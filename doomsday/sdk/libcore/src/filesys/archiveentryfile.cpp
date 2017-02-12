@@ -101,6 +101,16 @@ void ArchiveEntryFile::flush()
     }
 }
 
+Block ArchiveEntryFile::metaId() const
+{
+    Block data = File::metaId() + d->entryPath.toUtf8();
+    if (auto const *archFeed = originFeed()->maybeAs<ArchiveFeed>())
+    {
+        data += archFeed->archiveSourceFile().metaId();
+    }
+    return data.md5Hash();
+}
+
 Archive &ArchiveEntryFile::archive()
 {
     return *d->archive;

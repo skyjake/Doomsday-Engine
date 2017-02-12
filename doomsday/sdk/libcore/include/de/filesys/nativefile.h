@@ -50,6 +50,7 @@ public:
     virtual ~NativeFile();
 
     String describe() const;
+    Block metaId() const;
 
     void clear();
     void flush();

@@ -73,10 +73,9 @@ public:
      *              data is made, so the caller must make sure the
      *              byte array remains in existence for the lifetime
      *              of the Archive instance.
+     * @param dirCacheId  ID of cached ZIP directory data.
      */
-    ZipArchive(IByteArray const &data);
-
-    virtual ~ZipArchive();
+    ZipArchive(IByteArray const &data, Block const &dirCacheId = Block());
 
     void operator >> (Writer &to) const;
 
@@ -122,6 +121,9 @@ protected:
     typedef PathTreeT<ZipEntry> Index;
 
     Index const &index() const;
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de

@@ -274,6 +274,12 @@ public:
     dsize size() const;
 
     /**
+     * Generates a unique identifier generated based on the metadata of the file. This is
+     * suitable for use in caches to identify a particular instance of a file.
+     */
+    virtual Block metaId() const;
+
+    /**
      * Returns the mode of the file.
      */
     Flags const &mode() const;

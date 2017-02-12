@@ -46,10 +46,10 @@ public:
 
     ~ArchiveEntryFile();
 
-    String describe() const;
+    String describe() const override;
     String entryPath() const;
 
-    void clear();
+    void clear() override;
 
     /**
      * Flushes the entire archive that this file is part of into its source
@@ -63,7 +63,9 @@ public:
      * manual flushing this occurs automatically when the root ArchiveFeed
      * instance is deleted.
      */
-    void flush();
+    void flush() override;
+
+    Block metaId() const override;
 
     /// Returns the archive of the file.
     Archive &archive();
@@ -74,8 +76,8 @@ public:
     void uncache() const;
 
     // Implements IByteArray.
-    Size size() const;
-    void get(Offset at, Byte *values, Size count) const;
+    Size size() const override;
+    void get(Offset at, Byte *values, Size count) const override;
 
     /**
      * Modifies the content of an archive entry. Changes are made instantly
@@ -86,7 +88,7 @@ public:
      * @param values  Data.
      * @param count   Length of data.
      */
-    void set(Offset at, Byte const *values, Size count);
+    void set(Offset at, Byte const *values, Size count) override;
 
 private:
     DENG2_PRIVATE(d)

@@ -147,6 +147,11 @@ static Value *Function_File_ReadUtf8(Context &ctx, Function::ArgumentValues cons
     return new TextValue(String::fromUtf8(raw));
 }
 
+static Value *Function_File_MetaId(Context &ctx, Function::ArgumentValues const &)
+{
+    return new TextValue(fileInstance(ctx).metaId().asHexadecimalText());
+}
+
 static Value *Function_Folder_List(Context &ctx, Function::ArgumentValues const &)
 {
     Folder const &folder = fileInstance(ctx).as<Folder>();
@@ -252,7 +257,8 @@ void initCoreModule(Binder &binder, Record &coreModule)
                 << DENG2_FUNC_NOARG(File_ModifiedAt, "modifiedAt")
                 << DENG2_FUNC      (File_Locate, "locate", "relativePath")
                 << DENG2_FUNC_NOARG(File_Read, "read")
-                << DENG2_FUNC_NOARG(File_ReadUtf8, "readUtf8");
+                << DENG2_FUNC_NOARG(File_ReadUtf8, "readUtf8")
+                << DENG2_FUNC_NOARG(File_MetaId, "metaId");
     }
 
     // Folder

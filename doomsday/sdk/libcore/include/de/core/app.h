@@ -43,6 +43,7 @@ class FileSystem;
 class Folder;
 class LogBuffer;
 class LogFilter;
+class MetadataBank;
 class Module;
 class Path;
 class NativePath;
@@ -273,6 +274,11 @@ public:
      * Returns the application's file system.
      */
     static FileSystem &fileSystem();
+
+    /**
+     * Returns the application's metadata cache.
+     */
+    static MetadataBank &metadataBank();
 
     /**
      * Returns the root folder of the file system.

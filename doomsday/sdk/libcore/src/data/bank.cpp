@@ -223,7 +223,7 @@ DENG2_PIMPL(Bank)
                 if (isValidSerialTime(timestamp))
                 {
                     QScopedPointer<IData> blank(bank->newData());
-                    reader >> *blank->asSerializable();
+                    reader >> *blank->asSerializable(IData::Deserializing);
                     setData(blank.take());
                     LOG_RES_XVERBOSE("Deserialized \"%s\" in %.2f seconds",
                                      path(bank->d->sepChar) << startedAt.since());
@@ -259,7 +259,7 @@ DENG2_PIMPL(Bank)
                 loadFromSource();
             }
 
-            DENG2_ASSERT(data->asSerializable() != 0);
+            DENG2_ASSERT(data->asSerializable(IData::Serializing) != 0);
 
             try
             {
@@ -275,7 +275,7 @@ DENG2_PIMPL(Bank)
 
                 Writer(*serial).withHeader()
                         << source->modifiedAt()
-                        << *data->asSerializable();
+                        << *data->asSerializable(IData::Serializing);
             }
             catch (...)
             {

@@ -444,4 +444,14 @@ dsize File::size() const
     return status().size;
 }
 
+Block File::metaId() const
+{
+    auto const &st = target().status();
+
+    Block data;
+    Writer writer(data);
+    writer << path() << duint64(st.size) << st.modifiedAt;
+    return data.md5Hash();
+}
+
 } // namespace de

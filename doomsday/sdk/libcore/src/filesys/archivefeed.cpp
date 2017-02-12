@@ -67,7 +67,9 @@ DENG2_PIMPL(ArchiveFeed)
         {
             LOG_RES_XVERBOSE("Source %s is a byte array", f.description());
 
-            arch = new ZipArchive(*bytes);
+            qDebug() << "loading" << f.description() << f.metaId();
+
+            arch = new ZipArchive(*bytes, f.metaId());
         }
         else
         {
@@ -322,7 +324,7 @@ File const &ArchiveFeed::archiveSourceFile() const
     {
         return *d->file;
     }
-    throw InvalidSourceError("ArchiveFeed::archiveSourceFile", "Archive source file is gone");
+    throw InvalidSourceError("ArchiveFeed::archiveSourceFile", "Archive source file is missing");
 }
 
 void ArchiveFeed::rewriteFile()

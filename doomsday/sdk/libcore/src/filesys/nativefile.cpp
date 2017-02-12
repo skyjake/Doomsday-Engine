@@ -147,6 +147,11 @@ String NativeFile::describe() const
     return String("\"%1\"").arg(d->nativePath.pretty());
 }
 
+Block NativeFile::metaId() const
+{
+    return Block(File::metaId() + d->nativePath.toUtf8()).md5Hash();
+}
+
 void NativeFile::close()
 {
     DENG2_GUARD(this);

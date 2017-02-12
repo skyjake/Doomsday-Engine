@@ -27,6 +27,7 @@
 #include "de/ISerializable"
 #include "de/LittleEndianByteOrder"
 #include "de/LogBuffer"
+#include "de/MetadataBank"
 #include "de/Reader"
 #include "de/Writer"
 #include "de/Zeroed"
@@ -260,14 +261,198 @@ struct CentralEnd : public ISerializable {
 
 using namespace internal;
 
-ZipArchive::ZipArchive() : Archive()
+DENG2_PIMPL(ZipArchive)
+{
+    Block directoryCacheId;
+
+    Impl(Public *i) : Base(i) {}
+
+    void readCentralDirectory(Reader &reader, bool updateFromLocalHeaders)
+    {
+        // The central directory end record is at the signature we found.
+        CentralEnd summary;
+        reader >> summary;
+
+        duint const entryCount = summary.totalEntryCount;
+
+        // The ZIP must have only one part, all entries in the same archive.
+        if (entryCount != summary.diskEntryCount)
+        {
+            /// @throw MultiPartError  ZIP archives in more than one part are not supported
+            /// by the implementation.
+            throw MultiPartError("ZipArchive::readCentralDirectory", "Multipart archives are not supported");
+        }
+
+        // Read all the entries of the central directory.
+        reader.setOffset(summary.offset);
+        for (duint index = 0; index < entryCount; ++index)
+        {
+            CentralFileHeader header;
+            reader >> header;
+
+            // Check the signature.
+            if (header.signature != SIG_CENTRAL_FILE_HEADER)
+            {
+                /// @throw FormatError  Invalid signature in a central directory entry.
+                throw FormatError("ZipArchive::readCentralDirectory", "Corrupt central directory");
+            }
+
+            Block latin1Name;
+            reader.readBytes(header.fileNameSize, latin1Name);
+            String const fileName = String::fromLatin1(latin1Name); /// @todo UTF-8?
+
+            // Advance the cursor past the variable sized fields.
+            reader.seek(header.extraFieldSize + header.commentSize);
+
+            // Skip folders.
+            if (fileName.endsWith("/") && !header.size)
+            {
+                continue;
+            }
+
+            // Check for unsupported features.
+            if (header.compression != NO_COMPRESSION && header.compression != DEFLATED)
+            {
+                /// @throw UnknownCompressionError  Deflation is the only compression
+                /// algorithm supported by the implementation.
+                throw UnknownCompressionError("ZipArchive::readCentralDirectory",
+                    "Entry '" + fileName + "' uses an unsupported compression algorithm");
+            }
+            if (header.flags & ZFH_ENCRYPTED)
+            {
+                /// @throw EncryptionError  Archive is encrypted, which is not supported
+                /// by the implementation.
+                throw EncryptionError("ZipArchive::readCentralDirectory",
+                    "Entry '" + fileName + "' is encrypted and thus cannot be read");
+            }
+
+            LocalFileHeader localHeader;
+            if (updateFromLocalHeaders)
+            {
+                // Read the local file header, which contains the correct extra
+                // field size (Info-ZIP!).
+                reader.mark();
+                reader.setOffset(header.relOffset);
+                reader >> localHeader;
+            }
+
+            // Make an index entry for this.
+            ZipEntry &entry = static_cast<ZipEntry &>(self().insertEntry(fileName));
+
+            entry.size              = header.size;
+            entry.sizeInArchive     = header.compressedSize;
+            entry.compression       = header.compression;
+            entry.crc32             = header.crc32;
+            entry.localHeaderOffset = header.relOffset;
+
+            // Unpack the last modified time from the ZIP entry header.
+            DOSDate lastModDate(header.lastModDate);
+            DOSTime lastModTime(header.lastModTime);
+            entry.modifiedAt = QDateTime(QDate(lastModDate.year + 1980, lastModDate.month, lastModDate.dayOfMonth),
+                                         QTime(lastModTime.hours, lastModTime.minutes, lastModTime.seconds));
+
+            if (updateFromLocalHeaders)
+            {
+                entry.offset = reader.offset() + header.fileNameSize + localHeader.extraFieldSize;
+
+                // Back to the central directory.
+                reader.rewind();
+            }
+        }
+    }
+
+    void writeCentralDirectory(Writer &writer)
+    {
+        CentralEnd summary;
+        summary.diskEntryCount = summary.totalEntryCount = self().index().leafNodes().size();
+
+        // This is where the central directory begins.
+        summary.offset = writer.offset();
+
+        // Write the central directory.
+        for (PathTreeIterator<Index> iter(self().index().leafNodes()); iter.hasNext(); )
+        {
+            ZipEntry const &entry = iter.next();
+            String const fullPath = entry.path();
+
+            CentralFileHeader header;
+            header.signature = SIG_CENTRAL_FILE_HEADER;
+            header.version = 20;
+            header.requiredVersion = 20;
+            Date at(entry.modifiedAt);
+            header.lastModTime = DOSTime(at.hours(), at.minutes(), at.seconds());
+            header.lastModDate = DOSDate(at.year() - 1980, at.month(), at.dayOfMonth());
+            header.compression = entry.compression;
+            header.crc32 = entry.crc32;
+            header.compressedSize = entry.sizeInArchive;
+            header.size = entry.size;
+            header.fileNameSize = fullPath.size();
+            header.relOffset = entry.localHeaderOffset;
+
+            writer << header << FixedByteArray(fullPath.toLatin1());
+        }
+
+        // Size of the central directory.
+        summary.size = writer.offset() - summary.offset;
+
+        // End of central directory.
+        writer << duint32(SIG_END_OF_CENTRAL_DIR) << summary;
+
+        writer << duint32(SIG_DIGITAL_SIGNATURE)
+               << duint16(0); // No signature data.
+    }
+
+    void updateCachedDirectory()
+    {
+        if (!directoryCacheId.isEmpty())
+        {
+            Block meta;
+            Writer writer(meta);
+            writeCentralDirectory(writer);
+            MetadataBank::get().setMetadata(directoryCacheId, meta);
+        }
+    }
+
+    bool restoreFromCache()
+    {
+        if (directoryCacheId.isEmpty()) return false;
+
+        auto &bank = MetadataBank::get();
+
+        try
+        {
+            Block const meta = bank.check(directoryCacheId);
+            if (meta.isEmpty()) return false;
+            qDebug() << "restoring from cache" << directoryCacheId;
+            Reader reader(meta);
+            readCentralDirectory(reader, false);
+            return true;
+        }
+        catch (Error const &)
+        {
+            return false;
+        }
+    }
+};
+
+ZipArchive::ZipArchive() : d(new Impl(this))
 {
     setIndex(new Index);
 }
 
-ZipArchive::ZipArchive(IByteArray const &archive) : Archive(archive)
+ZipArchive::ZipArchive(IByteArray const &archive, Block const &dirCacheId)
+    : Archive(archive)
+    , d(new Impl(this))
 {
     setIndex(new Index);
+
+    d->directoryCacheId = dirCacheId;
+
+    if (d->restoreFromCache())
+    {
+        // No need to check the file itself.
+        return;
+    }
 
     Reader reader(archive, littleEndianByteOrder);
 
@@ -294,92 +479,9 @@ ZipArchive::ZipArchive(IByteArray const &archive) : Archive(archive)
             "Could not locate the central directory of the archive");
     }
 
-    // The central directory end record is at the signature we found.
-    CentralEnd summary;
-    reader >> summary;
-
-    duint const entryCount = summary.totalEntryCount;
-
-    // The ZIP must have only one part, all entries in the same archive.
-    if (entryCount != summary.diskEntryCount)
-    {
-        /// @throw MultiPartError  ZIP archives in more than one part are not supported
-        /// by the implementation.
-        throw MultiPartError("ZipArchive::Archive", "Multipart archives are not supported");
-    }
-
-    // Read all the entries of the central directory.
-    reader.setOffset(summary.offset);
-    for (duint index = 0; index < entryCount; ++index)
-    {
-        CentralFileHeader header;
-        reader >> header;
-
-        // Check the signature.
-        if (header.signature != SIG_CENTRAL_FILE_HEADER)
-        {
-            /// @throw FormatError  Invalid signature in a central directory entry.
-            throw FormatError("ZipArchive::Archive", "Corrupt central directory");
-        }
-
-        String fileName = String::fromLatin1(ByteSubArray(archive, reader.offset(), header.fileNameSize));
-
-        // Advance the cursor past the variable sized fields.
-        reader.seek(header.fileNameSize + header.extraFieldSize + header.commentSize);
-
-        // Skip folders.
-        if (fileName.endsWith("/") && !header.size)
-        {
-            continue;
-        }
-
-        // Check for unsupported features.
-        if (header.compression != NO_COMPRESSION && header.compression != DEFLATED)
-        {
-            /// @throw UnknownCompressionError  Deflation is the only compression
-            /// algorithm supported by the implementation.
-            throw UnknownCompressionError("ZipArchive::Archive",
-                "Entry '" + fileName + "' uses an unsupported compression algorithm");
-        }
-        if (header.flags & ZFH_ENCRYPTED)
-        {
-            /// @throw EncryptionError  Archive is encrypted, which is not supported
-            /// by the implementation.
-            throw EncryptionError("ZipArchive::Archive",
-                "Entry '" + fileName + "' is encrypted and thus cannot be read");
-        }
-
-        // Read the local file header, which contains the correct extra
-        // field size (Info-ZIP!).
-        reader.mark();
-        reader.setOffset(header.relOffset);
-        LocalFileHeader localHeader;
-        reader >> localHeader;
-
-        // Make an index entry for this.
-        ZipEntry &entry = static_cast<ZipEntry &>(insertEntry(fileName));
-
-        entry.size              = header.size;
-        entry.sizeInArchive     = header.compressedSize;
-        entry.compression       = header.compression;
-        entry.crc32             = header.crc32;
-        entry.localHeaderOffset = header.relOffset;
-
-        // Unpack the last modified time from the ZIP entry header.
-        DOSDate lastModDate(header.lastModDate);
-        DOSTime lastModTime(header.lastModTime);
-        entry.modifiedAt = QDateTime(QDate(lastModDate.year + 1980, lastModDate.month, lastModDate.dayOfMonth),
-                                     QTime(lastModTime.hours, lastModTime.minutes, lastModTime.seconds));
-
-        entry.offset = reader.offset() + header.fileNameSize + localHeader.extraFieldSize;
-
-        // Back to the central directory.
-        reader.rewind();
-    }
+    d->readCentralDirectory(reader, true);
+    d->updateCachedDirectory();
 }
-
-ZipArchive::~ZipArchive()
-{}
 
 void ZipArchive::readFromSource(Entry const &e, Path const &, IBlock &uncompressedData) const
 {
@@ -470,7 +572,7 @@ void ZipArchive::operator >> (Writer &to) const
      */
     Writer writer(to, littleEndianByteOrder);
 
-    // First write the local headers.
+    // First write the local headers and entry contents.
     for (PathTreeIterator<Index> iter(index().leafNodes()); iter.hasNext(); )
     {
         // We will be updating relevant members of the entry.
@@ -568,43 +670,7 @@ void ZipArchive::operator >> (Writer &to) const
         }
     }
 
-    CentralEnd summary;
-    summary.diskEntryCount = summary.totalEntryCount = index().leafNodes().size();
-
-    // This is where the central directory begins.
-    summary.offset = writer.offset();
-
-    // Write the central directory.
-    for (PathTreeIterator<Index> iter(index().leafNodes()); iter.hasNext(); )
-    {
-        ZipEntry const &entry = iter.next();
-        String const fullPath = entry.path();
-
-        CentralFileHeader header;
-        header.signature = SIG_CENTRAL_FILE_HEADER;
-        header.version = 20;
-        header.requiredVersion = 20;
-        Date at(entry.modifiedAt);
-        header.lastModTime = DOSTime(at.hours(), at.minutes(), at.seconds());
-        header.lastModDate = DOSDate(at.year() - 1980, at.month(), at.dayOfMonth());
-        header.compression = entry.compression;
-        header.crc32 = entry.crc32;
-        header.compressedSize = entry.sizeInArchive;
-        header.size = entry.size;
-        header.fileNameSize = fullPath.size();
-        header.relOffset = entry.localHeaderOffset;
-
-        writer << header << FixedByteArray(fullPath.toLatin1());
-    }
-
-    // Size of the central directory.
-    summary.size = writer.offset() - summary.offset;
-
-    // End of central directory.
-    writer << duint32(SIG_END_OF_CENTRAL_DIR) << summary;
-
-    // No signature data.
-    writer << duint32(SIG_DIGITAL_SIGNATURE) << duint16(0);
+    d->writeCentralDirectory(writer);
 
     // Since we used our own writer, seek the writer that was given to us
     // by the amount of data we wrote.

@@ -35,6 +35,7 @@
 #include "de/LogBuffer"
 #include "de/LogFilter"
 #include "de/math.h"
+#include "de/MetadataBank"
 #include "de/Module"
 #include "de/NativeFile"
 #include "de/NumberValue"
@@ -83,14 +84,15 @@ DENG2_PIMPL(App)
 
     ScriptSystem scriptSys;
     FileSystem fs;
-    QScopedPointer<NativeFile> basePackFile;
+    std::unique_ptr<MetadataBank> metaBank;
+    std::unique_ptr<NativeFile> basePackFile;
     Record appModule;
 
     /// Archive where persistent data should be stored. Written to /home/persist.pack.
     /// The archive is owned by the file system.
     Archive *persistentData;
 
-    QScopedPointer<UnixInfo> unixInfo;
+    std::unique_ptr<UnixInfo> unixInfo;
 
     /// The configuration.
     Path configPath;
@@ -102,7 +104,7 @@ DENG2_PIMPL(App)
     void (*terminateFunc)(char const *);
 
     /// Optional sink for warnings and errors (set with "-errors").
-    QScopedPointer<FileLogSink> errorSink;
+    std::unique_ptr<FileLogSink> errorSink;
 
     Impl(Public *a, QStringList args)
         : Base(a)
@@ -140,7 +142,9 @@ DENG2_PIMPL(App)
 
     ~Impl()
     {
-        if (!errorSink.isNull())
+        metaBank->unloadAll(Bank::InHotStorage);
+
+        if (errorSink)
         {
             logBuffer.removeSink(*errorSink);
         }
@@ -226,6 +230,9 @@ DENG2_PIMPL(App)
 
         // Internal data (for runtime use only, thus writable).
         fs.makeFolder("/sys").setMode(File::Write);
+
+        // Metadata for files.
+        metaBank.reset(new MetadataBank);
 
         // Populate the file system.
         fs.refresh();
@@ -756,6 +763,12 @@ NativePath App::nativeAppContentsPath()
 FileSystem &App::fileSystem()
 {
     return DENG2_APP->d->fs;
+}
+
+MetadataBank &App::metadataBank()
+{
+    DENG2_ASSERT(DENG2_APP->d->metaBank);
+    return *DENG2_APP->d->metaBank;
 }
 
 PackageLoader &App::packageLoader()

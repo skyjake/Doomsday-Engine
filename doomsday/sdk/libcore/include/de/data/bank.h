@@ -82,11 +82,15 @@ public:
 
     enum Flag
     {
+        SingleThread = 0,
+
         /**
          * Separate thread used for managing the bank's data (loading, caching
          * data). Requires data items and sources to be thread-safe.
          */
         BackgroundThread = 0x1,
+
+        EnableHotStorage = 0,
 
         /**
          * Do not use the hot storage to keep serialized copies of data items.
@@ -102,7 +106,7 @@ public:
          */
         ClearHotStorageWhenBankDestroyed = 0x4,
 
-        DefaultFlags = DisableHotStorage
+        DefaultFlags = SingleThread | DisableHotStorage
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
@@ -166,9 +170,11 @@ public:
     public:
         virtual ~IData() {}
 
+        enum SerialMode { Serializing, Deserializing };
+
         /// Returns an ISerializable pointer to the object. Required
         /// for putting the data in hot storage.
-        virtual ISerializable *asSerializable() { return 0; }
+        virtual ISerializable *asSerializable(SerialMode) { return 0; }
 
         /// Returns the size of the data that it occupies in memory.
         virtual duint sizeInMemory() const { return 0; }
@@ -370,7 +376,7 @@ protected:
 
     /**
      * Construct a new concrete instance of the data item. Called before
-     * deserialization. Default implementation just returns NULL (seriliazation
+     * deserialization. Default implementation just returns NULL (serialization
      * not supported).
      *
      * @return IData instance. Ownership given to caller.
