@@ -37,7 +37,6 @@ namespace de {
 class DENG2_PUBLIC RecordValue
         : public Value
         , public RecordAccessor
-        , DENG2_OBSERVES(Record, Deletion)
 {
 public:
     /// Attempt to access the record after it has been deleted. @ingroup errors
@@ -127,9 +126,6 @@ public:
     // Implements ISerializable.
     void operator >> (Writer &to) const;
     void operator << (Reader &from);
-
-    // Observes Record deletion.
-    void recordBeingDeleted(Record &record);
 
     RecordValue *duplicateUnowned() const;
 

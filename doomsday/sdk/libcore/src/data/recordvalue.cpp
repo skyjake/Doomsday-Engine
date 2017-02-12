@@ -33,62 +33,74 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(RecordValue)
+DENG2_PIMPL(RecordValue)
+, DENG2_OBSERVES(Record, Deletion)
 {
-    Record *record;
+    Record *record = nullptr;
     OwnershipFlags ownership;
     OwnershipFlags oldOwnership; // prior to serialization
 
-    Impl() : record(0) {}
+    Impl(Public *i) : Base(i) {}
+    
+    // Observes Record deletion.
+    void recordBeingDeleted(Record &DENG2_DEBUG_ONLY(deleted))
+    {
+        if (!record) return; // Not associated with a record any more.
+        
+        DENG2_ASSERT(record == &deleted);
+        DENG2_ASSERT(!ownership.testFlag(OwnsRecord));
+        record = nullptr;
+        self().setAccessedRecord(nullptr);
+    }
 };
 
 RecordValue::RecordValue(Record *record, OwnershipFlags o)
     : RecordAccessor(record)
-    , d(new Impl)
+    , d(new Impl(this))
 {
     d->record = record;
     d->ownership = o;
     d->oldOwnership = o;
 
-    DENG2_ASSERT(d->record != NULL);
+    DENG2_ASSERT(d->record != nullptr);
 
     if (!d->ownership.testFlag(OwnsRecord) &&
         !d->record->flags().testFlag(Record::WontBeDeleted))
     {
         // If we don't own it, someone may delete the record.
-        d->record->audienceForDeletion() += this;
+        d->record->audienceForDeletion() += d;
     }
 }
 
 RecordValue::RecordValue(Record const &record)
     : RecordAccessor(record)
-    , d(new Impl)
+    , d(new Impl(this))
 {
     d->record = const_cast<Record *>(&record);
 
     if (!record.flags().testFlag(Record::WontBeDeleted))
     {
         // Someone may delete the record.
-        d->record->audienceForDeletion() += this;
+        d->record->audienceForDeletion() += d;
     }
 }
 
 RecordValue::RecordValue(IObject const &object)
     : RecordAccessor(object.objectNamespace())
-    , d(new Impl)
+    , d(new Impl(this))
 {
     d->record = const_cast<Record *>(&object.objectNamespace());
 
     if (!d->record->flags().testFlag(Record::WontBeDeleted))
     {
         // Someone may delete the record.
-        d->record->audienceForDeletion() += this;
+        d->record->audienceForDeletion() += d;
     }
 }
 
 RecordValue::~RecordValue()
 {
-    setRecord(0);
+    setRecord(nullptr);
 }
 
 bool RecordValue::hasOwnership() const
@@ -112,15 +124,11 @@ void RecordValue::setRecord(Record *record, OwnershipFlags ownership)
 
     if (hasOwnership())
     {
-        //DENG2_ASSERT(!d->record->audienceForDeletion().contains(this));
-
         delete d->record;
     }
-    else if (d->record)
+    else if (d->record && !d->record->flags().testFlag(Record::WontBeDeleted))
     {
-        //DENG2_ASSERT(d->record->audienceForDeletion().contains(this));
-
-        d->record->audienceForDeletion() -= this;
+        d->record->audienceForDeletion() -= d;
     }
 
     d->record = record;
@@ -131,7 +139,7 @@ void RecordValue::setRecord(Record *record, OwnershipFlags ownership)
         !d->record->flags().testFlag(Record::WontBeDeleted))
     {
         // Since we don't own it, someone may delete the record.
-        d->record->audienceForDeletion() += this;
+        d->record->audienceForDeletion() += d;
     }
 }
 
@@ -144,6 +152,7 @@ Record *RecordValue::takeRecord()
         throw OwnershipError("RecordValue::takeRecord", "Value does not own the record");
     }
     Record *rec = d->record;
+    DENG2_ASSERT(!d->record->audienceForDeletion().contains(d));
     d->record = nullptr;
     d->ownership = RecordNotOwned;
     setAccessedRecord(nullptr);
@@ -173,7 +182,7 @@ Record const &RecordValue::dereference() const
 
 Value::Text RecordValue::typeId() const
 {
-    return "Record";
+    return QStringLiteral("Record");
 }
 
 Value *RecordValue::duplicate() const
@@ -317,16 +326,6 @@ void RecordValue::operator << (Reader &from)
     d->oldOwnership = OwnershipFlags(flags & OWNS_RECORD? OwnsRecord : 0);
 
     from >> dereference();
-}
-
-void RecordValue::recordBeingDeleted(Record &DENG2_DEBUG_ONLY(record))
-{
-    if (!d->record) return; // Not associated with a record any more.
-
-    DENG2_ASSERT(d->record == &record);
-    DENG2_ASSERT(!d->ownership.testFlag(OwnsRecord));
-    d->record = nullptr;
-    setAccessedRecord(nullptr);
 }
 
 } // namespace de
