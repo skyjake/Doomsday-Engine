@@ -69,6 +69,7 @@ public:
 
     inline Flag flags() const           { return _flags; }
     inline int size() const             { return _range.size(); }
+    inline bool isEmpty() const         { return _range.isEmpty(); }
     inline Rangeui16 usedRange() const  { return _range; }
     inline int allocatedSize() const    { return _size; }
     inline const_iterator begin() const { return _pointers + _range.start; }
@@ -105,6 +106,7 @@ class PointerSetT : public PointerSet
 public:
     typedef PointerSet::Pointer BasePointer;
     typedef Type * Pointer;
+    typedef Type const * ConstPointer;
     typedef Pointer const * const_iterator;
 
 public:
@@ -123,11 +125,20 @@ public:
     inline void insert(Pointer ptr) {
         PointerSet::insert(reinterpret_cast<BasePointer>(ptr));
     }
+    inline void insert(ConstPointer ptr) {
+        PointerSet::insert(reinterpret_cast<BasePointer>(const_cast<Pointer>(ptr)));
+    }
     inline void remove(Pointer ptr) {
         PointerSet::remove(reinterpret_cast<BasePointer>(ptr));
     }
+    inline void remove(ConstPointer ptr) {
+        PointerSet::remove(reinterpret_cast<BasePointer>(const_cast<Pointer>(ptr)));
+    }
     inline bool contains(Pointer ptr) const {
         return PointerSet::contains(reinterpret_cast<BasePointer>(ptr));
+    }
+    inline bool contains(ConstPointer ptr) const {
+        return PointerSet::contains(reinterpret_cast<BasePointer>(const_cast<Pointer>(ptr)));
     }
     inline const_iterator begin() const {
         return reinterpret_cast<const_iterator>(PointerSet::begin());
