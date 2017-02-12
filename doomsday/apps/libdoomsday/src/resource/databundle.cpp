@@ -1149,18 +1149,18 @@ File *DataBundle::Interpreter::interpretFile(File *sourceData) const
 {
     // Naive check using the file extension.
     static struct { String str; Format format; } formats[] = {
-        { ".zip", Pk3 },
-        { ".pk3", Pk3 },
-        { ".wad", Wad /* type (I or P) checked later */ },
-        { ".lmp", Lump },
-        { ".ded", Ded },
-        { ".deh", Dehacked },
-        { ".box", Collection },
+        { ".pk3.zip", Pk3 },
+        { ".pk3",     Pk3 },
+        { ".wad",     Wad /* type (I or P) checked later */ },
+        { ".lmp",     Lump },
+        { ".ded",     Ded },
+        { ".deh",     Dehacked },
+        { ".box",     Collection },
     };
-    String const ext = sourceData->extension();
+    //String const ext = sourceData->extension();
     for (auto const &fmt : formats)
     {
-        if (!fmt.str.compareWithoutCase(ext))
+        if (sourceData->name().endsWith(fmt.str, Qt::CaseInsensitive))
         {
             LOG_RES_XVERBOSE("Interpreted %s as %s",
                              sourceData->description() <<
