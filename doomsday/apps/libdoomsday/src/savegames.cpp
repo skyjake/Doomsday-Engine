@@ -161,7 +161,7 @@ DENG2_PIMPL(SaveGames)
     {
         LOG_AS("SaveGames");
         String const legacySavePath = String("/sys/legacysavegames") / gameId;
-        if (Folder *oldSaveFolder = FileSystem::get().root().tryLocate<Folder>(legacySavePath))
+        if (Folder *oldSaveFolder = FileSystem::tryLocate<Folder>(legacySavePath))
         {
             // Add any new legacy savegames which may have appeared in this folder.
             oldSaveFolder->populate(Folder::PopulateOnlyThisFolder /* no need to go deep */);
@@ -280,7 +280,7 @@ D_CMD(InspectSavegame)
         savePath = AbstractSession::savePath() / savePath;
     }
 
-    if (GameStateFolder const *saved = FileSystem::get().root().tryLocate<GameStateFolder>(savePath))
+    if (GameStateFolder const *saved = FileSystem::tryLocate<GameStateFolder>(savePath))
     {
         LOG_SCR_MSG("%s") << saved->metadata().asStyledText();
         LOG_SCR_MSG(_E(D) "Resource: " _E(.)_E(i) "\"%s\"") << saved->path();

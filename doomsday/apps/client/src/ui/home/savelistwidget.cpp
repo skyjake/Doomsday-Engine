@@ -82,7 +82,7 @@ DENG_GUI_PIMPL(SaveListWidget)
             auto const &saveItem = d->self().organizer()
                     .findItemForWidget(saveButton)->as<SaveListData::SaveItem>();
 
-            if (GameStateFolder const *saved = FS::get().root().tryLocate<GameStateFolder>(saveItem.savePath()))
+            if (GameStateFolder const *saved = FS::tryLocate<GameStateFolder>(saveItem.savePath()))
             {
                 auto *docPop = new DocumentPopupWidget;
                 docPop->setDeleteAfterDismissed(true);

@@ -196,7 +196,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
             foreach (String ext, imageExts)
             {
                 String const imgPath = packagePath / "icon" + ext;
-                if (ImageFile const *img = FS::get().root().tryLocate<ImageFile const>(imgPath))
+                if (ImageFile const *img = FS::tryLocate<ImageFile const>(imgPath))
                 {
                     Image iconImage = img->image();
                     if (iconImage.width() > 512 || iconImage.height() > 512)

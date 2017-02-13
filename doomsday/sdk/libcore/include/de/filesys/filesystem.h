@@ -356,6 +356,11 @@ public:
         return FileSystem::get().root().locate<T>(path);
     }
 
+    template <typename T>
+    static T *tryLocate(String const &path) {
+        return FileSystem::get().root().tryLocate<T>(path);
+    }
+
 private:
     DENG2_PRIVATE(d)
 };
