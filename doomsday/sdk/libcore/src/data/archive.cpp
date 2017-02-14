@@ -220,7 +220,9 @@ void Archive::uncacheBlock(Path const &path) const
     {
         if (!entry->data && !entry->dataInArchive) return;
 
-        qDebug() << "Archive:" << path << "uncached by archive" << this;
+        /*qDebug() << "Archive:" << path << "uncached by archive" << this
+                 << (entry->data? entry->data->size() : 0)
+                 << (entry->dataInArchive? entry->dataInArchive->size() : 0);*/
 
         if (!entry->maybeChanged)
         {
