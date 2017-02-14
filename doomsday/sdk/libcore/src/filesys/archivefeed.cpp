@@ -67,8 +67,6 @@ DENG2_PIMPL(ArchiveFeed)
         {
             LOG_RES_XVERBOSE("Source %s is a byte array", f.description());
 
-            qDebug() << "loading" << f.description() << f.metaId();
-
             arch = new ZipArchive(*bytes, f.metaId());
         }
         else

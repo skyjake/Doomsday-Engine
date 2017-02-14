@@ -48,7 +48,12 @@ DENG2_PIMPL(MetadataBank), public Lockable
 
     Impl(Public *i) : Base(i) {}
 
-    static DotPath pathFromId(Block const &id) { return id.asHexadecimalText(); }
+    static DotPath pathFromId(String const &category, Block const &id)
+    {
+        DENG2_ASSERT(!id.isEmpty());
+        String const hex = id.asHexadecimalText();
+        return String("%1.%2.%3").arg(category).arg(hex.at(0)).arg(hex);
+    }
 };
 
 MetadataBank::MetadataBank()
@@ -61,11 +66,11 @@ MetadataBank &MetadataBank::get() // static
     return App::metadataBank();
 }
 
-Block MetadataBank::check(Block const &id)
+Block MetadataBank::check(String const &category, Block const &id)
 {
     DENG2_GUARD(d);
 
-    DotPath const path = Impl::pathFromId(id);
+    DotPath const path = Impl::pathFromId(category, id);
     if (!has(path))
     {
         Bank::add(path, new Impl::Source(id));
@@ -73,11 +78,11 @@ Block MetadataBank::check(Block const &id)
     return data(path).as<Impl::Data>().metadata;
 }
 
-void MetadataBank::setMetadata(Block const &id, Block const &metadata)
+void MetadataBank::setMetadata(String const &category, Block const &id, Block const &metadata)
 {
     DENG2_GUARD(d);
 
-    DotPath const path = Impl::pathFromId(id);
+    DotPath const path = Impl::pathFromId(category, id);
     if (!has(path))
     {
         Bank::add(path, new Impl::Source(id));
@@ -85,11 +90,11 @@ void MetadataBank::setMetadata(Block const &id, Block const &metadata)
     data(path).as<Impl::Data>().metadata = metadata;
 }
 
-Block MetadataBank::metadata(Block const &id) const
+Block MetadataBank::metadata(String const &category, Block const &id) const
 {
     DENG2_GUARD(d);
 
-    return data(Impl::pathFromId(id)).as<Impl::Data>().metadata;
+    return data(Impl::pathFromId(category, id)).as<Impl::Data>().metadata;
 }
 
 Bank::IData *MetadataBank::loadFromSource(ISource &)

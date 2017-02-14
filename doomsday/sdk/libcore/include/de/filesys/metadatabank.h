@@ -38,16 +38,17 @@ public:
     /**
      * Adds a new metadata entry into the bank.
      *
-     * @param id  Meta ID.
+     * @param category  Metadata category. Each category is saved in its own subfolder.
+     * @param id        Meta ID.
      *
      * @return The cached metadata, if available. This will be an empty Block if no
      * metadata has yet been cached.
      */
-    Block check(Block const &id);
+    Block check(String const &category, Block const &id);
 
-    void setMetadata(Block const &id, Block const &metadata);
+    void setMetadata(String const &category, Block const &id, Block const &metadata);
 
-    Block metadata(Block const &id) const;
+    Block metadata(String const &category, Block const &id) const;
 
 protected:
     IData *loadFromSource(ISource &source) override;

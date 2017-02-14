@@ -39,6 +39,14 @@ DENG2_PIMPL_NOREF(ArchiveEntryFile)
     {
         if (!readBlock)
         {
+#if 0
+            {
+                static Lockable dbg;
+                DENG2_GUARD(dbg);
+                qDebug() << "--------\nAEF being read" << entryPath;
+                DENG2_PRINT_BACKTRACE();
+            }
+#endif
             readBlock = &const_cast<Archive const *>(archive)->entryBlock(entryPath);
         }
         return *readBlock;
@@ -104,9 +112,9 @@ void ArchiveEntryFile::flush()
 Block ArchiveEntryFile::metaId() const
 {
     Block data = File::metaId() + d->entryPath.toUtf8();
-    if (auto const *archFeed = originFeed()->maybeAs<ArchiveFeed>())
+    if (File const *sourceFile = dynamic_cast<File const *>(archive().source()))
     {
-        data += archFeed->archiveSourceFile().metaId();
+        data += sourceFile->metaId();
     }
     return data.md5Hash();
 }
