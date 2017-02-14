@@ -51,6 +51,9 @@ public:
      */
     NativePath();
 
+    NativePath(NativePath const &other);
+    NativePath(NativePath &&moved);
+
     /**
      * Constructs a native path from any string.
      *
@@ -72,6 +75,8 @@ public:
     NativePath &operator = (String const &str);
 
     NativePath &operator = (QString const &str);
+    NativePath &operator = (NativePath &&moved);
+    NativePath &operator = (NativePath const &other);
     NativePath &operator = (char const *nullTerminatedCStr);
 
     /**

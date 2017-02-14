@@ -472,7 +472,35 @@ public:
     DotPath(QString const &str)             : Path(str, '.') {}
     DotPath(char const *nullTerminatedCStr) : Path(nullTerminatedCStr, '.') {}
     DotPath(Path const &other)              : Path(other) {}
+    DotPath(Path &&moved)                   : Path(moved) {}
     DotPath(DotPath const &other)           : Path(other.toStringRef(), other.separator()) {}
+    DotPath(DotPath &&moved)                : Path(moved) {}
+
+    DotPath &operator = (char const *nullTerminatedCStr) {
+        return *this = DotPath(nullTerminatedCStr);
+    }
+    DotPath &operator = (String const &str) {
+        return *this = DotPath(str);
+    }
+    DotPath &operator = (QString const &str) {
+        return *this = DotPath(str);
+    }
+    DotPath &operator = (Path const &other) {
+        Path::operator = (other);
+        return *this;
+    }
+    DotPath &operator = (DotPath const &other) {
+        Path::operator = (other);
+        return *this;
+    }
+    DotPath &operator = (Path &&moved) {
+        Path::operator = (moved);
+        return *this;
+    }
+    DotPath &operator = (DotPath &&moved) {
+        Path::operator = (moved);
+        return *this;
+    }
 
     bool operator == (DotPath const &other) const {
         return Path::operator == (other);

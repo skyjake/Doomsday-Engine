@@ -65,6 +65,14 @@ static QString toNative(String const &s)
 NativePath::NativePath() : Path()
 {}
 
+NativePath::NativePath(NativePath const &other)
+    : Path(other)
+{}
+
+NativePath::NativePath(NativePath &&moved)
+    : Path(moved)
+{}
+
 NativePath::NativePath(String const &str) : Path(toNative(str), DIR_SEPARATOR)
 {}
 
@@ -88,6 +96,18 @@ NativePath &NativePath::operator = (String const &str)
 NativePath &NativePath::operator = (QString const &str)
 {
     set(toNative(str), DIR_SEPARATOR);
+    return *this;
+}
+
+NativePath &NativePath::operator = (NativePath &&moved)
+{
+    Path::operator = (moved);
+    return *this;
+}
+
+NativePath &NativePath::operator = (NativePath const &other)
+{
+    Path::operator = (other);
     return *this;
 }
 
