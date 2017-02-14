@@ -253,8 +253,8 @@ DENG2_PIMPL_NOREF(Socket)
 
         if (!header.size) // Try deflate.
         {
-            int const level = (payload.size() < 2*MAX_SIZE_MEDIUM? 6 /*default*/ : 9 /*best*/);
-            QByteArray deflated = qCompress(payload, level);
+            int const level = (payload.size() < 10*MAX_SIZE_MEDIUM? 1 /*fast*/ : 9 /*best*/);
+            Block const deflated = payload.compressed(level);
 
             if (!deflated.size())
             {
@@ -267,7 +267,7 @@ DENG2_PIMPL_NOREF(Socket)
             }
 
             // Choose the smallest compression.
-            if (huffData.size() && int(huffData.size()) <= deflated.size() && int(huffData.size()) <= MAX_SIZE_MEDIUM)
+            if (huffData.size() && huffData.size() <= deflated.size() && int(huffData.size()) <= MAX_SIZE_MEDIUM)
             {
                 // Huffman yielded smaller payload.
                 header.isHuffmanCoded = true;

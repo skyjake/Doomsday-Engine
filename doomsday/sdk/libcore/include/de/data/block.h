@@ -103,7 +103,7 @@ public:
 
     Block &operator = (IByteArray const &byteArray);
 
-    Block compressed() const;
+    Block compressed(int level = -1) const;
     Block decompressed() const;
     Block md5Hash() const;
     String asHexadecimalText() const;

@@ -193,9 +193,9 @@ Block &Block::operator = (IByteArray const &byteArray)
     return *this;
 }
 
-Block Block::compressed() const
+Block Block::compressed(int level) const
 {
-    return qCompress(*this);
+    return qCompress(*this, level);
 }
 
 Block Block::decompressed() const
