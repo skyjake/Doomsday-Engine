@@ -31,6 +31,7 @@
 #include <de/Info>
 #include <de/LinkFile>
 #include <de/LogBuffer>
+#include <de/MetadataBank>
 #include <de/Package>
 #include <de/PackageLoader>
 #include <de/Path>
@@ -53,6 +54,8 @@ static String const VAR_REQUIRES    ("requires");
 static String const VAR_RECOMMENDS  ("recommends");
 static String const VAR_EXTRAS      ("extras");
 static String const VAR_CATEGORY    ("category");
+
+static String const CACHE_CATEGORY  ("DataBundle");
 
 namespace internal
 {
@@ -183,33 +186,6 @@ DENG2_PIMPL(DataBundle), public Lockable
             return false;
         }
 
-        // Search for known data files in the bundle registry.
-        res::Bundles::MatchResult matched = DoomsdayApp::bundles().match(self());
-
-        File &dataFile = self().asFile();
-        String const dataFilePath = dataFile.path();
-
-        // Metadata for the package will be collected into this record.
-        Record meta;
-        meta.set(VAR_PATH,         dataFilePath);
-        meta.set(VAR_BUNDLE_SCORE, matched.bestScore);
-
-        if (format != Collection)
-        {
-            // Classic data files are loaded via the "dataFiles" array (in the listed order).
-            // However, collections are represented directly as Doomsday packages.
-            meta.addArray(VAR_DATA_FILES, new ArrayValue({ new TextValue(dataFilePath) }));
-        }
-        else
-        {
-            meta.addArray(VAR_DATA_FILES);
-
-            // Collections have a number of subsets.
-            meta.addArray(VAR_REQUIRES);
-            meta.addArray(VAR_RECOMMENDS);
-            meta.addArray(VAR_EXTRAS);
-        }
-
         if (isAutoLoaded())
         {
             // We're still loading with FS1, so it will handle auto-loaded files.
@@ -255,6 +231,151 @@ DENG2_PIMPL(DataBundle), public Lockable
             }
         }
 
+        Record const meta = cachedMetadata();
+        packageId = meta.gets(Package::VAR_ID);
+        versionedPackageId = packageId;
+
+        // Finally, make a link that represents the package.
+        if (auto chosen = chooseUniqueLinkPathAndVersion(self().asFile(), packageId,
+                                                         meta.gets(VAR_VERSION),
+                                                         meta.geti(VAR_BUNDLE_SCORE)))
+        {
+            LOGDEV_RES_VERBOSE("Linking %s as %s") << self().asFile().path() << chosen.path;
+
+            //qDebug() << "linking" << dataFile.path() << chosen.path;
+
+            pkgLink.reset(&bundleFolder().add(LinkFile::newLinkToFile(self().asFile(), chosen.path)));
+
+            // Set up package metadata in the link.
+            Record &metadata = Package::initializeMetadata(*pkgLink, packageId);
+            metadata.copyMembersFrom(meta);
+            metadata.set(VAR_VERSION, !chosen.version.isEmpty()? chosen.version : "0.0");
+
+            // Compose a versioned ID.
+            if (!chosen.version.isEmpty())
+            {
+                versionedPackageId += "_" + chosen.version;
+            }
+
+            LOG_RES_VERBOSE("Generated package:\n%s") << metadata.asText();
+
+            App::fileSystem().index(*pkgLink);
+
+            // Make this a required package in the container bundle.
+            if (container &&
+                container->isLinkedAsPackage() &&
+                container->format() == Collection)
+            {
+                //File &containerFile = *container->d->pkgLink;
+
+                String subset = VAR_RECOMMENDS;
+                String parentFolder = self().asFile().path().fileNamePath().fileName();
+                if (!parentFolder.compareWithoutCase(QStringLiteral("Extra")))
+                {
+                    subset = VAR_EXTRAS;
+                }
+                else if (!parentFolder.compareWithoutCase(QStringLiteral("Required")))
+                {
+                    subset = VAR_REQUIRES;
+                }
+                container->packageMetadata().insertToSortedArray(subset, new TextValue(versionedPackageId));
+
+                /*
+                qDebug() << container->d->versionedPackageId
+                         << "[" << container->d->pkgLink->objectNamespace().gets("package.tags", "") << "]"
+                         << "requires"
+                         << versionedPackageId
+                         << "[" << metadata.gets("tags", "") << "]"
+                         << "from" << dataFilePath;
+                         */
+
+                //Package::addRequiredPackage(containerFile, versionedPackageId);
+            }
+            return true;
+        }
+        else
+        {
+            ignored = true;
+            return false;
+        }
+    }
+
+    /**
+     * Fetches cached data bundle metadata from the metadata bank, or rebuilds the
+     * metadata if the cached data is missing or invalid. Updated metadata is saved
+     * in the metadata bank.
+     *
+     * @return Bundle metadata.
+     */
+    Record cachedMetadata()
+    {
+        Record meta;
+        Block metaId = self().asFile().metaId();
+
+        // Include container in the meta ID.
+        if (auto *container = self().containerBundle())
+        {
+            metaId = Block(metaId + container->asFile().metaId()).md5Hash();
+        }
+
+        try
+        {
+            // Maybe we already have this?
+            //qDebug() << "checking" << self().asFile().description() << metaId.asHexadecimalText();
+            if (Block cached = MetadataBank::get().check(CACHE_CATEGORY, metaId))
+            {
+                // Well, our work here has already been done.
+                cached = cached.decompressed();
+                Reader(cached).withHeader() >> meta;
+                return meta;
+            }
+        }
+        catch (Error const &er)
+        {
+            LOGDEV_RES_WARNING("Corrupt cached metadata: %s") << er.asText();
+        }
+
+        meta = buildMetadata();
+
+        // Now we can put it in the cache.
+        {
+            Block buf;
+            Writer(buf).withHeader() << meta;
+            MetadataBank::get().setMetadata(CACHE_CATEGORY, metaId, buf.compressed());
+        }
+
+        return meta;
+    }
+
+    Record buildMetadata()
+    {
+        String const dataFilePath = self().asFile().path();
+        auto const *container = self().containerBundle();
+
+        // Search for known data files in the bundle registry.
+        res::Bundles::MatchResult matched = DoomsdayApp::bundles().match(self());
+
+        // Metadata for the package will be collected into this record.
+        Record meta;
+        meta.set(VAR_PATH,         dataFilePath);
+        meta.set(VAR_BUNDLE_SCORE, matched.bestScore);
+
+        if (format != Collection)
+        {
+            // Classic data files are loaded via the "dataFiles" array (in the listed order).
+            // However, collections are represented directly as Doomsday packages.
+            meta.addArray(VAR_DATA_FILES, new ArrayValue({ new TextValue(dataFilePath) }));
+        }
+        else
+        {
+            meta.addArray(VAR_DATA_FILES);
+
+            // Collections have a number of subsets.
+            meta.addArray(VAR_REQUIRES);
+            meta.addArray(VAR_RECOMMENDS);
+            meta.addArray(VAR_EXTRAS);
+        }
+
         // At least two criteria must match -- otherwise simply having the correct
         // type would be accepted.
         if (matched)
@@ -276,7 +397,7 @@ DENG2_PIMPL(DataBundle), public Lockable
         }
         else
         {
-            meta.set(Package::VAR_TITLE, dataFile.name());
+            meta.set(Package::VAR_TITLE, self().asFile().name());
             meta.set(VAR_VERSION, "0.0");
             meta.set(VAR_AUTHOR,  "Unknown");
             meta.set(VAR_LICENSE, "Unknown");
@@ -299,7 +420,7 @@ DENG2_PIMPL(DataBundle), public Lockable
             for (DataBundle const *i = container; i; i = i->containerBundle())
             {
                 packageId = cleanIdentifier(stripVersion(i->sourceFile().name().fileNameWithoutExtension()))
-                            .concatenateMember(packageId);
+                        .concatenateMember(packageId);
             }
 
             // The file name may contain a version number.
@@ -375,73 +496,10 @@ DENG2_PIMPL(DataBundle), public Lockable
                 << packageId
                 << meta.gets(VAR_VERSION)
                 << ::internal::formatDescriptions[format]
-                << matched.bestScore;
+                   << meta.geti(VAR_BUNDLE_SCORE); // matched.bestScore;
 
-        versionedPackageId = packageId;
 
-        // Finally, make a link that represents the package.
-        if (auto chosen = chooseUniqueLinkPathAndVersion(dataFile, packageId,
-                                                         meta.gets(VAR_VERSION),
-                                                         matched.bestScore))
-        {
-            LOGDEV_RES_VERBOSE("Linking %s as %s") << dataFile.path() << chosen.path;
-
-            //qDebug() << "linking" << dataFile.path() << chosen.path;
-
-            pkgLink.reset(&bundleFolder().add(LinkFile::newLinkToFile(dataFile, chosen.path)));
-
-            // Set up package metadata in the link.
-            Record &metadata = Package::initializeMetadata(*pkgLink, packageId);
-            metadata.copyMembersFrom(meta);
-            metadata.set(VAR_VERSION, !chosen.version.isEmpty()? chosen.version : "0.0");
-
-            // Compose a versioned ID.
-            if (!chosen.version.isEmpty())
-            {
-                versionedPackageId += "_" + chosen.version;
-            }
-
-            LOG_RES_VERBOSE("Generated package:\n%s") << metadata.asText();
-
-            App::fileSystem().index(*pkgLink);
-
-            // Make this a required package in the container bundle.
-            if (container &&
-                container->isLinkedAsPackage() &&
-                container->format() == Collection)
-            {
-                //File &containerFile = *container->d->pkgLink;
-
-                String subset = VAR_RECOMMENDS;
-                String parentFolder = dataFilePath.fileNamePath().fileName();
-                if (!parentFolder.compareWithoutCase(QStringLiteral("Extra")))
-                {
-                    subset = VAR_EXTRAS;
-                }
-                else if (!parentFolder.compareWithoutCase(QStringLiteral("Required")))
-                {
-                    subset = VAR_REQUIRES;
-                }
-                container->packageMetadata().insertToSortedArray(subset, new TextValue(versionedPackageId));
-
-                /*
-                qDebug() << container->d->versionedPackageId
-                         << "[" << container->d->pkgLink->objectNamespace().gets("package.tags", "") << "]"
-                         << "requires"
-                         << versionedPackageId
-                         << "[" << metadata.gets("tags", "") << "]"
-                         << "from" << dataFilePath;
-                         */
-
-                //Package::addRequiredPackage(containerFile, versionedPackageId);
-            }
-            return true;
-        }
-        else
-        {
-            ignored = true;
-            return false;
-        }
+        return meta;
     }
 
     /**

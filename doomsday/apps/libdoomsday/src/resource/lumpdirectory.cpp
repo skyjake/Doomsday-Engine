@@ -18,6 +18,7 @@
 
 #include "doomsday/resource/lumpdirectory.h"
 
+#include <de/MetadataBank>
 #include <de/Reader>
 #include <de/mathutil.h>
 #include <QList>
@@ -29,10 +30,12 @@ namespace res {
 
 dsize const LumpDirectory::InvalidPos = dsize(-1);
 
+static String const CACHE_CATEGORY = "LumpDirectory";
+
 static QRegularExpression const regExMy ("^E[1-9]M[1-9]$");
 static QRegularExpression const regMAPxx("^MAP[0-9][0-9]$");
 
-DENG2_PIMPL_NOREF(LumpDirectory)
+DENG2_PIMPL_NOREF(LumpDirectory), public ISerializable
 {
     Type type = Invalid;
     MapType mapType = None;
@@ -42,6 +45,12 @@ DENG2_PIMPL_NOREF(LumpDirectory)
 
     void read(IByteArray const &source)
     {
+        // First check the metadata cache if we already have this directory.
+        if (File const *file = dynamic_cast<File const *>(&source))
+        {
+            if (readFromCache(file->metaId())) return;
+        }
+
         Reader reader(source);
 
         // Verify the magic.
@@ -92,6 +101,57 @@ DENG2_PIMPL_NOREF(LumpDirectory)
                 }
             }
         }
+
+        if (File const *file = dynamic_cast<File const *>(&source))
+        {
+            updateCache(file->metaId());
+        }
+    }
+
+    bool readFromCache(Block const &id)
+    {
+        try
+        {
+            if (Block const data = MetadataBank::get().check(CACHE_CATEGORY, id))
+            {
+                // We're in luck.
+                Reader reader(data);
+                reader.withHeader() >> *this;
+
+                // Update the name lookup.
+                for (int i = 0; i < entries.size(); ++i)
+                {
+                    index.insert(entries.at(i).name, i);
+                }
+                return true;
+            }
+        }
+        catch (Error const &er)
+        {
+            LOGDEV_RES_WARNING("Corrupt cached metadata: %s") << er.asText();
+        }
+        return false;
+    }
+
+    void updateCache(Block const &id)
+    {
+        Block data;
+        Writer writer(data);
+        writer.withHeader() << *this;
+        MetadataBank::get().setMetadata(CACHE_CATEGORY, id, data);
+    }
+
+    void operator >> (Writer &to) const override
+    {
+        to << duint8(type) << duint8(mapType) << crc;
+        to.writeElements(entries);
+    }
+
+    void operator << (Reader &from) override
+    {
+        entries.clear();
+        from.readAs<duint8>(type).readAs<duint8>(mapType) >> crc;
+        from.readElements(entries);
     }
 };
 
@@ -227,6 +287,18 @@ StringList LumpDirectory::mapsInContiguousRangesAsText() const
     }
 
     return mapRanges;
+}
+
+//---------------------------------------------------------------------------------------
+
+void LumpDirectory::Entry::operator >> (Writer &to) const
+{
+    to << name << offset << size;
+}
+
+void LumpDirectory::Entry::operator << (Reader &from)
+{
+    from >> name >> offset >> size;
 }
 
 } // namespace res

@@ -236,7 +236,7 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
         if (auto const *fileName = def->find(QStringLiteral("fileName")))
         {
             if (fileName->isKey() &&
-               fileName->as<Info::KeyElement>().value()
+                fileName->as<Info::KeyElement>().value()
                     .text.compareWithoutCase(source.name()) == 0)
             {
                 ++score;

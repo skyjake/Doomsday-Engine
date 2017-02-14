@@ -36,11 +36,15 @@ public:
     enum Type { Invalid, Iwad, Pwad };
     enum MapType { None, ExMy, MAPxx };
 
-    struct Entry
+    struct LIBDOOMSDAY_PUBLIC Entry : public de::ISerializable
     {
         de::Block name;     ///< Name of the lump.
         de::duint32 offset; ///< Position in the file, in bytes.
         de::duint32 size;   ///< Size of the lump.
+
+        // Implements ISerializable.
+        void operator >> (de::Writer &to) const override;
+        void operator << (de::Reader &from) override;
     };
 
     typedef de::dsize Pos;
