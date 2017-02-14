@@ -249,7 +249,7 @@ public:
      */
     void setMemoryCacheSize(dint64 maxBytes);
 
-    String hotStorageCacheLocation() const;
+    Path hotStorageCacheLocation() const;
     dint64 hotStorageSize() const;
     dint64 memoryCacheSize() const;
 

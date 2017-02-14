@@ -125,16 +125,15 @@ DENG2_PIMPL(Bank)
         Bank *bank;                     ///< Bank that owns the data.
         std::unique_ptr<IData> data;    ///< Non-NULL for in-memory items.
         std::unique_ptr<ISource> source;///< Always required.
-        IByteArray *serial;             ///< Serialized representation (if one is present; not owned).
+        SafePtr<File> serial;           ///< Serialized representation (if one is present; not owned).
         Cache *cache;                   ///< Current cache for the data (never NULL).
         Time accessedAt;
 
         Data(PathTree::NodeArgs const &args)
-            : Node(args),
-              bank(0),
-              serial(0),
-              cache(0),
-              accessedAt(Time::invalidTime())
+            : Node(args)
+            , bank(0)
+            , cache(0)
+            , accessedAt(Time::invalidTime())
         {}
 
         void clearData()
@@ -210,7 +209,7 @@ DENG2_PIMPL(Bank)
 
         void loadFromSerialized()
         {
-            DENG2_ASSERT(serial != 0);
+            DENG2_ASSERT(serial);
 
             try
             {
@@ -222,9 +221,9 @@ DENG2_PIMPL(Bank)
 
                 if (isValidSerialTime(timestamp))
                 {
-                    QScopedPointer<IData> blank(bank->newData());
+                    std::unique_ptr<IData> blank(bank->newData());
                     reader >> *blank->asSerializable(IData::Deserializing);
-                    setData(blank.take());
+                    setData(blank.release());
                     LOG_RES_XVERBOSE("Deserialized \"%s\" in %.2f seconds",
                                      path(bank->d->sepChar) << startedAt.since());
                     return; // Done!
@@ -241,7 +240,7 @@ DENG2_PIMPL(Bank)
             loadFromSource();
         }
 
-        void serialize(Folder &folder)
+        void serialize(Path const &folderPath)
         {
             DENG2_GUARD(this);
 
@@ -264,14 +263,12 @@ DENG2_PIMPL(Bank)
             try
             {
                 // Make sure the correct folder exists.
-                Folder &containingFolder = folder.fileSystem()
-                        .makeFolder(folder.path() / path().toString().fileNamePath());
+                Folder &containingFolder = FileSystem::get()
+                        .makeFolder(folderPath / path().toString().fileNamePath());
 
                 // Source timestamp is included in the serialization
                 // to check later whether the data is still fresh.
-                serial = dynamic_cast<IByteArray *>(
-                            &containingFolder.newFile(name(), Folder::ReplaceExisting));
-                DENG2_ASSERT(serial != 0);
+                serial.reset(&containingFolder.newFile(name(), Folder::ReplaceExisting));
 
                 Writer(*serial).withHeader()
                         << source->modifiedAt()
@@ -279,7 +276,7 @@ DENG2_PIMPL(Bank)
             }
             catch (...)
             {
-                serial = 0;
+                serial.reset();
                 throw;
             }
         }
@@ -288,7 +285,7 @@ DENG2_PIMPL(Bank)
         {
             DENG2_GUARD(this);
 
-            serial = 0;
+            serial.reset();
         }
 
         void changeCache(Cache &toCache)
@@ -331,14 +328,14 @@ DENG2_PIMPL(Bank)
     class SerializedCache : public DataCache
     {
     public:
-        SerializedCache() : DataCache(Serialized), _folder(0) {}
+        SerializedCache() : DataCache(Serialized) {}
 
         void add(Data &item)
         {
             DENG2_GUARD(this);
 
-            DENG2_ASSERT(_folder != 0);
-            item.serialize(*_folder);
+            DENG2_ASSERT(!_path.isEmpty());
+            item.serialize(_path);
             addBytes(item.serial->size());
             DataCache::add(item);
         }
@@ -358,23 +355,21 @@ DENG2_PIMPL(Bank)
             DENG2_GUARD(this);
 
             // Serialized "hot" data is kept here.
-            _folder = &App::fileSystem().makeFolder(location);
+            _path = location;
         }
 
-        Folder const &folder() const
+        Path const &path() const
         {
-            DENG2_ASSERT(_folder != 0);
-            return *_folder;
+            return _path;
         }
 
-        Folder &folder()
+        Folder *folder() const
         {
-            DENG2_ASSERT(_folder != 0);
-            return *_folder;
+            return FS::tryLocate<Folder>(_path);
         }
 
     private:
-        Folder *_folder;
+        Path _path;
     };
 
     /**
@@ -530,7 +525,7 @@ DENG2_PIMPL(Bank)
     Flags flags;
     SourceCache sourceCache;
     ObjectCache memoryCache;
-    SerializedCache *serialCache;
+    std::unique_ptr<SerializedCache> serialCache;
     DataTree items;
     TaskPool jobs;
     NotifyQueue notifications;
@@ -540,11 +535,10 @@ DENG2_PIMPL(Bank)
         : Base(i)
         , nameForLog(name)
         , flags(flg)
-        , serialCache(0)
     {
         if (!flags.testFlag(DisableHotStorage))
         {
-            serialCache = new SerializedCache;
+            serialCache.reset(new SerializedCache);
         }
     }
 
@@ -560,20 +554,21 @@ DENG2_PIMPL(Bank)
         // Should we delete the actual files where the data has been kept?
         if (serialCache && flags.testFlag(ClearHotStorageWhenBankDestroyed))
         {
-            Folder &folder = serialCache->folder();
-            PathTree::FoundPaths paths;
-            items.findAllPaths(paths, PathTree::NoBranch);
-            DENG2_FOR_EACH(PathTree::FoundPaths, i, paths)
+            if (Folder *folder = serialCache->folder())
             {
-                if (folder.has(*i))
+                PathTree::FoundPaths paths;
+                items.findAllPaths(paths, PathTree::NoBranch);
+                DENG2_FOR_EACH(PathTree::FoundPaths, i, paths)
                 {
-                    folder.removeFile(*i);
+                    if (folder->has(*i))
+                    {
+                        folder->removeFile(*i);
+                    }
                 }
             }
         }
 
-        delete serialCache;
-        serialCache = 0;
+        serialCache.reset();
     }
 
     inline bool isThreaded() const
@@ -618,7 +613,7 @@ DENG2_PIMPL(Bank)
         }
         else
         {
-            if (!serialCache) serialCache = new SerializedCache;
+            if (!serialCache) serialCache.reset(new SerializedCache);
             serialCache->setLocation(location);
         }
     }
@@ -633,7 +628,7 @@ DENG2_PIMPL(Bank)
         if (serialCache)
         {
             // Check if this item is already available in hot storage.
-            IByteArray *array = serialCache->folder().tryLocate<IByteArray>(item.path());
+            File *array = FS::tryLocate<File>(serialCache->path() / item.path());
             if (array)
             {
                 Time hotTime;
@@ -641,10 +636,10 @@ DENG2_PIMPL(Bank)
 
                 if (item.isValidSerialTime(hotTime))
                 {
-                    LOGDEV_RES_MSG("Found valid serialized copy of \"%s\"") << item.path(sepChar);
+                    LOGDEV_RES_VERBOSE("Found valid serialized copy of \"%s\"") << item.path(sepChar);
 
-                    item.serial = array;
-                    best = serialCache;
+                    item.serial.reset(array);
+                    best = serialCache.get();
                 }
             }
         }
@@ -705,9 +700,9 @@ DENG2_PIMPL(Bank)
                 DENG2_ASSERT(nt.cache != 0);
 
                 i->bankCacheLevelChanged(nt.path,
-                      nt.cache == &memoryCache? InMemory :
-                      nt.cache == serialCache?  InHotStorage :
-                                                InColdStorage);
+                      nt.cache == &memoryCache?      InMemory :
+                      nt.cache == serialCache.get()? InHotStorage :
+                                                     InColdStorage);
             }
             break;
         }
@@ -764,13 +759,13 @@ void Bank::setMemoryCacheSize(dint64 maxBytes)
     d->memoryCache.setMaxBytes(maxBytes);
 }
 
-String Bank::hotStorageCacheLocation() const
+Path Bank::hotStorageCacheLocation() const
 {
     if (d->serialCache)
     {
-        return d->serialCache->folder().path();
+        return d->serialCache->path();
     }
-    return "";
+    return Path();
 }
 
 dint64 Bank::hotStorageSize() const
