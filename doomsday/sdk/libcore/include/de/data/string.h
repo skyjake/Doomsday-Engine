@@ -106,6 +106,8 @@ public:
         return *this;
     }
 
+    inline explicit operator bool() const { return size() > 0; }
+
     /// Conversion to a character pointer.
     operator QChar const *() const {
         return data();

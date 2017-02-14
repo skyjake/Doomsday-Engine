@@ -81,6 +81,33 @@ public:
      */
     Block(IByteArray const &array, Offset at, Size count);
 
+    Byte *data();
+    Byte const *dataConst() const;
+
+    Block &append(Byte b);
+    Block &append(char const *str, int len);
+
+    inline explicit operator bool() const { return !isEmpty(); }
+
+    Block &operator += (char const *nullTerminatedCStr);
+    Block &operator += (QByteArray const &bytes);
+
+    /// Appends a block after this one.
+    Block &operator += (Block const &other);
+
+    /// Appends a byte array after this one.
+    Block &operator += (IByteArray const &byteArray);
+
+    /// Copies the contents of another block.
+    Block &operator = (Block const &other);
+
+    Block &operator = (IByteArray const &byteArray);
+
+    Block compressed() const;
+    Block decompressed() const;
+    Block md5Hash() const;
+    String asHexadecimalText() const;
+
     // Implements IByteArray.
     Size size() const;
     void get(Offset at, Byte *values, Size count) const;
@@ -105,31 +132,6 @@ public:
     void operator >> (Writer &to) const;
 
     void operator << (Reader &from);
-
-    Byte *data();
-    Byte const *dataConst() const;
-
-    Block &append(Byte b);
-    Block &append(char const *str, int len);
-
-    Block &operator += (char const *nullTerminatedCStr);
-    Block &operator += (QByteArray const &bytes);
-
-    /// Appends a block after this one.
-    Block &operator += (Block const &other);
-
-    /// Appends a byte array after this one.
-    Block &operator += (IByteArray const &byteArray);
-
-    /// Copies the contents of another block.
-    Block &operator = (Block const &other);
-
-    Block &operator = (IByteArray const &byteArray);
-
-    Block compressed() const;
-    Block decompressed() const;
-    Block md5Hash() const;
-    String asHexadecimalText() const;
 
 public:
     static Block join(QList<Block> const &blocks, Block const &sep = Block());
