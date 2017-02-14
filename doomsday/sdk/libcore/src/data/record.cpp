@@ -415,6 +415,7 @@ Record::Record(Record &&moved)
     , d(std::move(moved.d))
 {
     DENG2_ASSERT(moved.d.isNull());
+
     d->thisPublic = this;
 }
 
@@ -426,7 +427,6 @@ Record::~Record()
         // to the record prior to deletion.
         DENG2_FOR_AUDIENCE2(Deletion, i) i->recordBeingDeleted(*this);
 
-        DENG2_GUARD(d);
         clear();
     }
 }
@@ -467,6 +467,7 @@ Record &Record::operator = (Record const &other)
 Record &Record::operator = (Record &&moved)
 {
     d = std::move(moved.d);
+    d->thisPublic = this;
     return *this;
 }
 
