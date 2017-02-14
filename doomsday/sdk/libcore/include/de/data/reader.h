@@ -216,6 +216,18 @@ public:
         return *this;
     }
 
+    template <typename ListType>
+    Reader &readElements(ListType &list) {
+        duint32 count;
+        *this >> count;
+        while (count-- > 0) {
+            typename ListType::value_type elem;
+            *this >> elem;
+            list.push_back(elem);
+        }
+        return *this;
+    }
+
     /**
      * Reads something from the source and converts it to another type before
      * assigning to the destination. Use this for instance when reading an

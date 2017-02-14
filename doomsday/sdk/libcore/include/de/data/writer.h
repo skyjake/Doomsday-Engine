@@ -211,8 +211,8 @@ public:
     Writer &operator << (InlineOperation op);
 
     /**
-     * Writes a list of objects. ListType is expected to be an iterable
-     * list containing pointers to IWritable objects.
+     * Writes a list of objects. ListType is expected to be an iterable list containing
+     * pointers to IWritable objects.
      *
      * @param list  List of objects.
      */
@@ -220,6 +220,13 @@ public:
     Writer &writeObjects(ListType const &list) {
         *this << duint32(list.size());
         DENG2_FOR_EACH_CONST(typename ListType, i, list) *this << **i;
+        return *this;
+    }
+
+    template <typename ListType>
+    Writer &writeElements(ListType const &list) {
+        *this << duint32(list.size());
+        for (auto const &elem : list) *this << elem;
         return *this;
     }
 
