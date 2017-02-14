@@ -46,8 +46,6 @@ namespace de {
  */
 class DENG2_PUBLIC Path : public ISerializable, public LogEntry::Arg::Base
 {
-    struct Impl; // needs to be friended by Path::Segment
-
 public:
     /// Segment index was out of bounds. @ingroup errors
     DENG2_ERROR(OutOfBoundsError);
@@ -135,9 +133,6 @@ public:
          */
         bool operator < (Segment const &other) const;
 
-        friend class Path;
-        friend struct Path::Impl;
-
         enum Flag { GotHashKey = 0x1, WildCardChecked = 0x2, IncludesWildCard = 0x4 };
         Q_DECLARE_FLAGS(Flags, Flag)
 
@@ -145,6 +140,8 @@ public:
         mutable Flags flags;
         mutable hash_type hashKey;
         QStringRef range;
+
+        friend class Path;
     };
 
 public:
@@ -189,12 +186,11 @@ public:
      */
     Path(Path const &other);
 
-    virtual ~Path();
+    Path(Path &&moved);
 
-    inline Path &operator = (Path other) {
-        std::swap(d, other.d);
-        return *this;
-    }
+    Path &operator = (Path const &other);
+
+    Path &operator = (Path &&moved);
 
     Path &operator = (char const *pathUtf8);
 
@@ -215,14 +211,6 @@ public:
      * @copydoc operator+
      */
     Path operator + (char const *str) const;
-
-    /**
-     * Swaps this Path with @a other.
-     * @param other  Path.
-     */
-    inline void swap(Path &other) {
-        std::swap(d, other.d);
-    }
 
     /**
      * Determines if this path is equal to @a other. The test is case
@@ -468,7 +456,7 @@ public:
     static Path normalize(String const &text, QChar replaceWith = '/');
 
 private:
-    Impl *d;
+    DENG2_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Path::Segment::Flags)
@@ -538,12 +526,12 @@ private:
 
 } // namespace de
 
-namespace std {
+/*namespace std {
     // std::swap specialization for de::Path
     template <>
     inline void swap<de::Path>(de::Path &a, de::Path &b) {
         a.swap(b);
     }
-}
+}*/
 
 #endif // LIBDENG2_PATH_H

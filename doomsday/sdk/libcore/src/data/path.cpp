@@ -33,6 +33,8 @@ static int const SEGMENT_BUFFER_SIZE = 8;
 
 static String emptyPath;
 
+//---------------------------------------------------------------------------------------
+
 Path::hash_type const Path::hash_range = 0xffffffff;
 
 Path::hash_type Path::Segment::hash() const
@@ -92,11 +94,8 @@ String Path::Segment::toString() const
 
 //---------------------------------------------------------------------------------------
 
-struct Path::Impl
+DENG2_PIMPL_NOREF(Path)
 {
-    DENG2_NO_ASSIGN(Impl)
-    DENG2_NO_COPY  (Impl)
-
     String path;
 
     /// The character in Impl::path that acts as the segment separator.
@@ -248,35 +247,43 @@ Path::Path() : d(new Impl)
 {}
 
 Path::Path(String const &path, QChar sep)
-    : LogEntry::Arg::Base(), d(new Impl(path, sep))
+    : d(new Impl(path, sep))
 {}
 
 Path::Path(QString const &str)
-    : LogEntry::Arg::Base(), d(new Impl(str, '/'))
+    : d(new Impl(str, '/'))
 {}
 
 Path::Path(char const *nullTerminatedCStr, char sep)
-    : LogEntry::Arg::Base(), d(new Impl(QString::fromUtf8(nullTerminatedCStr), sep))
+    : d(new Impl(QString::fromUtf8(nullTerminatedCStr), sep))
 {}
 
 Path::Path(char const *nullTerminatedCStr)
-    : LogEntry::Arg::Base(), d(new Impl(QString::fromUtf8(nullTerminatedCStr), '/'))
-{
-}
-
-Path::Path(Path const &other)
-    : ISerializable(), LogEntry::Arg::Base(),
-      d(new Impl(other.d->path, other.d->separator))
+    : d(new Impl(QString::fromUtf8(nullTerminatedCStr), '/'))
 {}
 
-Path::~Path()
-{
-    delete d;
-}
+Path::Path(Path const &other)
+    : d(new Impl(other.d->path, other.d->separator))
+{}
+
+Path::Path(Path &&moved)
+    : d(std::move(moved.d))
+{}
 
 Path &Path::operator = (char const *pathUtf8)
 {
-    *this = Path(pathUtf8);
+    return *this = Path(pathUtf8);
+}
+
+Path &Path::operator = (Path const &other)
+{
+    d.reset(new Impl(other.d->path, other.d->separator));
+    return *this;
+}
+
+Path &Path::operator = (Path &&moved)
+{
+    d = std::move(moved.d);
     return *this;
 }
 
