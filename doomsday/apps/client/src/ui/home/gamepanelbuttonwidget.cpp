@@ -228,7 +228,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
                     // Delete the savegame file; the UI will be automatically updated.
                     String const path = savedItems.at(saves->selectedPos()).savePath();
                     self().unselectSave();
-                    App::rootFolder().removeFile(path);
+                    App::rootFolder().destroyFile(path);
                     App::fileSystem().refresh();
                 }))
                 << new ui::ActionItem(tr("Cancel"), new Action /* nop */);

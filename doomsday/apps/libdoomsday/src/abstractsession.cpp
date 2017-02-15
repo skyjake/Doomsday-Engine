@@ -83,7 +83,7 @@ void AbstractSession::removeSaved(String const &path) // static
 {
     if (App::rootFolder().has(path))
     {
-        App::rootFolder().removeFile(path);
+        App::rootFolder().destroyFile(path);
     }
 }
 

@@ -930,7 +930,7 @@ DENG2_PIMPL(DataBundle), public Lockable
                     if (linkFile->isBroken())
                     {
                         // This can be replaced.
-                        bundleFolder().removeFile(linkPath);
+                        bundleFolder().destroyFile(linkPath);
                         return PathAndVersion(linkPath, version);
                     }
                 }
@@ -939,7 +939,7 @@ DENG2_PIMPL(DataBundle), public Lockable
                 if (bundleScore > file.objectNamespace().geti("package.bundleScore"))
                 {
                     // Forget about the previous link.
-                    bundleFolder().removeFile(linkPath);
+                    bundleFolder().destroyFile(linkPath);
                     return PathAndVersion(linkPath, version);
                 }
             }

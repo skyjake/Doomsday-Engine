@@ -1211,7 +1211,7 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
             // Clear all saved map states in the current hub.
             for (auto name : mapsFolder.contents().keys())
             {
-                mapsFolder.removeFile(name);
+                mapsFolder.destroyFile(name);
             }
         }
 #if __JHEXEN__
