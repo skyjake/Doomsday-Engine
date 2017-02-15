@@ -497,10 +497,16 @@ DENG2_PIMPL(ZipArchive)
 
         try
         {
+            qDebug() << "checking for ZIP" << directoryCacheId.asHexadecimalText();
             if (Block const meta = bank.check(ZIPARCHIVE_META_CATEGORY, directoryCacheId))
             {
+                qDebug() << "found" << directoryCacheId.asHexadecimalText();
                 Reader reader(meta);
-                if (!seekToCentralEnd(reader)) return false;
+                if (!seekToCentralEnd(reader))
+                {
+                    qDebug() << "no central dir found" << directoryCacheId.asHexadecimalText();
+                    return false;
+                }
                 readCentralDirectory(reader, false, 0);
                 return true;
             }
@@ -509,6 +515,7 @@ DENG2_PIMPL(ZipArchive)
         {
             LOGDEV_RES_WARNING("Corrupt cached metadata: %s") << er.asText();
         }
+        qDebug() << "ZIP errored" << directoryCacheId.asHexadecimalText();
         return false;
     }
 };

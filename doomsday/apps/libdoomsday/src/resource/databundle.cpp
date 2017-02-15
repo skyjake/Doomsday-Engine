@@ -321,7 +321,6 @@ DENG2_PIMPL(DataBundle), public Lockable
         try
         {
             // Maybe we already have this?
-            //qDebug() << "checking" << self().asFile().description() << metaId.asHexadecimalText();
             if (Block cached = MetadataBank::get().check(CACHE_CATEGORY, metaId))
             {
                 // Well, our work here has already been done.
