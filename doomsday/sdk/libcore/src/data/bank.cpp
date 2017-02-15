@@ -222,7 +222,7 @@ DENG2_PIMPL(Bank)
                 if (isValidSerialTime(timestamp))
                 {
                     std::unique_ptr<IData> blank(bank->newData());
-                    reader >> *blank->asSerializable(IData::Deserializing);
+                    reader >> *blank->asSerializable();
                     setData(blank.release());
                     LOG_RES_XVERBOSE("Deserialized \"%s\" in %.2f seconds",
                                      path(bank->d->sepChar) << startedAt.since());
@@ -258,7 +258,7 @@ DENG2_PIMPL(Bank)
                 loadFromSource();
             }
 
-            DENG2_ASSERT(data->asSerializable(IData::Serializing) != 0);
+            DENG2_ASSERT(data->asSerializable() != 0);
 
             try
             {
@@ -266,13 +266,25 @@ DENG2_PIMPL(Bank)
                 Folder &containingFolder = FileSystem::get()
                         .makeFolder(folderPath / path().toString().fileNamePath());
 
+                if (!data->shouldBeSerialized())
+                {
+                    // Not necessary; the serialized version already exists?
+                    if (File *existing = containingFolder.tryLocate<File>(name()))
+                    {
+                        serial.reset(existing);
+                        return;
+                    }
+                }
+
                 // Source timestamp is included in the serialization
                 // to check later whether the data is still fresh.
                 serial.reset(&containingFolder.newFile(name(), Folder::ReplaceExisting));
 
+                qDebug() << "Writing to cache:" << serial->description();
+
                 Writer(*serial).withHeader()
                         << source->modifiedAt()
-                        << *data->asSerializable(IData::Serializing);
+                        << *data->asSerializable();
             }
             catch (...)
             {

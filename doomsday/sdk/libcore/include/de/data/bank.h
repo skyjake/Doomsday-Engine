@@ -170,11 +170,12 @@ public:
     public:
         virtual ~IData() {}
 
-        enum SerialMode { Serializing, Deserializing };
+        /// Serialization should be done?
+        virtual bool shouldBeSerialized() const { return true; }
 
         /// Returns an ISerializable pointer to the object. Required
         /// for putting the data in hot storage.
-        virtual ISerializable *asSerializable(SerialMode) { return 0; }
+        virtual ISerializable *asSerializable() { return 0; }
 
         /// Returns the size of the data that it occupies in memory.
         virtual duint sizeInMemory() const { return 0; }

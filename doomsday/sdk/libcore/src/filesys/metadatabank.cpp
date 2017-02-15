@@ -33,12 +33,12 @@ DENG2_PIMPL(MetadataBank), public Lockable
     struct Data : public IData
     {
         Block metadata;
+        bool isChanged = false;
 
-        ISerializable *asSerializable(SerialMode mode) override {
-            if (mode == Serializing && metadata.isEmpty()) {
-                // Never serialize empty metadata, since it hasn't been set.
-                return nullptr;
-            }
+        bool shouldBeSerialized() const override {
+            return isChanged;
+        }
+        ISerializable *asSerializable() override {
             return &metadata;
         }
         virtual duint sizeInMemory() const override {
@@ -52,7 +52,7 @@ DENG2_PIMPL(MetadataBank), public Lockable
     {
         DENG2_ASSERT(!id.isEmpty());
         String const hex = id.asHexadecimalText();
-        return String("%1.%2.%3").arg(category).arg(hex.at(0)).arg(hex);
+        return String("%1.%2.%3").arg(category).arg(hex.last()).arg(hex);
     }
 };
 
@@ -87,7 +87,12 @@ void MetadataBank::setMetadata(String const &category, Block const &id, Block co
     {
         Bank::add(path, new Impl::Source(id));
     }
-    data(path).as<Impl::Data>().metadata = metadata;
+    auto &entry = data(path).as<Impl::Data>();
+    entry.metadata = metadata;
+    entry.isChanged = true;
+
+    qDebug() << "Set metadata for" << category << id.asHexadecimalText();
+    DENG2_PRINT_BACKTRACE();
 }
 
 Block MetadataBank::metadata(String const &category, Block const &id) const

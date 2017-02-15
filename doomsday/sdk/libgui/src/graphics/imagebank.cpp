@@ -52,7 +52,7 @@ DENG2_PIMPL_NOREF(ImageBank)
         ImageData() {}
         ImageData(Image const &img) : image(img) {}
 
-        ISerializable *asSerializable(SerialMode)
+        ISerializable *asSerializable()
         {
             return &image;
         }
