@@ -18,6 +18,8 @@
 
 #include "de/MetadataBank"
 #include "de/App"
+#include "de/FileSystem"
+#include "de/Folder"
 
 namespace de {
 
@@ -90,9 +92,6 @@ void MetadataBank::setMetadata(String const &category, Block const &id, Block co
     auto &entry = data(path).as<Impl::Data>();
     entry.metadata = metadata;
     entry.isChanged = true;
-
-    qDebug() << "Set metadata for" << category << id.asHexadecimalText();
-    DENG2_PRINT_BACKTRACE();
 }
 
 Block MetadataBank::metadata(String const &category, Block const &id) const

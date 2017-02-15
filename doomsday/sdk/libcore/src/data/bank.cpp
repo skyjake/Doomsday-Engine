@@ -280,7 +280,7 @@ DENG2_PIMPL(Bank)
                 // to check later whether the data is still fresh.
                 serial.reset(&containingFolder.newFile(name(), Folder::ReplaceExisting));
 
-                qDebug() << "Writing to cache:" << serial->description();
+                LOG_RES_XVERBOSE("Serializing into %s", serial->description());
 
                 Writer(*serial).withHeader()
                         << source->modifiedAt()
@@ -627,6 +627,10 @@ DENG2_PIMPL(Bank)
         {
             if (!serialCache) serialCache.reset(new SerializedCache);
             serialCache->setLocation(location);
+
+            // Make sure that the cache folder is immediately populated so that the
+            // cached data available for future operations.
+            FS::get().makeFolder(location);
         }
     }
 
@@ -640,17 +644,17 @@ DENG2_PIMPL(Bank)
         if (serialCache)
         {
             // Check if this item is already available in hot storage.
-            File *array = FS::tryLocate<File>(serialCache->path() / item.path());
-            if (array)
+            File *src = FS::tryLocate<File>(serialCache->path() / item.path());
+            if (src)
             {
                 Time hotTime;
-                Reader(*array).withHeader() >> hotTime;
+                Reader(*src).withHeader() >> hotTime;
 
                 if (item.isValidSerialTime(hotTime))
                 {
                     LOGDEV_RES_VERBOSE("Found valid serialized copy of \"%s\"") << item.path(sepChar);
 
-                    item.serial.reset(array);
+                    item.serial.reset(src);
                     best = serialCache.get();
                 }
             }

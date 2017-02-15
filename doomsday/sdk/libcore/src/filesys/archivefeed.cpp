@@ -65,7 +65,7 @@ DENG2_PIMPL(ArchiveFeed)
         // directly to store the Archive.
         if (IByteArray *bytes = f.maybeAs<IByteArray>())
         {
-            qDebug() << "Loading" << f.description() << f.metaId().asHexadecimalText();
+            //qDebug() << "Loading" << f.description() << f.metaId().asHexadecimalText();
 
             LOG_RES_XVERBOSE("Source %s is a byte array", f.description());
 

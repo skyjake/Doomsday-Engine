@@ -116,6 +116,13 @@ Folder &FileSystem::makeFolder(String const &path, FolderCreationBehaviors behav
         // This folder does not exist yet. Let's create it.
         Folder &parentFolder = makeFolder(path.fileNamePath(), behavior);
 
+        // It is possible that the parent folder has already populated the folder
+        // we're looking for.
+        if (Folder *folder = parentFolder.tryLocate<Folder>(path.fileName()))
+        {
+            return *folder;
+        }
+
         // Folders may be interpreted just like any other file; however, they must
         // remain instances derived from Folder.
         subFolder = &interpret(new Folder(path.fileName()))->as<Folder>();
