@@ -277,13 +277,13 @@ bool ArchiveFeed::prune(File &file) const
     return false;
 }
 
-File *ArchiveFeed::newFile(String const &name)
+File *ArchiveFeed::createFile(String const &name)
 {
     String newEntry = d->basePath / name;
     if (archive().hasEntry(newEntry))
     {
         /// @throw AlreadyExistsError  The entry @a name already exists in the archive.
-        throw AlreadyExistsError("ArchiveFeed::newFile", name + ": already exists");
+        throw AlreadyExistsError("ArchiveFeed::createFile", name + ": already exists");
     }
     // Add an empty entry.
     archive().add(newEntry, Block());
@@ -293,7 +293,7 @@ File *ArchiveFeed::newFile(String const &name)
     return file;
 }
 
-void ArchiveFeed::removeFile(String const &name)
+void ArchiveFeed::destroyFile(String const &name)
 {
     archive().remove(d->basePath / name);
 }

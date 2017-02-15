@@ -36,9 +36,9 @@ class Feed;
  * @ingroup fs
  *
  * You should usually use the high-level API to manipulate files:
- * - newFile() to create a new file
+ * - createFile() to create a new file
  * - replaceFile() to create a file, always replacing the existing file
- * - removeFile() to delete a file
+ * - destroyFile() to delete a file
  *
  * @par Feeds
  *
@@ -122,10 +122,13 @@ public:
 
     LoopResult forContents(std::function<LoopResult (String name, File &file)> func) const;
 
+    QList<Folder *> subfolders() const;
+
     /**
      * Empties the contents of the folder: all contained file instances are
      * deleted. Attached feeds are not notified, which means the source data
-     * they translate into the folder remains untouched.
+     * they translate into the folder remains untouched. This is called
+     * automatically when the Folder instance is deleted.
      */
     void clear();
 
@@ -140,11 +143,11 @@ public:
      *
      * @return  The created file (write mode enabled).
      */
-    File &newFile(String const &name, FileCreationBehavior behavior = KeepExisting);
+    File &createFile(String const &name, FileCreationBehavior behavior = KeepExisting);
 
     /**
      * Creates a new file in the folder, replacing an existing file with the
-     * same name. Same as calling <code>newFile(name, true)</code>.
+     * same name. Same as calling <code>createFile(name, true)</code>.
      *
      * @param name  Name or path of the new file, relative to this folder.
      *
@@ -159,7 +162,20 @@ public:
      *
      * @param name  Name or path of file to remove, relative to this folder.
      */
-    void removeFile(String const &name);
+    void destroyFile(String const &name);
+
+    /**
+     * Removes all files in the folder. The files will be delted. If the files
+     * have origin feeds, the feed will be asked to remove the files as well.
+     * The folder remains locked during the entire operation.
+     */
+    void destroyAllFiles();
+
+    /**
+     * Removes all files in the folder and in all its subfolders. The subfolders
+     * themselves are retained.
+     */
+    void destroyAllFilesRecursively();
 
     /**
      * Checks whether the folder contains a file.

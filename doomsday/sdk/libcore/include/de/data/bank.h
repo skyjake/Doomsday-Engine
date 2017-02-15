@@ -255,6 +255,12 @@ public:
     dint64 memoryCacheSize() const;
 
     /**
+     * Deletes the contents of the hot storage folder. The items in the bank are
+     * otherwise unaffected.
+     */
+    void clearHotStorage();
+
+    /**
      * Removes all items and their source information from the bank. This is
      * not the same as unloading the data to a lower cache level.
      */

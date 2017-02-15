@@ -278,7 +278,7 @@ DENG2_PIMPL(Bank)
 
                 // Source timestamp is included in the serialization
                 // to check later whether the data is still fresh.
-                serial.reset(&containingFolder.newFile(name(), Folder::ReplaceExisting));
+                serial.reset(&containingFolder.createFile(name(), Folder::ReplaceExisting));
 
                 LOG_RES_XVERBOSE("Serializing into %s", serial->description());
 
@@ -559,6 +559,20 @@ DENG2_PIMPL(Bank)
         destroySerialCache();
     }
 
+    /**
+     * Deletes everything in the hot storage folder.
+     */
+    void clearHotStorage()
+    {
+        DENG2_ASSERT(serialCache);
+
+        if (Folder *folder = serialCache->folder())
+        {
+            Folder::waitForPopulation();
+            folder->destroyAllFilesRecursively();
+        }
+    }
+
     void destroySerialCache()
     {
         jobs.waitForDone();
@@ -566,18 +580,7 @@ DENG2_PIMPL(Bank)
         // Should we delete the actual files where the data has been kept?
         if (serialCache && flags.testFlag(ClearHotStorageWhenBankDestroyed))
         {
-            if (Folder *folder = serialCache->folder())
-            {
-                PathTree::FoundPaths paths;
-                items.findAllPaths(paths, PathTree::NoBranch);
-                DENG2_FOR_EACH(PathTree::FoundPaths, i, paths)
-                {
-                    if (folder->has(*i))
-                    {
-                        folder->removeFile(*i);
-                    }
-                }
-            }
+            clearHotStorage();
         }
 
         serialCache.reset();
@@ -796,6 +799,14 @@ dint64 Bank::hotStorageSize() const
 dint64 Bank::memoryCacheSize() const
 {
     return d->memoryCache.maxBytes();
+}
+
+void Bank::clearHotStorage()
+{
+    if (d->serialCache)
+    {
+        d->clearHotStorage();
+    }
 }
 
 void Bank::clear()

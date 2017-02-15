@@ -142,7 +142,7 @@ DENG2_PIMPL(App)
 
     ~Impl()
     {
-        metaBank->unloadAll(Bank::InHotStorage);
+        metaBank.reset();
 
         if (errorSink)
         {

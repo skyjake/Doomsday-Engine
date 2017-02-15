@@ -63,6 +63,11 @@ MetadataBank::MetadataBank()
     , d(new Impl(this))
 {}
 
+MetadataBank::~MetadataBank()
+{
+    unloadAll(InHotStorage);
+}
+
 MetadataBank &MetadataBank::get() // static
 {
     return App::metadataBank();
@@ -71,7 +76,6 @@ MetadataBank &MetadataBank::get() // static
 Block MetadataBank::check(String const &category, Block const &id)
 {
     DENG2_GUARD(d);
-
     DotPath const path = Impl::pathFromId(category, id);
     if (!has(path))
     {
@@ -83,7 +87,6 @@ Block MetadataBank::check(String const &category, Block const &id)
 void MetadataBank::setMetadata(String const &category, Block const &id, Block const &metadata)
 {
     DENG2_GUARD(d);
-
     DotPath const path = Impl::pathFromId(category, id);
     if (!has(path))
     {
@@ -97,8 +100,14 @@ void MetadataBank::setMetadata(String const &category, Block const &id, Block co
 Block MetadataBank::metadata(String const &category, Block const &id) const
 {
     DENG2_GUARD(d);
-
     return data(Impl::pathFromId(category, id)).as<Impl::Data>().metadata;
+}
+
+void MetadataBank::clear()
+{
+    DENG2_GUARD(d);
+    Bank::clear();
+    clearHotStorage();
 }
 
 Bank::IData *MetadataBank::loadFromSource(ISource &)

@@ -201,13 +201,13 @@ bool DirectoryFeed::prune(File &file) const
     return false;
 }
 
-File *DirectoryFeed::newFile(String const &name)
+File *DirectoryFeed::createFile(String const &name)
 {
     NativePath newPath = _nativePath / name;
     /*if (NativePath::exists(newPath))
     {
         /// @throw AlreadyExistsError  The file @a name already exists in the native directory.
-        //throw AlreadyExistsError("DirectoryFeed::newFile", name + ": already exists");
+        //throw AlreadyExistsError("DirectoryFeed::createFile", name + ": already exists");
         //qDebug() << "[DirectoryFeed] Overwriting" << newPath.toString();
     }*/
     File *file = new NativeFile(name, newPath);
@@ -215,7 +215,7 @@ File *DirectoryFeed::newFile(String const &name)
     return file;
 }
 
-void DirectoryFeed::removeFile(String const &name)
+void DirectoryFeed::destroyFile(String const &name)
 {
     NativePath path = _nativePath / name;
 
@@ -228,7 +228,7 @@ void DirectoryFeed::removeFile(String const &name)
     if (!QDir::current().remove(path))
     {
         /// @throw RemoveError  The file @a name exists but could not be removed.
-        throw RemoveError("DirectoryFeed::removeFile", "Cannot remove \"" + name +
+        throw RemoveError("DirectoryFeed::destroyFile", "Cannot remove \"" + name +
                           "\" in " + description());
     }
 }

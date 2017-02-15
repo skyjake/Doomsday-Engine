@@ -28,10 +28,15 @@ namespace de {
  *
  * @ingroup fs
  */
-class DENG2_PUBLIC MetadataBank : public Bank
+class DENG2_PUBLIC MetadataBank : protected Bank
 {
 public:
     MetadataBank();
+
+    /**
+     * Deletes the Bank instance but moves all items to hot storage first.
+     */
+    ~MetadataBank();
 
     static MetadataBank &get();
 
@@ -49,6 +54,8 @@ public:
     void setMetadata(String const &category, Block const &id, Block const &metadata);
 
     Block metadata(String const &category, Block const &id) const;
+
+    void clear();
 
 protected:
     IData *loadFromSource(ISource &source) override;

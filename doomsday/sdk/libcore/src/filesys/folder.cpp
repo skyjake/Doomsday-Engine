@@ -50,7 +50,7 @@ namespace internal
     static PopulationNotifier populationNotifier;
 }
 
-DENG2_PIMPL(Folder), public Lockable
+DENG2_PIMPL(Folder)
 {
     /// A map of file names to file instances.
     Contents contents;
@@ -66,9 +66,23 @@ DENG2_PIMPL(Folder), public Lockable
         file->setParent(thisPublic);
     }
 
+    void destroy(String path, File *file)
+    {
+        Feed *originFeed = file->originFeed();
+
+        // This'll close it and remove it from the index.
+        delete file;
+
+        // The origin feed will remove the original data of the file (e.g., the native file).
+        if (originFeed)
+        {
+            originFeed->destroyFile(path);
+        }
+    }
+
     QList<Folder *> subfolders() const
     {
-        DENG2_GUARD(this);
+        DENG2_GUARD_FOR(self(), G);
         QList<Folder *> subs;
         for (Contents::const_iterator i = contents.begin(); i != contents.end(); ++i)
         {
@@ -78,6 +92,15 @@ DENG2_PIMPL(Folder), public Lockable
             }
         }
         return subs;
+    }
+
+    static void destroyRecursive(Folder &folder)
+    {
+        foreach (Folder *sub, folder.subfolders())
+        {
+            destroyRecursive(*sub);
+        }
+        folder.destroyAllFiles();
     }
 };
 
@@ -135,7 +158,7 @@ String Folder::describe() const
 
 String Folder::describeFeeds() const
 {
-    DENG2_GUARD(d);
+    DENG2_GUARD(this);
 
     String desc;
 
@@ -169,7 +192,7 @@ String Folder::describeFeeds() const
 
 void Folder::clear()
 {
-    DENG2_GUARD(d);
+    DENG2_GUARD(this);
 
     if (d->contents.empty()) return;
 
@@ -186,7 +209,7 @@ void Folder::populate(PopulationBehaviors behavior)
 {
     LOG_AS("Folder");
     {
-        DENG2_GUARD(d);
+        DENG2_GUARD(this);
 
         // Prune the existing files first.
         QMutableMapIterator<String, File *> iter(d->contents);
@@ -246,7 +269,7 @@ void Folder::populate(PopulationBehaviors behavior)
 
         // Insert and index all new files atomically.
         {
-            DENG2_GUARD(d);
+            DENG2_GUARD(this);
             for (File *i : newFiles)
             {
                 if (!i) continue;
@@ -283,14 +306,14 @@ void Folder::populate(PopulationBehaviors behavior)
 
 Folder::Contents Folder::contents() const
 {
-    DENG2_GUARD(d);
+    DENG2_GUARD(this);
 
     return d->contents;
 }
 
 LoopResult Folder::forContents(std::function<LoopResult (String, File &)> func) const
 {
-    DENG2_GUARD(d);
+    DENG2_GUARD(this);
 
     for (Contents::const_iterator i = d->contents.constBegin(); i != d->contents.constEnd(); ++i)
     {
@@ -302,13 +325,18 @@ LoopResult Folder::forContents(std::function<LoopResult (String, File &)> func) 
     return LoopContinue;
 }
 
-File &Folder::newFile(String const &newPath, FileCreationBehavior behavior)
+QList<Folder *> Folder::subfolders() const
+{
+    return d->subfolders();
+}
+
+File &Folder::createFile(String const &newPath, FileCreationBehavior behavior)
 {
     String path = newPath.fileNamePath();
     if (!path.empty())
     {
         // Locate the folder where the file will be created in.
-        return locate<Folder>(path).newFile(newPath.fileName(), behavior);
+        return locate<Folder>(path).createFile(newPath.fileName(), behavior);
     }
 
     verifyWriteAccess();
@@ -317,7 +345,7 @@ File &Folder::newFile(String const &newPath, FileCreationBehavior behavior)
     {
         try
         {
-            removeFile(newPath);
+            destroyFile(newPath);
         }
         catch (Feed::RemoveError const &er)
         {
@@ -329,7 +357,7 @@ File &Folder::newFile(String const &newPath, FileCreationBehavior behavior)
     // The first feed able to create a file will get the honors.
     for (Feeds::iterator i = d->feeds.begin(); i != d->feeds.end(); ++i)
     {
-        File *file = (*i)->newFile(newPath);
+        File *file = (*i)->createFile(newPath);
         if (file)
         {
             // Allow writing to the new file.
@@ -342,16 +370,16 @@ File &Folder::newFile(String const &newPath, FileCreationBehavior behavior)
     }
 
     /// @throw NewFileError All feeds of this folder failed to create a file.
-    throw NewFileError("Folder::newFile", "Unable to create new file '" + newPath +
+    throw NewFileError("Folder::createFile", "Unable to create new file '" + newPath +
                        "' in " + description());
 }
 
 File &Folder::replaceFile(String const &newPath)
 {
-    return newFile(newPath, ReplaceExisting);
+    return createFile(newPath, ReplaceExisting);
 }
 
-void Folder::removeFile(String const &removePath)
+void Folder::destroyFile(String const &removePath)
 {
     DENG2_GUARD(this);
 
@@ -359,23 +387,31 @@ void Folder::removeFile(String const &removePath)
     if (!path.empty())
     {
         // Locate the folder where the file will be removed.
-        return locate<Folder>(path).removeFile(removePath.fileName());
+        return locate<Folder>(path).destroyFile(removePath.fileName());
     }
 
     verifyWriteAccess();
 
-    // It should now be in this folder.
-    File *file = &locate<File>(removePath);
-    Feed *originFeed = file->originFeed();
+    d->destroy(removePath, &locate<File>(removePath));
+}
 
-    // This'll close it and remove it from the index.
-    delete file;
+void Folder::destroyAllFiles()
+{
+    DENG2_GUARD(this);
 
-    // The origin feed will remove the original data of the file (e.g., the native file).
-    if (originFeed)
+    verifyWriteAccess();
+
+    foreach (File *file, d->contents)
     {
-        originFeed->removeFile(removePath);
+        file->setParent(nullptr);
+        d->destroy(file->name(), file);
     }
+    d->contents.clear();
+}
+
+void Folder::destroyAllFilesRecursively()
+{
+    Impl::destroyRecursive(*this);
 }
 
 bool Folder::has(String const &name) const
@@ -394,7 +430,7 @@ bool Folder::has(String const &name) const
         return false;
     }
 
-    DENG2_GUARD(d);
+    DENG2_GUARD(this);
     return (d->contents.find(name.lower()) != d->contents.end());
 }
 
@@ -408,14 +444,14 @@ File &Folder::add(File *file)
         throw DuplicateNameError("Folder::add", "Folder cannot contain two files with the same name: '" +
             file->name() + "'");
     }
-    DENG2_GUARD(d);
+    DENG2_GUARD(this);
     d->add(file);
     return *file;
 }
 
 File *Folder::remove(String name)
 {
-    DENG2_GUARD(d);
+    DENG2_GUARD(this);
 
     String const key = name.toLower();
     DENG2_ASSERT(d->contents.contains(key));
@@ -437,7 +473,7 @@ File *Folder::remove(File &file)
 
 filesys::Node const *Folder::tryGetChild(String const &name) const
 {
-    DENG2_GUARD(d);
+    DENG2_GUARD(this);
 
     Contents::const_iterator found = d->contents.find(name.toLower());
     if (found != d->contents.end())
@@ -481,14 +517,14 @@ void Folder::attach(Feed *feed)
 {
     if (feed)
     {
-        DENG2_GUARD(d);
+        DENG2_GUARD(this);
         d->feeds.push_back(feed);
     }
 }
 
 Feed *Folder::detach(Feed &feed)
 {
-    DENG2_GUARD(d);
+    DENG2_GUARD(this);
 
     d->feeds.removeOne(&feed);
     return &feed;
@@ -496,7 +532,7 @@ Feed *Folder::detach(Feed &feed)
 
 void Folder::setPrimaryFeed(Feed &feed)
 {
-    DENG2_GUARD(d);
+    DENG2_GUARD(this);
 
     d->feeds.removeOne(&feed);
     d->feeds.push_front(&feed);
@@ -504,13 +540,15 @@ void Folder::setPrimaryFeed(Feed &feed)
 
 Feed *Folder::primaryFeed() const
 {
+    DENG2_GUARD(this);
+
     if (d->feeds.isEmpty()) return nullptr;
     return d->feeds.front();
 }
 
 void Folder::clearFeeds()
 {
-    DENG2_GUARD(d);
+    DENG2_GUARD(this);
 
     while (!d->feeds.empty())
     {
@@ -520,7 +558,7 @@ void Folder::clearFeeds()
 
 Folder::Feeds Folder::feeds() const
 {
-    DENG2_GUARD(d);
+    DENG2_GUARD(this);
 
     return d->feeds;
 }

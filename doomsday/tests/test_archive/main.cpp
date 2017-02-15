@@ -62,7 +62,7 @@ int main(int argc, char **argv)
         try
         {
             // Make a second entry.
-            File &worldTxt = zip.newFile("world.txt");
+            File &worldTxt = zip.createFile("world.txt");
             Writer(worldTxt) << FixedByteArray(content.toUtf8());
         }
         catch (File::OutputError const &er)
@@ -71,7 +71,7 @@ int main(int argc, char **argv)
         }
 
         // test2.zip won't appear in the file system as a folder unless
-        // FS::refresh() is called. newFile() doesn't interpret anything, just
+        // FS::refresh() is called. createFile() doesn't interpret anything, just
         // makes a plain file.
         File &zip2 = app.homeFolder().replaceFile("test2.zip");
         zip2.setMode(File::Write | File::Truncate);

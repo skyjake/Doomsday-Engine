@@ -67,8 +67,8 @@ public:
 
     PopulatedFiles populate(Folder const &folder) override;
     bool prune(File &file) const override;
-    File *newFile(String const &name) override;
-    void removeFile(String const &name) override;
+    File *createFile(String const &name) override;
+    void destroyFile(String const &name) override;
     Feed *newSubFeed(String const &name) override;
 
     /**

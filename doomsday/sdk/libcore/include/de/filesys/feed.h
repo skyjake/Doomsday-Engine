@@ -106,14 +106,14 @@ public:
      *
      * @return  The new file. Caller gets ownership.
      */
-    virtual File *newFile(String const &name);
+    virtual File *createFile(String const &name);
 
     /**
      * Removes a file with the given name.
      *
      * @param name  Name of the removed file.
      */
-    virtual void removeFile(String const &name);
+    virtual void destroyFile(String const &name);
 
     /**
      * Creates a new feed suitable for attaching to a subfolder of whatever

@@ -82,8 +82,8 @@ public:
 
     PopulatedFiles populate(Folder const &folder);
     bool prune(File &file) const;
-    File *newFile(String const &name);
-    void removeFile(String const &name);
+    File *createFile(String const &name);
+    void destroyFile(String const &name);
     Feed *newSubFeed(String const &name);
 
 public:
