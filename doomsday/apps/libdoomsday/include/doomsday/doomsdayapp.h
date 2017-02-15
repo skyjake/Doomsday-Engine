@@ -102,7 +102,12 @@ public:
      * Release all cached uncompressed entries. If the contents of the compressed
      * files are needed, they will be decompressed and cached again.
      */
-    void uncacheFiles();
+    void uncacheFilesFromMemory();
+
+    /**
+     * Deletes the contents of the /home/cache folder.
+     */
+    void clearCache();
 
     enum Behavior
     {

@@ -1382,7 +1382,7 @@ static dint DD_StartupWorker(void * /*context*/)
 
     // Release all cached uncompressed entries. If the contents of the compressed
     // files are needed, they will be decompressed and cached again.
-    DoomsdayApp::app().uncacheFiles();
+    DoomsdayApp::app().uncacheFilesFromMemory();
 
 #ifdef WIN32
     // This thread has finished using COM.

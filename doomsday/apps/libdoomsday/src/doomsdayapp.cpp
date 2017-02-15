@@ -45,6 +45,7 @@
 #include <de/Folder>
 #include <de/Garbage>
 #include <de/Loop>
+#include <de/MetadataBank>
 #include <de/NativeFile>
 #include <de/PackageLoader>
 #include <de/ScriptSystem>
@@ -734,7 +735,7 @@ void DoomsdayApp::unloadGame(GameProfile const &/*upcomingGame*/)
     world::Materials::get().clearAllMaterialSchemes();
 }
 
-void DoomsdayApp::uncacheFiles()
+void DoomsdayApp::uncacheFilesFromMemory()
 {
     ArchiveFeed::uncacheAllEntries(StringList({ DENG2_TYPE_NAME(Folder),
                                                 DENG2_TYPE_NAME(ArchiveFolder),
@@ -742,11 +743,17 @@ void DoomsdayApp::uncacheFiles()
                                                 DENG2_TYPE_NAME(GameStateFolder) }));
 }
 
+void DoomsdayApp::clearCache()
+{
+    LOG_RES_NOTE("Clearing metadata cache contents");
+    MetadataBank::get().clear();
+}
+
 void DoomsdayApp::reset()
 {
     // Reset the world back to it's initial state (unload the map, reset players, etc...).
     World::get().reset();
-    uncacheFiles();
+    uncacheFilesFromMemory();
 
     Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
 

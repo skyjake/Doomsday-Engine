@@ -71,8 +71,7 @@ static TimeDelta OPEN_CLOSE_SPAN = 0.2;
 enum MenuItemPositions
 {
     // DE menu:
-    //POS_GAMES             = 1,
-    POS_MULTIPLAYER       = 1,
+    POS_HOME              = 1,
     POS_UNLOAD            = 2,
     POS_GAMES_SEPARATOR   = 3,
     POS_CONNECT           = 4,
@@ -278,7 +277,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
         itemWidget(mainMenu, POS_GAMES_SEPARATOR)  .show(!game.isNull());
         itemWidget(mainMenu, POS_PACKAGES)         .show(!game.isNull());
         //itemWidget(mainMenu, POS_IWAD_FOLDER)      .show(game.isNull());
-        itemWidget(mainMenu, POS_MULTIPLAYER)      .show(!game.isNull());
+        itemWidget(mainMenu, POS_HOME)             .show(!game.isNull());
         //itemWidget(mainMenu, POS_CONNECT)          .show(game.isNull());
 
         itemWidget(configMenu, POS_RENDERER_SETTINGS).show(!game.isNull());
@@ -334,11 +333,11 @@ DENG_GUI_PIMPL(TaskBarWidget)
     {
         if (self().root().window().as<ClientWindow>().isGameMinimized())
         {
-            mainMenu->items().at(POS_MULTIPLAYER).setLabel(tr("Hide Home"));
+            mainMenu->items().at(POS_HOME).setLabel(tr("Hide Home"));
         }
         else
         {
-            mainMenu->items().at(POS_MULTIPLAYER).setLabel(tr("Show Home"));
+            mainMenu->items().at(POS_HOME).setLabel(tr("Show Home"));
         }
     }
 };
@@ -501,9 +500,11 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Connect to Server..."), new SignalAction(this, SLOT(connectToServerManually())))
             << new ui::Item(ui::Item::Separator)
+            << new ui::Item(ui::Item::Separator, tr("Resources"))
+            << new ui::ActionItem(tr("Browse Packages..."), new SignalAction(this, SLOT(openPackagesSidebar())))
+            << new ui::ActionItem(tr("Clear Cache"), new CallbackAction([] () { DoomsdayApp::app().clearCache(); }))
+            << new ui::Item(ui::Item::Separator)
             << new ui::Item(ui::Item::Separator, tr("Doomsday"))
-            << new ui::ActionItem(tr("Packages..."), new SignalAction(this, SLOT(openPackagesSidebar())))
-            //<< new ui::ActionItem(tr("IWAD Folder..."), new SignalAction(this, SLOT(chooseIWADFolder())))
             << new ui::ActionItem(tr("Check for Updates"), new CommandAction("updateandnotify"))
             << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
             << helpMenu
