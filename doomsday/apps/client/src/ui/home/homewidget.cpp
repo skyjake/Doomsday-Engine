@@ -220,7 +220,7 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void appStartupCompleted()
     {
-        blanker->start(0.3);
+        blanker->start(0.25);
     }
 
     void gameReadinessUpdated()
@@ -526,7 +526,7 @@ HomeWidget::HomeWidget()
     // Hide content until first update.
     d->blanker.reset(new FadeToBlackWidget);
     d->blanker->rule().setRect(rule());
-    d->blanker->initFadeFromBlack(1.75);
+    d->blanker->initFadeFromBlack(1.25);
     add(d->blanker);
 
     // Define widget layout.
