@@ -149,6 +149,12 @@ String NativeFile::describe() const
 
 Block NativeFile::metaId() const
 {
+    // Special exception: application's persistent data store will be rewritten on every
+    // run so there's no point in caching it.
+    if (name() == QStringLiteral("persist.pack"))
+    {
+        return Block();
+    }
     return Block(File::metaId() + d->nativePath.toUtf8()).md5Hash();
 }
 
