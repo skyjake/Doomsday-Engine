@@ -330,12 +330,14 @@ QImage Font::rasterize(String const &textLine,
         return QImage();
     }
 
+    auto const &plat = d->getThreadFonts();
+
 #ifdef LIBGUI_ACCURATE_TEXT_BOUNDS
     Rectanglei const bounds = measure(textLine, format);
 #else
     Rectanglei const bounds(0, 0,
                             advanceWidth(textLine, format),
-                            d->font.height());
+                            plat.font.height());
 #endif
 
     QColor bgColor(background.x, background.y, background.z, background.w);
@@ -343,7 +345,6 @@ QImage Font::rasterize(String const &textLine,
     Vector4ub fg = foreground;
     Vector4ub bg = background;
 
-    auto const &plat = d->getThreadFonts();
     QImage img(QSize(bounds.width(),
                      de::max(duint(plat.font.height()), bounds.height())),
                QImage::Format_ARGB32);
