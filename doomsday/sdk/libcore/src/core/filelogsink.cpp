@@ -17,11 +17,13 @@
  */
 
 #include "de/FileLogSink"
+#include "de/FileSystem"
 
 namespace de {
 
 FileLogSink::FileLogSink(File &outputFile)
-    : LogSink(_format), _file(outputFile)
+    : LogSink(_format)
+    , _file(outputFile)
 {}
 
 LogSink &FileLogSink::operator << (String const &plainText)

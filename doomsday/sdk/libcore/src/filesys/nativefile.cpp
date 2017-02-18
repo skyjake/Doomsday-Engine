@@ -91,7 +91,8 @@ DENG2_PIMPL(NativeFile)
                 delete out;
                 out = 0;
                 /// @throw OutputError  Opening the output stream failed.
-                throw OutputError("NativeFile::output", "Failed to write " + nativePath);
+                throw OutputError("NativeFile::output", "Failed to write " + nativePath +
+                                  " (" + strerror(errno) + ")");
             }
             if (self().mode() & Truncate)
             {
@@ -206,16 +207,23 @@ void NativeFile::get(Offset at, Byte *values, Size count) const
 {
     DENG2_GUARD(this);
 
-    QFile &in = input();
     if (at + count > size())
     {
+        d->closeInput();
         /// @throw IByteArray::OffsetError  The region specified for reading extends
         /// beyond the bounds of the file.
         throw OffsetError("NativeFile::get", description() + ": cannot read past end of file " +
                           String("(%1[+%2] > %3)").arg(at).arg(count).arg(size()));
     }
+    QFile &in = input();
     if (in.pos() != qint64(at)) in.seek(qint64(at));
     in.read(reinterpret_cast<char *>(values), count);
+
+    // Close the native input file after reaching the end of the file.
+    if (in.atEnd())
+    {
+        d->closeInput();
+    }
 }
 
 void NativeFile::set(Offset at, Byte const *values, Size count)

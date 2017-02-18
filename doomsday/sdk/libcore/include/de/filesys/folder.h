@@ -184,6 +184,10 @@ public:
      */
     bool has(String const &name) const;
 
+    inline bool contains(String const &name) const {
+        return has(name);
+    }
+
     /**
      * Adds an object to the folder. The object must be an instance of a class
      * derived from File.

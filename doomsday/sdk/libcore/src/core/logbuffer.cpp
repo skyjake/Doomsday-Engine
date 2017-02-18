@@ -42,7 +42,6 @@ namespace de {
 TimeDelta const FLUSH_INTERVAL = .2; // seconds
 
 DENG2_PIMPL(LogBuffer)
-, DENG2_OBSERVES(File, Deletion)
 {
     typedef QList<LogEntry *> EntryList;
     typedef QSet<LogSink *> Sinks;
@@ -53,7 +52,6 @@ DENG2_PIMPL(LogBuffer)
     bool useStandardOutput;
     bool flushingEnabled;
     String outputPath;
-    File *outputFile;
     FileLogSink *fileLogSink;
 #ifndef WIN32
     TextStreamLogSink outSink;
@@ -74,7 +72,6 @@ DENG2_PIMPL(LogBuffer)
         , maxEntryCount(maxEntryCount)
         , useStandardOutput(true)
         , flushingEnabled(true)
-        , outputFile(0)
         , fileLogSink(0)
 #ifndef WIN32
         , outSink(new QTextStream(stdout))
@@ -118,30 +115,22 @@ DENG2_PIMPL(LogBuffer)
         }
     }
 
-    void fileBeingDeleted(File const &file)
-    {
-        DENG2_ASSERT(outputFile == &file);
-        DENG2_UNUSED(file);
-
-        self().flush();
-        disposeFileLogSink();
-        outputFile = 0;
-    }
-
     void createFileLogSink(bool truncate)
     {
         if (!outputPath.isEmpty())
         {
-            File *existing = (!truncate? App::rootFolder().tryLocate<File>(outputPath) : nullptr);
-            if (!existing)
+            File *outputFile = nullptr;
+            if (!truncate)
             {
+                // Try to use the existing file.
+                outputFile = App::rootFolder().tryLocate<File>(outputPath);
+            }
+            if (!outputFile)
+            {
+                // Start an empty log file.
                 outputFile = &App::rootFolder().replaceFile(outputPath);
             }
-            else
-            {
-                outputFile = existing;
-            }
-            outputFile->audienceForDeletion() += this;
+            DENG2_ASSERT(outputFile);
 
             // Add a sink for the file.
             DENG2_ASSERT(!fileLogSink);
@@ -290,20 +279,13 @@ void LogBuffer::setOutputFile(String const &path, OutputChangeBehavior behavior)
     }
 
     d->disposeFileLogSink();
-    if (d->outputFile)
-    {
-        d->outputFile->audienceForDeletion() -= d;
-        d->outputFile = 0;
-    }
-
     d->outputPath = path;
     d->createFileLogSink(true /* truncated */);
 }
 
 String LogBuffer::outputFile() const
 {
-    if (!d->outputFile) return "";
-    return d->outputFile->path();
+    return d->outputPath;
 }
 
 void LogBuffer::addSink(LogSink &sink)
@@ -325,12 +307,6 @@ void LogBuffer::flush()
     if (!d->flushingEnabled) return;
 
     DENG2_GUARD(this);
-
-    if (!d->outputFile && !d->outputPath.isEmpty())
-    {
-        // Reopen the file sink.
-        d->createFileLogSink(false);
-    }
 
     if (!d->toBeFlushed.isEmpty())
     {

@@ -128,7 +128,7 @@ void DirectoryFeed::populateFile(Folder const &folder, String const &entryName,
             return;
         }
 
-        NativePath entryPath = _nativePath / entryName;
+        NativePath const entryPath = _nativePath / entryName;
 
         // Open the native file.
         std::unique_ptr<NativeFile> nativeFile(new NativeFile(entryName, entryPath));

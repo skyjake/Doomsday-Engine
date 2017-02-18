@@ -17,7 +17,6 @@
  */
 
 #include "de/filesys/Node"
-#include "de/Guard"
 
 namespace de {
 namespace filesys {
@@ -38,23 +37,22 @@ Node::~Node()
 
 String Node::name() const
 {
-    DENG2_GUARD(this);
-
     return d->name;
 }
 
 String Node::extension() const
 {
-    DENG2_GUARD(this);
-
     return d->name.fileNameExtension();
 }
 
 void Node::setParent(Node *parent)
 {
-    DENG2_GUARD(this);
-
     d->parent = parent;
+}
+
+Node *Node::parent() const
+{
+    return d->parent;
 }
 
 bool Node::hasAncestor(Node const &possibleAncestor) const
@@ -66,23 +64,14 @@ bool Node::hasAncestor(Node const &possibleAncestor) const
     return false;
 }
 
-Node *Node::parent() const
-{
-    DENG2_GUARD(this);
-
-    return d->parent;
-}
-
 String Node::path() const
-{
-    DENG2_GUARD(this);
-
-    String thePath = name();
-    for (Node *i = d->parent; i; i = i->d->parent)
+{    
+    Node const *p = parent();
+    if (!p)
     {
-        thePath = i->name() / thePath;
+        return "/" + name();
     }
-    return "/" + thePath;
+    return p->path() / name();
 }
 
 Node const *Node::tryFollowPath(PathRef const &path) const

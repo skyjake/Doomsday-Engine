@@ -222,7 +222,12 @@ void Folder::populate(PopulationBehaviors behavior)
             // touch them.
             bool mustPrune = false;
 
-            File *file = iter.value();
+            File *file = iter.value();            
+            if (file->mode() & DontPrune)
+            {
+                // Skip this one, it should be kept as-is until manually deleted.
+                continue;
+            }
             Feed *originFeed = file->originFeed();
 
             // If the file has a designated feed, ask it about pruning.
@@ -360,8 +365,10 @@ File &Folder::createFile(String const &newPath, FileCreationBehavior behavior)
         File *file = (*i)->createFile(newPath);
         if (file)
         {
-            // Allow writing to the new file.
-            file->setMode(Write);
+            // Allow writing to the new file. Don't prune the file since we will be
+            // actively modifying it ourselves (otherwise it would get pruned after
+            // a flush modifies the underlying data).
+            file->setMode(Write | DontPrune);
 
             add(file);
             fileSystem().index(*file);
