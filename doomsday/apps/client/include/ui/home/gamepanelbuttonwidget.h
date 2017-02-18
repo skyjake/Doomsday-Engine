@@ -48,6 +48,7 @@ public:
 
 public slots:
     void play();
+    void selectPackages();
 
 protected slots:
     void saveSelected(de::ui::DataPos savePos);

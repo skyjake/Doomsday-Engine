@@ -34,6 +34,7 @@
 #include <de/MenuWidget>
 #include <de/PersistentState>
 #include <de/PopupMenuWidget>
+#include <de/SignalAction>
 
 using namespace de;
 
@@ -376,6 +377,10 @@ DENG_GUI_PIMPL(GameColumnWidget)
                             profileItem->update();
                         }
                     }));
+            }
+            else
+            {
+                popup->items() << new ui::ActionItem(tr("Packages..."), new SignalAction(button, SLOT(selectPackages())));
             }
 
             // Items suitable for all types of profiles.

@@ -347,6 +347,11 @@ void GamePanelButtonWidget::play()
     d->playButtonPressed();
 }
 
+void GamePanelButtonWidget::selectPackages()
+{
+    d->packagesButton->trigger();
+}
+
 void GamePanelButtonWidget::saveSelected(de::ui::DataPos savePos)
 {
     if (savePos != ui::Data::InvalidPos)
