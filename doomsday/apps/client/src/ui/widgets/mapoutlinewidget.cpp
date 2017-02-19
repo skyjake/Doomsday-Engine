@@ -140,10 +140,13 @@ void MapOutlineWidget::drawContent()
     GuiWidget::drawContent();
     if (d->vbuf && d->vbuf->count())
     {
-        root().painter().flush();
+        auto &painter = root().painter();
+        painter.flush();
+        GLState::push().setNormalizedScissor(painter.normalizedScissor());
         d->uMvpMatrix = root().projMatrix2D() * d->modelMatrix();
         d->uColor = Vector4f(1, 1, 1, d->mapOpacity * visibleOpacity());
         d->drawable.draw();
+        GLState::pop();
     }
 }
 
