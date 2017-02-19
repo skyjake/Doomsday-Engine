@@ -23,15 +23,6 @@
 
 namespace de {
 
-/*namespace internal
-{
-    struct RangeLess  {
-        bool operator () (Rangeui16 const &a, Rangeui16 const &b) const {
-            return a.size() < b.size();
-        }
-    };
-}*/
-
 static dsize const MIN_RANGE_SIZE = 16;
 
 DENG2_PIMPL_NOREF(GLAtlasBuffer)
@@ -79,15 +70,6 @@ DENG2_PIMPL_NOREF(GLAtlasBuffer)
         deinit();
     }
 
-    /*void init()
-    {
-        if (!hostBuffers.isEmpty())
-        {
-            deinit();
-        }
-        allocNewHostBuffer();
-    }*/
-
     HostBuffer &allocNewHostBuffer()
     {
         DENG2_ASSERT(maxElementCount > 0);
@@ -98,6 +80,7 @@ DENG2_PIMPL_NOREF(GLAtlasBuffer)
         host->buffer.setFormat(format);
         host->buffer.setUninitializedData(elementSize * maxElementCount, usage);
         hostBuffers.append(host);
+        qDebug() << "[GLAtlasBuffer] Now have" << hostBuffers.size() << "buffers";
         return *host;
     }
 
@@ -166,16 +149,6 @@ void GLAtlasBuffer::clear()
 {
     d->clear();
 }
-
-//void GLAtlasBuffer::initialize()
-//{
-//    d->init();
-//}
-
-//void GLAtlasBuffer::deinitialize()
-//{
-//    d->deinit();
-//}
 
 GLSubBuffer *GLAtlasBuffer::alloc(dsize elementCount)
 {

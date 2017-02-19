@@ -23,6 +23,7 @@
 
 namespace de {
 
+class GLBuffer;
 class GLProgram;
 class GLSubBuffer;
 class GLUniform;
@@ -52,11 +53,13 @@ public:
 
     int batchIndex() const;
 
-    void setBufferVector(Vector4f const &vector);
+    void setBatchColor(Vector4f const &color);
 
-    void setBufferSaturation(float saturation);
+    void setBatchSaturation(float saturation);
 
-    void setScissorRect(Vector4f const &scissor);
+    void setBatchScissorRect(Vector4f const &scissor);
+
+    void setBuffer(GLBuffer const &buffer);
 
     /**
      * Enqueues a sub-buffer for drawing. If the previously enqueued buffers are not
@@ -64,7 +67,7 @@ public:
      *
      * @param sub  Sub-buffer to draw.
      */
-    void drawBuffer(GLSubBuffer const &buffer);
+    void enqueueDraw(GLSubBuffer const &buffer);
 
     /**
      * Draws everything in the queue.

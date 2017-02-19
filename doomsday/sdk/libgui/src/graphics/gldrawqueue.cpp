@@ -33,7 +33,7 @@ int GLDrawQueue_queuedElems = 0;
 DENG2_PIMPL_NOREF(GLDrawQueue)
 {
     GLProgram *currentProgram = nullptr;
-    GLBuffer *currentBuffer = nullptr;
+    GLBuffer const *currentBuffer = nullptr;
     GLBuffer::Indices indices;
     GLBuffer indexBuffer;
 
@@ -41,7 +41,8 @@ DENG2_PIMPL_NOREF(GLDrawQueue)
 
     /// @todo These uniforms should be configurable.
 
-    std::unique_ptr<GLUniform> uBatchVectors;
+    Vector4f defaultColor;
+    std::unique_ptr<GLUniform> uBatchColors;
 
     Vector4f defaultScissor;
     GLUniform uBatchScissors { "uScissorRect", GLUniform::Vec4Array, GLShader::MAX_BATCH_UNIFORMS };
@@ -53,15 +54,25 @@ DENG2_PIMPL_NOREF(GLDrawQueue)
     {
         if (currentProgram)
         {
-            if (uBatchVectors)
+            if (uBatchColors)
             {
-                currentProgram->unbind(*uBatchVectors);
-                uBatchVectors.reset();
+                currentProgram->unbind(*uBatchColors);
+                uBatchColors.reset();
 
                 currentProgram->unbind(uBatchScissors);
                 currentProgram->unbind(uBatchSaturation);
             }
             currentProgram = nullptr;
+        }
+    }
+
+    void restoreBatchValues()
+    {
+        if (uBatchColors)
+        {
+            uBatchColors   ->set(batchIndex, defaultColor);
+            uBatchScissors  .set(batchIndex, defaultScissor);
+            uBatchSaturation.set(batchIndex, defaultSaturation);
         }
     }
 };
@@ -84,9 +95,9 @@ void GLDrawQueue::setProgram(GLProgram &program,
 
     if (batchUniformName)
     {
-        d->uBatchVectors.reset(new GLUniform(batchUniformName, batchUniformType,
+        d->uBatchColors.reset(new GLUniform(batchUniformName, batchUniformType,
                                              GLShader::MAX_BATCH_UNIFORMS));
-        program << *d->uBatchVectors;
+        program << *d->uBatchColors;
 
         // Other batch variables.
         program << d->uBatchScissors;
@@ -99,37 +110,42 @@ int GLDrawQueue::batchIndex() const
     return int(d->batchIndex);
 }
 
-void GLDrawQueue::setBufferVector(Vector4f const &vector)
+void GLDrawQueue::setBatchColor(Vector4f const &color)
 {
-    if (d->uBatchVectors)
+    if (d->uBatchColors)
     {
-        d->uBatchVectors->set(d->batchIndex, vector);
+        d->uBatchColors->set(d->batchIndex, color);
     }
+    d->defaultColor = color;
 }
 
-void GLDrawQueue::setBufferSaturation(float saturation)
+void GLDrawQueue::setBatchSaturation(float saturation)
 {
     d->uBatchSaturation.set(d->batchIndex, saturation);
     d->defaultSaturation = saturation;
 }
 
-void GLDrawQueue::setScissorRect(Vector4f const &scissor)
+void GLDrawQueue::setBatchScissorRect(Vector4f const &scissor)
 {
     d->uBatchScissors.set(d->batchIndex, scissor);
     d->defaultScissor = scissor;
 }
 
-void GLDrawQueue::drawBuffer(GLSubBuffer const &buffer)
+void GLDrawQueue::setBuffer(GLBuffer const &buffer)
 {
-    DENG2_ASSERT(d->currentProgram);
-
-    if (buffer.size() == 0) return;
-
-    if (d->currentBuffer && &buffer.hostBuffer() != d->currentBuffer)
+    if (d->currentBuffer && &buffer != d->currentBuffer)
     {
         flush();
     }
-    d->currentBuffer = &buffer.hostBuffer();
+    d->currentBuffer = &buffer;
+}
+
+void GLDrawQueue::enqueueDraw(GLSubBuffer const &buffer)
+{
+    DENG2_ASSERT(&buffer.hostBuffer() == d->currentBuffer);
+    DENG2_ASSERT(d->currentProgram);
+
+    if (buffer.size() == 0) return;
 
     // Stitch together with the previous strip.
     if (d->indices.size() > 0)
@@ -144,16 +160,14 @@ void GLDrawQueue::drawBuffer(GLSubBuffer const &buffer)
         d->indices << i;
     }
 
-    if (d->uBatchVectors)
+    if (d->uBatchColors)
     {
         d->batchIndex++;
         if (d->batchIndex == GLShader::MAX_BATCH_UNIFORMS)
         {
             flush();
         }
-        // Keep using the latest scissor.
-        d->uBatchScissors  .set(d->batchIndex, d->defaultScissor);
-        d->uBatchSaturation.set(d->batchIndex, d->defaultSaturation);
+        d->restoreBatchValues();
     }
 
 #ifdef DENG2_DEBUG
@@ -180,9 +194,9 @@ void GLDrawQueue::flush()
         d->indexBuffer.setIndices(gl::TriangleStrip, d->indices, gl::Dynamic);
         d->indices.clear();
 
-        if (d->uBatchVectors)
+        if (d->uBatchColors)
         {
-            d->uBatchVectors  ->setUsedElementCount(batchCount);
+            d->uBatchColors   ->setUsedElementCount(batchCount);
             d->uBatchScissors  .setUsedElementCount(batchCount);
             d->uBatchSaturation.setUsedElementCount(batchCount);
         }
@@ -193,6 +207,9 @@ void GLDrawQueue::flush()
     }
     d->currentBuffer = nullptr;
     d->batchIndex = 0;
+
+    // Keep using the latest scissor.
+    d->restoreBatchValues();
 }
 
 } // namespace de
