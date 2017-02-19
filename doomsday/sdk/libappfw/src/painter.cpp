@@ -51,7 +51,7 @@ DENG2_PIMPL(Painter), public Asset
 
     void init()
     {
-        BaseGuiApp::shaders().build(batchProgram, "batch.guiwidget")
+        BaseGuiApp::shaders().build(batchProgram, "ui.guiwidget.batch")
                 << uMvpMatrix;
         self().useDefaultProgram();
         setState(true);
@@ -123,8 +123,8 @@ void Painter::setNormalizedScissor(Rectanglef const &normScissorRect)
 
     scis = GLState::current().target().scaleToActiveRect(scis);
 
-    d->queue.setScissorRect(Vector4f(scis.left(),  int(vp.height()) - scis.bottom(),
-                                     scis.right(), int(vp.height()) - scis.top()));
+    d->queue.setBatchScissorRect(Vector4f(scis.left(),  int(vp.height()) - scis.bottom(),
+                                          scis.right(), int(vp.height()) - scis.top()));
 }
 
 Rectanglef Painter::normalizedScissor() const
@@ -134,20 +134,21 @@ Rectanglef Painter::normalizedScissor() const
 
 void Painter::setColor(Vector4f const &color)
 {
-    d->queue.setBufferVector(color);
+    d->queue.setBatchColor(color);
 }
 
 void Painter::setSaturation(float saturation)
 {
-    d->queue.setBufferSaturation(saturation);
+    d->queue.setBatchSaturation(saturation);
 }
 
 void Painter::drawTriangleStrip(QVector<GuiVertex> &vertices)
 {
     DENG2_ASSERT(d->isReady());
     std::unique_ptr<GLSubBuffer> sub(d->vertexBuf.alloc(dsize(vertices.size())));
+    d->queue.setBuffer(sub->hostBuffer()); // determines final batch index
     sub->setBatchVertices(d->queue.batchIndex(), dsize(vertices.size()), &vertices[0]);
-    d->queue.drawBuffer(*sub); // enqueues indices to be drawn
+    d->queue.enqueueDraw(*sub);
 }
 
 void Painter::flush()

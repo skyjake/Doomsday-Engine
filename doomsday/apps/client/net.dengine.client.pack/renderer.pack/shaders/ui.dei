@@ -1,6 +1,6 @@
-batch {       
+ui {       
     # Shader for UI widgets.
-    shader guiwidget {
+    shader guiwidget.batch {
         vertex = "
             uniform highp mat4  uMvpMatrix;            
             uniform highp vec4  uColor[DENG_MAX_BATCH_UNIFORMS];

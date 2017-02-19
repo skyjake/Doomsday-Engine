@@ -290,7 +290,7 @@ Id GuiRootWidget::boldRoundCorners() const
 Id GuiRootWidget::borderGlow() const
 {
     d->initAtlas();
-    return d->texBank.texture("Style.window.borderglow");
+    return d->texBank.texture(QStringLiteral("Style.window.borderglow"));
 }
 
 Id GuiRootWidget::tinyDot() const
@@ -302,7 +302,7 @@ Id GuiRootWidget::tinyDot() const
 Id GuiRootWidget::styleTexture(DotPath const &styleImagePath) const
 {
     d->initAtlas();
-    return d->texBank.texture(String("Style.") + styleImagePath);
+    return d->texBank.texture(QStringLiteral("Style.") + styleImagePath);
 }
 
 GLShaderBank &GuiRootWidget::shaders()

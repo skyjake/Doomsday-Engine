@@ -253,14 +253,6 @@ public:
      */
     void setAppearanceAnimation(AppearanceAnimation method, TimeDelta const &span = 0.0);
 
-    /**
-     * Sets a custom shader used when rendering the widget.
-     *
-     * @param program  Shader program. Ownership not taken. @c nullptr to use the
-     *                 default UI shader.
-     */
-    void setCustomShader(GLProgram *program);
-
     // Events.
     void update() override;
     void drawContent() override;

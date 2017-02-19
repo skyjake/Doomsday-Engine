@@ -78,7 +78,6 @@ public Font::RichFormat::IStyle
     std::unique_ptr<ProceduralImage> image;
     std::unique_ptr<ProceduralImage> overlayImage;
     GuiVertexBuilder verts;
-    GLProgram *extProgram;
     //Drawable drawable;
     //GLUniform uMvpMatrix;
     //GLUniform uColor;
@@ -104,7 +103,6 @@ public Font::RichFormat::IStyle
         , shaderId    ("generic.textured.color_ucolor")
         , richStyle   (0)
         , wasVisible  (true)
-        , extProgram  (nullptr)
         //, uMvpMatrix  ("uMvpMatrix", GLUniform::Mat4)
         //, uColor      ("uColor",     GLUniform::Vec4)
     {
@@ -564,16 +562,8 @@ public Font::RichFormat::IStyle
             {
                 painter.setModelViewProjection(mvp);
             }
-            if (extProgram)
-            {
-                painter.setProgram(*extProgram);
-            }
             painter.setColor(Vector4f(1, 1, 1, self().visibleOpacity()));
             painter.drawTriangleStrip(verts);
-            if (extProgram)
-            {
-                painter.useDefaultProgram();
-            }
             if (isCustomMvp)
             {
                 painter.setModelViewProjection(self().root().projMatrix2D());
@@ -952,21 +942,6 @@ void LabelWidget::setAppearanceAnimation(AppearanceAnimation method, TimeDelta c
         rule().setInput(Rule::Height, *h);
     }
 }
-
-void LabelWidget::setCustomShader(GLProgram *program)
-{
-    d->extProgram = program;
-}
-
-/*void LabelWidget::setShaderId(DotPath const &shaderId)
-{
-    d->shaderId = shaderId;
-}
-
-GLProgram &LabelWidget::shaderProgram()
-{
-    return d->drawable.program();
-}*/
 
 LabelWidget *LabelWidget::newWithText(String const &label, GuiWidget *parent)
 {

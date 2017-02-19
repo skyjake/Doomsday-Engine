@@ -677,7 +677,6 @@ void ScrollAreaWidget::drawContent()
     if (d->indicatorDrawEnabled)
     {
         auto &painter = root().painter();
-        painter.setColor(Vector4f(1, 1, 1, visibleOpacity()));
 
         // The indicator is quite simple, so just keep it dynamic. This will
         // also avoid the need to detect when the indicator is moving and
@@ -692,6 +691,7 @@ void ScrollAreaWidget::drawContent()
         if (d->verts)
         {
         //d->drawable.draw();
+            painter.setColor(Vector4f(1, 1, 1, visibleOpacity()));
             painter.drawTriangleStrip(d->verts);
         }
     }
