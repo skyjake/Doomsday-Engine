@@ -28,6 +28,8 @@ namespace de {
 /**
  * Sink where log entries are flushed from the LogBuffer.
  * @ingroup core
+ *
+ * LogSinks are flushed only from one thread at a time.
  */
 class DENG2_PUBLIC LogSink
 {

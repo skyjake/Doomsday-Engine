@@ -526,7 +526,7 @@ HomeWidget::HomeWidget()
     // Hide content until first update.
     d->blanker.reset(new FadeToBlackWidget);
     d->blanker->rule().setRect(rule());
-    d->blanker->initFadeFromBlack(1.25);
+    d->blanker->initFadeFromBlack(0.75);
     add(d->blanker);
 
     // Define widget layout.

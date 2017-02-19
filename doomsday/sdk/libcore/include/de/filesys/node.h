@@ -34,9 +34,9 @@ namespace filesys {
  * @par Thread-safety
  *
  * All nodes are Lockable so that multiple threads can use them simultaneously. As a
- * general rule, the user of a node does not need to lock the file manually; nodes will
- * lock themselves as appropriate. A user may lock the node manually if long-term
- * exclusive access is required.
+ * general rule, the user of a node does not need to lock the node manually for
+ * operations like writing and reading; nodes will lock themselves as appropriate. A user
+ * may lock the node manually if long-term exclusive access is required.
  */
 class DENG2_PUBLIC Node : public Lockable, public Deletable
 {

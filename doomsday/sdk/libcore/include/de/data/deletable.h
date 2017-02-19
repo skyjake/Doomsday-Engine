@@ -38,6 +38,7 @@ public:
 
 /**
  * Auto-nulled pointer to a Deletable object. Does not own the target object.
+ * The pointer value is guarded by a mutex.
  */
 template <typename Type>
 class SafePtr : DENG2_OBSERVES(Deletable, Deletion)
@@ -53,37 +54,50 @@ public:
         reset(nullptr);
     }
     void reset(Type *ptr = nullptr) {
-        if (_ptr) _ptr->Deletable::audienceForDeletion -= this;
-        _ptr = ptr;
-        if (_ptr) _ptr->Deletable::audienceForDeletion += this;
+        DENG2_GUARD(_ptr)
+        if (_ptr.value) _ptr.value->Deletable::audienceForDeletion -= this;
+        _ptr.value = ptr;
+        if (_ptr.value) _ptr.value->Deletable::audienceForDeletion += this;
     }
     SafePtr &operator = (SafePtr const &other) {
         reset(other._ptr);
         return *this;
     }
     Type *operator -> () const {
+        DENG2_GUARD(_ptr);
         if (!_ptr) throw Error("SafePtr::operator ->", "Object has been deleted");
         return _ptr;
     }
     operator Type const * () const {
+        DENG2_GUARD(_ptr);
         return _ptr;
     }
     operator Type * () {
+        DENG2_GUARD(_ptr);
         return _ptr;
     }
     Type *get() const {
+        DENG2_GUARD(_ptr);
         return _ptr;
     }
     explicit operator bool() const {
-        return _ptr != nullptr;
+        DENG2_GUARD(_ptr);
+        return _ptr.value != nullptr;
     }
     void objectWasDeleted(Deletable *obj) {
-        if (obj == _ptr) {
-            _ptr = nullptr;
+        DENG2_GUARD(_ptr);
+        if (obj == _ptr.value) {
+            _ptr.value = nullptr;
         }
     }
+    void lock() {
+        _ptr.lock();
+    }
+    void unlock() {
+        _ptr.unlock();
+    }
 private:
-    Type *_ptr = nullptr;
+    LockableT<Type *> _ptr { nullptr };
 };
 
 } // namespace de
