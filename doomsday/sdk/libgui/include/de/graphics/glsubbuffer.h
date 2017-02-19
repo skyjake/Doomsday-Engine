@@ -26,7 +26,7 @@ namespace de {
 /**
  * Sub-range of a larger GLBuffer.
  */
-class GLSubBuffer
+class LIBGUI_PUBLIC GLSubBuffer
 {
 public:
     GLSubBuffer(Rangeui16 const &hostRange, GLBuffer &hostBuffer);

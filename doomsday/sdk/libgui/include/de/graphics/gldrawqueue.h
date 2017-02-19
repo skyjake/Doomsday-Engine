@@ -42,7 +42,7 @@ class GLUniform;
  * state is changed, all previously queued data is first flushed. For example, changing
  * the clip rectangle always causes a flush.
  */
-class GLDrawQueue
+class LIBGUI_PUBLIC GLDrawQueue
 {
 public:
     GLDrawQueue();

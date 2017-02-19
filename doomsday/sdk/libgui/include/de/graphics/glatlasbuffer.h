@@ -28,7 +28,7 @@ class GLSubBuffer;
 /**
  * GLBuffer from where GLSubBuffers are allocated.
  */
-class GLAtlasBuffer
+class LIBGUI_PUBLIC GLAtlasBuffer
 {
 public:
     GLAtlasBuffer(internal::AttribSpecs const &vertexFormat);
