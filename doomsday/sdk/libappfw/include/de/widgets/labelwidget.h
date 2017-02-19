@@ -253,10 +253,6 @@ public:
      */
     void setAppearanceAnimation(AppearanceAnimation method, TimeDelta const &span = 0.0);
 
-    //void setShaderId(DotPath const &shaderId);
-
-    //GLProgram &shaderProgram();
-
     /**
      * Sets a custom shader used when rendering the widget.
      *
@@ -266,7 +262,6 @@ public:
     void setCustomShader(GLProgram *program);
 
     // Events.
-    //void viewResized() override;
     void update() override;
     void drawContent() override;
 

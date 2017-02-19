@@ -142,16 +142,6 @@ void Painter::setSaturation(float saturation)
     d->queue.setBufferSaturation(saturation);
 }
 
-/*GLDrawQueue &Painter::drawQueue()
-{
-    return d->queue;
-}
-
-GLAtlasBuffer &Painter::vertexBuffer()
-{
-    return d->vertexBuf;
-}*/
-
 void Painter::drawTriangleStrip(QVector<GuiVertex> &vertices)
 {
     DENG2_ASSERT(d->isReady());
@@ -164,12 +154,6 @@ void Painter::flush()
 {
     DENG2_ASSERT(d->isReady());
     d->queue.flush();
-}
-
-void Painter::finish()
-{
-    DENG2_ASSERT(d->isReady());
-    d->queue.finish();
     d->vertexBuf.clear();
 }
 
