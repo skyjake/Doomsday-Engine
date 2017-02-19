@@ -293,6 +293,11 @@ void File::setMode(Flags const &newMode)
     }
 }
 
+void File::setMode(Flags flags, FlagOpArg op)
+{
+    applyFlagOperation(d->mode, flags, op);
+}
+
 Record &File::objectNamespace()
 {
     return d->info;

@@ -293,6 +293,8 @@ public:
      */
     virtual void setMode(Flags const &newMode);
 
+    void setMode(Flags flags, FlagOpArg op);
+
     /**
      * Makes sure that the file has write access.
      */
