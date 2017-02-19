@@ -35,11 +35,15 @@ template <typename VertexType>
 struct VertexBuilder
 {
     struct Vertices : public QVector<VertexType> {
+        using Base = QVector<VertexType>;
         Vertices() {
-            QVector<VertexType>::reserve(64);
+            Base::reserve(64);
+        }
+        explicit operator bool() const {
+            return !Base::isEmpty();
         }
         void transform(Matrix4f const &matrix) {
-            for (int i = 0; i < QVector<VertexType>::size(); ++i) {
+            for (int i = 0; i < Base::size(); ++i) {
                 (*this)[i].pos = matrix * (*this)[i].pos;
             }
         }

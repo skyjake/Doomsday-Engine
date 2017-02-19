@@ -129,13 +129,10 @@ DENG2_PIMPL(GLBuffer)
     dsize idxCount;
     DrawRanges defaultRange; ///< All vertices.
     Primitive prim;
-    AttribSpecs specs;
+    AttribSpecs specs { nullptr, 0 };
 
     Impl(Public *i) : Base(i), name(0), idxName(0), count(0), idxCount(0), prim(Points)
-    {
-        specs.first = 0;
-        specs.second = 0;
-    }
+    {}
 
     ~Impl()
     {
@@ -298,9 +295,10 @@ void GLBuffer::setVertices(Primitive primitive, dsize count, void const *data, d
 
         if (dataSize && count)
         {
-            LIBGUI_GL.glBindBuffer(GL_ARRAY_BUFFER, d->name);
-            LIBGUI_GL.glBufferData(GL_ARRAY_BUFFER, dataSize, data, Impl::glUsage(usage));
-            LIBGUI_GL.glBindBuffer(GL_ARRAY_BUFFER, 0);
+            auto &GL = LIBGUI_GL;
+            GL.glBindBuffer(GL_ARRAY_BUFFER, d->name);
+            GL.glBufferData(GL_ARRAY_BUFFER, dataSize, data, Impl::glUsage(usage));
+            GL.glBindBuffer(GL_ARRAY_BUFFER, 0);
         }
 
         setState(Ready);
@@ -340,6 +338,33 @@ void GLBuffer::setIndices(Primitive primitive, Indices const &indices, Usage usa
     setIndices(primitive, indices.size(), indices.constData(), usage);
 }
 
+void GLBuffer::setData(dsize startOffset, void const *data, dsize dataSize)
+{
+    DENG2_ASSERT(isReady());
+
+    if (data && dataSize)
+    {
+        auto &GL = LIBGUI_GL;
+        GL.glBindBuffer   (GL_ARRAY_BUFFER, d->name);
+        GL.glBufferSubData(GL_ARRAY_BUFFER, GLintptr(startOffset), GLsizeiptr(dataSize), data);
+        GL.glBindBuffer   (GL_ARRAY_BUFFER, 0);
+    }
+}
+
+void GLBuffer::setUninitializedData(dsize dataSize, gl::Usage usage)
+{
+    d->count = 0;
+    d->defaultRange.clear();
+
+    d->alloc();
+
+    LIBGUI_GL.glBindBuffer(GL_ARRAY_BUFFER, d->name);
+    LIBGUI_GL.glBufferData(GL_ARRAY_BUFFER, GLsizeiptr(dataSize), nullptr, Impl::glUsage(usage));
+    LIBGUI_GL.glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    setState(Ready);
+}
+
 void GLBuffer::draw(DrawRanges const *ranges) const
 {
     if (!isReady() || !GLProgram::programInUse()) return;
@@ -347,30 +372,62 @@ void GLBuffer::draw(DrawRanges const *ranges) const
     // Mark the current target changed.
     GLState::current().target().markAsChanged();
 
-    LIBGUI_GL.glBindBuffer(GL_ARRAY_BUFFER, d->name);
+    auto &GL = LIBGUI_GL;
+
+    GL.glBindBuffer(GL_ARRAY_BUFFER, d->name);
     d->enableArrays(true);
-    LIBGUI_GL.glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL.glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     if (d->idxName)
     {
-        LIBGUI_GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
+        GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
         for (Rangeui const &range : (ranges? *ranges : d->defaultRange))
         {
-            LIBGUI_GL.glDrawElements(Impl::glPrimitive(d->prim),
-                           range.size(), GL_UNSIGNED_SHORT,
-                           (void const *) dintptr(range.start * 2));
+            GL.glDrawElements(Impl::glPrimitive(d->prim),
+                              range.size(), GL_UNSIGNED_SHORT,
+                              (void const *) dintptr(range.start * 2));
             LIBGUI_ASSERT_GL_OK();
         }
-        LIBGUI_GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
     else
     {
         for (Rangeui const &range : (ranges? *ranges : d->defaultRange))
         {
-            LIBGUI_GL.glDrawArrays(Impl::glPrimitive(d->prim), range.start, range.size());
+            GL.glDrawArrays(Impl::glPrimitive(d->prim), range.start, range.size());
             LIBGUI_ASSERT_GL_OK();
         }
     }
+    ++drawCounter;
+
+#ifdef DENG2_DEBUG
+    extern int GLDrawQueue_queuedElems;
+    DENG2_ASSERT(GLDrawQueue_queuedElems == 0);
+#endif
+
+    d->enableArrays(false);
+}
+
+void GLBuffer::drawWithIndices(GLBuffer const &indexBuffer) const
+{
+    if (!isReady() || !indexBuffer.d->idxName || !GLProgram::programInUse()) return;
+
+    // Mark the current target changed.
+    GLState::current().target().markAsChanged();
+
+    auto &GL = LIBGUI_GL;
+
+    GL.glBindBuffer(GL_ARRAY_BUFFER, d->name);
+    d->enableArrays(true);
+    GL.glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.d->idxName);
+    GL.glDrawElements(Impl::glPrimitive(indexBuffer.d->prim),
+                      GLsizei(indexBuffer.d->idxCount),
+                      GL_UNSIGNED_SHORT, nullptr);
+    LIBGUI_ASSERT_GL_OK();
+    GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
     ++drawCounter;
 
     d->enableArrays(false);

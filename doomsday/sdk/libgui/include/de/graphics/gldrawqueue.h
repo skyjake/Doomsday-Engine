@@ -19,19 +19,19 @@
 #ifndef LIBGUI_GLDRAWQUEUE_H
 #define LIBGUI_GLDRAWQUEUE_H
 
-#include <de/Drawable>
+#include <de/GLUniform>
 
 namespace de {
 
+class GLProgram;
+class GLSubBuffer;
+class GLUniform;
+
 /**
- * Utility for managing and drawing semi-static GL buffers.
+ * Utility for drawing GLSubBuffers.
  *
  * The main purpose of GLDrawQueue is to minimize the number of draw calls needed for
  * drawing the view.
- *
- * GLDrawQueue owns a large GLBuffer from which smaller segments can be assigned out to
- * users. The segments may be changed at any time without affecting the rest of the
- * buffer's contents. If the GLBuffer runs out of space, a larger one will be allocated.
  *
  * GLDrawQueue also owns a GLProgram whose shaders must support collecting uniform values
  * from each queued draw into arrays (element indices are stored as vertex attributes).
@@ -40,13 +40,38 @@ namespace de {
  * GLDrawQueue also has a GLState that is used for drawing the queued geometry. If the
  * state is changed, all previously queued data is first flushed. For example, changing
  * the clip rectangle always causes a flush.
- *
- * Internally, GLDrawQueue uses Drawable to manage its GL objects.
  */
 class GLDrawQueue
 {
 public:
     GLDrawQueue();
+
+    void setProgram(GLProgram &program,
+                    Block const &batchUniformName = Block(),
+                    GLUniform::Type batchUniformType = GLUniform::Float);
+
+    int batchIndex() const;
+
+    void setBufferVector(Vector4f const &vector);
+
+    void setBufferSaturation(float saturation);
+
+    void setScissorRect(Vector4f const &scissor);
+
+    /**
+     * Enqueues a sub-buffer for drawing. If the previously enqueued buffers are not
+     * from the same GLBuffer, the queue is flushed first.
+     *
+     * @param sub  Sub-buffer to draw.
+     */
+    void drawBuffer(GLSubBuffer const &buffer);
+
+    /**
+     * Draws everything in the queue.
+     */
+    void flush();
+
+    void finish();
 
 private:
     DENG2_PRIVATE(d)

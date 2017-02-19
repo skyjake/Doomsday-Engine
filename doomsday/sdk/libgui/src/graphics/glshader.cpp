@@ -25,6 +25,8 @@
 
 namespace de {
 
+//int const GLShader::MAX_BATCH_UNIFORMS = 64;
+
 DENG2_PIMPL(GLShader)
 {
     GLuint name;
@@ -141,6 +143,7 @@ void GLShader::compile(Type shaderType, IByteArray const &source)
     {
         predefs = QByteArray("#define DENG_FRAGMENT_SHADER\n");
     }
+    predefs += "#define DENG_MAX_BATCH_UNIFORMS " + QByteArray::number(MAX_BATCH_UNIFORMS) + "\n";
 
     // Prepare the shader source. This would be the time to substitute any
     // remaining symbols in the shader source.

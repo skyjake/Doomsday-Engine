@@ -647,6 +647,11 @@ void GLState::apply() const
 {
     LIBGUI_ASSERT_GL_OK();
 
+#ifdef DENG2_DEBUG
+    extern int GLDrawQueue_queuedElems;
+    DENG2_ASSERT(GLDrawQueue_queuedElems == 0);
+#endif
+
 /*#ifdef LIBGUI_USE_GLENTRYPOINTS
     if (!glBindFramebuffer) return;
 #endif*/

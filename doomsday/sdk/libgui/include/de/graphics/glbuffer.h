@@ -55,6 +55,7 @@ namespace internal
             BoneWeights,
             InstanceMatrix,     // x4
             InstanceColor,
+            Index,
 
             NUM_SEMANTICS
         };
@@ -270,6 +271,7 @@ class LIBGUI_PUBLIC GLBuffer : public Asset
 public:
     typedef duint16 Index;
     typedef QVector<Index> Indices;
+    typedef QVector<Rangeui> DrawRanges;
 
 public:
     GLBuffer();
@@ -284,7 +286,9 @@ public:
 
     void setIndices(gl::Primitive primitive, Indices const &indices, gl::Usage usage);
 
-    typedef QVector<Rangeui> DrawRanges;
+    void setData(dsize startOffset, void const *data, dsize dataSize);
+
+    void setUninitializedData(dsize dataSize, gl::Usage usage);
 
     /**
      * Draws the buffer.
@@ -294,6 +298,8 @@ public:
      * @param ranges  Range of vertices to draw. If nullptr, all vertices are drawn.
      */
     void draw(DrawRanges const *ranges = nullptr) const;
+
+    void drawWithIndices(GLBuffer const &indexBuffer) const;
 
     /**
      * Draws the buffer with instancing. One instance of the buffer is drawn per
@@ -313,11 +319,10 @@ public:
      */
     dsize count() const;
 
+    void setFormat(internal::AttribSpecs const &format);
+
     static duint drawCount();
     static void resetDrawCount();
-
-protected:
-    void setFormat(internal::AttribSpecs const &format);
 
 private:
     DENG2_PRIVATE(d)

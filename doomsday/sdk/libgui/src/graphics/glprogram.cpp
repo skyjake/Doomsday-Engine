@@ -181,6 +181,7 @@ DENG2_PIMPL(GLProgram)
             { AttribSpec::Bitangent,      "aBitangent"   },
             { AttribSpec::BoneIDs,        "aBoneIDs"     },
             { AttribSpec::BoneWeights,    "aBoneWeights" },
+            { AttribSpec::Index,          "aIndex"       },
 
             { AttribSpec::InstanceMatrix, "aInstanceMatrix" }, // x4
             { AttribSpec::InstanceColor,  "aInstanceColor"  }
@@ -193,9 +194,10 @@ DENG2_PIMPL(GLProgram)
         }
 
         // Look up where the attributes ended up being linked.
+        auto &GL = LIBGUI_GL;
         for (uint i = 0; i < sizeof(names)/sizeof(names[0]); ++i)
         {
-            attribLocation[names[i].semantic] = LIBGUI_GL.glGetAttribLocation(name, names[i].varName);
+            attribLocation[names[i].semantic] = GL.glGetAttribLocation(name, names[i].varName);
         }
     }
 
