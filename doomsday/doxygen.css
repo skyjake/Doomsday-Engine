@@ -20,7 +20,7 @@ body {
     margin-left: auto;
     margin-right: auto;
 
-    background: #282D2B url(http://dengine.net/panoramarotator) no-repeat fixed;
+    background: #ccc url(http://dengine.net/images/doxybg.jpg) no-repeat fixed;
     background-position: center 100%;
     background-size: 200% 200%;
 }
@@ -30,6 +30,10 @@ img {
 }
 
 /* Navigation tabs */
+
+ul.sm-dox {
+    background: #eee !important;
+}
 
 .tabs, .tabs2, .tabs3, .tablist li, 
 .tablist li a,
@@ -150,23 +154,23 @@ div.textblock,
 div.summary,
 div.qindex,
 div.qindex + table {
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: rgba(255, 255, 255, 0.7);
     box-shadow: 0 0 24px -8px rgb(110, 110, 110);    
-    color: #aaa;
+    color: #444;
     padding: 1.2em;
 }
 
-div.contents > :not(.textblock) > code:first-child {
+/*div.contents > :not(.textblock) > code:first-child {
     color: white;
-}
+}*/
 
 div.textblock h1 {
-    color: white;
+    color: black;
     margin-top: 1.5em;
 }
 
 div.contents > h3 {
-    color: #eee;
+    color: #333;
 }
 
 div.textblock h3:first-child {
@@ -193,7 +197,7 @@ div.textblock p:last-child {
 
 div.textblock dl dt,
 div.contents {
-    color: #ccc;
+    color: black; /*#ccc;*/
 }
 
 div.textblock p small {
@@ -242,15 +246,15 @@ h1.groupheader {
 
 .title {
     font-size: 225%;
-    font-weight: 300;
+    font-weight: 500;
     margin-top: 1em;
     margin-bottom: 1em;
-    color: white;
+    color: black;
 /*    margin: 10px 2px;*/
 }
 
 h2.groupheader {
-    color: white; /*rgb(160, 200, 180);*/
+    color: black; /*rgb(160, 200, 180);*/
     font-size: 175%;
     font-weight: 300;
     margin-top: 3em;
@@ -361,14 +365,20 @@ div.contents > dl a,
 div.contents > .qindex a,
 div.qindex + table a,
 .tablist li a,
-div.contents > :not(.textblock) > code:first-child a,
+/*div.contents > :not(.textblock) > code:first-child a,*/
 .directory .levels span,
 table.directory a, 
 .navpath li.navelem a {
-    color: #C59A57;
+    color: #073; /*#C59A57;*/
 }
 
-div.textblock a:hover,
+div.title a, div.contents > p > a,
+div.contents > :not(.textblock) > code:first-child a {
+    color: black;
+    font-weight: bold;
+}
+
+/*div.textblock a:hover,
 .inherit_header a:hover,
 div.summary a:hover,
 div.ingroups a:hover,
@@ -383,7 +393,7 @@ div.contents > :not(.textblock) > code:first-child a:hover,
 table.directory a:hover,
 .navpath li.navelem a:hover {
     color: #FFCB0F;
-}
+}*/
 
 /*.contents a:visited {
     color: #4665A2;
@@ -579,7 +589,7 @@ address.footer {
     font-weight: 300;
     text-align: center;
     margin-top: 2em;
-    color: rgb(140, 180, 150);
+    color: #555;
 }
 
 img.footer {
@@ -973,7 +983,7 @@ div.ttdef {
 /* these are for tree view when not used as main index */
 
 table.directory {
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(255, 255, 255, 0.75);
     box-shadow: 0 0 24px -8px rgb(110, 110, 110);    
     color: #888;
     padding: 0;
@@ -989,7 +999,7 @@ div.directory {
 
 table.directory span.icon {
     border-radius: 4px;
-    background-color: rgba(255, 210, 120, 0.6);
+    background-color: white; /*rgba(255, 210, 120, 0.6);*/
     color: black;
     font-weight: bold;
     font-size: 90%;
@@ -1008,12 +1018,12 @@ table.directory tr td:first-child {
 }
 
 table.directory tr.even td:nth-child(2) {
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(255, 255, 255, 0.5);
     font-style: italic;
 }
 
 table.directory tr:not(.even) td:nth-child(2) {
-    background-color: rgba(0, 0, 0, 0.25);
+    background-color: rgba(255, 255, 255, 0.75);
     font-style: italic;
 }
 
@@ -1046,12 +1056,12 @@ table.directory tr:not(.even) td:nth-child(2) {
     padding-left: 6px;
     padding-right: 6px;
     padding-top: 3px;
-    border-left: 1px solid rgba(0,0,0,0.05);
+    border-left: 1px solid rgba(255,255,255,0.05);
 }
 
 .directory tr.even {
     padding-left: 6px;
-    background-color: rgba(0, 0, 0, 0.4);
+    background-color: rgba(255, 255, 255, 0.4);
 /*    background-color: #F7F8FB;*/
 }
 
@@ -1191,6 +1201,7 @@ td.fielddoc p:last-child { margin-bottom: 0; }
     display: block;
     /*text-decoration: none;*/
     outline: none;
+    color: #eee;
     /*color: #283A5D;
     text-shadow: 0px 1px 1px rgba(255, 255, 255, 0.9);
     text-decoration: none;        */
@@ -1269,9 +1280,9 @@ div.textblock > dl.todo,
 div.textblock > dl.note,
 div.textblock > dl.invariant,
 div.textblock > dl.test {
-    background-color: #222;
-    border: 1px solid #444;
-    color: #888;
+    background-color: #eee;
+    border: 1px solid #aaa;
+    color: #666;
 }
 
 dl.todo dt,
@@ -1504,7 +1515,7 @@ div.toc li.level4 {
 
 .dynheader, .inherit_header {
     font-size: 110%;    
-    color: #ddd;
+    color: #444;
 }
 
 .inherit_header {
