@@ -63,6 +63,7 @@ public:
         Mat4,
         Sampler2D,
         SamplerCube,
+        FloatArray,
         Vec3Array,
         Vec4Array,
         Mat4Array
@@ -110,6 +111,9 @@ public:
     GLUniform &set(duint elementIndex, Vector3f const &vec);
     GLUniform &set(duint elementIndex, Vector4f const &vec);
     GLUniform &set(duint elementIndex, Matrix4f const &mat);
+
+    GLUniform &set(float const *floatArray, dsize count);
+    GLUniform &set(Vector4f const *vectorArray, dsize count);
 
     operator dint() const              { return toInt(); }
     operator duint() const             { return toUInt(); }

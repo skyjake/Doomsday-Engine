@@ -35,26 +35,29 @@ DENG2_PIMPL(GLUniform)
         dint     int32;
         duint    uint32;
         dfloat   float32;
+        dfloat   *floats;
         Vector3f *vec3array;
         Vector4f *vector;
         Matrix3f *mat3;
         Matrix4f *mat4;
         GLTexture const *tex;
     } value;
-    duint elemCount;
+    duint16 usedElemCount;
+    duint16 elemCount;
 
     Impl(Public *i, QLatin1String const &n, Type t, duint elems)
         : Base(i)
         , name(n.latin1())
         , type(t)
-        , elemCount(elems)
+        , usedElemCount(duint16(elems))
+        , elemCount(duint16(elems))
     {
         name.append('\0');
 
-        DENG2_ASSERT(elemCount == 1 || (elemCount > 1 && (type == Mat4Array ||
-                                                          type == Vec4Array ||
-                                                          type == Vec3Array)));
-
+        DENG2_ASSERT(elemCount == 1 || (elemCount > 1 && (type == FloatArray ||
+                                                          type == Mat4Array  ||
+                                                          type == Vec4Array  ||
+                                                          type == Vec3Array )));
         // Allocate the value type.
         zap(value);
         switch (type)
@@ -63,6 +66,10 @@ DENG2_PIMPL(GLUniform)
         case Vec3:
         case Vec4:
             value.vector = new Vector4f;
+            break;
+
+        case FloatArray:
+            value.floats = new float[elemCount];
             break;
 
         case Vec3Array:
@@ -100,6 +107,10 @@ DENG2_PIMPL(GLUniform)
         case Vec3:
         case Vec4:
             delete value.vector;
+            break;
+
+        case FloatArray:
+            delete [] value.floats;
             break;
 
         case Vec3Array:
@@ -347,6 +358,7 @@ GLUniform &GLUniform::set(duint elementIndex, Vector3f const &vec)
     if (d->value.vec3array[elementIndex] != vec)
     {
         d->value.vec3array[elementIndex] = vec;
+        d->usedElemCount = d->elemCount;
         d->markAsChanged();
     }
     return *this;
@@ -360,6 +372,7 @@ GLUniform &GLUniform::set(duint elementIndex, Vector4f const &vec)
     if (d->value.vector[elementIndex] != vec)
     {
         d->value.vector[elementIndex] = vec;
+        d->usedElemCount = d->elemCount;
         d->markAsChanged();
     }
     return *this;
@@ -371,8 +384,31 @@ GLUniform &GLUniform::set(duint elementIndex, Matrix4f const &mat)
     DENG2_ASSERT(elementIndex < d->elemCount);
 
     d->value.mat4[elementIndex] = mat;
+    d->usedElemCount = d->elemCount;
     d->markAsChanged();
 
+    return *this;
+}
+
+GLUniform &GLUniform::set(float const *floatArray, dsize count)
+{
+    DENG2_ASSERT(d->type == FloatArray);
+    DENG2_ASSERT(count <= d->elemCount);
+
+    memcpy(d->value.floats, floatArray, sizeof(float) * count);
+    d->usedElemCount = duint16(count);
+    d->markAsChanged();
+    return *this;
+}
+
+GLUniform &GLUniform::set(Vector4f const *vectorArray, dsize count)
+{
+    DENG2_ASSERT(d->type == Vec4Array);
+    DENG2_ASSERT(count <= d->elemCount);
+
+    memcpy(d->value.vector, vectorArray, sizeof(Vector4f) * count);
+    d->usedElemCount = duint16(count);
+    d->markAsChanged();
     return *this;
 }
 
@@ -500,6 +536,11 @@ void GLUniform::applyInProgram(GLProgram &program) const
         LIBGUI_ASSERT_GL_OK();
         break;
 
+    case FloatArray:
+        LIBGUI_GL.glUniform1fv(loc, d->usedElemCount, d->value.floats);
+        LIBGUI_ASSERT_GL_OK();
+        break;
+
     case Vec2:
         LIBGUI_GL.glUniform2f(loc, d->value.vector->x, d->value.vector->y);
         LIBGUI_ASSERT_GL_OK();
@@ -511,13 +552,13 @@ void GLUniform::applyInProgram(GLProgram &program) const
         break;
 
     case Vec3Array:
-        LIBGUI_GL.glUniform3fv(loc, d->elemCount, &d->value.vec3array->x); // sequentially laid out
+        LIBGUI_GL.glUniform3fv(loc, d->usedElemCount, &d->value.vec3array->x); // sequentially laid out
         LIBGUI_ASSERT_GL_OK();
         break;
 
     case Vec4:
     case Vec4Array:
-        LIBGUI_GL.glUniform4fv(loc, d->elemCount, &d->value.vector->x); // sequentially laid out
+        LIBGUI_GL.glUniform4fv(loc, d->usedElemCount, &d->value.vector->x); // sequentially laid out
         LIBGUI_ASSERT_GL_OK();
         break;
 
@@ -528,7 +569,7 @@ void GLUniform::applyInProgram(GLProgram &program) const
 
     case Mat4:
     case Mat4Array:
-        LIBGUI_GL.glUniformMatrix4fv(loc, d->elemCount, GL_FALSE, d->value.mat4->values()); // sequentially laid out
+        LIBGUI_GL.glUniformMatrix4fv(loc, d->usedElemCount, GL_FALSE, d->value.mat4->values()); // sequentially laid out
         LIBGUI_ASSERT_GL_OK();
         break;
 
