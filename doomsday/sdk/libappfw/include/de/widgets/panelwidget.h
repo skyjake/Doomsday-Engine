@@ -137,7 +137,7 @@ protected:
     void glInit();
     void glDeinit();
     void drawContent();
-    void glMakeGeometry(DefaultVertexBuf::Builder &verts);
+    void glMakeGeometry(GuiVertexBuilder &verts);
 
     virtual void preparePanelForOpening();
     virtual void panelClosing();

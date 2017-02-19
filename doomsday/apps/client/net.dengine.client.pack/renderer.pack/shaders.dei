@@ -10,6 +10,7 @@
 
 @include <shaders/generic.dei>
 @include <shaders/model.dei>
+@include <shaders/batch.dei>
 @include <shaders/fx/blur.dei>
 @include <shaders/fx/bloom.dei>
 @include <shaders/fx/post.dei>

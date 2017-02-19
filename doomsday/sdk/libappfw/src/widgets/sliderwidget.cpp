@@ -105,9 +105,10 @@ DENG_GUI_PIMPL(SliderWidget)
         NUM_LABELS
     };
     TextDrawable labels[NUM_LABELS];
-    Drawable drawable;
-    GLUniform uMvpMatrix;
-    GLUniform uColor;
+    GuiVertexBuilder verts;
+    //Drawable drawable;
+    //GLUniform uMvpMatrix;
+    //GLUniform uColor;
 
     Impl(Public *i)
         : Base(i),
@@ -117,9 +118,9 @@ DENG_GUI_PIMPL(SliderWidget)
           precision(0),
           displayFactor(1),
           state(Inert),
-          animating(false),
-          uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
-          uColor    ("uColor",     GLUniform::Vec4)
+          animating(false)
+          //uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
+          //uColor    ("uColor",     GLUniform::Vec4)
     {
         self().setFont("slider.label");
 
@@ -144,11 +145,11 @@ DENG_GUI_PIMPL(SliderWidget)
 
     void glInit()
     {
-        DefaultVertexBuf *buf = new DefaultVertexBuf;
-        drawable.addBuffer(buf);
+        //DefaultVertexBuf *buf = new DefaultVertexBuf;
+        //drawable.addBuffer(buf);
 
-        shaders().build(drawable.program(), "generic.textured.color_ucolor")
-                << uMvpMatrix << uColor << uAtlas();
+        /*shaders().build(drawable.program(), "generic.textured.color_ucolor")
+                << uMvpMatrix << uColor << uAtlas();*/
 
         for (int i = 0; i < int(NUM_LABELS); ++i)
         {
@@ -161,7 +162,8 @@ DENG_GUI_PIMPL(SliderWidget)
 
     void glDeinit()
     {
-        drawable.clear();
+        //drawable.clear();
+        verts.clear();
         for (int i = 0; i < int(NUM_LABELS); ++i)
         {
             labels[i].deinit();
@@ -210,7 +212,8 @@ DENG_GUI_PIMPL(SliderWidget)
         Vector4i const margin = self().margins().toVector();
         rect = rect.adjusted(margin.xy(), -margin.zw());
 
-        DefaultVertexBuf::Builder verts;
+        //DefaultVertexBuf::Builder verts;
+        verts.clear();
         self().glMakeGeometry(verts);
 
         // Determine the area where the slider is moving.
@@ -279,8 +282,8 @@ DENG_GUI_PIMPL(SliderWidget)
                                        state == Grabbed? invTextColor : textColor);
         }
 
-        drawable.buffer<DefaultVertexBuf>()
-                .setVertices(gl::TriangleStrip, verts, animating? gl::Dynamic : gl::Static);
+        /*drawable.buffer<DefaultVertexBuf>()
+                .setVertices(gl::TriangleStrip, verts, animating? gl::Dynamic : gl::Static);*/
 
         self().requestGeometry(false);
     }
@@ -289,8 +292,9 @@ DENG_GUI_PIMPL(SliderWidget)
     {
         updateGeometry();
 
-        uColor = Vector4f(1, 1, 1, self().visibleOpacity());
-        drawable.draw();
+        auto &painter = root().painter();
+        painter.setColor(Vector4f(1, 1, 1, self().visibleOpacity()));
+        painter.drawTriangleStrip(verts); //drawable.draw();
     }
 
     void setState(State st)
@@ -381,7 +385,7 @@ DENG_GUI_PIMPL(SliderWidget)
     void updateRangeLabels()
     {
         labels[Start].setText(minLabel.isEmpty()? QString::number(range.start * displayFactor, 'f', precision) : minLabel);
-        labels[End].setText(maxLabel.isEmpty()?   QString::number(range.end * displayFactor, 'f', precision)   : maxLabel);
+        labels[End]  .setText(maxLabel.isEmpty()? QString::number(range.end   * displayFactor, 'f', precision) : maxLabel);
     }
 
     void startGrab(MouseEvent const &ev)
@@ -539,12 +543,12 @@ ddouble SliderWidget::displayFactor() const
     return d->displayFactor;
 }
 
-void SliderWidget::viewResized()
+/*void SliderWidget::viewResized()
 {
     GuiWidget::viewResized();
 
     d->uMvpMatrix = root().projMatrix2D();
-}
+}*/
 
 void SliderWidget::update()
 {

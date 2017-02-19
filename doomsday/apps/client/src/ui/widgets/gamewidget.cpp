@@ -228,6 +228,7 @@ void GameWidget::drawContent()
     if (isDisabled() || !GL_IsFullyInited() || !App_GameLoaded())
         return;
 
+    root().painter().flush();
     GLState::push();
 
     Rectanglei pos;

@@ -122,6 +122,7 @@ void BusyWidget::drawContent()
 
         if (Con_TransitionInProgress())
         {
+            root().painter().flush();
             GLState::push()
                     .setViewport(Rectangleui::fromSize(GLState::current().target().size()))
                     .apply();
@@ -140,6 +141,7 @@ void BusyWidget::drawContent()
 
     if (d->haveTransitionFrame())
     {
+        root().painter().flush();
         GLState::push()
                 .setAlphaTest(false)
                 .setBlend(false)

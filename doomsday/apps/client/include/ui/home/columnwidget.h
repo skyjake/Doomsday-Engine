@@ -57,6 +57,8 @@ signals:
     void mouseActivity(QObject const *columnWidget);
 
 protected:
+    //void glInit() override;
+    //void glDeinit() override;
     void updateStyle() override;
 
 private:

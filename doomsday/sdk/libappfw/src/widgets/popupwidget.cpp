@@ -412,7 +412,7 @@ bool PopupWidget::handleEvent(Event const &event)
     return PanelWidget::handleEvent(event);
 }
 
-void PopupWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
+void PopupWidget::glMakeGeometry(GuiVertexBuilder &verts)
 {
     if (rule().recti().isNull()) return; // Still closed.
 
@@ -422,8 +422,8 @@ void PopupWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     if (dir == ui::NoDirection) return;
 
     // Anchor triangle.
-    DefaultVertexBuf::Builder tri;
-    DefaultVertexBuf::Type v;
+    GuiVertexBuilder tri;
+    GuiVertex v;
 
     v.rgba = background().solidFill;
     v.texCoord = root().atlas().imageRectf(root().solidWhitePixel()).middle();

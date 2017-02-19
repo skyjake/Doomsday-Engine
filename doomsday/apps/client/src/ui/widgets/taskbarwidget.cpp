@@ -56,6 +56,7 @@
 #include <de/Drawable>
 #include <de/GLBuffer>
 #include <de/KeyEvent>
+#include <de/Painter>
 #include <de/PopupMenuWidget>
 #include <de/SequentialLayout>
 #include <de/SignalAction>
@@ -120,10 +121,11 @@ DENG_GUI_PIMPL(TaskBarWidget)
     int maxSpace;
 
     // GL objects:
-    Drawable drawable;
-    GLUniform uMvpMatrix;
-    GLUniform uColor;
-    Matrix4f projMatrix;
+    //GuiVertexBuilder verts;
+    //Drawable drawable;
+    //GLUniform uMvpMatrix;
+    //GLUniform uColor;
+    //Matrix4f projMatrix;
 
     Impl(Public *i)
         : Base(i)
@@ -136,10 +138,10 @@ DENG_GUI_PIMPL(TaskBarWidget)
         , configMenu(0)
         , multiMenu(0)
         , mouseWasTrappedWhenOpening(false)
-        , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
-        , uColor    ("uColor",     GLUniform::Vec4)
+        //, uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
+        //, uColor    ("uColor",     GLUniform::Vec4)
     {
-        uColor = Vector4f(1, 1, 1, 1);
+        //uColor = Vector4f(1, 1, 1, 1);
         self().set(Background(style().colors().colorf("background")));
 
         vertShift = new AnimationRule(0);
@@ -206,18 +208,19 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
     void glInit()
     {
-        drawable.addBuffer(new VertexBuf);
+        //drawable.addBuffer(new VertexBuf);
 
-        shaders().build(drawable.program(), "generic.color_ucolor")
+        /*shaders().build(drawable.program(), "generic.color_ucolor")
                 << uMvpMatrix
                 << uColor;
 
-        updateProjection();
+        updateProjection();*/
     }
 
     void glDeinit()
     {
-        drawable.clear();
+        //drawable.clear();
+        //verts.clear();
     }
 
     void updateLogoButtonText()
@@ -245,22 +248,23 @@ DENG_GUI_PIMPL(TaskBarWidget)
         logo->setText(text);
     }
 
-    void updateProjection()
+    /*void updateProjection()
     {
         uMvpMatrix = root().projMatrix2D();
-    }
+    }*/
 
     void updateGeometry()
     {
+        /*
         Rectanglei pos;
         if (self().hasChangedPlace(pos) || self().geometryRequested())
         {
             self().requestGeometry(false);
 
-            VertexBuf::Builder verts;
+            verts.clear();
             self().glMakeGeometry(verts);
-            drawable.buffer<VertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Static);
-        }
+            //drawable.buffer<VertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Static);
+        }*/
     }
 
     GuiWidget &itemWidget(PopupMenuWidget *menu, uint pos) const
@@ -560,11 +564,11 @@ void TaskBarWidget::glDeinit()
     d->glDeinit();
 }
 
-void TaskBarWidget::viewResized()
+/*void TaskBarWidget::viewResized()
 {
     GuiWidget::viewResized();
-    d->updateProjection();
-}
+    //d->updateProjection();
+}*/
 
 void TaskBarWidget::update()
 {

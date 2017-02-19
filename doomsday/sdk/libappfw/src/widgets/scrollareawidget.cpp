@@ -21,7 +21,6 @@
 
 #include "de/ScrollAreaWidget"
 
-#include <de/GLState>
 #include <de/KeyEvent>
 #include <de/MouseEvent>
 #include <de/Lockable>
@@ -60,9 +59,10 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
     bool scrollBarHover = false;
     Rectanglef scrollBarVisRect;
     Rectanglef scrollBarLaneRect;
-    Drawable drawable;
-    GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
-    GLUniform uColor     { "uColor",     GLUniform::Vec4 };
+    //Drawable drawable;
+    //GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
+    //GLUniform uColor     { "uColor",     GLUniform::Vec4 };
+    GuiVertexBuilder verts;
 
     Impl(Public *i) : Base(i)
     {
@@ -92,17 +92,18 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
     {
         if (indicatorDrawEnabled)
         {
-            DefaultVertexBuf *buf = new DefaultVertexBuf;
+            /*DefaultVertexBuf *buf = new DefaultVertexBuf;
             drawable.addBuffer(buf);
 
             shaders().build(drawable.program(), "generic.textured.color_ucolor")
-                    << uMvpMatrix << uAtlas() << uColor;
+                    << uMvpMatrix << uAtlas() << uColor;*/
         }
     }
 
     void glDeinit()
     {
-        drawable.clear();
+        verts.clear();
+        //drawable.clear();
     }
 
     void updateStyle()
@@ -618,7 +619,7 @@ void ScrollAreaWidget::glDeinit()
     d->glDeinit();
 }
 
-void ScrollAreaWidget::glMakeScrollIndicatorGeometry(DefaultVertexBuf::Builder &verts,
+void ScrollAreaWidget::glMakeScrollIndicatorGeometry(GuiVertexBuilder &verts,
                                                      Vector2f const &origin)
 {
     // Draw the scroll indicator.
@@ -641,11 +642,11 @@ void ScrollAreaWidget::glMakeScrollIndicatorGeometry(DefaultVertexBuf::Builder &
     }
 }
 
-void ScrollAreaWidget::viewResized()
+/*void ScrollAreaWidget::viewResized()
 {
     GuiWidget::viewResized();
-    d->uMvpMatrix = root().projMatrix2D();
-}
+    //d->uMvpMatrix = root().projMatrix2D();
+}*/
 
 void ScrollAreaWidget::update()
 {
@@ -675,7 +676,8 @@ void ScrollAreaWidget::drawContent()
 {
     if (d->indicatorDrawEnabled)
     {
-        d->uColor = Vector4f(1, 1, 1, visibleOpacity());
+        auto &painter = root().painter();
+        painter.setColor(Vector4f(1, 1, 1, visibleOpacity()));
 
         // The indicator is quite simple, so just keep it dynamic. This will
         // also avoid the need to detect when the indicator is moving and
@@ -683,11 +685,15 @@ void ScrollAreaWidget::drawContent()
 
         setIndicatorUv(root().atlas().imageRectf(root().solidWhitePixel()).middle());
 
-        DefaultVertexBuf::Builder verts;
-        glMakeScrollIndicatorGeometry(verts, rule().recti().topLeft + margins().toVector().xy());
-        d->drawable.buffer<DefaultVertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Dynamic);
+        d->verts.clear(); //DefaultVertexBuf::Builder verts;
+        glMakeScrollIndicatorGeometry(d->verts, rule().recti().topLeft + margins().toVector().xy());
+        //d->drawable.buffer<DefaultVertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Dynamic);
 
-        d->drawable.draw();
+        if (d->verts)
+        {
+        //d->drawable.draw();
+            painter.drawTriangleStrip(d->verts);
+        }
     }
 }
 

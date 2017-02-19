@@ -90,7 +90,7 @@ public:
 protected:
     void glInit();
     void glDeinit();
-    void glMakeGeometry(DefaultVertexBuf::Builder &verts);
+    void glMakeGeometry(GuiVertexBuilder &verts);
     void updateStyle();
 
 private:

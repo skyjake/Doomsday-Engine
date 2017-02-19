@@ -23,6 +23,7 @@
 #include <de/Font>
 #include <de/Atlas>
 #include <de/GLBuffer>
+#include <de/Painter>
 
 #include "../ui/defs.h"
 #include "../FontLineWrapping"
@@ -40,10 +41,10 @@ namespace de {
  */
 class LIBAPPFW_PUBLIC GLTextComposer : public Asset
 {
-public:
+/*public:
     typedef Vertex2TexRgba      Vertex;
     typedef GLBufferT<Vertex>   VertexBuf;
-    typedef VertexBuf::Builder  Vertices;
+    typedef VertexBuf::Builder  Vertices;*/
 
 public:
     GLTextComposer();
@@ -89,7 +90,7 @@ public:
      */
     void releaseLinesOutsideRange();
 
-    void makeVertices(Vertices &triStrip,
+    void makeVertices(GuiVertexBuilder &triStrip,
                       Vector2i const &topLeft,
                       ui::Alignment const &lineAlign,
                       Vector4f const &color = Vector4f(1, 1, 1, 1));
@@ -104,7 +105,7 @@ public:
      * @param lineAlign    Horizontal alignment for each line within the paragraph.
      * @param color        Vertex color for the generated vertices.
      */
-    void makeVertices(Vertices &triStrip,
+    void makeVertices(GuiVertexBuilder &triStrip,
                       Rectanglei const &rect,
                       ui::Alignment const &alignInRect,
                       ui::Alignment const &lineAlign,

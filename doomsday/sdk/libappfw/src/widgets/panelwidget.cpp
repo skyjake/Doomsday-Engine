@@ -36,7 +36,7 @@ static TimeDelta const CLOSING_ANIM_SPAN = 0.3;
 DENG_GUI_PIMPL(PanelWidget)
 , DENG2_OBSERVES(Asset, StateChange)
 {
-    typedef DefaultVertexBuf VertexBuf;
+    //typedef DefaultVertexBuf VertexBuf;
 
     bool waitForContentReady = true;
     bool eatMouseEvents = true;
@@ -49,8 +49,9 @@ DENG_GUI_PIMPL(PanelWidget)
     std::unique_ptr<AssetGroup> pendingShow;
 
     // GL objects.
-    Drawable drawable;
-    GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
+    GuiVertexBuilder verts;
+    //Drawable drawable;
+    //GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
 
     Impl(Public *i) : Base(i)
     {
@@ -68,14 +69,15 @@ DENG_GUI_PIMPL(PanelWidget)
 
     void glInit()
     {
-        drawable.addBuffer(new VertexBuf);
+        /*drawable.addBuffer(new VertexBuf);
         shaders().build(drawable.program(), "generic.textured.color")
-                << uMvpMatrix << uAtlas();
+                << uMvpMatrix << uAtlas();*/
     }
 
     void glDeinit()
     {
-        drawable.clear();
+        //drawable.clear();
+        verts.clear();
     }
 
     bool isVerticalAnimation() const
@@ -113,9 +115,10 @@ DENG_GUI_PIMPL(PanelWidget)
         {
             self().requestGeometry(false);
 
-            VertexBuf::Builder verts;
+            //VertexBuf::Builder verts;
+            verts.clear();
             self().glMakeGeometry(verts);
-            drawable.buffer<VertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Static);
+            //drawable.buffer<VertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Static);
         }
     }
 
@@ -195,6 +198,7 @@ DENG_GUI_PIMPL(PanelWidget)
 
             // We can't delete the AssetGroup right now because we are in the middle
             // of an audience notification from it.
+            pendingShow->audienceForStateChange() -= this;
             trash(pendingShow.release());
         }
     }
@@ -299,7 +303,7 @@ void PanelWidget::viewResized()
 {
     GuiWidget::viewResized();
 
-    d->uMvpMatrix = root().projMatrix2D();
+    //d->uMvpMatrix = root().projMatrix2D();
 
     requestGeometry();
 }
@@ -387,10 +391,16 @@ void PanelWidget::dismiss()
 void PanelWidget::drawContent()
 {
     d->updateGeometry();
-    d->drawable.draw();
+
+    if (d->verts)
+    {
+        auto &painter = root().painter();
+        painter.setColor(Vector4f(1, 1, 1, 1));
+        painter.drawTriangleStrip(d->verts);
+    }
 }
 
-void PanelWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
+void PanelWidget::glMakeGeometry(GuiVertexBuilder &verts)
 {
     GuiWidget::glMakeGeometry(verts);
 }

@@ -43,18 +43,27 @@ DENG2_PIMPL(GuiWidget)
 , DENG2_OBSERVES(Widget, ParentChange)
 #endif
 {
+    enum
+    {
+        Inited       = 0x1,
+        NeedGeometry = 0x2,
+        StyleChanged = 0x4,
+        FirstUpdateAfterCreation
+                     = 0x8,
+        DefaultFlags = NeedGeometry | FirstUpdateAfterCreation,
+    };
+
     RuleRectangle rule;     ///< Visual rule, used when drawing.
     std::unique_ptr<RuleRectangle> hitRule; ///< Used only for hit testing. By default matches the visual rule.
     ui::Margins margins;
     Rectanglei savedPos;
-    bool inited;
-    bool needGeometry;
-    bool styleChanged;
+    duint32 flags;
     Attributes attribs;
     Background background;
     Animation opacity;
     Animation opacityWhenDisabled;
-    bool firstUpdateAfterCreation;
+    Rectanglef oldClip; // when drawing children
+    float saturation = 1.f;
     QList<IEventHandler *> eventHandlers;
 
     // Style.
@@ -78,13 +87,10 @@ DENG2_PIMPL(GuiWidget)
     Impl(Public *i)
         : Base(i)
         , margins("gap")
-        , inited(false)
-        , needGeometry(true)
-        , styleChanged(false)
+        , flags(DefaultFlags)
         , attribs(DefaultAttributes)
         , opacity(1.f, Animation::Linear)
         , opacityWhenDisabled(1.f, Animation::Linear)
-        , firstUpdateAfterCreation(true)
         , fontId("default")
         , textColorId("text")
     {
@@ -113,14 +119,14 @@ DENG2_PIMPL(GuiWidget)
          * first before beginning destruction.
          */
 #ifdef DENG2_DEBUG
-        if (inited) qDebug() << "GuiWidget" << thisPublic << self().name() << "is still inited!";
-        DENG2_ASSERT(!inited);
+        if (flags & Inited) qDebug() << "GuiWidget" << thisPublic << self().name() << "is still inited!";
+        DENG2_ASSERT(!(flags & Inited));
 #endif
     }
 
     void marginsChanged()
     {
-        styleChanged = true;
+        flags |= StyleChanged;
     }
 
 #ifdef DENG2_DEBUG
@@ -249,6 +255,7 @@ DENG2_PIMPL(GuiWidget)
             DENG2_ASSERT(background.blur != 0);
             if (background.blur)
             {
+                self().root().painter().flush();
                 background.blur->drawBlurredRect(self().rule().recti(), background.solidFill);
             }
             return;
@@ -261,6 +268,12 @@ DENG2_PIMPL(GuiWidget)
             deinitBlur();
             return;
         }
+
+        // Ensure normal drawing is complete.
+        auto &painter = self().root().painter();
+        painter.flush();
+
+        auto const oldClip = painter.normalizedScissor();
 
         // Make sure blurring is initialized.
         initBlur();
@@ -304,6 +317,8 @@ DENG2_PIMPL(GuiWidget)
         {
             self().drawBlurredRect(self().rule().recti(), blurColor, blurOpacity);
         }
+
+        painter.setNormalizedScissor(oldClip);
     }
 
     inline float currentOpacity() const
@@ -318,7 +333,7 @@ DENG2_PIMPL(GuiWidget)
         {
             opacityWhenDisabled.setValue(opac, .3f);
         }
-        if (firstUpdateAfterCreation ||
+        if ((flags & FirstUpdateAfterCreation) ||
             !attribs.testFlag(AnimateOpacityWhenEnabledOrDisabled))
         {
             opacityWhenDisabled.finish();
@@ -595,7 +610,7 @@ DotPath const &GuiWidget::textColorId() const
 void GuiWidget::setFont(DotPath const &id)
 {
     d->fontId = id;
-    d->styleChanged = true;
+    d->flags |= Impl::StyleChanged;
 }
 
 ColorBank::Color GuiWidget::textColor() const
@@ -611,7 +626,7 @@ ColorBank::Colorf GuiWidget::textColorf() const
 void GuiWidget::setTextColor(DotPath const &id)
 {
     d->textColorId = id;
-    d->styleChanged = true;
+    d->flags |= Impl::StyleChanged;
 }
 
 RuleRectangle &GuiWidget::rule()
@@ -712,6 +727,11 @@ void GuiWidget::set(Background const &bg)
     requestGeometry();
 }
 
+void GuiWidget::setSaturation(float saturation)
+{
+    d->saturation = saturation;
+}
+
 bool GuiWidget::isClipped() const
 {
     return behavior().testFlag(ContentClipping);
@@ -809,11 +829,11 @@ void GuiWidget::restoreState()
 
 void GuiWidget::initialize()
 {
-    if (d->inited) return;
+    if (d->flags & Impl::Inited) return;
 
     try
     {
-        d->inited = true;
+        d->flags |= Impl::Inited;
         glInit();
 
         if (d->attribs.testFlag(RetainStatePersistently))
@@ -830,7 +850,7 @@ void GuiWidget::initialize()
 
 void GuiWidget::deinitialize()
 {
-    if (!d->inited) return;
+    if (!(d->flags & Impl::Inited)) return;
 
     try
     {
@@ -841,7 +861,7 @@ void GuiWidget::deinitialize()
             d->saveState();
         }
 
-        d->inited = false;
+        applyFlagOperation(d->flags, Impl::Inited, false);
         d->deinitBlur();
         glDeinit();
     }
@@ -859,13 +879,13 @@ void GuiWidget::viewResized()
 
 void GuiWidget::update()
 {
-    if (!d->inited)
+    if (!(d->flags & Impl::Inited))
     {
         initialize();
     }
-    if (d->styleChanged)
+    if (d->flags & Impl::StyleChanged)
     {
-        d->styleChanged = false;
+        applyFlagOperation(d->flags, Impl::StyleChanged, false);
         updateStyle();
     }
     auto const familyAttribs = familyAttributes();
@@ -874,33 +894,37 @@ void GuiWidget::update()
     {
         d->updateOpacityForDisabledWidgets();
     }
-    d->firstUpdateAfterCreation = false;
+    applyFlagOperation(d->flags, Impl::FirstUpdateAfterCreation, false);
 }
 
 void GuiWidget::draw()
 {
-    if (d->inited && !isHidden() && visibleOpacity() > 0 && !d->isClipCulled())
+    if ((d->flags & Impl::Inited) && !isHidden() && visibleOpacity() > 0 && !d->isClipCulled())
     {
 #ifdef DENG2_DEBUG
         // Detect mistakes in GLState stack usage.
         dsize const depthBeforeDrawingWidget = GLState::stackDepth();
 #endif
-
         d->drawBlurredBackground();
 
         if (!d->attribs.testFlag(DontDrawContent))
         {
+            auto &painter = root().painter();
+            painter.setSaturation(d->saturation);
+
+            Rectanglef const oldClip = painter.normalizedScissor();
             if (isClipped())
             {
-                GLState::push().setNormalizedScissor(normalizedRect());
+                painter.setNormalizedScissor(oldClip & normalizedRect());
             }
 
             drawContent();
 
             if (isClipped())
             {
-                GLState::pop();
+                painter.setNormalizedScissor(oldClip);
             }
+            painter.setSaturation(1.f);
         }
 
         DENG2_ASSERT(GLState::stackDepth() == depthBeforeDrawingWidget);
@@ -935,7 +959,7 @@ bool GuiWidget::handleEvent(Event const &event)
             (key.ddKey() == DDKEY_LEFTARROW  ||
              key.ddKey() == DDKEY_RIGHTARROW ||
              key.ddKey() == DDKEY_UPARROW    ||
-             key.ddKey() == DDKEY_DOWNARROW))
+             key.ddKey() == DDKEY_DOWNARROW  ))
         {
             root().focusIndicator().fadeIn();
             root().setFocus(d->findAdjacentWidgetToFocus(
@@ -1100,17 +1124,17 @@ void GuiWidget::drawBlurredRect(Rectanglei const &rect, Vector4f const &color, f
 
 void GuiWidget::requestGeometry(bool yes)
 {
-    d->needGeometry = yes;
+    applyFlagOperation(d->flags, Impl::NeedGeometry, yes);
 }
 
 bool GuiWidget::geometryRequested() const
 {
-    return d->needGeometry;
+    return (d->flags & Impl::NeedGeometry) != 0;
 }
 
 bool GuiWidget::isInitialized() const
 {
-    return d->inited;
+    return (d->flags & Impl::Inited) != 0;
 }
 
 bool GuiWidget::canBeFocused() const
@@ -1146,7 +1170,7 @@ PopupWidget *GuiWidget::findParentPopup() const
     return nullptr;
 }
 
-void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
+void GuiWidget::glMakeGeometry(GuiVertexBuilder &verts)
 {
     auto &rootWgt = root();
     float const thick = d->toDevicePixels(d->background.thickness);
@@ -1227,7 +1251,7 @@ bool GuiWidget::hasChangedPlace(Rectanglei &currentPlace)
 
 bool GuiWidget::hasBeenUpdated() const
 {
-    return !d->firstUpdateAfterCreation;
+    return !(d->flags & Impl::FirstUpdateAfterCreation);
 }
 
 void GuiWidget::updateStyle()
@@ -1242,7 +1266,9 @@ void GuiWidget::preDrawChildren()
 {
     if (behavior().testFlag(ChildVisibilityClipping))
     {
-        GLState::push().setNormalizedScissor(normalizedRect());
+        auto &painter = root().painter();
+        d->oldClip = painter.normalizedScissor();
+        painter.setNormalizedScissor(d->oldClip & normalizedRect());
     }
 }
 
@@ -1250,7 +1276,7 @@ void GuiWidget::postDrawChildren()
 {
     if (behavior().testFlag(ChildVisibilityClipping))
     {
-        GLState::pop();
+        root().painter().setNormalizedScissor(d->oldClip);
     }
 
     // Focus indicator is an overlay.

@@ -30,9 +30,9 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
     Rangei range;
     Rangef visualRange    { 0, 1 };
     Animation pos         { 0, Animation::Linear };
-    bool posChanging      = false;
     float angle           = 0;
     float rotationSpeed   = 20;
+    bool posChanging      = false;
     bool mini             = false;
     Id gearTex;
     DotPath colorId       { "progress.light.wheel" };
@@ -76,7 +76,7 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
         gearTex = Id::None;
     }
 
-    void makeRingGeometry(DefaultVertexBuf::Builder &verts)
+    void makeRingGeometry(GuiVertexBuilder &verts)
     {
         ContentLayout layout;
         self().contentLayout(layout);
@@ -119,8 +119,8 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
 
         Matrix4f const rotation = Matrix4f::rotateAround(tc.middle(), -angle);
 
-        DefaultVertexBuf::Builder gear;
-        DefaultVertexBuf::Type v;
+        GuiVertexBuilder gear;
+        GuiVertex v;
         v.rgba = style().colors().colorf(colorId) * Vector4f(1, 1, 1, mini? 1.f : 1.9f);
 
         for (int i = 0; i <= edgeCount; ++i)
@@ -141,7 +141,7 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
         verts += gear;
     }
 
-    void makeDotsGeometry(DefaultVertexBuf::Builder &verts)
+    void makeDotsGeometry(GuiVertexBuilder &verts)
     {
         Image::Size const dotSize = atlas().imageRect(root().tinyDot()).size();
 
@@ -316,7 +316,7 @@ void ProgressWidget::glDeinit()
     LabelWidget::glDeinit();
 }
 
-void ProgressWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
+void ProgressWidget::glMakeGeometry(GuiVertexBuilder &verts)
 {
     DENG2_GUARD(d);
 

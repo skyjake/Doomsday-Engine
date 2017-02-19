@@ -106,7 +106,7 @@ public:
         release();
     }
 
-    void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect)
+    void glMakeGeometry(GuiVertexBuilder &verts, Rectanglef const &rect)
     {
         if (_atlas)
         {

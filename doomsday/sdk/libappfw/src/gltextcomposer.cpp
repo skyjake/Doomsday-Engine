@@ -436,7 +436,7 @@ void GLTextComposer::forceUpdate()
     d->needRedo = true;
 }
 
-void GLTextComposer::makeVertices(Vertices &triStrip,
+void GLTextComposer::makeVertices(GuiVertexBuilder &triStrip,
                                   Vector2i const &topLeft,
                                   Alignment const &lineAlign,
                                   Vector4f const &color)
@@ -444,7 +444,7 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
     makeVertices(triStrip, Rectanglei(topLeft, topLeft), AlignTopLeft, lineAlign, color);
 }
 
-void GLTextComposer::makeVertices(Vertices &triStrip,
+void GLTextComposer::makeVertices(GuiVertexBuilder &triStrip,
                                   Rectanglei const &rect,
                                   Alignment const &alignInRect,
                                   Alignment const &lineAlign,

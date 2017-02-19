@@ -32,8 +32,6 @@ using namespace ui;
 DENG_GUI_PIMPL(LabelWidget),
 public Font::RichFormat::IStyle
 {
-    typedef DefaultVertexBuf VertexBuf;
-
     AssetGroup assets;
     SizePolicy horizPolicy;
     SizePolicy vertPolicy;
@@ -77,11 +75,13 @@ public Font::RichFormat::IStyle
     mutable Vector2ui latestTextSize;
     bool wasVisible;
 
-    QScopedPointer<ProceduralImage> image;
-    QScopedPointer<ProceduralImage> overlayImage;
-    Drawable drawable;
-    GLUniform uMvpMatrix;
-    GLUniform uColor;
+    std::unique_ptr<ProceduralImage> image;
+    std::unique_ptr<ProceduralImage> overlayImage;
+    GuiVertexBuilder verts;
+    GLProgram *extProgram;
+    //Drawable drawable;
+    //GLUniform uMvpMatrix;
+    //GLUniform uColor;
 
     Impl(Public *i)
         : Base(i)
@@ -104,15 +104,16 @@ public Font::RichFormat::IStyle
         , shaderId    ("generic.textured.color_ucolor")
         , richStyle   (0)
         , wasVisible  (true)
-        , uMvpMatrix  ("uMvpMatrix", GLUniform::Mat4)
-        , uColor      ("uColor",     GLUniform::Vec4)
+        , extProgram  (nullptr)
+        //, uMvpMatrix  ("uMvpMatrix", GLUniform::Mat4)
+        //, uColor      ("uColor",     GLUniform::Vec4)
     {
         width     = new ConstantRule(0);
         height    = new ConstantRule(0);
         minHeight = new IndirectRule;
         outHeight = new OperatorRule(OperatorRule::Maximum, *height, *minHeight);
 
-        uColor = Vector4f(1, 1, 1, 1);
+        //uColor = Vector4f(1, 1, 1, 1);
         updateStyle();
 
         // The readiness of the LabelWidget depends on glText being ready.
@@ -203,18 +204,18 @@ public Font::RichFormat::IStyle
 
     void glInit()
     {
-        drawable.addBuffer(new VertexBuf);
+        /*drawable.addBuffer(new VertexBuf);
         shaders().build(drawable.program(), shaderId)
-                << uMvpMatrix << uColor << uAtlas();
+                << uMvpMatrix << uColor << uAtlas();*/
 
         glText.init(atlas(), self().font(), this);
 
-        if (!image.isNull())
+        if (image)
         {
             image->glInit();
         }
 
-        if (!overlayImage.isNull())
+        if (overlayImage)
         {
             overlayImage->glInit();
         }
@@ -222,13 +223,14 @@ public Font::RichFormat::IStyle
 
     void glDeinit()
     {
-        drawable.clear();
+        verts.clear();
+        //drawable.clear();
         glText.deinit();
-        if (!image.isNull())
+        if (image)
         {
             image->glDeinit();
         }
-        if (!overlayImage.isNull())
+        if (overlayImage)
         {
             overlayImage->glDeinit();
         }
@@ -236,7 +238,7 @@ public Font::RichFormat::IStyle
 
     bool hasImage() const
     {
-        return !image.isNull() && image->size() != ProceduralImage::Size(0, 0);
+        return image && image->size() != ProceduralImage::Size(0, 0);
     }
 
     bool hasText() const
@@ -246,7 +248,7 @@ public Font::RichFormat::IStyle
 
     Vector2f imageSize() const
     {
-        Vector2f size = image.isNull()? Vector2f() : image->size();
+        Vector2f size = image? image->size() : Vector2f();
         // Override components separately.
         if (overrideImageSize.x > 0)
         {
@@ -513,11 +515,11 @@ public Font::RichFormat::IStyle
     void updateGeometry()
     {
         // Update the image on the atlas.
-        if (!image.isNull() && image->update())
+        if (image && image->update())
         {
             self().requestGeometry();
         }
-        if (!overlayImage.isNull() && overlayImage->update())
+        if (overlayImage && overlayImage->update())
         {
             self().requestGeometry();
         }
@@ -537,9 +539,10 @@ public Font::RichFormat::IStyle
             return;
         }
 
-        VertexBuf::Builder verts;
+        verts.clear();
+        //VertexBuf::Builder verts;
         self().glMakeGeometry(verts);
-        drawable.buffer<VertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Static);
+        //drawable.buffer<VertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Static);
 
         self().requestGeometry(false);
     }
@@ -548,8 +551,34 @@ public Font::RichFormat::IStyle
     {
         updateGeometry();
 
-        self().updateModelViewProjection(uMvpMatrix);
-        drawable.draw();
+        //self().updateModelViewProjection(uMvpMatrix);
+        //drawable.draw();
+
+        if (verts)
+        {
+            auto &painter = root().painter();
+
+            Matrix4f mvp;
+            bool const isCustomMvp = self().updateModelViewProjection(mvp);
+            if (isCustomMvp)
+            {
+                painter.setModelViewProjection(mvp);
+            }
+            if (extProgram)
+            {
+                painter.setProgram(*extProgram);
+            }
+            painter.setColor(Vector4f(1, 1, 1, self().visibleOpacity()));
+            painter.drawTriangleStrip(verts);
+            if (extProgram)
+            {
+                painter.useDefaultProgram();
+            }
+            if (isCustomMvp)
+            {
+                painter.setModelViewProjection(self().root().projMatrix2D());
+            }
+        }
     }
 
     Rule const *widthRule() const
@@ -634,7 +663,7 @@ void LabelWidget::setStyleImage(DotPath const &id, String const &heightFromFont)
 
 ProceduralImage *LabelWidget::image() const
 {
-    return d->image.data();
+    return d->image.get();
 }
 
 void LabelWidget::setOverlayImage(ProceduralImage *overlayProcImage, ui::Alignment const &alignment)
@@ -806,7 +835,7 @@ void LabelWidget::update()
 
 void LabelWidget::drawContent()
 {
-    d->uColor = Vector4f(1, 1, 1, visibleOpacity());
+    //d->uColor = Vector4f(1, 1, 1, visibleOpacity());
     d->draw();
 }
 
@@ -825,7 +854,7 @@ void LabelWidget::glDeinit()
     d->glDeinit();
 }
 
-void LabelWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
+void LabelWidget::glMakeGeometry(GuiVertexBuilder &verts)
 {
     // Background/frame.
     GuiWidget::glMakeGeometry(verts);
@@ -859,7 +888,7 @@ void LabelWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
         d->glText.makeVertices(verts, layout.text, d->lineAlign, d->lineAlign, d->textGLColor);
     }
 
-    if (!d->overlayImage.isNull())
+    if (d->overlayImage)
     {
         Rectanglef rect = Rectanglef::fromSize(d->overlayImage->size());
         applyAlignment(d->overlayAlign, rect, contentRect());
@@ -872,16 +901,16 @@ void LabelWidget::updateStyle()
     d->updateStyle();
 }
 
-void LabelWidget::updateModelViewProjection(GLUniform &uMvp)
+bool LabelWidget::updateModelViewProjection(Matrix4f &)
 {
-    uMvp = root().projMatrix2D();
+    return false;
 }
 
-void LabelWidget::viewResized()
+/*void LabelWidget::viewResized()
 {
     GuiWidget::viewResized();
     updateModelViewProjection(d->uMvpMatrix);
-}
+}*/
 
 void LabelWidget::setWidthPolicy(SizePolicy policy)
 {
@@ -924,7 +953,12 @@ void LabelWidget::setAppearanceAnimation(AppearanceAnimation method, TimeDelta c
     }
 }
 
-void LabelWidget::setShaderId(DotPath const &shaderId)
+void LabelWidget::setCustomShader(GLProgram *program)
+{
+    d->extProgram = program;
+}
+
+/*void LabelWidget::setShaderId(DotPath const &shaderId)
 {
     d->shaderId = shaderId;
 }
@@ -932,7 +966,7 @@ void LabelWidget::setShaderId(DotPath const &shaderId)
 GLProgram &LabelWidget::shaderProgram()
 {
     return d->drawable.program();
-}
+}*/
 
 LabelWidget *LabelWidget::newWithText(String const &label, GuiWidget *parent)
 {

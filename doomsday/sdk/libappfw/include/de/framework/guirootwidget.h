@@ -30,8 +30,9 @@
 
 namespace de {
 
-class GuiWidget;
 class FocusWidget;
+class GuiWidget;
+class Painter;
 
 /**
  * Graphical root widget.
@@ -74,6 +75,8 @@ public:
     Id styleTexture(DotPath const &styleImagePath) const;
 
     static GLShaderBank &shaders();
+
+    Painter &painter();
 
     /**
      * Returns the default projection for 2D graphics.

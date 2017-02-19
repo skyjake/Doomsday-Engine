@@ -38,7 +38,7 @@ static duint const ID_BUF_CURSOR = 2;
 
 DENG_GUI_PIMPL(LineEditWidget)
 {
-    typedef GLBufferT<Vertex2TexRgba> VertexBuf;
+    typedef GLBufferT<GuiVertex> VertexBuf;
 
     AnimationRule *height;
     FontLineWrapping &wraps;
@@ -324,7 +324,7 @@ void LineEditWidget::glDeinit()
     d->glDeinit();
 }
 
-void LineEditWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
+void LineEditWidget::glMakeGeometry(GuiVertexBuilder &verts)
 {
     GuiWidget::glMakeGeometry(verts);
 
@@ -385,7 +385,7 @@ void LineEditWidget::focusLost()
 
     if (d->hint && d->showingHint())
     {
-        d->hint->setOpacity(1, 1, .5f);
+        d->hint->setOpacity(1, 1, 0.5);
     }
 }
 
@@ -408,6 +408,8 @@ void LineEditWidget::update()
 
 void LineEditWidget::drawContent()
 {
+    root().painter().flush();
+
     float const opac = visibleOpacity();
 
     // Blink the cursor.

@@ -46,7 +46,7 @@ public:
     de::Rule const &shift();
 
     // Events.
-    void viewResized();
+    //void viewResized();
     void update();
     void drawContent();
     bool handleEvent(de::Event const &event);

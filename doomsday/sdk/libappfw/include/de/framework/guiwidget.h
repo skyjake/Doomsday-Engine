@@ -23,6 +23,7 @@
 #include <de/RuleRectangle>
 #include <de/MouseEvent>
 #include <de/GLBuffer>
+#include <de/Painter>
 #include <QObject>
 
 #include "../Style"
@@ -305,6 +306,7 @@ public:
     void setFont(DotPath const &id);
     void setTextColor(DotPath const &id);
     void set(Background const &bg);
+    void setSaturation(float saturation);
 
     Font const &font() const;
     DotPath const &fontId() const;
@@ -542,7 +544,7 @@ protected:
      *
      * @param verts  Vertex builder.
      */
-    virtual void glMakeGeometry(DefaultVertexBuf::Builder &verts);
+    virtual void glMakeGeometry(GuiVertexBuilder &verts);
 
     /**
      * Checks if the widget's rectangle has changed.

@@ -35,11 +35,6 @@ namespace de {
  * the ChildWidgetOrganizer::IWidgetFactory interface. Also, third parties
  * may observe widget creation and updates and alter the widget as they choose.
  *
- * @todo Virtualization: it is not required that all the items of the context
- * are represented by widgets on screen at the same time. In contexts with
- * large numbers of items, virtualization should be applied to keep only a
- * subset/range of items present as widgets.
- *
  * @ingroup appfw
  */
 class LIBAPPFW_PUBLIC ChildWidgetOrganizer
@@ -125,7 +120,7 @@ public:
     void setVirtualizationEnabled(bool enabled);
 
     /**
-     * Enables or disables child recycling. Deleted children will be put up for 
+     * Enables or disables child recycling. Deleted children will be put up for
      * recycling instead of being deleted, and new children will first be taken
      * from the set of old recycled widgets.
      *

@@ -42,7 +42,7 @@ DENG_GUI_PIMPL(LogWidget),
 DENG2_OBSERVES(Atlas, OutOfSpace),
 public Font::RichFormat::IStyle
 {
-    typedef GLBufferT<Vertex2TexRgba> VertexBuf;
+    typedef GLBufferT<GuiVertex> VertexBuf;
 
     /**
      * Cached log entry ready for drawing. TextDrawable takes the styled text of the
@@ -212,7 +212,7 @@ public Font::RichFormat::IStyle
             return update() + heightDelta;
         }
 
-        void make(GLTextComposer::Vertices &verts, int y)
+        void make(GuiVertexBuilder &verts, int y)
         {
             DENG2_ASSERT(isReady());
             drawable.makeVertices(verts, Vector2i(0, y), AlignLeft);
@@ -865,6 +865,7 @@ void LogWidget::update()
 
 void LogWidget::drawContent()
 {
+    root().painter().flush();
     d->draw();
     ScrollAreaWidget::drawContent();
 }

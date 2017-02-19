@@ -48,7 +48,7 @@ DENG2_PIMPL_NOREF(FoldPanelWidget)
 
         /// We'll report the status as changed if the image was animating or its
         /// size was updated.
-        bool update()
+        bool update() override
         {
             bool changed = animating;
 
@@ -78,7 +78,7 @@ DENG2_PIMPL_NOREF(FoldPanelWidget)
             return changed;
         }
 
-        void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect)
+        void glMakeGeometry(GuiVertexBuilder &verts, Rectanglef const &rect) override
         {
             GuiRootWidget &root = fold.root();
             Atlas &atlas = root.atlas();

@@ -143,11 +143,11 @@ public:
      */
     void enableIndicatorDraw(bool enabled);
 
-    void glMakeScrollIndicatorGeometry(DefaultVertexBuf::Builder &verts,
+    void glMakeScrollIndicatorGeometry(GuiVertexBuilder &verts,
                                        Vector2f const &origin = Vector2f(0, 0));
 
     // Events.
-    void viewResized() override;
+    //void viewResized() override;
     void update() override;
     void drawContent() override;
     bool handleEvent(Event const &event) override;

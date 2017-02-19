@@ -21,6 +21,7 @@
 
 #include <de/Vector>
 #include <de/GLBuffer>
+#include <de/Painter>
 
 #include "../libappfw.h"
 
@@ -39,7 +40,7 @@ class LIBAPPFW_PUBLIC ProceduralImage
 public:
     typedef Vector2f Size;
     typedef Vector4f Color;
-    typedef GLBufferT<Vertex2TexRgba> DefaultVertexBuf;
+    //typedef GLBufferT<Vertex2TexRgba> DefaultVertexBuf;
 
 public:
     ProceduralImage(Size const &size = Size());
@@ -61,7 +62,7 @@ public:
 
     virtual void glInit(); // called repeatedly
     virtual void glDeinit();
-    virtual void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect) = 0;
+    virtual void glMakeGeometry(GuiVertexBuilder &verts, Rectanglef const &rect) = 0;
 
     DENG2_AS_IS_METHODS()
 

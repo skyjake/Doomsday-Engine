@@ -10,6 +10,7 @@
 
 @include <shaders/generic.dei>
 @include <shaders/fx-blur.dei>
+@include <shaders/batch.dei>
 
 group vr {
     group oculusrift {

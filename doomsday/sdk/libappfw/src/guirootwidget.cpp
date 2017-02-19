@@ -17,17 +17,18 @@
  */
 
 #include "de/GuiRootWidget"
-#include "de/GuiWidget"
 #include "de/BaseGuiApp"
-#include "de/Style"
 #include "de/BaseWindow"
 #include "de/FocusWidget"
+#include "de/GuiWidget"
+#include "de/Painter"
+#include "de/Style"
 
-#include <de/GLWindow>
-#include <de/TextureBank>
-#include <de/GLUniform>
 #include <de/GLFramebuffer>
 #include <de/GLState>
+#include <de/GLUniform>
+#include <de/GLWindow>
+#include <de/TextureBank>
 
 #include <QImage>
 #include <QPainter>
@@ -120,6 +121,7 @@ DENG2_PIMPL(GuiRootWidget)
     QScopedPointer<AtlasTexture> atlas; ///< Shared atlas for most UI graphics/text.
     GLUniform uTexAtlas;
     TextureBank texBank; ///< Bank for the atlas contents.
+    Painter painter;
     FocusWidget *focusIndicator;
     bool noFramesDrawnYet;
     QList<SafeWidgetPtr<Widget> *> focusStack;
@@ -308,6 +310,11 @@ GLShaderBank &GuiRootWidget::shaders()
     return BaseGuiApp::shaders();
 }
 
+Painter &GuiRootWidget::painter()
+{
+    return d->painter;
+}
+
 Matrix4f GuiRootWidget::projMatrix2D() const
 {
     RootWidget::Size const size = viewSize();
@@ -431,16 +438,27 @@ void GuiRootWidget::draw()
     dsize const depthBeforeDrawing = GLState::stackDepth();
 #endif
 
+    d->painter.init();
+    d->painter.setModelViewProjection(projMatrix2D());
+    d->painter.setTexture(uAtlas());
+    d->painter.setNormalizedScissor();
+
     RootWidget::draw();
+
+    d->painter.flush();
 
     DENG2_ASSERT(GLState::stackDepth() == depthBeforeDrawing);
 }
 
 void GuiRootWidget::drawUntil(Widget &until)
 {
+    d->painter.setNormalizedScissor();
+
     NotifyArgs args = notifyArgsForDraw();
     args.until = &until;
     notifyTree(args);
+
+    d->painter.flush();
 }
 
 } // namespace de

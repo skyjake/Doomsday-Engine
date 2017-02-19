@@ -57,7 +57,7 @@ DENG2_OBSERVES(ButtonWidget, Press)
             _pos.finish();
         }
 
-        bool update()
+        bool update() override
         {
             if (_animating)
             {
@@ -67,7 +67,7 @@ DENG2_OBSERVES(ButtonWidget, Press)
             return false;
         }
 
-        void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect)
+        void glMakeGeometry(GuiVertexBuilder &verts, Rectanglef const &rect) override
         {
             float p = _pos;
 

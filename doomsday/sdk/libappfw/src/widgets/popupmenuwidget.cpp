@@ -65,7 +65,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
             setSize(Vector2f(1, 1));
         }
 
-        void glInit()
+        void glInit() override
         {
             if (_id.isNone())
             {
@@ -73,12 +73,12 @@ DENG_GUI_PIMPL(PopupMenuWidget)
             }
         }
 
-        void glDeinit()
+        void glDeinit() override
         {
             _id = Id::None;
         }
 
-        void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect)
+        void glMakeGeometry(GuiVertexBuilder &verts, Rectanglef const &rect) override
         {
             if (!_id.isNone())
             {
@@ -455,7 +455,7 @@ void PopupMenuWidget::update()
     d->updateIfScrolled();
 }
 
-void PopupMenuWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
+void PopupMenuWidget::glMakeGeometry(GuiVertexBuilder &verts)
 {
     PopupWidget::glMakeGeometry(verts);
 

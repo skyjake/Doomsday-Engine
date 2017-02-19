@@ -118,7 +118,7 @@ public:
     bool handleEvent(Event const &event) override;
 
 protected:
-    void glMakeGeometry(DefaultVertexBuf::Builder &verts) override;
+    void glMakeGeometry(GuiVertexBuilder &verts) override;
     void updateStyle() override;
 
     void preparePanelForOpening() override;

@@ -48,7 +48,7 @@ public:
     void update() override;
 
 protected:
-    void glMakeGeometry(DefaultVertexBuf::Builder &verts) override;
+    void glMakeGeometry(GuiVertexBuilder &verts) override;
     void preparePanelForOpening() override;
     void panelClosing() override;
 

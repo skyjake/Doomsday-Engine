@@ -132,7 +132,7 @@ signals:
     void pressed();
 
 protected:
-    void updateModelViewProjection(GLUniform &uMvp) override;
+    bool updateModelViewProjection(Matrix4f &mvp) override;
     void updateStyle() override;
 
 private:

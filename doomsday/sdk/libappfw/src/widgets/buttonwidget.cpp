@@ -394,19 +394,19 @@ bool ButtonWidget::handleEvent(Event const &event)
     return LabelWidget::handleEvent(event);
 }
 
-void ButtonWidget::updateModelViewProjection(GLUniform &uMvp)
+bool ButtonWidget::updateModelViewProjection(Matrix4f &mvp)
 {
-    uMvp = root().projMatrix2D();
-
     if (!fequal(d->scale, 1.f))
     {
         Rectanglef const &pos = rule().rect();
 
         // Apply a scale animation to indicate button response.
-        uMvp = uMvp.toMatrix4f() *
-                Matrix4f::scaleThenTranslate(d->scale, pos.middle()) *
-                Matrix4f::translate(-pos.middle());
+        mvp = root().projMatrix2D() *
+              Matrix4f::scaleThenTranslate(d->scale, pos.middle()) *
+              Matrix4f::translate(-pos.middle());
+        return true;
     }
+    return false;
 }
 
 void ButtonWidget::updateStyle()

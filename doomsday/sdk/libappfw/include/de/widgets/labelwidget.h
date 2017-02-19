@@ -253,14 +253,22 @@ public:
      */
     void setAppearanceAnimation(AppearanceAnimation method, TimeDelta const &span = 0.0);
 
-    void setShaderId(DotPath const &shaderId);
+    //void setShaderId(DotPath const &shaderId);
 
-    GLProgram &shaderProgram();
+    //GLProgram &shaderProgram();
+
+    /**
+     * Sets a custom shader used when rendering the widget.
+     *
+     * @param program  Shader program. Ownership not taken. @c nullptr to use the
+     *                 default UI shader.
+     */
+    void setCustomShader(GLProgram *program);
 
     // Events.
-    void viewResized();
-    void update();
-    void drawContent();
+    //void viewResized() override;
+    void update() override;
+    void drawContent() override;
 
     struct ContentLayout {
         Rectanglef image;
@@ -273,16 +281,17 @@ public:
     static LabelWidget *newWithText(String const &label, GuiWidget *parent = 0);
 
 protected:
-    void glInit();
-    void glDeinit();
-    void glMakeGeometry(DefaultVertexBuf::Builder &verts);
-    void updateStyle();
+    void glInit() override;
+    void glDeinit() override;
+    void glMakeGeometry(GuiVertexBuilder &verts) override;
+    void updateStyle() override;
 
     /**
      * Called before drawing to update the model-view-projection matrix.
      * Derived classes may override this to set a custom matrix for the label.
+     * @return @c true, if a customized matrix was set.
      */
-    virtual void updateModelViewProjection(GLUniform &uMvp);
+    virtual bool updateModelViewProjection(Matrix4f &mvp);
 
 private:
     DENG2_PRIVATE(d)

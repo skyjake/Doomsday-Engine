@@ -63,7 +63,7 @@ public:
     ddouble displayFactor() const;
 
     // Events.
-    void viewResized();
+//    void viewResized();
     void update();
     void drawContent();
     bool handleEvent(Event const &event);

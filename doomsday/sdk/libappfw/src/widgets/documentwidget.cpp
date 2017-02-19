@@ -24,13 +24,13 @@
 
 namespace de {
 
-static int const ID_BACKGROUND = 1; // does not scroll
-static int const ID_TEXT = 2;       // scrolls
+//static int const ID_BACKGROUND = 1; // does not scroll
+//static int const ID_TEXT = 2;       // scrolls
 
 DENG_GUI_PIMPL(DocumentWidget),
 public Font::RichFormat::IStyle
 {
-    typedef DefaultVertexBuf VertexBuf;
+    //typedef DefaultVertexBuf VertexBuf;
 
     ProgressWidget *progress = nullptr;
 
@@ -51,12 +51,15 @@ public Font::RichFormat::IStyle
 
     // GL objects.
     TextDrawable glText;
-    Drawable drawable;
-    Matrix4f modelMatrix;
-    GLState clippedTextState;
-    GLUniform uMvpMatrix       { "uMvpMatrix", GLUniform::Mat4 };
-    GLUniform uScrollMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
-    GLUniform uColor           { "uColor",     GLUniform::Vec4 };
+    //Drawable drawable;
+    //Matrix4f modelMatrix;
+    //GLState clippedTextState;
+    //GLUniform uMvpMatrix       { "uMvpMatrix", GLUniform::Mat4 };
+    //GLUniform uScrollMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
+    //GLUniform uColor           { "uColor",     GLUniform::Vec4 };
+    GuiVertexBuilder bgVerts;
+    GuiVertexBuilder textVerts;
+    Matrix4f scrollMvpMatrix;
 
     Impl(Public *i) : Base(i)
     {
@@ -140,7 +143,7 @@ public Font::RichFormat::IStyle
 
         self().setIndicatorUv(atlas().imageRectf(root().solidWhitePixel()).middle());
 
-        drawable.addBuffer(ID_BACKGROUND, new VertexBuf);
+        /*drawable.addBuffer(ID_BACKGROUND, new VertexBuf);
         drawable.addBuffer(ID_TEXT,       new VertexBuf);
 
         shaders().build(drawable.program(), "generic.textured.color_ucolor")
@@ -149,14 +152,16 @@ public Font::RichFormat::IStyle
         shaders().build(drawable.addProgram(ID_TEXT), "generic.textured.color_ucolor")
                 << uScrollMvpMatrix << uColor << uAtlas();
         drawable.setProgram(ID_TEXT, drawable.program(ID_TEXT));
-        drawable.setState(ID_TEXT, clippedTextState);
+        drawable.setState(ID_TEXT, clippedTextState);*/
     }
 
     void glDeinit()
     {
         atlas().audienceForReposition() -= this;
         glText.deinit();
-        drawable.clear();
+        //drawable.clear();
+        bgVerts.clear();
+        textVerts.clear();
     }
 
     void atlasContentRepositioned(Atlas &atlas)
@@ -208,12 +213,13 @@ public Font::RichFormat::IStyle
         if (!self().geometryRequested()) return;
 
         // Background and scroll indicator.
-        VertexBuf::Builder verts;
-        self().glMakeGeometry(verts);
-        drawable.buffer<VertexBuf>(ID_BACKGROUND)
-                .setVertices(gl::TriangleStrip, verts, self().isScrolling()? gl::Dynamic : gl::Static);
+        bgVerts.clear();
+        //VertexBuf::Builder verts;
+        self().glMakeGeometry(bgVerts);
+        /*drawable.buffer<VertexBuf>(ID_BACKGROUND)
+                .setVertices(gl::TriangleStrip, verts, self().isScrolling()? gl::Dynamic : gl::Static);*/
 
-        uMvpMatrix = root().projMatrix2D();
+        //uMvpMatrix = root().projMatrix2D();
 
         if (!progress->isVisible())
         {
@@ -233,15 +239,16 @@ public Font::RichFormat::IStyle
                 glText.setRange(visRange);
                 glText.update(); // alloc visible lines
 
-                VertexBuf::Builder verts;
-                glText.makeVertices(verts, Vector2i(0, 0), ui::AlignLeft);
-                drawable.buffer<VertexBuf>(ID_TEXT).setVertices(gl::TriangleStrip, verts, gl::Static);
+                //VertexBuf::Builder verts;
+                textVerts.clear();
+                glText.makeVertices(textVerts, Vector2i(0, 0), ui::AlignLeft);
+                //drawable.buffer<VertexBuf>(ID_TEXT).setVertices(gl::TriangleStrip, verts, gl::Static);
 
                 // Update content size to match the generated vertices exactly.
                 self().setContentWidth(glText.verticesMaxWidth());
             }
 
-            uScrollMvpMatrix = root().projMatrix2D() *
+            scrollMvpMatrix = root().projMatrix2D() *
                     Matrix4f::translate(Vector2f(self().contentRule().left().valuei(),
                                                  self().contentRule().top().valuei()));
         }
@@ -254,13 +261,35 @@ public Font::RichFormat::IStyle
     {
         updateGeometry();
 
-        uColor = Vector4f(1, 1, 1, self().visibleOpacity());
+        //painter.flush();
 
-        // Update the scissor for the text.
-        clippedTextState = GLState::current();
-        clippedTextState.setNormalizedScissor(self().normalizedContentRect());
+        Vector4f const color = Vector4f(1, 1, 1, self().visibleOpacity());
 
-        drawable.draw();
+        auto &painter = root().painter();
+        if (bgVerts)
+        {
+            painter.setColor(color);
+            painter.drawTriangleStrip(bgVerts);
+        }
+        if (textVerts)
+        {
+            painter.setModelViewProjection(scrollMvpMatrix);
+
+            // Update the scissor for the text.
+            auto const oldClip = painter.normalizedScissor();
+            painter.setNormalizedScissor(oldClip & self().normalizedContentRect());
+        //GLState::push()
+        //clippedTextState = GLState::current();
+        /*clippedTextState.setNormalizedScissor(self().normalizedContentRect());*/
+
+        //drawable.draw();
+            painter.setColor(color);
+            painter.drawTriangleStrip(textVerts);
+            painter.setNormalizedScissor(oldClip);
+            painter.setModelViewProjection(root().projMatrix2D());
+        }
+
+        //GLState::pop();
     }
 };
 
@@ -279,10 +308,11 @@ void DocumentWidget::setText(String const &styledText)
     if (styledText != d->glText.text())
     {
         // Show the progress indicator until the text is ready for drawing.
-        if (d->drawable.hasBuffer(ID_TEXT))
+        d->textVerts.clear();
+        /*if (d->drawable.hasBuffer(ID_TEXT))
         {
             d->drawable.buffer(ID_TEXT).clear();
-        }
+        }*/
 
         d->progress->show();
 
@@ -332,7 +362,7 @@ void DocumentWidget::viewResized()
 {
     ScrollAreaWidget::viewResized();
 
-    d->uMvpMatrix = root().projMatrix2D();
+    //d->uMvpMatrix = root().projMatrix2D();
     requestGeometry();
 }
 

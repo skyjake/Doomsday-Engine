@@ -85,7 +85,7 @@ signals:
 protected:
     void glInit() override;
     void glDeinit() override;
-    void glMakeGeometry(DefaultVertexBuf::Builder &verts) override;
+    void glMakeGeometry(GuiVertexBuilder &verts) override;
     void updateStyle() override;
 
     int maximumWidth() const override;
