@@ -618,9 +618,9 @@ void App::initSubsystems(SubsystemInitFlags flags)
         {
             ZipArchive arch;
             arch.add("Info", String(QString("# Package for %1's persistent state.\n").arg(d->appName)).toUtf8());
-            Writer(homeFolder().replaceFile("persist.pack")) << arch;
-
-            homeFolder().populate(Folder::PopulateOnlyThisFolder);
+            File &persistPack = homeFolder().replaceFile("persist.pack");
+            Writer(persistPack) << arch;
+            persistPack.reinterpret()->as<ArchiveFolder>().populate();
         }
 
         // Load the persistent data.
