@@ -108,9 +108,12 @@ public:
     GLUniform &operator = (GLTexture const &texture);
     GLUniform &operator = (GLTexture const *texture);
 
+    GLUniform &set(duint elementIndex, dfloat value);
     GLUniform &set(duint elementIndex, Vector3f const &vec);
     GLUniform &set(duint elementIndex, Vector4f const &vec);
     GLUniform &set(duint elementIndex, Matrix4f const &mat);
+
+    GLUniform &setUsedElementCount(duint elementCount);
 
     GLUniform &set(float const *floatArray, dsize count);
     GLUniform &set(Vector4f const *vectorArray, dsize count);

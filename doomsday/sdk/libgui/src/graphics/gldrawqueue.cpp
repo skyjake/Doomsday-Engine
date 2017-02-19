@@ -38,12 +38,12 @@ DENG2_PIMPL_NOREF(GLDrawQueue)
     GLBuffer indexBuffer;
 
     dsize batchIndex = 0;
-    Vector4f batchVectors   [GLShader::MAX_BATCH_UNIFORMS];
-    Vector4f batchScissors  [GLShader::MAX_BATCH_UNIFORMS];
-    float    batchSaturation[GLShader::MAX_BATCH_UNIFORMS];
+
+    /// @todo These uniforms should be configurable.
+
+    std::unique_ptr<GLUniform> uBatchVectors;
 
     Vector4f defaultScissor;
-    std::unique_ptr<GLUniform> uBatchVectors;
     GLUniform uBatchScissors { "uScissorRect", GLUniform::Vec4Array, GLShader::MAX_BATCH_UNIFORMS };
 
     float defaultSaturation = 1.f;
@@ -101,25 +101,23 @@ int GLDrawQueue::batchIndex() const
 
 void GLDrawQueue::setBufferVector(Vector4f const &vector)
 {
-    d->batchVectors[d->batchIndex] = vector;
+    if (d->uBatchVectors)
+    {
+        d->uBatchVectors->set(d->batchIndex, vector);
+    }
 }
 
 void GLDrawQueue::setBufferSaturation(float saturation)
 {
-    d->batchSaturation[d->batchIndex] = saturation;
+    d->uBatchSaturation.set(d->batchIndex, saturation);
     d->defaultSaturation = saturation;
 }
 
 void GLDrawQueue::setScissorRect(Vector4f const &scissor)
 {
-    d->batchScissors[d->batchIndex] = scissor;
+    d->uBatchScissors.set(d->batchIndex, scissor);
     d->defaultScissor = scissor;
 }
-
-/*void GLDrawQueue::setupBatch(GLUniform const &value)
-{
-    d->currentBatchValue = &value;
-}*/
 
 void GLDrawQueue::drawBuffer(GLSubBuffer const &buffer)
 {
@@ -154,8 +152,8 @@ void GLDrawQueue::drawBuffer(GLSubBuffer const &buffer)
             flush();
         }
         // Keep using the latest scissor.
-        d->batchScissors  [d->batchIndex] = d->defaultScissor;
-        d->batchSaturation[d->batchIndex] = d->defaultSaturation;
+        d->uBatchScissors  .set(d->batchIndex, d->defaultScissor);
+        d->uBatchSaturation.set(d->batchIndex, d->defaultSaturation);
     }
 
 #ifdef DENG2_DEBUG
@@ -176,35 +174,25 @@ void GLDrawQueue::flush()
 
         dsize const batchCount = d->batchIndex;
 
-        qDebug() << "[GLDrawQueue] Flushing" << d->indices.size() << "elements"
-                 << "consisting of" << batchCount << "batches";
+        /*qDebug() << "[GLDrawQueue] Flushing" << d->indices.size() << "elements"
+                 << "consisting of" << batchCount << "batches";*/
 
         d->indexBuffer.setIndices(gl::TriangleStrip, d->indices, gl::Dynamic);
         d->indices.clear();
 
         if (d->uBatchVectors)
         {
-            for (int j = 0; j < batchCount; ++j)
-            {
-                qDebug() << "\t" << j << d->batchScissors[j].asText();
-            }
-            d->uBatchVectors  ->set(d->batchVectors,    batchCount);
-            d->uBatchScissors  .set(d->batchScissors,   batchCount);
-            d->uBatchSaturation.set(d->batchSaturation, batchCount);
+            d->uBatchVectors  ->setUsedElementCount(batchCount);
+            d->uBatchScissors  .setUsedElementCount(batchCount);
+            d->uBatchSaturation.setUsedElementCount(batchCount);
         }
 
         d->currentProgram->beginUse();
-        d->currentBuffer->drawWithIndices(d->indexBuffer);
+        d->currentBuffer ->drawWithIndices(d->indexBuffer);
         d->currentProgram->endUse();
     }
     d->currentBuffer = nullptr;
     d->batchIndex = 0;
-}
-
-void GLDrawQueue::finish()
-{
-    flush();
-    d->unsetProgram();
 }
 
 } // namespace de

@@ -71,8 +71,6 @@ public:
      */
     void flush();
 
-    void finish();
-
 private:
     DENG2_PRIVATE(d)
 };

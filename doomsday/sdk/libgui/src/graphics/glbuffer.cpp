@@ -323,9 +323,10 @@ void GLBuffer::setIndices(Primitive primitive, dsize count, Index const *indices
     {
         d->allocIndices();
 
-        LIBGUI_GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
-        LIBGUI_GL.glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(Index), indices, Impl::glUsage(usage));
-        LIBGUI_GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        auto &GL = LIBGUI_GL;
+        GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
+        GL.glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(Index), indices, Impl::glUsage(usage));
+        GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
     else
     {
@@ -436,7 +437,7 @@ void GLBuffer::drawWithIndices(GLBuffer const &indexBuffer) const
 void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint count) const
 {
     if (!GLInfo::extensions().ARB_draw_instanced ||
-       !GLInfo::extensions().ARB_instanced_arrays) return;
+        !GLInfo::extensions().ARB_instanced_arrays) return;
 
     if (!isReady() || !instanceAttribs.isReady() || !GLProgram::programInUse()) return;
 

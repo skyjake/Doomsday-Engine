@@ -350,6 +350,19 @@ GLUniform &GLUniform::operator = (GLTexture const *texture)
     return *this;
 }
 
+GLUniform &GLUniform::set(duint elementIndex, dfloat value)
+{
+    DENG2_ASSERT(d->type == FloatArray);
+    DENG2_ASSERT(elementIndex < d->elemCount);
+
+    if (!fequal(d->value.floats[elementIndex], value))
+    {
+        d->value.floats[elementIndex] = value;
+        d->markAsChanged();
+    }
+    return *this;
+}
+
 GLUniform &GLUniform::set(duint elementIndex, Vector3f const &vec)
 {
     DENG2_ASSERT(d->type == Vec3Array);
@@ -409,6 +422,13 @@ GLUniform &GLUniform::set(Vector4f const *vectorArray, dsize count)
     memcpy(d->value.vector, vectorArray, sizeof(Vector4f) * count);
     d->usedElemCount = duint16(count);
     d->markAsChanged();
+    return *this;
+}
+
+GLUniform &GLUniform::setUsedElementCount(duint elementCount)
+{
+    DENG2_ASSERT(elementCount <= d->elemCount);
+    d->usedElemCount = elementCount;
     return *this;
 }
 
