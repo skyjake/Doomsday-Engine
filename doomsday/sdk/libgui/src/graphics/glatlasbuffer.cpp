@@ -80,7 +80,7 @@ DENG2_PIMPL_NOREF(GLAtlasBuffer)
         host->buffer.setFormat(format);
         host->buffer.setUninitializedData(elementSize * maxElementCount, usage);
         hostBuffers.append(host);
-        qDebug() << "[GLAtlasBuffer] Now have" << hostBuffers.size() << "buffers";
+        //qDebug() << "[GLAtlasBuffer] Now have" << hostBuffers.size() << "buffers";
         return *host;
     }
 
