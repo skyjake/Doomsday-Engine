@@ -658,14 +658,14 @@ FrameModel *FrameModel::loadFromFile(FileHandle &hndl, float aspectScale) //stat
     ModelFileType const *rtypeGuess = 0;
     String filePath = hndl.file().composePath();
     String ext      = filePath.fileNameExtension();
-    if(!ext.isEmpty())
+    if (!ext.isEmpty())
     {
         for (auto const &rtype : modelTypes)
         {
-            if(!rtype.ext.compareWithoutCase(ext))
+            if (!rtype.ext.compareWithoutCase(ext))
             {
                 rtypeGuess = &rtype;
-                if(FrameModel *mdl = rtype.loadFunc(hndl, aspectScale))
+                if (FrameModel *mdl = rtype.loadFunc(hndl, aspectScale))
                 {
                     LOG_RES_VERBOSE("Interpreted \"" + NativePath(filePath).pretty() + "\" as a " + rtype.name + " model");
                     return mdl;
@@ -676,14 +676,12 @@ FrameModel *FrameModel::loadFromFile(FileHandle &hndl, float aspectScale) //stat
     }
 
     // Not yet interpreted - try each known format in order.
-    for(int i = 0; !modelTypes[i].name.isEmpty(); ++i)
+    for (auto const &rtype : modelTypes)
     {
-        ModelFileType const &rtype = modelTypes[i];
-
         // Already tried this?
-        if(&rtype == rtypeGuess) continue;
+        if (&rtype == rtypeGuess) continue;
 
-        if(FrameModel *mdl = rtype.loadFunc(hndl, aspectScale))
+        if (FrameModel *mdl = rtype.loadFunc(hndl, aspectScale))
         {
             LOG_RES_VERBOSE("Interpreted \"" + NativePath(filePath).pretty() + "\" as a " + rtype.name + " model");
             return mdl;
