@@ -72,9 +72,8 @@ namespace internal
     }
 }
 
-DENG2_PIMPL(Font)
+namespace internal
 {
-    QFont referenceFont;
     struct ThreadFonts
     {
         PlatformFont font;
@@ -84,22 +83,28 @@ DENG2_PIMPL(Font)
             qDeleteAll(fontMods.values());
         }
     };
+}
 
-    /**
-     * Each thread uses its own independent set of native font instances. This allows
-     * background threads to freely measure and render text using the native font
-     * instances without any synchronization. Also note that these background threads are
-     * pooled, so there is only a fixed total number of threads accessing these objects.
-     */
-    QThreadStorage<ThreadFonts> fontsForThread;
+/**
+ * Each thread uses its own independent set of native font instances. This allows
+ * background threads to freely measure and render text using the native font
+ * instances without any synchronization. Also note that these background threads are
+ * pooled, so there is only a fixed total number of threads accessing these objects.
+ */
+static QThreadStorage<QHash<Font *, internal::ThreadFonts>> fontsForThread;
+
+DENG2_PIMPL(Font)
+{
+    QFont referenceFont;
+    internal::ThreadFonts *threadFonts = nullptr;
 
     ConstantRule *heightRule;
     ConstantRule *ascentRule;
     ConstantRule *descentRule;
     ConstantRule *lineSpacingRule;
-    int ascent;
+    int ascent = 0;
 
-    Impl(Public *i) : Base(i), ascent(0)
+    Impl(Public *i) : Base(i)
     {
         createRules();
     }
@@ -115,14 +120,13 @@ DENG2_PIMPL(Font)
             qDebug() << "\tStyles:" << db.styles(fam);
         }
 #endif
-
         createRules();
         updateMetrics();
     }
 
     ~Impl()
     {
-        //qDeleteAll(fontMods.values());
+        fontsForThread.localData().remove(thisPublic); // FIXME: not removed by all threads...
 
         releaseRef(heightRule);
         releaseRef(ascentRule);
@@ -141,13 +145,14 @@ DENG2_PIMPL(Font)
     /**
      * Initializes the current thread's platform fonts for this Font.
      */
-    ThreadFonts &getThreadFonts()
+    internal::ThreadFonts &getThreadFonts()
     {
-        if (!fontsForThread.hasLocalData())
+        auto &hash = fontsForThread.localData();
+        if (!hash.contains(thisPublic))
         {
-            fontsForThread.localData().font = PlatformFont(referenceFont);
+            hash[thisPublic].font = PlatformFont(referenceFont);
         }
-        return fontsForThread.localData();
+        return hash[thisPublic];
     }
 
     void updateMetrics()
