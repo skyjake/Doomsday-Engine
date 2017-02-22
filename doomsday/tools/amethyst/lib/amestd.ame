@@ -220,7 +220,7 @@ $ Doomsday Engine Wiki specific macros.
 	@macro{wikilink}{[[@glue{@arg{2}}@glue{|}@glue{@arg{1}}]]}
 }@else{
 	@macro{wikiterm}{@arg}
-	@macro{wikilink}{@link{@arg{1}}{http://dengine.net/dew/index.php?title=@arg{2}}}
+	@macro{wikilink}{@link{@arg{1}}{http://wiki.dengine.net/w/@arg{2}}}
 }
 @ifdef{TXT}{
 	$ Omit the hyperlinks in TXT files.
