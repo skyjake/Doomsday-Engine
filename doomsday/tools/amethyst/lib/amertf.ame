@@ -4,7 +4,7 @@ $ Header/footer.
 @format{top}{@< @{\rtf1\ansi\ansicpg1252@n
     @{\fonttbl\f0\fswiss\fcharset0@_Helvetica;
         \f1\fmodern\fcharset0@_Courier@_New;@}@n
-        \paperw11900\vieww10840\viewh13000
+        \paperw11900\vieww9500\viewh13000
         \sb240\li600\fi0\tx600\tx1200\tx1800\tx2400\tx3000@n @> @}}
 
 $*** FORMATTING RULES ***$
