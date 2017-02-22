@@ -12,21 +12,32 @@
 
 $ Readme-specific formatting macros.
 @macro{plugin}{@arg}
+@ifndef{MAN}{
+    @macro{man_opt}{-@glue{@arg}}
+    @macro{man_opt2}{-@glue{@arg{1}} (@arg{2})}
+}
 
 @begin
 
-@include{introduction}
-@ifndef{MAN}{@include{documentation}}
-@include{gamemodes}
-@include{files}
-@include{environment}
-@include{network}
-@include{resources}
-@include{plugins}
+@ifdef{MAN}{    
+    $ Man pages begin with a command line synopsis and other basic 
+    $ technical information.    
+    @include{technical.ame}
+}
+
+@toc
+
+@include{introbrief}
+@include{features}
+@include{games}
+@include{ui/home}
+@include{ui/taskbar}
+@ifndef{MAN}{
+    @include{technical.ame}
+}
 @include{bugs}
+@include{seealso}
 @ifdef{MAN}{
-    $ See also
-    @include{documentation}
     $ Man pages have an author section.
     @include{../author}
 }

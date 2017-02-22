@@ -1,0 +1,86 @@
+@chapter{ Games }
+
+@section{ Loading IWADs }
+
+Doomsday requires @link{IWAD files}{http://wiki.dengine.net/w/WAD} to run
+games. You can use the following ways to let the engine know where your IWADs
+can be found:
+
+@list{
+    
+    @ifndef{WIN32}{The directory @file{/usr/share/games/doom} is checked for
+    any recognized IWAD files.}
+    
+    @ifndef{UNIX}{@item If you have Steam installed, Doomsday will
+    automatically detect if you have purchased a compatible game and will
+    access the IWAD files in the Steam games directories.}
+    
+    @ifdef{WIN32}{@item Compatible games purchased from
+    @link{GOG.com}{https://gog.com} are autodetected.}
+    
+    @item Using the @opt{-iwad} option. You can either provide the path to the
+    IWAD to use, or the path of the directory under which IWADs are located.
+    Doomsday will look through the specified location and use all the
+    recognized IWADs automatically. In other words, you can have the IWADs for
+    all games stored in a single directory; Doomsday will use the appropriate
+    one for each launched game.
+
+    @opt{-iwad} accepts multiple paths as parameters:
+    
+    @samp{@opt{-iwad path1 path2}}
+
+    @item The configuration variable @var{Config.resource.iwadFolder}. This is
+    typically set automatically via the user interface, for instance when you
+    first start Doomsday. Its value can also be manipulated in the Doomsday
+    Script command prompt.
+
+    @ifndef{WIN32}{@item The configuration file @file{~/.doomsday/paths} is
+    checked for @var{iwaddir} (see @ref{paths_file}{Additional files}).}
+    
+    @item Environment variables DOOMWADDIR and DOOMWADPATH (see
+    @ref{environ}{Environment}).
+
+}
+
+Doomsday tries to recognize IWAD files based on their contents. The
+@link{identification
+criteria can be viewed in GitHub}{https://github.com/skyjake/Doomsday-Engine/blob/master/doomsday/ap
+ps/libdoomsday/net.dengine.base.pack/databundles.dei}.
+
+@section{ Supported games }
+@a{gamemode} 
+
+One game plugin, such as the @plugin{Doom Plugin}, is able to run many
+different variants of the game. Each variant emulates a specific version of the
+original game and typically has its own IWAD file.
+
+Below is a list of all the games supported by the game plugins distributed
+with Doomsday.
+
+@table{19 25 56}{
+	@header{Plugin} @tab @header{Game ID} @tab @header{Description} @row{single}
+
+@plugin{Doom} 
+    @tab doom1-share @tab Shareware Doom v1.9 @row
+	@tab doom1 @tab Registered Doom v1.9 @row
+	@tab doom1-ultimate @tab Ultimate Doom* @row
+	@tab doom2 @tab Doom 2 @row
+	@tab doom2-plut @tab Final Doom: Plutonia Experiment @row
+	@tab doom2-tnt @tab Final Doom: TNT Evilution @row
+	@tab chex @tab Chex Quest @row
+	@tab hacx @tab HacX @row
+
+@plugin{Heretic} 
+    @tab heretic-share @tab Shareware Heretic @row
+	@tab heretic @tab Registered Heretic @row
+	@tab heretic-ext @tab Heretic: Shadow of the Serpent Riders** @row
+
+@plugin{Hexen} 
+    @tab hexen @tab Hexen v1.1 @row
+    @tab hexen-v10 @tab Hexen v1.0 @row
+	@tab hexen-dk @tab Hexen: Death Kings of Dark Citadel @row
+	@tab hexen-demo @tab The 4-level Hexen Demo
+}
+
+@caption{* = has a 4th episode @br ** = has episodes 4 and 5}
+

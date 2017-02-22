@@ -1,0 +1,5 @@
+Your runtime files are stored in a folder called @file{AppData\Local\Deng
+Team\Doomsday Engine\} in your home folder. The following noteworthy
+files and folders can be found inside:
+
+@include{technical/files_common}

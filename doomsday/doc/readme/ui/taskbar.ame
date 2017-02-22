@@ -1,0 +1,52 @@
+@chapter{ Task Bar }
+@a{taskbar}
+
+You can open the task bar at any time by pressing @key{Shift + Esc}.
+
+@section{ Application menu (DE logo) }
+
+@list{
+    @item Showing Home while a game is loaded
+    @item Unloading the current game
+    @item Browsing and loading packages while a game is loaded
+    @item Clearing resource cache
+    @item Checking for updates
+    @item Help: Tutorial
+}
+
+@section{ Configuration }
+
+@list{
+    @item Renderer
+    @item 3D/VR
+    @item Video
+    @item Audio
+    @item Input
+    @item Network
+    @item User Interface
+    @item Updater
+}
+
+@section{ Log history options }
+
+The log message history panel slides in from the left edge of the view. When
+visible, you can drag its right edge to resize it.
+
+@deflist{
+    @item{Show Full Log} Expands the log history panel to its full size.
+    @item{Close Log} Dismisses the log history panel.
+    @item{Go to Latest} Scrolls the log history to the latest message.
+    @item{Copy Path to Clipboard} Copies the @file{doomsday.out} file path to the system clipboard to make it easier to find the output file.
+    @item{Clear Log} Deletes all log messages from memory. The @file{doomsday.out} file is unaffected.
+    @item{Snap to Latest Entry} When this setting is enabled, new log entries will cause the history panel to scroll to the latest entry (bottom of the list).
+    @item{Entry Metadata} When this setting is enabled, log entries will be prefixed with a timestamp and categorization symbols.
+    @item{Log Filter & Alerts} Settings for filtering which log messages get printed. You can choose filtering options individually for each engine subsystem. Developer messages ("Dev") are primarily intended for developers and debugging, so they are disabled by default. The Alert toggles cause warnings and errors to pop up in the notification area.
+}
+
+@section{ Command prompt }
+
+@list{
+    @item Console command prompt
+    @item Doomsday Script prompt
+}
+

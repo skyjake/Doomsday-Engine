@@ -1,0 +1,75 @@
+@ifndef{MAN}{
+    @chapter{ Running from the command line }
+    
+    It is possible to launch Doomsday directly from the command line. If all
+    data files can be found under the default directories, the engine should be
+    able to launch itself without further assistance. If not, command line
+    options must be used to configure data file locations and other settings. 
+}
+@else{
+    @chapter{ Synopsis }
+}
+
+@ifndef{MACOSX}{
+    @strong{doomsday} @man_opt2{iwad}{dir} @man_opt2{game}{id} @man_opt{wnd}
+    @man_opt2{wh}{w h} @man_opt{v} @man_opt2{file}{file ...}
+}
+@else{
+    @strong{Doomsday.app/Contents/MacOS/Doomsday} [options]
+}
+
+Everything following @opt{--} is ignored. @opt{@@} can be used to specify a
+response file whose contents are added to the command line.
+
+@ifdef{MAN}{
+    @chapter{ Options }
+}
+
+@deflist{
+    
+    @item{@opt{-file}} Specify one or more data files or packages
+    (@file{.pack}, PK3, WAD, LMP) to load at startup. When used together with
+    the @opt{-game} option, the specified files will be loaded at startup.
+    Without @opt{-game} they are just registered as available files and can
+    then be added into game profiles in the Home screen. It is also possible to
+    load data files at runtime by opening the Packages sidebar (see
+    @ref{taskbar}{Task Bar}) or with the @cmd{load} console command.
+
+    @item{@opt{-game}} Sets the game to load after startup. If omitted, the
+    Home screen will be shown after startup. See @ref{gamemode}{Games} for a
+    list of available games. For example: @opt{-game doom1-ultimate}
+
+    @item{@opt{-h} | @opt{-?} | @opt{--help}} Prints a brief list of the
+    command line options.
+
+    @item{@opt{-iwad}} Specifies a directory where to look for IWAD files.
+    Searches for IWADs from all known games and automatically loads them when
+    needed.
+
+    @item{@opt{-version}} Show version information.
+
+    @item{@opt{-wnd}} Starts in windowed mode (also @opt{-window}). The default
+    is to start in fullscreen mode.
+
+    @item{@opt{-wh}} Sets the size of the Doomsday window. In fullscreen mode
+    specifies which display resolution to use.
+
+}
+
+@section{ Additional options }
+
+The following additional command-line options are also available.
+
+@deflist{
+
+    @item{@opt{-v} | @opt{-verbose}} Print verbose log messages (also
+    @opt{-verbose}). Specify more than once for extra verbosity.
+
+    @item{@opt{-vvv}} Enables all log messages (normal and developer, all
+    levels).
+
+    @item{@opt{-devlog} | @opt{-nodevlog}} Enables or disables developer log
+    entries. These are useful for debugging and/or troubleshooting, but are too
+    verbose or technical for everyday use.
+    
+}
