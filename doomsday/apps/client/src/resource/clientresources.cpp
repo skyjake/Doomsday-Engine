@@ -741,7 +741,7 @@ DENG2_PIMPL(ClientResources)
             }
             catch (FS1::NotFoundError const &)
             {
-                LOG_RES_WARNING("Failed to locate \"%s\" (#%i) for model \"%s\"")
+                LOG_RES_VERBOSE("Failed to locate \"%s\" (#%i) for model \"%s\"")
                         << skin.name << i << NativePath(modelFilePath).pretty();
             }
         }
