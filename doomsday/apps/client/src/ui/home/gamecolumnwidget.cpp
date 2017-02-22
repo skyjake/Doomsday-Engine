@@ -145,7 +145,6 @@ DENG_GUI_PIMPL(GameColumnWidget)
                 .setInput(Rule::Top,   menu->rule().bottom());
 
         DoomsdayApp::games().audienceForReadiness() += this;
-        DoomsdayApp::gameProfiles().audienceForAddition() += this;
         Config::get("home.showUnplayableGames").audienceForChange() += this;
     }
 
@@ -191,6 +190,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
         {
             if (profile.game().family() == gameFamily)
             {
+                DENG2_ASSERT(!findProfileItem(profile));
                 menu->items() << new ProfileItem(this, profile);
                 addOrRemoveSubheading();
                 return true;
@@ -326,6 +326,9 @@ DENG_GUI_PIMPL(GameColumnWidget)
             menu->setSelectedIndex(restoredSelected);
             restoredSelected = -1;
         }
+
+        // Observe further additions one by one.
+        DoomsdayApp::gameProfiles().audienceForAddition() += this;
     }
 
     void variableValueChanged(Variable &, Value const &)
