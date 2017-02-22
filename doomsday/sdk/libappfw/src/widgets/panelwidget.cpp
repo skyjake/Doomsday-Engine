@@ -190,7 +190,7 @@ DENG_GUI_PIMPL(PanelWidget)
         LOG_AS("PanelWidget");
 
         // All of the assets in the pending show group are now ready, let's open!
-        if (pendingShow->isReady())
+        if (pendingShow && pendingShow->isReady())
         {
             LOGDEV_XVERBOSE("All assets ready, resuming animation", "");
 
