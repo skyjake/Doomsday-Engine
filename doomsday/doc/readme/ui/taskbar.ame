@@ -39,7 +39,7 @@ visible, you can drag its right edge to resize it.
     @item{Clear Log} Deletes all log messages from memory. The @file{doomsday.out} file is unaffected.
     @item{Snap to Latest Entry} When this setting is enabled, new log entries will cause the history panel to scroll to the latest entry (bottom of the list).
     @item{Entry Metadata} When this setting is enabled, log entries will be prefixed with a timestamp and categorization symbols.
-    @item{Log Filter & Alerts} Settings for filtering which log messages get printed. You can choose filtering options individually for each engine subsystem. Developer messages ("Dev") are primarily intended for developers and debugging, so they are disabled by default. The Alert toggles cause warnings and errors to pop up in the notification area.
+    @item{Log Filter & Alerts} Settings for filtering which log messages get printed. You can choose filtering options individually for each engine subsystem. Developer messages (@ui{Dev}) are primarily intended for developers and debugging, so they are disabled by default. The @ui{Alert} toggles cause warnings and errors to pop up in the notification area.
 }
 
 @section{ Command prompt }

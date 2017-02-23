@@ -1,5 +1,5 @@
 @ifndef{MAN}{
-    @chapter{ Running from the command line }
+    @chapter{ Command line usage }
     
     It is possible to launch Doomsday directly from the command line. If all
     data files can be found under the default directories, the engine should be
@@ -12,7 +12,7 @@
 
 @ifndef{MACOSX}{
     @strong{doomsday} @man_opt2{iwad}{dir} @man_opt2{game}{id} @man_opt{wnd}
-    @man_opt2{wh}{w h} @man_opt{v} @man_opt2{file}{file ...}
+    @man_opt2{wh}{w h} @man_opt2{file}{file ...}
 }
 @else{
     @strong{Doomsday.app/Contents/MacOS/Doomsday} [options]
@@ -48,8 +48,8 @@ response file whose contents are added to the command line.
 
     @item{@opt{-version}} Show version information.
 
-    @item{@opt{-wnd}} Starts in windowed mode (also @opt{-window}). The default
-    is to start in fullscreen mode.
+    @item{@opt{-wnd} | @opt{-window}} Starts in windowed mode. The default is
+    to start in fullscreen mode.
 
     @item{@opt{-wh}} Sets the size of the Doomsday window. In fullscreen mode
     specifies which display resolution to use.
@@ -58,18 +58,79 @@ response file whose contents are added to the command line.
 
 @section{ Additional options }
 
-The following additional command-line options are also available.
-
 @deflist{
 
-    @item{@opt{-v} | @opt{-verbose}} Print verbose log messages (also
-    @opt{-verbose}). Specify more than once for extra verbosity.
-
-    @item{@opt{-vvv}} Enables all log messages (normal and developer, all
-    levels).
+    @item{@opt{-center}} Center the window (when not in fullscreen mode).
 
     @item{@opt{-devlog} | @opt{-nodevlog}} Enables or disables developer log
     entries. These are useful for debugging and/or troubleshooting, but are too
     verbose or technical for everyday use.
+
+    @ifndef{MACOSX}{ @item{@opt{-dpi}} Set the UI pixel density.
+    @ifdef{WIN32}{The desktop UI scaling factor is automatically detected and
+    used by Doomsday. This option will override it.} For example: @opt{-dpi
+    2.0}}
+    
+    @item{@opt{-errors}} Set the name of the error output file. The file is
+    written to the runtime folder. This output file is created in addition to
+    the usual @file{doomsday.out}. For example: @opt{-errors errors.out}
+
+    @item{@opt{-fullscreen} | @opt{-nofullscreen}} Enable or disable fullscreen
+    mode.
+
+    @item{@opt{-icd} | @opt{-imusic} | @opt{-isfx}} Set the audio backend for
+    CD playback, music, and sound effects. The following audio backends are
+    available: 
+    @list/thin{
+        @item dummy 
+        @item fmod
+        @ifndef{WIN32}{@item fluidsynth}
+        @item sdlmixer
+        @item openal
+        @ifdef{WIN32}{@item dsound @item winmm}
+    }
+        
+    @item{@opt{-fontsize}} Set a scaling factor for UI fonts. For example:
+    @opt{-fontsize 1.5}
+    
+    @item{@opt{-loglevel}} Set the log output level. The levels are: XVerbose,
+    Verbose, Message, Note, Warning, Error, Critical.
+    
+    @item{@opt{-maximize} | @opt{-nomaximize}} Maximize the window, or set the
+    window to non-maximized mode.
+    
+    @item{@opt{-nofsaa}} Disable antialiasing.
+    
+    @item{@opt{-nojoy}} Disable gamepads and other game controllers.
+    
+    @item{@opt{-nomouse}} Disable mouse input.
+    
+    @item{@opt{-novsync}} Disable vsync.
+    
+    @item{@opt{-out}} Set the name of the log output file. The file is always
+    written to the runtime folder. This option overrides the default
+    @file{doomsday.out}.
+    
+    @item{@opt{-packs}} Set additional folders where to find packages. Works
+    similar to @opt{-iwad}.
+    
+    @item{@opt{-speaker51} | @opt{-speaker71} | @opt{-speakerprologic}}
+    Overrides the FMOD backend's speaker mode (surround 5.1, 7.1, or SRS
+    5.1/Prologic/Prologic2). This option can also be changed in Audio Settings
+    (see @ref{config}{Configuration}).
+    
+    @item{@opt{-v} | @opt{-verbose}} Print verbose log messages. Specify more
+    than once for extra verbosity.
+
+    @item{@opt{-vvv}} Enables all log messages (normal and developer, all
+    levels).
+    
+    @item{@opt{-warp}} When starting directly into a game using @opt{-game},
+    automatically also jump to a specific map. The map can be specified either
+    as the map number, a pair of numbers (episode and map), or the map
+    identifier (e.g., "MAP12").
+    
+    @ifndef{MACOSX}{@item{@opt{-width} | @opt{-height}} Set the
+    horizontal/vertical display resolution when in fullscreen mode.}
     
 }
