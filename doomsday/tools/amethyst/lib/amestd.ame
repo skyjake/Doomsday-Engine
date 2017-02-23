@@ -111,7 +111,7 @@ $ Executable/binary file.
 $ Document header and any output language specific things.
 @macro{begin}{
 	@ifdef{HTML}{
-		@tag{<head><title>} @TITLE @tag{</title><style type="text/css">body@{font-family:sans-serif;font-size:13pt;max-width:80ex;margin-left:auto;margin-right:auto;background-color:#f0f0f0;color:#444;@}
+		@tag{<head><title>} @TITLE @tag{</title><style type="text/css">body@{font-family:sans-serif;font-size:12pt;max-width:80ex;margin-left:auto;margin-right:auto;background-color:#f0f0f0;color:#444;@}
 h1,h2,h3,h4,h5,h6@{color:black;@}
 h1@{margin-top:1em;@}
 a@{text-decoration:none;color:#051;@}
