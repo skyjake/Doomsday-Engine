@@ -25,7 +25,7 @@ $ Titles.
 $ Lists.
 @format{parent list}{*}
 @format{parent enum list}{@c.}
-@format{parent note list}{NOTE!}
+@format{parent note list}{NOTE:}
 
 $ Tables.
 @format{single parent table}{@< @r-}

@@ -64,7 +64,7 @@ $***
 $ Lists.
 @format{child 1 parent2 deflist}{@< \n@_ }
 @format{child 2 parent2 deflist}{@< @_-@_}
-@format{parent list note}{\nNOTE!}
+@format{parent list note}{\nNOTE:}
 @format{parent list !note }{-@_ @> \n}
 $ @format{parent enum list}{#@_}
 $ @format{list}{@< <ul> @> </ul>}

@@ -220,7 +220,7 @@ $ Makes a special note.
 @macro{notice}{
 	@ifdef{HTML}{
 		@tag{<table border="0" cellpadding="3" valign="top"><tr>
-		<td><b>NOTE!</b></td><td>}
+		<td><b>NOTE:</b></td><td>}
 		@arg @tag{</td></tr></table>}
 	}
 	@else{ @list/note{ @item @arg }	}
