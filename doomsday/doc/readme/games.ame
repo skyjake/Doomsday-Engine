@@ -47,8 +47,7 @@ Doomsday tries to recognize IWAD files based on their contents. The
 criteria can be viewed in GitHub}{https://github.com/skyjake/Doomsday-Engine/blob/master/doomsday/ap
 ps/libdoomsday/net.dengine.base.pack/databundles.dei}.
 
-@section{ Supported games }
-@a{gamemode} 
+@a{gamemode} @section{ Supported games }
 
 One game plugin, such as the @plugin{Doom Plugin}, is able to run many
 different variants of the game. Each variant emulates a specific version of the

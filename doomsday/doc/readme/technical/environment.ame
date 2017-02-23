@@ -1,6 +1,5 @@
-@chapter{ Environment }
+@a{environ}@chapter{ Environment }
 
-@a{environ}
 The following environment variables are recognized by Doomsday.
 
 @deflist{

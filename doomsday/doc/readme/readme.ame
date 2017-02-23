@@ -17,6 +17,7 @@ $ Readme-specific formatting macros.
     @macro{man_opt2}{-@glue{@arg{1}} (@arg{2})}
 }
 
+$-----------------------------------------------------------------------------
 @begin
 
 @ifdef{MAN}{    

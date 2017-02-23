@@ -1,5 +1,4 @@
-@chapter{ Task Bar }
-@a{taskbar}
+@a{taskbar}@chapter{ Task Bar }
 
 You can open the task bar at any time by pressing @key{Shift + Esc}.
 
@@ -14,7 +13,7 @@ You can open the task bar at any time by pressing @key{Shift + Esc}.
     @item Help: Tutorial
 }
 
-@section{ Configuration }
+@a{config}@section{ Configuration }
 
 @list{
     @item Renderer
@@ -23,7 +22,7 @@ You can open the task bar at any time by pressing @key{Shift + Esc}.
     @item Audio
     @item Input
     @item Network
-    @item User Interface
+    @item User Interface: resizing UI elements
     @item Updater
 }
 

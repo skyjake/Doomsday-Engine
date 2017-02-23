@@ -1,21 +1,61 @@
 @chapter{ Home Screen }
 
-@section{ Doom, Heretic, Hexen, Other Games }
+The Home screen in Doomsday 2 is a full replacement for the separate front-end
+application that was used in earlier versions. In Home you can manage your game
+profiles, resource packs and other add-ons, and join multiplayer games.
 
-@list{
-    @item Keyboard shortcuts, arrow keys and otherwise
-    @item Clicking the sides of the screen
-    @item Starting a game with or without additional packages
-    @item Package selection dialog
-    @item Hiding game descriptions via User Interface Settings
-    @item Loading a saved game
-    @item Right-click profiles
-    @item Right-click saves
-    @item Deleting a saved game
-    @item Creating a new profile
+Home consists of a number of scrollable tabs. There are several ways to switch
+to a different tab:
+
+@list/thin{
+    @item Click on the tab names in the top of the screen.
+    @item Left and right arrow keys move focus to an adjacent tab.
+    @item Shortcut keys: D, H, X, O, M, and P (while not entering text in a text field.)
+    @item Click on the left or right edge of the screen.
 }
 
-@section{ Packages }
+@section{ Doom, Heretic, Hexen, Other Games }
+
+The game library tabs list all the available game profiles and saved games
+associated with them. Each game profile can be configured to use a set of
+additional packages (data files, resource packs).
+
+The appearance of the game tabs can be changed in User Interface settings (see
+@ref{config}{Configuration}). You can hide the game library description texts,
+and choose whether unplayable game profiles are visible. You can also hide
+entire game tabs, if you are not interested in a particular family of games.
+
+@parag{Starting a game with or without additional packages.} Click on a profile
+to select it, or move the selection with the arrow keys. When selected, Package
+Selection and Play buttons slide in. The Package Selection button shows a
+number for how many additional packages have been configured. Click Play or
+double-click the profile to start the game.
+    
+@parag{Selecting packages.} Click the profile's Package Selection button to
+choose which additional packages are going to be loaded when the game is
+started. On the left side of the dialog, you have a list of the packages
+attached to the profile. On the right, you can browse the available packages.
+The package browser works similarly to the Packages tab, and it has a search
+field and Info buttons (see @ref{packages}{Packages}). To add a package to the
+profile, click the Plus button or double-click the package.
+    
+@parag{Loading a saved game.} All saved games are listed under the game profile
+they were created in. Click on a save to select it, and then press the profile's Play button. Clicking on an already selected save will unselect it.
+
+@notice{Old savegames created with Doomsday 1.x do not contain information
+about which data files and packages were in use when the save was created, so
+Doomsday can't determine which profile they belong to. Such saves are listed
+under each profile of the game.}
+
+@parag{Savegame information.} Right-click on a saved game to see information about the save: which data files and packages were in use, the overall game parameteres, current map, and other status information.
+ 
+@parag{Deleting a saved game.} When a savegame is selected, a small X button appears next to it. Clicking the X lets you delete the save.
+
+@parag{Creating a new profile.} At the bottom of each profile list, there is a Plus button that creates a new, empty profile. In the profile parameters, you can choose which game will be used, and which packages are selected for loading. Note that game profiles cannot have a name that is identical to an already existing game profile name.
+
+@parag{Duplicate, edit, and delete profiles.} Any profile can be duplicated by right-clicking on it and selecting Duplicate. Profiles can also be edited to change their name and the set of selected packages.
+
+@a{packages}@section{ Packages }
 
 @list{
     @item Setting additional folders where to load packages
@@ -30,6 +70,9 @@
 
 Doomsday supports client/server based multiplayer games for up to 15 players.
 
+Servers on the local network (and localhost) are discovered automatically and
+are visible immediately in the Multiplayer games list.
+
 @list{
     @item Querying from dengine.net master server vs. directly via manual address
     @item Viewing server information (ping, packages, etc.)
@@ -38,23 +81,13 @@ Doomsday supports client/server based multiplayer games for up to 15 players.
     @item What can go wrong? Network connectivity (check ping), different packages
 }
 
-@list{
-    
-    @item Servers on the local network (and localhost) are discovered
-    automatically and are visible immediately in the Multiplayer games list.
-
-    @item Server somewhere on the internet: enter the server's IP address or
-    domain name into the search address field.
-
-}
-
 @subsec{ Hosting a game (Doomsday Shell) }
 
 Use @ifdef{UNIX}{ @strong{doomsday-shell} or @strong{doomsday-shell-text} }
-@else{ @strong{Doomsday Shell}} to host a multiplayer game of your own. The
+@else{ @strong{Doomsday Shell} } to host a multiplayer game of your own. The
 @wikiterm{Shell}{Shell} allows you to start, stop, and control Doomsday
-multiplayer servers. Using the Shell, you can start local servers and connect to
-remote servers over the internet.
+multiplayer servers. Using the Shell, you can start local servers and connect
+to remote servers over the internet.
 
 @strong{doomsday-server} runs in a background process and has no UI of its own.
 You must use the Shell to view or manipulate it. The Shell provides a couple of
@@ -66,7 +99,7 @@ via the Console tab (text-mode command line interface).
 If your server is not public (i.e., announced to the master server), a client
 can connect to it manually using the IP address or domain name.
 
-@subsec{ Networking details }
+@subsec{ Network details }
 
 Doomsday uses TCP network connections for multiplayer games. If you host a
 game and are behind a firewall or using NAT, you must make sure that other

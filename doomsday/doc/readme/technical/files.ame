@@ -1,5 +1,4 @@
-@chapter{ Files }
-@a{files}
+@a{files}@chapter{ Files }
 
 @ifdef{MACOSX}{
     @include{technical/files_macos}
