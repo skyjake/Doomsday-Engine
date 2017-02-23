@@ -521,7 +521,6 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily,
     }
 
     header().menuButton().hide(); // no items for the menu atm
-    header().info().setTextColor("label.dimmed");
 
     /// @todo Get these description from the game family defs.
     {
