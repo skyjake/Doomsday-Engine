@@ -8,8 +8,13 @@ can be found:
 
 @list{
     
-    @ifndef{WIN32}{The directory @file{/usr/share/games/doom} is checked for
-    any recognized IWAD files.}
+    @item The first time you launch Doomsday and it doesn't find any IWADs, it
+    will show a tab titled @ui{Data Files?} containing a single button.
+    Clicking the button opens a file dialog where you can pick a folder where
+    your IWAD files are located.
+    
+    @ifdef{UNIX}{@item The directory @file{/usr/share/games/doom} is always
+    checked for any recognized IWAD files.}
     
     @ifndef{UNIX}{@item If you have Steam installed, Doomsday will
     automatically detect if you have purchased a compatible game and will
@@ -18,14 +23,14 @@ can be found:
     @ifdef{WIN32}{@item Compatible games purchased from
     @link{GOG.com}{https://gog.com} are autodetected.}
     
-    @item Using the @opt{-iwad} option. You can either provide the path to the
-    IWAD to use, or the path of the directory under which IWADs are located.
-    Doomsday will look through the specified location and use all the
+    @item Using the @opt{-iwad} command-line option. You can either provide the
+    path to the IWAD to use, or the path of the directory under which IWADs are
+    located. Doomsday will look through the specified location and use all the
     recognized IWADs automatically. In other words, you can have the IWADs for
     all games stored in a single directory; Doomsday will use the appropriate
     one for each launched game.
 
-    @opt{-iwad} accepts multiple paths as parameters:
+    @opt{-iwad} will also accept multiple paths as parameters:
     
     @samp{@opt{-iwad path1 path2}}
 
@@ -35,7 +40,7 @@ can be found:
     Script command prompt.
 
     @ifndef{WIN32}{@item The configuration file @file{~/.doomsday/paths} is
-    checked for @var{iwaddir} (see @ref{paths_file}{Additional files}).}
+    checked for @var{iwaddir} (see @ref{paths_file}{Files}).}
     
     @item Environment variables DOOMWADDIR and DOOMWADPATH (see
     @ref{environ}{Environment}).
