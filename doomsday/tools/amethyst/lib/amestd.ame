@@ -37,7 +37,14 @@ $ No space for the first word.
 @macro{glue}{ @single{@arg} }
 
 $ Paragraph heading.
-@macro{parag}{ @strong{@arg} }
+@macro{parag}{
+    @ifdef{TXT}{
+        __ @glue{@arg} @glue{__}
+    }
+    @else{    
+        @strong{@arg}
+    }
+}
 
 $ Date.
 @macro{date}{ @apply{@D}{yyyy-MM-dd} }
