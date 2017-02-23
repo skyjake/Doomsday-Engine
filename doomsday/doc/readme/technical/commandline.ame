@@ -27,7 +27,7 @@ response file whose contents are added to the command line.
 
 @deflist{
     
-    @item{@opt{-file}} Specify one or more data files or packages
+    @item{@opt{-file} | @opt{-f}} Specify one or more data files or packages
     (@file{.pack}, PK3, WAD, LMP) to load at startup. When used together with
     the @opt{-game} option, the specified files will be loaded at startup.
     Without @opt{-game} they are just registered as available files and can
@@ -35,9 +35,10 @@ response file whose contents are added to the command line.
     load data files at runtime by opening the Packages sidebar (see
     @ref{taskbar}{Task Bar}) or with the @cmd{load} console command.
 
-    @item{@opt{-game}} Sets the game to load after startup. If omitted, the
-    Home screen will be shown after startup. See @ref{gamemode}{Games} for a
-    list of available games. For example: @opt{-game doom1-ultimate}
+    @item{@opt{-game} | @opt{-g}} Sets the game to load after startup. If
+    omitted, the Home screen will be shown after startup. See
+    @ref{gamemode}{Games} for a list of available games. For example:
+    @opt{-game doom1-ultimate}
 
     @item{@opt{-h} | @opt{-?} | @opt{--help}} Prints a brief list of the
     command line options.
@@ -119,7 +120,7 @@ response file whose contents are added to the command line.
     5.1/Prologic/Prologic2). This option can also be changed in Audio Settings
     (see @ref{config}{Configuration}).
     
-    @item{@opt{-v} | @opt{-verbose}} Print verbose log messages. Specify more
+    @item{@opt{-verbose} | @opt{-v}} Print verbose log messages. Specify more
     than once for extra verbosity.
 
     @item{@opt{-vvv}} Enables all log messages (normal and developer, all

@@ -10,30 +10,34 @@ response file whose contents are added to the command line.
 @chapter{ Options }
 
 @deflist/thin{
+
+    @item{@opt{-file} | @opt{-f}} Specify one or more resource files (WAD, LMP,
+    PK3) to load at startup. More files can be loaded at runtime with the
+    @cmd{load} command.
+
+    @item{@opt{-game} | @opt{-g}} Sets the game to load after startup. See
+    doomsday(6) for a list of available games. For example:
+
+    @samp{@opt{-game doom1-ultimate}} 
+
+    If @opt{-game} is not specified and the server is unable to choose a game
+    automatically, the server will quit.
     
-@item{@opt{-stdout}} Prints all log entries to the standard output. If this
-option is not used, nothing is printed so that the server can be run as a
-background process.
+    @item{@opt{-iwad}} Specifies a directory where to look for IWAD files.
+    Doomsday will search for IWADs from all known games and automatically load
+    them when needed. Note that you can also use the DOOMWADDIR environment
+    variable or the @file{paths} configuration file to specify the location of
+    the IWAD files.
 
-@item{@opt{-port}} TCP port that the server listens to for incoming connections.
+    @item{@opt{-port}} TCP port that the server listens to for incoming
+    connections.
 
-@item{@opt{-iwad}} Specifies a directory where to look for IWAD files. Doomsday
-will search for IWADs from all known games and automatically load them when
-needed. Note that you can also use the DOOMWADDIR environment variable or the
-@file{paths} configuration file to specify the location of the IWAD files.
+    @item{@opt{-stdout}} Prints all log entries to the standard output. If this
+    option is not used, nothing is printed so that the server can be run as a
+    background process.
 
-@item{@opt{-game}} Sets the game to load after startup. See doomsday(6) for a
-list of available games. For example:
-
-@samp{@opt{-game doom1-ultimate}} 
-
-If @opt{-game} is not specified and the server is unable to choose a game automatically, the server will quit.
-
-@item{@opt{-v}} Print verbose log messages (also @opt{-verbose}). Specify more
-than once for extra verbosity.
-
-@item{@opt{-file}} Specify one or more resource files (WAD, LMP, PK3) to load
-at startup. More files can be loaded at runtime with the @cmd{load} command.
+    @item{@opt{-verbose} | @opt{-v}} Print verbose log messages. Specify more
+    than once for extra verbosity.
 
 }
 
@@ -46,6 +50,27 @@ options of doomsday(6).
 Doomsday servers are, by default, silent daemon processes intended to be run in
 the background. You need to use the Doomsday Shell to monitor their status and control them.
 
+@section{ Firewall and NAT }
+
+Doomsday uses TCP network connections for multiplayer games. If you host a game
+and are behind a firewall or using NAT, you must make sure that other computers
+are able to open TCP connections to your computer. This entails opening the
+appropriate incoming TCP ports on your firewall and/or configuring the NAT so
+that the correct ports are routed to your computer.
+
+Additionally, UDP ports 13209-13224 are used for detecting servers running on
+the local network; if you are experiencing problems with autodetecting local
+servers, check that your firewall isn't blocking these UDP ports on either end.
+
+A server opens one TCP port for listening to incoming connections. The port
+must be open for incoming TCP traffic in the firewall. The port number is
+configured with the console variable @var{net-ip-port}. By default, a server
+uses TCP port 13209.
+
+You can see status information about the network subsystem with the console
+command:
+
+@code{net info}
 
 @chapter{ See Also }
 

@@ -67,10 +67,10 @@ to change their name and the set of selected packages.
 
 @a{packages}@section{ Packages }
 
-The Packages tab is used to browse all the available @wikiterm{packages}. With
-the exception of game IWAD files, it shows all the data files that Doomsday can
-load. You can also quickly try out individual packages in one your existing
-game profiles.
+The Packages tab is used to browse the available @wikiterm{packages}. With the
+exception of game IWAD files, the Packages tab shows all the data files that
+Doomsday can load. You can also quickly try out individual packages in one your
+existing game profiles.
 
 @parag{Configuring the folders where packages are found.} To let Doomsday know
 where your packages can be found, either select @ui{Folders} in the Packages
@@ -122,68 +122,83 @@ contained sub-packages.
 
 @section{ Multiplayer }
 
-Doomsday supports client/server based multiplayer games for up to 15 players.
+The Multiplayer tab lists multiplayer games that you can join. Servers on the
+local network are discovered automatically and are visible immediately in the
+Multiplayer games list. The @link{dengine.net}{http://dengine.net/} master
+server is also automatically queried for any public servers.
 
-Servers on the local network (and localhost) are discovered automatically and
-are visible immediately in the Multiplayer games list.
-
-@list{
-    @item Querying from dengine.net master server vs. directly via manual address
-    @item Viewing server information (ping, packages, etc.)
-    @item Joining a game
-    @item Setting your player name and color (game's options menu)
-    @item What can go wrong? Network connectivity (check ping), different packages
+@parag{Viewing server information.} Right-click a server in the list to view
+status information about it. The same popup can be opened by clicking the small
+@ui{...} button in the server description. The status information includes:
+@list/thin{
+    @item ping time
+    @item which game and map is currently running
+    @item outline of the current map
+    @item list of packages loaded on the server
+    @item list of connected players
+    @item server version
 }
+
+@parag{Joining a game.} Join an open multiplayer game by clicking @ui{Join}
+either in the server list or in the server information popup.
+
+@parag{Player name and color.} When a game is running (after joining a
+multiplayer game or also in single-player), go to the game's @ui{Options} menu
+and select @ui{Player Setup}. In this menu you can change your multiplayer
+name, player color, and (in Hexen) player class. Note that this is the game's
+own menu and not part of Doomsday's UI.
+
+@parag{Connecting to a non-public server.} To connect to a server that is not
+announced to the master server, select @ui{Connect to Server...} in the
+Multiplayer tab's actions menu (@ui{...} under the tab title), and enter the
+server's IP address or domain name.
+
+@parag{Failure to connect?} There are several reasons why you may not be able
+to join a multiplayer game. You will be notified if you don't have the same
+packages that the server is using. You can review the required packages in the
+server information popup. Connectivity problems can also be due to your
+firewall or @link{network address translation
+(NAT)}{https://en.wikipedia.org/wiki/Network_address_translation}.
+
+Doomsday uses TCP network connections for multiplayer games. If you host a game
+and are behind a firewall or using NAT, you must make sure that other computers
+are able to open TCP connections to your computer. This entails opening the
+appropriate incoming TCP ports on your firewall and/or configuring the NAT so
+that the correct ports are routed to your computer.
+
+Additionally, UDP ports 13209-13224 are used for detecting servers running on
+the local network; if you are experiencing problems with autodetecting local
+servers, check that your firewall isn't blocking these UDP ports on either end.
+
+A server opens one TCP port for listening to incoming connections. The port
+must be open for incoming TCP traffic in the firewall. The port number is
+configured with the console variable @var{net-ip-port}. By default, a server uses TCP port 13209. 
+
+Clients do not require any firewall configuration for incoming connections. A
+client only needs to be able to reach the server via the server's TCP port.
+
+You can see status information about the network subsystem with the console
+command:
+
+@code{net info}
 
 @subsec{ Hosting a game (Doomsday Shell) }
 
 Use @ifdef{UNIX}{ @strong{doomsday-shell} or @strong{doomsday-shell-text} }
 @else{ @strong{Doomsday Shell} } to host a multiplayer game of your own. The
 @wikiterm{Shell}{Shell} allows you to start, stop, and control Doomsday
-multiplayer servers. Using the Shell, you can start local servers and connect
-to remote servers over the internet.
+multiplayer servers. This includes both your own local servers and remote
+servers on the internet.
 
 @strong{doomsday-server} runs in a background process and has no UI of its own.
-You must use the Shell to view or manipulate it. The Shell provides a couple of
-basic options that you can change via the GUI. For example, you can choose
-between Deatchmatch and Co-op mode, change the current map, and enable or
-disable monsters. The full set of @wikiterm{console variables} can be modified
-via the Console tab (text-mode command line interface).
+The Shell provides a couple of basic game options that you can change via the
+GUI. For example, you can choose between Deatchmatch and Co-op mode, change the
+current map, and enable or disable monsters. The full set of @wikiterm{console
+variables} can be modified via the Console tab (text-mode command line
+interface).
 
 If your server is not public (i.e., announced to the master server), a client
 can connect to it manually using the IP address or domain name.
 
-@subsec{ Network details }
-
-Doomsday uses TCP network connections for multiplayer games. If you host a
-game and are behind a firewall or using NAT, you must make sure that other
-computers are able to open TCP connections to your computer. This entails
-opening the appropriate incoming TCP ports on your firewall and/or configuring
-the NAT so that the correct ports are routed to your computer.
-
-Additionally, UDP ports 13209-13224 are used for detecting servers running on
-the local network; if you are experiencing problems with autodetecting local
-servers, check that your firewall isn't blocking these UDP ports on either end.
-
-You can see information about the network subsystem status with the command:
-
-@code{net info}
-
-$@subsec{ Server }
-
-A server opens one TCP port for listening to incoming connections. The port
-number is configured with the console variable @var{net-ip-port}.
-
-By default a server uses TCP port 13209 (setting the port to zero will mean
-13209 will be used). The configured port must be open for incoming TCP traffic
-in the firewall.
-
-$@subsec{ Client }
-
-Clients do not require any firewall configuration for incoming connections. A
-client only needs to be able to reach the server via the server's TCP port.
-
-A server running on the same computer can be connected to with the following
-command:
-
-@code{connect localhost}
+For more information about the Shell, see @wikilink{Shell Help in the
+wiki}{Shell_Help}.

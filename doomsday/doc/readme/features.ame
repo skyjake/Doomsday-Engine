@@ -52,19 +52,18 @@ Audio:
 
 Multiplayer:
 @list/thin{
-    @item TCP-based client/server multiplayer
-    @item Automatical discovery of servers running on the local network
+    @item Supports up to @wikiterm{15 player games}
+    @item Clients can join games in progress
+    @item Automatic discovery of servers running on the local network
     @item Central @wikiterm{master server} for discovery of servers on the internet
     @item Standalone @wikiterm{server} running as a daemon/background process
     @item Standalone @wikilink{Doomsday Shell}{Shell} tool for server management (both local and remote)
-    @item Supports up to @wikiterm{15 player games}
-    @item Clients can join games in progress
 }
 
 Other:
 @list/thin{
-    @item Open source: software developers should visit the @wikilink{Getting Started page}{Getting_started}
-    @item @wikilink{Cross platform}{Supported_platforms}
+    @item @wikilink{Cross-platform}{Supported_platforms}, runs on @link{Qt}{http://qt.io/}
+    @item Open source (see @wikilink{Getting Started page}{Getting_started})
     @item @wikiterm{Plugin} based @wikiterm{extensible architecture}
 }
 
