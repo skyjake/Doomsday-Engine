@@ -36,6 +36,9 @@ $ No spacing.
 $ No space for the first word.
 @macro{glue}{ @single{@arg} }
 
+$ Paragraph heading.
+@macro{parag}{ @strong{@arg} }
+
 $ Date.
 @macro{date}{ @apply{@D}{yyyy-MM-dd} }
 
