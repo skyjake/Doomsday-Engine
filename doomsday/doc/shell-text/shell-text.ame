@@ -66,7 +66,7 @@ the server.
 
 @section { Menu }
 
-Press @key{F9}, @key{^C}, or @key{^Z} to open the menu.
+Press @kbd{F9}, @kbd{^C}, or @kbd{^Z} to open the menu.
 
 @deflist{
 
@@ -102,7 +102,7 @@ These commands will get you started:
         Look up commands and variables containing a specific word.
 }
 
-The @key{PageUp} and @key{PageDown} keys scroll the log entry history.
+The @kbd{PageUp} and @kbd{PageDown} keys scroll the log entry history.
 
 
 @chapter{ See Also }

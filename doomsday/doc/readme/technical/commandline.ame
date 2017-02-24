@@ -114,6 +114,12 @@ response file whose contents are added to the command line.
     
     @item{@opt{-packs}} Set additional folders where to find packages. Works
     similar to @opt{-iwad}.
+        
+    @item{@opt{-reset}} Reset the engine configuration to default values. In
+    practice, this just erases the contents of the @file{persist.pack} file
+    that stores configuration variables and UI state. The affected variables
+    include, for example, game window size and position, and log filter
+    settings.
     
     @item{@opt{-speaker51} | @opt{-speaker71} | @opt{-speakerprologic}}
     Overrides the FMOD backend's speaker mode (surround 5.1, 7.1, or SRS
