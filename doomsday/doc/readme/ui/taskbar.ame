@@ -9,7 +9,7 @@ You can show the task bar by pressing @kbd{Shift + Esc}.
 
 @section{ App menu }
 
-The right-most button in the task bar (with the DE logo) opens the Doomsday
+The rightmost button in the task bar (with the DE logo) opens the Doomsday
 app menu.
 
 @parag{Tutorial.} The first-run tutorial points out the basic features of
@@ -85,7 +85,23 @@ Fluidsynth plugins. 3D sound and reverb are supported by FMOD, OpenAL, and
 DirectSound. The audio backend can be reconfigured on the fly; any changes are
 applied when you close the popup.
 
-@parag{Input settings.}
+@parag{Game controllers.} Doomsday comes with a few preset bindings for
+different gamepads. To use one of the presets, click on the @ui{Game Controller
+Preset} button and select a suitable one. Then click @ui{Apply} to erase all
+your existing game controller bindings and activate the ones in the preset. You
+can still manually edit the bindings in the game's @ui{Options} menu.
+
+@parag{Mouse input settings.} The @ui{Sync Axis Sensitivies} option will ensure
+that mouse sensitivity is the same in both the horizontal and vertical
+directions.
+
+@parag{Minimizing mouse latency.} The default input settings try to replicate
+the feel of the original 35 Hz input events of Doom. However, when the screen
+is actually refreshed at a higher rate, this may feel distractingly laggy. The
+35 Hz limiter can be disabled in the advanced input settings (click the Gauge
+button). This will minimize mouse input latency as much as possible. You may
+additionally want to disable mouse filtering by toggling the @ui{Filter X Axis}
+and @ui{Filter Y Axis} options.
 
 @parag{Local multiplayer packages.} By default, clients are not allowed to load
 packages in addition to what the server is using. This avoids any potential
@@ -94,14 +110,21 @@ definitions. However, you can manually enable local packages in Network
 settings. You can then select additional local packages for multiplayer games
 in the server information popup before joining the game.
 
-@parag{User Interface settings.} 
+@parag{User Interface settings.} The @ui{Scale} setting applies to the Doomsday
+UI only, and adjusts the overall size of UI elements and fonts. Lowering the UI
+scaling may be helpful for example when using a very low display resolution. In
+the Home screen there will be more tabs visible at the same time when using a
+smaller UI scale.
 
-@parag{Updater settings.}
+@parag{Updater settings.} The Updater settings determine when Doomsday will
+check for available updates. When an update is downloaded, it is saved to @ifdef{MACOSX}{@file{~/Library/Caches/Deng Team/Doomsday Engine/}}@else{your temporary files folder}.
 
-@section{ Log history options }
+@section{ Log history and log options menu }
 
 The log message history panel slides in from the left edge of the view. When
 visible, you can drag its right edge to resize it.
+
+The leftmost button in the task bar opens the log options menu:
 
 @deflist{
     @item{Show Full Log} Expands the log history panel to its full size.
