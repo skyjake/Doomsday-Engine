@@ -1,30 +1,102 @@
-@a{taskbar}@chapter{ Task Bar }
+@a{taskbar}@chapter{ Task bar }
 
-You can open the task bar at any time by pressing @key{Shift + Esc}.
+The @wikiterm{task bar} is a central element of Doomsday's UI. It is available
+at all times and provides access to key features of the engine. For example,
+you can modify configuration settings, show the Home screen, and unload the
+current game.
 
-@section{ Application menu (DE logo) }
+You can show the task bar by pressing @kbd{Shift + Esc}.
 
-@list{
-    @item Showing Home while a game is loaded
-    @item Unloading the current game
-    @item Browsing and loading packages while a game is loaded
-    @item Clearing resource cache
-    @item Checking for updates
-    @item Help: Tutorial
+@section{ App menu }
+
+The right-most button in the task bar (with the DE logo) opens the Doomsday
+app menu.
+
+@parag{Tutorial.} The first-run tutorial points out the basic features of
+Doomsday's UI. It is only shown once, but you can manually show it again by
+selecting @ui{Help: Show Tutorial}.
+
+@parag{Browsing and loading packages.} @ui{Browse Packages...} opens the
+package list in a sidebar where packages can be loaded and unloaded manually.
+You can also view information about packages like in the Home screen. The
+sidebar is only available when a game is loaded. You can use the
+@dquote{loaded} keyword to filter the list so that only the currently loaded
+packages are listed.
+
+@notice{Data from newly loaded packages may not be used until a new map is
+started in the game. Use of external textures can be enabled and disabled in
+Renderer settings.}
+
+@parag{Checking for updates.} Doomsday queries the dengine.net website to see
+if there are newer builds and shows a notification when updates are available.
+You can always also do a manual update check by selecting @ui{Check for
+Updates}.
+
+@parag{Clearing the resource cache.} Some resources and metadata get cached for
+later access. This allows Doomsday to load the resources faster and operate
+more efficiently. Usually it is unnecessary to clear the cache manually. See
+@ref{files}{Files} for the cache's location.
+
+@a{config} @section{ Configuration }
+
+The task bar's Gear button opens the configuration menu. This is where the
+majority of Doomsday's settings can be viewed and changed. Some of the settings
+are only available when a game is loaded (@ui{Input}, for instance).
+
+@parag{Reset to defaults and advanced settings.} Many settings dialogs have a
+@ui{Reset to Defaults} button. This affects only the settings in that one
+particular dialog. Sometimes a Gauge button is also available. It is reserved
+for advanced settings that are useful for developers and modding.
+
+@parag{Renderer settings.} Most of the renderer settings are managed via
+appearance profiles. This makes it easy to select one of the presets, such as a
+vanilla look or more exaggerated effects. The dialog has a couple of general
+settings in addition to the active appearance profile. The @ui{Pixel Density}
+slider is particularly useful as it allows improving rendering performance and
+achieving a more pixelated, 1990s VGA-style look. The selected appearance
+profile applies to all games.
+
+Some resource packs with high-resolution textures are intended to be used with
+the unmodified original games. However, a PWAD file may replace some of the
+textures with custom ones. The @ui{External Images} options allow you to
+control when external images are actually enabled if the resource packs in use
+aren't compatible with the loaded PWADs.
+
+@parag{Renderer appearance sidebar.} Click the Gear button next to the selected
+renderer appearance profile and select @ui{Edit} or @ui{View} to open the
+appearance sidebar. Alternatively you can open the sidebar with the
+@cmd{rendedit} console command. Individual settings groups can be folded and
+unfolded by clicking on the group titles. You can continue playing the game
+while the sidebar is visible. When you're done, dismiss the sidebar with the X
+button in the top right corner.
+
+@parag{Video aspect ratios.} In addition to basic game window parameters, the
+Video settings dialog has a set of aspect ratio options. These control the aspect ratios applied to specific elements in the game:
+
+@list/thin{
+    @item @ui{Original 1:1}: The aspect ratio is exactly as in the original game.
+    @item @ui{Smart}: The aspect ratio is dynamic but does not stretch too far away from the 1:1 ratio.
+    @item @ui{Stretched}: The aspect ratio is unrestricted and adapts to window dimensions. Game elements may appear too wide or tall with this setting.
 }
 
-@a{config}@section{ Configuration }
+@parag{Audio backends.} Some of the audio options are dependent on the active
+audio backend(s). For example, a MIDI sound font is supported by the FMOD and
+Fluidsynth plugins. 3D sound and reverb are supported by FMOD, OpenAL, and
+DirectSound. The audio backend can be reconfigured on the fly; any changes are
+applied when you close the popup.
 
-@list{
-    @item Renderer
-    @item 3D/VR
-    @item Video
-    @item Audio
-    @item Input
-    @item Network
-    @item User Interface: resizing UI elements
-    @item Updater
-}
+@parag{Input settings.}
+
+@parag{Local multiplayer packages.} By default, clients are not allowed to load
+packages in addition to what the server is using. This avoids any potential
+compatibility issues with the client's packages overriding some of the game's
+definitions. However, you can manually enable local packages in Network
+settings. You can then select additional local packages for multiplayer games
+in the server information popup before joining the game.
+
+@parag{User Interface settings.} 
+
+@parag{Updater settings.}
 
 @section{ Log history options }
 
