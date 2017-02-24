@@ -459,7 +459,7 @@ template <typename PublicType>
 struct Private : public IPrivate {
     using Public = PublicType;
     typedef Private<PublicType> Base;
-    
+
     Public *thisPublic;
     inline Public &self() const { return *thisPublic; }
 
@@ -520,6 +520,16 @@ inline ContainerType map(ContainerType const &c,
     ContainerType out;
     for (auto i = c.begin(); i != c.end(); ++i) {
         out.push_back(func(*i));
+    }
+    return out;
+}
+
+template <typename ContainerType>
+inline ContainerType filter(ContainerType const &c,
+                            std::function<bool (typename ContainerType::value_type const &)> func) {
+    ContainerType out;
+    for (auto i = c.begin(); i != c.end(); ++i) {
+        if (func(*i)) out.push_back(*i);
     }
     return out;
 }
