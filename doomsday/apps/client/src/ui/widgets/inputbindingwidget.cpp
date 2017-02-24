@@ -48,12 +48,11 @@ DENG_GUI_PIMPL(InputBindingWidget)
 
     Impl(Public *i) : Base(i)
     {
-        //self().setTextLineAlignment(ui::AlignLeft);
         self().setSizePolicy(ui::Fixed, ui::Expand);
 
         self().auxiliary().setText(_E(l) + tr("Reset"));
 
-        self().audienceForPress() += this;
+        //self().audienceForPress() += this;
         self().auxiliary().audienceForPress() += this;
     }
 
@@ -132,9 +131,9 @@ DENG_GUI_PIMPL(InputBindingWidget)
         }
     }
 
-    void buttonPressed(ButtonWidget &button)
+    void buttonPressed(ButtonWidget &)
     {
-        if (&button == thisPublic)
+        /*if (&button == thisPublic)
         {
             if (!self().hasFocus())
             {
@@ -145,26 +144,12 @@ DENG_GUI_PIMPL(InputBindingWidget)
                 unfocus();
             }
         }
-        else
+        else*/
         {
             // The reset button.
             bindCommand(defaultEvent);
             updateLabel();
         }
-    }
-
-    void focus()
-    {
-        root().setFocus(thisPublic);
-        self().auxiliary().disable();
-        self().invertStyle();
-    }
-
-    void unfocus()
-    {
-        root().setFocus(0);
-        self().auxiliary().enable();
-        self().invertStyle();
     }
 };
 
@@ -197,6 +182,20 @@ void InputBindingWidget::setContexts(QStringList const &contexts)
     d->updateLabel();
 }
 
+void InputBindingWidget::focusGained()
+{
+    AuxButtonWidget::focusGained();
+    auxiliary().disable();
+    invertStyle();
+}
+
+void InputBindingWidget::focusLost()
+{
+    AuxButtonWidget::focusLost();
+    auxiliary().enable();
+    invertStyle();
+}
+
 bool InputBindingWidget::handleEvent(Event const &event)
 {
     if (hasFocus())
@@ -213,7 +212,7 @@ bool InputBindingWidget::handleEvent(Event const &event)
 
             if (key->ddKey() == DDKEY_ESCAPE)
             {
-                d->unfocus();
+                root().popFocus();
                 return true;
             }
 
@@ -254,21 +253,21 @@ bool InputBindingWidget::handleEvent(Event const &event)
 
             d->bindCommand(desc);
             d->updateLabel();
-            d->unfocus();
+            root().popFocus();
             return true;
         }
 
-        if (MouseEvent const *mouse = event.maybeAs<MouseEvent>())
+        /*if (MouseEvent const *mouse = event.maybeAs<MouseEvent>())
         {
-            if (mouse->type() == Event::MouseButton &&
-               mouse->state() == MouseEvent::Released &&
-               !hitTest(event))
+            if (mouse->type()  == Event::MouseButton &&
+                mouse->state() == MouseEvent::Released &&
+                !hitTest(event))
             {
                 // Clicking outside clears focus.
                 d->unfocus();
                 return true;
             }
-        }
+        }*/
     }
 
     return AuxButtonWidget::handleEvent(event);

@@ -50,7 +50,9 @@ public:
     void setContexts(QStringList const &contexts);
 
     // Events.
-    bool handleEvent(de::Event const &event);
+    void focusGained() override;
+    void focusLost() override;
+    bool handleEvent(de::Event const &event) override;
 
 public:
     static InputBindingWidget *newTaskBarShortcut();
