@@ -33,6 +33,7 @@
 
 using namespace de;
 
+#if 0
 static QString defaultLocationName()
 {
 #ifdef DENG2_QT_5_0_OR_NEWER
@@ -46,6 +47,7 @@ static QString defaultLocationName()
     }
     return name;
 }
+#endif
 
 DENG2_PIMPL(UpdaterSettingsDialog),
 DENG2_OBSERVES(ToggleWidget, Toggle)
@@ -54,7 +56,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
     ChoiceWidget *freqs;
     LabelWidget *lastChecked;
     ChoiceWidget *channels;
-    ChoiceWidget *paths;
+    //ChoiceWidget *paths;
     ToggleWidget *autoDown;
     ToggleWidget *deleteAfter;
     bool didApply = false;
@@ -69,7 +71,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         area.add(lastChecked = new LabelWidget);
         area.add(channels    = new ChoiceWidget);
         area.add(autoDown    = new ToggleWidget);
-        area.add(paths       = new ChoiceWidget);
+        //area.add(paths       = new ChoiceWidget);
         area.add(deleteAfter = new ToggleWidget);
 
         // The updater Config is changed when the widget state is modified.
@@ -77,16 +79,16 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         QObject::connect(freqs,       SIGNAL(selectionChangedByUser(uint)),                  thisPublic, SLOT(apply()));
         QObject::connect(channels,    SIGNAL(selectionChangedByUser(uint)),                  thisPublic, SLOT(apply()));
         QObject::connect(autoDown,    SIGNAL(stateChangedByUser(ToggleWidget::ToggleState)), thisPublic, SLOT(apply()));
-        QObject::connect(paths,       SIGNAL(selectionChangedByUser(uint)),                  thisPublic, SLOT(apply()));
+        //QObject::connect(paths,       SIGNAL(selectionChangedByUser(uint)),                  thisPublic, SLOT(apply()));
         QObject::connect(deleteAfter, SIGNAL(stateChangedByUser(ToggleWidget::ToggleState)), thisPublic, SLOT(apply()));
 
         LabelWidget *releaseLabel = new LabelWidget;
         area.add(releaseLabel);
 
-        LabelWidget *pathLabel = new LabelWidget;
-        area.add(pathLabel);
+        /*LabelWidget *pathLabel = new LabelWidget;
+        area.add(pathLabel);*/
 
-        autoCheck->setText(tr("Check for updates:"));
+        autoCheck->setText(tr("Check for Updates:"));
 
         freqs->items()
                 << new ChoiceItem(tr("At startup"), UpdaterSettings::AtStartup)
@@ -99,20 +101,20 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         lastChecked->setFont("separator.annotation");
         lastChecked->setTextColor("altaccent");
 
-        releaseLabel->setText("Release type:");
+        releaseLabel->setText("Release Type:");
 
         channels->items()
                 << new ChoiceItem(tr("Stable"),             UpdaterSettings::Stable)
                 << new ChoiceItem(tr("Unstable/Candidate"), UpdaterSettings::Unstable);
 
-        pathLabel->setText(tr("Download location:"));
+        /*pathLabel->setText(tr("Download location:"));
 
         paths->items()
                 << new ChoiceItem(defaultLocationName(),
-                                  UpdaterSettings::defaultDownloadPath().toString());
+                                  UpdaterSettings::defaultDownloadPath().toString());*/
 
-        autoDown->setText(tr("Download automatically"));
-        deleteAfter->setText(tr("Delete file after install"));
+        autoDown->setText(tr("Download Automatically"));
+        deleteAfter->setText(tr("Delete File After Install"));
 
         fetch();
 
@@ -127,8 +129,8 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
                << Const(0)      << *lastChecked
                << *releaseLabel << *channels
                << Const(0)      << *autoDown
-               << Const(0)      << *deleteAfter
-               << *pathLabel    << *paths;
+               << Const(0)      << *deleteAfter;
+               //<< *pathLabel    << *paths;
 
         area.setContentSize(layout.width(), layout.height());
 
@@ -161,7 +163,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         freqs->enable(!st.onlyCheckManually());
         freqs->setSelected(freqs->items().findData(st.frequency()));
         channels->setSelected(channels->items().findData(st.channel()));
-        setDownloadPath(st.downloadPath());
+        //setDownloadPath(st.downloadPath());
         autoDown->setActive(st.autoDownload());
         deleteAfter->setActive(st.deleteAfterUpdate());
     }
@@ -194,6 +196,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         st.setDeleteAfterUpdate(deleteAfter->isActive());
     }
 
+#if 0
     void setDownloadPath(QString const &/*dir*/)
     {
         paths->setSelected(0);
@@ -213,6 +216,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
             pathList->setCurrentIndex(pathList->findData(dir));
         }*/
     }
+#endif
 };
 
 UpdaterSettingsDialog::UpdaterSettingsDialog(Mode mode, String const &name)
