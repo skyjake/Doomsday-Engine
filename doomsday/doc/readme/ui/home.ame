@@ -10,7 +10,7 @@ to a different tab:
 @list/thin{
     @item Click on the tab names in the top of the screen.
     @item Left and right arrow keys move focus to an adjacent tab.
-    @item Shortcut keys: D, H, X, O, M, and P (while not entering text in a text field.)
+    @item Shortcut keys: @kbd{D}, @kbd{H}, @kbd{X}, @kbd{O}, @kbd{M}, and @kbd{P} (while not entering text in a text field.)
     @item Click on the left or right edge of the screen.
 }
 
@@ -182,15 +182,13 @@ command:
 
 @code{net info}
 
-@subsec{ Hosting a game (Doomsday Shell) }
+@parag{Hosting a game.} Use @ifdef{UNIX}{ @strong{doomsday-shell} or
+@strong{doomsday-shell-text} } @else{ @strong{Doomsday Shell} } to host a
+multiplayer game of your own. The @wikiterm{Shell}{Shell} allows you to start,
+stop, and control Doomsday multiplayer servers. This includes both your own
+local servers and remote servers on the internet.
 
-Use @ifdef{UNIX}{ @strong{doomsday-shell} or @strong{doomsday-shell-text} }
-@else{ @strong{Doomsday Shell} } to host a multiplayer game of your own. The
-@wikiterm{Shell}{Shell} allows you to start, stop, and control Doomsday
-multiplayer servers. This includes both your own local servers and remote
-servers on the internet.
-
-@strong{doomsday-server} runs in a background process and has no UI of its own.
+@file{doomsday-server} runs in a background process and has no UI of its own.
 The Shell provides a couple of basic game options that you can change via the
 GUI. For example, you can choose between Deatchmatch and Co-op mode, change the
 current map, and enable or disable monsters. The full set of @wikiterm{console

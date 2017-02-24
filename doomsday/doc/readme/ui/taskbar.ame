@@ -91,8 +91,8 @@ Preset} button and select a suitable one. Then click @ui{Apply} to erase all
 your existing game controller bindings and activate the ones in the preset. You
 can still manually edit the bindings in the game's @ui{Options} menu.
 
-@parag{Mouse input settings.} The @ui{Sync Axis Sensitivies} option will ensure
-that mouse sensitivity is the same in both the horizontal and vertical
+@parag{Mouse input settings.} The @ui{Sync Axis Sensitivities} option will
+ensure that mouse sensitivity is the same in both the horizontal and vertical
 directions.
 
 @parag{Minimizing mouse latency.} The default input settings try to replicate
@@ -127,7 +127,7 @@ visible, you can drag its right edge to resize it.
 The leftmost button in the task bar opens the log options menu:
 
 @deflist{
-    @item{Show Full Log} Expands the log history panel to its full size.
+    @item{Show Full Log} Expands the log history panel to its full size. When the task bar is open, pressing @kbd{PageUp} will also expand the panel size.
     @item{Close Log} Dismisses the log history panel.
     @item{Go to Latest} Scrolls the log history to the latest message.
     @item{Copy Path to Clipboard} Copies the @file{doomsday.out} file path to the system clipboard to make it easier to find the output file.
@@ -139,8 +139,28 @@ The leftmost button in the task bar opens the log options menu:
 
 @section{ Command prompt }
 
-@list{
-    @item Console command prompt
-    @item Doomsday Script prompt
-}
+The middle of the task bar is occupied by a command prompt text field. Here you
+can enter console commands and modify console variables manually. This is
+typically most useful for developers, modders, and other advanced users.
 
+@parag{Console basics.} Type @cmd{help} to get started. This prints some basic
+information about how to use the @wikiterm{console}, and commands for listing
+all the available @wikiterm{console commands} and @wikilink{variables}{console
+variable}. At any time, press @kbd{Tab} to autocomplete the word being typed.
+This will pop up a list of all possible completions, including the current
+values for any variables. You can change console variable values as follows:
+
+@samp{@cmd{sound-info 1}}
+
+@parag{Shortcut key.} You should set up a console shortcut key if you find
+yourself going to the console often. The shortcut defaults to @kbd{Tilde} (U.S.
+keyboard) but you can choose your own shortcut key by clicking the @ui{>}
+button next to the command prompt.
+
+@parag{Interactive Doomsday Script prompt.} @wikiterm{Doomsday Script} is a
+fully-fledged Python/Ruby-like scripting language built into Doomsday 2. While
+it doesn't yet allow full access to all engine features, it is being improved
+in each release. The command prompt can be switched to Doomsday Script mode by
+right-clicking the @ui{>} prompt menu button. Everything entered into the
+command prompt is then run as Doomsday Script.This mode is intended only for
+developers.
