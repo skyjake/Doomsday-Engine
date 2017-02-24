@@ -50,6 +50,7 @@ static dint const MAX_CACHE_KB     = 4096;
 // Even one minute of silence is quite a long time during gameplay.
 static dint const MAX_CACHE_TICS   = TICSPERSEC * 60 * 4;  // 4 minutes.
 
+#if 0
 /**
  * Determines the necessary upsample factor for the given sample @a rate.
  */
@@ -58,7 +59,7 @@ static dint upsampleFactor(dint rate)
     dint factor = 1;
 #ifdef __CLIENT__
     // The (up)sampling factor.
-    if(App_AudioSystem().mustUpsampleToSfxRate())
+    if (App_AudioSystem().mustUpsampleToSfxRate())
     {
         factor = de::max(1, ::sfxRate / rate);
     }
@@ -89,20 +90,20 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
     DENG2_ASSERT(src && dst);
 
     // Let's first check for the easy cases.
-    if(dstRate == srcRate)
+    if (dstRate == srcRate)
     {
-        if(srcBytesPer == dstBytesPer)
+        if (srcBytesPer == dstBytesPer)
         {
             // A simple copy will suffice.
             std::memcpy(dst, src, srcSize);
         }
-        else if(srcBytesPer == 1 && dstBytesPer == 2)
+        else if (srcBytesPer == 1 && dstBytesPer == 2)
         {
             // Just changing the bytes won't do much good...
             duchar const *sp = (duchar const *) src;
             dshort *dp       = (dshort *) dst;
 
-            for(dint i = 0; i < srcNumSamples; ++i)
+            for (dint i = 0; i < srcNumSamples; ++i)
             {
                 *dp++ = (*sp++ - 0x80) << 8;
             }
@@ -111,15 +112,15 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
     }
 
     // 2x resampling.
-    if(dstRate == 2 * srcRate)
+    if (dstRate == 2 * srcRate)
     {
-        if(dstBytesPer == 1)
+        if (dstBytesPer == 1)
         {
             // The source has a byte per sample as well.
             duchar const *sp = (duchar const *) src;
             duchar *dp       = (duchar *) dst;
 
-            for(dint i = 0; i < srcNumSamples - 1; ++i, sp++)
+            for (dint i = 0; i < srcNumSamples - 1; ++i, sp++)
             {
                 *dp++ = *sp;
                 *dp++ = (*sp + sp[1]) >> 1;
@@ -128,13 +129,13 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
             // Fill in the last two as well.
             dp[0] = dp[1] = *sp;
         }
-        else if(srcBytesPer == 1)
+        else if (srcBytesPer == 1)
         {
             // Destination is signed 16bit. Source is 8bit.
             duchar const *sp = (duchar const *) src;
             dshort *dp       = (dshort *) dst;
 
-            for(dint i = 0; i < srcNumSamples - 1; ++i, sp++)
+            for (dint i = 0; i < srcNumSamples - 1; ++i, sp++)
             {
                 dshort const first = U8_S16(*sp);
 
@@ -145,13 +146,13 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
             // Fill in the last two as well.
             dp[0] = dp[1] = U8_S16(*sp);
         }
-        else if(srcBytesPer == 2)
+        else if (srcBytesPer == 2)
         {
             // Destination is signed 16bit. Source is 16bit.
             dshort const *sp = (dshort const *) src;
             dshort *dp       = (dshort *) dst;
 
-            for(dint i = 0; i < srcNumSamples - 1; ++i, sp++)
+            for (dint i = 0; i < srcNumSamples - 1; ++i, sp++)
             {
                 *dp++ = *sp;
                 *dp++ = (*sp + sp[1]) >> 1;
@@ -163,15 +164,15 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
     }
 
     // 4x resampling (11Khz => 44KHz only).
-    if(dstRate == 4 * srcRate)
+    if (dstRate == 4 * srcRate)
     {
-        if(dstBytesPer == 1)
+        if (dstBytesPer == 1)
         {
             // The source has a byte per sample as well.
             duchar const *sp = (duchar const *) src;
             duchar *dp       = (duchar *) dst;
 
-            for(dint i = 0; i < srcNumSamples - 1; ++i, sp++)
+            for (dint i = 0; i < srcNumSamples - 1; ++i, sp++)
             {
                 duchar const mid = (*sp + sp[1]) >> 1;
 
@@ -184,13 +185,13 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
             // Fill in the last four as well.
             dp[0] = dp[1] = dp[2] = dp[3] = *sp;
         }
-        else if(srcBytesPer == 1)
+        else if (srcBytesPer == 1)
         {
             // Destination is signed 16bit. Source is 8bit.
             duchar const *sp = (duchar const *) src;
             dshort *dp       = (dshort *) dst;
 
-            for(int i = 0; i < srcNumSamples - 1; ++i, sp++)
+            for (int i = 0; i < srcNumSamples - 1; ++i, sp++)
             {
                 dshort const first = U8_S16(*sp);
                 dshort const last  = U8_S16(sp[1]);
@@ -205,13 +206,13 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
             // Fill in the last four as well.
             dp[0] = dp[1] = dp[2] = dp[3] = U8_S16(*sp);
         }
-        else if(srcBytesPer == 2)
+        else if (srcBytesPer == 2)
         {
             // Destination is signed 16bit. Source is 16bit.
             dshort const *sp = (dshort const *) src;
             dshort *dp       = (dshort *) dst;
 
-            for(dint i = 0; i < srcNumSamples - 1; ++i, sp++)
+            for (dint i = 0; i < srcNumSamples - 1; ++i, sp++)
             {
                 dshort const mid = (*sp + sp[1]) >> 1;
 
@@ -226,6 +227,7 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
         }
     }
 }
+#endif
 
 /**
  * Prepare the given sound sample @a smp for caching.
@@ -246,7 +248,7 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
  * @param rate        Samples per second.
  */
 void configureSample(sfxsample_t &smp, void const *data, duint size,
-    dint numSamples, dint bytesPer, dint rate)
+                     dint numSamples, dint bytesPer, dint rate)
 {
     DENG2_UNUSED(data);
     DENG2_UNUSED(size);
@@ -257,6 +259,7 @@ void configureSample(sfxsample_t &smp, void const *data, duint size,
     smp.rate       = rate;
     smp.numSamples = numSamples;
 
+#if 0
     // Apply the upsample factor.
     dint const rsfactor = upsampleFactor(rate);
     smp.rate       *= rsfactor;
@@ -264,11 +267,12 @@ void configureSample(sfxsample_t &smp, void const *data, duint size,
     smp.size       *= rsfactor;
 
     // Resample to 16bit?
-    if(::sfxBits == 16 && smp.bytesPer == 1)
+    if (::sfxBits == 16 && smp.bytesPer == 1)
     {
         smp.bytesPer = 2;
         smp.size     *= 2;
     }
+#endif
 }
 
 SfxSampleCache::CacheItem::CacheItem()
@@ -302,13 +306,14 @@ void SfxSampleCache::CacheItem::replaceSample(sfxsample_t &newSample)
     std::memcpy(&sample, &newSample, sizeof(sample));
 }
 
+//---------------------------------------------------------------------------------------
+
 DENG2_PIMPL(SfxSampleCache)
 {
     /**
      * Cached samples are placed in a hash (key: sound id).
      */
-    struct Hash
-    {
+    struct Hash {
         CacheItem *first = nullptr;
         CacheItem *last  = nullptr;
     } hash[CACHE_HASH_SIZE];
@@ -336,9 +341,9 @@ DENG2_PIMPL(SfxSampleCache)
      */
     CacheItem *tryFind(dint soundId) const
     {
-        for(CacheItem *it = hashFor(soundId).first; it; it = it->next)
+        for (CacheItem *it = hashFor(soundId).first; it; it = it->next)
         {
-            if(it->sample.id == soundId)
+            if (it->sample.id == soundId)
                 return it;
         }
         return nullptr;  // Not found.
@@ -353,14 +358,14 @@ DENG2_PIMPL(SfxSampleCache)
         auto *item = new CacheItem;
 
         Hash &hash = hashFor(soundId);
-        if(hash.last)
+        if (hash.last)
         {
             hash.last->next = item;
             item->prev = hash.last;
         }
         hash.last = item;
 
-        if(!hash.first)
+        if (!hash.first)
             hash.first = item;
 
         return *item;
@@ -377,14 +382,14 @@ DENG2_PIMPL(SfxSampleCache)
         Hash &hash = hashFor(item.sample.id);
 
         // Unlink the item.
-        if(hash.last == &item)
+        if (hash.last == &item)
             hash.last = item.prev;
-        if(hash.first == &item)
+        if (hash.first == &item)
             hash.first = item.next;
 
-        if(item.next)
+        if (item.next)
             item.next->prev = item.prev;
-        if(item.prev)
+        if (item.prev)
             item.prev->next = item.next;
 
 #ifdef __CLIENT__
@@ -416,11 +421,11 @@ DENG2_PIMPL(SfxSampleCache)
 
         // Have we already cached a comparable sample?
         CacheItem *item = tryFind(soundId);
-        if(item)
+        if (item)
         {
             // A sample is already in the cache.
             // If the existing sample is in the same format - use it.
-            if(cached.bytesPer * 8 == ::sfxBits && cached.rate == ::sfxRate)
+            if (cached.bytesPer * 8 == ::sfxBits && cached.rate == ::sfxRate)
                 return *item;
 
             // Sample format differs - uncache it (we'll reuse this CacheItem).
@@ -436,9 +441,13 @@ DENG2_PIMPL(SfxSampleCache)
         cached.id    = soundId;
         cached.group = group;
 
+#if 0
         // Perform resampling if necessary.
         resample(cached.data = M_Malloc(cached.size), cached.bytesPer, cached.rate,
                  data, bytesPer, rate, numSamples, size);
+#endif
+        cached.data = M_Malloc(cached.size);
+        std::memcpy(cached.data, data, size);
 
         // Replace the cached sample.
         item->replaceSample(cached);
@@ -451,7 +460,7 @@ DENG2_PIMPL(SfxSampleCache)
      */
     void removeAll()
     {
-        for(Hash &hl : hash)
+        for (Hash &hl : hash)
         {
             while(hl.first)
             {
@@ -492,12 +501,12 @@ void SfxSampleCache::maybeRunPurge()
     // If no interface for SFX playback is available then we have nothing to do.
     // The assumption being that a manual clear is performed if/when SFX playback
     // availability changes.
-    if(!App_AudioSystem().sfxIsAvailable()) return;
+    if (!App_AudioSystem().sfxIsAvailable()) return;
 #endif
 
     // Is it time for a purge?
     dint const nowTime = Timer_Ticks();
-    if(nowTime - d->lastPurge < PURGE_TIME) return;  // No.
+    if (nowTime - d->lastPurge < PURGE_TIME) return;  // No.
 
     d->lastPurge = nowTime;
 
@@ -505,11 +514,11 @@ void SfxSampleCache::maybeRunPurge()
     // Also get rid of all sounds that have timed out.
     dint totalSize  = 0;
     CacheItem *next = nullptr;
-    for(Impl::Hash &hash : d->hash)
-    for(CacheItem *it = hash.first; it; it = next)
+    for (Impl::Hash &hash : d->hash)
+    for (CacheItem *it = hash.first; it; it = next)
     {
         next = it->next;
-        if(nowTime - it->lastUsed > MAX_CACHE_TICS)
+        if (nowTime - it->lastUsed > MAX_CACHE_TICS)
         {
             // This sound hasn't been used in a looong time.
             d->removeCacheItem(*it);
@@ -530,25 +539,27 @@ void SfxSampleCache::maybeRunPurge()
          * no more stopped sounds.
          */
         lowest = 0;
-        for(Impl::Hash &hash : d->hash)
-        for(CacheItem *it = hash.first; it; it = it->next)
+        for (Impl::Hash &hash : d->hash)
         {
+            for (CacheItem *it = hash.first; it; it = it->next)
+            {
 #ifdef __CLIENT__
-            // If the sample is playing we won't remove it now.
-            if(App_AudioSystem().sfxChannels().isPlaying(it->sample.id))
-                continue;
+                // If the sample is playing we won't remove it now.
+                if (App_AudioSystem().sfxChannels().isPlaying(it->sample.id))
+                    continue;
 #endif
 
-            // This sample could be removed, let's check the hits.
-            if(!lowest || it->hits < lowHits)
-            {
-                lowest  = it;
-                lowHits = it->hits;
+                // This sample could be removed, let's check the hits.
+                if (!lowest || it->hits < lowHits)
+                {
+                    lowest  = it;
+                    lowHits = it->hits;
+                }
             }
         }
 
         // No more samples to remove?
-        if(!lowest) break;
+        if (!lowest) break;
 
         // Stop and uncache this cached sample.
         totalSize -= lowest->sample.size + sizeof(*lowest);
@@ -560,20 +571,20 @@ void SfxSampleCache::info(duint *cacheBytes, duint *sampleCount)
 {
     duint size  = 0;
     duint count = 0;
-    for(Impl::Hash &hash : d->hash)
-    for(CacheItem *it = hash.first; it; it = it->next)
+    for (Impl::Hash &hash : d->hash)
+    for (CacheItem *it = hash.first; it; it = it->next)
     {
         size  += it->sample.size;
         count += 1;
     }
 
-    if(cacheBytes)  *cacheBytes  = size;
-    if(sampleCount) *sampleCount = count;
+    if (cacheBytes)  *cacheBytes  = size;
+    if (sampleCount) *sampleCount = count;
 }
 
 void SfxSampleCache::hit(dint soundId)
 {
-    if(CacheItem *found = d->tryFind(soundId))
+    if (CacheItem *found = d->tryFind(soundId))
     {
         found->hit();
     }
@@ -587,19 +598,19 @@ sfxsample_t *SfxSampleCache::cache(dint soundId)
     // If no interface for SFX playback is available there is no benefit to caching
     // sound samples that won't be heard.
     /// @todo AudioSystem should handle this by restricting access. -ds
-    if(!App_AudioSystem().sfxIsAvailable()) return nullptr;
+    if (!App_AudioSystem().sfxIsAvailable()) return nullptr;
 #endif
 
     // Ignore invalid sound IDs.
-    if(soundId <= 0) return nullptr;
+    if (soundId <= 0) return nullptr;
 
     // Have we already cached this?
-    if(CacheItem *existing = d->tryFind(soundId))
+    if (CacheItem *existing = d->tryFind(soundId))
         return &existing->sample;
 
     // Lookup info for this sound.
     sfxinfo_t *info = Def_GetSoundInfo(soundId, 0, 0);
-    if(!info)
+    if (!info)
     {
         LOG_AUDIO_WARNING("Ignoring sound id:%i (missing sfxinfo_t)") << soundId;
         return nullptr;
@@ -621,19 +632,19 @@ sfxsample_t *SfxSampleCache::cache(dint soundId)
 
     /// Has an external sound file been defined?
     /// @note Path is relative to the base path.
-    if(!Str_IsEmpty(&info->external))
+    if (!Str_IsEmpty(&info->external))
     {
         String searchPath = App_BasePath() / String(Str_Text(&info->external));
         // Try loading.
         data = WAV_Load(searchPath.toUtf8().constData(), &bytesPer, &rate, &numSamples);
-        if(data)
+        if (data)
         {
             bytesPer /= 8; // Was returned as bits.
         }
     }
 
     // If external didn't succeed, let's try the default resource dir.
-    if(!data)
+    if (!data)
     {
         /**
          * If the sound has an invalid lumpname, search external anyway. If the
@@ -642,7 +653,7 @@ sfxsample_t *SfxSampleCache::cache(dint soundId)
          *
          * @todo should be a cvar.
          */
-        if(info->lumpNum < 0 || !App_FileSystem().lump(info->lumpNum).container().hasCustom())
+        if (info->lumpNum < 0 || !App_FileSystem().lump(info->lumpNum).container().hasCustom())
         {
             try
             {
@@ -651,22 +662,22 @@ sfxsample_t *SfxSampleCache::cache(dint soundId)
                 foundPath = App_BasePath() / foundPath;  // Ensure the path is absolute.
 
                 data = WAV_Load(foundPath.toUtf8().constData(), &bytesPer, &rate, &numSamples);
-                if(data)
+                if (data)
                 {
                     // Loading was successful.
                     bytesPer /= 8;  // Was returned as bits.
                 }
             }
-            catch(FS1::NotFoundError const &)
+            catch (FS1::NotFoundError const &)
             {}  // Ignore this error.
         }
     }
 
     // No sample loaded yet?
-    if(!data)
+    if (!data)
     {
         // Try loading from the lump.
-        if(info->lumpNum < 0)
+        if (info->lumpNum < 0)
         {
             LOG_AUDIO_WARNING("Failed to locate lump resource '%s' for sample '%s'")
                 << info->lumpName << info->id;
@@ -674,20 +685,20 @@ sfxsample_t *SfxSampleCache::cache(dint soundId)
         }
 
         File1 &lump = App_FileSystem().lump(info->lumpNum);
-        if(lump.size() <= 8) return nullptr;
+        if (lump.size() <= 8) return nullptr;
 
         char hdr[12];
         lump.read((duint8 *)hdr, 0, 12);
 
         // Is this perhaps a WAV sound?
-        if(WAV_CheckFormat(hdr))
+        if (WAV_CheckFormat(hdr))
         {
             // Load as WAV, then.
             duint8 const *sp = lump.cache();
             data = WAV_MemoryLoad((byte const *) sp, lump.size(), &bytesPer, &rate, &numSamples);
             lump.unlock();
 
-            if(!data)
+            if (!data)
             {
                 // Abort...
                 LOG_AUDIO_WARNING("Unknown WAV format in lump '%s'") << info->lumpName;
@@ -698,7 +709,7 @@ sfxsample_t *SfxSampleCache::cache(dint soundId)
         }
     }
 
-    if(data)  // Loaded!
+    if (data)  // Loaded!
     {
         // Insert a copy of this into the cache.
         CacheItem &item = d->insert(soundId, data, bytesPer * numSamples, numSamples,
@@ -709,11 +720,11 @@ sfxsample_t *SfxSampleCache::cache(dint soundId)
 
     // Probably an old-fashioned DOOM sample.
     dsize lumpLength = 0;
-    if(info->lumpNum >= 0)
+    if (info->lumpNum >= 0)
     {
         File1 &lump = App_FileSystem().lump(info->lumpNum);
 
-        if(lump.size() > 8)
+        if (lump.size() > 8)
         {
             duint8 hdr[8];
             lump.read(hdr, 0, 8);
@@ -722,14 +733,14 @@ sfxsample_t *SfxSampleCache::cache(dint soundId)
             numSamples = de::max(0, DD_LONG(*(dint const *) (hdr + 4)));
             bytesPer   = 1; // 8-bit.
 
-            if(head == 3 && numSamples > 0 && (unsigned) numSamples <= lumpLength - 8)
+            if (head == 3 && numSamples > 0 && (unsigned) numSamples <= lumpLength - 8)
             {
                 // The sample data can be used as-is - load directly from the lump cache.
                 duint8 const *data = lump.cache() + 8;  // Skip the header.
 
                 // Insert a copy of this into the cache.
                 CacheItem &item = d->insert(soundId, data, bytesPer * numSamples, numSamples,
-                                           bytesPer, rate, info->group);
+                                            bytesPer, rate, info->group);
 
                 lump.unlock();
 
