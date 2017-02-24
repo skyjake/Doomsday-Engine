@@ -72,8 +72,8 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
         fov->setRange(Ranged(30, 160));
 
         area.add(enableExtWithPWADs = new VariableToggleWidget(tr("Use with PWADs"),   App::config("resource.highResWithPWAD")));
-        area.add(disableExtTextures = new VariableToggleWidget(tr("Disable for textures"), App::config("resource.noHighResTex")));
-        area.add(disableExtPatches  = new VariableToggleWidget(tr("Disable for patches"),  App::config("resource.noHighResPatches")));
+        area.add(disableExtTextures = new VariableToggleWidget(tr("Disable for Textures"), App::config("resource.noHighResTex")));
+        area.add(disableExtPatches  = new VariableToggleWidget(tr("Disable for Patches"),  App::config("resource.noHighResPatches")));
 
         // Set up a separate popup for developer settings.
         self().add(devPopup = new GridPopupWidget);
