@@ -145,9 +145,9 @@ de::Matrix4f GL_GetProjectionMatrix();
 void GL_SelectTexUnits(int count);
 
 /**
- * Swaps buffers / blits the back buffer to the front.
+ * Finish the frame being rendered. Applies the FPS limiter, if enabled.
  */
-void GL_DoUpdate();
+void GL_FinishFrame();
 
 /**
  * Set the current GL blending mode.

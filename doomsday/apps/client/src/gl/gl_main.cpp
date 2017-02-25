@@ -196,7 +196,7 @@ void GL_SetGamma()
     GL_SetGammaRamp(&myramp);
 }
 
-void GL_DoUpdate()
+void GL_FinishFrame()
 {
     if(ClientApp::vr().mode() == VRConfig::OculusRift) return;
 
@@ -211,8 +211,8 @@ void GL_DoUpdate()
 
     // Wait until the right time to show the frame so that the realized
     // frame rate is exactly right.
-    //glFlush();
-    //DD_WaitForOptimalUpdateTime();
+    LIBGUI_GL.glFlush();
+    DD_WaitForOptimalUpdateTime();
 
     // Blit screen to video.
     //ClientWindow::main().swapBuffers();
@@ -322,15 +322,15 @@ void GL_Shutdown()
     // artefacts during video context switches on some displays.
     //
     // Render a few black frames before we continue.
-    if(!novideo)
+    /*if(!novideo)
     {
         dint i = 0;
         do
         {
             LIBGUI_GL.glClear(GL_COLOR_BUFFER_BIT);
-            GL_DoUpdate();
+            GL_FinishFrame();
         } while(++i < 3);
-    }
+    }*/
     ClientApp::renderSystem().glDeinit();
     GL_ShutdownDeferredTask();
     FR_Shutdown();

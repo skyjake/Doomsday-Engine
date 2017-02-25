@@ -126,15 +126,20 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
 
     void fetch()
     {
-        /// @todo These widgets should be intelligent enough to fetch their
-        /// cvar values when they need to....
-
         foreach (Widget *child, self().area().childWidgets() + devPopup->content().childWidgets())
         {
             if (ICVarWidget *w = child->maybeAs<ICVarWidget>())
             {
                 w->updateFromCVar();
             }
+        }
+    }
+
+    void apply()
+    {
+        if (texSettingsToggled)
+        {
+            GL_TexReset();
         }
     }
 };
@@ -231,8 +236,5 @@ void RendererSettingsDialog::finish(int result)
 {
     DialogWidget::finish(result);
 
-    if (d->texSettingsToggled)
-    {
-        GL_TexReset();
-    }
+    d->apply();
 }

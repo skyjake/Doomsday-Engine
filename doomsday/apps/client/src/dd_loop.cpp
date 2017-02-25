@@ -74,7 +74,7 @@ using namespace de;
 
 dfloat frameTimePos;  ///< 0...1: fractional part for sharp game tics.
 
-dint maxFrameRate = 120;  ///< Zero means 'unlimited'.
+dint maxFrameRate = 0;  ///< Zero means 'unlimited'.
 // Refresh frame count (independant of the viewport-specific frameCount).
 dint rFrameCount;
 byte devShowFrameTimeDeltas;
@@ -329,7 +329,7 @@ void DD_WaitForOptimalUpdateTime()
     /// so we can't use fractions of a millisecond.
     duint const optimalDelta = (::maxFrameRate > 0 ? 1000 / ::maxFrameRate : 1);
 
-    if(Sys_IsShuttingDown()) return; // No need for finesse.
+    if (Sys_IsShuttingDown()) return; // No need for finesse.
 
     // This is when we would ideally like to make the update.
     duint const targetUpdateTime = prevUpdateTime + optimalDelta;
@@ -338,12 +338,12 @@ void DD_WaitForOptimalUpdateTime()
     duint nowTime = Timer_RealMilliseconds();
     duint elapsed = nowTime - prevUpdateTime;
 
-    if(elapsed < optimalDelta)
+    if (elapsed < optimalDelta)
     {
         duint const needSleepMs = optimalDelta - elapsed;
 
         // We need to wait until the optimal time has passed.
-        if(needSleepMs > 5)
+        if (needSleepMs > 5)
         {
             // Longer sleep, yield to other threads.
             Sys_Sleep(needSleepMs - 3);  // Leave some room for inaccuracies.
@@ -359,7 +359,7 @@ void DD_WaitForOptimalUpdateTime()
     // The time for this update.
     prevUpdateTime = nowTime;
 
-    timeDeltaStatistics(dint( elapsed ) - dint( optimalDelta ));
+    timeDeltaStatistics(dint(elapsed) - dint(optimalDelta));
 }
 
 timespan_t DD_LatestRunTicsStartTime()
@@ -436,12 +436,12 @@ void Loop_RunTics()
         // Various global variables are used for counting time.
         advanceTime(::ticLength);
     }
-    }
+}
 
 void DD_RegisterLoop()
 {
     C_VAR_BYTE("input-sharp-lateprocessing", &::processSharpEventsAfterTickers, 0, 0, 1);
-    C_VAR_INT ("refresh-rate-maximum",       &::maxFrameRate, 0, 35, 1000);
+    C_VAR_INT ("refresh-rate-maximum",       &::maxFrameRate, 0, 0, 1000);
     C_VAR_INT ("rend-dev-framecount",        &::rFrameCount, CVF_NO_ARCHIVE | CVF_PROTECTED, 0, 0);
     C_VAR_BYTE("rend-info-deltas-frametime", &::devShowFrameTimeDeltas, CVF_NO_ARCHIVE, 0, 1);
 }

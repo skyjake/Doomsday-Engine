@@ -53,6 +53,8 @@ DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
     ToggleWidget *centered;
     VariableToggleWidget *fsaa;
     VariableToggleWidget *vsync;
+    ToggleWidget *fpsLimiter = nullptr;
+    SliderWidget *fpsMax = nullptr;
     ChoiceWidget *modes;
     ButtonWidget *windowButton;
 #ifdef USE_COLOR_DEPTH_CHOICE
@@ -85,6 +87,21 @@ DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
 
         if (App_GameLoaded())
         {
+            area.add(fpsLimiter = new ToggleWidget);
+            fpsLimiter->margins().setTop("dialog.separator");
+            fpsLimiter->setText(tr("FPS Limiter"));
+            QObject::connect(fpsLimiter, &ToggleWidget::stateChangedByUser, [this] (ToggleWidget::ToggleState st) {
+                fpsMax->enable(st == ToggleWidget::Active);
+                applyFpsMax();
+            });
+
+            area.add(fpsMax = new SliderWidget);
+            fpsMax->margins().setTop("dialog.separator");
+            fpsMax->setRange(Ranged(35, 60));
+            fpsMax->setPrecision(0);
+            fpsMax->rule().setInput(Rule::Width, centered->rule().width());
+            QObject::connect(fpsMax, &SliderWidget::valueChangedByUser, [this] (double) { applyFpsMax(); });
+
             stretchChoices
                 << new ChoiceItem(tr("Smart"),        SCALEMODE_SMART_STRETCH)
                 << new ChoiceItem(tr("Original 1:1"), SCALEMODE_NO_STRETCH)
@@ -96,9 +113,9 @@ DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
             area.add(menuAspect   = new CVarChoiceWidget("menu-stretch"));
 
             finaleAspect->setItems(stretchChoices);
-            hudAspect->setItems(stretchChoices);
+            hudAspect   ->setItems(stretchChoices);
             inludeAspect->setItems(stretchChoices);
-            menuAspect->setItems(stretchChoices);
+            menuAspect  ->setItems(stretchChoices);
         }
     }
 
@@ -152,6 +169,15 @@ DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
         depths->setSelected(depths->items().findData(win.colorDepthBits()));
 #endif
 
+        // FPS limit.
+        if (fpsMax)
+        {
+            int const max = CVar_Integer(Con_FindVariable("refresh-rate-maximum"));
+            fpsLimiter->setActive(max != 0);
+            fpsMax->enable(max != 0);
+            fpsMax->setValue(!max ? 35 : max);
+        }
+
         foreach (Widget *child, self().area().childWidgets())
         {
             if (ICVarWidget *cw = child->maybeAs<ICVarWidget>())
@@ -162,6 +188,15 @@ DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
     void windowAttributesChanged(PersistentGLWindow &)
     {
         fetch();
+    }
+
+    void applyFpsMax()
+    {
+        if (fpsMax)
+        {
+            CVar_SetInteger(Con_FindVariable("refresh-rate-maximum"),
+                            fpsLimiter->isActive()? int(fpsMax->value()) : 0);
+        }
     }
 };
 
@@ -244,16 +279,19 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
 
     GridLayout layout(area().contentRule().left(),
                       area().contentRule().top(), GridLayout::RowFirst);
-    layout.setGridSize(2, 3);
+    layout.setGridSize(2, d->fpsLimiter? 4 : 3);
     layout.setColumnPadding(rule(RuleBank::UNIT));
-    layout << *d->showFps
-           << *d->fsaa
+    layout << *d->fsaa
            << *d->vsync
-           << *d->fullscreen
+           << *d->showFps;
+    if (d->fpsLimiter) layout << *d->fpsLimiter;
+    layout << *d->fullscreen
            << *d->maximized
            << *d->centered;
+    if (d->fpsMax) layout << *d->fpsMax;
 
-    GridLayout modeLayout(d->vsync->rule().left(), d->vsync->rule().bottom() + gap);
+    GridLayout modeLayout(d->vsync->rule().left(),
+                          (d->fpsLimiter? d->fpsLimiter : d->showFps)->rule().bottom() + gap);
     modeLayout.setGridSize(2, 0);
     modeLayout.setColumnAlignment(0, ui::AlignRight);
 
