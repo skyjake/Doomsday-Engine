@@ -13,10 +13,14 @@
 $ Readme-specific formatting macros.
 @macro{plugin}{@arg}
 @macro{ui}{@dquote{@arg}}
-@ifndef{MAN}{
-    @macro{man_opt}{@opt{-}@opt{@glue{@arg}}}
+@ifdef{TXT}{
+    @macro{man_opt}{-@glue{@arg}}
     @macro{man_opt2}{@man_opt{@arg{1}} (@arg{2})}
 }
+@else{@ifndef{MAN}{
+    @macro{man_opt}{@opt{-}@opt{@glue{@arg}}}
+    @macro{man_opt2}{@man_opt{@arg{1}} (@arg{2})}
+}}
 
 $-----------------------------------------------------------------------------
 @begin
