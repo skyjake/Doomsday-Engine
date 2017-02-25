@@ -2,5 +2,6 @@
 *.msi
 *.dmg
 *.deb
+*.rpm
 *.zip
 
