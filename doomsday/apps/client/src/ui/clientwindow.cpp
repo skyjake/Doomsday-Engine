@@ -923,7 +923,9 @@ void ClientWindow::drawWindowContent()
 
 void ClientWindow::postDraw()
 {
-    /// @note This method is called during the Canvas paintGL event.
+    /// @note This method is called during the GLWindow paintGL event.
+
+    BaseWindow::postDraw();
 
     // OVR will handle presentation in Oculus Rift mode.
     if (ClientApp::vr().mode() != VRConfig::OculusRift)
@@ -932,8 +934,6 @@ void ClientWindow::postDraw()
         // swapped.
         GL_FinishFrame();
     }
-
-    BaseWindow::postDraw();
 }
 
 bool ClientWindow::setDefaultGLFormat() // static
