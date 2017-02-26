@@ -162,5 +162,5 @@ fully-fledged Python/Ruby-like scripting language built into Doomsday 2. While
 it doesn't yet allow full access to all engine features, it is being improved
 in each release. The command prompt can be switched to Doomsday Script mode by
 right-clicking the @ui{>} prompt menu button. Everything entered into the
-command prompt is then run as Doomsday Script.This mode is intended only for
+command prompt is then run as Doomsday Script. This mode is intended only for
 developers.
