@@ -73,6 +73,7 @@ DENG2_PIMPL(GuiWidget)
     // Background blurring.
     struct BlurState
     {
+        Time updatedAt;
         Vector2ui size;
         QScopedPointer<GLTextureFramebuffer> fb[2];
         Drawable drawable;
@@ -244,6 +245,54 @@ DENG2_PIMPL(GuiWidget)
         }
     }
 
+    void updateBlurredBackground()
+    {
+        // Make sure blurring is initialized.
+        initBlur();
+
+        auto const now = Time::currentHighPerformanceTime();
+        if (blur->updatedAt == now)
+        {
+            return;
+        }
+        blur->updatedAt = now;
+        
+        // Ensure normal drawing is complete.
+        auto &painter = self().root().painter();
+        painter.flush();
+
+        auto const oldClip = painter.normalizedScissor();
+
+        DENG2_ASSERT(blur->fb[0]->isReady());
+
+        // Pass 1: render all the widgets behind this one onto the first blur
+        // texture, downsampled.
+        GLState::push()
+            .setTarget(*blur->fb[0])
+            .setViewport(Rectangleui::fromSize(blur->size));
+        blur->fb[0]->clear(GLFramebuffer::Depth);
+        self().root().drawUntil(self());
+        GLState::pop();
+
+        blur->fb[0]->resolveSamples();
+
+        // Pass 2: apply the horizontal blur filter to draw the background
+        // contents onto the second blur texture.
+        GLState::push()
+            .setTarget(*blur->fb[1])
+            .setViewport(Rectangleui::fromSize(blur->size));
+        blur->uTex = blur->fb[0]->colorTexture();
+        blur->uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
+        blur->uWindow = Vector4f(0, 0, 1, 1);
+        blur->drawable.setProgram(blur->drawable.program());
+        blur->drawable.draw();
+        GLState::pop();
+
+        blur->fb[1]->resolveSamples();
+
+        painter.setNormalizedScissor(oldClip);
+    }
+
     void drawBlurredBackground()
     {
         if (background.type == Background::SharedBlur ||
@@ -254,6 +303,7 @@ DENG2_PIMPL(GuiWidget)
             if (background.blur)
             {
                 self().root().painter().flush();
+                background.blur->d->updateBlurredBackground();
                 background.blur->drawBlurredRect(self().rule().recti(), background.solidFill);
             }
             return;
@@ -267,42 +317,6 @@ DENG2_PIMPL(GuiWidget)
             return;
         }
 
-        // Ensure normal drawing is complete.
-        auto &painter = self().root().painter();
-        painter.flush();
-
-        auto const oldClip = painter.normalizedScissor();
-
-        // Make sure blurring is initialized.
-        initBlur();
-
-        DENG2_ASSERT(blur->fb[0]->isReady());
-
-        // Pass 1: render all the widgets behind this one onto the first blur
-        // texture, downsampled.
-        GLState::push()
-                .setTarget(*blur->fb[0])
-                .setViewport(Rectangleui::fromSize(blur->size));
-        blur->fb[0]->clear(GLFramebuffer::Depth);
-        self().root().drawUntil(self());
-        GLState::pop();
-
-        blur->fb[0]->resolveSamples();
-
-        // Pass 2: apply the horizontal blur filter to draw the background
-        // contents onto the second blur texture.
-        GLState::push()
-                .setTarget(*blur->fb[1])
-                .setViewport(Rectangleui::fromSize(blur->size));
-        blur->uTex = blur->fb[0]->colorTexture();
-        blur->uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
-        blur->uWindow = Vector4f(0, 0, 1, 1);
-        blur->drawable.setProgram(blur->drawable.program());
-        blur->drawable.draw();
-        GLState::pop();
-
-        blur->fb[1]->resolveSamples();
-
         // Pass 3: apply the vertical blur filter, drawing the final result
         // into the original target.
         Vector4f blurColor = background.solidFill;
@@ -311,12 +325,11 @@ DENG2_PIMPL(GuiWidget)
         {
             blurColor.w = 1;
         }
-        if (!attribs.testFlag(DontDrawContent) && blurColor.w > 0 && blurOpacity > 0)
+        if (blurColor.w > 0 && blurOpacity > 0)
         {
+            updateBlurredBackground();
             self().drawBlurredRect(self().rule().recti(), blurColor, blurOpacity);
         }
-
-        painter.setNormalizedScissor(oldClip);
     }
 
     inline float currentOpacity() const
@@ -908,10 +921,10 @@ void GuiWidget::draw()
         // Detect mistakes in GLState stack usage.
         dsize const depthBeforeDrawingWidget = GLState::stackDepth();
 #endif
-        d->drawBlurredBackground();
-
         if (!d->attribs.testFlag(DontDrawContent))
         {
+            d->drawBlurredBackground();
+
             auto &painter = root().painter();
             painter.setSaturation(d->saturation);
 
