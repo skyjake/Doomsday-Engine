@@ -32,6 +32,7 @@ namespace de {
 
 static String const ISO_FORMAT = "yyyy-MM-dd hh:mm:ss.zzz";
 static HighPerformanceTimer highPerfTimer;
+static TimeDelta currentHighPerfDelta;
 
 namespace internal {
 
@@ -551,9 +552,14 @@ TimeDelta Time::highPerformanceTime() const
     return d->highPerfElapsed;
 }
 
-Time Time::currentHighPerformanceTime()
+Time Time::currentHighPerformanceTime() // static
 {
-    return Time(highPerfTimer.elapsed());
+    return currentHighPerfDelta;
+}
+
+void Time::updateCurrentHighPerformanceTime() // static
+{
+    currentHighPerfDelta = highPerfTimer.elapsed();
 }
 
 QTextStream &operator << (QTextStream &os, Time const &t)

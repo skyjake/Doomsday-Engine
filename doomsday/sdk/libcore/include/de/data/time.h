@@ -316,6 +316,8 @@ public:
      */
     static Time currentHighPerformanceTime();
 
+    static void updateCurrentHighPerformanceTime();
+
 private:
     DENG2_PRIVATE(d)
 };

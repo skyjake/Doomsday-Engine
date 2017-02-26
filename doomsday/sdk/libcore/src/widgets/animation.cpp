@@ -55,7 +55,8 @@ static inline float easeBoth(TimeDelta t)
 
 enum AnimationFlag
 {
-    Paused = 0x1
+    Paused = 0x1,
+    Finished = 0x2,
 };
 Q_DECLARE_FLAGS(AnimationFlags, AnimationFlag)
 Q_DECLARE_OPERATORS_FOR_FLAGS(AnimationFlags)
@@ -82,10 +83,10 @@ DENG2_PIMPL_NOREF(Animation)
     TimeDelta startDelay;
     Time setTime;
     Time targetTime;
+    Time pauseTime;
     Style style;
     float spring;
-    AnimationFlags flags;
-    Time pauseTime;
+    mutable AnimationFlags flags;
 
     Impl(float val, Style s)
         : value(val)
@@ -120,6 +121,7 @@ DENG2_PIMPL_NOREF(Animation)
 
         if (now >= targetTime.highPerformanceTime() || span <= 0)
         {
+            flags |= Finished;
             return target;
         }
         else
@@ -167,6 +169,14 @@ DENG2_PIMPL_NOREF(Animation)
         }
 
         return target;
+    }
+
+    void checkDone()
+    {
+        if (!(flags & Finished) && theTime.now >= targetTime.highPerformanceTime())
+        {
+            flags |= Finished;
+        }
     }
 
     Time currentTime() const
@@ -225,6 +235,7 @@ void Animation::setValue(float v, TimeDelta transitionSpan, TimeDelta startDelay
     {
         d->value = d->target = v;
         d->setTime = d->targetTime = now;
+        d->flags |= Finished;
     }
     else
     {
@@ -232,6 +243,7 @@ void Animation::setValue(float v, TimeDelta transitionSpan, TimeDelta startDelay
         d->target = v;
         d->setTime = now;
         d->targetTime = d->setTime + transitionSpan;
+        d->flags &= ~Finished;
     }
     d->startDelay = startDelay;
 }
@@ -253,16 +265,22 @@ float Animation::value() const
     {
         return d->valueAt(d->pauseTime.highPerformanceTime());
     }
+    if (d->flags & Finished)
+    {
+        return d->target;
+    }
     return d->valueAt(theTime.now);
 }
 
 bool Animation::done() const
 {
+    d->checkDone();
+    if (d->flags & Finished) return true;
     if (d->flags & Paused)
     {
         return d->pauseTime >= d->targetTime;
     }
-    return theTime.now >= d->targetTime.highPerformanceTime();
+    return false;
 }
 
 float Animation::target() const
