@@ -23,6 +23,7 @@
 #include "ui/dialogs/packageinfodialog.h"
 #include "resource/idtech1image.h"
 #include "ui/clientwindow.h"
+#include "ui/clientstyle.h"
 #include "clientapp.h"
 
 #include <doomsday/Games>
@@ -167,9 +168,9 @@ DENG_GUI_PIMPL(PackagesDialog)
 
         // Indicator that is only visible when no packages have been added to the profile.
         nothingSelected = new LabelWidget;
-        nothingSelected->setText(_E(b) + tr("No Packages Selected"));
-        nothingSelected->setFont("heading");
-        nothingSelected->setOpacity(0.5f);
+
+        nothingSelected->setText(tr("No Packages Selected"));
+        style().as<ClientStyle>().emptyMenuLabelStylist().applyStyle(*nothingSelected);
         nothingSelected->rule()
                 .setRect(self().leftArea().rule())
                 .setInput(Rule::Top, gameTitle->rule().bottom());

@@ -21,6 +21,7 @@
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/home/headerwidget.h"
 #include "ui/clientwindow.h"
+#include "ui/clientstyle.h"
 #include "network/serverlink.h"
 
 #include <doomsday/Games>
@@ -33,8 +34,11 @@
 using namespace de;
 
 DENG_GUI_PIMPL(MultiplayerColumnWidget)
+, DENG2_OBSERVES(ui::Data, Addition)
+, DENG2_OBSERVES(ui::Data, Removal)
 {
     MultiplayerServerMenuWidget *menu;
+    LabelWidget *noServers;
 
     Impl(Public *i) : Base(i)
     {
@@ -57,6 +61,29 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
                 .setInput(Rule::Width, area.contentRule().width())
                 .setInput(Rule::Left,  area.contentRule().left())
                 .setInput(Rule::Top,   self().header().rule().bottom());
+
+        // Empty content label.
+        noServers = new LabelWidget;
+        noServers->setText(tr("No Servers Found"));
+        style().as<ClientStyle>().emptyMenuLabelStylist().applyStyle(*noServers);
+        noServers->rule().setRect(self().rule());
+        self().add(noServers);
+
+        menu->items().audienceForAddition() += this;
+        menu->items().audienceForRemoval() += this;
+    }
+
+    void dataItemAdded(ui::DataPos, ui::Item const &) override
+    {
+        noServers->hide();
+    }
+
+    void dataItemRemoved(ui::DataPos, ui::Item &) override
+    {
+        if (menu->items().isEmpty())
+        {
+            noServers->show();
+        }
     }
 };
 
