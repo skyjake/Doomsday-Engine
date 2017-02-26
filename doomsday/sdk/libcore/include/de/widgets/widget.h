@@ -131,6 +131,7 @@ public:
 
     bool hasRoot() const;
     RootWidget &root() const;
+    RootWidget *findRoot() const;
     void setRoot(RootWidget *root);
 
     bool hasFocus() const;
@@ -138,13 +139,13 @@ public:
 
     void show(bool doShow = true);
     inline void hide() { show(false); }
-    void enable(bool yes = true) { setBehavior(Disabled, yes? UnsetFlags : SetFlags); }
-    void disable(bool yes = true) { setBehavior(Disabled, yes? SetFlags : UnsetFlags); }
+    void enable(bool yes = true)   { setBehavior(Disabled, yes); }
+    void disable(bool yes = true)  { setBehavior(Disabled, yes); }
 
-    inline bool isHidden() const { return hasFamilyBehavior(Hidden); }
-    inline bool isVisible() const { return !isHidden(); }
+    inline bool isHidden() const   { return hasFamilyBehavior(Hidden); }
+    inline bool isVisible() const  { return !isHidden(); }
     inline bool isDisabled() const { return hasFamilyBehavior(Disabled); }
-    inline bool isEnabled() const { return !isDisabled(); }
+    inline bool isEnabled() const  { return !isDisabled(); }
 
     /**
      * Determines if this widget or any of its parents have specific behavior
@@ -212,7 +213,7 @@ public:
      */
     void clearTree();
 
-    inline Widget &add(Widget *child) { return addLast(child); }
+    Widget &add(Widget *child);
 
     /**
      * Adds a child widget. It becomes the last child, meaning it is drawn on
@@ -238,6 +239,7 @@ public:
     Children children() const;
     dsize childCount() const;
     Widget *parent() const;
+    inline Widget *parentWidget() const { return parent(); }
     bool isFirstChild() const;
     bool isLastChild() const;
 

@@ -226,7 +226,10 @@ PopupWidget::PopupWidget(String const &name) : PanelWidget(name), d(new Impl(thi
 int PopupWidget::levelOfNesting() const
 {
     int nesting = 0;
-    for (Widget const *p = d->realParent? d->realParent.get() : parentWidget(); p; p = p->parent())
+    // GuiRootWidget is not a GuiWidget; root widget never has a parent.
+    for (GuiWidget const *p = d->realParent && d->realParent->parent()? 
+                static_cast<GuiWidget const *>(d->realParent.get()) : parentGuiWidget(); 
+         p; p = p->parentGuiWidget())
     {
         if (p->is<PopupWidget>())
         {

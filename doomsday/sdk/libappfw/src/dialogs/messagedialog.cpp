@@ -65,12 +65,12 @@ DENG_GUI_PIMPL(MessageDialog)
         layout.setOverrideWidth(rule("dialog.message.width"));
 
         // Put all the widgets into the layout.
-        foreach (Widget *w, area.childWidgets())
+        foreach (GuiWidget *w, area.childWidgets())
         {
             // Individual children can be hidden to exclude them from the layout.
             if (behavior == IncludeHidden || !w->behavior().testFlag(Widget::Hidden))
             {
-                layout << w->as<GuiWidget>();
+                layout << *w;
             }
         }
 

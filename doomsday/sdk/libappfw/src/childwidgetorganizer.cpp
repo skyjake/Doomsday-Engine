@@ -383,12 +383,12 @@ DENG2_PIMPL(ChildWidgetOrganizer)
 
     GuiWidget *firstChild() const
     {
-        return &container->childWidgets().first()->as<GuiWidget>();
+        return container->childWidgets().first();
     }
 
     GuiWidget *lastChild() const
     {
-        return &container->childWidgets().last()->as<GuiWidget>();
+        return container->childWidgets().last();
     }
 
     float virtualItemHeight(GuiWidget const *widget) const

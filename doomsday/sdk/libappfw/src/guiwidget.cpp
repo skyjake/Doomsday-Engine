@@ -154,15 +154,13 @@ DENG2_PIMPL(GuiWidget)
         bool wasClipped = false;
         Rectanglei visibleArea = self().root().viewRule().recti();
 
-        for (Widget const *w = self().parentWidget(); w; w = w->parent())
+        for (GuiWidget const *w = self().parentGuiWidget(); w; w = w->parentGuiWidget())
         {
-            if (!w->is<GuiWidget>()) continue;
-
             // Does this ancestor use child clipping?
             if (w->behavior().testFlag(ChildVisibilityClipping))
             {
                 wasClipped = true;
-                visibleArea &= w->as<GuiWidget>().rule().recti();
+                visibleArea &= w->rule().recti();
             }
         }
         if (!wasClipped) return false;
@@ -507,7 +505,7 @@ DENG2_PIMPL(GuiWidget)
 
         walkRoot->walkChildren(Forward, [this, &dir, &bestScore, &bestWidget] (Widget &widget)
         {
-            if (GuiWidget *gui = widget.maybeAs<GuiWidget>())
+            GuiWidget *gui = &widget.as<GuiWidget>();
             {
                 float score = scoreForWidget(*gui, dir);
                 if (score >= 0)
@@ -572,14 +570,27 @@ GuiRootWidget &GuiWidget::root() const
     return static_cast<GuiRootWidget &>(Widget::root());
 }
 
-Widget::Children GuiWidget::childWidgets() const
+GuiWidget::Children GuiWidget::childWidgets() const
 {
-    return Widget::children();
+    Children children;
+    children.reserve(childCount());
+    foreach (Widget *c, Widget::children())
+    {
+        DENG2_ASSERT(c->is<GuiWidget>());
+        children.append(static_cast<GuiWidget *>(c));
+    }
+    return children;
 }
 
-Widget *GuiWidget::parentWidget() const
+GuiWidget *GuiWidget::parentGuiWidget() const
 {
-    return Widget::parent();
+    Widget *p = parentWidget();
+    if (!p) return nullptr;
+    if (!p->parent())
+    {
+        if (p->is<RootWidget>()) return nullptr; // GuiRootWidget is not a GuiWidget
+    }
+    return static_cast<GuiWidget *>(p);
 }
 
 Style const &GuiWidget::style() const
@@ -757,12 +768,9 @@ float GuiWidget::visibleOpacity() const
     float opacity = d->currentOpacity();
     if (!d->attribs.testFlag(IndependentOpacity))
     {
-        for (Widget *i = Widget::parent(); i != 0; i = i->parent())
+        for (GuiWidget *i = parentGuiWidget(); i; i = i->parentGuiWidget())
         {
-            if (GuiWidget *w = i->maybeAs<GuiWidget>())
-            {
-                opacity *= w->d->currentOpacity();
-            }
+            opacity *= i->d->currentOpacity();
         }
     }
     return opacity;
@@ -791,12 +799,9 @@ GuiWidget::Attributes GuiWidget::attributes() const
 GuiWidget::Attributes GuiWidget::familyAttributes() const
 {
     Attributes attribs = d->attribs;
-    for (Widget const *p = parentWidget(); p; p = p->parent())
+    for (GuiWidget const *p = parentGuiWidget(); p; p = p->parentGuiWidget())
     {
-        if (auto const *guiParent = p->maybeAs<GuiWidget>())
-        {
-            attribs |= guiParent->attributes() & FamilyAttributes;
-        }
+        attribs |= p->attributes() & FamilyAttributes;
     }
     return attribs;
 }
@@ -805,12 +810,9 @@ void GuiWidget::saveState()
 {
     d->saveState();
 
-    foreach (Widget *child, childWidgets())
+    foreach (GuiWidget *child, childWidgets())
     {
-        if (GuiWidget *widget = child->maybeAs<GuiWidget>())
-        {
-            widget->saveState();
-        }
+        child->saveState();
     }
 }
 
@@ -818,12 +820,9 @@ void GuiWidget::restoreState()
 {
     d->restoreState();
 
-    foreach (Widget *child, childWidgets())
+    foreach (GuiWidget *child, childWidgets())
     {
-        if (GuiWidget *widget = child->maybeAs<GuiWidget>())
-        {
-            widget->restoreState();
-        }
+        child->restoreState();
     }
 }
 
@@ -833,6 +832,10 @@ void GuiWidget::initialize()
 
     try
     {
+        // Each widget has a single root, and it never changes.
+        qDebug() << "init GuiWidget" << findRoot();
+        setRoot(findRoot());
+
         d->flags |= Impl::Inited;
         glInit();
 
@@ -864,6 +867,7 @@ void GuiWidget::deinitialize()
         applyFlagOperation(d->flags, Impl::Inited, false);
         d->deinitBlur();
         glDeinit();
+        setRoot(nullptr);
     }
     catch (Error const &er)
     {
@@ -1025,13 +1029,10 @@ GuiWidget const *GuiWidget::treeHitTest(Vector2i const &pos) const
     Children const childs = childWidgets();
     for (int i = childs.size() - 1; i >= 0; --i)
     {
-        if (GuiWidget const *w = childs.at(i)->maybeAs<GuiWidget>())
+        // Check children first.
+        if (GuiWidget const *hit = childs.at(i)->treeHitTest(pos))
         {
-            // Check children first.
-            if (GuiWidget const *hit = w->treeHitTest(pos))
-            {
-                return hit;
-            }
+            return hit;
         }
     }
     if (hitTest(pos))
@@ -1160,7 +1161,7 @@ GuiWidget const *GuiWidget::guiFind(String const &name) const
 
 PopupWidget *GuiWidget::findParentPopup() const
 {
-    for (Widget *i = parentWidget(); i; i = i->parent())
+    for (GuiWidget *i = parentGuiWidget(); i; i = i->parentGuiWidget())
     {
         if (PopupWidget *popup = i->maybeAs<PopupWidget>())
         {
@@ -1281,7 +1282,7 @@ void GuiWidget::postDrawChildren()
 
     // Focus indicator is an overlay.
     auto &rootWidget = root();
-    if (rootWidget.focus() && rootWidget.focus()->parent() == this)
+    if (rootWidget.focus() && rootWidget.focus()->parentWidget() == this)
     {
         rootWidget.focusIndicator().draw();
     }

@@ -180,9 +180,9 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
 
     void gameReadinessUpdated() override
     {
-        foreach (Widget *w, self().childWidgets())
+        foreach (GuiWidget *w, self().childWidgets())
         {
-            updateAvailability(w->as<GuiWidget>());
+            updateAvailability(*w);
         }
     }
 

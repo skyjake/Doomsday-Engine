@@ -99,7 +99,7 @@ DENG2_PIMPL(MenuWidget)
                 // the popup menu.
                 if (auto *parentMenu = parent().parentWidget())
                 {
-                    subMenu->setParentPopup(parentMenu->parent()->maybeAs<PopupWidget>());
+                    subMenu->setParentPopup(parentMenu->parentWidget()->maybeAs<PopupWidget>());
                 }
             }
             _widget->setAnchorAndOpeningDirection(parent().hitRule(), _dir);
@@ -421,11 +421,11 @@ DENG2_PIMPL(MenuWidget)
         }
     }
 
-    bool isVisibleItem(Widget const *child) const
+    bool isVisibleItem(GuiWidget const *child) const
     {
-        if (GuiWidget const *widget = child->maybeAs<GuiWidget>())
+        if (child)
         {
-            return !widget->behavior().testFlag(Widget::Hidden);
+            return !child->behavior().testFlag(Widget::Hidden);
         }
         return false;
     }
@@ -433,7 +433,7 @@ DENG2_PIMPL(MenuWidget)
     int countVisible() const
     {
         int num = 0;
-        foreach (Widget *i, self().childWidgets())
+        foreach (GuiWidget *i, self().childWidgets())
         {
             if (isVisibleItem(i)) ++num;
         }
@@ -450,12 +450,12 @@ DENG2_PIMPL(MenuWidget)
                               self().contentRule().top() + organizer.virtualStrut());
         }
 
-        foreach (Widget *child, self().childWidgets())
+        foreach (GuiWidget *child, self().childWidgets())
         {
-            GuiWidget *w = child->maybeAs<GuiWidget>();
-            if (!isVisibleItem(w)) continue;
-
-            layout << *w;
+            if (isVisibleItem(child))
+            {
+                layout << *child;
+            }
         }
     }
 
@@ -554,9 +554,9 @@ int MenuWidget::count() const
     return d->countVisible();
 }
 
-bool MenuWidget::isWidgetPartOfMenu(Widget const &widget) const
+bool MenuWidget::isWidgetPartOfMenu(GuiWidget const &widget) const
 {
-    if (widget.parent() != this) return false;
+    if (widget.parentWidget() != this) return false;
     return d->isVisibleItem(&widget);
 }
 
@@ -597,16 +597,13 @@ Rule const &MenuWidget::contentHeight() const
 
 void MenuWidget::offerFocus()
 {
-    foreach (Widget *w, childWidgets())
+    foreach (GuiWidget *widget, childWidgets())
     {
-        if (GuiWidget const *widget = w->maybeAs<GuiWidget>())
+        if (!widget->behavior().testFlag(Hidden) &&
+            widget->behavior().testFlag(Focusable))
         {
-            if (!widget->behavior().testFlag(Hidden) &&
-                widget->behavior().testFlag(Focusable))
-            {
-                root().setFocus(w);
-                return;
-            }
+            root().setFocus(widget);
+            return;
         }
     }
 }
@@ -679,7 +676,7 @@ void MenuWidget::update()
 bool MenuWidget::handleEvent(Event const &event)
 {
     // If a menu item has focus, arrow keys can be used to move the focus.
-    if (event.isKeyDown() && root().focus() && root().focus()->parent() == this)
+    if (event.isKeyDown() && root().focus() && root().focus()->parentWidget() == this)
     {
         KeyEvent const &key = event.as<KeyEvent>();
         if (key.ddKey() == DDKEY_UPARROW || key.ddKey() == DDKEY_DOWNARROW)
@@ -689,15 +686,15 @@ bool MenuWidget::handleEvent(Event const &event)
             auto const children = childWidgets();
 
             for (int ordinal = children.indexOf(root().focus());
-                ordinal >= 0 && ordinal < int(childCount());
-                ordinal += (key.ddKey() == DDKEY_UPARROW? -1 : +1))
+                 ordinal >= 0 && ordinal < int(childCount());
+                 ordinal += (key.ddKey() == DDKEY_UPARROW? -1 : +1))
             {
                 auto *child = children.at(ordinal);
                 if (child->hasFocus() || child->isDisabled()) continue;
                 if (child->isVisible() && child->behavior().testFlag(Focusable))
                 {
                     root().setFocus(child);
-                    findTopmostScrollable().scrollToWidget(child->as<GuiWidget>());
+                    findTopmostScrollable().scrollToWidget(*child);
                     return true;
                 }
             }

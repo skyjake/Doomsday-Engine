@@ -308,6 +308,11 @@ RootWidget &Widget::root() const
     throw NotFoundError("Widget::root", "No root widget found");
 }
 
+RootWidget *Widget::findRoot() const
+{
+    return d->findRoot();
+}
+
 void Widget::setRoot(RootWidget *root)
 {
     d->manualRoot = root;
@@ -400,6 +405,11 @@ bool Widget::isEventRouted(int type, Widget *to) const
 void Widget::clearTree()
 {
     d->clear();
+}
+
+Widget &Widget::add(Widget *child)
+{
+    return addLast(child);
 }
 
 Widget &Widget::addLast(Widget *child)

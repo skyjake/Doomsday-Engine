@@ -67,7 +67,7 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
         SequentialLayout layout(self().rule().right(), self().rule().top(), ui::Left);
 
         bool first = true;
-        foreach (Widget *child, self().childWidgets())
+        foreach (GuiWidget *child, self().childWidgets())
         {
             GuiWidget *w = child->as<RelayWidget>().target();
             DENG2_ASSERT(w != nullptr);

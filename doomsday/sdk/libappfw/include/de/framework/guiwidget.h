@@ -151,6 +151,7 @@ public:
 
     typedef Vertex2TexRgba DefaultVertex;
     typedef GLBufferT<DefaultVertex> DefaultVertexBuf;
+    typedef QList<GuiWidget *> Children;
 
     /**
      * Handles events.
@@ -258,8 +259,8 @@ public:
     static void destroyLater(GuiWidget *widget);
 
     GuiRootWidget &root() const;
-    Widget::Children childWidgets() const;
-    Widget *parentWidget() const;
+    Children childWidgets() const;
+    GuiWidget *parentGuiWidget() const;
     Style const &style() const;
 
     /**
@@ -588,6 +589,8 @@ struct GuiWidgetDeleter {
         GuiWidget::destroy(w);
     }
 };
+
+typedef GuiWidget::Children GuiWidgetList;
 
 template <typename WidgetType>
 class UniqueWidgetPtr : public std::unique_ptr<WidgetType, GuiWidgetDeleter<WidgetType>> {

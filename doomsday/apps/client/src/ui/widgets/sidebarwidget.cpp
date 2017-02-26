@@ -121,7 +121,7 @@ LabelWidget &SidebarWidget::title()
 Rule const &SidebarWidget::maximumOfAllGroupFirstColumns() const
 {
     Rule const *max = nullptr;
-    foreach (Widget *child, d->container->childWidgets())
+    foreach (GuiWidget *child, d->container->childWidgets())
     {
         if (auto *g = child->maybeAs<VariableGroupEditor>())
         {

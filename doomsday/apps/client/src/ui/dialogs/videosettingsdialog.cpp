@@ -178,7 +178,7 @@ DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
             fpsMax->setValue(!max ? 35 : max);
         }
 
-        foreach (Widget *child, self().area().childWidgets())
+        foreach (GuiWidget *child, self().area().childWidgets())
         {
             if (ICVarWidget *cw = child->maybeAs<ICVarWidget>())
                 cw->updateFromCVar();
