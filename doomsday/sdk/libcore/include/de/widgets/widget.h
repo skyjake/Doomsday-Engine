@@ -139,7 +139,7 @@ public:
 
     void show(bool doShow = true);
     inline void hide() { show(false); }
-    void enable(bool yes = true)   { setBehavior(Disabled, yes); }
+    void enable(bool yes = true)   { setBehavior(Disabled, !yes); }
     void disable(bool yes = true)  { setBehavior(Disabled, yes); }
 
     inline bool isHidden() const   { return hasFamilyBehavior(Hidden); }
