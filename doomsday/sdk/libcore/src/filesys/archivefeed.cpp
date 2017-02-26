@@ -123,7 +123,7 @@ DENG2_PIMPL(ArchiveFeed)
         // If modified, the archive is written back to the file.
         if (arch->modified())
         {
-            LOG_RES_MSG("Updating archive in ") << file->description();
+            LOG_RES_VERBOSE("Updating archive in ") << file->description();
 
             // Make sure we have either a compressed or uncompressed version of
             // each entry in memory before destroying the source file.
