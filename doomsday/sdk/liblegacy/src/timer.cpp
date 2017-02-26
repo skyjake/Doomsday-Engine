@@ -64,6 +64,7 @@ void Timer_Init(void)
     timeBeginPeriod(1);
 #endif
     //startedAt.start();
+    de::Time::updateCurrentHighPerformanceTime();
     startedAt = de::Time::currentHighPerformanceTime();
     //timerOffset = 0;
 }
@@ -123,6 +124,7 @@ unsigned int Timer_RealMilliseconds(void)
     return return_time;
 #endif
 
+    de::Time::updateCurrentHighPerformanceTime();
     de::TimeDelta const delta = de::Time::currentHighPerformanceTime() - startedAt;
     return (unsigned int) delta.asMilliSeconds();
 }
