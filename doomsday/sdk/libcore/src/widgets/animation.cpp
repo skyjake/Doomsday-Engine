@@ -62,10 +62,9 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(AnimationFlags)
 
 /// Thread-safe current time for animations.
 struct AnimationTime : DENG2_OBSERVES(Clock, TimeChange) {
-    LockableT<Time> now;
+    double now;
     void timeChanged(Clock const &clock) override {
-        DENG2_GUARD(now);
-        now.value = clock.time();
+        now = clock.time().highPerformanceTime();
     }
 };
 static AnimationTime theTime;
@@ -103,7 +102,7 @@ DENG2_PIMPL_NOREF(Animation)
      * @param now  Point of time at which to evaluate.
      * @return Value of the animation when the frame time is @a now.
      */
-    float valueAt(Time const &now) const
+    float valueAt(TimeDelta const &now) const
     {
         TimeDelta span = targetTime - setTime;
 
@@ -119,14 +118,14 @@ DENG2_PIMPL_NOREF(Animation)
             peak2 = 2.f/3;
         }
 
-        if (now >= targetTime || span <= 0)
+        if (now >= targetTime.highPerformanceTime() || span <= 0)
         {
             return target;
         }
         else
         {
             span -= startDelay;
-            TimeDelta const elapsed = now - setTime - startDelay;
+            TimeDelta const elapsed = now - setTime.highPerformanceTime() - startDelay;
             TimeDelta const t = clamp(0.0, elapsed/span, 1.0);
             float const delta = target - value;
             switch (style)
@@ -172,7 +171,7 @@ DENG2_PIMPL_NOREF(Animation)
 
     Time currentTime() const
     {
-        if (flags.testFlag(Paused)) return pauseTime;
+        if (flags & Paused) return pauseTime;
         return Animation::currentTime();
     }
 };
@@ -229,7 +228,7 @@ void Animation::setValue(float v, TimeDelta transitionSpan, TimeDelta startDelay
     }
     else
     {
-        d->value = d->valueAt(now);
+        d->value = d->valueAt(now.highPerformanceTime());
         d->target = v;
         d->setTime = now;
         d->targetTime = d->setTime + transitionSpan;
@@ -252,9 +251,8 @@ float Animation::value() const
 {
     if (d->flags & Paused)
     {
-        return d->valueAt(d->pauseTime);
+        return d->valueAt(d->pauseTime.highPerformanceTime());
     }
-    DENG2_GUARD_FOR(theTime.now, G);
     return d->valueAt(theTime.now);
 }
 
@@ -264,8 +262,7 @@ bool Animation::done() const
     {
         return d->pauseTime >= d->targetTime;
     }
-    DENG2_GUARD_FOR(theTime.now, G);
-    return theTime.now.value >= d->targetTime;
+    return theTime.now >= d->targetTime.highPerformanceTime();
 }
 
 float Animation::target() const
@@ -385,8 +382,7 @@ Time Animation::currentTime() // static
     {
         throw ClockMissingError("Animation::clock", "Animation has no clock");
     }
-    DENG2_GUARD_FOR(theTime.now, G);
-    return theTime.now;
+    return Time(theTime.now);
 }
 
 Animation Animation::range(Style style, float from, float to, TimeDelta span, TimeDelta delay)

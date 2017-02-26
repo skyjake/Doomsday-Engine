@@ -219,6 +219,12 @@ DENG2_PIMPL_NOREF(Time)
         DENG2_ASSERT(false);
         return 0;
     }
+
+    void setDateTimeFromHighPerf()
+    {
+        dateTime = (highPerfTimer.startedAt() + highPerfElapsed).asDateTime();
+        flags |= DateTime;
+    }
 };
 
 Time::Time() : d(new Impl)
@@ -537,6 +543,12 @@ void Time::operator << (Reader &from)
         s >> d->dateTime;
         d->flags = Impl::DateTime;
     }
+}
+
+TimeDelta Time::highPerformanceTime() const
+{
+    DENG2_ASSERT(d->flags & Impl::HighPerformance);
+    return d->highPerfElapsed;
 }
 
 Time Time::currentHighPerformanceTime()
