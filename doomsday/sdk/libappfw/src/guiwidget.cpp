@@ -833,7 +833,6 @@ void GuiWidget::initialize()
     try
     {
         // Each widget has a single root, and it never changes.
-        qDebug() << "init GuiWidget" << findRoot();
         setRoot(findRoot());
 
         d->flags |= Impl::Inited;
