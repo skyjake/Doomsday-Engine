@@ -18,6 +18,7 @@
 
 #include "de_platform.h"
 #include "ui/clientwindowsystem.h"
+#include "ui/clientstyle.h"
 #include "clientapp.h"
 #include "dd_main.h"
 #include "gl/gl_main.h"
@@ -29,16 +30,6 @@ using namespace de;
 DENG2_PIMPL(ClientWindowSystem)
 {
     ConfigProfiles settings;
-
-    struct ClientStyle : public Style {
-        /*bool isBlurringAllowed() const {
-            return !App_GameLoaded();
-        }*/
-        GuiWidget *sharedBlurWidget() const {
-            if (!ClientWindow::mainExists()) return nullptr;
-            return &ClientWindow::main().taskBarBlur();
-        }
-    };
 
     Impl(Public *i)
         : Base(i)
