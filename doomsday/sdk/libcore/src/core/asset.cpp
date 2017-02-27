@@ -159,10 +159,13 @@ bool AssetGroup::has(Asset const &asset) const
 
 void AssetGroup::setPolicy(Asset const &asset, Policy policy)
 {
-    DENG2_ASSERT(d->deps.find(&asset) != d->deps.end());
-
-    d->deps[&asset] = policy;
-    d->update(*this);
+    auto found = d->deps.find(&asset);
+    DENG2_ASSERT(found != d->deps.end());
+    if (found->second != policy)
+    {
+        found->second = policy;
+        d->update(*this);
+    }
 }
 
 AssetGroup::Members const &AssetGroup::all() const

@@ -71,16 +71,14 @@ public Font::RichFormat::IStyle
     ColorBank::Color altAccentColor;
     Font::RichFormat::IStyle const *richStyle;
 
+    String styledText;
     TextDrawable glText;
     mutable Vector2ui latestTextSize;
-    bool wasVisible;
+    //bool wasVisible;
 
     std::unique_ptr<ProceduralImage> image;
     std::unique_ptr<ProceduralImage> overlayImage;
     GuiVertexBuilder verts;
-    //Drawable drawable;
-    //GLUniform uMvpMatrix;
-    //GLUniform uColor;
 
     Impl(Public *i)
         : Base(i)
@@ -102,16 +100,13 @@ public Font::RichFormat::IStyle
         , gapId       ("label.gap")
         , shaderId    ("generic.textured.color_ucolor")
         , richStyle   (0)
-        , wasVisible  (true)
-        //, uMvpMatrix  ("uMvpMatrix", GLUniform::Mat4)
-        //, uColor      ("uColor",     GLUniform::Vec4)
+        //, wasVisible  (true)
     {
         width     = new ConstantRule(0);
         height    = new ConstantRule(0);
         minHeight = new IndirectRule;
         outHeight = new OperatorRule(OperatorRule::Maximum, *height, *minHeight);
 
-        //uColor = Vector4f(1, 1, 1, 1);
         updateStyle();
 
         // The readiness of the LabelWidget depends on glText being ready.
@@ -202,10 +197,6 @@ public Font::RichFormat::IStyle
 
     void glInit()
     {
-        /*drawable.addBuffer(new VertexBuf);
-        shaders().build(drawable.program(), shaderId)
-                << uMvpMatrix << uColor << uAtlas();*/
-
         glText.init(atlas(), self().font(), this);
 
         if (image)
@@ -222,7 +213,6 @@ public Font::RichFormat::IStyle
     void glDeinit()
     {
         verts.clear();
-        //drawable.clear();
         glText.deinit();
         if (image)
         {
@@ -521,7 +511,6 @@ public Font::RichFormat::IStyle
         {
             self().requestGeometry();
         }
-
         glText.setLineWrapWidth(availableTextWidth());
         if (glText.update())
         {
@@ -531,26 +520,17 @@ public Font::RichFormat::IStyle
         }
 
         Rectanglei pos;
-        if (!self().hasChangedPlace(pos) && !self().geometryRequested())
+        if (self().hasChangedPlace(pos) || self().geometryRequested())
         {
-            // Nothing changed.
-            return;
+            verts.clear();
+            self().glMakeGeometry(verts);
+            self().requestGeometry(false);
         }
-
-        verts.clear();
-        //VertexBuf::Builder verts;
-        self().glMakeGeometry(verts);
-        //drawable.buffer<VertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Static);
-
-        self().requestGeometry(false);
     }
 
     void draw()
     {
         updateGeometry();
-
-        //self().updateModelViewProjection(uMvpMatrix);
-        //drawable.draw();
 
         if (verts)
         {
@@ -614,8 +594,9 @@ AssetGroup &LabelWidget::assets()
 
 void LabelWidget::setText(String const &text)
 {
-    if (text != d->glText.text())
+    if (text != d->styledText)
     {
+        d->styledText = text;
         d->glText.setText(text);
     }
 }
@@ -804,16 +785,8 @@ void LabelWidget::update()
     GuiWidget::update();
 
     // Check for visibility changes that affect asset readiness.
-    bool visibleNow = isVisible();
-    if (d->wasVisible && !visibleNow)
-    {
-        d->assets.setPolicy(d->glText, AssetGroup::Ignore);
-    }
-    else if (!d->wasVisible && visibleNow)
-    {
-        d->assets.setPolicy(d->glText, AssetGroup::Required);
-    }
-    d->wasVisible = visibleNow;
+    d->assets.setPolicy(d->glText, !isVisible() || !d->styledText?
+                        AssetGroup::Ignore : AssetGroup::Required);
 
     if (isInitialized())
     {
@@ -825,7 +798,6 @@ void LabelWidget::update()
 
 void LabelWidget::drawContent()
 {
-    //d->uColor = Vector4f(1, 1, 1, visibleOpacity());
     d->draw();
 }
 
