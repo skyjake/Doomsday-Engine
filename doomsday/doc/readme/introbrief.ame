@@ -1,35 +1,14 @@
+@chapter{Introduction}
+
 The Doomsday Engine is a @dquote{source port} of id Software's Doom and Raven
 Software's Heretic and Hexen, which were popular PC FPS games in the
 early-to-mid 1990s. Doomsday enhances these classic games with many features
 including 3D graphics, fully customizable controls and client/server
-networking, making them more accessible to modern gamers. However, the feel of
+multiplayer, making them more accessible to modern gamers. However, the feel of
 the original games has been kept intact, ensuring sublime nostalgia or an
-exciting introduction into the pioneering games of the genre.
+exciting introduction to the pioneering games of the genre.
 
 Doomsday and the associated ports of Doom, Heretic and Hexen have been in
 development since 1999; the first versions were released in late 1999 and
 early 2000. Several people have been involved in the project (see
 @ref{acks}{Acknowledgements}).
-
-@ifdef{MACOSX}{
-@section{How to install}
-
-The @strong{Doomsday.pkg} installer package contains two applications:
-@list{
-    @item @strong{Doomsday Engine}: launcher frontend for starting Doomsday
-    @item @strong{Doomsday Shell}: tool for running and monitoring your own
-    multiplayer servers (introduced in version 1.10)
-}
-
-We also provide the @strong{Doomsday Engine} and @strong{Doomsday Shell} 
-applications as individual downloads that you can drag and drop anywhere you
-like. You can find these in the @link{Build Repository}{http://dengine.net/builds}. However, the automatic updater will
-always download a full installer package.
-
-The first time you start the frontend, a setup wizard will guide you through
-setting up some game profiles.
-
-To uninstall, move @strong{Doomsday Engine} and @strong{Doomsday Shell} to the
-Trash. If you wish to also delete your frontend game profiles, savegames and other persistent data, delete the @file{~/Library/Application Support/Doomsday Engine} folder.
-
-}

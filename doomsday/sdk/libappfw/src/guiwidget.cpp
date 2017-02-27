@@ -73,6 +73,7 @@ DENG2_PIMPL(GuiWidget)
     // Background blurring.
     struct BlurState
     {
+        Time updatedAt;
         Vector2ui size;
         QScopedPointer<GLTextureFramebuffer> fb[2];
         Drawable drawable;
@@ -154,15 +155,13 @@ DENG2_PIMPL(GuiWidget)
         bool wasClipped = false;
         Rectanglei visibleArea = self().root().viewRule().recti();
 
-        for (Widget const *w = self().parentWidget(); w; w = w->parent())
+        for (GuiWidget const *w = self().parentGuiWidget(); w; w = w->parentGuiWidget())
         {
-            if (!w->is<GuiWidget>()) continue;
-
             // Does this ancestor use child clipping?
             if (w->behavior().testFlag(ChildVisibilityClipping))
             {
                 wasClipped = true;
-                visibleArea &= w->as<GuiWidget>().rule().recti();
+                visibleArea &= w->rule().recti();
             }
         }
         if (!wasClipped) return false;
@@ -246,6 +245,54 @@ DENG2_PIMPL(GuiWidget)
         }
     }
 
+    void updateBlurredBackground()
+    {
+        // Make sure blurring is initialized.
+        initBlur();
+
+        auto const now = Time::currentHighPerformanceTime();
+        if (blur->updatedAt == now)
+        {
+            return;
+        }
+        blur->updatedAt = now;
+        
+        // Ensure normal drawing is complete.
+        auto &painter = self().root().painter();
+        painter.flush();
+
+        auto const oldClip = painter.normalizedScissor();
+
+        DENG2_ASSERT(blur->fb[0]->isReady());
+
+        // Pass 1: render all the widgets behind this one onto the first blur
+        // texture, downsampled.
+        GLState::push()
+            .setTarget(*blur->fb[0])
+            .setViewport(Rectangleui::fromSize(blur->size));
+        blur->fb[0]->clear(GLFramebuffer::Depth);
+        self().root().drawUntil(self());
+        GLState::pop();
+
+        blur->fb[0]->resolveSamples();
+
+        // Pass 2: apply the horizontal blur filter to draw the background
+        // contents onto the second blur texture.
+        GLState::push()
+            .setTarget(*blur->fb[1])
+            .setViewport(Rectangleui::fromSize(blur->size));
+        blur->uTex = blur->fb[0]->colorTexture();
+        blur->uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
+        blur->uWindow = Vector4f(0, 0, 1, 1);
+        blur->drawable.setProgram(blur->drawable.program());
+        blur->drawable.draw();
+        GLState::pop();
+
+        blur->fb[1]->resolveSamples();
+
+        painter.setNormalizedScissor(oldClip);
+    }
+
     void drawBlurredBackground()
     {
         if (background.type == Background::SharedBlur ||
@@ -256,6 +303,7 @@ DENG2_PIMPL(GuiWidget)
             if (background.blur)
             {
                 self().root().painter().flush();
+                background.blur->d->updateBlurredBackground();
                 background.blur->drawBlurredRect(self().rule().recti(), background.solidFill);
             }
             return;
@@ -269,42 +317,6 @@ DENG2_PIMPL(GuiWidget)
             return;
         }
 
-        // Ensure normal drawing is complete.
-        auto &painter = self().root().painter();
-        painter.flush();
-
-        auto const oldClip = painter.normalizedScissor();
-
-        // Make sure blurring is initialized.
-        initBlur();
-
-        DENG2_ASSERT(blur->fb[0]->isReady());
-
-        // Pass 1: render all the widgets behind this one onto the first blur
-        // texture, downsampled.
-        GLState::push()
-                .setTarget(*blur->fb[0])
-                .setViewport(Rectangleui::fromSize(blur->size));
-        blur->fb[0]->clear(GLFramebuffer::Depth);
-        self().root().drawUntil(self());
-        GLState::pop();
-
-        blur->fb[0]->resolveSamples();
-
-        // Pass 2: apply the horizontal blur filter to draw the background
-        // contents onto the second blur texture.
-        GLState::push()
-                .setTarget(*blur->fb[1])
-                .setViewport(Rectangleui::fromSize(blur->size));
-        blur->uTex = blur->fb[0]->colorTexture();
-        blur->uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
-        blur->uWindow = Vector4f(0, 0, 1, 1);
-        blur->drawable.setProgram(blur->drawable.program());
-        blur->drawable.draw();
-        GLState::pop();
-
-        blur->fb[1]->resolveSamples();
-
         // Pass 3: apply the vertical blur filter, drawing the final result
         // into the original target.
         Vector4f blurColor = background.solidFill;
@@ -313,12 +325,11 @@ DENG2_PIMPL(GuiWidget)
         {
             blurColor.w = 1;
         }
-        if (!attribs.testFlag(DontDrawContent) && blurColor.w > 0 && blurOpacity > 0)
+        if (blurColor.w > 0 && blurOpacity > 0)
         {
+            updateBlurredBackground();
             self().drawBlurredRect(self().rule().recti(), blurColor, blurOpacity);
         }
-
-        painter.setNormalizedScissor(oldClip);
     }
 
     inline float currentOpacity() const
@@ -507,7 +518,7 @@ DENG2_PIMPL(GuiWidget)
 
         walkRoot->walkChildren(Forward, [this, &dir, &bestScore, &bestWidget] (Widget &widget)
         {
-            if (GuiWidget *gui = widget.maybeAs<GuiWidget>())
+            GuiWidget *gui = &widget.as<GuiWidget>();
             {
                 float score = scoreForWidget(*gui, dir);
                 if (score >= 0)
@@ -572,14 +583,27 @@ GuiRootWidget &GuiWidget::root() const
     return static_cast<GuiRootWidget &>(Widget::root());
 }
 
-Widget::Children GuiWidget::childWidgets() const
+GuiWidget::Children GuiWidget::childWidgets() const
 {
-    return Widget::children();
+    Children children;
+    children.reserve(childCount());
+    foreach (Widget *c, Widget::children())
+    {
+        DENG2_ASSERT(c->is<GuiWidget>());
+        children.append(static_cast<GuiWidget *>(c));
+    }
+    return children;
 }
 
-Widget *GuiWidget::parentWidget() const
+GuiWidget *GuiWidget::parentGuiWidget() const
 {
-    return Widget::parent();
+    Widget *p = parentWidget();
+    if (!p) return nullptr;
+    if (!p->parent())
+    {
+        if (p->is<RootWidget>()) return nullptr; // GuiRootWidget is not a GuiWidget
+    }
+    return static_cast<GuiWidget *>(p);
 }
 
 Style const &GuiWidget::style() const
@@ -757,12 +781,9 @@ float GuiWidget::visibleOpacity() const
     float opacity = d->currentOpacity();
     if (!d->attribs.testFlag(IndependentOpacity))
     {
-        for (Widget *i = Widget::parent(); i != 0; i = i->parent())
+        for (GuiWidget *i = parentGuiWidget(); i; i = i->parentGuiWidget())
         {
-            if (GuiWidget *w = i->maybeAs<GuiWidget>())
-            {
-                opacity *= w->d->currentOpacity();
-            }
+            opacity *= i->d->currentOpacity();
         }
     }
     return opacity;
@@ -791,12 +812,9 @@ GuiWidget::Attributes GuiWidget::attributes() const
 GuiWidget::Attributes GuiWidget::familyAttributes() const
 {
     Attributes attribs = d->attribs;
-    for (Widget const *p = parentWidget(); p; p = p->parent())
+    for (GuiWidget const *p = parentGuiWidget(); p; p = p->parentGuiWidget())
     {
-        if (auto const *guiParent = p->maybeAs<GuiWidget>())
-        {
-            attribs |= guiParent->attributes() & FamilyAttributes;
-        }
+        attribs |= p->attributes() & FamilyAttributes;
     }
     return attribs;
 }
@@ -805,12 +823,9 @@ void GuiWidget::saveState()
 {
     d->saveState();
 
-    foreach (Widget *child, childWidgets())
+    foreach (GuiWidget *child, childWidgets())
     {
-        if (GuiWidget *widget = child->maybeAs<GuiWidget>())
-        {
-            widget->saveState();
-        }
+        child->saveState();
     }
 }
 
@@ -818,12 +833,9 @@ void GuiWidget::restoreState()
 {
     d->restoreState();
 
-    foreach (Widget *child, childWidgets())
+    foreach (GuiWidget *child, childWidgets())
     {
-        if (GuiWidget *widget = child->maybeAs<GuiWidget>())
-        {
-            widget->restoreState();
-        }
+        child->restoreState();
     }
 }
 
@@ -833,6 +845,9 @@ void GuiWidget::initialize()
 
     try
     {
+        // Each widget has a single root, and it never changes.
+        setRoot(findRoot());
+
         d->flags |= Impl::Inited;
         glInit();
 
@@ -864,6 +879,7 @@ void GuiWidget::deinitialize()
         applyFlagOperation(d->flags, Impl::Inited, false);
         d->deinitBlur();
         glDeinit();
+        setRoot(nullptr);
     }
     catch (Error const &er)
     {
@@ -905,10 +921,10 @@ void GuiWidget::draw()
         // Detect mistakes in GLState stack usage.
         dsize const depthBeforeDrawingWidget = GLState::stackDepth();
 #endif
-        d->drawBlurredBackground();
-
         if (!d->attribs.testFlag(DontDrawContent))
         {
+            d->drawBlurredBackground();
+
             auto &painter = root().painter();
             painter.setSaturation(d->saturation);
 
@@ -1025,13 +1041,10 @@ GuiWidget const *GuiWidget::treeHitTest(Vector2i const &pos) const
     Children const childs = childWidgets();
     for (int i = childs.size() - 1; i >= 0; --i)
     {
-        if (GuiWidget const *w = childs.at(i)->maybeAs<GuiWidget>())
+        // Check children first.
+        if (GuiWidget const *hit = childs.at(i)->treeHitTest(pos))
         {
-            // Check children first.
-            if (GuiWidget const *hit = w->treeHitTest(pos))
-            {
-                return hit;
-            }
+            return hit;
         }
     }
     if (hitTest(pos))
@@ -1160,7 +1173,7 @@ GuiWidget const *GuiWidget::guiFind(String const &name) const
 
 PopupWidget *GuiWidget::findParentPopup() const
 {
-    for (Widget *i = parentWidget(); i; i = i->parent())
+    for (GuiWidget *i = parentGuiWidget(); i; i = i->parentGuiWidget())
     {
         if (PopupWidget *popup = i->maybeAs<PopupWidget>())
         {
@@ -1281,7 +1294,7 @@ void GuiWidget::postDrawChildren()
 
     // Focus indicator is an overlay.
     auto &rootWidget = root();
-    if (rootWidget.focus() && rootWidget.focus()->parent() == this)
+    if (rootWidget.focus() && rootWidget.focus()->parentWidget() == this)
     {
         rootWidget.focusIndicator().draw();
     }

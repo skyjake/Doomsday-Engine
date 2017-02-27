@@ -301,6 +301,8 @@ public:
      */
     dint asBuildNumber() const;
 
+    Delta highPerformanceTime() const;
+
     // Implements ISerializable.
     void operator >> (Writer &to) const;
     void operator << (Reader &from);
@@ -313,6 +315,8 @@ public:
      * @return
      */
     static Time currentHighPerformanceTime();
+
+    static void updateCurrentHighPerformanceTime();
 
 private:
     DENG2_PRIVATE(d)

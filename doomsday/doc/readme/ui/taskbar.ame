@@ -1,0 +1,166 @@
+@a{taskbar}@chapter{ Task bar }
+
+The @wikiterm{task bar} is a central element of Doomsday's UI. It is available
+at all times and provides access to key features of the engine. For example,
+you can modify configuration settings, show the Home screen, and unload the
+current game.
+
+You can show the task bar by pressing @kbd{Shift + Esc}.
+
+@section{ App menu }
+
+The rightmost button in the task bar (with the DE logo) opens the Doomsday
+app menu.
+
+@parag{Tutorial.} The first-run tutorial points out the basic features of
+Doomsday's UI. It is only shown once, but you can manually show it again by
+selecting @ui{Help: Show Tutorial}.
+
+@parag{Browsing and loading packages.} @ui{Browse Packages...} opens the
+package list in a sidebar where packages can be loaded and unloaded manually.
+You can also view information about packages like in the Home screen. The
+sidebar is only available when a game is loaded. You can use the
+@dquote{loaded} keyword to filter the list so that only the currently loaded
+packages are listed.
+
+@notice{Data from newly loaded packages may not be used until a new map is
+started in the game. Use of external textures can be enabled and disabled in
+Renderer settings.}
+
+@parag{Checking for updates.} Doomsday queries the dengine.net website to see
+if there are newer builds and shows a notification when updates are available.
+You can always also do a manual update check by selecting @ui{Check for
+Updates}.
+
+@parag{Clearing the resource cache.} Some resources and metadata get cached for
+later access. This allows Doomsday to load the resources faster and operate
+more efficiently. Usually it is unnecessary to clear the cache manually. See
+@ref{files}{Files} for the cache's location.
+
+@a{config} @section{ Configuration }
+
+The task bar's Gear button opens the configuration menu. This is where the
+majority of Doomsday's settings can be viewed and changed. Some of the settings
+are only available when a game is loaded (@ui{Input}, for instance).
+
+@parag{Reset to defaults and advanced settings.} Many settings dialogs have a
+@ui{Reset to Defaults} button. This affects only the settings in that one
+particular dialog. Sometimes a Gauge button is also available. It is reserved
+for advanced settings that are useful for developers and modding.
+
+@parag{Renderer settings.} Most of the renderer settings are managed via
+appearance profiles. This makes it easy to select one of the presets, such as a
+vanilla look or more exaggerated effects. The dialog has a couple of general
+settings in addition to the active appearance profile. The @ui{Pixel Density}
+slider is particularly useful as it allows improving rendering performance and
+achieving a more pixelated, 1990s VGA-style look. The selected appearance
+profile applies to all games.
+
+Some resource packs with high-resolution textures are intended to be used with
+the unmodified original games. However, a PWAD file may replace some of the
+textures with custom ones. The @ui{External Images} options allow you to
+control when external images are actually enabled if the resource packs in use
+aren't compatible with the loaded PWADs.
+
+@parag{Renderer appearance sidebar.} Click the Gear button next to the selected
+renderer appearance profile and select @ui{Edit} or @ui{View} to open the
+appearance sidebar. Alternatively you can open the sidebar with the
+@cmd{rendedit} console command. Individual settings groups can be folded and
+unfolded by clicking on the group titles. You can continue playing the game
+while the sidebar is visible. When you're done, dismiss the sidebar with the X
+button in the top right corner.
+
+@parag{Video aspect ratios.} In addition to basic game window parameters, the
+Video settings dialog has a set of aspect ratio options. These control the aspect ratios applied to specific elements in the game:
+
+@list/thin{
+    @item @ui{Original 1:1}: The aspect ratio is exactly as in the original game.
+    @item @ui{Smart}: The aspect ratio is dynamic but does not stretch too far away from the 1:1 ratio.
+    @item @ui{Stretched}: The aspect ratio is unrestricted and adapts to window dimensions. Game elements may appear too wide or tall with this setting.
+}
+
+@parag{Audio backends.} Some of the audio options are dependent on the active
+audio backend(s). For example, a MIDI sound font is supported by the FMOD and
+Fluidsynth plugins. 3D sound and reverb are supported by FMOD, OpenAL, and
+DirectSound. The audio backend can be reconfigured on the fly; any changes are
+applied when you close the popup.
+
+@parag{Game controllers.} Doomsday comes with a few preset bindings for
+different gamepads. To use one of the presets, click on the @ui{Game Controller
+Preset} button and select a suitable one. Then click @ui{Apply} to erase all
+your existing game controller bindings and activate the ones in the preset. You
+can still manually edit the bindings in the game's @ui{Options} menu.
+
+@parag{Mouse input settings.} The @ui{Sync Axis Sensitivities} option will
+ensure that mouse sensitivity is the same in both the horizontal and vertical
+directions.
+
+@parag{Minimizing mouse latency.} The default input settings try to replicate
+the feel of the original 35 Hz input events of Doom. However, when the screen
+is actually refreshed at a higher rate, this may feel distractingly laggy. The
+35 Hz limiter can be disabled in the advanced input settings (click the Gauge
+button). This will minimize mouse input latency as much as possible. You may
+additionally want to disable mouse filtering by toggling the @ui{Filter X Axis}
+and @ui{Filter Y Axis} options.
+
+@parag{Local multiplayer packages.} By default, clients are not allowed to load
+packages in addition to what the server is using. This avoids any potential
+compatibility issues with the client's packages overriding some of the game's
+definitions. However, you can manually enable local packages in Network
+settings. You can then select additional local packages for multiplayer games
+in the server information popup before joining the game.
+
+@parag{User Interface settings.} The @ui{Scale} setting applies to the Doomsday
+UI only, and adjusts the overall size of UI elements and fonts. Lowering the UI
+scaling may be helpful for example when using a very low display resolution. In
+the Home screen there will be more tabs visible at the same time when using a
+smaller UI scale.
+
+@parag{Updater settings.} The Updater settings determine when Doomsday will
+check for available updates. When an update is downloaded, it is saved to @ifdef{MACOSX}{@file{~/Library/Caches/Deng Team/Doomsday Engine/}}@else{your temporary files folder}.
+
+@section{ Log history and log options menu }
+
+The log message history panel slides in from the left edge of the view. When
+visible, you can drag its right edge to resize it.
+
+The leftmost button in the task bar opens the log options menu:
+
+@deflist{
+    @item{Show Full Log} Expands the log history panel to its full size. When the task bar is open, pressing @kbd{PageUp} will also expand the panel size.
+    @item{Close Log} Dismisses the log history panel.
+    @item{Go to Latest} Scrolls the log history to the latest message.
+    @item{Copy Path to Clipboard} Copies the @file{doomsday.out} file path to the system clipboard to make it easier to find the output file.
+    @item{Clear Log} Deletes all log messages from memory. The @file{doomsday.out} file is unaffected.
+    @item{Snap to Latest Entry} When this setting is enabled, new log entries will cause the history panel to scroll to the latest entry (bottom of the list).
+    @item{Entry Metadata} When this setting is enabled, log entries will be prefixed with a timestamp and categorization symbols.
+    @item{Log Filter & Alerts} Settings for filtering which log messages get printed. You can choose filtering options individually for each engine subsystem. Developer messages (@ui{Dev}) are primarily intended for developers and debugging, so they are disabled by default. The @ui{Alert} toggles cause warnings and errors to pop up in the notification area.
+}
+
+@section{ Command prompt }
+
+The middle of the task bar is occupied by a command prompt text field. Here you
+can enter console commands and modify console variables manually. This is
+typically most useful for developers, modders, and other advanced users.
+
+@parag{Console basics.} Type @cmd{help} to get started. This prints some basic
+information about how to use the @wikiterm{console}, and commands for listing
+all the available @wikiterm{console commands} and @wikilink{variables}{console
+variable}. At any time, press @kbd{Tab} to autocomplete the word being typed.
+This will pop up a list of all possible completions, including the current
+values for any variables. You can change console variable values as follows:
+
+@samp{@cmd{sound-info 1}}
+
+@parag{Shortcut key.} You should set up a console shortcut key if you find
+yourself going to the console often. The shortcut defaults to @kbd{Tilde} (U.S.
+keyboard) but you can choose your own shortcut key by clicking the @ui{>}
+button next to the command prompt.
+
+@parag{Interactive Doomsday Script prompt.} @wikiterm{Doomsday Script} is a
+fully-fledged Python/Ruby-like scripting language built into Doomsday 2. While
+it doesn't yet allow full access to all engine features, it is being improved
+in each release. The command prompt can be switched to Doomsday Script mode by
+right-clicking the @ui{>} prompt menu button. Everything entered into the
+command prompt is then run as Doomsday Script. This mode is intended only for
+developers.

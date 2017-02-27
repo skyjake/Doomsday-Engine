@@ -41,6 +41,8 @@ public:
     Style();
     virtual ~Style();
 
+    DENG2_AS_IS_METHODS()
+
     /**
      * Loads a style from a resource pack.
      *

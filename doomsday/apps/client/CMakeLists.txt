@@ -63,18 +63,17 @@ endif ()
 
 if (AMETHYST_FOUND)
     if (APPLE)
-        set (readme "${CMAKE_CURRENT_BINARY_DIR}/Read Me.rtf")
-        deng_add_amedoc (RTF ${readme} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
+        set (readme "${CMAKE_CURRENT_BINARY_DIR}/Read Me.html")
+        deng_add_amedoc (HTML ${readme} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
         install (FILES ${readme} DESTINATION .)
         list (APPEND SOURCES ${readme})
     else ()
-        # Plain text readme for other platforms.
-        set (readme "${CMAKE_CURRENT_BINARY_DIR}/readme.txt")
-        deng_add_amedoc (TXT ${readme} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
+        set (readme "${CMAKE_CURRENT_BINARY_DIR}/readme.html")
+        deng_add_amedoc (HTML ${readme} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
         list (APPEND SOURCES ${readme})
         if (WIN32)
             # WIX generator requires setting this manually.
-            set_property (INSTALL "${DENG_INSTALL_DOC_DIR}/readme.txt"
+            set_property (INSTALL "${DENG_INSTALL_DOC_DIR}/readme.html"
                 PROPERTY CPACK_START_MENU_SHORTCUTS "Read Me"
             )
         endif ()

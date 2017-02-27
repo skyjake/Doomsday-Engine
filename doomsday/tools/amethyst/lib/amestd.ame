@@ -36,6 +36,16 @@ $ No spacing.
 $ No space for the first word.
 @macro{glue}{ @single{@arg} }
 
+$ Paragraph heading.
+@macro{parag}{
+    @ifdef{TXT}{
+        __ @glue{@arg} @glue{__}
+    }
+    @else{    
+        @strong{@arg}
+    }
+}
+
 $ Date.
 @macro{date}{ @apply{@D}{yyyy-MM-dd} }
 
@@ -111,7 +121,17 @@ $ Executable/binary file.
 $ Document header and any output language specific things.
 @macro{begin}{
 	@ifdef{HTML}{
-		@tag{<head><title>} @TITLE @tag{</title></head><body>} @break
+		@tag{<head><title>} @TITLE @tag{</title><style type="text/css">body@{font-family:sans-serif;font-size:12pt;max-width:80ex;margin-left:auto;margin-right:auto;background-color:#f0f0f0;color:#444;@}
+h1,h2,h3,h4,h5,h6@{color:black;@}
+h1@{margin-top:1em;@}
+a@{text-decoration:none;color:#061;@}
+a:hover@{text-decoration:underline;@}
+h1 a,h2 a,h3 a,h4 a,h5 a,h6 a@{color:black;@}
+kbd@{font-family:sans-serif;text-transform:uppercase;font-size:80%@}
+dt@{margin-top:1em;font-weight:bold;@}
+dt tt@{font-weight:normal;@}
+ul li@{margin-bottom:1ex;@}
+ul li div,ol li div@{margin-bottom:1em;@}</style></head><body>} @break
 		@HTMLHEADER
 		@tag{<center><h1>} @TITLE @tag{</h1>}
 		@ifdef{VERSION}{ @tag{<b>} @VERSION @tag{</b>} @br }
@@ -208,7 +228,7 @@ $ Makes a special note.
 @macro{notice}{
 	@ifdef{HTML}{
 		@tag{<table border="0" cellpadding="3" valign="top"><tr>
-		<td><b>NOTE!</b></td><td>}
+		<td><b>NOTE:</b></td><td>}
 		@arg @tag{</td></tr></table>}
 	}
 	@else{ @list/note{ @item @arg }	}
@@ -218,10 +238,14 @@ $ Doomsday Engine Wiki specific macros.
 @ifdef{WIKI}{
 	@macro{wikiterm}{[[@glue{@arg}]]}
 	@macro{wikilink}{[[@glue{@arg{2}}@glue{|}@glue{@arg{1}}]]}
-}@else{
-	@macro{wikiterm}{@arg}
-	@macro{wikilink}{@link{@arg{1}}{http://dengine.net/dew/index.php?title=@arg{2}}}
+}@else{@ifdef{HTML}{
+	@macro{wikilink}{@link{@arg{1}}{@tag{http://wiki.dengine.net/w/@glue{@arg{2}}}}}
+    @macro{wikiterm}{@wikilink{@arg}{@arg}}
 }
+@else{
+	@macro{wikiterm}{@arg}
+	@macro{wikilink}{@link{@arg{1}}{http://wiki.dengine.net/w/@arg{2}}}
+}}
 @ifdef{TXT}{
 	$ Omit the hyperlinks in TXT files.
 	@macro{wikilink}{@arg}

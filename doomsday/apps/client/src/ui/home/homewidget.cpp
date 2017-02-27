@@ -352,7 +352,7 @@ DENG_GUI_PIMPL(HomeWidget)
         SequentialLayout layout(self().rule().left() - *scrollOffset,
                                 self().rule().top()  + *dismissOffset,
                                 ui::Right);
-        for (Widget *widget : self().childWidgets())
+        for (GuiWidget *widget : self().childWidgets())
         {
             if (!widget->behavior().testFlag(Widget::Hidden))
             {

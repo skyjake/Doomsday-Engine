@@ -96,6 +96,7 @@ HeaderWidget::HeaderWidget()
     d->logoBg->margins().setZero();
 
     //d->info->setFont("small");
+    d->info->setTextColor("label.dimmed");
     d->info->setAlignment(ui::AlignLeft);
     d->info->setTextLineAlignment(ui::AlignLeft);
     d->info->setMaximumTextWidth(rule().width());

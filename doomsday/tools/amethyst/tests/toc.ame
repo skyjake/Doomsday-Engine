@@ -1,0 +1,9 @@
+@macro{TITLE}{Awesome TOCument}
+@include{amestd}
+@begin
+@toc
+@chapter{The First Chapter}
+Some words.
+
+@chapter{The Second Chapter}
+More words.

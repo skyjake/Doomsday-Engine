@@ -1,0 +1,20 @@
+@deflist{
+
+    @item{@file{runtime/autoexec.cfg}} Console commands to execute after
+    loading the game with the @opt{-game} option.
+
+    @item{@file{runtime/cache/}} Cached data that helps Doomsday run faster.
+    You can delete the contents of this folder; Doomsday will recreate them
+    automatically as needed.
+
+    @item{@file{runtime/configs/}} Game profiles and saved values for console
+    variables and control bindings.
+
+    @item{@file{runtime/doomsday.out}} Log message output file.
+
+    @item{@file{runtime/savegames/}} Folder containing all saved games. Each
+    game has its own subfolder for saves. Note that the subfolders are
+    game-specific rather than profile-specific; if you create custom game
+    profiles, their saves will be written in the same subfolder as saves from
+    the default game profile.
+}

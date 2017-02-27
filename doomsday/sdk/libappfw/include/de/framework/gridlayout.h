@@ -96,7 +96,7 @@ public:
      */
     GridLayout &appendEmpty();
 
-    WidgetList widgets() const;
+    GuiWidgetList widgets() const;
     int size() const;
     bool isEmpty() const;
 

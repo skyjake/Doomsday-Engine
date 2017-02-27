@@ -43,8 +43,8 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
     CVarSliderWidget *reverbVolume;
     CVarToggleWidget *sound3D;
     CVarToggleWidget *overlapStop;
-    CVarToggleWidget *sound16bit;
-    CVarChoiceWidget *sampleRate;
+    //CVarToggleWidget *sound16bit;
+    //CVarChoiceWidget *sampleRate;
     CVarChoiceWidget *musicSource;
     CVarNativePathWidget *musicSoundfont;
     CVarToggleWidget     *soundInfo;
@@ -66,8 +66,8 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
             area.add(reverbVolume   = new CVarSliderWidget    ("sound-reverb-volume"));
             area.add(sound3D        = new CVarToggleWidget    ("sound-3d"));
             area.add(overlapStop    = new CVarToggleWidget    ("sound-overlap-stop"));
-            area.add(sound16bit     = new CVarToggleWidget    ("sound-16bit"));
-            area.add(sampleRate     = new CVarChoiceWidget    ("sound-rate"));
+            //area.add(sound16bit     = new CVarToggleWidget    ("sound-16bit"));
+            //area.add(sampleRate     = new CVarChoiceWidget    ("sound-rate"));
             area.add(musicSource    = new CVarChoiceWidget    ("music-source"));
             area.add(musicSoundfont = new CVarNativePathWidget("music-soundfont"));
 
@@ -149,7 +149,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
     {
         if (!DoomsdayApp::isGameLoaded()) return;
 
-        foreach (Widget *w, self().area().childWidgets() + devPopup->content().childWidgets())
+        foreach (GuiWidget *w, self().area().childWidgets() + devPopup->content().childWidgets())
         {
             if (ICVarWidget *cv = w->maybeAs<ICVarWidget>())
             {
@@ -179,14 +179,14 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
 
         d->sound3D    ->setText(tr("3D Effects & Reverb"  ));
         d->overlapStop->setText(tr("One Sound per Emitter"));
-        d->sound16bit ->setText(tr("16-bit Resampling"    ));
+        //d->sound16bit ->setText(tr("16-bit Resampling"    ));
 
-        auto *rateLabel = LabelWidget::newWithText(tr("Resampling:"), &area());
+        /*auto *rateLabel = LabelWidget::newWithText(tr("Resampling:"), &area());
 
         d->sampleRate->items()
                 << new ChoiceItem(tr("1x @ 11025 Hz"), 11025)
                 << new ChoiceItem(tr("2x @ 22050 Hz"), 22050)
-                << new ChoiceItem(tr("4x @ 44100 Hz"), 44100);
+                << new ChoiceItem(tr("4x @ 44100 Hz"), 44100);*/
 
         auto *musSrcLabel = LabelWidget::newWithText(tr("Preferred Music:"), &area());
 
@@ -200,11 +200,11 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
         // Layout.
         layout << *sfxVolLabel      << *d->sfxVolume
                << *musicVolLabel    << *d->musicVolume
-               << *rvbVolLabel      << *d->reverbVolume
                << Const(0)          << *d->sound3D
+               << *rvbVolLabel      << *d->reverbVolume
                << Const(0)          << *d->overlapStop
-               << *rateLabel        << *d->sampleRate
-               << Const(0)          << *d->sound16bit
+               //<< *rateLabel        << *d->sampleRate
+               //<< Const(0)          << *d->sound16bit
                << *musSrcLabel      << *d->musicSource
                << *sfLabel          << *d->musicSoundfont;
     }

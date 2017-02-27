@@ -19,6 +19,7 @@
 #define __AMETHYST_UTILS_H__
 
 #include "string.h"
+#include <stdint.h>
 
 class Gem;
 

@@ -41,11 +41,6 @@ namespace de {
  */
 class LIBAPPFW_PUBLIC GLTextComposer : public Asset
 {
-/*public:
-    typedef Vertex2TexRgba      Vertex;
-    typedef GLBufferT<Vertex>   VertexBuf;
-    typedef VertexBuf::Builder  Vertices;*/
-
 public:
     GLTextComposer();
 

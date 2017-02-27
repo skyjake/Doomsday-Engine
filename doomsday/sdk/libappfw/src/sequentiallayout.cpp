@@ -22,7 +22,7 @@ namespace de {
 
 DENG2_PIMPL(SequentialLayout)
 {
-    WidgetList widgets;
+    GuiWidgetList widgets;
     ui::Direction dir;
     Rule const *initialX;
     Rule const *initialY;
@@ -233,7 +233,7 @@ SequentialLayout &SequentialLayout::append(Rule const &emptySpace)
     return *this;
 }
 
-WidgetList SequentialLayout::widgets() const
+GuiWidgetList SequentialLayout::widgets() const
 {
     return d->widgets;
 }

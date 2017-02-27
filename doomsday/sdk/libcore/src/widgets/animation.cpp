@@ -55,17 +55,17 @@ static inline float easeBoth(TimeDelta t)
 
 enum AnimationFlag
 {
-    Paused = 0x1
+    Paused = 0x1,
+    Finished = 0x2,
 };
 Q_DECLARE_FLAGS(AnimationFlags, AnimationFlag)
 Q_DECLARE_OPERATORS_FOR_FLAGS(AnimationFlags)
 
 /// Thread-safe current time for animations.
 struct AnimationTime : DENG2_OBSERVES(Clock, TimeChange) {
-    LockableT<Time> now;
+    double now;
     void timeChanged(Clock const &clock) override {
-        DENG2_GUARD(now);
-        now.value = clock.time();
+        now = clock.time().highPerformanceTime();
     }
 };
 static AnimationTime theTime;
@@ -83,10 +83,10 @@ DENG2_PIMPL_NOREF(Animation)
     TimeDelta startDelay;
     Time setTime;
     Time targetTime;
+    Time pauseTime;
     Style style;
     float spring;
-    AnimationFlags flags;
-    Time pauseTime;
+    mutable AnimationFlags flags;
 
     Impl(float val, Style s)
         : value(val)
@@ -103,7 +103,7 @@ DENG2_PIMPL_NOREF(Animation)
      * @param now  Point of time at which to evaluate.
      * @return Value of the animation when the frame time is @a now.
      */
-    float valueAt(Time const &now) const
+    float valueAt(TimeDelta const &now) const
     {
         TimeDelta span = targetTime - setTime;
 
@@ -119,14 +119,15 @@ DENG2_PIMPL_NOREF(Animation)
             peak2 = 2.f/3;
         }
 
-        if (now >= targetTime || span <= 0)
+        if (now >= targetTime.highPerformanceTime() || span <= 0)
         {
+            flags |= Finished;
             return target;
         }
         else
         {
             span -= startDelay;
-            TimeDelta const elapsed = now - setTime - startDelay;
+            TimeDelta const elapsed = now - setTime.highPerformanceTime() - startDelay;
             TimeDelta const t = clamp(0.0, elapsed/span, 1.0);
             float const delta = target - value;
             switch (style)
@@ -170,9 +171,17 @@ DENG2_PIMPL_NOREF(Animation)
         return target;
     }
 
+    void checkDone()
+    {
+        if (!(flags & Finished) && theTime.now >= targetTime.highPerformanceTime())
+        {
+            flags |= Finished;
+        }
+    }
+
     Time currentTime() const
     {
-        if (flags.testFlag(Paused)) return pauseTime;
+        if (flags & Paused) return pauseTime;
         return Animation::currentTime();
     }
 };
@@ -226,13 +235,15 @@ void Animation::setValue(float v, TimeDelta transitionSpan, TimeDelta startDelay
     {
         d->value = d->target = v;
         d->setTime = d->targetTime = now;
+        d->flags |= Finished;
     }
     else
     {
-        d->value = d->valueAt(now);
+        d->value = d->valueAt(now.highPerformanceTime());
         d->target = v;
         d->setTime = now;
         d->targetTime = d->setTime + transitionSpan;
+        d->flags &= ~Finished;
     }
     d->startDelay = startDelay;
 }
@@ -252,20 +263,24 @@ float Animation::value() const
 {
     if (d->flags & Paused)
     {
-        return d->valueAt(d->pauseTime);
+        return d->valueAt(d->pauseTime.highPerformanceTime());
     }
-    DENG2_GUARD_FOR(theTime.now, G);
+    if (d->flags & Finished)
+    {
+        return d->target;
+    }
     return d->valueAt(theTime.now);
 }
 
 bool Animation::done() const
 {
+    d->checkDone();
+    if (d->flags & Finished) return true;
     if (d->flags & Paused)
     {
         return d->pauseTime >= d->targetTime;
     }
-    DENG2_GUARD_FOR(theTime.now, G);
-    return theTime.now.value >= d->targetTime;
+    return false;
 }
 
 float Animation::target() const
@@ -385,8 +400,7 @@ Time Animation::currentTime() // static
     {
         throw ClockMissingError("Animation::clock", "Animation has no clock");
     }
-    DENG2_GUARD_FOR(theTime.now, G);
-    return theTime.now;
+    return Time(theTime.now);
 }
 
 Animation Animation::range(Style style, float from, float to, TimeDelta span, TimeDelta delay)

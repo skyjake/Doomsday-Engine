@@ -1,0 +1,32 @@
+Your runtime files are by default stored in a folder called
+@file{~/.doomsday/}. The following noteworthy files and folders can be found
+inside:
+
+@include{technical/files_common}
+
+@section{ Additional files }
+@deflist{
+    
+    @item{@file{/etc/doomsday/defaults}} System-level default configuration.
+    This is checked after @file{~/.doomsday/defaults}. For example:
+
+    @samp{@pre{audio fluidsynth @{
+        driver: pulseaudio
+    @}}}
+
+    @item{@file{/etc/doomsday/paths}} @a{paths_file} System-level paths
+    configuration (@var{basedir}, @var{libdir}, @var{iwaddir}). This is checked
+    after @file{~/.doomsday/paths}. The @wikilink{syntax of the
+    file}{Configuration#Unix_system-level_config_files
+    } is documented in the wiki.
+
+    @item{@file{~/.doomsday/defaults}} User's own defaults (similar to the
+    system-level @file{defaults}; see above).
+
+    @item{@file{~/.doomsday/paths}} User's paths configuration (@var{basedir},
+    @var{libdir}, @var{iwaddir}).
+
+    @item{@file{/usr/share/doomsday/}} Data files for the engine and game
+    plugins.
+    
+}

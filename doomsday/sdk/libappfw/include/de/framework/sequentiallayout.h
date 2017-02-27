@@ -83,7 +83,7 @@ public:
     SequentialLayout &append(GuiWidget &widget, Rule const &spaceBefore, AppendMode mode = UpdateMinorAxis);
     SequentialLayout &append(Rule const &emptySpace);
 
-    WidgetList widgets() const;
+    GuiWidgetList widgets() const;
     int size() const;
     bool isEmpty() const;
 

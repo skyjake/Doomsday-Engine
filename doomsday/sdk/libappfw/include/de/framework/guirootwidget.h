@@ -102,6 +102,8 @@ public:
 
     FocusWidget &focusIndicator();
 
+    GuiWidget *focus() const;
+
     /**
      * Pushes a pointer to the current focused widget to a stack. It can later be
      * restored with popFocus().

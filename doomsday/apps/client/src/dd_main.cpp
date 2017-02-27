@@ -1939,94 +1939,174 @@ AutoStr *DD_MaterialSchemeNameForTextureScheme(ddstring_t const *textureSchemeNa
 D_CMD(Load)
 {
     DENG2_UNUSED(src);
+    BusyMode_FreezeGameForBusyMode();
+    auto &loader = PackageLoader::get();
 
-    bool didLoadGame = false, didLoadResource = false;
-    dint arg = 1;
-
-    AutoStr *searchPath = AutoStr_NewStd();
-    Str_Set(searchPath, argv[arg]);
-    Str_Strip(searchPath);
-    if (Str_IsEmpty(searchPath)) return false;
-
-    F_FixSlashes(searchPath, searchPath);
-
-    // Ignore attempts to load directories.
-    if (Str_RAt(searchPath, 0) == '/')
+    for (int arg = 1; arg < argc; ++arg)
     {
-        LOG_WARNING("Directories cannot be \"loaded\" (only files and/or known games).");
-        return true;
-    }
+        String searchTerm = String(argv[arg]).trimmed();
+        if (!searchTerm) continue;
 
-    // Are we loading a game?
-    try
-    {
-        Game &game = App_Games()[Str_Text(searchPath)];
-        if (!game.allStartupFilesFound())
+        // Are we loading a game?
+        if (DoomsdayApp::games().contains(searchTerm))
         {
-            LOG_WARNING("Failed to locate all required startup resources:");
-            Game::printFiles(game, FF_STARTUP);
-            LOG_MSG("%s (%s) cannot be loaded.")
-                    << game.title() << game.id();
-            return true;
+            Game const &game = DoomsdayApp::games()[searchTerm];
+            if (!game.isPlayable())
+            {
+                LOG_SCR_ERROR("Game \"%s\" is missing one or more required packages: %s")
+                        << game.id()
+                        << String::join(game.profile().unavailablePackages(), ", ");
+                return true;
+            }
+            if (!DoomsdayApp::app().changeGame(game.profile(), DD_ActivateGameWorker))
+            {
+                return false;
+            }
+            continue;
         }
 
-        BusyMode_FreezeGameForBusyMode();
-
-        if (!DoomsdayApp::app().changeGame(game.profile(), DD_ActivateGameWorker))
+        // It could also be a game profile.
+        if (auto const *profile = DoomsdayApp::gameProfiles().tryFind(searchTerm))
         {
-            return false;
+            auto const &gameProf = profile->as<GameProfile>();
+            if (!gameProf.isPlayable())
+            {
+                LOG_SCR_ERROR("Profile \"%s\" is missing one or more required packages: ")
+                        << String::join(gameProf.unavailablePackages(), ", ");
+                return true;
+            }
+            if (!DoomsdayApp::app().changeGame(gameProf, DD_ActivateGameWorker))
+            {
+                return false;
+            }
+            continue;
         }
 
-        didLoadGame = true;
-        ++arg;
-    }
-    catch (Games::NotFoundError const &)
-    {} // Ignore the error.
-
-    // Try the resource locator.
-    for (; arg < argc; ++arg)
-    {
         try
         {
-            String foundPath = App_FileSystem().findPath(de::Uri::fromNativePath(argv[arg], RC_PACKAGE),
-                                                         RLF_MATCH_EXTENSION, App_ResourceClass(RC_PACKAGE));
-            foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
-
-            if (File1::tryLoad(File1::LoadAsCustomFile, de::Uri(foundPath, RC_NULL)))
+            // Check packages with a matching name.
+            if (loader.isAvailable(searchTerm))
             {
-                didLoadResource = true;
+                if (loader.isLoaded(searchTerm))
+                {
+                    LOG_SCR_MSG("Package \"%s\" is already loaded") << searchTerm;
+                    continue;
+                }
+                loader.load(searchTerm);
+                continue;
+            }
+
+            // Check data bundles with a matching name. We assume the search term
+            // is a native path.
+            if (!DoomsdayApp::isGameLoaded())
+            {
+                LOG_SCR_ERROR("Cannot load data files when a game isn't loaded");
+                return false;
+            }
+            auto files = DataBundle::findAllNative(searchTerm);
+            if (files.size() == 1)
+            {
+                if (!files.first()->isLinkedAsPackage())
+                {
+                    LOG_SCR_ERROR("%s cannot be loaded (could be ignored due to "
+                                  "being unsupported or invalid") << files.first()->description();
+                    return false;
+                }
+                loader.load(files.first()->packageId());
+                continue;
+            }
+            else if (files.size() > 1)
+            {
+                LOG_SCR_MSG("There are %i possible matches for the name \"%s\"")
+                        << files.size()
+                        << searchTerm;
+                if (files.size() <= 10)
+                {
+                    LOG_SCR_MSG("Maybe you meant:");
+                    for (auto const *f : files)
+                    {
+                        LOG_SCR_MSG("- " _E(>) "%s") << f->description();
+                    }
+                }
+                return false;
+            }
+            else
+            {
+                LOG_SCR_ERROR("No files found matching the name \"%s\"") << searchTerm;
+                return false;
             }
         }
-        catch (FS1::NotFoundError const &)
-        {} // Ignore this error.
+        catch (Error const &er)
+        {
+            LOG_SCR_ERROR("Failed to load package \"%s\": %s") << searchTerm << er.asText();
+            return false;
+        }
     }
-
-    if (didLoadResource)
-    {
-        DD_UpdateEngineState();
-    }
-
-    return didLoadGame || didLoadResource;
+    return true;
 }
 
 D_CMD(Unload)
 {
     DENG2_UNUSED(src);
-
     BusyMode_FreezeGameForBusyMode();
 
-    // No arguments; unload the current game if loaded.
-    if (argc == 1)
+    DoomsdayApp &app = DoomsdayApp::app();
+
+    try
     {
-        if (!App_GameLoaded())
+        // No arguments; unload the current game if loaded.
+        if (argc == 1)
         {
-            LOG_MSG("No game is currently loaded.");
-            return true;
+            if (!app.isGameLoaded())
+            {
+                LOG_SCR_MSG("No game is currently loaded");
+                return true;
+            }
+            return app.changeGame(GameProfiles::null(), DD_ActivateGameWorker);
         }
-        return DoomsdayApp::app().changeGame(GameProfiles::null(), DD_ActivateGameWorker);
+
+        auto &loader = PackageLoader::get();
+        auto const loadedPackages = loader.loadedPackages();
+        auto loadedBundles = DataBundle::loadedBundles();
+
+        for (int arg = 1; arg < argc; ++arg)
+        {
+            String searchTerm = String(argv[arg]).trimmed();
+            if (!searchTerm) continue;
+
+            if (app.isGameLoaded() && searchTerm == DoomsdayApp::game().id())
+            {
+                if (!app.changeGame(GameProfiles::null(), DD_ActivateGameWorker))
+                {
+                    return false;
+                }
+                continue;
+            }
+
+            // Is this one of the loaded packages?
+            if (loadedPackages.contains(searchTerm) && loader.isAvailable(searchTerm))
+            {
+                loader.unload(searchTerm);
+                continue;
+            }
+            for (DataBundle const *bundle : loadedBundles)
+            {
+                if (!bundle->sourceFile().name().compareWithoutCase(searchTerm))
+                {
+                    loadedBundles.removeOne(bundle);
+                    loader.unload(bundle->packageId());
+                    break;
+                }
+            }
+        }
+    }
+    catch (Error const &er)
+    {
+        LOG_SCR_ERROR("Problem while unloading: %s") << er.asText();
+        return false;
     }
 
-    AutoStr *searchPath = AutoStr_NewStd();
+    /*AutoStr *searchPath = AutoStr_NewStd();
     Str_Set(searchPath, argv[1]);
     Str_Strip(searchPath);
     if (Str_IsEmpty(searchPath)) return false;
@@ -2084,7 +2164,9 @@ D_CMD(Unload)
         DD_UpdateEngineState();
     }
 
-    return didUnloadFiles;
+    return didUnloadFiles;*/
+
+    return true;
 }
 
 D_CMD(Reset)

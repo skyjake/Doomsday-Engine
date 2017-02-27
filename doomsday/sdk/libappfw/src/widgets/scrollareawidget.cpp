@@ -596,7 +596,7 @@ void ScrollAreaWidget::scrollToWidget(GuiWidget const &widget, TimeDelta span)
 
 ScrollAreaWidget &ScrollAreaWidget::findTopmostScrollable()
 {
-    for (Widget *parent = parentWidget(); parent; parent = parent->parent())
+    for (GuiWidget *parent = parentGuiWidget(); parent; parent = parent->parentGuiWidget())
     {
         if (ScrollAreaWidget *scroll = parent->maybeAs<ScrollAreaWidget>())
         {

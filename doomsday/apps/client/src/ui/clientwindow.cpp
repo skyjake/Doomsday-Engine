@@ -930,7 +930,7 @@ void ClientWindow::postDraw()
     {
         // Finish GL drawing and swap it on to the screen. Blocks until buffers
         // swapped.
-        GL_DoUpdate();
+        GL_FinishFrame();
     }
 
     BaseWindow::postDraw();

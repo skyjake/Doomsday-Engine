@@ -18,6 +18,7 @@
 
 #include "de_platform.h"
 #include "ui/clientwindowsystem.h"
+#include "ui/clientstyle.h"
 #include "clientapp.h"
 #include "dd_main.h"
 #include "gl/gl_main.h"
@@ -30,16 +31,6 @@ DENG2_PIMPL(ClientWindowSystem)
 {
     ConfigProfiles settings;
 
-    struct ClientStyle : public Style {
-        /*bool isBlurringAllowed() const {
-            return !App_GameLoaded();
-        }*/
-        GuiWidget *sharedBlurWidget() const {
-            if (!ClientWindow::mainExists()) return nullptr;
-            return &ClientWindow::main().taskBarBlur();
-        }
-    };
-
     Impl(Public *i)
         : Base(i)
     {
@@ -50,6 +41,7 @@ DENG2_PIMPL(ClientWindowSystem)
         settings.define(SReg::ConfigVariable, "window.main.showFps")
                 .define(SReg::ConfigVariable, "window.main.fsaa")
                 .define(SReg::ConfigVariable, "window.main.vsync")
+                .define(SReg::IntCVar,        "refresh-rate-maximum", 0)
                 .define(SReg::IntCVar,        "rend-finale-stretch", SCALEMODE_SMART_STRETCH)
                 .define(SReg::IntCVar,        "rend-hud-stretch", SCALEMODE_SMART_STRETCH)
                 .define(SReg::IntCVar,        "inlude-stretch", SCALEMODE_SMART_STRETCH)

@@ -182,9 +182,9 @@ DENG_GUI_PIMPL(PackageContentOptionsWidget)
         self().rule().setInput(Rule::Height, layout.height() + self().margins().bottom());
 
         // Configure margins.
-        for (Widget *w : self().childWidgets())
+        for (GuiWidget *w : self().childWidgets())
         {
-            w->as<GuiWidget>().margins().set("dialog.gap");
+            w->margins().set("dialog.gap");
         }
         contents->margins().setLeftRight("gap");
 

@@ -20,6 +20,7 @@
 #define DENG_CLIENTWINDOWSYSTEM_H
 
 #include <de/WindowSystem>
+#include <de/ui/Stylist>
 #include "ConfigProfiles"
 
 #undef main

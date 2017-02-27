@@ -297,15 +297,9 @@ StringList GameProfiles::Profile::packagesAffectingGameplay() const
 
 StringList GameProfiles::Profile::unavailablePackages() const
 {
-    StringList ids;
-    for (String const &pkg : allRequiredPackages())
-    {
-        if (!App::packageLoader().isAvailable(pkg))
-        {
-            ids << pkg;
-        }
-    }
-    return ids;
+    return de::filter(allRequiredPackages(), [] (String const &pkgId) {
+        return !PackageLoader::get().isAvailable(pkgId);
+    });
 }
 
 bool GameProfiles::Profile::isCompatibleWithPackages(StringList const &ids) const

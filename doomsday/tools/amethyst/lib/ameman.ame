@@ -61,9 +61,9 @@ $ Lists.
 @format{!thin enum !note list}{@< .Bl@_-enum@_-offset@_indent @> @n.El@n}
 @format{thin !enum !note list}{@< .Bl@_-dash@_-compact@_-offset@_indent @> @n.El@n}
 @format{thin enum !note list}{@< .Bl@_-enum@_-compact@_-offset@_indent @> @n.El@n}
-@format{note list}{@< .Bl@_-tag@_-width@_"NOTE!@_" @> @n.El@n}
+@format{note list}{@< .Bl@_-tag@_-width@_"NOTE:@_" @> @n.El@n}
 @format{parent !note list}{@n.It@n}
-@format{parent note list}{@n.It@_Sy@_NOTE!@n}
+@format{parent note list}{@n.It@_Sy@_NOTE:@n}
 @format{!thin deflist}{@< .Bl@_-tag@_-width@_14n@_-offset@_indent @> @n.El@n}
 @format{thin deflist}{@< .Bl@_-tag@_-width@_8n @> @n.El@n}
 @format{first try strong opt !pass @ child 1 parent2 deflist}{@< @n.It @> @n}

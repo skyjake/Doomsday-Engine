@@ -81,7 +81,7 @@ DENG2_PIMPL(VariableGroupEditor)
 
     void foldAll(bool fold)
     {
-        foreach (Widget *child, owner->containerWidget().childWidgets())
+        foreach (GuiWidget *child, owner->containerWidget().childWidgets())
         {
             if (auto *g = child->maybeAs<VariableGroupEditor>())
             {
@@ -302,7 +302,7 @@ void VariableGroupEditor::commit()
 
 void VariableGroupEditor::fetch()
 {
-    foreach (Widget *child, d->content->childWidgets())
+    foreach (GuiWidget *child, d->content->childWidgets())
     {
         if (ICVarWidget *w = child->maybeAs<ICVarWidget>())
         {
@@ -313,7 +313,7 @@ void VariableGroupEditor::fetch()
 
 void VariableGroupEditor::resetToDefaults()
 {
-    foreach (Widget *child, d->content->childWidgets())
+    foreach (GuiWidget *child, d->content->childWidgets())
     {
         if (ICVarWidget *w = child->maybeAs<ICVarWidget>())
         {

@@ -49,7 +49,8 @@ list {
 }
 
 dialog {
-    rule gap { constant $= UNIT * 2 }
+    rule gap       { constant $= UNIT * 2 }
+    rule separator { constant $= UNIT * 4 }
 
     rule about.width       { constant $= UNIT * 80 }
     rule message.width     { constant $= UNIT * 115 }

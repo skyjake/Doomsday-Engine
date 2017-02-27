@@ -32,6 +32,7 @@ namespace de {
 
 static String const ISO_FORMAT = "yyyy-MM-dd hh:mm:ss.zzz";
 static HighPerformanceTimer highPerfTimer;
+static TimeDelta currentHighPerfDelta;
 
 namespace internal {
 
@@ -218,6 +219,12 @@ DENG2_PIMPL_NOREF(Time)
          */
         DENG2_ASSERT(false);
         return 0;
+    }
+
+    void setDateTimeFromHighPerf()
+    {
+        dateTime = (highPerfTimer.startedAt() + highPerfElapsed).asDateTime();
+        flags |= DateTime;
     }
 };
 
@@ -539,9 +546,20 @@ void Time::operator << (Reader &from)
     }
 }
 
-Time Time::currentHighPerformanceTime()
+TimeDelta Time::highPerformanceTime() const
 {
-    return Time(highPerfTimer.elapsed());
+    DENG2_ASSERT(d->flags & Impl::HighPerformance);
+    return d->highPerfElapsed;
+}
+
+Time Time::currentHighPerformanceTime() // static
+{
+    return currentHighPerfDelta;
+}
+
+void Time::updateCurrentHighPerformanceTime() // static
+{
+    currentHighPerfDelta = highPerfTimer.elapsed();
 }
 
 QTextStream &operator << (QTextStream &os, Time const &t)

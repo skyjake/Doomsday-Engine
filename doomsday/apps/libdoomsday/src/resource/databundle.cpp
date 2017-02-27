@@ -1291,6 +1291,41 @@ QList<DataBundle const *> DataBundle::loadedBundles() // static
     return loaded;
 }
 
+QList<DataBundle const *> DataBundle::findAllNative(String const &fileNameOrPartialNativePath)
+{
+    NativePath const searchPath = NativePath(fileNameOrPartialNativePath).expand();
+
+    FS::FoundFiles found;
+    FS::get().findAllOfTypes(StringList({ DENG2_TYPE_NAME(DataFile),
+                                          DENG2_TYPE_NAME(DataFolder) }),
+                             searchPath.fileName().toLower(), found);
+    QList<DataBundle const *> bundles;
+    for (auto const *f : found)
+    {
+        DENG2_ASSERT(dynamic_cast<DataBundle const *>(f));
+        bundles << dynamic_cast<DataBundle const *>(f);
+    }
+
+    // Omit the ones that don't match the given native path.
+    if (!searchPath.fileNamePath().isEmpty())
+    {
+        bundles = de::filter(bundles, [&searchPath] (DataBundle const *b)
+        {
+            NativePath const bundlePath = b->asFile().correspondingNativePath().fileNamePath();
+            if (bundlePath.isEmpty()) return false;
+            //qDebug() << "bundle:" << path.asText() << "searchTerm:" << searchPath.fileNamePath();
+            if (bundlePath.toString().endsWith(searchPath.fileNamePath(),
+                                               Qt::CaseInsensitive))
+            {
+                return true;
+            }
+            return false;
+        });
+    }
+
+    return bundles;
+}
+
 StringList DataBundle::gameTags()
 {
     static StringList const gameTags({ "doom", "doom2", "heretic", "hexen" });

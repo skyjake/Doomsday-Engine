@@ -99,8 +99,8 @@ static volatile bool allowRefresh, refreshing;
 static bool sfxNoRndPitch;  ///< @todo should be a cvar.
 
 // Console variables:
-static dint sfx16Bit;
-static dint sfxSampleRate = 11025;
+//static dint sfx16Bit;
+//static dint sfxSampleRate = 11025;
 static dint sfx3D;
 #endif  // __CLIENT__
 static byte sfxOneSoundPerEmitter;  //< @c false= Traditional Doomsday behavior: allow sounds to overlap.
@@ -1382,6 +1382,7 @@ DENG2_PIMPL(AudioSystem)
         old3DMode = sfx3D;
     }
 
+#if 0
     void updateSfxSampleRateIfChanged()
     {
         static dint old16Bit = false;
@@ -1415,6 +1416,7 @@ DENG2_PIMPL(AudioSystem)
             oldRate  = sfxSampleRate;
         }
     }
+#endif
 
     void sfxSampleCacheAboutToRemove(sfxsample_t const &sample)
     {
@@ -1559,7 +1561,7 @@ void AudioSystem::startFrame()
 
         // Have there been changes to the cvar settings?
         d->updateSfx3DModeIfChanged();
-        d->updateSfxSampleRateIfChanged();
+        //d->updateSfxSampleRateIfChanged();
 
         // Should we purge the cache (to conserve memory)?
         d->sfxSampleCache.maybeRunPurge();
@@ -2619,12 +2621,12 @@ void AudioSystem::consoleRegister()  // static
 {
     // Sound effects:
 #ifdef __CLIENT__
-    C_VAR_INT     ("sound-16bit",         &sfx16Bit,              0, 0, 1);
+    //C_VAR_INT     ("sound-16bit",         &sfx16Bit,              0, 0, 1);
     C_VAR_INT     ("sound-3d",            &sfx3D,                 0, 0, 1);
 #endif
     C_VAR_BYTE    ("sound-overlap-stop",  &sfxOneSoundPerEmitter, 0, 0, 1);
 #ifdef __CLIENT__
-    C_VAR_INT     ("sound-rate",          &sfxSampleRate,         0, 11025, 44100);
+    //C_VAR_INT     ("sound-rate",          &sfxSampleRate,         0, 11025, 44100);
     C_VAR_FLOAT2  ("sound-reverb-volume", &sfxReverbStrength,     0, 0, 1.5f, sfxReverbStrengthChanged);
     C_VAR_INT     ("sound-volume",        &sfxVolume,             0, 0, 255);
 

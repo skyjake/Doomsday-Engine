@@ -548,7 +548,7 @@ PopupButtonWidget *DialogWidget::popupButtonWidget(int roleId) const
 QList<ButtonWidget *> DialogWidget::buttonWidgets() const
 {
     QList<ButtonWidget *> buttons;
-    foreach (Widget *w, d->buttons->childWidgets())
+    foreach (GuiWidget *w, d->buttons->childWidgets())
     {
         if (auto *but = w->maybeAs<ButtonWidget>())
         {

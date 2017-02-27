@@ -868,7 +868,7 @@ void TaskBarWidget::updateCommandLineLayout()
     RuleRectangle &cmdRule = d->console->commandLine().rule();
     cmdRule.setInput(Rule::Left,   d->console->buttons().rule().right())
            .setInput(Rule::Bottom, rule().bottom())
-           .setInput(Rule::Right,  layout.widgets().last()->as<GuiWidget>().rule().left());
+           .setInput(Rule::Right,  layout.widgets().last()->rule().left());
 
     // Just use a plain background for this editor.
     d->console->commandLine().set(Background(style().colors().colorf("background")));

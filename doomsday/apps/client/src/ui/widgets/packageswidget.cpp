@@ -311,7 +311,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             bool const highlight = _owner.d->packageStatus->isPackageHighlighted(packageId());
             _actions->setVariantItemsEnabled(highlight);
 
-            for (Widget *w : _actions->childWidgets())
+            for (GuiWidget *w : _actions->childWidgets())
             {
                 if (ButtonWidget *button = w->maybeAs<ButtonWidget>())
                 {

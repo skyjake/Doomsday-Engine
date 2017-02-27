@@ -155,7 +155,7 @@ public:
      *
      * @return @c true, if the widget is laid out as part of the menu.
      */
-    bool isWidgetPartOfMenu(Widget const &widget) const;
+    bool isWidgetPartOfMenu(GuiWidget const &widget) const;
 
     /**
      * Lays out children of the menu according to the grid setup. This should

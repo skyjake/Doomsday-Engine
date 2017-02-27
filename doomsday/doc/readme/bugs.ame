@@ -1,13 +1,16 @@
-@chapter{ Known issues }
+@chapter{ Bugs and known issues }
 
-Doomsday is a work in progress, so there usually is a number of known issues
-that will be addressed in the future.
+Doomsday remains a work in progress so there usually is a number of bugs and
+known issues.
 
 @deflist{
 
-@item{Bugs and Features} The official place to report new bugs, submit feature 
-requests and browse the existing reports is the @link{Deng Team's own Issue Tracker}{http://tracker.dengine.net/}.
+    @item{Bugs and Features} The official place to report new bugs, comment on
+    existing ones, and submit feature requests is the @link{dengine.net
+    Tracker}{http://tracker.dengine.net/}.
 
-@item{Multiplayer Issues} The Issue Tracker has a list of known @link{multiplayer issues and needed enhancements}{http://tracker.dengine.net/projects/deng/issues?query_id=10}.
+    @item{Multiplayer Issues} The bug tracker has a list of known
+    @link{multiplayer issues and needed
+    enhancements}{http://tracker.dengine.net/projects/deng/issues?query_id=10}.
 
 }

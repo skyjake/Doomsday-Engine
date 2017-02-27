@@ -221,17 +221,16 @@ DENG_GUI_PIMPL(PopupMenuWidget)
     {
         GridLayout const &layout = self().menu().layout();
 
-        foreach (Widget *child, self().menu().childWidgets())
+        foreach (GuiWidget *widget, self().menu().childWidgets())
         {
-            GuiWidget &widget = child->as<GuiWidget>();
-            if (self().menu().isWidgetPartOfMenu(widget))
+            if (self().menu().isWidgetPartOfMenu(*widget))
             {
-                Vector2i cell = layout.widgetPos(widget);
+                Vector2i cell = layout.widgetPos(*widget);
                 DENG2_ASSERT(cell.x >= 0 && cell.y >= 0);
 
                 // We want items to be hittable throughout the width of the menu, however
                 // restrict this to the item's column if there are multiple columns.
-                widget.hitRule()
+                widget->hitRule()
                         .setInput(Rule::Left,  (!cell.x? self().rule().left() :
                                                          layout.columnLeft(cell.x)))
                         .setInput(Rule::Right, (cell.x == layout.gridSize().x - 1? self().rule().right() :
@@ -242,7 +241,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
 
     bool hasButtonsWithImages() const
     {
-        foreach (Widget *child, self().menu().childWidgets())
+        foreach (GuiWidget *child, self().menu().childWidgets())
         {
             if (ButtonWidget *button = child->maybeAs<ButtonWidget>())
             {
@@ -266,31 +265,29 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         auto const &padding = rule("popup.menu.paddedmargin");
         auto const &none    = rule("popup.menu.margin");
 
-        foreach (Widget *child, self().menu().childWidgets())
+        foreach (GuiWidget *widget, self().menu().childWidgets())
         {
-            GuiWidget &widget = child->as<GuiWidget>();
-
             // Pad annotations with the full amount.
-            if (LabelWidget *label = widget.maybeAs<LabelWidget>())
+            if (LabelWidget *label = widget->maybeAs<LabelWidget>())
             {
-                ui::Item const *item = self().menu().organizer().findItemForWidget(widget);
+                ui::Item const *item = self().menu().organizer().findItemForWidget(*widget);
                 if (item->semantics().testFlag(ui::Item::Annotation))
                 {
                     if (useExtraPadding)
                     {
                         label->setMaximumTextWidth(*maxItemWidth - padding);
-                        widget.margins().setLeft(padding);
+                        widget->margins().setLeft(padding);
                     }
                     else
                     {
                         label->setMaximumTextWidth(*maxItemWidth);
-                        widget.margins().setLeft(none);
+                        widget->margins().setLeft(none);
                     }
                 }
             }
 
             // Pad buttons according to their image size.
-            if (ButtonWidget *button = widget.maybeAs<ButtonWidget>())
+            if (ButtonWidget *button = widget->maybeAs<ButtonWidget>())
             {
                 updateImageColor(*button);
                 if (useExtraPadding)
@@ -303,12 +300,12 @@ DENG_GUI_PIMPL(PopupMenuWidget)
                         sumInto(padRule, -Const(layout.image.width()) -
                                 rule(button->textGap()));
                     }
-                    widget.margins().setLeft(*padRule);
+                    widget->margins().setLeft(*padRule);
                     releaseRef(padRule);
                 }
                 else
                 {
-                    widget.margins().setLeft(none);
+                    widget->margins().setLeft(none);
                 }
             }
         }
@@ -400,7 +397,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
 
     void updateButtonColors()
     {
-        for (Widget *w : self().menu().childWidgets())
+        for (GuiWidget *w : self().menu().childWidgets())
         {
             if (ButtonWidget *btn = w->maybeAs<ButtonWidget>())
             {

@@ -43,7 +43,7 @@ on run argv
         set position of item "Doomsday.app" to { 130, 200 }
         set position of item "Doomsday Shell.app" to { 300, 200 }
         set position of item "Applications" to { 470, 200 }
-        set position of item "Read Me.rtf" to { 640, 200 }
+        set position of item "Read Me.html" to { 640, 200 }
         set position of item "include" to { 215, 500 }
         set position of item "lib" to { 385, 500 }
         set position of item "share" to { 555, 500 }

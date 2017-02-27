@@ -40,7 +40,7 @@ $ Styles.
 
 $ Table of contents.
 @format{parent3 contents @ order 1 parent child 1 parent chapter}{
-	<div@_style="padding-left:2ex"><a@_href="#@=">@_@=}
+	<div@_style="padding-left:2ex"><a@_href="#@=.">@_@=}
 @format{parent3 contents @ order 1 parent child 1 parent section}{
     <div@_style="padding-left:6ex"><a@_href="#@=">@_@=}
 @format{parent3 contents @ order 1 parent child 1 parent subsec}{

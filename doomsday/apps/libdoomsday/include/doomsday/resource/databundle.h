@@ -155,6 +155,19 @@ public:
      */
     static QList<DataBundle const *> loadedBundles();
 
+    /**
+     * Finds all DataFile and DataFolder instances with a matching file name or
+     * partial/full native path.
+     *
+     * @param filePath  File name or path to look for. If this is just a name, the
+     *                  file can be located anywhere. If a partial or full path
+     *                  is included, all returned files will match it. Paths are
+     *                  treated and compared as native paths.
+     *
+     * @return List of matching files.
+     */
+    static QList<DataBundle const *> findAllNative(de::String const &fileNameOrPartialNativePath);
+
     static de::StringList gameTags();
     static de::String anyGameTagPattern();
 

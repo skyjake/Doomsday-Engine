@@ -120,6 +120,12 @@ font small inherits default {
     size $: gui.scale(self.size, 0.75)
 }
 
+menu {
+    font empty inherits heading {
+        weight: bold
+    }
+}
+
 editor {
     font plaintext inherits default {}
     font hint.default inherits default {

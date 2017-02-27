@@ -692,6 +692,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     logBuf.enableFlushing(true);
 
     // Update the wall clock time.
+    Time::updateCurrentHighPerformanceTime();
     d->clock.setTime(Time::currentHighPerformanceTime());
 
     // Now we can start observing progress of time.

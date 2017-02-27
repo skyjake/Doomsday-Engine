@@ -41,6 +41,7 @@ DENG2_PIMPL(TextApp)
     {
         // Update the clock time. App listens to this clock and will inform
         // subsystems in the order they've been added in.
+        Time::updateCurrentHighPerformanceTime();
         Clock::get().setTime(Time());
     }
 };

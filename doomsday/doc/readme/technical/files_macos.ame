@@ -1,0 +1,15 @@
+Your runtime files (savegames, screenshots) are inside a folder called
+@file{~/Library/Application Support/Doomsday Engine/}.
+
+@include{technical/files_common}
+
+@ifdef{MACOSX}{        
+    @a{paths_file} Additional files:
+    @deflist{        
+        @item{@file{~/.doomsday/paths}} Customized file path
+        configuration (@var{basedir}, @var{libdir}, @var{iwaddir}). The
+        @wikilink{syntax of the
+        file}{Configuration#Unix_system-level_config_files} is documented in
+        the wiki.    
+    }
+}

@@ -379,6 +379,11 @@ FocusWidget &GuiRootWidget::focusIndicator()
     return *d->focusIndicator;
 }
 
+GuiWidget *GuiRootWidget::focus() const
+{
+    return static_cast<GuiWidget *>(RootWidget::focus());
+}
+
 void GuiRootWidget::pushFocus()
 {
     if (!focus()) return;
