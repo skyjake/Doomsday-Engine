@@ -1,7 +1,7 @@
 <?php
 /*
  * Doomsday Web API: Master Server
- * Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2016-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * License: GPL v2+
  *
@@ -26,30 +26,11 @@
  * - Remove expired entries from the database.
  */
 
-require_once('api_config.inc.php'); // database config
+require_once('database.inc.php');
 
 define('DB_TABLE', 'servers');
 define('EXPIRE_SECONDS', 900);
 define('DEFAULT_PORT', 13209);
-
-// Opens the database connection.
-// @return MySQLi object.
-function db_open()
-{
-    return new mysqli(DENG_DB_HOST, DENG_DB_USER, DENG_DB_PASSWORD, DENG_DB_NAME);
-}
-
-function db_query(&$db, $sql)
-{
-    $result = $db->query($sql);
-    if (!$result)
-    {
-        echo "Database error: " . $db->error;
-        echo "Query was: " . $sql;
-        exit;
-    }
-    return $result;
-}
 
 // Initializes the Servers database table.
 function db_init()
@@ -98,8 +79,7 @@ function parse_announcement($json_data)
 
     $address = ip2long($_SERVER['REMOTE_ADDR']);
 
-    if (!is_valid_host($address))
-    {
+    if (!is_valid_host($address)) {
         echo 'Remote host has an invalid address';
         exit;
     }
@@ -143,8 +123,7 @@ function fetch_servers()
 
     // Get all the remaining servers.
     $result = db_query($db, "SELECT * FROM $table");
-    while ($row = $result->fetch_assoc())
-    {
+    while ($row = $result->fetch_assoc()) {
         $sv = array(
             "__obj__" => "Record",
             "host"    => long2ip($row['address']),
@@ -173,23 +152,19 @@ function fetch_servers()
 
 //---------------------------------------------------------------------------------------
 
-if ($_SERVER['REQUEST_METHOD'] == 'GET')
-{
+if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     // GET requests are for querying information about servers.
     $op = $_GET['op'];
-    if ($op == 'list')
-    {
+    if ($op == 'list') {
         $servers = fetch_servers();
         echo json_encode($servers);
     }
-    else if (DENG_SETUP_ENABLED && $op == 'setup')
-    {
+    else if (DENG_SETUP_ENABLED && $op == 'setup') {
         echo "Initializing database...";
         db_init();
     }
 }
-else if ($_SERVER['REQUEST_METHOD'] == 'POST')
-{
+else if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // POST requests are for submitting info about running servers.
     parse_announcement(file_get_contents("php://input"));
 }
