@@ -24,19 +24,20 @@ function add_build($json_args)
     $args = json_decode($json_args);
     if ($args == NULL) return; // JSON parse error.
 
-    $build = (int) $args->build;
-    $type = ($args->type == 'stable'?    BT_STABLE :
-             $args->type == 'candidate'? BT_CANDIDATE : BT_UNSTABLE);
+    $build   = (int) $args->build;
+    $type    = ($args->type == 'stable'?    BT_STABLE :
+                $args->type == 'candidate'? BT_CANDIDATE : BT_UNSTABLE);
     $version = $db->real_escape_string($args->version);
-    $major = (int) $args->major;
-    $minor = (int) $args->minor;
-    $patch = (int) $args->patch;
-    $label = $db->real_escape_string($args->label);
+    $major   = (int) $args->major;
+    $minor   = (int) $args->minor;
+    $patch   = (int) $args->patch;
+    $label   = $db->real_escape_string($args->label);
+    $changes = $db->real_escape_string($args->changes);
 
     $db = db_open();
     db_query($db, "INSERT INTO ".DB_TABLE_BUILDS 
-        . " (build, type, version, major, minor, patch, label) VALUES ("
-        . "$build, $type, '$version', $major, $minor, $patch, '$label')");
+        . " (build, type, version, major, minor, patch, label, changes) VALUES ("
+        . "$build, $type, '$version', $major, $minor, $patch, '$label', '$changes')");
     $db->close();
 }
 
@@ -59,20 +60,20 @@ function add_file($json_args)
         
     $build = (int) $args->build;
     $plat_id = get_platform_id($db, $args->platform);
-    $type = ($args->type == 'binary'?  FT_BINARY :
-             $args->type == 'log'?     FT_LOG : 
-             $args->type == 'changes'? FT_CHANGES : FT_NONE);
+    $type = ($args->type == 'binary'? FT_BINARY :
+             $args->type == 'log'?    FT_LOG : 
+                                      FT_NONE);
     $name = $db->real_escape_string($args->name);
     
     $header = 'build, plat_id, type, name';
     $values = "$build, $plat_id, $type, '$name'";
     
-    if (in_array('md5', $args)) {
+    if (property_exists('md5', $args)) {
         $md5 = $db->real_escape_string($args->md5);
         $header .= ', md5';
         $values .= ", '$md5'";
     }
-    if (in_array('signature', $args)) {
+    if (property_exists('signature', $args)) {
         $sigature = $db->real_escape_string($args->signature);
         $header .= ', signature';
         $values .= ", '$signature'";
@@ -145,6 +146,7 @@ else if ($op == 'init')
     $table = DB_TABLE_PLATFORMS;
     $sql = "CREATE TABLE $table ("
         . "id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, "
+        . "ord INT NOT NULL, "
         . "platform VARCHAR(50) NOT NULL, "
         . "name VARCHAR(100) NOT NULL, "
         . "os VARCHAR(20) NOT NULL, "
@@ -154,13 +156,13 @@ else if ($op == 'init')
     db_query($db, $sql);
 
     // Set up the known platforms.    
-    db_query($db, "INSERT INTO $table (platform, name, os, cpu_arch, cpu_bits) VALUES "
-        . "('win-x86', 'Windows 7 (32-bit)', 'windows', 'x86', 32), "
-        . "('win-x64', 'Windows 7 (64-bit)', 'windows', 'x64', 64), "
-        . "('mac10_8-x86_64', 'macOS 10.8', 'macx', 'x86_64', 64), "
-        . "('ubuntu-x86_64', 'Ubuntu 16.04 LTS', 'linux', 'amd64', 64), "
-        . "('fedora-x86_64', 'Fedora 23', 'linux', 'x86_64', 64), "
-        . "('source', 'Source', 'any', 'any', 0);");
+    db_query($db, "INSERT INTO $table (ord, platform, name, os, cpu_arch, cpu_bits) VALUES "
+        . "(100, 'win-x64', 'Windows 7 (64-bit)', 'windows', 'x64', 64), "
+        . "(200, 'win-x86', 'Windows 7 (32-bit)', 'windows', 'x86', 32), "
+        . "(300, 'mac10_8-x86_64', 'macOS 10.8', 'macx', 'x86_64', 64), "
+        . "(400, 'ubuntu-x86_64', 'Ubuntu 16.04 LTS', 'linux', 'amd64', 64), "
+        . "(500, 'fedora-x86_64', 'Fedora 23', 'linux', 'x86_64', 64), "
+        . "(600, 'source', 'Source', 'any', 'any', 0);");
     
     // File archive.
     $table = DB_TABLE_FILES;
@@ -172,7 +174,7 @@ else if ($op == 'init')
         . "name VARCHAR(200) NOT NULL, "
         . "md5 CHAR(32), "
         . "signature TEXT, "
-        . "timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+        . "timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
         . ") CHARACTER SET utf8";
     db_query($db, $sql);
     
@@ -185,8 +187,9 @@ else if ($op == 'init')
         . "major INT NOT NULL, "
         . "minor INT NOT NULL, "
         . "patch INT NOT NULL, "
-        . "label INT NOT NULL, "
+        . "label VARCHAR(30) NOT NULL, "
         . "blurb TEXT, "
+        . "changes TEXT, "
         . "timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
         . ") CHARACTER SET utf8";
     db_query($db, $sql);        
