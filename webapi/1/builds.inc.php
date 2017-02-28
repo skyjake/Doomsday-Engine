@@ -68,7 +68,7 @@ function cmp_name($a, $b)
 function sfnet_link($build_data, $name)
 {
     $sfnet_url = 'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/';
-    if ($build_info['type'] == BT_STABLE) {
+    if ($build_data['type'] == BT_STABLE) {
         $sfnet_url .= "$build_data[version]/";
     }
     else {

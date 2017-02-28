@@ -63,7 +63,7 @@ function add_file($json_args)
 {
     $args = json_decode($json_args);
     if ($args == NULL) return; // JSON parse error.
-    
+        
     $db = db_open();
         
     $build = (int) $args->build;
@@ -71,9 +71,10 @@ function add_file($json_args)
     $type = ($args->type == 'binary'? FT_BINARY :
              ($args->type == 'log'? FT_LOG : FT_NONE));
     $name = $db->real_escape_string($args->name);
+    $size = (int) $args->size;
     
-    $header = 'build, plat_id, type, name';
-    $values = "$build, $plat_id, $type, '$name'";
+    $header = 'build, plat_id, type, name, size';
+    $values = "$build, $plat_id, $type, '$name', $size";
     
     if (property_exists($args, 'md5')) {
         $md5 = $db->real_escape_string($args->md5);
@@ -81,11 +82,16 @@ function add_file($json_args)
         $values .= ", '$md5'";
     }
     if (property_exists($args, 'signature')) {
-        $sigature = $db->real_escape_string($args->signature);
+        $signature = $db->real_escape_string($args->signature);
         $header .= ', signature';
         $values .= ", '$signature'";
     }
-    
+    if (property_exists($args, 'timestamp')) {
+        $ts = (int) $args->timestamp;        
+        $header .= ', timestamp';
+        $values .= ", FROM_UNIXTIME($ts)";
+    }
+        
     db_query($db, "INSERT INTO ".DB_TABLE_FILES." ($header) VALUES ($values)");
     $db->close();
 }
@@ -164,10 +170,11 @@ else if ($op == 'init')
 
     // Set up the known platforms.    
     db_query($db, "INSERT INTO $table (ord, platform, name, os, cpu_arch, cpu_bits) VALUES "
-        . "(100, 'win-x64', 'Windows 7 (64-bit)', 'windows', 'x64', 64), "
-        . "(200, 'win-x86', 'Windows 7 (32-bit)', 'windows', 'x86', 32), "
+        . "(100, 'win-x64', 'Windows 7', 'windows', 'x64', 64), "
+        . "(200, 'win-x86', 'Windows 7', 'windows', 'x86', 32), "
         . "(300, 'mac10_8-x86_64', 'macOS 10.8', 'macx', 'x86_64', 64), "
-        . "(400, 'ubuntu-x86_64', 'Ubuntu 16.04 LTS', 'linux', 'amd64', 64), "
+        . "(400, 'ubuntu-x86_64', 'Ubuntu 16.04', 'linux', 'amd64', 64), "
+        . "(450, 'ubuntu-x86', 'Ubuntu 14.04', 'linux', 'i386', 32), "
         . "(500, 'fedora-x86_64', 'Fedora 23', 'linux', 'x86_64', 64), "
         . "(600, 'source', 'Source', 'any', 'any', 0);");
     

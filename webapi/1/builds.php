@@ -74,12 +74,16 @@ function generate_build_page($number)
                 echo("<div class='filename'>$bin[name] ($mb_size MB)</div>"
                     ."<div class='hash'>MD5: <span class='digits'>$bin[md5]</span></div>");
                 if (!empty($bin['signature'])) {
-                    echo("<a class='signature' href='".DENG_API_URL."/builds?signature=$bin[name]'>PGP Signature</a>");
+                    echo("<a class='signature' href='".DENG_API_URL."/builds?signature=$bin[name]'>PGP Signature &#x21E3;</a>");
                 }
                 $mirror_url = sfnet_link($build_info, $bin['name']);
-                $fext = strtoupper(pathinfo($bin['name'], PATHINFO_EXTENSION));
-                echo("</td><td><a class='download' href='".DENG_ARCHIVE_URL."/$bin[name]'>$fext <span class='downarrow'>&#x21E3;</span></a>");
-                echo("</td><td><a class='mirror' href='$mirror_url'>$fext <span class='downarrow'>&#x21E3;</span></a>");
+                $fext = "<span class='fext'>".strtoupper(pathinfo($bin['name'], PATHINFO_EXTENSION))."</span>";
+                unset($bits);
+                if ($plat['cpu_bits'] > 0) {
+                    $bits = ' '.$plat['cpu_bits'].'-bit ';
+                }
+                echo("</td><td><a class='download' href='".DENG_ARCHIVE_URL."/$bin[name]'>$fext$bits<span class='downarrow'>&#x21E3;</span></a>");
+                echo("</td><td><a class='mirror' href='$mirror_url'>$fext$bits<span class='downarrow'>&#x21E3;</span></a>");
                 echo("</td></tr>\n");
             }
         }
