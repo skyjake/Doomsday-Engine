@@ -24,20 +24,28 @@ function add_build($json_args)
     $args = json_decode($json_args);
     if ($args == NULL) return; // JSON parse error.
 
+    $db = db_open();
     $build   = (int) $args->build;
-    $type    = ($args->type == 'stable'?    BT_STABLE :
-                $args->type == 'candidate'? BT_CANDIDATE : BT_UNSTABLE);
+    $type    = ($args->type == 'stable'? BT_STABLE :
+                ($args->type == 'candidate'? BT_CANDIDATE : BT_UNSTABLE));
     $version = $db->real_escape_string($args->version);
     $major   = (int) $args->major;
     $minor   = (int) $args->minor;
     $patch   = (int) $args->patch;
     $label   = $db->real_escape_string($args->label);
-    $changes = $db->real_escape_string($args->changes);
+    $changes = $db->real_escape_string(json_encode($args->changes));
 
-    $db = db_open();
+    $header = 'build, type, version, major, minor, patch, label, changes';
+    $values = "$build, $type, '$version', $major, $minor, $patch, '$label', '$changes'";
+
+    if (property_exists($args, 'timestamp')) {
+        $ts = (int) $args->timestamp;        
+        $header .= ', timestamp';
+        $values .= ", FROM_UNIXTIME($ts)";
+    }
+            
     db_query($db, "INSERT INTO ".DB_TABLE_BUILDS 
-        . " (build, type, version, major, minor, patch, label, changes) VALUES ("
-        . "$build, $type, '$version', $major, $minor, $patch, '$label', '$changes')");
+        . " ($header) VALUES ($values)");
     $db->close();
 }
 
@@ -61,19 +69,18 @@ function add_file($json_args)
     $build = (int) $args->build;
     $plat_id = get_platform_id($db, $args->platform);
     $type = ($args->type == 'binary'? FT_BINARY :
-             $args->type == 'log'?    FT_LOG : 
-                                      FT_NONE);
+             ($args->type == 'log'? FT_LOG : FT_NONE));
     $name = $db->real_escape_string($args->name);
     
     $header = 'build, plat_id, type, name';
     $values = "$build, $plat_id, $type, '$name'";
     
-    if (property_exists('md5', $args)) {
+    if (property_exists($args, 'md5')) {
         $md5 = $db->real_escape_string($args->md5);
         $header .= ', md5';
         $values .= ", '$md5'";
     }
-    if (property_exists('signature', $args)) {
+    if (property_exists($args, 'signature')) {
         $sigature = $db->real_escape_string($args->signature);
         $header .= ', signature';
         $values .= ", '$signature'";
@@ -198,11 +205,11 @@ else if ($op == 'init')
 }
 else if ($op == 'add_build')
 {
-    add_build(file_get_contents("php://input"));
+    add_build(file_get_contents("php://stdin"));
 }
 else if ($op == 'add_file')
 {
-    add_file(file_get_contents("php://input"));
+    add_file(file_get_contents("php://stdin"));
 }
 else if ($op == 'purge')
 {

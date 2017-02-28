@@ -96,27 +96,28 @@ function generate_build_page($number)
                     if (empty($groups[$key])) {
                         continue;
                     }
-                    echo("<h3>$key</h3><ul class='commitlist'>\n");
+                    echo("<h3 class='commitgroup'>$key</h3><ul class='commitlist'>\n");
                     foreach ($groups[$key] as $commit) {
                         // Which other groups this commit could belong to?
                         $other_groups = [];
                         foreach ($commit->tags + $commit->guessedTags as $tag) {
                             if ($tag != $key) {
-                                $other_groups[] = $tag;
+                                $other_groups[] = "<div class='tag'>"
+                                    .htmlspecialchars($tag)."</div>";
                             }
                         }
-                        $others = htmlspecialchars(join_list($other_groups));
+                        $others = join($other_groups);
                         if ($others) {
-                            $others = " <span='other-groups'>(&rarr; $others)</span>";
+                            $others = " <div class='other-groups'>$others</div>";
                         }
-                        $link = $commit->link;
+                        $link = DENG_GIT_URL . $commit->hash;
                         $date = htmlspecialchars(substr($commit->date, 0, 10));
                         $subject = htmlspecialchars($commit->subject);
                         $author = htmlentities($commit->author);
-                        $msg = htmlentities($commit->message);
-                        echo("<li><a href='$link'>$date</a>"
-                            ."<span class='title'>$subject</span>"
-                            ." by <span class='author'>$author</span>".$others
+                        $msg = basic_markdown(htmlentities($commit->message));
+                        echo("<li><a href='$link'>$date</a> "
+                            ."<span class='title'>$subject</span> "
+                            ."by <span class='author'>$author</span>".$others
                             ."<blockquote class='message'>$msg</blockquote></li>\n");
                     }
                     echo("</ul>\n");

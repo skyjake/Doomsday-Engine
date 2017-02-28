@@ -18,6 +18,17 @@
 
 require_once('database.inc.php');
 
+function basic_markdown($text)
+{
+    $text = str_replace("\n\n", "<p>", $text);
+    $text = preg_replace("/IssueID #([0-9]+)/", 
+        "<a href='".DENG_TRACKER_URL."/issues/$1'>IssueID #$1</a>", $text);
+        $text = preg_replace("/Fixes #([0-9]+)/", 
+            "<a href='".DENG_TRACKER_URL."/issues/$1'>Fixes #$1</a>", $text);
+    $text = preg_replace("/`([^\\n]+)`/", "<tt>$1</tt>", $text);
+    return $text;
+}
+
 function join_list($values)
 {
     if (count($values) > 1) {
@@ -133,7 +144,12 @@ function db_build_summary($db, $build)
             foreach ($tags as $tag => $count) {
                 $otags[] = array($tag, $count);
             }
-            function cmp($a, $b) { return $b[1] - $a[1]; }
+            function cmp($a, $b) { 
+                if ($b[1] == $a[1]) {
+                    return strcasecmp($a[0], $b[0]);
+                }
+                return $b[1] - $a[1]; 
+            }
             usort($otags, "cmp");
             $tags = [];
             foreach ($otags as $tag) {
@@ -142,12 +158,14 @@ function db_build_summary($db, $build)
             // List up to 5 tags.
             $common_tags = array_slice($tags, 0, 5);
             $common_count = count($common_tags);
-            $text .= ", and the most used tag";     
-            if ($common_count == 1) {
-                $text .= " is ".$common_tags[0];
-            }
-            else {
-                $text .= "s are ".join_list($common_tags);
+            if ($common_count > 0) {
+                $text .= ", and the most used tag";     
+                if ($common_count == 1) {
+                    $text .= " is ".$common_tags[0];
+                }
+                else {
+                    $text .= "s are ".join_list($common_tags);
+                }
             }
             $text .= '.';
         }
