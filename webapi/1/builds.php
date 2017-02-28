@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses/gpl.html
  */
 
-require_once('database.inc.php');
-
 ini_set('display_errors', 1);
 error_reporting(E_ALL ^ E_NOTICE);
+
+require_once('builds.inc.php');
 
 function generate_header($page_title)
 {
@@ -34,36 +34,7 @@ function generate_header($page_title)
 
 function generate_footer()
 {
-    echo("</body></html>");                
-}
-
-function cmp_name($a, $b) 
-{
-    return strcmp($a['name'], $b['name']); 
-}
-
-function list_files($db, $build, $platform, $file_type)
-{
-    $result = db_query($db, "SELECT * FROM ".DB_TABLE_FILES
-        ." WHERE build=$build AND plat_id=$platform AND type=$file_type");
-    $files = array();
-    while ($row = $result->fetch_assoc()) {
-        $files[] = $row;
-    }
-    usort($files, "cmp_name");    
-    return $files;
-}
-
-function sfnet_link($build_info, $name)
-{
-    $sfnet_url = 'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/';
-    if ($build_info['type'] == BT_STABLE) {
-        $sfnet_url .= "$build_info[version]/";
-    }
-    else {
-        $sfnet_url .= "Builds/";
-    }
-    return $sfnet_url . "$name/download";
+    echo("</body></html>");
 }
 
 function generate_build_page($number)
@@ -74,29 +45,29 @@ function generate_build_page($number)
         $build_info = $row;
         $type    = $row['type'];
         $version = $row['version'];
-    
+
         $files = db_build_list_files($db, $number);
-                
+
         // Output page header.
         generate_header("Build $number");
-    
+
         echo("<p class='links'><a href='http://dengine.net/'>dengine.net</a> | <a href='".DENG_API_URL."/builds?format=html'>Autobuilder Index</a>| <a href='".DENG_API_URL."/builds?format=feed'>RSS Feed</a></p>\n");
-    
+
         echo(db_build_summary($db, $number));
-        
+
         // Files to download.
         echo("<h2>Downloads</h2>\n"
             ."<table class='downloads'>\n");
         foreach (db_platform_list($db) as $plat) {
             // Find the binaries for this platform.
-            $bins = list_files($db, $number, $plat['id'], FT_BINARY);
+            $bins = db_build_list_platform_files($db, $number, $plat['id'], FT_BINARY);
             $bin_count = count($bins);
             for ($i = 0; $i < $bin_count; $i++) {
                 $bin = $bins[$i];
                 $mb_size = number_format($bin['size']/1000000, 1);
                 echo("<tr>");
                 if ($i == 0) {
-                    echo("<td class='platform' rowspan='$bin_count'>".$plat['name'] 
+                    echo("<td class='platform' rowspan='$bin_count'>".$plat['name']
                         ."</td>");
                 }
                 echo("<td class='binary'>");
@@ -111,12 +82,48 @@ function generate_build_page($number)
                 echo("</td><td><a class='mirror' href='$mirror_url'>$fext <span class='downarrow'>&#x21E3;</span></a>");
                 echo("</td></tr>\n");
             }
-        }        
+        }
         echo("</table>\n");
-    
+
         // Change log.
-        
-    
+        if (($changes = json_decode($build_info['changes'])) != NULL) {
+            if (count($changes->commits)) {
+                echo("<h2>Commits</h2>\n");
+                $groups = group_commits_by_tag($changes->commits);
+                $keys = array_keys($groups);
+                natcasesort($keys);
+                foreach ($keys as $key) {
+                    if (empty($groups[$key])) {
+                        continue;
+                    }
+                    echo("<h3>$key</h3><ul class='commitlist'>\n");
+                    foreach ($groups[$key] as $commit) {
+                        // Which other groups this commit could belong to?
+                        $other_groups = [];
+                        foreach ($commit->tags + $commit->guessedTags as $tag) {
+                            if ($tag != $key) {
+                                $other_groups[] = $tag;
+                            }
+                        }
+                        $others = htmlspecialchars(join_list($other_groups));
+                        if ($others) {
+                            $others = " <span='other-groups'>(&rarr; $others)</span>";
+                        }
+                        $link = $commit->link;
+                        $date = htmlspecialchars(substr($commit->date, 0, 10));
+                        $subject = htmlspecialchars($commit->subject);
+                        $author = htmlentities($commit->author);
+                        $msg = htmlentities($commit->message);
+                        echo("<li><a href='$link'>$date</a>"
+                            ."<span class='title'>$subject</span>"
+                            ." by <span class='author'>$author</span>".$others
+                            ."<blockquote class='message'>$msg</blockquote></li>\n");
+                    }
+                    echo("</ul>\n");
+                }
+            }
+        }
+
         // Output page footer.
         generate_footer();
     }
@@ -130,8 +137,8 @@ function generate_build_index_page()
     echo("<p class='links'><a href='http://dengine.net/'>dengine.net</a> | <a href='".DENG_API_URL."/builds?format=feed'>RSS Feed</a></p>"
         .'<h2>Latest Builds</h2>'
         .'<div class="buildlist">');
-    
-    $all_versions = array();
+
+    $all_versions = [];
     $db = db_open();
     $result = db_query($db, "SELECT build, type, UNIX_TIMESTAMP(timestamp), version"
         ." FROM ".DB_TABLE_BUILDS." ORDER BY timestamp DESC");
@@ -140,7 +147,7 @@ function generate_build_index_page()
         $type      = build_type_text($row['type']);
         $timestamp = $row['UNIX_TIMESTAMP(timestamp)'];
         $version   = $row['version'];
-                
+
         // Collect all known versions.
         $info = array(
             "build"   => $build,
@@ -164,7 +171,7 @@ function generate_build_index_page()
     }
     echo("</div>\n");
     $db->close();
-    
+
     echo("<h2>Versions</h2>\n");
     foreach ($all_versions as $version => $builds) {
         echo("<h3>$version</h3>"

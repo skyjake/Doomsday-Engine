@@ -112,7 +112,7 @@ function parse_announcement($json_data)
 
 function fetch_servers()
 {
-    $servers = array();
+    $servers = [];
 
     $db = db_open();
     $table = DB_TABLE;

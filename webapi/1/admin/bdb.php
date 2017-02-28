@@ -101,7 +101,7 @@ function purge_old_builds()
     $result = db_query($db, "SELECT build FROM ".DB_TABLE_BUILDS
         ." WHERE type != ".BT_STABLE." AND UNIX_TIMESTAMP(timestamp) < $expire_ts");
     $builds_sql = "";
-    $file_paths = array();
+    $file_paths = [];
     while ($row = $result->fetch_assoc()) {
         $build = $row['build'];
         echo("Purging build $build...");
