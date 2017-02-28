@@ -37,17 +37,45 @@ function generate_footer()
     echo("</body></html>");                
 }
 
+function cmp_name($a, $b) 
+{
+    return strcmp($a['name'], $b['name']); 
+}
+
+function list_files($db, $build, $platform, $file_type)
+{
+    $result = db_query($db, "SELECT * FROM ".DB_TABLE_FILES
+        ." WHERE build=$build AND plat_id=$platform AND type=$file_type");
+    $files = array();
+    while ($row = $result->fetch_assoc()) {
+        $files[] = $row;
+    }
+    usort($files, "cmp_name");    
+    return $files;
+}
+
+function sfnet_link($build_info, $name)
+{
+    $sfnet_url = 'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/';
+    if ($build_info['type'] == BT_STABLE) {
+        $sfnet_url .= "$build_info[version]/";
+    }
+    else {
+        $sfnet_url .= "Builds/";
+    }
+    return $sfnet_url . "$name/download";
+}
+
 function generate_build_page($number)
 {
     $db = db_open();
     $result = db_query($db, "SELECT * FROM ".DB_TABLE_BUILDS." WHERE build=$number");
     if ($row = $result->fetch_assoc()) {
+        $build_info = $row;
         $type    = $row['type'];
         $version = $row['version'];
-        $blurb   = $row['blurb'];
-        $ts      = $row['timestamp'];
     
-        $files = db_list_build_files($db, $number);
+        $files = db_build_list_files($db, $number);
                 
         // Output page header.
         generate_header("Build $number");
@@ -55,6 +83,39 @@ function generate_build_page($number)
         echo("<p class='links'><a href='http://dengine.net/'>dengine.net</a> | <a href='".DENG_API_URL."/builds?format=html'>Autobuilder Index</a>| <a href='".DENG_API_URL."/builds?format=feed'>RSS Feed</a></p>\n");
     
         echo(db_build_summary($db, $number));
+        
+        // Files to download.
+        echo("<h2>Downloads</h2>\n"
+            ."<table class='downloads'>\n");
+        foreach (db_platform_list($db) as $plat) {
+            // Find the binaries for this platform.
+            $bins = list_files($db, $number, $plat['id'], FT_BINARY);
+            $bin_count = count($bins);
+            for ($i = 0; $i < $bin_count; $i++) {
+                $bin = $bins[$i];
+                $mb_size = number_format($bin['size']/1000000, 1);
+                echo("<tr>");
+                if ($i == 0) {
+                    echo("<td class='platform' rowspan='$bin_count'>".$plat['name'] 
+                        ."</td>");
+                }
+                echo("<td class='binary'>");
+                echo("<div class='filename'>$bin[name] ($mb_size MB)</div>"
+                    ."<div class='hash'>MD5: <span class='digits'>$bin[md5]</span></div>");
+                if (!empty($bin['signature'])) {
+                    echo("<a class='signature' href='".DENG_API_URL."/builds?signature=$bin[name]'>PGP Signature</a>");
+                }
+                $mirror_url = sfnet_link($build_info, $bin['name']);
+                $fext = strtoupper(pathinfo($bin['name'], PATHINFO_EXTENSION));
+                echo("</td><td><a class='download' href='".DENG_ARCHIVE_URL."/$bin[name]'>$fext <span class='downarrow'>&#x21E3;</span></a>");
+                echo("</td><td><a class='mirror' href='$mirror_url'>$fext <span class='downarrow'>&#x21E3;</span></a>");
+                echo("</td></tr>\n");
+            }
+        }        
+        echo("</table>\n");
+    
+        // Change log.
+        
     
         // Output page footer.
         generate_footer();
@@ -87,11 +148,11 @@ function generate_build_index_page()
             "date"    => strftime('%b %d', $timestamp),
             "version" => $version
         );
-        if (in_array($version, $all_versions)) {
+        if (array_key_exists($version, $all_versions)) {
             $all_versions[$version][] = $info;
         }
         else {
-            $all_versions[$version] = array($info);
+            $all_versions += [$version => array($info)];
         }
 
         $build_date = $info['date'];
@@ -125,14 +186,35 @@ function generate_build_index_page()
     generate_footer();
 }
 
+function show_signature($filename)
+{
+    $db = db_open();
+    $result = db_query($db, "SELECT signature, name FROM ".DB_TABLE_FILES
+        ." WHERE name='".$db->real_escape_string($filename)."'");
+    $row = $result->fetch_assoc();
+    $signature = $row['signature'];
+    $db->close();
+    if (!empty($signature)) {
+        header('Content-Type: application/pgp-signature');
+        header('Content-Disposition: attachment; filename='.$row['name'].'.sig');
+        echo $signature;
+    }
+}
+
 //---------------------------------------------------------------------------------------
 
+setlocale(LC_ALL, 'en_US.UTF-8');
+
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
-    $number = (int) $_GET['number'];
+    if ($filename = $_GET['signature']) {
+        show_signature($filename);
+        return;
+    }
+    $number = $_GET['number'];
     $format = $_GET['format'];
     if ($format == 'html') {
         if ($number > 0) {
-            generate_build_page($number);
+            generate_build_page((int)$number);
         }
         else {
             generate_build_index_page();

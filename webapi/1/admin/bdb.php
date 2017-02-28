@@ -107,7 +107,7 @@ function purge_old_builds()
         echo("Purging build $build...");
         if ($builds_sql) $builds_sql .= " OR ";
         $builds_sql .= "build=$build";
-        foreach (db_list_build_files($db, $build) as $file) {
+        foreach (db_build_list_files($db, $build) as $file) {
             $file_paths[] = db_file_path($db, file);
         }
     }
@@ -172,6 +172,7 @@ else if ($op == 'init')
         . "plat_id INT UNSIGNED NOT NULL, "
         . "type TINYINT NOT NULL, "
         . "name VARCHAR(200) NOT NULL, "
+        . "size INT UNSIGNED NOT NULL, "
         . "md5 CHAR(32), "
         . "signature TEXT, "
         . "timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP"

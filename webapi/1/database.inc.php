@@ -50,14 +50,27 @@ define('BT_UNSTABLE',  0);
 define('BT_CANDIDATE', 1);
 define('BT_STABLE',    2);
 
-function db_list_build_files($db, $build)
+function build_type_text($build_type)
 {
-    $result = db_query($db, "SELECT id FROM ".DB_TABLE_FILES." WHERE build=$build");
-    $files = array();
-    while ($row = $result->fetch_assoc()) {
-        $files[] = $row['id'];
+    switch ($build_type) {
+        case BT_UNSTABLE:
+            return 'unstable';
+        case BT_CANDIDATE:
+            return 'candidate';
+        case BT_STABLE:
+            return 'stable';
     }
-    return $result;
+    return '';
+}
+
+function db_platform_list($db)
+{
+    $platforms = array();
+    $result = db_query($db, "SELECT * FROM ".DB_TABLE_PLATFORMS." ORDER BY ord");
+    while ($row = $result->fetch_assoc()) {
+        $platforms[] = $row;
+    }
+    return $platforms;
 }
 
 function db_file_path($db, $file_id)
@@ -67,6 +80,16 @@ function db_file_path($db, $file_id)
         return DENG_FILE_ARCHIVE_PATH.'/'.$row['name'];
     }
     return '';
+}
+
+function db_build_list_files($db, $build)
+{
+    $result = db_query($db, "SELECT id FROM ".DB_TABLE_FILES." WHERE build=$build");
+    $files = array();
+    while ($row = $result->fetch_assoc()) {
+        $files[] = $row['id'];
+    }
+    return $result;
 }
 
 function db_build_binary_count($db, $build)
@@ -79,13 +102,14 @@ function db_build_binary_count($db, $build)
 function db_build_summary($db, $build)
 {
     // Fetch build info.
-    $result = db_query($db, "SELECT UNIX_TIMESTAMP(timestamp), blurb, changes"
+    $result = db_query($db, "SELECT UNIX_TIMESTAMP(timestamp), type, blurb, changes"
         ." FROM ".DB_TABLE_BUILDS." WHERE build=$build");
     $row = $result->fetch_assoc();
+    $type = build_type_text($row['type']);
     $date = gmstrftime(RFC_TIME, $row['UNIX_TIMESTAMP(timestamp)']);
     $bin_count = db_build_binary_count($db, $build);
     
-    $text = "<p>The autobuilder started build $build on $date"
+    $text = "<p>The autobuilder started $type build $build on $date"
         ." and produced $bin_count package"
         .($bin_count != 1? 's.' : '.');
     
@@ -100,17 +124,25 @@ function db_build_summary($db, $build)
             // Collect commit tags.     
             foreach ($changes->commits as $commit) {
                 foreach ($commit->tags as $tag) {
-                    if (in_array($tag, $tags)) {
+                    if (array_key_exists($tag, $tags)) {
                         $tags[$tag] += 1;
                     }
                     else {
-                        $tags[$tag] = 1;
+                        $tags += [$tag => 1];
                     }
                 }
             }
-            asort($tags);
-            array_reverse($tags);
-            $common_tags = array_slice(array_keys($tags), 0, 5);
+            $otags = array();
+            foreach ($tags as $tag => $count) {
+                $otags[] = array($tag, $count);
+            }
+            function cmp($a, $b) { return $b[1] - $a[1]; }
+            usort($otags, "cmp");
+            $tags = array();
+            foreach ($otags as $tag) {
+                $tags[] = $tag[0];
+            }
+            $common_tags = array_slice($tags, 0, 5);
             $common_count = count($common_tags);
             $text .= ", and the most used tag";     
             if ($common_count == 1) {
@@ -129,17 +161,4 @@ function db_build_summary($db, $build)
         $text .= $row['blurb'];
     }
     return $text;
-}
-
-function build_type_text($build_type)
-{
-    switch ($build_type) {
-        case BT_UNSTABLE:
-            return 'unstable';
-        case BT_CANDIDATE:
-            return 'candidate';
-        case BT_STABLE:
-            return 'stable';
-    }
-    return '';
 }
