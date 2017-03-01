@@ -5,7 +5,7 @@ body {
     margin-right: auto;
     padding-left: 1em;
     padding-right: 1em;
-    background: #ccc url(http://dengine.net/images/doxybg.jpg) no-repeat fixed;
+    background: #ddd url(http://dengine.net/images/doxybg.jpg) no-repeat fixed;
     background-position: center 100%;
     background-size: 200% 200%;
 }
@@ -29,7 +29,7 @@ h3 {
     margin-top: 1.5em;
     text-align: center;
 }
-p {
+p, div.message {
     color: #444;
     text-align: justify;
     -webkit-hyphens: auto;
@@ -41,11 +41,14 @@ ul {
     color: #666;
 }
 a {
-    color: #070;
+    color: black; /*#070;*/
     text-decoration: none;
 }
 a:hover {
     text-decoration: underline;
+}
+p a {
+    font-weight: bold;
 }
 table {
     margin: auto;
@@ -68,19 +71,33 @@ div.buildlist {
 div.build {
     min-width: 5em;
     display: inline-block;
-    border: 1px solid #bdb;
+    border: 1px solid #bbb;
+    background-color: #eee;
     border-radius: 1ex;
     margin: 0.5ex;
     padding: 1ex;
     text-align: center;
 }
+div.build:hover {
+    background-color: white;
+}
 div.build.candidate {
     border-color: #da8;
     background: #fd8;
+    color: black;
+}
+div.build.candidate:hover {
+    background: #fe9;
 }
 div.build.stable {
     border-color: #371;
     background: #6a3;
+}
+div.build.stable:hover {
+    background: #8b4;
+}
+div.build a {
+    text-decoration: none;
 }
 div.build.candidate a {
     color: #850;
@@ -96,6 +113,9 @@ div.build.stable a {
 }
 .buildversion {
     font-weight: 300;
+}
+#versions-subtitle {
+    margin-bottom: 0;
 }
 #other-versions {
     text-align: center;
@@ -113,12 +133,22 @@ table.downloads {
 table.downloads td {
     vertical-align: top;
     margin: 1em;
+    padding-top: 0.5ex;
+}
+table.downloads tr.separator td {
+    padding-top: 1.5em;
+}
+table.downloads td.button {
+    padding-top: 0;
+}
+table.downloads tr.separator td.button {
+    padding-top: 1em;
 }
 td.platform {
     font-weight: bold;
     color: #777;
 }
-table.downloads td.detected-platform {
+table.downloads td.platform.detected {
     color: black;
 }
 div.fileinfo {
@@ -135,21 +165,27 @@ div.fileinfo div {
     white-space: nowrap;
 }
 div.fileinfo div.filesize {
-    font-weight: bold;
+    color: #555;
 }
-table.downloads tr:hover div.filesize {
+/*table.downloads tr:hover div.filesize {
     color: black;
-}    
+} */   
 div.fileinfo a {
     white-space: nowrap;    
 }
 div.hash .digits {
     font-family: monospace;
 }
+a.signature {
+    color: #777;
+}
+a.signature:hover {
+    color: black;
+}
 a.download {
     display: inline-block;
     padding: 1ex;
-    border: 1px solid #444;
+    border: 1px solid #876;
     border-radius: 1ex;
     font-size: 75%;
     min-width: 12ex;
@@ -163,6 +199,7 @@ a.download:hover {
     background-color: #FDD04D;
 }
 a.download.mirror {
+    border: 1px solid #777;
     background-color: #aaa;
 }
 a.download.mirror:hover {
@@ -177,17 +214,39 @@ a.download.mirror:hover {
 h3.commitgroup {
     text-align: left;
 }
-
-/*blockquote {
-font-size: 95%;
-color: #aaa !important;
-margin-left: 0em;
-margin-top: 1ex;
-padding-left: 1em;
-border-left: 2px solid #ddd;
+ul.commitlist li > a {
+    margin-right: 0.5ex;
+    font-weight: 300;
 }
-blockquote:hover {
-border-left: 2px solid #2c2;
-color: #666 !important;
+ul.commitlist span.title {
+    font-weight: bold;
+    color: #111;
 }
-*/
+ul.commitlist span.author {
+    font-style: italic;
+}
+div.other-groups {
+    display: inline-block;
+    vertical-align: text-top;
+    margin-top: 0.4ex;
+}
+div.other-groups div.tag {
+    display: inline-block;
+    padding: 0.1ex 1ex;
+    margin: 0 0.5ex;
+    border-radius: 0.25ex;
+    background-color: #aaa;
+    color: #fff;
+    font-size: 70%;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+ul.commitlist div.message {
+    margin: 1ex 0 1.5ex 0;
+}
+div.message a {
+    font-weight: normal;
+}
+ul.commitlist:last-child {
+    margin-bottom: 4em;
+}

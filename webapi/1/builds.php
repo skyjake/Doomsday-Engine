@@ -20,6 +20,7 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL ^ E_NOTICE);
 
 require_once('builds.inc.php');
+require_once('lib/Browser.php');
 
 function generate_header($page_title)
 {
@@ -39,6 +40,28 @@ function generate_footer()
 
 function generate_build_page($number)
 {
+    // Check what the browser tells us.
+    $browser = new Browser();    
+    switch ($browser->getPlatform()) {
+        case Browser::PLATFORM_WINDOWS:
+            $user_platform = 'windows';
+            break;
+        case Browser::PLATFORM_APPLE:
+            $user_platform = 'macx';
+            break;
+        case Browser::PLATFORM_LINUX:
+            $user_platform = 'linux';
+            break;
+        case Browser::PLATFORM_FREEBSD:
+        case Browser::PLATFORM_OPENBSD:
+        case Browser::PLATFORM_NETBSD:
+            $user_platform = 'any';
+            break;
+        default:
+            $user_platform = '';
+            break;
+    }
+        
     $db = db_open();
     $result = db_query($db, "SELECT * FROM ".DB_TABLE_BUILDS." WHERE build=$number");
     if ($row = $result->fetch_assoc()) {
@@ -51,14 +74,14 @@ function generate_build_page($number)
         // Output page header.
         generate_header(human_version($version, $number, $type));
 
-        echo("<p class='links'><a href='http://dengine.net/'>dengine.net</a> | <a href='".DENG_API_URL."/builds?format=html'>Autobuilder Index</a>| <a href='".DENG_API_URL."/builds?format=feed'>RSS Feed</a></p>\n");
+        echo("<p class='links'><a href='http://dengine.net/'>dengine.net</a> | <a href='".DENG_API_URL."/builds?format=html'>Autobuilder Index</a> | <a href='".DENG_API_URL."/builds?format=feed'>RSS Feed</a></p>\n");
 
         echo(db_build_summary($db, $number));
 
         // Files to download.
         echo("<h2>Downloads</h2>\n"
             ."<table class='downloads'>\n");
-        $last_plat = '';
+        $last_plat = NULL;
         foreach (db_platform_list($db) as $plat) {
             // Find the binaries for this platform.
             $bins = db_build_list_platform_files($db, $number, $plat['id'], FT_BINARY);
@@ -66,13 +89,20 @@ function generate_build_page($number)
             for ($i = 0; $i < $bin_count; $i++) {
                 $bin = $bins[$i];
                 $mb_size = number_format($bin['size']/1000000, 1);
-                echo("<tr>");
+                $row_class = '';
+                if (isset($last_plat) && $last_plat['os'] != $plat['os']) {
+                    $row_class = 'separator';
+                }
+                echo("<tr class='$row_class'>");
+                $cell_class = ($plat['os'] == $user_platform? 'detected' : '');
                 if ($i == 0) {
                     $shown_name = $plat['name'];
-                    if ($shown_name == $last_plat) $shown_name = '';
-                    echo("<td class='platform' rowspan='$bin_count'>".$shown_name
+                    if (isset($last_plat) && $shown_name == $last_plat['name']) {
+                        $shown_name = '';
+                    }
+                    echo("<td class='platform $cell_class' rowspan='$bin_count'>".$shown_name
                         ."</td>");
-                    $last_plat = $plat['name'];
+                    $last_plat = $plat;
                 }
                 $main_url   = DENG_ARCHIVE_URL."/".$bin['name'];
                 $mirror_url = sfnet_link($build_info, $bin['name']);
@@ -91,8 +121,8 @@ function generate_build_page($number)
                 if ($plat['cpu_bits'] > 0) {
                     $bits = ' '.$plat['cpu_bits'].'-bit ';
                 }
-                echo("</td><td><a class='download' href='$main_url'>$fext$bits<span class='downarrow'>&#x21E3;</span></a>");
-                echo("</td><td><a class='download mirror' href='$mirror_url'>$fext$bits<span class='downarrow'>&#x21E3;</span></a>");
+                echo("</td><td class='button'><a class='download' href='$main_url'>$fext$bits<span class='downarrow'>&#x21E3;</span></a>");
+                echo("</td><td class='button'><a class='download mirror' href='$mirror_url'>$fext$bits<span class='downarrow'>&#x21E3;</span></a>");
                 echo("</td></tr>\n");
             }
         }
@@ -124,14 +154,16 @@ function generate_build_page($number)
                             $others = " <div class='other-groups'>$others</div>";
                         }
                         $link = DENG_GIT_URL . $commit->hash;
-                        $date = htmlspecialchars(substr($commit->date, 0, 10));
+                        $parsed = date_parse(substr($commit->date, 0, 10));
+                        
+                        $date = strftime('%b %d', mktime(0, 0, 0, $parsed['month'], $parsed['day'])); //htmlspecialchars(substr($commit->date, 0, 10));
                         $subject = htmlspecialchars($commit->subject);
                         $author = htmlentities($commit->author);
                         $msg = basic_markdown(htmlentities($commit->message));
                         echo("<li><a href='$link'>$date</a> "
                             ."<span class='title'>$subject</span> "
                             ."by <span class='author'>$author</span>".$others
-                            ."<blockquote class='message'>$msg</blockquote></li>\n");
+                            ."<div class='message'>$msg</div></li>\n");
                     }
                     echo("</ul>\n");
                 }
@@ -147,6 +179,8 @@ function generate_build_page($number)
 function generate_build_index_page()
 {
     generate_header("Doomsday Autobuilder");
+    
+    $this_year_ts = mktime(0, 0, 0, 1, 1);
 
     echo("<p class='links'><a href='http://dengine.net/'>dengine.net</a> | <a href='".DENG_API_URL."/builds?format=feed'>RSS Feed</a></p>"
         .'<h2>Latest Builds</h2>'
@@ -163,10 +197,11 @@ function generate_build_index_page()
         $version   = $row['version'];
 
         // Collect all known versions.
+        $time_format = ($timestamp > $this_year_ts? '%b %d' : "%b %d '%y");
         $info = array(
             "build"   => $build,
             "type"    => $type,
-            "date"    => strftime('%b %d', $timestamp),
+            "date"    => strftime($time_format, $timestamp),
             "version" => $version
         );
         if (array_key_exists($version, $all_versions)) {
@@ -181,14 +216,14 @@ function generate_build_index_page()
             ."<a href=\"".DENG_API_URL."/builds?number=${build}&format=html\">"
             ."<div class='buildnumber'>$build</div>"
             ."<div class='builddate'>$build_date</div>"
-            ."<div class='buildversion'>$version</div></a></div>\n");
+            ."<div class='buildversion'>".omit_zeroes($version)."</div></a></div>\n");
     }
     echo("</div>\n");
     $db->close();
 
-    echo("<h2>Versions</h2><div id='other-versions'>\n");
+    echo("<h2 id='versions-subtitle'>Versions</h2><div id='other-versions'>\n");
     foreach ($all_versions as $version => $builds) {
-        echo("<div class='version'><h3>$version</h3>"
+        echo("<div class='version'><h3>".omit_zeroes($version)."</h3>"
             ."<div class='buildlist'>\n");
         foreach ($builds as $info) {
             $type       = $info['type'];
@@ -198,7 +233,7 @@ function generate_build_index_page()
                 ."<a href=\"".DENG_API_URL."/builds?number=${build}&format=html\">"
                 ."<div class='buildnumber'>$build</div>"
                 ."<div class='builddate'>$build_date</div>"
-                ."<div class='buildversion'>$version</div></a></div>\n");
+                ."<div class='buildversion'>".omit_zeroes($version)."</div></a></div>\n");
         }
         echo("</div></div>\n");
     }
