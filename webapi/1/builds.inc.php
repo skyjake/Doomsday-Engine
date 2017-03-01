@@ -109,14 +109,15 @@ function db_build_binary_count($db, $build)
 function db_build_summary($db, $build)
 {
     // Fetch build info.
-    $result = db_query($db, "SELECT UNIX_TIMESTAMP(timestamp), type, blurb, changes"
+    $result = db_query($db, "SELECT UNIX_TIMESTAMP(timestamp), type, version, blurb, changes"
         ." FROM ".DB_TABLE_BUILDS." WHERE build=$build");
     $row = $result->fetch_assoc();
     $type = build_type_text($row['type']);
+    $version = $row['version'];
     $date = gmstrftime(RFC_TIME, $row['UNIX_TIMESTAMP(timestamp)']);
     $bin_count = db_build_binary_count($db, $build);
     
-    $text = "<p>The autobuilder started $type build $build on $date"
+    $text = "<p>The autobuilder started build $build of $type $version on $date"
         ." and produced $bin_count package"
         .($bin_count != 1? 's.' : '.');
     
