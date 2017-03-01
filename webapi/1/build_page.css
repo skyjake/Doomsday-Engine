@@ -125,3 +125,12 @@ div.build.stable a {
 .buildversion {
     font-weight: 300;
 }
+
+#other-versions {
+    text-align: center;
+}
+
+div.version {
+    display: inline-block;
+    margin: 0 1ex;
+}

@@ -177,9 +177,9 @@ function generate_build_index_page()
     echo("</div>\n");
     $db->close();
 
-    echo("<h2>Versions</h2>\n");
+    echo("<h2>Versions</h2><div id='other-versions'>\n");
     foreach ($all_versions as $version => $builds) {
-        echo("<h3>$version</h3>"
+        echo("<div class='version'><h3>$version</h3>"
             ."<div class='buildlist'>\n");
         foreach ($builds as $info) {
             $type       = $info['type'];
@@ -191,8 +191,9 @@ function generate_build_index_page()
                 ."<div class='builddate'>$build_date</div>"
                 ."<div class='buildversion'>$version</div></a></div>\n");
         }
-        echo("</div>\n");
+        echo("</div></div>\n");
     }
+    echo("</div>\n");
 
     // Output page footer.
     generate_footer();
