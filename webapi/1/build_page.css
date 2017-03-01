@@ -5,35 +5,32 @@ body {
     margin-right: auto;
     padding-left: 1em;
     padding-right: 1em;
+    background: #ccc url(http://dengine.net/images/doxybg.jpg) no-repeat fixed;
+    background-position: center 100%;
+    background-size: 200% 200%;
 }
+
+/* Common Stuff */
 
 h1, h2 {
     font-weight: 300;
     text-align: center;
 }
-
 h1 {
     font-size: 275%;
     margin-top: 1em;
 }
-
 h2 {
     font-size: 200%;
     margin-top: 1.5em;
 }
-
 h3 {
     font-size: 150%;
     margin-top: 1.5em;
     text-align: center;
 }
-
-h3.commitgroup {
-    text-align: left;
-}
-
 p {
-    color: #666;
+    color: #444;
     text-align: justify;
     -webkit-hyphens: auto;
     -moz-hyphens: auto;
@@ -43,6 +40,144 @@ p {
 ul {
     color: #666;
 }
+a {
+    color: #070;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+table {
+    margin: auto;
+}
+th {
+    border-bottom: 1px solid #ccc;
+}
+td, th {
+    padding: 0.5ex;
+}
+
+/* Build Index */
+
+.links {
+    text-align: center;
+}
+div.buildlist {
+    text-align: center;
+}
+div.build {
+    min-width: 5em;
+    display: inline-block;
+    border: 1px solid #bdb;
+    border-radius: 1ex;
+    margin: 0.5ex;
+    padding: 1ex;
+    text-align: center;
+}
+div.build.candidate {
+    border-color: #da8;
+    background: #fd8;
+}
+div.build.stable {
+    border-color: #371;
+    background: #6a3;
+}
+div.build.candidate a {
+    color: #850;
+}
+div.build.stable a {
+    color: white;
+}
+.buildnumber {
+    font-size: 150%;
+}
+.builddate, .buildversion {
+    font-size: 80%;
+}
+.buildversion {
+    font-weight: 300;
+}
+#other-versions {
+    text-align: center;
+}
+div.version {
+    display: inline-block;
+    margin: 0 1ex;
+}
+
+/* Downloads Table */
+
+table.downloads {
+    border-spacing: 0;
+}
+table.downloads td {
+    vertical-align: top;
+    margin: 1em;
+}
+td.platform {
+    font-weight: bold;
+    color: #777;
+}
+table.downloads td.detected-platform {
+    color: black;
+}
+div.fileinfo {
+    font-size: 75%;
+    color: #888;
+    margin-top: 1ex;
+}
+div.filename a {
+    color: black;
+}
+div.fileinfo div {
+    display: inline-block;
+    margin-right: 1em;
+    white-space: nowrap;
+}
+div.fileinfo div.filesize {
+    font-weight: bold;
+}
+table.downloads tr:hover div.filesize {
+    color: black;
+}    
+div.fileinfo a {
+    white-space: nowrap;    
+}
+div.hash .digits {
+    font-family: monospace;
+}
+a.download {
+    display: inline-block;
+    padding: 1ex;
+    border: 1px solid #444;
+    border-radius: 1ex;
+    font-size: 75%;
+    min-width: 12ex;
+    text-align: center;
+    white-space: nowrap;
+    background-color: #E7BD47;
+    color: black;
+}
+a.download:hover {
+    text-decoration: none;
+    background-color: #FDD04D;
+}
+a.download.mirror {
+    background-color: #aaa;
+}
+a.download.mirror:hover {
+    background-color: #bbb;
+}
+.fext {
+    font-weight: bold;
+}
+
+/* Commits */
+
+h3.commitgroup {
+    text-align: left;
+}
+
 /*blockquote {
 font-size: 95%;
 color: #aaa !important;
@@ -56,81 +191,3 @@ border-left: 2px solid #2c2;
 color: #666 !important;
 }
 */
-
-a {
-    color: #191;
-    text-decoration: none;
-}
-
-a:hover {
-    text-decoration: underline;
-}
-
-table {
-    margin: auto;
-}
-th {
-    border-bottom: 1px solid #ccc;
-}
-td, th {
-    padding: 0.5ex;
-}
-
-/* Build List */
-
-.links {
-    text-align: center;
-}
-
-div.buildlist {
-    text-align: center;
-}
-
-div.build {
-    min-width: 5em;
-    display: inline-block;
-    border: 1px solid #bdb;
-    border-radius: 1ex;
-    margin: 0.5ex;
-    padding: 1ex;
-    text-align: center;
-}
-
-div.build.candidate {
-    border-color: #da8;
-    background: #fd8;
-}
-
-div.build.stable {
-    border-color: #371;
-    background: #6a3;
-}
-
-div.build.candidate a {
-    color: #850;
-}
-
-div.build.stable a {
-    color: white;
-}
-
-.buildnumber {
-    font-size: 150%;
-}
-
-.builddate, .buildversion {
-    font-size: 80%;
-}
-
-.buildversion {
-    font-weight: 300;
-}
-
-#other-versions {
-    text-align: center;
-}
-
-div.version {
-    display: inline-block;
-    margin: 0 1ex;
-}

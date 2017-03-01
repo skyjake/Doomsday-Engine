@@ -18,6 +18,20 @@
 
 require_once('database.inc.php');
 
+function omit_zeroes($version)
+{
+    $parts = split("\\.", $version);
+    while (count($parts) > 2 && array_slice($parts, -1)[0] == '0') {
+        $parts = array_slice($parts, 0, -1);
+    }
+    return join('.', $parts);
+}
+
+function human_version($version, $build, $release_type)
+{    
+    return omit_zeroes($version)." ".ucwords($release_type)." [#${build}]";
+}
+
 function basic_markdown($text)
 {
     $text = str_replace("\n\n", "<p>", $text);
@@ -113,7 +127,7 @@ function db_build_summary($db, $build)
         ." FROM ".DB_TABLE_BUILDS." WHERE build=$build");
     $row = $result->fetch_assoc();
     $type = build_type_text($row['type']);
-    $version = $row['version'];
+    $version = omit_zeroes($row['version']);
     $date = gmstrftime(RFC_TIME, $row['UNIX_TIMESTAMP(timestamp)']);
     $bin_count = db_build_binary_count($db, $build);
     

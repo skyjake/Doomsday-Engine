@@ -43,13 +43,13 @@ function generate_build_page($number)
     $result = db_query($db, "SELECT * FROM ".DB_TABLE_BUILDS." WHERE build=$number");
     if ($row = $result->fetch_assoc()) {
         $build_info = $row;
-        $type    = $row['type'];
+        $type    = build_type_text($row['type']);
         $version = $row['version'];
 
         $files = db_build_list_files($db, $number);
 
         // Output page header.
-        generate_header("Build $number");
+        generate_header(human_version($version, $number, $type));
 
         echo("<p class='links'><a href='http://dengine.net/'>dengine.net</a> | <a href='".DENG_API_URL."/builds?format=html'>Autobuilder Index</a>| <a href='".DENG_API_URL."/builds?format=feed'>RSS Feed</a></p>\n");
 
@@ -74,23 +74,25 @@ function generate_build_page($number)
                         ."</td>");
                     $last_plat = $plat['name'];
                 }
+                $main_url   = DENG_ARCHIVE_URL."/".$bin['name'];
+                $mirror_url = sfnet_link($build_info, $bin['name']);
                 echo("<td class='binary'>");
-                echo("<div class='filename'>$bin[name]</div>"
+                echo("<div class='filename'><a href='$main_url'>$bin[name]</a></div>"
                     ."<div class='fileinfo'>"
                     ."<div class='filesize'>$mb_size MB</div>");
                 if (!empty($bin['signature'])) {
-                    echo("<a class='signature' href='".DENG_API_URL."/builds?signature=$bin[name]'>PGP Signature &#x21E3;</a>");
+                    echo("<a class='signature' href='".DENG_API_URL."/builds?signature=$bin[name]'>Sig &#x21E3;</a> ");
                 }
                 echo("<div class='hash'>MD5: <span class='digits'>$bin[md5]</span></div>");
                 echo("</div>\n");
-                $mirror_url = sfnet_link($build_info, $bin['name']);
-                $fext = "<span class='fext'>".strtoupper(pathinfo($bin['name'], PATHINFO_EXTENSION))."</span>";
+                $fext = "<span class='fext'>"
+                    .strtoupper(pathinfo($bin['name'], PATHINFO_EXTENSION))."</span>";
                 unset($bits);
                 if ($plat['cpu_bits'] > 0) {
                     $bits = ' '.$plat['cpu_bits'].'-bit ';
                 }
-                echo("</td><td><a class='download' href='".DENG_ARCHIVE_URL."/$bin[name]'>$fext$bits<span class='downarrow'>&#x21E3;</span></a>");
-                echo("</td><td><a class='mirror' href='$mirror_url'>$fext$bits<span class='downarrow'>&#x21E3;</span></a>");
+                echo("</td><td><a class='download' href='$main_url'>$fext$bits<span class='downarrow'>&#x21E3;</span></a>");
+                echo("</td><td><a class='download mirror' href='$mirror_url'>$fext$bits<span class='downarrow'>&#x21E3;</span></a>");
                 echo("</td></tr>\n");
             }
         }

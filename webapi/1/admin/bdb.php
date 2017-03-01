@@ -170,14 +170,14 @@ else if ($op == 'init')
 
     // Set up the known platforms.    
     db_query($db, "INSERT INTO $table (ord, platform, name, os, cpu_arch, cpu_bits) VALUES "
-        . "(100, 'win-x64', 'Windows 7', 'windows', 'x64', 64), "
-        . "(200, 'win-x86', 'Windows 7', 'windows', 'x86', 32), "
-        . "(295, 'mac10_10-x86_64', 'macOS 10.10', 'macx', 'x86_64', 64), "
-        . "(300, 'mac10_8-x86_64', 'macOS 10.8', 'macx', 'x86_64', 64), "
-        . "(400, 'ubuntu-x86_64', 'Ubuntu 16.04', 'linux', 'amd64', 64), "
-        . "(450, 'ubuntu-x86', 'Ubuntu 14.04', 'linux', 'i386', 32), "
-        . "(500, 'fedora-x86_64', 'Fedora 23', 'linux', 'x86_64', 64), "
-        . "(600, 'source', 'Source', 'any', 'any', 0);");
+        . "(150, 'win-x64', 'Windows 7', 'windows', 'x64', 64), "
+        . "(160, 'win-x86', 'Windows 7', 'windows', 'x86', 32), "
+        . "(245, 'mac10_10-x86_64', 'macOS 10.10', 'macx', 'x86_64', 64), "
+        . "(250, 'mac10_8-x86_64', 'macOS 10.8', 'macx', 'x86_64', 64), "
+        . "(350, 'ubuntu-x86_64', 'Ubuntu 16.04', 'linux', 'amd64', 64), "
+        . "(360, 'ubuntu-x86', 'Ubuntu 14.04', 'linux', 'i386', 32), "
+        . "(450, 'fedora-x86_64', 'Fedora 23', 'linux', 'x86_64', 64), "
+        . "(950, 'source', 'Source', 'any', 'any', 0);");
     
     // File archive.
     $table = DB_TABLE_FILES;
