@@ -172,6 +172,7 @@ else if ($op == 'init')
     db_query($db, "INSERT INTO $table (ord, platform, name, os, cpu_arch, cpu_bits) VALUES "
         . "(100, 'win-x64', 'Windows 7', 'windows', 'x64', 64), "
         . "(200, 'win-x86', 'Windows 7', 'windows', 'x86', 32), "
+        . "(295, 'mac10_10-x86_64', 'macOS 10.10', 'macx', 'x86_64', 64), "
         . "(300, 'mac10_8-x86_64', 'macOS 10.8', 'macx', 'x86_64', 64), "
         . "(400, 'ubuntu-x86_64', 'Ubuntu 16.04', 'linux', 'amd64', 64), "
         . "(450, 'ubuntu-x86', 'Ubuntu 14.04', 'linux', 'i386', 32), "

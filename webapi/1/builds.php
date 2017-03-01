@@ -58,6 +58,7 @@ function generate_build_page($number)
         // Files to download.
         echo("<h2>Downloads</h2>\n"
             ."<table class='downloads'>\n");
+        $last_plat = '';
         foreach (db_platform_list($db) as $plat) {
             // Find the binaries for this platform.
             $bins = db_build_list_platform_files($db, $number, $plat['id'], FT_BINARY);
@@ -67,15 +68,21 @@ function generate_build_page($number)
                 $mb_size = number_format($bin['size']/1000000, 1);
                 echo("<tr>");
                 if ($i == 0) {
-                    echo("<td class='platform' rowspan='$bin_count'>".$plat['name']
+                    $shown_name = $plat['name'];
+                    if ($shown_name == $last_plat) $shown_name = '';
+                    echo("<td class='platform' rowspan='$bin_count'>".$shown_name
                         ."</td>");
+                    $last_plat = $plat['name'];
                 }
                 echo("<td class='binary'>");
-                echo("<div class='filename'>$bin[name] ($mb_size MB)</div>"
-                    ."<div class='hash'>MD5: <span class='digits'>$bin[md5]</span></div>");
+                echo("<div class='filename'>$bin[name]</div>"
+                    ."<div class='fileinfo'>"
+                    ."<div class='filesize'>$mb_size MB</div>");
                 if (!empty($bin['signature'])) {
                     echo("<a class='signature' href='".DENG_API_URL."/builds?signature=$bin[name]'>PGP Signature &#x21E3;</a>");
                 }
+                echo("<div class='hash'>MD5: <span class='digits'>$bin[md5]</span></div>");
+                echo("</div>\n");
                 $mirror_url = sfnet_link($build_info, $bin['name']);
                 $fext = "<span class='fext'>".strtoupper(pathinfo($bin['name'], PATHINFO_EXTENSION))."</span>";
                 unset($bits);
