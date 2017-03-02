@@ -185,21 +185,21 @@ a.signature:hover {
 a.download {
     display: inline-block;
     padding: 1ex;
-    border: 1px solid #876;
+    border: 1px solid #caa075;
     border-radius: 1ex;
     font-size: 75%;
     min-width: 12ex;
     text-align: center;
     white-space: nowrap;
-    background-color: #E7BD47;
+    background-color: #FDD04D;
     color: black;
 }
 a.download:hover {
     text-decoration: none;
-    background-color: #FDD04D;
+    background-color: #FFE087;
 }
 a.download.mirror {
-    border: 1px solid #777;
+    border: 1px solid #888;
     background-color: #aaa;
 }
 a.download.mirror:hover {

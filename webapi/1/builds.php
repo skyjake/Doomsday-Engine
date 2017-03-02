@@ -122,7 +122,7 @@ function generate_build_page($number)
                     $bits = ' '.$plat['cpu_bits'].'-bit ';
                 }
                 echo("</td><td class='button'><a class='download' href='$main_url'>$fext$bits<span class='downarrow'>&#x21E3;</span></a>");
-                echo("</td><td class='button'><a class='download mirror' href='$mirror_url'>$fext$bits<span class='downarrow'>&#x21E3;</span></a>");
+                echo("</td><td class='button'><a class='download mirror' href='$mirror_url'>Mirror <span class='downarrow'>&#x21E3;</span></a>");
                 echo("</td></tr>\n");
             }
         }
@@ -153,15 +153,16 @@ function generate_build_page($number)
                         if ($others) {
                             $others = " <div class='other-groups'>$others</div>";
                         }
-                        $link = DENG_GIT_URL . $commit->hash;
+                        $github_link = DENG_GITHUB_URL . $commit->hash;
+                        $trgit_link = DENG_TRACKER_GIT_URL . $commit->hash;
                         $parsed = date_parse(substr($commit->date, 0, 10));
                         
                         $date = strftime('%b %d', mktime(0, 0, 0, $parsed['month'], $parsed['day'])); //htmlspecialchars(substr($commit->date, 0, 10));
                         $subject = htmlspecialchars($commit->subject);
                         $author = htmlentities($commit->author);
                         $msg = basic_markdown(htmlentities($commit->message));
-                        echo("<li><a href='$link'>$date</a> "
-                            ."<span class='title'>$subject</span> "
+                        echo("<li><a href='$github_link'>$date</a> "
+                            ."<span class='title'><a href='$trgit_link'>$subject</a></span> "
                             ."by <span class='author'>$author</span>".$others
                             ."<div class='message'>$msg</div></li>\n");
                     }
