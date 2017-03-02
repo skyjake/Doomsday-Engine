@@ -189,6 +189,11 @@ function db_build_summary($db, $build)
     if (!empty($row['blurb'])) {
         $text .= $row['blurb'];
     }
+    if ($type == 'stable') {
+        $ver = omit_zeroes($version);
+        $relnotes_link = DENG_WIKI_URL."/Doomsday_version_".$ver;
+        $text .= "<p>See also: <a href='$relnotes_link'>Release notes for $ver</a></p>";
+    }
     return $text;
 }
 

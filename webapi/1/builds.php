@@ -224,7 +224,8 @@ function generate_build_index_page()
 
     echo("<h2 id='versions-subtitle'>Versions</h2><div id='other-versions'>\n");
     foreach ($all_versions as $version => $builds) {
-        echo("<div class='version'><h3>".omit_zeroes($version)."</h3>"
+        $relnotes_link = DENG_WIKI_URL."/Doomsday_version_".omit_zeroes($version);
+        echo("<div class='version'><h3><a href='$relnotes_link'>".omit_zeroes($version)."</a></h3>"
             ."<div class='buildlist'>\n");
         foreach ($builds as $info) {
             $type       = $info['type'];
