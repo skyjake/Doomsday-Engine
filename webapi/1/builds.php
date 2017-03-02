@@ -19,7 +19,7 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL ^ E_NOTICE);
 
-require_once('builds.inc.php');
+require_once('include/builds.inc.php');
 
 function show_signature($filename)
 {

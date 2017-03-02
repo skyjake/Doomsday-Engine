@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses/gpl.html
  */
 
-require_once(__DIR__.'/../builds.inc.php');
+require_once(__DIR__.'/../include/builds.inc.php');
 
 function add_build($json_args)
 {

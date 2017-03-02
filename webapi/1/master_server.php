@@ -26,7 +26,7 @@
  * - Remove expired entries from the database.
  */
 
-require_once('database.inc.php');
+require_once('include/database.inc.php');
 
 define('DB_TABLE', 'servers');
 define('EXPIRE_SECONDS', 900);
