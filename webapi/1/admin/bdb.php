@@ -108,9 +108,15 @@ function remove_file($db, $file_id)
 function purge_old_builds()
 {
     $expire_ts = time() - 100 * 24 * 60 * 60;
+
+    // If there is a small number of recent builds, don't purge at all.
+    $db = db_open();        
+    if (db_build_count($db, BT_UNSTABLE) <= 5) {
+        $db->close();
+        return;
+    }
     
     // Find non-stable builds that have become obsolete.
-    $db = db_open();        
     $result = db_query($db, "SELECT build FROM ".DB_TABLE_BUILDS
         ." WHERE type != ".BT_STABLE." AND UNIX_TIMESTAMP(timestamp) < $expire_ts");
     $builds_sql = "";

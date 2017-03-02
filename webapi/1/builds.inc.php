@@ -120,6 +120,13 @@ function db_build_binary_count($db, $build)
     return $result->num_rows;
 }
 
+function db_build_count($db, $type)
+{
+    $result = db_query($db, "SELECT build FROM ".DB_TABLE_BUILDS
+        ." WHERE type=".$type);
+    return $result->num_rows;
+}
+
 function db_build_summary($db, $build)
 {
     // Fetch build info.
