@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses/gpl.html
  */
 
-require_once(__DIR__.'/../database.inc.php');
+require_once(__DIR__.'/../builds.inc.php');
 
 function add_build($json_args)
 {
@@ -117,14 +117,14 @@ function purge_old_builds()
     $file_paths = [];
     while ($row = $result->fetch_assoc()) {
         $build = $row['build'];
-        echo("Purging build $build...");
+        echo("Purging build $build...\n");
         if ($builds_sql) $builds_sql .= " OR ";
         $builds_sql .= "build=$build";
         foreach (db_build_list_files($db, $build) as $file) {
-            $file_paths[] = db_file_path($db, file);
+            $file_paths[] = db_file_path($db, $file);
         }
     }
-    if ($builds_sql) {
+    if (!empty($builds_sql)) {
         db_query($db, "DELETE FROM ".DB_TABLE_BUILDS." WHERE $builds_sql");
         db_query($db, "DELETE FROM ".DB_TABLE_FILES ." WHERE $builds_sql");
     }
@@ -132,7 +132,7 @@ function purge_old_builds()
     
     // Remove the files, too.
     foreach ($file_paths as $path) {
-        echo("Deleting: $path");
+        echo("Deleting: $path\n");
         unlink($path);        
     }
 }
