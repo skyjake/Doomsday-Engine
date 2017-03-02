@@ -20,12 +20,29 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL ^ E_NOTICE);
 
 require_once('builds.inc.php');
-require_once('lib/Browser.php');
+
+function show_signature($filename)
+{
+    $db = db_open();
+    $result = db_query($db, "SELECT signature, name FROM ".DB_TABLE_FILES
+        ." WHERE name='".$db->real_escape_string($filename)."'");
+    $row = $result->fetch_assoc();
+    $signature = $row['signature'];
+    $db->close();
+    if (!empty($signature)) {
+        header('Content-Type: application/pgp-signature');
+        header('Content-Disposition: attachment; filename='.$row['name'].'.sig');
+        echo $signature;
+    }
+}
 
 function generate_header($page_title)
 {
-    echo("<html><head>\n");
-    echo("  <meta http-equiv='Content-Type' content='text/html;charset=UTF-8'>\n");
+    header('Content-Type: text/html;charset=UTF-8');
+    
+    echo("<!DOCTYPE html>\n");
+    echo("<html lang=\"en\"><head>\n");
+    echo("  <meta charset=\"UTF-8\">\n");
     echo("  <link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,700' rel='stylesheet' type='text/css'>\n");
     echo("  <link href='http://api.dengine.net/1/build_page.css' rel='stylesheet' type='text/css'>\n");
     echo("  <title>$page_title</title>\n");
@@ -40,6 +57,8 @@ function generate_footer()
 
 function generate_build_page($number)
 {
+    require_once('lib/Browser.php');
+    
     // Check what the browser tells us.
     $browser = new Browser();    
     switch ($browser->getPlatform()) {
@@ -214,7 +233,7 @@ function generate_build_index_page()
 
         $build_date = $info['date'];
         echo("<div class='build $type'>"
-            ."<a href=\"".DENG_API_URL."/builds?number=${build}&format=html\">"
+            ."<a href=\"".DENG_API_URL."/builds?number=${build}&amp;format=html\">"
             ."<div class='buildnumber'>$build</div>"
             ."<div class='builddate'>$build_date</div>"
             ."<div class='buildversion'>".omit_zeroes($version)."</div></a></div>\n");
@@ -232,7 +251,7 @@ function generate_build_index_page()
             $build_date = $info['date'];
             $build      = $info['build'];
             echo("<div class='build $type'>"
-                ."<a href=\"".DENG_API_URL."/builds?number=${build}&format=html\">"
+                ."<a href=\"".DENG_API_URL."/builds?number=${build}&amp;format=html\">"
                 ."<div class='buildnumber'>$build</div>"
                 ."<div class='builddate'>$build_date</div>"
                 ."<div class='buildversion'>".omit_zeroes($version)."</div></a></div>\n");
@@ -245,19 +264,65 @@ function generate_build_index_page()
     generate_footer();
 }
 
-function show_signature($filename)
+function generate_build_feed()
 {
+    header('Content-Type: application/rss+xml');
+    
+    // Check the time of the latest build.
     $db = db_open();
-    $result = db_query($db, "SELECT signature, name FROM ".DB_TABLE_FILES
-        ." WHERE name='".$db->real_escape_string($filename)."'");
-    $row = $result->fetch_assoc();
-    $signature = $row['signature'];
-    $db->close();
-    if (!empty($signature)) {
-        header('Content-Type: application/pgp-signature');
-        header('Content-Disposition: attachment; filename='.$row['name'].'.sig');
-        echo $signature;
+    $result = db_query($db, 'SELECT UNIX_TIMESTAMP(timestamp) FROM '
+        .DB_TABLE_BUILDS.' ORDER BY timestamp DESC LIMIT 1');
+    if ($result->num_rows == 0) {
+        $db->close();
+        return;    
     }
+    $row = $result->fetch_assoc();
+    $latest_ts = gmstrftime(RFC_TIME, $row['UNIX_TIMESTAMP(timestamp)']);        
+    $contact = 'skyjake@dengine.net (Jaakko Keränen)';
+
+    // Feed header.
+    echo("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        ."<rss version=\"2.0\" xmlns:atom=\"http://www.w3.org/2005/Atom\">\n"
+        .'<channel>'
+        .'<title>Doomsday Engine Builds</title>'
+        .'<link>http://dengine.net/</link>'
+        .'<atom:link href="'.DENG_API_URL.'/builds?format=feed" rel="self" type="application/rss+xml" />'
+        .'<description>Automated builds of the Doomsday Engine</description>'
+        .'<language>en-us</language>'
+        ."<webMaster>$contact</webMaster>"
+        ."<lastBuildDate>$latest_ts</lastBuildDate>"
+        .'<generator>'.DENG_API_URL.'/builds</generator>'
+        .'<ttl>180</ttl>'); # 3 hours
+            
+    #allEvents = []
+    
+    $max_unstable = 10;
+    $unstable_count = 0;
+    $result = db_query($db, 'SELECT build, type, UNIX_TIMESTAMP(timestamp) FROM '
+        .DB_TABLE_BUILDS.' ORDER BY timestamp DESC');
+    while ($row = $result->fetch_assoc()) {
+        $build_url = DENG_API_URL."/builds?number=$row[build]&amp;format=html";
+        $build_ts = gmstrftime(RFC_TIME, $row['UNIX_TIMESTAMP(timestamp)']);
+        $summary = db_build_plaintext_summary($db, $row['build']);
+        $report = db_build_summary($db, $row['build']);;
+        $guid = 'build'.$row['build'];
+        if ($row['type'] != BT_STABLE) {
+            if (++$unstable_count > $max_unstable) {
+                continue;
+            }
+        }
+        echo("\n<item>\n"
+            ."<title>Build $row[build]</title>\n"
+            ."<link>$build_url</link>\n"
+            ."<author>$contact</author>\n"
+            ."<pubDate>$build_ts</pubDate>\n"
+            ."<atom:summary><![CDATA[$summary]]></atom:summary>\n"
+            ."<description><![CDATA[$report<p><a href='$build_url'>Downloads and change log</a></p>]]></description>\n"
+            ."<guid isPermaLink=\"false\">$guid</guid>\n"
+            ."</item>\n");
+    }    
+    echo('</channel></rss>');
+    $db->close();
 }
 
 //---------------------------------------------------------------------------------------
@@ -280,6 +345,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         }
     }
     else if ($format == 'feed') {
-        //generate_build_feed();
+        generate_build_feed();
     }
 }

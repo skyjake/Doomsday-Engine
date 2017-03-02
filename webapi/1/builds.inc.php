@@ -127,7 +127,14 @@ function db_build_count($db, $type)
     return $result->num_rows;
 }
 
-function db_build_summary($db, $build)
+function tag_cmp($a, $b) { 
+    if ($b[1] == $a[1]) {
+        return strcasecmp($a[0], $b[0]);
+    }
+    return $b[1] - $a[1]; 
+}
+
+function db_build_plaintext_summary($db, $build)
 {
     // Fetch build info.
     $result = db_query($db, "SELECT UNIX_TIMESTAMP(timestamp), type, version, blurb, changes"
@@ -138,7 +145,7 @@ function db_build_summary($db, $build)
     $date = gmstrftime(RFC_TIME, $row['UNIX_TIMESTAMP(timestamp)']);
     $bin_count = db_build_binary_count($db, $build);
     
-    $text = "<p>The autobuilder started build $build of $type $version on $date"
+    $text = "The autobuilder started build $build of $type $version on $date"
         ." and produced $bin_count package"
         .($bin_count != 1? 's.' : '.');
     
@@ -166,13 +173,7 @@ function db_build_summary($db, $build)
             foreach ($tags as $tag => $count) {
                 $otags[] = array($tag, $count);
             }
-            function cmp($a, $b) { 
-                if ($b[1] == $a[1]) {
-                    return strcasecmp($a[0], $b[0]);
-                }
-                return $b[1] - $a[1]; 
-            }
-            usort($otags, "cmp");
+            usort($otags, "tag_cmp");
             $tags = [];
             foreach ($otags as $tag) {
                 $tags[] = $tag[0];
@@ -192,7 +193,19 @@ function db_build_summary($db, $build)
             $text .= '.';
         }
     }
-    $text .= '</p>';
+    return $text;
+}
+
+function db_build_summary($db, $build)
+{
+    // Fetch build info.
+    $result = db_query($db, "SELECT UNIX_TIMESTAMP(timestamp), type, version, blurb"
+        ." FROM ".DB_TABLE_BUILDS." WHERE build=$build");
+    $row = $result->fetch_assoc();
+    $type = build_type_text($row['type']);
+    $version = omit_zeroes($row['version']);
+    
+    $text = '<p>'.db_build_plaintext_summary($db, $build).'</p>';
     if (!empty($row['blurb'])) {
         $text .= $row['blurb'];
     }

@@ -228,7 +228,6 @@ ul.commitlist span.author {
 div.other-groups {
     display: inline-block;
     vertical-align: text-top;
-    margin-top: 0.4ex;
 }
 div.other-groups div.tag {
     display: inline-block;
@@ -240,6 +239,7 @@ div.other-groups div.tag {
     font-size: 70%;
     font-weight: bold;
     text-transform: uppercase;
+    vertical-align: baseline;
 }
 ul.commitlist div.message {
     margin: 1ex 0 1.5ex 0;

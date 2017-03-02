@@ -12,3 +12,12 @@ define('DENG_DB_HOST',     'localhost');
 define('DENG_DB_NAME',     '');
 define('DENG_DB_USER',     '');
 define('DENG_DB_PASSWORD', '');
+
+define('DENG_FILE_ARCHIVE_PATH', '/');
+define('DENG_ARCHIVE_URL', 'http://');
+define('DENG_API_URL', 'http://');
+define('DENG_GITHUB_URL', 'http://');
+define('DENG_TRACKER_URL', 'http://');
+define('DENG_TRACKER_GIT_URL', 'http://');
+define('DENG_WIKI_URL', 'http://');
+define('RFC_TIME', "%a, %d %b %Y %H:%M:%S +0000");
