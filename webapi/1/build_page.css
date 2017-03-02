@@ -100,7 +100,7 @@ div.build a {
     text-decoration: none;
 }
 div.build.candidate a {
-    color: #850;
+    color: #420;
 }
 div.build.stable a {
     color: white;
@@ -142,7 +142,7 @@ table.downloads td.button {
     padding-top: 0;
 }
 table.downloads tr.separator td.button {
-    padding-top: 1em;
+    padding-top: 1.25em;
 }
 td.platform {
     font-weight: bold;
