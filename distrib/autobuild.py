@@ -397,30 +397,30 @@ def update_xml_feed():
     print >> out, '</log>'
     
 
-def purge_apt_repository(atLeastSeconds):
-    for d in ['i386', 'amd64']:
-        binDir = os.path.join(builder.config.APT_REPO_DIR, builder.config.APT_DIST + '/main/binary-') + d
-        print 'Pruning binary apt directory', binDir
-        # Find the old files.
-        for fn in os.listdir(binDir):
-            if fn[-4:] != '.deb': continue
-            debPath = os.path.join(binDir, fn)
-            ct = os.stat(debPath).st_ctime
-            if time.time() - ct >= atLeastSeconds:
-                print 'Deleting', debPath
-                os.remove(debPath)
+# def purge_apt_repository(atLeastSeconds):
+#     for d in ['i386', 'amd64']:
+#         binDir = os.path.join(builder.config.APT_REPO_DIR, builder.config.APT_DIST + '/main/binary-') + d
+#         print 'Pruning binary apt directory', binDir
+#         # Find the old files.
+#         for fn in os.listdir(binDir):
+#             if fn[-4:] != '.deb': continue
+#             debPath = os.path.join(binDir, fn)
+#             ct = os.stat(debPath).st_ctime
+#             if time.time() - ct >= atLeastSeconds:
+#                 print 'Deleting', debPath
+#                 os.remove(debPath)
 
 
 def purge_obsolete():
-    """Purge old builds from the event directory (old > 12 weeks)."""
-    threshold = 3600 * 24 * 7 * 12
+    """Purge old builds from the event directory (old > 4 weeks)."""
+    threshold = 3600 * 24 * 7 * 4
 
     # Also purge the apt repository if one has been specified.
-    if builder.config.APT_REPO_DIR:
-        purge_apt_repository(threshold)
+    #if builder.config.APT_REPO_DIR:
+    #    purge_apt_repository(threshold)
     
     # Purge the old events.
-    print 'Deleting build events older than 12 weeks...'
+    print 'Deleting build events older than 4 weeks...'
     for ev in builder.find_old_events(threshold):
         print ev.tag()
         shutil.rmtree(ev.path()) 
