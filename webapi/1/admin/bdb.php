@@ -26,8 +26,7 @@ function add_build($json_args)
 
     $db = db_open();
     $build   = (int) $args->build;
-    $type    = ($args->type == 'stable'? BT_STABLE :
-                ($args->type == 'candidate'? BT_CANDIDATE : BT_UNSTABLE));
+    $type    = build_type_from_text($args->type);
     $version = $db->real_escape_string($args->version);
     $major   = (int) $args->major;
     $minor   = (int) $args->minor;
@@ -44,19 +43,8 @@ function add_build($json_args)
         $values .= ", FROM_UNIXTIME($ts)";
     }
             
-    db_query($db, "INSERT INTO ".DB_TABLE_BUILDS 
-        . " ($header) VALUES ($values)");
+    db_query($db, "INSERT INTO ".DB_TABLE_BUILDS." ($header) VALUES ($values)");
     $db->close();
-}
-
-function get_platform_id($db, $platform)
-{
-    $result = db_query($db, "SELECT id FROM ".DB_TABLE_PLATFORMS
-        ." WHERE platform='$platform'");
-    while ($row = $result->fetch_assoc()) {
-        return $row['id'];
-    }
-    return 0;
 }
 
 function add_file($json_args)
@@ -67,7 +55,7 @@ function add_file($json_args)
     $db = db_open();
         
     $build = (int) $args->build;
-    $plat_id = get_platform_id($db, $args->platform);
+    $plat_id = db_find_platform_id($db, $args->platform);
     $type = ($args->type == 'binary'? FT_BINARY :
              ($args->type == 'log'? FT_LOG : FT_NONE));
     $name = $db->real_escape_string($args->name);
@@ -197,6 +185,7 @@ else if ($op == 'init')
         . "size INT UNSIGNED NOT NULL, "
         . "md5 CHAR(32), "
         . "signature TEXT, "
+        . "dl_total INT UNSIGNED NOT NULL DEFAULT 0, "
         . "timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
         . ") CHARACTER SET utf8";
     db_query($db, $sql);
@@ -213,6 +202,7 @@ else if ($op == 'init')
         . "label VARCHAR(30) NOT NULL, "
         . "blurb TEXT, "
         . "changes TEXT, "
+        . "dl_total INT UNSIGNED NOT NULL DEFAULT 0, "
         . "timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
         . ") CHARACTER SET utf8";
     db_query($db, $sql);        

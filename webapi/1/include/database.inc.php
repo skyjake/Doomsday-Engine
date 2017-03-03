@@ -62,3 +62,24 @@ function build_type_text($build_type)
     }
     return '';
 }
+
+function build_type_from_text($text)
+{
+    return ($text == 'stable'? BT_STABLE : ($text == 'candidate'? BT_CANDIDATE : BT_UNSTABLE));    
+}
+
+function db_get_platform($db, $platform)
+{
+    $result = db_query($db, "SELECT * FROM ".DB_TABLE_PLATFORMS
+        ." WHERE platform='$platform'");
+    return $result->fetch_assoc();
+}
+
+function db_find_platform_id($db, $platform)
+{
+    $plat = db_get_platform($db, $platform);
+    if (array_key_exists('id', $plat)) {
+        return $plat['id'];
+    }
+    return 0;
+}

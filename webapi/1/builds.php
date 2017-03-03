@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses/gpl.html
  */
 
-ini_set('display_errors', 1);
-error_reporting(E_ALL ^ E_NOTICE);
+//ini_set('display_errors', 1);
+//error_reporting(E_ALL ^ E_NOTICE);
 
 require_once('include/builds.inc.php');
 
@@ -34,6 +34,27 @@ function show_signature($filename)
         header('Content-Disposition: attachment; filename='.$row['name'].'.sig');
         echo $signature;
     }
+}
+
+function download_file($filename)
+{
+    $db = db_open();
+    $name = $db->real_escape_string($filename);
+    $result = db_query($db, "SELECT id, build FROM ".DB_TABLE_FILES." WHERE name='$name'");
+    if ($row = $result->fetch_assoc()) {
+        // Increment the download counters.
+        db_query($db, "UPDATE ".DB_TABLE_FILES." SET dl_total=dl_total+1 "
+            ."WHERE id=$row[id]");
+        db_query($db, "UPDATE ".DB_TABLE_BUILDS." SET dl_total=dl_total+1 "
+            ."WHERE build=$row[build]");
+        // Redirect to the archive.
+        header('Status: 307 Temporary Redirect');
+        header("Location: ".DENG_ARCHIVE_URL."/".$filename);
+    }
+    else {
+        header('Status: 404 Not Found');
+    }
+    $db->close();
 }
 
 function generate_header($page_title)
@@ -123,8 +144,8 @@ function generate_build_page($number)
                         ."</td>");
                     $last_plat = $plat;
                 }
-                $main_url   = DENG_ARCHIVE_URL."/".$bin['name'];
-                $mirror_url = sfnet_link($build_info, $bin['name']);
+                $main_url   = download_link($bin['name']);
+                $mirror_url = sfnet_link($build_info['type'], $bin['name']);
                 echo("<td class='binary'>");
                 echo("<div class='filename'><a href='$main_url'>$bin[name]</a></div>"
                     ."<div class='fileinfo'>"
@@ -325,6 +346,71 @@ function generate_build_feed()
     $db->close();
 }
 
+function generate_platform_latest_json($platform, $build_type)
+{
+    header('Content-Type: application/json');
+
+    $db = db_open();
+    $plat = db_get_platform($db, $platform);
+    if (empty($plat)) {
+        echo("{}\n");
+        $db->close();
+        return;
+    }
+    $type = build_type_from_text($build_type);
+    if ($type == BT_CANDIDATE) {
+        $type_cond = "b.type!=".BT_UNSTABLE; // can also be stable
+    }
+    else {
+        $type_cond = "b.type=".$type;
+    }
+    $result = db_query($db, "SELECT f.name, f.size, f.md5, f.build, b.version, b.major, b.minor, b.patch, UNIX_TIMESTAMP(b.timestamp) FROM ".DB_TABLE_FILES
+        ." f LEFT JOIN ".DB_TABLE_BUILDS." b ON f.build=b.build "
+        ."WHERE $type_cond AND f.plat_id=$plat[id] ORDER BY b.timestamp DESC, f.name "
+        ."LIMIT 1");
+    $resp = [];        
+    if ($row = $result->fetch_assoc()) {
+        $filename = $row['name'];
+        $build = $row['build'];
+        $version = human_version($row['version'], $build, build_type_text($type));
+        $plat_name = $plat['name'];
+        $bits = $plat['cpu_bits'];
+        $date = gmstrftime(RFC_TIME, $row['UNIX_TIMESTAMP(b.timestamp)']);
+        if ($bits > 0) {
+            $full_title = "Doomsday $version for $plat_name or later (${bits}-bit)";
+        }
+        else {
+            $full_title = "Doomsday $version $plat_name";
+        }
+        $resp += [
+            'build_uniqueid' => (int) $build,
+            'build_type' => build_type_text($type),
+            'build_startdate' => $date,
+            'platform_name' => $platform,
+            'title' => "Doomsday ".omit_zeroes($row['version']),
+            'fulltitle' => $full_title,
+            'version' => omit_zeroes($row['version']),
+            'version_major' => (int) $row['major'],           
+            'version_minor' => (int) $row['minor'],           
+            'version_patch' => (int) $row['patch'],
+            'direct_download_uri' => download_link($filename),
+            'direct_download_fallback_uri' => sfnet_link($type, $filename),
+            'file_size' => (int) $row['size'],
+            'file_md5' => $row['md5'],
+            'release_changeloguri' => DENG_API_URL."/builds?number=$build&format=html",
+            'release_notesuri' => DENG_WIKI_URL."/Doomsday_version_"
+                .omit_zeroes($row['version']),
+            'release_date' => $date,
+            'is_unstable' => ($type == BT_UNSTABLE)
+        ];
+        echo(json_encode($resp));    
+    }
+    else {
+        echo("{}\n");
+    }
+    $db->close();
+}
+
 //---------------------------------------------------------------------------------------
 
 setlocale(LC_ALL, 'en_US.UTF-8');
@@ -332,6 +418,16 @@ setlocale(LC_ALL, 'en_US.UTF-8');
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     if ($filename = $_GET['signature']) {
         show_signature($filename);
+        return;
+    }
+    if ($filename = $_GET['dl']) {
+        download_file($filename);
+        return;
+    }
+    if ($latest_for = $_GET['latest_for']) {
+        $type = $_GET['type'];
+        if (empty($type)) $type = 'stable';
+        generate_platform_latest_json($latest_for, $type);
         return;
     }
     $number = $_GET['number'];
@@ -346,5 +442,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     }
     else if ($format == 'feed') {
         generate_build_feed();
+    }
+    else if (empty($number) && empty($format)) {
+        generate_build_index_page();
     }
 }
