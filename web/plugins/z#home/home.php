@@ -56,7 +56,39 @@ class HomePlugin extends Plugin implements Actioner, RequestInterpreter
         $fc->outputHeader();
         $fc->beginPage($this->title());
 
-        includeHTML('latestversion', 'z#home');
+        //includeHTML('latestversion', 'z#home');
+        
+        require_once(DENG_API_DIR.'/include/builds.inc.php');
+        
+        $user_platform = detect_user_platform();
+        $dl_link = 'http://dengine.net/';
+        switch ($user_platform) {
+            case 'windows':
+                $dl_link .= 'windows';
+                break;
+            case 'macx':
+                $dl_link .= 'mac_os';
+                break;
+            case 'linux':
+                $dl_link .= 'linux';
+                break;
+            default:
+                $dl_link .= 'source';
+                break;
+        }
+        // Find out the latest stable build.
+        $db = db_open();
+        $result = db_query($db, "SELECT version FROM ".DB_TABLE_BUILDS
+            ." WHERE type=".BT_STABLE." ORDER BY timestamp DESC LIMIT 1");
+        if ($row = $result->fetch_assoc()) {
+            $button_label = omit_zeroes($row['version']);
+        }
+        else {
+            $button_label = 'Download';            
+        }
+        $db->close();
+        
+        echo("<div id='latestversion'><h1><div class='download-button'><a href='$dl_link' title='Download latest stable release'>$button_label <span class='downarrow'>&#x21E3;</span></a></div></h1></div>\n");
 
 ?><div id="contentbox"><?php
 
@@ -276,8 +308,9 @@ $(document).ready(function () {
 })(jQuery)
 
 $(document).ready(function () {
+    // TODO: No need to parse the feed, just query the BDB directly.
     $('#recentbuilds').interpretFeed({
-        feedUri: 'http://files.dengine.net/builds/events.rss',
+        feedUri: 'http://api.dengine.net/1/builds?format=feed',
         dataType: 'xml',
         maxItems: 3,
         generateItemHtml : function(n, t) {
@@ -355,7 +388,7 @@ $(document).ready(function () {
 <aside role="complementary" class="block">
 <div id="status">
 <div class="twocolumn"><article>
-<header><h1><a href="http://files.dengine.net/builds/" title="View the complete index in the build repository">Most recent builds</a></h1>
+<header><h1><a href="http://dengine.net/builds" title="View the complete index in the build repository">Most recent builds</a></h1>
 <p><script>
 <!--
 var niceDate = $.datepicker.formatDate('MM d, yy', new Date());
