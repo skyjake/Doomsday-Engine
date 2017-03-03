@@ -18,6 +18,34 @@
 
 require_once('database.inc.php');
 
+function detect_user_platform()
+{
+    require_once(__DIR__.'/../lib/Browser.php');
+    
+    // Check what the browser tells us.
+    $browser = new Browser();    
+    switch ($browser->getPlatform()) {
+        case Browser::PLATFORM_WINDOWS:
+            $user_platform = 'windows';
+            break;
+        case Browser::PLATFORM_APPLE:
+            $user_platform = 'macx';
+            break;
+        case Browser::PLATFORM_LINUX:
+            $user_platform = 'linux';
+            break;
+        case Browser::PLATFORM_FREEBSD:
+        case Browser::PLATFORM_OPENBSD:
+        case Browser::PLATFORM_NETBSD:
+            $user_platform = 'any';
+            break;
+        default:
+            $user_platform = '';
+            break;
+    }
+    return $user_platform;
+}
+
 function omit_zeroes($version)
 {
     $parts = split("\\.", $version);
@@ -274,4 +302,69 @@ function group_commits_by_tag($commits)
     }
     
     return $groups;    
+}
+
+function generate_platform_latest_json($platform, $build_type_txt)
+{
+    header('Content-Type: application/json');
+
+    $db = db_open();
+    $plat = db_get_platform($db, $platform);
+    if (empty($plat)) {
+        echo("{}\n");
+        $db->close();
+        return;
+    }
+    $type = build_type_from_text($build_type_txt);
+    if ($type == BT_CANDIDATE) {
+        $type_cond = "b.type!=".BT_UNSTABLE; // can also be stable
+    }
+    else {
+        $type_cond = "b.type=".$type;
+    }
+    $result = db_query($db, "SELECT f.name, f.size, f.md5, f.build, b.version, b.major, b.minor, b.patch, UNIX_TIMESTAMP(b.timestamp) FROM ".DB_TABLE_FILES
+        ." f LEFT JOIN ".DB_TABLE_BUILDS." b ON f.build=b.build "
+        ."WHERE $type_cond AND f.plat_id=$plat[id] ORDER BY b.timestamp DESC, f.name "
+        ."LIMIT 1");
+    $resp = [];        
+    if ($row = $result->fetch_assoc()) {
+        $filename = $row['name'];
+        $build = $row['build'];
+        $version = human_version($row['version'], $build, build_type_text($type));
+        $plat_name = $plat['name'];
+        $bits = $plat['cpu_bits'];
+        $date = gmstrftime(RFC_TIME, $row['UNIX_TIMESTAMP(b.timestamp)']);
+        if ($bits > 0) {
+            $full_title = "Doomsday $version for $plat_name or later (${bits}-bit)";
+        }
+        else {
+            $full_title = "Doomsday $version $plat_name";
+        }
+        $resp += [
+            'build_uniqueid' => (int) $build,
+            'build_type' => build_type_text($type),
+            'build_startdate' => $date,
+            'platform_name' => $platform,
+            'title' => "Doomsday ".omit_zeroes($row['version']),
+            'fulltitle' => $full_title,
+            'version' => $row['version'],
+            'version_major' => (int) $row['major'],           
+            'version_minor' => (int) $row['minor'],           
+            'version_patch' => (int) $row['patch'],
+            'direct_download_uri' => download_link($filename),
+            'direct_download_fallback_uri' => download_link($filename)."&mirror=sf",
+            'file_size' => (int) $row['size'],
+            'file_md5' => $row['md5'],
+            'release_changeloguri' => DENG_API_URL."/builds?number=$build&format=html",
+            'release_notesuri' => DENG_WIKI_URL."/Doomsday_version_"
+                .omit_zeroes($row['version']),
+            'release_date' => $date,
+            'is_unstable' => ($type == BT_UNSTABLE)
+        ];
+        echo(json_encode($resp));    
+    }
+    else {
+        echo("{}\n");
+    }
+    $db->close();
 }
