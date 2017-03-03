@@ -74,7 +74,9 @@ using namespace de;
 #  define INSTALL_SCRIPT_NAME "deng-upgrade.scpt"
 #endif
 
-/// @todo The platform ID should come from the Builder.
+#define PLATFORM_ID     DENG_PLATFORM_ID
+
+/*
 #if defined(WIN32)
 #  if defined(__64BIT__)
 #    define PLATFORM_ID       "win-x64"
@@ -98,6 +100,7 @@ using namespace de;
 #    define PLATFORM_ID     "linux-x86"
 #  endif
 #endif
+*/
 
 static CommandLine* installerCommand;
 

@@ -20,6 +20,7 @@ execute_process (COMMAND sw_vers -productVersion
 
 add_definitions (
     -DMACOSX=1
+    -DDENG_PLATFORM_ID=mac10_10-${DENG_ARCH}
     # Fallback basedir for command line apps.
     -DDENG_BASE_DIR="${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_DATA_DIR}"
 )

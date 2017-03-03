@@ -13,6 +13,14 @@ add_definitions (
     -DDENG_LIBRARY_DIR="${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_PLUGIN_DIR}"
 )
 
+if (CPACK_GENERATOR STREQUAL DEB)
+    add_definitions (-DDENG_PLATFORM_ID=ubuntu16-${DENG_ARCH})
+elseif (CPACK_GENERATOR STREQUAL RPM)
+    add_definitions (-DDENG_PLATFORM_ID=fedora23-${DENG_ARCH})
+else ()
+    add_definitions (-DDENG_PLATFORM_ID=source)
+endif ()
+
 if (CMAKE_COMPILER_IS_GNUCXX)
     # The tree FRE optimization causes crashes with GCC 6 (Yakkety).
     append_unique (CMAKE_CXX_FLAGS_RELEASE        -fno-tree-fre)
