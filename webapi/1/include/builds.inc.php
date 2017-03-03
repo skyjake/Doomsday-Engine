@@ -84,11 +84,11 @@ function download_link($name)
     return DENG_API_URL."/builds?dl=".$name;
 }
 
-function sfnet_link($build_type, $name)
+function sfnet_link($build_type, $version, $name)
 {
     $sfnet_url = 'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/';
     if ($build_type == BT_STABLE) {
-        $sfnet_url .= "$build_data[version]/";
+        $sfnet_url .= "$version/";
     }
     else {
         $sfnet_url .= "Builds/";

@@ -36,11 +36,13 @@ function show_signature($filename)
     }
 }
 
-function download_file($filename)
+function download_file($filename, $mirror)
 {
     $db = db_open();
     $name = $db->real_escape_string($filename);
-    $result = db_query($db, "SELECT id, build FROM ".DB_TABLE_FILES." WHERE name='$name'");
+    $result = db_query($db, "SELECT f.id, b.version, f.build, b.type FROM ".DB_TABLE_FILES
+        ." f LEFT JOIN ".DB_TABLE_BUILDS." b ON f.build=b.build"
+        ." WHERE f.name='$name'");
     if ($row = $result->fetch_assoc()) {
         // Increment the download counters.
         db_query($db, "UPDATE ".DB_TABLE_FILES." SET dl_total=dl_total+1 "
@@ -49,7 +51,12 @@ function download_file($filename)
             ."WHERE build=$row[build]");
         // Redirect to the archive.
         header('Status: 307 Temporary Redirect');
-        header("Location: ".DENG_ARCHIVE_URL."/".$filename);
+        if ($mirror == 'sf') {
+            header("Location: ".sfnet_link($row['type'], omit_zeroes($row['version']), $filename));
+        }
+        else {
+            header("Location: ".DENG_ARCHIVE_URL."/".$filename);
+        }
     }
     else {
         header('Status: 404 Not Found');
@@ -145,7 +152,7 @@ function generate_build_page($number)
                     $last_plat = $plat;
                 }
                 $main_url   = download_link($bin['name']);
-                $mirror_url = sfnet_link($build_info['type'], $bin['name']);
+                $mirror_url = $main_url."&mirror=sf";
                 echo("<td class='binary'>");
                 echo("<div class='filename'><a href='$main_url'>$bin[name]</a></div>"
                     ."<div class='fileinfo'>"
@@ -394,7 +401,7 @@ function generate_platform_latest_json($platform, $build_type)
             'version_minor' => (int) $row['minor'],           
             'version_patch' => (int) $row['patch'],
             'direct_download_uri' => download_link($filename),
-            'direct_download_fallback_uri' => sfnet_link($type, $filename),
+            'direct_download_fallback_uri' => download_link($filename)."&mirror=sf",
             'file_size' => (int) $row['size'],
             'file_md5' => $row['md5'],
             'release_changeloguri' => DENG_API_URL."/builds?number=$build&format=html",
@@ -420,8 +427,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         show_signature($filename);
         return;
     }
-    if ($filename = $_GET['dl']) {
-        download_file($filename);
+    if ($filename = $_GET['dl']) {        
+        download_file($filename, $_GET['mirror']);
         return;
     }
     if ($latest_for = $_GET['latest_for']) {
