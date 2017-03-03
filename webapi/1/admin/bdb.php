@@ -168,10 +168,10 @@ else if ($op == 'init')
         . "(160, 'win-x86', 'Windows 7', 'windows', 'x86', 32), "
         . "(245, 'mac10_10-x86_64', 'macOS 10.10', 'macx', 'x86_64', 64), "
         . "(250, 'mac10_8-x86_64', 'macOS 10.8', 'macx', 'x86_64', 64), "
-        . "(350, 'ubuntu-x86_64', 'Ubuntu 16.04', 'linux', 'amd64', 64), "
-        . "(355, 'ubuntu-x86', 'Ubuntu 14.04', 'linux', 'amd64', 64), "
-        . "(360, 'ubuntu-x86', 'Ubuntu 14.04', 'linux', 'i386', 32), "
-        . "(450, 'fedora-x86_64', 'Fedora 23', 'linux', 'x86_64', 64), "
+        . "(350, 'ubuntu16-x86_64', 'Ubuntu 16.04', 'linux', 'amd64', 64), "
+        . "(355, 'ubuntu14-x86_64', 'Ubuntu 14.04', 'linux', 'amd64', 64), "
+        . "(360, 'ubuntu14-i386', 'Ubuntu 14.04', 'linux', 'i386', 32), "
+        . "(450, 'fedora23-x86_64', 'Fedora 23', 'linux', 'x86_64', 64), "
         . "(950, 'source', 'Source', 'any', 'any', 0);");
     
     // File archive.
