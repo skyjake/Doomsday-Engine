@@ -23,6 +23,96 @@
  */
 
 includeGuard('PagesPlugin');
+require_once(DENG_API_DIR.'/include/builds.inc.php');
+
+function generate_download_badge($db, $file_id)
+{
+    // Fetch all information about this file.
+    $result = db_query($db, "SELECT * FROM ".DB_TABLE_FILES." WHERE id=$file_id");
+    $file = $result->fetch_assoc();
+    
+    $build = db_get_build($db, $file['build']);
+    $version = $build['version'];
+    
+    $result = db_query($db, "SELECT * FROM ".DB_TABLE_PLATFORMS." WHERE id=$file[plat_id]");
+    $plat = $result->fetch_assoc();
+
+    $fext = strtoupper(pathinfo($file['name'], PATHINFO_EXTENSION))
+        ." ($plat[cpu_bits]-bit)";
+
+    $title = "Doomsday ".omit_zeroes($version);
+    if ($build['type'] != BT_STABLE) {
+        $title .= " [#".$build['build']."]";
+    }
+    $title .= " &middot; $fext";
+    $full_title = "Doomsday ".human_version($version, $build['build'], build_type_text($build['type']))
+        ." for ".$plat['name']." (".$plat['cpu_bits']."-bit)";
+    $download_url = 'http://api.dengine.net/1/builds?dl='.$file['name'];
+    
+    $metadata = '<span class="metalink">';
+    $metadata .= '<span title="Release Date">'
+        .substr($build['timestamp'], 0, 10)
+        .'</span> &middot; '; 
+    $metadata .= $plat['cpu_bits'].'-bit '.$plat['name'].' (or later)';
+    $metadata .= '</span>';
+    
+    echo('<p><div class="package_badge">'
+        ."<a class='package_name' href='$download_url' "
+        ."title=\"Download $full_title\">$title</a><br />"
+        .$metadata
+        ."</div></p>\n");
+    
+    /*
+        // Compose badge title.
+        var cleanTitle = json.title + ' ' + json.version;
+
+        // Generate metadata HMTL.
+        var metaData = '<span class="metalink">';
+        if(json.hasOwnProperty('is_unstable'))
+        {
+            var isUnstable = json.is_unstable;
+            var buildId = '';
+
+            if(json.hasOwnProperty('build_uniqueid'))
+            {
+                buildId += ' build' + json.build_uniqueid;
+            }
+
+            if(isUnstable)
+            {
+                cleanTitle += ' (Unstable)';
+            }
+        }
+
+        if(json.hasOwnProperty('release_date'))
+        {
+            var releaseDate = new Date(Date.parse(json.release_date));
+            var shortDate = (releaseDate.getDate()) + '/' + (1 + releaseDate.getMonth()) + '/' + releaseDate.getFullYear();
+            metaData += '<span title="Release Date">' + shortDate + '</span> &middot; ';
+        }
+        metaData += 'Windows Vista (or later)</span>';
+
+        return $('<div class="package_badge"><a class="package_name" href="' + downloadUri + '" title="Download ' + json.fulltitle + '">' + cleanTitle + '</a><br />' + metaData + '</div>');*/
+}
+
+function generate_badges($platform, $type)
+{
+    // Find the latest suitable files.
+    $db = db_open();
+    $result = db_latest_files($db, $platform, $type);
+    $latest_build = 0;
+    while ($row = $result->fetch_assoc()) {        
+        // All suitable files of the latest build will be shown.
+        if ($latest_build == 0) {
+            $latest_build = $row['build'];
+        }
+        else if ($latest_build != $row['build']) {
+            break;
+        }
+        generate_download_badge($db, $row['id']);
+    }
+    $db->close();
+}
 
 class PagesPlugin extends Plugin implements Actioner, RequestInterpreter
 {
@@ -36,15 +126,6 @@ class PagesPlugin extends Plugin implements Actioner, RequestInterpreter
     public function title()
     {
         return 'Pages';
-    }
-
-    public function mustUpdateCachedPage(&$pageFile, &$cacheName)
-    {
-        if(!FrontController::contentCache()->has($cacheName)) return TRUE;
-
-        $cacheInfo = new ContentInfo();
-        FrontController::contentCache()->info($cacheName, $cacheInfo);
-        return (filemtime($pageFile) > $cacheInfo->modifiedTime);
     }
 
     /**
@@ -67,13 +148,13 @@ class PagesPlugin extends Plugin implements Actioner, RequestInterpreter
         if(count($tokens))
         {
             $pageName = str_replace(" ", "_", $tokens[0]);
-            $pageFile = DIR_PLUGINS.'/'.self::$name.'/html/'.$pageName.'.html';
-            $cacheName = 'pages/'.$pageName.'.html';
+            $pageFile = __DIR__.'/html/'.$pageName.'.html';
+            //$cacheName = 'pages/'.$pageName.'.html';
 
             // Try to generate the page and add it to the cache.
             if(file_exists($pageFile))
             {
-                if($this->mustUpdateCachedPage($pageFile, $cacheName))
+                /*if($this->mustUpdateCachedPage($pageFile, $cacheName))
                 {
                     try
                     {
@@ -84,11 +165,11 @@ class PagesPlugin extends Plugin implements Actioner, RequestInterpreter
                     {
                         // @todo do not ignore!
                     }
-                }
-            }
+                }*/
+                //}
 
-            if(FrontController::contentCache()->has($cacheName))
-            {
+            //if(FrontController::contentCache()->has($cacheName))
+            //{
                 FrontController::fc()->enqueueAction($this, array('page' => $pageName));
                 return true; // Eat the request.
             }
@@ -97,10 +178,10 @@ class PagesPlugin extends Plugin implements Actioner, RequestInterpreter
         return false; // Not for us.
     }
 
-    public function generateHTML()
+    /*public function generateHTML()
     {
         includeHTML('introduction', self::$name);
-    }
+    }*/
 
     /**
      * Implements Actioner.
@@ -114,25 +195,14 @@ class PagesPlugin extends Plugin implements Actioner, RequestInterpreter
 
         $page = $args['page'];
         $mainHeading = ucwords(mb_ereg_replace('_', ' ', $page));
-        $pageFile = 'pages/'.$args['page'].'.html';
+        if ($page == 'mac_os') $mainHeading = 'macOS';
+        $pageFile = __DIR__.'/html/'.$args['page'].'.html';
 
         $fc->outputHeader($mainHeading);
         $fc->beginPage($mainHeading, $page);
 
-?>              <div id="contentbox"><?php
-
-        try
-        {
-            FrontController::contentCache()->import($pageFile);
-        }
-        catch(Exception $e)
-        {
-?>
-                <p>No content for this page</p>
-<?php
-        }
-
-?>              </div><?php
+?>              <div id="contentbox"><?php require($pageFile); ?>
+                </div><?php
 
         $fc->endPage();
     }

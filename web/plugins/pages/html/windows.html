@@ -1,25 +1,32 @@
 <div class="block">
 <section id="overview">
-<p>The Doomsday Engine can be run on all modern Windows operating systems and the same auto-install package is used on both 32bit and 64bit variants.</p>
+    <p>Doomsday Engine can run on all modern Windows operating systems (Vista or later). There are separate installation packages available for 32-bit and 64-bit versions of Windows. Requires a GPU that supports OpenGL 2.1.</p>
 </section>
 </div>
-<div class="block"><article><h1>Install Packages</h1>
-<p>Select the package you wish to install by clicking on it. You will then be directed to our primary download server and after a few moments your download should begin automatically. Once downloaded, run the install package and follow the onsreen instructions to complete the install.</p>
-<p><b>About Unstable Builds — Proceed with Caution!</b></p>
-<p>The unstable 2.0 builds are still being worked on rather heavily and miss several important features that are going to be in the final stable 2.0. The Snowberry front-end, for example, has now been <b>removed</b> in the unstable 2.0 builds. The front-end is required for certain basic things like loading PWADs, resource packs and other add-ons.</p>
-<p>Please consider using the stable 1.15 releases, especially if you are new to Doomsday.</p>
-<div id="downloads_list1" class="downloads_list"></div>
-<div id="downloads_list2" class="downloads_list"></div>
+<div class="block"><article><h1>Stable</h1>
+    <p>The latest stable release.</p>
+    <?php 
+    generate_badges('win-x64', BT_STABLE); 
+    generate_badges('win-x86', BT_STABLE); 
+    ?>
+</article></div>
+<div class="block"><article><h1>Release Candidate</h1>
+    <p>Release candidate of the next upcoming stable build.</p>
+    <?php 
+    generate_badges('win-x64', BT_CANDIDATE); 
+    generate_badges('win-x86', BT_CANDIDATE); 
+    ?>
+</article></div>
+<div class="block"><article><h1>Unstable / Nightly</h1>
+<p>Unstable builds are made automatically every day when changes are committed to the <a href="http://dengine.net/source">source repository</a>. They contain work-in-progress code and sometimes may crash on you.</p>
+    <?php 
+    generate_badges('win-x64', BT_UNSTABLE); 
+    generate_badges('win-x86', BT_UNSTABLE); 
+    ?>
 </article>
-<article><h1>Minimum System Requirements</h1>
-<ul>
-<li>Windows Vista, 7 or 8 running <a href="http://www.microsoft.com/directx" rel="nofollow" class="link-external" title="http://www.microsoft.com/directx">DirectX 8</a> (or later).</li>
-<li>Display adapter capable of 3D hardware acceleration using OpenGL 2.0.</li>
-<li>Original game data files for each supported game that you wish to play (e.g., in the case of <strong>DOOM</strong> the only file needed is <em>doom.wad</em>).</li>
-<li>Some <a href="/addons" title="Doomsday add-ons">add-ons</a> may require a large amount of disk space (especially high quality texture and music packs).</li>
-</ul></article>
 </div>
 
+<!--
 <script type="text/javascript">
 
 var packages = new Array();
@@ -212,3 +219,4 @@ removeAllChildren('#downloads_list1');
 removeAllChildren('#downloads_list2');
 updateLatestPackages(requests);
 </script>
+-->

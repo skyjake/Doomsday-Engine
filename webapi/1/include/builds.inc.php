@@ -304,6 +304,29 @@ function group_commits_by_tag($commits)
     return $groups;    
 }
 
+function db_get_build($db, $build)
+{
+    return db_query($db, "SELECT * FROM ".DB_TABLE_BUILDS
+        ." WHERE build=$build")->fetch_assoc();
+}
+
+function db_latest_files($db, $platform, $build_type, $limit=NULL)
+{
+    $plat = db_get_platform($db, $platform);
+    if ($build_type == BT_CANDIDATE) {
+        $type_cond = "b.type!=".BT_UNSTABLE; // can also be stable
+    }
+    else {
+        $type_cond = "b.type=".$build_type;
+    }
+    $limiter = (isset($limit)? "LIMIT $limit" : '');
+    $plat_id = $plat['id'];
+    return db_query($db, "SELECT f.id, f.name, f.size, f.md5, f.build, b.version, b.major, b.minor, b.patch, UNIX_TIMESTAMP(b.timestamp) FROM ".DB_TABLE_FILES
+        ." f LEFT JOIN ".DB_TABLE_BUILDS." b ON f.build=b.build "
+        ."WHERE $type_cond AND f.plat_id=$plat_id ORDER BY b.timestamp DESC, f.name "
+        .$limiter);    
+}
+
 function generate_platform_latest_json($platform, $build_type_txt)
 {
     header('Content-Type: application/json');
@@ -316,7 +339,8 @@ function generate_platform_latest_json($platform, $build_type_txt)
         return;
     }
     $type = build_type_from_text($build_type_txt);
-    if ($type == BT_CANDIDATE) {
+    $result = db_latest_files($db, $platform, $type, 1);
+    /*if ($type == BT_CANDIDATE) {
         $type_cond = "b.type!=".BT_UNSTABLE; // can also be stable
     }
     else {
@@ -325,7 +349,7 @@ function generate_platform_latest_json($platform, $build_type_txt)
     $result = db_query($db, "SELECT f.name, f.size, f.md5, f.build, b.version, b.major, b.minor, b.patch, UNIX_TIMESTAMP(b.timestamp) FROM ".DB_TABLE_FILES
         ." f LEFT JOIN ".DB_TABLE_BUILDS." b ON f.build=b.build "
         ."WHERE $type_cond AND f.plat_id=$plat[id] ORDER BY b.timestamp DESC, f.name "
-        ."LIMIT 1");
+        ."LIMIT 1");*/
     $resp = [];        
     if ($row = $result->fetch_assoc()) {
         $filename = $row['name'];
