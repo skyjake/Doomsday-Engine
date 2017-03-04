@@ -99,16 +99,23 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         self().updateLayout();
     }
 
+    static bool isMatchingChannel(String const &channel, String const &buildType)
+    {
+        if (channel == buildType) return true;
+        if (channel == "RC/stable" && buildType != "unstable") return true;
+        return false;
+    }
+
     void updateResult(Version const &latest, TimeDelta showSpan)
     {
         showProgress(false, showSpan);
 
         latestVersion = latest;
 
-        Version currentVersion = Version::currentBuild();
-
-        String channel     = (UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" : "unstable");
-        String builtInType = (String(DOOMSDAY_RELEASE_TYPE) == "Stable"? "stable" : "unstable");
+        Version const currentVersion = Version::currentBuild();
+        String const channel = (UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" :
+                                UpdaterSettings().channel() == UpdaterSettings::Unstable? "unstable" : "RC/stable");
+        String const builtInType = String(DOOMSDAY_RELEASE_TYPE).toLower();
         bool askUpgrade    = false;
         bool askDowngrade  = false;
 
@@ -123,7 +130,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
                                    .arg(_E(b) + latestVersion.asHumanReadableText() + _E(.))
                                    .arg(currentVersion.asHumanReadableText()));
         }
-        else if (channel == builtInType) // same release type
+        else if (isMatchingChannel(channel, builtInType)) // same release type
         {
             self().title().setText(tr("Up to Date"));
             self().message().setText(tr("The installed %1 is the latest available %2 build.")

@@ -104,11 +104,11 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         releaseLabel->setText("Release Type:");
 
         channels->items()
-                << new ChoiceItem(tr("Stable"),             UpdaterSettings::Stable)
-                << new ChoiceItem(tr("Unstable/Candidate"), UpdaterSettings::Unstable);
+                << new ChoiceItem(tr("Stable only"),      UpdaterSettings::Stable)
+                << new ChoiceItem(tr("RC or stable"),     UpdaterSettings::StableOrCandidate)
+                << new ChoiceItem(tr("Unstable/nightly"), UpdaterSettings::Unstable);
 
         /*pathLabel->setText(tr("Download location:"));
-
         paths->items()
                 << new ChoiceItem(defaultLocationName(),
                                   UpdaterSettings::defaultDownloadPath().toString());*/

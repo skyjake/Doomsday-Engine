@@ -76,32 +76,6 @@ using namespace de;
 
 #define PLATFORM_ID     DENG_PLATFORM_ID
 
-/*
-#if defined(WIN32)
-#  if defined(__64BIT__)
-#    define PLATFORM_ID       "win-x64"
-#  else
-#    define PLATFORM_ID       "win-x86"
-#  endif
-
-#elif defined(MACOSX)
-#  if defined(MACOS_10_7) || defined(MACOSX_NATIVESDK)
-#    define PLATFORM_ID     "mac10_8-x86_64"
-#  elif defined(__64BIT__)
-#    define PLATFORM_ID     "mac10_6-x86-x86_64"
-#  else
-#    define PLATFORM_ID     "mac10_4-x86-ppc"
-#  endif
-
-#else
-#  if defined(__64BIT__)
-#    define PLATFORM_ID     "linux-x86_64"
-#  else
-#    define PLATFORM_ID     "linux-x86"
-#  endif
-#endif
-*/
-
 static CommandLine* installerCommand;
 
 /**
@@ -211,12 +185,12 @@ DENG2_PIMPL(Updater)
     QString composeCheckUri()
     {
         UpdaterSettings st;
-        QString uri = QString(DOOMSDAY_HOMEURL) + "/latestbuild?";
-        uri += QString("platform=") + PLATFORM_ID;
-        uri += (st.channel() == UpdaterSettings::Stable? "&stable" : "&unstable");
-        uri += "&graph";
-
-        LOG_XVERBOSE("Check URI: ", uri);
+        String uri = String("%1builds?latest_for=%2&type=%3")
+                .arg(App::apiUrl())
+                .arg(DENG_PLATFORM_ID)
+                .arg(st.channel() == UpdaterSettings::Stable? "stable" :
+                     st.channel() == UpdaterSettings::Unstable? "unstable" : "candidate");
+        LOG_XVERBOSE("URI: ", uri);
         return uri;
     }
 
@@ -331,6 +305,7 @@ DENG2_PIMPL(Updater)
         if (!result.isValid()) return;
 
         QVariantMap const map = result.toMap();
+        if (!map.contains("direct_download_uri")) return;
 
         latestPackageUri = map["direct_download_uri"].toString();
         latestLogUri     = map["release_changeloguri"].toString();
