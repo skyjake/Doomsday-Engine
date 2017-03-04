@@ -32,19 +32,38 @@ function generate_download_badge($db, $file_id)
     $file = $result->fetch_assoc();
     
     $build = db_get_build($db, $file['build']);
+    $build_type = ucwords(build_type_text($build['type']));
+    if ($build_type == 'Candidate') {
+        $build_type = 'RC';
+    }
     $version = $build['version'];
     
     $result = db_query($db, "SELECT * FROM ".DB_TABLE_PLATFORMS." WHERE id=$file[plat_id]");
     $plat = $result->fetch_assoc();
 
-    $fext = strtoupper(pathinfo($file['name'], PATHINFO_EXTENSION))
-        ." ($plat[cpu_bits]-bit)";
+    $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+    // Special case for making a distinction between old .dmg files.
+    if ($ext == 'dmg' && strpos($file['name'], '_apps') != FALSE) {
+        $fext = 'Applications';
+    }
+    else if ($plat['os'] == 'macx') {
+        $fext = $ext;
+    }
+    else {
+        $fext = $ext." ($plat[cpu_bits]-bit)";
+    }
 
     $title = "Doomsday ".omit_zeroes($version);
     if ($build['type'] != BT_STABLE) {
-        $title .= " [#".$build['build']."]";
+        $title = omit_zeroes($version).' '
+            .$build_type." #$build[build]";
     }
-    $title .= " &middot; $fext";
+    if ($plat['platform'] == 'source') {
+        $title .= " (Source)";
+    }
+    else {
+        $title .= " &ndash; $fext";        
+    }
     $full_title = "Doomsday ".human_version($version, $build['build'], build_type_text($build['type']))
         ." for ".$plat['name']." (".$plat['cpu_bits']."-bit)";
     $download_url = 'http://api.dengine.net/1/builds?dl='.$file['name'];
@@ -53,7 +72,12 @@ function generate_download_badge($db, $file_id)
     $metadata .= '<span title="Release Date">'
         .substr($build['timestamp'], 0, 10)
         .'</span> &middot; '; 
-    $metadata .= $plat['cpu_bits'].'-bit '.$plat['name'].' (or later)';
+    if ($plat['os'] != 'any') {
+        $metadata .= $plat['cpu_bits'].'-bit '.$plat['name'].' (or later)';
+    }
+    else {
+        $metadata .= "Source code .tar.gz";
+    }
     $metadata .= '</span>';
     
     echo('<p><div class="package_badge">'

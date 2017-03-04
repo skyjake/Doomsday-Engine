@@ -1,11 +1,16 @@
 <div class="block">
-<article><h1>Install Packages</h1>
-<p>Select the package you wish to install by clicking on it. You will then be directed to our primary download server and after a few moments your download should begin automatically.</p>
-<div class="downloads_list">
+<article><h1>Source Packages</h1>
+<?php 
+generate_badges('source', BT_STABLE);
+generate_badges('source', BT_UNSTABLE);
+?>
+<!-- 
     <div class="package_badge">
         <a class="package_name" href="http://files.dengine.net/builds/build1857/doomsday-stable-1.15.8.tar.gz" title="Download source code for Doomsday 1.15.8">Doomsday 1.15.8 (Source)</a><br /><span class="metalink"></span>
     </div>
-</div></article>
+</div> -->
+<p/>
+</article>
 <article><h1>New to Doomsday Source?</h1>
 <p>The best place to begin is the <a href="http://wiki.dengine.net" title="deng project wiki">deng project wiki</a>. There you will find a lot of information from beginners guides to design documents and manifestos detailing concepts employed within the engine itself. In particular, all new developers should familiarize themselves with the following:</p>
 <ul>
@@ -36,6 +41,14 @@
 </div>
 
 <div id="column2" class="twocolumn collapsible">
+    <div class="block">
+        <article>
+            <h1>Git Repositories</h1>
+            <ul>
+                <li><a href="https://github.com/skyjake/Doomsday-Engine.git">GitHub: skyjake/Doomsday-Engine</a></li>
+            </ul>                
+        </article>
+    </div>
     <div class="block">
         <article>
             <h1>Commit Index</h1>

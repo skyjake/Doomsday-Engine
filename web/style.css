@@ -198,9 +198,28 @@ hr.dashed {
     margin:0;
 }
 
+#status > div.twocolumn {
+    width: 36ex;
+}
+#status > div.twocolumn:nth-child(2) {
+    float: right;
+}
+#status div.centercolumn {
+    text-align: center;
+    padding-top: 1ex;
+}
+
 @media only screen and (max-width: 767px) {
-.collapsible {width: 100%; float: left; }
-.collapsible:nth-child(n+1) { clear: left; }
+    .collapsible {width: 100%; float: left; }
+    .collapsible:nth-child(n+1) { clear: left; }
+
+    #status > div.twocolumn:nth-child(2) {
+        float: left;
+    }
+    #activeservers {
+        float: left !important;
+        min-height: 15ex;
+    }
 }
 
 .block {
@@ -542,6 +561,14 @@ ul, ol {
     padding-left:2.4em;
 }
 
+.project_links ul {
+    margin: 0;
+}
+
+.project_links a {
+    color: #eee;
+}
+
 #cp-menu #navigation ul {
     /* Improves User Control Panel sidebar layout in the forums. */
     margin-bottom:0;
@@ -556,18 +583,20 @@ div.game-sprite {
 
 /* Horizontally aligned lists (used for navigation bars mainly). */
 
-.hnav {
+.hnav:not(.project_links) {
     white-space: nowrap;
-    text-align:center;
+    text-align: center;
 }
 
 .hnav ul {
-    margin-left: 0;
-    padding-left: 0;
+    margin: 0;
+    padding: 0;
 }
 
 .hnav li {
     display: inline-block;
+    margin-left: 0.3ex;
+    margin-right: 0.3ex;
 }
 
 div.jumplist_wrapper {
@@ -874,7 +903,7 @@ div.clear {
 }
 
 #recentbuilds { float: left; }
-#activeservers { float: right; }
+#activeservers { float: right; min-height: 15ex; }
 
 #status ol {
     font-size: xx-small;
@@ -918,50 +947,55 @@ div.clear {
 }
 
 .platform_buttons {
-    margin-top: 1.2em;
-    margin-bottom: 1.2em;
+    min-width: 35ex;
+    /*margin-top: 1.2em;
+    margin-bottom: 1.2em;*/
 }
 
-#downloadbox div.hnav ul li, div.platform_buttons ul li {
+.platform_buttons div.hnav ul li, div.platform_buttons ul li {
     padding: 0;
     margin-left: .6em;
     margin-right: .6em;
     list-style-type: none;
 }
 
-#downloadbox a.platform_icon {
+.platform_buttons a.platform_icon {
     display: inline-block;
-    width: 63px;
-    height: 69px;
+    width: 44px; /*63px;*/
+    height: 48px; /*69px;*/
     margin: 0;
     padding: 0;
     border: 0;
     text-decoration: none;
 }
 
-#downloadbox ul li {
+.platform_buttons ul li {
     margin-bottom: .4em;
     list-style-type: none;
 }
 
-#downloadbox a.windows_icon {
+.platform_buttons a.windows_icon {
     background-image: url(images/windowslogo.png);
     background-position: 0 0;
+    background-size: 100%;
 }
 
-#downloadbox a.macos_icon {
+.platform_buttons a.macos_icon {
     background-image: url(images/macosxlogo.png);
     background-position: 0 0;
+    background-size: 100%;
 }
 
-#downloadbox a.ubuntu_icon {
+.platform_buttons a.ubuntu_icon {
     background-image: url(images/ubuntulogo.png);
     background-position: 0 0;
+    background-size: 100%;
 }
 
-#downloadbox a.linux_icon {
+.platform_buttons a.linux_icon {
     background-image: url(images/linuxlogo.png);
     background-position: 0 0;
+    background-size: 100%;
 }
 
 .download-button {
@@ -1667,8 +1701,8 @@ span.port {
     background: url(http://dengine.net/images/download_badge.png) no-repeat;
     height: 60px;
     min-width: 320px;
-    padding-top: 1.5em;
-    padding-bottom: 0;
+    padding-top: 0.7em;
+    padding-bottom: 1.3em;
     padding-left: 0;
     padding-right: 0;
     text-decoration: none;
@@ -1678,14 +1712,14 @@ span.port {
 .package_badge a.package_name {
     padding-top: 1.5em;
     padding-bottom: 2em;
-    padding-left: 3em;
+    padding-left: 3.6em;
     white-space:nowrap;
 }
 
 .package_badge span.metalink {
     position: absolute;
-    margin-left: 8em;
-    margin-top: .5em;
+    margin-left: 6.75em;
+    margin-top: 0;
     font-size: small;
 }
 

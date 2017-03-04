@@ -1,7 +1,26 @@
 <div class="block">
+    <article>
+        <h1>Stable</h1>
+        <?php 
+        generate_badges('ubuntu16-x86_64', BT_CANDIDATE);
+        generate_badges('fedora23-x86_64', BT_CANDIDATE);
+        ?>
+    </article>
+</div>
+<div class="block">
+    <article>
+        <h1>Unstable</h1>
+        <?php 
+        generate_badges('ubuntu16-x86_64', BT_UNSTABLE);
+        generate_badges('fedora23-x86_64', BT_UNSTABLE);
+        ?>
+    </article>
+</div>
+<div class="block">
 <article>
-<h1>Install Packages</h1>
-<p>See the <a href="/dew/index.php?title=Installation_%28Unix%29">Unix installation</a> article on the wiki for platform specific instructions.</p>
+<h1>Other Builds</h1>
+<p>See the <a href="/dew/index.php?title=Installation_%28Unix%29">Unix installation</a> article on the wiki for platform-specific instructions.</p>
+
 <h2><img src="images/debian.png" alt="debian" style="vertical-align:text-bottom;" /> Debian</h2>
 <p>Add the required repo to your "/etc/apt/sources.list" file.</p>
 <p class="leadparagraph">For Lenny:</p>
@@ -26,16 +45,5 @@ deb-src http://debian.keesmeijs.nl/ etch-kees main</pre>
 <h2><img src="images/redhat.gif" alt="RedHat" style="vertical-align:text-bottom;" /> RedHat Enterprise Linux 6</h2>
 <p><a href="http://gapf.ninth.su/el/6/RPMS/repoview/doomsday.html" class="link-external">Doomsday RPM packages</a> built by forum user <a href="/forums/memberlist.php?mode=viewprofile&u=396">skolnick</a>. Should also be compatible with RHEL derivatives such as CentOS and Scientific Linux. For more information, see the <a href="http://gapf.ninth.su/" class="link-external">repository's home page.</a></p>
 
-<h2><img src="images/ubuntu.png" alt="Ubuntu" style="vertical-align:text-bottom;" /> Ubuntu</h2>
-<p>See the <a href="/ubuntu">Ubuntu download page</a>.</p>
-
-</article>
-<article>
-<h1>Minimum System Requirements</h1>
-<ul>
-<li>Display adapter capable of 3D hardware acceleration using OpenGL.</li>
-<li>Original game data files for each supported game that you wish to play (e.g., in the case of <strong>DOOM</strong> the only file needed is <em>doom.wad</em>).</li>
-<li>Some <a href="/addons" title="Doomsday add-ons">add-ons</a> may require a large amount of disk space (especially high quality texture and music packs).</li>
-</ul>
 </article>
 </div>
