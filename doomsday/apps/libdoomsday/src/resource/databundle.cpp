@@ -397,7 +397,6 @@ DENG2_PIMPL(DataBundle), public Lockable
         else
         {
             meta.set(Package::VAR_TITLE, self().asFile().name());
-            meta.set(VAR_VERSION, "0.0");
             meta.set(VAR_AUTHOR,  "Unknown");
             meta.set(VAR_LICENSE, "Unknown");
             meta.set(VAR_TAGS,    (format == Iwad || format == Pwad)? ".wad" : "");
@@ -426,9 +425,15 @@ DENG2_PIMPL(DataBundle), public Lockable
             Version parsedVersion("");
             String strippedName = stripVersion(source->name().fileNameWithoutExtension(),
                                                &parsedVersion);
-            if (strippedName != source->name())
+            if (strippedName != source->name() && parsedVersion.isValid())
             {
                 meta.set(VAR_VERSION, parsedVersion.fullNumber());
+            }
+            else
+            {
+                // Compose a default version number from file status.
+                meta.set(VAR_VERSION, self().asFile().status().modifiedAt
+                         .asDateTime().toString("0.yyyy.MMdd.hhmm"));
             }
 
             packageId = stripRedundantParts(formatDomains[format]
@@ -606,7 +611,11 @@ DENG2_PIMPL(DataBundle), public Lockable
             if (english->blockType() == "language")
             {
                 // Doomsday must understand the version number.
-                meta.set(VAR_VERSION, Version(english->keyValue(VAR_VERSION)).fullNumber());
+                Version const sbVer(english->keyValue(VAR_VERSION));
+                if (sbVer.isValid())
+                {
+                    meta.set(VAR_VERSION, sbVer.fullNumber());
+                }
                 meta.set(VAR_AUTHOR,  english->keyValue("author"));
                 meta.set(VAR_LICENSE, english->keyValue("license"));
                 meta.set("contact", english->keyValue("contact"));
