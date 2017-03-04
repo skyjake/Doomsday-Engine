@@ -53,6 +53,7 @@ typedef struct libcommon_config_s {
 
     // Gameplay:
     byte            switchSoundOrigin;
+    byte            defaultRuleFastMonsters;
 
     // Weapons:
     byte            weaponCycleSequential; // if true multiple next/prev weapon impulses can be chained to allow the user to "count-click-switch".
