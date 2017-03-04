@@ -63,6 +63,16 @@ static Value *Function_String_Lower(Context &ctx, Function::ArgumentValues const
     return new TextValue(ctx.nativeSelf().asText().lower());
 }
 
+static Value *Function_String_BeginsWith(Context &ctx, Function::ArgumentValues const &args)
+{
+    return new NumberValue(ctx.nativeSelf().asText().beginsWith(args.at(0)->asText()));
+}
+
+static Value *Function_String_EndsWith(Context &ctx, Function::ArgumentValues const &args)
+{
+    return new NumberValue(ctx.nativeSelf().asText().endsWith(args.at(0)->asText()));
+}
+
 //---------------------------------------------------------------------------------------
 
 static Value *Function_Path_WithoutFileName(Context &, Function::ArgumentValues const &args)
@@ -119,6 +129,11 @@ static Value *Function_File_Size(Context &ctx, Function::ArgumentValues const &)
 static Value *Function_File_ModifiedAt(Context &ctx, Function::ArgumentValues const &)
 {
     return new TimeValue(fileInstance(ctx).status().modifiedAt);
+}
+
+static Value *Function_File_Description(Context &ctx, Function::ArgumentValues const &)
+{
+    return new TextValue(fileInstance(ctx).description());
 }
 
 static Value *Function_File_Locate(Context &ctx, Function::ArgumentValues const &args)
@@ -233,6 +248,8 @@ void initCoreModule(Binder &binder, Record &coreModule)
         binder.init(str)
                 << DENG2_FUNC_NOARG(String_Upper, "upper")
                 << DENG2_FUNC_NOARG(String_Lower, "lower")
+                << DENG2_FUNC      (String_BeginsWith, "beginsWith", "text")
+                << DENG2_FUNC      (String_EndsWith, "endsWith", "text")
                 << DENG2_FUNC_NOARG(String_FileNamePath, "fileNamePath")
                 << DENG2_FUNC_NOARG(String_FileNameExtension, "fileNameExtension")
                 << DENG2_FUNC_NOARG(String_FileNameWithoutExtension, "fileNameWithoutExtension")
@@ -255,6 +272,7 @@ void initCoreModule(Binder &binder, Record &coreModule)
                 << DENG2_FUNC_NOARG(File_Type, "type")
                 << DENG2_FUNC_NOARG(File_Size, "size")
                 << DENG2_FUNC_NOARG(File_ModifiedAt, "modifiedAt")
+                << DENG2_FUNC_NOARG(File_Description, "description")
                 << DENG2_FUNC      (File_Locate, "locate", "relativePath")
                 << DENG2_FUNC_NOARG(File_Read, "read")
                 << DENG2_FUNC_NOARG(File_ReadUtf8, "readUtf8")
