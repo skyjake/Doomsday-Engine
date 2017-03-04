@@ -893,10 +893,10 @@ div.clear {
     font-size: 106%;
 }
 
-.new:after {
+/*.new:after {
     content: " - NEW";
     color: #A7A29C;
-}
+}*/
 
 #status {
     font-size: 66%;
