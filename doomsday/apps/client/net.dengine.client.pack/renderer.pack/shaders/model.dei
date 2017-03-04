@@ -10,6 +10,7 @@ model.skeletal {
         variable uSpecular       { value = 1 }
         variable uEmission       { value = 0 }
         variable uGlossiness     { value = 100 }
+        variable uReflection     { value = 1 }
         variable uReflectionBlur { value = 10 }
         
         variable uMapTime {}

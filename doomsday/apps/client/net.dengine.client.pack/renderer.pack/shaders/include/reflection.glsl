@@ -28,6 +28,7 @@
 
 uniform samplerCube uReflectionTex;
 uniform highp mat4 uReflectionMatrix;
+uniform highp float uReflection;
 uniform highp float uReflectionBlur;
 
 /*
@@ -46,7 +47,8 @@ highp vec3 reflectedColorBiased(highp vec3 msNormal, float bias)
         
     // Match world space directions.
     reflectedDir.y = -reflectedDir.y;
-    return textureCube(uReflectionTex, reflectedDir, min(bias, MAX_REFLECTION_BIAS)).rgb;
+    return uReflection * textureCube(uReflectionTex, reflectedDir,
+                                     min(bias, MAX_REFLECTION_BIAS)).rgb;
 }
 
 highp vec3 reflectedColor(highp vec3 msNormal)
