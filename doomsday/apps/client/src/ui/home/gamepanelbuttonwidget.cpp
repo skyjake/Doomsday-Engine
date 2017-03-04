@@ -117,6 +117,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
             {
                 updateGameTitleImage();
             }
+            savedItems.refilter();
         });
 
         playButton = new ButtonWidget;
@@ -350,6 +351,13 @@ void GamePanelButtonWidget::play()
 void GamePanelButtonWidget::selectPackages()
 {
     d->packagesButton->trigger();
+}
+
+void GamePanelButtonWidget::clearPackages()
+{
+    d->gameProfile.setPackages(StringList());
+    d->savedItems.refilter();
+    updateContent();
 }
 
 void GamePanelButtonWidget::saveSelected(de::ui::DataPos savePos)
