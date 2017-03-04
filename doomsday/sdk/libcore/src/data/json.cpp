@@ -126,6 +126,11 @@ public:
         DENG2_ASSERT(c == '{');
         forever
         {
+            if (peek() == '}')
+            {
+                // Totally empty.
+                break;
+            }
             QString name = parseString().toString();
             c = next();
             if (c != ':') error("object keys and values must be separated by a colon");
