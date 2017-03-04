@@ -14,11 +14,11 @@ add_definitions (
 )
 
 if (CPACK_GENERATOR STREQUAL DEB)
-    add_definitions (-DDENG_PLATFORM_ID=ubuntu16-${DENG_ARCH})
+    add_definitions (-DDENG_PLATFORM_ID="ubuntu16-${DENG_ARCH}")
 elseif (CPACK_GENERATOR STREQUAL RPM)
-    add_definitions (-DDENG_PLATFORM_ID=fedora23-${DENG_ARCH})
+    add_definitions (-DDENG_PLATFORM_ID="fedora23-${DENG_ARCH}")
 else ()
-    add_definitions (-DDENG_PLATFORM_ID=source)
+    add_definitions (-DDENG_PLATFORM_ID="source")
 endif ()
 
 if (CMAKE_COMPILER_IS_GNUCXX)
