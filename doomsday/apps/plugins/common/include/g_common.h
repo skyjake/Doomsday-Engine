@@ -221,6 +221,7 @@ byte G_Ruleset_RandomClasses();
 #else
 byte G_Ruleset_RespawnMonsters();
 #endif
+void G_Ruleset_UpdateDefaults();
 
 /// @todo remove me
 void G_SetGameActionMapCompletedAndSetNextMap(void);

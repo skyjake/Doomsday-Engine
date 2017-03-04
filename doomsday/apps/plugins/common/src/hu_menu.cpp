@@ -1008,6 +1008,12 @@ void Hu_MenuInitGameplayOptionsPage()
             .setShortcut('j');
 #endif
 
+#if __JDOOM__
+    page->addWidget(new LabelWidget("Fast Monsters"));
+    page->addWidget(new CVarToggleWidget("game-monsters-fast"))
+            .setShortcut('f');
+#endif
+
 #if __JDOOM64__
     page->addWidget(new LabelWidget("Weapon Recoil"));
     page->addWidget(new CVarToggleWidget("player-weapon-recoil"));

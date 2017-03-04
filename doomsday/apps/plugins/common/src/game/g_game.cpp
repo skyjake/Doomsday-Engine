@@ -1929,6 +1929,13 @@ byte G_Ruleset_RespawnMonsters()
 }
 #endif
 
+void G_Ruleset_UpdateDefaults()
+{
+#if !__JHEXEN__
+    defaultGameRules.fast = cfg.common.defaultRuleFastMonsters;
+#endif
+}
+
 /**
  * Lookup the debriefing Finale for the current episode and map (if any).
  */

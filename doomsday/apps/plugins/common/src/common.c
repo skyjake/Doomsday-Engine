@@ -36,6 +36,13 @@ int Common_GetInteger(int id)
     return 0;
 }
 
+#ifdef __JDOOM__
+void fastMonstersChanged()
+{
+    G_Ruleset_UpdateDefaults();
+}
+#endif
+
 void Common_Register()
 {
     // Movement
@@ -46,4 +53,7 @@ void Common_Register()
 
     // Gameplay
     C_VAR_BYTE ("sound-switch-origin",  &cfg.common.switchSoundOrigin,  0, 0, 1);
+#ifdef __JDOOM__
+    C_VAR_BYTE2("game-monsters-fast",   &cfg.common.defaultRuleFastMonsters, 0, 0, 1, fastMonstersChanged);
+#endif
 }

@@ -421,6 +421,8 @@ void D_PostInit()
         ::cfg.common.netDeathmatch = 1;
     }
 
+    ::defaultGameRules.fast = cfg.common.defaultRuleFastMonsters;
+
     // Apply these rules.
     ::defaultGameRules.noMonsters      = cmdLine.check("-nomonsters")? true : false;
     ::defaultGameRules.respawnMonsters = cmdLine.check("-respawn")   ? true : false;
