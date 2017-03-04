@@ -388,10 +388,9 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
             // Items suitable for all types of profiles.
             popup->items()
-                << new ui::ActionItem(tr("Clear Packages"), new CallbackAction([this, profileItem] ()
+                << new ui::ActionItem(tr("Clear Packages"), new CallbackAction([this, button] ()
                 {
-                    profileItem->profile->setPackages(StringList());
-                    profileItem->update();
+                    button->clearPackages();
                 }))
                 << new ui::ActionItem(tr("Duplicate"), new CallbackAction([this, profileItem] ()
                 {
