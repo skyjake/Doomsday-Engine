@@ -829,6 +829,14 @@ Variable &App::config(String const &name)
     return config()[name];
 }
 
+String App::apiUrl() // static
+{
+    String u = Config::get().gets(QStringLiteral("apiUrl"));
+    if (!u.startsWith("http")) u = "http://" + u;
+    if (!u.endsWith("/")) u += "/";
+    return u;
+}
+
 UnixInfo &App::unixInfo()
 {
     return *DENG2_APP->d->unixInfo;

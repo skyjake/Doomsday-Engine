@@ -54,10 +54,7 @@ dd_bool serverPublic = false; // cvar
 
 static QString masterUrl(char const *suffix = 0)
 {
-    String u = App::config().gets("apiUrl");
-    if (!u.startsWith("http")) u = "http://" + u;
-    if (!u.endsWith("/")) u += "/";
-    u += "master_server";
+    String u = App::apiUrl() + "master_server";
     if (suffix) u += suffix;
     return u;
 }

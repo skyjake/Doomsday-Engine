@@ -346,6 +346,12 @@ public:
     static Variable &config(String const &name);
 
     /**
+     * Returns the web API URL. Always includes the protocol and ends with a slash.
+     * @return Configured web API URL.
+     */
+    static String apiUrl();
+
+    /**
      * Returns the Unix system-level configuration preferences.
      */
     static UnixInfo &unixInfo();
