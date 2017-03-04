@@ -221,6 +221,8 @@ DENG2_PIMPL(GuiWidget)
                 << blur->uColor
                 << blur->uBlurStep
                 << blur->uWindow;
+
+        blur->updatedAt = Time::currentHighPerformanceTime();
     }
 
     void deinitBlur()
@@ -247,19 +249,22 @@ DENG2_PIMPL(GuiWidget)
 
     void updateBlurredBackground()
     {
-        // Make sure blurring is initialized.
-        initBlur();
-
-        auto const now = Time::currentHighPerformanceTime();
-        if (blur->updatedAt == now)
+        if (blur)
         {
-            return;
+            auto const now = Time::currentHighPerformanceTime();
+            if (blur->updatedAt == now)
+            {
+                return;
+            }
+            blur->updatedAt = now;
         }
-        blur->updatedAt = now;
-        
+
         // Ensure normal drawing is complete.
         auto &painter = self().root().painter();
         painter.flush();
+
+        // Make sure blurring is initialized.
+        initBlur();
 
         auto const oldClip = painter.normalizedScissor();
 
@@ -1116,6 +1121,8 @@ void GuiWidget::drawBlurredRect(Rectanglei const &rect, Vector4f const &color, f
     if (!blur) return;
 
     DENG2_ASSERT(blur->fb[1]->isReady());
+
+    root().painter().flush();
 
     Vector2ui const viewSize = root().viewSize();
 
