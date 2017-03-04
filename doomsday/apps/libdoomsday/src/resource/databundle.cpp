@@ -242,7 +242,7 @@ DENG2_PIMPL(DataBundle), public Lockable
         {
             LOGDEV_RES_VERBOSE("Linking %s as %s") << self().asFile().path() << chosen.path;
 
-            //qDebug() << "linking" << dataFile.path() << chosen.path;
+            //qDebug() << "linking" << self().asFile().path() << chosen.path;
 
             pkgLink.reset(&bundleFolder().add(LinkFile::newLinkToFile(self().asFile(), chosen.path)));
 
@@ -901,20 +901,17 @@ DENG2_PIMPL(DataBundle), public Lockable
                 break;
             }
 
-            if (!packageVersion.isValid() && version.isEmpty())
-            {
-                // Do not allow linking invalid versions (0.0).
-                continue;
-            }
-
             if (!version.isEmpty())
             {
+                DENG2_ASSERT(Version(version).isValid());
                 linkPath += QString("_%1.pack").arg(version);
             }
             else
             {
                 linkPath += QStringLiteral(".pack");
             }
+
+            //qDebug() << "checking" << linkPath;
 
             // Each link must have a unique name.
             if (!bundleFolder().has(linkPath))
@@ -947,6 +944,9 @@ DENG2_PIMPL(DataBundle), public Lockable
 
         // Unique path & version not available. This version of the package is probably
         // already available.
+        LOG_RES_XVERBOSE("Failed to make a unique link for %s (%s %s score:%i)",
+                         dataFile.description() << packageId
+                         << packageVersion.fullNumber() << bundleScore);
         return PathAndVersion();
     }
 
