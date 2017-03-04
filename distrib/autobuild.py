@@ -293,108 +293,109 @@ def rebuild_apt_repository():
     os.system("~/Scripts/mirror-tree.py %s %s" % (aptDir, os.path.join(builder.config.EVENT_DIR, 'apt')))
 
 
-def write_html_page(outPath, title, content):
-    f = file(outPath, 'wt')
-    print >> f, "<html><head>"
-    print >> f, '<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">'
-    print >> f, "<title>%s</title>" % title
-    print >> f, "<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,700' rel='stylesheet' type='text/css'>"
-    print >> f, "<link href='http://files.dengine.net/build.css' rel='stylesheet' type='text/css'>"
-    print >> f, "</head><body><div id='content-outer'><div id='content-inner'>"
-    print >> f, "<h1>%s</h1>" % title
-    print >> f, content
-    print >> f, "</div></div></body>"
-    print >> f, "</html>"
-
-
-def write_report_html(tag):
-    ev = builder.Event(tag)
-    write_html_page(ev.file_path('index.html'), 'Build %i' % ev.number(),
-                    ev.html_description(False))
+# def write_html_page(outPath, title, content):
+#     f = file(outPath, 'wt')
+#     print >> f, "<html><head>"
+#     print >> f, '<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">'
+#     print >> f, "<title>%s</title>" % title
+#     print >> f, "<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,700' rel='stylesheet' type='text/css'>"
+#     print >> f, "<link href='http://files.dengine.net/build.css' rel='stylesheet' type='text/css'>"
+#     print >> f, "</head><body><div id='content-outer'><div id='content-inner'>"
+#     print >> f, "<h1>%s</h1>" % title
+#     print >> f, content
+#     print >> f, "</div></div></body>"
+#     print >> f, "</html>"
+#
+#
+# def write_report_html(tag):
+#     ev = builder.Event(tag)
+#     write_html_page(ev.file_path('index.html'), 'Build %i' % ev.number(),
+#                     ev.html_description(False))
 
 
 def update_feed():
     """Generate events.rss into the event directory."""
-    
-    feedName = os.path.join(builder.config.EVENT_DIR, "events.rss")
-    print "Updating feed in %s..." % feedName
-    
-    out = file(feedName, 'wt')
-    print >> out, '<?xml version="1.0" encoding="UTF-8"?>'
-    print >> out, '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">'
-    print >> out, '<channel>'
-    
-    print >> out, '<title>Doomsday Engine Builds</title>'
-    print >> out, '<link>http://dengine.net/</link>'
-    print >> out, '<atom:link href="%s/events.rss" rel="self" type="application/rss+xml" />' % builder.config.BUILD_URI
-    print >> out, '<description>Automated binary builds of the Doomsday Engine.</description>'
-    print >> out, '<language>en-us</language>'
-    print >> out, '<webMaster>skyjake@users.sourceforge.net (Jaakko Keränen)</webMaster>'
-    print >> out, '<lastBuildDate>%s</lastBuildDate>' % time.strftime(builder.config.RFC_TIME, 
-        time.gmtime(builder.find_newest_event()['time']))
-    print >> out, '<generator>autobuild.py</generator>'
-    print >> out, '<ttl>180</ttl>' # 3 hours
-    
-    allEvents = []
-    
-    for timestamp, ev in builder.events_by_time():
-        allEvents.append((timestamp, ev))
-        print >> out, '<item>'
-        print >> out, '<title>Build %i</title>' % ev.number()
-        print >> out, '<link>%s/%s/</link>' % ("http://files.dengine.net/builds", ev.name)
-        print >> out, '<author>skyjake@users.sourceforge.net (skyjake)</author>'
-        print >> out, '<pubDate>%s</pubDate>' % time.strftime(builder.config.RFC_TIME, time.gmtime(timestamp))
-        print >> out, '<atom:summary>%s</atom:summary>' % ev.text_summary()
-        print >> out, '<description>%s</description>' % ev.html_description()
-        print >> out, '<guid isPermaLink="false">%s</guid>' % ev.tag()
-        print >> out, '</item>'
-        
-        write_report_html(ev.tag())
-    
-    # Close.
-    print >> out, '</channel>'
-    print >> out, '</rss>'
-    
-    # Write a index page for all the builds.
-    versions = {}
-    text = '<p class="links"><a href="events.rss">RSS Feed</a> | <a href="events.xml">XML Feed</a></p>'
-    text += '<h2>Latest Builds</h2>'
-    text += '<div class="buildlist">'    
-    for timestamp, ev in allEvents:
-        eventVersion = '.'.join(ev.version().split('.')[:2])
-        if eventVersion in versions:
-            versions[eventVersion].append(ev)
-        else:
-            versions[eventVersion] = [ev]
-        text += '<div class="build %s"><a href="http://files.dengine.net/builds/build%i"><div class="buildnumber">%i</div><div class="builddate">%s</div><div class="buildversion">%s</div></a></div>' % (ev.release_type(), ev.number(), ev.number(),
-            time.strftime('%b %d', time.gmtime(timestamp)), ev.version())
-    text += '</div>'
-    
-    text += '<h2>Versions</h2>'
-    for version in versions.keys():
-        text += '<h3>%s</h3>' % version
-        text += '<div class="buildlist">'    
-        for ev in versions[version]:
-            text += '<div class="build %s"><a href="http://files.dengine.net/builds/build%i"><div class="buildnumber">%i</div><div class="builddate">%s</div><div class="buildversion">%s</div></a></div>' % (ev.release_type(), ev.number(), ev.number(),
-                time.strftime('%b %d', time.gmtime(ev.timestamp())), ev.version())
-        text += '</div>'
-            
-    write_html_page(os.path.join(builder.config.EVENT_DIR, "index.html"),
-                    'Doomsday Autobuilder', text)
+    pass
+#     feedName = os.path.join(builder.config.EVENT_DIR, "events.rss")
+#     print "Updating feed in %s..." % feedName
+#
+#     out = file(feedName, 'wt')
+#     print >> out, '<?xml version="1.0" encoding="UTF-8"?>'
+#     print >> out, '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">'
+#     print >> out, '<channel>'
+#
+#     print >> out, '<title>Doomsday Engine Builds</title>'
+#     print >> out, '<link>http://dengine.net/</link>'
+#     print >> out, '<atom:link href="%s/events.rss" rel="self" type="application/rss+xml" />' % builder.config.BUILD_URI
+#     print >> out, '<description>Automated binary builds of the Doomsday Engine.</description>'
+#     print >> out, '<language>en-us</language>'
+#     print >> out, '<webMaster>skyjake@users.sourceforge.net (Jaakko Keränen)</webMaster>'
+#     print >> out, '<lastBuildDate>%s</lastBuildDate>' % time.strftime(builder.config.RFC_TIME,
+#         time.gmtime(builder.find_newest_event()['time']))
+#     print >> out, '<generator>autobuild.py</generator>'
+#     print >> out, '<ttl>180</ttl>' # 3 hours
+#
+#     allEvents = []
+#
+#     for timestamp, ev in builder.events_by_time():
+#         allEvents.append((timestamp, ev))
+#         print >> out, '<item>'
+#         print >> out, '<title>Build %i</title>' % ev.number()
+#         print >> out, '<link>%s/%s/</link>' % ("http://files.dengine.net/builds", ev.name)
+#         print >> out, '<author>skyjake@users.sourceforge.net (skyjake)</author>'
+#         print >> out, '<pubDate>%s</pubDate>' % time.strftime(builder.config.RFC_TIME, time.gmtime(timestamp))
+#         print >> out, '<atom:summary>%s</atom:summary>' % ev.text_summary()
+#         print >> out, '<description>%s</description>' % ev.html_description()
+#         print >> out, '<guid isPermaLink="false">%s</guid>' % ev.tag()
+#         print >> out, '</item>'
+#
+#         write_report_html(ev.tag())
+#
+#     # Close.
+#     print >> out, '</channel>'
+#     print >> out, '</rss>'
+#
+#     # Write a index page for all the builds.
+#     versions = {}
+#     text = '<p class="links"><a href="events.rss">RSS Feed</a> | <a href="events.xml">XML Feed</a></p>'
+#     text += '<h2>Latest Builds</h2>'
+#     text += '<div class="buildlist">'
+#     for timestamp, ev in allEvents:
+#         eventVersion = '.'.join(ev.version().split('.')[:2])
+#         if eventVersion in versions:
+#             versions[eventVersion].append(ev)
+#         else:
+#             versions[eventVersion] = [ev]
+#         text += '<div class="build %s"><a href="http://files.dengine.net/builds/build%i"><div class="buildnumber">%i</div><div class="builddate">%s</div><div class="buildversion">%s</div></a></div>' % (ev.release_type(), ev.number(), ev.number(),
+#             time.strftime('%b %d', time.gmtime(timestamp)), ev.version())
+#     text += '</div>'
+#
+#     text += '<h2>Versions</h2>'
+#     for version in versions.keys():
+#         text += '<h3>%s</h3>' % version
+#         text += '<div class="buildlist">'
+#         for ev in versions[version]:
+#             text += '<div class="build %s"><a href="http://files.dengine.net/builds/build%i"><div class="buildnumber">%i</div><div class="builddate">%s</div><div class="buildversion">%s</div></a></div>' % (ev.release_type(), ev.number(), ev.number(),
+#                 time.strftime('%b %d', time.gmtime(ev.timestamp())), ev.version())
+#         text += '</div>'
+#
+#     write_html_page(os.path.join(builder.config.EVENT_DIR, "index.html"),
+#                     'Doomsday Autobuilder', text)
     
     
 def update_xml_feed():
-    """Generate events.xml into the event directory."""
-    
-    feedName = os.path.join(builder.config.EVENT_DIR, "events.xml")
-    print "Updating XML feed in %s..." % feedName
-    
-    out = file(feedName, 'wt')
-    print >> out, '<?xml version="1.0" encoding="UTF-8"?>'
-    print >> out, '<log>'
-    for timestamp, ev in builder.events_by_time():
-        print >> out, ev.xml_description()    
-    print >> out, '</log>'
+    pass
+#     """Generate events.xml into the event directory."""
+#
+#     feedName = os.path.join(builder.config.EVENT_DIR, "events.xml")
+#     print "Updating XML feed in %s..." % feedName
+#
+#     out = file(feedName, 'wt')
+#     print >> out, '<?xml version="1.0" encoding="UTF-8"?>'
+#     print >> out, '<log>'
+#     for timestamp, ev in builder.events_by_time():
+#         print >> out, ev.xml_description()
+#     print >> out, '</log>'
     
 
 # def purge_apt_repository(atLeastSeconds):
