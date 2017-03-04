@@ -316,7 +316,7 @@ $(document).ready(function () {
         generateItemHtml : function(n, t) {
             var html = '<a href="' + t.link + '" title="' + t.title.toLowerCase() + ' (read more in the repository)">' + t.title + ' completed</a>';
             var d = new Date(t.pubDate);
-            var niceDate = $.datepicker.formatDate('MM d, yy', d);
+            var niceDate = $.datepicker.formatDate('MM d', d);
             html += ' ' + niceDate;
             d.setDate(d.getDate() + 2);
             var isNew = (new Date() < d);
