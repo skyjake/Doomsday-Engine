@@ -408,9 +408,13 @@ void LineEditWidget::update()
 
 void LineEditWidget::drawContent()
 {
-    root().painter().flush();
+    auto &painter = root().painter();
+    painter.flush();
+
+    GLState::push().setNormalizedScissor(painter.normalizedScissor());
 
     float const opac = visibleOpacity();
+    d->uColor = Vector4f(1, 1, 1, opac); // Overall opacity.
 
     // Blink the cursor.
     Vector4f col = style().colors().colorf("editor.cursor");
@@ -421,11 +425,10 @@ void LineEditWidget::drawContent()
     }
     d->uCursorColor = col;
 
-    // Overall opacity.
-    d->uColor = Vector4f(1, 1, 1, opac);
-
     d->updateGeometry();
     d->drawable.draw();
+
+    GLState::pop();
 }
 
 bool LineEditWidget::handleEvent(Event const &event)
