@@ -28,6 +28,10 @@
 
 namespace de {
 
+#ifdef DENG2_DEBUG
+extern int GLDrawQueue_queuedElems;
+#endif
+
 namespace internal
 {
     enum Property {
@@ -648,7 +652,6 @@ void GLState::apply() const
     LIBGUI_ASSERT_GL_OK();
 
 #ifdef DENG2_DEBUG
-    extern int GLDrawQueue_queuedElems;
     DENG2_ASSERT(GLDrawQueue_queuedElems == 0);
 #endif
 

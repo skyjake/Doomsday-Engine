@@ -27,6 +27,7 @@
 namespace de {
 
 #ifdef DENG2_DEBUG
+extern int GLDrawQueue_queuedElems;
 int GLDrawQueue_queuedElems = 0;
 #endif
 

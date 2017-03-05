@@ -24,6 +24,10 @@
 
 namespace de {
 
+#ifdef DENG2_DEBUG
+extern int GLDrawQueue_queuedElems;
+#endif
+
 using namespace internal;
 using namespace gl;
 
@@ -402,7 +406,6 @@ void GLBuffer::draw(DrawRanges const *ranges) const
     ++drawCounter;
 
 #ifdef DENG2_DEBUG
-    extern int GLDrawQueue_queuedElems;
     DENG2_ASSERT(GLDrawQueue_queuedElems == 0);
 #endif
 
