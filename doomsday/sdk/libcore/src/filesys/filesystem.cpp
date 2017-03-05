@@ -114,7 +114,8 @@ Folder &FileSystem::makeFolder(String const &path, FolderCreationBehaviors behav
     if (!subFolder)
     {
         // This folder does not exist yet. Let's create it.
-        Folder &parentFolder = makeFolder(path.fileNamePath(), behavior);
+        // If the parent folder is missing, it won't be populated yet.
+        Folder &parentFolder = makeFolder(path.fileNamePath(), behavior & ~PopulateNewFolder);
 
         // It is possible that the parent folder has already populated the folder
         // we're looking for.
