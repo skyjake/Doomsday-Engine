@@ -26,6 +26,7 @@
 #include <de/Package>
 #include <de/PackageLoader>
 #include <de/ui/SubwidgetItem>
+#include <de/Loop>
 
 #include "dd_main.h"
 
@@ -40,6 +41,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
     ui::ListData actions;
     ProgressWidget *updating;
     bool ignoreCheck = false;
+    LoopCallback mainCall;
 
     Impl(Public *i) : Base(i)
     {
@@ -156,6 +158,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
             return;
         }
 
+#if 0
         qDebug() << "resolving...";
 
         auto &pkgLoader = PackageLoader::get();
@@ -206,11 +209,24 @@ DENG2_PIMPL(PackageCompatibilityDialog)
         }
 
         qDebug() << DoomsdayApp::loadedPackagesAffectingGameplay();
+#endif
 
         self().buttonsMenu().disable();
         updating->setOpacity(1, 0.3);
 
-        self().accept();
+        mainCall.enqueue([this] ()
+        {
+            auto &adhoc = DoomsdayApp::app().adhocProfile();
+            if (DoomsdayApp::currentGameProfile())
+            {
+                adhoc = *DoomsdayApp::currentGameProfile();
+            }
+            adhoc.setUseGameRequirements(false);
+            qDebug() << "using wanted:" << wanted;
+            adhoc.setPackages(wanted);
+            DoomsdayApp::app().changeGame(adhoc, DD_ActivateGameWorker);
+            self().accept();
+        });
     }
 };
 
