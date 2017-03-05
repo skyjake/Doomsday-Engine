@@ -655,7 +655,11 @@ dfloat Surface::glow(Vector3f &color) const
     TextureVariant *texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
     if (!texture) return 0;
     auto const *avgColorAmplified = reinterpret_cast<averagecolor_analysis_t const *>(texture->base().analysisDataPointer(ClientTexture::AverageColorAmplifiedAnalysis));
-    if (!avgColorAmplified) throw Error("Surface::glow", "Texture \"" + texture->base().manifest().composeUri().asText() + "\" has no AverageColorAmplifiedAnalysis");
+    if (!avgColorAmplified)
+    {
+        //throw Error("Surface::glow", "Texture \"" + texture->base().manifest().composeUri().asText() + "\" has no AverageColorAmplifiedAnalysis");
+        return 0;
+    }
 
     color = Vector3f(avgColorAmplified->color.rgb);
     return matAnimator.glowStrength() * glowFactor; // Global scale factor.

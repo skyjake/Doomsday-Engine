@@ -210,9 +210,6 @@ DENG2_PIMPL(PackageCompatibilityDialog)
         self().buttonsMenu().disable();
         updating->setOpacity(1, 0.3);
 
-        // Refresh resources.
-        //DD_UpdateEngineState();
-
         self().accept();
     }
 };
