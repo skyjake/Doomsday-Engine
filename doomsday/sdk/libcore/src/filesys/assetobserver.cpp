@@ -20,6 +20,7 @@
 #include "de/App"
 #include "de/FileSystem"
 #include "de/LinkFile"
+#include "de/Loop"
 #include <QRegExp>
 
 namespace de {
@@ -32,6 +33,7 @@ DENG2_PIMPL(AssetObserver)
 , DENG2_OBSERVES(FileIndex, Removal)
 {
     QRegExp pattern;
+    LoopCallback mainCall;
 
     static FileIndex const &linkIndex() {
         return App::fileSystem().indexFor(DENG2_TYPE_NAME(LinkFile));
@@ -56,10 +58,14 @@ DENG2_PIMPL(AssetObserver)
         // Only matching assets cause notifications.
         if (!pattern.exactMatch(link.name())) return;
 
-        DENG2_FOR_PUBLIC_AUDIENCE2(Availability, i)
+        String const ident = assetIdentifier(link);
+        mainCall.enqueue([this, ident] ()
         {
-            i->assetAvailabilityChanged(assetIdentifier(link), Added);
-        }
+            DENG2_FOR_PUBLIC_AUDIENCE2(Availability, i)
+            {
+                i->assetAvailabilityChanged(ident, Added);
+            }
+        });
     }
 
     void fileRemoved(File const &link, FileIndex const &)

@@ -32,7 +32,11 @@ DENG2_PIMPL(FileIndex), public ReadWriteLockable
     Impl(Public *i)
         : Base(i)
         , predicate(0)
-    {}
+    {
+        // File operations may occur in several threads.
+        audienceForAddition.setAdditionAllowedDuringIteration(true);
+        audienceForRemoval .setAdditionAllowedDuringIteration(true);
+    }
 
     static String indexedName(File const &file)
     {
