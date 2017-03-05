@@ -35,11 +35,11 @@ DENG_GUI_PIMPL(SaveListWidget)
     /**
      * Handles mouse button doubleclicks on the save items.
      */
-    struct DoubleClickHandler : public GuiWidget::IEventHandler
+    struct ClickHandler : public GuiWidget::IEventHandler
     {
         SaveListWidget::Impl *d;
 
-        DoubleClickHandler(SaveListWidget::Impl *d) : d(d) {}
+        ClickHandler(SaveListWidget::Impl *d) : d(d) {}
 
         bool handleEvent(GuiWidget &button, Event const &event)
         {
@@ -67,12 +67,12 @@ DENG_GUI_PIMPL(SaveListWidget)
                     }
                 }
 
-                if (button.hitTest(mouse) && mouse.state() == MouseEvent::DoubleClick)
+                /*if (button.hitTest(mouse) && mouse.state() == MouseEvent::DoubleClick)
                 {
                     emit d->self().doubleClicked(d->self().items().find(
                             *d->self().organizer().findItemForWidget(button)));
                     return true;
-                }
+                }*/
             }
             return false;
         }
@@ -118,7 +118,7 @@ DENG_GUI_PIMPL(SaveListWidget)
             toggleSelectedItem(button);
             emit owner.mouseActivity();
         });
-        button.addEventHandler(new DoubleClickHandler(this));
+        button.addEventHandler(new ClickHandler(this));
 
         auto const &saveItem = item.as<SaveListData::SaveItem>();
         button.setImage(style().images().image(Game::logoImageForId(saveItem.gameId())));
