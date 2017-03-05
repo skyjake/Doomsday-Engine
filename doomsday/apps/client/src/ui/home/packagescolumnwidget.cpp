@@ -101,8 +101,13 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
             menu->items()
                     << new ui::ActionItem(/*style().images().image("refresh"), */tr("Refresh"),
                                           new CallbackAction([this] () { packages->refreshPackages(); }))
-                    << new ui::SubwidgetItem(tr("Folders"), ui::Left, makePackageFoldersDialog);
-            return menu;
+                    << new ui::SubwidgetItem(tr("Folders"), ui::Left, [menu] () -> PopupWidget *
+                    {
+                        auto *pop = makePackageFoldersDialog();
+                        QObject::connect(pop, SIGNAL(closed()), menu, SLOT(close()));
+                        return pop;
+                    });
+                return menu;
         }, ui::Down);
     }
 };

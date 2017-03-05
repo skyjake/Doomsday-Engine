@@ -297,8 +297,15 @@ DENG_GUI_PIMPL(PackagesDialog)
                     }
                 }
             }
-            gameDataFiles->setText(_E(l) + String::format("Data file%s: ", dataFiles.size() != 1? "s" : "") +
-                                   _E(.) + String::join(dataFiles, _E(l) " and " _E(.)));
+            if (!dataFiles.isEmpty())
+            {
+                gameDataFiles->setText(_E(l) + String::format("Data file%s: ", dataFiles.size() != 1? "s" : "") +
+                                       _E(.) + String::join(dataFiles, _E(l) " and " _E(.)));
+            }
+            else
+            {
+                gameDataFiles->setText(_E(D) + tr("Locate data file in Data Files settings"));
+            }
         }
     }
 

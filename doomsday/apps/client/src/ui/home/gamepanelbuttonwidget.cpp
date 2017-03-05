@@ -68,6 +68,8 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
                 return false;
             }
 
+            if (!gameProfile.isPlayable()) return false;
+
             StringList const savePacks = item.loadedPackages();
 
             // Fallback for older saves without package metadata.
@@ -109,15 +111,8 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
                          &PackagesButtonWidget::packageSelectionChanged,
                          [this] (QStringList ids)
         {
-            StringList pkgs;
-            for (auto const &i : ids) pkgs << i;
-            gameProfile.setPackages(pkgs);
-            updatePackagesIndicator();
-            if (catalog.setPackages(gameProfile.allRequiredPackages()))
-            {
-                updateGameTitleImage();
-            }
-            savedItems.refilter();
+            gameProfile.setPackages(toStringList(ids));
+            self().updateContent();
         });
 
         playButton = new ButtonWidget;
@@ -274,10 +269,13 @@ void GamePanelButtonWidget::setSelected(bool selected)
 
 void GamePanelButtonWidget::updateContent()
 {
-    bool const isPlayable = d->game().isPlayable();
+    bool const isPlayable     = d->gameProfile.isPlayable();
+    bool const isGamePlayable = d->game().isPlayableWithDefaultPackages();
 
     playButton().enable(isPlayable);
-    d->problemIcon->show(!isPlayable);
+    playButton().show(isPlayable);
+    updateButtonLayout();
+    d->problemIcon->show(!isGamePlayable);
     d->updatePackagesIndicator();
 
     String meta = !d->gameProfile.isUserCreated()? String::number(d->game().releaseDate().year())
@@ -285,7 +283,7 @@ void GamePanelButtonWidget::updateContent()
 
     if (isSelected())
     {
-        if (!d->game().isPlayable())
+        if (!isGamePlayable)
         {
             meta = _E(D) + tr("Missing data files") + _E(.);
         }
@@ -299,6 +297,11 @@ void GamePanelButtonWidget::updateContent()
         }
     }
 
+    if (!isPlayable && isGamePlayable)
+    {
+        meta = _E(D) + tr("Selected packages missing") + _E(.);
+    }
+
     label().setText(String(_E(b) "%1\n" _E(l) "%2")
                     .arg(d->gameProfile.name())
                     .arg(meta));
@@ -309,6 +312,7 @@ void GamePanelButtonWidget::updateContent()
     {
         d->updateGameTitleImage();
     }
+    d->savedItems.refilter();
 }
 
 void GamePanelButtonWidget::unselectSave()
@@ -356,7 +360,6 @@ void GamePanelButtonWidget::selectPackages()
 void GamePanelButtonWidget::clearPackages()
 {
     d->gameProfile.setPackages(StringList());
-    d->savedItems.refilter();
     updateContent();
 }
 
