@@ -135,7 +135,10 @@ DENG_GUI_PIMPL(HomeItemWidget)
         buttonHideTimer.setSingleShot(true);
         QObject::connect(&buttonHideTimer, &QTimer::timeout, [this] ()
         {
-            for (auto *btn : buttons) btn->hide();
+            for (auto *button : buttons)
+            {
+                button->setAttribute(DontDrawContent);
+            }
         });
     }
 
@@ -152,7 +155,10 @@ DENG_GUI_PIMPL(HomeItemWidget)
                                 label->rule().top(), ui::Right);
         for (auto *button : buttons)
         {
-            layout << *button;
+            if (!button->behavior().testFlag(Hidden))
+            {
+                layout << *button;
+            }
             button->rule().setMidAnchorY(label->rule().midY());
         }
         changeRef(buttonsWidth, layout.width() + rule("gap"));
@@ -165,7 +171,18 @@ DENG_GUI_PIMPL(HomeItemWidget)
         if (show)
         {
             buttonHideTimer.stop();
-            for (auto *button : buttons) button->show();
+            for (auto *button : buttons)
+            {
+                button->setAttribute(DontDrawContent, false);
+                button->setBehavior(Focusable);
+            }
+        }
+        else
+        {
+            for (auto *button : buttons)
+            {
+                button->setBehavior(Focusable, false);
+            }
         }
 
         TimeDelta const SPAN = (self().hasBeenUpdated()? 0.4 : 0.0);
@@ -379,7 +396,6 @@ bool HomeItemWidget::handleEvent(Event const &event)
             }
         }
     }
-
     return GuiWidget::handleEvent(event);
 }
 
@@ -415,7 +431,8 @@ void HomeItemWidget::addButton(GuiWidget *widget)
 
     d->buttons << widget;
     d->label->add(widget);
-    widget->hide();
+    widget->setAttribute(DontDrawContent);
+    widget->setBehavior(Focusable, false);
     d->updateButtonLayout();
 }
 
@@ -440,4 +457,9 @@ void HomeItemWidget::setKeepButtonsVisible(bool yes)
 void HomeItemWidget::setLabelMinimumRightMargin(Rule const &rule)
 {
     d->labelMinRightMargin->setSource(rule);
+}
+
+void HomeItemWidget::updateButtonLayout()
+{
+    d->updateButtonLayout();
 }
