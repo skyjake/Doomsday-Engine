@@ -1011,13 +1011,14 @@ static void changeViewState(ViewState viewState) //, viewport_t const *port, vie
 #undef R_RenderPlayerView
 DENG_EXTERN_C void R_RenderPlayerView(dint num)
 {
-    if(num < 0 || num >= DDMAXPLAYERS) return; // Huh?
+    if (num < 0 || num >= DDMAXPLAYERS) return; // Huh?
     player_t *player = DD_Player(num);
 
-    if(!player->publicData().inGame) return;
-    if(!player->publicData().mo) return;
+    if (!player->publicData().inGame) return;
+    if (!player->publicData().mo) return;
+    if (!ClientApp::world().hasMap()) return;
 
-    if(firstFrameAfterLoad)
+    if (firstFrameAfterLoad)
     {
         // Don't let the clock run yet.  There may be some texture
         // loading still left to do that we have been unable to
@@ -1028,7 +1029,7 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
 
     // Too early? Game has not configured the view window?
     viewdata_t *vd = &player->viewport();
-    if(vd->window.isNull()) return;
+    if (vd->window.isNull()) return;
 
     // Setup for rendering the frame.
     R_SetupFrame(player);
@@ -1038,9 +1039,8 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     setupViewMatrix();
     setupPlayerSprites();
 
-    if(ClientApp::vr().mode() == VRConfig::OculusRift &&
-       ClientApp::world().hasMap() &&
-       ClientApp::world().map().isPointInVoid(Rend_EyeOrigin().xzy()))
+    if (ClientApp::vr().mode() == VRConfig::OculusRift &&
+        ClientApp::world().map().isPointInVoid(Rend_EyeOrigin().xzy()))
     {
         // Putting one's head in the wall will cause a blank screen.
         GLState::current().target().clear(GLFramebuffer::Color);
@@ -1049,14 +1049,14 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
 
     // Hide the viewPlayer's mobj?
     dint oldFlags = 0;
-    if(!(player->publicData().flags & DDPF_CHASECAM))
+    if (!(player->publicData().flags & DDPF_CHASECAM))
     {
         oldFlags = player->publicData().mo->ddFlags;
         player->publicData().mo->ddFlags |= DDMF_DONTDRAW;
     }
 
     // Go to wireframe mode?
-    if(renderWireframe)
+    if (renderWireframe)
     {
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
@@ -1070,30 +1070,27 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     //switchTo3DState(true); //, currentViewport, vd);
     changeViewState(PlayerView3D);
 
-    if(ClientApp::world().hasMap())
-    {
-        Rend_RenderMap(ClientApp::world().map());
-    }
+    Rend_RenderMap(ClientApp::world().map());
 
     // Orthogonal projection to the view window.
     //restore2DState(1); //, currentViewport, vd);
     changeViewState(PlayerSprite2D);
 
     // Don't render in wireframe mode with 2D psprites.
-    if(renderWireframe)
+    if (renderWireframe)
     {
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
     Rend_Draw2DPlayerSprites();  // If the 2D versions are needed.
 
-    if(renderWireframe)
+    if (renderWireframe)
     {
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
 
     // Do we need to render any 3D psprites?
-    if(psp3d)
+    if (psp3d)
     {
         //switchTo3DState(false); //, currentViewport, vd);
         changeViewState(PlayerView3D);
@@ -1110,13 +1107,13 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     LIBGUI_GL.glPopMatrix();
 
     // Back from wireframe mode?
-    if(renderWireframe)
+    if (renderWireframe)
     {
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
     // Now we can show the viewPlayer's mobj again.
-    if(!(player->publicData().flags & DDPF_CHASECAM))
+    if (!(player->publicData().flags & DDPF_CHASECAM))
     {
         player->publicData().mo->ddFlags = oldFlags;
     }
