@@ -202,6 +202,8 @@ public:
 
     bool isPlayable() const;
 
+    bool isPlayableWithDefaultPackages() const;
+
     /**
      * Provides access to the manifests for efficent traversals.
      */
