@@ -161,12 +161,18 @@ DENG2_PIMPL(Resources)
         bool needReset = ddPkg.hasDefinitions();
         File const &sourceFile = ddPkg.sourceFile();
 
-        if (sourceFile.is<DataBundle>())
+        if (DataBundle const *bundle = sourceFile.maybeAs<DataBundle>())
         {
+            // DEH patches cannot be loaded/unloaded as such; they are simply
+            // marked as loaded and applied all at once during a reset.
+            if (bundle->format() == DataBundle::Dehacked)
+            {
+                needReset = true;
+            }
             // We can try load the data file manually right now.
             // Data files are currently loaded via FS1.
-            if (   ( loading && File1::tryLoad(File1::LoadAsCustomFile, ddPkg.loadableUri()))
-                || (!loading && File1::tryUnload(ddPkg.loadableUri())))
+            else if (   ( loading && File1::tryLoad(File1::LoadAsCustomFile, ddPkg.loadableUri()))
+                     || (!loading && File1::tryUnload(ddPkg.loadableUri())))
             {
                 needReset = true;
             }
