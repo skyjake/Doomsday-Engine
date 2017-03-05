@@ -233,6 +233,16 @@ bool Game::isPlayable() const
     return allStartupFilesFound();
 }
 
+bool Game::isPlayableWithDefaultPackages() const
+{
+    for (String const &pkg : d->requiredPackages)
+    {
+        if (!App::packageLoader().isAvailable(pkg))
+            return false;
+    }
+    return true;
+}
+
 Game::Status Game::status() const
 {
     if (App_GameLoaded() && &DoomsdayApp::game() == this)
