@@ -198,6 +198,11 @@ hr.dashed {
     margin:0;
 }
 
+section.column {
+    margin-top: 1em;
+    margin-right: 1em;
+}
+
 #status > div.twocolumn {
     width: 36ex;
 }
@@ -237,7 +242,7 @@ hr.dashed {
 }
 
 .block article:first-of-type,
-.block section:first-of-type {
+.block section:first-of-type:not(.column) {
     margin-top: 0;
 }
 

@@ -17,33 +17,27 @@
     </article>
 </div>
 <div class="block">
-<article>
-<h1>Other Builds</h1>
-<p>See the <a href="/dew/index.php?title=Installation_%28Unix%29">Unix installation</a> article on the wiki for platform-specific instructions.</p>
+    <article>
+        <h1>Other Builds</h1>
+        <p>Binary packages are available for some Linux distributions. You can also <a href="http://wiki.dengine.net/w/Compilation">compile manually from source</a> (requires CMake 3.1 and Qt 5).</p>
 
-<h2><img src="images/debian.png" alt="debian" style="vertical-align:text-bottom;" /> Debian</h2>
-<p>Add the required repo to your "/etc/apt/sources.list" file.</p>
-<p class="leadparagraph">For Lenny:</p>
-<blockquote>
-<pre>deb http://debian.keesmeijs.nl/  lenny-kees main
-deb-src http://debian.keesmeijs.nl/ lenny-kees main</pre>
-</blockquote>
-<p class="leadparagraph">For Etch:</p>
-<blockquote>
-<pre>deb http://debian.keesmeijs.nl/  etch-kees main
-deb-src http://debian.keesmeijs.nl/ etch-kees main</pre>
-</blockquote>
+        <div id="column1" class="twocolumn collapsible">
+            <section class="column">
+                <h2><img src="images/ubuntu.png" alt="debian" style="vertical-align:text-bottom;" /> Ubuntu</h2>
+                <p><a class="link-external" href="https://launchpad.net/~sjke/+archive/ubuntu/doomsday/">skyjake's PPA</a> has Doomsday builds for a number of versions of Ubuntu. The <a class="link-external" href="http://packages.ubuntu.com/xenial/games/doomsday">Ubuntu repositories</a> should also have stable releases of Doomsday.</p>
 
-<p>The "kees-archive-keyring" package contains the archive signing key, or you can download <a href="http://debian.keesmeijs.nl/kees-archive-keyring.pub" class="link-external">http://debian.keesmeijs.nl/kees-archive-keyring.pub</a> and install it manually.</p>
+                <h2><img src="images/debian.png" alt="debian" style="vertical-align:text-bottom;" /> Debian</h2>
+                <p>Check Debian's repositories for binary packages.</p>
+            </section>
+        </div>
+        <div id="column2" class="twocolumn collapsible">
+            <section class="column">
+                <h2><img src="images/gentoo.png" alt="Gentoo" style="vertical-align:text-bottom;" /> Gentoo</h2>
+                <p><a href="https://packages.gentoo.org/packages/games-fps/doomsday" class="link-external">Doomsday Engine package for Gentoo</a></p>
 
-<h2><img src="images/gentoo.png" alt="Gentoo" style="vertical-align:text-bottom;" /> Gentoo</h2>
-<p><a href="http://gentoo-portage.com/games-fps/doomsday" class="link-external">Doomsday Engine package for Gentoo</a></p>
-
-<h2><img src="images/opensuse.png" alt="openSUSE" style="vertical-align:text-bottom;"/> openSUSE 12.1</h2>
-<p>Binary packages for Doomsday are available in the <a href="http://download.opensuse.org/repositories/games/openSUSE_12.1/" class="link-external">openSUSE repositories.</a></p>
-
-<h2><img src="images/redhat.gif" alt="RedHat" style="vertical-align:text-bottom;" /> RedHat Enterprise Linux 6</h2>
-<p><a href="http://gapf.ninth.su/el/6/RPMS/repoview/doomsday.html" class="link-external">Doomsday RPM packages</a> built by forum user <a href="/forums/memberlist.php?mode=viewprofile&u=396">skolnick</a>. Should also be compatible with RHEL derivatives such as CentOS and Scientific Linux. For more information, see the <a href="http://gapf.ninth.su/" class="link-external">repository's home page.</a></p>
-
-</article>
+                <h2><img src="images/opensuse.png" alt="openSUSE" style="vertical-align:text-bottom;"/> openSUSE</h2>
+                <p>Binary packages for Doomsday are available in the <a href="https://software.opensuse.org/package/doomsday" class="link-external">openSUSE repositories.</a></p>
+            </section>
+        </div>
+    </article>
 </div>
