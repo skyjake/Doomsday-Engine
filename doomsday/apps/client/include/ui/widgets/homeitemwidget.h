@@ -76,6 +76,9 @@ public:
 
     virtual void itemRightClicked();
 
+protected:
+    void updateButtonLayout();
+
 signals:
     void mouseActivity();
     void doubleClicked();
