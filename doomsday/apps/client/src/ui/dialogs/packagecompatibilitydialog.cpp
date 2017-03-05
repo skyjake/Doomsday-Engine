@@ -186,10 +186,10 @@ DENG2_PIMPL(PackageCompatibilityDialog)
             qDebug() << "unloading excess" << loaded.at(i);
 
             pkgLoader.unload(loaded.at(i));
-            if (DataBundle const *bundle = DataBundle::bundleForPackage(loaded.at(i)))
+            /*if (DataBundle const *bundle = DataBundle::bundleForPackage(loaded.at(i)))
             {
                 File1::tryUnload(*bundle);
-            }
+            }*/
             loaded.removeAt(i);
         }
 
@@ -199,10 +199,10 @@ DENG2_PIMPL(PackageCompatibilityDialog)
             qDebug() << "loading wanted" << wanted.at(i);
 
             pkgLoader.load(wanted.at(i));
-            if (DataBundle const *bundle = DataBundle::bundleForPackage(wanted.at(i)))
+            /*if (DataBundle const *bundle = DataBundle::bundleForPackage(wanted.at(i)))
             {
                 File1::tryLoad(*bundle);
-            }
+            }*/
         }
 
         qDebug() << DoomsdayApp::loadedPackagesAffectingGameplay();
@@ -211,7 +211,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
         updating->setOpacity(1, 0.3);
 
         // Refresh resources.
-        DD_UpdateEngineState();
+        //DD_UpdateEngineState();
 
         self().accept();
     }
