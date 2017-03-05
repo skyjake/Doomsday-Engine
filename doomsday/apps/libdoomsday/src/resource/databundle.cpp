@@ -905,8 +905,7 @@ DENG2_PIMPL(DataBundle), public Lockable
                 // Larger versions are preferred when multiple versions are available,
                 // so use the major version 0 to avoid always preferring these date-based
                 // versions.
-                version = version.concatenateMember(dataFile.status().modifiedAt
-                                                    .asDateTime().toString("0.yyyy.MMdd.hhmm"));
+                version = dataFile.status().modifiedAt.asDateTime().toString("0.yyyy.MMdd.hhmm");
                 break;
             }
 
