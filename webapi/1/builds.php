@@ -132,6 +132,9 @@ function generate_build_page($number)
                     if (isset($last_plat) && $shown_name == $last_plat['name']) {
                         $shown_name = '';
                     }
+                    if ($shown_name && ($plat['os'] == 'windows' || $plat['os'] == 'macx')) {
+                        $shown_name .= "<br>(or&nbsp;later)";
+                    }
                     cache_echo("<td class='platform $cell_class' rowspan='$bin_count'>".$shown_name
                         ."</td>");
                     $last_plat = $plat;
