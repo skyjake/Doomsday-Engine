@@ -68,24 +68,31 @@ function generate_header($page_title)
 {
     header('Content-Type: text/html;charset=UTF-8');
     
-    echo("<!DOCTYPE html>\n");
-    echo("<html lang=\"en\"><head>\n");
-    echo("  <meta charset=\"UTF-8\">\n");
-    echo("  <link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,700' rel='stylesheet' type='text/css'>\n");
-    echo("  <link href='http://api.dengine.net/1/build_page.css' rel='stylesheet' type='text/css'>\n");
-    echo("  <title>$page_title</title>\n");
-    echo("</head><body>\n");
-    echo("<h1>$page_title</h1>\n");
+    cache_echo("<!DOCTYPE html>\n");
+    cache_echo("<html lang=\"en\"><head>\n");
+    cache_echo("  <meta charset=\"UTF-8\">\n");
+    cache_echo("  <link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,700' rel='stylesheet' type='text/css'>\n");
+    cache_echo("  <link href='http://api.dengine.net/1/build_page.css' rel='stylesheet' type='text/css'>\n");
+    cache_echo("  <title>$page_title</title>\n");
+    cache_echo("</head><body>\n");
+    cache_echo("<h1>$page_title</h1>\n");
 }
 
 function generate_footer()
 {
-    echo("</body></html>");
+    cache_echo("</body></html>");
 }
 
 function generate_build_page($number)
 {
     $user_platform = detect_user_platform();
+    
+    // Check the cache first.
+    $ckey = cache_key('builds', [$number, $user_platform]);
+    if (cache_try_load($ckey)) {
+        cache_dump();
+        return;
+    }        
         
     $db = db_open();
     $result = db_query($db, "SELECT * FROM ".DB_TABLE_BUILDS." WHERE build=$number");
@@ -99,12 +106,12 @@ function generate_build_page($number)
         // Output page header.
         generate_header(human_version($version, $number, $type));
 
-        echo("<p class='links'><a href='http://dengine.net/'>dengine.net</a> | <a href='".DENG_API_URL."/builds?format=html'>Autobuilder Index</a> | <a href='".DENG_API_URL."/builds?format=feed'>RSS Feed</a></p>\n");
+        cache_echo("<p class='links'><a href='http://dengine.net/'>dengine.net</a> | <a href='".DENG_API_URL."/builds?format=html'>Autobuilder Index</a> | <a href='".DENG_API_URL."/builds?format=feed'>RSS Feed</a></p>\n");
 
-        echo(db_build_summary($db, $number));
+        cache_echo(db_build_summary($db, $number));
 
         // Files to download.
-        echo("<h2>Downloads</h2>\n"
+        cache_echo("<h2>Downloads</h2>\n"
             ."<table class='downloads'>\n");
         $last_plat = NULL;
         foreach (db_platform_list($db) as $plat) {
@@ -118,45 +125,45 @@ function generate_build_page($number)
                 if (isset($last_plat) && $last_plat['os'] != $plat['os']) {
                     $row_class = 'separator';
                 }
-                echo("<tr class='$row_class'>");
+                cache_echo("<tr class='$row_class'>");
                 $cell_class = ($plat['os'] == $user_platform? 'detected' : '');
                 if ($i == 0) {
                     $shown_name = $plat['name'];
                     if (isset($last_plat) && $shown_name == $last_plat['name']) {
                         $shown_name = '';
                     }
-                    echo("<td class='platform $cell_class' rowspan='$bin_count'>".$shown_name
+                    cache_echo("<td class='platform $cell_class' rowspan='$bin_count'>".$shown_name
                         ."</td>");
                     $last_plat = $plat;
                 }
                 $main_url   = download_link($bin['name']);
                 $mirror_url = $main_url."&mirror=sf";
-                echo("<td class='binary'>");
-                echo("<div class='filename'><a href='$main_url'>$bin[name]</a></div>"
+                cache_echo("<td class='binary'>");
+                cache_echo("<div class='filename'><a href='$main_url'>$bin[name]</a></div>"
                     ."<div class='fileinfo'>"
                     ."<div class='filesize'>$mb_size MB</div>");
                 if (!empty($bin['signature'])) {
-                    echo("<a class='signature' href='".DENG_API_URL."/builds?signature=$bin[name]'>Sig &#x21E3;</a> ");
+                    cache_echo("<a class='signature' href='".DENG_API_URL."/builds?signature=$bin[name]'>Sig &#x21E3;</a> ");
                 }
-                echo("<div class='hash'>MD5: <span class='digits'>$bin[md5]</span></div>");
-                echo("</div>\n");
+                cache_echo("<div class='hash'>MD5: <span class='digits'>$bin[md5]</span></div>");
+                cache_echo("</div>\n");
                 $fext = "<span class='fext'>"
                     .strtoupper(pathinfo($bin['name'], PATHINFO_EXTENSION))."</span>";
                 unset($bits);
                 if ($plat['cpu_bits'] > 0) {
                     $bits = ' '.$plat['cpu_bits'].'-bit ';
                 }
-                echo("</td><td class='button'><a class='download' href='$main_url'>$fext$bits<span class='downarrow'>&#x21E3;</span></a>");
-                echo("</td><td class='button'><a class='download mirror' href='$mirror_url'>Mirror <span class='downarrow'>&#x21E3;</span></a>");
-                echo("</td></tr>\n");
+                cache_echo("</td><td class='button'><a class='download' href='$main_url'>$fext$bits<span class='downarrow'>&#x21E3;</span></a>");
+                cache_echo("</td><td class='button'><a class='download mirror' href='$mirror_url'>Mirror <span class='downarrow'>&#x21E3;</span></a>");
+                cache_echo("</td></tr>\n");
             }
         }
-        echo("</table>\n");
+        cache_echo("</table>\n");
 
         // Change log.
         if (($changes = json_decode($build_info['changes'])) != NULL) {
             if (count($changes->commits)) {
-                echo("<h2>Commits</h2>\n");
+                cache_echo("<h2>Commits</h2>\n");
                 $groups = group_commits_by_tag($changes->commits);
                 $keys = array_keys($groups);
                 natcasesort($keys);
@@ -164,7 +171,7 @@ function generate_build_page($number)
                     if (empty($groups[$key])) {
                         continue;
                     }
-                    echo("<h3 class='commitgroup'>$key</h3><ul class='commitlist'>\n");
+                    cache_echo("<h3 class='commitgroup'>$key</h3><ul class='commitlist'>\n");
                     foreach ($groups[$key] as $commit) {
                         // Which other groups this commit could belong to?
                         $other_groups = [];
@@ -186,12 +193,12 @@ function generate_build_page($number)
                         $subject = htmlspecialchars($commit->subject);
                         $author = htmlentities($commit->author);
                         $msg = basic_markdown(htmlentities($commit->message));
-                        echo("<li><a href='$github_link'>$date</a> "
+                        cache_echo("<li><a href='$github_link'>$date</a> "
                             ."<span class='title'><a href='$trgit_link'>$subject</a></span> "
                             ."by <span class='author'>$author</span>".$others
                             ."<div class='message'>$msg</div></li>\n");
                     }
-                    echo("</ul>\n");
+                    cache_echo("</ul>\n");
                 }
             }
         }
@@ -200,15 +207,24 @@ function generate_build_page($number)
         generate_footer();
     }
     $db->close();
+    
+    cache_dump();
+    cache_store($ckey);
 }
 
 function generate_build_index_page()
 {
+    $ckey = cache_key('builds', 'index');
+    if (cache_try_load($ckey)) {
+        cache_dump();
+        return;
+    }
+
     generate_header("Doomsday Autobuilder");
-    
+        
     $this_year_ts = mktime(0, 0, 0, 1, 1);
 
-    echo("<p class='links'><a href='http://dengine.net/'>dengine.net</a> | <a href='".DENG_API_URL."/builds?format=feed'>RSS Feed</a></p>"
+    cache_echo("<p class='links'><a href='http://dengine.net/'>dengine.net</a> | <a href='".DENG_API_URL."/builds?format=feed'>RSS Feed</a></p>"
         .'<h2>Latest Builds</h2>'
         .'<div class="buildlist">');
 
@@ -238,41 +254,50 @@ function generate_build_index_page()
         }
 
         $build_date = $info['date'];
-        echo("<div class='build $type'>"
+        cache_echo("<div class='build $type'>"
             ."<a href=\"".DENG_API_URL."/builds?number=${build}&amp;format=html\">"
             ."<div class='buildnumber'>$build</div>"
             ."<div class='builddate'>$build_date</div>"
             ."<div class='buildversion'>".omit_zeroes($version)."</div></a></div>\n");
     }
-    echo("</div>\n");
+    cache_echo("</div>\n");
     $db->close();
 
-    echo("<h2 id='versions-subtitle'>Versions</h2><div id='other-versions'>\n");
+    cache_echo("<h2 id='versions-subtitle'>Versions</h2><div id='other-versions'>\n");
     foreach ($all_versions as $version => $builds) {
         $relnotes_link = DENG_WIKI_URL."/Doomsday_version_".omit_zeroes($version);
-        echo("<div class='version'><h3><a href='$relnotes_link'>".omit_zeroes($version)."</a></h3>"
+        cache_echo("<div class='version'><h3><a href='$relnotes_link'>".omit_zeroes($version)."</a></h3>"
             ."<div class='buildlist'>\n");
         foreach ($builds as $info) {
             $type       = $info['type'];
             $build_date = $info['date'];
             $build      = $info['build'];
-            echo("<div class='build $type'>"
+            cache_echo("<div class='build $type'>"
                 ."<a href=\"".DENG_API_URL."/builds?number=${build}&amp;format=html\">"
                 ."<div class='buildnumber'>$build</div>"
                 ."<div class='builddate'>$build_date</div>"
                 ."<div class='buildversion'>".omit_zeroes($version)."</div></a></div>\n");
         }
-        echo("</div></div>\n");
+        cache_echo("</div></div>\n");
     }
-    echo("</div>\n");
+    cache_echo("</div>\n");
 
     // Output page footer.
     generate_footer();
+    
+    cache_dump();
+    cache_store($ckey);
 }
 
 function generate_build_feed()
 {
     header('Content-Type: application/rss+xml');
+    
+    $ckey = cache_key('builds', 'feed');
+    if (cache_try_load($ckey)) {
+        cache_dump();
+        return;
+    }
     
     // Check the time of the latest build.
     $db = db_open();
@@ -287,7 +312,7 @@ function generate_build_feed()
     $contact = 'skyjake@dengine.net (Jaakko Keränen)';
 
     // Feed header.
-    echo("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+    cache_echo("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
         ."<rss version=\"2.0\" xmlns:atom=\"http://www.w3.org/2005/Atom\">\n"
         .'<channel>'
         .'<title>Doomsday Engine Builds</title>'
@@ -299,9 +324,7 @@ function generate_build_feed()
         ."<lastBuildDate>$latest_ts</lastBuildDate>"
         .'<generator>'.DENG_API_URL.'/builds</generator>'
         .'<ttl>180</ttl>'); # 3 hours
-            
-    #allEvents = []
-    
+                
     $max_unstable = 10;
     $unstable_count = 0;
     $result = db_query($db, 'SELECT build, type, UNIX_TIMESTAMP(timestamp) FROM '
@@ -317,7 +340,7 @@ function generate_build_feed()
                 continue;
             }
         }
-        echo("\n<item>\n"
+        cache_echo("\n<item>\n"
             ."<title>Build $row[build]</title>\n"
             ."<link>$build_url</link>\n"
             ."<author>$contact</author>\n"
@@ -327,8 +350,11 @@ function generate_build_feed()
             ."<guid isPermaLink=\"false\">$guid</guid>\n"
             ."</item>\n");
     }    
-    echo('</channel></rss>');
+    cache_echo('</channel></rss>');
     $db->close();
+    
+    cache_dump();
+    cache_store($ckey);
 }
 
 //---------------------------------------------------------------------------------------
