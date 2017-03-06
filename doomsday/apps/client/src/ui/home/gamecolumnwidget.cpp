@@ -451,7 +451,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
         if (!Config::get().getb("home.showUnplayableGames"))
         {
-            drawer.show(item.as<ProfileItem>().game().isPlayable());
+            drawer.show(item.as<ProfileItem>().game().isPlayableWithDefaultPackages());
         }
         else
         {
