@@ -613,7 +613,7 @@ QImage GLFramebuffer::toImage() const
                                (GLvoid *) img.constBits());
         // Restore the stack's target.
         GLState::current().target().glBind();
-        return img;
+        return img.mirrored(false, true);
     }
     return QImage();
 }
