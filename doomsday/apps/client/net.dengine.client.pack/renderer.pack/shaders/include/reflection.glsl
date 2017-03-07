@@ -45,6 +45,7 @@ highp vec3 reflectedColorBiased(highp vec3 msNormal, float bias)
     reflectedDir = (uReflectionMatrix * vec4(reflectedDir, 0.0)).xyz;
         
     // Match world space directions.
+    reflectedDir.z = -reflectedDir.z;
     reflectedDir.y = -reflectedDir.y;
     return textureCube(uReflectionTex, reflectedDir, min(bias, MAX_REFLECTION_BIAS)).rgb;
 }
