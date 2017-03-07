@@ -390,16 +390,6 @@ Rangef GL_DepthClipRange()
     return Rangef(glNearClip, glFarClip);
 }
 
-Matrix4f GL_GetProjectionMatrix()
-{
-    dfloat const fov = Rend_FieldOfView();
-    //Vector2f const size(viewpw, viewph);
-    Vector2f const size = R_Console3DViewRect(displayPlayer).size();
-    yfov = vrCfg().verticalFieldOfView(fov, size);
-    return vrCfg().projectionMatrix(Rend_FieldOfView(), size, glNearClip, glFarClip) *
-           Matrix4f::scale(Vector3f(1, 1, -1));
-}
-
 void GL_ProjectionMatrix()
 {
     DENG_ASSERT_IN_MAIN_THREAD();
@@ -408,7 +398,7 @@ void GL_ProjectionMatrix()
     // Actually shift the player viewpoint
     // We'd like to have a left-handed coordinate system.
     LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glLoadMatrixf(GL_GetProjectionMatrix().values());
+    LIBGUI_GL.glLoadMatrixf(Rend_GetProjectionMatrix().values());
 }
 
 void GL_SetupFogFromMapInfo(Record const *mapInfo)

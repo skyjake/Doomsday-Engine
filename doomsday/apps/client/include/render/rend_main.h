@@ -179,7 +179,16 @@ de::Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool inWorldSpace = true);
 
 de::Vector3d Rend_EyeOrigin();
 
+/**
+ * Returns the projection matrix that is used for rendering the current frame's
+ * 3D portions.
+ */
+de::Matrix4f Rend_GetProjectionMatrix();
+
 #define Rend_PointDist2D(c) (fabs((vOrigin.z-(c)[VY])*viewsidex - (vOrigin.x-(c)[VX])*viewsidey))
+
+void Rend_SetFixedView(int consoleNum, float yaw, float pitch, float fov, de::Vector2f viewportSize);
+void Rend_UnsetFixedView();
 
 /**
  * The DOOM lighting model applies a light level delta to everything when

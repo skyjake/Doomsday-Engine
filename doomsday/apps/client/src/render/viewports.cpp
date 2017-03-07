@@ -675,7 +675,6 @@ void R_SetupFrame(player_t *player)
             player->extraLight = player->targetExtraLight;
     }
 
-    // Why?
     validCount++;
 
     extraLight      = player->extraLight;
@@ -887,7 +886,7 @@ static Matrix4f frameViewMatrix;
 static void setupViewMatrix()
 {
     // This will be the view matrix for the current frame.
-    frameViewMatrix = GL_GetProjectionMatrix() *
+    frameViewMatrix = Rend_GetProjectionMatrix() *
                       Rend_GetModelViewMatrix(DoomsdayApp::players().indexOf(viewPlayer));
 }
 
@@ -1223,56 +1222,27 @@ void R_RenderViewPort(int playerNum)
     RectRaw vdWindow(vd->window.topLeft.x, vd->window.topLeft.y,
                      vd->window.width(), vd->window.height());
 
-    //switch(layer)
-    //{
-    //case Player3DViewLayer:
-
     R_UpdateViewer(vp->console);
-
-    //LensFx_BeginFrame(vp->console);
 
     gx.DrawViewPort(localNum, &vpGeometry, &vdWindow, displayPlayer, /* layer: */ 0);
 
-        //LensFx_EndFrame();
-        //break;
-
-    LensFx_Draw(vp->console);
-
     // Apply camera lens effects on the rendered view.
-
-
-#if 0
-    case ViewBorderLayer:
-        R_RenderPlayerViewBorder();
-        break;
-
-    case HUDLayer:
-        gx.DrawViewPort(p, &vpGeometry, &vdWindow, displayPlayer, /* layer: */ 1);
-        break;
-    }
-#endif
+    LensFx_Draw(vp->console);
 
     restoreDefaultGLState();
 
     LIBGUI_GL.glMatrixMode(GL_PROJECTION);
     LIBGUI_GL.glPopMatrix();
-//}
 
-//if(layer == Player3DViewLayer)
-//{
     // Increment the internal frame count. This does not
     // affect the window's FPS counter.
     frameCount++;
 
     // Keep reseting until a new sharp world has arrived.
     if(resetNextViewer > 1) resetNextViewer = 0;
-//}
 
     // Restore things back to normal.
     displayPlayer = oldDisplay;
-
-    //R_UseViewPort(nullptr);
-    //currentViewport = nullptr;
 }
 
 #if 0
@@ -1539,9 +1509,9 @@ void R_ViewerClipLumobj(Lumobj *lum)
     /// @todo Determine the exact centerpoint of the light in addLuminous!
     Vector3d const origin(lum->x(), lum->y(), lum->z() + lum->zOffset());
 
-    if(!(devNoCulling || P_IsInVoid(DD_Player(displayPlayer))))
+    if (!P_IsInVoid(DD_Player(displayPlayer)) && !devNoCulling)
     {
-        if(!ClientApp::renderSystem().angleClipper().isPointVisible(origin))
+        if (!ClientApp::renderSystem().angleClipper().isPointVisible(origin))
         {
             markLumobjClipped(*lum); // Won't have a halo.
         }
@@ -1551,7 +1521,7 @@ void R_ViewerClipLumobj(Lumobj *lum)
         markLumobjClipped(*lum);
 
         Vector3d const eye = Rend_EyeOrigin().xzy();
-        if(LineSightTest(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER)
+        if (LineSightTest(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER)
                 .trace(lum->map().bspTree()))
         {
             markLumobjClipped(*lum, false); // Will have a halo.

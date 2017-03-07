@@ -517,7 +517,7 @@ void LensFlares::draw()
 
     d->uViewUnit  = Vector2f(aspect, 1.f);
     d->uPixelAsUv = Vector2f(1.f / window.pixelWidth(), 1.f / window.pixelHeight());
-    d->uMvpMatrix = Viewer_Matrix(); //GL_GetProjectionMatrix() * Rend_GetModelViewMatrix(console());
+    d->uMvpMatrix = Viewer_Matrix(); //Rend_GetProjectionMatrix() * Rend_GetModelViewMatrix(console());
 
     DENG2_ASSERT(console() == displayPlayer);
     //DENG2_ASSERT(viewPlayer - ddPlayers == displayPlayer);

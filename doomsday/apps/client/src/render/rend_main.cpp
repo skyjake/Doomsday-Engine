@@ -157,6 +157,7 @@ D_CMD(OpenRendererAppearanceEditor);
 D_CMD(LowRes);
 D_CMD(MipMap);
 D_CMD(TexReset);
+D_CMD(CubeShot);
 
 #if 0
 dint useBias;  ///< Shadow Bias enabled? cvar
@@ -228,6 +229,17 @@ dint glmode[6] = // Indexed by 'mipmapping'.
 Vector3d vOrigin;
 dfloat vang, vpitch;
 dfloat viewsidex, viewsidey;
+
+// Helper for overriding the normal view matrices.
+struct FixedView
+{
+    Matrix4f projectionMatrix;
+    Matrix4f modelViewMatrix;
+    float yaw;
+    float pitch;
+    float horizontalFov;
+};
+static std::unique_ptr<FixedView> fixedView;
 
 dbyte freezeRLs;
 dint devNoCulling;  ///< @c 1= disabled (cvar).
@@ -413,6 +425,11 @@ bool Rend_IsMTexDetails()
 
 dfloat Rend_FieldOfView()
 {
+    if (fixedView)
+    {
+        return fixedView->horizontalFov;
+    }
+
     if (vrCfg().mode() == VRConfig::OculusRift)
     {
         // OVR tells us which FOV to use.
@@ -445,19 +462,52 @@ Vector3d Rend_EyeOrigin()
     return vEyeOrigin;
 }
 
+void Rend_SetFixedView(int consoleNum, float yaw, float pitch, float fov, Vector2f viewportSize)
+{
+    viewdata_t const *viewData = &DD_Player(consoleNum)->viewport();
+
+    fixedView.reset(new FixedView);
+
+    fixedView->yaw = yaw;
+    fixedView->pitch = pitch;
+    fixedView->horizontalFov = fov;
+    fixedView->modelViewMatrix =
+            Matrix4f::rotate(pitch, Vector3f(1, 0, 0)) *
+            Matrix4f::rotate(yaw,   Vector3f(0, 1, 0)) *
+            Matrix4f::scale(Vector3f(1.0f, 1.2f, 1.0f)) * // This is the aspect correction.
+            Matrix4f::translate(-viewData->current.origin.xzy());
+
+    Rangef const clip = GL_DepthClipRange();
+    fixedView->projectionMatrix = BaseGuiApp::app().vr()
+            .projectionMatrix(fov, viewportSize, clip.start, clip.end) *
+            Matrix4f::scale(Vector3f(1, 1, -1));
+}
+
+void Rend_UnsetFixedView()
+{
+    fixedView.reset();
+}
+
 Matrix4f Rend_GetModelViewMatrix(dint consoleNum, bool inWorldSpace)
 {
     viewdata_t const *viewData = &DD_Player(consoleNum)->viewport();
 
-    dfloat bodyAngle = viewData->current.angleWithoutHeadTracking() / (dfloat) ANGLE_MAX * 360 - 90;
-
     /// @todo vOrigin et al. shouldn't be changed in a getter function. -jk
 
     vOrigin = viewData->current.origin.xzy();
-    vang    = viewData->current.angle() / (dfloat) ANGLE_MAX * 360 - 90;  // head tracking included
-    vpitch  = viewData->current.pitch * 85.0 / 110.0;
-
     vEyeOrigin = vOrigin;
+
+    if (fixedView)
+    {
+        vang   = fixedView->yaw;
+        vpitch = fixedView->pitch;
+        return fixedView->modelViewMatrix;
+    }
+
+    vang   = viewData->current.angle() / (dfloat) ANGLE_MAX * 360 - 90;  // head tracking included
+    vpitch = viewData->current.pitch * 85.0 / 110.0;
+
+    dfloat bodyAngle = viewData->current.angleWithoutHeadTracking() / (dfloat) ANGLE_MAX * 360 - 90;
 
     OculusRift &ovr = vrCfg().oculusRift();
     bool const applyHead = (vrCfg().mode() == VRConfig::OculusRift && ovr.isReady());
@@ -521,6 +571,22 @@ void Rend_ModelViewMatrix(bool inWorldSpace)
 
     LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
     LIBGUI_GL.glLoadMatrixf(Rend_GetModelViewMatrix(DoomsdayApp::players().indexOf(viewPlayer), inWorldSpace).values());
+}
+
+Matrix4f Rend_GetProjectionMatrix()
+{
+    if (fixedView)
+    {
+        return fixedView->projectionMatrix;
+    }
+
+    dfloat const fov = Rend_FieldOfView();
+    //Vector2f const size(viewpw, viewph);
+    Vector2f const size = R_Console3DViewRect(displayPlayer).size();
+    yfov = vrCfg().verticalFieldOfView(fov, size);
+    Rangef const clip = GL_DepthClipRange();
+    return vrCfg().projectionMatrix(Rend_FieldOfView(), size, clip.start, clip.end) *
+           Matrix4f::scale(Vector3f(1, 1, -1));
 }
 
 static inline ddouble viewFacingDot(Vector2d const &v1, Vector2d const &v2)
@@ -6439,6 +6505,7 @@ void Rend_Register()
 
     C_CMD("rendedit", "", OpenRendererAppearanceEditor);
     C_CMD("modeledit", "", OpenModelAssetEditor);
+    C_CMD("cubeshot", "i", CubeShot);
 
     C_CMD_FLAGS("lowres", "", LowRes, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("mipmap", "i", MipMap, CMDF_NO_DEDICATED);

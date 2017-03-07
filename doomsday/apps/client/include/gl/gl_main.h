@@ -134,12 +134,6 @@ void GL_ProjectionMatrix();
 de::Rangef GL_DepthClipRange();
 
 /**
- * Returns the projection matrix that is used for rendering the current frame's
- * 3D portions.
- */
-de::Matrix4f GL_GetProjectionMatrix();
-
-/**
  * The first selected unit is active after this call.
  */
 void GL_SelectTexUnits(int count);
