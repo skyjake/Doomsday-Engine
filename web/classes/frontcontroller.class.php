@@ -417,7 +417,7 @@ class FrontController
 
         $rightTabs = array();
         $rightTabs[] = array('page'=>'/addons',       'label'=>'Add-ons', 'tooltip'=>'Add-ons for games playable with the Doomsday Engine');
-        $rightTabs[] = array('page'=>'/forums',       'label'=>'Forums',  'tooltip'=>'Doomsday Engine user forums');
+        $rightTabs[] = array('page'=>'/talk/categories', 'label'=>'Forums',  'tooltip'=>'Doomsday Engine user forums');
         $rightTabs[] = array('page'=>'/masterserver', 'label'=>'Servers', 'tooltip'=>'Doomsday Engine server browser');
 
 ?>
