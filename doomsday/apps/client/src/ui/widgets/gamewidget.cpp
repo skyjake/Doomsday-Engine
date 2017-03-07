@@ -212,7 +212,7 @@ void GameWidget::renderCubeMap(uint size, String const &outputImagePath)
     GLTextureFramebuffer destFb(Image::RGB_888, fbSize, 1);
     destFb.glInit();
 
-    LOG_GL_MSG("Rendering %ix%i cube map to \"%s\"") << 6*fbSize.x << fbSize.y << outputImagePath;
+    LOG_GL_MSG("Rendering %ix%i cube map...") << 6 * fbSize.x << fbSize.y;
 
     // Prevent the angleclipper from clipping anything.
     int old_devNoCulling = devNoCulling;
@@ -253,9 +253,21 @@ void GameWidget::renderCubeMap(uint size, String const &outputImagePath)
         buf.open(QBuffer::WriteOnly);
         composited.save(&buf, outputImagePath.fileNameExtension().mid(1).toLatin1());
 
-        File &outFile = FS::get().root().replaceFile(outputImagePath);
+        // Choose a unique name.
+        int counter = 0;
+        String uniquePath = outputImagePath;
+        while (FS::tryLocate<File const>(uniquePath))
+        {
+            uniquePath = outputImagePath.fileNameAndPathWithoutExtension() +
+                    String::format("-%03i", counter++) +
+                    outputImagePath.fileNameExtension();
+        }
+
+        File &outFile = FS::get().root().replaceFile(uniquePath);
         outFile << Block(buf.data());
         outFile.flush();
+
+        LOG_GL_MSG("Cube map saved to \"%s\"") << outFile.correspondingNativePath();
     }
 
     // Cleanup.
