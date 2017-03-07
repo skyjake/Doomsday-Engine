@@ -59,37 +59,44 @@ class HomePlugin extends Plugin implements Actioner, RequestInterpreter
         //includeHTML('latestversion', 'z#home');
         
         require_once(DENG_API_DIR.'/include/builds.inc.php');
-        
         $user_platform = detect_user_platform();
-        $dl_link = 'http://dengine.net/';
-        switch ($user_platform) {
-            case 'windows':
-                $dl_link .= 'windows';
-                break;
-            case 'macx':
-                $dl_link .= 'mac_os';
-                break;
-            case 'linux':
-                $dl_link .= 'linux';
-                break;
-            default:
-                $dl_link .= 'source';
-                break;
+        $ckey = cache_key('home', ['latest_stable', $user_platform]);
+        if (cache_try_load($ckey)) {
+            cache_dump();
         }
-        // Find out the latest stable build.
-        $db = db_open();
-        $result = db_query($db, "SELECT version FROM ".DB_TABLE_BUILDS
-            ." WHERE type=".BT_STABLE." ORDER BY timestamp DESC LIMIT 1");
-        if ($row = $result->fetch_assoc()) {
-            $button_label = omit_zeroes($row['version']);
-        }
-        else {
-            $button_label = 'Download';            
-        }
-        $db->close();
+        else {        
+            $dl_link = 'http://dengine.net/';
+            switch ($user_platform) {
+                case 'windows':
+                    $dl_link .= 'windows';
+                    break;
+                case 'macx':
+                    $dl_link .= 'mac_os';
+                    break;
+                case 'linux':
+                    $dl_link .= 'linux';
+                    break;
+                default:
+                    $dl_link .= 'source';
+                    break;
+            }
+            // Find out the latest stable build.
+            $db = db_open();
+            $result = db_query($db, "SELECT version FROM ".DB_TABLE_BUILDS
+                ." WHERE type=".BT_STABLE." ORDER BY timestamp DESC LIMIT 1");
+            if ($row = $result->fetch_assoc()) {
+                $button_label = omit_zeroes($row['version']);
+            }
+            else {
+                $button_label = 'Download';            
+            }
+            $db->close();
         
-        echo("<div id='latestversion'><h1><div class='download-button'><a href='$dl_link' title='Download latest stable release'>$button_label <span class='downarrow'>&#x21E3;</span></a></div></h1></div>\n");
+            cache_echo("<div id='latestversion'><h1><div class='download-button'><a href='$dl_link' title='Download latest stable release'>$button_label <span class='downarrow'>&#x21E3;</span></a></div></h1></div>\n");
 
+            cache_dump();
+            cache_store($ckey);
+        }        
 ?><div id="contentbox"><?php
 
         //includeHTML('introduction', 'z#home');
@@ -324,28 +331,8 @@ $(document).ready(function () {
         }
     });
 
-    /*$('#column1').interpretFeed({
-        feedUri: 'http://files.dengine.net/builds/events.rss',
-        dataType: 'xml',
-        maxItems: 3,
-        clearOnSuccess: false,
-        generateItemHtml: function (n, t) {
-            var html = '<div class="block"><article class="buildevent"><header><h1><a href="' + t.link + '" title="Read more about ' + t.title + ' in the repository">' + t.title + '</a></h1>';
-
-            var d = new Date(t.pubDate);
-            var niceDate = $.datepicker.formatDate('MM d, yy', d);
-            html += '<p><time datetime="' + d.toISOString() + '" pubdate>' + niceDate + '</time></p>';
-
-            html += '</header><br />';
-            html += t.atomSummary;
-            html += '</article>';
-            html += '<div class="links"><a href="' + n.feedUri + '" class="link-rss" title="Doomsday Engine build events are reported via RSS">All builds</a></div></div>';
-            return '<li>' + html + '</li>';
-        }
-    });*/
-
     $('#column2').interpretFeed({
-        feedUri: 'http://dengine.net/blog/category/news/?json=true',
+        feedUri: 'http://api.dengine.net/1/news?category=news',
         dataType: 'json',
         clearOnSuccess: false,
         maxItems: 2,
@@ -365,7 +352,7 @@ $(document).ready(function () {
     });
 
     $('#column1').interpretFeed({
-        feedUri: 'http://dengine.net/blog/category/dev/?json=true', 
+        feedUri: 'http://api.dengine.net/1/news?category=dev', 
         dataType: 'json',
         clearOnSuccess: false,
         maxItems: 1,
