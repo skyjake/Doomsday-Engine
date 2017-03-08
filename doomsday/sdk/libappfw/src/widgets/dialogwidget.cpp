@@ -562,6 +562,11 @@ void DialogWidget::setAcceptanceAction(RefArg<de::Action> action)
 {
     changeRef(d->acceptAction, action);
 }
+    
+Action *DialogWidget::acceptanceAction() const
+{
+    return d->acceptAction;
+}
 
 int DialogWidget::exec(GuiRootWidget &root)
 {

@@ -210,6 +210,8 @@ public:
      * @param action  Action to trigger after the dialog has been accepted.
      */
     void setAcceptanceAction(RefArg<de::Action> action);
+    
+    de::Action *acceptanceAction() const;
 
     /**
      * Shows the dialog and blocks execution until the dialog is closed --
