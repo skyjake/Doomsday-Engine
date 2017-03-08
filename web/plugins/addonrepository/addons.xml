@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addons>
 <addon featured="true">
-    <downloadUri>http://files.dengine.net/tracker/torrents/jdrp-packaged-20070404.zip.torrent</downloadUri>
+    <downloadUri>http://files.dengine.net/packs/jdrp-packaged-20070404.zip</downloadUri>
     <title>DOOM Resource Pack (jDRP)</title>
     <version>1.01</version>
     <description>3D model pack (addon.box version).</description>
