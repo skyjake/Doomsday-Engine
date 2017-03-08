@@ -158,7 +158,6 @@ DENG2_PIMPL(PackageCompatibilityDialog)
             return;
         }
 
-#if 0
         qDebug() << "resolving...";
 
         auto &pkgLoader = PackageLoader::get();
@@ -189,10 +188,6 @@ DENG2_PIMPL(PackageCompatibilityDialog)
             qDebug() << "unloading excess" << loaded.at(i);
 
             pkgLoader.unload(loaded.at(i));
-            /*if (DataBundle const *bundle = DataBundle::bundleForPackage(loaded.at(i)))
-            {
-                File1::tryUnload(*bundle);
-            }*/
             loaded.removeAt(i);
         }
 
@@ -202,31 +197,14 @@ DENG2_PIMPL(PackageCompatibilityDialog)
             qDebug() << "loading wanted" << wanted.at(i);
 
             pkgLoader.load(wanted.at(i));
-            /*if (DataBundle const *bundle = DataBundle::bundleForPackage(wanted.at(i)))
-            {
-                File1::tryLoad(*bundle);
-            }*/
         }
 
         qDebug() << DoomsdayApp::loadedPackagesAffectingGameplay();
-#endif
 
         self().buttonsMenu().disable();
         updating->setOpacity(1, 0.3);
 
-        mainCall.enqueue([this] ()
-        {
-            auto &adhoc = DoomsdayApp::app().adhocProfile();
-            if (DoomsdayApp::currentGameProfile())
-            {
-                adhoc = *DoomsdayApp::currentGameProfile();
-            }
-            adhoc.setUseGameRequirements(false);
-            qDebug() << "using wanted:" << wanted;
-            adhoc.setPackages(wanted);
-            DoomsdayApp::app().changeGame(adhoc, DD_ActivateGameWorker);
-            self().accept();
-        });
+        self().accept();
     }
 };
 
