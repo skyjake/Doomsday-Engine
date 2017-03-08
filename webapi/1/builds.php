@@ -66,6 +66,7 @@ function download_file($filename, $mirror)
 
 function generate_header($page_title)
 {
+    header("Cache-Control: max-age=3600");
     header('Content-Type: text/html;charset=UTF-8');
     
     cache_echo("<!DOCTYPE html>\n");
@@ -146,7 +147,7 @@ function generate_build_page($number)
                     ."<div class='fileinfo'>"
                     ."<div class='filesize'>$mb_size MB</div>");
                 if (!empty($bin['signature'])) {
-                    cache_echo("<a class='signature' href='".DENG_API_URL."/builds?signature=$bin[name]'>Sig &#x21E3;</a> ");
+                    cache_echo("<a title='Get PGP Signature' class='signature' href='".DENG_API_URL."/builds?signature=$bin[name]'>Sig &#x21E3;</a> ");
                 }
                 cache_echo("<div class='hash'>MD5: <span class='digits'>$bin[md5]</span></div>");
                 cache_echo("</div>\n");
@@ -157,7 +158,7 @@ function generate_build_page($number)
                     $bits = ' '.$plat['cpu_bits'].'-bit ';
                 }
                 cache_echo("</td><td class='button'><a class='download' href='$main_url'>$fext$bits<span class='downarrow'>&#x21E3;</span></a>");
-                cache_echo("</td><td class='button'><a class='download mirror' href='$mirror_url'>Mirror <span class='downarrow'>&#x21E3;</span></a>");
+                cache_echo("</td><td class='button'><a title='Download from a SourceForge mirror' class='download mirror' href='$mirror_url'>Mirror <span class='downarrow'>&#x21E3;</span></a>");
                 cache_echo("</td></tr>\n");
             }
         }
@@ -294,6 +295,7 @@ function generate_build_index_page()
 
 function generate_build_feed()
 {
+    header("Cache-Control: max-age=10800");
     header('Content-Type: application/rss+xml');
     
     $ckey = cache_key('builds', 'feed');

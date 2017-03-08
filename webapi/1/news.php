@@ -20,9 +20,10 @@ require_once('include/cache.inc.php');
 
 function fetch_blog_feed($category)
 {
+    header("Cache-Control: max-age=900");
     header('Content-Type: application/json');
     
-    $json_url = "http://dengine.net/blog/category/$category/?json=true";
+    $json_url = "http://dengine.net/blog/category/$category/?json=true&count=3";
     $ckey = cache_key('news', $category);
     if (cache_try_load($ckey)) {
         cache_dump();
