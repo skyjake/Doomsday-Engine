@@ -273,7 +273,7 @@ class FrontController
         if(ini_get('display_errors'))
         {
             printf("<br />\n<b>%s</b>: %s in <b>%s</b> on line <b>%d</b><br /><br />\n",
-                   $errortype[$errno], $errmsg, $filename, $linenum);
+                   isset($errortype[$errno])? $errortype[$errno] : "$errno", $errmsg, $filename, $linenum);
 
             return true;
         }

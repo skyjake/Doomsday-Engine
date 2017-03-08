@@ -49,7 +49,7 @@ function detect_user_platform()
 
 function omit_zeroes($version)
 {
-    $parts = split("\\.", $version);
+    $parts = explode(".", $version);
     while (count($parts) > 2 && array_slice($parts, -1)[0] == '0') {
         $parts = array_slice($parts, 0, -1);
     }
