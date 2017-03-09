@@ -59,6 +59,9 @@ DENG2_PIMPL(DirectoryListDialog)
 
         self().area().add(group->description = new LabelWidget);
         group->description->setText(description);
+        group->description->setFont("small");
+        group->description->setTextColor("altaccent");
+        group->description->margins().setTop("").setBottom("");
         group->description->setMaximumTextWidth(self().area().rule().width() -
                                                 self().margins().width());
         group->description->setTextLineAlignment(ui::AlignLeft);
