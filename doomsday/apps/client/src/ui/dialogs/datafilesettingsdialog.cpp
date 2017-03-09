@@ -56,12 +56,13 @@ DataFileSettingsDialog::DataFileSettingsDialog(String const &name)
     //dlg->message().setText(QObject::tr("The following folders are searched for game data files:"));
 
     d->iwadGroup = addGroup(tr("IWAD Folders"),
-                            tr("The following folders are searched for game IWAD files:"));
+                            tr("The following folders are searched for game IWAD files. "
+                               "Only these folders are checked, not their subfolders."));
     setValue(d->iwadGroup, d->iwadFolders.value());
 
     d->pkgGroup = addGroup(tr("Add-on and Package Folders"),
                            tr("The following folders and all their subfolders are searched "
-                              "for resource packs and other add-ons:"));
+                              "for resource packs and other add-ons."));
     setValue(d->pkgGroup, d->pkgFolders.value());
 
     connect(this, &DirectoryListDialog::arrayChanged, [this] ()
