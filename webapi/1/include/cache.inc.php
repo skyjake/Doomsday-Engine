@@ -52,12 +52,12 @@ function cache_key($id, $data)
     return "/$id/".urlencode(json_encode($data));
 }
 
-function cache_try_load($key)
+function cache_try_load($key, $max_age = DENG_CACHE_MAX_AGE)
 {
     $fn = DENG_CACHE_PATH.$key;
     if (!file_exists($fn)) return false;
     $ts = filemtime($fn);
-    if (time() - $ts > DENG_CACHE_MAX_AGE) return false; // Too old.
+    if ($max_age >= 0 && (time() - $ts) > $max_age) return false; // Too old.
     if (($value = file_get_contents($fn)) === false) return false;
     global $_cache_buf;
     global $_cache_ts;

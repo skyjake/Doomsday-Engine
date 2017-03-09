@@ -23,13 +23,13 @@ function fetch_blog_feed($category)
     header("Cache-Control: max-age=900");
     header('Content-Type: application/json');
     
-    $json_url = "http://dengine.net/blog/category/$category/?json=true&count=3";
     $ckey = cache_key('news', $category);
-    if (cache_try_load($ckey)) {
+    if (cache_try_load($ckey, -1)) { // always use the cached data
         cache_dump();
         return;
     }
-    
+
+    $json_url = "http://dengine.net/blog/category/$category/?json=true&count=3";    
     $ch = curl_init(); 
     curl_setopt($ch, CURLOPT_URL, $json_url); 
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); // as a string
