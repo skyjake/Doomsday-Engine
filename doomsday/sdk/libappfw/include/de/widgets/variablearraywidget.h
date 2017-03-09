@@ -62,6 +62,9 @@ public:
 
     ui::Item *makeItem(Value const &value);
 
+signals:
+    void arrayChanged();
+
 protected:
     virtual String labelForElement(Value const &value) const;
 
