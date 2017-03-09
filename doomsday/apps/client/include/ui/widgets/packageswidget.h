@@ -66,6 +66,7 @@ public:
     void setPopulationEnabled(bool enable);
     void setFilterEditorMinimumY(de::Rule const &minY);
     void setPackageStatus(IPackageStatus const &packageStatus);
+    void showProgressIndicator();
 
     /**
      * Sets the data items that determine what kind of action buttons get created

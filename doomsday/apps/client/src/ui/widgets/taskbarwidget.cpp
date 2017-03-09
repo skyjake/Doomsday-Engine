@@ -26,6 +26,7 @@
 #include "ui/clientwindow.h"
 #include "ui/dialogs/aboutdialog.h"
 #include "ui/dialogs/audiosettingsdialog.h"
+#include "ui/dialogs/datafilesettingsdialog.h"
 #include "ui/dialogs/inputsettingsdialog.h"
 #include "ui/dialogs/manualconnectiondialog.h"
 #include "ui/dialogs/networksettingsdialog.h"
@@ -351,31 +352,6 @@ static PopupWidget *makeUpdaterSettings()
     return new UpdaterSettingsDialog(UpdaterSettingsDialog::WithApplyAndCheckButton);
 }
 
-static PopupWidget *makeIWADFolders()
-{
-    DENG2_ASSERT(!App_GameLoaded());
-
-    Variable &iwadFolders = App::config("resource.iwadFolder");
-
-    auto *dlg = new DirectoryListDialog;
-    dlg->title().setFont("heading");
-    dlg->title().setStyleImage("package.icon");
-    dlg->title().setOverrideImageSize(Style::get().fonts().font("heading").ascent().value());
-    dlg->title().setTextGap("dialog.gap");
-    dlg->title().setText(QObject::tr("IWAD Folders"));
-    dlg->message().setText(QObject::tr("The following folders are searched for game data files:"));
-    dlg->setValue(iwadFolders.value());
-    dlg->setAcceptanceAction(new CallbackAction([dlg, &iwadFolders] ()
-    {
-        iwadFolders.set(dlg->value());
-
-        // Reload packages and recheck for game availability.
-        ClientWindow::main().console().closeLogAndUnfocusCommandLine();
-        DoomsdayApp::app().initWadFolders();
-    }));
-    return dlg;
-}
-
 TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
 {
 #if 0
@@ -487,7 +463,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
             << new ui::SubwidgetItem(style().images().image("input"),     tr("Input"),          ui::Left, makePopup<InputSettingsDialog>)
             << new ui::SubwidgetItem(style().images().image("network"),   tr("Network"),        ui::Left, makePopup<NetworkSettingsDialog>)
             << new ui::Item(ui::Item::Separator)
-            << new ui::SubwidgetItem(style().images().image("package.icon"), tr("Data Files"),     ui::Left, makeIWADFolders)
+            << new ui::SubwidgetItem(style().images().image("package.icon"), tr("Data Files"),     ui::Left, makePopup<DataFileSettingsDialog>)
             << new ui::SubwidgetItem(style().images().image("home.icon"), tr("User Interface"), ui::Left, makePopup<UISettingsDialog>)
             << new ui::SubwidgetItem(style().images().image("updater"),   tr("Updater"),        ui::Left, makeUpdaterSettings);
 
