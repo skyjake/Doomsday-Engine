@@ -21,6 +21,7 @@
 
 #include "../MessageDialog"
 #include "../DirectoryArrayWidget"
+#include <de/Id>
 
 namespace de {
 
@@ -29,20 +30,30 @@ namespace de {
  */
 class LIBAPPFW_PUBLIC DirectoryListDialog : public MessageDialog
 {
+    Q_OBJECT
+
 public:
     DirectoryListDialog(String const &name = String());
+
+    Id addGroup(String const &title, String const &description);
 
     /**
      * Sets the list elements.
      * @param elements  Array of text strings, or a single TextValue.
      */
-    void setValue(Value const &elements);
+    void setValue(Id const &group, Value const &elements);
 
     /**
      * Returns the contents of the directory list.
      * Array of text strings, or a single TextValue.
      */
-    Value const &value() const;
+    Value const &value(Id const &group) const;
+
+signals:
+    void arrayChanged();
+
+protected:
+    void prepare() override;
 
 private:
     DENG2_PRIVATE(d)

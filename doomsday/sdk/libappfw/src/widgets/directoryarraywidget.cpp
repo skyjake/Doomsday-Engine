@@ -27,9 +27,7 @@
 namespace de {
 
 DENG2_PIMPL_NOREF(DirectoryArrayWidget)
-{
-
-};
+{};
 
 DirectoryArrayWidget::DirectoryArrayWidget(Variable &variable, String const &name)
     : VariableArrayWidget(variable, name)

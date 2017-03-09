@@ -25,16 +25,58 @@ namespace de {
 
 DENG2_PIMPL(DirectoryListDialog)
 {
-    Variable array;
-    DirectoryArrayWidget *list;
+    struct Group
+    {
+        LabelWidget *title;
+        LabelWidget *description;
+        Variable array;
+        DirectoryArrayWidget *list;
+    };
+    QHash<Id::Type, Group *> groups;
 
     Impl(Public *i) : Base(i)
+    {}
+
+    ~Impl()
     {
-        array.set(new ArrayValue);
-        list = new DirectoryArrayWidget(array);
-        list->margins().setZero();
-        self().add(list->detachAddButton(self().area().rule().width()));
-        list->addButton().hide();
+        qDeleteAll(groups);
+    }
+
+    Id addGroup(String const &title, String const &description)
+    {
+        Id groupId;
+        std::unique_ptr<Group> group(new Group);
+
+        self().area().add(group->title = new LabelWidget);
+        group->title->setText(title);
+        group->title->setMaximumTextWidth(self().area().rule().width() -
+                                          self().margins().width());
+        group->title->setTextLineAlignment(ui::AlignLeft);
+        group->title->setAlignment(ui::AlignLeft);
+        group->title->setFont("separator.label");
+        group->title->setTextColor("accent");
+        group->title->margins().setTop("gap");
+
+        self().area().add(group->description = new LabelWidget);
+        group->description->setText(description);
+        group->description->setMaximumTextWidth(self().area().rule().width() -
+                                                self().margins().width());
+        group->description->setTextLineAlignment(ui::AlignLeft);
+        group->description->setAlignment(ui::AlignLeft);
+        group->description->margins().setBottom(ConstantRule::zero());
+
+        group->array.set(new ArrayValue);
+        group->list = new DirectoryArrayWidget(group->array);
+        group->list->margins().setZero();
+        //self().add(group->list->detachAddButton(self().area().rule().width()));
+        //group->list->addButton().hide();
+        self().area().add(group->list);
+
+        QObject::connect(group->list, SIGNAL(arrayChanged()),
+                         thisPublic, SIGNAL(arrayChanged()));
+
+        groups.insert(groupId, group.release());
+        return groupId;
     }
 };
 
@@ -42,25 +84,34 @@ DirectoryListDialog::DirectoryListDialog(String const &name)
     : MessageDialog(name)
     , d(new Impl(this))
 {
-    area().add(d->list);
-
     buttons() << new DialogButtonItem(Default | Accept)
-              << new DialogButtonItem(Reject)
-              << new DialogButtonItem(Action, style().images().image("create"),
+              << new DialogButtonItem(Reject);
+              /*<< new DialogButtonItem(Action, style().images().image("create"),
                                       tr("Add Folder"),
-                                      new SignalAction(&d->list->addButton(), SLOT(trigger())));
+                                      new SignalAction(&d->list->addButton(), SLOT(trigger())));*/
+}
 
+Id DirectoryListDialog::addGroup(String const &title, String const &description)
+{
+    return d->addGroup(title, description);
+}
+
+void DirectoryListDialog::prepare()
+{
+    MessageDialog::prepare();
     updateLayout();
 }
 
-void DirectoryListDialog::setValue(Value const &elements)
+void DirectoryListDialog::setValue(Id const &id, Value const &elements)
 {
-    d->array.set(elements);
+    DENG2_ASSERT(d->groups.contains(id));
+    d->groups[id]->array.set(elements);
 }
 
-Value const &DirectoryListDialog::value() const
+Value const &DirectoryListDialog::value(Id const &id) const
 {
-    return d->array.value();
+    DENG2_ASSERT(d->groups.contains(id));
+    return d->groups[id]->array.value();
 }
 
 } // namespace de

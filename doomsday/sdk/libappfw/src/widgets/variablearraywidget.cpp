@@ -174,16 +174,19 @@ VariableArrayWidget::VariableArrayWidget(Variable &variable, String const &name)
             .setLeftTop(margins().left() + rule().left(),
                         margins().top()  + rule().top());
 
+    d->addButton->setFont("small");
     d->addButton->setStyleImage("create", d->addButton->fontId());
     d->addButton->setTextAlignment(ui::AlignRight);
-    d->addButton->setSizePolicy(ui::Fixed, ui::Expand);
+    d->addButton->setSizePolicy(ui::Expand, ui::Expand);
 
     AutoRef<Rule> totalWidth(OperatorRule::maximum(d->menu->rule().width(),
+                                                   d->deleteButton->rule().width() +
                                                    d->addButton->contentWidth()));
 
     d->addButton->rule()
-            .setInput(Rule::Width, totalWidth)
-            .setLeftTop(d->menu->rule().left(), d->menu->rule().bottom());
+            //.setInput(Rule::Width, totalWidth)
+            .setLeftTop(d->deleteButton->rule().width() + d->menu->rule().left(),
+                        d->menu->rule().bottom());
 
     d->deleteButton->rule().setInput(Rule::Left, d->menu->rule().left());
     d->deleteButton->setActionFn([this] ()
@@ -250,6 +253,7 @@ void VariableArrayWidget::updateFromVariable()
 void VariableArrayWidget::setVariableFromWidget()
 {
     d->setVariableFromWidget();
+    emit arrayChanged();
 }
 
 } // namespace de
