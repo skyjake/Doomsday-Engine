@@ -211,7 +211,7 @@ section.column {
 }
 #status div.centercolumn {
     text-align: center;
-    padding-top: 1ex;
+    padding-top: 1.5ex;
 }
 
 @media only screen and (max-width: 767px) {
