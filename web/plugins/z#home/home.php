@@ -1,6 +1,7 @@
 <?php
 /** @file home.php Implements the dengine.net homepage.
  *
+ * @authors Copyright (c) 2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright Â© 2009-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -22,6 +23,27 @@ includeGuard('HomePlugin');
 
 require_once(DIR_CLASSES.'/requestinterpreter.interface.php');
 require_once(DIR_CLASSES.'/visual.interface.php');
+require_once(DENG_API_DIR.'/include/builds.inc.php');
+
+function generate_blog_post($post, $css_class, $source_link)
+{
+    $date = date_parse($post->date);
+    $ts = mktime($date['hour'], $date['minute'], $date['second'],
+                 $date['month'], $date['day'], $date['year']);
+    $nice_date = strftime('%B %d, %Y', $ts);    
+    
+    $html = '<div class="block"><article class="'.$css_class
+        .' content"><header><h1><a href="'.$post->url.'">'
+        .$post->title.'</a></h1>';
+
+    $html .= '<p><time datetime="'.$post->date.'" pubdate>'.$nice_date
+        .'</time> &mdash; '.$post->author->name.'</p></header><br />';
+
+    $html .= '<div class="articlecontent">'.$post->content.'</div></article>';
+    $html .= '<div class="links">'.$source_link.'</div></div>';
+    
+    echo('<li>'.$html.'</li>');    
+}
 
 class HomePlugin extends Plugin implements Actioner, RequestInterpreter
 {
@@ -55,33 +77,29 @@ class HomePlugin extends Plugin implements Actioner, RequestInterpreter
         $fc = &FrontController::fc();
         $fc->outputHeader();
         $fc->beginPage($this->title());
-
-        //includeHTML('latestversion', 'z#home');
         
-        require_once(DENG_API_DIR.'/include/builds.inc.php');
         $user_platform = detect_user_platform();
         $ckey = cache_key('home', ['latest_stable', $user_platform]);
         if (cache_try_load($ckey)) {
             cache_dump();
         }
         else {        
-            $dl_link = 'http://dengine.net/';
             switch ($user_platform) {
                 case 'windows':
-                    $dl_link .= 'windows';
+                    $dl_link = '/windows';
                     break;
                 case 'macx':
-                    $dl_link .= 'mac_os';
+                    $dl_link = '/mac_os';
                     break;
                 case 'linux':
-                    $dl_link .= 'linux';
+                    $dl_link = '/linux';
                     break;
                 default:
-                    $dl_link .= 'source';
+                    $dl_link = '/source';
                     break;
             }
             // Find out the latest stable build.
-            $db = db_open();
+            $db = FrontController::fc()->database();
             $result = db_query($db, "SELECT version FROM ".DB_TABLE_BUILDS
                 ." WHERE type=".BT_STABLE." ORDER BY timestamp DESC LIMIT 1");
             if ($row = $result->fetch_assoc()) {
@@ -90,22 +108,38 @@ class HomePlugin extends Plugin implements Actioner, RequestInterpreter
             else {
                 $button_label = 'Download';            
             }
-            $db->close();
         
             cache_echo("<div id='latestversion'><h1><div class='download-button'><a href='$dl_link' title='Download latest stable release'>$button_label <span class='downarrow'>&#x21E3;</span></a></div></h1></div>\n");
 
             cache_dump();
             cache_store($ckey);
         }        
+        
+        // Fetch the cached news and dev blog posts.
+        cache_try_load(cache_key('news', 'news'), -1);
+        $news = json_decode(cache_get());        
+        cache_try_load(cache_key('news', 'dev'), -1);
+        $dev = json_decode(cache_get());
+                
+        // Figure out how many posts to show.
+        $news_size = strlen($news->posts[0]->content);
+        $dev_size  = strlen($dev->posts[0]->content);
+        $news_count = 1;
+        $dev_count = 1;        
+        if ($news_size < $dev_size * 0.8) {
+            $news_count += 1;
+        }        
+        else if ($dev_size < $news_size * 0.8) {
+            $dev_count += 1;
+        }        
+        
 ?><div id="contentbox"><?php
-
-        //includeHTML('introduction', 'z#home');
 
 ?><script>
 (function (e) {
     e.fn.interpretMasterServerStatus = function (t) {
         var n = {
-            serverUri: "http://dengine.net/master.php?xml",
+            serverUri: "/master.php?xml",
             maxItems: 3,
             generateServerSummaryHtml: 0
         };
@@ -232,95 +266,46 @@ $(document).ready(function () {
         }
     });
 });
+</script>
 
-(function (e) {
-    e.fn.interpretFeed = function (t) {
-        var n = { feedUri:          'http://rss.cnn.com/rss/edition.rss',
-                  dataType:         'xml',
-                  maxItems:         5,
-                  clearOnSuccess:   true,
-                  generateItemHtml: 0
-        };
-        if(t) {
-            e.extend(n, t);
+<aside role="complementary" class="block"><div id="status">
+
+<div class="twocolumn">
+<article id='mostrecentbuilds'>
+<header><h1><a href="/builds" title="View the complete index in the build repository">Most recent builds</a></h1>
+<p><script>
+<!--
+var niceDate = $.datepicker.formatDate('MM d, yy', new Date());
+document.write(niceDate);
+//-->
+</script></p></header><div id="recentbuilds">
+<?php
+
+    // Contact the BDB for a list of the latest builds.
+    {
+        $db = $fc->database();
+        $result = db_query($db, "SELECT build, version, type, UNIX_TIMESTAMP(timestamp) FROM "
+            .DB_TABLE_BUILDS." ORDER BY timestamp DESC");    
+        $new_threshold = time() - 2 * 24 * 3600;
+        $count = 3;
+        echo("<ol style=\"list-style-type: none;\">");
+        while ($row = $result->fetch_assoc()) {            
+            $link = '/build'.$row['build'];
+            $label = "Build $row[build] completed";
+            $version = omit_zeroes($row['version']);
+            $title = "Build report for $version ".ucwords(build_type_text($row['type']))
+                ." [#".$row['build']."]";
+            $ts = (int) $row['UNIX_TIMESTAMP(timestamp)'];
+            $date = gmstrftime('%b %d', $ts);
+            $css_class = ($ts > $new_threshold)? ' class="new"' : '';
+        
+            echo("<li${css_class}><a title='$title' href='$link'>$label</a> $date</li>\n");
+            
+            if (--$count == 0) break;
         }
-        var r = e(this).attr('id');
-
-        /*if(n.useGoogleApi)
-        {
-            e.ajax({
-                url: 'http://ajax.googleapis.com/ajax/services/feed/load?v=1.0&num=' + n.maxItems + '&output=json&q=' + encodeURIComponent(n.feedUri) + '&hl=en&callback=?',
-                dataType: n.dataType,
-                success: function (t) {
-
-                    if(n.clearOnSuccess)
-                    {
-                        e("#" + r).empty();
-                    }
-
-                    var html = "";
-                    e.each(t.responseData.feed.entries, function (e, t) {
-                        html += n.generateItemHtml(n, t);
-                    });
-                    e("#" + r).append('<ol style="list-style-type: none;">' + html + "</ol>");
-                }
-            });
-        }
-        else*/
-        {
-            e.ajax({
-                url: n.feedUri,
-                dataType: n.dataType,
-                success: function (t) {
-
-                    if(n.clearOnSuccess)
-                    {
-                        e("#" + r).empty();
-                    }
-
-                    var html = "";
-                    
-                    if(n.dataType === 'xml') {
-                        var xml = $(t);
-                        xml.find('item').slice(0, n.maxItems).each(function() {
-                            var self = $(this),
-                            item = { title:       self.children('title').text(),
-                                     link:        self.children('link').text(),
-                                     author:      self.children('author').text(),
-                                     pubDate:     self.children('pubDate').text(),
-                                     atomSummary: self.children('atom\\:summary').text(),
-                                     description: self.children('description').text(),
-                                     author:      self.children('author').text()
-                            }
-                            html += n.generateItemHtml(n, item);
-                        });
-                    }
-                    else if (n.dataType === 'json') {
-                        for (var i = 0; i < n.maxItems && i < t.posts.length; ++i) {
-                            var post = t.posts[i];
-                            item = { title:         post.title, 
-                                     link:          post.url,
-                                     author:        post.author.name,
-                                     publishedDate: post.date.substring(0, 10),
-                                     content:       post.content
-                            }
-                            html += n.generateItemHtml(n, item);
-                        }              
-                    }
-                    e('#' + r).append('<ol style="list-style-type: none;">' + html + '</ol>');
-                }
-            });
-        }
-    }
-})(jQuery)
-
-$(document).ready(function () {
-    // TODO: No need to parse the feed, just query the BDB directly.
-    $('#recentbuilds').interpretFeed({
-        feedUri: 'http://api.dengine.net/1/builds?format=feed',
-        dataType: 'xml',
-        maxItems: 3,
-        generateItemHtml : function(n, t) {
+        echo("</ol>\n");
+ 
+    /*    generateItemHtml : function(n, t) {
             var html = '<a href="' + t.link + '" title="' + t.title.toLowerCase() + ' (read more in the repository)">' + t.title + ' completed</a>';
             var d = new Date(t.pubDate);
             var niceDate = $.datepicker.formatDate('MM d', d);
@@ -328,62 +313,10 @@ $(document).ready(function () {
             d.setDate(d.getDate() + 2);
             var isNew = (new Date() < d);
             return '<li' + (isNew? ' class="new"' : '') + '>' + html + '</li>';
-        }
-    });
-
-    $('#column2').interpretFeed({
-        feedUri: 'http://api.dengine.net/1/news?category=news',
-        dataType: 'json',
-        clearOnSuccess: false,
-        maxItems: 2,
-        generateItemHtml: function (n, t) {
-            var html = '<div class="block"><article class="newspost content"><header><h1><a href="' + t.link + '" title="&#39;' + t.title + '&#39; (full article in the blog)">' + t.title + '</a></h1>';
-
-            var d = new Date(t.publishedDate);
-            var niceDate = $.datepicker.formatDate('MM d, yy', d);
-            html += '<p><time datetime="' + d.toISOString() + '" pubdate>' + niceDate + '</time> &mdash; ' + t.author + '</p>';
-
-            html += '</header><br />';
-            html += '<div class="articlecontent">' + t.content + '</div>';
-            html += '</article>';
-            html += '<div class="links"><a href="http://dengine.net/blog/category/news/feed/atom" class="link-rss" title="Doomsday Engine news via RSS">All news</a></div></div>';
-            return '<li>' + html + '</li>';
-        }
-    });
-
-    $('#column1').interpretFeed({
-        feedUri: 'http://api.dengine.net/1/news?category=dev', 
-        dataType: 'json',
-        clearOnSuccess: false,
-        maxItems: 1,
-        generateItemHtml: function (n, t) {
-            var html = '<div class="block"><article class="blogpost content"><header><h1><a href="' + t.link + '" title="&#39;' + t.title + '&#39; (full article in the blog)">' + t.title + '</a></h1>';
-
-            var d = new Date(t.publishedDate);
-            var niceDate = $.datepicker.formatDate('MM d, yy', d);
-            html += '<p><time datetime="' + d.toISOString() + '" pubdate>' + niceDate + '</time> &mdash; ' + t.author + '</p>';
-
-            html += '</header><br />';
-            html += '<div class="articlecontent">' + t.content + '</div>';
-            html += '</article>';
-            html += '<div class="links"><a href="http://dengine.net/blog/category/dev/feed/atom" class="link-rss" title="Doomsday Engine development blog via RSS">All dev posts</a></div></div>';
-            return '<li>' + html + '</li>';
-        }
-    });
-});
-</script>
-
-<aside role="complementary" class="block"><div id="status">
-
-<div class="twocolumn">
-<article id='mostrecentbuilds'>
-<header><h1><a href="http://dengine.net/builds" title="View the complete index in the build repository">Most recent builds</a></h1>
-<p><script>
-<!--
-var niceDate = $.datepicker.formatDate('MM d, yy', new Date());
-document.write(niceDate);
-//-->
-</script></p></header><div id="recentbuilds">Contacting build repository...</div>
+        }*/    
+    }
+    
+?></div>
 </article>
 </div>
 
@@ -396,17 +329,35 @@ document.write(niceDate);
 <div class="clear"></div>
 </div></aside>
 
-<div id="column1" class="twocolumn collapsible"></div>
-<div id="column2" class="twocolumn collapsible"></div>
+<div id="column1" class="twocolumn collapsible">
+    <ol style="list-style-type:none;">
+    <?php
+    
+    for ($i = 0; $i < $news_count; ++$i) {
+        generate_blog_post($news->posts[$i], 'newspost', '<a href="/blog/category/news/feed/atom" class="link-rss" title="Doomsday Engine news via RSS">News feed</a>');
+    }    
+    
+    ?>    
+    </ol>
+</div>
+<div id="column2" class="twocolumn collapsible">
+    <ol style="list-style-type:none;">
+    <?php
+    
+    for ($i = 0; $i < $dev_count; ++$i) {
+        generate_blog_post($dev->posts[$i], 'blogpost', '<a href="/blog/category/dev/feed/atom" class="link-rss" title="Doomsday Engine development blog via RSS">Dev feed</a>');
+    }        
+    
+    ?>
+    </ol>
+</div>
 <div class="clear"></div>
 
 </div>
 <?php
 
 ?><div><div id="downloadbox" class="asidebox"><?php
-
         #includeHTML('getitnow', 'z#home');
-
 ?></div><?php
 
 ?><div id="socialbookmarkbox" class="asidebox"><?php

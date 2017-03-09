@@ -122,7 +122,7 @@ function generate_download_badge($db, $file_id)
 function generate_badges($platform, $type)
 {
     // Find the latest suitable files.
-    $db = db_open();
+    $db = FrontController::fc()->database();
     $result = db_latest_files($db, $platform, $type);
     $latest_build = 0;
     while ($row = $result->fetch_assoc()) {        
@@ -135,7 +135,6 @@ function generate_badges($platform, $type)
         }
         generate_download_badge($db, $row['id']);
     }
-    $db->close();
 }
 
 class PagesPlugin extends Plugin implements Actioner, RequestInterpreter

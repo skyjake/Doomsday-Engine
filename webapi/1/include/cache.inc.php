@@ -41,6 +41,12 @@ function cache_dump()
     echo($_cache_buf);
 }
 
+function cache_get()
+{
+    global $_cache_buf;
+    return $_cache_buf;
+}
+
 function cache_timestamp()
 {
     global $_cache_ts;
@@ -54,6 +60,8 @@ function cache_key($id, $data)
 
 function cache_try_load($key, $max_age = DENG_CACHE_MAX_AGE)
 {
+    cache_clear();
+    
     $fn = DENG_CACHE_PATH.$key;
     if (!file_exists($fn)) return false;
     $ts = filemtime($fn);

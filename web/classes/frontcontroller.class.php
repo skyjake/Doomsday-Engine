@@ -42,6 +42,7 @@ class FrontController
     private $_plugins;
     private $_actions;
     private $_contentCache = NULL;
+    private $_db = NULL;
 
     private $_visibleErrors = false;
 
@@ -105,6 +106,10 @@ class FrontController
         ini_set('display_errors', (bool) $this->_visibleErrors);
         ini_set('display_startup_errors', (bool) $this->_visibleErrors);
         set_error_handler(array(&$this,"ErrorHandler"));
+        
+        // Open a database connection.
+        require_once(DENG_API_DIR.'/include/database.inc.php');        
+        $this->_db = db_open();
 
         // Locate plugins.
         $this->_plugins = new Plugins(DIR_PLUGINS);
@@ -139,6 +144,11 @@ class FrontController
     public function &request()
     {
         return $this->_request;
+    }
+    
+    public function &database()
+    {
+        return $this->_db;
     }
 
     public function &plugins()
