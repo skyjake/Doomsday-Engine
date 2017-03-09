@@ -19,6 +19,7 @@
 #include "ui/home/packagescolumnwidget.h"
 #include "ui/widgets/packageswidget.h"
 #include "ui/dialogs/packageinfodialog.h"
+#include "ui/dialogs/datafilesettingsdialog.h"
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/widgets/homemenuwidget.h"
 
@@ -38,29 +39,34 @@
 
 using namespace de;
 
+#if 0
 static PopupWidget *makePackageFoldersDialog()
 {
     Variable &pkgFolders = Config::get("resource.packageFolder");
 
     auto *dlg = new DirectoryListDialog;
-    dlg->title().setFont("heading");
-    dlg->title().setText(QObject::tr("Add-on and Package Folders"));
-    dlg->message().setText(QObject::tr("The following folders are searched for resource packs and other add-ons:"));
-    dlg->setValue(pkgFolders.value());
-    dlg->setAcceptanceAction(new CallbackAction([dlg, &pkgFolders] ()
+    //dlg->title().setFont("heading");
+    //dlg->title().setText(QObject::tr("Add-on and Package Folders"));
+    //dlg->message().setText(QObject::tr("The following folders are searched for resource packs and other add-ons:"));
+    Id group = dlg->addGroup(QObject::tr("Add-on and Package Folders"),
+                             QObject::tr("The following folders are searched for resource packs and other add-ons:"));
+    dlg->setValue(group, pkgFolders.value());
+    dlg->setAcceptanceAction(new CallbackAction([dlg, &pkgFolders, group] ()
     {
-        pkgFolders.set(dlg->value());
+        pkgFolders.set(dlg->value(group));
 
         // Reload packages and recheck for game availability.
         DoomsdayApp::app().initPackageFolders();
     }));
     return dlg;
 }
+#endif
 
 DENG_GUI_PIMPL(PackagesColumnWidget)
 {
     PackagesWidget *packages;
     LabelWidget *countLabel;
+    ButtonWidget *folderOptionsButton;
     ui::ListData actions;
     LoopCallback mainCall;
 
@@ -95,18 +101,36 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
             }
         });
 
-        // Column menu.
+        area.add(folderOptionsButton = new ButtonWidget);
+        folderOptionsButton->setStyleImage("gear", "default");
+        folderOptionsButton->setText(tr("Data Files"));
+        folderOptionsButton->setTextAlignment(ui::AlignRight);
+        folderOptionsButton->setSizePolicy(ui::Fixed, ui::Expand);
+        folderOptionsButton->rule()
+                .setInput(Rule::Width, area.contentRule().width())
+                .setInput(Rule::Left,  area.contentRule().left())
+                .setInput(Rule::Top,   packages->rule().bottom());
+        folderOptionsButton->setAction(new CallbackAction([this] ()
+        {
+            auto *dlg = new DataFileSettingsDialog;
+            dlg->setDeleteAfterDismissed(true);
+            dlg->setAnchorAndOpeningDirection(folderOptionsButton->rule(), ui::Left);
+            self().root().addOnTop(dlg);
+            dlg->open();
+        }));
+
+        // Column actions menu.
         self().header().menuButton().setPopup([this] (PopupButtonWidget const &) -> PopupWidget * {
             auto *menu = new PopupMenuWidget;
             menu->items()
                     << new ui::ActionItem(/*style().images().image("refresh"), */tr("Refresh"),
-                                          new CallbackAction([this] () { packages->refreshPackages(); }))
-                    << new ui::SubwidgetItem(tr("Folders"), ui::Left, [menu] () -> PopupWidget *
+                                          new CallbackAction([this] () { packages->refreshPackages(); }));
+                    /*<< new ui::SubwidgetItem(tr("Folders"), ui::Left, [menu] () -> PopupWidget *
                     {
                         auto *pop = makePackageFoldersDialog();
                         QObject::connect(pop, SIGNAL(closed()), menu, SLOT(close()));
                         return pop;
-                    });
+                    });*/
                 return menu;
         }, ui::Down);
     }
@@ -132,7 +156,8 @@ PackagesColumnWidget::PackagesColumnWidget()
     scrollArea().setContentSize(maximumContentWidth(),
                                 header().rule().height() +
                                 rule("gap") +
-                                d->packages->rule().height());
+                                d->packages->rule().height() +
+                                d->folderOptionsButton->rule().height()*2);
 
     // Additional layout for the packages list.
     d->packages->setFilterEditorMinimumY(scrollArea().margins().top());

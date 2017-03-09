@@ -805,6 +805,11 @@ void PackagesWidget::setPackageStatus(IPackageStatus const &packageStatus)
     d->packageStatus = &packageStatus;
 }
 
+void PackagesWidget::showProgressIndicator()
+{
+    d->showProgressIndicator(true);
+}
+
 void PackagesWidget::setActionItems(ui::Data const &actionItems)
 {
     d->actionItems = &actionItems;
