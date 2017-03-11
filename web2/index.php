@@ -1,6 +1,6 @@
 <?php
 require_once('include/template.inc.php');
-generate_page_header('Doomsday Engine');
+generate_page_header();
 ?>
 <body>
     <?php include('include/topbar.inc.php'); ?>
@@ -41,29 +41,5 @@ generate_page_header('Doomsday Engine');
             </article>
         </div>
     </div>
-    <div id='site-map'>
-        <ul class='map-wrapper'>
-            <li>
-                Manual
-            </li>
-            <li>
-                <div>Latest news</div>
-                <div>Latest builds</div>
-            </li>
-            <li>
-                Multiplayer servers
-            </li>
-            <li>
-                Go to...
-            </li>
-        </ul>
-        <div id="credits">
-            Doomsday Engine is <a href="https://github.com/skyjake/Doomsday-Engine.git">open 
-            source software</a> and distributed under 
-            the <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License</a> (applications) and <a href="http://www.gnu.org/licenses/lgpl.html">LGPL</a> (core libraries).
-            Assets from the original games remain under their original copyright. 
-            Doomsday logo created by Daniel Swanson.
-            Website design by Jaakko Ker&auml;nen &copy; 2017. 
-        </div>
-    </div>
+    <?php generate_sitemap(); ?>
 </body>
