@@ -1,0 +1,88 @@
+@import url("http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,700");
+@import url("topbar.css");
+
+body {
+    background: #282D2B url("../images/site-background.jpg") no-repeat fixed;
+    background-position: center 100%;
+    background-size: 200% 200%;
+    font-family: "Open Sans";
+    font-weight: 400;
+    color: #eee;
+}
+
+#content {
+    max-width: 70em;
+    margin: 1em auto 0 auto;
+}
+#content a {
+    color: #eb0;    
+    text-decoration: none;
+}
+#content a:hover {
+    color: #fc0;    
+    text-decoration: underline;
+}
+#content a.button {
+    border-radius: 0.5ex;
+    padding: 0.75ex 1.4ex;
+    display: inline-block;
+    margin: 1ex 0;
+    font-size: x-large;
+    font-weight: bold;
+    background-color: rgba(255, 255, 255, 0.333);
+    color: #121;
+}
+#content a.button:hover {
+    text-decoration: none;
+    background-color: rgba(255, 255, 255, 0.5);    
+    color: black;
+}
+#content .download-button a.button {
+    padding-left: 0.9em;
+}
+
+#welcome {
+    width: 100%;
+    margin: 6em 0;
+    text-align: center;
+}
+#welcome div {
+    display: inline-block;
+    vertical-align: top;
+}
+#welcome .main-logo {
+    background-image: url("../images/deng-logo-512.png");
+    width: 256px;
+    height: 256px;
+    background-size: 100% 100%;
+} 
+#welcome .intro {
+    text-align: left;
+    font-size: 120%;
+    height: 256px;
+    margin: 0 1em;
+}
+#welcome .intro section {
+    margin: 74px 0;
+    line-height: 120%;
+}
+#welcome h1 {
+    font-weight: 300;
+    font-size: 160%;
+    color: #ced;
+    margin: 1ex 0;
+}
+#welcome p {
+    margin: 0;
+}
+#welcome ul.supported-platforms {
+    list-style: none;
+    margin: 0;
+    -webkit-padding-start: 0;
+}
+#welcome ul.supported-platforms li {
+    display: inline-block;
+    margin: 0;
+    margin-right: 1em;
+    font-size: 60%;
+}

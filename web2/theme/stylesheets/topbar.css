@@ -1,0 +1,30 @@
+#dengine-topbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;    
+    padding: 0.5ex 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    font-family: "Open Sans", sans-serif;
+}
+#dengine-topbar ul.site-navigation {
+    text-align: center;
+    list-style: none;
+    margin: 0 auto;
+    padding: 0;
+}
+#dengine-topbar ul.site-navigation li {
+    display: inline-block;    
+    margin: 0 0.5ex;
+}
+#dengine-topbar a {
+    color: white;
+    text-decoration: none;
+    font-weight: 300;
+}
+#dengine-topbar a:hover {
+    text-decoration: underline;
+}
+#dengine-topbar a.site-link {
+    font-weight: bold;
+}
