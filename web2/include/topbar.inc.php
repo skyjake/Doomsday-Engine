@@ -30,10 +30,10 @@
         <li><?php echo($download_link); ?></li>
         <li><a href="/builds">Builds</a></li>
         <li><a href="<?php echo(SITE_ROOT."/addons"); ?>">Add-ons</a></li>
-        <li><a href="/blog" class="blog-link">Blog</a></li>
         <li><a href="/manual">Manual</a></li>
         <li><a href="/talk">Forums</a></li>
         <li><a href="/support">Support</a></li>
         <li><a href="https://tracker.dengine.net/projects/deng">Bug Tracker</a></li>
+        <li><a href="/blog" class="blog-link">Blog</a></li>
     </ul>
 </div>

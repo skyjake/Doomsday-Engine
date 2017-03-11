@@ -7,15 +7,16 @@ body {
     background-size: 200% 200%;
     font-family: "Open Sans";
     font-weight: 400;
-    color: #eee;
+    color: #ddd;
+    margin: 0;
 }
 
 #content {
-    max-width: 70em;
+    max-width: 65em;
     margin: 1em auto 0 auto;
 }
 #content a {
-    color: #eb0;    
+    color: #eb4;    
     text-decoration: none;
 }
 #content a:hover {
@@ -30,7 +31,7 @@ body {
     font-size: x-large;
     font-weight: bold;
     background-color: rgba(255, 255, 255, 0.333);
-    color: #121;
+    color: rgba(0, 0, 0, 0.6); /*#202820;*/
 }
 #content a.button:hover {
     text-decoration: none;
@@ -43,7 +44,7 @@ body {
 
 #welcome {
     width: 100%;
-    margin: 6em 0;
+    margin: 8em auto 6em auto;
     text-align: center;
 }
 #welcome div {
@@ -59,21 +60,23 @@ body {
 #welcome .intro {
     text-align: left;
     font-size: 120%;
+    min-width: 23em;
+    max-width: 55%;
     height: 256px;
     margin: 0 1em;
 }
 #welcome .intro section {
-    margin: 74px 0;
+    margin: 65px 0;
     line-height: 120%;
 }
 #welcome h1 {
     font-weight: 300;
     font-size: 160%;
-    color: #ced;
     margin: 1ex 0;
+    color: rgba(220, 255, 240, 0.666);
 }
 #welcome p {
-    margin: 0;
+    margin: 0;    
 }
 #welcome ul.supported-platforms {
     list-style: none;
@@ -85,4 +88,52 @@ body {
     margin: 0;
     margin-right: 1em;
     font-size: 60%;
+}
+
+div.block {
+    margin: 5em 1em;
+}
+div.block h1 {
+    text-transform: uppercase;
+    font-weight: 400;
+    margin-left: 0;
+    color: #eee;
+}
+div.block p {
+    color: #b0b0b0;
+}
+
+#site-map {
+    width: 100%;
+    margin: 5em 0 0 0;
+    padding: 2em 0 2em 0;
+    font-size: 75%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+#site-map ul.map-wrapper {
+    /*text-align: center;*/
+    list-style: none;
+    margin: 0 auto;
+    padding: 0;
+}
+#site-map ul.map-wrapper li {
+    display: inline-block;   
+    vertical-align: top; 
+    width: 30em;
+    margin: 0 2em;
+    text-align: left;
+}
+
+#credits {
+    margin: 2em 6em 0 6em;
+    text-align: center;
+    color: #888;
+}
+#credits a {
+    color: #aaa;
+    text-decoration: none;
+}
+#credits a:hover {
+    color: #ddd;
+    text-decoration: underline;
 }

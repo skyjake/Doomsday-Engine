@@ -20,7 +20,7 @@ function platform_download_link()
         case 'windows': 
             $dl_link = SITE_ROOT.'/windows'; break;
         case 'macx':
-            $dl_link = SITE_ROOT.'/mac_os'; break;
+            $dl_link = SITE_ROOT.'/macos'; break;
         case 'linux':
             $dl_link = SITE_ROOT.'/linux'; break;
         default:
