@@ -157,6 +157,7 @@ function generate_sidebar()
             <li><a href='source'>Source</a></li>
             <li><a href='/builds'>Recent builds</a></li>
         </ul>
+        <div class='heading'><a href='addons'>Add-ons</a></div>
         <div class='heading'><a href='/manual'>User Manual</a></div>
         <ul>
             <li><a href='/manual/getting_started'>Getting started</a></li>
@@ -181,32 +182,113 @@ function generate_sidebar()
     </div>");
 }
 
+function generate_blog_post_cached($post, $css_class)
+{
+    $date = date_parse($post->date);
+    $ts = mktime($date['hour'], $date['minute'], $date['second'],
+                 $date['month'], $date['day'], $date['year']);
+    $nice_date = strftime('%B %d, %Y', $ts);    
+    
+    /*$html = '<div class="block"><article class="'.$css_class
+        .' content"><header><h1><a href="'.$post->url.'">'
+        .$post->title.'</a></h1>';
+
+    $html .= '<p><time datetime="'.$post->date.'" pubdate>'.$nice_date
+        .'</time> &mdash; '.$post->author->name.'</p></header><br />';
+
+    $html .= '<div class="articlecontent">'.$post->content.'</div></article>';
+    $html .= '<div class="links">'.$source_link.'</div></div>';*/
+    
+    $html = "<a class='blog-link' href='$post->url'>$post->title</a> "
+        ."<time datetime='$post->date' pubdate>&ndash; $nice_date</time>";
+    
+    cache_echo('<li>'.$html.'</li>');    
+}
+
 function generate_sitemap()
 {
-    echo("<div id='site-map'>
-        <ul class='map-wrapper'>
-            <li>
-                <div>Latest News</div>
-                <div>Latest Builds</div>
-            </li>
-            <li>
-                Multiplayer Games
-            </li>
-            <li>
-                User Manual
-            </li>
-            <li>
-                <div>Go to...</div>
-                <div>Alternatives</div>
-            </li>
-        </ul>
-        <div id='credits'>
-            Doomsday Engine is <a href='https://github.com/skyjake/Doomsday-Engine.git'>open 
-            source software</a> and distributed under 
-            the <a href='http://www.gnu.org/licenses/gpl.html'>GNU General Public License</a> (applications) and <a href='http://www.gnu.org/licenses/lgpl.html'>LGPL</a> (core libraries).
-            Assets from the original games remain under their original copyright. 
-            Doomsday logo created by Daniel Swanson.
-            Website design by Jaakko Ker&auml;nen &copy; 2017. 
-        </div>
-    </div>");
+    // Check for a cached sitemap.
+    $ckey = cache_key('home', 'sitemap');    
+    if (!cache_try_load($ckey)) {            
+        // Fetch the cached news and dev blog posts.
+        cache_try_load(cache_key('news', 'news'), -1);
+        $news = json_decode(cache_get());            
+        cache_try_load(cache_key('news', 'dev'), -1);
+        $dev = json_decode(cache_get());
+        $news_count = min(3, count($news->posts));
+        $dev_count  = min(3, count($dev->posts));
+
+        cache_clear();
+    
+        // Contact the BDB for a list of the latest builds.
+        $db = Session::get()->database();
+        $result = db_query($db, "SELECT build, version, type, UNIX_TIMESTAMP(timestamp) FROM "
+            .DB_TABLE_BUILDS." ORDER BY timestamp DESC");    
+        $new_threshold = time() - 2 * 24 * 3600;
+        $count = 4;
+        $build_list = "<ul class='sitemap-list'>";
+        while ($row = $result->fetch_assoc()) {            
+            $link = '/build'.$row['build'];
+            $version = omit_zeroes($row['version']);
+            $label = "$version ".ucwords(build_type_text($row['type']))
+                ." [#".$row['build']."]";
+            $title = "Build report for $label";
+            $ts = (int) $row['UNIX_TIMESTAMP(timestamp)'];
+            $date = gmstrftime('&ndash; %B %d', $ts);
+            $css_class = ($ts > $new_threshold)? ' class="new-build"' : '';
+        
+            $build_list .= "  <li${css_class}><a title='$title' href='$link'>$label</a> <time>$date</time></li>\n";
+            
+            if (--$count == 0) break;
+        }
+        $build_list .= "<li><a href='/builds'>Autobuilder Index</a></li>\n"
+            ."<li><a href='http://api.dengine.net/1/builds?format=feed'>RSS Feed</a></li></ul>\n";
+
+        cache_echo("<div id='site-map'>
+            <ul class='map-wrapper'>
+                <li>
+                    <div class='heading'>Latest News</div>
+                    <ul class='sitemap-list'>");
+                   
+        for ($i = 0; $i < $news_count; ++$i) {
+            generate_blog_post_cached($news->posts[$i], 'newspost');
+        }    
+        cache_echo("<li><a href='/blog/category/news/feed/atom'
+                        title='Doomsday Engine news via RSS'>RSS Feed</a></li>");
+                    
+        cache_echo("</ul></li><li>
+                    <div class='heading'>Blog Posts</div>
+                    <ul class='sitemap-list'>\n");
+
+        for ($i = 0; $i < $dev_count; ++$i) {
+            generate_blog_post_cached($dev->posts[$i], 'blogpost');
+        }        
+        cache_echo("<li><a href='/blog/category/dev/feed/atom' 
+            title='Doomsday Engine development blog via RSS'>RSS Feed</a></li>");
+                    
+        cache_echo("</ul></li><li><div class='heading'>Recent Builds</div>
+                    $build_list</li>
+                <li>
+                    <div class='heading'>Multiplayer Games</div>
+                </li>
+                <li>
+                    <div class='heading'>User Manual</div>
+                </li>
+                <li>
+                    <div class='heading'>Reference Guide</div>
+                </li>
+            </ul>
+            <div id='credits'>
+                Doomsday Engine is <a href='https://github.com/skyjake/Doomsday-Engine.git'>open 
+                source software</a> and distributed under 
+                the <a href='http://www.gnu.org/licenses/gpl.html'>GNU General Public License</a> (applications) and <a href='http://www.gnu.org/licenses/lgpl.html'>LGPL</a> (core libraries).
+                Assets from the original games remain under their original copyright. 
+                Doomsday logo created by Daniel Swanson.
+                <a href='/'>dengine.net</a> website design by Jaakko Ker&auml;nen &copy; 2017. 
+            </div>
+        </div>");
+                
+        cache_store($ckey);
+    }
+    cache_dump();
 }

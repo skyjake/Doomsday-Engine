@@ -12,7 +12,7 @@ generate_page_header($page_title);
         <div id='page-content'>
             <div class="block">
                 <article id="overview">
-                    <p>Doomsday Engine can run on recent 64-bit versions of macOS. If your macOS is more than two years old, please check out the <a href="http://wiki.dengine.net/w/Supported_platforms">older Doomsday releases</a>.</p>
+                    <p>Doomsday Engine can run on recent 64-bit versions of macOS. If your macOS is more than two years old, please check out the <a href="/manual/supported_platforms">older Doomsday releases</a>.</p>
                 </article>
             </div>
             <div class="block">
@@ -31,7 +31,7 @@ generate_page_header($page_title);
             <div class="block">
                 <article>
                     <h1>Unstable / Nightly</h1>
-                    <p>Unstable builds are made automatically every day when changes are committed to the <a href="http://dengine.net/source">source repository</a>. They contain work-in-progress code and sometimes may crash on you.</p>
+                    <p>Unstable builds are made automatically every day when changes are committed to the <a href="source">source repository</a>. They contain work-in-progress code and sometimes may crash on you.</p>
                     <?php generate_badges('mac10_10-x86_64', BT_UNSTABLE); ?>
                 </article>
             </div>

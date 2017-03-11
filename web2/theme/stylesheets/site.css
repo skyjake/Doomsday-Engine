@@ -13,7 +13,7 @@ body {
 
 #page-title {
     width: 100%;
-    height: 14em;
+    height: 15em;
     text-align: center;
     text-shadow: 0 0 1em black;
     background: #282D2B url("../images/site-banner.jpg") no-repeat;
@@ -32,11 +32,11 @@ body {
     max-width: 60em;
     margin: 1em auto 0 auto;
 }
-#content a {
+#content a, #site-map a {
     color: #eb4;    
     text-decoration: none;
 }
-#content a:hover {
+#content a:hover, #site-map a:hover {
     color: #fc0;    
     text-decoration: underline;
 }
@@ -48,7 +48,7 @@ body {
     font-size: x-large;
     font-weight: bold;
     background-color: rgba(255, 255, 255, 0.333);
-    color: rgba(0, 0, 0, 0.6); /*#202820;*/
+    color: rgba(0, 0, 0, 0.6);
 }
 #content a.button:hover {
     text-decoration: none;
@@ -125,6 +125,15 @@ div.block h1 {
     margin-top: 0;
     color: #eee;
 }
+div.block h2 {
+    font-size: 125%;
+    margin-top: 1.5em;
+}
+div.block h3 {
+    font-size: 110%;
+    font-weight: 400;
+    margin-top: 1.5em;
+}
 div.block p {
     color: #b0b0b0;
 }
@@ -134,9 +143,14 @@ div.block p {
     max-width: 45em;
     width: 75%;
 }
-
 #overview p {
     margin: 0;
+}
+img.distro-icon {
+    width: 23px;
+    height: 23px;
+    padding-right: 1ex;
+    vertical-align: middle;
 }
 
 #sidebar {
@@ -156,6 +170,7 @@ div.block p {
     padding-left: 1em;
     margin-top: 0.5ex;
     margin-bottom: 1em;
+    font-weight: 300;    
 }
 
 #site-map {
@@ -167,17 +182,38 @@ div.block p {
     background-color: rgba(0, 0, 0, 0.5);
 }
 #site-map ul.map-wrapper {
-    /*text-align: center;*/
+    text-align: center;
     list-style: none;
     margin: 0 auto;
     padding: 0;
 }
-#site-map ul.map-wrapper li {
-    display: inline-block;   
+#site-map ul.map-wrapper > li {
+    display: inline-block;
     vertical-align: top; 
-    width: 30em;
-    margin: 0 2em;
+    width: 23%;
+    min-width: 20em;
+    max-width: 40em;
+    margin: 0 1em;
     text-align: left;
+}
+#site-map ul.sitemap-list {
+    padding: 0;
+    list-style: none;
+    margin-bottom: 1em;
+}
+#site-map ul.sitemap-list > li {
+    display: list-item;
+    padding: 0;
+    list-style: none;
+}
+#site-map .heading {
+    font-weight: bold;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+}
+#site-map time {
+    color: #999;
+    white-space: nowrap;
 }
 
 #credits {
