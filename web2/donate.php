@@ -16,11 +16,14 @@ generate_page_header($page_title);
                     <p>Doomsday Engine is a long-running open source project.
                         Since its inception in 1999, it has been fueled by nostalgia
                         and the passion of its developers. However, those things 
-                        unfortunately cannot pay for web hosting, code signing keys, 
-                        build server upgrades, and other running costs.</p>
+                        unfortunately cannot pay for web hosting, build server upgrades,
+                        code signing keys, and other running costs.</p>
                     <p>If you enjoy Doomsday and wish to see its development continue
                         at full speed, please consider making a donation.
                     </p>
+                    <div class='undersigned'>&mdash; Jaakko Ker&auml;nen
+                        <div class='role'>Project founder</div>
+                    </div>
                 </article>
             </div>
             <div class="block">
