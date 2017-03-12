@@ -97,6 +97,11 @@ function generate_build_page($number)
         
     $db = db_open();
     $result = db_query($db, "SELECT * FROM ".DB_TABLE_BUILDS." WHERE build=$number");
+    if ($result->num_rows == 0) {
+        // Revert to the full index.
+        generate_build_index_page();
+        return;
+    }
     if ($row = $result->fetch_assoc()) {
         $build_info = $row;
         $type    = build_type_text($row['type']);
