@@ -19,8 +19,11 @@ generate_page_header();
         </div>
         <div id='hero' class='block'>
             <article>
-                <video id='hero-video'>
-                    <img src='theme/images/video-placeholder.jpg'>
+                <video id='hero-video' width="450" height="253" 
+                    autoplay loop muted
+                    src='http://files.dengine.net/doomsday_demo.mp4'
+                    poster='theme/images/demo-thumb.jpg'>
+                    <img src='theme/images/demo-thumb.jpg'>
                 </video>
                 <h1>A rejuvenation.</h1>
                 <p><a href="https://en.wikipedia.org/wiki/Doom_(1993_video_game)">id 
@@ -38,16 +41,16 @@ generate_page_header();
             </article>
         </div>
         <div id='features' class='block'>
+            <img id='feature-image' src='theme/images/home_ui.jpg'>
             <article>
-                <img id='feature-image' src='theme/images/home_v2t.jpg'>
                 <h1>FEATURES</h1>
-                <p>UI</p>
-                <p>Graphics</p>
-                <p>Audio</p>
-                <p>Resources</p>
-                <p>Multiplayer</p>
-                <p>Tech: OpenGL, Qt 5</p>
+                <p><span class='heading'>UI</span> Game profiles and add-on selection. Multiplayer server browser. In-game overlay with configuration options and console prompt.</p>
+                <p><span class='heading'>Graphics</span> Particle effects and dynamic lights. Bloom and vignette effects. Geometry-based ambient occlusion. Supports 3D models for objects (FBX, MD5) and sky boxes. Upscaling texture filter. Stereoscopic rendering modes.</p>
+                <p><span class='heading'>Audio</span> 3D sound effects and reverb (FMOD plugin). Supports music add-ons (MP3) and FluidSynth for high-quality MIDI music (Unix only).</p>
+                <p><span class='heading'>Multiplayer</span> Automatic discovery of LAN servers. Master server for public games. Tool for running servers in the background.</p>
+                <p><span class='heading'>Technology</span> Portable code built on Qt 5 and OpenGL.</p>
             </article>
+            <div style="clear:both;"></div>
         </div>
     </div>
     <?php generate_sitemap(); ?>

@@ -127,16 +127,26 @@ body {
     margin: 5em 0em;
 }
 #hero-video {
-    width: 320px;
+    width: 450px;
     float: right;
     margin-left: 2em;
-    margin-bottom: 10em;
+    margin-bottom: 2em;
+}
+#features .heading {
+    text-transform: uppercase;
+    color: white;
+    font-weight: bold;
+    font-size: 90%;  
+    margin-right: 1ex;  
+}
+#features article {
+    float: right;
+    width: 55%;
 }
 #feature-image {
-    width: 320px;
-    float: left;
+    width: 40%;
     margin-right: 2em;
-    margin-bottom: 6em;
+    margin-bottom: 2em;
 }
 @media only screen and (max-width: 750px) {
     #hero-video {
@@ -144,6 +154,10 @@ body {
         width: 100%;
         margin-left: 0;
         margin-bottom: 1em;
+    }
+    #features article {
+        float: none;
+        width: 100%;
     }
     #feature-image {
         float: none;
@@ -185,9 +199,13 @@ div.block p, div.block ul, div.block ol {
 div.block.blog-post {
     background-color: rgba(0, 0, 0, 0.4);
 }
+#content .blog-post h1 a {
+    color: white;
+}
 .blog-post .post-metadata {
     color: #aaa;
     font-size: 80%;
+    margin-bottom: 1.75em;
 }
 .blog-post .post-tag {
     display: inline;
