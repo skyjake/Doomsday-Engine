@@ -26,14 +26,14 @@
 ?>
 <div id="dengine-topbar">
     <ul class="site-navigation">
-        <li><a href="<?php echo(SITE_ROOT); ?>" class="site-link">Doomsday Engine</a></li>
-        <li><?php echo($download_link); ?></li>
-        <li><a href="/builds">Builds</a></li>
-        <li><a href="<?php echo(SITE_ROOT."/addons"); ?>">Add-ons</a></li>
+        <li><a href="<?php echo(SITE_ROOT); ?>" class="site-link">Doomsday<span class="aux-word"> Engine</span></a></li>
+        <li class="quick-download"><?php echo($download_link); ?></li>
+        <li class="supplementary"><a href="/builds">Builds</a></li>
+        <li class="supplementary"><a href="<?php echo(SITE_ROOT."/addons"); ?>">Add-ons</a></li>
         <li><a href="/manual">Manual</a></li>
         <li><a href="/talk">Forums</a></li>
-        <li><a href="/support">Support</a></li>
-        <li><a href="https://tracker.dengine.net/projects/deng">Bug Tracker</a></li>
-        <li><a href="/blog" class="blog-link">Blog</a></li>
+        <li class="supplementary"><a href="/support">Support</a></li>
+        <li><a href="https://tracker.dengine.net/projects/deng"><span class="aux-word">Bug </span>Tracker</a></li>
+        <li><a href="<?php echo(SITE_ROOT).'/recent_posts'; ?>" class="blog-link">Blog</a></li>
     </ul>
 </div>

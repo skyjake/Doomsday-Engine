@@ -19,6 +19,9 @@ generate_page_header();
         </div>
         <div id='hero' class='block'>
             <article>
+                <video id='hero-video'>
+                    <img src='theme/images/video-placeholder.jpg'>
+                </video>
                 <h1>A rejuvenation.</h1>
                 <p><a href="https://en.wikipedia.org/wiki/Doom_(1993_video_game)">id 
                     Software's Doom</a> pioneered the modern first-person shooter genre.
@@ -36,8 +39,14 @@ generate_page_header();
         </div>
         <div id='features' class='block'>
             <article>
+                <img id='feature-image' src='theme/images/home_v2t.jpg'>
                 <h1>FEATURES</h1>
-                <p>{feature highlights} OpenGL and Qt 5.</p>
+                <p>UI</p>
+                <p>Graphics</p>
+                <p>Audio</p>
+                <p>Resources</p>
+                <p>Multiplayer</p>
+                <p>Tech: OpenGL, Qt 5</p>
             </article>
         </div>
     </div>

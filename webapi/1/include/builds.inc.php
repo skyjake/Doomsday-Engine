@@ -30,6 +30,8 @@ function detect_user_platform()
             $user_platform = 'windows';
             break;
         case Browser::PLATFORM_APPLE:
+        case Browser::PLATFORM_IPHONE:
+        case Browser::PLATFORM_IPAD:
             $user_platform = 'macx';
             break;
         case Browser::PLATFORM_LINUX:

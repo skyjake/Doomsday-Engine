@@ -12,6 +12,7 @@ generate_page_header($page_title);
         <div id='page-content'>
             <div class="block">
                 <article id="overview">
+                    <h1><?php echo($page_title); ?></h1>
                     <p>Doomsday Engine can run on recent 64-bit versions of macOS. If your macOS is more than two years old, please check out the <a href="/manual/supported_platforms">older Doomsday releases</a>.</p>
                 </article>
             </div>

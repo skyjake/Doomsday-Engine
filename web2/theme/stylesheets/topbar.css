@@ -6,6 +6,7 @@
     padding: 0.5ex 0;
     background-color: rgba(0, 0, 0, 0.5);
     font-family: "Open Sans", sans-serif;
+    font-size: 12pt;
 }
 #dengine-topbar ul.site-navigation {
     text-align: center;
@@ -27,4 +28,24 @@
 }
 #dengine-topbar a.site-link {
     font-weight: bold;
+}
+@media only screen and (max-width: 750px) {
+    #dengine-topbar ul.site-navigation li.supplementary {
+        display: none;
+    }
+}
+@media only screen and (max-width: 520px) {
+    #dengine-topbar ul.site-navigation li.quick-download {
+        display: none;
+    }
+}
+@media only screen and (max-width: 480px) {
+    #dengine-topbar ul.site-navigation span.aux-word {
+        display: none;
+    }
+}
+@media only screen and (max-width: 320px) {
+    #dengine-topbar {
+        font-size: 10pt;
+    }
 }

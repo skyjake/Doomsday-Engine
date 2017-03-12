@@ -3,25 +3,44 @@
 require_once('class.session.php');
 require_once(DENG_API_DIR.'/include/builds.inc.php');
     
+function reformat_date($date_text)
+{
+    $date = date_parse($date_text);
+    $ts = mktime($date['hour'], $date['minute'], $date['second'],
+                 $date['month'], $date['day'], $date['year']);
+    if (date('Y') != $date['year']) {
+        $fmt = '%Y %B %e';
+    }
+    else {
+        $fmt = '%B %e';
+    }
+    return strftime($fmt, $ts);        
+}
+
 function generate_page_header($title = NULL)
 {
     if ($title) {
         $title = " | ".$title;    
     }
-    echo("<!DOCTYPE html>\n"
-        ."<html lang='en'>\n"
-        ."  <head>\n"
-        ."  <meta charset='UTF-8'>\n"
-        ."  <link href='".SITE_ROOT."/theme/stylesheets/site.css' rel='stylesheet' type='text/css'>\n"
-        ."  <title>Doomsday Engine$title</title>\n"
-        ."</head>\n");    
+    $bg_index = time()/3600 % 10;
+    $bg_rotation_css = 
+        "body { background-image: url(\"theme/images/site-background${bg_index}.jpg\"); }
+        #page-title { background-image: url(\"theme/images/site-banner${bg_index}.jpg\"); }";
+    echo("<!DOCTYPE html>
+        <html lang='en'>
+        <head>
+          <meta name='viewport' content='width=device-width, initial-scale=1'>
+          <meta charset='UTF-8'>
+          <link href='".SITE_ROOT."/theme/stylesheets/site.css' rel='stylesheet' type='text/css'>
+          <style>$bg_rotation_css</style>
+          <title>Doomsday Engine$title</title>
+        </head>\n");    
 }
 
 function generate_page_title($title)
 {
-    echo("<div id='page-title'>
-        <h1>$title</h1>
-    </div>");
+    //<h1>$title</h1>
+    echo("<div id='page-title'></div>");
 }
 
 function platform_download_link()
@@ -89,7 +108,7 @@ function generate_download_badge($db, $file_id)
         $fext = $ext;
     }
     else {
-        $fext = $ext." ($plat[cpu_bits]-bit)";
+        $fext = "$plat[cpu_bits]-bit ".$ext;
     }
 
     $title = "Doomsday ".omit_zeroes($version);
@@ -101,29 +120,26 @@ function generate_download_badge($db, $file_id)
         $title .= " (Source)";
     }
     else {
-        $title .= " &ndash; $fext";        
+        $title .= " &mdash; $fext";        
     }
     $full_title = "Doomsday ".human_version($version, $build['build'], build_type_text($build['type']))
         ." for ".$plat['name']." (".$plat['cpu_bits']."-bit)";
     $download_url = 'http://api.dengine.net/1/builds?dl='.$file['name'];
     
-    $metadata = '<span class="metalink">';
-    $metadata .= '<span title="Release Date">'
-        .substr($build['timestamp'], 0, 10)
-        .'</span> &middot; '; 
     if ($plat['os'] != 'any') {
-        $metadata .= $plat['cpu_bits'].'-bit '.$plat['name'].' (or later)';
+        $metadata .= $plat['name'].' (or later)'; //' &middot; '.$plat['cpu_bits'].'-bit';
     }
     else {
         $metadata .= "Source code .tar.gz";
     }
-    $metadata .= '</span>';
+    $metadata .= "<time datetime='$build[timestamp]'> &middot; "
+        .reformat_date($build['timestamp']).'</time> '; 
     
-    echo('<p><div class="package_badge">'
-        ."<a class='package_name' href='$download_url' "
-        ."title=\"Download $full_title\">$title</a><br />"
+    echo('<p><div class="package-badge">'
+        ."<a class='package-dl' href='$download_url' "
+        ."title=\"Download $full_title\"><div class='package-name'>$title</div><div class='package-metadata'>"
         .$metadata
-        ."</div></p>\n");
+        ."</div></a></div></p>\n");
 }
 
 function generate_badges($platform, $type)
@@ -148,6 +164,7 @@ function generate_sidebar()
 {
     echo(
     "<div id='sidebar'>
+        <div class='partition'>
         <div class='heading'><a href='".SITE_ROOT."'>About Doomsday</a></div>
         <div class='heading'>Downloads</div>
         <ul>
@@ -158,11 +175,13 @@ function generate_sidebar()
             <li><a href='/builds'>Recent builds</a></li>
         </ul>
         <div class='heading'><a href='addons'>Add-ons</a></div>
-        <div class='heading'><a href='/manual'>User Manual</a></div>
+        <div class='heading'><a href='/manual'>User Guide</a></div>
         <ul>
             <li><a href='/manual/getting_started'>Getting started</a></li>
             <li><a href='/manual/multiplayer'>Multiplayer</a></li>
         </ul>
+        </div>
+        <div class='partition'>
         <div class='heading'>Community</div>
         <ul>
             <li><a href='/talk'>Forums</a></li>
@@ -174,20 +193,17 @@ function generate_sidebar()
         <ul>
             <li><a href='https://tracker.dengine.net/projects/deng'>Bug Tracker</a></li>
             <li><a href='https://tracker.dengine.net/projects/deng/roadmap'>Roadmap</a></li>
-            <li><a href='https://github.com/skyjake/Doomsday-Engine.git'>GitHub</a></li>
-            <li><a href='/blog/'>Blog</a></li>
+            <li><a href='recent_posts'>Blog</a></li>
             <li><a href='http://twitter.com/@dengteam'>@dengteam</a></li>
+            <li><a href='https://github.com/skyjake/Doomsday-Engine.git'>GitHub</a></li>
         </ul>
-        <div class='heading'><a href='http://sourceforge.net/p/deng/donate/?source=navbar' title='Donate to support the Doomsday Engine Project'>Donate &#9825;</a></div>
-    </div>");
+        <div class='heading'><a href='donate' title='Donate to support the Doomsday Engine Project'>Donate &#9825;</a></div>
+    </div></div>");
 }
 
 function generate_blog_post_cached($post, $css_class)
 {
-    $date = date_parse($post->date);
-    $ts = mktime($date['hour'], $date['minute'], $date['second'],
-                 $date['month'], $date['day'], $date['year']);
-    $nice_date = strftime('%B %d, %Y', $ts);    
+    $nice_date = reformat_date($post->date);
     
     /*$html = '<div class="block"><article class="'.$css_class
         .' content"><header><h1><a href="'.$post->url.'">'
@@ -200,7 +216,7 @@ function generate_blog_post_cached($post, $css_class)
     $html .= '<div class="links">'.$source_link.'</div></div>';*/
     
     $html = "<a class='blog-link' href='$post->url'>$post->title</a> "
-        ."<time datetime='$post->date' pubdate>&ndash; $nice_date</time>";
+        ."<time datetime='$post->date' pubdate>&middot; $nice_date</time>";
     
     cache_echo('<li>'.$html.'</li>');    
 }
@@ -234,7 +250,7 @@ function generate_sitemap()
                 ." [#".$row['build']."]";
             $title = "Build report for $label";
             $ts = (int) $row['UNIX_TIMESTAMP(timestamp)'];
-            $date = gmstrftime('&ndash; %B %d', $ts);
+            $date = gmstrftime('&middot; %B %e', $ts);
             $css_class = ($ts > $new_threshold)? ' class="new-build"' : '';
         
             $build_list .= "  <li${css_class}><a title='$title' href='$link'>$label</a> <time>$date</time></li>\n";
@@ -270,6 +286,7 @@ function generate_sitemap()
                     $build_list</li>
                 <li>
                     <div class='heading'>Multiplayer Games</div>
+                    <ul class='sitemap-list'><li>No servers</li></ul>
                 </li>
                 <li>
                     <div class='heading'>User Manual</div>

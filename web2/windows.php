@@ -12,6 +12,7 @@ generate_page_header($page_title);
         <div id='page-content'>
             <div class="block">
                 <article id="overview">
+                    <h1><?php echo($page_title); ?></h1>
                     <p>Doomsday Engine can run on all modern Microsoft Windows &reg; desktop operating systems (Vista or later). There are separate installation packages available for 32-bit and 64-bit versions of Windows. Requires a GPU that supports OpenGL 2.1.</p>
                 </article>
             </div>

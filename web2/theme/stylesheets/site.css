@@ -2,7 +2,7 @@
 @import url("topbar.css");
 
 body {
-    background: #282D2B url("../images/site-background.jpg") no-repeat fixed;
+    background: #282D2B url("../images/site-background0.jpg") no-repeat fixed;
     background-position: center 100%;
     background-size: 200% 200%;
     font-family: "Open Sans";
@@ -16,8 +16,14 @@ body {
     height: 15em;
     text-align: center;
     text-shadow: 0 0 1em black;
-    background: #282D2B url("../images/site-banner.jpg") no-repeat;
+    background: #282D2B url("../images/site-banner0.jpg") no-repeat;
     background-size: cover;
+    background-position: center;
+}
+@media only screen and (max-width: 640px) {
+    #page-title {
+        height: 10em;
+    }
 }
 #page-title h1 {
     margin: 0;
@@ -31,6 +37,12 @@ body {
 #content {
     max-width: 60em;
     margin: 1em auto 0 auto;
+}
+@media only screen and (max-width: 640px) {
+    #content {        
+        max-width: none;
+        margin: 1em 0 0 0;
+    }
 }
 #content a, #site-map a {
     color: #eb4;    
@@ -47,12 +59,12 @@ body {
     margin: 1ex 0;
     font-size: x-large;
     font-weight: bold;
-    background-color: rgba(255, 255, 255, 0.333);
-    color: rgba(0, 0, 0, 0.6);
+    background-color: rgba(220, 255, 240, 0.3);
+    color: rgba(0, 0, 0, 0.7);
 }
 #content a.button:hover {
     text-decoration: none;
-    background-color: rgba(255, 255, 255, 0.5);    
+    background-color: rgba(220, 255, 240, 0.4);
     color: black;
 }
 #content .download-button a.button {
@@ -82,15 +94,19 @@ body {
     height: 256px;
     margin: 0 1em;
 }
+@media only screen and (max-width: 640px) {
+    #welcome .intro {
+        min-width: 15em;
+    }
+}
 #welcome .intro section {
-    margin: 65px 0;
-    line-height: 120%;
+    margin: 55px 0;
 }
 #welcome h1 {
     font-weight: 300;
     font-size: 160%;
-    margin: 1ex 0;
-    color: rgba(220, 255, 240, 0.666);
+    margin: 0 0 0.15ex 0;
+    color: rgba(220, 255, 240, 0.5);
 }
 #welcome p {
     margin: 0;    
@@ -110,6 +126,32 @@ body {
 #hero, #features {
     margin: 5em 0em;
 }
+#hero-video {
+    width: 320px;
+    float: right;
+    margin-left: 2em;
+    margin-bottom: 10em;
+}
+#feature-image {
+    width: 320px;
+    float: left;
+    margin-right: 2em;
+    margin-bottom: 6em;
+}
+@media only screen and (max-width: 750px) {
+    #hero-video {
+        float: none;
+        width: 100%;
+        margin-left: 0;
+        margin-bottom: 1em;
+    }
+    #feature-image {
+        float: none;
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 1em;
+    }
+}
 
 div.block {
     margin: 0 0 1em 0;
@@ -125,6 +167,9 @@ div.block h1 {
     margin-top: 0;
     color: #eee;
 }
+div.block h1:last-child {
+    margin-bottom: 0;
+}
 div.block h2 {
     font-size: 125%;
     margin-top: 1.5em;
@@ -134,8 +179,22 @@ div.block h3 {
     font-weight: 400;
     margin-top: 1.5em;
 }
-div.block p {
-    color: #b0b0b0;
+div.block p, div.block ul, div.block ol {
+    color: #c0c0c0;
+}
+div.block.blog-post {
+    background-color: rgba(0, 0, 0, 0.4);
+}
+.blog-post .post-metadata {
+    color: #aaa;
+    font-size: 80%;
+}
+.blog-post .post-tag {
+    display: inline;
+    font-weight: 300;
+}
+.blog-post h1 {
+    margin-bottom: 0;
 }
 
 #page-content {
@@ -143,8 +202,39 @@ div.block p {
     max-width: 45em;
     width: 75%;
 }
+@media only screen and (max-width: 650px) {
+    #page-content {
+        float: none;
+        width: 100%;
+        max-width: none;
+    }
+}
 #overview p {
     margin: 0;
+    color: #eee;
+}
+div.package-badge {
+    background-image: url("../images/package.png");
+    background-repeat: no-repeat;
+    background-size: 32px 32px;    
+    background-position: left center;
+    padding-left: 42px;
+}
+#content div.package-badge a:hover {
+    text-decoration: none;
+}
+#content div.package-badge a:hover .package-name {
+    text-decoration: underline;
+}
+div.package-badge .package-name {
+    font-size: 110%;
+}
+div.package-badge .package-metadata {
+    font-size: 85%;
+    color: #ccc;
+}
+div.package-badge time {
+    color: #aaa;
 }
 img.distro-icon {
     width: 23px;
@@ -157,6 +247,20 @@ img.distro-icon {
     font-size: 95%;
     width: 20em;
     margin: 0 1em;
+}
+#sidebar .partition {
+    display: inline-block;
+    vertical-align: top;
+    margin-bottom: -1em;
+}
+@media only screen and (max-width: 650px) {
+    #sidebar {
+        width: 100%;
+        margin: 0;
+    }
+    #sidebar .partition {
+        padding-left: 2em;
+    }
 }
 #sidebar .heading {
     text-transform: uppercase;
@@ -185,16 +289,21 @@ img.distro-icon {
     text-align: center;
     list-style: none;
     margin: 0 auto;
-    padding: 0;
+    padding: 0 1em;
 }
 #site-map ul.map-wrapper > li {
     display: inline-block;
     vertical-align: top; 
-    width: 23%;
+    width: 10%;
     min-width: 20em;
-    max-width: 40em;
     margin: 0 1em;
     text-align: left;
+}
+@media only screen and (max-width: 600px) {
+    #site-map ul.map-wrapper > li {
+        width: 100%;
+        margin: 0;
+    }
 }
 #site-map ul.sitemap-list {
     padding: 0;
@@ -220,6 +329,11 @@ img.distro-icon {
     margin: 2em 6em 0 6em;
     text-align: center;
     color: #888;
+}
+@media only screen and (max-width: 600px) {
+    #credits {
+        margin: 2em 2em 0 2em;
+    }
 }
 #credits a {
     color: #aaa;
