@@ -50,6 +50,7 @@ using namespace de;
 
 static String const VAR_TITLE ("title");
 static String const VAR_TAGS  ("tags");
+
 static String const TAG_HIDDEN("hidden");
 static String const TAG_LOADED("loaded");
 
@@ -782,6 +783,7 @@ void PackagesWidget::setRightClickToOpenContextMenu(bool enable)
 void PackagesWidget::setHiddenTags(StringList const &hiddenTags)
 {
     d->hiddenTags = hiddenTags;
+    populate();
 }
 
 void PackagesWidget::setPopulationEnabled(bool enable)
