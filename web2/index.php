@@ -19,8 +19,7 @@ generate_page_header();
         </div>
         <div id='hero' class='block'>
             <article>
-                <video id='hero-video' width="450" height="253" 
-                    autoplay loop muted
+                <video id='hero-video' width="450" height="253" muted
                     src='http://files.dengine.net/doomsday_demo.mp4'
                     poster='theme/images/demo-thumb.jpg'>
                     <img src='theme/images/demo-thumb.jpg'>
