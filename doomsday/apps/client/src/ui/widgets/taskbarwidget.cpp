@@ -78,6 +78,7 @@ enum MenuItemPositions
     POS_GAMES_SEPARATOR   = 3,
     POS_UNLOAD            = 4,
     POS_PACKAGES          = 7,
+    POS_PACKAGES_NOTE     = 8,
 
     // Config menu:
     POS_RENDERER_SETTINGS = 0,
@@ -281,6 +282,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
         itemWidget(mainMenu, POS_UNLOAD)           .show(!game.isNull());
         itemWidget(mainMenu, POS_GAMES_SEPARATOR)  .show(!game.isNull());
         itemWidget(mainMenu, POS_PACKAGES)         .show(!game.isNull());
+        itemWidget(mainMenu, POS_PACKAGES_NOTE)    .show(!game.isNull());
         //itemWidget(mainMenu, POS_IWAD_FOLDER)      .show(game.isNull());
         itemWidget(mainMenu, POS_HOME)             .show(!game.isNull());
         //itemWidget(mainMenu, POS_CONNECT)          .show(game.isNull());
@@ -482,7 +484,11 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
             << new ui::Item(ui::Item::Separator)
             << new ui::Item(ui::Item::Separator, tr("Resources"))
             << new ui::ActionItem(tr("Browse Packages..."), new SignalAction(this, SLOT(openPackagesSidebar())))
+            << new ui::Item(ui::Item::Annotation,
+                            tr("Load/unload data files and view package information."))
             << new ui::ActionItem(tr("Clear Cache"), new CallbackAction([] () { DoomsdayApp::app().clearCache(); }))
+            << new ui::Item(ui::Item::Annotation,
+                            tr("Forces a refresh of resource file metadata."))
             << new ui::Item(ui::Item::Separator)
             << new ui::Item(ui::Item::Separator, tr("Doomsday"))
             << new ui::ActionItem(tr("Check for Updates"), new CommandAction("updateandnotify"))
