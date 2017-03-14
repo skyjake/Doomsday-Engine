@@ -35,7 +35,9 @@ using namespace de;
 
 namespace res {
 
-static int const MATCH_MINIMUM_SCORE = 2;
+static int const MATCH_MAXIMUM_SCORE = 4; // in case 5 specified, allow 1 to not match for flexibility
+
+static String const VAR_REQUIRED_SCORE = "requiredScore";
 
 DENG2_PIMPL(Bundles)
 , DENG2_OBSERVES(FileIndex, Addition)
@@ -137,11 +139,11 @@ DENG2_PIMPL(Bundles)
         formatEntries.clear();
         identityRegistry.parse(App::rootFolder().locate<File const>(defPath));
 
-        for (auto const *elem : identityRegistry.root().contentsInOrder())
+        for (auto *elem : identityRegistry.root().contentsInOrder())
         {
             if (!elem->isBlock()) continue;
 
-            Info::BlockElement const &block = elem->as<Info::BlockElement>();
+            Info::BlockElement &block = elem->as<Info::BlockElement>();
             if (block.blockType() != QStringLiteral("package"))
             {
                 // Not sure what this is...
@@ -163,6 +165,14 @@ DENG2_PIMPL(Bundles)
             {
                 throw InvalidError("Bundles::parseRegistry",
                                    defPath + ": invalid format for \"" + block.name() + "\"");
+            }
+
+            // How many rules required?
+            if (!block.contains(VAR_REQUIRED_SCORE))
+            {
+                int const ruleCount = block.size() - 1; // not counting "info"
+                block.add(new Info::KeyElement(VAR_REQUIRED_SCORE,
+                        String::format("%i", de::min(MATCH_MAXIMUM_SCORE, ruleCount))));
             }
 
             formatEntries[bundleFormat].append(&block);
@@ -328,6 +338,11 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
             }
         }
 
+        if (score < def->keyValue(VAR_REQUIRED_SCORE).text.toInt())
+        {
+            score = 0;
+        }
+
         if (score > 0 && score >= match.bestScore)
         {
             match.bestMatch = def;
@@ -342,7 +357,7 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
         }
     }
 
-    if (match.bestScore < MATCH_MINIMUM_SCORE)
+    if (!match.bestScore)
     {
         // No go.
         return MatchResult();
