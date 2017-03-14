@@ -33,6 +33,7 @@ def setDefaults(d)
         record d.ui()
             scaleFactor = 1.0  # Overall factor (both rules and fonts).
             showAnnotations = True
+            translucency = True
         end
            
         # Window manager defaults.

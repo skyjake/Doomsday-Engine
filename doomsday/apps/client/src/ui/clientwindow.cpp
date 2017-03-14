@@ -282,7 +282,10 @@ DENG2_PIMPL(ClientWindow)
 
         // Everything behind the task bar can be blurred with this widget.
         taskBarBlur = new LabelWidget("taskbar-blur");
-        taskBarBlur->set(GuiWidget::Background(Vector4f(1, 1, 1, 1), GuiWidget::Background::Blurred));
+        if (style.isBlurringAllowed())
+        {
+            taskBarBlur->set(GuiWidget::Background(Vector4f(1, 1, 1, 1), GuiWidget::Background::Blurred));
+        }
         taskBarBlur->rule().setRect(root.viewRule());
         taskBarBlur->setAttribute(GuiWidget::DontDrawContent);
         root.add(taskBarBlur);

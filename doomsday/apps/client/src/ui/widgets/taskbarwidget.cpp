@@ -354,14 +354,7 @@ static PopupWidget *makeUpdaterSettings()
 
 TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
 {
-#if 0
-    // GameWidget is presently too inefficient with blurring.
-    BlurWidget *blur = new BlurWidget("taskbar_blur");
-    add(blur);
-    Background bg(*blur, style().colors().colorf("background"));
-#else
     Background bg(style().colors().colorf("background"));
-#endif
 
     Rule const &gap = rule("gap");
 
@@ -371,7 +364,14 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
             .setInput(Rule::Bottom, rule().bottom())
             .setInput(Rule::Right,  rule().right())
             .setInput(Rule::Top,    rule().top());
-    d->backBlur->set(Background(ClientWindow::main().taskBarBlur(), Vector4f(1, 1, 1, 1)));
+    if (style().isBlurringAllowed())
+    {
+        d->backBlur->set(Background(ClientWindow::main().taskBarBlur(), Vector4f(1, 1, 1, 1)));
+    }
+    else
+    {
+        d->backBlur->set(Background(Vector4f(0, 0, 0, 1)));
+    }
     add(d->backBlur);
 
     d->console = new ConsoleWidget;

@@ -20,6 +20,7 @@
 
 #include <de/App>
 #include <de/CommandLine>
+#include <de/Config>
 #include <de/Folder>
 #include <de/Package>
 #include <de/Record>
@@ -36,6 +37,9 @@ DENG2_PIMPL(Style)
     FontBank fonts;
     ColorBank colors;
     ImageBank images;
+
+    // Options:
+    Variable const &uiTranslucency = Config::get("ui.translucency");
 
     Impl(Public *i) : Base(i)
     {
@@ -199,7 +203,7 @@ Font const *Style::richStyleFont(Font::RichFormat::Style fontStyle) const
 
 bool Style::isBlurringAllowed() const
 {
-    return true;
+    return d->uiTranslucency.value().isTrue();
 }
 
 GuiWidget *Style::sharedBlurWidget() const

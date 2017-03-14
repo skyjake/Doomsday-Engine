@@ -434,7 +434,7 @@ DENG_GUI_PIMPL(DialogWidget)
         {
             bg = self().infoStyleBackground();
         }
-        else if (Style::get().isBlurringAllowed())
+        else if (style().isBlurringAllowed())
         {
             /// @todo Should use the Style for this.
             bg.type = Background::SharedBlurWithBorderGlow;
@@ -562,7 +562,7 @@ void DialogWidget::setAcceptanceAction(RefArg<de::Action> action)
 {
     changeRef(d->acceptAction, action);
 }
-    
+
 Action *DialogWidget::acceptanceAction() const
 {
     return d->acceptAction;

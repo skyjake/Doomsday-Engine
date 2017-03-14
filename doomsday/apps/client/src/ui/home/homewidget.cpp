@@ -97,7 +97,14 @@ DENG_GUI_PIMPL(HomeWidget)
         tabs = new TabWidget;
 
         tabsBackground = new LabelWidget;
-        tabsBackground->set(Background(Vector4f(1, 1, 1, 1), Background::Blurred));
+        if (style().isBlurringAllowed())
+        {
+            tabsBackground->set(Background(Vector4f(1, 1, 1, 1), Background::Blurred));
+        }
+        else
+        {
+            tabsBackground->set(Background(Vector4f(0, 0, 0, 1)));
+        }
 
         // Create the column navigation buttons.
         moveLeft  = new ButtonWidget;

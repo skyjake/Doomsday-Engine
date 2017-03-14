@@ -31,6 +31,7 @@ using namespace de;
 DENG2_PIMPL(UISettingsDialog)
 {
     VariableChoiceWidget *uiScale;
+    VariableToggleWidget *uiTranslucency;
     VariableToggleWidget *showAnnotations;
     VariableToggleWidget *showColumnDescription;
     VariableToggleWidget *showUnplayable;
@@ -45,6 +46,7 @@ DENG2_PIMPL(UISettingsDialog)
         auto &area = self().area();
 
         area.add(uiScale               = new VariableChoiceWidget(App::config("ui.scaleFactor")));
+        area.add(uiTranslucency        = new VariableToggleWidget(tr("Background Translucency"), App::config("ui.translucency")));
         area.add(showAnnotations       = new VariableToggleWidget(tr("Menu Annotations"),  App::config("ui.showAnnotations")));
         area.add(showColumnDescription = new VariableToggleWidget(tr("Game Descriptions"), App::config("home.showColumnDescription")));
         area.add(showUnplayable        = new VariableToggleWidget(tr("Unplayable Games"),  App::config("home.showUnplayableGames")));
@@ -79,7 +81,7 @@ UISettingsDialog::UISettingsDialog(String const &name)
     auto *library = LabelWidget::newWithText(_E(D) + tr("Game Library"), &area());
     library->setFont("separator.label");
 
-    auto *restartNotice = LabelWidget::newWithText(tr("Takes effect only after restarting."), &area());
+    auto *restartNotice = LabelWidget::newWithText(tr("Changes take effect only after restarting."), &area());
     restartNotice->margins().setTop("");
     restartNotice->setFont("separator.annotation");
     restartNotice->setTextColor("altaccent");
@@ -96,6 +98,7 @@ UISettingsDialog::UISettingsDialog(String const &name)
     layout.setGridSize(2, 0);
     layout.setColumnAlignment(0, ui::AlignRight);
     layout << *LabelWidget::newWithText(tr("Scale:"), &area()) << *d->uiScale
+           << Const(0) << *d->uiTranslucency
            << Const(0) << *restartNotice
            << Const(0) << *d->showAnnotations
            << Const(0) << *annots;
