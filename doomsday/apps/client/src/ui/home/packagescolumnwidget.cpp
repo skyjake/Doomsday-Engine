@@ -63,6 +63,7 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
         area.add(packages = new PackagesWidget(PackagesWidget::PopulationEnabled, "home-packages"));
         packages->setActionItems(actions);
         packages->setRightClickToOpenContextMenu(true);
+        packages->margins().setLeft("").setRight("");
         packages->rule()
                 .setInput(Rule::Width, area.contentRule().width())
                 .setInput(Rule::Top,   self().header().rule().bottom() + rule("gap"))
@@ -83,7 +84,7 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
 
         area.add(folderOptionsButton = new ButtonWidget);
         folderOptionsButton->setStyleImage("gear", "default");
-        folderOptionsButton->setText(tr("Data Files"));
+        folderOptionsButton->setText(tr("Configure Data Files"));
         folderOptionsButton->setTextAlignment(ui::AlignRight);
         folderOptionsButton->setSizePolicy(ui::Fixed, ui::Expand);
         folderOptionsButton->rule()
