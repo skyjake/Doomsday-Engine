@@ -39,30 +39,8 @@
 
 using namespace de;
 
-#if 0
-static PopupWidget *makePackageFoldersDialog()
-{
-    Variable &pkgFolders = Config::get("resource.packageFolder");
-
-    auto *dlg = new DirectoryListDialog;
-    //dlg->title().setFont("heading");
-    //dlg->title().setText(QObject::tr("Add-on and Package Folders"));
-    //dlg->message().setText(QObject::tr("The following folders are searched for resource packs and other add-ons:"));
-    Id group = dlg->addGroup(QObject::tr("Add-on and Package Folders"),
-                             QObject::tr("The following folders are searched for resource packs and other add-ons:"));
-    dlg->setValue(group, pkgFolders.value());
-    dlg->setAcceptanceAction(new CallbackAction([dlg, &pkgFolders, group] ()
-    {
-        pkgFolders.set(dlg->value(group));
-
-        // Reload packages and recheck for game availability.
-        DoomsdayApp::app().initPackageFolders();
-    }));
-    return dlg;
-}
-#endif
-
 DENG_GUI_PIMPL(PackagesColumnWidget)
+, DENG2_OBSERVES(DoomsdayApp, GameChange)
 {
     PackagesWidget *packages;
     LabelWidget *countLabel;
@@ -72,6 +50,8 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
 
     Impl(Public *i) : Base(i)
     {
+        DoomsdayApp::app().audienceForGameChange() += this;
+
         actions << new ui::SubwidgetItem(tr("..."), ui::Left, [this] () -> PopupWidget *
         {
             return new PackageInfoDialog(packages->actionPackage());
@@ -123,16 +103,15 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
         self().header().menuButton().setPopup([this] (PopupButtonWidget const &) -> PopupWidget * {
             auto *menu = new PopupMenuWidget;
             menu->items()
-                    << new ui::ActionItem(/*style().images().image("refresh"), */tr("Refresh"),
+                    << new ui::ActionItem(tr("Refresh"),
                                           new CallbackAction([this] () { packages->refreshPackages(); }));
-                    /*<< new ui::SubwidgetItem(tr("Folders"), ui::Left, [menu] () -> PopupWidget *
-                    {
-                        auto *pop = makePackageFoldersDialog();
-                        QObject::connect(pop, SIGNAL(closed()), menu, SLOT(close()));
-                        return pop;
-                    });*/
                 return menu;
         }, ui::Down);
+    }
+
+    void currentGameChanged(Game const &game) override
+    {
+        folderOptionsButton->show(game.isNull());
     }
 };
 
