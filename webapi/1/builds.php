@@ -72,7 +72,7 @@ function generate_header($page_title)
     cache_echo("<!DOCTYPE html>\n");
     cache_echo("<html lang=\"en\"><head>\n");
     cache_echo("  <meta charset=\"UTF-8\">\n");
-    cache_echo("  <link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,700' rel='stylesheet' type='text/css'>\n");
+    cache_echo("  <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400italic,700' rel='stylesheet' type='text/css'>\n");
     cache_echo("  <link href='http://api.dengine.net/1/build_page.css' rel='stylesheet' type='text/css'>\n");
     cache_echo("  <title>$page_title</title>\n");
     cache_echo("</head><body>\n");
@@ -202,9 +202,9 @@ function generate_build_page($number)
                         $subject = htmlspecialchars($commit->subject);
                         $author = htmlentities($commit->author);
                         $msg = basic_markdown(htmlentities($commit->message));
-                        cache_echo("<li><a href='$github_link'>$date</a> "
+                        cache_echo("<li>$others<a href='$github_link'>$date</a> "
                             ."<span class='title'><a href='$trgit_link'>$subject</a></span> "
-                            ."by <span class='author'>$author</span>".$others
+                            //."by <span class='author'>$author</span>"
                             ."<div class='message'>$msg</div></li>\n");
                     }
                     cache_echo("</ul>\n");

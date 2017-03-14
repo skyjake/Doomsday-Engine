@@ -1,6 +1,7 @@
 body {
-    font-family: "Open Sans";
-    max-width: 80ex;
+    font-family: "Source Sans Pro";
+    font-size: 13pt;    
+    max-width: 85ex;
     margin-left: auto;
     margin-right: auto;
     padding-left: 1em;
@@ -41,7 +42,7 @@ ul {
     color: #666;
 }
 a {
-    color: black; /*#070;*/
+    color: black;
     text-decoration: none;
 }
 a:hover {
@@ -74,7 +75,7 @@ div.build {
     border: 1px solid #bbb;
     background-color: #eee;
     border-radius: 1ex;
-    margin: 0.5ex;
+    margin: 0.8ex 0.5ex;
     padding: 1ex;
     text-align: center;
 }
@@ -175,6 +176,7 @@ div.fileinfo a {
 }
 div.hash .digits {
     font-family: monospace;
+    font-size: 80%;
 }
 a.signature {
     color: #777;
@@ -226,8 +228,9 @@ ul.commitlist span.author {
     font-style: italic;
 }
 div.other-groups {
-    display: inline-block;
+    display: block;
     vertical-align: text-top;
+    float: right;
 }
 div.other-groups div.tag {
     display: inline-block;

@@ -1,12 +1,13 @@
-@import url("http://fonts.googleapis.com/css?family=Open+Sans:300,400,400italic,700");
+@import url("http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400italic,700");
 @import url("topbar.css");
 
 body {
     background: #282D2B url("../images/site-background0.jpg") no-repeat fixed;
     background-position: center 100%;
     background-size: 200% 200%;
-    font-family: "Open Sans";
+    font-family: "Source Sans Pro";
     font-weight: 400;
+    font-size: 14pt;
     color: #ddd;
     margin: 0;
 }
@@ -35,7 +36,7 @@ body {
 }
 
 #content {
-    max-width: 60em;
+    max-width: 51em;
     margin: 1em auto 0 auto;
 }
 @media only screen and (max-width: 640px) {
@@ -138,7 +139,7 @@ body {
     width: 450px;
     float: right;
     margin-left: 2em;
-    margin-bottom: 2em;
+    margin-bottom: 3em;
 }
 #features .heading {
     text-transform: uppercase;
@@ -149,7 +150,7 @@ body {
 }
 #features article {
     float: right;
-    width: 55%;
+    width: 54%;
     font-size: 90%;
 }
 #feature-image {
