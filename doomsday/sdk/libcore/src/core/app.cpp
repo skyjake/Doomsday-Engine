@@ -261,10 +261,9 @@ DENG2_PIMPL(App)
                 qWarning("%s", er.asText().toLatin1().constData());
             }
 
-            // Aliases have not been defined at this point, so check all variants.
             level = LogEntry::Level(level
                                     - cmdLine.has("-verbose")
-                                    - cmdLine.has("-v")
+                                    - cmdLine.has("-v") * (cmdLine.isAliasDefinedFor("-verbose")? 0 : 1)
                                     - cmdLine.has("-vv") * 2
                                     - cmdLine.has("-vvv") * 3);
 
