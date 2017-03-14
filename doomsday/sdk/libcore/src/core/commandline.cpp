@@ -430,6 +430,12 @@ void CommandLine::alias(String const &full, String const &alias)
     d->aliases[full.toStdString()].push_back(alias);
 }
 
+bool CommandLine::isAliasDefinedFor(String const &full) const
+{
+    auto const &aliases = d.getConst()->aliases;
+    return aliases.find(full.toStdString()) != aliases.end();
+}
+
 bool CommandLine::matches(String const &full, String const &fullOrAlias) const
 {
     if (!full.compareWithoutCase(fullOrAlias))

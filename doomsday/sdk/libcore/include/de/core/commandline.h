@@ -216,6 +216,8 @@ public:
      */
     void alias(String const &full, String const &alias);
 
+    bool isAliasDefinedFor(String const &full) const;
+
     /**
      * @return @c true, iff the two parameters are equivalent according to
      * the abbreviations.
