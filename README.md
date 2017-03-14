@@ -18,6 +18,8 @@ Linux 64-bit [![Linux Build Status](https://travis-ci.org/skyjake/Doomsday-Engin
 
 **libshell** has functionality related to connecting to and controlling Doomsday servers remotely.
 
+**libdoomsday** is an application-level library that contains shared functionality for the client, server, and plugins.
+
 ## External Dependencies
 
 ### CMake
@@ -26,7 +28,7 @@ Doomsday is compiled using [CMake](http://cmake.org/). Version 3.1 or later is r
 
 ### Qt
 
-Using the latest version of Qt 5 is recommended. The minimum required version is Qt 4.8. See [Supported platforms](http://wiki.dengine.net/w/Supported_platforms) in the wiki for details about which version is being used on which platform.
+Using the latest version of Qt 5 is recommended. The minimum required version is Qt 5.5 (complete build) or Qt 5.0 (client disabled). See [Supported platforms](http://wiki.dengine.net/w/Supported_platforms) in the wiki for details about which version is being used on which platform.
 
 ### Open Asset Import Library
 
