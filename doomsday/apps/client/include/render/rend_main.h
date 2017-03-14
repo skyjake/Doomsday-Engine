@@ -86,7 +86,7 @@ DENG_EXTERN_C int useMultiTexDetails;
 
 DENG_EXTERN_C int dynlightBlend;
 
-DENG_EXTERN_C int torchAdditive;
+//DENG_EXTERN_C int torchAdditive;
 DENG_EXTERN_C de::Vector3f torchColor;
 
 DENG_EXTERN_C int rAmbient;

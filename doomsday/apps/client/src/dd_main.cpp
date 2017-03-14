@@ -1777,8 +1777,8 @@ void *DD_GetVariable(dint ddvalue)
     case DD_TORCH_BLUE:
         return &torchColor.z;
 
-    case DD_TORCH_ADDITIVE:
-        return &torchAdditive;
+    //case DD_TORCH_ADDITIVE:
+    //    return &torchAdditive;
 
 # ifdef WIN32
     case DD_WINDOW_HANDLE:
@@ -1851,9 +1851,9 @@ void DD_SetVariable(dint ddvalue, void *parm)
             torchColor.z = de::clamp(0.f, *((dfloat*) parm), 1.f);
             return;
 
-        case DD_TORCH_ADDITIVE:
-            torchAdditive = (*(dint*) parm)? true : false;
-            break;
+        //case DD_TORCH_ADDITIVE:
+        //    torchAdditive = (*(dint*) parm)? true : false;
+        //    break;
 #endif
 
         default:

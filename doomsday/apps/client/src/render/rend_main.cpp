@@ -175,7 +175,7 @@ dint useMultiTexDetails = true;
 dint dynlightBlend;
 
 Vector3f torchColor(1, 1, 1);
-dint torchAdditive = true;
+//dint torchAdditive = true;
 
 dint useShinySurfaces = true;
 
@@ -618,14 +618,7 @@ void Rend_ApplyTorchLight(Vector4f &color, dfloat distance)
             d *= (1024 - distance) / 1024.0f;
         }
 
-        if (torchAdditive)
-        {
-            color += torchColor * d;
-        }
-        else
-        {
-            color += ((color * torchColor) - color) * d;
-        }
+        color = color.max(torchColor * d);
     }
 }
 
