@@ -816,6 +816,9 @@ void DoomsdayApp::makeGameCurrent(GameProfile const &profile)
     {
         // Remember what was loaded beforehand.
         d->preGamePackages = PackageLoader::get().loadedPackageIdsInOrder(PackageLoader::NonVersioned);
+
+        // Ensure game profiles have been saved.
+        d->gameProfiles.serialize();
     }
 
     try
