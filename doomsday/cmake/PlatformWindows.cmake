@@ -18,17 +18,20 @@ add_definitions (
 )
 
 # Code signing.
-set (DENG_SIGNTOOL_CERT "" CACHE FILEPATH "Path of the certificate for signing files.")
-set (DENG_SIGNTOOL_PASSPHRASE "" CACHE STRING "Signing certificate passphrase.")
+set (DENG_SIGNTOOL_CERT "" CACHE FILEPATH "Name of the certificate for signing files.")
+set (DENG_SIGNTOOL_PIN "" CACHE STRING "PIN for signing key.")
+set (DENG_SIGNTOOL_TIMESTAMP "" CACHE STRING "URL of the signing timestamp server.")
 find_program (SIGNTOOL_COMMAND signtool)
 mark_as_advanced (SIGNTOOL_COMMAND)
 
 function (deng_signtool path comp)
     install (CODE "message (STATUS \"Signing ${path}...\")
-        execute_process (COMMAND \"${SIGNTOOL_COMMAND}\" sign
-            /f \"${DENG_SIGNTOOL_CERT}\"
-            /p ${DENG_SIGNTOOL_PASSPHRASE}
-            /t http://timestamp.verisign.com/scripts/timstamp.dll
+        execute_process (COMMAND \"${SIGNTOOL_COMMAND}\" -pin ${DENG_SIGNTOOL_PIN}
+            sign
+            /n \"${DENG_SIGNTOOL_CERT}\"
+            /t ${DENG_SIGNTOOL_TIMESTAMP}
+            /fd sha1
+            /v
             \"\${CMAKE_INSTALL_PREFIX}/${path}\"
         )"
         COMPONENT ${comp}
