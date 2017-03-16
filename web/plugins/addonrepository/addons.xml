@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addons>
 <addon featured="true">
-    <downloadUri>http://files.dengine.net/packs/jdrp-packaged-20070404.zip</downloadUri>
+    <downloadUri>http://files.dengine.net/torrents/jdrp-packaged-20070404.zip.torrent</downloadUri>
     <title>DOOM Resource Pack (jDRP)</title>
     <version>1.01</version>
     <description>3D model pack (addon.box version).</description>
@@ -16,7 +16,7 @@
     </games>
 </addon>
 <addon>
-    <downloadUri>http://files.dengine.net/tracker/torrents/jdmu-doom-classic-20080930.pk3.torrent</downloadUri>
+    <downloadUri>http://files.dengine.net/torrents/jdmu-doom-classic-20080930.pk3.torrent</downloadUri>
     <title>DOOM Classic Music</title>
     <version>2008.09.30</version>
     <description>The original DOOM midis recorded on a genuine Roland Sound Canvas SC-155.</description>
@@ -28,7 +28,7 @@
     </games>
 </addon>
 <addon>
-    <downloadUri>http://files.dengine.net/tracker/torrents/jdmu-doom2-classic-20080930.pk3.torrent</downloadUri>
+    <downloadUri>http://files.dengine.net/torrents/jdmu-doom2-classic-20080930.pk3.torrent</downloadUri>
     <title>DOOM2 Classic Music</title>
     <version>2008.09.30</version>
     <description>The original DOOM2 midis recorded on a genuine Roland Sound Canvas SC-155.</description>
@@ -38,7 +38,7 @@
     </games>
 </addon>
 <addon>
-    <downloadUri>http://files.dengine.net/tracker/torrents/tnt-remix-lorcan-20071225.pk3.torrent</downloadUri>
+    <downloadUri>http://files.dengine.net/torrents/tnt-remix-lorcan-20071225.pk3.torrent</downloadUri>
     <title>TNT Lorcan Remix</title>
     <version>2007.12.25</version>
     <description>TNT music remixed by Lorcan.</description>
@@ -48,7 +48,7 @@
     </games>
 </addon>
 <addon>
-    <downloadUri>http://files.dengine.net/tracker/torrents/jdmu-all-remix-Sycraft-v4.pk3.torrent</downloadUri>
+    <downloadUri>http://files.dengine.net/torrents/jdmu-all-remix-Sycraft-v4.pk3.torrent</downloadUri>
     <title>Sycraft Remixes</title>
     <version>4</version>
     <description>DOOM, DOOMII and Final DOOM music remixed by Sycraft.</description>
@@ -76,7 +76,7 @@
     </games>
 </addon>
 <addon>
-    <downloadUri>http://files.dengine.net/tracker/torrents/jdui-all-20120223.pk3.torrent</downloadUri>
+    <downloadUri>http://files.dengine.net/torrents/jdui-all-20120223.pk3.torrent</downloadUri>
     <title>DOOM High-Resolution User interface Pack</title>
     <version>2012.02.23</version>
     <description>High-resolution user interface textures for all version of DOOM.</description>
@@ -91,7 +91,7 @@
     </games>
 </addon>
 <addon featured="true">
-    <downloadUri>http://files.dengine.net/tracker/torrents/pk-doom-sfx-20100109.pk3.torrent</downloadUri>
+    <downloadUri>http://files.dengine.net/torrents/pk-doom-sfx-20100109.pk3.torrent</downloadUri>
     <title>DOOM High-Quality Sound Pack</title>
     <version>2010.01.09</version>
     <description>Compiled by Per Kristian Risvik.</description>
@@ -106,7 +106,7 @@
     </games>
 </addon>
 <addon>
-    <downloadUri>http://files.dengine.net/tracker/torrents/slide-skyboxes.torrent</downloadUri>
+    <downloadUri>http://files.dengine.net/torrents/slide-skyboxes.zip.torrent</downloadUri>
     <title>Slide's Skyboxes</title>
     <description>3d model skies by Slide for all versions of DOOM.</description>
     <notes><![CDATA[Move these packs into the Snowberry addon folder]]></notes>
@@ -120,7 +120,7 @@
     </games>
 </addon>
 <addon>
-    <downloadUri>http://files.dengine.net/packs/jhrp+psy-20100928.pk3</downloadUri>
+    <downloadUri>http://files.dengine.net/torrents/jhrp+psy-20100928.pk3.torrent</downloadUri>
     <title>Heretic Resource Pack (jHRP)</title>
     <version>2010.09.28+psy</version>
     <description>3D models, high-resolution user interface and textures.</description>
@@ -156,7 +156,7 @@
     </games>
 </addon>
 <addon>
-    <downloadUri>http://files.dengine.net/tracker/torrents/xhtp-20100714.pk3.torrent</downloadUri>
+    <downloadUri>http://files.dengine.net/torrents/xhtp-20100714.pk3.torrent</downloadUri>
     <title>Hexen Texture Pack</title>
     <version>2010.07.14</version>
     <description>High-resolution texture pack.</description>
