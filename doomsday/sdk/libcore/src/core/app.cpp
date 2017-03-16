@@ -51,6 +51,10 @@
 #include <QDir>
 #include <QThread>
 
+#ifdef UNIX
+#  include <locale.h>
+#endif
+
 namespace de {
 
 static App *singletonApp;
@@ -116,6 +120,14 @@ DENG2_PIMPL(App)
         , config(0)
         , terminateFunc(0)
     {
+#ifdef UNIX
+        // We wish to use U.S. English formatting for time and numbers (in libc).
+        setlocale(LC_ALL, "en_US.UTF-8");
+        setlocale(LC_NUMERIC, "C");
+#endif
+        // Override the system number formatting.
+        QLocale::setDefault(QLocale("en_US.UTF-8"));
+
         packagesToLoadAtInit << "net.dengine.stdlib";
 
         singletonApp = a;
