@@ -83,8 +83,13 @@ function parse_announcement($json_data)
         echo 'Remote host has an invalid address';
         exit;
     }
-    
-    $domain       = urlencode($server_info->dom);
+
+    if (property_exists($server_info, 'dom')) {
+        $domain = urlencode($server_info->dom);
+    }
+    else {
+        $domain = '';
+    }
     $port         = (int) $server_info->port;
     $name         = urlencode($server_info->name);
     $description  = urlencode($server_info->desc);
@@ -95,7 +100,7 @@ function parse_announcement($json_data)
     $game_id      = urlencode($server_info->game);
     $game_config  = urlencode($server_info->cfg);
     $map          = urlencode($server_info->map);
-    $player_count = (int) $server_info->pnum;
+    $player_count = property_exists($server_info, 'pnum')? ((int) $server_info->pnum) : 0;
     $player_max   = (int) $server_info->pmax;
     $player_names = urlencode(json_encode($server_info->plrs));
     $flags        = (int) $server_info->flags;
