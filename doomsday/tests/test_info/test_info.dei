@@ -55,7 +55,7 @@ type1 first-block { key = value }
 type2 example-block inherits first-block {}
 
 group font {
-    condition: Version.OS == 'macx'
+    #condition: Version.OS == 'macx'
 
     preferences < font.default, $" 'font'+'.'+'title' " >
 
