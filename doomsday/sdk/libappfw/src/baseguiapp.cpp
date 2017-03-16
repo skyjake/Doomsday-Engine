@@ -122,9 +122,6 @@ DENG2_PIMPL_NOREF(BaseGuiApp)
 BaseGuiApp::BaseGuiApp(int &argc, char **argv)
     : GuiApp(argc, argv), d(new Impl)
 {
-    // Override the system locale (affects number/time formatting).
-    QLocale::setDefault(QLocale("en_US.UTF-8"));
-
     d->binder.init(scriptSystem().nativeModule("App"))
             << DENG2_FUNC (App_AddFontMapping, "addFontMapping", "family" << "mappings")
             << DENG2_FUNC (App_LoadFont,       "loadFont", "fileName");

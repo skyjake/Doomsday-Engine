@@ -154,9 +154,6 @@ ServerApp::ServerApp(int &argc, char **argv)
 {
     novideo = true;
 
-    // Override the system locale (affects number/time formatting).
-    QLocale::setDefault(QLocale("en_US.UTF-8"));
-
     // Use the host system's proxy configuration.
     QNetworkProxyFactory::setUseSystemConfiguration(true);
 

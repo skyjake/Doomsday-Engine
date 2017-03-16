@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-#include <locale.h>
 
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/filesys/fs_util.h>
@@ -48,9 +47,6 @@ static int initDGL(void)
 dd_bool DD_Unix_Init(void)
 {
     dd_bool failed = true;
-
-    // We wish to use U.S. English formatting for time and numbers.
-    setlocale(LC_ALL, "en_US.UTF-8");
 
     Library_Init();
 
