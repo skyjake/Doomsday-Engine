@@ -19,7 +19,8 @@ generate_page_header();
         </div>
         <div id='hero' class='block'>
             <article>
-                <video id='hero-video' width="450" height="253" muted
+                <video id='hero-video' width="450" height="253" muted controls
+                    preload="none" onclick="this.play()"
                     src='http://files.dengine.net/doomsday_demo.mp4'
                     poster='theme/images/demo-thumb.jpg'>
                     <img src='theme/images/demo-thumb.jpg'>

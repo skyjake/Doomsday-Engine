@@ -24,23 +24,23 @@ function generate_page_header($title = NULL)
     }
     $bg_index = time()/3600 % 10;
     $bg_rotation_css = 
-        "body { background-image: url(\"theme/images/site-background${bg_index}.jpg\"); }
-        #page-title { background-image: url(\"theme/images/site-banner${bg_index}.jpg\"); }";
-    echo("<!DOCTYPE html>
-        <html lang='en'>
-        <head>
-          <meta name='viewport' content='width=device-width, initial-scale=1'>
-          <meta charset='UTF-8'>
-          <link href='".SITE_ROOT."/theme/stylesheets/site.css' rel='stylesheet' type='text/css'>
-          <style>$bg_rotation_css</style>
-          <title>Doomsday Engine$title</title>
-        </head>\n");    
+        "body { background-image: url(\"theme/images/site-background${bg_index}.jpg\"); } #page-title { background-image: url(\"theme/images/site-banner${bg_index}.jpg\"); }";
+    echo(
+"<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <meta charset='UTF-8'>
+  <link href='".SITE_ROOT."/theme/stylesheets/site.css' rel='stylesheet' type='text/css'>
+  <style>$bg_rotation_css</style>
+  <title>Doomsday Engine$title</title>
+</head>\n");    
 }
 
 function generate_page_title($title)
 {
     //<h1>$title</h1>
-    echo("<div id='page-title'></div>");
+    echo("<div id='page-title'></div>\n");
 }
 
 function platform_download_link()
@@ -163,42 +163,42 @@ function generate_badges($platform, $type)
 function generate_sidebar()
 {
     echo(
-    "<div id='sidebar'>
-        <div class='partition'>
-        <div class='heading'><a href='".SITE_ROOT."'>About Doomsday</a></div>
-        <div class='heading'>Downloads</div>
-        <ul>
-            <li><a href='windows'>Windows</a></li>
-            <li><a href='macos'>macOS</a></li>
-            <li><a href='linux'>Linux</a></li>
-            <li><a href='source'>Source</a></li>
-            <li><a href='/builds'>Recent builds</a></li>
-        </ul>
-        <div class='heading'><a href='addons'>Add-ons</a></div>
-        <div class='heading'><a href='/manual'>User Guide</a></div>
-        <ul>
-            <li><a href='/manual/getting_started'>Getting started</a></li>
-            <li><a href='/manual/multiplayer'>Multiplayer</a></li>
-        </ul>
-        </div>
-        <div class='partition'>
-        <div class='heading'>Community</div>
-        <ul>
-            <li><a href='/talk'>Forums</a></li>
-            <li><a href='/support'>Tech support</a></li>
-            <li><a href='http://facebook.com/doomsday.engine'>Facebook page</a></li>
-            <li><a href='/manual/other_ports'>Other ports</a></li>            
-        </ul>
-        <div class='heading'>Development</div>
-        <ul>
-            <li><a href='https://tracker.dengine.net/projects/deng'>Bug Tracker</a></li>
-            <li><a href='https://tracker.dengine.net/projects/deng/roadmap'>Roadmap</a></li>
-            <li><a href='recent_posts'>Blog</a></li>
-            <li><a href='http://twitter.com/@dengteam'>@dengteam</a></li>
-            <li><a href='https://github.com/skyjake/Doomsday-Engine.git'>GitHub</a></li>
-        </ul>
-        <div class='heading'><a href='donate' title='Donate to support the Doomsday Engine Project'>Donate &#9825;</a></div>
-    </div></div>");
+"<div id='sidebar'>
+    <div class='partition'>
+    <div class='heading'><a href='".SITE_ROOT."'>About Doomsday</a></div>
+    <div class='heading'>Downloads</div>
+    <ul>
+        <li><a href='windows'>Windows</a></li>
+        <li><a href='macos'>macOS</a></li>
+        <li><a href='linux'>Linux</a></li>
+        <li><a href='source'>Source</a></li>
+        <li><a href='/builds'>Recent builds</a></li>
+    </ul>
+    <div class='heading'><a href='addons'>Add-ons</a></div>
+    <div class='heading'><a href='/manual'>User Guide</a></div>
+    <ul>
+        <li><a href='/manual/getting_started'>Getting started</a></li>
+        <li><a href='/manual/multiplayer'>Multiplayer</a></li>
+    </ul>
+    </div>
+    <div class='partition'>
+    <div class='heading'>Community</div>
+    <ul>
+        <li><a href='/talk'>Forums</a></li>
+        <li><a href='/support'>Tech support</a></li>
+        <li><a href='http://facebook.com/doomsday.engine'>Facebook page</a></li>
+        <li><a href='/manual/other_ports'>Other ports</a></li>            
+    </ul>
+    <div class='heading'>Development</div>
+    <ul>
+        <li><a href='https://tracker.dengine.net/projects/deng'>Bug Tracker</a></li>
+        <li><a href='https://tracker.dengine.net/projects/deng/roadmap'>Roadmap</a></li>
+        <li><a href='recent_posts'>Blog</a></li>
+        <li><a href='http://twitter.com/@dengteam'>@dengteam</a></li>
+        <li><a href='https://github.com/skyjake/Doomsday-Engine.git'>GitHub</a></li>
+    </ul>
+    <div class='heading'><a href='donate' title='Donate to support the Doomsday Engine Project'>Donate &#9825;</a></div>
+</div></div>");
 }
 
 function generate_blog_post_cached($post, $css_class)
@@ -260,50 +260,56 @@ function generate_sitemap()
         $build_list .= "<li><a href='/builds'>Autobuilder Index</a></li>\n"
             ."<li><a href='http://api.dengine.net/1/builds?format=feed'>RSS Feed</a></li></ul>\n";
 
-        cache_echo("<div id='site-map'>
-            <ul class='map-wrapper'>
-                <li>
-                    <div class='heading'>Latest News</div>
-                    <ul class='sitemap-list'>");
+        cache_echo(
+"<div id='site-map'>
+    <ul class='map-wrapper'>
+        <li>
+            <div class='heading'>Latest News</div>
+            <ul class='sitemap-list'>");
                    
         for ($i = 0; $i < $news_count; ++$i) {
             generate_blog_post_cached($news->posts[$i], 'newspost');
         }    
-        cache_echo("<li><a href='/blog/category/news/feed/atom'
-                        title='Doomsday Engine news via RSS'>RSS Feed</a></li>");
+        cache_echo("<li><a href='/blog/category/news/feed/atom' title='Doomsday Engine news via RSS'>RSS Feed</a></li>");
                     
-        cache_echo("</ul></li><li>
-                    <div class='heading'>Blog Posts</div>
-                    <ul class='sitemap-list'>\n");
+        cache_echo(
+"            </ul>
+        </li>
+        <li>
+            <div class='heading'>Blog Posts</div>
+            <ul class='sitemap-list'>\n");
 
         for ($i = 0; $i < $dev_count; ++$i) {
             generate_blog_post_cached($dev->posts[$i], 'blogpost');
         }        
-        cache_echo("<li><a href='/blog/category/dev/feed/atom' 
-            title='Doomsday Engine development blog via RSS'>RSS Feed</a></li>");
+        cache_echo("<li><a href='/blog/category/dev/feed/atom' title='Doomsday Engine development blog via RSS'>RSS Feed</a></li>");
                     
-        cache_echo("</ul></li><li><div class='heading'>Recent Builds</div>
-                    $build_list</li>
-                <li>
-                    <div class='heading'>Multiplayer Games</div>
-                    <ul class='sitemap-list'><li>No servers</li></ul>
-                </li>
-                <li>
-                    <div class='heading'>User Manual</div>
-                </li>
-                <li>
-                    <div class='heading'>Reference Guide</div>
-                </li>
-            </ul>
-            <div id='credits'>
-                Doomsday Engine is <a href='https://github.com/skyjake/Doomsday-Engine.git'>open 
-                source software</a> and distributed under 
-                the <a href='http://www.gnu.org/licenses/gpl.html'>GNU General Public License</a> (applications) and <a href='http://www.gnu.org/licenses/lgpl.html'>LGPL</a> (core libraries).
-                Assets from the original games remain under their original copyright. 
-                Doomsday logo created by Daniel Swanson.
-                <a href='/'>dengine.net</a> website design by Jaakko Ker&auml;nen &copy; 2017. 
-            </div>
-        </div>");
+        cache_echo(
+"            </ul></li>
+        <li>
+            <div class='heading'>Recent Builds</div>
+            $build_list
+        </li>
+        <li>
+            <div class='heading'>Multiplayer Games</div>
+            <ul class='sitemap-list'><li>No servers</li></ul>
+        </li>
+        <li>
+            <div class='heading'>User Manual</div>
+        </li>
+        <li>
+            <div class='heading'>Reference Guide</div>
+        </li>
+    </ul>
+    <div id='credits'>
+        Doomsday Engine is <a href='https://github.com/skyjake/Doomsday-Engine.git'>open 
+        source software</a> and distributed under 
+        the <a href='http://www.gnu.org/licenses/gpl.html'>GNU General Public License</a> (applications) and <a href='http://www.gnu.org/licenses/lgpl.html'>LGPL</a> (core libraries).
+        Assets from the original games remain under their original copyright. 
+        Doomsday logo created by Daniel Swanson.
+        <a href='/'>dengine.net</a> website design by Jaakko Ker&auml;nen &copy; 2017. 
+    </div>
+</div>");
                 
         cache_store($ckey);
     }
