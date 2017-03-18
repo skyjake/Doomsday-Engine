@@ -42,6 +42,14 @@ ArrayValue::ArrayValue(ArrayValue const &other) : Value(), _iteration(0)
     }
 }
 
+ArrayValue::ArrayValue(StringList const &strings)
+{
+    for (String str : strings)
+    {
+        _elements.push_back(new TextValue(str));
+    }
+}
+
 ArrayValue::ArrayValue(std::initializer_list<Value *> values) : _iteration(0)
 {
     for (auto *v : values)

@@ -49,6 +49,7 @@ public:
 public:
     ArrayValue();
     ArrayValue(ArrayValue const &other);
+    ArrayValue(StringList const &strings);
     ArrayValue(std::initializer_list<Value *> values);
 
     /**
