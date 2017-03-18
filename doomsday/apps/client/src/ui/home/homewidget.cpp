@@ -232,6 +232,8 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void gameReadinessUpdated()
     {
+        self().root().window().glActivate();
+        
         updateVisibleColumnsAndTabs();
         calculateColumnCount();
         updateLayout();
