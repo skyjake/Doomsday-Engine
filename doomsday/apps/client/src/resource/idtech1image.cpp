@@ -82,7 +82,7 @@ Image IdTech1Image::makeGameLogo(Game const &game,
 {
     try
     {
-        if (game.isPlayable())
+        if (game.isPlayableWithDefaultPackages())
         {
             Block const playPal  = catalog.read("PLAYPAL");
             Block const title    = catalog.read("TITLE");
