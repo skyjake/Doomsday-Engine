@@ -173,7 +173,7 @@ StringList ServerInfo::packages() const
     return getStringList(VAR_PACKAGES);
 }
 
-ServerInfo &ServerInfo::setPackages(StringList const &packages)
+ServerInfo &ServerInfo::setPackages(StringList packages)
 {
     ArrayValue &pkgs = addArray(VAR_PACKAGES).value<ArrayValue>();
     for (String const &p : packages)

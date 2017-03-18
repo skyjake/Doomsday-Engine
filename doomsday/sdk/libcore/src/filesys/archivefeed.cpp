@@ -351,7 +351,7 @@ void ArchiveFeed::uncache()
     }
 }
 
-void ArchiveFeed::uncacheAllEntries(StringList const &folderTypes) // static
+void ArchiveFeed::uncacheAllEntries(StringList folderTypes) // static
 {
     if (Folder::isPopulatingAsync()) return; // Never mind.
 

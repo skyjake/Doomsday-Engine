@@ -32,7 +32,7 @@ public:
     PackagesDialog(de::String const &titleText = "");
 
     void setGame(de::String const &gameId);
-    void setSelectedPackages(de::StringList const &packages);
+    void setSelectedPackages(de::StringList packages);
     de::StringList selectedPackages() const;
 
 public slots:

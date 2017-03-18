@@ -386,7 +386,7 @@ void PackagesDialog::setGame(String const &gameId)
     d->updateGameTitle();
 }
 
-void PackagesDialog::setSelectedPackages(StringList const &packages)
+void PackagesDialog::setSelectedPackages(StringList packages)
 {
     d->selectedPackages = packages;
     d->browser->populate();

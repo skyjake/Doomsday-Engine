@@ -54,15 +54,15 @@ public:
     PackagesWidget(PopulateBehavior popBehavior = PopulationEnabled,
                    de::String const &name = de::String());
 
-    PackagesWidget(de::StringList const &manualPackageIds,
+    PackagesWidget(de::StringList manualPackageIds,
                    de::String const &name = de::String());
 
     HomeMenuWidget &menu();
     de::ProgressWidget &progress();
 
-    void setManualPackageIds(de::StringList const &manualPackageIds);
+    void setManualPackageIds(de::StringList manualPackageIds);
     void setRightClickToOpenContextMenu(bool enable);
-    void setHiddenTags(de::StringList const &hiddenTags);
+    void setHiddenTags(de::StringList hiddenTags);
     void setPopulationEnabled(bool enable);
     void setFilterEditorMinimumY(de::Rule const &minY);
     void setPackageStatus(IPackageStatus const &packageStatus);

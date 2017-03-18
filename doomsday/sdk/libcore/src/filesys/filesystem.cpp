@@ -254,7 +254,7 @@ LoopResult FileSystem::forAllOfType(String const &typeIdentifier, String const &
     return LoopContinue;
 }
 
-int FileSystem::findAllOfTypes(StringList const &typeIdentifiers, String const &path, FoundFiles &found) const
+int FileSystem::findAllOfTypes(StringList typeIdentifiers, String const &path, FoundFiles &found) const
 {
     LOG_AS("FS::findAllOfTypes");
 

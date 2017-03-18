@@ -90,7 +90,7 @@ void LumpCatalog::clear()
     d->clear();
 }
 
-bool LumpCatalog::setPackages(StringList const &packageIds)
+bool LumpCatalog::setPackages(StringList packageIds)
 {
     if (packageIds != d->packageIds)
     {

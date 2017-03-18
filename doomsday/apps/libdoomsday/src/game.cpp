@@ -142,7 +142,7 @@ String Game::family() const
     return "";
 }
 
-void Game::setRequiredPackages(StringList const &packageIds)
+void Game::setRequiredPackages(StringList packageIds)
 {
     d->requiredPackages = packageIds;
 }
@@ -188,7 +188,7 @@ StringList Game::localMultiplayerPackages(String const &gameId) // static
     }
 }
 
-void Game::setLocalMultiplayerPackages(String const &gameId, StringList const &packages) // static
+void Game::setLocalMultiplayerPackages(String const &gameId, StringList packages) // static
 {
     std::unique_ptr<ArrayValue> ids(new ArrayValue);
     for (String const &pkg : packages)

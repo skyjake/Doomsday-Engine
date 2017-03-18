@@ -35,7 +35,7 @@ DENG_GUI_PIMPL(PackagesButtonWidget)
 
     Impl(Public *i) : Base(i)
     {}
-
+    
     void updateLabel()
     {
         self().setStyleImage("package.icon");
@@ -125,7 +125,7 @@ void PackagesButtonWidget::setDialogIcon(DotPath const &imageId)
     d->dialogIcon = imageId;
 }
 
-void PackagesButtonWidget::setPackages(StringList const &packageIds)
+void PackagesButtonWidget::setPackages(StringList packageIds)
 {
     d->packages = packageIds;
     d->updateLabel();

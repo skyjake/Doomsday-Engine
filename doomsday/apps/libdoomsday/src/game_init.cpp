@@ -247,7 +247,7 @@ static void parseStartupFilePathsAndAddFiles(char const *pathString)
     M_Free(buffer);
 }
 
-static dint addListFiles(QStringList const &list, FileType const &ftype)
+static dint addListFiles(QStringList list, FileType const &ftype)
 {
     dint numAdded = 0;
     foreach (QString const &path, list)

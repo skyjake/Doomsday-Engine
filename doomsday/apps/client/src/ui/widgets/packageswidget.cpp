@@ -542,7 +542,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         }
     }
 
-    void setManualPackages(StringList const &ids)
+    void setManualPackages(StringList ids)
     {
         auto &loader = PackageLoader::get();
 
@@ -653,7 +653,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         }
     }
 
-    void setFilterTerms(QStringList const &terms)
+    void setFilterTerms(QStringList terms)
     {
         filterTerms = terms;
         clearSearch->show(!terms.isEmpty());
@@ -751,7 +751,7 @@ PackagesWidget::PackagesWidget(PopulateBehavior initBehavior, String const &name
     }
 }
 
-PackagesWidget::PackagesWidget(StringList const &manualPackageIds, String const &name)
+PackagesWidget::PackagesWidget(StringList manualPackageIds, String const &name)
     : GuiWidget(name)
     , d(new Impl(this))
 {
@@ -769,7 +769,7 @@ ProgressWidget &PackagesWidget::progress()
     return *d->refreshProgress;
 }
 
-void PackagesWidget::setManualPackageIds(StringList const &manualPackageIds)
+void PackagesWidget::setManualPackageIds(StringList manualPackageIds)
 {
     d->setManualPackages(manualPackageIds);
     populate();
@@ -780,7 +780,7 @@ void PackagesWidget::setRightClickToOpenContextMenu(bool enable)
     d->rightClickToOpenContextMenu = enable;
 }
 
-void PackagesWidget::setHiddenTags(StringList const &hiddenTags)
+void PackagesWidget::setHiddenTags(StringList hiddenTags)
 {
     d->hiddenTags = hiddenTags;
     populate();

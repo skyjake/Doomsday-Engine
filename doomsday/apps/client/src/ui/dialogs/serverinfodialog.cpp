@@ -203,7 +203,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         self().add(localPackages);
 
         QObject::connect(localPackages, &PackagesButtonWidget::packageSelectionChanged,
-                         [this] (QStringList const &packages)
+                         [this] (QStringList packages)
         {
             Game::setLocalMultiplayerPackages(profile.gameId(), toStringList(packages));
         });

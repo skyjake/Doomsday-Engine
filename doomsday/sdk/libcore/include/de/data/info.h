@@ -319,9 +319,9 @@ public:
      *
      * @param blocksToParseAsScript  List of block types.
      */
-    void setScriptBlocks(QStringList const &blocksToParseAsScript);
+    void setScriptBlocks(QStringList blocksToParseAsScript);
 
-    void setAllowDuplicateBlocksOfType(QStringList const &duplicatesAllowed);
+    void setAllowDuplicateBlocksOfType(QStringList duplicatesAllowed);
 
     /**
      * Sets the block type used for single-token blocks. By default, this is not set,

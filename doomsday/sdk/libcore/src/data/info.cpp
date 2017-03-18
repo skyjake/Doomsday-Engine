@@ -843,12 +843,12 @@ void Info::useDefaultFinder()
     d->finder = &d->defaultFinder;
 }
 
-void Info::setScriptBlocks(QStringList const &blocksToParseAsScript)
+void Info::setScriptBlocks(QStringList blocksToParseAsScript)
 {
     d->scriptBlockTypes = blocksToParseAsScript;
 }
 
-void Info::setAllowDuplicateBlocksOfType(QStringList const &duplicatesAllowed)
+void Info::setAllowDuplicateBlocksOfType(QStringList duplicatesAllowed)
 {
     d->allowDuplicateBlocksOfType = duplicatesAllowed;
 }

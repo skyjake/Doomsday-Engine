@@ -130,7 +130,7 @@ RecordValue const &RecordAccessor::getr(String const &name) const
     return getAs<RecordValue>(name);
 }
 
-StringList RecordAccessor::getStringList(String const &name, StringList const &defaultValue) const
+StringList RecordAccessor::getStringList(String const &name, StringList defaultValue) const
 {
     if (!accessedRecord().has(name)) return defaultValue;
 
