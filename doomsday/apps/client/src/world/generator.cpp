@@ -1049,6 +1049,8 @@ void Generator::runTick()
         newParts *= particleSpawnRate *
             (1 - def->spawnRateVariance * RNG_RandFloat());
 
+        newParts = de::min(newParts, float(def->particles)); // don't spawn too many
+
         _spawnCount += newParts;
         while(_spawnCount >= 1)
         {
