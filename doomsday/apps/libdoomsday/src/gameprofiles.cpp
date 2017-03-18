@@ -102,6 +102,20 @@ LoopResult GameProfiles::forAll(std::function<LoopResult (Profile const &)> func
     });
 }
 
+QList<GameProfile *> GameProfiles::profilesInFamily(de::String const &family)
+{
+    QList<GameProfile *> profs;
+    forAll([&profs, &family] (GameProfile &profile)
+    {
+        if (profile.game().family() == family)
+        {
+            profs << &profile;
+        }
+        return LoopContinue;
+    });
+    return profs;
+}
+
 QList<GameProfile *> GameProfiles::profilesSortedByFamily()
 {
     QList<GameProfile *> profs;
@@ -208,7 +222,7 @@ void GameProfiles::Profile::setGame(String const &id)
     }
 }
 
-void GameProfiles::Profile::setPackages(StringList const &packagesInOrder)
+void GameProfiles::Profile::setPackages(StringList packagesInOrder)
 {
     if (d->packages != packagesInOrder)
     {

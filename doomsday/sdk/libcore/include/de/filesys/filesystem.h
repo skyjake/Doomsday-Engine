@@ -217,7 +217,7 @@ public:
     LoopResult forAllOfType(String const &typeIdentifier, String const &path,
                             std::function<LoopResult (File &)> func);
 
-    int findAllOfTypes(StringList const &typeIdentifiers, String const &path, FoundFiles &found) const;
+    int findAllOfTypes(StringList typeIdentifiers, String const &path, FoundFiles &found) const;
 
     /**
      * Finds a single file matching a full or partial path. The search is

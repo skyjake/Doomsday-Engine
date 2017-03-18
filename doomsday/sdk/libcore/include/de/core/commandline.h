@@ -68,7 +68,7 @@ public:
      *
      * @param args  Arguments to use.
      */
-    CommandLine(QStringList const &args);
+    CommandLine(QStringList args);
 
     CommandLine(CommandLine const &other);
 

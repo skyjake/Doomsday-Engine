@@ -41,7 +41,7 @@ public:
     void setSetupCallback(std::function<void (PackagesDialog &dialog)> func);
     void setLabelPrefix(de::String const &labelPrefix);
     void setNoneLabel(de::String const &noneLabel);
-    void setPackages(de::StringList const &packageIds);
+    void setPackages(de::StringList packageIds);
 
     de::StringList packages() const;
 

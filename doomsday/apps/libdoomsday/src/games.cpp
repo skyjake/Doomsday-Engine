@@ -228,16 +228,12 @@ Game &Games::defineGame(String const &id, Record const &parameters)
     LOG_AS("Games");
 
     // Game IDs must be unique. Ensure that is the case.
-    try
+    if (d->idLookup.contains(id))
     {
-        /// @todo Check a hash. -jk
-        /*Game &game =*/ (*this)[id];
         LOGDEV_WARNING("Ignored new game \"%s\", ID'%s' already in use")
                 << parameters.gets(Game::DEF_TITLE) << id;
         throw Error("Games::defineGame", String("Duplicate game ID: ") + id);
     }
-    catch (Games::NotFoundError const &)
-    {} // Ignore the error.
 
     // Add this game to our records.
     Game *game = new Game(id, parameters);

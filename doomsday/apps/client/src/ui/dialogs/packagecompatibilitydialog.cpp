@@ -220,7 +220,7 @@ void PackageCompatibilityDialog::setMessage(String const &msg)
     d->message = msg;
 }
 
-void PackageCompatibilityDialog::setWantedPackages(StringList const &packages)
+void PackageCompatibilityDialog::setWantedPackages(StringList packages)
 {
     DENG2_ASSERT(!packages.isEmpty());
 

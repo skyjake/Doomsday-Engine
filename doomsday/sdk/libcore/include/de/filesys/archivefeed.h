@@ -105,7 +105,7 @@ public:
      * specific suitable points in the application's lifetime is good so that unnecessary
      * data is not kept cached.
      */
-    static void uncacheAllEntries(StringList const &folderTypes);
+    static void uncacheAllEntries(StringList folderTypes);
 
 private:
     DENG2_PRIVATE(d)

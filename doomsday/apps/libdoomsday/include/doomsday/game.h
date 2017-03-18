@@ -98,7 +98,7 @@ public:
      *
      * @param packageIds  List of package IDs.
      */
-    void setRequiredPackages(de::StringList const &packageIds);
+    void setRequiredPackages(de::StringList packageIds);
 
     void addRequiredPackage(de::String const &packageId);
 
@@ -295,7 +295,7 @@ public:
      *
      * @param packages  List of local packages.
      */
-    static void setLocalMultiplayerPackages(de::String const &gameId, de::StringList const &packages);
+    static void setLocalMultiplayerPackages(de::String const &gameId, de::StringList packages);
 
 private:
     DENG2_PRIVATE(d)

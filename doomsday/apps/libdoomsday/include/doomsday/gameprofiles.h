@@ -45,7 +45,7 @@ public:
         Profile &operator = (Profile const &other);
 
         void setGame(de::String const &id);
-        void setPackages(de::StringList const &packagesInOrder);
+        void setPackages(de::StringList packagesInOrder);
         void setUserCreated(bool userCreated);
         void setUseGameRequirements(bool useGameRequirements);
 
@@ -104,7 +104,7 @@ public:
     de::LoopResult forAll(std::function<de::LoopResult (Profile const &)> func) const;
 
     QList<Profile const *> allPlayableProfiles() const;
-
+    QList<Profile *> profilesInFamily(de::String const &family);
     QList<Profile *> profilesSortedByFamily();
 
     static Profile const &null();

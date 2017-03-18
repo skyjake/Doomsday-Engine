@@ -126,7 +126,7 @@ DENG2_PIMPL(CommandLine)
 CommandLine::CommandLine() : d(new Impl(*this))
 {}
 
-CommandLine::CommandLine(QStringList const &args) : d(new Impl(*this))
+CommandLine::CommandLine(QStringList args) : d(new Impl(*this))
 {
     for (int i = 0; i < args.size(); ++i)
     {

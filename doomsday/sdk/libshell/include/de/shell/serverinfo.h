@@ -75,7 +75,7 @@ public:
     ServerInfo &setName(String const &name);
     ServerInfo &setDescription(String const &description);
     ServerInfo &setPluginDescription(String const &pluginDescription);
-    ServerInfo &setPackages(StringList const &packages);
+    ServerInfo &setPackages(StringList packages);
     ServerInfo &setGameId(String const &gameId);
     ServerInfo &setGameConfig(String const &gameConfig);
     ServerInfo &setMap(String const &map);
