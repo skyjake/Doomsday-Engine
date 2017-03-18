@@ -18,6 +18,7 @@
 
 #include "de/CommandWidget"
 #include "de/DocumentPopupWidget"
+#include "de/PersistentState"
 #include "de/Style"
 
 #include <de/shell/EditorHistory>
@@ -143,6 +144,19 @@ bool CommandWidget::handleControlKey(int qtKey, KeyModifiers const &mods)
         return true;
     }
     return false;
+}
+
+void CommandWidget::operator >> (PersistentState &toState) const
+{
+    int const MAX_PERSISTENT_HISTORY = 200;
+    toState.objectNamespace().set(name().concatenateMember("history"),
+                                  new ArrayValue(d->history.fullHistory(MAX_PERSISTENT_HISTORY)));
+}
+
+void CommandWidget::operator << (PersistentState const &fromState)
+{
+    d->history.setFullHistory(fromState.objectNamespace()
+                              .getStringList(name().concatenateMember("history")));
 }
 
 void CommandWidget::dismissContentToHistory()

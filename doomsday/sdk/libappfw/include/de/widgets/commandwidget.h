@@ -20,6 +20,7 @@
 #define LIBAPPFW_COMMANDWIDGET_H
 
 #include "../LineEditWidget"
+#include "../IPersistent"
 
 namespace de {
 
@@ -31,7 +32,7 @@ class PopupWidget;
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC CommandWidget : public LineEditWidget
+class LIBAPPFW_PUBLIC CommandWidget : public LineEditWidget, public IPersistent
 {
     Q_OBJECT
 
@@ -47,6 +48,10 @@ public:
     void update() override;
 
     bool handleControlKey(int qtKey, KeyModifiers const &mods) override;
+
+    // IPersistent.
+    void operator >> (PersistentState &toState) const override;
+    void operator << (PersistentState const &fromState) override;
 
 public slots:
     /**
