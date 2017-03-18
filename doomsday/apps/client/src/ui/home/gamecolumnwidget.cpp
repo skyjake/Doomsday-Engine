@@ -148,12 +148,11 @@ DENG_GUI_PIMPL(GameColumnWidget)
         Config::get("home.showUnplayableGames").audienceForChange() += this;
     }
 
-    ui::Item const *findProfileItem(GameProfile const &profile) const
+    ui::Item *findProfileItem(GameProfile const &profile) const
     {
         for (dsize i = 0; i < menu->items().size(); ++i)
         {
-            ui::Item const &item = menu->items().at(i);
-            //qDebug() << i << item.label();
+            ui::Item &item = menu->items().at(i);
             if (!item.semantics().testFlag(ui::Item::Separator))
             {
                 if (item.as<ProfileItem>().profile == &profile) return &item;
@@ -161,7 +160,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
         }
         return nullptr;
     }
-
+    
     GamePanelButtonWidget &widgetForItem(ui::Item const &item) const
     {
         DENG2_ASSERT(menu->items().find(item) != ui::Data::InvalidPos);
@@ -244,12 +243,44 @@ DENG_GUI_PIMPL(GameColumnWidget)
      */
     void populateItems()
     {
-        menu->items().clear();
-        DoomsdayApp::gameProfiles().forAll([this] (GameProfile &profile)
+        QSet<GameProfile *> profiles;
+        foreach (GameProfile *prof,
+                 DoomsdayApp::gameProfiles().profilesInFamily(gameFamily))
         {
-            addItemForProfile(profile);
-            return LoopContinue;
-        });
+            profiles.insert(prof);
+        }
+        QSet<GameProfile *> toAdd = profiles;
+        
+        // Update or remove profiles as needed.
+        for (ui::DataPos i = 0; i < menu->items().size(); ++i)
+        {
+            ui::Item const &item = menu->items().at(i);
+            if (item.semantics() & ui::Item::Separator)
+            {
+                // Skip the subheading.
+                continue;
+            }
+            auto const &profItem = item.as<ProfileItem>();
+            if (profiles.contains(profItem.profile))
+            {
+                // Already existing item.
+                toAdd.remove(profItem.profile);
+                profItem.update();
+            }
+            else
+            {
+                // Deleted profile.
+                menu->items().remove(i--);
+            }
+        }
+        
+        // Add new items.
+        foreach (GameProfile *newProf, toAdd)
+        {
+            addItemForProfile(*newProf);
+        }
+        
+        addOrRemoveSubheading();
         sortItems();
     }
 
@@ -563,7 +594,7 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily,
     }
     }
 
-    d->populateItems();
+    //d->populateItems();
 }
 
 String GameColumnWidget::tabHeading() const
