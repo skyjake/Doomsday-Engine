@@ -97,7 +97,7 @@ void GLDrawQueue::setProgram(GLProgram &program,
     if (batchUniformName)
     {
         d->uBatchColors.reset(new GLUniform(batchUniformName, batchUniformType,
-                                             GLShader::MAX_BATCH_UNIFORMS));
+                                            GLShader::MAX_BATCH_UNIFORMS));
         program << *d->uBatchColors;
 
         // Other batch variables.

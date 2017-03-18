@@ -429,6 +429,7 @@ GLUniform &GLUniform::setUsedElementCount(duint elementCount)
 {
     DENG2_ASSERT(elementCount <= d->elemCount);
     d->usedElemCount = elementCount;
+    d->markAsChanged();
     return *this;
 }
 
