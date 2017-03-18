@@ -219,8 +219,9 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         pop->items()
                 << new ui::Item(ui::Item::Separator, tr("Are you sure?"))
                 << new ui::ActionItem(tr("Delete Savegame"),
-                                      new CallbackAction([this] ()
+                                      new CallbackAction([this, pop] ()
                 {
+                    pop->detachAnchor();
                     // Delete the savegame file; the UI will be automatically updated.
                     String const path = savedItems.at(saves->selectedPos()).savePath();
                     self().unselectSave();
