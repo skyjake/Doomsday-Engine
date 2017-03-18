@@ -66,6 +66,15 @@ public:
      */
     bool handleControlKey(int qtKey);
 
+    /**
+     * Returns the history contents.
+     *
+     * @param maxCount  Maximum number of history entries. 0 for unlimited.
+     */
+    StringList fullHistory(int maxCount = 0) const;
+
+    void setFullHistory(StringList history);
+
 private:
     DENG2_PRIVATE(d)
 };
