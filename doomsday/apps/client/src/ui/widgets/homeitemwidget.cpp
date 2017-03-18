@@ -101,6 +101,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
     Rule const *buttonsWidth = nullptr;
     bool selected = false;
     bool keepButtonsVisible = false;
+    bool buttonsShown = false;
     DotPath bgColor           { "transparent" };
     DotPath selectedBgColor   { "background" };
     DotPath textColor         { "text" };
@@ -162,10 +163,18 @@ DENG_GUI_PIMPL(HomeItemWidget)
             button->rule().setMidAnchorY(label->rule().midY());
         }
         changeRef(buttonsWidth, layout.width() + rule("gap"));
+        
+        if (buttonsShown)
+        {
+            labelRightMargin->set(*buttonsWidth,
+                                  labelRightMargin->animation().done()? TimeDelta(0.4) :
+                                  labelRightMargin->animation().remainingTime());
+        }
     }
 
     void showButtons(bool show)
     {
+        buttonsShown = show;
         if (!buttonsWidth) return;
 
         if (show)
