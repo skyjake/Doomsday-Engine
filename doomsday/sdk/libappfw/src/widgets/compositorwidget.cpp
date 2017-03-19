@@ -137,35 +137,37 @@ void CompositorWidget::viewResized()
 void CompositorWidget::preDrawChildren()
 {
     GuiWidget::preDrawChildren();
+    if (d->shouldBeDrawn())
+    {
+        root().painter().flush();
 
-    if (!d->shouldBeDrawn()) return;
+        //qDebug() << "entering compositor" << d->nextBufIndex;
 
-    //qDebug() << "entering compositor" << d->nextBufIndex;
+        Impl::Buffer *buf = d->beginBufferUse();
+        DENG2_ASSERT(!buf->offscreen.isNull());
 
-    Impl::Buffer *buf = d->beginBufferUse();
-    DENG2_ASSERT(!buf->offscreen.isNull());
+        GLState::push()
+                .setTarget(*buf->offscreen)
+                .setViewport(Rectangleui::fromSize(buf->texture.size()));
 
-    GLState::push()
-            .setTarget(*buf->offscreen)
-            .setViewport(Rectangleui::fromSize(buf->texture.size()));
-
-    buf->offscreen->clear(GLFramebuffer::Color);
+        buf->offscreen->clear(GLFramebuffer::Color);
+    }
 }
 
 void CompositorWidget::postDrawChildren()
 {
     GuiWidget::postDrawChildren();
+    if (d->shouldBeDrawn())
+    {
+        root().painter().flush();
 
-    if (!d->shouldBeDrawn()) return;
+        // Restore original rendering target.
+        GLState::pop();
 
-    // Restore original rendering target.
-    GLState::pop();
+        drawComposite();
 
-    //qDebug() << "exiting compositor, drawing composite";
-
-    drawComposite();
-
-    d->endBufferUse();
+        d->endBufferUse();
+    }
 }
 
 void CompositorWidget::glInit()
