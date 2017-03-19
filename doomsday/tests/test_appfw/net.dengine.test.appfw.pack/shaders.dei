@@ -10,21 +10,4 @@
 
 @include <shaders/generic.dei>
 @include <shaders/fx-blur.dei>
-@include <shaders/batch.dei>
-
-group vr {
-    group oculusrift {
-        shader barrel {
-            vertex = "
-                #version 120
-                attribute highp vec4 aVertex;
-                attribute highp vec2 aUV;
-                varying highp vec2 vTexCoord;
-                void main() {
-                    gl_Position = aVertex;
-                    vTexCoord = aUV;
-                }"
-            path.fragment = "shaders/oculusrift-barrel.fsh"
-        }
-    }
-}
+@include <shaders/ui.dei>

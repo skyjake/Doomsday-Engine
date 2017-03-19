@@ -199,6 +199,7 @@ DENG2_PIMPL(MainWindow)
 MainWindow::MainWindow(String const &id)
     : BaseWindow(id), d(new Impl(this))
 {
+#if 0
     if (App::commandLine().has("--ovr"))
     {
         // Go straight into Oculus Rift mode.
@@ -210,6 +211,7 @@ MainWindow::MainWindow(String const &id)
         vr.setEyeHeightInMapUnits(vr.physicalPlayerHeight() * .925f);
         setCursor(Qt::BlankCursor);
     }
+#endif
 
     setTitle("test_appfw");
 
