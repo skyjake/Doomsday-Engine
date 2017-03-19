@@ -653,8 +653,8 @@ void StateAnimator::triggerByState(String const &stateName)
             continue;
         }
 
-        /*LOG_GL_XVERBOSE("Mobj %i starting animation: " _E(b))
-                << d->names.geti("self.__id__") << seq.name;*/
+        //qDebug() << "Mobj starting animation: id"
+        //         << d->names.geti(d->ownerNamespaceVarName + ".__id__") << seq.name;
         break;
     }
 }

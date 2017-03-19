@@ -456,10 +456,24 @@ DENG2_PIMPL(ModelRenderer)
             DENG2_FOR_EACH_CONST(Record::Subrecords, state, states)
             {
                 // Sequences are added in source order.
-                auto seqs = ScriptedInfo::subrecordsOfType(DEF_SEQUENCE, *state.value());
-                for (String key : ScriptedInfo::sortRecordsBySource(seqs))
+                auto const seqs = ScriptedInfo::subrecordsOfType(DEF_SEQUENCE, *state.value());
+                if (!seqs.isEmpty())
                 {
-                    model.animations[state.key()] << render::Model::AnimSequence(key, *seqs[key]);
+                    if (model.animationCount() > 0)
+                    {
+                        for (String key : ScriptedInfo::sortRecordsBySource(seqs))
+                        {
+                            model.animations[state.key()] << render::Model::AnimSequence(key, *seqs[key]);
+                        }
+                    }
+                    else
+                    {
+                        LOG_GL_WARNING("Model \"%s\" has no animation sequences in the model file "
+                                       "but animation sequence definition found at %s")
+                                << path
+                                << ScriptedInfo::sourceLocation
+                                   (*seqs[ScriptedInfo::sortRecordsBySource(seqs).first()]);
+                    }
                 }
             }
 

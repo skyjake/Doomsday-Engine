@@ -291,7 +291,10 @@ void ClientMobjThinkerData::stateChanged(state_t const *previousState)
      * for instance allowing consecutive attack sequences to play as a single,
      * long sequence (e.g., Hexen's Ettin).
      */
-    d->flags |= StateChanged;
+    if (mobj()->state != previousState)
+    {
+        d->flags |= StateChanged;
+    }
     d->triggerParticleGenerators(justSpawned);
 }
 
