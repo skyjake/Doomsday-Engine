@@ -77,6 +77,7 @@ void RelayWidget::initialize()
     GuiWidget::initialize();
     if (d->target)
     {
+        d->target->setRoot(&root());
         d->target->notifySelfAndTree(&Widget::initialize);
     }
 }
@@ -104,6 +105,7 @@ void RelayWidget::update()
     GuiWidget::update();
     if (d->target)
     {
+        d->target->setRoot(&root());
         d->target->notifySelfAndTree(&Widget::update);
     }
 }
@@ -125,7 +127,7 @@ bool RelayWidget::hitTest(Vector2i const &pos) const
     }
     return false;
 }
-    
+
 void RelayWidget::drawContent()
 {
     if (d->target)
