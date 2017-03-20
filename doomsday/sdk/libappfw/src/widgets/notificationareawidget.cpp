@@ -191,8 +191,8 @@ void NotificationAreaWidget::showChild(GuiWidget &notif)
 
     auto *relay = new RelayWidget(&notif);
     d->shown.insert(&notif, relay);
-    relay->initialize();
     add(relay);
+    relay->initialize();
     d->updateChildLayout();
     d->show();
 }
