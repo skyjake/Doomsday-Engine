@@ -362,6 +362,53 @@ function generate_build_feed()
     cache_store($ckey);
 }
 
+function generate_download_statistics()
+{
+    header('Content-Type: application/json');
+    $db = db_open();
+    
+    $plat_name = [];
+    $dl_plat = [];
+    $dl_build = [];
+    $result = db_query($db, "SELECT id, platform FROM ".DB_TABLE_PLATFORMS);
+    while ($row = $result->fetch_assoc()) {
+        $plat_id = (int) $row['id'];
+        $plat_name += [$plat_id => $row['platform']];
+        $dl_plat   += [$plat_id => 0];
+    }
+    
+    // Most popular platforms.
+    $result = db_query($db, "SELECT f.build, f.plat_id, f.dl_total, b.version FROM ".DB_TABLE_FILES
+        ." f LEFT JOIN ".DB_TABLE_BUILDS." b ON f.build=b.build");
+    while ($row = $result->fetch_assoc()) {
+        $build   = (int) $row['build'];
+        $plat_id = (int) $row['plat_id'];
+        $count   = (int) $row['dl_total'];
+        $version = $row['version'].".".$row['build'];
+        
+        $dl_plat[$plat_id] += $count;
+        if (key_exists($version, $dl_build)) {
+            $dl_build[$version] += $count;
+        }
+        else {
+            $dl_build += [$version => $count];
+        }
+    }
+    
+    $dl_platname = [];
+    foreach ($dl_plat as $key => $val) {
+        $dl_platname += [$plat_name[$key] => $val];
+    }
+    
+    arsort($dl_platname);
+    arsort($dl_build);
+    
+    $db->close();
+    
+    $stats = ["platform_dl" => $dl_platname, "build_dl" => $dl_build];    
+    echo(json_encode($stats)."\n");
+}
+
 //---------------------------------------------------------------------------------------
 
 setlocale(LC_ALL, 'en_US.UTF-8');
@@ -380,6 +427,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         if (empty($type)) $type = 'stable';
         generate_platform_latest_json($latest_for, $type);
         return;
+    }
+    if ($stats = $_GET['stats']) {
+        if ($stats == 'dl') {
+            generate_download_statistics();
+            return;
+        }
     }
     $number = $_GET['number'];
     $format = $_GET['format'];
