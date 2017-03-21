@@ -7,7 +7,7 @@
 #   buildpackage (pack-dir) (output-dir)
 #
 
-import sys, os, os.path, zipfile
+import sys, os, os.path, zipfile, time
 
 if len(sys.argv) < 2:
     print "Usage: %s (pack-dir) (output-dir)" % sys.argv[0]
@@ -58,8 +58,12 @@ class Package:
             sys.exit(1)
         
         # Write entries in alphabetical order.
+        date_time = time.localtime(int(os.environ.get('SOURCE_DATE_EPOCH', time.time())))
         for full, internal in sorted(contents):
-            pack.write(full, internal)
+            info = zipfile.ZipInfo(internal, date_time)
+            info.external_attr = 0644 << 16L
+            with open(full, 'rb') as f:
+                pack.writestr(info, f.read())
             
         # Write it out.
         print "Wrote %s (contains %i files)." % (outputName.replace("\\", "/"), len(pack.namelist()))
