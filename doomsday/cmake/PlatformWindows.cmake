@@ -18,7 +18,7 @@ add_definitions (
 )
 
 # Code signing.
-set (DENG_SIGNTOOL_CERT "" CACHE FILEPATH "Name of the certificate for signing files.")
+set (DENG_SIGNTOOL_CERT "" CACHE STRING "Name of the certificate for signing files.")
 set (DENG_SIGNTOOL_PIN "" CACHE STRING "PIN for signing key.")
 set (DENG_SIGNTOOL_TIMESTAMP "" CACHE STRING "URL of the signing timestamp server.")
 find_program (SIGNTOOL_COMMAND signtool)
