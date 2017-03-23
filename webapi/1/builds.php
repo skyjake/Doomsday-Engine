@@ -158,9 +158,11 @@ function generate_build_page($number)
                 cache_echo("</div>\n");
                 $fext = "<span class='fext'>"
                     .strtoupper(pathinfo($bin['name'], PATHINFO_EXTENSION))."</span>";
-                unset($bits);
                 if ($plat['cpu_bits'] > 0) {
                     $bits = ' '.$plat['cpu_bits'].'-bit ';
+                }
+                else {
+                    $bits = '';
                 }
                 cache_echo("</td><td class='button'><a class='download' href='$main_url'>$fext$bits<span class='downarrow'>&#x21E3;</span></a>");
                 cache_echo("</td><td class='button'><a title='Download from a SourceForge mirror' class='download mirror' href='$mirror_url'>Mirror <span class='downarrow'>&#x21E3;</span></a>");
@@ -419,28 +421,36 @@ function generate_download_statistics()
 setlocale(LC_ALL, 'en_US.UTF-8');
 
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
-    if ($filename = $_GET['signature']) {
-        show_signature($filename);
+    if (key_exists('signature', $_GET)) {
+        show_signature($_GET['signature']);
         return;
     }
-    if ($filename = $_GET['dl']) {        
-        download_file($filename, $_GET['mirror']);
+    if (key_exists('dl', $_GET)) {
+        download_file($_GET['dl'], $_GET['mirror']);
         return;
     }
-    if ($latest_for = $_GET['latest_for']) {
+    if (key_exists('latest_for', $_GET) && key_exists('type', $_GET)) {
+        $latest_for = $_GET['latest_for'];
         $type = $_GET['type'];
         if (empty($type)) $type = 'stable';
         generate_platform_latest_json($latest_for, $type);
         return;
     }
-    if ($stats = $_GET['stats']) {
+    if (key_exists('stats', $_GET)) {
+        $stats = $_GET['stats'];
         if ($stats == 'dl') {
             generate_download_statistics();
             return;
         }
     }
-    $number = $_GET['number'];
-    $format = $_GET['format'];
+    $number = 0;
+    $format = NULL;
+    if (key_exists('number', $_GET)) {
+        $number = $_GET['number'];
+    }
+    if (key_exists('format', $_GET)) {
+        $format = $_GET['format'];
+    }
     if ($format == 'html') {
         if ($number > 0) {
             generate_build_page((int)$number);
@@ -452,7 +462,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     else if ($format == 'feed') {
         generate_build_feed();
     }
-    else if (empty($number) && empty($format)) {
+    else if (!$number && empty($format)) {
         generate_build_index_page();
     }
 }
