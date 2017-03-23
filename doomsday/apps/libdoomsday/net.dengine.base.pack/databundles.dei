@@ -120,6 +120,19 @@ package "com.idsoftware.doom2_1.6.66" {
     }
 }
 
+package "com.idsoftware.doom2.french_1.8" {
+    format: IWAD 
+    fileName: doom2f.wad
+    fileSize: 14607420 
+    lumpDirCRC32: 3234e940
+    info {
+        title: DOOM 2: Hell on Earth (French)
+        author: id Software
+        license: All rights reserved
+        tags: doom vanilla french
+    }
+}
+
 package "com.idsoftware.doom2_1.9" {
     format: IWAD
     fileName <doom2f.wad, doom2.wad>
@@ -298,6 +311,20 @@ package "freedoom.phase2_0.10.1" {
     }
 }
 
+package "freedoom.phase2_0.11.2" {
+    format: IWAD 
+    fileName <freedoom2.wad>
+    fileSize: 29093468
+    lumps <MAP01, MAP32>
+    lumpDirCRC32: 9bb60797
+    info {
+        title: Freedoom: Phase 2
+        author: Freedoom Project
+        license: BSD
+        tags: gamedata doom2 mod
+    }
+}
+
 package "freedoom.phase1_0.9" {
     format: IWAD 
     fileName: freedoom1.wad
@@ -340,6 +367,20 @@ package "freedoom.phase1_0.10.1" {
     }
 }
 
+package "freedoom.phase1_0.11.2" {
+    format: IWAD 
+    fileName: freedoom1.wad
+    fileSize: 23559728
+    lumps <E1M1, E4M9>
+    lumpDirCRC32: 4ab81689
+    info {
+        title: Freedoom: Phase 1
+        author: Freedoom Project
+        license: BSD
+        tags: gamedata doom mod
+    }
+}
+
 package "freedoom.freedm_0.10.1" {
     format: IWAD 
     fileName: freedm.wad
@@ -354,7 +395,47 @@ package "freedoom.freedm_0.10.1" {
     }
 }
 
-package "com.ravensoftware.heretic" {
+package "freedoom.freedm_0.11.2" {
+    format: IWAD 
+    fileName: freedm.wad
+    fileSize: 21103364 
+    lumps <MAP01, MAP32>
+    lumpDirCRC32: 68d2ddfd
+    info {
+        title: Freedoom Deathmatch
+        author: Freedoom Project
+        license: BSD
+        tags: gamedata doom2 mod multiplayer
+    }
+}
+
+package "com.ravensoftware.heretic_1.0" {
+    format: IWAD
+    fileName: heretic.wad
+    fileSize: 11096488
+    lumps <E2M2, E3M6, MUMSIT, WIZACT, MUS_CPTD, CHKNC5, SPAXA1A5>
+    info {
+        title: Heretic Registered
+        author: Raven Software
+        license: All rights reserved
+        tags: gamedata heretic vanilla
+    }    
+}
+
+package "com.ravensoftware.heretic_1.3" {
+    format: IWAD
+    fileName: heretic.wad
+    fileSize: 14189976
+    lumps <E2M2, E3M6, MUMSIT, WIZACT, MUS_CPTD, CHKNC5, SPAXA1A5>
+    info {
+        title: Heretic Registered
+        author: Raven Software
+        license: All rights reserved
+        tags: gamedata heretic vanilla
+    }    
+}
+
+package "com.ravensoftware.heretic_1.2" {
     format: IWAD
     fileName: heretic.wad
     lumps <E2M2, E3M6, MUMSIT, WIZACT, MUS_CPTD, CHKNC5, SPAXA1A5>
@@ -366,12 +447,25 @@ package "com.ravensoftware.heretic" {
     }    
 }
 
-package "com.ravensoftware.heretic.shareware" {
+package "com.ravensoftware.heretic.shareware_1.2" {
     format: IWAD 
     fileName: heretic1.wad
     fileSize: 5120920 
     lumps <E1M1, MUMSIT, WIZACT, MUS_CPTD, CHKNC5, SPAXA1A5>
     lumpDirCRC32: c3aefe95
+    info {
+        title: Heretic Shareware
+        author: Raven Software
+        license: All rights reserved
+        tags: gamedata heretic vanilla    
+    }
+}
+
+package "com.ravensoftware.heretic.shareware_1.0" {
+    format: IWAD 
+    fileName: heretic1.wad
+    fileSize: 5120300 
+    lumps <E1M1, MUMSIT, WIZACT, MUS_CPTD, CHKNC5, SPAXA1A5>
     info {
         title: Heretic Shareware
         author: Raven Software
@@ -394,12 +488,27 @@ package "com.ravensoftware.heretic.extended" {
     }
 }
 
-package "com.ravensoftware.hexen.deathkings_1.1" {
+package "com.ravensoftware.hexen.deathkings_1.0" {
     format: IWAD 
     fileName: hexdd.wad
     fileSize: 4429700 
     lumps <MAP59, MAP60>
     lumpDirCRC32: b0b096be
+    info {
+        title: Hexen: Deathkings of the Dark Citadel (Expansion)
+        author: Raven Software
+        license: All rights reserved
+        tags: gamedata hexen vanilla expansion
+        required <com.ravensoftware.hexen>
+    }
+}
+
+package "com.ravensoftware.hexen.deathkings_1.1" {
+    format: IWAD 
+    fileName: hexdd.wad
+    fileSize: 4440584
+    lumps <MAP59, MAP60>
+    lumpDirCRC32: 9097cb5c
     info {
         title: Hexen: Deathkings of the Dark Citadel (Expansion)
         author: Raven Software
