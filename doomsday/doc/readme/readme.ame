@@ -1,4 +1,5 @@
-@ifndef{MAN}{
+@ifdef{MAN}{@macro{MANPAGE}{}} $ structure as man page
+@ifndef{MANPAGE}{
     @macro{TITLE}{ Doomsday Engine }
 }
 @else{
@@ -25,7 +26,7 @@ $ Readme-specific formatting macros.
 $-----------------------------------------------------------------------------
 @begin
 
-@ifdef{MAN}{    
+@ifdef{MANPAGE}{    
     $ Man pages begin with a command line synopsis and other basic 
     $ technical information.    
     @include{technical.ame}
@@ -38,12 +39,12 @@ $-----------------------------------------------------------------------------
 @include{games}
 @include{ui/home}
 @include{ui/taskbar}
-@ifndef{MAN}{
+@ifndef{MANPAGE}{
     @include{technical.ame}
 }
 @include{bugs}
 @include{seealso}
-@ifdef{MAN}{
+@ifdef{MANPAGE}{
     $ Man pages have an author section.
     @include{../author}
 }

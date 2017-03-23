@@ -1,4 +1,4 @@
-@ifndef{MAN}{
+@ifndef{MANPAGE}{
     @chapter{ Command line usage }
     
     It is possible to launch Doomsday directly from the command line. If all
@@ -21,7 +21,7 @@
 Everything following @opt{--} is ignored. @opt{@@} can be used to specify a
 response file whose contents are added to the command line.
 
-@ifdef{MAN}{
+@ifdef{MANPAGE}{
     @chapter{ Options }
 }
 

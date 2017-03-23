@@ -10,9 +10,10 @@ inside:
     @item{@file{/etc/doomsday/defaults}} System-level default configuration.
     This is checked after @file{~/.doomsday/defaults}. For example:
 
-    @samp{@pre{audio fluidsynth @{
-        driver: pulseaudio
-    @}}}
+    @samp{@pre{
+audio fluidsynth @{
+    driver: pulseaudio
+@}}}
 
     @item{@file{/etc/doomsday/paths}} @a{paths_file} System-level paths
     configuration (@var{basedir}, @var{libdir}, @var{iwaddir}). This is checked

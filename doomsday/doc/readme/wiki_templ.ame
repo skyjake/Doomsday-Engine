@@ -1,4 +1,4 @@
-$@macro{TITLE}{ Doomsday Engine }
+@macro{TITLE}{ doomsday }
 
 @require{amestd}
 
@@ -12,23 +12,13 @@ $@macro{TITLE}{ Doomsday Engine }
 
 @begin
 
-@toc{}
-
-@ifdef{Intro}{
-	@require{introduction}
-	@require{gamemodes}
-	@require{documentation}
-	@include{bugs}
-}
-@ifdef{Platform}{
-	@require{files}
-	@require{environment}
-}
-@ifdef{MP}{
-	@require{network}
-	$ TODO: more MP docs wouldn't hurt
-}
-@ifdef{Res}{
-	@require{resources}
-	@include{plugins}
-}
+@include{technical.ame}
+@include{introbrief}
+@include{features}
+@include{games}
+@include{ui/home}
+@include{ui/taskbar}
+@include{bugs}
+@include{seealso}
+@include{../author}
+@include{credit}
