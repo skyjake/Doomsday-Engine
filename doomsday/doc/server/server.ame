@@ -7,6 +7,10 @@ $ Man page for doomsday-server
 @require{amestd}
 
 $ Extra formatting macros.
+@ifndef{MAN}{
+    @macro{man_opt}{@opt{-}@opt{@glue{@arg}}}
+    @macro{man_opt2}{@man_opt{@arg{1}} (@arg{2})}
+}
 @macro{plugin}{@arg}
 
 @begin

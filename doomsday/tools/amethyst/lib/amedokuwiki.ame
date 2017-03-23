@@ -22,13 +22,13 @@ $@format{parent count 1 opt parent !samp}{''@=''}
 @format{order -1 parent code}{@=''}
 @format{order 1 parent email}{//@=}
 @format{order -1 parent email}{@=//}
-@format{pre !control}{@n@= @< @B<pre> @> </pre>@b}
+@format{pre !control}{@g @< @B<code> @> </code>@b}
 @format{order 1 parent caption}{//@=}
 @format{order -1 parent caption}{@=//}
 @format{br parent caption}{\\}
 
 $ Indented styles.
-@format{indent !cite}{@= @< >@_ @> @N}
+@format{indent !cite first !pre}{@= @< >@_ @> @N}
 $style="padding-left:1.5em;@_margin:0.5em;"
 
 $ Remove all section numbers, Mediawiki numbers them on its own.
