@@ -232,6 +232,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         nativePath = file->correspondingNativePath();
         String fileDesc = file->source()->description();
 
+        String lumpDirCrc32;
         String format;
         DataBundle const *bundle = file->target().maybeAs<DataBundle>();
         if (bundle)
@@ -247,6 +248,11 @@ DENG_GUI_PIMPL(PackageInfoDialog)
             if (bundle->format() == DataBundle::Collection)
             {
                 fileDesc = file->target().description();
+            }
+            else if (bundle->format() == DataBundle::Iwad ||
+                     bundle->format() == DataBundle::Pwad)
+            {
+                lumpDirCrc32 = String::format("%08x", bundle->lumpDirectory()->crc32());
             }
         }
         else
@@ -314,6 +320,11 @@ DENG_GUI_PIMPL(PackageInfoDialog)
                     .arg(mapCount)
                     .arg(DENG2_PLURAL_S(mapCount)) +
                     String::join(bundle->lumpDirectory()->mapsInContiguousRangesAsText(), ", ");
+        }
+
+        if (lumpDirCrc32)
+        {
+            msg += "\nWAD directory CRC32: " _E(m) + lumpDirCrc32 + _E(.);
         }
 
         if (meta.has("notes"))
