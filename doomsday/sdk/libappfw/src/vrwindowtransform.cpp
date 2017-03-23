@@ -73,8 +73,8 @@ DENG2_PIMPL(VRWindowTransform)
 
         // Since the UI style doesn't yet support scaling at runtime based on
         // display resolution (or any other factor).
-        return 1.f / Rangef(.5f, 1.0f).clamp((width() - GuiWidget::toDevicePixels(256.f)) /
-                                              GuiWidget::toDevicePixels(768.f));
+        return 1.f / Rangef(.66666f, 1.0f).clamp((width() - GuiWidget::toDevicePixels(256.f)) /
+                                                 GuiWidget::toDevicePixels(768.f));
     }
 
     void drawContent() const
