@@ -49,8 +49,7 @@ can be found:
 
 Doomsday tries to recognize IWAD files based on their contents. The
 @link{identification
-criteria can be viewed in GitHub}{https://github.com/skyjake/Doomsday-Engine/blob/master/doomsday/ap
-ps/libdoomsday/net.dengine.base.pack/databundles.dei}.
+criteria can be viewed in GitHub}{https://github.com/skyjake/Doomsday-Engine/blob/master/doomsday/apps/libdoomsday/net.dengine.base.pack/databundles.dei}.
 
 @a{gamemode} @section{ Supported games }
 
