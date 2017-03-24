@@ -3,6 +3,12 @@
 require_once('class.session.php');
 require_once(DENG_API_DIR.'/include/builds.inc.php');
     
+function starts_with($needle, $haystack)
+{
+     $length = strlen($needle);
+     return (substr($haystack, 0, $length) === $needle);
+}
+
 function reformat_date($date_text)
 {
     $date = date_parse($date_text);
@@ -233,11 +239,26 @@ function generate_sitemap()
         $dev = json_decode(cache_get());
         $news_count = min(3, count($news->posts));
         $dev_count  = min(3, count($dev->posts));
+        
+        // Check any recently announced servers.
+        $recent_servers = '';
+        $db = Session::get()->database();
+        $result = db_query($db, "SELECT * FROM servers ORDER BY player_count DESC, name ASC LIMIT 4");
+        while ($row = $result->fetch_assoc()) {
+            $pnum = $row['player_count'];
+            $pmax = $row['player_max'];
+            $name = htmlentities(urldecode($row['name']));
+            $game_id = $row['game_id'];
+            $recent_servers .= "<li class='recent-server'><span class='server-players'>$pnum / $pmax</span> &middot; "
+                ."<span class='server-name'>$name</span> &middot; <span class='server-game'>$game_id</span></li>";
+        }
+        if (!$recent_servers) {
+            $recent_servers = '<li>No servers</li>';
+        }
 
         cache_clear();
     
         // Contact the BDB for a list of the latest builds.
-        $db = Session::get()->database();
         $result = db_query($db, "SELECT build, version, type, UNIX_TIMESTAMP(timestamp) FROM "
             .DB_TABLE_BUILDS." ORDER BY timestamp DESC");    
         $new_threshold = time() - 2 * 24 * 3600;
@@ -292,13 +313,23 @@ function generate_sitemap()
         </li>
         <li>
             <div class='heading'>Multiplayer Games</div>
-            <ul class='sitemap-list'><li>No servers</li></ul>
+            <ul class='sitemap-list'>$recent_servers</ul>
         </li>
         <li>
             <div class='heading'>User Manual</div>
+            <ul class='sitemap-list'>
+                <li><a href='/manual/getting_started'>Getting started</a></li>            
+                <li><a href='/manual/multiplayer'>Multiplayer</a></li>            
+                <li><a href='/manual/version'>Version history</a></li>            
+            </ul>
         </li>
         <li>
             <div class='heading'>Reference Guide</div>
+            <ul class='sitemap-list'>
+                <li><a href='/manual/fs'>Packages &amp; assets</a></li>            
+                <li><a href='/manual/ded'>DED definitions</a></li>            
+                <li><a href='/manual/script'>Scripting</a></li>            
+            </ul>
         </li>
     </ul>
     <div id='credits'>

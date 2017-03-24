@@ -4,7 +4,7 @@
 body {
     background: #282D2B url("../images/site-background0.jpg") no-repeat fixed;
     background-position: center 100%;
-    background-size: 200% 200%;
+    background-size: 240% 240%;
     font-family: "Source Sans Pro";
     font-weight: 400;
     font-size: 14pt;
@@ -224,6 +224,9 @@ div.block.blog-post {
 .blog-post h1 {
     margin-bottom: 0;
 }
+.blog-post .post-content {
+    line-height: 1.4;    
+}
 
 #page-content {
     float: right;
@@ -263,6 +266,23 @@ div.package-badge .package-metadata {
 }
 div.package-badge time {
     color: #aaa;
+}
+div.package-description {
+    padding-left: 42px;
+}
+div.package-description p.package-description {
+    color: #d0d0d0;
+}
+div.package-description p.package-notes {
+    color: #b0b0b0;
+    font-weight: 300;
+}
+div.package-description:not(:last-of-type) {
+    margin-bottom: 2em;
+}
+div.package-description p {
+    margin: 1ex 0;
+    font-size: 95%;
 }
 img.distro-icon {
     width: 23px;
@@ -348,7 +368,7 @@ img.distro-icon {
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.5);
 }
-#site-map time {
+#site-map time, .server-game, .server-players {
     color: #999;
     white-space: nowrap;
 }
