@@ -2,7 +2,7 @@ $ Amethyst Dokuwiki Source formatting.
 
 $*** FORMATTING RULES ***$
 @format{@=@s(**|<nowiki>**</nowiki>)}
-@format{break}{@N}
+@format{break next !indent @ prev !indent}{@N}
 @format{br}{@n}
 
 $ Styles.
@@ -12,26 +12,28 @@ $ Styles.
 @format{order 1 parent strong}{**@=}
 @format{order -1 parent strong}{@=**}
 $@format{parent count 1 opt parent !samp}{''@=''}
-@format{order 1 parent cmd}{''@=}
-@format{order -1 parent cmd}{@=''}
+@format{order 1 parent cmd parent !samp}{''@=}
+@format{order -1 parent cmd parent !samp}{@=''}
 @format{order 1 parent var}{''@=}
 @format{order -1 parent var}{@=''}
-@format{order 1 parent opt}{''@=}
-@format{order -1 parent opt}{@=''}
-@format{order 1 parent code}{''@=}
-@format{order -1 parent code}{@=''}
+@format{order 1 parent opt parent !samp}{''@=}
+@format{order -1 parent opt parent !samp}{@=''}
+@format{order 1 parent code !indent}{''@=}
+@format{order -1 parent code !indent}{@=''}
 @format{order 1 parent email}{//@=}
 @format{order -1 parent email}{@=//}
-@format{pre !control}{@g @< @B<code> @> </code>@b}
 @format{order 1 parent caption}{//@=}
 @format{order -1 parent caption}{@=//}
 @format{br parent caption}{\\}
+@format{break next !indent @ parent2 list}{\\@_\\}
+@format{pre !control}{indent code}{@g @< @B<code> @> </code>@b}
+@format{try opt cmd pass parent indent samp}{@= @< <code> @> </code>}
 
 $ Indented styles.
-@format{indent !cite first !pre}{@= @< >@_ @> @N}
+$@format{indent !cite first !pre}{@= @< >@_ @> @N}
 $style="padding-left:1.5em;@_margin:0.5em;"
 
-$ Remove all section numbers, Mediawiki numbers them on its own.
+$ Remove all section numbers.
 @format{parent child 1 parent try chapter section subsec sub2sec pass}{}
 
 $ Titles.
