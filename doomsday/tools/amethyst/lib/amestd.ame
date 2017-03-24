@@ -89,16 +89,25 @@ $ Anchor.
 	@ifdef{HTML}{
 		@tag{<a name=@nsp{" @arg "></a>}}
 	}
+    @ifdef{DOKUWIKI}{
+        @tag{<html><a name=@nsp{" @arg "></a></html>}}
+    }
 }
 
 $ Reference to an anchor.
 @macro{ref}{
 	@ifdef{HTML}{
 		@tag{<a href="#@nsp{@arg{1}">}} @glue{@arg{2}} @tag{@nsp{</a>}}
-	}@else{
-    	@ifdef{MAN}{ @apply{@u}{@arg{2}} }
-    	@else{ @arg{2} }	    
-	}
+    }
+    @else{@ifdef{DOKUWIKI}{
+        @tag{<html><a href="#@nsp{@arg{1}">}} @glue{@arg{2}} @tag{@nsp{</a></html>}}
+    }
+    @else{@ifdef{MAN}{
+        @apply{@u}{@arg{2}}
+    }
+    @else{
+        @arg{2}
+    }}}
 }
 
 $ Hyperlink with a title.
