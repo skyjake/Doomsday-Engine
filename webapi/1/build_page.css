@@ -1,14 +1,20 @@
 body {
     font-family: "Source Sans Pro";
     font-size: 13pt;    
-    max-width: 85ex;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 1em;
-    padding-right: 1em;
+    margin: 0;
     background: #ddd url(http://dengine.net/images/doxybg.jpg) no-repeat fixed;
     background-position: center 100%;
     background-size: 200% 200%;
+}
+#wrapper {
+    max-width: 85ex;
+    margin-left: auto;
+    margin-right: auto;    
+    padding-left: 1em;
+    padding-right: 1em;
+}
+#wrapper.index_page {
+    max-width: 110ex;
 }
 
 /* Common Stuff */
@@ -19,7 +25,7 @@ h1, h2 {
 }
 h1 {
     font-size: 275%;
-    margin-top: 1em;
+    margin-top: 1.4em;
 }
 h2 {
     font-size: 200%;

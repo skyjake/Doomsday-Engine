@@ -110,7 +110,7 @@ function generate_addon_blocks()
                 <article id="overview">
                     <h1>Add-ons</h1>
                     <p>This is a collection of featured resource packs and other add-ons.
-                        You can find more on the <a href="/talk">discussions forums</a>.
+                        You can find more on the <a href="/talk">discussion forums</a>.
                     </p>
                 </article>
             </div>

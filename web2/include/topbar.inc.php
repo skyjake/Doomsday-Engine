@@ -28,11 +28,11 @@
     <ul class="site-navigation">
         <li><a href="<?php echo(SITE_ROOT); ?>" class="site-link">Doomsday<span class="aux-word"> Engine</span></a></li>
         <li class="quick-download"><?php echo($download_link); ?></li>
-        <li class="supplementary"><a href="/builds">Builds</a></li>
+        <li class="supplementary"><a href="<?php echo(SITE_ROOT); ?>/builds">Builds</a></li>
         <li class="supplementary"><a href="<?php echo(SITE_ROOT."/addons"); ?>">Add-ons</a></li>
-        <li><a href="/manual">Manual</a></li>
-        <li><a href="/talk">Forums</a></li>
-        <li class="supplementary"><a href="/support">Support</a></li>
+        <li><a href="<?php echo(SITE_ROOT); ?>/manual">Manual</a></li>
+        <li><a href="<?php echo(SITE_ROOT); ?>/talk">Forums</a></li>
+        <li class="supplementary"><a href="<?php echo(SITE_ROOT); ?>/support">Support</a></li>
         <li><a href="https://tracker.dengine.net/projects/deng"><span class="aux-word">Bug </span>Tracker</a></li>
         <li><a href="<?php echo(SITE_ROOT).'/recent_posts'; ?>" class="blog-link">Blog</a></li>
     </ul>

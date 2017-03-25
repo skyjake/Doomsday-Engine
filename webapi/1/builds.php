@@ -20,6 +20,7 @@
 //error_reporting(E_ALL ^ E_NOTICE);
 
 require_once('include/builds.inc.php');
+require_once(__DIR__.'/../../www/include/template.inc.php');
 
 function show_signature($filename)
 {
@@ -64,7 +65,7 @@ function download_file($filename, $mirror)
     $db->close();
 }
 
-function generate_header($page_title)
+function generate_header($page_title, $page_class='')
 {
     header("Cache-Control: max-age=3600");
     header('Content-Type: text/html;charset=UTF-8');
@@ -72,15 +73,32 @@ function generate_header($page_title)
     cache_echo("<!DOCTYPE html>\n");
     cache_echo("<html lang=\"en\"><head>\n");
     cache_echo("  <meta charset=\"UTF-8\">\n");
+    cache_echo("  <meta name='viewport' content='width=device-width, initial-scale=1'>\n");
     cache_echo("  <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400italic,700' rel='stylesheet' type='text/css'>\n");
     cache_echo("  <link href='http://api.dengine.net/1/build_page.css' rel='stylesheet' type='text/css'>\n");
+    cache_echo("  <link href='http://dengine.net/theme/stylesheets/topbar.css' rel='stylesheet' type='text/css'>\n");
+    cache_echo("  <link href='http://dengine.net/theme/stylesheets/sitemap.css' rel='stylesheet' type='text/css'>\n");
     cache_echo("  <title>$page_title</title>\n");
     cache_echo("</head><body>\n");
+    cache_echo("<div id='wrapper' class='$page_class'>\n");
     cache_echo("<h1>$page_title</h1>\n");
 }
 
 function generate_footer()
-{
+{    
+    cache_echo("</div>\n"); // #wrapper
+    
+    $wip = cache_get();
+    cache_clear();
+
+    ob_start();
+    include(__DIR__.'/../../www/include/topbar.inc.php');
+    generate_sitemap();
+    $templ = ob_get_contents();
+    ob_end_clean();    
+    cache_clear();
+    
+    cache_echo($wip.$templ);    
     cache_echo("</body></html>");
 }
 
@@ -110,9 +128,9 @@ function generate_build_page($number)
         $files = db_build_list_files($db, $number);
 
         // Output page header.
-        generate_header(human_version($version, $number, $type));
+        generate_header(human_version($version, $number, $type), 'build_page');
 
-        cache_echo("<p class='links'><a href='http://dengine.net/'>dengine.net</a> | <a href='".DENG_API_URL."/builds?format=html'>Autobuilder Index</a> | <a href='".DENG_API_URL."/builds?format=feed'>RSS Feed</a></p>\n");
+        cache_echo("<p class='links'><a href='".DENG_API_URL."/builds?format=html'>Autobuilder Index</a> | <a href='".DENG_API_URL."/builds?format=feed'>RSS Feed</a></p>\n");
 
         cache_echo(db_build_summary($db, $number));
 
@@ -231,11 +249,11 @@ function generate_build_index_page()
         return;
     }
 
-    generate_header("Doomsday Autobuilder");
+    generate_header("Doomsday Autobuilder", 'index_page');
         
     $this_year_ts = mktime(0, 0, 0, 1, 1);
 
-    cache_echo("<p class='links'><a href='http://dengine.net/'>dengine.net</a> | <a href='".DENG_API_URL."/builds?format=feed'>RSS Feed</a></p>"
+    cache_echo("<p class='links'><a href='".DENG_API_URL."/builds?format=feed'>RSS Feed</a></p>"
         .'<h2>Latest Builds</h2>'
         .'<div class="buildlist">');
 

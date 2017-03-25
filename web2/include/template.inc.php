@@ -53,15 +53,15 @@ function platform_download_link()
 {
     switch (detect_user_platform()) {
         case 'windows': 
-            $dl_link = SITE_ROOT.'/windows'; break;
+            $dl_link = '/windows'; break;
         case 'macx':
-            $dl_link = SITE_ROOT.'/macos'; break;
+            $dl_link = '/macos'; break;
         case 'linux':
-            $dl_link = SITE_ROOT.'/linux'; break;
+            $dl_link = '/linux'; break;
         default:
-            $dl_link = SITE_ROOT.'/source'; break;
+            $dl_link = '/source'; break;
     }
-    return $dl_link;
+    return SITE_ROOT.$dl_link;
 }
 
 function generate_download_button()
@@ -193,7 +193,7 @@ function generate_sidebar()
         <li><a href='/talk'>Forums</a></li>
         <li><a href='/support'>Tech support</a></li>
         <li><a href='http://facebook.com/doomsday.engine'>Facebook page</a></li>
-        <li><a href='/manual/other_ports'>Other ports</a></li>            
+        <li><a href='/manual/guide/other_ports'>Other ports</a></li>            
     </ul>
     <div class='heading'>Development</div>
     <ul>
@@ -231,7 +231,8 @@ function generate_sitemap()
 {
     // Check for a cached sitemap.
     $ckey = cache_key('home', 'sitemap');    
-    if (!cache_try_load($ckey)) {            
+    if (!cache_try_load($ckey)) {        
+        $site_root = SITE_ROOT;    
         // Fetch the cached news and dev blog posts.
         cache_try_load(cache_key('news', 'news'), -1);
         $news = json_decode(cache_get());            
@@ -243,7 +244,7 @@ function generate_sitemap()
         // Check any recently announced servers.
         $recent_servers = '';
         $db = Session::get()->database();
-        $result = db_query($db, "SELECT * FROM servers ORDER BY player_count DESC, name ASC LIMIT 4");
+        $result = db_query($db, "SELECT * FROM servers ORDER BY player_count DESC, timestamp DESC LIMIT 4");
         while ($row = $result->fetch_assoc()) {
             $pnum = $row['player_count'];
             $pmax = $row['player_max'];
@@ -265,7 +266,7 @@ function generate_sitemap()
         $count = 4;
         $build_list = "<ul class='sitemap-list'>";
         while ($row = $result->fetch_assoc()) {            
-            $link = '/build'.$row['build'];
+            $link = $site_root.'/build'.$row['build'];
             $version = omit_zeroes($row['version']);
             $label = "$version ".ucwords(build_type_text($row['type']))
                 ." [#".$row['build']."]";
@@ -278,7 +279,7 @@ function generate_sitemap()
             
             if (--$count == 0) break;
         }
-        $build_list .= "<li><a href='/builds'>Autobuilder Index</a></li>\n"
+        $build_list .= "<li><a href='$site_root/builds'>Autobuilder Index</a></li>\n"
             ."<li><a href='http://api.dengine.net/1/builds?format=feed'>RSS Feed</a></li></ul>\n";
 
         cache_echo(
@@ -291,7 +292,7 @@ function generate_sitemap()
         for ($i = 0; $i < $news_count; ++$i) {
             generate_blog_post_cached($news->posts[$i], 'newspost');
         }    
-        cache_echo("<li><a href='/blog/category/news/feed/atom' title='Doomsday Engine news via RSS'>RSS Feed</a></li>");
+        cache_echo("<li><a href='$site_root/blog/category/news/feed/atom' title='Doomsday Engine news via RSS'>RSS Feed</a></li>");
                     
         cache_echo(
 "            </ul>
@@ -303,7 +304,7 @@ function generate_sitemap()
         for ($i = 0; $i < $dev_count; ++$i) {
             generate_blog_post_cached($dev->posts[$i], 'blogpost');
         }        
-        cache_echo("<li><a href='/blog/category/dev/feed/atom' title='Doomsday Engine development blog via RSS'>RSS Feed</a></li>");
+        cache_echo("<li><a href='$site_root/blog/category/dev/feed/atom' title='Doomsday Engine development blog via RSS'>RSS Feed</a></li>");
                     
         cache_echo(
 "            </ul></li>
@@ -318,17 +319,17 @@ function generate_sitemap()
         <li>
             <div class='heading'>User Manual</div>
             <ul class='sitemap-list'>
-                <li><a href='/manual/getting_started'>Getting started</a></li>            
-                <li><a href='/manual/multiplayer'>Multiplayer</a></li>            
-                <li><a href='/manual/version'>Version history</a></li>            
+                <li><a href='$site_root/manual/getting_started'>Getting started</a></li>            
+                <li><a href='$site_root/manual/multiplayer'>Multiplayer</a></li>            
+                <li><a href='$site_root/manual/version'>Version history</a></li>            
             </ul>
         </li>
         <li>
             <div class='heading'>Reference Guide</div>
             <ul class='sitemap-list'>
-                <li><a href='/manual/fs'>Packages &amp; assets</a></li>            
-                <li><a href='/manual/ded'>DED definitions</a></li>            
-                <li><a href='/manual/script'>Scripting</a></li>            
+                <li><a href='$site_root/manual/fs'>Packages &amp; assets</a></li>            
+                <li><a href='$site_root/manual/ded'>DED definitions</a></li>            
+                <li><a href='$site_root/manual/script'>Scripting</a></li>            
             </ul>
         </li>
     </ul>
@@ -338,7 +339,7 @@ function generate_sitemap()
         the <a href='http://www.gnu.org/licenses/gpl.html'>GNU General Public License</a> (applications) and <a href='http://www.gnu.org/licenses/lgpl.html'>LGPL</a> (core libraries).
         Assets from the original games remain under their original copyright. 
         Doomsday logo created by Daniel Swanson.
-        <a href='/'>dengine.net</a> website design by Jaakko Ker&auml;nen &copy; 2017. 
+        <a href='$site_root'>dengine.net</a> website design by Jaakko Ker&auml;nen &copy; 2017. 
     </div>
 </div>");
                 

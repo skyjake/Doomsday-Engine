@@ -1,8 +1,23 @@
+AddType application/octet-stream .pk3 .zip
+AddType application/x-gzip .gz .txt.gz
+Header set Access-Control-Allow-Origin "http://dengine.net"
 ErrorDocument 404 index.php
 
 RewriteEngine on
-RewriteBase /web2
+RewriteBase /
 
+# Redirect www subdomain.
+RewriteCond %{HTTP_HOST} www\.dengine\.net [NC]
+RewriteRule ^(.*)$ http://dengine.net/$1 [R=301,QSA,L]
+
+# Static redirects.
+RewriteCond %{REQUEST_URI} support
+RewriteRule ^(.*)$ talk/categories/technical-support [R=301,L]
+
+RewriteCond %{REQUEST_URI} forums.*
+RewriteRule ^forums(.*)$ talk$1 [R=301,QSA,L]
+
+# Append .php extension.
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule (.*) $1.php [L,QSA]

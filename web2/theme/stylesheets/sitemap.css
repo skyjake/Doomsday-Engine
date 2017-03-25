@@ -1,0 +1,81 @@
+#site-map {
+    clear: both;
+    width: 100%;
+    margin: 5em 0 0 0;
+    padding: 2em 0 2em 0;
+    font-family: "Source Sans Pro";
+    font-size: 10.5pt;
+    line-height: 1.3;
+    color: #ddd;
+    background-color: rgba(0, 0, 0, 0.75);
+}
+#site-map ul {
+    color: #ddd;
+}
+#site-map a {
+    color: #eb4;    
+    text-decoration: none;
+}
+#site-map a:hover {
+    color: #fc0;    
+    text-decoration: underline;
+}
+#site-map ul.map-wrapper {
+    text-align: center;
+    list-style: none;
+    margin: 0 auto;
+    padding: 0 1em;
+}
+#site-map ul.map-wrapper > li {
+    display: inline-block;
+    vertical-align: top; 
+    width: 10%;
+    min-width: 20em;
+    margin: 0 1em;
+    text-align: left;
+}
+@media only screen and (max-width: 600px) {
+    #site-map ul.map-wrapper > li {
+        width: 100%;
+        margin: 0;
+    }
+}
+#site-map ul.sitemap-list {
+    padding: 0;
+    list-style: none;
+    margin-bottom: 1em;
+}
+#site-map ul.sitemap-list > li {
+    display: list-item;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+#site-map .heading {
+    font-weight: bold;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+}
+#site-map time, .server-game, .server-players {
+    color: #999;
+    white-space: nowrap;
+}
+
+#credits {
+    margin: 2em 6em 0 6em;
+    text-align: center;
+    color: #888;
+}
+@media only screen and (max-width: 600px) {
+    #credits {
+        margin: 2em 2em 0 2em;
+    }
+}
+#credits a {
+    color: #aaa;
+    text-decoration: none;
+}
+#credits a:hover {
+    color: #ddd;
+    text-decoration: underline;
+}
