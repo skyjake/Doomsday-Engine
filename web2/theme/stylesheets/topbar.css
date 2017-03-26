@@ -8,6 +8,9 @@
     font-family: "Source Sans Pro", sans-serif;
     font-size: 12pt;
 }
+#vanilla_discussion_embed #dengine-topbar {
+    display: none;
+}
 #dengine-topbar ul.site-navigation {
     text-align: center;
     list-style: none;
