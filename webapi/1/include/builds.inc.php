@@ -398,7 +398,7 @@ function generate_platform_latest_json($platform, $build_type_txt)
             cache_echo(json_encode($resp));    
         }
         else {
-            cache_echo("{}\n");
+            cache_echo("{ \"result\": \"no builds found\" }\n");
         }
     }
     $db->close();

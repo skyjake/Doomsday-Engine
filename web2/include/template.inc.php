@@ -132,6 +132,7 @@ function generate_download_badge($db, $file_id)
         ." for ".$plat['name']." (".$plat['cpu_bits']."-bit)";
     $download_url = 'http://api.dengine.net/1/builds?dl='.$file['name'];
     
+    $metadata = '';
     if ($plat['os'] != 'any') {
         $metadata .= $plat['name'].' (or later)'; //' &middot; '.$plat['cpu_bits'].'-bit';
     }
