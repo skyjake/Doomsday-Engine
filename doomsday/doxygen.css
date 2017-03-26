@@ -1,6 +1,7 @@
 /* Doomsday API Documentation Style */
 
 @import url(http://fonts.googleapis.com/css?family=Source+Sans+Pro:300italic,400italic,700italic,400,700,300);
+@import url(http://dengine.net/theme/stylesheets/topbar.css);
 
 body, .tabs, .tabs2, .tabs3,
 #MSearchField, .SelectItem, .SRSymbol, .SRScope {
@@ -1419,7 +1420,7 @@ dl.bug
 }
 
 #titlearea {
-    padding: 6px 0px;
+    padding: 30px 0 6px 0;
     margin: 0px;
     width: 100%;
 }
