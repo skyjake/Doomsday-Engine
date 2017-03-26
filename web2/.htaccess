@@ -10,6 +10,11 @@ RewriteBase /
 RewriteCond %{HTTP_HOST} www\.dengine\.net [NC]
 RewriteRule ^(.*)$ http://dengine.net/$1 [R=301,QSA,L]
 
+# Redirect builds.
+RewriteRule ^builds$ http://api.dengine.net/1/builds [R=301,L]
+
+RewriteRule ^build([0-9]+)$ http://api.dengine.net/1/builds?number=$1&format=html [R=301,L]
+
 # Static redirects.
 RewriteCond %{REQUEST_URI} support
 RewriteRule ^(.*)$ talk/categories/technical-support [R=301,L]
