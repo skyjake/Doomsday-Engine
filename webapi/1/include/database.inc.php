@@ -70,6 +70,7 @@ function build_type_from_text($text)
 
 function db_get_platform($db, $platform)
 {
+    $platform = $db->real_escape_string($platform);
     $result = db_query($db, "SELECT * FROM ".DB_TABLE_PLATFORMS
         ." WHERE platform='$platform'");
     return $result->fetch_assoc();
