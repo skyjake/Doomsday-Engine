@@ -147,7 +147,7 @@ void ClientTexture::clearVariants()
 void ClientTexture::release(/*TextureVariantSpec *spec*/)
 {
     Texture::release();
-    
+
     foreach (TextureVariant *variant, d->variants)
     {
         //if (!spec || spec == &variant->spec())
@@ -171,7 +171,6 @@ String ClientTexture::description() const
         // Print variant specs.
         os << "\n" << _E(R);
 
-        //foreach (TextureVariant *variant, texture.variants())
         for (int variantIdx = 0; variantIdx < d->variants.size(); ++variantIdx)
         {
             auto const *variant = d->variants.at(variantIdx);
@@ -190,8 +189,6 @@ String ClientTexture::description() const
                << _E(R)
                << "\n" _E(b) "Specification:" _E(.)
                << textualVariantSpec;
-
-            ++variantIdx;
         }
     }
 
