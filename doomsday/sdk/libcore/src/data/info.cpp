@@ -920,6 +920,13 @@ bool Info::isEmpty() const
     return d->rootBlock.isEmpty();
 }
 
+String Info::quoteString(String const &text)
+{
+    String quoted = text;
+    quoted.replace("\"", "''");
+    return String("\"%1\"").arg(quoted);
+}
+
 String Info::sourceLocation(duint32 lineId) // static
 {
     return de::sourceLineTable.sourceLocation(lineId);
