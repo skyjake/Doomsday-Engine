@@ -399,6 +399,8 @@ public:
 
     bool isEmpty() const;
 
+    static String quoteString(String const &text);
+
     static String sourceLocation(duint32 lineId);
     static SourceLineTable const &sourceLineTable();
 
