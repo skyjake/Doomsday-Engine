@@ -363,7 +363,7 @@ String GameProfiles::Profile::toInfoSource() const
     os.setCodec("UTF-8");
 
     os << VAR_GAME << ": " << d->gameId << "\n"
-       << VAR_PACKAGES << " <" << String::join(d->packages, ", ") << ">\n"
+       << VAR_PACKAGES << " <" << String::join(de::map(d->packages, Info::quoteString), ", ") << ">\n"
        << VAR_USER_CREATED << ": " << (d->userCreated? "True" : "False") << "\n"
        << VAR_USE_GAME_REQUIREMENTS << ": " << (d->useGameRequirements? "True" : "False");
 
