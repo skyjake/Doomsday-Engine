@@ -318,6 +318,8 @@ static void stopPlayer()
     fsPlayer = 0;
 
     blockBuffer->clear();
+
+    fluid_synth_system_reset(DMFluid_Synth());
 }
 
 int DM_Music_Init(void)
