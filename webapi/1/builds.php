@@ -294,7 +294,7 @@ function generate_build_index_page()
 
     cache_echo("<h2 id='versions-subtitle'>Versions</h2><div id='other-versions'>\n");
     foreach ($all_versions as $version => $builds) {
-        $relnotes_link = DENG_WIKI_URL."/Doomsday_version_".omit_zeroes($version);
+        $relnotes_link = release_notes_url(omit_zeroes($version));
         cache_echo("<div class='version'><h3><a href='$relnotes_link'>".omit_zeroes($version)."</a></h3>"
             ."<div class='buildlist'>\n");
         foreach ($builds as $info) {

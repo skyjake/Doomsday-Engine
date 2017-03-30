@@ -232,6 +232,11 @@ function db_build_plaintext_summary($db, $build)
     return $text;
 }
 
+function release_notes_url($version)
+{
+    return DENG_WIKI_URL."/version/$version";
+}
+
 function db_build_summary($db, $build)
 {
     // Fetch build info.
@@ -247,7 +252,7 @@ function db_build_summary($db, $build)
     }
     if ($type == 'stable') {
         $ver = omit_zeroes($version);
-        $relnotes_link = DENG_WIKI_URL."/Doomsday_version_".$ver;
+        $relnotes_link = release_notes_url($ver);
         $text .= "<p>See also: <a href='$relnotes_link'>Release notes for $ver</a></p>";
     }
     return $text;
@@ -390,8 +395,7 @@ function generate_platform_latest_json($platform, $build_type_txt)
                 'file_size' => (int) $row['size'],
                 'file_md5' => $row['md5'],
                 'release_changeloguri' => DENG_API_URL."/builds?number=$build&format=html",
-                'release_notesuri' => DENG_WIKI_URL."/Doomsday_version_"
-                    .omit_zeroes($row['version']),
+                'release_notesuri' => release_notes_url(omit_zeroes($row['version'])),
                 'release_date' => $date,
                 'is_unstable' => ($type == BT_UNSTABLE)
             ];
