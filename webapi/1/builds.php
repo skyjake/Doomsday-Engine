@@ -221,7 +221,8 @@ function generate_build_page($number)
                         $date = strftime('%b %d', mktime(0, 0, 0, $parsed['month'], $parsed['day'])); //htmlspecialchars(substr($commit->date, 0, 10));
                         $subject = htmlspecialchars($commit->subject);
                         $author = htmlentities($commit->author);
-                        $msg = basic_markdown(htmlentities($commit->message));
+                        $msg = trim(str_replace("[ci skip]", "", $commit->message));
+                        $msg = basic_markdown(htmlentities($msg));
                         cache_echo("<li>$others<a href='$github_link'>$date</a> "
                             ."<span class='title'><a href='$trgit_link'>$subject</a></span> "
                             //."by <span class='author'>$author</span>"
