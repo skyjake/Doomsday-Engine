@@ -60,6 +60,12 @@
     color: #999;
     white-space: nowrap;
 }
+#site-map ul.sitemap-list li.recent time {
+    color: #ddd;
+}
+#site-map ul.sitemap-list li.recent time::after  {
+    content: " ★";
+}
 
 #credits {
     margin: 2em 6em 0 6em;

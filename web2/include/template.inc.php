@@ -3,17 +3,25 @@
 require_once('class.session.php');
 require_once(DENG_API_DIR.'/include/builds.inc.php');
     
+define('RECENT_THRESHOLD', 3600*72);
+    
 function starts_with($needle, $haystack)
 {
      $length = strlen($needle);
      return (substr($haystack, 0, $length) === $needle);
 }
 
-function reformat_date($date_text)
+function timestamp_from_date($date_text)
 {
     $date = date_parse($date_text);
     $ts = mktime($date['hour'], $date['minute'], $date['second'],
                  $date['month'], $date['day'], $date['year']);
+    return $ts;
+}
+
+function reformat_date($date_text)
+{
+    $ts = timestamp_from_date($date_text);
     if (date('Y') != $date['year']) {
         $fmt = '%Y %B %e';
     }
@@ -210,22 +218,14 @@ function generate_sidebar()
 
 function generate_blog_post_cached($post, $css_class)
 {
-    $nice_date = reformat_date($post->date);
-    
-    /*$html = '<div class="block"><article class="'.$css_class
-        .' content"><header><h1><a href="'.$post->url.'">'
-        .$post->title.'</a></h1>';
-
-    $html .= '<p><time datetime="'.$post->date.'" pubdate>'.$nice_date
-        .'</time> &mdash; '.$post->author->name.'</p></header><br />';
-
-    $html .= '<div class="articlecontent">'.$post->content.'</div></article>';
-    $html .= '<div class="links">'.$source_link.'</div></div>';*/
-    
+    $nice_date = reformat_date($post->date);    
     $html = "<a class='blog-link' href='$post->url'>$post->title</a> "
-        ."<time datetime='$post->date' pubdate>&middot; $nice_date</time>";
-    
-    cache_echo('<li>'.$html.'</li>');    
+        ."<time datetime='$post->date' pubdate>&middot; $nice_date</time>";    
+    $itemclass = '';
+    if (time() - timestamp_from_date($post->date) < RECENT_THRESHOLD) {
+        $itemclas = 'recent';
+    }    
+    cache_echo("<li class='$itemclass'>".$html.'</li>');    
 }
 
 function generate_sitemap()
@@ -239,7 +239,7 @@ function generate_sitemap()
         $news = json_decode(cache_get());            
         cache_try_load(cache_key('news', 'dev'), -1);
         $dev = json_decode(cache_get());
-        $news_count = min(3, count($news->posts));
+        $news_count = min(4, count($news->posts));
         $dev_count  = min(3, count($dev->posts));
         
         // Check any recently announced servers.
@@ -263,7 +263,7 @@ function generate_sitemap()
         // Contact the BDB for a list of the latest builds.
         $result = db_query($db, "SELECT build, version, type, UNIX_TIMESTAMP(timestamp) FROM "
             .DB_TABLE_BUILDS." ORDER BY timestamp DESC");    
-        $new_threshold = time() - 2 * 24 * 3600;
+        $new_threshold = time() - RECENT_THRESHOLD;
         $count = 4;
         $build_list = "<ul class='sitemap-list'>";
         while ($row = $result->fetch_assoc()) {            
@@ -274,7 +274,7 @@ function generate_sitemap()
             $title = "Build report for $label";
             $ts = (int) $row['UNIX_TIMESTAMP(timestamp)'];
             $date = gmstrftime('&middot; %B %e', $ts);
-            $css_class = ($ts > $new_threshold)? ' class="new-build"' : '';
+            $css_class = ($ts > $new_threshold)? ' class="recent"' : '';
         
             $build_list .= "  <li${css_class}><a title='$title' href='$link'>$label</a> <time>$date</time></li>\n";
             
@@ -336,7 +336,7 @@ function generate_sitemap()
     </ul>
     <div id='credits'>
         Doomsday Engine is <a href='https://github.com/skyjake/Doomsday-Engine.git'>open 
-        source software</a> and distributed under 
+        source software</a> and is distributed under 
         the <a href='http://www.gnu.org/licenses/gpl.html'>GNU General Public License</a> (applications) and <a href='http://www.gnu.org/licenses/lgpl.html'>LGPL</a> (core libraries).
         Assets from the original games remain under their original copyright. 
         Doomsday logo created by Daniel Swanson.
