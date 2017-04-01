@@ -166,6 +166,19 @@ int Games::numPlayable() const
     return count;
 }
 
+int Games::numPlayable(String const &family) const
+{
+    int count = 0;
+    foreach (Game *game, d->games)
+    {
+        if (game->isPlayableWithDefaultPackages() && game->family() == family)
+        {
+            count++;
+        }
+    }
+    return count;
+}
+
 GameProfile const *Games::firstPlayable() const
 {
     foreach (Game *game, d->games)

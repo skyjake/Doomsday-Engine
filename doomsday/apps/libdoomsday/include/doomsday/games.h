@@ -81,6 +81,9 @@ public:
     /// @return  Number of games marked as currently playable.
     int numPlayable() const;
 
+    /// @return  Number of games marked as currently playable in a game family.
+    int numPlayable(de::String const &family) const;
+
     /**
      * @return  Game associated with @a identityKey.
      *
