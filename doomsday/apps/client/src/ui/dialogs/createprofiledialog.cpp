@@ -66,6 +66,9 @@ DENG_GUI_PIMPL(CreateProfileDialog)
         // A game must be selected, too.
         if (!gameChoice->isValidSelection()) valid = false;
 
+        if (gameChoice->isValidSelection() &&
+            gameChoice->selectedItem().data().toString().isEmpty()) valid = false;
+
         self().buttonWidget(Id1)->enable(valid);
     }
 
@@ -98,6 +101,11 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
         return LoopContinue;
     });
     d->gameChoice->items().sort();
+
+    if (d->gameChoice->items().isEmpty())
+    {
+        d->gameChoice->items() << new ChoiceItem(tr("No playable games"), "");
+    }
 
     // Packages selection.
     form->add(d->packages = new PackagesButtonWidget);
