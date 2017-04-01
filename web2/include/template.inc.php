@@ -21,6 +21,7 @@ function timestamp_from_date($date_text)
 
 function reformat_date($date_text)
 {
+    $date = date_parse($date_text);
     $ts = timestamp_from_date($date_text);
     if (date('Y') != $date['year']) {
         $fmt = '%Y %B %e';
@@ -70,6 +71,13 @@ function platform_download_link()
             $dl_link = '/source'; break;
     }
     return SITE_ROOT.$dl_link;
+}
+
+function release_notes_link($platform)
+{
+    $stable_ver = omit_zeroes(db_latest_version(Session::get()->database(), $platform, BT_STABLE));
+    $link = release_notes_url($stable_ver);
+    return "See <a href='".$link."'>release notes for $stable_ver</a> in the Manual.";
 }
 
 function generate_download_button()

@@ -19,10 +19,12 @@ generate_page_header($page_title);
             <div class="block">
                 <article>
                     <h1>Stable</h1>
-                    <?php generate_badges('mac10_8-x86_64', BT_STABLE); ?>
+                    <p>This is the latest stable version. <?php echo(release_notes_link('mac10_10-x86_64')); ?></p>
+                    <?php generate_badges('mac10_10-x86_64', BT_STABLE); ?>
                 </article>
             </div>
-            <div class="block">
+            <div class="block"
+                <?php if (!is_release_candidate_available('mac10_10-x86_64')) echo("style='display:none';"); ?> >
                 <article>
                     <h1>Release Candidate</h1>
                     <p>Release candidate of the next upcoming stable build.</p>
@@ -32,7 +34,7 @@ generate_page_header($page_title);
             <div class="block">
                 <article>
                     <h1>Unstable / Nightly</h1>
-                    <p>Unstable builds are made automatically every day when changes are committed to the <a href="source">source repository</a>. They contain work-in-progress code and sometimes may crash on you.</p>
+                    <p>Unstable builds are made automatically every day when changes are committed to the <a href="source">source repository</a>. They contain work-in-progress code and sometimes may crash on you. Change logs can be found in the <a href="/builds">Autobuilder</a>.</p>
                     <?php generate_badges('mac10_10-x86_64', BT_UNSTABLE); ?>
                 </article>
             </div>

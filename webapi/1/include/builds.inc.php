@@ -335,6 +335,21 @@ function db_latest_files($db, $platform, $build_type, $limit=NULL)
         .$limiter);    
 }
 
+function db_latest_version($db, $platform, $build_type)
+{
+    $result = db_latest_files($db, $platform, $build_type, 1);
+    $row = $result->fetch_assoc();
+    return $row['version'];
+}
+
+function is_release_candidate_available($platform)
+{
+    $db = Session::get()->database();
+    $stable_ver = db_latest_version($db, $platform, BT_STABLE);
+    $rc_ver     = db_latest_version($db, $platform, BT_CANDIDATE);
+    return $stable_ver != $rc_ver;
+}
+
 function generate_platform_latest_json($platform, $build_type_txt)
 {
     header('Content-Type: application/json');
