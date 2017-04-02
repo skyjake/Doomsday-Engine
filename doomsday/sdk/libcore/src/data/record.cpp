@@ -473,6 +473,8 @@ Record &Record::operator = (Record &&moved)
 
 Record &Record::assign(Record const &other, Behavior behavior)
 {
+    if (this == &other) return *this;
+    
     DENG2_GUARD(d);
 
     clear(behavior);
