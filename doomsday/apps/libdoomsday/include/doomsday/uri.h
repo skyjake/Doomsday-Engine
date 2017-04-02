@@ -97,7 +97,7 @@ public:
      * @param sep             Character used to separate path segments
      *                        in @a path.
      */
-    Uri(String const &percentEncoded, resourceclassid_t defaultResClass = RC_UNKNOWN, QChar sep = '/');
+    Uri(String const &percentEncoded, resourceclassid_t defaultResClass/* = RC_UNKNOWN*/, QChar sep = '/');
 
     /**
      * Construct a Uri from a textual scheme and a path.
