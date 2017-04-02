@@ -48,6 +48,8 @@ public:
         void setPackages(de::StringList packagesInOrder);
         void setUserCreated(bool userCreated);
         void setUseGameRequirements(bool useGameRequirements);
+        void setAutoStartMap(de::String const &map);
+        void setAutoStartSkill(int level);
 
         bool appendPackage(de::String const &id);
 
@@ -56,6 +58,8 @@ public:
         de::StringList packages() const;
         bool isUserCreated() const;
         bool isUsingGameRequirements() const;
+        de::String autoStartMap() const;
+        int autoStartSkill() const;
 
         /**
          * Returns a list of the game's packages in addition to the profile's

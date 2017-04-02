@@ -674,6 +674,22 @@ ded_compositefont_t *ded_s::getCompositeFont(char const *uriCString) const
     return def;
 }
 
+String ded_s::findEpisode(String const &mapId) const
+{
+    de::Uri mapUri(mapId, RC_NULL);
+    if (mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
+
+    for (int i = 0; i < episodes.size(); ++i)
+    {
+        defn::Episode episode(episodes[i]);
+        if (episode.tryFindMapGraphNode(mapUri.compose()))
+        {
+            return episode.gets("id");
+        }
+    }
+    return String();
+}
+
 int ded_s::getTextNum(char const *id) const
 {
     if (id && id[0])

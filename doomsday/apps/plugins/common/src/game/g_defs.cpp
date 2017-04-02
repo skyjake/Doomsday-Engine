@@ -74,3 +74,4 @@ de::Uri TranslateMapWarpNumber(String const &episodeId, dint warpNumber)
     }
     return de::Uri("Maps:", RC_NULL);  // Not found.
 }
+

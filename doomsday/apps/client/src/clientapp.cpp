@@ -386,6 +386,21 @@ DENG2_PIMPL(ClientApp)
         }
 
         ClientWindow::main().console().zeroLogHeight();
+
+        if (!newGame.isNull())
+        {
+            // Auto-start the game?
+            auto const *prof = self().currentGameProfile();
+            if (prof && prof->autoStartMap())
+            {
+                LOG_NOTE("Starting in %s as configured in the game profile")
+                        << prof->autoStartMap();
+
+                Con_Executef(CMDS_DDAY, false, "setdefaultskill %i; setmap %s",
+                             prof->autoStartSkill(),
+                             prof->autoStartMap().toUtf8().constData());
+            }
+        }
     }
 
     void periodicAutosave()

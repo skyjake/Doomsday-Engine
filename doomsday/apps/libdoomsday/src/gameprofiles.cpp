@@ -29,10 +29,14 @@
 
 using namespace de;
 
-static String const VAR_GAME        ("game");
-static String const VAR_PACKAGES    ("packages");
-static String const VAR_USER_CREATED("userCreated");
+static String const VAR_GAME            ("game");
+static String const VAR_PACKAGES        ("packages");
+static String const VAR_USER_CREATED    ("userCreated");
 static String const VAR_USE_GAME_REQUIREMENTS("useGameRequirements");
+static String const VAR_AUTO_START_MAP  ("autoStartMap");
+static String const VAR_AUTO_START_SKILL("autoStartSkill");
+
+static int const DEFAULT_SKILL = 3; // Normal skill level (1-5)
 
 static GameProfile nullGameProfile;
 
@@ -169,6 +173,14 @@ Profiles::AbstractProfile *GameProfiles::profileFromInfoBlock(Info::BlockElement
         prof->setUseGameRequirements(!block.keyValue(VAR_USE_GAME_REQUIREMENTS)
                                      .text.compareWithoutCase("True"));
     }
+    if (block.contains(VAR_AUTO_START_MAP))
+    {
+        prof->setAutoStartMap(block.keyValue(VAR_AUTO_START_MAP).text);
+    }
+    if (block.contains(VAR_AUTO_START_SKILL))
+    {
+        prof->setAutoStartSkill(block.keyValue(VAR_AUTO_START_SKILL).text.toInt());
+    }
 
     return prof.release();
 }
@@ -181,6 +193,8 @@ DENG2_PIMPL_NOREF(GameProfiles::Profile)
     StringList packages;
     bool userCreated = false;
     bool useGameRequirements = true;
+    String autoStartMap;
+    int autoStartSkill = DEFAULT_SKILL;
 
     Impl() {}
 
@@ -189,6 +203,8 @@ DENG2_PIMPL_NOREF(GameProfiles::Profile)
         , packages           (other.packages)
         , userCreated        (other.userCreated)
         , useGameRequirements(other.useGameRequirements)
+        , autoStartMap       (other.autoStartMap)
+        , autoStartSkill     (other.autoStartSkill)
     {}
 };
 
@@ -210,6 +226,8 @@ GameProfiles::Profile &GameProfiles::Profile::operator = (Profile const &other)
     d->packages = other.d->packages;
     d->userCreated = other.d->userCreated;
     d->useGameRequirements = other.d->useGameRequirements;
+    d->autoStartMap = other.d->autoStartMap;
+    d->autoStartSkill = other.d->autoStartSkill;
     return *this;
 }
 
@@ -249,6 +267,26 @@ void GameProfiles::Profile::setUseGameRequirements(bool useGameRequirements)
     }
 }
 
+void GameProfiles::Profile::setAutoStartMap(String const &map)
+{
+    if (d->autoStartMap != map)
+    {
+        d->autoStartMap = map;
+        notifyChange();
+    }
+}
+
+void GameProfiles::Profile::setAutoStartSkill(int level)
+{
+    if (level < 1 || level > 5) level = DEFAULT_SKILL;
+
+    if (d->autoStartSkill != level)
+    {
+        d->autoStartSkill = level;
+        notifyChange();
+    }
+}
+
 bool GameProfiles::Profile::appendPackage(String const &id)
 {
     if (!d->packages.contains(id))
@@ -283,6 +321,16 @@ bool GameProfiles::Profile::isUserCreated() const
 bool GameProfiles::Profile::isUsingGameRequirements() const
 {
     return d->useGameRequirements;
+}
+
+String GameProfiles::Profile::autoStartMap() const
+{
+    return d->autoStartMap;
+}
+
+int GameProfiles::Profile::autoStartSkill() const
+{
+    return d->autoStartSkill;
 }
 
 StringList GameProfiles::Profile::allRequiredPackages() const
@@ -362,10 +410,15 @@ String GameProfiles::Profile::toInfoSource() const
     QTextStream os(&info);
     os.setCodec("UTF-8");
 
-    os << VAR_GAME << ": " << d->gameId << "\n"
-       << VAR_PACKAGES << " <" << String::join(de::map(d->packages, Info::quoteString), ", ") << ">\n"
-       << VAR_USER_CREATED << ": " << (d->userCreated? "True" : "False") << "\n"
+    os << VAR_GAME                  << ": " << d->gameId << "\n"
+       << VAR_PACKAGES              << " <" << String::join(de::map(d->packages, Info::quoteString), ", ") << ">\n"
+       << VAR_USER_CREATED          << ": " << (d->userCreated? "True" : "False") << "\n"
        << VAR_USE_GAME_REQUIREMENTS << ": " << (d->useGameRequirements? "True" : "False");
+    if (d->autoStartMap)
+    {
+        os << "\n" << VAR_AUTO_START_MAP << ": " << d->autoStartMap;
+    }
+    os << "\n" << VAR_AUTO_START_SKILL << ": " << d->autoStartSkill;
 
     return info;
 }
