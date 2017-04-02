@@ -257,7 +257,7 @@ int DED_AddTextureEnv(ded_t* ded, char const* id)
     return ded->textureEnv.indexOf(env);
 }
 
-int DED_AddCompositeFont(ded_t* ded, char const* uri)
+int DED_AddCompositeFont(ded_t* ded, char const *uri)
 {
     ded_compositefont_t* cfont = ded->compositeFonts.append();
     if (uri) cfont->uri = new de::Uri(uri, RC_NULL);

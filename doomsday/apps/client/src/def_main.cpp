@@ -594,7 +594,7 @@ static void readAllDefinitions()
         if (!CommandLine_Exists("-noauto"))
         {
             FS1::PathList foundPaths;
-            if (fileSys().findAllPaths(de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded", RC_NULL).resolved(), 0, foundPaths))
+            if (fileSys().findAllPaths(de::makeUri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded").resolved(), 0, foundPaths))
             {
                 for (FS1::PathListItem const &found : foundPaths)
                 {
@@ -770,7 +770,7 @@ static void generateMaterialDefs()
 static bool decorationIsCompatible(Record const &decorDef, de::Uri const &textureUri,
                                    bool materialIsCustom)
 {
-    if (de::Uri(decorDef.gets("texture"), RC_NULL) != textureUri)
+    if (de::makeUri(decorDef.gets("texture")) != textureUri)
         return false;
 
     if (materialIsCustom)
@@ -802,10 +802,10 @@ static void redecorateMaterial(ClientMaterial &material, Record const &def)
         {
             Record const &st = decorDef.stage(k);
 
-            defineLightmap(de::Uri(st.gets("lightmapUp"), RC_NULL));
-            defineLightmap(de::Uri(st.gets("lightmapDown"), RC_NULL));
-            defineLightmap(de::Uri(st.gets("lightmapSide"), RC_NULL));
-            defineFlaremap(de::Uri(st.gets("haloTexture"), RC_NULL));
+            defineLightmap(de::makeUri(st.gets("lightmapUp")));
+            defineLightmap(de::makeUri(st.gets("lightmapDown")));
+            defineLightmap(de::makeUri(st.gets("lightmapSide")));
+            defineFlaremap(de::makeUri(st.gets("haloTexture")));
         }
 
         material.addDecoration(LightMaterialDecoration::fromDef(decorDef.def()));
@@ -1312,10 +1312,10 @@ void Def_Read()
             Record const &st = defn::MaterialDecoration(decorDef.light(k)).stage(0);
             if (Vector3f(st.geta("color")) != Vector3f(0, 0, 0))
             {
-                defineLightmap(de::Uri(st["lightmapUp"], RC_NULL));
-                defineLightmap(de::Uri(st["lightmapDown"], RC_NULL));
-                defineLightmap(de::Uri(st["lightmapSide"], RC_NULL));
-                defineFlaremap(de::Uri(st["haloTexture"], RC_NULL));
+                defineLightmap(de::makeUri(st["lightmapUp"]));
+                defineLightmap(de::makeUri(st["lightmapDown"]));
+                defineLightmap(de::makeUri(st["lightmapSide"]));
+                defineFlaremap(de::makeUri(st["haloTexture"]));
             }
         }
     }
@@ -1798,7 +1798,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
                 {
                     try
                     {
-                        l->iparm[k] = world::Materials::get().materialManifest(de::Uri(def->iparmStr[k], RC_NULL)).id();
+                        l->iparm[k] = world::Materials::get().materialManifest(de::makeUri(def->iparmStr[k])).id();
                     }
                     catch (Resources::MissingResourceManifestError const &)
                     {}  // Ignore this error.

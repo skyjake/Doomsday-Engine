@@ -241,7 +241,7 @@ static void parseStartupFilePathsAndAddFiles(char const *pathString)
     char *token = strtok(buffer, ATWSEPS);
     while (token)
     {
-        tryLoadFile(de::Uri(token, RC_NULL));
+        tryLoadFile(de::makeUri(token));
         token = strtok(nullptr, ATWSEPS);
     }
     M_Free(buffer);
@@ -257,7 +257,7 @@ static dint addListFiles(QStringList list, FileType const &ftype)
             continue;
         }
 
-        if (tryLoadFile(de::Uri(path, RC_NULL)))
+        if (tryLoadFile(de::makeUri(path)))
         {
             numAdded += 1;
         }
@@ -284,10 +284,10 @@ int loadGameStartupResourcesBusyWorker(void *context)
         // Create default Auto mappings in the runtime directory.
 
         // Data class resources.
-        App_FileSystem().addPathMapping("auto/", de::Uri("$(App.DataPath)/$(GamePlugin.Name)/auto/", RC_NULL).resolved());
+        App_FileSystem().addPathMapping("auto/", de::makeUri("$(App.DataPath)/$(GamePlugin.Name)/auto/").resolved());
 
         // Definition class resources.
-        App_FileSystem().addPathMapping("auto/", de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/", RC_NULL).resolved());
+        App_FileSystem().addPathMapping("auto/", de::makeUri("$(App.DefsPath)/$(GamePlugin.Name)/auto/").resolved());
     }
 
     // Load data files.
@@ -371,7 +371,7 @@ static dint loadFilesFromDataGameAuto()
         // Ignore directories.
         if (i->attrib & A_SUBDIR) continue;
 
-        if (tryLoadFile(de::Uri(i->path, RC_NULL)))
+        if (tryLoadFile(de::makeUri(i->path)))
         {
             numLoaded += 1;
         }

@@ -2120,7 +2120,7 @@ int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/, void *c
     {
         // Backward compatibility dictates that invalid refs be interpreted to mean the start map
         // of the current episode (which is known to always exist).
-        newMapUri = de::Uri(COMMON_GAMESESSION->episodeDef()->gets("startMap"), RC_NULL);
+        newMapUri = de::makeUri(COMMON_GAMESESSION->episodeDef()->gets("startMap"));
     }
 
     G_SetGameActionMapCompleted(newMapUri);

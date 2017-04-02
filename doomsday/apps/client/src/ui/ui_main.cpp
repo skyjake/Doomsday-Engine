@@ -58,7 +58,7 @@ static AbstractFont *loadSystemFont(char const *name)
     DENG2_ASSERT(name != 0 && name[0]);
 
     // Compose the resource name.
-    de::Uri uri = de::Uri("System:", RC_NULL).setPath(name);
+    de::Uri uri = de::makeUri("System:").setPath(name);
 
     // Compose the resource data path.
     ddstring_t resourcePath; Str_InitStd(&resourcePath);
@@ -87,7 +87,7 @@ static void loadFontIfNeeded(char const *uri, fontid_t *fid)
     {
         try
         {
-            FontManifest &manifest = ClientResources::get().fontManifest(de::Uri(uri, RC_NULL));
+            FontManifest &manifest = ClientResources::get().fontManifest(de::makeUri(uri));
             if (manifest.hasResource())
             {
                 *fid = fontid_t(manifest.uniqueId());

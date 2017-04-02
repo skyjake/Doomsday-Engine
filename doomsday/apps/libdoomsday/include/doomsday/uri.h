@@ -346,6 +346,11 @@ private:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Uri::ComposeAsTextFlags)
 
+inline Uri makeUri(String const &percentEncoded, QChar sep = '/')
+{
+    return Uri(percentEncoded, RC_NULL, sep);
+}
+
 } // namespace de
 
 namespace std {

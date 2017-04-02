@@ -548,7 +548,7 @@ DENG2_PIMPL(ClientServerWorld)
 
         // The game may need to perform it's own finalization now that the
         // "current" map has changed.
-        de::Uri const mapUri = (map->hasManifest() ? map->manifest().composeUri() : de::Uri("Maps:", RC_NULL));
+        de::Uri const mapUri = (map->hasManifest() ? map->manifest().composeUri() : de::makeUri("Maps:"));
         if(gx.FinalizeMapChange)
         {
             gx.FinalizeMapChange(reinterpret_cast<uri_s const *>(&mapUri));

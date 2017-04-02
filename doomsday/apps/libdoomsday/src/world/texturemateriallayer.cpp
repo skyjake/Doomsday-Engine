@@ -83,7 +83,7 @@ void TextureMaterialLayer::AnimationStage::resetToDefaults()
 TextureMaterialLayer::AnimationStage *
 TextureMaterialLayer::AnimationStage::fromDef(Record const &stageDef)
 {
-    return new AnimationStage(de::Uri(stageDef.gets("texture"), RC_NULL),
+    return new AnimationStage(de::makeUri(stageDef.gets("texture")),
                               stageDef.geti("tics"),
                               stageDef.getf("variance"),
                               stageDef.getf("glowStrength"),

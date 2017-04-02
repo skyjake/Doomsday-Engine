@@ -390,12 +390,12 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
                 if(G_Ruleset_Deathmatch())
                 {
                     // Winning in deathmatch goes back to the first map of the current episode.
-                    G_SetGameActionMapCompleted(de::Uri(COMMON_GAMESESSION->episodeDef()->gets("startMap"), RC_NULL));
+                    G_SetGameActionMapCompleted(de::makeUri(COMMON_GAMESESSION->episodeDef()->gets("startMap")));
                 }
                 else
                 {
                     // Passing a URI with an empty path starts the Finale
-                    G_SetGameActionMapCompleted(de::Uri("Maps:", RC_NULL));
+                    G_SetGameActionMapCompleted(de::makeUri("Maps:"));
                 }
             }
         }

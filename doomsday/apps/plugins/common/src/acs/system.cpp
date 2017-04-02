@@ -73,7 +73,7 @@ DENG2_PIMPL_NOREF(System)
         {
             String mapUriStr;
             from >> mapUriStr;
-            mapUri = de::Uri(mapUriStr, RC_NULL);
+            mapUri = de::makeUri(mapUriStr);
             if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
 
             from >> scriptNumber;

@@ -71,7 +71,7 @@ de::Uri D_NetDefaultMap()
     de::Uri map("Maps:", RC_NULL);
     if(!episodeId.isEmpty())
     {
-        map = de::Uri(Defs().episodes.find("id", episodeId).gets("startMap"), RC_NULL);
+        map = de::makeUri(Defs().episodes.find("id", episodeId).gets("startMap"));
         DENG2_ASSERT(!map.isEmpty());
     }
     return map;

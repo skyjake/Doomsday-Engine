@@ -69,9 +69,9 @@ de::Uri TranslateMapWarpNumber(String const &episodeId, dint warpNumber)
         defn::Episode episodeDef(*rec);
         if(Record const *mgNodeRec = episodeDef.tryFindMapGraphNodeByWarpNumber(warpNumber))
         {
-            return de::Uri(mgNodeRec->gets("id"), RC_NULL);
+            return de::makeUri(mgNodeRec->gets("id"));
         }
     }
-    return de::Uri("Maps:", RC_NULL);  // Not found.
+    return de::makeUri("Maps:");  // Not found.
 }
 

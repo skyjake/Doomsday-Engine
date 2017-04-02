@@ -1534,7 +1534,7 @@ Map::Map(res::MapManifest *manifest)
 
 Record const &Map::mapInfo() const
 {
-    return App_World().mapInfoForMapUri(hasManifest() ? manifest().composeUri() : de::Uri("Maps:", RC_NULL));
+    return App_World().mapInfoForMapUri(hasManifest() ? manifest().composeUri() : de::makeUri("Maps:"));
 }
 
 Mesh const &Map::mesh() const

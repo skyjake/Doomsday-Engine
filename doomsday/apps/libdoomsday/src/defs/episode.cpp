@@ -86,7 +86,7 @@ Record *Episode::tryFindHubByMapId(String const &mapId)
             foreach (Value *mapIt, hubRec.geta("map").elements())
             {
                 Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
-                if (mapUri == de::Uri(mgNodeDef.gets("id"), RC_NULL))
+                if (mapUri == de::makeUri(mgNodeDef.gets("id")))
                 {
                     return &hubRec;
                 }
@@ -108,7 +108,7 @@ Record *Episode::tryFindMapGraphNode(String const &mapId)
             foreach (Value *mapIt, hubRec.geta("map").elements())
             {
                 Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
-                if (mapUri == de::Uri(mgNodeDef.gets("id"), RC_NULL))
+                if (mapUri == de::makeUri(mgNodeDef.gets("id")))
                 {
                     return &mgNodeDef;
                 }
@@ -118,7 +118,7 @@ Record *Episode::tryFindMapGraphNode(String const &mapId)
         foreach (Value *mapIt, geta("map").elements())
         {
             Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
-            if (mapUri == de::Uri(mgNodeDef.gets("id"), RC_NULL))
+            if (mapUri == de::makeUri(mgNodeDef.gets("id")))
             {
                 return &mgNodeDef;
             }

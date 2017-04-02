@@ -3388,7 +3388,7 @@ static void Hu_MenuInitNewGame(bool confirmed)
     newRules.skill = mnSkillmode;
 
     Record const &episodeDef = Defs().episodes.find("id", mnEpisode);
-    G_SetGameActionNewSession(newRules, mnEpisode, de::Uri(episodeDef.gets("startMap"), RC_NULL));
+    G_SetGameActionNewSession(newRules, mnEpisode, de::makeUri(episodeDef.gets("startMap")));
 }
 
 void Hu_MenuActionInitNewGame(Widget & /*wi*/, Widget::Action action)

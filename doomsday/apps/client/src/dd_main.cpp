@@ -407,8 +407,8 @@ static void createPackagesScheme()
 #undef SEP_CHAR
     }
 
-    scheme.addSearchPath(SearchPath(de::Uri("$(App.DataPath)/", RC_NULL), SearchPath::NoDescend));
-    scheme.addSearchPath(SearchPath(de::Uri("$(App.DataPath)/$(GamePlugin.Name)/", RC_NULL), SearchPath::NoDescend));
+    scheme.addSearchPath(SearchPath(de::makeUri("$(App.DataPath)/"), SearchPath::NoDescend));
+    scheme.addSearchPath(SearchPath(de::makeUri("$(App.DataPath)/$(GamePlugin.Name)/"), SearchPath::NoDescend));
 }
 #endif
 
@@ -469,7 +469,7 @@ void DD_CreateFileSystemSchemes()
 
         for (dint i = 0; i < searchPathCount; ++i)
         {
-            scheme.addSearchPath(SearchPath(de::Uri(def.searchPaths[i], RC_NULL), def.searchPathFlags));
+            scheme.addSearchPath(SearchPath(de::makeUri(def.searchPaths[i]), def.searchPathFlags));
         }
 
         if (def.optOverridePath && CommandLine_CheckWith(def.optOverridePath, 1))
@@ -1322,7 +1322,7 @@ static dint DD_StartupWorker(void * /*context*/)
     /*String foundPath = App_FileSystem().findPath(de::Uri("doomsday.pk3", RC_PACKAGE),
                                                  RLF_DEFAULT, App_ResourceClass(RC_PACKAGE));
     foundPath = App_BasePath() / foundPath;  // Ensure the path is absolute.
-    File1 *loadedFile = File1::tryLoad(de::Uri(foundPath, RC_NULL));
+    File1 *loadedFile = File1::tryLoad(de::makeUri(foundPath));
     DENG2_ASSERT(loadedFile);
     DENG2_UNUSED(loadedFile);*/
 
@@ -2149,7 +2149,7 @@ D_CMD(Unload)
                                                          RLF_MATCH_EXTENSION, App_ResourceClass(RC_PACKAGE));
             foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 
-            if (File1::tryUnload(de::Uri(foundPath, RC_NULL)))
+            if (File1::tryUnload(de::makeUri(foundPath)))
             {
                 didUnloadFiles = true;
             }

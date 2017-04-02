@@ -1035,7 +1035,7 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
                 {
                     try
                     {
-                        state->fontNum = App_Resources().fontManifest(de::Uri(buf, RC_NULL)).uniqueId();
+                        state->fontNum = App_Resources().fontManifest(de::makeUri(buf)).uniqueId();
                         continue;
                     }
                     catch(Resources::MissingResourceManifestError const &)

@@ -224,9 +224,9 @@ namespace internal {
         String const gameIdKey = DoomsdayApp::game().id();
         if(gameIdKey.beginsWith("doom1") || gameIdKey.beginsWith("heretic"))
         {
-            return de::Uri(String("Maps:E%1M%2").arg(episode+1).arg(map+1), RC_NULL);
+            return de::makeUri(String("Maps:E%1M%2").arg(episode+1).arg(map+1));
         }
-        return de::Uri(String("Maps:MAP%1").arg(map+1, 2, 10, QChar('0')), RC_NULL);
+        return de::makeUri(String("Maps:MAP%1").arg(map+1, 2, 10, QChar('0')));
     }
 
     static uint mapWarpNumberFor(de::Uri const &mapUri)
@@ -600,7 +600,7 @@ namespace internal {
             int mapNumber = String(Str_Text(tok)).toInt(&isNumber); // 1-based
             if(!isNumber)
             {
-                mapUri = de::Uri(Str_Text(tok), RC_NULL);
+                mapUri = de::makeUri(Str_Text(tok));
                 if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
                 mapInfo.set((isSecret? "secretNextMap" : "nextMap"), mapUri.compose());
             }
@@ -625,7 +625,7 @@ namespace internal {
                 int mapNumber = mapRef.toInt(&isNumber); // 1-based
                 if(!isNumber)
                 {
-                    mapUri = de::Uri(mapRef, RC_NULL);
+                    mapUri = de::makeUri(mapRef);
                     if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
                 }
                 else
@@ -1232,12 +1232,12 @@ DENG2_PIMPL_NOREF(MapInfoTranslator)
                 {
                     LOGDEV_MAP_VERBOSE("Warp %u translated to map %s, hub %i")
                             << map << info.gets("id") << info.geti("hub");
-                    return de::Uri(info.gets("id"), RC_NULL);
+                    return de::makeUri(info.gets("id"));
                 }
 
                 LOGDEV_MAP_VERBOSE("Warp %u matches map %s, but it has no hub")
                         << map << info.gets("id");
-                matchedWithoutHub = de::Uri(info.gets("id"), RC_NULL);
+                matchedWithoutHub = de::makeUri(info.gets("id"));
             }
         }
 

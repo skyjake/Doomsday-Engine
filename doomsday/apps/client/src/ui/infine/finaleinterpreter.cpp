@@ -1369,7 +1369,7 @@ DEFFC(BGMaterial)
     {
         if (ded_value_t *value = DED_Definitions()->getValueByUri(*reinterpret_cast<de::Uri const *>(OP_URI(0))))
         {
-            material = &world::Materials::get().material(de::Uri(value->text, RC_NULL));
+            material = &world::Materials::get().material(de::makeUri(value->text));
         }
         else
         {

@@ -423,7 +423,7 @@ DENG2_PIMPL(FS1)
             if (FILE *found = findAndOpenNativeFile(path, mode, foundPath))
             {
                 // Do not read files twice.
-                if (!allowDuplicate && !self().checkFileId(de::Uri(foundPath, RC_NULL)))
+                if (!allowDuplicate && !self().checkFileId(de::makeUri(foundPath)))
                 {
                     fclose(found);
                     return 0;

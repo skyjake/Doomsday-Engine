@@ -714,7 +714,7 @@ static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
                     break;
                 case CVT_URIPTR:
                     /// @todo Sanitize and validate against known schemas.
-                    CVar_SetUri(cvar, de::Uri(argptr, RC_NULL));
+                    CVar_SetUri(cvar, de::makeUri(argptr));
                     break;
                 default: break;
                 }

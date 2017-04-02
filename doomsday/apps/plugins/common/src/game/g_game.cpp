@@ -268,7 +268,7 @@ void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoi
     // If no Wolf3D maps, no secret exit!
     if (::secretExit && (::gameModeBits & GM_ANY_DOOM2))
     {
-        if (!P_MapExists(de::Uri("Maps:MAP31", RC_NULL).compose().toUtf8().constData()))
+        if (!P_MapExists(de::makeUri("Maps:MAP31").compose().toUtf8().constData()))
         {
             ::secretExit = false;
         }
@@ -1420,7 +1420,7 @@ static void runGameAction()
             // Check that the map truly exists.
             if (!P_MapExists(::nextMapUri.compose().toUtf8().constData()))
             {
-                ::nextMapUri = de::Uri(COMMON_GAMESESSION->episodeDef()->gets("startMap"), RC_NULL);
+                ::nextMapUri = de::makeUri(COMMON_GAMESESSION->episodeDef()->gets("startMap"));
             }
             COMMON_GAMESESSION->leaveMap(::nextMapUri, ::nextMapEntryPoint);
             break;
@@ -2182,7 +2182,7 @@ String G_MapAuthor(de::Uri const &mapUri, bool supressGameAuthor)
 
 de::Uri G_MapTitleImage(de::Uri const &mapUri)
 {
-    return de::Uri(G_MapInfoForMapUri(mapUri).gets("titleImage"), RC_NULL);
+    return de::makeUri(G_MapInfoForMapUri(mapUri).gets("titleImage"));
 }
 
 String G_MapDescription(String episodeId, de::Uri const &mapUri)

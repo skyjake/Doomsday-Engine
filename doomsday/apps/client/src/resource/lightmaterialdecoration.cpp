@@ -61,9 +61,9 @@ LightMaterialDecoration::AnimationStage::AnimationStage(AnimationStage const &ot
 LightMaterialDecoration::AnimationStage *
 LightMaterialDecoration::AnimationStage::fromDef(Record const &stageDef)
 {
-    ClientTexture *lightmapUp   = static_cast<ClientTexture *>(res::Textures::get().tryFindTextureByResourceUri("Lightmaps", de::Uri(stageDef.gets("lightmapUp"  ), RC_NULL)));
-    ClientTexture *lightmapDown = static_cast<ClientTexture *>(res::Textures::get().tryFindTextureByResourceUri("Lightmaps", de::Uri(stageDef.gets("lightmapDown"), RC_NULL)));
-    ClientTexture *lightmapSide = static_cast<ClientTexture *>(res::Textures::get().tryFindTextureByResourceUri("Lightmaps", de::Uri(stageDef.gets("lightmapSide"), RC_NULL)));
+    ClientTexture *lightmapUp   = static_cast<ClientTexture *>(res::Textures::get().tryFindTextureByResourceUri("Lightmaps", de::makeUri(stageDef.gets("lightmapUp"  ))));
+    ClientTexture *lightmapDown = static_cast<ClientTexture *>(res::Textures::get().tryFindTextureByResourceUri("Lightmaps", de::makeUri(stageDef.gets("lightmapDown"))));
+    ClientTexture *lightmapSide = static_cast<ClientTexture *>(res::Textures::get().tryFindTextureByResourceUri("Lightmaps", de::makeUri(stageDef.gets("lightmapSide"))));
 
     int haloTextureIndex  = stageDef.geti("haloTextureIndex");
     ClientTexture *haloTexture  = nullptr;

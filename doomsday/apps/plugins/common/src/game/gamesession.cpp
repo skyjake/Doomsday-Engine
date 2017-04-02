@@ -567,7 +567,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
             ArrayValue const &vistedMapsArray = metadata.geta("visitedMaps");
             for (Value const *value : vistedMapsArray.elements())
             {
-                visitedMaps << de::Uri(value->as<TextValue>(), RC_NULL);
+                visitedMaps << de::makeUri(value->as<TextValue>());
             }
         }
 
@@ -581,7 +581,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
 
         self().setInProgress(true);
 
-        setMap(de::Uri(metadata.gets("mapUri"), RC_NULL));
+        setMap(de::makeUri(metadata.gets("mapUri")));
         //mapEntryPoint = ??; // not saved??
 
         reloadMap();
@@ -1001,7 +1001,7 @@ de::Uri GameSession::mapUriForNamedExit(String name) const
 
         if (chosenExit)
         {
-            return de::Uri(chosenExit->gets("targetMap"), RC_NULL);
+            return de::makeUri(chosenExit->gets("targetMap"));
         }
     }
     return de::Uri();

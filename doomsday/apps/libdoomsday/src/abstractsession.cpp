@@ -61,7 +61,7 @@ bool AbstractSession::hasBegun() const
 
 de::Uri AbstractSession::mapUri() const
 {
-    return hasBegun()? d->mapUri : de::Uri("Maps:", RC_NULL);
+    return hasBegun()? d->mapUri : de::makeUri("Maps:");
 }
 
 world::IThinkerMapping const *AbstractSession::thinkerMapping() const
