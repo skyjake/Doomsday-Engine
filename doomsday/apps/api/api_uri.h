@@ -187,7 +187,7 @@ DENG_API_TYPEDEF(Uri) // v1
      */
     UriWrapper* (*SetUri2)(UriWrapper* uri, char const* path, resourceclassid_t defaultResourceClass);
 
-    UriWrapper* (*SetUri)(UriWrapper* uri, char const* path/* defaultResourceClass = RC_UNKNOWN*/);
+    UriWrapper* (*SetUri)(UriWrapper* uri, char const* path/* defaultResourceClass = RC_IMPLICIT*/);
 
     UriWrapper* (*SetUriStr)(UriWrapper* uri, ddstring_t const* path);
 

@@ -128,7 +128,7 @@ namespace de
     class LIBDOOMSDAY_PUBLIC NullFileType : public FileType
     {
     public:
-        NullFileType() : FileType("FT_NONE",  RC_UNKNOWN)
+        NullFileType() : FileType("FT_NONE",  RC_IMPLICIT)
         {}
     };
 

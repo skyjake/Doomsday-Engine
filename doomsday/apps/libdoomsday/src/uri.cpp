@@ -119,7 +119,7 @@ DENG2_PIMPL_NOREF(Uri)
         }
 
         // Attempt to guess the scheme by interpreting the path?
-        if (defaultResourceClass == RC_UNKNOWN)
+        if (defaultResourceClass == RC_IMPLICIT)
         {
             defaultResourceClass = DD_GuessFileTypeFromFileName(strPath).defaultClass();
         }
@@ -203,6 +203,14 @@ DENG2_PIMPL_NOREF(Uri)
 
 Uri::Uri() : d(new Impl)
 {}
+
+Uri::Uri(String const &percentEncoded) : d(new Impl)
+{
+    if (!percentEncoded.isEmpty())
+    {
+        setUri(percentEncoded, RC_IMPLICIT, '/');
+    }
+}
 
 Uri::Uri(String const &percentEncoded, resourceclassid_t defaultResourceClass, QChar sep)
     : d(new Impl)

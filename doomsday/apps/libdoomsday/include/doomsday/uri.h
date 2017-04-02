@@ -83,6 +83,8 @@ public:
      */
     Uri();
 
+    Uri(String const &percentEncoded);
+
     /**
      * Construct a Uri instance from a text string.
      *
@@ -91,13 +93,13 @@ public:
      *
      * @param defaultResClass Default scheme. Determines the scheme for the Uri
      *                        if one is not specified in @a percentEncoded.
-     *                        @c RC_UNKNOWN: resource locator guesses an
+     *                        @c RC_IMPLICIT: resource locator guesses an
      *                        appropriate scheme for this type of file.
      *
      * @param sep             Character used to separate path segments
      *                        in @a path.
      */
-    Uri(String const &percentEncoded, resourceclassid_t defaultResClass/* = RC_UNKNOWN*/, QChar sep = '/');
+    Uri(String const &percentEncoded, resourceclassid_t defaultResClass, QChar sep = '/');
 
     /**
      * Construct a Uri from a textual scheme and a path.
@@ -111,7 +113,7 @@ public:
      * Construct a Uri instance from a path. Note that Path instances can
      * never contain a scheme as a prefix, so @a resClass is mandatory.
      *
-     * @param resClass  Scheme for the URI. @c RC_UNKNOWN: resource locator
+     * @param resClass  Scheme for the URI. @c RC_IMPLICIT: resource locator
      *                  guesses an appropriate scheme for this.
      *
      * @param path      Path of the URI.
@@ -126,7 +128,7 @@ public:
     Uri(Path const &path);
 
     /**
-     * Construct a Uri instance from a UTF-8 C-style text string, using RC_UNKNOWN
+     * Construct a Uri instance from a UTF-8 C-style text string, using RC_IMPLICIT
      * as the default resource class.
      *
      * @param nullTerminatedCStr  String to be parsed. Assumed to be in
@@ -297,7 +299,7 @@ public:
      *
      * @param sep  Character used to separate path segments in @a path.
      */
-    Uri &setUri(String newUri, resourceclassid_t defaultResourceClass = RC_UNKNOWN, QChar sep = '/');
+    Uri &setUri(String newUri, resourceclassid_t defaultResourceClass = RC_IMPLICIT, QChar sep = '/');
 
     /**
      * Compose from this URI a plain-text representation. Any symbolic identifiers
