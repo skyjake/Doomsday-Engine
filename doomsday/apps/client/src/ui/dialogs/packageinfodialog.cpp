@@ -503,7 +503,8 @@ void PackageInfoDialog::prepare()
 
     // Monospace text implies that there is an DOS-style readme text
     // file included in the notes.
-    bool const useWideLayout = d->description->text().contains(_E(m));
+    bool const useWideLayout = d->description->text().contains(_E(m)) &&
+                               d->description->text().size() > 200; // reasonably long?
 
     // Update the width of the dialog. Don't let it get wider than the window.
     d->descriptionWidth->setSource(OperatorRule::minimum(
