@@ -170,8 +170,13 @@ DENG2_PIMPL(DoomsdayApp)
             if (path.exists())
             {
                 LOG_RES_NOTE("Using %s WAD folder: %s") << description << path.pretty();
-                App::rootFolder().locate<Folder>(PATH_LOCAL_WADS).attach(
-                            new DirectoryFeed(path, DirectoryFeed::OnlyThisFolder));
+                Path folderPath = PATH_LOCAL_WADS;
+                if (path.segmentCount() >= 2)
+                {
+                    folderPath = folderPath / path.lastSegment();
+                }
+                FS::get().makeFolder(folderPath)
+                        .attach(new DirectoryFeed(path, DirectoryFeed::OnlyThisFolder));
             }
             else
             {
