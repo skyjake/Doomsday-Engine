@@ -20,11 +20,14 @@
 #include "de/BaseGuiApp"
 #include "de/BaseWindow"
 
+#include <de/Config>
 #include <de/NativePath>
 #include <de/TextValue>
 #include <QFileDialog>
 
 namespace de {
+
+static String const CFG_LAST_FOLDER("resource.latestDirectory");
 
 DENG2_PIMPL_NOREF(DirectoryArrayWidget)
 {};
@@ -39,16 +42,17 @@ DirectoryArrayWidget::DirectoryArrayWidget(Variable &variable, String const &nam
         // Use a native dialog to select the IWAD folder.
         DENG2_BASE_GUI_APP->beginNativeUIMode();
 
-        QFileDialog dlg(nullptr,
-                        tr("Select Folder"),
-                        ".", "");
+        QFileDialog dlg(nullptr, tr("Select Folder"),
+                        Config::get().gets(CFG_LAST_FOLDER, "."), "");
         dlg.setFileMode(QFileDialog::Directory);
         dlg.setReadOnly(true);
         //dlg.setNameFilter("*.wad");
         dlg.setLabelText(QFileDialog::Accept, tr("Select"));
         if (dlg.exec())
         {
-            elementsMenu().items() << makeItem(TextValue(dlg.selectedFiles().at(0)));
+            String dir = dlg.selectedFiles().at(0);
+            Config::get().set(CFG_LAST_FOLDER, dir.fileNamePath());
+            elementsMenu().items() << makeItem(TextValue(dir));
             setVariableFromWidget();
         }
 
