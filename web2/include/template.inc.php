@@ -211,6 +211,7 @@ function generate_sidebar()
         <li><a href='/support'>Tech support</a></li>
         <li><a href='http://facebook.com/doomsday.engine'>Facebook page</a></li>
         <li><a href='/manual/guide/other_ports'>Other ports</a></li>            
+        <li><a href='https://doomwiki.org/wiki/Entryway' title='DoomWiki.org'>Doom Wiki</a></li>
     </ul>
     <div class='heading'>Development</div>
     <ul>
