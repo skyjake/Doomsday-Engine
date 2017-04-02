@@ -262,7 +262,12 @@ bool GameProfiles::Profile::appendPackage(String const &id)
 
 Game &GameProfiles::Profile::game() const
 {
-    return DoomsdayApp::games()[d->gameId];
+    auto &games = DoomsdayApp::games();
+    if (games.contains(d->gameId))
+    {
+        return games[d->gameId];
+    }
+    return Games::nullGame();
 }
 
 String GameProfiles::Profile::gameId() const
