@@ -79,6 +79,7 @@ p.add_files(
       ('plugins/doom/data/doom1-share.mapinfo',    'data/jdoom/doom1-share.mapinfo'),
       ('plugins/doom/data/doom1-ultimate.mapinfo', 'data/jdoom/doom1-ultimate.mapinfo'),
       ('plugins/doom/data/doom1.mapinfo',          'data/jdoom/doom1.mapinfo'),
+      ('plugins/doom/data/doom2-nerve.mapinfo',    'data/jdoom/doom2-nerve.mapinfo'),
       ('plugins/doom/data/doom2-plut.mapinfo',     'data/jdoom/doom2-plut.mapinfo'),
       ('plugins/doom/data/doom2-tnt.mapinfo',      'data/jdoom/doom2-tnt.mapinfo'),
       ('plugins/doom/data/doom2-freedoom.mapinfo', 'data/jdoom/doom2-freedoom.mapinfo'),

@@ -107,6 +107,20 @@ package "com.idsoftware.doom.ultimate_1.9" {
     }
 }
 
+package "com.idsoftware.doom.bfg_2012.10.16" {
+    format: PWAD 
+    fileName: doom.wad
+    fileSize: 12487824 
+    lumps <E4M1, E4M2, E4M3, E4M4, E4M5, E4M6, E4M7, E4M8, E4M9, M_EPI4>
+    lumpDirCRC32: 8aed7bf2
+    info {
+        title: Ultimate DOOM (BFG Edition)
+        author: id Software
+        license: All rights reserved
+        tags: gamedata doom bfg
+    }
+}
+
 package "com.idsoftware.doom2_1.6.66" {
     format: IWAD 
     fileName: doom2.wad
@@ -144,6 +158,35 @@ package "com.idsoftware.doom2_1.9" {
         author: id Software
         license: All rights reserved
         tags: gamedata doom vanilla
+    }
+}
+
+package "com.idsoftware.doom2.bfg_2012.10.16" {
+    format: PWAD
+    fileName: doom2.wad
+    fileSize: 14691821 
+    lumps <MAP01, MAP02, MAP03, MAP04, MAP10, MAP20, MAP25, MAP30, VILEN1, VILEO1, VILEQ1, GRNROCK>
+    lumpDirCRC32: 2f9a0a30
+    info {
+        title: DOOM 2: Hell on Earth (BFG Edition)
+        author: id Software
+        license: All rights reserved
+        tags: gamedata doom bfg
+    }
+}
+
+package "com.nervesoftware.norestfortheliving_2012.10.16" {
+    format: PWAD
+    fileName: nerve.wad
+    fileSize: 3819855 
+    lumps <CWILV00, CWILV08, MAP01, MAP02, MAP03, MAP04, MAP09>
+    lumpDirCRC32: 29240a37
+    info {
+        title: No Rest for the Living
+        author: Nerve Software
+        license: All rights reserved
+        tags: gamedata doom bfg expansion
+        requires <com.idsoftware.doom2.bfg>
     }
 }
 
@@ -499,7 +542,7 @@ package "com.ravensoftware.hexen.deathkings_1.0" {
         author: Raven Software
         license: All rights reserved
         tags: gamedata hexen vanilla expansion
-        required <com.ravensoftware.hexen>
+        requires <com.ravensoftware.hexen>
     }
 }
 
@@ -514,7 +557,7 @@ package "com.ravensoftware.hexen.deathkings_1.1" {
         author: Raven Software
         license: All rights reserved
         tags: gamedata hexen vanilla expansion
-        required <com.ravensoftware.hexen>
+        requires <com.ravensoftware.hexen>
     }
 }
 

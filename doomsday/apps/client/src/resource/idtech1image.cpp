@@ -87,8 +87,9 @@ Image IdTech1Image::makeGameLogo(Game const &game,
             Block const playPal  = catalog.read("PLAYPAL");
             Block const title    = catalog.read("TITLE");
             Block const titlePic = catalog.read("TITLEPIC");
+            Block const interPic = catalog.read("INTERPIC");
 
-            IdTech1Image img(title.isEmpty()? titlePic : title, playPal);
+            IdTech1Image img(title? title : (titlePic? titlePic : interPic), playPal);
 
             float const scaleFactor = flags.testFlag(Downscale50Percent)? .5f : 1.f;
             Image::Size const finalSize(img.width()  * scaleFactor,

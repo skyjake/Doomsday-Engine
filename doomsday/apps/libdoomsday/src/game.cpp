@@ -322,7 +322,7 @@ String Game::logoImageForId(String const &id)
 
 String Game::legacySavegameNameExp() const
 {
-    return d->params[DEF_LEGACYSAVEGAME_NAME_EXP];
+    return d->params.gets(DEF_LEGACYSAVEGAME_NAME_EXP, "");
 }
 
 String Game::legacySavegamePath() const
@@ -338,7 +338,7 @@ String Game::legacySavegamePath() const
     }
 
     // The default save path. The savegames are in a game-specific folder.
-    if (!d->params.gets(DEF_LEGACYSAVEGAME_SUBFOLDER, "").isEmpty())
+    if (d->params.gets(DEF_LEGACYSAVEGAME_SUBFOLDER, ""))
     {
         return App::app().nativeHomePath() / d->params.gets(DEF_LEGACYSAVEGAME_SUBFOLDER) / id();
     }

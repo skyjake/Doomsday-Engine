@@ -25,7 +25,16 @@ InFine
     MARKER title_loop
 
     # Step 1.
-    Patch back 0 0 "TITLEPIC"
+    IF MODE:doom2-nerve DO
+        Patch back 0 0 "INTERPIC"
+        GOTO pic_set
+    ;
+    IF MODE:doom2-bfg DO
+        Patch back 0 0 "INTERPIC"
+        GOTO pic_set
+    ;
+    Patch back 0 0 "TITLEPIC"            
+    MARKER pic_set
     MusicOnce "dm2ttl"
     Wait 13 # Original was 11; this'll play the whole song.
         
@@ -40,7 +49,16 @@ InFine
     PlayDemo "2demo2.cdm"
     
     # Step 5.
+    IF MODE:doom2-nerve DO
+        Patch back 0 0 "INTERPIC"
+        GOTO pic_set2
+    ;
+    IF MODE:doom2-bfg DO
+        Patch back 0 0 "INTERPIC"
+        GOTO pic_set2
+    ;
     Set back "TITLEPIC"
+    MARKER pic_set2
     Music "dm2ttl"
     Wait 13 # Original was 11.
       

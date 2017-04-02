@@ -1,0 +1,77 @@
+; Episode 1 ------------------------------------------------------------
+
+episode MAP01
+name "No Rest for the Living"
+key n
+
+map MAP01 lookup HUSTR_1
+next MAP02
+warptrans 1
+sky1 SKY1 0
+par 75
+music D_MESSAG
+titlepatch CWILV00
+
+map MAP02 lookup HUSTR_2
+next MAP03
+warptrans 2
+sky1 SKY1 0
+par 105
+music D_DDTBLU
+titlepatch CWILV01
+
+map MAP03 lookup HUSTR_3
+next MAP04
+warptrans 3
+sky1 SKY1 0
+par 120
+music D_DOOM
+titlepatch CWILV02
+
+map MAP04 lookup HUSTR_4
+next MAP05
+secretnext MAP09
+warptrans 4
+sky1 SKY1 0
+par 105
+music D_SHAWN
+titlepatch CWILV03
+
+map MAP05 lookup HUSTR_5
+next MAP06
+warptrans 5
+sky1 SKY1 0
+par 210
+music D_IN_CIT
+titlepatch CWILV04
+
+map MAP06 lookup HUSTR_6
+next MAP07
+warptrans 6
+sky1 SKY1 0
+par 105
+music D_THE_DA
+titlepatch CWILV05
+
+map MAP07 lookup HUSTR_7
+next MAP08
+warptrans 7
+sky1 SKY1 0
+par 165
+music D_IN_CIT
+titlepatch CWILV06
+
+map MAP08 lookup HUSTR_8
+warptrans 8
+sky1 SKY1 0
+par 105
+music D_SHAWN
+titlepatch CWILV07
+
+map MAP09 lookup HUSTR_9
+next MAP05
+warptrans 9
+sky1 SKY1 0
+par 135
+music D_DDTBLU
+titlepatch CWILV08
