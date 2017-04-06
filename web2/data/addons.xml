@@ -63,7 +63,23 @@
         </games>
     </addon>
     <addon>
-        <homepageUri>http://dhtp.hiriwa.com/</homepageUri>
+        <downloadUri>http://dhmp.hiriwa.com/</downloadUri>
+        <title>DOOM High-Resolution Model Project</title>
+        <description>3D models for DOOM. The aim is to have faithfully recreated 
+            high-resolution models that may also take inspiration from the concept sketches 
+            and models that id created when making DOOM.</description>
+        <notes>Doomsday 2 required.</notes>
+        <games>
+            <game>doom1</game>
+            <game>doom1-share</game>
+            <game>doom1-ultimate</game>
+            <game>doom2</game>
+            <game>doom2-plut</game>
+            <game>doom2-tnt</game>
+        </games>
+    </addon>
+    <addon>
+        <downloadUri>http://dhtp.hiriwa.com/</downloadUri>
         <title>DOOM High-Resolution Texture Project</title>
         <description>High-resolution textures for all versions of DOOM.</description>
         <games>
