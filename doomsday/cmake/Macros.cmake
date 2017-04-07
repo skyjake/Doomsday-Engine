@@ -112,17 +112,21 @@ endmacro (deng_cotire)
 
 macro (deng_target_rpath target)
     if (APPLE)
+        set (_extraRPath)
+        if (NOT DENG_ENABLE_DEPLOYQT)
+            # Not deployed; include the local Qt library path in @rpath.
+            set (_extraRPath "${QT_LIBS}")
+        endif ()
         set_target_properties (${target} PROPERTIES
-            INSTALL_RPATH "@loader_path/../Frameworks;@executable_path/../${DENG_INSTALL_LIB_DIR}"
+            INSTALL_RPATH "@loader_path/../Frameworks;@executable_path/../${DENG_INSTALL_LIB_DIR};${_extraRPath}"
         )
         if (${target} MATCHES "test_.*")
             # These won't be deployed, so we can use the full path.
-            qmake_query (_qtLibPath QT_INSTALL_LIBS)
             set_property (TARGET ${target} APPEND PROPERTY
-                INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR};${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_PLUGIN_DIR};${_qtLibPath}"
+                INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR};${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_PLUGIN_DIR};${QT_LIBS}"
             )
-            set (_qtLibPath)
         endif ()
+        set (_extraRPath)
     elseif (UNIX)
         set_property (TARGET ${target}
             PROPERTY INSTALL_RPATH
@@ -670,6 +674,9 @@ endfunction (deng_install_bundle_deps)
 # Run the Qt deploy utility on the target, resolving any local system
 # dependencies.
 function (deng_install_deployqt target)
+    if (NOT DENG_ENABLE_DEPLOYQT)
+        return ()
+    endif ()
     if (UNIX AND NOT APPLE)
         return () # No need to deploy Qt.
     endif ()
