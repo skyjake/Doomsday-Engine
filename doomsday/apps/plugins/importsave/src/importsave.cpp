@@ -32,16 +32,11 @@ using namespace de;
 
 static NativePath findSavegameTool()
 {
-#ifdef MACOSX
-    return App::executablePath().fileNamePath() / "../Resources/savegametool";
-    /// @todo fixme: Need to try alternate locations?
-#elif WIN32
+#ifdef WIN32
     return App::executablePath().fileNamePath() / "savegametool.exe";
-#else // UNIX
+#else
     return App::executablePath().fileNamePath() / "savegametool";
-    /// @todo fixme: Need to try alternate locations?
 #endif
-
 }
 
 int SavegameConvertHook(int /*hook_type*/, int /*parm*/, void *data)
