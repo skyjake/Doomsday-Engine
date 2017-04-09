@@ -36,6 +36,8 @@
 struct vissprite_t;
 struct vispsprite_t;
 
+namespace render { class ModelLoader; }
+
 /**
  * The model renderer: draws 3D models representing map objects and psprites.
  *
@@ -56,15 +58,15 @@ struct vispsprite_t;
 class ModelRenderer
 {
 public:
-    DENG2_ERROR(DefinitionError);
-    DENG2_ERROR(TextureMappingError);
-
-public:
     ModelRenderer();
 
     void glInit();
 
     void glDeinit();
+
+    render::ModelLoader &loader();
+
+    render::ModelLoader const &loader() const;
 
     /**
      * Provides access to the bank containing available drawable models.
@@ -89,29 +91,8 @@ public:
      */
     void render(vispsprite_t const &pspr, struct mobj_s const *playerMobj);
 
-    /**
-     * Looks up the name of a shader based on a GLProgram instance.
-     *
-     * @param program  Shader program. Must be a shader program
-     *                 created and owned by ModelRenderer.
-     * @return Name of the shader (in the shader bank).
-     */
-    de::String shaderName(de::GLProgram const &program) const;
-
-    /**
-     * Looks up the definition of a shader based on a GLProgram instance.
-     *
-     * @param program  Shader program. Must be a shader program
-     *                 created and owned by ModelRenderer.
-     * @return Shader definition record.
-     */
-    de::Record const &shaderDefinition(de::GLProgram const &program) const;
-
 public:
     static void initBindings(de::Binder &binder, de::Record &module);
-
-    static int identifierFromText(de::String const &text,
-                                  std::function<int (de::String const &)> resolver);
 
 private:
     DENG2_PRIVATE(d)

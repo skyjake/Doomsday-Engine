@@ -18,6 +18,7 @@
 
 #include "render/stateanimator.h"
 #include "render/rendersystem.h"
+#include "render/modelloader.h"
 #include "render/shadervar.h"
 #include "clientapp.h"
 #include "dd_loop.h"
@@ -489,14 +490,14 @@ DENG2_PIMPL(StateAnimator)
                           de::String const &passName,
                           BindOperation operation) const
     {
-        auto const &modelRenderer = ClientApp::renderSystem().modelRenderer();
+        auto const &modelLoader = ClientApp::renderSystem().modelRenderer().loader();
 
         auto const vars = passVars.constFind(passName);
         if (vars != passVars.constEnd())
         {
             for (auto i : vars.value()->members)
             {
-                if (!hasDeclaredVariable(modelRenderer.shaderDefinition(program),
+                if (!hasDeclaredVariable(modelLoader.shaderDefinition(program),
                                          *i->uniform))
                     continue;
 
@@ -515,7 +516,7 @@ DENG2_PIMPL(StateAnimator)
 
     int animationId(String const &name) const
     {
-        return ModelRenderer::identifierFromText(name, [this] (String const &name) {
+        return ModelLoader::identifierFromText(name, [this] (String const &name) {
             return self().model().animationIdForName(name);
         });
     }
