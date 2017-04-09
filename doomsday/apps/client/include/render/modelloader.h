@@ -38,12 +38,13 @@ public:
 public:
     ModelLoader();
 
-    void glInit();
-    void glDeinit();
-
     de::ModelBank &bank();
 
     de::ModelBank const &bank() const;
+
+    void glInit();
+
+    void glDeinit();
 
     /**
      * Looks up the name of a shader based on a GLProgram instance.

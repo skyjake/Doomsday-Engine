@@ -37,6 +37,8 @@ namespace render {
  */
 struct Model : public de::ModelDrawable
 {
+    de::String identifier;
+
     /**
      * Animation sequence definition.
      */
