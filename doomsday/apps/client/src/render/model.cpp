@@ -22,7 +22,7 @@ using namespace de;
 
 namespace render {
 
-static String const DEF_TIMELINE("timeline");
+String const Model::DEF_TIMELINE("timeline");
 
 Model::AnimSequence::AnimSequence(String const &name, Record const &def)
     : name(name)

@@ -36,21 +36,17 @@ using namespace de;
 
 namespace render {
 
-static String const DEF_PROBABILITY   ("prob");
-static String const DEF_NODE          ("node");
-static String const DEF_LOOPING       ("looping");
-static String const DEF_PRIORITY      ("priority");
-static String const DEF_DURATION      ("duration");
 static String const DEF_ALWAYS_TRIGGER("alwaysTrigger");
-static String const DEF_RENDER        ("render");
-static String const DEF_PASS          ("pass");
-static String const DEF_VARIABLE      ("variable");
-static String const DEF_ENABLED       ("enabled");
-static String const DEF_MATERIAL      ("material");
-static String const DEF_ANIMATION     ("animation");
-static String const DEF_SPEED         ("speed");
 static String const DEF_ANGLE         ("angle");
 static String const DEF_AXIS          ("axis");
+static String const DEF_DURATION      ("duration");
+static String const DEF_ENABLED       ("enabled");
+static String const DEF_LOOPING       ("looping");
+static String const DEF_NODE          ("node");
+static String const DEF_PRIORITY      ("priority");
+static String const DEF_PROBABILITY   ("prob");
+static String const DEF_SPEED         ("speed");
+static String const DEF_VARIABLE      ("variable");
 
 static String const VAR_ID            ("ID");           // model asset ID
 static String const VAR_ASSET         ("__asset__");    // runtime reference to asset metadata
@@ -236,15 +232,15 @@ DENG2_PIMPL(StateAnimator)
 
         int passIndex = 0;
         auto const &def = names[VAR_ASSET].valueAsRecord();
-        if (def.has(DEF_RENDER))
+        if (def.has(ModelLoader::DEF_RENDER))
         {
-            Record const &renderBlock = def.subrecord(DEF_RENDER);
+            Record const &renderBlock = def.subrecord(ModelLoader::DEF_RENDER);
 
             initVariablesForPass(renderBlock);
 
             // Each rendering pass is represented by a subrecord, named
             // according the to the pass names.
-            auto passes = ScriptedInfo::subrecordsOfType(DEF_PASS, renderBlock);
+            auto passes = ScriptedInfo::subrecordsOfType(ModelLoader::DEF_PASS, renderBlock);
             for (String passName : ScriptedInfo::sortRecordsBySource(passes))
             {
                 Record const &passDef = *passes[passName];
@@ -260,9 +256,9 @@ DENG2_PIMPL(StateAnimator)
             }
         }
 
-        if (def.has(DEF_ANIMATION))
+        if (def.has(ModelLoader::DEF_ANIMATION))
         {
-            auto varDefs = ScriptedInfo::subrecordsOfType(DEF_VARIABLE, def.subrecord(DEF_ANIMATION));
+            auto varDefs = ScriptedInfo::subrecordsOfType(DEF_VARIABLE, def.subrecord(ModelLoader::DEF_ANIMATION));
             for (String varName : varDefs.keys())
             {
                 initAnimationVariable(varName, *varDefs[varName]);
@@ -282,7 +278,7 @@ DENG2_PIMPL(StateAnimator)
         // Each pass has a variable for selecting the material.
         // The default value is optionally specified in the definition.
         Variable &passMaterialVar = names.addText(passName.concatenateMember(VAR_MATERIAL),
-                                                  block.gets(DEF_MATERIAL, DEFAULT_MATERIAL));
+                                                  block.gets(ModelLoader::DEF_MATERIAL, DEFAULT_MATERIAL));
         passMaterialVar.audienceForChange() += this;
         passForMaterialVariable.insert(&passMaterialVar, self().model().passes.findName(passName));
 
