@@ -30,8 +30,10 @@
 #include "ui/busyvisual.h"
 #include "ui/inputsystem.h"
 #include "ui/widgets/busywidget.h"
+#include "ui/home/homewidget.h"
 #include "ui/clientwindow.h"
 #include "ui/progress.h"
+#include "clientapp.h"
 
 #include <doomsday/doomsdayapp.h>
 #include <de/concurrency.h>
@@ -148,7 +150,11 @@ DENG2_PIMPL_NOREF(BusyRunner)
             ClientWindow::main().fadeContent(ClientWindow::FadeFromBlack, 2);
         }
     }
+
+    DENG2_PIMPL_AUDIENCE(DeferredGLTask)
 };
+
+DENG2_AUDIENCE_METHOD(BusyRunner, DeferredGLTask)
 
 static BusyRunner &busyRunner()
 {
@@ -209,10 +215,10 @@ BusyRunner::Result BusyRunner::runTask(BusyTask *task)
 #ifdef WIN32
     /*
      * Pretty big kludge here: it seems that with Qt 5.6-5.8 on Windows 10,
-     * Nvidia drivers 376.33 (and many other versions), swap interval 
-     * behaves as if it has been set to 2 (30 FPS) whenever a game is started. 
-     * This could be due to some unknown behavior related to the secondary 
-     * event loop used during busy mode. Toggling the swap interval off and 
+     * Nvidia drivers 376.33 (and many other versions), swap interval
+     * behaves as if it has been set to 2 (30 FPS) whenever a game is started.
+     * This could be due to some unknown behavior related to the secondary
+     * event loop used during busy mode. Toggling the swap interval off and
      * back on appears to be a valid workaround.
      */
     de::Loop::timer(0.1, [] () {
@@ -260,17 +266,33 @@ void BusyRunner::loop()
     ClientApp::inputSystem().processEvents(0);
     ClientApp::inputSystem().processSharpEvents(0);
 
+    ClientWindow::main().glActivate();
+
+    // Only perform pending tasks after Home has been hidden, as otherwise there
+    // might be nasty stutters in the window refresh if one of the pending tasks
+    // blocks the thread for a while.
+    bool pendingRemain = false;
+    if (ClientWindow::main().home().isHidden())
+    {
+        DENG2_FOR_AUDIENCE2(DeferredGLTask, i)
+        {
+            if (i->performDeferredGLTask() == TasksPending)
+            {
+                pendingRemain = true;
+            }
+        }
+    }
+
     if (canUpload)
     {
-        ClientWindow::main().glActivate();
-
         // Any deferred content needs to get uploaded.
         GL_ProcessDeferredTasks(15);
     }
 
-    if (!d->busyDone ||
-        (canUpload && GL_DeferredTaskCount() > 0) ||
-        !Con_IsProgressAnimationCompleted())
+    if (!d->busyDone
+        || pendingRemain
+        || (canUpload && GL_DeferredTaskCount() > 0)
+        || !Con_IsProgressAnimationCompleted())
     {
         // Let's keep running the busy loop.
         return;

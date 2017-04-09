@@ -42,6 +42,14 @@
 class BusyRunner : public BusyMode::ITaskRunner
 {
 public:
+    enum DeferredResult { AllTasksCompleted, TasksPending };
+
+    /// Called during the busy loop from the main thread.
+    /// @return @c true, if all deferred tasks have been completed. @c false, if
+    /// deferred tasks still remain afterwards.
+    DENG2_DEFINE_AUDIENCE2(DeferredGLTask, DeferredResult performDeferredGLTask())
+
+public:
     BusyRunner();
 
     bool isTransitionAnimated() const;

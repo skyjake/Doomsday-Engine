@@ -20,12 +20,14 @@
 #include "render/model.h"
 #include "render/rendersystem.h"
 #include "clientapp.h"
+#include "busyrunner.h"
 
 #include <de/filesys/AssetObserver>
 #include <de/MultiAtlas>
 #include <de/ScriptedInfo>
 
 #include <QHash>
+#include <QSet>
 
 namespace render {
 
@@ -65,6 +67,7 @@ DENG2_PIMPL(ModelLoader)
 , DENG2_OBSERVES(filesys::AssetObserver, Availability)
 , DENG2_OBSERVES(Bank, Load)
 , DENG2_OBSERVES(ModelDrawable, AboutToGLInit)
+, DENG2_OBSERVES(BusyRunner, DeferredGLTask)
 , public MultiAtlas::IAtlasFactory
 {
     MultiAtlas atlasPool { *this };
@@ -74,6 +77,7 @@ DENG2_PIMPL(ModelLoader)
         // Using render::Model instances.
         [] () -> ModelDrawable * { return new render::Model; }
     };
+    LockableT<QSet<String>> pendingModels;
 
     struct Program : public GLProgram
     {
@@ -117,12 +121,17 @@ DENG2_PIMPL(ModelLoader)
         // The default shader is used whenever a model does not specifically
         // request another one.
         loadProgram(SHADER_DEFAULT);
+
+        ClientApp::busyRunner().audienceForDeferredGLTask() += this;
     }
 
     void deinit()
     {
+        ClientApp::busyRunner().audienceForDeferredGLTask() -= this;
+
         // GL resources must be accessed from the main thread only.
         bank.unloadAll(Bank::ImmediatelyInCurrentThread);
+        pendingModels.value.clear();
 
         atlasPool.clear();
         unloadProgram(*programs[SHADER_DEFAULT]);
@@ -182,7 +191,49 @@ DENG2_PIMPL(ModelLoader)
             }
 
             bank.remove(identifier);
+            {
+                DENG2_GUARD(pendingModels);
+                pendingModels.value.remove(identifier);
+            }
         }
+    }
+
+    /**
+     * Initializes one or more uninitializes models for rendering.
+     * Must be called from the main thread.
+     *
+     * @param maxCount  Maximum number of models to initialize.
+     */
+    void initPendingModels(int maxCount)
+    {
+        DENG2_GUARD(pendingModels);
+
+        while (!pendingModels.value.isEmpty() && maxCount > 0)
+        {
+            String const identifier = *pendingModels.value.begin();
+            pendingModels.value.remove(identifier);
+
+            if (!bank.has(identifier))
+            {
+                continue;
+            }
+
+            LOG_GL_MSG("Initializing \"%s\"") << identifier;
+
+            auto &model = bank.model<render::Model>(identifier);
+            model.glInit();
+
+            --maxCount;
+        }
+    }
+
+    BusyRunner::DeferredResult performDeferredGLTask() override
+    {
+        initPendingModels(1);
+
+        DENG2_GUARD(pendingModels);
+        return pendingModels.value.isEmpty()? BusyRunner::AllTasksCompleted
+                                            : BusyRunner::TasksPending;
     }
 
     /**
@@ -246,7 +297,10 @@ DENG2_PIMPL(ModelLoader)
     void modelAboutToGLInit(ModelDrawable &drawable) override
     {
         auto &model = static_cast<render::Model &>(drawable);
-
+        {
+            DENG2_GUARD(pendingModels);
+            pendingModels.value.remove(model.identifier);
+        }
         model.setAtlas(*model.textures);
     }
 
@@ -535,6 +589,12 @@ DENG2_PIMPL(ModelLoader)
 
         // Textures of the model will be kept here.
         model.textures.reset(new MultiAtlas::AllocGroup(atlasPool));
+
+        // Initialize for rendering at a later time.
+        {
+            DENG2_GUARD(pendingModels);
+            pendingModels.value.insert(path);
+        }
     }
 
 
