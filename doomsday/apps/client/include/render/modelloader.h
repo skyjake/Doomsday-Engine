@@ -68,6 +68,11 @@ public:
     static int identifierFromText(de::String const &text,
                                   std::function<int (de::String const &)> resolver);
 
+    static de::String const DEF_ANIMATION;
+    static de::String const DEF_MATERIAL;
+    static de::String const DEF_PASS;
+    static de::String const DEF_RENDER;
+
 private:
     DENG2_PRIVATE(d)
 };

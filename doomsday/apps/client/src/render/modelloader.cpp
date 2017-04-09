@@ -33,28 +33,29 @@ namespace render {
 
 using namespace de;
 
-static String const DEF_ANIMATION      ("animation");
-static String const DEF_MATERIAL       ("material");
-static String const DEF_VARIANT        ("variant");
-static String const DEF_UP_VECTOR      ("up");
-static String const DEF_FRONT_VECTOR   ("front");
-static String const DEF_AUTOSCALE      ("autoscale");
-static String const DEF_ALIGNMENT_YAW  ("alignment.yaw");
+String const ModelLoader::DEF_ANIMATION("animation");
+String const ModelLoader::DEF_MATERIAL ("material");
+String const ModelLoader::DEF_PASS     ("pass");
+String const ModelLoader::DEF_RENDER   ("render");
+
 static String const DEF_ALIGNMENT_PITCH("alignment.pitch");
-static String const DEF_MIRROR         ("mirror");
-static String const DEF_OFFSET         ("offset");
-static String const DEF_STATE          ("state");
-static String const DEF_SEQUENCE       ("sequence");
-static String const DEF_RENDER         ("render");
-static String const DEF_TEXTURE_MAPPING("textureMapping");
-static String const DEF_SHADER         ("shader");
-static String const DEF_PASS           ("pass");
-static String const DEF_MESHES         ("meshes");
+static String const DEF_ALIGNMENT_YAW  ("alignment.yaw");
+static String const DEF_AUTOSCALE      ("autoscale");
 static String const DEF_BLENDFUNC      ("blendFunc");
 static String const DEF_BLENDOP        ("blendOp");
 static String const DEF_DEPTHFUNC      ("depthFunc");
 static String const DEF_DEPTHWRITE     ("depthWrite");
+static String const DEF_FRONT_VECTOR   ("front");
+static String const DEF_MESHES         ("meshes");
+static String const DEF_MIRROR         ("mirror");
+static String const DEF_OFFSET         ("offset");
+static String const DEF_SEQUENCE       ("sequence");
+static String const DEF_SHADER         ("shader");
+static String const DEF_STATE          ("state");
+static String const DEF_TEXTURE_MAPPING("textureMapping");
 static String const DEF_TIMELINE       ("timeline");
+static String const DEF_UP_VECTOR      ("up");
+static String const DEF_VARIANT        ("variant");
 
 static String const SHADER_DEFAULT     ("model.skeletal.generic");
 static String const MATERIAL_DEFAULT   ("default");

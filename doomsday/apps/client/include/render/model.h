@@ -37,6 +37,10 @@ namespace render {
  */
 struct Model : public de::ModelDrawable
 {
+    static de::String const DEF_TIMELINE;
+
+//---------------------------------------------------------------------------------------
+
     de::String identifier;
 
     /**
