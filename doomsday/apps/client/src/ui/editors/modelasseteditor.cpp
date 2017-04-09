@@ -27,6 +27,7 @@
 #include "clientplayer.h"
 #include "render/rend_main.h"
 #include "render/rendersystem.h"
+#include "render/modelloader.h"
 #include "render/stateanimator.h"
 #include "render/playerweaponanimator.h"
 
@@ -420,10 +421,9 @@ DENG_GUI_PIMPL(ModelAssetEditor)
 
             // Look up the shader.
             auto const &pass = animator.model().passes.at(passIndex);
-            String shaderName = ClientApp::renderSystem().modelRenderer()
-                    .shaderName(*pass.program);
-            Record const &shaderDef = ClientApp::renderSystem().modelRenderer()
-                    .shaderDefinition(*pass.program);
+            auto &modelLoader = ClientApp::renderSystem().modelRenderer().loader();
+            String shaderName = modelLoader.shaderName(*pass.program);
+            Record const &shaderDef = modelLoader.shaderDefinition(*pass.program);
 
             // Check the variable declarations.
             auto vars = ScriptedInfo::subrecordsOfType(QStringLiteral("variable"),
