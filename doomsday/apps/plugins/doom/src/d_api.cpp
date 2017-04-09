@@ -305,6 +305,23 @@ int G_RegisterGames(int hookType, int param, void *data)
         setCommonParameters(shareware);
         shareware.addResource(RC_DEFINITION, 0, "doom1-share.ded", 0);
     }
+
+    /* DOOM - Freedoom Phase 1 */
+    {
+        Game &freedoom1 = games.defineGame(gameIds[doom_freedoom],
+            Record::withMembers(Game::DEF_CONFIG_DIR, "doom",
+                                Game::DEF_TITLE, "Freedoom: Phase 1",
+                                Game::DEF_AUTHOR, "Freedoom Project",
+                                Game::DEF_RELEASE_DATE, "2009-06-18",
+                                Game::DEF_FAMILY, "",
+                                Game::DEF_TAGS, "freedoom",
+                                Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
+                                Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
+                                Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom1-ultimate.mapinfo"));
+        freedoom1.addRequiredPackage("freedoom.phase1");
+        setCommonParameters(freedoom1);
+        freedoom1.addResource(RC_DEFINITION, 0, "doom1-freedoom.ded", 0);
+    }
     return true;
 
 #undef STARTUPPK3
