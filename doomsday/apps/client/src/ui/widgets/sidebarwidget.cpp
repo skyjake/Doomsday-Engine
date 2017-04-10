@@ -81,6 +81,7 @@ SidebarWidget::SidebarWidget(String const &titleText, String const &name)
     setSizePolicy(Fixed);
     setWaitForContentReady(false);
     setOpeningDirection(Left);
+    setAnimationStyle(Smooth);
     set(Background(style().colors().colorf("background")).withSolidFillOpacity(1));
 
     // Set up the editor UI.

@@ -49,10 +49,14 @@ public:
      */
     DENG2_DEFINE_AUDIENCE2(Close, void panelBeingClosed(PanelWidget &))
 
+    enum AnimationStyle { Bouncy, Smooth };
+
 public:
     PanelWidget(String const &name = String());
 
     void setWaitForContentReady(bool yes);
+
+    void setAnimationStyle(AnimationStyle style);
 
     /**
      * Enables or disables mouse event eating. The default is that a panel eats

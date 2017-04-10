@@ -36,8 +36,6 @@ static TimeDelta const CLOSING_ANIM_SPAN = 0.3;
 DENG_GUI_PIMPL(PanelWidget)
 , DENG2_OBSERVES(Asset, StateChange)
 {
-    //typedef DefaultVertexBuf VertexBuf;
-
     bool waitForContentReady = true;
     bool eatMouseEvents = true;
     bool opened = false;
@@ -45,13 +43,12 @@ DENG_GUI_PIMPL(PanelWidget)
     ui::SizePolicy secondaryPolicy = ui::Expand;
     GuiWidget *content = nullptr;
     AnimationRule *openingRule;
+    AnimationStyle openingStyle = Bouncy;
     QTimer dismissTimer;
     std::unique_ptr<AssetGroup> pendingShow;
 
     // GL objects.
     GuiVertexBuilder verts;
-    //Drawable drawable;
-    //GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
 
     Impl(Public *i) : Base(i)
     {
@@ -69,14 +66,10 @@ DENG_GUI_PIMPL(PanelWidget)
 
     void glInit()
     {
-        /*drawable.addBuffer(new VertexBuf);
-        shaders().build(drawable.program(), "generic.textured.color")
-                << uMvpMatrix << uAtlas();*/
     }
 
     void glDeinit()
     {
-        //drawable.clear();
         verts.clear();
     }
 
@@ -114,11 +107,8 @@ DENG_GUI_PIMPL(PanelWidget)
         if (self().hasChangedPlace(pos) || self().geometryRequested())
         {
             self().requestGeometry(false);
-
-            //VertexBuf::Builder verts;
             verts.clear();
             self().glMakeGeometry(verts);
-            //drawable.buffer<VertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Static);
         }
     }
 
@@ -132,7 +122,16 @@ DENG_GUI_PIMPL(PanelWidget)
         {
             openingRule->set(content->rule().width(), span);
         }
-        openingRule->setStyle(Animation::Bounce, 12);
+
+        switch (openingStyle)
+        {
+        case Bouncy:
+            openingRule->setStyle(Animation::Bounce, 12);
+            break;
+        case Smooth:
+            openingRule->setStyle(Animation::EaseBoth);
+            break;
+        }
     }
 
     void close(TimeDelta delay)
@@ -145,7 +144,15 @@ DENG_GUI_PIMPL(PanelWidget)
 
         // Begin the closing animation.
         openingRule->set(0, CLOSING_ANIM_SPAN + delay, delay);
-        openingRule->setStyle(Animation::EaseIn);
+        switch (openingStyle)
+        {
+        case Bouncy:
+            openingRule->setStyle(Animation::EaseIn);
+            break;
+        case Smooth:
+            openingRule->setStyle(Animation::EaseBoth);
+            break;
+        }
 
         self().panelClosing();
 
@@ -222,7 +229,12 @@ void PanelWidget::setWaitForContentReady(bool yes)
     d->waitForContentReady = yes;
 }
 
-void de::PanelWidget::setEatMouseEvents(bool yes)
+void PanelWidget::setAnimationStyle(AnimationStyle style)
+{
+    d->openingStyle = style;
+}
+
+void PanelWidget::setEatMouseEvents(bool yes)
 {
     d->eatMouseEvents = yes;
 }
@@ -302,9 +314,6 @@ void PanelWidget::close(TimeDelta delayBeforeClosing)
 void PanelWidget::viewResized()
 {
     GuiWidget::viewResized();
-
-    //d->uMvpMatrix = root().projMatrix2D();
-
     requestGeometry();
 }
 
@@ -322,7 +331,6 @@ bool PanelWidget::handleEvent(Event const &event)
         // Eat buttons that land on the panel.
         if (hitTest(mouse.pos()))
         {
-            //root().setFocus(0);
             return true;
         }
     }
