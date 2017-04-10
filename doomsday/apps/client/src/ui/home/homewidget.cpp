@@ -34,6 +34,7 @@
 #include <de/FadeToBlackWidget>
 #include <de/LabelWidget>
 #include <de/Loop>
+#include <de/PackageLoader>
 #include <de/PersistentState>
 #include <de/PopupMenuWidget>
 #include <de/SequentialLayout>
@@ -79,6 +80,7 @@ DENG_GUI_PIMPL(HomeWidget)
     QTimer moveShowTimer;
     ButtonWidget *taskBarHintButton;
     bool dismissing = false;
+    bool havePackages = false;
 
     int restoredOffsetTab = -1;
     int restoredActiveTab = -1;
@@ -195,7 +197,7 @@ DENG_GUI_PIMPL(HomeWidget)
         }
     }
 
-    void updateVisibleColumnsAndTabs()
+    void updateVisibleColumnsAndTabHeadings()
     {
         bool const gotGames = DoomsdayApp::games().numPlayable() > 0;
 
@@ -209,6 +211,10 @@ DENG_GUI_PIMPL(HomeWidget)
             if (col.configVar)
             {
                 col.widget->show(gotGames && col.configVar->value().isTrue());
+            }
+            if (col.widget->is<PackagesColumnWidget>())
+            {
+                col.widget->show(gotGames || havePackages);
             }
         }
 
@@ -225,6 +231,13 @@ DENG_GUI_PIMPL(HomeWidget)
         }
     }
 
+    void updateVisibleTabsAndLayout()
+    {
+        updateVisibleColumnsAndTabHeadings();
+        calculateColumnCount();
+        updateLayout();
+    }
+
     void appStartupCompleted()
     {
         blanker->start(0.25);
@@ -233,10 +246,8 @@ DENG_GUI_PIMPL(HomeWidget)
     void gameReadinessUpdated()
     {
         self().root().window().glActivate();
-        
-        updateVisibleColumnsAndTabs();
-        calculateColumnCount();
-        updateLayout();
+
+        updateVisibleTabsAndLayout();
 
         // Restore previous state?
         if (restoredActiveTab >= 0)
@@ -284,9 +295,7 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void variableValueChanged(Variable &, Value const &)
     {
-        updateVisibleColumnsAndTabs();
-        calculateColumnCount();
-        updateLayout();
+        updateVisibleTabsAndLayout();
     }
 
     void moveOffscreen(TimeDelta span = DISMISS_SPAN)
@@ -514,10 +523,19 @@ HomeWidget::HomeWidget()
     column = new MultiplayerColumnWidget();
     d->addColumn(column);
 
-    column = new PackagesColumnWidget();
-    d->addColumn(column);
+    {
+        auto *packagesColumn = new PackagesColumnWidget;
+        d->addColumn(packagesColumn);
+        connect(packagesColumn,
+                &PackagesColumnWidget::availablePackageCountChanged,
+                [this] (int count)
+        {
+            d->havePackages = count > 0;
+            d->updateVisibleTabsAndLayout();
+        });
+    }
 
-    d->updateVisibleColumnsAndTabs();
+    d->updateVisibleColumnsAndTabHeadings();
     d->tabs->setCurrent(0);
 
     // Tabs on top.

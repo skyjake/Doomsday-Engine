@@ -45,7 +45,7 @@ NoGamesColumnWidget::NoGamesColumnWidget()
             .setInput(Rule::Bottom, rule().midY());
 
     ButtonWidget *chooseIwad = new ButtonWidget;
-    chooseIwad->setText(tr("Select IWAD Folder..."));
+    chooseIwad->setText(tr("Select WAD Folder..."));
     chooseIwad->setSizePolicy(ui::Expand, ui::Expand);
     chooseIwad->rule()
             .setMidAnchorX(rule().midX())

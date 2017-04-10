@@ -23,11 +23,18 @@
 
 class PackagesColumnWidget : public ColumnWidget
 {
+    Q_OBJECT
+
 public:
     PackagesColumnWidget();
 
+    int availablePackageCount() const;
+
     de::String tabHeading() const override;
     void setHighlighted(bool highlighted) override;
+
+signals:
+    void availablePackageCountChanged(int count);
 
 private:
     DENG2_PRIVATE(d)

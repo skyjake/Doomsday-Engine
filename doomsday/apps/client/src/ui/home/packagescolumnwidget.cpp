@@ -47,6 +47,7 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
     ButtonWidget *folderOptionsButton;
     ui::ListData actions;
     LoopCallback mainCall;
+    int totalPackageCount = 0;
 
     Impl(Public *i) : Base(i)
     {
@@ -80,6 +81,8 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
             {
                 countLabel->setText(tr("%1 shown out of %2 available").arg(shown).arg(total));
             }
+            totalPackageCount = total;
+            emit self().availablePackageCountChanged(total);
         });
 
         area.add(folderOptionsButton = new ButtonWidget);
@@ -142,6 +145,11 @@ PackagesColumnWidget::PackagesColumnWidget()
     // Additional layout for the packages list.
     d->packages->setFilterEditorMinimumY(scrollArea().margins().top());
     d->packages->progress().rule().setRect(scrollArea().rule());
+}
+
+int PackagesColumnWidget::availablePackageCount() const
+{
+    return d->totalPackageCount;
 }
 
 String PackagesColumnWidget::tabHeading() const
