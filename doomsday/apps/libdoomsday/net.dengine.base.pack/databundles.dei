@@ -161,6 +161,20 @@ package "com.idsoftware.finaldoom.plutonia_1.9" {
     }
 }
 
+package "com.idsoftware.finaldoom.plutonia_1.9.1" {
+    format: IWAD 
+    fileName: plutonia.wad
+    fileSize: 18240172
+    lumps <_DEUTEX_, MAP01, MAP25, MC5, MC11, MC16, MC20>
+    lumpDirCRC32: 36fb4f7a
+    info {
+        title: Final DOOM: The Plutonia Experiment
+        author: Dario Casali and Milo Casali
+        license: All rights reserved
+        tags: gamedata doom2 mod
+    }
+}
+
 package "com.idsoftware.finaldoom.tnt_1.9" {
     format: IWAD 
     fileName: tnt.wad
@@ -175,6 +189,19 @@ package "com.idsoftware.finaldoom.tnt_1.9" {
     }
 }
 
+package "com.idsoftware.finaldoom.tnt_1.9.1" {
+    format: IWAD 
+    fileName: tnt.wad
+    fileSize: 18654796
+    lumps <CAVERN5, CAVERN7, STONEW1>
+    lumpDirCRC32: 22eb92fe
+    info {
+        title: Final DOOM: TNT: Evilution
+        author: Team TNT
+        license: All rights reserved
+        tags: gamedata doom2 mod
+    }
+}
 package "banjo.hacx" {
     format: IWAD
     fileName: hacx.wad
