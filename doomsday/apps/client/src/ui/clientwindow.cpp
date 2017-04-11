@@ -370,6 +370,8 @@ DENG2_PIMPL(ClientWindow)
         {
             taskBar->close();
         }
+
+        Loop::get().timer(1.0, [this] () { showOrHideQuitButton(); });
     }
 
     void currentGameChanged(Game const &newGame)
