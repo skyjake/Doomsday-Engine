@@ -495,7 +495,7 @@ NativePath App::nativePluginBinaryPath()
 # ifdef MACOSX
     path = d->appPath.fileNamePath() / "../PlugIns/Doomsday";
 # else
-    path = DENG_LIBRARY_DIR;
+    path = d->appPath.fileNamePath() / DENG_LIBRARY_DIR;
     if (!path.exists())
     {
         // Try a fallback relative to the executable.
@@ -591,10 +591,10 @@ NativePath App::nativeBasePath()
     if (!path.exists())
     {
         // Try the built-in base directory (unbundled apps).
-        path = DENG_BASE_DIR;
+        path = d->appPath.fileNamePath() / DENG_BASE_DIR;
     }
 # else
-    path = DENG_BASE_DIR;
+    path = d->appPath.fileNamePath() / DENG_BASE_DIR;
 # endif
     if (!path.exists())
     {
