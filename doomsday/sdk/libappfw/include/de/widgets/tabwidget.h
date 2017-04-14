@@ -68,6 +68,8 @@ public:
 
     void useInvertedStyle();
 
+    void clearItems();
+
     /**
      * Items representing the tabs in the widget.
      *
