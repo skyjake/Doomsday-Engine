@@ -201,8 +201,6 @@ DENG_GUI_PIMPL(HomeWidget)
     {
         bool const gotGames = DoomsdayApp::games().numPlayable() > 0;
 
-        tabs->items().clear();
-
         // Show columns depending on whether there are playable games.
         allColumns.at(0).widget->show(!gotGames);
         for (int i = 1; i < allColumns.size(); ++i)
@@ -219,15 +217,46 @@ DENG_GUI_PIMPL(HomeWidget)
         }
 
         // Tab headings for visible columns.
-        int index = 0;
-        for (Column const &col : allColumns)
+        struct TabSpec {
+            Column const *col;
+            int visibleIndex;
+        };
+        QList<TabSpec> specs;
+        int visibleIndex = 0;
+        for (int index = 0; index < allColumns.size(); ++index)
         {
+            Column const &col = allColumns.at(index);
             if (!col.widget->behavior().testFlag(Widget::Hidden))
             {
-                auto *tabItem = new TabItem(col.widget->tabHeading(), index++);
-                tabItem->setShortcutKey(col.widget->tabShortcut());
-                tabs->items() << tabItem;
+                TabSpec ts;
+                ts.col = &col;
+                ts.visibleIndex = visibleIndex++;
+                specs << ts;
             }
+        }
+        // Is this different than what is currently there?
+        if (tabs->items().size() == specs.size())
+        {
+            bool differenceFound = false;
+            for (auto pos = 0; pos < tabs->items().size(); ++pos)
+            {
+                auto const &item = tabs->items().at(pos);
+                if (item.label() != specs.at(pos).col->widget->tabHeading() ||
+                    item.data().toInt() != specs.at(pos).visibleIndex)
+                {
+                    differenceFound = true;
+                    break;
+                }
+            }
+            if (!differenceFound) return;
+        }
+        // Create new items.
+        tabs->clearItems();
+        for (TabSpec const &ts : specs)
+        {
+            auto *tabItem = new TabItem(ts.col->widget->tabHeading(), ts.visibleIndex);
+            tabItem->setShortcutKey(ts.col->widget->tabShortcut());
+            tabs->items() << tabItem;
         }
     }
 
