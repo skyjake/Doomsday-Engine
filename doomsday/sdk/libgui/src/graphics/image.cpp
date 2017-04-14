@@ -669,12 +669,10 @@ Image Image::multiplied(Color const &color) const
             duint16 r = (*ptr & 0xff0000) >> 16;
             duint16 a = (*ptr & 0xff000000) >> 24;
 
-            QColor const mult((color.x + 1) * r >> 8,
-                              (color.y + 1) * g >> 8,
-                              (color.z + 1) * b >> 8,
-                              (color.w + 1) * a >> 8);
-
-            *ptr++ = mult.rgba();
+            *ptr++ = qRgba((color.x + 1) * r >> 8,
+                           (color.y + 1) * g >> 8,
+                           (color.z + 1) * b >> 8,
+                           (color.w + 1) * a >> 8);
         }
     }
     return copy;
