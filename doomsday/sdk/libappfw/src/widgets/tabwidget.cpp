@@ -184,6 +184,16 @@ void TabWidget::useInvertedStyle()
     d->invertedStyle = true;
 }
 
+void TabWidget::clearItems()
+{
+    if (d->selLeft)
+    {
+        // Dependent on the heading widget rules.
+        d->selLeft->set(d->selLeft->value());
+    }
+    items().clear();
+}
+
 ui::Data &TabWidget::items()
 {
     return d->buttons->items();
