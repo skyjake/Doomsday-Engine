@@ -222,10 +222,10 @@ DENG_GUI_PIMPL(HomeWidget)
             }
         }
         // Is this different than what is currently there?
-        if (tabs->items().size() == specs.size())
+        if (tabs->items().size() == dsize(specs.size()))
         {
             bool differenceFound = false;
-            for (auto pos = 0; pos < tabs->items().size(); ++pos)
+            for (dsize pos = 0; pos < tabs->items().size(); ++pos)
             {
                 auto const &item = tabs->items().at(pos);
                 if (item.label() != specs.at(pos).col->widget->tabHeading() ||
