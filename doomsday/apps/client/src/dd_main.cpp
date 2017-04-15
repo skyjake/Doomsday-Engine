@@ -1254,7 +1254,8 @@ void DD_FinishInitializationAfterWindowReady()
     try
     {
         initializeWithWindowReady();
-        App::app().notifyStartupComplete();
+        // Let everyone know we're up and running (via another timer callback).
+        Loop::get().timer(0.1, [] () { App::app().notifyStartupComplete(); });
         return;
     }
     catch (Error const &er)
