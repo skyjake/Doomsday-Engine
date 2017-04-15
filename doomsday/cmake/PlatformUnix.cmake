@@ -6,7 +6,7 @@ set (DENG_PLATFORM_SUFFIX x11)
 set (DENG_AMETHYST_PLATFORM UNIX)
 
 set (DENG_BASE_DIR    "" CACHE STRING "Base directory path (defaults to {prefix}/${DENG_INSTALL_DATA_DIR})")
-set (DENG_LIBRARY_DIR "" CACHE STRINGS "Plugin directory path (defaults to {prefix}/${DENG_INSTALL_PLUGIN_DIR})")
+set (DENG_LIBRARY_DIR "" CACHE STRING "Plugin directory path (defaults to {prefix}/${DENG_INSTALL_PLUGIN_DIR})")
 
 add_definitions (
     -DDENG_X11
