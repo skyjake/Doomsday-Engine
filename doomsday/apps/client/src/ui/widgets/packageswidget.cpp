@@ -688,6 +688,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             mainCallForIdentify.enqueue([this] ()
             {
                 //qDebug() << "Bundles identified, re-populating" << &self;
+                root().window().glActivate();
                 populateEnabled = true;
                 self().populate();
             });
