@@ -38,6 +38,7 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
 , DENG2_OBSERVES(Asset, Deletion)
 {
     ClientPlayer *player;
+    String identifier;
     std::unique_ptr<StateAnimator> animator;
     AnimationVector2 angleOffset { Animation::Linear };
 
@@ -47,6 +48,7 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
 
     void setupAsset(String const &identifier)
     {
+        this->identifier = identifier;
         angleOffset = Vector2f();
 
         if (animator)
@@ -66,6 +68,7 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
         else
         {
             animator.reset();
+            this->identifier.clear();
         }
     }
 
@@ -87,6 +90,11 @@ PlayerWeaponAnimator::PlayerWeaponAnimator(ClientPlayer *plr)
 void PlayerWeaponAnimator::setAsset(String const &identifier)
 {
     d->setupAsset(identifier);
+}
+
+String PlayerWeaponAnimator::assetId() const
+{
+    return d->identifier;
 }
 
 void PlayerWeaponAnimator::stateChanged(state_s const *state)

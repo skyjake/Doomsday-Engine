@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDOOMSDAY_PLAYER_H
@@ -98,6 +98,8 @@ typedef struct ddplayer_s {
 
 #include <de/Record>
 
+class World;
+
 /**
  * Base class for player state: common functionality shared by both the server
  * and the client.
@@ -128,6 +130,8 @@ public:
 
     virtual ~Player();
 
+    virtual void setWorld(World *world);
+
     ddplayer_t &publicData();
     ddplayer_t const &publicData() const;
 
@@ -145,7 +149,7 @@ public:
      * Returns the player's namespace.
      */
     de::Record &info();
-    
+
     Smoother *smoother();
 
     Pinger &pinger();

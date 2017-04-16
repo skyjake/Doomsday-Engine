@@ -22,9 +22,12 @@
 #include "ui/viewcompositor.h"
 #include "def_share.h"
 
+#include <doomsday/world/world.h>
+
 using namespace de;
 
 DENG2_PIMPL(ClientPlayer)
+, DENG2_OBSERVES(World, MapChange)
 {
     ViewCompositor     viewCompositor;
     viewdata_t         viewport;
@@ -44,6 +47,15 @@ DENG2_PIMPL(ClientPlayer)
         zap(clPlayerState);
         zap(demoTimer);
     }
+
+    void worldMapChanged()
+    {
+        // Reset the weapon animator when the map changes.
+        if (playerWeaponAnimator.assetId())
+        {
+            playerWeaponAnimator.setAsset(playerWeaponAnimator.assetId());
+        }
+    }
 };
 
 ClientPlayer::ClientPlayer()
@@ -51,6 +63,15 @@ ClientPlayer::ClientPlayer()
     , recordPaused(false)
     , d(new Impl(this))
 {}
+
+void ClientPlayer::setWorld(World *world)
+{
+    Player::setWorld(world);
+    if (world)
+    {
+        world->audienceForMapChange() += d;
+    }
+}
 
 ViewCompositor &ClientPlayer::viewCompositor()
 {
@@ -99,14 +120,14 @@ DemoTimer &ClientPlayer::demoTimer()
 
 void ClientPlayer::tick(timespan_t elapsed)
 {
-    if(!isInGame()) return;
+    if (!isInGame()) return;
 
     d->playerWeaponAnimator.advanceTime(elapsed);
 }
 
 void ClientPlayer::setWeaponAssetId(String const &id)
 {
-    if(id != d->weaponAssetId)
+    if (id != d->weaponAssetId)
     {
         LOG_RES_VERBOSE("Weapon asset: %s") << id;
         d->weaponAssetId = id;
@@ -117,7 +138,7 @@ void ClientPlayer::setWeaponAssetId(String const &id)
 
 void ClientPlayer::weaponStateChanged(state_t const *state)
 {
-    if(state != d->lastPSpriteState)
+    if (state != d->lastPSpriteState)
     {
         d->lastPSpriteState = state;
         d->playerWeaponAnimator.stateChanged(state);

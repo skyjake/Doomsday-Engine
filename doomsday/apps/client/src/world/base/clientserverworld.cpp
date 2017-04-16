@@ -77,19 +77,13 @@
 #  include "world/contact.h"
 #  include "client/cledgeloop.h"
 #  include "client/clientsubsector.h"
-
-//#  include "Hand"
-//#  include "HueCircle"
 #  include "Lumobj"
-
 #  include "render/viewports.h"  // R_ResetViewer
 #  include "render/rend_fakeradio.h"
 #  include "render/rend_main.h"
 #  include "render/rendersystem.h"
 #  include "render/rendpoly.h"
 #  include "MaterialAnimator"
-
-//#  include "ui/editors/edit_bias.h"
 #  include "ui/progress.h"
 #  include "ui/inputsystem.h"
 #endif

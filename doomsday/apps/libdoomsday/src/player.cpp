@@ -13,15 +13,17 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "doomsday/player.h"
+#include "doomsday/world/world.h"
 
 using namespace de;
 
 DENG2_PIMPL_NOREF(Player)
 {
+    World *world = nullptr;
     ddplayer_t publicData;
     Record info;
     Smoother *smoother = Smoother_New();
@@ -52,6 +54,14 @@ Player::Player()
 
 Player::~Player()
 {}
+
+void Player::setWorld(World *world)
+{
+    if (world)
+    {
+        d->world = world;
+    }
+}
 
 ddplayer_t &Player::publicData()
 {
