@@ -729,7 +729,7 @@ DENG2_PIMPL(PersistentGLWindow)
                     }
                     LOG_GL_VERBOSE("Setting window geometry to ") << next.rect.asText();
                     self().setGeometry(next.rect.left(),  next.rect.top(),
-                                     next.rect.width(), next.rect.height());
+                                       next.rect.width(), next.rect.height());
                     state.windowRect = next.rect;
                     break;
 
@@ -841,10 +841,11 @@ bool PersistentGLWindow::isCentered() const
 
 Rectanglei PersistentGLWindow::windowRect() const
 {
-    if (d->neverShown)
+    if (d->neverShown || isFullScreen() || isMaximized())
     {
-        // If the window hasn't been shown yet, it doesn't have a valid
-        // normal geometry. Use the one defined in the State.
+        // If the window hasn't been shown yet, or it uses a maximized/fullscreen
+        // size, it doesn't have a valid normal geometry. Use the one defined in 
+        // the State.
         return d->state.windowRect;
     }
 
