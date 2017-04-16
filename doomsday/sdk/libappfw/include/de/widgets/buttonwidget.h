@@ -76,6 +76,8 @@ public:
     void setColorTheme(ColorTheme theme);
     ColorTheme colorTheme() const;
 
+    void setTextColor(DotPath const &colorId) override;
+
     /**
      * Text color to use in the Hover state. The default is to use the normal text
      * color of the button (label).
@@ -111,11 +113,10 @@ public:
     Action const *action() const;
 
     State state() const;
-
-    void setShortcutKey(String const &key);
+    void setState(State state);
 
     String shortcutKey() const;
-
+    void setShortcutKey(String const &key);
     bool handleShortcut(KeyEvent const &keyEvent);
 
     // Events.

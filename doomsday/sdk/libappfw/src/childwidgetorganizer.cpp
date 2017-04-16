@@ -149,9 +149,7 @@ DENG2_PIMPL(ChildWidgetOrganizer)
         }
         if (!w) return nullptr; // Unpresentable.
 
-        // Update the widget immediately.
         mapping.insert(&item, w);
-        itemChanged(item);
 
         if (behavior.testFlag(AlwaysAppend) || pos == dataItems->size() - 1)
         {
@@ -178,6 +176,9 @@ DENG2_PIMPL(ChildWidgetOrganizer)
         {
             i->widgetCreatedForItem(*w, item);
         }
+
+        // Update the widget immediately.
+        itemChanged(item);
 
         // Observe.
         w->audienceForDeletion() += this; // in case it's manually deleted

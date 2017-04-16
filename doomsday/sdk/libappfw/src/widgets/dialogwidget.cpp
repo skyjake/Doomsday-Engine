@@ -366,12 +366,16 @@ DENG_GUI_PIMPL(DialogWidget)
             // Highlight the default button(s).
             if (i->role().testFlag(Default))
             {
-                but.setTextColor("dialog.default");
+                but.setTextColor(self().colorTheme() == Normal? "dialog.default" : "inverted.text");
+                if (self().colorTheme() == Normal)
+                {
+                    but.setHoverTextColor("dialog.default", ButtonWidget::ReplaceColor);
+                }
                 but.setText(_E(b) + but.text());
             }
             else
             {
-                but.setTextColor("text");
+                but.setTextColor(self().colorTheme() == Normal? "text" : "inverted.text");
             }
         }
     }

@@ -211,10 +211,13 @@ DENG_GUI_PIMPL(PopupMenuWidget)
 
     void setButtonColors(ButtonWidget &button)
     {
-        bool const hovering = (hover == &button);
+        /*bool const hovering = (hover == &button);
         button.setTextColor(!hovering ^ (colorTheme == Inverted)? "text" : "inverted.text");
         button.setHoverTextColor(!hovering ^ (colorTheme == Inverted)? "inverted.text" : "text",
-                                 ButtonWidget::ReplaceColor);
+                                 ButtonWidget::ReplaceColor);*/
+
+        button.setTextColor     (colorTheme == Normal? "text"          : "inverted.text" );
+        button.setHoverTextColor(colorTheme == Normal? "inverted.text" : "text",         ButtonWidget::ReplaceColor);
     }
 
     void updateItemHitRules()
@@ -487,7 +490,8 @@ void PopupMenuWidget::panelClosing()
     {
         auto &btn = *const_cast<ButtonWidget *>(d->hover);
         d->hover = 0;
-        d->setButtonColors(btn);
+        btn.setState(ButtonWidget::Up);
+        //d->setButtonColors(btn);
         d->updateImageColor(btn);
         //btn.setImageColor(style().colors().colorf(!d->infoStyle? "text" : "inverted.text"));
         requestGeometry();
