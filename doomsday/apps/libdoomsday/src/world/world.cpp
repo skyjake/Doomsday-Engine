@@ -18,8 +18,8 @@
 
 #include "doomsday/world/world.h"
 #include "doomsday/world/materials.h"
-#include "doomsday/doomsdayapp.h"
-#include "doomsday/player.h"
+#include "doomsday/DoomsdayApp"
+#include "doomsday/players.h"
 #include "api_player.h"
 
 #include <de/App>
@@ -50,7 +50,14 @@ DENG2_PIMPL(World)
 DENG2_AUDIENCE_METHOD(World, MapChange)
 
 World::World() : d(new Impl(this))
-{}
+{
+    // Let players know that a world exists.
+    DoomsdayApp::players().forAll([this] (Player &plr)
+    {
+        plr.setWorld(this);
+        return LoopContinue;
+    });
+}
 
 void World::reset()
 {

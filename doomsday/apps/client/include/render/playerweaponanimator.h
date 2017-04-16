@@ -39,6 +39,8 @@ public:
 
     void setAsset(de::String const &identifier);
 
+    de::String assetId() const;
+
     void stateChanged(state_s const *state);
 
     /**

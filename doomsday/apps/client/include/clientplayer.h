@@ -75,6 +75,8 @@ public:
 public:
     ClientPlayer();
 
+    void setWorld(World *world) override;
+
     ViewCompositor &viewCompositor();
 
     viewdata_t &viewport();
