@@ -305,7 +305,7 @@ public:
     Rectanglef normalizedContentRect() const;
 
     void setFont(DotPath const &id);
-    void setTextColor(DotPath const &id);
+    virtual void setTextColor(DotPath const &id);
     void set(Background const &bg);
     void setSaturation(float saturation);
 

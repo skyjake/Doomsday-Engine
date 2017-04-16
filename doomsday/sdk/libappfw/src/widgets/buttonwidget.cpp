@@ -58,13 +58,6 @@ DENG2_OBSERVES(Action, Triggered)
     {
         if (state == st) return;
 
-        if (st == Hover && state == Up)
-        {
-            // Remember the original text color.
-            originalTextColor = self().textColorId();
-            originalTextModColor = self().textModulationColorf();
-        }
-
         State const prev = state;
         state = st;
         animating = true;
@@ -84,7 +77,7 @@ DENG2_OBSERVES(Action, Triggered)
                     self().setTextModulationColorf(originalTextModColor);
                     break;
                 case ReplaceColor:
-                    self().setTextColor(originalTextColor);
+                    setTemporaryTextColor(originalTextColor);
                     break;
                 }
             }
@@ -100,7 +93,7 @@ DENG2_OBSERVES(Action, Triggered)
                     self().setTextModulationColorf(style().colors().colorf(hoverTextColor));
                     break;
                 case ReplaceColor:
-                    self().setTextColor(hoverTextColor);
+                    setTemporaryTextColor(hoverTextColor);
                     break;
                 }
             }
@@ -182,6 +175,13 @@ DENG2_OBSERVES(Action, Triggered)
         }
     }
 
+    void setTemporaryTextColor(DotPath const &id)
+    {
+        DotPath const original = originalTextColor;
+        self().setTextColor(id); // originalTextColor changes...
+        originalTextColor = original;
+    }
+
     DENG2_PIMPL_AUDIENCE(StateChange)
     DENG2_PIMPL_AUDIENCE(Press)
     DENG2_PIMPL_AUDIENCE(Triggered)
@@ -194,6 +194,7 @@ DENG2_AUDIENCE_METHOD(ButtonWidget, Triggered)
 ButtonWidget::ButtonWidget(String const &name) : LabelWidget(name), d(new Impl(this))
 {
     setBehavior(Focusable);
+    setColorTheme(Normal);
 }
 
 void ButtonWidget::useInfoStyle(bool yes)
@@ -211,36 +212,40 @@ void ButtonWidget::setColorTheme(ColorTheme theme)
     auto bg = background();
 
     d->colorTheme = theme;
+    setTextModulationColorf(Vector4f(1, 1, 1, 1));
+    d->originalTextModColor = textModulationColorf();
     if (theme == Inverted)
     {
         d->bgType = Background::GradientFrameWithRoundedFill;
         if (bg.type == Background::GradientFrame) bg.type = d->bgType;
-        d->originalTextColor = "inverted.text";
+        setTextColor("inverted.text");
         setHoverTextColor("inverted.text", ReplaceColor);
         setBorderColor("inverted.text");
         setBackgroundColor("inverted.background");
-        setImageColor(style().colors().colorf("inverted.text"));
     }
     else
     {
         d->bgType = Background::GradientFrame;
         if (bg.type == Background::GradientFrameWithRoundedFill) bg.type = d->bgType;
-        d->originalTextColor = "text";
+        setTextColor("text");
         setHoverTextColor("text", ReplaceColor);
         setBorderColor("text");
         setBackgroundColor("background");
-        setImageColor(style().colors().colorf("text"));
     }
     set(bg);
-    setTextColor(d->originalTextColor);
-    d->originalTextModColor = Vector4f(1, 1, 1, 1);
-    setTextModulationColorf(d->originalTextModColor);
+    setImageColor(textColorf());
     updateStyle();
 }
 
 GuiWidget::ColorTheme ButtonWidget::colorTheme() const
 {
     return d->colorTheme;
+}
+
+void ButtonWidget::setTextColor(DotPath const &colorId)
+{
+    LabelWidget::setTextColor(colorId);
+    d->originalTextColor = colorId;
 }
 
 void ButtonWidget::setHoverTextColor(DotPath const &hoverTextId, HoverColorMode mode)
@@ -309,6 +314,11 @@ void ButtonWidget::trigger()
 ButtonWidget::State ButtonWidget::state() const
 {
     return d->state;
+}
+
+void ButtonWidget::setState(State state)
+{
+    d->setState(state);
 }
 
 void ButtonWidget::setShortcutKey(String const &key)
