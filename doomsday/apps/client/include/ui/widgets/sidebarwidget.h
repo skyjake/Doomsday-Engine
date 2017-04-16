@@ -19,10 +19,11 @@
 #ifndef DENG_CLIENT_UI_SIDEBARWIDGET_H
 #define DENG_CLIENT_UI_SIDEBARWIDGET_H
 
+#include <de/ButtonWidget>
+#include <de/ConstantRule>
 #include <de/PanelWidget>
 #include <de/ScrollAreaWidget>
 #include <de/SequentialLayout>
-#include <de/ButtonWidget>
 
 /**
  * Editor for changing model asset parameters.
@@ -46,8 +47,8 @@ protected:
      * @param minWidth     Minimum width.
      * @param extraHeight  Height in addition to title and layout.
      */
-    void updateSidebarLayout(de::Rule const &minWidth,
-                             de::Rule const &extraHeight);
+    void updateSidebarLayout(de::Rule const &minWidth    = de::ConstantRule::zero(),
+                             de::Rule const &extraHeight = de::ConstantRule::zero());
 
     void preparePanelForOpening();
     void panelDismissed();
