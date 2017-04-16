@@ -162,7 +162,7 @@ DENG2_PIMPL(GuiRootWidget)
 
     void initAtlas()
     {
-        if (atlas.isNull())
+        if (atlas.isNull() || atlas->totalSize() == Atlas::Size())
         {
             atlas.reset(AtlasTexture::newWithKdTreeAllocator(
                             Atlas::BackingStore | Atlas::AllowDefragment,
