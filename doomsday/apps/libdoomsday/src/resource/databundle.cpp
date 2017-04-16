@@ -570,7 +570,16 @@ DENG2_PIMPL(DataBundle), public Lockable
      */
     void parseSnowberryInfo(File const &infoFile, Record &meta)
     {
-        Info info(infoFile);
+        Info info;
+        String parseErrorMsg;
+        try
+        {
+            info.parse(infoFile);
+        }
+        catch (Error const &er)
+        {
+            parseErrorMsg = er.asText();
+        }
         auto const &rootBlock = info.root();
 
         // Tag it as a Snowberry package.
@@ -627,6 +636,13 @@ DENG2_PIMPL(DataBundle), public Lockable
                     meta.set("notes", notes);
                 }
             }
+        }
+
+        if (parseErrorMsg)
+        {
+            meta.appendUniqueWord(VAR_TAGS, "error");
+            meta.set("notes", QObject::tr("There is an error in the metadata of this package: %1")
+                .arg(parseErrorMsg) + "\n\n" + meta.gets("notes", ""));
         }
     }
 
