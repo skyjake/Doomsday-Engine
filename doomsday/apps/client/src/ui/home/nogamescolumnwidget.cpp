@@ -69,7 +69,7 @@ void NoGamesColumnWidget::browseForDataFiles()
                     App::config().gets("resource.iwadFolder", ""));
     dlg.setFileMode(QFileDialog::Directory);
     dlg.setReadOnly(true);
-    dlg.setNameFilter("*.wad");
+    //dlg.setNameFilter("*.wad");
     dlg.setLabelText(QFileDialog::Accept, tr("Select"));
     bool reload = false;
     if (dlg.exec())
