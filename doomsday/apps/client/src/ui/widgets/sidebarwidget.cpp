@@ -34,7 +34,8 @@ DENG_GUI_PIMPL(SidebarWidget)
 , DENG2_OBSERVES(DoomsdayApp, GameChange)
 {
     DialogContentStylist stylist;
-    ScrollAreaWidget *container;
+    GuiWidget *container;
+    ScrollAreaWidget *sidebarContent;
     IndirectRule *firstColumnWidth; ///< Shared by all groups.
     LabelWidget *title;
     ButtonWidget *close;
@@ -46,17 +47,30 @@ DENG_GUI_PIMPL(SidebarWidget)
     {
         DoomsdayApp::app().audienceForGameChange() += this;
 
+        container = new GuiWidget;
+
         // The contents of the editor will scroll.
-        container = new ScrollAreaWidget;
-        container->enableIndicatorDraw(true);
-        stylist.setContainer(*container);
+        sidebarContent = new ScrollAreaWidget;
+        sidebarContent->enableIndicatorDraw(true);
+        stylist.setContainer(*sidebarContent);
+        container->add(sidebarContent);
 
+        // Set up the editor UI.
+        container->add(title = new LabelWidget);
+        title->margins().set(rule("dialog.gap"));
+        title->margins().setLeft("gap");
+        title->setFont("title");
+        title->setTextColor("accent");
+        title->setSizePolicy(ui::Expand, ui::Expand);
+
+        // Button for closing the sidebar.
         container->add(close = new ButtonWidget);
-
+        close->margins().set(rule("dialog.gap"));
         close->setImage(style().images().image("close.ringless"));
-        close->setImageColor(style().colors().colorf("accent"));
-        close->setOverrideImageSize(style().fonts().font("title").height().valuei());
+        close->setImageColor(title->textColorf());
+        close->setOverrideImageSize(title->font().height().valuei());
         close->setAction(new SignalAction(thisPublic, SLOT(close())));
+        close->setSizePolicy(ui::Expand, ui::Expand);
     }
 
     ~Impl()
@@ -84,26 +98,29 @@ SidebarWidget::SidebarWidget(String const &titleText, String const &name)
     setAnimationStyle(Smooth);
     set(Background(style().colors().colorf("background")).withSolidFillOpacity(1));
 
-    // Set up the editor UI.
-    d->title = LabelWidget::newWithText(titleText, d->container);
-    d->title->setFont("title");
-    d->title->setTextColor("accent");
+    d->title->setText(titleText);
 
     // Basic layout.
-    RuleRectangle const &area = d->container->contentRule();
     d->title->rule()
-            .setInput(Rule::Top,  area.top())
-            .setInput(Rule::Left, area.left());
+            .setInput(Rule::Top,  d->container->rule().top())
+            .setInput(Rule::Left, d->container->rule().left());
     d->close->rule()
-            .setInput(Rule::Right,  area.right())
+            .setInput(Rule::Right,  d->container->rule().right())
             .setInput(Rule::Bottom, d->title->rule().bottom());
 
-    d->layout.reset(new SequentialLayout(area.left(), d->title->rule().bottom(), Down));
-
-    d->container->rule().setSize(d->container->contentRule().width() +
-                                 d->container->margins().width(),
-                                 rule().height());
+    d->sidebarContent->rule()
+        .setInput(Rule::Left,   d->container->rule().left())
+        .setInput(Rule::Width,  d->sidebarContent->contentRule().width() +
+                                d->sidebarContent->margins().width())
+        .setInput(Rule::Top,    d->title->rule().bottom())
+        .setInput(Rule::Bottom, rule().bottom());
+    
+    d->container->rule().setSize(d->sidebarContent->rule().width(),
+                                 rule().height());    
     setContent(d->container);
+
+    RuleRectangle const &area = d->sidebarContent->contentRule();
+    d->layout.reset(new SequentialLayout(area.left(), area.top(), Down));
 
     // Install the editor.
     ClientWindow::main().setSidebar(ClientWindow::RightEdge, this);
@@ -122,7 +139,7 @@ LabelWidget &SidebarWidget::title()
 Rule const &SidebarWidget::maximumOfAllGroupFirstColumns() const
 {
     Rule const *max = nullptr;
-    foreach (GuiWidget *child, d->container->childWidgets())
+    foreach (GuiWidget *child, d->sidebarContent->childWidgets())
     {
         if (auto *g = child->maybeAs<VariableGroupEditor>())
         {
@@ -143,7 +160,7 @@ IndirectRule &SidebarWidget::firstColumnWidth()
 
 ScrollAreaWidget &SidebarWidget::containerWidget()
 {
-    return *d->container;
+    return *d->sidebarContent;
 }
 
 ButtonWidget &SidebarWidget::closeButton()
@@ -162,15 +179,12 @@ void SidebarWidget::panelDismissed()
     ClientWindow::main().unsetSidebar(ClientWindow::RightEdge);
 }
 
-void SidebarWidget::updateSidebarLayout(de::Rule const &minWidth,
-                                        de::Rule const &extraHeight)
+void SidebarWidget::updateSidebarLayout(Rule const &minWidth,
+                                        Rule const &extraHeight)
 {
     d->firstColumnWidth->setSource(maximumOfAllGroupFirstColumns());
 
-    d->container->setContentSize(OperatorRule::maximum(minWidth,
-                                                       d->layout->width(),
-                                                       rule("sidebar.width")),
-                                 d->title->rule().height() +
-                                 d->layout->height() +
-                                 extraHeight);
+    d->sidebarContent->setContentSize(
+            OperatorRule::maximum(minWidth, d->layout->width(), rule("sidebar.width")),
+            d->layout->height() + extraHeight);
 }
