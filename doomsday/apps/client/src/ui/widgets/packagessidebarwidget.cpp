@@ -35,7 +35,6 @@ DENG_GUI_PIMPL(PackagesSidebarWidget)
         GuiWidget *container = &self().containerWidget();
 
         container->add(browser = new PackagesWidget);
-        browser->setFilterEditorMinimumY(Const(0));
         browser->setRightClickToOpenContextMenu(true);
         browser->rule().setInput(Rule::Width, rule("sidebar.width"));
 
@@ -58,7 +57,7 @@ PackagesSidebarWidget::PackagesSidebarWidget()
 {
     // Button for refreshing the available packages.
     auto *refreshButton = new ButtonWidget;
-    containerWidget().add(refreshButton);
+    closeButton().parentGuiWidget()->add(refreshButton);
     refreshButton->setSizePolicy(ui::Expand, ui::Fixed);
     refreshButton->rule()
             .setInput(Rule::Right,  closeButton().rule().left())
@@ -69,6 +68,8 @@ PackagesSidebarWidget::PackagesSidebarWidget()
     {
         d->browser->refreshPackages();
     });
+
+    d->browser->setFilterEditorMinimumY(closeButton().rule().bottom());
 
     layout() << *d->browser;
 
