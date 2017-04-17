@@ -1065,6 +1065,15 @@ bool ClientWindow::hasSidebar(SidebarLocation location) const
     return d->sidebar != 0;
 }
 
+GuiWidget &ClientWindow::sidebar(SidebarLocation location) const
+{
+    DENG2_ASSERT(location == RightEdge);
+    DENG2_UNUSED(location);
+    DENG2_ASSERT(d->sidebar != nullptr);
+
+    return *d->sidebar;
+}
+
 bool ClientWindow::handleFallbackEvent(Event const &event)
 {
     return d->handleFallbackEvent(event);

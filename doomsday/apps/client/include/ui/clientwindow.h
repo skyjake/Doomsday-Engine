@@ -103,6 +103,8 @@ public:
 
     bool hasSidebar(SidebarLocation location = RightEdge) const;
 
+    de::GuiWidget &sidebar(SidebarLocation location = RightEdge) const;
+
     /**
      * Sets the operating mode of the window. In Busy mode, the normal
      * widgets of the window will be replaced with a single BusyWidget.

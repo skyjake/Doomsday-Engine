@@ -133,6 +133,7 @@
 #  include "ui/inputsystem.h"
 #  include "ui/busyvisual.h"
 #  include "ui/sys_input.h"
+#  include "ui/widgets/sidebarwidget.h"
 #  include "ui/widgets/taskbarwidget.h"
 #  include "ui/home/homewidget.h"
 
@@ -705,6 +706,24 @@ D_CMD(TaskBar)
     else
     {
         win.taskBar().close();
+    }
+    return true;
+}
+
+D_CMD(PackagesSidebar)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    if (!DoomsdayApp::isGameLoaded()) return false;
+
+    ClientWindow &win = ClientWindow::main();
+    if (!win.hasSidebar())
+    {
+        win.taskBar().openPackagesSidebar();
+    }
+    else
+    {
+        win.sidebar().as<SidebarWidget>().close();
     }
     return true;
 }
@@ -2461,6 +2480,7 @@ void DD_ConsoleRegister()
     C_CMD_FLAGS("contoggle",      "",     OpenClose,    CMDF_NO_DEDICATED);
     C_CMD      ("taskbar",        "",     TaskBar);
     C_CMD      ("tutorial",       "",     Tutorial);
+    C_CMD      ("packages",       "",     PackagesSidebar);
 
     /// @todo Move to UI module.
     Con_TransitionRegister();
