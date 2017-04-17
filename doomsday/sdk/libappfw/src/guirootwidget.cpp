@@ -164,6 +164,7 @@ DENG2_PIMPL(GuiRootWidget)
     {
         if (atlas.isNull() || atlas->totalSize() == Atlas::Size())
         {
+            window->glActivate();
             atlas.reset(AtlasTexture::newWithKdTreeAllocator(
                             Atlas::BackingStore | Atlas::AllowDefragment,
                             GLTexture::maximumSize().min(GLTexture::Size(4096, 4096))));
@@ -350,6 +351,7 @@ void GuiRootWidget::handleEventAsFallback(Event const &)
 
 void GuiRootWidget::loadCommonTextures()
 {
+    window().glActivate();
     d->initBankContents();
 }
 
