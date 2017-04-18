@@ -1517,8 +1517,11 @@ static int radiusBlast(thinker_t* th, void* context)
     mobj_t* mo = (mobj_t *) th;
     coord_t dist;
 
-    if(mo == params->source || (mo->flags2 & MF2_BOSS))
+    if(mo == params->source || (mo->flags2 & MF2_BOSS) || (mo->flags3 & MF3_NOBLAST))
+    {
+        // Unaffected.
         return false; // Continue iteration.
+    }
 
     if(mo->type == MT_POISONCLOUD || // poison cloud.
        mo->type == MT_HOLY_FX || // holy fx.
@@ -1532,7 +1535,8 @@ static int radiusBlast(thinker_t* th, void* context)
     }
     else if(!(mo->flags & MF_COUNTKILL) && !mo->player &&
             !(mo->flags & MF_MISSILE))
-    {   // Must be monster, player, or missile.
+    {
+        // Must be monster, player, or missile.
         return false; // Continue iteration.
     }
 

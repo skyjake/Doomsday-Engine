@@ -159,6 +159,7 @@ class MapStateWriter;
 
 #define MF3_NOINFIGHT       0x00000001  // Mobj will never be targeted for in-fighting
 #define MF3_CLIENTACTION    0x00000002  // States' action funcs are executed by client
+#define MF3_NOBLAST         0x00000004  // Never affected by A_BlastRadius.
 
 typedef enum dirtype_s {
     DI_EAST,
