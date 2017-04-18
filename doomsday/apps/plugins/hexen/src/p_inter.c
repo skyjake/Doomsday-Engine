@@ -2180,19 +2180,18 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damageP
         case MT_POISONCLOUD:
             if(target->player)
             {
-                int                 damageDone = 0;
-
+                int damageDone = 0;
                 if(target->player->poisonCount < 4)
                 {
                     damageDone = P_PoisonDamage(target->player, source, 15 + (P_Random() & 15), false);  // Don't play painsound
                     P_PoisonPlayer(target->player, source, 50);
                     S_StartSound(SFX_PLAYER_POISONCOUGH, target);
                 }
-
                 return damageDone;
             }
             else if(!(target->flags & MF_COUNTKILL))
-            {   // Only damage monsters/players with the poison cloud.
+            {
+                // Only damage monsters/players with the poison cloud.
                 return 0;
             }
             break;
@@ -2351,7 +2350,7 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damageP
             }
             else
             {
-                statenum_t          state;
+                statenum_t state;
 
                 target->flags |= MF_JUSTHIT; // fight back!
 

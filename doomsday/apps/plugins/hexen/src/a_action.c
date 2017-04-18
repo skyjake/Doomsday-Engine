@@ -506,9 +506,9 @@ void C_DECL A_FogMove(mobj_t* actor)
     actor->mom[MY] = speed * FIX2FLT(finesine[an]);
 }
 
-void C_DECL A_PoisonBagInit(mobj_t* actor)
+void C_DECL A_PoisonBagInit(mobj_t *actor)
 {
-    mobj_t*             mo;
+    mobj_t *mo;
 
     if((mo = P_SpawnMobjXYZ(MT_POISONCLOUD, actor->origin[VX], actor->origin[VY],
                            actor->origin[VZ] + 28, P_Random() << 24, 0)))
@@ -521,6 +521,12 @@ void C_DECL A_PoisonBagInit(mobj_t* actor)
         mo->radius = 20;
         mo->height = 30;
         mo->flags &= ~MF_NOCLIP;
+
+        // Vanilla quirk: poison clouds spawned by mushrooms cannot be blasted (issue 911).
+        if (actor->type == MT_ZPOISONSHROOM)
+        {
+            mo->flags3 |= MF3_NOBLAST;
+        }
     }
 }
 
