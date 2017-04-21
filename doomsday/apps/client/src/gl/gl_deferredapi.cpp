@@ -49,17 +49,20 @@ static void GL_CALL deng_glDeleteTextures(GLsizei num, GLuint const *names)
 
 static void GL_CALL deng_glFogi(GLenum p, GLint v)
 {
-    LIBGUI_GL.glFogi(p, v);
+    //LIBGUI_GL.glFogi(p, v);
+    qDebug() << "glFogi not implemented";
 }
 
 static void GL_CALL deng_glFogf(GLenum p, GLfloat v)
 {
-    LIBGUI_GL.glFogf(p, v);
+    //LIBGUI_GL.glFogf(p, v);
+    qDebug() << "glFogf not implemented";
 }
 
 static void GL_CALL deng_glFogfv(GLenum p, GLfloat const *v)
 {
-    LIBGUI_GL.glFogfv(p, v);
+    //LIBGUI_GL.glFogfv(p, v);
+    qDebug() << "glFogfv not implemented";
 }
 
 #define GL_CALL1(form, func, x) \

@@ -54,23 +54,23 @@ dbyte devNoSprites;
 
 static inline void drawQuad(dgl_vertex_t *v, dgl_color_t *c, dgl_texcoord_t *tc)
 {
-    LIBGUI_GL.glBegin(GL_QUADS);
-        LIBGUI_GL.glColor4ubv(c[0].rgba);
-        LIBGUI_GL.glTexCoord2fv(tc[0].st);
-        LIBGUI_GL.glVertex3fv(v[0].xyz);
+    DGL_Begin(DGL_QUADS);
+        DGL_Color4ubv(c[0].rgba);
+        DGL_TexCoord2fv(0, tc[0].st);
+        DGL_Vertex3fv(v[0].xyz);
 
-        LIBGUI_GL.glColor4ubv(c[1].rgba);
-        LIBGUI_GL.glTexCoord2fv(tc[1].st);
-        LIBGUI_GL.glVertex3fv(v[1].xyz);
+        DGL_Color4ubv(c[1].rgba);
+        DGL_TexCoord2fv(0, tc[1].st);
+        DGL_Vertex3fv(v[1].xyz);
 
-        LIBGUI_GL.glColor4ubv(c[2].rgba);
-        LIBGUI_GL.glTexCoord2fv(tc[2].st);
-        LIBGUI_GL.glVertex3fv(v[2].xyz);
+        DGL_Color4ubv(c[2].rgba);
+        DGL_TexCoord2fv(0, tc[2].st);
+        DGL_Vertex3fv(v[2].xyz);
 
-        LIBGUI_GL.glColor4ubv(c[3].rgba);
-        LIBGUI_GL.glTexCoord2fv(tc[3].st);
-        LIBGUI_GL.glVertex3fv(v[3].xyz);
-    LIBGUI_GL.glEnd();
+        DGL_Color4ubv(c[3].rgba);
+        DGL_TexCoord2fv(0, tc[3].st);
+        DGL_Vertex3fv(v[3].xyz);
+    DGL_End();
 }
 
 void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
@@ -116,7 +116,8 @@ void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
         GL_BindTextureUnmanaged(renderTextures ? parms.modTex : 0,
                                 gl::ClampToEdge, gl::ClampToEdge);
 
-        LIBGUI_GL.glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, parms.modColor);
+        //LIBGUI_GL.glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, parms.modColor);
+        qDebug() << __FILE__ << __LINE__ << "was using glTexEnv";
 
         // The actual texture.
         LIBGUI_GL.glActiveTexture(IS_MUL ? GL_TEXTURE1 : GL_TEXTURE0);
@@ -127,15 +128,15 @@ void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
     else
     {
         GL_ModulateTexture(1);
-        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+        DGL_Enable(DGL_TEXTURE_2D);
         GL_BindTexture(tex);
         normal = 0;
     }
 
     GL_BlendMode(parms.blendMode);
 
-    GLenum normalTarget = normal? GL_TEXTURE1 : GL_TEXTURE0;
-    GLenum dynTarget    =    dyn? GL_TEXTURE1 : GL_TEXTURE0;
+    byte normalTarget = normal? 1 : 0;
+    byte dynTarget    =    dyn? 1 : 0;
 
     // Draw one quad. This is obviously not a very efficient way to render
     // lots of masked walls, but since 3D models and sprites must be
@@ -143,43 +144,43 @@ void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
     // done about this.
     if(withDyn)
     {
-        LIBGUI_GL.glBegin(GL_QUADS);
-            LIBGUI_GL.glColor4fv(parms.vertices[0].color);
-            LIBGUI_GL.glMultiTexCoord2f(normalTarget, parms.texCoord[0][0], parms.texCoord[1][1]);
+        DGL_Begin(DGL_QUADS);
+            DGL_Color4fv(parms.vertices[0].color);
+            DGL_TexCoord2f(normalTarget, parms.texCoord[0][0], parms.texCoord[1][1]);
 
-            LIBGUI_GL.glMultiTexCoord2f(dynTarget, parms.modTexCoord[0][0], parms.modTexCoord[1][1]);
+            DGL_TexCoord2f(dynTarget, parms.modTexCoord[0][0], parms.modTexCoord[1][1]);
 
-            LIBGUI_GL.glVertex3f(parms.vertices[0].pos[0],
-                       parms.vertices[0].pos[2],
-                       parms.vertices[0].pos[1]);
+            DGL_Vertex3f(parms.vertices[0].pos[0],
+                         parms.vertices[0].pos[2],
+                         parms.vertices[0].pos[1]);
 
-            LIBGUI_GL.glColor4fv(parms.vertices[1].color);
-            LIBGUI_GL.glMultiTexCoord2f(normalTarget, parms.texCoord[0][0], parms.texCoord[0][1]);
+            DGL_Color4fv(parms.vertices[1].color);
+            DGL_TexCoord2f(normalTarget, parms.texCoord[0][0], parms.texCoord[0][1]);
 
-            LIBGUI_GL.glMultiTexCoord2f(dynTarget, parms.modTexCoord[0][0], parms.modTexCoord[0][1]);
+            DGL_TexCoord2f(dynTarget, parms.modTexCoord[0][0], parms.modTexCoord[0][1]);
 
-            LIBGUI_GL.glVertex3f(parms.vertices[1].pos[0],
-                       parms.vertices[1].pos[2],
-                       parms.vertices[1].pos[1]);
+            DGL_Vertex3f(parms.vertices[1].pos[0],
+                         parms.vertices[1].pos[2],
+                         parms.vertices[1].pos[1]);
 
-            LIBGUI_GL.glColor4fv(parms.vertices[3].color);
-            LIBGUI_GL.glMultiTexCoord2f(normalTarget, parms.texCoord[1][0], parms.texCoord[0][1]);
+            DGL_Color4fv(parms.vertices[3].color);
+            DGL_TexCoord2f(normalTarget, parms.texCoord[1][0], parms.texCoord[0][1]);
 
-            LIBGUI_GL.glMultiTexCoord2f(dynTarget, parms.modTexCoord[1][0], parms.modTexCoord[0][1]);
+            DGL_TexCoord2f(dynTarget, parms.modTexCoord[1][0], parms.modTexCoord[0][1]);
 
-            LIBGUI_GL.glVertex3f(parms.vertices[3].pos[0],
-                       parms.vertices[3].pos[2],
-                       parms.vertices[3].pos[1]);
+            DGL_Vertex3f(parms.vertices[3].pos[0],
+                         parms.vertices[3].pos[2],
+                         parms.vertices[3].pos[1]);
 
-            LIBGUI_GL.glColor4fv(parms.vertices[2].color);
-            LIBGUI_GL.glMultiTexCoord2f(normalTarget, parms.texCoord[1][0], parms.texCoord[1][1]);
+            DGL_Color4fv(parms.vertices[2].color);
+            DGL_TexCoord2f(normalTarget, parms.texCoord[1][0], parms.texCoord[1][1]);
 
-            LIBGUI_GL.glMultiTexCoord2f(dynTarget, parms.modTexCoord[1][0], parms.modTexCoord[1][1]);
+            DGL_TexCoord2f(dynTarget, parms.modTexCoord[1][0], parms.modTexCoord[1][1]);
 
-            LIBGUI_GL.glVertex3f(parms.vertices[2].pos[0],
-                       parms.vertices[2].pos[2],
-                       parms.vertices[2].pos[1]);
-        LIBGUI_GL.glEnd();
+            DGL_Vertex3f(parms.vertices[2].pos[0],
+                         parms.vertices[2].pos[2],
+                         parms.vertices[2].pos[1]);
+        DGL_End();
 
         // Restore normal GL state.
         GL_SelectTexUnits(1);
@@ -187,38 +188,38 @@ void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
     }
     else
     {
-        LIBGUI_GL.glBegin(GL_QUADS);
-            LIBGUI_GL.glColor4fv(parms.vertices[0].color);
-            LIBGUI_GL.glTexCoord2f(parms.texCoord[0][0], parms.texCoord[1][1]);
+        DGL_Begin(DGL_QUADS);
+            DGL_Color4fv(parms.vertices[0].color);
+            DGL_TexCoord2f(0, parms.texCoord[0][0], parms.texCoord[1][1]);
 
-            LIBGUI_GL.glVertex3f(parms.vertices[0].pos[0],
+            DGL_Vertex3f(parms.vertices[0].pos[0],
                        parms.vertices[0].pos[2],
                        parms.vertices[0].pos[1]);
 
-            LIBGUI_GL.glColor4fv(parms.vertices[1].color);
-            LIBGUI_GL.glTexCoord2f(parms.texCoord[0][0], parms.texCoord[0][1]);
+            DGL_Color4fv(parms.vertices[1].color);
+            DGL_TexCoord2f(0, parms.texCoord[0][0], parms.texCoord[0][1]);
 
-            LIBGUI_GL.glVertex3f(parms.vertices[1].pos[0],
+            DGL_Vertex3f(parms.vertices[1].pos[0],
                        parms.vertices[1].pos[2],
                        parms.vertices[1].pos[1]);
 
-            LIBGUI_GL.glColor4fv(parms.vertices[3].color);
-            LIBGUI_GL.glTexCoord2f(parms.texCoord[1][0], parms.texCoord[0][1]);
+            DGL_Color4fv(parms.vertices[3].color);
+            DGL_TexCoord2f(0, parms.texCoord[1][0], parms.texCoord[0][1]);
 
-            LIBGUI_GL.glVertex3f(parms.vertices[3].pos[0],
+            DGL_Vertex3f(parms.vertices[3].pos[0],
                        parms.vertices[3].pos[2],
                        parms.vertices[3].pos[1]);
 
-            LIBGUI_GL.glColor4fv(parms.vertices[2].color);
-            LIBGUI_GL.glTexCoord2f(parms.texCoord[1][0], parms.texCoord[1][1]);
+            DGL_Color4fv(parms.vertices[2].color);
+            DGL_TexCoord2f(0, parms.texCoord[1][0], parms.texCoord[1][1]);
 
-            LIBGUI_GL.glVertex3f(parms.vertices[2].pos[0],
+            DGL_Vertex3f(parms.vertices[2].pos[0],
                        parms.vertices[2].pos[2],
                        parms.vertices[2].pos[1]);
-        LIBGUI_GL.glEnd();
+        DGL_End();
     }
 
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    DGL_Disable(DGL_TEXTURE_2D);
     GL_BlendMode(BM_NORMAL);
 }
 
@@ -302,7 +303,7 @@ void Rend_DrawPSprite(rendpspriteparams_t const &parms)
     if(::renderTextures == 1)
     {
         GL_SetPSprite(parms.mat, 0, 0);
-        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+        DGL_Enable(DGL_TEXTURE_2D);
     }
     else if(::renderTextures == 2)
     {
@@ -314,7 +315,7 @@ void Rend_DrawPSprite(rendpspriteparams_t const &parms)
         matAnimator.prepare();
 
         GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
-        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+        DGL_Enable(DGL_TEXTURE_2D);
     }
 
     //  0---1
@@ -361,27 +362,27 @@ void Rend_DrawPSprite(rendpspriteparams_t const &parms)
     tc[3].st[0] = parms.texOffset[0] *  (parms.texFlip[0]? 1:0);
     tc[3].st[1] = parms.texOffset[1] * (!parms.texFlip[1]? 1:0);
 
-    LIBGUI_GL.glBegin(GL_QUADS);
-        LIBGUI_GL.glColor4ubv(c[0].rgba);
-        LIBGUI_GL.glTexCoord2fv(tc[0].st);
-        LIBGUI_GL.glVertex2fv(v1);
+    DGL_Begin(DGL_QUADS);
+        DGL_Color4ubv(c[0].rgba);
+        DGL_TexCoord2fv(0, tc[0].st);
+        DGL_Vertex2fv(v1);
 
-        LIBGUI_GL.glColor4ubv(c[1].rgba);
-        LIBGUI_GL.glTexCoord2fv(tc[1].st);
-        LIBGUI_GL.glVertex2fv(v2);
+        DGL_Color4ubv(c[1].rgba);
+        DGL_TexCoord2fv(0, tc[1].st);
+        DGL_Vertex2fv(v2);
 
-        LIBGUI_GL.glColor4ubv(c[2].rgba);
-        LIBGUI_GL.glTexCoord2fv(tc[2].st);
-        LIBGUI_GL.glVertex2fv(v3);
+        DGL_Color4ubv(c[2].rgba);
+        DGL_TexCoord2fv(0, tc[2].st);
+        DGL_Vertex2fv(v3);
 
-        LIBGUI_GL.glColor4ubv(c[3].rgba);
-        LIBGUI_GL.glTexCoord2fv(tc[3].st);
-        LIBGUI_GL.glVertex2fv(v4);
-    LIBGUI_GL.glEnd();
+        DGL_Color4ubv(c[3].rgba);
+        DGL_TexCoord2fv(0, tc[3].st);
+        DGL_Vertex2fv(v4);
+    DGL_End();
 
     if(renderTextures)
     {
-        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+        DGL_Disable(DGL_TEXTURE_2D);
     }
 }
 
@@ -434,7 +435,7 @@ void Rend_DrawSprite(vissprite_t const &spr)
     if(renderTextures)
     {
         GL_BindTexture(tex);
-        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+        DGL_Enable(DGL_TEXTURE_2D);
     }
     else
     {
@@ -465,14 +466,14 @@ void Rend_DrawSprite(vissprite_t const &spr)
 
 /*#if _DEBUG
     // Draw the surface normal.
-    LIBGUI_GL.glBegin(GL_LINES);
-    LIBGUI_GL.glColor4f(1, 0, 0, 1);
-    LIBGUI_GL.glVertex3f(spriteCenter[0], spriteCenter[2], spriteCenter[1]);
-    LIBGUI_GL.glColor4f(1, 0, 0, 0);
-    LIBGUI_GL.glVertex3f(spriteCenter[0] + surfaceNormal[0] * 10,
+    DGL_Begin(DGL_LINES);
+    DGL_Color4f(1, 0, 0, 1);
+    DGL_Vertex3f(spriteCenter[0], spriteCenter[2], spriteCenter[1]);
+    DGL_Color4f(1, 0, 0, 0);
+    DGL_Vertex3f(spriteCenter[0] + surfaceNormal[0] * 10,
                spriteCenter[2] + surfaceNormal[2] * 10,
                spriteCenter[1] + surfaceNormal[1] * 10);
-    LIBGUI_GL.glEnd();
+    DGL_End();
 #endif*/
 
     // All sprite vertices are co-plannar, so just copy the surface normal.
@@ -503,11 +504,11 @@ void Rend_DrawSprite(vissprite_t const &spr)
     {
         // We must set up a modelview transformation matrix.
         restoreMatrix = true;
-        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-        LIBGUI_GL.glPushMatrix();
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
 
         // Rotate around the center of the sprite.
-        LIBGUI_GL.glTranslatef(spriteCenter[0], spriteCenter[2], spriteCenter[1]);
+        DGL_Translatef(spriteCenter[0], spriteCenter[2], spriteCenter[1]);
         if(!spr.pose.viewAligned)
         {
             dfloat s_dx = v1[0] - v2[0];
@@ -530,7 +531,7 @@ void Rend_DrawSprite(vissprite_t const &spr)
                                                          spriteAngle + maxSpriteAngle);
 
                     // Rotate along the sprite edge.
-                    LIBGUI_GL.glRotatef(turnAngle, s_dx, 0, s_dy);
+                    DGL_Rotatef(turnAngle, s_dx, 0, s_dy);
                 }
             }
             else
@@ -538,15 +539,15 @@ void Rend_DrawSprite(vissprite_t const &spr)
                 // Restricted view plane alignment.
                 // This'll do, for now... Really it should notice both the
                 // sprite angle and vpitch.
-                LIBGUI_GL.glRotatef(vpitch * .5f, s_dx, 0, s_dy);
+                DGL_Rotatef(vpitch * .5f, s_dx, 0, s_dy);
             }
         }
         else
         {
             // Normal rotation perpendicular to the view plane.
-            LIBGUI_GL.glRotatef(vpitch, viewsidex, 0, viewsidey);
+            DGL_Rotatef(vpitch, viewsidex, 0, viewsidey);
         }
-        LIBGUI_GL.glTranslatef(-spriteCenter[0], -spriteCenter[2], -spriteCenter[1]);
+        DGL_Translatef(-spriteCenter[0], -spriteCenter[2], -spriteCenter[1]);
     }
 
     // Need to change blending modes?
@@ -560,7 +561,6 @@ void Rend_DrawSprite(vissprite_t const &spr)
        !(parm.blendMode == BM_NORMAL || parm.blendMode == BM_ZEROALPHA))
     {
         restoreZ = true;
-        //LIBGUI_GL.glDepthMask(GL_FALSE);
         GLState::current().setDepthWrite(false).apply();
     }
 
@@ -600,23 +600,21 @@ void Rend_DrawSprite(vissprite_t const &spr)
 
     if(renderTextures)
     {
-        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+        DGL_Disable(DGL_TEXTURE_2D);
     }
 
     if(devMobjVLights && spr.light.vLightListIdx)
     {
         // Draw the vlight vectors, for debug.
-        //LIBGUI_GL.glDisable(GL_DEPTH_TEST);
-        //LIBGUI_GL.glDisable(GL_CULL_FACE);
         GLState::push()
                 .setDepthTest(false)
                 .setCull(gl::None)
                 .apply();
 
-        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-        LIBGUI_GL.glPushMatrix();
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
 
-        LIBGUI_GL.glTranslatef(spr.pose.origin[0], spr.pose.origin[2], spr.pose.origin[1]);
+        DGL_Translatef(spr.pose.origin[0], spr.pose.origin[2], spr.pose.origin[1]);
 
         coord_t const distFromViewer = de::abs(spr.pose.distance);
         ClientApp::renderSystem().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (VectorLightData const &vlight)
@@ -628,18 +626,16 @@ void Rend_DrawSprite(vissprite_t const &spr)
             return LoopContinue;
         });
 
-        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-        LIBGUI_GL.glPopMatrix();
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PopMatrix();
 
-        //LIBGUI_GL.glEnable(GL_CULL_FACE);
-        //LIBGUI_GL.glEnable(GL_DEPTH_TEST);
         GLState::pop().apply();
     }
 
     // Need to restore the original modelview matrix?
     if(restoreMatrix)
     {
-        LIBGUI_GL.glPopMatrix();
+        DGL_PopMatrix();
     }
 
     // Change back to normal blending?
@@ -651,7 +647,6 @@ void Rend_DrawSprite(vissprite_t const &spr)
     // Enable Z-writing again?
     if(restoreZ)
     {
-        //LIBGUI_GL.glDepthMask(GL_TRUE);
         GLState::current().setDepthWrite(true).apply();
     }
 }

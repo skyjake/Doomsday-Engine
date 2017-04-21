@@ -246,7 +246,7 @@ static inline void enableTexUnit(int id)
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + id);
-    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+    DGL_Enable(DGL_TEXTURE_2D);
 }
 
 static inline void disableTexUnit(int id)
@@ -255,7 +255,7 @@ static inline void disableTexUnit(int id)
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + id);
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    DGL_Disable(DGL_TEXTURE_2D);
 
     // Implicit disabling of texcoord array.
     disableArrays(0, 0, 1 << id);
@@ -325,19 +325,19 @@ static void drawArrayElement(int index)
         if(!arrays[AR_TEXCOORD0 + i].enabled) continue;
 
         Vector2f const &texCoord = ((Vector2f const *)arrays[AR_TEXCOORD0 + i].data)[index];
-        LIBGUI_GL.glMultiTexCoord2f(GL_TEXTURE0 + i, texCoord.x, texCoord.y);
+        DGL_TexCoord2f(byte(i), texCoord.x, texCoord.y);
     }
 
     if(arrays[AR_COLOR].enabled)
     {
         Vector4ub const &colorCoord = ((Vector4ub const *) arrays[AR_COLOR].data)[index];
-        LIBGUI_GL.glColor4ub(colorCoord.x, colorCoord.y, colorCoord.z, colorCoord.w);
+        DGL_Color4ub(colorCoord.x, colorCoord.y, colorCoord.z, colorCoord.w);
     }
 
     if(arrays[AR_VERTEX].enabled)
     {
         Vector3f const &posCoord = ((Vector3f const *) arrays[AR_VERTEX].data)[index];
-        LIBGUI_GL.glVertex3f(posCoord.x, posCoord.y, posCoord.z);
+        DGL_Vertex3f(posCoord.x, posCoord.y, posCoord.z);
     }
 }
 
@@ -398,20 +398,20 @@ static void drawPrimitives(rendcmd_t mode, FrameModel::Primitives const &primiti
     foreach(FrameModel::Primitive const &prim, primitives)
     {
         // The type of primitive depends on the sign.
-        LIBGUI_GL.glBegin(prim.triFan? GL_TRIANGLE_FAN : GL_TRIANGLE_STRIP);
+        DGL_Begin(prim.triFan? DGL_TRIANGLE_FAN : DGL_TRIANGLE_STRIP);
 
         foreach(FrameModel::Primitive::Element const &elem, prim.elements)
         {
             if(mode != RC_OTHER_COORDS)
             {
-                LIBGUI_GL.glTexCoord2f(elem.texCoord.x, elem.texCoord.y);
+                DGL_TexCoord2f(0, elem.texCoord.x, elem.texCoord.y);
             }
 
             drawArrayElement(elem.index);
         }
 
         // The primitive is complete.
-        LIBGUI_GL.glEnd();
+        DGL_End();
     }
 }
 
@@ -749,11 +749,11 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     }
 
     // Setup transformation.
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPushMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
 
     // Model space => World space
-    LIBGUI_GL.glTranslatef(spr.pose.origin[VX] + spr.pose.srvo[VX] +
+    DGL_Translatef(spr.pose.origin[VX] + spr.pose.srvo[VX] +
                    de::lerp(mf->offset.x, mfNext->offset.x, inter),
                  spr.pose.origin[VZ] + spr.pose.srvo[VZ] +
                    de::lerp(mf->offset.y, mfNext->offset.y, inter),
@@ -763,26 +763,26 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     if(spr.pose.extraYawAngle || spr.pose.extraPitchAngle)
     {
         // Sky models have an extra rotation.
-        LIBGUI_GL.glScalef(1, 200 / 240.0f, 1);
-        LIBGUI_GL.glRotatef(spr.pose.extraYawAngle, 1, 0, 0);
-        LIBGUI_GL.glRotatef(spr.pose.extraPitchAngle, 0, 0, 1);
-        LIBGUI_GL.glScalef(1, 240 / 200.0f, 1);
+        DGL_Scalef(1, 200 / 240.0f, 1);
+        DGL_Rotatef(spr.pose.extraYawAngle, 1, 0, 0);
+        DGL_Rotatef(spr.pose.extraPitchAngle, 0, 0, 1);
+        DGL_Scalef(1, 240 / 200.0f, 1);
     }
 
     // Model rotation.
-    LIBGUI_GL.glRotatef(spr.pose.viewAligned? spr.pose.yawAngleOffset   : spr.pose.yaw,   0, 1, 0);
-    LIBGUI_GL.glRotatef(spr.pose.viewAligned? spr.pose.pitchAngleOffset : spr.pose.pitch, 0, 0, 1);
+    DGL_Rotatef(spr.pose.viewAligned? spr.pose.yawAngleOffset   : spr.pose.yaw,   0, 1, 0);
+    DGL_Rotatef(spr.pose.viewAligned? spr.pose.pitchAngleOffset : spr.pose.pitch, 0, 0, 1);
 
     // Scaling and model space offset.
-    LIBGUI_GL.glScalef(de::lerp(mf->scale.x, mfNext->scale.x, inter),
+    DGL_Scalef(de::lerp(mf->scale.x, mfNext->scale.x, inter),
              de::lerp(mf->scale.y, mfNext->scale.y, inter),
              de::lerp(mf->scale.z, mfNext->scale.z, inter));
     if(spr.pose.extraScale)
     {
         // Particle models have an extra scale.
-        LIBGUI_GL.glScalef(spr.pose.extraScale, spr.pose.extraScale, spr.pose.extraScale);
+        DGL_Scalef(spr.pose.extraScale, spr.pose.extraScale, spr.pose.extraScale);
     }
-    LIBGUI_GL.glTranslatef(smf.offset.x, smf.offset.y, smf.offset.z);
+    DGL_Translatef(smf.offset.x, smf.offset.y, smf.offset.z);
 
     // Determine the suitable LOD.
     if(mdl.lodCount() > 1 && rend_model_lod != 0)
@@ -946,7 +946,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
         //glDisable(GL_CULL_FACE);
         GLState::current().setCull(gl::None).apply();
     }
-    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+    DGL_Enable(DGL_TEXTURE_2D);
 
     FrameModel::Primitives const &primitives =
         activeLod? activeLod->primitives : mdl.primitives();
@@ -1027,7 +1027,8 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
 
         // Multiply by shininess.
         float colorv1[] = { color.x * color.w, color.y * color.w, color.z * color.w, color.w };
-        LIBGUI_GL.glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, colorv1);
+        //LIBGUI_GL.glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, colorv1);
+        qDebug() << __FILE__ << __LINE__ << "TexEnv was being used";
 
         LIBGUI_GL.glActiveTexture(GL_TEXTURE0);
         GL_BindTexture(renderTextures? skinTexture : 0);
@@ -1040,9 +1041,9 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     }
 
     // We're done!
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPopMatrix();
+    DGL_Disable(DGL_TEXTURE_2D);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 
     // Normally culling is always enabled.
     if(smf.testFlag(MFF_TWO_SIDED))
@@ -1105,10 +1106,10 @@ void Rend_DrawModel(vissprite_t const &spr)
                 .setCull(gl::None)
                 .apply();
 
-        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-        LIBGUI_GL.glPushMatrix();
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
 
-        LIBGUI_GL.glTranslatef(spr.pose.origin[0], spr.pose.origin[2], spr.pose.origin[1]);
+        DGL_Translatef(spr.pose.origin[0], spr.pose.origin[2], spr.pose.origin[1]);
 
         coord_t const distFromViewer = de::abs(spr.pose.distance);
         ClientApp::renderSystem().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (VectorLightData const &vlight)
@@ -1120,8 +1121,8 @@ void Rend_DrawModel(vissprite_t const &spr)
             return LoopContinue;
         });
 
-        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-        LIBGUI_GL.glPopMatrix();
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PopMatrix();
 
         //glEnable(GL_CULL_FACE);
         //glEnable(GL_DEPTH_TEST);

@@ -126,12 +126,12 @@ void UI_MixColors(ui_color_t* a, ui_color_t* b, ui_color_t* dest, float amount)
 
 void UI_SetColorA(ui_color_t* color, float alpha)
 {
-    LIBGUI_GL.glColor4f(color->red, color->green, color->blue, alpha);
+    DGL_Color4f(color->red, color->green, color->blue, alpha);
 }
 
 void UI_SetColor(ui_color_t* color)
 {
-    LIBGUI_GL.glColor3f(color->red, color->green, color->blue);
+    DGL_Color3f(color->red, color->green, color->blue);
 }
 
 void UI_TextOutEx2(const char* text, const Point2Raw* origin, ui_color_t* color, float alpha,
@@ -165,7 +165,7 @@ void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, fl
 
     GLState::push();
 
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    DGL_Disable(DGL_TEXTURE_2D);
     if (alpha < 1.0f)
     {
         GL_BlendMode(BM_NORMAL);
@@ -176,24 +176,24 @@ void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, fl
         GLState::current().setBlend(false).apply();
     }
 
-    LIBGUI_GL.glColor4f(0, 0, 0, alpha);
-    LIBGUI_GL.glBegin(GL_QUADS);
+    DGL_Color4f(0, 0, 0, alpha);
+    DGL_Begin(DGL_QUADS);
         // Top color.
         //glColor4f(dark->red * mul, dark->green * mul, dark->blue * mul, alpha);
         //glTexCoord2f(0, 0);
-        LIBGUI_GL.glVertex2f(origin.x, origin.y);
+        DGL_Vertex2f(origin.x, origin.y);
         //glTexCoord2f(1, 0);
-        LIBGUI_GL.glVertex2f(origin.x + dimensions.width, origin.y);
+        DGL_Vertex2f(origin.x + dimensions.width, origin.y);
 
         // Bottom color.
         //glColor4f(light->red * mul, light->green * mul, light->blue * mul, alpha);
         //glTexCoord2f(1, 1);
-        LIBGUI_GL.glVertex2f(origin.x + dimensions.width, origin.y + dimensions.height);
+        DGL_Vertex2f(origin.x + dimensions.width, origin.y + dimensions.height);
         //glTexCoord2f(0, 1);
-        LIBGUI_GL.glVertex2f(0, origin.y + dimensions.height);
-    LIBGUI_GL.glEnd();
+        DGL_Vertex2f(0, origin.y + dimensions.height);
+    DGL_End();
 
     //glEnable(GL_BLEND);
     GLState::pop().apply();
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    DGL_Disable(DGL_TEXTURE_2D);
 }

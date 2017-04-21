@@ -50,28 +50,28 @@ public:
     /// Extension availability bits.
     struct Extensions
     {
-        duint32 ARB_draw_instanced : 1;
-        duint32 ARB_instanced_arrays : 1;
-        duint32 ARB_texture_env_combine : 1;
-        duint32 ARB_texture_non_power_of_two : 1;
+        //duint32 ARB_draw_instanced : 1;
+        //duint32 ARB_instanced_arrays : 1;
+        //duint32 ARB_texture_env_combine : 1;
+        //duint32 ARB_texture_non_power_of_two : 1;
 
-        duint32 EXT_blend_subtract : 1;
-        duint32 EXT_framebuffer_blit : 1;
-        duint32 EXT_framebuffer_multisample : 1;
-        duint32 EXT_framebuffer_object : 1;
-        duint32 EXT_packed_depth_stencil : 1;
+        //duint32 EXT_blend_subtract : 1;
+        //duint32 EXT_framebuffer_blit : 1;
+        //duint32 EXT_framebuffer_multisample : 1;
+        //duint32 EXT_framebuffer_object : 1;
+        //duint32 EXT_packed_depth_stencil : 1;
         duint32 EXT_texture_compression_s3tc : 1;
         duint32 EXT_texture_filter_anisotropic : 1;
-        duint32 EXT_timer_query : 1;
+        //duint32 EXT_timer_query : 1;
 
         // Vendor-specific extensions:
-        duint32 ATI_texture_env_combine3 : 1;
+        //duint32 ATI_texture_env_combine3 : 1;
         duint32 NV_framebuffer_multisample_coverage : 1;
-        duint32 NV_texture_env_combine4 : 1;
-        duint32 SGIS_generate_mipmap : 1;
+        //duint32 NV_texture_env_combine4 : 1;
+        //duint32 SGIS_generate_mipmap : 1;
 
 #ifdef WIN32
-        duint32 Windows_ARB_multisample : 1;
+        //duint32 Windows_ARB_multisample : 1;
         duint32 Windows_EXT_swap_control : 1;
 #endif
 
@@ -108,11 +108,11 @@ public:
     static QOpenGLFunctions_Doomsday &api();
 
     // Extensions:
-    static QOpenGLExtension_ARB_draw_instanced          *ARB_draw_instanced();
-    static QOpenGLExtension_ARB_instanced_arrays        *ARB_instanced_arrays();
-    static QOpenGLExtension_EXT_framebuffer_blit        *EXT_framebuffer_blit();
-    static QOpenGLExtension_EXT_framebuffer_multisample *EXT_framebuffer_multisample();
-    static QOpenGLExtension_EXT_framebuffer_object      *EXT_framebuffer_object();
+    //static QOpenGLExtension_ARB_draw_instanced          *ARB_draw_instanced();
+    //static QOpenGLExtension_ARB_instanced_arrays        *ARB_instanced_arrays();
+    //static QOpenGLExtension_EXT_framebuffer_blit        *EXT_framebuffer_blit();
+    //static QOpenGLExtension_EXT_framebuffer_multisample *EXT_framebuffer_multisample();
+    //static QOpenGLExtension_EXT_framebuffer_object      *EXT_framebuffer_object();
     static QOpenGLExtension_NV_framebuffer_multisample_coverage
                                                         *NV_framebuffer_multisample_coverage();
 

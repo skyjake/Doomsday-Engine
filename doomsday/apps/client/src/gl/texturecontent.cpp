@@ -464,6 +464,18 @@ static GLint ChooseTextureFormat(dgltexformat_t format, dd_bool allowCompression
 static dd_bool uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels,
     int width,  int height, int genMipmaps)
 {
+    GLenum const properties[8] =
+    {
+       GL_PACK_ROW_LENGTH,
+       GL_PACK_ALIGNMENT,
+       GL_PACK_SKIP_ROWS,
+       GL_PACK_SKIP_PIXELS,
+       GL_UNPACK_ROW_LENGTH,
+       GL_UNPACK_ALIGNMENT,
+       GL_UNPACK_SKIP_ROWS,
+       GL_UNPACK_SKIP_PIXELS,
+    };
+
     const int packRowLength = 0, packAlignment = 1, packSkipRows = 0, packSkipPixels = 0;
     const int unpackRowLength = 0, unpackAlignment = 1, unpackSkipRows = 0, unpackSkipPixels = 0;
     int mipLevel = 0;
@@ -493,20 +505,31 @@ static dd_bool uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
+    auto &GL = LIBGUI_GL;
+
     // Automatic mipmap generation?
-    if(GLInfo::extensions().SGIS_generate_mipmap && genMipmaps)
-        LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
+    if (genMipmaps)
+    {
+        GL.glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+    }
 
-    LIBGUI_GL.glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
-    LIBGUI_GL.glPixelStorei(GL_PACK_ROW_LENGTH, (GLint)packRowLength);
-    LIBGUI_GL.glPixelStorei(GL_PACK_ALIGNMENT, (GLint)packAlignment);
-    LIBGUI_GL.glPixelStorei(GL_PACK_SKIP_ROWS, (GLint)packSkipRows);
-    LIBGUI_GL.glPixelStorei(GL_PACK_SKIP_PIXELS, (GLint)packSkipPixels);
-    LIBGUI_GL.glPixelStorei(GL_UNPACK_ROW_LENGTH, (GLint)unpackRowLength);
-    LIBGUI_GL.glPixelStorei(GL_UNPACK_ALIGNMENT, (GLint)unpackAlignment);
-    LIBGUI_GL.glPixelStorei(GL_UNPACK_SKIP_ROWS, (GLint)unpackSkipRows);
-    LIBGUI_GL.glPixelStorei(GL_UNPACK_SKIP_PIXELS, (GLint)unpackSkipPixels);
+    //LIBGUI_GL.glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
+    GLint oldPixelStore[8];
+    for (int i = 0; i < 8; ++i)
+    {
+        GL.glGetIntegerv(properties[i], &oldPixelStore[i]);
+    }
 
+    GL.glPixelStorei(GL_PACK_ROW_LENGTH, (GLint)packRowLength);
+    GL.glPixelStorei(GL_PACK_ALIGNMENT, (GLint)packAlignment);
+    GL.glPixelStorei(GL_PACK_SKIP_ROWS, (GLint)packSkipRows);
+    GL.glPixelStorei(GL_PACK_SKIP_PIXELS, (GLint)packSkipPixels);
+    GL.glPixelStorei(GL_UNPACK_ROW_LENGTH, (GLint)unpackRowLength);
+    GL.glPixelStorei(GL_UNPACK_ALIGNMENT, (GLint)unpackAlignment);
+    GL.glPixelStorei(GL_UNPACK_SKIP_ROWS, (GLint)unpackSkipRows);
+    GL.glPixelStorei(GL_UNPACK_SKIP_PIXELS, (GLint)unpackSkipPixels);
+
+#if 0
     if(genMipmaps && !GLInfo::extensions().SGIS_generate_mipmap)
     {   // Build all mipmap levels.
         int neww, newh, bpp, w, h;
@@ -563,12 +586,19 @@ static dd_bool uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels
             M_Free(image);
     }
     else
+#endif
     {
         LIBGUI_GL.glTexImage2D(GL_TEXTURE_2D, mipLevel, (GLint)glFormat, (GLsizei)width,
             (GLsizei)height, 0, (GLint)loadFormat, GL_UNSIGNED_BYTE, pixels);
     }
 
-    LIBGUI_GL.glPopClientAttrib();
+    //LIBGUI_GL.glPopClientAttrib();
+
+    for (int i = 0; i < 8; ++i)
+    {
+        GL.glPixelStorei(properties[i], oldPixelStore[i]);
+    }
+
     DENG_ASSERT(!Sys_GLCheckError());
 
     return true;

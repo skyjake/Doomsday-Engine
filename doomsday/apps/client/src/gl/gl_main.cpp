@@ -245,8 +245,8 @@ void GL_EarlyInit()
 
     // We are simple people; two texture units is enough.
     numTexUnits = de::min(GLInfo::limits().maxTexUnits, MAX_TEX_UNITS);
-    envModAdd = (GLInfo::extensions().NV_texture_env_combine4 ||
-                 GLInfo::extensions().ATI_texture_env_combine3);
+    //envModAdd = (GLInfo::extensions().NV_texture_env_combine4 ||
+    //             GLInfo::extensions().ATI_texture_env_combine3);
 
     GL_InitDeferredTask();
 
@@ -362,27 +362,27 @@ void GL_Init2DState()
             .apply();
 
     //glDisable(GL_TEXTURE_1D);
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    DGL_Disable(DGL_TEXTURE_2D);
     LIBGUI_GL.glDisable(GL_TEXTURE_CUBE_MAP);
 
     // The projection matrix.
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glLoadIdentity();
-    LIBGUI_GL.glOrtho(0, 320, 200, 0, -1, 1);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 320, 200, 0, -1, 1);
 
     // Default state for the white fog is off.
     fogParams.usingFog = false;
     LIBGUI_GL.glDisable(GL_FOG);
-    LIBGUI_GL.glFogi(GL_FOG_MODE, (fogModeDefault == 0 ? GL_LINEAR :
-                                   fogModeDefault == 1 ? GL_EXP    : GL_EXP2));
-    LIBGUI_GL.glFogf(GL_FOG_START, DEFAULT_FOG_START);
-    LIBGUI_GL.glFogf(GL_FOG_END, DEFAULT_FOG_END);
-    LIBGUI_GL.glFogf(GL_FOG_DENSITY, DEFAULT_FOG_DENSITY);
+    Deferred_glFogi(GL_FOG_MODE, (fogModeDefault == 0 ? GL_LINEAR :
+                                  fogModeDefault == 1 ? GL_EXP    : GL_EXP2));
+    Deferred_glFogf(GL_FOG_START, DEFAULT_FOG_START);
+    Deferred_glFogf(GL_FOG_END, DEFAULT_FOG_END);
+    Deferred_glFogf(GL_FOG_DENSITY, DEFAULT_FOG_DENSITY);
     fogParams.fogColor[0] = DEFAULT_FOG_COLOR_RED;
     fogParams.fogColor[1] = DEFAULT_FOG_COLOR_GREEN;
     fogParams.fogColor[2] = DEFAULT_FOG_COLOR_BLUE;
     fogParams.fogColor[3] = 1;
-    LIBGUI_GL.glFogfv(GL_FOG_COLOR, fogParams.fogColor);
+    Deferred_glFogfv(GL_FOG_COLOR, fogParams.fogColor);
 }
 
 Rangef GL_DepthClipRange()
@@ -397,8 +397,8 @@ void GL_ProjectionMatrix()
 
     // Actually shift the player viewpoint
     // We'd like to have a left-handed coordinate system.
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glLoadMatrixf(Rend_GetProjectionMatrix().values());
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_LoadMatrix(Rend_GetProjectionMatrix().values());
 }
 
 void GL_SetupFogFromMapInfo(Record const *mapInfo)
@@ -451,7 +451,7 @@ void GL_SelectTexUnits(dint count)
     for(dint i = numTexUnits - 1; i >= count; i--)
     {
         LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + i);
-        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+        DGL_Disable(DGL_TEXTURE_2D);
     }
 
     // Enable the selected units.
@@ -460,7 +460,7 @@ void GL_SelectTexUnits(dint count)
         if(i >= numTexUnits) continue;
 
         LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + i);
-        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+        DGL_Enable(DGL_TEXTURE_2D);
     }
 }
 

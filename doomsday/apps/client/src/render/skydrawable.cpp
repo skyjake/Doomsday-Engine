@@ -151,37 +151,37 @@ struct Hemisphere
     {
         GL_SetNoTexture();
 
-        LIBGUI_GL.glColor3f(color.x, color.y, color.z);
+        DGL_Color3f(color.x, color.y, color.z);
 
         // Draw the cap.
-        LIBGUI_GL.glBegin(GL_TRIANGLE_FAN);
+        DGL_Begin(DGL_TRIANGLE_FAN);
         for(int c = 0; c < columns; ++c)
         {
             Vector3f const &vtx = vertex(0, c);
-            LIBGUI_GL.glVertex3f(vtx.x, vtx.y, vtx.z);
+            DGL_Vertex3f(vtx.x, vtx.y, vtx.z);
         }
-        LIBGUI_GL.glEnd();
+        DGL_End();
 
         // Are we doing a colored fadeout?
         if(!drawFadeOut) return;
 
         // We must fill the background for the top row since it'll be translucent.
-        LIBGUI_GL.glBegin(GL_TRIANGLE_STRIP);
+        DGL_Begin(DGL_TRIANGLE_STRIP);
         Vector3f const *vtx = &vertex(0, 0);
-        LIBGUI_GL.glVertex3f(vtx->x, vtx->y, vtx->z);
+        DGL_Vertex3f(vtx->x, vtx->y, vtx->z);
         int c = 0;
         for(; c < columns; ++c)
         {
             // One step down.
             vtx = &vertex(1, c);
-            LIBGUI_GL.glVertex3f(vtx->x, vtx->y, vtx->z);
+            DGL_Vertex3f(vtx->x, vtx->y, vtx->z);
             // And one step right.
             vtx = &vertex(0, c + 1);
-            LIBGUI_GL.glVertex3f(vtx->x, vtx->y, vtx->z);
+            DGL_Vertex3f(vtx->x, vtx->y, vtx->z);
         }
         vtx = &vertex(1, c);
-        LIBGUI_GL.glVertex3f(vtx->x, vtx->y, vtx->z);
-        LIBGUI_GL.glEnd();
+        DGL_Vertex3f(vtx->x, vtx->y, vtx->z);
+        DGL_End();
     }
 
     void draw(SphereComponent hemisphere, Sky const &sky, dint firstActiveLayer,
@@ -196,9 +196,9 @@ struct Hemisphere
         if (yflip)
         {
             // The lower hemisphere must be flipped.
-            LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-            LIBGUI_GL.glPushMatrix();
-            LIBGUI_GL.glScalef(1.0f, -1.0f, 1.0f);
+            DGL_MatrixMode(DGL_MODELVIEW);
+            DGL_PushMatrix();
+            DGL_Scalef(1.0f, -1.0f, 1.0f);
         }
 
         // First draw the cap and the background for fadeouts, if needed.
@@ -224,20 +224,20 @@ struct Hemisphere
                 layerTex = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
                 GL_BindTexture(layerTex);
 
-                LIBGUI_GL.glEnable(GL_TEXTURE_2D);
-                LIBGUI_GL.glMatrixMode(GL_TEXTURE);
-                LIBGUI_GL.glPushMatrix();
-                LIBGUI_GL.glLoadIdentity();
+                DGL_Enable(DGL_TEXTURE_2D);
+                DGL_MatrixMode(DGL_TEXTURE);
+                DGL_PushMatrix();
+                DGL_LoadIdentity();
                 Vector2ui const &texSize = layerTex->base().dimensions();
                 if (texSize.x > 0)
                 {
-                    LIBGUI_GL.glTranslatef(ldata.offset / texSize.x, 0, 0);
-                    LIBGUI_GL.glScalef(1024.f / texSize.x, 1, 1);
+                    DGL_Translatef(ldata.offset / texSize.x, 0, 0);
+                    DGL_Scalef(1024.f / texSize.x, 1, 1);
                 }
                 if (yflip)
                 {
-                    LIBGUI_GL.glScalef(1, -1, 1);
-                    LIBGUI_GL.glTranslatef(0, -1, 0);
+                    DGL_Scalef(1, -1, 1);
+                    DGL_Translatef(0, -1, 0);
                 }
             }
             else
@@ -249,25 +249,25 @@ struct Hemisphere
     svtx = &vertex(r_, c_); \
     if (layerTex) \
     { \
-       LIBGUI_GL.glTexCoord2f((c_) / float(columns), (r_) / float(rows)); \
+       DGL_TexCoord2f(0, (c_) / float(columns), (r_) / float(rows)); \
     } \
     if (drawFadeOut) \
     { \
-        if ((r_) == 0) LIBGUI_GL.glColor4f(1, 1, 1, 0); \
-        else           LIBGUI_GL.glColor3f(1, 1, 1); \
+        if ((r_) == 0) DGL_Color4f(1, 1, 1, 0); \
+        else           DGL_Color3f(1, 1, 1); \
     } \
     else \
     { \
-        if ((r_) == 0) LIBGUI_GL.glColor3f(0, 0, 0); \
-        else           LIBGUI_GL.glColor3f(1, 1, 1); \
+        if ((r_) == 0) DGL_Color3f(0, 0, 0); \
+        else           DGL_Color3f(1, 1, 1); \
     } \
-    LIBGUI_GL.glVertex3f(svtx->x, svtx->y, svtx->z); \
+    DGL_Vertex3f(svtx->x, svtx->y, svtx->z); \
 }
 
             Vector3f const *svtx;
             for (dint r = 0; r < rows; ++r)
             {
-                LIBGUI_GL.glBegin(GL_TRIANGLE_STRIP);
+                DGL_Begin(DGL_TRIANGLE_STRIP);
                 WRITESKYVERTEX(r, 0);
                 WRITESKYVERTEX(r + 1, 0);
                 for (dint c = 1; c <= columns; ++c)
@@ -275,14 +275,14 @@ struct Hemisphere
                     WRITESKYVERTEX(r, c);
                     WRITESKYVERTEX(r + 1, c);
                 }
-                LIBGUI_GL.glEnd();
+                DGL_End();
             }
 
             if (layerTex)
             {
-                LIBGUI_GL.glMatrixMode(GL_TEXTURE);
-                LIBGUI_GL.glPopMatrix();
-                LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+                DGL_MatrixMode(DGL_TEXTURE);
+                DGL_PopMatrix();
+                DGL_Disable(DGL_TEXTURE_2D);
             }
 
 #undef WRITESKYVERTEX
@@ -290,8 +290,8 @@ struct Hemisphere
 
         if (yflip)
         {
-            LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-            LIBGUI_GL.glPopMatrix();
+            DGL_MatrixMode(DGL_MODELVIEW);
+            DGL_PopMatrix();
         }
     }
 
@@ -426,17 +426,17 @@ DENG2_PIMPL(SkyDrawable)
                 .apply();
 
         // Setup a proper matrix.
-        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-        LIBGUI_GL.glPushMatrix();
-        LIBGUI_GL.glTranslatef(vOrigin.x, vOrigin.y, vOrigin.z);
-        LIBGUI_GL.glScalef(sphereDistance, sphereDistance, sphereDistance);
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
+        DGL_Translatef(vOrigin.x, vOrigin.y, vOrigin.z);
+        DGL_Scalef(sphereDistance, sphereDistance, sphereDistance);
 
         // Always draw both hemispheres.
         hemisphere.draw(Hemisphere::LowerHemisphere, *sky, firstActiveLayer, layers);
         hemisphere.draw(Hemisphere::UpperHemisphere, *sky, firstActiveLayer, layers);
 
-        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-        LIBGUI_GL.glPopMatrix();
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PopMatrix();
 
         // Restore assumed default GL state.
         //glEnable(GL_CULL_FACE);
@@ -458,11 +458,11 @@ DENG2_PIMPL(SkyDrawable)
                 .apply();
         LIBGUI_GL.glClear(GL_DEPTH_BUFFER_BIT);
 
-        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-        LIBGUI_GL.glPushMatrix();
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
 
         // Setup basic translation.
-        LIBGUI_GL.glTranslatef(vOrigin.x, vOrigin.y, vOrigin.z);
+        DGL_Translatef(vOrigin.x, vOrigin.y, vOrigin.z);
 
         for(int i = 0; i < MAX_MODELS; ++i)
         {
@@ -507,8 +507,8 @@ DENG2_PIMPL(SkyDrawable)
             Rend_DrawModel(vis);
         }
 
-        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-        LIBGUI_GL.glPopMatrix();
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PopMatrix();
 
         // We don't want that anything in the world geometry interferes with what was
         // drawn in the sky.
@@ -678,12 +678,12 @@ void SkyDrawable::draw(Animator const *animator) const
     // Only drawn when at least one layer is active.
     if(d->firstActiveLayer < 0) return;
 
-    if(fogParams.usingFog) LIBGUI_GL.glEnable(GL_FOG);
+    if(fogParams.usingFog) DGL_Enable(DGL_FOG);
 
     d->drawSphere();
     d->drawModels(animator);
 
-    if(fogParams.usingFog) LIBGUI_GL.glDisable(GL_FOG);
+    if(fogParams.usingFog) DGL_Disable(DGL_FOG);
 }
 
 MaterialVariantSpec const &SkyDrawable::layerMaterialSpec(bool masked) // static

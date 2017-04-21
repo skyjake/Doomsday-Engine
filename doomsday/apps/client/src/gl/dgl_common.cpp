@@ -38,6 +38,7 @@
 
 using namespace de;
 
+#if 0
 /**
  * Requires a texture environment mode that can add and multiply.
  * Nvidia's and ATI's appropriate extensions are supported, other cards will
@@ -113,15 +114,20 @@ static void envModMultiTex(int activate)
     // This is a single-pass mode. The alpha should remain unmodified
     // during the light stage.
     if(activate)
-    {   // Replace: primAlpha.
+    {
+        // Replace: primAlpha.
         LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
         LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
         LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
     }
 }
+#endif
 
 void GL_ModulateTexture(int mode)
 {
+    qDebug() << "GL_ModulateTexture: TexEnv not available; mode" << mode;
+
+#if 0
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
@@ -305,6 +311,7 @@ void GL_ModulateTexture(int mode)
     default:
         break;
     }
+#endif
 }
 
 /*void GL_BlendOp(int op)
@@ -375,7 +382,8 @@ dd_bool DGL_GetIntegerv(int name, int *v)
     switch(name)
     {
     case DGL_MODULATE_ADD_COMBINE:
-        *v = GLInfo::extensions().NV_texture_env_combine4 || GLInfo::extensions().ATI_texture_env_combine3;
+        qDebug() << "DGL_GetIntegerv: tex env not available";
+        //*v = GLInfo::extensions().NV_texture_env_combine4 || GLInfo::extensions().ATI_texture_env_combine3;
         break;
 
     case DGL_SCISSOR_TEST:
@@ -675,9 +683,9 @@ void DGL_MatrixMode(int mode)
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
     DENG_ASSERT(mode == DGL_PROJECTION || mode == DGL_TEXTURE || mode == DGL_MODELVIEW);
 
-    LIBGUI_GL.glMatrixMode(mode == DGL_PROJECTION ? GL_PROJECTION :
-                 mode == DGL_TEXTURE ? GL_TEXTURE :
-                 GL_MODELVIEW);
+//    LIBGUI_GL.glMatrixMode(mode == DGL_PROJECTION ? GL_PROJECTION :
+//                 mode == DGL_TEXTURE ? GL_TEXTURE :
+//                 GL_MODELVIEW);
 }
 
 #undef DGL_PushMatrix
@@ -686,7 +694,7 @@ void DGL_PushMatrix(void)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glPushMatrix();
+    DGL_PushMatrix();
 
 #if _DEBUG
     if(LIBGUI_GL.glGetError() == GL_STACK_OVERFLOW)
@@ -768,12 +776,7 @@ void DGL_PopMatrix(void)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glPopMatrix();
-
-#if _DEBUG
-    if(LIBGUI_GL.glGetError() == GL_STACK_UNDERFLOW)
-        App_Error("DG_PopMatrix: Stack underflow.\n");
-#endif
+    //DGL_PopMatrix();
 }
 
 #undef DGL_LoadIdentity
@@ -782,7 +785,13 @@ void DGL_LoadIdentity(void)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glLoadIdentity();
+    //DGL_LoadIdentity();
+}
+
+#undef DGL_LoadMatrix
+void DGL_LoadMatrix(float const *matrix4x4)
+{
+    // TODO: replace matrix in stack
 }
 
 #undef DGL_Translatef
@@ -791,7 +800,7 @@ void DGL_Translatef(float x, float y, float z)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glTranslatef(x, y, z);
+    //DGL_Translatef(x, y, z);
 }
 
 #undef DGL_Rotatef
@@ -800,7 +809,7 @@ void DGL_Rotatef(float angle, float x, float y, float z)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glRotatef(angle, x, y, z);
+    //DGL_Rotatef(angle, x, y, z);
 }
 
 #undef DGL_Scalef
@@ -809,7 +818,7 @@ void DGL_Scalef(float x, float y, float z)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glScalef(x, y, z);
+    //DGL_Scalef(x, y, z);
 }
 
 #undef DGL_Ortho
@@ -818,7 +827,7 @@ void DGL_Ortho(float left, float top, float right, float bottom, float znear, fl
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glOrtho(left, right, bottom, top, znear, zfar);
+    //DGL_Ortho(left, right, bottom, top, znear, zfar);
 }
 
 #undef DGL_DeleteTextures
@@ -873,7 +882,7 @@ DENG_EXTERN_C void DGL_Color3fv(const float* vec);
 DENG_EXTERN_C void DGL_Color4f(float r, float g, float b, float a);
 DENG_EXTERN_C void DGL_Color4fv(const float* vec);
 DENG_EXTERN_C void DGL_TexCoord2f(byte target, float s, float t);
-DENG_EXTERN_C void DGL_TexCoord2fv(byte target, float* vec);
+DENG_EXTERN_C void DGL_TexCoord2fv(byte target, float const *vec);
 DENG_EXTERN_C void DGL_Vertex2f(float x, float y);
 DENG_EXTERN_C void DGL_Vertex2fv(const float* vec);
 DENG_EXTERN_C void DGL_Vertex3f(float x, float y, float z);
@@ -923,15 +932,12 @@ DENG_DECLARE_API(GL) =
     DGL_PushMatrix,
     DGL_PopMatrix,
     DGL_LoadIdentity,
+    DGL_LoadMatrix,
     DGL_Translatef,
     DGL_Rotatef,
     DGL_Scalef,
     DGL_Begin,
     DGL_End,
-    DGL_NewList,
-    DGL_EndList,
-    DGL_CallList,
-    DGL_DeleteLists,
     DGL_SetNoMaterial,
     DGL_SetMaterialUI,
     DGL_SetPatch,

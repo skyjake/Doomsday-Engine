@@ -1211,6 +1211,7 @@ DENG2_PIMPL(AutomapWidget)
 
     void deleteLists()
     {
+#if 0
         if(Get(DD_NOVIDEO) || IS_DEDICATED) return;
 
         for(dint i = 0; i < NUM_MAP_OBJECTLISTS; ++i)
@@ -1220,6 +1221,7 @@ DENG2_PIMPL(AutomapWidget)
                 DGL_DeleteLists(lists[i], 1); lists[i] = 0;
             }
         }
+#endif
     }
 
     /**
@@ -1227,6 +1229,7 @@ DENG2_PIMPL(AutomapWidget)
      */
     void buildLists()
     {
+#if 0
         if(Get(DD_NOVIDEO) || IS_DEDICATED) return;
 
         deleteLists();
@@ -1242,6 +1245,7 @@ DENG2_PIMPL(AutomapWidget)
         }
 
         needBuildLists = false;
+#endif
     }
 };
 
@@ -1402,7 +1406,7 @@ void AutomapWidget::draw(Vector2i const &offset) const
 
             DGL_Color4f(info.rgba[0], info.rgba[1], info.rgba[2], info.rgba[3] * cfg.common.automapLineAlpha * alpha);
             DGL_BlendMode(info.blendMode);
-            DGL_CallList(d->lists[i]);
+            //DGL_CallList(d->lists[i]);
         }
     }
 

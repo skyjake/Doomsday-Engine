@@ -25,10 +25,10 @@
 #  error "glDeleteTextures defined as a macro! (would be undefined by Qt)"
 #endif
 
-#include <QOpenGLFunctions_2_1>
+#include <QOpenGLFunctions_3_3_Core>
 #include <QOpenGLExtensions>
 
-#define QOpenGLFunctions_Doomsday   QOpenGLFunctions_2_1
+#define QOpenGLFunctions_Doomsday   QOpenGLFunctions_3_3_Core
 
 // Defined in GLES2.
 #ifndef GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS
@@ -40,8 +40,8 @@
  */
 //#define LIBGUI_GLES2
 
-#ifndef GL_VERSION_2_1
-#  error "OpenGL 2.1 (or newer) headers not found"
+#ifndef GL_VERSION_3_3
+#  error "OpenGL 3.3 (or newer) headers not found"
 #endif
 
 #endif // LIBGUI_SYSTEM_OPENGL_H

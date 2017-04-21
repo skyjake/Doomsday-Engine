@@ -46,9 +46,9 @@ DENG2_PIMPL(GuiApp)
 void GuiApp::setDefaultOpenGLFormat() // static
 {
     QSurfaceFormat fmt;
-    fmt.setRenderableType(QSurfaceFormat::OpenGL);
-    fmt.setProfile(QSurfaceFormat::CompatibilityProfile);
-    fmt.setVersion(2, 1);
+    fmt.setRenderableType(QSurfaceFormat::OpenGL); // TODO: option for GLES
+    fmt.setProfile(QSurfaceFormat::CoreProfile);
+    fmt.setVersion(3, 3);
     fmt.setDepthBufferSize(24);
     fmt.setStencilBufferSize(8);
     fmt.setSwapBehavior(QSurfaceFormat::DoubleBuffer);

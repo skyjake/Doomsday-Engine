@@ -148,21 +148,21 @@ void FinaleTextWidget::draw(Vector3f const &offset)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPushMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
     //glScalef(.1f/SCREENWIDTH, .1f/SCREENWIDTH, 1);
-    LIBGUI_GL.glTranslatef(origin()[0].value + offset.x, origin()[1].value + offset.y, origin()[2].value + offset.z);
+    DGL_Translatef(origin()[0].value + offset.x, origin()[1].value + offset.y, origin()[2].value + offset.z);
 
     if (angle().value != 0)
     {
         // Counter the VGA aspect ratio.
-        LIBGUI_GL.glScalef(1, 200.0f / 240.0f, 1);
-        LIBGUI_GL.glRotatef(angle().value, 0, 0, 1);
-        LIBGUI_GL.glScalef(1, 240.0f / 200.0f, 1);
+        DGL_Scalef(1, 200.0f / 240.0f, 1);
+        DGL_Rotatef(angle().value, 0, 0, 1);
+        DGL_Scalef(1, 240.0f / 200.0f, 1);
     }
 
-    LIBGUI_GL.glScalef(scale()[0].value, scale()[1].value, scale()[2].value);
-    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+    DGL_Scalef(scale()[0].value, scale()[1].value, scale()[2].value);
+    DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(d->pageFont? page()->predefinedFont(d->pageFont - 1) : d->fontNum);
 
@@ -241,10 +241,10 @@ void FinaleTextWidget::draw(Vector3f const &offset)
         ++cnt;
     }
 
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    DGL_Disable(DGL_TEXTURE_2D);
 
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 #endif
 

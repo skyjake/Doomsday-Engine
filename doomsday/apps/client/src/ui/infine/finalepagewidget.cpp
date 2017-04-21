@@ -126,7 +126,7 @@ void FinalePageWidget::draw() const
                 matAnimator.prepare();
 
                 GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
-                LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+                DGL_Enable(DGL_TEXTURE_2D);
             }
 
             if (d->bg.material || topAlpha < 1.0 || bottomAlpha < 1.0)
@@ -149,8 +149,8 @@ void FinalePageWidget::draw() const
     }
 
     // Now lets go into 3D mode for drawing the p objects.
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPushMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
     //glLoadIdentity();
 
     //GL_SetMultisample(true);
@@ -187,8 +187,8 @@ void FinalePageWidget::draw() const
 
     //GL_SetMultisample(false);
 
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 #endif
 

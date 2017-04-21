@@ -20,6 +20,7 @@
 
 #include "render/fx/colorfilter.h"
 #include "gl/gl_draw.h"
+#include "api_gl.h"
 
 #include <de/GLInfo>
 #include <de/LogBuffer>
@@ -63,13 +64,13 @@ void ColorFilter::draw()
     {
         Rectanglei const rect = viewRect();
 
-        LIBGUI_GL.glColor4f(filterColor.x, filterColor.y, filterColor.z, filterColor.w);
-        LIBGUI_GL.glBegin(GL_QUADS);
-            LIBGUI_GL.glVertex2f(rect.topLeft.x,      rect.topLeft.y);
-            LIBGUI_GL.glVertex2f(rect.topRight().x,   rect.topRight().y);
-            LIBGUI_GL.glVertex2f(rect.bottomRight.x,  rect.bottomRight.y);
-            LIBGUI_GL.glVertex2f(rect.bottomLeft().x, rect.bottomLeft().y);
-        LIBGUI_GL.glEnd();
+        DGL_Color4f(filterColor.x, filterColor.y, filterColor.z, filterColor.w);
+        DGL_Begin(DGL_QUADS);
+            DGL_Vertex2f(rect.topLeft.x,      rect.topLeft.y);
+            DGL_Vertex2f(rect.topRight().x,   rect.topRight().y);
+            DGL_Vertex2f(rect.bottomRight.x,  rect.bottomRight.y);
+            DGL_Vertex2f(rect.bottomLeft().x, rect.bottomLeft().y);
+        DGL_End();
     }
 }
 

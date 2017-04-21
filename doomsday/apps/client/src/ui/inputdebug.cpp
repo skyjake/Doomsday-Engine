@@ -99,9 +99,9 @@ static void initDrawStateForVisual(Point2Raw const *origin)
     // Ignore zero offsets.
     if (origin && !(origin->x == 0 && origin->y == 0))
     {
-        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-        LIBGUI_GL.glPushMatrix();
-        LIBGUI_GL.glTranslatef(origin->x, origin->y, 0);
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
+        DGL_Translatef(origin->x, origin->y, 0);
     }
 }
 
@@ -110,8 +110,8 @@ static void endDrawStateForVisual(Point2Raw const *origin)
     // Ignore zero offsets.
     if (origin && !(origin->x == 0 && origin->y == 0))
     {
-        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-        LIBGUI_GL.glPopMatrix();
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PopMatrix();
     }
 
     FR_PopAttrib();
@@ -224,26 +224,26 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
                                                          textSize.height + BORDER * 2));
 
     // Draw a background.
-    LIBGUI_GL.glColor4fv(button.isDown()? downColor : upColor);
+    DGL_Color4fv(button.isDown()? downColor : upColor);
     GL_DrawRect(textGeom);
 
     // Draw the text.
-    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+    DGL_Enable(DGL_TEXTURE_2D);
     Point2Raw const textOffset(BORDER, BORDER);
     FR_DrawText(label.toUtf8().constData(), &textOffset);
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    DGL_Disable(DGL_TEXTURE_2D);
 
     // Mark expired?
     if (button.bindContextAssociation() & InputControl::Expired)
     {
         int const markSize = .5f + de::min(textGeom.width(), textGeom.height()) / 3.f;
 
-        LIBGUI_GL.glColor3fv(expiredMarkColor);
-        LIBGUI_GL.glBegin(GL_TRIANGLES);
-        LIBGUI_GL.glVertex2i(textGeom.width(), 0);
-        LIBGUI_GL.glVertex2i(textGeom.width(), markSize);
-        LIBGUI_GL.glVertex2i(textGeom.width() - markSize, 0);
-        LIBGUI_GL.glEnd();
+        DGL_Color3fv(expiredMarkColor);
+        DGL_Begin(DGL_TRIANGLES);
+        DGL_Vertex2f(textGeom.width(), 0);
+        DGL_Vertex2f(textGeom.width(), markSize);
+        DGL_Vertex2f(textGeom.width() - markSize, 0);
+        DGL_End();
     }
 
     // Mark triggered?
@@ -251,12 +251,12 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
     {
         int const markSize = .5f + de::min(textGeom.width(), textGeom.height()) / 3.f;
 
-        LIBGUI_GL.glColor3fv(triggeredMarkColor);
-        LIBGUI_GL.glBegin(GL_TRIANGLES);
-        LIBGUI_GL.glVertex2i(0, 0);
-        LIBGUI_GL.glVertex2i(markSize, 0);
-        LIBGUI_GL.glVertex2i(0, markSize);
-        LIBGUI_GL.glEnd();
+        DGL_Color3fv(triggeredMarkColor);
+        DGL_Begin(DGL_TRIANGLES);
+        DGL_Vertex2f(0, 0);
+        DGL_Vertex2f(markSize, 0);
+        DGL_Vertex2f(0, markSize);
+        DGL_End();
     }
 
     endDrawStateForVisual(&origin);
@@ -424,10 +424,10 @@ void Rend_RenderInputDeviceStateVisual(InputDevice &device, inputdev_layout_t co
     {
         Size2Raw size;
 
-        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+        DGL_Enable(DGL_TEXTURE_2D);
         Block const fullName(device.title().toUtf8());
         FR_DrawText(fullName.constData(), nullptr/*no offset*/);
-        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+        DGL_Disable(DGL_TEXTURE_2D);
 
         FR_TextSize(&size, fullName.constData());
         visualGeom = Rect_NewWithOriginSize2(offset.x, offset.y, size.width, size.height);
@@ -770,10 +770,10 @@ void I_DebugDrawer()
     // Disabled?
     if (!devRendKeyState && !devRendMouseState && !devRendJoyState) return;
 
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPushMatrix();
-    LIBGUI_GL.glLoadIdentity();
-    LIBGUI_GL.glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Ortho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
 
     if (devRendKeyState)
     {
@@ -792,8 +792,8 @@ void I_DebugDrawer()
         Rend_RenderInputDeviceStateVisual(InputSystem::get().device(IDEV_JOY1), &joyLayout, &origin, &dimensions);
     }
 
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 
 #undef NUMITEMS
 #undef SPACING

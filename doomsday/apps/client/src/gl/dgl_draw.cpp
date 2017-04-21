@@ -40,6 +40,7 @@ static dd_bool inPrim = false;
 
 dd_bool GL_NewList(DGLuint list, int mode)
 {
+#if 0
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
@@ -69,40 +70,50 @@ dd_bool GL_NewList(DGLuint list, int mode)
     LIBGUI_GL.glNewList(list, mode == DGL_COMPILE? GL_COMPILE : GL_COMPILE_AND_EXECUTE);
     inList = list;
     return true;
+#endif
+    qDebug() << "OpenGL drawing lists are not available";
+    return false;
 }
 
 DGLuint GL_EndList(void)
 {
+#if 0
     DGLuint currentList = inList;
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glEndList();
+    DGL_EndList();
 #ifdef _DEBUG
     inList = 0;
     Sys_GLCheckError();
 #endif
 
     return currentList;
+#endif
+    return 0;
 }
 
 void GL_CallList(DGLuint list)
 {
+#if 0
     if(!list) return; // We do not consider zero a valid list id.
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     LIBGUI_GL.glCallList(list);
+#endif
 }
 
 void GL_DeleteLists(DGLuint list, int range)
 {
+#if 0
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     LIBGUI_GL.glDeleteLists(list, range);
+#endif
 }
 
 #undef DGL_Color3ub
@@ -111,7 +122,7 @@ DENG_EXTERN_C void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glColor3ub(r, g, b);
+    //LIBGUI_GL.glColor3ub(r, g, b);
 }
 
 #undef DGL_Color3ubv
@@ -120,7 +131,7 @@ DENG_EXTERN_C void DGL_Color3ubv(const DGLubyte* vec)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glColor3ubv(vec);
+    //LIBGUI_GL.glColor3ubv(vec);
 }
 
 #undef DGL_Color4ub
@@ -129,7 +140,7 @@ DENG_EXTERN_C void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glColor4ub(r, g, b, a);
+    //LIBGUI_GL.glColor4ub(r, g, b, a);
 }
 
 #undef DGL_Color4ubv
@@ -138,7 +149,7 @@ DENG_EXTERN_C void DGL_Color4ubv(const DGLubyte* vec)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glColor4ubv(vec);
+    //LIBGUI_GL.glColor4ubv(vec);
 }
 
 #undef DGL_Color3f
@@ -147,7 +158,7 @@ DENG_EXTERN_C void DGL_Color3f(float r, float g, float b)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glColor3f(r, g, b);
+    //LIBGUI_GL.glColor3f(r, g, b);
 }
 
 #undef DGL_Color3fv
@@ -156,7 +167,7 @@ DENG_EXTERN_C void DGL_Color3fv(const float* vec)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glColor3fv(vec);
+    //DGL_Color3fv(vec);
 }
 
 #undef DGL_Color4f
@@ -165,7 +176,7 @@ DENG_EXTERN_C void DGL_Color4f(float r, float g, float b, float a)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glColor4f(r, g, b, a);
+    //DGL_Color4f(r, g, b, a);
 }
 
 #undef DGL_Color4fv
@@ -174,7 +185,7 @@ DENG_EXTERN_C void DGL_Color4fv(const float* vec)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glColor4fv(vec);
+    DGL_Color4fv(vec);
 }
 
 #undef DGL_TexCoord2f
@@ -183,16 +194,16 @@ DENG_EXTERN_C void DGL_TexCoord2f(byte target, float s, float t)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glMultiTexCoord2f(GL_TEXTURE0 + target, s, t);
+    //LIBGUI_GL.glMultiTexCoord2f(GL_TEXTURE0 + target, s, t);
 }
 
 #undef DGL_TexCoord2fv
-DENG_EXTERN_C void DGL_TexCoord2fv(byte target, float* vec)
+DENG_EXTERN_C void DGL_TexCoord2fv(byte target, float const *vec)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glMultiTexCoord2fv(GL_TEXTURE0 + target, vec);
+    //LIBGUI_GL.glMultiTexCoord2fv(GL_TEXTURE0 + target, vec);
 }
 
 #undef DGL_Vertex2f
@@ -201,7 +212,7 @@ DENG_EXTERN_C void DGL_Vertex2f(float x, float y)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glVertex2f(x, y);
+    //DGL_Vertex2f(x, y);
 }
 
 #undef DGL_Vertex2fv
@@ -210,7 +221,7 @@ DENG_EXTERN_C void DGL_Vertex2fv(const float* vec)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glVertex2fv(vec);
+    //DGL_Vertex2fv(vec);
 }
 
 #undef DGL_Vertex3f
@@ -219,7 +230,7 @@ DENG_EXTERN_C void DGL_Vertex3f(float x, float y, float z)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glVertex3f(x, y, z);
+    //DGL_Vertex3f(x, y, z);
 }
 
 #undef DGL_Vertex3fv
@@ -228,7 +239,7 @@ DENG_EXTERN_C void DGL_Vertex3fv(const float* vec)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glVertex3fv(vec);
+    DGL_Vertex3fv(vec);
 }
 
 #undef DGL_Vertices2ftv
@@ -239,8 +250,8 @@ DENG_EXTERN_C void DGL_Vertices2ftv(int num, const dgl_ft2vertex_t* vec)
 
     for(; num > 0; num--, vec++)
     {
-        LIBGUI_GL.glTexCoord2fv(vec->tex);
-        LIBGUI_GL.glVertex2fv(vec->pos);
+        DGL_TexCoord2fv(0, vec->tex);
+        //DGL_Vertex2fv(vec->pos);
     }
 }
 
@@ -252,8 +263,8 @@ DENG_EXTERN_C void DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec)
 
     for(; num > 0; num--, vec++)
     {
-        LIBGUI_GL.glTexCoord2fv(vec->tex);
-        LIBGUI_GL.glVertex3fv(vec->pos);
+        DGL_TexCoord2fv(0, vec->tex);
+        DGL_Vertex3fv(vec->pos);
     }
 }
 
@@ -265,9 +276,9 @@ DENG_EXTERN_C void DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec)
 
     for(; num > 0; num--, vec++)
     {
-        LIBGUI_GL.glColor4fv(vec->color);
-        LIBGUI_GL.glTexCoord2fv(vec->tex);
-        LIBGUI_GL.glVertex3fv(vec->pos);
+        DGL_Color4fv(vec->color);
+        DGL_TexCoord2fv(0, vec->tex);
+        DGL_Vertex3fv(vec->pos);
     }
 }
 
@@ -284,18 +295,20 @@ DENG_EXTERN_C void DGL_Begin(dglprimtype_t mode)
     primLevel++;
 
 #ifdef _DEBUG
-    if(inPrim)
-        App_Error("OpenGL: already inPrim");
+    DENG2_ASSERT(!inPrim);
     inPrim = true;
     Sys_GLCheckError();
 #endif
 
-    LIBGUI_GL.glBegin(mode == DGL_POINTS ? GL_POINTS : mode ==
+    /*LIBGUI_GL.glBegin(mode == DGL_POINTS ? GL_POINTS : mode ==
             DGL_LINES ? GL_LINES : mode ==
+            DGL_LINE_STRIP ? GL_LINE_STRIP : mode ==
             DGL_TRIANGLES ? GL_TRIANGLES : mode ==
             DGL_TRIANGLE_FAN ? GL_TRIANGLE_FAN : mode ==
             DGL_TRIANGLE_STRIP ? GL_TRIANGLE_STRIP : mode ==
-            DGL_QUAD_STRIP ? GL_QUAD_STRIP : GL_QUADS);
+            DGL_QUAD_STRIP ? GL_QUAD_STRIP : GL_QUADS);*/
+
+    // TODO: Start a new primitive
 }
 
 void DGL_AssertNotInPrimitive(void)
@@ -315,7 +328,7 @@ DENG_EXTERN_C void DGL_End(void)
     if(primLevel > 0)
     {
         primLevel--;
-        LIBGUI_GL.glEnd();
+        //DGL_End();
     }
 
 #ifdef _DEBUG
@@ -324,6 +337,7 @@ DENG_EXTERN_C void DGL_End(void)
 #endif
 }
 
+#if 0
 #undef DGL_NewList
 DENG_EXTERN_C dd_bool DGL_NewList(DGLuint list, int mode)
 {
@@ -347,6 +361,7 @@ DENG_EXTERN_C void DGL_DeleteLists(DGLuint list, int range)
 {
     GL_DeleteLists(list, range);
 }
+#endif
 
 #undef DGL_DrawLine
 DENG_EXTERN_C void DGL_DrawLine(float x1, float y1, float x2, float y2, float r,
@@ -387,7 +402,7 @@ DENG_EXTERN_C void DGL_DrawRectf2Color(double x, double y, double w, double h, f
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glColor4f(r, g, b, a);
+    //DGL_Color4f(r, g, b, a);
     GL_DrawRectf2(x, y, w, h);
 }
 
@@ -421,12 +436,13 @@ DENG_EXTERN_C void DGL_DrawQuadOutline(Point2Raw const *tl, Point2Raw const *tr,
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(color) DGL_Color4fv(color);
-    LIBGUI_GL.glBegin(GL_LINE_LOOP);
-        LIBGUI_GL.glVertex2iv((const GLint*)tl->xy);
-        LIBGUI_GL.glVertex2iv((const GLint*)tr->xy);
-        LIBGUI_GL.glVertex2iv((const GLint*)br->xy);
-        LIBGUI_GL.glVertex2iv((const GLint*)bl->xy);
-    LIBGUI_GL.glEnd();
+    DGL_Begin(DGL_LINE_STRIP);
+        DGL_Vertex2f(tl->x, tl->y);
+        DGL_Vertex2f(tr->x, tr->y);
+        DGL_Vertex2f(br->x, br->y);
+        DGL_Vertex2f(bl->x, bl->y);
+        DGL_Vertex2f(tl->x, tl->y);
+    DGL_End();
 }
 
 #undef DGL_DrawQuad2Outline

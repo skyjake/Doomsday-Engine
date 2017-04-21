@@ -253,7 +253,10 @@ DENG2_PIMPL(GLState)
             break;
 
         case internal::AlphaLimit:
-            LIBGUI_GL.glAlphaFunc(GL_GREATER, self().alphaLimit());
+            //LIBGUI_GL.glAlphaFunc(GL_GREATER, self().alphaLimit());
+
+            // TODO: use a shared GLUniform available to all shaders that need it
+
             break;
 
         case internal::Blend:
@@ -654,10 +657,6 @@ void GLState::apply() const
 #ifdef DENG2_DEBUG
     DENG2_ASSERT(GLDrawQueue_queuedElems == 0);
 #endif
-
-/*#ifdef LIBGUI_USE_GLENTRYPOINTS
-    if (!glBindFramebuffer) return;
-#endif*/
 
     bool forceViewportAndScissor = false;
 

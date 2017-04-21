@@ -929,12 +929,12 @@ static void changeViewState(ViewState viewState) //, viewport_t const *port, vie
                                            conRect.width(), conRect.height(),
                                            scalemode_t(weaponScaleMode));
 
-        LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-        LIBGUI_GL.glLoadIdentity();
+        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_LoadIdentity();
 
         if(sm == SCALEMODE_STRETCH)
         {
-            LIBGUI_GL.glOrtho(0, SCREENWIDTH, height, 0, -1, 1);
+            DGL_Ortho(0, SCREENWIDTH, height, 0, -1, 1);
         }
         else
         {
@@ -942,17 +942,17 @@ static void changeViewState(ViewState viewState) //, viewport_t const *port, vie
             // translate and scale the projection to produce an aspect
             // corrected coordinate space at 4:3, aligned vertically to
             // the bottom and centered horizontally in the window.
-            LIBGUI_GL.glOrtho(0, conRect.width(), conRect.height(), 0, -1, 1);
-            LIBGUI_GL.glTranslatef(conRect.width()/2, conRect.height(), 0);
+            DGL_Ortho(0, conRect.width(), conRect.height(), 0, -1, 1);
+            DGL_Translatef(conRect.width()/2, conRect.height(), 0);
 
             if(conRect.width() >= conRect.height())
             {
-                LIBGUI_GL.glScalef(dfloat( conRect.height() ) / SCREENHEIGHT,
+                DGL_Scalef(dfloat( conRect.height() ) / SCREENHEIGHT,
                                    dfloat( conRect.height() ) / SCREENHEIGHT, 1);
             }
             else
             {
-                LIBGUI_GL.glScalef(dfloat( conRect.width() ) / SCREENWIDTH,
+                DGL_Scalef(dfloat( conRect.width() ) / SCREENWIDTH,
                                    dfloat( conRect.width() ) / SCREENWIDTH, 1);
             }
 
@@ -962,15 +962,15 @@ static void changeViewState(ViewState viewState) //, viewport_t const *port, vie
             if(conRect.height() > conRect.width())
             {
                 dfloat extraScale = (dfloat(conRect.height() * 2) / conRect.width()) / 2;
-                LIBGUI_GL.glScalef(extraScale, extraScale, 1);
+                DGL_Scalef(extraScale, extraScale, 1);
             }
 
-            LIBGUI_GL.glTranslatef(-(SCREENWIDTH / 2), -SCREENHEIGHT, 0);
-            LIBGUI_GL.glScalef(1, dfloat( SCREENHEIGHT ) / height, 1);
+            DGL_Translatef(-(SCREENWIDTH / 2), -SCREENHEIGHT, 0);
+            DGL_Scalef(1, dfloat( SCREENHEIGHT ) / height, 1);
         }
 
-        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-        LIBGUI_GL.glLoadIdentity();
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_LoadIdentity();
 
         // Depth testing must be disabled so that psprite 1 will be drawn
         // on top of psprite 0 (Doom plasma rifle fire).
@@ -1060,10 +1060,10 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
 
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPushMatrix();
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPushMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
 
     // GL is in 3D transformation state only during the frame.
     //switchTo3DState(true); //, currentViewport, vd);
@@ -1100,10 +1100,10 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     //restore2DState(2); //, currentViewport, vd);
     changeViewState(Default2D);
 
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPopMatrix();
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 
     // Back from wireframe mode?
     if (renderWireframe)
@@ -1206,14 +1206,14 @@ void R_RenderViewPort(int playerNum)
         return;
     }
 
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPushMatrix();
-    LIBGUI_GL.glLoadIdentity();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
 
     Rectanglei viewRect = R_Console3DViewRect(playerNum);
 
     // Use an orthographic projection in real pixel dimensions.
-    LIBGUI_GL.glOrtho(0, viewRect.width(), viewRect.height(), 0, -1, 1);
+    DGL_Ortho(0, viewRect.width(), viewRect.height(), 0, -1, 1);
 
     viewdata_t const *vd = &DD_Player(vp->console)->viewport();
     RectRaw vpGeometry(vp->geometry.topLeft.x, vp->geometry.topLeft.y,
@@ -1231,8 +1231,8 @@ void R_RenderViewPort(int playerNum)
 
     restoreDefaultGLState();
 
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 
     // Increment the internal frame count. This does not
     // affect the window's FPS counter.
@@ -1274,12 +1274,12 @@ void R_RenderViewPorts(ViewPortLayer layer)
             continue;
         }
 
-        LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-        LIBGUI_GL.glPushMatrix();
-        LIBGUI_GL.glLoadIdentity();
+        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_PushMatrix();
+        DGL_LoadIdentity();
 
         // Use an orthographic projection in real pixel dimensions.
-        LIBGUI_GL.glOrtho(0, vp->geometry.width(), vp->geometry.height(), 0, -1, 1);
+        DGL_Ortho(0, vp->geometry.width(), vp->geometry.height(), 0, -1, 1);
 
         viewdata_t const *vd = &DD_Player(vp->console)->viewport();
         RectRaw vpGeometry(vp->geometry.topLeft.x, vp->geometry.topLeft.y,
@@ -1308,8 +1308,8 @@ void R_RenderViewPorts(ViewPortLayer layer)
 
         restoreDefaultGLState();
 
-        LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-        LIBGUI_GL.glPopMatrix();
+        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_PopMatrix();
     }
 
     if(layer == Player3DViewLayer)

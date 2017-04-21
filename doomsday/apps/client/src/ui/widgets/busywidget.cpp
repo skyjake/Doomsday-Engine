@@ -146,7 +146,7 @@ void BusyWidget::drawContent()
                 .setAlphaTest(false)
                 .setBlend(false)
                 .apply();
-        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+        DGL_Enable(DGL_TEXTURE_2D);
 
         // Draw the texture.
         Rectanglei pos = rule().recti();
@@ -156,7 +156,7 @@ void BusyWidget::drawContent()
         d->drawable.draw();
 
         GLState::pop().apply();
-        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+        DGL_Disable(DGL_TEXTURE_2D);
     }
 }
 

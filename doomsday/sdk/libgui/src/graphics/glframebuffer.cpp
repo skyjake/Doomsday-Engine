@@ -183,8 +183,8 @@ DENG2_OBSERVES(Asset, Deletion)
     {
         if (isDefault() || fbo) return;
 
-        GLInfo::EXT_framebuffer_object()->glGenFramebuffersEXT(1, &fbo);
-        GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, fbo);
+        LIBGUI_GL.glGenFramebuffers(1, &fbo);
+        LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
         LIBGUI_ASSERT_GL_OK();
         LOG_GL_XVERBOSE("Creating FBO %i", fbo);
@@ -197,7 +197,7 @@ DENG2_OBSERVES(Asset, Deletion)
         LOG_GL_XVERBOSE("FBO %i: glTex %i (level %i) => attachment %i",
                         fbo << tex.glName() << level << attachmentToId(attachment));
 
-        GLInfo::EXT_framebuffer_object()->glFramebufferTexture2DEXT(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, tex.glName(), level);
+        LIBGUI_GL.glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, tex.glName(), level);
         LIBGUI_ASSERT_GL_OK();
 
         bufTextures[attachmentToId(attachment)] = &tex;
@@ -207,8 +207,8 @@ DENG2_OBSERVES(Asset, Deletion)
     {
         DENG2_ASSERT(size != Vector2ui(0, 0));
 
-        GLInfo::EXT_framebuffer_object()->glGenRenderbuffersEXT(1, &renderBufs[id]);
-        GLInfo::EXT_framebuffer_object()->glBindRenderbufferEXT(GL_RENDERBUFFER, renderBufs[id]);
+        LIBGUI_GL.glGenRenderbuffers(1, &renderBufs[id]);
+        LIBGUI_GL.glBindRenderbuffer(GL_RENDERBUFFER, renderBufs[id]);
         LIBGUI_ASSERT_GL_OK();
 
         if (sampleCount > 1)
@@ -230,18 +230,18 @@ DENG2_OBSERVES(Asset, Deletion)
                         << attachmentToId(attachment);
 
                 //DENG2_ASSERT(GLInfo::extensions().EXT_framebuffer_multisample);
-                GLInfo::EXT_framebuffer_multisample()->glRenderbufferStorageMultisampleEXT(
+                LIBGUI_GL.glRenderbufferStorageMultisample(
                         GL_RENDERBUFFER, sampleCount, type, size.x, size.y);
                 LIBGUI_ASSERT_GL_OK();
             }
         }
         else
         {
-            GLInfo::EXT_framebuffer_object()->glRenderbufferStorageEXT(GL_RENDERBUFFER, type, size.x, size.y);
+            LIBGUI_GL.glRenderbufferStorage(GL_RENDERBUFFER, type, size.x, size.y);
             LIBGUI_ASSERT_GL_OK();
         }
 
-        GLInfo::EXT_framebuffer_object()->glFramebufferRenderbufferEXT(
+        LIBGUI_GL.glFramebufferRenderbuffer(
                     GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, renderBufs[id]);
         LIBGUI_ASSERT_GL_OK();
     }
@@ -287,7 +287,7 @@ DENG2_OBSERVES(Asset, Deletion)
 
         allocDepthStencilRenderBuffers();
 
-        GLInfo::EXT_framebuffer_object()->glBindRenderbufferEXT(GL_RENDERBUFFER, 0);
+        LIBGUI_GL.glBindRenderbuffer(GL_RENDERBUFFER, 0);
     }
 
     void allocDepthStencilRenderBuffers()
@@ -317,7 +317,7 @@ DENG2_OBSERVES(Asset, Deletion)
 
     void releaseRenderBuffers()
     {
-        GLInfo::EXT_framebuffer_object()->glDeleteRenderbuffersEXT(MAX_ATTACHMENTS, renderBufs);
+        LIBGUI_GL.glDeleteRenderbuffers(MAX_ATTACHMENTS, renderBufs);
         zap(renderBufs);
         zap(bufTextures);
     }
@@ -328,7 +328,7 @@ DENG2_OBSERVES(Asset, Deletion)
         if (fbo)
         {
             releaseRenderBuffers();
-            GLInfo::EXT_framebuffer_object()->glDeleteFramebuffersEXT(1, &fbo);
+            LIBGUI_GL.glDeleteFramebuffers(1, &fbo);
             fbo = 0;
         }
         zap(bufTextures);
@@ -349,7 +349,7 @@ DENG2_OBSERVES(Asset, Deletion)
     {
         if (renderBufs[id])
         {
-            GLInfo::EXT_framebuffer_object()->glDeleteRenderbuffersEXT(1, &renderBufs[id]);
+            LIBGUI_GL.glDeleteRenderbuffers(1, &renderBufs[id]);
             renderBufs[id] = 0;
         }
     }
@@ -367,7 +367,7 @@ DENG2_OBSERVES(Asset, Deletion)
         DENG2_ASSERT(self().isReady()); // must already be inited
         DENG2_ASSERT(bufTextures[attachmentToId(attachment)] != 0); // must have an attachment already
 
-        GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, fbo);
+        LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
         attachTexture(newTexture, attachment);
 
         validate();
@@ -378,7 +378,7 @@ DENG2_OBSERVES(Asset, Deletion)
         DENG2_ASSERT(self().isReady()); // must already be inited
         if (attachment == DepthStencil) // this supported only
         {
-            GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, fbo);
+            LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
             allocDepthStencilRenderBuffers();
 
@@ -394,8 +394,8 @@ DENG2_OBSERVES(Asset, Deletion)
 
         renderBufs[id] = renderBufId;
 
-        GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, fbo);
-        GLInfo::EXT_framebuffer_object()->glFramebufferRenderbufferEXT(
+        LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        LIBGUI_GL.glFramebufferRenderbuffer(
                     GL_FRAMEBUFFER, flagsToGLAttachment(attachment),
                     GL_RENDERBUFFER, renderBufs[id]);
 
@@ -415,9 +415,8 @@ DENG2_OBSERVES(Asset, Deletion)
 
         DENG2_ASSERT(fbo != 0);
 
-        GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, fbo);
-        GLenum status = GLInfo::EXT_framebuffer_object()->glCheckFramebufferStatusEXT(GL_FRAMEBUFFER);
-
+        LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        GLenum status = LIBGUI_GL.glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if (status != GL_FRAMEBUFFER_COMPLETE)
         {
             releaseAndReset();
@@ -584,7 +583,7 @@ void GLFramebuffer::glBind() const
 
     GLuint const fbo = (d->fbo? d->fbo : defaultFramebuffer);
 
-    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, fbo);
+    LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     LIBGUI_ASSERT_GL_OK();
 }
 
@@ -592,7 +591,7 @@ void GLFramebuffer::glRelease() const
 {
     LIBGUI_ASSERT_GL_OK();
 
-    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, defaultFramebuffer); // both read and write FBOs
+    LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebuffer); // both read and write FBOs
     LIBGUI_ASSERT_GL_OK();
 }
 
@@ -607,7 +606,7 @@ QImage GLFramebuffer::toImage() const
         // Read the contents of the color attachment.
         Size imgSize = size();
         QImage img(QSize(imgSize.x, imgSize.y), QImage::Format_ARGB32);
-        GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, d->fbo);
+        LIBGUI_GL.glBindFramebuffer(GL_READ_FRAMEBUFFER_EXT, d->fbo);
         LIBGUI_GL.glPixelStorei(GL_PACK_ALIGNMENT, 4);
         LIBGUI_GL.glReadPixels(0, 0, imgSize.x, imgSize.y, GL_BGRA, GL_UNSIGNED_BYTE,
                                (GLvoid *) img.constBits());
@@ -648,7 +647,7 @@ void GLFramebuffer::resize(Size const &size)
     // The default target resizes itself automatically with the canvas.
     if (d->size == size || d->isDefault()) return;
 
-    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, d->fbo);
+    LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, d->fbo);
     if (d->texture)
     {
         d->texture->setUndefinedImage(size, d->texture->imageFormat());
@@ -691,23 +690,15 @@ void GLFramebuffer::blit(GLFramebuffer &dest, Flags const &attachments, gl::Filt
 {
     LIBGUI_ASSERT_GL_OK();
 
-    auto *fb_obj  = GLInfo::EXT_framebuffer_object();
-    auto *fb_blit = GLInfo::EXT_framebuffer_blit();
-
-    if (!fb_obj || !fb_blit)
-    {
-        return;
-    }
-
-    fb_obj->glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, dest.glName());
+    LIBGUI_GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dest.glName());
     LIBGUI_ASSERT_GL_OK();
 
-    fb_obj->glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, glName());
+    LIBGUI_GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, glName());
     LIBGUI_ASSERT_GL_OK();
 
     Flags common = d->flags & dest.flags() & attachments;
 
-    fb_blit->glBlitFramebufferEXT(
+    LIBGUI_GL.glBlitFramebuffer(
                 0, 0, size().x, size().y,
                 0, 0, dest.size().x, dest.size().y,
                 (common.testFlag(Color)?   GL_COLOR_BUFFER_BIT   : 0) |
@@ -730,10 +721,10 @@ void GLFramebuffer::blit(gl::Filter filtering) const
 
     //qDebug() << "Blitting from" << glName() << "to" << defaultFramebuffer << size().asText();
 
-    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, glName());
-    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, defaultFramebuffer);
+    LIBGUI_GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, glName());
+    LIBGUI_GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defaultFramebuffer);
 
-    GLInfo::EXT_framebuffer_blit()->glBlitFramebufferEXT(
+    LIBGUI_GL.glBlitFramebuffer(
                 0, 0, size().x, size().y,
                 0, 0, size().x, size().y,
                 GL_COLOR_BUFFER_BIT,

@@ -212,13 +212,13 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Prepare the texture rotation matrix.
-    LIBGUI_GL.glMatrixMode(GL_TEXTURE);
-    LIBGUI_GL.glPushMatrix();
-    LIBGUI_GL.glLoadIdentity();
+    DGL_MatrixMode(DGL_TEXTURE);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
     // Rotate around the center of the texture.
-    LIBGUI_GL.glTranslatef(0.5f, 0.5f, 0);
-    LIBGUI_GL.glRotatef(turnAngle / float(de::PI) * 180, 0, 0, 1);
-    LIBGUI_GL.glTranslatef(-0.5f, -0.5f, 0);
+    DGL_Translatef(0.5f, 0.5f, 0);
+    DGL_Rotatef(turnAngle / float(de::PI) * 180, 0, 0, 1);
+    DGL_Translatef(-0.5f, -0.5f, 0);
 
     flare_t *fl = flares;
     for(int i = 0; i < haloMode && i < NUM_FLARES; ++i, fl++)
@@ -320,36 +320,36 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
         }
 
         GL_BindTextureUnmanaged(renderTextures? tex : 0, gl::ClampToEdge, gl::ClampToEdge);
-        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+        DGL_Enable(DGL_TEXTURE_2D);
 
         float const radX = radius * fl->size;
         float const radY = radX / 1.2f; // Aspect correction.
 
-        LIBGUI_GL.glColor4f(color.x, color.y, color.z, alpha);
-        LIBGUI_GL.glBegin(GL_QUADS);
-            LIBGUI_GL.glTexCoord2f(0, 0);
-            LIBGUI_GL.glVertex3f(pos.x + radX * leftOff.x,
+        DGL_Color4f(color.x, color.y, color.z, alpha);
+        DGL_Begin(DGL_QUADS);
+            DGL_TexCoord2f(0, 0, 0);
+            DGL_Vertex3f(pos.x + radX * leftOff.x,
                        pos.y + radY * leftOff.y,
                        pos.z + radX * leftOff.z);
-            LIBGUI_GL.glTexCoord2f(1, 0);
-            LIBGUI_GL.glVertex3f(pos.x + radX * rightOff.x,
+            DGL_TexCoord2f(0, 1, 0);
+            DGL_Vertex3f(pos.x + radX * rightOff.x,
                        pos.y + radY * rightOff.y,
                        pos.z + radX * rightOff.z);
-            LIBGUI_GL.glTexCoord2f(1, 1);
-            LIBGUI_GL.glVertex3f(pos.x - radX * leftOff.x,
+            DGL_TexCoord2f(0, 1, 1);
+            DGL_Vertex3f(pos.x - radX * leftOff.x,
                        pos.y - radY * leftOff.y,
                        pos.z - radX * leftOff.z);
-            LIBGUI_GL.glTexCoord2f(0, 1);
-            LIBGUI_GL.glVertex3f(pos.x - radX * rightOff.x,
+            DGL_TexCoord2f(0, 0, 1);
+            DGL_Vertex3f(pos.x - radX * rightOff.x,
                        pos.y - radY * rightOff.y,
                        pos.z - radX * rightOff.z);
-        LIBGUI_GL.glEnd();
+        DGL_End();
 
-        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+        DGL_Disable(DGL_TEXTURE_2D);
     }
 
-    LIBGUI_GL.glMatrixMode(GL_TEXTURE);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(DGL_TEXTURE);
+    DGL_PopMatrix();
 
     // Restore previous GL state.
     if(doPrimary)

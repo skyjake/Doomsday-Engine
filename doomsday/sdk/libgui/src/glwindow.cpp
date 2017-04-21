@@ -124,14 +124,14 @@ DENG2_PIMPL(GLWindow)
 
     bool timerQueryReady() const
     {
-        if (!GLInfo::extensions().EXT_timer_query) return false;
+        //if (!GLInfo::extensions().EXT_timer_query) return false;
         return timerQuery && !timerQueryPending;
     }
 
     void checkTimerQueryResult()
     {
         // Measure how long it takes to render a frame on average.
-        if (GLInfo::extensions().EXT_timer_query &&
+        if (//GLInfo::extensions().EXT_timer_query &&
             timerQueryPending &&
             timerQuery->isResultAvailable())
         {
@@ -414,7 +414,7 @@ void GLWindow::paintGL()
 
     DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
 
-    if (GLInfo::extensions().EXT_timer_query)
+    //if (GLInfo::extensions().EXT_timer_query)
     {
         d->checkTimerQueryResult();
 

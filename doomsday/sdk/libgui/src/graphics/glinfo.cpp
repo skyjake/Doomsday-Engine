@@ -50,11 +50,11 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
     Extensions ext;
     Limits lim;
 
-    std::unique_ptr<QOpenGLExtension_ARB_draw_instanced>          ARB_draw_instanced;
-    std::unique_ptr<QOpenGLExtension_ARB_instanced_arrays>        ARB_instanced_arrays;
-    std::unique_ptr<QOpenGLExtension_EXT_framebuffer_blit>        EXT_framebuffer_blit;
-    std::unique_ptr<QOpenGLExtension_EXT_framebuffer_multisample> EXT_framebuffer_multisample;
-    std::unique_ptr<QOpenGLExtension_EXT_framebuffer_object>      EXT_framebuffer_object;
+    //std::unique_ptr<QOpenGLExtension_ARB_draw_instanced>          ARB_draw_instanced;
+    //std::unique_ptr<QOpenGLExtension_ARB_instanced_arrays>        ARB_instanced_arrays;
+    //std::unique_ptr<QOpenGLExtension_EXT_framebuffer_blit>        EXT_framebuffer_blit;
+    //std::unique_ptr<QOpenGLExtension_EXT_framebuffer_multisample> EXT_framebuffer_multisample;
+    //std::unique_ptr<QOpenGLExtension_EXT_framebuffer_object>      EXT_framebuffer_object;
     std::unique_ptr<QOpenGLExtension_NV_framebuffer_multisample_coverage> NV_framebuffer_multisample_coverage;
 
 #ifdef WIN32
@@ -161,25 +161,25 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
         }
 
         // Extensions.
-        ext.ARB_draw_instanced             = query("GL_ARB_draw_instanced");
-        ext.ARB_instanced_arrays           = query("GL_ARB_instanced_arrays");
-        ext.ARB_texture_env_combine        = query("GL_ARB_texture_env_combine") || query("GL_EXT_texture_env_combine");
-        ext.ARB_texture_non_power_of_two   = query("GL_ARB_texture_non_power_of_two");
+        //ext.ARB_draw_instanced             = query("GL_ARB_draw_instanced");
+        //ext.ARB_instanced_arrays           = query("GL_ARB_instanced_arrays");
+        //ext.ARB_texture_env_combine        = query("GL_ARB_texture_env_combine") || query("GL_EXT_texture_env_combine");
+        //ext.ARB_texture_non_power_of_two   = query("GL_ARB_texture_non_power_of_two");
 
-        ext.EXT_blend_subtract             = query("GL_EXT_blend_subtract");
-        ext.EXT_framebuffer_blit           = query("GL_EXT_framebuffer_blit");
-        ext.EXT_framebuffer_multisample    = query("GL_EXT_framebuffer_multisample");
-        ext.EXT_framebuffer_object         = query("GL_EXT_framebuffer_object");
-        ext.EXT_packed_depth_stencil       = query("GL_EXT_packed_depth_stencil");
+        //ext.EXT_blend_subtract             = query("GL_EXT_blend_subtract");
+        //ext.EXT_framebuffer_blit           = query("GL_EXT_framebuffer_blit");
+        //ext.EXT_framebuffer_multisample    = query("GL_EXT_framebuffer_multisample");
+        //ext.EXT_framebuffer_object         = query("GL_EXT_framebuffer_object");
+        //ext.EXT_packed_depth_stencil       = query("GL_EXT_packed_depth_stencil");
         ext.EXT_texture_compression_s3tc   = query("GL_EXT_texture_compression_s3tc");
         ext.EXT_texture_filter_anisotropic = query("GL_EXT_texture_filter_anisotropic");
-        ext.EXT_timer_query                = query("GL_EXT_timer_query");
+        //ext.EXT_timer_query                = query("GL_EXT_timer_query");
 
-        ext.ATI_texture_env_combine3       = query("GL_ATI_texture_env_combine3");
+        //ext.ATI_texture_env_combine3       = query("GL_ATI_texture_env_combine3");
         ext.NV_framebuffer_multisample_coverage
                                            = query("GL_NV_framebuffer_multisample_coverage");
-        ext.NV_texture_env_combine4        = query("GL_NV_texture_env_combine4");
-        ext.SGIS_generate_mipmap           = query("GL_SGIS_generate_mipmap");
+        //ext.NV_texture_env_combine4        = query("GL_NV_texture_env_combine4");
+        //ext.SGIS_generate_mipmap           = query("GL_SGIS_generate_mipmap");
 
 #ifdef WIN32
         ext.Windows_ARB_multisample        = query("WGL_ARB_multisample");
@@ -214,6 +214,7 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
         }
 #endif
 
+        /*
         if (ext.ARB_draw_instanced)
         {
             ARB_draw_instanced.reset(new QOpenGLExtension_ARB_draw_instanced);
@@ -238,7 +239,8 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
         {
             EXT_framebuffer_object.reset(new QOpenGLExtension_EXT_framebuffer_object);
             EXT_framebuffer_object->initializeOpenGLFunctions();
-        }
+        }*/
+
         if (ext.NV_framebuffer_multisample_coverage)
         {
             NV_framebuffer_multisample_coverage.reset(new QOpenGLExtension_NV_framebuffer_multisample_coverage);
@@ -300,6 +302,7 @@ QOpenGLFunctions_Doomsday &GLInfo::api() // static
     return *info.d;
 }
 
+/*
 QOpenGLExtension_ARB_draw_instanced *GLInfo::ARB_draw_instanced()
 {
     DENG2_ASSERT(info.d->inited);
@@ -329,6 +332,7 @@ QOpenGLExtension_EXT_framebuffer_object *GLInfo::EXT_framebuffer_object()
     DENG2_ASSERT(info.d->inited);
     return info.d->EXT_framebuffer_object.get();
 }
+*/
 
 QOpenGLExtension_NV_framebuffer_multisample_coverage *GLInfo::NV_framebuffer_multisample_coverage()
 {
@@ -391,8 +395,7 @@ GLInfo::Limits const &GLInfo::limits()
 
 bool GLInfo::isFramebufferMultisamplingSupported()
 {
-    return extensions().EXT_framebuffer_multisample &&
-           extensions().EXT_framebuffer_blit;
+    return true;
 }
 
 } // namespace de

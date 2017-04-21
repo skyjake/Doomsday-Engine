@@ -52,16 +52,16 @@ static void drawMobj(mobj_t const &mob)
 {
     AABoxd const bounds = Mobj_Bounds(mob);
 
-    LIBGUI_GL.glVertex2f(bounds.minX, bounds.minY);
-    LIBGUI_GL.glVertex2f(bounds.maxX, bounds.minY);
-    LIBGUI_GL.glVertex2f(bounds.maxX, bounds.maxY);
-    LIBGUI_GL.glVertex2f(bounds.minX, bounds.maxY);
+    DGL_Vertex2f(bounds.minX, bounds.minY);
+    DGL_Vertex2f(bounds.maxX, bounds.minY);
+    DGL_Vertex2f(bounds.maxX, bounds.maxY);
+    DGL_Vertex2f(bounds.minX, bounds.maxY);
 }
 
 static void drawLine(Line const &line)
 {
-    LIBGUI_GL.glVertex2f(line.from().x(), line.from().y());
-    LIBGUI_GL.glVertex2f(line.to  ().x(), line.to  ().y());
+    DGL_Vertex2f(line.from().x(), line.from().y());
+    DGL_Vertex2f(line.to  ().x(), line.to  ().y());
 }
 
 static void drawSubspace(ConvexSubspace const &subspace)
@@ -77,10 +77,10 @@ static void drawSubspace(ConvexSubspace const &subspace)
         Vector2d start = hedge->origin();
         Vector2d end   = hedge->twin().origin();
 
-        LIBGUI_GL.glBegin(GL_LINES);
-            LIBGUI_GL.glVertex2f(start.x, start.y);
-            LIBGUI_GL.glVertex2f(end.x, end.y);
-        LIBGUI_GL.glEnd();
+        DGL_Begin(DGL_LINES);
+            DGL_Vertex2f(start.x, start.y);
+            DGL_Vertex2f(end.x, end.y);
+        DGL_End();
 
         ddouble length = (end - start).length();
         if (length > 0)
@@ -89,21 +89,21 @@ static void drawSubspace(ConvexSubspace const &subspace)
             Vector2d const normal(-unit.y, unit.x);
 
             GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC));
-            LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+            DGL_Enable(DGL_TEXTURE_2D);
             GL_BlendMode(BM_ADD);
 
-            LIBGUI_GL.glBegin(GL_QUADS);
-                LIBGUI_GL.glTexCoord2f(0.75f, 0.5f);
-                LIBGUI_GL.glVertex2f(start.x, start.y);
-                LIBGUI_GL.glTexCoord2f(0.75f, 0.5f);
-                LIBGUI_GL.glVertex2f(end.x, end.y);
-                LIBGUI_GL.glTexCoord2f(0.75f, 1);
-                LIBGUI_GL.glVertex2f(end.x - normal.x * width, end.y - normal.y * width);
-                LIBGUI_GL.glTexCoord2f(0.75f, 1);
-                LIBGUI_GL.glVertex2f(start.x - normal.x * width, start.y - normal.y * width);
-            LIBGUI_GL.glEnd();
+            DGL_Begin(DGL_QUADS);
+                DGL_TexCoord2f(0, 0.75f, 0.5f);
+                DGL_Vertex2f(start.x, start.y);
+                DGL_TexCoord2f(0, 0.75f, 0.5f);
+                DGL_Vertex2f(end.x, end.y);
+                DGL_TexCoord2f(0, 0.75f, 1);
+                DGL_Vertex2f(end.x - normal.x * width, end.y - normal.y * width);
+                DGL_TexCoord2f(0, 0.75f, 1);
+                DGL_Vertex2f(start.x - normal.x * width, start.y - normal.y * width);
+            DGL_End();
 
-            LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+            DGL_Disable(DGL_TEXTURE_2D);
             GL_BlendMode(BM_NORMAL);
         }
 
@@ -111,23 +111,23 @@ static void drawSubspace(ConvexSubspace const &subspace)
         start = Vector2d(poly.bounds().minX, poly.bounds().minY);
         end   = Vector2d(poly.bounds().maxX, poly.bounds().maxY);
 
-        LIBGUI_GL.glBegin(GL_LINES);
-            LIBGUI_GL.glVertex2f(start.x, start.y);
-            LIBGUI_GL.glVertex2f(  end.x, start.y);
-            LIBGUI_GL.glVertex2f(  end.x, start.y);
-            LIBGUI_GL.glVertex2f(  end.x,   end.y);
-            LIBGUI_GL.glVertex2f(  end.x,   end.y);
-            LIBGUI_GL.glVertex2f(start.x,   end.y);
-            LIBGUI_GL.glVertex2f(start.x,   end.y);
-            LIBGUI_GL.glVertex2f(start.x, start.y);
-        LIBGUI_GL.glEnd();
+        DGL_Begin(DGL_LINES);
+            DGL_Vertex2f(start.x, start.y);
+            DGL_Vertex2f(  end.x, start.y);
+            DGL_Vertex2f(  end.x, start.y);
+            DGL_Vertex2f(  end.x,   end.y);
+            DGL_Vertex2f(  end.x,   end.y);
+            DGL_Vertex2f(start.x,   end.y);
+            DGL_Vertex2f(start.x,   end.y);
+            DGL_Vertex2f(start.x, start.y);
+        DGL_End();
 
     } while ((hedge = &hedge->next()) != base);
 }
 
 static int drawCellLines(Blockmap const &bmap, BlockmapCell const &cell, void *)
 {
-    LIBGUI_GL.glBegin(GL_LINES);
+    DGL_Begin(DGL_LINES);
         bmap.forAllInCell(cell, [] (void *object)
         {
             Line &line = *(Line *)object;
@@ -138,13 +138,13 @@ static int drawCellLines(Blockmap const &bmap, BlockmapCell const &cell, void *)
             }
             return LoopContinue;
         });
-    LIBGUI_GL.glEnd();
+    DGL_End();
     return false; // Continue iteration.
 }
 
 static int drawCellPolyobjs(Blockmap const &bmap, BlockmapCell const &cell, void *context)
 {
-    LIBGUI_GL.glBegin(GL_LINES);
+    DGL_Begin(DGL_LINES);
         bmap.forAllInCell(cell, [&context] (void *object)
         {
             Polyobj &pob = *(Polyobj *)object;
@@ -158,13 +158,13 @@ static int drawCellPolyobjs(Blockmap const &bmap, BlockmapCell const &cell, void
             }
             return LoopContinue;
         });
-    LIBGUI_GL.glEnd();
+    DGL_End();
     return false; // Continue iteration.
 }
 
 static int drawCellMobjs(Blockmap const &bmap, BlockmapCell const &cell, void *)
 {
-    LIBGUI_GL.glBegin(GL_QUADS);
+    DGL_Begin(DGL_QUADS);
         bmap.forAllInCell(cell, [] (void *object)
         {
             mobj_t &mob = *(mobj_t *)object;
@@ -175,7 +175,7 @@ static int drawCellMobjs(Blockmap const &bmap, BlockmapCell const &cell, void *)
             }
             return LoopContinue;
         });
-    LIBGUI_GL.glEnd();
+    DGL_End();
     return false; // Continue iteration.
 }
 
@@ -200,47 +200,47 @@ static void drawBackground(Blockmap const &bmap)
 
     // Scale modelview matrix so we can express cell geometry
     // using a cell-sized unit coordinate space.
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPushMatrix();
-    LIBGUI_GL.glScalef(bmap.cellSize(), bmap.cellSize(), 1);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Scalef(bmap.cellSize(), bmap.cellSize(), 1);
 
     /*
      * Draw the translucent quad which represents the "used" cells.
      */
-    LIBGUI_GL.glColor4f(.25f, .25f, .25f, .66f);
-    LIBGUI_GL.glBegin(GL_QUADS);
-        LIBGUI_GL.glVertex2f(0,            0);
-        LIBGUI_GL.glVertex2f(dimensions.x, 0);
-        LIBGUI_GL.glVertex2f(dimensions.x, dimensions.y);
-        LIBGUI_GL.glVertex2f(0,            dimensions.y);
-    LIBGUI_GL.glEnd();
+    DGL_Color4f(.25f, .25f, .25f, .66f);
+    DGL_Begin(DGL_QUADS);
+        DGL_Vertex2f(0,            0);
+        DGL_Vertex2f(dimensions.x, 0);
+        DGL_Vertex2f(dimensions.x, dimensions.y);
+        DGL_Vertex2f(0,            dimensions.y);
+    DGL_End();
 
     /*
      * Draw the "null cells" over the top.
      */
-    LIBGUI_GL.glColor4f(0, 0, 0, .95f);
+    DGL_Color4f(0, 0, 0, .95f);
     BlockmapCell cell;
     for (cell.y = 0; cell.y < dimensions.y; ++cell.y)
     for (cell.x = 0; cell.x < dimensions.x; ++cell.x)
     {
         if (bmap.cellElementCount(cell)) continue;
 
-        LIBGUI_GL.glBegin(GL_QUADS);
-            LIBGUI_GL.glVertex2f(cell.x,     cell.y);
-            LIBGUI_GL.glVertex2f(cell.x + 1, cell.y);
-            LIBGUI_GL.glVertex2f(cell.x + 1, cell.y + 1);
-            LIBGUI_GL.glVertex2f(cell.x,     cell.y + 1);
-        LIBGUI_GL.glEnd();
+        DGL_Begin(DGL_QUADS);
+            DGL_Vertex2f(cell.x,     cell.y);
+            DGL_Vertex2f(cell.x + 1, cell.y);
+            DGL_Vertex2f(cell.x + 1, cell.y + 1);
+            DGL_Vertex2f(cell.x,     cell.y + 1);
+        DGL_End();
     }
 
     // Restore previous GL state.
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
 static void drawCellInfo(Vector2d const &origin_, char const *info)
 {
-    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+    DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
@@ -260,12 +260,12 @@ static void drawCellInfo(Vector2d const &origin_, char const *info)
     UI_SetColor(UI_Color(UIC_TEXT));
     UI_TextOutEx2(info, &origin, UI_Color(UIC_TITLE), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
 
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 static void drawBlockmapInfo(Vector2d const &origin_, Blockmap const &blockmap)
 {
-    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+    DGL_Enable(DGL_TEXTURE_2D);
 
     Point2Raw origin(origin_.x, origin_.y);
 
@@ -306,7 +306,7 @@ static void drawBlockmapInfo(Vector2d const &origin_, Blockmap const &blockmap)
                          blockmap.bounds().maxX, blockmap.bounds().maxY);
     UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
 
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 static void drawCellInfoBox(Vector2d const &origin, Blockmap const &blockmap,
@@ -358,13 +358,13 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
     if (followMobj)
     {
         // Orient on the center of the followed Mobj.
-        LIBGUI_GL.glTranslated(-(vCell.x * cellDimensions.x), -(vCell.y * cellDimensions.y), 0);
+        DGL_Translatef(-(vCell.x * cellDimensions.x), -(vCell.y * cellDimensions.y), 0);
     }
     else
     {
         // Orient on center of the Blockmap.
-        LIBGUI_GL.glTranslated(-(cellDimensions.x * dimensions.x)/2,
-                     -(cellDimensions.y * dimensions.y)/2, 0);
+        DGL_Translatef(-(cellDimensions.x * dimensions.x)/2,
+                       -(cellDimensions.y * dimensions.y)/2, 0);
     }
 
     // First we'll draw a background showing the "null" cells.
@@ -372,7 +372,7 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
     if (followMobj)
     {
         // Highlight cells the followed Mobj "touches".
-        LIBGUI_GL.glBegin(GL_QUADS);
+        DGL_Begin(DGL_QUADS);
 
         BlockmapCell cell;
         for (cell.y = vCellBlock.min.y; cell.y < vCellBlock.max.y; ++cell.y)
@@ -381,24 +381,24 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
             if (cell == vCell)
             {
                 // The cell the followed Mobj is actually in.
-                LIBGUI_GL.glColor4f(.66f, .66f, 1, .66f);
+                DGL_Color4f(.66f, .66f, 1, .66f);
             }
             else
             {
                 // A cell within the followed Mobj's extended collision range.
-                LIBGUI_GL.glColor4f(.33f, .33f, .66f, .33f);
+                DGL_Color4f(.33f, .33f, .66f, .33f);
             }
 
             Vector2d const start = cellDimensions * cell;
             Vector2d const end   = start + cellDimensions;
 
-            LIBGUI_GL.glVertex2d(start.x, start.y);
-            LIBGUI_GL.glVertex2d(  end.x, start.y);
-            LIBGUI_GL.glVertex2d(  end.x,   end.y);
-            LIBGUI_GL.glVertex2d(start.x,   end.y);
+            DGL_Vertex2f(start.x, start.y);
+            DGL_Vertex2f(  end.x, start.y);
+            DGL_Vertex2f(  end.x,   end.y);
+            DGL_Vertex2f(start.x,   end.y);
         }
 
-        LIBGUI_GL.glEnd();
+        DGL_End();
     }
 
     /**
@@ -406,23 +406,23 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
      * @note Gridmap uses a cell unit size of [width:1,height:1], so we need to
      *       scale it up so it aligns correctly.
      */
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPushMatrix();
-    LIBGUI_GL.glScaled(cellDimensions.x, cellDimensions.y, 1);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Scalef(cellDimensions.x, cellDimensions.y, 1);
 
     bmap.drawDebugVisual();
 
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 
     /*
      * Draw the blockmap-linked data.
      * Translate the modelview matrix so that objects can be drawn using
      * the map space coordinates directly.
      */
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPushMatrix();
-    LIBGUI_GL.glTranslated(-bmap.origin().x, -bmap.origin().y, 0);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(-bmap.origin().x, -bmap.origin().y, 0);
 
     if (cellDrawer)
     {
@@ -435,7 +435,7 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
 
             // First, the cells outside the "touch" range (crimson).
             validCount++;
-            LIBGUI_GL.glColor4f(.33f, 0, 0, .75f);
+            DGL_Color4f(.33f, 0, 0, .75f);
             BlockmapCell cell;
             for (cell.y = 0; cell.y < dimensions.y; ++cell.y)
             for (cell.x = 0; cell.x < dimensions.x; ++cell.x)
@@ -452,7 +452,7 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
 
             // Next, the cells within the "touch" range (orange).
             validCount++;
-            LIBGUI_GL.glColor3f(1, .5f, 0);
+            DGL_Color3f(1, .5f, 0);
             for (cell.y = vCellBlock.min.y; cell.y < vCellBlock.max.y; ++cell.y)
             for (cell.x = vCellBlock.min.x; cell.x < vCellBlock.max.x; ++cell.x)
             {
@@ -464,7 +464,7 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
 
             // Lastly, the cell the followed Mobj is in (yellow).
             validCount++;
-            LIBGUI_GL.glColor3f(1, 1, 0);
+            DGL_Color3f(1, 1, 0);
             if (bmap.cellElementCount(vCell))
             {
                 cellDrawer(bmap, vCell, 0/*no params*/);
@@ -474,7 +474,7 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
         {
             // Draw all cells without color coding.
             validCount++;
-            LIBGUI_GL.glColor4f(.33f, 0, 0, .75f);
+            DGL_Color4f(.33f, 0, 0, .75f);
             BlockmapCell cell;
             for (cell.y = 0; cell.y < dimensions.y; ++cell.y)
             for (cell.x = 0; cell.x < dimensions.x; ++cell.x)
@@ -492,15 +492,15 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
     if (followMobj)
     {
         validCount++;
-        LIBGUI_GL.glColor3f(0, 1, 0);
-        LIBGUI_GL.glBegin(GL_QUADS);
+        DGL_Color3f(0, 1, 0);
+        DGL_Begin(DGL_QUADS);
             drawMobj(*followMobj);
-        LIBGUI_GL.glEnd();
+        DGL_End();
     }
 
     // Undo the map coordinate space translation.
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(GL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
 void Rend_BlockmapDebug()
@@ -547,16 +547,16 @@ void Rend_BlockmapDebug()
     /*
      * Draw the blockmap.
      */
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPushMatrix();
-    LIBGUI_GL.glLoadIdentity();
-    LIBGUI_GL.glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
+    DGL_MatrixMode(GL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Ortho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
     // Orient on the center of the window.
-    LIBGUI_GL.glTranslatef((DENG_GAMEVIEW_WIDTH / 2), (DENG_GAMEVIEW_HEIGHT / 2), 0);
+    DGL_Translatef((DENG_GAMEVIEW_WIDTH / 2), (DENG_GAMEVIEW_HEIGHT / 2), 0);
 
     // Uniform scaling factor for this visual.
     float scale = bmapDebugSize / de::max(DENG_GAMEVIEW_HEIGHT / 100, 1);
-    LIBGUI_GL.glScalef(scale, -scale, 1);
+    DGL_Scalef(scale, -scale, 1);
 
     // If possible we'll tailor what we draw relative to the viewPlayer.
     mobj_t *followMobj = 0;
@@ -568,16 +568,16 @@ void Rend_BlockmapDebug()
     // Draw!
     drawBlockmap(*blockmap, followMobj, cellDrawer);
 
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(GL_PROJECTION);
+    DGL_PopMatrix();
 
     /*
      * Draw HUD info.
      */
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPushMatrix();
-    LIBGUI_GL.glLoadIdentity();
-    LIBGUI_GL.glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
+    DGL_MatrixMode(GL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Ortho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
 
     if (followMobj)
     {
@@ -595,6 +595,6 @@ void Rend_BlockmapDebug()
     drawBlockmapInfo(Vector2d(DENG_GAMEVIEW_WIDTH - 10, DENG_GAMEVIEW_HEIGHT - 10),
                      *blockmap);
 
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(GL_PROJECTION);
+    DGL_PopMatrix();
 }

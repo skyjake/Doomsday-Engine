@@ -239,7 +239,7 @@ void ViewCompositor::drawCompositedLayers()
     // Some of the layers use OpenGL 2 drawing code.
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
-    LIBGUI_GL.glLoadMatrixf(ClientWindow::main().root().projMatrix2D().values());
+    DGL_LoadMatrix(ClientWindow::main().root().projMatrix2D().values());
 
     // Fill around a scaled-down 3D view. The border is not visible if the 3D view
     // covers the entire area.

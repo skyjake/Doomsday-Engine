@@ -245,14 +245,7 @@ void GLTextureFramebuffer::glInit()
 
     LOG_AS("GLFramebuffer");
 
-    // Check for some integral OpenGL functionality.
-    if (!GLInfo::extensions().EXT_packed_depth_stencil)
-    {
-        LOG_GL_WARNING("GL_EXT_packed_depth_stencil is missing, some features may be unavailable");
-    }
-
     d->texFboState.setState(Ready);
-
     d->reconfigure();
 }
 

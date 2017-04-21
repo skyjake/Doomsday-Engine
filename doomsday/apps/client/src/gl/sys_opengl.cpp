@@ -40,21 +40,6 @@
 
 gl_state_t GL_state;
 
-/*
-#ifdef WIN32
-//PFNWGLSWAPINTERVALEXTPROC      wglSwapIntervalEXT = NULL;
-PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = NULL;
-#endif
-*/
-
-/*
-#ifdef LIBGUI_USE_GLENTRYPOINTS
-PFNGLBLENDEQUATIONEXTPROC      glBlendEquationEXT = NULL;
-PFNGLLOCKARRAYSEXTPROC         glLockArraysEXT = NULL;
-PFNGLUNLOCKARRAYSEXTPROC       glUnlockArraysEXT = NULL;
-#endif
-*/
-
 static dd_bool doneEarlyInit = false;
 static dd_bool sysOpenGLInited = false;
 static dd_bool firstTimeInit = true;
@@ -66,19 +51,6 @@ static void initialize(void)
     if(CommandLine_Exists("-noanifilter"))
     {
         GL_state.features.texFilterAniso = false;
-    }
-
-    if(ext.EXT_blend_subtract)
-    {
-#ifdef LIBGUI_USE_GLENTRYPOINTS
-        GETPROC(PFNGLBLENDEQUATIONEXTPROC, glBlendEquationEXT);
-        if(!glBlendEquationEXT)
-            GL_state.features.blendSubtract = false;
-#endif
-    }
-    else
-    {
-        GL_state.features.blendSubtract = false;
     }
 
     if (CommandLine_Exists("-texcomp") && !CommandLine_Exists("-notexcomp"))
@@ -97,12 +69,6 @@ static void initialize(void)
 #else
     GL_state.features.texCompression = false;
 #endif
-
-    // Automatic mipmap generation.
-    if(!ext.SGIS_generate_mipmap || CommandLine_Exists("-nosgm"))
-    {
-        GL_state.features.genMipmap = false;
-    }
 }
 
 #define TABBED(A, B)  _E(Ta) "  " _E(l) A _E(.) " " _E(Tb) << B << "\n"
@@ -178,8 +144,8 @@ dd_bool Sys_GLPreInit(void)
     // Init assuming ideal configuration.
     //GL_state.multisampleFormat = 0; // No valid default can be assumed at this time.
 
-    GL_state.features.blendSubtract = true;
-    GL_state.features.genMipmap = true;
+    //GL_state.features.blendSubtract = true;
+    //GL_state.features.genMipmap = true;
     //GL_state.features.multisample = false; // We'll test for availability...
     GL_state.features.texCompression = false;
     GL_state.features.texFilterAniso = true;
@@ -246,8 +212,9 @@ dd_bool Sys_GLInitialize(void)
      */
 
     // Use nice quality for mipmaps please.
-    if(GL_state.features.genMipmap && de::GLInfo::extensions().SGIS_generate_mipmap)
-        LIBGUI_GL.glHint(GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
+    //if(GL_state.features.genMipmap && de::GLInfo::extensions().SGIS_generate_mipmap)
+
+    LIBGUI_GL.glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
 
     assert(!Sys_GLCheckError());
 
@@ -284,20 +251,20 @@ void Sys_GLConfigureDefaultState(void)
             .setDepthTest(false)
             .setDepthFunc(de::gl::Less);
 
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    DGL_Disable(DGL_TEXTURE_2D);
     LIBGUI_GL.glDisable(GL_TEXTURE_CUBE_MAP);
 
     // The projection matrix.
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glLoadIdentity();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_LoadIdentity();
 
     // Initialize the modelview matrix.
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glLoadIdentity();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_LoadIdentity();
 
     // Also clear the texture matrix.
-    LIBGUI_GL.glMatrixMode(GL_TEXTURE);
-    LIBGUI_GL.glLoadIdentity();
+    DGL_MatrixMode(DGL_TEXTURE);
+    DGL_LoadIdentity();
 
     // Setup for antialiased lines/points.
     LIBGUI_GL.glEnable(GL_LINE_SMOOTH);
@@ -308,13 +275,13 @@ void Sys_GLConfigureDefaultState(void)
     LIBGUI_GL.glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
     LIBGUI_GL.glPointSize(GL_state.currentPointSize);
 
-    LIBGUI_GL.glShadeModel(GL_SMOOTH);
+    //LIBGUI_GL.glShadeModel(GL_SMOOTH);
 
     // Default state for the white fog is off.
-    LIBGUI_GL.glDisable(GL_FOG);
-    LIBGUI_GL.glFogi(GL_FOG_MODE, GL_LINEAR);
-    LIBGUI_GL.glFogi(GL_FOG_END, 2100); // This should be tweaked a bit.
-    LIBGUI_GL.glFogfv(GL_FOG_COLOR, fogcol);
+    DGL_Disable(DGL_FOG);
+    Deferred_glFogi(GL_FOG_MODE, GL_LINEAR);
+    Deferred_glFogi(GL_FOG_END, 2100); // This should be tweaked a bit.
+    Deferred_glFogfv(GL_FOG_COLOR, fogcol);
 
     LIBGUI_GL.glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 

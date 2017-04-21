@@ -85,7 +85,7 @@ svgid_t Svg_UniqueId(Svg* svg)
 
 static void draw(const Svg* svg)
 {
-    GLenum nextPrimType, primType = GL_LINE_STRIP;
+    dglprimtype_t nextPrimType, primType = DGL_LINE_STRIP;
     const SvgLine* lIt;
     uint i;
 
@@ -97,24 +97,24 @@ static void draw(const Svg* svg)
     {
         if(lIt->numPoints != 2)
         {
-            nextPrimType = SvgLine_IsLoop(lIt)? GL_LINE_LOOP : GL_LINE_STRIP;
+            nextPrimType = SvgLine_IsLoop(lIt)? DGL_LINE_LOOP : DGL_LINE_STRIP;
 
             // Do we need to end the current primitive?
-            if(primType == GL_LINES)
+            if(primType == DGL_LINES)
             {
-                LIBGUI_GL.glEnd(); // 2-vertex set ends.
+                DGL_End(); // 2-vertex set ends.
             }
 
             // A new n-vertex primitive begins.
-            LIBGUI_GL.glBegin(nextPrimType);
+            DGL_Begin(nextPrimType);
         }
         else
         {
             // Do we need to start a new 2-vertex primitive set?
-            if(primType != GL_LINES)
+            if(primType != DGL_LINES)
             {
-                primType = GL_LINES;
-                LIBGUI_GL.glBegin(GL_LINES);
+                primType = DGL_LINES;
+                DGL_Begin(DGL_LINES);
             }
         }
 
@@ -125,21 +125,22 @@ static void draw(const Svg* svg)
             do
             {
                 /// @todo Use TexGen?
-                LIBGUI_GL.glTexCoord2dv((const GLdouble*)pIt->coords.xy);
-                LIBGUI_GL.glVertex2dv((const GLdouble*)pIt->coords.xy);
-            } while(NULL != (pIt = pIt->next) && pIt != lIt->head);
+                DGL_TexCoord2f(0, pIt->coords.x, pIt->coords.y);;
+                DGL_Vertex2f(pIt->coords.x, pIt->coords.y);
+            }
+            while(NULL != (pIt = pIt->next) && pIt != lIt->head);
         }
 
         if(lIt->numPoints != 2)
         {
-            LIBGUI_GL.glEnd(); // N-vertex primitive ends.
+            DGL_End(); // N-vertex primitive ends.
         }
     }
 
-    if(primType == GL_LINES)
+    if(primType == DGL_LINES)
     {
         // Close any remaining open 2-vertex set.
-        LIBGUI_GL.glEnd();
+        DGL_End();
     }
 }
 
