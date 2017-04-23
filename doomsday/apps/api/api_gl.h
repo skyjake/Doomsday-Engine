@@ -118,6 +118,7 @@ typedef enum dgltexformat_e {
 
 /// Primitive types.
 typedef enum dglprimtype_e {
+    DGL_NO_PRIMITIVE,
     DGL_LINES,
     DGL_LINE_STRIP,
     DGL_LINE_LOOP,
@@ -126,7 +127,7 @@ typedef enum dglprimtype_e {
     DGL_TRIANGLE_STRIP,
     DGL_QUADS,
     DGL_QUAD_STRIP,
-    DGL_POINTS
+    DGL_POINTS,
 } dglprimtype_t;
 
 #define DDNUM_BLENDMODES    9
@@ -257,7 +258,7 @@ DENG_API_TYPEDEF(GL)
     void (*SetScissor)(RectRaw const *rect);
     void (*SetScissor2)(int x, int y, int width, int height);
 
-    void (*MatrixMode)(int mode);
+    void (*MatrixMode)(DGLenum mode);
     void (*PushMatrix)(void);
     void (*PopMatrix)(void);
     void (*LoadIdentity)(void);

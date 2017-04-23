@@ -363,7 +363,7 @@ void GL_Init2DState()
 
     //glDisable(GL_TEXTURE_1D);
     DGL_Disable(DGL_TEXTURE_2D);
-    LIBGUI_GL.glDisable(GL_TEXTURE_CUBE_MAP);
+    //LIBGUI_GL.glDisable(GL_TEXTURE_CUBE_MAP);
 
     // The projection matrix.
     DGL_MatrixMode(DGL_PROJECTION);
@@ -372,7 +372,7 @@ void GL_Init2DState()
 
     // Default state for the white fog is off.
     fogParams.usingFog = false;
-    LIBGUI_GL.glDisable(GL_FOG);
+    DGL_Disable(DGL_FOG);
     Deferred_glFogi(GL_FOG_MODE, (fogModeDefault == 0 ? GL_LINEAR :
                                   fogModeDefault == 1 ? GL_EXP    : GL_EXP2));
     Deferred_glFogf(GL_FOG_START, DEFAULT_FOG_START);
@@ -383,6 +383,8 @@ void GL_Init2DState()
     fogParams.fogColor[2] = DEFAULT_FOG_COLOR_BLUE;
     fogParams.fogColor[3] = 1;
     Deferred_glFogfv(GL_FOG_COLOR, fogParams.fogColor);
+
+    LIBGUI_ASSERT_GL_OK();
 }
 
 Rangef GL_DepthClipRange()

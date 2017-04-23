@@ -284,7 +284,7 @@ dint rendMaxLumobjs;             ///< Max lumobjs per viewer, per frame. @c 0= n
 dint extraLight;  ///< Bumped light from gun blasts.
 dfloat extraLightDelta;
 
-DGLuint dlBBox;  ///< Display list id for the active-textured bbox model.
+//DGLuint dlBBox;  ///< Display list id for the active-textured bbox model.
 
 /*
  * Debug/Development cvars:
@@ -406,11 +406,11 @@ void Rend_Reset()
     {
         App_World().map().removeAllLumobjs();
     }
-    if (dlBBox)
-    {
-        GL_DeleteLists(dlBBox, 1);
-        dlBBox = 0;
-    }
+//    if (dlBBox)
+//    {
+//        GL_DeleteLists(dlBBox, 1);
+//        dlBBox = 0;
+//    }
 }
 
 bool Rend_IsMTexLights()
@@ -5166,47 +5166,47 @@ void Rend_DrawLightModMatrix()
 #undef BLOCK_WIDTH
 }
 
-static DGLuint constructBBox(DGLuint name, dfloat br)
+static void drawBBox(dfloat br)
 {
-    if(GL_NewList(name, GL_COMPILE))
+//    if(GL_NewList(name, GL_COMPILE))
+//    {
+    DGL_Begin(DGL_QUADS);
     {
-        DGL_Begin(DGL_QUADS);
-        {
-            // Top
-            DGL_TexCoord2f(0, 1.0f, 1.0f); DGL_Vertex3f( 1.0f+br, 1.0f,-1.0f-br);  // TR
-            DGL_TexCoord2f(0, 0.0f, 1.0f); DGL_Vertex3f(-1.0f-br, 1.0f,-1.0f-br);  // TL
-            DGL_TexCoord2f(0, 0.0f, 0.0f); DGL_Vertex3f(-1.0f-br, 1.0f, 1.0f+br);  // BL
-            DGL_TexCoord2f(0, 1.0f, 0.0f); DGL_Vertex3f( 1.0f+br, 1.0f, 1.0f+br);  // BR
-            // Bottom
-            DGL_TexCoord2f(0, 1.0f, 1.0f); DGL_Vertex3f( 1.0f+br,-1.0f, 1.0f+br);  // TR
-            DGL_TexCoord2f(0, 0.0f, 1.0f); DGL_Vertex3f(-1.0f-br,-1.0f, 1.0f+br);  // TL
-            DGL_TexCoord2f(0, 0.0f, 0.0f); DGL_Vertex3f(-1.0f-br,-1.0f,-1.0f-br);  // BL
-            DGL_TexCoord2f(0, 1.0f, 0.0f); DGL_Vertex3f( 1.0f+br,-1.0f,-1.0f-br);  // BR
-            // Front
-            DGL_TexCoord2f(0, 1.0f, 1.0f); DGL_Vertex3f( 1.0f+br, 1.0f+br, 1.0f);  // TR
-            DGL_TexCoord2f(0, 0.0f, 1.0f); DGL_Vertex3f(-1.0f-br, 1.0f+br, 1.0f);  // TL
-            DGL_TexCoord2f(0, 0.0f, 0.0f); DGL_Vertex3f(-1.0f-br,-1.0f-br, 1.0f);  // BL
-            DGL_TexCoord2f(0, 1.0f, 0.0f); DGL_Vertex3f( 1.0f+br,-1.0f-br, 1.0f);  // BR
-            // Back
-            DGL_TexCoord2f(0, 1.0f, 1.0f); DGL_Vertex3f( 1.0f+br,-1.0f-br,-1.0f);  // TR
-            DGL_TexCoord2f(0, 0.0f, 1.0f); DGL_Vertex3f(-1.0f-br,-1.0f-br,-1.0f);  // TL
-            DGL_TexCoord2f(0, 0.0f, 0.0f); DGL_Vertex3f(-1.0f-br, 1.0f+br,-1.0f);  // BL
-            DGL_TexCoord2f(0, 1.0f, 0.0f); DGL_Vertex3f( 1.0f+br, 1.0f+br,-1.0f);  // BR
-            // Left
-            DGL_TexCoord2f(0, 1.0f, 1.0f); DGL_Vertex3f(-1.0f, 1.0f+br, 1.0f+br);  // TR
-            DGL_TexCoord2f(0, 0.0f, 1.0f); DGL_Vertex3f(-1.0f, 1.0f+br,-1.0f-br);  // TL
-            DGL_TexCoord2f(0, 0.0f, 0.0f); DGL_Vertex3f(-1.0f,-1.0f-br,-1.0f-br);  // BL
-            DGL_TexCoord2f(0, 1.0f, 0.0f); DGL_Vertex3f(-1.0f,-1.0f-br, 1.0f+br);  // BR
-            // Right
-            DGL_TexCoord2f(0, 1.0f, 1.0f); DGL_Vertex3f( 1.0f, 1.0f+br,-1.0f-br);  // TR
-            DGL_TexCoord2f(0, 0.0f, 1.0f); DGL_Vertex3f( 1.0f, 1.0f+br, 1.0f+br);  // TL
-            DGL_TexCoord2f(0, 0.0f, 0.0f); DGL_Vertex3f( 1.0f,-1.0f-br, 1.0f+br);  // BL
-            DGL_TexCoord2f(0, 1.0f, 0.0f); DGL_Vertex3f( 1.0f,-1.0f-br,-1.0f-br);  // BR
-        }
-        DGL_End();
-        return GL_EndList();
+        // Top
+        DGL_TexCoord2f(0, 1.0f, 1.0f); DGL_Vertex3f( 1.0f+br, 1.0f,-1.0f-br);  // TR
+        DGL_TexCoord2f(0, 0.0f, 1.0f); DGL_Vertex3f(-1.0f-br, 1.0f,-1.0f-br);  // TL
+        DGL_TexCoord2f(0, 0.0f, 0.0f); DGL_Vertex3f(-1.0f-br, 1.0f, 1.0f+br);  // BL
+        DGL_TexCoord2f(0, 1.0f, 0.0f); DGL_Vertex3f( 1.0f+br, 1.0f, 1.0f+br);  // BR
+        // Bottom
+        DGL_TexCoord2f(0, 1.0f, 1.0f); DGL_Vertex3f( 1.0f+br,-1.0f, 1.0f+br);  // TR
+        DGL_TexCoord2f(0, 0.0f, 1.0f); DGL_Vertex3f(-1.0f-br,-1.0f, 1.0f+br);  // TL
+        DGL_TexCoord2f(0, 0.0f, 0.0f); DGL_Vertex3f(-1.0f-br,-1.0f,-1.0f-br);  // BL
+        DGL_TexCoord2f(0, 1.0f, 0.0f); DGL_Vertex3f( 1.0f+br,-1.0f,-1.0f-br);  // BR
+        // Front
+        DGL_TexCoord2f(0, 1.0f, 1.0f); DGL_Vertex3f( 1.0f+br, 1.0f+br, 1.0f);  // TR
+        DGL_TexCoord2f(0, 0.0f, 1.0f); DGL_Vertex3f(-1.0f-br, 1.0f+br, 1.0f);  // TL
+        DGL_TexCoord2f(0, 0.0f, 0.0f); DGL_Vertex3f(-1.0f-br,-1.0f-br, 1.0f);  // BL
+        DGL_TexCoord2f(0, 1.0f, 0.0f); DGL_Vertex3f( 1.0f+br,-1.0f-br, 1.0f);  // BR
+        // Back
+        DGL_TexCoord2f(0, 1.0f, 1.0f); DGL_Vertex3f( 1.0f+br,-1.0f-br,-1.0f);  // TR
+        DGL_TexCoord2f(0, 0.0f, 1.0f); DGL_Vertex3f(-1.0f-br,-1.0f-br,-1.0f);  // TL
+        DGL_TexCoord2f(0, 0.0f, 0.0f); DGL_Vertex3f(-1.0f-br, 1.0f+br,-1.0f);  // BL
+        DGL_TexCoord2f(0, 1.0f, 0.0f); DGL_Vertex3f( 1.0f+br, 1.0f+br,-1.0f);  // BR
+        // Left
+        DGL_TexCoord2f(0, 1.0f, 1.0f); DGL_Vertex3f(-1.0f, 1.0f+br, 1.0f+br);  // TR
+        DGL_TexCoord2f(0, 0.0f, 1.0f); DGL_Vertex3f(-1.0f, 1.0f+br,-1.0f-br);  // TL
+        DGL_TexCoord2f(0, 0.0f, 0.0f); DGL_Vertex3f(-1.0f,-1.0f-br,-1.0f-br);  // BL
+        DGL_TexCoord2f(0, 1.0f, 0.0f); DGL_Vertex3f(-1.0f,-1.0f-br, 1.0f+br);  // BR
+        // Right
+        DGL_TexCoord2f(0, 1.0f, 1.0f); DGL_Vertex3f( 1.0f, 1.0f+br,-1.0f-br);  // TR
+        DGL_TexCoord2f(0, 0.0f, 1.0f); DGL_Vertex3f( 1.0f, 1.0f+br, 1.0f+br);  // TL
+        DGL_TexCoord2f(0, 0.0f, 0.0f); DGL_Vertex3f( 1.0f,-1.0f-br, 1.0f+br);  // BL
+        DGL_TexCoord2f(0, 1.0f, 0.0f); DGL_Vertex3f( 1.0f,-1.0f-br,-1.0f-br);  // BR
     }
-    return 0;
+    DGL_End();
+    //    return GL_EndList();
+    //}
+    //return 0;
 }
 
 /**
@@ -5242,7 +5242,8 @@ void Rend_DrawBBox(Vector3d const &pos, coord_t w, coord_t l, coord_t h,
     DGL_Scalef(w - br - br, h - br - br, l - br - br);
     DGL_Color4f(color[0], color[1], color[2], alpha);
 
-    GL_CallList(dlBBox);
+    //GL_CallList(dlBBox);
+    drawBBox(.08f);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -5259,7 +5260,7 @@ void Rend_DrawBBox(Vector3d const &pos, coord_t w, coord_t l, coord_t h,
  * @param alpha  Alpha to make the box (uniform vertex color).
  */
 void Rend_DrawArrow(Vector3d const &pos, dfloat a, dfloat s, dfloat const color[3],
-    dfloat alpha)
+                    dfloat alpha)
 {
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -5346,8 +5347,8 @@ static void drawMobjBoundingBoxes(Map &map)
     if(netGame) return;
 #endif
 
-    if(!dlBBox)
-        dlBBox = constructBBox(0, .08f);
+//    if(!dlBBox)
+//        dlBBox = constructBBox(0, .08f);
 
     GLState::current().setDepthTest(false).apply();
     DGL_Enable(DGL_TEXTURE_2D);

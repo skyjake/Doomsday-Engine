@@ -59,11 +59,12 @@ static void initialize(void)
     }
 #ifdef USE_TEXTURE_COMPRESSION_S3
     // Enabled by default if available.
-    if(ext.EXT_texture_compression_s3tc)
+    if (ext.EXT_texture_compression_s3tc)
     {
         GLint iVal;
         LIBGUI_GL.glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
-        if(iVal == 0 || LIBGUI_GL.glGetError() != GL_NO_ERROR)
+        LIBGUI_ASSERT_GL_OK();
+        if (iVal == 0)// || LIBGUI_GL.glGetError() != GL_NO_ERROR)
             GL_state.features.texCompression = false;
     }
 #else
@@ -87,6 +88,8 @@ de::String Sys_GLDescription()
     os << TABBED("Renderer:", (char const *) LIBGUI_GL.glGetString(GL_RENDERER));
     os << TABBED("Vendor:",   (char const *) LIBGUI_GL.glGetString(GL_VENDOR));
 
+    LIBGUI_ASSERT_GL_OK();
+
     os << _E(T`) "Capabilities:\n";
 
     GLint iVal;
@@ -95,34 +98,31 @@ de::String Sys_GLDescription()
     if(de::GLInfo::extensions().EXT_texture_compression_s3tc)
     {
         LIBGUI_GL.glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
+        LIBGUI_ASSERT_GL_OK();
         os << TABBED("Compressed texture formats:", iVal);
     }
 #endif
 
     os << TABBED("Use texture compression:", (GL_state.features.texCompression? "yes" : "no"));
 
-    LIBGUI_GL.glGetIntegerv(GL_MAX_TEXTURE_UNITS, &iVal);
-    os << TABBED("Available texture units:", iVal);
+    os << TABBED("Available texture units:", de::GLInfo::limits().maxTexUnits);
 
     if(de::GLInfo::extensions().EXT_texture_filter_anisotropic)
     {
-        LIBGUI_GL.glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &iVal);
-        os << TABBED("Maximum texture anisotropy:", iVal);
+        os << TABBED("Maximum texture anisotropy:", de::GLInfo::limits().maxTexFilterAniso);
     }
     else
     {
         os << _E(Ta) "  Variable texture anisotropy unavailable.";
     }
 
-    LIBGUI_GL.glGetIntegerv(GL_MAX_TEXTURE_SIZE, &iVal);
-    os << TABBED("Maximum texture size:", iVal);
+    os << TABBED("Maximum texture size:", de::GLInfo::limits().maxTexSize);
 
-    GLfloat fVals[2];
-    LIBGUI_GL.glGetFloatv(GL_LINE_WIDTH_GRANULARITY, fVals);
-    os << TABBED("Line width granularity:", fVals[0]);
+    os << TABBED("Line width granularity:", de::GLInfo::limits().smoothLineWidthGranularity);
 
-    LIBGUI_GL.glGetFloatv(GL_LINE_WIDTH_RANGE, fVals);
-    os << TABBED("Line width range:", fVals[0] << "..." << fVals[1]);
+    os << TABBED("Line width range:",
+                 de::GLInfo::limits().smoothLineWidth.start << "..." <<
+                 de::GLInfo::limits().smoothLineWidth.end);
 
     return str.rightStrip();
 
@@ -180,7 +180,7 @@ dd_bool Sys_GLInitialize(void)
             LOG_GL_WARNING("Failed to determine OpenGL version; driver reports: %s")
                     << LIBGUI_GL.glGetString(GL_VERSION);
         }
-        else if(version < 2.0)
+        else if(version < 3.3)
         {
             if(!CommandLine_Exists("-noglcheck"))
             {
@@ -192,7 +192,7 @@ dd_bool Sys_GLInitialize(void)
             }
             else
             {
-                LOG_GL_WARNING("OpenGL may be too old (2.0+ required, "
+                LOG_GL_WARNING("OpenGL may be too old (3.3+ required, "
                                "but driver reports %s)") << LIBGUI_GL.glGetString(GL_VERSION);
             }
         }
@@ -213,8 +213,7 @@ dd_bool Sys_GLInitialize(void)
 
     // Use nice quality for mipmaps please.
     //if(GL_state.features.genMipmap && de::GLInfo::extensions().SGIS_generate_mipmap)
-
-    LIBGUI_GL.glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
+    //LIBGUI_GL.glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
 
     assert(!Sys_GLCheckError());
 
@@ -230,6 +229,8 @@ void Sys_GLShutdown(void)
 
 void Sys_GLConfigureDefaultState(void)
 {
+    LIBGUI_ASSERT_GL_OK();
+
     GLfloat fogcol[4] = { .54f, .54f, .54f, 1 };
 
     /**
@@ -246,13 +247,18 @@ void Sys_GLConfigureDefaultState(void)
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     LIBGUI_GL.glFrontFace(GL_CW);
+    LIBGUI_ASSERT_GL_OK();
+
     de::GLState::current()
             .setCull(de::gl::None)
             .setDepthTest(false)
             .setDepthFunc(de::gl::Less);
 
     DGL_Disable(DGL_TEXTURE_2D);
-    LIBGUI_GL.glDisable(GL_TEXTURE_CUBE_MAP);
+    //LIBGUI_GL.glDisable(GL_TEXTURE_CUBE_MAP);
+
+    LIBGUI_GL.glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+    LIBGUI_ASSERT_GL_OK();
 
     // The projection matrix.
     DGL_MatrixMode(DGL_PROJECTION);
@@ -268,12 +274,16 @@ void Sys_GLConfigureDefaultState(void)
 
     // Setup for antialiased lines/points.
     LIBGUI_GL.glEnable(GL_LINE_SMOOTH);
+    LIBGUI_ASSERT_GL_OK();
     LIBGUI_GL.glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-    LIBGUI_GL.glLineWidth(GL_state.currentLineWidth);
+    LIBGUI_ASSERT_GL_OK();
 
-    LIBGUI_GL.glEnable(GL_POINT_SMOOTH);
-    LIBGUI_GL.glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
+    de::GLInfo::setLineWidth(GL_state.currentLineWidth);
+
+    //LIBGUI_GL.glEnable(GL_POINT_SMOOTH);
+    //LIBGUI_GL.glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
     LIBGUI_GL.glPointSize(GL_state.currentPointSize);
+    LIBGUI_ASSERT_GL_OK();
 
     //LIBGUI_GL.glShadeModel(GL_SMOOTH);
 
@@ -283,10 +293,12 @@ void Sys_GLConfigureDefaultState(void)
     Deferred_glFogi(GL_FOG_END, 2100); // This should be tweaked a bit.
     Deferred_glFogfv(GL_FOG_COLOR, fogcol);
 
-    LIBGUI_GL.glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+    LIBGUI_ASSERT_GL_OK();
 
     // Prefer good quality in texture compression.
     LIBGUI_GL.glHint(GL_TEXTURE_COMPRESSION_HINT, GL_NICEST);
+
+    LIBGUI_ASSERT_GL_OK();
 
     // Configure the default GLState (bottom of the stack).
     de::GLState::current()
@@ -370,17 +382,11 @@ void Sys_GLPrintExtensions(void)
     */
 }
 
-dd_bool Sys_GLCheckError()
+dd_bool Sys_GLCheckErrorArgs(char const *file, int line)
 {
+    if (novideo) return false;
 #ifdef DENG_DEBUG
-    if(!novideo)
-    {
-        GLenum error = LIBGUI_GL.glGetError();
-        if(error != GL_NO_ERROR)
-        {
-            LOGDEV_GL_ERROR("OpenGL error: 0x%x") << error;
-        }
-    }
+    de::GLInfo::checkError(file, line);
 #endif
     return false;
 }

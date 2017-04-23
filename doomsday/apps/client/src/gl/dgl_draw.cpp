@@ -1,4 +1,6 @@
-/** @file dgl_draw.cpp  Drawing Operations and Vertex Arrays.
+/** @file dgl_draw.cpp  Drawing operations and vertex arrays.
+ *
+ * Emulates OpenGL 1.x drawing for legacy code.
  *
  * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
@@ -17,8 +19,6 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_NO_API_MACROS_GL
-
 #include "de_base.h"
 #include "gl/gl_main.h"
 
@@ -26,232 +26,348 @@
 #include <cstdlib>
 #include <de/concurrency.h>
 #include <de/GLInfo>
+#include <de/GLBuffer>
+#include <de/GLState>
+#include <de/GLProgram>
+#include <de/Matrix>
 #include "sys_system.h"
 #include "gl/gl_draw.h"
 #include "gl/sys_opengl.h"
+#include "clientapp.h"
 
 using namespace de;
 
-static int primLevel = 0;
-static DGLuint inList = 0;
-#ifdef _DEBUG
-static dd_bool inPrim = false;
-#endif
+uint constexpr MAX_TEX_COORDS = 3;
 
-dd_bool GL_NewList(DGLuint list, int mode)
+struct DGLDrawState
 {
-#if 0
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    struct Vertex
+    {
+        Vector3f  vertex;
+        Vector4ub color { 255, 255, 255, 255 };
+        Vector2f  texCoord[MAX_TEX_COORDS];
+    };
 
-    // We enter a New/End list section.
-#ifdef _DEBUG
-    if(inList)
-        App_Error("GL_NewList: Already in list");
-    Sys_GLCheckError();
-#endif
+    // Indices for vertex attribute arrays.
+    enum
+    {
+        VAA_VERTEX,
+        VAA_COLOR,
+        VAA_TEXCOORD0,
+        VAA_TEXCOORD1,
+        VAA_TEXCOORD2,
+        NUM_VERTEX_ATTRIB_ARRAYS
+    };
 
-    if(list)
-    {   // A specific list id was requested. Is it free?
-        if(LIBGUI_GL.glIsList(list))
+    int primLevel = 0;
+    dglprimtype_t currentPrimitive = DGL_NO_PRIMITIVE;
+    QVector<Vertex> vertices;
+
+    struct GLData
+    {
+        GLProgram shader;
+        GLUniform uMvpMatrix       { "uMvpMatrix",       GLUniform::Mat4 };
+        GLUniform uTextureMatrix   { "uTextureMatrix",   GLUniform::Mat4 };
+        GLUniform uEnabledTextures { "uEnabledTextures", GLUniform::Int  };
+        GLuint vertexArray = 0;
+    };
+    std::unique_ptr<GLData> gl;
+
+    DGLDrawState()
+    {
+        clearVertices();
+    }
+
+    void commitVertex()
+    {
+        vertices.append(vertices.last());
+    }
+
+    void clearVertices()
+    {
+        vertices.clear();
+        vertices.append(Vertex());
+    }
+
+    int numVertices() const
+    {
+        // The last one is always the incomplete one.
+        return vertices.size() - 1;
+    }
+
+    Vertex &vertex()
+    {
+        return vertices.last();
+    }
+
+    static Vector4ub colorFromFloat(Vector4f const &color)
+    {
+        Vector4i rgba = (color * 255 + Vector4f(0.5f, 0.5f, 0.5f, 0.5f))
+                .toVector4i()
+                .max(Vector4i(0, 0, 0, 0))
+                .min(Vector4i(255, 255, 255, 255));
+        return Vector4ub(dbyte(rgba.x), dbyte(rgba.y), dbyte(rgba.z), dbyte(rgba.w));
+    }
+
+    void beginPrimitive(dglprimtype_t primitive)
+    {
+        // We enter a Begin/End section.
+        primLevel++;
+
+        DENG2_ASSERT(currentPrimitive == DGL_NO_PRIMITIVE);
+        currentPrimitive = primitive;
+    }
+
+    void endPrimitive()
+    {
+        DENG2_ASSERT(primLevel > 0);
+        DENG2_ASSERT(currentPrimitive != DGL_NO_PRIMITIVE);
+
+        if (primLevel > 0)
         {
-#if _DEBUG
-            App_Error("GL_NewList: List %u already in use.", (unsigned int) list);
-#endif
-            return false;
+            primLevel--;
+            drawPrimitives();
+        }
+        clearVertices();
+    }
+
+    void glInit()
+    {
+        DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+        if (!gl)
+        {
+            gl.reset(new GLData);
+
+            // Set up the shader.
+            ClientApp::shaders().build(gl->shader, "dgl.draw")
+                    << gl->uMvpMatrix
+                    << gl->uTextureMatrix
+                    << gl->uEnabledTextures;
+
+            auto &GL = LIBGUI_GL;
+
+            // Sampler uniforms.
+            {
+                auto prog = gl->shader.glName();
+                GL.glUseProgram(prog);
+                GL.glUniform1i(GL.glGetUniformLocation(prog, "uTex0"), 0);
+                GL.glUniform1i(GL.glGetUniformLocation(prog, "uTex1"), 1);
+                GL.glUniform1i(GL.glGetUniformLocation(prog, "uTex2"), 2);
+                GL.glUseProgram(0);
+            }
+
+            // Vertex array object.
+            {
+                GL.glGenVertexArrays(1, &gl->vertexArray);
+                GL.glBindVertexArray(gl->vertexArray);
+                for (uint i = 0; i < NUM_VERTEX_ATTRIB_ARRAYS; ++i)
+                {
+                    GL.glEnableVertexAttribArray(i);
+                }
+                GL.glBindVertexArray(0);
+            }
         }
     }
-    else
+
+    void glBindArrays()
     {
-        // Just get a new list id, it doesn't matter.
-        list = LIBGUI_GL.glGenLists(1);
+        uint const stride = sizeof(Vertex);
+        auto &GL = LIBGUI_GL;
+
+        GL.glBindVertexArray(gl->vertexArray);
+
+        // Updated pointers.
+        GL.glVertexAttribPointer(VAA_VERTEX,    3, GL_FLOAT,         GL_FALSE, stride, &vertices[0].vertex);
+        GL.glVertexAttribPointer(VAA_COLOR,     4, GL_UNSIGNED_BYTE, GL_FALSE, stride, &vertices[0].color);
+        GL.glVertexAttribPointer(VAA_TEXCOORD0, 2, GL_FLOAT,         GL_FALSE, stride, &vertices[0].texCoord[0]);
+        GL.glVertexAttribPointer(VAA_TEXCOORD1, 2, GL_FLOAT,         GL_FALSE, stride, &vertices[0].texCoord[1]);
+        GL.glVertexAttribPointer(VAA_TEXCOORD2, 2, GL_FLOAT,         GL_FALSE, stride, &vertices[0].texCoord[2]);
+
+        LIBGUI_ASSERT_GL_OK();
     }
 
-    LIBGUI_GL.glNewList(list, mode == DGL_COMPILE? GL_COMPILE : GL_COMPILE_AND_EXECUTE);
-    inList = list;
-    return true;
-#endif
-    qDebug() << "OpenGL drawing lists are not available";
-    return false;
-}
+    void glUnbindArrays()
+    {
+        LIBGUI_GL.glBindVertexArray(0);
+    }
 
-DGLuint GL_EndList(void)
-{
-#if 0
-    DGLuint currentList = inList;
+    GLenum glPrimitive() const
+    {
+        switch (currentPrimitive)
+        {
+        case DGL_POINTS:            return GL_POINTS;
+        case DGL_LINES:             return GL_LINES;
+        case DGL_LINE_LOOP:         return GL_LINE_LOOP;
+        case DGL_LINE_STRIP:        return GL_LINE_STRIP;
+        case DGL_QUADS:             return GL_QUADS;
+        case DGL_QUAD_STRIP:        return GL_QUAD_STRIP;
+        case DGL_TRIANGLES:         return GL_TRIANGLES;
+        case DGL_TRIANGLE_FAN:      return GL_TRIANGLE_FAN;
+        case DGL_TRIANGLE_STRIP:    return GL_TRIANGLE_STRIP;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+        case DGL_NO_PRIMITIVE:      DENG2_ASSERT(!"No primitive type specified"); return GL_NONE;
+        }
+    }
 
-    DGL_EndList();
-#ifdef _DEBUG
-    inList = 0;
-    Sys_GLCheckError();
-#endif
+    /**
+     * Draws all the primitives currently stored in the vertex array.
+     */
+    void drawPrimitives()
+    {
+        glInit();
 
-    return currentList;
-#endif
-    return 0;
-}
+        // Update uniforms.
+        gl->uMvpMatrix     = DGL_Matrix(DGL_PROJECTION) * DGL_Matrix(DGL_MODELVIEW);
+        gl->uTextureMatrix = DGL_Matrix(DGL_TEXTURE);
 
-void GL_CallList(DGLuint list)
-{
-#if 0
-    if(!list) return; // We do not consider zero a valid list id.
+        gl->uEnabledTextures = DGL_GetInteger(DGL_TEXTURE_2D)? 1 : 0;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+        gl->shader.beginUse();
+        {
+            glBindArrays();
+            LIBGUI_GL.glDrawArrays(glPrimitive(), 0, numVertices());
+            glUnbindArrays();
+        }
+        gl->shader.endUse();
+    }
+};
 
-    LIBGUI_GL.glCallList(list);
-#endif
-}
-
-void GL_DeleteLists(DGLuint list, int range)
-{
-#if 0
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    LIBGUI_GL.glDeleteLists(list, range);
-#endif
-}
+static DGLDrawState dglDraw;
 
 #undef DGL_Color3ub
 DENG_EXTERN_C void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    //LIBGUI_GL.glColor3ub(r, g, b);
+    dglDraw.vertex().color = Vector4ub(r, g, b, 255);
 }
 
 #undef DGL_Color3ubv
 DENG_EXTERN_C void DGL_Color3ubv(const DGLubyte* vec)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    //LIBGUI_GL.glColor3ubv(vec);
+    dglDraw.vertex().color = Vector4ub(Vector3ub(vec), 255);
 }
 
 #undef DGL_Color4ub
 DENG_EXTERN_C void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    //LIBGUI_GL.glColor4ub(r, g, b, a);
+    dglDraw.vertex().color = Vector4ub(r, g, b, a);
 }
 
 #undef DGL_Color4ubv
 DENG_EXTERN_C void DGL_Color4ubv(const DGLubyte* vec)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    //LIBGUI_GL.glColor4ubv(vec);
+    dglDraw.vertex().color = Vector4ub(vec);
 }
 
 #undef DGL_Color3f
 DENG_EXTERN_C void DGL_Color3f(float r, float g, float b)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    //LIBGUI_GL.glColor3f(r, g, b);
+    dglDraw.vertex().color = DGLDrawState::colorFromFloat(Vector4f(r, g, b, 1.f));
 }
 
 #undef DGL_Color3fv
 DENG_EXTERN_C void DGL_Color3fv(const float* vec)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    //DGL_Color3fv(vec);
+    dglDraw.vertex().color = DGLDrawState::colorFromFloat(Vector4f(Vector3f(vec), 1.f));
 }
 
 #undef DGL_Color4f
 DENG_EXTERN_C void DGL_Color4f(float r, float g, float b, float a)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    //DGL_Color4f(r, g, b, a);
+    dglDraw.vertex().color = DGLDrawState::colorFromFloat(Vector4f(r, g, b, a));
 }
 
 #undef DGL_Color4fv
 DENG_EXTERN_C void DGL_Color4fv(const float* vec)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    DGL_Color4fv(vec);
+    dglDraw.vertex().color = DGLDrawState::colorFromFloat(Vector4f(vec));
 }
 
 #undef DGL_TexCoord2f
 DENG_EXTERN_C void DGL_TexCoord2f(byte target, float s, float t)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG2_ASSERT(target < MAX_TEX_COORDS);
 
-    //LIBGUI_GL.glMultiTexCoord2f(GL_TEXTURE0 + target, s, t);
+    if (target < MAX_TEX_COORDS)
+    {
+        dglDraw.vertex().texCoord[target] = Vector2f(s, t);
+    }
 }
 
 #undef DGL_TexCoord2fv
 DENG_EXTERN_C void DGL_TexCoord2fv(byte target, float const *vec)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG2_ASSERT(target < MAX_TEX_COORDS);
 
-    //LIBGUI_GL.glMultiTexCoord2fv(GL_TEXTURE0 + target, vec);
+    if (target < MAX_TEX_COORDS)
+    {
+        dglDraw.vertex().texCoord[target] = Vector2f(vec);
+    }
 }
 
 #undef DGL_Vertex2f
 DENG_EXTERN_C void DGL_Vertex2f(float x, float y)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    //DGL_Vertex2f(x, y);
+    dglDraw.vertex().vertex = Vector3f(x, y, 0.f);
+    dglDraw.commitVertex();
 }
 
 #undef DGL_Vertex2fv
 DENG_EXTERN_C void DGL_Vertex2fv(const float* vec)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    //DGL_Vertex2fv(vec);
+    dglDraw.vertex().vertex = Vector3f(vec[0], vec[1], 0.f);
+    dglDraw.commitVertex();
 }
 
 #undef DGL_Vertex3f
 DENG_EXTERN_C void DGL_Vertex3f(float x, float y, float z)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    //DGL_Vertex3f(x, y, z);
+    dglDraw.vertex().vertex = Vector3f(x, y, z);
+    dglDraw.commitVertex();
 }
 
 #undef DGL_Vertex3fv
 DENG_EXTERN_C void DGL_Vertex3fv(const float* vec)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    DGL_Vertex3fv(vec);
+    dglDraw.vertex().vertex = Vector3f(vec);
+    dglDraw.commitVertex();
 }
 
 #undef DGL_Vertices2ftv
 DENG_EXTERN_C void DGL_Vertices2ftv(int num, const dgl_ft2vertex_t* vec)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     for(; num > 0; num--, vec++)
     {
         DGL_TexCoord2fv(0, vec->tex);
-        //DGL_Vertex2fv(vec->pos);
+        DGL_Vertex2fv(vec->pos);
     }
 }
 
@@ -291,29 +407,12 @@ DENG_EXTERN_C void DGL_Begin(dglprimtype_t mode)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    // We enter a Begin/End section.
-    primLevel++;
-
-#ifdef _DEBUG
-    DENG2_ASSERT(!inPrim);
-    inPrim = true;
-    Sys_GLCheckError();
-#endif
-
-    /*LIBGUI_GL.glBegin(mode == DGL_POINTS ? GL_POINTS : mode ==
-            DGL_LINES ? GL_LINES : mode ==
-            DGL_LINE_STRIP ? GL_LINE_STRIP : mode ==
-            DGL_TRIANGLES ? GL_TRIANGLES : mode ==
-            DGL_TRIANGLE_FAN ? GL_TRIANGLE_FAN : mode ==
-            DGL_TRIANGLE_STRIP ? GL_TRIANGLE_STRIP : mode ==
-            DGL_QUAD_STRIP ? GL_QUAD_STRIP : GL_QUADS);*/
-
-    // TODO: Start a new primitive
+    dglDraw.beginPrimitive(mode);
 }
 
 void DGL_AssertNotInPrimitive(void)
 {
-    DENG_ASSERT(!inPrim);
+    DENG_ASSERT(dglDraw.currentPrimitive == DGL_NO_PRIMITIVE);
 }
 
 #undef DGL_End
@@ -325,43 +424,8 @@ DENG_EXTERN_C void DGL_End(void)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    if(primLevel > 0)
-    {
-        primLevel--;
-        //DGL_End();
-    }
-
-#ifdef _DEBUG
-    inPrim = false;
-    Sys_GLCheckError();
-#endif
+    dglDraw.endPrimitive();
 }
-
-#if 0
-#undef DGL_NewList
-DENG_EXTERN_C dd_bool DGL_NewList(DGLuint list, int mode)
-{
-    return GL_NewList(list, mode);
-}
-
-#undef DGL_EndList
-DENG_EXTERN_C DGLuint DGL_EndList(void)
-{
-    return GL_EndList();
-}
-
-#undef DGL_CallList
-DENG_EXTERN_C void DGL_CallList(DGLuint list)
-{
-    GL_CallList(list);
-}
-
-#undef DGL_DeleteLists
-DENG_EXTERN_C void DGL_DeleteLists(DGLuint list, int range)
-{
-    GL_DeleteLists(list, range);
-}
-#endif
 
 #undef DGL_DrawLine
 DENG_EXTERN_C void DGL_DrawLine(float x1, float y1, float x2, float y2, float r,
@@ -400,9 +464,8 @@ DENG_EXTERN_C void DGL_DrawRectf2(double x, double y, double w, double h)
 DENG_EXTERN_C void DGL_DrawRectf2Color(double x, double y, double w, double h, float r, float g, float b, float a)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    //DGL_Color4f(r, g, b, a);
+    DGL_Color4f(r, g, b, a);
     GL_DrawRectf2(x, y, w, h);
 }
 
@@ -433,7 +496,6 @@ DENG_EXTERN_C void DGL_DrawQuadOutline(Point2Raw const *tl, Point2Raw const *tr,
     if(!tl || !tr || !br || !bl || (color && !(color[CA] > 0))) return;
 
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(color) DGL_Color4fv(color);
     DGL_Begin(DGL_LINE_STRIP);

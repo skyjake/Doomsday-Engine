@@ -151,7 +151,7 @@ void Sys_GLConfigureDefaultState(void);
  */
 void Sys_GLPrintExtensions(void);
 
-dd_bool Sys_GLCheckError(void);
+dd_bool Sys_GLCheckErrorArgs(char const *file, int line);
 
 #endif // __CLIENT__
 

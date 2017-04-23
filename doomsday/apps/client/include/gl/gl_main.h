@@ -61,6 +61,8 @@ DENG_EXTERN_C int r_detail;
 #  define DENG_ASSERT_GL_CONTEXT_ACTIVE()
 #endif
 
+#define Sys_GLCheckError()  Sys_GLCheckErrorArgs(__FILE__, __LINE__)
+
 #ifdef _DEBUG
 #  define LIBDENG_ASSERT_GL_TEXTURE_ISBOUND(tex) { \
     GLint p; \
@@ -314,6 +316,8 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int comps,
     struct ColorRawf_s *color, float *lumSize);
 
 void DGL_AssertNotInPrimitive(void);
+
+de::Matrix4f DGL_Matrix(DGLenum matrixMode);
 
 // Console commands.
 D_CMD(UpdateGammaRamp);

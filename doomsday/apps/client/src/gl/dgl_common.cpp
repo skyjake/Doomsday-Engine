@@ -27,6 +27,7 @@
 #include <de/concurrency.h>
 #include <de/GLInfo>
 #include <de/GLState>
+#include <de/Matrix>
 #include <doomsday/res/Textures>
 
 #include "api_gl.h"
@@ -37,6 +38,64 @@
 #include "render/r_draw.h"
 
 using namespace de;
+
+struct DGLState
+{
+    int matrixMode = 0;
+    QVector<Matrix4f> matrixStacks[3];
+    bool enableTexture = true;
+    bool enableFog = false;
+
+    DGLState()
+    {
+        // The matrix stacks initially contain identity matrices.
+        for (auto &stack : matrixStacks)
+        {
+            stack.append(Matrix4f());
+        }
+    }
+
+    static int stackIndex(DGLenum id)
+    {
+        int const index = int(id) - DGL_MODELVIEW;
+        DENG2_ASSERT(index >=0 && index < 3);
+        return index;
+    }
+
+    void pushMatrix()
+    {
+        auto &stack = matrixStacks[matrixMode];
+        stack.push_back(stack.back());
+    }
+
+    void popMatrix()
+    {
+        auto &stack = matrixStacks[matrixMode];
+        DENG2_ASSERT(stack.size() > 1);
+        stack.pop_back();
+    }
+
+    void loadMatrix(Matrix4f const &mat)
+    {
+        auto &stack = matrixStacks[matrixMode];
+        DENG2_ASSERT(!stack.isEmpty());
+        stack.back() = mat;
+    }
+
+    void multMatrix(Matrix4f const &mat)
+    {
+        auto &stack = matrixStacks[matrixMode];
+        DENG2_ASSERT(!stack.isEmpty());
+        stack.back() = stack.back() * mat;
+    }
+};
+
+static DGLState dgl;
+
+Matrix4f DGL_Matrix(DGLenum matrixMode)
+{
+    return dgl.matrixStacks[DGLState::stackIndex(matrixMode)].back();
+}
 
 #if 0
 /**
@@ -381,6 +440,10 @@ dd_bool DGL_GetIntegerv(int name, int *v)
     float color[4];
     switch(name)
     {
+    case DGL_TEXTURE_2D:
+        *v = (dgl.enableTexture? 1 : 0);
+        break;
+
     case DGL_MODULATE_ADD_COMBINE:
         qDebug() << "DGL_GetIntegerv: tex env not available";
         //*v = GLInfo::extensions().NV_texture_env_combine4 || GLInfo::extensions().ATI_texture_env_combine3;
@@ -530,7 +593,7 @@ dd_bool DGL_SetFloat(int name, float value)
     {
     case DGL_LINE_WIDTH:
         GL_state.currentLineWidth = value;
-        LIBGUI_GL.glLineWidth(value);
+        GLInfo::setLineWidth(value);
         break;
 
     case DGL_POINT_SIZE:
@@ -569,11 +632,13 @@ int DGL_Enable(int cap)
     switch(cap)
     {
     case DGL_TEXTURE_2D:
-        Deferred_glEnable(GL_TEXTURE_2D);
+        //Deferred_glEnable(GL_TEXTURE_2D);
+        dgl.enableTexture = true;
         break;
 
     case DGL_FOG:
-        Deferred_glEnable(GL_FOG);
+        //Deferred_glEnable(GL_FOG);
+        dgl.enableFog = true;
         GL_state.currentUseFog = true;
         break;
 
@@ -594,6 +659,7 @@ int DGL_Enable(int cap)
         return 0;
     }
 
+    LIBGUI_ASSERT_GL_OK();
     return 1;
 }
 
@@ -606,11 +672,13 @@ void DGL_Disable(int cap)
     switch(cap)
     {
     case DGL_TEXTURE_2D:
-        Deferred_glDisable(GL_TEXTURE_2D);
+        //Deferred_glDisable(GL_TEXTURE_2D);
+        dgl.enableTexture = false;
         break;
 
     case DGL_FOG:
-        Deferred_glDisable(GL_FOG);
+        //Deferred_glDisable(GL_FOG);
+        dgl.enableFog = false;
         GL_state.currentUseFog = false;
         break;
 
@@ -631,6 +699,8 @@ void DGL_Disable(int cap)
         DENG_ASSERT(!"DGL_Disable: Invalid cap");
         break;
     }
+
+    LIBGUI_ASSERT_GL_OK();
 }
 
 #undef DGL_BlendOp
@@ -676,32 +746,6 @@ void DGL_BlendMode(blendmode_t mode)
     GL_BlendMode(mode);
 }
 
-#undef DGL_MatrixMode
-void DGL_MatrixMode(int mode)
-{
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-    DENG_ASSERT(mode == DGL_PROJECTION || mode == DGL_TEXTURE || mode == DGL_MODELVIEW);
-
-//    LIBGUI_GL.glMatrixMode(mode == DGL_PROJECTION ? GL_PROJECTION :
-//                 mode == DGL_TEXTURE ? GL_TEXTURE :
-//                 GL_MODELVIEW);
-}
-
-#undef DGL_PushMatrix
-void DGL_PushMatrix(void)
-{
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    DGL_PushMatrix();
-
-#if _DEBUG
-    if(LIBGUI_GL.glGetError() == GL_STACK_OVERFLOW)
-        App_Error("DG_PushMatrix: Stack overflow.\n");
-#endif
-}
-
 #undef DGL_SetNoMaterial
 void DGL_SetNoMaterial(void)
 {
@@ -713,12 +757,15 @@ static gl::Wrapping DGL_ToGLWrapCap(DGLint cap)
     switch(cap)
     {
     case DGL_CLAMP:
-    case DGL_CLAMP_TO_EDGE: return gl::ClampToEdge;
+    case DGL_CLAMP_TO_EDGE:
+        return gl::ClampToEdge;
 
-    case DGL_REPEAT:        return gl::Repeat;
+    case DGL_REPEAT:
+        return gl::Repeat;
+
     default:
-        App_Error("DGL_ToGLWrapCap: Unknown cap value %i.", (int)cap);
-        exit(1); // Unreachable.
+        DENG2_ASSERT(!"DGL_ToGLWrapCap: Unknown cap value");
+        break;
     }
 }
 
@@ -770,64 +817,77 @@ void DGL_SetRawImage(lumpnum_t lumpNum, DGLint wrapS, DGLint wrapT)
     GL_SetRawImage(lumpNum, DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT));
 }
 
+#undef DGL_MatrixMode
+void DGL_MatrixMode(DGLenum mode)
+{
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT(mode == DGL_PROJECTION || mode == DGL_TEXTURE || mode == DGL_MODELVIEW);
+
+    dgl.matrixMode = DGLState::stackIndex(mode);
+}
+
+#undef DGL_PushMatrix
+void DGL_PushMatrix(void)
+{
+    DENG_ASSERT_IN_MAIN_THREAD();
+
+    dgl.pushMatrix();
+}
+
 #undef DGL_PopMatrix
 void DGL_PopMatrix(void)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    //DGL_PopMatrix();
+    dgl.popMatrix();
 }
 
 #undef DGL_LoadIdentity
 void DGL_LoadIdentity(void)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    //DGL_LoadIdentity();
+    dgl.loadMatrix(Matrix4f());
 }
 
 #undef DGL_LoadMatrix
 void DGL_LoadMatrix(float const *matrix4x4)
 {
-    // TODO: replace matrix in stack
+    DENG_ASSERT_IN_MAIN_THREAD();
+
+    dgl.loadMatrix(Matrix4f(matrix4x4));
 }
 
 #undef DGL_Translatef
 void DGL_Translatef(float x, float y, float z)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    //DGL_Translatef(x, y, z);
+    dgl.multMatrix(Matrix4f::translate(Vector3f(x, y, z)));
 }
 
 #undef DGL_Rotatef
 void DGL_Rotatef(float angle, float x, float y, float z)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    //DGL_Rotatef(angle, x, y, z);
+    dgl.multMatrix(Matrix4f::rotate(angle, Vector3f(x, y, z)));
 }
 
 #undef DGL_Scalef
 void DGL_Scalef(float x, float y, float z)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    //DGL_Scalef(x, y, z);
+    dgl.multMatrix(Matrix4f::scale(Vector3f(x, y, z)));
 }
 
 #undef DGL_Ortho
 void DGL_Ortho(float left, float top, float right, float bottom, float znear, float zfar)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    //DGL_Ortho(left, right, bottom, top, znear, zfar);
+    dgl.multMatrix(Matrix4f::ortho(left, right, top, bottom, znear, zfar));
 }
 
 #undef DGL_DeleteTextures
@@ -835,7 +895,7 @@ void DGL_DeleteTextures(int num, DGLuint const *names)
 {
     if(!num || !names) return;
 
-    Deferred_glDeleteTextures(num, (GLuint const *) names);
+    Deferred_glDeleteTextures(num, names);
 }
 
 #undef DGL_Bind
@@ -869,10 +929,6 @@ DGLuint DGL_NewTextureWithParams(dgltexformat_t format, int width, int height,
 // dgl_draw.cpp
 DENG_EXTERN_C void DGL_Begin(dglprimtype_t mode);
 DENG_EXTERN_C void DGL_End(void);
-DENG_EXTERN_C dd_bool DGL_NewList(DGLuint list, int mode);
-DENG_EXTERN_C DGLuint DGL_EndList(void);
-DENG_EXTERN_C void DGL_CallList(DGLuint list);
-DENG_EXTERN_C void DGL_DeleteLists(DGLuint list, int range);
 DENG_EXTERN_C void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b);
 DENG_EXTERN_C void DGL_Color3ubv(const DGLubyte* vec);
 DENG_EXTERN_C void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a);
