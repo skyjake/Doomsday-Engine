@@ -315,8 +315,8 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int comps,
     colorpaletteid_t paletteId, float *brightX, float *brightY,
     struct ColorRawf_s *color, float *lumSize);
 
+void DGL_Shutdown();
 void DGL_AssertNotInPrimitive(void);
-
 de::Matrix4f DGL_Matrix(DGLenum matrixMode);
 void DGL_CurrentColor(DGLubyte *rgba);
 void DGL_CurrentColor(float *rgba);

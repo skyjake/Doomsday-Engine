@@ -91,8 +91,8 @@ struct DGLDrawState
                 // 4 vertices become 6.
                 //
                 // 0--1     0--1   5
-                // |  | =>   \ |   |\
-                // |  |       \|   | \
+                // |  |      \ |   |\
+                // |  |  =>   \|   | \
                 // 3--2        2   4--3
 
                 vertices.append(vertices.last());
@@ -193,6 +193,12 @@ struct DGLDrawState
         }
     }
 
+    void glDeinit()
+    {
+        LIBGUI_GL.glDeleteVertexArrays(1, &gl->vertexArray);
+        gl.reset();
+    }
+
     void glBindArrays()
     {
         uint const stride = sizeof(Vertex);
@@ -211,7 +217,7 @@ struct DGLDrawState
 
         // Updated pointers.
         GL.glVertexAttribPointer(VAA_VERTEX,    3, GL_FLOAT,         GL_FALSE, stride, &basePtr->vertex);
-        GL.glVertexAttribPointer(VAA_COLOR,     4, GL_UNSIGNED_BYTE, GL_FALSE, stride, &basePtr->color);
+        GL.glVertexAttribPointer(VAA_COLOR,     4, GL_UNSIGNED_BYTE, GL_TRUE,  stride, &basePtr->color);
         GL.glVertexAttribPointer(VAA_TEXCOORD0, 2, GL_FLOAT,         GL_FALSE, stride, &basePtr->texCoord[0]);
         GL.glVertexAttribPointer(VAA_TEXCOORD1, 2, GL_FLOAT,         GL_FALSE, stride, &basePtr->texCoord[1]);
         GL.glVertexAttribPointer(VAA_TEXCOORD2, 2, GL_FLOAT,         GL_FALSE, stride, &basePtr->texCoord[2]);
@@ -268,6 +274,11 @@ struct DGLDrawState
 };
 
 static DGLDrawState dglDraw;
+
+void DGL_Shutdown()
+{
+    dglDraw.glDeinit();
+}
 
 void DGL_CurrentColor(DGLubyte *rgba)
 {

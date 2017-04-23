@@ -337,8 +337,8 @@ void GL_Shutdown()
     Rend_ModelShutdown();
     LensFx_Shutdown();
     Rend_Reset();
-
     GL_ShutdownRefresh();
+    DGL_Shutdown();
 
     // Shutdown OpenGL.
     Sys_GLShutdown();
