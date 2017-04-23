@@ -187,15 +187,15 @@ void Con_DrawTransition(void)
         x = 0;
         s = 0;
 
-        DGL_Begin(DGL_QUAD_STRIP);
+        DGL_Begin(DGL_TRIANGLE_STRIP);
         for (i = 0; i <= SCREENWIDTH; ++i, x++, s += colWidth)
         {
             y = doomWipeSamples[i];
 
-            DGL_Color4f(1, 1, 1, topAlpha);
-            DGL_TexCoord2f(0, s, 1); DGL_Vertex2f(x, y);
             DGL_Color4f(1, 1, 1, 1);
             DGL_TexCoord2f(0, s, div); DGL_Vertex2f(x, y + h);
+            DGL_Color4f(1, 1, 1, topAlpha);
+            DGL_TexCoord2f(0, s, 1); DGL_Vertex2f(x, y);
         }
         DGL_End();
 
@@ -203,13 +203,13 @@ void Con_DrawTransition(void)
         s = 0;
 
         DGL_Color4f(1, 1, 1, 1);
-        DGL_Begin(DGL_QUAD_STRIP);
+        DGL_Begin(DGL_TRIANGLE_STRIP);
         for (i = 0; i <= SCREENWIDTH; ++i, x++, s += colWidth)
         {
             y = doomWipeSamples[i] + h;
 
-            DGL_TexCoord2f(0, s, div); DGL_Vertex2f(x, y);
             DGL_TexCoord2f(0, s, 0);   DGL_Vertex2f(x, y + (SCREENHEIGHT - h));
+            DGL_TexCoord2f(0, s, div); DGL_Vertex2f(x, y);
         }
         DGL_End();
         break;

@@ -458,28 +458,28 @@ dd_bool DGL_GetIntegerv(int name, int *v)
         break;
 
     case DGL_CURRENT_COLOR_R:
-        LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, color);
+        DGL_CurrentColor(color);
         *v = int(color[0] * 255);
         break;
 
     case DGL_CURRENT_COLOR_G:
-        LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, color);
+        DGL_CurrentColor(color);
         *v = int(color[1] * 255);
         break;
 
     case DGL_CURRENT_COLOR_B:
-        LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, color);
+        DGL_CurrentColor(color);
         *v = int(color[2] * 255);
         break;
 
     case DGL_CURRENT_COLOR_A:
-        LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, color);
+        DGL_CurrentColor(color);
         *v = int(color[3] * 255);
         break;
 
     case DGL_CURRENT_COLOR_RGBA:
-        LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, color);
-        for(int i = 0; i < 4; ++i)
+        DGL_CurrentColor(color);
+        for (int i = 0; i < 4; ++i)
         {
             v[i] = int(color[i] * 255);
         }
@@ -530,31 +530,31 @@ dd_bool DGL_GetFloatv(int name, float *v)
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     float color[4];
-    switch(name)
+    switch (name)
     {
     case DGL_CURRENT_COLOR_R:
-        LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, color);
+        DGL_CurrentColor(color);
         *v = color[0];
         break;
 
     case DGL_CURRENT_COLOR_G:
-        LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, color);
+        DGL_CurrentColor(color);
         *v = color[1];
         break;
 
     case DGL_CURRENT_COLOR_B:
-        LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, color);
+        DGL_CurrentColor(color);
         *v = color[2];
         break;
 
     case DGL_CURRENT_COLOR_A:
-        LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, color);
+        DGL_CurrentColor(color);
         *v = color[3];
         break;
 
     case DGL_CURRENT_COLOR_RGBA:
-        LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, color);
-        for(int i = 0; i < 4; ++i)
+        DGL_CurrentColor(color);
+        for (int i = 0; i < 4; ++i)
         {
             v[i] = color[i];
         }
@@ -651,7 +651,8 @@ int DGL_Enable(int cap)
         break;
 
     case DGL_POINT_SMOOTH:
-        Deferred_glEnable(GL_POINT_SMOOTH);
+        //Deferred_glEnable(GL_POINT_SMOOTH);
+        // TODO: Not needed?
         break;
 
     default:

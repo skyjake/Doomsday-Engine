@@ -1270,7 +1270,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
     auto &GL = LIBGUI_GL;
 
     // We need to change the current color, so remember for restore.
-    GL.glGetFloatv(GL_CURRENT_COLOR, origColor);
+    DGL_CurrentColor(origColor);
 
     for(pass = ((_textFlags & DTF_NO_SHADOW)  != 0? 1 : 0);
         pass < ((_textFlags & DTF_NO_GLITTER) != 0? 2 : 3); ++pass)

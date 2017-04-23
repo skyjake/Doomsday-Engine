@@ -855,6 +855,8 @@ void GL_BindTextureUnmanaged(GLuint glName, gl::Wrapping wrapS, gl::Wrapping wra
 {
     if(ClientApp::busyRunner().inWorkerThread()) return;
 
+    LIBGUI_ASSERT_GL_OK();
+
     if(glName == 0)
     {
         GL_SetNoTexture();
@@ -865,7 +867,7 @@ void GL_BindTextureUnmanaged(GLuint glName, gl::Wrapping wrapS, gl::Wrapping wra
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, glName);
-    Sys_GLCheckError();
+    LIBGUI_ASSERT_GL_OK();
 
     LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_Wrap(wrapS));
     LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_Wrap(wrapT));
@@ -874,6 +876,7 @@ void GL_BindTextureUnmanaged(GLuint glName, gl::Wrapping wrapS, gl::Wrapping wra
     {
         LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
     }
+    LIBGUI_ASSERT_GL_OK();
 }
 
 void GL_Bind(GLTextureUnit const &glTU)

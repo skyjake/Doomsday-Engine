@@ -59,8 +59,8 @@ struct DGLDrawState
         NUM_VERTEX_ATTRIB_ARRAYS
     };
 
-    int primLevel = 0;
-    dglprimtype_t currentPrimitive = DGL_NO_PRIMITIVE;
+    dglprimtype_t primType = DGL_NO_PRIMITIVE;
+    int primIndex = 0;
     QVector<Vertex> vertices;
 
     struct GLData
@@ -70,6 +70,7 @@ struct DGLDrawState
         GLUniform uTextureMatrix   { "uTextureMatrix",   GLUniform::Mat4 };
         GLUniform uEnabledTextures { "uEnabledTextures", GLUniform::Int  };
         GLuint vertexArray = 0;
+        GLBuffer buffer;
     };
     std::unique_ptr<GLData> gl;
 
@@ -81,12 +82,39 @@ struct DGLDrawState
     void commitVertex()
     {
         vertices.append(vertices.last());
+        ++primIndex;
+
+        if (primType == DGL_QUADS)
+        {
+            if (primIndex == 4)
+            {
+                // 4 vertices become 6.
+                //
+                // 0--1     0--1   5
+                // |  | =>   \ |   |\
+                // |  |       \|   | \
+                // 3--2        2   4--3
+
+                vertices.append(vertices.last());
+                vertices.append(vertices.last());
+
+                // 0 1 2  3 3 3  X
+                int const N = vertices.size();
+                vertices[N - 4] = vertices[N - 5];
+                vertices[N - 2] = vertices[N - 7];
+
+                primIndex = 0;
+            }
+        }
     }
 
     void clearVertices()
     {
+        Vertex const last = (vertices.isEmpty()? Vertex() : vertices.last());
         vertices.clear();
-        vertices.append(Vertex());
+        vertices.append(last);
+        primIndex = 0;
+        primType  = DGL_NO_PRIMITIVE;
     }
 
     int numVertices() const
@@ -111,21 +139,16 @@ struct DGLDrawState
 
     void beginPrimitive(dglprimtype_t primitive)
     {
-        // We enter a Begin/End section.
-        primLevel++;
+        DENG2_ASSERT(primType == DGL_NO_PRIMITIVE);
 
-        DENG2_ASSERT(currentPrimitive == DGL_NO_PRIMITIVE);
-        currentPrimitive = primitive;
+        // We enter a Begin/End section.
+        primType = primitive;
     }
 
     void endPrimitive()
     {
-        DENG2_ASSERT(primLevel > 0);
-        DENG2_ASSERT(currentPrimitive != DGL_NO_PRIMITIVE);
-
-        if (primLevel > 0)
+        if (primType != DGL_NO_PRIMITIVE)
         {
-            primLevel--;
             drawPrimitives();
         }
         clearVertices();
@@ -175,36 +198,46 @@ struct DGLDrawState
         uint const stride = sizeof(Vertex);
         auto &GL = LIBGUI_GL;
 
+        // Upload the vertex data.
+        gl->buffer.setData(&vertices[0], sizeof(Vertex) * vertices.size(), gl::Dynamic);
+
         GL.glBindVertexArray(gl->vertexArray);
+        LIBGUI_ASSERT_GL_OK();
+
+        GL.glBindBuffer(GL_ARRAY_BUFFER, gl->buffer.glName());
+        LIBGUI_ASSERT_GL_OK();
+
+        Vertex const *basePtr = nullptr;
 
         // Updated pointers.
-        GL.glVertexAttribPointer(VAA_VERTEX,    3, GL_FLOAT,         GL_FALSE, stride, &vertices[0].vertex);
-        GL.glVertexAttribPointer(VAA_COLOR,     4, GL_UNSIGNED_BYTE, GL_FALSE, stride, &vertices[0].color);
-        GL.glVertexAttribPointer(VAA_TEXCOORD0, 2, GL_FLOAT,         GL_FALSE, stride, &vertices[0].texCoord[0]);
-        GL.glVertexAttribPointer(VAA_TEXCOORD1, 2, GL_FLOAT,         GL_FALSE, stride, &vertices[0].texCoord[1]);
-        GL.glVertexAttribPointer(VAA_TEXCOORD2, 2, GL_FLOAT,         GL_FALSE, stride, &vertices[0].texCoord[2]);
-
+        GL.glVertexAttribPointer(VAA_VERTEX,    3, GL_FLOAT,         GL_FALSE, stride, &basePtr->vertex);
+        GL.glVertexAttribPointer(VAA_COLOR,     4, GL_UNSIGNED_BYTE, GL_FALSE, stride, &basePtr->color);
+        GL.glVertexAttribPointer(VAA_TEXCOORD0, 2, GL_FLOAT,         GL_FALSE, stride, &basePtr->texCoord[0]);
+        GL.glVertexAttribPointer(VAA_TEXCOORD1, 2, GL_FLOAT,         GL_FALSE, stride, &basePtr->texCoord[1]);
+        GL.glVertexAttribPointer(VAA_TEXCOORD2, 2, GL_FLOAT,         GL_FALSE, stride, &basePtr->texCoord[2]);
         LIBGUI_ASSERT_GL_OK();
+
+        GL.glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
     void glUnbindArrays()
     {
         LIBGUI_GL.glBindVertexArray(0);
+        LIBGUI_ASSERT_GL_OK();
     }
 
     GLenum glPrimitive() const
     {
-        switch (currentPrimitive)
+        switch (primType)
         {
         case DGL_POINTS:            return GL_POINTS;
         case DGL_LINES:             return GL_LINES;
         case DGL_LINE_LOOP:         return GL_LINE_LOOP;
         case DGL_LINE_STRIP:        return GL_LINE_STRIP;
-        case DGL_QUADS:             return GL_QUADS;
-        case DGL_QUAD_STRIP:        return GL_QUAD_STRIP;
         case DGL_TRIANGLES:         return GL_TRIANGLES;
         case DGL_TRIANGLE_FAN:      return GL_TRIANGLE_FAN;
         case DGL_TRIANGLE_STRIP:    return GL_TRIANGLE_STRIP;
+        case DGL_QUADS:             return GL_TRIANGLES; // converted
 
         case DGL_NO_PRIMITIVE:      DENG2_ASSERT(!"No primitive type specified"); return GL_NONE;
         }
@@ -227,6 +260,7 @@ struct DGLDrawState
         {
             glBindArrays();
             LIBGUI_GL.glDrawArrays(glPrimitive(), 0, numVertices());
+            LIBGUI_ASSERT_GL_OK();
             glUnbindArrays();
         }
         gl->shader.endUse();
@@ -234,6 +268,17 @@ struct DGLDrawState
 };
 
 static DGLDrawState dglDraw;
+
+void DGL_CurrentColor(DGLubyte *rgba)
+{
+    std::memcpy(rgba, dglDraw.vertex().color.constPtr(), 4);
+}
+
+void DGL_CurrentColor(float *rgba)
+{
+    Vector4f colorf = dglDraw.vertex().color.toVector4f() / 255.0;
+    std::memcpy(rgba, colorf.constPtr(), sizeof(float) * 4);
+}
 
 #undef DGL_Color3ub
 DENG_EXTERN_C void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
@@ -401,8 +446,7 @@ DENG_EXTERN_C void DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec)
 #undef DGL_Begin
 DENG_EXTERN_C void DGL_Begin(dglprimtype_t mode)
 {
-    if(novideo)
-        return;
+    if (novideo) return;
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -412,14 +456,13 @@ DENG_EXTERN_C void DGL_Begin(dglprimtype_t mode)
 
 void DGL_AssertNotInPrimitive(void)
 {
-    DENG_ASSERT(dglDraw.currentPrimitive == DGL_NO_PRIMITIVE);
+    DENG_ASSERT(dglDraw.primType == DGL_NO_PRIMITIVE);
 }
 
 #undef DGL_End
 DENG_EXTERN_C void DGL_End(void)
 {
-    if(novideo)
-        return;
+    if (novideo) return;
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -437,7 +480,7 @@ DENG_EXTERN_C void DGL_DrawLine(float x1, float y1, float x2, float y2, float r,
 #undef DGL_DrawRect
 DENG_EXTERN_C void DGL_DrawRect(RectRaw const *rect)
 {
-    if(!rect) return;
+    if (!rect) return;
     GL_DrawRect(Rectanglei::fromSize(Vector2i(rect->origin.xy),
                                      Vector2ui(rect->size.width, rect->size.height)));
 }

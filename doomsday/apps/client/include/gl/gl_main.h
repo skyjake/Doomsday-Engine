@@ -318,6 +318,8 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int comps,
 void DGL_AssertNotInPrimitive(void);
 
 de::Matrix4f DGL_Matrix(DGLenum matrixMode);
+void DGL_CurrentColor(DGLubyte *rgba);
+void DGL_CurrentColor(float *rgba);
 
 // Console commands.
 D_CMD(UpdateGammaRamp);

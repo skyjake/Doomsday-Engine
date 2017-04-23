@@ -24,6 +24,7 @@
 #ifdef __CLIENT__
 #  include <de/GLInfo>
 #  include "api_gl.h"
+#  include "gl/gl_main.h"
 #endif
 
 #include <de/Vector>
@@ -728,7 +729,8 @@ void Blockmap::drawDebugVisual() const
 #define UNIT_SIZE           1
 
     // We'll be changing the color, so query the current and restore later.
-    GLfloat oldColor[4]; LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, oldColor);
+    GLfloat oldColor[4];
+    DGL_CurrentColor(oldColor);
 
     /*
      * Draw the Quadtree.

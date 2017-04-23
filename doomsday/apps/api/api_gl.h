@@ -126,7 +126,6 @@ typedef enum dglprimtype_e {
     DGL_TRIANGLE_FAN,
     DGL_TRIANGLE_STRIP,
     DGL_QUADS,
-    DGL_QUAD_STRIP,
     DGL_POINTS,
 } dglprimtype_t;
 
