@@ -331,9 +331,9 @@ DENG_EXTERN_C void GL_ConfigureBorderedProjection(dgl_borderedprojectionstate_t*
 DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
 {
     DENG_ASSERT(bp != 0);
-    if(!bp) return;
+    if (!bp) return;
 
-    if(SCALEMODE_STRETCH == bp->scaleMode) return;
+    if (bp->scaleMode == SCALEMODE_STRETCH) return;
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -354,11 +354,11 @@ DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
 
     GLState::push();
 
-    if(bp->isPillarBoxed)
+    if (bp->isPillarBoxed)
     {
         // "Pillarbox":
         int offset = int((bp->availWidth - bp->scaleFactor * bp->width) / 2 + .5f);
-        if(bp->flags & BPF_OVERDRAW_CLIP)
+        if (bp->flags & BPF_OVERDRAW_CLIP)
         {
             DGL_SetScissor2(offset, 0,
                             int(bp->scaleFactor * bp->width), bp->availHeight);
@@ -371,7 +371,7 @@ DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
     {
         // "Letterbox":
         int offset = int((bp->availHeight - bp->scaleFactor * 1.2f * bp->height) / 2 + .5f);
-        if(bp->flags & BPF_OVERDRAW_CLIP)
+        if (bp->flags & BPF_OVERDRAW_CLIP)
         {
             DGL_SetScissor2(0, offset,
                             bp->availWidth, int(bp->scaleFactor * 1.2f * bp->height));
@@ -388,7 +388,7 @@ DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp)
     DENG_ASSERT(bp != 0);
     if(!bp) return;
 
-    if(SCALEMODE_STRETCH == bp->scaleMode) return;
+    if (SCALEMODE_STRETCH == bp->scaleMode) return;
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -398,7 +398,7 @@ DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 
-    if(bp->flags & BPF_OVERDRAW_MASK)
+    if (bp->flags & BPF_OVERDRAW_MASK)
     {
         // It shouldn't be necessary to bind the "not-texture" but the game
         // may have left whatever GL texture state it was using on. As this
@@ -407,7 +407,7 @@ DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp)
         GL_SetNoTexture();
         DGL_Color4f(0, 0, 0, 1);
 
-        if(bp->isPillarBoxed)
+        if (bp->isPillarBoxed)
         {
             // "Pillarbox":
             int w = int((bp->availWidth - bp->scaleFactor * bp->width) / 2 + .5f);

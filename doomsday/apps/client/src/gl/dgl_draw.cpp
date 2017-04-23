@@ -257,10 +257,11 @@ struct DGLDrawState
         glInit();
 
         // Update uniforms.
-        gl->uMvpMatrix     = DGL_Matrix(DGL_PROJECTION) * DGL_Matrix(DGL_MODELVIEW);
-        gl->uTextureMatrix = DGL_Matrix(DGL_TEXTURE);
-
+        gl->uMvpMatrix       = DGL_Matrix(DGL_PROJECTION) * DGL_Matrix(DGL_MODELVIEW);
+        gl->uTextureMatrix   = DGL_Matrix(DGL_TEXTURE);
         gl->uEnabledTextures = DGL_GetInteger(DGL_TEXTURE_2D)? 1 : 0;
+
+        GLState::current().apply();
 
         gl->shader.beginUse();
         {

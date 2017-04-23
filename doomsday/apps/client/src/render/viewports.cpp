@@ -934,7 +934,7 @@ static void changeViewState(ViewState viewState) //, viewport_t const *port, vie
 
         if(sm == SCALEMODE_STRETCH)
         {
-            DGL_Ortho(0, SCREENWIDTH, height, 0, -1, 1);
+            DGL_Ortho(0, 0, SCREENWIDTH, height, -1, 1);
         }
         else
         {
@@ -942,7 +942,7 @@ static void changeViewState(ViewState viewState) //, viewport_t const *port, vie
             // translate and scale the projection to produce an aspect
             // corrected coordinate space at 4:3, aligned vertically to
             // the bottom and centered horizontally in the window.
-            DGL_Ortho(0, conRect.width(), conRect.height(), 0, -1, 1);
+            DGL_Ortho(0, 0, conRect.width(), conRect.height(), -1, 1);
             DGL_Translatef(conRect.width()/2, conRect.height(), 0);
 
             if(conRect.width() >= conRect.height())
@@ -1213,7 +1213,7 @@ void R_RenderViewPort(int playerNum)
     Rectanglei viewRect = R_Console3DViewRect(playerNum);
 
     // Use an orthographic projection in real pixel dimensions.
-    DGL_Ortho(0, viewRect.width(), viewRect.height(), 0, -1, 1);
+    DGL_Ortho(0, 0, viewRect.width(), viewRect.height(), -1, 1);
 
     viewdata_t const *vd = &DD_Player(vp->console)->viewport();
     RectRaw vpGeometry(vp->geometry.topLeft.x, vp->geometry.topLeft.y,
@@ -1279,7 +1279,7 @@ void R_RenderViewPorts(ViewPortLayer layer)
         DGL_LoadIdentity();
 
         // Use an orthographic projection in real pixel dimensions.
-        DGL_Ortho(0, vp->geometry.width(), vp->geometry.height(), 0, -1, 1);
+        DGL_Ortho(0, 0, vp->geometry.width(), vp->geometry.height(), -1, 1);
 
         viewdata_t const *vd = &DD_Player(vp->console)->viewport();
         RectRaw vpGeometry(vp->geometry.topLeft.x, vp->geometry.topLeft.y,

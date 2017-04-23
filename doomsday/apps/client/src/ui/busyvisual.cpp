@@ -160,7 +160,7 @@ void Con_DrawTransition(void)
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
     DGL_LoadIdentity();
-    DGL_Ortho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
+    DGL_Ortho(0, 0, SCREENWIDTH, SCREENHEIGHT, -1, 1);
 
     DENG2_ASSERT(ClientWindow::main().busy().transitionFrame() != 0);
 

@@ -368,7 +368,7 @@ void GL_Init2DState()
     // The projection matrix.
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_LoadIdentity();
-    DGL_Ortho(0, 320, 200, 0, -1, 1);
+    DGL_Ortho(0, 0, 320, 200, -1, 1);
 
     // Default state for the white fog is off.
     fogParams.usingFog = false;
@@ -970,7 +970,7 @@ duint8 *GL_SmartFilter(dint method, duint8 const *src, dint width, dint height,
 }
 
 duint8 *GL_ConvertBuffer(duint8 const *in, dint width, dint height, dint informat,
-    colorpaletteid_t paletteId, dint outformat)
+                         colorpaletteid_t paletteId, dint outformat)
 {
     DENG2_ASSERT(in);
 
