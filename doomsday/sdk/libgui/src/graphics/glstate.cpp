@@ -246,10 +246,14 @@ DENG2_PIMPL(GLState)
             break;
 
         case internal::AlphaTest:
-            if (self().alphaTest())
+            /*if (self().alphaTest())
                 LIBGUI_GL.glEnable(GL_ALPHA_TEST);
             else
-                LIBGUI_GL.glDisable(GL_ALPHA_TEST);
+                LIBGUI_GL.glDisable(GL_ALPHA_TEST);*/
+
+            // TODO: use a shared GLUniform available to all shaders that need it
+
+            //qDebug() << "[GLState] Alpha test:" << (self().alphaTest()? "enabled" : "disabled");
             break;
 
         case internal::AlphaLimit:

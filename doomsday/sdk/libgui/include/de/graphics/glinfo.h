@@ -20,17 +20,14 @@
 #define LIBGUI_GLINFO_H
 
 #include <de/libcore.h>
+#include <de/Range>
 #include "../gui/libgui.h"
 #include "de/graphics/opengl.h"
 
 #define LIBGUI_GL  de::GLInfo::api()
 
 #ifndef NDEBUG
-#  define LIBGUI_ASSERT_GL_OK() {GLuint _er = GL_NO_ERROR; do { \
-    _er = LIBGUI_GL.glGetError(); if (_er != GL_NO_ERROR) { \
-    LogBuffer_Flush(); qWarning(__FILE__":%i: OpenGL error: 0x%x (%s)", __LINE__, _er, \
-    LIBGUI_GL_ERROR_STR(_er)); LIBGUI_ASSERT_GL(0!="OpenGL operation failed"); \
-    }} while (_er != GL_NO_ERROR);}
+#  define LIBGUI_ASSERT_GL_OK()     de::GLInfo::checkError(__FILE__, __LINE__)
 #else
 #  define LIBGUI_ASSERT_GL_OK()
 #endif
@@ -88,6 +85,8 @@ public:
         int maxTexFilterAniso;
         int maxTexSize; ///< Texels.
         int maxTexUnits;
+        Rangef smoothLineWidth;
+        float smoothLineWidthGranularity;
     };
 
     GLInfo();
@@ -117,6 +116,9 @@ public:
                                                         *NV_framebuffer_multisample_coverage();
 
     static void setSwapInterval(int interval);
+    static void setLineWidth(float lineWidth);
+
+    static void checkError(char const *file, int line);
 
 private:
     DENG2_PRIVATE(d)

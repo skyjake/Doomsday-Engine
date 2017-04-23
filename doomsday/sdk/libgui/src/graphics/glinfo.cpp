@@ -27,6 +27,8 @@
 #include <de/math.h>
 #include <de/c_wrapper.h>
 
+#include <QOpenGLDebugLogger>
+
 #if defined (MACOSX)
 #  include <OpenGL/OpenGL.h>
 #endif
@@ -159,6 +161,78 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
         {
             throw InitError("GLInfo::init", "Failed to initialize OpenGL");
         }
+        inited = true;
+
+#ifdef DENG_ENABLE_OPENGL_DEBUG_LOGGER
+        QOpenGLDebugLogger *logger = new QOpenGLDebugLogger(&GLWindow::main());
+        if (!logger->initialize())
+        {
+            qWarning() << "[GLInfo] Failed to initialize debug logger!";
+        }
+        else
+        {
+            QObject::connect(logger, &QOpenGLDebugLogger::messageLogged,
+                             [] (QOpenGLDebugMessage const &debugMessage)
+            {
+                char const *mType     = "--";
+                char const *mSeverity = "--";
+
+                switch (debugMessage.type())
+                {
+                case QOpenGLDebugMessage::ErrorType:
+                    mType = "ERROR";
+                    break;
+                case QOpenGLDebugMessage::DeprecatedBehaviorType:
+                    mType = "Deprecated";
+                    break;
+                case QOpenGLDebugMessage::UndefinedBehaviorType:
+                    mType = "Undefined";
+                    break;
+                case QOpenGLDebugMessage::PortabilityType:
+                    mType = "Portability";
+                    break;
+                case QOpenGLDebugMessage::PerformanceType:
+                    mType = "Performance";
+                    break;
+                case QOpenGLDebugMessage::OtherType:
+                    mType = "Other";
+                    break;
+                case QOpenGLDebugMessage::MarkerType:
+                    mType = "Marker";
+                    break;
+                case QOpenGLDebugMessage::GroupPushType:
+                    mType = "Group Push";
+                    break;
+                case QOpenGLDebugMessage::GroupPopType:
+                    mType = "Group Pop";
+                    break;
+                default:
+                    break;
+                }
+
+                switch (debugMessage.severity())
+                {
+                case QOpenGLDebugMessage::HighSeverity:
+                    mType = " HIGH ";
+                    break;
+                case QOpenGLDebugMessage::MediumSeverity:
+                    mType = "MEDIUM";
+                    break;
+                case QOpenGLDebugMessage::LowSeverity:
+                    mType = " low  ";
+                    break;
+                case QOpenGLDebugMessage::NotificationSeverity:
+                    mType = " note ";
+                    break;
+                default:
+                    break;
+                }
+
+                qDebug("[OpenGL] %s (%s): %s", mType, mSeverity, debugMessage.message().toLatin1().constData());
+            });
+            logger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
+        }
+#endif
 
         // Extensions.
         //ext.ARB_draw_instanced             = query("GL_ARB_draw_instanced");
@@ -248,8 +322,12 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
         }
 
         // Limits.
-        glGetIntegerv(GL_MAX_TEXTURE_SIZE,  (GLint *) &lim.maxTexSize);
-        glGetIntegerv(GL_MAX_TEXTURE_UNITS, (GLint *) &lim.maxTexUnits);
+        glGetIntegerv(GL_MAX_TEXTURE_SIZE,              reinterpret_cast<GLint *>(&lim.maxTexSize));
+        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS,       reinterpret_cast<GLint *>(&lim.maxTexUnits));
+        glGetFloatv  (GL_SMOOTH_LINE_WIDTH_RANGE,       &lim.smoothLineWidth.start);
+        glGetFloatv  (GL_SMOOTH_LINE_WIDTH_GRANULARITY, &lim.smoothLineWidthGranularity);
+
+        LIBGUI_ASSERT_GL_OK();
 
         if (ext.EXT_texture_filter_anisotropic)
         {
@@ -278,7 +356,7 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
         LOGDEV_GL_MSG(" - samples: %i") << form.samples();
         LOGDEV_GL_MSG(" - swap behavior: %i") << form.swapBehavior();
 
-        inited = true;
+        LIBGUI_ASSERT_GL_OK();
     }
 };
 
@@ -381,6 +459,13 @@ void GLInfo::setSwapInterval(int interval)
 #endif
 }
 
+void GLInfo::setLineWidth(float lineWidth)
+{
+    DENG2_ASSERT(info.d->inited);
+    info.d->glLineWidth(info.d->lim.smoothLineWidth.clamp(lineWidth));
+    LIBGUI_ASSERT_GL_OK();
+}
+
 GLInfo::Extensions const &GLInfo::extensions()
 {
     DENG2_ASSERT(info.d->inited);
@@ -396,6 +481,23 @@ GLInfo::Limits const &GLInfo::limits()
 bool GLInfo::isFramebufferMultisamplingSupported()
 {
     return true;
+}
+
+void GLInfo::checkError(char const *file, int line)
+{
+    GLuint error = GL_NO_ERROR;
+    do
+    {
+        error = LIBGUI_GL.glGetError();
+        if (error != GL_NO_ERROR)
+        {
+            LogBuffer_Flush();
+            qWarning("%s:%i: OpenGL error: 0x%x (%s)", file, line, error,
+                     LIBGUI_GL_ERROR_STR(error));
+            LIBGUI_ASSERT_GL(0!="OpenGL operation failed");
+        }
+    }
+    while (error != GL_NO_ERROR);
 }
 
 } // namespace de

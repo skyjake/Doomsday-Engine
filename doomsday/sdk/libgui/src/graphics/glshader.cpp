@@ -116,7 +116,7 @@ Block GLShader::prefixToSource(Block const &source, Block const &prefix)
 
 void GLShader::compile(Type shaderType, IByteArray const &source)
 {
-    static QByteArray const DEFAULT_VERSION("#version 120\n");
+    static QByteArray const DEFAULT_VERSION("#version 330\n");
 
 #ifndef LIBGUI_GLES2
     // With non-ES OpenGL, ignore the precision attributes.
@@ -141,7 +141,8 @@ void GLShader::compile(Type shaderType, IByteArray const &source)
     }
     else
     {
-        predefs = QByteArray("#define DENG_FRAGMENT_SHADER\n");
+        predefs = QByteArray("#define DENG_FRAGMENT_SHADER\n"
+                             "out vec4 out_FragColor;\n");
     }
     predefs += "#define DENG_MAX_BATCH_UNIFORMS " + QByteArray::number(MAX_BATCH_UNIFORMS) + "\n";
 
