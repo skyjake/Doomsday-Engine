@@ -4,16 +4,16 @@ fx {
     blur {
         # Both passes use the same vertex shader.
         common = "
-            uniform highp mat4 uMvpMatrix;
-            uniform highp vec4 uColor;
-            uniform highp vec4 uWindow;
+            uniform mat4 uMvpMatrix;
+            uniform vec4 uColor;
+            uniform vec4 uWindow;
 
-            attribute highp vec4 aVertex;
-            attribute highp vec2 aUV;
-            attribute highp vec4 aColor;
+            in vec4 aVertex;
+            in vec2 aUV;
+            in vec4 aColor;
 
-            varying highp vec2 vUV;
-            varying highp vec4 vColor;
+            out vec2 vUV;
+            out vec4 vColor;
 
             void main(void) {
                 gl_Position = uMvpMatrix * aVertex;
@@ -25,24 +25,24 @@ fx {
             vertex $= fx.blur.common
             fragment = "
                 uniform sampler2D uTex;
-                uniform highp vec2 uBlurStep;
+                uniform vec2 uBlurStep;
 
-                varying highp vec2 vUV;
-                varying highp vec4 vColor;
+                in vec2 vUV;
+                in vec4 vColor;
 
                 void main(void) {
-                    highp vec4 sum = vec4(0.0);
-                    sum += texture2D(uTex, vec2(vUV.s - 4.0 * uBlurStep.s, vUV.t)) * 0.05;
-                    sum += texture2D(uTex, vec2(vUV.s - 3.0 * uBlurStep.s, vUV.t)) * 0.09;
-                    sum += texture2D(uTex, vec2(vUV.s - 2.0 * uBlurStep.s, vUV.t)) * 0.123;
-                    sum += texture2D(uTex, vec2(vUV.s - uBlurStep.s,       vUV.t)) * 0.154;
-                    sum += texture2D(uTex, vUV)                                    * 0.165;
-                    sum += texture2D(uTex, vec2(vUV.s + uBlurStep.s,       vUV.t)) * 0.154;
-                    sum += texture2D(uTex, vec2(vUV.s + 2.0 * uBlurStep.s, vUV.t)) * 0.123;
-                    sum += texture2D(uTex, vec2(vUV.s + 3.0 * uBlurStep.s, vUV.t)) * 0.09;
-                    sum += texture2D(uTex, vec2(vUV.s + 4.0 * uBlurStep.s, vUV.t)) * 0.05;
-                    gl_FragColor = sum;
-                    gl_FragColor.a = 1.0;
+                    vec4 sum = vec4(0.0);
+                    sum += texture(uTex, vec2(vUV.s - 4.0 * uBlurStep.s, vUV.t)) * 0.05;
+                    sum += texture(uTex, vec2(vUV.s - 3.0 * uBlurStep.s, vUV.t)) * 0.09;
+                    sum += texture(uTex, vec2(vUV.s - 2.0 * uBlurStep.s, vUV.t)) * 0.123;
+                    sum += texture(uTex, vec2(vUV.s - uBlurStep.s,       vUV.t)) * 0.154;
+                    sum += texture(uTex, vUV)                                    * 0.165;
+                    sum += texture(uTex, vec2(vUV.s + uBlurStep.s,       vUV.t)) * 0.154;
+                    sum += texture(uTex, vec2(vUV.s + 2.0 * uBlurStep.s, vUV.t)) * 0.123;
+                    sum += texture(uTex, vec2(vUV.s + 3.0 * uBlurStep.s, vUV.t)) * 0.09;
+                    sum += texture(uTex, vec2(vUV.s + 4.0 * uBlurStep.s, vUV.t)) * 0.05;
+                    out_FragColor = sum;
+                    out_FragColor.a = 1.0;
                 }"
         }
         
@@ -50,23 +50,23 @@ fx {
             vertex $= fx.blur.common
             fragment = "
                 uniform sampler2D uTex;
-                uniform highp vec2 uBlurStep;
+                uniform vec2 uBlurStep;
 
-                varying highp vec2 vUV;
-                varying highp vec4 vColor;
+                in vec2 vUV;
+                in vec4 vColor;
 
                 void main(void) {
-                    highp vec4 sum = vec4(0.0);
-                    sum += texture2D(uTex, vec2(vUV.s, vUV.t - 4.0 * uBlurStep.t)) * 0.05;
-                    sum += texture2D(uTex, vec2(vUV.s, vUV.t - 3.0 * uBlurStep.t)) * 0.09;
-                    sum += texture2D(uTex, vec2(vUV.s, vUV.t - 2.0 * uBlurStep.t)) * 0.123;
-                    sum += texture2D(uTex, vec2(vUV.s, vUV.t - uBlurStep.t      )) * 0.154;
-                    sum += texture2D(uTex, vUV)                                    * 0.165;
-                    sum += texture2D(uTex, vec2(vUV.s, vUV.t + uBlurStep.t      )) * 0.154;
-                    sum += texture2D(uTex, vec2(vUV.s, vUV.t + 2.0 * uBlurStep.t)) * 0.123;
-                    sum += texture2D(uTex, vec2(vUV.s, vUV.t + 3.0 * uBlurStep.t)) * 0.09;
-                    sum += texture2D(uTex, vec2(vUV.s, vUV.t + 4.0 * uBlurStep.t)) * 0.05;
-                    gl_FragColor = sum * vColor;
+                    vec4 sum = vec4(0.0);
+                    sum += texture(uTex, vec2(vUV.s, vUV.t - 4.0 * uBlurStep.t)) * 0.05;
+                    sum += texture(uTex, vec2(vUV.s, vUV.t - 3.0 * uBlurStep.t)) * 0.09;
+                    sum += texture(uTex, vec2(vUV.s, vUV.t - 2.0 * uBlurStep.t)) * 0.123;
+                    sum += texture(uTex, vec2(vUV.s, vUV.t - uBlurStep.t      )) * 0.154;
+                    sum += texture(uTex, vUV)                                    * 0.165;
+                    sum += texture(uTex, vec2(vUV.s, vUV.t + uBlurStep.t      )) * 0.154;
+                    sum += texture(uTex, vec2(vUV.s, vUV.t + 2.0 * uBlurStep.t)) * 0.123;
+                    sum += texture(uTex, vec2(vUV.s, vUV.t + 3.0 * uBlurStep.t)) * 0.09;
+                    sum += texture(uTex, vec2(vUV.s, vUV.t + 4.0 * uBlurStep.t)) * 0.05;
+                    out_FragColor = sum * vColor;
                 }"
         }
     }

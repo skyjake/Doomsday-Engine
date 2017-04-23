@@ -18,21 +18,20 @@
  * http://www.gnu.org/licenses</small>
  */
 
-uniform highp vec4 uFogRange; // startDepth, fogDepth, nearclip, farclip
-uniform highp vec4 uFogColor; // set alpha to zero to disable fog
+uniform vec4 uFogRange; // startDepth, fogDepth, nearclip, farclip
+uniform vec4 uFogColor; // set alpha to zero to disable fog
 
 void applyFog()
 {
-    if(uFogColor.a > 0.0)
-    {
-        highp float near = uFogRange.z;
-        highp float far  = uFogRange.w;
+    if (uFogColor.a > 0.0) {
+        float near = uFogRange.z;
+        float far  = uFogRange.w;
         
         // First convert the fragment Z back to view space.
-        highp float zNorm = gl_FragCoord.z * 2.0 - 1.0;
-        highp float zEye = -2.0 * far * near / (zNorm * (far - near) - (far + near));
+        float zNorm = gl_FragCoord.z * 2.0 - 1.0;
+        float zEye = -2.0 * far * near / (zNorm * (far - near) - (far + near));
         
-        highp float fogAmount = clamp((zEye - uFogRange.x) / uFogRange.y, 0.0, 1.0);
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, uFogColor.rgb, fogAmount);
+        float fogAmount = clamp((zEye - uFogRange.x) / uFogRange.y, 0.0, 1.0);
+        out_FragColor.rgb = mix(out_FragColor.rgb, uFogColor.rgb, fogAmount);
     }    
 }

@@ -1,8 +1,8 @@
 /*
  * The Doomsday Engine Project
- * Common OpenGL Shaders: Texture manipulation
+ * Common OpenGL Shaders: Legacy DGL Drawing
  *
- * Copyright (c) 2015-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -18,19 +18,29 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_HAVE_UTEX
+#version 330
 
-uniform sampler2D uTex; // texture atlas
+layout(location = 0) in vec3 aVertex;
+layout(location = 1) in vec4 aColor;
+layout(location = 2) in vec2 aTexCoord[3];
 
-/*
- * Maps the normalized @a uv to the rectangle defined by @a bounds.
- */
-vec2 mapToBounds(vec2 uv, vec4 bounds)
+uniform mat4 uMvpMatrix;
+uniform mat4 uTextureMatrix;
+
+out vec4 vColor;
+out vec2 vTexCoord[3];
+
+vec2 transformTexCoord(vec2 tc) 
 {
-    return bounds.xy + uv * bounds.zw;
+    vec4 coord = vec4(tc.s, tc.t, 0.0, 1.0);
+    return (uTextureMatrix * coord).xy;
 }
 
-vec3 normalVector(vec2 uv) 
+void main()
 {
-    return normalize((texture(uTex, uv).xyz * 2.0) - 1.0);
+    gl_Position = uMvpMatrix * aVertex;
+    vColor = aColor;    
+    for (int i = 0; i < 3; ++i) {
+        vTexCoord[i] = transformTexCoord(aTexCoord[i]);
+    }
 }

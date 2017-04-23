@@ -8,6 +8,7 @@
 # - vertex:        source of the vertex shader
 # - fragment:      source of the fragment shader
 
+@include <shaders/dgl/dgl.dei>
 @include <shaders/generic.dei>
 @include <shaders/model.dei>
 @include <shaders/fx/blur.dei>

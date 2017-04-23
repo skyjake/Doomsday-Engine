@@ -18,22 +18,22 @@
  * http://www.gnu.org/licenses</small>
  */
 
-varying highp vec3 vTSNormal;
-varying highp vec3 vTSTangent;
-varying highp vec3 vTSBitangent;
-
 #ifdef DENG_VERTEX_SHADER
 
-attribute highp vec3 aNormal;
-attribute highp vec3 aTangent;
-attribute highp vec3 aBitangent;
+in vec3 aNormal;
+in vec3 aTangent;
+in vec3 aBitangent;
 
-highp vec3 transformVector(highp vec3 dir, highp mat4 matrix) 
+out vec3 vTSNormal;
+out vec3 vTSTangent;
+out vec3 vTSBitangent;
+
+vec3 transformVector(vec3 dir, mat4 matrix) 
 {
     return (matrix * vec4(dir, 0.0)).xyz;
 }
 
-void setTangentSpace(highp mat4 modelSpace)
+void setTangentSpace(mat4 modelSpace)
 {
     vTSNormal    = transformVector(aNormal,    modelSpace);
     vTSTangent   = transformVector(aTangent,   modelSpace);
@@ -44,12 +44,16 @@ void setTangentSpace(highp mat4 modelSpace)
 
 #ifdef DENG_FRAGMENT_SHADER
 
-highp mat3 fragmentTangentSpace()
+in  vec3 vTSNormal;
+in  vec3 vTSTangent;
+in  vec3 vTSBitangent;
+
+mat3 fragmentTangentSpace()
 {
     return mat3(normalize(vTSTangent), normalize(vTSBitangent), normalize(vTSNormal));
 }
 
-highp vec3 modelSpaceNormalVector(highp vec2 uv)
+vec3 modelSpaceNormalVector(vec2 uv)
 {
     return fragmentTangentSpace() * normalVector(uv);
 }
