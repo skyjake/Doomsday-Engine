@@ -3606,7 +3606,7 @@ void C_DECL A_SorcOffense2(mobj_t* mo)
     ang1 = mo->angle + delta;
 
     pmo = P_SpawnMissileAngle(MT_SORCFX4, parent, ang1, 0);
-    if(pmo)
+    if (pmo && target)
     {
         pmo->special2 = TICSPERSEC * 5 / 2;
         dist = M_ApproxDistance(target->origin[VX] - pmo->origin[VX],
