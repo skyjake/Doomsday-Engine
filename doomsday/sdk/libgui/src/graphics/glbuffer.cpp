@@ -364,7 +364,8 @@ void GLBuffer::setIndices(Primitive primitive, dsize count, Index const *indices
 
         auto &GL = LIBGUI_GL;
         GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
-        GL.glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(Index), indices, Impl::glUsage(usage));
+        GL.glBufferData(GL_ELEMENT_ARRAY_BUFFER, GLsizeiptr(count * sizeof(Index)),
+                        indices, Impl::glUsage(usage));
         GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
     else
@@ -376,6 +377,23 @@ void GLBuffer::setIndices(Primitive primitive, dsize count, Index const *indices
 void GLBuffer::setIndices(Primitive primitive, Indices const &indices, Usage usage)
 {
     setIndices(primitive, indices.size(), indices.constData(), usage);
+}
+
+void GLBuffer::setData(void const *data, dsize dataSize, gl::Usage usage)
+{
+    if (data && dataSize)
+    {
+        d->alloc();
+
+        auto &GL = LIBGUI_GL;
+        GL.glBindBuffer(GL_ARRAY_BUFFER, d->name);
+        GL.glBufferData(GL_ARRAY_BUFFER, GLsizeiptr(dataSize), data, Impl::glUsage(usage));
+        GL.glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+    else
+    {
+        d->release();
+    }
 }
 
 void GLBuffer::setData(dsize startOffset, void const *data, dsize dataSize)
@@ -521,6 +539,11 @@ dsize GLBuffer::count() const
 void GLBuffer::setFormat(AttribSpecs const &format)
 {
     d->specs = format;
+}
+
+GLuint GLBuffer::glName() const
+{
+    return d->name;
 }
 
 duint GLBuffer::drawCount() // static
