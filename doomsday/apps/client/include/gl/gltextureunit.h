@@ -25,16 +25,12 @@
 #include <de/GLTexture>
 #include <de/Vector>
 
+namespace de {
+
 /**
  * Of the available GL texture units, only this many will be utilized.
- *
- * @todo Find a more suitable home (here because all other GL-domain headers
- * also include system headers, which aren't needed in components whose API(s)
- * do not depend on them (and pollute on Windows)).
  */
-#define MAX_TEX_UNITS           2 // More aren't currently used.
-
-namespace de {
+#define MAX_TEX_UNITS           2 // Classic renderer only uses two.
 
 /**
  * GL Texture unit config.

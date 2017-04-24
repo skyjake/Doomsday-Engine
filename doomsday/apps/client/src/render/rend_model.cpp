@@ -62,7 +62,7 @@ using namespace de;
 static inline float qatan2(float y, float x)
 {
     float ang = BANG2RAD(bamsAtan2(y * 512, x * 512));
-    if(ang > PI) ang -= 2 * (float) PI;
+    if (ang > PI) ang -= 2 * (float) PI;
     return ang;
 }
 
@@ -78,7 +78,7 @@ int modelLight         = 4;
 int frameInter         = true;
 float modelAspectMod   = 1 / 1.2f; //.833334f;
 int mirrorHudModels;
-int modelShinyMultitex = true;
+//int modelShinyMultitex = true;
 float modelShinyFactor = 1.0f;
 float modelSpinSpeed   = 1;
 int maxModelDistance   = 1500;
@@ -127,13 +127,13 @@ void Rend_ModelRegister()
     C_VAR_FLOAT("rend-model-lod",            &rend_model_lod,       CVF_NO_MAX, 0, 0);
     C_VAR_INT  ("rend-model-mirror-hud",     &mirrorHudModels,      0, 0, 1);
     C_VAR_FLOAT("rend-model-spin-speed",     &modelSpinSpeed,       CVF_NO_MAX | CVF_NO_MIN, 0, 0);
-    C_VAR_INT  ("rend-model-shiny-multitex", &modelShinyMultitex,   0, 0, 1);
+    //C_VAR_INT  ("rend-model-shiny-multitex", &modelShinyMultitex,   0, 0, 1);
     C_VAR_FLOAT("rend-model-shiny-strength", &modelShinyFactor,     0, 0, 10);
 }
 
 void Rend_ModelInit()
 {
-    if(inited) return; // Already been here.
+    if (inited) return; // Already been here.
 
     modelPosCoords   = 0;
     modelNormCoords  = 0;
@@ -150,7 +150,7 @@ void Rend_ModelInit()
 
 void Rend_ModelShutdown()
 {
-    if(!inited) return;
+    if (!inited) return;
 
     M_Free(modelPosCoords); modelPosCoords = 0;
     M_Free(modelNormCoords); modelNormCoords = 0;
@@ -171,13 +171,13 @@ bool Rend_ModelExpandVertexBuffers(uint numVertices)
 
     LOG_AS("Rend_ModelExpandVertexBuffers");
 
-    if(numVertices <= vertexBufferMax) return true;
+    if (numVertices <= vertexBufferMax) return true;
 
     // Sanity check a sane maximum...
-    if(numVertices >= RENDER_MAX_MODEL_VERTS)
+    if (numVertices >= RENDER_MAX_MODEL_VERTS)
     {
 #ifdef DENG_DEBUG
-        if(!announcedVertexBufferMaxBreach)
+        if (!announcedVertexBufferMaxBreach)
         {
             LOGDEV_GL_WARNING("Attempted to expand to %u vertices (max %u)")
                 << numVertices << RENDER_MAX_MODEL_VERTS;
@@ -199,7 +199,7 @@ static bool resizeVertexBuffer(uint numVertices)
     Rend_ModelExpandVertexBuffers(numVertices);
 
     // Do we need to resize the buffers?
-    if(vertexBufferMax != vertexBufferSize)
+    if (vertexBufferMax != vertexBufferSize)
     {
         /// @todo Align access to this memory along a 4-byte boundary?
         modelPosCoords   =  (Vector3f *) M_Realloc(modelPosCoords,   sizeof(*modelPosCoords)   * vertexBufferMax);
@@ -219,19 +219,19 @@ static void disableArrays(int vertices, int colors, int coords)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    if(vertices)
+    if (vertices)
     {
         arrays[AR_VERTEX].enabled = false;
     }
 
-    if(colors)
+    if (colors)
     {
         arrays[AR_COLOR].enabled = false;
     }
 
-    for(int i = 0; i < numTexUnits; ++i)
+    for (int i = 0; i < MAX_TEX_UNITS; ++i)
     {
-        if(coords & (1 << i))
+        if (coords & (1 << i))
         {
             arrays[AR_TEXCOORD0 + i].enabled = false;
         }
@@ -264,18 +264,18 @@ static inline void disableTexUnit(int id)
  */
 static void selectTexUnits(int count)
 {
-    if (count < numTexUnits)
+    if (count < MAX_TEX_UNITS)
     {
-        for (int i = numTexUnits - 1; i >= count; i--)
+        for (int i = MAX_TEX_UNITS - 1; i >= count; i--)
         {
             disableTexUnit(i);
         }
     }
 
     // Enable the selected units.
-    for(int i = count - 1; i >= 0; i--)
+    for (int i = count - 1; i >= 0; i--)
     {
-        if(i >= numTexUnits) continue;
+        if (i >= MAX_TEX_UNITS) continue;
         enableTexUnit(i);
     }
 }
@@ -284,26 +284,26 @@ static void selectTexUnits(int count)
  * Enable, set and optionally lock all enabled arrays.
  */
 static void configureArrays(void *vertices, void *colors, int numCoords = 0,
-    void **coords = 0)
+                            void **coords = 0)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    if(vertices)
+    if (vertices)
     {
         arrays[AR_VERTEX].enabled = true;
         arrays[AR_VERTEX].data = vertices;
     }
 
-    if(colors)
+    if (colors)
     {
         arrays[AR_COLOR].enabled = true;
         arrays[AR_COLOR].data = colors;
     }
 
-    for(int i = 0; i < numCoords && i < MAX_TEX_UNITS; ++i)
+    for (int i = 0; i < numCoords && i < MAX_TEX_UNITS; ++i)
     {
-        if(coords[i])
+        if (coords[i])
         {
             arrays[AR_TEXCOORD0 + i].enabled = true;
             arrays[AR_TEXCOORD0 + i].data = coords[i];
@@ -318,21 +318,21 @@ static void drawArrayElement(int index)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    for(int i = 0; i < numTexUnits; ++i)
+    for (int i = 0; i < MAX_TEX_UNITS; ++i)
     {
-        if(!arrays[AR_TEXCOORD0 + i].enabled) continue;
+        if (!arrays[AR_TEXCOORD0 + i].enabled) continue;
 
         Vector2f const &texCoord = ((Vector2f const *)arrays[AR_TEXCOORD0 + i].data)[index];
         DGL_TexCoord2f(byte(i), texCoord.x, texCoord.y);
     }
 
-    if(arrays[AR_COLOR].enabled)
+    if (arrays[AR_COLOR].enabled)
     {
         Vector4ub const &colorCoord = ((Vector4ub const *) arrays[AR_COLOR].data)[index];
         DGL_Color4ub(colorCoord.x, colorCoord.y, colorCoord.z, colorCoord.w);
     }
 
-    if(arrays[AR_VERTEX].enabled)
+    if (arrays[AR_VERTEX].enabled)
     {
         Vector3f const &posCoord = ((Vector3f const *) arrays[AR_VERTEX].data)[index];
         DGL_Vertex3f(posCoord.x, posCoord.y, posCoord.z);
@@ -344,7 +344,7 @@ static void drawArrayElement(int index)
  */
 static FrameModelFrame &visibleModelFrame(FrameModelDef &modef, int subnumber, int mobjId)
 {
-    if(subnumber >= int(modef.subCount()))
+    if (subnumber >= int(modef.subCount()))
     {
         throw Error("Rend_DrawModel.visibleFrame",
                     QString("Model has %1 submodels, but submodel #%2 was requested")
@@ -353,7 +353,7 @@ static FrameModelFrame &visibleModelFrame(FrameModelDef &modef, int subnumber, i
     SubmodelDef const &sub = modef.subModelDef(subnumber);
 
     int curFrame = sub.frame;
-    if(modef.flags & MFF_IDFRAME)
+    if (modef.flags & MFF_IDFRAME)
     {
         curFrame += mobjId % sub.frameRange;
     }
@@ -375,7 +375,7 @@ static void drawPrimitives(rendcmd_t mode, FrameModel::Primitives const &primiti
 
     // Load the vertex array.
     void *coords[2];
-    switch(mode)
+    switch (mode)
     {
     case RC_OTHER_COORDS:
         coords[0] = texCoords;
@@ -393,14 +393,14 @@ static void drawPrimitives(rendcmd_t mode, FrameModel::Primitives const &primiti
         break;
     }
 
-    foreach(FrameModel::Primitive const &prim, primitives)
+    foreach (FrameModel::Primitive const &prim, primitives)
     {
         // The type of primitive depends on the sign.
         DGL_Begin(prim.triFan? DGL_TRIANGLE_FAN : DGL_TRIANGLE_STRIP);
 
-        foreach(FrameModel::Primitive::Element const &elem, prim.elements)
+        foreach (FrameModel::Primitive::Element const &elem, prim.elements)
         {
-            if(mode != RC_OTHER_COORDS)
+            if (mode != RC_OTHER_COORDS)
             {
                 DGL_TexCoord2f(0, elem.texCoord.x, elem.texCoord.y);
             }
@@ -426,11 +426,11 @@ static void Mod_LerpVertices(float inter, int count, FrameModelFrame const &from
     FrameModelFrame::VertexBuf::const_iterator startIt = from.vertices.begin();
     FrameModelFrame::VertexBuf::const_iterator endIt   = to.vertices.begin();
 
-    if(&from == &to || de::fequal(inter, 0))
+    if (&from == &to || de::fequal(inter, 0))
     {
-        for(int i = 0; i < count; ++i, startIt++, posOut++, normOut++)
+        for (int i = 0; i < count; ++i, startIt++, posOut++, normOut++)
         {
-            if(!activeLod || activeLod->hasVertex(i))
+            if (!activeLod || activeLod->hasVertex(i))
             {
                 *posOut  = startIt->pos;
                 *normOut = startIt->norm;
@@ -439,9 +439,9 @@ static void Mod_LerpVertices(float inter, int count, FrameModelFrame const &from
     }
     else
     {
-        for(int i = 0; i < count; ++i, startIt++, endIt++, posOut++, normOut++)
+        for (int i = 0; i < count; ++i, startIt++, endIt++, posOut++, normOut++)
         {
-            if(!activeLod || activeLod->hasVertex(i))
+            if (!activeLod || activeLod->hasVertex(i))
             {
                 *posOut  = de::lerp(startIt->pos,  endIt->pos,  inter);
                 *normOut = de::lerp(startIt->norm, endIt->norm, inter);
@@ -453,7 +453,7 @@ static void Mod_LerpVertices(float inter, int count, FrameModelFrame const &from
 static void Mod_MirrorCoords(dint count, Vector3f *coords, dint axis)
 {
     DENG2_ASSERT(coords);
-    for(; count-- > 0; coords++)
+    for (; count-- > 0; coords++)
     {
         (*coords)[axis] = -(*coords)[axis];
     }
@@ -476,7 +476,7 @@ static Vector3f rotateLightVector(VectorLightData const &vlight, dfloat yaw, dfl
     M_RotateVector(rotated, yaw, pitch);
 
     // Quick hack: Flip light normal if model inverted.
-    if(invert)
+    if (invert)
     {
         rotated[0] = -rotated[0];
         rotated[1] = -rotated[1];
@@ -494,9 +494,9 @@ static void Mod_VertexColors(Vector4ub *out, dint count, Vector3f const *normCoo
 {
     Vector4f const saturated(1, 1, 1, 1);
 
-    for(dint i = 0; i < count; ++i, out++, normCoords++)
+    for (dint i = 0; i < count; ++i, out++, normCoords++)
     {
-        if(activeLod && !activeLod->hasVertex(i))
+        if (activeLod && !activeLod->hasVertex(i))
             continue;
 
         Vector3f const &normal = *normCoords;
@@ -518,7 +518,7 @@ static void Mod_VertexColors(Vector4ub *out, dint count, Vector3f const *normCoo
                             + vlight.offset;  // Shift a bit towards the light.
 
             // Ability to both light and shade.
-            if(strength > 0) strength *= vlight.lightSide;
+            if (strength > 0) strength *= vlight.lightSide;
             else             strength *= vlight.darkSide;
 
             accum[vlight.affectedByAmbient? 0 : 1]
@@ -541,7 +541,7 @@ static void Mod_VertexColors(Vector4ub *out, dint count, Vector3f const *normCoo
 static void Mod_FullBrightVertexColors(dint count, Vector4ub *colorCoords, dfloat alpha)
 {
     DENG2_ASSERT(colorCoords);
-    for(; count-- > 0; colorCoords++)
+    for (; count-- > 0; colorCoords++)
     {
         *colorCoords = Vector4ub(255, 255, 255, 255 * alpha);
     }
@@ -553,7 +553,7 @@ static void Mod_FullBrightVertexColors(dint count, Vector4ub *colorCoords, dfloa
 static void Mod_FixedVertexColors(dint count, Vector4ub *colorCoords, Vector4ub const &color)
 {
     DENG2_ASSERT(colorCoords);
-    for(; count-- > 0; colorCoords++)
+    for (; count-- > 0; colorCoords++)
     {
         *colorCoords = color;
     }
@@ -565,9 +565,9 @@ static void Mod_FixedVertexColors(dint count, Vector4ub *colorCoords, Vector4ub 
 static void Mod_ShinyCoords(Vector2f *out, int count, Vector3f const *normCoords,
     float normYaw, float normPitch, float shinyAng, float shinyPnt, float reactSpeed)
 {
-    for(int i = 0; i < count; ++i, out++, normCoords++)
+    for (int i = 0; i < count; ++i, out++, normCoords++)
     {
-        if(activeLod && !activeLod->hasVertex(i))
+        if (activeLod && !activeLod->hasVertex(i))
             continue;
 
         float rotatedNormal[3] = { normCoords->x, normCoords->y, normCoords->z };
@@ -584,18 +584,18 @@ static void Mod_ShinyCoords(Vector2f *out, int count, Vector3f const *normCoords
 
 static int chooseSelSkin(FrameModelDef &mf, int submodel, int selector)
 {
-    if(mf.def.hasSub(submodel))
+    if (mf.def.hasSub(submodel))
     {
         Record &subDef = mf.def.sub(submodel);
 
         int i = (selector >> DDMOBJ_SELECTOR_SHIFT) & subDef.geti("selSkinMask");
         int c = subDef.geti("selSkinShift");
 
-        if(c > 0) i >>= c;
-        else      i <<= -c;
+        if (c > 0) i >>= c;
+        else       i <<= -c;
 
-        if(i > 7) i = 7; // Maximum number of skins for selskin.
-        if(i < 0) i = 0; // Improbable (impossible?), but doesn't hurt.
+        if (i > 7) i = 7; // Maximum number of skins for selskin.
+        if (i < 0) i = 0; // Improbable (impossible?), but doesn't hurt.
 
         return subDef.geta("selSkins")[i].asInt();
     }
@@ -604,7 +604,7 @@ static int chooseSelSkin(FrameModelDef &mf, int submodel, int selector)
 
 static int chooseSkin(FrameModelDef &mf, int submodel, int id, int selector, int tmap)
 {
-    if(submodel >= int(mf.subCount()))
+    if (submodel >= int(mf.subCount()))
     {
         return 0;
     }
@@ -614,18 +614,18 @@ static int chooseSkin(FrameModelDef &mf, int submodel, int id, int selector, int
     int skin = smf.skin;
 
     // Selskin overrides the skin range.
-    if(smf.testFlag(MFF_SELSKIN))
+    if (smf.testFlag(MFF_SELSKIN))
     {
         skin = chooseSelSkin(mf, submodel, selector);
     }
 
     // Is there a skin range for this frame?
     // (During model setup skintics and skinrange are set to >0.)
-    if(smf.skinRange > 1)
+    if (smf.skinRange > 1)
     {
         // What rule to use for determining the skin?
         int offset;
-        if(smf.testFlag(MFF_IDSKIN))
+        if (smf.testFlag(MFF_IDSKIN))
         {
             offset = id;
         }
@@ -638,12 +638,12 @@ static int chooseSkin(FrameModelDef &mf, int submodel, int id, int selector, int
     }
 
     // Need translation?
-    if(smf.testFlag(MFF_SKINTRANS))
+    if (smf.testFlag(MFF_SKINTRANS))
     {
         skin = tmap;
     }
 
-    if(skin < 0 || skin >= mdl.skinCount())
+    if (skin < 0 || skin >= mdl.skinCount())
     {
         skin = 0;
     }
@@ -667,25 +667,25 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     FrameModel &mdl = App_Resources().model(smf.modelId);
 
     // Do not bother with infinitely small models...
-    if(mf->scale == Vector3f(0, 0, 0))
+    if (mf->scale == Vector3f(0, 0, 0))
         return;
 
     float alpha = spr.light.ambientColor[CA];
 
     // Is the submodel-defined alpha multiplier in effect?
     // With df_brightshadow2, the alpha multiplier will be applied anyway.
-    if(smf.testFlag(MFF_BRIGHTSHADOW2) ||
+    if (smf.testFlag(MFF_BRIGHTSHADOW2) ||
        !(parm.flags & (DDMF_BRIGHTSHADOW|DDMF_SHADOW|DDMF_ALTSHADOW)))
     {
         alpha *= smf.alpha / 255.f;
     }
 
     // Would this be visible?
-    if(alpha <= 0) return;
+    if (alpha <= 0) return;
 
     blendmode_t blending = smf.blendMode;
     // Is the submodel-defined blend mode in effect?
-    if(parm.flags & DDMF_BRIGHTSHADOW)
+    if (parm.flags & DDMF_BRIGHTSHADOW)
     {
         blending = BM_ADD;
     }
@@ -697,7 +697,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     // interrange. If a custom one is defined, don't touch interpos.
     float endPos = 0;
     float inter = parm.inter;
-    if((mf->interRange[0] == 0 && mf->interRange[1] == 1) || smf.testFlag(MFF_WORLD_TIME_ANIM))
+    if ((mf->interRange[0] == 0 && mf->interRange[1] == 1) || smf.testFlag(MFF_WORLD_TIME_ANIM))
     {
         endPos = (mf->interNext ? mf->interNext->interMark : 1);
         inter = (parm.inter - mf->interMark) / (endPos - mf->interMark);
@@ -706,7 +706,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     FrameModelFrame *frame = &visibleModelFrame(*mf, number, parm.id);
     FrameModelFrame *nextFrame = 0;
     // Do we have a sky/particle model here?
-    if(parm.alwaysInterpolate)
+    if (parm.alwaysInterpolate)
     {
         // Always interpolate, if there's animation.
         // Used with sky and particle models.
@@ -716,9 +716,9 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     else
     {
         // Check for possible interpolation.
-        if(frameInter && mfNext && !smf.testFlag(MFF_DONT_INTERPOLATE))
+        if (frameInter && mfNext && !smf.testFlag(MFF_DONT_INTERPOLATE))
         {
-            if(mfNext->hasSub(number) && mfNext->subModelId(number) == smf.modelId)
+            if (mfNext->hasSub(number) && mfNext->subModelId(number) == smf.modelId)
             {
                 nextFrame = &visibleModelFrame(*mfNext, number, parm.id);
             }
@@ -728,7 +728,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     // Clamp interpolation.
     inter = de::clamp(0.f, inter, 1.f);
 
-    if(!nextFrame)
+    if (!nextFrame)
     {
         // If not interpolating, use the same frame as interpolation target.
         // The lerp routines will recognize this special case.
@@ -740,7 +740,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     int numVerts = mdl.vertexCount();
 
     // Ensure our vertex render buffers can accommodate this.
-    if(!resizeVertexBuffer(numVerts))
+    if (!resizeVertexBuffer(numVerts))
     {
         // No can do, we aint got the power!
         return;
@@ -753,12 +753,12 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     // Model space => World space
     DGL_Translatef(spr.pose.origin[VX] + spr.pose.srvo[VX] +
                    de::lerp(mf->offset.x, mfNext->offset.x, inter),
-                 spr.pose.origin[VZ] + spr.pose.srvo[VZ] +
+                   spr.pose.origin[VZ] + spr.pose.srvo[VZ] +
                    de::lerp(mf->offset.y, mfNext->offset.y, inter),
-                 spr.pose.origin[VY] + spr.pose.srvo[VY] + zSign *
+                   spr.pose.origin[VY] + spr.pose.srvo[VY] + zSign *
                    de::lerp(mf->offset.z, mfNext->offset.z, inter));
 
-    if(spr.pose.extraYawAngle || spr.pose.extraPitchAngle)
+    if (spr.pose.extraYawAngle || spr.pose.extraPitchAngle)
     {
         // Sky models have an extra rotation.
         DGL_Scalef(1, 200 / 240.0f, 1);
@@ -775,7 +775,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     DGL_Scalef(de::lerp(mf->scale.x, mfNext->scale.x, inter),
              de::lerp(mf->scale.y, mfNext->scale.y, inter),
              de::lerp(mf->scale.z, mfNext->scale.z, inter));
-    if(spr.pose.extraScale)
+    if (spr.pose.extraScale)
     {
         // Particle models have an extra scale.
         DGL_Scalef(spr.pose.extraScale, spr.pose.extraScale, spr.pose.extraScale);
@@ -783,10 +783,10 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     DGL_Translatef(smf.offset.x, smf.offset.y, smf.offset.z);
 
     // Determine the suitable LOD.
-    if(mdl.lodCount() > 1 && rend_model_lod != 0)
+    if (mdl.lodCount() > 1 && rend_model_lod != 0)
     {
         float lodFactor = rend_model_lod * DENG_GAMEVIEW_WIDTH / 640.0f / (Rend_FieldOfView() / 90.0f);
-        if(!de::fequal(lodFactor, 0))
+        if (!de::fequal(lodFactor, 0))
         {
             lodFactor = 1 / lodFactor;
         }
@@ -803,7 +803,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     Mod_LerpVertices(inter, numVerts, *frame, *nextFrame,
                      modelPosCoords, modelNormCoords);
 
-    if(zSign < 0)
+    if (zSign < 0)
     {
         Mod_MirrorCoords(numVerts, modelPosCoords, 2);
         Mod_MirrorCoords(numVerts, modelNormCoords, 1);
@@ -815,13 +815,13 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
 
     // Calculate lighting.
     Vector4f ambient;
-    if(smf.testFlag(MFF_FULLBRIGHT) && !smf.testFlag(MFF_DIM))
+    if (smf.testFlag(MFF_FULLBRIGHT) && !smf.testFlag(MFF_DIM))
     {
         // Submodel-specific lighting override.
         ambient = Vector4f(1, 1, 1, 1);
         Mod_FullBrightVertexColors(numVerts, modelColorCoords, alpha);
     }
-    else if(!spr.light.vLightListIdx)
+    else if (!spr.light.vLightListIdx)
     {
         // Lit uniformly.
         ambient = Vector4f(spr.light.ambientColor, alpha);
@@ -840,13 +840,13 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
 
     TextureVariant *shinyTexture = 0;
     float shininess = 0;
-    if(mf->def.hasSub(number))
+    if (mf->def.hasSub(number))
     {
         shininess = float(de::clamp(0.0, mf->def.sub(number).getd("shiny") * modelShinyFactor, 1.0));
         // Ensure we've prepared the shiny skin.
-        if(shininess > 0)
+        if (shininess > 0)
         {
-            if(ClientTexture *tex = static_cast<ClientTexture *>(mf->subModelDef(number).shinySkin))
+            if (ClientTexture *tex = static_cast<ClientTexture *>(mf->subModelDef(number).shinySkin))
             {
                 shinyTexture = tex->prepareVariant(Rend_ModelShinyTextureSpec());
             }
@@ -858,7 +858,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     }
 
     Vector4f color;
-    if(shininess > 0)
+    if (shininess > 0)
     {
         // Calculate shiny coordinates.
         Vector3f shinyColor = mf->def.sub(number).get("shinyColor");
@@ -877,7 +877,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
 
         float shinyAng = 0;
         float shinyPnt = 0;
-        if(parm.shinepspriteCoordSpace)
+        if (parm.shinepspriteCoordSpace)
         {
             // This is a hack to accommodate the psprite coordinate space.
             shinyPnt = 0.5;
@@ -886,7 +886,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
         {
             Vector3f delta = modelCenter;
 
-            if(!parm.shineTranslateWithViewerPos)
+            if (!parm.shineTranslateWithViewerPos)
             {
                 delta -= Rend_EyeOrigin().xzy();
             }
@@ -901,7 +901,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
                         mf->def.sub(number).getf("shinyReact"));
 
         // Shiny color.
-        if(smf.testFlag(MFF_SHINY_LIT))
+        if (smf.testFlag(MFF_SHINY_LIT))
         {
             color = Vector4f(ambient * shinyColor, shininess);
         }
@@ -912,7 +912,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     }
 
     TextureVariant *skinTexture = 0;
-    if(renderTextures == 2)
+    if (renderTextures == 2)
     {
         // For lighting debug, render all surfaces using the gray texture.
         MaterialAnimator &matAnimator = ClientMaterial::find(de::Uri("System", Path("gray")))
@@ -926,20 +926,20 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     else
     {
         skinTexture = 0;
-        if(ClientTexture *tex = static_cast<ClientTexture *>(mdl.skin(useSkin).texture))
+        if (ClientTexture *tex = static_cast<ClientTexture *>(mdl.skin(useSkin).texture))
         {
             skinTexture = tex->prepareVariant(Rend_ModelDiffuseTextureSpec(mdl.flags().testFlag(FrameModel::NoTextureCompression)));
         }
     }
 
     // If we mirror the model, triangles have a different orientation.
-    if(zSign < 0)
+    if (zSign < 0)
     {
         LIBGUI_GL.glFrontFace(GL_CCW);
     }
 
     // Twosided models won't use backface culling.
-    if(smf.testFlag(MFF_TWO_SIDED))
+    if (smf.testFlag(MFF_TWO_SIDED))
     {
         //glDisable(GL_CULL_FACE);
         GLState::current().setCull(gl::None).apply();
@@ -950,12 +950,11 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
         activeLod? activeLod->primitives : mdl.primitives();
 
     // Render using multiple passes?
-    if(!modelShinyMultitex || shininess <= 0 || alpha < 1 ||
-       blending != BM_NORMAL || !smf.testFlag(MFF_SHINY_SPECULAR) ||
-       numTexUnits < 2 || !envModAdd)
+    if (shininess <= 0 || alpha < 1 ||
+        blending != BM_NORMAL || !smf.testFlag(MFF_SHINY_SPECULAR))
     {
         // The first pass can be skipped if it won't be visible.
-        if(shininess < 1 || smf.testFlag(MFF_SHINY_SPECULAR))
+        if (shininess < 1 || smf.testFlag(MFF_SHINY_SPECULAR))
         {
             selectTexUnits(1);
             GL_BlendMode(blending);
@@ -965,13 +964,13 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
                            modelPosCoords, modelColorCoords);
         }
 
-        if(shininess > 0)
+        if (shininess > 0)
         {
             //glDepthFunc(GL_LEQUAL);
             GLState::current().setDepthFunc(gl::LessOrEqual).apply();
 
             // Set blending mode, two choices: reflected and specular.
-            if(smf.testFlag(MFF_SHINY_SPECULAR))
+            if (smf.testFlag(MFF_SHINY_SPECULAR))
                 GL_BlendMode(BM_ADD);
             else
                 GL_BlendMode(BM_NORMAL);
@@ -980,34 +979,22 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
             Mod_FixedVertexColors(numVerts, modelColorCoords,
                                   (color * 255).toVector4ub());
 
-            if(numTexUnits > 1 && modelShinyMultitex)
-            {
-                // We'll use multitexturing to clear out empty spots in
-                // the primary texture.
-                selectTexUnits(2);
-                DGL_ModulateTexture(11);
+            // We'll use multitexturing to clear out empty spots in
+            // the primary texture.
+            selectTexUnits(2);
+            DGL_ModulateTexture(11);
 
-                DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
-                GL_BindTexture(renderTextures? shinyTexture : 0);
+            DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
+            GL_BindTexture(renderTextures? shinyTexture : 0);
 
-                DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
-                GL_BindTexture(renderTextures? skinTexture : 0);
+            DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
+            GL_BindTexture(renderTextures? skinTexture : 0);
 
-                drawPrimitives(RC_BOTH_COORDS, primitives,
-                               modelPosCoords, modelColorCoords, modelTexCoords);
+            drawPrimitives(RC_BOTH_COORDS, primitives,
+                           modelPosCoords, modelColorCoords, modelTexCoords);
 
-                selectTexUnits(1);
-                DGL_ModulateTexture(1);
-            }
-            else
-            {
-                // Empty spots will get shine, too.
-                selectTexUnits(1);
-                GL_BindTexture(renderTextures? shinyTexture : 0);
-
-                drawPrimitives(RC_OTHER_COORDS, primitives,
-                               modelPosCoords, modelColorCoords, modelTexCoords);
-            }
+            selectTexUnits(1);
+            DGL_ModulateTexture(1);
         }
     }
     else
@@ -1043,13 +1030,13 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     DGL_PopMatrix();
 
     // Normally culling is always enabled.
-    if(smf.testFlag(MFF_TWO_SIDED))
+    if (smf.testFlag(MFF_TWO_SIDED))
     {
         //glEnable(GL_CULL_FACE);
         GLState::current().setCull(gl::Back).apply();
     }
 
-    if(zSign < 0)
+    if (zSign < 0)
     {
         LIBGUI_GL.glFrontFace(GL_CW);
     }
@@ -1067,17 +1054,17 @@ void Rend_DrawModel(vissprite_t const &spr)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    if(!parm.mf) return;
+    if (!parm.mf) return;
 
     // Render all the submodels of this model.
-    for(uint i = 0; i < parm.mf->subCount(); ++i)
+    for (uint i = 0; i < parm.mf->subCount(); ++i)
     {
-        if(parm.mf->subModelId(i))
+        if (parm.mf->subModelId(i))
         {
             bool disableZ = (parm.mf->flags & MFF_DISABLE_Z_WRITE ||
                              parm.mf->testSubFlag(i, MFF_DISABLE_Z_WRITE));
 
-            if(disableZ)
+            if (disableZ)
             {
                 //glDepthMask(GL_FALSE);
                 GLState::current().setDepthWrite(false).apply();
@@ -1085,7 +1072,7 @@ void Rend_DrawModel(vissprite_t const &spr)
 
             drawSubmodel(i, spr);
 
-            if(disableZ)
+            if (disableZ)
             {
                 //glDepthMask(GL_TRUE);
                 GLState::current().setDepthWrite(true).apply();
@@ -1093,7 +1080,7 @@ void Rend_DrawModel(vissprite_t const &spr)
         }
     }
 
-    if(devMobjVLights && spr.light.vLightListIdx)
+    if (devMobjVLights && spr.light.vLightListIdx)
     {
         // Draw the vlight vectors, for debug.
         //glDisable(GL_DEPTH_TEST);
@@ -1111,7 +1098,7 @@ void Rend_DrawModel(vissprite_t const &spr)
         coord_t const distFromViewer = de::abs(spr.pose.distance);
         ClientApp::renderSystem().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (VectorLightData const &vlight)
         {
-            if(distFromViewer < 1600 - 8)
+            if (distFromViewer < 1600 - 8)
             {
                 Rend_DrawVectorLight(vlight, 1 - distFromViewer / 1600);
             }

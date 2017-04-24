@@ -94,7 +94,7 @@ void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
     // This only happens when multitexturing is enabled.
     bool withDyn = false;
     dint normal = 0, dyn = 1;
-    if(parms.modTex && ::numTexUnits > 1)
+    if(parms.modTex)
     {
         if(IS_MUL)
         {

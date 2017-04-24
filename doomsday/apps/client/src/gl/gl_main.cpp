@@ -76,8 +76,6 @@ using namespace de;
 extern dint maxnumnodes;
 extern dd_bool fillOutlines;
 
-dint numTexUnits = 1;
-dd_bool envModAdd;     ///< TexEnv: modulate and add is available.
 dint test3dfx;
 dint r_detail = true;  ///< Draw detail textures (if available).
 
@@ -227,7 +225,7 @@ static void printConfiguration()
     {
         LOG_GL_VERBOSE("  Multisampling format: %i") << GL_state.multisampleFormat;
     }*/
-    LOG_GL_VERBOSE("  Multitexturing: %s") << (numTexUnits > 1? (envModAdd? "full" : "partial") : "not available");
+    //LOG_GL_VERBOSE("  Multitexturing: %s") << (numTexUnits > 1? (envModAdd? "full" : "partial") : "not available");
     LOG_GL_VERBOSE("  Texture Anisotropy: %s") << (GL_state.features.texFilterAniso? "variable" : "fixed");
     LOG_GL_VERBOSE("  Texture Compression: %b") << GL_state.features.texCompression;
 }
@@ -242,11 +240,6 @@ void GL_EarlyInit()
     ClientApp::renderSystem().glInit();
 
     gamma_support = !CommandLine_Check("-noramp");
-
-    // We are simple people; two texture units is enough.
-    numTexUnits = de::min(GLInfo::limits().maxTexUnits, MAX_TEX_UNITS);
-    //envModAdd = (GLInfo::extensions().NV_texture_env_combine4 ||
-    //             GLInfo::extensions().ATI_texture_env_combine3);
 
     GL_InitDeferredTask();
 
@@ -450,7 +443,7 @@ void GL_SelectTexUnits(dint count)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    for (dint i = numTexUnits - 1; i >= count; i--)
+    for (dint i = MAX_TEX_UNITS - 1; i >= count; i--)
     {
         DGL_Disable(DGL_TEXTURE0 + i);
     }
@@ -458,7 +451,7 @@ void GL_SelectTexUnits(dint count)
     // Enable the selected units.
     for (dint i = count - 1; i >= 0; i--)
     {
-        if (i >= numTexUnits) continue;
+        if (i >= MAX_TEX_UNITS) continue;
 
         DGL_Enable(DGL_TEXTURE0 + i);
     }

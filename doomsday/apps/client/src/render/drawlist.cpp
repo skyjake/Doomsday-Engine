@@ -191,7 +191,7 @@ DENG2_PIMPL(DrawList)
                 {
                     duint const index = indices[i];
 
-                    for (dint k = 0; k < numTexUnits; ++k)
+                    for (dint k = 0; k < MAX_TEX_UNITS; ++k)
                     {
                         Vector2f const *tc = nullptr;  // No mapping.
                         switch (texUnitMap[k])
@@ -370,7 +370,6 @@ DENG2_PIMPL(DrawList)
             if (spec.unit(TU_INTER).hasTexture())
             {
                 // Blend between two textures, modulate with primary color.
-                DENG2_ASSERT(numTexUnits >= 2);
                 GL_SelectTexUnits(2);
 
                 GL_BindTo(spec.unit(TU_PRIMARY), 0);
@@ -428,7 +427,6 @@ DENG2_PIMPL(DrawList)
                 return Skip;
             }
 
-            DENG2_ASSERT(numTexUnits >= 2);
             GL_SelectTexUnits(2);
             GL_BindTo(spec.unit(TU_PRIMARY), 0);
             GL_BindTo(spec.unit(TU_INTER  ), 1);
@@ -482,7 +480,6 @@ DENG2_PIMPL(DrawList)
             {
                 // Mode 3 actually just disables the second texture stage,
                 // which would modulate with primary color.
-                DENG2_ASSERT(numTexUnits >= 2);
                 GL_SelectTexUnits(2);
                 GL_BindTo(spec.unit(TU_PRIMARY), 0);
                 GL_BindTo(spec.unit(TU_INTER  ), 1);

@@ -169,8 +169,8 @@ dbyte smoothTexAnim = true;
 
 dint renderTextures = true;
 dint renderWireframe;
-dint useMultiTexLights = true;
-dint useMultiTexDetails = true;
+//dint useMultiTexLights = true;
+//dint useMultiTexDetails = true;
 
 dint dynlightBlend;
 
@@ -846,8 +846,7 @@ void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
     }
 
     /// @todo Semitransparent masked polys arn't lit atm
-    if(glow < 1 && lightListIdx && numTexUnits > 1 && envModAdd &&
-       !(rcolors[0].w < 1))
+    if(glow < 1 && lightListIdx && !(rcolors[0].w < 1))
     {
         // The dynlights will have already been sorted so that the brightest
         // and largest of them is first in the list. So grab that one.
@@ -4678,16 +4677,10 @@ static void drawAllLists(Map &map)
     //
 
     ClientApp::renderSystem().drawLists().findAll(ShineGeom, lists);
-    if(numTexUnits > 1)
-    {
-        // Render masked shiny surfaces in a separate pass.
-        drawLists(lists, DM_SHINY);
-        drawLists(lists, DM_MASKED_SHINY);
-    }
-    else
-    {
-        drawLists(lists, DM_ALL_SHINY);
-    }
+
+    // Render masked shiny surfaces in a separate pass.
+    drawLists(lists, DM_SHINY);
+    drawLists(lists, DM_MASKED_SHINY);
 
     //
     // Pass: Shadow geometries (objects and Fake Radio).
@@ -6444,7 +6437,7 @@ void Rend_Register()
     C_VAR_FLOAT2("rend-light-compression", &lightRangeCompression, 0, -1, 1, Rend_UpdateLightModMatrix);
     C_VAR_BYTE("rend-light-decor", &useLightDecorations, 0, 0, 1);
     C_VAR_FLOAT("rend-light-fog-bright", &dynlightFogBright, 0, 0, 1);
-    C_VAR_INT("rend-light-multitex", &useMultiTexLights, 0, 0, 1);
+    //C_VAR_INT("rend-light-multitex", &useMultiTexLights, 0, 0, 1);
     C_VAR_INT("rend-light-num", &rendMaxLumobjs, CVF_NO_MAX, 0, 0);
     C_VAR_FLOAT("rend-light-sky", &rendSkyLight, 0, 0, 1/*, useSkylightChanged*/);
     C_VAR_BYTE("rend-light-sky-auto", &rendSkyLightAuto, 0, 0, 1/*, useSkylightChanged*/);
@@ -6461,7 +6454,7 @@ void Rend_Register()
     C_VAR_INT("rend-tex", &renderTextures, CVF_NO_ARCHIVE, 0, 2);
     C_VAR_BYTE("rend-tex-anim-smooth", &smoothTexAnim, 0, 0, 1);
     C_VAR_INT("rend-tex-detail", &r_detail, 0, 0, 1);
-    C_VAR_INT("rend-tex-detail-multitex", &useMultiTexDetails, 0, 0, 1);
+    //C_VAR_INT("rend-tex-detail-multitex", &useMultiTexDetails, 0, 0, 1);
     C_VAR_FLOAT("rend-tex-detail-scale", &detailScale, CVF_NO_MIN | CVF_NO_MAX, 0, 0);
     C_VAR_FLOAT2("rend-tex-detail-strength", &detailFactor, 0, 0, 5, detailFactorChanged);
     C_VAR_BYTE2("rend-tex-external-always", &loadExtAlways, 0, 0, 1, loadExtAlwaysChanged);

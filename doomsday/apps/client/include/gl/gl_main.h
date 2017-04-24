@@ -49,9 +49,6 @@ namespace world { class Material; }
 #define MINTEXWIDTH             8
 #define MINTEXHEIGHT            8
 
-DENG_EXTERN_C int numTexUnits;
-DENG_EXTERN_C dd_bool  envModAdd;
-//DENG_EXTERN_C int viewph, viewpw, viewpx, viewpy;
 DENG_EXTERN_C float vid_gamma, vid_bright, vid_contrast;
 DENG_EXTERN_C int r_detail;
 
