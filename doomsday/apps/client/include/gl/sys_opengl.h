@@ -80,19 +80,13 @@
  * High-level GL state information.
  */
 typedef struct gl_state_s {
-    /// Global config:
-    //int multisampleFormat;
-
     /// Current state:
-    dd_bool currentUseFog;
     float currentLineWidth;
     float currentPointSize;
 
     /// Feature (abstract) availability bits:
     /// Vendor and implementation agnostic.
     struct {
-        //uint blendSubtract : 1;
-        //uint genMipmap : 1;
         uint texCompression : 1;
         uint texFilterAniso : 1;
     } features;

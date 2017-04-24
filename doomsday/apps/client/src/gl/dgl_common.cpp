@@ -27,6 +27,7 @@
 #include <de/concurrency.h>
 #include <de/GLInfo>
 #include <de/GLState>
+#include <de/GLUniform>
 #include <de/Matrix>
 #include <doomsday/res/Textures>
 
@@ -48,6 +49,11 @@ struct DGLState
     bool enableFog = false;
     int textureModulation = 0;
     Vector4f textureModulationColor;
+    DGLenum fogMode = DGL_LINEAR;
+    float fogStart = 0;
+    float fogEnd = 0;
+    float fogDensity = 0;
+    Vector4f fogColor;
 
     DGLState()
     {
@@ -121,6 +127,30 @@ void DGL_SetModulationColor(Vector4f const &modColor)
 Vector4f DGL_ModulationColor()
 {
     return dgl.textureModulationColor;
+}
+
+void DGL_FogParams(GLUniform &fogRange, GLUniform &fogColor)
+{
+    if (dgl.enableFog)
+    {
+        fogColor = Vector4f(dgl.fogColor[0],
+                            dgl.fogColor[1],
+                            dgl.fogColor[2],
+                            1.f);
+
+        // TODO: Implement EXP and EXP2 fog modes. This is LINEAR.
+
+        Rangef const depthPlanes = GL_DepthClipRange();
+        float const fogDepth = dgl.fogEnd - dgl.fogStart;
+        fogRange = Vector4f(dgl.fogStart,
+                            fogDepth,
+                            depthPlanes.start,
+                            depthPlanes.end);
+    }
+    else
+    {
+        fogColor = Vector4f();
+    }
 }
 
 #if 0
@@ -222,6 +252,11 @@ void DGL_ModulateTexture(int mode)
     case 1:
     case 2:
     case 3:
+    case 4:
+    case 6:
+    case 8:
+    case 10:
+    case 11:
         break;
     }
 
@@ -509,7 +544,11 @@ dd_bool DGL_GetIntegerv(int name, int *v)
         break;
 
     case DGL_FOG:
-        *v = GL_state.currentUseFog;
+        *v = (dgl.enableFog? 1 : 0);
+        break;
+
+    case DGL_FOG_MODE:
+        *v = int(dgl.fogMode);
         break;
 
     case DGL_CURRENT_COLOR_R:
@@ -611,11 +650,34 @@ dd_bool DGL_GetFloatv(int name, float *v)
         break;
 
     case DGL_CURRENT_COLOR_RGBA:
-        DGL_CurrentColor(color);
+        DGL_CurrentColor(v);
+        break;
+
+    case DGL_FOG_START:
+        v[0] = dgl.fogStart;
+        break;
+
+    case DGL_FOG_END:
+        v[0] = dgl.fogEnd;
+        break;
+
+    case DGL_FOG_DENSITY:
+        v[0] = dgl.fogDensity;
+        break;
+
+    case DGL_FOG_COLOR:
         for (int i = 0; i < 4; ++i)
         {
-            v[i] = color[i];
+            v[i] = dgl.fogColor[i];
         }
+        break;
+
+    case DGL_LINE_WIDTH:
+        v[0] = GL_state.currentLineWidth;
+        break;
+
+    case DGL_POINT_SIZE:
+        v[0] = GL_state.currentPointSize;
         break;
 
     default:
@@ -628,17 +690,9 @@ dd_bool DGL_GetFloatv(int name, float *v)
 #undef DGL_GetFloat
 float DGL_GetFloat(int name)
 {
-    switch(name)
-    {
-    case DGL_LINE_WIDTH:
-        return GL_state.currentLineWidth;
-
-    case DGL_POINT_SIZE:
-        return GL_state.currentPointSize;
-
-    default:
-        return 0;
-    }
+    float value = 0.f;
+    DGL_GetFloatv(name, &value);
+    return value;
 }
 
 #undef DGL_SetFloat
@@ -690,7 +744,6 @@ int DGL_Enable(int cap)
     switch(cap)
     {
     case DGL_TEXTURE_2D:
-        //Deferred_glEnable(GL_TEXTURE_2D);
         dgl.enableTexture[dgl.activeTexture] = true;
         break;
 
@@ -705,9 +758,7 @@ int DGL_Enable(int cap)
         break;
 
     case DGL_FOG:
-        //Deferred_glEnable(GL_FOG);
         dgl.enableFog = true;
-        GL_state.currentUseFog = true;
         break;
 
     case DGL_SCISSOR_TEST:
@@ -755,13 +806,10 @@ void DGL_Disable(int cap)
         break;
 
     case DGL_FOG:
-        //Deferred_glDisable(GL_FOG);
         dgl.enableFog = false;
-        GL_state.currentUseFog = false;
         break;
 
     case DGL_SCISSOR_TEST:
-        //glDisable(GL_SCISSOR_TEST);
         GLState::current().clearScissor().apply();
         break;
 
@@ -967,6 +1015,46 @@ void DGL_Ortho(float left, float top, float right, float bottom, float znear, fl
     dgl.multMatrix(Matrix4f::ortho(left, right, top, bottom, znear, zfar));
 }
 
+#undef DGL_Fogi
+void DGL_Fogi(DGLenum property, int value)
+{
+    switch (property)
+    {
+    case DGL_FOG_MODE:
+        dgl.fogMode = DGLenum(value);
+        break;
+    }
+}
+
+#undef DGL_Fogfv
+void DGL_Fogfv(DGLenum property, float const *values)
+{
+    switch (property)
+    {
+    case DGL_FOG_START:
+        dgl.fogStart = values[0];
+        break;
+
+    case DGL_FOG_END:
+        dgl.fogEnd = values[0];
+        break;
+
+    case DGL_FOG_DENSITY:
+        dgl.fogDensity = values[0];
+        break;
+
+    case DGL_FOG_COLOR:
+        dgl.fogColor = Vector4f(values);
+        break;
+    }
+}
+
+#undef DGL_Fogf
+void DGL_Fogf(DGLenum property, float value)
+{
+    DGL_Fogfv(property, &value);
+}
+
 #undef DGL_DeleteTextures
 void DGL_DeleteTextures(int num, DGLuint const *names)
 {
@@ -1111,6 +1199,9 @@ DENG_DECLARE_API(GL) =
     DGL_NewTextureWithParams,
     DGL_Bind,
     DGL_DeleteTextures,
+    DGL_Fogi,
+    DGL_Fogf,
+    DGL_Fogfv,
     GL_UseFog,
     GL_SetFilter,
     GL_SetFilterColor,
@@ -1118,5 +1209,5 @@ DENG_DECLARE_API(GL) =
     GL_ConfigureBorderedProjection,
     GL_BeginBorderedProjection,
     GL_EndBorderedProjection,
-    GL_ResetViewEffects
+    GL_ResetViewEffects,
 };

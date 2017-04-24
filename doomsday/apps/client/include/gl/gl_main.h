@@ -315,6 +315,7 @@ void            DGL_CurrentColor(float *rgba);
 void            DGL_ModulateTexture(int mode);
 void            DGL_SetModulationColor(de::Vector4f const &modColor);
 de::Vector4f    DGL_ModulationColor();
+void            DGL_FogParams(de::GLUniform &fogRange, de::GLUniform &fogColor);
 
 // Console commands ---------------------------------------------------------------------
 

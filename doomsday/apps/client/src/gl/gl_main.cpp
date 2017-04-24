@@ -28,6 +28,7 @@
 
 #include "de_base.h"
 #include "gl/gl_main.h"
+#include "api_gl.h"
 
 #include <de/concurrency.h>
 #include <de/App>
@@ -366,16 +367,16 @@ void GL_Init2DState()
     // Default state for the white fog is off.
     fogParams.usingFog = false;
     DGL_Disable(DGL_FOG);
-    Deferred_glFogi(GL_FOG_MODE, (fogModeDefault == 0 ? GL_LINEAR :
-                                  fogModeDefault == 1 ? GL_EXP    : GL_EXP2));
-    Deferred_glFogf(GL_FOG_START, DEFAULT_FOG_START);
-    Deferred_glFogf(GL_FOG_END, DEFAULT_FOG_END);
-    Deferred_glFogf(GL_FOG_DENSITY, DEFAULT_FOG_DENSITY);
+    DGL_Fogi(DGL_FOG_MODE, (fogModeDefault == 0 ? DGL_LINEAR :
+                            fogModeDefault == 1 ? DGL_EXP    : DGL_EXP2));
+    DGL_Fogf(DGL_FOG_START,   DEFAULT_FOG_START);
+    DGL_Fogf(DGL_FOG_END,     DEFAULT_FOG_END);
+    DGL_Fogf(DGL_FOG_DENSITY, DEFAULT_FOG_DENSITY);
     fogParams.fogColor[0] = DEFAULT_FOG_COLOR_RED;
     fogParams.fogColor[1] = DEFAULT_FOG_COLOR_GREEN;
     fogParams.fogColor[2] = DEFAULT_FOG_COLOR_BLUE;
-    fogParams.fogColor[3] = 1;
-    Deferred_glFogfv(GL_FOG_COLOR, fogParams.fogColor);
+    fogParams.fogColor[3] = 1.f;
+    DGL_Fogfv(DGL_FOG_COLOR, fogParams.fogColor);
 
     LIBGUI_ASSERT_GL_OK();
 }
@@ -1434,7 +1435,7 @@ D_CMD(Fog)
         }
         fogParams.fogColor[3] = 1;
 
-        Deferred_glFogfv(GL_FOG_COLOR, fogParams.fogColor);
+        DGL_Fogfv(DGL_FOG_COLOR, fogParams.fogColor);
         LOG_GL_VERBOSE("Fog color set");
         return true;
     }
@@ -1442,20 +1443,20 @@ D_CMD(Fog)
     {
         fogParams.fogStart = (GLfloat) strtod(argv[2], nullptr);
 
-        Deferred_glFogf(GL_FOG_START, fogParams.fogStart);
+        DGL_Fogf(DGL_FOG_START, fogParams.fogStart);
         LOG_GL_VERBOSE("Fog start distance set");
         return true;
     }
     if(!stricmp(argv[1], "end") && argc == 3)
     {
         fogParams.fogEnd = (GLfloat) strtod(argv[2], nullptr);
-        Deferred_glFogf(GL_FOG_END, fogParams.fogEnd);
+        DGL_Fogf(DGL_FOG_END, fogParams.fogEnd);
         LOG_GL_VERBOSE("Fog end distance set");
         return true;
     }
     if(!stricmp(argv[1], "density") && argc == 3)
     {
-        Deferred_glFogf(GL_FOG_DENSITY, (GLfloat) strtod(argv[2], nullptr));
+        DGL_Fogf(DGL_FOG_DENSITY, (GLfloat) strtod(argv[2], nullptr));
         LOG_GL_VERBOSE("Fog density set");
         return true;
     }
@@ -1463,19 +1464,19 @@ D_CMD(Fog)
     {
         if(!stricmp(argv[2], "linear"))
         {
-            Deferred_glFogi(GL_FOG_MODE, GL_LINEAR);
+            DGL_Fogi(DGL_FOG_MODE, GL_LINEAR);
             LOG_GL_VERBOSE("Fog mode set to linear");
             return true;
         }
         if(!stricmp(argv[2], "exp"))
         {
-            Deferred_glFogi(GL_FOG_MODE, GL_EXP);
+            DGL_Fogi(DGL_FOG_MODE, GL_EXP);
             LOG_GL_VERBOSE("Fog mode set to exp");
             return true;
         }
         if(!stricmp(argv[2], "exp2"))
         {
-            Deferred_glFogi(GL_FOG_MODE, GL_EXP2);
+            DGL_Fogi(DGL_FOG_MODE, GL_EXP2);
             LOG_GL_VERBOSE("Fog mode set to exp2");
             return true;
         }

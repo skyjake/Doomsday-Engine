@@ -23,6 +23,7 @@
 uniform int uTexEnabled;
 uniform int uTexMode;
 uniform vec4 uTexModeColor;
+uniform float uAlphaLimit;
 uniform sampler2D uTex0;
 uniform sampler2D uTex1;
 
@@ -54,11 +55,44 @@ void main()
         break;
     case 2:
         // Texture interpolation and modulation with primary color.
-        out_FragColor.rgb = mix(texColor[0].rgb, texColor[1].rgb, vColor.a) * vColor.rgb;
+        out_FragColor.rgb *= mix(texColor[0].rgb, texColor[1].rgb, uTexModeColor.a);      
         break;
     case 3:
         // Texture interpolation.
-        out_FragColor.rgb = mix(texColor[0].rgb, texColor[1].rgb, vColor.a);        
+        out_FragColor.rgb = mix(texColor[0].rgb, texColor[1].rgb, uTexModeColor.a);
+        break;
+    case 4:
+        // Sector light, dynamic light, and texture.
+        out_FragColor.rgb += texColor[0].a * uTexModeColor.rgb;
+        out_FragColor     *= texColor[1];
+        break;
+    case 6:
+        // Simple dynlight addition (add to primary color).
+        out_FragColor.rgb += texColor[0].a * uTexModeColor.rgb;
+        break;
+    case 8:
+        // Texture and Detail.
+        out_FragColor     *= texColor[0];
+        out_FragColor.rgb *= texColor[1].rgb * 2.0;
+        break;
+    case 10:
+        // Sector light * texture + dynamic light.
+        out_FragColor     *= texColor[0];
+        out_FragColor.rgb += texColor[1].rgb * uTexModeColor.rgb;
+        break;
+    case 11:
+        // Normal modulation, alpha of 2nd stage.
+        // Tex0: texture
+        // Tex1: shiny texture
+        out_FragColor.rgb *= texColor[1].rgb;
+        out_FragColor.a   *= texColor[0].a;
         break;
     }
+    
+    // Alpha test.
+    if (out_FragColor.a < uAlphaLimit) {
+        discard;
+    }
+    
+    applyFog();
 }

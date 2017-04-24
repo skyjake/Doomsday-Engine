@@ -47,7 +47,11 @@ enum {
     DGL_CURRENT_COLOR_A,
     DGL_CURRENT_COLOR_RGBA,
 
-    DGL_MODULATE_TEXTURE_COLOR,
+    DGL_FOG_MODE,
+    DGL_FOG_START,
+    DGL_FOG_END,
+    DGL_FOG_DENSITY,
+    DGL_FOG_COLOR,
 
     // Matrices
     DGL_MODELVIEW = 0x4000,
@@ -94,7 +98,9 @@ enum {
     DGL_CLAMP_TO_EDGE,
     DGL_REPEAT,
     DGL_LINE_WIDTH,
-    DGL_POINT_SIZE
+    DGL_POINT_SIZE,
+    DGL_EXP,
+    DGL_EXP2,
 };
 
 // Types.
@@ -328,9 +334,15 @@ DENG_API_TYPEDEF(GL)
      * be created dynamically.
      */
     int (*Bind)(DGLuint texture);
+
     void (*DeleteTextures)(int num, const DGLuint* names);
 
+    void (*Fogi)(DGLenum property, int value);
+    void (*Fogf)(DGLenum property, float value);
+    void (*Fogfv)(DGLenum property, float const *values);
+
     void (*UseFog)(int yes);
+
     void (*SetFilter)(dd_bool enable);
     void (*SetFilterColor)(float r, float g, float b, float a);
     void (*ConfigureBorderedProjection2)(dgl_borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);
@@ -409,6 +421,9 @@ DENG_API_T(GL);
 #define DGL_NewTextureWithParams    _api_GL.NewTextureWithParams
 #define DGL_Bind                    _api_GL.Bind
 #define DGL_DeleteTextures          _api_GL.DeleteTextures
+#define DGL_Fogi            _api_GL.Fogi
+#define DGL_Fogf            _api_GL.Fogf
+#define DGL_Fogfv           _api_GL.Fogfv
 #define GL_UseFog                   _api_GL.UseFog
 #define GL_SetFilter                _api_GL.SetFilter
 #define GL_SetFilterColor           _api_GL.SetFilterColor

@@ -141,18 +141,10 @@ dd_bool Sys_GLPreInit(void)
     if(novideo) return true;
     if(doneEarlyInit) return true; // Already been here??
 
-    // Init assuming ideal configuration.
-    //GL_state.multisampleFormat = 0; // No valid default can be assumed at this time.
-
-    //GL_state.features.blendSubtract = true;
-    //GL_state.features.genMipmap = true;
-    //GL_state.features.multisample = false; // We'll test for availability...
     GL_state.features.texCompression = false;
     GL_state.features.texFilterAniso = true;
-
     GL_state.currentLineWidth = 1.5f;
     GL_state.currentPointSize = 1.5f;
-    GL_state.currentUseFog = false;
 
     doneEarlyInit = true;
     return true;
@@ -289,9 +281,9 @@ void Sys_GLConfigureDefaultState(void)
 
     // Default state for the white fog is off.
     DGL_Disable(DGL_FOG);
-    Deferred_glFogi(GL_FOG_MODE, GL_LINEAR);
-    Deferred_glFogi(GL_FOG_END, 2100); // This should be tweaked a bit.
-    Deferred_glFogfv(GL_FOG_COLOR, fogcol);
+    DGL_Fogi(DGL_FOG_MODE, GL_LINEAR);
+    DGL_Fogi(DGL_FOG_END, 2100); // This should be tweaked a bit.
+    DGL_Fogfv(DGL_FOG_COLOR, fogcol);
 
     LIBGUI_ASSERT_GL_OK();
 

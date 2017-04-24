@@ -65,12 +65,15 @@ struct DGLDrawState
     struct GLData
     {
         GLProgram shader;
-        GLUniform uMvpMatrix    { "uMvpMatrix",    GLUniform::Mat4 };
-        GLUniform uTexMatrix0   { "uTexMatrix0",   GLUniform::Mat4 };
-        GLUniform uTexMatrix1   { "uTexMatrix1",   GLUniform::Mat4 };
-        GLUniform uTexEnabled   { "uTexEnabled",   GLUniform::Int  };
-        GLUniform uTexMode      { "uTexMode",      GLUniform::Int  };
-        GLUniform uTexModeColor { "uTexModeColor", GLUniform::Vec4 };
+        GLUniform uMvpMatrix    { "uMvpMatrix",    GLUniform::Mat4  };
+        GLUniform uTexMatrix0   { "uTexMatrix0",   GLUniform::Mat4  };
+        GLUniform uTexMatrix1   { "uTexMatrix1",   GLUniform::Mat4  };
+        GLUniform uTexEnabled   { "uTexEnabled",   GLUniform::Int   };
+        GLUniform uTexMode      { "uTexMode",      GLUniform::Int   };
+        GLUniform uTexModeColor { "uTexModeColor", GLUniform::Vec4  };
+        GLUniform uAlphaLimit   { "uAlphaLimit",   GLUniform::Float };
+        GLUniform uFogRange     { "uFogRange",     GLUniform::Vec4  };
+        GLUniform uFogColor     { "uFogColor",     GLUniform::Vec4  };
         GLuint vertexArray = 0;
         GLBuffer buffer;
     };
@@ -171,7 +174,10 @@ struct DGLDrawState
                     << gl->uTexMatrix1
                     << gl->uTexEnabled
                     << gl->uTexMode
-                    << gl->uTexModeColor;
+                    << gl->uTexModeColor
+                    << gl->uAlphaLimit
+                    << gl->uFogRange
+                    << gl->uFogColor;
 
             auto &GL = LIBGUI_GL;
 
@@ -259,6 +265,8 @@ struct DGLDrawState
     {
         glInit();
 
+        GLState const &glState = GLState::current();
+
         // Update uniforms.
         gl->uMvpMatrix    = DGL_Matrix(DGL_PROJECTION) * DGL_Matrix(DGL_MODELVIEW);
         gl->uTexMatrix0   = DGL_Matrix(DGL_TEXTURE0);
@@ -267,6 +275,8 @@ struct DGLDrawState
                             (DGL_GetInteger(DGL_TEXTURE1)? 0x2 : 0);
         gl->uTexMode      = DGL_GetInteger(DGL_MODULATE_TEXTURE);
         gl->uTexModeColor = DGL_ModulationColor();
+        gl->uAlphaLimit   = (glState.alphaTest()? glState.alphaLimit() : 0.f);
+        DGL_FogParams(gl->uFogRange, gl->uFogColor);
 
         GLState::current().apply();
 

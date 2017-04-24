@@ -3939,7 +3939,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         // Fog is allowed during this pass.
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glEnable(GL_FOG);
+            DGL_Enable(DGL_FOG);
         }
         // All of the surfaces are opaque.
         GLState::current().setBlend(false).apply();
@@ -3969,7 +3969,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         // Fog is allowed during this pass.
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glEnable(GL_FOG);
+            DGL_Enable(DGL_FOG);
         }
         // All of the surfaces are opaque.
         GLState::current().setBlend(false).apply();
@@ -4027,7 +4027,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         if(fogParams.usingFog)
         {
             DGL_Enable(DGL_FOG);
-            Deferred_glFogfv(GL_FOG_COLOR, black);
+            DGL_Fogfv(DGL_FOG_COLOR, black);
         }
 
         GLState::current().setBlend(true).apply();
@@ -4064,7 +4064,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         // Fog is allowed.
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glEnable(GL_FOG);
+            DGL_Enable(DGL_FOG);
         }
         break;
 
@@ -4078,7 +4078,6 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 
         // All of the surfaces are opaque.
         GLState::current().setBlend(true).apply();
-        //glBlendFunc(GL_DST_COLOR, GL_ZERO);
         GLState::current().setBlendFunc(gl::DestColor, gl::Zero).apply();
         break;
 
@@ -4093,14 +4092,13 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 
         // All of the surfaces are opaque.
         GLState::current().setBlend(true).apply();
-        //glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
         GLState::current().setBlendFunc(gl::DestColor, gl::SrcColor).apply();
         // Use fog to fade the details, if fog is enabled.
         if(fogParams.usingFog)
         {
             DGL_Enable(DGL_FOG);
             dfloat const midGray[] = { .5f, .5f, .5f, fogParams.fogColor[3] };  // The alpha is probably meaningless?
-            Deferred_glFogfv(GL_FOG_COLOR, midGray);
+            DGL_Fogfv(DGL_FOG_COLOR, midGray);
         }
         break;
 
@@ -4116,14 +4114,13 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 
         // All of the surfaces are opaque.
         GLState::current().setBlend(true).apply();
-        //glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
         GLState::current().setBlendFunc(gl::DestColor, gl::SrcColor).apply();
         // Use fog to fade the details, if fog is enabled.
         if(fogParams.usingFog)
         {
             DGL_Enable(DGL_FOG);
             dfloat const midGray[] = { .5f, .5f, .5f, fogParams.fogColor[3] };  // The alpha is probably meaningless?
-            Deferred_glFogfv(GL_FOG_COLOR, midGray);
+            DGL_Fogfv(DGL_FOG_COLOR, midGray);
         }
         break;
 
@@ -4141,7 +4138,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         if(fogParams.usingFog)
         {
             DGL_Enable(DGL_FOG);
-            Deferred_glFogfv(GL_FOG_COLOR, fogParams.fogColor);
+            DGL_Fogfv(DGL_FOG_COLOR, fogParams.fogColor);
         }
         GLState::current().setBlend(true).apply();
         GL_BlendMode(BM_NORMAL);
@@ -4159,8 +4156,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         if(fogParams.usingFog)
         {
             // Fog makes the shininess diminish in the distance.
-            DGL_Enable(GL_FOG);
-            Deferred_glFogfv(GL_FOG_COLOR, black);
+            DGL_Enable(DGL_FOG);
+            DGL_Fogfv(DGL_FOG_COLOR, black);
         }
         GLState::current().setBlend(true).apply();
         GL_BlendMode(BM_ADD);  // Purely additive.
@@ -4179,8 +4176,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         if(fogParams.usingFog)
         {
             // Fog makes the shininess diminish in the distance.
-            DGL_Enable(GL_FOG);
-            Deferred_glFogfv(GL_FOG_COLOR, black);
+            DGL_Enable(DGL_FOG);
+            DGL_Fogfv(DGL_FOG_COLOR, black);
         }
         GLState::current().setBlend(true).apply();
         GL_BlendMode(BM_ADD);  // Purely additive.
@@ -4211,7 +4208,7 @@ static void popGLStateForPass(DrawMode mode)
         GLState::current().setDepthTest(false).apply();
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glDisable(GL_FOG);
+            DGL_Disable(DGL_FOG);
         }
         GLState::current().setBlend(true).apply();
         break;
@@ -4224,7 +4221,7 @@ static void popGLStateForPass(DrawMode mode)
         GLState::current().setDepthTest(false).apply();
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glDisable(GL_FOG);
+            DGL_Disable(DGL_FOG);
         }
         GLState::current().setBlend(true).apply();
         break;
@@ -4254,7 +4251,7 @@ static void popGLStateForPass(DrawMode mode)
         GLState::current().setDepthTest(false).apply();
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glDisable(GL_FOG);
+            DGL_Disable(DGL_FOG);
         }
         GL_BlendMode(BM_NORMAL);
         break;
@@ -4273,7 +4270,7 @@ static void popGLStateForPass(DrawMode mode)
         GLState::current().setBlend(true).apply();
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glDisable(GL_FOG);
+            DGL_Disable(DGL_FOG);
         }
         break;
 
@@ -4290,7 +4287,7 @@ static void popGLStateForPass(DrawMode mode)
         GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha).apply();
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glDisable(GL_FOG);
+            DGL_Disable(DGL_FOG);
         }
         break;
 
@@ -4302,7 +4299,7 @@ static void popGLStateForPass(DrawMode mode)
         GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha).apply();
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glDisable(GL_FOG);
+            DGL_Disable(DGL_FOG);
         }
         break;
 
@@ -4310,7 +4307,7 @@ static void popGLStateForPass(DrawMode mode)
         GLState::current().setDepthTest(false).apply();
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glDisable(GL_FOG);
+            DGL_Disable(DGL_FOG);
         }
         break;
 
@@ -4319,7 +4316,7 @@ static void popGLStateForPass(DrawMode mode)
         GLState::current().setDepthTest(false).apply();
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glDisable(GL_FOG);
+            DGL_Disable(DGL_FOG);
         }
         GL_BlendMode(BM_NORMAL);
         break;
@@ -4331,7 +4328,7 @@ static void popGLStateForPass(DrawMode mode)
         GLState::current().setDepthTest(false).apply();
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glDisable(GL_FOG);
+            DGL_Disable(DGL_FOG);
         }
         GL_BlendMode(BM_NORMAL);
         break;
@@ -4706,7 +4703,7 @@ static void drawAllLists(Map &map)
     if(fogParams.usingFog)
     {
         DGL_Enable(DGL_FOG);
-        Deferred_glFogfv(GL_FOG_COLOR, fogParams.fogColor);
+        DGL_Fogfv(DGL_FOG_COLOR, fogParams.fogColor);
     }
 
     // Draw masked walls, sprites and models.

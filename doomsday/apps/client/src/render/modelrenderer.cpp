@@ -138,28 +138,6 @@ DENG2_PIMPL(ModelRenderer)
         lightCount++;
     }
 
-    void setupFog()
-    {
-        if (fogParams.usingFog)
-        {
-            uFogColor = Vector4f(fogParams.fogColor[0],
-                                 fogParams.fogColor[1],
-                                 fogParams.fogColor[2],
-                                 1.f);
-
-            Rangef const depthPlanes = GL_DepthClipRange();
-            float const fogDepth = fogParams.fogEnd - fogParams.fogStart;
-            uFogRange = Vector4f(fogParams.fogStart,
-                                 fogDepth,
-                                 depthPlanes.start,
-                                 depthPlanes.end);
-        }
-        else
-        {
-            uFogColor = Vector4f();
-        }
-    }
-
     void setupPose(Vector3d const &modelWorldOrigin,
                    Vector3f const &modelOffset,
                    float yawAngle,
@@ -231,7 +209,7 @@ DENG2_PIMPL(ModelRenderer)
     template <typename Params> // generic to accommodate psprites and vispsprites
     void draw(Params const &p)
     {
-        setupFog();
+        DGL_FogParams(uFogRange, uFogColor);
         uTex = static_cast<AtlasTexture const *>(p.model->textures->atlas());
 
         p.model->draw(&p.animator->appearance(), p.animator);
