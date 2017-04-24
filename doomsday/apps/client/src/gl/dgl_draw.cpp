@@ -414,7 +414,10 @@ DENG_EXTERN_C void DGL_Vertex2fv(const float* vec)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
 
-    dglDraw.vertex().vertex = Vector3f(vec[0], vec[1], 0.f);
+    if (vec)
+    {
+        dglDraw.vertex().vertex = Vector3f(vec[0], vec[1], 0.f);
+    }
     dglDraw.commitVertex();
 }
 
@@ -432,7 +435,10 @@ DENG_EXTERN_C void DGL_Vertex3fv(const float* vec)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
 
-    dglDraw.vertex().vertex = Vector3f(vec);
+    if (vec)
+    {
+        dglDraw.vertex().vertex = Vector3f(vec);
+    }
     dglDraw.commitVertex();
 }
 

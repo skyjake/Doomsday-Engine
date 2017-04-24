@@ -320,22 +320,23 @@ static void drawArrayElement(int index)
 
     for (int i = 0; i < MAX_TEX_UNITS; ++i)
     {
-        if (!arrays[AR_TEXCOORD0 + i].enabled) continue;
-
-        Vector2f const &texCoord = ((Vector2f const *)arrays[AR_TEXCOORD0 + i].data)[index];
-        DGL_TexCoord2f(byte(i), texCoord.x, texCoord.y);
+        if (arrays[AR_TEXCOORD0 + i].enabled)
+        {
+            Vector2f const &texCoord = reinterpret_cast<Vector2f const *>(arrays[AR_TEXCOORD0 + i].data)[index];
+            DGL_TexCoord2fv(byte(i), texCoord.constPtr());
+        }
     }
 
     if (arrays[AR_COLOR].enabled)
     {
-        Vector4ub const &colorCoord = ((Vector4ub const *) arrays[AR_COLOR].data)[index];
-        DGL_Color4ub(colorCoord.x, colorCoord.y, colorCoord.z, colorCoord.w);
+        Vector4ub const &colorCoord = reinterpret_cast<Vector4ub const *>(arrays[AR_COLOR].data)[index];
+        DGL_Color4ubv(colorCoord.constPtr());
     }
 
     if (arrays[AR_VERTEX].enabled)
     {
-        Vector3f const &posCoord = ((Vector3f const *) arrays[AR_VERTEX].data)[index];
-        DGL_Vertex3f(posCoord.x, posCoord.y, posCoord.z);
+        Vector3f const &posCoord = reinterpret_cast<Vector3f const *>(arrays[AR_VERTEX].data)[index];
+        DGL_Vertex3fv(posCoord.constPtr());
     }
 }
 
@@ -364,8 +365,11 @@ static FrameModelFrame &visibleModelFrame(FrameModelDef &modef, int subnumber, i
 /**
  * Render a set of 3D model primitives using the given data.
  */
-static void drawPrimitives(rendcmd_t mode, FrameModel::Primitives const &primitives,
-    Vector3f *posCoords, Vector4ub *colorCoords, Vector2f *texCoords = 0)
+static void drawPrimitives(rendcmd_t mode,
+                           FrameModel::Primitives const &primitives,
+                           Vector3f *posCoords,
+                           Vector4ub *colorCoords,
+                           Vector2f *texCoords = 0)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -393,24 +397,72 @@ static void drawPrimitives(rendcmd_t mode, FrameModel::Primitives const &primiti
         break;
     }
 
+    FrameModel::Primitive::Element const *firstElem = nullptr;
+    bool joining = false;
+
+    auto submitElement = [mode, &firstElem] (FrameModel::Primitive::Element const &elem)
+    {
+        if (!firstElem)
+        {
+            firstElem = &elem;
+        }
+        if (mode != RC_OTHER_COORDS)
+        {
+            DGL_TexCoord2fv(0, elem.texCoord.constPtr());
+        }
+        drawArrayElement(elem.index);
+    };
+
+    int lastLength = 0;
+
+    // Combine all triangle strips and fans into one big strip. Fans are converted
+    // to strips. When joining strips, winding is retained so that each sub-strip
+    // begins with the same winding.
+
+    DGL_Begin(DGL_TRIANGLE_STRIP);
     foreach (FrameModel::Primitive const &prim, primitives)
     {
-        // The type of primitive depends on the sign.
-        DGL_Begin(prim.triFan? DGL_TRIANGLE_FAN : DGL_TRIANGLE_STRIP);
+        DGLenum const primType = (prim.triFan? DGL_TRIANGLE_FAN : DGL_TRIANGLE_STRIP);
 
-        foreach (FrameModel::Primitive::Element const &elem, prim.elements)
+        joining = false;
+        if (lastLength > 0)
         {
-            if (mode != RC_OTHER_COORDS)
-            {
-                DGL_TexCoord2f(0, elem.texCoord.x, elem.texCoord.y);
-            }
-
-            drawArrayElement(elem.index);
+            // Disconnect strip.
+            DGL_Vertex3fv(nullptr);
+            if (lastLength & 1) DGL_Vertex3fv(nullptr); // Retain the winding.
+            joining = true;
         }
+        firstElem = nullptr;
 
-        // The primitive is complete.
-        DGL_End();
+        if (primType == DGL_TRIANGLE_STRIP)
+        {
+            lastLength = prim.elements.size();
+            foreach (FrameModel::Primitive::Element const &elem, prim.elements)
+            {
+                submitElement(elem);
+                if (joining)
+                {
+                    DGL_Vertex3fv(nullptr);
+                    joining = false;
+                }
+            }
+        }
+        else
+        {
+            lastLength = 2; // just make it even, so it doesn't affect winding (see above)
+            for (int i = 1; i < prim.elements.size(); ++i)
+            {
+                submitElement(prim.elements.at(0));
+                if (joining)
+                {
+                    DGL_Vertex3fv(nullptr);
+                    joining = false;
+                }
+                submitElement(prim.elements.at(i));
+            }
+        }
     }
+    DGL_End();
 }
 
 /**
