@@ -288,6 +288,9 @@ struct DGLDrawState
             glUnbindArrays();
         }
         gl->shader.endUse();
+
+        // Buffers are single-use.
+        gl->buffer.clear();
     }
 };
 

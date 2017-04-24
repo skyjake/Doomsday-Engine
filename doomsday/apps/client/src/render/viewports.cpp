@@ -909,8 +909,7 @@ static void changeViewState(ViewState viewState) //, viewport_t const *port, vie
     case PlayerView3D:
         GLState::current()
                 .setCull(gl::Back)
-                .setDepthTest(true)
-                .apply();
+                .setDepthTest(true);
         // The 3D projection matrix.
         GL_ProjectionMatrix();
         break;
@@ -974,7 +973,7 @@ static void changeViewState(ViewState viewState) //, viewport_t const *port, vie
 
         // Depth testing must be disabled so that psprite 1 will be drawn
         // on top of psprite 0 (Doom plasma rifle fire).
-        GLState::current().setDepthTest(false).apply();
+        GLState::current().setDepthTest(false);
 
         break;
     }
@@ -982,8 +981,7 @@ static void changeViewState(ViewState viewState) //, viewport_t const *port, vie
     case Default2D:
         GLState::current()
                 .setCull(gl::None)
-                .setDepthTest(false)
-                .apply();
+                .setDepthTest(false);
         break;
     }
 

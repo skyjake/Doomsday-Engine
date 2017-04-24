@@ -96,16 +96,14 @@ DENG2_PIMPL(GameWidget)
     {
         GLState::push()
                 .setTarget(dest)
-                .setViewport(Rectangleui::fromSize(dest.size()))
-                .apply();
+                .setViewport(Rectangleui::fromSize(dest.size()));
 
         dest.clear(GLFramebuffer::ColorDepthStencil);
 
         // Rendering is done by the caller-provided callback.
         R_RenderViewPort(playerNum);
 
-        GLState::pop()
-                .apply();
+        GLState::pop();
     }
 
     /**
@@ -181,15 +179,6 @@ GameWidget::GameWidget(String const &name)
 {
     requestGeometry(false);
 }
-
-/*
-void GameWidget::glApplyViewport(Rectanglei const &rect)
-{
-    GLState::current()
-            .setNormalizedViewport(normalizedRect(rect))
-            .apply();
-}
-*/
 
 void GameWidget::pause()
 {

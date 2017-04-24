@@ -546,16 +546,14 @@ static void drawParticles(dint rtype, bool withBlend)
     {
         GLState::current()
                 .setDepthWrite(true)
-                .setDepthTest(true)
-                .apply();
+                .setDepthTest(true);
     }
     else if (tex != 0)
     {
         GLState::current()
                 .setDepthWrite(false)
                 .setDepthFunc(gl::LessOrEqual)
-                .setCull(gl::None)
-                .apply();
+                .setCull(gl::None);
 
         GL_BindTextureUnmanaged(tex, gl::ClampToEdge, gl::ClampToEdge);
         DGL_Enable(DGL_TEXTURE_2D);
@@ -814,8 +812,8 @@ static void drawParticles(dint rtype, bool withBlend)
         {
             DGL_Vertex3f(center.x, center.y, center.z);
             DGL_Vertex3f(center.x - FIX2FLT(pinfo.mov[0]),
-                       center.y - FIX2FLT(pinfo.mov[2]),
-                       center.z - FIX2FLT(pinfo.mov[1]));
+                         center.y - FIX2FLT(pinfo.mov[2]),
+                         center.z - FIX2FLT(pinfo.mov[1]));
         }
     }
 
@@ -825,14 +823,10 @@ static void drawParticles(dint rtype, bool withBlend)
 
         if(tex != 0)
         {
-            //glEnable(GL_CULL_FACE);
-            //glDepthMask(GL_TRUE);
-            //glDepthFunc(GL_LESS);
             GLState::current()
                     .setCull(gl::Back)
                     .setDepthWrite(true)
-                    .setDepthFunc(gl::Less)
-                    .apply();
+                    .setDepthFunc(gl::Less);
 
             DGL_Disable(DGL_TEXTURE_2D);
         }

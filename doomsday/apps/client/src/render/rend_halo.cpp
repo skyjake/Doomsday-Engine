@@ -102,8 +102,7 @@ void H_SetupState(bool dosetup)
     {
         GLState::current()
                 .setDepthWrite(false)
-                .setDepthTest(false)
-                .apply();
+                .setDepthTest(false);
         GL_BlendMode(BM_ADD);
     }
     else
@@ -111,8 +110,7 @@ void H_SetupState(bool dosetup)
         GL_BlendMode(BM_NORMAL);
         GLState::current()
                 .setDepthWrite(true)
-                .setDepthTest(true)
-                .apply();
+                .setDepthTest(true);
     }
 }
 

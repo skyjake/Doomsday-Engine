@@ -173,7 +173,7 @@ void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, fl
     else
     {
         //glDisable(GL_BLEND);
-        GLState::current().setBlend(false).apply();
+        GLState::current().setBlend(false);
     }
 
     DGL_Color4f(0, 0, 0, alpha);
@@ -194,6 +194,6 @@ void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, fl
     DGL_End();
 
     //glEnable(GL_BLEND);
-    GLState::pop().apply();
+    GLState::pop();
     DGL_Disable(DGL_TEXTURE_2D);
 }

@@ -491,7 +491,7 @@ DENG_EXTERN_C void DGL_SetScissor(RectRaw const *rect)
                                                      rect->size.width, rect->size.height),
                                           Rectanglei::fromSize(game.rule().recti().size()));
 
-    GLState::current().setNormalizedScissor(norm).apply();
+    GLState::current().setNormalizedScissor(norm);
 }
 
 #undef DGL_SetScissor2
@@ -730,9 +730,6 @@ void DGL_PushState(void)
 void DGL_PopState(void)
 {
     GLState::pop();
-
-    // Make sure the restored state is immediately in effect.
-    GLState::current().apply();
 }
 
 #undef DGL_Enable
@@ -810,7 +807,7 @@ void DGL_Disable(int cap)
         break;
 
     case DGL_SCISSOR_TEST:
-        GLState::current().clearScissor().apply();
+        GLState::current().clearScissor();
         break;
 
     case DGL_LINE_SMOOTH:
@@ -834,8 +831,7 @@ void DGL_BlendOp(int op)
 {
     GLState::current().setBlendOp(op == DGL_SUBTRACT         ? gl::Subtract :
                                   op == DGL_REVERSE_SUBTRACT ? gl::ReverseSubtract :
-                                                               gl::Add)
-            .apply();
+                                                               gl::Add);
 }
 
 #undef DGL_BlendFunc
@@ -862,8 +858,7 @@ void DGL_BlendFunc(int param1, int param2)
                                     param2 == DGL_ONE_MINUS_SRC_ALPHA ? gl::OneMinusSrcAlpha :
                                     param2 == DGL_DST_ALPHA           ? gl::DestAlpha :
                                     param2 == DGL_ONE_MINUS_DST_ALPHA ? gl::OneMinusDestAlpha :
-                                                                        gl::Zero)
-            .apply();
+                                                                        gl::Zero);
 }
 
 #undef DGL_BlendMode

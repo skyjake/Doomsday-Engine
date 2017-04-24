@@ -294,8 +294,7 @@ void Sys_GLConfigureDefaultState(void)
 
     // Configure the default GLState (bottom of the stack).
     de::GLState::current()
-            .setBlendFunc(de::gl::SrcAlpha, de::gl::OneMinusSrcAlpha)
-            .apply();
+            .setBlendFunc(de::gl::SrcAlpha, de::gl::OneMinusSrcAlpha);
 }
 
 static de::String omitGLPrefix(de::String str)

@@ -352,8 +352,7 @@ void GL_Init2DState()
     // Here we configure the OpenGL state and set the projection matrix.
     GLState::current()
             .setCull(gl::None)
-            .setDepthTest(false)
-            .apply();
+            .setDepthTest(false);
 
     //glDisable(GL_TEXTURE_1D);
     DGL_Disable(DGL_TEXTURE_2D);
@@ -508,62 +507,52 @@ void GL_BlendMode(blendmode_t mode)
     {
     case BM_ZEROALPHA:
         GLState::current().setBlendOp(gl::Add)
-                          .setBlendFunc(gl::One, gl::Zero)
-                          .apply();
+                          .setBlendFunc(gl::One, gl::Zero);
         break;
 
     case BM_ADD:
         GLState::current().setBlendOp(gl::Add)
-                          .setBlendFunc(gl::SrcAlpha, gl::One)
-                          .apply();
+                          .setBlendFunc(gl::SrcAlpha, gl::One);
         break;
 
     case BM_DARK:
         GLState::current().setBlendOp(gl::Add)
-                          .setBlendFunc(gl::DestColor, gl::OneMinusSrcAlpha)
-                          .apply();
+                          .setBlendFunc(gl::DestColor, gl::OneMinusSrcAlpha);
         break;
 
     case BM_SUBTRACT:
         GLState::current().setBlendOp(gl::Subtract)
-                          .setBlendFunc(gl::One, gl::SrcAlpha)
-                          .apply();
+                          .setBlendFunc(gl::One, gl::SrcAlpha);
         break;
 
     case BM_ALPHA_SUBTRACT:
         GLState::current().setBlendOp(gl::Subtract)
-                          .setBlendFunc(gl::SrcAlpha, gl::One)
-                          .apply();
+                          .setBlendFunc(gl::SrcAlpha, gl::One);
         break;
 
     case BM_REVERSE_SUBTRACT:
         GLState::current().setBlendOp(gl::ReverseSubtract)
-                          .setBlendFunc(gl::SrcAlpha, gl::One)
-                          .apply();
+                          .setBlendFunc(gl::SrcAlpha, gl::One);
         break;
 
     case BM_MUL:
         GLState::current().setBlendOp(gl::Add)
-                          .setBlendFunc(gl::Zero, gl::SrcColor)
-                          .apply();
+                          .setBlendFunc(gl::Zero, gl::SrcColor);
         break;
 
     case BM_INVERSE:
         GLState::current().setBlendOp(gl::Add)
-                          .setBlendFunc(gl::OneMinusDestColor, gl::OneMinusSrcColor)
-                          .apply();
+                          .setBlendFunc(gl::OneMinusDestColor, gl::OneMinusSrcColor);
         break;
 
     case BM_INVERSE_MUL:
         GLState::current().setBlendOp(gl::Add)
-                          .setBlendFunc(gl::Zero, gl::OneMinusSrcColor)
-                          .apply();
+                          .setBlendFunc(gl::Zero, gl::OneMinusSrcColor);
         break;
 
     default:
         GLState::current().setBlendOp(gl::Add)
-                          .setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha)
-                          .apply();
+                          .setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
         break;
     }
 }

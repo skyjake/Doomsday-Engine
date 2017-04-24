@@ -942,7 +942,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     if (smf.testFlag(MFF_TWO_SIDED))
     {
         //glDisable(GL_CULL_FACE);
-        GLState::current().setCull(gl::None).apply();
+        GLState::current().setCull(gl::None);
     }
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -967,7 +967,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
         if (shininess > 0)
         {
             //glDepthFunc(GL_LEQUAL);
-            GLState::current().setDepthFunc(gl::LessOrEqual).apply();
+            GLState::current().setDepthFunc(gl::LessOrEqual);
 
             // Set blending mode, two choices: reflected and specular.
             if (smf.testFlag(MFF_SHINY_SPECULAR))
@@ -1033,7 +1033,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     if (smf.testFlag(MFF_TWO_SIDED))
     {
         //glEnable(GL_CULL_FACE);
-        GLState::current().setCull(gl::Back).apply();
+        GLState::current().setCull(gl::Back);
     }
 
     if (zSign < 0)
@@ -1041,7 +1041,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
         LIBGUI_GL.glFrontFace(GL_CW);
     }
     //glDepthFunc(GL_LESS);
-    GLState::current().setDepthFunc(gl::Less).apply();
+    GLState::current().setDepthFunc(gl::Less);
 
     GL_BlendMode(BM_NORMAL);
 }
@@ -1067,7 +1067,7 @@ void Rend_DrawModel(vissprite_t const &spr)
             if (disableZ)
             {
                 //glDepthMask(GL_FALSE);
-                GLState::current().setDepthWrite(false).apply();
+                GLState::current().setDepthWrite(false);
             }
 
             drawSubmodel(i, spr);
@@ -1075,7 +1075,7 @@ void Rend_DrawModel(vissprite_t const &spr)
             if (disableZ)
             {
                 //glDepthMask(GL_TRUE);
-                GLState::current().setDepthWrite(true).apply();
+                GLState::current().setDepthWrite(true);
             }
         }
     }
@@ -1087,8 +1087,7 @@ void Rend_DrawModel(vissprite_t const &spr)
         //glDisable(GL_CULL_FACE);
         GLState::push()
                 .setDepthTest(false)
-                .setCull(gl::None)
-                .apply();
+                .setCull(gl::None);
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
@@ -1110,7 +1109,7 @@ void Rend_DrawModel(vissprite_t const &spr)
 
         //glEnable(GL_CULL_FACE);
         //glEnable(GL_DEPTH_TEST);
-        GLState::pop().apply();
+        GLState::pop();
     }
 }
 

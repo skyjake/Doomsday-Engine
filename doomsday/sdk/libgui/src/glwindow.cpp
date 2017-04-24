@@ -438,7 +438,6 @@ void GLWindow::paintGL()
     LIBGUI_ASSERT_GL_OK();
 
     // Make sure any changes to the state stack are in effect.
-    GLState::current().apply();
     GLState::current().target().glBind();
 
     draw();

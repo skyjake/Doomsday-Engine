@@ -136,7 +136,7 @@ void FinalePageWidget::draw() const
             else
             {
                 //glDisable(GL_BLEND);
-                GLState::current().setBlend(false).apply();
+                GLState::current().setBlend(false);
             }
 
             GL_DrawRectf2TextureColor(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64,
@@ -144,7 +144,7 @@ void FinalePageWidget::draw() const
 
             GL_SetNoTexture();
             //glEnable(GL_BLEND);
-            GLState::current().setBlend(true).apply();
+            GLState::current().setBlend(true);
         }
     }
 
@@ -161,7 +161,7 @@ void FinalePageWidget::draw() const
     if (renderWireframe > 1)
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     //glEnable(GL_ALPHA_TEST);
-    GLState::push().setAlphaTest(true).apply();
+    GLState::push().setAlphaTest(true);
 
     Vector3f worldOrigin(/*-SCREENWIDTH/2*/ - d->offset[VX].value,
                          /*-SCREENHEIGHT/2*/ - d->offset[VY].value,
@@ -174,7 +174,7 @@ void FinalePageWidget::draw() const
 
     // Restore original matrices and state: back to normal 2D.
     //glDisable(GL_ALPHA_TEST);
-    GLState::pop().apply();
+    GLState::pop();
     // Back from wireframe mode?
     if (renderWireframe > 1)
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

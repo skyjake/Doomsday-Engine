@@ -466,7 +466,7 @@ DENG2_PIMPL(ClientWindow)
         game->enable();
 
         // Configure a viewport immediately.
-        GLState::current().setViewport(Rectangleui(0, 0, self().pixelWidth(), self().pixelHeight())).apply();
+        GLState::current().setViewport(Rectangleui(0, 0, self().pixelWidth(), self().pixelHeight()));
 
         LOG_DEBUG("GameWidget enabled");
 

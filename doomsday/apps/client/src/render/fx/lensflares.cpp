@@ -550,7 +550,7 @@ void LensFlares::draw()
 
     d->drawable.draw();
 
-    GLState::pop().apply();
+    GLState::pop();
 }
 
 void LensFlares::consoleRegister()

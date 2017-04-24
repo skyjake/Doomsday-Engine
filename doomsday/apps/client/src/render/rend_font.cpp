@@ -825,8 +825,7 @@ static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright
                             gl::ClampToEdge, gl::ClampToEdge);
 
     GLState::current().setBlendFunc(bright? gl::SrcAlpha : gl::Zero,
-                                bright? gl::One : gl::OneMinusSrcAlpha)
-                      .apply();
+                                    bright? gl::One      : gl::OneMinusSrcAlpha);
 
     DGL_Begin(DGL_QUADS);
         DGL_TexCoord2f(0, 0, 0);
@@ -839,8 +838,7 @@ static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright
         DGL_Vertex2f(x, y + h);
     DGL_End();
 
-    GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha)
-                      .apply();
+    GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
 }
 
 /**

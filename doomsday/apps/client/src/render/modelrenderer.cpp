@@ -285,7 +285,7 @@ void ModelRenderer::render(vissprite_t const &spr)
     // Draw the model using the current animation state.
     GLState::push().setCull(p.model->cull);
     d->draw(p);
-    GLState::pop().apply();
+    GLState::pop();
 }
 
 void ModelRenderer::render(vispsprite_t const &pspr, mobj_t const *playerMobj)
@@ -312,7 +312,7 @@ void ModelRenderer::render(vispsprite_t const &pspr, mobj_t const *playerMobj)
 
     GLState::push().setCull(p.model->cull);
     d->draw(p);
-    GLState::pop().apply();
+    GLState::pop();
 }
 
 //---------------------------------------------------------------------------------------

@@ -138,8 +138,7 @@ DENG2_PIMPL(Bloom)
             break;
         }
 
-
-        GLState::pop().apply();
+        GLState::pop();
     }
 
     /**

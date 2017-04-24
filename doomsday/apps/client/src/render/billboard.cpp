@@ -560,7 +560,7 @@ void Rend_DrawSprite(vissprite_t const &spr)
        !(parm.blendMode == BM_NORMAL || parm.blendMode == BM_ZEROALPHA))
     {
         restoreZ = true;
-        GLState::current().setDepthWrite(false).apply();
+        GLState::current().setDepthWrite(false);
     }
 
     dgl_vertex_t vs[4], *v = vs;
@@ -607,8 +607,7 @@ void Rend_DrawSprite(vissprite_t const &spr)
         // Draw the vlight vectors, for debug.
         GLState::push()
                 .setDepthTest(false)
-                .setCull(gl::None)
-                .apply();
+                .setCull(gl::None);
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
@@ -628,7 +627,7 @@ void Rend_DrawSprite(vissprite_t const &spr)
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PopMatrix();
 
-        GLState::pop().apply();
+        GLState::pop();
     }
 
     // Need to restore the original modelview matrix?
@@ -646,7 +645,7 @@ void Rend_DrawSprite(vissprite_t const &spr)
     // Enable Z-writing again?
     if(restoreZ)
     {
-        GLState::current().setDepthWrite(true).apply();
+        GLState::current().setDepthWrite(true);
     }
 }
 

@@ -105,8 +105,7 @@ DENG2_PIMPL(VRWindowTransform)
         // Set render target to offscreen temporarily.
         GLState::push()
                 .setTarget(unwarpedFB)
-                .setViewport(Rectangleui::fromSize(unwarpedFB.size()))
-                .apply();
+                .setViewport(Rectangleui::fromSize(unwarpedFB.size()));
         unwarpedFB.unsetActiveRect(true);
 
         GLTextureFramebuffer::Size const fbSize = unwarpedFB.size();
@@ -129,7 +128,7 @@ DENG2_PIMPL(VRWindowTransform)
         }
 
         unwarpedFB.unsetActiveRect(true);
-        GLState::pop().apply();
+        GLState::pop();
 
         vrCfg.enableFrustumShift(); // restore default
     }
@@ -244,25 +243,25 @@ DENG2_PIMPL(VRWindowTransform)
         case VRConfig::GreenMagenta:
             // Left eye view
             vrCfg.setCurrentEye(VRConfig::LeftEye);
-            GLState::push().setColorMask(gl::WriteGreen | gl::WriteAlpha).apply(); // Left eye view green
+            GLState::push().setColorMask(gl::WriteGreen | gl::WriteAlpha); // Left eye view green
             drawContent();
             // Right eye view
             vrCfg.setCurrentEye(VRConfig::RightEye);
-            GLState::current().setColorMask(gl::WriteRed | gl::WriteBlue | gl::WriteAlpha).apply(); // Right eye view magenta
+            GLState::current().setColorMask(gl::WriteRed | gl::WriteBlue | gl::WriteAlpha); // Right eye view magenta
             drawContent();
-            GLState::pop().apply();
+            GLState::pop();
             break;
 
         case VRConfig::RedCyan:
             // Left eye view
             vrCfg.setCurrentEye(VRConfig::LeftEye);
-            GLState::push().setColorMask(gl::WriteRed | gl::WriteAlpha).apply(); // Left eye view red
+            GLState::push().setColorMask(gl::WriteRed | gl::WriteAlpha); // Left eye view red
             drawContent();
             // Right eye view
             vrCfg.setCurrentEye(VRConfig::RightEye);
-            GLState::current().setColorMask(gl::WriteGreen | gl::WriteBlue | gl::WriteAlpha).apply(); // Right eye view cyan
+            GLState::current().setColorMask(gl::WriteGreen | gl::WriteBlue | gl::WriteAlpha); // Right eye view cyan
             drawContent();
-            GLState::pop().apply();
+            GLState::pop();
             break;
 
         case VRConfig::QuadBuffered:
@@ -306,11 +305,10 @@ DENG2_PIMPL(VRWindowTransform)
             rowInterRightFB.colorTexture().glApplyParameters();
             GLState::push()
                     .setTarget(rowInterRightFB)
-                    .setViewport(Rectangleui::fromSize(rowInterRightFB.size()))
-                    .apply();
+                    .setViewport(Rectangleui::fromSize(rowInterRightFB.size()));
             vrCfg.setCurrentEye(rowParityIsEven ? VRConfig::RightEye : VRConfig::LeftEye);
             drawContent();
-            GLState::pop().apply();
+            GLState::pop();
 
             // Draw right eye view to the screen from FBO color texture
             vrInitRowInterleaved();

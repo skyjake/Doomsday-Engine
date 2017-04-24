@@ -422,8 +422,7 @@ DENG2_PIMPL(SkyDrawable)
         GLState::push()
                 .setCull(gl::None)
                 .setDepthTest(false)
-                .setDepthWrite(false)
-                .apply();
+                .setDepthWrite(false);
 
         // Setup a proper matrix.
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -439,10 +438,7 @@ DENG2_PIMPL(SkyDrawable)
         DGL_PopMatrix();
 
         // Restore assumed default GL state.
-        //glEnable(GL_CULL_FACE);
-        //glDepthMask(GL_TRUE);
-        //glEnable(GL_DEPTH_TEST);
-        GLState::pop().apply();
+        GLState::pop();
     }
 
     void drawModels(Animator const *animator) const
@@ -454,8 +450,7 @@ DENG2_PIMPL(SkyDrawable)
         //glDepthMask(GL_TRUE);
         GLState::current()
                 .setDepthTest(true)
-                .setDepthWrite(true)
-                .apply();
+                .setDepthWrite(true);
         LIBGUI_GL.glClear(GL_DEPTH_BUFFER_BIT);
 
         DGL_MatrixMode(DGL_MODELVIEW);
