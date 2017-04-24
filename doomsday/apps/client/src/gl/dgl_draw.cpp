@@ -37,7 +37,7 @@
 
 using namespace de;
 
-uint constexpr MAX_TEX_COORDS = 3;
+uint constexpr MAX_TEX_COORDS = 2;
 
 struct DGLDrawState
 {
@@ -55,7 +55,6 @@ struct DGLDrawState
         VAA_COLOR,
         VAA_TEXCOORD0,
         VAA_TEXCOORD1,
-        VAA_TEXCOORD2,
         NUM_VERTEX_ATTRIB_ARRAYS
     };
 
@@ -66,9 +65,12 @@ struct DGLDrawState
     struct GLData
     {
         GLProgram shader;
-        GLUniform uMvpMatrix       { "uMvpMatrix",       GLUniform::Mat4 };
-        GLUniform uTextureMatrix   { "uTextureMatrix",   GLUniform::Mat4 };
-        GLUniform uEnabledTextures { "uEnabledTextures", GLUniform::Int  };
+        GLUniform uMvpMatrix    { "uMvpMatrix",    GLUniform::Mat4 };
+        GLUniform uTexMatrix0   { "uTexMatrix0",   GLUniform::Mat4 };
+        GLUniform uTexMatrix1   { "uTexMatrix1",   GLUniform::Mat4 };
+        GLUniform uTexEnabled   { "uTexEnabled",   GLUniform::Int  };
+        GLUniform uTexMode      { "uTexMode",      GLUniform::Int  };
+        GLUniform uTexModeColor { "uTexModeColor", GLUniform::Vec4 };
         GLuint vertexArray = 0;
         GLBuffer buffer;
     };
@@ -165,8 +167,11 @@ struct DGLDrawState
             // Set up the shader.
             ClientApp::shaders().build(gl->shader, "dgl.draw")
                     << gl->uMvpMatrix
-                    << gl->uTextureMatrix
-                    << gl->uEnabledTextures;
+                    << gl->uTexMatrix0
+                    << gl->uTexMatrix1
+                    << gl->uTexEnabled
+                    << gl->uTexMode
+                    << gl->uTexModeColor;
 
             auto &GL = LIBGUI_GL;
 
@@ -176,7 +181,6 @@ struct DGLDrawState
                 GL.glUseProgram(prog);
                 GL.glUniform1i(GL.glGetUniformLocation(prog, "uTex0"), 0);
                 GL.glUniform1i(GL.glGetUniformLocation(prog, "uTex1"), 1);
-                GL.glUniform1i(GL.glGetUniformLocation(prog, "uTex2"), 2);
                 GL.glUseProgram(0);
             }
 
@@ -220,7 +224,6 @@ struct DGLDrawState
         GL.glVertexAttribPointer(VAA_COLOR,     4, GL_UNSIGNED_BYTE, GL_TRUE,  stride, &basePtr->color);
         GL.glVertexAttribPointer(VAA_TEXCOORD0, 2, GL_FLOAT,         GL_FALSE, stride, &basePtr->texCoord[0]);
         GL.glVertexAttribPointer(VAA_TEXCOORD1, 2, GL_FLOAT,         GL_FALSE, stride, &basePtr->texCoord[1]);
-        GL.glVertexAttribPointer(VAA_TEXCOORD2, 2, GL_FLOAT,         GL_FALSE, stride, &basePtr->texCoord[2]);
         LIBGUI_ASSERT_GL_OK();
 
         GL.glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -257,9 +260,13 @@ struct DGLDrawState
         glInit();
 
         // Update uniforms.
-        gl->uMvpMatrix       = DGL_Matrix(DGL_PROJECTION) * DGL_Matrix(DGL_MODELVIEW);
-        gl->uTextureMatrix   = DGL_Matrix(DGL_TEXTURE);
-        gl->uEnabledTextures = DGL_GetInteger(DGL_TEXTURE_2D)? 1 : 0;
+        gl->uMvpMatrix    = DGL_Matrix(DGL_PROJECTION) * DGL_Matrix(DGL_MODELVIEW);
+        gl->uTexMatrix0   = DGL_Matrix(DGL_TEXTURE0);
+        gl->uTexMatrix1   = DGL_Matrix(DGL_TEXTURE1);
+        gl->uTexEnabled   = (DGL_GetInteger(DGL_TEXTURE0)? 0x1 : 0) |
+                            (DGL_GetInteger(DGL_TEXTURE1)? 0x2 : 0);
+        gl->uTexMode      = DGL_GetInteger(DGL_MODULATE_TEXTURE);
+        gl->uTexModeColor = DGL_ModulationColor();
 
         GLState::current().apply();
 

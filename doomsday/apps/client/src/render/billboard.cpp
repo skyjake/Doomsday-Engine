@@ -108,26 +108,25 @@ void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
         }
 
         GL_SelectTexUnits(2);
-        GL_ModulateTexture(IS_MUL ? 4 : 5);
+        DGL_ModulateTexture(IS_MUL? 4 : 5);
 
         // The dynamic light.
-        LIBGUI_GL.glActiveTexture(IS_MUL ? GL_TEXTURE0 : GL_TEXTURE1);
+        DGL_SetInteger(DGL_ACTIVE_TEXTURE, IS_MUL? 0 : 1);
         /// @todo modTex may be the name of a "managed" texture.
         GL_BindTextureUnmanaged(renderTextures ? parms.modTex : 0,
                                 gl::ClampToEdge, gl::ClampToEdge);
 
-        //LIBGUI_GL.glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, parms.modColor);
-        qDebug() << __FILE__ << __LINE__ << "was using glTexEnv";
+        DGL_SetModulationColor(parms.modColor);
 
         // The actual texture.
-        LIBGUI_GL.glActiveTexture(IS_MUL ? GL_TEXTURE1 : GL_TEXTURE0);
+        DGL_SetInteger(DGL_ACTIVE_TEXTURE, IS_MUL? 1 : 0);
         GL_BindTexture(tex);
 
         withDyn = true;
     }
     else
     {
-        GL_ModulateTexture(1);
+        DGL_ModulateTexture(1);
         DGL_Enable(DGL_TEXTURE_2D);
         GL_BindTexture(tex);
         normal = 0;
@@ -184,7 +183,7 @@ void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
 
         // Restore normal GL state.
         GL_SelectTexUnits(1);
-        GL_ModulateTexture(1);
+        DGL_ModulateTexture(1);
     }
     else
     {

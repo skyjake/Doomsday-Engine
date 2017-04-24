@@ -174,7 +174,7 @@ void Svg_Draw(Svg* svg)
     draw(svg);
 }
 
-dd_bool Svg_Prepare(Svg* svg)
+dd_bool Svg_Prepare(Svg *)
 {/*
     assert(svg);
     if (!novideo && !isDedicated)

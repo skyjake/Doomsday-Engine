@@ -1267,8 +1267,6 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    auto &GL = LIBGUI_GL;
-
     // We need to change the current color, so remember for restore.
     DGL_CurrentColor(origColor);
 

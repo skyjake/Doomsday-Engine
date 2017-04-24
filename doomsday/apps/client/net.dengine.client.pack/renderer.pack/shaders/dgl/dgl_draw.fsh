@@ -20,31 +20,45 @@
 
 #version 330
 
-uniform int uEnabledTextures;
+uniform int uTexEnabled;
+uniform int uTexMode;
+uniform vec4 uTexModeColor;
 uniform sampler2D uTex0;
 uniform sampler2D uTex1;
-uniform sampler2D uTex2;
 
 in vec4 vColor;
-in vec2 vTexCoord[3];
+in vec2 vTexCoord[2];
 
 void main()
 {
-    out_FragColor = vColor;    
+    out_FragColor = vColor;
     
     // Colors from textures.    
-    vec4 texColor[3] = vec4[3] (vec4(0.0), vec4(0.0), vec4(0.0));
-    if ((uEnabledTextures & 0x1) != 0) {
+    vec4 texColor[2] = vec4[2] (vec4(1.0), vec4(1.0));
+    if ((uTexEnabled & 0x1) != 0) {
         texColor[0] = texture(uTex0, vTexCoord[0]);
-        out_FragColor *= texColor[0];
     }
-    if ((uEnabledTextures & 0x2) != 0) {
+    if ((uTexEnabled & 0x2) != 0) {
         texColor[1] = texture(uTex1, vTexCoord[1]);
     }
-    if ((uEnabledTextures & 0x4) != 0) {
-        texColor[2] = texture(uTex2, vTexCoord[2]);
+    
+    // Modulate the texture colors in the requested manner.
+    switch (uTexMode) {
+    case 0:
+        // No modulation: just replace with texture.
+        out_FragColor = texColor[0];
+        break;
+    case 1:
+        // Normal texture modulation with primary color.
+        out_FragColor *= texColor[0];
+        break;
+    case 2:
+        // Texture interpolation and modulation with primary color.
+        out_FragColor.rgb = mix(texColor[0].rgb, texColor[1].rgb, vColor.a) * vColor.rgb;
+        break;
+    case 3:
+        // Texture interpolation.
+        out_FragColor.rgb = mix(texColor[0].rgb, texColor[1].rgb, vColor.a);        
+        break;
     }
-    
-    // TODO: Modulate the texture colors in the requested manner
-    
 }

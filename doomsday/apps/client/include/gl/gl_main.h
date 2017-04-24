@@ -171,13 +171,6 @@ void GL_InitRefresh();
 void GL_ShutdownRefresh();
 
 /**
- * Configure the GL state for the specified texture modulation mode.
- *
- * @param mode  Modulation mode ident.
- */
-void GL_ModulateTexture(int mode);
-
-/**
  * Enables or disables vsync. May cause the OpenGL surface to be recreated.
  *
  * @param on  @c true to enable vsync, @c false to disable.
@@ -315,13 +308,19 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int comps,
     colorpaletteid_t paletteId, float *brightX, float *brightY,
     struct ColorRawf_s *color, float *lumSize);
 
-void DGL_Shutdown();
-void DGL_AssertNotInPrimitive(void);
-de::Matrix4f DGL_Matrix(DGLenum matrixMode);
-void DGL_CurrentColor(DGLubyte *rgba);
-void DGL_CurrentColor(float *rgba);
+// DGL internal API ---------------------------------------------------------------------
 
-// Console commands.
+void            DGL_Shutdown();
+void            DGL_AssertNotInPrimitive(void);
+de::Matrix4f    DGL_Matrix(DGLenum matrixMode);
+void            DGL_CurrentColor(DGLubyte *rgba);
+void            DGL_CurrentColor(float *rgba);
+void            DGL_ModulateTexture(int mode);
+void            DGL_SetModulationColor(de::Vector4f const &modColor);
+de::Vector4f    DGL_ModulationColor();
+
+// Console commands ---------------------------------------------------------------------
+
 D_CMD(UpdateGammaRamp);
 
 #endif // DENG_GL_MAIN_H

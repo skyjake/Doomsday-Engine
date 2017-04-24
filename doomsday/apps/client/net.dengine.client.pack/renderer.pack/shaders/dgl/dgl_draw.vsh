@@ -22,25 +22,25 @@
 
 layout(location = 0) in vec4 aVertex;
 layout(location = 1) in vec4 aColor;
-layout(location = 2) in vec2 aTexCoord[3];
+layout(location = 2) in vec2 aTexCoord[2];
 
 uniform mat4 uMvpMatrix;
-uniform mat4 uTextureMatrix;
+uniform mat4 uTexMatrix0;
+uniform mat4 uTexMatrix1;
 
 out vec4 vColor;
-out vec2 vTexCoord[3];
+out vec2 vTexCoord[2];
 
-vec2 transformTexCoord(vec2 tc) 
+vec2 transformTexCoord(const mat4 matrix, const vec2 tc) 
 {
     vec4 coord = vec4(tc.s, tc.t, 0.0, 1.0);
-    return (uTextureMatrix * coord).xy;
+    return (matrix * coord).xy;
 }
 
 void main()
 {
     gl_Position = uMvpMatrix * aVertex;
     vColor = aColor;    
-    for (int i = 0; i < 3; ++i) {
-        vTexCoord[i] = transformTexCoord(aTexCoord[i]);
-    }
+    vTexCoord[0] = transformTexCoord(uTexMatrix0, aTexCoord[0]);
+    vTexCoord[1] = transformTexCoord(uTexMatrix1, aTexCoord[1]);
 }

@@ -3954,13 +3954,13 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         {
             texUnitMap[0] = AttributeSpec::ModTexCoord;
             texUnitMap[1] = AttributeSpec::TexCoord0;
-            GL_ModulateTexture(4);  // Light * texture.
+            DGL_ModulateTexture(4);  // Light * texture.
         }
         else
         {
             texUnitMap[0] = AttributeSpec::TexCoord0;
             texUnitMap[1] = AttributeSpec::ModTexCoord;
-            GL_ModulateTexture(5);  // Texture + light.
+            DGL_ModulateTexture(5);  // Texture + light.
         }
         GLState::current().setAlphaTest(false).apply();
         GLState::current().setDepthWrite(true).apply();
@@ -3980,7 +3980,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         // One light, no texture.
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::ModTexCoord;
-        GL_ModulateTexture(6);
+        DGL_ModulateTexture(6);
         GLState::current().setAlphaTest(false).apply();
         GLState::current().setDepthWrite(true).apply();
         GLState::current().setDepthTest(true).apply();
@@ -3993,7 +3993,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         // One additive light, no texture.
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::ModTexCoord;
-        GL_ModulateTexture(7);  // Add light, no color.
+        DGL_ModulateTexture(7);  // Add light, no color.
         GLState::current().setAlphaTest(true).apply();
         GLState::current().setAlphaLimit(1 / 255.0f).apply();
         GLState::current().setDepthWrite(false).apply();
@@ -4006,7 +4006,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 
     case DM_WITHOUT_TEXTURE:
         GL_SelectTexUnits(0);
-        GL_ModulateTexture(1);
+        DGL_ModulateTexture(1);
         GLState::current().setAlphaTest(false).apply();
         GLState::current().setDepthWrite(true).apply();
         GLState::current().setDepthTest(true).apply();
@@ -4018,7 +4018,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     case DM_LIGHTS:
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::TexCoord0;
-        GL_ModulateTexture(1);
+        DGL_ModulateTexture(1);
         GLState::current().setAlphaTest(true).apply();
         GLState::current().setAlphaLimit(1 / 255.0f).apply();
         GLState::current().setDepthWrite(false).apply();
@@ -4086,7 +4086,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     case DM_ALL_DETAILS:
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::TexCoord0;
-        GL_ModulateTexture(0);
+        DGL_ModulateTexture(0);
         GLState::current().setAlphaTest(false).apply();
         GLState::current().setDepthWrite(false).apply();
         GLState::current().setDepthTest(true).apply();
@@ -4109,7 +4109,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GL_SelectTexUnits(2);
         texUnitMap[0] = AttributeSpec::TexCoord0;
         texUnitMap[1] = AttributeSpec::TexCoord1;
-        GL_ModulateTexture(3);
+        DGL_ModulateTexture(3);
         GLState::current().setAlphaTest(false).apply();
         GLState::current().setDepthWrite(false).apply();
         GLState::current().setDepthTest(true).apply();
@@ -4132,7 +4132,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         // A bit like 'negative lights'.
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::TexCoord0;
-        GL_ModulateTexture(1);
+        DGL_ModulateTexture(1);
         GLState::current().setAlphaTest(true).apply();
         GLState::current().setAlphaLimit(1 / 255.0f).apply();
         GLState::current().setDepthWrite(false).apply();
@@ -4151,7 +4151,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     case DM_SHINY:
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::TexCoord0;
-        GL_ModulateTexture(1);  // 8 for multitexture
+        DGL_ModulateTexture(1);  // 8 for multitexture
         GLState::current().setAlphaTest(false).apply();
         GLState::current().setDepthWrite(false).apply();
         GLState::current().setDepthTest(true).apply();
@@ -4171,7 +4171,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GL_SelectTexUnits(2);
         texUnitMap[0] = AttributeSpec::TexCoord0;
         texUnitMap[1] = AttributeSpec::TexCoord1;  // the mask
-        GL_ModulateTexture(8);  // same as with details
+        DGL_ModulateTexture(8);  // same as with details
         GLState::current().setAlphaTest(false).apply();
         GLState::current().setDepthWrite(false).apply();
         GLState::current().setDepthTest(true).apply();
@@ -4220,7 +4220,7 @@ static void popGLStateForPass(DrawMode mode)
     case DM_LIGHT_MOD_TEXTURE:
     case DM_TEXTURE_PLUS_LIGHT:
         GL_SelectTexUnits(1);
-        GL_ModulateTexture(1);
+        DGL_ModulateTexture(1);
         GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
         if(fogParams.usingFog)
@@ -4231,21 +4231,21 @@ static void popGLStateForPass(DrawMode mode)
         break;
 
     case DM_FIRST_LIGHT:
-        GL_ModulateTexture(1);
+        DGL_ModulateTexture(1);
         GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
         GLState::current().setBlend(true).apply();
         break;
 
     case DM_BLENDED_FIRST_LIGHT:
-        GL_ModulateTexture(1);
+        DGL_ModulateTexture(1);
         GLState::current().setDepthTest(false).apply();
         GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha).apply();
         break;
 
     case DM_WITHOUT_TEXTURE:
         GL_SelectTexUnits(1);
-        GL_ModulateTexture(1);
+        DGL_ModulateTexture(1);
         GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
         GLState::current().setBlend(true).apply();
@@ -4285,7 +4285,7 @@ static void popGLStateForPass(DrawMode mode)
         break;
 
     case DM_ALL_DETAILS:
-        GL_ModulateTexture(1);
+        DGL_ModulateTexture(1);
         GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
         GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha).apply();
@@ -4297,7 +4297,7 @@ static void popGLStateForPass(DrawMode mode)
 
     case DM_BLENDED_DETAILS:
         GL_SelectTexUnits(1);
-        GL_ModulateTexture(1);
+        DGL_ModulateTexture(1);
         GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
         GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha).apply();
@@ -4327,7 +4327,7 @@ static void popGLStateForPass(DrawMode mode)
 
     case DM_MASKED_SHINY:
         GL_SelectTexUnits(1);
-        GL_ModulateTexture(1);
+        DGL_ModulateTexture(1);
         GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
         if(fogParams.usingFog)

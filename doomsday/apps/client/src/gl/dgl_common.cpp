@@ -42,9 +42,12 @@ using namespace de;
 struct DGLState
 {
     int matrixMode = 0;
-    QVector<Matrix4f> matrixStacks[3];
-    bool enableTexture = true;
+    QVector<Matrix4f> matrixStacks[4];
+    int activeTexture = 0;
+    bool enableTexture[2] { true, false };
     bool enableFog = false;
+    int textureModulation = 0;
+    Vector4f textureModulationColor;
 
     DGLState()
     {
@@ -55,11 +58,24 @@ struct DGLState
         }
     }
 
-    static int stackIndex(DGLenum id)
+    int stackIndex(DGLenum id) const
     {
-        int const index = int(id) - DGL_MODELVIEW;
-        DENG2_ASSERT(index >=0 && index < 3);
-        return index;
+        switch (id)
+        {
+        case DGL_TEXTURE0:
+            return 2;
+
+        case DGL_TEXTURE1:
+            return 3;
+
+        case DGL_TEXTURE:
+            return 2 + activeTexture;
+
+        default: {
+            int const index = int(id) - DGL_MODELVIEW;
+            DENG2_ASSERT(index >= 0 && index < 2);
+            return index; }
+        }
     }
 
     void pushMatrix()
@@ -94,7 +110,17 @@ static DGLState dgl;
 
 Matrix4f DGL_Matrix(DGLenum matrixMode)
 {
-    return dgl.matrixStacks[DGLState::stackIndex(matrixMode)].back();
+    return dgl.matrixStacks[dgl.stackIndex(matrixMode)].back();
+}
+
+void DGL_SetModulationColor(Vector4f const &modColor)
+{
+    dgl.textureModulationColor = modColor;
+}
+
+Vector4f DGL_ModulationColor()
+{
+    return dgl.textureModulationColor;
 }
 
 #if 0
@@ -182,9 +208,22 @@ static void envModMultiTex(int activate)
 }
 #endif
 
-void GL_ModulateTexture(int mode)
+void DGL_ModulateTexture(int mode)
 {
-    qDebug() << "GL_ModulateTexture: TexEnv not available; mode" << mode;
+    dgl.textureModulation = mode;
+
+    switch (mode)
+    {
+    default:
+        qDebug() << "DGL_ModulateTexture: texture modulation mode" << mode << "not implemented";
+        break;
+
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+        break;
+    }
 
 #if 0
     DENG_ASSERT_IN_MAIN_THREAD();
@@ -440,14 +479,30 @@ dd_bool DGL_GetIntegerv(int name, int *v)
     float color[4];
     switch(name)
     {
-    case DGL_TEXTURE_2D:
-        *v = (dgl.enableTexture? 1 : 0);
+    case DGL_ACTIVE_TEXTURE:
+        *v = dgl.activeTexture;
         break;
 
-    case DGL_MODULATE_ADD_COMBINE:
-        qDebug() << "DGL_GetIntegerv: tex env not available";
-        //*v = GLInfo::extensions().NV_texture_env_combine4 || GLInfo::extensions().ATI_texture_env_combine3;
+    case DGL_TEXTURE_2D:
+        *v = (dgl.enableTexture[dgl.activeTexture]? 1 : 0);
         break;
+
+    case DGL_TEXTURE0:
+        *v = dgl.enableTexture[0]? 1 : 0;
+        break;
+
+    case DGL_TEXTURE1:
+        *v = dgl.enableTexture[1]? 1 : 0;
+        break;
+
+    case DGL_MODULATE_TEXTURE:
+        *v = dgl.textureModulation;
+        break;
+
+//    case DGL_MODULATE_ADD_COMBINE:
+//        qDebug() << "DGL_GetIntegerv: tex env not available";
+//        //*v = GLInfo::extensions().NV_texture_env_combine4 || GLInfo::extensions().ATI_texture_env_combine3;
+//        break;
 
     case DGL_SCISSOR_TEST:
         *(GLint *) v = GLState::current().scissor();
@@ -509,11 +564,14 @@ dd_bool DGL_SetInteger(int name, int value)
     switch(name)
     {
     case DGL_ACTIVE_TEXTURE:
-        LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + byte(value));
+        DENG2_ASSERT(value >= 0);
+        DENG2_ASSERT(value < MAX_TEX_UNITS);
+        dgl.activeTexture = value;
+        LIBGUI_GL.glActiveTexture(GLenum(GL_TEXTURE0 + value));
         break;
 
     case DGL_MODULATE_TEXTURE:
-        GL_ModulateTexture(value);
+        DGL_ModulateTexture(value);
         break;
 
     default:
@@ -633,7 +691,17 @@ int DGL_Enable(int cap)
     {
     case DGL_TEXTURE_2D:
         //Deferred_glEnable(GL_TEXTURE_2D);
-        dgl.enableTexture = true;
+        dgl.enableTexture[dgl.activeTexture] = true;
+        break;
+
+    case DGL_TEXTURE0:
+        DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
+        dgl.enableTexture[0] = true;
+        break;
+
+    case DGL_TEXTURE1:
+        DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
+        dgl.enableTexture[1] = true;
         break;
 
     case DGL_FOG:
@@ -673,8 +741,17 @@ void DGL_Disable(int cap)
     switch(cap)
     {
     case DGL_TEXTURE_2D:
-        //Deferred_glDisable(GL_TEXTURE_2D);
-        dgl.enableTexture = false;
+        dgl.enableTexture[dgl.activeTexture] = false;
+        break;
+
+    case DGL_TEXTURE0:
+        DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
+        dgl.enableTexture[0] = false;
+        break;
+
+    case DGL_TEXTURE1:
+        DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
+        dgl.enableTexture[1] = false;
         break;
 
     case DGL_FOG:
@@ -822,9 +899,8 @@ void DGL_SetRawImage(lumpnum_t lumpNum, DGLint wrapS, DGLint wrapT)
 void DGL_MatrixMode(DGLenum mode)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT(mode == DGL_PROJECTION || mode == DGL_TEXTURE || mode == DGL_MODELVIEW);
 
-    dgl.matrixMode = DGLState::stackIndex(mode);
+    dgl.matrixMode = dgl.stackIndex(mode);
 }
 
 #undef DGL_PushMatrix

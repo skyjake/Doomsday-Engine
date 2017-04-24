@@ -245,8 +245,7 @@ static inline void enableTexUnit(int id)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + id);
-    DGL_Enable(DGL_TEXTURE_2D);
+    DGL_Enable(DGL_TEXTURE0 + id);
 }
 
 static inline void disableTexUnit(int id)
@@ -254,8 +253,7 @@ static inline void disableTexUnit(int id)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + id);
-    DGL_Disable(DGL_TEXTURE_2D);
+    DGL_Disable(DGL_TEXTURE0 + id);
 
     // Implicit disabling of texcoord array.
     disableArrays(0, 0, 1 << id);
@@ -987,19 +985,19 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
                 // We'll use multitexturing to clear out empty spots in
                 // the primary texture.
                 selectTexUnits(2);
-                GL_ModulateTexture(11);
+                DGL_ModulateTexture(11);
 
-                LIBGUI_GL.glActiveTexture(GL_TEXTURE1);
+                DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
                 GL_BindTexture(renderTextures? shinyTexture : 0);
 
-                LIBGUI_GL.glActiveTexture(GL_TEXTURE0);
+                DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
                 GL_BindTexture(renderTextures? skinTexture : 0);
 
                 drawPrimitives(RC_BOTH_COORDS, primitives,
                                modelPosCoords, modelColorCoords, modelTexCoords);
 
                 selectTexUnits(1);
-                GL_ModulateTexture(1);
+                DGL_ModulateTexture(1);
             }
             else
             {
@@ -1020,24 +1018,23 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
         selectTexUnits(2);
 
         // Tex1*Color + Tex2RGB*ConstRGB
-        GL_ModulateTexture(10);
+        DGL_ModulateTexture(10);
 
-        LIBGUI_GL.glActiveTexture(GL_TEXTURE1);
+        DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
         GL_BindTexture(renderTextures? shinyTexture : 0);
 
         // Multiply by shininess.
         float colorv1[] = { color.x * color.w, color.y * color.w, color.z * color.w, color.w };
-        //LIBGUI_GL.glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, colorv1);
-        qDebug() << __FILE__ << __LINE__ << "TexEnv was being used";
+        DGL_SetModulationColor(colorv1);
 
-        LIBGUI_GL.glActiveTexture(GL_TEXTURE0);
+        DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
         GL_BindTexture(renderTextures? skinTexture : 0);
 
         drawPrimitives(RC_BOTH_COORDS, primitives,
                        modelPosCoords, modelColorCoords, modelTexCoords);
 
         selectTexUnits(1);
-        GL_ModulateTexture(1);
+        DGL_ModulateTexture(1);
     }
 
     // We're done!

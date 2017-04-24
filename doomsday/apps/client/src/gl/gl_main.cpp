@@ -450,19 +450,17 @@ void GL_SelectTexUnits(dint count)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    for(dint i = numTexUnits - 1; i >= count; i--)
+    for (dint i = numTexUnits - 1; i >= count; i--)
     {
-        LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + i);
-        DGL_Disable(DGL_TEXTURE_2D);
+        DGL_Disable(DGL_TEXTURE0 + i);
     }
 
     // Enable the selected units.
-    for(dint i = count - 1; i >= 0; i--)
+    for (dint i = count - 1; i >= 0; i--)
     {
-        if(i >= numTexUnits) continue;
+        if (i >= numTexUnits) continue;
 
-        LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + i);
-        DGL_Enable(DGL_TEXTURE_2D);
+        DGL_Enable(DGL_TEXTURE0 + i);
     }
 }
 
@@ -832,7 +830,7 @@ void GL_BindTexture(TextureVariant *vtexture)
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, glTexName);
-    Sys_GLCheckError();
+    LIBGUI_ASSERT_GL_OK();
 
     // Apply dynamic adjustments to the GL texture state according to our spec.
     TextureVariantSpec const &spec = vtexture->spec();
@@ -847,6 +845,7 @@ void GL_BindTexture(TextureVariant *vtexture)
             LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
                             GL_GetTexAnisoMul(spec.variant.logicalAnisoLevel()));
         }
+        LIBGUI_ASSERT_GL_OK();
     }
 }
 
@@ -906,7 +905,7 @@ void GL_BindTo(GLTextureUnit const &glTU, dint unit)
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
-    LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + dbyte(unit));
+    DGL_SetInteger(DGL_ACTIVE_TEXTURE, unit);
     GL_Bind(glTU);
 }
 
