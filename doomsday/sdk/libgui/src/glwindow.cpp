@@ -237,6 +237,11 @@ float GLWindow::frameRate() const
     return d->fps;
 }
 
+uint GLWindow::frameCount() const
+{
+    return d->frameCount;
+}
+
 GLWindow::Size GLWindow::pointSize() const
 {
     return Size(duint(de::max(0, QOpenGLWindow::width())),

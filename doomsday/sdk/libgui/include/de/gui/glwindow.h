@@ -78,6 +78,7 @@ public:
     bool isHidden() const;
 
     float frameRate() const;
+    uint frameCount() const;
 
     /**
      * Determines the current top left corner (origin) of the window.
