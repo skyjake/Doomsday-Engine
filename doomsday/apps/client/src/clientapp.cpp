@@ -639,6 +639,8 @@ void ClientApp::initialize()
 
 void ClientApp::preFrame()
 {
+    DGL_BeginFrame();
+
     // Frame synchronous I/O operations.
     App_AudioSystem().startFrame();
 

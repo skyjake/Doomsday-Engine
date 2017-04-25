@@ -46,6 +46,19 @@ struct DGLDrawState
         Vector3f  vertex;
         Vector4ub color { 255, 255, 255, 255 };
         Vector2f  texCoord[MAX_TEX_COORDS];
+
+        Vertex() {}
+
+        Vertex(Vertex const &other)
+        {
+            std::memcpy(this, &other, sizeof(Vertex));
+        }
+
+        Vertex &operator = (Vertex const &other)
+        {
+            std::memcpy(this, &other, sizeof(Vertex));
+            return *this;
+        }
     };
 
     // Indices for vertex attribute arrays.
@@ -74,8 +87,19 @@ struct DGLDrawState
         GLUniform uAlphaLimit   { "uAlphaLimit",   GLUniform::Float };
         GLUniform uFogRange     { "uFogRange",     GLUniform::Vec4  };
         GLUniform uFogColor     { "uFogColor",     GLUniform::Vec4  };
-        GLuint vertexArray = 0;
-        GLBuffer buffer;
+        struct DrawBuffer
+        {
+            GLuint vertexArray = 0;
+            GLBuffer arrayData;
+
+            void release()
+            {
+                LIBGUI_GL.glDeleteVertexArrays(1, &vertexArray);
+                arrayData.clear();
+            }
+        };
+        QVector<DrawBuffer *> buffers;
+        int bufferPos = 0;
     };
     std::unique_ptr<GLData> gl;
 
@@ -189,24 +213,39 @@ struct DGLDrawState
                 GL.glUniform1i(GL.glGetUniformLocation(prog, "uTex1"), 1);
                 GL.glUseProgram(0);
             }
+        }
+    }
+
+    void glDeinit()
+    {
+        foreach (GLData::DrawBuffer *dbuf, gl->buffers)
+        {
+            dbuf->release();
+        }
+        gl.reset();
+    }
+
+    GLData::DrawBuffer &nextBuffer()
+    {
+        if (gl->bufferPos == gl->buffers.size())
+        {
+            auto *dbuf = new GLData::DrawBuffer;
 
             // Vertex array object.
             {
-                GL.glGenVertexArrays(1, &gl->vertexArray);
-                GL.glBindVertexArray(gl->vertexArray);
+                auto &GL = LIBGUI_GL;
+                GL.glGenVertexArrays(1, &dbuf->vertexArray);
+                GL.glBindVertexArray(dbuf->vertexArray);
                 for (uint i = 0; i < NUM_VERTEX_ATTRIB_ARRAYS; ++i)
                 {
                     GL.glEnableVertexAttribArray(i);
                 }
                 GL.glBindVertexArray(0);
             }
-        }
-    }
 
-    void glDeinit()
-    {
-        LIBGUI_GL.glDeleteVertexArrays(1, &gl->vertexArray);
-        gl.reset();
+            gl->buffers.append(dbuf);
+        }
+        return *gl->buffers[gl->bufferPos++];
     }
 
     void glBindArrays()
@@ -215,12 +254,13 @@ struct DGLDrawState
         auto &GL = LIBGUI_GL;
 
         // Upload the vertex data.
-        gl->buffer.setData(&vertices[0], sizeof(Vertex) * vertices.size(), gl::Dynamic);
+        GLData::DrawBuffer &buf = nextBuffer();
+        buf.arrayData.setData(&vertices[0], sizeof(Vertex) * vertices.size(), gl::Dynamic);
 
-        GL.glBindVertexArray(gl->vertexArray);
+        GL.glBindVertexArray(buf.vertexArray);
         LIBGUI_ASSERT_GL_OK();
 
-        GL.glBindBuffer(GL_ARRAY_BUFFER, gl->buffer.glName());
+        GL.glBindBuffer(GL_ARRAY_BUFFER, buf.arrayData.glName());
         LIBGUI_ASSERT_GL_OK();
 
         Vertex const *basePtr = nullptr;
@@ -288,9 +328,6 @@ struct DGLDrawState
             glUnbindArrays();
         }
         gl->shader.endUse();
-
-        // Buffers are single-use.
-        gl->buffer.clear();
     }
 };
 
@@ -301,6 +338,15 @@ void DGL_Shutdown()
     dglDraw.glDeinit();
 }
 
+void DGL_BeginFrame()
+{
+    if (dglDraw.gl)
+    {
+        // Reuse buffers every frame.
+        dglDraw.gl->bufferPos = 0;
+    }
+}
+
 void DGL_CurrentColor(DGLubyte *rgba)
 {
     std::memcpy(rgba, dglDraw.vertex().color.constPtr(), 4);
@@ -308,7 +354,7 @@ void DGL_CurrentColor(DGLubyte *rgba)
 
 void DGL_CurrentColor(float *rgba)
 {
-    Vector4f colorf = dglDraw.vertex().color.toVector4f() / 255.0;
+    Vector4f colorf = Vector4ub(dglDraw.vertex().color).toVector4f() / 255.0;
     std::memcpy(rgba, colorf.constPtr(), sizeof(float) * 4);
 }
 
@@ -321,7 +367,7 @@ DENG_EXTERN_C void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
 }
 
 #undef DGL_Color3ubv
-DENG_EXTERN_C void DGL_Color3ubv(const DGLubyte* vec)
+DENG_EXTERN_C void DGL_Color3ubv(DGLubyte const *vec)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
 
@@ -337,7 +383,7 @@ DENG_EXTERN_C void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
 }
 
 #undef DGL_Color4ubv
-DENG_EXTERN_C void DGL_Color4ubv(const DGLubyte* vec)
+DENG_EXTERN_C void DGL_Color4ubv(DGLubyte const *vec)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
 
@@ -353,7 +399,7 @@ DENG_EXTERN_C void DGL_Color3f(float r, float g, float b)
 }
 
 #undef DGL_Color3fv
-DENG_EXTERN_C void DGL_Color3fv(const float* vec)
+DENG_EXTERN_C void DGL_Color3fv(float const *vec)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
 
@@ -369,7 +415,7 @@ DENG_EXTERN_C void DGL_Color4f(float r, float g, float b, float a)
 }
 
 #undef DGL_Color4fv
-DENG_EXTERN_C void DGL_Color4fv(const float* vec)
+DENG_EXTERN_C void DGL_Color4fv(float const *vec)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
 
@@ -427,6 +473,7 @@ DENG_EXTERN_C void DGL_Vertex3f(float x, float y, float z)
     DENG_ASSERT_IN_MAIN_THREAD();
 
     dglDraw.vertex().vertex = Vector3f(x, y, z);
+
     dglDraw.commitVertex();
 }
 

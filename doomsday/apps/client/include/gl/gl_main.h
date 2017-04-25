@@ -308,6 +308,7 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int comps,
 // DGL internal API ---------------------------------------------------------------------
 
 void            DGL_Shutdown();
+void            DGL_BeginFrame();
 void            DGL_AssertNotInPrimitive(void);
 de::Matrix4f    DGL_Matrix(DGLenum matrixMode);
 void            DGL_CurrentColor(DGLubyte *rgba);
