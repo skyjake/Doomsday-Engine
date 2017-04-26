@@ -487,6 +487,23 @@ void GLBuffer::drawWithIndices(GLBuffer const &indexBuffer) const
     d->enableArrays(false);
 }
 
+void GLBuffer::drawWithIndices(gl::Primitive primitive, Index const *indices, dsize count) const
+{
+    if (!isReady() || !indices || !count || !GLProgram::programInUse()) return;
+
+    GLState::current().target().markAsChanged();
+
+    auto &GL = LIBGUI_GL;
+
+    d->enableArrays(true);
+
+    GL.glDrawElements(Impl::glPrimitive(primitive), count, GL_UNSIGNED_SHORT, indices);
+    LIBGUI_ASSERT_GL_OK();
+    ++drawCounter;
+
+    d->enableArrays(false);
+}
+
 void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint count) const
 {
     if (!isReady() || !instanceAttribs.isReady() || !GLProgram::programInUse()) return;

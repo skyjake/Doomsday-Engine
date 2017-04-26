@@ -303,6 +303,8 @@ public:
 
     void drawWithIndices(GLBuffer const &indexBuffer) const;
 
+    void drawWithIndices(gl::Primitive primitive, Index const *indices, dsize count) const;
+
     /**
      * Draws the buffer with instancing. One instance of the buffer is drawn per
      * each element in the provided @a instanceAttribs buffer.
