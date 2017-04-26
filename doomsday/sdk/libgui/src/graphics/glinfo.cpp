@@ -27,7 +27,10 @@
 #include <de/math.h>
 #include <de/c_wrapper.h>
 
-#include <QOpenGLDebugLogger>
+#ifdef DENG2_DEBUG
+#  define DENG_ENABLE_OPENGL_DEBUG_LOGGER
+#  include <QOpenGLDebugLogger>
+#endif
 
 #if defined (MACOSX)
 #  include <OpenGL/OpenGL.h>
@@ -163,9 +166,69 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
         }
         inited = true;
 
+        // Extensions.
+        //ext.ARB_draw_instanced             = query("GL_ARB_draw_instanced");
+        //ext.ARB_instanced_arrays           = query("GL_ARB_instanced_arrays");
+        //ext.ARB_texture_env_combine        = query("GL_ARB_texture_env_combine") || query("GL_EXT_texture_env_combine");
+        //ext.ARB_texture_non_power_of_two   = query("GL_ARB_texture_non_power_of_two");
+
+        //ext.EXT_blend_subtract             = query("GL_EXT_blend_subtract");
+        //ext.EXT_framebuffer_blit           = query("GL_EXT_framebuffer_blit");
+        //ext.EXT_framebuffer_multisample    = query("GL_EXT_framebuffer_multisample");
+        //ext.EXT_framebuffer_object         = query("GL_EXT_framebuffer_object");
+        //ext.EXT_packed_depth_stencil       = query("GL_EXT_packed_depth_stencil");
+        ext.EXT_texture_compression_s3tc   = query("GL_EXT_texture_compression_s3tc");
+        ext.EXT_texture_filter_anisotropic = query("GL_EXT_texture_filter_anisotropic");
+        //ext.EXT_timer_query                = query("GL_EXT_timer_query");
+
+        //ext.ATI_texture_env_combine3       = query("GL_ATI_texture_env_combine3");
+        ext.NV_framebuffer_multisample_coverage
+                                           = query("GL_NV_framebuffer_multisample_coverage");
+        //ext.NV_texture_env_combine4        = query("GL_NV_texture_env_combine4");
+        //ext.SGIS_generate_mipmap           = query("GL_SGIS_generate_mipmap");
+
+        ext.KHR_debug                      = query("GL_KHR_debug");
+
+#ifdef WIN32
+        //ext.Windows_ARB_multisample        = query("WGL_ARB_multisample");
+        ext.Windows_EXT_swap_control       = query("WGL_EXT_swap_control");
+
+        if (ext.Windows_EXT_swap_control)
+        {
+            wglSwapIntervalEXT = de::function_cast<decltype(wglSwapIntervalEXT)>
+                (QOpenGLContext::currentContext()->getProcAddress("wglSwapIntervalEXT"));
+        }
+#endif
+
+#ifdef DENG_X11
+        ext.X11_EXT_swap_control           = query("GLX_EXT_swap_control");
+        ext.X11_SGI_swap_control           = query("GLX_SGI_swap_control");
+        ext.X11_MESA_swap_control          = query("GLX_MESA_swap_control");
+
+        if (ext.X11_EXT_swap_control)
+        {
+            glXSwapIntervalEXT = de::function_cast<decltype(glXSwapIntervalEXT)>
+                    (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalEXT")));
+        }
+        if (ext.X11_SGI_swap_control)
+        {
+            glXSwapIntervalSGI = de::function_cast<decltype(glXSwapIntervalSGI)>
+                    (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalSGI")));
+        }
+        if (ext.X11_MESA_swap_control)
+        {
+            glXSwapIntervalMESA = de::function_cast<decltype(glXSwapIntervalMESA)>
+                    (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalMESA")));
+        }
+#endif
+
 #ifdef DENG_ENABLE_OPENGL_DEBUG_LOGGER
         QOpenGLDebugLogger *logger = new QOpenGLDebugLogger(&GLWindow::main());
-        if (!logger->initialize())
+        if (!ext.KHR_debug)
+        {
+            qDebug() << "[GLInfo] GL_KHR_debug is not available";
+        }
+        else if (!logger->initialize())
         {
             qWarning() << "[GLInfo] Failed to initialize debug logger!";
         }
@@ -174,7 +237,7 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
             QObject::connect(logger, &QOpenGLDebugLogger::messageLogged,
                              [] (QOpenGLDebugMessage const &debugMessage)
             {
-                char const *mType     = "--";
+                char const *mType = "--";
                 char const *mSeverity = "--";
 
                 switch (debugMessage.type())
@@ -231,60 +294,6 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
                 qDebug("[OpenGL] %s (%s): %s", mType, mSeverity, debugMessage.message().toLatin1().constData());
             });
             logger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
-        }
-#endif
-
-        // Extensions.
-        //ext.ARB_draw_instanced             = query("GL_ARB_draw_instanced");
-        //ext.ARB_instanced_arrays           = query("GL_ARB_instanced_arrays");
-        //ext.ARB_texture_env_combine        = query("GL_ARB_texture_env_combine") || query("GL_EXT_texture_env_combine");
-        //ext.ARB_texture_non_power_of_two   = query("GL_ARB_texture_non_power_of_two");
-
-        //ext.EXT_blend_subtract             = query("GL_EXT_blend_subtract");
-        //ext.EXT_framebuffer_blit           = query("GL_EXT_framebuffer_blit");
-        //ext.EXT_framebuffer_multisample    = query("GL_EXT_framebuffer_multisample");
-        //ext.EXT_framebuffer_object         = query("GL_EXT_framebuffer_object");
-        //ext.EXT_packed_depth_stencil       = query("GL_EXT_packed_depth_stencil");
-        ext.EXT_texture_compression_s3tc   = query("GL_EXT_texture_compression_s3tc");
-        ext.EXT_texture_filter_anisotropic = query("GL_EXT_texture_filter_anisotropic");
-        //ext.EXT_timer_query                = query("GL_EXT_timer_query");
-
-        //ext.ATI_texture_env_combine3       = query("GL_ATI_texture_env_combine3");
-        ext.NV_framebuffer_multisample_coverage
-                                           = query("GL_NV_framebuffer_multisample_coverage");
-        //ext.NV_texture_env_combine4        = query("GL_NV_texture_env_combine4");
-        //ext.SGIS_generate_mipmap           = query("GL_SGIS_generate_mipmap");
-
-#ifdef WIN32
-        ext.Windows_ARB_multisample        = query("WGL_ARB_multisample");
-        ext.Windows_EXT_swap_control       = query("WGL_EXT_swap_control");
-
-        if (ext.Windows_EXT_swap_control)
-        {
-            wglSwapIntervalEXT = de::function_cast<decltype(wglSwapIntervalEXT)>
-                (QOpenGLContext::currentContext()->getProcAddress("wglSwapIntervalEXT"));
-        }
-#endif
-
-#ifdef DENG_X11
-        ext.X11_EXT_swap_control           = query("GLX_EXT_swap_control");
-        ext.X11_SGI_swap_control           = query("GLX_SGI_swap_control");
-        ext.X11_MESA_swap_control          = query("GLX_MESA_swap_control");
-
-        if (ext.X11_EXT_swap_control)
-        {
-            glXSwapIntervalEXT = de::function_cast<decltype(glXSwapIntervalEXT)>
-                    (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalEXT")));
-        }
-        if (ext.X11_SGI_swap_control)
-        {
-            glXSwapIntervalSGI = de::function_cast<decltype(glXSwapIntervalSGI)>
-                    (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalSGI")));
-        }
-        if (ext.X11_MESA_swap_control)
-        {
-            glXSwapIntervalMESA = de::function_cast<decltype(glXSwapIntervalMESA)>
-                    (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalMESA")));
         }
 #endif
 

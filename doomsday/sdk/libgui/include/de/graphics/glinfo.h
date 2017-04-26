@@ -67,6 +67,8 @@ public:
         //duint32 NV_texture_env_combine4 : 1;
         //duint32 SGIS_generate_mipmap : 1;
 
+        duint32 KHR_debug : 1;
+
 #ifdef WIN32
         //duint32 Windows_ARB_multisample : 1;
         duint32 Windows_EXT_swap_control : 1;

@@ -218,11 +218,14 @@ struct DGLDrawState
 
     void glDeinit()
     {
-        foreach (GLData::DrawBuffer *dbuf, gl->buffers)
+        if (gl)
         {
-            dbuf->release();
+            foreach (GLData::DrawBuffer *dbuf, gl->buffers)
+            {
+                dbuf->release();
+            }
+            gl.reset();
         }
-        gl.reset();
     }
 
     GLData::DrawBuffer &nextBuffer()
@@ -294,8 +297,9 @@ struct DGLDrawState
         case DGL_TRIANGLE_STRIP:    return GL_TRIANGLE_STRIP;
         case DGL_QUADS:             return GL_TRIANGLES; // converted
 
-        case DGL_NO_PRIMITIVE:      DENG2_ASSERT(!"No primitive type specified"); return GL_NONE;
+        case DGL_NO_PRIMITIVE:      DENG2_ASSERT(!"No primitive type specified"); break;
         }
+        return GL_NONE;
     }
 
     /**
