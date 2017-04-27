@@ -74,7 +74,7 @@ DENG2_PIMPL_NOREF(AutomapStyle)
     }
 
     void newLineInfo(int reqAutomapFlags, int reqSpecial, int reqSided, int reqNotFlagged,
-        float r, float g, float b, float a, blendmode_t blendmode, glowtype_t glowType,
+        float r, float g, float b, float a, blendmode_t /*blendmode*/, glowtype_t glowType,
         float glowStrength, float glowSize, dd_bool scaleGlowWithView)
     {
         DENG2_ASSERT(reqSpecial >= 0)
@@ -104,7 +104,7 @@ DENG2_PIMPL_NOREF(AutomapStyle)
         info->glowStrength  = de::clamp(0.f, glowStrength, 1.f);
         info->glowSize      = glowSize;
         info->scaleWithView = scaleGlowWithView;
-        info->blendMode     = blendmode;
+        //info->blendMode     = blendmode;
     }
 };
 
@@ -178,7 +178,7 @@ void AutomapStyle::applyDefaults()
     d->mapObjectInfo[MOL_LINEDEF_UNSEEN].glow = GLOW_NONE;
     d->mapObjectInfo[MOL_LINEDEF_UNSEEN].glowStrength = 1;
     d->mapObjectInfo[MOL_LINEDEF_UNSEEN].glowSize = 10;
-    d->mapObjectInfo[MOL_LINEDEF_UNSEEN].blendMode = BM_NORMAL;
+    //d->mapObjectInfo[MOL_LINEDEF_UNSEEN].blendMode = BM_NORMAL;
     d->mapObjectInfo[MOL_LINEDEF_UNSEEN].scaleWithView = false;
     d->mapObjectInfo[MOL_LINEDEF_UNSEEN].rgba[0] = 1;
     d->mapObjectInfo[MOL_LINEDEF_UNSEEN].rgba[1] = 1;
@@ -187,7 +187,7 @@ void AutomapStyle::applyDefaults()
     d->mapObjectInfo[MOL_LINEDEF].glow = GLOW_NONE;
     d->mapObjectInfo[MOL_LINEDEF].glowStrength = 1;
     d->mapObjectInfo[MOL_LINEDEF].glowSize = 10;
-    d->mapObjectInfo[MOL_LINEDEF].blendMode = BM_NORMAL;
+    //d->mapObjectInfo[MOL_LINEDEF].blendMode = BM_NORMAL;
     d->mapObjectInfo[MOL_LINEDEF].scaleWithView = false;
     d->mapObjectInfo[MOL_LINEDEF].rgba[0] = 1;
     d->mapObjectInfo[MOL_LINEDEF].rgba[1] = 1;
@@ -196,7 +196,7 @@ void AutomapStyle::applyDefaults()
     d->mapObjectInfo[MOL_LINEDEF_TWOSIDED].glow = GLOW_NONE;
     d->mapObjectInfo[MOL_LINEDEF_TWOSIDED].glowStrength = 1;
     d->mapObjectInfo[MOL_LINEDEF_TWOSIDED].glowSize = 10;
-    d->mapObjectInfo[MOL_LINEDEF_TWOSIDED].blendMode = BM_NORMAL;
+    //d->mapObjectInfo[MOL_LINEDEF_TWOSIDED].blendMode = BM_NORMAL;
     d->mapObjectInfo[MOL_LINEDEF_TWOSIDED].scaleWithView = false;
     d->mapObjectInfo[MOL_LINEDEF_TWOSIDED].rgba[0] = 1;
     d->mapObjectInfo[MOL_LINEDEF_TWOSIDED].rgba[1] = 1;
@@ -205,7 +205,7 @@ void AutomapStyle::applyDefaults()
     d->mapObjectInfo[MOL_LINEDEF_FLOOR].glow = GLOW_NONE;
     d->mapObjectInfo[MOL_LINEDEF_FLOOR].glowStrength = 1;
     d->mapObjectInfo[MOL_LINEDEF_FLOOR].glowSize = 10;
-    d->mapObjectInfo[MOL_LINEDEF_FLOOR].blendMode = BM_NORMAL;
+    //d->mapObjectInfo[MOL_LINEDEF_FLOOR].blendMode = BM_NORMAL;
     d->mapObjectInfo[MOL_LINEDEF_FLOOR].scaleWithView = false;
     d->mapObjectInfo[MOL_LINEDEF_FLOOR].rgba[0] = 1;
     d->mapObjectInfo[MOL_LINEDEF_FLOOR].rgba[1] = 1;
@@ -214,7 +214,7 @@ void AutomapStyle::applyDefaults()
     d->mapObjectInfo[MOL_LINEDEF_CEILING].glow = GLOW_NONE;
     d->mapObjectInfo[MOL_LINEDEF_CEILING].glowStrength = 1;
     d->mapObjectInfo[MOL_LINEDEF_CEILING].glowSize = 10;
-    d->mapObjectInfo[MOL_LINEDEF_CEILING].blendMode = BM_NORMAL;
+    //d->mapObjectInfo[MOL_LINEDEF_CEILING].blendMode = BM_NORMAL;
     d->mapObjectInfo[MOL_LINEDEF_CEILING].scaleWithView = false;
     d->mapObjectInfo[MOL_LINEDEF_CEILING].rgba[0] = 1;
     d->mapObjectInfo[MOL_LINEDEF_CEILING].rgba[1] = 1;

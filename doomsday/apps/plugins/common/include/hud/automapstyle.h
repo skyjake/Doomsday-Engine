@@ -162,7 +162,7 @@ struct automapcfg_lineinfo_t
     int reqNotFlagged;
     int reqAutomapFlags;
     float rgba[4];
-    blendmode_t blendMode;
+    //blendmode_t blendMode;
     float glowStrength, glowSize;
     glowtype_t glow;
     dd_bool scaleWithView;
