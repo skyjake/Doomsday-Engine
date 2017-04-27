@@ -258,7 +258,7 @@ struct DGLDrawState
 
         // Upload the vertex data.
         GLData::DrawBuffer &buf = nextBuffer();
-        buf.arrayData.setData(&vertices[0], sizeof(Vertex) * vertices.size(), gl::Dynamic);
+        buf.arrayData.setData(&vertices[0], sizeof(Vertex) * vertices.size(), gl::Stream);
 
         GL.glBindVertexArray(buf.vertexArray);
         LIBGUI_ASSERT_GL_OK();
