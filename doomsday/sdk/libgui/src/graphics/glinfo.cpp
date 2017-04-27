@@ -72,6 +72,9 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
     PFNGLXSWAPINTERVALMESAPROC glXSwapIntervalMESA = nullptr;
 #endif
 
+#ifdef DENG_ENABLE_OPENGL_DEBUG_LOGGER
+    QOpenGLDebugLogger *logger = nullptr;
+#endif
 
     Impl()
     {
@@ -223,7 +226,7 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
 #endif
 
 #ifdef DENG_ENABLE_OPENGL_DEBUG_LOGGER
-        QOpenGLDebugLogger *logger = new QOpenGLDebugLogger(&GLWindow::main());
+        logger = new QOpenGLDebugLogger(&GLWindow::main());
         if (!ext.KHR_debug)
         {
             qDebug() << "[GLInfo] GL_KHR_debug is not available";
@@ -284,14 +287,18 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
                 case QOpenGLDebugMessage::LowSeverity:
                     mType = " low  ";
                     break;
-                case QOpenGLDebugMessage::NotificationSeverity:
+                case QOpenGLDebugMessage::NotificationSeverity:                    
                     mType = " note ";
                     break;
                 default:
                     break;
                 }
 
-                qDebug("[OpenGL] %s (%s): %s", mType, mSeverity, debugMessage.message().toLatin1().constData());
+                qDebug("[OpenGL] %04x %s (%s): %s",
+                       debugMessage.id(),
+                       mType,
+                       mSeverity,
+                       debugMessage.message().toLatin1().constData());
             });
             logger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
         }
@@ -378,7 +385,13 @@ void GLInfo::glInit()
 }
 
 void GLInfo::glDeinit()
-{
+{    
+#ifdef DENG_ENABLE_OPENGL_DEBUG_LOGGER
+    if (info.d->logger)
+    {
+        info.d->logger->stopLogging();
+    }
+#endif
     info.d.reset();
 }
 

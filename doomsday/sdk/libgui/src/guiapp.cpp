@@ -52,7 +52,7 @@ void GuiApp::setDefaultOpenGLFormat() // static
     fmt.setDepthBufferSize(24);
     fmt.setStencilBufferSize(8);
     fmt.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
-#ifdef DENG_ENABLE_OPENGL_DEBUG_LOGGER
+#ifdef DENG2_DEBUG
     fmt.setOption(QSurfaceFormat::DebugContext, true);
 #endif
     QSurfaceFormat::setDefaultFormat(fmt);
