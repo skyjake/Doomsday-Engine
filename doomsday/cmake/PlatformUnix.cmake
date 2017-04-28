@@ -1,6 +1,14 @@
 # Linux / BSD / other Unix
 include (PlatformGenericUnix)
 
+if (NOT CMAKE_CXX_COMPILER_ID)
+    if (CMAKE_CXX_COMPILER MATCHES ".*g\\+\\+.*")
+        message (STATUS "CMake did not detect the compiler; based on name we assume GNU C++")
+        set (CMAKE_CXX_COMPILER_ID "GNU")
+        set (CMAKE_COMPILER_IS_GNUCXX YES)
+    endif ()
+endif ()
+
 set (DENG_X11 ON)
 set (DENG_PLATFORM_SUFFIX x11)
 set (DENG_AMETHYST_PLATFORM UNIX)
