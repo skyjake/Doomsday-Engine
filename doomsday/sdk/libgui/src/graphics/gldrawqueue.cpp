@@ -36,7 +36,8 @@ DENG2_PIMPL_NOREF(GLDrawQueue)
     GLProgram *currentProgram = nullptr;
     GLBuffer const *currentBuffer = nullptr;
     GLBuffer::Indices indices;
-    GLBuffer indexBuffer;
+    QList<GLBuffer *> indexBuffers;
+    int indexBufferPos = 0;
 
     dsize batchIndex = 0;
 
@@ -50,6 +51,22 @@ DENG2_PIMPL_NOREF(GLDrawQueue)
 
     float defaultSaturation = 1.f;
     GLUniform uBatchSaturation { "uSaturation", GLUniform::FloatArray, GLShader::MAX_BATCH_UNIFORMS };
+
+    ~Impl()
+    {
+        qDeleteAll(indexBuffers);
+    }
+
+    GLBuffer &nextIndexBuffer()
+    {
+        if (indexBufferPos == indexBuffers.size())
+        {
+            // Allocate a new one.
+            indexBuffers << new GLBuffer;
+        }
+        indexBufferPos++;
+        return *indexBuffers.last();
+    }
 
     void unsetProgram()
     {
@@ -192,7 +209,8 @@ void GLDrawQueue::flush()
         /*qDebug() << "[GLDrawQueue] Flushing" << d->indices.size() << "elements"
                  << "consisting of" << batchCount << "batches";*/
 
-        d->indexBuffer.setIndices(gl::TriangleStrip, d->indices, gl::Stream);
+        GLBuffer &indexBuffer = d->nextIndexBuffer();
+        indexBuffer.setIndices(gl::TriangleStrip, d->indices, gl::Stream);
         d->indices.clear();
 
         if (d->uBatchColors)
@@ -203,7 +221,7 @@ void GLDrawQueue::flush()
         }
 
         d->currentProgram->beginUse();
-        d->currentBuffer ->drawWithIndices(d->indexBuffer);
+        d->currentBuffer ->drawWithIndices(indexBuffer);
         d->currentProgram->endUse();
 
         d->indices.clear();
@@ -213,6 +231,11 @@ void GLDrawQueue::flush()
 
     // Keep using the latest scissor.
     d->restoreBatchValues();
+}
+
+void GLDrawQueue::beginFrame()
+{
+    d->indexBufferPos = 0;
 }
 
 } // namespace de

@@ -74,6 +74,7 @@ void Painter::init()
     {
         d->init();
     }
+    d->queue.beginFrame();
 }
 
 void Painter::deinit()
