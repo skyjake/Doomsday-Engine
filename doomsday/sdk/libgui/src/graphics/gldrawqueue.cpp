@@ -36,7 +36,7 @@ DENG2_PIMPL_NOREF(GLDrawQueue)
     GLProgram *currentProgram = nullptr;
     GLBuffer const *currentBuffer = nullptr;
     GLBuffer::Indices indices;
-    //GLBuffer indexBuffer;
+    GLBuffer indexBuffer;
 
     dsize batchIndex = 0;
 
@@ -192,7 +192,8 @@ void GLDrawQueue::flush()
         /*qDebug() << "[GLDrawQueue] Flushing" << d->indices.size() << "elements"
                  << "consisting of" << batchCount << "batches";*/
 
-        //d->indexBuffer.setIndices(gl::TriangleStrip, d->indices, gl::Dynamic);
+        d->indexBuffer.setIndices(gl::TriangleStrip, d->indices, gl::Stream);
+        d->indices.clear();
 
         if (d->uBatchColors)
         {
@@ -202,7 +203,7 @@ void GLDrawQueue::flush()
         }
 
         d->currentProgram->beginUse();
-        d->currentBuffer ->drawWithIndices(gl::TriangleStrip, d->indices.constData(), d->indices.size());
+        d->currentBuffer ->drawWithIndices(d->indexBuffer);
         d->currentProgram->endUse();
 
         d->indices.clear();
