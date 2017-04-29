@@ -1,7 +1,7 @@
 /** @file rend_font.cpp  Font Renderer.
  *
- * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -110,7 +110,7 @@ static int typeInTime;
 
 static void errorIfNotInited(const char* callerName)
 {
-    if(initedFont) return;
+    if (initedFont) return;
     App_Error("%s: font renderer module is not presently initialized.", callerName);
     // Unreachable. Prevents static analysers from getting rather confused, poor things.
     exit(1);
@@ -119,7 +119,7 @@ static void errorIfNotInited(const char* callerName)
 static int topToAscent(AbstractFont *font)
 {
     int lineHeight = font->lineSpacing();
-    if(lineHeight == 0)
+    if (lineHeight == 0)
         return 0;
     return lineHeight - font->ascent();
 }
@@ -131,7 +131,7 @@ static inline fr_state_attributes_t *currentAttribs(void)
 
 void FR_Shutdown(void)
 {
-    if(!initedFont) return;
+    if (!initedFont) return;
     initedFont = false;
 }
 
@@ -142,13 +142,13 @@ dd_bool FR_Available(void)
 
 void FR_Ticker(timespan_t /*ticLength*/)
 {
-    if(!initedFont)
+    if (!initedFont)
         return;
 
     // Restricted to fixed 35 Hz ticks.
     /// @todo We should not be synced to the games' fixed "sharp" timing.
     ///        This font renderer is used by the engine's UI also.
-    if(!DD_IsSharpTick())
+    if (!DD_IsSharpTick())
         return; // It's too soon.
 
     ++typeInTime;
@@ -165,7 +165,7 @@ void FR_ResetTypeinTimer(void)
 void FR_SetFont(fontid_t num)
 {
     errorIfNotInited("FR_SetFont");
-    if(num != NOFONTID)
+    if (num != NOFONTID)
     {
         try
         {
@@ -173,7 +173,7 @@ void FR_SetFont(fontid_t num)
             fr.fontNum = num;
             return;
         }
-        catch(ClientResources::UnknownFontIdError const &)
+        catch (ClientResources::UnknownFontIdError const &)
         {}
     }
     else
@@ -206,7 +206,7 @@ void FR_LoadDefaultAttrib(void)
 void FR_PushAttrib(void)
 {
     errorIfNotInited("FR_PushAttrib");
-    if(fr.attribStackDepth+1 == FR_MAX_ATTRIB_STACK_DEPTH)
+    if (fr.attribStackDepth+1 == FR_MAX_ATTRIB_STACK_DEPTH)
     {
         App_Error("FR_PushAttrib: STACK_OVERFLOW.");
         exit(1); // Unreachable.
@@ -219,7 +219,7 @@ void FR_PushAttrib(void)
 void FR_PopAttrib(void)
 {
     errorIfNotInited("FR_PopAttrib");
-    if(fr.attribStackDepth == 0)
+    if (fr.attribStackDepth == 0)
     {
         App_Error("FR_PopAttrib: STACK_UNDERFLOW.");
         exit(1); // Unreachable.
@@ -365,8 +365,8 @@ void FR_ShadowOffset(int* offsetX, int* offsetY)
 {
     fr_state_attributes_t* sat = currentAttribs();
     errorIfNotInited("FR_ShadowOffset");
-    if(NULL != offsetX) *offsetX = sat->shadowOffsetX;
-    if(NULL != offsetY) *offsetY = sat->shadowOffsetY;
+    if (NULL != offsetX) *offsetX = sat->shadowOffsetX;
+    if (NULL != offsetY) *offsetY = sat->shadowOffsetY;
 }
 
 #undef FR_SetShadowOffset
@@ -424,7 +424,7 @@ void FR_SetCaseScale(dd_bool value)
 void FR_CharSize(Size2Raw *size, uchar ch)
 {
     errorIfNotInited("FR_CharSize");
-    if(size)
+    if (size)
     {
         Vector2ui dimensions = App_Resources().font(fr.fontNum).glyphPosCoords(ch).size();
         size->width  = dimensions.x;
@@ -436,7 +436,7 @@ void FR_CharSize(Size2Raw *size, uchar ch)
 int FR_CharWidth(uchar ch)
 {
     errorIfNotInited("FR_CharWidth");
-    if(fr.fontNum != 0)
+    if (fr.fontNum != 0)
         return App_Resources().font(fr.fontNum).glyphPosCoords(ch).width();
     return 0;
 }
@@ -445,7 +445,7 @@ int FR_CharWidth(uchar ch)
 int FR_CharHeight(uchar ch)
 {
     errorIfNotInited("FR_CharHeight");
-    if(fr.fontNum != 0)
+    if (fr.fontNum != 0)
         return App_Resources().font(fr.fontNum).glyphPosCoords(ch).height();
     return 0;
 }
@@ -453,11 +453,11 @@ int FR_CharHeight(uchar ch)
 int FR_SingleLineHeight(char const *text)
 {
     errorIfNotInited("FR_SingleLineHeight");
-    if(fr.fontNum == 0 || !text)
+    if (fr.fontNum == 0 || !text)
         return 0;
     AbstractFont &font = App_Resources().font(fr.fontNum);
     int ascent = font.ascent();
-    if(ascent != 0)
+    if (ascent != 0)
         return ascent;
     return font.glyphPosCoords((uchar)text[0]).height();
 }
@@ -465,11 +465,11 @@ int FR_SingleLineHeight(char const *text)
 int FR_GlyphTopToAscent(char const *text)
 {
     errorIfNotInited("FR_GlyphTopToAscent");
-    if(fr.fontNum == 0 || !text)
+    if (fr.fontNum == 0 || !text)
         return 0;
     AbstractFont &font = App_Resources().font(fr.fontNum);
     int lineHeight = font.lineSpacing();
-    if(lineHeight == 0)
+    if (lineHeight == 0)
         return 0;
     return lineHeight - font.ascent();
 }
@@ -478,7 +478,7 @@ static int textFragmentWidth(char const *fragment)
 {
     DENG2_ASSERT(fragment != 0);
 
-    if(fr.fontNum == 0)
+    if (fr.fontNum == 0)
     {
         App_Error("textFragmentHeight: Cannot determine height without a current font.");
         exit(1);
@@ -491,7 +491,7 @@ static int textFragmentWidth(char const *fragment)
     size_t i = 0;
     char const *ch = fragment;
     uchar c;
-    while(i++ < len && (c = *ch++) != 0 && c != '\n')
+    while (i++ < len && (c = *ch++) != 0 && c != '\n')
     {
         width += FR_CharWidth(c);
     }
@@ -503,7 +503,7 @@ static int textFragmentHeight(char const *fragment)
 {
     DENG2_ASSERT(fragment != 0);
 
-    if(fr.fontNum == 0)
+    if (fr.fontNum == 0)
     {
         App_Error("textFragmentHeight: Cannot determine height without a current font.");
         exit(1);
@@ -516,7 +516,7 @@ static int textFragmentHeight(char const *fragment)
     size_t len = strlen(fragment);
     char const *ch = fragment;
     uchar c;
-    while(i++ < len && (c = *ch++) != 0 && c != '\n')
+    while (i++ < len && (c = *ch++) != 0 && c != '\n')
     {
         height = de::max(height, FR_CharHeight(c));
     }
@@ -527,8 +527,8 @@ static int textFragmentHeight(char const *fragment)
 /*
 static void textFragmentSize(int* width, int* height, const char* fragment)
 {
-    if(width)  *width  = textFragmentWidth(fragment);
-    if(height) *height = textFragmentHeight(fragment);
+    if (width)  *width  = textFragmentWidth(fragment);
+    if (height) *height = textFragmentHeight(fragment);
 }
 */
 
@@ -551,24 +551,24 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
     unsigned char c;
     const char* ch;
 
-    if(alignFlags & ALIGN_RIGHT)
+    if (alignFlags & ALIGN_RIGHT)
         x -= textFragmentWidth(fragment);
-    else if(!(alignFlags & ALIGN_LEFT))
+    else if (!(alignFlags & ALIGN_LEFT))
         x -= textFragmentWidth(fragment)/2;
 
-    if(alignFlags & ALIGN_BOTTOM)
+    if (alignFlags & ALIGN_BOTTOM)
         y -= textFragmentHeight(fragment);
-    else if(!(alignFlags & ALIGN_TOP))
+    else if (!(alignFlags & ALIGN_TOP))
         y -= textFragmentHeight(fragment)/2;
 
-    if(!(noTypein && noGlitter))
+    if (!(noTypein && noGlitter))
     {
         flashColor[CR] = (1 + 2 * sat->rgba[CR]) / 3;
         flashColor[CG] = (1 + 2 * sat->rgba[CG]) / 3;
         flashColor[CB] = (1 + 2 * sat->rgba[CB]) / 3;
     }
 
-    if(renderWireframe > 1)
+    if (renderWireframe > 1)
     {
         DENG_ASSERT_IN_MAIN_THREAD();
         DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -576,9 +576,9 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         DGL_Disable(DGL_TEXTURE_2D);
     }
-    if(BitmapFont *bmapFont = font->maybeAs<BitmapFont>())
+    if (BitmapFont *bmapFont = font->maybeAs<BitmapFont>())
     {
-        if(bmapFont->textureGLName())
+        if (bmapFont->textureGLName())
         {
             GL_BindTextureUnmanaged(bmapFont->textureGLName(), gl::ClampToEdge,
                                     gl::ClampToEdge, filterUI? gl::Linear : gl::Nearest);
@@ -591,14 +591,14 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
         }
     }
 
-    for(int pass = (noShadow? 1 : 0); pass < (noCharacter && noGlitter? 1 : 2); ++pass)
+    for (int pass = (noShadow? 1 : 0); pass < (noCharacter && noGlitter? 1 : 2); ++pass)
     {
         count = initialCount;
         ch = fragment;
         cx = x + (pass == 0? sat->shadowOffsetX : 0);
         cy = y + (pass == 0? sat->shadowOffsetY : 0);
 
-        for(;;)
+        for (;;)
         {
             c = *ch++;
             yoff = 0;
@@ -610,71 +610,71 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
             shadowMul = (noShadow? 0 : sat->rgba[CA]);
 
             // Do the type-in effect?
-            if(!noTypein && (pass || (!noShadow && !pass)))
+            if (!noTypein && (pass || (!noShadow && !pass)))
             {
                 int maxCount = (typeInTime > 0? typeInTime * 2 : 0);
 
-                if(pass)
+                if (pass)
                 {
-                    if(!noGlitter)
+                    if (!noGlitter)
                     {
-                        if(count == maxCount)
+                        if (count == maxCount)
                         {
                             glitterMul = 1;
                             flashColor[CR] = sat->rgba[CR];
                             flashColor[CG] = sat->rgba[CG];
                             flashColor[CB] = sat->rgba[CB];
                         }
-                        else if(count + 1 == maxCount)
+                        else if (count + 1 == maxCount)
                         {
                             glitterMul = 0.88f;
                             flashColor[CR] = (1 + sat->rgba[CR]) / 2;
                             flashColor[CG] = (1 + sat->rgba[CG]) / 2;
                             flashColor[CB] = (1 + sat->rgba[CB]) / 2;
                         }
-                        else if(count + 2 == maxCount)
+                        else if (count + 2 == maxCount)
                         {
                             glitterMul = 0.75f;
                             flashColor[CR] = sat->rgba[CR];
                             flashColor[CG] = sat->rgba[CG];
                             flashColor[CB] = sat->rgba[CB];
                         }
-                        else if(count + 3 == maxCount)
+                        else if (count + 3 == maxCount)
                         {
                             glitterMul = 0.5f;
                             flashColor[CR] = sat->rgba[CR];
                             flashColor[CG] = sat->rgba[CG];
                             flashColor[CB] = sat->rgba[CB];
                         }
-                        else if(count > maxCount)
+                        else if (count > maxCount)
                         {
                             break;
                         }
                     }
-                    else if(count > maxCount)
+                    else if (count > maxCount)
                     {
                         break;
                     }
                 }
                 else
                 {
-                    if(count == maxCount)
+                    if (count == maxCount)
                     {
                         shadowMul = 0;
                     }
-                    else if(count + 1 == maxCount)
+                    else if (count + 1 == maxCount)
                     {
                         shadowMul *= .25f;
                     }
-                    else if(count + 2 == maxCount)
+                    else if (count + 2 == maxCount)
                     {
                         shadowMul *= .5f;
                     }
-                    else if(count + 3 == maxCount)
+                    else if (count + 3 == maxCount)
                     {
                         shadowMul *= .75f;
                     }
-                    else if(count > maxCount)
+                    else if (count > maxCount)
                     {
                         break;
                     }
@@ -682,25 +682,25 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
             }
             count++;
 
-            if(!c || c == '\n')
+            if (!c || c == '\n')
                 break;
 
             w = FR_CharWidth(c);
             h = FR_CharHeight(c);
 
-            if(' ' != c)
+            if (c != ' ')
             {
                 // A non-white-space character we have a glyph for.
-                if(pass)
+                if (pass)
                 {
-                    if(!noCharacter)
+                    if (!noCharacter)
                     {
                         // The character itself.
                         DGL_Color4fv(sat->rgba);
                         drawChar(c, cx, cy + yoff, font, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
                     }
 
-                    if(!noGlitter && glitter > 0)
+                    if (!noGlitter && glitter > 0)
                     {
                         // Do something flashy.
                         Point2Raw origin;
@@ -713,7 +713,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
                         drawFlash(&origin, &size, true);
                     }
                 }
-                else if(!noShadow)
+                else if (!noShadow)
                 {
                     Point2Raw origin;
                     Size2Raw size;
@@ -731,15 +731,15 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
     }
 
     // Restore previous GL-state.
-    if(BitmapFont *bmapFont = font->maybeAs<BitmapFont>())
+    if (BitmapFont *bmapFont = font->maybeAs<BitmapFont>())
     {
-        if(bmapFont->textureGLName())
+        if (bmapFont->textureGLName())
         {
             DGL_MatrixMode(DGL_TEXTURE);
             DGL_PopMatrix();
         }
     }
-    if(renderWireframe > 1)
+    if (renderWireframe > 1)
     {
         /// @todo do not assume previous state.
         DGL_Enable(DGL_TEXTURE_2D);
@@ -750,22 +750,22 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
 static void drawChar(uchar ch, float x, float y, AbstractFont *font,
     int alignFlags, short /*textFlags*/)
 {
-    if(alignFlags & ALIGN_RIGHT)
+    if (alignFlags & ALIGN_RIGHT)
     {
         x -= font->glyphPosCoords(ch).width();
     }
-    else if(!(alignFlags & ALIGN_LEFT))
+    else if (!(alignFlags & ALIGN_LEFT))
     {
         x -= font->glyphPosCoords(ch).width() / 2;
     }
 
     int const ascent = font->ascent();
     int const lineHeight = ascent? ascent : font->glyphPosCoords(ch).height();
-    if(alignFlags & ALIGN_BOTTOM)
+    if (alignFlags & ALIGN_BOTTOM)
     {
         y -= topToAscent(font) + lineHeight;
     }
-    else if(!(alignFlags & ALIGN_TOP))
+    else if (!(alignFlags & ALIGN_TOP))
     {
         y -= (topToAscent(font) + lineHeight) / 2;
     }
@@ -775,7 +775,7 @@ static void drawChar(uchar ch, float x, float y, AbstractFont *font,
 
     Rectanglei geometry = font->glyphPosCoords(ch);
 
-    if(BitmapFont *bmapFont = font->maybeAs<BitmapFont>())
+    if (BitmapFont *bmapFont = font->maybeAs<BitmapFont>())
     {
         /// @todo Filtering should be determined at a higher level.
         /// @todo We should not need to re-bind this texture here.
@@ -784,7 +784,7 @@ static void drawChar(uchar ch, float x, float y, AbstractFont *font,
 
         geometry = geometry.expanded(bmapFont->textureMargin().toVector2i());
     }
-    else if(CompositeBitmapFont *compFont = font->maybeAs<CompositeBitmapFont>())
+    else if (CompositeBitmapFont *compFont = font->maybeAs<CompositeBitmapFont>())
     {
         GL_BindTexture(compFont->glyphTexture(ch));
         geometry = geometry.expanded(compFont->glyphTextureBorder(ch));
@@ -797,7 +797,7 @@ static void drawChar(uchar ch, float x, float y, AbstractFont *font,
 
     GL_DrawRectWithCoords(geometry, coords);
 
-    if(font->is<CompositeBitmapFont>())
+    if (font->is<CompositeBitmapFont>())
     {
         GL_SetNoTexture();
     }
@@ -814,7 +814,7 @@ static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright
     int x, y, w, h;
 
     // Don't draw anything for very small letters.
-    if(size->height <= 4) return;
+    if (size->height <= 4) return;
 
     x = origin->x + (int) (size->width  / 2.0f - fw / 2);
     y = origin->y + (int) (size->height / 2.0f - fh / 2);
@@ -853,7 +853,7 @@ static float parseFloat(char** str)
     char* end;
 
     *str = M_SkipWhite(*str);
-    if(**str != '=') return 0; // Now I'm confused!
+    if (**str != '=') return 0; // Now I'm confused!
 
     *str = M_SkipWhite(*str + 1);
     value = (float) strtod(*str, &end);
@@ -872,30 +872,30 @@ static float parseFloat(char** str)
     size_t len;
     char* end;
 
-    if(!buf || bufLen == 0) return false;
+    if (!buf || bufLen == 0) return false;
 
     *str = M_SkipWhite(*str);
-    if(**str != '=') return false; // Now I'm confused!
+    if (**str != '=') return false; // Now I'm confused!
 
     // Skip over any leading whitespace.
     *str = M_SkipWhite(*str + 1);
 
     // Skip over any opening '"' character.
-    if(**str == '"') (*str)++;
+    if (**str == '"') (*str)++;
 
     // Find the end of the string.
     end = *str;
-    while(*end && *end != '}' && *end != ',' && *end !='"') { end++; }
+    while (*end && *end != '}' && *end != ',' && *end !='"') { end++; }
 
     len = end - *str;
-    if(len != 0)
+    if (len != 0)
     {
         dd_snprintf(buf, MIN_OF(len+1, bufLen), "%s", *str);
         *str = end;
     }
 
     // Skip over any closing '"' character.
-    if(**str == '"')
+    if (**str == '"')
         (*str)++;
 
     return true;
@@ -906,117 +906,117 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
     LOG_AS("parseParamaterBlock");
 
     (*strPtr)++;
-    while(*(*strPtr) && *(*strPtr) != '}')
+    while (*(*strPtr) && *(*strPtr) != '}')
     {
         (*strPtr) = M_SkipWhite((*strPtr));
 
         // What do we have here?
-        if(!strnicmp((*strPtr), "flash", 5))
+        if (!strnicmp((*strPtr), "flash", 5))
         {
             (*strPtr) += 5;
             state->typeIn = true;
         }
-        else if(!strnicmp((*strPtr), "noflash", 7))
+        else if (!strnicmp((*strPtr), "noflash", 7))
         {
             (*strPtr) += 7;
             state->typeIn = false;
         }
-        else if(!strnicmp((*strPtr), "case", 4))
+        else if (!strnicmp((*strPtr), "case", 4))
         {
             (*strPtr) += 4;
             state->caseScale = true;
         }
-        else if(!strnicmp((*strPtr), "nocase", 6))
+        else if (!strnicmp((*strPtr), "nocase", 6))
         {
             (*strPtr) += 6;
             state->caseScale = false;
         }
-        else if(!strnicmp((*strPtr), "ups", 3))
+        else if (!strnicmp((*strPtr), "ups", 3))
         {
             (*strPtr) += 3;
             state->caseMod[1].scale = parseFloat(&(*strPtr));
         }
-        else if(!strnicmp((*strPtr), "upo", 3))
+        else if (!strnicmp((*strPtr), "upo", 3))
         {
             (*strPtr) += 3;
             state->caseMod[1].offset = parseFloat(&(*strPtr));
         }
-        else if(!strnicmp((*strPtr), "los", 3))
+        else if (!strnicmp((*strPtr), "los", 3))
         {
             (*strPtr) += 3;
             state->caseMod[0].scale = parseFloat(&(*strPtr));
         }
-        else if(!strnicmp((*strPtr), "loo", 3))
+        else if (!strnicmp((*strPtr), "loo", 3))
         {
             (*strPtr) += 3;
             state->caseMod[0].offset = parseFloat(&(*strPtr));
         }
-        else if(!strnicmp((*strPtr), "break", 5))
+        else if (!strnicmp((*strPtr), "break", 5))
         {
             (*strPtr) += 5;
             ++(*numBreaks);
         }
-        else if(!strnicmp((*strPtr), "r", 1))
+        else if (!strnicmp((*strPtr), "r", 1))
         {
             (*strPtr)++;
             state->rgba[CR] = parseFloat(&(*strPtr));
         }
-        else if(!strnicmp((*strPtr), "g", 1))
+        else if (!strnicmp((*strPtr), "g", 1))
         {
             (*strPtr)++;
             state->rgba[CG] = parseFloat(&(*strPtr));
         }
-        else if(!strnicmp((*strPtr), "b", 1))
+        else if (!strnicmp((*strPtr), "b", 1))
         {
             (*strPtr)++;
             state->rgba[CB] = parseFloat(&(*strPtr));
         }
-        else if(!strnicmp((*strPtr), "a", 1))
+        else if (!strnicmp((*strPtr), "a", 1))
         {
             (*strPtr)++;
             state->rgba[CA] = parseFloat(&(*strPtr));
         }
-        else if(!strnicmp((*strPtr), "x", 1))
+        else if (!strnicmp((*strPtr), "x", 1))
         {
             (*strPtr)++;
             state->offX = parseFloat(&(*strPtr));
         }
-        else if(!strnicmp((*strPtr), "y", 1))
+        else if (!strnicmp((*strPtr), "y", 1))
         {
             (*strPtr)++;
             state->offY = parseFloat(&(*strPtr));
         }
-        else if(!strnicmp((*strPtr), "scalex", 6))
+        else if (!strnicmp((*strPtr), "scalex", 6))
         {
             (*strPtr) += 6;
             state->scaleX = parseFloat(&(*strPtr));
         }
-        else if(!strnicmp((*strPtr), "scaley", 6))
+        else if (!strnicmp((*strPtr), "scaley", 6))
         {
             (*strPtr) += 6;
             state->scaleY = parseFloat(&(*strPtr));
         }
-        else if(!strnicmp((*strPtr), "scale", 5))
+        else if (!strnicmp((*strPtr), "scale", 5))
         {
             (*strPtr) += 5;
             state->scaleX = state->scaleY = parseFloat(&(*strPtr));
         }
-        else if(!strnicmp((*strPtr), "angle", 5))
+        else if (!strnicmp((*strPtr), "angle", 5))
         {
             (*strPtr) += 5;
             state->angle = parseFloat(&(*strPtr));
         }
-        else if(!strnicmp((*strPtr), "glitter", 7))
+        else if (!strnicmp((*strPtr), "glitter", 7))
         {
             (*strPtr) += 7;
             state->glitterStrength = parseFloat(&(*strPtr));
         }
-        else if(!strnicmp((*strPtr), "shadow", 6))
+        else if (!strnicmp((*strPtr), "shadow", 6))
         {
             (*strPtr) += 6;
             state->shadowStrength = parseFloat(&(*strPtr));
         }
-        else if(!strnicmp((*strPtr), "tracking", 8))
+        else if (!strnicmp((*strPtr), "tracking", 8))
         {
             (*strPtr) += 8;
             state->tracking = parseFloat(&(*strPtr));
@@ -1024,19 +1024,19 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
         else
         {
             // Perhaps a font name?
-            if(!strnicmp((*strPtr), "font", 4))
+            if (!strnicmp((*strPtr), "font", 4))
             {
                 char buf[80];
 
                 (*strPtr) += 4;
-                if(parseString(&(*strPtr), buf, 80))
+                if (parseString(&(*strPtr), buf, 80))
                 {
                     try
                     {
                         state->fontNum = App_Resources().fontManifest(de::makeUri(buf)).uniqueId();
                         continue;
                     }
-                    catch(Resources::MissingResourceManifestError const &)
+                    catch (Resources::MissingResourceManifestError const &)
                     {}
                 }
 
@@ -1045,7 +1045,7 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
             }
 
             // Unknown, skip it.
-            if(*(*strPtr) != '}')
+            if (*(*strPtr) != '}')
             {
                 (*strPtr)++;
             }
@@ -1053,7 +1053,7 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
     }
 
     // Skip over the closing brace.
-    if(*(*strPtr))
+    if (*(*strPtr))
         (*strPtr)++;
 }
 
@@ -1087,15 +1087,15 @@ static void initDrawTextState(drawtextstate_t* state, short textFlags)
 
 static char* enlargeTextBuffer(size_t lengthMinusTerminator)
 {
-    if(lengthMinusTerminator <= FR_SMALL_TEXT_BUFFER_SIZE)
+    if (lengthMinusTerminator <= FR_SMALL_TEXT_BUFFER_SIZE)
     {
         return smallTextBuffer;
     }
-    if(largeTextBuffer == NULL || lengthMinusTerminator > largeTextBufferSize)
+    if (largeTextBuffer == NULL || lengthMinusTerminator > largeTextBufferSize)
     {
         largeTextBufferSize = lengthMinusTerminator;
         largeTextBuffer = (char*)realloc(largeTextBuffer, largeTextBufferSize+1);
-        if(largeTextBuffer == NULL)
+        if (largeTextBuffer == NULL)
             App_Error("FR_EnlargeTextBuffer: Failed on reallocation of %lu bytes.",
                 (unsigned long)(lengthMinusTerminator+1));
     }
@@ -1104,7 +1104,7 @@ static char* enlargeTextBuffer(size_t lengthMinusTerminator)
 
 static void freeTextBuffer(void)
 {
-    if(largeTextBuffer == NULL)
+    if (largeTextBuffer == NULL)
         return;
     free(largeTextBuffer); largeTextBuffer = 0;
     largeTextBufferSize = 0;
@@ -1120,7 +1120,7 @@ int FR_TextWidth(const char* string)
 
     errorIfNotInited("FR_TextWidth");
 
-    if(!string || !string[0])
+    if (!string || !string[0])
         return 0;
 
     /// @todo All visual format parsing should be done in one place.
@@ -1128,33 +1128,33 @@ int FR_TextWidth(const char* string)
     w = 0;
     len = strlen(string);
     ch = string;
-    for(i = 0; i < len; ++i, ch++)
+    for (i = 0; i < len; ++i, ch++)
     {
         unsigned char c = *ch;
 
-        if(c == FR_FORMAT_ESCAPE_CHAR)
+        if (c == FR_FORMAT_ESCAPE_CHAR)
         {
             escaped = true;
             continue;
         }
-        if(!escaped && c == '{')
+        if (!escaped && c == '{')
         {
             skipping = true;
         }
-        else if(skipping && c == '}')
+        else if (skipping && c == '}')
         {
             skipping = false;
             continue;
         }
 
-        if(skipping)
+        if (skipping)
             continue;
 
         escaped = false;
 
-        if(c == '\n')
+        if (c == '\n')
         {
-            if(w > maxWidth)
+            if (w > maxWidth)
                 maxWidth = w;
             w = 0;
             continue;
@@ -1162,11 +1162,11 @@ int FR_TextWidth(const char* string)
 
         w += FR_CharWidth(c);
 
-        if(i != len - 1)
+        if (i != len - 1)
         {
             w += FR_Tracking();
         }
-        else if(maxWidth == -1)
+        else if (maxWidth == -1)
         {
             maxWidth = w;
         }
@@ -1183,7 +1183,7 @@ int FR_TextHeight(const char* string)
     const char* ch;
     size_t i, len;
 
-    if(!string || !string[0])
+    if (!string || !string[0])
         return 0;
 
     errorIfNotInited("FR_TextHeight");
@@ -1192,25 +1192,25 @@ int FR_TextHeight(const char* string)
     len = strlen(string);
     h = 0;
     ch = string;
-    for(i = 0; i < len; ++i, ch++)
+    for (i = 0; i < len; ++i, ch++)
     {
         unsigned char c = *ch;
         int charHeight;
 
-        if(c == '{')
+        if (c == '{')
         {
             skip = true;
         }
-        else if(c == '}')
+        else if (c == '}')
         {
             skip = false;
             continue;
         }
 
-        if(skip)
+        if (skip)
             continue;
 
-        if(c == '\n')
+        if (c == '\n')
         {
             h += currentLineHeight == 0? (FR_CharHeight('A') * (1+FR_Leading())) : currentLineHeight;
             currentLineHeight = 0;
@@ -1218,7 +1218,7 @@ int FR_TextHeight(const char* string)
         }
 
         charHeight = FR_CharHeight(c) * (1+FR_Leading());
-        if(charHeight > currentLineHeight)
+        if (charHeight > currentLineHeight)
             currentLineHeight = charHeight;
     }
     h += currentLineHeight;
@@ -1229,7 +1229,7 @@ int FR_TextHeight(const char* string)
 #undef FR_TextSize
 void FR_TextSize(Size2Raw* size, const char* text)
 {
-    if(!size) return;
+    if (!size) return;
     size->width  = FR_TextWidth(text);
     size->height = FR_TextHeight(text);
 }
@@ -1251,7 +1251,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
 
     errorIfNotInited("FR_DrawText");
 
-    if(!text || !text[0]) return;
+    if (!text || !text[0]) return;
 
     origin.x = _origin? _origin->x : 0;
     origin.y = _origin? _origin->y : 0;
@@ -1259,7 +1259,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
     _textFlags &= ~(DTF_INTERNAL_MASK);
 
     // If we aren't aligning to top-left we need to know the dimensions.
-    if(alignFlags & ALIGN_RIGHT)
+    if (alignFlags & ALIGN_RIGHT)
         FR_TextSize(&textSize, text);
 
     DENG_ASSERT_IN_MAIN_THREAD();
@@ -1268,8 +1268,8 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
     // We need to change the current color, so remember for restore.
     DGL_CurrentColor(origColor);
 
-    for(pass = ((_textFlags & DTF_NO_SHADOW)  != 0? 1 : 0);
-        pass < ((_textFlags & DTF_NO_GLITTER) != 0? 2 : 3); ++pass)
+    for (pass = ((_textFlags & DTF_NO_SHADOW)  != 0? 1 : 0);
+         pass < ((_textFlags & DTF_NO_GLITTER) != 0? 2 : 3); ++pass)
     {
         short textFlags = 0;
 
@@ -1278,7 +1278,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
         cy = (float) origin.y;
         curCase = -1;
         charCount = 0;
-        switch(pass)
+        switch (pass)
         {
         case 0: textFlags = _textFlags | (DTF_NO_GLITTER|DTF_NO_CHARACTER); break;
         case 1: textFlags = _textFlags | (DTF_NO_SHADOW |DTF_NO_GLITTER);   break;
@@ -1289,15 +1289,15 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
         initDrawTextState(&state, textFlags);
 
         str = (char*)text;
-        while(*str)
+        while (*str)
         {
-            if(*str == FR_FORMAT_ESCAPE_CHAR)
+            if (*str == FR_FORMAT_ESCAPE_CHAR)
             {
                 escaped = true;
                 ++str;
                 continue;
             }
-            if(!escaped && *str == '{') // Paramaters included?
+            if (!escaped && *str == '{') // Paramaters included?
             {
                 fontid_t lastFont = state.fontNum;
                 int lastTracking = state.tracking;
@@ -1315,60 +1315,60 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
 
                 parseParamaterBlock(&str, &state, &numBreaks);
 
-                if(numBreaks != 0)
+                if (numBreaks != 0)
                 {
                     do
                     {
                         cx = (float) origin.x;
                         cy += state.lastLineHeight * (1+lastLeading);
-                    } while(--numBreaks > 0);
+                    } while (--numBreaks > 0);
                 }
 
-                if(state.fontNum != lastFont)
+                if (state.fontNum != lastFont)
                     FR_SetFont(state.fontNum);
-                if(state.tracking != lastTracking)
+                if (state.tracking != lastTracking)
                     FR_SetTracking(state.tracking);
-                if(state.leading != lastLeading)
+                if (state.leading != lastLeading)
                     FR_SetLeading(state.leading);
-                if(state.rgba[CR] != lastRGBA[CR] || state.rgba[CG] != lastRGBA[CG] || state.rgba[CB] != lastRGBA[CB] || state.rgba[CA] != lastRGBA[CA])
+                if (state.rgba[CR] != lastRGBA[CR] || state.rgba[CG] != lastRGBA[CG] || state.rgba[CB] != lastRGBA[CB] || state.rgba[CA] != lastRGBA[CA])
                     FR_SetColorAndAlphav(state.rgba);
-                if(state.shadowStrength != lastShadowStrength)
+                if (state.shadowStrength != lastShadowStrength)
                     FR_SetShadowStrength(state.shadowStrength);
-                if(state.glitterStrength != lastGlitterStrength)
+                if (state.glitterStrength != lastGlitterStrength)
                     FR_SetGlitterStrength(state.glitterStrength);
-                if(state.caseScale != lastCaseScale)
+                if (state.caseScale != lastCaseScale)
                     FR_SetCaseScale(state.caseScale);
             }
 
-            for(end = str; *end && *end != FR_FORMAT_ESCAPE_CHAR && (escaped || *end != '{');)
+            for (end = str; *end && *end != FR_FORMAT_ESCAPE_CHAR && (escaped || *end != '{');)
             {
                 int newlines = 0, fragmentAlignFlags;
                 float alignx = 0;
 
                 // Find the end of the next fragment.
-                if(FR_CaseScale())
+                if (FR_CaseScale())
                 {
                     curCase = -1;
                     // Select a substring with characters of the same case (or whitespace).
-                    for(; *end && *end != FR_FORMAT_ESCAPE_CHAR && (escaped || *end != '{') &&
+                    for (; *end && *end != FR_FORMAT_ESCAPE_CHAR && (escaped || *end != '{') &&
                         *end != '\n'; end++)
                     {
                         escaped = false;
 
                         // We can skip whitespace.
-                        if(isspace(*end))
+                        if (isspace(*end))
                             continue;
 
-                        if(curCase < 0)
+                        if (curCase < 0)
                             curCase = (isupper(*end) != 0);
-                        else if(curCase != (isupper(*end) != 0))
+                        else if (curCase != (isupper(*end) != 0))
                             break;
                     }
                 }
                 else
                 {
                     curCase = 0;
-                    for(; *end && *end != FR_FORMAT_ESCAPE_CHAR && (escaped || *end != '{') &&
+                    for (; *end && *end != FR_FORMAT_ESCAPE_CHAR && (escaped || *end != '{') &&
                         *end != '\n'; end++) { escaped = false; }
                 }
 
@@ -1381,7 +1381,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                 fragment = buffer;
                 }
 
-                while(*end == '\n')
+                while (*end == '\n')
                 {
                     newlines++;
                     end++;
@@ -1390,7 +1390,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                 // Continue from here.
                 str = end;
 
-                if(!(alignFlags & (ALIGN_LEFT|ALIGN_RIGHT)))
+                if (!(alignFlags & (ALIGN_LEFT|ALIGN_RIGHT)))
                 {
                     fragmentAlignFlags = alignFlags;
                 }
@@ -1398,7 +1398,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                 {
                     // We'll take care of horizontal positioning of the fragment so align left.
                     fragmentAlignFlags = (alignFlags & ~(ALIGN_RIGHT)) | ALIGN_LEFT;
-                    if(alignFlags & ALIGN_RIGHT)
+                    if (alignFlags & ALIGN_RIGHT)
                         alignx = -textSize.width * state.scaleX;
                 }
 
@@ -1407,7 +1407,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                 DGL_PushMatrix();
 
                 // Rotate.
-                if(state.angle != 0)
+                if (state.angle != 0)
                 {
                     // The origin is the specified (x,y) for the patch.
                     // We'll undo the aspect ratio (otherwise the result would be skewed).
@@ -1425,20 +1425,20 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                 DGL_Scalef(state.scaleX, state.scaleY * extraScale, 1);
 
                 // Draw it.
-                if(fr.fontNum)
+                if (fr.fontNum)
                 {
                     textFragmentDrawer(fragment, 0, 0, fragmentAlignFlags, textFlags, state.typeIn ? (int) charCount : DEFAULT_INITIALCOUNT);
                 }
                 charCount += strlen(fragment);
 
                 // Advance the current position?
-                if(newlines == 0)
+                if (newlines == 0)
                 {
                     cx += ((float) textFragmentWidth(fragment) + currentAttribs()->tracking) * state.scaleX;
                 }
                 else
                 {
-                    if(strlen(fragment) > 0)
+                    if (strlen(fragment) > 0)
                         state.lastLineHeight = textFragmentHeight(fragment);
 
                     cx = (float) origin.x;
@@ -1537,8 +1537,8 @@ void FR_DrawCharXY(unsigned char ch, int x, int y)
 void FR_Init(void)
 {
     // No reinitializations...
-    if(initedFont) return;
-    if(isDedicated) return;
+    if (initedFont) return;
+    if (isDedicated) return;
 
     initedFont = true;
     fr.fontNum = 0;
@@ -1549,12 +1549,12 @@ void FR_Init(void)
 #undef Fonts_ResolveUri
 DENG_EXTERN_C fontid_t Fonts_ResolveUri(uri_s const *uri)
 {
-    if(!uri) return NOFONTID;
+    if (!uri) return NOFONTID;
     try
     {
         return App_Resources().fontManifest(*reinterpret_cast<de::Uri const *>(uri)).uniqueId();
     }
-    catch(Resources::MissingResourceManifestError const &)
+    catch (Resources::MissingResourceManifestError const &)
     {}
     return NOFONTID;
 }

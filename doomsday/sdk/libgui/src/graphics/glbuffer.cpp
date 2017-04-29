@@ -497,7 +497,7 @@ void GLBuffer::drawWithIndices(gl::Primitive primitive, Index const *indices, ds
 
     d->enableArrays(true);
 
-    GL.glDrawElements(Impl::glPrimitive(primitive), count, GL_UNSIGNED_SHORT, indices);
+    GL.glDrawElements(Impl::glPrimitive(primitive), GLsizei(count), GL_UNSIGNED_SHORT, indices);
     LIBGUI_ASSERT_GL_OK();
     ++drawCounter;
 
@@ -527,8 +527,8 @@ void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint 
 
         GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
         GL.glDrawElementsInstanced(Impl::glPrimitive(d->prim), count, GL_UNSIGNED_SHORT,
-                                   (void const *) dintptr(first * 2),
-                                   instanceAttribs.count());
+                                   reinterpret_cast<void const *>(dintptr(first * 2)),
+                                   GLsizei(instanceAttribs.count()));
         LIBGUI_ASSERT_GL_OK();
         GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
@@ -540,7 +540,7 @@ void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint 
         DENG2_ASSERT(count >= 0);
 
         GL.glDrawArraysInstanced(Impl::glPrimitive(d->prim), first, count,
-                                 instanceAttribs.count());
+                                 GLsizei(instanceAttribs.count()));
         LIBGUI_ASSERT_GL_OK();
     }
 
