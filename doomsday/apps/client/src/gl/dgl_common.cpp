@@ -44,11 +44,13 @@ struct DGLState
 {
     int matrixMode = 0;
     QVector<Matrix4f> matrixStacks[4];
+
     int activeTexture = 0;
     bool enableTexture[2] { true, false };
-    bool enableFog = false;
     int textureModulation = 1;
     Vector4f textureModulationColor;
+
+    bool enableFog = false;
     DGLenum fogMode = DGL_LINEAR;
     float fogStart = 0;
     float fogEnd = 0;
