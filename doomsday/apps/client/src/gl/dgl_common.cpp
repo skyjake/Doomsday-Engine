@@ -47,7 +47,7 @@ struct DGLState
     int activeTexture = 0;
     bool enableTexture[2] { true, false };
     bool enableFog = false;
-    int textureModulation = 0;
+    int textureModulation = 1;
     Vector4f textureModulationColor;
     DGLenum fogMode = DGL_LINEAR;
     float fogStart = 0;
