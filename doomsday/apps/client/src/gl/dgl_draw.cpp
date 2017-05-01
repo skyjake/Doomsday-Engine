@@ -319,7 +319,7 @@ struct DGLDrawState
                             (DGL_GetInteger(DGL_TEXTURE1)? 0x2 : 0);
         gl->uTexMode      = DGL_GetInteger(DGL_MODULATE_TEXTURE);
         gl->uTexModeColor = DGL_ModulationColor();
-        gl->uAlphaLimit   = (glState.alphaTest()? glState.alphaLimit() : 0.f);
+        gl->uAlphaLimit   = (glState.alphaTest()? glState.alphaLimit() : -1.f);
         DGL_FogParams(gl->uFogRange, gl->uFogColor);
 
         glState.apply();

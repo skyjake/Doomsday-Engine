@@ -90,7 +90,7 @@ void main()
     }
     
     // Alpha test.
-    if (out_FragColor.a < uAlphaLimit) {
+    if (out_FragColor.a <= uAlphaLimit) {
         discard;
     }
     
