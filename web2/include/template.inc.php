@@ -14,8 +14,8 @@ function starts_with($needle, $haystack)
 function timestamp_from_date($date_text)
 {
     $date = date_parse($date_text);
-    $ts = mktime($date['hour'], $date['minute'], $date['second'],
-                 $date['month'], $date['day'], $date['year']);
+    $ts = gmmktime($date['hour'], $date['minute'], $date['second'],
+                   $date['month'], $date['day'], $date['year']);
     return $ts;
 }
 
@@ -231,8 +231,8 @@ function generate_blog_post_cached($post, $css_class)
     $html = "<a class='blog-link' href='$post->url'>$post->title</a> "
         ."<time datetime='$post->date' pubdate>&middot; $nice_date</time>";    
     $itemclass = '';
-    if (time() - timestamp_from_date($post->date) < RECENT_THRESHOLD) {
-        $itemclas = 'recent';
+    if (time() - RECENT_THRESHOLD < timestamp_from_date($post->date)) {
+        $itemclass = 'recent';
     }    
     cache_echo("<li class='$itemclass'>".$html.'</li>');    
 }
