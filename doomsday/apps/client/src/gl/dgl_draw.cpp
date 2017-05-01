@@ -322,7 +322,7 @@ struct DGLDrawState
         gl->uAlphaLimit   = (glState.alphaTest()? glState.alphaLimit() : 0.f);
         DGL_FogParams(gl->uFogRange, gl->uFogColor);
 
-        GLState::current().apply();
+        glState.apply();
 
         gl->shader.beginUse();
         {
