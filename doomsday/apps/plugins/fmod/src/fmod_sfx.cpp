@@ -74,7 +74,7 @@ struct BufferInfo
      * @param newMode  @c true, if the channel should be head-relative.
      */
     void setRelativeMode(bool newMode) {
-        if(newMode) {
+        if (newMode) {
             mode &= ~FMOD_3D_WORLDRELATIVE;
             mode |=  FMOD_3D_HEADRELATIVE;
         }
@@ -82,7 +82,7 @@ struct BufferInfo
             mode |=  FMOD_3D_WORLDRELATIVE;
             mode &= ~FMOD_3D_HEADRELATIVE;
         }
-        if(channel) channel->setMode(mode);
+        if (channel) channel->setMode(mode);
     }
 };
 
@@ -123,7 +123,7 @@ static de::LockableT<Streams> streams;
 
 const char* sfxPropToString(int prop)
 {
-    switch(prop)
+    switch (prop)
     {
     case SFXBP_VOLUME:        return "SFXBP_VOLUME";
     case SFXBP_FREQUENCY:     return "SFXBP_FREQUENCY";
@@ -143,20 +143,26 @@ static BufferInfo& bufferInfo(sfxbuffer_t* buf)
     return *reinterpret_cast<BufferInfo*>(buf->ptr);
 }
 
-static FMOD_RESULT F_CALLBACK channelCallback(FMOD_CHANNEL* chanPtr,
-                                              FMOD_CHANNEL_CALLBACKTYPE type,
-                                              void* /*commanddata1*/,
-                                              void* /*commanddata2*/)
+static FMOD_RESULT F_CALLBACK channelCallback(FMOD_CHANNELCONTROL *channelcontrol,
+                                              FMOD_CHANNELCONTROL_TYPE controltype,
+                                              FMOD_CHANNELCONTROL_CALLBACK_TYPE callbacktype,
+                                              void *,
+                                              void *)
 {
-    FMOD::Channel *channel = reinterpret_cast<FMOD::Channel*>(chanPtr);
+    if (controltype != FMOD_CHANNELCONTROL_CHANNEL)
+    {
+        return FMOD_OK;
+    }
+
+    FMOD::Channel *channel = reinterpret_cast<FMOD::Channel *>(channelcontrol);
     sfxbuffer_t *buf = 0;
 
-    switch(type)
+    switch (callbacktype)
     {
-    case FMOD_CHANNEL_CALLBACKTYPE_END:
+    case FMOD_CHANNELCONTROL_CALLBACK_END:
         // The sound has ended, mark the channel.
-        channel->getUserData(reinterpret_cast<void**>(&buf));
-        if(buf)
+        channel->getUserData(reinterpret_cast<void **>(&buf));
+        if (buf)
         {
             LOGDEV_AUDIO_XVERBOSE("[FMOD] channelCallback: sfxbuffer %p stops", buf);
             buf->flags &= ~SFXBF_PLAYING;
@@ -220,15 +226,17 @@ void DS_SFX_DestroyBuffer(sfxbuffer_t* buf)
     free(buf);
 }
 
+#if 0
 static void toSigned8bit(const unsigned char* source, int size, RawSamplePCM8& output)
 {
     output.clear();
     output.resize(size);
-    for(int i = 0; i < size; ++i)
+    for (int i = 0; i < size; ++i)
     {
         output[i] = char(source[i]) - 128;
     }
 }
+#endif
 
 static FMOD_RESULT F_CALLBACK pcmReadCallback(FMOD_SOUND* soundPtr, void* data, unsigned int datalen)
 {
@@ -267,7 +275,7 @@ static FMOD_RESULT F_CALLBACK pcmReadCallback(FMOD_SOUND* soundPtr, void* data, 
  */
 void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 {
-    if(!fmodSystem || !buf || !sample) return;
+    if (!fmodSystem || !buf || !sample) return;
 
     bool streaming = (buf->flags & SFXBF_STREAM) != 0;
 
@@ -289,7 +297,7 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
                           buf << sample->size << sample->rate << sample->bytesPer);
 
     // If it has a sample, release it later.
-    if(info.sound)
+    if (info.sound)
     {
         DENG2_GUARD(streams);
         LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Load: Releasing buffer's old Sound %p", info.sound);
@@ -297,19 +305,18 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
         streams.value.erase(info.sound);
     }
 
-    RawSamplePCM8 signConverted;
+    //RawSamplePCM8 signConverted;
     const char* sampleData = reinterpret_cast<const char*>(sample->data);
-    if(!streaming)
+    if (!streaming)
     {
-        if(sample->bytesPer == 1)
+        /*if (sample->bytesPer == 1)
         {
             // Doomsday gives us unsigned 8-bit audio samples.
             toSigned8bit(reinterpret_cast<const unsigned char*>(sample->data), sample->size, signConverted);
             sampleData = &signConverted[0];
-        }
+        }*/
         info.mode = FMOD_OPENMEMORY |
                     FMOD_OPENRAW |
-                    FMOD_HARDWARE |
                     (buf->flags & SFXBF_3D? FMOD_3D : FMOD_2D) |
                     (buf->flags & SFXBF_REPEAT? FMOD_LOOP_NORMAL : 0);
     }
@@ -317,7 +324,6 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     {
         info.mode = FMOD_OPENUSER |
                     FMOD_CREATESTREAM |
-                    FMOD_HARDWARE |
                     FMOD_LOOP_NORMAL;
 
         params.numchannels = 2; /// @todo  Make this configurable.
@@ -326,7 +332,7 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
         params.pcmreadcallback = pcmReadCallback;
         sampleData = 0; // will be streamed
     }
-    if(buf->flags & SFXBF_3D)
+    if (buf->flags & SFXBF_3D)
     {
         info.mode |= FMOD_3D_WORLDRELATIVE;
     }
@@ -338,7 +344,7 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Load: created Sound %p%s",
                           info.sound << (streaming? " as streaming" : ""));
 
-    if(streaming)
+    if (streaming)
     {
         DENG2_GUARD(streams);
         // Keep a record of the playing stream for the PCM read callback.
@@ -366,7 +372,7 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
  */
 void DS_SFX_Reset(sfxbuffer_t* buf)
 {
-    if(!buf)
+    if (!buf)
         return;
 
     LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Reset: sfxbuffer %p", buf);
@@ -376,14 +382,14 @@ void DS_SFX_Reset(sfxbuffer_t* buf)
     buf->flags &= ~SFXBF_RELOAD;
 
     BufferInfo& info = bufferInfo(buf);
-    if(info.sound)
+    if (info.sound)
     {
         DENG2_GUARD(streams);
         LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Reset: releasing Sound %p", info.sound);
         info.sound->release();
         streams.value.erase(info.sound);
     }
-    if(info.channel)
+    if (info.channel)
     {
         info.channel->setCallback(0);
         info.channel->setUserData(0);
@@ -395,17 +401,17 @@ void DS_SFX_Reset(sfxbuffer_t* buf)
 void DS_SFX_Play(sfxbuffer_t* buf)
 {
     // Playing is quite impossible without a sample.
-    if(!buf || !buf->sample)
+    if (!buf || !buf->sample)
         return;
 
     BufferInfo& info = bufferInfo(buf);
     assert(info.sound != 0);
 
     FMOD_RESULT result;
-    result = fmodSystem->playSound(FMOD_CHANNEL_FREE, info.sound, true, &info.channel);
+    result = fmodSystem->playSound(info.sound, nullptr, true, &info.channel);
     DSFMOD_ERRCHECK(result);
 
-    if(!info.channel) return;
+    if (!info.channel) return;
 
     // Set the properties of the sound.
     info.channel->setPan(info.pan);
@@ -413,7 +419,7 @@ void DS_SFX_Play(sfxbuffer_t* buf)
     info.channel->setVolume(info.volume);
     info.channel->setUserData(buf);
     info.channel->setCallback(channelCallback);
-    if(buf->flags & SFXBF_3D)
+    if (buf->flags & SFXBF_3D)
     {
         // 3D properties.
         info.channel->set3DMinMaxDistance(info.minDistanceMeters,
@@ -476,42 +482,42 @@ void DS_SFX_Refresh(sfxbuffer_t*)
  */
 void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
 {
-    if(!buf)
+    if (!buf)
         return;
 
     BufferInfo& info = bufferInfo(buf);
 
-    switch(prop)
+    switch (prop)
     {
     case SFXBP_VOLUME:
-        if(FEQUAL(info.volume, value)) return; // No change.
+        if (FEQUAL(info.volume, value)) return; // No change.
         assert(value >= 0);
         info.volume = value;
-        if(info.channel) info.channel->setVolume(info.volume);
+        if (info.channel) info.channel->setVolume(info.volume);
         break;
 
     case SFXBP_FREQUENCY: {
         unsigned int newFreq = (unsigned int) (buf->rate * value);
-        if(buf->freq == newFreq) return; // No change.
+        if (buf->freq == newFreq) return; // No change.
         buf->freq = newFreq;
-        if(info.channel) info.channel->setFrequency(float(buf->freq));
+        if (info.channel) info.channel->setFrequency(float(buf->freq));
         break; }
 
     case SFXBP_PAN:
-        if(FEQUAL(info.pan, value)) return; // No change.
+        if (FEQUAL(info.pan, value)) return; // No change.
         info.pan = value;
-        if(info.channel) info.channel->setPan(info.pan);
+        if (info.channel) info.channel->setPan(info.pan);
         break;
 
     case SFXBP_MIN_DISTANCE:
         info.minDistanceMeters = value;
-        if(info.channel) info.channel->set3DMinMaxDistance(info.minDistanceMeters,
+        if (info.channel) info.channel->set3DMinMaxDistance(info.minDistanceMeters,
                                                            info.maxDistanceMeters);
         break;
 
     case SFXBP_MAX_DISTANCE:
         info.maxDistanceMeters = value;
-        if(info.channel) info.channel->set3DMinMaxDistance(info.minDistanceMeters,
+        if (info.channel) info.channel->set3DMinMaxDistance(info.minDistanceMeters,
                                                            info.maxDistanceMeters);
         break;
 
@@ -535,20 +541,20 @@ void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
  */
 void DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values)
 {
-    if(!fmodSystem || !buf) return;
+    if (!fmodSystem || !buf) return;
 
     BufferInfo& info = bufferInfo(buf);
 
-    switch(prop)
+    switch (prop)
     {
     case SFXBP_POSITION:
         info.position.set(values);
-        if(info.channel) info.channel->set3DAttributes(&info.position, &info.velocity);
+        if (info.channel) info.channel->set3DAttributes(&info.position, &info.velocity);
         break;
 
     case SFXBP_VELOCITY:
         info.velocity.set(values);
-        if(info.channel) info.channel->set3DAttributes(&info.position, &info.velocity);
+        if (info.channel) info.channel->set3DAttributes(&info.position, &info.velocity);
         break;
 
     default:
@@ -563,7 +569,7 @@ void DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values)
  */
 void DS_SFX_Listener(int prop, float value)
 {
-    switch(prop)
+    switch (prop)
     {
     case SFXLP_UNITS_PER_METER:
         unitsPerMeter = value;
@@ -589,15 +595,24 @@ void DS_SFX_Listener(int prop, float value)
 }
 
 /**
- * Convert linear volume 0..1 to logarithmic -10000..0.
+ * Convert linear volume 0..1 to a logarithmic range.
  */
-static int linearToLog(float vol)
+static float linearToLog(float linear)
 {
-    if(vol <= 0) return -10000;
-    if(vol >= 1) return 0;
+    return 10.f * std::log10(linear);
+}
 
-    // Straighten the volume curve.
-    return std::min(std::max(-10000, (int) (100 * 20 * std::log10(vol))), 0);
+/**
+ * Convert dB value to a linear 0..1 value.
+ */
+static float logToLinear(float db)
+{
+    return std::pow(10.f, db/10.f);
+}
+
+static float scaleLogarithmic(float db, float scale, de::Rangef const &range)
+{
+    return range.clamp(linearToLog(scale * logToLinear(db)));
 }
 
 /**
@@ -605,71 +620,78 @@ static int linearToLog(float vol)
  *
  * @param reverb  Array of NUM_REVERB_DATA parameters (see SRD_*).
  */
-static void updateListenerEnvironmentSettings(float* reverb)
+static void updateListenerEnvironmentSettings(float *reverb)
 {
-    if(!fmodSystem || !reverb) return;
+    if (!fmodSystem || !reverb) return;
 
     DSFMOD_TRACE("updateListenerEnvironmentSettings: " <<
                  reverb[0] << " " << reverb[1] << " " <<
                  reverb[2] << " " << reverb[3]);
 
     // No reverb?
-    if(reverb[SFXLP_REVERB_VOLUME] == 0 && reverb[SFXLP_REVERB_SPACE]   == 0 &&
-       reverb[SFXLP_REVERB_DECAY]  == 0 && reverb[SFXLP_REVERB_DAMPING] == 0)
+    if (reverb[SFXLP_REVERB_VOLUME] == 0 && reverb[SFXLP_REVERB_SPACE]   == 0 &&
+        reverb[SFXLP_REVERB_DECAY]  == 0 && reverb[SFXLP_REVERB_DAMPING] == 0)
     {
         FMOD_REVERB_PROPERTIES noReverb = FMOD_PRESET_OFF;
-        fmodSystem->setReverbAmbientProperties(&noReverb);
+        fmodSystem->setReverbProperties(0, &noReverb);
         return;
     }
 
-    const static FMOD_REVERB_PROPERTIES presetPlain       = FMOD_PRESET_PLAIN;
-    const static FMOD_REVERB_PROPERTIES presetConcertHall = FMOD_PRESET_CONCERTHALL;
-    const static FMOD_REVERB_PROPERTIES presetAuditorium  = FMOD_PRESET_AUDITORIUM;
-    const static FMOD_REVERB_PROPERTIES presetCave        = FMOD_PRESET_CAVE;
-    const static FMOD_REVERB_PROPERTIES presetGeneric     = FMOD_PRESET_GENERIC;
-    const static FMOD_REVERB_PROPERTIES presetRoom        = FMOD_PRESET_ROOM;
+    static FMOD_REVERB_PROPERTIES const presetPlain       = FMOD_PRESET_PLAIN;
+    static FMOD_REVERB_PROPERTIES const presetConcertHall = FMOD_PRESET_CONCERTHALL;
+    static FMOD_REVERB_PROPERTIES const presetAuditorium  = FMOD_PRESET_AUDITORIUM;
+    static FMOD_REVERB_PROPERTIES const presetCave        = FMOD_PRESET_CAVE;
+    static FMOD_REVERB_PROPERTIES const presetGeneric     = FMOD_PRESET_GENERIC;
+    static FMOD_REVERB_PROPERTIES const presetRoom        = FMOD_PRESET_ROOM;
 
     float space = reverb[SFXLP_REVERB_SPACE];
-    if(reverb[SFXLP_REVERB_DECAY] > .5)
+    if (reverb[SFXLP_REVERB_DECAY] > .5)
     {
         // This much decay needs at least the Generic environment.
-        if(space < .2)
+        if (space < .2)
             space = .2f;
     }
 
     // Choose a preset based on the size of the space.
     FMOD_REVERB_PROPERTIES props;
-    if(space >= 1)
+    if (space >= 1)
         props = presetPlain;
-    else if(space >= .8)
+    else if (space >= .8)
         props = presetConcertHall;
-    else if(space >= .6)
+    else if (space >= .6)
         props = presetAuditorium;
-    else if(space >= .4)
+    else if (space >= .4)
         props = presetCave;
-    else if(space >= .2)
+    else if (space >= .2)
         props = presetGeneric;
     else
         props = presetRoom;
 
     // Overall reverb volume adjustment.
-    props.Room = linearToLog(reverb[SFXLP_REVERB_VOLUME]);
+    //props.WetLevel = scaleLogarithmic(props.WetLevel, reverb[SFXLP_REVERB_VOLUME], de::Rangef(-80.f, 0.f));
+    props.WetLevel = de::Rangef(-80.f, 0.f).clamp(linearToLog((logToLinear(props.WetLevel) + reverb[SFXLP_REVERB_VOLUME])/6.f));
     //setEAXdw(DSPROPERTY_EAXLISTENER_ROOM, volLinearToLog(rev[SFXLP_REVERB_VOLUME]));
 
     // Reverb decay.
-    float decay = (reverb[SFXLP_REVERB_DECAY] - .5f) * 1.5f + 1;
-    props.DecayTime = std::min(std::max(0.1f, props.DecayTime * decay), 20.f);
+    float const decayFactor = 1.f + (reverb[SFXLP_REVERB_DECAY] - .5f) * 1.5f;
+    props.DecayTime = std::min(std::max(100.f, props.DecayTime * decayFactor), 20000.f);
     //mulEAXf(DSPROPERTY_EAXLISTENER_DECAYTIME, val, EAXLISTENER_MINDECAYTIME, EAXLISTENER_MAXDECAYTIME);
 
     // Damping.
-    float damping = std::max(.1f, 1.1f * (1.2f - reverb[SFXLP_REVERB_DAMPING]));
-    props.RoomHF = linearToLog(std::pow(10.f, props.RoomHF / 2000.f) * damping);
+    //props.HighCut = de::Rangef(20, 20000).clamp(20000 * std::pow(1.f - reverb[SFXLP_REVERB_DAMPING], 2.f));
+    props.HighCut = de::Rangef(20, 20000).clamp(props.HighCut * std::pow(1.f - reverb[SFXLP_REVERB_DAMPING], 2.f));
+    //float const damping = std::max(.1f, 1.1f * (1.2f - reverb[SFXLP_REVERB_DAMPING]));
+    //props.RoomHF = linearToLog(std::pow(10.f, props.RoomHF / 2000.f) * damping);
     //mulEAXdw(DSPROPERTY_EAXLISTENER_ROOMHF, val);
+
+    qDebug() << "WetLevel:" << props.WetLevel << "dB" << "input:" << reverb[SFXLP_REVERB_VOLUME]
+             << "DecayTime:" << props.DecayTime << "ms"
+             << "HighCut:" << props.HighCut << "Hz";
 
     // A slightly increased roll-off. (Not in FMOD?)
     //props.RoomRolloffFactor = 1.3f;
 
-    fmodSystem->setReverbAmbientProperties(&props);
+    fmodSystem->setReverbProperties(0, &props);
 }
 
 /**
@@ -677,7 +699,7 @@ static void updateListenerEnvironmentSettings(float* reverb)
  */
 void DS_SFX_Listenerv(int prop, float* values)
 {
-    switch(prop)
+    switch (prop)
     {
     case SFXLP_POSITION:
         listener.position.set(values);
@@ -714,12 +736,12 @@ void DS_SFX_Listenerv(int prop, float* values)
  */
 int DS_SFX_Getv(int prop, void *values)
 {
-    switch(prop)
+    switch (prop)
     {
     case SFXIP_DISABLE_CHANNEL_REFRESH: {
         /// The return value is a single 32-bit int.
         int *wantDisable = reinterpret_cast<int *>(values);
-        if(wantDisable)
+        if (wantDisable)
         {
             // Channel refresh is handled by FMOD, so we don't need to do anything.
             *wantDisable = true;
@@ -728,7 +750,7 @@ int DS_SFX_Getv(int prop, void *values)
 
     case SFXIP_ANY_SAMPLE_RATE_ACCEPTED: {
         int *anySampleRate = reinterpret_cast<int *>(values);
-        if(anySampleRate)
+        if (anySampleRate)
         {
             // FMOD can resample on the fly as needed.
             *anySampleRate = true;

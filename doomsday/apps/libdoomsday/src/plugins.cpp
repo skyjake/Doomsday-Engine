@@ -122,7 +122,7 @@ DENG2_PIMPL_NOREF(Plugins)
         {
 #ifdef UNIX
             String const fn = Path(lib.path()).fileName();
-            if (fn.contains("libfmodex") || fn.contains("libassimp"))
+            if (fn.contains("libfmod") || fn.contains("libassimp"))
             {
                 // No need to warn about these shared libs.
                 return 0;

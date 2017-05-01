@@ -1,12 +1,12 @@
 /**
  * @file driver_fmod.cpp
- * FMOD Ex audio plugin. @ingroup dsfmod
+ * FMOD Studio low-level audio plugin. @ingroup dsfmod
  *
  * @authors Copyright © 2011-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html (with exception granted to allow
- * linking against FMOD Ex)
+ * linking against FMOD Studio)
  *
  * <small>This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by the
@@ -19,14 +19,14 @@
  * http://www.gnu.org/licenses
  *
  * <b>Special Exception to GPLv2:</b>
- * Linking the Doomsday Audio Plugin for FMOD Ex (audio_fmod) statically or
+ * Linking the Doomsday Audio Plugin for FMOD Studio (audio_fmod) statically or
  * dynamically with other modules is making a combined work based on
  * audio_fmod. Thus, the terms and conditions of the GNU General Public License
  * cover the whole combination. In addition, <i>as a special exception</i>, the
  * copyright holders of audio_fmod give you permission to combine audio_fmod
  * with free software programs or libraries that are released under the GNU
- * LGPL and with code included in the standard release of "FMOD Ex Programmer's
- * API" under the "FMOD Ex Programmer's API" license (or modified versions of
+ * LGPL and with code included in the standard release of "FMOD Studio Programmer's
+ * API" under the "FMOD Studio Programmer's API" license (or modified versions of
  * such code, with unchanged license). You may copy and distribute such a
  * system following the terms of the GNU GPL for audio_fmod and the licenses of
  * the other code concerned, provided that you include the source code of that
@@ -52,10 +52,37 @@
 #include <de/Config>
 #include <de/LogBuffer>
 
-FMOD::System* fmodSystem = 0;
+FMOD::System *fmodSystem = 0;
+
+struct Driver
+{
+    de::String name;
+    FMOD_GUID guid;
+    int systemRate;
+    FMOD_SPEAKERMODE speakerMode;
+    int speakerModeChannels;
+};
+static QVector<Driver> fmodDrivers;
+
+static char const *speakerModeText(FMOD_SPEAKERMODE mode)
+{
+    switch (mode)
+    {
+    case FMOD_SPEAKERMODE_DEFAULT:  return "Default";
+    case FMOD_SPEAKERMODE_RAW:      return "Raw";
+    case FMOD_SPEAKERMODE_MONO:     return "Mono";
+    case FMOD_SPEAKERMODE_STEREO:   return "Stereo";
+    case FMOD_SPEAKERMODE_QUAD:     return "Quad";
+    case FMOD_SPEAKERMODE_SURROUND: return "Surround";
+    case FMOD_SPEAKERMODE_5POINT1:  return "5.1";
+    case FMOD_SPEAKERMODE_7POINT1:  return "7.1";
+    default: break;
+    }
+    return "";
+}
 
 /**
- * Initialize the FMOD Ex sound driver.
+ * Initialize the FMOD Studio low-level sound driver.
  */
 int DS_Init(void)
 {
@@ -73,6 +100,33 @@ int DS_Init(void)
         return false;
     }
 
+    // Print the credit required by FMOD license.
+    LOG_AUDIO_NOTE("FMOD by Firelight Technologies Pty Ltd");
+
+    // Check what kind of drivers are available.
+    {
+        int numDrivers = 0;
+        fmodSystem->getNumDrivers(&numDrivers);
+        fmodDrivers.resize(numDrivers);
+        for (int i = 0; i < numDrivers; ++i)
+        {
+            auto &drv = fmodDrivers[i];
+            char nameBuf[512];
+            de::zap(nameBuf);
+            fmodSystem->getDriverInfo(i, nameBuf, sizeof(nameBuf),
+                                      &drv.guid, &drv.systemRate,
+                                      &drv.speakerMode, &drv.speakerModeChannels);
+            drv.name = de::String(nameBuf);
+
+            LOG_AUDIO_MSG("FMOD driver %i: \"%s\" Rate:%iHz Mode:%s Channels:%i")
+                    << i << drv.name
+                    << drv.systemRate
+                    << speakerModeText(drv.speakerMode)
+                    << drv.speakerModeChannels;
+        }
+    }
+
+#if 0
 #ifdef WIN32
     {
         // Figure out the system's configured default speaker mode.
@@ -112,9 +166,10 @@ int DS_Init(void)
     {
         fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_SRS5_1_MATRIX);
     }
+#endif
 
     // Initialize FMOD.
-    if ((result = fmodSystem->init(50, FMOD_INIT_NORMAL | FMOD_INIT_3D_RIGHTHANDED | FMOD_INIT_HRTF_LOWPASS, 0)) != FMOD_OK)
+    if ((result = fmodSystem->init(50, FMOD_INIT_NORMAL | FMOD_INIT_3D_RIGHTHANDED | FMOD_INIT_CHANNEL_LOWPASS, 0)) != FMOD_OK)
     {
         LOGDEV_AUDIO_ERROR("FMOD init failed: (%d) %s") << result << FMOD_ErrorString(result);
         fmodSystem->release();
@@ -124,7 +179,8 @@ int DS_Init(void)
 
     // Options.
     FMOD_ADVANCEDSETTINGS settings;
-    zeroStruct(settings);
+    de::zap(settings);
+    settings.cbSize = sizeof(settings);
     settings.HRTFMaxAngle = 360;
     settings.HRTFMinAngle = 180;
     settings.HRTFFreq = 11000;
@@ -149,9 +205,6 @@ int DS_Init(void)
     }
 #endif
 
-    // Print the credit required by FMOD license.
-    LOG_AUDIO_NOTE("FMOD Sound System (c) Firelight Technologies Pty, Ltd., 1994-2013");
-
     LOGDEV_AUDIO_VERBOSE("[FMOD] Initialized");
     return true;
 }
@@ -162,7 +215,7 @@ int DS_Init(void)
 void DS_Shutdown(void)
 {
     DMFmod_Music_Shutdown();
-    DMFmod_CDAudio_Shutdown();
+    //DMFmod_CDAudio_Shutdown();
 
     DSFMOD_TRACE("DS_Shutdown.");
     fmodSystem->release();

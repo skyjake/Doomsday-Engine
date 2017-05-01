@@ -45,7 +45,7 @@ macro (deng_add_plugin target)
             BUNDLE ON
             MACOSX_BUNDLE_INFO_PLIST ${DENG_SOURCE_DIR}/cmake/MacOSXPluginBundleInfo.plist.in
             BUILD_WITH_INSTALL_RPATH ON  # staging prevents CMake's own rpath fixing
-            INSTALL_RPATH "@executable_path/../Frameworks;${_extraRPath}"
+            INSTALL_RPATH "@loader_path/../Frameworks;@executable_path/../Frameworks;${_extraRPath}"
         )
         set (_extraRPath)
         macx_set_bundle_name ("net.dengine.plugin.${target}")

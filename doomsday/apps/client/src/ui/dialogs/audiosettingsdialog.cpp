@@ -52,7 +52,9 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
     VariableChoiceWidget *fmodSpeakerMode;
     VariableChoiceWidget *soundPlugin;
     VariableChoiceWidget *musicPlugin;
+#if defined (WIN32)
     VariableChoiceWidget *cdPlugin;
+#endif
     bool audioPluginsChanged = false;
 
     Impl(Public *i) : Base(i)
@@ -92,7 +94,9 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
 
         area.add(soundPlugin    = new VariableChoiceWidget(App::config("audio.soundPlugin")));
         area.add(musicPlugin    = new VariableChoiceWidget(App::config("audio.musicPlugin")));
+#if defined (WIN32)
         area.add(cdPlugin       = new VariableChoiceWidget(App::config("audio.cdPlugin")));
+#endif
 
         area.add(fmodSpeakerMode = new VariableChoiceWidget(App::config("audio.fmod.speakerMode")));
         fmodSpeakerMode->items()
@@ -125,24 +129,26 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
            #endif
                 << new ChoiceItem(tr("Disabled"), "dummy");
 
+#if defined (WIN32)
         cdPlugin->items()
-                << new ChoiceItem(tr("FMOD"), "fmod")
-           #if defined (WIN32)
                 << new ChoiceItem(tr("Windows Multimedia"), "winmm")
-           #endif
                 << new ChoiceItem(tr("Disabled"), "dummy");
+
+        cdPlugin->updateFromVariable();
+#endif
 
         soundPlugin    ->updateFromVariable();
         musicPlugin    ->updateFromVariable();
-        cdPlugin       ->updateFromVariable();
         fmodSpeakerMode->updateFromVariable();
 
         // The audio system needs reinitializing if the plugins are changed.
         auto changeFunc = [this] (uint) { audioPluginsChanged = true; };
         QObject::connect(soundPlugin,     &ChoiceWidget::selectionChangedByUser, changeFunc);
         QObject::connect(musicPlugin,     &ChoiceWidget::selectionChangedByUser, changeFunc);
-        QObject::connect(cdPlugin,        &ChoiceWidget::selectionChangedByUser, changeFunc);
         QObject::connect(fmodSpeakerMode, &ChoiceWidget::selectionChangedByUser, changeFunc);
+#if defined (WIN32)
+        QObject::connect(cdPlugin,        &ChoiceWidget::selectionChangedByUser, changeFunc);
+#endif
     }
 
     void fetch()
@@ -211,7 +217,9 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
 
     auto *soundPluginLabel = LabelWidget::newWithText(tr("SFX Plugin:"  ), &area());
     auto *musicPluginLabel = LabelWidget::newWithText(tr("Music Plugin:"), &area());
+#if defined (WIN32)
     auto *cdPluginLabel    = LabelWidget::newWithText(tr("CD Plugin:"   ), &area());
+#endif
 
     LabelWidget *pluginLabel = LabelWidget::newWithText(_E(D) + tr("Audio Backend"), &area());
     pluginLabel->setFont("separator.label");
@@ -220,8 +228,10 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
     layout.append(*pluginLabel, 2);
 
     layout << *soundPluginLabel << *d->soundPlugin
-           << *musicPluginLabel << *d->musicPlugin
-           << *cdPluginLabel    << *d->cdPlugin;
+           << *musicPluginLabel << *d->musicPlugin;
+#if defined (WIN32)
+    layout << *cdPluginLabel    << *d->cdPlugin;
+#endif
 
     auto *padding = new GuiWidget;
     area().add(padding);
