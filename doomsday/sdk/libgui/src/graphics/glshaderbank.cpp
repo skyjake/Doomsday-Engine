@@ -36,7 +36,7 @@ namespace de {
 
 static String processIncludes(String source, String const &sourceFolderPath)
 {
-    QRegularExpression const re("#include\\s+\"([^\"]+)\"");
+    QRegularExpression const re("#include\\s+['\"]([^\"']+)['\"]");
     forever
     {
         auto found = re.match(source);

@@ -1,5 +1,4 @@
 # Shader for the DGL drawing routines that emulate OpenGL 1.x behavior.
 shader dgl.draw {
-    path.vertex   = "dgl_draw.vsh"
-    path.fragment = "dgl_draw.fsh"
+    path = "dgl_draw"
 }
