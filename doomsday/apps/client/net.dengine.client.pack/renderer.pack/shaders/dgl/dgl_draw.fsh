@@ -20,6 +20,8 @@
 
 #version 330
 
+#include "../include/fog.glsl"
+
 uniform int uTexEnabled;
 uniform int uTexMode;
 uniform vec4 uTexModeColor;
