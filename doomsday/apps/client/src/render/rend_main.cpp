@@ -168,14 +168,13 @@ dfloat fieldOfView = 95.0f;
 dbyte smoothTexAnim = true;
 
 dint renderTextures = true;
+#if defined (DENG_OPENGL)
 dint renderWireframe;
-//dint useMultiTexLights = true;
-//dint useMultiTexDetails = true;
+#endif
 
 dint dynlightBlend;
 
 Vector3f torchColor(1, 1, 1);
-//dint torchAdditive = true;
 
 dint useShinySurfaces = true;
 

@@ -128,6 +128,7 @@ static duint drawCounter = 0;
 DENG2_PIMPL(GLBuffer)
 {
     GLuint vao = 0;
+    GLProgram const *vaoBoundProgram = nullptr;
     GLuint name = 0;
     GLuint idxName = 0;
     dsize count = 0;
@@ -148,19 +149,24 @@ DENG2_PIMPL(GLBuffer)
 
     void allocArray()
     {
+#if defined (DENG_HAVE_VAOS)
         if (!vao)
         {
             LIBGUI_GL.glGenVertexArrays(1, &vao);
         }
+#endif
     }
 
     void releaseArray()
     {
+#if defined (DENG_HAVE_VAOS)
         if (vao)
         {
             LIBGUI_GL.glDeleteVertexArrays(1, &vao);
             vao = 0;
+            vaoBoundProgram = nullptr;
         }
+#endif
     }
 
     void alloc()
@@ -186,6 +192,7 @@ DENG2_PIMPL(GLBuffer)
             LIBGUI_GL.glDeleteBuffers(1, &name);
             name = 0;
             count = 0;
+            vaoBoundProgram = nullptr;
         }
     }
 
@@ -244,32 +251,47 @@ DENG2_PIMPL(GLBuffer)
                                         (void const *) dintptr(spec.startOffset + part * 4 * sizeof(float)));
         LIBGUI_ASSERT_GL_OK();
 
+#if defined (DENG_HAVE_INSTANCES)
         GL.glVertexAttribDivisor(index + part, divisor);
         LIBGUI_ASSERT_GL_OK();
+#else
+        DENG2_UNUSED(divisor);
+#endif
     }
 
-    void enableArrays(bool enable, int divisor = 0, GLuint vaoName = 0) const
+    void enableArrays(bool enable, int divisor = 0, GLuint vaoName = 0)
     {
-        DENG2_ASSERT(GLProgram::programInUse());
-        DENG2_ASSERT(specs.first != 0); // must have a spec
-        DENG2_ASSERT(vaoName || vao);
-
         auto &GL = LIBGUI_GL;
 
         if (!enable)
         {
+#if defined (DENG_HAVE_VAOS)
             GL.glBindVertexArray(0);
+#endif
             return;
         }
 
+        DENG2_ASSERT(GLProgram::programInUse());
+        DENG2_ASSERT(specs.first != 0); // must have a spec
+#if defined (DENG_HAVE_VAOS)
+        DENG2_ASSERT(vaoName || vao);
+#else
+        DENG2_UNUSED(vaoName);
+#endif
+
+#if defined (DENG_HAVE_VAOS)
         GL.glBindVertexArray(vaoName? vaoName : vao);
+#endif
         GL.glBindBuffer(GL_ARRAY_BUFFER, name);
+
+        // Arrays are updated for a particular program.
+        vaoBoundProgram = GLProgram::programInUse();
 
         for (duint i = 0; i < specs.second; ++i)
         {
             AttribSpec const &spec = specs.first[i];
 
-            int index = GLProgram::programInUse()->attributeLocation(spec.semantic);
+            int index = vaoBoundProgram->attributeLocation(spec.semantic);
             if (index < 0) continue; // Not used.
 
             if (spec.size == 16)
@@ -299,6 +321,32 @@ DENG2_PIMPL(GLBuffer)
         }
 
         GL.glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+
+    void bindArray(bool doBind)
+    {
+#if defined (DENG_HAVE_VAOS)
+        if (doBind)
+        {
+            DENG2_ASSERT(vao != 0);
+            DENG2_ASSERT(GLProgram::programInUse());
+            if (vaoBoundProgram != GLProgram::programInUse())
+            {
+                enableArrays(true);
+            }
+            else
+            {
+                // Just bind it, the setup is already good.
+                LIBGUI_GL.glBindVertexArray(vao);
+            }
+        }
+        else
+        {
+            LIBGUI_GL.glBindVertexArray(0);
+        }
+#else
+        enableArrays(doBind);
+#endif
     }
 };
 
@@ -433,7 +481,7 @@ void GLBuffer::draw(DrawRanges const *ranges) const
 
     auto &GL = LIBGUI_GL;
 
-    d->enableArrays(true);
+    d->bindArray(true);
 
     if (d->idxName)
     {
@@ -461,7 +509,7 @@ void GLBuffer::draw(DrawRanges const *ranges) const
     DENG2_ASSERT(GLDrawQueue_queuedElems == 0);
 #endif
 
-    d->enableArrays(false);
+    d->bindArray(false);
 }
 
 void GLBuffer::drawWithIndices(GLBuffer const &indexBuffer) const
@@ -473,7 +521,7 @@ void GLBuffer::drawWithIndices(GLBuffer const &indexBuffer) const
 
     auto &GL = LIBGUI_GL;
 
-    d->enableArrays(true);
+    d->bindArray(true);
 
     GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.d->idxName);
     GL.glDrawElements(Impl::glPrimitive(indexBuffer.d->prim),
@@ -484,7 +532,7 @@ void GLBuffer::drawWithIndices(GLBuffer const &indexBuffer) const
 
     ++drawCounter;
 
-    d->enableArrays(false);
+    d->bindArray(false);
 }
 
 void GLBuffer::drawWithIndices(gl::Primitive primitive, Index const *indices, dsize count) const
@@ -495,17 +543,19 @@ void GLBuffer::drawWithIndices(gl::Primitive primitive, Index const *indices, ds
 
     auto &GL = LIBGUI_GL;
 
-    d->enableArrays(true);
+    d->bindArray(true);
 
     GL.glDrawElements(Impl::glPrimitive(primitive), GLsizei(count), GL_UNSIGNED_SHORT, indices);
     LIBGUI_ASSERT_GL_OK();
     ++drawCounter;
 
-    d->enableArrays(false);
+    d->bindArray(false);
 }
 
 void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint count) const
 {
+#if defined (DENG_HAVE_INSTANCES)
+
     if (!isReady() || !instanceAttribs.isReady() || !GLProgram::programInUse()) return;
 
     // Mark the current target changed.
@@ -546,6 +596,15 @@ void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint 
 
     d->enableArrays(false);
     instanceAttribs.d->enableArrays(false);
+
+#else
+
+    // Instanced drawing is not available.
+    DENG2_UNUSED(instanceAttribs);
+    DENG2_UNUSED(first);
+    DENG2_UNUSED(count);
+
+#endif
 }
 
 dsize GLBuffer::count() const

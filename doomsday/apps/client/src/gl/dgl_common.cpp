@@ -712,7 +712,9 @@ dd_bool DGL_SetFloat(int name, float value)
 
     case DGL_POINT_SIZE:
         GL_state.currentPointSize = value;
+#if defined (DENG_OPENGL)
         LIBGUI_GL.glPointSize(value);
+#endif
         break;
 
     default:

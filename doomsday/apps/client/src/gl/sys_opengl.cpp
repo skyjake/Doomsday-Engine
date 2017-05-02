@@ -274,8 +274,10 @@ void Sys_GLConfigureDefaultState(void)
 
     //LIBGUI_GL.glEnable(GL_POINT_SMOOTH);
     //LIBGUI_GL.glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
+#if defined (DENG_OPENGL)
     LIBGUI_GL.glPointSize(GL_state.currentPointSize);
     LIBGUI_ASSERT_GL_OK();
+#endif
 
     //LIBGUI_GL.glShadeModel(GL_SMOOTH);
 

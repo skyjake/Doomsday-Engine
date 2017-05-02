@@ -988,7 +988,11 @@ static uint makeFlatShadowGeometry(DrawList::Indices &indices, Store &verts, gl:
     verts.posCoords[indices[order[2]]] = edges[1].inner();
     verts.posCoords[indices[order[3]]] = edges[0].inner();
     // Set uniform color.
+#if defined (DENG_OPENGL)
     Vector4ub const &uniformColor = (::renderWireframe? white : black);  // White to assist visual debugging.
+#else
+    Vector4ub const &uniformColor = black;
+#endif
     for(duint i = 0; i < 4; ++i)
     {
         verts.colorCoords[indices[i]] = uniformColor;
@@ -1024,7 +1028,13 @@ void Rend_DrawFlatRadio(ConvexSubspace const &subspace)
     auto const eyeToSubspace = Vector2f(Rend_EyeOrigin().xz() - subspace.poly().center());
 
     // All shadow geometry uses the same texture (i.e., none) - use the same list.
-    DrawList &shadowList = ClientApp::renderSystem().drawLists().find(DrawListSpec(::renderWireframe? UnlitGeom : ShadowGeom));
+    DrawList &shadowList = ClientApp::renderSystem().drawLists().find(
+#if defined (DENG_OPENGL)
+        DrawListSpec(renderWireframe? UnlitGeom : ShadowGeom)
+#else
+        DrawListSpec(ShadowGeom)
+#endif
+    );
 
     // Process all LineSides linked to this subspace as potential shadow casters.
     subspace.forAllShadowLines([&subsec, &shadowDark, &eyeToSubspace, &shadowList] (LineSide &side)

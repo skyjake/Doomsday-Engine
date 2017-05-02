@@ -94,7 +94,9 @@ struct DGLDrawState
 
             void release()
             {
+#if defined (DENG_HAVE_VAOS)
                 LIBGUI_GL.glDeleteVertexArrays(1, &vertexArray);
+#endif
                 arrayData.clear();
             }
         };
@@ -235,6 +237,7 @@ struct DGLDrawState
             auto *dbuf = new GLData::DrawBuffer;
 
             // Vertex array object.
+#if defined (DENG_HAVE_VAOS)
             {
                 auto &GL = LIBGUI_GL;
                 GL.glGenVertexArrays(1, &dbuf->vertexArray);
@@ -245,6 +248,7 @@ struct DGLDrawState
                 }
                 GL.glBindVertexArray(0);
             }
+#endif
 
             gl->buffers.append(dbuf);
         }
@@ -260,7 +264,14 @@ struct DGLDrawState
         GLData::DrawBuffer &buf = nextBuffer();
         buf.arrayData.setData(&vertices[0], sizeof(Vertex) * vertices.size(), gl::Stream);
 
+#if defined (DENG_HAVE_VAOS)
         GL.glBindVertexArray(buf.vertexArray);
+#else
+        for (uint i = 0; i < NUM_VERTEX_ATTRIB_ARRAYS; ++i)
+        {
+            GL.glEnableVertexAttribArray(i);
+        }
+#endif
         LIBGUI_ASSERT_GL_OK();
 
         GL.glBindBuffer(GL_ARRAY_BUFFER, buf.arrayData.glName());
@@ -280,8 +291,17 @@ struct DGLDrawState
 
     void glUnbindArrays()
     {
-        LIBGUI_GL.glBindVertexArray(0);
-        LIBGUI_ASSERT_GL_OK();
+        auto &GL = LIBGUI_GL;
+
+#if defined (DENG_HAVE_VAOS)
+        GL.glBindVertexArray(0);
+#else
+        for (uint i = 0; i < NUM_VERTEX_ATTRIB_ARRAYS; ++i)
+        {
+            GL.glDisableVertexAttribArray(i);
+            LIBGUI_ASSERT_GL_OK();
+        }
+#endif
     }
 
     GLenum glPrimitive() const

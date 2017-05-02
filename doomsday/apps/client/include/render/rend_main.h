@@ -78,7 +78,9 @@ extern FogParams fogParams;
 DENG_EXTERN_C byte smoothTexAnim, devMobjVLights;
 
 DENG_EXTERN_C int renderTextures; /// @c 0= no textures, @c 1= normal mode, @c 2= lighting debug
+#if defined (DENG_OPENGL)
 DENG_EXTERN_C int renderWireframe;
+#endif
 //DENG_EXTERN_C int useMultiTexLights;
 //DENG_EXTERN_C int useMultiTexDetails;
 

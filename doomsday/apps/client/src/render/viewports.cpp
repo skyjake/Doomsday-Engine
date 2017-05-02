@@ -1053,10 +1053,12 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     }
 
     // Go to wireframe mode?
+#if defined (DENG_OPENGL)
     if (renderWireframe)
     {
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
+#endif
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
@@ -1074,17 +1076,21 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     changeViewState(PlayerSprite2D);
 
     // Don't render in wireframe mode with 2D psprites.
+#if defined (DENG_OPENGL)
     if (renderWireframe)
     {
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
+#endif
 
     Rend_Draw2DPlayerSprites();  // If the 2D versions are needed.
 
+#if defined (DENG_OPENGL)
     if (renderWireframe)
     {
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
+#endif
 
     // Do we need to render any 3D psprites?
     if (psp3d)
@@ -1103,11 +1109,13 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 
+#if defined (DENG_OPENGL)
     // Back from wireframe mode?
     if (renderWireframe)
     {
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
+#endif
 
     // Now we can show the viewPlayer's mobj again.
     if (!(player->publicData().flags & DDPF_CHASECAM))

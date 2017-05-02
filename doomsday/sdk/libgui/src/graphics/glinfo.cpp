@@ -163,10 +163,34 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
 
         if (inited) return;
 
+#ifdef DENG_OPENGL_ES
+        initializeOpenGLFunctions();
+
+        static OpenGLFeature const requiredFeatures[] =
+        {
+            Multitexture,
+            Shaders,
+            Buffers,
+            Framebuffers,
+            BlendEquationSeparate,
+            BlendSubtract,
+            NPOTTextures,
+            NPOTTextureRepeat,
+        };
+        for (auto const &feature : requiredFeatures)
+        {
+            if (!openGLFeatures().testFlag(feature))
+            {
+                throw InitError("GLInfo::init", "Required OpenGL feature missing: " +
+                                String("%1").arg(feature));
+            }
+        }
+#else
         if (!initializeOpenGLFunctions())
         {
             throw InitError("GLInfo::init", "Failed to initialize OpenGL");
         }
+#endif
         inited = true;
 
         // Extensions.
@@ -287,7 +311,7 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
                 case QOpenGLDebugMessage::LowSeverity:
                     mType = " low  ";
                     break;
-                case QOpenGLDebugMessage::NotificationSeverity:                    
+                case QOpenGLDebugMessage::NotificationSeverity:
                     mType = " note ";
                     break;
                 default:
@@ -385,7 +409,7 @@ void GLInfo::glInit()
 }
 
 void GLInfo::glDeinit()
-{    
+{
 #ifdef DENG_ENABLE_OPENGL_DEBUG_LOGGER
     if (info.d->logger)
     {

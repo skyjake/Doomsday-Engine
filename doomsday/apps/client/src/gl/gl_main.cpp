@@ -1477,7 +1477,9 @@ D_CMD(Fog)
 void GL_Register()
 {
     // Cvars
+#if defined (DENG_OPENGL)
     C_VAR_INT  ("rend-dev-wireframe",    &renderWireframe,  CVF_NO_ARCHIVE, 0, 2);
+#endif
     C_VAR_INT  ("rend-fog-default",      &fogModeDefault,   0, 0, 2);
 
     // * Render-HUD

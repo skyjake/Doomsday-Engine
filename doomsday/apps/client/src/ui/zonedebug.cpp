@@ -24,7 +24,7 @@
 
 #include "de_base.h"
 
-#ifdef DENG_DEBUG
+#if defined (DENG_DEBUG) && defined (DENG_OPENGL)
 
 #include <cmath>
 #include <de/GLState>

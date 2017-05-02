@@ -568,6 +568,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
         flashColor[CB] = (1 + 2 * sat->rgba[CB]) / 3;
     }
 
+#if defined (DENG_OPENGL)
     if (renderWireframe > 1)
     {
         DENG_ASSERT_IN_MAIN_THREAD();
@@ -576,6 +577,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         DGL_Disable(DGL_TEXTURE_2D);
     }
+#endif
     if (BitmapFont *bmapFont = font->maybeAs<BitmapFont>())
     {
         if (bmapFont->textureGLName())
@@ -739,12 +741,14 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
             DGL_PopMatrix();
         }
     }
+#if defined (DENG_OPENGL)
     if (renderWireframe > 1)
     {
         /// @todo do not assume previous state.
         DGL_Enable(DGL_TEXTURE_2D);
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
+#endif
 }
 
 static void drawChar(uchar ch, float x, float y, AbstractFont *font,

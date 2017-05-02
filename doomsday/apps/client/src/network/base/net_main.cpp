@@ -619,7 +619,7 @@ void Net_Drawer()
     // Draw the demo recording overlay.
     Net_DrawDemoOverlay();
 
-# ifdef DENG2_DEBUG
+# if defined (DENG2_DEBUG) && defined (DENG_OPENGL)
     Z_DebugDrawer();
 # endif
 #endif  // __CLIENT__

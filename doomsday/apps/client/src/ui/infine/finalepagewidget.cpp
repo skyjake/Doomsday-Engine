@@ -158,8 +158,13 @@ void FinalePageWidget::draw() const
     // Clear Z buffer (prevent the objects being clipped by nearby polygons).
     LIBGUI_GL.glClear(GL_DEPTH_BUFFER_BIT);
 
+#if defined (DENG_OPENGL)
     if (renderWireframe > 1)
+    {
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+#endif
+
     //glEnable(GL_ALPHA_TEST);
     GLState::push().setAlphaTest(true);
 
@@ -175,9 +180,14 @@ void FinalePageWidget::draw() const
     // Restore original matrices and state: back to normal 2D.
     //glDisable(GL_ALPHA_TEST);
     GLState::pop();
+
+#if defined (DENG_OPENGL)
     // Back from wireframe mode?
     if (renderWireframe > 1)
+    {
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+#endif
 
     // Filter on top of everything. Only draw if necessary.
     if (d->filter[3].value > 0)

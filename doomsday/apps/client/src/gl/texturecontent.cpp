@@ -57,6 +57,7 @@ static int BytesPerPixelFmt(dgltexformat_t format)
     }
 }
 
+#if 0
 /**
  * Given a pixel format return the number of bytes to store one pixel.
  * @pre Input data is of GL_UNSIGNED_BYTE type.
@@ -89,6 +90,7 @@ static int BytesPerPixel(GLint format)
         return 0; // Unreachable.
     }
 }
+#endif
 
 void GL_InitTextureContent(texturecontent_t *content)
 {

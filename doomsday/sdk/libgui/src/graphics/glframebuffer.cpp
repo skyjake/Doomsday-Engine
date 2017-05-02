@@ -211,6 +211,7 @@ DENG2_OBSERVES(Asset, Deletion)
         LIBGUI_GL.glBindRenderbuffer(GL_RENDERBUFFER, renderBufs[id]);
         LIBGUI_ASSERT_GL_OK();
 
+#if !defined(DENG_OPENGL_ES)
         if (sampleCount > 1)
         {
             if (GLInfo::extensions().NV_framebuffer_multisample_coverage)
@@ -236,6 +237,7 @@ DENG2_OBSERVES(Asset, Deletion)
             }
         }
         else
+#endif
         {
             LIBGUI_GL.glRenderbufferStorage(GL_RENDERBUFFER, type, size.x, size.y);
             LIBGUI_ASSERT_GL_OK();
@@ -499,7 +501,11 @@ void GLFramebuffer::configure(Vector2ui const &size, Flags const &flags, int sam
 
     d->flags = flags;
     d->size = size;
+#if defined (DENG_OPENGL_ES)
+    DENG2_UNUSED(sampleCount);
+#else
     d->sampleCount = (sampleCount > 1? sampleCount : 0);
+#endif
 
     d->allocFBO();
     d->allocRenderBuffers();
@@ -693,6 +699,8 @@ void GLFramebuffer::blit(GLFramebuffer &dest, Flags const &attachments, gl::Filt
     LIBGUI_GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dest.glName());
     LIBGUI_ASSERT_GL_OK();
 
+#if defined (DENG_HAVE_BLIT_FRAMEBUFFER)
+
     LIBGUI_GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, glName());
     LIBGUI_ASSERT_GL_OK();
 
@@ -710,6 +718,14 @@ void GLFramebuffer::blit(GLFramebuffer &dest, Flags const &attachments, gl::Filt
     //GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, 0);
     //LIBGUI_ASSERT_GL_OK();
 
+#else
+
+    qDebug() << "need to implement glBlitFramebuffer:" << glName() << "->" << dest.glName();
+    qDebug() << "\t- from texture:" << attachedTexture(Color);
+    qDebug() << "\t- to texture:" << dest.attachedTexture(Color);
+
+#endif
+
     dest.markAsChanged();
 
     GLState::current().target().glBind();
@@ -721,6 +737,8 @@ void GLFramebuffer::blit(gl::Filter filtering) const
 
     //qDebug() << "Blitting from" << glName() << "to" << defaultFramebuffer << size().asText();
 
+#if defined (DENG_HAVE_BLIT_FRAMEBUFFER)
+
     LIBGUI_GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, glName());
     LIBGUI_GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defaultFramebuffer);
 
@@ -731,6 +749,13 @@ void GLFramebuffer::blit(gl::Filter filtering) const
                 filtering == gl::Nearest? GL_NEAREST : GL_LINEAR);
 
     LIBGUI_ASSERT_GL_OK();
+
+#else
+
+    qDebug() << "need to implement glBlitFramebuffer:" << glName() << "-> 0";
+    qDebug() << "\t- texture:" << attachedTexture(Color);
+
+#endif
 
     GLState::current().target().glBind();
 }

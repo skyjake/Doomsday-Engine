@@ -11,9 +11,9 @@ else ()
     endif ()
 endif ()
 
-option (DENG_ENABLE_TURBO    "Enable/disable Turbo mode (source merging)"
-        ${DENG_ENABLE_TURBO_DEFAULT})
+option (DENG_ENABLE_TURBO    "Enable/disable Turbo mode (source merging)" ${DENG_ENABLE_TURBO_DEFAULT})
 option (DENG_ENABLE_GUI      "Enable/disable the client and all GUI related functionality" ON)
+option (DENG_ENABLE_SERVER   "Enable/disable the server executable" ON)
 option (DENG_ENABLE_SDK      "Enable/disable installation of the Doomsday 2 SDK" ON)
 option (DENG_ENABLE_TOOLS    "Compile the Doomsday tools" ON)
 option (DENG_ENABLE_DEPLOYQT "Enable/disable the *deployqt tool" ON)
