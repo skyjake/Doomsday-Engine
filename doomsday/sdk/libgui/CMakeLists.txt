@@ -71,6 +71,9 @@ option (DENG_ENABLE_DISPLAYMODE "Enable/disable changing the display mode"
     ${DENG_ENABLE_DISPLAYMODE_DEFAULT}
 )
 
+# OpenGL API selection.
+set (DENG_OPENGL_API "3.3" CACHE STRING "OpenGL API selection (3.3, GLES3, GLES2)")
+
 # Dependencies.
 find_package (DengCore)
 find_package (Assimp REQUIRED)
@@ -82,6 +85,18 @@ deng_add_package (net.dengine.stdlib.gui)
 
 # Definitions.
 add_definitions (-D__LIBGUI__=1)
+if (DENG_OPENGL_API STREQUAL "3.3")
+    add_definitions (-DDENG_OPENGL=330)
+    message (STATUS "Using OpenGL 3.3")
+elseif (DENG_OPENGL_API STREQUAL "GLES3")
+    add_definitions (-DDENG_OPENGL_ES=30)
+    message (STATUS "Using OpenGL ES 3.0")
+elseif (DENG_OPENGL_API STREQUAL "GLES2")
+    add_definitions (-DDENG_OPENGL_ES=20)
+    message (STATUS "Using OpenGL ES 2.0")
+else ()
+    message (FATAL_ERROR "Invalid value for OpenGL API: ${DENG_OPENGL_API}")
+endif ()    
 
 # Source and header files.
 file (GLOB_RECURSE HEADERS include/de/*)

@@ -25,23 +25,30 @@
 #  error "glDeleteTextures defined as a macro! (would be undefined by Qt)"
 #endif
 
-#include <QOpenGLFunctions_3_3_Core>
-#include <QOpenGLExtensions>
+/*
+ * OpenGL API selection
+ */
+#if (DENG_OPENGL == 330)
+#  include <QOpenGLFunctions_3_3_Core>
+#  define QOpenGLFunctions_Doomsday QOpenGLFunctions_3_3_Core
+#  ifndef GL_VERSION_3_3
+#    error "OpenGL 3.3 (or newer) headers not found"
+#  endif
 
-#define QOpenGLFunctions_Doomsday   QOpenGLFunctions_3_3_Core
+#elif (DENG_OPENGL_ES == 30)
+#  include <QOpenGLExtraFunctions>
+#  define QOpenGLFunctions_Doomsday QOpenGLExtraFunctions
+
+#elif (DENG_OPENGL_ES == 20)
+#  include <QOpenGLFunctions>
+#  define QOpenGLFunctions_Doomsday QOpenGLFunctions
+#endif
+
+#include <QOpenGLExtensions>
 
 // Defined in GLES2.
 #ifndef GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS
 #  define GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS 0x8CD9
-#endif
-
-/*
- * The LIBGUI_GLES2 macro is defined when the OpenGL ES 2.0 API is in use.
- */
-//#define LIBGUI_GLES2
-
-#ifndef GL_VERSION_3_3
-#  error "OpenGL 3.3 (or newer) headers not found"
 #endif
 
 #endif // LIBGUI_SYSTEM_OPENGL_H
