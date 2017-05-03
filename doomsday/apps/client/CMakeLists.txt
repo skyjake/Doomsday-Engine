@@ -40,7 +40,10 @@ deng_merge_sources (ui_editors    src/ui/editors/*.cpp)
 deng_merge_sources (ui_home       src/ui/home/*.cpp)
 deng_merge_sources (ui_infine     src/ui/infine/*.cpp)
 deng_merge_sources (ui_widgets    src/ui/widgets/*.cpp)
-deng_merge_sources (updater       src/updater/*.cpp)
+if (NOT IOS)
+    add_definitions (DENG_HAVE_UPDATER)
+    deng_merge_sources (updater   src/updater/*.cpp)
+endif ()
 deng_merge_sources (world         src/world/*.cpp)
 deng_merge_sources (world_base    src/world/base/*.cpp)
 deng_merge_sources (world_bsp     src/world/bsp/*.cpp)
@@ -103,14 +106,48 @@ if (WIN32)
     list (APPEND src ${RCC_SOURCES})
 endif ()
 
+if (IOS)
+    file (WRITE ${CMAKE_CURRENT_BINARY_DIR}/qt_plugin_import.cpp
+"#include <QtPlugin>
+Q_IMPORT_PLUGIN(QIOSIntegrationPlugin)
+Q_IMPORT_PLUGIN(QGifPlugin)
+Q_IMPORT_PLUGIN(QICNSPlugin)
+Q_IMPORT_PLUGIN(QJpegPlugin)
+Q_IMPORT_PLUGIN(QTgaPlugin)")
+    list (APPEND src ${CMAKE_CURRENT_BINARY_DIR}/qt_plugin_import.cpp)
+endif ()
+
 deng_add_application (client ${src} EXTRA_RESOURCES ${MACX_RESOURCES})
 
 # There's some old code here so relax the warnings a bit.
 relaxed_warnings (client)
 
 # Libraries.
-target_link_libraries (client PUBLIC Deng::libappfw Deng::libdoomsday)
-if (APPLE)
+if (IOS)
+    link_framework (client PUBLIC CoreFoundation)
+    link_framework (client PUBLIC QuartzCore)
+    link_framework (client PUBLIC CoreGraphics)
+    link_framework (client PUBLIC CoreText)
+    link_framework (client PUBLIC Foundation)
+    link_framework (client PUBLIC ImageIO)
+    link_framework (client PUBLIC MobileCoreServices)
+    link_framework (client PUBLIC Security)
+    link_framework (client PUBLIC UIKit)
+    target_link_libraries (client PUBLIC 
+        ${QT_LIBS}/libqtlibpng.a
+        ${QT_LIBS}/libqtharfbuzz.a
+        ${QT_LIBS}/libqtfreetype.a
+        ${QT_LIBS}/libqtpcre.a
+        ${QT_LIBS}/libQt5FontDatabaseSupport_debug.a
+        ${QT_LIBS}/libQt5GraphicsSupport_debug.a
+        ${QT_LIBS}/libQt5ClipboardSupport_debug.a
+        ${QT_PLUGINS}/platforms/libqios_debug.a        
+        ${QT_PLUGINS}/imageformats/libqgif.a
+        ${QT_PLUGINS}/imageformats/libqicns.a
+        ${QT_PLUGINS}/imageformats/libqtga.a
+        ${QT_PLUGINS}/imageformats/libqjpeg.a
+    )
+elseif (APPLE)
     link_framework (client PUBLIC Cocoa)
     if (DENG_HAVE_QTKIT)
         link_framework (client PUBLIC QTKit) # MusicPlayer
@@ -125,6 +162,7 @@ endif ()
 if (TARGET DirectX)
     target_link_libraries (client PUBLIC DirectX)
 endif ()
+target_link_libraries (client PUBLIC Deng::libappfw Deng::libdoomsday)
 
 # Deployment -----------------------------------------------------------------
 
@@ -164,6 +202,13 @@ if (WIN32)
         deng_install_library (${OPENSSL_LIBEAY})
         deng_install_library (${OPENSSL_SSLEAY})
     endif ()
+endif ()
+
+if (IOS)
+    set_target_properties (client PROPERTIES
+        LINK_FLAGS "-Wl,-e,_qt_main_wrapper"
+        MACOSX_BUNDLE_INFO_PLIST iOSBundleInfo.plist.in
+    )
 endif ()
 
 if (APPLE)

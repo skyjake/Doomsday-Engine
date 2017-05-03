@@ -6,7 +6,7 @@ include (../cmake/Config.cmake)
 
 add_subdirectory (libdoomsday)
 add_subdirectory (plugins)
-if (DENG_ENABLE_SERVER)
+if (DENG_ENABLE_SERVER AND NOT IOS)
     add_subdirectory (server)
 endif ()
 if (DENG_ENABLE_GUI)

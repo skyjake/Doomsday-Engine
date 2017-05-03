@@ -114,8 +114,10 @@ public:
     //static QOpenGLExtension_EXT_framebuffer_blit        *EXT_framebuffer_blit();
     //static QOpenGLExtension_EXT_framebuffer_multisample *EXT_framebuffer_multisample();
     //static QOpenGLExtension_EXT_framebuffer_object      *EXT_framebuffer_object();
+#if defined (DENG_OPENGL)
     static QOpenGLExtension_NV_framebuffer_multisample_coverage
                                                         *NV_framebuffer_multisample_coverage();
+#endif
 
     static void setSwapInterval(int interval);
     static void setLineWidth(float lineWidth);

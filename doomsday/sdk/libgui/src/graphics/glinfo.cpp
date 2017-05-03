@@ -60,7 +60,9 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
     //std::unique_ptr<QOpenGLExtension_EXT_framebuffer_blit>        EXT_framebuffer_blit;
     //std::unique_ptr<QOpenGLExtension_EXT_framebuffer_multisample> EXT_framebuffer_multisample;
     //std::unique_ptr<QOpenGLExtension_EXT_framebuffer_object>      EXT_framebuffer_object;
+#if defined (DENG_OPENGL)
     std::unique_ptr<QOpenGLExtension_NV_framebuffer_multisample_coverage> NV_framebuffer_multisample_coverage;
+#endif
 
 #ifdef WIN32
     BOOL (APIENTRY *wglSwapIntervalEXT)(int interval) = nullptr;
@@ -181,8 +183,9 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
         {
             if (!openGLFeatures().testFlag(feature))
             {
-                throw InitError("GLInfo::init", "Required OpenGL feature missing: " +
-                                String("%1").arg(feature));
+                qDebug() << "OpenGL feature reported as not available:" << feature;
+                //throw InitError("GLInfo::init", "Required OpenGL feature missing: " +
+                //                String("%1").arg(feature));
             }
         }
 #else
@@ -355,17 +358,21 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
             EXT_framebuffer_object->initializeOpenGLFunctions();
         }*/
 
+#if defined (DENG_OPENGL)
         if (ext.NV_framebuffer_multisample_coverage)
         {
             NV_framebuffer_multisample_coverage.reset(new QOpenGLExtension_NV_framebuffer_multisample_coverage);
             NV_framebuffer_multisample_coverage->initializeOpenGLFunctions();
         }
+#endif
 
         // Limits.
         glGetIntegerv(GL_MAX_TEXTURE_SIZE,              reinterpret_cast<GLint *>(&lim.maxTexSize));
         glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS,       reinterpret_cast<GLint *>(&lim.maxTexUnits)); // at least 16
+#if defined (DENG_OPENGL)
         glGetFloatv  (GL_SMOOTH_LINE_WIDTH_RANGE,       &lim.smoothLineWidth.start);
         glGetFloatv  (GL_SMOOTH_LINE_WIDTH_GRANULARITY, &lim.smoothLineWidthGranularity);
+#endif
 
         LIBGUI_ASSERT_GL_OK();
 
@@ -458,11 +465,13 @@ QOpenGLExtension_EXT_framebuffer_object *GLInfo::EXT_framebuffer_object()
 }
 */
 
+#if defined (DENG_OPENGL)
 QOpenGLExtension_NV_framebuffer_multisample_coverage *GLInfo::NV_framebuffer_multisample_coverage()
 {
     DENG2_ASSERT(info.d->inited);
     return info.d->NV_framebuffer_multisample_coverage.get();
 }
+#endif
 
 void GLInfo::setSwapInterval(int interval)
 {

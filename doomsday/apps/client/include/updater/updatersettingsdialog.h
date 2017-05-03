@@ -23,6 +23,8 @@
 #ifndef DENG_CLIENT_UPDATERSETTINGSDIALOG_H
 #define DENG_CLIENT_UPDATERSETTINGSDIALOG_H
 
+#if defined (DENG_HAVE_UPDATER)
+
 #include <de/DialogWidget>
 
 /**
@@ -55,5 +57,7 @@ protected:
 private:
     DENG2_PRIVATE(d)
 };
+
+#endif // DENG_HAVE_UPDATER
 
 #endif // DENG_CLIENT_UPDATERSETTINGSDIALOG_H

@@ -19,6 +19,8 @@
 #ifndef LIBSHELL_LOCALSERVER_H
 #define LIBSHELL_LOCALSERVER_H
 
+#if !defined (DENG_IOS)
+
 #include "Link"
 #include <de/Error>
 #include <de/NativePath>
@@ -82,5 +84,7 @@ private:
 
 } // namespace shell
 } // namespace de
+
+#endif // !DENG_IOS
 
 #endif // LIBSHELL_LOCALSERVER_H

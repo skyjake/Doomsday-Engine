@@ -7,6 +7,7 @@ find_file (FMOD_FMOD_H api/lowlevel/inc/fmod.h
     HINTS ENV DENG_DEPEND_PATH
     PATH_SUFFIXES "FMOD" "FMOD Programmers API"
     NO_DEFAULT_PATH
+    NO_CMAKE_FIND_ROOT_PATH
 )
 mark_as_advanced (FMOD_FMOD_H)
 
@@ -24,7 +25,19 @@ if (FMOD_FMOD_H AND NOT TARGET fmodex)
 
     add_library (fmodex INTERFACE)
     target_include_directories (fmodex INTERFACE ${fmodInc})
-    if (APPLE)
+    set (fmodInstLib)
+    if (IOS)
+        if (IOS_PLATFORM STREQUAL SIMULATOR)
+            set (fmodLib "${fmodApi}/lib/libfmod_iphonesimulator.a")
+        else ()
+            set (fmodLib "${fmodApi}/lib/libfmod_iphoneos.a")
+        endif ()
+        if (NOT EXISTS ${fmodLib})
+            message (FATAL_ERROR "iOS version of FMOD library not found: ${FMOD_FMOD_H}")
+        endif ()
+        link_framework (fmodex INTERFACE AVFoundation)
+        link_framework (fmodex INTERFACE AudioToolbox)
+    elseif (APPLE)
         set (fmodLib "${fmodApi}/lib/libfmod.dylib")
         set (fmodInstLib ${fmodLib})
     elseif (MSVC)
@@ -44,5 +57,7 @@ if (FMOD_FMOD_H AND NOT TARGET fmodex)
         set (fmodInstLib ${fmodLib})
     endif ()
     target_link_libraries (fmodex INTERFACE ${fmodLib})
-    deng_install_library (${fmodInstLib})
+    if (fmodInstLib)
+        deng_install_library (${fmodInstLib})
+    endif ()
 endif ()

@@ -79,7 +79,6 @@ public:
 
     static ClientApp &          app();
     static BusyRunner &         busyRunner();
-    static Updater &            updater();
     static ConfigProfiles &     logSettings();
     static ConfigProfiles &     networkSettings();
     static ConfigProfiles &     audioSettings();    ///< @todo Belongs in AudioSystem.
@@ -96,6 +95,10 @@ public:
     static bool hasInputSystem();
     static bool hasRenderSystem();
     static bool hasAudioSystem();
+
+#if defined (DENG_HAVE_UPDATER)
+    static Updater &updater();
+#endif
 
 public slots:
     void openHomepageInBrowser();

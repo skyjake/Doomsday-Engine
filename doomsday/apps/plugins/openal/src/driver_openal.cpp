@@ -40,6 +40,9 @@
 #ifdef HAVE_AL_H
 #  include <al.h>
 #  include <alc.h>
+#elif defined (DENG_IOS)
+#  include <OpenAL/al.h>
+#  include <OpenAL/alc.h>
 #else
 #  include <AL/al.h>
 #  include <AL/alc.h>

@@ -767,7 +767,9 @@ int DGL_Enable(int cap)
         break;
 
     case DGL_LINE_SMOOTH:
+#if defined (DENG_OPENGL)
         Deferred_glEnable(GL_LINE_SMOOTH);
+#endif
         break;
 
     case DGL_POINT_SMOOTH:
@@ -815,11 +817,15 @@ void DGL_Disable(int cap)
         break;
 
     case DGL_LINE_SMOOTH:
+#if defined (DENG_OPENGL)
         Deferred_glDisable(GL_LINE_SMOOTH);
+#endif
         break;
 
     case DGL_POINT_SMOOTH:
+#if defined (DENG_OPENGL)
         Deferred_glDisable(GL_POINT_SMOOTH);
+#endif
         break;
 
     default:
@@ -1075,6 +1081,9 @@ DGLuint DGL_NewTextureWithParams(dgltexformat_t format, int width, int height,
     uint8_t const *pixels, int flags, int minFilter, int magFilter,
     int anisoFilter, int wrapS, int wrapT)
 {
+#if defined (DENG_OPENGL_ES)
+#  define GL_CLAMP GL_CLAMP_TO_EDGE
+#endif
     return GL_NewTextureWithParams(format, width, height, (uint8_t *)pixels, flags, 0,
                                     (minFilter == DGL_LINEAR                 ? GL_LINEAR :
                                      minFilter == DGL_NEAREST                ? GL_NEAREST :
@@ -1088,6 +1097,9 @@ DGLuint DGL_NewTextureWithParams(dgltexformat_t format, int width, int height,
                                      wrapS == DGL_CLAMP_TO_EDGE ? GL_CLAMP_TO_EDGE : GL_REPEAT),
                                     (wrapT == DGL_CLAMP         ? GL_CLAMP :
                                      wrapT == DGL_CLAMP_TO_EDGE ? GL_CLAMP_TO_EDGE : GL_REPEAT));
+#if defined (DENG_OPENGL_ES)
+#  undef GL_CLAMP
+#endif
 }
 
 // dgl_draw.cpp

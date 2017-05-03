@@ -416,8 +416,27 @@ void GL_PrepareTextureContent(texturecontent_t &c,
  */
 static GLint ChooseTextureFormat(dgltexformat_t format, dd_bool allowCompression)
 {
-    dd_bool compress = (allowCompression && GL_state.features.texCompression);
+#if defined (DENG_OPENGL_ES)
+    
+    switch (format)
+    {
+    case DGL_RGB:
+    case DGL_COLOR_INDEX_8:
+        return GL_RGB8;
+        
+    case DGL_RGBA:
+    case DGL_COLOR_INDEX_8_PLUS_A8:
+        return GL_RGBA8;
 
+    default:
+        DENG2_ASSERT(!"ChooseTextureFormat: Invalid texture source format");
+        return 0;
+    }
+
+#else
+    
+    dd_bool compress = (allowCompression && GL_state.features.texCompression);
+    
     switch (format)
     {
     case DGL_RGB:
@@ -450,6 +469,8 @@ static GLint ChooseTextureFormat(dgltexformat_t format, dd_bool allowCompression
         DENG2_ASSERT(!"ChooseTextureFormat: Invalid texture source format");
         return 0; // Unreachable.
     }
+    
+#endif
 }
 
 /**

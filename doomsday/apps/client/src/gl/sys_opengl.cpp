@@ -32,7 +32,7 @@
 
 #ifdef WIN32
 #   define GETPROC(Type, x)   x = de::function_cast<Type>(wglGetProcAddress(#x))
-#elif defined(UNIX) && !defined(MACOSX)
+#elif defined (UNIX) && !defined (MACOSX) && !defined (DENG_IOS)
 #   include <GL/glx.h>
 #   undef None
 #   define GETPROC(Type, x)   x = de::function_cast<Type>(glXGetProcAddress((GLubyte const *)#x))
@@ -165,6 +165,7 @@ dd_bool Sys_GLInitialize(void)
 
     if(firstTimeInit)
     {
+#if defined (DENG_OPENGL)
         const GLubyte* versionStr = LIBGUI_GL.glGetString(GL_VERSION);
         double version = (versionStr? strtod((const char*) versionStr, NULL) : 0);
         if(version == 0)
@@ -188,6 +189,7 @@ dd_bool Sys_GLInitialize(void)
                                "but driver reports %s)") << LIBGUI_GL.glGetString(GL_VERSION);
             }
         }
+#endif
 
         initialize();
         printGLUInfo();
@@ -249,8 +251,10 @@ void Sys_GLConfigureDefaultState(void)
     DGL_Disable(DGL_TEXTURE_2D);
     //LIBGUI_GL.glDisable(GL_TEXTURE_CUBE_MAP);
 
+#if defined (DENG_OPENGL)
     LIBGUI_GL.glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
     LIBGUI_ASSERT_GL_OK();
+#endif
 
     // The projection matrix.
     DGL_MatrixMode(DGL_PROJECTION);
@@ -264,33 +268,28 @@ void Sys_GLConfigureDefaultState(void)
     DGL_MatrixMode(DGL_TEXTURE);
     DGL_LoadIdentity();
 
+    de::GLInfo::setLineWidth(GL_state.currentLineWidth);
+
+#if defined (DENG_OPENGL)
     // Setup for antialiased lines/points.
     LIBGUI_GL.glEnable(GL_LINE_SMOOTH);
     LIBGUI_ASSERT_GL_OK();
     LIBGUI_GL.glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     LIBGUI_ASSERT_GL_OK();
-
-    de::GLInfo::setLineWidth(GL_state.currentLineWidth);
-
-    //LIBGUI_GL.glEnable(GL_POINT_SMOOTH);
-    //LIBGUI_GL.glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
-#if defined (DENG_OPENGL)
+    
     LIBGUI_GL.glPointSize(GL_state.currentPointSize);
     LIBGUI_ASSERT_GL_OK();
-#endif
 
-    //LIBGUI_GL.glShadeModel(GL_SMOOTH);
+    // Prefer good quality in texture compression.
+    LIBGUI_GL.glHint(GL_TEXTURE_COMPRESSION_HINT, GL_NICEST);
+    LIBGUI_ASSERT_GL_OK();
+#endif
 
     // Default state for the white fog is off.
     DGL_Disable(DGL_FOG);
     DGL_Fogi(DGL_FOG_MODE, GL_LINEAR);
     DGL_Fogi(DGL_FOG_END, 2100); // This should be tweaked a bit.
     DGL_Fogfv(DGL_FOG_COLOR, fogcol);
-
-    LIBGUI_ASSERT_GL_OK();
-
-    // Prefer good quality in texture compression.
-    LIBGUI_GL.glHint(GL_TEXTURE_COMPRESSION_HINT, GL_NICEST);
 
     LIBGUI_ASSERT_GL_OK();
 

@@ -35,6 +35,7 @@
 #  ifndef GL_VERSION_3_3
 #    error "OpenGL 3.3 (or newer) headers not found"
 #  endif
+#  define DENG_HAVE_TIMER_QUERY
 
 #elif (DENG_OPENGL_ES == 30)
 #  include <QOpenGLExtraFunctions>

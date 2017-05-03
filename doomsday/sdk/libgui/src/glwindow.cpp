@@ -51,10 +51,12 @@ DENG2_PIMPL(GLWindow)
     unsigned int frameCount = 0;
     float fps = 0;
 
+#if defined (DENG_HAVE_TIMER_QUERY)
     QOpenGLTimerQuery *timerQuery = nullptr;
     bool timerQueryPending = false;
     QElapsedTimer gpuTimeRecordingStartedAt;
     QVector<TimeDelta> recordedGpuTimes;
+#endif
 
     Impl(Public *i) : Base(i) {}
 
@@ -82,6 +84,7 @@ DENG2_PIMPL(GLWindow)
         self().setState(NotReady);
         readyNotified = false;
         readyPending = false;
+#if defined (DENG_HAVE_TIMER_QUERY)
         if (timerQuery)
         {
             if (timerQueryPending) timerQuery->waitForResult();
@@ -89,6 +92,7 @@ DENG2_PIMPL(GLWindow)
             timerQuery = nullptr;
             timerQueryPending = false;
         }
+#endif
         GLInfo::glDeinit();
     }
 
@@ -105,11 +109,17 @@ DENG2_PIMPL(GLWindow)
         // Print some information.
         QSurfaceFormat const fmt = self().format();
 
+#if defined (DENG_OPENGL)
         LOG_GL_NOTE("OpenGL %i.%i supported%s")
-                << fmt.majorVersion() << fmt.minorVersion()
+                << fmt.majorVersion()
+                << fmt.minorVersion()
                 << (fmt.majorVersion() > 2?
                         (fmt.profile() == QSurfaceFormat::CompatibilityProfile? " (Compatibility)"
                                                                               : " (Core)") : "");
+#else
+        LOG_GL_NOTE("OpenGL ES %i.%i supported")
+                << fmt.majorVersion() << fmt.minorVersion();
+#endif
 
         // Everybody can perform GL init now.
         DENG2_FOR_PUBLIC_AUDIENCE2(Init, i) i->windowInit(self());
@@ -122,6 +132,7 @@ DENG2_PIMPL(GLWindow)
         mainCall.enqueue([this] () { self().update(); });
     }
 
+#if defined (DENG_HAVE_TIMER_QUERY)
     bool timerQueryReady() const
     {
         //if (!GLInfo::extensions().EXT_timer_query) return false;
@@ -159,6 +170,7 @@ DENG2_PIMPL(GLWindow)
             }
         }
     }
+#endif
 
     void updateFrameRateStatistics()
     {
@@ -420,6 +432,7 @@ void GLWindow::paintGL()
     DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
 
     //if (GLInfo::extensions().EXT_timer_query)
+#if defined (DENG_HAVE_TIMER_QUERY)
     {
         d->checkTimerQueryResult();
 
@@ -437,6 +450,7 @@ void GLWindow::paintGL()
             d->timerQuery->begin();
         }
     }
+#endif
 
     GLBuffer::resetDrawCount();
 
@@ -449,11 +463,13 @@ void GLWindow::paintGL()
 
     LIBGUI_ASSERT_GL_OK();
 
+#if defined (DENG_HAVE_TIMER_QUERY)
     if (d->timerQueryReady())
     {
         d->timerQuery->end();
         d->timerQueryPending = true;
     }
+#endif
 }
 
 void GLWindow::windowAboutToClose()

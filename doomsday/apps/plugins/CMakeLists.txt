@@ -9,8 +9,10 @@ add_subdirectory (libgamefw)
 
 add_subdirectory (importdeh)
 add_subdirectory (importidtech1)
-add_subdirectory (importsave)
 add_subdirectory (importudmf)
+if (NOT IOS)
+    add_subdirectory (importsave)
+endif ()
 
 add_subdirectory (doom)
 add_subdirectory (heretic)
@@ -19,7 +21,7 @@ add_subdirectory (doom64)
 
 add_subdirectory (fmod)
 add_subdirectory (openal)
-if (NOT WIN32)
+if (NOT (WIN32 OR IOS))
     add_subdirectory (fluidsynth)
 endif ()
 

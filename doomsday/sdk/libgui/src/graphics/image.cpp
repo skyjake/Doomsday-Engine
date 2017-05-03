@@ -812,8 +812,12 @@ GLPixelFormat Image::glFormat(QImage::Format format)
         return GLPixelFormat(GL_RGB, GL_UNSIGNED_BYTE, 1);
 
     case QImage::Format_RGB32:
+#if defined (DENG_OPENGL)
         /// @todo Is GL_BGR in any GL standard spec? Check for EXT_bgra.
         return GLPixelFormat(GL_BGR, GL_UNSIGNED_BYTE, 4);
+#else
+        return GLPixelFormat(GL_BGRA8_EXT, GL_UNSIGNED_BYTE, 4);
+#endif
 
     case QImage::Format_ARGB32:
         /// @todo Is GL_BGRA in any GL standard spec? Check for EXT_bgra.

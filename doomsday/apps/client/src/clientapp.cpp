@@ -117,7 +117,9 @@ static void continueInitWithEventLoopRunning()
     // as the canvas is visible and ready for initialization.
     ClientWindowSystem::main().show();
 
+#if defined (DENG_HAVE_UPDATER)
     ClientApp::updater().setupUI();
+#endif
 }
 
 static Value *Function_App_GamePlugin(Context &, Function::ArgumentValues const &)
@@ -149,7 +151,9 @@ DENG2_PIMPL(ClientApp)
 , DENG2_OBSERVES(DoomsdayApp, PeriodicAutosave)
 {
     Binder binder;
+#if defined (DENG_HAVE_UPDATER)
     QScopedPointer<Updater> updater;
+#endif
     BusyRunner busyRunner;
     ConfigProfiles audioSettings;
     ConfigProfiles networkSettings;
@@ -264,7 +268,9 @@ DENG2_PIMPL(ClientApp)
             DENG2_ASSERT("Unclean shutdown: exception in ~ClientApp"!=0);
         }
 
+#if defined (DENG_HAVE_UPDATER)
         updater.reset();
+#endif
         delete inputSys;
         delete resources;
         delete winSys;
@@ -290,7 +296,9 @@ DENG2_PIMPL(ClientApp)
             // If an update has been downloaded and is ready to go, we should
             // re-show the dialog now that the user has saved the game as prompted.
             LOG_DEBUG("Game saved");
+#if defined (DENG_HAVE_UPDATER)
             DownloadDialog::showCompletedDownload();
+#endif
             break;
 
         case DD_NOTIFY_PSPRITE_STATE_CHANGED:
@@ -612,8 +620,10 @@ void ClientApp::initialize()
     WindowSystem::setAppWindowSystem(*d->winSys);
     addSystem(*d->winSys);
 
+#if defined (DENG_HAVE_UPDATER)
     // Check for updates automatically.
     d->updater.reset(new Updater);
+#endif
 
     // Create the resource system.
     d->resources = new ClientResources;
@@ -798,11 +808,13 @@ BusyRunner &ClientApp::busyRunner()
     return app().d->busyRunner;
 }
 
+#if defined (DENG_HAVE_UPDATER)
 Updater &ClientApp::updater()
 {
     DENG2_ASSERT(!app().d->updater.isNull());
     return *app().d->updater;
 }
+#endif
 
 ConfigProfiles &ClientApp::logSettings()
 {

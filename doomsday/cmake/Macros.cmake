@@ -404,7 +404,11 @@ macro (deng_add_library target)
     sublist (_src 1 -1 ${ARGV})
     deng_filter_platform_sources (_src ${_src})
     # Define the target and namespace alias.
-    add_library (${target} SHARED ${_src})
+    if (NOT IOS)        
+        add_library (${target} SHARED ${_src})
+    else ()
+        add_library (${target} STATIC ${_src})
+    endif ()
     set (_src)
     add_library (Deng::${target} ALIAS ${target})
     # Libraries use the "deng_" prefix.
@@ -416,7 +420,7 @@ macro (deng_add_library target)
     set (_outName)
     # Compiler settings.
     deng_target_defaults (${target})
-    if (APPLE)
+    if (APPLE AND NOT IOS)
         set_property (TARGET ${target} PROPERTY BUILD_WITH_INSTALL_RPATH ON)
         add_custom_command (TARGET ${target} POST_BUILD
             COMMAND ${CMAKE_COMMAND}
@@ -563,6 +567,9 @@ function (add_pkgconfig_interface_library target)
 endfunction (add_pkgconfig_interface_library)
 
 function (fix_bundled_install_names binaryFile)
+    if (IOS)
+        return ()
+    endif ()
     if (NOT EXISTS ${binaryFile})
         message (FATAL_ERROR "fix_bundled_install_names: ${binaryFile} not found")
     endif ()
@@ -626,6 +633,7 @@ function (deng_bundle_install_names target)
     file (GENERATE OUTPUT "${scriptName}" CONTENT "
 set (CMAKE_MODULE_PATH ${DENG_SOURCE_DIR}/cmake)
 set (CMAKE_INSTALL_NAME_TOOL ${CMAKE_INSTALL_NAME_TOOL})
+set (IOS ${IOS})
 include (Macros)
 fix_bundled_install_names (\"${CMAKE_CURRENT_BINARY_DIR}/\${INT_DIR}/${target}.bundle/Contents/MacOS/${target}\"
     \"${libs}\")\n")

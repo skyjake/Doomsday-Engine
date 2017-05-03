@@ -5988,7 +5988,9 @@ static void drawVertexes(Map &map)
     {
         GLState::current().setDepthTest(false);
 
+#if defined (DENG_OPENGL)
         LIBGUI_GL.glEnable(GL_LINE_SMOOTH);
+#endif
         oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
         DGL_SetFloat(DGL_LINE_WIDTH, 2);
 
@@ -6016,7 +6018,9 @@ static void drawVertexes(Map &map)
     // Draw the vertex origins.
     dfloat const oldPointSize = DGL_GetFloat(DGL_POINT_SIZE);
 
+#if defined (DENG_OPENGL)
     LIBGUI_GL.glEnable(GL_POINT_SMOOTH);
+#endif
     DGL_SetFloat(DGL_POINT_SIZE, 6);
 
     GLState::current().setDepthTest(false);
@@ -6068,10 +6072,14 @@ static void drawVertexes(Map &map)
     if (devVertexBars)
     {
         DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);
+#if defined (DENG_OPENGL)
         LIBGUI_GL.glDisable(GL_LINE_SMOOTH);
+#endif
     }
     DGL_SetFloat(DGL_POINT_SIZE, oldPointSize);
+#if defined (DENG_OPENGL)
     LIBGUI_GL.glDisable(GL_POINT_SMOOTH);
+#endif
 
 #undef MAX_VERTEX_POINT_DIST
 }
@@ -6241,7 +6249,7 @@ MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec()
 /// Returns the texture variant specification for lightmaps.
 TextureVariantSpec const &Rend_MapSurfaceLightmapTextureSpec()
 {
-    return ClientApp::resources().textureSpec(TC_MAPSURFACE_LIGHTMAP, 0, 0, 0, 0, GL_CLAMP, GL_CLAMP,
+    return ClientApp::resources().textureSpec(TC_MAPSURFACE_LIGHTMAP, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                 1, -1, -1, false, false, false, true);
 }
 

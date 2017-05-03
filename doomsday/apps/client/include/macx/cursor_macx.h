@@ -20,11 +20,15 @@
 #ifndef CLIENT_MACX_CURSOR_H
 #define CLIENT_MACX_CURSOR_H
 
+#if !defined (DENG_IOS)
+
 /**
  * Show or hide the mouse cursor.
  *
  * @param show  @c true to show, @c false to hide.
  */
 void Cursor_Show(bool show);
+
+#endif
 
 #endif // CLIENT_MACX_CURSOR_H

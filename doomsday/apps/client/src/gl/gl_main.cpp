@@ -1453,19 +1453,19 @@ D_CMD(Fog)
     {
         if(!stricmp(argv[2], "linear"))
         {
-            DGL_Fogi(DGL_FOG_MODE, GL_LINEAR);
+            DGL_Fogi(DGL_FOG_MODE, DGL_LINEAR);
             LOG_GL_VERBOSE("Fog mode set to linear");
             return true;
         }
         if(!stricmp(argv[2], "exp"))
         {
-            DGL_Fogi(DGL_FOG_MODE, GL_EXP);
+            DGL_Fogi(DGL_FOG_MODE, DGL_EXP);
             LOG_GL_VERBOSE("Fog mode set to exp");
             return true;
         }
         if(!stricmp(argv[2], "exp2"))
         {
-            DGL_Fogi(DGL_FOG_MODE, GL_EXP2);
+            DGL_Fogi(DGL_FOG_MODE, DGL_EXP2);
             LOG_GL_VERBOSE("Fog mode set to exp2");
             return true;
         }

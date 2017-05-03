@@ -49,7 +49,11 @@ macro (deng_add_plugin target)
         )
         set (_extraRPath)
         macx_set_bundle_name ("net.dengine.plugin.${target}")
-        set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE "${target}.bundle/Contents/MacOS/${target}")
+        if (IOS)
+            set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE "${target}.bundle/${target}")
+        else ()
+            set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE "${target}.bundle/Contents/MacOS/${target}")
+        endif ()
         # Stage plugins for symlinking/copying into the client app later.
         # This is needed because we want access to these even in a build where the
         # plugins are not installed yet -- the staging directory symlinks to the

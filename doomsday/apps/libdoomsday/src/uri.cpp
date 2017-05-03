@@ -514,6 +514,7 @@ void Uri::writeUri(writer_s *writer, int omitComponents) const
 }
 
 #ifdef _DEBUG
+#  if !defined (DENG_IOS)
 
 LIBDENG_DEFINE_UNITTEST(Uri)
 {
@@ -615,6 +616,7 @@ LIBDENG_DEFINE_UNITTEST(Uri)
 
 LIBDENG_RUN_UNITTEST(Uri)
 
+#  endif // DENG_IOS
 #endif // _DEBUG
 
 } // namespace de

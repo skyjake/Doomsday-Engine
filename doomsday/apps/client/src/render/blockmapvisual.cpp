@@ -499,7 +499,7 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
     }
 
     // Undo the map coordinate space translation.
-    DGL_MatrixMode(GL_MODELVIEW);
+    DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 }
 
@@ -547,7 +547,7 @@ void Rend_BlockmapDebug()
     /*
      * Draw the blockmap.
      */
-    DGL_MatrixMode(GL_PROJECTION);
+    DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
     DGL_LoadIdentity();
     DGL_Ortho(0, 0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, -1, 1);
@@ -568,13 +568,13 @@ void Rend_BlockmapDebug()
     // Draw!
     drawBlockmap(*blockmap, followMobj, cellDrawer);
 
-    DGL_MatrixMode(GL_PROJECTION);
+    DGL_MatrixMode(DGL_PROJECTION);
     DGL_PopMatrix();
 
     /*
      * Draw HUD info.
      */
-    DGL_MatrixMode(GL_PROJECTION);
+    DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
     DGL_LoadIdentity();
     DGL_Ortho(0, 0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, -1, 1);
@@ -595,6 +595,6 @@ void Rend_BlockmapDebug()
     drawBlockmapInfo(Vector2d(DENG_GAMEVIEW_WIDTH - 10, DENG_GAMEVIEW_HEIGHT - 10),
                      *blockmap);
 
-    DGL_MatrixMode(GL_PROJECTION);
+    DGL_MatrixMode(DGL_PROJECTION);
     DGL_PopMatrix();
 }

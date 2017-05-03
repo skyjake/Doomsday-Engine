@@ -74,6 +74,10 @@ option (DENG_ENABLE_DISPLAYMODE "Enable/disable changing the display mode"
 # OpenGL API selection.
 set (DENG_OPENGL_API "3.3" CACHE STRING "OpenGL API selection (3.3, GLES3, GLES2)")
 
+if (IOS)
+    set (DENG_OPENGL_API "GLES3" CACHE STRING "OpenGL API selection" FORCE)
+endif ()
+
 # Dependencies.
 find_package (DengCore)
 find_package (Assimp REQUIRED)
@@ -131,7 +135,9 @@ if (UNIX AND NOT APPLE)
     target_link_libraries (libgui PUBLIC ${assimpLibs})
 endif ()
 
-if (APPLE)
+if (IOS)
+    link_framework (libgui PRIVATE OpenGLES)
+elseif (APPLE)
     link_framework (libgui PRIVATE Cocoa)
     link_framework (libgui PRIVATE OpenGL)
 endif ()

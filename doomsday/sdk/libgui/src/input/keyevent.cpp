@@ -27,7 +27,7 @@
 #include <QKeyEvent>
 #include <de/Log>
 
-#if defined(UNIX) && !defined(MACOSX)
+#if defined (UNIX) && !defined (MACOSX) && !defined (DENG_IOS)
 #  include <QX11Info>
 #  include <X11/keysym.h>
 #  include <X11/Xlib.h>

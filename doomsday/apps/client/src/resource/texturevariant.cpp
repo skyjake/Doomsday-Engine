@@ -160,7 +160,9 @@ bool TextureVariantSpec::operator == (TextureVariantSpec const &other) const
 static String nameForGLTextureWrapMode(int mode)
 {
     if(mode == GL_REPEAT) return "repeat";
+#if defined (DENG_OPENGL)
     if(mode == GL_CLAMP) return "clamp";
+#endif
     if(mode == GL_CLAMP_TO_EDGE) return "clamp_edge";
     return "(unknown)";
 }

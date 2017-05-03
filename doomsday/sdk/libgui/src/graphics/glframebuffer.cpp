@@ -309,11 +309,13 @@ DENG2_OBSERVES(Asset, Deletion)
                 LOG_GL_VERBOSE("FBO %i: depth renderbuffer %s") << fbo << size.asText();
                 attachRenderbuffer(DepthBuffer, GL_DEPTH_COMPONENT, GL_DEPTH_ATTACHMENT);
             }
+#if defined (DENG_OPENGL)
             if (flags.testFlag(Stencil) && !textureAttachment.testFlag(Stencil))
             {
                 LOG_GL_VERBOSE("FBO %i: stencil renderbuffer %s") << fbo << size.asText();
                 attachRenderbuffer(StencilBuffer, GL_STENCIL_INDEX, GL_STENCIL_ATTACHMENT);
             }
+#endif
         }
     }
 
@@ -612,7 +614,7 @@ QImage GLFramebuffer::toImage() const
         // Read the contents of the color attachment.
         Size imgSize = size();
         QImage img(QSize(imgSize.x, imgSize.y), QImage::Format_ARGB32);
-        LIBGUI_GL.glBindFramebuffer(GL_READ_FRAMEBUFFER_EXT, d->fbo);
+        LIBGUI_GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, d->fbo);
         LIBGUI_GL.glPixelStorei(GL_PACK_ALIGNMENT, 4);
         LIBGUI_GL.glReadPixels(0, 0, imgSize.x, imgSize.y, GL_BGRA, GL_UNSIGNED_BYTE,
                                (GLvoid *) img.constBits());
