@@ -26,7 +26,7 @@
 
 #include <QStringList>
 
-#if !defined (DENG_IOS)
+#if !defined (DENG_MOBILE)
 #  include <QProcess>
 #  define DENG_HAVE_QPROCESS
 #endif
@@ -229,7 +229,7 @@ public:
     bool matches(String const &full, String const &fullOrAlias) const;
 
 #if defined (DENG_HAVE_QPROCESS)
-    
+
     /**
      * Spawns a new process using the command line. The first argument
      * specifies the file name of the executable. Returns immediately
@@ -252,7 +252,7 @@ public:
     QProcess *executeProcess() const;
 
 #endif
-    
+
     static CommandLine &get();
 
 private:

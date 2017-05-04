@@ -359,10 +359,12 @@ function (deng_add_package packName)
         # the packages need to be made available separately.
         set (packComponent sdk)
     endif ()
-    install (FILES ${outDir}/${outName}
-        DESTINATION ${DENG_INSTALL_DATA_DIR}
-        COMPONENT ${packComponent}
-    )
+    if (NOT IOS)
+        install (FILES ${outDir}/${outName}
+            DESTINATION ${DENG_INSTALL_DATA_DIR}
+            COMPONENT ${packComponent}
+        )
+    endif ()
     if (MSVC)
         # In addition to installing, copy the packages to the build products
         # directories so that executables can be run in them.
@@ -645,7 +647,7 @@ endfunction (deng_bundle_install_names)
 
 # macOS: Install the libraries of a dependency target into the application bundle.
 function (deng_install_bundle_deps target)
-    if (APPLE)
+    if (APPLE AND NOT IOS)
         sublist (_deps 1 -1 ${ARGV})
         get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)
         set (_fwDir "${_outName}.app/Contents/Frameworks")
@@ -685,7 +687,7 @@ function (deng_install_deployqt target)
     if (NOT DENG_ENABLE_DEPLOYQT)
         return ()
     endif ()
-    if (UNIX AND NOT APPLE)
+    if (UNIX_LINUX)
         return () # No need to deploy Qt.
     endif ()
     get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)
@@ -771,7 +773,7 @@ endfunction (deng_install_tool)
 # Not applicable to macOS because libraries are not installed but instead
 # bundled with the applicatino.
 macro (deng_install_library library)
-    if (UNIX AND NOT APPLE)
+    if (UNIX_LINUX)
         string (REGEX REPLACE "(.*)\\.so" "\\1-*.so" versioned ${library})
         file (GLOB _links ${library}.* ${versioned})
         install (FILES ${library} ${_links}

@@ -19,7 +19,7 @@
 #ifndef LIBSHELL_LOCALSERVER_H
 #define LIBSHELL_LOCALSERVER_H
 
-#if !defined (DENG_IOS)
+#if !defined (DENG_MOBILE)
 
 #include "Link"
 #include <de/Error>
@@ -85,6 +85,6 @@ private:
 } // namespace shell
 } // namespace de
 
-#endif // !DENG_IOS
+#endif // !DENG_MOBILE
 
 #endif // LIBSHELL_LOCALSERVER_H

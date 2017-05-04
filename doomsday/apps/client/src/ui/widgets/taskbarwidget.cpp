@@ -501,7 +501,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
 #endif
             << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
             << helpMenu
-#if !defined (DENG_IOS)
+#if !defined (DENG_MOBILE)
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit!"))
 #endif

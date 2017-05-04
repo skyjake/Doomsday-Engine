@@ -45,6 +45,8 @@ else ()
 endif ()
 
 add_definitions (
+    -DDENG_APPLE=1
+    -DDENG_MOBILE=1
     -DDENG_IOS=1
     -DDENG_BASE_DIR="${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_DATA_DIR}"
 )

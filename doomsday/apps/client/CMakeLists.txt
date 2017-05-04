@@ -7,7 +7,8 @@ project (DENG_CLIENT)
 set (DENG_ENABLE_PK3S ON)
 include (../../cmake/Config.cmake)
 
-# Dependencies.
+# Dependencies --------------------------------------------------------------------------
+
 find_package (DengAppfw)
 find_package (DengDoomsday)
 find_package (Amethyst QUIET)
@@ -15,6 +16,8 @@ find_package (SDL2)
 if (WIN32)
     find_package (DirectX)
 endif ()
+
+# Sources and includes ------------------------------------------------------------------
 
 include_directories (include ${DENG_API_DIR})
 
@@ -64,31 +67,6 @@ if (UNIX)
     deng_merge_sources (unix src/unix/*.cpp)
 endif ()
 
-if (AMETHYST_FOUND)
-    if (APPLE)
-        set (readme "${CMAKE_CURRENT_BINARY_DIR}/Read Me.html")
-        deng_add_amedoc (HTML ${readme} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
-        install (FILES ${readme} DESTINATION .)
-        list (APPEND SOURCES ${readme})
-    else ()
-        set (readme "${CMAKE_CURRENT_BINARY_DIR}/readme.html")
-        deng_add_amedoc (HTML ${readme} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
-        list (APPEND SOURCES ${readme})
-        if (WIN32)
-            # WIX generator requires setting this manually.
-            set_property (INSTALL "${DENG_INSTALL_DOC_DIR}/readme.html"
-                PROPERTY CPACK_START_MENU_SHORTCUTS "Read Me"
-            )
-        endif ()
-    endif ()
-    # Manual page.
-    if (UNIX)
-        set (MAN_PAGE ${CMAKE_CURRENT_BINARY_DIR}/doomsday.6)
-        deng_add_amedoc (MAN ${MAN_PAGE} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
-        list (APPEND SOURCES ${MAN_PAGE})
-    endif ()
-endif ()
-
 deng_filter_platform_sources (src ${SOURCES} ${HEADERS} ${API_HEADERS})
 
 deng_add_package (net.dengine.client)
@@ -122,7 +100,8 @@ deng_add_application (client ${src} EXTRA_RESOURCES ${MACX_RESOURCES})
 # There's some old code here so relax the warnings a bit.
 relaxed_warnings (client)
 
-# Libraries.
+# Libraries -----------------------------------------------------------------------------
+
 if (IOS)
     link_framework (client PUBLIC CoreFoundation)
     link_framework (client PUBLIC QuartzCore)
@@ -133,19 +112,34 @@ if (IOS)
     link_framework (client PUBLIC MobileCoreServices)
     link_framework (client PUBLIC Security)
     link_framework (client PUBLIC UIKit)
+    
+    # Static Qt libraries.
     target_link_libraries (client PUBLIC
-        ${QT_LIBS}/libqtlibpng.a
-        ${QT_LIBS}/libqtharfbuzz.a
-        ${QT_LIBS}/libqtfreetype.a
-        ${QT_LIBS}/libqtpcre.a
-        ${QT_LIBS}/libQt5FontDatabaseSupport_debug.a
-        ${QT_LIBS}/libQt5GraphicsSupport_debug.a
-        ${QT_LIBS}/libQt5ClipboardSupport_debug.a
-        ${QT_PLUGINS}/platforms/libqios_debug.a
-        ${QT_PLUGINS}/imageformats/libqgif.a
-        ${QT_PLUGINS}/imageformats/libqicns.a
-        ${QT_PLUGINS}/imageformats/libqtga.a
-        ${QT_PLUGINS}/imageformats/libqjpeg.a
+        debug ${QT_LIBS}/libqtlibpng_debug.a
+        debug ${QT_LIBS}/libqtharfbuzz_debug.a
+        debug ${QT_LIBS}/libqtfreetype_debug.a
+        debug ${QT_LIBS}/libqtpcre_debug.a
+        debug ${QT_LIBS}/libQt5FontDatabaseSupport_debug.a
+        debug ${QT_LIBS}/libQt5GraphicsSupport_debug.a
+        debug ${QT_LIBS}/libQt5ClipboardSupport_debug.a
+        debug ${QT_PLUGINS}/platforms/libqios_debug.a
+        debug ${QT_PLUGINS}/imageformats/libqgif_debug.a
+        debug ${QT_PLUGINS}/imageformats/libqicns_debug.a
+        debug ${QT_PLUGINS}/imageformats/libqtga_debug.a
+        debug ${QT_PLUGINS}/imageformats/libqjpeg_debug.a
+
+        optimized ${QT_LIBS}/libqtlibpng.a
+        optimized ${QT_LIBS}/libqtharfbuzz.a
+        optimized ${QT_LIBS}/libqtfreetype.a
+        optimized ${QT_LIBS}/libqtpcre.a
+        optimized ${QT_LIBS}/libQt5FontDatabaseSupport.a
+        optimized ${QT_LIBS}/libQt5GraphicsSupport.a
+        optimized ${QT_LIBS}/libQt5ClipboardSupport.a
+        optimized ${QT_PLUGINS}/platforms/libqios.a
+        optimized ${QT_PLUGINS}/imageformats/libqgif.a
+        optimized ${QT_PLUGINS}/imageformats/libqicns.a
+        optimized ${QT_PLUGINS}/imageformats/libqtga.a
+        optimized ${QT_PLUGINS}/imageformats/libqjpeg.a
     )
 elseif (APPLE)
     link_framework (client PUBLIC Cocoa)
@@ -162,19 +156,49 @@ endif ()
 if (TARGET DirectX)
     target_link_libraries (client PUBLIC DirectX)
 endif ()
+
 target_link_libraries (client PUBLIC Deng::libappfw Deng::libdoomsday)
 
-# Deployment -----------------------------------------------------------------
+# Deployment ----------------------------------------------------------------------------
+
+if (AMETHYST_FOUND)
+    if (APPLE)
+        set (readme "${CMAKE_CURRENT_BINARY_DIR}/Read Me.html")
+        deng_add_amedoc (HTML ${readme} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
+        install (FILES ${readme} DESTINATION .)
+        list (APPEND SOURCES ${readme})
+    else ()
+        set (readme "${CMAKE_CURRENT_BINARY_DIR}/readme.html")
+        deng_add_amedoc (HTML ${readme} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
+        list (APPEND SOURCES ${readme})
+        if (WIN32)
+            # WIX generator requires setting this manually.
+            set_property (INSTALL "${DENG_INSTALL_DOC_DIR}/readme.html"
+                PROPERTY CPACK_START_MENU_SHORTCUTS "Read Me"
+            )
+        endif ()
+    endif ()
+    # Manual page.
+    if (UNIX)
+        set (MAN_PAGE ${CMAKE_CURRENT_BINARY_DIR}/doomsday.6)
+        deng_add_amedoc (MAN ${MAN_PAGE} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
+        list (APPEND SOURCES ${MAN_PAGE})
+    endif ()
+endif ()
 
 if (WIN32 OR APPLE)
     set_property (TARGET client PROPERTY OUTPUT_NAME "Doomsday")
     set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE "Doomsday")
-    set (MACOSX_BUNDLE_ICON_FILE "deng.icns")
+    if (IOS)
+        set (MACOSX_BUNDLE_ICON_FILE "deng.icns")
+    else ()
+        set (MACOSX_BUNDLE_ICON_FILE "deng.icns")
+    endif ()
 else ()
     set_property (TARGET client PROPERTY OUTPUT_NAME "doomsday")
 endif ()
 
-if (UNIX AND NOT APPLE)
+if (UNIX_LINUX)
     configure_file (doomsday-engine.desktop.in net.dengine.Doomsday.desktop)
     install (PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/net.dengine.Doomsday.desktop
         DESTINATION share/applications)
@@ -183,11 +207,10 @@ if (UNIX AND NOT APPLE)
 endif ()
 
 if (WIN32)
-    # WIX generator requires setting this manually.
+    # WIX generator requires setting Start Menu shortcut manually.
     set_property (INSTALL "bin/$<TARGET_FILE_NAME:client>"
         PROPERTY CPACK_START_MENU_SHORTCUTS "Doomsday Engine"
     )
-
     # Also include OpenSSL support.
     if (OPENSSL_DIR)
         find_file (OPENSSL_LIBEAY libeay32.dll
@@ -223,7 +246,11 @@ if (APPLE)
     # work on them -- plugins are already self-contained.
     get_property (outName TARGET client PROPERTY OUTPUT_NAME)
     set (stageDir "${DENG_BUILD_STAGING_DIR}/DengPlugins")
-    set (destDir "${outName}.app/Contents/PlugIns/Doomsday")
+    if (IOS)
+        set (destDir "${outName}.app/PlugIns")
+    else ()
+        set (destDir "${outName}.app/Contents/PlugIns/Doomsday")
+    endif ()
     install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E remove_directory
         \"\${CMAKE_INSTALL_PREFIX}/${destDir}\")")
     deng_install_deployqt (client)

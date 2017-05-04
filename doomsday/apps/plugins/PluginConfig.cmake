@@ -33,6 +33,17 @@ macro (deng_add_plugin target)
     set_target_properties (${target} PROPERTIES FOLDER Plugins)
 
     if (APPLE)
+        if (IOS)
+            link_framework (${target} PUBLIC Foundation)
+            link_framework (${target} PUBLIC CoreFoundation)
+            link_framework (${target} PUBLIC MobileCoreServices)
+            link_framework (${target} PUBLIC UIKit)
+            link_framework (${target} PUBLIC Security)
+            target_link_libraries (${target} PUBLIC
+                debug ${QT_LIBS}/libqtpcre_debug.a
+                optimized ${QT_LIBS}/libqtpcre.a
+            )
+        endif ()
         # The plugins have some messy code.
         set_property (TARGET ${target}
             APPEND PROPERTY COMPILE_OPTIONS -Wno-missing-braces

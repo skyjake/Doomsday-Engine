@@ -1,3 +1,10 @@
+if (IOS)
+    # On iOS, we'll install files into the app bundle instead of
+    # any user-specified location.
+    set (CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/apps/client/\${BUILD_TYPE}\${EFFECTIVE_PLATFORM_NAME})
+    return ()
+endif ()
+
 set (_oldPrefix ${CMAKE_INSTALL_PREFIX})
 
 # Install destination. PREFIX can be used to set the location manually.

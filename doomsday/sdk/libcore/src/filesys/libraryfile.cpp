@@ -95,35 +95,54 @@ bool LibraryFile::hasUnderscoreName(String const &nameAfterUnderscore) const
 
 bool LibraryFile::recognize(File const &file)
 {
-#ifdef MACOSX
-    // On macOS, plugins are in the .bundle format. The LibraryFile will point
-    // to the actual binary inside the bundle. Libraries must be loaded from
-    // native files.
-    if (NativeFile const *native = file.maybeAs<NativeFile>())
+    #if defined (DENG_APPLE)
     {
-        // Check if this in the executable folder with a matching bundle name.
-        if (native->nativePath().fileNamePath().toString().endsWith(
-                    file.name() + ".bundle/Contents/MacOS"))
+        // On macOS/iOS, plugins are in the .bundle format. The LibraryFile will point
+        // to the actual binary inside the bundle. Libraries must be loaded from
+        // native files.
+        if (NativeFile const *native = file.maybeAs<NativeFile>())
         {
-            // (name).bundle/Contents/MacOS/(name)
+            // Check if this in the executable folder with a matching bundle name.
+            #if defined (DENG_IOS)
+            {
+                if (native->nativePath().fileNamePath().toString()
+                    .endsWith(file.name() + ".bundle"))
+                {
+                    return true;
+                }
+            }
+            #else
+            {
+                if (native->nativePath().fileNamePath().toString()
+                    .endsWith(file.name() + ".bundle/Contents/MacOS"))
+                {
+                    return true;
+                }
+            }
+            #endif
+        }
+    }
+    #else // not Apple
+    {
+        // Check the extension first.
+        if (QLibrary::isLibrary(file.name()))
+        {
+            #if defined(UNIX)
+            {
+                // Only actual .so files should be considered.
+                if (!file.name().endsWith(".so")) // just checks the file name
+                {
+                    return false;
+                }
+            }
+            #endif
+
+            // Looks like a library.
             return true;
         }
     }
-#else
-    // Check the extension first.
-    if (QLibrary::isLibrary(file.name()))
-    {
-#if defined(UNIX)
-        // Only actual .so files should be considered.
-        if (!file.name().endsWith(".so")) // just checks the file name
-        {
-            return false;
-        }
-#endif
-        // Looks like a library.
-        return true;
-    }
-#endif
+    #endif
+
     return false;
 }
 

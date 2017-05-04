@@ -120,11 +120,14 @@ DENG2_PIMPL(App)
         , config(0)
         , terminateFunc(0)
     {
-#ifdef UNIX
-        // We wish to use U.S. English formatting for time and numbers (in libc).
-        setlocale(LC_ALL, "en_US.UTF-8");
-        setlocale(LC_NUMERIC, "C");
-#endif
+        #ifdef UNIX
+        {
+            // We wish to use U.S. English formatting for time and numbers (in libc).
+            setlocale(LC_ALL, "en_US.UTF-8");
+            setlocale(LC_NUMERIC, "C");
+        }
+        #endif
+        
         // Override the system number formatting.
         QLocale::setDefault(QLocale("en_US.UTF-8"));
 
@@ -177,12 +180,16 @@ DENG2_PIMPL(App)
 
     NativePath defaultNativeModulePath() const
     {
-#ifdef WIN32
-        NativePath appDir = appPath.fileNamePath();
-        return appDir / "..\\modules";
-#else
-        return self().nativeBasePath() / "modules";
-#endif
+        #ifdef WIN32
+        {
+            NativePath appDir = appPath.fileNamePath();
+            return appDir / "..\\modules";
+        }
+        #else
+        {
+            return self().nativeBasePath() / "modules";
+        }
+        #endif
     }
 
     void initFileSystem(bool allowPlugins)
@@ -204,24 +211,30 @@ DENG2_PIMPL(App)
         }
         else
         {
-#ifdef MACOSX
-            NativePath appDir = appPath.fileNamePath();
-            binFolder.attach(new DirectoryFeed(appDir));
-            fs.makeFolder("/data").attach(new DirectoryFeed(self().nativeBasePath()));
-#elif WIN32
-            NativePath appDir = appPath.fileNamePath();
-            fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
-
-#else // UNIX
-            if ((self().nativeBasePath() / "data").exists())
+            #ifdef MACOSX
             {
-                fs.makeFolder("/data").attach(new DirectoryFeed(self().nativeBasePath() / "data"));
-            }
-            else
-            {
+                NativePath appDir = appPath.fileNamePath();
+                binFolder.attach(new DirectoryFeed(appDir));
                 fs.makeFolder("/data").attach(new DirectoryFeed(self().nativeBasePath()));
             }
-#endif
+            #elif WIN32
+            {
+                NativePath appDir = appPath.fileNamePath();
+                fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
+            }
+            #else // UNIX
+            {
+                if ((self().nativeBasePath() / "data").exists())
+                {
+                    fs.makeFolder("/data").attach(new DirectoryFeed(self().nativeBasePath() / "data"));
+                }
+                else
+                {
+                    fs.makeFolder("/data").attach(new DirectoryFeed(self().nativeBasePath()));
+                }
+            }
+            #endif
+            
             if (defaultNativeModulePath().exists())
             {
                 fs.makeFolder("/modules").attach(new DirectoryFeed(defaultNativeModulePath()));
@@ -373,14 +386,16 @@ App::App(NativePath const &appFilePath, QStringList args)
     LOG_NOTE("Application path: ") << d->appPath;
     LOG_NOTE("Build: ") << Version::currentBuild().asHumanReadableText();
 
-#ifdef MACOSX
-    // When the application is started through Finder, we get a special command
-    // line argument. The working directory needs to be changed.
-    if (d->cmdLine.count() >= 2 && d->cmdLine.at(1).beginsWith("-psn"))
+    #if defined (MACOSX)
     {
-        DirectoryFeed::changeWorkingDir(d->cmdLine.at(0).fileNamePath() + "/..");
+        // When the application is started through Finder, we get a special command
+        // line argument. The working directory needs to be changed.
+        if (d->cmdLine.count() >= 2 && d->cmdLine.at(1).beginsWith("-psn"))
+        {
+            DirectoryFeed::changeWorkingDir(d->cmdLine.at(0).fileNamePath() + "/..");
+        }
     }
-#endif
+    #endif
 }
 
 App::~App()
@@ -489,23 +504,38 @@ NativePath App::nativePluginBinaryPath()
     }
 
     NativePath path;
-#ifdef WIN32
-    path = d->appPath.fileNamePath() / "plugins";
-#else
-# if defined (MACOSX) || defined (DENG_IOS)
-    path = d->appPath.fileNamePath() / "../PlugIns/Doomsday";
-# else
-    path = d->appPath.fileNamePath() / DENG_LIBRARY_DIR;
-    if (!path.exists())
+
+    #if defined (WIN32)
     {
-        // Try a fallback relative to the executable.
-        path = d->appPath.fileNamePath() / "../lib/doomsday";
+        path = d->appPath.fileNamePath() / "plugins";
+        return (d->cachedPluginBinaryPath = path);
     }
-# endif
-    // Also check the system config files.
-    d->unixInfo->path("libdir", path);
-#endif
-    return (d->cachedPluginBinaryPath = path);
+    #else
+    {
+        #if defined (DENG_IOS)
+        {
+            path = d->appPath.fileNamePath() / "PlugIns";
+        }
+        #elif defined (MACOSX)
+        {
+            path = d->appPath.fileNamePath() / "../PlugIns/Doomsday";
+        }
+        #else
+        {
+            path = d->appPath.fileNamePath() / DENG_LIBRARY_DIR;
+            if (!path.exists())
+            {
+                // Try a fallback relative to the executable.
+                path = d->appPath.fileNamePath() / "../lib/doomsday";
+            }
+        }
+        #endif
+
+        // Also check the system config files.
+        d->unixInfo->path("libdir", path);
+        return (d->cachedPluginBinaryPath = path);
+    }
+    #endif
 }
 
 NativePath App::nativeHomePath()
@@ -518,16 +548,30 @@ NativePath App::nativeHomePath()
         return (d->cachedHomePath = d->cmdLine.at(opt.pos + 1));
     }
 
-#ifdef MACOSX
-    NativePath nativeHome = QDir::homePath();
-    nativeHome = nativeHome / "Library/Application Support" / d->appName / "runtime";
-#elif WIN32
-    NativePath nativeHome = appDataPath();
-    nativeHome = nativeHome / "runtime";
-#else // UNIX
-    NativePath nativeHome = QDir::homePath();
-    nativeHome = nativeHome / d->unixHomeFolder / "runtime";
-#endif
+    NativePath nativeHome;
+
+    #if defined (DENG_IOS)
+    {
+        nativeHome = QDir::homePath();
+        nativeHome = nativeHome / "Documents/runtime";
+    }
+    #elif defined (MACOSX)
+    {
+        nativeHome = QDir::homePath();
+        nativeHome = nativeHome / "Library/Application Support" / d->appName / "runtime";
+    }
+    #elif defined (WIN32)
+    {
+        nativeHome = appDataPath();
+        nativeHome = nativeHome / "runtime";
+    }
+    #else // UNIX
+    {
+        nativeHome = QDir::homePath();
+        nativeHome = nativeHome / d->unixHomeFolder / "runtime";
+    }
+    #endif
+
     return (d->cachedHomePath = nativeHome);
 }
 
@@ -583,30 +627,39 @@ NativePath App::nativeBasePath()
     }
 
     NativePath path;
-#ifdef WIN32
-    path = d->appPath.fileNamePath() / "..";
-#else
-# ifdef MACOSX
-    path = d->appPath.fileNamePath() / "../Resources";
-    if (!path.exists())
+    #ifdef WIN32
     {
-        // Try the built-in base directory (unbundled apps).
-        path = d->appPath.fileNamePath() / DENG_BASE_DIR;
+        path = d->appPath.fileNamePath() / "..";
     }
-# else
-    path = d->appPath.fileNamePath() / DENG_BASE_DIR;
-# endif
-    if (!path.exists())
+    #else
     {
-        // Fall back to using the application binary path, which always exists.
-        // We use this instead of the working directory because the basedir is
-        // meant for storing read-only data files that may be deployed with
-        // the application binary.
-        path = d->appPath.fileNamePath();
+        #ifdef MACOSX
+        {
+            path = d->appPath.fileNamePath() / "../Resources";
+            if (!path.exists())
+            {
+                // Try the built-in base directory (unbundled apps).
+                path = d->appPath.fileNamePath() / DENG_BASE_DIR;
+            }
+        }
+        #else
+        {
+            path = d->appPath.fileNamePath() / DENG_BASE_DIR;
+        }
+        #endif
+        
+        if (!path.exists())
+        {
+            // Fall back to using the application binary path, which always exists.
+            // We use this instead of the working directory because the basedir is
+            // meant for storing read-only data files that may be deployed with
+            // the application binary.
+            path = d->appPath.fileNamePath();
+        }
+        // Also check the system config files.
+        d->unixInfo->path("basedir", path);
     }
-    // Also check the system config files.
-    d->unixInfo->path("basedir", path);
-#endif
+    #endif
     return (d->cachedBasePath = path);
 }
 

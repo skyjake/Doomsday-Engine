@@ -165,35 +165,40 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
 
         if (inited) return;
 
-#ifdef DENG_OPENGL_ES
-        initializeOpenGLFunctions();
+        #if defined (DENG_OPENGL_ES)
+        {
+            initializeOpenGLFunctions();
 
-        static OpenGLFeature const requiredFeatures[] =
-        {
-            Multitexture,
-            Shaders,
-            Buffers,
-            Framebuffers,
-            BlendEquationSeparate,
-            BlendSubtract,
-            NPOTTextures,
-            NPOTTextureRepeat,
-        };
-        for (auto const &feature : requiredFeatures)
-        {
-            if (!openGLFeatures().testFlag(feature))
+            static OpenGLFeature const requiredFeatures[] =
             {
-                qDebug() << "OpenGL feature reported as not available:" << feature;
-                //throw InitError("GLInfo::init", "Required OpenGL feature missing: " +
-                //                String("%1").arg(feature));
+                Multitexture,
+                Shaders,
+                Buffers,
+                Framebuffers,
+                BlendEquationSeparate,
+                BlendSubtract,
+                NPOTTextures,
+                NPOTTextureRepeat,
+            };
+            for (auto const &feature : requiredFeatures)
+            {
+                if (!openGLFeatures().testFlag(feature))
+                {
+                    qDebug() << "OpenGL feature reported as not available:" << feature;
+                    //throw InitError("GLInfo::init", "Required OpenGL feature missing: " +
+                    //                String("%1").arg(feature));
+                }
             }
         }
-#else
-        if (!initializeOpenGLFunctions())
+        #else
         {
-            throw InitError("GLInfo::init", "Failed to initialize OpenGL");
+            if (!initializeOpenGLFunctions())
+            {
+                throw InitError("GLInfo::init", "Failed to initialize OpenGL");
+            }
         }
-#endif
+        #endif
+
         inited = true;
 
         // Extensions.
@@ -219,117 +224,123 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
 
         ext.KHR_debug                      = query("GL_KHR_debug");
 
-#ifdef WIN32
-        //ext.Windows_ARB_multisample        = query("WGL_ARB_multisample");
-        ext.Windows_EXT_swap_control       = query("WGL_EXT_swap_control");
+        #ifdef WIN32
+        {
+            //ext.Windows_ARB_multisample        = query("WGL_ARB_multisample");
+            ext.Windows_EXT_swap_control       = query("WGL_EXT_swap_control");
 
-        if (ext.Windows_EXT_swap_control)
-        {
-            wglSwapIntervalEXT = de::function_cast<decltype(wglSwapIntervalEXT)>
-                (QOpenGLContext::currentContext()->getProcAddress("wglSwapIntervalEXT"));
-        }
-#endif
-
-#ifdef DENG_X11
-        ext.X11_EXT_swap_control           = query("GLX_EXT_swap_control");
-        ext.X11_SGI_swap_control           = query("GLX_SGI_swap_control");
-        ext.X11_MESA_swap_control          = query("GLX_MESA_swap_control");
-
-        if (ext.X11_EXT_swap_control)
-        {
-            glXSwapIntervalEXT = de::function_cast<decltype(glXSwapIntervalEXT)>
-                    (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalEXT")));
-        }
-        if (ext.X11_SGI_swap_control)
-        {
-            glXSwapIntervalSGI = de::function_cast<decltype(glXSwapIntervalSGI)>
-                    (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalSGI")));
-        }
-        if (ext.X11_MESA_swap_control)
-        {
-            glXSwapIntervalMESA = de::function_cast<decltype(glXSwapIntervalMESA)>
-                    (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalMESA")));
-        }
-#endif
-
-#ifdef DENG_ENABLE_OPENGL_DEBUG_LOGGER
-        logger = new QOpenGLDebugLogger(&GLWindow::main());
-        if (!ext.KHR_debug)
-        {
-            qDebug() << "[GLInfo] GL_KHR_debug is not available";
-        }
-        else if (!logger->initialize())
-        {
-            qWarning() << "[GLInfo] Failed to initialize debug logger!";
-        }
-        else
-        {
-            QObject::connect(logger, &QOpenGLDebugLogger::messageLogged,
-                             [] (QOpenGLDebugMessage const &debugMessage)
+            if (ext.Windows_EXT_swap_control)
             {
-                char const *mType = "--";
-                char const *mSeverity = "--";
-
-                switch (debugMessage.type())
-                {
-                case QOpenGLDebugMessage::ErrorType:
-                    mType = "ERROR";
-                    break;
-                case QOpenGLDebugMessage::DeprecatedBehaviorType:
-                    mType = "Deprecated";
-                    break;
-                case QOpenGLDebugMessage::UndefinedBehaviorType:
-                    mType = "Undefined";
-                    break;
-                case QOpenGLDebugMessage::PortabilityType:
-                    mType = "Portability";
-                    break;
-                case QOpenGLDebugMessage::PerformanceType:
-                    mType = "Performance";
-                    break;
-                case QOpenGLDebugMessage::OtherType:
-                    mType = "Other";
-                    break;
-                case QOpenGLDebugMessage::MarkerType:
-                    mType = "Marker";
-                    break;
-                case QOpenGLDebugMessage::GroupPushType:
-                    mType = "Group Push";
-                    break;
-                case QOpenGLDebugMessage::GroupPopType:
-                    mType = "Group Pop";
-                    break;
-                default:
-                    break;
-                }
-
-                switch (debugMessage.severity())
-                {
-                case QOpenGLDebugMessage::HighSeverity:
-                    mType = " HIGH ";
-                    break;
-                case QOpenGLDebugMessage::MediumSeverity:
-                    mType = "MEDIUM";
-                    break;
-                case QOpenGLDebugMessage::LowSeverity:
-                    mType = " low  ";
-                    break;
-                case QOpenGLDebugMessage::NotificationSeverity:
-                    mType = " note ";
-                    break;
-                default:
-                    break;
-                }
-
-                qDebug("[OpenGL] %04x %s (%s): %s",
-                       debugMessage.id(),
-                       mType,
-                       mSeverity,
-                       debugMessage.message().toLatin1().constData());
-            });
-            logger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
+                wglSwapIntervalEXT = de::function_cast<decltype(wglSwapIntervalEXT)>
+                        (QOpenGLContext::currentContext()->getProcAddress("wglSwapIntervalEXT"));
+            }
         }
-#endif
+        #endif
+
+        #ifdef DENG_X11
+        {
+            ext.X11_EXT_swap_control           = query("GLX_EXT_swap_control");
+            ext.X11_SGI_swap_control           = query("GLX_SGI_swap_control");
+            ext.X11_MESA_swap_control          = query("GLX_MESA_swap_control");
+
+            if (ext.X11_EXT_swap_control)
+            {
+                glXSwapIntervalEXT = de::function_cast<decltype(glXSwapIntervalEXT)>
+                        (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalEXT")));
+            }
+            if (ext.X11_SGI_swap_control)
+            {
+                glXSwapIntervalSGI = de::function_cast<decltype(glXSwapIntervalSGI)>
+                        (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalSGI")));
+            }
+            if (ext.X11_MESA_swap_control)
+            {
+                glXSwapIntervalMESA = de::function_cast<decltype(glXSwapIntervalMESA)>
+                        (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalMESA")));
+            }
+        }
+        #endif
+
+        #ifdef DENG_ENABLE_OPENGL_DEBUG_LOGGER
+        {
+            logger = new QOpenGLDebugLogger(&GLWindow::main());
+            if (!ext.KHR_debug)
+            {
+                qDebug() << "[GLInfo] GL_KHR_debug is not available";
+            }
+            else if (!logger->initialize())
+            {
+                qWarning() << "[GLInfo] Failed to initialize debug logger!";
+            }
+            else
+            {
+                QObject::connect(logger, &QOpenGLDebugLogger::messageLogged,
+                                 [] (QOpenGLDebugMessage const &debugMessage)
+                {
+                    char const *mType = "--";
+                    char const *mSeverity = "--";
+
+                    switch (debugMessage.type())
+                    {
+                    case QOpenGLDebugMessage::ErrorType:
+                        mType = "ERROR";
+                        break;
+                    case QOpenGLDebugMessage::DeprecatedBehaviorType:
+                        mType = "Deprecated";
+                        break;
+                    case QOpenGLDebugMessage::UndefinedBehaviorType:
+                        mType = "Undefined";
+                        break;
+                    case QOpenGLDebugMessage::PortabilityType:
+                        mType = "Portability";
+                        break;
+                    case QOpenGLDebugMessage::PerformanceType:
+                        mType = "Performance";
+                        break;
+                    case QOpenGLDebugMessage::OtherType:
+                        mType = "Other";
+                        break;
+                    case QOpenGLDebugMessage::MarkerType:
+                        mType = "Marker";
+                        break;
+                    case QOpenGLDebugMessage::GroupPushType:
+                        mType = "Group Push";
+                        break;
+                    case QOpenGLDebugMessage::GroupPopType:
+                        mType = "Group Pop";
+                        break;
+                    default:
+                        break;
+                    }
+
+                    switch (debugMessage.severity())
+                    {
+                    case QOpenGLDebugMessage::HighSeverity:
+                        mType = " HIGH ";
+                        break;
+                    case QOpenGLDebugMessage::MediumSeverity:
+                        mType = "MEDIUM";
+                        break;
+                    case QOpenGLDebugMessage::LowSeverity:
+                        mType = " low  ";
+                        break;
+                    case QOpenGLDebugMessage::NotificationSeverity:
+                        mType = " note ";
+                        break;
+                    default:
+                        break;
+                    }
+
+                    qDebug("[OpenGL] %04x %s (%s): %s",
+                           debugMessage.id(),
+                           mType,
+                           mSeverity,
+                           debugMessage.message().toLatin1().constData());
+                });
+                logger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
+            }
+        }
+        #endif
 
         /*
         if (ext.ARB_draw_instanced)
@@ -358,21 +369,25 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
             EXT_framebuffer_object->initializeOpenGLFunctions();
         }*/
 
-#if defined (DENG_OPENGL)
-        if (ext.NV_framebuffer_multisample_coverage)
+        #if defined (DENG_OPENGL)
         {
-            NV_framebuffer_multisample_coverage.reset(new QOpenGLExtension_NV_framebuffer_multisample_coverage);
-            NV_framebuffer_multisample_coverage->initializeOpenGLFunctions();
+            if (ext.NV_framebuffer_multisample_coverage)
+            {
+                NV_framebuffer_multisample_coverage.reset(new QOpenGLExtension_NV_framebuffer_multisample_coverage);
+                NV_framebuffer_multisample_coverage->initializeOpenGLFunctions();
+            }
         }
-#endif
+        #endif
 
         // Limits.
         glGetIntegerv(GL_MAX_TEXTURE_SIZE,              reinterpret_cast<GLint *>(&lim.maxTexSize));
         glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS,       reinterpret_cast<GLint *>(&lim.maxTexUnits)); // at least 16
-#if defined (DENG_OPENGL)
-        glGetFloatv  (GL_SMOOTH_LINE_WIDTH_RANGE,       &lim.smoothLineWidth.start);
-        glGetFloatv  (GL_SMOOTH_LINE_WIDTH_GRANULARITY, &lim.smoothLineWidthGranularity);
-#endif
+        #if defined (DENG_OPENGL)
+        {
+            glGetFloatv(GL_SMOOTH_LINE_WIDTH_RANGE,       &lim.smoothLineWidth.start);
+            glGetFloatv(GL_SMOOTH_LINE_WIDTH_GRANULARITY, &lim.smoothLineWidthGranularity);
+        }
+        #endif
 
         LIBGUI_ASSERT_GL_OK();
 
@@ -417,12 +432,14 @@ void GLInfo::glInit()
 
 void GLInfo::glDeinit()
 {
-#ifdef DENG_ENABLE_OPENGL_DEBUG_LOGGER
-    if (info.d->logger)
+    #ifdef DENG_ENABLE_OPENGL_DEBUG_LOGGER
     {
-        info.d->logger->stopLogging();
+        if (info.d->logger)
+        {
+            info.d->logger->stopLogging();
+        }
     }
-#endif
+    #endif
     info.d.reset();
 }
 
@@ -477,14 +494,14 @@ void GLInfo::setSwapInterval(int interval)
 {
     DENG2_ASSERT(info.d->inited);
 
-#if defined (WIN32)
-    if (extensions().Windows_EXT_swap_control)
+    #if defined (WIN32)
     {
-        info.d->wglSwapIntervalEXT(interval);
+        if (extensions().Windows_EXT_swap_control)
+        {
+            info.d->wglSwapIntervalEXT(interval);
+        }
     }
-#endif
-
-#if defined (MACOSX)
+    #elif defined (MACOSX)
     {
         CGLContextObj context = CGLGetCurrentContext();
         DENG2_ASSERT(context != nullptr);
@@ -494,31 +511,39 @@ void GLInfo::setSwapInterval(int interval)
             CGLSetParameter(context, kCGLCPSwapInterval, params);
         }
     }
-#endif
-
-#if defined (DENG_X11)
-    if (extensions().X11_SGI_swap_control)
+    #elif defined (DENG_X11)
     {
-        info.d->glXSwapIntervalSGI(interval);
+        if (extensions().X11_SGI_swap_control)
+        {
+            info.d->glXSwapIntervalSGI(interval);
+        }
+        else if (extensions().X11_MESA_swap_control)
+        {
+            info.d->glXSwapIntervalMESA(uint(interval));
+        }
+        else if (extensions().X11_EXT_swap_control)
+        {
+            info.d->glXSwapIntervalEXT(QX11Info::display(),
+                                       GLWindow::main().winId(),
+                                       interval);
+        }
     }
-    else if (extensions().X11_MESA_swap_control)
-    {
-        info.d->glXSwapIntervalMESA(uint(interval));
-    }
-    else if (extensions().X11_EXT_swap_control)
-    {
-        info.d->glXSwapIntervalEXT(QX11Info::display(),
-                                   GLWindow::main().winId(),
-                                   interval);
-    }
-#endif
+    #endif
 }
 
 void GLInfo::setLineWidth(float lineWidth)
 {
-    DENG2_ASSERT(info.d->inited);
-    info.d->glLineWidth(info.d->lim.smoothLineWidth.clamp(lineWidth));
-    LIBGUI_ASSERT_GL_OK();
+    #if defined (DENG_OPENGL)
+    {
+        DENG2_ASSERT(info.d->inited);
+        info.d->glLineWidth(info.d->lim.smoothLineWidth.clamp(lineWidth));
+        LIBGUI_ASSERT_GL_OK();
+    }
+    #else
+    {
+        DENG2_UNUSED(lineWidth);
+    }
+    #endif
 }
 
 GLInfo::Extensions const &GLInfo::extensions()

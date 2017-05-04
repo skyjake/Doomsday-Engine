@@ -23,7 +23,7 @@
 #include <QCoreApplication>
 #include <QDir>
 
-#if !defined (DENG_IOS)
+#if !defined (DENG_MOBILE)
 
 namespace de {
 namespace shell {
@@ -191,7 +191,7 @@ NativePath LocalServer::errorLogPath() const
 {
     return d->userDir / ERROR_LOG_NAME;
 }
-   
+
 } // namespace shell
 } // namespace de
 

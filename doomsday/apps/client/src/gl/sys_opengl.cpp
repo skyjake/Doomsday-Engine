@@ -32,7 +32,7 @@
 
 #ifdef WIN32
 #   define GETPROC(Type, x)   x = de::function_cast<Type>(wglGetProcAddress(#x))
-#elif defined (UNIX) && !defined (MACOSX) && !defined (DENG_IOS)
+#elif defined (DENG_X11)
 #   include <GL/glx.h>
 #   undef None
 #   define GETPROC(Type, x)   x = de::function_cast<Type>(glXGetProcAddress((GLubyte const *)#x))
@@ -276,7 +276,7 @@ void Sys_GLConfigureDefaultState(void)
     LIBGUI_ASSERT_GL_OK();
     LIBGUI_GL.glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     LIBGUI_ASSERT_GL_OK();
-    
+
     LIBGUI_GL.glPointSize(GL_state.currentPointSize);
     LIBGUI_ASSERT_GL_OK();
 
