@@ -41,7 +41,7 @@ deng_merge_sources (ui_home       src/ui/home/*.cpp)
 deng_merge_sources (ui_infine     src/ui/infine/*.cpp)
 deng_merge_sources (ui_widgets    src/ui/widgets/*.cpp)
 if (NOT IOS)
-    add_definitions (DENG_HAVE_UPDATER)
+    add_definitions (-DDENG_HAVE_UPDATER)
     deng_merge_sources (updater   src/updater/*.cpp)
 endif ()
 deng_merge_sources (world         src/world/*.cpp)
@@ -133,7 +133,7 @@ if (IOS)
     link_framework (client PUBLIC MobileCoreServices)
     link_framework (client PUBLIC Security)
     link_framework (client PUBLIC UIKit)
-    target_link_libraries (client PUBLIC 
+    target_link_libraries (client PUBLIC
         ${QT_LIBS}/libqtlibpng.a
         ${QT_LIBS}/libqtharfbuzz.a
         ${QT_LIBS}/libqtfreetype.a
@@ -141,7 +141,7 @@ if (IOS)
         ${QT_LIBS}/libQt5FontDatabaseSupport_debug.a
         ${QT_LIBS}/libQt5GraphicsSupport_debug.a
         ${QT_LIBS}/libQt5ClipboardSupport_debug.a
-        ${QT_PLUGINS}/platforms/libqios_debug.a        
+        ${QT_PLUGINS}/platforms/libqios_debug.a
         ${QT_PLUGINS}/imageformats/libqgif.a
         ${QT_PLUGINS}/imageformats/libqicns.a
         ${QT_PLUGINS}/imageformats/libqtga.a
