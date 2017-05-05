@@ -18,18 +18,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#version 330
-
-layout(location = 0) in vec4 aVertex;
-layout(location = 1) in vec4 aColor;
-layout(location = 2) in vec2 aTexCoord[2];
+DENG_LAYOUT_LOC(0) DENG_ATTRIB vec4 aVertex;
+DENG_LAYOUT_LOC(1) DENG_ATTRIB vec4 aColor;
+DENG_LAYOUT_LOC(2) DENG_ATTRIB vec2 aTexCoord[2];
 
 uniform mat4 uMvpMatrix;
 uniform mat4 uTexMatrix0;
 uniform mat4 uTexMatrix1;
 
-out vec4 vColor;
-out vec2 vTexCoord[2];
+DENG_VAR vec4 vColor;
+DENG_VAR vec2 vTexCoord[2];
 
 vec2 transformTexCoord(const mat4 matrix, const vec2 tc) 
 {

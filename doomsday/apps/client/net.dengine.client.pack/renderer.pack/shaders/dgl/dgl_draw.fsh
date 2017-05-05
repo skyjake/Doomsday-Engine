@@ -17,9 +17,7 @@
  * the GNU Lesser General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
  */
-
-#version 330
-
+ 
 #include "../include/fog.glsl"
 
 uniform int uTexEnabled;
@@ -29,8 +27,8 @@ uniform float uAlphaLimit;
 uniform sampler2D uTex0;
 uniform sampler2D uTex1;
 
-in vec4 vColor;
-in vec2 vTexCoord[2];
+DENG_VAR vec4 vColor;
+DENG_VAR vec2 vTexCoord[2];
 
 void main()
 {

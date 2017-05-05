@@ -61,7 +61,7 @@ if (QT_VERSION VERSION_LESS 5.4)
 endif ()
 
 if (APPLE)
-    # Don't change display modes on macOS. We'll instead resize the
+    # Don't change display modes on macOS/iOS. We'll instead resize the
     # frame buffer and scale up.
     set (DENG_ENABLE_DISPLAYMODE_DEFAULT OFF)
 else ()

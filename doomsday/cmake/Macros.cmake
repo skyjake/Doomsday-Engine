@@ -478,16 +478,32 @@ macro (deng_codesign target)
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/PlugIns/*/*.dylib\"
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/Frameworks/*.dylib\"
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/Frameworks/*.framework\"
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/PlugIns/*.bundle/*\"
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/PlugIns/*.bundle\"
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/*.dylib\"
             )
             foreach (fn IN LISTS fw)
+                set (_skip NO)
+                if (fn MATCHES \".*app/PlugIns.*\" AND NOT fn MATCHES \".*\\\\.bundle$\")
+                    get_filename_component (fn2 \${fn} NAME)                    
+                    if (NOT fn MATCHES \".*\${fn2}.bundle/\${fn2}$\")
+                        set (_skip YES)
+                        message (STATUS \"Skipping \${fn} -- not an executable\")
+                    endif ()
+                endif ()
+                if (NOT _skip)
                 message (STATUS \"Signing \${fn}...\")
                 execute_process (COMMAND ${CODESIGN_COMMAND} --verbose
-                    -s \"${DENG_CODESIGN_APP_CERT}\" \"\${fn}\"
+                        -s \"${DENG_CODESIGN_APP_CERT}\" 
+                        ${DENG_FW_CODESIGN_EXTRA_FLAGS}
+                        \"\${fn}\"
                 )
+                endif ()
             endforeach (fn)
-            message (STATUS \"Signing ${_outName}.app using '${DENG_CODESIGN_APP_CERT}'...\")
+            message (STATUS \"Signing \${CMAKE_INSTALL_PREFIX}/${_outName}.app using '${DENG_CODESIGN_APP_CERT}'...\")
             execute_process (COMMAND ${CODESIGN_COMMAND} --verbose
                 --force -s \"${DENG_CODESIGN_APP_CERT}\"
+                ${DENG_CODESIGN_EXTRA_FLAGS}
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app\"
             )")
     endif ()
@@ -636,8 +652,11 @@ function (deng_bundle_install_names target)
 set (CMAKE_MODULE_PATH ${DENG_SOURCE_DIR}/cmake)
 set (CMAKE_INSTALL_NAME_TOOL ${CMAKE_INSTALL_NAME_TOOL})
 set (IOS ${IOS})
+if (NOT IOS)
+    set (bundleSubDir Contents/MacOS)
+endif ()
 include (Macros)
-fix_bundled_install_names (\"${CMAKE_CURRENT_BINARY_DIR}/\${INT_DIR}/${target}.bundle/Contents/MacOS/${target}\"
+fix_bundled_install_names (\"${CMAKE_CURRENT_BINARY_DIR}/\${INT_DIR}/${target}.bundle/\${bundleSubDir}/${target}\"
     \"${libs}\")\n")
     add_custom_command (TARGET ${target} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -DINT_DIR=${CMAKE_CFG_INTDIR} -P "${scriptName}"
@@ -653,12 +672,6 @@ function (deng_install_bundle_deps target)
         set (_fwDir "${_outName}.app/Contents/Frameworks")
         foreach (_dep ${_deps})
             if (TARGET ${_dep})
-                # get_property (bundleLibs TARGET ${_dep} PROPERTY MACOSX_BUNDLED_LIBRARIES)
-                # if (bundleLibs)
-                #   foreach (_lib ${bundleLibs})
-                #       message ("bundle this: ${_lib}")
-                #   endforeach (_lib)
-                # else ()
                     if (_dep MATCHES "Deng::(.*)")
                         install (FILES $<TARGET_FILE:${_dep}> DESTINATION ${_fwDir})
                     else ()
@@ -670,12 +683,7 @@ function (deng_install_bundle_deps target)
                                 install (FILES ${_tlib} DESTINATION ${_fwDir})
                             endif ()
                         endforeach (_tlib)
-                        # Cannot use this (CMake bug?); instead use the foreach above.
-                        # install (FILES $<TARGET_PROPERTY:${_dep},INTERFACE_LINK_LIBRARIES>
-                        #     DESTINATION ${_fwDir}
-                        # )
                     endif ()
-                #endif ()
             endif ()
         endforeach (_dep)
     endif ()
