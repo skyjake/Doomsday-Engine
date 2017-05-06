@@ -63,7 +63,6 @@ add_definitions (
 set (DENG_FIXED_ASM_DEFAULT OFF)
 
 set (XCODE_ATTRIBUTE_USE_HEADERMAP NO)
-set (XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH YES)
 
 macro (link_framework target linkType fw)
     find_library (${fw}_LIBRARY ${fw})
@@ -75,6 +74,11 @@ macro (link_framework target linkType fw)
 endmacro (link_framework)
 
 macro (deng_xcode_attribs target)
+    if (IOS_PLATFORM STREQUAL SIMULATOR)
+        set_target_properties (${target} PROPERTIES
+            XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH YES        
+        )
+    endif ()
     # set_target_properties (${target} PROPERTIES
     #     XCODE_ATTRIBUTE_GCC_SYMBOLS_PRIVATE_EXTERN NO
     #     XCODE_ATTRIBUTE_GCC_INLINES_ARE_PRIVATE_EXTERN NO

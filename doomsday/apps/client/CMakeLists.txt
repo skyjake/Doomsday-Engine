@@ -93,6 +93,8 @@ Q_IMPORT_PLUGIN(QICNSPlugin)
 Q_IMPORT_PLUGIN(QJpegPlugin)
 Q_IMPORT_PLUGIN(QTgaPlugin)")
     list (APPEND src ${CMAKE_CURRENT_BINARY_DIR}/qt_plugin_import.cpp)
+    
+    list (APPEND src res/ios/LaunchScreen.xib)
 endif ()
 
 deng_add_application (client ${src} EXTRA_RESOURCES ${MACX_RESOURCES})
@@ -239,7 +241,9 @@ endif ()
 if (IOS)
     set_target_properties (client PROPERTIES
         LINK_FLAGS "-Wl,-e,_qt_main_wrapper"
+        RESOURCE res/ios/LaunchScreen.xib
         MACOSX_BUNDLE_INFO_PLIST iOSBundleInfo.plist.in
+        XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
     )
 endif ()
 
