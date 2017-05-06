@@ -3,6 +3,8 @@ include (PlatformGenericUnix)
 set (DENG_PLATFORM_SUFFIX ios)
 #set (DENG_AMETHYST_PLATFORM IOS)
 
+set (DENG_STATIC_LINK YES)
+
 # Install the documentation in the app bundle.
 set (DENG_INSTALL_DOC_DIR "Doomsday.app/Contents/Resources/doc")
 #set (DENG_INSTALL_MAN_DIR ${DENG_INSTALL_DOC_DIR})
@@ -44,7 +46,14 @@ else ()
     set (CMAKE_OSX_ARCHITECTURES "arm64")
 endif ()
 
+append_unique (CMAKE_CXX_FLAGS "-fvisibility=hidden")
+append_unique (CMAKE_CXX_FLAGS "-fvisibility-inlines-hidden")
+append_unique (CMAKE_CXX_FLAGS "-Wno-inconsistent-missing-override")
+append_unique (CMAKE_C_FLAGS   "-Wno-shorten-64-to-32")
+append_unique (CMAKE_CXX_FLAGS "-Wno-shorten-64-to-32")
+
 add_definitions (
+    -DDENG_STATIC_LINK=1
     -DDENG_APPLE=1
     -DDENG_MOBILE=1
     -DDENG_IOS=1

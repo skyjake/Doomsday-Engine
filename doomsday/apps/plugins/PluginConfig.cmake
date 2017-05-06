@@ -23,7 +23,12 @@ macro (deng_add_plugin target)
         endif ()
         list (APPEND _src ${_winres})
     endif ()
-    add_library (${target} MODULE ${_src} ${DENG_RESOURCES})
+    if (DENG_STATIC_LINK)
+        set (_libType STATIC)
+    else ()
+        set (_libType MODULE)
+    endif ()
+    add_library (${target} ${_libType} ${_src} ${DENG_RESOURCES})
     target_include_directories (${target}
         PUBLIC "${DENG_API_DIR}"
         PRIVATE "${DENG_SOURCE_DIR}/sdk/libgui/include"

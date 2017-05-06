@@ -140,6 +140,15 @@ if (IOS)
         optimized ${QT_PLUGINS}/imageformats/libqicns.a
         optimized ${QT_PLUGINS}/imageformats/libqtga.a
         optimized ${QT_PLUGINS}/imageformats/libqjpeg.a
+        
+        importdeh
+        importidtech1
+        importudmf
+        doom
+        doom64
+        heretic
+        hexen
+        audio_fmod
     )
 elseif (APPLE)
     link_framework (client PUBLIC Cocoa)
@@ -234,7 +243,7 @@ if (IOS)
     )
 endif ()
 
-if (APPLE)
+if (APPLE AND NOT IOS)
     deng_install_bundle_deps (client
         Deng::libcore Deng::libshell Deng::libgui Deng::libappfw
         Deng::liblegacy Deng::libdoomsday Deng::libgamefw

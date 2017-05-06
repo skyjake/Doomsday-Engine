@@ -113,8 +113,6 @@ wbstartstruct_t wmInfo; // Intermission parameters.
 de::Uri nextMapUri;
 uint nextMapEntryPoint;
 
-static GameSession session;
-
 static bool quitInProgress;
 static gamestate_t gameState = GS_STARTUP;
 

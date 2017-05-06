@@ -264,13 +264,52 @@ int DS_Set(int prop, const void* ptr)
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DENG_EXTERN_C DENG_VISIBLE_SYMBOL const char* deng_LibraryType(void)
+DENG_EXTERN_C const char* deng_LibraryType(void)
 {
     return "deng-plugin/audio";
 }
+
+#if defined (DENG_STATIC_LINK)
+
+DENG_EXTERN_C void *staticlib_audio_fmod_symbol(char const *name)
+{
+    DENG_SYMBOL_PTR(name, deng_LibraryType)
+    DENG_SYMBOL_PTR(name, DS_Init)
+    DENG_SYMBOL_PTR(name, DS_Shutdown)
+    DENG_SYMBOL_PTR(name, DS_Event)
+    DENG_SYMBOL_PTR(name, DS_Set)
+    DENG_SYMBOL_PTR(name, DS_SFX_Init)
+    DENG_SYMBOL_PTR(name, DS_SFX_CreateBuffer)
+    DENG_SYMBOL_PTR(name, DS_SFX_DestroyBuffer)
+    DENG_SYMBOL_PTR(name, DS_SFX_Load)
+    DENG_SYMBOL_PTR(name, DS_SFX_Reset)
+    DENG_SYMBOL_PTR(name, DS_SFX_Play)
+    DENG_SYMBOL_PTR(name, DS_SFX_Stop)
+    DENG_SYMBOL_PTR(name, DS_SFX_Refresh)
+    DENG_SYMBOL_PTR(name, DS_SFX_Set)
+    DENG_SYMBOL_PTR(name, DS_SFX_Setv)
+    DENG_SYMBOL_PTR(name, DS_SFX_Listener)
+    DENG_SYMBOL_PTR(name, DS_SFX_Listenerv)
+    DENG_SYMBOL_PTR(name, DS_SFX_Getv)
+    DENG_SYMBOL_PTR(name, DM_Music_Init)
+    DENG_SYMBOL_PTR(name, DM_Music_Update)
+    DENG_SYMBOL_PTR(name, DM_Music_Get)
+    DENG_SYMBOL_PTR(name, DM_Music_Set)
+    DENG_SYMBOL_PTR(name, DM_Music_Pause)
+    DENG_SYMBOL_PTR(name, DM_Music_Stop)
+    DENG_SYMBOL_PTR(name, DM_Music_SongBuffer)
+    DENG_SYMBOL_PTR(name, DM_Music_Play)
+    DENG_SYMBOL_PTR(name, DM_Music_PlayFile)
+    qWarning() << name << "not found in audio_fmod";
+    return nullptr;
+}
+
+#else
 
 DENG_DECLARE_API(Con);
 
 DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_CONSOLE, Con);
 )
+
+#endif

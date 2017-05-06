@@ -33,7 +33,7 @@ struct font_s;
 #include <de/libcore.h>
 #include <de/types.h>
 
-DENG_EXTERN_C DENG_VISIBLE_SYMBOL void DP_Initialize();
+DENG_EXTERN_C void DP_Initialize();
 
 // Internal:
 extern ded_t *ded; // @todo Remove me.

@@ -220,11 +220,13 @@ public:
      */
     NativePath nativeBasePath();
 
+#if !defined (DENG_STATIC_LINK)
     /**
      * Returns the native path of where to load binaries (plugins). This
      * is where "/bin" points to.
      */
     NativePath nativePluginBinaryPath();
+#endif
 
     /**
      * Returns the native path where user-specific runtime files should be

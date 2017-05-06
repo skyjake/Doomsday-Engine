@@ -55,6 +55,8 @@ public:
      * @param source  Library file. Ownership transferred to LibraryFile.
      */
     LibraryFile(File *source);
+    
+    LibraryFile(NativePath const &nativePath);
 
     /**
      * When the LibraryFile is deleted the library is gets unloaded.
@@ -68,7 +70,7 @@ public:
      *
      * @return  @c true, if the library has been loaded.
      */
-    bool loaded() const { return _library != 0; }
+    bool loaded() const;
 
     /**
      * Provides access to the library. Automatically attempts to load the
@@ -114,9 +116,9 @@ public:
     };
 
 private:
-    Library *_library;
+    DENG2_PRIVATE(d)
 };
-
+    
 } // namespace de
 
 #endif /* LIBDENG2_LIBRARYFILE_H */

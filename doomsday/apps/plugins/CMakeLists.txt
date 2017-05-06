@@ -28,7 +28,9 @@ add_subdirectory (doom64)
 # Audio ---------------------------------------------------------------------------------
 
 add_subdirectory (fmod)
-add_subdirectory (openal)
+if (NOT TARGET audio_fmod)
+    add_subdirectory (openal)
+endif ()
 if (NOT (WIN32 OR IOS))
     add_subdirectory (fluidsynth)
 endif ()
@@ -39,6 +41,6 @@ endif ()
 
 # Other ---------------------------------------------------------------------------------
 
-if (DENG_DEVELOPER)
+if (DENG_DEVELOPER AND NOT IOS)
     add_subdirectory (example)
 endif ()

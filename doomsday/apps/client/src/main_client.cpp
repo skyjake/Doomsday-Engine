@@ -50,10 +50,25 @@
 #include <QTranslator>
 #include <de/EscapeParser>
 
+#if defined (DENG_STATIC_LINK)
+
+#include <de/Library>
+
+DENG2_IMPORT_LIBRARY(importidtech1);
+DENG2_IMPORT_LIBRARY(importudmf);
+DENG2_IMPORT_LIBRARY(importdeh);
+DENG2_IMPORT_LIBRARY(audio_fmod);
+DENG2_IMPORT_LIBRARY(doom);
+DENG2_IMPORT_LIBRARY(heretic);
+DENG2_IMPORT_LIBRARY(hexen);
+DENG2_IMPORT_LIBRARY(doom64);
+
+#endif
+
 /**
  * Application entry point.
  */
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     int exitCode = 0;
     {
@@ -89,16 +104,22 @@ int main(int argc, char** argv)
     }
 
     // Check that all reference-counted objects have been deleted.
-#ifdef DENG2_DEBUG
-# ifdef DENG_USE_COUNTED_TRACING
-    if(de::Counted::totalCount > 0)
+    #if defined (DENG2_DEBUG)
     {
-        de::Counted::printAllocs();
+        #if defined (DENG_USE_COUNTED_TRACING)
+        {
+            if(de::Counted::totalCount > 0)
+            {
+                de::Counted::printAllocs();
+            }
+        }
+        #else
+        {
+            DENG2_ASSERT(de::Counted::totalCount == 0);
+        }
+        #endif
     }
-# else
-    DENG2_ASSERT(de::Counted::totalCount == 0);
-# endif
-#endif
+    #endif
 
     return exitCode;
 }

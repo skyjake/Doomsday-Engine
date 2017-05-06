@@ -1595,7 +1595,7 @@ D_CMD(ViewGrid)
 void Viewports_Register()
 {
     C_VAR_INT ("con-show-during-setup",     &loadInStartupMode,     0, 0, 1);
-
+    
     C_VAR_INT ("rend-camera-smooth",        &rendCameraSmooth,      CVF_HIDE, 0, 1);
 
     C_VAR_BYTE("rend-info-deltas-angles",   &showViewAngleDeltas,   0, 0, 1);

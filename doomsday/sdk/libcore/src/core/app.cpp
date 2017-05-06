@@ -43,6 +43,7 @@
 #include "de/PackageLoader"
 #include "de/Record"
 #include "de/ScriptSystem"
+#include "de/StaticLibraryFeed"
 #include "de/UnixInfo"
 #include "de/Version"
 #include "de/Writer"
@@ -243,7 +244,11 @@ DENG2_PIMPL(App)
 
         if (allowPlugins)
         {
+#if !defined (DENG_STATIC_LINK)
             binFolder.attach(new DirectoryFeed(self().nativePluginBinaryPath()));
+#else
+            binFolder.attach(new StaticLibraryFeed);
+#endif
         }
 
         // User's home folder.
@@ -493,6 +498,7 @@ bool App::inMainThread()
     return DENG2_APP->d->mainThread == QThread::currentThread();
 }
 
+#if !defined (DENG_STATIC_LINK)
 NativePath App::nativePluginBinaryPath()
 {
     if (!d->cachedPluginBinaryPath.isEmpty()) return d->cachedPluginBinaryPath;
@@ -512,11 +518,7 @@ NativePath App::nativePluginBinaryPath()
     }
     #else
     {
-        #if defined (DENG_IOS)
-        {
-            path = d->appPath.fileNamePath() / "PlugIns";
-        }
-        #elif defined (MACOSX)
+        #if defined (MACOSX)
         {
             path = d->appPath.fileNamePath() / "../PlugIns/Doomsday";
         }
@@ -537,6 +539,7 @@ NativePath App::nativePluginBinaryPath()
     }
     #endif
 }
+#endif
 
 NativePath App::nativeHomePath()
 {

@@ -185,7 +185,7 @@ typedef struct de_api_s {
 #define DENG_USING_API(Name)    DENG_EXTERN_C DENG_DECLARE_API(Name)
 
 #define DENG_API_EXCHANGE(APIs) \
-    DENG_EXTERN_C DENG_VISIBLE_SYMBOL void deng_API(int id, void *api) { \
+    DENG_EXTERN_C void deng_API(int id, void *api) { \
         switch(id) { APIs \
         default: break; } }
 #define DENG_GET_API(Ident, Name) \
@@ -193,5 +193,12 @@ typedef struct de_api_s {
         memcpy(&_api_##Name, api, sizeof(_api_##Name)); \
         DENG_ASSERT(_api_##Name.api.id == Ident); \
         break;
+
+#if defined (DENG_STATIC_LINK)
+#define DENG_SYMBOL_PTR(var, symbolName) \
+    if (!qstrcmp(var, #symbolName)) { \
+        return reinterpret_cast<void *>(symbolName); \
+    }
+#endif
 
 #endif  // DOOMSDAY_APIS_H

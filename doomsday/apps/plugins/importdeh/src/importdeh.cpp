@@ -177,7 +177,7 @@ int DefsHook(int /*hook_type*/, int /*parm*/, void *data)
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
-DENG_EXTERN_C DENG_VISIBLE_SYMBOL void DP_Initialize()
+DENG_EXTERN_C void DP_Initialize()
 {
     Plug_AddHook(HOOK_DEFS, DefsHook);
 }
@@ -186,10 +186,22 @@ DENG_EXTERN_C DENG_VISIBLE_SYMBOL void DP_Initialize()
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DENG_EXTERN_C DENG_VISIBLE_SYMBOL char const *deng_LibraryType()
+DENG_EXTERN_C char const *deng_LibraryType()
 {
     return "deng-plugin/generic";
 }
+
+#if defined (DENG_STATIC_LINK)
+
+DENG_EXTERN_C void *staticlib_importdeh_symbol(char const *name)
+{
+    DENG_SYMBOL_PTR(name, deng_LibraryType)
+    DENG_SYMBOL_PTR(name, DP_Initialize);
+    qWarning() << name << "not found in importdeh";
+    return nullptr;
+}
+
+#else
 
 DENG_DECLARE_API(Base);
 DENG_DECLARE_API(Con);
@@ -202,3 +214,5 @@ DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_DEFINITIONS, Def);
     DENG_GET_API(DE_API_FILE_SYSTEM, F);
 )
+
+#endif
