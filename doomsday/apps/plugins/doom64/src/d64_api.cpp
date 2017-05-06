@@ -85,7 +85,7 @@ int G_RegisterGames(int hookType, int param, void* data)
 /**
  * Called right after the game plugin is selected into use.
  */
-DENG_EXTERN_C void DP_Load(void)
+DENG_EXTERN_C DENG_VISIBLE_SYMBOL void DP_Load(void)
 {
     Plug_AddHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
     gfw_SetCurrentGame(GFW_DOOM64);
@@ -94,7 +94,7 @@ DENG_EXTERN_C void DP_Load(void)
 /**
  * Called when the game plugin is freed from memory.
  */
-DENG_EXTERN_C void DP_Unload(void)
+DENG_EXTERN_C DENG_VISIBLE_SYMBOL void DP_Unload(void)
 {
     Plug_RemoveHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
 }
@@ -130,7 +130,7 @@ dd_bool G_TryShutdown(void)
  * Takes a copy of the engine's entry points and exported data. Returns
  * a pointer to the structure that contains our entry points and exports.
  */
-DENG_EXTERN_C game_export_t *GetGameAPI(void)
+DENG_EXTERN_C DENG_VISIBLE_SYMBOL game_export_t *GetGameAPI(void)
 {
     // Clear all of our exports.
     memset(&gx, 0, sizeof(gx));
@@ -182,7 +182,7 @@ DENG_EXTERN_C game_export_t *GetGameAPI(void)
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
-DENG_EXTERN_C void DP_Initialize()
+DENG_EXTERN_C DENG_VISIBLE_SYMBOL void DP_Initialize()
 {
     Plug_AddHook(HOOK_STARTUP, G_RegisterGames);
 }
@@ -191,7 +191,7 @@ DENG_EXTERN_C void DP_Initialize()
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DENG_EXTERN_C const char* deng_LibraryType(void)
+DENG_EXTERN_C DENG_VISIBLE_SYMBOL const char* deng_LibraryType(void)
 {
     return "deng-plugin/game";
 }

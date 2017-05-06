@@ -34,6 +34,7 @@ macro (deng_add_plugin target)
 
     if (APPLE)
         if (IOS)
+            set_property (TARGET ${target} PROPERTY XCODE_ATTRIBUTE_DEAD_CODE_STRIPPING NO)
             link_framework (${target} PUBLIC Foundation)
             link_framework (${target} PUBLIC CoreFoundation)
             link_framework (${target} PUBLIC MobileCoreServices)

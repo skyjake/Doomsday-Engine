@@ -128,7 +128,7 @@ int ConvertMapInfoHook(int /*hookType*/, int /*parm*/, void *context)
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
-extern "C" void DP_Initialize()
+DENG_EXTERN_C DENG_VISIBLE_SYMBOL void DP_Initialize()
 {
     Plug_AddHook(HOOK_MAP_CONVERT,     ConvertMapHook);
     Plug_AddHook(HOOK_MAPINFO_CONVERT, ConvertMapInfoHook);
@@ -138,7 +138,7 @@ extern "C" void DP_Initialize()
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-extern "C" char const *deng_LibraryType()
+DENG_EXTERN_C DENG_VISIBLE_SYMBOL char const *deng_LibraryType()
 {
     return "deng-plugin/generic";
 }

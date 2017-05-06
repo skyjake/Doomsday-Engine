@@ -185,7 +185,7 @@ typedef struct de_api_s {
 #define DENG_USING_API(Name)    DENG_EXTERN_C DENG_DECLARE_API(Name)
 
 #define DENG_API_EXCHANGE(APIs) \
-    DENG_EXTERN_C void deng_API(int id, void *api) { \
+    DENG_EXTERN_C DENG_VISIBLE_SYMBOL void deng_API(int id, void *api) { \
         switch(id) { APIs \
         default: break; } }
 #define DENG_GET_API(Ident, Name) \

@@ -77,6 +77,12 @@
 #  define DENG_NORETURN __attribute__((__noreturn__))
 #endif
 
+#if defined (DENG_IOS)
+#  define DENG_VISIBLE_SYMBOL __attribute__((visibility("default")))
+#else
+#  define DENG_VISIBLE_SYMBOL
+#endif
+
 #if !defined(_MSC_VER)
 #endif
 
