@@ -20,7 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "binangle.h"
+#include "de/binangle.h"
 #include <math.h>
 
 // Define this to use the lookup table implementation
