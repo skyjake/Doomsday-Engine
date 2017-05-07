@@ -610,10 +610,10 @@ static float logToLinear(float db)
     return std::pow(10.f, db/10.f);
 }
 
-static float scaleLogarithmic(float db, float scale, de::Rangef const &range)
-{
-    return range.clamp(linearToLog(scale * logToLinear(db)));
-}
+//static float scaleLogarithmic(float db, float scale, de::Rangef const &range)
+//{
+//    return range.clamp(linearToLog(scale * logToLinear(db)));
+//}
 
 /**
  * Update the ambient reverb properties.

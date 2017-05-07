@@ -1168,7 +1168,7 @@ D_CMD(If)
         {"<=",  IF_LEQUAL},
         {NULL,  0}
     };
-    uint        i, oper;
+    uint        i, oper = IF_EQUAL;
     cvar_t     *var;
     dd_bool     isTrue = false;
 
