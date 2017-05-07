@@ -71,30 +71,41 @@ deng_filter_platform_sources (src ${SOURCES} ${HEADERS} ${API_HEADERS})
 
 deng_add_package (net.dengine.client)
 
+if (IOS)
+    set (MACX_RESOURCES
+        doomsday.pk3
+    )
+    
+    file (WRITE ${CMAKE_CURRENT_BINARY_DIR}/qt_plugin_import.cpp
+        "#include <QtPlugin>
+        Q_IMPORT_PLUGIN(QIOSIntegrationPlugin)
+        Q_IMPORT_PLUGIN(QGifPlugin)
+        Q_IMPORT_PLUGIN(QICNSPlugin)
+        Q_IMPORT_PLUGIN(QJpegPlugin)
+        Q_IMPORT_PLUGIN(QTgaPlugin)")
+    list (APPEND src ${CMAKE_CURRENT_BINARY_DIR}/qt_plugin_import.cpp)
+
+    file (GLOB IOS_ICON_FILES res/ios/AppIcon*.png)
+
+    list (APPEND src 
+        res/ios/LaunchScreen.xib
+        ${IOS_ICON_FILES}
+    )    
+endif ()
+
 # OS X: Packages and other resources to bundle with the application.
-set (MACX_RESOURCES
-    res/macx/deng.icns
-    res/macx/English.lproj
-    doomsday.pk3
-)
+if (APPLE AND NOT IOS)
+    set (MACX_RESOURCES
+        res/macx/deng.icns
+        res/macx/English.lproj
+        doomsday.pk3
+    )
+endif ()
 
 # Windows: Use Qt resources.
 if (WIN32)
     qt5_add_resources (RCC_SOURCES res/windows/client.qrc)
     list (APPEND src ${RCC_SOURCES})
-endif ()
-
-if (IOS)
-    file (WRITE ${CMAKE_CURRENT_BINARY_DIR}/qt_plugin_import.cpp
-"#include <QtPlugin>
-Q_IMPORT_PLUGIN(QIOSIntegrationPlugin)
-Q_IMPORT_PLUGIN(QGifPlugin)
-Q_IMPORT_PLUGIN(QICNSPlugin)
-Q_IMPORT_PLUGIN(QJpegPlugin)
-Q_IMPORT_PLUGIN(QTgaPlugin)")
-    list (APPEND src ${CMAKE_CURRENT_BINARY_DIR}/qt_plugin_import.cpp)
-    
-    list (APPEND src res/ios/LaunchScreen.xib)
 endif ()
 
 deng_add_application (client ${src} EXTRA_RESOURCES ${MACX_RESOURCES})
@@ -200,9 +211,7 @@ endif ()
 if (WIN32 OR APPLE)
     set_property (TARGET client PROPERTY OUTPUT_NAME "Doomsday")
     set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE "Doomsday")
-    if (IOS)
-        set (MACOSX_BUNDLE_ICON_FILE "deng.icns")
-    else ()
+    if (NOT IOS)
         set (MACOSX_BUNDLE_ICON_FILE "deng.icns")
     endif ()
 else ()
@@ -241,9 +250,10 @@ endif ()
 if (IOS)
     set_target_properties (client PROPERTIES
         LINK_FLAGS "-Wl,-e,_qt_main_wrapper"
-        RESOURCE res/ios/LaunchScreen.xib
+        RESOURCE "res/ios/LaunchScreen.xib;${IOS_ICON_FILES}"
         MACOSX_BUNDLE_INFO_PLIST iOSBundleInfo.plist.in
         XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
+        XCODE_ATTRIBUTE_COMBINE_HIDPI_IMAGES NO
     )
 endif ()
 
