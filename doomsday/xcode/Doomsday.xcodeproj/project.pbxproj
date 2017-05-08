@@ -1782,8 +1782,6 @@
 		063576511EBF3C970074E6D4 /* font_richformat.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = font_richformat.cpp; sourceTree = "<group>"; };
 		063576521EBF3C970074E6D4 /* fontbank.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = fontbank.cpp; sourceTree = "<group>"; };
 		063576531EBF3C970074E6D4 /* nativefont.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = nativefont.cpp; sourceTree = "<group>"; };
-		063576541EBF3C970074E6D4 /* qtnativefont.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = qtnativefont.cpp; sourceTree = "<group>"; };
-		063576551EBF3C970074E6D4 /* qtnativefont.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = qtnativefont.h; sourceTree = "<group>"; };
 		063576561EBF3C970074E6D4 /* displaymode_dummy.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = displaymode_dummy.cpp; path = ../sdk/libgui/src/displaymode_dummy.cpp; sourceTree = "<group>"; };
 		063576571EBF3C970074E6D4 /* displaymode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = displaymode.cpp; path = ../sdk/libgui/src/displaymode.cpp; sourceTree = "<group>"; };
 		063576581EBF3C970074E6D4 /* glwindow.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = glwindow.cpp; path = ../sdk/libgui/src/glwindow.cpp; sourceTree = "<group>"; };
@@ -3294,8 +3292,6 @@
 				063576511EBF3C970074E6D4 /* font_richformat.cpp */,
 				063576521EBF3C970074E6D4 /* fontbank.cpp */,
 				063576531EBF3C970074E6D4 /* nativefont.cpp */,
-				063576541EBF3C970074E6D4 /* qtnativefont.cpp */,
-				063576551EBF3C970074E6D4 /* qtnativefont.h */,
 			);
 			name = text;
 			path = ../sdk/libgui/src/text;
