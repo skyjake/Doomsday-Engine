@@ -35,3 +35,4 @@ precompiled.h.cpp
 *.cpp.orig
 *.xcuserstate
 *.xcuserdatad
+*.xcscmblueprint
