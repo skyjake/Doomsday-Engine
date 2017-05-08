@@ -1145,7 +1145,6 @@
 		063581231EBF7AE50074E6D4 /* postprocessing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 063580141EBF7AE50074E6D4 /* postprocessing.cpp */; };
 		063581241EBF7AE50074E6D4 /* progress.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 063580151EBF7AE50074E6D4 /* progress.cpp */; };
 		063581251EBF7AE50074E6D4 /* savelistdata.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 063580161EBF7AE50074E6D4 /* savelistdata.cpp */; };
-		063581261EBF7AE50074E6D4 /* splash.xpm in Resources */ = {isa = PBXBuildFile; fileRef = 063580171EBF7AE50074E6D4 /* splash.xpm */; };
 		063581271EBF7AE50074E6D4 /* styledlogsinkformatter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 063580181EBF7AE50074E6D4 /* styledlogsinkformatter.cpp */; };
 		063581281EBF7AE50074E6D4 /* sys_input.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 063580191EBF7AE50074E6D4 /* sys_input.cpp */; };
 		063581291EBF7AE50074E6D4 /* ui_main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0635801A1EBF7AE50074E6D4 /* ui_main.cpp */; };
@@ -1333,6 +1332,15 @@
 		063583021EBFC0670074E6D4 /* AssimpCExport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 063583011EBFC0670074E6D4 /* AssimpCExport.cpp */; };
 		063583041EC036B40074E6D4 /* irrXML.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 063583031EC036B40074E6D4 /* irrXML.cpp */; };
 		063583061EC036CC0074E6D4 /* ConvertUTF.c in Sources */ = {isa = PBXBuildFile; fileRef = 063583051EC036CC0074E6D4 /* ConvertUTF.c */; };
+		063583111EC044DF0074E6D4 /* doomsday.pk3 in Resources */ = {isa = PBXBuildFile; fileRef = 063583101EC044DF0074E6D4 /* doomsday.pk3 */; };
+		063583161EC0452B0074E6D4 /* libdoom.pk3 in Resources */ = {isa = PBXBuildFile; fileRef = 063583121EC045220074E6D4 /* libdoom.pk3 */; };
+		063583171EC0452B0074E6D4 /* libdoom64.pk3 in Resources */ = {isa = PBXBuildFile; fileRef = 063583131EC045220074E6D4 /* libdoom64.pk3 */; };
+		063583181EC0452B0074E6D4 /* libheretic.pk3 in Resources */ = {isa = PBXBuildFile; fileRef = 063583141EC045220074E6D4 /* libheretic.pk3 */; };
+		063583191EC0452B0074E6D4 /* libhexen.pk3 in Resources */ = {isa = PBXBuildFile; fileRef = 063583151EC045220074E6D4 /* libhexen.pk3 */; };
+		0635831E1EC069B70074E6D4 /* net.dengine.base.pack in Resources */ = {isa = PBXBuildFile; fileRef = 0635831A1EC069B70074E6D4 /* net.dengine.base.pack */; };
+		0635831F1EC069B70074E6D4 /* net.dengine.client.pack in Resources */ = {isa = PBXBuildFile; fileRef = 0635831B1EC069B70074E6D4 /* net.dengine.client.pack */; };
+		063583201EC069B70074E6D4 /* net.dengine.stdlib.gui.pack in Resources */ = {isa = PBXBuildFile; fileRef = 0635831C1EC069B70074E6D4 /* net.dengine.stdlib.gui.pack */; };
+		063583211EC069B70074E6D4 /* net.dengine.stdlib.pack in Resources */ = {isa = PBXBuildFile; fileRef = 0635831D1EC069B70074E6D4 /* net.dengine.stdlib.pack */; };
 		067AD9181EBF14AE00B808B2 /* hexlex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 067AD9131EBF148F00B808B2 /* hexlex.cpp */; };
 		067AD9191EBF14AE00B808B2 /* importidtech1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 067AD9141EBF148F00B808B2 /* importidtech1.cpp */; };
 		067AD91A1EBF14AE00B808B2 /* mapimporter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 067AD9151EBF148F00B808B2 /* mapimporter.cpp */; };
@@ -1454,6 +1462,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 0635819B1EBFBA120074E6D4;
 			remoteInfo = assimp;
+		};
+		0635830B1EC03E0C0074E6D4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 068610501EBF01F700180814 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 063583071EC03DAD0074E6D4;
+			remoteInfo = Packages;
 		};
 		067AD9E11EBF154500B808B2 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -2598,6 +2613,16 @@
 		063583011EBFC0670074E6D4 /* AssimpCExport.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AssimpCExport.cpp; path = ../external/assimp/code/AssimpCExport.cpp; sourceTree = "<group>"; };
 		063583031EC036B40074E6D4 /* irrXML.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = irrXML.cpp; path = ../external/assimp/contrib/irrXML/irrXML.cpp; sourceTree = "<group>"; };
 		063583051EC036CC0074E6D4 /* ConvertUTF.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ConvertUTF.c; path = ../external/assimp/contrib/ConvertUTF/ConvertUTF.c; sourceTree = "<group>"; };
+		0635830F1EC0401D0074E6D4 /* Makefile.xcpacks */ = {isa = PBXFileReference; lastKnownFileType = text; name = Makefile.xcpacks; path = ../build/scripts/Makefile.xcpacks; sourceTree = "<group>"; };
+		063583101EC044DF0074E6D4 /* doomsday.pk3 */ = {isa = PBXFileReference; lastKnownFileType = file; name = doomsday.pk3; path = ../../Intermediates/Doomsday.build/doomsday.pk3; sourceTree = BUILT_PRODUCTS_DIR; };
+		063583121EC045220074E6D4 /* libdoom.pk3 */ = {isa = PBXFileReference; lastKnownFileType = file; name = libdoom.pk3; path = ../../Intermediates/Doomsday.build/libdoom.pk3; sourceTree = BUILT_PRODUCTS_DIR; };
+		063583131EC045220074E6D4 /* libdoom64.pk3 */ = {isa = PBXFileReference; lastKnownFileType = file; name = libdoom64.pk3; path = ../../Intermediates/Doomsday.build/libdoom64.pk3; sourceTree = BUILT_PRODUCTS_DIR; };
+		063583141EC045220074E6D4 /* libheretic.pk3 */ = {isa = PBXFileReference; lastKnownFileType = file; name = libheretic.pk3; path = ../../Intermediates/Doomsday.build/libheretic.pk3; sourceTree = BUILT_PRODUCTS_DIR; };
+		063583151EC045220074E6D4 /* libhexen.pk3 */ = {isa = PBXFileReference; lastKnownFileType = file; name = libhexen.pk3; path = ../../Intermediates/Doomsday.build/libhexen.pk3; sourceTree = BUILT_PRODUCTS_DIR; };
+		0635831A1EC069B70074E6D4 /* net.dengine.base.pack */ = {isa = PBXFileReference; explicitFileType = archive.zip; name = net.dengine.base.pack; path = ../../Intermediates/Doomsday.build/net.dengine.base.pack; sourceTree = BUILT_PRODUCTS_DIR; };
+		0635831B1EC069B70074E6D4 /* net.dengine.client.pack */ = {isa = PBXFileReference; explicitFileType = archive.zip; name = net.dengine.client.pack; path = ../../Intermediates/Doomsday.build/net.dengine.client.pack; sourceTree = BUILT_PRODUCTS_DIR; };
+		0635831C1EC069B70074E6D4 /* net.dengine.stdlib.gui.pack */ = {isa = PBXFileReference; explicitFileType = archive.zip; name = net.dengine.stdlib.gui.pack; path = ../../Intermediates/Doomsday.build/net.dengine.stdlib.gui.pack; sourceTree = BUILT_PRODUCTS_DIR; };
+		0635831D1EC069B70074E6D4 /* net.dengine.stdlib.pack */ = {isa = PBXFileReference; explicitFileType = archive.zip; name = net.dengine.stdlib.pack; path = ../../Intermediates/Doomsday.build/net.dengine.stdlib.pack; sourceTree = BUILT_PRODUCTS_DIR; };
 		067AD9091EBF143600B808B2 /* libimportidtech1.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libimportidtech1.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		067AD9131EBF148F00B808B2 /* hexlex.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = hexlex.cpp; path = ../apps/plugins/importidtech1/src/hexlex.cpp; sourceTree = "<group>"; };
 		067AD9141EBF148F00B808B2 /* importidtech1.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = importidtech1.cpp; path = ../apps/plugins/importidtech1/src/importidtech1.cpp; sourceTree = "<group>"; };
@@ -4920,6 +4945,15 @@
 				068610621EBF01F700180814 /* Assets.xcassets */,
 				068610761EBF01F700180814 /* LaunchScreen.storyboard */,
 				068610791EBF01F700180814 /* Info.plist */,
+				063583101EC044DF0074E6D4 /* doomsday.pk3 */,
+				063583121EC045220074E6D4 /* libdoom.pk3 */,
+				063583131EC045220074E6D4 /* libdoom64.pk3 */,
+				063583141EC045220074E6D4 /* libheretic.pk3 */,
+				063583151EC045220074E6D4 /* libhexen.pk3 */,
+				0635831A1EC069B70074E6D4 /* net.dengine.base.pack */,
+				0635831B1EC069B70074E6D4 /* net.dengine.client.pack */,
+				0635831C1EC069B70074E6D4 /* net.dengine.stdlib.gui.pack */,
+				0635831D1EC069B70074E6D4 /* net.dengine.stdlib.pack */,
 				068610641EBF01F700180814 /* Supporting Files */,
 			);
 			name = Resources;
@@ -5358,11 +5392,29 @@
 			isa = PBXGroup;
 			children = (
 				063581801EBF9C690074E6D4 /* xcmoc.py */,
+				0635830F1EC0401D0074E6D4 /* Makefile.xcpacks */,
 			);
 			name = Scripts;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
+
+/* Begin PBXLegacyTarget section */
+		063583071EC03DAD0074E6D4 /* Packages */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "-f $(SRCROOT)/../build/scripts/Makefile.xcpacks $(ACTION)";
+			buildConfigurationList = 063583081EC03DAD0074E6D4 /* Build configuration list for PBXLegacyTarget "Packages" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = $PROJECT_TEMP_DIR;
+			dependencies = (
+			);
+			name = Packages;
+			passBuildSettingsInEnvironment = 1;
+			productName = Packages;
+		};
+/* End PBXLegacyTarget section */
 
 /* Begin PBXNativeTarget section */
 		063574811EBF39880074E6D4 /* deng_shell */ = {
@@ -5656,6 +5708,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				0635830C1EC03E0C0074E6D4 /* PBXTargetDependency */,
 				067AD9E21EBF154500B808B2 /* PBXTargetDependency */,
 				0635771C1EBF3EB40074E6D4 /* PBXTargetDependency */,
 				063577201EBF3EB40074E6D4 /* PBXTargetDependency */,
@@ -5728,6 +5781,11 @@
 					0635819B1EBFBA120074E6D4 = {
 						DevelopmentTeam = VS2RUWJAF3;
 					};
+					063583071EC03DAD0074E6D4 = {
+						CreatedOnToolsVersion = 8.3.2;
+						DevelopmentTeam = VS2RUWJAF3;
+						ProvisioningStyle = Automatic;
+					};
 					067AD9081EBF143600B808B2 = {
 						CreatedOnToolsVersion = 8.3.2;
 						DevelopmentTeam = VS2RUWJAF3;
@@ -5756,6 +5814,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				063583071EC03DAD0074E6D4 /* Packages */,
 				067AD91D1EBF14E000B808B2 /* deng_core */,
 				063574811EBF39880074E6D4 /* deng_shell */,
 				0635768E1EBF3CD20074E6D4 /* deng_gui */,
@@ -5782,9 +5841,17 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0635831F1EC069B70074E6D4 /* net.dengine.client.pack in Resources */,
+				063583201EC069B70074E6D4 /* net.dengine.stdlib.gui.pack in Resources */,
 				068610781EBF01F700180814 /* LaunchScreen.storyboard in Resources */,
-				063581261EBF7AE50074E6D4 /* splash.xpm in Resources */,
 				068610631EBF01F700180814 /* Assets.xcassets in Resources */,
+				063583111EC044DF0074E6D4 /* doomsday.pk3 in Resources */,
+				063583161EC0452B0074E6D4 /* libdoom.pk3 in Resources */,
+				063583211EC069B70074E6D4 /* net.dengine.stdlib.pack in Resources */,
+				063583181EC0452B0074E6D4 /* libheretic.pk3 in Resources */,
+				0635831E1EC069B70074E6D4 /* net.dengine.base.pack in Resources */,
+				063583191EC0452B0074E6D4 /* libhexen.pk3 in Resources */,
+				063583171EC0452B0074E6D4 /* libdoom64.pk3 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -7396,6 +7463,11 @@
 			target = 0635819B1EBFBA120074E6D4 /* assimp */;
 			targetProxy = 063582491EBFBA350074E6D4 /* PBXContainerItemProxy */;
 		};
+		0635830C1EC03E0C0074E6D4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 063583071EC03DAD0074E6D4 /* Packages */;
+			targetProxy = 0635830B1EC03E0C0074E6D4 /* PBXContainerItemProxy */;
+		};
 		067AD9E21EBF154500B808B2 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 067AD91D1EBF14E000B808B2 /* deng_core */;
@@ -7902,6 +7974,39 @@
 			};
 			name = Release;
 		};
+		063583091EC03DAD0074E6D4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				DEBUGGING_SYMBOLS = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = VS2RUWJAF3;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		0635830A1EC03DAD0074E6D4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = VS2RUWJAF3;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		067AD9101EBF143600B808B2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -8367,6 +8472,14 @@
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
+		};
+		063583081EC03DAD0074E6D4 /* Build configuration list for PBXLegacyTarget "Packages" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				063583091EC03DAD0074E6D4 /* Debug */,
+				0635830A1EC03DAD0074E6D4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
 		};
 		067AD90F1EBF143600B808B2 /* Build configuration list for PBXNativeTarget "importidtech1" */ = {
 			isa = XCConfigurationList;

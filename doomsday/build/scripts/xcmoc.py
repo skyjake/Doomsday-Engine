@@ -39,6 +39,8 @@ def find_source(name, dir_path = os.path.join(sys.argv[1], 'src')):
 def md5sum(text):
     m = hashlib.md5()
     m.update(text.encode())
+    m.update(os.getenv('GCC_PREPROCESSOR_DEFINITIONS').encode())
+    m.update(os.getenv('HEADER_SEARCH_PATHS').encode())
     return m.hexdigest()    
 
 #print "Running moc in", sys.argv[1]
