@@ -22,6 +22,10 @@
 #include "de/Log"
 #include "de/LogBuffer"
 
+#if !defined (DENG_STATIC_LINK)
+#  include <QLibrary>
+#endif
+
 #include <array>
 
 namespace de {

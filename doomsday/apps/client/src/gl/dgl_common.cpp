@@ -898,6 +898,7 @@ static gl::Wrapping DGL_ToGLWrapCap(DGLint cap)
         DENG2_ASSERT(!"DGL_ToGLWrapCap: Unknown cap value");
         break;
     }
+    return gl::ClampToEdge;
 }
 
 #undef DGL_SetMaterialUI
