@@ -91,8 +91,12 @@ DENG2_PIMPL(BaseWindow)
 };
 
 BaseWindow::BaseWindow(String const &id)
-    : PersistentGLWindow(id)
+#if !defined (DENG_MOBILE)
+    : LIBAPPFW_BASEWINDOW_SUPER(id)
     , d(new Impl(this))
+#else
+    : d(new Impl(this))
+#endif
 {}
 
 void BaseWindow::setTransform(WindowTransform &xf)
@@ -176,5 +180,14 @@ void BaseWindow::postDraw()
     // The timer loop was paused when the frame was requested to be drawn.
     DENG2_GUI_APP->loop().resume();
 }
+    
+#if defined (DENG_MOBILE)
+
+String BaseWindow::configName(String const &key) const
+{
+    return QString("window.main.%1").arg(key);
+}
+
+#endif
 
 } // namespace de

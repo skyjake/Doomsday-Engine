@@ -86,7 +86,9 @@ public slots:
     void focusOnCommandLine();
     void closeMenu();
     void commandWasEntered(de::String const &);
+#if !defined (DENG_MOBILE)
     void copyLogPathToClipboard();
+#endif
 
 protected slots:
     void logContentHeightIncreased(int delta);

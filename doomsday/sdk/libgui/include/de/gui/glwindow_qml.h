@@ -1,7 +1,6 @@
-/** @file glwindow.h  Top-level OpenGL window.
+/** @file glwindow_ios.h  Top-level OpenGL window (QML item).
  *
- * @authors Copyright © 2012-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright (c) 2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -17,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_GLWINDOW_H
-#define LIBGUI_GLWINDOW_H
+#ifndef LIBGUI_GLWINDOW_IOS_H
+#define LIBGUI_GLWINDOW_IOS_H
 
 #include "../WindowEventHandler"
 #include "../GLTextureFramebuffer"
@@ -27,25 +26,14 @@
 #include <de/Rectangle>
 #include <de/NativePath>
 
-#if defined (DENG_MOBILE)
-#  error "glwindow.h is for desktop platforms (use glwindow_qml.h instead)"
-##endif
-
-#include <QOpenGLWindow>
-
-#ifdef WIN32
-#  undef min
-#  undef max
-#endif
+#include <QQuickItem>
 
 namespace de {
     
 /**
- * Top-level window that contains an OpenGL drawing surface. @ingroup gui
- *
- * @see WindowEventHandler
+ * Top-level UI item that contains an OpenGL drawing surface. @ingroup gui
  */
-class LIBGUI_PUBLIC GLWindow : public QOpenGLWindow, public Asset
+class LIBGUI_PUBLIC GLWindow : public QQuickItem, public Asset
 {
     Q_OBJECT
 
@@ -75,7 +63,17 @@ public:
 
 public:
     GLWindow();
-        
+    
+    void setTitle(QString const &title);
+    QSurfaceFormat format() const;
+    double devicePixelRatio() const;
+    void makeCurrent();
+    void doneCurrent();
+    Rectanglei windowRect() const;
+    Size fullscreenSize() const;
+    void hide();
+    void update();
+
     bool isGLReady() const;
     bool isFullScreen() const;
     bool isMaximized() const;
@@ -185,10 +183,11 @@ public:
     static void setMain(GLWindow *window);
 
 protected:
-    void initializeGL() override;
-    void paintGL() override;
+    /*void initializeGL() override;
+    void paintGL() override;*/
     virtual void windowAboutToClose();
 
+    /*
     // Native events.
     void resizeEvent            (QResizeEvent *ev) override;
     void focusInEvent           (QFocusEvent  *ev) override;
@@ -200,11 +199,20 @@ protected:
     void mouseDoubleClickEvent  (QMouseEvent  *ev) override;
     void mouseMoveEvent         (QMouseEvent  *ev) override;
     void wheelEvent             (QWheelEvent  *ev) override;
-
+     
     bool event(QEvent *) override;
+     */
 
+public slots:
+    void sync();
+    void cleanup();
+    void paintGL();
+    
 protected slots:
     void frameWasSwapped();
+
+private slots:
+    void handleWindowChanged(QQuickWindow *win);
 
 private:
     DENG2_PRIVATE(d)
@@ -212,4 +220,4 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_GLWINDOW_H
+#endif // LIBGUI_GLWINDOW_IOS_H

@@ -1,1 +1,6 @@
-#include "gui/glwindow.h"
+#if defined (DENG_MOBILE)
+#  include "gui/glwindow_qml.h"
+#else
+#  include "gui/glwindow.h"
+#endif
+

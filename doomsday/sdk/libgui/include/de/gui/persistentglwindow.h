@@ -20,6 +20,8 @@
 #ifndef LIBGUI_PERSISTENTCANVASWINDOW_H
 #define LIBGUI_PERSISTENTCANVASWINDOW_H
 
+#if !defined (DENG_MOBILE)
+
 #include <de/Error>
 #include <de/GLWindow>
 #include <de/Rectangle>
@@ -182,5 +184,7 @@ private:
 };
 
 } // namespace de
+
+#endif
 
 #endif // LIBGUI_PERSISTENTCANVASWINDOW_H

@@ -46,7 +46,7 @@ DENG2_PIMPL(GuiApp)
 void GuiApp::setDefaultOpenGLFormat() // static
 {
     QSurfaceFormat fmt;
-#ifdef DENG_OPENGL_ES
+#if defined (DENG_OPENGL_ES)
     fmt.setRenderableType(QSurfaceFormat::OpenGLES);
     fmt.setVersion(DENG_OPENGL_ES / 10, DENG_OPENGL_ES % 10);
 #else
@@ -57,16 +57,16 @@ void GuiApp::setDefaultOpenGLFormat() // static
     fmt.setDepthBufferSize(24);
     fmt.setStencilBufferSize(8);
     fmt.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
-#ifdef DENG2_DEBUG
+#if defined (DENG2_DEBUG)
     fmt.setOption(QSurfaceFormat::DebugContext, true);
 #endif
     QSurfaceFormat::setDefaultFormat(fmt);
 }
 
 GuiApp::GuiApp(int &argc, char **argv)
-    : QApplication(argc, argv),
-      App(applicationFilePath(), arguments()),
-      d(new Impl(this))
+    : LIBGUI_GUIAPP_BASECLASS(argc, argv)
+    , App(applicationFilePath(), arguments())
+    , d(new Impl(this))
 {
     static ImageFile::Interpreter intrpImageFile;
     fileSystem().addInterpreter(intrpImageFile);
@@ -91,7 +91,7 @@ bool GuiApp::notify(QObject *receiver, QEvent *event)
 {
     try
     {
-        return QApplication::notify(receiver, event);
+        return LIBGUI_GUIAPP_BASECLASS::notify(receiver, event);
     }
     catch (std::exception const &error)
     {
@@ -114,7 +114,7 @@ int GuiApp::execLoop()
     LOGDEV_NOTE("Starting GuiApp event loop...");
 
     d->loop.start();
-    int code = QApplication::exec();
+    int code = LIBGUI_GUIAPP_BASECLASS::exec();
 
     LOGDEV_NOTE("GuiApp event loop exited with code %i") << code;
     return code;
@@ -125,7 +125,7 @@ void GuiApp::stopLoop(int code)
     LOGDEV_MSG("Stopping GuiApp event loop");
 
     d->loop.stop();
-    return QApplication::exit(code);
+    return LIBGUI_GUIAPP_BASECLASS::exit(code);
 }
 
 GuiLoop &GuiApp::loop()

@@ -153,10 +153,12 @@ bool Version::operator > (Version const &other) const
 
 String Version::operatingSystem()
 {
-#if defined(WIN32)
+#if defined (WIN32)
     return "windows";
-#elif defined(MACOSX)
+#elif defined (MACOSX)
     return "macx";
+#elif defined (DENG_IOS)
+    return "ios";
 #else
     return "unix";
 #endif

@@ -289,9 +289,9 @@ DENG2_PIMPL(VRWindowTransform)
         case VRConfig::RowInterleaved: {
             // Use absolute screen position of window to determine whether the
             // first scan line is odd or even.
-            QPoint ulCorner(0, 0);
+            QPointF ulCorner(0, 0);
             ulCorner = self().window().mapToGlobal(ulCorner); // widget to screen coordinates
-            bool const rowParityIsEven = ((ulCorner.y() % 2) == 0);
+            bool const rowParityIsEven = ((int(ulCorner.y()) % 2) == 0);
 
             // Draw left eye view directly to the screen
             vrCfg.setCurrentEye(rowParityIsEven? VRConfig::LeftEye : VRConfig::RightEye);

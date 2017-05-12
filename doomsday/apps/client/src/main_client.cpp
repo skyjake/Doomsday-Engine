@@ -59,6 +59,11 @@ Q_IMPORT_PLUGIN(QIOSIntegrationPlugin)
 Q_IMPORT_PLUGIN(QGifPlugin)
 Q_IMPORT_PLUGIN(QJpegPlugin)
 Q_IMPORT_PLUGIN(QTgaPlugin)
+Q_IMPORT_PLUGIN(QtQuick2Plugin)
+Q_IMPORT_PLUGIN(QtQuickControls2Plugin)
+Q_IMPORT_PLUGIN(QtQuickLayoutsPlugin)
+Q_IMPORT_PLUGIN(QtQuickTemplates2Plugin)
+Q_IMPORT_PLUGIN(QtQuick2WindowPlugin)
 
 DENG2_IMPORT_LIBRARY(importidtech1)
 DENG2_IMPORT_LIBRARY(importudmf)
@@ -71,6 +76,11 @@ DENG2_IMPORT_LIBRARY(doom64)
 
 #endif
 
+#if defined (DENG_MOBILE)
+#  include <QQuickView>
+#  include "ui/clientwindow.h"
+#endif
+
 /**
  * Application entry point.
  */
@@ -81,7 +91,7 @@ int main(int argc, char **argv)
         ClientApp::setDefaultOpenGLFormat();
 
         ClientApp clientApp(argc, argv);
-
+        
         /**
          * @todo Translations are presently disabled because lupdate can't seem to
          * parse tr strings from inside private implementation classes. Workaround
@@ -97,6 +107,17 @@ int main(int argc, char **argv)
         try
         {
             clientApp.initialize();
+            
+#if defined (DENG_MOBILE)
+            // On mobile, Qt Quick is actually in charge of drawing the screen.
+            // GLWindow is just an item that draws the UI background.
+            qmlRegisterType<ClientWindow>("Doomsday", 1, 0, "ClientWindow");
+            QQuickView view;
+            view.setResizeMode(QQuickView::SizeRootObjectToView);
+            view.setSource(QUrl("qrc:///qml/main.qml"));
+            view.show();
+#endif
+            
             exitCode = clientApp.execLoop();
         }
         catch(de::Error const &er)

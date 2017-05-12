@@ -1,8 +1,7 @@
-/** @file glwindow.cpp  Top-level OpenGL window.
+/** @file glwindow.cpp  Top-level OpenGL window (QML item).
  * @ingroup base
  *
- * @authors Copyright © 2012-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright (c) 2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -21,17 +20,17 @@
 #include "de/GLWindow"
 #include "de/GuiApp"
 
-#include <QElapsedTimer>
-#include <QImage>
-#include <QOpenGLTimerQuery>
-#include <QSurfaceFormat>
-#include <QTimer>
-
 #include <de/GLBuffer>
 #include <de/GLState>
 #include <de/GLFramebuffer>
 #include <de/Log>
 #include <de/c_wrapper.h>
+
+#include <QElapsedTimer>
+#include <QImage>
+#include <QQuickWindow>
+#include <QSurfaceFormat>
+#include <QTimer>
 
 namespace de {
 
@@ -39,6 +38,7 @@ static GLWindow *mainWindow = nullptr;
 
 DENG2_PIMPL(GLWindow)
 {
+    QQuickWindow *qtWindow = nullptr;
     LoopCallback mainCall;
     GLFramebuffer backing; // Represents QOpenGLWindow's framebuffer.
     WindowEventHandler *handler = nullptr; ///< Event handler.
@@ -50,48 +50,19 @@ DENG2_PIMPL(GLWindow)
     unsigned int frameCount = 0;
     float fps = 0;
 
-#if defined (DENG_HAVE_TIMER_QUERY)
-    QOpenGLTimerQuery *timerQuery = nullptr;
-    bool timerQueryPending = false;
-    QElapsedTimer gpuTimeRecordingStartedAt;
-    QVector<TimeDelta> recordedGpuTimes;
-#endif
-
     Impl(Public *i) : Base(i) {}
-
-    ~Impl()
-    {
-        self().makeCurrent();
-        glDeinit();
-        self().doneCurrent();
-
-        if (thisPublic == mainWindow)
-        {
-            GuiLoop::get().setWindow(nullptr);
-            mainWindow = nullptr;
-        }
-    }
 
     void glInit()
     {
         GLInfo::glInit();
-        self().setState(Ready);
+        self().Asset::setState(Ready);
     }
 
     void glDeinit()
     {
-        self().setState(NotReady);
+        self().Asset::setState(NotReady);
         readyNotified = false;
         readyPending = false;
-#if defined (DENG_HAVE_TIMER_QUERY)
-        if (timerQuery)
-        {
-            if (timerQueryPending) timerQuery->waitForResult();
-            delete timerQuery;
-            timerQuery = nullptr;
-            timerQueryPending = false;
-        }
-#endif
         GLInfo::glDeinit();
     }
 
@@ -101,12 +72,10 @@ DENG2_PIMPL(GLWindow)
 
         readyPending = false;
 
-        self().makeCurrent();
-
         DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
 
         // Print some information.
-        QSurfaceFormat const fmt = self().format();
+        QSurfaceFormat const fmt = qtWindow->format();
 
 #if defined (DENG_OPENGL)
         LOG_GL_NOTE("OpenGL %i.%i supported%s")
@@ -125,51 +94,9 @@ DENG2_PIMPL(GLWindow)
 
         readyNotified = true;
 
-        self().doneCurrent();
-
         // Now we can paint.
-        mainCall.enqueue([this] () { self().update(); });
+        //mainCall.enqueue([this] () { self().update(); });
     }
-
-#if defined (DENG_HAVE_TIMER_QUERY)
-    bool timerQueryReady() const
-    {
-        //if (!GLInfo::extensions().EXT_timer_query) return false;
-        return timerQuery && !timerQueryPending;
-    }
-
-    void checkTimerQueryResult()
-    {
-        // Measure how long it takes to render a frame on average.
-        if (//GLInfo::extensions().EXT_timer_query &&
-            timerQueryPending &&
-            timerQuery->isResultAvailable())
-        {
-            timerQueryPending = false;
-            recordedGpuTimes.append(double(timerQuery->waitForResult()) / 1.0e9);
-
-            if (!gpuTimeRecordingStartedAt.isValid())
-            {
-                gpuTimeRecordingStartedAt.start();
-            }
-
-            // There are minor time variations rendering the same frame, so average over
-            // a second to find out a reasonable value.
-            if (gpuTimeRecordingStartedAt.elapsed() > 1000)
-            {
-                TimeDelta average = 0;
-                for (auto dt : recordedGpuTimes) average += dt;
-                average = average / recordedGpuTimes.size();
-                recordedGpuTimes.clear();
-
-                //qDebug() << "[OpenGL average frame timed]" << average.asMicroSeconds() << "µs";
-                //qDebug() << "[OpenGL draw count]" << GLBuffer::drawCount();
-
-                gpuTimeRecordingStartedAt.restart();
-            }
-        }
-    }
-#endif
 
     void updateFrameRateStatistics()
     {
@@ -200,29 +127,61 @@ DENG2_AUDIENCE_METHOD(GLWindow, Resize)
 DENG2_AUDIENCE_METHOD(GLWindow, Swap)
 
 GLWindow::GLWindow()
-    : LIBGUI_GLWINDOW_BASECLASS()
-    , d(new Impl(this))
+    : d(new Impl(this))
 {
-#if defined (MACOSX)
-    setFlags(flags() | Qt::WindowFullscreenButtonHint);
-#endif
-    
-#if defined (DENG_MOBILE)
-    setFocusPolicy(Qt::StrongFocus);
-#endif
-
-    connect(this, SIGNAL(frameSwapped()), this, SLOT(frameWasSwapped()));
-
     // Create the drawing canvas for this window.
     d->handler = new WindowEventHandler(this);
+    
+    connect(this, &QQuickItem::windowChanged, this, &GLWindow::handleWindowChanged);
 }
 
-#if defined (DENG_MOBILE)
 void GLWindow::setTitle(QString const &title)
 {
-    setWindowTitle(title);
+    //setWindowTitle(title);
 }
-#endif
+    
+QSurfaceFormat GLWindow::format() const
+{
+    DENG2_ASSERT(d->qtWindow);
+    return d->qtWindow->format();
+}
+    
+double GLWindow::devicePixelRatio() const
+{
+    DENG2_ASSERT(d->qtWindow);
+    return d->qtWindow->devicePixelRatio();
+}
+    
+void GLWindow::makeCurrent()
+{
+    DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
+}
+    
+void GLWindow::doneCurrent()
+{
+        
+}
+    
+void GLWindow::update()
+{
+    if (d->qtWindow) d->qtWindow->update();
+}
+    
+Rectanglei GLWindow::windowRect() const
+{
+    Size const size = pointSize();
+    return Rectanglei(0, 0, size.x, size.y);
+}
+    
+GLWindow::Size GLWindow::fullscreenSize() const
+{
+    return pointSize();
+}
+    
+void GLWindow::hide()
+{
+    
+}
     
 bool GLWindow::isGLReady() const
 {
@@ -231,38 +190,22 @@ bool GLWindow::isGLReady() const
 
 bool GLWindow::isMaximized() const
 {
-#if defined (DENG_MOBILE)
     return false;
-#else
-    return visibility() == QWindow::Maximized;
-#endif
 }
 
 bool GLWindow::isMinimized() const
 {
-#if defined (DENG_MOBILE)
     return false;
-#else
-    return visibility() == QWindow::Minimized;
-#endif
 }
 
 bool GLWindow::isFullScreen() const
 {
-#if defined (DENG_MOBILE)
     return true;
-#else
-    return visibility() == QWindow::FullScreen;
-#endif
 }
 
 bool GLWindow::isHidden() const
 {
-#if defined (DENG_MOBILE)
     return false;
-#else
-    return visibility() == QWindow::Hidden;
-#endif
 }
 
 GLFramebuffer &GLWindow::framebuffer() const
@@ -282,8 +225,9 @@ uint GLWindow::frameCount() const
 
 GLWindow::Size GLWindow::pointSize() const
 {
-    return Size(duint(de::max(0, LIBGUI_GLWINDOW_BASECLASS::width())),
-                duint(de::max(0, LIBGUI_GLWINDOW_BASECLASS::height())));
+    if (!d->qtWindow) return Size();
+    return Size(duint(de::max(0, d->qtWindow->width())),
+                duint(de::max(0, d->qtWindow->height())));
 }
 
 GLWindow::Size GLWindow::pixelSize() const
@@ -323,6 +267,7 @@ bool GLWindow::ownsEventHandler(WindowEventHandler *handler) const
     return d->handler == handler;
 }
 
+    /*
 void GLWindow::focusInEvent(QFocusEvent *ev)
 {
     d->handler->focusInEvent(ev);
@@ -370,21 +315,13 @@ void GLWindow::wheelEvent(QWheelEvent *ev)
 
 bool GLWindow::event(QEvent *ev)
 {
-/*#ifdef WIN32
-    if (ev->type() == QEvent::ActivationChange)
-    {
-        //LOG_DEBUG("GLWindow: Forwarding QEvent::KeyRelease, Qt::Key_Alt");
-        QKeyEvent keyEvent = QKeyEvent(QEvent::KeyRelease, Qt::Key_Alt, Qt::NoModifier);
-        return QApplication::sendEvent(&canvas(), &keyEvent);
-    }
-#endif*/
-    
     if (ev->type() == QEvent::Close)
     {
         windowAboutToClose();
     }
     return LIBGUI_GLWINDOW_BASECLASS::event(ev);
 }
+     */
 
 bool GLWindow::grabToFile(NativePath const &path) const
 {
@@ -393,11 +330,13 @@ bool GLWindow::grabToFile(NativePath const &path) const
 
 QImage GLWindow::grabImage(QSize const &outputSize) const
 {
-    return grabImage(QRect(QPoint(0, 0), geometry().size() * qApp->devicePixelRatio()), outputSize);
+    Size const size = pixelSize();
+    return grabImage(QRect(QPoint(0, 0), QSize(size.x, size.y)), outputSize);
 }
 
 QImage GLWindow::grabImage(QRect const &area, QSize const &outputSize) const
 {
+#if 0
     // We will be grabbing the visible, latest complete frame.
     //LIBGUI_GL.glReadBuffer(GL_FRONT);
     QImage grabbed = const_cast<GLWindow *>(this)->grabFramebuffer(); // no alpha
@@ -412,40 +351,53 @@ QImage GLWindow::grabImage(QRect const &area, QSize const &outputSize) const
         grabbed = grabbed.scaled(outputSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     }
     return grabbed;
+#endif
+    return QImage();
 }
 
 void GLWindow::glActivate()
 {
-    makeCurrent();
+    if (isGLReady())
+    {
+        makeCurrent();
+    }
+    //d->qtWindow->makeCurrent();
+    //d->qtWindow->openglContext()
 }
 
 void GLWindow::glDone()
 {
-    doneCurrent();
+    //doneCurrent();
 }
 
 void *GLWindow::nativeHandle() const
 {
+#if 0
     return reinterpret_cast<void *>(winId());
+#endif
+    return nullptr;
 }
 
-void GLWindow::initializeGL()
+/*void GLWindow::initializeGL()
 {
     LOG_AS("GLWindow");
     LOGDEV_GL_NOTE("Initializing OpenGL window");
 
     d->glInit();
-}
+}*/
 
 void GLWindow::paintGL()
 {
-    GLFramebuffer::setDefaultFramebuffer(defaultFramebufferObject());
+    DENG2_ASSERT(d->qtWindow != nullptr);
+    DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
+    
+    GLFramebuffer::setDefaultFramebuffer(QOpenGLContext::currentContext()->defaultFramebufferObject());
 
     // Do not proceed with painting until after the application has completed
     // GL initialization. This is done via timer callback because we don't
     // want to perform a long-running operation during a paint event.
 
-    if (!d->readyNotified)
+    /*if (!d->readyNotified)
     {
         if (!d->readyPending)
         {
@@ -454,30 +406,7 @@ void GLWindow::paintGL()
         }
         LIBGUI_GL.glClear(GL_COLOR_BUFFER_BIT);
         return;
-    }
-
-    DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
-
-    //if (GLInfo::extensions().EXT_timer_query)
-#if defined (DENG_HAVE_TIMER_QUERY)
-    {
-        d->checkTimerQueryResult();
-
-        if (!d->timerQuery)
-        {
-            d->timerQuery = new QOpenGLTimerQuery();
-            if (!d->timerQuery->create())
-            {
-                LOG_GL_ERROR("Failed to create timer query object");
-            }
-        }
-
-        if (d->timerQueryReady())
-        {
-            d->timerQuery->begin();
-        }
-    }
-#endif
+    }*/
 
     GLBuffer::resetDrawCount();
 
@@ -489,19 +418,14 @@ void GLWindow::paintGL()
     draw();
 
     LIBGUI_ASSERT_GL_OK();
-
-#if defined (DENG_HAVE_TIMER_QUERY)
-    if (d->timerQueryReady())
-    {
-        d->timerQuery->end();
-        d->timerQueryPending = true;
-    }
-#endif
+    
+    d->qtWindow->resetOpenGLState();
 }
 
 void GLWindow::windowAboutToClose()
 {}
 
+/*
 void GLWindow::resizeEvent(QResizeEvent *ev)
 {
     d->pendingSize = Size(ev->size().width(), ev->size().height()) * qApp->devicePixelRatio();
@@ -524,15 +448,68 @@ void GLWindow::resizeEvent(QResizeEvent *ev)
         }
     }
 }
-
+*/
+    
 void GLWindow::frameWasSwapped()
 {
     makeCurrent();
-    DENG2_FOR_AUDIENCE2(Swap, i) i->windowSwapped(*this);
+    DENG2_FOR_AUDIENCE2(Swap, i)
+    {
+        i->windowSwapped(*this);
+    }
     d->updateFrameRateStatistics();
-    doneCurrent();
+    //doneCurrent();
 }
 
+void GLWindow::handleWindowChanged(QQuickWindow *win)
+{
+    d->qtWindow = win;
+    
+    if (win)
+    {
+        connect(win, &QQuickWindow::frameSwapped,          this, &GLWindow::frameWasSwapped, Qt::DirectConnection);
+        connect(win, &QQuickWindow::beforeSynchronizing,   this, &GLWindow::sync,            Qt::DirectConnection);
+        connect(win, &QQuickWindow::sceneGraphInvalidated, this, &GLWindow::cleanup,         Qt::DirectConnection);
+        
+        win->setClearBeforeRendering(false);
+    }
+}
+    
+void GLWindow::sync()
+{
+    DENG2_ASSERT(d->qtWindow);
+    
+    if (!d->readyNotified)
+    {
+        LOG_AS("GLWindow");
+        LOGDEV_GL_NOTE("Initializing OpenGL window");
+        
+        d->glInit();
+        d->notifyReady();
+        
+        connect(d->qtWindow, &QQuickWindow::beforeRendering, this, &GLWindow::paintGL, Qt::DirectConnection);
+    }
+    
+    QSize const winSize = d->qtWindow->size() * d->qtWindow->devicePixelRatio();
+    d->pendingSize = Size(winSize.width(), winSize.height());
+    
+    // Only react if this is actually a resize.
+    if (d->currentSize != d->pendingSize)
+    {
+        makeCurrent();
+        d->currentSize = d->pendingSize;
+        DENG2_FOR_AUDIENCE2(Resize, i) i->windowResized(*this);
+    }
+}
+
+void GLWindow::cleanup()
+{
+    if (isReady())
+    {
+        d->glDeinit();
+    }
+}
+    
 bool GLWindow::mainExists() // static
 {
     return mainWindow != 0;

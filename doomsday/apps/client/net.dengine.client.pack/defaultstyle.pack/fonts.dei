@@ -39,7 +39,7 @@ group {
 }
 
 group {
-    condition: Version.OS == 'macx'
+    condition: Version.OS == 'macx' or Version.OS == 'ios'
 
     script {
         # Define mappings for native font styles and weights.
@@ -109,7 +109,7 @@ font heading inherits title {
 }
 
 script {
-    if Version.OS == 'macx'
+    if Version.OS == 'macx' or Version.OS == 'ios'
         # Use the larger variant.
         title.family   = "SF UI Display"
         heading.family = "SF UI Display"
@@ -143,12 +143,12 @@ separator {
         size $: gui.scale(self.size, 0.5)
     }
     font label inherits default {
-        condition: Version.OS == 'macx'
+        condition: Version.OS == 'macx' or Version.OS == 'ios'
         size $: gui.scale(self.size, 0.7)
         transform: uppercase
     }
     font label inherits small {
-        condition: Version.OS != 'macx'
+        condition: Version.OS != 'macx' and Version.OS != 'ios'
         weight: bold
     }
     font annotation inherits small {}    

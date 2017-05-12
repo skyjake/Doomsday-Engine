@@ -68,10 +68,11 @@ static void Mouse_Qt_Poll()
 {
     if (!mouseTrapped) return;
 
+#if !defined (DENG_MOBILE)
     ClientWindow *win = ClientWindowSystem::mainPtr();
     if (!win) return; // Hmm?
 
-    QPoint curPos = win->mapFromGlobal(QCursor::pos());
+    QPointF curPos = win->mapFromGlobal(QCursor::pos());
     if (!prevMousePos.isNull())
     {
         QPoint delta = curPos - prevMousePos;
@@ -89,6 +90,7 @@ static void Mouse_Qt_Poll()
     {
         prevMousePos = curPos;
     }
+#endif
 }
 
 static void Mouse_Qt_GetState(mousestate_t *state)
@@ -120,10 +122,6 @@ static void Mouse_Qt_GetState(mousestate_t *state)
 
 static void Mouse_Qt_ShowCursor(bool yes)
 {
-/*#ifndef MACOSX
-    de::Canvas &canvas = ClientWindowSystem::main().canvas();
-#endif*/
-
     LOG_INPUT_VERBOSE("%s cursor (presently visible? %b)")
             << (yes? "showing" : "hiding") << !cursorHidden;
 
@@ -133,7 +131,6 @@ static void Mouse_Qt_ShowCursor(bool yes)
 #ifdef MACOSX
         Cursor_Show(false);
 #else
-        //canvas.setCursor(QCursor(Qt::BlankCursor));
         qApp->setOverrideCursor(QCursor(Qt::BlankCursor));
 #endif
     }
@@ -144,13 +141,13 @@ static void Mouse_Qt_ShowCursor(bool yes)
         Cursor_Show(true);
 #else
         qApp->restoreOverrideCursor();
-        //canvas.setCursor(QCursor(Qt::ArrowCursor)); // Default cursor.
 #endif
     }
 }
 
 static void Mouse_Qt_InitTrap()
 {
+#if !defined (DENG_MOBILE)
     auto &window = ClientWindowSystem::main();
 
     QCursor::setPos(window.mapToGlobal(window.geometry().center()));
@@ -158,15 +155,18 @@ static void Mouse_Qt_InitTrap()
     window.setKeyboardGrabEnabled(true);
 
     Mouse_Qt_ShowCursor(false);
+#endif
 }
 
 static void Mouse_Qt_DeinitTrap()
 {
+#if !defined (DENG_MOBILE)
     auto &window = ClientWindowSystem::main();
     window.setMouseGrabEnabled(false);
     window.setKeyboardGrabEnabled(false);
 
     Mouse_Qt_ShowCursor(true);
+#endif
 }
 
 static void Mouse_Qt_Trap(dd_bool enabled)

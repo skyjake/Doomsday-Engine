@@ -43,9 +43,11 @@
 #include <de/ui/VariableToggleItem>
 #include <doomsday/doomsdayapp.h>
 
-#include <QApplication>
-#include <QCursor>
-#include <QClipboard>
+#if !defined (DENG_MOBILE)
+#  include <QApplication>
+#  include <QCursor>
+#  include <QClipboard>
+#endif
 
 using namespace de;
 
@@ -158,7 +160,9 @@ DENG_GUI_PIMPL(ConsoleWidget)
             if (grabHover != RightEdge)
             {
                 grabHover = RightEdge;
+#if !defined (DENG_MOBILE)
                 self().root().window().setCursor(Qt::SizeHorCursor);
+#endif
             }
         }
         else
@@ -171,13 +175,17 @@ DENG_GUI_PIMPL(ConsoleWidget)
                 if (grabHover != TopEdge)
                 {
                     grabHover = TopEdge;
+#if !defined (DENG_MOBILE)
                     self().root().window().setCursor(Qt::SizeVerCursor);
+#endif
                 }
             }
             else if (grabHover != NotGrabbed)
             {
                 grabHover = NotGrabbed;
+#if !defined (DENG_MOBILE)
                 self().root().window().setCursor(Qt::ArrowCursor);
+#endif
             }
         }
 
@@ -639,6 +647,7 @@ void ConsoleWidget::commandWasEntered(String const &)
     }
 }
 
+#if !defined (DENG_MOBILE)
 void ConsoleWidget::copyLogPathToClipboard()
 {
     if (NativeFile *native = App::rootFolder().tryLocate<NativeFile>(LogBuffer::get().outputFile()))
@@ -646,3 +655,4 @@ void ConsoleWidget::copyLogPathToClipboard()
         qApp->clipboard()->setText(native->nativePath());
     }
 }
+#endif

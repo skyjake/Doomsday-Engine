@@ -21,10 +21,12 @@
  */
 
 #include "de/GLState"
-#include "de/PersistentGLWindow"
+#include "de/GLFramebuffer"
+#include "de/GLWindow"
 #include "de/graphics/opengl.h"
 #include <de/GLInfo>
 #include <de/BitField>
+#include <de/Log>
 
 namespace de {
 

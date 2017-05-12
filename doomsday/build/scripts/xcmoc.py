@@ -9,6 +9,8 @@
 
 import sys, os, re, subprocess, hashlib
 
+IGNORED_HEADERS = ['glwindow.h']
+
 def contains_qobject(fn):
     for line in open(fn, 'rt').readlines():
         if 'Q_OBJECT' in line:
@@ -18,6 +20,7 @@ def contains_qobject(fn):
 def find_headers(dir_path):
     headers = []
     for fn in os.listdir(dir_path):
+        if fn in IGNORED_HEADERS: continue
         file_path = os.path.join(dir_path, fn)
         if os.path.isdir(file_path):
             headers += find_headers(file_path)
@@ -26,15 +29,15 @@ def find_headers(dir_path):
                 headers.append(os.path.abspath(file_path))
     return headers
     
-def find_source(name, dir_path = os.path.join(sys.argv[1], 'src')):
-    for fn in os.listdir(dir_path):
-        file_path = os.path.join(dir_path, fn)
-        if os.path.isdir(file_path):
-            found = find_source(name, file_path)
-            if found: return found
-        elif fn == name[:-2] + '.cpp':
-            return os.path.abspath(file_path)
-    return None
+# def find_source(name, dir_path = os.path.join(sys.argv[1], 'src')):
+#     for fn in os.listdir(dir_path):
+#         file_path = os.path.join(dir_path, fn)
+#         if os.path.isdir(file_path):
+#             found = find_source(name, file_path)
+#             if found: return found
+#         elif fn == name[:-2] + '.cpp':
+#             return os.path.abspath(file_path)
+#     return None
     
 def md5sum(text):
     m = hashlib.md5()

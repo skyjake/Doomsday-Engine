@@ -1202,6 +1202,8 @@ void GL_CalcLuminance(duint8 const *buffer, dint width, dint height, dint pixelS
     */
 }
 
+#if !defined (DENG_MOBILE)
+
 D_CMD(SetRes)
 {
     DENG2_UNUSED3(src, argc, argv);
@@ -1322,6 +1324,8 @@ D_CMD(SetBPP)
     return win->changeAttributes(attribs);
 }
 
+#endif // !DENG_MOBILE
+
 D_CMD(DisplayModeInfo)
 {
     DENG2_UNUSED3(src, argc, argv);
@@ -1348,10 +1352,13 @@ D_CMD(DisplayModeInfo)
                .arg(win->windowRect().topLeft.asText())
                .arg(win->windowRect().size().asText())
                .arg(win->fullscreenSize().asText());
+
+#if !defined (DENG_MOBILE)
     str += String("\n  fullscreen:%1 centered:%2 maximized:%3")
                .arg(DENG2_BOOL_YESNO( win->isFullScreen() ))
                .arg(DENG2_BOOL_YESNO( win->isCentered()   ))
                .arg(DENG2_BOOL_YESNO( win->isMaximized()  ));
+#endif
 
     LOG_GL_MSG("%s") << str;
     return true;
@@ -1504,6 +1511,7 @@ void GL_Register()
     C_CMD_FLAGS("fog",              nullptr,   Fog,                CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
     C_CMD      ("displaymode",      "",     DisplayModeInfo);
     C_CMD      ("listdisplaymodes", "",     ListDisplayModes);
+#if !defined (DENG_MOBILE)
     C_CMD      ("setcolordepth",    "i",    SetBPP);
     C_CMD      ("setbpp",           "i",    SetBPP);
     C_CMD      ("setres",           "ii",   SetRes);
@@ -1514,4 +1522,5 @@ void GL_Register()
     C_CMD      ("togglemaximized",  "",     ToggleMaximized);
     C_CMD      ("togglecentered",   "",     ToggleCentered);
     C_CMD      ("centerwindow",     "",     CenterWindow);
+#endif
 }

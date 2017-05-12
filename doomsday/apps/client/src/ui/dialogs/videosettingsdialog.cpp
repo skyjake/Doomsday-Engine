@@ -43,8 +43,10 @@ using namespace de::ui;
 #  define USE_COLOR_DEPTH_CHOICE
 #endif
 
-DENG2_PIMPL(VideoSettingsDialog),
-DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
+DENG2_PIMPL(VideoSettingsDialog)
+#if !defined (DENG_MOBILE)
+, DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
+#endif
 {
     ClientWindow &win;
     VariableToggleWidget *showFps;
@@ -83,7 +85,9 @@ DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
 #ifdef USE_COLOR_DEPTH_CHOICE
         area.add(depths       = new ChoiceWidget);
 #endif
+#if !defined (DENG_MOBILE)
         win.audienceForAttributeChange() += this;
+#endif
 
         if (App_GameLoaded())
         {
@@ -138,6 +142,7 @@ DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
      */
     void fetch()
     {
+#if !defined (DENG_MOBILE)
         fullscreen->setActive(win.isFullScreen());
         maximized->setActive(win.isMaximized());
         centered->setActive(win.isCentered());
@@ -169,6 +174,8 @@ DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
         depths->setSelected(depths->items().findData(win.colorDepthBits()));
 #endif
 
+#endif // !DENG_MOBILE
+
         // FPS limit.
         if (fpsMax)
         {
@@ -185,11 +192,13 @@ DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
         }
     }
 
+#if !defined (DENG_MOBILE)
     void windowAttributesChanged(PersistentGLWindow &)
     {
         fetch();
     }
-
+#endif
+    
     void applyFpsMax()
     {
         if (fpsMax)
@@ -350,6 +359,8 @@ void VideoSettingsDialog::resetToDefaults()
     d->fetch();
 }
 
+#if !defined (DENG_MOBILE)
+
 void VideoSettingsDialog::changeMode(uint selected)
 {
     QPoint const res = d->modes->items().at(selected).data().toPoint();
@@ -404,3 +415,5 @@ void VideoSettingsDialog::applyModeToWindow()
 
     d->win.changeAttributes(attribs);
 }
+
+#endif

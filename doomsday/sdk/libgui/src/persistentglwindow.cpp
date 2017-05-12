@@ -22,6 +22,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#if !defined (DENG_MOBILE)
+
 #include "de/PersistentGLWindow"
 #include "de/GuiApp"
 #include "de/DisplayMode"
@@ -34,6 +36,7 @@
 
 #include <QDesktopWidget>
 #include <QResizeEvent>
+#include <QScreen>
 #include <QTimer>
 #include <QVector>
 #include <QList>
@@ -46,11 +49,16 @@ int const PersistentGLWindow::MIN_WIDTH  = 320;
 int const PersistentGLWindow::MIN_HEIGHT = 240;
 
 static int const BREAK_CENTERING_THRESHOLD = 5;
-
 static QRect desktopRect()
 {
+    //return QApplication::desktop()->screenGeometry();
+    
     /// @todo Multimonitor? This checks the default screen.
-    return QApplication::desktop()->screenGeometry();
+#if defined (DENG2_QT_5_6_OR_NEWER)
+    return QGuiApplication::primaryScreen()->geometry();
+#else
+    return QGuiApplication::screens().at(0)->geometry();
+#endif
 }
 
 static QRect centeredQRect(Vector2ui const &size)
@@ -935,7 +943,7 @@ PersistentGLWindow &PersistentGLWindow::main()
     }
     return static_cast<PersistentGLWindow &>(GLWindow::main());
 }
-
+    
 void PersistentGLWindow::moveEvent(QMoveEvent *)
 {
     if (isCentered() && !isMaximized() && !isFullScreen())
@@ -974,5 +982,7 @@ void PersistentGLWindow::resizeEvent(QResizeEvent *ev)
         d->state.windowRect.setSize(Vector2i(ev->size().width(), ev->size().height()));
     }*/
 }
-
+    
 } // namespace de
+
+#endif

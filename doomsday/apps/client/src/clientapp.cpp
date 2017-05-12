@@ -113,9 +113,11 @@ static void continueInitWithEventLoopRunning()
 {
     if (!ClientWindowSystem::mainExists()) return;
 
+#if !defined (DENG_MOBILE)
     // Show the main window. This causes initialization to finish (in busy mode)
     // as the canvas is visible and ready for initialization.
     ClientWindowSystem::main().show();
+#endif
 
 #if defined (DENG_HAVE_UPDATER)
     ClientApp::updater().setupUI();
@@ -425,7 +427,7 @@ DENG2_PIMPL(ClientApp)
      */
     void setupAppMenu()
     {
-#ifdef MACOSX
+#if defined (MACOSX)
         nativeAppMenu.reset(new NativeMenu);
 #endif
     }
@@ -532,6 +534,7 @@ ClientApp::ClientApp(int &argc, char **argv)
             << DENG2_FUNC_NOARG (App_GamePlugin, "gamePlugin")
             << DENG2_FUNC_NOARG (App_Quit,       "quit");
 
+#if !defined (DENG_MOBILE)
     /// @todo Remove the splash screen when file system indexing can be done as
     /// a background task and the main window can be opened instantly. -jk
     QPixmap const pixmap(doomsdaySplashXpm);
@@ -542,6 +545,7 @@ ClientApp::ClientApp(int &argc, char **argv)
                         QColor(90, 110, 95));
     processEvents();
     splash->deleteLater();
+#endif
 }
 
 void ClientApp::initialize()
@@ -631,8 +635,10 @@ void ClientApp::initialize()
 
     plugins().loadAll();
 
-    // Create the main window.
+    // On mobile, the window is instantiated via QML.
+#if !defined (DENG_MOBILE)
     d->winSys->createWindow()->setTitle(DD_ComposeMainWindowTitle());
+#endif
 
     d->setupAppMenu();
 
@@ -914,12 +920,14 @@ void ClientApp::openHomepageInBrowser()
 
 void ClientApp::openInBrowser(QUrl url)
 {
+#if !defined (DENG_MOBILE)
     // Get out of fullscreen mode.
     int windowed[] = {
         ClientWindow::Fullscreen, false,
         ClientWindow::End
     };
     ClientWindow::main().changeAttributes(windowed);
+#endif
 
     QDesktopServices::openUrl(url);
 }

@@ -97,7 +97,7 @@
 		063576D61EBF3CFC0074E6D4 /* nativefont.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 063576531EBF3C970074E6D4 /* nativefont.cpp */; };
 		063576D91EBF3CFC0074E6D4 /* displaymode_dummy.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 063576561EBF3C970074E6D4 /* displaymode_dummy.cpp */; };
 		063576DA1EBF3CFC0074E6D4 /* displaymode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 063576571EBF3C970074E6D4 /* displaymode.cpp */; };
-		063576DB1EBF3CFC0074E6D4 /* glwindow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 063576581EBF3C970074E6D4 /* glwindow.cpp */; };
+		063576DB1EBF3CFC0074E6D4 /* glwindow_qml.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 063576581EBF3C970074E6D4 /* glwindow_qml.cpp */; };
 		063576DC1EBF3CFC0074E6D4 /* guiapp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 063576591EBF3C970074E6D4 /* guiapp.cpp */; };
 		063576DD1EBF3CFC0074E6D4 /* guiloop.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0635765A1EBF3C970074E6D4 /* guiloop.cpp */; };
 		063576DE1EBF3CFC0074E6D4 /* persistentglwindow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0635765B1EBF3C970074E6D4 /* persistentglwindow.cpp */; };
@@ -1341,6 +1341,8 @@
 		0635831F1EC069B70074E6D4 /* net.dengine.client.pack in Resources */ = {isa = PBXBuildFile; fileRef = 0635831B1EC069B70074E6D4 /* net.dengine.client.pack */; };
 		063583201EC069B70074E6D4 /* net.dengine.stdlib.gui.pack in Resources */ = {isa = PBXBuildFile; fileRef = 0635831C1EC069B70074E6D4 /* net.dengine.stdlib.gui.pack */; };
 		063583211EC069B70074E6D4 /* net.dengine.stdlib.pack in Resources */ = {isa = PBXBuildFile; fileRef = 0635831D1EC069B70074E6D4 /* net.dengine.stdlib.pack */; };
+		063583231EC0B7870074E6D4 /* doom1.wad in Resources */ = {isa = PBXBuildFile; fileRef = 063583221EC0B7870074E6D4 /* doom1.wad */; };
+		063671181EC4E7BA00DAF520 /* qrc_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 063671171EC4E7BA00DAF520 /* qrc_client.cpp */; };
 		067AD9181EBF14AE00B808B2 /* hexlex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 067AD9131EBF148F00B808B2 /* hexlex.cpp */; };
 		067AD9191EBF14AE00B808B2 /* importidtech1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 067AD9141EBF148F00B808B2 /* importidtech1.cpp */; };
 		067AD91A1EBF14AE00B808B2 /* mapimporter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 067AD9151EBF148F00B808B2 /* mapimporter.cpp */; };
@@ -1784,7 +1786,7 @@
 		063576531EBF3C970074E6D4 /* nativefont.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = nativefont.cpp; sourceTree = "<group>"; };
 		063576561EBF3C970074E6D4 /* displaymode_dummy.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = displaymode_dummy.cpp; path = ../sdk/libgui/src/displaymode_dummy.cpp; sourceTree = "<group>"; };
 		063576571EBF3C970074E6D4 /* displaymode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = displaymode.cpp; path = ../sdk/libgui/src/displaymode.cpp; sourceTree = "<group>"; };
-		063576581EBF3C970074E6D4 /* glwindow.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = glwindow.cpp; path = ../sdk/libgui/src/glwindow.cpp; sourceTree = "<group>"; };
+		063576581EBF3C970074E6D4 /* glwindow_qml.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = glwindow_qml.cpp; path = ../sdk/libgui/src/glwindow_qml.cpp; sourceTree = "<group>"; };
 		063576591EBF3C970074E6D4 /* guiapp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = guiapp.cpp; path = ../sdk/libgui/src/guiapp.cpp; sourceTree = "<group>"; };
 		0635765A1EBF3C970074E6D4 /* guiloop.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = guiloop.cpp; path = ../sdk/libgui/src/guiloop.cpp; sourceTree = "<group>"; };
 		0635765B1EBF3C970074E6D4 /* persistentglwindow.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = persistentglwindow.cpp; path = ../sdk/libgui/src/persistentglwindow.cpp; sourceTree = "<group>"; };
@@ -1825,7 +1827,7 @@
 		063577031EBF3D240074E6D4 /* vertexbuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = vertexbuilder.h; sourceTree = "<group>"; };
 		063577051EBF3D240074E6D4 /* displaymode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = displaymode.h; sourceTree = "<group>"; };
 		063577061EBF3D240074E6D4 /* displaymode_native.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = displaymode_native.h; sourceTree = "<group>"; };
-		063577071EBF3D240074E6D4 /* glwindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = glwindow.h; sourceTree = "<group>"; };
+		063577071EBF3D240074E6D4 /* glwindow_qml.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = glwindow_qml.h; sourceTree = "<group>"; };
 		063577081EBF3D240074E6D4 /* guiapp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = guiapp.h; sourceTree = "<group>"; };
 		063577091EBF3D240074E6D4 /* guiloop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = guiloop.h; sourceTree = "<group>"; };
 		0635770A1EBF3D240074E6D4 /* libgui.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = libgui.h; sourceTree = "<group>"; };
@@ -2621,6 +2623,10 @@
 		0635831B1EC069B70074E6D4 /* net.dengine.client.pack */ = {isa = PBXFileReference; explicitFileType = archive.zip; name = net.dengine.client.pack; path = ../../Intermediates/Doomsday.build/net.dengine.client.pack; sourceTree = BUILT_PRODUCTS_DIR; };
 		0635831C1EC069B70074E6D4 /* net.dengine.stdlib.gui.pack */ = {isa = PBXFileReference; explicitFileType = archive.zip; name = net.dengine.stdlib.gui.pack; path = ../../Intermediates/Doomsday.build/net.dengine.stdlib.gui.pack; sourceTree = BUILT_PRODUCTS_DIR; };
 		0635831D1EC069B70074E6D4 /* net.dengine.stdlib.pack */ = {isa = PBXFileReference; explicitFileType = archive.zip; name = net.dengine.stdlib.pack; path = ../../Intermediates/Doomsday.build/net.dengine.stdlib.pack; sourceTree = BUILT_PRODUCTS_DIR; };
+		063583221EC0B7870074E6D4 /* doom1.wad */ = {isa = PBXFileReference; lastKnownFileType = file; name = doom1.wad; path = /Users/jaakeran/src/deng/doomsday/xcode/Doomsday/../../../../../odrive/Amazon/Documents/IWADs/shareware/doom1.wad; sourceTree = "<absolute>"; };
+		063583251EC4E5B80074E6D4 /* client.qrc */ = {isa = PBXFileReference; lastKnownFileType = text; name = client.qrc; path = ../../apps/client/res/qml/client.qrc; sourceTree = "<group>"; };
+		063583271EC4E6040074E6D4 /* main.qml */ = {isa = PBXFileReference; lastKnownFileType = text; name = main.qml; path = ../../apps/client/res/qml/main.qml; sourceTree = "<group>"; };
+		063671171EC4E7BA00DAF520 /* qrc_client.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = qrc_client.cpp; path = ../../Intermediates/Doomsday.build/qrc_client.cpp; sourceTree = BUILT_PRODUCTS_DIR; };
 		067AD9091EBF143600B808B2 /* libimportidtech1.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libimportidtech1.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		067AD9131EBF148F00B808B2 /* hexlex.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = hexlex.cpp; path = ../apps/plugins/importidtech1/src/hexlex.cpp; sourceTree = "<group>"; };
 		067AD9141EBF148F00B808B2 /* importidtech1.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = importidtech1.cpp; path = ../apps/plugins/importidtech1/src/importidtech1.cpp; sourceTree = "<group>"; };
@@ -3363,7 +3369,7 @@
 			children = (
 				063577051EBF3D240074E6D4 /* displaymode.h */,
 				063577061EBF3D240074E6D4 /* displaymode_native.h */,
-				063577071EBF3D240074E6D4 /* glwindow.h */,
+				063577071EBF3D240074E6D4 /* glwindow_qml.h */,
 				063577081EBF3D240074E6D4 /* guiapp.h */,
 				063577091EBF3D240074E6D4 /* guiloop.h */,
 				0635770A1EBF3D240074E6D4 /* libgui.h */,
@@ -4407,6 +4413,16 @@
 			name = "File Formats";
 			sourceTree = "<group>";
 		};
+		063583261EC4E5E80074E6D4 /* User Interface */ = {
+			isa = PBXGroup;
+			children = (
+				068610761EBF01F700180814 /* LaunchScreen.storyboard */,
+				063583251EC4E5B80074E6D4 /* client.qrc */,
+				063583271EC4E6040074E6D4 /* main.qml */,
+			);
+			name = "User Interface";
+			sourceTree = "<group>";
+		};
 		067AD92C1EBF151100B808B2 /* concurrency */ = {
 			isa = PBXGroup;
 			children = (
@@ -4938,8 +4954,8 @@
 		068610611EBF01F700180814 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				063583261EC4E5E80074E6D4 /* User Interface */,
 				068610621EBF01F700180814 /* Assets.xcassets */,
-				068610761EBF01F700180814 /* LaunchScreen.storyboard */,
 				068610791EBF01F700180814 /* Info.plist */,
 				063583101EC044DF0074E6D4 /* doomsday.pk3 */,
 				063583121EC045220074E6D4 /* libdoom.pk3 */,
@@ -4959,6 +4975,7 @@
 		068610641EBF01F700180814 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				063583221EC0B7870074E6D4 /* doom1.wad */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -5003,6 +5020,7 @@
 				063580711EBF7AE50074E6D4 /* localplayer.cpp */,
 				063580721EBF7AE50074E6D4 /* main_client.cpp */,
 				063580731EBF7AE50074E6D4 /* sys_system.cpp */,
+				063671171EC4E7BA00DAF520 /* qrc_client.cpp */,
 				063581981EBFB7620074E6D4 /* Doomsday_moc_compilation.cpp */,
 			);
 			name = Client;
@@ -5056,7 +5074,7 @@
 				063581921EBFB6B80074E6D4 /* deng_gui_moc_compilation.cpp */,
 				063576561EBF3C970074E6D4 /* displaymode_dummy.cpp */,
 				063576571EBF3C970074E6D4 /* displaymode.cpp */,
-				063576581EBF3C970074E6D4 /* glwindow.cpp */,
+				063576581EBF3C970074E6D4 /* glwindow_qml.cpp */,
 				063576591EBF3C970074E6D4 /* guiapp.cpp */,
 				0635765A1EBF3C970074E6D4 /* guiloop.cpp */,
 				0635765B1EBF3C970074E6D4 /* persistentglwindow.cpp */,
@@ -5696,6 +5714,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 0686107C1EBF01F700180814 /* Build configuration list for PBXNativeTarget "Doomsday" */;
 			buildPhases = (
+				063583241EC4E5530074E6D4 /* ShellScript */,
 				063581911EBFB6540074E6D4 /* ShellScript */,
 				068610541EBF01F700180814 /* Sources */,
 				068610551EBF01F700180814 /* Frameworks */,
@@ -5837,17 +5856,18 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0635831F1EC069B70074E6D4 /* net.dengine.client.pack in Resources */,
-				063583201EC069B70074E6D4 /* net.dengine.stdlib.gui.pack in Resources */,
 				068610781EBF01F700180814 /* LaunchScreen.storyboard in Resources */,
 				068610631EBF01F700180814 /* Assets.xcassets in Resources */,
+				063583211EC069B70074E6D4 /* net.dengine.stdlib.pack in Resources */,
+				063583201EC069B70074E6D4 /* net.dengine.stdlib.gui.pack in Resources */,
+				0635831E1EC069B70074E6D4 /* net.dengine.base.pack in Resources */,
+				0635831F1EC069B70074E6D4 /* net.dengine.client.pack in Resources */,
 				063583111EC044DF0074E6D4 /* doomsday.pk3 in Resources */,
 				063583161EC0452B0074E6D4 /* libdoom.pk3 in Resources */,
-				063583211EC069B70074E6D4 /* net.dengine.stdlib.pack in Resources */,
 				063583181EC0452B0074E6D4 /* libheretic.pk3 in Resources */,
-				0635831E1EC069B70074E6D4 /* net.dengine.base.pack in Resources */,
 				063583191EC0452B0074E6D4 /* libhexen.pk3 in Resources */,
 				063583171EC0452B0074E6D4 /* libdoom64.pk3 in Resources */,
+				063583231EC0B7870074E6D4 /* doom1.wad in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -5949,6 +5969,20 @@
 			shellPath = /bin/sh;
 			shellScript = "$SRCROOT/../build/scripts/xcmoc.py $SRCROOT/../apps/client\n";
 			showEnvVarsInLog = 0;
+		};
+		063583241EC4E5530074E6D4 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/../apps/client/res/qml/client.qrc",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$QT_DIR/bin/rcc $SCRIPT_INPUT_FILE_0 -o $PROJECT_TEMP_DIR/qrc_client.cpp\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -6064,7 +6098,7 @@
 				063576D61EBF3CFC0074E6D4 /* nativefont.cpp in Sources */,
 				063576D91EBF3CFC0074E6D4 /* displaymode_dummy.cpp in Sources */,
 				063576DA1EBF3CFC0074E6D4 /* displaymode.cpp in Sources */,
-				063576DB1EBF3CFC0074E6D4 /* glwindow.cpp in Sources */,
+				063576DB1EBF3CFC0074E6D4 /* glwindow_qml.cpp in Sources */,
 				063576DC1EBF3CFC0074E6D4 /* guiapp.cpp in Sources */,
 				063576DD1EBF3CFC0074E6D4 /* guiloop.cpp in Sources */,
 				063576DE1EBF3CFC0074E6D4 /* persistentglwindow.cpp in Sources */,
@@ -7166,6 +7200,7 @@
 				063580E21EBF7AE50074E6D4 /* image.cpp in Sources */,
 				063580E61EBF7AE50074E6D4 /* alertmask.cpp in Sources */,
 				063581031EBF7AE50074E6D4 /* serverinfodialog.cpp in Sources */,
+				063671181EC4E7BA00DAF520 /* qrc_client.cpp in Sources */,
 				063580C01EBF7AE50074E6D4 /* rend_halo.cpp in Sources */,
 				063580E31EBF7AE50074E6D4 /* lightmaterialdecoration.cpp in Sources */,
 				063580F91EBF7AE50074E6D4 /* createprofiledialog.cpp in Sources */,
@@ -8089,8 +8124,8 @@
 				DENG_DEFINES_DEBUG = "_DEBUG DEBUG=1";
 				DENG_VERSION = "$(DENG_VER_MAJOR).$(DENG_VER_MINOR).$(DENG_VER_PATCH)";
 				DENG_VER_MAJOR = 2;
-				DENG_VER_MINOR = 0;
-				DENG_VER_PATCH = 1;
+				DENG_VER_MINOR = 1;
+				DENG_VER_PATCH = 0;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				FMOD_DIR = "$HOME/SDK/iOS/FMOD\\ Programmers\\ API";
@@ -8109,6 +8144,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
+					$QT_DIR/include/QtQuick,
 					$QT_DIR/include/QtWidgets,
 					$QT_DIR/include/QtOpenGLExtensions,
 					$QT_DIR/include/QtNetwork,
@@ -8181,8 +8217,8 @@
 				DENG_DEFINES_DEBUG = "_DEBUG DEBUG=1";
 				DENG_VERSION = "$(DENG_VER_MAJOR).$(DENG_VER_MINOR).$(DENG_VER_PATCH)";
 				DENG_VER_MAJOR = 2;
-				DENG_VER_MINOR = 0;
-				DENG_VER_PATCH = 1;
+				DENG_VER_MINOR = 1;
+				DENG_VER_PATCH = 0;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				FMOD_DIR = "$HOME/SDK/iOS/FMOD\\ Programmers\\ API";
@@ -8196,6 +8232,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
+					$QT_DIR/include/QtQuick,
 					$QT_DIR/include/QtWidgets,
 					$QT_DIR/include/QtOpenGLExtensions,
 					$QT_DIR/include/QtNetwork,
@@ -8263,6 +8300,12 @@
 					$QT_DIR/plugins,
 					$QT_DIR/plugins/platforms,
 					$QT_DIR/plugins/imageformats,
+					$QT_DIR/qml/QtQuick.2,
+					$QT_DIR/qml/QtQuick/Controls.2,
+					$QT_DIR/qml/QtQuick/Controls.2/Universal,
+					$QT_DIR/qml/QtQuick/Templates.2,
+					$QT_DIR/qml/QtQuick/Layouts,
+					$QT_DIR/qml/QtQuick/Window.2,
 					$FMOD_DIR/api/lowlevel/lib,
 				);
 				OTHER_LDFLAGS = (
@@ -8271,6 +8314,10 @@
 					"-lQt5Core_debug",
 					"-lQt5Network_debug",
 					"-lQt5Widgets_debug",
+					"-lQt5Quick_debug",
+					"-lQt5QuickControls2_debug",
+					"-lQt5QuickTemplates2_debug",
+					"-lQt5Qml_debug",
 					"-lQt5Gui_debug",
 					"-lQt5ClipboardSupport_debug",
 					"-lQt5FontDatabaseSupport_debug",
@@ -8279,6 +8326,13 @@
 					"-lqtlibpng_debug",
 					"-lqtharfbuzz_debug",
 					"-lqtfreetype_debug",
+					"-lqtquick2plugin_debug",
+					"-lwindowplugin_debug",
+					"-lqtquickcontrols2plugin_debug",
+					"-lqtquickcontrols2universalstyleplugin_debug",
+					"-lqtquicktemplates2plugin_debug",
+					"-lqquicklayoutsplugin_debug",
+					"-lqios_debug",
 					"-lqios_debug",
 					"-lqjpeg_debug",
 					"-lqgif_debug",
@@ -8313,6 +8367,12 @@
 					$QT_DIR/plugins,
 					$QT_DIR/plugins/platforms,
 					$QT_DIR/plugins/imageformats,
+					$QT_DIR/qml/QtQuick.2,
+					$QT_DIR/qml/QtQuick/Controls.2,
+					$QT_DIR/qml/QtQuick/Controls.2/Universal,
+					$QT_DIR/qml/QtQuick/Templates.2,
+					$QT_DIR/qml/QtQuick/Layouts,
+					$QT_DIR/qml/QtQuick/Window.2,
 					$FMOD_DIR/api/lowlevel/lib,
 				);
 				OTHER_LDFLAGS = (
@@ -8321,6 +8381,10 @@
 					"-lQt5Core",
 					"-lQt5Network",
 					"-lQt5Gui",
+					"-lQt5Quick",
+					"-lQt5QuickControls2",
+					"-lQt5QuickTemplates2",
+					"-lQt5Qml",
 					"-lQt5Widgets",
 					"-lQt5ClipboardSupport",
 					"-lQt5FontDatabaseSupport",
@@ -8329,6 +8393,12 @@
 					"-lqtlibpng",
 					"-lqtharfbuzz",
 					"-lqtfreetype",
+					"-lqtquick2plugin",
+					"-lwindowplugin",
+					"-lqquicklayoutsplugin",
+					"-lqtquickcontrols2plugin",
+					"-lqtquickcontrols2universalstyleplugin_debug",
+					"-lqtquicktemplates2plugin",
 					"-lqios",
 					"-lqjpeg",
 					"-lqtga",
@@ -8476,6 +8546,7 @@
 				0635830A1EC03DAD0074E6D4 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		067AD90F1EBF143600B808B2 /* Build configuration list for PBXNativeTarget "importidtech1" */ = {
 			isa = XCConfigurationList;

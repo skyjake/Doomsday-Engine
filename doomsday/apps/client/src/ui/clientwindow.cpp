@@ -71,8 +71,6 @@
 
 using namespace de;
 
-static ClientWindow *mainWindow = nullptr; // The main window, set after fully constructed.
-
 DENG2_PIMPL(ClientWindow)
 , DENG2_OBSERVES(App, StartupComplete)
 , DENG2_OBSERVES(DoomsdayApp, GameChange)
@@ -81,8 +79,10 @@ DENG2_PIMPL(ClientWindow)
 , DENG2_OBSERVES(GLWindow, Init)
 , DENG2_OBSERVES(GLWindow, Resize)
 , DENG2_OBSERVES(GLWindow, Swap)
-, DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
 , DENG2_OBSERVES(Variable, Change)
+#if !defined (DENG_MOBILE)
+, DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
+#endif
 {
     bool needMainInit            = true;
     bool needRootSizeUpdate      = false;
@@ -157,18 +157,17 @@ DENG2_PIMPL(ClientWindow)
         releaseRef(gameHeight);
         releaseRef(homeDelta);
         releaseRef(quitX);
-
-        if (thisPublic == mainWindow)
-        {
-            mainWindow = nullptr;
-        }
     }
 
     StringList configVariableNames() const
     {
+#if !defined (DENG_MOBILE)
         return StringList()
                 << self().configName("fsaa")
                 << self().configName("vsync");
+#else
+        return StringList();
+#endif
     }
 
     void setupUI()
@@ -352,7 +351,9 @@ DENG2_PIMPL(ClientWindow)
 #endif
         */
 
+#if !defined (DENG_MOBILE)
         self().audienceForAttributeChange() += this;
+#endif
     }
 
     void appStartupCompleted()
@@ -449,7 +450,7 @@ DENG2_PIMPL(ClientWindow)
         mode = newMode;
     }
 
-    void windowInit(GLWindow &)
+    void windowInit(GLWindow &) override
     {
         Sys_GLConfigureDefaultState();
         GL_Init2DState();
@@ -474,9 +475,10 @@ DENG2_PIMPL(ClientWindow)
         {
             needMainInit = false;
 
+#if !defined (DENG_MOBILE)
             self().raise();
             self().requestActivate();
-
+#endif
             self().eventHandler().audienceForFocusChange() += this;
 
             DD_FinishInitializationAfterWindowReady();
@@ -486,7 +488,7 @@ DENG2_PIMPL(ClientWindow)
         }
     }
 
-    void windowResized(GLWindow &)
+    void windowResized(GLWindow &) override
     {
         LOG_AS("ClientWindow");
 
@@ -501,7 +503,7 @@ DENG2_PIMPL(ClientWindow)
         showOrHideQuitButton();
     }
 
-    void windowSwapped(GLWindow &)
+    void windowSwapped(GLWindow &) override
     {
         if (DoomsdayApp::app().isShuttingDown()) return;
 
@@ -512,10 +514,12 @@ DENG2_PIMPL(ClientWindow)
         completeFade();
     }
 
-    void windowAttributesChanged(PersistentGLWindow &)
+#if !defined (DENG_MOBILE)
+    void windowAttributesChanged(PersistentGLWindow &) override
     {
         showOrHideQuitButton();
     }
+#endif
 
     void showOrHideQuitButton()
     {
@@ -731,6 +735,7 @@ DENG2_PIMPL(ClientWindow)
 
     void updateMouseCursor()
     {
+#if !defined (DENG_MOBILE)
         // The cursor is only needed if the content is warped.
         cursor->show(!self().eventHandler().isMouseTrapped() && VRConfig::modeAppliesDisplacement(vrCfg().mode()));
 
@@ -755,6 +760,7 @@ DENG2_PIMPL(ClientWindow)
             }
             cursorHasBeenHidden = false;
         }
+#endif
     }
 
     void setupFade(FadeDirection fadeDir, TimeDelta const &span)
@@ -790,22 +796,21 @@ ClientWindow::ClientWindow(String const &id)
     : BaseWindow(id)
     , d(new Impl(this))
 {
+#if defined (DENG_MOBILE)
+    setMain(this);
+    WindowSystem::get().addWindow("main", this);
+#endif
+    
     audienceForInit()   += d;
     audienceForResize() += d;
     audienceForSwap()   += d;
 
-#ifdef WIN32
+#if defined (WIN32)
     // Set an icon for the window.
     setIcon(QIcon(":/doomsday.ico"));
 #endif
 
     d->setupUI();
-
-    // The first window is the main window.
-    if (!mainWindow)
-    {
-        mainWindow = this;
-    }
 }
 
 ClientRootWidget &ClientWindow::root()
@@ -1024,7 +1029,7 @@ ClientWindow &ClientWindow::main()
 
 bool ClientWindow::mainExists()
 {
-    return mainWindow != nullptr;
+    return BaseWindow::mainExists();
 }
 
 void ClientWindow::toggleFPSCounter()

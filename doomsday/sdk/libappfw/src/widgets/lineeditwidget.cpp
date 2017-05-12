@@ -28,6 +28,11 @@
 #include <de/AnimationRule>
 #include <de/Drawable>
 
+#if defined (DENG_MOBILE)
+#  include <QGuiApplication>
+#  include <QInputMethod>
+#endif
+
 namespace de {
 
 using namespace ui;
@@ -377,10 +382,18 @@ void LineEditWidget::focusGained()
     {
         d->hint->setOpacity(0);
     }
+    
+#if defined (DENG_MOBILE)
+    qGuiApp->inputMethod()->show();
+#endif
 }
 
 void LineEditWidget::focusLost()
 {
+#if defined (DENG_MOBILE)
+    qGuiApp->inputMethod()->hide();
+#endif
+
     d->contentChanged(false /* don't notify */);
 
     if (d->hint && d->showingHint())
