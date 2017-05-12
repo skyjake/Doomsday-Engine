@@ -250,6 +250,10 @@ DENG2_PIMPL(App)
         fs.refresh();
         Folder::waitForPopulation();
 
+        // Ensure known subfolders exist:
+        // - /home/configs is used by de::Profiles.
+        fs.makeFolder("/home/configs");
+
         packageLoader.audienceForActivity() += this;
     }
 
