@@ -510,8 +510,8 @@ DENG_EXTERN_C void DGL_SetScissor2(int x, int y, int width, int height)
 #undef DGL_GetIntegerv
 dd_bool DGL_GetIntegerv(int name, int *v)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    //DENG_ASSERT_IN_MAIN_THREAD();
+    //DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     float color[4];
     switch(name)
@@ -599,12 +599,10 @@ int DGL_GetInteger(int name)
 #undef DGL_SetInteger
 dd_bool DGL_SetInteger(int name, int value)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
     switch(name)
     {
     case DGL_ACTIVE_TEXTURE:
+        DENG_ASSERT_GL_CONTEXT_ACTIVE();
         DENG2_ASSERT(value >= 0);
         DENG2_ASSERT(value < MAX_TEX_UNITS);
         dgl.activeTexture = value;
@@ -625,8 +623,8 @@ dd_bool DGL_SetInteger(int name, int value)
 #undef DGL_GetFloatv
 dd_bool DGL_GetFloatv(int name, float *v)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    //DENG_ASSERT_IN_MAIN_THREAD();
+    //DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     float color[4];
     switch (name)
@@ -700,9 +698,6 @@ float DGL_GetFloat(int name)
 #undef DGL_SetFloat
 dd_bool DGL_SetFloat(int name, float value)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
     switch(name)
     {
     case DGL_LINE_WIDTH:
@@ -713,6 +708,7 @@ dd_bool DGL_SetFloat(int name, float value)
     case DGL_POINT_SIZE:
         GL_state.currentPointSize = value;
 #if defined (DENG_OPENGL)
+        LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
         LIBGUI_GL.glPointSize(value);
 #endif
         break;

@@ -197,24 +197,23 @@ void GL_SetGamma()
 
 void GL_FinishFrame()
 {
-    if(ClientApp::vr().mode() == VRConfig::OculusRift) return;
+    if (ClientApp::vr().mode() == VRConfig::OculusRift) return;
+
+    DENG2_ASSERT_IN_RENDER_THREAD();
+    LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Check for color adjustment changes.
-    if(oldgamma != vid_gamma || oldcontrast != vid_contrast || oldbright != vid_bright)
+    if (oldgamma != vid_gamma || oldcontrast != vid_contrast || oldbright != vid_bright)
     {
         GL_SetGamma();
     }
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
+#if !defined (DENG_MOBILE)
     // Wait until the right time to show the frame so that the realized
     // frame rate is exactly right.
     LIBGUI_GL.glFlush();
     DD_WaitForOptimalUpdateTime();
-
-    // Blit screen to video.
-    //ClientWindow::main().swapBuffers();
+#endif
 }
 
 static void printConfiguration()
@@ -347,7 +346,6 @@ void GL_Init2DState()
     glFarClip  = 16500;
 
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Here we configure the OpenGL state and set the projection matrix.
     GLState::current()

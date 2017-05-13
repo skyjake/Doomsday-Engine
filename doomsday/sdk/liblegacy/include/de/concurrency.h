@@ -97,11 +97,7 @@ extern "C" {
  * @def DENG_ASSERT_IN_MAIN_THREAD
  * In a debug build, this asserts that the current code is executing in the main thread.
  */
-#ifdef _DEBUG
-#  define DENG_ASSERT_IN_MAIN_THREAD() { DENG_ASSERT(Sys_InMainThread()); }
-#else
-#  define DENG_ASSERT_IN_MAIN_THREAD()
-#endif
+#define DENG_ASSERT_IN_MAIN_THREAD()   DENG2_ASSERT_IN_MAIN_THREAD()
 
 /**
  * Starts a new thread.
@@ -158,12 +154,6 @@ void Sem_Destroy(sem_t semaphore);
 void Sem_P(sem_t semaphore);
 void Sem_V(sem_t semaphore);
 #endif
-
-/*
- * Private functions.
- */
-
-void Sys_MarkAsMainThread(void);
 
 /// @}
 

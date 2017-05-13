@@ -29,11 +29,11 @@
 #include <QQuickItem>
 
 namespace de {
-    
+
 /**
- * Top-level UI item that contains an OpenGL drawing surface. @ingroup gui
+ * Top-level UI item that paints onto the OpenGL drawing surface. @ingroup gui
  */
-class LIBGUI_PUBLIC GLWindow : public QQuickItem, public Asset
+class LIBGUI_PUBLIC GLWindow : public QObject, public Asset
 {
     Q_OBJECT
 
@@ -64,6 +64,9 @@ public:
 public:
     GLWindow();
     
+    void setWindow(QQuickWindow *window);
+    void setOpenGLContext(QOpenGLContext *context);
+
     void setTitle(QString const &title);
     QSurfaceFormat format() const;
     double devicePixelRatio() const;
@@ -78,6 +81,7 @@ public:
     bool isFullScreen() const;
     bool isMaximized() const;
     bool isMinimized() const;
+    bool isVisible() const;
     bool isHidden() const;
 
     float frameRate() const;
@@ -86,7 +90,7 @@ public:
     /**
      * Determines the current top left corner (origin) of the window.
      */
-    inline Vector2i pos() const { return Vector2i(x(), y()); }
+    inline Vector2i pos() const { return Vector2i(); }
 
     Size pointSize() const;
     Size pixelSize() const;
@@ -174,6 +178,9 @@ public:
      */
     void *nativeHandle() const;
 
+    void initializeGL();
+    void resizeGL(int w, int h);
+
     virtual void draw() = 0;
 
 public:
@@ -183,8 +190,6 @@ public:
     static void setMain(GLWindow *window);
 
 protected:
-    /*void initializeGL() override;
-    void paintGL() override;*/
     virtual void windowAboutToClose();
 
     /*
@@ -204,20 +209,49 @@ protected:
      */
 
 public slots:
-    void sync();
-    void cleanup();
     void paintGL();
-    
-protected slots:
     void frameWasSwapped();
-
-private slots:
-    void handleWindowChanged(QQuickWindow *win);
 
 private:
     DENG2_PRIVATE(d)
 };
 
+/**
+ * Performs OpenGL rendering primarily in the Qt render thread.
+ */
+class GLQuickItem : public QQuickItem
+{
+    Q_OBJECT
+    
+public:
+    GLQuickItem();
+    
+    virtual GLWindow *makeWindowRenderer() = 0;
+    
+public slots:
+    void sync();
+    void cleanup();
+    
+private slots:
+    void handleWindowChanged(QQuickWindow *win);
+    
+private:
+    DENG2_PRIVATE(d)
+};
+    
+/**
+ * Template for instantiating a particular type of renderer in a GLQuickItem.
+ */
+template <typename RendererType>
+class GLQuickItemT : public GLQuickItem
+{
+public:
+    GLWindow *makeWindowRenderer() override
+    {
+        return new RendererType;
+    }
+};
+    
 } // namespace de
 
 #endif // LIBGUI_GLWINDOW_IOS_H

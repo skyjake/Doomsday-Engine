@@ -25,11 +25,12 @@
 
 #include <de/concurrency.h>
 #include <de/GLInfo>
+#include <de/GuiApp>
 #include "gl/gl_defer.h"
 
 static dd_bool __inline mustDefer(void)
 {
-    return !Sys_InMainThread();
+    return !de::GuiApp::inRenderThread();
 }
 
 static void GL_CALL deng_glEnable(GLenum e)

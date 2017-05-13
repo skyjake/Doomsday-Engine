@@ -24,6 +24,7 @@
 #include <de/NativePath>
 
 #include <QSurfaceFormat>
+#include <QThread>
 
 #ifdef DENG2_QT_5_0_OR_NEWER
 #  include <QStandardPaths>
@@ -36,6 +37,7 @@ namespace de {
 DENG2_PIMPL(GuiApp)
 {
     GuiLoop loop;
+    QThread *renderThread = nullptr;
 
     Impl(Public *i) : Base(i)
     {
@@ -131,6 +133,20 @@ void GuiApp::stopLoop(int code)
 GuiLoop &GuiApp::loop()
 {
     return d->loop;
+}
+
+bool GuiApp::inRenderThread()
+{
+    if (!App::appExists())
+    {
+        return false;
+    }
+    return DENG2_GUI_APP->d->renderThread == QThread::currentThread();
+}
+
+void GuiApp::setRenderThread(QThread *thread)
+{
+    DENG2_GUI_APP->d->renderThread = thread;
 }
 
 void GuiApp::loopIteration()

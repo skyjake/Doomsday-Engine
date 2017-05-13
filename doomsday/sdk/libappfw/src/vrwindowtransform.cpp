@@ -287,6 +287,7 @@ DENG2_PIMPL(VRWindowTransform)
             break;
 
         case VRConfig::RowInterleaved: {
+#if !defined (DENG_MOBILE)
             // Use absolute screen position of window to determine whether the
             // first scan line is odd or even.
             QPointF ulCorner(0, 0);
@@ -314,6 +315,7 @@ DENG2_PIMPL(VRWindowTransform)
             vrInitRowInterleaved();
             rowInterUniformTex = rowInterRightFB.colorTexture();
             rowInterDrawable.draw();
+#endif
             break;
           }
 

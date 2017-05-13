@@ -154,7 +154,7 @@ void Con_DrawTransition(void)
     if (isDedicated) return;
     if (!Con_TransitionInProgress()) return;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_MatrixMode(DGL_PROJECTION);

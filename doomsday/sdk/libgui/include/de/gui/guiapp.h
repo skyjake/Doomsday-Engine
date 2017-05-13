@@ -28,6 +28,8 @@
  */
 #define DENG2_GUI_APP   (static_cast<de::GuiApp *>(qApp))
 
+#define DENG2_ASSERT_IN_RENDER_THREAD()   DENG2_ASSERT(de::GuiApp::inRenderThread())
+
 #if defined (DENG_MOBILE)
 #include <QGuiApplication>
 #  define LIBGUI_GUIAPP_BASECLASS  QGuiApplication
@@ -76,6 +78,14 @@ public:
 
     GuiLoop &loop();
 
+    /**
+     * Determines if the currently executing thread is the rendering thread.
+     * This may be the same thread as the main thread.
+     */
+    static bool inRenderThread();
+    
+    static void setRenderThread(QThread *thread);    
+    
 protected:
     NativePath appDataPath() const;
 

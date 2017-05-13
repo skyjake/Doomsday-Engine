@@ -898,8 +898,8 @@ void ClientWindow::preDraw()
 
     ClientApp::app().preFrame(); /// @todo what about multiwindow?
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG2_ASSERT_IN_RENDER_THREAD();
+    LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Cursor position (if cursor is visible).
     d->updateMouseCursor();
@@ -919,6 +919,7 @@ Vector2f ClientWindow::windowContentSize() const
 
 void ClientWindow::drawWindowContent()
 {
+    DENG2_ASSERT_IN_RENDER_THREAD();
     root().draw();
     LIBGUI_ASSERT_GL_OK();
 }
@@ -926,6 +927,7 @@ void ClientWindow::drawWindowContent()
 void ClientWindow::postDraw()
 {
     /// @note This method is called during the GLWindow paintGL event.
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
     BaseWindow::postDraw();
 

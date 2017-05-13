@@ -34,6 +34,7 @@
 #include "de/Log"
 #include "de/LogBuffer"
 #include "de/LogFilter"
+#include "de/Loop"
 #include "de/math.h"
 #include "de/MetadataBank"
 #include "de/Module"
@@ -63,7 +64,7 @@ static App *singletonApp;
 DENG2_PIMPL(App)
 , DENG2_OBSERVES(PackageLoader, Activity)
 {
-    QThread *mainThread;
+    QThread *mainThread   = nullptr;
 
     /// Name of the application (metadata for humans).
     String appName;

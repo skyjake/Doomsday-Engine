@@ -20,6 +20,7 @@
 #define LIBGUI_GLINFO_H
 
 #include <de/libcore.h>
+#include <de/GuiApp> // checking for render thread
 #include <de/Range>
 #include "../gui/libgui.h"
 #include "de/graphics/opengl.h"
@@ -31,6 +32,8 @@
 #else
 #  define LIBGUI_ASSERT_GL_OK()
 #endif
+
+#define LIBGUI_ASSERT_GL_CONTEXT_ACTIVE()  DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr)
 
 namespace de {
 

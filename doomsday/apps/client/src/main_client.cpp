@@ -111,7 +111,7 @@ int main(int argc, char **argv)
 #if defined (DENG_MOBILE)
             // On mobile, Qt Quick is actually in charge of drawing the screen.
             // GLWindow is just an item that draws the UI background.
-            qmlRegisterType<ClientWindow>("Doomsday", 1, 0, "ClientWindow");
+            qmlRegisterType<de::GLQuickItemT<ClientWindow>>("Doomsday", 1, 0, "ClientWindow");
             QQuickView view;
             view.setResizeMode(QQuickView::SizeRootObjectToView);
             view.setSource(QUrl("qrc:///qml/main.qml"));

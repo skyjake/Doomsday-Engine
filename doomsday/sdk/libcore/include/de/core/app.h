@@ -402,10 +402,10 @@ public:
 public:
     /**
      * Determines if the currently executing thread is the application's main
-     * (UI) thread.
+     * thread.
      */
     static bool inMainThread();
-
+        
 protected:
     /**
      * Returns the native path of the directory where the application can store

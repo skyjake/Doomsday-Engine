@@ -664,6 +664,10 @@ void GLState::apply() const
     DENG2_ASSERT(GLDrawQueue_queuedElems == 0);
 #endif
 
+    // Actual OpenGL state shouldn't be changed outside the render thread.
+    // The main thread can still manipulate shared OpenGL objects, though.
+    DENG2_ASSERT_IN_RENDER_THREAD();
+
     bool forceViewportAndScissor = false;
 
     // Update the render target.
