@@ -384,14 +384,26 @@ void LineEditWidget::focusGained()
     }
     
 #if defined (DENG_MOBILE)
-    qGuiApp->inputMethod()->show();
+    {
+        auto &win = root().window();
+        emit win.textEntryRequest();
+    
+        // Text entry happens via OS virtual keyboard.
+        connect(&win, &GLWindow::userEnteredText, this, &LineEditWidget::userEnteredText);
+        connect(&win, &GLWindow::userFinishedTextEntry, this, &LineEditWidget::userFinishedTextEntry);
+    }
 #endif
 }
 
 void LineEditWidget::focusLost()
 {
 #if defined (DENG_MOBILE)
-    qGuiApp->inputMethod()->hide();
+    {
+        auto &win = root().window();
+        disconnect(&win, &GLWindow::userEnteredText, this, &LineEditWidget::userEnteredText);
+        disconnect(&win, &GLWindow::userFinishedTextEntry, this, &LineEditWidget::userFinishedTextEntry);
+        emit win.textEntryDismiss();
+    }
 #endif
 
     d->contentChanged(false /* don't notify */);
@@ -401,6 +413,18 @@ void LineEditWidget::focusLost()
         d->hint->setOpacity(1, 1, 0.5);
     }
 }
+    
+#if defined (DENG_MOBILE)
+void LineEditWidget::userEnteredText(QString text)
+{
+    setText(text);
+}
+    
+void LineEditWidget::userFinishedTextEntry()
+{
+    root().popFocus();
+}
+#endif
 
 void LineEditWidget::update()
 {

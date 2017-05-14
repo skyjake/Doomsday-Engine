@@ -811,6 +811,14 @@ ClientWindow::ClientWindow(String const &id)
 #endif
 
     d->setupUI();
+    
+#if defined (DENG_MOBILE)
+    // Stay out from under the virtual keyboard.
+    connect(this, &GLWindow::rootDimensionsChanged, [this] (QRect rect)
+    {
+        d->root.setViewSize(Vector2ui(rect.width(), rect.height()));        
+    });
+#endif
 }
 
 ClientRootWidget &ClientWindow::root()
@@ -919,6 +927,12 @@ Vector2f ClientWindow::windowContentSize() const
 
 void ClientWindow::drawWindowContent()
 {
+#if defined (DENG_MOBILE)
+    {
+        
+    }
+#endif
+    
     DENG2_ASSERT_IN_RENDER_THREAD();
     root().draw();
     LIBGUI_ASSERT_GL_OK();

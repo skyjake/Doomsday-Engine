@@ -72,7 +72,7 @@ protected:
     virtual void numberOfLinesChanged(int lineCount);
     virtual void cursorMoved();
     virtual void contentChanged();
-
+    
 private:
     DENG2_PRIVATE(d)
 };

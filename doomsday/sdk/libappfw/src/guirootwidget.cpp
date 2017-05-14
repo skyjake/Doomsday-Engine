@@ -430,6 +430,10 @@ void GuiRootWidget::update()
 
 void GuiRootWidget::draw()
 {
+    DENG2_GUARD(this);
+
+    DENG2_ASSERT_IN_RENDER_THREAD();
+
     d->focusIndicator->initialize();
 
     if (d->noFramesDrawnYet)
@@ -459,6 +463,10 @@ void GuiRootWidget::draw()
 
 void GuiRootWidget::drawUntil(Widget &until)
 {
+    DENG2_GUARD(this);
+    
+    DENG2_ASSERT_IN_RENDER_THREAD();
+
     d->painter.setNormalizedScissor();
 
     NotifyArgs args = notifyArgsForDraw();

@@ -207,11 +207,18 @@ protected:
      
     bool event(QEvent *) override;
      */
+    
+signals:
+    void textEntryRequest();
+    void textEntryDismiss();
+    void userEnteredText(QString);
+    void userFinishedTextEntry();
+    void rootDimensionsChanged(QRect);
 
 public slots:
     void paintGL();
     void frameWasSwapped();
-
+    
 private:
     DENG2_PRIVATE(d)
 };
@@ -228,9 +235,21 @@ public:
     
     virtual GLWindow *makeWindowRenderer() = 0;
     
+signals:
+    void textEntryRequest();
+    void textEntryDismiss();
+    
 public slots:
     void sync();
     void cleanup();
+
+    void dimensionsChanged();
+    void userEnteredText(QString text);
+    void userFinishedTextEntry();
+
+    void onTouchPressed(QVariantList touchPoints);
+    void onTouchUpdated(QVariantList touchPoints);
+    void onTouchReleased(QVariantList touchPoints);
     
 private slots:
     void handleWindowChanged(QQuickWindow *win);

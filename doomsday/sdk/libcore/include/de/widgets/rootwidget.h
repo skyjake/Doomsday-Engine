@@ -39,7 +39,7 @@ class RuleRectangle;
  *
  * @ingroup widgets
  */
-class DENG2_PUBLIC RootWidget : public Widget
+class DENG2_PUBLIC RootWidget : public Widget, public Lockable
 {
 public:
     typedef Vector2ui Size;

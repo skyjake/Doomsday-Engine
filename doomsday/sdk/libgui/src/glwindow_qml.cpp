@@ -518,6 +518,7 @@ DENG2_PIMPL_NOREF(GLQuickItem)
     QQuickWindow *qtWindow = nullptr;
     GLWindow *renderer = nullptr;
     bool initPending = false;
+    int touchId = 0;
 };
 
 GLQuickItem::GLQuickItem()
@@ -543,7 +544,7 @@ void GLQuickItem::handleWindowChanged(QQuickWindow *win)
         }
     }
 }
-
+ 
 void GLQuickItem::sync()
 {
     DENG2_ASSERT(d->qtWindow);
@@ -571,6 +572,9 @@ void GLQuickItem::sync()
             renderer->setOpenGLContext(mainContext);
             renderer->setWindow(d->qtWindow);
             renderer->initializeGL();
+            
+            connect(renderer, &GLWindow::textEntryRequest, this, &GLQuickItem::textEntryRequest);
+            connect(renderer, &GLWindow::textEntryDismiss, this, &GLQuickItem::textEntryDismiss);
         
             d->renderer = renderer;
         });
@@ -600,6 +604,113 @@ void GLQuickItem::cleanup()
     delete d->renderer;
     d->renderer = nullptr;
     d->initPending = false;
+}
+    
+void GLQuickItem::dimensionsChanged()
+{
+    if (d->renderer && d->qtWindow)
+    {
+        auto const ratio = d->qtWindow->devicePixelRatio();
+        
+        QRect newRect = QRect(0, 0, width() * ratio, height() * ratio);
+        qDebug() << "dimensions" << newRect;
+                
+        // Just resize the root widget, the window hasn't changed.
+        emit d->renderer->rootDimensionsChanged(newRect);
+    }
+}
+    
+void GLQuickItem::userEnteredText(QString text)
+{
+    if (d->renderer)
+    {
+        qDebug() << "user entered:" << text;
+        emit d->renderer->userEnteredText(text);
+    }
+}
+    
+void GLQuickItem::userFinishedTextEntry()
+{
+    if (d->renderer)
+    {
+        qDebug() << "user Done";
+
+        auto &handler = d->renderer->eventHandler();
+//        QKeyEvent(Type type, int key, Qt::KeyboardModifiers modifiers, const QString& text = QString(),
+//                  bool autorep = false, ushort count = 1);
+        
+        // Simulate the press of the Enter key.
+
+        QKeyEvent pressed (QEvent::KeyPress,   Qt::Key_Enter, Qt::NoModifier, "\n");
+        QKeyEvent released(QEvent::KeyRelease, Qt::Key_Enter, Qt::NoModifier);
+        
+        handler.keyPressEvent(&pressed);
+        handler.keyReleaseEvent(&released);
+        
+        emit d->renderer->userFinishedTextEntry();
+    }
+}
+    
+void GLQuickItem::onTouchPressed(QVariantList touchPoints)
+{
+    if (!d->renderer) return;
+    
+    //qDebug() << "GLQuickItem: onTouchPressed" << touchPoints;
+    foreach (QVariant item, touchPoints)
+    {
+        QObject *obj = item.value<QObject *>();
+        int id = obj->property("pointId").toInt();
+        if (id == 0)
+        {
+            QMouseEvent event(QEvent::MouseButtonPress,
+                              QPointF(obj->property("x").toDouble(),
+                                      obj->property("y").toDouble()),
+                              Qt::LeftButton,
+                              Qt::LeftButton,
+                              Qt::NoModifier);
+            d->renderer->eventHandler().mousePressEvent(&event);
+        }
+    }
+}
+    
+void GLQuickItem::onTouchUpdated(QVariantList touchPoints)
+{
+    if (!d->renderer) return;
+    
+    foreach (QVariant item, touchPoints)
+    {
+        QObject *obj = item.value<QObject *>();
+        if (obj->property("pointId").toInt() == 0)
+        {
+            QMouseEvent event(QEvent::MouseMove,
+                              QPointF(obj->property("x").toDouble(),
+                                      obj->property("y").toDouble()),
+                              Qt::LeftButton,
+                              Qt::LeftButton,
+                              Qt::NoModifier);
+            d->renderer->eventHandler().mouseMoveEvent(&event);
+        }
+    }
+}
+
+void GLQuickItem::onTouchReleased(QVariantList touchPoints)
+{
+    if (!d->renderer) return;
+    
+    foreach (QVariant item, touchPoints)
+    {
+        QObject *obj = item.value<QObject *>();
+        if (obj->property("pointId").toInt() == 0)
+        {
+            QMouseEvent event(QEvent::MouseButtonRelease,
+                              QPointF(obj->property("x").toDouble(),
+                                      obj->property("y").toDouble()),
+                              Qt::LeftButton,
+                              Qt::NoButton,
+                              Qt::NoModifier);
+            d->renderer->eventHandler().mouseReleaseEvent(&event);
+        }
+    }
 }
     
 } // namespace de

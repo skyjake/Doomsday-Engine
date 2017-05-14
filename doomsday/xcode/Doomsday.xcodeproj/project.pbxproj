@@ -2627,6 +2627,97 @@
 		063583251EC4E5B80074E6D4 /* client.qrc */ = {isa = PBXFileReference; lastKnownFileType = text; name = client.qrc; path = ../../apps/client/res/qml/client.qrc; sourceTree = "<group>"; };
 		063583271EC4E6040074E6D4 /* main.qml */ = {isa = PBXFileReference; lastKnownFileType = text; name = main.qml; path = ../../apps/client/res/qml/main.qml; sourceTree = "<group>"; };
 		063671171EC4E7BA00DAF520 /* qrc_client.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = qrc_client.cpp; path = ../../Intermediates/Doomsday.build/qrc_client.cpp; sourceTree = BUILT_PRODUCTS_DIR; };
+		065548171EC8BB670000E33E /* directorylistdialog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = directorylistdialog.h; sourceTree = "<group>"; };
+		065548181EC8BB670000E33E /* inputdialog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = inputdialog.h; sourceTree = "<group>"; };
+		065548191EC8BB670000E33E /* messagedialog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = messagedialog.h; sourceTree = "<group>"; };
+		0655481B1EC8BB670000E33E /* actionitem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = actionitem.h; sourceTree = "<group>"; };
+		0655481C1EC8BB670000E33E /* atlasproceduralimage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = atlasproceduralimage.h; sourceTree = "<group>"; };
+		0655481D1EC8BB670000E33E /* baseguiapp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = baseguiapp.h; sourceTree = "<group>"; };
+		0655481E1EC8BB670000E33E /* basewindow.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = basewindow.h; sourceTree = "<group>"; };
+		0655481F1EC8BB670000E33E /* callbackaction.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = callbackaction.h; sourceTree = "<group>"; };
+		065548201EC8BB670000E33E /* childwidgetorganizer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = childwidgetorganizer.h; sourceTree = "<group>"; };
+		065548211EC8BB670000E33E /* data.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = data.h; sourceTree = "<group>"; };
+		065548221EC8BB670000E33E /* dialogcontentstylist.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dialogcontentstylist.h; sourceTree = "<group>"; };
+		065548231EC8BB670000E33E /* filtereddata.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = filtereddata.h; sourceTree = "<group>"; };
+		065548241EC8BB670000E33E /* fontlinewrapping.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = fontlinewrapping.h; sourceTree = "<group>"; };
+		065548251EC8BB670000E33E /* gltextcomposer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gltextcomposer.h; sourceTree = "<group>"; };
+		065548261EC8BB670000E33E /* gridlayout.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gridlayout.h; sourceTree = "<group>"; };
+		065548271EC8BB670000E33E /* guirootwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = guirootwidget.h; sourceTree = "<group>"; };
+		065548281EC8BB670000E33E /* guiwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = guiwidget.h; sourceTree = "<group>"; };
+		065548291EC8BB670000E33E /* guiwidgetprivate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = guiwidgetprivate.h; sourceTree = "<group>"; };
+		0655482A1EC8BB670000E33E /* imageitem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = imageitem.h; sourceTree = "<group>"; };
+		0655482B1EC8BB670000E33E /* ipersistent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ipersistent.h; sourceTree = "<group>"; };
+		0655482C1EC8BB670000E33E /* item.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = item.h; sourceTree = "<group>"; };
+		0655482D1EC8BB670000E33E /* listdata.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = listdata.h; sourceTree = "<group>"; };
+		0655482E1EC8BB670000E33E /* margins.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = margins.h; sourceTree = "<group>"; };
+		0655482F1EC8BB670000E33E /* painter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = painter.h; sourceTree = "<group>"; };
+		065548301EC8BB670000E33E /* persistentstate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = persistentstate.h; sourceTree = "<group>"; };
+		065548311EC8BB670000E33E /* proceduralimage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = proceduralimage.h; sourceTree = "<group>"; };
+		065548321EC8BB670000E33E /* sequentiallayout.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sequentiallayout.h; sourceTree = "<group>"; };
+		065548331EC8BB670000E33E /* signalaction.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = signalaction.h; sourceTree = "<group>"; };
+		065548341EC8BB670000E33E /* style.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = style.h; sourceTree = "<group>"; };
+		065548351EC8BB670000E33E /* styleproceduralimage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = styleproceduralimage.h; sourceTree = "<group>"; };
+		065548361EC8BB670000E33E /* stylist.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stylist.h; sourceTree = "<group>"; };
+		065548371EC8BB670000E33E /* submenuitem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = submenuitem.h; sourceTree = "<group>"; };
+		065548381EC8BB670000E33E /* subwidgetitem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = subwidgetitem.h; sourceTree = "<group>"; };
+		065548391EC8BB670000E33E /* textdrawable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = textdrawable.h; sourceTree = "<group>"; };
+		0655483A1EC8BB670000E33E /* untrapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = untrapper.h; sourceTree = "<group>"; };
+		0655483B1EC8BB670000E33E /* variabletoggleitem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = variabletoggleitem.h; sourceTree = "<group>"; };
+		0655483C1EC8BB670000E33E /* variantactionitem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = variantactionitem.h; sourceTree = "<group>"; };
+		0655483D1EC8BB670000E33E /* vrwindowtransform.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = vrwindowtransform.h; sourceTree = "<group>"; };
+		0655483E1EC8BB670000E33E /* windowsystem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = windowsystem.h; sourceTree = "<group>"; };
+		0655483F1EC8BB670000E33E /* windowtransform.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = windowtransform.h; sourceTree = "<group>"; };
+		065548411EC8BB670000E33E /* ActionItem */ = {isa = PBXFileReference; lastKnownFileType = text; path = ActionItem; sourceTree = "<group>"; };
+		065548421EC8BB670000E33E /* Data */ = {isa = PBXFileReference; lastKnownFileType = text; path = Data; sourceTree = "<group>"; };
+		065548431EC8BB670000E33E /* defs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = defs.h; sourceTree = "<group>"; };
+		065548441EC8BB670000E33E /* FilteredData */ = {isa = PBXFileReference; lastKnownFileType = text; path = FilteredData; sourceTree = "<group>"; };
+		065548451EC8BB670000E33E /* ImageItem */ = {isa = PBXFileReference; lastKnownFileType = text; path = ImageItem; sourceTree = "<group>"; };
+		065548461EC8BB670000E33E /* Item */ = {isa = PBXFileReference; lastKnownFileType = text; path = Item; sourceTree = "<group>"; };
+		065548471EC8BB670000E33E /* ListData */ = {isa = PBXFileReference; lastKnownFileType = text; path = ListData; sourceTree = "<group>"; };
+		065548481EC8BB670000E33E /* Margins */ = {isa = PBXFileReference; lastKnownFileType = text; path = Margins; sourceTree = "<group>"; };
+		065548491EC8BB670000E33E /* Stylist */ = {isa = PBXFileReference; lastKnownFileType = text; path = Stylist; sourceTree = "<group>"; };
+		0655484A1EC8BB670000E33E /* SubmenuItem */ = {isa = PBXFileReference; lastKnownFileType = text; path = SubmenuItem; sourceTree = "<group>"; };
+		0655484B1EC8BB670000E33E /* SubwidgetItem */ = {isa = PBXFileReference; lastKnownFileType = text; path = SubwidgetItem; sourceTree = "<group>"; };
+		0655484C1EC8BB670000E33E /* VariableToggleItem */ = {isa = PBXFileReference; lastKnownFileType = text; path = VariableToggleItem; sourceTree = "<group>"; };
+		0655484D1EC8BB670000E33E /* VariantActionItem */ = {isa = PBXFileReference; lastKnownFileType = text; path = VariantActionItem; sourceTree = "<group>"; };
+		0655484F1EC8BB670000E33E /* oculusrift.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = oculusrift.h; sourceTree = "<group>"; };
+		065548501EC8BB670000E33E /* vrconfig.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = vrconfig.h; sourceTree = "<group>"; };
+		065548521EC8BB670000E33E /* auxbuttonwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = auxbuttonwidget.h; sourceTree = "<group>"; };
+		065548531EC8BB670000E33E /* blurwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = blurwidget.h; sourceTree = "<group>"; };
+		065548541EC8BB670000E33E /* buttonwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = buttonwidget.h; sourceTree = "<group>"; };
+		065548551EC8BB670000E33E /* choicewidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = choicewidget.h; sourceTree = "<group>"; };
+		065548561EC8BB670000E33E /* commandwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = commandwidget.h; sourceTree = "<group>"; };
+		065548571EC8BB670000E33E /* compositorwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = compositorwidget.h; sourceTree = "<group>"; };
+		065548581EC8BB670000E33E /* dialogwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dialogwidget.h; sourceTree = "<group>"; };
+		065548591EC8BB670000E33E /* directoryarraywidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = directoryarraywidget.h; sourceTree = "<group>"; };
+		0655485A1EC8BB670000E33E /* documentpopupwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = documentpopupwidget.h; sourceTree = "<group>"; };
+		0655485B1EC8BB670000E33E /* documentwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = documentwidget.h; sourceTree = "<group>"; };
+		0655485C1EC8BB670000E33E /* fadetoblackwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = fadetoblackwidget.h; sourceTree = "<group>"; };
+		0655485D1EC8BB670000E33E /* focuswidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = focuswidget.h; sourceTree = "<group>"; };
+		0655485E1EC8BB670000E33E /* foldpanelwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = foldpanelwidget.h; sourceTree = "<group>"; };
+		0655485F1EC8BB670000E33E /* gridpopupwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gridpopupwidget.h; sourceTree = "<group>"; };
+		065548601EC8BB670000E33E /* labelwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = labelwidget.h; sourceTree = "<group>"; };
+		065548611EC8BB670000E33E /* lineeditwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = lineeditwidget.h; sourceTree = "<group>"; };
+		065548621EC8BB670000E33E /* logwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = logwidget.h; sourceTree = "<group>"; };
+		065548631EC8BB670000E33E /* menuwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = menuwidget.h; sourceTree = "<group>"; };
+		065548641EC8BB670000E33E /* notificationareawidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = notificationareawidget.h; sourceTree = "<group>"; };
+		065548651EC8BB670000E33E /* panelwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = panelwidget.h; sourceTree = "<group>"; };
+		065548661EC8BB670000E33E /* popupbuttonwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = popupbuttonwidget.h; sourceTree = "<group>"; };
+		065548671EC8BB670000E33E /* popupmenuwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = popupmenuwidget.h; sourceTree = "<group>"; };
+		065548681EC8BB670000E33E /* popupwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = popupwidget.h; sourceTree = "<group>"; };
+		065548691EC8BB670000E33E /* progresswidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = progresswidget.h; sourceTree = "<group>"; };
+		0655486A1EC8BB670000E33E /* relaywidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = relaywidget.h; sourceTree = "<group>"; };
+		0655486B1EC8BB670000E33E /* scriptcommandwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = scriptcommandwidget.h; sourceTree = "<group>"; };
+		0655486C1EC8BB670000E33E /* scrollareawidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = scrollareawidget.h; sourceTree = "<group>"; };
+		0655486D1EC8BB670000E33E /* sliderwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sliderwidget.h; sourceTree = "<group>"; };
+		0655486E1EC8BB670000E33E /* tabwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tabwidget.h; sourceTree = "<group>"; };
+		0655486F1EC8BB670000E33E /* togglewidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = togglewidget.h; sourceTree = "<group>"; };
+		065548701EC8BB670000E33E /* variablearraywidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = variablearraywidget.h; sourceTree = "<group>"; };
+		065548711EC8BB670000E33E /* variablechoicewidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = variablechoicewidget.h; sourceTree = "<group>"; };
+		065548721EC8BB670000E33E /* variablelineeditwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = variablelineeditwidget.h; sourceTree = "<group>"; };
+		065548731EC8BB670000E33E /* variablesliderwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = variablesliderwidget.h; sourceTree = "<group>"; };
+		065548741EC8BB670000E33E /* variabletogglewidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = variabletogglewidget.h; sourceTree = "<group>"; };
+		065548751EC8BB670000E33E /* libappfw.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = libappfw.h; path = ../sdk/libappfw/include/de/libappfw.h; sourceTree = "<group>"; };
 		067AD9091EBF143600B808B2 /* libimportidtech1.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libimportidtech1.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		067AD9131EBF148F00B808B2 /* hexlex.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = hexlex.cpp; path = ../apps/plugins/importidtech1/src/hexlex.cpp; sourceTree = "<group>"; };
 		067AD9141EBF148F00B808B2 /* importidtech1.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = importidtech1.cpp; path = ../apps/plugins/importidtech1/src/importidtech1.cpp; sourceTree = "<group>"; };
@@ -4423,6 +4514,149 @@
 			name = "User Interface";
 			sourceTree = "<group>";
 		};
+		065548151EC8BB3E0000E33E /* Headers */ = {
+			isa = PBXGroup;
+			children = (
+				065548161EC8BB670000E33E /* dialogs */,
+				0655481A1EC8BB670000E33E /* framework */,
+				065548401EC8BB670000E33E /* ui */,
+				0655484E1EC8BB670000E33E /* vr */,
+				065548511EC8BB670000E33E /* widgets */,
+				065548751EC8BB670000E33E /* libappfw.h */,
+			);
+			name = Headers;
+			sourceTree = "<group>";
+		};
+		065548161EC8BB670000E33E /* dialogs */ = {
+			isa = PBXGroup;
+			children = (
+				065548171EC8BB670000E33E /* directorylistdialog.h */,
+				065548181EC8BB670000E33E /* inputdialog.h */,
+				065548191EC8BB670000E33E /* messagedialog.h */,
+			);
+			name = dialogs;
+			path = ../sdk/libappfw/include/de/dialogs;
+			sourceTree = "<group>";
+		};
+		0655481A1EC8BB670000E33E /* framework */ = {
+			isa = PBXGroup;
+			children = (
+				0655481B1EC8BB670000E33E /* actionitem.h */,
+				0655481C1EC8BB670000E33E /* atlasproceduralimage.h */,
+				0655481D1EC8BB670000E33E /* baseguiapp.h */,
+				0655481E1EC8BB670000E33E /* basewindow.h */,
+				0655481F1EC8BB670000E33E /* callbackaction.h */,
+				065548201EC8BB670000E33E /* childwidgetorganizer.h */,
+				065548211EC8BB670000E33E /* data.h */,
+				065548221EC8BB670000E33E /* dialogcontentstylist.h */,
+				065548231EC8BB670000E33E /* filtereddata.h */,
+				065548241EC8BB670000E33E /* fontlinewrapping.h */,
+				065548251EC8BB670000E33E /* gltextcomposer.h */,
+				065548261EC8BB670000E33E /* gridlayout.h */,
+				065548271EC8BB670000E33E /* guirootwidget.h */,
+				065548281EC8BB670000E33E /* guiwidget.h */,
+				065548291EC8BB670000E33E /* guiwidgetprivate.h */,
+				0655482A1EC8BB670000E33E /* imageitem.h */,
+				0655482B1EC8BB670000E33E /* ipersistent.h */,
+				0655482C1EC8BB670000E33E /* item.h */,
+				0655482D1EC8BB670000E33E /* listdata.h */,
+				0655482E1EC8BB670000E33E /* margins.h */,
+				0655482F1EC8BB670000E33E /* painter.h */,
+				065548301EC8BB670000E33E /* persistentstate.h */,
+				065548311EC8BB670000E33E /* proceduralimage.h */,
+				065548321EC8BB670000E33E /* sequentiallayout.h */,
+				065548331EC8BB670000E33E /* signalaction.h */,
+				065548341EC8BB670000E33E /* style.h */,
+				065548351EC8BB670000E33E /* styleproceduralimage.h */,
+				065548361EC8BB670000E33E /* stylist.h */,
+				065548371EC8BB670000E33E /* submenuitem.h */,
+				065548381EC8BB670000E33E /* subwidgetitem.h */,
+				065548391EC8BB670000E33E /* textdrawable.h */,
+				0655483A1EC8BB670000E33E /* untrapper.h */,
+				0655483B1EC8BB670000E33E /* variabletoggleitem.h */,
+				0655483C1EC8BB670000E33E /* variantactionitem.h */,
+				0655483D1EC8BB670000E33E /* vrwindowtransform.h */,
+				0655483E1EC8BB670000E33E /* windowsystem.h */,
+				0655483F1EC8BB670000E33E /* windowtransform.h */,
+			);
+			name = framework;
+			path = ../sdk/libappfw/include/de/framework;
+			sourceTree = "<group>";
+		};
+		065548401EC8BB670000E33E /* ui */ = {
+			isa = PBXGroup;
+			children = (
+				065548411EC8BB670000E33E /* ActionItem */,
+				065548421EC8BB670000E33E /* Data */,
+				065548431EC8BB670000E33E /* defs.h */,
+				065548441EC8BB670000E33E /* FilteredData */,
+				065548451EC8BB670000E33E /* ImageItem */,
+				065548461EC8BB670000E33E /* Item */,
+				065548471EC8BB670000E33E /* ListData */,
+				065548481EC8BB670000E33E /* Margins */,
+				065548491EC8BB670000E33E /* Stylist */,
+				0655484A1EC8BB670000E33E /* SubmenuItem */,
+				0655484B1EC8BB670000E33E /* SubwidgetItem */,
+				0655484C1EC8BB670000E33E /* VariableToggleItem */,
+				0655484D1EC8BB670000E33E /* VariantActionItem */,
+			);
+			name = ui;
+			path = ../sdk/libappfw/include/de/ui;
+			sourceTree = "<group>";
+		};
+		0655484E1EC8BB670000E33E /* vr */ = {
+			isa = PBXGroup;
+			children = (
+				0655484F1EC8BB670000E33E /* oculusrift.h */,
+				065548501EC8BB670000E33E /* vrconfig.h */,
+			);
+			name = vr;
+			path = ../sdk/libappfw/include/de/vr;
+			sourceTree = "<group>";
+		};
+		065548511EC8BB670000E33E /* widgets */ = {
+			isa = PBXGroup;
+			children = (
+				065548521EC8BB670000E33E /* auxbuttonwidget.h */,
+				065548531EC8BB670000E33E /* blurwidget.h */,
+				065548541EC8BB670000E33E /* buttonwidget.h */,
+				065548551EC8BB670000E33E /* choicewidget.h */,
+				065548561EC8BB670000E33E /* commandwidget.h */,
+				065548571EC8BB670000E33E /* compositorwidget.h */,
+				065548581EC8BB670000E33E /* dialogwidget.h */,
+				065548591EC8BB670000E33E /* directoryarraywidget.h */,
+				0655485A1EC8BB670000E33E /* documentpopupwidget.h */,
+				0655485B1EC8BB670000E33E /* documentwidget.h */,
+				0655485C1EC8BB670000E33E /* fadetoblackwidget.h */,
+				0655485D1EC8BB670000E33E /* focuswidget.h */,
+				0655485E1EC8BB670000E33E /* foldpanelwidget.h */,
+				0655485F1EC8BB670000E33E /* gridpopupwidget.h */,
+				065548601EC8BB670000E33E /* labelwidget.h */,
+				065548611EC8BB670000E33E /* lineeditwidget.h */,
+				065548621EC8BB670000E33E /* logwidget.h */,
+				065548631EC8BB670000E33E /* menuwidget.h */,
+				065548641EC8BB670000E33E /* notificationareawidget.h */,
+				065548651EC8BB670000E33E /* panelwidget.h */,
+				065548661EC8BB670000E33E /* popupbuttonwidget.h */,
+				065548671EC8BB670000E33E /* popupmenuwidget.h */,
+				065548681EC8BB670000E33E /* popupwidget.h */,
+				065548691EC8BB670000E33E /* progresswidget.h */,
+				0655486A1EC8BB670000E33E /* relaywidget.h */,
+				0655486B1EC8BB670000E33E /* scriptcommandwidget.h */,
+				0655486C1EC8BB670000E33E /* scrollareawidget.h */,
+				0655486D1EC8BB670000E33E /* sliderwidget.h */,
+				0655486E1EC8BB670000E33E /* tabwidget.h */,
+				0655486F1EC8BB670000E33E /* togglewidget.h */,
+				065548701EC8BB670000E33E /* variablearraywidget.h */,
+				065548711EC8BB670000E33E /* variablechoicewidget.h */,
+				065548721EC8BB670000E33E /* variablelineeditwidget.h */,
+				065548731EC8BB670000E33E /* variablesliderwidget.h */,
+				065548741EC8BB670000E33E /* variabletogglewidget.h */,
+			);
+			name = widgets;
+			path = ../sdk/libappfw/include/de/widgets;
+			sourceTree = "<group>";
+		};
 		067AD92C1EBF151100B808B2 /* concurrency */ = {
 			isa = PBXGroup;
 			children = (
@@ -5119,6 +5353,7 @@
 		0686109E1EBF054E00180814 /* libappfw */ = {
 			isa = PBXGroup;
 			children = (
+				065548151EC8BB3E0000E33E /* Headers */,
 				063577271EBF42C10074E6D4 /* dialogs */,
 				0635772B1EBF42C10074E6D4 /* vr */,
 				0635772E1EBF42C10074E6D4 /* widgets */,

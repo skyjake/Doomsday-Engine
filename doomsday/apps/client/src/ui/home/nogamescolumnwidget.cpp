@@ -61,6 +61,9 @@ String NoGamesColumnWidget::tabHeading() const
 
 void NoGamesColumnWidget::browseForDataFiles()
 {
+    bool reload = false;
+
+#if !defined (DENG_MOBILE)
     // Use a native dialog to select the IWAD folder.
     ClientApp::app().beginNativeUIMode();
 
@@ -71,7 +74,6 @@ void NoGamesColumnWidget::browseForDataFiles()
     dlg.setReadOnly(true);
     //dlg.setNameFilter("*.wad");
     dlg.setLabelText(QFileDialog::Accept, tr("Select"));
-    bool reload = false;
     if (dlg.exec())
     {
         App::config().set("resource.iwadFolder", dlg.selectedFiles().at(0));
@@ -79,6 +81,7 @@ void NoGamesColumnWidget::browseForDataFiles()
     }
 
     ClientApp::app().endNativeUIMode();
+#endif
 
     // Reload packages and recheck for game availability.
     if (reload)
