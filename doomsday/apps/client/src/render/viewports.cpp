@@ -695,7 +695,7 @@ void R_RenderPlayerViewBorder()
 
 void R_UseViewPort(viewport_t const *vp)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if (!vp)
@@ -901,7 +901,7 @@ static void changeViewState(ViewState viewState) //, viewport_t const *port, vie
 {
     //DENG2_ASSERT(port && viewData);
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch (viewState)
@@ -1142,54 +1142,6 @@ static void restoreDefaultGLState()
     DGL_Enable(DGL_LINE_SMOOTH);
     DGL_Enable(DGL_POINT_SMOOTH);
 }
-
-#if 0
-static void clearViewPorts()
-{
-    GLbitfield bits = GL_DEPTH_BUFFER_BIT;
-
-    if(fx::Bloom::isEnabled() ||
-       (App_InFineSystem().finaleInProgess() && !GameUIWidget::finaleStretch()) ||
-        ClientApp::vr().mode() == VRConfig::OculusRift)
-    {
-        // Parts of the previous frame might leak in the bloom unless we clear the color
-        // buffer. Not doing this would result in very bright HOMs in map holes and game
-        // UI elements glowing in the frame (UI elements are normally on a separate layer
-        // and should not affect bloom).
-        bits |= GL_COLOR_BUFFER_BIT;
-    }
-
-    if(!devRendSkyMode)
-        bits |= GL_STENCIL_BUFFER_BIT;
-
-    if(freezeRLs)
-    {
-        bits |= GL_COLOR_BUFFER_BIT;
-    }
-    else
-    {
-        for(dint i = 0; i < DDMAXPLAYERS; ++i)
-        {
-            player_t *plr = DD_Player(i);
-
-            if(!plr->publicData().inGame || !(plr->publicData().flags & DDPF_LOCAL))
-                continue;
-
-            if(P_IsInVoid(plr) || !ClientApp::world().hasMap())
-            {
-                bits |= GL_COLOR_BUFFER_BIT;
-                break;
-            }
-        }
-    }
-
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    // This is all the clearing we'll do.
-    LIBGUI_GL.glClear(bits);
-}
-#endif
 
 void R_RenderViewPort(int playerNum)
 {

@@ -331,7 +331,7 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
-DENG_EXTERN_C void DP_Initialize()
+DENG_ENTRYPOINT void DP_Initialize()
 {
     Plug_AddHook(HOOK_MAP_CONVERT, importMapHook);
 }
@@ -340,7 +340,7 @@ DENG_EXTERN_C void DP_Initialize()
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DENG_EXTERN_C char const *deng_LibraryType()
+DENG_ENTRYPOINT char const *deng_LibraryType()
 {
     return "deng-plugin/generic";
 }

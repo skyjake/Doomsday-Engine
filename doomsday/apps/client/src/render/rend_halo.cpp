@@ -95,7 +95,7 @@ TextureVariantSpec const &Rend_HaloTextureSpec()
 
 void H_SetupState(bool dosetup)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(dosetup)
@@ -206,7 +206,7 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
     if(doPrimary)
         H_SetupState(true);
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Prepare the texture rotation matrix.

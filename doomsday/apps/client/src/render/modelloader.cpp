@@ -123,12 +123,16 @@ DENG2_PIMPL(ModelLoader)
         // request another one.
         loadProgram(SHADER_DEFAULT);
 
+#if defined (DENG_HAVE_BUSYRUNNER)
         ClientApp::busyRunner().audienceForDeferredGLTask() += this;
+#endif
     }
 
     void deinit()
     {
+#if defined (DENG_HAVE_BUSYRUNNER)
         ClientApp::busyRunner().audienceForDeferredGLTask() -= this;
+#endif
 
         // GL resources must be accessed from the main thread only.
         bank.unloadAll(Bank::ImmediatelyInCurrentThread);

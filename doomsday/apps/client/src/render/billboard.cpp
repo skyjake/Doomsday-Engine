@@ -75,7 +75,7 @@ static inline void drawQuad(dgl_vertex_t *v, dgl_color_t *c, dgl_texcoord_t *tc)
 
 void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     TextureVariant *tex = nullptr;
@@ -296,7 +296,7 @@ MaterialVariantSpec const &PSprite_MaterialSpec()
 
 void Rend_DrawPSprite(rendpspriteparams_t const &parms)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(::renderTextures == 1)
@@ -395,7 +395,7 @@ void Rend_DrawSprite(vissprite_t const &spr)
 {
     drawspriteparams_t const &parm = *VS_SPRITE(&spr);
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     TextureVariant *tex = nullptr;

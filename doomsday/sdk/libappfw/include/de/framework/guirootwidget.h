@@ -30,6 +30,7 @@
 
 namespace de {
 
+class AnimationVector2;
 class FocusWidget;
 class GuiWidget;
 class Painter;
@@ -82,6 +83,8 @@ public:
      * Returns the default projection for 2D graphics.
      */
     Matrix4f projMatrix2D() const;
+    
+    AnimationVector2 &rootOffset();
 
     void routeMouse(Widget *routeTo);
 

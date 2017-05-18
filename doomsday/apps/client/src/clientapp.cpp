@@ -156,7 +156,9 @@ DENG2_PIMPL(ClientApp)
 #if defined (DENG_HAVE_UPDATER)
     QScopedPointer<Updater> updater;
 #endif
+#if defined (DENG_HAVE_BUSYRUNNER)
     BusyRunner busyRunner;
+#endif
     ConfigProfiles audioSettings;
     ConfigProfiles networkSettings;
     ConfigProfiles logSettings;
@@ -809,16 +811,18 @@ ClientApp &ClientApp::app()
     return *clientAppSingleton;
 }
 
-BusyRunner &ClientApp::busyRunner()
-{
-    return app().d->busyRunner;
-}
-
 #if defined (DENG_HAVE_UPDATER)
 Updater &ClientApp::updater()
 {
     DENG2_ASSERT(!app().d->updater.isNull());
     return *app().d->updater;
+}
+#endif
+
+#if defined (DENG_HAVE_BUSYRUNNER)
+BusyRunner &ClientApp::busyRunner()
+{
+    return app().d->busyRunner;
 }
 #endif
 

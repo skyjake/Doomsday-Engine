@@ -513,7 +513,7 @@ void App_Error(char const *error, ...)
         dd_vsnprintf(buff, sizeof(buff), error, argptr);
         va_end(argptr);
 
-#ifdef __CLIENT__
+#if defined (__CLIENT__) && defined (DENG_HAVE_BUSYRUNNER)
         if (!ClientApp::busyRunner().inWorkerThread())
         {
             Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, buff, 0);
@@ -545,7 +545,7 @@ void App_Error(char const *error, ...)
     {
         DoomsdayApp::app().busyMode().abort(buff);
 
-#ifdef __CLIENT__
+#if defined (__CLIENT__) && defined (DENG_HAVE_BUSYRUNNER)
         if (ClientApp::busyRunner().inWorkerThread())
         {
             // We should not continue to execute the worker any more.

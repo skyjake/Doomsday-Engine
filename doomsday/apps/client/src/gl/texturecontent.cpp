@@ -525,7 +525,7 @@ static dd_bool uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels
         genMipmaps = 0;
     }
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    //DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     auto &GL = LIBGUI_GL;
@@ -947,7 +947,7 @@ void GL_UploadTextureContent(texturecontent_t const &content, gl::UploadMethod m
         }
     }
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    //DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, content.name);

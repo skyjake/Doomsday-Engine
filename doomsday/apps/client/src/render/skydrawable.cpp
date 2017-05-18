@@ -665,7 +665,7 @@ void SkyDrawable::draw(Animator const *animator) const
 {
     DENG2_ASSERT(animator);
     DENG2_ASSERT(&animator->sky() == this && d->sky == animator->sky().sky());
-    DENG2_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     d->prepare(animator);

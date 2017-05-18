@@ -72,7 +72,7 @@ struct FlareData
     {
         try
         {
-            DENG_ASSERT_IN_MAIN_THREAD();
+            DENG2_ASSERT_IN_RENDER_THREAD();
             DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
             images.addFromInfo(App::rootFolder().locate<File>("/packs/feature.lensflares/images.dei"));

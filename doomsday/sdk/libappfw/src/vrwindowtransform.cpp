@@ -69,12 +69,16 @@ DENG2_PIMPL(VRWindowTransform)
 
     float displayModeDependentUIScalingFactor() const
     {
+#if defined (DENG_MOBILE)
+        return 1.0f;
+#else
         if (GuiWidget::toDevicePixels(1) == 1) return 1.0f; // Not enough pixels for good-quality scaling.
 
         // Since the UI style doesn't yet support scaling at runtime based on
         // display resolution (or any other factor).
         return 1.f / Rangef(.66666f, 1.0f).clamp((width() - GuiWidget::toDevicePixels(256.f)) /
                                                  GuiWidget::toDevicePixels(768.f));
+#endif
     }
 
     void drawContent() const

@@ -332,7 +332,9 @@ void BusyMode_FreezeGameForBusyMode(void)
         DoomsdayApp::app().busyMode().taskRunner() &&
         de::App::inMainThread())
     {
+#if !defined (DENG_MOBILE)
         ClientWindow::main().busy().renderTransitionFrame();
+#endif
     }
 }
 

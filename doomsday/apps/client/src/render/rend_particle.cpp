@@ -520,7 +520,7 @@ static Vector2f lineUnitVector(Line const &line)
 
 static void drawParticles(dint rtype, bool withBlend)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     viewdata_t const *viewData = &viewPlayer->viewport();

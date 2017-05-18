@@ -764,7 +764,7 @@ void I_DebugDrawer()
 
     if (novideo || isDedicated) return; // Not for us.
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Disabled?

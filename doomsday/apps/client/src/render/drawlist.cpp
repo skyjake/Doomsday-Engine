@@ -815,7 +815,7 @@ void DrawList::draw(DrawMode mode, TexUnitMap const &texUnitMap) const
 {
     using Parm = PrimitiveParams;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Setup GL state for this list.

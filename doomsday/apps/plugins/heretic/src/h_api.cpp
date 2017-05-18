@@ -63,7 +63,7 @@ static char const *gameIds[NUM_GAME_MODES] =
 /**
  * Register the game modes supported by this plugin.
  */
-int G_RegisterGames(int hookType, int param, void* data)
+static int G_RegisterGames(int hookType, int param, void* data)
 {
     Games &games = DoomsdayApp::games();
 
@@ -130,7 +130,7 @@ int G_RegisterGames(int hookType, int param, void* data)
 /**
  * Called right after the game plugin is selected into use.
  */
-DENG_EXTERN_C void DP_Load(void)
+DENG_ENTRYPOINT void DP_Load(void)
 {
     Plug_AddHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
     gfw_SetCurrentGame(GFW_HERETIC);
@@ -139,12 +139,12 @@ DENG_EXTERN_C void DP_Load(void)
 /**
  * Called when the game plugin is freed from memory.
  */
-DENG_EXTERN_C void DP_Unload(void)
+DENG_ENTRYPOINT void DP_Unload(void)
 {
     Plug_RemoveHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
 }
 
-DENG_EXTERN_C void G_PreInit(char const *gameId)
+void G_PreInit(char const *gameId)
 {
     /// \todo Refactor me away.
     { size_t i;
@@ -175,7 +175,7 @@ dd_bool G_TryShutdown(void)
  * Takes a copy of the engine's entry points and exported data. Returns
  * a pointer to the structure that contains our entry points and exports.
  */
-DENG_EXTERN_C game_export_t *GetGameAPI(void)
+DENG_ENTRYPOINT game_export_t *GetGameAPI(void)
 {
     // Clear all of our exports.
     memset(&gx, 0, sizeof(gx));
@@ -228,7 +228,7 @@ DENG_EXTERN_C game_export_t *GetGameAPI(void)
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
-DENG_EXTERN_C void DP_Initialize(void)
+DENG_ENTRYPOINT void DP_Initialize(void)
 {
     Plug_AddHook(HOOK_STARTUP, G_RegisterGames);
 }
@@ -237,7 +237,7 @@ DENG_EXTERN_C void DP_Initialize(void)
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DENG_EXTERN_C char const *deng_LibraryType(void)
+DENG_ENTRYPOINT char const *deng_LibraryType(void)
 {
     return "deng-plugin/game";
 }

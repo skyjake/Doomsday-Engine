@@ -565,7 +565,7 @@ Matrix4f Rend_GetModelViewMatrix(dint consoleNum, bool inWorldSpace)
 
 void Rend_ModelViewMatrix(bool inWorldSpace)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -4518,7 +4518,7 @@ static void drawMasked()
 static void drawAllLists(Map &map)
 {
     DENG2_ASSERT(!Sys_GLCheckError());
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     drawSky();

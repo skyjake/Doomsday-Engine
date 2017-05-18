@@ -385,7 +385,7 @@ Rangef GL_DepthClipRange()
 
 void GL_ProjectionMatrix()
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Actually shift the player viewpoint
@@ -438,7 +438,7 @@ DENG_EXTERN_C void GL_UseFog(dint yes)
 
 void GL_SelectTexUnits(dint count)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     for (dint i = MAX_TEX_UNITS - 1; i >= count; i--)
@@ -498,7 +498,7 @@ void GL_TotalRestore()
 
 void GL_BlendMode(blendmode_t mode)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(mode)
@@ -797,7 +797,9 @@ void GL_SetRawImage(lumpnum_t lumpNum, gl::Wrapping wrapS, gl::Wrapping wrapT)
 
 void GL_BindTexture(TextureVariant *vtexture)
 {
-    if(ClientApp::busyRunner().inWorkerThread()) return;
+#if defined (DENG_HAVE_BUSYRUNNER)
+    if (ClientApp::busyRunner().inWorkerThread()) return;
+#endif
 
     // Ensure we have a prepared texture.
     duint glTexName = vtexture? vtexture->prepare() : 0;
@@ -807,7 +809,7 @@ void GL_BindTexture(TextureVariant *vtexture)
         return;
     }
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, glTexName);
@@ -833,7 +835,9 @@ void GL_BindTexture(TextureVariant *vtexture)
 void GL_BindTextureUnmanaged(GLuint glName, gl::Wrapping wrapS, gl::Wrapping wrapT,
     gl::Filter filter)
 {
-    if(ClientApp::busyRunner().inWorkerThread()) return;
+#if defined (DENG_HAVE_BUSYRUNNER)
+    if (ClientApp::busyRunner().inWorkerThread()) return;
+#endif
 
     LIBGUI_ASSERT_GL_OK();
 
@@ -843,7 +847,7 @@ void GL_BindTextureUnmanaged(GLuint glName, gl::Wrapping wrapS, gl::Wrapping wra
         return;
     }
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, glName);
@@ -884,7 +888,7 @@ void GL_BindTo(GLTextureUnit const &glTU, dint unit)
 {
     if(!glTU.hasTexture()) return;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
     DGL_SetInteger(DGL_ACTIVE_TEXTURE, unit);
     GL_Bind(glTU);
@@ -892,9 +896,11 @@ void GL_BindTo(GLTextureUnit const &glTU, dint unit)
 
 void GL_SetNoTexture()
 {
+#if defined (DENG_HAVE_BUSYRUNNER)
     if(ClientApp::busyRunner().inWorkerThread()) return;
+#endif
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     /// @todo Don't actually change the current binding. Instead we should disable

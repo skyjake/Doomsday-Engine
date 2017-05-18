@@ -192,6 +192,7 @@ void *Library::address(String const &name, SymbolLookupMode lookup)
 
 #if defined (DENG_STATIC_LINK)
     void *ptr = d->library->symbolFunc(name.toLatin1().constData());
+    qDebug() << d->fileName.toString() << name << ptr;
 #elif defined (DENG2_USE_DLOPEN)
     void *ptr = dlsym(d->library, name.toLatin1().constData());
 #else
@@ -246,7 +247,10 @@ StringList Library::staticLibraries() // static
     StringList names;
     for (auto const &lib : importedLibraries)
     {
-        names << lib.name;
+        if (lib.name)
+        {
+            names << lib.name;
+        }
     }
     return names;
 }

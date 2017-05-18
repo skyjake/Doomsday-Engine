@@ -624,7 +624,7 @@ void GameColumnWidget::setHighlighted(bool highlighted)
     }
     else
     {
-        root().setFocus(nullptr);
+        //root().setFocus(nullptr);
         d->menu->unselectAll();
     }
     d->showActions(highlighted);

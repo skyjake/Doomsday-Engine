@@ -264,7 +264,7 @@ int DS_Set(int prop, const void* ptr)
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DENG_EXTERN_C const char* deng_LibraryType(void)
+DENG_ENTRYPOINT const char* deng_LibraryType(void)
 {
     return "deng-plugin/audio";
 }

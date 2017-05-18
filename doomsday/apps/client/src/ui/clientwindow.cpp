@@ -241,10 +241,12 @@ DENG2_PIMPL(ClientWindow)
                     .setInput(Rule::Bottom, root.viewBottom() + *homeDelta);
         root.add(home);
 
+#if !defined (DENG_MOBILE)
         // Busy progress should be visible over the Home.
         busy->progress().orphan();
         busy->progress().rule().setRect(game->rule());
         root.add(&busy->progress());
+#endif
 
         // Common notification area.
         notifications = new NotificationAreaWidget;
@@ -437,8 +439,12 @@ DENG2_PIMPL(ClientWindow)
             break;
 
         case Normal:
+#if defined (DENG_HAVE_BUSYRUNNER)
             // The busy widget will hide itself after a possible transition has finished.
             busy->disable();
+#else
+            busy->hide();
+#endif
 
             game->show();
             game->enable();
@@ -816,7 +822,8 @@ ClientWindow::ClientWindow(String const &id)
     // Stay out from under the virtual keyboard.
     connect(this, &GLWindow::rootDimensionsChanged, [this] (QRect rect)
     {
-        d->root.setViewSize(Vector2ui(rect.width(), rect.height()));        
+        d->root.rootOffset().setValue(Vector2f(0, int(rect.height()) - int(pixelSize().y)),
+                                      0.3);
     });
 #endif
 }

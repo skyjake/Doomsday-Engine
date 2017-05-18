@@ -385,7 +385,7 @@ void DGL_CurrentColor(float *rgba)
 #undef DGL_Color3ub
 DENG_EXTERN_C void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
     dglDraw.vertex().color = Vector4ub(r, g, b, 255);
 }
@@ -393,7 +393,7 @@ DENG_EXTERN_C void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
 #undef DGL_Color3ubv
 DENG_EXTERN_C void DGL_Color3ubv(DGLubyte const *vec)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
     dglDraw.vertex().color = Vector4ub(Vector3ub(vec), 255);
 }
@@ -401,7 +401,7 @@ DENG_EXTERN_C void DGL_Color3ubv(DGLubyte const *vec)
 #undef DGL_Color4ub
 DENG_EXTERN_C void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
     dglDraw.vertex().color = Vector4ub(r, g, b, a);
 }
@@ -409,7 +409,7 @@ DENG_EXTERN_C void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
 #undef DGL_Color4ubv
 DENG_EXTERN_C void DGL_Color4ubv(DGLubyte const *vec)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
     dglDraw.vertex().color = Vector4ub(vec);
 }
@@ -417,7 +417,7 @@ DENG_EXTERN_C void DGL_Color4ubv(DGLubyte const *vec)
 #undef DGL_Color3f
 DENG_EXTERN_C void DGL_Color3f(float r, float g, float b)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
     dglDraw.vertex().color = DGLDrawState::colorFromFloat(Vector4f(r, g, b, 1.f));
 }
@@ -425,7 +425,7 @@ DENG_EXTERN_C void DGL_Color3f(float r, float g, float b)
 #undef DGL_Color3fv
 DENG_EXTERN_C void DGL_Color3fv(float const *vec)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
     dglDraw.vertex().color = DGLDrawState::colorFromFloat(Vector4f(Vector3f(vec), 1.f));
 }
@@ -433,7 +433,7 @@ DENG_EXTERN_C void DGL_Color3fv(float const *vec)
 #undef DGL_Color4f
 DENG_EXTERN_C void DGL_Color4f(float r, float g, float b, float a)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
     dglDraw.vertex().color = DGLDrawState::colorFromFloat(Vector4f(r, g, b, a));
 }
@@ -441,7 +441,7 @@ DENG_EXTERN_C void DGL_Color4f(float r, float g, float b, float a)
 #undef DGL_Color4fv
 DENG_EXTERN_C void DGL_Color4fv(float const *vec)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
     dglDraw.vertex().color = DGLDrawState::colorFromFloat(Vector4f(vec));
 }
@@ -449,7 +449,7 @@ DENG_EXTERN_C void DGL_Color4fv(float const *vec)
 #undef DGL_TexCoord2f
 DENG_EXTERN_C void DGL_TexCoord2f(byte target, float s, float t)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG2_ASSERT(target < MAX_TEX_COORDS);
 
     if (target < MAX_TEX_COORDS)
@@ -461,7 +461,7 @@ DENG_EXTERN_C void DGL_TexCoord2f(byte target, float s, float t)
 #undef DGL_TexCoord2fv
 DENG_EXTERN_C void DGL_TexCoord2fv(byte target, float const *vec)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG2_ASSERT(target < MAX_TEX_COORDS);
 
     if (target < MAX_TEX_COORDS)
@@ -473,7 +473,7 @@ DENG_EXTERN_C void DGL_TexCoord2fv(byte target, float const *vec)
 #undef DGL_Vertex2f
 DENG_EXTERN_C void DGL_Vertex2f(float x, float y)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
     dglDraw.vertex().vertex = Vector3f(x, y, 0.f);
     dglDraw.commitVertex();
@@ -482,7 +482,7 @@ DENG_EXTERN_C void DGL_Vertex2f(float x, float y)
 #undef DGL_Vertex2fv
 DENG_EXTERN_C void DGL_Vertex2fv(const float* vec)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
     if (vec)
     {
@@ -494,7 +494,7 @@ DENG_EXTERN_C void DGL_Vertex2fv(const float* vec)
 #undef DGL_Vertex3f
 DENG_EXTERN_C void DGL_Vertex3f(float x, float y, float z)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
     dglDraw.vertex().vertex = Vector3f(x, y, z);
 
@@ -504,7 +504,7 @@ DENG_EXTERN_C void DGL_Vertex3f(float x, float y, float z)
 #undef DGL_Vertex3fv
 DENG_EXTERN_C void DGL_Vertex3fv(const float* vec)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
     if (vec)
     {
@@ -516,7 +516,7 @@ DENG_EXTERN_C void DGL_Vertex3fv(const float* vec)
 #undef DGL_Vertices2ftv
 DENG_EXTERN_C void DGL_Vertices2ftv(int num, const dgl_ft2vertex_t* vec)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
     for(; num > 0; num--, vec++)
     {
@@ -528,7 +528,7 @@ DENG_EXTERN_C void DGL_Vertices2ftv(int num, const dgl_ft2vertex_t* vec)
 #undef DGL_Vertices3ftv
 DENG_EXTERN_C void DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     for(; num > 0; num--, vec++)
@@ -541,7 +541,7 @@ DENG_EXTERN_C void DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec)
 #undef DGL_Vertices3fctv
 DENG_EXTERN_C void DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     for(; num > 0; num--, vec++)
@@ -557,7 +557,7 @@ DENG_EXTERN_C void DGL_Begin(dglprimtype_t mode)
 {
     if (novideo) return;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     dglDraw.beginPrimitive(mode);
@@ -573,7 +573,7 @@ DENG_EXTERN_C void DGL_End(void)
 {
     if (novideo) return;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     dglDraw.endPrimitive();

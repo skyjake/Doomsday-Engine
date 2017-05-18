@@ -106,9 +106,11 @@ DENG2_PIMPL_NOREF(Plugins)
     {
         typedef void (*PluginInitializer)(void);
 
+#if !defined (DENG_STATIC_LINK)
         // We are only interested in native files.
         if (!lib.source()->is<NativeFile>())
             return 0;  // Continue iteration.
+#endif
 
         DENG2_ASSERT(!lib.path().isEmpty());
         if (strcasestr("/bin/audio_", lib.path().toUtf8().constData()))
@@ -161,7 +163,7 @@ DENG2_PIMPL_NOREF(Plugins)
             Library_Delete(plugin);
             return 0;  // Continue iteration.
         }
-
+        
         // This seems to be a Doomsday plugin.
         LOGDEV_MSG("Plugin id:%i name:%s")
                 << plugId << lib.path().fileNameWithoutExtension();

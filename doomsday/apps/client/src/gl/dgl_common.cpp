@@ -479,7 +479,7 @@ DENG_EXTERN_C void DGL_SetScissor(RectRaw const *rect)
 {
     if(!rect) return;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     GameWidget &game = ClientWindow::main().game();
@@ -735,7 +735,7 @@ void DGL_PopState(void)
 #undef DGL_Enable
 int DGL_Enable(int cap)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    //DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(cap)
@@ -785,7 +785,7 @@ int DGL_Enable(int cap)
 #undef DGL_Disable
 void DGL_Disable(int cap)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    //DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(cap)
@@ -843,7 +843,7 @@ void DGL_BlendOp(int op)
 #undef DGL_BlendFunc
 void DGL_BlendFunc(int param1, int param2)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     GLState::current().setBlendFunc(param1 == DGL_ZERO                ? gl::Zero :
@@ -948,7 +948,7 @@ void DGL_SetRawImage(lumpnum_t lumpNum, DGLint wrapS, DGLint wrapT)
 #undef DGL_MatrixMode
 void DGL_MatrixMode(DGLenum mode)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    //DENG2_ASSERT_IN_RENDER_THREAD();
 
     dgl.matrixMode = dgl.stackIndex(mode);
 }
@@ -956,7 +956,7 @@ void DGL_MatrixMode(DGLenum mode)
 #undef DGL_PushMatrix
 void DGL_PushMatrix(void)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    //DENG2_ASSERT_IN_RENDER_THREAD();
 
     dgl.pushMatrix();
 }
@@ -964,7 +964,7 @@ void DGL_PushMatrix(void)
 #undef DGL_PopMatrix
 void DGL_PopMatrix(void)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    //DENG2_ASSERT_IN_RENDER_THREAD();
 
     dgl.popMatrix();
 }
@@ -972,7 +972,7 @@ void DGL_PopMatrix(void)
 #undef DGL_LoadIdentity
 void DGL_LoadIdentity(void)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    //DENG2_ASSERT_IN_RENDER_THREAD();
 
     dgl.loadMatrix(Matrix4f());
 }
@@ -980,7 +980,7 @@ void DGL_LoadIdentity(void)
 #undef DGL_LoadMatrix
 void DGL_LoadMatrix(float const *matrix4x4)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    //DENG2_ASSERT_IN_RENDER_THREAD();
 
     dgl.loadMatrix(Matrix4f(matrix4x4));
 }
@@ -988,7 +988,7 @@ void DGL_LoadMatrix(float const *matrix4x4)
 #undef DGL_Translatef
 void DGL_Translatef(float x, float y, float z)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    //DENG2_ASSERT_IN_RENDER_THREAD();
 
     dgl.multMatrix(Matrix4f::translate(Vector3f(x, y, z)));
 }
@@ -996,7 +996,7 @@ void DGL_Translatef(float x, float y, float z)
 #undef DGL_Rotatef
 void DGL_Rotatef(float angle, float x, float y, float z)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    //DENG2_ASSERT_IN_RENDER_THREAD();
 
     dgl.multMatrix(Matrix4f::rotate(angle, Vector3f(x, y, z)));
 }
@@ -1004,7 +1004,7 @@ void DGL_Rotatef(float angle, float x, float y, float z)
 #undef DGL_Scalef
 void DGL_Scalef(float x, float y, float z)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    //DENG2_ASSERT_IN_RENDER_THREAD();
 
     dgl.multMatrix(Matrix4f::scale(Vector3f(x, y, z)));
 }
@@ -1012,7 +1012,7 @@ void DGL_Scalef(float x, float y, float z)
 #undef DGL_Ortho
 void DGL_Ortho(float left, float top, float right, float bottom, float znear, float zfar)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    //DENG2_ASSERT_IN_RENDER_THREAD();
 
     dgl.multMatrix(Matrix4f::ortho(left, right, top, bottom, znear, zfar));
 }

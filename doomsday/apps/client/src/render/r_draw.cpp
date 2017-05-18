@@ -223,7 +223,7 @@ void R_DrawViewBorder()
 
     Vector2i const origin = port->geometry.topLeft;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_Enable(DGL_TEXTURE_2D);

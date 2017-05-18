@@ -383,6 +383,8 @@ void LineEditWidget::focusGained()
         d->hint->setOpacity(0);
     }
     
+    qDebug() << "LineEditWidget: focusGained";
+    
 #if defined (DENG_MOBILE)
     {
         auto &win = root().window();
@@ -397,6 +399,8 @@ void LineEditWidget::focusGained()
 
 void LineEditWidget::focusLost()
 {
+    qDebug() << "LineEditWidget: focusLost";
+    
 #if defined (DENG_MOBILE)
     {
         auto &win = root().window();
@@ -492,6 +496,11 @@ bool LineEditWidget::handleEvent(Event const &event)
         default:
             break;
         }
+    }
+    
+    if (event.is<KeyEvent>() && event.as<KeyEvent>().qtKey() == Qt::Key_Enter)
+    {
+        qDebug() << "LineEditWidget: Enter key" << event.type() << hasFocus();
     }
 
     // Only handle keys when focused.

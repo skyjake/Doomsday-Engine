@@ -83,6 +83,12 @@
 #  define DENG_VISIBLE_SYMBOL
 #endif
 
+#if defined (DENG_STATIC_LINK)
+#  define DENG_ENTRYPOINT static
+#else
+#  define DENG_ENTRYPOINT DENG_EXTERN_C
+#endif
+
 #if !defined(_MSC_VER)
 #endif
 
