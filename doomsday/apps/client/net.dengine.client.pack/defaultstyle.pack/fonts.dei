@@ -44,21 +44,26 @@ group {
     script {
         # Define mappings for native font styles and weights.
         import App
+        if Version.OS == 'macx'
+            prefix = '.SFNS'
+        else
+            prefix = '.SFUI'
+        end
         App.addFontMapping("SF UI Text", {
-            ['regular', 25]: '.SFNSText-Light',
-            ['regular', 50]: '.SFNSText-Regular',
-            ['regular', 75]: '.SFNSText-Bold',
-            ['italic',  25]: '.SFNSText-LightItalic',
-            ['italic',  50]: '.SFNSText-Italic',
-            ['italic',  75]: '.SFNSText-BoldItalic'
+            ['regular', 25]: prefix + 'Text-Light',
+            ['regular', 50]: prefix + 'Text-Regular',
+            ['regular', 75]: prefix + 'Text-Bold',
+            ['italic',  25]: prefix + 'Text-LightItalic',
+            ['italic',  50]: prefix + 'Text-Italic',
+            ['italic',  75]: prefix + 'Text-BoldItalic'
         })
         App.addFontMapping("SF UI Display", {
-            ['regular', 25]: '.SFNSDisplay-Light',
-            ['regular', 50]: '.SFNSDisplay-Regular',
-            ['regular', 75]: '.SFNSDisplay-Bold',
-            ['italic',  25]: '.SFNSText-LightItalic',    # Only non-italic available.
-            ['italic',  50]: '.SFNSText-Italic',
-            ['italic',  75]: '.SFNSText-BoldItalic'
+            ['regular', 25]: prefix + 'Display-Light',
+            ['regular', 50]: prefix + 'Display-Regular',
+            ['regular', 75]: prefix + 'Display-Bold',
+            ['italic',  25]: prefix + 'Text-LightItalic',    # Only non-italic available.
+            ['italic',  50]: prefix + 'Text-Italic',
+            ['italic',  75]: prefix + 'Text-BoldItalic'
         })
         App.addFontMapping("Menlo", {
             ['regular', 25]: 'Menlo-Regular',
