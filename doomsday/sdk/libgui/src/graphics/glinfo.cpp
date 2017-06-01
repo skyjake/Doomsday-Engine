@@ -428,7 +428,7 @@ GLInfo::GLInfo() : d(new Impl)
 void GLInfo::glInit()
 {
     LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
-    
+
     info.d->init();
 }
 
@@ -537,7 +537,7 @@ void GLInfo::setLineWidth(float lineWidth)
 {
     #if defined (DENG_OPENGL)
     {
-        DENG2_ASSERT_GL_CONTEXT_ACTIVE();
+        LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
         DENG2_ASSERT(info.d->inited);
         info.d->glLineWidth(info.d->lim.smoothLineWidth.clamp(lineWidth));
         LIBGUI_ASSERT_GL_OK();

@@ -19,6 +19,10 @@
 #ifndef LIBGUI_GLWINDOW_IOS_H
 #define LIBGUI_GLWINDOW_IOS_H
 
+#if !defined (DENG_MOBILE)
+#  error "glwindow_qml.h is only for mobile platforms"
+#endif
+
 #include "../WindowEventHandler"
 #include "../GLTextureFramebuffer"
 
@@ -63,7 +67,7 @@ public:
 
 public:
     GLWindow();
-    
+
     void setWindow(QQuickWindow *window);
     void setOpenGLContext(QOpenGLContext *context);
 
@@ -204,10 +208,10 @@ protected:
     void mouseDoubleClickEvent  (QMouseEvent  *ev) override;
     void mouseMoveEvent         (QMouseEvent  *ev) override;
     void wheelEvent             (QWheelEvent  *ev) override;
-     
+
     bool event(QEvent *) override;
      */
-    
+
 signals:
     void textEntryRequest();
     void textEntryDismiss();
@@ -218,7 +222,7 @@ signals:
 public slots:
     void paintGL();
     void frameWasSwapped();
-    
+
 private:
     DENG2_PRIVATE(d)
 };
@@ -229,16 +233,16 @@ private:
 class GLQuickItem : public QQuickItem
 {
     Q_OBJECT
-    
+
 public:
     GLQuickItem();
-    
+
     virtual GLWindow *makeWindowRenderer() = 0;
-    
+
 signals:
     void textEntryRequest();
     void textEntryDismiss();
-    
+
 public slots:
     void sync();
     void cleanup();
@@ -250,14 +254,14 @@ public slots:
     void onTouchPressed(QVariantList touchPoints);
     void onTouchUpdated(QVariantList touchPoints);
     void onTouchReleased(QVariantList touchPoints);
-    
+
 private slots:
     void handleWindowChanged(QQuickWindow *win);
-    
+
 private:
     DENG2_PRIVATE(d)
 };
-    
+
 /**
  * Template for instantiating a particular type of renderer in a GLQuickItem.
  */
@@ -270,7 +274,7 @@ public:
         return new RendererType;
     }
 };
-    
+
 } // namespace de
 
 #endif // LIBGUI_GLWINDOW_IOS_H

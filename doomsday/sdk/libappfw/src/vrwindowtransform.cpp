@@ -294,7 +294,7 @@ DENG2_PIMPL(VRWindowTransform)
 #if !defined (DENG_MOBILE)
             // Use absolute screen position of window to determine whether the
             // first scan line is odd or even.
-            QPointF ulCorner(0, 0);
+            QPoint ulCorner(0, 0);
             ulCorner = self().window().mapToGlobal(ulCorner); // widget to screen coordinates
             bool const rowParityIsEven = ((int(ulCorner.y()) % 2) == 0);
 

@@ -33,6 +33,10 @@
 #include <QTimer>
 #include <QThread>
 
+#if !defined (DENG_MOBILE)
+#  error "glwindow_qml.cpp is only for mobile platforms"
+#endif
+
 namespace de {
 
 static GLWindow *mainWindow = nullptr;
@@ -51,7 +55,7 @@ DENG2_PIMPL(GLWindow)
     float fps = 0;
 
     Impl(Public *i) : Base(i) {}
-    
+
     ~Impl()
     {
         glDeinit();
@@ -74,7 +78,7 @@ DENG2_PIMPL(GLWindow)
     {
         if (readyNotified) return;
         readyNotified = true;
-        
+
         DENG2_ASSERT_IN_MAIN_THREAD();
         DENG2_ASSERT(QOpenGLContext::currentContext() == mainContext);
 
@@ -136,19 +140,19 @@ void GLWindow::setTitle(QString const &title)
 {
     //setWindowTitle(title);
 }
-    
+
 QSurfaceFormat GLWindow::format() const
 {
     DENG2_ASSERT(d->qtWindow);
     return d->qtWindow->format();
 }
-    
+
 double GLWindow::devicePixelRatio() const
 {
     DENG2_ASSERT(d->qtWindow);
     return d->qtWindow->devicePixelRatio();
 }
-    
+
 void GLWindow::makeCurrent()
 {
     //DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
@@ -162,42 +166,42 @@ void GLWindow::makeCurrent()
         //d->qtWindow->openglContext()->makeCurrent(d->qtWindow);
     }
 }
-    
+
 void GLWindow::doneCurrent()
 {
 }
-    
+
 void GLWindow::setWindow(QQuickWindow *window)
 {
     d->qtWindow = window;
 }
-    
+
 void GLWindow::setOpenGLContext(QOpenGLContext *context)
 {
     d->mainContext = context;
 }
-    
+
 void GLWindow::update()
 {
     if (d->qtWindow) d->qtWindow->update();
 }
-    
+
 Rectanglei GLWindow::windowRect() const
 {
     Size const size = pointSize();
     return Rectanglei(0, 0, size.x, size.y);
 }
-    
+
 GLWindow::Size GLWindow::fullscreenSize() const
 {
     return pointSize();
 }
-    
+
 void GLWindow::hide()
 {
-    
+
 }
-    
+
 bool GLWindow::isGLReady() const
 {
     return d->readyNotified;
@@ -222,7 +226,7 @@ bool GLWindow::isHidden() const
 {
     return false;
 }
-    
+
 bool GLWindow::isVisible() const
 {
     return true;
@@ -403,7 +407,7 @@ void GLWindow::initializeGL()
 
     DENG2_ASSERT_IN_MAIN_THREAD();
     makeCurrent();
-    
+
     d->glInit();
     d->notifyReady();
 }
@@ -413,7 +417,7 @@ void GLWindow::paintGL()
     DENG2_ASSERT_IN_RENDER_THREAD();
     DENG2_ASSERT(d->qtWindow != nullptr);
     DENG2_ASSERT(QOpenGLContext::currentContext() == d->qtWindow->openglContext());
-    
+
     GLFramebuffer::setDefaultFramebuffer(QOpenGLContext::currentContext()->defaultFramebufferObject());
 
     // Do not proceed with painting until after the application has completed
@@ -434,7 +438,7 @@ void GLWindow::paintGL()
     GLBuffer::resetDrawCount();
 
     LIBGUI_ASSERT_GL_OK();
-    
+
     GLState::considerNativeStateUndefined();
     GLState::current().apply();
 
@@ -444,7 +448,7 @@ void GLWindow::paintGL()
     draw();
 
     LIBGUI_ASSERT_GL_OK();
-    
+
     d->qtWindow->resetOpenGLState();
 }
 
@@ -454,7 +458,7 @@ void GLWindow::windowAboutToClose()
 void GLWindow::resizeGL(int w, int h)
 {
     DENG2_ASSERT_IN_MAIN_THREAD();
-    
+
     d->pendingSize = Size(w, h);
 
     // Only react if this is actually a resize.
@@ -475,7 +479,7 @@ void GLWindow::resizeGL(int w, int h)
         }
     }
 }
-    
+
 void GLWindow::frameWasSwapped()
 {
     Loop::mainCall([this] ()
@@ -488,7 +492,7 @@ void GLWindow::frameWasSwapped()
         d->updateFrameRateStatistics();
     });
 }
-   
+
 bool GLWindow::mainExists() // static
 {
     return mainWindow != 0;
@@ -512,7 +516,7 @@ void GLWindow::setMain(GLWindow *window) // static
 }
 
 //----------------------------------------------------------------------------------------
-    
+
 DENG2_PIMPL_NOREF(GLQuickItem)
 {
     QQuickWindow *qtWindow = nullptr;
@@ -526,25 +530,25 @@ GLQuickItem::GLQuickItem()
 {
     connect(this, &QQuickItem::windowChanged, this, &GLQuickItem::handleWindowChanged);
 }
-    
+
 void GLQuickItem::handleWindowChanged(QQuickWindow *win)
 {
     d->qtWindow = win;
-    
+
     if (win)
     {
         connect(win, &QQuickWindow::beforeSynchronizing,   this, &GLQuickItem::sync,    Qt::DirectConnection);
         connect(win, &QQuickWindow::sceneGraphInvalidated, this, &GLQuickItem::cleanup, Qt::DirectConnection);
-        
+
         win->setClearBeforeRendering(false);
-        
+
         if (d->renderer)
         {
             d->renderer->setWindow(win);
         }
     }
 }
- 
+
 void GLQuickItem::sync()
 {
     DENG2_ASSERT(d->qtWindow);
@@ -553,39 +557,39 @@ void GLQuickItem::sync()
     {
         d->initPending = true;
         GuiApp::setRenderThread(QThread::currentThread());
-        
+
         QOpenGLContext *renderContext = QOpenGLContext::currentContext();
-        
+
         Loop::mainCall([this, renderContext] ()
         {
             LOG_AS("GLWindow");
             LOGDEV_GL_NOTE("Initializing OpenGL window");
-            
+
             DENG2_ASSERT_IN_MAIN_THREAD();
-            
+
             // Create a shared OpenGL context for the main thread.
             QOpenGLContext *mainContext = new QOpenGLContext;
             mainContext->setShareContext(renderContext);
             mainContext->create();
-            
+
             auto *renderer = makeWindowRenderer();
             renderer->setOpenGLContext(mainContext);
             renderer->setWindow(d->qtWindow);
             renderer->initializeGL();
-            
+
             connect(renderer, &GLWindow::textEntryRequest, this, &GLQuickItem::textEntryRequest);
             connect(renderer, &GLWindow::textEntryDismiss, this, &GLQuickItem::textEntryDismiss);
-        
+
             d->renderer = renderer;
         });
     }
-    
+
     if (d->renderer)
     {
         if (d->initPending)
         {
             d->initPending = false;
-            
+
             // Painting may commence.
             connect(d->qtWindow, &QQuickWindow::beforeRendering, d->renderer, &GLWindow::paintGL,         Qt::DirectConnection);
             connect(d->qtWindow, &QQuickWindow::frameSwapped,    d->renderer, &GLWindow::frameWasSwapped, Qt::DirectConnection);
@@ -605,21 +609,21 @@ void GLQuickItem::cleanup()
     d->renderer = nullptr;
     d->initPending = false;
 }
-    
+
 void GLQuickItem::dimensionsChanged()
 {
     if (d->renderer && d->qtWindow)
     {
         auto const ratio = d->qtWindow->devicePixelRatio();
-        
+
         QRect newRect = QRect(0, 0, width() * ratio, height() * ratio);
         qDebug() << "dimensions" << newRect;
-                
+
         // Just resize the root widget, the window hasn't changed.
         emit d->renderer->rootDimensionsChanged(newRect);
     }
 }
-    
+
 void GLQuickItem::userEnteredText(QString text)
 {
     if (d->renderer)
@@ -628,7 +632,7 @@ void GLQuickItem::userEnteredText(QString text)
         emit d->renderer->userEnteredText(text);
     }
 }
-    
+
 void GLQuickItem::userFinishedTextEntry()
 {
     if (d->renderer)
@@ -638,23 +642,23 @@ void GLQuickItem::userFinishedTextEntry()
         auto &handler = d->renderer->eventHandler();
 //        QKeyEvent(Type type, int key, Qt::KeyboardModifiers modifiers, const QString& text = QString(),
 //                  bool autorep = false, ushort count = 1);
-        
+
         // Simulate the press of the Enter key.
 
         QKeyEvent pressed (QEvent::KeyPress,   Qt::Key_Enter, Qt::NoModifier, "\n");
         QKeyEvent released(QEvent::KeyRelease, Qt::Key_Enter, Qt::NoModifier);
-        
+
         handler.keyPressEvent(&pressed);
         handler.keyReleaseEvent(&released);
-        
+
         emit d->renderer->userFinishedTextEntry();
     }
 }
-    
+
 void GLQuickItem::onTouchPressed(QVariantList touchPoints)
 {
     if (!d->renderer) return;
-    
+
     //qDebug() << "GLQuickItem: onTouchPressed" << touchPoints;
     foreach (QVariant item, touchPoints)
     {
@@ -672,11 +676,11 @@ void GLQuickItem::onTouchPressed(QVariantList touchPoints)
         }
     }
 }
-    
+
 void GLQuickItem::onTouchUpdated(QVariantList touchPoints)
 {
     if (!d->renderer) return;
-    
+
     foreach (QVariant item, touchPoints)
     {
         QObject *obj = item.value<QObject *>();
@@ -696,7 +700,7 @@ void GLQuickItem::onTouchUpdated(QVariantList touchPoints)
 void GLQuickItem::onTouchReleased(QVariantList touchPoints)
 {
     if (!d->renderer) return;
-    
+
     foreach (QVariant item, touchPoints)
     {
         QObject *obj = item.value<QObject *>();
@@ -712,5 +716,5 @@ void GLQuickItem::onTouchReleased(QVariantList touchPoints)
         }
     }
 }
-    
+
 } // namespace de

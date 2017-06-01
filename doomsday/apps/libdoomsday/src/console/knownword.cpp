@@ -77,7 +77,7 @@ static bool compareKnownWordByName(knownword_t const &a, knownword_t const &b)
 
     default:
         DENG_ASSERT(!"compareKnownWordByName: Invalid type for word B");
-        return nullptr;
+        return false;
     }
 
     return Str_CompareIgnoreCase(textA, Str_Text(textB)) < 0;

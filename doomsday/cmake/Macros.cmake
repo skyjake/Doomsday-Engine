@@ -406,7 +406,7 @@ macro (deng_add_library target)
     sublist (_src 1 -1 ${ARGV})
     deng_filter_platform_sources (_src ${_src})
     # Define the target and namespace alias.
-    if (NOT IOS)        
+    if (NOT IOS)
         add_library (${target} SHARED ${_src})
     else ()
         add_library (${target} STATIC ${_src})
@@ -485,7 +485,7 @@ macro (deng_codesign target)
             foreach (fn IN LISTS fw)
                 set (_skip NO)
                 if (fn MATCHES \".*app/PlugIns.*\" AND NOT fn MATCHES \".*\\\\.bundle$\")
-                    get_filename_component (fn2 \${fn} NAME)                    
+                    get_filename_component (fn2 \${fn} NAME)
                     if (NOT fn MATCHES \".*\${fn2}.bundle/\${fn2}$\")
                         set (_skip YES)
                         message (STATUS \"Skipping \${fn} -- not an executable\")
@@ -494,7 +494,7 @@ macro (deng_codesign target)
                 if (NOT _skip)
                 message (STATUS \"Signing \${fn}...\")
                 execute_process (COMMAND ${CODESIGN_COMMAND} --verbose
-                        -s \"${DENG_CODESIGN_APP_CERT}\" 
+                        -s \"${DENG_CODESIGN_APP_CERT}\"
                         ${DENG_FW_CODESIGN_EXTRA_FLAGS}
                         \"\${fn}\"
                 )
@@ -814,6 +814,8 @@ function (deng_add_amedoc type file ameSourceDir mainSrc)
             set (pfm UNIX) # man pages are always for Unix
         elseif (type STREQUAL RTF)
             set (descText "rich text document")
+        elseif (type STREQUAL HTML)
+            set (descText "HTML document")
         else ()
             set (descText "text document")
             if (WIN32)
@@ -824,8 +826,13 @@ function (deng_add_amedoc type file ameSourceDir mainSrc)
         get_filename_component (_name ${file} NAME)
         add_custom_command (
             OUTPUT ${file}
-            COMMAND "${AMETHYST_COMMAND}" ${AMETHYST_FLAGS} -d${type} -d${pfm} ${opts}
-                -o${_name} ${ameSourceDir}/${mainSrc}
+            COMMAND "${AMETHYST_COMMAND}"
+                ${AMETHYST_FLAGS}
+                -d${type}
+                -d${pfm}
+                ${opts}
+                -o${_name}
+                ${ameSourceDir}/${mainSrc}
             DEPENDS ${_ameSrc}
             COMMENT "Compiling ${descText}..."
         )

@@ -37,11 +37,14 @@ namespace de {
 DENG2_PIMPL(GuiApp)
 {
     GuiLoop loop;
-    QThread *renderThread = nullptr;
+    QThread *renderThread;
 
     Impl(Public *i) : Base(i)
     {
         loop.audienceForIteration() += self();
+
+        // The default render thread is the main thread.
+        renderThread = QThread::currentThread();
     }
 };
 

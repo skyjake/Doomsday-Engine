@@ -67,6 +67,32 @@ if (UNIX)
     deng_merge_sources (unix src/unix/*.cpp)
 endif ()
 
+# Documentation sources.
+if (AMETHYST_FOUND)
+    if (APPLE)
+        set (readme "${CMAKE_CURRENT_BINARY_DIR}/Read Me.html")
+        deng_add_amedoc (HTML "${readme}" ${DENG_SOURCE_DIR}/doc/readme readme.ame)
+        install (FILES ${readme} DESTINATION .)
+        list (APPEND SOURCES ${readme})
+    else ()
+        set (readme "${CMAKE_CURRENT_BINARY_DIR}/readme.html")
+        deng_add_amedoc (HTML ${readme} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
+        list (APPEND SOURCES ${readme})
+        if (WIN32)
+            # WIX generator requires setting this manually.
+            set_property (INSTALL "${DENG_INSTALL_DOC_DIR}/readme.html"
+                PROPERTY CPACK_START_MENU_SHORTCUTS "Read Me"
+            )
+        endif ()
+    endif ()
+    # Manual page.
+    if (UNIX)
+        set (MAN_PAGE ${CMAKE_CURRENT_BINARY_DIR}/doomsday.6)
+        deng_add_amedoc (MAN ${MAN_PAGE} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
+        list (APPEND SOURCES ${MAN_PAGE})
+    endif ()
+endif ()
+
 deng_filter_platform_sources (src ${SOURCES} ${HEADERS} ${API_HEADERS})
 
 deng_add_package (net.dengine.client)
@@ -75,7 +101,7 @@ if (IOS)
     set (MACX_RESOURCES
         doomsday.pk3
     )
-    
+
     file (WRITE ${CMAKE_CURRENT_BINARY_DIR}/qt_plugin_import.cpp
         "#include <QtPlugin>
         Q_IMPORT_PLUGIN(QIOSIntegrationPlugin)
@@ -87,10 +113,10 @@ if (IOS)
 
     file (GLOB IOS_ICON_FILES res/ios/AppIcon*.png)
 
-    list (APPEND src 
+    list (APPEND src
         res/ios/LaunchScreen.xib
         ${IOS_ICON_FILES}
-    )    
+    )
 endif ()
 
 # OS X: Packages and other resources to bundle with the application.
@@ -125,7 +151,7 @@ if (IOS)
     link_framework (client PUBLIC MobileCoreServices)
     link_framework (client PUBLIC Security)
     link_framework (client PUBLIC UIKit)
-    
+
     # Static Qt libraries.
     target_link_libraries (client PUBLIC
         debug ${QT_LIBS}/libqtlibpng_debug.a
@@ -153,7 +179,7 @@ if (IOS)
         optimized ${QT_PLUGINS}/imageformats/libqicns.a
         optimized ${QT_PLUGINS}/imageformats/libqtga.a
         optimized ${QT_PLUGINS}/imageformats/libqjpeg.a
-        
+
         importdeh
         importidtech1
         importudmf
@@ -182,31 +208,6 @@ endif ()
 target_link_libraries (client PUBLIC Deng::libappfw Deng::libdoomsday)
 
 # Deployment ----------------------------------------------------------------------------
-
-if (AMETHYST_FOUND)
-    if (APPLE)
-        set (readme "${CMAKE_CURRENT_BINARY_DIR}/Read Me.html")
-        deng_add_amedoc (HTML ${readme} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
-        install (FILES ${readme} DESTINATION .)
-        list (APPEND SOURCES ${readme})
-    else ()
-        set (readme "${CMAKE_CURRENT_BINARY_DIR}/readme.html")
-        deng_add_amedoc (HTML ${readme} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
-        list (APPEND SOURCES ${readme})
-        if (WIN32)
-            # WIX generator requires setting this manually.
-            set_property (INSTALL "${DENG_INSTALL_DOC_DIR}/readme.html"
-                PROPERTY CPACK_START_MENU_SHORTCUTS "Read Me"
-            )
-        endif ()
-    endif ()
-    # Manual page.
-    if (UNIX)
-        set (MAN_PAGE ${CMAKE_CURRENT_BINARY_DIR}/doomsday.6)
-        deng_add_amedoc (MAN ${MAN_PAGE} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
-        list (APPEND SOURCES ${MAN_PAGE})
-    endif ()
-endif ()
 
 if (WIN32 OR APPLE)
     set_property (TARGET client PROPERTY OUTPUT_NAME "Doomsday")

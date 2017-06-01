@@ -72,7 +72,7 @@ static void Mouse_Qt_Poll()
     ClientWindow *win = ClientWindowSystem::mainPtr();
     if (!win) return; // Hmm?
 
-    QPointF curPos = win->mapFromGlobal(QCursor::pos());
+    QPoint curPos = win->mapFromGlobal(QCursor::pos());
     if (!prevMousePos.isNull())
     {
         QPoint delta = curPos - prevMousePos;

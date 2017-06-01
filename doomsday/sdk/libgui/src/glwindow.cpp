@@ -200,13 +200,12 @@ DENG2_AUDIENCE_METHOD(GLWindow, Resize)
 DENG2_AUDIENCE_METHOD(GLWindow, Swap)
 
 GLWindow::GLWindow()
-    : LIBGUI_GLWINDOW_BASECLASS()
-    , d(new Impl(this))
+    : d(new Impl(this))
 {
 #if defined (MACOSX)
     setFlags(flags() | Qt::WindowFullscreenButtonHint);
 #endif
-    
+
 #if defined (DENG_MOBILE)
     setFocusPolicy(Qt::StrongFocus);
 #endif
@@ -223,7 +222,7 @@ void GLWindow::setTitle(QString const &title)
     setWindowTitle(title);
 }
 #endif
-    
+
 bool GLWindow::isGLReady() const
 {
     return d->readyNotified;
@@ -282,8 +281,8 @@ uint GLWindow::frameCount() const
 
 GLWindow::Size GLWindow::pointSize() const
 {
-    return Size(duint(de::max(0, LIBGUI_GLWINDOW_BASECLASS::width())),
-                duint(de::max(0, LIBGUI_GLWINDOW_BASECLASS::height())));
+    return Size(duint(de::max(0, QOpenGLWindow::width())),
+                duint(de::max(0, QOpenGLWindow::height())));
 }
 
 GLWindow::Size GLWindow::pixelSize() const
@@ -378,12 +377,12 @@ bool GLWindow::event(QEvent *ev)
         return QApplication::sendEvent(&canvas(), &keyEvent);
     }
 #endif*/
-    
+
     if (ev->type() == QEvent::Close)
     {
         windowAboutToClose();
     }
-    return LIBGUI_GLWINDOW_BASECLASS::event(ev);
+    return QOpenGLWindow::event(ev);
 }
 
 bool GLWindow::grabToFile(NativePath const &path) const

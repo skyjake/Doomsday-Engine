@@ -100,7 +100,7 @@ elseif (DENG_OPENGL_API STREQUAL "GLES2")
     message (STATUS "Using OpenGL ES 2.0")
 else ()
     message (FATAL_ERROR "Invalid value for OpenGL API: ${DENG_OPENGL_API}")
-endif ()    
+endif ()
 
 # Source and header files.
 file (GLOB_RECURSE HEADERS include/de/*)
@@ -118,6 +118,10 @@ if (NOT DENG_ENABLE_DISPLAYMODE)
 else ()
     list (APPEND SOURCES src/displaymode_${DENG_PLATFORM_SUFFIX})
 endif ()
+
+# Ignore mobile-only sources.
+list_remove_matches (HEADERS ".*_qml.*")
+list_remove_matches (SOURCES ".*_qml.*")
 
 deng_add_library (libgui ${SOURCES} ${HEADERS})
 

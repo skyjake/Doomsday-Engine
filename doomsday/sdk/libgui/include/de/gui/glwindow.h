@@ -29,7 +29,7 @@
 
 #if defined (DENG_MOBILE)
 #  error "glwindow.h is for desktop platforms (use glwindow_qml.h instead)"
-##endif
+#endif
 
 #include <QOpenGLWindow>
 
@@ -39,7 +39,7 @@
 #endif
 
 namespace de {
-    
+
 /**
  * Top-level window that contains an OpenGL drawing surface. @ingroup gui
  *
@@ -75,7 +75,7 @@ public:
 
 public:
     GLWindow();
-        
+
     bool isGLReady() const;
     bool isFullScreen() const;
     bool isMaximized() const;

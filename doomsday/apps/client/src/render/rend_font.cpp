@@ -571,7 +571,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
 #if defined (DENG_OPENGL)
     if (renderWireframe > 1)
     {
-        DENG_ASSERT_IN_RENDER_THREAD();
+        DENG2_ASSERT_IN_RENDER_THREAD();
         DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
