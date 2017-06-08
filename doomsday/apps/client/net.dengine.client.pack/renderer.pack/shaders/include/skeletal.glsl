@@ -18,16 +18,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-uniform highp mat4 uBoneMatrices[64];
+uniform mat4 uBoneMatrices[64];
 
-attribute highp vec4 aBoneIDs;
-attribute highp vec4 aBoneWeights;
+in vec4 aBoneIDs;
+in vec4 aBoneWeights;
 
 /*
  * Calculates the bone matrix for the current vertex. Bones and their weights
  * are determined by vertex attributes.
  */
-highp mat4 vertexBoneTransform()
+mat4 vertexBoneTransform()
 {
     return uBoneMatrices[int(aBoneIDs.x + 0.5)] * aBoneWeights.x +
            uBoneMatrices[int(aBoneIDs.y + 0.5)] * aBoneWeights.y +

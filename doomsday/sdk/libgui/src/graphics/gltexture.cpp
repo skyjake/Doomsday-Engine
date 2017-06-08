@@ -508,7 +508,7 @@ void GLTexture::generateMipmap()
     if (d->name)
     {
         d->glBind();
-        GLInfo::EXT_framebuffer_object()->glGenerateMipmapEXT(d->texTarget); LIBGUI_ASSERT_GL_OK();
+        LIBGUI_GL.glGenerateMipmap(d->texTarget); LIBGUI_ASSERT_GL_OK();
         d->glUnbind();
 
         d->flags |= MipmapAvailable;

@@ -64,7 +64,7 @@ def setDefaults(d)
         mainWin.rect = [offx, offy, mode['width'] - 2*offx, mode['height'] - 2*offy]
         mainWin.colorDepth = mode['depth']
 
-        if Version.OS == 'windows' or Version.OS == 'macx'
+        if Version.OS in ['windows', 'macx', 'ios']
             mainWin.fullscreen = True
             mainWin.maximize   = False
         else

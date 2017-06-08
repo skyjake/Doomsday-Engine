@@ -581,11 +581,25 @@ int DialogWidget::exec(GuiRootWidget &root)
     root.add(this);
 
     prepare();
-
-    int result = d->subloop.exec();
-
+    
+    int result = 0;
+    try
+    {
+        // The subloop will likely access the root independently.
+        root.unlock();
+        
+        result = d->subloop.exec();
+        
+        root.lock();
+    }
+    catch (...)
+    {
+        // The lock needs to be reacquired in any case.
+        root.lock();
+        throw;
+    }
+    
     finish(result);
-
     return result;
 }
 

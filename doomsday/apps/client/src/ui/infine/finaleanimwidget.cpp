@@ -126,11 +126,11 @@ static void useColor(animator_t const *color, int components)
 {
     if (components == 3)
     {
-        LIBGUI_GL.glColor3f(color[0].value, color[1].value, color[2].value);
+        DGL_Color3f(color[0].value, color[1].value, color[2].value);
     }
     else if (components == 4)
     {
-        LIBGUI_GL.glColor4f(color[0].value, color[1].value, color[2].value, color[3].value);
+        DGL_Color4f(color[0].value, color[1].value, color[2].value, color[3].value);
     }
 }
 
@@ -171,21 +171,21 @@ static int buildGeometry(float const /*dimensions*/[3], dd_bool flipTextureS,
 static void drawGeometry(int numVerts, Vector3f const *posCoords,
     Vector4f const *colorCoords, Vector2f const *texCoords)
 {
-    LIBGUI_GL.glBegin(GL_TRIANGLE_STRIP);
+    DGL_Begin(DGL_TRIANGLE_STRIP);
     Vector3f const *posIt   = posCoords;
     Vector4f const *colorIt = colorCoords;
     Vector2f const *texIt   = texCoords;
     for (int i = 0; i < numVerts; ++i, posIt++, colorIt++, texIt++)
     {
         if (texCoords)
-            LIBGUI_GL.glTexCoord2f(texIt->x, texIt->y);
+            DGL_TexCoord2f(0, texIt->x, texIt->y);
 
         if (colorCoords)
-            LIBGUI_GL.glColor4f(colorIt->x, colorIt->y, colorIt->z, colorIt->w);
+            DGL_Color4f(colorIt->x, colorIt->y, colorIt->z, colorIt->w);
 
-        LIBGUI_GL.glVertex3f(posIt->x, posIt->y, posIt->z);
+        DGL_Vertex3f(posIt->x, posIt->y, posIt->z);
     }
-    LIBGUI_GL.glEnd();
+    DGL_End();
 }
 
 static inline MaterialVariantSpec const &uiMaterialSpec_FinaleAnim()
@@ -235,7 +235,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
                                         (filterUI ? gl::Linear : gl::Nearest));
                 if (glName)
                 {
-                    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+                    DGL_Enable(DGL_TEXTURE_2D);
                     textureEnabled = true;
                 }
             }
@@ -249,7 +249,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
                                     (filterUI ? gl::Linear : gl::Nearest));
             if (f->texRef.tex)
             {
-                LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+                DGL_Enable(DGL_TEXTURE_2D);
                 textureEnabled = true;
             }
             break;
@@ -268,7 +268,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
                 int const texBorder            = tex->spec().variant.border;
 
                 GL_BindTexture(tex);
-                LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+                DGL_Enable(DGL_TEXTURE_2D);
                 textureEnabled = true;
 
                 V3f_Set(dimensions, matDimensions.x + texBorder * 2, matDimensions.y + texBorder * 2, 0);
@@ -298,7 +298,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
                     Rend_PatchTextureSpec(0 | (tex.isFlagged(res::Texture::Monochrome)        ? TSF_MONOCHROME : 0)
                                             | (tex.isFlagged(res::Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
                 GL_BindTexture(static_cast<ClientTexture &>(tex).prepareVariant(texSpec));
-                LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+                DGL_Enable(DGL_TEXTURE_2D);
                 textureEnabled = true;
 
                 V3f_Set(offset, tex.origin().x, tex.origin().y, 0);
@@ -334,41 +334,41 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
     numVerts = buildGeometry(dimensions, flipTextureS, rgba, rgba2, &posCoords, &colorCoords, &texCoords);
 
     // Setup the transformation.
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPushMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
     //glScalef(.1f/SCREENWIDTH, .1f/SCREENWIDTH, 1);
 
     // Move to the object origin.
-    LIBGUI_GL.glTranslatef(origin[VX], origin[VY], origin[VZ]);
+    DGL_Translatef(origin[VX], origin[VY], origin[VZ]);
 
     // Translate to the object center.
     /// @todo Remove this; just go to origin directly. Rotation origin is
     /// now separately in 'rotateCenter'. -jk
-    LIBGUI_GL.glTranslatef(originOffset[VX], originOffset[VY], originOffset[VZ]);
+    DGL_Translatef(originOffset[VX], originOffset[VY], originOffset[VZ]);
 
-    LIBGUI_GL.glScalef(scale[VX], scale[VY], scale[VZ]);
+    DGL_Scalef(scale[VX], scale[VY], scale[VZ]);
 
     if (angle != 0)
     {
-        LIBGUI_GL.glTranslatef(rotateCenter[VX], rotateCenter[VY], 0);
+        DGL_Translatef(rotateCenter[VX], rotateCenter[VY], 0);
 
         // With rotation we must counter the VGA aspect ratio.
-        LIBGUI_GL.glScalef(1, 200.0f / 240.0f, 1);
-        LIBGUI_GL.glRotatef(angle, 0, 0, 1);
-        LIBGUI_GL.glScalef(1, 240.0f / 200.0f, 1);
+        DGL_Scalef(1, 200.0f / 240.0f, 1);
+        DGL_Rotatef(angle, 0, 0, 1);
+        DGL_Scalef(1, 240.0f / 200.0f, 1);
 
-        LIBGUI_GL.glTranslatef(-rotateCenter[VX], -rotateCenter[VY], 0);
+        DGL_Translatef(-rotateCenter[VX], -rotateCenter[VY], 0);
     }
 
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
+    DGL_MatrixMode(DGL_MODELVIEW);
     // Scale up our unit-geometry to the desired dimensions.
-    LIBGUI_GL.glScalef(dimensions[VX], dimensions[VY], dimensions[VZ]);
+    DGL_Scalef(dimensions[VX], dimensions[VY], dimensions[VZ]);
 
     if (texScale[0] != 1 || texScale[1] != 1)
     {
-        LIBGUI_GL.glMatrixMode(GL_TEXTURE);
-        LIBGUI_GL.glPushMatrix();
-        LIBGUI_GL.glScalef(texScale[0], texScale[1], 1);
+        DGL_MatrixMode(DGL_TEXTURE);
+        DGL_PushMatrix();
+        DGL_Scalef(texScale[0], texScale[1], 1);
         mustPopTextureMatrix = true;
     }
 
@@ -378,32 +378,32 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
 
     if (mustPopTextureMatrix)
     {
-        LIBGUI_GL.glMatrixMode(GL_TEXTURE);
-        LIBGUI_GL.glPopMatrix();
+        DGL_MatrixMode(DGL_TEXTURE);
+        DGL_PopMatrix();
     }
 
     if (showEdges)
     {
-        LIBGUI_GL.glBegin(GL_LINES);
+        DGL_Begin(DGL_LINES);
             useColor(p->edgeColor(), 4);
-            LIBGUI_GL.glVertex2f(0, 0);
-            LIBGUI_GL.glVertex2f(1, 0);
-            LIBGUI_GL.glVertex2f(1, 0);
+            DGL_Vertex2f(0, 0);
+            DGL_Vertex2f(1, 0);
+            DGL_Vertex2f(1, 0);
 
             useColor(p->otherEdgeColor(), 4);
-            LIBGUI_GL.glVertex2f(1, 1);
-            LIBGUI_GL.glVertex2f(1, 1);
-            LIBGUI_GL.glVertex2f(0, 1);
-            LIBGUI_GL.glVertex2f(0, 1);
+            DGL_Vertex2f(1, 1);
+            DGL_Vertex2f(1, 1);
+            DGL_Vertex2f(0, 1);
+            DGL_Vertex2f(0, 1);
 
             useColor(p->edgeColor(), 4);
-            LIBGUI_GL.glVertex2f(0, 0);
-        LIBGUI_GL.glEnd();
+            DGL_Vertex2f(0, 0);
+        DGL_End();
     }
 
     // Restore original transformation.
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
 void FinaleAnimWidget::draw(Vector3f const &offset)

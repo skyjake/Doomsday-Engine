@@ -27,7 +27,7 @@
 #include <QKeyEvent>
 #include <de/Log>
 
-#if defined(UNIX) && !defined(MACOSX)
+#if defined (DENG_X11)
 #  include <QX11Info>
 #  include <X11/keysym.h>
 #  include <X11/Xlib.h>
@@ -48,7 +48,7 @@ static int x11ScancodeToDDKey(int scancode);
 #  endif
 #endif
 
-#ifdef WIN32
+#if defined (WIN32)
 static int win32Keymap[256];
 
 /**

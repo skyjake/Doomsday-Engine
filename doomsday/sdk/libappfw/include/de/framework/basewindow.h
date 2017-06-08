@@ -20,9 +20,15 @@
 #define LIBAPPFW_BASEWINDOW_H
 
 #include "../libappfw.h"
-
-#include <de/PersistentGLWindow>
 #include <de/Vector>
+
+#if !defined (DENG_MOBILE)
+#  include <de/PersistentGLWindow>
+#  define LIBAPPFW_BASEWINDOW_SUPER de::PersistentGLWindow
+#else
+#  include <de/GLWindow>
+#  define LIBAPPFW_BASEWINDOW_SUPER de::GLWindow
+#endif
 
 namespace de {
 
@@ -38,7 +44,7 @@ class WindowTransform;
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC BaseWindow : public PersistentGLWindow
+class LIBAPPFW_PUBLIC BaseWindow : public LIBAPPFW_BASEWINDOW_SUPER
 {
 public:
     BaseWindow(String const &id);
@@ -81,6 +87,10 @@ public:
      * draw an entire frame using the non-transformed logical size of the view.
      */
     virtual void drawWindowContent() = 0;
+
+#if defined (DENG_MOBILE)
+    String configName(String const &key) const;
+#endif
 
 protected:
     /**

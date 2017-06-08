@@ -895,7 +895,7 @@ void GuiWidget::deinitialize()
 
 void GuiWidget::viewResized()
 {
-    d->reinitBlur();
+    d->deinitBlur();
 }
 
 void GuiWidget::update()

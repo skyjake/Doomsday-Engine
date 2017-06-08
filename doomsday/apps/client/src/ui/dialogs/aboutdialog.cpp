@@ -77,7 +77,8 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Impl(this))
     LabelWidget *info = new LabelWidget;
     String txt = String(_E(b) "%4 %5 #%6" _E(.) "\n%7%9\n\n%1 (%2-%8)%3")
             .arg(version.operatingSystem() == "windows"? tr("Windows") :
-                 version.operatingSystem() == "macx"? tr("macOS") : tr("Unix"))
+                 version.operatingSystem() == "macx"? tr("macOS") :
+                 version.operatingSystem() == "ios"? tr("iOS") : tr("Unix"))
             .arg(version.cpuBits())
             .arg(version.isDebugBuild()? tr(" Debug") : "")
             .arg(DOOMSDAY_RELEASE_TYPE)

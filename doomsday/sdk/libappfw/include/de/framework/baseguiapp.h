@@ -51,7 +51,7 @@ public:
 
     void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems);
     double dpiFactor() const;
-
+    
     /**
      * Enters the "native UI" mode that temporarily switches the main window to a
      * regular window and restores the desktop display mode. This allows the user to

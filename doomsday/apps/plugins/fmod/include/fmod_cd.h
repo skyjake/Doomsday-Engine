@@ -44,6 +44,8 @@
 
 #include "api_audiod_mus.h"
 
+#if 0
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -63,5 +65,6 @@ void    DM_CDAudio_Stop(void);
 
 // Internal:
 void    DMFmod_CDAudio_Shutdown(void);
+#endif
 
 #endif /* end of include guard: __FMOD_CD_H__ */

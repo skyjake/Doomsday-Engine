@@ -32,7 +32,7 @@ def parse_cmake_for_version(cmakeFile):
                 continue
             patch = re.search(r'DENG_VERSION_PATCH.*([0-9]+)', line)
             if patch:
-                versionPatch = int(patch.group(1))
+                versionRevision = int(patch.group(1))
                 continue
         else:
             relType = re.search(r'^\s*[^\#]\s*(Unstable|Candidate|Stable)', line)

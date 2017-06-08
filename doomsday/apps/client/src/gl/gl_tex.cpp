@@ -355,8 +355,6 @@ void* GL_ScaleBufferEx(const void* dataIn, int widthIn, int heightIn, int bpp,
     case GL_FLOAT:
         sizeIn = sizeof(GLfloat);
         break;
-    case GL_BITMAP:
-        // Not implemented yet.
     default:
         return NULL;
     }
@@ -385,8 +383,6 @@ void* GL_ScaleBufferEx(const void* dataIn, int widthIn, int heightIn, int bpp,
     case GL_FLOAT:
         sizeOut = sizeof(GLfloat);
         break;
-    case GL_BITMAP:
-        // Not implemented yet.
     default:
         return NULL;
     }

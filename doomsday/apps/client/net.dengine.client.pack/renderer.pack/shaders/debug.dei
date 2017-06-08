@@ -3,12 +3,12 @@ debug {
         # Visualize alpha information.
         shader alpha {
             vertex = "
-                uniform highp mat4 uMvpMatrix;
-                attribute highp vec4 aVertex;
-                attribute highp vec2 aUV;
-                attribute highp vec4 aColor;
-                varying highp vec2 vUV;
-                varying highp vec4 vColor;
+                uniform mat4 uMvpMatrix;
+                in vec4 aVertex;
+                in vec2 aUV;
+                in vec4 aColor;
+                out vec2 vUV;
+                out vec4 vColor;
             
                 void main(void) {
                     gl_Position = uMvpMatrix * aVertex;
@@ -17,12 +17,12 @@ debug {
                 }"
             fragment = "
                 uniform sampler2D uTex;
-                varying highp vec2 vUV;
-                varying highp vec4 vColor;
+                in vec2 vUV;
+                in vec4 vColor;
 
                 void main(void) {
-                    highp vec4 col = vColor * texture2D(uTex, vUV);
-                    gl_FragColor = vec4(col.a, col.a, col.a, 1.0);
+                    vec4 col = vColor * texture(uTex, vUV);
+                    out_FragColor = vec4(col.a, col.a, col.a, 1.0);
                 }"
         }
     }

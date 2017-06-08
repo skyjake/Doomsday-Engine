@@ -116,8 +116,7 @@ void LensFx_Draw(int playerNum)
 
     // Now that we've resolved multisampling, further rendering must be done without it.
     GLState::push()
-            .setTarget(player.viewCompositor().gameView().resolvedFramebuffer())
-            .apply();
+            .setTarget(player.viewCompositor().gameView().resolvedFramebuffer());
 
     auto const &effects = player.fxStack().effects;
 
@@ -145,7 +144,7 @@ void LensFx_Draw(int playerNum)
         effects.at(i)->endFrame();
     }
 
-    GLState::pop().apply();
+    GLState::pop();
 }
 
 void LensFx_MarkLightVisibleInFrame(IPointLightSource const &lightSource)

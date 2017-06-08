@@ -962,10 +962,10 @@ dd_bool XS_GetPlane(Line* actline, Sector* sector, int ref, int* refdata,
 {
     LOG_AS("XS_GetPlane");
 
-    world_Material* otherMat;
-    coord_t otherHeight;
-    Sector* otherSec = NULL, *iter;
-    xline_t* xline;
+    world_Material *otherMat = NULL;
+    coord_t otherHeight = 0;
+    Sector* otherSec = NULL, *iter = NULL;
+    xline_t* xline = NULL;
     char buff[50];
 
     if(refdata)

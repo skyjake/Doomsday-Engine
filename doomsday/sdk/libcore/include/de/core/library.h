@@ -23,14 +23,24 @@
 #include "../libcore.h"
 #include "../NativePath"
 
-#include <QLibrary>
-#include <QMap>
-
 /**
  * Convenience macro for accessing symbols that have a type defined in de::Library
  * with the type name matching the symbol name.
  */
 #define DENG2_SYMBOL(Name) symbol<de::Library::Name>(#Name)
+
+#if defined (DENG_STATIC_LINK)
+typedef void *(*StaticSymbolFunc)(char const *name);
+#define DENG2_IMPORT_LIBRARY(name) \
+    DENG2_EXTERN_C void * staticlib_##name##_symbol(char const *); \
+    struct Importer_##name { \
+        Importer_##name() { \
+            de::Library::importStaticLibrary(#name, staticlib_##name##_symbol); \
+        } \
+    }; \
+    static Importer_##name importer_##name;
+#endif
+
 
 namespace de {
 
@@ -125,6 +135,11 @@ public:
     typedef char const *(*deng_GetString)(dint id);
     typedef void *(*deng_GetAddress)(dint id);
     typedef void (*deng_Ticker)(ddouble tickLength);
+    
+#if defined (DENG_STATIC_LINK)
+    static void importStaticLibrary(char const *name, StaticSymbolFunc symbolFunc);
+    static StringList staticLibraries();
+#endif
 
 public:
     /**

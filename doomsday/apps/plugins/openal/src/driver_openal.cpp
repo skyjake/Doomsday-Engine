@@ -40,6 +40,9 @@
 #ifdef HAVE_AL_H
 #  include <al.h>
 #  include <alc.h>
+#elif defined (DENG_IOS)
+#  include <OpenAL/al.h>
+#  include <OpenAL/alc.h>
 #else
 #  include <AL/al.h>
 #  include <AL/alc.h>
@@ -505,7 +508,7 @@ int DS_SFX_Getv(int /*prop*/, void* /*values*/)
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DENG_EXTERN_C const char* deng_LibraryType(void)
+DENG_EXTERN_C DENG_VISIBLE_SYMBOL const char* deng_LibraryType(void)
 {
     return "deng-plugin/audio";
 }

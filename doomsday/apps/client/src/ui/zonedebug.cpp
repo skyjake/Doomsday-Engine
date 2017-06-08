@@ -24,7 +24,7 @@
 
 #include "de_base.h"
 
-#ifdef DENG_DEBUG
+#if defined (DENG_DEBUG) && defined (DENG_OPENGL)
 
 #include <cmath>
 #include <de/GLState>
@@ -60,9 +60,9 @@ static void drawRegion(memvolume_t &volume, Rectanglei const &rect, size_t start
         int const availPixels = edge - x;
         int const usedPixels = de::min(availPixels, pixels);
 
-        LIBGUI_GL.glColor4fv(color);
-        LIBGUI_GL.glVertex2i(x, y);
-        LIBGUI_GL.glVertex2i(x + usedPixels, y);
+        DGL_Color4fv(color);
+        DGL_Vertex2f(x, y);
+        DGL_Vertex2f(x + usedPixels, y);
 
         pixels -= usedPixels;
 
@@ -85,17 +85,17 @@ void Z_DebugDrawVolume(MemoryZonePrivateData *pd, memvolume_t *volume, Rectangle
     char *base = ((char *)volume->zone) + sizeof(memzone_t);
 
     // Clear the background.
-    LIBGUI_GL.glColor4f(0, 0, 0, opacity);
+    DGL_Color4f(0, 0, 0, opacity);
     GL_DrawRect(rect);
 
     // Outline.
-    LIBGUI_GL.glLineWidth(1);
-    LIBGUI_GL.glColor4f(1, 1, 1, opacity/2);
+    GLInfo::setLineWidth(1);
+    DGL_Color4f(1, 1, 1, opacity/2);
     LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     GL_DrawRect(rect);
     LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    LIBGUI_GL.glBegin(GL_LINES);
+    DGL_Begin(DGL_LINES);
 
     // Visualize each block.
     for (memblock_t *block = volume->zone->blockList.next;
@@ -121,12 +121,12 @@ void Z_DebugDrawVolume(MemoryZonePrivateData *pd, memvolume_t *volume, Rectangle
         drawRegion(*volume, rect, (char *)block - base, block->size, color);
     }
 
-    LIBGUI_GL.glEnd();
+    DGL_End();
 
     if (pd->isVolumeTooFull(volume))
     {
-        LIBGUI_GL.glLineWidth(2);
-        LIBGUI_GL.glColor4f(1, 0, 0, 1);
+        GLInfo::setLineWidth(2);
+        DGL_Color4f(1, 0, 0, 1);
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         GL_DrawRect(rect);
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -148,18 +148,17 @@ void Z_DebugDrawer(void)
     //glDisable(GL_DEPTH_TEST);
     GLState::push()
             .setCull(gl::None)
-            .setDepthTest(false)
-            .apply();
+            .setDepthTest(false);
 
     // Go into screen projection mode.
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPushMatrix();
-    LIBGUI_GL.glLoadIdentity();
-    LIBGUI_GL.glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, -1, 1);
 
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPushMatrix();
-    LIBGUI_GL.glLoadIdentity();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
 
     Z_GetPrivateData(&pd);
 
@@ -186,14 +185,14 @@ void Z_DebugDrawer(void)
 
     pd.unlock();
 
-    GLState::pop().apply();
+    GLState::pop();
 
     // Cleanup.
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 }
 
 #endif // _DEBUG

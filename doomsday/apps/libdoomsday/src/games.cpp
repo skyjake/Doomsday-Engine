@@ -239,7 +239,7 @@ int Games::collectAll(GameList &collected)
 Game &Games::defineGame(String const &id, Record const &parameters)
 {
     LOG_AS("Games");
-
+    
     // Game IDs must be unique. Ensure that is the case.
     if (d->idLookup.contains(id))
     {

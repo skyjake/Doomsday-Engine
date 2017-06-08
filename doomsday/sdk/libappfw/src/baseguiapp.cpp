@@ -193,23 +193,33 @@ VRConfig &BaseGuiApp::vr()
 
 void BaseGuiApp::beginNativeUIMode()
 {
+#if !defined (DENG_MOBILE)
     // Switch temporarily to windowed mode. Not needed on macOS because the display mode
     // is never changed on that platform.
-#ifndef MACOSX
-    auto &win = static_cast<BaseWindow &>(GLWindow::main());
-    win.saveState();
-    int const windowedMode[] = {
-        BaseWindow::Fullscreen, false,
-        BaseWindow::End
-    };
-    win.changeAttributes(windowedMode);
+    #if !defined (MACOSX)
+    {
+        auto &win = static_cast<BaseWindow &>(GLWindow::main());
+        win.saveState();
+        int const windowedMode[] = {
+            BaseWindow::Fullscreen, false,
+            BaseWindow::End
+        };
+        win.changeAttributes(windowedMode);
+    }
+    #endif
 #endif
 }
 
 void BaseGuiApp::endNativeUIMode()
 {
-#ifndef MACOSX
-    static_cast<BaseWindow &>(GLWindow::main()).restoreState();
+#if !defined (DENG_MOBILE)
+#   if !defined (MACOSX)
+    {
+        static_cast<BaseWindow &>(GLWindow::main()).restoreState();
+    }
+#   endif
 #endif
 }
+    
+
 } // namespace de

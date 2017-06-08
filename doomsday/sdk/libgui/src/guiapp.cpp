@@ -24,6 +24,7 @@
 #include <de/NativePath>
 
 #include <QSurfaceFormat>
+#include <QThread>
 
 #ifdef DENG2_QT_5_0_OR_NEWER
 #  include <QStandardPaths>
@@ -36,29 +37,41 @@ namespace de {
 DENG2_PIMPL(GuiApp)
 {
     GuiLoop loop;
+    QThread *renderThread;
 
     Impl(Public *i) : Base(i)
     {
         loop.audienceForIteration() += self();
+
+        // The default render thread is the main thread.
+        renderThread = QThread::currentThread();
     }
 };
 
 void GuiApp::setDefaultOpenGLFormat() // static
 {
     QSurfaceFormat fmt;
+#if defined (DENG_OPENGL_ES)
+    fmt.setRenderableType(QSurfaceFormat::OpenGLES);
+    fmt.setVersion(DENG_OPENGL_ES / 10, DENG_OPENGL_ES % 10);
+#else
     fmt.setRenderableType(QSurfaceFormat::OpenGL);
-    fmt.setProfile(QSurfaceFormat::CompatibilityProfile);
-    fmt.setVersion(2, 1);
+    fmt.setProfile(QSurfaceFormat::CoreProfile);
+    fmt.setVersion(3, 3);
+#endif
     fmt.setDepthBufferSize(24);
     fmt.setStencilBufferSize(8);
     fmt.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
+#if defined (DENG2_DEBUG)
+    fmt.setOption(QSurfaceFormat::DebugContext, true);
+#endif
     QSurfaceFormat::setDefaultFormat(fmt);
 }
 
 GuiApp::GuiApp(int &argc, char **argv)
-    : QApplication(argc, argv),
-      App(applicationFilePath(), arguments()),
-      d(new Impl(this))
+    : LIBGUI_GUIAPP_BASECLASS(argc, argv)
+    , App(applicationFilePath(), arguments())
+    , d(new Impl(this))
 {
     static ImageFile::Interpreter intrpImageFile;
     fileSystem().addInterpreter(intrpImageFile);
@@ -83,7 +96,7 @@ bool GuiApp::notify(QObject *receiver, QEvent *event)
 {
     try
     {
-        return QApplication::notify(receiver, event);
+        return LIBGUI_GUIAPP_BASECLASS::notify(receiver, event);
     }
     catch (std::exception const &error)
     {
@@ -106,7 +119,7 @@ int GuiApp::execLoop()
     LOGDEV_NOTE("Starting GuiApp event loop...");
 
     d->loop.start();
-    int code = QApplication::exec();
+    int code = LIBGUI_GUIAPP_BASECLASS::exec();
 
     LOGDEV_NOTE("GuiApp event loop exited with code %i") << code;
     return code;
@@ -117,12 +130,26 @@ void GuiApp::stopLoop(int code)
     LOGDEV_MSG("Stopping GuiApp event loop");
 
     d->loop.stop();
-    return QApplication::exit(code);
+    return LIBGUI_GUIAPP_BASECLASS::exit(code);
 }
 
 GuiLoop &GuiApp::loop()
 {
     return d->loop;
+}
+
+bool GuiApp::inRenderThread()
+{
+    if (!App::appExists())
+    {
+        return false;
+    }
+    return DENG2_GUI_APP->d->renderThread == QThread::currentThread();
+}
+
+void GuiApp::setRenderThread(QThread *thread)
+{
+    DENG2_GUI_APP->d->renderThread = thread;
 }
 
 void GuiApp::loopIteration()

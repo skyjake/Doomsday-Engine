@@ -106,7 +106,8 @@ enum {
     DE_API_GL_v1                = 800,     // 1.10
     DE_API_GL_v2                = 801,     // 1.13
     DE_API_GL_v3                = 802,     // 1.15
-    DE_API_GL                   = DE_API_GL_v3,
+    DE_API_GL_v4                = 803,     // 2.1
+    DE_API_GL                   = DE_API_GL_v4,
 
     DE_API_INFINE_v1            = 900,     // 1.10
     DE_API_INFINE               = DE_API_INFINE_v1,
@@ -192,5 +193,12 @@ typedef struct de_api_s {
         memcpy(&_api_##Name, api, sizeof(_api_##Name)); \
         DENG_ASSERT(_api_##Name.api.id == Ident); \
         break;
+
+#if defined (DENG_STATIC_LINK)
+#define DENG_SYMBOL_PTR(var, symbolName) \
+    if (!qstrcmp(var, #symbolName)) { \
+        return reinterpret_cast<void *>(symbolName); \
+    }
+#endif
 
 #endif  // DOOMSDAY_APIS_H

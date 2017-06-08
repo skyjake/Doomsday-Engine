@@ -47,9 +47,11 @@ enum {
     DGL_CURRENT_COLOR_A,
     DGL_CURRENT_COLOR_RGBA,
 
-    // List modes
-    DGL_COMPILE = 0x3000,
-    DGL_COMPILE_AND_EXECUTE,
+    DGL_FOG_MODE,
+    DGL_FOG_START,
+    DGL_FOG_END,
+    DGL_FOG_DENSITY,
+    DGL_FOG_COLOR,
 
     // Matrices
     DGL_MODELVIEW = 0x4000,
@@ -60,10 +62,12 @@ enum {
     DGL_TEXTURE_2D = 0x5000,
     DGL_SCISSOR_TEST,
     DGL_FOG,
-    DGL_MODULATE_ADD_COMBINE,
     DGL_MODULATE_TEXTURE,
     DGL_LINE_SMOOTH,
     DGL_POINT_SMOOTH,
+
+    DGL_TEXTURE0 = 0x5100,
+    DGL_TEXTURE1,
 
     // Blending functions
     DGL_ZERO = 0x6000,
@@ -76,7 +80,6 @@ enum {
     DGL_ONE_MINUS_SRC_COLOR,
     DGL_SRC_ALPHA,
     DGL_ONE_MINUS_SRC_ALPHA,
-    DGL_UNUSED1, // DGL_SRC_ALPHA_SATURATE
     DGL_ADD,
     DGL_SUBTRACT,
     DGL_REVERSE_SUBTRACT,
@@ -95,7 +98,9 @@ enum {
     DGL_CLAMP_TO_EDGE,
     DGL_REPEAT,
     DGL_LINE_WIDTH,
-    DGL_POINT_SIZE
+    DGL_POINT_SIZE,
+    DGL_EXP,
+    DGL_EXP2,
 };
 
 // Types.
@@ -118,13 +123,15 @@ typedef enum dgltexformat_e {
 
 /// Primitive types.
 typedef enum dglprimtype_e {
+    DGL_NO_PRIMITIVE,
     DGL_LINES,
+    DGL_LINE_STRIP,
+    DGL_LINE_LOOP,
     DGL_TRIANGLES,
     DGL_TRIANGLE_FAN,
     DGL_TRIANGLE_STRIP,
     DGL_QUADS,
-    DGL_QUAD_STRIP,
-    DGL_POINTS
+    DGL_POINTS,
 } dglprimtype_t;
 
 #define DDNUM_BLENDMODES    9
@@ -255,10 +262,11 @@ DENG_API_TYPEDEF(GL)
     void (*SetScissor)(RectRaw const *rect);
     void (*SetScissor2)(int x, int y, int width, int height);
 
-    void (*MatrixMode)(int mode);
+    void (*MatrixMode)(DGLenum mode);
     void (*PushMatrix)(void);
     void (*PopMatrix)(void);
     void (*LoadIdentity)(void);
+    void (*LoadMatrix)(float const *matrix4x4);
 
     void (*Translatef)(float x, float y, float z);
     void (*Rotatef)(float angle, float x, float y, float z);
@@ -266,10 +274,6 @@ DENG_API_TYPEDEF(GL)
 
     void (*Begin)(dglprimtype_t type);
     void (*End)(void);
-    dd_bool (*NewList)(DGLuint list, int mode);
-    DGLuint (*EndList)(void);
-    void (*CallList)(DGLuint list);
-    void (*DeleteLists)(DGLuint list, int range);
 
     void (*SetNoMaterial)(void);
     void (*SetMaterialUI)(world_Material *mat, DGLint wrapS, DGLint wrapT);
@@ -292,7 +296,7 @@ DENG_API_TYPEDEF(GL)
     void (*Color4fv)(const float* vec);
 
     void (*TexCoord2f)(byte target, float s, float t);
-    void (*TexCoord2fv)(byte target, float* vec);
+    void (*TexCoord2fv)(byte target, float const *vec);
 
     void (*Vertex2f)(float x, float y);
     void (*Vertex2fv)(const float* vec);
@@ -330,9 +334,15 @@ DENG_API_TYPEDEF(GL)
      * be created dynamically.
      */
     int (*Bind)(DGLuint texture);
+
     void (*DeleteTextures)(int num, const DGLuint* names);
 
+    void (*Fogi)(DGLenum property, int value);
+    void (*Fogf)(DGLenum property, float value);
+    void (*Fogfv)(DGLenum property, float const *values);
+
     void (*UseFog)(int yes);
+
     void (*SetFilter)(dd_bool enable);
     void (*SetFilterColor)(float r, float g, float b, float a);
     void (*ConfigureBorderedProjection2)(dgl_borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);
@@ -365,15 +375,12 @@ DENG_API_T(GL);
 #define DGL_PushMatrix      _api_GL.PushMatrix
 #define DGL_PopMatrix       _api_GL.PopMatrix
 #define DGL_LoadIdentity    _api_GL.LoadIdentity
+#define DGL_LoadMatrix      _api_GL.LoadMatrix
 #define DGL_Translatef      _api_GL.Translatef
 #define DGL_Rotatef         _api_GL.Rotatef
 #define DGL_Scalef          _api_GL.Scalef
 #define DGL_Begin           _api_GL.Begin
 #define DGL_End             _api_GL.End
-#define DGL_NewList         _api_GL.NewList
-#define DGL_EndList         _api_GL.EndList
-#define DGL_CallList        _api_GL.CallList
-#define DGL_DeleteLists     _api_GL.DeleteLists
 #define DGL_SetNoMaterial   _api_GL.SetNoMaterial
 #define DGL_SetMaterialUI   _api_GL.SetMaterialUI
 #define DGL_SetPatch        _api_GL.SetPatch
@@ -414,6 +421,9 @@ DENG_API_T(GL);
 #define DGL_NewTextureWithParams    _api_GL.NewTextureWithParams
 #define DGL_Bind                    _api_GL.Bind
 #define DGL_DeleteTextures          _api_GL.DeleteTextures
+#define DGL_Fogi            _api_GL.Fogi
+#define DGL_Fogf            _api_GL.Fogf
+#define DGL_Fogfv           _api_GL.Fogfv
 #define GL_UseFog                   _api_GL.UseFog
 #define GL_SetFilter                _api_GL.SetFilter
 #define GL_SetFilterColor           _api_GL.SetFilterColor

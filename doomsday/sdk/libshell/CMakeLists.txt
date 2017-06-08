@@ -17,7 +17,7 @@ file (GLOB SOURCES src/*.h)
 deng_merge_sources (libshell src/*.cpp)
 
 deng_add_library (libshell ${SOURCES} ${HEADERS})
-target_link_libraries (libshell Deng::libcore)
+target_link_libraries (libshell PUBLIC Deng::libcore)
 
 deng_deploy_library (libshell DengShell)
 

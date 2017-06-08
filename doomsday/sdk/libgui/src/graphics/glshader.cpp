@@ -116,11 +116,18 @@ Block GLShader::prefixToSource(Block const &source, Block const &prefix)
 
 void GLShader::compile(Type shaderType, IByteArray const &source)
 {
-    static QByteArray const DEFAULT_VERSION("#version 120\n");
-
-#ifndef LIBGUI_GLES2
+#if defined (DENG_OPENGL)
+    static QByteArray const DEFAULT_VERSION("#version 330\n");
     // With non-ES OpenGL, ignore the precision attributes.
-    static QByteArray const PREFIX("#ifndef GL_ES\n#define lowp\n#define mediump\n#define highp\n#endif\n");
+    static QByteArray const PREFIX("#ifndef GL_ES\n"
+                                   "#  define lowp\n"
+                                   "#  define mediump\n"
+                                   "#  define highp\n"
+                                   "#endif\n");
+#else
+    int const glesVer = DENG_OPENGL_ES;
+    static QByteArray const DEFAULT_VERSION(glesVer == 30? "#version 300 es\n" : "#version 100\n");
+    static QByteArray const PREFIX("\n");
 #endif
 
     DENG2_ASSERT(shaderType == Vertex || shaderType == Fragment);
@@ -138,12 +145,40 @@ void GLShader::compile(Type shaderType, IByteArray const &source)
     if (shaderType == Vertex)
     {
         predefs = QByteArray("#define DENG_VERTEX_SHADER\n");
+
+#if defined (DENG_OPENGL) || (defined (DENG_OPENGL_ES) && DENG_OPENGL_ES == 30)
+        predefs += "#define DENG_VAR out\n"
+                   "#define DENG_ATTRIB in\n";
+#else
+        predefs += "#define DENG_VAR varying\n"
+                   "#define DENG_ATTRIB attribute\n";
+#endif
     }
     else
     {
         predefs = QByteArray("#define DENG_FRAGMENT_SHADER\n");
+
+#if defined (DENG_OPENGL_ES)
+        // Precision qualifiers required in fragment shaders.
+        predefs += "precision highp float;\n"
+                   "precision highp int;\n";
+#endif
+
+#if defined (DENG_OPENGL) || (defined (DENG_OPENGL_ES) && DENG_OPENGL_ES == 30)
+        predefs += "#define DENG_VAR in\n"
+                   "out vec4 out_FragColor;\n";
+#else
+        predefs += "#define DENG_VAR varying\n"
+                   "#define out_FragColor gl_FragColor\n";
+#endif
     }
     predefs += "#define DENG_MAX_BATCH_UNIFORMS " + QByteArray::number(MAX_BATCH_UNIFORMS) + "\n";
+
+#if defined (DENG_OPENGL) || (defined (DENG_OPENGL_ES) && DENG_OPENGL_ES == 30)
+    predefs += "#define DENG_LAYOUT_LOC(x) layout(location = x)\n";
+#else
+    predefs += "#define DENG_LAYOUT_LOC(x)\n";
+#endif
 
     // Prepare the shader source. This would be the time to substitute any
     // remaining symbols in the shader source.

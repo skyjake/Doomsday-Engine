@@ -184,7 +184,7 @@ void CompositorWidget::drawComposite()
 {
     if (!d->shouldBeDrawn()) return;
 
-    //LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+    //DGL_Enable(DGL_TEXTURE_2D);
 
     DENG2_ASSERT(d->nextBufIndex > 0);
 

@@ -50,9 +50,6 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
     VariableToggleWidget *disableExtPatches;
     CVarToggleWidget *precacheModels;
     CVarToggleWidget *precacheSprites;
-    CVarToggleWidget *multiLight;
-    CVarToggleWidget *multiShiny;
-    CVarToggleWidget *multiDetail;
 
     // Developer settings.
     GridPopupWidget *devPopup;
@@ -92,16 +89,10 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
 
         precacheModels  = new CVarToggleWidget("rend-model-precache",       tr("3D Models"));
         precacheSprites = new CVarToggleWidget("rend-sprite-precache",      tr("Sprites"));
-        multiLight      = new CVarToggleWidget("rend-light-multitex",       tr("Dynamic Lights"));
-        multiShiny      = new CVarToggleWidget("rend-model-shiny-multitex", tr("3D Model Shiny Surfaces"));
-        multiDetail     = new CVarToggleWidget("rend-tex-detail-multitex",  tr("Surface Details"));
 
         devPopup->addSeparatorLabel(tr("Behavior"));
         *devPopup << LabelWidget::newWithText(tr("Precaching:")) << precacheModels
-                  << Const(0) << precacheSprites
-                  << LabelWidget::newWithText(tr("Multitexturing:")) << multiLight
-                  << Const(0) << multiShiny
-                  << Const(0) << multiDetail;
+                  << Const(0) << precacheSprites;
 
         devPopup->addSeparatorLabel(tr("Diagnosis"));
         *devPopup << LabelWidget::newWithText(tr("Surface Texturing:"))

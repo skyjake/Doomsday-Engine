@@ -29,9 +29,30 @@
 #include <de/ScriptedInfo>
 #include <de/math.h>
 
+#include <QRegularExpression>
 #include <QMap>
 
 namespace de {
+
+static String processIncludes(String source, String const &sourceFolderPath)
+{
+    QRegularExpression const re("#include\\s+['\"]([^\"']+)['\"]");
+    forever
+    {
+        auto found = re.match(source);
+        if (!found.hasMatch()) break; // No more includes.
+
+        String incFilePath = sourceFolderPath / found.captured(1);
+        String incSource = String::fromUtf8(Block(App::rootFolder().locate<File const>(incFilePath)));
+        incSource = processIncludes(incSource, incFilePath.fileNamePath());
+
+        Rangei const capRange(found.capturedStart(), found.capturedEnd());
+        source = source.substr(0, capRange.start)
+               + incSource
+               + source.substr(capRange.end);
+    }
+    return source;
+}
 
 DENG2_PIMPL(GLShaderBank)
 {
@@ -75,6 +96,12 @@ DENG2_PIMPL(GLShaderBank)
                 Block combo = GLShader::prefixToSource(source.toLatin1(),
                         Block(String("#define %1 %2\n").arg(macroName).arg(content).toLatin1()));
                 source = String::fromLatin1(combo);
+            }
+
+            void insertIncludes(GLShaderBank const &bank, Record const &def)
+            {
+                convertToSourceText();
+                source = processIncludes(source, bank.absolutePathInContext(def, ".").fileNamePath());
             }
         };
 
@@ -275,6 +302,10 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
             frag.insertFromFile(absolutePathInContext(def, incs.at(i)->asText()));
         }
     }
+
+    // Handle #include directives in the source.
+    vtx .insertIncludes(*this, def);
+    frag.insertIncludes(*this, def);
 
     if (def.has("defines"))
     {

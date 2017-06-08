@@ -31,7 +31,13 @@
 namespace de {
 
 static String const ISO_FORMAT = "yyyy-MM-dd hh:mm:ss.zzz";
-static HighPerformanceTimer highPerfTimer;
+
+static HighPerformanceTimer &highPerfTimer()
+{
+    static HighPerformanceTimer hpt;
+    return hpt;
+}
+
 static TimeDelta currentHighPerfDelta;
 
 namespace internal {
@@ -79,7 +85,7 @@ ddouble TimeDelta::asDays() const
 
 Time::Delta Time::Delta::sinceStartOfProcess()
 {
-    return highPerfTimer.elapsed();
+    return highPerfTimer().elapsed();
 }
 
 void TimeDelta::sleep() const
@@ -119,7 +125,7 @@ DENG2_PIMPL_NOREF(Time)
     Impl()
         : flags(DateTime | HighPerformance)
         , dateTime(QDateTime::currentDateTime())
-        , highPerfElapsed(highPerfTimer.elapsed())
+        , highPerfElapsed(highPerfTimer().elapsed())
     {}
 
     Impl(QDateTime const &dt) : flags(DateTime), dateTime(dt) {}
@@ -179,14 +185,14 @@ DENG2_PIMPL_NOREF(Time)
         if (flags.testFlag(DateTime))
         {
             // This is DateTime but other is high-perf.
-            return fequal(highPerfTimer.startedAt().asDateTime().msecsTo(dateTime)/1000.0,
+            return fequal(highPerfTimer().startedAt().asDateTime().msecsTo(dateTime)/1000.0,
                           other.highPerfElapsed);
         }
         if (flags.testFlag(HighPerformance))
         {
             // This is high-perf and the other is DateTime.
             return fequal(highPerfElapsed,
-                          highPerfTimer.startedAt().asDateTime().msecsTo(other.dateTime)/1000.0);
+                          highPerfTimer().startedAt().asDateTime().msecsTo(other.dateTime)/1000.0);
         }
         return false;
     }
@@ -223,7 +229,7 @@ DENG2_PIMPL_NOREF(Time)
 
     void setDateTimeFromHighPerf()
     {
-        dateTime = (highPerfTimer.startedAt() + highPerfElapsed).asDateTime();
+        dateTime = (highPerfTimer().startedAt() + highPerfElapsed).asDateTime();
         flags |= DateTime;
     }
 };
@@ -333,7 +339,7 @@ String Time::asText(Format format) const
             }
             else if (d->flags.testFlag(Impl::DateTime))
             {
-                elapsed = highPerfTimer.startedAt().deltaTo(Time(d->dateTime));
+                elapsed = highPerfTimer().startedAt().deltaTo(Time(d->dateTime));
             }
             int hours = int(elapsed.asHours());
             TimeDelta sec = elapsed - hours * 3600.0;
@@ -449,7 +455,7 @@ QDateTime const &de::Time::asDateTime() const
 {
     if (!d->hasDateTime() && d->flags.testFlag(Impl::HighPerformance))
     {
-        d->dateTime = (highPerfTimer.startedAt() + d->highPerfElapsed).asDateTime();
+        d->dateTime = (highPerfTimer().startedAt() + d->highPerfElapsed).asDateTime();
         d->flags |= Impl::DateTime;
     }
     return d->dateTime;
@@ -522,7 +528,7 @@ void Time::operator << (Reader &from)
         {
             // If both are present, the high-performance time should be synced
             // with current high-perf timer.
-            if (d->dateTime < highPerfTimer.startedAt().asDateTime())
+            if (d->dateTime < highPerfTimer().startedAt().asDateTime())
             {
                 // Current high-performance timer was started after this time;
                 // we can't represent the time as high performance delta.
@@ -530,7 +536,7 @@ void Time::operator << (Reader &from)
             }
             else
             {
-                d->highPerfElapsed = highPerfTimer.startedAt().deltaTo(d->dateTime);
+                d->highPerfElapsed = highPerfTimer().startedAt().deltaTo(d->dateTime);
             }
         }
     }
@@ -559,7 +565,7 @@ Time Time::currentHighPerformanceTime() // static
 
 void Time::updateCurrentHighPerformanceTime() // static
 {
-    currentHighPerfDelta = highPerfTimer.elapsed();
+    currentHighPerfDelta = highPerfTimer().elapsed();
 }
 
 QTextStream &operator << (QTextStream &os, Time const &t)

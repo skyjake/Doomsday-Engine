@@ -38,6 +38,8 @@
  * exception.) </small>
  */
 
+#if 0
+
 #include "driver_fmod.h"
 #include <de/LogBuffer>
 
@@ -207,3 +209,6 @@ void DM_CDAudio_Stop()
         cdSound->release(); cdSound = nullptr;
     }
 }
+
+#endif
+

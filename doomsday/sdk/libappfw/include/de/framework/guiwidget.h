@@ -435,7 +435,7 @@ public:
 
     MouseClickStatus handleMouseClick(Event const &event,
                                       MouseEvent::Button button = MouseEvent::Left);
-
+    
     /**
      * Requests the widget to refresh its geometry, if it has any static
      * geometry. Normally this does not need to be called. It is provided

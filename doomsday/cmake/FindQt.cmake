@@ -49,6 +49,10 @@ if (NOT DEFINED QT_MODULE OR
     qmake_query (_qtLibs "QT_INSTALL_LIBS")
     set (QT_LIBS ${_qtLibs} CACHE PATH "Qt library directory")
     mark_as_advanced (QT_LIBS)
+    
+    qmake_query (_qtPlugins "QT_INSTALL_PLUGINS")
+    set (QT_PLUGINS ${_qtPlugins} CACHE PATH "Qt plugins directory")
+    mark_as_advanced (QT_PLUGINS)
 
     qmake_query (QT_BINS "QT_INSTALL_BINS")
     if (APPLE)

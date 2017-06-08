@@ -581,23 +581,23 @@ void Net_DrawDemoOverlay()
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Go into screen projection mode.
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPushMatrix();
-    LIBGUI_GL.glLoadIdentity();
-    LIBGUI_GL.glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, -1, 1);
 
-    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+    DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(::fontFixed);
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(1, 1, 1, 1);
     FR_DrawTextXY3(buf, x, y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    DGL_Disable(DGL_TEXTURE_2D);
 
     // Restore original matrix.
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 }
 
 #endif  // __CLIENT__
@@ -619,7 +619,7 @@ void Net_Drawer()
     // Draw the demo recording overlay.
     Net_DrawDemoOverlay();
 
-# ifdef DENG2_DEBUG
+# if defined (DENG2_DEBUG) && defined (DENG_OPENGL)
     Z_DebugDrawer();
 # endif
 #endif  // __CLIENT__

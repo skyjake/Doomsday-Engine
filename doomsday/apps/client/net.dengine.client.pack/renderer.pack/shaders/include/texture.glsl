@@ -25,12 +25,12 @@ uniform sampler2D uTex; // texture atlas
 /*
  * Maps the normalized @a uv to the rectangle defined by @a bounds.
  */
-highp vec2 mapToBounds(highp vec2 uv, highp vec4 bounds)
+vec2 mapToBounds(vec2 uv, vec4 bounds)
 {
     return bounds.xy + uv * bounds.zw;
 }
 
-highp vec3 normalVector(highp vec2 uv) 
+vec3 normalVector(vec2 uv) 
 {
-    return normalize((texture2D(uTex, uv).xyz * 2.0) - 1.0);
+    return normalize((texture(uTex, uv).xyz * 2.0) - 1.0);
 }

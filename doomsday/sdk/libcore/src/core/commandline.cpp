@@ -25,7 +25,6 @@
 
 #include <QFile>
 #include <QDir>
-#include <QProcess>
 #include <QDebug>
 
 #include <fstream>
@@ -458,6 +457,8 @@ bool CommandLine::matches(String const &full, String const &fullOrAlias) const
     }
     return false;
 }
+    
+#if defined (DENG_HAVE_QPROCESS)
 
 bool CommandLine::execute() const
 {
@@ -513,6 +514,8 @@ QProcess *CommandLine::executeProcess() const
     LOG_DEBUG("Started process %i \"%s\"") << proc->pid() << at(0);
     return proc;
 }
+    
+#endif // DENG_HAVE_QPROCESS
 
 CommandLine &CommandLine::get()
 {

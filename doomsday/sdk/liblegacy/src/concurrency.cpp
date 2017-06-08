@@ -25,12 +25,11 @@
 #include <QMutex>
 #include <QCoreApplication>
 #include <QDebug>
+#include <de/App>
 #include <de/Time>
 #include <de/Log>
 #include <de/Garbage>
 #include <assert.h>
-
-static uint mainThreadId = 0; ///< ID of the main thread.
 
 CallbackThread::CallbackThread(systhreadfunc_t func, void *param)
     : _callback(func), _parm(param), _returnValue(0),
@@ -111,15 +110,15 @@ void CallbackThread::setTerminationFunc(void (*func)(systhreadexitstatus_t))
     _terminationFunc = func;
 }
 
-void Sys_MarkAsMainThread(void)
+/*void Sys_MarkAsMainThread(void)
 {
     // This is the main thread.
     mainThreadId = Sys_CurrentThreadId();
-}
+}*/
 
 dd_bool Sys_InMainThread(void)
 {
-    return mainThreadId == Sys_CurrentThreadId();
+    return de::App::inMainThread();
 }
 
 void Thread_Sleep(int milliseconds)

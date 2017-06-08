@@ -977,8 +977,8 @@ int XL_TraversePlanes(Line *line, int refType, int ref, void *data, void *contex
 {
     LOG_AS(travsectors? "XL_TraverseSectors" : "XL_TraversePlanes");
 
-    int tag;
-    mobj_t *mo;
+    int tag = 0;
+    mobj_t *mo = NULL;
     dd_bool ok, findSecTagged;
 
     if(xgDev)
@@ -1180,10 +1180,10 @@ int XL_TraverseLines(Line* line, int rtype, int ref, void* data,
     LOG_AS("XL_TraverseLines");
 
     int i;
-    int tag;
+    int tag = 0;
     int reftype = rtype;
     char buff[50];
-    Line *iter;
+    Line *iter = NULL;
     dd_bool findLineTagged;
 
     // Binary XG data from DD_XGDATA uses the old flag values.

@@ -168,14 +168,13 @@ dfloat fieldOfView = 95.0f;
 dbyte smoothTexAnim = true;
 
 dint renderTextures = true;
+#if defined (DENG_OPENGL)
 dint renderWireframe;
-dint useMultiTexLights = true;
-dint useMultiTexDetails = true;
+#endif
 
 dint dynlightBlend;
 
 Vector3f torchColor(1, 1, 1);
-//dint torchAdditive = true;
 
 dint useShinySurfaces = true;
 
@@ -284,7 +283,7 @@ dint rendMaxLumobjs;             ///< Max lumobjs per viewer, per frame. @c 0= n
 dint extraLight;  ///< Bumped light from gun blasts.
 dfloat extraLightDelta;
 
-DGLuint dlBBox;  ///< Display list id for the active-textured bbox model.
+//DGLuint dlBBox;  ///< Display list id for the active-textured bbox model.
 
 /*
  * Debug/Development cvars:
@@ -406,11 +405,11 @@ void Rend_Reset()
     {
         App_World().map().removeAllLumobjs();
     }
-    if (dlBBox)
-    {
-        GL_DeleteLists(dlBBox, 1);
-        dlBBox = 0;
-    }
+//    if (dlBBox)
+//    {
+//        GL_DeleteLists(dlBBox, 1);
+//        dlBBox = 0;
+//    }
 }
 
 bool Rend_IsMTexLights()
@@ -566,11 +565,11 @@ Matrix4f Rend_GetModelViewMatrix(dint consoleNum, bool inWorldSpace)
 
 void Rend_ModelViewMatrix(bool inWorldSpace)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glLoadMatrixf(Rend_GetModelViewMatrix(DoomsdayApp::players().indexOf(viewPlayer), inWorldSpace).values());
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_LoadMatrix(Rend_GetModelViewMatrix(DoomsdayApp::players().indexOf(viewPlayer), inWorldSpace).values());
 }
 
 Matrix4f Rend_GetProjectionMatrix()
@@ -846,8 +845,7 @@ void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
     }
 
     /// @todo Semitransparent masked polys arn't lit atm
-    if(glow < 1 && lightListIdx && numTexUnits > 1 && envModAdd &&
-       !(rcolors[0].w < 1))
+    if(glow < 1 && lightListIdx && !(rcolors[0].w < 1))
     {
         // The dynlights will have already been sorted so that the brightest
         // and largest of them is first in the list. So grab that one.
@@ -3917,10 +3915,10 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     {
     case DM_SKYMASK:
         GL_SelectTexUnits(0);
-        GLState::current().setAlphaTest(false).apply();
-        GLState::current().setDepthWrite(true).apply();
-        GLState::current().setDepthTest(true).apply();
-        GLState::current().setDepthFunc(gl::Less).apply();
+        GLState::current().setAlphaTest(false);
+        GLState::current().setDepthWrite(true);
+        GLState::current().setDepthTest(true);
+        GLState::current().setDepthFunc(gl::Less);
         break;
 
     case DM_BLENDED:
@@ -3932,18 +3930,18 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         // The first texture unit is used for the main texture.
         texUnitMap[0] = AttributeSpec::TexCoord0;
         texUnitMap[1] = AttributeSpec::TexCoord1;
-        GLState::current().setAlphaTest(false).apply();
-        GLState::current().setDepthWrite(true).apply();
-        GLState::current().setDepthTest(true).apply();
-        GLState::current().setDepthFunc(gl::Less).apply();
+        GLState::current().setAlphaTest(false);
+        GLState::current().setDepthWrite(true);
+        GLState::current().setDepthTest(true);
+        GLState::current().setDepthFunc(gl::Less);
 
         // Fog is allowed during this pass.
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glEnable(GL_FOG);
+            DGL_Enable(DGL_FOG);
         }
         // All of the surfaces are opaque.
-        GLState::current().setBlend(false).apply();
+        GLState::current().setBlend(false);
         break;
 
     case DM_LIGHT_MOD_TEXTURE:
@@ -3954,84 +3952,84 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         {
             texUnitMap[0] = AttributeSpec::ModTexCoord;
             texUnitMap[1] = AttributeSpec::TexCoord0;
-            GL_ModulateTexture(4);  // Light * texture.
+            DGL_ModulateTexture(4);  // Light * texture.
         }
         else
         {
             texUnitMap[0] = AttributeSpec::TexCoord0;
             texUnitMap[1] = AttributeSpec::ModTexCoord;
-            GL_ModulateTexture(5);  // Texture + light.
+            DGL_ModulateTexture(5);  // Texture + light.
         }
-        GLState::current().setAlphaTest(false).apply();
-        GLState::current().setDepthWrite(true).apply();
-        GLState::current().setDepthTest(true).apply();
-        GLState::current().setDepthFunc(gl::Less).apply();
+        GLState::current().setAlphaTest(false);
+        GLState::current().setDepthWrite(true);
+        GLState::current().setDepthTest(true);
+        GLState::current().setDepthFunc(gl::Less);
 
         // Fog is allowed during this pass.
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glEnable(GL_FOG);
+            DGL_Enable(DGL_FOG);
         }
         // All of the surfaces are opaque.
-        GLState::current().setBlend(false).apply();
+        GLState::current().setBlend(false);
         break;
 
     case DM_FIRST_LIGHT:
         // One light, no texture.
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::ModTexCoord;
-        GL_ModulateTexture(6);
-        GLState::current().setAlphaTest(false).apply();
-        GLState::current().setDepthWrite(true).apply();
-        GLState::current().setDepthTest(true).apply();
-        GLState::current().setDepthFunc(gl::Less).apply();
+        DGL_ModulateTexture(6);
+        GLState::current().setAlphaTest(false);
+        GLState::current().setDepthWrite(true);
+        GLState::current().setDepthTest(true);
+        GLState::current().setDepthFunc(gl::Less);
         // All of the surfaces are opaque.
-        GLState::current().setBlend(false).apply();
+        GLState::current().setBlend(false);
         break;
 
     case DM_BLENDED_FIRST_LIGHT:
         // One additive light, no texture.
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::ModTexCoord;
-        GL_ModulateTexture(7);  // Add light, no color.
-        GLState::current().setAlphaTest(true).apply();
-        GLState::current().setAlphaLimit(1 / 255.0f).apply();
-        GLState::current().setDepthWrite(false).apply();
-        GLState::current().setDepthTest(true).apply();
-        GLState::current().setDepthFunc(gl::LessOrEqual).apply();
+        DGL_ModulateTexture(7);  // Add light, no color.
+        GLState::current().setAlphaTest(true);
+        GLState::current().setAlphaLimit(1 / 255.0f);
+        GLState::current().setDepthWrite(false);
+        GLState::current().setDepthTest(true);
+        GLState::current().setDepthFunc(gl::LessOrEqual);
         // All of the surfaces are opaque.
-        GLState::current().setBlend(true).apply();
-        GLState::current().setBlendFunc(gl::One, gl::One).apply();
+        GLState::current().setBlend(true);
+        GLState::current().setBlendFunc(gl::One, gl::One);
         break;
 
     case DM_WITHOUT_TEXTURE:
         GL_SelectTexUnits(0);
-        GL_ModulateTexture(1);
-        GLState::current().setAlphaTest(false).apply();
-        GLState::current().setDepthWrite(true).apply();
-        GLState::current().setDepthTest(true).apply();
-        GLState::current().setDepthFunc(gl::Less).apply();
+        DGL_ModulateTexture(1);
+        GLState::current().setAlphaTest(false);
+        GLState::current().setDepthWrite(true);
+        GLState::current().setDepthTest(true);
+        GLState::current().setDepthFunc(gl::Less);
         // All of the surfaces are opaque.
-        GLState::current().setBlend(false).apply();
+        GLState::current().setBlend(false);
         break;
 
     case DM_LIGHTS:
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::TexCoord0;
-        GL_ModulateTexture(1);
-        GLState::current().setAlphaTest(true).apply();
-        GLState::current().setAlphaLimit(1 / 255.0f).apply();
-        GLState::current().setDepthWrite(false).apply();
-        GLState::current().setDepthTest(true).apply();
-        GLState::current().setDepthFunc(gl::LessOrEqual).apply();
+        DGL_ModulateTexture(1);
+        GLState::current().setAlphaTest(true);
+        GLState::current().setAlphaLimit(1 / 255.0f);
+        GLState::current().setDepthWrite(false);
+        GLState::current().setDepthTest(true);
+        GLState::current().setDepthFunc(gl::LessOrEqual);
 
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glEnable(GL_FOG);
-            LIBGUI_GL.glFogfv(GL_FOG_COLOR, black);
+            DGL_Enable(DGL_FOG);
+            DGL_Fogfv(DGL_FOG_COLOR, black);
         }
 
-        GLState::current().setBlend(true).apply();
+        GLState::current().setBlend(true);
         GL_BlendMode(BM_ADD);
         break;
 
@@ -4041,67 +4039,65 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         // The first texture unit is used for the main texture.
         texUnitMap[0] = AttributeSpec::TexCoord0;
         texUnitMap[1] = AttributeSpec::TexCoord1;
-        GLState::current().setAlphaTest(false).apply();
-        GLState::current().setDepthWrite(false).apply();
-        GLState::current().setDepthTest(true).apply();
-        GLState::current().setDepthFunc(gl::LessOrEqual).apply();
+        GLState::current().setAlphaTest(false);
+        GLState::current().setDepthWrite(false);
+        GLState::current().setDepthTest(true);
+        GLState::current().setDepthFunc(gl::LessOrEqual);
 
         // All of the surfaces are opaque.
-        GLState::current().setBlend(true).apply();
+        GLState::current().setBlend(true);
         //glBlendFunc(GL_DST_COLOR, GL_ZERO);
-        GLState::current().setBlendFunc(gl::DestColor, gl::Zero).apply();
+        GLState::current().setBlendFunc(gl::DestColor, gl::Zero);
         break;
 
     case DM_UNBLENDED_TEXTURE_AND_DETAIL:
         texUnitMap[0] = AttributeSpec::TexCoord0;
         texUnitMap[1] = AttributeSpec::TexCoord0;
-        GLState::current().setAlphaTest(false).apply();
-        GLState::current().setDepthWrite(true).apply();
-        GLState::current().setDepthTest(true).apply();
-        GLState::current().setDepthFunc(gl::Less).apply();
+        GLState::current().setAlphaTest(false);
+        GLState::current().setDepthWrite(true);
+        GLState::current().setDepthTest(true);
+        GLState::current().setDepthFunc(gl::Less);
 
         // All of the surfaces are opaque.
-        GLState::current().setBlend(false).apply();
+        GLState::current().setBlend(false);
         // Fog is allowed.
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glEnable(GL_FOG);
+            DGL_Enable(DGL_FOG);
         }
         break;
 
     case DM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
         texUnitMap[0] = AttributeSpec::TexCoord0;
         texUnitMap[1] = AttributeSpec::TexCoord0;
-        GLState::current().setAlphaTest(false).apply();
-        GLState::current().setDepthWrite(false).apply();
-        GLState::current().setDepthTest(true).apply();
-        GLState::current().setDepthFunc(gl::LessOrEqual).apply();
+        GLState::current().setAlphaTest(false);
+        GLState::current().setDepthWrite(false);
+        GLState::current().setDepthTest(true);
+        GLState::current().setDepthFunc(gl::LessOrEqual);
 
         // All of the surfaces are opaque.
-        GLState::current().setBlend(true).apply();
-        //glBlendFunc(GL_DST_COLOR, GL_ZERO);
-        GLState::current().setBlendFunc(gl::DestColor, gl::Zero).apply();
+        GLState::current().setBlend(true);
+        GLState::current().setBlendFunc(gl::DestColor, gl::Zero);
         break;
 
     case DM_ALL_DETAILS:
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::TexCoord0;
-        GL_ModulateTexture(0);
-        GLState::current().setAlphaTest(false).apply();
-        GLState::current().setDepthWrite(false).apply();
-        GLState::current().setDepthTest(true).apply();
-        GLState::current().setDepthFunc(gl::LessOrEqual).apply();
+        DGL_ModulateTexture(0);
+        GLState::current().setAlphaTest(false);
+        GLState::current().setDepthWrite(false);
+        GLState::current().setDepthTest(true);
+        GLState::current().setDepthFunc(gl::LessOrEqual);
 
         // All of the surfaces are opaque.
-        GLState::current().setBlend(true).apply();
-        //glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
-        GLState::current().setBlendFunc(gl::DestColor, gl::SrcColor).apply();
+        GLState::current().setBlend(true);
+        GLState::current().setBlendFunc(gl::DestColor, gl::SrcColor);
         // Use fog to fade the details, if fog is enabled.
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glEnable(GL_FOG);
+            DGL_Enable(DGL_FOG);
             dfloat const midGray[] = { .5f, .5f, .5f, fogParams.fogColor[3] };  // The alpha is probably meaningless?
-            LIBGUI_GL.glFogfv(GL_FOG_COLOR, midGray);
+            DGL_Fogfv(DGL_FOG_COLOR, midGray);
         }
         break;
 
@@ -4109,22 +4105,21 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GL_SelectTexUnits(2);
         texUnitMap[0] = AttributeSpec::TexCoord0;
         texUnitMap[1] = AttributeSpec::TexCoord1;
-        GL_ModulateTexture(3);
-        GLState::current().setAlphaTest(false).apply();
-        GLState::current().setDepthWrite(false).apply();
-        GLState::current().setDepthTest(true).apply();
-        GLState::current().setDepthFunc(gl::LessOrEqual).apply();
+        DGL_ModulateTexture(3);
+        GLState::current().setAlphaTest(false);
+        GLState::current().setDepthWrite(false);
+        GLState::current().setDepthTest(true);
+        GLState::current().setDepthFunc(gl::LessOrEqual);
 
         // All of the surfaces are opaque.
-        GLState::current().setBlend(true).apply();
-        //glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
-        GLState::current().setBlendFunc(gl::DestColor, gl::SrcColor).apply();
+        GLState::current().setBlend(true);
+        GLState::current().setBlendFunc(gl::DestColor, gl::SrcColor);
         // Use fog to fade the details, if fog is enabled.
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glEnable(GL_FOG);
+            DGL_Enable(DGL_FOG);
             dfloat const midGray[] = { .5f, .5f, .5f, fogParams.fogColor[3] };  // The alpha is probably meaningless?
-            LIBGUI_GL.glFogfv(GL_FOG_COLOR, midGray);
+            DGL_Fogfv(DGL_FOG_COLOR, midGray);
         }
         break;
 
@@ -4132,38 +4127,38 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         // A bit like 'negative lights'.
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::TexCoord0;
-        GL_ModulateTexture(1);
-        GLState::current().setAlphaTest(true).apply();
-        GLState::current().setAlphaLimit(1 / 255.0f).apply();
-        GLState::current().setDepthWrite(false).apply();
-        GLState::current().setDepthTest(true).apply();
-        GLState::current().setDepthFunc(gl::LessOrEqual).apply();
+        DGL_ModulateTexture(1);
+        GLState::current().setAlphaTest(true);
+        GLState::current().setAlphaLimit(1 / 255.0f);
+        GLState::current().setDepthWrite(false);
+        GLState::current().setDepthTest(true);
+        GLState::current().setDepthFunc(gl::LessOrEqual);
         // Set normal fog, if it's enabled.
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glEnable(GL_FOG);
-            LIBGUI_GL.glFogfv(GL_FOG_COLOR, fogParams.fogColor);
+            DGL_Enable(DGL_FOG);
+            DGL_Fogfv(DGL_FOG_COLOR, fogParams.fogColor);
         }
-        GLState::current().setBlend(true).apply();
+        GLState::current().setBlend(true);
         GL_BlendMode(BM_NORMAL);
         break;
 
     case DM_SHINY:
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::TexCoord0;
-        GL_ModulateTexture(1);  // 8 for multitexture
-        GLState::current().setAlphaTest(false).apply();
-        GLState::current().setDepthWrite(false).apply();
-        GLState::current().setDepthTest(true).apply();
-        GLState::current().setDepthFunc(gl::LessOrEqual).apply();
+        DGL_ModulateTexture(1);  // 8 for multitexture
+        GLState::current().setAlphaTest(false);
+        GLState::current().setDepthWrite(false);
+        GLState::current().setDepthTest(true);
+        GLState::current().setDepthFunc(gl::LessOrEqual);
 
         if(fogParams.usingFog)
         {
             // Fog makes the shininess diminish in the distance.
-            LIBGUI_GL.glEnable(GL_FOG);
-            LIBGUI_GL.glFogfv(GL_FOG_COLOR, black);
+            DGL_Enable(DGL_FOG);
+            DGL_Fogfv(DGL_FOG_COLOR, black);
         }
-        GLState::current().setBlend(true).apply();
+        GLState::current().setBlend(true);
         GL_BlendMode(BM_ADD);  // Purely additive.
         break;
 
@@ -4171,19 +4166,19 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GL_SelectTexUnits(2);
         texUnitMap[0] = AttributeSpec::TexCoord0;
         texUnitMap[1] = AttributeSpec::TexCoord1;  // the mask
-        GL_ModulateTexture(8);  // same as with details
-        GLState::current().setAlphaTest(false).apply();
-        GLState::current().setDepthWrite(false).apply();
-        GLState::current().setDepthTest(true).apply();
-        GLState::current().setDepthFunc(gl::LessOrEqual).apply();
+        DGL_ModulateTexture(8);  // same as with details
+        GLState::current().setAlphaTest(false);
+        GLState::current().setDepthWrite(false);
+        GLState::current().setDepthTest(true);
+        GLState::current().setDepthFunc(gl::LessOrEqual);
 
         if(fogParams.usingFog)
         {
             // Fog makes the shininess diminish in the distance.
-            LIBGUI_GL.glEnable(GL_FOG);
-            LIBGUI_GL.glFogfv(GL_FOG_COLOR, black);
+            DGL_Enable(DGL_FOG);
+            DGL_Fogfv(DGL_FOG_COLOR, black);
         }
-        GLState::current().setBlend(true).apply();
+        GLState::current().setBlend(true);
         GL_BlendMode(BM_ADD);  // Purely additive.
         break;
 
@@ -4199,8 +4194,8 @@ static void popGLStateForPass(DrawMode mode)
 
     case DM_SKYMASK:
         GL_SelectTexUnits(1);
-        GLState::current().setAlphaTest(true).apply();
-        GLState::current().setDepthTest(false).apply();
+        GLState::current().setAlphaTest(true);
+        GLState::current().setDepthTest(false);
         break;
 
     case DM_BLENDED:
@@ -4208,54 +4203,54 @@ static void popGLStateForPass(DrawMode mode)
 
         // Intentional fall-through.
     case DM_ALL:
-        GLState::current().setAlphaTest(true).apply();
-        GLState::current().setDepthTest(false).apply();
+        GLState::current().setAlphaTest(true);
+        GLState::current().setDepthTest(false);
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glDisable(GL_FOG);
+            DGL_Disable(DGL_FOG);
         }
-        GLState::current().setBlend(true).apply();
+        GLState::current().setBlend(true);
         break;
 
     case DM_LIGHT_MOD_TEXTURE:
     case DM_TEXTURE_PLUS_LIGHT:
         GL_SelectTexUnits(1);
-        GL_ModulateTexture(1);
-        GLState::current().setAlphaTest(true).apply();
-        GLState::current().setDepthTest(false).apply();
+        DGL_ModulateTexture(1);
+        GLState::current().setAlphaTest(true);
+        GLState::current().setDepthTest(false);
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glDisable(GL_FOG);
+            DGL_Disable(DGL_FOG);
         }
-        GLState::current().setBlend(true).apply();
+        GLState::current().setBlend(true);
         break;
 
     case DM_FIRST_LIGHT:
-        GL_ModulateTexture(1);
-        GLState::current().setAlphaTest(true).apply();
-        GLState::current().setDepthTest(false).apply();
-        GLState::current().setBlend(true).apply();
+        DGL_ModulateTexture(1);
+        GLState::current().setAlphaTest(true);
+        GLState::current().setDepthTest(false);
+        GLState::current().setBlend(true);
         break;
 
     case DM_BLENDED_FIRST_LIGHT:
-        GL_ModulateTexture(1);
-        GLState::current().setDepthTest(false).apply();
-        GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha).apply();
+        DGL_ModulateTexture(1);
+        GLState::current().setDepthTest(false);
+        GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
         break;
 
     case DM_WITHOUT_TEXTURE:
         GL_SelectTexUnits(1);
-        GL_ModulateTexture(1);
-        GLState::current().setAlphaTest(true).apply();
-        GLState::current().setDepthTest(false).apply();
-        GLState::current().setBlend(true).apply();
+        DGL_ModulateTexture(1);
+        GLState::current().setAlphaTest(true);
+        GLState::current().setDepthTest(false);
+        GLState::current().setBlend(true);
         break;
 
     case DM_LIGHTS:
-        GLState::current().setDepthTest(false).apply();
+        GLState::current().setDepthTest(false);
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glDisable(GL_FOG);
+            DGL_Disable(DGL_FOG);
         }
         GL_BlendMode(BM_NORMAL);
         break;
@@ -4263,76 +4258,76 @@ static void popGLStateForPass(DrawMode mode)
     case DM_MOD_TEXTURE:
     case DM_MOD_TEXTURE_MANY_LIGHTS:
     case DM_BLENDED_MOD_TEXTURE:
-        GLState::current().setAlphaTest(true).apply();
-        GLState::current().setDepthTest(false).apply();
-        GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha).apply();
+        GLState::current().setAlphaTest(true);
+        GLState::current().setDepthTest(false);
+        GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
         break;
 
     case DM_UNBLENDED_TEXTURE_AND_DETAIL:
-        GLState::current().setAlphaTest(true).apply();
-        GLState::current().setDepthTest(false).apply();
-        GLState::current().setBlend(true).apply();
+        GLState::current().setAlphaTest(true);
+        GLState::current().setDepthTest(false);
+        GLState::current().setBlend(true);
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glDisable(GL_FOG);
+            DGL_Disable(DGL_FOG);
         }
         break;
 
     case DM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
-        GLState::current().setAlphaTest(true).apply();
-        GLState::current().setDepthTest(false).apply();
-        GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha).apply();
+        GLState::current().setAlphaTest(true);
+        GLState::current().setDepthTest(false);
+        GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
         break;
 
     case DM_ALL_DETAILS:
-        GL_ModulateTexture(1);
-        GLState::current().setAlphaTest(true).apply();
-        GLState::current().setDepthTest(false).apply();
-        GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha).apply();
+        DGL_ModulateTexture(1);
+        GLState::current().setAlphaTest(true);
+        GLState::current().setDepthTest(false);
+        GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glDisable(GL_FOG);
+            DGL_Disable(DGL_FOG);
         }
         break;
 
     case DM_BLENDED_DETAILS:
         GL_SelectTexUnits(1);
-        GL_ModulateTexture(1);
-        GLState::current().setAlphaTest(true).apply();
-        GLState::current().setDepthTest(false).apply();
-        GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha).apply();
+        DGL_ModulateTexture(1);
+        GLState::current().setAlphaTest(true);
+        GLState::current().setDepthTest(false);
+        GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glDisable(GL_FOG);
+            DGL_Disable(DGL_FOG);
         }
         break;
 
     case DM_SHADOW:
-        GLState::current().setDepthTest(false).apply();
+        GLState::current().setDepthTest(false);
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glDisable(GL_FOG);
+            DGL_Disable(DGL_FOG);
         }
         break;
 
     case DM_SHINY:
-        GLState::current().setAlphaTest(true).apply();
-        GLState::current().setDepthTest(false).apply();
+        GLState::current().setAlphaTest(true);
+        GLState::current().setDepthTest(false);
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glDisable(GL_FOG);
+            DGL_Disable(DGL_FOG);
         }
         GL_BlendMode(BM_NORMAL);
         break;
 
     case DM_MASKED_SHINY:
         GL_SelectTexUnits(1);
-        GL_ModulateTexture(1);
-        GLState::current().setAlphaTest(true).apply();
-        GLState::current().setDepthTest(false).apply();
+        DGL_ModulateTexture(1);
+        GLState::current().setAlphaTest(true);
+        GLState::current().setDepthTest(false);
         if(fogParams.usingFog)
         {
-            LIBGUI_GL.glDisable(GL_FOG);
+            DGL_Disable(DGL_FOG);
         }
         GL_BlendMode(BM_NORMAL);
         break;
@@ -4371,8 +4366,7 @@ static void drawSky()
     GLState::push()
             .setDepthTest(false)
             .setDepthWrite(false)
-            .setColorMask(gl::WriteNone)
-            .apply();
+            .setColorMask(gl::WriteNone);
 
     // Mask out stencil buffer, setting the drawn areas to 1.
     LIBGUI_GL.glEnable(GL_STENCIL_TEST);
@@ -4390,7 +4384,7 @@ static void drawSky()
     }
 
     // Restore previous GL state.
-    GLState::pop().apply();
+    GLState::pop();
     LIBGUI_GL.glDisable(GL_STENCIL_TEST);
 
     // Now, only render where the stencil is set to 1.
@@ -4524,7 +4518,7 @@ static void drawMasked()
 static void drawAllLists(Map &map)
 {
     DENG2_ASSERT(!Sys_GLCheckError());
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     drawSky();
@@ -4678,16 +4672,10 @@ static void drawAllLists(Map &map)
     //
 
     ClientApp::renderSystem().drawLists().findAll(ShineGeom, lists);
-    if(numTexUnits > 1)
-    {
-        // Render masked shiny surfaces in a separate pass.
-        drawLists(lists, DM_SHINY);
-        drawLists(lists, DM_MASKED_SHINY);
-    }
-    else
-    {
-        drawLists(lists, DM_ALL_SHINY);
-    }
+
+    // Render masked shiny surfaces in a separate pass.
+    drawLists(lists, DM_SHINY);
+    drawLists(lists, DM_MASKED_SHINY);
 
     //
     // Pass: Shadow geometries (objects and Fake Radio).
@@ -4701,19 +4689,19 @@ static void drawAllLists(Map &map)
 
     renderTextures = oldRenderTextures;
 
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    DGL_Disable(DGL_TEXTURE_2D);
 
     // The draw lists do not modify these states -ds
-    GLState::current().setBlend(true).apply();
-    GLState::current().setDepthWrite(true).apply();
-    GLState::current().setDepthTest(true).apply();
-    GLState::current().setDepthFunc(gl::Less).apply();
-    GLState::current().setAlphaTest(true).apply();
-    GLState::current().setAlphaLimit(0).apply();
+    GLState::current().setBlend(true);
+    GLState::current().setDepthWrite(true);
+    GLState::current().setDepthTest(true);
+    GLState::current().setDepthFunc(gl::Less);
+    GLState::current().setAlphaTest(true);
+    GLState::current().setAlphaLimit(0);
     if(fogParams.usingFog)
     {
-        LIBGUI_GL.glEnable(GL_FOG);
-        LIBGUI_GL.glFogfv(GL_FOG_COLOR, fogParams.fogColor);
+        DGL_Enable(DGL_FOG);
+        DGL_Fogfv(DGL_FOG_COLOR, fogParams.fogColor);
     }
 
     // Draw masked walls, sprites and models.
@@ -4724,7 +4712,7 @@ static void drawAllLists(Map &map)
 
     if(fogParams.usingFog)
     {
-        LIBGUI_GL.glDisable(GL_FOG);
+        DGL_Disable(DGL_FOG);
     }
 
     DENG2_ASSERT(!Sys_GLCheckError());
@@ -4797,29 +4785,29 @@ static void drawStar(Vector3d const &origin, dfloat size, Vector4f const &color)
 {
     static dfloat const black[] = { 0, 0, 0, 0 };
 
-    LIBGUI_GL.glBegin(GL_LINES);
-        LIBGUI_GL.glColor4fv(black);
-        LIBGUI_GL.glVertex3f(origin.x - size, origin.z, origin.y);
-        LIBGUI_GL.glColor4f(color.x, color.y, color.z, color.w);
-        LIBGUI_GL.glVertex3f(origin.x, origin.z, origin.y);
-        LIBGUI_GL.glVertex3f(origin.x, origin.z, origin.y);
-        LIBGUI_GL.glColor4fv(black);
-        LIBGUI_GL.glVertex3f(origin.x + size, origin.z, origin.y);
+    DGL_Begin(DGL_LINES);
+        DGL_Color4fv(black);
+        DGL_Vertex3f(origin.x - size, origin.z, origin.y);
+        DGL_Color4f(color.x, color.y, color.z, color.w);
+        DGL_Vertex3f(origin.x, origin.z, origin.y);
+        DGL_Vertex3f(origin.x, origin.z, origin.y);
+        DGL_Color4fv(black);
+        DGL_Vertex3f(origin.x + size, origin.z, origin.y);
 
-        LIBGUI_GL.glVertex3f(origin.x, origin.z - size, origin.y);
-        LIBGUI_GL.glColor4f(color.x, color.y, color.z, color.w);
-        LIBGUI_GL.glVertex3f(origin.x, origin.z, origin.y);
-        LIBGUI_GL.glVertex3f(origin.x, origin.z, origin.y);
-        LIBGUI_GL.glColor4fv(black);
-        LIBGUI_GL.glVertex3f(origin.x, origin.z + size, origin.y);
+        DGL_Vertex3f(origin.x, origin.z - size, origin.y);
+        DGL_Color4f(color.x, color.y, color.z, color.w);
+        DGL_Vertex3f(origin.x, origin.z, origin.y);
+        DGL_Vertex3f(origin.x, origin.z, origin.y);
+        DGL_Color4fv(black);
+        DGL_Vertex3f(origin.x, origin.z + size, origin.y);
 
-        LIBGUI_GL.glVertex3f(origin.x, origin.z, origin.y - size);
-        LIBGUI_GL.glColor4f(color.x, color.y, color.z, color.w);
-        LIBGUI_GL.glVertex3f(origin.x, origin.z, origin.y);
-        LIBGUI_GL.glVertex3f(origin.x, origin.z, origin.y);
-        LIBGUI_GL.glColor4fv(black);
-        LIBGUI_GL.glVertex3f(origin.x, origin.z, origin.y + size);
-    LIBGUI_GL.glEnd();
+        DGL_Vertex3f(origin.x, origin.z, origin.y - size);
+        DGL_Color4f(color.x, color.y, color.z, color.w);
+        DGL_Vertex3f(origin.x, origin.z, origin.y);
+        DGL_Vertex3f(origin.x, origin.z, origin.y);
+        DGL_Color4fv(black);
+        DGL_Vertex3f(origin.x, origin.z, origin.y + size);
+    DGL_End();
 }
 #endif
 
@@ -4827,18 +4815,18 @@ static void drawLabel(String const &label, Vector3d const &origin, dfloat scale,
 {
     if(label.isEmpty()) return;
 
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPushMatrix();
-    LIBGUI_GL.glTranslatef(origin.x, origin.z, origin.y);
-    LIBGUI_GL.glRotatef(-vang + 180, 0, 1, 0);
-    LIBGUI_GL.glRotatef(vpitch, 1, 0, 0);
-    LIBGUI_GL.glScalef(-scale, -scale, 1);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(origin.x, origin.z, origin.y);
+    DGL_Rotatef(-vang + 180, 0, 1, 0);
+    DGL_Rotatef(vpitch, 1, 0, 0);
+    DGL_Scalef(-scale, -scale, 1);
 
     Point2Raw offset(2, 2);
     UI_TextOutEx(label.toUtf8().constData(), &offset, UI_Color(UIC_TITLE), opacity);
 
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
 static void drawLabel(String const &label, Vector3d const &origin, ddouble maxDistance = 2000)
@@ -4871,43 +4859,43 @@ static void drawSource(BiasSource *s)
     drawStar(s->origin(), 25 + s->evaluateIntensity() / 20,
              Vector4f(s->color(), 1.0f / de::max(float((distToEye - 100) / 1000), 1.f)));
 
-    GLState::current().setDepthTest(false).apply();
-    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+    GLState::current().setDepthTest(false);
+    DGL_Enable(DGL_TEXTURE_2D);
 
     drawLabel(labelForSource(s), s->origin());
 
-    GLState::current().setDepthTest(true).apply();
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    GLState::current().setDepthTest(true);
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 static void drawLock(Vector3d const &origin, ddouble unit, ddouble t)
 {
-    LIBGUI_GL.glColor4f(1, 1, 1, 1);
+    DGL_Color4f(1, 1, 1, 1);
 
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPushMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
 
-    LIBGUI_GL.glTranslatef(origin.x, origin.z, origin.y);
+    DGL_Translatef(origin.x, origin.z, origin.y);
 
-    LIBGUI_GL.glRotatef(t / 2,  0, 0, 1);
-    LIBGUI_GL.glRotatef(t,      1, 0, 0);
-    LIBGUI_GL.glRotatef(t * 15, 0, 1, 0);
+    DGL_Rotatef(t / 2,  0, 0, 1);
+    DGL_Rotatef(t,      1, 0, 0);
+    DGL_Rotatef(t * 15, 0, 1, 0);
 
-    LIBGUI_GL.glBegin(GL_LINES);
-        LIBGUI_GL.glVertex3f(-unit, 0, -unit);
-        LIBGUI_GL.glVertex3f(+unit, 0, -unit);
+    DGL_Begin(DGL_LINES);
+        DGL_Vertex3f(-unit, 0, -unit);
+        DGL_Vertex3f(+unit, 0, -unit);
 
-        LIBGUI_GL.glVertex3f(+unit, 0, -unit);
-        LIBGUI_GL.glVertex3f(+unit, 0, +unit);
+        DGL_Vertex3f(+unit, 0, -unit);
+        DGL_Vertex3f(+unit, 0, +unit);
 
-        LIBGUI_GL.glVertex3f(+unit, 0, +unit);
-        LIBGUI_GL.glVertex3f(-unit, 0, +unit);
+        DGL_Vertex3f(+unit, 0, +unit);
+        DGL_Vertex3f(-unit, 0, +unit);
 
-        LIBGUI_GL.glVertex3f(-unit, 0, +unit);
-        LIBGUI_GL.glVertex3f(-unit, 0, -unit);
-    LIBGUI_GL.glEnd();
+        DGL_Vertex3f(-unit, 0, +unit);
+        DGL_Vertex3f(-unit, 0, -unit);
+    DGL_End();
 
-    LIBGUI_GL.glPopMatrix();
+    DGL_PopMatrix();
 }
 
 static void drawBiasEditingVisuals(Map &map)
@@ -4924,25 +4912,25 @@ static void drawBiasEditingVisuals(Map &map)
     {
         viewdata_t const *viewData = &viewPlayer->viewport();
 
-        GLState::current().setDepthTest(false).apply();
+        GLState::current().setDepthTest(false);
         //glDisable(GL_CULL_FACE);
-        GLState::push().setCull(gl::None).apply();
+        GLState::push().setCull(gl::None);
 
-        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-        LIBGUI_GL.glPushMatrix();
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
 
-        LIBGUI_GL.glTranslatef(Rend_EyeOrigin().x, Rend_EyeOrigin().y, Rend_EyeOrigin().z);
-        LIBGUI_GL.glScalef(1, 1.0f/1.2f, 1);
-        LIBGUI_GL.glTranslatef(-Rend_EyeOrigin().x, -Rend_EyeOrigin().y, -Rend_EyeOrigin().z);
+        DGL_Translatef(Rend_EyeOrigin().x, Rend_EyeOrigin().y, Rend_EyeOrigin().z);
+        DGL_Scalef(1, 1.0f/1.2f, 1);
+        DGL_Translatef(-Rend_EyeOrigin().x, -Rend_EyeOrigin().y, -Rend_EyeOrigin().z);
 
         HueCircleVisual::draw(*hueCircle, Rend_EyeOrigin(), viewData->frontVec);
 
-        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-        LIBGUI_GL.glPopMatrix();
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PopMatrix();
 
-        GLState::current().setDepthTest(true).apply();
+        GLState::current().setDepthTest(true);
         //glEnable(GL_CULL_FACE);
-        GLState::pop().apply();
+        GLState::pop();
     }
 
     coord_t handDistance;
@@ -4961,7 +4949,7 @@ static void drawBiasEditingVisuals(Map &map)
     if((hand.origin() - nearSource->origin()).length() > 2 * handDistance)
     {
         // Show where it is.
-        GLState::current().setDepthTest(false).apply();
+        GLState::current().setDepthTest(false);
     }
 
     // The nearest cursor phases blue.
@@ -4977,13 +4965,13 @@ static void drawBiasEditingVisuals(Map &map)
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
-    GLState::current().setDepthTest(false).apply();
-    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+    GLState::current().setDepthTest(false);
+    DGL_Enable(DGL_TEXTURE_2D);
 
     drawLabel(labelForSource(nearSource), nearSource->origin());
 
-    GLState::current().setDepthTest(true).apply();
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    GLState::current().setDepthTest(true);
+    DGL_Disable(DGL_TEXTURE_2D);
 
     if(nearSource->isLocked())
         drawLock(nearSource->origin(), 2 + (nearSource->origin() - eyeOrigin).length() / 100, t);
@@ -4998,13 +4986,13 @@ static void drawBiasEditingVisuals(Map &map)
 
         drawStar(s->origin(), 10000, grabbedColor);
 
-        GLState::current().setDepthTest(false).apply();
-        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+        GLState::current().setDepthTest(false);
+        DGL_Enable(DGL_TEXTURE_2D);
 
         drawLabel(labelForSource(s), s->origin());
 
-        GLState::current().setDepthTest(true).apply();
-        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+        GLState::current().setDepthTest(true);
+        DGL_Disable(DGL_TEXTURE_2D);
 
         if(s->isLocked())
             drawLock(s->origin(), 2 + (s->origin() - eyeOrigin).length() / 100, t);
@@ -5013,12 +5001,12 @@ static void drawBiasEditingVisuals(Map &map)
     /*BiasSource *s = hand.nearestBiasSource();
     if(s && !hand.hasGrabbed(*s))
     {
-        GLState::current().setDepthTest(false).apply();
+        GLState::current().setDepthTest(false);
         glEnable(GL_TEXTURE_2D);
 
         drawLabel(labelForSource(s), s->origin());
 
-        GLState::current().setDepthTest(true).apply();
+        GLState::current().setDepthTest(true);
         glDisable(GL_TEXTURE_2D);
     }*/
 
@@ -5035,7 +5023,7 @@ static void drawBiasEditingVisuals(Map &map)
         });
     }
 
-    GLState::current().setDepthTest(true).apply();
+    GLState::current().setDepthTest(true);
 }
 #endif
 
@@ -5123,90 +5111,90 @@ void Rend_DrawLightModMatrix()
     // Disabled?
     if(!devLightModRange) return;
 
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPushMatrix();
-    LIBGUI_GL.glLoadIdentity();
-    LIBGUI_GL.glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, -1, 1);
 
-    LIBGUI_GL.glTranslatef(BORDER, BORDER, 0);
+    DGL_Translatef(BORDER, BORDER, 0);
 
     // Draw an outside border.
-    LIBGUI_GL.glColor4f(1, 1, 0, 1);
-    LIBGUI_GL.glBegin(GL_LINES);
-        LIBGUI_GL.glVertex2f(-1, -1);
-        LIBGUI_GL.glVertex2f(255 + 1, -1);
-        LIBGUI_GL.glVertex2f(255 + 1, -1);
-        LIBGUI_GL.glVertex2f(255 + 1, BLOCK_HEIGHT + 1);
-        LIBGUI_GL.glVertex2f(255 + 1, BLOCK_HEIGHT + 1);
-        LIBGUI_GL.glVertex2f(-1, BLOCK_HEIGHT + 1);
-        LIBGUI_GL.glVertex2f(-1, BLOCK_HEIGHT + 1);
-        LIBGUI_GL.glVertex2f(-1, -1);
-    LIBGUI_GL.glEnd();
+    DGL_Color4f(1, 1, 0, 1);
+    DGL_Begin(DGL_LINES);
+        DGL_Vertex2f(-1, -1);
+        DGL_Vertex2f(255 + 1, -1);
+        DGL_Vertex2f(255 + 1, -1);
+        DGL_Vertex2f(255 + 1, BLOCK_HEIGHT + 1);
+        DGL_Vertex2f(255 + 1, BLOCK_HEIGHT + 1);
+        DGL_Vertex2f(-1, BLOCK_HEIGHT + 1);
+        DGL_Vertex2f(-1, BLOCK_HEIGHT + 1);
+        DGL_Vertex2f(-1, -1);
+    DGL_End();
 
-    LIBGUI_GL.glBegin(GL_QUADS);
+    DGL_Begin(DGL_QUADS);
     dfloat c = 0;
     for(dint i = 0; i < 255; ++i, c += (1.0f/255.0f))
     {
         // Get the result of the source light level + offset.
         dfloat off = lightModRange[i];
 
-        LIBGUI_GL.glColor4f(c + off, c + off, c + off, 1);
-        LIBGUI_GL.glVertex2f(i * BLOCK_WIDTH, 0);
-        LIBGUI_GL.glVertex2f(i * BLOCK_WIDTH + BLOCK_WIDTH, 0);
-        LIBGUI_GL.glVertex2f(i * BLOCK_WIDTH + BLOCK_WIDTH, BLOCK_HEIGHT);
-        LIBGUI_GL.glVertex2f(i * BLOCK_WIDTH, BLOCK_HEIGHT);
+        DGL_Color4f(c + off, c + off, c + off, 1);
+        DGL_Vertex2f(i * BLOCK_WIDTH, 0);
+        DGL_Vertex2f(i * BLOCK_WIDTH + BLOCK_WIDTH, 0);
+        DGL_Vertex2f(i * BLOCK_WIDTH + BLOCK_WIDTH, BLOCK_HEIGHT);
+        DGL_Vertex2f(i * BLOCK_WIDTH, BLOCK_HEIGHT);
     }
-    LIBGUI_GL.glEnd();
+    DGL_End();
 
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 
 #undef BORDER
 #undef BLOCK_HEIGHT
 #undef BLOCK_WIDTH
 }
 
-static DGLuint constructBBox(DGLuint name, dfloat br)
+static void drawBBox(dfloat br)
 {
-    if(GL_NewList(name, GL_COMPILE))
+//    if(GL_NewList(name, GL_COMPILE))
+//    {
+    DGL_Begin(DGL_QUADS);
     {
-        LIBGUI_GL.glBegin(GL_QUADS);
-        {
-            // Top
-            LIBGUI_GL.glTexCoord2f(1.0f, 1.0f); LIBGUI_GL.glVertex3f( 1.0f+br, 1.0f,-1.0f-br);  // TR
-            LIBGUI_GL.glTexCoord2f(0.0f, 1.0f); LIBGUI_GL.glVertex3f(-1.0f-br, 1.0f,-1.0f-br);  // TL
-            LIBGUI_GL.glTexCoord2f(0.0f, 0.0f); LIBGUI_GL.glVertex3f(-1.0f-br, 1.0f, 1.0f+br);  // BL
-            LIBGUI_GL.glTexCoord2f(1.0f, 0.0f); LIBGUI_GL.glVertex3f( 1.0f+br, 1.0f, 1.0f+br);  // BR
-            // Bottom
-            LIBGUI_GL.glTexCoord2f(1.0f, 1.0f); LIBGUI_GL.glVertex3f( 1.0f+br,-1.0f, 1.0f+br);  // TR
-            LIBGUI_GL.glTexCoord2f(0.0f, 1.0f); LIBGUI_GL.glVertex3f(-1.0f-br,-1.0f, 1.0f+br);  // TL
-            LIBGUI_GL.glTexCoord2f(0.0f, 0.0f); LIBGUI_GL.glVertex3f(-1.0f-br,-1.0f,-1.0f-br);  // BL
-            LIBGUI_GL.glTexCoord2f(1.0f, 0.0f); LIBGUI_GL.glVertex3f( 1.0f+br,-1.0f,-1.0f-br);  // BR
-            // Front
-            LIBGUI_GL.glTexCoord2f(1.0f, 1.0f); LIBGUI_GL.glVertex3f( 1.0f+br, 1.0f+br, 1.0f);  // TR
-            LIBGUI_GL.glTexCoord2f(0.0f, 1.0f); LIBGUI_GL.glVertex3f(-1.0f-br, 1.0f+br, 1.0f);  // TL
-            LIBGUI_GL.glTexCoord2f(0.0f, 0.0f); LIBGUI_GL.glVertex3f(-1.0f-br,-1.0f-br, 1.0f);  // BL
-            LIBGUI_GL.glTexCoord2f(1.0f, 0.0f); LIBGUI_GL.glVertex3f( 1.0f+br,-1.0f-br, 1.0f);  // BR
-            // Back
-            LIBGUI_GL.glTexCoord2f(1.0f, 1.0f); LIBGUI_GL.glVertex3f( 1.0f+br,-1.0f-br,-1.0f);  // TR
-            LIBGUI_GL.glTexCoord2f(0.0f, 1.0f); LIBGUI_GL.glVertex3f(-1.0f-br,-1.0f-br,-1.0f);  // TL
-            LIBGUI_GL.glTexCoord2f(0.0f, 0.0f); LIBGUI_GL.glVertex3f(-1.0f-br, 1.0f+br,-1.0f);  // BL
-            LIBGUI_GL.glTexCoord2f(1.0f, 0.0f); LIBGUI_GL.glVertex3f( 1.0f+br, 1.0f+br,-1.0f);  // BR
-            // Left
-            LIBGUI_GL.glTexCoord2f(1.0f, 1.0f); LIBGUI_GL.glVertex3f(-1.0f, 1.0f+br, 1.0f+br);  // TR
-            LIBGUI_GL.glTexCoord2f(0.0f, 1.0f); LIBGUI_GL.glVertex3f(-1.0f, 1.0f+br,-1.0f-br);  // TL
-            LIBGUI_GL.glTexCoord2f(0.0f, 0.0f); LIBGUI_GL.glVertex3f(-1.0f,-1.0f-br,-1.0f-br);  // BL
-            LIBGUI_GL.glTexCoord2f(1.0f, 0.0f); LIBGUI_GL.glVertex3f(-1.0f,-1.0f-br, 1.0f+br);  // BR
-            // Right
-            LIBGUI_GL.glTexCoord2f(1.0f, 1.0f); LIBGUI_GL.glVertex3f( 1.0f, 1.0f+br,-1.0f-br);  // TR
-            LIBGUI_GL.glTexCoord2f(0.0f, 1.0f); LIBGUI_GL.glVertex3f( 1.0f, 1.0f+br, 1.0f+br);  // TL
-            LIBGUI_GL.glTexCoord2f(0.0f, 0.0f); LIBGUI_GL.glVertex3f( 1.0f,-1.0f-br, 1.0f+br);  // BL
-            LIBGUI_GL.glTexCoord2f(1.0f, 0.0f); LIBGUI_GL.glVertex3f( 1.0f,-1.0f-br,-1.0f-br);  // BR
-        }
-        LIBGUI_GL.glEnd();
-        return GL_EndList();
+        // Top
+        DGL_TexCoord2f(0, 1.0f, 1.0f); DGL_Vertex3f( 1.0f+br, 1.0f,-1.0f-br);  // TR
+        DGL_TexCoord2f(0, 0.0f, 1.0f); DGL_Vertex3f(-1.0f-br, 1.0f,-1.0f-br);  // TL
+        DGL_TexCoord2f(0, 0.0f, 0.0f); DGL_Vertex3f(-1.0f-br, 1.0f, 1.0f+br);  // BL
+        DGL_TexCoord2f(0, 1.0f, 0.0f); DGL_Vertex3f( 1.0f+br, 1.0f, 1.0f+br);  // BR
+        // Bottom
+        DGL_TexCoord2f(0, 1.0f, 1.0f); DGL_Vertex3f( 1.0f+br,-1.0f, 1.0f+br);  // TR
+        DGL_TexCoord2f(0, 0.0f, 1.0f); DGL_Vertex3f(-1.0f-br,-1.0f, 1.0f+br);  // TL
+        DGL_TexCoord2f(0, 0.0f, 0.0f); DGL_Vertex3f(-1.0f-br,-1.0f,-1.0f-br);  // BL
+        DGL_TexCoord2f(0, 1.0f, 0.0f); DGL_Vertex3f( 1.0f+br,-1.0f,-1.0f-br);  // BR
+        // Front
+        DGL_TexCoord2f(0, 1.0f, 1.0f); DGL_Vertex3f( 1.0f+br, 1.0f+br, 1.0f);  // TR
+        DGL_TexCoord2f(0, 0.0f, 1.0f); DGL_Vertex3f(-1.0f-br, 1.0f+br, 1.0f);  // TL
+        DGL_TexCoord2f(0, 0.0f, 0.0f); DGL_Vertex3f(-1.0f-br,-1.0f-br, 1.0f);  // BL
+        DGL_TexCoord2f(0, 1.0f, 0.0f); DGL_Vertex3f( 1.0f+br,-1.0f-br, 1.0f);  // BR
+        // Back
+        DGL_TexCoord2f(0, 1.0f, 1.0f); DGL_Vertex3f( 1.0f+br,-1.0f-br,-1.0f);  // TR
+        DGL_TexCoord2f(0, 0.0f, 1.0f); DGL_Vertex3f(-1.0f-br,-1.0f-br,-1.0f);  // TL
+        DGL_TexCoord2f(0, 0.0f, 0.0f); DGL_Vertex3f(-1.0f-br, 1.0f+br,-1.0f);  // BL
+        DGL_TexCoord2f(0, 1.0f, 0.0f); DGL_Vertex3f( 1.0f+br, 1.0f+br,-1.0f);  // BR
+        // Left
+        DGL_TexCoord2f(0, 1.0f, 1.0f); DGL_Vertex3f(-1.0f, 1.0f+br, 1.0f+br);  // TR
+        DGL_TexCoord2f(0, 0.0f, 1.0f); DGL_Vertex3f(-1.0f, 1.0f+br,-1.0f-br);  // TL
+        DGL_TexCoord2f(0, 0.0f, 0.0f); DGL_Vertex3f(-1.0f,-1.0f-br,-1.0f-br);  // BL
+        DGL_TexCoord2f(0, 1.0f, 0.0f); DGL_Vertex3f(-1.0f,-1.0f-br, 1.0f+br);  // BR
+        // Right
+        DGL_TexCoord2f(0, 1.0f, 1.0f); DGL_Vertex3f( 1.0f, 1.0f+br,-1.0f-br);  // TR
+        DGL_TexCoord2f(0, 0.0f, 1.0f); DGL_Vertex3f( 1.0f, 1.0f+br, 1.0f+br);  // TL
+        DGL_TexCoord2f(0, 0.0f, 0.0f); DGL_Vertex3f( 1.0f,-1.0f-br, 1.0f+br);  // BL
+        DGL_TexCoord2f(0, 1.0f, 0.0f); DGL_Vertex3f( 1.0f,-1.0f-br,-1.0f-br);  // BR
     }
-    return 0;
+    DGL_End();
+    //    return GL_EndList();
+    //}
+    //return 0;
 }
 
 /**
@@ -5226,26 +5214,27 @@ static DGLuint constructBBox(DGLuint name, dfloat br)
 void Rend_DrawBBox(Vector3d const &pos, coord_t w, coord_t l, coord_t h,
     dfloat a, dfloat const color[3], dfloat alpha, dfloat br, bool alignToBase)
 {
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPushMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
 
     if(alignToBase)
         // The Z coordinate is to the bottom of the object.
-        LIBGUI_GL.glTranslated(pos.x, pos.z + h, pos.y);
+        DGL_Translatef(pos.x, pos.z + h, pos.y);
     else
-        LIBGUI_GL.glTranslated(pos.x, pos.z, pos.y);
+        DGL_Translatef(pos.x, pos.z, pos.y);
 
-    LIBGUI_GL.glRotatef(0, 0, 0, 1);
-    LIBGUI_GL.glRotatef(0, 1, 0, 0);
-    LIBGUI_GL.glRotatef(a, 0, 1, 0);
+    DGL_Rotatef(0, 0, 0, 1);
+    DGL_Rotatef(0, 1, 0, 0);
+    DGL_Rotatef(a, 0, 1, 0);
 
-    LIBGUI_GL.glScaled(w - br - br, h - br - br, l - br - br);
-    LIBGUI_GL.glColor4f(color[0], color[1], color[2], alpha);
+    DGL_Scalef(w - br - br, h - br - br, l - br - br);
+    DGL_Color4f(color[0], color[1], color[2], alpha);
 
-    GL_CallList(dlBBox);
+    //GL_CallList(dlBBox);
+    drawBBox(.08f);
 
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
 /**
@@ -5259,37 +5248,37 @@ void Rend_DrawBBox(Vector3d const &pos, coord_t w, coord_t l, coord_t h,
  * @param alpha  Alpha to make the box (uniform vertex color).
  */
 void Rend_DrawArrow(Vector3d const &pos, dfloat a, dfloat s, dfloat const color[3],
-    dfloat alpha)
+                    dfloat alpha)
 {
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPushMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
 
-    LIBGUI_GL.glTranslated(pos.x, pos.z, pos.y);
+    DGL_Translatef(pos.x, pos.z, pos.y);
 
-    LIBGUI_GL.glRotatef(0, 0, 0, 1);
-    LIBGUI_GL.glRotatef(0, 1, 0, 0);
-    LIBGUI_GL.glRotatef(a, 0, 1, 0);
+    DGL_Rotatef(0, 0, 0, 1);
+    DGL_Rotatef(0, 1, 0, 0);
+    DGL_Rotatef(a, 0, 1, 0);
 
-    LIBGUI_GL.glScalef(s, 0, s);
+    DGL_Scalef(s, 0, s);
 
-    LIBGUI_GL.glBegin(GL_TRIANGLES);
+    DGL_Begin(DGL_TRIANGLES);
     {
-        LIBGUI_GL.glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
-        LIBGUI_GL.glTexCoord2f(1.0f, 1.0f);
-        LIBGUI_GL.glVertex3f( 1.0f, 1.0f,-1.0f);  // L
+        DGL_Color4f(0.0f, 0.0f, 0.0f, 0.5f);
+        DGL_TexCoord2f(0, 1.0f, 1.0f);
+        DGL_Vertex3f( 1.0f, 1.0f,-1.0f);  // L
 
-        LIBGUI_GL.glColor4f(color[0], color[1], color[2], alpha);
-        LIBGUI_GL.glTexCoord2f(0.0f, 1.0f);
-        LIBGUI_GL.glVertex3f(-1.0f, 1.0f,-1.0f);  // Point
+        DGL_Color4f(color[0], color[1], color[2], alpha);
+        DGL_TexCoord2f(0, 0.0f, 1.0f);
+        DGL_Vertex3f(-1.0f, 1.0f,-1.0f);  // Point
 
-        LIBGUI_GL.glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
-        LIBGUI_GL.glTexCoord2f(0.0f, 0.0f);
-        LIBGUI_GL.glVertex3f(-1.0f, 1.0f, 1.0f);  // R
+        DGL_Color4f(0.0f, 0.0f, 0.0f, 0.5f);
+        DGL_TexCoord2f(0, 0.0f, 0.0f);
+        DGL_Vertex3f(-1.0f, 1.0f, 1.0f);  // R
     }
-    LIBGUI_GL.glEnd();
+    DGL_End();
 
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
 static void drawMobjBBox(mobj_t &mob)
@@ -5346,13 +5335,13 @@ static void drawMobjBoundingBoxes(Map &map)
     if(netGame) return;
 #endif
 
-    if(!dlBBox)
-        dlBBox = constructBBox(0, .08f);
+//    if(!dlBBox)
+//        dlBBox = constructBBox(0, .08f);
 
-    GLState::current().setDepthTest(false).apply();
-    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+    GLState::current().setDepthTest(false);
+    DGL_Enable(DGL_TEXTURE_2D);
     //glDisable(GL_CULL_FACE);
-    GLState::push().setCull(gl::None).apply();
+    GLState::push().setCull(gl::None);
 
     MaterialAnimator &matAnimator = ClientMaterial::find(de::Uri("System", Path("bbox")))
             .getAnimator(Rend_SpriteMaterialSpec());
@@ -5408,29 +5397,29 @@ static void drawMobjBoundingBoxes(Map &map)
 
     GL_BlendMode(BM_NORMAL);
 
-    GLState::pop().apply();
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
-    GLState::current().setDepthTest(true).apply();
+    GLState::pop();
+    DGL_Disable(DGL_TEXTURE_2D);
+    GLState::current().setDepthTest(true);
 }
 
 static void drawPoint(Vector3d const &origin, Vector4f const &color = Vector4f(1, 1, 1, 1))
 {
-    LIBGUI_GL.glBegin(GL_POINTS);
-        LIBGUI_GL.glColor4f(color.x, color.y, color.z, color.w);
-        LIBGUI_GL.glVertex3f(origin.x, origin.z, origin.y);
-    LIBGUI_GL.glEnd();
+    DGL_Begin(DGL_POINTS);
+        DGL_Color4f(color.x, color.y, color.z, color.w);
+        DGL_Vertex3f(origin.x, origin.z, origin.y);
+    DGL_End();
 }
 
 static void drawVector(Vector3f const &vector, dfloat scalar, Vector4f const &color = Vector4f(1, 1, 1, 1))
 {
     static dfloat const black[] = { 0, 0, 0, 0 };
 
-    LIBGUI_GL.glBegin(GL_LINES);
-        LIBGUI_GL.glColor4fv(black);
-        LIBGUI_GL.glVertex3f(scalar * vector.x, scalar * vector.z, scalar * vector.y);
-        LIBGUI_GL.glColor4f(color.x, color.y, color.z, color.w);
-        LIBGUI_GL.glVertex3f(0, 0, 0);
-    LIBGUI_GL.glEnd();
+    DGL_Begin(DGL_LINES);
+        DGL_Color4fv(black);
+        DGL_Vertex3f(scalar * vector.x, scalar * vector.z, scalar * vector.y);
+        DGL_Color4f(color.x, color.y, color.z, color.w);
+        DGL_Vertex3f(0, 0, 0);
+    DGL_End();
 }
 
 static void drawTangentVectorsForSurface(Surface const &suf, Vector3d const &origin)
@@ -5440,16 +5429,16 @@ static void drawTangentVectorsForSurface(Surface const &suf, Vector3d const &ori
     static Vector4f const green( 0, 1, 0, 1);
     static Vector4f const blue ( 0, 0, 1, 1);
 
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPushMatrix();
-    LIBGUI_GL.glTranslatef(origin.x, origin.z, origin.y);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(origin.x, origin.z, origin.y);
 
     if(::devSurfaceVectors & SVF_TANGENT)   drawVector(suf.tangent(),   VISUAL_LENGTH, red);
     if(::devSurfaceVectors & SVF_BITANGENT) drawVector(suf.bitangent(), VISUAL_LENGTH, green);
     if(::devSurfaceVectors & SVF_NORMAL)    drawVector(suf.normal(),    VISUAL_LENGTH, blue);
 
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
 /**
@@ -5585,7 +5574,7 @@ static void drawSurfaceTangentVectors(Map &map)
     if (!::devSurfaceVectors) return;
 
     //glDisable(GL_CULL_FACE);
-    GLState::push().setCull(gl::None).apply();
+    GLState::push().setCull(gl::None);
 
     map.forAllSectors([] (Sector &sec)
     {
@@ -5597,7 +5586,7 @@ static void drawSurfaceTangentVectors(Map &map)
     });
 
     //glEnable(GL_CULL_FACE);
-    GLState::pop().apply();
+    GLState::pop();
 }
 
 static void drawLumobjs(Map &map)
@@ -5606,54 +5595,54 @@ static void drawLumobjs(Map &map)
 
     if (!devDrawLums) return;
 
-    GLState::current().setDepthTest(false).apply();
+    GLState::current().setDepthTest(false);
     //glDisable(GL_CULL_FACE);
-    GLState::push().setCull(gl::None).apply();
+    GLState::push().setCull(gl::None);
 
     map.forAllLumobjs([] (Lumobj &lob)
     {
         if (rendMaxLumobjs > 0 && R_ViewerLumobjIsHidden(lob.indexInMap()))
             return LoopContinue;
 
-        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-        LIBGUI_GL.glPushMatrix();
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
 
-        LIBGUI_GL.glTranslated(lob.origin().x, lob.origin().z + lob.zOffset(), lob.origin().y);
+        DGL_Translatef(lob.origin().x, lob.origin().z + lob.zOffset(), lob.origin().y);
 
-        LIBGUI_GL.glBegin(GL_LINES);
+        DGL_Begin(DGL_LINES);
         {
-            LIBGUI_GL.glColor4fv(black);
-            LIBGUI_GL.glVertex3f(-lob.radius(), 0, 0);
-            LIBGUI_GL.glColor4f(lob.color().x, lob.color().y, lob.color().z, 1);
-            LIBGUI_GL.glVertex3f(0, 0, 0);
-            LIBGUI_GL.glVertex3f(0, 0, 0);
-            LIBGUI_GL.glColor4fv(black);
-            LIBGUI_GL.glVertex3f(lob.radius(), 0, 0);
+            DGL_Color4fv(black);
+            DGL_Vertex3f(-lob.radius(), 0, 0);
+            DGL_Color4f(lob.color().x, lob.color().y, lob.color().z, 1);
+            DGL_Vertex3f(0, 0, 0);
+            DGL_Vertex3f(0, 0, 0);
+            DGL_Color4fv(black);
+            DGL_Vertex3f(lob.radius(), 0, 0);
 
-            LIBGUI_GL.glVertex3f(0, -lob.radius(), 0);
-            LIBGUI_GL.glColor4f(lob.color().x, lob.color().y, lob.color().z, 1);
-            LIBGUI_GL.glVertex3f(0, 0, 0);
-            LIBGUI_GL.glVertex3f(0, 0, 0);
-            LIBGUI_GL.glColor4fv(black);
-            LIBGUI_GL.glVertex3f(0, lob.radius(), 0);
+            DGL_Vertex3f(0, -lob.radius(), 0);
+            DGL_Color4f(lob.color().x, lob.color().y, lob.color().z, 1);
+            DGL_Vertex3f(0, 0, 0);
+            DGL_Vertex3f(0, 0, 0);
+            DGL_Color4fv(black);
+            DGL_Vertex3f(0, lob.radius(), 0);
 
-            LIBGUI_GL.glVertex3f(0, 0, -lob.radius());
-            LIBGUI_GL.glColor4f(lob.color().x, lob.color().y, lob.color().z, 1);
-            LIBGUI_GL.glVertex3f(0, 0, 0);
-            LIBGUI_GL.glVertex3f(0, 0, 0);
-            LIBGUI_GL.glColor4fv(black);
-            LIBGUI_GL.glVertex3f(0, 0, lob.radius());
+            DGL_Vertex3f(0, 0, -lob.radius());
+            DGL_Color4f(lob.color().x, lob.color().y, lob.color().z, 1);
+            DGL_Vertex3f(0, 0, 0);
+            DGL_Vertex3f(0, 0, 0);
+            DGL_Color4fv(black);
+            DGL_Vertex3f(0, 0, lob.radius());
         }
-        LIBGUI_GL.glEnd();
+        DGL_End();
 
-        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-        LIBGUI_GL.glPopMatrix();
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PopMatrix();
         return LoopContinue;
     });
 
     //glEnable(GL_CULL_FACE);
-    GLState::pop().apply();
-    GLState::current().setDepthTest(true).apply();
+    GLState::pop();
+    GLState::current().setDepthTest(true);
 }
 
 static String labelForLineSideSection(LineSide &side, dint sectionId)
@@ -5690,8 +5679,8 @@ static void drawSoundEmitters(Map &map)
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
-    GLState::current().setDepthTest(false).apply();
-    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+    GLState::current().setDepthTest(false);
+    DGL_Enable(DGL_TEXTURE_2D);
 
     if(devSoundEmitters & SOF_SIDE)
     {
@@ -5738,8 +5727,8 @@ static void drawSoundEmitters(Map &map)
         });
     }
 
-    GLState::current().setDepthTest(true).apply();
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    GLState::current().setDepthTest(true);
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 void Rend_DrawVectorLight(VectorLightData const &vlight, dfloat alpha)
@@ -5748,12 +5737,12 @@ void Rend_DrawVectorLight(VectorLightData const &vlight, dfloat alpha)
 
     dfloat const unitLength = 100;
 
-    LIBGUI_GL.glBegin(GL_LINES);
-        LIBGUI_GL.glColor4f(vlight.color.x, vlight.color.y, vlight.color.z, alpha);
-        LIBGUI_GL.glVertex3f(unitLength * vlight.direction.x, unitLength * vlight.direction.z, unitLength * vlight.direction.y);
-        LIBGUI_GL.glColor4f(vlight.color.x, vlight.color.y, vlight.color.z, 0);
-        LIBGUI_GL.glVertex3f(0, 0, 0);
-    LIBGUI_GL.glEnd();
+    DGL_Begin(DGL_LINES);
+        DGL_Color4f(vlight.color.x, vlight.color.y, vlight.color.z, alpha);
+        DGL_Vertex3f(unitLength * vlight.direction.x, unitLength * vlight.direction.z, unitLength * vlight.direction.y);
+        DGL_Color4f(vlight.color.x, vlight.color.y, vlight.color.z, 0);
+        DGL_Vertex3f(0, 0, 0);
+    DGL_End();
 }
 
 static String labelForGenerator(Generator const &gen)
@@ -5789,8 +5778,8 @@ static void drawGenerators(Map &map)
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
-    GLState::current().setDepthTest(false).apply();
-    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+    GLState::current().setDepthTest(false);
+    DGL_Enable(DGL_TEXTURE_2D);
 
     map.forAllGenerators([] (Generator &gen)
     {
@@ -5798,8 +5787,8 @@ static void drawGenerators(Map &map)
         return LoopContinue;
     });
 
-    GLState::current().setDepthTest(true).apply();
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    GLState::current().setDepthTest(true);
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 static void drawBar(Vector3d const &origin, coord_t height, dfloat opacity)
@@ -5807,17 +5796,17 @@ static void drawBar(Vector3d const &origin, coord_t height, dfloat opacity)
     static dint const EXTEND_DIST = 64;
     static dfloat const black[] = { 0, 0, 0, 0 };
 
-    LIBGUI_GL.glBegin(GL_LINES);
-        LIBGUI_GL.glColor4fv(black);
-        LIBGUI_GL.glVertex3f(origin.x, origin.z - EXTEND_DIST, origin.y);
-        LIBGUI_GL.glColor4f(1, 1, 1, opacity);
-        LIBGUI_GL.glVertex3f(origin.x, origin.z, origin.y);
-        LIBGUI_GL.glVertex3f(origin.x, origin.z, origin.y);
-        LIBGUI_GL.glVertex3f(origin.x, origin.z + height, origin.y);
-        LIBGUI_GL.glVertex3f(origin.x, origin.z + height, origin.y);
-        LIBGUI_GL.glColor4fv(black);
-        LIBGUI_GL.glVertex3f(origin.x, origin.z + height + EXTEND_DIST, origin.y);
-    LIBGUI_GL.glEnd();
+    DGL_Begin(DGL_LINES);
+        DGL_Color4fv(black);
+        DGL_Vertex3f(origin.x, origin.z - EXTEND_DIST, origin.y);
+        DGL_Color4f(1, 1, 1, opacity);
+        DGL_Vertex3f(origin.x, origin.z, origin.y);
+        DGL_Vertex3f(origin.x, origin.z, origin.y);
+        DGL_Vertex3f(origin.x, origin.z + height, origin.y);
+        DGL_Vertex3f(origin.x, origin.z + height, origin.y);
+        DGL_Color4fv(black);
+        DGL_Vertex3f(origin.x, origin.z + height + EXTEND_DIST, origin.y);
+    DGL_End();
 }
 
 static String labelForVertex(Vertex const *vtx)
@@ -5871,13 +5860,13 @@ static void drawVertexVisual(Vertex const &vertex, ddouble minHeight, ddouble ma
     }
     if(parms.drawLabel)
     {
-        GLState::current().setDepthTest(false).apply();
-        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+        GLState::current().setDepthTest(false);
+        DGL_Enable(DGL_TEXTURE_2D);
 
         drawLabel(labelForVertex(&vertex), origin, distToEye / (DENG_GAMEVIEW_WIDTH / 2), opacity);
 
-        GLState::current().setDepthTest(true).apply();
-        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+        GLState::current().setDepthTest(true);
+        DGL_Disable(DGL_TEXTURE_2D);
     }
 }
 
@@ -5997,9 +5986,11 @@ static void drawVertexes(Map &map)
 
     if (devVertexBars)
     {
-        GLState::current().setDepthTest(false).apply();
+        GLState::current().setDepthTest(false);
 
+#if defined (DENG_OPENGL)
         LIBGUI_GL.glEnable(GL_LINE_SMOOTH);
+#endif
         oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
         DGL_SetFloat(DGL_LINE_WIDTH, 2);
 
@@ -6021,16 +6012,18 @@ static void drawVertexes(Map &map)
             return LoopContinue;
         });
 
-        GLState::current().setDepthTest(true).apply();
+        GLState::current().setDepthTest(true);
     }
 
     // Draw the vertex origins.
     dfloat const oldPointSize = DGL_GetFloat(DGL_POINT_SIZE);
 
+#if defined (DENG_OPENGL)
     LIBGUI_GL.glEnable(GL_POINT_SMOOTH);
+#endif
     DGL_SetFloat(DGL_POINT_SIZE, 6);
 
-    GLState::current().setDepthTest(false).apply();
+    GLState::current().setDepthTest(false);
 
     parms.drawnVerts->fill(false);  // Process all again.
     parms.drawOrigin = true;
@@ -6051,7 +6044,7 @@ static void drawVertexes(Map &map)
         return LoopContinue;
     });
 
-    GLState::current().setDepthTest(true).apply();
+    GLState::current().setDepthTest(true);
 
     if (devVertexIndices)
     {
@@ -6079,10 +6072,14 @@ static void drawVertexes(Map &map)
     if (devVertexBars)
     {
         DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);
+#if defined (DENG_OPENGL)
         LIBGUI_GL.glDisable(GL_LINE_SMOOTH);
+#endif
     }
     DGL_SetFloat(DGL_POINT_SIZE, oldPointSize);
+#if defined (DENG_OPENGL)
     LIBGUI_GL.glDisable(GL_POINT_SMOOTH);
+#endif
 
 #undef MAX_VERTEX_POINT_DIST
 }
@@ -6106,8 +6103,8 @@ static void drawSectors(Map &map)
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
-    GLState::current().setDepthTest(false).apply();
-    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+    GLState::current().setDepthTest(false);
+    DGL_Enable(DGL_TEXTURE_2D);
 
     // Draw a sector label at the center of each subsector:
     map.forAllSectors([] (Sector &sec)
@@ -6125,8 +6122,8 @@ static void drawSectors(Map &map)
         });
     });
 
-    GLState::current().setDepthTest(true).apply();
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    GLState::current().setDepthTest(true);
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 static String labelForThinker(thinker_t *thinker)
@@ -6149,8 +6146,8 @@ static void drawThinkers(Map &map)
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
-    GLState::current().setDepthTest(false).apply();
-    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+    GLState::current().setDepthTest(false);
+    DGL_Enable(DGL_TEXTURE_2D);
 
     map.thinkers().forAll(0x1 | 0x2, [] (thinker_t *th)
     {
@@ -6168,8 +6165,8 @@ static void drawThinkers(Map &map)
         return LoopContinue;
     });
 
-    GLState::current().setDepthTest(true).apply();
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    GLState::current().setDepthTest(true);
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 #if 0
@@ -6193,14 +6190,14 @@ void Rend_LightGridVisual(LightGrid &lg)
     }
 
     // Go into screen projection mode.
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPushMatrix();
-    LIBGUI_GL.glLoadIdentity();
-    LIBGUI_GL.glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, -1, 1);
 
     for(dint y = 0; y < lg.dimensions().y; ++y)
     {
-        LIBGUI_GL.glBegin(GL_QUADS);
+        DGL_Begin(DGL_QUADS);
         for(dint x = 0; x < lg.dimensions().x; ++x)
         {
             LightGrid::Index gridIndex = lg.toIndex(x, lg.dimensions().y - 1 - y);
@@ -6220,17 +6217,17 @@ void Rend_LightGridVisual(LightGrid &lg)
 
             LIBGUI_GL.glColor3f(color->x, color->y, color->z);
 
-            LIBGUI_GL.glVertex2f(x * devLightGridSize, y * devLightGridSize);
-            LIBGUI_GL.glVertex2f(x * devLightGridSize + devLightGridSize, y * devLightGridSize);
-            LIBGUI_GL.glVertex2f(x * devLightGridSize + devLightGridSize,
+            DGL_Vertex2f(x * devLightGridSize, y * devLightGridSize);
+            DGL_Vertex2f(x * devLightGridSize + devLightGridSize, y * devLightGridSize);
+            DGL_Vertex2f(x * devLightGridSize + devLightGridSize,
                        y * devLightGridSize + devLightGridSize);
-            LIBGUI_GL.glVertex2f(x * devLightGridSize, y * devLightGridSize + devLightGridSize);
+            DGL_Vertex2f(x * devLightGridSize, y * devLightGridSize + devLightGridSize);
         }
-        LIBGUI_GL.glEnd();
+        DGL_End();
     }
 
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 }
 #endif
 
@@ -6252,7 +6249,7 @@ MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec()
 /// Returns the texture variant specification for lightmaps.
 TextureVariantSpec const &Rend_MapSurfaceLightmapTextureSpec()
 {
-    return ClientApp::resources().textureSpec(TC_MAPSURFACE_LIGHTMAP, 0, 0, 0, 0, GL_CLAMP, GL_CLAMP,
+    return ClientApp::resources().textureSpec(TC_MAPSURFACE_LIGHTMAP, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                 1, -1, -1, false, false, false, true);
 }
 
@@ -6443,7 +6440,7 @@ void Rend_Register()
     C_VAR_FLOAT2("rend-light-compression", &lightRangeCompression, 0, -1, 1, Rend_UpdateLightModMatrix);
     C_VAR_BYTE("rend-light-decor", &useLightDecorations, 0, 0, 1);
     C_VAR_FLOAT("rend-light-fog-bright", &dynlightFogBright, 0, 0, 1);
-    C_VAR_INT("rend-light-multitex", &useMultiTexLights, 0, 0, 1);
+    //C_VAR_INT("rend-light-multitex", &useMultiTexLights, 0, 0, 1);
     C_VAR_INT("rend-light-num", &rendMaxLumobjs, CVF_NO_MAX, 0, 0);
     C_VAR_FLOAT("rend-light-sky", &rendSkyLight, 0, 0, 1/*, useSkylightChanged*/);
     C_VAR_BYTE("rend-light-sky-auto", &rendSkyLightAuto, 0, 0, 1/*, useSkylightChanged*/);
@@ -6460,7 +6457,7 @@ void Rend_Register()
     C_VAR_INT("rend-tex", &renderTextures, CVF_NO_ARCHIVE, 0, 2);
     C_VAR_BYTE("rend-tex-anim-smooth", &smoothTexAnim, 0, 0, 1);
     C_VAR_INT("rend-tex-detail", &r_detail, 0, 0, 1);
-    C_VAR_INT("rend-tex-detail-multitex", &useMultiTexDetails, 0, 0, 1);
+    //C_VAR_INT("rend-tex-detail-multitex", &useMultiTexDetails, 0, 0, 1);
     C_VAR_FLOAT("rend-tex-detail-scale", &detailScale, CVF_NO_MIN | CVF_NO_MAX, 0, 0);
     C_VAR_FLOAT2("rend-tex-detail-strength", &detailFactor, 0, 0, 5, detailFactorChanged);
     C_VAR_BYTE2("rend-tex-external-always", &loadExtAlways, 0, 0, 1, loadExtAlwaysChanged);

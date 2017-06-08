@@ -124,10 +124,9 @@ void BusyWidget::drawContent()
         {
             root().painter().flush();
             GLState::push()
-                    .setViewport(Rectangleui::fromSize(GLState::current().target().size()))
-                    .apply();
+                    .setViewport(Rectangleui::fromSize(GLState::current().target().size()));
             Con_DrawTransition();
-            GLState::pop().apply();
+            GLState::pop();
         }
         else
         {
@@ -144,9 +143,8 @@ void BusyWidget::drawContent()
         root().painter().flush();
         GLState::push()
                 .setAlphaTest(false)
-                .setBlend(false)
-                .apply();
-        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+                .setBlend(false);
+        DGL_Enable(DGL_TEXTURE_2D);
 
         // Draw the texture.
         Rectanglei pos = rule().recti();
@@ -155,8 +153,8 @@ void BusyWidget::drawContent()
                 Matrix4f::scaleThenTranslate(pos.size(), pos.topLeft);
         d->drawable.draw();
 
-        GLState::pop().apply();
-        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+        GLState::pop();
+        DGL_Disable(DGL_TEXTURE_2D);
     }
 }
 
@@ -196,12 +194,11 @@ void BusyWidget::renderTransitionFrame()
 
     GLState::push()
             .setTarget(d->transitionFrame)
-            .setViewport(Rectangleui::fromSize(d->transitionFrame.size()))
-            .apply();
+            .setViewport(Rectangleui::fromSize(d->transitionFrame.size()));
 
     d->gameWidget->drawComposited();
 
-    GLState::pop().apply();
+    GLState::pop();
 
     d->transitionFrame.resolveSamples();
 

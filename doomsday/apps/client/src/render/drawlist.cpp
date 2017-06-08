@@ -118,17 +118,14 @@ DENG2_PIMPL(DrawList)
             {
                 DENG2_ASSERT(buffer);
 
-                auto &GL = LIBGUI_GL;
-
                 if (conditions & SetLightEnv)
                 {
                     // Use the correct texture and color for the light.
-                    GL.glActiveTexture((conditions & SetLightEnv0)? GL_TEXTURE0 : GL_TEXTURE1);
+                    DGL_SetInteger(DGL_ACTIVE_TEXTURE, (conditions & SetLightEnv0)? 0 : 1);
                     GL_BindTextureUnmanaged(!renderTextures? 0 : primitive.modTexture,
                                             gl::ClampToEdge, gl::ClampToEdge);
 
-                    Vector4f modColor4(primitive.modColor, 0.f);
-                    GL.glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, modColor4.constPtr());
+                    DGL_SetModulationColor(Vector4f(primitive.modColor, 0.f));
                 }
 
                 if (conditions & SetMatrixTexture)
@@ -136,24 +133,24 @@ DENG2_PIMPL(DrawList)
                     // Primitive-specific texture translation & scale.
                     if (conditions & SetMatrixTexture0)
                     {
-                        GL.glActiveTexture(GL_TEXTURE0);
-                        GL.glMatrixMode(GL_TEXTURE);
-                        GL.glPushMatrix();
-                        GL.glLoadIdentity();
-                        GL.glTranslatef(primitive.texOffset.x * primitive.texScale.x,
-                                        primitive.texOffset.y * primitive.texScale.y, 1);
-                        GL.glScalef(primitive.texScale.x, primitive.texScale.y, 1);
+                        DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
+                        DGL_MatrixMode(DGL_TEXTURE);
+                        DGL_PushMatrix();
+                        DGL_LoadIdentity();
+                        DGL_Translatef(primitive.texOffset.x * primitive.texScale.x,
+                                       primitive.texOffset.y * primitive.texScale.y, 1);
+                        DGL_Scalef(primitive.texScale.x, primitive.texScale.y, 1);
                     }
 
                     if (conditions & SetMatrixTexture1)
                     {
-                        GL.glActiveTexture(GL_TEXTURE1);
-                        GL.glMatrixMode(GL_TEXTURE);
-                        GL.glPushMatrix();
-                        GL.glLoadIdentity();
-                        GL.glTranslatef(primitive.texOffset.x * primitive.texScale.x,
-                                        primitive.texOffset.y * primitive.texScale.y, 1);
-                        GL.glScalef(primitive.texScale.x, primitive.texScale.y, 1);
+                        DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
+                        DGL_MatrixMode(DGL_TEXTURE);
+                        DGL_PushMatrix();
+                        DGL_LoadIdentity();
+                        DGL_Translatef(primitive.texOffset.x * primitive.texScale.x,
+                                       primitive.texOffset.y * primitive.texScale.y, 1);
+                        DGL_Scalef(primitive.texScale.x, primitive.texScale.y, 1);
                     }
                 }
 
@@ -162,24 +159,24 @@ DENG2_PIMPL(DrawList)
                     // Primitive-specific texture translation & scale.
                     if (conditions & SetMatrixDTexture0)
                     {
-                        GL.glActiveTexture(GL_TEXTURE0);
-                        GL.glMatrixMode(GL_TEXTURE);
-                        GL.glPushMatrix();
-                        GL.glLoadIdentity();
-                        GL.glTranslatef(primitive.detailTexOffset.x * primitive.detailTexScale.x,
-                                        primitive.detailTexOffset.y * primitive.detailTexScale.y, 1);
-                        GL.glScalef(primitive.detailTexScale.x, primitive.detailTexScale.y, 1);
+                        DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
+                        DGL_MatrixMode(DGL_TEXTURE);
+                        DGL_PushMatrix();
+                        DGL_LoadIdentity();
+                        DGL_Translatef(primitive.detailTexOffset.x * primitive.detailTexScale.x,
+                                       primitive.detailTexOffset.y * primitive.detailTexScale.y, 1);
+                        DGL_Scalef(primitive.detailTexScale.x, primitive.detailTexScale.y, 1);
                     }
 
                     if (conditions & SetMatrixDTexture1)
                     {
-                        GL.glActiveTexture(GL_TEXTURE1);
-                        GL.glMatrixMode(GL_TEXTURE);
-                        GL.glPushMatrix();
-                        GL.glLoadIdentity();
-                        GL.glTranslatef(primitive.detailTexOffset.x * primitive.detailTexScale.x,
-                                        primitive.detailTexOffset.y * primitive.detailTexScale.y, 1);
-                        GL.glScalef(primitive.detailTexScale.x, primitive.detailTexScale.y, 1);
+                        DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
+                        DGL_MatrixMode(DGL_TEXTURE);
+                        DGL_PushMatrix();
+                        DGL_LoadIdentity();
+                        DGL_Translatef(primitive.detailTexOffset.x * primitive.detailTexScale.x,
+                                       primitive.detailTexOffset.y * primitive.detailTexScale.y, 1);
+                        DGL_Scalef(primitive.detailTexScale.x, primitive.detailTexScale.y, 1);
                     }
                 }
 
@@ -189,12 +186,12 @@ DENG2_PIMPL(DrawList)
                     GL_BlendMode(blendmode_t(primitive.flags_blendMode & BLEND_MODE_MASK));
                 }
 
-                GL.glBegin(primitive.type == gl::TriangleStrip? GL_TRIANGLE_STRIP : GL_TRIANGLE_FAN);
+                DGL_Begin(primitive.type == gl::TriangleStrip? DGL_TRIANGLE_STRIP : DGL_TRIANGLE_FAN);
                 for (duint i = 0; i < numIndices; ++i)
                 {
                     duint const index = indices[i];
 
-                    for (dint k = 0; k < numTexUnits; ++k)
+                    for (dint k = 0; k < MAX_TEX_UNITS; ++k)
                     {
                         Vector2f const *tc = nullptr;  // No mapping.
                         switch (texUnitMap[k])
@@ -208,35 +205,35 @@ DENG2_PIMPL(DrawList)
 
                         if (tc)
                         {
-                            GL.glMultiTexCoord2f(GL_TEXTURE0 + k, tc[index].x, tc[index].y);
+                            DGL_TexCoord2f(k, tc[index].x, tc[index].y);
                         }
                     }
 
                     if (!(conditions & NoColor))
                     {
                         Vector4ub const &color = buffer->colorCoords[index];
-                        GL.glColor4ub(color.x, color.y, color.z, color.w);
+                        DGL_Color4ub(color.x, color.y, color.z, color.w);
                     }
 
                     Vector3f const &pos = buffer->posCoords[index];
-                    GL.glVertex3f(pos.x, pos.z, pos.y);
+                    DGL_Vertex3f(pos.x, pos.z, pos.y);
                 }
-                GL.glEnd();
+                DGL_End();
 
                 // Restore the texture matrix if changed.
                 if (conditions & SetMatrixDTexture)
                 {
                     if (conditions & SetMatrixDTexture0)
                     {
-                        GL.glActiveTexture(GL_TEXTURE0);
-                        GL.glMatrixMode(GL_TEXTURE);
-                        GL.glPopMatrix();
+                        DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
+                        DGL_MatrixMode(DGL_TEXTURE);
+                        DGL_PopMatrix();
                     }
                     if (conditions & SetMatrixDTexture1)
                     {
-                        GL.glActiveTexture(GL_TEXTURE1);
-                        GL.glMatrixMode(GL_TEXTURE);
-                        GL.glPopMatrix();
+                        DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
+                        DGL_MatrixMode(DGL_TEXTURE);
+                        DGL_PopMatrix();
                     }
                 }
 
@@ -244,15 +241,15 @@ DENG2_PIMPL(DrawList)
                 {
                     if (conditions & SetMatrixTexture0)
                     {
-                        GL.glActiveTexture(GL_TEXTURE0);
-                        GL.glMatrixMode(GL_TEXTURE);
-                        GL.glPopMatrix();
+                        DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
+                        DGL_MatrixMode(DGL_TEXTURE);
+                        DGL_PopMatrix();
                     }
                     if (conditions & SetMatrixTexture1)
                     {
-                        GL.glActiveTexture(GL_TEXTURE1);
-                        GL.glMatrixMode(GL_TEXTURE);
-                        GL.glPopMatrix();
+                        DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
+                        DGL_MatrixMode(DGL_TEXTURE);
+                        DGL_PopMatrix();
                     }
                 }
             }
@@ -373,15 +370,14 @@ DENG2_PIMPL(DrawList)
             if (spec.unit(TU_INTER).hasTexture())
             {
                 // Blend between two textures, modulate with primary color.
-                DENG2_ASSERT(numTexUnits >= 2);
                 GL_SelectTexUnits(2);
 
                 GL_BindTo(spec.unit(TU_PRIMARY), 0);
                 GL_BindTo(spec.unit(TU_INTER  ), 1);
-                GL_ModulateTexture(2);
+                DGL_ModulateTexture(2);
 
                 dfloat color[4] = { 0, 0, 0, spec.unit(TU_INTER).opacity };
-                LIBGUI_GL.glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
+                DGL_SetModulationColor(color);
             }
             else if (!spec.unit(TU_PRIMARY).hasTexture())
             {
@@ -393,7 +389,7 @@ DENG2_PIMPL(DrawList)
                 // Normal modulation.
                 GL_SelectTexUnits(1);
                 GL_Bind(spec.unit(TU_PRIMARY));
-                GL_ModulateTexture(1);
+                DGL_ModulateTexture(1);
             }
 
             if (spec.unit(TU_INTER).hasTexture())
@@ -431,14 +427,13 @@ DENG2_PIMPL(DrawList)
                 return Skip;
             }
 
-            DENG2_ASSERT(numTexUnits >= 2);
             GL_SelectTexUnits(2);
             GL_BindTo(spec.unit(TU_PRIMARY), 0);
             GL_BindTo(spec.unit(TU_INTER  ), 1);
-            GL_ModulateTexture(2);
+            DGL_ModulateTexture(2);
 
             dfloat color[4] = { 0, 0, 0, spec.unit(TU_INTER).opacity };
-            LIBGUI_GL.glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
+            DGL_SetModulationColor(color);
             return SetMatrixTexture0 | SetMatrixTexture1; }
 
         case DM_BLENDED_FIRST_LIGHT:
@@ -485,21 +480,20 @@ DENG2_PIMPL(DrawList)
             {
                 // Mode 3 actually just disables the second texture stage,
                 // which would modulate with primary color.
-                DENG2_ASSERT(numTexUnits >= 2);
                 GL_SelectTexUnits(2);
                 GL_BindTo(spec.unit(TU_PRIMARY), 0);
                 GL_BindTo(spec.unit(TU_INTER  ), 1);
-                GL_ModulateTexture(3);
+                DGL_ModulateTexture(3);
 
                 dfloat color[4] = { 0, 0, 0, spec.unit(TU_INTER).opacity };
-                LIBGUI_GL.glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
+                DGL_SetModulationColor(color);
                 // Render all geometry.
                 return SetMatrixTexture0 | SetMatrixTexture1;
             }
             // No modulation at all.
             GL_SelectTexUnits(1);
             GL_Bind(spec.unit(TU_PRIMARY));
-            GL_ModulateTexture(0);
+            DGL_ModulateTexture(0);
             if (mode == DM_MOD_TEXTURE_MANY_LIGHTS)
             {
                 return SetMatrixTexture0 | ManyLights;
@@ -518,7 +512,7 @@ DENG2_PIMPL(DrawList)
             if (spec.unit(TU_PRIMARY_DETAIL).hasTexture())
             {
                 GL_SelectTexUnits(2);
-                GL_ModulateTexture(9); // Tex+Detail, no color.
+                DGL_ModulateTexture(9); // Tex+Detail, no color.
                 GL_BindTo(spec.unit(TU_PRIMARY       ), 0);
                 GL_BindTo(spec.unit(TU_PRIMARY_DETAIL), 1);
                 return SetMatrixTexture0 | SetMatrixDTexture1;
@@ -526,7 +520,7 @@ DENG2_PIMPL(DrawList)
             else
             {
                 GL_SelectTexUnits(1);
-                GL_ModulateTexture(0);
+                DGL_ModulateTexture(0);
                 GL_Bind(spec.unit(TU_PRIMARY));
                 return SetMatrixTexture0;
             }
@@ -554,7 +548,7 @@ DENG2_PIMPL(DrawList)
             if (spec.unit(TU_PRIMARY_DETAIL).hasTexture())
             {
                 GL_SelectTexUnits(2);
-                GL_ModulateTexture(8);
+                DGL_ModulateTexture(8);
                 GL_BindTo(spec.unit(TU_PRIMARY       ), 0);
                 GL_BindTo(spec.unit(TU_PRIMARY_DETAIL), 1);
                 return SetMatrixTexture0 | SetMatrixDTexture1;
@@ -563,7 +557,7 @@ DENG2_PIMPL(DrawList)
             {
                 // Normal modulation.
                 GL_SelectTexUnits(1);
-                GL_ModulateTexture(1);
+                DGL_ModulateTexture(1);
                 GL_Bind(spec.unit(TU_PRIMARY));
                 return SetMatrixTexture0;
             }
@@ -588,7 +582,7 @@ DENG2_PIMPL(DrawList)
             GL_BindTo(spec.unit(TU_INTER_DETAIL  ), 1);
 
             dfloat color[4] = { 0, 0, 0, spec.unit(TU_INTER_DETAIL).opacity };
-            LIBGUI_GL.glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
+            DGL_SetModulationColor(color);
             return SetMatrixDTexture0 | SetMatrixDTexture1; }
 
         case DM_SHADOW:
@@ -606,13 +600,13 @@ DENG2_PIMPL(DrawList)
             if (!spec.unit(TU_PRIMARY).hasTexture())
             {
                 // Apply a modelview shift.
-                LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-                LIBGUI_GL.glPushMatrix();
+                DGL_MatrixMode(DGL_MODELVIEW);
+                DGL_PushMatrix();
 
                 // Scale towards the viewpoint to avoid Z-fighting.
-                LIBGUI_GL.glTranslatef(vOrigin.x, vOrigin.y, vOrigin.z);
-                LIBGUI_GL.glScalef(.99f, .99f, .99f);
-                LIBGUI_GL.glTranslatef(-vOrigin.x, -vOrigin.y, -vOrigin.z);
+                DGL_Translatef(vOrigin.x, vOrigin.y, vOrigin.z);
+                DGL_Scalef(.99f, .99f, .99f);
+                DGL_Translatef(-vOrigin.x, -vOrigin.y, -vOrigin.z);
             }
             return 0;
 
@@ -625,7 +619,7 @@ DENG2_PIMPL(DrawList)
                 // The intertex holds the info for the mask texture.
                 GL_BindTo(spec.unit(TU_INTER), 1);
                 dfloat color[4] = { 0, 0, 0, 1 };
-                LIBGUI_GL.glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
+                DGL_SetModulationColor(color);
             }
 
             // Intentional fall-through.
@@ -671,7 +665,7 @@ DENG2_PIMPL(DrawList)
             if (spec.unit(TU_INTER).hasTexture())
             {
                 GL_SelectTexUnits(1);
-                GL_ModulateTexture(1);
+                DGL_ModulateTexture(1);
             }
             break;
 
@@ -679,7 +673,7 @@ DENG2_PIMPL(DrawList)
             if (spec.unit(TU_INTER).hasTexture())
             {
                 GL_SelectTexUnits(1);
-                GL_ModulateTexture(1);
+                DGL_ModulateTexture(1);
             }
             break;
 
@@ -689,11 +683,11 @@ DENG2_PIMPL(DrawList)
             if (spec.unit(TU_INTER).hasTexture())
             {
                 GL_SelectTexUnits(1);
-                GL_ModulateTexture(1);
+                DGL_ModulateTexture(1);
             }
             else if (mode != DM_BLENDED_MOD_TEXTURE)
             {
-                GL_ModulateTexture(1);
+                DGL_ModulateTexture(1);
             }
             break;
 
@@ -703,11 +697,11 @@ DENG2_PIMPL(DrawList)
                 if (spec.unit(TU_PRIMARY_DETAIL).hasTexture())
                 {
                     GL_SelectTexUnits(1);
-                    GL_ModulateTexture(1);
+                    DGL_ModulateTexture(1);
                 }
                 else
                 {
-                    GL_ModulateTexture(1);
+                    DGL_ModulateTexture(1);
                 }
             }
             break;
@@ -717,7 +711,7 @@ DENG2_PIMPL(DrawList)
                spec.unit(TU_PRIMARY_DETAIL).hasTexture())
             {
                 GL_SelectTexUnits(1);
-                GL_ModulateTexture(1);
+                DGL_ModulateTexture(1);
             }
             break;
 
@@ -725,8 +719,8 @@ DENG2_PIMPL(DrawList)
             if (!spec.unit(TU_PRIMARY).hasTexture())
             {
                 // Restore original modelview matrix.
-                LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-                LIBGUI_GL.glPopMatrix();
+                DGL_MatrixMode(DGL_MODELVIEW);
+                DGL_PopMatrix();
             }
             break;
 
@@ -821,7 +815,7 @@ void DrawList::draw(DrawMode mode, TexUnitMap const &texUnitMap) const
 {
     using Parm = PrimitiveParams;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Setup GL state for this list.
@@ -911,7 +905,7 @@ void DrawList::rewind()
     d->last   = nullptr;
 }
 
-void DrawList::reserveSpace(DrawList::Indices &indices, uint count) // static 
+void DrawList::reserveSpace(DrawList::Indices &indices, uint count) // static
 {
     if (indices.size() < int(count)) indices.resize(int(count));
 }

@@ -36,6 +36,11 @@ else ()
     set (DENG_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE})
 endif ()
 
+if (UNIX AND NOT APPLE)
+    set (UNIX_LINUX YES)
+    include (GNUInstallDirs)
+endif()
+
 include (Macros)
 include (Arch)
 include (BuildTypes)
@@ -44,10 +49,6 @@ include (Version)
 find_package (Ccache)
 include (Options)
 include (Packaging)
-
-if (UNIX AND NOT APPLE)
-    include (GNUInstallDirs)
-endif()
 
 # Install directories.
 set (DENG_INSTALL_DATA_DIR "share/doomsday")
@@ -91,9 +92,23 @@ else ()
     find_package (Qt4 REQUIRED)
 endif ()
 
+# Check for mobile platforms.
+if (NOT QMAKE_XSPEC_CHECKED)
+    qmake_query (xspec "QMAKE_XSPEC")
+    set (QMAKE_XSPEC ${xspec} CACHE STRING "Value of QMAKE_XSPEC")
+    set (QMAKE_XSPEC_CHECKED YES CACHE BOOL "QMAKE_XSPEC has been checked")
+    mark_as_advanced (QMAKE_XSPEC)
+    mark_as_advanced (QMAKE_XSPEC_CHECKED)
+    if (QMAKE_XSPEC STREQUAL "macx-ios-clang")
+        set (IOS YES CACHE BOOL "Building for iOS platform")
+    endif ()
+endif ()
+
 # Platform-Specific Configuration --------------------------------------------
 
-if (APPLE)
+if (IOS)
+    include (PlatformiOS)
+elseif (APPLE)
     include (PlatformMacx)
 elseif (WIN32)
     include (PlatformWindows)

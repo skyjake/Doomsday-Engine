@@ -80,19 +80,13 @@
  * High-level GL state information.
  */
 typedef struct gl_state_s {
-    /// Global config:
-    //int multisampleFormat;
-
     /// Current state:
-    dd_bool currentUseFog;
     float currentLineWidth;
     float currentPointSize;
 
     /// Feature (abstract) availability bits:
     /// Vendor and implementation agnostic.
     struct {
-        uint blendSubtract : 1;
-        uint genMipmap : 1;
         uint texCompression : 1;
         uint texFilterAniso : 1;
     } features;
@@ -118,19 +112,6 @@ extern "C" {
 #ifdef __CLIENT__
 
 extern gl_state_t GL_state;
-
-/*#ifdef WIN32
-//extern PFNWGLSWAPINTERVALEXTPROC      wglSwapIntervalEXT;
-extern PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
-#endif
-*/
-/*
-#if defined(LIBGUI_USE_GLENTRYPOINTS)
-extern PFNGLBLENDEQUATIONEXTPROC      glBlendEquationEXT;
-extern PFNGLLOCKARRAYSEXTPROC         glLockArraysEXT;
-extern PFNGLUNLOCKARRAYSEXTPROC       glUnlockArraysEXT;
-#endif
-*/
 
 #ifndef GL_ATI_texture_env_combine3
 #define GL_MODULATE_ADD_ATI             0x8744
@@ -164,7 +145,7 @@ void Sys_GLConfigureDefaultState(void);
  */
 void Sys_GLPrintExtensions(void);
 
-dd_bool Sys_GLCheckError(void);
+dd_bool Sys_GLCheckErrorArgs(char const *file, int line);
 
 #endif // __CLIENT__
 

@@ -2615,6 +2615,30 @@ static void musicMidiFontChanged()
 {
     App_AudioSystem().updateMusicMidiFont();
 }
+
+D_CMD(ReverbParameters)
+{
+    dfloat args[NUM_REVERB_DATA];
+
+    args[SFXLP_REVERB_VOLUME ] = String(argv[1]).toFloat();
+    args[SFXLP_REVERB_SPACE  ] = String(argv[2]).toFloat();
+    args[SFXLP_REVERB_DECAY  ] = String(argv[3]).toFloat();
+    args[SFXLP_REVERB_DAMPING] = String(argv[4]).toFloat();
+
+    LOG_SCR_MSG("Setting reverb parameters:\n"
+                "- volume: %f\n"
+                "- space: %f\n"
+                "- decay: %f\n"
+                "- damping: %f")
+            << args[SFXLP_REVERB_VOLUME ]
+            << args[SFXLP_REVERB_SPACE  ]
+            << args[SFXLP_REVERB_DECAY  ]
+            << args[SFXLP_REVERB_DAMPING];
+
+    App_AudioSystem().sfx()->Listenerv(SFXLP_REVERB, args);
+
+    return true;
+}
 #endif
 
 void AudioSystem::consoleRegister()  // static
@@ -2640,6 +2664,8 @@ void AudioSystem::consoleRegister()  // static
     C_CMD_FLAGS("pausemusic", nullptr, PauseMusic, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("playmusic",  nullptr, PlayMusic,  CMDF_NO_DEDICATED);
     C_CMD_FLAGS("stopmusic",  "",      StopMusic,  CMDF_NO_DEDICATED);
+
+    C_CMD("reverbparams", "ffff", ReverbParameters);
 
     // Debug:
     C_VAR_INT     ("sound-info",          &showSoundInfo,         0, 0, 1);

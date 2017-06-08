@@ -113,11 +113,15 @@ static void continueInitWithEventLoopRunning()
 {
     if (!ClientWindowSystem::mainExists()) return;
 
+#if !defined (DENG_MOBILE)
     // Show the main window. This causes initialization to finish (in busy mode)
     // as the canvas is visible and ready for initialization.
     ClientWindowSystem::main().show();
+#endif
 
+#if defined (DENG_HAVE_UPDATER)
     ClientApp::updater().setupUI();
+#endif
 }
 
 static Value *Function_App_GamePlugin(Context &, Function::ArgumentValues const &)
@@ -149,8 +153,12 @@ DENG2_PIMPL(ClientApp)
 , DENG2_OBSERVES(DoomsdayApp, PeriodicAutosave)
 {
     Binder binder;
+#if defined (DENG_HAVE_UPDATER)
     QScopedPointer<Updater> updater;
+#endif
+#if defined (DENG_HAVE_BUSYRUNNER)
     BusyRunner busyRunner;
+#endif
     ConfigProfiles audioSettings;
     ConfigProfiles networkSettings;
     ConfigProfiles logSettings;
@@ -264,7 +272,9 @@ DENG2_PIMPL(ClientApp)
             DENG2_ASSERT("Unclean shutdown: exception in ~ClientApp"!=0);
         }
 
+#if defined (DENG_HAVE_UPDATER)
         updater.reset();
+#endif
         delete inputSys;
         delete resources;
         delete winSys;
@@ -290,7 +300,9 @@ DENG2_PIMPL(ClientApp)
             // If an update has been downloaded and is ready to go, we should
             // re-show the dialog now that the user has saved the game as prompted.
             LOG_DEBUG("Game saved");
+#if defined (DENG_HAVE_UPDATER)
             DownloadDialog::showCompletedDownload();
+#endif
             break;
 
         case DD_NOTIFY_PSPRITE_STATE_CHANGED:
@@ -417,7 +429,7 @@ DENG2_PIMPL(ClientApp)
      */
     void setupAppMenu()
     {
-#ifdef MACOSX
+#if defined (MACOSX)
         nativeAppMenu.reset(new NativeMenu);
 #endif
     }
@@ -524,6 +536,7 @@ ClientApp::ClientApp(int &argc, char **argv)
             << DENG2_FUNC_NOARG (App_GamePlugin, "gamePlugin")
             << DENG2_FUNC_NOARG (App_Quit,       "quit");
 
+#if !defined (DENG_MOBILE)
     /// @todo Remove the splash screen when file system indexing can be done as
     /// a background task and the main window can be opened instantly. -jk
     QPixmap const pixmap(doomsdaySplashXpm);
@@ -534,6 +547,7 @@ ClientApp::ClientApp(int &argc, char **argv)
                         QColor(90, 110, 95));
     processEvents();
     splash->deleteLater();
+#endif
 }
 
 void ClientApp::initialize()
@@ -612,8 +626,10 @@ void ClientApp::initialize()
     WindowSystem::setAppWindowSystem(*d->winSys);
     addSystem(*d->winSys);
 
+#if defined (DENG_HAVE_UPDATER)
     // Check for updates automatically.
     d->updater.reset(new Updater);
+#endif
 
     // Create the resource system.
     d->resources = new ClientResources;
@@ -621,8 +637,10 @@ void ClientApp::initialize()
 
     plugins().loadAll();
 
-    // Create the main window.
+    // On mobile, the window is instantiated via QML.
+#if !defined (DENG_MOBILE)
     d->winSys->createWindow()->setTitle(DD_ComposeMainWindowTitle());
+#endif
 
     d->setupAppMenu();
 
@@ -639,6 +657,8 @@ void ClientApp::initialize()
 
 void ClientApp::preFrame()
 {
+    DGL_BeginFrame();
+
     // Frame synchronous I/O operations.
     App_AudioSystem().startFrame();
 
@@ -791,16 +811,20 @@ ClientApp &ClientApp::app()
     return *clientAppSingleton;
 }
 
-BusyRunner &ClientApp::busyRunner()
-{
-    return app().d->busyRunner;
-}
-
+#if defined (DENG_HAVE_UPDATER)
 Updater &ClientApp::updater()
 {
     DENG2_ASSERT(!app().d->updater.isNull());
     return *app().d->updater;
 }
+#endif
+
+#if defined (DENG_HAVE_BUSYRUNNER)
+BusyRunner &ClientApp::busyRunner()
+{
+    return app().d->busyRunner;
+}
+#endif
 
 ConfigProfiles &ClientApp::logSettings()
 {
@@ -900,12 +924,14 @@ void ClientApp::openHomepageInBrowser()
 
 void ClientApp::openInBrowser(QUrl url)
 {
+#if !defined (DENG_MOBILE)
     // Get out of fullscreen mode.
     int windowed[] = {
         ClientWindow::Fullscreen, false,
         ClientWindow::End
     };
     ClientWindow::main().changeAttributes(windowed);
+#endif
 
     QDesktopServices::openUrl(url);
 }

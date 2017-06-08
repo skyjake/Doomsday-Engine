@@ -122,6 +122,7 @@ DENG2_PIMPL(GuiRootWidget)
     GLUniform uTexAtlas;
     TextureBank texBank; ///< Bank for the atlas contents.
     Painter painter;
+    AnimationVector2 rootOffset;
     FocusWidget *focusIndicator;
     bool noFramesDrawnYet;
     QList<SafeWidgetPtr<Widget> *> focusStack;
@@ -319,7 +320,13 @@ Painter &GuiRootWidget::painter()
 Matrix4f GuiRootWidget::projMatrix2D() const
 {
     RootWidget::Size const size = viewSize();
-    return Matrix4f::ortho(0, size.x, 0, size.y);
+    return Matrix4f::ortho(0, size.x, 0, size.y) *
+           Matrix4f::translate(d->rootOffset.value());
+}
+    
+AnimationVector2 &GuiRootWidget::rootOffset()
+{
+    return d->rootOffset;
 }
 
 void GuiRootWidget::routeMouse(Widget *routeTo)
@@ -430,6 +437,10 @@ void GuiRootWidget::update()
 
 void GuiRootWidget::draw()
 {
+    DENG2_GUARD(this);
+
+    DENG2_ASSERT_IN_RENDER_THREAD();
+
     d->focusIndicator->initialize();
 
     if (d->noFramesDrawnYet)
@@ -459,6 +470,10 @@ void GuiRootWidget::draw()
 
 void GuiRootWidget::drawUntil(Widget &until)
 {
+    DENG2_GUARD(this);
+    
+    DENG2_ASSERT_IN_RENDER_THREAD();
+
     d->painter.setNormalizedScissor();
 
     NotifyArgs args = notifyArgsForDraw();

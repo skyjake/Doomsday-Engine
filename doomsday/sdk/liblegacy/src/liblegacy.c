@@ -35,7 +35,6 @@ void Libdeng_Init(void)
     bamsInit();
     Timer_Init();
     Z_Init();
-    Sys_MarkAsMainThread();
 }
 
 void Libdeng_Shutdown(void)

@@ -23,7 +23,6 @@
 #include <de/Log>
 #include <de/Loop>
 
-#include <QApplication>
 #include <QTime>
 #include <QDebug>
 

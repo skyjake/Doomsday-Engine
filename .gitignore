@@ -33,3 +33,6 @@ vc100.pdb
 precompiled.h.cpp
 *.h.orig
 *.cpp.orig
+*.xcuserstate
+*.xcuserdatad
+*.xcscmblueprint

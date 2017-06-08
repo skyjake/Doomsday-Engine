@@ -47,6 +47,8 @@ class LIBGUI_PUBLIC GLDrawQueue
 public:
     GLDrawQueue();
 
+    void beginFrame();
+
     void setProgram(GLProgram &program,
                     Block const &batchUniformName = Block(),
                     GLUniform::Type batchUniformType = GLUniform::Float);

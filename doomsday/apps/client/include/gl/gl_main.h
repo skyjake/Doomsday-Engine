@@ -49,9 +49,6 @@ namespace world { class Material; }
 #define MINTEXWIDTH             8
 #define MINTEXHEIGHT            8
 
-DENG_EXTERN_C int numTexUnits;
-DENG_EXTERN_C dd_bool  envModAdd;
-//DENG_EXTERN_C int viewph, viewpw, viewpx, viewpy;
 DENG_EXTERN_C float vid_gamma, vid_bright, vid_contrast;
 DENG_EXTERN_C int r_detail;
 
@@ -60,6 +57,8 @@ DENG_EXTERN_C int r_detail;
 #else
 #  define DENG_ASSERT_GL_CONTEXT_ACTIVE()
 #endif
+
+#define Sys_GLCheckError()  Sys_GLCheckErrorArgs(__FILE__, __LINE__)
 
 #ifdef _DEBUG
 #  define LIBDENG_ASSERT_GL_TEXTURE_ISBOUND(tex) { \
@@ -167,13 +166,6 @@ void GL_InitRefresh();
  * To be called once at final shutdown.
  */
 void GL_ShutdownRefresh();
-
-/**
- * Configure the GL state for the specified texture modulation mode.
- *
- * @param mode  Modulation mode ident.
- */
-void GL_ModulateTexture(int mode);
 
 /**
  * Enables or disables vsync. May cause the OpenGL surface to be recreated.
@@ -313,9 +305,21 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int comps,
     colorpaletteid_t paletteId, float *brightX, float *brightY,
     struct ColorRawf_s *color, float *lumSize);
 
-void DGL_AssertNotInPrimitive(void);
+// DGL internal API ---------------------------------------------------------------------
 
-// Console commands.
+void            DGL_Shutdown();
+void            DGL_BeginFrame();
+void            DGL_AssertNotInPrimitive(void);
+de::Matrix4f    DGL_Matrix(DGLenum matrixMode);
+void            DGL_CurrentColor(DGLubyte *rgba);
+void            DGL_CurrentColor(float *rgba);
+void            DGL_ModulateTexture(int mode);
+void            DGL_SetModulationColor(de::Vector4f const &modColor);
+de::Vector4f    DGL_ModulationColor();
+void            DGL_FogParams(de::GLUniform &fogRange, de::GLUniform &fogColor);
+
+// Console commands ---------------------------------------------------------------------
+
 D_CMD(UpdateGammaRamp);
 
 #endif // DENG_GL_MAIN_H

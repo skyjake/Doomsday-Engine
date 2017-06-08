@@ -286,6 +286,8 @@ public:
 
     void setIndices(gl::Primitive primitive, Indices const &indices, gl::Usage usage);
 
+    void setData(void const *data, dsize dataSize, gl::Usage usage);
+
     void setData(dsize startOffset, void const *data, dsize dataSize);
 
     void setUninitializedData(dsize dataSize, gl::Usage usage);
@@ -300,6 +302,8 @@ public:
     void draw(DrawRanges const *ranges = nullptr) const;
 
     void drawWithIndices(GLBuffer const &indexBuffer) const;
+
+    void drawWithIndices(gl::Primitive primitive, Index const *indices, dsize count) const;
 
     /**
      * Draws the buffer with instancing. One instance of the buffer is drawn per
@@ -320,6 +324,8 @@ public:
     dsize count() const;
 
     void setFormat(internal::AttribSpecs const &format);
+
+    GLuint glName() const;
 
     static duint drawCount();
     static void resetDrawCount();

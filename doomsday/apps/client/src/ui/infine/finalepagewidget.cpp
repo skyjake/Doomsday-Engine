@@ -126,7 +126,7 @@ void FinalePageWidget::draw() const
                 matAnimator.prepare();
 
                 GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
-                LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+                DGL_Enable(DGL_TEXTURE_2D);
             }
 
             if (d->bg.material || topAlpha < 1.0 || bottomAlpha < 1.0)
@@ -136,7 +136,7 @@ void FinalePageWidget::draw() const
             else
             {
                 //glDisable(GL_BLEND);
-                GLState::current().setBlend(false).apply();
+                GLState::current().setBlend(false);
             }
 
             GL_DrawRectf2TextureColor(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64,
@@ -144,13 +144,13 @@ void FinalePageWidget::draw() const
 
             GL_SetNoTexture();
             //glEnable(GL_BLEND);
-            GLState::current().setBlend(true).apply();
+            GLState::current().setBlend(true);
         }
     }
 
     // Now lets go into 3D mode for drawing the p objects.
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPushMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
     //glLoadIdentity();
 
     //GL_SetMultisample(true);
@@ -158,10 +158,15 @@ void FinalePageWidget::draw() const
     // Clear Z buffer (prevent the objects being clipped by nearby polygons).
     LIBGUI_GL.glClear(GL_DEPTH_BUFFER_BIT);
 
+#if defined (DENG_OPENGL)
     if (renderWireframe > 1)
+    {
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+#endif
+
     //glEnable(GL_ALPHA_TEST);
-    GLState::push().setAlphaTest(true).apply();
+    GLState::push().setAlphaTest(true);
 
     Vector3f worldOrigin(/*-SCREENWIDTH/2*/ - d->offset[VX].value,
                          /*-SCREENHEIGHT/2*/ - d->offset[VY].value,
@@ -174,10 +179,15 @@ void FinalePageWidget::draw() const
 
     // Restore original matrices and state: back to normal 2D.
     //glDisable(GL_ALPHA_TEST);
-    GLState::pop().apply();
+    GLState::pop();
+
+#if defined (DENG_OPENGL)
     // Back from wireframe mode?
     if (renderWireframe > 1)
+    {
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+#endif
 
     // Filter on top of everything. Only draw if necessary.
     if (d->filter[3].value > 0)
@@ -187,8 +197,8 @@ void FinalePageWidget::draw() const
 
     //GL_SetMultisample(false);
 
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 #endif
 

@@ -453,10 +453,10 @@ GLProgram &GLProgram::unbind(GLUniform const &uniform)
 void GLProgram::beginUse() const
 {
     LIBGUI_ASSERT_GL_OK();
-    DENG2_ASSERT_IN_MAIN_THREAD();
-    DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG2_ASSERT(isReady());
     DENG2_ASSERT(!d->inUse);
+    LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
 
     if (d->needRebuild)
     {
@@ -482,6 +482,7 @@ void GLProgram::beginUse() const
 
 void GLProgram::endUse() const
 {
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG2_ASSERT(d->inUse);
 
     d->inUse = false;

@@ -312,9 +312,11 @@ void P_PlayerRemoteMove(player_t *player)
     if(IS_CLIENT && plrNum == CONSOLEPLAYER)
         return;
 
+#if !defined (DENG_MOBILE)
     // On server, there must be valid coordinates.
     if(IS_SERVER && !Sv_CanTrustClientPos(plrNum))
         return;
+#endif
 
     // Unless there is a pending momentum fix, clear the mobj's momentum.
     if(ddpl->fixCounter.mom == ddpl->fixAcked.mom && !(ddpl->flags & DDPF_FIXMOM))

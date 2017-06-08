@@ -695,7 +695,7 @@ void R_RenderPlayerViewBorder()
 
 void R_UseViewPort(viewport_t const *vp)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if (!vp)
@@ -901,7 +901,7 @@ static void changeViewState(ViewState viewState) //, viewport_t const *port, vie
 {
     //DENG2_ASSERT(port && viewData);
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch (viewState)
@@ -909,8 +909,7 @@ static void changeViewState(ViewState viewState) //, viewport_t const *port, vie
     case PlayerView3D:
         GLState::current()
                 .setCull(gl::Back)
-                .setDepthTest(true)
-                .apply();
+                .setDepthTest(true);
         // The 3D projection matrix.
         GL_ProjectionMatrix();
         break;
@@ -929,12 +928,12 @@ static void changeViewState(ViewState viewState) //, viewport_t const *port, vie
                                            conRect.width(), conRect.height(),
                                            scalemode_t(weaponScaleMode));
 
-        LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-        LIBGUI_GL.glLoadIdentity();
+        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_LoadIdentity();
 
         if(sm == SCALEMODE_STRETCH)
         {
-            LIBGUI_GL.glOrtho(0, SCREENWIDTH, height, 0, -1, 1);
+            DGL_Ortho(0, 0, SCREENWIDTH, height, -1, 1);
         }
         else
         {
@@ -942,17 +941,17 @@ static void changeViewState(ViewState viewState) //, viewport_t const *port, vie
             // translate and scale the projection to produce an aspect
             // corrected coordinate space at 4:3, aligned vertically to
             // the bottom and centered horizontally in the window.
-            LIBGUI_GL.glOrtho(0, conRect.width(), conRect.height(), 0, -1, 1);
-            LIBGUI_GL.glTranslatef(conRect.width()/2, conRect.height(), 0);
+            DGL_Ortho(0, 0, conRect.width(), conRect.height(), -1, 1);
+            DGL_Translatef(conRect.width()/2, conRect.height(), 0);
 
             if(conRect.width() >= conRect.height())
             {
-                LIBGUI_GL.glScalef(dfloat( conRect.height() ) / SCREENHEIGHT,
+                DGL_Scalef(dfloat( conRect.height() ) / SCREENHEIGHT,
                                    dfloat( conRect.height() ) / SCREENHEIGHT, 1);
             }
             else
             {
-                LIBGUI_GL.glScalef(dfloat( conRect.width() ) / SCREENWIDTH,
+                DGL_Scalef(dfloat( conRect.width() ) / SCREENWIDTH,
                                    dfloat( conRect.width() ) / SCREENWIDTH, 1);
             }
 
@@ -962,19 +961,19 @@ static void changeViewState(ViewState viewState) //, viewport_t const *port, vie
             if(conRect.height() > conRect.width())
             {
                 dfloat extraScale = (dfloat(conRect.height() * 2) / conRect.width()) / 2;
-                LIBGUI_GL.glScalef(extraScale, extraScale, 1);
+                DGL_Scalef(extraScale, extraScale, 1);
             }
 
-            LIBGUI_GL.glTranslatef(-(SCREENWIDTH / 2), -SCREENHEIGHT, 0);
-            LIBGUI_GL.glScalef(1, dfloat( SCREENHEIGHT ) / height, 1);
+            DGL_Translatef(-(SCREENWIDTH / 2), -SCREENHEIGHT, 0);
+            DGL_Scalef(1, dfloat( SCREENHEIGHT ) / height, 1);
         }
 
-        LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-        LIBGUI_GL.glLoadIdentity();
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_LoadIdentity();
 
         // Depth testing must be disabled so that psprite 1 will be drawn
         // on top of psprite 0 (Doom plasma rifle fire).
-        GLState::current().setDepthTest(false).apply();
+        GLState::current().setDepthTest(false);
 
         break;
     }
@@ -982,8 +981,7 @@ static void changeViewState(ViewState viewState) //, viewport_t const *port, vie
     case Default2D:
         GLState::current()
                 .setCull(gl::None)
-                .setDepthTest(false)
-                .apply();
+                .setDepthTest(false);
         break;
     }
 
@@ -1055,15 +1053,17 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     }
 
     // Go to wireframe mode?
+#if defined (DENG_OPENGL)
     if (renderWireframe)
     {
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
+#endif
 
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPushMatrix();
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPushMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
 
     // GL is in 3D transformation state only during the frame.
     //switchTo3DState(true); //, currentViewport, vd);
@@ -1076,17 +1076,21 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     changeViewState(PlayerSprite2D);
 
     // Don't render in wireframe mode with 2D psprites.
+#if defined (DENG_OPENGL)
     if (renderWireframe)
     {
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
+#endif
 
     Rend_Draw2DPlayerSprites();  // If the 2D versions are needed.
 
+#if defined (DENG_OPENGL)
     if (renderWireframe)
     {
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
+#endif
 
     // Do we need to render any 3D psprites?
     if (psp3d)
@@ -1100,16 +1104,18 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     //restore2DState(2); //, currentViewport, vd);
     changeViewState(Default2D);
 
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPopMatrix();
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 
+#if defined (DENG_OPENGL)
     // Back from wireframe mode?
     if (renderWireframe)
     {
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
+#endif
 
     // Now we can show the viewPlayer's mobj again.
     if (!(player->publicData().flags & DDPF_CHASECAM))
@@ -1137,54 +1143,6 @@ static void restoreDefaultGLState()
     DGL_Enable(DGL_POINT_SMOOTH);
 }
 
-#if 0
-static void clearViewPorts()
-{
-    GLbitfield bits = GL_DEPTH_BUFFER_BIT;
-
-    if(fx::Bloom::isEnabled() ||
-       (App_InFineSystem().finaleInProgess() && !GameUIWidget::finaleStretch()) ||
-        ClientApp::vr().mode() == VRConfig::OculusRift)
-    {
-        // Parts of the previous frame might leak in the bloom unless we clear the color
-        // buffer. Not doing this would result in very bright HOMs in map holes and game
-        // UI elements glowing in the frame (UI elements are normally on a separate layer
-        // and should not affect bloom).
-        bits |= GL_COLOR_BUFFER_BIT;
-    }
-
-    if(!devRendSkyMode)
-        bits |= GL_STENCIL_BUFFER_BIT;
-
-    if(freezeRLs)
-    {
-        bits |= GL_COLOR_BUFFER_BIT;
-    }
-    else
-    {
-        for(dint i = 0; i < DDMAXPLAYERS; ++i)
-        {
-            player_t *plr = DD_Player(i);
-
-            if(!plr->publicData().inGame || !(plr->publicData().flags & DDPF_LOCAL))
-                continue;
-
-            if(P_IsInVoid(plr) || !ClientApp::world().hasMap())
-            {
-                bits |= GL_COLOR_BUFFER_BIT;
-                break;
-            }
-        }
-    }
-
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    // This is all the clearing we'll do.
-    LIBGUI_GL.glClear(bits);
-}
-#endif
-
 void R_RenderViewPort(int playerNum)
 {
     int localNum = P_ConsoleToLocal(playerNum);
@@ -1206,14 +1164,14 @@ void R_RenderViewPort(int playerNum)
         return;
     }
 
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPushMatrix();
-    LIBGUI_GL.glLoadIdentity();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
 
     Rectanglei viewRect = R_Console3DViewRect(playerNum);
 
     // Use an orthographic projection in real pixel dimensions.
-    LIBGUI_GL.glOrtho(0, viewRect.width(), viewRect.height(), 0, -1, 1);
+    DGL_Ortho(0, 0, viewRect.width(), viewRect.height(), -1, 1);
 
     viewdata_t const *vd = &DD_Player(vp->console)->viewport();
     RectRaw vpGeometry(vp->geometry.topLeft.x, vp->geometry.topLeft.y,
@@ -1231,8 +1189,8 @@ void R_RenderViewPort(int playerNum)
 
     restoreDefaultGLState();
 
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 
     // Increment the internal frame count. This does not
     // affect the window's FPS counter.
@@ -1274,12 +1232,12 @@ void R_RenderViewPorts(ViewPortLayer layer)
             continue;
         }
 
-        LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-        LIBGUI_GL.glPushMatrix();
-        LIBGUI_GL.glLoadIdentity();
+        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_PushMatrix();
+        DGL_LoadIdentity();
 
         // Use an orthographic projection in real pixel dimensions.
-        LIBGUI_GL.glOrtho(0, vp->geometry.width(), vp->geometry.height(), 0, -1, 1);
+        DGL_Ortho(0, 0, vp->geometry.width(), vp->geometry.height(), -1, 1);
 
         viewdata_t const *vd = &DD_Player(vp->console)->viewport();
         RectRaw vpGeometry(vp->geometry.topLeft.x, vp->geometry.topLeft.y,
@@ -1308,8 +1266,8 @@ void R_RenderViewPorts(ViewPortLayer layer)
 
         restoreDefaultGLState();
 
-        LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-        LIBGUI_GL.glPopMatrix();
+        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_PopMatrix();
     }
 
     if(layer == Player3DViewLayer)
@@ -1589,7 +1547,7 @@ D_CMD(ViewGrid)
 void Viewports_Register()
 {
     C_VAR_INT ("con-show-during-setup",     &loadInStartupMode,     0, 0, 1);
-
+    
     C_VAR_INT ("rend-camera-smooth",        &rendCameraSmooth,      CVF_HIDE, 0, 1);
 
     C_VAR_BYTE("rend-info-deltas-angles",   &showViewAngleDeltas,   0, 0, 1);

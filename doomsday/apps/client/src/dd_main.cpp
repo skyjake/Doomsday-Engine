@@ -513,7 +513,7 @@ void App_Error(char const *error, ...)
         dd_vsnprintf(buff, sizeof(buff), error, argptr);
         va_end(argptr);
 
-#ifdef __CLIENT__
+#if defined (__CLIENT__) && defined (DENG_HAVE_BUSYRUNNER)
         if (!ClientApp::busyRunner().inWorkerThread())
         {
             Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, buff, 0);
@@ -545,7 +545,7 @@ void App_Error(char const *error, ...)
     {
         DoomsdayApp::app().busyMode().abort(buff);
 
-#ifdef __CLIENT__
+#if defined (__CLIENT__) && defined (DENG_HAVE_BUSYRUNNER)
         if (ClientApp::busyRunner().inWorkerThread())
         {
             // We should not continue to execute the worker any more.
@@ -1629,7 +1629,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
 #else
     {0, 0},
 #endif
-    {&DED_Definitions()->sounds.count.num, 0},
+    {0, 0}, // pointer updated when queried //{&DED_Definitions()->sounds.count.num, 0},
     {0, 0},
     {0, 0},
 #ifdef __CLIENT__
@@ -1643,7 +1643,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
 #ifdef __CLIENT__
     {&gameDrawHUD, 0},
     {&symbolicEchoMode, &symbolicEchoMode},
-    {&numTexUnits, 0},
+    {0, 0},
     {&rendLightAttenuateFixedColormap, &rendLightAttenuateFixedColormap}
 #else
     {0, 0},
@@ -1699,6 +1699,13 @@ dint DD_GetInteger(dint ddvalue)
     {
         return 0;
     }
+    
+    // Update pointers.
+    if (ddvalue == DD_NUMSOUNDS)
+    {
+        ddValues[ddvalue].readPtr = &DED_Definitions()->sounds.count.num;
+    }
+    
     if (ddValues[ddvalue].readPtr == 0)
     {
         return 0;
@@ -2212,7 +2219,7 @@ D_CMD(ReloadGame)
     return true;
 }
 
-#ifdef __CLIENT__
+#if defined (DENG_HAVE_UPDATER)
 
 D_CMD(CheckForUpdates)
 {
@@ -2248,7 +2255,7 @@ D_CMD(ShowUpdateSettings)
     return true;
 }
 
-#endif // __CLIENT__
+#endif // DENG_HAVE_UPDATER
 
 D_CMD(Version)
 {
@@ -2277,7 +2284,7 @@ D_CMD(Quit)
 {
     DENG2_UNUSED2(src, argc);
 
-#ifdef __CLIENT__
+#if defined (DENG_HAVE_UPDATER)
     if (DownloadDialog::isDownloadInProgress())
     {
         LOG_WARNING("Cannot quit while downloading an update");
@@ -2470,10 +2477,13 @@ void DD_ConsoleRegister()
 
 #ifdef __CLIENT__
     C_CMD("clear",           "", Clear);
+
+#if defined (DENG_HAVE_UPDATER)
     C_CMD("update",          "", CheckForUpdates);
     C_CMD("updateandnotify", "", CheckForUpdatesAndNotify);
     C_CMD("updatesettings",  "", ShowUpdateSettings);
     C_CMD("lastupdated",     "", LastUpdated);
+#endif
 
     C_CMD_FLAGS("conclose",       "",     OpenClose,    CMDF_NO_DEDICATED);
     C_CMD_FLAGS("conopen",        "",     OpenClose,    CMDF_NO_DEDICATED);

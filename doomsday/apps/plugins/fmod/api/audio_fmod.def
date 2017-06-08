@@ -39,10 +39,10 @@ DM_Music_Play
 DM_Music_PlayFile
 
 ; CD audio interface
-DM_CDAudio_Init
-DM_CDAudio_Update
-DM_CDAudio_Set
-DM_CDAudio_Get
-DM_CDAudio_Pause
-DM_CDAudio_Stop
-DM_CDAudio_Play
+;DM_CDAudio_Init
+;DM_CDAudio_Update
+;DM_CDAudio_Set
+;DM_CDAudio_Get
+;DM_CDAudio_Pause
+;DM_CDAudio_Stop
+;DM_CDAudio_Play

@@ -124,6 +124,9 @@ def setDefaults(d)
         if Version.OS == 'macx'
             musicPlugin = 'fluidsynth'
             cdPlugin    = 'dummy'
+        elsif Version.OS == 'ios'
+            musicPlugin = 'fmod'
+            cdPlugin    = 'dummy'
         else
             musicPlugin = 'fmod'
             cdPlugin    = 'fmod'

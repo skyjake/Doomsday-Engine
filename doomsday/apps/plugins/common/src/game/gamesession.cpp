@@ -100,9 +100,8 @@ namespace internal
 
 using namespace internal;
 
-static GameSession *singleton;
-
 static String const internalSavePath = "/home/cache/internal.save";
+static GameSession theSession;
 
 DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
 {
@@ -116,10 +115,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
     acs::System acscriptSys;  ///< The One acs::System instance.
 
     Impl(Public *i) : Base(i)
-    {
-        DENG2_ASSERT(singleton == nullptr);
-        singleton = thisPublic;
-    }
+    {}
 
     inline String userSavePath(String const &fileName) {
         return AbstractSession::savePath() / fileName + ".save";
@@ -885,13 +881,11 @@ GameSession::~GameSession()
 {
     LOG_AS("~GameSession");
     d.reset();
-    singleton = nullptr;
 }
 
 GameSession &GameSession::gameSession()
 {
-    DENG2_ASSERT(singleton);
-    return *singleton;
+    return theSession;
 }
 
 bool GameSession::isLoadingPossible()

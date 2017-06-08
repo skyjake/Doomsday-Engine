@@ -25,7 +25,6 @@
 #include <QUrl>
 
 class AudioSystem;
-class BusyRunner;
 class ClientPlayer;
 class ClientResources;
 class ClientServerWorld;
@@ -36,6 +35,11 @@ class InputSystem;
 class RenderSystem;
 class ServerLink;
 class Updater;
+
+#if !defined (DENG_MOBILE)
+#  define DENG_HAVE_BUSYRUNNER 1
+class BusyRunner;
+#endif
 
 /**
  * The client application.
@@ -78,8 +82,6 @@ public:
     static de::LoopResult forLocalPlayers(std::function<de::LoopResult (ClientPlayer &)> func);
 
     static ClientApp &          app();
-    static BusyRunner &         busyRunner();
-    static Updater &            updater();
     static ConfigProfiles &     logSettings();
     static ConfigProfiles &     networkSettings();
     static ConfigProfiles &     audioSettings();    ///< @todo Belongs in AudioSystem.
@@ -93,9 +95,17 @@ public:
     static ClientResources &    resources();
     static ClientServerWorld &  world();
 
+#if defined (DENG_HAVE_BUSYRUNNER)
+    static BusyRunner &         busyRunner();
+#endif
+
     static bool hasInputSystem();
     static bool hasRenderSystem();
     static bool hasAudioSystem();
+
+#if defined (DENG_HAVE_UPDATER)
+    static Updater &updater();
+#endif
 
 public slots:
     void openHomepageInBrowser();

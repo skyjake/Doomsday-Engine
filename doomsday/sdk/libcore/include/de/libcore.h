@@ -156,6 +156,12 @@
 #  define DENG2_NORETURN __attribute__((__noreturn__))
 #endif
 
+#if defined (DENG_IOS)
+#  define DENG2_VISIBLE_SYMBOL __attribute__((visibility("default")))
+#else
+#  define DENG2_VISIBLE_SYMBOL
+#endif
+
 #ifndef NDEBUG
 #  define DENG2_DEBUG
    DENG2_EXTERN_C DENG2_PUBLIC void LogBuffer_Flush(void);

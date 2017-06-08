@@ -21,10 +21,12 @@
  */
 
 #include "de/GLState"
-#include "de/PersistentGLWindow"
+#include "de/GLFramebuffer"
+#include "de/GLWindow"
 #include "de/graphics/opengl.h"
 #include <de/GLInfo>
 #include <de/BitField>
+#include <de/Log>
 
 namespace de {
 
@@ -246,14 +248,21 @@ DENG2_PIMPL(GLState)
             break;
 
         case internal::AlphaTest:
-            if (self().alphaTest())
+            /*if (self().alphaTest())
                 LIBGUI_GL.glEnable(GL_ALPHA_TEST);
             else
-                LIBGUI_GL.glDisable(GL_ALPHA_TEST);
+                LIBGUI_GL.glDisable(GL_ALPHA_TEST);*/
+
+            // TODO: use a shared GLUniform available to all shaders that need it
+
+            //qDebug() << "[GLState] Alpha test:" << (self().alphaTest()? "enabled" : "disabled");
             break;
 
         case internal::AlphaLimit:
-            LIBGUI_GL.glAlphaFunc(GL_GREATER, self().alphaLimit());
+            //LIBGUI_GL.glAlphaFunc(GL_GREATER, self().alphaLimit());
+
+            // TODO: use a shared GLUniform available to all shaders that need it
+
             break;
 
         case internal::Blend:
@@ -655,9 +664,9 @@ void GLState::apply() const
     DENG2_ASSERT(GLDrawQueue_queuedElems == 0);
 #endif
 
-/*#ifdef LIBGUI_USE_GLENTRYPOINTS
-    if (!glBindFramebuffer) return;
-#endif*/
+    // Actual OpenGL state shouldn't be changed outside the render thread.
+    // The main thread can still manipulate shared OpenGL objects, though.
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
     bool forceViewportAndScissor = false;
 

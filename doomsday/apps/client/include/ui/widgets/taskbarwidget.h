@@ -62,11 +62,13 @@ public slots:
     void openMultiplayerMenu();
     void unloadGame();
     void showAbout();
-    void showUpdaterSettings();
     void showOrHideHome();
     void connectToServerManually();
     void showTutorial();
     void openPackagesSidebar();
+#if defined (DENG_HAVE_UPDATER)
+    void showUpdaterSettings();
+#endif
 
 protected slots:
     void updateCommandLineLayout();

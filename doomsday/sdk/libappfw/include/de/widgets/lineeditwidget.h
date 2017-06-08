@@ -78,6 +78,12 @@ public:
 public:
     static KeyModifiers modifiersFromKeyEvent(KeyEvent::Modifiers const &keyMods);
 
+#if defined (DENG_MOBILE)
+protected slots:
+    void userEnteredText(QString);
+    void userFinishedTextEntry();
+#endif
+    
 signals:
     void enterPressed(QString text);
     void editorContentChanged();

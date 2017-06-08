@@ -349,10 +349,12 @@ DENG_GUI_PIMPL(TaskBarWidget)
     }
 };
 
+#if defined (DENG_HAVE_UPDATER)
 static PopupWidget *makeUpdaterSettings()
 {
     return new UpdaterSettingsDialog(UpdaterSettingsDialog::WithApplyAndCheckButton);
 }
+#endif
 
 TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
 {
@@ -466,8 +468,11 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
             << new ui::SubwidgetItem(style().images().image("network"),   tr("Network"),        ui::Left, makePopup<NetworkSettingsDialog>)
             << new ui::Item(ui::Item::Separator)
             << new ui::SubwidgetItem(style().images().image("package.icon"), tr("Data Files"),     ui::Left, makePopup<DataFileSettingsDialog>)
-            << new ui::SubwidgetItem(style().images().image("home.icon"), tr("User Interface"), ui::Left, makePopup<UISettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("home.icon"), tr("User Interface"), ui::Left, makePopup<UISettingsDialog>);
+#if defined (DENG_HAVE_UPDATER)
+    d->configMenu->items()
             << new ui::SubwidgetItem(style().images().image("updater"),   tr("Updater"),        ui::Left, makeUpdaterSettings);
+#endif
 
     auto *helpMenu = new ui::SubmenuItem(tr("Help"), ui::Left);
     helpMenu->items()
@@ -491,11 +496,16 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
                             tr("Forces a refresh of resource file metadata."))
             << new ui::Item(ui::Item::Separator)
             << new ui::Item(ui::Item::Separator, tr("Doomsday"))
+#if defined (DENG_HAVE_UPDATER)
             << new ui::ActionItem(tr("Check for Updates"), new CommandAction("updateandnotify"))
+#endif
             << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
             << helpMenu
+#if !defined (DENG_MOBILE)
             << new ui::Item(ui::Item::Separator)
-            << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit!"));
+            << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit!"))
+#endif
+            ;
 
     d->showOrHideMenuItems();
 
@@ -778,6 +788,7 @@ void TaskBarWidget::showAbout()
     root().window().glDone();
 }
 
+#if defined (DENG_HAVE_UPDATER)
 void TaskBarWidget::showUpdaterSettings()
 {
     /// @todo This has actually little to do with the taskbar. -jk
@@ -786,6 +797,7 @@ void TaskBarWidget::showUpdaterSettings()
     root().addOnTop(dlg);
     dlg->open();
 }
+#endif
 
 void TaskBarWidget::showOrHideHome()
 {

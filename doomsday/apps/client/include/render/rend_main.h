@@ -49,15 +49,13 @@ namespace world {
 }
 
 // Multiplicative blending for dynamic lights?
-#define IS_MUL              (dynlightBlend != 1 && !fogParams.usingFog)
+#define IS_MUL          (dynlightBlend != 1 && !fogParams.usingFog)
 
-#define MTEX_DETAILS_ENABLED (r_detail && useMultiTexDetails && \
-                              DED_Definitions()->details.size() > 0)
-#define IS_MTEX_DETAILS     (MTEX_DETAILS_ENABLED && numTexUnits > 1)
-#define IS_MTEX_LIGHTS      (!IS_MTEX_DETAILS && !fogParams.usingFog && useMultiTexLights \
-                             && numTexUnits > 1 && envModAdd)
+#define MTEX_DETAILS_ENABLED (r_detail && DED_Definitions()->details.size() > 0)
+#define IS_MTEX_DETAILS (MTEX_DETAILS_ENABLED)
+#define IS_MTEX_LIGHTS  (!IS_MTEX_DETAILS && !fogParams.usingFog)
 
-#define GLOW_HEIGHT_MAX                     (1024.f) /// Absolute maximum
+#define GLOW_HEIGHT_MAX (1024.f) /// Absolute maximum
 
 #define OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN (.05f)
 
@@ -80,9 +78,11 @@ extern FogParams fogParams;
 DENG_EXTERN_C byte smoothTexAnim, devMobjVLights;
 
 DENG_EXTERN_C int renderTextures; /// @c 0= no textures, @c 1= normal mode, @c 2= lighting debug
+#if defined (DENG_OPENGL)
 DENG_EXTERN_C int renderWireframe;
-DENG_EXTERN_C int useMultiTexLights;
-DENG_EXTERN_C int useMultiTexDetails;
+#endif
+//DENG_EXTERN_C int useMultiTexLights;
+//DENG_EXTERN_C int useMultiTexDetails;
 
 DENG_EXTERN_C int dynlightBlend;
 

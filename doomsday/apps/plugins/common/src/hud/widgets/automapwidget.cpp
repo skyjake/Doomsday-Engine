@@ -58,7 +58,8 @@ struct uiautomap_rendstate_t
 {
     player_t *plr;
     dint obType;         ///< The type of object to draw. @c -1= only line specials.
-    dd_bool addToLists;
+    dd_bool glowOnly;
+    dglprimtype_t primType;
 };
 uiautomap_rendstate_t rs;
 
@@ -95,10 +96,10 @@ namespace internal
     {
         DENG2_ASSERT(aabb);
         if     (point.x < aabb[BOXLEFT  ]) aabb[BOXLEFT  ] = point.x;
-        else if(point.x > aabb[BOXRIGHT ]) aabb[BOXRIGHT ] = point.x;
+        else if (point.x > aabb[BOXRIGHT ]) aabb[BOXRIGHT ] = point.x;
 
         if     (point.y < aabb[BOXBOTTOM]) aabb[BOXBOTTOM] = point.y;
-        else if(point.y > aabb[BOXTOP   ]) aabb[BOXTOP   ] = point.y;
+        else if (point.y > aabb[BOXTOP   ]) aabb[BOXTOP   ] = point.y;
     }
 
     static dd_bool interceptEdge(coord_t point[2], coord_t const startA[2],
@@ -106,7 +107,7 @@ namespace internal
     {
         coord_t directionA[2];
         V2d_Subtract(directionA, endA, startA);
-        if(V2d_PointOnLineSide(point, startA, directionA) >= 0)
+        if (V2d_PointOnLineSide(point, startA, directionA) >= 0)
         {
             coord_t directionB[2];
             V2d_Subtract(directionB, endB, startB);
@@ -140,9 +141,9 @@ namespace internal
 
         // Trace a vector from the view location to the marked point and intercept
         // vs the edges of the rotated view window.
-        if(!interceptEdge(pointV1, topLeftV1, bottomLeftV1, viewPointV1, pointV1))
+        if (!interceptEdge(pointV1, topLeftV1, bottomLeftV1, viewPointV1, pointV1))
             interceptEdge(pointV1, bottomRightV1, topRightV1, viewPointV1, pointV1);
-        if(!interceptEdge(pointV1, topRightV1, topLeftV1, viewPointV1, pointV1))
+        if (!interceptEdge(pointV1, topRightV1, topLeftV1, viewPointV1, pointV1))
             interceptEdge(pointV1, bottomLeftV1, bottomRightV1, viewPointV1, pointV1);
 
         return Vector2d(pointV1);
@@ -176,7 +177,7 @@ namespace internal
 #endif
         };
 
-        if(!IS_NETGAME) return WHITE;
+        if (!IS_NETGAME) return WHITE;
 
         return playerColors[cfg.playerColor[de::max(0, consoleNum) % MAXPLAYERS]];
     }
@@ -185,10 +186,10 @@ namespace internal
     {
         DENG2_ASSERT(consoleNum >= 0 && consoleNum < MAXPLAYERS);
         player_t *player = &players[consoleNum];
-        if(!player->plr->inGame) return;
+        if (!player->plr->inGame) return;
 
         mobj_t *plrMob = player->plr->mo;
-        if(!plrMob) return;
+        if (!plrMob) return;
 
         coord_t origin[3]; Mobj_OriginSmoothed(plrMob, origin);
         dfloat const angle = Mobj_AngleSmoothed(plrMob) / (dfloat) ANGLE_MAX * 360; /* $unifiedangles */
@@ -197,7 +198,7 @@ namespace internal
 
         dfloat opacity = cfg.common.automapLineAlpha * uiRendState->pageAlpha;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        if(player->powers[PT_INVISIBILITY])
+        if (player->powers[PT_INVISIBILITY])
             opacity *= .125f;
 #endif
 
@@ -212,7 +213,7 @@ DENG2_PIMPL(AutomapWidget)
 {
     AutomapStyle *style = nullptr;
 
-    DGLuint lists[NUM_MAP_OBJECTLISTS];  ///< Each list contains one or more of given type of automap wi.
+    //DGLuint lists[NUM_MAP_OBJECTLISTS];  ///< Each list contains one or more of given type of automap wi.
     bool needBuildLists = false;         ///< @c true= force a rebuild of all lists.
 
     dint flags = 0;
@@ -266,7 +267,7 @@ DENG2_PIMPL(AutomapWidget)
 
     Impl(Public *i) : Base(i)
     {
-        de::zap(lists);
+        //de::zap(lists);
         de::zap(bounds);
         de::zap(viewAABB);
     }
@@ -323,67 +324,71 @@ DENG2_PIMPL(AutomapWidget)
     static void drawLine2(Vector2d const &from, Vector2d const &to,
         Vector3f const &color, dfloat opacity, glowtype_t glowType, dfloat glowStrength,
         dfloat glowSize, dd_bool glowOnly, dd_bool scaleGlowWithView, dd_bool caps,
-        blendmode_t blend, dd_bool drawNormal, dd_bool addToLists)
+        /*blendmode_t blend, */dd_bool drawNormal)
     {
         opacity *= uiRendState->pageAlpha;
 
         Vector2d const unit = (to - from).normalize();
         Vector2d const normal(unit.y, -unit.x);
 
-        if(de::abs(unit.length()) <= 0) return;
+        if (de::abs(unit.length()) <= 0) return;
+
+        //DGL_BlendMode(blend);
 
         // Is this a glowing line?
-        if(glowType != GLOW_NONE)
+        if (glowOnly && glowType != GLOW_NONE)
         {
-            dint const tex = Get(DD_DYNLIGHT_TEXTURE);
+            //dint const tex = Get(DD_DYNLIGHT_TEXTURE);
 
             // Scale line thickness relative to zoom level?
             dfloat thickness;
-            if(scaleGlowWithView)
+            if (scaleGlowWithView)
                 thickness = cfg.common.automapDoorGlow * 2.5f + 3;
             else
                 thickness = glowSize;
 
+            DENG_ASSERT(rs.primType == DGL_QUADS);
+
             // Draw a "cap" at the start of the line?
-            if(caps)
+            if (caps)
             {
                 Vector2f const v1 = from -   unit * thickness + normal * thickness;
                 Vector2f const v2 = from + normal * thickness;
                 Vector2f const v3 = from - normal * thickness;
                 Vector2f const v4 = from -   unit * thickness - normal * thickness;
 
-                if(!addToLists)
+                //if (!addToLists)
                 {
-                    DGL_Bind(tex);
+                    //DGL_Bind(tex);
 
                     DGL_Color4f(color.x, color.y, color.z, glowStrength * opacity);
-                    DGL_BlendMode(blend);
+                    //DGL_BlendMode(blend);
                 }
 
-                DGL_Begin(DGL_QUADS);
-                    DGL_TexCoord2f(0, 0, 0);
-                    DGL_TexCoord2f(1, v1.x, v1.y);
-                    DGL_Vertex2f(v1.x, v1.y);
+//                DGL_Begin(DGL_QUADS);
+                DGL_TexCoord2f(0, 0, 0);
+                DGL_TexCoord2f(1, v1.x, v1.y);
+                DGL_Vertex2f(v1.x, v1.y);
 
-                    DGL_TexCoord2f(0, .5f, 0);
-                    DGL_TexCoord2f(1, v2.x, v2.y);
-                    DGL_Vertex2f(v2.x, v2.y);
+                DGL_TexCoord2f(0, .5f, 0);
+                DGL_TexCoord2f(1, v2.x, v2.y);
+                DGL_Vertex2f(v2.x, v2.y);
 
-                    DGL_TexCoord2f(0, .5f, 1);
-                    DGL_TexCoord2f(1, v3.x, v3.y);
-                    DGL_Vertex2f(v3.x, v3.y);
+                DGL_TexCoord2f(0, .5f, 1);
+                DGL_TexCoord2f(1, v3.x, v3.y);
+                DGL_Vertex2f(v3.x, v3.y);
 
-                    DGL_TexCoord2f(0, 0, 1);
-                    DGL_TexCoord2f(1, v4.x, v4.y);
-                    DGL_Vertex2f(v4.x, v4.y);
-                DGL_End();
+                DGL_TexCoord2f(0, 0, 1);
+                DGL_TexCoord2f(1, v4.x, v4.y);
+                DGL_Vertex2f(v4.x, v4.y);
+//                DGL_End();
 
-                if(!addToLists)
-                    DGL_BlendMode(BM_NORMAL);
+                //if (!addToLists)
+                    //DGL_BlendMode(BM_NORMAL);
             }
 
             // The middle part of the line.
-            switch(glowType)
+            switch (glowType)
             {
             case GLOW_BOTH: {
                 Vector2f const v1 = from + normal * thickness;
@@ -391,190 +396,193 @@ DENG2_PIMPL(AutomapWidget)
                 Vector2f const v3 =   to - normal * thickness;
                 Vector2f const v4 = from - normal * thickness;
 
-                if(!addToLists)
+                //if (!addToLists)
                 {
-                    DGL_Bind(tex);
+                    //DGL_Bind(tex);
 
                     DGL_Color4f(color.x, color.y, color.z, glowStrength * opacity);
-                    DGL_BlendMode(blend);
+                    //DGL_BlendMode(blend);
                 }
 
-                DGL_Begin(DGL_QUADS);
-                    DGL_TexCoord2f(0, .5f, 0);
-                    DGL_TexCoord2f(1, v1.x, v1.y);
-                    DGL_Vertex2f(v1.x, v1.y);
+//                DGL_Begin(DGL_QUADS);
+                DGL_TexCoord2f(0, .5f, 0);
+                DGL_TexCoord2f(1, v1.x, v1.y);
+                DGL_Vertex2f(v1.x, v1.y);
 
-                    DGL_TexCoord2f(0, .5f, 0);
-                    DGL_TexCoord2f(1, v2.x, v2.y);
-                    DGL_Vertex2f(v2.x, v2.y);
+                DGL_TexCoord2f(0, .5f, 0);
+                DGL_TexCoord2f(1, v2.x, v2.y);
+                DGL_Vertex2f(v2.x, v2.y);
 
-                    DGL_TexCoord2f(0, .5f, 1);
-                    DGL_TexCoord2f(1, v3.x, v3.y);
-                    DGL_Vertex2f(v3.x, v3.y);
+                DGL_TexCoord2f(0, .5f, 1);
+                DGL_TexCoord2f(1, v3.x, v3.y);
+                DGL_Vertex2f(v3.x, v3.y);
 
-                    DGL_TexCoord2f(0, .5f, 1);
-                    DGL_TexCoord2f(1, v4.x, v4.y);
-                    DGL_Vertex2f(v4.x, v4.y);
-                DGL_End();
+                DGL_TexCoord2f(0, .5f, 1);
+                DGL_TexCoord2f(1, v4.x, v4.y);
+                DGL_Vertex2f(v4.x, v4.y);
+//                DGL_End();
 
-                if(!addToLists)
-                    DGL_BlendMode(BM_NORMAL);
+                //if (!addToLists)
+                    //DGL_BlendMode(BM_NORMAL);
                 break; }
 
             case GLOW_BACK: {
                 Vector2f const v1 = from + normal * thickness;
                 Vector2f const v2 =   to + normal * thickness;
 
-                if(!addToLists)
+                //if (!addToLists)
                 {
-                    DGL_Bind(tex);
+                    //DGL_Bind(tex);
 
                     DGL_Color4f(color.x, color.y, color.z, glowStrength * opacity);
-                    DGL_BlendMode(blend);
+//                    DGL_BlendMode(blend);
                 }
 
-                DGL_Begin(DGL_QUADS);
-                    DGL_TexCoord2f(0, 0, .25f);
-                    DGL_TexCoord2f(1, v1.x, v1.y);
-                    DGL_Vertex2f(v1.x, v1.y);
+//                DGL_Begin(DGL_QUADS);
+                DGL_TexCoord2f(0, 0, .25f);
+                DGL_TexCoord2f(1, v1.x, v1.y);
+                DGL_Vertex2f(v1.x, v1.y);
 
-                    DGL_TexCoord2f(0, 0, .25f);
-                    DGL_TexCoord2f(1, v2.x, v2.y);
-                    DGL_Vertex2f(v2.x, v2.y);
+                DGL_TexCoord2f(0, 0, .25f);
+                DGL_TexCoord2f(1, v2.x, v2.y);
+                DGL_Vertex2f(v2.x, v2.y);
 
-                    DGL_TexCoord2f(0, .5f, .25f);
-                    DGL_TexCoord2f(1, to.x, to.y);
-                    DGL_Vertex2f(to.x, to.y);
+                DGL_TexCoord2f(0, .5f, .25f);
+                DGL_TexCoord2f(1, to.x, to.y);
+                DGL_Vertex2f(to.x, to.y);
 
-                    DGL_TexCoord2f(0, .5f, .25f);
-                    DGL_TexCoord2f(1, from.x, from.y);
-                    DGL_Vertex2f(from.x, from.y);
-                DGL_End();
+                DGL_TexCoord2f(0, .5f, .25f);
+                DGL_TexCoord2f(1, from.x, from.y);
+                DGL_Vertex2f(from.x, from.y);
+//                DGL_End();
 
-                if(!addToLists)
-                    DGL_BlendMode(BM_NORMAL);
+                //if (!addToLists)
+//                    DGL_BlendMode(BM_NORMAL);
                 break; }
 
             case GLOW_FRONT: {
                 Vector2f const v3 =   to - normal * thickness;
                 Vector2f const v4 = from - normal * thickness;
 
-                if(!addToLists)
+                //if (!addToLists)
                 {
-                    DGL_Bind(tex);
+                    //DGL_Bind(tex);
 
                     DGL_Color4f(color.x, color.y, color.z, glowStrength * opacity);
-                    DGL_BlendMode(blend);
+//                    DGL_BlendMode(blend);
                 }
 
-                DGL_Begin(DGL_QUADS);
-                    DGL_TexCoord2f(0, .75f, .5f);
-                    DGL_TexCoord2f(1, from.x, from.y);
-                    DGL_Vertex2f(from.x, from.y);
+//                DGL_Begin(DGL_QUADS);
+                DGL_TexCoord2f(0, .75f, .5f);
+                DGL_TexCoord2f(1, from.x, from.y);
+                DGL_Vertex2f(from.x, from.y);
 
-                    DGL_TexCoord2f(0, .75f, .5f);
-                    DGL_TexCoord2f(1, to.x, to.y);
-                    DGL_Vertex2f(to.x, to.y);
+                DGL_TexCoord2f(0, .75f, .5f);
+                DGL_TexCoord2f(1, to.x, to.y);
+                DGL_Vertex2f(to.x, to.y);
 
-                    DGL_TexCoord2f(0, .75f, 1);
-                    DGL_TexCoord2f(1, v3.x, v3.y);
-                    DGL_Vertex2f(v3.x, v3.y);
+                DGL_TexCoord2f(0, .75f, 1);
+                DGL_TexCoord2f(1, v3.x, v3.y);
+                DGL_Vertex2f(v3.x, v3.y);
 
-                    DGL_TexCoord2f(0, .75f, 1);
-                    DGL_TexCoord2f(1, v4.x, v4.y);
-                    DGL_Vertex2f(v4.x, v4.y);
-                DGL_End();
+                DGL_TexCoord2f(0, .75f, 1);
+                DGL_TexCoord2f(1, v4.x, v4.y);
+                DGL_Vertex2f(v4.x, v4.y);
+//                DGL_End();
 
-                if(!addToLists)
-                    DGL_BlendMode(BM_NORMAL);
+                //if (!addToLists)
+//                    DGL_BlendMode(BM_NORMAL);
                 break; }
 
-            default: DENG2_ASSERT(!"Unknown glowtype"); break;
+            default:
+                DENG2_ASSERT(!"Unknown glowtype");
+                break;
             }
 
-            if(caps)
+            if (caps)
             {
                 Vector2f const v1 = to + normal * thickness;
                 Vector2f const v2 = to +   unit * thickness + normal * thickness;
                 Vector2f const v3 = to +   unit * thickness - normal * thickness;
                 Vector2f const v4 = to - normal * thickness;
 
-                if(!addToLists)
+                //if (!addToLists)
                 {
-                    DGL_Bind(tex);
+                    //DGL_Bind(tex);
 
                     DGL_Color4f(color.x, color.y, color.z, glowStrength * opacity);
-                    DGL_BlendMode(blend);
+//                    DGL_BlendMode(blend);
                 }
 
-                DGL_Begin(DGL_QUADS);
-                    DGL_TexCoord2f(0, .5f, 0);
-                    DGL_TexCoord2f(1, v1.x, v1.y);
-                    DGL_Vertex2f(v1.x, v1.y);
+//                DGL_Begin(DGL_QUADS);
+                DGL_TexCoord2f(0, .5f, 0);
+                DGL_TexCoord2f(1, v1.x, v1.y);
+                DGL_Vertex2f(v1.x, v1.y);
 
-                    DGL_TexCoord2f(0, 1, 0);
-                    DGL_TexCoord2f(1, v2.x, v2.y);
-                    DGL_Vertex2f(v2.x, v2.y);
+                DGL_TexCoord2f(0, 1, 0);
+                DGL_TexCoord2f(1, v2.x, v2.y);
+                DGL_Vertex2f(v2.x, v2.y);
 
-                    DGL_TexCoord2f(0, 1, 1);
-                    DGL_TexCoord2f(1, v3.x, v3.y);
-                    DGL_Vertex2f(v3.x, v3.y);
+                DGL_TexCoord2f(0, 1, 1);
+                DGL_TexCoord2f(1, v3.x, v3.y);
+                DGL_Vertex2f(v3.x, v3.y);
 
-                    DGL_TexCoord2f(0, .5, 1);
-                    DGL_TexCoord2f(1, v4.x, v4.y);
-                    DGL_Vertex2f(v4.x, v4.y);
-                DGL_End();
+                DGL_TexCoord2f(0, .5, 1);
+                DGL_TexCoord2f(1, v4.x, v4.y);
+                DGL_Vertex2f(v4.x, v4.y);
+//                DGL_End();
 
-                if(!addToLists)
-                    DGL_BlendMode(BM_NORMAL);
+                //if (!addToLists)
+//                    DGL_BlendMode(BM_NORMAL);
             }
         }
-
-        if(!glowOnly)
+        else if (!glowOnly)
         {
-            if(!addToLists)
+            DENG_ASSERT(rs.primType == DGL_LINES);
+            //if (!addToLists)
             {
                 DGL_Color4f(color.x, color.y, color.z, opacity);
-                DGL_BlendMode(blend);
+//                DGL_BlendMode(blend);
             }
 
-            DGL_Begin(DGL_LINES);
-                DGL_TexCoord2f(0, from[0], from[1]);
-                DGL_Vertex2f(from[0], from[1]);
-                DGL_TexCoord2f(0, to[0], to[1]);
-                DGL_Vertex2f(to[0], to[1]);
-            DGL_End();
+            //DGL_Begin(DGL_LINES);
+            DGL_TexCoord2f(0, from[0], from[1]);
+            DGL_Vertex2f(from[0], from[1]);
+            DGL_TexCoord2f(0, to[0], to[1]);
+            DGL_Vertex2f(to[0], to[1]);
+            //DGL_End();
 
-            if(!addToLists)
-                DGL_BlendMode(BM_NORMAL);
-        }
-
-        if(drawNormal)
-        {
+            //if (!addToLists)
+//                DGL_BlendMode(BM_NORMAL);
+            if (drawNormal)
+            {
 #define NORMTAIL_LENGTH         8
 
-            Vector2f const v1 = (from + to) / 2;
-            Vector2d const v2 = v1 + normal * NORMTAIL_LENGTH;
+                Vector2f const v1 = (from + to) / 2;
+                Vector2d const v2 = v1 + normal * NORMTAIL_LENGTH;
 
-            if(!addToLists)
-            {
-                DGL_Color4f(color.x, color.y, color.z, opacity);
-                DGL_BlendMode(blend);
-            }
+                //if (!addToLists)
+                {
+                    DGL_Color4f(color.x, color.y, color.z, opacity);
+                    //                DGL_BlendMode(blend);
+                }
 
-            DGL_Begin(DGL_LINES);
+//                DGL_Begin(DGL_LINES);
                 DGL_TexCoord2f(0, v1.x, v1.y);
                 DGL_Vertex2f(v1.x, v1.y);
 
                 DGL_TexCoord2f(0, v2.x, v2.y);
                 DGL_Vertex2f(v2.x, v2.y);
-            DGL_End();
+//                DGL_End();
 
-            if(!addToLists)
-                DGL_BlendMode(BM_NORMAL);
+                //if (!addToLists)
+                //                DGL_BlendMode(BM_NORMAL);
 
 #undef NORMTAIL_LENGTH
+            }
         }
+
+            //DGL_BlendMode(BM_NORMAL);
     }
 
     void drawLine(Line *line) const
@@ -584,70 +592,70 @@ DENG2_PIMPL(AutomapWidget)
         xline_t *xline = P_ToXLine(line);
 
         // Already drawn once?
-        if(xline->validCount == VALIDCOUNT)
+        if (xline->validCount == VALIDCOUNT)
             return;
 
         // Is this line being drawn?
-        if((xline->flags & ML_DONTDRAW) && !(flags & AWF_SHOW_ALLLINES))
+        if ((xline->flags & ML_DONTDRAW) && !(flags & AWF_SHOW_ALLLINES))
             return;
 
         // We only want to draw twosided lines once.
         auto *frontSector = (Sector *)P_GetPtrp(line, DMU_FRONT_SECTOR);
-        if(frontSector && frontSector != (Sector *)P_GetPtrp(line, DMU_FRONT_SECTOR))
+        if (frontSector && frontSector != (Sector *)P_GetPtrp(line, DMU_FRONT_SECTOR))
         {
             return;
         }
 
         automapcfg_lineinfo_t const *info = nullptr;
-        if((flags & AWF_SHOW_ALLLINES) || xline->mapped[rs.plr - players])
+        if ((flags & AWF_SHOW_ALLLINES) || xline->mapped[rs.plr - players])
         {
-            auto *backSector = (Sector *)P_GetPtrp(line, DMU_BACK_SECTOR);
+            auto *backSector = reinterpret_cast<Sector *>(P_GetPtrp(line, DMU_BACK_SECTOR));
 
             // Perhaps this is a specially colored line?
             info = style->tryFindLineInfo_special(xline->special, xline->flags,
                                                   frontSector, backSector, flags);
-            if(rs.obType != -1 && !info)
+            if (rs.obType != -1 && !info)
             {
                 // Perhaps a default colored line?
                 /// @todo Implement an option which changes the vanilla behavior of always
                 ///       coloring non-secret lines with the solid-wall color to instead
                 ///       use whichever color it would be if not flagged secret.
-                if(!backSector || !P_GetPtrp(line, DMU_BACK) || (xline->flags & ML_SECRET))
+                if (!backSector || !P_GetPtrp(line, DMU_BACK) || (xline->flags & ML_SECRET))
                 {
                     // solid wall (well probably anyway...)
                     info = style->tryFindLineInfo(AMO_SINGLESIDEDLINE);
                 }
                 else
                 {
-                    if(!de::fequal(P_GetDoublep(backSector,  DMU_FLOOR_HEIGHT),
-                                   P_GetDoublep(frontSector, DMU_FLOOR_HEIGHT)))
+                    if (!de::fequal(P_GetDoublep(backSector,  DMU_FLOOR_HEIGHT),
+                                    P_GetDoublep(frontSector, DMU_FLOOR_HEIGHT)))
                     {
                         // Floor level change.
                         info = style->tryFindLineInfo(AMO_FLOORCHANGELINE);
                     }
-                    else if(!de::fequal(P_GetDoublep(backSector,  DMU_CEILING_HEIGHT),
-                                        P_GetDoublep(frontSector, DMU_CEILING_HEIGHT)))
+                    else if (!de::fequal(P_GetDoublep(backSector,  DMU_CEILING_HEIGHT),
+                                         P_GetDoublep(frontSector, DMU_CEILING_HEIGHT)))
                     {
                         // Ceiling level change.
                         info = style->tryFindLineInfo(AMO_CEILINGCHANGELINE);
                     }
-                    else if(flags & AWF_SHOW_ALLLINES)
+                    else if (flags & AWF_SHOW_ALLLINES)
                     {
                         info = style->tryFindLineInfo(AMO_UNSEENLINE);
                     }
                 }
             }
         }
-        else if(rs.obType != -1 && revealed)
+        else if (rs.obType != -1 && revealed)
         {
-            if(!(xline->flags & ML_DONTDRAW))
+            if (!(xline->flags & ML_DONTDRAW))
             {
                 // An as yet, unseen line.
                 info = style->tryFindLineInfo(AMO_UNSEENLINE);
             }
         }
 
-        if(info && (rs.obType == -1 || info == &style->lineInfo(rs.obType)))
+        if (info && (rs.obType == -1 || info == &style->lineInfo(rs.obType)))
         {
             ddouble from[2]; P_GetDoublepv(P_GetPtrp(line, DMU_VERTEX0), DMU_XY, from);
             ddouble to  [2]; P_GetDoublepv(P_GetPtrp(line, DMU_VERTEX1), DMU_XY, to);
@@ -655,11 +663,10 @@ DENG2_PIMPL(AutomapWidget)
             drawLine2(Vector2d(from), Vector2d(to), Vector3f(info->rgba), info->rgba[3],
                       (xline->special && !cfg.common.automapShowDoors ? GLOW_NONE : info->glow),
                       info->glowStrength,
-                      info->glowSize, !rs.addToLists, info->scaleWithView,
+                      info->glowSize, rs.glowOnly, info->scaleWithView,
                       (info->glow && !(xline->special && !cfg.common.automapShowDoors)),
-                      (xline->special && !cfg.common.automapShowDoors ? BM_NORMAL : info->blendMode),
-                      (flags & AWF_SHOW_LINE_NORMALS),
-                      rs.addToLists);
+                      //(xline->special && !cfg.common.automapShowDoors ? BM_NORMAL : info->blendMode),
+                      (flags & AWF_SHOW_LINE_NORMALS));
 
             xline->validCount = VALIDCOUNT; // Mark as drawn this frame.
         }
@@ -681,56 +688,79 @@ DENG2_PIMPL(AutomapWidget)
      *
      * @params objType  Type of map object being drawn.
      */
-    void drawAllLines(dint obType, bool addToLists = true) const
+    void drawAllLines(dint obType, bool glowOnly = false) const
     {
         // VALIDCOUNT is used to track which lines have been drawn this frame.
         VALIDCOUNT++;
 
         // Configure render state:
-        rs.obType     = obType;
-        rs.addToLists = addToLists;
+        rs.obType   = obType;
+        rs.glowOnly = glowOnly;
+
+        if (glowOnly)
+        {
+            rs.primType = DGL_QUADS;
+            DGL_Enable(DGL_TEXTURE0);
+            DGL_Bind(DGLuint(Get(DD_DYNLIGHT_TEXTURE)));
+        }
+        else
+        {
+            rs.primType = DGL_LINES;
+            if (amMaskTexture)
+            {
+                DGL_Enable(DGL_TEXTURE0);
+                DGL_Bind(amMaskTexture);
+            }
+        }
+
+        DGL_Begin(rs.primType);
 
         // Can we use the automap's in-view bounding box to cull out of view objects?
-        if(!addToLists)
+        //if (!addToLists)
         {
             AABoxd aaBox;
             self().pvisibleBounds(&aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
             Subspace_BoxIterator(&aaBox, drawLinesForSubspaceWorker, const_cast<Impl *>(this));
         }
-        else
+        /*else
         {
             // No. As the map lists are considered static we want them to contain all
             // walls, not just those visible *now* (note rotation).
             dint const numSubspaces = P_Count(DMU_SUBSPACE);
-            for(dint i = 0; i < numSubspaces; ++i)
+            for (dint i = 0; i < numSubspaces; ++i)
             {
                 P_Iteratep(P_ToPtr(DMU_SUBSPACE, i), DMU_LINE, drawLineWorker, const_cast<Impl *>(this));
             }
-        }
+        }*/
+
+        DGL_End();
+        DGL_Enable(DGL_TEXTURE0);
     }
 
     static void drawLine(Line *line, Vector3f const &color, dfloat opacity,
-        blendmode_t blendMode, bool showNormal)
+                         /*blendmode_t blendMode, */bool showNormal)
     {
         dfloat length = P_GetFloatp(line, DMU_LENGTH);
 
-        if(length > 0)
+        if (length > 0)
         {
             dfloat v1[2]; P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX0), DMU_XY, v1);
             dfloat v2[2]; P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX1), DMU_XY, v2);
 
-            DGL_BlendMode(blendMode);
+            //DGL_BlendMode(blendMode);
             DGL_Color4f(color.x, color.y, color.z, opacity);
 
-            DGL_Begin(DGL_LINES);
-                DGL_TexCoord2f(0, v1[0], v1[1]);
-                DGL_Vertex2f(v1[0], v1[1]);
+            DENG_ASSERT(rs.primType == DGL_LINES);
 
-                DGL_TexCoord2f(0, v2[0], v2[1]);
-                DGL_Vertex2f(v2[0], v2[1]);
-            DGL_End();
+            //DGL_Begin(DGL_LINES);
+            DGL_TexCoord2f(0, v1[0], v1[1]);
+            DGL_Vertex2f(v1[0], v1[1]);
 
-            if(showNormal)
+            DGL_TexCoord2f(0, v2[0], v2[1]);
+            DGL_Vertex2f(v2[0], v2[1]);
+            //DGL_End();
+
+            if (showNormal)
             {
 #define NORMTAIL_LENGTH         8
 
@@ -747,18 +777,18 @@ DENG2_PIMPL(AutomapWidget)
                 v2[0] = v1[0] + normal[0] * NORMTAIL_LENGTH;
                 v2[1] = v1[1] + normal[1] * NORMTAIL_LENGTH;
 
-                DGL_Begin(DGL_LINES);
-                    DGL_TexCoord2f(0, v1[0], v1[1]);
-                    DGL_Vertex2f(v1[0], v1[1]);
+                //DGL_Begin(DGL_LINES);
+                DGL_TexCoord2f(0, v1[0], v1[1]);
+                DGL_Vertex2f(v1[0], v1[1]);
 
-                    DGL_TexCoord2f(0, v2[0], v2[1]);
-                    DGL_Vertex2f(v2[0], v2[1]);
-                DGL_End();
+                DGL_TexCoord2f(0, v2[0], v2[1]);
+                DGL_Vertex2f(v2[0], v2[1]);
+                //DGL_End();
 
 #undef NORMTAIL_LENGTH
             }
 
-            DGL_BlendMode(BM_NORMAL);
+            //DGL_BlendMode(BM_NORMAL);
         }
     }
 
@@ -770,34 +800,34 @@ DENG2_PIMPL(AutomapWidget)
         dfloat const opacity = uiRendState->pageAlpha;
 
         xline_t *xline = P_ToXLine(line);
-        if(!xline) return false;
+        if (!xline) return false;
 
         // Already processed this frame?
-        if(xline->validCount == VALIDCOUNT) return false;
+        if (xline->validCount == VALIDCOUNT) return false;
 
-        if((xline->flags & ML_DONTDRAW) && !(inst->flags & AWF_SHOW_ALLLINES))
+        if ((xline->flags & ML_DONTDRAW) && !(inst->flags & AWF_SHOW_ALLLINES))
         {
             return false;
         }
 
         automapcfg_objectname_t amo = AMO_NONE;
-        if((inst->flags & AWF_SHOW_ALLLINES) || xline->mapped[rs.plr - players])
+        if ((inst->flags & AWF_SHOW_ALLLINES) || xline->mapped[rs.plr - players])
         {
             amo = AMO_SINGLESIDEDLINE;
         }
-        else if(rs.obType != -1 && inst->revealed)
+        else if (rs.obType != -1 && inst->revealed)
         {
-            if(!(xline->flags & ML_DONTDRAW))
+            if (!(xline->flags & ML_DONTDRAW))
             {
                 // An as yet, unseen line.
                 amo = AMO_UNSEENLINE;
             }
         }
 
-        if(automapcfg_lineinfo_t const *info = inst->style->tryFindLineInfo(amo))
+        if (automapcfg_lineinfo_t const *info = inst->style->tryFindLineInfo(amo))
         {
             drawLine(line, Vector3f(info->rgba), info->rgba[3] * cfg.common.automapLineAlpha * opacity,
-                     info->blendMode, (inst->flags & AWF_SHOW_LINE_NORMALS));
+                     /*info->blendMode, */(inst->flags & AWF_SHOW_LINE_NORMALS));
         }
 
         xline->validCount = VALIDCOUNT;  // Mark as processed this frame.
@@ -811,11 +841,16 @@ DENG2_PIMPL(AutomapWidget)
 
         // Configure render state:
         rs.obType = MOL_LINEDEF;
+        rs.primType = DGL_LINES;
 
-        // Draw any polyobjects in view.
-        AABoxd aaBox;
-        self().pvisibleBounds(&aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
-        Line_BoxIterator(&aaBox, LIF_POLYOBJ, drawLine_polyob, const_cast<Impl *>(this));
+        DGL_Begin(rs.primType);
+        {
+            // Draw any polyobjects in view.
+            AABoxd aaBox;
+            self().pvisibleBounds(&aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
+            Line_BoxIterator(&aaBox, LIF_POLYOBJ, drawLine_polyob, const_cast<Impl *>(this));
+        }
+        DGL_End();
     }
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
@@ -825,22 +860,22 @@ DENG2_PIMPL(AutomapWidget)
         DENG2_ASSERT(line && inst);
 
         xline_t *xline = P_ToXLine(line);
-        if(!xline) return false;
+        if (!xline) return false;
 
-        if(xline->validCount == VALIDCOUNT) return false;
+        if (xline->validCount == VALIDCOUNT) return false;
 
-        if(!(inst->flags & AWF_SHOW_ALLLINES))
+        if (!(inst->flags & AWF_SHOW_ALLLINES))
         {
-            if(xline->flags & ML_DONTDRAW) return false;
+            if (xline->flags & ML_DONTDRAW) return false;
         }
 
         // Only active XG lines.
-        if(!xline->xg || !xline->xg->active) return false;
+        if (!xline->xg || !xline->xg->active) return false;
 
         // XG lines blink.
-        if(!(mapTime & 4)) return false;
+        if (!(mapTime & 4)) return false;
 
-        drawLine(line, Vector3f(.8f, 0, .8f), 1, BM_ADD, (inst->flags & AWF_SHOW_LINE_NORMALS));
+        drawLine(line, Vector3f(.8f, 0, .8f), 1, (inst->flags & AWF_SHOW_LINE_NORMALS));
         xline->validCount = VALIDCOUNT;  // Mark as processed this frame.
 
         return false;  // Continue iteration.
@@ -850,19 +885,26 @@ DENG2_PIMPL(AutomapWidget)
     void drawAllLines_xg() const
     {
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        if(!(flags & AWF_SHOW_SPECIALLINES))
+        if (!(flags & AWF_SHOW_SPECIALLINES))
             return;
 
         // VALIDCOUNT is used to track which lines have been drawn this frame.
         VALIDCOUNT++;
 
         // Configure render state:
-        rs.addToLists = false;
-        rs.obType     = -1;
+        rs.glowOnly = true;
+        rs.obType   = -1;
+        rs.primType = DGL_LINES;
 
-        AABoxd aaBox;
-        self().pvisibleBounds(&aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
-        Line_BoxIterator(&aaBox, LIF_SECTOR, drawLine_xg, const_cast<Impl *>(this));
+        DGL_BlendMode(BM_ADD);
+        DGL_Begin(rs.primType);
+        {
+            AABoxd aaBox;
+            self().pvisibleBounds(&aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
+            Line_BoxIterator(&aaBox, LIF_SECTOR, drawLine_xg, const_cast<Impl *>(this));
+        }
+        DGL_End();
+        DGL_BlendMode(BM_NORMAL);
 #endif
     }
 
@@ -871,10 +913,10 @@ DENG2_PIMPL(AutomapWidget)
      */
     void drawAllPlayerMarkers() const
     {
-        for(dint i = 0; i < MAXPLAYERS; ++i)
+        for (dint i = 0; i < MAXPLAYERS; ++i)
         {
             // Do not show markers for other players in deathmatch.
-            if(COMMON_GAMESESSION->rules().deathmatch && i != self().player())
+            if (COMMON_GAMESESSION->rules().deathmatch && i != self().player())
             {
                 continue;
             }
@@ -903,9 +945,9 @@ DENG2_PIMPL(AutomapWidget)
             { MT_AKYY,  KEY3_COLOR },
 #  endif
         };
-        for(auto const &thing : thingData)
+        for (auto const &thing : thingData)
         {
-            if(thing.type == type) return thing.palColor;
+            if (thing.type == type) return thing.palColor;
         }
         return -1;  // None.
 #endif
@@ -921,10 +963,10 @@ DENG2_PIMPL(AutomapWidget)
 
     static int drawThingPoint(mobj_t *mob, void *context)
     {
-        auto *p = (drawthingpoint_params_t *) context;
+        auto *p = reinterpret_cast<drawthingpoint_params_t *>(context);
 
         // Only sector linked mobjs should be visible in the automap.
-        if(!(mob->flags & MF_NOSECTOR))
+        if (!(mob->flags & MF_NOSECTOR))
         {
             svgid_t vgId   = p->vgId;
             bool isVisible = false;
@@ -932,10 +974,10 @@ DENG2_PIMPL(AutomapWidget)
 
             dfloat angle = 0;
             dfloat keyColorRGB[3];
-            if(p->flags & AWF_SHOW_KEYS)
+            if (p->flags & AWF_SHOW_KEYS)
             {
                 dint keyColor = thingColorForMobjType(mobjtype_t(mob->type));
-                if(keyColor != -1)
+                if (keyColor != -1)
                 {
                     R_GetColorPaletteRGBf(0, keyColor, keyColorRGB, false);
                     vgId      = VG_KEY;
@@ -945,13 +987,13 @@ DENG2_PIMPL(AutomapWidget)
             }
 
             // Something else?
-            if(!isVisible)
+            if (!isVisible)
             {
                 isVisible = !!(p->flags & AWF_SHOW_THINGS);
-                angle = Mobj_AngleSmoothed(mob) / (float) ANGLE_MAX * 360;  // In degrees.
+                angle = Mobj_AngleSmoothed(mob) / float(ANGLE_MAX) * 360;  // In degrees.
             }
 
-            if(isVisible)
+            if (isVisible)
             {
                 /* $unifiedangles */
                 coord_t origin[3]; Mobj_OriginSmoothed(mob, origin);
@@ -966,7 +1008,7 @@ DENG2_PIMPL(AutomapWidget)
 
     void drawAllThings() const
     {
-        if(!(flags & (AWF_SHOW_THINGS | AWF_SHOW_KEYS)))
+        if (!(flags & (AWF_SHOW_THINGS | AWF_SHOW_KEYS)))
             return;
 
         dfloat const alpha = uiRendState->pageAlpha;
@@ -988,7 +1030,7 @@ DENG2_PIMPL(AutomapWidget)
     {
         dfloat const alpha = uiRendState->pageAlpha;
 
-        if(points.isEmpty()) return;
+        if (points.isEmpty()) return;
 
         // Calculate final scale factor.
         scale = self().frameToMap(1) * scale;
@@ -999,7 +1041,7 @@ DENG2_PIMPL(AutomapWidget)
 
         dint idx = 0;
         Point2Raw const labelOffset;
-        for(MarkedPoint const *point : points)
+        for (MarkedPoint const *point : points)
         {
             String const label    = String::number(idx++);
             Vector2d const origin = fitPointInRectangle(point->origin(), topLeft, topRight, bottomRight, bottomLeft, view);
@@ -1014,7 +1056,7 @@ DENG2_PIMPL(AutomapWidget)
 
             FR_SetFont(FID(GF_MAPPOINT));
 #if __JDOOM__
-            if(gameMode == doom2_hacx)
+            if (gameMode == doom2_hacx)
                 FR_SetColorAndAlpha(1, 1, 1, alpha);
             else
                 FR_SetColorAndAlpha(.22f, .22f, .22f, alpha);
@@ -1044,7 +1086,7 @@ DENG2_PIMPL(AutomapWidget)
 
         dfloat bgColor[3];
 #if __JHERETIC__ || __JHEXEN__
-        if(!CentralLumpIndex().contains("AUTOPAGE.lmp"))
+        if (!CentralLumpIndex().contains("AUTOPAGE.lmp"))
         {
             bgColor[0] = .55f; bgColor[1] = .45f; bgColor[2] = .35f;
         }
@@ -1059,7 +1101,7 @@ DENG2_PIMPL(AutomapWidget)
         RectRaw geom; Rect_Raw(&self().geometry(), &geom);
 
         // Do we want a background texture?
-        if(autopageLumpNum != -1)
+        if (autopageLumpNum != -1)
         {
             // Apply the background texture onto a parallaxing layer which
             // follows the map view target (not player).
@@ -1101,7 +1143,7 @@ DENG2_PIMPL(AutomapWidget)
 #if __JDOOM64__
         // jd64 > Demon keys
         // If drawn in HUD we don't need them visible in the map too.
-        if(!cfg.hudShown[HUD_INVENTORY])
+        if (!cfg.hudShown[HUD_INVENTORY])
         {
             static inventoryitemtype_t const items[3] = {
                 IIT_DEMONKEY1, IIT_DEMONKEY2, IIT_DEMONKEY3
@@ -1109,13 +1151,13 @@ DENG2_PIMPL(AutomapWidget)
 
             dint player = self().player();
             dint num = 0;
-            for(inventoryitemtype_t const &item : items)
+            for (inventoryitemtype_t const &item : items)
             {
-                if(P_InventoryCount(player, item) > 0)
+                if (P_InventoryCount(player, item) > 0)
                     num += 1;
             }
 
-            if(num > 0)
+            if (num > 0)
             {
                 static dint const invItemSprites[NUM_INVENTORYITEM_TYPES] = {
                     SPR_ART1, SPR_ART2, SPR_ART3
@@ -1126,9 +1168,9 @@ DENG2_PIMPL(AutomapWidget)
 
                 spriteinfo_t sprInfo;
                 dfloat y = 0;
-                for(dint i = 0; i < 3; ++i)
+                for (dint i = 0; i < 3; ++i)
                 {
-                    if(P_InventoryCount(player, items[i]))
+                    if (P_InventoryCount(player, items[i]))
                     {
                         R_GetSpriteInfo(invItemSprites[i], 0, &sprInfo);
                         DGL_SetPSprite(sprInfo.material);
@@ -1186,7 +1228,7 @@ DENG2_PIMPL(AutomapWidget)
 
     void drawAllVertexes()
     {
-        if(!(flags & AWF_SHOW_VERTEXES))
+        if (!(flags & AWF_SHOW_VERTEXES))
             return;
 
         DGL_Color4f(.2f, .5f, 1, uiRendState->pageAlpha);
@@ -1197,7 +1239,7 @@ DENG2_PIMPL(AutomapWidget)
 
         dfloat v[2];
         DGL_Begin(DGL_POINTS);
-        for(dint i = 0; i < numvertexes; ++i)
+        for (dint i = 0; i < numvertexes; ++i)
         {
             P_GetFloatv(DMU_VERTEX, i, DMU_XY, v);
             DGL_TexCoord2f(0, v[0], v[1]);
@@ -1207,41 +1249,6 @@ DENG2_PIMPL(AutomapWidget)
 
         DGL_SetFloat(DGL_POINT_SIZE, oldPointSize);
         DGL_Disable(DGL_POINT_SMOOTH);
-    }
-
-    void deleteLists()
-    {
-        if(Get(DD_NOVIDEO) || IS_DEDICATED) return;
-
-        for(dint i = 0; i < NUM_MAP_OBJECTLISTS; ++i)
-        {
-            if(lists[i])
-            {
-                DGL_DeleteLists(lists[i], 1); lists[i] = 0;
-            }
-        }
-    }
-
-    /**
-     * Compile OpenGL commands for drawing the map objects with display lists.
-     */
-    void buildLists()
-    {
-        if(Get(DD_NOVIDEO) || IS_DEDICATED) return;
-
-        deleteLists();
-
-        for(dint i = 0; i < NUM_MAP_OBJECTLISTS; ++i)
-        {
-            // Build commands and compile to a display list.
-            if(DGL_NewList(0, DGL_COMPILE))
-            {
-                drawAllLines(i);
-                lists[i] = DGL_EndList();
-            }
-        }
-
-        needBuildLists = false;
     }
 };
 
@@ -1271,13 +1278,13 @@ void AutomapWidget::prepareAssets()  // static
 {
     LumpIndex const &lumpIndex = CentralLumpIndex();
 
-    if(autopageLumpNum >= 0)
+    if (autopageLumpNum >= 0)
         autopageLumpNum = lumpIndex.findLast("autopage.lmp");
 
-    if(!amMaskTexture)
+    if (!amMaskTexture)
     {
         lumpnum_t lumpNum = lumpIndex.findLast("mapmask.lmp");
-        if(lumpNum >= 0)
+        if (lumpNum >= 0)
         {
             File1 &file = lumpIndex[lumpNum];
             uint8_t const *pixels = file.cache();
@@ -1293,14 +1300,13 @@ void AutomapWidget::prepareAssets()  // static
 
 void AutomapWidget::releaseAssets()  // static
 {
-    if(!amMaskTexture) return;
+    if (!amMaskTexture) return;
     DGL_DeleteTextures(1, &amMaskTexture);
     amMaskTexture = 0;
 }
 
 void AutomapWidget::reset()
 {
-    d->deleteLists();
     d->needBuildLists = true;
 }
 
@@ -1321,7 +1327,7 @@ void AutomapWidget::draw(Vector2i const &offset) const
     float const alpha = uiRendState->pageAlpha;
     player_t *plr = &players[player()];
 
-    if(!plr->plr->inGame) return;
+    if (!plr->plr->inGame) return;
 
     // Configure render state:
     rs.plr = plr;
@@ -1330,11 +1336,11 @@ void AutomapWidget::draw(Vector2i const &offset) const
     RectRaw geom; Rect_Raw(&geometry(), &geom);
 
     // Freeze the lists if the map is fading out from being open, or for debug.
-    if((++updateWait % 10) && d->needBuildLists && !freezeMapRLs && isOpen())
-    {
-        // Its time to rebuild the automap object display lists.
-        d->buildLists();
-    }
+//    if ((++updateWait % 10) && d->needBuildLists && !freezeMapRLs && isOpen())
+//    {
+//        // Its time to rebuild the automap object display lists.
+//        d->buildLists();
+//    }
 
     // Setup for frame.
     d->setupGLStateForMap();
@@ -1371,15 +1377,11 @@ void AutomapWidget::draw(Vector2i const &offset) const
     }
 #endif*/
 
-    if(amMaskTexture)
+    if (amMaskTexture)
     {
         dint const border = .5f + UIAUTOMAP_BORDER * aspectScale;
 
-        DGL_Bind(amMaskTexture);
-        DGL_Enable(DGL_TEXTURE_2D);
-
         DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
-
         DGL_MatrixMode(DGL_TEXTURE);
         DGL_LoadIdentity();
 
@@ -1394,16 +1396,11 @@ void AutomapWidget::draw(Vector2i const &offset) const
     }
 
     // Draw static map geometry.
-    for(dint i = NUM_MAP_OBJECTLISTS-1; i >= 0; i--)
+    for (dint i = NUM_MAP_OBJECTLISTS-1; i >= 0; i--)
     {
-        if(d->lists[i])
-        {
-            automapcfg_lineinfo_t const &info = d->style->lineInfo(i);
-
-            DGL_Color4f(info.rgba[0], info.rgba[1], info.rgba[2], info.rgba[3] * cfg.common.automapLineAlpha * alpha);
-            DGL_BlendMode(info.blendMode);
-            DGL_CallList(d->lists[i]);
-        }
+        automapcfg_lineinfo_t const &info = d->style->lineInfo(i);
+        DGL_Color4f(info.rgba[0], info.rgba[1], info.rgba[2], info.rgba[3] * cfg.common.automapLineAlpha * alpha);
+        d->drawAllLines(i);
     }
 
     // Draw dynamic map geometry.
@@ -1422,20 +1419,17 @@ void AutomapWidget::draw(Vector2i const &offset) const
     d->drawAllPlayerMarkers();
     DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);
 
-    if(amMaskTexture)
+    if (amMaskTexture)
     {
-        DGL_Disable(DGL_TEXTURE_2D);
+        DGL_Disable(DGL_TEXTURE0);
         DGL_MatrixMode(DGL_TEXTURE);
         DGL_PopMatrix();
     }
 
     // Draw glows?
-    if(cfg.common.automapShowDoors)
+    if (cfg.common.automapShowDoors)
     {
-        /// @todo Optimize: Hugely inefficent. Need a new approach.
-        DGL_Enable(DGL_TEXTURE_2D);
-        d->drawAllLines(-1, false /*don't use draw lists*/);
-        DGL_Disable(DGL_TEXTURE_2D);
+        d->drawAllLines(-1, true /*only glows*/);
     }
 
     d->restoreGLStateFromMap();
@@ -1449,12 +1443,12 @@ void AutomapWidget::draw(Vector2i const &offset) const
 
 void AutomapWidget::open(bool yes, bool instantly)
 {
-    if(G_GameState() != GS_MAP && yes) return;
+    if (G_GameState() != GS_MAP && yes) return;
 
-    if(d->open == yes) return;  // No change.
+    if (d->open == yes) return;  // No change.
 
     d->targetOpacity = (yes? 1.f : 0.f);
-    if(instantly)
+    if (instantly)
     {
         d->opacity = d->oldOpacity = d->targetOpacity;
     }
@@ -1466,18 +1460,18 @@ void AutomapWidget::open(bool yes, bool instantly)
     }
 
     d->open = yes;
-    if(d->open)
+    if (d->open)
     {
-        if(mobj_t *mob = followMobj())
+        if (mobj_t *mob = followMobj())
         {
             // The map's target player is available.
-            if(!(!d->follow && !cfg.common.automapPanResetOnOpen))
+            if (!(!d->follow && !cfg.common.automapPanResetOnOpen))
             {
                 coord_t origin[3]; Mobj_OriginSmoothed(mob, origin);
                 setCameraOrigin(Vector2d(origin));
             }
 
-            if(!d->follow && cfg.common.automapPanResetOnOpen)
+            if (!d->follow && cfg.common.automapPanResetOnOpen)
             {
                 /* $unifiedangles */
                 setCameraAngle((d->rotate ? (mob->angle - ANGLE_90) / (float) ANGLE_MAX * 360 : 0));
@@ -1493,10 +1487,10 @@ void AutomapWidget::open(bool yes, bool instantly)
         }
     }
 
-    if(d->open)
+    if (d->open)
     {
         DD_Execute(true, "activatebcontext map");
-        if(!d->follow)
+        if (!d->follow)
             DD_Execute(true, "activatebcontext map-freepan");
     }
     else
@@ -1516,34 +1510,34 @@ void AutomapWidget::tick(timespan_t elapsed)
     dfloat panX[2]; P_GetControlState(plrNum, CTL_MAP_PAN_X, &panX[0], &panX[1]);
     dfloat panY[2]; P_GetControlState(plrNum, CTL_MAP_PAN_Y, &panY[0], &panY[1]);
 
-    if(G_GameState() != GS_MAP) return;
+    if (G_GameState() != GS_MAP) return;
 
     // Move towards the target alpha level for the automap.
     d->opacityTimer += (cfg.common.automapOpenSeconds == 0? 1 : 1 / cfg.common.automapOpenSeconds * elapsed);
-    if(d->opacityTimer >= 1)
+    if (d->opacityTimer >= 1)
         d->opacity = d->targetOpacity;
     else
         d->opacity = de::lerp(d->oldOpacity, d->targetOpacity, d->opacityTimer);
 
     // Unless open we do nothing further.
-    if(!isOpen()) return;
+    if (!isOpen()) return;
 
     // Map view zoom contol.
     dfloat zoomSpeed = 1 + (2 * cfg.common.automapZoomSpeed) * elapsed * TICRATE;
-    if(players[plrNum].brain.speed) zoomSpeed *= 1.5f;
+    if (players[plrNum].brain.speed) zoomSpeed *= 1.5f;
 
     dfloat zoomVel;
     P_GetControlState(plrNum, CTL_MAP_ZOOM, &zoomVel, nullptr); // ignores rel offset -jk
-    if(zoomVel > 0) // zoom in
+    if (zoomVel > 0) // zoom in
     {
         setScale(d->viewScale * zoomSpeed);
     }
-    else if(zoomVel < 0) // zoom out
+    else if (zoomVel < 0) // zoom out
     {
         setScale(d->viewScale / zoomSpeed);
     }
 
-    if(!d->follow || !followMob)
+    if (!d->follow || !followMob)
     {
         // Camera panning mode.
         dfloat panUnitsPerSecond;
@@ -1551,7 +1545,7 @@ void AutomapWidget::tick(timespan_t elapsed)
         // DOOM.EXE pans the automap at 140 fixed pixels per second (VGA: 200 pixels tall).
         /// @todo This needs resolution-independent units. (The "frame" units are screen pixels.)
         panUnitsPerSecond = frameToMap(140 * Rect_Height(&geometry()) / 200.f) * (2 * cfg.common.automapPanSpeed);
-        if(panUnitsPerSecond < 8) panUnitsPerSecond = 8;
+        if (panUnitsPerSecond < 8) panUnitsPerSecond = 8;
 
         /// @todo Fix sensitivity for relative axes.
         Vector2d const delta = rotate(Vector2d(panX[0], panY[0]) * panUnitsPerSecond * elapsed + Vector2d(panX[1], panY[1]),
@@ -1567,12 +1561,12 @@ void AutomapWidget::tick(timespan_t elapsed)
         setCameraAngle(angle);
     }
 
-    if(d->needViewScaleUpdate)
+    if (d->needViewScaleUpdate)
         d->updateViewScale();
 
     // Map viewer location.
     d->viewTimer += dfloat(.4 * elapsed * TICRATE);
-    if(d->viewTimer >= 1)
+    if (d->viewTimer >= 1)
     {
         d->view = d->targetView;
     }
@@ -1585,7 +1579,7 @@ void AutomapWidget::tick(timespan_t elapsed)
 
     // Map view scale (zoom).
     d->viewScaleTimer += dfloat(.4 * elapsed * TICRATE);
-    if(d->viewScaleTimer >= 1)
+    if (d->viewScaleTimer >= 1)
     {
         d->viewScale = d->targetViewScale;
     }
@@ -1596,7 +1590,7 @@ void AutomapWidget::tick(timespan_t elapsed)
 
     // Map view rotation.
     d->angleTimer += dfloat(.4 * elapsed * TICRATE);
-    if(d->angleTimer >= 1)
+    if (d->angleTimer >= 1)
     {
         d->angle = d->targetAngle;
     }
@@ -1606,22 +1600,22 @@ void AutomapWidget::tick(timespan_t elapsed)
         dfloat endAngle   = d->targetAngle;
 
         dfloat diff;
-        if(endAngle > startAngle)
+        if (endAngle > startAngle)
         {
             diff = endAngle - startAngle;
-            if(diff > 180)
+            if (diff > 180)
                 endAngle = startAngle - (360 - diff);
         }
         else
         {
             diff = startAngle - endAngle;
-            if(diff > 180)
+            if (diff > 180)
                 endAngle = startAngle + (360 - diff);
         }
 
         d->angle = de::lerp(startAngle, endAngle, d->angleTimer);
-        if(d->angle < 0)        d->angle += 360;
-        else if(d->angle > 360) d->angle -= 360;
+        if (d->angle < 0)        d->angle += 360;
+        else if (d->angle > 360) d->angle -= 360;
     }
 
     //
@@ -1680,7 +1674,7 @@ void AutomapWidget::updateGeometry()
     // the position and/or size of the automap must therefore change too.
     RectRaw newGeom; R_ViewWindowGeometry(player(), &newGeom);
 
-    if(newGeom.origin.x != Rect_X(&geometry()) ||
+    if (newGeom.origin.x != Rect_X(&geometry()) ||
        newGeom.origin.y != Rect_Y(&geometry()) ||
        newGeom.size.width != Rect_Width(&geometry()) ||
        newGeom.size.height != Rect_Height(&geometry()))
@@ -1703,7 +1697,7 @@ void AutomapWidget::setCameraAngle(dfloat newAngle)
 {
     // Already at this target?
     newAngle = de::clamp(0.f, newAngle, 359.9999f);
-    if(newAngle == d->targetAngle) return;
+    if (newAngle == d->targetAngle) return;
 
     // Begin animating toward the new target.
     d->oldAngle    = d->angle;
@@ -1719,21 +1713,21 @@ Vector2d AutomapWidget::cameraOrigin() const
 void AutomapWidget::setCameraOrigin(Vector2d const &newOrigin, bool instantly)
 {
     // Already at this target?
-    if(newOrigin == d->targetView)
+    if (newOrigin == d->targetView)
         return;
 
     // If the delta is too great - perform the move instantly.
-    if(!instantly && d->maxViewPositionDelta > 0)
+    if (!instantly && d->maxViewPositionDelta > 0)
     {
         coord_t const dist = de::abs((cameraOrigin() - newOrigin).length());
-        if(dist > d->maxViewPositionDelta)
+        if (dist > d->maxViewPositionDelta)
         {
             instantly = true;
         }
     }
 
     // Begin animating toward the new target.
-    if(instantly)
+    if (instantly)
     {
         d->view = d->oldView = d->targetView = newOrigin;
     }
@@ -1752,13 +1746,13 @@ dfloat AutomapWidget::scale() const
 
 void AutomapWidget::setScale(dfloat newScale)
 {
-    if(d->needViewScaleUpdate)
+    if (d->needViewScaleUpdate)
         d->updateViewScale();
 
     newScale = de::clamp(d->minScaleMTOF, newScale, d->maxScaleMTOF);
 
     // Already at this target?
-    if(newScale == d->targetViewScale)
+    if (newScale == d->targetViewScale)
         return;
 
     // Begin animating toward the new target.
@@ -1779,7 +1773,7 @@ bool AutomapWidget::isRevealed() const
 
 void AutomapWidget::reveal(bool yes)
 {
-    if(d->revealed != yes)
+    if (d->revealed != yes)
     {
         d->revealed = yes;
         d->needBuildLists = true;
@@ -1788,10 +1782,10 @@ void AutomapWidget::reveal(bool yes)
 
 void AutomapWidget::pvisibleBounds(coord_t *lowX, coord_t *hiX, coord_t *lowY, coord_t *hiY) const
 {
-    if(lowX) *lowX = d->viewAABB[BOXLEFT];
-    if(hiX)  *hiX  = d->viewAABB[BOXRIGHT];
-    if(lowY) *lowY = d->viewAABB[BOXBOTTOM];
-    if(hiY)  *hiY  = d->viewAABB[BOXTOP];
+    if (lowX) *lowX = d->viewAABB[BOXLEFT];
+    if (hiX)  *hiX  = d->viewAABB[BOXRIGHT];
+    if (lowY) *lowY = d->viewAABB[BOXBOTTOM];
+    if (hiY)  *hiY  = d->viewAABB[BOXTOP];
 }
 
 dint AutomapWidget::pointCount() const
@@ -1803,7 +1797,7 @@ dint AutomapWidget::addPoint(Vector3d const &origin)
 {
     d->points << new MarkedPoint(origin);
     dint pointNum = d->points.count() - 1;  // base 0.
-    if(player() >= 0)
+    if (player() >= 0)
     {
         String msg = String(AMSTR_MARKEDSPOT) + " " + String::number(pointNum);
         P_SetMessageWithFlags(&players[player()], msg.toUtf8().constData(), LMF_NO_HIDE);
@@ -1818,16 +1812,16 @@ bool AutomapWidget::hasPoint(dint index) const
 
 AutomapWidget::MarkedPoint &AutomapWidget::point(dint index) const
 {
-    if(hasPoint(index)) return *d->points.at(index);
+    if (hasPoint(index)) return *d->points.at(index);
     /// @throw MissingPointError  Invalid point reference.
     throw MissingPointError("AutomapWidget::point", "Unknown point #" + String::number(index));
 }
 
 LoopResult AutomapWidget::forAllPoints(std::function<LoopResult (MarkedPoint &)> func) const
 {
-    for(MarkedPoint *point : d->points)
+    for (MarkedPoint *point : d->points)
     {
-        if(auto result = func(*point)) return result;
+        if (auto result = func(*point)) return result;
     }
     return LoopContinue;
 }
@@ -1836,7 +1830,7 @@ void AutomapWidget::clearAllPoints(bool silent)
 {
     d->clearPoints();
 
-    if(!silent && player() >= 0)
+    if (!silent && player() >= 0)
     {
         P_SetMessageWithFlags(&players[player()], AMSTR_MARKSCLEARED, LMF_NO_HIDE);
     }
@@ -1852,20 +1846,20 @@ void AutomapWidget::setCameraZoomMode(bool yes)
     LOG_AS("AutomapWidget");
     bool const oldZoomMax = d->forceMaxScale;
 
-    if(d->needViewScaleUpdate)
+    if (d->needViewScaleUpdate)
     {
         d->updateViewScale();
     }
 
     // When switching to max scale mode, store the old scale.
-    if(!d->forceMaxScale)
+    if (!d->forceMaxScale)
     {
         d->priorToMaxScale = d->viewScale;
     }
 
     d->forceMaxScale = yes;
     setScale((d->forceMaxScale ? 0 : d->priorToMaxScale));
-    if(oldZoomMax != d->forceMaxScale)
+    if (oldZoomMax != d->forceMaxScale)
     {
         LOGDEV_XVERBOSE("Maximum zoom: ", DENG2_BOOL_YESNO(cameraZoomMode()));
     }
@@ -1878,10 +1872,10 @@ bool AutomapWidget::cameraFollowMode() const
 
 void AutomapWidget::setCameraFollowMode(bool yes)
 {
-    if(d->follow != yes)
+    if (d->follow != yes)
     {
         d->follow = yes;
-        if(d->open)
+        if (d->open)
         {
             DD_Executef(true, "%sactivatebcontext map-freepan", d->follow? "de" : "");
             P_SetMessageWithFlags(&players[player()], (d->follow ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF), LMF_NO_HIDE);
@@ -1891,7 +1885,7 @@ void AutomapWidget::setCameraFollowMode(bool yes)
 
 mobj_t *AutomapWidget::followMobj() const
 {
-    if(d->followPlayer >= 0)
+    if (d->followPlayer >= 0)
     {
         player_t *player = &players[d->followPlayer];
         return player->plr->inGame ? player->plr->mo : nullptr;
@@ -1917,7 +1911,7 @@ dfloat AutomapWidget::opacityEX() const
 void AutomapWidget::setOpacityEX(dfloat newOpacity)
 {
     newOpacity = de::clamp(0.f, newOpacity, 1.f);
-    if(newOpacity != d->targetOpacity)
+    if (newOpacity != d->targetOpacity)
     {
         // Start animating toward the new target.
         d->oldOpacity    = d->opacity;
@@ -1933,7 +1927,7 @@ dint AutomapWidget::flags() const
 
 void AutomapWidget::setFlags(dint newFlags)
 {
-    if(d->flags != newFlags)
+    if (d->flags != newFlags)
     {
         d->flags = newFlags;
         // We will need to rebuild one or more display lists.

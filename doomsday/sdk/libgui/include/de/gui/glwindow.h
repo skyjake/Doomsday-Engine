@@ -26,6 +26,11 @@
 #include <de/Vector>
 #include <de/Rectangle>
 #include <de/NativePath>
+
+#if defined (DENG_MOBILE)
+#  error "glwindow.h is for desktop platforms (use glwindow_qml.h instead)"
+#endif
+
 #include <QOpenGLWindow>
 
 #ifdef WIN32
@@ -78,6 +83,7 @@ public:
     bool isHidden() const;
 
     float frameRate() const;
+    uint frameCount() const;
 
     /**
      * Determines the current top left corner (origin) of the window.

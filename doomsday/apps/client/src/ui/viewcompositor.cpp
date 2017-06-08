@@ -192,16 +192,14 @@ void ViewCompositor::renderGameView(std::function<void (int)> renderFunc)
 
     GLState::push()
             .setTarget(d->viewFramebuf)
-            .setViewport(Rectangleui::fromSize(d->viewFramebuf.size()))
-            .apply();
+            .setViewport(Rectangleui::fromSize(d->viewFramebuf.size()));
 
     d->viewFramebuf.clear(GLFramebuffer::ColorDepthStencil);
 
     // Rendering is done by the caller-provided callback.
     renderFunc(d->playerNum);
 
-    GLState::pop()
-            .apply();
+    GLState::pop();
 }
 
 GLTextureFramebuffer &ViewCompositor::gameView()
@@ -239,7 +237,7 @@ void ViewCompositor::drawCompositedLayers()
     // Some of the layers use OpenGL 2 drawing code.
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
-    LIBGUI_GL.glLoadMatrixf(ClientWindow::main().root().projMatrix2D().values());
+    DGL_LoadMatrix(ClientWindow::main().root().projMatrix2D().values());
 
     // Fill around a scaled-down 3D view. The border is not visible if the 3D view
     // covers the entire area.
@@ -260,9 +258,7 @@ void ViewCompositor::drawCompositedLayers()
 
         if (gx.DrawViewPort)
         {
-            GLState::current()
-                    .setBlend(true)
-                    .apply();
+            GLState::current().setBlend(true);
 
             gx.DrawViewPort(P_ConsoleToLocal(d->playerNum),
                             &vpGeometry,
@@ -287,9 +283,7 @@ void ViewCompositor::drawCompositedLayers()
     Rectanglef const vp { normRect.topLeft     * targetSize,
                           normRect.bottomRight * targetSize };
 
-    GLState::push()
-            .setViewport(vp.toRectangleui())
-            .apply();
+    GLState::push().setViewport(vp.toRectangleui());
 
     // Finale.
     {
@@ -321,7 +315,7 @@ void ViewCompositor::drawCompositedLayers()
         }
     }
 
-    GLState::pop().apply();
+    GLState::pop();
 
     // Legacy engine/debug UIs (stuff from the old Net_Drawer).
     {
@@ -344,7 +338,7 @@ void ViewCompositor::drawCompositedLayers()
     displayPlayer = oldDisplayPlayer;
 
     GLState::considerNativeStateUndefined();
-    GLState::pop().apply();
+    GLState::pop();
 }
 
 PostProcessing &ViewCompositor::postProcessing()

@@ -72,7 +72,7 @@ int     DS_Set(int prop, const void* ptr);
         LOGDEV_AUDIO_WARNING("[FMOD] Error at %s, line %i: (%d) %s") << __FILE__ << __LINE__ << result << FMOD_ErrorString(result); \
     }
 
-extern FMOD::System* fmodSystem;
+extern FMOD::System *fmodSystem;
 
 #include "fmod_sfx.h"
 #include "fmod_music.h"

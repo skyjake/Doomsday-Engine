@@ -331,7 +331,7 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
-extern "C" void DP_Initialize()
+DENG_ENTRYPOINT void DP_Initialize()
 {
     Plug_AddHook(HOOK_MAP_CONVERT, importMapHook);
 }
@@ -340,10 +340,22 @@ extern "C" void DP_Initialize()
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-extern "C" char const *deng_LibraryType()
+DENG_ENTRYPOINT char const *deng_LibraryType()
 {
     return "deng-plugin/generic";
 }
+
+#if defined (DENG_STATIC_LINK)
+
+DENG_EXTERN_C void *staticlib_importudmf_symbol(char const *name)
+{
+    DENG_SYMBOL_PTR(name, deng_LibraryType)
+    DENG_SYMBOL_PTR(name, DP_Initialize);
+    qWarning() << name << "not found in importudmf";
+    return nullptr;
+}
+
+#else
 
 DENG_DECLARE_API(Map);
 DENG_DECLARE_API(Material);
@@ -354,3 +366,5 @@ DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_MATERIALS, Material);
     DENG_GET_API(DE_API_MAP_EDIT, MPE);
 )
+
+#endif
