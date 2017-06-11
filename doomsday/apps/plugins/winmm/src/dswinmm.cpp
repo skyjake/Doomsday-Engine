@@ -158,18 +158,21 @@ static int mixer3i(int device, int action, int control)
     return mixer4i(device, action, control, 0);
 }
 
-static void initMixerLine(mixerdata_t* mix, DWORD type)
+static bool initMixerLine(mixerdata_t* mix, DWORD type)
 {
     memset(mix, 0, sizeof(*mix));
     mix->line.cbStruct = sizeof(mix->line);
     mix->line.dwComponentType = type;
-    if((res =
-        mixerGetLineInfo((HMIXEROBJ) mixer, &mix->line,
-                         MIXER_GETLINEINFOF_COMPONENTTYPE)) !=
-       MMSYSERR_NOERROR)
+    res = mixerGetLineInfo((HMIXEROBJ)mixer, &mix->line, MIXER_GETLINEINFOF_COMPONENTTYPE);
+    if (res == MIXERR_INVALLINE)
+    {
+        // Such a mixer line is not available.
+        return false;
+    }
+    if (res != MMSYSERR_NOERROR)
     {
         App_Log(DE2_AUDIO_ERROR, "[WinMM] Error getting line info: Error %i", res);
-        return;
+        return false;
     }
 
     App_Log(DE2_DEV_AUDIO_MSG, "  Destination line idx: %i", mix->line.dwDestination);
@@ -184,13 +187,11 @@ static void initMixerLine(mixerdata_t* mix, DWORD type)
     mix->controls.cControls = 1;
     mix->controls.cbmxctrl = sizeof(mix->volume);
     mix->controls.pamxctrl = &mix->volume;
-    if((res =
-        mixerGetLineControls((HMIXEROBJ) mixer, &mix->controls,
-                             MIXER_GETLINECONTROLSF_ONEBYTYPE)) !=
+    if((res = mixerGetLineControls((HMIXEROBJ) mixer, &mix->controls, MIXER_GETLINECONTROLSF_ONEBYTYPE)) !=
        MMSYSERR_NOERROR)
     {
         App_Log(DE2_AUDIO_ERROR, "[WinMM] Error getting line controls (vol): error %i", res);
-        return;
+        return false;
     }
 
     App_Log(DE2_DEV_AUDIO_MSG, "  Volume control ID: 0x%x", mix->volume.dwControlID);
@@ -200,6 +201,8 @@ static void initMixerLine(mixerdata_t* mix, DWORD type)
 
     // This mixer line is now available.
     mix->available = true;
+    
+    return true;
 }
 
 /**
@@ -340,7 +343,7 @@ void DM_Music_Set(int prop, float value)
     {
     case MUSIP_VOLUME:
         {
-        int                 val = MINMAX_OF(0, (byte) (value * 255 + .5f), 255);
+        int val = MINMAX_OF(0, (byte) (value * 255 + .5f), 255);
 
         // Straighten the volume curve.
         val <<= 8; // Make it a word.

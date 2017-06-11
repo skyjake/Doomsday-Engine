@@ -49,8 +49,14 @@ static int sendMCICmd(char *returnInfo, int returnLength, char const *format, ..
     dd_vsnprintf(buf, sizeof(buf), format, args);
     va_end(args);
 
-    if(MCIERROR error = mciSendStringA(buf, returnInfo, returnLength, NULL))
+    if (MCIERROR error = mciSendStringA(buf, returnInfo, returnLength, NULL))    
     {
+        if (error == MCIERR_HARDWARE)
+        {
+            // Hardware is not cooperating.
+            App_Log(DE2_DEV_AUDIO_VERBOSE, "[WinMM] CD playback hardware is not ready");
+            return false;
+        }
         mciGetErrorStringA(error, buf, 300);
         App_Log(DE2_AUDIO_ERROR, "[WinMM] CD playback error: %s", buf);
         return false;
