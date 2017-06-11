@@ -382,14 +382,12 @@ void LineEditWidget::focusGained()
     {
         d->hint->setOpacity(0);
     }
-    
-    qDebug() << "LineEditWidget: focusGained";
-    
+
 #if defined (DENG_MOBILE)
     {
         auto &win = root().window();
         emit win.textEntryRequest();
-    
+
         // Text entry happens via OS virtual keyboard.
         connect(&win, &GLWindow::userEnteredText, this, &LineEditWidget::userEnteredText);
         connect(&win, &GLWindow::userFinishedTextEntry, this, &LineEditWidget::userFinishedTextEntry);
@@ -399,8 +397,6 @@ void LineEditWidget::focusGained()
 
 void LineEditWidget::focusLost()
 {
-    qDebug() << "LineEditWidget: focusLost";
-    
 #if defined (DENG_MOBILE)
     {
         auto &win = root().window();
@@ -417,13 +413,13 @@ void LineEditWidget::focusLost()
         d->hint->setOpacity(1, 1, 0.5);
     }
 }
-    
+
 #if defined (DENG_MOBILE)
 void LineEditWidget::userEnteredText(QString text)
 {
     setText(text);
 }
-    
+
 void LineEditWidget::userFinishedTextEntry()
 {
     root().popFocus();
@@ -497,7 +493,7 @@ bool LineEditWidget::handleEvent(Event const &event)
             break;
         }
     }
-    
+
     if (event.is<KeyEvent>() && event.as<KeyEvent>().qtKey() == Qt::Key_Enter)
     {
         qDebug() << "LineEditWidget: Enter key" << event.type() << hasFocus();
