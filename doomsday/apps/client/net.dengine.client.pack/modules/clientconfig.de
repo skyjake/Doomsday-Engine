@@ -6,19 +6,19 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #----------------------------------------------------------------------------
 # CONFIGURATION FOR THE DOOMSDAY CLIENT
 #
-# This module contains configuration related scripts for the client 
+# This module contains configuration related scripts for the client
 # application. It is automatically imported by Config and used as needed.
 
 import gui
@@ -31,11 +31,11 @@ def setDefaults(d)
     # - d: Record where to set the values.
 
     gui.setDefaults(d)
-    
+
     # Additional Log defaults.
     d.log.filterBySubsystem = False
     d.log.showMetadata = False
-    
+
     record d.alert()
         generic  = Log.WARNING
         resource = Log.WARNING
@@ -45,15 +45,15 @@ def setDefaults(d)
         audio    = Log.WARNING
         input    = Log.WARNING
         network  = Log.WARNING
-        
+
         # Alert notification dismissed after 3 minutes by default.
         autoHide = 3 * 60
     end
-        
+
     # Home.
     record d.home()
         showUnplayableGames = True
-        showColumnDescription = True        
+        showColumnDescription = True
         record columns()
             doom = True
             heretic = True
@@ -62,7 +62,7 @@ def setDefaults(d)
             multiplayer = True
         end
     end
-    
+
     # Input defaults.
     record d.input()
         record mouse
@@ -84,13 +84,13 @@ def setDefaults(d)
         downloadPath = "${DEFAULT}"
         deleteAtStartup = ""
     end
-    
+
     # Console defaults.
     record d.console()
         snap = True
         script = False
     end
-        
+
     # Resource settings.
     record d.resource()
         # Local packaegs are disabled by default in MP games.
@@ -101,7 +101,7 @@ def setDefaults(d)
         noHighResPatches = False
         highResWithPWAD = True
     end
-    
+
     # Renderer settings.
     record d.render()
         pixelDensity = 1.0     # Overall pixel density.
@@ -111,13 +111,13 @@ def setDefaults(d)
         record fx.resize
         fx.resize.factor = 1.0
     end
-    
+
     # VR/3D settings.
     record d.vr()
         record oculusRift
         oculusRift.pixelDensity = 1.0
     end
-    
+
     # Audio settings.
     record d.audio()
         soundPlugin = 'fmod'
@@ -127,9 +127,12 @@ def setDefaults(d)
         elsif Version.OS == 'ios'
             musicPlugin = 'fmod'
             cdPlugin    = 'dummy'
+        elsif Version.OS == 'windows'
+            musicPlugin = 'sdlmixer'
+            cdPlugin    = 'winmm'
         else
             musicPlugin = 'fmod'
-            cdPlugin    = 'fmod'
+            cdPlugin    = 'dummy'
         end
         record fmod
         fmod.speakerMode = '' # defaults to stereo
