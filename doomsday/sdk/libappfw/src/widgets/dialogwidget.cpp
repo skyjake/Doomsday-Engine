@@ -581,24 +581,30 @@ int DialogWidget::exec(GuiRootWidget &root)
     root.add(this);
 
     prepare();
-    
+
     int result = 0;
     try
     {
+#if defined (DENG_MOBILE)
         // The subloop will likely access the root independently.
         root.unlock();
-        
+#endif
+
         result = d->subloop.exec();
-        
+
+#if defined (DENG_MOBILE)
         root.lock();
+#endif
     }
     catch (...)
     {
+#if defined (DENG_MOBILE)
         // The lock needs to be reacquired in any case.
         root.lock();
+#endif
         throw;
     }
-    
+
     finish(result);
     return result;
 }
