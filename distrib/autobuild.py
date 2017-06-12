@@ -416,15 +416,16 @@ def purge_obsolete():
     """Purge old builds from the event directory (old > 4 weeks)."""
     threshold = 3600 * 24 * 7 * 4
 
-    # Also purge the apt repository if one has been specified.
-    #if builder.config.APT_REPO_DIR:
-    #    purge_apt_repository(threshold)
+    # We'll keep a small number of events unpurgable.
+    totalCount = len(builder.find_old_events(0))
     
     # Purge the old events.
     print 'Deleting build events older than 4 weeks...'
     for ev in builder.find_old_events(threshold):
-        print ev.tag()
-        shutil.rmtree(ev.path()) 
+        if totalCount > 5:
+            print ev.tag()
+            shutil.rmtree(ev.path()) 
+            totalCount -= 1
         
     print 'Purge done.'
 
