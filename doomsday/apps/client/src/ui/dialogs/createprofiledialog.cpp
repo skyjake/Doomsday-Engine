@@ -113,7 +113,7 @@ DENG_GUI_PIMPL(CreateProfileDialog)
             String const pkgId = packageIds.at(i);
             if (File const *pkgFile = PackageLoader::get().select(pkgId))
             {
-                DataBundle const *bundle = pkgFile->target().maybeAs<DataBundle>();
+                DataBundle const *bundle = maybeAs<DataBundle>(pkgFile->target());
                 if (!bundle || !bundle->lumpDirectory())
                 {
                     continue;

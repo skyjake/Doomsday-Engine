@@ -63,7 +63,7 @@ DENG2_PIMPL(ArchiveFeed)
     {
         // If the file happens to be a byte array file, we can use it
         // directly to store the Archive.
-        if (IByteArray *bytes = f.maybeAs<IByteArray>())
+        if (auto *bytes = maybeAs<IByteArray>(f))
         {
             //qDebug() << "Loading" << f.description() << f.metaId().asHexadecimalText();
 
@@ -254,7 +254,7 @@ bool ArchiveFeed::prune(File &file) const
 {
     LOG_AS("ArchiveFeed::prune");
 
-    ArchiveEntryFile *entryFile = file.maybeAs<ArchiveEntryFile>();
+    ArchiveEntryFile *entryFile = maybeAs<ArchiveEntryFile>(file);
     if (entryFile && &entryFile->archive() == &archive())
     {
         if (!archive().hasEntry(entryFile->entryPath()))

@@ -919,7 +919,7 @@ static void lightWallOrFlatGeometry(Geometry &verts, duint numVertices, Vector3f
     MapElement &mapElement, dint /*geomGroup*/, Matrix3f const &/*surfaceTangents*/,
     Vector3f const &color, Vector3f const *color2, dfloat glowing, dfloat const luminosityDeltas[2])
 {
-    bool const haveWall = mapElement.is<LineSideSegment>();
+    bool const haveWall = is<LineSideSegment>(mapElement);
     //auto &subsec = ::curSubspace->subsector().as<world::ClientSubsector>();
 
     // Uniform color?

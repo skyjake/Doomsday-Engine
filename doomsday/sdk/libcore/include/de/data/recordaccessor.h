@@ -74,7 +74,7 @@ public:
 
     template <typename ValueType>
     ValueType const &getAs(String const &name) const {
-        ValueType const *v = get(name).maybeAs<ValueType>();
+        ValueType const *v = maybeAs<ValueType>(get(name));
         if (!v) {
             throw ValueTypeError("RecordAccessor::getAs", String("Cannot cast to expected type (") +
                                  DENG2_TYPE_NAME(ValueType) + " const)");

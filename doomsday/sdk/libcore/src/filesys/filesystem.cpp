@@ -316,7 +316,7 @@ File &FileSystem::copySerialized(String const &sourcePath, String const &destina
         dest = dest->reinterpret();
     }
 
-    if (behavior.testFlag(PopulateDestination) && dest->is<Folder>())
+    if (behavior.testFlag(PopulateDestination) && is<Folder>(dest))
     {
         dest->as<Folder>().populate();
     }

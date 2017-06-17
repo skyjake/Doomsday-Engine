@@ -95,7 +95,7 @@ public:
     Widget();
     virtual ~Widget();
 
-    DENG2_AS_IS_METHODS()
+    DENG2_CAST_METHODS()
 
     virtual void draw() const {}
 

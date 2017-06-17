@@ -157,7 +157,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
 
         foreach (GuiWidget *w, self().area().childWidgets() + devPopup->content().childWidgets())
         {
-            if (ICVarWidget *cv = w->maybeAs<ICVarWidget>())
+            if (ICVarWidget *cv = maybeAs<ICVarWidget>(w))
             {
                 cv->updateFromCVar();
             }

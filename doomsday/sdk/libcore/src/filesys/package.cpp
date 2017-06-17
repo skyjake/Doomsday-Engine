@@ -149,7 +149,7 @@ File const &Package::sourceFile() const
 Folder const &Package::root() const
 {
     d->verifyFile();
-    return d->file->expectedAs<Folder>();
+    return expectedAs<Folder>(d->file);
 }
 
 Record &Package::objectNamespace()
@@ -234,7 +234,7 @@ void Package::parseMetadata(File &packageFile) // static
 {
     static String const TIMESTAMP("__timestamp__");
 
-    if (Folder *folder = packageFile.maybeAs<Folder>())
+    if (Folder *folder = maybeAs<Folder>(packageFile))
     {
         File *initializerScript = folder->tryLocateFile(QStringLiteral("__init__.de"));
         File *metadataInfo      = folder->tryLocateFile(QStringLiteral("Info.dei"));
@@ -255,7 +255,7 @@ void Package::parseMetadata(File &packageFile) // static
                 needParse = false;
 
                 // Only parse if the source has changed.
-                if (TimeValue const *time = metadata.get(TIMESTAMP).maybeAs<TimeValue>())
+                if (auto const *time = maybeAs<TimeValue>(metadata.get(TIMESTAMP)))
                 {
                     needParse =
                             (metadataInfo      && metadataInfo->status().modifiedAt      > time->time()) ||

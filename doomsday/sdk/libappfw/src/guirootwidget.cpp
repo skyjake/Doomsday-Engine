@@ -205,7 +205,7 @@ DENG2_PIMPL(GuiRootWidget)
 
     void focusedWidgetChanged(Widget *focused)
     {
-        if (GuiWidget const *w = focused->maybeAs<GuiWidget>())
+        if (GuiWidget const *w = maybeAs<GuiWidget>(focused))
         {
             focusIndicator->rule().setRect(w->hitRule());
             if (!w->attributes().testFlag(GuiWidget::FocusHidden))
@@ -323,7 +323,7 @@ Matrix4f GuiRootWidget::projMatrix2D() const
     return Matrix4f::ortho(0, size.x, 0, size.y) *
            Matrix4f::translate(d->rootOffset.value());
 }
-    
+
 AnimationVector2 &GuiRootWidget::rootOffset()
 {
     return d->rootOffset;
@@ -367,7 +367,7 @@ GuiWidget const *GuiRootWidget::globalHitTest(Vector2i const &pos) const
     Widget::Children const childs = children();
     for (int i = childs.size() - 1; i >= 0; --i)
     {
-        if (GuiWidget const *w = childs.at(i)->maybeAs<GuiWidget>())
+        if (auto const *w = maybeAs<GuiWidget>(childs.at(i)))
         {
             if (GuiWidget const *hit = w->treeHitTest(pos))
             {
@@ -380,7 +380,7 @@ GuiWidget const *GuiRootWidget::globalHitTest(Vector2i const &pos) const
 
 GuiWidget const *GuiRootWidget::guiFind(String const &name) const
 {
-    return find(name)->maybeAs<GuiWidget>();
+    return maybeAs<GuiWidget>(find(name));
 }
 
 FocusWidget &GuiRootWidget::focusIndicator()
@@ -471,7 +471,7 @@ void GuiRootWidget::draw()
 void GuiRootWidget::drawUntil(Widget &until)
 {
     DENG2_GUARD(this);
-    
+
     DENG2_ASSERT_IN_RENDER_THREAD();
 
     d->painter.setNormalizedScissor();

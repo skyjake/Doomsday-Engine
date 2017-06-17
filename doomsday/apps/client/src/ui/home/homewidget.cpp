@@ -210,7 +210,7 @@ DENG_GUI_PIMPL(HomeWidget)
             {
                 col.widget->show(gotGames && col.configVar->value().isTrue());
             }
-            if (col.widget->is<PackagesColumnWidget>())
+            if (is<PackagesColumnWidget>(col.widget))
             {
                 col.widget->show(gotGames || havePackages);
             }
@@ -403,7 +403,7 @@ DENG_GUI_PIMPL(HomeWidget)
         {
             if (!widget->behavior().testFlag(Widget::Hidden))
             {
-                if (ColumnWidget *column = widget->maybeAs<ColumnWidget>())
+                if (ColumnWidget *column = maybeAs<ColumnWidget>(widget))
                 {
                     layout << *column;
                     columns << column;

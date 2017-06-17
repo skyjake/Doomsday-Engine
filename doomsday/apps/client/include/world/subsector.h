@@ -60,7 +60,7 @@ public:
 
     virtual ~Subsector();
 
-    DENG2_AS_IS_METHODS()
+    DENG2_CAST_METHODS()
 
     /**
      * Returns a humman-friendly, textual description of the subsector.

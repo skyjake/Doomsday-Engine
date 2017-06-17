@@ -86,7 +86,7 @@ DENG2_PIMPL(Folder)
         QList<Folder *> subs;
         for (Contents::const_iterator i = contents.begin(); i != contents.end(); ++i)
         {
-            if (Folder *folder = i.value()->maybeAs<Folder>())
+            if (Folder *folder = maybeAs<Folder>(i.value()))
             {
                 subs << folder;
             }
@@ -222,7 +222,7 @@ void Folder::populate(PopulationBehaviors behavior)
             // touch them.
             bool mustPrune = false;
 
-            File *file = iter.value();            
+            File *file = iter.value();
             if (file->mode() & DontPrune)
             {
                 // Skip this one, it should be kept as-is until manually deleted.
@@ -515,7 +515,7 @@ File *Folder::tryLocateFile(String const &path) const
 {
     if (filesys::Node const *node = tryFollowPath(Path(path)))
     {
-        return const_cast<File *>(node->maybeAs<File>());
+        return const_cast<File *>(maybeAs<File>(node));
     }
     return nullptr;
 }

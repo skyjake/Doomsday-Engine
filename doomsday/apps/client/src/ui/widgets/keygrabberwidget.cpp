@@ -72,7 +72,7 @@ bool KeyGrabberWidget::handleEvent(Event const &event)
     }
     else
     {
-        if (KeyEvent const *key = event.maybeAs<KeyEvent>())
+        if (KeyEvent const *key = maybeAs<KeyEvent>(event))
         {
             if (key->ddKey() == DDKEY_ESCAPE)
             {
@@ -93,7 +93,7 @@ bool KeyGrabberWidget::handleEvent(Event const &event)
             return true;
         }
 
-        if (MouseEvent const *mouse = event.maybeAs<MouseEvent>())
+        if (MouseEvent const *mouse = maybeAs<MouseEvent>(event))
         {
             if (mouse->type() == Event::MouseButton &&
                mouse->state() == MouseEvent::Released &&

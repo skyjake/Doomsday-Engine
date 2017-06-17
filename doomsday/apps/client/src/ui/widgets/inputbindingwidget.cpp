@@ -200,7 +200,7 @@ bool InputBindingWidget::handleEvent(Event const &event)
 {
     if (hasFocus())
     {
-        if (KeyEvent const *key = event.maybeAs<KeyEvent>())
+        if (KeyEvent const *key = maybeAs<KeyEvent>(event))
         {
             if (key->state() != KeyEvent::Pressed) return false;
 
@@ -257,7 +257,7 @@ bool InputBindingWidget::handleEvent(Event const &event)
             return true;
         }
 
-        /*if (MouseEvent const *mouse = event.maybeAs<MouseEvent>())
+        /*if (MouseEvent const *mouse = maybeAs<MouseEvent>(event))
         {
             if (mouse->type()  == Event::MouseButton &&
                 mouse->state() == MouseEvent::Released &&

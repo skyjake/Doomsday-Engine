@@ -71,10 +71,10 @@ DENG2_PIMPL(Bundles)
 
     void fileAdded(File const &dataFile, FileIndex const &)
     {
-        DENG2_ASSERT(dataFile.is<DataBundle>());
+        DENG2_ASSERT(is<DataBundle>(dataFile));
         {
             DENG2_GUARD(this);
-            bundlesToIdentify.insert(dataFile.maybeAs<DataBundle>());
+            bundlesToIdentify.insert(maybeAs<DataBundle>(dataFile));
         }
         // Use a deferred call to avoid spamming.
         if (!mainCall)
@@ -85,10 +85,10 @@ DENG2_PIMPL(Bundles)
 
     void fileRemoved(File const &dataFile, FileIndex const &)
     {
-        DENG2_ASSERT(dataFile.is<DataBundle>());
+        DENG2_ASSERT(is<DataBundle>(dataFile));
 
         DENG2_GUARD(this);
-        bundlesToIdentify.remove(dataFile.maybeAs<DataBundle>());
+        bundlesToIdentify.remove(maybeAs<DataBundle>(dataFile));
     }
 
     DataBundle const *nextToIdentify()
@@ -301,7 +301,7 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
                 }
             }
 
-            if (auto const *lumps = def->find(QStringLiteral("lumps"))->maybeAs<Info::ListElement>())
+            if (auto const *lumps = maybeAs<Info::ListElement>(def->find(QStringLiteral("lumps"))))
             {
                 ++score; // will be subtracted if not matched
 

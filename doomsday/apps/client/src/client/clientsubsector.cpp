@@ -1901,7 +1901,7 @@ void ClientSubsector::generateLumobjs()
     {
         for (Decoration *decor : static_cast<Impl::DecoratedSurface *>(surface->decorationState())->decorations)
         {
-            if (auto const *lightDecor = decor->maybeAs<LightDecoration>())
+            if (auto const *lightDecor = maybeAs<LightDecoration>(decor))
             {
                 if (Lumobj *lum = lightDecor->generateLumobj())
                 {

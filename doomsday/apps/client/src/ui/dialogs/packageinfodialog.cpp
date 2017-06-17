@@ -234,7 +234,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
 
         String lumpDirCrc32;
         String format;
-        DataBundle const *bundle = file->target().maybeAs<DataBundle>();
+        DataBundle const *bundle = maybeAs<DataBundle>(file->target());
         if (bundle)
         {
             format         = bundle->formatAsText().upperFirstChar();
@@ -261,7 +261,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
             useIconFile(file->path());
         }
 
-        if (file->source()->is<ArchiveEntryFile>())
+        if (is<ArchiveEntryFile>(file->source()))
         {
             // The file itself makes for a better description.
             fileDesc = file->description();

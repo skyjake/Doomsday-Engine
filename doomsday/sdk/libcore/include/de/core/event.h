@@ -65,7 +65,7 @@ public:
     bool isMouse() const { return _type == MouseButton || _type == MouseMotion ||
                 _type == MousePosition || _type == MouseWheel; }
 
-    DENG2_AS_IS_METHODS()
+    DENG2_CAST_METHODS()
 
 private:
     int _type;

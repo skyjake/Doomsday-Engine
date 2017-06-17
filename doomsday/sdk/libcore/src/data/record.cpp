@@ -227,7 +227,7 @@ DENG2_PIMPL(Record)
 
     static bool isRecord(Variable const &var)
     {
-        RecordValue const *value = var.value().maybeAs<RecordValue>();
+        RecordValue const *value = maybeAs<RecordValue>(var.value());
         return value && value->record();
     }
 
@@ -235,7 +235,7 @@ DENG2_PIMPL(Record)
     {
         // Subrecords are owned by this record.
         // Note: Non-owned Records are likely imports from other modules.
-        RecordValue const *value = var.value().maybeAs<RecordValue>();
+        RecordValue const *value = maybeAs<RecordValue>(var.value());
         return value && value->record() && value->hasOwnership();
     }
 
@@ -474,7 +474,7 @@ Record &Record::operator = (Record &&moved)
 Record &Record::assign(Record const &other, Behavior behavior)
 {
     if (this == &other) return *this;
-    
+
     DENG2_GUARD(d);
 
     clear(behavior);

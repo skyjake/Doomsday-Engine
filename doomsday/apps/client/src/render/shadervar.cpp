@@ -109,7 +109,7 @@ void ShaderVars::initVariableFromDefinition(String const &variableName,
     // Initialize the appropriate type of value animation and uniform,
     // depending on the "value" key in the definition.
     Value const &initialValue = valueDef.get("value");
-    if (auto const *array = initialValue.maybeAs<ArrayValue>())
+    if (auto const *array = maybeAs<ArrayValue>(initialValue))
     {
         switch (array->size())
         {

@@ -2618,6 +2618,8 @@ static void musicMidiFontChanged()
 
 D_CMD(ReverbParameters)
 {
+    DENG2_UNUSED2(src, argc);
+
     dfloat args[NUM_REVERB_DATA];
 
     args[SFXLP_REVERB_VOLUME ] = String(argv[1]).toFloat();

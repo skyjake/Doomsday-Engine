@@ -69,12 +69,12 @@ File &LinkFile::target()
 
 Folder const *LinkFile::targetFolder() const
 {
-    return target().maybeAs<Folder>();
+    return maybeAs<Folder>(target());
 }
 
 Folder *LinkFile::targetFolder()
 {
-    return target().maybeAs<Folder>();
+    return maybeAs<Folder>(target());
 }
 
 void LinkFile::setTarget(File const &file)

@@ -62,7 +62,7 @@ String DoomsdayPackage::defsPath(File const &packageFile) // static
 
 de::Uri DoomsdayPackage::loadableUri(File const &packageFile) // static
 {
-    if (NativeFile const *nativeSrc = packageFile.source()->maybeAs<NativeFile>())
+    if (auto const *nativeSrc = maybeAs<NativeFile>(packageFile.source()))
     {
         return de::Uri::fromNativePath(nativeSrc->nativePath());
     }

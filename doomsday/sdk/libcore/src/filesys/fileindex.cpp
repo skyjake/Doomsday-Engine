@@ -187,7 +187,7 @@ void FileIndex::findPartialPath(String const &packageId, String const &path,
 {
     // We can only look in Folder-like packages.
     Package const &pkg = App::packageLoader().package(packageId);
-    if (pkg.file().is<Folder>())
+    if (is<Folder>(pkg.file()))
     {
         findPartialPath(pkg.root(), path, found, FindInEntireIndex);
 

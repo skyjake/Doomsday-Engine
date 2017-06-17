@@ -140,7 +140,7 @@ static Value *Function_File_Locate(Context &ctx, Function::ArgumentValues const 
 {
     Path const relativePath = args.at(0)->asText();
 
-    if (File const *found = fileInstance(ctx).tryFollowPath(relativePath)->maybeAs<File>())
+    if (File const *found = maybeAs<File>(fileInstance(ctx).tryFollowPath(relativePath)))
     {
         return new RecordValue(found->objectNamespace());
     }
@@ -188,7 +188,7 @@ static Value *Function_Folder_ContentSize(Context &ctx, Function::ArgumentValues
 
 static Animation &animationInstance(Context &ctx)
 {
-    if (AnimationValue *v = ctx.nativeSelf().maybeAs<AnimationValue>())
+    if (AnimationValue *v = maybeAs<AnimationValue>(ctx.nativeSelf()))
     {
         return v->animation();
     }

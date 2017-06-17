@@ -328,11 +328,11 @@ static Block valueToJSON(Value const &value)
     {
         return "null";
     }
-    if (auto const *rec = value.maybeAs<RecordValue>())
+    if (auto const *rec = maybeAs<RecordValue>(value))
     {
         return recordToJSON(rec->dereference());
     }
-    if (auto const *dict = value.maybeAs<DictionaryValue>())
+    if (auto const *dict = maybeAs<DictionaryValue>(value))
     {
         Block out = "{";
         auto const &elems = dict->elements();
@@ -347,7 +347,7 @@ static Block valueToJSON(Value const &value)
         }
         return out + "\n}";
     }
-    if (auto const *array = value.maybeAs<ArrayValue>())
+    if (auto const *array = maybeAs<ArrayValue>(value))
     {
         Block out = "[";
         auto const &elems = array->elements();
@@ -361,7 +361,7 @@ static Block valueToJSON(Value const &value)
         }
         return out + "\n]";
     }
-    if (auto const *num = value.maybeAs<NumberValue>())
+    if (auto const *num = maybeAs<NumberValue>(value))
     {
         if (num->semanticHints().testFlag(NumberValue::Boolean))
         {

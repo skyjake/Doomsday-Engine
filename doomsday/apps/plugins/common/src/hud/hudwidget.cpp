@@ -92,7 +92,7 @@ void HudWidget::setMaximumSize(Size2Raw const &newSize)
     d->maxSize.width  = newSize.width;
     d->maxSize.height = newSize.height;
 
-    if(auto *group = maybeAs<GroupWidget>())
+    if(auto *group = maybeAs<GroupWidget>(this))
     {
         group->forAllChildren([&newSize] (HudWidget &child)
         {
@@ -107,7 +107,7 @@ void HudWidget::setMaximumHeight(int newMaxHeight)
     if(d->maxSize.height == newMaxHeight) return;
     d->maxSize.height = newMaxHeight;
 
-    if(auto *group = maybeAs<GroupWidget>())
+    if(auto *group = maybeAs<GroupWidget>(this))
     {
         group->forAllChildren([&newMaxHeight] (HudWidget &child)
         {
@@ -122,7 +122,7 @@ void HudWidget::setMaximumWidth(int newMaxWidth)
     if(d->maxSize.width == newMaxWidth) return;
     d->maxSize.width = newMaxWidth;
 
-    if(auto *group = maybeAs<GroupWidget>())
+    if(auto *group = maybeAs<GroupWidget>(this))
     {
         group->forAllChildren([&newMaxWidth] (HudWidget &child)
         {
@@ -151,7 +151,7 @@ float HudWidget::opacity() const
 HudWidget &HudWidget::setOpacity(float newOpacity)
 {
     d->opacity = newOpacity;
-    if(auto *group = maybeAs<GroupWidget>())
+    if(auto *group = maybeAs<GroupWidget>(this))
     {
         group->forAllChildren([&newOpacity] (HudWidget &child)
         {

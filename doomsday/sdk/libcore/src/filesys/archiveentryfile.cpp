@@ -103,7 +103,7 @@ void ArchiveEntryFile::clear()
 void ArchiveEntryFile::flush()
 {
     ByteArrayFile::flush();
-    if (ArchiveFeed *feed = originFeed()->maybeAs<ArchiveFeed>())
+    if (ArchiveFeed *feed = maybeAs<ArchiveFeed>(originFeed()))
     {
         feed->rewriteFile();
     }
@@ -112,7 +112,7 @@ void ArchiveEntryFile::flush()
 Block ArchiveEntryFile::metaId() const
 {
     Block data = File::metaId() + d->entryPath.toUtf8();
-    if (File const *sourceFile = dynamic_cast<File const *>(archive().source()))
+    if (File const *sourceFile = maybeAs<File const>(archive().source()))
     {
         data += sourceFile->metaId();
     }

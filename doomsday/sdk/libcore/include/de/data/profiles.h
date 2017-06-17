@@ -101,7 +101,7 @@ public:
          */
         virtual String toInfoSource() const = 0;
 
-        DENG2_AS_IS_METHODS()
+        DENG2_CAST_METHODS()
 
     public:
         DENG2_DEFINE_AUDIENCE2(Change, void profileChanged(AbstractProfile &))

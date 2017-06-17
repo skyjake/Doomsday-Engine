@@ -52,7 +52,7 @@ typedef struct thinker_s {
 } thinker_t;
 
 #define THINKER_DATA(thinker, T)        (reinterpret_cast<Thinker::IData *>((thinker).d)->as<T>())
-#define THINKER_DATA_MAYBE(thinker, T)  (reinterpret_cast<Thinker::IData *>((thinker).d)->maybeAs<T>())
+#define THINKER_DATA_MAYBE(thinker, T)  (maybeAs<T>(reinterpret_cast<Thinker::IData *>((thinker).d)))
 
 #ifdef __cplusplus
 extern "C" {
@@ -133,7 +133,7 @@ public:
         virtual void think() = 0;
         virtual IData *duplicate() const = 0;
 
-        DENG2_AS_IS_METHODS()
+        DENG2_CAST_METHODS()
     };
 
     enum AllocMethod { AllocateStandard, AllocateMemoryZone };
@@ -240,11 +240,6 @@ public:
     MemberDelegate<thinkfunc_t> function;
     MemberDelegate<thid_t> id;
 };
-
-#if defined (__GNUC__)
-template <>
-inline bool Thinker::IData::is<Thinker::IData>() const { return true; }
-#endif
 
 #ifdef _MSC_VER
 // MSVC needs some hand-holding.

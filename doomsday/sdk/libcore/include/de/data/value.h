@@ -139,15 +139,25 @@ public:
         return *t;
     }
 
-    template <typename ValueType>
-    ValueType *maybeAs() {
-        return dynamic_cast<ValueType *>(this);
+    /*template <typename TargetType, typename ValueType>
+    static TargetType *maybeAs(ValueType *ptr) {
+        return dynamic_cast<TargetType *>(ptr);
     }
 
-    template <typename ValueType>
-    ValueType const *maybeAs() const {
-        return dynamic_cast<ValueType const *>(this);
+    template <typename TargetType, typename ValueType>
+    static TargetType const *maybeAs(ValueType const *ptr) {
+        return dynamic_cast<TargetType const *>(ptr);
     }
+
+    template <typename TargetType, typename ValueType>
+    static TargetType *maybeAs(ValueType &obj) {
+        return dynamic_cast<TargetType *>(&obj);
+    }
+
+    template <typename TargetType, typename ValueType>
+    static TargetType const *maybeAs(ValueType const &obj) {
+        return dynamic_cast<TargetType const *>(&obj);
+    }*/
 
     /**
      * Returns the scope for any members of this value. When evaluating a member in

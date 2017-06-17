@@ -65,7 +65,7 @@ DENG2_PIMPL_NOREF(ControllerPresets)
         QSet<QString> ids;
         for (auto i : presets().elements())
         {
-            if (auto const *value = i.second->maybeAs<RecordValue>())
+            if (auto const *value = maybeAs<RecordValue>(i.second))
             {
                 ids.insert(value->dereference().gets("id"));
             }
@@ -89,7 +89,7 @@ DENG2_PIMPL_NOREF(ControllerPresets)
             String const key = i.first.value->asText();
             if (!key.isEmpty() && QRegExp(key, Qt::CaseInsensitive).exactMatch(deviceName))
             {
-                if (auto const *value = i.second->maybeAs<RecordValue>())
+                if (auto const *value = maybeAs<RecordValue>(i.second))
                 {
                     return value->record();
                 }
@@ -102,7 +102,7 @@ DENG2_PIMPL_NOREF(ControllerPresets)
     {
         for (auto i : presets().elements())
         {
-            if (auto const *value = i.second->maybeAs<RecordValue>())
+            if (auto const *value = maybeAs<RecordValue>(i.second))
             {
                 if (value->dereference().gets("id") == id)
                 {

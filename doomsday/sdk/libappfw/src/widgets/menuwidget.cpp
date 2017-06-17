@@ -93,13 +93,13 @@ DENG2_PIMPL(MenuWidget)
 
             Action::trigger();
 
-            if (auto *subMenu = _widget->maybeAs<PopupMenuWidget>())
+            if (auto *subMenu = maybeAs<PopupMenuWidget>(_widget))
             {
                 // Parent is the anchor button, owned by a MenuWidget, possibly owned a
                 // the popup menu.
                 if (auto *parentMenu = parent().parentWidget())
                 {
-                    subMenu->setParentPopup(parentMenu->parentWidget()->maybeAs<PopupWidget>());
+                    subMenu->setParentPopup(maybeAs<PopupWidget>(parentMenu->parentWidget()));
                 }
             }
             _widget->setAnchorAndOpeningDirection(parent().hitRule(), _dir);
@@ -248,11 +248,11 @@ DENG2_PIMPL(MenuWidget)
         // when filtered items are accepted again as widgets.
         needLayout = true;
 
-        if (IAssetGroup *asset = child.maybeAs<IAssetGroup>())
+        if (IAssetGroup *asset = maybeAs<IAssetGroup>(child))
         {
             assets += *asset; // part of the asset group (observes for deletion)
         }
-        if (ButtonWidget *button = child.maybeAs<ButtonWidget>())
+        if (ButtonWidget *button = maybeAs<ButtonWidget>(child))
         {
             button->audienceForPress() += this;
         }
@@ -264,11 +264,11 @@ DENG2_PIMPL(MenuWidget)
         // when filtered items are removed from the menu.
         needLayout = true;
 
-        if (IAssetGroup *asset = child.maybeAs<IAssetGroup>())
+        if (IAssetGroup *asset = maybeAs<IAssetGroup>(child))
         {
             assets -= *asset; // no longer part of the asset group
         }
-        if (ButtonWidget *button = child.maybeAs<ButtonWidget>())
+        if (ButtonWidget *button = maybeAs<ButtonWidget>(child))
         {
             button->audienceForPress() -= this;
         }
@@ -294,13 +294,13 @@ DENG2_PIMPL(MenuWidget)
             ButtonWidget *b = (item.semantics().testFlag(Item::ShownAsPopupButton)?
                                    new PopupButtonWidget : new ButtonWidget);
             b->setTextAlignment(ui::AlignRight);
-            if (item.is<SubmenuItem>())
+            if (is<SubmenuItem>(item))
             {
                 auto const &subItem = item.as<SubmenuItem>();
                 b->setAction(new SubmenuAction(this, subItem));
                 setFoldIndicatorForDirection(*b, subItem.openingDirection());
             }
-            else if (item.is<SubwidgetItem>())
+            else if (is<SubwidgetItem>(item))
             {
                 auto const &subItem = item.as<SubwidgetItem>();
                 b->setAction(new SubwidgetAction(this, subItem));
@@ -331,7 +331,7 @@ DENG2_PIMPL(MenuWidget)
         else if (item.semantics().testFlag(Item::ShownAsToggle))
         {
             // We know how to present variable toggles.
-            if (VariableToggleItem const *varTog = item.maybeAs<VariableToggleItem>())
+            if (VariableToggleItem const *varTog = maybeAs<VariableToggleItem>(item))
             {
                 return new VariableToggleWidget(varTog->variable());
             }
@@ -347,9 +347,9 @@ DENG2_PIMPL(MenuWidget)
     void updateItemWidget(GuiWidget &widget, Item const &item)
     {
         // Image items apply their image to all label-based widgets.
-        if (ImageItem const *img = item.maybeAs<ImageItem>())
+        if (ImageItem const *img = maybeAs<ImageItem>(item))
         {
-            if (LabelWidget *label = widget.maybeAs<LabelWidget>())
+            if (LabelWidget *label = maybeAs<LabelWidget>(widget))
             {
                 if (!img->image().isNull())
                 {
@@ -358,7 +358,7 @@ DENG2_PIMPL(MenuWidget)
             }
         }
 
-        if (ActionItem const *act = item.maybeAs<ActionItem>())
+        if (ActionItem const *act = maybeAs<ActionItem>(item))
         {
             if (item.semantics().testFlag(Item::ShownAsButton))
             {
@@ -405,7 +405,7 @@ DENG2_PIMPL(MenuWidget)
 
     void keepTrackOfSubWidget(PanelWidget *w)
     {
-        DENG2_ASSERT(w->is<PanelWidget>());
+        DENG2_ASSERT(is<PanelWidget>(w));
 
         openSubs.insert(w);
 
@@ -635,7 +635,7 @@ void MenuWidget::setVariantItemsEnabled(bool variantsEnabled)
 
         items().forAll([this] (ui::Item const &item)
         {
-            if (item.is<ui::VariantActionItem>())
+            if (is<ui::VariantActionItem>(item))
             {
                 item.notifyChange();
             }

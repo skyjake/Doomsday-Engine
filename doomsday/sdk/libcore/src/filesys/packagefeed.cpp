@@ -92,9 +92,9 @@ Feed::PopulatedFiles PackageFeed::populate(Folder const &folder)
 
 bool PackageFeed::prune(File &file) const
 {
-    if (LinkFile const *link = file.maybeAs<LinkFile>())
+    if (LinkFile const *link = maybeAs<LinkFile>(file))
     {
-        if (Folder const *pkg = link->target().maybeAs<Folder>())
+        if (Folder const *pkg = maybeAs<Folder>(link->target()))
         {
             // Links to unloaded packages should be pruned.
             if (!d->loader.isLoaded(*pkg)) return true;

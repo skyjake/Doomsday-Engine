@@ -198,7 +198,7 @@ static void drawWidget(HudWidget *wi, Point2Raw const *origin = nullptr)
     // First ourself.
     drawWidget2(wi);
 
-    if(auto *group = wi->maybeAs<GroupWidget>())
+    if(auto *group = maybeAs<GroupWidget>(wi))
     {
         // Then our children.
         group->forAllChildren([] (HudWidget &child)
@@ -329,7 +329,7 @@ void GUI_ReleaseResources()
 
     for(HudWidget *wi : widgets)
     {
-        if(auto *automap = wi->maybeAs<AutomapWidget>())
+        if(auto *automap = maybeAs<AutomapWidget>(wi))
         {
             automap->reset();
         }

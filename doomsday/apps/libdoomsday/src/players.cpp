@@ -45,7 +45,7 @@ Players::Players(Constructor playerConstructor) : d(new Impl)
     for (auto &plr : d->players)
     {
         plr = playerConstructor();
-        DENG2_ASSERT(plr->is<Player>());
+        DENG2_ASSERT(is<Player>(plr));
     }
 }
 

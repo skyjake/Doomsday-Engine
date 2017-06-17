@@ -163,7 +163,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
             button->rule().setMidAnchorY(label->rule().midY());
         }
         changeRef(buttonsWidth, layout.width() + rule("gap"));
-        
+
         if (buttonsShown)
         {
             labelRightMargin->set(*buttonsWidth,
@@ -233,7 +233,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
     {
         for (Widget *i = self().parentWidget(); i; i = i->parent())
         {
-            if (i->is<ColumnWidget>()) return true;
+            if (is<ColumnWidget>(i)) return true;
         }
         return false;
     }
@@ -383,7 +383,7 @@ void HomeItemWidget::acquireFocus()
 
 HomeMenuWidget *HomeItemWidget::parentMenu()
 {
-    return parentWidget()->maybeAs<HomeMenuWidget>();
+    return maybeAs<HomeMenuWidget>(parentWidget());
 }
 
 bool HomeItemWidget::handleEvent(Event const &event)
@@ -427,13 +427,13 @@ void HomeItemWidget::itemRightClicked()
 void HomeItemWidget::addButton(GuiWidget *widget)
 {
     // Common styling.
-    if (auto *label = widget->maybeAs<LabelWidget>())
+    if (auto *label = maybeAs<LabelWidget>(widget))
     {
         label->setSizePolicy(ui::Expand, ui::Expand);
     }
 
     // Observing triggers.
-    if (auto *menu = widget->maybeAs<MenuWidget>())
+    if (auto *menu = maybeAs<MenuWidget>(widget))
     {
         menu->audienceForItemTriggered() += d;
     }

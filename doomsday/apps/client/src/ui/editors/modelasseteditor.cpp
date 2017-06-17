@@ -378,7 +378,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
 
             String label = namePrefix.concatenateMember(name);
 
-            if (NumberValue const *num = var.value().maybeAs<NumberValue>())
+            if (NumberValue const *num = maybeAs<NumberValue>(var.value()))
             {
                 if (num->semanticHints().testFlag(NumberValue::Boolean))
                 {

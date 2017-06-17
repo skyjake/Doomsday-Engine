@@ -426,7 +426,7 @@ D_CMD(MappedConfigVariable)
     else if (argc > 1)
     {
         // Retain the current type of the Config variable (numeric or text).
-        if (var.value().maybeAs<TextValue>())
+        if (maybeAs<TextValue>(var.value()))
         {
             var.set(new TextValue(argv[1]));
         }

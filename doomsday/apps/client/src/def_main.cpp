@@ -1175,7 +1175,7 @@ static void clearFontDefinitionLinks()
 {
     for (AbstractFont *font : ClientResources::get().allFonts())
     {
-        if (CompositeBitmapFont *compFont = font->maybeAs<CompositeBitmapFont>())
+        if (CompositeBitmapFont *compFont = maybeAs<CompositeBitmapFont>(font))
         {
             compFont->setDefinition(nullptr);
         }

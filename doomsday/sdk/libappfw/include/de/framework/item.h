@@ -102,7 +102,7 @@ public:
 
     QVariant const &data() const;
 
-    DENG2_AS_IS_METHODS()
+    DENG2_CAST_METHODS()
 
     /**
      * Notifies the Change audience of a changed property.

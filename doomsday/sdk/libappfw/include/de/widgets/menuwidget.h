@@ -133,7 +133,7 @@ public:
     WidgetType *itemWidget(ui::DataPos itemPos) const {
         if (itemPos < items().size()) {
             if (auto *widget = organizer().itemWidget(items().at(itemPos))) {
-                return widget->maybeAs<WidgetType>();
+                return maybeAs<WidgetType>(widget);
             }
         }
         return nullptr;

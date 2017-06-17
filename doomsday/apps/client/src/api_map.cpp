@@ -199,7 +199,7 @@ void *P_DummyExtraData(void *dummy)
     if(P_IsDummy(dummy))
     {
         MapElement *elem = IN_ELEM(dummy);
-        return elem->maybeAs<DummyData>()->extraData;
+        return maybeAs<DummyData>(elem)->extraData;
     }
     return 0;
 }

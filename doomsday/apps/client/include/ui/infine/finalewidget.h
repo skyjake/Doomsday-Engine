@@ -44,7 +44,7 @@ public:
     explicit FinaleWidget(de::String const &name = de::String());
     virtual ~FinaleWidget();
 
-    DENG2_AS_IS_METHODS()
+    DENG2_CAST_METHODS()
 
 #ifdef __CLIENT__
     virtual void draw(de::Vector3f const &offset) = 0;

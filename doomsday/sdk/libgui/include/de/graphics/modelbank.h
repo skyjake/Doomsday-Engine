@@ -45,7 +45,7 @@ public:
     {
     public:
         virtual ~IUserData() {}
-        DENG2_AS_IS_METHODS()
+        DENG2_CAST_METHODS()
     };
 
     typedef std::function<ModelDrawable * ()> Constructor;

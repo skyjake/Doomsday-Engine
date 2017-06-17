@@ -125,7 +125,7 @@ public:
      */
     virtual Feed *newSubFeed(String const &name);
 
-    DENG2_AS_IS_METHODS()
+    DENG2_CAST_METHODS()
 };
 
 } // namespace de

@@ -99,7 +99,7 @@ DENG_GUI_PIMPL(VariableArrayWidget)
 
         menu->items().clear();
 
-        if (auto const *array = var->value().maybeAs<ArrayValue>())
+        if (auto const *array = maybeAs<ArrayValue>(var->value()))
         {
             for (Value const *value : array->elements())
             {

@@ -105,7 +105,7 @@ public:
     virtual dfloat minDistance() const;
     virtual dfloat spatialSpread() const;
 
-    DENG2_AS_IS_METHODS()
+    DENG2_CAST_METHODS()
 
     /// Audience that is notified when the sound is played.
     DENG2_DEFINE_AUDIENCE2(Play, void soundPlayed(Sound const &))

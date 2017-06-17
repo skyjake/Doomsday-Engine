@@ -509,7 +509,7 @@ public:
         while (i.hasNext())
         {
             i.next();
-            if (!i.value()->file().is<Type>())
+            if (!is<Type>(i.value()->file()))
             {
                 i.remove();
             }

@@ -83,7 +83,7 @@ DENG2_PIMPL(VariableGroupEditor)
     {
         foreach (GuiWidget *child, owner->containerWidget().childWidgets())
         {
-            if (auto *g = child->maybeAs<VariableGroupEditor>())
+            if (auto *g = maybeAs<VariableGroupEditor>(child))
             {
                 if (fold)
                     g->close(0);
@@ -304,7 +304,7 @@ void VariableGroupEditor::fetch()
 {
     foreach (GuiWidget *child, d->content->childWidgets())
     {
-        if (ICVarWidget *w = child->maybeAs<ICVarWidget>())
+        if (ICVarWidget *w = maybeAs<ICVarWidget>(child))
         {
             w->updateFromCVar();
         }
@@ -315,7 +315,7 @@ void VariableGroupEditor::resetToDefaults()
 {
     foreach (GuiWidget *child, d->content->childWidgets())
     {
-        if (ICVarWidget *w = child->maybeAs<ICVarWidget>())
+        if (ICVarWidget *w = maybeAs<ICVarWidget>(child))
         {
             d->owner->resetToDefaults(w->cvarPath());
             //d->settings.resetSettingToDefaults(w->cvarPath());

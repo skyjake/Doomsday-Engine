@@ -1572,7 +1572,7 @@ AbstractFont *ClientResources::newFontFromDef(ded_compositefont_t const &def)
         FontManifest &manifest = declareFont(uri);
         if (manifest.hasResource())
         {
-            if (auto *compFont = manifest.resource().maybeAs<CompositeBitmapFont>())
+            if (auto *compFont = maybeAs<CompositeBitmapFont>(manifest.resource()))
             {
                 /// @todo Do not update fonts here (not enough knowledge). We should
                 /// instead return an invalid reference/signal and force the caller
@@ -1631,7 +1631,7 @@ AbstractFont *ClientResources::newFontFromFile(de::Uri const &uri, String filePa
 
         if (manifest.hasResource())
         {
-            if (auto *bmapFont = manifest.resource().maybeAs<BitmapFont>())
+            if (auto *bmapFont = maybeAs<BitmapFont>(manifest.resource()))
             {
                 /// @todo Do not update fonts here (not enough knowledge). We should
                 /// instead return an invalid reference/signal and force the caller

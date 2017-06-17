@@ -187,7 +187,7 @@ DENG2_PIMPL(VideoSettingsDialog)
 
         foreach (GuiWidget *child, self().area().childWidgets())
         {
-            if (ICVarWidget *cw = child->maybeAs<ICVarWidget>())
+            if (ICVarWidget *cw = maybeAs<ICVarWidget>(child))
                 cw->updateFromCVar();
         }
     }

@@ -75,7 +75,7 @@ Library &LibraryFile::library()
     {
         return *d->library;
     }
-    
+
     if (!d->nativePath.isEmpty())
     {
         d->library = new Library(d->nativePath);
@@ -83,8 +83,8 @@ Library &LibraryFile::library()
     else
     {
         /// @todo A mechanism to make a NativeFile out of any File via caching?
-        
-        NativeFile *native = source()->maybeAs<NativeFile>();
+
+        NativeFile *native = maybeAs<NativeFile>(source());
         if (!native)
         {
             /// @throw UnsupportedSourceError Currently shared libraries are only loaded directly
@@ -127,7 +127,7 @@ bool LibraryFile::recognize(File const &file)
         // On macOS/iOS, plugins are in the .bundle format. The LibraryFile will point
         // to the actual binary inside the bundle. Libraries must be loaded from
         // native files.
-        if (NativeFile const *native = file.maybeAs<NativeFile>())
+        if (NativeFile const *native = maybeAs<NativeFile>(file))
         {
             // Check if this in the executable folder with a matching bundle name.
             if (native->nativePath().fileNamePath().toString()

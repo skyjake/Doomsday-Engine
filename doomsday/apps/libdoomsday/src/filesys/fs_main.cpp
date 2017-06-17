@@ -481,7 +481,7 @@ void FS1::index(File1 &file)
 #endif
 
     // Publish lumps to one or more indexes?
-    if (Zip *zip = file.maybeAs<Zip>())
+    if (Zip *zip = maybeAs<Zip>(file))
     {
         if (!zip->isEmpty())
         {
@@ -497,7 +497,7 @@ void FS1::index(File1 &file)
             }
         }
     }
-    else if (Wad *wad = file.maybeAs<Wad>())
+    else if (Wad *wad = maybeAs<Wad>(file))
     {
         if (!wad->isEmpty())
         {
@@ -752,7 +752,7 @@ static Wad *findFirstWadFile(FS1::FileList &list, bool custom)
         File1 &file = (*i)->file();
         if (custom != file.hasCustom()) continue;
 
-        if (Wad *wad = file.maybeAs<Wad>())
+        if (Wad *wad = maybeAs<Wad>(file))
         {
             return wad;
         }
@@ -1214,11 +1214,11 @@ D_CMD(ListFiles)
             uint crc = 0;
 
             int fileCount = 1;
-            if (de::Zip *zip = file.maybeAs<de::Zip>())
+            if (de::Zip *zip = maybeAs<de::Zip>(file))
             {
                 fileCount = zip->lumpCount();
             }
-            else if (de::Wad *wad = file.maybeAs<de::Wad>())
+            else if (de::Wad *wad = maybeAs<de::Wad>(file))
             {
                 fileCount = wad->lumpCount();
                 crc = (!file.hasCustom()? wad->calculateCRC() : 0);

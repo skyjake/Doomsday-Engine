@@ -494,7 +494,7 @@ bool LineEditWidget::handleEvent(Event const &event)
         }
     }
 
-    if (event.is<KeyEvent>() && event.as<KeyEvent>().qtKey() == Qt::Key_Enter)
+    if (is<KeyEvent>(event) && event.as<KeyEvent>().qtKey() == Qt::Key_Enter)
     {
         qDebug() << "LineEditWidget: Enter key" << event.type() << hasFocus();
     }

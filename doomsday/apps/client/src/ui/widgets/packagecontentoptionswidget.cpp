@@ -192,21 +192,21 @@ DENG_GUI_PIMPL(PackageContentOptionsWidget)
         defaultsButton->setActionFn([this] ()
         {
             contents->items().forAll([] (ui::Item &item) {
-                if (auto *i = item.maybeAs<Item>()) i->reset();
+                if (auto *i = maybeAs<Item>(item)) i->reset();
                 return LoopContinue;
             });
         });
         noneButton->setActionFn([this] ()
         {
             contents->items().forAll([] (ui::Item &item) {
-                if (auto *i = item.maybeAs<Item>()) i->setSelected(false);
+                if (auto *i = maybeAs<Item>(item)) i->setSelected(false);
                 return LoopContinue;
             });
         });
         allButton->setActionFn([this] ()
         {
             contents->items().forAll([] (ui::Item &item) {
-                if (auto *i = item.maybeAs<Item>()) i->setSelected(true);
+                if (auto *i = maybeAs<Item>(item)) i->setSelected(true);
                 return LoopContinue;
             });
         });

@@ -108,7 +108,7 @@ DENG2_PIMPL_NOREF(Plugins)
 
 #if !defined (DENG_STATIC_LINK)
         // We are only interested in native files.
-        if (!lib.source()->is<NativeFile>())
+        if (!is<NativeFile>(lib.source()))
             return 0;  // Continue iteration.
 #endif
 
@@ -163,7 +163,7 @@ DENG2_PIMPL_NOREF(Plugins)
             Library_Delete(plugin);
             return 0;  // Continue iteration.
         }
-        
+
         // This seems to be a Doomsday plugin.
         LOGDEV_MSG("Plugin id:%i name:%s")
                 << plugId << lib.path().fileNameWithoutExtension();

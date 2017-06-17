@@ -578,7 +578,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
         DGL_Disable(DGL_TEXTURE_2D);
     }
 #endif
-    if (BitmapFont *bmapFont = font->maybeAs<BitmapFont>())
+    if (BitmapFont *bmapFont = maybeAs<BitmapFont>(font))
     {
         if (bmapFont->textureGLName())
         {
@@ -733,7 +733,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
     }
 
     // Restore previous GL-state.
-    if (BitmapFont *bmapFont = font->maybeAs<BitmapFont>())
+    if (BitmapFont *bmapFont = maybeAs<BitmapFont>(font))
     {
         if (bmapFont->textureGLName())
         {
@@ -779,7 +779,7 @@ static void drawChar(uchar ch, float x, float y, AbstractFont *font,
 
     Rectanglei geometry = font->glyphPosCoords(ch);
 
-    if (BitmapFont *bmapFont = font->maybeAs<BitmapFont>())
+    if (BitmapFont *bmapFont = maybeAs<BitmapFont>(font))
     {
         /// @todo Filtering should be determined at a higher level.
         /// @todo We should not need to re-bind this texture here.
@@ -788,7 +788,7 @@ static void drawChar(uchar ch, float x, float y, AbstractFont *font,
 
         geometry = geometry.expanded(bmapFont->textureMargin().toVector2i());
     }
-    else if (CompositeBitmapFont *compFont = font->maybeAs<CompositeBitmapFont>())
+    else if (CompositeBitmapFont *compFont = maybeAs<CompositeBitmapFont>(font))
     {
         GL_BindTexture(compFont->glyphTexture(ch));
         geometry = geometry.expanded(compFont->glyphTextureBorder(ch));
@@ -801,7 +801,7 @@ static void drawChar(uchar ch, float x, float y, AbstractFont *font,
 
     GL_DrawRectWithCoords(geometry, coords);
 
-    if (font->is<CompositeBitmapFont>())
+    if (is<CompositeBitmapFont>(font))
     {
         GL_SetNoTexture();
     }

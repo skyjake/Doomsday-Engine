@@ -102,7 +102,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 
     void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
     {
-        if (ButtonWidget *but = widget.maybeAs<ButtonWidget>())
+        if (ButtonWidget *but = maybeAs<ButtonWidget>(widget))
         {
             // Make sure the created buttons have an action that updates the
             // selected item.

@@ -403,7 +403,7 @@ public VariableGroupEditor::IOwner
 
         foreach (GuiWidget *child, self().containerWidget().childWidgets())
         {
-            if (Group *g = child->maybeAs<Group>())
+            if (Group *g = maybeAs<Group>(child))
             {
                 g->setResetable(!isReadOnly);
                 g->fetch();
@@ -422,7 +422,7 @@ public VariableGroupEditor::IOwner
     {
         foreach (GuiWidget *child, self().containerWidget().childWidgets())
         {
-            if (Group *g = child->maybeAs<Group>())
+            if (Group *g = maybeAs<Group>(child))
             {
                 toState.objectNamespace().set(self().name() + "." + g->name() + ".open",
                                               g->isOpen());
@@ -436,7 +436,7 @@ public VariableGroupEditor::IOwner
 
         foreach (GuiWidget *child, self().containerWidget().childWidgets())
         {
-            if (Group *g = child->maybeAs<Group>())
+            if (Group *g = maybeAs<Group>(child))
             {
                 String const var = self().name() + "." + g->name() + ".open";
                 if (fromState.objectNamespace().has(var))

@@ -66,7 +66,7 @@ public:
     AbstractFont(de::FontManifest &manifest);
     virtual ~AbstractFont();
 
-    DENG2_AS_IS_METHODS()
+    DENG2_CAST_METHODS()
 
     /**
      * Returns the resource manifest for the font.

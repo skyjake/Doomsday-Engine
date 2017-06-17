@@ -40,7 +40,7 @@ Feed::PopulatedFiles BundleLinkFeed::populate(Folder const &)
 
 bool BundleLinkFeed::prune(File &file) const
 {
-    if (LinkFile const *link = file.maybeAs<LinkFile>())
+    if (LinkFile const *link = maybeAs<LinkFile>(file))
     {
         // Broken links must be removed.
         return link->isBroken();

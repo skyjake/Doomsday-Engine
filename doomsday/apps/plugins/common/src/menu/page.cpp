@@ -177,14 +177,14 @@ DENG2_PIMPL(Page)
             // vertical dividing line, with the label on the left, other widget
             // on the right.
             // @todo Do not assume pairing, a widget should designate it's label.
-            if(wi->is<LabelWidget>() && nextWi)
+            if(is<LabelWidget>(wi) && nextWi)
             {
                 if(!nextWi->isHidden() &&
-                   (nextWi->is<ButtonWidget>()         ||
-                    nextWi->is<InlineListWidget>()     ||
-                    nextWi->is<ColorEditWidget>()      ||
-                    nextWi->is<InputBindingWidget>()   ||
-                    nextWi->is<CVarTextualSliderWidget>()))
+                   (is<ButtonWidget>(nextWi)         ||
+                    is<InlineListWidget>(nextWi)     ||
+                    is<ColorEditWidget>(nextWi)      ||
+                    is<InputBindingWidget>(nextWi)   ||
+                    is<CVarTextualSliderWidget>(nextWi)))
                 {
                     int const margin = lineOffset * 2;
 
@@ -295,24 +295,24 @@ DENG2_PIMPL(Page)
     {
         for(Widget *wi : children)
         {
-            if(CVarToggleWidget *tog = wi->maybeAs<CVarToggleWidget>())
+            if(CVarToggleWidget *tog = maybeAs<CVarToggleWidget>(wi))
             {
                 int value = Con_GetByte(tog->cvarPath()) & (tog->cvarValueMask()? tog->cvarValueMask() : ~0);
                 tog->setState(value? CVarToggleWidget::Down : CVarToggleWidget::Up);
                 tog->setText(tog->isDown()? tog->downText() : tog->upText());
             }
-            if(CVarInlineListWidget *list = wi->maybeAs<CVarInlineListWidget>())
+            if(CVarInlineListWidget *list = maybeAs<CVarInlineListWidget>(wi))
             {
                 int itemValue = Con_GetInteger(list->cvarPath());
                 if(int valueMask = list->cvarValueMask())
                     itemValue &= valueMask;
                 list->selectItemByValue(itemValue);
             }
-            if(CVarLineEditWidget *edit = wi->maybeAs<CVarLineEditWidget>())
+            if(CVarLineEditWidget *edit = maybeAs<CVarLineEditWidget>(wi))
             {
                 edit->setText(Con_GetString(edit->cvarPath()));
             }
-            if(CVarSliderWidget *sldr = wi->maybeAs<CVarSliderWidget>())
+            if(CVarSliderWidget *sldr = maybeAs<CVarSliderWidget>(wi))
             {
                 float value;
                 if(sldr->floatMode())
@@ -321,7 +321,7 @@ DENG2_PIMPL(Page)
                     value = Con_GetInteger(sldr->cvarPath());
                 sldr->setValue(value);
             }
-            if(CVarColorEditWidget *cbox = wi->maybeAs<CVarColorEditWidget>())
+            if(CVarColorEditWidget *cbox = maybeAs<CVarColorEditWidget>(wi))
             {
                 cbox->setColor(Vector4f(Con_GetFloat(cbox->redCVarPath()),
                                         Con_GetFloat(cbox->greenCVarPath()),
@@ -502,7 +502,7 @@ void Page::draw(float alpha, bool showFocusCursor)
         /// @kludge
         /// We cannot yet query the subobjects of the list for these values
         /// so we must calculate them ourselves, here.
-        if(ListWidget const *list = focused->maybeAs<ListWidget>())
+        if(ListWidget const *list = maybeAs<ListWidget>(focused))
         {
             if(focused->isActive() && list->selectionIsVisible())
             {
@@ -688,11 +688,11 @@ void Page::activate()
     // (Re)init widgets.
     for(Widget *wi : d->children)
     {
-        if(CVarToggleWidget *tog = wi->maybeAs<CVarToggleWidget>())
+        if(CVarToggleWidget *tog = maybeAs<CVarToggleWidget>(wi))
         {
             tog->setFlags(Widget::Active, tog->isDown()? SetFlags : UnsetFlags);
         }
-        if(ListWidget *list = wi->maybeAs<ListWidget>())
+        if(ListWidget *list = maybeAs<ListWidget>(wi))
         {
             // Determine number of potentially visible items.
             list->updateVisibleSelection();

@@ -945,7 +945,7 @@ static GameProfile const *autoselectGameProfile()
         foreach (File *f, DoomsdayApp::app().filesFromCommandLine())
         {
             String packageId;
-            if (auto const *bundle = f->maybeAs<DataBundle>())
+            if (auto const *bundle = maybeAs<DataBundle>(f))
             {
                 packageId = bundle->packageId();
             }

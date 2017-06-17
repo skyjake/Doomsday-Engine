@@ -267,13 +267,13 @@ void GameStateFolder::Metadata::parse(String const &source)
         Record &rules = addSubrecord("gameRules");
         foreach (Info::Element const *elem, info.root().contentsInOrder())
         {
-            if (Info::KeyElement const *key = elem->maybeAs<Info::KeyElement>())
+            if (Info::KeyElement const *key = maybeAs<Info::KeyElement>(elem))
             {
                 QScopedPointer<Value> v(makeValueFromInfoValue(key->value()));
                 add(key->name()) = v.take();
                 continue;
             }
-            if (Info::ListElement const *list = elem->maybeAs<Info::ListElement>())
+            if (Info::ListElement const *list = maybeAs<Info::ListElement>(elem))
             {
                 QScopedPointer<ArrayValue> arr(new ArrayValue);
                 foreach (Info::Element::Value const &v, list->values())
@@ -283,7 +283,7 @@ void GameStateFolder::Metadata::parse(String const &source)
                 addArray(list->name(), arr.take());
                 continue;
             }
-            if (Info::BlockElement const *block = elem->maybeAs<Info::BlockElement>())
+            if (Info::BlockElement const *block = maybeAs<Info::BlockElement>(elem))
             {
                 // Perhaps a ruleset group?
                 if (block->blockType() == BLOCK_GROUP)

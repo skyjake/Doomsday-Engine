@@ -161,7 +161,7 @@ DENG2_PIMPL(Resources)
         bool needReset = ddPkg.hasDefinitions();
         File const &sourceFile = ddPkg.sourceFile();
 
-        if (DataBundle const *bundle = sourceFile.maybeAs<DataBundle>())
+        if (DataBundle const *bundle = maybeAs<DataBundle>(sourceFile))
         {
             // DEH patches cannot be loaded/unloaded as such; they are simply
             // marked as loaded and applied all at once during a reset.

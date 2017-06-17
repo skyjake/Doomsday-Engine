@@ -198,7 +198,7 @@ DENG2_PIMPL(ConfigProfiles)
 
     Profile *tryFind(String const &name) const
     {
-        return self().tryFind(name)->maybeAs<Profile>();
+        return maybeAs<Profile>(self().tryFind(name));
     }
 
     Profile &currentProfile() const

@@ -142,13 +142,13 @@ DENG_GUI_PIMPL(DialogWidget)
         // Segregate Action buttons into the extra buttons set.
         mainButtonItems.setFilter([] (ui::Item const &it)
         {
-            if (!it.is<DialogButtonItem>()) return false;
+            if (!is<DialogButtonItem>(it)) return false;
             // Non-Action buttons only.
             return !it.as<DialogButtonItem>().role().testFlag(Action);
         });
         extraButtonItems.setFilter([] (ui::Item const &it)
         {
-            if (!it.is<DialogButtonItem>()) return false;
+            if (!is<DialogButtonItem>(it)) return false;
             // Only Action buttons allowed.
             return it.as<DialogButtonItem>().role().testFlag(Action);
         });
@@ -309,13 +309,13 @@ DENG_GUI_PIMPL(DialogWidget)
     {
         // Make sure all label-based widgets in the button area
         // manage their own size.
-        if (LabelWidget *lab = widget.maybeAs<LabelWidget>())
+        if (LabelWidget *lab = maybeAs<LabelWidget>(widget))
         {
             lab->setSizePolicy(ui::Expand, ui::Expand);
         }
 
         // Apply dialog button specific roles.
-        if (ButtonItem const *i = item.maybeAs<ButtonItem>())
+        if (ButtonItem const *i = maybeAs<ButtonItem>(item))
         {
             ButtonWidget &but = widget.as<ButtonWidget>();
             but.setColorTheme(self().colorTheme());
@@ -335,7 +335,7 @@ DENG_GUI_PIMPL(DialogWidget)
 
     void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item)
     {
-        if (ButtonItem const *i = item.maybeAs<ButtonItem>())
+        if (ButtonItem const *i = maybeAs<ButtonItem>(item))
         {
             ButtonWidget &but = widget.as<ButtonWidget>();
 
@@ -386,7 +386,7 @@ DENG_GUI_PIMPL(DialogWidget)
 
         for (ui::Data::Pos i = 0; i < mainButtonItems.size(); ++i)
         {
-            ButtonItem const *act = mainButtonItems.at(i).maybeAs<ButtonItem>();
+            ButtonItem const *act = maybeAs<ButtonItem>(mainButtonItems.at(i));
             if (act->role().testFlag(Default) &&
                 buttons->organizer().itemWidget(i)->isEnabled())
             {
@@ -554,7 +554,7 @@ QList<ButtonWidget *> DialogWidget::buttonWidgets() const
     QList<ButtonWidget *> buttons;
     foreach (GuiWidget *w, d->buttons->childWidgets())
     {
-        if (auto *but = w->maybeAs<ButtonWidget>())
+        if (auto *but = maybeAs<ButtonWidget>(w))
         {
             buttons << but;
         }
