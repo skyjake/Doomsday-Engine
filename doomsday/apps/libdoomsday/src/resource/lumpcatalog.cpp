@@ -53,7 +53,7 @@ DENG2_PIMPL(LumpCatalog)
             // The package must be available as a file.
             if (File const *file = App::packageLoader().select(pkg))
             {
-                auto const *bundle = file->target().maybeAs<DataBundle>();
+                auto const *bundle = maybeAs<DataBundle>(file->target());
                 if (bundle && bundle->lumpDirectory())
                 {
                     bundles << bundle;

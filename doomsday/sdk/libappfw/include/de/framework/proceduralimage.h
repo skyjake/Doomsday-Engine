@@ -64,7 +64,7 @@ public:
     virtual void glDeinit();
     virtual void glMakeGeometry(GuiVertexBuilder &verts, Rectanglef const &rect) = 0;
 
-    DENG2_AS_IS_METHODS()
+    DENG2_CAST_METHODS()
 
 private:
     Size _size;

@@ -66,7 +66,7 @@ public:
      */
     DENG2_DEFINE_AUDIENCE2(Swap, void windowSwapped(GLWindow &))
 
-    DENG2_AS_IS_METHODS()
+    DENG2_CAST_METHODS()
 
 public:
     GLWindow();

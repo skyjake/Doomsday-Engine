@@ -57,7 +57,7 @@ Library &LibraryFile::library()
     }
 
     /// @todo A method for File for making a NativeFile out of any File.
-    NativeFile *native = source()->maybeAs<NativeFile>();
+    NativeFile *native = maybeAs<NativeFile>(source());
     if (!native)
     {
         /// @throw UnsupportedSourceError Currently shared libraries are only loaded directly

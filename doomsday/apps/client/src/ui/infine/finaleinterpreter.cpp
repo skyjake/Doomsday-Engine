@@ -799,7 +799,7 @@ DENG2_PIMPL(FinaleInterpreter)
 
     static inline PageIndex choosePageFor(FinaleWidget &widget)
     {
-        return widget.is<FinaleAnimWidget>()? Anims : Texts;
+        return is<FinaleAnimWidget>(widget)? Anims : Texts;
     }
 
     static inline PageIndex choosePageFor(fi_obtype_e type)
@@ -1740,7 +1740,7 @@ DEFFC(ClearAnim)
     DENG2_UNUSED(cmd);
     if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
-        if (FinaleAnimWidget *anim = wi->maybeAs<FinaleAnimWidget>())
+        if (FinaleAnimWidget *anim = maybeAs<FinaleAnimWidget>(wi))
         {
             anim->clearAllFrames();
         }
@@ -1867,11 +1867,11 @@ DEFFC(ObjectRGB)
     if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         Vector3f const color(OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3));
-        if (FinaleTextWidget *text = wi->maybeAs<FinaleTextWidget>())
+        if (FinaleTextWidget *text = maybeAs<FinaleTextWidget>(wi))
         {
             text->setColor(color, fi.inTime());
         }
-        if (FinaleAnimWidget *anim = wi->maybeAs<FinaleAnimWidget>())
+        if (FinaleAnimWidget *anim = maybeAs<FinaleAnimWidget>(wi))
         {
             // This affects all the colors.
             anim->setColor         (color, fi.inTime())
@@ -1888,11 +1888,11 @@ DEFFC(ObjectAlpha)
     if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         float const alpha = OP_FLOAT(1);
-        if (FinaleTextWidget *text = wi->maybeAs<FinaleTextWidget>())
+        if (FinaleTextWidget *text = maybeAs<FinaleTextWidget>(wi))
         {
             text->setAlpha(alpha, fi.inTime());
         }
-        if (FinaleAnimWidget *anim = wi->maybeAs<FinaleAnimWidget>())
+        if (FinaleAnimWidget *anim = maybeAs<FinaleAnimWidget>(wi))
         {
             anim->setAlpha     (alpha, fi.inTime())
                  .setOtherAlpha(alpha, fi.inTime());
@@ -1984,7 +1984,7 @@ DEFFC(FillColor)
 {
     DENG2_UNUSED(cmd);
     FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0));
-    if (!wi || !wi->is<FinaleAnimWidget>()) return;
+    if (!wi || !is<FinaleAnimWidget>(wi)) return;
     FinaleAnimWidget &anim = wi->as<FinaleAnimWidget>();
 
     // Which colors to modify?
@@ -2009,7 +2009,7 @@ DEFFC(EdgeColor)
 {
     DENG2_UNUSED(cmd);
     FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0));
-    if (!wi || !wi->is<FinaleAnimWidget>()) return;
+    if (!wi || !is<FinaleAnimWidget>(wi)) return;
     FinaleAnimWidget &anim = wi->as<FinaleAnimWidget>();
 
     // Which colors to modify?

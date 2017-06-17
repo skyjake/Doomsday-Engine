@@ -77,6 +77,8 @@
 #  include <functional>
 #  include <memory>  // unique_ptr, shared_ptr
 #  include <typeinfo>
+#  include <stdexcept>
+#  include <string>
 #endif
 
 #if defined(__x86_64__) || defined(__x86_64) || defined(_LP64) || defined(DENG_64BIT_HOST)
@@ -87,6 +89,7 @@
 #  include <QtCore/qglobal.h>
 #  include <QScopedPointer>
 #  include <QDebug>
+#  include <QString>
 
 // Qt versioning helper. Qt 4.8 is the oldest we support.
 #  if (QT_VERSION < QT_VERSION_CHECK(4, 8, 0))
@@ -295,42 +298,26 @@
  * - `expectedAs` does a `dynamic_cast` and throws an exception if the cast fails.
  *   Slowest performance, but is the safest.
  */
-#define DENG2_AS_IS_METHODS() \
-    template <typename T_> \
-    bool is() const { return dynamic_cast<T_ const *>(this) != nullptr; } \
+#define DENG2_CAST_METHODS() \
     template <typename T_> \
     T_ &as() { \
-        DENG2_ASSERT(is<T_>()); \
+        DENG2_ASSERT(de::is<T_>(this)); \
         return *static_cast<T_ *>(this); \
     } \
     template <typename T_> \
     T_ *asPtr() { \
-        DENG2_ASSERT(is<T_>()); \
+        DENG2_ASSERT(de::is<T_>(this)); \
         return static_cast<T_ *>(this); \
     } \
     template <typename T_> \
     T_ const &as() const { \
-        DENG2_ASSERT(is<T_>()); \
+        DENG2_ASSERT(de::is<T_>(this)); \
         return *static_cast<T_ const *>(this); \
     } \
     template <typename T_> \
     T_ const *asPtr() const { \
-        DENG2_ASSERT(is<T_>()); \
+        DENG2_ASSERT(de::is<T_>(this)); \
         return static_cast<T_ const *>(this); \
-    } \
-    template <typename T_> \
-    T_ *maybeAs() { return dynamic_cast<T_ *>(this); } \
-    template <typename T_> \
-    T_ const *maybeAs() const { return dynamic_cast<T_ const *>(this); } \
-    template <typename T_> \
-    T_ &expectedAs() { \
-        if (auto *t = maybeAs<T_>()) return *t; \
-        throw CastError(QString("Cannot cast %1 to %2").arg(DENG2_TYPE_NAME(this)).arg(DENG2_TYPE_NAME(T_))); \
-    } \
-    template <typename T_> \
-    T_ const &expectedAs() const { \
-        if (auto const *t = maybeAs<T_>()) return *t; \
-        throw CastError(QString("Cannot cast %1 to %2").arg(DENG2_TYPE_NAME(this)).arg(DENG2_TYPE_NAME(T_))); \
     }
 
 /**
@@ -371,6 +358,111 @@
 
 #if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
 namespace de {
+
+/**
+ * @defgroup errors Exceptions
+ *
+ * These are exceptions thrown by libcore when a fatal error occurs.
+ */
+
+/**
+ * Base class for error exceptions thrown by libcore. @ingroup errors
+ */
+class DENG2_PUBLIC Error : public std::runtime_error
+{
+public:
+    Error(QString const &where, QString const &message);
+
+    QString name() const;
+    virtual QString asText() const;
+
+protected:
+    void setName(QString const &name);
+
+private:
+    std::string _name;
+};
+
+/**
+ * Macro for defining an exception class that belongs to a parent group of
+ * exceptions.  This should be used so that whoever uses the class
+ * that throws an exception is able to choose the level of generality
+ * of the caught errors.
+ */
+#define DENG2_SUB_ERROR(Parent, Name) \
+    class Name : public Parent { \
+    public: \
+        Name(QString const &message) \
+            : Parent("-", message) { Parent::setName(#Name); } \
+        Name(QString const &where, QString const &message) \
+            : Parent(where, message) { Parent::setName(#Name); } \
+        virtual void raise() const { throw *this; } \
+    } /**< @note One must put a semicolon after the macro invocation. */
+
+/**
+ * Define a top-level exception class.
+ * @note One must put a semicolon after the macro invocation.
+ */
+#define DENG2_ERROR(Name) DENG2_SUB_ERROR(de::Error, Name)
+
+/// Thrown from the expectedAs() method if a cast cannot be made as expected.
+DENG2_ERROR(CastError);
+
+/*
+ * Convenience wrappers for dynamic_cast.
+ */
+
+template <typename X_, typename T_>
+inline bool is(T_ *ptr) {
+    return dynamic_cast<X_ *>(ptr) != nullptr;
+}
+
+template <typename X_, typename T_>
+inline bool is(T_ const *ptr) {
+    return dynamic_cast<X_ const *>(ptr) != nullptr;
+}
+
+template <typename X_, typename T_>
+inline bool is(T_ &obj) {
+    return dynamic_cast<X_ *>(&obj) != nullptr;
+}
+
+template <typename X_, typename T_>
+inline bool is(T_ const &obj) {
+    return dynamic_cast<X_ const *>(&obj) != nullptr;
+}
+
+template <typename X_, typename T_>
+inline X_ *maybeAs(T_ *ptr) {
+    return dynamic_cast<X_ *>(ptr);
+}
+
+template <typename X_, typename T_>
+inline X_ const *maybeAs(T_ const *ptr) {
+    return dynamic_cast<X_ const *>(ptr);
+}
+
+template <typename X_, typename T_>
+inline X_ *maybeAs(T_ &obj) {
+    return dynamic_cast<X_ *>(&obj);
+}
+
+template <typename X_, typename T_>
+inline X_ const *maybeAs(T_ const &obj) {
+    return dynamic_cast<X_ const *>(&obj);
+}
+
+template <typename X_, typename T_>
+inline X_ &expectedAs(T_ *ptr) {
+    if (auto *t = maybeAs<X_>(ptr)) return *t;
+    throw CastError(QString("Cannot cast %1 to %2").arg(DENG2_TYPE_NAME(T_)).arg(DENG2_TYPE_NAME(X_)));
+}
+
+template <typename X_, typename T_>
+inline X_ const &expectedAs(T_ const *ptr) {
+    if (auto const *t = maybeAs<X_>(ptr)) return *t;
+    throw CastError(QString("Cannot cast %1 to %2").arg(DENG2_TYPE_NAME(T_)).arg(DENG2_TYPE_NAME(X_)));
+}
 
 /**
  * Interface for all private instance implementation structs.

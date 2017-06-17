@@ -75,7 +75,7 @@ DENG2_PIMPL(PackageLoader)
         if (Feed const *feed = packageFile.originFeed())
         {
             // PackageFeed generates links to loaded packages.
-            if (feed->is<PackageFeed>()) return true;
+            if (is<PackageFeed>(feed)) return true;
         }
         return false;
     }

@@ -2615,7 +2615,8 @@ static void musicMidiFontChanged()
 {
     App_AudioSystem().updateMusicMidiFont();
 }
-#endif
+
+#endif // __CLIENT__
 
 void AudioSystem::consoleRegister()  // static
 {

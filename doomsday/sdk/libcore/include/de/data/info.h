@@ -110,7 +110,7 @@ public:
 
         virtual ValueList values() const = 0;
 
-        DENG2_AS_IS_METHODS()
+        DENG2_CAST_METHODS()
 
     private:
         DENG2_PRIVATE(d)

@@ -106,7 +106,7 @@ static void forNativeDataFiles(DataBundle const &bundle, std::function<void (Str
         {
             if (File const *dataFile = App::rootFolder().tryLocate<File const>(v->asText()))
             {
-                if (dataFile->source()->is<NativeFile>())
+                if (is<NativeFile>(dataFile->source()))
                 {
                     func(v->asText());
                 }
@@ -221,7 +221,7 @@ static void loadResource(ResourceManifest &manifest)
         file->setCustom(false);
 
         // Print the 'CRC' number of IWADs, so they can be identified.
-        if (Wad *wad = file->maybeAs<Wad>())
+        if (Wad *wad = maybeAs<Wad>(file))
         {
             LOG_RES_MSG("IWAD identification: %08x") << wad->calculateCRC();
         }

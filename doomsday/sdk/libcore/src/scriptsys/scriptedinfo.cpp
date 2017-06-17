@@ -600,7 +600,7 @@ String ScriptedInfo::absolutePathInContext(Record const &context, String const &
 
 bool ScriptedInfo::isTrue(Value const &value) // static
 {
-    if (TextValue const *textValue = value.maybeAs<TextValue>())
+    if (TextValue const *textValue = maybeAs<TextValue>(value))
     {
         // Text values are interpreted a bit more loosely.
         String const value = textValue->asText();
@@ -640,7 +640,7 @@ bool ScriptedInfo::isFalse(RecordAccessor const &rec, String const &name, bool d
 
 bool ScriptedInfo::isFalse(Value const &value) // static
 {
-    if (TextValue const *textValue = value.maybeAs<TextValue>())
+    if (TextValue const *textValue = maybeAs<TextValue>(value))
     {
         // Text values are interpreted a bit more loosely.
         String const value = textValue->asText();

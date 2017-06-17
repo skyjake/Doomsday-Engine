@@ -164,7 +164,7 @@ bool DirectoryFeed::prune(File &file) const
     /// Rules for pruning:
     /// - A file sourced by NativeFile will be pruned if it's out of sync with the hard
     ///   drive version (size, time of last modification).
-    if (NativeFile *nativeFile = file.maybeAs<NativeFile>())
+    if (NativeFile *nativeFile = maybeAs<NativeFile>(file))
     {
         try
         {
@@ -184,11 +184,11 @@ bool DirectoryFeed::prune(File &file) const
 
     /// - A Folder will be pruned if the corresponding directory does not exist (providing
     ///   a DirectoryFeed is the sole feed in the folder).
-    if (Folder *subFolder = file.maybeAs<Folder>())
+    if (Folder *subFolder = maybeAs<Folder>(file))
     {
         if (subFolder->feeds().size() == 1)
         {
-            DirectoryFeed *dirFeed = subFolder->feeds().front()->maybeAs<DirectoryFeed>();
+            DirectoryFeed *dirFeed = maybeAs<DirectoryFeed>(subFolder->feeds().front());
             if (dirFeed && !NativePath::exists(dirFeed->_nativePath))
             {
                 LOG_RES_NOTE("Pruning \"%s\": no longer exists") << _nativePath;

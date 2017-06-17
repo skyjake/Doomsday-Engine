@@ -258,7 +258,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             // An action button needs updating.
             LabelWidget &label = widget.as<LabelWidget>();
 
-            if (ui::VariantActionItem const *varItem = item.maybeAs<ui::VariantActionItem>())
+            if (ui::VariantActionItem const *varItem = maybeAs<ui::VariantActionItem>(item))
             {
                 label.setText      (varItem->label       (_actions->variantItemsEnabled()));
                 label.setStyleImage(varItem->styleImageId(_actions->variantItemsEnabled()),
@@ -267,7 +267,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             else
             {
                 label.setText(item.label());
-                if (ui::ImageItem const *imgItem = item.maybeAs<ui::ImageItem>())
+                if (ui::ImageItem const *imgItem = maybeAs<ui::ImageItem>(item))
                 {
                     if (imgItem->styleImageId().isEmpty())
                     {
@@ -291,7 +291,7 @@ DENG_GUI_PIMPL(PackagesWidget)
                 icon().setStyleImage("file", "default");
 
                 // Local files should not be indicated to be packages.
-                if (NativeFile const *native = _item->file->source()->maybeAs<NativeFile>())
+                if (NativeFile const *native = maybeAs<NativeFile>(_item->file->source()))
                 {
                     pkgIdVer.first = native->nativePath().pretty();
                 }
@@ -314,7 +314,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 
             for (GuiWidget *w : _actions->childWidgets())
             {
-                if (ButtonWidget *button = w->maybeAs<ButtonWidget>())
+                if (ButtonWidget *button = maybeAs<ButtonWidget>(w))
                 {
                     button->setImageColor(style().colors().colorf(highlight? "text" : "inverted.text"));
                     button->setColorTheme(highlight? invertColorTheme(_owner.d->selectedItemHilit)
@@ -363,7 +363,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             {
                 auto *w = (defaultAction? _actions->childWidgets().last()
                                         : _actions->childWidgets().first());
-                if (auto *button = w->maybeAs<ButtonWidget>())
+                if (auto *button = maybeAs<ButtonWidget>(w))
                 {
                     button->trigger();
                 }
@@ -830,7 +830,7 @@ void PackagesWidget::setActionsAlwaysShown(bool showActions)
     // Update existing widgets.
     for (auto *w : d->menu->childWidgets())
     {
-        if (HomeItemWidget *item = w->maybeAs<HomeItemWidget>())
+        if (HomeItemWidget *item = maybeAs<HomeItemWidget>(w))
         {
             item->setKeepButtonsVisible(showActions);
         }

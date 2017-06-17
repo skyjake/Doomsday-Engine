@@ -98,10 +98,10 @@ DENG2_PIMPL(Material)
     {
         for (Layer *layer : self()._layers)
         {
-            if (layer->is<DetailTextureMaterialLayer>()) continue;
-            if (layer->is<ShineTextureMaterialLayer>())  continue;
+            if (is<DetailTextureMaterialLayer>(layer)) continue;
+            if (is<ShineTextureMaterialLayer> (layer)) continue;
 
-            if (auto *texLayer = layer->maybeAs<TextureMaterialLayer>())
+            if (auto *texLayer = maybeAs<TextureMaterialLayer>(layer))
             {
                 return texLayer;
             }
@@ -254,8 +254,8 @@ bool Material::hasAnimatedTextureLayers() const
 {
     for (Layer const *layer : _layers)
     {
-        if (   !layer->is<DetailTextureMaterialLayer>()
-            && !layer->is<ShineTextureMaterialLayer>())
+        if (   !is<DetailTextureMaterialLayer>(layer)
+            && !is<ShineTextureMaterialLayer>(layer))
         {
             if (layer->isAnimated())
                 return true;

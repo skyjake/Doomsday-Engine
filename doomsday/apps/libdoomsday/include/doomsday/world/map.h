@@ -80,7 +80,7 @@ public:
 
     virtual void deserializeInternalState(de::Reader &from, IThinkerMapping const &);
 
-    DENG2_AS_IS_METHODS()
+    DENG2_CAST_METHODS()
 
 public:
     /// Notified when the map is about to be deleted.

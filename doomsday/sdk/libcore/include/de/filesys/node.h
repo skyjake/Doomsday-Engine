@@ -94,7 +94,7 @@ public:
      */
     virtual Node const *tryGetChild(String const &name) const;
 
-    DENG2_AS_IS_METHODS()
+    DENG2_CAST_METHODS()
 
 protected:
     /**

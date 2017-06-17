@@ -227,11 +227,11 @@ int PopupWidget::levelOfNesting() const
 {
     int nesting = 0;
     // GuiRootWidget is not a GuiWidget; root widget never has a parent.
-    for (GuiWidget const *p = d->realParent && d->realParent->parent()? 
-                static_cast<GuiWidget const *>(d->realParent.get()) : parentGuiWidget(); 
+    for (GuiWidget const *p = d->realParent && d->realParent->parent()?
+                static_cast<GuiWidget const *>(d->realParent.get()) : parentGuiWidget();
          p; p = p->parentGuiWidget())
     {
-        if (p->is<PopupWidget>())
+        if (is<PopupWidget>(p))
         {
             ++nesting;
         }

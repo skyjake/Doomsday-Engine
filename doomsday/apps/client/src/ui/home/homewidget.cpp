@@ -387,7 +387,7 @@ DENG_GUI_PIMPL(HomeWidget)
         {
             if (!widget->behavior().testFlag(Widget::Hidden))
             {
-                if (ColumnWidget *column = widget->maybeAs<ColumnWidget>())
+                if (ColumnWidget *column = maybeAs<ColumnWidget>(widget))
                 {
                     layout << *column;
                     columns << column;

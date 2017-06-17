@@ -627,7 +627,7 @@ void StateAnimator::triggerByState(String const &stateName)
             }
 
             // Do not override higher-priority animations.
-            if (auto *existing = find(node)->maybeAs<Sequence>())
+            if (auto *existing = maybeAs<Sequence>(find(node)))
             {
                 if (priority < existing->priority)
                 {

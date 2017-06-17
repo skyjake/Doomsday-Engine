@@ -243,7 +243,7 @@ Page &Hu_MenuPage(String name)
 static bool Hu_MenuHasCursorRotation(Widget *wi)
 {
     DENG2_ASSERT(wi != 0);
-    return (!wi->isDisabled() && (wi->is<InlineListWidget>() || wi->is<SliderWidget>()));
+    return (!wi->isDisabled() && (is<InlineListWidget>(wi) || is<SliderWidget>(wi)));
 }
 
 /// To be called to re-evaluate the state of the cursor (e.g., when focus changes).
@@ -2320,7 +2320,7 @@ void Hu_MenuDrawer()
     bool showFocusCursor = true;
     if(focused && focused->isActive())
     {
-        if(focused->is<ColorEditWidget>() || focused->is<InputBindingWidget>())
+        if(is<ColorEditWidget>(focused) || is<InputBindingWidget>(focused))
         {
             showFocusCursor = false;
         }
@@ -2343,7 +2343,7 @@ void Hu_MenuDrawer()
     // Drawing any overlays?
     if(focused && focused->isActive())
     {
-        if(focused->is<ColorEditWidget>())
+        if(is<ColorEditWidget>(focused))
         {
             drawOverlayBackground(OVERLAY_DARKEN);
             GL_BeginBorderedProjection(&bp);
@@ -2354,7 +2354,7 @@ void Hu_MenuDrawer()
 
             GL_EndBorderedProjection(&bp);
         }
-        if(InputBindingWidget *binds = focused->maybeAs<InputBindingWidget>())
+        if(InputBindingWidget *binds = maybeAs<InputBindingWidget>(focused))
         {
             drawOverlayBackground(OVERLAY_DARKEN);
             GL_BeginBorderedProjection(&bp);
@@ -2502,7 +2502,7 @@ static menucommand_e translateCommand(menucommand_e cmd)
         if(Widget *wi = Hu_MenuPage().focusWidget())
         {
             if(wi->isActive() &&
-               (wi->is<LineEditWidget>() || wi->is<ListWidget>() || wi->is<ColorEditWidget>()))
+               (is<LineEditWidget>(wi) || is<ListWidget>(wi) || is<ColorEditWidget>(wi)))
             {
                 cmd = MCMD_NAV_OUT;
             }

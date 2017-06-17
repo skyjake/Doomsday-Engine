@@ -170,7 +170,7 @@ public:
             Stage(Stage const &other) : tics(other.tics), variance(other.variance) {}
             virtual ~Stage() {}
 
-            DENG2_AS_IS_METHODS()
+            DENG2_CAST_METHODS()
 
             /**
              * Returns a human-friendly, textual description of the animation stage
@@ -182,7 +182,7 @@ public:
     public:
         virtual ~Layer();
 
-        DENG2_AS_IS_METHODS()
+        DENG2_CAST_METHODS()
 
         /**
          * Returns a human-friendly, textual name for the type of material layer.

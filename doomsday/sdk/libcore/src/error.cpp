@@ -20,7 +20,6 @@
 
 #include "de/error.h"
 #include "core/logtextstyle.h"
-//#include <iostream>
 
 namespace de {
 
@@ -31,14 +30,7 @@ Error::Error(QString const &where, QString const &message)
                          .arg(message)
                          .toStdString())
     , _name("")
-{
-    //std::cerr << "Constructed Error " << this << ": " << asText().toAscii().constData() << "\n";
-}
-
-Error::~Error() throw()
-{
-    //std::cerr << "destroying  Error " << this << ": " << asText().toAscii().constData() << "\n";
-}
+{}
 
 QString Error::name() const
 {

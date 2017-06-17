@@ -1308,7 +1308,7 @@ ChatWidget* ST_TryFindChatWidget(int player)
 
         if (widgetPointer)
         {
-            return widgetPointer->maybeAs<ChatWidget>();
+            return maybeAs<ChatWidget>(widgetPointer);
         }
     }
 
@@ -1323,7 +1323,7 @@ PlayerLogWidget* ST_TryFindLogWidget(int player)
 
         if (widgetPointer)
         {
-            return widgetPointer->maybeAs<PlayerLogWidget>();
+            return maybeAs<PlayerLogWidget>(widgetPointer);
         }
     }
 
@@ -1338,7 +1338,7 @@ AutomapWidget* ST_TryFindAutomapWidget(int player)
 
         if (widgetPointer)
         {
-            return widgetPointer->maybeAs<AutomapWidget>();
+            return maybeAs<AutomapWidget>(widgetPointer);
         }
     }
 

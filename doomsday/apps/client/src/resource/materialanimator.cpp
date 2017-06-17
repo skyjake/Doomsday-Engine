@@ -97,7 +97,7 @@ DENG2_PIMPL_NOREF(MaterialAnimator::Decoration)
     bool useInterpolation() const
     {
         DENG2_ASSERT(matDecor);
-        if (auto const *light = matDecor->maybeAs<LightMaterialDecoration>())
+        if (auto const *light = maybeAs<LightMaterialDecoration>(matDecor))
         {
             return light->useInterpolation();
         }
@@ -210,7 +210,7 @@ bool MaterialAnimator::Decoration::animate()
 
 void MaterialAnimator::Decoration::update()
 {
-    if (auto *lightDecor = decor().maybeAs<LightMaterialDecoration>())
+    if (auto *lightDecor = maybeAs<LightMaterialDecoration>(decor()))
     {
         LightMaterialDecoration::AnimationStage const &stage = lightDecor->stage(d->stage);
         LightMaterialDecoration::AnimationStage const &next  = lightDecor->stage(d->stage + 1);
@@ -361,7 +361,7 @@ DENG2_PIMPL(MaterialAnimator)
         {
             layers[i]->stageTextures.clear();
 
-            if (world::TextureMaterialLayer const *layer = self().material().layer(i).maybeAs<world::TextureMaterialLayer>())
+            if (world::TextureMaterialLayer const *layer = maybeAs<world::TextureMaterialLayer>(self().material().layer(i)))
             {
                 for (int k = 0; k < layer->stageCount(); ++k)
                 {
@@ -422,7 +422,7 @@ DENG2_PIMPL(MaterialAnimator)
                 world::MaterialLayer const &layer = material->layer(i);
                 LayerState const &ls       = *layers[i];
 
-                if (auto const *detailLayer = layer.maybeAs<world::DetailTextureMaterialLayer>())
+                if (auto const *detailLayer = maybeAs<world::DetailTextureMaterialLayer>(layer))
                 {
                     auto const &stage = detailLayer->stage(ls.stage).as<world::DetailTextureMaterialLayer::AnimationStage>();
                     auto const &next  = detailLayer->stage(ls.nextStage).as<world::DetailTextureMaterialLayer::AnimationStage>();
@@ -442,7 +442,7 @@ DENG2_PIMPL(MaterialAnimator)
                         }
                     }
                 }
-                else if (layer.is<world::ShineTextureMaterialLayer>())
+                else if (is<world::ShineTextureMaterialLayer>(layer))
                 {
                     world::TextureMaterialLayer::AnimationStage const &stage = layer.as<world::TextureMaterialLayer>().stage(ls.stage);
                     //TextureMaterialLayer::AnimationStage const &next  = layer.stage(l.stage + 1);
@@ -458,7 +458,7 @@ DENG2_PIMPL(MaterialAnimator)
                         }
                     }
                 }
-                else if (auto const *texLayer = layer.maybeAs<world::TextureMaterialLayer>())
+                else if (auto const *texLayer = maybeAs<world::TextureMaterialLayer>(layer))
                 {
                     world::TextureMaterialLayer::AnimationStage const &stage = texLayer->stage(ls.stage);
                     world::TextureMaterialLayer::AnimationStage const &next  = texLayer->stage(ls.nextStage);
@@ -494,7 +494,7 @@ DENG2_PIMPL(MaterialAnimator)
             world::MaterialLayer const &layer = material->layer(i);
             LayerState const &ls = *layers[i];
 
-            if (auto const *detailLayer = layer.maybeAs<world::DetailTextureMaterialLayer>())
+            if (auto const *detailLayer = maybeAs<world::DetailTextureMaterialLayer>(layer))
             {
                 if (TextureVariant *tex = snapshot->textures[TU_DETAIL])
                 {
@@ -524,7 +524,7 @@ DENG2_PIMPL(MaterialAnimator)
                     }
                 }
             }
-            else if (layer.is<world::ShineTextureMaterialLayer>())
+            else if (is<world::ShineTextureMaterialLayer>(layer))
             {
                 if (TextureVariant *tex = snapshot->textures[TU_SHINE])
                 {
@@ -549,7 +549,7 @@ DENG2_PIMPL(MaterialAnimator)
                     }
                 }
             }
-            else if (auto const *texLayer = layer.maybeAs<world::TextureMaterialLayer>())
+            else if (auto const *texLayer = maybeAs<world::TextureMaterialLayer>(layer))
             {
                 if (TextureVariant *tex = snapshot->textures[TU_LAYER0 + texLayerIndex])
                 {
@@ -681,7 +681,7 @@ void MaterialAnimator::animate(timespan_t /*ticLength*/)
     for (int i = 0; i < material().layerCount(); ++i)
     {
         world::MaterialLayer const &layer = material().layer(i);
-        if (layer.isAnimated() && layer.is<world::TextureMaterialLayer>())
+        if (layer.isAnimated() && is<world::TextureMaterialLayer>(layer))
         {
             d->animateLayer(*d->layers[i], layer);
         }
@@ -734,7 +734,7 @@ void MaterialAnimator::cacheAssets()
 
     for (int i = 0; i < material().layerCount(); ++i)
     {
-        if (world::TextureMaterialLayer const *layer = material().layer(i).maybeAs<world::TextureMaterialLayer>())
+        if (world::TextureMaterialLayer const *layer = maybeAs<world::TextureMaterialLayer>(material().layer(i)))
         {
             for (int k = 0; k < layer->stageCount(); ++k)
             {
@@ -742,13 +742,13 @@ void MaterialAnimator::cacheAssets()
 
                 if (ClientTexture *tex = d->layers.at(i)->stageTextures.at(k))
                 {
-                    if (layer->is<world::DetailTextureMaterialLayer>())
+                    if (is<world::DetailTextureMaterialLayer>(layer))
                     {
                         auto const &detailStage = stage.as<world::DetailTextureMaterialLayer::AnimationStage>();
                         float const contrast = de::clamp(0.f, detailStage.strength, 1.f) * detailFactor /*Global strength multiplier*/;
                         tex->prepareVariant(resSys().detailTextureSpec(contrast));
                     }
-                    else if (layer->is<world::ShineTextureMaterialLayer>())
+                    else if (is<world::ShineTextureMaterialLayer>(layer))
                     {
                         tex->prepareVariant(Rend_MapSurfaceShinyTextureSpec());
                         if (ClientTexture *maskTex = findTextureForAnimationStage(stage, MaskTextureProperty))

@@ -187,7 +187,7 @@ static bool validateWad(String const &filePath, QStringList const &identityKeys)
     {
         FileHandle &hndl = App_FileSystem().openFile(filePath, "rb", 0/*baseOffset*/, true /*allow duplicates*/);
 
-        if (Wad *wad = hndl.file().maybeAs<Wad>())
+        if (Wad *wad = maybeAs<Wad>(hndl.file()))
         {
             // Ensure all identity lumps are present.
             if (identityKeys.count())
@@ -277,7 +277,7 @@ void ResourceManifest::locateFile()
         App::fileSystem().forAll(*i, [&candidates] (File &f)
         {
             // We ignore interpretations and go straight to the source.
-            if (NativeFile const *native = f.source()->maybeAs<NativeFile>())
+            if (NativeFile const *native = maybeAs<NativeFile>(f.source()))
             {
                 candidates << native->nativePath();
             }

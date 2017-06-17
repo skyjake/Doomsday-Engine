@@ -159,7 +159,7 @@ public:
             return Time::invalidTime();
         }
 
-        DENG2_AS_IS_METHODS()
+        DENG2_CAST_METHODS()
     };
 
     /**
@@ -183,7 +183,7 @@ public:
         /// Called to notify the data that it is leaving the memory cache.
         virtual void aboutToUnload() {}
 
-        DENG2_AS_IS_METHODS()
+        DENG2_CAST_METHODS()
     };
 
     typedef std::set<String> Names; // alphabetical order

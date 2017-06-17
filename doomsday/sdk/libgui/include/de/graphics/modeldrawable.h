@@ -143,7 +143,7 @@ public:
              */
             virtual void initialize();
 
-            DENG2_AS_IS_METHODS()
+            DENG2_CAST_METHODS()
 
             /**
              * Determines if the sequence is at its duration or past it.

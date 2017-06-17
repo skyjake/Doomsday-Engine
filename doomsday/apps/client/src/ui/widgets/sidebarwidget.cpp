@@ -140,7 +140,7 @@ Rule const &SidebarWidget::maximumOfAllGroupFirstColumns() const
     Rule const *max = nullptr;
     foreach (GuiWidget *child, d->sidebarContent->childWidgets())
     {
-        if (auto *g = child->maybeAs<VariableGroupEditor>())
+        if (auto *g = maybeAs<VariableGroupEditor>(child))
         {
             changeRef(max, OperatorRule::maximum(g->firstColumnWidth(), max));
         }

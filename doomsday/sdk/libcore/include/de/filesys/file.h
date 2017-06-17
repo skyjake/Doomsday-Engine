@@ -339,7 +339,7 @@ public:
     Record const &objectNamespace() const;
 
     // Standard casting methods.
-    DENG2_AS_IS_METHODS()
+    DENG2_CAST_METHODS()
 
 public:
     /**

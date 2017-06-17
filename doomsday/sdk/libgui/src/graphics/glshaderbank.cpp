@@ -309,7 +309,7 @@ Bank::IData *GLShaderBank::loadFromSource(ISource &source)
         // Initialize the appropriate type of value animation and uniform,
         // depending on the "value" key in the definition.
         Value const &valueDef = i.value()->get(QStringLiteral("value"));
-        if (auto const *array = valueDef.maybeAs<ArrayValue>())
+        if (auto const *array = maybeAs<ArrayValue>(valueDef))
         {
             switch (array->size())
             {

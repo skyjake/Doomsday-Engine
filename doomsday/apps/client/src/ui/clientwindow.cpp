@@ -547,7 +547,7 @@ DENG2_PIMPL(ClientWindow)
      */
     bool handleFallbackEvent(Event const &ev)
     {
-        if (MouseEvent const *mouse = ev.maybeAs<MouseEvent>())
+        if (MouseEvent const *mouse = maybeAs<MouseEvent>(ev))
         {
             // Fall back to legacy handling.
             switch (ev.type())

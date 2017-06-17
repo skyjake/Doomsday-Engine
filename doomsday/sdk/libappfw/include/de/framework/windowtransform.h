@@ -75,7 +75,7 @@ public:
      */
     virtual void drawTransformed();
 
-    DENG2_AS_IS_METHODS()
+    DENG2_CAST_METHODS()
 
 private:
     DENG2_PRIVATE(d)

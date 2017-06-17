@@ -306,7 +306,7 @@ void Profiles::deserialize()
     App::fileSystem().findAll("profiles" / d->persistentName, folders);
     DENG2_FOR_EACH(FS::FoundFiles, i, folders)
     {
-        if (Folder const *folder = (*i)->maybeAs<Folder>())
+        if (auto const *folder = maybeAs<Folder>(*i))
         {
             // Let's see if it contains any .dei files.
             folder->forContents([this] (String name, File &file)

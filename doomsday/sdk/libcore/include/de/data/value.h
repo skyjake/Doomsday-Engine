@@ -139,16 +139,6 @@ public:
         return *t;
     }
 
-    template <typename ValueType>
-    ValueType *maybeAs() {
-        return dynamic_cast<ValueType *>(this);
-    }
-
-    template <typename ValueType>
-    ValueType const *maybeAs() const {
-        return dynamic_cast<ValueType const *>(this);
-    }
-
     /**
      * Returns the scope for any members of this value. When evaluating a member in
      * reference to this value, this will return the primary scope using which the

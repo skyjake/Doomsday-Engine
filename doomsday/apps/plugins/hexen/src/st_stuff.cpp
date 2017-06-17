@@ -924,7 +924,7 @@ AutomapWidget *ST_TryFindAutomapWidget(int localPlayer)
     hudstate_t *hud = &hudStates[localPlayer];
     if(auto *wi = GUI_TryFindWidgetById(hud->automapId))
     {
-        return wi->maybeAs<AutomapWidget>();
+        return maybeAs<AutomapWidget>(wi);
     }
     return nullptr;
 }
@@ -936,7 +936,7 @@ ChatWidget *ST_TryFindChatWidget(int localPlayer)
     hudstate_t *hud = &hudStates[localPlayer];
     if(auto *wi = GUI_TryFindWidgetById(hud->chatId))
     {
-        return wi->maybeAs<ChatWidget>();
+        return maybeAs<ChatWidget>(wi);
     }
     return nullptr;
 }
@@ -948,7 +948,7 @@ PlayerLogWidget *ST_TryFindPlayerLogWidget(int localPlayer)
     hudstate_t *hud = &hudStates[localPlayer];
     if(auto *wi = GUI_TryFindWidgetById(hud->logId))
     {
-        return wi->maybeAs<PlayerLogWidget>();
+        return maybeAs<PlayerLogWidget>(wi);
     }
     return nullptr;
 }

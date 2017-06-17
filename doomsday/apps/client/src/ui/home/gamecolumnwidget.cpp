@@ -85,7 +85,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
             items.remove(items.find(*this)); // item deleted
         }
 
-        DENG2_AS_IS_METHODS()
+        DENG2_CAST_METHODS()
     };
 
     LoopCallback mainCall;
@@ -160,7 +160,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
         }
         return nullptr;
     }
-    
+
     GamePanelButtonWidget &widgetForItem(ui::Item const &item) const
     {
         DENG2_ASSERT(menu->items().find(item) != ui::Data::InvalidPos);
@@ -250,7 +250,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
             profiles.insert(prof);
         }
         QSet<GameProfile *> toAdd = profiles;
-        
+
         // Update or remove profiles as needed.
         for (ui::DataPos i = 0; i < menu->items().size(); ++i)
         {
@@ -273,13 +273,13 @@ DENG_GUI_PIMPL(GameColumnWidget)
                 menu->items().remove(i--);
             }
         }
-        
+
         // Add new items.
         foreach (GameProfile *newProf, toAdd)
         {
             addItemForProfile(*newProf);
         }
-        
+
         addOrRemoveSubheading();
         sortItems();
     }

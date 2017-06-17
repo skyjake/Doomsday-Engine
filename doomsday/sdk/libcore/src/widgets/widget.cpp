@@ -74,7 +74,7 @@ DENG2_PIMPL(Widget)
             w = w->parent();
             if (w->d->manualRoot) return w->d->manualRoot;
         }
-        if (w->is<RootWidget>())
+        if (is<RootWidget>(w))
         {
             return const_cast<RootWidget *>(&w->as<RootWidget>());
         }

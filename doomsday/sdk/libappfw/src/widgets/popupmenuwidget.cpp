@@ -138,7 +138,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
             return;
         }
 
-        if (LabelWidget *lab = widget.maybeAs<LabelWidget>())
+        if (LabelWidget *lab = maybeAs<LabelWidget>(widget))
         {
             lab->margins().set("popup.menu.margin");
             lab->setMaximumTextWidth(rule("popup.menu.width.max"));
@@ -149,14 +149,14 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         // Customize buttons for use in the popup. We will observe the button
         // state for highlighting and possibly close the popup when an action
         // gets triggered.
-        if (ButtonWidget *b = widget.maybeAs<ButtonWidget>())
+        if (ButtonWidget *b = maybeAs<ButtonWidget>(widget))
         {
             addToMaxWidth(widget);
 
             setButtonColors(*b);
             b->setSizePolicy(ui::Expand, ui::Expand);
 
-            if (!b->is<ToggleWidget>())
+            if (!is<ToggleWidget>(b))
             {
                 b->setTextGap("dialog.gap");
                 b->setOverrideImageSize(style().fonts().font("default").height().valuei());
@@ -246,7 +246,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
     {
         foreach (GuiWidget *child, self().menu().childWidgets())
         {
-            if (ButtonWidget *button = child->maybeAs<ButtonWidget>())
+            if (ButtonWidget *button = maybeAs<ButtonWidget>(child))
             {
                 // Menu item images are expected to be on the left side.
                 if (button->hasImage() && button->textAlignment() == ui::AlignRight)
@@ -271,7 +271,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         foreach (GuiWidget *widget, self().menu().childWidgets())
         {
             // Pad annotations with the full amount.
-            if (LabelWidget *label = widget->maybeAs<LabelWidget>())
+            if (LabelWidget *label = maybeAs<LabelWidget>(widget))
             {
                 ui::Item const *item = self().menu().organizer().findItemForWidget(*widget);
                 if (item->semantics().testFlag(ui::Item::Annotation))
@@ -290,7 +290,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
             }
 
             // Pad buttons according to their image size.
-            if (ButtonWidget *button = widget->maybeAs<ButtonWidget>())
+            if (ButtonWidget *button = maybeAs<ButtonWidget>(widget))
             {
                 updateImageColor(*button);
                 if (useExtraPadding)
@@ -402,7 +402,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
     {
         for (GuiWidget *w : self().menu().childWidgets())
         {
-            if (ButtonWidget *btn = w->maybeAs<ButtonWidget>())
+            if (ButtonWidget *btn = maybeAs<ButtonWidget>(w))
             {
                 setButtonColors(*btn);
             }

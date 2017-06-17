@@ -598,7 +598,7 @@ ScrollAreaWidget &ScrollAreaWidget::findTopmostScrollable()
 {
     for (GuiWidget *parent = parentGuiWidget(); parent; parent = parent->parentGuiWidget())
     {
-        if (ScrollAreaWidget *scroll = parent->maybeAs<ScrollAreaWidget>())
+        if (ScrollAreaWidget *scroll = maybeAs<ScrollAreaWidget>(parent))
         {
             if (scroll->isScrollable())
             {

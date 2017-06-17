@@ -148,7 +148,7 @@ DENG_GUI_PIMPL(SaveListWidget)
     {
         for (auto *w : self().childWidgets())
         {
-            if (auto *bw = w->maybeAs<ButtonWidget>())
+            if (auto *bw = maybeAs<ButtonWidget>(w))
             {
                 if (selectedButton == bw)
                 {

@@ -43,7 +43,7 @@ public:
                        de::dint player = 0, uiwidgetid_t id = 0);
     virtual ~HudWidget();
 
-    DENG2_AS_IS_METHODS()
+    DENG2_CAST_METHODS()
 
     uiwidgetid_t id() const;
     void setId(uiwidgetid_t newId);

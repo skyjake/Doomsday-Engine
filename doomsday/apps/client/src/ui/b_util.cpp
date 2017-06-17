@@ -544,7 +544,7 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
         float deviceOffset = 0;
         uint deviceTime = 0;
 
-        if (auto *axis = ctrl->maybeAs<AxisInputControl>())
+        if (auto *axis = maybeAs<AxisInputControl>(ctrl))
         {
             if (context && axis->bindContext() != context)
             {
@@ -576,7 +576,7 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
                 deviceTime = axis->time();
             }
         }
-        if (auto *button = ctrl->maybeAs<ButtonInputControl>())
+        if (auto *button = maybeAs<ButtonInputControl>(ctrl))
         {
             if (context && button->bindContext() != context)
                 return LoopContinue; // Shadowed by a more important active context.
@@ -592,7 +592,7 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
                 button->setBindContextAssociation(InputControl::Triggered, UnsetFlags);
             }
         }
-        if (auto *hat = ctrl->maybeAs<HatInputControl>())
+        if (auto *hat = maybeAs<HatInputControl>(ctrl))
         {
             if (context && hat->bindContext() != context)
                 return LoopContinue; // Shadowed by a more important active class.

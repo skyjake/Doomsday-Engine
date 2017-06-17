@@ -360,7 +360,7 @@ DENG2_PIMPL(GuiWidget)
     {
         try
         {
-            if (IPersistent *po = self().maybeAs<IPersistent>())
+            if (IPersistent *po = maybeAs<IPersistent>(self()))
             {
                 DENG2_BASE_GUI_APP->persistentUIState() >> *po;
             }
@@ -377,7 +377,7 @@ DENG2_PIMPL(GuiWidget)
     {
         try
         {
-            if (IPersistent *po = self().maybeAs<IPersistent>())
+            if (IPersistent *po = maybeAs<IPersistent>(self()))
             {
                 DENG2_BASE_GUI_APP->persistentUIState() << *po;
             }
@@ -402,7 +402,7 @@ DENG2_PIMPL(GuiWidget)
                 escaped = true;
                 return LoopAbort;
             }
-            if (widget.canBeFocused() && widget.is<GuiWidget>())
+            if (widget.canBeFocused() && is<GuiWidget>(widget))
             {
                 // The widget's center must be in view.
                 if (viewRect.contains(widget.as<GuiWidget>().rule().recti().middle()))
@@ -594,7 +594,7 @@ GuiWidget::Children GuiWidget::childWidgets() const
     children.reserve(childCount());
     foreach (Widget *c, Widget::children())
     {
-        DENG2_ASSERT(c->is<GuiWidget>());
+        DENG2_ASSERT(is<GuiWidget>(c));
         children.append(static_cast<GuiWidget *>(c));
     }
     return children;
@@ -606,7 +606,7 @@ GuiWidget *GuiWidget::parentGuiWidget() const
     if (!p) return nullptr;
     if (!p->parent())
     {
-        if (p->is<RootWidget>()) return nullptr; // GuiRootWidget is not a GuiWidget
+        if (is<RootWidget>(p)) return nullptr; // GuiRootWidget is not a GuiWidget
     }
     return static_cast<GuiWidget *>(p);
 }
@@ -1170,19 +1170,19 @@ bool GuiWidget::canBeFocused() const
 
 GuiWidget *GuiWidget::guiFind(String const &name)
 {
-    return find(name)->maybeAs<GuiWidget>();
+    return maybeAs<GuiWidget>(find(name));
 }
 
 GuiWidget const *GuiWidget::guiFind(String const &name) const
 {
-    return find(name)->maybeAs<GuiWidget>();
+    return maybeAs<GuiWidget>(find(name));
 }
 
 PopupWidget *GuiWidget::findParentPopup() const
 {
     for (GuiWidget *i = parentGuiWidget(); i; i = i->parentGuiWidget())
     {
-        if (PopupWidget *popup = i->maybeAs<PopupWidget>())
+        if (PopupWidget *popup = maybeAs<PopupWidget>(i))
         {
             return popup;
         }
@@ -1309,7 +1309,7 @@ void GuiWidget::postDrawChildren()
 
 void GuiWidget::collectNotReadyAssets(AssetGroup &collected, Widget &widget)
 {
-    if (auto *assetGroup = widget.maybeAs<IAssetGroup>())
+    if (auto *assetGroup = maybeAs<IAssetGroup>(widget))
     {
         if (!assetGroup->assets().isReady())
         {

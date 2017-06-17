@@ -76,7 +76,7 @@ public:
         explicit Control(InputDevice *device = nullptr);
         virtual ~Control();
 
-        DENG2_AS_IS_METHODS()
+        DENG2_CAST_METHODS()
 
         /**
          * Returns @c true if the control is presently in its default state.

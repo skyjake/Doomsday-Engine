@@ -341,7 +341,7 @@ void ModelRenderer::render(vispsprite_t const &pspr, mobj_t const *playerMobj)
 
 static render::StateAnimator &animatorInstance(Context &ctx)
 {
-    if (auto *self = ctx.selfInstance().get(Record::VAR_NATIVE_SELF).maybeAs<NativePointerValue>())
+    if (auto *self = maybeAs<NativePointerValue>(ctx.selfInstance().get(Record::VAR_NATIVE_SELF)))
     {
         if (auto *obj = self->nativeObject<render::StateAnimator>())
         {

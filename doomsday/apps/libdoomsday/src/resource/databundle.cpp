@@ -946,7 +946,7 @@ DENG2_PIMPL(DataBundle), public Lockable
             {
                 auto const &file = bundleFolder().locate<File const>(linkPath);
 
-                if (LinkFile const *linkFile = file.maybeAs<LinkFile>())
+                if (LinkFile const *linkFile = maybeAs<LinkFile>(file))
                 {
                     if (linkFile->isBroken())
                     {
@@ -1141,7 +1141,7 @@ DataBundle const *DataBundle::bundleForPackage(String const &packageId) // stati
 {
     if (File const *file = PackageLoader::get().select(packageId))
     {
-        if (auto const *bundle = file->target().maybeAs<DataBundle>())
+        if (auto const *bundle = maybeAs<DataBundle>(file->target()))
         {
             return bundle;
         }
@@ -1200,7 +1200,7 @@ DataBundle *DataBundle::containerBundle() const
 
     for (Folder *folder = file->parent(); folder; folder = folder->parent())
     {
-        if (auto *data = folder->maybeAs<DataFolder>())
+        if (auto *data = maybeAs<DataFolder>(folder))
         {
             return data;
         }
@@ -1269,7 +1269,7 @@ QList<DataBundle const *> DataBundle::loadedBundles() // static
     // Check all the loaded packages to see which ones are data bundles.
     for (auto *f : PackageLoader::get().loadedPackagesAsFilesInPackageOrder())
     {
-        if (DataBundle const *bundle = f->maybeAs<DataBundle>())
+        if (DataBundle const *bundle = maybeAs<DataBundle>(f))
         {
             // Non-collection data files are loaded as-is.
             loaded << bundle;

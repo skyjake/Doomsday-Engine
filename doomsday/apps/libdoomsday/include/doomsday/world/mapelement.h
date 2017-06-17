@@ -75,7 +75,7 @@ public:
      */
     de::dint type() const;
 
-    DENG2_AS_IS_METHODS()
+    DENG2_CAST_METHODS()
 
     /**
      * Returns @c true iff a parent is attributed to the map element.

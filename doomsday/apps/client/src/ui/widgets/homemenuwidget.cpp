@@ -38,7 +38,7 @@ DENG_GUI_PIMPL(HomeMenuWidget)
 
     void widgetCreatedForItem(GuiWidget &widget, ui::Item const &)
     {
-        if (widget.is<HomeItemWidget>())
+        if (is<HomeItemWidget>(widget))
         {
             QObject::connect(&widget, SIGNAL(mouseActivity()),
                              thisPublic, SLOT(mouseActivityInItem()));
@@ -89,7 +89,7 @@ void HomeMenuWidget::unselectAll()
         // Unselect all items.
         for (auto *w : childWidgets())
         {
-            if (auto *item = w->maybeAs<HomeItemWidget>())
+            if (auto *item = maybeAs<HomeItemWidget>(w))
             {
                 // Never deselect the currently focused item.
                 if (root().focus() != item)
@@ -140,7 +140,7 @@ ColumnWidget *HomeMenuWidget::parentColumn() const
 {
     for (Widget *i = parentWidget(); i; i = i->parent())
     {
-        if (ColumnWidget *column = i->maybeAs<ColumnWidget>())
+        if (ColumnWidget *column = maybeAs<ColumnWidget>(i))
         {
             return column;
         }

@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/DialogContentStylist"
@@ -96,20 +96,20 @@ void DialogContentStylist::applyStyle(GuiWidget &w)
 {
     if (d->adjustMargins)
     {
-        if (!w.is<AuxButtonWidget>())
+        if (!is<AuxButtonWidget>(w))
         {
             w.margins().set("dialog.gap");
         }
     }
 
     // All label-based widgets should expand on their own.
-    if (LabelWidget *lab = w.maybeAs<LabelWidget>())
+    if (LabelWidget *lab = maybeAs<LabelWidget>(w))
     {
         lab->setSizePolicy(ui::Expand, ui::Expand);
     }
 
     // Button background override?
-    if (ButtonWidget *but = w.maybeAs<ButtonWidget>())
+    if (ButtonWidget *but = maybeAs<ButtonWidget>(w))
     {
         if (d->useInfoStyle)
         {
@@ -118,12 +118,12 @@ void DialogContentStylist::applyStyle(GuiWidget &w)
     }
 
     // Toggles should have no background.
-    if (ToggleWidget *tog = w.maybeAs<ToggleWidget>())
+    if (ToggleWidget *tog = maybeAs<ToggleWidget>(w))
     {
         tog->set(GuiWidget::Background());
     }
 
-    if (LineEditWidget *ed = w.maybeAs<LineEditWidget>())
+    if (LineEditWidget *ed = maybeAs<LineEditWidget>(w))
     {
         ed->rule().setInput(Rule::Width, d->containers.first()->rule("editor.width"));
     }

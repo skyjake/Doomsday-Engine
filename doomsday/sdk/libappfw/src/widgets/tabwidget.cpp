@@ -161,7 +161,7 @@ DENG_GUI_PIMPL(TabWidget)
     {
         foreach (auto *w, buttons->childWidgets())
         {
-            if (ButtonWidget *but = w->maybeAs<ButtonWidget>())
+            if (ButtonWidget *but = maybeAs<ButtonWidget>(w))
             {
                 if (but->handleShortcut(key))
                 {

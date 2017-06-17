@@ -113,7 +113,7 @@ public:
     Widget(String const &name = String());
     virtual ~Widget();
 
-    DENG2_AS_IS_METHODS()
+    DENG2_CAST_METHODS()
 
     /**
      * Returns the automatically generated, unique identifier of the widget.

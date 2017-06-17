@@ -501,7 +501,7 @@ DENG2_PIMPL(InputSystem)
             {
                 device->forAllControls([&ticLength] (InputControl &ctrl)
                 {
-                    if (auto *axis = ctrl.maybeAs<AxisInputControl>())
+                    if (auto *axis = maybeAs<AxisInputControl>(ctrl))
                     {
                         axis->update(ticLength);
                     }

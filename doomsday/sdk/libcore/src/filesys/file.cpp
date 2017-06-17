@@ -111,7 +111,7 @@ FileSystem &File::fileSystem()
 
 Folder *File::parent() const
 {
-    return Node::parent()->maybeAs<Folder>();
+    return maybeAs<Folder>(Node::parent());
 }
 
 String File::description(int verbosity) const
@@ -157,7 +157,7 @@ String File::description(int verbosity) const
     // In case of DirectoryFeed, the native file desciption itself already contains
     // information about the full native path, so we don't have to describe the
     // feed itself (would be redundant).
-    if (originFeed() && (verbosity >= 2 || !originFeed()->is<DirectoryFeed>()))
+    if (originFeed() && (verbosity >= 2 || !is<DirectoryFeed>(originFeed())))
     {
         desc += " from " + originFeed()->description();
     }
@@ -368,11 +368,11 @@ File *File::reinterpret()
 
 NativePath File::correspondingNativePath() const
 {
-    if (NativeFile const *native = source()->maybeAs<NativeFile>())
+    if (NativeFile const *native = maybeAs<NativeFile>(source()))
     {
         return native->nativePath();
     }
-    else if (Folder const *folder = target().maybeAs<Folder>())
+    else if (Folder const *folder = maybeAs<Folder>(target()))
     {
         if (auto *feed = folder->primaryFeedMaybeAs<DirectoryFeed>())
         {
@@ -417,7 +417,7 @@ String File::fileListAsText(QList<File const *> files)
 
         // Folder / Access flags / source flag / has origin feed.
         String flags = QString("%1%2%3%4%5")
-                .arg(f->is<Folder>()?              'd' : '-')
+                .arg(is<Folder>(f)?                'd' : '-')
                 .arg(f->mode().testFlag(Write)?    'w' : 'r')
                 .arg(f->mode().testFlag(Truncate)? 't' : '-')
                 .arg(f->source() != f?             'i' : '-')
@@ -429,7 +429,7 @@ String File::fileListAsText(QList<File const *> files)
                 .arg(f->name());
 
         // Link target.
-        if (LinkFile const *link = f->maybeAs<LinkFile>())
+        if (LinkFile const *link = maybeAs<LinkFile>(f))
         {
             if (!link->isBroken())
             {
