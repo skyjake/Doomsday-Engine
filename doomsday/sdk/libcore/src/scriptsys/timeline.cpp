@@ -98,6 +98,11 @@ void Timeline::setContext(Record &context)
     d->setContext(&context);
 }
 
+Record *Timeline::context() const
+{
+    return d->context;
+}
+
 Script &Timeline::addScript(TimeDelta at, String const &source, String const &sourcePath)
 {
     auto *ev = new Impl::Event(at, source, sourcePath);

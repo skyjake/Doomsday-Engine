@@ -25,6 +25,7 @@
 #include <de/ModelDrawable>
 #include <de/GLProgram>
 #include <de/IObject>
+#include <de/Scheduler>
 
 namespace render {
 
@@ -51,6 +52,12 @@ public:
     StateAnimator(de::DotPath const &id, Model const &model);
 
     Model const &model() const;
+
+    /**
+     * Returns the script scheduler specific to this animator. A new scheduler will
+     * be created the first time this is called.
+     */
+    de::Scheduler &scheduler();
 
     /**
      * Sets the namespace of the animator's owner. Available as a variable in

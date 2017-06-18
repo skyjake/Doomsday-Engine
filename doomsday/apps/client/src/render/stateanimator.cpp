@@ -198,6 +198,7 @@ DENG2_PIMPL(StateAnimator)
         }
     };
     std::unique_ptr<StateCallback> stateCallback;
+    std::unique_ptr<Scheduler> scheduler; // only created if needed for additional timelines
 
     Impl(Public *i, DotPath const &assetId) : Base(i)
     {
@@ -584,6 +585,15 @@ Model const &StateAnimator::model() const
     return static_cast<Model const &>(ModelDrawable::Animator::model());
 }
 
+Scheduler &StateAnimator::scheduler()
+{
+    if (!d->scheduler)
+    {
+        d->scheduler.reset(new Scheduler);
+    }
+    return *d->scheduler;
+}
+
 void StateAnimator::setOwnerNamespace(Record &names, String const &varName)
 {
     d->ownerNamespaceVarName = varName;
@@ -815,6 +825,11 @@ void StateAnimator::advanceTime(TimeDelta const &elapsed)
                 pending.remove(node);
             }
         }
+    }
+
+    if (d->scheduler)
+    {
+        d->scheduler->advanceTime(elapsed);
     }
 
     if (retrigger && !d->currentStateName.isEmpty())

@@ -30,10 +30,12 @@
 #include "world/clientmobjthinkerdata.h"
 #include "world/convexsubspace.h"
 #include "clientapp.h"
+#include "world/clientserverworld.h"
 
 #include <de/App>
 #include <de/ModelBank>
 #include <de/NativePointerValue>
+#include <de/TextValue>
 
 using namespace de;
 
@@ -351,6 +353,28 @@ static Value *Function_StateAnimator_PlayingSequences(Context &ctx, Function::Ar
     return playing.release();
 }
 
+static Value *Function_StateAnimator_StartTimeline(Context &ctx, Function::ArgumentValues const &args)
+{
+    render::StateAnimator &anim = animatorInstance(ctx);
+    render::Model const &model = anim.model();
+    String const timelineName = args.first()->asText();
+    if (model.timelines.contains(timelineName))
+    {
+        anim.scheduler().start(*model.timelines[timelineName],
+                               &anim.objectNamespace(),
+                               timelineName);
+        return new TextValue(timelineName);
+    }
+    return nullptr;
+}
+
+static Value *Function_StateAnimator_StopTimeline(Context &ctx, Function::ArgumentValues const &args)
+{
+    render::StateAnimator &anim = animatorInstance(ctx);
+    anim.scheduler().stop(args.first()->asText());
+    return nullptr;
+}
+
 void ModelRenderer::initBindings(Binder &binder, Record &module) // static
 {
     // StateAnimator
@@ -358,6 +382,8 @@ void ModelRenderer::initBindings(Binder &binder, Record &module) // static
         Record &anim = module.addSubrecord("StateAnimator");
         binder.init(anim)
                 << DENG2_FUNC_NOARG(StateAnimator_Thing,            "thing")
-                << DENG2_FUNC_NOARG(StateAnimator_PlayingSequences, "playingSequences");
+                << DENG2_FUNC_NOARG(StateAnimator_PlayingSequences, "playingSequences")
+                << DENG2_FUNC      (StateAnimator_StartTimeline,    "startTimeline", "name")
+                << DENG2_FUNC      (StateAnimator_StopTimeline,     "stopTimeline", "name");
     }
 }
