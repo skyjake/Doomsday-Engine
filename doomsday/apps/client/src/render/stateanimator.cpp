@@ -738,12 +738,16 @@ void StateAnimator::triggerDamage(int points, struct mobj_s const *inflictor)
     }
 }
 
-void StateAnimator::startSequence(int animationId, int priority, bool looping,
-                                  String const &node)
+void StateAnimator::startAnimation(int animationId, int priority, bool looping, String const &node)
 {
     using Seq = Impl::Sequence;
     d->start(Seq(animationId, node, looping? Seq::Looping : Seq::NotLooping,
                  priority));
+}
+
+int StateAnimator::animationId(String const &name) const
+{
+    return d->animationId(name);
 }
 
 void StateAnimator::advanceTime(TimeDelta const &elapsed)

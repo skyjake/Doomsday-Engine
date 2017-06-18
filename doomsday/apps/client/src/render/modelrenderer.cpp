@@ -353,6 +353,21 @@ static Value *Function_StateAnimator_PlayingSequences(Context &ctx, Function::Ar
     return playing.release();
 }
 
+static Value *Function_StateAnimator_StartSequence(Context &ctx, Function::ArgumentValues const &args)
+{
+    render::StateAnimator &anim = animatorInstance(ctx);
+    int animId = anim.animationId(args.at(0)->asText());
+    if (animId >= 0)
+    {
+        int priority = args.at(1)->asInt();
+        bool looping = args.at(2)->isTrue();
+        String node  = args.at(3)->asText();
+
+        anim.startAnimation(animId, priority, looping, node);
+    }
+    return nullptr;
+}
+
 static Value *Function_StateAnimator_StartTimeline(Context &ctx, Function::ArgumentValues const &args)
 {
     render::StateAnimator &anim = animatorInstance(ctx);
@@ -383,6 +398,11 @@ void ModelRenderer::initBindings(Binder &binder, Record &module) // static
         binder.init(anim)
                 << DENG2_FUNC_NOARG(StateAnimator_Thing,            "thing")
                 << DENG2_FUNC_NOARG(StateAnimator_PlayingSequences, "playingSequences")
+                << DENG2_FUNC_DEFS (StateAnimator_StartSequence,    "startSequence",
+                                    "sequence" << "priority" << "looping" << "node",
+                                    Function::Defaults({ std::make_pair("priority", new NumberValue(0)),
+                                                         std::make_pair("looping",  new NumberValue(0)),
+                                                         std::make_pair("node",     new TextValue) }))
                 << DENG2_FUNC      (StateAnimator_StartTimeline,    "startTimeline", "name")
                 << DENG2_FUNC      (StateAnimator_StopTimeline,     "stopTimeline", "name");
     }

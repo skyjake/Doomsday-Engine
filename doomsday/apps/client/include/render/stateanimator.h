@@ -77,8 +77,10 @@ public:
 
     void triggerDamage(int points, struct mobj_s const *inflictor);
 
-    void startSequence(int animationId, int priority, bool looping,
-                       de::String const &node = "");
+    void startAnimation(int animationId, int priority, bool looping,
+                        de::String const &node = "");
+
+    int animationId(de::String const &name) const;
 
     de::ModelDrawable::Appearance const &appearance() const;
 

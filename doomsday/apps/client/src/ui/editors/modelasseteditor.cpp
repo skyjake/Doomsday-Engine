@@ -587,7 +587,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
 
         if (animator)
         {
-            animator->startSequence(data.animationId, 10, false);
+            animator->startAnimation(data.animationId, 10, false);
         }
     }
 
