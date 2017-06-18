@@ -23,7 +23,7 @@
 #include <de/ModelDrawable>
 #include <de/ModelBank>
 #include <de/GLState>
-#include <de/Scheduler>
+#include <de/Timeline>
 #include <de/MultiAtlas>
 
 #include <QList>

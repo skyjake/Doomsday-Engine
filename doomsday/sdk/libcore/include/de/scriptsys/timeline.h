@@ -1,4 +1,4 @@
-/** @file scheduler.h  Script scheduling utility.
+/** @file timeline.h  Script scheduling utility.
  *
  * @authors Copyright (c) 2015-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_SCHEDULER_H
-#define LIBDENG2_SCHEDULER_H
+#ifndef LIBDENG2_TIMELINE_H
+#define LIBDENG2_TIMELINE_H
 
 #include "../libcore.h"
 #include "../Time"
@@ -29,24 +29,24 @@ class Script;
 class Record;
 
 /**
- * Script scheduling utility.
+ * Collection of scripts to be run at specified points in time.
  *
- * Scheduler owns the parsed scripts, but does not execute them. Use Scheduler::Clock
- * to execute scripts. There can be any number of Scheduler::Clock instances operating
- * on a single schedule.
+ * Timeline owns the parsed scripts, but does not execute them. Use Timeline::Clock
+ * to execute scripts. There can be any number of Timeline::Clock instances operating
+ * on a single timeline.
  *
  * @ingroup script
  */
-class DENG2_PUBLIC Scheduler
+class DENG2_PUBLIC Timeline
 {
 public:
-    Scheduler();
+    Timeline();
 
     void clear();
 
     /**
      * Sets the execution context, i.e., global namespace for the scripts. All
-     * scripts of the scheduler run in the same context.
+     * scripts of the timeline run in the same context.
      *
      * @param context  Global namespace.
      */
@@ -55,22 +55,25 @@ public:
     Record *context() const;
 
     /**
-     * Adds a new script to the scheduler.
+     * Adds a new script to the timeline.
      *
      * @param at          Point in time when the script is to be executed.
      * @param source      Script source. This will be parsed before the method returns.
      * @param sourcePath  Path where the source comes from.
      *
-     * @return Scheduled Script (owned by Scheduler).
+     * @return Scheduled Script (owned by Timeline).
      */
     Script &addScript(TimeDelta at, String const &source, String const &sourcePath = "");
 
     void addFromInfo(Record const &timelineRecord);
 
+    /**
+     * Clock for executing a timeline.
+     */
     class DENG2_PUBLIC Clock
     {
     public:
-        Clock(Scheduler const &schedule, Record *context = nullptr);
+        Clock(Timeline const &timeline, Record *context = nullptr);
 
         /**
          * Returns the current time of the clock.
@@ -108,5 +111,5 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_SCHEDULER_H
+#endif // LIBDENG2_TIMELINE_H
 

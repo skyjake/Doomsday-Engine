@@ -157,7 +157,7 @@ void ScriptCommandWidget::executeCommand(String const &text)
     try
     {
         Value const &result = d->process.context().evaluator().result();
-        if (!result.is<NoneValue>())
+        if (!is<NoneValue>(result))
         {
             String msg = DENG2_CHAR_RIGHT_DOUBLEARROW " " _E(>)_E(m) + result.asText();
             LOG_SCR_MSG(msg);

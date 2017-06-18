@@ -31,7 +31,7 @@ Model::AnimSequence::AnimSequence(String const &name, Record const &def)
     // Parse timeline events.
     if (def.hasSubrecord(DEF_TIMELINE))
     {
-        timeline = new Scheduler;
+        timeline = new Timeline;
         timeline->addFromInfo(def.subrecord(DEF_TIMELINE));
     }
     else if (def.hasMember(DEF_TIMELINE))

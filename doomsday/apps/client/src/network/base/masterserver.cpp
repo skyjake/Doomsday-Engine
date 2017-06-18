@@ -216,7 +216,7 @@ bool MasterWorker::parseResponse(QByteArray const &response)
             try
             {
                 std::unique_ptr<Value> entryValue(Value::constructFrom(entry));
-                if (!entryValue->is<RecordValue>())
+                if (!is<RecordValue>(*entryValue))
                 {
                     LOG_NET_WARNING("Server information was in unexpected format");
                     continue;

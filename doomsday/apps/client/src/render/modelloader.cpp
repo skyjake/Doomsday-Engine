@@ -508,7 +508,7 @@ DENG2_PIMPL(ModelLoader)
             auto timelines = ScriptedInfo::subrecordsOfType(DEF_TIMELINE, asset.subrecord(DEF_ANIMATION));
             DENG2_FOR_EACH_CONST(Record::Subrecords, timeline, timelines)
             {
-                Scheduler *scheduler = new Scheduler;
+                Timeline *scheduler = new Timeline;
                 scheduler->addFromInfo(*timeline.value());
                 model.timelines[timeline.key()] = scheduler;
             }

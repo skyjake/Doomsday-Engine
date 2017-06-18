@@ -94,7 +94,7 @@ VariableSliderWidget::VariableSliderWidget(Variable &variable, Ranged const &ran
     : SliderWidget(name)
     , d(new Impl(this, variable))
 {
-    if (!variable.value().is<NumberValue>())
+    if (!is<NumberValue>(variable.value()))
     {
         // Animation is the only other supported type.
         d->valueType = VariableSliderWidget::Animation;

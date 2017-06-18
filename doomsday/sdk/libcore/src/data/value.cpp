@@ -64,6 +64,23 @@ int Value::asInt() const
     return round<int>(asNumber());
 }
 
+StringList Value::asStringList() const
+{
+    StringList str;
+    if (is<ArrayValue>(this))
+    {
+        for (Value const *val : as<ArrayValue>().elements())
+        {
+            str << val->asText();
+        }
+    }
+    else
+    {
+        str << asText();
+    }
+    return str;
+}
+
 Record *Value::memberScope() const
 {
     // By default, there are no members are thus no scope for them.

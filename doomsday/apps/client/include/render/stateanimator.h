@@ -29,7 +29,8 @@
 namespace render {
 
 /**
- * State-based object animator for `ModelDrawable`s.
+ * State-based object animator for `ModelDrawable`s. Triggers animation sequences
+ * based on state changes and damage points received by the owner.
  *
  * Used for both mobjs and psprites. The state and movement of the object
  * determine which animation sequences are started.

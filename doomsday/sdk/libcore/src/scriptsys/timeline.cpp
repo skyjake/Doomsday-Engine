@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Scheduler"
+#include "de/Timeline"
 #include "de/ScriptedInfo"
 #include "de/Record"
 #include "de/Script"
@@ -27,7 +27,7 @@
 
 namespace de {
 
-DENG2_PIMPL(Scheduler)
+DENG2_PIMPL(Timeline)
 , DENG2_OBSERVES(Record, Deletion)
 {
     Record *context = nullptr;
@@ -84,28 +84,28 @@ DENG2_PIMPL(Scheduler)
     }
 };
 
-Scheduler::Scheduler()
+Timeline::Timeline()
     : d(new Impl(this))
 {}
 
-void Scheduler::clear()
+void Timeline::clear()
 {
     d->clear();
 }
 
-void Scheduler::setContext(Record &context)
+void Timeline::setContext(Record &context)
 {
     d->setContext(&context);
 }
 
-Script &Scheduler::addScript(TimeDelta at, String const &source, String const &sourcePath)
+Script &Timeline::addScript(TimeDelta at, String const &source, String const &sourcePath)
 {
     auto *ev = new Impl::Event(at, source, sourcePath);
     d->events.push(ev);
     return ev->script;
 }
 
-void Scheduler::addFromInfo(Record const &timelineRecord)
+void Timeline::addFromInfo(Record const &timelineRecord)
 {
     auto scripts = ScriptedInfo::subrecordsOfType(ScriptedInfo::SCRIPT, timelineRecord);
     for (String key : ScriptedInfo::sortRecordsBySource(scripts))
@@ -128,13 +128,13 @@ void Scheduler::addFromInfo(Record const &timelineRecord)
 
 //----------------------------------------------------------------------------
 
-DENG2_PIMPL_NOREF(Scheduler::Clock)
+DENG2_PIMPL_NOREF(Timeline::Clock)
 {
-    typedef Scheduler::Impl::Event  Event;
-    typedef Scheduler::Impl::Events Events; // Events not owned
+    typedef Timeline::Impl::Event  Event;
+    typedef Timeline::Impl::Events Events; // Events not owned
 
     Record *context = nullptr;
-    Scheduler const *scheduler = nullptr;
+    Timeline const *scheduler = nullptr;
     TimeDelta at = 0.0;
     Events events;
 
@@ -173,7 +173,7 @@ DENG2_PIMPL_NOREF(Scheduler::Clock)
     }
 };
 
-Scheduler::Clock::Clock(Scheduler const &schedule, Record *context)
+Timeline::Clock::Clock(Timeline const &schedule, Record *context)
     : d(new Impl)
 {
     d->scheduler = &schedule;
@@ -181,22 +181,22 @@ Scheduler::Clock::Clock(Scheduler const &schedule, Record *context)
     d->rewind(0.0);
 }
 
-TimeDelta Scheduler::Clock::at() const
+TimeDelta Timeline::Clock::at() const
 {
     return d->at;
 }
 
-void Scheduler::Clock::rewind(TimeDelta const &toTime)
+void Timeline::Clock::rewind(TimeDelta const &toTime)
 {
     d->rewind(toTime);
 }
 
-void Scheduler::Clock::advanceTime(TimeDelta const &elapsed)
+void Timeline::Clock::advanceTime(TimeDelta const &elapsed)
 {
     d->advanceTime(elapsed);
 }
 
-bool Scheduler::Clock::isFinished() const
+bool Timeline::Clock::isFinished() const
 {
     return d->events.empty();
 }

@@ -455,7 +455,7 @@ String GameStateFolder::Metadata::asTextWithInfoSyntax() const
         {
             Value const &value = i.value()->value();
             String valueAsText = value.asText();
-            if (value.is<Value::Text>())
+            if (is<Value::Text>(value))
             {
                 valueAsText = "\"" + valueAsText.replace("\"", "''") + "\"";
             }

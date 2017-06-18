@@ -770,7 +770,7 @@ Variable &Record::appendToArray(String const &name, Value *value)
     }
 
     Variable &var = (*this)[name];
-    DENG2_ASSERT(var.value().is<ArrayValue>());
+    DENG2_ASSERT(is<ArrayValue>(var.value()));
     var.value<ArrayValue>().add(value);
     return var;
 }

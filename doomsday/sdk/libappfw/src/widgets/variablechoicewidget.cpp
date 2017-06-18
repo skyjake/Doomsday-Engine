@@ -42,7 +42,7 @@ DENG2_OBSERVES(Variable, Change  )
     {
         if (!var) return;
 
-        if (var->value().is<TextValue>())
+        if (is<TextValue>(var->value()))
         {
             self().setSelected(self().items().findData(var->value().asText()));
         }
@@ -57,7 +57,7 @@ DENG2_OBSERVES(Variable, Change  )
         if (!var) return;
 
         var->audienceForChange() -= this;
-        if (var->value().is<TextValue>())
+        if (is<TextValue>(var->value()))
         {
             var->set(TextValue(self().selectedItem().data().toString()));
         }

@@ -119,7 +119,7 @@ DENG2_PIMPL(ServerLink)
             {
                 QVariant const response = parseJSON(String::fromUtf8(reply.mid(5)));
                 std::unique_ptr<Value> rec(Value::constructFrom(response.toMap()));
-                if (!rec->is<RecordValue>())
+                if (!is<RecordValue>(*rec))
                 {
                     throw Error("ServerLink::handleInfoResponse", "Failed to parse response contents");
                 }

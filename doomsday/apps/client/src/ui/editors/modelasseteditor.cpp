@@ -391,17 +391,17 @@ DENG_GUI_PIMPL(ModelAssetEditor)
                     g->addSlider(var, range, step, precision);
                 }
             }
-            else if (var.value().is<TextValue>())
+            else if (is<TextValue>(var.value()))
             {
                 g->addLabel(varLabel(label));
                 g->addLineEdit(var);
             }
-            else if (var.value().is<AnimationValue>())
+            else if (is<AnimationValue>(var.value()))
             {
                 g->addLabel(varLabel(label));
                 g->addSlider(var, range, step, precision);
             }
-            else if (descend && var.value().is<RecordValue>())
+            else if (descend && is<RecordValue>(var.value()))
             {
                 populateGroup(g, var.valueAsRecord(), descend, label);
             }

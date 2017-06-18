@@ -21,7 +21,7 @@
 
 #include <de/Record>
 #include <de/ModelDrawable>
-#include <de/Scheduler>
+#include <de/Timeline>
 #include <de/MultiAtlas>
 
 #include <QHash>
@@ -50,7 +50,7 @@ struct Model : public de::ModelDrawable
     {
         de::String name;        ///< Name of the sequence.
         de::Record const *def;  ///< Record describing the sequence (in asset metadata).
-        de::Scheduler *timeline = nullptr; ///< Script timeline (owned).
+        de::Timeline *timeline = nullptr; ///< Script timeline (owned).
         de::String sharedTimeline; ///< Name of shared timeline (if specified).
 
         AnimSequence(de::String const &n, de::Record const &d);
@@ -102,7 +102,7 @@ struct Model : public de::ModelDrawable
     StateAnims animations;
 
     /// Shared timelines (not sequence-specific). Owned.
-    QHash<de::String, de::Scheduler *> timelines;
+    QHash<de::String, de::Timeline *> timelines;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Model::Flags)

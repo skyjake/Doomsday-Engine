@@ -109,15 +109,16 @@ public:
     int asInt() const;
 
     /**
+     * Convert the value to a list of strings using asText().
+     * @return List of text strings.
+     */
+    StringList asStringList() const;
+
+    /**
      * Convert the value to into a text string.  All values have
      * to implement this.
      */
     virtual Text asText() const = 0;
-
-    template <typename ValueType>
-    bool is() const {
-        return dynamic_cast<ValueType const *>(this) != 0;
-    }
 
     template <typename ValueType>
     ValueType &as() {
@@ -138,26 +139,6 @@ public:
         }
         return *t;
     }
-
-    /*template <typename TargetType, typename ValueType>
-    static TargetType *maybeAs(ValueType *ptr) {
-        return dynamic_cast<TargetType *>(ptr);
-    }
-
-    template <typename TargetType, typename ValueType>
-    static TargetType const *maybeAs(ValueType const *ptr) {
-        return dynamic_cast<TargetType const *>(ptr);
-    }
-
-    template <typename TargetType, typename ValueType>
-    static TargetType *maybeAs(ValueType &obj) {
-        return dynamic_cast<TargetType *>(&obj);
-    }
-
-    template <typename TargetType, typename ValueType>
-    static TargetType const *maybeAs(ValueType const &obj) {
-        return dynamic_cast<TargetType const *>(&obj);
-    }*/
 
     /**
      * Returns the scope for any members of this value. When evaluating a member in

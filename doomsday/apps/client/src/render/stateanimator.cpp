@@ -25,12 +25,15 @@
 
 #include <doomsday/world/thinkerdata.h>
 
+#include <de/ConditionalTrigger>
 #include <de/ScriptedInfo>
 #include <de/ScriptSystem>
 #include <de/RecordValue>
 #include <de/NoneValue>
 #include <de/NativePointerValue>
 #include <de/GLUniform>
+
+#include <QSet>
 
 using namespace de;
 
@@ -52,6 +55,8 @@ static String const VAR_ID            ("ID");           // model asset ID
 static String const VAR_ASSET         ("__asset__");    // runtime reference to asset metadata
 static String const VAR_ENABLED       ("enabled");
 static String const VAR_MATERIAL      ("material");
+
+static String const VAR_NOTIFIED_STATES("notifiedStates");
 
 static String const PASS_GLOBAL       ("");
 static String const DEFAULT_MATERIAL  ("default");
@@ -75,14 +80,14 @@ DENG2_PIMPL(StateAnimator)
 
         LoopMode looping = NotLooping;
         int priority = ANIM_DEFAULT_PRIORITY;
-        Scheduler const *timeline = nullptr; // owned by ModelRenderer::AnimSequence
-        std::unique_ptr<Scheduler::Clock> clock;
+        Timeline const *timeline = nullptr; // owned by ModelRenderer::AnimSequence
+        std::unique_ptr<Timeline::Clock> clock;
         TimeDelta overrideDuration = -1.0;
 
         Sequence() {}
 
         Sequence(int animationId, String const &rootNode, LoopMode looping, int priority,
-                 Scheduler const *timeline = nullptr)
+                 Timeline const *timeline = nullptr)
             : looping(looping)
             , priority(priority)
             , timeline(timeline)
@@ -172,15 +177,31 @@ DENG2_PIMPL(StateAnimator)
     typedef QHash<String, AnimVar *> AnimVars;
     AnimVars animVars;
 
-    Impl(Public *i, DotPath const &id) : Base(i)
+    /// Optional script callback for chosen states.
+    struct StateCallback : public ConditionalTrigger
     {
-        names.add(Record::VAR_NATIVE_SELF).set(new NativePointerValue(thisPublic)).setReadOnly();
-        names.addSuperRecord(ScriptSystem::builtInClass(QStringLiteral("Render"),
-                                                        QStringLiteral("StateAnimator")));
-        names.addText(VAR_ID, id).setReadOnly();
-        names.add(VAR_ASSET).set(new RecordValue(App::asset(id).accessedRecord())).setReadOnly();
+        Record &names;
 
-        initVariables();
+        StateCallback(Record &names) : names(names)
+        {
+            setCondition(names[VAR_NOTIFIED_STATES]);
+        }
+
+        void handleTriggered(String const &trigger) override
+        {
+            Record ns;
+            ns.add(QStringLiteral("self")).set(new RecordValue(names));
+            Process::scriptCall(Process::IgnoreResult, ns,
+                                QStringLiteral("self.__asset__.onStateChange"),
+                                "$self",    // StateAnimator instance
+                                trigger);   // new state
+        }
+    };
+    std::unique_ptr<StateCallback> stateCallback;
+
+    Impl(Public *i, DotPath const &assetId) : Base(i)
+    {
+        initVariables(assetId);
 
         // Set up the model drawing parameters.
         if (!self().model().passes.isEmpty())
@@ -205,8 +226,30 @@ DENG2_PIMPL(StateAnimator)
         deinitVariables();
     }
 
-    void initVariables()
+    void initVariables(DotPath const &assetId)
     {
+        // Initialize the StateAnimator script object.
+        names.add(Record::VAR_NATIVE_SELF).set(new NativePointerValue(thisPublic)).setReadOnly();
+        names.addSuperRecord(ScriptSystem::builtInClass(QStringLiteral("Render"),
+                                                        QStringLiteral("StateAnimator")));
+        names.addText(VAR_ID, assetId).setReadOnly();
+        Record const &assetDef = App::asset(assetId).accessedRecord();
+        names.add(VAR_ASSET).set(new RecordValue(assetDef)).setReadOnly();
+        if (assetDef.has(VAR_NOTIFIED_STATES))
+        {
+            // Use the initial value for state callbacks.
+            names.add(VAR_NOTIFIED_STATES).set(assetDef.get(VAR_NOTIFIED_STATES));
+        }
+        else
+        {
+            // The states to notify can be chosen later.
+            names.addArray(VAR_NOTIFIED_STATES);
+        }
+        if (assetDef.has(QStringLiteral("onStateChange")))
+        {
+            stateCallback.reset(new StateCallback(names));
+        }
+
         int const passCount = self().model().passes.size();
 
         // Clear lookups affected by the variables.
@@ -523,7 +566,7 @@ DENG2_PIMPL(StateAnimator)
         anim.apply(spec);
         if (anim.timeline)
         {
-            anim.clock.reset(new Scheduler::Clock(*anim.timeline, &names));
+            anim.clock.reset(new Timeline::Clock(*anim.timeline, &names));
         }
         applyFlagOperation(anim.flags, Sequence::ClampToDuration,
                            anim.looping == Sequence::Looping? UnsetFlags : SetFlags);
@@ -547,12 +590,12 @@ void StateAnimator::setOwnerNamespace(Record &names, String const &varName)
     d->names.add(d->ownerNamespaceVarName).set(new RecordValue(names));
 
     // Call the onInit() function if there is one.
-    if (d->names.has(VAR_ASSET + QStringLiteral(".onInit")))
+    if (d->names.has(QStringLiteral("__asset__.onInit")))
     {
         Record ns;
         ns.add(QStringLiteral("self")).set(new RecordValue(d->names));
         Process::scriptCall(Process::IgnoreResult, ns,
-                            "self." + VAR_ASSET + ".onInit",
+                            "self.__asset__.onInit",
                             "$self");
     }
 }
@@ -565,6 +608,11 @@ String StateAnimator::ownerNamespaceName() const
 void StateAnimator::triggerByState(String const &stateName)
 {
     using Sequence = Impl::Sequence;
+
+    if (d->stateCallback)
+    {
+        d->stateCallback->tryTrigger(stateName);
+    }
 
     // No animations can be triggered if none are available.
     auto const *stateAnims = &model().animations;
@@ -603,7 +651,7 @@ void StateAnimator::triggerByState(String const &stateName)
             int const priority = seq.def->geti(DEF_PRIORITY, ANIM_DEFAULT_PRIORITY);
 
             // Look up the timeline.
-            Scheduler *timeline = seq.timeline;
+            Timeline *timeline = seq.timeline;
             if (!seq.sharedTimeline.isEmpty())
             {
                 auto tl = model().timelines.constFind(seq.sharedTimeline);
@@ -663,7 +711,7 @@ void StateAnimator::triggerDamage(int points, struct mobj_s const *inflictor)
      * variable holds a direct pointer to the asset definition, where the
      * function is defined.
      */
-    if (d->names.has(VAR_ASSET + QStringLiteral(".onDamage")))
+    if (d->names.has(QStringLiteral("__asset__.onDamage")))
     {
         /*
          * We need to provide the StateAnimator instance to the script as an
@@ -673,7 +721,7 @@ void StateAnimator::triggerDamage(int points, struct mobj_s const *inflictor)
         Record ns;
         ns.add(QStringLiteral("self")).set(new RecordValue(d->names));
         Process::scriptCall(Process::IgnoreResult, ns,
-                            "self." + VAR_ASSET + ".onDamage",
+                            QStringLiteral("self.__asset__.onDamage"),
                             "$self", points,
                             inflictor? &THINKER_DATA(inflictor->thinker, ThinkerData) :
                                        nullptr);
