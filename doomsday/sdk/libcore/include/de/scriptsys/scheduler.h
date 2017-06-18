@@ -26,7 +26,7 @@ namespace de {
 /**
  * Scheduler for scripts and timelines.
  */
-class Scheduler
+class DENG2_PUBLIC Scheduler
 {
 public:
     Scheduler();

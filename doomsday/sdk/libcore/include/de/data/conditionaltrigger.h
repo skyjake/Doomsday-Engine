@@ -26,7 +26,7 @@ namespace de {
 /**
  * Conditional trigger that calls a method
  */
-class ConditionalTrigger
+class DENG2_PUBLIC ConditionalTrigger
 {
 public:
     ConditionalTrigger();
