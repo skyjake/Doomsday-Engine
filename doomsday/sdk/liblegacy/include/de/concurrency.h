@@ -82,7 +82,7 @@ private:
  * @param startpos  Executes while the thread is running. When the function exists,
  *                  the thread stops.
  * @param parm             Parameter given to the thread function.
- * @param terminationFunc  Callback function that is called from the worker thread 
+ * @param terminationFunc  Callback function that is called from the worker thread
  *                         right before it exits. The callback is given the exit status
  *                         of the thread as a parameter.
  * @return Thread handle.
@@ -118,6 +118,8 @@ DENG_PUBLIC thread_t Sys_StartThread(int (*startpos)(void *), void *parm,
                                      void (*terminationFunc)(systhreadexitstatus_t));
 
 DENG_PUBLIC void Thread_Sleep(int milliseconds);
+
+DENG_PUBLIC void Thread_KillAbnormally(thread_t handle);
 
 /**
  * Wait for a thread to stop. If the thread does not stop after @a timeoutMs,

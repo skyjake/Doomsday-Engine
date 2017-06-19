@@ -563,6 +563,8 @@ void App_Error(char const *error, ...)
 
 void App_AbnormalShutdown(char const *message)
 {
+    DENG2_ASSERT_IN_MAIN_THREAD();
+
 #ifdef __CLIENT__
     // This is a crash landing, better be safe than sorry.
     DoomsdayApp::app().busyMode().setTaskRunner(nullptr);
@@ -579,7 +581,10 @@ void App_AbnormalShutdown(char const *message)
     // that the app's event loop is running normally while we show the native
     // message box below -- if the app windows are not hidden/closed, they might
     // receive draw events.
-    ClientApp::windowSystem().closeAll();
+    ClientApp::windowSystem().forAll([] (BaseWindow *win) {
+        win->hide();
+        return LoopContinue;
+    });
 #endif
 
     if (message) // Only show if a message given.
