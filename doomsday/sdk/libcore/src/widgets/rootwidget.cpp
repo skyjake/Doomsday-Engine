@@ -97,8 +97,10 @@ Rule const &RootWidget::viewHeight() const
 
 void RootWidget::setViewSize(Size const &size)
 {
+#if defined (DENG_MOBILE)
     DENG2_GUARD(this);
-    
+#endif
+
     d->viewRect->setInput(Rule::Right,  Constu(size.x));
     d->viewRect->setInput(Rule::Bottom, Constu(size.y));
 
@@ -141,27 +143,35 @@ Widget *RootWidget::focus() const
 
 void RootWidget::initialize()
 {
+#if defined (DENG_MOBILE)
     DENG2_GUARD(this);
+#endif
     notifyTree(&Widget::initialize);
 }
 
 void RootWidget::update()
 {
+#if defined (DENG_MOBILE)
     DENG2_GUARD(this);
+#endif
     notifyTree(&Widget::update);
 }
 
 void RootWidget::draw()
 {
+#if defined (DENG_MOBILE)
     DENG2_GUARD(this);
+#endif
     notifyTree(notifyArgsForDraw());
     Rule::markRulesValid(); // All done for this frame.
 }
 
 bool RootWidget::processEvent(Event const &event)
 {
+#if defined (DENG_MOBILE)
     DENG2_GUARD(this);
-    
+#endif
+
     // Focus is only for the keyboard.
     if (event.isKey() && focus())
     {

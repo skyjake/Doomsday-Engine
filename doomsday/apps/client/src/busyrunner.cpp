@@ -40,9 +40,12 @@
 #include <de/Config>
 #include <de/GLInfo>
 #include <de/Log>
+#include <de/Loop>
 
 #include <QEventLoop>
 #include <atomic>
+
+using namespace de;
 
 static bool animatedTransitionActive(int busyMode)
 {
@@ -59,6 +62,7 @@ DENG2_PIMPL_NOREF(BusyRunner)
 , DENG2_OBSERVES(BusyMode, Beginning)
 , DENG2_OBSERVES(BusyMode, End)
 , DENG2_OBSERVES(BusyMode, TaskWillStart)
+, DENG2_OBSERVES(BusyMode, Abort)
 {
     QEventLoop *eventLoop = nullptr;
 
@@ -74,6 +78,7 @@ DENG2_PIMPL_NOREF(BusyRunner)
         busy().audienceForBeginning()     += this;
         busy().audienceForEnd()           += this;
         busy().audienceForTaskWillStart() += this;
+        busy().audienceForAbort()         += this;
     }
 
     ~Impl()
@@ -81,7 +86,7 @@ DENG2_PIMPL_NOREF(BusyRunner)
         busy().setTaskRunner(nullptr);
     }
 
-    void busyModeWillBegin(BusyTask &firstTask)
+    void busyModeWillBegin(BusyTask &firstTask) override
     {
         if (auto *fader = ClientWindow::main().contentFade())
         {
@@ -105,7 +110,7 @@ DENG2_PIMPL_NOREF(BusyRunner)
         ClientWindow::main().setMode(ClientWindow::Busy);
     }
 
-    void busyModeEnded()
+    void busyModeEnded() override
     {
         DD_ResetTimer();
 
@@ -119,13 +124,23 @@ DENG2_PIMPL_NOREF(BusyRunner)
         ClientWindow::main().setMode(ClientWindow::Normal);
     }
 
-    void busyTaskWillStart(BusyTask &task)
+    void busyTaskWillStart(BusyTask &task) override
     {
         // Is the worker updating its progress?
         if (task.maxProgress > 0)
         {
             Con_InitProgress2(task.maxProgress, task.progressStart, task.progressEnd);
         }
+    }
+
+    void busyModeAborted(String const &) override
+    {
+        Loop::mainCall([this] ()
+        {
+            qDebug() << "[BusyRunner] Killing the worker!";
+            Thread_KillAbnormally(busyThread);
+            exitEventLoop();
+        });
     }
 
     /**
@@ -189,11 +204,11 @@ BusyRunner::Result BusyRunner::runTask(BusyTask *task)
     // Let's get busy!
     BusyVisual_PrepareResources();
 
-    de::ProgressWidget &prog = ClientWindow::main().busy().progress();
+    ProgressWidget &prog = ClientWindow::main().busy().progress();
     prog.show((task->mode & BUSYF_PROGRESS_BAR) != 0);
     prog.setText(task->name);
-    prog.setMode(task->mode & BUSYF_ACTIVITY? de::ProgressWidget::Indefinite :
-                                              de::ProgressWidget::Ranged);
+    prog.setMode(task->mode & BUSYF_ACTIVITY? ProgressWidget::Indefinite :
+                                              ProgressWidget::Ranged);
 
     // Start the busy worker thread, which will process the task in the
     // background while we keep the user occupied with nice animations.
@@ -221,15 +236,15 @@ BusyRunner::Result BusyRunner::runTask(BusyTask *task)
      * event loop used during busy mode. Toggling the swap interval off and
      * back on appears to be a valid workaround.
      */
-    de::Loop::timer(0.1, [] () {
+    Loop::timer(0.1, [] () {
         ClientWindow::main().glActivate();
-        de::GLInfo::setSwapInterval(0);
+        GLInfo::setSwapInterval(0);
         ClientWindow::main().glDone();
     });
-    de::Loop::timer(0.5, [] () {
+    Loop::timer(0.5, [] () {
         ClientWindow::main().glActivate();
-        if (de::Config::get().getb("window.main.vsync")) {
-            de::GLInfo::setSwapInterval(1);
+        if (Config::get().getb("window.main.vsync")) {
+            GLInfo::setSwapInterval(1);
         }
         ClientWindow::main().glDone();
     });
@@ -330,7 +345,7 @@ void BusyMode_FreezeGameForBusyMode(void)
     // This is only possible from the main thread.
     if (ClientWindow::mainExists() &&
         DoomsdayApp::app().busyMode().taskRunner() &&
-        de::App::inMainThread())
+        App::inMainThread())
     {
 #if !defined (DENG_MOBILE)
         ClientWindow::main().busy().renderTransitionFrame();

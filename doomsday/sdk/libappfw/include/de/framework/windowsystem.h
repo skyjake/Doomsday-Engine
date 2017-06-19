@@ -95,6 +95,8 @@ public:
      */
     BaseWindow *find(String const &id) const;
 
+    LoopResult forAll(std::function<LoopResult (BaseWindow *)> func);
+
     /**
      * Closes all windows, including the main window.
      */

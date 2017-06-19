@@ -437,7 +437,9 @@ void GuiRootWidget::update()
 
 void GuiRootWidget::draw()
 {
+#if defined (DENG_MOBILE)
     DENG2_GUARD(this);
+#endif
 
     DENG2_ASSERT_IN_RENDER_THREAD();
 
@@ -470,7 +472,9 @@ void GuiRootWidget::draw()
 
 void GuiRootWidget::drawUntil(Widget &until)
 {
+#if defined (DENG_MOBILE)
     DENG2_GUARD(this);
+#endif
 
     DENG2_ASSERT_IN_RENDER_THREAD();
 

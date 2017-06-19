@@ -103,8 +103,20 @@ BaseWindow *WindowSystem::find(String const &id) const
     return 0;
 }
 
+LoopResult WindowSystem::forAll(std::function<LoopResult (BaseWindow *)> func)
+{
+    for (BaseWindow *win : d->windows)
+    {
+        if (auto result = func(win))
+        {
+            return result;
+        }
+    }
+    return LoopContinue;
+}
+
 void WindowSystem::closeAll()
-{   
+{
     closingAllWindows();
 
     qDeleteAll(d->windows.values());

@@ -281,7 +281,7 @@ void GameWidget::update()
 {
     GuiWidget::update();
 
-    if (isDisabled() || BusyMode_Active()) return;
+    if (DoomsdayApp::app().isShuttingDown() || isDisabled() || BusyMode_Active()) return;
 
     // We may be performing GL operations.
     ClientWindow::main().glActivate();
