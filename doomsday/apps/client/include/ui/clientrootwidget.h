@@ -34,9 +34,11 @@ public:
 
     ClientWindow &window();
 
-    void addOnTop(de::GuiWidget *widget);
-    void dispatchLatestMousePosition();
-    void handleEventAsFallback(de::Event const &event);
+    void update() override;
+
+    void addOnTop(de::GuiWidget *widget) override;
+    void dispatchLatestMousePosition() override;
+    void handleEventAsFallback(de::Event const &event) override;
 };
 
 #endif // DENG_CLIENTROOTWIDGET_H

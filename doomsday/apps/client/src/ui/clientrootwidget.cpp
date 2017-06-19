@@ -33,6 +33,14 @@ ClientWindow &ClientRootWidget::window()
     return GuiRootWidget::window().as<ClientWindow>();
 }
 
+void ClientRootWidget::update()
+{
+    if (!DoomsdayApp::app().isShuttingDown())
+    {
+        GuiRootWidget::update();
+    }
+}
+
 void ClientRootWidget::addOnTop(GuiWidget *widget)
 {
     // The window knows what is the correct top to add to.
