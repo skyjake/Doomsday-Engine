@@ -449,19 +449,6 @@ package "com.ravensoftware.heretic_1.0" {
     }    
 }
 
-package "com.ravensoftware.heretic_1.3" {
-    format: IWAD
-    fileName: heretic.wad
-    fileSize: 14189976
-    lumps <E2M2, E3M6, MUMSIT, WIZACT, MUS_CPTD, CHKNC5, SPAXA1A5>
-    info {
-        title: Heretic Registered
-        author: Raven Software
-        license: All rights reserved
-        tags: gamedata heretic vanilla
-    }    
-}
-
 package "com.ravensoftware.heretic_1.2" {
     format: IWAD
     fileName: heretic.wad
