@@ -99,8 +99,13 @@ DENG2_PIMPL(DataBundle), public Lockable
 
     static String cleanIdentifier(String const &text)
     {
+        // Periods and underscores have special meaning in packages IDs.
+        // Whitespace is used as separator in package ID lists (see PackageLoader).
+        // Info syntax has ambiguous quote/double-quote escaping in strings, so
+        // we'll also get rid of single quotes. (For example, Info converts a string
+        // containing ['"] to ['''].)
         String cleaned = text.toLower();
-        cleaned.replace(QRegExp("[._]"), "-"); // periods and underscores have special meaning in packages IDs
+        cleaned.replace(QRegExp("[._'\\s]"), "-");
         return cleaned;
     }
 
