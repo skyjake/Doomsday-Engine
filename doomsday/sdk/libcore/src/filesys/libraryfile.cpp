@@ -99,7 +99,7 @@ bool LibraryFile::recognize(File const &file)
     // On macOS, plugins are in the .bundle format. The LibraryFile will point
     // to the actual binary inside the bundle. Libraries must be loaded from
     // native files.
-    if (NativeFile const *native = file.maybeAs<NativeFile>())
+    if (NativeFile const *native = maybeAs<NativeFile>(file))
     {
         // Check if this in the executable folder with a matching bundle name.
         if (native->nativePath().fileNamePath().toString().endsWith(

@@ -75,6 +75,12 @@ public:
     void resume();
 
     /**
+     * Calls a function in the main thread. If the current thread is the main thread,
+     * the function is called immediately. Otherwise a loop callback is enqueued.
+     */
+    static void mainCall(std::function<void ()> func);
+
+    /**
      * Registers a new single-shot timer that will do a callback.
      *
      * @param delay  Time to wait before calling.

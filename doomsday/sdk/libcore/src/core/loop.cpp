@@ -36,6 +36,7 @@ DENG2_PIMPL(Loop)
     TimeDelta interval;
     bool running;
     QTimer *timer;
+    LoopCallback mainCall;    
 
     Impl(Public *i) : Base(i), interval(0), running(false)
     {
@@ -94,6 +95,18 @@ void Loop::timer(TimeDelta const &delay, std::function<void ()> func)
     // The timer will delete itself after it's triggered.
     internal::CallbackTimer *timer = new internal::CallbackTimer(func, qApp);
     timer->start(delay.asMilliSeconds());
+}
+
+void Loop::mainCall(std::function<void ()> func) // static
+{
+    if (App::inMainThread())
+    {
+        func();
+    }
+    else
+    {
+        Loop::get().d->mainCall.enqueue(func);
+    }
 }
 
 Loop &Loop::get()
