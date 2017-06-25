@@ -96,6 +96,11 @@ void FocusWidget::fadeOut()
     d->fadeOpacity = 0.f;
 }
 
+bool FocusWidget::isKeyboardFocusActive() const
+{
+    return d->fadeOpacity > 0 && d->reference;
+}
+
 void FocusWidget::update()
 {
     setOpacity(d->fadeOpacity * (d->reference? d->reference->visibleOpacity() : 0.f));

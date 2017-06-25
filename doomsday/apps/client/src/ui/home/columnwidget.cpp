@@ -96,16 +96,11 @@ DENG_GUI_PIMPL(ColumnWidget)
     HeaderWidget *header;
     Rule const *maxContentWidth = nullptr;
     Vector4f backTintColor;
-
-    //GLProgram bgProgram;
-    //GLUniform uSaturation { "uSaturation", GLUniform::Float }; // background saturation
-    //GLUniform uBgColor    { "uColor",      GLUniform::Vec4 };
     Animation backSaturation { 0.f, Animation::Linear };
 
     Impl(Public *i) : Base(i)
     {
         back = new LabelWidget;
-        //back->setCustomShader(&bgProgram);
         back->margins().setZero();
 
         scrollArea = new ScrollAreaWidget;
@@ -125,19 +120,6 @@ DENG_GUI_PIMPL(ColumnWidget)
     {
         releaseRef(maxContentWidth);
     }
-
-    /*void glInit()
-    {
-        root().shaders().build(bgProgram, "generic.textured.hsv.color_ucolor")
-                << uSaturation
-                << uBgColor
-                << root().uAtlas();
-    }
-
-    void glDeinit()
-    {
-        bgProgram.clear();
-    }*/
 };
 
 ColumnWidget::ColumnWidget(String const &name)
@@ -225,19 +207,7 @@ void ColumnWidget::update()
     GuiWidget::update();
 
     d->back->setSaturation(d->backSaturation);
-    /*d->uSaturation = d->backSaturation;
-    d->uBgColor    = Vector4f(1, 1, 1, visibleOpacity());*/
 }
-
-/*void ColumnWidget::glInit()
-{
-    d->glInit();
-}
-
-void ColumnWidget::glDeinit()
-{
-    d->bgProgram.clear();
-}*/
 
 void ColumnWidget::updateStyle()
 {

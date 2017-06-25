@@ -343,8 +343,9 @@ bool GuiRootWidget::processEvent(Event const &event)
 {
     window().glActivate();
 
-    if (event.type() == Event::MouseButton &&
-        event.as<MouseEvent>().state() != MouseEvent::Released)
+    if ((event.type() == Event::MouseButton &&
+         event.as<MouseEvent>().state() != MouseEvent::Released) ||
+        event.type() == Event::MouseWheel)
     {
         d->focusIndicator->fadeOut();
     }

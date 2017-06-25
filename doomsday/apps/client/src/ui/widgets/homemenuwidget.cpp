@@ -20,6 +20,8 @@
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/home/columnwidget.h"
 
+#include <de/FocusWidget>
+
 using namespace de;
 
 DENG_GUI_PIMPL(HomeMenuWidget)
@@ -113,19 +115,28 @@ ui::DataPos HomeMenuWidget::selectedIndex() const
 
 void HomeMenuWidget::setSelectedIndex(ui::DataPos index)
 {
+    DENG2_ASSERT(hasRoot());
+
+    root().setFocus(nullptr);
+    unselectAll();
+
     if (auto *widget = itemWidget<HomeItemWidget>(index))
     {
         widget->acquireFocus();
 
-        // Check if we can scroll to the selected widget right away.
-        // If not, we are observing the asset and will scroll when it is ready.
-        if (assets().isReady())
+        // Focus-based scrolling is only enabled when keyboard focus is in use.
+        if (root().focusIndicator().isKeyboardFocusActive())
         {
-            d->scrollToSelected();
-        }
-        else
-        {
-            assets().audienceForStateChange() += d;
+            // Check if we can scroll to the selected widget right away.
+            // If not, we are observing the asset and will scroll when it is ready.
+            if (assets().isReady())
+            {
+                d->scrollToSelected();
+            }
+            else
+            {
+                assets().audienceForStateChange() += d;
+            }
         }
     }
 }
