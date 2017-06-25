@@ -55,8 +55,9 @@ model.skeletal {
                 vUVBounds[3] = aBounds4;                
             }"
 
-        defines $= {'PREDEF_TRANSFORM_UV(uv)': '',
-                    'PREDEF_TRANSFORM_EMISSION(color)': ''}
+        defines $= {'PREDEF_TRANSFORM_UV(uv)'          : '',                    
+                    'PREDEF_TRANSFORM_EMISSION(color)' : '',
+                    'PREDEF_TRANSFORM_ALPHA(alpha)'    : ''}
         
         include.fragment <include/texture.glsl, 
                           include/tangentspace.glsl,
@@ -89,8 +90,10 @@ model.skeletal {
                 vec3 msNormal = modelSpaceNormalVector(normalUV);
                 vec4 specGloss = specularGloss(specularUV);
                 
+                float alphaFactor = uAlpha;
+                PREDEF_TRANSFORM_ALPHA(alphaFactor);
                 out_FragColor = diffuseAndReflectedLight(
-                    vColor * vec4(uColor, uAlpha), uv, specGloss, msNormal);
+                    vColor * vec4(uColor, alphaFactor), uv, specGloss, msNormal);
 
                 if (out_FragColor.a < uAlphaLimit) discard;
 
