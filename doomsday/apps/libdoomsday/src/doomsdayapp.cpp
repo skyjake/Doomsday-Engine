@@ -385,7 +385,7 @@ DENG2_PIMPL(DoomsdayApp)
         packs.populate(Folder::PopulateAsyncFullTree);
     }
 
-    void folderPopulationFinished()
+    void folderPopulationFinished() override
     {
         if (initialized)
         {
@@ -707,7 +707,7 @@ void DoomsdayApp::unloadGame(GameProfile const &/*upcomingGame*/)
             void *unloader = plugins().findEntryPoint(game().pluginId(), "DP_Unload");
             LOGDEV_MSG("Calling DP_Unload %p") << unloader;
             plugins().setActivePluginId(game().pluginId());
-            if (unloader) ((pluginfunc_t)unloader)();
+            if (unloader) reinterpret_cast<pluginfunc_t>(unloader)();
             plugins().setActivePluginId(0);
         }
 
@@ -924,7 +924,7 @@ bool DoomsdayApp::changeGame(GameProfile const &profile,
             void *loader = plugins().findEntryPoint(game().pluginId(), "DP_Load");
             LOGDEV_MSG("Calling DP_Load %p") << loader;
             plugins().setActivePluginId(game().pluginId());
-            if (loader) ((pluginfunc_t)loader)();
+            if (loader) reinterpret_cast<pluginfunc_t>(loader)();
             plugins().setActivePluginId(0);
         }
 
