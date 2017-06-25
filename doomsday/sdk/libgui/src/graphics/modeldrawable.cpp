@@ -647,6 +647,8 @@ DENG2_PIMPL(ModelDrawable)
     {
         LOG_GL_MSG("Loading model from %s") << file.description();
 
+#if defined (DENG_HAVE_CUSTOMIZED_ASSIMP)
+        {
         /*
          * MD5: Multiple animation sequences are supported via multiple .md5anim files.
          * Autodetect if these exist and make a list of their names.
@@ -667,6 +669,8 @@ DENG2_PIMPL(ModelDrawable)
             });
         }
         importer.SetPropertyString(AI_CONFIG_IMPORT_MD5_ANIM_SEQUENCE_NAMES, anims.toStdString());
+        }
+#endif
 
         scene = glData.scene = nullptr;
         sourcePath = file.path();
