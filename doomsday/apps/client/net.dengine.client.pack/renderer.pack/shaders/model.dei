@@ -55,7 +55,8 @@ model.skeletal {
                 vUVBounds[3] = aBounds4;                
             }"
 
-        defines $= {'PREDEF_TRANSFORM_UV(uv)': ''}
+        defines $= {'PREDEF_TRANSFORM_UV(uv)': '',
+                    'PREDEF_TRANSFORM_EMISSION(color)': ''}
         
         include.fragment <include/texture.glsl, 
                           include/tangentspace.glsl,
@@ -79,6 +80,7 @@ model.skeletal {
                 vec2 wrappedUV = vUV + uOffsetUV;
                 PREDEF_TRANSFORM_UV(wrappedUV);
                 wrappedUV = fract(wrappedUV);
+                
                 vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
                 vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
                 vec2 specularUV = mapToBounds(wrappedUV, vUVBounds[2]);
@@ -93,7 +95,11 @@ model.skeletal {
                 if (out_FragColor.a < uAlphaLimit) discard;
 
                 out_FragColor.rgb += specularLight(specGloss, msNormal);
-                out_FragColor += emittedLight(emissiveUV);
+
+                // Emitted light.
+                vec4 emitted = emittedLight(emissiveUV);
+                PREDEF_TRANSFORM_EMISSION(emitted);
+                out_FragColor += emitted;
                     
                 applyFog();
             }"
