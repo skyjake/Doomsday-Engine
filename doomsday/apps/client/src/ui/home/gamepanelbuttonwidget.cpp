@@ -30,11 +30,13 @@
 #include <doomsday/Games>
 #include <doomsday/LumpCatalog>
 #include <doomsday/LumpDirectory>
+#include <doomsday/res/Bundles>
 
 #include <de/App>
 #include <de/CallbackAction>
 #include <de/ChildWidgetOrganizer>
 #include <de/FileSystem>
+#include <de/Loop>
 #include <de/PopupMenuWidget>
 #include <de/ui/FilteredData>
 
@@ -42,6 +44,7 @@ using namespace de;
 
 DENG_GUI_PIMPL(GamePanelButtonWidget)
 , DENG2_OBSERVES(Profiles::AbstractProfile, Change)
+, DENG2_OBSERVES(res::Bundles, Identify)
 {
     GameProfile &gameProfile;
     ui::FilteredDataT<SaveListData::SaveItem> savedItems;
@@ -162,6 +165,8 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 
         self().panel().setContent(saves);
         self().panel().open();
+
+        DoomsdayApp::bundles().audienceForIdentify() += this;
     }
 
     Game const &game() const
@@ -238,9 +243,18 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         self().icon().setImage(IdTech1Image::makeGameLogo(game(), catalog));
     }
 
-    void profileChanged(Profiles::AbstractProfile &)
+    void profileChanged(Profiles::AbstractProfile &) override
     {
         self().updateContent();
+    }
+
+    void dataBundlesIdentified() override
+    {
+        Loop::get().mainCall([this] ()
+        {
+            catalog.clear();
+            self().updateContent();
+        });
     }
 };
 
