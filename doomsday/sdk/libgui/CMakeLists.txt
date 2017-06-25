@@ -52,6 +52,7 @@ if (DENG_ASSIMP_EMBEDDED)
     add_subdirectory (../../external/assimp assimp)
     set_property (TARGET assimp PROPERTY FOLDER Libraries)
     set (CMAKE_C_FLAGS ${oldCFlags})
+    add_definitions (-DDENG_HAVE_CUSTOMIZED_ASSIMP=1)
 endif ()
 #----------------------------------------------------------------------------------------
 
