@@ -102,6 +102,7 @@ DENG_GUI_PIMPL(DialogWidget)
     QScopedPointer<Untrapper> untrapper;
     DialogContentStylist stylist;
     IndirectRule *minWidth;
+    Rule const *maxContentHeight = nullptr;
 
     Impl(Public *i, Flags const &dialogFlags)
         : Base(i)
@@ -112,7 +113,7 @@ DENG_GUI_PIMPL(DialogWidget)
         , needButtonUpdate(false)
         , animatingGlow(false)
     {
-        minWidth  = new IndirectRule;
+        minWidth = new IndirectRule;
 
         // Initialize the border glow.
         normalGlow = style().colors().colorf("glow").w;
@@ -223,6 +224,7 @@ DENG_GUI_PIMPL(DialogWidget)
     ~Impl()
     {
         releaseRef(minWidth);
+        releaseRef(maxContentHeight);
         releaseRef(acceptAction);
     }
 
@@ -262,6 +264,10 @@ DENG_GUI_PIMPL(DialogWidget)
         if (self().openingDirection() == ui::Down)
         {
             changeRef(maxHeight, *maxHeight - self().anchor().top() - rule("gap"));
+        }
+        if (maxContentHeight)
+        {
+            changeRef(maxHeight, OperatorRule::minimum(*maxHeight, *maxContentHeight));
         }
 
         // Scrollable area content height.
@@ -493,6 +499,11 @@ ScrollAreaWidget &DialogWidget::rightArea()
 void DialogWidget::setMinimumContentWidth(Rule const &minWidth)
 {
     d->minWidth->setSource(minWidth);
+}
+
+void DialogWidget::setMaximumContentHeight(const de::Rule &maxHeight)
+{
+    changeRef(d->maxContentHeight, maxHeight);
 }
 
 MenuWidget &DialogWidget::buttonsMenu()

@@ -374,6 +374,8 @@ PackagesDialog::PackagesDialog(String const &titleText)
     rightArea().setContentSize(d->browser->rule().width(), d->browser->rule().height());
     d->browser->progress().rule().setRect(rightArea().rule());
 
+    setMaximumContentHeight(rule().width());
+
     // Setup has been completed, so contents can be updated.
     //d->browser->setPopulationEnabled(true);
     refreshPackages();

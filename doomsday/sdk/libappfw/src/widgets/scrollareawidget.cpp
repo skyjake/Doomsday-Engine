@@ -59,9 +59,6 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
     bool scrollBarHover = false;
     Rectanglef scrollBarVisRect;
     Rectanglef scrollBarLaneRect;
-    //Drawable drawable;
-    //GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
-    //GLUniform uColor     { "uColor",     GLUniform::Vec4 };
     GuiVertexBuilder verts;
 
     Impl(Public *i) : Base(i)

@@ -180,6 +180,8 @@ public:
      */
     void setMinimumContentWidth(Rule const &minWidth);
 
+    void setMaximumContentHeight(Rule const &maxHeight);
+
     MenuWidget &buttonsMenu();
 
     /**
@@ -210,7 +212,7 @@ public:
      * @param action  Action to trigger after the dialog has been accepted.
      */
     void setAcceptanceAction(RefArg<de::Action> action);
-    
+
     de::Action *acceptanceAction() const;
 
     /**
