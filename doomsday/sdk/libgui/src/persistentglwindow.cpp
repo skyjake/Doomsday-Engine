@@ -52,7 +52,7 @@ static int const BREAK_CENTERING_THRESHOLD = 5;
 static QRect desktopRect()
 {
     //return QApplication::desktop()->screenGeometry();
-    
+
     /// @todo Multimonitor? This checks the default screen.
 #if defined (DENG2_QT_5_6_OR_NEWER)
     return QGuiApplication::primaryScreen()->geometry();
@@ -784,7 +784,7 @@ DENG2_PIMPL(PersistentGLWindow)
         st.flags =
                 (self().isMaximized()?  State::Maximized  : State::None) |
                 (self().isFullScreen()? State::Fullscreen : State::None) |
-                (state.isCentered()?  State::Centered   : State::None);
+                (state.isCentered()?    State::Centered   : State::None);
 
         return st;
     }
@@ -799,6 +799,7 @@ PersistentGLWindow::PersistentGLWindow(String const &id)
 {
     try
     {
+        connect(this, SIGNAL(visibilityChanged(QWindow::Visibility)), this, SLOT(windowVisibilityChanged()));
         restoreFromConfig();
     }
     catch (Error const &er)
@@ -852,7 +853,7 @@ Rectanglei PersistentGLWindow::windowRect() const
     if (d->neverShown || isFullScreen() || isMaximized())
     {
         // If the window hasn't been shown yet, or it uses a maximized/fullscreen
-        // size, it doesn't have a valid normal geometry. Use the one defined in 
+        // size, it doesn't have a valid normal geometry. Use the one defined in
         // the State.
         return d->state.windowRect;
     }
@@ -928,6 +929,19 @@ void PersistentGLWindow::performQueuedTasks()
     d->checkQueue();
 }
 
+void PersistentGLWindow::windowVisibilityChanged()
+{
+    if (d->queue.isEmpty())
+    {
+        d->state = d->widgetState();
+    }
+
+    DENG2_FOR_AUDIENCE2(AttributeChange, i)
+    {
+        i->windowAttributesChanged(*this);
+    }
+}
+
 String PersistentGLWindow::configName(String const &key) const
 {
     return d->state.configName(key);
@@ -943,7 +957,7 @@ PersistentGLWindow &PersistentGLWindow::main()
     }
     return static_cast<PersistentGLWindow &>(GLWindow::main());
 }
-    
+
 void PersistentGLWindow::moveEvent(QMoveEvent *)
 {
     if (isCentered() && !isMaximized() && !isFullScreen())
@@ -982,7 +996,7 @@ void PersistentGLWindow::resizeEvent(QResizeEvent *ev)
         d->state.windowRect.setSize(Vector2i(ev->size().width(), ev->size().height()));
     }*/
 }
-    
+
 } // namespace de
 
 #endif

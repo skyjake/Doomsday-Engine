@@ -167,6 +167,7 @@ public:
 
 protected slots:
     void performQueuedTasks();
+    void windowVisibilityChanged();
 
     /**
      * Forms the name of a Config variable for this window. Subclasses are
