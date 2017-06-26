@@ -38,6 +38,7 @@
 #include <de/NativeFile>
 #include <de/PackageLoader>
 #include <de/PopupMenuWidget>
+#include <de/ProgressWidget>
 #include <de/SequentialLayout>
 #include <de/SignalAction>
 
@@ -70,7 +71,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         descriptionWidth = new IndirectRule;
         minContentHeight = new IndirectRule;
 
-        self().useInfoStyle();
+        //self().useInfoStyle();
 
         // The Close button is always available. Other actions are shown depending
         // on what kind of package is being displayed.
@@ -95,13 +96,13 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         title = LabelWidget::newWithText("", &area);
         title->setFont("title");
         title->setSizePolicy(ui::Filled, ui::Expand);
-        title->setTextColor("inverted.accent");
+        title->setTextColor("accent");
         title->setTextLineAlignment(ui::AlignLeft);
         title->margins().setBottom("");
 
         path = LabelWidget::newWithText("", &area);
         path->setSizePolicy(ui::Filled, ui::Expand);
-        path->setTextColor("inverted.text");
+        path->setTextColor("text");
         path->setTextLineAlignment(ui::AlignLeft);
         path->margins().setTop("unit");
 
@@ -109,6 +110,16 @@ DENG_GUI_PIMPL(PackageInfoDialog)
 
         description = new DocumentWidget;
         description->setFont("small");
+
+        // Light-on-dark document.
+        description->setStyleColor(Font::RichFormat::NormalColor,    "label.dimmed");
+        description->setStyleColor(Font::RichFormat::HighlightColor, "label.highlight");
+        description->setStyleColor(Font::RichFormat::DimmedColor,    "label.dimmed");
+        description->setStyleColor(Font::RichFormat::AccentColor,    "label.accent");
+        description->setStyleColor(Font::RichFormat::DimAccentColor, "label.dimaccent");
+        description->progress().setColor      ("progress.light.wheel");
+        description->progress().setShadowColor("progress.light.shadow");
+
         description->setWidthPolicy(ui::Fixed);
         description->rule().setInput(Rule::Height, contentHeight - title->rule().height()
                                      - path->rule().height());
@@ -134,7 +145,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         metaInfo->setSizePolicy(ui::Filled, ui::Expand);
         metaInfo->setTextLineAlignment(ui::AlignLeft);
         metaInfo->setFont("small");
-        metaInfo->setTextColor("inverted.altaccent");
+        metaInfo->setTextColor("altaccent");
 
         SequentialLayout rightLayout(title->rule().right(), title->rule().top(), ui::Down);
         rightLayout.setOverrideWidth(rule("dialog.packageinfo.metadata.width"));
@@ -181,7 +192,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
     void useDefaultIcon()
     {
         icon->setStyleImage("package.large");
-        icon->setImageColor(style().colors().colorf("inverted.altaccent"));
+        icon->setImageColor(style().colors().colorf("altaccent"));
         icon->setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
         //icon->setImageScale(.75f);
         icon->setOpacity(.5f);

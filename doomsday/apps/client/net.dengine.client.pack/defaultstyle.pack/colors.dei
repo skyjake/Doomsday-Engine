@@ -40,6 +40,7 @@ focus {
 }
 
 popup {
+    color outline { rgb <1.0, 1.0, 1.0, 0.5> }
     info {
         color background { rgb <0.933, 0.933, 0.933> }
         color glow       { rgb $= inverted.glow.rgb }

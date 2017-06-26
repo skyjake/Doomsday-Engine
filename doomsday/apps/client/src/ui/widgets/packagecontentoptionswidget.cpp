@@ -343,6 +343,7 @@ PopupWidget *PackageContentOptionsWidget::makePopup(String const &packageId,
                                                     Rule const &maxHeight)
 {
     PopupWidget *pop = new PopupWidget;
+    pop->setOutlineColor("popup.outline");
     pop->setDeleteAfterDismissed(true);
     //pop->setAnchorAndOpeningDirection(rule(), ui::Left);
     /*pop->closeButton().setActionFn([this] ()

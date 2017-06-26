@@ -280,6 +280,7 @@ DENG_GUI_PIMPL(ConsoleWidget)
 static PopupWidget *consoleShortcutPopup()
 {
     auto *pop = new PopupWidget;
+    pop->setOutlineColor("popup.outline");
     // The 'padding' widget will provide empty margins around the content.
     // Popups normally do not provide any margins.
     auto *padding = new GuiWidget;

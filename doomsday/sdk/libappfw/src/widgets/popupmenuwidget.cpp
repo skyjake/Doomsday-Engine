@@ -223,6 +223,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
     void updateItemHitRules()
     {
         GridLayout const &layout = self().menu().layout();
+        AutoRef<Rule const> halfUnit = self().rule("halfunit");
 
         foreach (GuiWidget *widget, self().menu().childWidgets())
         {
@@ -234,10 +235,12 @@ DENG_GUI_PIMPL(PopupMenuWidget)
                 // We want items to be hittable throughout the width of the menu, however
                 // restrict this to the item's column if there are multiple columns.
                 widget->hitRule()
-                        .setInput(Rule::Left,  (!cell.x? self().rule().left() :
-                                                         layout.columnLeft(cell.x)))
-                        .setInput(Rule::Right, (cell.x == layout.gridSize().x - 1? self().rule().right() :
-                                                                                   layout.columnRight(cell.x)));
+                        .setInput(Rule::Left,  (!cell.x?
+                                                    self().rule().left()
+                                                  : layout.columnLeft(cell.x)) + halfUnit)
+                        .setInput(Rule::Right, ((cell.x == layout.gridSize().x - 1)?
+                                                    self().rule().right()
+                                                  : layout.columnRight(cell.x)) - halfUnit);
             }
         }
     }
@@ -414,6 +417,7 @@ PopupMenuWidget::PopupMenuWidget(String const &name)
     : PopupWidget(name), d(new Impl(this))
 {
     setContent(new MenuWidget(name.isEmpty()? "" : name + "-content"));
+    setOutlineColor("popup.outline");
 
     menu().setGridSize(1, ui::Expand, 0, ui::Expand);
 
