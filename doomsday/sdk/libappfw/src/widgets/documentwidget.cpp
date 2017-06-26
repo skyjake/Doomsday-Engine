@@ -24,17 +24,13 @@
 
 namespace de {
 
-//static int const ID_BACKGROUND = 1; // does not scroll
-//static int const ID_TEXT = 2;       // scrolls
-
 DENG_GUI_PIMPL(DocumentWidget),
 public Font::RichFormat::IStyle
 {
-    //typedef DefaultVertexBuf VertexBuf;
-
     ProgressWidget *progress = nullptr;
 
     // Style.
+    DotPath colorIds[Font::RichFormat::MaxColors];
     ColorBank::Color normalColor;
     ColorBank::Color highlightColor;
     ColorBank::Color dimmedColor;
@@ -51,18 +47,18 @@ public Font::RichFormat::IStyle
 
     // GL objects.
     TextDrawable glText;
-    //Drawable drawable;
-    //Matrix4f modelMatrix;
-    //GLState clippedTextState;
-    //GLUniform uMvpMatrix       { "uMvpMatrix", GLUniform::Mat4 };
-    //GLUniform uScrollMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
-    //GLUniform uColor           { "uColor",     GLUniform::Vec4 };
     GuiVertexBuilder bgVerts;
     GuiVertexBuilder textVerts;
     Matrix4f scrollMvpMatrix;
 
     Impl(Public *i) : Base(i)
     {
+        colorIds[Font::RichFormat::NormalColor]    = "document.normal";
+        colorIds[Font::RichFormat::HighlightColor] = "document.highlight";
+        colorIds[Font::RichFormat::DimmedColor]    = "document.dimmed";
+        colorIds[Font::RichFormat::AccentColor]    = "document.accent";
+        colorIds[Font::RichFormat::DimAccentColor] = "document.dimaccent";
+
         updateStyle();
 
         // Widget to show while lines are being wrapped.
@@ -85,11 +81,11 @@ public Font::RichFormat::IStyle
     {
         Style const &st = style();
 
-        normalColor    = st.colors().color("document.normal");
-        highlightColor = st.colors().color("document.highlight");
-        dimmedColor    = st.colors().color("document.dimmed");
-        accentColor    = st.colors().color("document.accent");
-        dimAccentColor = st.colors().color("document.dimaccent");
+        normalColor    = st.colors().color(colorIds[Font::RichFormat::NormalColor]);
+        highlightColor = st.colors().color(colorIds[Font::RichFormat::HighlightColor]);
+        dimmedColor    = st.colors().color(colorIds[Font::RichFormat::DimmedColor]);
+        accentColor    = st.colors().color(colorIds[Font::RichFormat::AccentColor]);
+        dimAccentColor = st.colors().color(colorIds[Font::RichFormat::DimAccentColor]);
 
         glText.setFont(self().font());
         self().requestGeometry();
@@ -142,24 +138,12 @@ public Font::RichFormat::IStyle
         glText.init(atlas(), self().font(), this);
 
         self().setIndicatorUv(atlas().imageRectf(root().solidWhitePixel()).middle());
-
-        /*drawable.addBuffer(ID_BACKGROUND, new VertexBuf);
-        drawable.addBuffer(ID_TEXT,       new VertexBuf);
-
-        shaders().build(drawable.program(), "generic.textured.color_ucolor")
-                << uMvpMatrix << uColor << uAtlas();
-
-        shaders().build(drawable.addProgram(ID_TEXT), "generic.textured.color_ucolor")
-                << uScrollMvpMatrix << uColor << uAtlas();
-        drawable.setProgram(ID_TEXT, drawable.program(ID_TEXT));
-        drawable.setState(ID_TEXT, clippedTextState);*/
     }
 
     void glDeinit()
     {
         atlas().audienceForReposition() -= this;
         glText.deinit();
-        //drawable.clear();
         bgVerts.clear();
         textVerts.clear();
     }
@@ -214,12 +198,7 @@ public Font::RichFormat::IStyle
 
         // Background and scroll indicator.
         bgVerts.clear();
-        //VertexBuf::Builder verts;
         self().glMakeGeometry(bgVerts);
-        /*drawable.buffer<VertexBuf>(ID_BACKGROUND)
-                .setVertices(gl::TriangleStrip, verts, self().isScrolling()? gl::Dynamic : gl::Static);*/
-
-        //uMvpMatrix = root().projMatrix2D();
 
         if (!progress->isVisible())
         {
@@ -239,10 +218,8 @@ public Font::RichFormat::IStyle
                 glText.setRange(visRange);
                 glText.update(); // alloc visible lines
 
-                //VertexBuf::Builder verts;
                 textVerts.clear();
                 glText.makeVertices(textVerts, Vector2i(0, 0), ui::AlignLeft);
-                //drawable.buffer<VertexBuf>(ID_TEXT).setVertices(gl::TriangleStrip, verts, gl::Static);
 
                 // Update content size to match the generated vertices exactly.
                 self().setContentWidth(glText.verticesMaxWidth());
@@ -261,8 +238,6 @@ public Font::RichFormat::IStyle
     {
         updateGeometry();
 
-        //painter.flush();
-
         Vector4f const color = Vector4f(1, 1, 1, self().visibleOpacity());
 
         auto &painter = root().painter();
@@ -278,18 +253,11 @@ public Font::RichFormat::IStyle
             // Update the scissor for the text.
             auto const oldClip = painter.normalizedScissor();
             painter.setNormalizedScissor(oldClip & self().normalizedContentRect());
-        //GLState::push()
-        //clippedTextState = GLState::current();
-        /*clippedTextState.setNormalizedScissor(self().normalizedContentRect());*/
-
-        //drawable.draw();
             painter.setColor(color);
             painter.drawTriangleStrip(textVerts);
             painter.setNormalizedScissor(oldClip);
             painter.setModelViewProjection(root().projMatrix2D());
         }
-
-        //GLState::pop();
     }
 };
 
@@ -309,10 +277,6 @@ void DocumentWidget::setText(String const &styledText)
     {
         // Show the progress indicator until the text is ready for drawing.
         d->textVerts.clear();
-        /*if (d->drawable.hasBuffer(ID_TEXT))
-        {
-            d->drawable.buffer(ID_TEXT).clear();
-        }*/
 
         d->progress->show();
 
@@ -358,11 +322,25 @@ void DocumentWidget::setMaximumLineWidth(int maxWidth)
     requestGeometry();
 }
 
+void DocumentWidget::setStyleColor(Font::RichFormat::Color id, DotPath const &colorName)
+{
+    DENG2_ASSERT(id != Font::RichFormat::AltAccentColor); // FIXME: not implemented!
+
+    if (id >= 0 && id < Font::RichFormat::MaxColors)
+    {
+        d->colorIds[id] = colorName;
+        updateStyle();
+    }
+}
+
+ProgressWidget &DocumentWidget::progress()
+{
+    return *d->progress;
+}
+
 void DocumentWidget::viewResized()
 {
     ScrollAreaWidget::viewResized();
-
-    //d->uMvpMatrix = root().projMatrix2D();
     requestGeometry();
 }
 

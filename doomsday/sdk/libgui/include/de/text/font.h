@@ -117,7 +117,8 @@ public:
             DimmedColor    = 2,
             AccentColor    = 3,
             DimAccentColor = 4,
-            AltAccentColor = 5
+            AltAccentColor = 5,
+            MaxColors
         };
 
         /**

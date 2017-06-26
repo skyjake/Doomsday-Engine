@@ -24,6 +24,8 @@
 
 namespace de {
 
+class ProgressWidget;
+
 /**
  * Widget for displaying large amounts of text.
  *
@@ -75,6 +77,16 @@ public:
      * @param maxWidth  Maximum width of a text line.
      */
     void setMaximumLineWidth(int maxWidth);
+
+    /**
+     * Set one of the style colors.
+     *
+     * @param id         Color identifier.
+     * @param colorName  Name of the color.
+     */
+    void setStyleColor(Font::RichFormat::Color id, DotPath const &colorName);
+
+    ProgressWidget &progress();
 
     // Events.
     void viewResized();
