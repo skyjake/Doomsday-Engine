@@ -142,6 +142,9 @@ DENG_GUI_PIMPL(SaveListWidget)
         }
 
         emit self().selectionChanged(selected);
+
+        // Keep focus on the clicked button.
+        self().root().setFocus(&self());
     }
 
     void updateItemHighlights(ButtonWidget *selectedButton)

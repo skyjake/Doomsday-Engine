@@ -117,12 +117,15 @@ void HomeMenuWidget::setSelectedIndex(ui::DataPos index)
 {
     DENG2_ASSERT(hasRoot());
 
-    root().setFocus(nullptr);
-    unselectAll();
-
     if (auto *widget = itemWidget<HomeItemWidget>(index))
     {
-        widget->acquireFocus();
+        if (d->selectedIndex != index)
+        {
+            root().setFocus(nullptr);
+            unselectAll();
+
+            widget->acquireFocus();
+        }
 
         // Focus-based scrolling is only enabled when keyboard focus is in use.
         if (root().focusIndicator().isKeyboardFocusActive())

@@ -270,16 +270,19 @@ GamePanelButtonWidget::GamePanelButtonWidget(GameProfile &game, SaveListData con
 
 void GamePanelButtonWidget::setSelected(bool selected)
 {
-    PanelButtonWidget::setSelected(selected);
-
-    d->playButton->enable(selected);
-
-    if (!selected)
+    if ((isSelected() && !selected) || (!isSelected() && selected))
     {
-        unselectSave();
-    }
+        PanelButtonWidget::setSelected(selected);
 
-    updateContent();
+        d->playButton->enable(selected);
+
+        if (!selected)
+        {
+            unselectSave();
+        }
+
+        updateContent();
+    }
 }
 
 void GamePanelButtonWidget::updateContent()
