@@ -1,37 +1,41 @@
 # Fonts for the default UI style
 #
 # - family: font family name
-# - size can be "pt" or "px", defaults to "pt" 
+# - size can be "pt" or "px", defaults to "pt"
 # - weight: normal, bold, light
 # - style: normal, italic
 # - transform: normal, uppercase, lowercase
 
-script { 
+script {
     import Version, gui, DisplayMode
-     
-    # Load the Open Sans font contained in this pack.
-    def loadOpenSans()
+
+    # Load the fonts contained in this pack.
+    def loadFonts()
         import App
         fontDir = __file__.fileNamePath() / "fonts"
-        # Sadly, light fonts seem to not work in Qt presently.
-        for style in ['Regular', 'Bold', 'Italic', 'BoldItalic']  #'Light', 'LightItalic'
-            App.loadFont(fontDir / ("OpenSans-%s.ttf" % style))
-        end    
+        fontStyles = ['Regular', 'Bold', 'Italic', 'BoldItalic']
+        # Light fonts are a bit too thin for low-res displays.
+        if DisplayMode.DPI_FACTOR > 1
+            fontStyles += ['Light', 'LightItalic']
+        end
+        for style in fontStyles
+            App.loadFont(fontDir / ("SourceSansPro-%s.ttf" % style))
+        end
     end
 }
 
 group {
     condition: Version.OS == 'windows'
-    
-    script { loadOpenSans() }
+
+    script { loadFonts() }
 
     font default {
-        family: Open Sans
+        family: Source Sans Pro
         size: 12pt
         weight: normal
-        style: normal    
+        style: normal
     }
-    
+
     font monospace inherits default {
         family: Courier New
         size: 10pt
@@ -74,14 +78,14 @@ group {
             ['italic',  75]: 'Menlo-BoldItalic'
         })
     }
-    
+
     font default {
         family: SF UI Text
         size $: gui.scale('16pt', DisplayMode.DPI_FACTOR)
         weight: normal
         style: normal
     }
-    
+
     font monospace inherits default {
         family: Menlo
         size $: gui.scale('12pt', DisplayMode.DPI_FACTOR)
@@ -118,7 +122,7 @@ script {
         # Use the larger variant.
         title.family   = "SF UI Display"
         heading.family = "SF UI Display"
-    end 
+    end
 }
 
 font small inherits default {
@@ -156,7 +160,7 @@ separator {
         condition: Version.OS != 'macx' and Version.OS != 'ios'
         weight: bold
     }
-    font annotation inherits small {}    
+    font annotation inherits small {}
 }
 
 choice {
