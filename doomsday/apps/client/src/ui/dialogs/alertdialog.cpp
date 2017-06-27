@@ -291,6 +291,8 @@ DENG_GUI_PIMPL(AlertDialog)
 
 AlertDialog::AlertDialog(String const &/*name*/) : d(new Impl(this))
 {
+	setOutlineColor("transparent");
+
     // The dialog is connected to the notification icon.
     d->notification->setPopup(*this, ui::Down);
 
