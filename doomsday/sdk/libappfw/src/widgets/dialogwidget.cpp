@@ -465,7 +465,7 @@ DialogWidget::DialogWidget(String const &name, Flags const &flags)
 {
     d->stylist.setContainer(area());
     setOpeningDirection(ui::NoDirection);
-    setOutlineColor("accent");
+    setOutlineColor("popup.outline");
     d->updateBackground();
 }
 

@@ -33,7 +33,7 @@ GridPopupWidget::GridPopupWidget(String const &name)
     : PopupWidget(name), d(new Impl)
 {
     setOpeningDirection(ui::Up);
-    setOutlineColor("accent");
+    setOutlineColor("popup.outline");
 
     d->container = new GuiWidget;
     setContent(d->container);
