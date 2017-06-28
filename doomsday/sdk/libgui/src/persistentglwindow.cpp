@@ -111,11 +111,11 @@ DENG2_PIMPL(PersistentGLWindow)
         String winId;
         Rectanglei windowRect;  ///< Window geometry in windowed mode.
         Size fullSize;          ///< Dimensions in a fullscreen mode.
-        int colorDepthBits;
-        Flags flags;
+        int colorDepthBits = 0;
+        float refreshRate = 0.f;
+        Flags flags { None };
 
-        State(String const &id)
-            : winId(id), colorDepthBits(0), flags(None)
+        State(String const &id) : winId(id)
         {}
 
         bool operator == (State const &other) const
@@ -124,7 +124,8 @@ DENG2_PIMPL(PersistentGLWindow)
                     windowRect     == other.windowRect &&
                     fullSize       == other.fullSize &&
                     colorDepthBits == other.colorDepthBits &&
-                    flags          == other.flags);
+                    flags          == other.flags &&
+                    refreshRate    == other.refreshRate);
         }
 
         bool operator != (State const &other) const
@@ -203,10 +204,11 @@ DENG2_PIMPL(PersistentGLWindow)
                    << NumberValue(fullSize.y);
             config.set(configName("fullSize"), array);
 
-            config.set(configName("center"),     isCentered());
-            config.set(configName("maximize"),   isMaximized());
-            config.set(configName("fullscreen"), isFullscreen());
-            config.set(configName("colorDepth"), colorDepthBits);
+            config.set(configName("center"),      isCentered());
+            config.set(configName("maximize"),    isMaximized());
+            config.set(configName("fullscreen"),  isFullscreen());
+            config.set(configName("colorDepth"),  colorDepthBits);
+            config.set(configName("refreshRate"), refreshRate);
 
             // FSAA and vsync are saved as part of the Config.
             //config.set(configName("fsaa"),       isAntialiased());
@@ -233,7 +235,8 @@ DENG2_PIMPL(PersistentGLWindow)
                 fullSize = Size(fs.at(0).asNumber(), fs.at(1).asNumber());
             }
 
-            colorDepthBits =    config.geti(configName("colorDepth"));
+            colorDepthBits    = config.geti(configName("colorDepth"));
+            refreshRate       = config.getf(configName("refreshRate"));
             setFlag(Centered,   config.getb(configName("center")));
             setFlag(Maximized,  config.getb(configName("maximize")));
             setFlag(Fullscreen, config.getb(configName("fullscreen")));
@@ -258,7 +261,7 @@ DENG2_PIMPL(PersistentGLWindow)
         {
             if (isFullscreen())
             {
-                return DisplayMode_FindClosest(fullSize.x, fullSize.y, colorDepthBits, 0);
+                return DisplayMode_FindClosest(fullSize.x, fullSize.y, colorDepthBits, refreshRate);
             }
             return DisplayMode_OriginalMode();
         }
@@ -310,6 +313,10 @@ DENG2_PIMPL(PersistentGLWindow)
                 case PersistentGLWindow::ColorDepthBits:
                     colorDepthBits = attribs[i];
                     DENG2_ASSERT(colorDepthBits >= 8 && colorDepthBits <= 32);
+                    break;
+
+                case PersistentGLWindow::RefreshRate:
+                    refreshRate = float(de::max(0, attribs[i])) / 1000.f;                    
                     break;
 
                 case PersistentGLWindow::FullSceneAntialias:
@@ -381,6 +388,12 @@ DENG2_PIMPL(PersistentGLWindow)
             if (int arg = cmdLine.check("-bpp", 1))
             {
                 attribs << PersistentGLWindow::ColorDepthBits << de::clamp(8, cmdLine.at(arg+1).toInt(), 32);
+            }
+
+            if (int arg = cmdLine.check("-refreshrate", 1))
+            {
+                attribs << PersistentGLWindow::RefreshRate
+                    << int(cmdLine.at(arg + 1).toFloat() * 1000);
             }
 
             if (int arg = cmdLine.check("-xpos", 1))
@@ -532,6 +545,7 @@ DENG2_PIMPL(PersistentGLWindow)
                     return false; // Illegal value.
                 break;
 
+            case RefreshRate:
             case Centered:
             case Maximized:
                 break;
@@ -560,16 +574,17 @@ DENG2_PIMPL(PersistentGLWindow)
 
         // Update the cached state from the authoritative source:
         // the widget itself.
-        state = widgetState();
+        state = widgetState();  
 
         // The new modified state.
         State mod = state;
         mod.applyAttributes(attribs);
 
-        LOGDEV_GL_MSG("windowRect:%s fullSize:%s depth:%i flags:%x")
+        LOGDEV_GL_MSG("windowRect:%s fullSize:%s depth:%i refresh:%.1f flags:%x")
                 << mod.windowRect.asText()
                 << mod.fullSize.asText()
                 << mod.colorDepthBits
+                << mod.refreshRate
                 << mod.flags;
 
         // Apply them.
@@ -614,6 +629,7 @@ DENG2_PIMPL(PersistentGLWindow)
 
             modeChanged = DisplayMode_Change(newMode, newState.shouldCaptureScreen());
             state.colorDepthBits = newMode->depth;
+            state.refreshRate    = newMode->refreshRate;
 
             // Wait a while after the mode change to let changes settle in.
 #ifdef MACOSX
@@ -780,6 +796,7 @@ DENG2_PIMPL(PersistentGLWindow)
         st.windowRect     = self().windowRect();
         st.fullSize       = state.fullSize;
         st.colorDepthBits = DisplayMode_Current()->depth;
+        st.refreshRate    = DisplayMode_Current()->refreshRate;
 
         st.flags =
                 (self().isMaximized()?  State::Maximized  : State::None) |
@@ -870,6 +887,11 @@ GLWindow::Size PersistentGLWindow::fullscreenSize() const
 int PersistentGLWindow::colorDepthBits() const
 {
     return d->state.colorDepthBits;
+}
+
+float PersistentGLWindow::refreshRate() const
+{
+    return d->state.refreshRate;
 }
 
 void PersistentGLWindow::show(bool yes)

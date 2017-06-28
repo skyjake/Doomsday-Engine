@@ -73,6 +73,7 @@ public:
         FullscreenWidth,
         FullscreenHeight,
         ColorDepthBits,
+        RefreshRate,        // milli-Hz
 
         // Other
         FullSceneAntialias,
@@ -119,6 +120,8 @@ public:
     inline int fullscreenHeight() const { return fullscreenSize().y; }
 
     int colorDepthBits() const;
+
+    float refreshRate() const;
 
     void show(bool yes = true);
 

@@ -39,7 +39,8 @@
 using namespace de;
 using namespace de::ui;
 
-#ifndef MACOSX
+#if !defined (MACOSX)
+#  define USE_REFRESH_RATE_CHOICE
 #  define USE_COLOR_DEPTH_CHOICE
 #endif
 
@@ -59,6 +60,9 @@ DENG2_PIMPL(VideoSettingsDialog)
     SliderWidget *fpsMax = nullptr;
     ChoiceWidget *modes;
     ButtonWidget *windowButton;
+#ifdef USE_REFRESH_RATE_CHOICE
+    ChoiceWidget *refreshRates;
+#endif
 #ifdef USE_COLOR_DEPTH_CHOICE
     ChoiceWidget *depths;
 #endif
@@ -82,6 +86,9 @@ DENG2_PIMPL(VideoSettingsDialog)
         area.add(vsync        = new VariableToggleWidget(App::config("window.main.vsync")));
         area.add(modes        = new ChoiceWidget);
         area.add(windowButton = new ButtonWidget);
+#ifdef USE_REFRESH_RATE_CHOICE
+        area.add(refreshRates = new ChoiceWidget);
+#endif
 #ifdef USE_COLOR_DEPTH_CHOICE
         area.add(depths       = new ChoiceWidget);
 #endif
@@ -169,6 +176,10 @@ DENG2_PIMPL(VideoSettingsDialog)
         }
         modes->setSelected(closest);
 
+#ifdef USE_REFRESH_RATE_CHOICE
+        refreshRates->setSelected(refreshRates->items().findData(int(win.refreshRate() * 10)));
+#endif
+
 #ifdef USE_COLOR_DEPTH_CHOICE
         // Select the current color depth in the depth list.
         depths->setSelected(depths->items().findData(win.colorDepthBits()));
@@ -233,8 +244,11 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
 
     d->vsync->setText(tr("VSync"));
 
+#ifdef USE_REFRESH_RATE_CHOICE
+    LabelWidget *refreshLabel = nullptr;
+#endif
 #ifdef USE_COLOR_DEPTH_CHOICE
-    LabelWidget *colorLabel = 0;
+    LabelWidget *colorLabel = nullptr;
 #endif
     if (gotDisplayMode)
     {
@@ -262,15 +276,46 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
             d->modes->items() << new ChoiceItem(desc, res);
         }
 
-#ifdef USE_COLOR_DEPTH_CHOICE
-        colorLabel = new LabelWidget;
-        colorLabel->setText(tr("Colors:"));
-        area().add(colorLabel);
+#ifdef USE_REFRESH_RATE_CHOICE
+        {
+            refreshLabel = LabelWidget::newWithText(tr("Monitor Refresh:"), &area());
 
-        d->depths->items()
+            QSet<int> rates;
+            rates.insert(0);
+            for (int i = 0; i < DisplayMode_Count(); ++i)
+            {
+                rates.insert(int(DisplayMode_ByIndex(i)->refreshRate * 10));
+            }
+            foreach (int rate, rates)
+            {
+                if (rate == 0)
+                {
+                    d->refreshRates->items() << new ChoiceItem(tr("Default"), 0);
+                }
+                else
+                {
+                    d->refreshRates->items()
+                        << new ChoiceItem(tr("%1 Hz").arg(float(rate) / 10.f, 0, 'f', 1), rate);
+                }
+            }
+            d->refreshRates->items().sort([] (ui::Item const &a, ui::Item const &b) {
+                int const i = a.data().toInt();
+                int const j = b.data().toInt();
+                if (!i) return true;
+                if (!j) return false;
+                return i < j;
+            });
+        }
+#endif
+
+#ifdef USE_COLOR_DEPTH_CHOICE
+        {
+            colorLabel = LabelWidget::newWithText(tr("Colors:"), &area());
+            d->depths->items()
                 << new ChoiceItem(tr("32-bit"), 32)
                 << new ChoiceItem(tr("24-bit"), 24)
                 << new ChoiceItem(tr("16-bit"), 16);
+        }
 #endif
     }
 
@@ -314,6 +359,9 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
                 .setInput(Rule::Top,  d->modes->rule().top())
                 .setInput(Rule::Left, d->modes->rule().right());
 
+#ifdef USE_REFRESH_RATE_CHOICE
+        modeLayout << *refreshLabel << *d->refreshRates;
+#endif
 #ifdef USE_COLOR_DEPTH_CHOICE
         modeLayout << *colorLabel << *d->depths;
 #endif
@@ -347,6 +395,9 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
 
     connect(d->modes,  SIGNAL(selectionChangedByUser(uint)), this, SLOT(changeMode(uint)));
 
+#ifdef USE_REFRESH_RATE_CHOICE
+    connect(d->refreshRates, SIGNAL(selectionChangedByUser(uint)), this, SLOT(changeRefreshRate(uint)));
+#endif
 #ifdef USE_COLOR_DEPTH_CHOICE
     connect(d->depths, SIGNAL(selectionChangedByUser(uint)), this, SLOT(changeColorDepth(uint)));
 #endif
@@ -365,7 +416,7 @@ void VideoSettingsDialog::changeMode(uint selected)
 {
     QPoint const res = d->modes->items().at(selected).data().toPoint();
 
-    int attribs[] = {
+    int const attribs[] = {
         ClientWindow::FullscreenWidth,  int(res.x()),
         ClientWindow::FullscreenHeight, int(res.y()),
         ClientWindow::End
@@ -379,6 +430,20 @@ void VideoSettingsDialog::changeColorDepth(uint selected)
 #ifdef USE_COLOR_DEPTH_CHOICE
     Con_Executef(CMDS_DDAY, true, "setcolordepth %i",
                  d->depths->items().at(selected).data().toInt());
+#else
+    DENG2_UNUSED(selected);
+#endif
+}
+
+void VideoSettingsDialog::changeRefreshRate(uint selected)
+{
+#ifdef USE_REFRESH_RATE_CHOICE
+    float const rate = float(d->refreshRates->items().at(selected).data().toInt()) / 10.f;
+    int const attribs[] = {
+        ClientWindow::RefreshRate, int(rate * 1000), // milli-Hz
+        ClientWindow::End
+    };
+    d->win.changeAttributes(attribs);
 #else
     DENG2_UNUSED(selected);
 #endif

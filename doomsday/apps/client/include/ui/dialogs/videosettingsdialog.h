@@ -36,6 +36,7 @@ protected slots:
 #if !defined (DENG_MOBILE)
     void changeMode(uint selected);
     void changeColorDepth(uint selected);
+    void changeRefreshRate(uint selected);
     void showColorAdjustments();
     void showWindowMenu();
     void applyModeToWindow();

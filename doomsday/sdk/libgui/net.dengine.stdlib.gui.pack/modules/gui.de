@@ -4,14 +4,14 @@
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or (at 
+# the Free Software Foundation; either version 3 of the License, or (at
 # your option) any later version.
-# 
-# This program is distributed in the hope that it will be useful, but 
+#
+# This program is distributed in the hope that it will be useful, but
 # WITHOUTANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public 
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
-# 
+#
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
@@ -35,27 +35,28 @@ def setDefaults(d)
             showAnnotations = True
             translucency = True
         end
-           
+
         # Window manager defaults.
         record d.window()
             fsaa = False   # Remove this (should be window-specific).
-    
+
             # Configure the main window.
             record main()
                 showFps = False
                 center  = True
                 fsaa    = False
                 vsync   = True
+                refreshRate = 0.0    # match desktop rate
             end
         end
 
         # The default window parameters depend on the original display mode.
         mode = DisplayMode.originalMode()
-        
+
         # By default the fullscreen resolution is the desktop resolution.
         mainWin = d.window.main
         mainWin.fullSize = [mode['width'], mode['height']]
-    
+
         # In windowed mode mode, leave some space on the sides so that
         # the first switch to windowed mode does not place the window in an
         # inconvenient location. The reduction is done proportionally.
@@ -78,7 +79,7 @@ def setDefaults(d)
 end
 
 def scale(value, factor)
-    # Scales a value by 'factor'. If 'value' is a text string, the 
+    # Scales a value by 'factor'. If 'value' is a text string, the
     # suffixes "pt" and "px" (point, pixel) are retained in the result.
     # - src:    Value to scale. Number or Text, may have "pt" or "px"
     #           as suffix.
@@ -100,13 +101,13 @@ def colorMix(a, b, amount)
     # the result is 'b'.
     if len(a) < 4: a += [1.0]
     if len(b) < 4: b += [1.0]
-    
+
     for i in [0, 1, 2, 3]
         a[i] = Number(a[i])
         b[i] = Number(b[i])
     end
-    
-    inv = 1.0 - amount    
+
+    inv = 1.0 - amount
     return [a[0] * inv + b[0] * amount,
             a[1] * inv + b[1] * amount,
             a[2] * inv + b[2] * amount,
