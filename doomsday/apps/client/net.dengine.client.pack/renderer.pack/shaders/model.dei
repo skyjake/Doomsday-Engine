@@ -350,7 +350,8 @@ model.skeletal {
         # Mapping when used with ModelDrawable.
         textureMapping <diffuse>
 
-        defines $= {'PREDEF_TRANSFORM_UV(uv)': ''}
+        defines $= {'PREDEF_TRANSFORM_UV(uv)'       : '',
+                    'PREDEF_TRANSFORM_ALPHA(alpha)' : ''}
         
         include.vertex <include/skeletal.glsl>
         vertex = "
@@ -403,7 +404,11 @@ model.skeletal {
                 vec4 diffuse = vColor * texture(uTex, uv);
                 if (diffuse.a < uAlphaLimit) discard;
                 
-                out_FragColor = diffuse * vec4(uColor, uAlpha);
+                float alphaFactor = uAlpha;
+            #if defined (PREDEF_TRANSFORM_ALPHA)
+                PREDEF_TRANSFORM_ALPHA(alphaFactor);
+            #endif
+                out_FragColor = diffuse * vec4(uColor, alphaFactor);
             }"        
     }        
 }
