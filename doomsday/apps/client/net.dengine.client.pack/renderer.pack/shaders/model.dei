@@ -79,7 +79,9 @@ model.skeletal {
             {
                 // Calculate UV at the fragment (wrapped inside the bounds).
                 vec2 wrappedUV = vUV + uOffsetUV;
+            #if defined (PREDEF_TRANSFORM_UV)
                 PREDEF_TRANSFORM_UV(wrappedUV);
+            #endif
                 wrappedUV = fract(wrappedUV);
                 
                 vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
@@ -91,7 +93,9 @@ model.skeletal {
                 vec4 specGloss = specularGloss(specularUV);
                 
                 float alphaFactor = uAlpha;
+            #if defined (PREDEF_TRANSFORM_ALPHA)
                 PREDEF_TRANSFORM_ALPHA(alphaFactor);
+            #endif
                 out_FragColor = diffuseAndReflectedLight(
                     vColor * vec4(uColor, alphaFactor), uv, specGloss, msNormal);
 
@@ -101,7 +105,9 @@ model.skeletal {
 
                 // Emitted light.
                 vec4 emitted = emittedLight(emissiveUV);
+            #if defined (PREDEF_TRANSFORM_EMISSION)
                 PREDEF_TRANSFORM_EMISSION(emitted);
+            #endif
                 out_FragColor += emitted;
                     
                 applyFog();
@@ -127,7 +133,9 @@ model.skeletal {
             {
                 // Calculate UV at the fragment (wrapped inside the bounds).
                 vec2 wrappedUV = vUV + uOffsetUV;
+            #if defined (PREDEF_TRANSFORM_UV)
                 PREDEF_TRANSFORM_UV(wrappedUV);
+            #endif
                 wrappedUV = fract(wrappedUV);
                 vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
                 vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
@@ -223,7 +231,9 @@ model.skeletal {
             {
                 // Calculate UV at the fragment (wrapped inside the bounds).
                 vec2 wrappedUV = vUV + uOffsetUV;
+            #if defined (PREDEF_TRANSFORM_UV)
                 PREDEF_TRANSFORM_UV(wrappedUV);
+            #endif
                 wrappedUV = fract(wrappedUV);
                 vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
                 vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
@@ -309,7 +319,9 @@ model.skeletal {
             {
                 // Calculate UV at the fragment (wrapped inside the bounds).
                 vec2 wrappedUV = vUV + uOffsetUV;
+            #if defined (PREDEF_TRANSFORM_UV)
                 PREDEF_TRANSFORM_UV(wrappedUV);
+            #endif
                 wrappedUV = fract(wrappedUV);
                 vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
                 vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
@@ -382,7 +394,9 @@ model.skeletal {
             {
                 // Calculate UV at the fragment (wrapped inside the bounds).
                 vec2 wrappedUV = vUV + uOffsetUV;
+            #if defined (PREDEF_TRANSFORM_UV)
                 PREDEF_TRANSFORM_UV(wrappedUV);
+            #endif
                 wrappedUV = fract(wrappedUV);
                 vec2 uv = mapToBounds(wrappedUV, vUVBounds);
             
