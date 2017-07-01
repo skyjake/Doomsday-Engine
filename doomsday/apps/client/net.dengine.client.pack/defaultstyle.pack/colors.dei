@@ -40,7 +40,7 @@ focus {
 }
 
 popup {
-    color outline { rgb $= altaccent.rgb }
+    color outline { rgb $= gui.colorAlpha(altaccent.rgb, 0.67) }
     info {
         color background { rgb <0.933, 0.933, 0.933> }
         color glow       { rgb $= inverted.glow.rgb }

@@ -229,6 +229,8 @@ DENG_GUI_PIMPL(PackageInfoDialog)
 
     bool setup(File const *file)
     {
+        self().setOutlineColor("popup.outline");
+
         if (!file) return false; // Not a package?
 
         // Look up the package metadata.
