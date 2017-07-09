@@ -10,7 +10,7 @@ set (CPACK_PACKAGE_DESCRIPTION_FILE ${DENG_SOURCE_DIR}/../distrib/description.tx
 
 set (CPACK_DEBIAN_PACKAGE_MAINTAINER "Jaakko Keränen (skyjake) <jaakko.keranen@iki.fi>")
 set (CPACK_DEBIAN_PACKAGE_SECTION universe/games)
-set (CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5gui5, libqt5x11extras5, libsdl2-mixer-2.0-0, libxrandr2, libxxf86vm1, libncurses5, libfluidsynth1")
+set (CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5gui5, libqt5x11extras5, libsdl2-mixer-2.0-0, libxrandr2, libxxf86vm1, libncurses5, libfluidsynth1, libminizip1")
 
 set (CPACK_RPM_PACKAGE_SUMMARY ${summary})
 set (CPACK_RPM_PACKAGE_LICENSE "GPL3, LGPL3")
