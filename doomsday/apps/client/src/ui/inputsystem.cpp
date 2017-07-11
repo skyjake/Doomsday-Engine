@@ -530,16 +530,15 @@ DENG2_PIMPL(InputSystem)
      */
     void readKeyboard()
     {
-#define QUEUESIZE 32
-
         if (novideo) return;
 
         ddevent_t ev; de::zap(ev);
-        ev.device = IDEV_KEYBOARD;
-        ev.type   = E_TOGGLE;
+        ev.device       = IDEV_KEYBOARD;
+        ev.type         = E_TOGGLE;
         ev.toggle.state = ETOG_REPEAT;
 
         // Read the new keyboard events, convert to ddevents and post them.
+        int const QUEUESIZE = 32;
         keyevent_t keyevs[QUEUESIZE];
         size_t const numkeyevs = Keyboard_GetEvents(keyevs, QUEUESIZE);
         for (size_t n = 0; n < numkeyevs; ++n)
@@ -569,8 +568,6 @@ DENG2_PIMPL(InputSystem)
 
             self().postEvent(&ev);
         }
-
-#undef QUEUESIZE
     }
 
     /**
@@ -781,8 +778,8 @@ DENG2_PIMPL(InputSystem)
         //vrCfg().oculusRift().update();
 
         ddevent_t ev; de::zap(ev);
-        ev.device = IDEV_HEAD_TRACKER;
-        ev.type   = E_AXIS;
+        ev.device    = IDEV_HEAD_TRACKER;
+        ev.type      = E_AXIS;
         ev.axis.type = EAXIS_ABSOLUTE;
 
         Vector3f const pry = vrCfg().oculusRift().headOrientation();
