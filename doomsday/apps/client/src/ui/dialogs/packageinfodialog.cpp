@@ -135,11 +135,11 @@ DENG_GUI_PIMPL(PackageInfoDialog)
 
         // Right column.
         icon = LabelWidget::newWithText("", &area);
-        icon->setSizePolicy(ui::Filled, ui::Filled);
+        icon->setSizePolicy(ui::Filled, ui::Expand);
         //icon->setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
         //icon->setStyleImage("package.large");
         //icon->setImageColor(style().colors().colorf("inverted.accent"));
-        icon->rule().setInput(Rule::Height, rule("dialog.packageinfo.icon.height"));
+        //icon->rule().setInput(Rule::Height, rule("dialog.packageinfo.icon.height"));
 
         metaInfo = LabelWidget::newWithText("", &area);
         metaInfo->setSizePolicy(ui::Filled, ui::Expand);
