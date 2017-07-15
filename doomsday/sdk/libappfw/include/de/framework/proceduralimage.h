@@ -40,7 +40,6 @@ class LIBAPPFW_PUBLIC ProceduralImage
 public:
     typedef Vector2f Size;
     typedef Vector4f Color;
-    //typedef GLBufferT<Vertex2TexRgba> DefaultVertexBuf;
 
 public:
     ProceduralImage(Size const &size = Size());
