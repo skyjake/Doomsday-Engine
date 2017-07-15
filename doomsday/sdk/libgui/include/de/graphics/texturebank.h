@@ -51,7 +51,8 @@ public:
     };
 
 public:
-    TextureBank();
+    TextureBank(char const *nameForLog = "TextureBank",
+                Flags const &flags = DefaultFlags);
 
     /**
      * Sets the atlas where the images are to be allocated from.

@@ -46,7 +46,10 @@ DENG2_PIMPL(TextureBank)
 
         TextureData(Image const &image, Impl *owner) : d(owner)
         {
-            id = d->atlas->alloc(image);
+            if (!image.isNull())
+            {
+                id = d->atlas->alloc(image);
+            }
 
             /// @todo Reduce size if doesn't fit? Can be expanded when requested for use.
         }
@@ -70,7 +73,8 @@ DENG2_PIMPL(TextureBank)
     }
 };
 
-TextureBank::TextureBank() : Bank("TextureBank"), d(new Impl(this))
+TextureBank::TextureBank(char const *nameForLog, Flags const &flags)
+    : Bank(nameForLog, flags), d(new Impl(this))
 {}
 
 void TextureBank::setAtlas(IAtlas *atlas)
