@@ -601,8 +601,10 @@ void Image::resize(Size const &size)
     DENG2_ASSERT(d->image.format() != QImage::Format_Invalid);
 
     QImage resized(QSize(size.x, size.y), d->image.format());
+    resized.fill(0);
+
     QPainter painter(&resized);
-    painter.drawImage(QPoint(0, 0), d->image);
+    painter.drawImage(QRect(QPoint(0, 0), resized.size()), d->image);
     d->image = resized;
     d->size = size;
 }
