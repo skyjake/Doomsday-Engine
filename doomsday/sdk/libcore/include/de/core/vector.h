@@ -720,6 +720,11 @@ public:
     Vector2<Type> zw() const   { return swizzle(*this, AxisZ, AxisW); }
     Vector3<Type> xyz() const  { return *this; }
     Vector4<Type> zyxw() const { return swizzle(*this, AxisZ, AxisY, AxisX, AxisW); }
+    Vector4<Type> replaced(int index, Type const &value) const {
+        Vector4 v = *this;
+        v[index] = value;
+        return v;
+    }
 
 public:
     Type w;
