@@ -22,8 +22,10 @@
 #include "ui/widgets/panelbuttonwidget.h"
 #include "ui/dialogs/packageinfodialog.h"
 #include "ui/widgets/packagecontentoptionswidget.h"
+#include "ui/clientrootwidget.h"
 #include "clientapp.h"
 
+#include <de/AtlasProceduralImage>
 #include <de/CallbackAction>
 #include <de/ChildWidgetOrganizer>
 #include <de/DocumentPopupWidget>
@@ -32,6 +34,7 @@
 #include <de/Loop>
 #include <de/MenuWidget>
 #include <de/NativeFile>
+#include <de/PackageIconBank>
 #include <de/PackageLoader>
 #include <de/PopupButtonWidget>
 #include <de/ProgressWidget>
@@ -48,11 +51,10 @@
 
 using namespace de;
 
-static String const VAR_TITLE ("title");
-static String const VAR_TAGS  ("tags");
-
-static String const TAG_HIDDEN("hidden");
-static String const TAG_LOADED("loaded");
+static String    const VAR_TITLE ("title");
+static String    const VAR_TAGS  ("tags");
+static String    const TAG_HIDDEN("hidden");
+static String    const TAG_LOADED("loaded");
 
 static TimeDelta const REFILTER_DELAY(0.2);
 
@@ -108,39 +110,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         }
     };
 
-    LoopCallback mainCall;
-    LoopCallback mainCallForIdentify;
-
-    // Search filter:
-    LineEditWidget *search;
-    Rule const *searchMinY = nullptr;
-    ButtonWidget *clearSearch;
-    Animation searchBackgroundOpacity { 0.f, Animation::Linear };
-    QStringList filterTerms;
-    QTimer refilterTimer;
-
-    ProgressWidget *refreshProgress;
-
-    // Packages list:
-    StringList hiddenTags;
-    StringList manualPackagePaths; // if empty, all available packages used
-    HomeMenuWidget *menu;
-    ui::ListDataT<PackageItem> allPackages;
-    ui::FilteredData filteredPackages { allPackages };
-    ui::ListData defaultActionItems;
-    ui::Data const *actionItems = &defaultActionItems;
-    bool populateEnabled = true;
-    bool showHidden = false;
-    bool showOnlyLoaded = false;
-    bool actionOnlyForSelection = true;
-    bool rightClickToOpenContextMenu = false;
-
-    IPackageStatus const *packageStatus = &isPackageLoaded;
-
-    GuiWidget::ColorTheme unselectedItem      = GuiWidget::Normal;
-    GuiWidget::ColorTheme selectedItem        = GuiWidget::Normal;
-    GuiWidget::ColorTheme unselectedItemHilit = GuiWidget::Inverted;
-    GuiWidget::ColorTheme selectedItemHilit   = GuiWidget::Inverted;
+//---------------------------------------------------------------------------------------
 
     /**
      * Widget showing information about a package and containing buttons for manipulating
@@ -149,6 +119,7 @@ DENG_GUI_PIMPL(PackagesWidget)
     class PackageListItemWidget : public HomeItemWidget
                                 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation) // actions
                                 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)   // actions
+                                , DENG2_OBSERVES(Bank, Load) // package icons
     {
     public:
         PackageListItemWidget(PackageItem const &item, PackagesWidget &owner)
@@ -156,10 +127,9 @@ DENG_GUI_PIMPL(PackagesWidget)
             , _owner(owner)
             , _item(&item)
         {
-            icon().setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
-            icon().margins().set("gap");
-            Rule const &height = style().fonts().font("default").height();
-            icon().rule().setInput(Rule::Width, height + rule("gap")*2);
+            icon().setImageFit(ui::FitToWidth | ui::OriginalAspectRatio);
+            icon().margins().set("gap").setRight("");
+            icon().rule().setInput(Rule::Width, style().fonts().font("default").height()*3);
 
             _actions = new MenuWidget;
             _actions->enablePageKeys(false);
@@ -174,16 +144,19 @@ DENG_GUI_PIMPL(PackagesWidget)
             setKeepButtonsVisible(!_owner.d->actionOnlyForSelection);
 
             createTagButtons();
+            fetchIcon();
         }
 
         void setItem(PackageItem const &item)
         {
             if (_item != &item)
             {
+                iconBank().audienceForLoad() -= this;
                 setSelected(false);
                 _item = &item;
                 destroyTagButtons();
                 createTagButtons();
+                fetchIcon();
             }
         }
 
@@ -246,14 +219,36 @@ DENG_GUI_PIMPL(PackagesWidget)
             tag->set(Background(Background::Rounded, style().colors().colorf(color), 6));
         }
 
-        void widgetCreatedForItem(GuiWidget &widget, ui::Item const &)
+        PackageIconBank &iconBank()
+        {
+            return _owner.root().as<ClientRootWidget>().packageIconBank();
+        }
+
+        void fetchIcon()
+        {
+            _iconId = Id::None;
+
+            if (_item && _item->file)
+            {
+                if (Id pkgIcon = iconBank().packageIcon(*_item->file))
+                {
+                    setPackageIcon(pkgIcon);
+                }
+                else
+                {
+                    iconBank().audienceForLoad() += this;
+                }
+            }
+        }
+
+        void widgetCreatedForItem(GuiWidget &widget, ui::Item const &) override
         {
             // An action button has been created.
             LabelWidget &label = widget.as<LabelWidget>();
             label.setSizePolicy(ui::Expand, ui::Expand);
         }
 
-        void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item)
+        void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item) override
         {
             // An action button needs updating.
             LabelWidget &label = widget.as<LabelWidget>();
@@ -288,7 +283,11 @@ DENG_GUI_PIMPL(PackagesWidget)
             if (pkgIdVer.first.startsWith("file."))
             {
                 isFile = true;
-                icon().setStyleImage("file", "default");
+                if (!_iconId)
+                {
+                    icon().setStyleImage("file", "default");
+                    icon().setImageScale(.5f);
+                }
 
                 // Local files should not be indicated to be packages.
                 if (NativeFile const *native = maybeAs<NativeFile>(_item->file->source()))
@@ -296,9 +295,10 @@ DENG_GUI_PIMPL(PackagesWidget)
                     pkgIdVer.first = native->nativePath().pretty();
                 }
             }
-            else
+            else if (!_iconId)
             {
                 icon().setStyleImage("package.icon", "default");
+                icon().setImageScale(.5f);
             }
             String labelText = String(_E(b) "%1\n" _E(l)_E(s) "%2")
                     .arg(_item->label())
@@ -378,12 +378,75 @@ DENG_GUI_PIMPL(PackagesWidget)
             }
         }
 
+        void bankLoaded(DotPath const &path) override
+        {
+            if (_iconId || !_item || !_item->file) return;
+
+            auto &bank = iconBank();
+
+            if (Path(_item->file->path()) == path)
+            {
+                setPackageIcon(bank.texture(path));
+                bank.audienceForLoad() -= this;
+            }
+        }
+
+        void setPackageIcon(Id const &id)
+        {
+            _iconId = id;
+
+            if (_iconId)
+            {
+                auto *img = new AtlasProceduralImage(_owner);
+                img->setPreallocatedImage(_iconId);
+                icon().setImage(img);
+                icon().setImageScale(1);
+            }
+        }
+
     private:
         PackagesWidget &_owner;
         PackageItem const *_item;
         QList<ButtonWidget *> _tags;
         MenuWidget *_actions = nullptr;
+        Id _iconId;
     };
+
+//---------------------------------------------------------------------------------------
+
+    LoopCallback mainCall;
+    LoopCallback mainCallForIdentify;
+
+    // Search filter:
+    LineEditWidget *search;
+    Rule const *searchMinY = nullptr;
+    ButtonWidget *clearSearch;
+    Animation searchBackgroundOpacity { 0.f, Animation::Linear };
+    QStringList filterTerms;
+    QTimer refilterTimer;
+
+    ProgressWidget *refreshProgress;
+
+    // Packages list:
+    StringList hiddenTags;
+    StringList manualPackagePaths; // if empty, all available packages used
+    HomeMenuWidget *menu;
+    ui::ListDataT<PackageItem> allPackages;
+    ui::FilteredData filteredPackages { allPackages };
+    ui::ListData defaultActionItems;
+    ui::Data const *actionItems = &defaultActionItems;
+    bool populateEnabled = true;
+    bool showHidden = false;
+    bool showOnlyLoaded = false;
+    bool actionOnlyForSelection = true;
+    bool rightClickToOpenContextMenu = false;
+
+    IPackageStatus const *packageStatus = &isPackageLoaded;
+
+    GuiWidget::ColorTheme unselectedItem      = GuiWidget::Normal;
+    GuiWidget::ColorTheme selectedItem        = GuiWidget::Normal;
+    GuiWidget::ColorTheme unselectedItemHilit = GuiWidget::Inverted;
+    GuiWidget::ColorTheme selectedItemHilit   = GuiWidget::Inverted;
 
 //- PackagesWidget::Pimpl Methods -------------------------------------------------------
 
@@ -420,9 +483,6 @@ DENG_GUI_PIMPL(PackagesWidget)
             }
             menu->interactedItem()->notifyChange();
         }));
-
-        //maxPanelHeight = new IndirectRule;
-        //maxPanelHeight->setSource(self().rule().height());
 
         self().add(menu = new HomeMenuWidget);
         self().add(search = new LineEditWidget);
@@ -687,7 +747,6 @@ DENG_GUI_PIMPL(PackagesWidget)
         {
             mainCallForIdentify.enqueue([this] ()
             {
-                //qDebug() << "Bundles identified, re-populating" << &self;
                 root().window().glActivate();
                 populateEnabled = true;
                 self().populate();
@@ -724,12 +783,12 @@ DENG_GUI_PIMPL(PackagesWidget)
 
 //- ChildWidgetOrganizer::IWidgetFactory --------------------------------------
 
-    GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
+    GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *) override
     {
         return new PackageListItemWidget(item.as<PackageItem>(), self());
     }
 
-    void updateItemWidget(GuiWidget &widget, ui::Item const &item)
+    void updateItemWidget(GuiWidget &widget, ui::Item const &item) override
     {
         auto &w = widget.as<PackageListItemWidget>();
         w.setItem(item.as<PackageItem>());
@@ -797,11 +856,6 @@ void PackagesWidget::setFilterEditorMinimumY(Rule const &minY)
     d->search->rule().setInput(Rule::Top, OperatorRule::maximum(minY, rule().top() + margins().top()));
     changeRef(d->searchMinY, minY);
 }
-
-/*void PackagesWidget::setMaximumPanelHeight(Rule const &maxHeight)
-{
-    //d->maxPanelHeight->setSource(maxHeight - d->search->rule().height() - rule("gap"));
-}*/
 
 void PackagesWidget::setPackageStatus(IPackageStatus const &packageStatus)
 {
@@ -929,19 +983,6 @@ LineEditWidget &PackagesWidget::searchTermsEditor()
     return *d->search;
 }
 
-/*
-void PackagesWidget::openContentOptions(ui::Item const &item)
-{
-    if (auto *widget = d->menu->organizer().itemWidget(item))
-    {
-        if (auto *itemWidget = widget->maybeAs<Impl::PackageListItemWidget>())
-        {
-            itemWidget->openContentOptions();
-        }
-    }
-}
-*/
-
 void PackagesWidget::initialize()
 {
     GuiWidget::initialize();
@@ -971,11 +1012,6 @@ void PackagesWidget::update()
         // Update search field background opacity.
         d->search->setUnfocusedBackgroundOpacity(d->searchBackgroundOpacity);
     }
-
-//    if (d->menu->isHidden() && DoomsdayApp::bundles().isEverythingIdentified())
-//    {
-//        d->populate();
-//    }
 }
 
 void PackagesWidget::operator >> (PersistentState &toState) const

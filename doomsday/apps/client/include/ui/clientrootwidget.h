@@ -21,6 +21,7 @@
 
 #include <de/GuiRootWidget>
 #include <de/GLWindow>
+#include <de/PackageIconBank>
 
 class ClientWindow;
 
@@ -33,12 +34,15 @@ public:
     ClientRootWidget(de::GLWindow *window = 0);
 
     ClientWindow &window();
+    de::PackageIconBank &packageIconBank();
 
     void update() override;
-
     void addOnTop(de::GuiWidget *widget) override;
     void dispatchLatestMousePosition() override;
     void handleEventAsFallback(de::Event const &event) override;
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 #endif // DENG_CLIENTROOTWIDGET_H
