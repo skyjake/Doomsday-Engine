@@ -1774,7 +1774,14 @@ void C_DECL A_SpeedFade(mobj_t *actor)
 {
     actor->flags |= MF_SHADOW;
     actor->flags &= ~MF_ALTSHADOW;
-    actor->sprite = actor->target->sprite;
+
+    // Target should have been set (or restored).
+    DENG_ASSERT(actor->target != NULL);
+
+    if (actor->target)
+    {
+        actor->sprite = actor->target->sprite;
+    }
 }
 
 /**
