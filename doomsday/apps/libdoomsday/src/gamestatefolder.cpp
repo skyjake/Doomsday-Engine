@@ -422,7 +422,7 @@ String GameStateFolder::Metadata::asTextWithInfoSyntax() const
     if (has("gameIdentityKey")) os <<   "gameIdentityKey: " << gets("gameIdentityKey");
     if (has("packages"))
     {
-        os << "\npackages " << geta("packages").asTextUsingInfoSyntax();
+        os << "\npackages " << geta("packages").asTextWithInfoSyntax();
     }
     if (has("episode"))         os << "\nepisode: "         << gets("episode");
     if (has("mapTime"))         os << "\nmapTime: "         << String::number(geti("mapTime"));
@@ -441,7 +441,7 @@ String GameStateFolder::Metadata::asTextWithInfoSyntax() const
     }
     if (has("visitedMaps"))
     {
-        os << "\nvisitedMaps " << geta("visitedMaps").asTextUsingInfoSyntax();
+        os << "\nvisitedMaps " << geta("visitedMaps").asTextWithInfoSyntax();
     }
     if (has("sessionId"))       os << "\nsessionId: "       << String::number(geti("sessionId"));
     if (has("userDescription")) os << "\nuserDescription: " << gets("userDescription");

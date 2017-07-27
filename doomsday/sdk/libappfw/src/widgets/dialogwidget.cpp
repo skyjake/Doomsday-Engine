@@ -543,7 +543,7 @@ ButtonWidget *DialogWidget::buttonWidget(int roleId) const
     {
         DialogButtonItem const &item = d->buttonItems.at(i).as<DialogButtonItem>();
 
-        if ((item.role() & IdMask) == roleId)
+        if ((item.role() & IdMask) == uint(roleId))
         {
             return &d->buttonWidget(item);
         }

@@ -42,9 +42,14 @@
 
 using namespace de;
 
-dd_bool Thinker_HasMobjFunc(thinkfunc_t func)
+bool Thinker_IsMobjFunc(thinkfunc_t func)
 {
     return (func && func == reinterpret_cast<thinkfunc_t>(gx.MobjThinker));
+}
+
+bool Thinker_IsMobj(thinker_t const *th)
+{
+    return (th && Thinker_IsMobjFunc(th->function));
 }
 
 world::Map &Thinker_Map(thinker_t const & /*th*/)
@@ -234,7 +239,7 @@ void Thinkers::add(thinker_t &th, bool makePublic)
         throw Error("Thinkers::add", "Invalid thinker function");
 
     // Will it need an ID?
-    if (Thinker_HasMobjFunc(th.function))
+    if (Thinker_IsMobj(&th))
     {
         // It is a mobj, give it an ID (not for client mobjs, though, they
         // already have an id).
@@ -439,7 +444,7 @@ void Thinker_InitPrivateData(thinker_t *th, Id::Type knownId)
     {
         Id const privateId = knownId? Id(knownId) : Id(/* get a new ID */);
 
-        if (Thinker_HasMobjFunc(th->function))
+        if (Thinker_IsMobj(th))
         {
 #ifdef __CLIENT__
             th->d = new ClientMobjThinkerData(privateId);

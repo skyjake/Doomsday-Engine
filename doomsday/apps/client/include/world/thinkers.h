@@ -125,7 +125,8 @@ private:
 
 }  // namespace world
 
-dd_bool Thinker_HasMobjFunc(thinkfunc_t func);
+bool Thinker_IsMobj(thinker_t const *th);
+bool Thinker_IsMobjFunc(thinkfunc_t func);
 world::Map &Thinker_Map(thinker_t const &th);
 
 /**
