@@ -91,7 +91,7 @@ enum {
     DD_UNUSED4, // DD_TRACE_ADDRESS
     DD_SPRITE_REPLACEMENT, ///< Sprite <-> model replacement.
     DD_ACTION_LINK, ///< State action routine addresses.
-    DD_UNUSED10, // DD_MAP_NAME
+    DD_OBJECT_STATE_INFO_STR, ///< Information about mobjs in plain text Info format.
     DD_UNUSED11, // DD_MAP_AUTHOR
     DD_MAP_MUSIC,
     DD_MAP_MIN_X,

@@ -203,6 +203,8 @@ public:
 
     void deserializeInternalState(de::Reader &from, world::IThinkerMapping const &thinkerMapping) override;
 
+    de::String mapObjectsDescription() const;
+
 public:  //- Light sources --------------------------------------------------------------
 
 #if 0

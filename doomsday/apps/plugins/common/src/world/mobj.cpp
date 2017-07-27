@@ -26,7 +26,10 @@
 
 #include <cmath>
 #include <doomsday/world/mobjthinkerdata.h>
+#include <de/String>
 #include <de/mathutil.h>
+#include <QTextStream>
+
 #include "dmu_lib.h"
 #include "mapstatereader.h"
 #include "mapstatewriter.h"
@@ -228,6 +231,19 @@ dd_bool Mobj_IsPlayerClMobj(mobj_t *mo)
         }
     }
     return false;
+}
+
+uint32_t Mobj_PrivateID(mobj_t const *mob)
+{
+    if (!mob)
+    {
+        return 0;
+    }
+    if (auto const *td = THINKER_DATA_MAYBE(mob->thinker, ThinkerData))
+    {
+        return td->id();
+    }
+    return 0;
 }
 
 dd_bool Mobj_IsPlayer(mobj_t const *mob)
@@ -1026,4 +1042,31 @@ void Mobj_InflictDamage(mobj_t *mob, mobj_t const *inflictor, int damage)
 
     // Notify the engine.
     THINKER_DATA(mob->thinker, MobjThinkerData).damageReceived(damage, inflictor);
+}
+
+de::String Mobj_AsTextWithInfoSyntax(mobj_t const *mob)
+{
+    // Note: Used for debugging purposes.
+
+    using de::String;
+
+    QString str;
+    QTextStream os(&str);
+    os.setCodec("latin1");
+
+    os << "Mobj 0x" << String::number(Mobj_PrivateID(mob), 16) << " {\n";
+
+    os << "  target    = 0x" << String::number(Mobj_PrivateID(mob->target), 16) << "\n"
+       << "  onMobj    = 0x" << String::number(Mobj_PrivateID(mob->onMobj), 16) << "\n";
+
+    #if defined (__JHEXEN__)
+    {
+        os << "  tracer    = 0x" << String::number(Mobj_PrivateID(mob->tracer), 16) << "\n"
+           << "  lastEnemy = 0x" << String::number(Mobj_PrivateID(mob->lastEnemy), 16) << "\n";
+    }
+    #endif
+
+    os << "}\n";
+
+    return str;
 }

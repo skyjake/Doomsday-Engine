@@ -25,8 +25,20 @@
 #include "common.h"
 
 #ifdef __cplusplus
+
+#include <de/String>
+
 extern "C" {
 #endif
+
+/**
+ * Returns the private internal ID of a map object. This is a unique 32-bit number
+ * that the engine chooses internally for identifying the object.
+ *
+ * @param mob  Map object.
+ * @return Private ID.
+ */
+uint32_t Mobj_PrivateID(mobj_t const *mob);
 
 /**
  * Determines the current friction affecting @a mo, given the sector it is in and
@@ -218,6 +230,14 @@ void Mobj_InflictDamage(mobj_t *mob, mobj_t const *inflictor, int damage);
 
 #ifdef __cplusplus
 }  // extern "C"
+
+/**
+ * Describe the object in plain text Info syntax.
+ * @param mob  Map object.
+ * @return Description text.
+ */
+de::String Mobj_AsTextWithInfoSyntax(mobj_t const *mob);
+
 #endif
 
 #endif  // LIBCOMMON_MOBJ_H

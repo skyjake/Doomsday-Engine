@@ -119,6 +119,9 @@ void *X_GetVariable(int id)
     case DD_TM_CEILING_Z:
         return (void*) &tmCeilingZ;
 
+    case DD_OBJECT_STATE_INFO_STR:
+        return reinterpret_cast<void *>(Mobj_AsTextWithInfoSyntax);
+
     default:
         break;
     }

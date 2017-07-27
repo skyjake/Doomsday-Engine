@@ -454,7 +454,7 @@ DENG2_PIMPL(Map)
             if (de::abs(line.direction().x) < bsp::DIST_EPSILON)
                 return;
 
-            if(   (line.bounds().maxX < p.testLineCenter.x - bsp::DIST_EPSILON)
+            if (   (line.bounds().maxX < p.testLineCenter.x - bsp::DIST_EPSILON)
                || (line.bounds().minX > p.testLineCenter.x + bsp::DIST_EPSILON))
                 return;
 
@@ -660,7 +660,7 @@ DENG2_PIMPL(Map)
                                     }
                                 } while ((hedge = &hedge->next()) != subspace.poly().hedge());
 
-                                if(discontinuities)
+                                if (discontinuities)
                                 {
                                     LOG_MAP_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
                                                     "is not contiguous (%i gaps/overlaps).\n%s")
@@ -1569,14 +1569,14 @@ bool Map::hasLightGrid() const
 
 LightGrid &Map::lightGrid()
 {
-    if(bool(d->lightGrid)) return *d->lightGrid;
+    if (bool(d->lightGrid)) return *d->lightGrid;
     /// @throw MissingLightGrid Attempted with no LightGrid initialized.
     throw MissingLightGridError("Map::lightGrid", "No light grid is initialized");
 }
 
 LightGrid const &Map::lightGrid() const
 {
-    if(bool(d->lightGrid)) return *d->lightGrid;
+    if (bool(d->lightGrid)) return *d->lightGrid;
     /// @throw MissingLightGrid Attempted with no LightGrid initialized.
     throw MissingLightGridError("Map::lightGrid", "No light grid is initialized");
 }
@@ -2048,7 +2048,7 @@ void Map::setGravity(coord_t newGravity)
 
 Thinkers &Map::thinkers() const
 {
-    if(bool( d->thinkers )) return *d->thinkers;
+    if (bool( d->thinkers )) return *d->thinkers;
     /// @throw MissingThinkersError  The thinker lists are not yet initialized.
     throw MissingThinkersError("Map::thinkers", "Thinkers not initialized");
 }
@@ -2434,7 +2434,7 @@ LoopResult Map::forAllSectorsTouchingMobj(mobj_t &mob, std::function<LoopResult 
                 if (ld->back().hasSector())
                 {
                     Sector &backSec = ld->back().sector();
-                    if(backSec.validCount() != validCount)
+                    if (backSec.validCount() != validCount)
                     {
                         backSec.setValidCount(validCount);
                         linkStore.append(&backSec);
@@ -3111,9 +3111,35 @@ void Map::update()
 
 #ifdef __CLIENT__
 
+String Map::mapObjectsDescription() const
+{
+    String str;
+    QTextStream os(&str);
+
+    if (auto *descPtr = gx.GetVariable(DD_OBJECT_STATE_INFO_STR))
+    {
+        auto const descFunc = de::function_cast<de::String (*)(mobj_t const *)>(descPtr);
+
+        // Internal state of thinkers.
+        thinkers().forAll(0x3, [&os, &descFunc] (thinker_t *th)
+        {
+            if (Thinker_IsMobj(th))
+            {
+                os << descFunc(reinterpret_cast<mobj_t const *>(th));
+            }
+            return LoopContinue;
+        });
+    }
+
+    return str;
+}
+
 void Map::serializeInternalState(Writer &to) const
 {
     BaseMap::serializeInternalState(to);
+
+    //qDebug() << "DD_OBJECT_STATE_INFO_STR:";
+    //qDebug() << mapObjectsDescription().toLatin1().constData();
 
     // Internal state of thinkers.
     thinkers().forAll(0x3, [&to] (thinker_t *th)
