@@ -300,6 +300,20 @@ public:
     dint toInt(bool *ok = 0, int base = 10, IntConversionFlags flags = AllowOnlyWhitespace) const;
 
     /**
+     * Converts the string to a 32-bit unsigned integer. The behavior is the same as
+     * QString::toUInt(), with the exception that the default is to autodetect the
+     * base of the number.
+     *
+     * @param ok     @c true is returned via this pointer if the conversion was
+     *               successful.
+     * @param base   Base for the number.
+     *
+     * @return 32-bit unsigned integer parsed from the string (@c *ok set to true).
+     * @c 0 if the conversion fails (@c *ok set to @c false).
+     */
+    duint32 toUInt32(bool *ok = 0, int base = 0) const;
+
+    /**
      * Adds a prefix to each line in the text.
      *
      * @param prefix  Prefix text.

@@ -539,6 +539,11 @@ dint String::toInt(bool *ok, int base, IntConversionFlags flags) const
     return token.QString::toInt(ok, base);
 }
 
+duint32 String::toUInt32(bool *ok, int base) const
+{
+    return QString::toUInt(ok, base);
+}
+
 String String::addLinePrefix(String const &prefix) const
 {
     String result;
