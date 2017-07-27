@@ -39,6 +39,7 @@
 #include <de/Error>
 #include <de/FileSystem>
 #include <de/Garbage>
+#include <de/Info>
 #include <de/Log>
 #include <de/LogSink>
 #include <de/NativeFont>
@@ -506,9 +507,14 @@ DENG2_PIMPL(ClientApp)
     }
 #endif
 
-    String pathForMapClientState(String const &mapId)
+    String mapClientStatePath(String const &mapId) const
     {
         return String("maps/%1ClientState").arg(mapId);
+    }
+
+    String mapObjectStatePath(String const &mapId) const
+    {
+        return String("maps/%1ObjectState").arg(mapId);
     }
 };
 
@@ -733,10 +739,20 @@ void ClientApp::gameSessionWasSaved(AbstractSession const &session,
 
     try
     {
+        String const mapId = session.mapUri().path();
+
         // Internal map state.
-        File &file = toFolder.replaceFile(d->pathForMapClientState(session.mapUri().path()));
-        Writer writer(file);
-        world().map().serializeInternalState(writer.withHeader());
+        {
+            File &file = toFolder.replaceFile(d->mapClientStatePath(mapId));
+            Writer writer(file);
+            world().map().serializeInternalState(writer.withHeader());
+        }
+
+        // Object state.
+        {
+            File &file = toFolder.replaceFile(d->mapObjectStatePath(mapId));
+            file << world().map().objectsDescription().toUtf8(); // plain text
+        }
     }
     catch (Error const &er)
     {
@@ -749,10 +765,12 @@ void ClientApp::gameSessionWasLoaded(AbstractSession const &session,
 {
     DoomsdayApp::gameSessionWasLoaded(session, fromFolder);
 
+    String const mapId = session.mapUri().path();
+
+    // Internal map state. This might be missing.
     try
     {
-        // Internal map state. This might be missing.
-        if (File const *file = fromFolder.tryLocate<File const>(d->pathForMapClientState(session.mapUri().path())))
+        if (File const *file = fromFolder.tryLocate<File const>(d->mapClientStatePath(mapId)))
         {
             DENG2_ASSERT(session.thinkerMapping() != nullptr);
 
@@ -764,6 +782,24 @@ void ClientApp::gameSessionWasLoaded(AbstractSession const &session,
     catch (Error const &er)
     {
         LOGDEV_MAP_WARNING("Internal map state not deserialized: %s") << er.asText();
+    }
+
+    // Check validity the object state.
+    try
+    {
+        if (File const *file = fromFolder.tryLocate<File const>(d->mapObjectStatePath(mapId)))
+        {
+            // Parse the info and cross-check with current state.
+            world().map().verifyObjects(Info(*file), *session.thinkerMapping());
+        }
+        else
+        {
+            LOGDEV_MSG("\"%s\" not found") << d->mapObjectStatePath(mapId);
+        }
+    }
+    catch (Error const &er)
+    {
+        LOGDEV_MAP_WARNING("Object state check error: %s") << er.asText();
     }
 }
 

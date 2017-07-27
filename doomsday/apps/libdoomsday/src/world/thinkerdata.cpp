@@ -24,7 +24,7 @@
 
 using namespace de;
 
-//static QMultiHash<Id::Type, ThinkerData *> thinkerLookup;
+static QMultiHash<Id::Type, ThinkerData *> thinkerLookup;
 
 DENG2_PIMPL(ThinkerData)
 {
@@ -47,7 +47,7 @@ DENG2_PIMPL(ThinkerData)
 
     ~Impl()
     {
-        //thinkerLookup.remove(id, &self());
+        thinkerLookup.remove(id, &self());
 
         DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i)
         {
@@ -63,14 +63,18 @@ DENG2_AUDIENCE_METHOD(ThinkerData, Deletion)
 ThinkerData::ThinkerData(Id const &id)
     : d(new Impl(this, id))
 {
-    //DENG2_ASSERT(!d->id.isNone());
-    //thinkerLookup.insert(d->id, this);
+    if (d->id)
+    {
+        thinkerLookup.insert(d->id, this);
+    }
 }
 
 ThinkerData::ThinkerData(ThinkerData const &other) : d(new Impl(this, *other.d))
 {
-    //DENG2_ASSERT(!d->id.isNone());
-    //thinkerLookup.insert(d->id, this);
+    if (d->id)
+    {
+        thinkerLookup.insert(d->id, this);
+    }
 }
 
 Id const &ThinkerData::id() const
@@ -80,8 +84,8 @@ Id const &ThinkerData::id() const
 
 void ThinkerData::setId(Id const &id)
 {
-    //thinkerLookup.remove(d->id, this);
-    //thinkerLookup.insert(id, this);
+    thinkerLookup.remove(d->id, this);
+    thinkerLookup.insert(id, this);
 
     d->id = id;
 }
@@ -135,7 +139,7 @@ void ThinkerData::operator >> (Writer &to) const
 
 void ThinkerData::operator << (Reader &from)
 {
-    //thinkerLookup.remove(d->id, this);
+    thinkerLookup.remove(d->id, this);
 
     world::InternalSerialId sid;
     from >> sid;
@@ -153,10 +157,10 @@ void ThinkerData::operator << (Reader &from)
     }
 
     // The thinker has a new ID.
-    //thinkerLookup.insert(d->id, this);
+    thinkerLookup.insert(d->id, this);
 }
 
-/*ThinkerData *ThinkerData::find(Id const &id)
+ThinkerData *ThinkerData::find(Id const &id)
 {
     auto found = thinkerLookup.constFind(id);
     if (found != thinkerLookup.constEnd())
@@ -164,7 +168,7 @@ void ThinkerData::operator << (Reader &from)
         return found.value();
     }
     return nullptr;
-}*/
+}
 
 #ifdef DENG2_DEBUG
 duint32 ThinkerData::DebugCounter::total = 0;

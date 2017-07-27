@@ -3111,7 +3111,7 @@ void Map::update()
 
 #ifdef __CLIENT__
 
-String Map::mapObjectsDescription() const
+String Map::objectsDescription() const
 {
     String str;
     QTextStream os(&str);
@@ -3134,12 +3134,82 @@ String Map::mapObjectsDescription() const
     return str;
 }
 
+void Map::verifyObjects(Info const &objState, IThinkerMapping const &thinkerMapping) const
+{
+    auto *descPtr = gx.GetVariable(DD_OBJECT_STATE_INFO_STR);
+    if (!descPtr) return;
+
+    auto const descFunc = de::function_cast<de::String (*)(mobj_t const *)>(descPtr);
+
+    // Look up all the mobjs.
+    QList<thinker_t const *> mobjs;
+    thinkers().forAll(0x3, [&mobjs] (thinker_t *th)
+    {
+        if (Thinker_IsMobj(th)) mobjs << th;
+        return LoopContinue;
+    });
+
+    // Check that all objects are found in the state description.
+    if (objState.root().contents().size() != mobjs.size())
+    {
+        throw Error("Map::verifyObjects",
+                    String::format("Incorrect number of objects: %i in map, %i in description",
+                                   mobjs.size(),
+                                   objState.root().contents().size()));
+    }
+
+    // Check the cross-references.
+    for (auto i  = objState.root().contentsInOrder().begin();
+              i != objState.root().contentsInOrder().end();
+            ++i)
+    {
+        Info::BlockElement const &state = (*i)->as<Info::BlockElement>();
+        Id::Type const privateId = state.name().toUInt32();
+
+        DENG2_ASSERT(privateId != 0);
+
+        if (thinker_t *th = thinkerMapping.thinkerForPrivateId(privateId))
+        {
+            ThinkerData const *found = ThinkerData::find(privateId);
+
+            DENG2_ASSERT(found != nullptr);
+            DENG2_ASSERT(&found->thinker() == th);
+
+            Info const currentDesc(descFunc(found->as<MobjThinkerData>().mobj()));
+
+            Info::BlockElement const &currentState = currentDesc.root().contentsInOrder()
+                    .first()->as<Info::BlockElement>();
+
+            DENG2_ASSERT(currentState.name() == state.name());
+
+            foreach (String const &key, currentState.contents().keys())
+            {
+                qDebug() << privateId << key << currentState.keyValue(key).text << state.keyValue(key).text;
+
+                if (currentState.keyValue(key).text != state.keyValue(key).text)
+                {
+                    throw Error("Map::verifyObjects",
+                                String("Object %1 has mismatching '%2' (current:%3 != arch:%4)")
+                                .arg(privateId)
+                                .arg(key)
+                                .arg(currentState.keyValue(key).text)
+                                .arg(state.keyValue(key).text));
+                }
+            }
+        }
+        else
+        {
+            throw Error("Map::verifyObjects",
+                        String::format("Failed to find thinker matching ID 0x%x", privateId));
+        }
+    }
+
+    LOGDEV_MSG("State of map objects verified");
+}
+
 void Map::serializeInternalState(Writer &to) const
 {
     BaseMap::serializeInternalState(to);
-
-    //qDebug() << "DD_OBJECT_STATE_INFO_STR:";
-    //qDebug() << mapObjectsDescription().toLatin1().constData();
 
     // Internal state of thinkers.
     thinkers().forAll(0x3, [&to] (thinker_t *th)
@@ -3162,7 +3232,7 @@ void Map::serializeInternalState(Writer &to) const
     to << Id(Id::None);
 }
 
-void Map::deserializeInternalState(Reader &from, world::IThinkerMapping const &thinkerMapping)
+void Map::deserializeInternalState(Reader &from, IThinkerMapping const &thinkerMapping)
 {
     BaseMap::deserializeInternalState(from, thinkerMapping);
 

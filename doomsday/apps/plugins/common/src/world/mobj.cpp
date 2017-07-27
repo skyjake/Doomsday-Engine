@@ -1052,7 +1052,7 @@ de::String Mobj_AsTextWithInfoSyntax(mobj_t const *mob)
 
     QString str;
     QTextStream os(&str);
-    os.setCodec("latin1");
+    os.setCodec("UTF-8");
 
     os << "Mobj 0x" << String::number(Mobj_PrivateID(mob), 16) << " {\n";
 

@@ -89,7 +89,7 @@ public:
      * @param id  Identifier.
      * @return Thinker or @c nullptr.
      */
-    //static ThinkerData *find(de::Id const &id);
+    static ThinkerData *find(de::Id const &id);
 
 private:
     DENG2_PRIVATE(d)
