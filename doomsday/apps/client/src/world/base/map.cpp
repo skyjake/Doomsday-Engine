@@ -3182,11 +3182,11 @@ void Map::verifyObjects(Info const &objState, IThinkerMapping const &thinkerMapp
 
             DENG2_ASSERT(currentState.name() == state.name());
 
-            foreach (String const &key, currentState.contents().keys())
+            foreach (String const &key, state.contents().keys())
             {
-                qDebug() << privateId << key << currentState.keyValue(key).text << state.keyValue(key).text;
+                //qDebug() << privateId << key << currentState.keyValue(key).text << state.keyValue(key).text;
 
-                if (currentState.keyValue(key).text != state.keyValue(key).text)
+                if (state.keyValue(key).text != currentState.keyValue(key).text)
                 {
                     throw Error("Map::verifyObjects",
                                 String("Object %1 has mismatching '%2' (current:%3 != arch:%4)")
