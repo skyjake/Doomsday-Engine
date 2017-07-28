@@ -314,7 +314,12 @@ void BitmapFont::glInit()
         default:
             DENG2_ASSERT(!"BitmapFont: Format not implemented");
         }
-        if(!pixels) return;
+        if(!pixels) 
+        {
+            App_FileSystem().releaseFile(hndl->file());
+            delete hndl;
+            return;
+        }
 
         // Upload the texture.
         if(!novideo && !isDedicated)
