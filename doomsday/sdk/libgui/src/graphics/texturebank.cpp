@@ -42,13 +42,21 @@ DENG2_PIMPL(TextureBank)
     struct TextureData : public IData
     {
         Impl *d;
-        Id id { Id::None };
+        Id _id { Id::None };
+        std::unique_ptr<Image> pendingImage;
 
         TextureData(Image const &image, Impl *owner) : d(owner)
         {
-            if (!image.isNull())
+            if (image)
             {
-                id = d->atlas->alloc(image);
+                if (d->atlas)
+                {
+                    _id = d->atlas->alloc(image);
+                }
+                else
+                {
+                    pendingImage.reset(new Image(image));
+                }
             }
 
             /// @todo Reduce size if doesn't fit? Can be expanded when requested for use.
@@ -56,8 +64,21 @@ DENG2_PIMPL(TextureBank)
 
         ~TextureData()
         {
-            d->pathForAtlasId.remove(id);
-            d->atlas->release(id);
+            if (_id)
+            {
+                d->pathForAtlasId.remove(_id);
+                d->atlas->release(_id);
+            }
+        }
+
+        Id const &id()
+        {
+            if (pendingImage && d->atlas)
+            {
+                _id = d->atlas->alloc(*pendingImage);
+                pendingImage.reset();
+            }
+            return _id;
         }
     };
 
@@ -89,7 +110,7 @@ IAtlas *TextureBank::atlas()
 
 Id const &TextureBank::texture(DotPath const &id)
 {
-    return data(id).as<Impl::TextureData>().id;
+    return data(id).as<Impl::TextureData>().id();
 }
 
 Path TextureBank::sourcePathForAtlasId(Id const &id) const
@@ -105,7 +126,10 @@ Path TextureBank::sourcePathForAtlasId(Id const &id) const
 Bank::IData *TextureBank::loadFromSource(ISource &source)
 {
     auto *data = new Impl::TextureData(source.as<ImageSource>().load(), d);
-    d->pathForAtlasId.insert(data->id, source.as<ImageSource>().sourcePath());
+    if (auto const &texId = data->id())
+    {
+        d->pathForAtlasId.insert(texId, source.as<ImageSource>().sourcePath());
+    }
     return data;
 }
 
