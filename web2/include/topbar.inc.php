@@ -30,7 +30,7 @@
         <li class="quick-download"><?php echo($download_link); ?></li>
         <li class="supplementary"><a href="<?php echo(SITE_ROOT); ?>/builds">Builds</a></li>
         <li class="supplementary"><a href="<?php echo(SITE_ROOT."/addons"); ?>">Add-ons</a></li>
-        <li><a href="<?php echo(SITE_ROOT); ?>/manual">Manual</a></li>
+        <li><a href="https://manual.dengine.net">Manual</a></li>
         <li>&middot;</li>
         <li><a href="<?php echo(SITE_ROOT); ?>/talk">Forums</a></li>
         <li class="supplementary"><a href="<?php echo(SITE_ROOT); ?>/support">Support</a></li>
