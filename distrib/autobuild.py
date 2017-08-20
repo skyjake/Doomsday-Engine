@@ -220,11 +220,10 @@ def build_source_package():
         pkgName = 'doomsday'
         if ev.release_type() == 'stable':
             print 'Stable packages will be prepared'
-            system_command('deng_package_source.sh ' + ev.version_base())
+            system_command('deng_package_source.sh stable %i %s' % (ev.number(), ev.version_base()))
             pkgName += '-stable'
         else:
-            system_command('deng_package_source.sh build %i %s' % (ev.number(), 
-                                                                   ev.version_base()))
+            system_command('deng_package_source.sh unstable %i %s' % (ev.number(), ev.version_base()))
         for fn in os.listdir('.'):
             if fn[:9] == 'doomsday-' and fn[-7:] == '.tar.gz' and ev.version_base() in fn:
                 remote_copy(fn, ev.file_path(fn))
