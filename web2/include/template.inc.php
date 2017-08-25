@@ -209,17 +209,17 @@ function generate_sidebar()
     <ul>
         <li><a href='/talk'>Forums</a></li>
         <li><a href='/support'>Tech support</a></li>
-        <li><a href='http://facebook.com/doomsday.engine'>Facebook page</a></li>
         <li><a href='https://manual.dengine.net/guide/other_ports'>Other ports</a></li>            
         <li><a href='https://doomwiki.org/wiki/Entryway' title='DoomWiki.org'>Doom Wiki</a></li>
+        <li><a href='http://facebook.com/doomsday.engine'><span class='websymbol'>f</span> Facebook</a></li>
     </ul>
     <div class='heading'>Development</div>
     <ul>
+        <li><a href='https://github.com/skyjake/Doomsday-Engine.git'><span class='websymbol'>S</span> GitHub</a></li>
         <li><a href='https://tracker.dengine.net/projects/deng'>Bug Tracker</a></li>
         <li><a href='https://tracker.dengine.net/projects/deng/roadmap'>Roadmap</a></li>
         <li><a href='recent_posts'>Blog</a></li>
-        <li><a href='http://twitter.com/@dengteam'>@dengteam</a></li>
-        <li><a href='https://github.com/skyjake/Doomsday-Engine.git'>GitHub</a></li>
+        <li><a href='http://twitter.com/@dengteam'><span class='websymbol'>t</span> @dengteam</a></li>
     </ul>
     <div class='heading'><a href='donate' title='Donate to support the Doomsday Engine Project'>Donate &#9825;</a></div>
 </div></div>");
@@ -290,7 +290,7 @@ function generate_sitemap()
             if (--$count == 0) break;
         }
         $build_list .= "<li><a href='$site_root/builds'>Autobuilder Index</a></li>\n"
-            ."<li><a href='http://api.dengine.net/1/builds?format=feed'>RSS Feed</a></li></ul>\n";
+            ."<li><a href='http://api.dengine.net/1/builds?format=feed'><span class='websymbol'>B</span> RSS Feed</a></li></ul>\n";
 
         cache_echo(
 "<div id='site-map'>
@@ -302,7 +302,7 @@ function generate_sitemap()
         for ($i = 0; $i < $news_count; ++$i) {
             generate_blog_post_cached($news->posts[$i], 'newspost');
         }    
-        cache_echo("<li><a href='http://blog.dengine.net/category/news/feed/atom' title='Doomsday Engine news via RSS'>RSS Feed</a></li>");
+        cache_echo("<li><a href='http://blog.dengine.net/category/news/feed/atom' title='Doomsday Engine news via RSS'><span class='websymbol'>B</span> RSS Feed</a></li>");
                     
         cache_echo(
 "            </ul>
@@ -314,7 +314,7 @@ function generate_sitemap()
         for ($i = 0; $i < $dev_count; ++$i) {
             generate_blog_post_cached($dev->posts[$i], 'blogpost');
         }        
-        cache_echo("<li><a href='http://blog.dengine.net/category/dev/feed/atom' title='Doomsday Engine development blog via RSS'>RSS Feed</a></li>");
+        cache_echo("<li><a href='http://blog.dengine.net/category/dev/feed/atom' title='Doomsday Engine development blog via RSS'><span class='websymbol'>B</span> RSS Feed</a></li>");
                     
         cache_echo(
 "            </ul></li>

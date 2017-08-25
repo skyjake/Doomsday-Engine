@@ -1,9 +1,10 @@
 @import url("http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400italic,700");
-@import url("topbar.css");
-@import url("sitemap.css");
+@import url("https://fontlibrary.org/face/web-symbols");
+@import url("https://dengine.net/theme/stylesheets/topbar.css");
+@import url("https://dengine.net/theme/stylesheets/sitemap.css");
 
 body {
-    background: #282D2B url("../images/site-background0.jpg") no-repeat fixed;
+    background: #282D2B url("https://dengine.net/images/site-background0.jpg") no-repeat fixed;
     background-position: center 100%;
     background-size: 240% 240%;
     font-family: "Source Sans Pro";
@@ -13,12 +14,18 @@ body {
     margin: 0;
 }
 
+.websymbol {
+    font-family: "WebSymbolsRegular";
+    font-weight: normal; 
+    font-style: normal; 
+}
+
 #page-title {
     width: 100%;
     height: 15em;
     text-align: center;
     text-shadow: 0 0 1em black;
-    background: #282D2B url("../images/site-banner0.jpg") no-repeat;
+    background: #282D2B url("https://dengine.net/theme/images/site-banner0.jpg") no-repeat;
     background-size: cover;
     background-position: center;
 }
@@ -91,7 +98,7 @@ body {
     vertical-align: top;
 }
 #welcome .main-logo {
-    background-image: url("../images/deng-logo-512.png");
+    background-image: url("https://dengine.net/theme/images/deng-logo-512.png");
     width: 256px;
     height: 256px;
     background-size: 100% 100%;
@@ -246,7 +253,7 @@ div.block.blog-post {
     color: #eee;
 }
 div.package-badge {
-    background-image: url("../images/package.png");
+    background-image: url("https://dengine.net/theme/images/package.png");
     background-repeat: no-repeat;
     background-size: 32px 32px;    
     background-position: left center;
