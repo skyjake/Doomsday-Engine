@@ -37,10 +37,6 @@ DENG2_PIMPL_NOREF(PackageIconBank)
 
         Image load() const override
         {
-            // If the file system is being updated, let's hold on a second first.
-            // This is a background task so it doesn't hurt to delay it a little.
-            Folder::waitForPopulation();
-
             String const iconPath = sourcePath() / QStringLiteral("icon");
 
             Image img;

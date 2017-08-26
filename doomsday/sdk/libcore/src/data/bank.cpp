@@ -88,6 +88,11 @@ public:
         _items.remove(&data);
     }
 
+    bool contains(ItemType const *data) const {
+        DENG2_GUARD(this);
+        return _items.contains(const_cast<ItemType *>(data));
+    }
+
     virtual void clear() {
         DENG2_GUARD(this);
         _items.clear();
@@ -162,7 +167,6 @@ DENG2_PIMPL(Bank)
         /// Load the item into memory from its current cache.
         void load()
         {
-            DENG2_GUARD(this);
             DENG2_ASSERT(cache != 0);
 
             switch (cache->format())
@@ -401,15 +405,14 @@ DENG2_PIMPL(Bank)
 
             DENG2_GUARD(this);
 
-            DENG2_ASSERT(item.data.get() != 0);
-
+            DENG2_ASSERT(item.data.get() != nullptr);
             addBytes(item.data->sizeInMemory());
             DataCache::add(item);
         }
 
         void remove(Data &item)
         {
-            DENG2_ASSERT(item.data.get() != 0);
+            DENG2_ASSERT(item.data.get() != nullptr);
 
             DENG2_GUARD(this);
 
@@ -936,9 +939,11 @@ Bank::IData &Bank::data(DotPath const &path) const
 
 bool Bank::isLoaded(DotPath const &path) const
 {
-    Impl::Data &item = d->items.find(path, PathTree::MatchFull | PathTree::NoBranch);
-    DENG2_GUARD(item);
-    return bool(item.data);
+    if (Impl::Data const *item = d->items.tryFind(path, PathTree::MatchFull | PathTree::NoBranch))
+    {
+        return d->memoryCache.contains(item);
+    }
+    return false;
 }
 
 void Bank::unload(DotPath const &path, CacheLevel toLevel, Importance importance)
