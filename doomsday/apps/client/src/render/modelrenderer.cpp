@@ -149,6 +149,8 @@ DENG2_PIMPL(ModelRenderer)
         Vector3f const aspectCorrect(1.0f, 1.0f/1.2f, 1.0f);
         Vector3d origin = modelWorldOrigin + modelOffset * aspectCorrect;
 
+        // "local" == world space but with origin at model origin
+
         Matrix4f modelToLocal =
                 Matrix4f::rotate(-90 + yawAngle, Vector3f(0, 1, 0) /* vertical axis for yaw */) *
                 Matrix4f::rotate(pitchAngle,     Vector3f(1, 0, 0));
@@ -174,6 +176,9 @@ DENG2_PIMPL(ModelRenderer)
 
     /**
      * Sets up the transformation matrices.
+     *
+     * "Local space" is the same as world space but relative to the object's origin.
+     * That is, (0,0,0) being the object's origin.
      *
      * @param relativeEyePos  Position of the eye in relation to object (in world space).
      * @param modelToLocal    Transformation from model space to the object's local space

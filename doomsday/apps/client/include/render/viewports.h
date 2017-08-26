@@ -238,4 +238,6 @@ void R_ViewWindowTicker(int consoleNum, timespan_t ticLength);
  */
 de::Matrix4f const &Viewer_Matrix();
 
+de::Matrix4f const &Viewer_ModelViewMatrix();
+
 #endif // DENG_CLIENT_VIEWPORTS_H

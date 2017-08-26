@@ -881,18 +881,27 @@ static void setupPlayerSprites()
     }
 }
 
-static Matrix4f frameViewMatrix;
+static Matrix4f frameModelViewMatrix;
+static Matrix4f frameViewerMatrix;
 
 static void setupViewMatrix()
 {
-    // This will be the view matrix for the current frame.
-    frameViewMatrix = Rend_GetProjectionMatrix() *
-                      Rend_GetModelViewMatrix(DoomsdayApp::players().indexOf(viewPlayer));
+    auto &rend = ClientApp::renderSystem();
+
+    // These will be the matrices for the current frame.
+    rend.uProjectionMatrix() = Rend_GetProjectionMatrix();
+    frameModelViewMatrix     = Rend_GetModelViewMatrix(DoomsdayApp::players().indexOf(viewPlayer));
+    frameViewerMatrix        = rend.uProjectionMatrix().toMatrix4f() * frameModelViewMatrix;
 }
 
 Matrix4f const &Viewer_Matrix()
 {
-    return frameViewMatrix;
+    return frameViewerMatrix;
+}
+
+Matrix4f const &Viewer_ModelViewMatrix()
+{
+    return frameModelViewMatrix;
 }
 
 enum ViewState { Default2D, PlayerView3D, PlayerSprite2D };
@@ -1547,7 +1556,7 @@ D_CMD(ViewGrid)
 void Viewports_Register()
 {
     C_VAR_INT ("con-show-during-setup",     &loadInStartupMode,     0, 0, 1);
-    
+
     C_VAR_INT ("rend-camera-smooth",        &rendCameraSmooth,      CVF_HIDE, 0, 1);
 
     C_VAR_BYTE("rend-info-deltas-angles",   &showViewAngleDeltas,   0, 0, 1);
