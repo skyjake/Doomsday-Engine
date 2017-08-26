@@ -426,6 +426,7 @@ DENG_GUI_PIMPL(PackagesWidget)
                 img->setPreallocatedImage(_iconId);
                 icon().setImage(img);
                 icon().setImageScale(1);
+                checkIconColor();
             }
         }
 
