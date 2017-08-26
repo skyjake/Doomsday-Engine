@@ -283,6 +283,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         {
             bool isFile = false;
             auto pkgIdVer = Package::split(packageId());
+
             if (pkgIdVer.first.startsWith("file."))
             {
                 isFile = true;
@@ -303,9 +304,11 @@ DENG_GUI_PIMPL(PackagesWidget)
                 icon().setStyleImage("package.icon", "default");
                 icon().setImageScale(.5f);
             }
+
             String labelText = String(_E(b) "%1\n" _E(l)_E(s) "%2")
                     .arg(_item->label())
                     .arg(pkgIdVer.first);
+
             if (!isFile && pkgIdVer.second.isValid())
             {
                 labelText += String(_E(C) " %1" _E(.)).arg(pkgIdVer.second.compactNumber());
@@ -339,6 +342,23 @@ DENG_GUI_PIMPL(PackagesWidget)
             for (ButtonWidget *b : _tags)
             {
                 updateTagButtonStyle(b, auxColor);
+            }
+
+            checkIconColor();
+        }
+
+        void setSelected(bool selected) override
+        {
+            HomeItemWidget::setSelected(selected);
+            checkIconColor();
+        }
+
+        void checkIconColor()
+        {
+            // Package icons should always use their original colors.
+            if (_iconId)
+            {
+                icon().setImageColor(Vector4f(1, 1, 1, 1));
             }
         }
 
