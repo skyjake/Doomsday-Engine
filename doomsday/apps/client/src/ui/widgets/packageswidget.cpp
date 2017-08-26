@@ -153,6 +153,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             {
                 iconBank().audienceForLoad() -= this;
                 setSelected(false);
+                _packagePath.clear();
                 _item = &item;
                 destroyTagButtons();
                 createTagButtons();
@@ -230,6 +231,8 @@ DENG_GUI_PIMPL(PackagesWidget)
 
             if (_item && _item->file)
             {
+                _packagePath = _item->file->path();
+
                 if (Id pkgIcon = iconBank().packageIcon(*_item->file))
                 {
                     setPackageIcon(pkgIcon);
@@ -380,11 +383,13 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         void bankLoaded(DotPath const &path) override
         {
-            if (_iconId || !_item || !_item->file) return;
+            if (_iconId) return;
+
+            DENG2_ASSERT_IN_MAIN_THREAD();
 
             auto &bank = iconBank();
 
-            if (Path(_item->file->path()) == path)
+            if (_packagePath == path)
             {
                 setPackageIcon(bank.texture(path));
                 bank.audienceForLoad() -= this;
@@ -407,6 +412,7 @@ DENG_GUI_PIMPL(PackagesWidget)
     private:
         PackagesWidget &_owner;
         PackageItem const *_item;
+        Path _packagePath;
         QList<ButtonWidget *> _tags;
         MenuWidget *_actions = nullptr;
         Id _iconId;
