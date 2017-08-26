@@ -79,6 +79,11 @@ struct Garbage : public Lockable
             allocs.clear();
         }
     }
+
+    void forgetAndLeak()
+    {
+        allocs.clear(); // Oh well...
+    }
 };
 
 struct Garbages : public std::map<QThread *, Garbage *>, public Lockable
@@ -108,6 +113,16 @@ struct Garbages : public std::map<QThread *, Garbage *>, public Lockable
         {
             i->second->recycle(func);
         }
+    }
+
+    void forgetAndLeak()
+    {
+        DENG2_GUARD(this);
+        for (iterator i = begin(); i != end(); ++i)
+        {
+            i->second->forgetAndLeak();
+        }
+        clear();
     }
 };
 
@@ -191,6 +206,11 @@ void Garbage_Recycle(void)
 {
     Garbage *g = garbageForThread(QThread::currentThread());
     g->recycle();
+}
+
+void Garbage_ForgetAndLeak(void)
+{
+    garbages.forgetAndLeak();
 }
 
 void Garbage_RecycleAllWithDestructor(GarbageDestructor destructor)

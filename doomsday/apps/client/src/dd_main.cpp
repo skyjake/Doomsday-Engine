@@ -45,6 +45,7 @@
 #include <de/timer.h>
 #include <de/ArrayValue>
 #include <de/CommandLine>
+#include <de/Garbage>
 #include <de/NativeFile>
 #include <de/PackageLoader>
 #include <de/LinkFile>
@@ -600,6 +601,8 @@ void App_AbnormalShutdown(char const *message)
 
     //Sys_Shutdown();
     DD_Shutdown();
+
+    Garbage_ForgetAndLeak(); // At this point, it's too late.
 
     // Get outta here.
     exit(1);

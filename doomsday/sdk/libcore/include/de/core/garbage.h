@@ -88,6 +88,13 @@ DENG2_PUBLIC void Garbage_RemoveIfTrashed(void *ptr);
 DENG2_PUBLIC void Garbage_Recycle(void);
 
 /**
+ * Clears the garbage contents without actually freeing any memory. This
+ * should only be called under exceptional circumstances to quickly dismiss
+ * all recycled memory. Everything in the trash will leak!
+ */
+DENG2_PUBLIC void Garbage_ForgetAndLeak(void);
+
+/**
  * Frees all pointers in every thread's garbage if they are using a specific
  * destructor function.
  *
