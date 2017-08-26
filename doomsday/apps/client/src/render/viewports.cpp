@@ -881,7 +881,6 @@ static void setupPlayerSprites()
     }
 }
 
-static Matrix4f frameModelViewMatrix;
 static Matrix4f frameViewerMatrix;
 
 static void setupViewMatrix()
@@ -890,18 +889,14 @@ static void setupViewMatrix()
 
     // These will be the matrices for the current frame.
     rend.uProjectionMatrix() = Rend_GetProjectionMatrix();
-    frameModelViewMatrix     = Rend_GetModelViewMatrix(DoomsdayApp::players().indexOf(viewPlayer));
-    frameViewerMatrix        = rend.uProjectionMatrix().toMatrix4f() * frameModelViewMatrix;
+    rend.uViewMatrix()       = Rend_GetModelViewMatrix(DoomsdayApp::players().indexOf(viewPlayer));
+
+    frameViewerMatrix        = rend.uProjectionMatrix().toMatrix4f() * rend.uViewMatrix().toMatrix4f();
 }
 
 Matrix4f const &Viewer_Matrix()
 {
     return frameViewerMatrix;
-}
-
-Matrix4f const &Viewer_ModelViewMatrix()
-{
-    return frameModelViewMatrix;
 }
 
 enum ViewState { Default2D, PlayerView3D, PlayerSprite2D };

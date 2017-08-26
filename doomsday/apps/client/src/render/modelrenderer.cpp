@@ -47,6 +47,7 @@ DENG2_PIMPL(ModelRenderer)
     render::ModelLoader loader;
 
     GLUniform uMvpMatrix        { "uMvpMatrix",        GLUniform::Mat4 };
+    GLUniform uWorldMatrix      { "uWorldMatrix",      GLUniform::Mat4 }; // included in uMvpMatrix
     GLUniform uReflectionMatrix { "uReflectionMatrix", GLUniform::Mat4 };
     GLUniform uTex              { "uTex",              GLUniform::Sampler2D };
     GLUniform uReflectionTex    { "uReflectionTex",    GLUniform::SamplerCube };
@@ -82,6 +83,7 @@ DENG2_PIMPL(ModelRenderer)
     {
         program << uMvpMatrix
                 << uReflectionMatrix
+                << uWorldMatrix
                 << uTex
                 << uReflectionTex
                 << uEyePos
@@ -165,13 +167,17 @@ DENG2_PIMPL(ModelRenderer)
             modelToLocal = modelToLocal * (*preModelToLocal);
         }
 
-        Matrix4f localToView =
-                Viewer_Matrix() *
+        auto &rend = ClientApp::renderSystem();
+
+        Matrix4f const localToWorld =
                 Matrix4f::translate(origin) *
                 Matrix4f::scale(aspectCorrect); // Inverse aspect correction.
+        Matrix4f const localToScreen = Viewer_Matrix() * localToWorld;
+
+        uWorldMatrix = localToWorld * modelToLocal;
 
         // Set up a suitable matrix for the pose.
-        setTransformation(relativePos, modelToLocal, localToView);
+        setTransformation(relativePos, modelToLocal, localToScreen);
     }
 
     /**
@@ -183,13 +189,13 @@ DENG2_PIMPL(ModelRenderer)
      * @param relativeEyePos  Position of the eye in relation to object (in world space).
      * @param modelToLocal    Transformation from model space to the object's local space
      *                        (object's local frame in world space).
-     * @param localToView     Transformation from local space to projected view space.
+     * @param localToScreen   Transformation from local space to screen (projected 2D) space.
      */
     void setTransformation(Vector3f const &relativeEyePos,
                            Matrix4f const &modelToLocal,
-                           Matrix4f const &localToView)
+                           Matrix4f const &localToScreen)
     {
-        uMvpMatrix   = localToView * modelToLocal;
+        uMvpMatrix   = localToScreen * modelToLocal;
         inverseLocal = modelToLocal.inverse();
         uEyePos      = inverseLocal * relativeEyePos;
     }

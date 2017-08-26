@@ -62,6 +62,7 @@ static String const MATERIAL_DEFAULT    ("default");
 
 static String const VAR_U_MAP_TIME          ("uMapTime");
 static String const VAR_U_PROJECTION_MATRIX ("uProjectionMatrix");
+static String const VAR_U_VIEW_MATRIX       ("uViewMatrix");
 
 static Atlas::Size const MAX_ATLAS_SIZE (8192, 8192);
 
@@ -282,6 +283,10 @@ DENG2_PIMPL(ModelLoader)
         if (prog->def->hasMember(VAR_U_PROJECTION_MATRIX))
         {
             *prog << render.uProjectionMatrix();
+        }
+        if (prog->def->hasMember(VAR_U_VIEW_MATRIX))
+        {
+            *prog << render.uViewMatrix();
         }
 
         programs[name] = prog.get();

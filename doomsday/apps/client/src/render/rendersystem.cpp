@@ -69,6 +69,7 @@ DENG2_PIMPL(RenderSystem)
     DrawLists drawLists;
 
     GLUniform uMapTime          { "uMapTime",          GLUniform::Float };
+    GLUniform uViewMatrix       { "uViewMatrix",       GLUniform::Mat4  };
     GLUniform uProjectionMatrix { "uProjectionMatrix", GLUniform::Mat4  };
 
     // Texture => world surface projection lists.
@@ -426,6 +427,11 @@ GLUniform const &RenderSystem::uMapTime() const
 GLUniform &RenderSystem::uProjectionMatrix() const
 {
     return d->uProjectionMatrix;
+}
+
+GLUniform &RenderSystem::uViewMatrix() const
+{
+    return d->uViewMatrix;
 }
 
 render::Environment &RenderSystem::environment()

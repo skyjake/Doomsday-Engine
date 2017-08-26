@@ -58,6 +58,7 @@ public:
     de::ImageBank &images();
     de::GLUniform const &uMapTime() const;
     de::GLUniform &uProjectionMatrix() const;
+    de::GLUniform &uViewMatrix() const;
     render::Environment &environment();
     ModelRenderer &modelRenderer();
     SkyDrawable &sky();
