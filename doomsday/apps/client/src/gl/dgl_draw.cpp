@@ -225,6 +225,7 @@ struct DGLDrawState
             foreach (GLData::DrawBuffer *dbuf, gl->buffers)
             {
                 dbuf->release();
+                delete dbuf;
             }
             gl.reset();
         }
