@@ -47,8 +47,23 @@ function generate_page_header($title = NULL)
   <meta name='viewport' content='width=device-width, initial-scale=1'>
   <meta charset='UTF-8'>
   <link href='".SITE_ROOT."/theme/stylesheets/site.css' rel='stylesheet' type='text/css'>
+  <link rel=\"preconnect\" href=\"https://fontlibrary.org/face/web-symbols\" crossorigin>
   <style>$bg_rotation_css</style>
   <title>Doomsday Engine$title</title>
+  <script type=\"text/javascript\">
+  WebFontConfig = {
+    custom: {
+      families: [ 'WebSymbolsRegular' ],
+      urls: [ 'https://fontlibrary.org/face/web-symbols' ]
+    },
+    timeout: 5000
+  };  
+  (function(d) {
+    var wf = d.createElement('script'), s = d.scripts[0];
+    wf.src = 'https://ajax.googleapis.com/ajax/libs/webfont/1.5.18/webfont.js';
+    s.parentNode.insertBefore(wf, s);
+  })(document);
+  </script>
 </head>\n");    
 }
 
