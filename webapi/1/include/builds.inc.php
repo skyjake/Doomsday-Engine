@@ -17,51 +17,7 @@
  */
 
 require_once('database.inc.php');
-require_once('cache.inc.php');
-
-function detect_user_platform()
-{
-    require_once(__DIR__.'/../lib/Browser.php');
-    
-    // Check what the browser tells us.
-    $browser = new Browser();    
-    switch ($browser->getPlatform()) {
-        case Browser::PLATFORM_WINDOWS:
-            $user_platform = 'windows';
-            break;
-        case Browser::PLATFORM_APPLE:
-        case Browser::PLATFORM_IPHONE:
-        case Browser::PLATFORM_IPAD:
-            $user_platform = 'macx';
-            break;
-        case Browser::PLATFORM_LINUX:
-            $user_platform = 'linux';
-            break;
-        case Browser::PLATFORM_FREEBSD:
-        case Browser::PLATFORM_OPENBSD:
-        case Browser::PLATFORM_NETBSD:
-            $user_platform = 'any';
-            break;
-        default:
-            $user_platform = '';
-            break;
-    }
-    return $user_platform;
-}
-
-function omit_zeroes($version)
-{
-    $parts = explode(".", $version);
-    while (count($parts) > 2 && array_slice($parts, -1)[0] == '0') {
-        $parts = array_slice($parts, 0, -1);
-    }
-    return join('.', $parts);
-}
-
-function human_version($version, $build, $release_type)
-{    
-    return omit_zeroes($version)." ".ucwords($release_type)." [#${build}]";
-}
+require_once(DENG_LIB_DIR.'/cache.inc.php');
 
 function basic_markdown($text)
 {
@@ -409,7 +365,7 @@ function generate_platform_latest_json($platform, $build_type_txt)
                 'direct_download_fallback_uri' => download_link($filename)."&mirror=sf",
                 'file_size' => (int) $row['size'],
                 'file_md5' => $row['md5'],
-                'release_changeloguri' => DENG_API_URL."/builds?number=$build&format=html",
+                'release_changeloguri' => DENG_API_URL."/builds/$build/",
                 'release_notesuri' => release_notes_url(omit_zeroes($row['version'])),
                 'release_date' => $date,
                 'is_unstable' => ($type == BT_UNSTABLE)

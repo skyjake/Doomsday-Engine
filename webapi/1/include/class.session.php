@@ -1,7 +1,6 @@
 <?php
 
-require_once('config.inc.php');
-require_once(DENG_API_DIR.'/include/database.inc.php');
+require_once('database.inc.php');
 
 class Session
 {

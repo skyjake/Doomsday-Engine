@@ -17,6 +17,7 @@
  */
 
 require_once('api_config.inc.php'); // database config
+require_once(DENG_LIB_DIR.'/utils.inc.php');
 
 // Opens the database connection.
 // @return MySQLi object.
@@ -45,28 +46,6 @@ define('DB_TABLE_PLATFORMS', 'bdb_platforms');
 define('FT_NONE',      0);
 define('FT_BINARY',    1);
 define('FT_LOG',       2);
-
-define('BT_UNSTABLE',  0);
-define('BT_CANDIDATE', 1);
-define('BT_STABLE',    2);
-
-function build_type_text($build_type)
-{
-    switch ($build_type) {
-        case BT_UNSTABLE:
-            return 'unstable';
-        case BT_CANDIDATE:
-            return 'candidate';
-        case BT_STABLE:
-            return 'stable';
-    }
-    return '';
-}
-
-function build_type_from_text($text)
-{
-    return ($text == 'stable'? BT_STABLE : ($text == 'candidate'? BT_CANDIDATE : BT_UNSTABLE));    
-}
 
 function db_get_platform($db, $platform)
 {

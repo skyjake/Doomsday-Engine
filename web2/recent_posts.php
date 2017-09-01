@@ -11,9 +11,9 @@ function cmp_post($a, $b)
 function fetch_posts()
 {
     // Fetch the cached blog entries.
-    cache_try_load(cache_key('news', 'news'), -1);
+    cache_try_load(cache_key('blog', 'news'), -1);
     $news = json_decode(cache_get());            
-    cache_try_load(cache_key('news', 'dev'), -1);
+    cache_try_load(cache_key('blog', 'dev'), -1);
     $dev = json_decode(cache_get());
 
     $posts = array_merge($news->posts, $dev->posts);
@@ -28,11 +28,11 @@ function generate_post_blocks()
         $post = $posts[$i];
         $url = $post->url;
         $category = $post->categories[0];
-        $cat_link = '/blog/category/'.$category->slug;
+        $cat_link = DENG_BLOG_URL.'/category/'.$category->slug;
         $date = reformat_date($post->date);
         $tags = '';
         foreach ($post->tags as $tag) {
-            $tags .= " <div class='post-tag'><a href='/blog/tag/$tag->slug'>$tag->title</a></div>";    
+            $tags .= " <div class='post-tag'><a href='".DENG_BLOG_URL."/tag/$tag->slug'>$tag->title</a></div>";    
         }
         echo(
         "<div class='block blog-post'>
@@ -94,13 +94,13 @@ function generate_html()
 {
     generate_page_header($page_title);
     echo("<body>");
-    include('include/topbar.inc.php'); 
+    include(DENG_LIB_DIR.'/topbar.inc.php'); 
     generate_page_title($page_title);
     echo("<div id='content'><div id='page-content'>");    
     generate_post_blocks();
     echo("<div class='block'>
                     <article>
-                        <p><a href='/blog'>More blog posts &rarr;</a></p>
+                        <p><a href='".DENG_BLOG_URL."'>More blog posts &rarr;</a></p>
                     </article>
                 </div>                  
             </div>");

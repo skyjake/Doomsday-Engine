@@ -5,7 +5,7 @@ generate_page_header($page_title);
 ?>
 <body>
     <?php 
-    include('include/topbar.inc.php'); 
+    include(DENG_LIB_DIR.'/topbar.inc.php');     
     generate_page_title($page_title);
     ?>
     <div id='content'>

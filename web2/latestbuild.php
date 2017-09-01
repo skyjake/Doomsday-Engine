@@ -1,5 +1,6 @@
 <?php
 // Backwards compatibility for older versions of Doomsday
+// TODO: read from sitedata.json
 
 require_once('include/config.inc.php');
 require_once(DENG_API_DIR.'/include/builds.inc.php');

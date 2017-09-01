@@ -5,7 +5,7 @@ generate_page_header($page_title);
 ?>
 <body>
     <?php 
-    include('include/topbar.inc.php'); 
+    include(DENG_LIB_DIR.'/topbar.inc.php'); 
     generate_page_title($page_title);
     ?>
     <div id='content'>
@@ -23,10 +23,10 @@ generate_page_header($page_title);
 <div class="block">
 <article>            
     <h1>New to Doomsday Source?</h1>
-    <p>The best place to begin is the <a href="/manual/devel">Development section of the Manual</a>. Here are a couple of important pages to read first:</p>
+    <p>The best place to begin is the <a href="https://manual.dengine.net/devel">Development section of the Manual</a>. Here are a couple of important pages to read first:</p>
     <ul>
-        <li><a href="/manual/devel/getting_started">Getting started</a></li>
-        <li><a href="/manual/devel/guidelines">Developer guidelines</a></li>
+        <li><a href="https://manual.dengine.net/devel/getting_started">Getting started</a></li>
+        <li><a href="https://manual.dengine.net/devel/guidelines">Developer guidelines</a></li>
     </ul>
     <h2>API Documentation</h2>
     <ul>

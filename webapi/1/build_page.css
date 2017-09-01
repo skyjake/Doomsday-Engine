@@ -6,6 +6,11 @@ body {
     background-position: center 100%;
     background-size: 200% 200%;
 }
+.websymbol {
+    font-family: "WebSymbolsRegular";
+    font-weight: normal; 
+    font-style: normal; 
+}
 #wrapper {
     max-width: 85ex;
     margin-left: auto;

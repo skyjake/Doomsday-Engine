@@ -1,28 +1,19 @@
 <?php
-    require_once('class.session.php');
-    require_once('template.inc.php');
+    require_once('class.sitedata.php');
+    require_once('utils.inc.php');
     
     // Check the latest build.
     $user_platform = detect_user_platform();
-    $ckey = cache_key('home', ['topbar_dl', $user_platform]);
-    if (!cache_try_load($ckey)) {
-        $dl_link = platform_download_link();
-        // Find out the latest stable build.
-        $db = Session::get()->database();
-        $result = db_query($db, "SELECT version FROM ".DB_TABLE_BUILDS
-            ." WHERE type=".BT_STABLE." ORDER BY timestamp DESC LIMIT 1");
-        if ($row = $result->fetch_assoc()) {
-            $button_label = omit_zeroes($row['version']);
-        }
-        else {
-            $button_label = 'Download';            
-        }    
-        cache_echo("<a href='$dl_link' class='quick-download-link' "
+    
+    $dl_link = platform_download_link();
+    $dl_plat = user_download_platform();
+    $button_label = omit_zeroes(SiteData::get()->data()['latest_stable_version'][$dl_plat]);
+    if (!$button_label) {
+        $button_label = 'Download';
+    }
+    $download_link ="<a href='$dl_link' class='quick-download-link' "
             ."title='Download latest stable release'>$button_label <span "
-            ."class='downarrow'>&#x21E3;</span></a>");
-        cache_store($ckey);
-    }            
-    $download_link = cache_get();
+            ."class='downarrow'>&#x21E3;</span></a>";
 ?>
 <div id="dengine-topbar">
     <ul class="site-navigation">

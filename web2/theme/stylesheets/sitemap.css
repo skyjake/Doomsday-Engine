@@ -9,6 +9,11 @@
     color: #ddd;
     background-color: rgba(0, 0, 0, 0.75);
 }
+#site-map .websymbol {
+    font-family: "WebSymbolsRegular";
+    font-weight: normal; 
+    font-style: normal; 
+}
 #site-map ul {
     color: #ddd;
 }

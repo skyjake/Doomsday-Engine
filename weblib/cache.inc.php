@@ -16,7 +16,9 @@
  * http://www.gnu.org/licenses/gpl.html
  */
 
-require_once('api_config.inc.php');
+// Requirements:
+// - define DENG_CACHE_MAX_AGE (seconds)
+// - define DENG_CACHE_PATH
 
 $_cache_buf = '';
 $_cache_ts = 0;

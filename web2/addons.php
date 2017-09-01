@@ -101,7 +101,7 @@ function generate_addon_blocks()
 ?>
 <body>
     <?php 
-    include('include/topbar.inc.php'); 
+    include(DENG_LIB_DIR.'/topbar.inc.php'); 
     generate_page_title($page_title);
     ?>
     <div id='content'>

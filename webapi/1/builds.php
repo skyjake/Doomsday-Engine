@@ -20,7 +20,7 @@
 //error_reporting(E_ALL ^ E_NOTICE);
 
 require_once('include/builds.inc.php');
-require_once(__DIR__.'/../../www/include/template.inc.php');
+require_once(DENG_LIB_DIR.'/sitemap.inc.php');
 
 function show_signature($filename)
 {
@@ -75,9 +75,10 @@ function generate_header($page_title, $page_class='')
     cache_echo("  <meta charset=\"UTF-8\">\n");
     cache_echo("  <meta name='viewport' content='width=device-width, initial-scale=1'>\n");
     cache_echo("  <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400italic,700' rel='stylesheet' type='text/css'>\n");
-    cache_echo("  <link href='http://api.dengine.net/1/build_page.css' rel='stylesheet' type='text/css'>\n");
+    cache_echo("  <link href='/1/build_page.css' rel='stylesheet' type='text/css'>\n");
     cache_echo("  <link href='http://dengine.net/theme/stylesheets/topbar.css' rel='stylesheet' type='text/css'>\n");
     cache_echo("  <link href='http://dengine.net/theme/stylesheets/sitemap.css' rel='stylesheet' type='text/css'>\n");
+    cache_echo("  ".webfont_loader_header()."\n");
     cache_echo("  <title>$page_title</title>\n");
     cache_echo("</head><body>\n");
     cache_echo("<div id='wrapper' class='$page_class'>\n");
@@ -92,7 +93,7 @@ function generate_footer()
     cache_clear();
 
     ob_start();
-    include(__DIR__.'/../../www/include/topbar.inc.php');
+    include(DENG_LIB_DIR.'/topbar.inc.php');
     generate_sitemap();
     $templ = ob_get_contents();
     ob_end_clean();    
@@ -130,7 +131,7 @@ function generate_build_page($number)
         // Output page header.
         generate_header(human_version($version, $number, $type), 'build_page');
 
-        cache_echo("<p class='links'><a href='".DENG_API_URL."/builds?format=html'>Autobuilder Index</a> | <a href='".DENG_API_URL."/builds?format=feed'>RSS Feed</a></p>\n");
+        cache_echo("<p class='links'><a href='".DENG_API_URL."/builds/index'>Autobuilder Index</a> | <a href='".DENG_API_URL."/builds/feed'>RSS Feed</a></p>\n");
 
         cache_echo(db_build_summary($db, $number));
 
@@ -254,7 +255,7 @@ function generate_build_index_page()
         
     $this_year_ts = mktime(0, 0, 0, 1, 1);
 
-    cache_echo("<p class='links'><a href='".DENG_API_URL."/builds?format=feed'>RSS Feed</a></p>"
+    cache_echo("<p class='links'><a href='".DENG_API_URL."/builds/feed'>RSS Feed</a></p>"
         .'<h2>Latest Builds</h2>'
         .'<div class="buildlist">');
 
@@ -285,7 +286,7 @@ function generate_build_index_page()
 
         $build_date = $info['date'];
         cache_echo("<div class='build $type'>"
-            ."<a href=\"".DENG_API_URL."/builds?number=${build}&amp;format=html\">"
+            ."<a href=\"".DENG_API_URL."/builds/${build}\">"
             ."<div class='buildnumber'>$build</div>"
             ."<div class='builddate'>$build_date</div>"
             ."<div class='buildversion'>".omit_zeroes($version)."</div></a></div>\n");
@@ -303,7 +304,7 @@ function generate_build_index_page()
             $build_date = $info['date'];
             $build      = $info['build'];
             cache_echo("<div class='build $type'>"
-                ."<a href=\"".DENG_API_URL."/builds?number=${build}&amp;format=html\">"
+                ."<a href=\"".DENG_API_URL."/builds/${build}\">"
                 ."<div class='buildnumber'>$build</div>"
                 ."<div class='builddate'>$build_date</div>"
                 ."<div class='buildversion'>".omit_zeroes($version)."</div></a></div>\n");
@@ -348,7 +349,7 @@ function generate_build_feed()
         .'<channel>'
         .'<title>Doomsday Engine Builds</title>'
         .'<link>http://dengine.net/</link>'
-        .'<atom:link href="'.DENG_API_URL.'/builds?format=feed" rel="self" type="application/rss+xml" />'
+        .'<atom:link href="'.DENG_API_URL.'/builds/feed" rel="self" type="application/rss+xml" />'
         .'<description>Automated builds of the Doomsday Engine</description>'
         .'<language>en-us</language>'
         ."<webMaster>$contact</webMaster>"
@@ -361,7 +362,7 @@ function generate_build_feed()
     $result = db_query($db, 'SELECT build, type, UNIX_TIMESTAMP(timestamp) FROM '
         .DB_TABLE_BUILDS.' ORDER BY timestamp DESC');
     while ($row = $result->fetch_assoc()) {
-        $build_url = DENG_API_URL."/builds?number=$row[build]&amp;format=html";
+        $build_url = DENG_API_URL."/builds/$row[build]";
         $build_ts = gmstrftime(RFC_TIME, $row['UNIX_TIMESTAMP(timestamp)']);
         $summary = db_build_plaintext_summary($db, $row['build']);
         $report = db_build_summary($db, $row['build']);;

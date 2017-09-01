@@ -3,7 +3,7 @@ require_once('include/template.inc.php');
 generate_page_header();
 ?>
 <body>
-    <?php include('include/topbar.inc.php'); ?>
+    <?php include(DENG_LIB_DIR.'/topbar.inc.php'); ?>
     <div id='content'>
         <div id='welcome'>
             <div class='main-logo'></div>
