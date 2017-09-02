@@ -12,7 +12,6 @@ define('DENG_API_URL',      'http://api.dengine.net/1');
 define('DENG_MANUAL_URL',   'https://manual.dengine.net');
 define('DENG_BLOG_URL',     'http://blog.dengine.net');
 
-//define('DENG_LIB_DIR',          '/home/skyjake/public_html/lib');
-define('DENG_LIB_DIR',          '/home/skyjake/public_html/web2/lib');
+define('DENG_LIB_DIR',          '/home/skyjake/public_html/lib');
 define('DENG_CACHE_PATH',       '/home/skyjake/public_html/cache/api');
 define('DENG_CACHE_MAX_AGE',    14*60);

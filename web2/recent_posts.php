@@ -1,5 +1,7 @@
 <?php
+require_once('include/config.inc.php');
 require_once('include/template.inc.php');
+
 setlocale(LC_ALL, 'en_US.UTF-8');
 $page_title = 'Recent Blog Posts';
 
