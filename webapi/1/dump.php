@@ -19,6 +19,8 @@
 require_once('include/class.session.php');
 require_once('include/builds.inc.php');
 
+define('RECENT_THRESHOLD', 3600*72);
+
 $dl_platforms = [
     'win-x64',
     'win-x86',

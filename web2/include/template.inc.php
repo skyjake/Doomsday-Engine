@@ -4,9 +4,7 @@ require_once('config.inc.php');
 require_once(DENG_LIB_DIR.'/class.sitedata.php');
 require_once(DENG_LIB_DIR.'/utils.inc.php');
 require_once(DENG_LIB_DIR.'/sitemap.inc.php');
-    
-define('RECENT_THRESHOLD', 3600*72);
-    
+        
 function generate_page_header($title = NULL)
 {
     if ($title) {
