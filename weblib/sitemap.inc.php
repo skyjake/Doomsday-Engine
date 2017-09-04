@@ -3,6 +3,8 @@
 require_once('utils.inc.php');
 require_once('class.sitedata.php');
 
+define('RECENT_THRESHOLD', 3600*72);
+
 function generate_sitemap_blog_post($post, $css_class)
 {
     $nice_date = reformat_date($post->date);    
