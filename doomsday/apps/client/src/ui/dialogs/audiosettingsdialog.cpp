@@ -117,9 +117,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
                 << new ChoiceItem(tr("Disabled"), "dummy");
 
         musicPlugin->items()
-           #if defined (UNIX)
                 << new ChoiceItem(tr("Fluidsynth"), "fluidsynth")
-           #endif
                 << new ChoiceItem(tr("FMOD"), "fmod")
            #if !defined (DENG_DISABLE_SDLMIXER)
                 << new ChoiceItem(tr("SDL_mixer"), "sdlmixer")

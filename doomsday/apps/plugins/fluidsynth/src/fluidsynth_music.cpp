@@ -460,18 +460,27 @@ void DM_Music_Pause(int setPause)
 
 int DM_Music_PlayFile(const char *filename, int looped)
 {
-    if(!filename) return false;
+    if (!filename) return false;
 
-    if(!fluid_is_midifile(filename))
+#if defined (WIN32)
+    // Using MinGW.
+    QString pathStr = filename;
+    pathStr.replace("\\", "/");
+    QByteArray const path = pathStr.toUtf8();
+#else
+    QByteArray const path = filename;
+#endif
+
+    if (!fluid_is_midifile(path))
     {
         // It doesn't look like MIDI.
-        App_Log(DE2_LOG_VERBOSE, "[FluidSynth] Cannot play \"%s\": not a MIDI file", filename);
+        App_Log(DE2_LOG_VERBOSE, "[FluidSynth] Cannot play \"%s\": not a MIDI file", path.constData());
         return false;
     }
 
-    if(sfontId < 0)
+    if (sfontId < 0)
     {
-        App_Log(DE2_LOG_VERBOSE, "[FluidSynth] Cannot play \"%s\" without an SF2 soundfont", filename);
+        App_Log(DE2_LOG_VERBOSE, "[FluidSynth] Cannot play \"%s\" without an SF2 soundfont", path.constData());
         return false;
     }
 
@@ -482,13 +491,13 @@ int DM_Music_PlayFile(const char *filename, int looped)
 
     // Create a new player.
     fsPlayer = new_fluid_player(DMFluid_Synth());
-    fluid_player_add(fsPlayer, filename);
+    fluid_player_add(fsPlayer, path);
     fluid_player_set_loop(fsPlayer, looped? -1 /*infinite times*/ : 1);
     fluid_player_play(fsPlayer);
 
     startPlayer();
 
-    DSFLUIDSYNTH_TRACE("PlayFile: playing '" << filename << "' using player "
+    DSFLUIDSYNTH_TRACE("PlayFile: playing '" << path.constData() << "' using player "
                        << fsPlayer << " looped:" << looped << " sfont:" << sfontId);
     return true;
 }
