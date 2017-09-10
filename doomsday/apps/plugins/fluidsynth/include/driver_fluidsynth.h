@@ -48,7 +48,7 @@ fluid_synth_t* DMFluid_Synth();
 fluid_audio_driver_t* DMFluid_Driver();
 audiointerface_sfx_generic_t* DMFluid_Sfx();
 
-#define MAX_SYNTH_GAIN      0.4
+#define MAX_SYNTH_GAIN      1.0f //0.4f
 
 #define DSFLUIDSYNTH_TRACE(args)  LOGDEV_AUDIO_XVERBOSE("[FluidSynth] ", args)
 

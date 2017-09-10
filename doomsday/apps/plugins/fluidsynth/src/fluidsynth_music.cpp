@@ -86,7 +86,7 @@ public:
         Sys_Lock(_mutex);
 
         int avail;
-        if(_writePos >= _readPos)
+        if (_writePos >= _readPos)
         {
             avail = _writePos - _readPos;
         }
@@ -108,11 +108,11 @@ public:
 
         // No need to split?
         const int remainder = _end - _writePos;
-        if(length <= remainder)
+        if (length <= remainder)
         {
             memcpy(_writePos, data, length);
             _writePos += length;
-            if(_writePos == _end) _writePos = _buf; // May wrap around.
+            if (_writePos == _end) _writePos = _buf; // May wrap around.
         }
         else
         {
@@ -144,11 +144,11 @@ public:
         length = MIN_OF(length, avail);
 
         const int remainder = _end - _readPos;
-        if(length <= remainder)
+        if (length <= remainder)
         {
             memcpy(data, _readPos, length);
             _readPos += length;
-            if(_readPos == _end) _readPos = _buf; // May wrap around.
+            if (_readPos == _end) _readPos = _buf; // May wrap around.
         }
         else
         {
@@ -173,7 +173,7 @@ private:
 };
 
 static RingBuffer* blockBuffer;
-static float musicVolume;
+static float musicVolume = 1.0f;
 
 /**
  * Thread entry point for the synthesizer. Runs until the song is stopped.
@@ -187,9 +187,9 @@ static int synthWorkThread(void* parm)
 
     byte samples[BLOCK_SIZE];
 
-    while(!workerShouldStop)
+    while (!workerShouldStop)
     {
-        if(blockBuffer->availableForWriting() < BLOCK_SIZE)
+        if (blockBuffer->availableForWriting() < BLOCK_SIZE)
         {
             // We should not or cannot produce samples right now, let's sleep for a while.
             Thread_Sleep(50);
@@ -225,7 +225,7 @@ static int streamOutSamples(sfxbuffer_t* buf, void* data, unsigned int size)
     DENG_UNUSED(buf);
     DENG_ASSERT(buf == sfxBuf);
 
-    if(blockBuffer->availableForReading() >= int(size))
+    if (blockBuffer->availableForReading() >= int(size))
     {
         //DSFLUIDSYNTH_TRACE("Streaming out " << size << " bytes.");
         blockBuffer->read(data, size);
@@ -252,7 +252,7 @@ static void startWorker()
  */
 static void startPlayer()
 {
-    if(DMFluid_Driver()) return;
+    if (DMFluid_Driver()) return;
 
     DENG_ASSERT(!worker);
     DENG_ASSERT(sfxBuf == NULL);
@@ -285,7 +285,7 @@ static void stopWorker()
 {
     DENG_ASSERT(DMFluid_Driver() == NULL);
 
-    if(worker)
+    if (worker)
     {
         DSFLUIDSYNTH_TRACE("stopWorker: Stopping thread " << worker);
 
@@ -300,9 +300,9 @@ static void stopWorker()
 static void stopPlayer()
 {
     DSFLUIDSYNTH_TRACE("stopPlayer: fsPlayer " << fsPlayer);
-    if(!fsPlayer) return;
+    if (!fsPlayer) return;
 
-    if(!DMFluid_Driver())
+    if (!DMFluid_Driver())
     {
         // Destroy the sfx buffer.
         DENG_ASSERT(sfxBuf != 0);
@@ -324,7 +324,7 @@ static void stopPlayer()
 
 int DM_Music_Init(void)
 {
-    if(blockBuffer) return true;
+    if (blockBuffer) return true;
 
     musicVolume = 1.f;
     blockBuffer = new RingBuffer(MAX_BLOCKS * BLOCK_SIZE);
@@ -333,13 +333,13 @@ int DM_Music_Init(void)
 
 void DMFluid_Shutdown(void)
 {
-    if(!blockBuffer) return;
+    if (!blockBuffer) return;
 
     stopPlayer();
 
     delete blockBuffer; blockBuffer = 0;
 
-    if(fsPlayer)
+    if (fsPlayer)
     {
         delete_fluid_player(fsPlayer);
         fsPlayer = 0;
@@ -355,18 +355,18 @@ void DM_Music_Shutdown(void)
 
 void DMFluid_SetSoundFont(const char* fileName)
 {
-    if(sfontId >= 0)
+    if (sfontId >= 0)
     {
         // First unload the previous font.
         fluid_synth_sfunload(DMFluid_Synth(), sfontId, false);
         sfontId = -1;
     }
 
-    if(!fileName) return;
+    if (!fileName) return;
 
     // Load the new one.
     sfontId = fluid_synth_sfload(DMFluid_Synth(), fileName, true);
-    if(sfontId >= 0)
+    if (sfontId >= 0)
     {
         App_Log(DE2_LOG_VERBOSE, "FluidSynth: Loaded SF2 soundfont \"%s\" with id:%i", fileName, sfontId);
     }
@@ -378,17 +378,13 @@ void DMFluid_SetSoundFont(const char* fileName)
 
 void DM_Music_Set(int prop, float value)
 {
-    switch(prop)
+    switch (prop)
     {
     case MUSIP_VOLUME:
         musicVolume = value;
-        if(sfxBuf)
+        if (sfxBuf)
         {
             DMFluid_Sfx()->Set(sfxBuf, SFXBP_VOLUME, musicVolume);
-        }
-        else if(DMFluid_Driver())
-        {
-            fluid_synth_set_gain(DMFluid_Synth(), MAX_SYNTH_GAIN * musicVolume);
         }
         DSFLUIDSYNTH_TRACE("Music_Set: MUSIP_VOLUME = " << musicVolume);
         break;
@@ -400,10 +396,10 @@ void DM_Music_Set(int prop, float value)
 
 int DM_Music_Get(int prop, void* ptr)
 {
-    switch(prop)
+    switch (prop)
     {
     case MUSIP_ID:
-        if(ptr)
+        if (ptr)
         {
             strcpy((char*) ptr, "FluidSynth/Ext (MIDI only)");
             return true;
@@ -411,7 +407,7 @@ int DM_Music_Get(int prop, void* ptr)
         break;
 
     case MUSIP_PLAYING: {
-        if(!fsPlayer) return false;
+        if (!fsPlayer) return false;
         int playing = (fluid_player_get_status(fsPlayer) == FLUID_PLAYER_PLAYING);
         DSFLUIDSYNTH_TRACE("Music_Get: MUSIP_PLAYING = " << playing);
         return playing;
@@ -444,9 +440,9 @@ void DM_Music_Stop(void)
 
 void DM_Music_Pause(int setPause)
 {
-    if(!fsPlayer || !sfxBuf) return;
+    if (!fsPlayer || !sfxBuf) return;
 
-    if(setPause)
+    if (setPause)
     {
         DMFluid_Sfx()->Stop(sfxBuf);
         DSFLUIDSYNTH_TRACE("Song paused.");
