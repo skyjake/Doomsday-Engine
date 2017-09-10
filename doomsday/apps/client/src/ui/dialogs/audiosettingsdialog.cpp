@@ -73,7 +73,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
             area.add(musicSource    = new CVarChoiceWidget    ("music-source"));
             area.add(musicSoundfont = new CVarNativePathWidget("music-soundfont"));
 
-            musicSoundfont->setBlankText(tr("System default"));
+            musicSoundfont->setBlankText(tr("GeneralUser GS"));
             musicSoundfont->setFilters(StringList()
                                        << "SF2 soundfonts (*.sf2)"
                                        << "DLS soundfonts (*.dls)"

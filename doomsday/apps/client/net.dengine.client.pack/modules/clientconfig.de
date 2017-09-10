@@ -121,18 +121,14 @@ def setDefaults(d)
     # Audio settings.
     record d.audio()
         soundPlugin = 'fmod'
-        if Version.OS == 'macx'
-            musicPlugin = 'fluidsynth'
-            cdPlugin    = 'dummy'
+        musicPlugin = 'fluidsynth'
+        cdPlugin = 'dummy'
+        if Version.OS == 'windows'
+            cdPlugin = 'winmm'
         elsif Version.OS == 'ios'
             musicPlugin = 'fmod'
-            cdPlugin    = 'dummy'
-        elsif Version.OS == 'windows'
-            musicPlugin = 'sdlmixer'
-            cdPlugin    = 'winmm'
         else
             musicPlugin = 'fmod'
-            cdPlugin    = 'dummy'
         end
         record fmod
         fmod.speakerMode = '' # defaults to stereo

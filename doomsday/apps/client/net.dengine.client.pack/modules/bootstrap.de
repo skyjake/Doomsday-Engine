@@ -64,12 +64,26 @@ def upgradeMaintenance()
     end
 end
 
+def cacheDataFiles()
+    # Make an unzipped copy of the default soundfont, if it is missing.
+    cacheFolder = File('/home/cache')
+    sf2Name = 'default.sf2'
+    if not cacheFolder.locate(sf2Name)
+        dest = cacheFolder.replace(sf2Name)
+        dest.write(File('/packs/net.dengine.client/audio/GeneralUser GS.471/GeneralUser GS v1.471.sf2').read())
+        dest.flush()
+    end
+end
+
 #
 # BOOT SEQUENCE
 #
 
 # During launch we will perform any necessary maintenance tasks.
 upgradeMaintenance()
+
+# Make native copies of data files.
+cacheDataFiles()
 
 # Whenever a game is added, we'll schedule legacy savegame conversion tasks.
 App.audienceForGameAddition += [runLegacySavegameConversion]

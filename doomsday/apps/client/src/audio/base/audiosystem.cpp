@@ -1850,15 +1850,13 @@ void AudioSystem::updateMusicMidiFont()
     LOG_AS("AudioSystem");
 
     NativePath path(musMidiFontPath);
-#ifdef MACOSX
-    // On macOS we can try to use the basic DLS soundfont that's part of CoreAudio.
     if (path.isEmpty())
     {
-        path = "/System/Library/Components/CoreAudio.component/Contents/Resources/gs_instruments.dls";
+        // The bootstrap script copies the default GeneralUser GS soundfont from the
+        // client's package so it can be loaded by FluidSynth.
+        path = App::app().nativeHomePath()/"cache/default.sf2";
     }
-#endif
-
-    d->setMusicProperty(AUDIOP_SOUNDFONT_FILENAME, path.expand().toString().toLatin1().constData());
+    d->setMusicProperty(AUDIOP_SOUNDFONT_FILENAME, path.expand().toString().toUtf8().constData());
 }
 
 bool AudioSystem::sfxIsAvailable() const
