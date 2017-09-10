@@ -45,6 +45,7 @@ public:
     operator IByteArray &();
 
     Block &block();
+    Block const &block() const;
 
     /// Empties the block value.
     void clear();
