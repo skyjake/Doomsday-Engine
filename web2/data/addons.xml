@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addons>
+<addons>    
     <addon featured="true">
         <downloadUri>http://files.dengine.net/torrents/jdrp-packaged-20070404.zip.torrent</downloadUri>
         <title>DOOM Resource Pack (jDRP)</title>
@@ -126,6 +126,32 @@
         <title>Slide's Skyboxes</title>
         <description>3d model skies by Slide for all versions of DOOM.</description>
         <notes><![CDATA[ZIP archives should be unzipped before loading in Doomsday.]]></notes>
+        <games>
+            <game>doom1</game>
+            <game>doom1-share</game>
+            <game>doom1-ultimate</game>
+            <game>doom2</game>
+            <game>doom2-plut</game>
+            <game>doom2-tnt</game>
+        </games>
+    </addon>
+    <addon>
+        <downloadUri>http://files.dengine.net/packs/Abbspack%20Fullpack%20v7.1%20(deus-ex%20fixed%20edition).pk3</downloadUri>
+        <title>Abbspack v7.1 (3D Weapons)</title>
+        <description>New HUD 3D weapon models &amp; sound effects for the standard Doom weapon set. This is the classic Abbspack with fixes by deus-ex for Doomsday 2.</description>
+        <games>
+            <game>doom1</game>
+            <game>doom1-share</game>
+            <game>doom1-ultimate</game>
+            <game>doom2</game>
+            <game>doom2-plut</game>
+            <game>doom2-tnt</game>
+        </games>
+    </addon>
+    <addon>
+        <downloadUri>http://files.dengine.net/packs/Abbspack%20Alternative%20v7.1%20(deus-ex%20fixed%20edition).pk3</downloadUri>
+        <title>Abbspack v7.1 with Alternative Weapons</title>
+        <description>Same as the regular Abbspack v7.1 except Pistol is replaced by a Colt and Plasma Rifle is replaced by a Winchester Rifle. This is the classic Abbspack with fixes by deus-ex for Doomsday 2.</description>
         <games>
             <game>doom1</game>
             <game>doom1-share</game>
