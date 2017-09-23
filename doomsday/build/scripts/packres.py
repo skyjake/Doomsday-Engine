@@ -46,7 +46,7 @@ class Pack:
                 # Write the contents of the folder recursively.
                 def process_dir(path, dest_path):
                     self.msg("processing %s" % os.path.normpath(path))
-                    for file in os.listdir(path):
+                    for file in sorted(os.listdir(path)):
                         real_file = os.path.join(path, file)
                         if file[0] == '.':
                             continue # Ignore these.
