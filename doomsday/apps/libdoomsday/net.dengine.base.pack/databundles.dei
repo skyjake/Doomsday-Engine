@@ -134,6 +134,18 @@ package "com.idsoftware.doom2_1.6.66" {
     }
 }
 
+package "com.idsoftware.doom2.german_1.6.66" {
+    format: IWAD 
+    fileName: doom2.wad
+    fileSize: 14824716
+    info {
+        title: DOOM 2: Hell on Earth (German)
+        author: id Software
+        license: All rights reserved
+        tags: doom vanilla german
+    }
+}
+
 package "com.idsoftware.doom2.french_1.8" {
     format: IWAD 
     fileName: doom2f.wad
