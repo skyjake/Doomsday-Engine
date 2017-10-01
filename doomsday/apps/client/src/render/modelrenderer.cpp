@@ -167,8 +167,6 @@ DENG2_PIMPL(ModelRenderer)
             modelToLocal = modelToLocal * (*preModelToLocal);
         }
 
-        auto &rend = ClientApp::renderSystem();
-
         Matrix4f const localToWorld =
                 Matrix4f::translate(origin) *
                 Matrix4f::scale(aspectCorrect); // Inverse aspect correction.
