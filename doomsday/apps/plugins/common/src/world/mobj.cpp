@@ -246,6 +246,23 @@ uint32_t Mobj_PrivateID(mobj_t const *mob)
     return 0;
 }
 
+mobj_t *Mobj_FindByPrivateID(uint32_t privateId)
+{
+    if (privateId == 0)
+    {
+        return nullptr;
+    }
+
+    if (auto *thinkerData = ThinkerData::find(de::Id(privateId)))
+    {
+        if (auto *mobjData = de::maybeAs<MobjThinkerData>(thinkerData))
+        {
+            return mobjData->mobj();
+        }
+    }
+    return nullptr;
+}
+
 dd_bool Mobj_IsPlayer(mobj_t const *mob)
 {
     if(!mob) return false;
@@ -1046,27 +1063,85 @@ void Mobj_InflictDamage(mobj_t *mob, mobj_t const *inflictor, int damage)
 
 de::String Mobj_AsTextWithInfoSyntax(mobj_t const *mob)
 {
-    // Note: Used for debugging purposes.
-
     using de::String;
 
     QString str;
     QTextStream os(&str);
     os.setCodec("UTF-8");
 
-    os << "Mobj 0x" << String::number(Mobj_PrivateID(mob), 16) << " {\n";
+    os << "Mobj 0x" << String::number(Mobj_PrivateID(mob), 16)
+       << " {\n  target = 0x" << String::number(Mobj_PrivateID(mob->target), 16)
+       << "\n  onMobj = 0x" << String::number(Mobj_PrivateID(mob->onMobj), 16)
+       << "\n  tracer = 0x" << String::number(Mobj_PrivateID(mob->tracer), 16);
 
-    os << "  target    = 0x" << String::number(Mobj_PrivateID(mob->target), 16) << "\n"
-       << "  onMobj    = 0x" << String::number(Mobj_PrivateID(mob->onMobj), 16) << "\n";
-
-    #if defined (__JHEXEN__)
+    #if defined (__JHERETIC__)
     {
-        os << "  tracer    = 0x" << String::number(Mobj_PrivateID(mob->tracer), 16) << "\n"
-           << "  lastEnemy = 0x" << String::number(Mobj_PrivateID(mob->lastEnemy), 16) << "\n";
+        os << "\n  generator = 0x" << String::number(Mobj_PrivateID(mob->generator), 16);
     }
     #endif
 
-    os << "}\n";
+    #if defined (__JHEXEN__)
+    {
+        os << "\n  lastEnemy = 0x" << String::number(Mobj_PrivateID(mob->lastEnemy), 16);
+    }
+    #endif
+
+    os << "\n}\n";
 
     return str;
+}
+
+void Mobj_RestoreObjectState(mobj_t *mob, de::Info::BlockElement const &state)
+{
+    static de::String const KEY_TARGET     ("target");
+    static de::String const KEY_ON_MOBJ    ("onMobj");
+    static de::String const KEY_TRACER     ("tracer");
+    static de::String const KEY_GENERATOR  ("generator");
+    static de::String const KEY_LAST_ENEMY ("lastEnemy");
+
+    bool ok;
+    uint32_t pid;
+
+    pid = state.keyValue(KEY_TARGET).text.toUInt32(&ok, 0);
+    if (ok)
+    {
+        mob->target = Mobj_FindByPrivateID(pid);
+        qDebug() << "mobj" << mob->thinker.id << "target" << pid << mob->target;
+    }
+
+    pid = state.keyValue(KEY_ON_MOBJ).text.toUInt32(&ok, 0);
+    if (ok)
+    {
+        mob->onMobj = Mobj_FindByPrivateID(pid);
+        qDebug() << "mobj" << mob->thinker.id << "onMobj" << pid << mob->onMobj;
+    }
+
+    pid = state.keyValue(KEY_TRACER).text.toUInt32(&ok, 0);
+    if (ok)
+    {
+        mob->tracer = Mobj_FindByPrivateID(pid);
+        qDebug() << "mobj" << mob->thinker.id << "tracer" << pid << mob->tracer;
+    }
+
+    #if defined (__JHERETIC__)
+    {
+        pid = state.keyValue(KEY_GENERATOR).text.toUInt32(&ok, 0);
+        if (ok)
+        {
+            mob->generator = Mobj_FindByPrivateID(pid);
+            qDebug() << "mobj" << mob->thinker.id << "generator" << pid << mob->generator;
+        }
+    }
+    #endif
+
+    #if defined (__JHEXEN__)
+    {
+        pid = state.keyValue(KEY_LAST_ENEMY).text.toUInt32(&ok, 0);
+        if (ok)
+        {
+            mob->lastEnemy = Mobj_FindByPrivateID(pid);
+            qDebug() << "mobj" << mob->thinker.id << "lastEnemy" << pid << mob->lastEnemy;
+        }
+    }
+    #endif
 }

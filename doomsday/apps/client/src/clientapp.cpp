@@ -784,13 +784,13 @@ void ClientApp::gameSessionWasLoaded(AbstractSession const &session,
         LOGDEV_MAP_WARNING("Internal map state not deserialized: %s") << er.asText();
     }
 
-    // Check validity the object state.
+    // Restore object state.
     try
     {
         if (File const *file = fromFolder.tryLocate<File const>(d->mapObjectStatePath(mapId)))
         {
             // Parse the info and cross-check with current state.
-            world().map().verifyObjects(Info(*file), *session.thinkerMapping());
+            world().map().restoreObjects(Info(*file), *session.thinkerMapping());
         }
         else
         {

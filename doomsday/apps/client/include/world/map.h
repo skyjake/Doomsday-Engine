@@ -207,7 +207,7 @@ public:
 
     de::String objectsDescription() const;
 
-    void verifyObjects(de::Info const &objState, IThinkerMapping const &thinkerMapping) const;
+    void restoreObjects(de::Info const &objState, IThinkerMapping const &thinkerMapping) const;
 
 public:  //- Light sources --------------------------------------------------------------
 

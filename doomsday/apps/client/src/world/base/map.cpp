@@ -3116,11 +3116,11 @@ String Map::objectsDescription() const
     String str;
     QTextStream os(&str);
 
-    if (auto *descPtr = gx.GetVariable(DD_OBJECT_STATE_INFO_STR))
+    if (auto *descPtr = gx.GetVariable(DD_FUNC_OBJECT_STATE_INFO_STR))
     {
         auto const descFunc = de::function_cast<de::String (*)(mobj_t const *)>(descPtr);
 
-        // Internal state of thinkers.
+        // Print out a state description for each thinker.
         thinkers().forAll(0x3, [&os, &descFunc] (thinker_t *th)
         {
             if (Thinker_IsMobj(th))
@@ -3134,17 +3134,21 @@ String Map::objectsDescription() const
     return str;
 }
 
-void Map::verifyObjects(Info const &objState, IThinkerMapping const &thinkerMapping) const
+void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMapping) const
 {
-    auto *descPtr = gx.GetVariable(DD_OBJECT_STATE_INFO_STR);
-    if (!descPtr) return;
+    /// @todo Generalize from mobjs to all thinkers?
 
-    auto const descFunc = de::function_cast<de::String (*)(mobj_t const *)>(descPtr);
+    auto *descPtr    = gx.GetVariable(DD_FUNC_OBJECT_STATE_INFO_STR);
+    auto *restorePtr = gx.GetVariable(DD_FUNC_RESTORE_OBJECT_STATE);
+
+    if (!descPtr || !restorePtr) return;
+
+    auto const descFunc    = de::function_cast<de::String (*)(mobj_t const *)>(descPtr);
+    auto const restoreFunc = de::function_cast<void (*)(mobj_t *, Info::BlockElement const &)>(restorePtr);
 
     // Look up all the mobjs.
     QList<thinker_t const *> mobjs;
-    thinkers().forAll(0x3, [&mobjs] (thinker_t *th)
-    {
+    thinkers().forAll(0x3, [&mobjs] (thinker_t *th) {
         if (Thinker_IsMobj(th)) mobjs << th;
         return LoopContinue;
     });
@@ -3152,7 +3156,7 @@ void Map::verifyObjects(Info const &objState, IThinkerMapping const &thinkerMapp
     // Check that all objects are found in the state description.
     if (objState.root().contents().size() != mobjs.size())
     {
-        throw Error("Map::verifyObjects",
+        throw Error("Map::restoreObjects",
                     String::format("Incorrect number of objects: %i in map, %i in description",
                                    mobjs.size(),
                                    objState.root().contents().size()));
@@ -3165,46 +3169,47 @@ void Map::verifyObjects(Info const &objState, IThinkerMapping const &thinkerMapp
     {
         Info::BlockElement const &state = (*i)->as<Info::BlockElement>();
         Id::Type const privateId = state.name().toUInt32();
-
         DENG2_ASSERT(privateId != 0);
 
         if (thinker_t *th = thinkerMapping.thinkerForPrivateId(privateId))
         {
-            ThinkerData const *found = ThinkerData::find(privateId);
-
+            ThinkerData *found = ThinkerData::find(privateId);
             DENG2_ASSERT(found != nullptr);
             DENG2_ASSERT(&found->thinker() == th);
 
-            Info const currentDesc(descFunc(found->as<MobjThinkerData>().mobj()));
+            // Restore the state according to the serialized info.
+            restoreFunc(found->as<MobjThinkerData>().mobj(), state);
 
-            Info::BlockElement const &currentState = currentDesc.root().contentsInOrder()
-                    .first()->as<Info::BlockElement>();
-
-            DENG2_ASSERT(currentState.name() == state.name());
-
-            foreach (String const &key, state.contents().keys())
+            #if defined (DENG2_DEBUG)
             {
-                //qDebug() << privateId << key << currentState.keyValue(key).text << state.keyValue(key).text;
-
-                if (state.keyValue(key).text != currentState.keyValue(key).text)
+                // Verify that the state is now correct.
+                Info const currentDesc(descFunc(found->as<MobjThinkerData>().mobj()));
+                Info::BlockElement const &currentState = currentDesc.root().contentsInOrder()
+                        .first()->as<Info::BlockElement>();
+                DENG2_ASSERT(currentState.name() == state.name());
+                foreach (String const &key, state.contents().keys())
                 {
-                    throw Error("Map::verifyObjects",
-                                String("Object %1 has mismatching '%2' (current:%3 != arch:%4)")
-                                .arg(privateId)
-                                .arg(key)
-                                .arg(currentState.keyValue(key).text)
-                                .arg(state.keyValue(key).text));
+                    if (state.keyValue(key).text != currentState.keyValue(key).text)
+                    {
+                        throw Error("Map::restoreObjects",
+                                    String("Object %1 has mismatching '%2' (current:%3 != arch:%4)")
+                                    .arg(privateId)
+                                    .arg(key)
+                                    .arg(currentState.keyValue(key).text)
+                                    .arg(state.keyValue(key).text));
+                    }
                 }
             }
+            #endif
         }
         else
         {
-            throw Error("Map::verifyObjects",
+            throw Error("Map::restoreObjects",
                         String::format("Failed to find thinker matching ID 0x%x", privateId));
         }
     }
 
-    LOGDEV_MSG("State of map objects verified");
+    LOGDEV_MSG("State of map objects has been restored");
 }
 
 void Map::serializeInternalState(Writer &to) const

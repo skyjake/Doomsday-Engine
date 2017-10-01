@@ -91,8 +91,8 @@ enum {
     DD_UNUSED4, // DD_TRACE_ADDRESS
     DD_SPRITE_REPLACEMENT, ///< Sprite <-> model replacement.
     DD_ACTION_LINK, ///< State action routine addresses.
-    DD_OBJECT_STATE_INFO_STR, ///< Information about mobjs in plain text Info format.
-    DD_UNUSED11, // DD_MAP_AUTHOR
+    DD_FUNC_OBJECT_STATE_INFO_STR,  ///< Information about mobjs in plain text Info format.
+    DD_FUNC_RESTORE_OBJECT_STATE,   ///< Restore object state according to a parsed Info block.
     DD_MAP_MUSIC,
     DD_MAP_MIN_X,
     DD_MAP_MIN_Y,
@@ -131,7 +131,7 @@ enum {
 /**
  * The routines/data exported from the game plugin. @ingroup game
  *
- * @todo Get rid of this struct in favor of individually queried export points.
+ * @todo Get rid of this struct in favor of individually queried entrypoints.
  */
 typedef struct {
     size_t apiSize; ///< sizeof(game_export_t)
