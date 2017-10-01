@@ -531,6 +531,8 @@ GLTexture const *GLUniform::texture() const
 
 void GLUniform::applyInProgram(GLProgram &program) const
 {
+    LIBGUI_ASSERT_GL_OK();
+
     int loc = program.glUniformLocation(d->name.constData());
     if (loc < 0)
     {
@@ -544,59 +546,59 @@ void GLUniform::applyInProgram(GLProgram &program) const
     {
     case Int:
         LIBGUI_GL.glUniform1i(loc, d->value.int32);
-        LIBGUI_ASSERT_GL_OK();
         break;
 
     case UInt:
         LIBGUI_GL.glUniform1i(loc, d->value.uint32);
-        LIBGUI_ASSERT_GL_OK();
         break;
 
     case Float:
         LIBGUI_GL.glUniform1f(loc, d->value.float32);
-        LIBGUI_ASSERT_GL_OK();
         break;
 
     case FloatArray:
         LIBGUI_GL.glUniform1fv(loc, d->usedElemCount, d->value.floats);
-        LIBGUI_ASSERT_GL_OK();
         break;
 
     case Vec2:
         LIBGUI_GL.glUniform2f(loc, d->value.vector->x, d->value.vector->y);
-        LIBGUI_ASSERT_GL_OK();
         break;
 
     case Vec3:
         LIBGUI_GL.glUniform3f(loc, d->value.vector->x, d->value.vector->y, d->value.vector->z);
-        LIBGUI_ASSERT_GL_OK();
         break;
 
     case Vec3Array:
         LIBGUI_GL.glUniform3fv(loc, d->usedElemCount, &d->value.vec3array->x); // sequentially laid out
-        LIBGUI_ASSERT_GL_OK();
         break;
 
     case Vec4:
     case Vec4Array:
         LIBGUI_GL.glUniform4fv(loc, d->usedElemCount, &d->value.vector->x); // sequentially laid out
-        LIBGUI_ASSERT_GL_OK();
         break;
 
     case Mat3:
         LIBGUI_GL.glUniformMatrix3fv(loc, 1, GL_FALSE, d->value.mat3->values());
-        LIBGUI_ASSERT_GL_OK();
         break;
 
     case Mat4:
     case Mat4Array:
         LIBGUI_GL.glUniformMatrix4fv(loc, d->usedElemCount, GL_FALSE, d->value.mat4->values()); // sequentially laid out
-        LIBGUI_ASSERT_GL_OK();
         break;
 
     default:
         break;
     }
+
+#if defined (DENG2_DEBUG)
+    {
+        GLenum err = glGetError();
+        if (err != GL_NO_ERROR)
+        {
+            qDebug() << "[GLUniform] Failure with uniform:" << d->name << "loc:" << loc;
+        }
+    }
+#endif
 }
 
 } // namespace de
