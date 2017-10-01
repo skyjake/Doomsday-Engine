@@ -208,6 +208,15 @@ public:
     /// Writes a writable object into the destination buffer.
     Writer &operator << (IWritable const &writable);
 
+    /**
+     * Begins or ends a span of data. The length of the span is written at the beginning
+     * (BeginSpan) as an uint32. Nothing is written at the end (EndSpan), however the
+     * writer is temporarily rewound for updating the length of the span.
+     *
+     * @param op  BeginSpan or EndSpan.
+     *
+     * @return Reference to the Writer.
+     */
     Writer &operator << (InlineOperation op);
 
     /**
