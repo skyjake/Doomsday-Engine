@@ -2245,7 +2245,7 @@ D_CMD(Version)
     // Print the version info of the current game if loaded.
     if (App_GameLoaded())
     {
-        LOG_SCR_MSG(_E(l) "Game: " _E(.) "%s") << (char const *) gx.GetVariable(DD_PLUGIN_VERSION_LONG);
+        LOG_SCR_MSG(_E(l) "Game: " _E(.) "%s") << (char const *) gx.GetPointer(DD_PLUGIN_VERSION_LONG);
     }
 
     // Additional information for developers.

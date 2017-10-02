@@ -120,8 +120,8 @@ void PlayerWeaponAnimator::setupVisPSprite(vispsprite_t &spr) const
     spr.data.model2.animator = d->animator.get();
 
     // Use the plain bob values.
-    float bob[2] = { *(float *) gx.GetVariable(DD_PSPRITE_BOB_X),
-                     *(float *) gx.GetVariable(DD_PSPRITE_BOB_Y) };
+    float bob[2] = { *(float *) gx.GetPointer(DD_PSPRITE_BOB_X),
+                     *(float *) gx.GetPointer(DD_PSPRITE_BOB_Y) };
 
     Vector2f angles(
     /* yaw: */   bob[0] * weaponOffsetScale,

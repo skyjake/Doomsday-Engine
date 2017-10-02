@@ -93,7 +93,7 @@ typedef struct {
     void          (*Shutdown) (void);
     void          (*UpdateState) (int step);
     int           (*GetInteger) (int id);
-    void         *(*GetVariable) (int id);
+    void         *(*GetPointer) (int id);
 
     // Networking.
     int           (*NetServerStart) (int before);

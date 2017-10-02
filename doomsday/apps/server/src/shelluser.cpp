@@ -110,7 +110,7 @@ void ShellUser::sendGameState()
      * state packet.
      */
 
-    String rules = reinterpret_cast<char const *>(gx.GetVariable(DD_GAME_CONFIG));
+    String rules = reinterpret_cast<char const *>(gx.GetPointer(DD_GAME_CONFIG));
 
     // Check the map's information.
     String mapId;

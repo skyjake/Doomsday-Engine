@@ -201,7 +201,7 @@ DENG_ENTRYPOINT game_export_t *GetGameAPI(void)
     gx.UpdateState = G_UpdateState;
 
     gx.GetInteger = H_GetInteger;
-    gx.GetVariable = H_GetVariable;
+    gx.GetPointer = H_GetVariable;
 
     gx.NetServerStart = D_NetServerStarted;
     gx.NetServerStop = D_NetServerClose;

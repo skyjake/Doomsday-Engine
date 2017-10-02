@@ -64,13 +64,13 @@ static String resolveUriSymbol(String const &symbol)
     else if (!symbol.compare("GamePlugin.Name", Qt::CaseInsensitive))
     {
         auto &gx = DoomsdayApp::plugins().gameExports();
-        if (DoomsdayApp::game().isNull() || !gx.GetVariable)
+        if (DoomsdayApp::game().isNull() || !gx.GetPointer)
         {
             /// @throw de::Uri::ResolveSymbolError  An unresolveable symbol was encountered.
             throw de::Uri::ResolveSymbolError("Resources::resolveUriSymbol",
                                               "Symbol 'GamePlugin' did not resolve (no game plugin loaded)");
         }
-        return String(reinterpret_cast<char const *>(gx.GetVariable(DD_PLUGIN_NAME)));
+        return String(reinterpret_cast<char const *>(gx.GetPointer(DD_PLUGIN_NAME)));
     }
     else
     {

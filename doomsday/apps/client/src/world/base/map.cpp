@@ -3116,7 +3116,7 @@ String Map::objectsDescription() const
     String str;
     QTextStream os(&str);
 
-    if (auto *descPtr = gx.GetVariable(DD_FUNC_OBJECT_STATE_INFO_STR))
+    if (auto *descPtr = gx.GetPointer(DD_FUNC_OBJECT_STATE_INFO_STR))
     {
         auto const descFunc = de::function_cast<de::String (*)(mobj_t const *)>(descPtr);
 
@@ -3138,8 +3138,8 @@ void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMap
 {
     /// @todo Generalize from mobjs to all thinkers?
 
-    auto *descPtr    = gx.GetVariable(DD_FUNC_OBJECT_STATE_INFO_STR);
-    auto *restorePtr = gx.GetVariable(DD_FUNC_RESTORE_OBJECT_STATE);
+    auto *descPtr    = gx.GetPointer(DD_FUNC_OBJECT_STATE_INFO_STR);
+    auto *restorePtr = gx.GetPointer(DD_FUNC_RESTORE_OBJECT_STATE);
 
     if (!descPtr || !restorePtr) return;
 

@@ -86,7 +86,7 @@ de::String DD_ComposeMainWindowTitle()
 {
     de::String title = DOOMSDAY_NICENAME " " + Version::currentBuild().compactNumber();
 
-    if(App_GameLoaded() && gx.GetVariable)
+    if(App_GameLoaded() && gx.GetPointer)
     {
         title = App_CurrentGame().title() + " - " + title;
     }

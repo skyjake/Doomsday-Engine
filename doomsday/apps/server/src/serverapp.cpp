@@ -257,11 +257,11 @@ shell::ServerInfo ServerApp::currentServerInfo()
     // Let's figure out what we want to tell about ourselves.
     info.setCompatibilityVersion(DOOMSDAY_VERSION);
     info.setPluginDescription(String::format("%s %s",
-                                             reinterpret_cast<char const *>(gx.GetVariable(DD_PLUGIN_NAME)),
-                                             reinterpret_cast<char const *>(gx.GetVariable(DD_PLUGIN_VERSION_SHORT))));
+                                             reinterpret_cast<char const *>(gx.GetPointer(DD_PLUGIN_NAME)),
+                                             reinterpret_cast<char const *>(gx.GetPointer(DD_PLUGIN_VERSION_SHORT))));
 
     info.setGameId(game().id());
-    info.setGameConfig(reinterpret_cast<char const *>(gx.GetVariable(DD_GAME_CONFIG)));
+    info.setGameConfig(reinterpret_cast<char const *>(gx.GetPointer(DD_GAME_CONFIG)));
     info.setName(serverName);
     info.setDescription(serverInfo);
 

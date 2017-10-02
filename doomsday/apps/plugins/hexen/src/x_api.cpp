@@ -237,7 +237,7 @@ DENG_ENTRYPOINT game_export_t *GetGameAPI(void)
     gx.SectorHeightChangeNotification = P_HandleSectorHeightChange;
     gx.UpdateState = G_UpdateState;
     gx.GetInteger = X_GetInteger;
-    gx.GetVariable = X_GetVariable;
+    gx.GetPointer = X_GetVariable;
 
     gx.NetServerStart = D_NetServerStarted;
     gx.NetServerStop = D_NetServerClose;
