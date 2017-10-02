@@ -156,7 +156,7 @@ void Svg_Draw(Svg* svg)
 {
     assert(svg);
 
-    if (novideo || isDedicated)
+    if (novideo)
     {
         assert(0); // Should not have been called!
         return;
@@ -191,7 +191,7 @@ dd_bool Svg_Prepare(Svg *)
 void Svg_Unload(Svg* svg)
 {
     assert(svg);
-    if (novideo || isDedicated) return;
+    if (novideo) return;
 
     /*if (svg->dlist)
     {

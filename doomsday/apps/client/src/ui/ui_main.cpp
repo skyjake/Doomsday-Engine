@@ -20,6 +20,7 @@
 #include "de_base.h"
 #include "ui/ui_main.h"
 #include "ui/clientwindow.h"
+#include "sys_system.h"
 
 #include <cmath>
 #include <de/GLState>
@@ -105,7 +106,7 @@ static void loadFontIfNeeded(char const *uri, fontid_t *fid)
 
 void UI_LoadFonts()
 {
-    if (isDedicated) return;
+    if (novideo) return;
 
     loadFontIfNeeded(UI_ChooseFixedFont(), &fontFixed);
 }

@@ -291,7 +291,7 @@ void BitmapFont::glInit()
     LOG_AS("BitmapFont");
 
     if(!d->needGLInit) return;
-    if(novideo || isDedicated || BusyMode_Active()) return;
+    if(novideo || BusyMode_Active()) return;
 
     glDeinit();
 
@@ -314,7 +314,7 @@ void BitmapFont::glInit()
         default:
             DENG2_ASSERT(!"BitmapFont: Format not implemented");
         }
-        if(!pixels) 
+        if(!pixels)
         {
             App_FileSystem().releaseFile(hndl->file());
             delete hndl;

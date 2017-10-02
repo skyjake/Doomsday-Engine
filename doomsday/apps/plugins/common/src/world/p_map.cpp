@@ -89,7 +89,7 @@ coord_t P_GetGravity()
     {
         return (coord_t) cfg.common.netGravity / 100;
     }
-    return *((coord_t *) DD_GetVariable(DD_GRAVITY));
+    return *((coord_t *) DD_GetVariable(DD_MAP_GRAVITY));
 }
 
 /**

@@ -31,101 +31,51 @@ extern "C" {
 
 struct event_s;
 
-/// General constants (not to be used with Get/Set).
+/// General constants.
 /// @note Many of these have become unused as better APIs are introduced for
 /// sharing information.
 enum {
-    DD_DISABLE,
-    DD_ENABLE,
-    DD_UNUSED22, // DD_MASK
-    DD_YES,
-    DD_NO,
-    DD_UNUSED23, // DD_MATERIAL
-    DD_UNUSED24, // DD_OFFSET
-    DD_UNUSED25, // DD_HEIGHT
-    DD_UNUSED2,
-    DD_UNUSED3,
-    DD_UNUSED26, // DD_COLOR_LIMIT
-    DD_PRE,
-    DD_POST,
-    DD_PLUGIN_VERSION_SHORT,
-    DD_PLUGIN_VERSION_LONG,
-    DD_UNUSED27, // DD_HORIZON
-    DD_OLD_GAME_ID,
-    DD_UNUSED32, // DD_DEF_MOBJ
-    DD_UNUSED33, // DD_DEF_MOBJ_BY_NAME
-    DD_UNUSED29, // DD_DEF_STATE
-    DD_UNUSED34, // DD_DEF_SPRITE
-    DD_DEF_SOUND,
-    DD_UNUSED14, // DD_DEF_MUSIC
-    DD_UNUSED13, // DD_DEF_MAP_INFO
-    DD_UNUSED28, // DD_DEF_TEXT
-    DD_UNUSED36, // DD_DEF_VALUE
-    DD_UNUSED37, // DD_DEF_VALUE_BY_INDEX
-    DD_DEF_LINE_TYPE,
-    DD_DEF_SECTOR_TYPE,
-    DD_PSPRITE_BOB_X,
-    DD_PSPRITE_BOB_Y,
-    DD_UNUSED19, // DD_DEF_FINALE_AFTER
-    DD_UNUSED20, // DD_DEF_FINALE_BEFORE
-    DD_UNUSED21, // DD_DEF_FINALE
-    DD_RENDER_RESTART_PRE,
-    DD_RENDER_RESTART_POST,
-    DD_UNUSED35, // DD_DEF_SOUND_BY_NAME
-    DD_DEF_SOUND_LUMPNAME,
-    DD_UNUSED16, // DD_ID
-    DD_LUMP,
-    DD_UNUSED17, // DD_CD_TRACK
-    DD_UNUSED30, // DD_SPRITE
-    DD_UNUSED31, // DD_FRAME
-    DD_GAME_CONFIG, ///< String: dm/co-op, jumping, etc.
-    DD_PLUGIN_NAME, ///< (e.g., jdoom, jheretic etc..., suitable for use with filepaths)
-    DD_PLUGIN_NICENAME, ///< (e.g., jDoom, MyGame:Episode2 etc..., fancy name)
-    DD_PLUGIN_HOMEURL,
-    DD_PLUGIN_DOCSURL,
-    DD_DEF_ACTION,
-    DD_UNUSED15, // DD_DEF_MUSIC_CDTRACK
+    DD_DISABLE = 0,
+    DD_ENABLE = 1,
+    DD_YES = 2,
+    DD_NO = 3,
+    DD_PRE = 4,
+    DD_POST = 5,
 
-    // Non-integer/special values for Set/Get
-    DD_MAP_BOUNDING_BOX,
-    DD_UNUSED4, // DD_TRACE_ADDRESS
-    DD_SPRITE_REPLACEMENT, ///< Sprite <-> model replacement.
-    DD_ACTION_LINK, ///< State action routine addresses.
-    DD_FUNC_OBJECT_STATE_INFO_STR,  ///< Information about mobjs in plain text Info format.
-    DD_FUNC_RESTORE_OBJECT_STATE,   ///< Restore object state according to a parsed Info block.
-    DD_MAP_MUSIC,
-    DD_MAP_MIN_X,
-    DD_MAP_MIN_Y,
-    DD_MAP_MAX_X,
-    DD_MAP_MAX_Y,
-    DD_WINDOW_WIDTH,
-    DD_WINDOW_HEIGHT,
-    DD_WINDOW_HANDLE,
-    DD_DYNLIGHT_TEXTURE,
-    DD_GAME_EXPORTS,
-    DD_POLYOBJ_COUNT,
-    DD_XGFUNC_LINK, ///< XG line classes
-    DD_SHARED_FIXED_TRIGGER_OBSOLETE, ///< obsolete
-    DD_GAMETIC,
+    DD_GAME_CONFIG = 0x100,         ///< String: dm/co-op, jumping, etc.
+    DD_GAME_RECOMMENDS_SAVING,      ///< engine asks whether game should be saved (e.g., when upgrading) (game's GetInteger)
+
+    DD_NOTIFY_GAME_SAVED = 0x200,   ///< savegame was written
     DD_NOTIFY_PLAYER_WEAPON_CHANGED, ///< a player's weapon changed (including powerups)
     DD_NOTIFY_PSPRITE_STATE_CHANGED, ///< a player's psprite state has changed
-    DD_UNUSED7, // DD_OPENBOTTOM
-    DD_UNUSED8, // DD_LOWFLOOR
-    DD_CPLAYER_THRUST_MUL_OBSOLETE, ///< obsolete
-    DD_GRAVITY,
-    DD_PSPRITE_OFFSET_X, ///< 10x
-    DD_PSPRITE_OFFSET_Y, ///< 10x
-    DD_PSPRITE_LIGHTLEVEL_MULTIPLIER,
-    DD_TORCH_RED,
-    DD_TORCH_GREEN,
-    DD_TORCH_BLUE,
-    DD_TORCH_ADDITIVE_obsolete,
-    DD_TM_FLOOR_Z,              ///< output from P_CheckPosition
-    DD_TM_CEILING_Z,            ///< output from P_CheckPosition
-    DD_SHIFT_DOWN,
-    DD_GAME_RECOMMENDS_SAVING,  ///< engine asks whether game should be saved (e.g., when upgrading) (game's GetInteger)
-    DD_NOTIFY_GAME_SAVED,       ///< savegame was written
-    DD_DEFS                     ///< engine definition database (DED)
+
+    DD_PLUGIN_NAME = 0x300,         ///< (e.g., jdoom, jheretic etc..., suitable for use with filepaths)
+    DD_PLUGIN_NICENAME,             ///< (e.g., jDoom, MyGame:Episode2 etc..., fancy name)
+    DD_PLUGIN_VERSION_SHORT,
+    DD_PLUGIN_VERSION_LONG,
+    DD_PLUGIN_HOMEURL,
+    DD_PLUGIN_DOCSURL,
+
+    DD_DEF_SOUND = 0x400,
+    DD_DEF_LINE_TYPE,
+    DD_DEF_SECTOR_TYPE,
+    DD_DEF_SOUND_LUMPNAME,
+    DD_DEF_ACTION,
+    DD_LUMP,
+
+    DD_ACTION_LINK = 0x500,         ///< State action routine addresses.
+    DD_XGFUNC_LINK,                 ///< XG line classes
+
+    DD_FUNC_OBJECT_STATE_INFO_STR,  ///< Information about mobjs in plain text Info format.
+    DD_FUNC_RESTORE_OBJECT_STATE,   ///< Restore object state according to a parsed Info block.
+
+    DD_TM_FLOOR_Z = 0x600,          ///< output from P_CheckPosition
+    DD_TM_CEILING_Z,                ///< output from P_CheckPosition
+
+    DD_PSPRITE_BOB_X = 0x700,
+    DD_PSPRITE_BOB_Y,
+    DD_RENDER_RESTART_PRE,
+    DD_RENDER_RESTART_POST
 };
 
 /**

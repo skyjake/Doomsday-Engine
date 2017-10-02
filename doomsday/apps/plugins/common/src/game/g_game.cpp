@@ -1620,7 +1620,7 @@ void G_Ticker(timespan_t ticLength)
         if (!IS_CLIENT)
         {
             // Enable/disable sending of frames (delta sets) to clients.
-            Set(DD_ALLOW_FRAMES, G_GameState() == GS_MAP);
+            Set(DD_SERVER_ALLOW_FRAMES, G_GameState() == GS_MAP);
 
             // Tell Doomsday when the game is paused (clients can't pause
             // the game.)
@@ -1635,7 +1635,7 @@ void G_Ticker(timespan_t ticLength)
         if (!IS_CLIENT)
         {
             // Disable sending of frames (delta sets) to clients.
-            Set(DD_ALLOW_FRAMES, false);
+            Set(DD_SERVER_ALLOW_FRAMES, false);
         }
     }
 

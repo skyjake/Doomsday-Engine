@@ -127,43 +127,63 @@ float           FloatSwap(float);
 #define DD_ULONG(x)         ((uint32_t) DD_LONG(x))
 ///@}
 
-/// Integer values for Set/Get
 enum {
-    DD_FIRST_VALUE = -1,
+    DD_FIRST_VALUE = 0,
+
+    DD_NOVIDEO = DD_FIRST_VALUE,
     DD_NETGAME,
-    DD_SERVER,
+    DD_SERVER,                  ///< Running in server mode + listening.
     DD_CLIENT,
-    DD_ALLOW_FRAMES,
     DD_CONSOLEPLAYER,
     DD_DISPLAYPLAYER,
-    DD_MIPMAPPING,
-    DD_SMOOTH_IMAGES,
-    DD_DEFAULT_RES_X_obsolete,
-    DD_DEFAULT_RES_Y_obsolete,
-    DD_UNUSEDVALUE1,
-    DD_MOUSE_INVERSE_Y,
-    DD_FULLBRIGHT, ///< Render everything fullbright?
-    DD_CCMD_RETURN_obsolete,
-    DD_GAME_READY,
-    DD_DEDICATED,
-    DD_NOVIDEO,
-    DD_NUMMOBJTYPES,
     DD_GOTFRAME,
-    DD_PLAYBACK,
     DD_NUMSOUNDS,
-    DD_UNUSEDVALUE2, // DD_NUMMUSIC,
-    DD_UNUSEDVALUE3, // DD_NUMLUMPS
+
+    // Server-only:
+    DD_SERVER_ALLOW_FRAMES,
+
+    // Client-only:
+    DD_RENDER_FULLBRIGHT,       ///< Render everything fullbright?
+    DD_GAME_READY,
+    DD_PLAYBACK,
     DD_CLIENT_PAUSED,
-    DD_WEAPON_OFFSET_SCALE_Y, ///< 1000x
-    DD_UNUSED5,
-    DD_GAME_DRAW_HUD_HINT, ///< Doomsday advises not to draw the HUD.
+    DD_WEAPON_OFFSET_SCALE_Y,   ///< 1000x
+    DD_GAME_DRAW_HUD_HINT,      ///< Doomsday advises not to draw the HUD.
     DD_SYMBOLIC_ECHO,
-    DD_UNUSEDVALUE4, //DD_MAX_TEXTURE_UNITS,
     DD_FIXEDCOLORMAP_ATTENUATE,
+
     DD_LAST_VALUE,
 
-    DD_CURRENT_CLIENT_FINALE_ID,
-    DD_USING_HEAD_TRACKING
+    // Other values:
+    DD_GAME_EXPORTS = 0x1000,
+    DD_SHIFT_DOWN,
+
+    DD_WINDOW_WIDTH = 0x1100,
+    DD_WINDOW_HEIGHT,
+    DD_WINDOW_HANDLE,
+    DD_USING_HEAD_TRACKING,
+    DD_DYNLIGHT_TEXTURE,
+    DD_PSPRITE_OFFSET_X,        ///< 10x
+    DD_PSPRITE_OFFSET_Y,        ///< 10x
+    DD_PSPRITE_LIGHTLEVEL_MULTIPLIER,
+    DD_TORCH_RED,
+    DD_TORCH_GREEN,
+    DD_TORCH_BLUE,
+
+    DD_DEFS = 0x1200,                    ///< engine definition database (DED)
+    DD_NUMMOBJTYPES,
+
+    DD_CURRENT_CLIENT_FINALE_ID = 0x1300,
+
+    DD_GAMETIC = 0x1400,
+    DD_MAP_BOUNDING_BOX,
+    DD_MAP_MUSIC,
+    DD_MAP_MIN_X,
+    DD_MAP_MIN_Y,
+    DD_MAP_MAX_X,
+    DD_MAP_MAX_Y,
+    DD_MAP_POLYOBJ_COUNT,
+    DD_MAP_GRAVITY,
 };
 
 //------------------------------------------------------------------------

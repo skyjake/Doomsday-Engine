@@ -21,6 +21,7 @@
 
 #include "de_base.h"
 #include "render/rend_font.h"
+#include "sys_system.h" // novideo
 
 #include <cctype>
 #include <cstdio>
@@ -1541,8 +1542,7 @@ void FR_DrawCharXY(unsigned char ch, int x, int y)
 void FR_Init(void)
 {
     // No reinitializations...
-    if (initedFont) return;
-    if (isDedicated) return;
+    if (initedFont || novideo) return;
 
     initedFont = true;
     fr.fontNum = 0;

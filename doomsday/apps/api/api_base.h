@@ -43,7 +43,7 @@ typedef struct gameinfo_s {
 /// @}
 
 // The Base API.
-DENG_API_TYPEDEF(Base) // v2
+DENG_API_TYPEDEF(Base)
 {
     de_api_t api;
 

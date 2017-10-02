@@ -1593,71 +1593,40 @@ struct ddvalue_t
     dint *writePtr;
 };
 
-ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
+static ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE] = {
+    {&novideo, 0},
     {&netGame, 0},
-    {&isServer, 0},                         // An *open* server?
+    {&isServer, 0}, // An *open* server?
     {&isClient, 0},
+    {&consolePlayer, &consolePlayer},
+    {&displayPlayer, 0}, // use R_SetViewPortPlayer() to change
+    {&gotFrame, 0},
+    {0, 0}, // pointer updated when queried (DED sound def count)
+
 #ifdef __SERVER__
     {&allowFrames, &allowFrames},
 #else
     {0, 0},
 #endif
-    {&consolePlayer, &consolePlayer},
-    {&displayPlayer, 0 /*&displayPlayer*/}, // use R_SetViewPortPlayer() instead
-#ifdef __CLIENT__
-    {&mipmapping, 0},
-    {&filterUI, 0},
-    {0, 0}, // defResX
-    {0, 0}, // defResY
-#else
-    {0, 0},
-    {0, 0},
-    {0, 0},
-    {0, 0},
-#endif
-    {0, 0},
-    {0, 0}, //{&mouseInverseY, &mouseInverseY},
+
 #ifdef __CLIENT__
     {&levelFullBright, &levelFullBright},
-#else
-    {0, 0},
-#endif
-    {0, 0}, // &CmdReturnValue
-#ifdef __CLIENT__
     {&gameReady, &gameReady},
-#else
-    {0, 0},
-#endif
-    {&isDedicated, 0},
-    {&novideo, 0},
-    {0, 0},
-    {&gotFrame, 0},
-#ifdef __CLIENT__
     {&playback, 0},
-#else
-    {0, 0},
-#endif
-    {0, 0}, // pointer updated when queried //{&DED_Definitions()->sounds.count.num, 0},
-    {0, 0},
-    {0, 0},
-#ifdef __CLIENT__
     {&clientPaused, &clientPaused},
     {&weaponOffsetScaleY, &weaponOffsetScaleY},
-#else
-    {0, 0},
-    {0, 0},
-#endif
-    {0, 0},
-#ifdef __CLIENT__
     {&gameDrawHUD, 0},
     {&symbolicEchoMode, &symbolicEchoMode},
-    {0, 0},
-    {&rendLightAttenuateFixedColormap, &rendLightAttenuateFixedColormap}
+    {&rendLightAttenuateFixedColormap, &rendLightAttenuateFixedColormap},
 #else
     {0, 0},
     {0, 0},
     {0, 0},
-    {0, 0}
+    {0, 0},
+    {0, 0},
+    {0, 0},
+    {0, 0},
+    {0, 0},
 #endif
 };
 
@@ -1703,7 +1672,7 @@ dint DD_GetInteger(dint ddvalue)
     default: break;
     }
 
-    if (ddvalue >= DD_LAST_VALUE || ddvalue <= DD_FIRST_VALUE)
+    if (ddvalue >= DD_LAST_VALUE || ddvalue < DD_FIRST_VALUE)
     {
         return 0;
     }
@@ -1727,7 +1696,7 @@ dint DD_GetInteger(dint ddvalue)
  */
 void DD_SetInteger(dint ddvalue, dint parm)
 {
-    if (ddvalue <= DD_FIRST_VALUE || ddvalue >= DD_LAST_VALUE)
+    if (ddvalue < DD_FIRST_VALUE || ddvalue >= DD_LAST_VALUE)
     {
         return;
     }
@@ -1755,7 +1724,7 @@ void *DD_GetVariable(dint ddvalue)
     case DD_GAME_EXPORTS:
         return &gx;
 
-    case DD_POLYOBJ_COUNT:
+    case DD_MAP_POLYOBJ_COUNT:
         value = App_World().hasMap()? App_World().map().polyobjCount() : 0;
         return &value;
 
@@ -1789,7 +1758,7 @@ void *DD_GetVariable(dint ddvalue)
     /*case DD_CPLAYER_THRUST_MUL:
         return &cplrThrustMul;*/
 
-    case DD_GRAVITY:
+    case DD_MAP_GRAVITY:
         valueD = App_World().hasMap()? App_World().map().gravity() : 0;
         return &valueD;
 
@@ -1832,7 +1801,7 @@ void *DD_GetVariable(dint ddvalue)
     default: break;
     }
 
-    if (ddvalue >= DD_LAST_VALUE || ddvalue <= DD_FIRST_VALUE)
+    if (ddvalue >= DD_LAST_VALUE || ddvalue < DD_FIRST_VALUE)
     {
         return 0;
     }
@@ -1848,7 +1817,7 @@ void *DD_GetVariable(dint ddvalue)
 #undef DD_SetVariable
 void DD_SetVariable(dint ddvalue, void *parm)
 {
-    if (ddvalue <= DD_FIRST_VALUE || ddvalue >= DD_LAST_VALUE)
+    if (ddvalue < DD_FIRST_VALUE || ddvalue >= DD_LAST_VALUE)
     {
         switch (ddvalue)
         {
@@ -1856,7 +1825,7 @@ void DD_SetVariable(dint ddvalue, void *parm)
             cplrThrustMul = *(dfloat*) parm;
             return;*/
 
-        case DD_GRAVITY:
+        case DD_MAP_GRAVITY:
             if (App_World().hasMap())
                 App_World().map().setGravity(*(coord_t*) parm);
             return;

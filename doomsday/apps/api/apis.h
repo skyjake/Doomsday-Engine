@@ -71,7 +71,8 @@ enum {
     DE_API_BASE_v1              = 0,       // 1.10
     DE_API_BASE_v2              = 1,       // 1.14
     DE_API_BASE_v3              = 2,       // 2.0
-    DE_API_BASE                 = DE_API_BASE_v3,
+    DE_API_BASE_v4              = 3,       // 2.1
+    DE_API_BASE                 = DE_API_BASE_v4,
 
     DE_API_BINDING_v1           = 100,     // 1.10
     DE_API_BINDING_v2           = 101,     // 1.15

@@ -142,7 +142,7 @@ static TextureVariantSpec const &glyphTextureSpec()
 void CompositeBitmapFont::glInit()
 {
     if(!d->needGLInit) return;
-    if(novideo || isDedicated || BusyMode_Active()) return;
+    if(novideo || BusyMode_Active()) return;
 
     LOG_AS("CompositeBitmapFont");
 
@@ -195,7 +195,7 @@ void CompositeBitmapFont::glInit()
 
 void CompositeBitmapFont::glDeinit()
 {
-    if(novideo || isDedicated) return;
+    if(novideo) return;
 
     d->needGLInit = true;
     if(BusyMode_Active()) return;

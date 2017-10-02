@@ -206,7 +206,7 @@ void G_RendPlayerView(int player)
     }
 
     // How about fullbright?
-    DD_SetInteger(DD_FULLBRIGHT, isFullBright);
+    DD_SetInteger(DD_RENDER_FULLBRIGHT, isFullBright);
 
     // Render the view with possible custom filters.
     R_RenderPlayerView(player);

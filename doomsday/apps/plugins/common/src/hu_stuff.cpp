@@ -210,7 +210,7 @@ static void initFogEffect()
 
 static void prepareFogTexture()
 {
-    if(Get(DD_NOVIDEO) || Get(DD_DEDICATED)) return;
+    if(Get(DD_NOVIDEO)) return;
     // Already prepared?
     if(fogEffectData.texture) return;
 
@@ -228,7 +228,7 @@ static void prepareFogTexture()
 
 static void releaseFogTexture()
 {
-    if(Get(DD_NOVIDEO) || Get(DD_DEDICATED)) return;
+    if(Get(DD_NOVIDEO)) return;
     // Not prepared?
     if(!fogEffectData.texture) return;
 
@@ -1573,7 +1573,7 @@ void Hu_MapTitleDrawer(const RectRaw* portGeometry)
 void M_DrawShadowedPatch3(patchid_t id, int x, int y, int alignFlags, int patchFlags,
     float r, float g, float b, float a)
 {
-    if(id == 0 || DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED))
+    if(id == 0 || DD_GetInteger(DD_NOVIDEO))
         return;
 
     DGL_Color4f(0, 0, 0, a * .4f);

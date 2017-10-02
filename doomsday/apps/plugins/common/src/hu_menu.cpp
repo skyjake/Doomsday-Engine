@@ -2171,7 +2171,7 @@ void Hu_MenuSetPage(Page *page, bool canReactivate)
     if(!menuActive) return;
     if(!page) return;
 
-    if(!(Get(DD_DEDICATED) || Get(DD_NOVIDEO)))
+    if(!Get(DD_NOVIDEO))
     {
         FR_ResetTypeinTimer();
     }
@@ -3207,7 +3207,7 @@ void Hu_MenuSelectLoadGame(Widget & /*wi*/, Widget::Action action)
 {
     if(action != Widget::Deactivated) return;
 
-    if(!Get(DD_DEDICATED))
+    if(!Get(DD_NOVIDEO))
     {
         if(IS_CLIENT && !Get(DD_PLAYBACK))
         {
@@ -3225,7 +3225,7 @@ void Hu_MenuSelectSaveGame(Widget & /*wi*/, Widget::Action action)
 
     if(action != Widget::Deactivated) return;
 
-    if(!Get(DD_DEDICATED))
+    if(!Get(DD_NOVIDEO))
     {
         if(IS_CLIENT)
         {

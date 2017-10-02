@@ -26,7 +26,7 @@ using namespace de;
 void GL_DrawPatch(patchid_t id, Vector2i const &origin, int alignFlags, int patchFlags)
 {
     if(!id) return;
-    if(DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED)) return;
+    if(DD_GetInteger(DD_NOVIDEO)) return;
 
     patchinfo_t info;
     if(!R_GetPatchInfo(id, &info)) return;

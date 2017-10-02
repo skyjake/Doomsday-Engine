@@ -287,7 +287,7 @@ DENG_EXTERN_C void GL_ResetViewEffects()
 {
     GL_SetFilter(false);
     Con_Executef(CMDS_DDAY, true, "postfx %i none", consolePlayer);
-    DD_SetInteger(DD_FULLBRIGHT, false);
+    DD_SetInteger(DD_RENDER_FULLBRIGHT, false);
 }
 
 #undef GL_ConfigureBorderedProjection2
