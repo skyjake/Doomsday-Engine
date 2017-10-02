@@ -580,6 +580,12 @@ inline ToType function_cast(FromType ptr)
     return forcedCast.target;
 }
 
+template <typename ToType, typename FromType>
+inline ToType functionAssign(ToType &dest, FromType src)
+{
+    return dest = de::function_cast<ToType>(src);
+}
+
 /**
  * Clears a region of memory. Size of the region is the size of Type.
  * @param t  Reference to the memory.

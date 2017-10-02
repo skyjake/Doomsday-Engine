@@ -22,6 +22,7 @@
 
 #include <de/str.h>
 #include <de/rect.h>
+#include "world/valuetype.h"
 
 /**
  * Unique identifier assigned to each plugin during initial startup.
@@ -107,9 +108,140 @@ typedef struct {
 #ifdef __cplusplus
 
 #include <de/Observers>
+#include <de/Info>
 #include "libdoomsday.h"
 #include "library.h"
 #include "gameapi.h"
+
+/**
+ * Routines exported from a game plugin. @ingroup game
+ *
+ * Note that this struct is not part of the game plugin ABI any longer (since 2.1).
+ */
+struct GameExports
+{
+    // Base-level.
+    void        (*PreInit) (char const *gameId);
+    void        (*PostInit) (void);
+    dd_bool     (*TryShutdown) (void);
+    void        (*Shutdown) (void);
+    void        (*UpdateState) (int step);
+    int         (*GetInteger) (int id);
+    void       *(*GetPointer) (int id);
+
+    // Networking.
+    int         (*NetServerStart) (int before);
+    int         (*NetServerStop) (int before);
+    int         (*NetConnect) (int before);
+    int         (*NetDisconnect) (int before);
+    long int    (*NetPlayerEvent) (int playernum, int type, void *data);
+    int         (*NetWorldEvent) (int type, int parm, void *data);
+    void        (*HandlePacket) (int fromplayer, int type, void *data,
+                                 size_t length);
+
+    // Tickers.
+    void        (*Ticker) (timespan_t ticLength);
+
+    // Responders.
+    int         (*FinaleResponder) (void const *ddev);
+    int         (*PrivilegedResponder) (struct event_s *ev);
+    int         (*Responder) (struct event_s *ev);
+    int         (*FallbackResponder) (struct event_s *ev);
+
+    // Refresh.
+    void        (*BeginFrame) (void);
+
+    /**
+     * Called at the end of a refresh frame. This is the last chance the game
+     * will have at updating the engine state before rendering of the frame
+     * begins. Once rendering begins, the viewer can still be updated however
+     * any changes will not take effect until the subsequent frame. Therefore
+     * this is the place where games should strive to update the viewer to
+     * ensure latency-free world refresh.
+     */
+    void        (*EndFrame) (void);
+
+    /**
+     * Draw the view port display of the identified console @a player.
+     * The engine will configure a orthographic GL projection in real pixel
+     * dimensions prior to calling this.
+     *
+     * Example subdivision of the game window into four view ports:
+     * <pre>
+     *     (0,0)-----------------------. X
+     *       | .--------. |            |
+     *       | | window | |            |
+     *       | '--------' |            |
+     *       |    port #0 |    port #1 |
+     *       |-------------------------|
+     *       |            |            |
+     *       |            |            |
+     *       |            |            |
+     *       |    port #2 |    port #3 |
+     *       '--------------------(xn-1, yn-1)
+     *       Y               Game Window
+     * </pre>
+     *
+     * @param port  Logical number of this view port.
+     * @param portGeometry  Geometry of the view port in real screen pixels.
+     * @param windowGeometry  Geometry of the view window within the port, in
+     *                        real screen pixels.
+     *
+     * @param player  Console player number associated with the view port.
+     * @param layer  Logical layer identifier for the content to be drawn:
+     *      - 0: The bottom-most layer and the one which generally contains the
+     *        call to R_RenderPlayerView.
+     *      - 1: Displays to be drawn on top of view window (after bordering),
+     *        such as the player HUD.
+     */
+    void        (*DrawViewPort) (int port, RectRaw const *portGeometry,
+                                 RectRaw const *windowGeometry, int player, int layer);
+
+    /**
+     * Draw over-viewport displays covering the whole game window. Typically
+     * graphical user interfaces such as game menus are done here.
+     *
+     * @param windowSize  Dimensions of the game window in real screen pixels.
+     */
+    void        (*DrawWindow) (Size2Raw const *windowSize);
+
+    // Miscellaneous.
+    void        (*MobjThinker) (void *mobj);
+    coord_t     (*MobjFriction) (struct mobj_s const *mobj);  // Returns a friction factor.
+    dd_bool     (*MobjCheckPositionXYZ) (struct mobj_s *mobj, coord_t x, coord_t y, coord_t z);
+    dd_bool     (*MobjTryMoveXYZ) (struct mobj_s *mobj, coord_t x, coord_t y, coord_t z);
+    de::String  (*MobjStateAsInfoText) (struct mobj_s const *);
+    void        (*MobjRestoreState) (struct mobj_s *, de::Info::BlockElement const &stateInfoBlockElement);
+
+    void        (*SectorHeightChangeNotification)(int sectorIdx);  // Applies necessary checks on objects.
+
+    // Map setup
+
+    /**
+     * Called once a map change (i.e., P_MapChange()) has completed to allow the
+     * game to do any post change finalization it needs to do at this time.
+     */
+    void        (*FinalizeMapChange) (void const *uri);
+
+    /**
+     * Called when trying to assign a value read from the map data (to a
+     * property known to us) that we don't know what to do with.
+     *
+     * (eg the side->toptexture field contains a text string that
+     * we don't understand but the game might).
+     *
+     * @return The action code returned by the game depends on the context.
+     */
+    int         (*HandleMapDataPropertyValue) (uint id, int dtype, int prop,
+                                               valuetype_t type, void *data);
+    // Post map setup
+    /**
+     * The engine calls this to inform the game of any changes it is
+     * making to map data object to which the game might want to
+     * take further action.
+     */
+    int         (*HandleMapObjectStatusReport) (int code, uint id, int dtype, void *data);
+};
 
 /**
  * Plugin loader.
@@ -167,7 +299,7 @@ public:
     /**
      * Returns the current game plugin's entrypoints.
      */
-    game_export_t &gameExports() const;
+    GameExports &gameExports() const;
 
 public:  // Function hooks: ----------------------------------------------------------
 

@@ -44,7 +44,7 @@ class Subsector;
 }
 class Plane;
 
-#define MOBJ_SIZE               gx.mobjSize
+#define MOBJ_SIZE               gx.GetInteger(DD_MOBJ_SIZE)
 
 class MobjThinker : public ThinkerT<mobj_t>
 {

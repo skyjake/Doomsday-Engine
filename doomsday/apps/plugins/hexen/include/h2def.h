@@ -81,8 +81,6 @@
 #define Set                 DD_SetInteger
 #define Get                 DD_GetInteger
 
-DENG_EXTERN_C game_export_t gx;
-
 //
 // Global parameters/defines.
 //

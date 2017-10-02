@@ -39,8 +39,6 @@
 extern "C" {
 #endif
 
-extern game_export_t gx;
-
 DENG_USING_API(Base);
 DENG_USING_API(B);
 DENG_USING_API(Busy);

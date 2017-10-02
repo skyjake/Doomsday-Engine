@@ -23,6 +23,7 @@
 
 #include "dd_share.h"
 #include <doomsday/uri.h>
+#include "common.h"
 #include "fi_lib.h"
 #include "mobj.h"
 #include "player.h"

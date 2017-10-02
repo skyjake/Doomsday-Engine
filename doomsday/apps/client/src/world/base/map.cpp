@@ -3116,16 +3116,14 @@ String Map::objectsDescription() const
     String str;
     QTextStream os(&str);
 
-    if (auto *descPtr = gx.GetPointer(DD_FUNC_OBJECT_STATE_INFO_STR))
+    if (gx.MobjStateAsInfoText)
     {
-        auto const descFunc = de::function_cast<de::String (*)(mobj_t const *)>(descPtr);
-
         // Print out a state description for each thinker.
-        thinkers().forAll(0x3, [&os, &descFunc] (thinker_t *th)
+        thinkers().forAll(0x3, [&os] (thinker_t *th)
         {
             if (Thinker_IsMobj(th))
             {
-                os << descFunc(reinterpret_cast<mobj_t const *>(th));
+                os << gx.MobjStateAsInfoText(reinterpret_cast<mobj_t const *>(th));
             }
             return LoopContinue;
         });
@@ -3138,13 +3136,7 @@ void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMap
 {
     /// @todo Generalize from mobjs to all thinkers?
 
-    auto *descPtr    = gx.GetPointer(DD_FUNC_OBJECT_STATE_INFO_STR);
-    auto *restorePtr = gx.GetPointer(DD_FUNC_RESTORE_OBJECT_STATE);
-
-    if (!descPtr || !restorePtr) return;
-
-    auto const descFunc    = de::function_cast<de::String (*)(mobj_t const *)>(descPtr);
-    auto const restoreFunc = de::function_cast<void (*)(mobj_t *, Info::BlockElement const &)>(restorePtr);
+    if (!gx.MobjStateAsInfoText || !gx.MobjRestoreState) return;
 
     // Look up all the mobjs.
     QList<thinker_t const *> mobjs;
@@ -3178,12 +3170,12 @@ void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMap
             DENG2_ASSERT(&found->thinker() == th);
 
             // Restore the state according to the serialized info.
-            restoreFunc(found->as<MobjThinkerData>().mobj(), state);
+            gx.MobjRestoreState(found->as<MobjThinkerData>().mobj(), state);
 
             #if defined (DENG2_DEBUG)
             {
                 // Verify that the state is now correct.
-                Info const currentDesc(descFunc(found->as<MobjThinkerData>().mobj()));
+                Info const currentDesc(gx.MobjStateAsInfoText(found->as<MobjThinkerData>().mobj()));
                 Info::BlockElement const &currentState = currentDesc.root().contentsInOrder()
                         .first()->as<Info::BlockElement>();
                 DENG2_ASSERT(currentState.name() == state.name());
@@ -4117,7 +4109,7 @@ Polyobj *Map::createPolyobj(Vector2d const &origin)
         /// @throw EditError  Attempted when not editing.
         throw EditError("Map::createPolyobj", "Editing is not enabled");
 
-    void *region = M_Calloc(POLYOBJ_SIZE);
+    void *region = M_Calloc(gx.GetInteger(DD_POLYOBJ_SIZE));
     auto *pob = new (region) Polyobj(origin);
     d->editable.polyobjs.append(pob);
 

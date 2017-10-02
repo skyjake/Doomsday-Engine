@@ -57,8 +57,9 @@
 extern "C" {
 #endif
 
-int Common_GetInteger(int id);
-void Common_Register();
+void *  Common_GetGameAPI(char const *name);
+int     Common_GetInteger(int id);
+void    Common_Register();
 
 #ifdef __cplusplus
 } // extern "C"

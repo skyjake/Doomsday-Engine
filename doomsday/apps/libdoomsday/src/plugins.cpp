@@ -74,8 +74,8 @@ pluginid_t Plugins::Hook::pluginId() const
 
 DENG2_PIMPL_NOREF(Plugins)
 {
-    GETGAMEAPI getGameAPI = nullptr;
-    game_export_t gameExports;
+    void *(*getGameAPI)(char const *) = nullptr;
+    GameExports gameExports;
 
     typedef ::Library *PluginHandle;
 
@@ -288,13 +288,59 @@ bool Plugins::exchangeGameEntryPoints(pluginid_t pluginId)
     if (pluginId != 0)
     {
         // Do the API transfer.
-        if (!(d->getGameAPI = (GETGAMEAPI) findEntryPoint(pluginId, "GetGameAPI")))
+        if (!functionAssign(d->getGameAPI, findEntryPoint(pluginId, "GetGameAPI")))
         {
             return false;
         }
 
-        game_export_t *gameExPtr = d->getGameAPI();
-        std::memcpy(&d->gameExports, gameExPtr, de::min(sizeof(d->gameExports), gameExPtr->apiSize));
+        zap(d->gameExports);
+
+        // Query all the known entrypoints.
+        #define GET_FUNC_OPTIONAL(Name) { functionAssign(d->gameExports.Name, d->getGameAPI(#Name)); }
+        #define GET_FUNC(Name) { GET_FUNC_OPTIONAL(Name); DENG2_ASSERT(d->gameExports.Name); }
+
+        GET_FUNC(PreInit);
+        GET_FUNC(PostInit);
+        GET_FUNC(TryShutdown);
+        GET_FUNC(Shutdown);
+        GET_FUNC(UpdateState);
+        GET_FUNC(GetInteger);
+        GET_FUNC(GetPointer);
+
+        GET_FUNC(NetServerStart);
+        GET_FUNC(NetServerStop);
+        GET_FUNC(NetConnect);
+        GET_FUNC(NetDisconnect);
+        GET_FUNC(NetPlayerEvent);
+        GET_FUNC(NetWorldEvent);
+        GET_FUNC(HandlePacket);
+
+        GET_FUNC(Ticker);
+
+        GET_FUNC(FinaleResponder);
+        GET_FUNC(PrivilegedResponder);
+        GET_FUNC(Responder);
+        GET_FUNC_OPTIONAL(FallbackResponder);
+
+        GET_FUNC_OPTIONAL(BeginFrame);
+        GET_FUNC(EndFrame);
+        GET_FUNC(DrawViewPort);
+        GET_FUNC(DrawWindow);
+
+        GET_FUNC(MobjThinker);
+        GET_FUNC(MobjFriction);
+        GET_FUNC(MobjCheckPositionXYZ);
+        GET_FUNC(MobjTryMoveXYZ);
+        GET_FUNC(MobjStateAsInfoText);
+        GET_FUNC(MobjRestoreState);
+
+        GET_FUNC(SectorHeightChangeNotification);
+
+        GET_FUNC(FinalizeMapChange);
+        GET_FUNC(HandleMapDataPropertyValue);
+        GET_FUNC(HandleMapObjectStatusReport);
+
+        #undef GET_FUNC
     }
     else
     {
@@ -305,7 +351,7 @@ bool Plugins::exchangeGameEntryPoints(pluginid_t pluginId)
     return true;
 }
 
-game_export_t &Plugins::gameExports() const
+GameExports &Plugins::gameExports() const
 {
     return d->gameExports;
 }

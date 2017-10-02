@@ -116,12 +116,6 @@ void *H_GetVariable(int id)
     case DD_TM_CEILING_Z:
         return (void*) &tmCeilingZ;
 
-    case DD_FUNC_OBJECT_STATE_INFO_STR:
-        return reinterpret_cast<void *>(Mobj_AsTextWithInfoSyntax);
-
-    case DD_FUNC_RESTORE_OBJECT_STATE:
-        return reinterpret_cast<void *>(Mobj_RestoreObjectState);
-
     default:
         break;
     }

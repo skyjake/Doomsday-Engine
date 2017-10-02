@@ -49,9 +49,6 @@
 
 using namespace de;
 
-// The interface to the Doomsday engine.
-game_export_t gx;
-
 // Identifiers given to the games we register during startup.
 static char const *gameIds[NUM_GAME_MODES] =
 {
@@ -212,52 +209,30 @@ dd_bool G_TryShutdown(void)
  * Takes a copy of the engine's entry points and exported data. Returns
  * a pointer to the structure that contains our entry points and exports.
  */
-DENG_ENTRYPOINT game_export_t *GetGameAPI(void)
+DENG_ENTRYPOINT void *GetGameAPI(char const *name)
 {
-    // Clear all of our exports.
-    memset(&gx, 0, sizeof(gx));
+    if (auto *ptr = Common_GetGameAPI(name))
+    {
+        return ptr;
+    }
 
-    // Fill in the data for the exports.
-    gx.apiSize = sizeof(gx);
-    gx.PreInit = G_PreInit;
-    gx.PostInit = X_PostInit;
-    gx.TryShutdown = G_TryShutdown;
-    gx.Shutdown = X_Shutdown;
-    gx.Ticker = G_Ticker;
-    gx.DrawViewPort = G_DrawViewPort;
-    gx.DrawWindow = X_DrawWindow;
-    gx.FinaleResponder = FI_PrivilegedResponder;
-    gx.PrivilegedResponder = G_PrivilegedResponder;
-    gx.Responder = G_Responder;
-    gx.EndFrame = X_EndFrame;
-    gx.MobjThinker = P_MobjThinker;
-    gx.MobjFriction = Mobj_Friction;
-    gx.MobjCheckPositionXYZ = P_CheckPositionXYZ;
-    gx.MobjTryMoveXYZ = P_TryMoveXYZ;
-    gx.SectorHeightChangeNotification = P_HandleSectorHeightChange;
-    gx.UpdateState = G_UpdateState;
-    gx.GetInteger = X_GetInteger;
-    gx.GetPointer = X_GetVariable;
+    #define HASH_ENTRY(Name, Func) std::make_pair(QByteArray(Name), de::function_cast<void *>(Func))
+    static QHash<QByteArray, void *> const funcs(
+    {
+        HASH_ENTRY("DrawWindow",    X_DrawWindow),
+        HASH_ENTRY("EndFrame",      X_EndFrame),
+        HASH_ENTRY("GetInteger",    X_GetInteger),
+        HASH_ENTRY("GetPointer",    X_GetVariable),
+        HASH_ENTRY("PostInit",      X_PostInit),
+        HASH_ENTRY("PreInit",       G_PreInit),
+        HASH_ENTRY("Shutdown",      X_Shutdown),
+        HASH_ENTRY("TryShutdown",   G_TryShutdown),
+    });
+    #undef HASH_ENTRY
 
-    gx.NetServerStart = D_NetServerStarted;
-    gx.NetServerStop = D_NetServerClose;
-    gx.NetConnect = D_NetConnect;
-    gx.NetDisconnect = D_NetDisconnect;
-    gx.NetPlayerEvent = D_NetPlayerEvent;
-    gx.NetWorldEvent = D_NetWorldEvent;
-    gx.HandlePacket = D_HandlePacket;
-
-    // Data structure sizes.
-    gx.mobjSize = sizeof(mobj_t);
-    gx.polyobjSize = sizeof(Polyobj);
-
-    gx.FinalizeMapChange = (void (*)(void const *)) P_FinalizeMapChange;
-
-    // These really need better names. Ideas?
-    gx.HandleMapDataPropertyValue = P_HandleMapDataPropertyValue;
-    gx.HandleMapObjectStatusReport = P_HandleMapObjectStatusReport;
-
-    return &gx;
+    auto found = funcs.find(name);
+    if (found != funcs.end()) return found.value();
+    return nullptr;
 }
 
 /**
