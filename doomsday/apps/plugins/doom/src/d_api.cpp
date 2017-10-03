@@ -368,10 +368,6 @@ dd_bool G_TryShutdown(void)
     return true;
 }
 
-/**
- * Takes a copy of the engine's entry points and exported data. Returns
- * a pointer to the structure that contains our entry points and exports.
- */
 DENG_ENTRYPOINT void *GetGameAPI(char const *name)
 {
     if (auto *ptr = Common_GetGameAPI(name))

@@ -32,8 +32,6 @@ extern "C" {
 struct event_s;
 
 /// General constants.
-/// @note Many of these have become unused as better APIs are introduced for
-/// sharing information.
 enum {
     DD_DISABLE = 0,
     DD_ENABLE = 1,
@@ -67,9 +65,6 @@ enum {
     DD_XGFUNC_LINK,                 ///< XG line classes
     DD_MOBJ_SIZE,
     DD_POLYOBJ_SIZE,
-
-    //DD_FUNC_OBJECT_STATE_INFO_STR,  ///< Information about mobjs in plain text Info format.
-    //DD_FUNC_RESTORE_OBJECT_STATE,   ///< Restore object state according to a parsed Info block.
 
     DD_TM_FLOOR_Z = 0x600,          ///< output from P_CheckPosition
     DD_TM_CEILING_Z,                ///< output from P_CheckPosition
