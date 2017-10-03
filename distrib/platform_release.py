@@ -107,7 +107,11 @@ def mac_os_version():
 
 
 def mac_os_8_or_later():
-    return mac_os_version() in ['10.8', '10.9', '10.10', '10.11', '10.12']
+    try:
+        v = mac_os_version().split('.')
+        return int(v[1]) >= 8
+    except:
+        return False
 
 
 def mac_target_ext():
