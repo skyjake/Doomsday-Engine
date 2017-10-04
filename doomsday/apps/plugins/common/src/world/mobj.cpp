@@ -1106,21 +1106,21 @@ void Mobj_RestoreObjectState(mobj_t *mob, de::Info::BlockElement const &state)
     if (ok)
     {
         mob->target = Mobj_FindByPrivateID(pid);
-        qDebug() << "mobj" << mob->thinker.id << "target" << pid << mob->target;
+        //qDebug() << "mobj" << mob->thinker.id << "target" << pid << mob->target;
     }
 
     pid = state.keyValue(KEY_ON_MOBJ).text.toUInt32(&ok, 0);
     if (ok)
     {
         mob->onMobj = Mobj_FindByPrivateID(pid);
-        qDebug() << "mobj" << mob->thinker.id << "onMobj" << pid << mob->onMobj;
+        //qDebug() << "mobj" << mob->thinker.id << "onMobj" << pid << mob->onMobj;
     }
 
     pid = state.keyValue(KEY_TRACER).text.toUInt32(&ok, 0);
     if (ok)
     {
         mob->tracer = Mobj_FindByPrivateID(pid);
-        qDebug() << "mobj" << mob->thinker.id << "tracer" << pid << mob->tracer;
+        //qDebug() << "mobj" << mob->thinker.id << "tracer" << pid << mob->tracer;
     }
 
     #if defined (__JHERETIC__)
@@ -1129,7 +1129,7 @@ void Mobj_RestoreObjectState(mobj_t *mob, de::Info::BlockElement const &state)
         if (ok)
         {
             mob->generator = Mobj_FindByPrivateID(pid);
-            qDebug() << "mobj" << mob->thinker.id << "generator" << pid << mob->generator;
+            //qDebug() << "mobj" << mob->thinker.id << "generator" << pid << mob->generator;
         }
     }
     #endif
@@ -1140,7 +1140,7 @@ void Mobj_RestoreObjectState(mobj_t *mob, de::Info::BlockElement const &state)
         if (ok)
         {
             mob->lastEnemy = Mobj_FindByPrivateID(pid);
-            qDebug() << "mobj" << mob->thinker.id << "lastEnemy" << pid << mob->lastEnemy;
+            //qDebug() << "mobj" << mob->thinker.id << "lastEnemy" << pid << mob->lastEnemy;
         }
     }
     #endif
