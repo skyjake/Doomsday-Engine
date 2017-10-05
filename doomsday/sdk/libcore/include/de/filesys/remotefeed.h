@@ -1,7 +1,6 @@
-/*
- * The Doomsday Engine Project
+/** @file remotefeed.h  Feed for remote files.
  *
- * Copyright © 2010-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -17,43 +16,33 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/IdentifiedPacket"
-#include "de/Writer"
-#include "de/Reader"
+#ifndef LIBDENG2_REMOTEFEED_H
+#define LIBDENG2_REMOTEFEED_H
+
+#include "../Feed"
+#include "../Address"
 
 namespace de {
 
-static IdentifiedPacket::Id idGen = 0;
-
-IdentifiedPacket::IdentifiedPacket(Type const &type, Id i)
-    : Packet(type), _id(i)
-{}
-
-void IdentifiedPacket::setId(Id id)
+/**
+ * Feed that communicates with a remote backend and populates local placeholders for
+ * remote file data.
+ */
+class DENG2_PUBLIC RemoteFeed : public Feed
 {
-    _id = id;
-}
+public:
+    RemoteFeed(Address const &backend, String const &remotePath = String("/"));
 
-void IdentifiedPacket::operator >> (Writer &to) const
-{
-    Packet::operator >> (to);
-    to << id();
-}
+    Address backend() const;
 
-void IdentifiedPacket::operator << (Reader &from)
-{
-    Packet::operator << (from);
-    from >> _id;
-}
+    String description() const;
+    PopulatedFiles populate(Folder const &folder);
+    bool prune(File &file) const;
 
-IdentifiedPacket::Id IdentifiedPacket::id() const
-{
-    if (!_id)
-    {
-        // Late assignment of the id. If the id is never asked, one is never set.
-        _id = ++idGen;
-    }
-    return _id;
-}
+private:
+    DENG2_PRIVATE(d)
+};
 
 } // namespace de
+
+#endif // LIBDENG2_REMOTEFEED_H

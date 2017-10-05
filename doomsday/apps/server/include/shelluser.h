@@ -22,6 +22,7 @@
 
 #include <de/Socket>
 #include <de/shell/Link>
+#include "users.h"
 
 /**
  * Remote user of a shell connection.
@@ -34,7 +35,7 @@
  *
  * @ingroup server
  */
-class ShellUser : public de::shell::Link
+class ShellUser : public de::shell::Link, public User
 {
     Q_OBJECT
 
@@ -55,6 +56,8 @@ public:
     void sendGameState();
     void sendMapOutline();
     void sendPlayerInfo();
+
+    de::Address address() const override;
 
 protected slots:
     void handleIncomingPackets();

@@ -1,7 +1,6 @@
-/*
- * The Doomsday Engine Project
+/** @file remotefile.cpp  Remote file.
  *
- * Copyright © 2010-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -17,43 +16,25 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/IdentifiedPacket"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/RemoteFile"
 
 namespace de {
 
-static IdentifiedPacket::Id idGen = 0;
-
-IdentifiedPacket::IdentifiedPacket(Type const &type, Id i)
-    : Packet(type), _id(i)
-{}
-
-void IdentifiedPacket::setId(Id id)
+DENG2_PIMPL(RemoteFile)
 {
-    _id = id;
+    Impl(Public *i) : Base(i) {}
+};
+
+RemoteFile::RemoteFile(String const &name)
+    : File(name)
+    , d(new Impl(this))
+{
+    setState(NotReady);
 }
 
-void IdentifiedPacket::operator >> (Writer &to) const
+void RemoteFile::fetchContents()
 {
-    Packet::operator >> (to);
-    to << id();
-}
-
-void IdentifiedPacket::operator << (Reader &from)
-{
-    Packet::operator << (from);
-    from >> _id;
-}
-
-IdentifiedPacket::Id IdentifiedPacket::id() const
-{
-    if (!_id)
-    {
-        // Late assignment of the id. If the id is never asked, one is never set.
-        _id = ++idGen;
-    }
-    return _id;
+    setState(Recovering);
 }
 
 } // namespace de

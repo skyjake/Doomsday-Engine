@@ -43,6 +43,7 @@
 #include "de/PackageFeed"
 #include "de/PackageLoader"
 #include "de/Record"
+#include "de/RemoteFeedRelay"
 #include "de/ScriptSystem"
 #include "de/StaticLibraryFeed"
 #include "de/UnixInfo"
@@ -64,7 +65,7 @@ static App *singletonApp;
 DENG2_PIMPL(App)
 , DENG2_OBSERVES(PackageLoader, Activity)
 {
-    QThread *mainThread   = nullptr;
+    QThread *mainThread = nullptr;
 
     /// Name of the application (metadata for humans).
     String appName;
@@ -100,6 +101,8 @@ DENG2_PIMPL(App)
 
     std::unique_ptr<UnixInfo> unixInfo;
 
+    RemoteFeedRelay remoteFeedRelay;
+
     /// The configuration.
     Path configPath;
     Config *config;
@@ -129,7 +132,7 @@ DENG2_PIMPL(App)
             setlocale(LC_NUMERIC, "C");
         }
         #endif
-        
+
         // Override the system number formatting.
         QLocale::setDefault(QLocale("en_US.UTF-8"));
 
@@ -236,7 +239,7 @@ DENG2_PIMPL(App)
                 }
             }
             #endif
-            
+
             if (defaultNativeModulePath().exists())
             {
                 fs.makeFolder("/modules").attach(new DirectoryFeed(defaultNativeModulePath()));
@@ -655,7 +658,7 @@ NativePath App::nativeBasePath()
             path = d->appPath.fileNamePath() / DENG_BASE_DIR;
         }
         #endif
-        
+
         if (!path.exists())
         {
             // Fall back to using the application binary path, which always exists.
@@ -888,6 +891,11 @@ Folder &App::rootFolder()
 Folder &App::homeFolder()
 {
     return rootFolder().locate<Folder>("home");
+}
+
+RemoteFeedRelay &App::remoteFeedRelay()
+{
+    return DENG2_APP->d->remoteFeedRelay;
 }
 
 Config &App::config()

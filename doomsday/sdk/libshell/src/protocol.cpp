@@ -257,31 +257,30 @@ Protocol::PacketType Protocol::recognize(Packet const *packet)
 {
     if (packet->type() == CHALLENGE_PACKET_TYPE)
     {
-        DENG2_ASSERT(dynamic_cast<ChallengePacket const *>(packet) != 0);
+        DENG2_ASSERT(is<ChallengePacket>(packet));
         return PasswordChallenge;
     }
 
     if (packet->type() == LOG_ENTRY_PACKET_TYPE)
     {
-        DENG2_ASSERT(dynamic_cast<LogEntryPacket const *>(packet) != 0);
+        DENG2_ASSERT(is<LogEntryPacket>(packet));
         return LogEntries;
     }
 
     if (packet->type() == MAP_OUTLINE_PACKET_TYPE)
     {
-        DENG2_ASSERT(dynamic_cast<MapOutlinePacket const *>(packet) != 0);
+        DENG2_ASSERT(is<MapOutlinePacket>(packet));
         return MapOutline;
     }
 
     if (packet->type() == PLAYER_INFO_PACKET_TYPE)
     {
-        DENG2_ASSERT(dynamic_cast<PlayerInfoPacket const *>(packet) != 0);
+        DENG2_ASSERT(is<PlayerInfoPacket>(packet));
         return PlayerInfo;
     }
 
     // One of the generic-format packets?
-    RecordPacket const *rec = dynamic_cast<RecordPacket const *>(packet);
-    if (rec)
+    if (RecordPacket const *rec = maybeAs<RecordPacket>(packet))
     {
         if (rec->name() == PT_COMMAND)
         {

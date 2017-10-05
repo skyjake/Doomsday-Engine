@@ -1,8 +1,6 @@
-/** @file shellusers.h  All remote shell users.
- * @ingroup server
+/** @file remotefeeduser.h
  *
- * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright (c) 2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,26 +16,27 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef SERVER_SHELLUSERS_H
-#define SERVER_SHELLUSERS_H
+#ifndef SERVER_REMOTEFEEDUSER_H
+#define SERVER_REMOTEFEEDUSER_H
 
-#include <doomsday/world/world.h>
 #include "users.h"
-#include "shelluser.h"
+#include <de/Socket>
 
-/**
- * All remote shell users.
- */
-class ShellUsers : public Users, DENG2_OBSERVES(World, MapChange)
+class RemoteFeedUser : public User
 {
 public:
-    ShellUsers();
+    /**
+     * Construct a new RemoteFeedUser.
+     *
+     * @param socket Network connection to the user. Ownership taken.
+     */
+    RemoteFeedUser(de::Socket *socket);
 
-    void add(User *shellUser) override;
-    void worldMapChanged() override;
+    de::Address address() const override;
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif  // SERVER_SHELLUSERS_H
+
+#endif // SERVER_REMOTEFEEDUSER_H

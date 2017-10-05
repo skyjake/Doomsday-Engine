@@ -406,7 +406,7 @@ Socket::Socket(Address const &address, TimeDelta const &timeOut) : d(new Impl) /
                  d->socket->state() == QAbstractSocket::ConnectedState);
 }
 
-void Socket::connect(Address const &address) // non-blocking
+void Socket::open(Address const &address) // non-blocking
 {
     DENG2_ASSERT(d->socket);
     DENG2_ASSERT(d->socket->state() == QAbstractSocket::UnconnectedState);
@@ -418,8 +418,8 @@ void Socket::connect(Address const &address) // non-blocking
     d->target = address;
 }
 
-void Socket::connectToDomain(String const &domainNameWithOptionalPort,
-                             duint16 defaultPort) // non-blocking
+void Socket::open(String const &domainNameWithOptionalPort,
+                  duint16 defaultPort) // non-blocking
 {
     String str = domainNameWithOptionalPort;
     duint16 port = defaultPort;
@@ -432,7 +432,7 @@ void Socket::connectToDomain(String const &domainNameWithOptionalPort,
     }
     if (str == "localhost")
     {
-        connect(Address(str.toLatin1(), port));
+        open(Address(str.toLatin1(), port));
         return;
     }
 
@@ -440,7 +440,7 @@ void Socket::connectToDomain(String const &domainNameWithOptionalPort,
     if (!host.isNull())
     {
         // Looks like a regular IP address.
-        connect(Address(str.toLatin1(), port));
+        open(Address(str.toLatin1(), port));
         return;
     }
 
@@ -454,7 +454,7 @@ void Socket::reconnect()
 {
     DENG2_ASSERT(!isOpen());
 
-    connect(d->target);
+    open(d->target);
 }
 
 Socket::Socket(QTcpSocket *existingSocket) : d(new Impl)
@@ -585,7 +585,7 @@ void Socket::hostResolved(QHostInfo const &info)
     else
     {
         // Now we know where to connect.
-        connect(Address(info.addresses().first(), d->target.port()));
+        open(Address(info.addresses().first(), d->target.port()));
 
         emit addressResolved();
     }

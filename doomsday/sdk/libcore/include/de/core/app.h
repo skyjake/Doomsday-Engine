@@ -48,6 +48,7 @@ class Module;
 class Path;
 class NativePath;
 class PackageLoader;
+class RemoteFeedRelay;
 class ScriptSystem;
 class System;
 class UnixInfo;
@@ -293,6 +294,11 @@ public:
     static Folder &homeFolder();
 
     /**
+     * Returns the remote feed relay that manages connections to remote file repositories.
+     */
+    static RemoteFeedRelay &remoteFeedRelay();
+
+    /**
      * Returns the application's package loader.
      */
     static PackageLoader &packageLoader();
@@ -405,7 +411,7 @@ public:
      * thread.
      */
     static bool inMainThread();
-        
+
 protected:
     /**
      * Returns the native path of the directory where the application can store

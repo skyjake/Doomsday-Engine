@@ -19,6 +19,7 @@
 
 #include "shellusers.h"
 #include "dd_main.h"
+#include <de/Garbage>
 #include <QTimer>
 
 using namespace de;
@@ -27,79 +28,45 @@ static int const PLAYER_INFO_INTERVAL = 2500; // ms
 
 DENG2_PIMPL_NOREF(ShellUsers)
 {
-    QSet<ShellUser *> users;
-    QTimer *infoTimer;
+    QTimer infoTimer;
 
     Impl()
     {
-        infoTimer = new QTimer;
-        infoTimer->setInterval(PLAYER_INFO_INTERVAL);
-    }
-
-    ~Impl()
-    {
-        delete infoTimer;
+        infoTimer.setInterval(PLAYER_INFO_INTERVAL);
     }
 };
 
 ShellUsers::ShellUsers() : d(new Impl)
 {
     // Player information is sent periodically to all shell users.
-    connect(d->infoTimer, SIGNAL(timeout()), this, SLOT(sendPlayerInfoToAll()));
-    d->infoTimer->start();
-}
-
-ShellUsers::~ShellUsers()
-{
-    d->infoTimer->stop();
-
-    foreach (ShellUser *user, d->users)
+    QObject::connect(&d->infoTimer, &QTimer::timeout, [this] ()
     {
-        delete user;
-    }
+        forUsers([this] (User &user)
+        {
+            user.as<ShellUser>().sendPlayerInfo();
+            return LoopContinue;
+        });
+    });
+    d->infoTimer.start();
 }
 
-void ShellUsers::add(ShellUser *user)
+void ShellUsers::add(User *user)
 {
+    DENG2_ASSERT(is<ShellUser>(user));
+    Users::add(user);
+
     LOG_NET_NOTE("New shell user from %s") << user->address();
-
-    d->users.insert(user);
-    connect(user, SIGNAL(disconnected()), this, SLOT(userDisconnected()));
-
-    user->sendInitialUpdate();
-}
-
-int ShellUsers::count() const
-{
-    return d->users.size();
+    user->as<ShellUser>().sendInitialUpdate();
 }
 
 void ShellUsers::worldMapChanged()
 {
-    foreach (ShellUser *user, d->users)
+    forUsers([this] (User &user)
     {
-        user->sendGameState();
-        user->sendMapOutline();
-        user->sendPlayerInfo();
-    }
-}
-
-void ShellUsers::sendPlayerInfoToAll()
-{
-    foreach (ShellUser *user, d->users)
-    {
-        user->sendPlayerInfo();
-    }
-}
-
-void ShellUsers::userDisconnected()
-{
-    DENG2_ASSERT(dynamic_cast<ShellUser *>(sender()) != 0);
-
-    ShellUser *user = static_cast<ShellUser *>(sender());
-    d->users.remove(user);
-
-    LOG_NET_NOTE("Shell user from %s has disconnected") << user->address();
-
-    user->deleteLater();
+        ShellUser &shellUser = user.as<ShellUser>();
+        shellUser.sendGameState();
+        shellUser.sendMapOutline();
+        shellUser.sendPlayerInfo();
+        return LoopContinue;
+    });
 }

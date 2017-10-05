@@ -80,6 +80,13 @@ DENG2_PIMPL(ShellUser), public LogSink
 
 ShellUser::ShellUser(Socket *socket) : shell::Link(socket), d(new Impl(*this))
 {
+    connect(this, &Link::disconnected, [this] ()
+    {
+        DENG2_FOR_AUDIENCE(Disconnect, i)
+        {
+            i->userDisconnected(*this);
+        }
+    });
     connect(this, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
 }
 
@@ -170,6 +177,11 @@ void ShellUser::sendPlayerInfo()
     }
 
     *this << *packet;
+}
+
+Address ShellUser::address() const
+{
+    return Link::address();
 }
 
 void ShellUser::handleIncomingPackets()

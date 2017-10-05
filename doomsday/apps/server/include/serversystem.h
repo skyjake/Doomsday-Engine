@@ -82,6 +82,8 @@ public:
 
     void convertToShellUser(RemoteUser *user);
 
+    void convertToRemoteFeedUser(RemoteUser *user);
+
     /**
      * Prints the status of the server into the log.
      */

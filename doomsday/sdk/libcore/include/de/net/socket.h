@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_SOCKET_H
@@ -93,7 +93,7 @@ public:
      *
      * @param address  Address to connect to.
      */
-    void connect(Address const &address);
+    void open(Address const &address);
 
     /**
      * Opens a connection to a host and returns immediately. If the IP address
@@ -107,7 +107,7 @@ public:
      * optional port appended (e.g., "myhost.com:13209").
      * @param defaultPort  Port number to use if not specified in the first argument.
      */
-    void connectToDomain(String const &domainNameWithOptionalPort, duint16 defaultPort = 0);
+    void open(String const &domainNameWithOptionalPort, duint16 defaultPort = 0);
 
     /**
      * Returns the currently active channel.

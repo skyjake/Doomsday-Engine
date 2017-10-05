@@ -119,7 +119,7 @@ DENG2_PIMPL(RemoteUser)
 
         //ddstring_t msg;
 
-        int length = command.size();
+        auto const length = command.size();
 
         // If the command is too long, it'll be considered invalid.
         if (length >= 256)
@@ -150,6 +150,12 @@ DENG2_PIMPL(RemoteUser)
             Block serialized;
             Writer(serialized).withHeader() << packet;
             self() << Block("MapOutline\n" + serialized.compressed());
+        }
+        else if (command == "RemoteFeed")
+        {
+            // This connection will be only doing file system operations.
+            App_ServerSystem().convertToRemoteFeedUser(thisPublic);
+            return false;
         }
         else if (length >= 5 && command.startsWith("Shell"))
         {

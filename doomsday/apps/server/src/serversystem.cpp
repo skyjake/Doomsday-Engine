@@ -33,6 +33,7 @@
 #include "serverapp.h"
 #include "shellusers.h"
 #include "remoteuser.h"
+#include "remotefeeduser.h"
 
 #include "server/sv_def.h"
 #include "server/sv_frame.h"
@@ -71,6 +72,7 @@ DENG2_PIMPL(ServerSystem)
 
     QHash<Id, RemoteUser *> users;
     ShellUsers shellUsers;
+    Users remoteFeedUsers;
 
     Impl(Public *i) : Base(i) {}
     ~Impl() { deinit(); }
@@ -215,7 +217,14 @@ DENG2_PIMPL(ServerSystem)
         {
             LOG_MSG("%i shell user%s")
                     << shellUsers.count()
-                    << (shellUsers.count() == 1? "" : "s");
+                    << DENG2_PLURAL_S(shellUsers.count());
+        }
+
+        if (remoteFeedUsers.count())
+        {
+            LOG_MSG("%i remote file system user%s")
+                    << remoteFeedUsers.count()
+                    << DENG2_PLURAL_S(remoteFeedUsers.count());
         }
 
         N_PrintBufferInfo();
@@ -278,6 +287,17 @@ void ServerSystem::convertToShellUser(RemoteUser *user)
     d->shellUsers.add(new ShellUser(socket));
 }
 
+void ServerSystem::convertToRemoteFeedUser(RemoteUser *user)
+{
+    DENG2_ASSERT(user);
+
+    Socket *socket = user->takeSocket();
+    LOGDEV_NET_VERBOSE("Remote user %s converted to remote file system user") << user->id();
+    user->deleteLater();
+
+    d->remoteFeedUsers.add(new RemoteFeedUser(socket));
+}
+
 void ServerSystem::timeChanged(Clock const &clock)
 {
     if (Sys_IsShuttingDown())
@@ -334,8 +354,10 @@ void ServerSystem::userDestroyed()
 
     d->users.remove(u->id());
 
-    LOG_NET_VERBOSE("%i remote users and %i shell users remain")
-            << d->users.size() << d->shellUsers.count();
+    LOG_NET_VERBOSE("Remaining user count: %i remote, %i shell, %i filesys")
+            << d->users.size()
+            << d->shellUsers.count()
+            << d->remoteFeedUsers.count();
 }
 
 void ServerSystem::printStatus()

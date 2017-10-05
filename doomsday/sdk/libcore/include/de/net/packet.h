@@ -38,6 +38,8 @@ class String;
 class DENG2_PUBLIC Packet : public ISerializable
 {
 public:
+    DENG2_CAST_METHODS()
+
     /// While deserializing, an invalid type identifier was encountered. @ingroup errors
     DENG2_SUB_ERROR(DeserializationError, InvalidTypeError);
 
