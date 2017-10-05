@@ -31,9 +31,9 @@ namespace de {
 class DENG2_PUBLIC RemoteFeed : public Feed
 {
 public:
-    RemoteFeed(Address const &backend, String const &remotePath = String("/"));
+    RemoteFeed(String const &repository, String const &remotePath = String("/"));
 
-    Address backend() const;
+    String repository() const;
 
     String description() const;
     PopulatedFiles populate(Folder const &folder);

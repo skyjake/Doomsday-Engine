@@ -36,14 +36,7 @@ DENG2_PIMPL(RemoteFeedRelay)
     {
         RemoteFeedRelay::Impl *d;
 
-        enum State {
-            Deinitialized,
-            Initializing,
-            Ready,
-        };
-        State state = Initializing;
-        String address;
-        IdentifiedPacket::Id nextQueryId = 1;
+        enum State { Deinitialized, Initializing, Ready };
 
         struct Query
         {
@@ -67,6 +60,10 @@ DENG2_PIMPL(RemoteFeedRelay)
                 if (fileList) fileList->cancel();
             }
         };
+
+        State state = Initializing;
+        String address;
+        Query::Id nextQueryId = 1;
         QList<Query> deferredQueries;
         QHash<Query::Id, Query> pendingQueries;
 
@@ -202,23 +199,26 @@ DENG2_PIMPL(RemoteFeedRelay)
 
         void receiveMessages()
         {
-            try
+            while (socket.hasIncoming())
             {
-                DENG2_ASSERT_IN_MAIN_THREAD();
-
-                std::unique_ptr<Message> response(socket.receive());
-                std::unique_ptr<Packet>  packet  (d->protocol.interpret(*response));
-
-                if (d->protocol.recognize(*packet) == RemoteFeedProtocol::Metadata)
+                try
                 {
-                    auto const &md = packet->as<RemoteFeedMetadataPacket>();
-                    finishQuery(md.id(), md.metadata());
+                    DENG2_ASSERT_IN_MAIN_THREAD();
+
+                    std::unique_ptr<Message> response(socket.receive());
+                    std::unique_ptr<Packet>  packet  (d->protocol.interpret(*response));
+
+                    if (d->protocol.recognize(*packet) == RemoteFeedProtocol::Metadata)
+                    {
+                        auto const &md = packet->as<RemoteFeedMetadataPacket>();
+                        finishQuery(md.id(), md.metadata());
+                    }
                 }
-            }
-            catch (Error const &er)
-            {
-                LOG_NET_ERROR("Error when handling remote feed response: %s")
-                        << er.asText();
+                catch (Error const &er)
+                {
+                    LOG_NET_ERROR("Error when handling remote feed response: %s")
+                            << er.asText();
+                }
             }
             cleanup();
         }
@@ -246,9 +246,16 @@ RemoteFeedRelay::RemoteFeedRelay()
     : d(new Impl(this))
 {}
 
+RemoteFeed *RemoteFeedRelay::addServerRepository(String const &serverAddress)
+{
+    auto *repo = new Impl::NativeRepositoryLink(d, serverAddress);
+    d->repositories.insert(serverAddress, repo);
+    return new RemoteFeed(serverAddress, "/local");
+}
+
 RemoteFeed *RemoteFeedRelay::addRepository(String const &address)
 {
-
+    return nullptr;
 }
 
 StringList RemoteFeedRelay::repositories() const
@@ -262,11 +269,11 @@ StringList RemoteFeedRelay::repositories() const
 }
 
 RemoteFeedRelay::FileListRequest
-RemoteFeedRelay::fetchFileList(Address const &backend, String folderPath, FileListFunc result)
+RemoteFeedRelay::fetchFileList(String const &repository, String folderPath, FileListFunc result)
 {
-    DENG2_ASSERT(d->repositoriesByHost.contains(backend.host()));
+    DENG2_ASSERT(d->repositories.contains(repository));
 
-    auto *repo = d->repositoriesByHost[backend.host()];
+    auto *repo = d->repositories[repository];
     FileListRequest request(new FileListRequest::element_type(result));
     repo->sendQuery(Impl::RepositoryLink::Query(request, folderPath));
     return request;

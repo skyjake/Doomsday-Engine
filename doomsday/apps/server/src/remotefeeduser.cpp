@@ -18,14 +18,81 @@
 
 #include "remotefeeduser.h"
 
+#include <de/FileSystem>
+#include <de/Folder>
+#include <de/Message>
+#include <de/RemoteFeedProtocol>
+
 using namespace de;
 
 DENG2_PIMPL(RemoteFeedUser)
 {
     std::unique_ptr<Socket> socket;
+    RemoteFeedProtocol protocol;
 
     Impl(Public *i, Socket *s) : Base(i), socket(s)
-    {}
+    {
+        QObject::connect(s, &Socket::messagesReady, [this] () { receiveMessages(); });
+        QObject::connect(s, &Socket::disconnected, [this] ()
+        {
+            DENG2_FOR_PUBLIC_AUDIENCE(Disconnect, i)
+            {
+                i->userDisconnected(self());
+            }
+        });
+    }
+
+    void receiveMessages()
+    {
+        LOG_AS("RemoteFeedUser");
+        while (socket->hasIncoming())
+        {
+            try
+            {
+                std::unique_ptr<Message> message(socket->receive());
+                std::unique_ptr<Packet>  packet(protocol.interpret(*message));
+
+                if (protocol.recognize(*packet) == RemoteFeedProtocol::Query)
+                {
+                    handleQuery(packet->as<RemoteFeedQueryPacket>());
+                }
+            }
+            catch (Error const &er)
+            {
+                LOG_NET_ERROR("Error during query: %s") << er.asText();
+            }
+        }
+    }
+
+    void handleQuery(RemoteFeedQueryPacket const &query)
+    {
+        std::unique_ptr<RemoteFeedMetadataPacket> response(new RemoteFeedMetadataPacket);
+        response->setId(query.id());
+
+        switch (query.query())
+        {
+        case RemoteFeedQueryPacket::ListFiles:
+            if (auto const *folder = FS::tryLocate<Folder const>(query.path()))
+            {
+                folder->forContents([&response] (String, File &file)
+                {
+                    response->addFile(file);
+                    return LoopContinue;
+                });
+            }
+            else
+            {
+                LOG_NET_WARNING("%s not found!") << query.path();
+            }
+            break;
+
+        case RemoteFeedQueryPacket::FileContents:
+
+            break;
+        }
+
+        socket->sendPacket(*response);
+    }
 };
 
 RemoteFeedUser::RemoteFeedUser(Socket *socket)

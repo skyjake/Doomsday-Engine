@@ -45,13 +45,15 @@ public:
 public:
     RemoteFeedRelay();
 
+    RemoteFeed *addServerRepository(String const &serverAddress);
+
     RemoteFeed *addRepository(String const &address);
 
     void removeRepository(String const &address);
 
     StringList repositories() const;
 
-    FileListRequest fetchFileList(Address const &backend, String folderPath,
+    FileListRequest fetchFileList(String const &repository, String folderPath,
                                   FileListFunc result);
 
     void fetchFileContents(Address const &backend, String filePath,

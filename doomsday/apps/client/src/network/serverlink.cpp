@@ -39,6 +39,7 @@
 #include <de/MessageDialog>
 #include <de/PackageLoader>
 #include <de/RecordValue>
+#include <de/RemoteFeedRelay>
 #include <de/Socket>
 #include <de/data/json.h>
 #include <de/memory.h>
@@ -372,7 +373,7 @@ void ServerLink::connectToServerAndChangeGame(shell::ServerInfo info)
     }
 
     // Get the profile for this.
-    // Use a delayed callback so that the UI is not blocked while we switch games.
+    // Use a deferred callback so that the UI is not blocked while we switch games.
     acquireServerProfile(info.address(),
                          [this, info] (GameProfile const *serverProfile)
     {
@@ -413,6 +414,11 @@ void ServerLink::connectToServerAndChangeGame(shell::ServerInfo info)
             adhoc.setPackages(serverProfile->packages() + localPackages);
             joinProfile = &adhoc;
         }
+
+        Folder &remotePacks = FS::get().makeFolderWithFeed
+                ("/remote/server",
+                 RemoteFeedRelay::get().addServerRepository(info.address().asText()),
+                 Folder::PopulateAsync);
 
         if (!joinProfile->isPlayable())
         {

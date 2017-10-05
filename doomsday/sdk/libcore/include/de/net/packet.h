@@ -54,7 +54,7 @@ public:
      *
      * @param type  Type identifier of the packet.
      */
-    Packet(Type const &type);
+    explicit Packet(Type const &type);
 
     virtual ~Packet() {}
 

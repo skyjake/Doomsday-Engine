@@ -595,7 +595,7 @@ Message *Socket::receive()
 {
     if (d->receivedMessages.isEmpty())
     {
-        return 0;
+        return nullptr;
     }
     return d->receivedMessages.takeFirst();
 }
@@ -604,7 +604,7 @@ Message *Socket::peek()
 {
     if (d->receivedMessages.isEmpty())
     {
-        return 0;
+        return nullptr;
     }
     return d->receivedMessages.first();
 }

@@ -30,29 +30,29 @@ static TimeDelta const POPULATE_TIMEOUT = 10.0;
 
 DENG2_PIMPL(RemoteFeed)
 {
-    Address backendAddress;
+    String repository;
     Path remotePath;
 
     Impl(Public *i) : Base(i)
     {}
 };
 
-RemoteFeed::RemoteFeed(Address const &backend, String const &remotePath)
+RemoteFeed::RemoteFeed(String const &repository, String const &remotePath)
     : d(new Impl(this))
 {
-    d->backendAddress = backend;
-    d->remotePath     = remotePath;
+    d->repository = repository;
+    d->remotePath = remotePath;
 }
 
-Address RemoteFeed::backend() const
+String RemoteFeed::repository() const
 {
-    return d->backendAddress;
+    return d->repository;
 }
 
 String RemoteFeed::description() const
 {
-    return String("Remote file repository %1 at path %2")
-            .arg(d->backendAddress.asText())
+    return String("remote file repository \"%1\" (remote root \"%2\")")
+            .arg(d->repository)
             .arg(d->remotePath);
 }
 
@@ -60,7 +60,7 @@ Feed::PopulatedFiles RemoteFeed::populate(Folder const &folder)
 {
     PopulatedFiles files;
     auto request = RemoteFeedRelay::get().fetchFileList
-            (d->backendAddress,
+            (d->repository,
              d->remotePath,
              [this, &folder, &files]
              (RemoteFeedRelay::FileList const &fileList)
