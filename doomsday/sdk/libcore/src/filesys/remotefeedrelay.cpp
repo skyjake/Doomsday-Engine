@@ -86,7 +86,7 @@ DENG2_PIMPL(RemoteFeedRelay)
 
         virtual void handleError(QString errorMessage)
         {
-            LOG_NET_ERROR("Error accessing remote file repository \"%s\" (%s) " DENG2_CHAR_MDASH
+            LOG_NET_ERROR("Error accessing remote file repository \"%s\": %s " DENG2_CHAR_MDASH
                           "files from repository may not be available")
                     << address
                     << errorMessage;
@@ -105,6 +105,7 @@ DENG2_PIMPL(RemoteFeedRelay)
                 }
                 else
                 {
+                    qDebug() << "[RemoteFeedRelay] Query" << query.id << "is deferred";
                     deferredQueries.append(query);
                 }
             }
@@ -186,6 +187,8 @@ DENG2_PIMPL(RemoteFeedRelay)
         void transmit(Query const &query) override
         {
             DENG2_ASSERT(query.isValid());
+
+            qDebug() << "transmitting query" << query.id << query.path;
 
             RemoteFeedQueryPacket packet;
             packet.setId(query.id);

@@ -19,6 +19,7 @@
 #include "de/RemoteFeedProtocol"
 #include "de/TextValue"
 #include "de/RecordValue"
+#include "de/Folder"
 
 namespace de {
 
@@ -78,9 +79,26 @@ RemoteFeedMetadataPacket::RemoteFeedMetadataPacket()
 
 void RemoteFeedMetadataPacket::addFile(File const &file)
 {
-    std::unique_ptr<Record> fileMeta(new Record(file.objectNamespace()));
+    auto const &ns = file.objectNamespace();
+    auto const status = file.status();
 
-    // TODO: Omit irrelevant/local information?
+    std::unique_ptr<Record> fileMeta(new Record);
+
+    fileMeta->addTime  ("modifiedAt", status.modifiedAt);
+    fileMeta->addNumber("type",       status.type());
+    if (status.type() == File::Status::FOLDER)
+    {
+        fileMeta->addNumber("size", file.as<Folder>().contents().size());
+    }
+    else
+    {
+        fileMeta->addNumber("size", status.size);
+    }
+    if (ns.hasSubrecord("package"))
+    {
+        fileMeta->add("package", new Record(ns["package"].valueAsRecord(),
+                      Record::IgnoreDoubleUnderscoreMembers));
+    }
 
     _metadata.add(new TextValue(file.name()),
                   new RecordValue(fileMeta.release(), RecordValue::OwnsRecord));

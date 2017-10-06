@@ -32,6 +32,7 @@ DENG2_PIMPL(RemoteFeedUser)
 
     Impl(Public *i, Socket *s) : Base(i), socket(s)
     {
+        LOG_NET_MSG("Setting up RemoteFeedUser %p") << thisPublic;
         QObject::connect(s, &Socket::messagesReady, [this] () { receiveMessages(); });
         QObject::connect(s, &Socket::disconnected, [this] ()
         {
@@ -40,6 +41,9 @@ DENG2_PIMPL(RemoteFeedUser)
                 i->userDisconnected(self());
             }
         });
+
+        // We took over an open socket, there may already be messages waiting.
+        receiveMessages();
     }
 
     void receiveMessages()
@@ -51,6 +55,8 @@ DENG2_PIMPL(RemoteFeedUser)
             {
                 std::unique_ptr<Message> message(socket->receive());
                 std::unique_ptr<Packet>  packet(protocol.interpret(*message));
+
+                LOG_NET_MSG("received packet '%s'") << packet->type();
 
                 if (protocol.recognize(*packet) == RemoteFeedProtocol::Query)
                 {
@@ -84,6 +90,7 @@ DENG2_PIMPL(RemoteFeedUser)
             {
                 LOG_NET_WARNING("%s not found!") << query.path();
             }
+            LOG_NET_MSG("%s") << response->metadata().asText();
             break;
 
         case RemoteFeedQueryPacket::FileContents:
@@ -91,6 +98,7 @@ DENG2_PIMPL(RemoteFeedUser)
             break;
         }
 
+        LOG_NET_MSG("Sending response %i") << query.id();
         socket->sendPacket(*response);
     }
 };

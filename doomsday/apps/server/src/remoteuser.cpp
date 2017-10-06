@@ -252,6 +252,8 @@ String RemoteUser::name() const
 Socket *RemoteUser::takeSocket()
 {
     Socket *sock = d->socket;
+    QObject::disconnect(sock, SIGNAL(disconnected()),  this, SLOT(socketDisconnected()));
+    QObject::disconnect(sock, SIGNAL(messagesReady()), this, SLOT(handleIncomingPackets()));
     d->socket = 0;
     d->state = Disconnected; // not signaled
     return sock;
