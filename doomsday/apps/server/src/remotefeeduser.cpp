@@ -18,6 +18,7 @@
 
 #include "remotefeeduser.h"
 
+#include <de/Async>
 #include <de/FileSystem>
 #include <de/Folder>
 #include <de/Message>
@@ -53,14 +54,25 @@ DENG2_PIMPL(RemoteFeedUser)
         {
             try
             {
-                std::unique_ptr<Message> message(socket->receive());
-                std::unique_ptr<Packet>  packet(protocol.interpret(*message));
+                std::unique_ptr<Message> message { socket->receive() };
+                std::shared_ptr<Packet>  packet  { protocol.interpret(*message) };
 
                 LOG_NET_MSG("received packet '%s'") << packet->type();
 
                 if (protocol.recognize(*packet) == RemoteFeedProtocol::Query)
                 {
-                    handleQuery(packet->as<RemoteFeedQueryPacket>());
+                    async([this, packet] ()
+                    {
+                        return handleQueryAsync(packet->as<RemoteFeedQueryPacket>());
+                    },
+                    [this] (Packet *response)
+                    {
+                        std::unique_ptr<Packet> p(response);
+                        if (p)
+                        {
+                            socket->sendPacket(*p);
+                        }
+                    });
                 }
             }
             catch (Error const &er)
@@ -70,36 +82,45 @@ DENG2_PIMPL(RemoteFeedUser)
         }
     }
 
-    void handleQuery(RemoteFeedQueryPacket const &query)
+    Packet *handleQueryAsync(RemoteFeedQueryPacket const &query)
     {
-        std::unique_ptr<RemoteFeedMetadataPacket> response(new RemoteFeedMetadataPacket);
-        response->setId(query.id());
-
-        switch (query.query())
+        // Note: This is executed in a background thread.
+        try
         {
-        case RemoteFeedQueryPacket::ListFiles:
-            if (auto const *folder = FS::tryLocate<Folder const>(query.path()))
+            std::unique_ptr<RemoteFeedMetadataPacket> response(new RemoteFeedMetadataPacket);
+            response->setId(query.id());
+
+            switch (query.query())
             {
-                folder->forContents([&response] (String, File &file)
+            case RemoteFeedQueryPacket::ListFiles:
+                if (auto const *folder = FS::tryLocate<Folder const>(query.path()))
                 {
-                    response->addFile(file);
-                    return LoopContinue;
-                });
-            }
-            else
-            {
-                LOG_NET_WARNING("%s not found!") << query.path();
-            }
-            LOG_NET_MSG("%s") << response->metadata().asText();
-            break;
+                    folder->forContents([&response] (String, File &file)
+                    {
+                        response->addFile(file);
+                        return LoopContinue;
+                    });
+                }
+                else
+                {
+                    LOG_NET_WARNING("%s not found!") << query.path();
+                }
+                LOG_NET_MSG("%s") << response->metadata().asText();
+                break;
 
-        case RemoteFeedQueryPacket::FileContents:
+            case RemoteFeedQueryPacket::FileContents:
 
-            break;
+                break;
+            }
+
+            return response.release();
         }
-
-        LOG_NET_MSG("Sending response %i") << query.id();
-        socket->sendPacket(*response);
+        catch (Error const &er)
+        {
+            LOG_NET_ERROR("Error while handling remote feed query from %s: %s")
+                    << query.from().asText() << er.asText();
+            return nullptr;
+        }
     }
 };
 
