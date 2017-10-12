@@ -28,19 +28,20 @@
 
 namespace de {
 
+struct DENG2_PUBLIC AsyncTask : public QThread
+{
+    virtual ~AsyncTask() {}
+    virtual void abort() = 0;
+};
+
 namespace internal {
 
 template <typename Task, typename Completion>
-struct AsyncTaskThread : public QThread
+class AsyncTaskThread : public AsyncTask
 {
     Task task;
     Completion completion;
-    decltype(task()) result {};
-
-    AsyncTaskThread(Task const &task, Completion const &completion)
-        : task(task)
-        , completion(completion)
-    {}
+    decltype(task()) result {}; // can't be void
 
     void run() override
     {
@@ -50,11 +51,28 @@ struct AsyncTaskThread : public QThread
         }
         catch (...)
         {}
+        notifyCompletion();
+    }
+
+    void notifyCompletion()
+    {
         Loop::mainCall([this] ()
         {
             completion(result);
             deleteLater();
         });
+    }
+
+public:
+    AsyncTaskThread(Task const &task, Completion const &completion)
+        : task(task)
+        , completion(completion)
+    {}
+
+    void abort() override
+    {
+        terminate();
+        notifyCompletion();
     }
 };
 
@@ -72,14 +90,18 @@ struct AsyncTaskThread : public QThread
  *                    a default-constructed result value.
  * @param completion  Completion callback. Takes one argument matching the type of
  *                    the return value from @a task.
+ *
+ * @return Background thread object. The thread will delete itself after the completion
+ * callback has been called.
  */
 template <typename Task, typename Completion>
-void async(Task const &task, Completion const &completion)
+AsyncTask *async(Task const &task, Completion const &completion)
 {
     DENG2_ASSERT_IN_MAIN_THREAD();
     auto *t = new internal::AsyncTaskThread<Task, Completion>(task, completion);
     t->start();
-    // The thread will delete itself when finished.
+    // Note: The thread will delete itself when finished.
+    return t;
 }
 
 } // namespace de
