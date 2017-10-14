@@ -55,6 +55,10 @@ public:
     /// resource.  If timeout occurs, an exception is thrown.
     void wait(TimeDelta const &timeOut) const;
 
+    /// Wait for the specified period of time to secure the
+    /// resource.  If timeout occurs, returns @c false.
+    bool tryWait(TimeDelta const &timeOut) const;
+
     /// Mark the resource as available by incrementing the
     /// semaphore value.
     void post() const;

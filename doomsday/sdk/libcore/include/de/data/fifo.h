@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_FIFO_H
@@ -75,12 +75,12 @@ public:
     /**
      * Takes the oldest object in the buffer.
      *
-     * @return The oldest object in the buffer, or NULL if the buffer is empty.
+     * @return The oldest object in the buffer, or nullptr if the buffer is empty.
      * Caller gets ownership of the returned object.
      */
     Type *take() {
         DENG2_GUARD(this);
-        if (_objects.empty()) return NULL;
+        if (_objects.empty()) return nullptr;
         Type *last = _objects.back();
         _objects.pop_back();
         return last;
@@ -89,12 +89,12 @@ public:
     /**
      * Returns the oldest object in the buffer.
      *
-     * @return The oldest object in the buffer, or NULL if the buffer is empty.
+     * @return The oldest object in the buffer, or nullptr if the buffer is empty.
      * The object is not removed from the buffer.
      */
     Type* tail() const {
         DENG2_GUARD(this);
-        if (_objects.empty()) return NULL;
+        if (_objects.empty()) return nullptr;
         return _objects.back();
     }
 

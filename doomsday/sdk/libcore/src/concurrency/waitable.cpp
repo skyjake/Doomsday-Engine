@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Waitable"
@@ -24,7 +24,7 @@ using namespace de;
 
 Waitable::Waitable(duint initialValue) : _semaphore(initialValue)
 {}
-    
+
 Waitable::~Waitable()
 {}
 
@@ -40,6 +40,15 @@ void Waitable::wait() const
 
 void Waitable::wait(TimeDelta const &timeOut) const
 {
+    if (!tryWait(timeOut))
+    {
+        /// @throw WaitError Failed to secure the resource due to an error.
+        throw WaitError("Waitable::wait", "Timed out");
+    }
+}
+
+bool Waitable::tryWait(TimeDelta const &timeOut) const
+{
     if (timeOut <= 0.0)
     {
         _semaphore.acquire();
@@ -49,10 +58,10 @@ void Waitable::wait(TimeDelta const &timeOut) const
         // Wait until the resource becomes available.
         if (!_semaphore.tryAcquire(1, int(timeOut.asMilliSeconds())))
         {
-            /// @throw WaitError Failed to secure the resource due to an error.
-            throw WaitError("Waitable::wait", "Timed out");
+            return false;
         }
     }
+    return true;
 }
 
 void Waitable::post() const
