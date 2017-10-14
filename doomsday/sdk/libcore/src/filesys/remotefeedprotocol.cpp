@@ -212,6 +212,7 @@ RemoteFeedProtocol::RemoteFeedProtocol()
 {
     define(RemoteFeedQueryPacket::fromBlock);
     define(RemoteFeedMetadataPacket::fromBlock);
+    define(RemoteFeedFileContentsPacket::fromBlock);
 }
 
 RemoteFeedProtocol::PacketType RemoteFeedProtocol::recognize(Packet const &packet)

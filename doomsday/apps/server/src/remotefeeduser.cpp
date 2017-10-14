@@ -122,7 +122,7 @@ DENG2_PIMPL(RemoteFeedUser)
 
                 response.reset(new RemoteFeedFileContentsPacket);
 
-                dsize const blockSize = 64 * 1024;
+                dsize const blockSize = 128 * 1024;
                 auto &xfer = transfers.value.front();
 
                 response->setId(xfer.queryId);

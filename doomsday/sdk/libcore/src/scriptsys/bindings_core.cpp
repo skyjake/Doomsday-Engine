@@ -28,6 +28,7 @@
 #include "de/Path"
 #include "de/Record"
 #include "de/RecordValue"
+#include "de/RemoteFile"
 #include "de/TextValue"
 #include "de/TimeValue"
 
@@ -215,6 +216,13 @@ static Value *Function_Folder_Contents(Context &ctx, Function::ArgumentValues co
     return nullptr;
 }
 
+static Value *Function_RemoteFile_FetchContents(Context &ctx, Function::ArgumentValues const &)
+{
+    RemoteFile &rf = fileInstance(ctx).as<RemoteFile>();
+    rf.fetchContents();
+    return nullptr;
+}
+
 //---------------------------------------------------------------------------------------
 
 static Animation &animationInstance(Context &ctx)
@@ -320,6 +328,13 @@ void initCoreModule(Binder &binder, Record &coreModule)
                 << DENG2_FUNC_NOARG(Folder_List, "list")
                 << DENG2_FUNC_NOARG(Folder_Contents, "contents")
                 << DENG2_FUNC_NOARG(Folder_ContentSize, "contentSize");
+    }
+
+    // RemoteFile
+    {
+        Record &remoteFile = coreModule.addSubrecord("RemoteFile").setFlags(Record::WontBeDeleted);
+        binder.init(remoteFile)
+                << DENG2_FUNC_NOARG(RemoteFile_FetchContents, "fetchContents");
     }
 
     // Animation

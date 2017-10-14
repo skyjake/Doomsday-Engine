@@ -36,7 +36,7 @@ DENG2_PIMPL(TextApp)
         // In text-based apps, we can limit the loop frequency.
         loop.setRate(35);
     }
-    
+
     void loopIteration() override
     {
         // Update the clock time. App listens to this clock and will inform
@@ -47,9 +47,9 @@ DENG2_PIMPL(TextApp)
 };
 
 TextApp::TextApp(int &argc, char **argv)
-    : QCoreApplication(argc, argv),
-      App(applicationFilePath(), arguments()),
-      d(new Impl(this))
+    : QCoreApplication(argc, argv)
+    , App(applicationFilePath(), arguments())
+    , d(new Impl(this))
 {}
 
 void TextApp::setMetadata(String const &orgName, String const &orgDomain,

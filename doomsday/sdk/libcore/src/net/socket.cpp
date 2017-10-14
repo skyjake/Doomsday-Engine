@@ -279,6 +279,7 @@ DENG2_PIMPL_NOREF(Socket)
     void sendMessage(MessageHeader const &header,
                      Block const &payload)
     {
+        DENG2_ASSERT(socket != nullptr);
         DENG2_ASSERT(QThread::currentThread() == socket->thread());
 
         // Write the message header.
@@ -310,8 +311,11 @@ DENG2_PIMPL_NOREF(Socket)
             },
             [this] (std::pair<MessageHeader, Block> msg)
             {
-                // Write to socket in main thread.
-                sendMessage(msg.first, msg.second);
+                if (socket)
+                {
+                    // Write to socket in main thread.
+                    sendMessage(msg.first, msg.second);
+                }
             });
         }
         else

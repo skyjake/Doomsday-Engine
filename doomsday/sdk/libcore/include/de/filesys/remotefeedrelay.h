@@ -36,9 +36,10 @@ public:
     typedef DictionaryValue FileList;
 
     typedef std::function<void (FileList const &)> FileListFunc;
-    typedef std::function<void (Block const &, duint64 remainingBytes)> DataReceivedFunc;
+    typedef std::function<void (duint64 startOffset, Block const &, duint64 remainingBytes)> DataReceivedFunc;
 
-    typedef std::shared_ptr<AsyncCallback<FileListFunc>> FileListRequest;
+    typedef std::shared_ptr<AsyncCallback<FileListFunc>>     FileListRequest;
+    typedef std::shared_ptr<AsyncCallback<DataReceivedFunc>> FileContentsRequest;
 
     static RemoteFeedRelay &get();
 
@@ -53,11 +54,13 @@ public:
 
     StringList repositories() const;
 
-    FileListRequest fetchFileList(String const &repository, String folderPath,
+    FileListRequest fetchFileList(String const &repository,
+                                  String folderPath,
                                   FileListFunc result);
 
-    void fetchFileContents(Address const &backend, String filePath,
-                           DataReceivedFunc dataReceivedk);
+    FileContentsRequest fetchFileContents(String const &repository,
+                                          String filePath,
+                                          DataReceivedFunc dataReceived);
 
 private:
     DENG2_PRIVATE(d)

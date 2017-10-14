@@ -19,7 +19,7 @@
 #ifndef LIBDENG2_REMOTEFILE_H
 #define LIBDENG2_REMOTEFILE_H
 
-#include "../File"
+#include "../ByteArrayFile"
 #include "../Asset"
 
 namespace de {
@@ -30,19 +30,29 @@ namespace de {
  *
  * RemoteFile provides status information as an Asset.
  */
-class RemoteFile : public File, public Asset
+class RemoteFile : public ByteArrayFile, public Asset
 {
+public:
+    /// Data of the file has not yet been fetched. @ingroup errors
+    DENG2_ERROR(UnfetchedError);
+
 public:
     RemoteFile(String const &name, String const &remotePath, Block const &remoteMetaId);
 
     String describe() const override;
-
-    Block metaId() const override;
+    Block  metaId()   const override;
 
     /**
      * Initiates downloading of the file contents from the remote backend.
      */
     void fetchContents();
+
+    // Implements IByteArray.
+    void get(Offset at, Byte *values, Size count) const override;
+    void set(Offset at, Byte const *values, Size count) override;
+
+    // File streaming.
+    IIStream const &operator >> (IByteArray &bytes) const override;
 
 private:
     DENG2_PRIVATE(d)

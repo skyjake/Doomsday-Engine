@@ -44,21 +44,30 @@ DENG2_PIMPL(RemoteFeedRelay)
             using Id = IdentifiedPacket::Id;
 
             Id id;
-            FileListRequest fileList;
             String path;
+            FileListRequest fileList;
+            FileContentsRequest fileContents;
+            Block receivedData;
+            duint64 receivedBytes = 0;
+            duint64 fileSize = 0;
 
-            Query(FileListRequest req, String path) : fileList(req), path(path)
+            Query(FileListRequest req, String path) : path(path), fileList(req)
+            {}
+
+            Query(FileContentsRequest req, String path) : path(path), fileContents(req)
             {}
 
             bool isValid() const
             {
-                if (fileList) return fileList->isValid();
+                if (fileList)     return fileList    ->isValid();
+                if (fileContents) return fileContents->isValid();
                 return false;
             }
 
             void cancel()
             {
-                if (fileList) fileList->cancel();
+                if (fileList)     fileList    ->cancel();
+                if (fileContents) fileContents->cancel();
             }
         };
 
@@ -130,16 +139,52 @@ DENG2_PIMPL(RemoteFeedRelay)
             deferredQueries.clear();
         }
 
-        void finishQuery(Query::Id id, DictionaryValue const &metadata)
+        void metadataReceived(Query::Id id, DictionaryValue const &metadata)
         {
             auto found = pendingQueries.find(id);
             if (found != pendingQueries.end())
             {
-                if (found.value().fileList)
+                auto &query = found.value();
+                if (query.fileList)
                 {
-                    found.value().fileList->call(metadata);
+                    query.fileList->call(metadata);
                 }
                 pendingQueries.erase(found);
+            }
+        }
+
+        void chunkReceived(Query::Id id, duint64 startOffset, Block const &chunk, duint64 fileSize)
+        {
+            auto found = pendingQueries.find(id);
+            if (found != pendingQueries.end())
+            {
+                auto &query = found.value();
+                if (!query.isValid())
+                {
+                    pendingQueries.erase(found);
+                    return;
+                }
+                if (query.receivedData.size() != fileSize)
+                {
+                    query.receivedData.resize(fileSize);
+                }
+                if (!query.fileSize)
+                {
+                    // Before the first chunk, notify about the total size.
+                    query.fileContents->call(0, Block(), fileSize);
+                }
+                query.receivedData.set(startOffset, chunk.data(), chunk.size());
+                query.fileSize = fileSize;
+                query.receivedBytes += chunk.size();
+
+                // Notify about progress.
+                query.fileContents->call(startOffset, chunk, fileSize - query.receivedBytes);
+
+                if (fileSize == query.receivedBytes)
+                {
+                    // Transfer complete.
+                    pendingQueries.erase(found);
+                }
             }
         }
 
@@ -198,6 +243,10 @@ DENG2_PIMPL(RemoteFeedRelay)
             {
                 packet.setQuery(RemoteFeedQueryPacket::ListFiles);
             }
+            else
+            {
+                packet.setQuery(RemoteFeedQueryPacket::FileContents);
+            }
             socket.sendPacket(packet);
         }
 
@@ -212,10 +261,26 @@ DENG2_PIMPL(RemoteFeedRelay)
                     std::unique_ptr<Message> response(socket.receive());
                     std::unique_ptr<Packet>  packet  (d->protocol.interpret(*response));
 
-                    if (d->protocol.recognize(*packet) == RemoteFeedProtocol::Metadata)
+                    if (!packet) continue;
+
+                    switch (d->protocol.recognize(*packet))
                     {
-                        auto const &md = packet->as<RemoteFeedMetadataPacket>();
-                        finishQuery(md.id(), md.metadata());
+                    case RemoteFeedProtocol::Metadata:
+                        {
+                            auto const &md = packet->as<RemoteFeedMetadataPacket>();
+                            metadataReceived(md.id(), md.metadata());
+                        }
+                        break;
+
+                    case RemoteFeedProtocol::FileContents:
+                        {
+                            auto const &fc = packet->as<RemoteFeedFileContentsPacket>();
+                            chunkReceived(fc.id(), fc.startOffset(), fc.data(), fc.fileSize());
+                        }
+                        break;
+
+                    default:
+                        break;
                     }
                 }
                 catch (Error const &er)
@@ -288,6 +353,17 @@ RemoteFeedRelay::fetchFileList(String const &repository, String folderPath, File
         done.post();
     });
     done.wait();
+    return request;
+}
+
+RemoteFeedRelay::FileContentsRequest
+RemoteFeedRelay::fetchFileContents(String const &repository, String filePath, DataReceivedFunc dataReceived)
+{
+    DENG2_ASSERT(d->repositories.contains(repository));
+
+    auto *repo = d->repositories[repository];
+    FileContentsRequest request(new FileContentsRequest::element_type(dataReceived));
+    repo->sendQuery(Impl::RepositoryLink::Query(request, filePath));
     return request;
 }
 
