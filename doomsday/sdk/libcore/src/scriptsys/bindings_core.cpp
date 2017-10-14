@@ -123,7 +123,7 @@ static Value *Function_File_Path(Context &ctx, Function::ArgumentValues const &)
 
 static Value *Function_File_Type(Context &ctx, Function::ArgumentValues const &)
 {
-    return new TextValue(constFileInstance(ctx).status().type() == File::Status::FILE? "file" : "folder");
+    return new TextValue(constFileInstance(ctx).status().type() == File::Type::File? "file" : "folder");
 }
 
 static Value *Function_File_Size(Context &ctx, Function::ArgumentValues const &)
@@ -206,6 +206,13 @@ static Value *Function_Folder_ContentSize(Context &ctx, Function::ArgumentValues
 {
     Folder const &folder = constFileInstance(ctx).as<Folder>();
     return new NumberValue(folder.contents().size());
+}
+
+static Value *Function_Folder_Contents(Context &ctx, Function::ArgumentValues const &)
+{
+    Folder const &folder = constFileInstance(ctx).as<Folder>();
+    LOG_SCR_MSG(_E(m) "%s") << folder.contentsAsText();
+    return nullptr;
 }
 
 //---------------------------------------------------------------------------------------
@@ -311,6 +318,7 @@ void initCoreModule(Binder &binder, Record &coreModule)
         Record &folder = coreModule.addSubrecord("Folder").setFlags(Record::WontBeDeleted);
         binder.init(folder)
                 << DENG2_FUNC_NOARG(Folder_List, "list")
+                << DENG2_FUNC_NOARG(Folder_Contents, "contents")
                 << DENG2_FUNC_NOARG(Folder_ContentSize, "contentSize");
     }
 
