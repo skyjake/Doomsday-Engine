@@ -752,7 +752,7 @@ static bool recognizeZipExtension(String const &ext)
 
 bool ZipArchive::recognize(File const &file)
 {
-    if (file.status().type() == File::Status::FILE)
+    if (file.status().type() == File::Type::File)
     {
         // For now, just check the name.
         return recognizeZipExtension(file.extension().lower());

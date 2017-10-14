@@ -164,7 +164,7 @@ File::Status Archive::entryStatus(Path const &path) const
     Entry const &found = static_cast<Entry const &>(d->index->find(path, PathTree::MatchFull));
 
     return File::Status(
-        found.isLeaf()? File::Status::FILE : File::Status::FOLDER,
+        found.isLeaf()? File::Type::File : File::Type::Folder,
         found.size,
         found.modifiedAt);
 }

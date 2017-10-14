@@ -264,7 +264,7 @@ File::Status DirectoryFeed::fileStatus(NativePath const &nativePath)
     }
 
     // Get file status information.
-    return File::Status(info.isDir()? File::Status::FOLDER : File::Status::FILE,
+    return File::Status(info.isDir()? File::Type::Folder : File::Type::File,
                         dsize(info.size()),
                         info.lastModified());
 }
@@ -300,7 +300,7 @@ File &DirectoryFeed::manuallyPopulateSingleFile(NativePath const &nativePath,
         }
     }
 
-    if (status.type() == File::Status::FILE)
+    if (status.type() == File::Type::File)
     {
         auto *source = new NativeFile(nativePath.fileName(), nativePath);
         source->setStatus(status);

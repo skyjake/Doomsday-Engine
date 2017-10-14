@@ -91,6 +91,13 @@ public:
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
+    /// Type of file.
+    enum class Type
+    {
+        File,
+        Folder
+    };
+
     /**
      * The file object is about to be deleted. This may be, e.g., due to pruning or
      * because the parent is being deleted.
@@ -105,15 +112,8 @@ public:
     class Status
     {
     public:
-        /// Type of file.
-        enum Type {
-            FILE = 0,
-            FOLDER = 1
-        };
-
-    public:
         Status(dsize s = 0, Time const &modTime = Time::invalidTime())
-            : size(s), modifiedAt(modTime), _type(FILE) {}
+            : size(s), modifiedAt(modTime), _type(Type::File) {}
 
         Status(Type t, dsize s = 0, Time const &modTime = Time::invalidTime())
             : size(s), modifiedAt(modTime), _type(t) {}

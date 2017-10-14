@@ -425,7 +425,7 @@ String File::fileListAsText(QList<File const *> files)
 
         txt += flags + QString("%1 %2 %3")
                 .arg(f->size(), 9)
-                .arg(f->status().modifiedAt.asText())
+                .arg(f->status().modifiedAt.asText(), 23)
                 .arg(f->name());
 
         // Link target.

@@ -268,8 +268,8 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
         // Match the file type.
         String fileType = def->keyValue(QStringLiteral("fileType"));
         if (fileType.isEmpty()) fileType = "file"; // prefer files by default
-        if ((!fileType.compareWithoutCase(QStringLiteral("file"))   && source.status().type() == File::Status::FILE) ||
-            (!fileType.compareWithoutCase(QStringLiteral("folder")) && source.status().type() == File::Status::FOLDER))
+        if ((!fileType.compareWithoutCase(QStringLiteral("file"))   && source.status().type() == File::Type::File) ||
+            (!fileType.compareWithoutCase(QStringLiteral("folder")) && source.status().type() == File::Type::Folder))
         {
             ++score;
         }

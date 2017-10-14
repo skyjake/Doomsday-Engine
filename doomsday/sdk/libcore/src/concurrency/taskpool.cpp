@@ -42,8 +42,6 @@ namespace internal
 
 DENG2_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
 {
-    LoopCallback mainCall;
-
     /// Private instance will be deleted when pool is empty.
     bool deleteWhenDone = false;
 

@@ -106,7 +106,7 @@ DENG2_PIMPL(Folder)
 
 Folder::Folder(String const &name) : File(name), d(new Impl(this))
 {
-    setStatus(Status::FOLDER);
+    setStatus(Type::Folder);
     objectNamespace().addSuperRecord(ScriptSystem::builtInClass(QStringLiteral("Folder")));
 }
 
@@ -573,7 +573,8 @@ Folder::Feeds Folder::feeds() const
 String Folder::contentsAsText() const
 {
     QList<File const *> files;
-    forContents([&files] (String, File &f) {
+    forContents([&files] (String, File &f)
+    {
         files << &f;
         return LoopContinue;
     });
