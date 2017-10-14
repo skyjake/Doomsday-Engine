@@ -19,6 +19,7 @@
 #include "de/RemoteFeedRelay"
 
 #include "de/App"
+#include "de/Loop"
 #include "de/Message"
 #include "de/RemoteFeedProtocol"
 #include "de/Socket"
@@ -276,9 +277,17 @@ RemoteFeedRelay::fetchFileList(String const &repository, String folderPath, File
 {
     DENG2_ASSERT(d->repositories.contains(repository));
 
-    auto *repo = d->repositories[repository];
-    FileListRequest request(new FileListRequest::element_type(result));
-    repo->sendQuery(Impl::RepositoryLink::Query(request, folderPath));
+    Waitable done;
+    FileListRequest request;
+    Loop::mainCall([&] ()
+    {
+        // The repository sockets are handled in the main thread.
+        auto *repo = d->repositories[repository];
+        request.reset(new FileListRequest::element_type(result));
+        repo->sendQuery(Impl::RepositoryLink::Query(request, folderPath));
+        done.post();
+    });
+    done.wait();
     return request;
 }
 

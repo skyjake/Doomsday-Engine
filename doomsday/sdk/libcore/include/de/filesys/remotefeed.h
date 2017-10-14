@@ -39,6 +39,9 @@ public:
     PopulatedFiles populate(Folder const &folder);
     bool prune(File &file) const;
 
+protected:
+    RemoteFeed(RemoteFeed const &parentFeed, String const &remotePath);
+
 private:
     DENG2_PRIVATE(d)
 };

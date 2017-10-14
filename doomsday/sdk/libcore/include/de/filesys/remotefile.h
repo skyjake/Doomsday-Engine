@@ -33,7 +33,11 @@ namespace de {
 class RemoteFile : public File, public Asset
 {
 public:
-    RemoteFile(String const &name);
+    RemoteFile(String const &name, String const &remotePath, Block const &remoteMetaId);
+
+    String describe() const override;
+
+    Block metaId() const override;
 
     /**
      * Initiates downloading of the file contents from the remote backend.

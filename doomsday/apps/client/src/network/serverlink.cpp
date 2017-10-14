@@ -418,7 +418,7 @@ void ServerLink::connectToServerAndChangeGame(shell::ServerInfo info)
         Folder &remotePacks = FS::get().makeFolderWithFeed
                 ("/remote/server",
                  RemoteFeedRelay::get().addServerRepository(info.address().asText()),
-                 Folder::PopulateAsync);
+                 Folder::PopulateAsyncFullTree);
 
         if (!joinProfile->isPlayable())
         {

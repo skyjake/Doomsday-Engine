@@ -63,9 +63,12 @@ class DENG2_PUBLIC RemoteFeedMetadataPacket : public IdentifiedPacket
 public:
     RemoteFeedMetadataPacket();
 
-    void addFile(File const &file);
+    void addFile(File const &file, String const &prefix = String());
+    void addFolder(Folder const &folder, String prefix = String());
 
     DictionaryValue const &metadata() const;
+
+    static File::Type toFileType(int value);
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;
@@ -75,6 +78,35 @@ public:
 
 private:
     DictionaryValue _metadata;
+};
+
+/**
+ * Packet that contains a portion of a file. Used as a response to the FileContents
+ * query. @ingroup fs
+ */
+class DENG2_PUBLIC RemoteFeedFileContentsPacket : public IdentifiedPacket
+{
+public:
+    RemoteFeedFileContentsPacket();
+
+    void setData(Block const &data);
+    void setStartOffset(dsize offset);
+    void setFileSize(dsize size);
+
+    Block const &data() const;
+    dsize startOffset() const;
+    dsize fileSize() const;
+
+    // Implements ISerializable.
+    void operator >> (Writer &to) const;
+    void operator << (Reader &from);
+
+    static Packet *fromBlock(Block const &block);
+
+private:
+    dsize _startOffset;
+    dsize _fileSize;
+    Block _data;
 };
 
 /**
@@ -90,6 +122,7 @@ public:
         Unknown,
         Query,          ///< Query for file metadata or contents.
         Metadata,       ///< Response containing metadata.
+        FileContents,
     };
 
 public:

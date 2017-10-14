@@ -18,29 +18,83 @@
 
 #include "de/RemoteFeed"
 
+#include "de/BlockValue"
+#include "de/Folder"
 #include "de/Path"
+#include "de/RecordValue"
+#include "de/RemoteFeedProtocol"
 #include "de/RemoteFeedRelay"
+#include "de/RemoteFile"
 #include "de/Socket"
+#include "de/TimeValue"
 #include "de/Waitable"
 #include "de/charsymbols.h"
 
 namespace de {
 
-static TimeDelta const POPULATE_TIMEOUT = 10.0;
+static TimeDelta const POPULATE_TIMEOUT = 15.0;
 
 DENG2_PIMPL(RemoteFeed)
 {
     String repository;
     Path remotePath;
+    std::unique_ptr<RemoteFeedRelay::FileList> fileList;
 
     Impl(Public *i) : Base(i)
     {}
+
+    PopulatedFiles populate()
+    {
+        PopulatedFiles populated;
+        for (auto i : fileList->elements())
+        {
+            String const path = remotePath / i.first.value->asText();
+
+            if (RecordValue const *meta = maybeAs<RecordValue>(i.second))
+            {
+                Record const &md = *meta->record();
+
+                File::Type const fileType = RemoteFeedMetadataPacket::toFileType(md.geti("type", 0));
+                dsize      const fileSize = md.getui("size", 0);
+                Time       const modTime  = md.getAs<TimeValue>("modifiedAt").time();
+
+                File *file = nullptr;
+                if (fileType == File::Type::File)
+                {
+                    file = new RemoteFile(path.fileName(), path, md.getAs<BlockValue>("metaId").block());
+                }
+                else
+                {
+                    Folder *subfolder = new Folder(path.fileName());
+                    // Make a subfeed of this feed.
+                    subfolder->attach(new RemoteFeed(*thisPublic, path));
+                    file = subfolder;
+                }
+                if (md.has("package"))
+                {
+                    file->objectNamespace().add("package", new Record(md.subrecord("package")));
+                }
+                file->setStatus(File::Status(fileType, fileSize, modTime));
+                file->setOriginFeed(thisPublic);
+
+                populated << file;
+            }
+        }
+        return populated;
+    }
 };
 
 RemoteFeed::RemoteFeed(String const &repository, String const &remotePath)
     : d(new Impl(this))
 {
     d->repository = repository;
+    d->remotePath = remotePath;
+}
+
+RemoteFeed::RemoteFeed(RemoteFeed const &parentFeed, String const &remotePath)
+    : d(new Impl(this))
+{
+    d->repository = parentFeed.d->repository;
     d->remotePath = remotePath;
 }
 
@@ -65,9 +119,12 @@ Feed::PopulatedFiles RemoteFeed::populate(Folder const &folder)
              [this, &folder, &files]
              (RemoteFeedRelay::FileList const &fileList)
     {
-        qDebug() << "Received file listing:";
+        qDebug() << "Received file listing of" << d->remotePath;
         qDebug() << fileList.asText();
 
+        // Make a copy of the listed metadata.
+        d->fileList.reset(static_cast<DictionaryValue *>(fileList.duplicate()));
+        files = d->populate();
     });
     request->wait(POPULATE_TIMEOUT);
     return files;

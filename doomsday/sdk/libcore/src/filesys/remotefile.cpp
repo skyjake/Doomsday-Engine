@@ -22,19 +22,38 @@ namespace de {
 
 DENG2_PIMPL(RemoteFile)
 {
+    String remotePath;
+    Block remoteMetaId;
+
     Impl(Public *i) : Base(i) {}
 };
 
-RemoteFile::RemoteFile(String const &name)
+RemoteFile::RemoteFile(String const &name, String const &remotePath, Block const &remoteMetaId)
     : File(name)
     , d(new Impl(this))
 {
+    d->remotePath = remotePath;
+    d->remoteMetaId = remoteMetaId;
     setState(NotReady);
 }
 
 void RemoteFile::fetchContents()
 {
     setState(Recovering);
+}
+
+String RemoteFile::describe() const
+{
+    return String("remote file \"%1\" (%2)")
+            .arg(name())
+            .arg(  state() == NotReady   ? "not ready"
+                 : state() == Recovering ? "downloading"
+                                         : "ready");
+}
+
+Block RemoteFile::metaId() const
+{
+    return d->remoteMetaId;
 }
 
 } // namespace de

@@ -17,13 +17,14 @@
  */
 
 #include "de/RemoteFeedProtocol"
+#include "de/BlockValue"
 #include "de/TextValue"
 #include "de/RecordValue"
 #include "de/Folder"
 
 namespace de {
 
-// RemoteFeedQueryPacket ------------------------------------------------------
+// RemoteFeedQueryPacket ----------------------------------------------------------------
 
 static char const *QUERY_PACKET_TYPE = "RFQu";
 
@@ -69,7 +70,7 @@ Packet *RemoteFeedQueryPacket::fromBlock(Block const &block)
     return constructFromBlock<RemoteFeedQueryPacket>(block, QUERY_PACKET_TYPE);
 }
 
-// RemoteFeedMetadataPacket ---------------------------------------------------
+// RemoteFeedMetadataPacket -------------------------------------------------------------
 
 static char const *METADATA_PACKET_TYPE = "RFMt";
 
@@ -77,7 +78,7 @@ RemoteFeedMetadataPacket::RemoteFeedMetadataPacket()
     : IdentifiedPacket(METADATA_PACKET_TYPE)
 {}
 
-void RemoteFeedMetadataPacket::addFile(File const &file)
+void RemoteFeedMetadataPacket::addFile(File const &file, String const &prefix)
 {
     auto const &ns = file.objectNamespace();
     auto const status = file.status();
@@ -85,14 +86,15 @@ void RemoteFeedMetadataPacket::addFile(File const &file)
     std::unique_ptr<Record> fileMeta(new Record);
 
     fileMeta->addTime  ("modifiedAt", status.modifiedAt);
-    fileMeta->addNumber("type",       status.type());
-    if (status.type() == File::Status::FOLDER)
+    fileMeta->addNumber("type",       status.type() == File::Type::File? 0 : 1);
+    if (status.type() == File::Type::Folder)
     {
         fileMeta->addNumber("size", file.as<Folder>().contents().size());
     }
     else
     {
         fileMeta->addNumber("size", status.size);
+        fileMeta->addBlock ("metaId").value<BlockValue>().block() = file.metaId();
     }
     if (ns.hasSubrecord("package"))
     {
@@ -100,13 +102,33 @@ void RemoteFeedMetadataPacket::addFile(File const &file)
                       Record::IgnoreDoubleUnderscoreMembers));
     }
 
-    _metadata.add(new TextValue(file.name()),
+    _metadata.add(new TextValue(prefix / file.name()),
                   new RecordValue(fileMeta.release(), RecordValue::OwnsRecord));
+}
+
+void RemoteFeedMetadataPacket::addFolder(Folder const &folder, String prefix)
+{
+    folder.forContents([this, prefix] (String, File &file)
+    {
+        // Each file's metadata is included.
+        addFile(file, prefix);
+
+//        if (Folder const *subfolder = maybeAs<Folder>(file))
+//        {
+//            addFileTree(*subfolder, prefix / file.name());
+//        }
+        return LoopContinue;
+    });
 }
 
 DictionaryValue const &RemoteFeedMetadataPacket::metadata() const
 {
     return _metadata;
+}
+
+File::Type RemoteFeedMetadataPacket::toFileType(int value)
+{
+    return (value == 0? File::Type::File : File::Type::Folder);
 }
 
 void RemoteFeedMetadataPacket::operator >> (Writer &to) const
@@ -126,7 +148,65 @@ Packet *RemoteFeedMetadataPacket::fromBlock(Block const &block)
     return constructFromBlock<RemoteFeedMetadataPacket>(block, METADATA_PACKET_TYPE);
 }
 
-// RemoteFeedProtocol ---------------------------------------------------------
+// RemoteFeedFileContentsPacket ---------------------------------------------------------
+
+static char const *FILE_CONTENTS_PACKET_TYPE = "RFCo";
+
+RemoteFeedFileContentsPacket::RemoteFeedFileContentsPacket()
+    : IdentifiedPacket(FILE_CONTENTS_PACKET_TYPE)
+    , _startOffset(0)
+{}
+
+void RemoteFeedFileContentsPacket::setData(Block const &data)
+{
+    _data = data;
+}
+
+void RemoteFeedFileContentsPacket::setStartOffset(dsize offset)
+{
+    _startOffset = offset;
+}
+
+void RemoteFeedFileContentsPacket::setFileSize(dsize size)
+{
+    _fileSize = size;
+}
+
+Block const &RemoteFeedFileContentsPacket::data() const
+{
+    return _data;
+}
+
+dsize RemoteFeedFileContentsPacket::startOffset() const
+{
+    return _startOffset;
+}
+
+dsize RemoteFeedFileContentsPacket::fileSize() const
+{
+    return _fileSize;
+}
+
+void RemoteFeedFileContentsPacket::operator >> (Writer &to) const
+{
+    IdentifiedPacket::operator >> (to);
+    to << duint64(_fileSize) << duint64(_startOffset) << _data;
+}
+
+void RemoteFeedFileContentsPacket::operator << (Reader &from)
+{
+    IdentifiedPacket::operator << (from);
+    from.readAs<duint64>(_fileSize)
+        .readAs<duint64>(_startOffset)
+        >> _data;
+}
+
+Packet *RemoteFeedFileContentsPacket::fromBlock(Block const &block)
+{
+    return constructFromBlock<RemoteFeedFileContentsPacket>(block, FILE_CONTENTS_PACKET_TYPE);
+}
+
+// RemoteFeedProtocol -------------------------------------------------------------------
 
 RemoteFeedProtocol::RemoteFeedProtocol()
 {
@@ -145,6 +225,11 @@ RemoteFeedProtocol::PacketType RemoteFeedProtocol::recognize(Packet const &packe
     {
         DENG2_ASSERT(is<RemoteFeedMetadataPacket>(&packet));
         return Metadata;
+    }
+    if (packet.type() == FILE_CONTENTS_PACKET_TYPE)
+    {
+        DENG2_ASSERT(is<RemoteFeedFileContentsPacket>(&packet));
+        return FileContents;
     }
     return Unknown;
 }
