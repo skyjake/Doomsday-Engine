@@ -67,6 +67,7 @@
  */
 
 #include "de/Socket"
+#include "de/Async"
 #include "de/Message"
 #include "de/Writer"
 #include "de/Reader"
@@ -81,6 +82,7 @@ static duint const MAX_CHANNELS = 2;
 
 static int const MAX_SIZE_SMALL  = 127; // bytes
 static int const MAX_SIZE_MEDIUM = 4095; // bytes
+static int const MAX_SIZE_BIG    = 10*MAX_SIZE_MEDIUM;
 static int const MAX_SIZE_LARGE  = DENG2_SOCKET_MAX_PAYLOAD_SIZE;
 
 /// Threshold for input data size: messages smaller than this are first compressed
@@ -227,11 +229,9 @@ DENG2_PIMPL_NOREF(Socket)
         foreach (Message *msg, receivedMessages) delete msg;
     }
 
-    void serializeAndSendMessage(IByteArray const &packet)
+    void serializeMessage(MessageHeader &header, Block &payload)
     {
-        Block payload(packet);
         Block huffData;
-        MessageHeader header;
 
         // Let's find the appropriate compression method of the payload. First see
         // if the encoded contents are under 128 bytes as Huffman codes.
@@ -255,7 +255,7 @@ DENG2_PIMPL_NOREF(Socket)
 
         if (!header.size) // Try deflate.
         {
-            int const level = (payload.size() < 10*MAX_SIZE_MEDIUM? 1 /*fast*/ : 9 /*best*/);
+            int const level = (payload.size() < MAX_SIZE_BIG? 1 /*fast*/ : 9 /*best*/);
             Block const deflated = payload.compressed(level);
 
             if (!deflated.size())
@@ -284,6 +284,12 @@ DENG2_PIMPL_NOREF(Socket)
                 payload = deflated;
             }
         }
+    }
+
+    void sendMessage(MessageHeader const &header,
+                     Block const &payload)
+    {
+        DENG2_ASSERT(QThread::currentThread() == socket->thread());
 
         // Write the message header.
         Block dest;
@@ -291,11 +297,39 @@ DENG2_PIMPL_NOREF(Socket)
         socket->write(dest);
 
         // Update totals (for statistics).
-        dsize total = dest.size() + payload.size();
+        dsize const total = dest.size() + payload.size();
         bytesToBeWritten += total;
         totalBytesWritten += total;
 
         socket->write(payload);
+    }
+
+    void serializeAndSendMessage(IByteArray const &packet)
+    {
+        Block payload = packet;
+
+        if (packet.size() >= MAX_SIZE_BIG)
+        {
+            async([this, payload] ()
+            {
+                // Prepare for sending in a background thread, since it may take a moment.
+                MessageHeader header;
+                Block msgData = payload;
+                serializeMessage(header, msgData);
+                return std::make_pair(header, msgData);
+            },
+            [this] (std::pair<MessageHeader, Block> msg)
+            {
+                // Write to socket in main thread.
+                sendMessage(msg.first, msg.second);
+            });
+        }
+        else
+        {
+            MessageHeader header;
+            serializeMessage(header, payload);
+            sendMessage(header, payload);
+        }
     }
 
     /**
@@ -312,7 +346,6 @@ DENG2_PIMPL_NOREF(Socket)
                     // A message must be at least two bytes long (header + payload).
                     return;
                 }
-
                 try
                 {
                     Reader reader(receivedBytes);

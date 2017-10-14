@@ -42,6 +42,10 @@ class Message;
  *
  * ListenSocket constructs Socket instances for incoming connections.
  *
+ * Note that Socket instances must always be used in the same thread as ListenSocket.
+ * Socket uses a background thread for compressing large messages before sending. This
+ * means they may be sent out-of-order with regards to all other messages.
+ *
  * @ingroup net
  */
 class DENG2_PUBLIC Socket : public QObject, public Transmitter

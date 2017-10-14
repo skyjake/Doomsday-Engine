@@ -19,7 +19,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/data/huffman.h"
@@ -330,7 +330,7 @@ struct Huffman
      * Checks if the encoding/decoding buffer can hold the given number of
      * bytes. If not, reallocates the buffer.
      */
-    void Huff_ResizeBuffer(HuffBuffer *buffer, dsize neededSize)
+    static void Huff_ResizeBuffer(HuffBuffer *buffer, dsize neededSize)
     {
         while (neededSize > buffer->size)
         {
@@ -339,7 +339,7 @@ struct Huffman
             else
                 buffer->size *= 2;
         }
-        buffer->data = (dbyte *) realloc(buffer->data, buffer->size);
+        buffer->data = reinterpret_cast<dbyte *>(realloc(buffer->data, buffer->size));
     }
 
     /**
@@ -364,7 +364,7 @@ struct Huffman
         zapPtr(buffer);
     }
 
-    dbyte *encode(dbyte const *data, dsize size, dsize *encodedSize)
+    dbyte *encode(dbyte const *data, dsize size, dsize *encodedSize) const
     {
         HuffBuffer huffEnc;
         dsize i;
@@ -429,7 +429,7 @@ struct Huffman
         return huffEnc.data;
     }
 
-    dbyte *decode(dbyte const *data, dsize size, dsize *decodedSize)
+    dbyte *decode(dbyte const *data, dsize size, dsize *decodedSize) const
     {
         HuffBuffer huffDec;
         HuffNode *node;
@@ -439,7 +439,7 @@ struct Huffman
         dbyte bit = 3, lastByteBits;
 
         if (!data || size == 0) return nullptr;
-        
+
         zap(huffDec);
         Huff_ResizeBuffer(&huffDec, 256);
 
