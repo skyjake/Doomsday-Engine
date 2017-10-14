@@ -72,6 +72,8 @@
 #include "de/Reader"
 #include "de/data/huffman.h"
 
+#include <QThread>
+
 namespace de {
 
 /// Maximum number of channels.
@@ -387,7 +389,7 @@ Socket::Socket(Address const &address, TimeDelta const &timeOut) : d(new Impl) /
 
     // Now that the signals have been set...
     d->socket->connectToHost(address.host(), address.port());
-    if (!d->socket->waitForConnected(timeOut.asMilliSeconds()))
+    if (!d->socket->waitForConnected(int(timeOut.asMilliSeconds())))
     {
         QString msg = d->socket->errorString();
         delete d->socket;
@@ -553,6 +555,9 @@ void Socket::send(IByteArray const &packet, duint /*channel*/)
         throw DisconnectedError("Socket::send", "Socket is unavailable");
     }
 
+    // Sockets must be used only in their own thread.
+    DENG2_ASSERT(thread() == QThread::currentThread());
+
     d->serializeAndSendMessage(packet);
 }
 
@@ -560,7 +565,7 @@ void Socket::readIncomingBytes()
 {
     if (!d->socket) return;
 
-    int available = d->socket->bytesAvailable();
+    auto available = d->socket->bytesAvailable();
     if (available > 0)
     {
         d->receivedBytes += d->socket->read(d->socket->bytesAvailable());
@@ -661,13 +666,18 @@ bool Socket::hasIncoming() const
 
 dsize Socket::bytesBuffered() const
 {
-    return d->bytesToBeWritten;
+    return dsize(d->bytesToBeWritten);
 }
 
 void Socket::bytesWereWritten(qint64 bytes)
 {
     d->bytesToBeWritten -= bytes;
     DENG2_ASSERT(d->bytesToBeWritten >= 0);
+
+    if (d->bytesToBeWritten == 0)
+    {
+        emit allSent();
+    }
 }
 
 } // namespace de

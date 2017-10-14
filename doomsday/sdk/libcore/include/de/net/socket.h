@@ -207,6 +207,7 @@ signals:
     void messagesReady();
     void disconnected();
     void error(QString errorMessage);
+    void allSent();
 
 public slots:
     void socketDisconnected();
