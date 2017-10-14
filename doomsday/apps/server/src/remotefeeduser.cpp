@@ -47,6 +47,10 @@ DENG2_PIMPL(RemoteFeedUser)
     Impl(Public *i, Socket *s) : Base(i), socket(s)
     {
         LOG_NET_MSG("Setting up RemoteFeedUser %p") << thisPublic;
+
+        // The RemoteFeed protocol does not require ordered messages.
+        socket->setRetainOrder(false);
+
         QObject::connect(s, &Socket::messagesReady, [this] () { receiveMessages(); });
         QObject::connect(s, &Socket::allSent, [this] () { continueFileTransfers(); });
         QObject::connect(s, &Socket::disconnected, [this] ()
@@ -103,6 +107,7 @@ DENG2_PIMPL(RemoteFeedUser)
 
     void continueFileTransfers()
     {
+        DENG2_ASSERT_IN_MAIN_THREAD();
         try
         {
             if (socket->bytesBuffered() > 0) return; // Too soon.

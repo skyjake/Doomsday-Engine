@@ -125,6 +125,19 @@ public:
      */
     void setChannel(duint number);
 
+    /**
+     * Specifies whether all sent messages need to be written out in the order they have
+     * been sent. The default is to retain order.
+     *
+     * If the messaging protocol in use does not require messages to be ordered, setting
+     * this to @c false allows Socket to compress large messages in a background thread
+     * and send them when ready, instead of blocking.
+     *
+     * @param retainOrder  @c true to keep send order, @c false to allow order to be
+     *                     unpredictable.
+     */
+    void setRetainOrder(bool retainOrder);
+
     // Implements Transmitter.
     /**
      * Sends the given data over the socket.  Copies the data into

@@ -188,40 +188,30 @@ using namespace internal;
 
 DENG2_PIMPL_NOREF(Socket)
 {
-    Address target;
-    bool quiet;
+    Address peer;
+    bool quiet = false;
+    bool retainOrder = true;
 
-    enum ReceptionState {
-        ReceivingHeader,
-        ReceivingPayload
-    };
-    ReceptionState receptionState;
+    enum ReceptionState { ReceivingHeader, ReceivingPayload };
+    ReceptionState receptionState = ReceivingHeader;
     Block receivedBytes;
     MessageHeader incomingHeader;
 
     /// Number of the active channel.
     /// @todo Channel is not used at the moment.
-    duint activeChannel;
+    duint activeChannel = 0;
 
     /// Pointer to the internal socket data.
-    QTcpSocket *socket;
+    QTcpSocket *socket = nullptr;
 
     /// Buffer for incoming received messages.
     QList<Message *> receivedMessages;
 
     /// Number of bytes waiting to be written to the socket.
-    dint64 bytesToBeWritten;
+    dint64 bytesToBeWritten = 0;
 
     /// Number of bytes written to the socket so far.
-    dint64 totalBytesWritten;
-
-    Impl() :
-        quiet(false),
-        receptionState(ReceivingHeader),
-        activeChannel(0),
-        socket(0),
-        bytesToBeWritten(0),
-        totalBytesWritten(0) {}
+    dint64 totalBytesWritten = 0;
 
     ~Impl()
     {
@@ -298,7 +288,7 @@ DENG2_PIMPL_NOREF(Socket)
 
         // Update totals (for statistics).
         dsize const total = dest.size() + payload.size();
-        bytesToBeWritten += total;
+        bytesToBeWritten  += total;
         totalBytesWritten += total;
 
         socket->write(payload);
@@ -308,7 +298,7 @@ DENG2_PIMPL_NOREF(Socket)
     {
         Block payload = packet;
 
-        if (packet.size() >= MAX_SIZE_BIG)
+        if (!retainOrder && packet.size() >= MAX_SIZE_BIG)
         {
             async([this, payload] ()
             {
@@ -435,7 +425,7 @@ Socket::Socket(Address const &address, TimeDelta const &timeOut) : d(new Impl) /
 
     LOG_NET_NOTE("Connection opened to %s") << address.asText();
 
-    d->target = address;
+    d->peer = address;
 
     DENG2_ASSERT(d->socket->isOpen() && d->socket->isWritable() &&
                  d->socket->state() == QAbstractSocket::ConnectedState);
@@ -450,7 +440,7 @@ void Socket::open(Address const &address) // non-blocking
     if (!d->quiet) LOG_NET_MSG("Opening connection to %s") << address.asText();
 
     d->socket->connectToHost(address.host(), address.port());
-    d->target = address;
+    d->peer = address;
 }
 
 void Socket::open(String const &domainNameWithOptionalPort,
@@ -479,7 +469,7 @@ void Socket::open(String const &domainNameWithOptionalPort,
         return;
     }
 
-    d->target.setPort(port);
+    d->peer.setPort(port);
 
     // Looks like we will need to look this up.
     QHostInfo::lookupHost(str, this, SLOT(hostResolved(QHostInfo)));
@@ -489,7 +479,7 @@ void Socket::reconnect()
 {
     DENG2_ASSERT(!isOpen());
 
-    open(d->target);
+    open(d->peer);
 }
 
 Socket::Socket(QTcpSocket *existingSocket) : d(new Impl)
@@ -569,6 +559,11 @@ void Socket::setChannel(duint number)
     d->activeChannel = min(number, MAX_CHANNELS - 1);
 }
 
+void Socket::setRetainOrder(bool retainOrder)
+{
+    d->retainOrder = retainOrder;
+}
+
 void Socket::send(IByteArray const &packet)
 {
     send(packet, d->activeChannel);
@@ -623,7 +618,7 @@ void Socket::hostResolved(QHostInfo const &info)
     else
     {
         // Now we know where to connect.
-        open(Address(info.addresses().first(), d->target.port()));
+        open(Address(info.addresses().first(), d->peer.port()));
 
         emit addressResolved();
     }
@@ -662,7 +657,7 @@ Address Socket::peerAddress() const
     {
         return Address(d->socket->peerAddress(), d->socket->peerPort());
     }
-    return d->target;
+    return d->peer;
 }
 
 bool Socket::isOpen() const
