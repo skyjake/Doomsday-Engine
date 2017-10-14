@@ -139,13 +139,10 @@ void DirectoryFeed::populateFile(Folder const &folder, String const &entryName,
         }
 
         File *file = folder.fileSystem().interpret(nativeFile.release());
-        //folder.add(file);
 
         // We will decide on pruning this.
         file->setOriginFeed(this);
 
-        // Include files in the main index.
-        //folder.fileSystem().index(*file);
         populated << file;
     }
     catch (StatusError const &er)
