@@ -37,15 +37,10 @@
 extern dd_bool  allowSending;
 extern int      maxQueuePackets;
 
-//extern char    *nptIPAddress;
-//extern int      nptIPPort;
-
 ServerLink &Net_ServerLink(void);
 
 void    N_Register(void);
 void    N_PrintInfo(void);
-//int     N_GetHostCount(void);
-//dd_bool N_GetHostInfo(int index, de::shell::ServerInfo &info);
 void    N_PrintNetworkStatus(void);
 
 #endif  // CLIENT_SYSTEM_NETWORK_H

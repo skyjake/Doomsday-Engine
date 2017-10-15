@@ -53,7 +53,7 @@
 using namespace de;
 
 char *nptIPAddress = (char *) ""; ///< Public domain for clients to connect to (cvar).
-int nptIPPort = 0; ///< Server TCP port (cvar).
+int   nptIPPort    = 0; ///< Server TCP port (cvar).
 
 static de::duint16 Server_ListenPort()
 {

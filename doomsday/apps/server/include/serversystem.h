@@ -107,6 +107,6 @@ dd_bool N_ServerClose(void);
 void    N_PrintNetworkStatus(void);
 
 extern char *nptIPAddress; // cvar
-extern int nptIPPort; // cvar
+extern int   nptIPPort;    // cvar
 
 #endif // SERVERSYSTEM_H

@@ -31,18 +31,12 @@
 
 using namespace de;
 
-//char *nptIPAddress = (char *) ""; ///< Address to connect to by default (cvar).
-int   nptIPPort = 0;              ///< Port to connect to by default (cvar).
-
 #ifdef _DEBUG
 D_CMD(NetFreqs);
 #endif
 
 void N_Register(void)
 {
-    //C_VAR_CHARPTR("net-ip-address", &nptIPAddress, 0, 0, 0);
-    //C_VAR_INT    ("net-ip-port",    &nptIPPort, CVF_NO_MAX, 0, 0);
-
 #ifdef _DEBUG
     C_CMD("netfreq", NULL, NetFreqs);
 #endif
@@ -52,18 +46,6 @@ ServerLink &Net_ServerLink(void)
 {
     return ClientApp::app().serverLink();
 }
-
-#if 0
-dd_bool N_GetHostInfo(int index, struct serverinfo_s *info)
-{
-    return Net_ServerLink().foundServerInfo(index, info);
-}
-
-int N_GetHostCount(void)
-{
-    return Net_ServerLink().foundServerCount();
-}
-#endif
 
 /**
  * Called from "net info" (client-side).
