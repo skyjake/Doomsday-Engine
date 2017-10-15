@@ -105,7 +105,7 @@ String RemoteFeed::repository() const
 
 String RemoteFeed::description() const
 {
-    return String("remote file repository \"%1\" (remote root \"%2\")")
+    return String("remote repository \"%1%2\"")
             .arg(d->repository)
             .arg(d->remotePath);
 }
