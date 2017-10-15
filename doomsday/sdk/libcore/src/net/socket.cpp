@@ -77,6 +77,17 @@
 
 namespace de {
 
+struct Counters
+{
+    duint64 sentUncompressedBytes = 0;
+    duint64 sentBytes = 0;
+    duint64 sentPeriodBytes = 0;
+    double outputBytesPerSecond = 0;
+    Time periodStartedAt;
+};
+static LockableT<Counters> counters;
+static TimeDelta const sendPeriodDuration = 5;
+
 /// Maximum number of channels.
 static duint const MAX_CHANNELS = 2;
 
@@ -88,9 +99,7 @@ static int const MAX_SIZE_LARGE  = DENG2_SOCKET_MAX_PAYLOAD_SIZE;
 /// Threshold for input data size: messages smaller than this are first compressed
 /// with Doomsday's Huffman codes. If the result is smaller than the deflated data,
 /// the Huffman coded payload is used (unless it doesn't fit in a medium-sized packet).
-#define MAX_HUFFMAN_INPUT_SIZE  4096 // bytes
-
-#define DEFAULT_TRANSMISSION_SIZE   4096
+static int const MAX_HUFFMAN_INPUT_SIZE = 4096; // bytes
 
 #define TRMF_CONTINUE           0x80
 #define TRMF_DEFLATED           0x40
@@ -293,11 +302,31 @@ DENG2_PIMPL_NOREF(Socket)
         totalBytesWritten += total;
 
         socket->write(payload);
+
+        // Update total counters, too.
+        {
+            DENG2_GUARD(counters);
+            counters.value.sentPeriodBytes += total;
+            counters.value.sentBytes       += total;
+            // Update Bps counter.
+            if (!counters.value.periodStartedAt.isValid()
+                || counters.value.periodStartedAt.since() > sendPeriodDuration)
+            {
+                counters.value.outputBytesPerSecond = double(counters.value.sentPeriodBytes)
+                                                    / sendPeriodDuration;
+                counters.value.sentPeriodBytes = 0;
+                counters.value.periodStartedAt = Time::currentHighPerformanceTime();
+            }
+        }
     }
 
     void serializeAndSendMessage(IByteArray const &packet)
     {
         Block payload = packet;
+        {
+            DENG2_GUARD(counters);
+            counters.value.sentUncompressedBytes += payload.size();
+        }
 
         if (!retainOrder && packet.size() >= MAX_SIZE_BIG)
         {
@@ -550,6 +579,30 @@ void Socket::close()
 void Socket::setQuiet(bool noLogOutput)
 {
     d->quiet = noLogOutput;
+}
+
+void Socket::resetCounters()
+{
+    DENG2_GUARD(counters);
+    counters.value = Counters();
+}
+
+duint64 Socket::sentUncompressedBytes()
+{
+    DENG2_GUARD(counters);
+    return counters.value.sentUncompressedBytes;
+}
+
+duint64 Socket::sentBytes()
+{
+    DENG2_GUARD(counters);
+    return counters.value.sentBytes;
+}
+
+double Socket::outputBytesPerSecond()
+{
+    DENG2_GUARD(counters);
+    return counters.value.outputBytesPerSecond;
 }
 
 duint Socket::channel() const

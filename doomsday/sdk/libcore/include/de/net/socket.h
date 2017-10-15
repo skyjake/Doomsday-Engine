@@ -218,6 +218,12 @@ public:
      */
     void setQuiet(bool noLogOutput);
 
+    // Statistics:
+    static void resetCounters();
+    static duint64 sentUncompressedBytes();
+    static duint64 sentBytes();
+    static double outputBytesPerSecond();
+
 signals:
     void addressResolved();
     void connected();

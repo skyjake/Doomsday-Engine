@@ -87,7 +87,7 @@ int             N_IdentifyPlayer(nodeid_t id);
 void            N_PrintBufferInfo(void);
 void            N_PrintTransmissionStats(void);
 void            N_PostMessage(netmessage_t *msg);
-void            N_AddSentBytes(size_t bytes);
+//void            N_AddSentBytes(size_t bytes);
 
 #ifdef __cplusplus
 } // extern "C"

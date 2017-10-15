@@ -58,10 +58,10 @@ static dint entryCount;
 static mutex_t msgMutex;
 
 // Number of bytes of outgoing data transmitted.
-static dsize numOutBytes;
+//static dsize numOutBytes;
 
 // Number of bytes sent over the network (compressed).
-static dsize numSentBytes;
+//static dsize numSentBytes;
 
 reader_s *Reader_NewWithNetworkBuffer()
 {
@@ -293,7 +293,7 @@ void N_SendPacket(dint flags)
 #endif
 
     // This is what will be sent.
-    ::numOutBytes += ::netBuffer.headerLength + ::netBuffer.length;
+    //::numOutBytes += ::netBuffer.headerLength + ::netBuffer.length;
 
     try
     {
@@ -311,10 +311,10 @@ void N_SendPacket(dint flags)
     }
 }
 
-void N_AddSentBytes(dsize bytes)
-{
-    ::numSentBytes += bytes;
-}
+//void N_AddSentBytes(dsize bytes)
+//{
+//    ::numSentBytes += bytes;
+//}
 
 /**
  * @return The player number that corresponds network node @a id.
@@ -415,15 +415,21 @@ void N_PrintBufferInfo()
  */
 void N_PrintTransmissionStats()
 {
-    if(::numOutBytes == 0)
+    auto const sentBytes = Socket::sentUncompressedBytes();
+    auto const outBytes  = Socket::sentBytes();
+    auto const outRate   = Socket::outputBytesPerSecond();
+
+    if (outBytes == 0)
     {
-        LOG_NET_MSG("Transmission efficiency: Nothing has been sent yet");
+        LOG_NET_MSG("Nothing has been sent yet over the network");
     }
     else
     {
-        LOG_NET_MSG("Transmission efficiency: %.3f%% (data: %i bytes, sent: %i bytes)")
-            << (100 - (100.0f * ::numSentBytes) / ::numOutBytes)
-            << ::numOutBytes
-            << ::numSentBytes;
+        LOG_NET_MSG("Average compression: %.3f%% (data: %.1f KB, out: %.1f KB)\n"
+                    "Current output: %.1f KB/s")
+            << 100 * (1.0 - double(outBytes) / double(sentBytes))
+            << sentBytes/1000.0
+            << outBytes/1000.0
+            << outRate/1000.0;
     }
 }
