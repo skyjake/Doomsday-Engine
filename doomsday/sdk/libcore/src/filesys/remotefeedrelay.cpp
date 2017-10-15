@@ -47,7 +47,7 @@ DENG2_PIMPL(RemoteFeedRelay)
             String path;
             FileListRequest fileList;
             FileContentsRequest fileContents;
-            Block receivedData;
+            //Block receivedData;
             duint64 receivedBytes = 0;
             duint64 fileSize = 0;
 
@@ -81,7 +81,17 @@ DENG2_PIMPL(RemoteFeedRelay)
         {}
 
         virtual ~RepositoryLink()
-        {}
+        {
+            // All queries will be cancelled.
+            for (auto i = deferredQueries.begin(); i != deferredQueries.end(); ++i)
+            {
+                i->cancel();
+            }
+            for (auto i = pendingQueries.begin(); i != pendingQueries.end(); ++i)
+            {
+                i.value().cancel();
+            }
+        }
 
         virtual void wasConnected()
         {
@@ -164,16 +174,16 @@ DENG2_PIMPL(RemoteFeedRelay)
                     pendingQueries.erase(found);
                     return;
                 }
-                if (query.receivedData.size() != fileSize)
+                /*if (query.receivedData.size() != fileSize)
                 {
                     query.receivedData.resize(fileSize);
-                }
+                }*/
                 if (!query.fileSize)
                 {
                     // Before the first chunk, notify about the total size.
                     query.fileContents->call(0, Block(), fileSize);
                 }
-                query.receivedData.set(startOffset, chunk.data(), chunk.size());
+                //query.receivedData.set(startOffset, chunk.data(), chunk.size());
                 query.fileSize = fileSize;
                 query.receivedBytes += chunk.size();
 
@@ -243,7 +253,7 @@ DENG2_PIMPL(RemoteFeedRelay)
             {
                 packet.setQuery(RemoteFeedQueryPacket::ListFiles);
             }
-            else
+            else if (query.fileContents)
             {
                 packet.setQuery(RemoteFeedQueryPacket::FileContents);
             }
@@ -265,19 +275,15 @@ DENG2_PIMPL(RemoteFeedRelay)
 
                     switch (d->protocol.recognize(*packet))
                     {
-                    case RemoteFeedProtocol::Metadata:
-                        {
-                            auto const &md = packet->as<RemoteFeedMetadataPacket>();
-                            metadataReceived(md.id(), md.metadata());
-                        }
-                        break;
+                    case RemoteFeedProtocol::Metadata: {
+                        auto const &md = packet->as<RemoteFeedMetadataPacket>();
+                        metadataReceived(md.id(), md.metadata());
+                        break; }
 
-                    case RemoteFeedProtocol::FileContents:
-                        {
-                            auto const &fc = packet->as<RemoteFeedFileContentsPacket>();
-                            chunkReceived(fc.id(), fc.startOffset(), fc.data(), fc.fileSize());
-                        }
-                        break;
+                    case RemoteFeedProtocol::FileContents: {
+                        auto const &fc = packet->as<RemoteFeedFileContentsPacket>();
+                        chunkReceived(fc.id(), fc.startOffset(), fc.data(), fc.fileSize());
+                        break; }
 
                     default:
                         break;
@@ -327,6 +333,14 @@ RemoteFeed *RemoteFeedRelay::addRepository(String const &address)
     return nullptr;
 }
 
+void RemoteFeedRelay::removeRepository(const de::String &address)
+{
+    if (auto *repo = d->repositories.take(address))
+    {
+        delete repo;
+    }
+}
+
 StringList RemoteFeedRelay::repositories() const
 {
     StringList repos;
@@ -361,9 +375,17 @@ RemoteFeedRelay::fetchFileContents(String const &repository, String filePath, Da
 {
     DENG2_ASSERT(d->repositories.contains(repository));
 
-    auto *repo = d->repositories[repository];
-    FileContentsRequest request(new FileContentsRequest::element_type(dataReceived));
-    repo->sendQuery(Impl::RepositoryLink::Query(request, filePath));
+    Waitable done;
+    FileContentsRequest request;
+    Loop::mainCall([&] ()
+    {
+        // The repository sockets are handled in the main thread.
+        auto *repo = d->repositories[repository];
+        FileContentsRequest request(new FileContentsRequest::element_type(dataReceived));
+        repo->sendQuery(Impl::RepositoryLink::Query(request, filePath));
+        done.post();
+    });
+    done.wait();
     return request;
 }
 

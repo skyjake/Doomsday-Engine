@@ -44,22 +44,27 @@ DENG2_PIMPL(RemoteFile)
         }
     }
 
-    void checkCache()
+    String cachePath() const
     {
-        if (self().state() != Ready)
+        String const hex = remoteMetaId.asHexadecimalText();
+        return CACHE_PATH / String(hex.last()) / hex;
+    }
+
+    void checkCache(bool requireExists = true)
+    {
+        if (self().state() == NotReady)
         {
             throw UnfetchedError("RemoteFile::operator >>",
                                  self().description() + " not downloaded");
         }
         if (!cachedFile)
         {
-            cachedFile.reset(FS::tryLocate<File const>
-                             (CACHE_PATH / remoteMetaId.asHexadecimalText()));
-            if (!cachedFile)
-            {
-                throw InputError("RemoteFile::operator >>",
-                                 self().description() + " has no locally cached data although marked Ready");
-            }
+            cachedFile.reset(FS::tryLocate<File const>(cachePath()));
+        }
+        if (requireExists && !cachedFile)
+        {
+            throw InputError("RemoteFile::operator >>",
+                             self().description() + " has no locally cached data although marked Ready");
         }
     }
 };
@@ -81,6 +86,15 @@ void RemoteFile::fetchContents()
     if (state() != NotReady) return;
 
     setState(Recovering);
+
+    d->checkCache(false /* doesn't have to exist */);
+    if (d->cachedFile)
+    {
+        // There is a cached copy already.
+        setState(Ready);
+        reinterpret();
+        return;
+    }
 
     d->fetching = RemoteFeedRelay::get().fetchFileContents
             (originFeed()->as<RemoteFeed>().repository(),
@@ -105,8 +119,9 @@ void RemoteFile::fetchContents()
             qDebug() << "[RemoteFile] Complete contents received" << d->buffer.size();
             d->fetching = nullptr;
 
-            Folder &cacheFolder = FS::get().makeFolder(CACHE_PATH);
-            File &data = cacheFolder.replaceFile(d->remoteMetaId.asHexadecimalText());
+            String const fn = d->cachePath();
+            Folder &cacheFolder = FS::get().makeFolder(fn.fileNamePath());
+            File &data = cacheFolder.replaceFile(fn);
             data << d->buffer;
             data.flush();
 
@@ -144,6 +159,10 @@ IIStream const &RemoteFile::operator >> (IByteArray &bytes) const
 
 String RemoteFile::describe() const
 {
+    if (isReady())
+    {
+        return String("\"%1\"").arg(name());
+    }
     return String("remote file \"%1\" (%2)")
             .arg(name())
             .arg(  state() == NotReady   ? "not ready"

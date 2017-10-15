@@ -34,6 +34,7 @@
 #include <de/BlockPacket>
 #include <de/ByteRefArray>
 #include <de/ByteSubArray>
+#include <de/Garbage>
 #include <de/GuiApp>
 #include <de/Message>
 #include <de/MessageDialog>
@@ -81,7 +82,8 @@ DENG2_PIMPL(ServerLink)
     std::unique_ptr<GameProfile> serverProfile; ///< Profile used when joining.
     std::function<void (GameProfile const *)> profileResultCallback;
     std::function<void (Address, GameProfile const *)> profileResultCallbackWithAddress;
-    LoopCallback mainCall;
+    String fileRepository;
+    LoopCallback mainCall; // for deferred actions
 
     Impl(Public *i, Flags flags)
         : Base(i)
@@ -335,6 +337,25 @@ DENG2_PIMPL(ServerLink)
         dlg->open(MessageDialog::Modal);
     }
 
+    void mountFileRepository(shell::ServerInfo const &info)
+    {
+        fileRepository = info.address().asText();
+        FS::get().makeFolderWithFeed
+                ("/remote/server",
+                 RemoteFeedRelay::get().addServerRepository(fileRepository),
+                 Folder::PopulateAsyncFullTree);
+    }
+
+    void unmountFileRepository()
+    {
+        if (Folder *remoteFiles = FS::tryLocate<Folder>("/remote/server"))
+        {
+            trash(remoteFiles);
+        }
+        RemoteFeedRelay::get().removeRepository(fileRepository);
+        fileRepository.clear();
+    }
+
     DENG2_PIMPL_AUDIENCE(DiscoveryUpdate)
     DENG2_PIMPL_AUDIENCE(PingResponse)
     DENG2_PIMPL_AUDIENCE(MapOutline)
@@ -415,10 +436,7 @@ void ServerLink::connectToServerAndChangeGame(shell::ServerInfo info)
             joinProfile = &adhoc;
         }
 
-        Folder &remotePacks = FS::get().makeFolderWithFeed
-                ("/remote/server",
-                 RemoteFeedRelay::get().addServerRepository(info.address().asText()),
-                 Folder::PopulateAsyncFullTree);
+        d->mountFileRepository(info);
 
         if (!joinProfile->isPlayable())
         {
@@ -534,7 +552,7 @@ void ServerLink::disconnect()
         DENG2_FOR_AUDIENCE2(Leave, i) i->networkGameLeft();
 
         LOG_NET_NOTE("Link to server %s disconnected") << address();
-
+        d->unmountFileRepository();
         AbstractLink::disconnect();
 
         Net_StopGame();
