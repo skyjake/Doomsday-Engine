@@ -50,8 +50,9 @@ DENG2_PIMPL(RemoteFile)
         return CACHE_PATH / String(hex.last()) / hex;
     }
 
-    void checkCache(bool requireExists = true)
+    void findCachedFile(bool requireExists = true)
     {
+        if (cachedFile) return;
         if (self().state() == NotReady)
         {
             throw UnfetchedError("RemoteFile::operator >>",
@@ -64,7 +65,7 @@ DENG2_PIMPL(RemoteFile)
         if (requireExists && !cachedFile)
         {
             throw InputError("RemoteFile::operator >>",
-                             self().description() + " has no locally cached data although marked Ready");
+                             self().description() + " has no locally cached data");
         }
     }
 };
@@ -87,7 +88,7 @@ void RemoteFile::fetchContents()
 
     setState(Recovering);
 
-    d->checkCache(false /* doesn't have to exist */);
+    d->findCachedFile(false /* doesn't have to exist */);
     if (d->cachedFile)
     {
         // There is a cached copy already.
@@ -138,21 +139,26 @@ void RemoteFile::fetchContents()
 
 void RemoteFile::get(Offset at, Byte *values, Size count) const
 {
-    d->checkCache();
-    if (auto *array = maybeAs<IByteArray>(d->cachedFile))
+    d->findCachedFile();
+    if (auto *array = maybeAs<IByteArray>(d->cachedFile.get()))
     {
         array->get(at, values, count);
+    }
+    else
+    {
+        DENG2_ASSERT(false);
     }
 }
 
 void RemoteFile::set(Offset, Byte const *, Size)
 {
-    verifyWriteAccess();
+    verifyWriteAccess(); // intended to throw exception
 }
 
 IIStream const &RemoteFile::operator >> (IByteArray &bytes) const
 {
-    d->checkCache();
+    d->findCachedFile();
+    DENG2_ASSERT(d->cachedFile);
     *d->cachedFile >> bytes;
     return *this;
 }
