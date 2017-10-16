@@ -19,7 +19,7 @@
 #ifndef LIBDENG2_REMOTEFILE_H
 #define LIBDENG2_REMOTEFILE_H
 
-#include "../ByteArrayFile"
+#include "../LinkFile"
 #include "../Asset"
 
 namespace de {
@@ -30,7 +30,7 @@ namespace de {
  *
  * RemoteFile provides status information as an Asset.
  */
-class RemoteFile : public ByteArrayFile, public Asset
+class DENG2_PUBLIC RemoteFile : public LinkFile, public Asset
 {
 public:
     /// Data of the file has not yet been fetched. @ingroup errors
@@ -48,8 +48,8 @@ public:
     void fetchContents();
 
     // Implements IByteArray.
-    void get(Offset at, Byte *values, Size count) const override;
-    void set(Offset at, Byte const *values, Size count) override;
+    //void get(Offset at, Byte *values, Size count) const override;
+    //void set(Offset at, Byte const *values, Size count) override;
 
     // File streaming.
     IIStream const &operator >> (IByteArray &bytes) const override;

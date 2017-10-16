@@ -80,8 +80,8 @@ RemoteFeedMetadataPacket::RemoteFeedMetadataPacket()
 
 void RemoteFeedMetadataPacket::addFile(File const &file, String const &prefix)
 {
-    auto const &ns = file.objectNamespace();
-    auto const status = file.status();
+    auto const &ns = file.target().objectNamespace();
+    auto const status = file.target().status();
 
     std::unique_ptr<Record> fileMeta(new Record);
 
@@ -98,9 +98,13 @@ void RemoteFeedMetadataPacket::addFile(File const &file, String const &prefix)
     }
     if (ns.hasSubrecord("package"))
     {
-        fileMeta->add("package", new Record(ns["package"].valueAsRecord(),
+        fileMeta->add("package", new Record(ns.getr("package").dereference(),
                       Record::IgnoreDoubleUnderscoreMembers));
     }
+//    if (ns.hasSubrecord("link"))
+//    {
+//        fileMeta->add("link", new Record(ns.getr("link").dereference()));
+//    }
 
     _metadata.add(new TextValue(prefix / file.name()),
                   new RecordValue(fileMeta.release(), RecordValue::OwnsRecord));

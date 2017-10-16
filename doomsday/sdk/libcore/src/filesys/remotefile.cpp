@@ -17,10 +17,13 @@
  */
 
 #include "de/RemoteFile"
-#include "de/RemoteFeedRelay"
+
 #include "de/App"
 #include "de/FileSystem"
+#include "de/RecordValue"
+#include "de/RemoteFeedRelay"
 #include "de/ScriptSystem"
+#include "de/TextValue"
 
 namespace de {
 
@@ -32,7 +35,7 @@ DENG2_PIMPL(RemoteFile)
     Block remoteMetaId;
     Block buffer;
     RemoteFeedRelay::FileContentsRequest fetching;
-    SafePtr<File const> cachedFile;
+    //SafePtr<File const> cachedFile;
 
     Impl(Public *i) : Base(i) {}
 
@@ -47,35 +50,53 @@ DENG2_PIMPL(RemoteFile)
     String cachePath() const
     {
         String const hex = remoteMetaId.asHexadecimalText();
-        return CACHE_PATH / String(hex.last()) / hex;
+        String path = CACHE_PATH / hex.right(3);
+        String original = self().objectNamespace().gets("package.path", remotePath);
+        return path / original.fileName();
     }
 
     void findCachedFile(bool requireExists = true)
     {
-        if (cachedFile) return;
+        if (!self().isBroken()) return;
+
         if (self().state() == NotReady)
         {
             throw UnfetchedError("RemoteFile::operator >>",
                                  self().description() + " not downloaded");
         }
-        if (!cachedFile)
+        if (self().isBroken())
         {
-            cachedFile.reset(FS::tryLocate<File const>(cachePath()));
+            self().setTarget(FS::tryLocate<File const>(cachePath()));
         }
-        if (requireExists && !cachedFile)
+        if (requireExists && self().isBroken())
         {
             throw InputError("RemoteFile::operator >>",
                              self().description() + " has no locally cached data");
         }
     }
+
+    void prepareForUse()
+    {
+//        File *interp = self().reinterpret();
+//        if (interp != thisPublic)
+//        {
+//            // Make sure the remote package metadata is visible.
+//            interp->objectNamespace().add
+//                ("package", new Record(self().objectNamespace().subrecord("package")));
+
+//            qDebug() << "Interpreted as" << interp->description();
+//            qDebug() << interp->objectNamespace().asText();
+//        }
+//        self().setState(Ready);
+    }
 };
 
 RemoteFile::RemoteFile(String const &name, String const &remotePath, Block const &remoteMetaId)
-    : ByteArrayFile(name)
+    : LinkFile(name)
     , d(new Impl(this))
 {
     objectNamespace().addSuperRecord(ScriptSystem::builtInClass(QStringLiteral("RemoteFile")));
-    d->remotePath = remotePath;
+    d->remotePath   = remotePath;
     d->remoteMetaId = remoteMetaId;
     setState(NotReady);
 }
@@ -88,14 +109,17 @@ void RemoteFile::fetchContents()
 
     setState(Recovering);
 
+#if 0
     d->findCachedFile(false /* doesn't have to exist */);
-    if (d->cachedFile)
+    if (!isBroken())
     {
         // There is a cached copy already.
-        setState(Ready);
-        reinterpret();
+        d->prepareForUse();
+        //setState(Ready);
+        //reinterpret();
         return;
     }
+#endif
 
     d->fetching = RemoteFeedRelay::get().fetchFileContents
             (originFeed()->as<RemoteFeed>().repository(),
@@ -112,6 +136,7 @@ void RemoteFile::fetchContents()
         {
             d->buffer.resize(remainingBytes);
         }
+
         d->buffer.set(startOffset, chunk.data(), chunk.size());
 
         // When fully transferred, the file can be cached locally and interpreted.
@@ -124,19 +149,31 @@ void RemoteFile::fetchContents()
             Folder &cacheFolder = FS::get().makeFolder(fn.fileNamePath());
             File &data = cacheFolder.replaceFile(fn);
             data << d->buffer;
+            d->buffer.clear();
+
             data.flush();
 
-            d->buffer.clear();
-            d->cachedFile.reset(&data);
+            setTarget(data.reinterpret());
+
+            //            d->cachedFile.reset(&data);
+
+            //d->prepareForUse();
+
+            if (objectNamespace().has("package.path"))
+            {
+                objectNamespace()["package.path"] = target().path();
+            }
+            qDebug() << "RemoteFile metadata:\n" << objectNamespace().asText().toUtf8().constData();
+
             setState(Ready);
 
             // Now this RemoteFile can become the source of an interpreted file,
             // which replaces the RemoteFile within the parent folder.
-            reinterpret();
         }
     });
 }
 
+/*
 void RemoteFile::get(Offset at, Byte *values, Size count) const
 {
     d->findCachedFile();
@@ -154,13 +191,16 @@ void RemoteFile::set(Offset, Byte const *, Size)
 {
     verifyWriteAccess(); // intended to throw exception
 }
+*/
 
 IIStream const &RemoteFile::operator >> (IByteArray &bytes) const
 {
-    d->findCachedFile();
-    DENG2_ASSERT(d->cachedFile);
-    *d->cachedFile >> bytes;
-    return *this;
+    //d->findCachedFile();
+    DENG2_ASSERT(!isBroken());
+    return LinkFile::operator >> (bytes);
+
+    //*d->cachedFile >> bytes;
+    //return *this;
 }
 
 String RemoteFile::describe() const
@@ -169,11 +209,17 @@ String RemoteFile::describe() const
     {
         return String("\"%1\"").arg(name());
     }
+    String targetDesc;
+    if (!isBroken())
+    {
+        targetDesc = " cached in " + target().description();
+    }
     return String("remote file \"%1\" (%2)")
             .arg(name())
             .arg(  state() == NotReady   ? "not ready"
                  : state() == Recovering ? "downloading"
-                                         : "ready");
+                                         : "ready")
+            + targetDesc;
 }
 
 Block RemoteFile::metaId() const

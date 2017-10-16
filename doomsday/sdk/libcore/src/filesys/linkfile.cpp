@@ -84,6 +84,13 @@ void LinkFile::setTarget(File const &file)
     d->target.reset(&file);
 }
 
+void LinkFile::setTarget(File const *fileOrNull)
+{
+    DENG2_GUARD(this);
+
+    d->target.reset(fileOrNull);
+}
+
 bool LinkFile::isBroken() const
 {
     return &target() == this;
@@ -99,6 +106,19 @@ String LinkFile::describe() const
         return "link to " + target().description();
     }
     return "broken link";
+}
+
+IIStream const &LinkFile::operator >> (IByteArray &bytes) const
+{
+    if (!isBroken())
+    {
+        target() >> bytes;
+        return *this;
+    }
+    else
+    {
+        return File::operator >> (bytes);
+    }
 }
 
 filesys::Node const *LinkFile::tryFollowPath(PathRef const &path) const

@@ -181,6 +181,7 @@ DENG2_PIMPL(RemoteFeedRelay)
                 if (!query.fileSize)
                 {
                     // Before the first chunk, notify about the total size.
+                    qDebug() << "notifying full file size:" << fileSize;
                     query.fileContents->call(0, Block(), fileSize);
                 }
                 //query.receivedData.set(startOffset, chunk.data(), chunk.size());
@@ -188,6 +189,7 @@ DENG2_PIMPL(RemoteFeedRelay)
                 query.receivedBytes += chunk.size();
 
                 // Notify about progress.
+                qDebug() << "notifying chunk with" << chunk.size() << "bytes";
                 query.fileContents->call(startOffset, chunk, fileSize - query.receivedBytes);
 
                 if (fileSize == query.receivedBytes)
@@ -325,7 +327,7 @@ RemoteFeed *RemoteFeedRelay::addServerRepository(String const &serverAddress)
 {
     auto *repo = new Impl::NativeRepositoryLink(d, serverAddress);
     d->repositories.insert(serverAddress, repo);
-    return new RemoteFeed(serverAddress, "/local");
+    return new RemoteFeed(serverAddress, "/sys/server/files");
 }
 
 RemoteFeed *RemoteFeedRelay::addRepository(String const &address)

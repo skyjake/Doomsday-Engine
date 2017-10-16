@@ -23,6 +23,7 @@
 
 namespace de {
 
+class Package;
 class PackageLoader;
 
 /**
@@ -33,7 +34,14 @@ class PackageLoader;
 class PackageFeed : public Feed
 {
 public:
-    PackageFeed(PackageLoader &loader);
+    enum LinkMode { LinkPackages, LinkSourceFiles };
+
+    typedef std::function<bool (Package const &)> Filter;
+
+public:
+    PackageFeed(PackageLoader &loader, LinkMode linkMode = LinkPackages);
+
+    void setFilter(Filter filter);
 
     PackageLoader &loader();
 
