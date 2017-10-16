@@ -368,7 +368,8 @@ DENG2_PIMPL(DataBundle), public Lockable
         {
             // Classic data files are loaded via the "dataFiles" array (in the listed order).
             // However, collections are represented directly as Doomsday packages.
-            meta.addArray(VAR_DATA_FILES, new ArrayValue({ new TextValue(dataFilePath) }));
+            // Paths in "dataFiles" are relative to the package root.
+            meta.addArray(VAR_DATA_FILES, new ArrayValue({ new TextValue(dataFilePath.fileName()) }));
         }
         else
         {
@@ -506,7 +507,6 @@ DENG2_PIMPL(DataBundle), public Lockable
                 << meta.gets(VAR_VERSION)
                 << ::internal::formatDescriptions[format]
                    << meta.geti(VAR_BUNDLE_SCORE); // matched.bestScore;
-
 
         return meta;
     }
@@ -1086,6 +1086,11 @@ File const &DataBundle::asFile() const
 File const &DataBundle::sourceFile() const
 {
     return *asFile().source();
+}
+
+String DataBundle::rootPath() const
+{
+    return asFile().path().fileNamePath();
 }
 
 String DataBundle::packageId() const

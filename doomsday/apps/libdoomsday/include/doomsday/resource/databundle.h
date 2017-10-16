@@ -66,6 +66,8 @@ public:
     de::File const &asFile() const;
     de::File const &sourceFile() const;
 
+    de::String rootPath() const;
+
     /**
      * Identifier of the package representing this data bundle (after being identified).
      */

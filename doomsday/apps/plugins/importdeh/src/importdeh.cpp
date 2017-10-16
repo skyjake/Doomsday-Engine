@@ -145,9 +145,10 @@ static void readPatchFiles()
     {
         if (bundle->format() == DataBundle::Dehacked)
         {
+            String const bundleRoot = bundle->rootPath();
             for (Value const *path : bundle->packageMetadata().geta("dataFiles").elements())
             {
-                readFile2(path->asText());
+                readFile2(bundleRoot / path->asText());
             }
         }
     }

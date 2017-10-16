@@ -24,7 +24,7 @@
 namespace res {
 
 /**
- * FS feed for maanging data bundle links.
+ * FS feed for managing data bundle links.
  *
  * The main responsibility of the feed is to prune broken links.
  */

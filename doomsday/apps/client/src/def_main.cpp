@@ -612,9 +612,10 @@ static void readAllDefinitions()
     {
         if (bundle->format() == DataBundle::Ded)
         {
+            String const bundleRoot = bundle->rootPath();
             for (Value const *path : bundle->packageMetadata().geta("dataFiles").elements())
             {
-                readDefinitionFile(path->asText());
+                readDefinitionFile(bundleRoot / path->asText());
             }
         }
     }

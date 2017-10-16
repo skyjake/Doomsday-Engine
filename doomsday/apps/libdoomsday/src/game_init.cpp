@@ -104,11 +104,14 @@ static void forNativeDataFiles(DataBundle const &bundle, std::function<void (Str
         Record const &meta = bundle.packageMetadata();
         for (auto const *v : meta.geta("dataFiles").elements())
         {
-            if (File const *dataFile = App::rootFolder().tryLocate<File const>(v->asText()))
+//            LOG_RES_MSG("bundle root: %s -> trying to load %s") << bundle.rootPath()
+//                     << v->asText();
+            String const dataFilePath = bundle.rootPath() / v->asText();
+            if (File const *dataFile = FS::tryLocate<File const>(dataFilePath))
             {
                 if (is<NativeFile>(dataFile->source()))
                 {
-                    func(v->asText());
+                    func(dataFilePath);
                 }
                 else
                 {
