@@ -28,11 +28,14 @@
 
 #include <de/CommandLine>
 #include <de/Config>
+#include <de/Error>
+#include <de/FileSystem>
+#include <de/Garbage>
 #include <de/Log>
 #include <de/LogBuffer>
-#include <de/Error>
+#include <de/PackageFeed>
+#include <de/PackageLoader>
 #include <de/c_wrapper.h>
-#include <de/Garbage>
 
 #include "serverapp.h"
 #include "serverplayer.h"
@@ -56,6 +59,8 @@ using namespace de;
 
 static ServerApp *serverAppSingleton = 0;
 
+static String const PATH_SERVER_FILES = "/sys/server/files";
+
 static void handleAppTerminate(char const *msg)
 {
     LogBuffer::get().flush();
@@ -67,6 +72,7 @@ DENG2_PIMPL(ServerApp)
 , DENG2_OBSERVES(DoomsdayApp, GameUnload)
 , DENG2_OBSERVES(DoomsdayApp, ConsoleRegistration)
 , DENG2_OBSERVES(DoomsdayApp, PeriodicAutosave)
+, DENG2_OBSERVES(PackageLoader, Activity)
 {
     QScopedPointer<ServerSystem> serverSystem;
     QScopedPointer<Resources> resources;
@@ -83,6 +89,7 @@ DENG2_PIMPL(ServerApp)
         self().audienceForGameUnload() += this;
         self().audienceForConsoleRegistration() += this;
         self().audienceForPeriodicAutosave() += this;
+        PackageLoader::get().audienceForActivity() += this;
     }
 
     ~Impl()
@@ -91,38 +98,56 @@ DENG2_PIMPL(ServerApp)
         DD_Shutdown();
     }
 
-    void publishAPIToPlugin(::Library *plugin)
+    void publishAPIToPlugin(::Library *plugin) override
     {
         DD_PublishAPIs(plugin);
     }
 
-    void consoleRegistration()
+    void consoleRegistration() override
     {
         DD_ConsoleRegister();
     }
 
-    void aboutToUnloadGame(Game const &/*gameBeingUnloaded*/)
+    void aboutToUnloadGame(Game const &/*gameBeingUnloaded*/) override
     {
         if (netGame && isServer)
         {
             N_ServerClose();
         }
-
         infineSystem().reset();
-
         if (App_GameLoaded())
         {
             Con_SaveDefaults();
         }
     }
 
-    void periodicAutosave()
+    void periodicAutosave() override
     {
         if (Config::exists())
         {
             Config::get().writeIfModified();
         }
         Con_SaveDefaultsIfChanged();
+    }
+
+    void initServerFiles()
+    {
+        Folder &files = self().fileSystem().makeFolder(PATH_SERVER_FILES);
+        auto *feed = new PackageFeed(PackageLoader::get(),
+                                     PackageFeed::LinkSourceFiles);
+        feed->setFilter([] (Package const &pkg)
+        {
+            return !pkg.matchTags(pkg.file(), "\\b(vanilla|core)\\b");
+        });
+        files.attach(feed);
+    }
+
+    void setOfLoadedPackagesChanged() override
+    {
+        if (Folder *files = FS::tryLocate<Folder>(PATH_SERVER_FILES))
+        {
+            files->populate();
+        }
     }
 
 #ifdef UNIX
@@ -217,6 +242,8 @@ void ServerApp::initialize()
     // Load the server's packages.
     initSubsystems();
     DoomsdayApp::initialize();
+
+    d->initServerFiles();
 
     // Initialize.
 #if WIN32

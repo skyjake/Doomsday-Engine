@@ -183,6 +183,13 @@ DENG2_PIMPL(RemoteFeedUser)
                 {
                     *file >> xfer.data;
                 }
+                else
+                {
+                    LOG_NET_WARNING("%s not found!") << query.path();
+                }
+                LOG_NET_MSG("New file transfer: %s size:%i")
+                        << query.path()
+                        << xfer.data.size();
                 DENG2_GUARD(transfers);
                 transfers.value.push_back(xfer);
                 break; }
