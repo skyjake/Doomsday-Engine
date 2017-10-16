@@ -103,6 +103,12 @@ Variable &Variable::operator = (Value *v)
     return *this;
 }
 
+Variable &Variable::operator = (String const &textValue)
+{
+    set(new TextValue(textValue));
+    return *this;
+}
+
 Variable &Variable::set(Value *v)
 {
     DENG2_ASSERT(v != 0);

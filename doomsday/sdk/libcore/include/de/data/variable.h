@@ -150,6 +150,13 @@ public:
     /**
      * Sets the value of the variable.
      *
+     * @param textValue  Text string. A new TextValue is created.
+     */
+    Variable &operator = (String const &textValue);
+
+    /**
+     * Sets the value of the variable.
+     *
      * @param v  New value. Variable takes a copy of this.
      */
     Variable &set(Value const &v);
