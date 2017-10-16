@@ -39,6 +39,8 @@
 #include <de/Log>
 #include <de/LogBuffer>
 #include <de/NativeFile>
+#include <de/Process>
+#include <de/Script>
 #include <de/ScriptSystem>
 #include <de/Time>
 #include <de/TextValue>
@@ -106,6 +108,7 @@ D_CMD(Wait);
 D_CMD(InspectMobj);
 D_CMD(DebugCrash);
 D_CMD(DebugError);
+D_CMD(DoomsdayScript);
 
 void initVariableBindings(Binder &);
 
@@ -142,6 +145,7 @@ void Con_Register(void)
 #ifdef _DEBUG
     C_CMD("crash",          NULL,   DebugCrash);
 #endif
+    C_CMD("ds",             "s*",   DoomsdayScript);
 
     Con_DataRegister();
 }
@@ -1398,5 +1402,21 @@ D_CMD(ListAliases)
     uint numPrinted = 0;
     Con_IterateKnownWords(argc > 1? argv[1] : 0, WT_CALIAS, printKnownWordWorker, &numPrinted);
     LOG_SCR_MSG("Found %i aliases") << numPrinted;
+    return true;
+}
+
+D_CMD(DoomsdayScript)
+{
+    DENG_UNUSED(src);
+    DENG_UNUSED(argc);
+    String source;
+    for (int i = 1; i < argc; ++i)
+    {
+        if (source) source += " ";
+        source += String(argv[i]);
+    }
+    Script script(source);
+    Process proc(script);
+    proc.execute();
     return true;
 }

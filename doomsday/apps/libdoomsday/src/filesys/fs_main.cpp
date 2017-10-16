@@ -42,6 +42,7 @@
 #include <de/LogBuffer>
 #include <de/memory.h>
 #include <de/findfile.h>
+#include <de/FileSystem>
 
 using namespace de;
 
@@ -1237,6 +1238,11 @@ D_CMD(ListFiles)
 
     LOG_RES_MSG(_E(b)"Total: " _E(.) "%i files in %i packages")
             << totalFiles << totalPackages;
+
+    if (auto *svFiles = FS::get().tryLocate<Folder const>("/sys/server/files"))
+    {
+        LOG_RES_MSG("Server files:\n" _E(m) "%s") << svFiles->contentsAsText();
+    }
 
     return true;
 }
