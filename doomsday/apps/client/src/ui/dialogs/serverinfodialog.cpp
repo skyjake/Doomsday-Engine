@@ -386,7 +386,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             if (!domainName.isEmpty())
             {
                 // Begin a query for the latest details.
-                link.acquireServerProfile(domainName, [this] (Address resolvedAddress,
+                link.acquireServerProfileAsync(domainName, [this] (Address resolvedAddress,
                                                               GameProfile const *svProfile)
                 {
                     host = resolvedAddress;
@@ -395,7 +395,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             }
             else
             {
-                link.acquireServerProfile(host, [this] (GameProfile const *svProfile)
+                link.acquireServerProfileAsync(host, [this] (GameProfile const *svProfile)
                 {
                     statusReceived(*svProfile);
                 });

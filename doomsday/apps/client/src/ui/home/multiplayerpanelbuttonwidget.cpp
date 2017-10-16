@@ -100,7 +100,7 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
         {
             i->aboutToJoinMultiplayerGame(serverInfo);
         }
-        ClientApp::serverLink().connectToServerAndChangeGame(serverInfo);
+        ClientApp::serverLink().connectToServerAndChangeGameAsync(serverInfo);
     }
 
     bool hasConfig(String const &token) const

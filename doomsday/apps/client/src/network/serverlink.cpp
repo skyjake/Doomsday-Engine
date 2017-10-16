@@ -31,16 +31,19 @@
 #include "dd_main.h"
 #include "clientapp.h"
 
+#include <de/Async>
 #include <de/BlockPacket>
 #include <de/ByteRefArray>
 #include <de/ByteSubArray>
 #include <de/Garbage>
 #include <de/GuiApp>
+#include <de/LinkFile>
 #include <de/Message>
 #include <de/MessageDialog>
 #include <de/PackageLoader>
 #include <de/RecordValue>
 #include <de/RemoteFeedRelay>
+#include <de/RemoteFile>
 #include <de/Socket>
 #include <de/data/json.h>
 #include <de/memory.h>
@@ -68,7 +71,12 @@ enum LinkState
 
 static int const NUM_PINGS = 5;
 
+static String const PATH_REMOTE_SERVER  = "/remote/server";
+static String const PATH_REMOTE_BUNDLES = "/remote/bundles";
+static String const PATH_REMOTE_PACKS   = "/remote/packs";
+
 DENG2_PIMPL(ServerLink)
+, DENG2_OBSERVES(Asset, StateChange)
 {
     std::unique_ptr<shell::ServerFinder> finder; ///< Finding local servers.
     LinkState state;
@@ -83,6 +91,8 @@ DENG2_PIMPL(ServerLink)
     std::function<void (GameProfile const *)> profileResultCallback;
     std::function<void (Address, GameProfile const *)> profileResultCallbackWithAddress;
     String fileRepository;
+    AssetGroup downloads;
+    std::function<void ()> postDownloadCallback;
     LoopCallback mainCall; // for deferred actions
 
     Impl(Public *i, Flags flags)
@@ -341,19 +351,83 @@ DENG2_PIMPL(ServerLink)
     {
         fileRepository = info.address().asText();
         FS::get().makeFolderWithFeed
-                ("/remote/server",
+                (PATH_REMOTE_SERVER,
                  RemoteFeedRelay::get().addServerRepository(fileRepository),
                  Folder::PopulateAsyncFullTree);
     }
 
     void unmountFileRepository()
     {
-        if (Folder *remoteFiles = FS::tryLocate<Folder>("/remote/server"))
+        unloadRemotePackages();
+        if (Folder *remoteFiles = FS::tryLocate<Folder>(PATH_REMOTE_SERVER))
         {
             trash(remoteFiles);
         }
         RemoteFeedRelay::get().removeRepository(fileRepository);
         fileRepository.clear();
+    }
+
+    void downloadFile(File &file)
+    {
+        if (auto *folder = maybeAs<Folder>(file))
+        {
+            folder->forContents([this] (String, File &f)
+            {
+                downloadFile(f);
+                return LoopContinue;
+            });
+        }
+        if (auto *remoteFile = maybeAs<RemoteFile>(file))
+        {
+            qDebug() << "downloading" << remoteFile->name();
+            downloads.insert(*remoteFile);
+            remoteFile->fetchContents();
+        }
+    }
+
+    void assetStateChanged(Asset &) override
+    {
+        DENG2_ASSERT(!downloads.isEmpty());
+        if (downloads.isReady())
+        {
+            qDebug() << downloads.size() << "downloads complete!";
+            Loop::mainCall([this] ()
+            {
+                if (postDownloadCallback) postDownloadCallback();
+            });
+        }
+    }
+
+    void loadRemotePackages(StringList const &ids)
+    {
+        auto &fs = FS::get();
+
+        qDebug() << fs.locate<Folder const>(PATH_REMOTE_SERVER).contentsAsText().toUtf8().constData();
+
+        qDebug() << "registering remote packages...";
+
+        Folder &bundles = FS::get().makeFolder(PATH_REMOTE_BUNDLES);
+        foreach (String pkgId, ids)
+        {
+            qDebug() << "registering remote:" << pkgId;
+            if (auto const *file = fs.tryLocate<File const>(PATH_REMOTE_SERVER / pkgId))
+            {
+                auto *pack = LinkFile::newLinkToFile(*file, file->name() + ".pack");
+                pack->objectNamespace().add("package",
+                        new Record(file->objectNamespace().subrecord("package")));
+                bundles.add(pack);
+                fs.index(*pack);
+                qDebug() << "=>" << pack->path();
+            }
+        }
+    }
+
+    void unloadRemotePackages()
+    {
+        if (Folder *bundles = FS::tryLocate<Folder>(PATH_REMOTE_BUNDLES))
+        {
+            delete bundles;
+        }
     }
 
     DENG2_PIMPL_AUDIENCE(DiscoveryUpdate)
@@ -385,7 +459,7 @@ void ServerLink::clear()
     // TODO: clear all found servers
 }
 
-void ServerLink::connectToServerAndChangeGame(shell::ServerInfo info)
+void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
 {
     // Automatically leave the current MP game.
     if (netGame && isClient)
@@ -393,10 +467,12 @@ void ServerLink::connectToServerAndChangeGame(shell::ServerInfo info)
         disconnect();
     }
 
-    // Get the profile for this.
-    // Use a deferred callback so that the UI is not blocked while we switch games.
-    acquireServerProfile(info.address(),
-                         [this, info] (GameProfile const *serverProfile)
+    // Forming the connection is a multi-step asynchronous procedure. The app's event
+    // loop is running between each of these steps so the UI is never frozen. The first
+    // step is to acquire the server's game profile.
+
+    acquireServerProfileAsync(info.address(),
+                              [this, info] (GameProfile const *serverProfile)
     {
         if (!serverProfile)
         {
@@ -408,10 +484,13 @@ void ServerLink::connectToServerAndChangeGame(shell::ServerInfo info)
             return;
         }
 
+        // Profile acquired! Figure out if the profile can be started locally.
+
         auto &win = ClientWindow::main();
         win.glActivate();
 
-        // If additional packages are configured, set up the ad-hoc profile.
+        // If additional packages are configured, set up the ad-hoc profile with the
+        // local additions.
         GameProfile const *joinProfile = serverProfile;
         auto const localPackages = serverProfile->game().localMultiplayerPackages();
         if (localPackages.count())
@@ -436,33 +515,88 @@ void ServerLink::connectToServerAndChangeGame(shell::ServerInfo info)
             joinProfile = &adhoc;
         }
 
+        // The server makes certain packages available for clients to download.
         d->mountFileRepository(info);
 
-        if (!joinProfile->isPlayable())
+        // Wait async until remote files have been populated so we can decide if
+        // anything needs to be downloaded.
+        async([] ()
         {
-            String const errorMsg = tr("Server's game \"%1\" is not playable on this system. "
-                                       "The following packages are unavailable:\n\n%2")
-                    .arg(info.gameId())
-                    .arg(String::join(de::map(joinProfile->unavailablePackages(),
-                                              Package::splitToHumanReadable), "\n"));
-            LOG_NET_ERROR("Failed to join %s: ") << info.address() << errorMsg;
-            d->reportError(errorMsg);
-            return;
-        }
+            Folder::waitForPopulation(); // remote feeds populating...
+            return 0;
+        },
+        [this, joinProfile, info] (int)
+        {
+            // Now we know all the files that the server will be providing.
+            // If we are missing any of the packages, download a copy from the server.
 
-        BusyMode_FreezeGameForBusyMode();
-        win.taskBar().close();
+            qDebug() << "Folder population is complete";
+            qDebug() << joinProfile->packages();
+            qDebug() << "isPlayable:" << joinProfile->isPlayable();
 
-        DoomsdayApp::app().changeGame(*joinProfile, DD_ActivateGameWorker);
+            // Request contents of missing packages.
+            d->downloads.clear();
+            foreach (String missing, joinProfile->unavailablePackages())
+            {
+                if (File *rem = FS::tryLocate<File>(PATH_REMOTE_SERVER / missing))
+                {
+                    d->downloadFile(*rem);
+                }
+            }
 
-        connectHost(info.address());
+            // We must wait after the downloads have finished.
+            // The user sees a popup while downloads are progressing, and has the
+            // option of cancelling.
 
-        win.glDone();
+            d->postDownloadCallback = [this, joinProfile, info] ()
+            {
+                auto &win = ClientWindow::main();
+                win.glActivate();
+
+                // Let's finalize the downloads so we can load all the packages.
+                d->downloads.audienceForStateChange() -= d;
+                d->downloads.clear();
+
+                d->loadRemotePackages(joinProfile->unavailablePackages());
+
+                if (!joinProfile->isPlayable())
+                {
+                    String const errorMsg = tr("Server's game \"%1\" is not playable on this system. "
+                                               "The following packages are unavailable:\n\n%2")
+                            .arg(info.gameId())
+                            .arg(String::join(de::map(joinProfile->unavailablePackages(),
+                                                      Package::splitToHumanReadable), "\n"));
+                    LOG_NET_ERROR("Failed to join %s: ") << info.address() << errorMsg;
+                    d->unmountFileRepository();
+                    d->reportError(errorMsg);
+                    return;
+                }
+
+                // Everything is finally good to go.
+
+                BusyMode_FreezeGameForBusyMode();
+                win.taskBar().close();
+                DoomsdayApp::app().changeGame(*joinProfile, DD_ActivateGameWorker);
+                connectHost(info.address());
+
+                win.glDone();
+            };
+
+            // If nothing needs to be downloaded, let's just continue right away.
+            if (d->downloads.isReady())
+            {
+                d->postDownloadCallback();
+            }
+            else
+            {
+                d->downloads.audienceForStateChange() += d;
+            }
+        });
     });
 }
 
-void ServerLink::acquireServerProfile(Address const &address,
-                                      std::function<void (GameProfile const *)> resultHandler)
+void ServerLink::acquireServerProfileAsync(Address const &address,
+                                           std::function<void (GameProfile const *)> resultHandler)
 {
     if (d->prepareServerProfile(address))
     {
@@ -482,8 +616,8 @@ void ServerLink::acquireServerProfile(Address const &address,
     }
 }
 
-void ServerLink::acquireServerProfile(String const &domain,
-                                      std::function<void (Address, GameProfile const *)> resultHandler)
+void ServerLink::acquireServerProfileAsync(String const &domain,
+                                           std::function<void (Address, GameProfile const *)> resultHandler)
 {
     d->profileResultCallbackWithAddress = resultHandler;
     discover(domain);
