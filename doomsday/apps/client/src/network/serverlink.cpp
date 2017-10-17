@@ -370,6 +370,7 @@ DENG2_PIMPL(ServerLink)
 
     void downloadFile(File &file)
     {
+        qDebug() << "downloadFile:" << file.description();
         if (auto *folder = maybeAs<Folder>(file))
         {
             folder->forContents([this] (String, File &f)
@@ -409,11 +410,16 @@ DENG2_PIMPL(ServerLink)
         foreach (String pkgId, ids)
         {
             qDebug() << "registering remote:" << pkgId;
-            if (auto const *file = fs.tryLocate<File const>(PATH_REMOTE_SERVER / pkgId))
+            if (auto *file = fs.tryLocate<File>(PATH_REMOTE_SERVER / pkgId))
             {
+                //file->objectNamespace().set("package.path", file->path());
+
+                qDebug() << "Cached metadata:\n" << file->objectNamespace().asText();
+
                 auto *pack = LinkFile::newLinkToFile(*file, file->name() + ".pack");
                 pack->objectNamespace().add("package",
                         new Record(file->objectNamespace().subrecord("package")));
+                pack->objectNamespace().set("package.path", file->path());
                 remotePacks.add(pack);
                 fs.index(*pack);
                 qDebug() << "=>" << pack->path();
