@@ -105,6 +105,8 @@ public:
      */
     static File::Status fileStatus(NativePath const &nativePath);
 
+    static void setFileModifiedTime(NativePath const &nativePath, Time const &modifiedAt);
+
     /**
      * Creates and interprets a single native file and adds it to a folder. The created
      * file is not governed by any feed and will not be pruned during folder pruning.

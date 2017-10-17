@@ -19,11 +19,13 @@
 #include "de/RemoteFile"
 
 #include "de/App"
+#include "de/DirectoryFeed"
 #include "de/FileSystem"
 #include "de/RecordValue"
 #include "de/RemoteFeedRelay"
 #include "de/ScriptSystem"
 #include "de/TextValue"
+#include "de/TimeValue"
 
 namespace de {
 
@@ -35,7 +37,6 @@ DENG2_PIMPL(RemoteFile)
     Block remoteMetaId;
     Block buffer;
     RemoteFeedRelay::FileContentsRequest fetching;
-    //SafePtr<File const> cachedFile;
 
     Impl(Public *i) : Base(i) {}
 
@@ -150,8 +151,18 @@ void RemoteFile::fetchContents()
             File &data = cacheFolder.replaceFile(fn);
             data << d->buffer;
             d->buffer.clear();
-
             data.flush();
+
+            // Override the last modified time.
+            {
+                auto st = data.status();
+                st.modifiedAt = status().modifiedAt;
+                data.setStatus(st);
+
+                // Remember this for later as well.
+                DirectoryFeed::setFileModifiedTime(data.correspondingNativePath(),
+                                                   st.modifiedAt);
+            }
 
             setTarget(data.reinterpret());
 

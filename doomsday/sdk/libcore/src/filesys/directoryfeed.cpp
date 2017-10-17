@@ -27,7 +27,9 @@
 #include <QDir>
 #include <QFileInfo>
 
-using namespace de;
+namespace de {
+
+static String const fileStatusSuffix = ".doomsday_file_status";
 
 DirectoryFeed::DirectoryFeed(NativePath const &nativePath, Flags const &mode)
     : _nativePath(nativePath), _mode(mode) {}
@@ -79,7 +81,10 @@ Feed::PopulatedFiles DirectoryFeed::populate(Folder const &folder)
         }
         else
         {
-            populateFile(folder, entry.fileName(), populated);
+            if (!entry.fileName().endsWith(fileStatusSuffix)) // ignore meta files
+            {
+                populateFile(folder, entry.fileName(), populated);
+            }
         }
     }
     return populated;
@@ -253,7 +258,6 @@ void DirectoryFeed::changeWorkingDir(NativePath const &nativePath)
 File::Status DirectoryFeed::fileStatus(NativePath const &nativePath)
 {
     QFileInfo info(nativePath);
-
     if (!info.exists())
     {
         /// @throw StatusError Determining the file status was not possible.
@@ -261,9 +265,36 @@ File::Status DirectoryFeed::fileStatus(NativePath const &nativePath)
     }
 
     // Get file status information.
-    return File::Status(info.isDir()? File::Type::Folder : File::Type::File,
-                        dsize(info.size()),
-                        info.lastModified());
+    File::Status st { info.isDir()? File::Type::Folder : File::Type::File,
+                      dsize(info.size()),
+                      info.lastModified() };
+
+    // Check for overridden status.
+    String const overrideName = nativePath + fileStatusSuffix;
+    if (QFileInfo().exists(overrideName))
+    {
+        QFile f(overrideName);
+        if (f.open(QFile::ReadOnly))
+        {
+            st.modifiedAt = Time::fromText(String::fromUtf8(f.readAll()), Time::ISOFormat);
+        }
+    }
+    return st;
+}
+
+void DirectoryFeed::setFileModifiedTime(NativePath const &nativePath, Time const &modifiedAt)
+{
+    String const overrideName = nativePath + fileStatusSuffix;
+    if (!modifiedAt.isValid())
+    {
+        QFile::remove(overrideName);
+        return;
+    }
+    QFile f(overrideName);
+    if (f.open(QFile::WriteOnly | QFile::Truncate))
+    {
+        f.write(modifiedAt.asText(Time::ISOFormat).toUtf8());
+    }
 }
 
 File &DirectoryFeed::manuallyPopulateSingleFile(NativePath const &nativePath,
@@ -314,3 +345,5 @@ File &DirectoryFeed::manuallyPopulateSingleFile(NativePath const &nativePath,
                                             FS::DontInheritFeeds | FS::PopulateNewFolder);
     }
 }
+
+} // namespace de
