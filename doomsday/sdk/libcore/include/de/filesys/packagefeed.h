@@ -31,7 +31,7 @@ class PackageLoader;
  *
  * @ingroup fs
  */
-class PackageFeed : public Feed
+class DENG2_PUBLIC PackageFeed : public Feed
 {
 public:
     enum LinkMode { LinkIdentifier, LinkVersionedIdentifier };

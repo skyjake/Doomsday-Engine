@@ -592,7 +592,7 @@ void GLUniform::applyInProgram(GLProgram &program) const
 
 #if defined (DENG2_DEBUG)
     {
-        GLenum err = glGetError();
+        GLenum err = LIBGUI_GL.glGetError();
         if (err != GL_NO_ERROR)
         {
             qDebug() << "[GLUniform] Failure with uniform:" << d->name << "loc:" << loc;
