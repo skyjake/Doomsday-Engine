@@ -36,7 +36,10 @@ public:
     DataFolder(Format format, de::File &sourceFile);
     ~DataFolder();
 
-    de::String describe() const;
+    de::String describe() const override;
+
+    // Stream access.
+    IIStream const &operator >> (IByteArray &bytes) const override;
 };
 
 #endif // LIBDOOMSDAY_DATABUNDLE_H
