@@ -244,7 +244,18 @@ public:
 
     template <typename Type>
     Type *tryLocate(String const &path) const {
-        return dynamic_cast<Type *>(tryLocateFile(path));
+        File *f = tryLocateFile(path);
+        if (!f) return nullptr;
+        if (auto *casted = dynamic_cast<Type *>(f)) {
+            return casted;
+        }
+        if (&f->target() != f) {
+            if (auto *casted = dynamic_cast<Type *>(&f->target())) {
+                // Link target also accepted, if type matches.
+                return casted;
+            }
+        }
+        return nullptr;
     }
 
     /**
@@ -265,6 +276,11 @@ public:
         }
         if (Type *casted = dynamic_cast<Type *>(found)) {
             return *casted;
+        }
+        if (found != &found->target()) {
+            if (Type *casted = dynamic_cast<Type *>(&found->target())) {
+                return *casted;
+            }
         }
         /// @throw NotFoundError  Found file could not be cast to the
         /// requested type.
