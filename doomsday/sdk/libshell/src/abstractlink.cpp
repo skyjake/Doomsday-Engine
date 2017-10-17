@@ -17,11 +17,12 @@
  */
 
 #include "de/shell/AbstractLink"
+#include <de/App>
+#include <de/Log>
 #include <de/Message>
+#include <de/Packet>
 #include <de/Socket>
 #include <de/Time>
-#include <de/Log>
-#include <de/Packet>
 #include <QTimer>
 
 namespace de {

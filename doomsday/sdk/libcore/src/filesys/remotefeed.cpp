@@ -73,9 +73,6 @@ DENG2_PIMPL(RemoteFeed)
                 if (md.has("package"))
                 {
                     file->objectNamespace().add("package", new Record(md.subrecord("package")));
-
-                    //qDebug() << "Package metadata for" << file->path();
-                    //qDebug() << file->objectNamespace().getr("package").asText();
                 }
                 file->setStatus(File::Status(fileType, fileSize, modTime));
                 file->setOriginFeed(thisPublic);
