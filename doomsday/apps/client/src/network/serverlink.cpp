@@ -72,7 +72,6 @@ enum LinkState
 static int const NUM_PINGS = 5;
 
 static String const PATH_REMOTE_SERVER  = "/remote/server";
-static String const PATH_REMOTE_BUNDLES = "/remote/bundles";
 static String const PATH_REMOTE_PACKS   = "/remote/packs";
 
 DENG2_PIMPL(ServerLink)
@@ -358,7 +357,7 @@ DENG2_PIMPL(ServerLink)
 
     void unmountFileRepository()
     {
-        unloadRemotePackages();
+        unlinkRemotePackages();
         if (Folder *remoteFiles = FS::tryLocate<Folder>(PATH_REMOTE_SERVER))
         {
             trash(remoteFiles);
@@ -398,7 +397,7 @@ DENG2_PIMPL(ServerLink)
         }
     }
 
-    void loadRemotePackages(StringList const &ids)
+    void linkRemotePackages(StringList const &ids)
     {
         auto &fs = FS::get();
 
@@ -406,7 +405,7 @@ DENG2_PIMPL(ServerLink)
 
         qDebug() << "registering remote packages...";
 
-        Folder &bundles = FS::get().makeFolder(PATH_REMOTE_BUNDLES);
+        Folder &remotePacks = FS::get().makeFolder(PATH_REMOTE_PACKS);
         foreach (String pkgId, ids)
         {
             qDebug() << "registering remote:" << pkgId;
@@ -415,18 +414,24 @@ DENG2_PIMPL(ServerLink)
                 auto *pack = LinkFile::newLinkToFile(*file, file->name() + ".pack");
                 pack->objectNamespace().add("package",
                         new Record(file->objectNamespace().subrecord("package")));
-                bundles.add(pack);
+                remotePacks.add(pack);
                 fs.index(*pack);
                 qDebug() << "=>" << pack->path();
             }
         }
     }
 
-    void unloadRemotePackages()
+    void unlinkRemotePackages()
     {
-        if (Folder *bundles = FS::tryLocate<Folder>(PATH_REMOTE_BUNDLES))
+        // Unload all server packages. Note that the entire folder will be destroyed, too.
+        if (std::unique_ptr<Folder> remotePacks { FS::tryLocate<Folder>(PATH_REMOTE_PACKS) })
         {
-            delete bundles;
+            remotePacks->forContents([] (String, File &file)
+            {
+                qDebug() << "unloading remote package:" << file.name();
+                PackageLoader::get().unload(Package::identifierForFile(file));
+                return LoopContinue;
+            });
         }
     }
 
@@ -557,7 +562,7 @@ void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
                 d->downloads.audienceForStateChange() -= d;
                 d->downloads.clear();
 
-                d->loadRemotePackages(joinProfile->unavailablePackages());
+                d->linkRemotePackages(joinProfile->unavailablePackages());
 
                 if (!joinProfile->isPlayable())
                 {

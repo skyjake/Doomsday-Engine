@@ -99,7 +99,7 @@ DENG2_PIMPL(Package)
     {
         if (!file)
         {
-            throw SourceError("Package::verify", "Package's source file missing");
+            throw SourceError("Package::verifyFile", "Package's source file missing");
         }
     }
 
