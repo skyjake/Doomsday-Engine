@@ -24,6 +24,7 @@
 #include <de/Log>
 #include <de/LogBuffer>
 #include <de/LogSink>
+#include <de/Loop>
 #include <doomsday/console/exec.h>
 #include <doomsday/console/knownword.h>
 #include <doomsday/games.h>
@@ -41,7 +42,7 @@ using namespace de;
 DENG2_PIMPL(ShellUser), public LogSink
 {
     /// Log entries to be sent are collected here.
-    shell::LogEntryPacket logEntryPacket;
+    LockableT<shell::LogEntryPacket> logEntryPacket;
 
     Impl(Public &i) : Base(i)
     {
@@ -56,7 +57,8 @@ DENG2_PIMPL(ShellUser), public LogSink
 
     LogSink &operator << (LogEntry const &entry)
     {
-        logEntryPacket.add(entry);
+        DENG2_GUARD(logEntryPacket);
+        logEntryPacket.value.add(entry);
         return *this;
     }
 
@@ -67,14 +69,19 @@ DENG2_PIMPL(ShellUser), public LogSink
 
     /**
      * Sends the accumulated log entries over the link.
+     * Note that any thread can flush the log sinks.
      */
     void flush()
     {
-        if (!logEntryPacket.isEmpty() && self().status() == shell::Link::Connected)
+        Loop::mainCall([this] ()
         {
-            self() << logEntryPacket;
-            logEntryPacket.clear();
-        }
+            DENG2_GUARD(logEntryPacket);
+            if (!logEntryPacket.value.isEmpty() && self().status() == shell::Link::Connected)
+            {
+                self() << logEntryPacket.value;
+                logEntryPacket.value.clear();
+            }
+        });
     }
 };
 
