@@ -46,31 +46,22 @@ DENG2_PIMPL(PackageFeed)
         if (filter && !filter(pkg)) return nullptr;
 
         // Create a link to the loaded package's file.
-        File const *target;
         String name;
-        if (linkMode == LinkPackages)
+        if (linkMode == LinkIdentifier)
         {
-            target = &pkg.file();
             name = linkName;
         }
         else
         {
-            target = &pkg.file();
-            //name = String("%1.%2").arg(target->metaId().asHexadecimalText())
-             //                     .arg(target->name());
             name = Package::versionedIdentifierForFile(pkg.file());
         }
-        LinkFile *link = LinkFile::newLinkToFile(*target, name);
+        LinkFile *link = LinkFile::newLinkToFile(pkg.file(), name);
 
         // We will decide on pruning this.
         link->setOriginFeed(thisPublic);
 
+        // Identifier also in metadata.
         link->objectNamespace().addText(VAR_LINK_PACKAGE_ID, pkg.identifier());
-//        if (linkMode == LinkSourceFiles)
-//        {
-//            link->objectNamespace().addText(QStringLiteral("link.sourceName"),
-//                                            pkg.sourceFile().name());
-//        }
 
         return link;
     }

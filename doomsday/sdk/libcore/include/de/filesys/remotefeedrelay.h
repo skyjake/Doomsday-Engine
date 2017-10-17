@@ -46,7 +46,7 @@ public:
 public:
     RemoteFeedRelay();
 
-    RemoteFeed *addServerRepository(String const &serverAddress);
+    RemoteFeed *addServerRepository(String const &serverAddress, String const &remoteRoot);
 
     RemoteFeed *addRepository(String const &address);
 

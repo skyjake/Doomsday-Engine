@@ -323,11 +323,11 @@ RemoteFeedRelay::RemoteFeedRelay()
     : d(new Impl(this))
 {}
 
-RemoteFeed *RemoteFeedRelay::addServerRepository(String const &serverAddress)
+RemoteFeed *RemoteFeedRelay::addServerRepository(String const &serverAddress, String const &remoteRoot)
 {
     auto *repo = new Impl::NativeRepositoryLink(d, serverAddress);
     d->repositories.insert(serverAddress, repo);
-    return new RemoteFeed(serverAddress, "/sys/server/files");
+    return new RemoteFeed(serverAddress, remoteRoot);
 }
 
 RemoteFeed *RemoteFeedRelay::addRepository(String const &address)

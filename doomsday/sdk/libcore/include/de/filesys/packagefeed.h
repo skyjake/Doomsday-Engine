@@ -34,12 +34,12 @@ class PackageLoader;
 class PackageFeed : public Feed
 {
 public:
-    enum LinkMode { LinkPackages, LinkSourceFiles };
+    enum LinkMode { LinkIdentifier, LinkVersionedIdentifier };
 
     typedef std::function<bool (Package const &)> Filter;
 
 public:
-    PackageFeed(PackageLoader &loader, LinkMode linkMode = LinkPackages);
+    PackageFeed(PackageLoader &loader, LinkMode linkMode = LinkIdentifier);
 
     void setFilter(Filter filter);
 
