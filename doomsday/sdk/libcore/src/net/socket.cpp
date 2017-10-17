@@ -254,7 +254,7 @@ DENG2_PIMPL_NOREF(Socket)
 
         if (!header.size) // Try deflate.
         {
-            int const level = (payload.size() < MAX_SIZE_BIG? 1 /*fast*/ : 9 /*best*/);
+            int const level = 1; //(payload.size() < MAX_SIZE_BIG? 1 /*fast*/ : 9 /*best*/);
             Block const deflated = payload.compressed(level);
 
             if (!deflated.size())
