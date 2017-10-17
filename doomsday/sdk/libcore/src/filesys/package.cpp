@@ -45,6 +45,7 @@ static String const PACKAGE_IMPORT_PATH("package.importPath");
 static String const PACKAGE_REQUIRES   ("package.requires");
 static String const PACKAGE_RECOMMENDS ("package.recommends");
 static String const PACKAGE_EXTRAS     ("package.extras");
+static String const PACKAGE_PATH       ("package.path");
 static String const PACKAGE_TAGS       ("package.tags");
 
 static String const VAR_ID  ("ID");
@@ -143,13 +144,13 @@ File const &Package::file() const
 
 File const &Package::sourceFile() const
 {
-    return App::rootFolder().locate<File const>(objectNamespace().gets("package.path"));
+    return App::rootFolder().locate<File const>(objectNamespace().gets(PACKAGE_PATH));
 }
 
 Folder const &Package::root() const
 {
     d->verifyFile();
-    return expectedAs<Folder>(d->file);
+    return expectedAs<Folder>(&d->file->target());
 }
 
 Record &Package::objectNamespace()

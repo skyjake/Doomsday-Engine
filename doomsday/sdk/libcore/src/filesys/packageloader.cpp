@@ -59,10 +59,16 @@ DENG2_PIMPL(PackageLoader)
      */
     Package *tryFindLoaded(File const &file) const
     {
+//        qDebug() << "tryFindLoaded:" << Package::identifierForFile(file);
+//        for (auto i = loaded.begin(); i != loaded.end(); ++i)
+//        {
+//            qDebug() << "  currently loaded:" << i.key() << "file:" << i.value()->file().path() << "source:" << i.value()->sourceFile().path();
+//        }
         LoadedPackages::const_iterator found = loaded.constFind(Package::identifierForFile(file));
         if (found != loaded.constEnd())
         {
-            if (&found.value()->file() == &file)
+            auto const &pkg = *found.value();
+            if (&pkg.file() == &file || &pkg.sourceFile() == &file)
             {
                 return found.value();
             }

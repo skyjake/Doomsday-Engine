@@ -89,7 +89,7 @@ void RemoteFeedMetadataPacket::addFile(File const &file, String const &prefix)
     fileMeta->addNumber("type",       status.type() == File::Type::File? 0 : 1);
     if (status.type() == File::Type::Folder)
     {
-        fileMeta->addNumber("size", file.as<Folder>().contents().size());
+        fileMeta->addNumber("size", file.target().as<Folder>().contents().size());
     }
     else
     {
