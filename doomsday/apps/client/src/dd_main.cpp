@@ -949,7 +949,15 @@ static GameProfile const *autoselectGameProfile()
             automaticProfile = prof->as<GameProfile>();
         }
 
-        // Append the packages specified on the command line.
+        // Packages from the command line.
+        foreach (String packageId, PackageLoader::get().loadedFromCommandLine())
+        {
+            StringList pkgs = automaticProfile.packages();
+            pkgs << packageId;
+            automaticProfile.setPackages(pkgs);
+        }
+
+        // Also append the packages specified as files on the command line.
         foreach (File *f, DoomsdayApp::app().filesFromCommandLine())
         {
             String packageId;

@@ -153,9 +153,10 @@ public:
     void sortInPackageOrder(FileSystem::FoundFiles &filesToSort) const;
 
     /**
-     * Loads all the packages specified on the command line (using the @c -pkg option).
+     * Lists all the packages specified on the command line (using the @c -pkg option)
+     * so they can be loaded. The order matches the order of the command line parameters.
      */
-    void loadFromCommandLine();
+    StringList loadedFromCommandLine() const;
 
     /**
      * Looks up all the packages in the file system index.

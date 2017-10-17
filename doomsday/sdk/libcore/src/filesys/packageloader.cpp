@@ -517,7 +517,7 @@ StringList PackageLoader::loadedPackageIdsInOrder(IdentifierType idType) const
         Version const pkgVersion(meta.gets("version"));
         if (idType == Versioned && pkgVersion.isValid()) // nonzero
         {
-            ids << String("%1_%2").arg(meta.gets("ID")).arg(meta.gets("version"));
+            ids << String("%1_%2").arg(meta.gets("ID")).arg(pkgVersion.fullNumber());
         }
         else
         {
@@ -567,11 +567,11 @@ void PackageLoader::sortInPackageOrder(FS::FoundFiles &filesToSort) const
     }
 }
 
-void PackageLoader::loadFromCommandLine()
+StringList PackageLoader::loadedFromCommandLine() const
 {
+    StringList pkgs;
     CommandLine &args = App::commandLine();
-
-    for (int p = 0; p < args.count(); )
+    for (duint p = 0; p < duint(args.count()); )
     {
         // Find all the -pkg options.
         if (!args.matches("-pkg", args.at(p)))
@@ -579,13 +579,13 @@ void PackageLoader::loadFromCommandLine()
             ++p;
             continue;
         }
-
         // Load all the specified packages (by identifier, not by path).
-        while (++p != args.count() && !args.isOption(p))
+        while (++p != duint(args.count()) && !args.isOption(p))
         {
-            load(args.at(p));
+            pkgs << args.at(p);
         }
     }
+    return pkgs;
 }
 
 StringList PackageLoader::findAllPackages() const

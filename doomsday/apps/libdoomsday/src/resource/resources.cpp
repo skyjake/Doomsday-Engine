@@ -186,9 +186,7 @@ DENG2_PIMPL(Resources)
 };
 
 Resources::Resources() : d(new Impl(this))
-{
-    App::packageLoader().loadFromCommandLine();
-}
+{}
 
 void Resources::timeChanged(Clock const &)
 {
