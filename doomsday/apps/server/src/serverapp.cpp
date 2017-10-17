@@ -132,9 +132,12 @@ DENG2_PIMPL(ServerApp)
 
     void initServerFiles()
     {
+        // Packages available to clients via RemoteFeed use versioned identifiers because
+        // a client may already have a different version of the package.
+
         Folder &files = self().fileSystem().makeFolder(PATH_SERVER_FILES);
         auto *feed = new PackageFeed(PackageLoader::get(),
-                                     PackageFeed::LinkSourceFiles);
+                                     PackageFeed::LinkVersionedIdentifier);
         feed->setFilter([] (Package const &pkg)
         {
             return !pkg.matchTags(pkg.file(), "\\b(vanilla|core)\\b");

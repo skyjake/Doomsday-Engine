@@ -71,8 +71,10 @@ enum LinkState
 
 static int const NUM_PINGS = 5;
 
-static String const PATH_REMOTE_SERVER  = "/remote/server";
-static String const PATH_REMOTE_PACKS   = "/remote/packs";
+static String const PATH_SERVER_REPOSITORY_ROOT = "/sys/server/files"; // serverside folder
+
+static String const PATH_REMOTE_SERVER = "/remote/server"; // local folder for RemoteFeed
+static String const PATH_REMOTE_PACKS  = "/remote/packs";
 
 DENG2_PIMPL(ServerLink)
 , DENG2_OBSERVES(Asset, StateChange)
@@ -351,7 +353,7 @@ DENG2_PIMPL(ServerLink)
         fileRepository = info.address().asText();
         FS::get().makeFolderWithFeed
                 (PATH_REMOTE_SERVER,
-                 RemoteFeedRelay::get().addServerRepository(fileRepository),
+                 RemoteFeedRelay::get().addServerRepository(fileRepository, PATH_SERVER_REPOSITORY_ROOT),
                  Folder::PopulateAsyncFullTree);
     }
 
@@ -400,8 +402,6 @@ DENG2_PIMPL(ServerLink)
     void linkRemotePackages(StringList const &ids)
     {
         auto &fs = FS::get();
-
-        qDebug() << fs.locate<Folder const>(PATH_REMOTE_SERVER).contentsAsText().toUtf8().constData();
 
         qDebug() << "registering remote packages...";
 
