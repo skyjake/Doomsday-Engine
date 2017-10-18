@@ -26,6 +26,7 @@
 #include <de/memory.h>
 #include <de/timer.h>
 #include <de/ByteRefArray>
+#include <de/Loop>
 
 #ifdef __CLIENT__
 #  include "network/sys_network.h"
@@ -358,6 +359,16 @@ dd_bool N_GetPacket()
 void N_PrintBufferInfo()
 {
     N_PrintTransmissionStats();
+
+    double const loopRate = Loop::get().rate();
+    if (loopRate > 0)
+    {
+        LOG_NET_MSG("Event loop frequency: up to %.1f Hz") << loopRate;
+    }
+    else
+    {
+        LOG_NET_MSG("Event loop frequency: unlimited");
+    }
 }
 
 void N_PrintTransmissionStats()
