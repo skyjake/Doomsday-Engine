@@ -60,6 +60,5 @@ void N_PrintNetworkStatus(void)
     {
         LOG_NET_NOTE(_E(b) "OFFLINE: " _E(.) "Single-player mode");
     }
-
     N_PrintBufferInfo();
 }

@@ -402,26 +402,21 @@ DENG2_PIMPL(ServerLink)
 
     void linkRemotePackages(StringList const &ids)
     {
-        auto &fs = FS::get();
-
-        qDebug() << "registering remote packages...";
-
         Folder &remotePacks = FS::get().makeFolder(PATH_REMOTE_PACKS);
         foreach (String pkgId, ids)
         {
             qDebug() << "registering remote:" << pkgId;
-            if (auto *file = fs.tryLocate<File>(PATH_REMOTE_SERVER / pkgId))
+            if (auto *file = FS::tryLocate<File>(PATH_REMOTE_SERVER / pkgId))
             {
-                //file->objectNamespace().set("package.path", file->path());
-
                 qDebug() << "Cached metadata:\n" << file->objectNamespace().asText();
 
                 auto *pack = LinkFile::newLinkToFile(*file, file->name() + ".pack");
-                pack->objectNamespace().add("package",
-                        new Record(file->objectNamespace().subrecord("package")));
-                pack->objectNamespace().set("package.path", file->path());
+                Record &meta = pack->objectNamespace();
+                meta.add("package", new Record(file->objectNamespace().subrecord("package")));
+                meta.set("package.path", file->path());
                 remotePacks.add(pack);
-                fs.index(*pack);
+                FS::get().index(*pack);
+
                 qDebug() << "=>" << pack->path();
             }
         }
