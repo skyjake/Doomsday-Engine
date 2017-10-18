@@ -76,19 +76,30 @@ DENG2_PIMPL(RemoteFile)
         }
     }
 
-    void prepareForUse()
+    void setTarget(File const &cachedFile)
     {
-//        File *interp = self().reinterpret();
-//        if (interp != thisPublic)
-//        {
-//            // Make sure the remote package metadata is visible.
-//            interp->objectNamespace().add
-//                ("package", new Record(self().objectNamespace().subrecord("package")));
+        self().setTarget(cachedFile);
 
-//            qDebug() << "Interpreted as" << interp->description();
-//            qDebug() << interp->objectNamespace().asText();
-//        }
-//        self().setState(Ready);
+        auto &ns = self().objectNamespace();
+        if (ns.has("package.path"))
+        {
+            ns["package.path"] = self().target().path();
+        }
+    }
+
+    bool checkExistingCache()
+    {
+        if (File const *cached = FS::tryLocate<File const>(cachePath()))
+        {
+            if (cached->status() == self().status())
+            {
+                // Seems to match (including part of the meta hash).
+                LOG_RES_MSG("Using local cached copy of %s") << cached->description();
+                setTarget(*cached);
+                return true;
+            }
+        }
+        return false;
     }
 };
 
@@ -110,17 +121,11 @@ void RemoteFile::fetchContents()
 
     setState(Recovering);
 
-#if 0
-    d->findCachedFile(false /* doesn't have to exist */);
-    if (!isBroken())
+    if (d->checkExistingCache())
     {
-        // There is a cached copy already.
-        d->prepareForUse();
-        //setState(Ready);
-        //reinterpret();
+        setState(Ready);
         return;
     }
-#endif
 
     d->fetching = RemoteFeedRelay::get().fetchFileContents
             (originFeed()->as<RemoteFeed>().repository(),
@@ -165,16 +170,10 @@ void RemoteFile::fetchContents()
             }
 
             setTarget(data.reinterpret());
-
-            //            d->cachedFile.reset(&data);
-
-            //d->prepareForUse();
-
             if (objectNamespace().has("package.path"))
             {
                 objectNamespace()["package.path"] = target().path();
             }
-            qDebug() << "RemoteFile metadata:\n" << objectNamespace().asText().toUtf8().constData();
 
             setState(Ready);
 
@@ -184,34 +183,15 @@ void RemoteFile::fetchContents()
     });
 }
 
-/*
-void RemoteFile::get(Offset at, Byte *values, Size count) const
-{
-    d->findCachedFile();
-    if (auto *array = maybeAs<IByteArray>(d->cachedFile.get()))
-    {
-        array->get(at, values, count);
-    }
-    else
-    {
-        DENG2_ASSERT(false);
-    }
-}
-
-void RemoteFile::set(Offset, Byte const *, Size)
-{
-    verifyWriteAccess(); // intended to throw exception
-}
-*/
-
 IIStream const &RemoteFile::operator >> (IByteArray &bytes) const
 {
-    //d->findCachedFile();
+    if (state() != Ready)
+    {
+        throw UnfetchedError("RemoteFile::operator >>",
+                             description() + " not downloaded");
+    }
     DENG2_ASSERT(!isBroken());
     return LinkFile::operator >> (bytes);
-
-    //*d->cachedFile >> bytes;
-    //return *this;
 }
 
 String RemoteFile::describe() const
