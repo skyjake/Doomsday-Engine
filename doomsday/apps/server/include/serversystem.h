@@ -85,6 +85,11 @@ public:
     void convertToRemoteFeedUser(RemoteUser *user);
 
     /**
+     * Returns the total number of connected users (of all types).
+     */
+    int userCount() const;
+
+    /**
      * Prints the status of the server into the log.
      */
     void printStatus();

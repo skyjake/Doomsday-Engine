@@ -298,6 +298,13 @@ void ServerSystem::convertToRemoteFeedUser(RemoteUser *user)
     d->remoteFeedUsers.add(new RemoteFeedUser(socket));
 }
 
+int ServerSystem::userCount() const
+{
+    return d->remoteFeedUsers.count() +
+           d->shellUsers.count() +
+           d->users.size();
+}
+
 void ServerSystem::timeChanged(Clock const &clock)
 {
     if (Sys_IsShuttingDown())
@@ -305,14 +312,8 @@ void ServerSystem::timeChanged(Clock const &clock)
 
     Garbage_Recycle();
 
-    // Adjust loop rate depending on whether players are in game.
-    int count = 0;
-    for (int i = 1; i < DDMAXPLAYERS; ++i)
-    {
-        if (DD_Player(i)->publicData().inGame) count++;
-    }
-
-    DENG2_TEXT_APP->loop().setRate(count? 35 : 3);
+    // Adjust loop rate depending on whether users are connected.
+    DENG2_TEXT_APP->loop().setRate(userCount()? 35 : 3);
 
     Loop_RunTics();
 
