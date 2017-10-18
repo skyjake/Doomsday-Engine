@@ -62,10 +62,15 @@ DENG2_AUDIENCE_METHOD(Loop, Iteration)
 Loop::Loop() : d(new Impl(this))
 {}
 
-void Loop::setRate(int freqHz)
+void Loop::setRate(double freqHz)
 {
     d->interval = 1.0 / freqHz;
     d->timer->setInterval(de::max(1, int(d->interval.asMilliSeconds())));
+}
+
+double Loop::rate() const
+{
+    return 1.0 / d->interval;
 }
 
 void Loop::start()

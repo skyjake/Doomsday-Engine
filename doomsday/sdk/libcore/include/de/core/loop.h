@@ -58,7 +58,9 @@ public:
      *
      * @param freqHz  Frequency in Hz.
      */
-    void setRate(int freqHz);
+    void setRate(double freqHz);
+
+    double rate() const;
 
     /**
      * Starts the loop.
