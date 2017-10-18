@@ -1287,7 +1287,6 @@ QList<DataBundle const *> DataBundle::loadedBundles() // static
         else
         {
             // Packages may declare a list of data files to load.
-            qDebug() << "finding Package for" << f->description();
             Package const *pkg = PackageLoader::get().tryFindLoaded(*f);
             DENG2_ASSERT(pkg);
 
