@@ -119,8 +119,8 @@ Feed::PopulatedFiles RemoteFeed::populate(Folder const &folder)
              [this, &folder, &files]
              (RemoteFeedRelay::FileList const &fileList)
     {
-        qDebug() << "Received file listing of" << d->remotePath;
-        qDebug() << fileList.asText();
+        //qDebug() << "Received file listing of" << d->remotePath;
+        //qDebug() << fileList.asText();
 
         // Make a copy of the listed metadata.
         d->fileList.reset(static_cast<DictionaryValue *>(fileList.duplicate()));

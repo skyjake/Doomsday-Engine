@@ -370,7 +370,6 @@ DENG2_PIMPL(ServerLink)
 
     void downloadFile(File &file)
     {
-        qDebug() << "downloadFile:" << file.description();
         if (auto *folder = maybeAs<Folder>(file))
         {
             folder->forContents([this] (String, File &f)
@@ -381,7 +380,7 @@ DENG2_PIMPL(ServerLink)
         }
         if (auto *remoteFile = maybeAs<RemoteFile>(file))
         {
-            qDebug() << "downloading" << remoteFile->name();
+            LOG_NET_VERBOSE("Downloading from server: %s") << remoteFile->description();
             downloads.insert(*remoteFile);
             remoteFile->fetchContents();
         }
@@ -392,7 +391,7 @@ DENG2_PIMPL(ServerLink)
         DENG2_ASSERT(!downloads.isEmpty());
         if (downloads.isReady())
         {
-            qDebug() << downloads.size() << "downloads complete!";
+            LOG_NET_VERBOSE("All downloads of remote files finished");
             Loop::mainCall([this] ()
             {
                 if (postDownloadCallback) postDownloadCallback();
@@ -405,10 +404,10 @@ DENG2_PIMPL(ServerLink)
         Folder &remotePacks = FS::get().makeFolder(PATH_REMOTE_PACKS);
         foreach (String pkgId, ids)
         {
-            qDebug() << "registering remote:" << pkgId;
+            LOG_RES_VERBOSE("Registering remote package \"%s\"") << pkgId;
             if (auto *file = FS::tryLocate<File>(PATH_REMOTE_SERVER / pkgId))
             {
-                qDebug() << "Cached metadata:\n" << file->objectNamespace().asText();
+                LOGDEV_RES_VERBOSE("Cached metadata:\n") << file->objectNamespace().asText();
 
                 auto *pack = LinkFile::newLinkToFile(*file, file->name() + ".pack");
                 Record &meta = pack->objectNamespace();
@@ -417,7 +416,7 @@ DENG2_PIMPL(ServerLink)
                 remotePacks.add(pack);
                 FS::get().index(*pack);
 
-                qDebug() << "=>" << pack->path();
+                LOG_RES_VERBOSE("\"%s\" linked as ") << pkgId << pack->path();
             }
         }
     }
@@ -429,7 +428,7 @@ DENG2_PIMPL(ServerLink)
         {
             remotePacks->forContents([] (String, File &file)
             {
-                qDebug() << "unloading remote package:" << file.name();
+                LOG_RES_VERBOSE("Unloading remote package: ") << file.description();
                 PackageLoader::get().unload(Package::identifierForFile(file));
                 return LoopContinue;
             });
@@ -491,6 +490,8 @@ void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
         }
 
         // Profile acquired! Figure out if the profile can be started locally.
+        LOG_NET_MSG("Received server's game profile");
+        LOG_NET_VERBOSE(serverProfile->toInfoSource());
 
         auto &win = ClientWindow::main();
         win.glActivate();
@@ -536,9 +537,11 @@ void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
             // Now we know all the files that the server will be providing.
             // If we are missing any of the packages, download a copy from the server.
 
-            qDebug() << "Folder population is complete";
-            qDebug() << joinProfile->packages();
-            qDebug() << "isPlayable:" << joinProfile->isPlayable();
+            LOG_RES_MSG("Received metadata about server files");
+
+            //qDebug() << "Folder population is complete";
+            //qDebug() << joinProfile->packages();
+            //qDebug() << "isPlayable:" << joinProfile->isPlayable();
 
             // Request contents of missing packages.
             d->downloads.clear();
@@ -618,7 +621,7 @@ void ServerLink::acquireServerProfileAsync(Address const &address,
         AbstractLink::connectHost(address);
         d->profileResultCallback = resultHandler;
         d->state = Discovering;
-        LOG_NET_MSG("Querying %s for full status") << address;
+        LOG_NET_MSG("Querying server %s for full status") << address;
     }
 }
 
@@ -627,14 +630,14 @@ void ServerLink::acquireServerProfileAsync(String const &domain,
 {
     d->profileResultCallbackWithAddress = resultHandler;
     discover(domain);
-    LOG_NET_MSG("Querying %s for full status") << domain;
+    LOG_NET_MSG("Querying server %s for full status") << domain;
 }
 
 void ServerLink::requestMapOutline(Address const &address)
 {
     AbstractLink::connectHost(address);
     d->state = QueryingMapOutline;
-    LOG_NET_VERBOSE("Querying %s for map outline") << address;
+    LOG_NET_VERBOSE("Querying server %s for map outline") << address;
 }
 
 void ServerLink::ping(Address const &address)

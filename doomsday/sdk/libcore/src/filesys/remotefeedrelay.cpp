@@ -125,7 +125,7 @@ DENG2_PIMPL(RemoteFeedRelay)
                 }
                 else
                 {
-                    qDebug() << "[RemoteFeedRelay] Query" << query.id << "is deferred";
+                    //qDebug() << "[RemoteFeedRelay] Query" << query.id << "is deferred";
                     deferredQueries.append(query);
                 }
             }
@@ -181,7 +181,6 @@ DENG2_PIMPL(RemoteFeedRelay)
                 if (!query.fileSize)
                 {
                     // Before the first chunk, notify about the total size.
-                    qDebug() << "notifying full file size:" << fileSize;
                     query.fileContents->call(0, Block(), fileSize);
                 }
                 //query.receivedData.set(startOffset, chunk.data(), chunk.size());
@@ -189,7 +188,6 @@ DENG2_PIMPL(RemoteFeedRelay)
                 query.receivedBytes += chunk.size();
 
                 // Notify about progress.
-                qDebug() << "notifying chunk with" << chunk.size() << "bytes";
                 query.fileContents->call(startOffset, chunk, fileSize - query.receivedBytes);
 
                 if (fileSize == query.receivedBytes)
@@ -246,7 +244,7 @@ DENG2_PIMPL(RemoteFeedRelay)
         {
             DENG2_ASSERT(query.isValid());
 
-            qDebug() << "transmitting query" << query.id << query.path;
+            //qDebug() << "transmitting query" << query.id << query.path;
 
             RemoteFeedQueryPacket packet;
             packet.setId(query.id);

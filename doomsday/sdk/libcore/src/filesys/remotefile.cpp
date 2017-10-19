@@ -127,6 +127,8 @@ void RemoteFile::fetchContents()
         return;
     }
 
+    LOG_NET_MSG("Requesting download of \"%s\"") << name();
+
     d->fetching = RemoteFeedRelay::get().fetchFileContents
             (originFeed()->as<RemoteFeed>().repository(),
              d->remotePath,
@@ -134,8 +136,7 @@ void RemoteFile::fetchContents()
     {
         DENG2_ASSERT_IN_MAIN_THREAD();
 
-        qDebug() << "[RemoteFile]" << d->remotePath << startOffset
-                 << "remaining:" << remainingBytes;
+        //qDebug() << "[RemoteFile]" << d->remotePath << startOffset << "remaining:" << remainingBytes;
 
         // Keep received data in a buffer.
         if (d->buffer.size() < remainingBytes)
@@ -148,7 +149,8 @@ void RemoteFile::fetchContents()
         // When fully transferred, the file can be cached locally and interpreted.
         if (remainingBytes == 0)
         {
-            qDebug() << "[RemoteFile] Complete contents received" << d->buffer.size();
+            LOG_NET_MSG("\"%s\" downloaded (%i bytes)") << name() << d->buffer.size();
+
             d->fetching = nullptr;
 
             String const fn = d->cachePath();
