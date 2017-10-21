@@ -402,6 +402,23 @@ void Folder::destroyFile(String const &removePath)
     d->destroy(removePath, &locate<File>(removePath));
 }
 
+bool Folder::tryDestroyFile(String const &removePath)
+{
+    try
+    {
+        if (has(removePath))
+        {
+            destroyFile(removePath);
+            return true;
+        }
+    }
+    catch (Error const &)
+    {
+        // This shouldn't happen.
+    }
+    return false;
+}
+
 void Folder::destroyAllFiles()
 {
     DENG2_GUARD(this);

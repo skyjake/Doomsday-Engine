@@ -165,6 +165,17 @@ public:
     void destroyFile(String const &name);
 
     /**
+     * Removes a file from a folder. The file will be deleted.  If it has an
+     * origin feed, the feed will be asked to remove the file as well, which
+     * means it will be removed in the source data as well as the file tree.
+     *
+     * @param name  Name of path of file to remove, relative to this folder.
+     *
+     * @return @c true, if the file was deleted. @c false, if it did not exist.
+     */
+    bool tryDestroyFile(String const &name);
+
+    /**
      * Removes all files in the folder. The files will be delted. If the files
      * have origin feeds, the feed will be asked to remove the files as well.
      * The folder remains locked during the entire operation.
