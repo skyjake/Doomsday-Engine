@@ -1,4 +1,4 @@
-/** @file downloaddialog.cpp Dialog that downloads a distribution package.
+/** @file updatedownloaddialog.cpp Dialog that downloads a distribution package.
  * @ingroup updater
  *
  * @authors Copyright © 2012-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -8,20 +8,19 @@
  * GPL: http://www.gnu.org/licenses/gpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
  */
 
 #include <QFile>
 #include "de_platform.h"
-#include "updater/downloaddialog.h"
+#include "updater/updatedownloaddialog.h"
 #include "updater/updatersettings.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/clientwindow.h"
@@ -42,9 +41,9 @@
 
 using namespace de;
 
-static DownloadDialog *downloadInProgress;
+static UpdateDownloadDialog *downloadInProgress;
 
-DENG2_PIMPL(DownloadDialog)
+DENG_GUI_PIMPL(UpdateDownloadDialog)
 {
     enum State {
         Connecting,
@@ -56,7 +55,6 @@ DENG2_PIMPL(DownloadDialog)
     State state;
 
     QNetworkAccessManager* network;
-    ProgressWidget *progress;
     QUrl uri;
     QUrl uri2;
     NativePath savedFilePath;
@@ -71,24 +69,6 @@ DENG2_PIMPL(DownloadDialog)
         : Base(d), state(Connecting), uri(downloadUri), uri2(fallbackUri), reply(0),
           receivedBytes(0), totalBytes(0)
     {
-        ScrollAreaWidget &area = self().area();
-
-        progress = new ProgressWidget;
-        area.add(progress);
-        progress->setImageScale(toDevicePixels(.4f));
-        progress->setAlignment(ui::AlignLeft);
-        progress->setSizePolicy(ui::Fixed, ui::Expand);
-        progress->setRange(Rangei(0, 100));
-        progress->rule()
-                .setLeftTop(area.contentRule().left(), area.contentRule().top())
-                .setInput(Rule::Width, self().rule("dialog.download.width"));
-
-        area.setContentSize(progress->rule().width(), progress->rule().height());
-
-        self().buttons() << new DialogButtonItem(DialogWidget::Reject,
-                                               tr("Cancel Download"),
-                                               new SignalAction(thisPublic, SLOT(cancel())));
-
         updateLocation(uri);
         updateProgress();
 
@@ -153,36 +133,37 @@ DENG2_PIMPL(DownloadDialog)
             break;
         }
 
-        progress->setText(msg);
+        self().progressIndicator().setText(msg);
     }
 };
 
-DownloadDialog::DownloadDialog(String downloadUri, String fallbackUri)
-    : DialogWidget("download"), d(new Impl(this, downloadUri, fallbackUri))
+UpdateDownloadDialog::UpdateDownloadDialog(String downloadUri, String fallbackUri)
+    : DownloadDialog("download")
+    , d(new Impl(this, downloadUri, fallbackUri))
 {}
 
-DownloadDialog::~DownloadDialog()
+UpdateDownloadDialog::~UpdateDownloadDialog()
 {
     downloadInProgress = 0;
 }
 
-String DownloadDialog::downloadedFilePath() const
+String UpdateDownloadDialog::downloadedFilePath() const
 {
     if (!isReadyToInstall()) return "";
     return d->savedFilePath;
 }
 
-bool DownloadDialog::isReadyToInstall() const
+bool UpdateDownloadDialog::isReadyToInstall() const
 {
     return d->state == Impl::Finished;
 }
 
-bool DownloadDialog::isFailed() const
+bool UpdateDownloadDialog::isFailed() const
 {
     return d->state == Impl::Error;
 }
 
-void DownloadDialog::finished(QNetworkReply *reply)
+void UpdateDownloadDialog::finished(QNetworkReply *reply)
 {
     LOG_AS("Download");
 
@@ -272,7 +253,7 @@ void DownloadDialog::finished(QNetworkReply *reply)
             << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Install Update"));
 
     d->state = Impl::Finished;
-    d->progress->setRotationSpeed(0);
+    progressIndicator().setRotationSpeed(0);
     d->updateProgress();
 
     // Make sure the finished download is noticed by the user.
@@ -281,12 +262,12 @@ void DownloadDialog::finished(QNetworkReply *reply)
     LOG_DEBUG("Request finished");
 }
 
-void DownloadDialog::cancel()
+void UpdateDownloadDialog::cancel()
 {
     LOG_NOTE("Download cancelled due to user request");
 
     d->state = Impl::Error;
-    d->progress->setRotationSpeed(0);
+    progressIndicator().setRotationSpeed(0);
 
     if (d->reply)
     {
@@ -300,7 +281,7 @@ void DownloadDialog::cancel()
     }
 }
 
-void DownloadDialog::progress(qint64 received, qint64 total)
+void UpdateDownloadDialog::progress(qint64 received, qint64 total)
 {
     LOG_AS("Download");
 
@@ -310,14 +291,14 @@ void DownloadDialog::progress(qint64 received, qint64 total)
         d->receivedBytes = received;
         d->updateProgress();
 
-        dint64 percent = received * 100 / total;
-        d->progress->setProgress(percent);
+        int const percent = int(received * 100 / total);
+        progressIndicator().setProgress(percent);
 
         emit downloadProgress(percent);
     }
 }
 
-void DownloadDialog::replyMetaDataChanged()
+void UpdateDownloadDialog::replyMetaDataChanged()
 {
     LOG_AS("Download");
 
@@ -340,18 +321,18 @@ void DownloadDialog::replyMetaDataChanged()
     }
 }
 
-bool DownloadDialog::isDownloadInProgress()
+bool UpdateDownloadDialog::isDownloadInProgress()
 {
     return downloadInProgress != 0;
 }
 
-DownloadDialog &DownloadDialog::currentDownload()
+UpdateDownloadDialog &UpdateDownloadDialog::currentDownload()
 {
     DENG2_ASSERT(isDownloadInProgress());
     return *downloadInProgress;
 }
 
-void DownloadDialog::showCompletedDownload()
+void UpdateDownloadDialog::showCompletedDownload()
 {
     if (downloadInProgress && downloadInProgress->isReadyToInstall())
     {

@@ -86,7 +86,7 @@
 #include "ui/viewcompositor.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "updater.h"
-#include "updater/downloaddialog.h"
+#include "updater/updatedownloaddialog.h"
 #include "world/contact.h"
 #include "world/map.h"
 #include "world/p_players.h"
@@ -302,7 +302,7 @@ DENG2_PIMPL(ClientApp)
             // re-show the dialog now that the user has saved the game as prompted.
             LOG_DEBUG("Game saved");
 #if defined (DENG_HAVE_UPDATER)
-            DownloadDialog::showCompletedDownload();
+            UpdateDownloadDialog::showCompletedDownload();
 #endif
             break;
 

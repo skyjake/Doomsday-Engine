@@ -139,7 +139,7 @@
 #  include "ui/home/homewidget.h"
 
 #  include "updater.h"
-#  include "updater/downloaddialog.h"
+#  include "updater/updatedownloaddialog.h"
 #endif
 #ifdef __SERVER__
 #  include "network/net_main.h"
@@ -2270,11 +2270,11 @@ D_CMD(Quit)
     DENG2_UNUSED2(src, argc);
 
 #if defined (DENG_HAVE_UPDATER)
-    if (DownloadDialog::isDownloadInProgress())
+    if (UpdateDownloadDialog::isDownloadInProgress())
     {
         LOG_WARNING("Cannot quit while downloading an update");
         ClientWindow::main().taskBar().openAndPauseGame();
-        DownloadDialog::currentDownload().open();
+        UpdateDownloadDialog::currentDownload().open();
         return false;
     }
 #endif

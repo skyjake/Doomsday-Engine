@@ -52,9 +52,9 @@
 #include "ui/clientwindow.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "updater.h"
-#include "updater/downloaddialog.h"
 #include "updater/processcheckdialog.h"
 #include "updater/updateavailabledialog.h"
+#include "updater/updatedownloaddialog.h"
 #include "updater/updatersettings.h"
 #include "updater/updatersettingsdialog.h"
 
@@ -144,7 +144,7 @@ DENG2_PIMPL(Updater)
 , DENG2_OBSERVES(App, StartupComplete)
 {
     QNetworkAccessManager *network = nullptr;
-    DownloadDialog *download = nullptr; // not owned (in the widget tree, if exists)
+    UpdateDownloadDialog *download = nullptr; // not owned (in the widget tree, if exists)
     UniqueWidgetPtr<UpdaterStatusWidget> status;
     UpdateAvailableDialog *availableDlg = nullptr; ///< If currently open (not owned).
     bool alwaysShowNotification;
@@ -404,7 +404,7 @@ DENG2_PIMPL(Updater)
 
         LOG_MSG("Download and install update");
 
-        download = new DownloadDialog(latestPackageUri, latestPackageUri2);
+        download = new UpdateDownloadDialog(latestPackageUri, latestPackageUri2);
         status->popupButton().setPopup(*download, ui::Down);
         QObject::connect(download, SIGNAL(closed()), thisPublic, SLOT(downloadDialogClosed()));
         QObject::connect(download, SIGNAL(downloadProgress(int)),thisPublic, SLOT(downloadProgressed(int)));
