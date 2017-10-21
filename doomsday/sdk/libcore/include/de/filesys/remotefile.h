@@ -49,6 +49,10 @@ public:
      */
     void fetchContents();
 
+    void cancelFetch();
+
+    void deleteCache();
+
     // File streaming.
     IIStream const &operator >> (IByteArray &bytes) const override;
 

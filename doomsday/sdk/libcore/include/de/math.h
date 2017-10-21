@@ -128,6 +128,8 @@ inline Type round(ddouble const &value) {
     return Type(std::floor(value + 0.5));
 }
 
+inline dint64 roundi(ddouble const &value) { return round<dint64>(value); }
+
 inline dint32 floor(dfloat const &value) {
     return dint32(std::floor(value));
 }

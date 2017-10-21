@@ -127,6 +127,10 @@ void RemoteFile::fetchContents()
 
     if (d->checkExistingCache())
     {
+        DENG2_FOR_AUDIENCE2(Download, i)
+        {
+            i->remoteFileDownloading(*this, 0);
+        }
         setState(Ready);
         return;
     }
@@ -189,6 +193,23 @@ void RemoteFile::fetchContents()
             // which replaces the RemoteFile within the parent folder.
         }
     });
+}
+
+void RemoteFile::cancelFetch()
+{
+    if (d->fetching)
+    {
+        d->fetching->cancel();
+        d->fetching = nullptr;
+        d->buffer.clear();
+        setState(NotReady);
+    }
+}
+
+void RemoteFile::deleteCache()
+{
+    setState(NotReady);
+    FS::get().root().tryDestroyFile(d->cachePath());
 }
 
 IIStream const &RemoteFile::operator >> (IByteArray &bytes) const
