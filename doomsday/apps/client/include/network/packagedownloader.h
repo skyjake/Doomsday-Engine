@@ -24,7 +24,7 @@
 #include <de/String>
 
 /**
- * Utility for downloading packages from a remote repository.
+ * Utility for downloading packages from remote repositories.
  * @ingroup network
  */
 class PackageDownloader
@@ -32,10 +32,22 @@ class PackageDownloader
 public:
     PackageDownloader();
 
+    /**
+     * Mount a server's remote file repository.
+     *
+     * @param serverInfo  Server information.
+     */
     void mountFileRepository(de::shell::ServerInfo const &serverInfo);
 
     void unmountFileRepository();
 
+    /**
+     * Start downloading files for a set of packages. A notification callback is done
+     * after the operation is complete (successfully or not).
+     *
+     * @param packageIds  Packages to download from the remote repository.
+     * @param callback    Called when the downloads are finished or cancelled.
+     */
     void download(de::StringList packageIds, std::function<void ()> callback);
 
     de::String fileRepository() const;
