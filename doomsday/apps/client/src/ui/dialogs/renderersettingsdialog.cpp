@@ -177,7 +177,7 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
            << Const(0) << *d->disableExtTextures
            << Const(0) << *d->disableExtPatches;
 
-    area().setContentSize(layout.width(), layout.height());
+    area().setContentSize(layout);
 
     buttons()
             << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))

@@ -242,7 +242,7 @@ LogSettingsDialog::LogSettingsDialog(String const &name)
     d->fold->content().rule().setSize(d->foldLayout.width(), d->foldLayout.height());
 
     // Dialog content size.
-    area().setContentSize(layout.width(), layout.height());
+    area().setContentSize(layout);
 
     buttons()
             << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))

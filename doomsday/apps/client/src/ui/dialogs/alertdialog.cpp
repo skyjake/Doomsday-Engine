@@ -117,7 +117,7 @@ DENG_GUI_PIMPL(AlertDialog)
         alerts->enableScrolling(false);
         alerts->setGridSize(1, ui::Expand, 0, ui::Expand);
         alerts->rule().setLeftTop(area.contentRule().left(), area.contentRule().top());
-        area.setContentSize(alerts->rule().width(), alerts->rule().height());
+        area.setContentSize(alerts->rule());
         area.add(alerts);
 
         area.enableIndicatorDraw(true);
@@ -291,7 +291,7 @@ DENG_GUI_PIMPL(AlertDialog)
 
 AlertDialog::AlertDialog(String const &/*name*/) : d(new Impl(this))
 {
-	setOutlineColor("transparent");
+    setOutlineColor("transparent");
 
     // The dialog is connected to the notification icon.
     d->notification->setPopup(*this, ui::Down);

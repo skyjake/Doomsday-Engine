@@ -54,7 +54,7 @@ DENG_GUI_PIMPL(ColorAdjustmentDialog)
         layout << *gammaLabel      << *gamma
                << *contrastLabel   << *contrast
                << *brightnessLabel << *brightness;
-        area.setContentSize(layout.width(), layout.height());
+        area.setContentSize(layout);
     }
 
     void fetch()

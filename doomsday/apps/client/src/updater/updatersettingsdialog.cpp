@@ -132,7 +132,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
                << Const(0)      << *deleteAfter;
                //<< *pathLabel    << *paths;
 
-        area.setContentSize(layout.width(), layout.height());
+        area.setContentSize(layout);
 
         self().buttons()
                 << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"));

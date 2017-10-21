@@ -91,7 +91,7 @@ NetworkSettingsDialog::NetworkSettingsDialog(String const &name)
     caution->setTextColor("altaccent");
     layout << *caution;
 
-    area().setContentSize(layout.width(), layout.height());
+    area().setContentSize(layout);
 
     buttons()
             << new DialogButtonItem(Default | Accept, tr("Close"))

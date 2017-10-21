@@ -239,7 +239,7 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
     auto *speakerLabel = LabelWidget::newWithText(tr("FMOD Speaker Mode:"), &area());
     layout << *speakerLabel << *d->fmodSpeakerMode;
 
-    area().setContentSize(layout.width(), layout.height());
+    area().setContentSize(layout);
 
     buttons()
             << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))

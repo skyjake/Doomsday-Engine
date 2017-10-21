@@ -371,7 +371,7 @@ PackagesDialog::PackagesDialog(String const &titleText)
                                OperatorRule::maximum(d->menu->rule().height(),
                                                      d->nothingSelected->rule().height()) +
                                d->gameTitle->rule().height());
-    rightArea().setContentSize(d->browser->rule().width(), d->browser->rule().height());
+    rightArea().setContentSize(d->browser->rule());
     d->browser->progress().rule().setRect(rightArea().rule());
 
     setMaximumContentHeight(rule().width());

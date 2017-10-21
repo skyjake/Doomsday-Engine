@@ -102,7 +102,7 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Impl(this))
     layout << *logo << *title << *info;
 
     // Total size of the dialog's content.
-    area().setContentSize(layout.width(), layout.height());
+    area().setContentSize(layout);
 
     buttons()
             << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Close"))
