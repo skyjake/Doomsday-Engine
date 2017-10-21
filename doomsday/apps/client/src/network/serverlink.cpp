@@ -24,6 +24,7 @@
 #include "network/net_demo.h"
 #include "network/net_event.h"
 #include "network/protocol.h"
+#include "network/packagedownloader.h"
 #include "client/cl_def.h"
 #include "ui/clientwindow.h"
 #include "ui/widgets/taskbarwidget.h"
@@ -35,15 +36,11 @@
 #include <de/BlockPacket>
 #include <de/ByteRefArray>
 #include <de/ByteSubArray>
-#include <de/Garbage>
 #include <de/GuiApp>
-#include <de/LinkFile>
 #include <de/Message>
 #include <de/MessageDialog>
 #include <de/PackageLoader>
 #include <de/RecordValue>
-#include <de/RemoteFeedRelay>
-#include <de/RemoteFile>
 #include <de/Socket>
 #include <de/data/json.h>
 #include <de/memory.h>
@@ -71,13 +68,7 @@ enum LinkState
 
 static int const NUM_PINGS = 5;
 
-static String const PATH_SERVER_REPOSITORY_ROOT = "/sys/server/files"; // serverside folder
-
-static String const PATH_REMOTE_SERVER = "/remote/server"; // local folder for RemoteFeed
-static String const PATH_REMOTE_PACKS  = "/remote/packs";
-
 DENG2_PIMPL(ServerLink)
-, DENG2_OBSERVES(Asset, StateChange)
 {
     std::unique_ptr<shell::ServerFinder> finder; ///< Finding local servers.
     LinkState state;
@@ -91,10 +82,8 @@ DENG2_PIMPL(ServerLink)
     std::unique_ptr<GameProfile> serverProfile; ///< Profile used when joining.
     std::function<void (GameProfile const *)> profileResultCallback;
     std::function<void (Address, GameProfile const *)> profileResultCallbackWithAddress;
-    String fileRepository;
-    AssetGroup downloads;
-    std::function<void ()> postDownloadCallback;
-    LoopCallback mainCall; // for deferred actions
+    PackageDownloader downloader;
+    LoopCallback deferred; // for deferred actions
 
     Impl(Public *i, Flags flags)
         : Base(i)
@@ -162,7 +151,7 @@ DENG2_PIMPL(ServerLink)
                     if (prepareServerProfile(svAddress))
                     {
                         LOG_NET_MSG("Received server's game profile from ") << svAddress;
-                        mainCall.enqueue([this, svAddress] ()
+                        deferred.enqueue([this, svAddress] ()
                         {
                             if (profileResultCallback)
                             {
@@ -254,7 +243,7 @@ DENG2_PIMPL(ServerLink)
         fetching = true;
         N_MAPost(MAC_REQUEST);
         N_MAPost(MAC_WAIT);
-        mainCall.enqueue([this] () { checkMasterReply(); });
+        deferred.enqueue([this] () { checkMasterReply(); });
     }
 
     void checkMasterReply()
@@ -279,7 +268,7 @@ DENG2_PIMPL(ServerLink)
         else
         {
             // Check again later.
-            mainCall.enqueue([this] () { checkMasterReply(); });
+            deferred.enqueue([this] () { checkMasterReply(); });
         }
     }
 
@@ -348,93 +337,6 @@ DENG2_PIMPL(ServerLink)
         dlg->open(MessageDialog::Modal);
     }
 
-    void mountFileRepository(shell::ServerInfo const &info)
-    {
-        fileRepository = info.address().asText();
-        FS::get().makeFolderWithFeed
-                (PATH_REMOTE_SERVER,
-                 RemoteFeedRelay::get().addServerRepository(fileRepository, PATH_SERVER_REPOSITORY_ROOT),
-                 Folder::PopulateAsyncFullTree);
-    }
-
-    void unmountFileRepository()
-    {
-        unlinkRemotePackages();
-        if (Folder *remoteFiles = FS::tryLocate<Folder>(PATH_REMOTE_SERVER))
-        {
-            trash(remoteFiles);
-        }
-        RemoteFeedRelay::get().removeRepository(fileRepository);
-        fileRepository.clear();
-    }
-
-    void downloadFile(File &file)
-    {
-        if (auto *folder = maybeAs<Folder>(file))
-        {
-            folder->forContents([this] (String, File &f)
-            {
-                downloadFile(f);
-                return LoopContinue;
-            });
-        }
-        if (auto *remoteFile = maybeAs<RemoteFile>(file))
-        {
-            LOG_NET_VERBOSE("Downloading from server: %s") << remoteFile->description();
-            downloads.insert(*remoteFile);
-            remoteFile->fetchContents();
-        }
-    }
-
-    void assetStateChanged(Asset &) override
-    {
-        DENG2_ASSERT(!downloads.isEmpty());
-        if (downloads.isReady())
-        {
-            LOG_NET_VERBOSE("All downloads of remote files finished");
-            Loop::mainCall([this] ()
-            {
-                if (postDownloadCallback) postDownloadCallback();
-            });
-        }
-    }
-
-    void linkRemotePackages(StringList const &ids)
-    {
-        Folder &remotePacks = FS::get().makeFolder(PATH_REMOTE_PACKS);
-        foreach (String pkgId, ids)
-        {
-            LOG_RES_VERBOSE("Registering remote package \"%s\"") << pkgId;
-            if (auto *file = FS::tryLocate<File>(PATH_REMOTE_SERVER / pkgId))
-            {
-                LOGDEV_RES_VERBOSE("Cached metadata:\n") << file->objectNamespace().asText();
-
-                auto *pack = LinkFile::newLinkToFile(*file, file->name() + ".pack");
-                Record &meta = pack->objectNamespace();
-                meta.add("package", new Record(file->objectNamespace().subrecord("package")));
-                meta.set("package.path", file->path());
-                remotePacks.add(pack);
-                FS::get().index(*pack);
-
-                LOG_RES_VERBOSE("\"%s\" linked as ") << pkgId << pack->path();
-            }
-        }
-    }
-
-    void unlinkRemotePackages()
-    {
-        // Unload all server packages. Note that the entire folder will be destroyed, too.
-        if (std::unique_ptr<Folder> remotePacks { FS::tryLocate<Folder>(PATH_REMOTE_PACKS) })
-        {
-            remotePacks->forContents([] (String, File &file)
-            {
-                LOG_RES_VERBOSE("Unloading remote package: ") << file.description();
-                PackageLoader::get().unload(Package::identifierForFile(file));
-                return LoopContinue;
-            });
-        }
-    }
-
     DENG2_PIMPL_AUDIENCE(DiscoveryUpdate)
     DENG2_PIMPL_AUDIENCE(PingResponse)
     DENG2_PIMPL_AUDIENCE(MapOutline)
@@ -479,6 +381,9 @@ void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
     acquireServerProfileAsync(info.address(),
                               [this, info] (GameProfile const *serverProfile)
     {
+        auto &win = ClientWindow::main();
+        win.glActivate();
+
         if (!serverProfile)
         {
             // Hmm, oopsie?
@@ -492,9 +397,6 @@ void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
         // Profile acquired! Figure out if the profile can be started locally.
         LOG_NET_MSG("Received server's game profile");
         LOG_NET_VERBOSE(serverProfile->toInfoSource());
-
-        auto &win = ClientWindow::main();
-        win.glActivate();
 
         // If additional packages are configured, set up the ad-hoc profile with the
         // local additions.
@@ -523,7 +425,7 @@ void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
         }
 
         // The server makes certain packages available for clients to download.
-        d->mountFileRepository(info);
+        d->downloader.mountFileRepository(info);
 
         // Wait async until remote files have been populated so we can decide if
         // anything needs to be downloaded.
@@ -539,34 +441,12 @@ void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
 
             LOG_RES_MSG("Received metadata about server files");
 
-            //qDebug() << "Folder population is complete";
-            //qDebug() << joinProfile->packages();
-            //qDebug() << "isPlayable:" << joinProfile->isPlayable();
-
             // Request contents of missing packages.
-            d->downloads.clear();
-            foreach (String missing, joinProfile->unavailablePackages())
-            {
-                if (File *rem = FS::tryLocate<File>(PATH_REMOTE_SERVER / missing))
-                {
-                    d->downloadFile(*rem);
-                }
-            }
-
-            // We must wait after the downloads have finished.
-            // The user sees a popup while downloads are progressing, and has the
-            // option of cancelling.
-
-            d->postDownloadCallback = [this, joinProfile, info] ()
+            d->downloader.download(joinProfile->unavailablePackages(),
+                                   [this, joinProfile, info] ()
             {
                 auto &win = ClientWindow::main();
                 win.glActivate();
-
-                // Let's finalize the downloads so we can load all the packages.
-                d->downloads.audienceForStateChange() -= d;
-                d->downloads.clear();
-
-                d->linkRemotePackages(joinProfile->unavailablePackages());
 
                 if (!joinProfile->isPlayable())
                 {
@@ -576,7 +456,7 @@ void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
                             .arg(String::join(de::map(joinProfile->unavailablePackages(),
                                                       Package::splitToHumanReadable), "\n"));
                     LOG_NET_ERROR("Failed to join %s: ") << info.address() << errorMsg;
-                    d->unmountFileRepository();
+                    d->downloader.unmountFileRepository();
                     d->reportError(errorMsg);
                     return;
                 }
@@ -589,17 +469,11 @@ void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
                 connectHost(info.address());
 
                 win.glDone();
-            };
+            });
 
-            // If nothing needs to be downloaded, let's just continue right away.
-            if (d->downloads.isReady())
-            {
-                d->postDownloadCallback();
-            }
-            else
-            {
-                d->downloads.audienceForStateChange() += d;
-            }
+            // We must wait after the downloads have finished.
+            // The user sees a popup while downloads are progressing, and has the
+            // option of cancelling.
         });
     });
 }
@@ -610,7 +484,7 @@ void ServerLink::acquireServerProfileAsync(Address const &address,
     if (d->prepareServerProfile(address))
     {
         // We already know everything that is needed for the profile.
-        d->mainCall.enqueue([this, resultHandler] ()
+        d->deferred.enqueue([this, resultHandler] ()
         {
             DENG2_ASSERT(d->serverProfile.get() != nullptr);
             resultHandler(d->serverProfile.get());
@@ -695,7 +569,7 @@ void ServerLink::disconnect()
         DENG2_FOR_AUDIENCE2(Leave, i) i->networkGameLeft();
 
         LOG_NET_NOTE("Link to server %s disconnected") << address();
-        d->unmountFileRepository();
+        d->downloader.unmountFileRepository();
         AbstractLink::disconnect();
 
         Net_StopGame();
