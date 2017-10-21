@@ -36,6 +36,8 @@ public:
     /// Data of the file has not yet been fetched. @ingroup errors
     DENG2_ERROR(UnfetchedError);
 
+    DENG2_DEFINE_AUDIENCE2(Download, void remoteFileDownloading(RemoteFile &, dsize remainingBytes))
+
 public:
     RemoteFile(String const &name, String const &remotePath, Block const &remoteMetaId);
 
@@ -46,10 +48,6 @@ public:
      * Initiates downloading of the file contents from the remote backend.
      */
     void fetchContents();
-
-    // Implements IByteArray.
-    //void get(Offset at, Byte *values, Size count) const override;
-    //void set(Offset at, Byte const *values, Size count) override;
 
     // File streaming.
     IIStream const &operator >> (IByteArray &bytes) const override;

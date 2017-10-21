@@ -51,9 +51,9 @@ DENG2_PIMPL(RemoteFile)
     String cachePath() const
     {
         String const hex = remoteMetaId.asHexadecimalText();
-        String path = CACHE_PATH / hex.right(3);
+        String path = CACHE_PATH / hex.right(1);
         String original = self().objectNamespace().gets("package.path", remotePath);
-        return path / original.fileName();
+        return path / hex + "_" + original.fileName();
     }
 
     void findCachedFile(bool requireExists = true)
@@ -101,7 +101,11 @@ DENG2_PIMPL(RemoteFile)
         }
         return false;
     }
+
+    DENG2_PIMPL_AUDIENCE(Download)
 };
+
+DENG2_AUDIENCE_METHOD(RemoteFile, Download)
 
 RemoteFile::RemoteFile(String const &name, String const &remotePath, Block const &remoteMetaId)
     : LinkFile(name)
@@ -135,8 +139,10 @@ void RemoteFile::fetchContents()
              [this] (duint64 startOffset, Block const &chunk, duint64 remainingBytes)
     {
         DENG2_ASSERT_IN_MAIN_THREAD();
-
-        //qDebug() << "[RemoteFile]" << d->remotePath << startOffset << "remaining:" << remainingBytes;
+        DENG2_FOR_AUDIENCE2(Download, i)
+        {
+            i->remoteFileDownloading(*this, remainingBytes);
+        }
 
         // Keep received data in a buffer.
         if (d->buffer.size() < remainingBytes)
