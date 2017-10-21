@@ -74,7 +74,7 @@ DENG_GUI_PIMPL(MessageDialog)
             }
         }
 
-        area.setContentSize(layout.width(), layout.height());
+        area.setContentSize(layout);
     }
 };
 

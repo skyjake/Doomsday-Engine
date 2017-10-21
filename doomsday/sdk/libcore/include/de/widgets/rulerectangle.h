@@ -21,6 +21,7 @@
 #define LIBDENG2_RECTANGLERULE_H
 
 #include "../AnimationVector"
+#include "../ISizeRule"
 #include "../Rectangle"
 #include "rules.h"
 
@@ -42,7 +43,7 @@ namespace de {
  *
  * @ingroup widgets
  */
-class DENG2_PUBLIC RuleRectangle
+class DENG2_PUBLIC RuleRectangle : public ISizeRule
 {
 public:
     RuleRectangle();
@@ -52,10 +53,10 @@ public:
     Rule const &top() const;
     Rule const &right() const;
     Rule const &bottom() const;
-    Rule const &width() const;
-    Rule const &height() const;
     Rule const &midX() const;
     Rule const &midY() const;
+    Rule const &width() const override;
+    Rule const &height() const override;
 
     /**
      * Sets one of the input rules of the rectangle.
@@ -70,6 +71,8 @@ public:
     RuleRectangle &setRightBottom(Rule const &right, Rule const &bottom);
 
     RuleRectangle &setSize(Rule const &width, Rule const &height);
+
+    RuleRectangle &setSize(ISizeRule const &dimensions);
 
     RuleRectangle &setMidAnchorX(Rule const &middle);
 

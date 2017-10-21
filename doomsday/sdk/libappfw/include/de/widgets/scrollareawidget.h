@@ -67,6 +67,7 @@ public:
     void setContentHeight(int height);
     void setContentHeight(Rule const &height);
     void setContentSize(Rule const &width, Rule const &height);
+    void setContentSize(ISizeRule const &dimensions);
     void setContentSize(Vector2i const &size);
     void setContentSize(Vector2ui const &size);
 

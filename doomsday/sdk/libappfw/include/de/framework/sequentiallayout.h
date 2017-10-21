@@ -21,6 +21,7 @@
 
 #include "../ui/defs.h"
 #include "../GuiWidget"
+#include <de/ISizeRule>
 
 namespace de {
 
@@ -33,7 +34,7 @@ namespace de {
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC SequentialLayout
+class LIBAPPFW_PUBLIC SequentialLayout : public ISizeRule
 {
 public:
     SequentialLayout(Rule const &startX,
@@ -87,8 +88,8 @@ public:
     int size() const;
     bool isEmpty() const;
 
-    Rule const &width() const;
-    Rule const &height() const;
+    Rule const &width() const override;
+    Rule const &height() const override;
 
 private:
     DENG2_PRIVATE(d)

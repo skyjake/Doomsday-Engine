@@ -339,6 +339,11 @@ RuleRectangle &RuleRectangle::setSize(Rule const &width, Rule const &height)
     return *this;
 }
 
+RuleRectangle &RuleRectangle::setSize(ISizeRule const &dimensions)
+{
+    return setSize(dimensions.width(), dimensions.height());
+}
+
 RuleRectangle &RuleRectangle::setMidAnchorX(Rule const &middle)
 {
     setInput(Rule::AnchorX, middle);
