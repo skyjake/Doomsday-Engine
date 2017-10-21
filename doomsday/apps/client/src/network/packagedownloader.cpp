@@ -42,8 +42,11 @@ DENG2_PIMPL(PackageDownloader)
 {
     String fileRepository;
     AssetGroup downloads;
-    QHash<RemoteFile *, dsize> downloadBytesRemaining;
+    QHash<RemoteFile *, Rangei64> downloadBytes;
+    dint64 totalBytes = 0;
+    int numDownloads = 0;
     std::function<void ()> postDownloadCallback;
+    bool isCancelled = false;
 
     Impl(Public *i) : Base(i)
     {}
@@ -61,10 +64,16 @@ DENG2_PIMPL(PackageDownloader)
         if (auto *remoteFile = maybeAs<RemoteFile>(file))
         {
             LOG_NET_VERBOSE("Downloading from server: %s") << remoteFile->description();
+
             downloads.insert(*remoteFile);
             remoteFile->audienceForDownload() += this;
             remoteFile->Deletable::audienceForDeletion += this;
-            downloadBytesRemaining.insert(remoteFile, remoteFile->size());
+            downloadBytes.insert(remoteFile, Rangei64(dint64(remoteFile->size()),
+                                                      dint64(remoteFile->size())));
+            numDownloads++;
+            totalBytes += remoteFile->size();
+            isCancelled = false;
+
             remoteFile->fetchContents();
         }
     }
@@ -73,57 +82,82 @@ DENG2_PIMPL(PackageDownloader)
     {
         DENG2_ASSERT_IN_MAIN_THREAD();
 
-        auto found = downloadBytesRemaining.find(&file);
-        if (found == downloadBytesRemaining.end()) return;
+        auto found = downloadBytes.find(&file);
+        if (found == downloadBytes.end()) return;
 
-        found.value() = remainingBytes;
+        found.value().start = dint64(remainingBytes);
 
         if (remainingBytes == 0)
         {
             file.audienceForDownload() -= this;
             file.Deletable::audienceForDeletion -= this;
-            downloadBytesRemaining.erase(found);
+            downloadBytes.erase(found);
         }
 
         // Update total for the UI popup.
         {
-            dsize const totalRemaining = std::accumulate(downloadBytesRemaining.constBegin(),
-                                                         downloadBytesRemaining.constEnd(),
-                                                         dsize(0));
-            qDebug() << "Total remaining:" << totalRemaining;
+            dint64 totalRemaining = 0;
+            foreach (auto bytes, downloadBytes)
+            {
+                totalRemaining += bytes.start;
+            }
+
+            DENG2_FOR_PUBLIC_AUDIENCE2(Status, i)
+            {
+                i->downloadStatusUpdate(Rangei64(totalRemaining, totalBytes),
+                                        Rangei(downloadBytes.size(), numDownloads));
+            }
         }
     }
 
     void objectWasDeleted(Deletable *del) override
     {
         DENG2_ASSERT_IN_MAIN_THREAD();
-        downloadBytesRemaining.remove(static_cast<RemoteFile *>(del));
+        downloadBytes.remove(static_cast<RemoteFile *>(del));
     }
 
     void assetStateChanged(Asset &) override
     {
-        DENG2_ASSERT(!downloads.isEmpty());
         if (downloads.isReady())
         {
-            LOG_NET_VERBOSE("All downloads of remote files finished");
+            LOG_NET_VERBOSE(isCancelled? "Remote file downloads cancelled"
+                                       : "All downloads of remote files finished");
             Loop::mainCall([this] ()
             {
-                DENG2_ASSERT(downloadBytesRemaining.isEmpty());
+                DENG2_ASSERT(downloadBytes.isEmpty());
                 if (postDownloadCallback) postDownloadCallback();
             });
         }
     }
 
+    void finishDownloads()
+    {
+        // Final status update.
+        DENG2_FOR_PUBLIC_AUDIENCE2(Status, i)
+        {
+            i->downloadStatusUpdate(Rangei64(0, totalBytes), Rangei(0, numDownloads));
+        }
+        numDownloads = 0;
+        totalBytes = 0;
+        downloads.clear();
+    }
+
     void clearDownloads()
     {
-        for (auto i = downloadBytesRemaining.begin(); i != downloadBytesRemaining.end(); ++i)
+        for (auto i = downloadBytes.begin(); i != downloadBytes.end(); ++i)
         {
-            i.key()->audienceForDownload() -= this;
-            i.key()->Deletable::audienceForDeletion -= this;
+            auto &file = i.key()->as<RemoteFile>();
+
+            // Ongoing (partial) downloads will be cancelled.
+            file.cancelFetch();
+
+            file.audienceForDownload() -= this;
+            file.Deletable::audienceForDeletion -= this;
         }
-        downloadBytesRemaining.clear();
+        numDownloads = 0;
+        totalBytes = 0;
+        downloadBytes.clear();
         downloads.clear();
-        postDownloadCallback = nullptr;
     }
 
     /**
@@ -171,7 +205,11 @@ DENG2_PIMPL(PackageDownloader)
             });
         }
     }
+
+    DENG2_PIMPL_AUDIENCE(Status)
 };
+
+DENG2_AUDIENCE_METHOD(PackageDownloader, Status)
 
 PackageDownloader::PackageDownloader()
     : d(new Impl(this))
@@ -182,9 +220,25 @@ String PackageDownloader::fileRepository() const
     return d->fileRepository;
 }
 
+void PackageDownloader::cancel()
+{
+    d->isCancelled = true;
+    DENG2_FOR_AUDIENCE2(Status, i)
+    {
+        i->downloadStatusUpdate(Rangei64(), Rangei());
+    }
+    d->clearDownloads();
+}
+
+bool PackageDownloader::isCancelled() const
+{
+    return d->isCancelled;
+}
+
 void PackageDownloader::mountFileRepository(shell::ServerInfo const &info)
 {
     d->fileRepository = info.address().asText();
+    d->isCancelled = false;
     FS::get().makeFolderWithFeed
             (PATH_REMOTE_SERVER,
              RemoteFeedRelay::get().addServerRepository(d->fileRepository, PATH_SERVER_REPOSITORY_ROOT),
@@ -201,6 +255,7 @@ void PackageDownloader::unmountFileRepository()
     }
     RemoteFeedRelay::get().removeRepository(d->fileRepository);
     d->fileRepository.clear();
+    d->isCancelled = false;
 }
 
 void PackageDownloader::download(StringList packageIds, std::function<void ()> callback)
@@ -218,8 +273,7 @@ void PackageDownloader::download(StringList packageIds, std::function<void ()> c
     {
         // Let's finalize the downloads so we can load all the packages.
         d->downloads.audienceForStateChange() -= d;
-        d->downloads.clear();
-
+        d->finishDownloads();
         d->linkRemotePackages(packageIds);
 
         callback();

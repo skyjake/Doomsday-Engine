@@ -22,7 +22,7 @@
 #ifndef DENG_CLIENT_UPDATEDOWNLOADDIALOG_H
 #define DENG_CLIENT_UPDATEDOWNLOADDIALOG_H
 
-#include "ui/widgets/downloaddialog.h"
+#include "ui/dialogs/downloaddialog.h"
 
 class QNetworkReply;
 

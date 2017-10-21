@@ -28,6 +28,7 @@
 #include "client/cl_def.h"
 #include "ui/clientwindow.h"
 #include "ui/widgets/taskbarwidget.h"
+#include "ui/dialogs/filedownloaddialog.h"
 #include "dd_def.h"
 #include "dd_main.h"
 #include "clientapp.h"
@@ -360,6 +361,11 @@ ServerLink::ServerLink(Flags flags) : d(new Impl(this, flags))
     connect(this, SIGNAL(disconnected()), this, SLOT(linkDisconnected()));
 }
 
+PackageDownloader &ServerLink::packageDownloader()
+{
+    return d->downloader;
+}
+
 void ServerLink::clear()
 {
     d->finder->clear();
@@ -441,12 +447,27 @@ void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
 
             LOG_RES_MSG("Received metadata about server files");
 
+            StringList const neededPackages = joinProfile->unavailablePackages();
+
+            // Show the download popup.
+            auto *dlPopup = new FileDownloadDialog;
+            dlPopup->setDeleteAfterDismissed(true);
+            ClientWindow::main().root().addOnTop(dlPopup);
+            dlPopup->open(DialogWidget::Modal);
+
             // Request contents of missing packages.
-            d->downloader.download(joinProfile->unavailablePackages(),
-                                   [this, joinProfile, info] ()
+            d->downloader.download(neededPackages,
+                                   [this, dlPopup, joinProfile, info] ()
             {
                 auto &win = ClientWindow::main();
                 win.glActivate();
+
+                dlPopup->close();
+                if (d->downloader.isCancelled())
+                {
+                    d->downloader.unmountFileRepository();
+                    return;
+                }
 
                 if (!joinProfile->isPlayable())
                 {

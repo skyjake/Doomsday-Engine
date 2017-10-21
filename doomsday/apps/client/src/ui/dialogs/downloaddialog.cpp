@@ -18,7 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/widgets/downloaddialog.h"
+#include "ui/dialogs/downloaddialog.h"
 
 #include <de/CallbackAction>
 

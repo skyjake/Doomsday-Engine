@@ -19,6 +19,7 @@
 #ifndef DENG_CLIENT_PACKAGEDOWNLOADER_H
 #define DENG_CLIENT_PACKAGEDOWNLOADER_H
 
+#include <de/Range>
 #include <de/shell/ServerInfo>
 #include <de/String>
 
@@ -38,6 +39,23 @@ public:
     void download(de::StringList packageIds, std::function<void ()> callback);
 
     de::String fileRepository() const;
+
+    /**
+     * Cancel the ongoing downloads.
+     */
+    void cancel();
+
+    bool isCancelled() const;
+
+public:
+    /**
+     * Notified when file downloads are progressing. The ranges describe the remaining
+     * and total amounts. For example, `bytes.start` is the number of total bytes
+     * remaining to download. `bytes.size()` is the number of bytes downloaded so far.
+     * `bytes.end` is the total number of bytes overall.
+     */
+    DENG2_DEFINE_AUDIENCE2(Status, void downloadStatusUpdate(de::Rangei64 const &bytes,
+                                                             de::Rangei   const &files))
 
 private:
     DENG2_PRIVATE(d)

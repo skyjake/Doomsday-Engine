@@ -28,6 +28,8 @@
 #include <QObject>
 #include "network/net_main.h"
 
+class PackageDownloader;
+
 /**
  * Network connection to a server.
  * @ingroup network
@@ -55,6 +57,8 @@ public:
 
 public:
     ServerLink(Flags flags = DiscoverLocalServers);
+
+    PackageDownloader &packageDownloader();
 
     void clear();
 
