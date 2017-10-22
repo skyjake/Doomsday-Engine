@@ -31,6 +31,7 @@ public:
     int availablePackageCount() const;
 
     de::String tabHeading() const override;
+    de::String tabShortcut() const override;
     void setHighlighted(bool highlighted) override;
 
 signals:

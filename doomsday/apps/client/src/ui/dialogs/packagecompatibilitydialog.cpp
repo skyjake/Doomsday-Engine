@@ -67,9 +67,9 @@ DENG2_PIMPL(PackageCompatibilityDialog)
         }
         if (list->itemCount() > 0)
         {
-            return _E(b) + tr("Load Packages");
+            return _E(b) + tr("Load Mods");
         }
-        return _E(b) + tr("Unload Packages");
+        return _E(b) + tr("Unload Mods");
     }
 
     void enableIgnore(bool yes)

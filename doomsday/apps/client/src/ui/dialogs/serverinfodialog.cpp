@@ -181,7 +181,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         serverPackages->setActionItems(serverPackageActions);
         serverPackages->setActionsAlwaysShown(true);
         serverPackages->setPackageStatus(*this);
-        serverPackages->searchTermsEditor().setEmptyContentHint(tr("Filter Server Packages"));
+        serverPackages->searchTermsEditor().setEmptyContentHint(tr("Filter Server Mods"));
         serverPackages->rule().setInput(Rule::Width, rule("dialog.serverinfo.popup.width"));
         serverPopup->setContent(serverPackages);
 
@@ -196,7 +196,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         localPackages = new PackagesButtonWidget;
         localPackages->setColorTheme(Inverted);
         localPackages->setLabelPrefix(tr("Local: "));
-        localPackages->setNoneLabel(tr("Local Packages..."));
+        localPackages->setNoneLabel(tr("Local Mods..."));
         localPackages->setGameProfile(profile);
         localPackages->disable();
         localPackages->rule().setLeftTop(svBut->rule().right(), svBut->rule().top());
@@ -307,7 +307,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
 
         // Local packages.
         {
-            localPackages->setDialogTitle(tr("Local Packages for %1 Multiplayer").arg(gameTitle));
+            localPackages->setDialogTitle(tr("Local Mods for %1 Multiplayer").arg(gameTitle));
             localPackages->setGameProfile(profile);
             localPackages->setPackages(Game::localMultiplayerPackages(gameId));
         }

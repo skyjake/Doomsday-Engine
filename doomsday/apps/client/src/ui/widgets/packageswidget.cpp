@@ -51,10 +51,11 @@
 
 using namespace de;
 
-static String    const VAR_TITLE ("title");
-static String    const VAR_TAGS  ("tags");
-static String    const TAG_HIDDEN("hidden");
-static String    const TAG_LOADED("loaded");
+static String const VAR_TITLE ("title");
+static String const VAR_TAGS  ("tags");
+static String const TAG_HIDDEN("hidden");
+static String const TAG_LOADED("loaded");
+static String const TAG_CACHED("cached");
 
 static TimeDelta const REFILTER_DELAY(0.2);
 
@@ -550,12 +551,13 @@ DENG_GUI_PIMPL(PackagesWidget)
 
             if (!item.info) return false;
 
-            bool const isHidden = Package::matchTags(*item.file, QStringLiteral("\\bhidden\\b"));
-            if (showHidden ^ isHidden)
+            if (showOnlyLoaded && !item.isLoaded())
             {
                 return false;
             }
-            if (showOnlyLoaded && !item.isLoaded())
+
+            bool const isHidden = Package::matchTags(*item.file, QStringLiteral("\\bhidden\\b"));
+            if (showHidden ^ isHidden)
             {
                 return false;
             }

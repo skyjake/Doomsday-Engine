@@ -199,7 +199,7 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
     layout.setColumnAlignment(0, ui::AlignRight);
     layout << *LabelWidget::newWithText(tr("Game:"), form)
            << *d->gameChoice
-           << *LabelWidget::newWithText(tr("Packages:"), form)
+           << *LabelWidget::newWithText(tr("Mods:"), form)
            << *d->packages;
 
     LabelWidget *optionsLabel = LabelWidget::newWithText(_E(D) + tr("Game Options"), form);

@@ -169,7 +169,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         // Indicator that is only visible when no packages have been added to the profile.
         nothingSelected = new LabelWidget;
 
-        nothingSelected->setText(tr("No Packages Selected"));
+        nothingSelected->setText(tr("No Mods Selected"));
         style().as<ClientStyle>().emptyMenuLabelStylist().applyStyle(*nothingSelected);
         nothingSelected->rule()
                 .setRect(self().leftArea().rule())
@@ -299,7 +299,7 @@ DENG_GUI_PIMPL(PackagesDialog)
             }
             if (!dataFiles.isEmpty())
             {
-                gameDataFiles->setText(_E(l) + String::format("Data file%s: ", dataFiles.size() != 1? "s" : "") +
+                gameDataFiles->setText(_E(l) + String::format("Game data file%s: ", dataFiles.size() != 1? "s" : "") +
                                        _E(.) + String::join(dataFiles, _E(l) " and " _E(.)));
             }
             else
@@ -353,7 +353,7 @@ PackagesDialog::PackagesDialog(String const &titleText)
 {
     if (titleText.isEmpty())
     {
-        heading().setText(tr("Packages"));
+        heading().setText(tr("Mods"));
     }
     else
     {

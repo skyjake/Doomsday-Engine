@@ -488,7 +488,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
             << unloadMenu                           // hidden with null-game
             << new ui::Item(ui::Item::Separator)
             << new ui::Item(ui::Item::Separator, tr("Resources"))
-            << new ui::ActionItem(tr("Browse Packages..."), new SignalAction(this, SLOT(openPackagesSidebar())))
+            << new ui::ActionItem(tr("Browse Mods..."), new SignalAction(this, SLOT(openPackagesSidebar())))
             << new ui::Item(ui::Item::Annotation,
                             tr("Load/unload data files and view package information."))
             << new ui::ActionItem(tr("Clear Cache"), new CallbackAction([] () { DoomsdayApp::app().clearCache(); }))

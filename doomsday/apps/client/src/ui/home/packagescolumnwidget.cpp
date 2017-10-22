@@ -123,8 +123,8 @@ PackagesColumnWidget::PackagesColumnWidget()
     : ColumnWidget("packages-column")
     , d(new Impl(this))
 {
-    header().title().setText(_E(s) "\n" _E(.) + tr("Packages"));
-    header().info().setText(tr("Browse available packages and install new ones."));
+    header().title().setText(_E(s) "\n" _E(.) + tr("Mods"));
+    header().info().setText(tr("Browse available mods/add-ons and install new ones."));
     header().infoPanel().close(0);
 
     // Total number of packages listed.
@@ -154,7 +154,12 @@ int PackagesColumnWidget::availablePackageCount() const
 
 String PackagesColumnWidget::tabHeading() const
 {
-    return tr("Packages");
+    return tr("Mods");
+}
+
+String PackagesColumnWidget::tabShortcut() const
+{
+    return QStringLiteral("s");
 }
 
 void PackagesColumnWidget::setHighlighted(bool highlighted)

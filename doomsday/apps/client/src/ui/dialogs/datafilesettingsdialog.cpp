@@ -60,9 +60,9 @@ DataFileSettingsDialog::DataFileSettingsDialog(String const &name)
                                "Only these folders are checked, not their subfolders."));
     setValue(d->iwadGroup, d->iwadFolders.value());
 
-    d->pkgGroup = addGroup(tr("Add-on and Package Folders"),
+    d->pkgGroup = addGroup(tr("Mod / Add-on Folders"),
                            tr("The following folders and all their subfolders are searched "
-                              "for resource packs and other add-ons."));
+                              "for mods, resource packs, and other add-ons."));
     setValue(d->pkgGroup, d->pkgFolders.value());
 
     connect(this, &DirectoryListDialog::arrayChanged, [this] ()
