@@ -237,12 +237,18 @@ bool PackageDownloader::isCancelled() const
 
 void PackageDownloader::mountFileRepository(shell::ServerInfo const &info)
 {
-    d->fileRepository = info.address().asText();
-    d->isCancelled = false;
-    FS::get().makeFolderWithFeed
-            (PATH_REMOTE_SERVER,
-             RemoteFeedRelay::get().addServerRepository(d->fileRepository, PATH_SERVER_REPOSITORY_ROOT),
-             Folder::PopulateAsyncFullTree);
+    // The remote repository feature was added in 2.1. Trying to send a RemoteFeed
+    // request to an older server would just result in us getting immediately
+    // disconnected.
+    if (info.version() > Version(2, 1, 0, 2484))
+    {
+        d->fileRepository = info.address().asText();
+        d->isCancelled = false;
+        FS::get().makeFolderWithFeed
+                (PATH_REMOTE_SERVER,
+                 RemoteFeedRelay::get().addServerRepository(d->fileRepository, PATH_SERVER_REPOSITORY_ROOT),
+                 Folder::PopulateAsyncFullTree);
+    }
 }
 
 void PackageDownloader::unmountFileRepository()
