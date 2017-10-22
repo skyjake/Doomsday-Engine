@@ -47,7 +47,6 @@ DENG2_PIMPL(RemoteFeedRelay)
             String path;
             FileListRequest fileList;
             FileContentsRequest fileContents;
-            //Block receivedData;
             duint64 receivedBytes = 0;
             duint64 fileSize = 0;
 
@@ -125,7 +124,6 @@ DENG2_PIMPL(RemoteFeedRelay)
                 }
                 else
                 {
-                    //qDebug() << "[RemoteFeedRelay] Query" << query.id << "is deferred";
                     deferredQueries.append(query);
                 }
             }
@@ -169,25 +167,24 @@ DENG2_PIMPL(RemoteFeedRelay)
             if (found != pendingQueries.end())
             {
                 auto &query = found.value();
+
+                // Get rid of cancelled queries.
                 if (!query.isValid())
                 {
                     pendingQueries.erase(found);
                     return;
                 }
-                /*if (query.receivedData.size() != fileSize)
-                {
-                    query.receivedData.resize(fileSize);
-                }*/
+
+                // Before the first chunk, notify about the total size.
                 if (!query.fileSize)
                 {
-                    // Before the first chunk, notify about the total size.
                     query.fileContents->call(0, Block(), fileSize);
                 }
-                //query.receivedData.set(startOffset, chunk.data(), chunk.size());
+
                 query.fileSize = fileSize;
                 query.receivedBytes += chunk.size();
 
-                // Notify about progress.
+                // Notify about progress and provide the data chunk to the requestor.
                 query.fileContents->call(startOffset, chunk, fileSize - query.receivedBytes);
 
                 if (fileSize == query.receivedBytes)
@@ -244,8 +241,6 @@ DENG2_PIMPL(RemoteFeedRelay)
         {
             DENG2_ASSERT(query.isValid());
 
-            //qDebug() << "transmitting query" << query.id << query.path;
-
             RemoteFeedQueryPacket packet;
             packet.setId(query.id);
             packet.setPath(query.path);
@@ -300,8 +295,7 @@ DENG2_PIMPL(RemoteFeedRelay)
     };
 
     RemoteFeedProtocol protocol;
-    QHash<String,       RepositoryLink *> repositories; // owned
-    QHash<QHostAddress, RepositoryLink *> repositoriesByHost; // not owned
+    QHash<String, RepositoryLink *> repositories; // owned
 
     Impl(Public *i) : Base(i)
     {}
