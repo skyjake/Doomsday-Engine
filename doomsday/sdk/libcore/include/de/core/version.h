@@ -56,6 +56,8 @@ public:
      */
     Version();
 
+    Version(int major, int minor, int patch, int buildNumber = 0);
+
     /**
      * Version information.
      *

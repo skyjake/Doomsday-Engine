@@ -36,6 +36,13 @@ Version::Version()
     , build(0)
 {}
 
+Version::Version(int major, int minor, int patch, int buildNumber)
+    : major(major)
+    , minor(minor)
+    , patch(patch)
+    , build(buildNumber)
+{}
+
 Version Version::currentBuild()
 {
     Version v;
