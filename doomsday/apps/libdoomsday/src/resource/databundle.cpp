@@ -500,6 +500,16 @@ DENG2_PIMPL(DataBundle), public Lockable
             meta.appendUniqueWord(VAR_TAGS, "hidden");
         }
 
+        // Check for special tags.
+        {
+            // Cached copies of remote files.
+            if (dataFilePath.startsWith("/home/cache/remote/"))
+            {
+                meta.appendUniqueWord(VAR_TAGS, "hidden");
+                meta.appendUniqueWord(VAR_TAGS, "cached");
+            }
+        }
+
         determineGameTags(meta);
 
         LOG_RES_VERBOSE("Identified \"%s\" %s %s score: %i")
