@@ -158,6 +158,11 @@ bool Version::operator > (Version const &other) const
     return !(*this < other || *this == other);
 }
 
+String Version::userAgent() const
+{
+    return String("Doomsday Engine %1 (%2)").arg(fullNumber()).arg(operatingSystem());
+}
+
 String Version::operatingSystem()
 {
 #if defined (WIN32)

@@ -129,6 +129,9 @@ public:
 
     RecordValue *duplicateUnowned() const;
 
+    static RecordValue *takeRecord(Record *record);
+    static RecordValue *takeRecord(Record &&record);
+
 public:
     DENG2_PRIVATE(d)
 };

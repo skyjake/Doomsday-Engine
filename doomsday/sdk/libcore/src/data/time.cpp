@@ -239,7 +239,7 @@ Time::Time() : d(new Impl)
 
 Time::Time(Time const &other) : d(new Impl(*other.d))
 {}
-    
+
 Time::Time(Time &&moved) : d(std::move(moved.d))
 {}
 
@@ -260,7 +260,7 @@ Time &Time::operator = (Time const &other)
     *d = *other.d;
     return *this;
 }
-    
+
 Time &Time::operator = (Time &&moved)
 {
     d = std::move(moved.d);
@@ -371,10 +371,31 @@ String Time::asText(Format format) const
     return "";
 }
 
+static int parseMonth(String const &shortName)
+{
+    static char const *months[] = {
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    };
+
+    for (int i = 0; i < 12; ++i)
+    {
+        if (shortName == months[i])
+        {
+            return i + 1;
+        }
+    }
+    return 0;
+}
+
 Time Time::fromText(String const &text, Time::Format format)
 {
-    DENG2_ASSERT(format == ISOFormat || format == ISODateOnly || format == FriendlyFormat ||
-                 format == CompilerDateTime || format == HumanDate);
+    DENG2_ASSERT(format == ISOFormat ||
+                 format == ISODateOnly ||
+                 format == FriendlyFormat ||
+                 format == CompilerDateTime ||
+                 format == HumanDate ||
+                 format == UnixLsStyleDateTime);
 
     if (format == ISOFormat)
     {
@@ -392,28 +413,48 @@ Time Time::fromText(String const &text, Time::Format format)
     {
         // Parse the text manually as it is locale-independent.
         QStringList const parts = text.split(" ", QString::SkipEmptyParts);
-        DENG2_ASSERT(parts.size() == 4);
-        char const *months[] = {
-            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-        };
-        int day = parts[1].toInt();
-        int year = parts[2].toInt();
-        int month = 0;
-        for (int i = 0; i < 12; ++i)
+        if (parts.size() >= 4)
         {
-            if (parts[0] == months[i])
+            int day = parts[1].toInt();
+            int year = parts[2].toInt();
+            int month = parseMonth(parts[0]);
+            QDate date(year, month, day);
+            QTime time = QTime::fromString(parts[3], "HH:mm:ss");
+            return Time(QDateTime(date, time));
+        }
+    }
+    else if (format == UnixLsStyleDateTime)
+    {
+        // Two options:
+        // Jun 2 2016
+        // Jun 2 06:30
+
+        QStringList const parts = text.split(" ", QString::SkipEmptyParts);
+        if (parts.size() >= 3)
+        {
+            int month = parseMonth(parts[0]);
+            int day = parts[1].toInt();
+            int hour = 0;
+            int minute = 0;
+            int year;
+            if (parts[2].contains(QChar(':')))
             {
-                month = i + 1;
-                break;
+                year = QDate::currentDate().year();
+                hour = parts[2].left(2).toInt();
+                minute = parts[2].right(2).toInt();
+                return Time(QDateTime(QDate(year, month, day),
+                                      QTime(hour, minute, 0)));
+            }
+            else
+            {
+                year = parts[2].toInt();
+                return Time(QDateTime(QDate(year, month, day), QTime(0, 0, 0)));
             }
         }
-        QDate date(year, month, day);
-        QTime time = QTime::fromString(parts[3], "HH:mm:ss");
-        return Time(QDateTime(date, time));
     }
     else if (format == HumanDate)
     {
+        // Note: Check use of indices below.
         static QStringList const formats({
             "M/d/yy",
             "MM/dd/yy",
@@ -425,24 +466,37 @@ Time Time::fromText(String const &text, Time::Format format)
             "dd.MM.yyyy",
             "MM.dd.yyyy", // as a fallback...
             "yyyy-MM-dd",
+
+            // Unix "ls" style:
+            "MMM d yyyy",
+            "MMM d hh:mm",
         });
+        String const normText = text.normalizeWhitespace();
         for (int i = 0; i < formats.size(); ++i)
         {
             String const fmt = formats.at(i);
             bool const isShortYear = i < 4;
-            QDate date = QDate::fromString(text, fmt);
-            if (date.isValid())
+            QDateTime dt = QDateTime::fromString(normText, fmt);
+            if (dt.isValid())
             {
-                if (isShortYear && date.year() < 1980)
+                if (i == 10) // No year specified.
                 {
-                    date.setDate(date.year() + 100, date.month(), date.day()); // Y2K?
+                    dt.setDate(QDate(QDate::currentDate().year(),
+                                     dt.date().month(),
+                                     dt.date().day()));
                 }
-                return Time(QDateTime(date));
+                else if (isShortYear && dt.date().year() < 1980)
+                {
+                    dt.setDate(QDate(dt.date().year() + 100,
+                                     dt.date().month(),
+                                     dt.date().day())); // Y2K?
+                }
+                return Time(dt);
             }
         }
-        return Time(QDateTime::fromString(text, Qt::TextDate));
+        return Time(QDateTime::fromString(normText, Qt::TextDate));
     }
-    return Time();
+    return Time::invalidTime();
 }
 
 QDateTime &de::Time::asDateTime()

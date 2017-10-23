@@ -409,6 +409,12 @@ public:
     /// @copydoc set()
     Variable &set(String const &name, unsigned long value);
 
+    /// @copydoc set()
+    Variable &set(String const &name, Time const &value);
+
+    /// @copydoc set()
+    Variable &set(String const &name, Block const &value);
+
     /**
      * Sets the value of a variable, creating the variable if it doesn't exist.
      *
@@ -416,6 +422,8 @@ public:
      * @param value  Array to use as the value of the variable. Ownership taken.
      */
     Variable &set(String const &name, ArrayValue *value);
+
+    Variable &set(String const &name, Value *value);
 
     /**
      * Appends a word to the value of the variable.

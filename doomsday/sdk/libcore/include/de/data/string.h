@@ -186,6 +186,9 @@ public:
     /// @return Copy of the string without whitespace.
     String rightStrip() const;
 
+    /// Replaces all sequences of whitespace with single space characters.
+    String normalizeWhitespace() const;
+
     /// Returns a lower-case version of the string.
     String lower() const;
 

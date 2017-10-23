@@ -123,6 +123,11 @@ public:
     bool operator > (Version const &other) const;
 
     /**
+     * Returns a user agent string for network requests.
+     */
+    String userAgent() const;
+
+    /**
      * Determines the operating system.
      */
     static String operatingSystem();

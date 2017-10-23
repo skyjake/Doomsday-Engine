@@ -235,6 +235,8 @@ public:
          */
         Path path(QChar sep = '/') const;
 
+        DENG2_CAST_METHODS()
+
         friend class PathTree;
         friend struct PathTree::Impl;
 

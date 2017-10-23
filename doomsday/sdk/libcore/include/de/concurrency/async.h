@@ -24,6 +24,7 @@
 #include "../String"
 
 #include <QThread>
+#include <atomic>
 #include <utility>
 
 namespace de {
@@ -32,6 +33,7 @@ struct DENG2_PUBLIC AsyncTask : public QThread
 {
     virtual ~AsyncTask() {}
     virtual void abort() = 0;
+    virtual void invalidate() = 0;
 };
 
 namespace internal {
@@ -40,8 +42,9 @@ template <typename Task, typename Completion>
 class AsyncTaskThread : public AsyncTask
 {
     Task task;
-    Completion completion;
     decltype(task()) result {}; // can't be void
+    Completion completion;
+    bool valid;
 
     void run() override
     {
@@ -58,15 +61,26 @@ class AsyncTaskThread : public AsyncTask
     {
         Loop::mainCall([this] ()
         {
-            completion(result);
+            if (valid) completion(result);
             deleteLater();
         });
+    }
+
+    void invalidate() override
+    {
+        valid = false;
     }
 
 public:
     AsyncTaskThread(Task const &task, Completion const &completion)
         : task(task)
         , completion(completion)
+        , valid(true)
+    {}
+
+    AsyncTaskThread(Task const &task)
+        : task(task)
+        , valid(false)
     {}
 
     void abort() override
@@ -79,20 +93,30 @@ public:
 } // namespace internal
 
 /**
- * Executes an asynchronous callback in a background thread. After the background thread
- * finishes, the result from the callback is passed to another callback that is called
- * in the main thread.
+ * Executes an asynchronous callback in a background thread.
+ *
+ * After the background thread finishes, the result from the callback is passed to
+ * another callback that is called in the main thread.
  *
  * Must be called from the main thread.
  *
+ * If it is possible that the completion becomes invalid (e.g., the object that
+ * started the operation is destroyed), you should use AsyncScope to automatically
+ * invalidate the completion callbacks of the started tasks.
+ *
  * @param task        Task callback. If an exception is thrown here, it will be
  *                    quietly caught, and the completion callback will be called with
- *                    a default-constructed result value.
- * @param completion  Completion callback. Takes one argument matching the type of
- *                    the return value from @a task.
+ *                    a default-constructed result value. Note that if you return a
+ *                    pointer to an object and intend to pass ownership to the
+ *                    completion callback, the object will leak if the completion has
+ *                    been invalidated. Therefore, you should always pass ownership via
+ *                    std::shared_ptr or other reference-counted type.
+ *
+ * @param completion  Completion callback to be called in the main thread. Takes one
+ *                    argument matching the type of the return value from @a task.
  *
  * @return Background thread object. The thread will delete itself after the completion
- * callback has been called.
+ * callback has been called. You can pass this to AsyncScope for keeping track of.
  */
 template <typename Task, typename Completion>
 AsyncTask *async(Task const &task, Completion const &completion)
@@ -103,6 +127,31 @@ AsyncTask *async(Task const &task, Completion const &completion)
     // Note: The thread will delete itself when finished.
     return t;
 }
+
+/*template <typename Task>
+AsyncTask *async(Task const &task)
+{
+    auto *t = new internal::AsyncTaskThread<Task, void *>(task);
+    t->start();
+    // Note: The thread will delete itself when finished.
+    return t;
+}*/
+
+/**
+ * Utility for invalidating the completion callbacks of async tasks whose initiator
+ * has gone out of scope.
+ */
+class DENG2_PUBLIC AsyncScope
+{
+public:
+    AsyncScope() = default;
+    ~AsyncScope();
+
+    AsyncScope &operator += (AsyncTask *task);
+
+private:
+    QSet<AsyncTask *> _tasks;
+};
 
 } // namespace de
 

@@ -626,7 +626,7 @@ Record &Record::add(String const &name, Record *subrecord)
     std::unique_ptr<Record> sub(subrecord);
     d->parentRecordByPath(name)
             .add(new Variable(Impl::memberNameFromPath(name),
-                              new RecordValue(sub.release(), RecordValue::OwnsRecord)));
+                              RecordValue::takeRecord(sub.release())));
     return *subrecord;
 }
 
@@ -725,6 +725,30 @@ Variable &Record::set(String const &name, duint64 value)
 Variable &Record::set(String const &name, unsigned long value)
 {
     return set(name, Value::Number(value));
+}
+
+Variable &Record::set(String const &name, Time const &value)
+{
+    DENG2_GUARD(d);
+
+    if (hasMember(name))
+    {
+        return (*this)[name].set(TimeValue(value));
+    }
+    return addTime(name, value);
+}
+
+Variable &Record::set(String const &name, Block const &value)
+{
+    DENG2_GUARD(d);
+
+    if (hasMember(name))
+    {
+        return (*this)[name].set(BlockValue(value));
+    }
+    Variable &var = addBlock(name);
+    var.value<BlockValue>().block() = value;
+    return var;
 }
 
 Variable &Record::set(String const &name, ArrayValue *value)

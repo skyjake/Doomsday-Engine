@@ -328,4 +328,14 @@ void RecordValue::operator << (Reader &from)
     from >> dereference();
 }
 
+RecordValue *RecordValue::takeRecord(Record *record)
+{
+    return new RecordValue(record, OwnsRecord);
+}
+
+RecordValue *RecordValue::takeRecord(Record &&record)
+{
+    return new RecordValue(new Record(record), OwnsRecord);
+}
+
 } // namespace de
