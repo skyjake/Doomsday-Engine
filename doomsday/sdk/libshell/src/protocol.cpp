@@ -28,13 +28,13 @@
 namespace de {
 namespace shell {
 
-static String const PT_COMMAND = "shell.command";
-static String const PT_LEXICON = "shell.lexicon";
+static String const PT_COMMAND    = "shell.command";
+static String const PT_LEXICON    = "shell.lexicon";
 static String const PT_GAME_STATE = "shell.game.state";
 
 // ChallengePacket -----------------------------------------------------------
 
-static char const *CHALLENGE_PACKET_TYPE = "Psw?";
+static Packet::Type const CHALLENGE_PACKET_TYPE = Packet::typeFromString("Psw?");
 
 ChallengePacket::ChallengePacket() : Packet(CHALLENGE_PACKET_TYPE)
 {}
@@ -46,7 +46,7 @@ Packet *ChallengePacket::fromBlock(Block const &block)
 
 // LogEntryPacket ------------------------------------------------------------
 
-static char const *LOG_ENTRY_PACKET_TYPE = "LgEn";
+static Packet::Type const LOG_ENTRY_PACKET_TYPE = Packet::typeFromString("LgEn");
 
 LogEntryPacket::LogEntryPacket() : Packet(LOG_ENTRY_PACKET_TYPE)
 {}
@@ -108,7 +108,7 @@ Packet *LogEntryPacket::fromBlock(Block const &block)
 
 // PlayerInfoPacket ----------------------------------------------------------
 
-static char const *PLAYER_INFO_PACKET_TYPE = "PlrI";
+static Packet::Type const PLAYER_INFO_PACKET_TYPE = Packet::typeFromString("PlrI");
 
 DENG2_PIMPL_NOREF(PlayerInfoPacket)
 {
@@ -174,7 +174,7 @@ Packet *PlayerInfoPacket::fromBlock(Block const &block)
 
 // MapOutlinePacket ----------------------------------------------------------
 
-static char const *MAP_OUTLINE_PACKET_TYPE = "MpOL";
+static Packet::Type const MAP_OUTLINE_PACKET_TYPE = Packet::typeFromString("MpOL");
 
 DENG2_PIMPL_NOREF(MapOutlinePacket)
 {

@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/RecordPacket"
@@ -25,7 +25,7 @@
 
 namespace de {
 
-static const char* RECORD_PACKET_TYPE = "RECO";
+static Packet::Type const RECORD_PACKET_TYPE = Packet::typeFromString("RECO");
 
 RecordPacket::RecordPacket(String const &name, Id i)
     : IdentifiedPacket(RECORD_PACKET_TYPE, i), _name(name), _record(0)

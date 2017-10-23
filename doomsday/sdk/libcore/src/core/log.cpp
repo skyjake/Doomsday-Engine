@@ -32,6 +32,7 @@
 #include <QThread>
 #include <QThreadStorage>
 #include <QStringList>
+#include <array>
 
 namespace de {
 
@@ -168,6 +169,11 @@ void LogEntry::Arg::setValue(String const &s)
     _type = StringArgument;
     // Ensure a deep copy of the string is taken.
     _data.stringValue = new String(s.data(), s.size());
+}
+
+void LogEntry::Arg::setValue(std::array<char, 4> const &typecode)
+{
+    setValue(QString::fromLatin1(typecode.data(), 4));
 }
 
 void LogEntry::Arg::setValue(LogEntry::Arg::Base const &arg)
@@ -729,22 +735,22 @@ LogEntry &Log::enter(duint32 metadata, String const &format, LogEntry::Args argu
     if (!logsPtr.get()) logsPtr.reset(new internal::Logs);
     return *logsPtr;
 }*/
-    
+
 static QThreadStorage<Log> theLogs;
 
 Log &Log::threadLog()
 {
     // Each thread has its own log.
     //QThread *thread = QThread::currentThread();
-    
+
     return theLogs.localData();
-    
+
     /*if (!theLogs.hasLocalData())
     {
         theLogs.setLocalData(<#de::Log t#>)
     internal::Logs &logs = theLogs();
     DENG2_GUARD(logs);
-    
+
     auto found = logs.constFind(thread);
     if (found == logs.constEnd())
     {

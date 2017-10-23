@@ -197,7 +197,7 @@ public:
      * Writes a fixed-size sequence of bytes to the destination buffer.
      * The size of the sequence is @em NOT included in the written data.
      * When reading, the reader must know the size beforehand
-     * (Reader::readPresetSize()).
+     * (Reader::readBytesFixedSize()).
      *
      * @param array  Array to write.
      *

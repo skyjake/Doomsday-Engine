@@ -22,7 +22,7 @@
 
 namespace de {
 
-static const char* BLOCK_PACKET_TYPE = "BLCK";
+static Packet::Type const BLOCK_PACKET_TYPE = Packet::typeFromString("BLCK");
 
 BlockPacket::BlockPacket() : Packet(BLOCK_PACKET_TYPE)
 {}
