@@ -54,6 +54,8 @@ public:
 
     StringList repositories() const;
 
+    bool isConnected(String const &address) const;
+
     FileListRequest fetchFileList(String const &repository,
                                   String folderPath,
                                   FileListFunc result);
@@ -61,6 +63,10 @@ public:
     FileContentsRequest fetchFileContents(String const &repository,
                                           String filePath,
                                           DataReceivedFunc dataReceived);
+
+public:
+    enum Status { Disconnected, Connected };
+    DENG2_DEFINE_AUDIENCE2(Status, void remoteRepositoryStatusChanged(String const &address, Status))
 
 private:
     DENG2_PRIVATE(d)

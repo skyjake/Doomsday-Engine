@@ -1248,6 +1248,12 @@ String DataBundle::guessCompatibleGame() const
 
 File *DataBundle::Interpreter::interpretFile(File *sourceData) const
 {
+    // Broken links cannot be interpreted.
+    if (LinkFile *link = maybeAs<LinkFile>(sourceData))
+    {
+        if (link->isBroken()) return nullptr;
+    }
+
     // Naive check using the file extension.
     static struct { String str; Format format; } formats[] = {
         { ".pk3.zip", Pk3 },

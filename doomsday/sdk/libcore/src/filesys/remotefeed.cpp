@@ -35,10 +35,12 @@ namespace de {
 static TimeDelta const POPULATE_TIMEOUT = 15.0;
 
 DENG2_PIMPL(RemoteFeed)
+, DENG2_OBSERVES(RemoteFeedRelay, Status)
 {
     String repository;
     Path remotePath;
     std::unique_ptr<RemoteFeedRelay::FileList> fileList;
+    SafePtr<Folder> pendingPopulation;
 
     Impl(Public *i) : Base(i)
     {}
@@ -82,6 +84,20 @@ DENG2_PIMPL(RemoteFeed)
         }
         return populated;
     }
+
+    void remoteRepositoryStatusChanged(String const &address, RemoteFeedRelay::Status status) override
+    {
+        if (repository == address && status == RemoteFeedRelay::Connected)
+        {
+            if (pendingPopulation)
+            {
+                // There is a pending population request, let's do it now.
+                pendingPopulation->populate(Folder::PopulateAsyncFullTree);
+                pendingPopulation.reset();
+            }
+            RemoteFeedRelay::get().audienceForStatus() -= this;
+        }
+    }
 };
 
 RemoteFeed::RemoteFeed(String const &repository, String const &remotePath)
@@ -105,15 +121,23 @@ String RemoteFeed::repository() const
 
 String RemoteFeed::description() const
 {
-    return String("remote repository \"%1%2\"")
-            .arg(d->repository)
-            .arg(d->remotePath);
+    return String("remote repository \"%1\"")
+            .arg(d->repository / d->remotePath);
 }
 
 Feed::PopulatedFiles RemoteFeed::populate(Folder const &folder)
 {
+    LOG_AS("RemoteFeed");
+    auto &relay = RemoteFeedRelay::get();
     PopulatedFiles files;
-    auto request = RemoteFeedRelay::get().fetchFileList
+    if (!relay.isConnected(d->repository))
+    {
+        //qDebug() << "Population deferred:" << folder.path();
+        d->pendingPopulation.reset(const_cast<Folder *>(&folder));
+        relay.audienceForStatus() += d;
+        return files;
+    }
+    auto request = relay.fetchFileList
             (d->repository,
              d->remotePath,
              [this, &folder, &files]

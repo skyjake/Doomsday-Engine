@@ -19,11 +19,27 @@
 #include "de/RemoteFeedRelay"
 
 #include "de/App"
+#include "de/Async"
+#include "de/Date"
+#include "de/DictionaryValue"
 #include "de/Loop"
 #include "de/Message"
+#include "de/PathTree"
+#include "de/RecordValue"
 #include "de/RemoteFeedProtocol"
 #include "de/Socket"
+#include "de/TextValue"
+#include "de/Version"
 #include "de/charsymbols.h"
+#include "de/data/gzip.h"
+
+#include <QNetworkAccessManager>
+#include <QNetworkDiskCache>
+#include <QNetworkReply>
+#include <QRegularExpression>
+#include <QStandardPaths>
+
+#include <QFile>
 
 namespace de {
 
@@ -33,7 +49,7 @@ DENG2_PIMPL(RemoteFeedRelay)
      * Active connection to a remote repository. One link is shared by all
      * RemoteFeed instances accessing the same repository.
      */
-    struct RepositoryLink
+    struct RepositoryLink : protected AsyncScope
     {
         RemoteFeedRelay::Impl *d;
 
@@ -81,6 +97,41 @@ DENG2_PIMPL(RemoteFeedRelay)
 
         virtual ~RepositoryLink()
         {
+            cancelAllQueries();
+        }
+
+        virtual void wasConnected()
+        {
+            DENG2_ASSERT_IN_MAIN_THREAD();
+            state = Ready;
+            sendDeferredQueries();
+            DENG2_FOR_EACH_OBSERVER(StatusAudience, i, d->audienceForStatus)
+            {
+                i->remoteRepositoryStatusChanged(address, Connected);
+            }
+        }
+
+        virtual void wasDisconnected()
+        {
+            state = Deinitialized;
+            cancelAllQueries();
+            cleanup();
+            DENG2_FOR_EACH_OBSERVER(StatusAudience, i, d->audienceForStatus)
+            {
+                i->remoteRepositoryStatusChanged(address, Disconnected);
+            }
+        }
+
+        virtual void handleError(QString errorMessage)
+        {
+            LOG_NET_ERROR("Error accessing remote file repository \"%s\": %s " DENG2_CHAR_MDASH
+                          " files from repository may not be available")
+                    << address
+                    << errorMessage;
+        }
+
+        void cancelAllQueries()
+        {
             // All queries will be cancelled.
             for (auto i = deferredQueries.begin(); i != deferredQueries.end(); ++i)
             {
@@ -90,25 +141,6 @@ DENG2_PIMPL(RemoteFeedRelay)
             {
                 i.value().cancel();
             }
-        }
-
-        virtual void wasConnected()
-        {
-            state = Ready;
-            sendDeferredQueries();
-        }
-
-        virtual void wasDisconnected()
-        {
-            state = Deinitialized;
-        }
-
-        virtual void handleError(QString errorMessage)
-        {
-            LOG_NET_ERROR("Error accessing remote file repository \"%s\": %s " DENG2_CHAR_MDASH
-                          "files from repository may not be available")
-                    << address
-                    << errorMessage;
         }
 
         void sendQuery(Query query)
@@ -147,50 +179,56 @@ DENG2_PIMPL(RemoteFeedRelay)
             deferredQueries.clear();
         }
 
-        void metadataReceived(Query::Id id, DictionaryValue const &metadata)
+        Query *findQuery(Query::Id id)
         {
             auto found = pendingQueries.find(id);
             if (found != pendingQueries.end())
             {
-                auto &query = found.value();
-                if (query.fileList)
+                return &found.value();
+            }
+            return nullptr;
+        }
+
+        void metadataReceived(Query::Id id, DictionaryValue const &metadata)
+        {
+            if (auto *query = findQuery(id))
+            {
+                if (query->fileList)
                 {
-                    query.fileList->call(metadata);
+                    query->fileList->call(metadata);
                 }
-                pendingQueries.erase(found);
+                pendingQueries.remove(id);
             }
         }
 
-        void chunkReceived(Query::Id id, duint64 startOffset, Block const &chunk, duint64 fileSize)
+        void chunkReceived(Query::Id id, duint64 startOffset, Block const &chunk,duint64 fileSize)
         {
-            auto found = pendingQueries.find(id);
-            if (found != pendingQueries.end())
+            if (auto *query = findQuery(id))
             {
-                auto &query = found.value();
-
                 // Get rid of cancelled queries.
-                if (!query.isValid())
+                if (!query->isValid())
                 {
-                    pendingQueries.erase(found);
+                    pendingQueries.remove(id);
                     return;
                 }
 
                 // Before the first chunk, notify about the total size.
-                if (!query.fileSize)
+                if (!query->fileSize)
                 {
-                    query.fileContents->call(0, Block(), fileSize);
+                    query->fileContents->call(0, Block(), fileSize);
                 }
 
-                query.fileSize = fileSize;
-                query.receivedBytes += chunk.size();
+                query->fileSize = fileSize;
+                query->receivedBytes += chunk.size();
 
                 // Notify about progress and provide the data chunk to the requestor.
-                query.fileContents->call(startOffset, chunk, fileSize - query.receivedBytes);
+                query->fileContents->call(startOffset, chunk,
+                                          fileSize - query->receivedBytes);
 
-                if (fileSize == query.receivedBytes)
+                if (fileSize == query->receivedBytes)
                 {
                     // Transfer complete.
-                    pendingQueries.erase(found);
+                    pendingQueries.remove(id);
                 }
             }
         }
@@ -294,17 +332,266 @@ DENG2_PIMPL(RemoteFeedRelay)
         }
     };
 
+    /**
+     * Repository of files hosted on a web server as a file tree. Assumed to come
+     * with a Unix-style "ls-laR.gz" directory tree index (e.g., an idgames mirror).
+     */
+    struct WebRepositoryLink : public RepositoryLink
+    {
+        QSet<QNetworkReply *> pendingRequests;
+
+        struct FileEntry : public PathTree::Node
+        {
+            duint64 size = 0;
+            Time modTime;
+
+            FileEntry(PathTree::NodeArgs const &args) : Node(args) {}
+            FileEntry() = delete;
+        };
+        using FileTree = PathTreeT<FileEntry>;
+        LockableT<std::shared_ptr<FileTree>> fileTree;
+
+        WebRepositoryLink(RemoteFeedRelay::Impl *d, String const &address)
+            : RepositoryLink(d, address)
+        {
+            // Fetch the repository index.
+            {
+                QNetworkRequest req(QUrl(address / "ls-laR.gz"));
+                req.setRawHeader("User-Agent", Version::currentBuild().userAgent().toLatin1());
+
+                QNetworkReply *reply = d->network->get(req);
+                QObject::connect(reply, &QNetworkReply::finished, [this, reply] ()
+                {
+                    reply->deleteLater();
+                    if (reply->error() == QNetworkReply::NoError)
+                    {
+                        parseUnixDirectoryListing(reply->readAll());
+                    }
+                    else
+                    {
+                        handleError(reply->errorString());
+                        wasDisconnected();
+                    }
+                });
+            }
+        }
+
+        void parseUnixDirectoryListing(QByteArray data)
+        {
+            // This may be a long list, so let's do it in a background thread.
+            // The link will be marked connected only after the data has been parsed.
+
+            *this += async([this, data] () -> String
+            {
+                Block const listing = gDecompress(data);
+                QTextStream is(listing, QIODevice::ReadOnly);
+                is.setCodec("UTF-8");
+                QRegularExpression const reDir("^\\.?(.*):$");
+                QRegularExpression const reTotal("^total\\s+\\d+$");
+                QRegularExpression const reFile("^(-|d)[-rwxs]+\\s+\\d+\\s+\\w+\\s+\\w+\\s+"
+                                                "(\\d+)\\s+(\\w+\\s+\\d+\\s+[0-9:]+)\\s+(.*)$",
+                                                QRegularExpression::CaseInsensitiveOption);
+                String currentPath;
+                bool ignore = false;
+                QRegularExpression const reIncludedPaths("^/(levels|music|sounds|themes)");
+
+                std::shared_ptr<FileTree> tree(new FileTree);
+                while (!is.atEnd())
+                {
+                    if (String const line = is.readLine().trimmed())
+                    {
+                        if (!currentPath)
+                        {
+                            // This should be a directory path.
+                            auto match = reDir.match(line);
+                            if (match.hasMatch())
+                            {
+                                currentPath = match.captured(1);
+                                qDebug() << "[WebRepositoryLink] Parsing path:" << currentPath;
+
+                                ignore = !reIncludedPaths.match(currentPath).hasMatch();
+                            }
+                        }
+                        else if (!ignore && reTotal.match(line).hasMatch())
+                        {
+                            // Ignore directory sizes.
+                        }
+                        else if (!ignore)
+                        {
+                            auto match = reFile.match(line);
+                            if (match.hasMatch())
+                            {
+                                bool const isFolder = (match.captured(1) == QStringLiteral("d"));
+                                if (!isFolder)
+                                {
+                                    String const name = match.captured(4);
+                                    if (name.startsWith(QChar('.')) || name.contains(" -> "))
+                                        continue;
+
+                                    auto &entry = tree->insert(currentPath / name);
+                                    entry.size = match.captured(2).toULongLong(nullptr, 10);;
+                                    entry.modTime = Time::fromText(match.captured(3), Time::UnixLsStyleDateTime);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        currentPath.clear();
+                    }
+                }
+                qDebug() << "file tree contains" << tree->size() << "entries";
+                {
+                    // It is now ready for use.
+                    DENG2_GUARD(fileTree);
+                    fileTree.value = tree;
+                }
+                return String();
+            },
+            [this] (String const &errorMessage)
+            {
+                if (!errorMessage)
+                {
+                    wasConnected();
+                }
+                else
+                {
+                    handleError("Failed to parse directory listing: " + errorMessage);
+                    wasDisconnected();
+                }
+            });
+        }
+
+        ~WebRepositoryLink()
+        {
+            foreach (auto *reply, pendingRequests)
+            {
+                reply->deleteLater();
+            }
+        }
+
+        void transmit(Query const &query) override
+        {
+            // We can answer population queries instantly.
+            if (query.fileList)
+            {
+                handleFileListQueryAsync(query);
+                return;
+            }
+
+            String url = address;
+            QNetworkRequest req(url);
+            req.setRawHeader("User-Agent", Version::currentBuild().userAgent().toLatin1());
+
+            // TODO: Configure the request.
+
+            QNetworkReply *reply = d->network->get(req);
+            pendingRequests.insert(reply);
+
+            auto const id = query.id;
+            QObject::connect(reply, &QNetworkReply::finished, [this, id, reply] ()
+            {
+                handleReply(id, reply);
+            });
+        }
+
+        Block metaIdForFileEntry(FileEntry const &entry) const
+        {
+            if (entry.isBranch()) return Block(); // not applicable
+
+            Block data;
+            Writer writer(data);
+            writer << address << entry.path() << entry.size << entry.modTime;
+            return data.md5Hash();
+        }
+
+        void handleFileListQueryAsync(Query query)
+        {
+            Query::Id id = query.id;
+            String const queryPath = query.path;
+            *this += async([this, queryPath] () -> std::shared_ptr<DictionaryValue>
+            {
+                DENG2_GUARD(fileTree);
+                if (auto const *dir = fileTree.value->tryFind
+                        (queryPath, FileTree::MatchFull | FileTree::NoLeaf))
+                {
+                    std::shared_ptr<DictionaryValue> list(new DictionaryValue);
+
+                    static String const VAR_TYPE("type");
+                    static String const VAR_MODIFIED_AT("modifiedAt");
+                    static String const VAR_SIZE("size");
+                    static String const VAR_META_ID("metaId");
+
+                    auto addMeta = [this]
+                            (DictionaryValue &list, PathTree::Nodes const &nodes)
+                    {
+                        for (auto i = nodes.begin(); i != nodes.end(); ++i)
+                        {
+                            auto const &entry = i.value()->as<FileEntry>();
+                            list.add(new TextValue(entry.name()),
+                                      RecordValue::takeRecord(
+                                          Record::withMembers(
+                                              VAR_TYPE, entry.isLeaf()? 0 : 1,
+                                              VAR_SIZE, entry.size,
+                                              VAR_MODIFIED_AT, entry.modTime,
+                                              VAR_META_ID, metaIdForFileEntry(entry)
+                                          )));
+                        }
+                    };
+
+                    addMeta(*list.get(), dir->children().branches);
+                    addMeta(*list.get(), dir->children().leaves);
+
+                    return list;
+                }
+                return nullptr;
+            },
+            [this, id] (std::shared_ptr<DictionaryValue> list)
+            {
+                metadataReceived(id, list? *list : DictionaryValue());
+            });
+        }
+
+        void handleReply(Query::Id id, QNetworkReply *reply)
+        {
+            reply->deleteLater();
+            if (reply->error() == QNetworkReply::NoError)
+            {
+                QByteArray const data = reply->readAll();
+
+            }
+            else
+            {
+                LOG_NET_WARNING(reply->errorString());
+            }
+        }
+
+    };
+
     RemoteFeedProtocol protocol;
     QHash<String, RepositoryLink *> repositories; // owned
+    std::unique_ptr<QNetworkAccessManager> network;
 
     Impl(Public *i) : Base(i)
-    {}
+    {
+        network.reset(new QNetworkAccessManager);
+
+        auto *cache = new QNetworkDiskCache;
+        String const dir = NativePath(QStandardPaths::writableLocation(QStandardPaths::CacheLocation))
+                / "RemoteFiles";
+        cache->setCacheDirectory(dir);
+        network->setCache(cache);
+    }
 
     ~Impl()
     {
         qDeleteAll(repositories.values());
     }
+
+    DENG2_PIMPL_AUDIENCE(Status)
 };
+
+DENG2_AUDIENCE_METHOD(RemoteFeedRelay, Status)
 
 RemoteFeedRelay &RemoteFeedRelay::get()
 {
@@ -324,7 +611,9 @@ RemoteFeed *RemoteFeedRelay::addServerRepository(String const &serverAddress, St
 
 RemoteFeed *RemoteFeedRelay::addRepository(String const &address)
 {
-    return nullptr;
+    auto *repo = new Impl::WebRepositoryLink(d, address);
+    d->repositories.insert(address, repo);
+    return new RemoteFeed(address);
 }
 
 void RemoteFeedRelay::removeRepository(const de::String &address)
@@ -343,6 +632,16 @@ StringList RemoteFeedRelay::repositories() const
         repos << a;
     }
     return repos;
+}
+
+bool RemoteFeedRelay::isConnected(String const &address) const
+{
+    auto found = d->repositories.constFind(address);
+    if (found != d->repositories.constEnd())
+    {
+        return found.value()->state == Impl::RepositoryLink::Ready;
+    }
+    return false;
 }
 
 RemoteFeedRelay::FileListRequest

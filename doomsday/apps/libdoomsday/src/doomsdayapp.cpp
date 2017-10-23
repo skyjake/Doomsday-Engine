@@ -48,6 +48,7 @@
 #include <de/MetadataBank>
 #include <de/NativeFile>
 #include <de/PackageLoader>
+#include <de/RemoteFeedRelay>
 #include <de/ScriptSystem>
 #include <de/TextValue>
 #include <de/c_wrapper.h>
@@ -348,7 +349,7 @@ DENG2_PIMPL(DoomsdayApp)
 
     void initPackageFolders()
     {
-        Folder &packs = FileSystem::get().makeFolder(PATH_LOCAL_PACKS, FS::DontInheritFeeds);
+        Folder &packs = FS::get().makeFolder(PATH_LOCAL_PACKS, FS::DontInheritFeeds);
         packs.clear();
         packs.clearFeeds();
 
@@ -383,6 +384,13 @@ DENG2_PIMPL(DoomsdayApp)
         }
 
         packs.populate(Folder::PopulateAsyncFullTree);
+    }
+
+    void initRemoteRepositories()
+    {
+        FS::get().makeFolderWithFeed("/remote/idgames",
+                RemoteFeedRelay::get().addRepository("http://www.gamers.org/pub/idgames/"),
+                Folder::PopulateAsyncFullTree);
     }
 
     void folderPopulationFinished() override
@@ -480,10 +488,14 @@ void DoomsdayApp::initialize()
     d->initWadFolders();
     d->initPackageFolders();
 
-    Folder::waitForPopulation();
+    // We need to access the local file system to complete initialization.
+    Folder::waitForPopulation(Folder::BlockingMainThread);
 
     d->dataBundles.identify();
     d->gameProfiles.deserialize();
+
+    // Register some remote repositories.
+    d->initRemoteRepositories();
 
     d->initialized = true;
 }
