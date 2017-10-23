@@ -1063,5 +1063,5 @@ void PackagesWidget::operator << (PersistentState const &fromState)
 void PackagesWidget::refreshPackages()
 {
     d->showProgressIndicator(true);
-    App::fileSystem().refresh();
+    App::fileSystem().refreshAsync();
 }

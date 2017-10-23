@@ -30,6 +30,7 @@
 #include <de/ProgressWidget>
 #include <de/SignalAction>
 #include <de/Log>
+#include <de/Version>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QDir>
@@ -94,7 +95,7 @@ DENG_GUI_PIMPL(UpdateDownloadDialog)
         savedFilePath = UpdaterSettings().downloadPath() / path.fileName();
 
         QNetworkRequest request(uri);
-        request.setRawHeader("User-Agent", Net_UserAgent().toLatin1());
+        request.setRawHeader("User-Agent", Version::currentBuild().userAgent().toLatin1());
         reply = network->get(request);
 
         QObject::connect(reply, SIGNAL(metaDataChanged()), thisPublic, SLOT(replyMetaDataChanged()));

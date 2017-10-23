@@ -435,12 +435,7 @@ void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
 
         // Wait async until remote files have been populated so we can decide if
         // anything needs to be downloaded.
-        async([] ()
-        {
-            Folder::waitForPopulation(); // remote feeds populating...
-            return 0;
-        },
-        [this, joinProfile, info] (int)
+        Folder::afterPopulation([this, joinProfile, info] ()
         {
             // Now we know all the files that the server will be providing.
             // If we are missing any of the packages, download a copy from the server.

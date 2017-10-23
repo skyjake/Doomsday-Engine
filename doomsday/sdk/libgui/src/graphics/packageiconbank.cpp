@@ -102,7 +102,8 @@ Id PackageIconBank::packageIcon(File const &packageFile)
         // Already have it.
         return TextureBank::texture(packagePath);
     }
-    qDebug() << "[packageIcon] starting load of" << packagePath.toString();
+    LOG_AS("PackageIconBank");
+    LOG_RES_VERBOSE("Loading icon from \"%s\"") << packagePath.toString();
     // Every new request goes to the front of the queue.
     load(packagePath, BeforeQueued);
     return Id::None;

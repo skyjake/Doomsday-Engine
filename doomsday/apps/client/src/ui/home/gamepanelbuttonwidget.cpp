@@ -231,7 +231,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
                     String const path = savedItems.at(saves->selectedPos()).savePath();
                     self().unselectSave();
                     App::rootFolder().destroyFile(path);
-                    App::fileSystem().refresh();
+                    FS::get().refreshAsync();
                 }))
                 << new ui::ActionItem(tr("Cancel"), new Action /* nop */);
         self().add(pop);

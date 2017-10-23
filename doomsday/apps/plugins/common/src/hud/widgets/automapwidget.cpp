@@ -207,7 +207,7 @@ namespace internal
     }
 
 }  // namespace internal
-using namespace internal;
+using namespace ::internal;
 
 DENG2_PIMPL(AutomapWidget)
 {
