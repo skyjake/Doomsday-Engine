@@ -572,7 +572,7 @@ DENG2_PIMPL(Bank)
 
         if (Folder *folder = serialCache->folder())
         {
-            Folder::waitForPopulation();
+            Folder::waitForPopulation(Folder::BlockingMainThread);
             folder->destroyAllFilesRecursively();
         }
     }

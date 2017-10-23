@@ -268,9 +268,8 @@ DENG2_PIMPL(App)
         // Metadata for files.
         metaBank.reset(new MetadataBank);
 
-        // Populate the file system.
-        fs.refresh();
-        Folder::waitForPopulation();
+        // Populate the file system (blocking).
+        fs.root().populate(Folder::PopulateFullTree);
 
         // Ensure known subfolders exist:
         // - /home/configs is used by de::Profiles.

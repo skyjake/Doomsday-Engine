@@ -19,6 +19,8 @@
 
 #include "de/Folder"
 
+#include "de/App"
+#include "de/Async"
 #include "de/DirectoryFeed"
 #include "de/FS"
 #include "de/Feed"
@@ -507,9 +509,33 @@ filesys::Node const *Folder::tryGetChild(String const &name) const
     return nullptr;
 }
 
-void Folder::waitForPopulation()
+void Folder::waitForPopulation(WaitBehavior waitBehavior)
 {
+    if (waitBehavior == OnlyInBackground && App::inMainThread())
+    {
+        DENG2_ASSERT(!App::inMainThread());
+        throw Error("Folder::waitForPopulation", "Not allowed to block the main thread");
+    }
     internal::populateTasks.waitForDone();
+}
+
+AsyncTask *Folder::afterPopulation(std::function<void ()> func)
+{
+    if (!isPopulatingAsync())
+    {
+        func();
+        return nullptr;
+    }
+
+    return async([] ()
+    {
+        waitForPopulation();
+        return 0;
+    },
+    [func] (int)
+    {
+        func();
+    });
 }
 
 bool Folder::isPopulatingAsync()

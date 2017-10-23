@@ -145,9 +145,10 @@ public:
     Folder const &root() const;
 
     /**
-     * Refresh the file system. Populates all folders with files from the feeds.
+     * Refresh the file system asynchronously. Populates all folders with files from
+     * the feeds.
      */
-    void refresh();
+    void refreshAsync();
 
     enum FolderCreationBehavior {
         DontInheritFeeds   = 0,     ///< Subfolder will not have any feeds created for them.

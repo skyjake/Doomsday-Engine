@@ -28,6 +28,7 @@
 
 namespace de {
 
+struct AsyncTask;
 class Feed;
 
 /**
@@ -360,7 +361,23 @@ public:
     Node const *tryGetChild(String const &name) const;
 
 public:
-    static void waitForPopulation();
+    enum WaitBehavior {
+        OnlyInBackground,
+        BlockingMainThread,
+    };
+    static void waitForPopulation(WaitBehavior waitBehavior = OnlyInBackground);
+
+    /**
+     * When all folder population tasks are finished, performs a callback in the main
+     * thread. Does not block the main thread. If nothing is currently being populated,
+     * the callback is called immediately before the method returns.
+     *
+     * @param func  Callback to be called in the main thread.
+     *
+     * @return Task handle. Can be ignored or added to an AsyncScope.
+     */
+    static AsyncTask *afterPopulation(std::function<void ()> func);
+
     static bool isPopulatingAsync();
 
 private:
