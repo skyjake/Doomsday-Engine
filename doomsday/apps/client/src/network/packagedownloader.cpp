@@ -246,7 +246,9 @@ void PackageDownloader::mountFileRepository(shell::ServerInfo const &info)
         d->isCancelled = false;
         FS::get().makeFolderWithFeed
                 (PATH_REMOTE_SERVER,
-                 RemoteFeedRelay::get().addServerRepository(d->fileRepository, PATH_SERVER_REPOSITORY_ROOT),
+                 RemoteFeedRelay::get().addRepository(RemoteFeedRelay::Server,
+                                                      d->fileRepository,
+                                                      PATH_SERVER_REPOSITORY_ROOT),
                  Folder::PopulateAsyncFullTree);
     }
 }

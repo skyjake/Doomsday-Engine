@@ -19,10 +19,10 @@
 #ifndef LIBDENG2_REMOTEFEEDPROTOCOL_H
 #define LIBDENG2_REMOTEFEEDPROTOCOL_H
 
-#include "../DictionaryValue"
-#include "../File"
-#include "../IdentifiedPacket"
-#include "../Protocol"
+#include "../../DictionaryValue"
+#include "../../File"
+#include "../../IdentifiedPacket"
+#include "../../Protocol"
 
 namespace de {
 

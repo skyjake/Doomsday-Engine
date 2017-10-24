@@ -19,10 +19,12 @@
 #ifndef LIBDENG2_REMOTEFEEDRELAY_H
 #define LIBDENG2_REMOTEFEEDRELAY_H
 
-#include "../RemoteFeed"
-#include "../Record"
-#include "../DictionaryValue"
-#include "../AsyncCallback"
+#include "../../RemoteFeed"
+#include "../../Record"
+#include "../../DictionaryValue"
+#include "../../AsyncCallback"
+
+#include <QNetworkAccessManager>
 
 namespace de {
 
@@ -43,12 +45,20 @@ public:
 
     static RemoteFeedRelay &get();
 
+    enum RepositoryType {
+        Server,
+        NativePackages,
+        IdgamesFileTree,
+    };
+
+    enum Status { Disconnected, Connected };
+
+    DENG2_DEFINE_AUDIENCE2(Status, void remoteRepositoryStatusChanged(String const &address, Status))
+
 public:
     RemoteFeedRelay();
 
-    RemoteFeed *addServerRepository(String const &serverAddress, String const &remoteRoot);
-
-    RemoteFeed *addRepository(String const &address);
+    RemoteFeed *addRepository(RepositoryType type, String const &address, String const &remoteRoot = "/");
 
     void removeRepository(String const &address);
 
@@ -64,9 +74,7 @@ public:
                                           String filePath,
                                           DataReceivedFunc dataReceived);
 
-public:
-    enum Status { Disconnected, Connected };
-    DENG2_DEFINE_AUDIENCE2(Status, void remoteRepositoryStatusChanged(String const &address, Status))
+    QNetworkAccessManager &network();
 
 private:
     DENG2_PRIVATE(d)

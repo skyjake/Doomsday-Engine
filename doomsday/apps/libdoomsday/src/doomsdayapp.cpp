@@ -389,7 +389,8 @@ DENG2_PIMPL(DoomsdayApp)
     void initRemoteRepositories()
     {
         FS::get().makeFolderWithFeed("/remote/idgames",
-                RemoteFeedRelay::get().addRepository("http://www.gamers.org/pub/idgames/"),
+                RemoteFeedRelay::get().addRepository(RemoteFeedRelay::IdgamesFileTree,
+                                                     "http://www.gamers.org/pub/idgames/"),
                 Folder::PopulateAsyncFullTree);
     }
 

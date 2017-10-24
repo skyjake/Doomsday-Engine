@@ -19,8 +19,8 @@
 #ifndef LIBDENG2_REMOTEFEED_H
 #define LIBDENG2_REMOTEFEED_H
 
-#include "../Feed"
-#include "../Address"
+#include "../../Feed"
+#include "../../Address"
 
 namespace de {
 

@@ -19,8 +19,8 @@
 #ifndef LIBDENG2_REMOTEFILE_H
 #define LIBDENG2_REMOTEFILE_H
 
-#include "../LinkFile"
-#include "../Asset"
+#include "../../LinkFile"
+#include "../../Asset"
 
 namespace de {
 

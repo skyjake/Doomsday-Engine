@@ -1,4 +1,4 @@
-/** @file link.h  Network connection to a server.
+/** @file link.cpp  Network connection to a server.
  *
  * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
