@@ -27,6 +27,8 @@ public:
     IdgamesLink(de::String const &address);
 
     void parseRepositoryIndex(QByteArray data) override;
+
+    static de::filesys::Link *construct(de::String const &address);
 };
 
 #endif // LIBDOOMSDAY_FILESYS_IDGAMESLINK_H

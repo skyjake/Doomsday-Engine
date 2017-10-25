@@ -101,7 +101,7 @@ DENG2_PIMPL(App)
 
     std::unique_ptr<UnixInfo> unixInfo;
 
-    RemoteFeedRelay remoteFeedRelay;
+    filesys::RemoteFeedRelay remoteFeedRelay;
 
     /// The configuration.
     Path configPath;
@@ -892,7 +892,7 @@ Folder &App::homeFolder()
     return rootFolder().locate<Folder>("home");
 }
 
-RemoteFeedRelay &App::remoteFeedRelay()
+filesys::RemoteFeedRelay &App::remoteFeedRelay()
 {
     return DENG2_APP->d->remoteFeedRelay;
 }

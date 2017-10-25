@@ -28,6 +28,7 @@
 #include "doomsday/filesys/datafile.h"
 #include "doomsday/filesys/datafolder.h"
 #include "doomsday/filesys/virtualmappings.h"
+#include "doomsday/filesys/idgameslink.h"
 #include "doomsday/busymode.h"
 #include "doomsday/world/world.h"
 #include "doomsday/world/entitydef.h"
@@ -151,6 +152,9 @@ DENG2_PIMPL(DoomsdayApp)
             }
         });
         configSaveTimer.start();
+
+        // File system extensions.
+        filesys::RemoteFeedRelay::get().defineLink(IdgamesLink::construct);
     }
 
     ~Impl()
@@ -389,8 +393,7 @@ DENG2_PIMPL(DoomsdayApp)
     void initRemoteRepositories()
     {
         FS::get().makeFolderWithFeed("/remote/idgames",
-                RemoteFeedRelay::get().addRepository(RemoteFeedRelay::IdgamesFileTree,
-                                                     "http://www.gamers.org/pub/idgames/"),
+                filesys::RemoteFeedRelay::get().addRepository("http://www.gamers.org/pub/idgames/"),
                 Folder::PopulateAsyncFullTree);
     }
 

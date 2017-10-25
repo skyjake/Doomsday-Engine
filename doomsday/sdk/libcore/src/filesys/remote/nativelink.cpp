@@ -26,6 +26,8 @@
 namespace de {
 namespace filesys {
 
+static String const URL_SCHEME("doomsday:");
+
 DENG2_PIMPL(NativeLink)
 {
     RemoteFeedProtocol protocol;
@@ -76,13 +78,24 @@ NativeLink::NativeLink(String const &address)
     : Link(address)
     , d(new Impl(this))
 {
+    DENG2_ASSERT(address.startsWith(URL_SCHEME));
+
     QObject::connect(&d->socket, &Socket::connected,     [this] () { wasConnected(); });
     QObject::connect(&d->socket, &Socket::disconnected,  [this] () { wasDisconnected(); });
     QObject::connect(&d->socket, &Socket::error,         [this] (QString msg) { handleError(msg); });
 
     QObject::connect(&d->socket, &Socket::messagesReady, [this] () { d->receiveMessages(); });
 
-    d->socket.open(address);
+    d->socket.open(address.mid(URL_SCHEME.size()));
+}
+
+Link *NativeLink::construct(String const &address)
+{
+    if (address.startsWith(URL_SCHEME))
+    {
+        return new NativeLink(address);
+    }
+    return nullptr;
 }
 
 void NativeLink::wasConnected()

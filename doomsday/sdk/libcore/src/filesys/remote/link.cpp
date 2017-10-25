@@ -16,7 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/filesys/remote/link.h"
+#include "de/filesys/Link"
+#include "de/RemoteFeedRelay"
 
 #include <de/App>
 #include <de/Async>
@@ -120,6 +121,9 @@ Link::Link(String const &address)
     d->address = address;
 }
 
+Link::~Link()
+{}
+
 String Link::address() const
 {
     return d->address;
@@ -170,7 +174,7 @@ void Link::cleanupQueries()
     d->cleanup();
 }
 
-Link::Query *Link::findQuery(QueryId id)
+Query *Link::findQuery(QueryId id)
 {
     auto found = d->pendingQueries.find(id);
     if (found != d->pendingQueries.end())
@@ -244,29 +248,6 @@ void Link::chunkReceived(QueryId id, duint64 startOffset, Block const &chunk, du
             d->pendingQueries.remove(id);
         }
     }
-}
-
-//---------------------------------------------------------------------------------------
-
-Link::Query::Query(RemoteFeedRelay::FileListRequest req, String path)
-    : path(path), fileList(req)
-{}
-
-Link::Query::Query(RemoteFeedRelay::FileContentsRequest req, String path)
-    : path(path), fileContents(req)
-{}
-
-bool Link::Query::isValid() const
-{
-    if (fileList)     return fileList    ->isValid();
-    if (fileContents) return fileContents->isValid();
-    return false;
-}
-
-void Link::Query::cancel()
-{
-    if (fileList)     fileList    ->cancel();
-    if (fileContents) fileContents->cancel();
 }
 
 } // namespace filesys

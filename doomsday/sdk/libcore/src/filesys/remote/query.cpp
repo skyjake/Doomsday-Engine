@@ -1,4 +1,4 @@
-/** @file remote/nativelink.h
+/** @file remote/query.cpp
  *
  * @authors Copyright (c) 2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,33 +16,31 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG2_FILESYS_NATIVELINK_H
-#define DENG2_FILESYS_NATIVELINK_H
-
-#include "link.h"
+#include "de/filesys/Query"
 
 namespace de {
 namespace filesys {
 
-/**
- * Link to a native Doomsday remote repository (see RemoteFeedUser on server).
- */
-class DENG2_PUBLIC NativeLink : public Link
+Query::Query(FileListRequest req, String path)
+    : path(path), fileList(req)
+{}
+
+Query::Query(FileContentsRequest req, String path)
+    : path(path), fileContents(req)
+{}
+
+bool Query::isValid() const
 {
-public:
-    static Link *construct(String const &address);
+    if (fileList)     return fileList    ->isValid();
+    if (fileContents) return fileContents->isValid();
+    return false;
+}
 
-protected:
-    NativeLink(String const &address);
-
-    void wasConnected() override;
-    void transmit(Query const &query) override;
-
-private:
-    DENG2_PRIVATE(d)
-};
+void Query::cancel()
+{
+    if (fileList)     fileList    ->cancel();
+    if (fileContents) fileContents->cancel();
+}
 
 } // namespace filesys
 } // namespace de
-
-#endif // DENG2_FILESYS_NATIVELINK_H

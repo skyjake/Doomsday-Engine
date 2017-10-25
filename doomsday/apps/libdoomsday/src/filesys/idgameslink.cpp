@@ -108,5 +108,15 @@ void IdgamesLink::parseRepositoryIndex(QByteArray data)
             handleError("Failed to parse directory listing: " + errorMessage);
             wasDisconnected();
         }
-    });
+});
+}
+
+filesys::Link *IdgamesLink::construct(String const &address)
+{
+    if ((address.startsWith("http:") || address.startsWith("https:")) &&
+        !address.contains("dengine.net"))
+    {
+        return new IdgamesLink(address);
+    }
+    return nullptr;
 }

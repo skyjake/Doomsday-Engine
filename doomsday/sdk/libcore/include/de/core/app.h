@@ -48,11 +48,11 @@ class Module;
 class Path;
 class NativePath;
 class PackageLoader;
-class RemoteFeedRelay;
 class ScriptSystem;
 class System;
 class UnixInfo;
 
+namespace filesys { class RemoteFeedRelay; }
 namespace game { class Game; }
 
 /**
@@ -296,7 +296,7 @@ public:
     /**
      * Returns the remote feed relay that manages connections to remote file repositories.
      */
-    static RemoteFeedRelay &remoteFeedRelay();
+    static filesys::RemoteFeedRelay &remoteFeedRelay();
 
     /**
      * Returns the application's package loader.

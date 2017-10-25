@@ -21,8 +21,8 @@
 
 #include "../../DictionaryValue"
 #include "../../IdentifiedPacket"
-#include "../../RemoteFeedRelay"
 #include "../../String"
+#include "../Query"
 
 namespace de {
 
@@ -31,49 +31,31 @@ class AsyncScope;
 namespace filesys {
 
 /**
- * Active connection to a remote repository. One link is shared by all
- * RemoteFeed instances accessing the same repository.
+ * Base class for an active connection to a remote repository. Specialized subclasses
+ * handle specific types of repositories. One link instance is shared by all RemoteFeed
+ * instances accessing the same repository.
+ *
+ * @ingroup fs
  */
 class DENG2_PUBLIC Link
 {
 public:
     enum State { Deinitialized, Initializing, Ready };
 
-    using QueryId = IdentifiedPacket::Id;
-
-    struct DENG2_PUBLIC Query
-    {
-        QueryId id;
-        String path;
-        RemoteFeedRelay::FileListRequest fileList;
-        RemoteFeedRelay::FileContentsRequest fileContents;
-        duint64 receivedBytes = 0;
-        duint64 fileSize = 0;
-
-        Query(RemoteFeedRelay::FileListRequest req, String path);
-        Query(RemoteFeedRelay::FileContentsRequest req, String path);
-        bool isValid() const;
-        void cancel();
-    };
+    typedef std::function<Link * (String const &address)> Constructor;
 
 public:
-    Link(String const &address);
-
     virtual ~Link();
 
     String address() const;
 
     State state() const;
 
-    virtual void wasConnected();
-
-    virtual void wasDisconnected();
-
-    virtual void handleError(QString errorMessage);
-
     void sendQuery(Query query);
 
 protected:
+    Link(String const &address);
+
     AsyncScope &scope();
 
     Query *findQuery(QueryId id);
@@ -86,6 +68,12 @@ protected:
 
     void chunkReceived(QueryId id, duint64 startOffset, Block const &chunk, duint64 fileSize);
 
+    virtual void wasConnected();
+
+    virtual void wasDisconnected();
+
+    virtual void handleError(QString errorMessage);
+
     virtual void transmit(Query const &query) = 0;
 
 private:
@@ -95,4 +83,4 @@ private:
 } // namespace filesys
 } // namespace de
 
-#endif // DENG2_REMOTE_REPOSITORYLINK_H
+#endif // DENG2_FILESYS_LINK_H

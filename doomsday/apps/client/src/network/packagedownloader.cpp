@@ -240,15 +240,15 @@ void PackageDownloader::mountFileRepository(shell::ServerInfo const &info)
     // The remote repository feature was added in 2.1. Trying to send a RemoteFeed
     // request to an older server would just result in us getting immediately
     // disconnected.
+
     if (info.version() > Version(2, 1, 0, 2484))
     {
-        d->fileRepository = info.address().asText();
+        d->fileRepository = "doomsday:" + info.address().asText();
         d->isCancelled = false;
         FS::get().makeFolderWithFeed
                 (PATH_REMOTE_SERVER,
-                 RemoteFeedRelay::get().addRepository(RemoteFeedRelay::Server,
-                                                      d->fileRepository,
-                                                      PATH_SERVER_REPOSITORY_ROOT),
+                 filesys::RemoteFeedRelay::get().addRepository(d->fileRepository,
+                                                               PATH_SERVER_REPOSITORY_ROOT),
                  Folder::PopulateAsyncFullTree);
     }
 }
@@ -261,7 +261,7 @@ void PackageDownloader::unmountFileRepository()
     {
         trash(remoteFiles);
     }
-    RemoteFeedRelay::get().removeRepository(d->fileRepository);
+    filesys::RemoteFeedRelay::get().removeRepository(d->fileRepository);
     d->fileRepository.clear();
     d->isCancelled = false;
 }

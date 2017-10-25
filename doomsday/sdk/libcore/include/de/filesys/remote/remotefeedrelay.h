@@ -23,10 +23,13 @@
 #include "../../Record"
 #include "../../DictionaryValue"
 #include "../../AsyncCallback"
+#include "../Query"
+#include "../Link"
 
 #include <QNetworkAccessManager>
 
 namespace de {
+namespace filesys {
 
 /**
  * Connects to one or more remote file repositories and provides metadata and file
@@ -35,21 +38,13 @@ namespace de {
 class DENG2_PUBLIC RemoteFeedRelay
 {
 public:
-    typedef DictionaryValue FileList;
-
-    typedef std::function<void (FileList const &)> FileListFunc;
-    typedef std::function<void (duint64 startOffset, Block const &, duint64 remainingBytes)> DataReceivedFunc;
-
-    typedef std::shared_ptr<AsyncCallback<FileListFunc>>     FileListRequest;
-    typedef std::shared_ptr<AsyncCallback<DataReceivedFunc>> FileContentsRequest;
-
     static RemoteFeedRelay &get();
 
-    enum RepositoryType {
-        Server,
-        NativePackages,
-        IdgamesFileTree,
-    };
+//    enum RepositoryType {
+//        Server,
+//        NativePackages,
+//        IdgamesFileTree,
+//    };
 
     enum Status { Disconnected, Connected };
 
@@ -58,7 +53,16 @@ public:
 public:
     RemoteFeedRelay();
 
-    RemoteFeed *addRepository(RepositoryType type, String const &address, String const &remoteRoot = "/");
+    /**
+     * Defines a new type of remote repository link. The defined links are each
+     * offered a remote repository address, and the first one to create a Link instance
+     * based on the address will be used to communicate with the repository.
+     *
+     * @param linkConstructor  Constructor method.
+     */
+    void defineLink(Link::Constructor linkConstructor);
+
+    RemoteFeed *addRepository(String const &address, String const &remoteRoot = "/");
 
     void removeRepository(String const &address);
 
@@ -80,6 +84,7 @@ private:
     DENG2_PRIVATE(d)
 };
 
+} // namespace filesys
 } // namespace de
 
 #endif // LIBDENG2_REMOTEFEEDRELAY_H

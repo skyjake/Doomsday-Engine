@@ -36,7 +36,7 @@ DENG2_PIMPL(RemoteFile)
     String remotePath;
     Block remoteMetaId;
     Block buffer;
-    RemoteFeedRelay::FileContentsRequest fetching;
+    filesys::FileContentsRequest fetching;
 
     Impl(Public *i) : Base(i) {}
 
@@ -137,7 +137,7 @@ void RemoteFile::fetchContents()
 
     LOG_NET_MSG("Requesting download of \"%s\"") << name();
 
-    d->fetching = RemoteFeedRelay::get().fetchFileContents
+    d->fetching = filesys::RemoteFeedRelay::get().fetchFileContents
             (originFeed()->as<RemoteFeed>().repository(),
              d->remotePath,
              [this] (duint64 startOffset, Block const &chunk, duint64 remainingBytes)

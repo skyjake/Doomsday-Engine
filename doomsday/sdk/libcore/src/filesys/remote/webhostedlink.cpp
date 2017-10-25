@@ -17,10 +17,12 @@
  */
 
 #include "de/filesys/WebHostedLink"
-#include "de/PathTree"
+
 #include "de/Async"
-#include "de/TextValue"
+#include "de/PathTree"
 #include "de/RecordValue"
+#include "de/RemoteFeedRelay"
+#include "de/TextValue"
 
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -126,7 +128,7 @@ WebHostedLink::WebHostedLink(String const &address, String const &indexPath)
         QNetworkRequest req(QUrl(address / indexPath /*"ls-laR.gz"*/));
         req.setRawHeader("User-Agent", Version::currentBuild().userAgent().toLatin1());
 
-        QNetworkReply *reply = RemoteFeedRelay::get().network().get(req);
+        QNetworkReply *reply = filesys::RemoteFeedRelay::get().network().get(req);
         QObject::connect(reply, &QNetworkReply::finished, [this, reply] ()
         {
             reply->deleteLater();

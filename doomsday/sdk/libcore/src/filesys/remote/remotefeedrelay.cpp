@@ -23,16 +23,12 @@
 #include "de/Date"
 #include "de/DictionaryValue"
 #include "de/filesys/Link"
+#include "de/filesys/NativeLink"
 #include "de/Loop"
 #include "de/Message"
-//#include "de/PathTree"
-//#include "de/RecordValue"
 #include "de/RemoteFeedProtocol"
-//#include "de/Socket"
-//#include "de/TextValue"
 #include "de/Version"
 #include "de/charsymbols.h"
-//#include "de/data/gzip.h"
 
 #include <QNetworkAccessManager>
 #include <QNetworkDiskCache>
@@ -43,9 +39,11 @@
 #include <QFile>
 
 namespace de {
+namespace filesys {
 
 DENG2_PIMPL(RemoteFeedRelay)
 {
+    QList<Link::Constructor> linkConstructors;
     QHash<String, filesys::Link *> repositories; // owned
     std::unique_ptr<QNetworkAccessManager> network;
 
@@ -77,34 +75,30 @@ RemoteFeedRelay &RemoteFeedRelay::get()
 
 RemoteFeedRelay::RemoteFeedRelay()
     : d(new Impl(this))
-{}
-
-RemoteFeed *RemoteFeedRelay::addRepository(RepositoryType type, String const &address, String const &remoteRoot)
 {
-    Impl::RepositoryLink *repo = nullptr;
-    switch (type)
-    {
-    case Server:
-        repo = new Impl::NativeRepositoryLink(d, address);
-        break;
+    // Built-in constructors.
+    defineLink(NativeLink::construct);
+}
 
-    case NativePackages:
-        break;
+void RemoteFeedRelay::defineLink(filesys::Link::Constructor linkConstructor)
+{
+    d->linkConstructors.push_front(linkConstructor);
+}
 
-    case IdgamesFileTree:
-        repo = new Impl::IdgamesRepositoryLink(d, address);
-        break;
-    }
-    DENG2_ASSERT(repo);
-    if (repo)
+RemoteFeed *RemoteFeedRelay::addRepository(String const &address, String const &remoteRoot)
+{
+    for (auto constructor : d->linkConstructors)
     {
-        d->repositories.insert(address, repo);
-        return new RemoteFeed(address, remoteRoot);
+        if (auto *link = constructor(address))
+        {
+            d->repositories.insert(address, link);
+            return new RemoteFeed(address, remoteRoot);
+        }
     }
     return nullptr;
 }
 
-void RemoteFeedRelay::removeRepository(const de::String &address)
+void RemoteFeedRelay::removeRepository(String const &address)
 {
     if (auto *repo = d->repositories.take(address))
     {
@@ -132,7 +126,7 @@ bool RemoteFeedRelay::isConnected(String const &address) const
     return false;
 }
 
-RemoteFeedRelay::FileListRequest
+FileListRequest
 RemoteFeedRelay::fetchFileList(String const &repository, String folderPath, FileListFunc result)
 {
     DENG2_ASSERT(d->repositories.contains(repository));
@@ -144,14 +138,14 @@ RemoteFeedRelay::fetchFileList(String const &repository, String folderPath, File
         // The repository sockets are handled in the main thread.
         auto *repo = d->repositories[repository];
         request.reset(new FileListRequest::element_type(result));
-        repo->sendQuery(filesys::Link::Query(request, folderPath));
+        repo->sendQuery(Query(request, folderPath));
         done.post();
     });
     done.wait();
     return request;
 }
 
-RemoteFeedRelay::FileContentsRequest
+FileContentsRequest
 RemoteFeedRelay::fetchFileContents(String const &repository, String filePath, DataReceivedFunc dataReceived)
 {
     DENG2_ASSERT(d->repositories.contains(repository));
@@ -163,7 +157,7 @@ RemoteFeedRelay::fetchFileContents(String const &repository, String filePath, Da
         // The repository sockets are handled in the main thread.
         auto *repo = d->repositories[repository];
         FileContentsRequest request(new FileContentsRequest::element_type(dataReceived));
-        repo->sendQuery(filesys::Link::Query(request, filePath));
+        repo->sendQuery(Query(request, filePath));
         done.post();
     });
     done.wait();
@@ -175,4 +169,5 @@ QNetworkAccessManager &RemoteFeedRelay::network()
     return *d->network;
 }
 
+} // namespace filesys
 } // namespace de
