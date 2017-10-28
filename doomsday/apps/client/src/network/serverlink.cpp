@@ -24,7 +24,6 @@
 #include "network/net_demo.h"
 #include "network/net_event.h"
 #include "network/protocol.h"
-#include "network/packagedownloader.h"
 #include "client/cl_def.h"
 #include "ui/clientwindow.h"
 #include "ui/widgets/taskbarwidget.h"
@@ -83,7 +82,7 @@ DENG2_PIMPL(ServerLink)
     std::unique_ptr<GameProfile> serverProfile; ///< Profile used when joining.
     std::function<void (GameProfile const *)> profileResultCallback;
     std::function<void (Address, GameProfile const *)> profileResultCallbackWithAddress;
-    PackageDownloader downloader;
+    shell::PackageDownloader downloader;
     LoopCallback deferred; // for deferred actions
 
     Impl(Public *i, Flags flags)
@@ -361,7 +360,7 @@ ServerLink::ServerLink(Flags flags) : d(new Impl(this, flags))
     connect(this, SIGNAL(disconnected()), this, SLOT(linkDisconnected()));
 }
 
-PackageDownloader &ServerLink::packageDownloader()
+shell::PackageDownloader &ServerLink::packageDownloader()
 {
     return d->downloader;
 }
@@ -431,7 +430,7 @@ void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
         }
 
         // The server makes certain packages available for clients to download.
-        d->downloader.mountFileRepository(info);
+        d->downloader.mountServerRepository(info);
 
         // Wait async until remote files have been populated so we can decide if
         // anything needs to be downloaded.
@@ -445,7 +444,7 @@ void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
             StringList const neededPackages = joinProfile->unavailablePackages();
 
             // Show the download popup.
-            auto *dlPopup = new FileDownloadDialog;
+            auto *dlPopup = new FileDownloadDialog(d->downloader);
             dlPopup->setDeleteAfterDismissed(true);
             ClientWindow::main().root().addOnTop(dlPopup);
             dlPopup->open(DialogWidget::Modal);
@@ -460,7 +459,7 @@ void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
                 dlPopup->close();
                 if (d->downloader.isCancelled())
                 {
-                    d->downloader.unmountFileRepository();
+                    d->downloader.unmountServerRepository();
                     return;
                 }
 
@@ -472,7 +471,7 @@ void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
                             .arg(String::join(de::map(joinProfile->unavailablePackages(),
                                                       Package::splitToHumanReadable), "\n"));
                     LOG_NET_ERROR("Failed to join %s: ") << info.address() << errorMsg;
-                    d->downloader.unmountFileRepository();
+                    d->downloader.unmountServerRepository();
                     d->reportError(errorMsg);
                     return;
                 }
@@ -585,7 +584,7 @@ void ServerLink::disconnect()
         DENG2_FOR_AUDIENCE2(Leave, i) i->networkGameLeft();
 
         LOG_NET_NOTE("Link to server %s disconnected") << address();
-        d->downloader.unmountFileRepository();
+        d->downloader.unmountServerRepository();
         AbstractLink::disconnect();
 
         Net_StopGame();

@@ -27,6 +27,7 @@
 
 #include <de/NativePath>
 #include <de/Info>
+#include <de/shell/PackageDownloader>
 
 #include <QFlags>
 #include <string>
@@ -187,6 +188,8 @@ public:
 
 public:
     static DoomsdayApp &    app();
+    static de::shell::PackageDownloader &
+                            packageDownloader();
     static res::Bundles &   bundles();
     static Plugins &        plugins();
     static Games &          games();

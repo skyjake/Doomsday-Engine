@@ -80,7 +80,6 @@ static DoomsdayApp *theDoomsdayApp = nullptr;
 
 DENG2_PIMPL(DoomsdayApp)
 , public IFolderPopulationObserver
-//, DENG2_OBSERVES(filesys::RemoteFeedRelay, Status)
 {
     std::string ddBasePath; // Doomsday root directory is at...?
 
@@ -97,6 +96,7 @@ DENG2_PIMPL(DoomsdayApp)
     BusyMode busyMode;
     Players players;
     res::Bundles dataBundles;
+    shell::PackageDownloader packageDownloader;
     SaveGames saveGames;
     LoopCallback mainCall;
     QTimer configSaveTimer;
@@ -556,6 +556,11 @@ DoomsdayApp &DoomsdayApp::app()
 {
     DENG2_ASSERT(theDoomsdayApp);
     return *theDoomsdayApp;
+}
+
+shell::PackageDownloader &DoomsdayApp::packageDownloader()
+{
+    return DoomsdayApp::app().d->packageDownloader;
 }
 
 res::Bundles &DoomsdayApp::bundles()

@@ -355,6 +355,8 @@ void initCoreModule(Binder &binder, Record &coreModule)
                 << DENG2_FUNC_DEFS (Animation_SetValueFrom, "setValueFrom",
                                     "fromValue" << "toValue" << "span" << "delay", setValueFromArgs);
     }
+
+
 }
 
 } // namespace de

@@ -16,18 +16,21 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_PACKAGEDOWNLOADER_H
-#define DENG_CLIENT_PACKAGEDOWNLOADER_H
+#ifndef LIBSHELL_PACKAGEDOWNLOADER_H
+#define LIBSHELL_PACKAGEDOWNLOADER_H
 
 #include <de/Range>
-#include <de/shell/ServerInfo>
 #include <de/String>
+#include "ServerInfo"
+
+namespace de {
+namespace shell {
 
 /**
  * Utility for downloading packages from remote repositories.
  * @ingroup network
  */
-class PackageDownloader
+class LIBSHELL_PUBLIC PackageDownloader
 {
 public:
     PackageDownloader();
@@ -37,9 +40,9 @@ public:
      *
      * @param serverInfo  Server information.
      */
-    void mountFileRepository(de::shell::ServerInfo const &serverInfo);
+    void mountServerRepository(ServerInfo const &serverInfo);
 
-    void unmountFileRepository();
+    void unmountServerRepository();
 
     /**
      * Start downloading files for a set of packages. A notification callback is done
@@ -48,7 +51,7 @@ public:
      * @param packageIds  Packages to download from the remote repository.
      * @param callback    Called when the downloads are finished or cancelled.
      */
-    void download(de::StringList packageIds, std::function<void ()> callback);
+    void download(StringList packageIds, std::function<void ()> callback);
 
     de::String fileRepository() const;
 
@@ -59,6 +62,11 @@ public:
 
     bool isCancelled() const;
 
+    /**
+     * Determines whether downloads are currently active.
+     */
+    bool isActive() const;
+
 public:
     /**
      * Notified when file downloads are progressing. The ranges describe the remaining
@@ -66,11 +74,14 @@ public:
      * remaining to download. `bytes.size()` is the number of bytes downloaded so far.
      * `bytes.end` is the total number of bytes overall.
      */
-    DENG2_DEFINE_AUDIENCE2(Status, void downloadStatusUpdate(de::Rangei64 const &bytes,
-                                                             de::Rangei   const &files))
+    DENG2_DEFINE_AUDIENCE2(Status, void downloadStatusUpdate(Rangei64 const &bytes,
+                                                             Rangei   const &files))
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_PACKAGEDOWNLOADER_H
+} // namespace shell
+} // namespace de
+
+#endif // LIBSHELL_PACKAGEDOWNLOADER_H

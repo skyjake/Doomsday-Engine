@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "network/packagedownloader.h"
+#include "de/shell/PackageDownloader"
 
 #include <de/App>
 #include <de/FileSystem>
@@ -28,9 +28,9 @@
 #include <de/PackageLoader>
 #include <de/RemoteFeedRelay>
 #include <de/RemoteFile>
-#include <numeric>
 
-using namespace de;
+namespace de {
+namespace shell {
 
 static String const PATH_REMOTE_PACKS  = "/remote/packs";
 static String const PATH_REMOTE_SERVER = "/remote/server"; // local folder for RemoteFeed
@@ -41,12 +41,12 @@ DENG2_PIMPL(PackageDownloader)
 , DENG2_OBSERVES(Deletable, Deletion)
 {
     String fileRepository;
-    AssetGroup downloads;
-    QHash<IDownloadable *, Rangei64> downloadBytes;
+    bool isCancelled = false;
     dint64 totalBytes = 0;
     int numDownloads = 0;
+    AssetGroup downloads;
+    QHash<IDownloadable *, Rangei64> downloadBytes;
     std::function<void ()> postDownloadCallback;
-    bool isCancelled = false;
 
     Impl(Public *i) : Base(i)
     {}
@@ -235,7 +235,12 @@ bool PackageDownloader::isCancelled() const
     return d->isCancelled;
 }
 
-void PackageDownloader::mountFileRepository(shell::ServerInfo const &info)
+bool PackageDownloader::isActive() const
+{
+    return !d->downloads.isEmpty() && !d->downloads.isReady();
+}
+
+void PackageDownloader::mountServerRepository(shell::ServerInfo const &info)
 {
     // The remote repository feature was added in 2.1. Trying to send a RemoteFeed
     // request to an older server would just result in us getting immediately
@@ -249,7 +254,7 @@ void PackageDownloader::mountFileRepository(shell::ServerInfo const &info)
     }
 }
 
-void PackageDownloader::unmountFileRepository()
+void PackageDownloader::unmountServerRepository()
 {
     d->clearDownloads();
     d->unlinkRemotePackages();
@@ -300,3 +305,6 @@ void PackageDownloader::download(StringList packageIds, std::function<void ()> c
         d->downloads.audienceForStateChange() += d;
     }
 }
+
+} // namespace shell
+} // namespace de

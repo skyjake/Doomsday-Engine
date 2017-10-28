@@ -25,10 +25,9 @@
 #include <de/shell/AbstractLink>
 #include <de/shell/Protocol>
 #include <de/shell/ServerInfo>
+#include <de/shell/PackageDownloader>
 #include <QObject>
 #include "network/net_main.h"
-
-class PackageDownloader;
 
 /**
  * Network connection to a server.
@@ -58,7 +57,7 @@ public:
 public:
     ServerLink(Flags flags = DiscoverLocalServers);
 
-    PackageDownloader &packageDownloader();
+    de::shell::PackageDownloader &packageDownloader();
 
     void clear();
 

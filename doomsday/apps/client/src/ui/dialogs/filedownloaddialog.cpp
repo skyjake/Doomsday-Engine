@@ -17,7 +17,6 @@
  */
 
 #include "ui/dialogs/filedownloaddialog.h"
-#include "network/packagedownloader.h"
 #include "network/serverlink.h"
 
 #include <de/charsymbols.h>
@@ -25,13 +24,16 @@
 using namespace de;
 
 DENG_GUI_PIMPL(FileDownloadDialog)
-, DENG2_OBSERVES(PackageDownloader, Status)
+, DENG2_OBSERVES(shell::PackageDownloader, Status)
 {
+    shell::PackageDownloader &downloader;
     String message = tr("Downloading data files...");
 
-    Impl(Public *i) : Base(i)
+    Impl(Public *i, shell::PackageDownloader &downloader)
+        : Base(i)
+        , downloader(downloader)
     {
-        ServerLink::get().packageDownloader().audienceForStatus() += this;
+        downloader.audienceForStatus() += this;
 
         self().progressIndicator().setText(tr("%1\n" _E(l)_E(F) "%2"
                                               DENG2_CHAR_MDASH " files / "
@@ -55,13 +57,13 @@ DENG_GUI_PIMPL(FileDownloadDialog)
     }
 };
 
-FileDownloadDialog::FileDownloadDialog()
-    : d(new Impl(this))
+FileDownloadDialog::FileDownloadDialog(shell::PackageDownloader &downloader)
+    : d(new Impl(this, downloader))
 {}
 
 void FileDownloadDialog::cancel()
 {
-    ServerLink::get().packageDownloader().cancel();
+    d->downloader.cancel();
 }
 
 void FileDownloadDialog::finish(int result)

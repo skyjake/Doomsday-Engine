@@ -20,6 +20,7 @@
 #define DENG_CLIENT_FILEDOWNLOADDIALOG_H
 
 #include "downloaddialog.h"
+#include <de/shell/PackageDownloader>
 
 /**
  * Dialog for monitoring file downloads.
@@ -28,7 +29,7 @@
 class FileDownloadDialog : public DownloadDialog
 {
 public:
-    FileDownloadDialog();
+    FileDownloadDialog(de::shell::PackageDownloader &downloader);
 
     void cancel() override;
 

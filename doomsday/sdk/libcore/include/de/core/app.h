@@ -294,14 +294,14 @@ public:
     static Folder &homeFolder();
 
     /**
-     * Returns the remote feed relay that manages connections to remote file repositories.
-     */
-    static filesys::RemoteFeedRelay &remoteFeedRelay();
-
-    /**
      * Returns the application's package loader.
      */
     static PackageLoader &packageLoader();
+
+    /**
+     * Returns the remote feed relay that manages connections to remote file repositories.
+     */
+    static filesys::RemoteFeedRelay &remoteFeedRelay();
 
     /**
      * Convenience method for finding all files matching a certain name or partial path
