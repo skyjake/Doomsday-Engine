@@ -29,6 +29,8 @@
 
 namespace de {
 
+using namespace de::filesys;
+
 static String const CACHE_PATH = "/home/cache/remote";
 
 DENG2_PIMPL(RemoteFile)
@@ -36,7 +38,7 @@ DENG2_PIMPL(RemoteFile)
     String remotePath;
     Block remoteMetaId;
     Block buffer;
-    filesys::FileContentsRequest fetching;
+    Request<FileContents> fetching;
 
     Impl(Public *i) : Base(i) {}
 
@@ -101,11 +103,7 @@ DENG2_PIMPL(RemoteFile)
         }
         return false;
     }
-
-    DENG2_PIMPL_AUDIENCE(Download)
 };
-
-DENG2_AUDIENCE_METHOD(RemoteFile, Download)
 
 RemoteFile::RemoteFile(String const &name, String const &remotePath, Block const &remoteMetaId)
     : LinkFile(name)
@@ -117,7 +115,7 @@ RemoteFile::RemoteFile(String const &name, String const &remotePath, Block const
     setState(NotReady);
 }
 
-void RemoteFile::fetchContents()
+void RemoteFile::download()
 {
     DENG2_ASSERT(is<RemoteFeed>(originFeed()));
 
@@ -127,9 +125,9 @@ void RemoteFile::fetchContents()
 
     if (d->checkExistingCache())
     {
-        DENG2_FOR_AUDIENCE2(Download, i)
+        DENG2_FOR_AUDIENCE(Download, i)
         {
-            i->remoteFileDownloading(*this, 0);
+            i->downloadProgress(*this, 0);
         }
         setState(Ready);
         return;
@@ -143,9 +141,9 @@ void RemoteFile::fetchContents()
              [this] (duint64 startOffset, Block const &chunk, duint64 remainingBytes)
     {
         DENG2_ASSERT_IN_MAIN_THREAD();
-        DENG2_FOR_AUDIENCE2(Download, i)
+        DENG2_FOR_AUDIENCE(Download, i)
         {
-            i->remoteFileDownloading(*this, remainingBytes);
+            i->downloadProgress(*this, remainingBytes);
         }
 
         // Keep received data in a buffer.
@@ -195,7 +193,7 @@ void RemoteFile::fetchContents()
     });
 }
 
-void RemoteFile::cancelFetch()
+void RemoteFile::cancelDownload()
 {
     if (d->fetching)
     {
@@ -245,6 +243,21 @@ String RemoteFile::describe() const
 Block RemoteFile::metaId() const
 {
     return d->remoteMetaId;
+}
+
+Asset &RemoteFile::asset()
+{
+    return *this;
+}
+
+Asset const &RemoteFile::asset() const
+{
+    return *this;
+}
+
+dsize RemoteFile::downloadSize() const
+{
+    return size();
 }
 
 } // namespace de

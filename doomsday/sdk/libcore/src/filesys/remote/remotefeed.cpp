@@ -39,7 +39,7 @@ DENG2_PIMPL(RemoteFeed)
 {
     String repository;
     Path remotePath;
-    std::unique_ptr<filesys::FileList> fileList;
+    std::unique_ptr<DictionaryValue> fileMetadata;
     SafePtr<Folder> pendingPopulation;
 
     Impl(Public *i) : Base(i)
@@ -48,7 +48,7 @@ DENG2_PIMPL(RemoteFeed)
     PopulatedFiles populate()
     {
         PopulatedFiles populated;
-        for (auto i : fileList->elements())
+        for (auto i : fileMetadata->elements())
         {
             String const path = remotePath / i.first.value->asText();
 
@@ -141,13 +141,13 @@ Feed::PopulatedFiles RemoteFeed::populate(Folder const &folder)
             (d->repository,
              d->remotePath,
              [this, &folder, &files]
-             (filesys::FileList const &fileList)
+             (DictionaryValue const &fileMetadata)
     {
         //qDebug() << "Received file listing of" << d->remotePath;
         //qDebug() << fileList.asText();
 
         // Make a copy of the listed metadata.
-        d->fileList.reset(static_cast<DictionaryValue *>(fileList.duplicate()));
+        d->fileMetadata.reset(static_cast<DictionaryValue *>(fileMetadata.duplicate()));
         files = d->populate();
     });
     request->wait(POPULATE_TIMEOUT);

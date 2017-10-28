@@ -19,6 +19,7 @@
 #include "de/filesys/WebHostedLink"
 
 #include "de/Async"
+#include "de/Folder"
 #include "de/PathTree"
 #include "de/RecordValue"
 #include "de/RemoteFeedRelay"
@@ -31,10 +32,10 @@
 namespace de {
 namespace filesys {
 
-DENG2_PIMPL(WebHostedLink)
+DENG2_PIMPL(WebHostedLink), public Lockable
 {
     QSet<QNetworkReply *> pendingRequests;
-    LockableT<std::shared_ptr<FileTree>> fileTree;
+    std::shared_ptr<FileTree> fileTree;
 
     Impl(Public *i) : Base(i)
     {}
@@ -50,29 +51,25 @@ DENG2_PIMPL(WebHostedLink)
     Block metaIdForFileEntry(FileEntry const &entry) const
     {
         if (entry.isBranch()) return Block(); // not applicable
-
-        Block data;
-        Writer writer(data);
-        writer << self().address() << entry.path() << entry.size << entry.modTime;
-        return data.md5Hash();
+        return md5Hash(self().address(), entry.path(), entry.size, entry.modTime);
     }
 
     void handleFileListQueryAsync(Query query)
     {
-        QueryId id = query.id;
+        QueryId const id = query.id;
         String const queryPath = query.path;
         self().scope() += async([this, queryPath] () -> std::shared_ptr<DictionaryValue>
         {
-            DENG2_GUARD(fileTree);
-            if (auto const *dir = fileTree.value->tryFind
+            DENG2_GUARD(this);
+            if (auto const *dir = fileTree->tryFind
                     (queryPath, FileTree::MatchFull | FileTree::NoLeaf))
             {
                 std::shared_ptr<DictionaryValue> list(new DictionaryValue);
 
-                static String const VAR_TYPE("type");
+                static String const VAR_TYPE       ("type");
                 static String const VAR_MODIFIED_AT("modifiedAt");
-                static String const VAR_SIZE("size");
-                static String const VAR_META_ID("metaId");
+                static String const VAR_SIZE       ("size");
+                static String const VAR_META_ID    ("metaId");
 
                 auto addMeta = [this]
                         (DictionaryValue &list, PathTree::Nodes const &nodes)
@@ -125,7 +122,7 @@ WebHostedLink::WebHostedLink(String const &address, String const &indexPath)
 {
     // Fetch the repository index.
     {
-        QNetworkRequest req(QUrl(address / indexPath /*"ls-laR.gz"*/));
+        QNetworkRequest req(QUrl(address / indexPath));
         req.setRawHeader("User-Agent", Version::currentBuild().userAgent().toLatin1());
 
         QNetworkReply *reply = filesys::RemoteFeedRelay::get().network().get(req);
@@ -147,15 +144,34 @@ WebHostedLink::WebHostedLink(String const &address, String const &indexPath)
 
 void WebHostedLink::setFileTree(FileTree *tree)
 {
-    DENG2_GUARD_FOR(d->fileTree, G);
-    d->fileTree.value.reset(tree);
+    DENG2_GUARD(d);
+    d->fileTree.reset(tree);
+}
+
+WebHostedLink::FileTree const &WebHostedLink::fileTree() const
+{
+    return *d->fileTree;
+}
+
+filesys::PackagePaths WebHostedLink::locatePackages(StringList const &packageIds) const
+{
+    PackagePaths remotePaths;
+    foreach (String packageId, packageIds)
+    {
+        if (String remotePath = findPackagePath(packageId))
+        {
+            remotePaths.insert(packageId,
+                               RepositoryPath(*this, localRoot().path()/packageId, remotePath));
+        }
+    }
+    return remotePaths;
 }
 
 void WebHostedLink::transmit(Query const &query)
 {
     // We can answer population queries instantly because an index was
     // downloaded when the connection was opened.
-    if (query.fileList)
+    if (query.fileMetadata)
     {
         d->handleFileListQueryAsync(query);
         return;
@@ -175,6 +191,11 @@ void WebHostedLink::transmit(Query const &query)
     {
         d->handleReply(id, reply);
     });
+}
+
+Block WebHostedLink::FileEntry::metaId(Link const &link) const
+{
+    return md5Hash(link.address(), path(), size, modTime);
 }
 
 } // namespace filesys

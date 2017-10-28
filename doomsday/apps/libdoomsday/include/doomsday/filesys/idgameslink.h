@@ -24,11 +24,22 @@
 class IdgamesLink : public de::filesys::WebHostedLink
 {
 public:
-    IdgamesLink(de::String const &address);
+    static de::filesys::Link *construct(de::String const &address);
+
+    de::File *populateRemotePath(de::String const &packageId,
+                                 de::filesys::RepositoryPath const &path) const override;
 
     void parseRepositoryIndex(QByteArray data) override;
 
-    static de::filesys::Link *construct(de::String const &address);
+    de::String findPackagePath(de::String const &packageId) const override;
+
+protected:
+    IdgamesLink(de::String const &address);
+
+    void setFileTree(FileTree *tree) override;
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 #endif // LIBDOOMSDAY_FILESYS_IDGAMESLINK_H

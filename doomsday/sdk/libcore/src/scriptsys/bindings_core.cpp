@@ -216,10 +216,10 @@ static Value *Function_Folder_Contents(Context &ctx, Function::ArgumentValues co
     return nullptr;
 }
 
-static Value *Function_RemoteFile_FetchContents(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_RemoteFile_Download(Context &ctx, Function::ArgumentValues const &)
 {
     RemoteFile &rf = fileInstance(ctx).as<RemoteFile>();
-    rf.fetchContents();
+    rf.download();
     return nullptr;
 }
 
@@ -334,7 +334,7 @@ void initCoreModule(Binder &binder, Record &coreModule)
     {
         Record &remoteFile = coreModule.addSubrecord("RemoteFile").setFlags(Record::WontBeDeleted);
         binder.init(remoteFile)
-                << DENG2_FUNC_NOARG(RemoteFile_FetchContents, "fetchContents");
+                << DENG2_FUNC_NOARG(RemoteFile_Download, "download");
     }
 
     // Animation

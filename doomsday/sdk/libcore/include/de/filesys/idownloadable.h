@@ -1,4 +1,4 @@
-/** @file remote/nativelink.h
+/** @file idownloadable.h
  *
  * @authors Copyright (c) 2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,39 +16,35 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG2_FILESYS_NATIVELINK_H
-#define DENG2_FILESYS_NATIVELINK_H
+#ifndef IDOWNLOADABLE_H
+#define IDOWNLOADABLE_H
 
-#include "link.h"
+#include "../Asset"
 
 namespace de {
-namespace filesys {
 
 /**
- * Link to a native Doomsday remote repository (see RemoteFeedUser on server).
+ * Interface for downloadable objects.
+ * @ingroup fs
  */
-class DENG2_PUBLIC NativeLink : public Link
+class DENG2_PUBLIC IDownloadable
 {
 public:
-    static String const URL_SCHEME;
+    virtual ~IDownloadable() {}
 
-    static Link *construct(String const &address);
+    virtual Asset &asset() = 0;
 
-    void setLocalRoot(String const &rootPath) override;
+    virtual Asset const &asset() const = 0;
 
-    PackagePaths locatePackages(StringList const &packageIds) const override;
+    virtual dsize downloadSize() const = 0;
 
-protected:
-    NativeLink(String const &address);
+    virtual void download() = 0;
 
-    void wasConnected() override;
-    void transmit(Query const &query) override;
+    virtual void cancelDownload() = 0;
 
-private:
-    DENG2_PRIVATE(d)
+    DENG2_DEFINE_AUDIENCE(Download, void downloadProgress(IDownloadable &, dsize remainingBytes))
 };
 
-} // namespace filesys
 } // namespace de
 
-#endif // DENG2_FILESYS_NATIVELINK_H
+#endif // IDOWNLOADABLE_H

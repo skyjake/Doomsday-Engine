@@ -19,8 +19,9 @@
 #ifndef LIBDENG2_REMOTEFILE_H
 #define LIBDENG2_REMOTEFILE_H
 
-#include "../../LinkFile"
 #include "../../Asset"
+#include "../../LinkFile"
+#include "../../IDownloadable"
 
 namespace de {
 
@@ -30,13 +31,11 @@ namespace de {
  *
  * RemoteFile provides status information as an Asset.
  */
-class DENG2_PUBLIC RemoteFile : public LinkFile, public Asset
+class DENG2_PUBLIC RemoteFile : public LinkFile, public Asset, public IDownloadable
 {
 public:
     /// Data of the file has not yet been fetched. @ingroup errors
     DENG2_ERROR(UnfetchedError);
-
-    DENG2_DEFINE_AUDIENCE2(Download, void remoteFileDownloading(RemoteFile &, dsize remainingBytes))
 
 public:
     RemoteFile(String const &name, String const &remotePath, Block const &remoteMetaId);
@@ -47,9 +46,15 @@ public:
     /**
      * Initiates downloading of the file contents from the remote backend.
      */
-    void fetchContents();
+    void download() override;
 
-    void cancelFetch();
+    void cancelDownload() override;
+
+    Asset &asset() override;
+
+    Asset const &asset() const override;
+
+    dsize downloadSize() const override;
 
     void deleteCache();
 

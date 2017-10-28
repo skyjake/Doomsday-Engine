@@ -39,6 +39,8 @@ public:
 
         FileEntry(PathTree::NodeArgs const &args) : Node(args) {}
         FileEntry() = delete;
+
+        Block metaId(Link const &link) const;
     };
 
     using FileTree = PathTreeT<FileEntry>;
@@ -46,10 +48,16 @@ public:
 public:
     WebHostedLink(String const &address, String const &indexPath);
 
+    PackagePaths locatePackages(StringList const &packageIds) const override;
+
 protected:
-    void setFileTree(FileTree *tree);
+    virtual void setFileTree(FileTree *tree);
+
+    FileTree const &fileTree() const;
 
     virtual void parseRepositoryIndex(QByteArray data) = 0;
+
+    virtual String findPackagePath(String const &packageId) const = 0;
 
     void transmit(Query const &query) override;
 

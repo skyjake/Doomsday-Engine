@@ -61,8 +61,7 @@ void RemoteFeedQueryPacket::operator >> (Writer &to) const
 void RemoteFeedQueryPacket::operator << (Reader &from)
 {
     IdentifiedPacket::operator << (from);
-    from.readAs<duint8>(_query);
-    from >> _path;
+    from.readAs<duint8>(_query) >> _path;
 }
 
 Packet *RemoteFeedQueryPacket::fromBlock(Block const &block)
@@ -116,11 +115,6 @@ void RemoteFeedMetadataPacket::addFolder(Folder const &folder, String prefix)
     {
         // Each file's metadata is included.
         addFile(file, prefix);
-
-//        if (Folder const *subfolder = maybeAs<Folder>(file))
-//        {
-//            addFileTree(*subfolder, prefix / file.name());
-//        }
         return LoopContinue;
     });
 }

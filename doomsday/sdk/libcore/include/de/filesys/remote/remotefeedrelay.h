@@ -26,6 +26,7 @@
 #include "../Query"
 #include "../Link"
 
+#include <QHash>
 #include <QNetworkAccessManager>
 
 namespace de {
@@ -39,12 +40,6 @@ class DENG2_PUBLIC RemoteFeedRelay
 {
 public:
     static RemoteFeedRelay &get();
-
-//    enum RepositoryType {
-//        Server,
-//        NativePackages,
-//        IdgamesFileTree,
-//    };
 
     enum Status { Disconnected, Connected };
 
@@ -62,7 +57,7 @@ public:
      */
     void defineLink(Link::Constructor linkConstructor);
 
-    RemoteFeed *addRepository(String const &address, String const &remoteRoot = "/");
+    void addRepository(String const &address, String const &localRootPath);
 
     void removeRepository(String const &address);
 
@@ -70,13 +65,23 @@ public:
 
     bool isConnected(String const &address) const;
 
-    FileListRequest fetchFileList(String const &repository,
-                                  String folderPath,
-                                  FileListFunc result);
+    /**
+     * Queries all the connected repositories for a set of packages. The local paths
+     * representing the remote packages are returned.
+     *
+     * @param packageIds  Packages to find.
+     *
+     * @return Hash of [packageId -> local path].
+     */
+    PackagePaths locatePackages(StringList const &packageIds) const;
 
-    FileContentsRequest fetchFileContents(String const &repository,
-                                          String filePath,
-                                          DataReceivedFunc dataReceived);
+    Request<FileMetadata> fetchFileList(String const &repository,
+                                        String folderPath,
+                                        FileMetadata metadataReceived);
+
+    Request<FileContents> fetchFileContents(String const &repository,
+                                            String filePath,
+                                            FileContents contentsReceived);
 
     QNetworkAccessManager &network();
 

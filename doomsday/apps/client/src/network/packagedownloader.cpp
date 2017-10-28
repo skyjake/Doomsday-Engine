@@ -24,6 +24,7 @@
 #include <de/Garbage>
 #include <de/LinkFile>
 #include <de/Loop>
+#include <de/filesys/NativeLink>
 #include <de/PackageLoader>
 #include <de/RemoteFeedRelay>
 #include <de/RemoteFile>
@@ -33,7 +34,6 @@ using namespace de;
 
 static String const PATH_REMOTE_PACKS  = "/remote/packs";
 static String const PATH_REMOTE_SERVER = "/remote/server"; // local folder for RemoteFeed
-static String const PATH_SERVER_REPOSITORY_ROOT = "/sys/server/files"; // serverside folder
 
 DENG2_PIMPL(PackageDownloader)
 , DENG2_OBSERVES(Asset, StateChange)
@@ -42,7 +42,7 @@ DENG2_PIMPL(PackageDownloader)
 {
     String fileRepository;
     AssetGroup downloads;
-    QHash<RemoteFile *, Rangei64> downloadBytes;
+    QHash<IDownloadable *, Rangei64> downloadBytes;
     dint64 totalBytes = 0;
     int numDownloads = 0;
     std::function<void ()> postDownloadCallback;
@@ -61,36 +61,36 @@ DENG2_PIMPL(PackageDownloader)
                 return LoopContinue;
             });
         }
-        if (auto *remoteFile = maybeAs<RemoteFile>(file))
+        if (auto *dl = maybeAs<IDownloadable>(file))
         {
-            LOG_NET_VERBOSE("Downloading from server: %s") << remoteFile->description();
+            LOG_NET_VERBOSE("Downloading from server: %s") << file.description();
 
-            downloads.insert(*remoteFile);
-            remoteFile->audienceForDownload() += this;
-            remoteFile->Deletable::audienceForDeletion += this;
-            downloadBytes.insert(remoteFile, Rangei64(dint64(remoteFile->size()),
-                                                      dint64(remoteFile->size())));
+            downloads.insert(dl->asset());
+            dl->audienceForDownload += this;
+            file.Deletable::audienceForDeletion += this;
+            downloadBytes.insert(dl, Rangei64(dint64(dl->downloadSize()),
+                                              dint64(dl->downloadSize())));
             numDownloads++;
-            totalBytes += remoteFile->size();
+            totalBytes += dl->downloadSize();
             isCancelled = false;
 
-            remoteFile->fetchContents();
+            dl->download();
         }
     }
 
-    void remoteFileDownloading(RemoteFile &file, dsize remainingBytes) override
+    void downloadProgress(IDownloadable &dl, dsize remainingBytes) override
     {
         DENG2_ASSERT_IN_MAIN_THREAD();
 
-        auto found = downloadBytes.find(&file);
+        auto found = downloadBytes.find(&dl);
         if (found == downloadBytes.end()) return;
 
         found.value().start = dint64(remainingBytes);
 
         if (remainingBytes == 0)
         {
-            file.audienceForDownload() -= this;
-            file.Deletable::audienceForDeletion -= this;
+            dl.audienceForDownload -= this;
+            maybeAs<File>(dl)->Deletable::audienceForDeletion -= this;
             downloadBytes.erase(found);
         }
 
@@ -146,13 +146,13 @@ DENG2_PIMPL(PackageDownloader)
     {
         for (auto i = downloadBytes.begin(); i != downloadBytes.end(); ++i)
         {
-            auto &file = i.key()->as<RemoteFile>();
+            auto *dl = i.key();
 
             // Ongoing (partial) downloads will be cancelled.
-            file.cancelFetch();
+            dl->cancelDownload();
 
-            file.audienceForDownload() -= this;
-            file.Deletable::audienceForDeletion -= this;
+            dl->audienceForDownload -= this;
+            maybeAs<File>(dl)->Deletable::audienceForDeletion -= this;
         }
         numDownloads = 0;
         totalBytes = 0;
@@ -170,13 +170,13 @@ DENG2_PIMPL(PackageDownloader)
      * @param ids  Identifiers of remote packages that have been downloaded and are now
      *             being prepared for loading.
      */
-    void linkRemotePackages(StringList const &ids)
+    void linkRemotePackages(filesys::PackagePaths const &pkgPaths)
     {
         Folder &remotePacks = FS::get().makeFolder(PATH_REMOTE_PACKS);
-        foreach (String pkgId, ids)
+        for (auto i = pkgPaths.begin(); i != pkgPaths.end(); ++i)
         {
-            LOG_RES_VERBOSE("Registering remote package \"%s\"") << pkgId;
-            if (auto *file = FS::tryLocate<File>(PATH_REMOTE_SERVER / pkgId))
+            LOG_RES_VERBOSE("Registering remote package \"%s\"") << i.key();
+            if (auto *file = FS::tryLocate<File>(i.value().localPath))
             {
                 LOGDEV_RES_VERBOSE("Cached metadata:\n") << file->objectNamespace().asText();
 
@@ -187,7 +187,7 @@ DENG2_PIMPL(PackageDownloader)
                 remotePacks.add(pack);
                 FS::get().index(*pack);
 
-                LOG_RES_VERBOSE("\"%s\" linked as ") << pkgId << pack->path();
+                LOG_RES_VERBOSE("\"%s\" linked as ") << i.key() << pack->path();
             }
         }
     }
@@ -243,13 +243,9 @@ void PackageDownloader::mountFileRepository(shell::ServerInfo const &info)
 
     if (info.version() > Version(2, 1, 0, 2484))
     {
-        d->fileRepository = "doomsday:" + info.address().asText();
+        d->fileRepository = filesys::NativeLink::URL_SCHEME + info.address().asText();
         d->isCancelled = false;
-        FS::get().makeFolderWithFeed
-                (PATH_REMOTE_SERVER,
-                 filesys::RemoteFeedRelay::get().addRepository(d->fileRepository,
-                                                               PATH_SERVER_REPOSITORY_ROOT),
-                 Folder::PopulateAsyncFullTree);
+        filesys::RemoteFeedRelay::get().addRepository(d->fileRepository, PATH_REMOTE_SERVER);
     }
 }
 
@@ -269,20 +265,25 @@ void PackageDownloader::unmountFileRepository()
 void PackageDownloader::download(StringList packageIds, std::function<void ()> callback)
 {
     d->downloads.clear();
-    foreach (String missing, packageIds)
+
+    auto const pkgPaths = filesys::RemoteFeedRelay::get().locatePackages(packageIds);
+
+    // The set of found packages may not contain all the requested packages.
+    StringList const foundIds = pkgPaths.keys();
+    for (auto found = pkgPaths.begin(); found != pkgPaths.end(); ++found)
     {
-        if (File *rem = FS::tryLocate<File>(PATH_REMOTE_SERVER / missing))
+        if (File *file = found.value().link->populateRemotePath(found.key(), found.value()))
         {
-            d->downloadFile(*rem);
+            d->downloadFile(*file);
         }
     }
 
-    auto finished = [this, packageIds, callback] ()
+    auto finished = [this, pkgPaths, callback] ()
     {
         // Let's finalize the downloads so we can load all the packages.
         d->downloads.audienceForStateChange() -= d;
         d->finishDownloads();
-        d->linkRemotePackages(packageIds);
+        d->linkRemotePackages(pkgPaths);
 
         callback();
     };

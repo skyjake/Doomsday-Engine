@@ -80,6 +80,7 @@ static DoomsdayApp *theDoomsdayApp = nullptr;
 
 DENG2_PIMPL(DoomsdayApp)
 , public IFolderPopulationObserver
+//, DENG2_OBSERVES(filesys::RemoteFeedRelay, Status)
 {
     std::string ddBasePath; // Doomsday root directory is at...?
 
@@ -392,10 +393,19 @@ DENG2_PIMPL(DoomsdayApp)
 
     void initRemoteRepositories()
     {
-        FS::get().makeFolderWithFeed("/remote/idgames",
-                filesys::RemoteFeedRelay::get().addRepository("http://www.gamers.org/pub/idgames/"),
-                Folder::PopulateAsyncFullTree);
+        filesys::RemoteFeedRelay::get().addRepository("https://www.quaddicted.com/files/idgames/",
+                                                      "/remote/www.quaddicted.com");
+        //filesys::RemoteFeedRelay::get().audienceForStatus() += this;
     }
+
+//    void remoteRepositoryStatusChanged(String const &address, filesys::RemoteFeedRelay::Status status) override
+//    {
+//        foreach (auto p, filesys::RemoteFeedRelay::get().locatePackages(
+//                     StringList({"idgames.levels.doom2.deadmen"})))
+//        {
+//            qDebug() << p.link->address() << p.localPath << p.remotePath;
+//        }
+//    }
 
     void folderPopulationFinished() override
     {

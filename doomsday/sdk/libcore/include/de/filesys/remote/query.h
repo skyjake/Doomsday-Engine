@@ -26,15 +26,32 @@
 namespace de {
 namespace filesys {
 
-typedef DictionaryValue FileList;
-
-typedef std::function<void (FileList const &)> FileListFunc;
-typedef std::function<void (duint64 startOffset, Block const &, duint64 remainingBytes)> DataReceivedFunc;
-
-typedef std::shared_ptr<AsyncCallback<FileListFunc>>     FileListRequest;
-typedef std::shared_ptr<AsyncCallback<DataReceivedFunc>> FileContentsRequest;
+class Link;
 
 using QueryId = IdentifiedPacket::Id;
+
+struct DENG2_PUBLIC RepositoryPath
+{
+    Link const *link = nullptr;
+    String localPath;
+    String remotePath;
+
+    RepositoryPath() = default;
+
+    RepositoryPath(Link const &link, String const &localPath, String const &remotePath)
+        : link(&link)
+        , localPath(localPath)
+        , remotePath(remotePath)
+    {}
+};
+
+typedef QHash<String, RepositoryPath> PackagePaths;
+
+typedef std::function<void (DictionaryValue const &)> FileMetadata;
+typedef std::function<void (duint64 startOffset, Block const &, duint64 remainingBytes)> FileContents;
+
+template <typename Callback>
+using Request = std::shared_ptr<AsyncCallback<Callback>>;
 
 /**
  * Query about information stored in the remote repository. The callbacks will
@@ -45,17 +62,19 @@ struct DENG2_PUBLIC Query
     // Query parameters:
     QueryId id;
     String path;
+    StringList packageIds;
 
     // Callbacks:
-    FileListRequest fileList;
-    FileContentsRequest fileContents;
+    Request<FileMetadata> fileMetadata;
+    Request<FileContents> fileContents;
 
     // Internal status:
     duint64 receivedBytes = 0;
     duint64 fileSize = 0;
 
-    Query(FileListRequest req, String path);
-    Query(FileContentsRequest req, String path);
+public:
+    Query(Request<FileMetadata> req, String path);
+    Query(Request<FileContents> req, String path);
     bool isValid() const;
     void cancel();
 };

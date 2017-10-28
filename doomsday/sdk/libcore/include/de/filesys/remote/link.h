@@ -27,6 +27,8 @@
 namespace de {
 
 class AsyncScope;
+class File;
+class Folder;
 
 namespace filesys {
 
@@ -40,18 +42,38 @@ namespace filesys {
 class DENG2_PUBLIC Link
 {
 public:
-    enum State { Deinitialized, Initializing, Ready };
+    enum State
+    {
+        Deinitialized, Initializing, Ready
+    };
 
     typedef std::function<Link * (String const &address)> Constructor;
 
 public:
     virtual ~Link();
 
+    virtual void setLocalRoot(String const &rootPath);
+
+    Folder &localRoot() const;
+
     String address() const;
 
     State state() const;
 
-    void sendQuery(Query query);
+    /**
+     * Uses locally available indexes to determine which remote paths for a set of
+     * packages.
+     *
+     * @param packageIds  Packages to locate. The identifiers may include versions.
+     *
+     * @return Paths for located packages. May contain fewer entries than was provided
+     * via @a packageIds -- empty if nothing was found.
+     */
+    virtual PackagePaths locatePackages(StringList const &packageIds) const = 0;
+
+    QueryId sendQuery(Query query);
+
+    virtual File *populateRemotePath(String const &packageId, RepositoryPath const &path) const;
 
 protected:
     Link(String const &address);
@@ -63,6 +85,8 @@ protected:
     void cancelAllQueries();
 
     void cleanupQueries();
+
+    //void packagePathsReceived(QueryId id, PackagePaths const &remotePaths);
 
     void metadataReceived(QueryId id, DictionaryValue const &metadata);
 

@@ -17,16 +17,131 @@
  */
 
 #include "doomsday/filesys/idgameslink.h"
+#include "doomsday/filesys/idgamespackageinfofile.h"
+#include "doomsday/DataBundle"
 
 #include <de/Async>
+#include <de/FileSystem>
+#include <de/RemoteFile>
 #include <de/data/gzip.h>
 
 #include <QRegularExpression>
+#include <QUrl>
 
 using namespace de;
 
+static String const DOMAIN_IDGAMES("idgames");
+static String const CATEGORY_LEVELS("levels");
+static String const CATEGORY_MUSIC ("music");
+static String const CATEGORY_SOUNDS("sounds");
+static String const CATEGORY_THEMES("themes");
+
+DENG2_PIMPL(IdgamesLink)
+{
+    struct PackageIndexEntry : public PathTree::Node
+    {
+        FileEntry const *file = nullptr;
+        Version version;
+
+        PackageIndexEntry(PathTree::NodeArgs const &args) : Node(args) {}
+
+        String descriptionPath() const
+        {
+            return path().toString().fileNameAndPathWithoutExtension() + ".TXT";
+        }
+    };
+    PathTreeT<PackageIndexEntry> packageIndex;
+
+    String localRootPath;
+
+    Impl(Public *i) : Base(i)
+    {
+        localRootPath = "/remote/" + QUrl(self().address()).host();
+    }
+
+    String packageIdentifierForFileEntry(FileEntry const &entry) const
+    {
+        if (entry.name().fileNameExtension() == QStringLiteral(".zip"))
+        {
+            Path const path = entry.path();
+            String id = QString("%1_%2")
+                    .arg(DataBundle::cleanIdentifier(path.fileName().fileNameWithoutExtension()))
+                    .arg(DataBundle::versionFromTimestamp(entry.modTime));
+
+            // Remove the hour:minute part.
+            id.truncate(id.size() - 5);
+
+            if (path.segment(1) == CATEGORY_MUSIC ||
+                path.segment(1) == CATEGORY_SOUNDS ||
+                path.segment(1) == CATEGORY_THEMES)
+            {
+                return String("%1.%2.%3")
+                        .arg(DOMAIN_IDGAMES)
+                        .arg(path.segment(1))
+                        .arg(id);
+            }
+            if (path.segment(1) == CATEGORY_LEVELS)
+            {
+                return String("%1.%2.%3.%4")
+                        .arg(DOMAIN_IDGAMES)
+                        .arg(CATEGORY_LEVELS)
+                        .arg(path.segment(2))
+                        .arg(id);
+            }
+            return String("%1.%2").arg(DOMAIN_IDGAMES).arg(id);
+        }
+        else
+        {
+            return String();
+        }
+    }
+
+    void buildPackageIndex()
+    {
+        packageIndex.clear();
+
+        PathTreeIterator<FileTree> iter(self().fileTree().leafNodes());
+        while (iter.hasNext())
+        {
+            auto const &fileEntry = iter.next();
+            if (String pkg = packageIdentifierForFileEntry(fileEntry))
+            {
+                auto const id_ver = Package::split(pkg);
+                auto &pkgEntry = packageIndex.insert(DotPath(id_ver.first));
+                pkgEntry.file = &fileEntry;
+                pkgEntry.version = id_ver.second;
+            }
+        }
+
+        qDebug() << "idgames package index has" << packageIndex.size() << "entries";
+    }
+
+    PackageIndexEntry const *findPackage(String const &packageId) const
+    {
+        auto const id_ver = Package::split(packageId);
+        if (auto *found = packageIndex.tryFind(DotPath(id_ver.first),
+                                               PathTree::MatchFull | PathTree::NoBranch))
+        {
+            if (!id_ver.second.isValid() || found->version == id_ver.second)
+            {
+                return found;
+            }
+        }
+        return nullptr;
+    }
+
+    RemoteFile &makeRemoteFile(Folder &folder, String const &remotePath, Block const &remoteMetaId)
+    {
+        auto *file = new RemoteFile(remotePath.fileName(), remotePath, remoteMetaId);
+        folder.add(file);
+        FS::get().index(*file);
+        return *file;
+    }
+};
+
 IdgamesLink::IdgamesLink(String const &address)
     : filesys::WebHostedLink(address, "ls-laR.gz")
+    , d(new Impl(this))
 {}
 
 void IdgamesLink::parseRepositoryIndex(QByteArray data)
@@ -60,7 +175,7 @@ void IdgamesLink::parseRepositoryIndex(QByteArray data)
                     if (match.hasMatch())
                     {
                         currentPath = match.captured(1);
-                        qDebug() << "[WebRepositoryLink] Parsing path:" << currentPath;
+                        //qDebug() << "[WebRepositoryLink] Parsing path:" << currentPath;
 
                         ignore = !reIncludedPaths.match(currentPath).hasMatch();
                     }
@@ -81,7 +196,7 @@ void IdgamesLink::parseRepositoryIndex(QByteArray data)
                             if (name.startsWith(QChar('.')) || name.contains(" -> "))
                                 continue;
 
-                            auto &entry = tree->insert(currentPath / name);
+                            auto &entry = tree->insert((currentPath / name).toLower());
                             entry.size = match.captured(2).toULongLong(nullptr, 10);;
                             entry.modTime = Time::fromText(match.captured(3), Time::UnixLsStyleDateTime);
                         }
@@ -108,7 +223,16 @@ void IdgamesLink::parseRepositoryIndex(QByteArray data)
             handleError("Failed to parse directory listing: " + errorMessage);
             wasDisconnected();
         }
-});
+    });
+}
+
+String IdgamesLink::findPackagePath(String const &packageId) const
+{
+    if (auto *found = d->findPackage(packageId))
+    {
+        return found->file->path();
+    }
+    return String();
 }
 
 filesys::Link *IdgamesLink::construct(String const &address)
@@ -119,4 +243,39 @@ filesys::Link *IdgamesLink::construct(String const &address)
         return new IdgamesLink(address);
     }
     return nullptr;
+}
+
+File *IdgamesLink::populateRemotePath(String const &packageId,
+                                      filesys::RepositoryPath const &path) const
+{
+    DENG2_ASSERT(path.link == this);
+
+    auto *pkgEntry = d->findPackage(packageId);
+    if (!pkgEntry)
+    {
+        DENG2_ASSERT(pkgEntry);
+        return nullptr;
+    }
+
+    auto &pkgFolder = FS::get().makeFolder(path.localPath, FS::DontInheritFeeds);
+
+    // The main data file of the package.
+    auto &dataFile = d->makeRemoteFile(pkgFolder, pkgEntry->file->path(), pkgEntry->file->metaId(*this));
+
+    // Additional description.
+    auto &txtFile = d->makeRemoteFile(pkgFolder, pkgEntry->descriptionPath(),
+                                      md5Hash(address(), pkgEntry->descriptionPath(), pkgEntry->file->modTime));
+
+    auto *infoFile = new IdgamesPackageInfoFile("info.dei");
+    infoFile->setSourceFiles(dataFile, txtFile);
+    pkgFolder.add(infoFile);
+    FS::get().index(*infoFile);
+
+    return &pkgFolder;
+}
+
+void IdgamesLink::setFileTree(FileTree *tree)
+{
+    WebHostedLink::setFileTree(tree);
+    d->buildPackageIndex();
 }

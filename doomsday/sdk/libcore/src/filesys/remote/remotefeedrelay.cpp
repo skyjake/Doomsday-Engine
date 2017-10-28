@@ -43,9 +43,9 @@ namespace filesys {
 
 DENG2_PIMPL(RemoteFeedRelay)
 {
+    std::unique_ptr<QNetworkAccessManager> network;
     QList<Link::Constructor> linkConstructors;
     QHash<String, filesys::Link *> repositories; // owned
-    std::unique_ptr<QNetworkAccessManager> network;
 
     Impl(Public *i) : Base(i)
     {
@@ -85,17 +85,18 @@ void RemoteFeedRelay::defineLink(filesys::Link::Constructor linkConstructor)
     d->linkConstructors.push_front(linkConstructor);
 }
 
-RemoteFeed *RemoteFeedRelay::addRepository(String const &address, String const &remoteRoot)
+void RemoteFeedRelay::addRepository(String const &address,
+                                    String const &localRootPath)
 {
     for (auto constructor : d->linkConstructors)
     {
         if (auto *link = constructor(address))
         {
             d->repositories.insert(address, link);
-            return new RemoteFeed(address, remoteRoot);
+            link->setLocalRoot(localRootPath);
+            return;
         }
     }
-    return nullptr;
 }
 
 void RemoteFeedRelay::removeRepository(String const &address)
@@ -121,23 +122,43 @@ bool RemoteFeedRelay::isConnected(String const &address) const
     auto found = d->repositories.constFind(address);
     if (found != d->repositories.constEnd())
     {
-        return found.value()->state() == filesys::Link::Ready;
+        return found.value()->state() == Link::Ready;
     }
     return false;
 }
 
-FileListRequest
-RemoteFeedRelay::fetchFileList(String const &repository, String folderPath, FileListFunc result)
+PackagePaths RemoteFeedRelay::locatePackages(StringList const &packageIds) const
+{
+    PackagePaths located;
+    foreach (auto *repo, d->repositories)
+    {
+        if (repo->state() == Link::Ready)
+        {
+            auto const paths = repo->locatePackages(packageIds);
+            for (auto i = paths.begin(); i != paths.end(); ++i)
+            {
+                if (!located.contains(i.key()))
+                {
+                    located.insert(i.key(), i.value());
+                }
+            }
+        }
+    }
+    return located;
+}
+
+Request<FileMetadata>
+RemoteFeedRelay::fetchFileList(String const &repository, String folderPath, FileMetadata metadataReceived)
 {
     DENG2_ASSERT(d->repositories.contains(repository));
 
     Waitable done;
-    FileListRequest request;
+    Request<FileMetadata> request;
     Loop::mainCall([&] ()
     {
         // The repository sockets are handled in the main thread.
         auto *repo = d->repositories[repository];
-        request.reset(new FileListRequest::element_type(result));
+        request.reset(new Request<FileMetadata>::element_type(metadataReceived));
         repo->sendQuery(Query(request, folderPath));
         done.post();
     });
@@ -145,18 +166,18 @@ RemoteFeedRelay::fetchFileList(String const &repository, String folderPath, File
     return request;
 }
 
-FileContentsRequest
-RemoteFeedRelay::fetchFileContents(String const &repository, String filePath, DataReceivedFunc dataReceived)
+Request<FileContents>
+RemoteFeedRelay::fetchFileContents(String const &repository, String filePath, FileContents contentsReceived)
 {
     DENG2_ASSERT(d->repositories.contains(repository));
 
     Waitable done;
-    FileContentsRequest request;
+    Request<FileContents> request;
     Loop::mainCall([&] ()
     {
         // The repository sockets are handled in the main thread.
         auto *repo = d->repositories[repository];
-        FileContentsRequest request(new FileContentsRequest::element_type(dataReceived));
+        request.reset(new Request<FileContents>::element_type(contentsReceived));
         repo->sendQuery(Query(request, filePath));
         done.post();
     });

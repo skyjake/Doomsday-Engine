@@ -19,14 +19,19 @@
 #include "de/filesys/NativeLink"
 
 #include "de/App"
+#include "de/FileSystem"
+#include "de/Loop"
 #include "de/Message"
+#include "de/RemoteFeed"
 #include "de/RemoteFeedProtocol"
 #include "de/Socket"
 
 namespace de {
 namespace filesys {
 
-static String const URL_SCHEME("doomsday:");
+String const NativeLink::URL_SCHEME("doomsday:");
+
+static String const PATH_SERVER_REPOSITORY_ROOT("/sys/server/files"); // serverside folder
 
 DENG2_PIMPL(NativeLink)
 {
@@ -98,6 +103,31 @@ Link *NativeLink::construct(String const &address)
     return nullptr;
 }
 
+void NativeLink::setLocalRoot(String const &rootPath)
+{
+    Link::setLocalRoot(rootPath);
+
+    auto &root = localRoot();
+    root.attach(new RemoteFeed(address(), PATH_SERVER_REPOSITORY_ROOT));
+    root.populate(Folder::PopulateAsyncFullTree);
+}
+
+PackagePaths NativeLink::locatePackages(StringList const &packageIds) const
+{
+    PackagePaths remotePaths;
+    foreach (String pkg, packageIds)
+    {
+        // Available packages have been populated as remote files.
+        if (File *rem = FS::tryLocate<File>("/remote/server"/pkg))
+        {
+            // Remote path not needed because local folders are fully populated with
+            // remote files.
+            remotePaths.insert(pkg, RepositoryPath(*this, rem->path(), ""));
+        }
+    }
+    return remotePaths;
+}
+
 void NativeLink::wasConnected()
 {
     d->socket << ByteRefArray("RemoteFeed", 10);
@@ -111,7 +141,7 @@ void NativeLink::transmit(Query const &query)
     RemoteFeedQueryPacket packet;
     packet.setId(query.id);
     packet.setPath(query.path);
-    if (query.fileList)
+    if (query.fileMetadata)
     {
         packet.setQuery(RemoteFeedQueryPacket::ListFiles);
     }

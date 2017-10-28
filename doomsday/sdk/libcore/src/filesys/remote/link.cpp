@@ -18,9 +18,11 @@
 
 #include "de/filesys/Link"
 #include "de/RemoteFeedRelay"
+#include "de/FileSystem"
 
 #include <de/App>
 #include <de/Async>
+#include <de/Garbage>
 #include <de/charsymbols.h>
 
 namespace de {
@@ -28,6 +30,7 @@ namespace filesys {
 
 DENG2_PIMPL(Link), public AsyncScope
 {
+    String localRootPath;
     State state = Initializing;
     String address;
     QueryId nextQueryId = 1;
@@ -97,8 +100,8 @@ DENG2_PIMPL(Link), public AsyncScope
         {
             if (query.isValid())
             {
-                self().transmit(query);
                 pendingQueries.insert(query.id, query);
+                self().transmit(query);
             }
         }
         deferredQueries.clear();
@@ -123,6 +126,18 @@ Link::Link(String const &address)
 
 Link::~Link()
 {}
+
+void Link::setLocalRoot(String const &rootPath)
+{
+    d->localRootPath = rootPath;
+    // Create the folder right away.
+    localRoot();
+}
+
+Folder &Link::localRoot() const
+{
+    return FS::get().makeFolder(d->localRootPath, FS::DontInheritFeeds);
+}
 
 String Link::address() const
 {
@@ -149,6 +164,12 @@ void Link::wasDisconnected()
     d->cancelAllQueries();
     d->cleanup();
     d->notifyStatus(RemoteFeedRelay::Disconnected);
+
+    // Remove the local root folder.
+    if (Folder *root = FS::tryLocate<Folder>(d->localRootPath))
+    {
+        trash(root);
+    }
 }
 
 void Link::handleError(QString errorMessage)
@@ -184,35 +205,55 @@ Query *Link::findQuery(QueryId id)
     return nullptr;
 }
 
-void Link::sendQuery(Query query)
+QueryId Link::sendQuery(Query query)
 {
     try
     {
         query.id = d->nextQueryId++;
         if (d->state == Ready)
         {
-            transmit(query);
             d->pendingQueries.insert(query.id, query);
+            transmit(query);
             d->cleanup();
         }
         else
         {
             d->deferredQueries.append(query);
         }
+        return query.id;
     }
     catch (Error const &er)
     {
         LOG_NET_ERROR("Error sending file repository query: %s") << er.asText();
+        return 0;
     }
 }
+
+File *Link::populateRemotePath(String const &, RepositoryPath const &path) const
+{
+    // By default we assume the remote files are all populated while connecting.
+    return FS::tryLocate<File>(path.localPath);
+}
+
+//void Link::packagePathsReceived(QueryId id, PackagePaths const &remotePaths)
+//{
+//    if (auto *query = findQuery(id))
+//    {
+//        if (query->remotePaths)
+//        {
+//            query->remotePaths->call(id, remotePaths);
+//        }
+//        d->pendingQueries.remove(id);
+//    }
+//}
 
 void Link::metadataReceived(QueryId id, DictionaryValue const &metadata)
 {
     if (auto *query = findQuery(id))
     {
-        if (query->fileList)
+        if (query->fileMetadata)
         {
-            query->fileList->call(metadata);
+            query->fileMetadata->call(metadata);
         }
         d->pendingQueries.remove(id);
     }

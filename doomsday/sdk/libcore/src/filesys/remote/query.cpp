@@ -21,24 +21,24 @@
 namespace de {
 namespace filesys {
 
-Query::Query(FileListRequest req, String path)
-    : path(path), fileList(req)
+Query::Query(Request<FileMetadata> req, String path)
+    : path(path), fileMetadata(req)
 {}
 
-Query::Query(FileContentsRequest req, String path)
+Query::Query(Request<FileContents> req, String path)
     : path(path), fileContents(req)
 {}
 
 bool Query::isValid() const
 {
-    if (fileList)     return fileList    ->isValid();
+    if (fileMetadata) return fileMetadata->isValid();
     if (fileContents) return fileContents->isValid();
     return false;
 }
 
 void Query::cancel()
 {
-    if (fileList)     fileList    ->cancel();
+    if (fileMetadata) fileMetadata->cancel();
     if (fileContents) fileContents->cancel();
 }
 
