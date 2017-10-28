@@ -97,50 +97,6 @@ DENG2_PIMPL(DataBundle), public Lockable
         return App::rootFolder().locate<Folder>(QStringLiteral("/sys/bundles"));
     }
 
-    static String cleanIdentifier(String const &text)
-    {
-        // Periods and underscores have special meaning in packages IDs.
-        // Whitespace is used as separator in package ID lists (see PackageLoader).
-        // Info syntax has ambiguous quote/double-quote escaping in strings, so
-        // we'll also get rid of single quotes. (For example, Info converts a string
-        // containing ['"] to ['''].)
-        String cleaned = text.toLower();
-        cleaned.replace(QRegExp("[._'\\s]"), "-");
-        return cleaned;
-    }
-
-    static String stripVersion(String const &text, Version *version = nullptr)
-    {
-        QRegExp re(".*([-_. ][0-9._-]+)$");
-        if (re.exactMatch(text))
-        {
-            if (version)
-            {
-                String str = re.cap(1).mid(1);
-                str.replace("_", ".");
-                version->parseVersionString(str);
-            }
-            return text.mid(0, text.size() - re.cap(1).size());
-        }
-        return text;
-    }
-
-    static String stripRedundantParts(String const &id)
-    {
-        DotPath const path(id);
-        String stripped = path.segment(0);
-        for (int i = 1; i < path.segmentCount(); ++i)
-        {
-            String seg = path.segment(i);
-            if (seg.startsWith(path.segment(i - 1) + "-"))
-            {
-                seg = seg.mid(path.segment(i - 1).size() + 1);
-            }
-            stripped = stripped.concatenateMember(seg);
-        }
-        return stripped;
-    }
-
     /**
      * Identifies the data bundle and sets up a package link under "/sys/bundles" with
      * the appropriate metadata.
@@ -1385,4 +1341,53 @@ StringList DataBundle::gameTags()
 String DataBundle::anyGameTagPattern()
 {
     return String("\\b(%1)\\b").arg(String::join(gameTags(), "|"));
+}
+
+String DataBundle::cleanIdentifier(String const &text)
+{
+    // Periods and underscores have special meaning in packages IDs.
+    // Whitespace is used as separator in package ID lists (see PackageLoader).
+    // Info syntax has ambiguous quote/double-quote escaping in strings, so
+    // we'll also get rid of single quotes. (For example, Info converts a string
+    // containing ['"] to ['''].)
+    String cleaned = text.toLower();
+    cleaned.replace(QRegExp("[._'\\s]"), "-");
+    return cleaned;
+}
+
+String DataBundle::stripVersion(String const &text, Version *version)
+{
+    QRegExp re(".*([-_. ][0-9._-]+)$");
+    if (re.exactMatch(text))
+    {
+        if (version)
+        {
+            String str = re.cap(1).mid(1);
+            str.replace("_", ".");
+            version->parseVersionString(str);
+        }
+        return text.mid(0, text.size() - re.cap(1).size());
+    }
+    return text;
+}
+
+String DataBundle::stripRedundantParts(String const &id)
+{
+    DotPath const path(id);
+    String stripped = path.segment(0);
+    for (int i = 1; i < path.segmentCount(); ++i)
+    {
+        String seg = path.segment(i);
+        if (seg.startsWith(path.segment(i - 1) + "-"))
+        {
+            seg = seg.mid(path.segment(i - 1).size() + 1);
+        }
+        stripped = stripped.concatenateMember(seg);
+    }
+    return stripped;
+}
+
+de::String DataBundle::versionFromTimestamp(const Time &timestamp)
+{
+    return timestamp.asDateTime().toString(QStringLiteral("0.yyyy.MMdd.hhmm"));
 }

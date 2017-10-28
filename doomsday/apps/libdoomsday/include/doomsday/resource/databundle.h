@@ -23,6 +23,7 @@
 #include "lumpdirectory.h"
 #include <de/filesys/IInterpreter>
 #include <de/Folder>
+#include <de/Version>
 
 /**
  * Abstract base class for classic data files: PK3, WAD, LMP, DED, DEH.
@@ -172,6 +173,10 @@ public:
 
     static de::StringList gameTags();
     static de::String anyGameTagPattern();
+    static de::String cleanIdentifier(de::String const &text);
+    static de::String stripVersion(de::String const &text, de::Version *version = nullptr);
+    static de::String stripRedundantParts(de::String const &id);
+    static de::String versionFromTimestamp(de::Time const &timestamp);
 
 protected:
     void setFormat(Format format);
