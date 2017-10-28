@@ -239,6 +239,17 @@ public:
         return *this;
     }
 
+    template <typename Type>
+    Writer &writeMultiple(Type const &value) {
+        return *this << value;
+    }
+
+    template <typename Type, typename... Args>
+    Writer &writeMultiple(Type const &value, Args... args) {
+        *this << value;
+        return writeMultiple(args...);
+    }
+
     /**
      * Returns the destination byte array used by the writer.
      */
