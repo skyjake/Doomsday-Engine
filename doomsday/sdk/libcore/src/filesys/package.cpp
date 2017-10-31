@@ -456,6 +456,12 @@ bool Package::equals(String const &id1, String const &id2)
 
 String Package::identifierForFile(File const &file)
 {
+    // The ID may be specified in the metadata.
+    if (auto const *pkgId = file.objectNamespace().tryFind(VAR_PACKAGE_ID))
+    {
+        return pkgId->value().asText();
+    }
+
     // Form the prefix if there are enclosing packs as parents.
     String prefix;
     Folder const *parent = file.parent();
