@@ -25,6 +25,7 @@
 #include "players.h"
 #include "gameprofiles.h"
 
+#include <de/Binder>
 #include <de/NativePath>
 #include <de/Info>
 #include <de/shell/PackageDownloader>
@@ -228,6 +229,8 @@ public:
     static de::StringList loadedPackagesAffectingGameplay();
 
 protected:
+    static void initBindings(de::Binder &binder);
+
     /**
      * Called just before a game change is about to begin. The GameUnload
      * audience has already been notified.

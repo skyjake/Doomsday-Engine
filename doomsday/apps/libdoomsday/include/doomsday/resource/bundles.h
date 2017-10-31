@@ -67,6 +67,18 @@ public:
     BlockElements formatEntries(DataBundle::Format format) const;
 
     /**
+     * Defines a known pacakge. When identifying the specified path, it will be
+     * recognized as @a packageId. This is used for overriding the normal data bundle
+     * registry programmatically. The known file is given a maximum match score.
+     *
+     * @param path       Path of a data bundle.
+     * @param packageId  Package identifier.
+     */
+//    void defineKnownPackage(de::Path const &path, de::String const &packageId);
+
+//    void undefineKnownPackage(de::Path const &path);
+
+    /**
      * Tries to identify of the data files that have been indexed since the
      * previous call of this method. Recognized data files are linked as
      * packages under the /sys/bundles folder.

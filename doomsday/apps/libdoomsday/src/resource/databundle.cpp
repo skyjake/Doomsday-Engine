@@ -48,6 +48,7 @@ static String const VAR_LICENSE     ("license");
 static String const VAR_AUTHOR      ("author");
 static String const VAR_TITLE       ("title");
 static String const VAR_TAGS        ("tags");
+static String const VAR_NOTES       ("notes");
 static String const VAR_DATA_FILES  ("dataFiles");
 static String const VAR_BUNDLE_SCORE("bundleScore");
 static String const VAR_REQUIRES    ("requires");
@@ -405,16 +406,7 @@ DENG2_PIMPL(DataBundle), public Lockable
             auto &root = App::rootFolder();
 
             // WAD files sometimes come with a matching TXT file.
-            if (format == Pwad || format == Iwad)
-            {
-                if (File const *wadTxt = root.tryLocate<File const>(
-                            dataFilePath.fileNamePath() / dataFilePath.fileNameWithoutExtension() + ".txt"))
-                {
-                    Block txt;
-                    *wadTxt >> txt;
-                    meta.set("notes", _E(m) + String::fromCP437(txt));
-                }
-            }
+            checkAuxiliaryNotes(meta);
 
             // There may be Snowberry metadata available:
             // - Info entry inside root folder
@@ -475,6 +467,21 @@ DENG2_PIMPL(DataBundle), public Lockable
                    << meta.geti(VAR_BUNDLE_SCORE); // matched.bestScore;
 
         return meta;
+    }
+
+    void checkAuxiliaryNotes(Record &meta)
+    {
+        if (format == Pwad || format == Iwad)
+        {
+            String const dataFilePath = self().asFile().path();
+            if (File const *wadTxt = FS::tryLocate<File const>(
+                        dataFilePath.fileNameAndPathWithoutExtension() + ".txt"))
+            {
+                Block txt;
+                *wadTxt >> txt;
+                meta.set(VAR_NOTES, _E(m) + String::fromCP437(txt));
+            }
+        }
     }
 
     /**
@@ -604,7 +611,7 @@ DENG2_PIMPL(DataBundle), public Lockable
                 if (!notes.isEmpty())
                 {
                     notes.replace(QRegExp("\\s+"), " "); // normalize whitespace
-                    meta.set("notes", notes);
+                    meta.set(VAR_NOTES, notes);
                 }
             }
         }
@@ -612,8 +619,8 @@ DENG2_PIMPL(DataBundle), public Lockable
         if (parseErrorMsg)
         {
             meta.appendUniqueWord(VAR_TAGS, "error");
-            meta.set("notes", QObject::tr("There is an error in the metadata of this package: %1")
-                .arg(parseErrorMsg) + "\n\n" + meta.gets("notes", ""));
+            meta.set(VAR_NOTES, QObject::tr("There is an error in the metadata of this package: %1")
+                .arg(parseErrorMsg) + "\n\n" + meta.gets(VAR_NOTES, ""));
         }
     }
 
@@ -635,7 +642,7 @@ DENG2_PIMPL(DataBundle), public Lockable
 
         bool foundVersion = false;
 
-        foreach (String line, meta.gets("notes", "").split('\n'))
+        foreach (String line, meta.gets(VAR_NOTES, "").split('\n'))
         {
             auto match = reTitle.match(line);
             if (match.hasMatch())
@@ -765,15 +772,16 @@ DENG2_PIMPL(DataBundle), public Lockable
 
     static void removeGameTags(Record &meta)
     {
-        String newTags;
-        foreach (QString tag, Package::tags(meta.gets(VAR_TAGS)))
-        {
-            if (!gameTags().contains(tag))
-            {
-                if (!newTags.isEmpty()) newTags += QStringLiteral(" ");
-                newTags += tag;
-            }
-        }
+        String newTags = meta.gets(VAR_TAGS);
+        newTags.remove(QRegularExpression(anyGameTagPattern()));
+//        foreach (QString tag, Package::tags(meta.gets(VAR_TAGS)))
+//        {
+//            if (!gameTags().contains(tag))
+//            {
+//                if (!newTags.isEmpty()) newTags += QStringLiteral(" ");
+//                newTags += tag;
+//            }
+//        }
         meta.set(VAR_TAGS, newTags);
     }
 
@@ -807,7 +815,7 @@ DENG2_PIMPL(DataBundle), public Lockable
             removeGameTags(meta);
             meta.appendUniqueWord(VAR_TAGS, tag);
         }
-        else if (identifyMostLikelyGame(meta.gets("notes", ""), tag))
+        else if (identifyMostLikelyGame(meta.gets(VAR_NOTES, ""), tag))
         {
             //qDebug() << meta.gets(VAR_TITLE)<< "- from notes:" << tag;
             removeGameTags(meta);
@@ -1061,11 +1069,20 @@ String DataBundle::rootPath() const
 
 String DataBundle::packageId() const
 {
-    if (d->packageId.isEmpty())
+    if (!d->packageId)
     {
         identifyPackages();
     }
     return d->packageId;
+}
+
+String DataBundle::versionedPackageId() const
+{
+    if (!d->packageId)
+    {
+        identifyPackages();
+    }
+    return d->versionedPackageId;
 }
 
 IByteArray::Size DataBundle::size() const
@@ -1390,4 +1407,9 @@ String DataBundle::stripRedundantParts(String const &id)
 de::String DataBundle::versionFromTimestamp(const Time &timestamp)
 {
     return timestamp.asDateTime().toString(QStringLiteral("0.yyyy.MMdd.hhmm"));
+}
+
+void DataBundle::checkAuxiliaryNotes(Record &packageMetadata)
+{
+    d->checkAuxiliaryNotes(packageMetadata);
 }

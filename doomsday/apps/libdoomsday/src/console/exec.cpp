@@ -417,7 +417,7 @@ static dd_bool Con_CheckExecBuffer(void)
                  ptr->source == CMDS_CMDLINE);
         if (isInteractive)
         {
-            Log::threadLog().beginInteractive();
+            LOG().beginInteractive();
         }
 
         if (!executeSubCmd(storage, ptr->source, ptr->isNetCmd))
@@ -427,7 +427,7 @@ static dd_bool Con_CheckExecBuffer(void)
 
         if (isInteractive)
         {
-            Log::threadLog().endInteractive();
+            LOG().endInteractive();
         }
     }
 

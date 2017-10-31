@@ -96,6 +96,6 @@ void AbstractSession::copySaved(String const &destPath, String const &sourcePath
     removeSaved(destPath);
 
     GameStateFolder const &original = App::rootFolder().locate<GameStateFolder>(sourcePath);
-    GameStateFolder &copied = App::fileSystem().copySerialized(sourcePath, destPath).as<GameStateFolder>();
+    GameStateFolder &copied = FS::copySerialized(sourcePath, destPath).as<GameStateFolder>();
     copied.cacheMetadata(original.metadata()); // Avoid immediately opening the .save package.
 }

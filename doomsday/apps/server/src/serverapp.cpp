@@ -59,7 +59,7 @@ using namespace de;
 
 static ServerApp *serverAppSingleton = 0;
 
-static String const PATH_SERVER_FILES = "/sys/server/files";
+static String const PATH_SERVER_FILES = "/sys/server/public";
 
 static void handleAppTerminate(char const *msg)
 {

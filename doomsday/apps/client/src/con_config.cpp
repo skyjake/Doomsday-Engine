@@ -312,7 +312,7 @@ void Con_SaveDefaults()
 
     if (CommandLine_CheckWith("-config", 1))
     {
-        path = App::fileSystem().accessNativeLocation(CommandLine_NextAsPath(), File::Write);
+        path = FS::accessNativeLocation(CommandLine_NextAsPath(), File::Write);
     }
     else
     {

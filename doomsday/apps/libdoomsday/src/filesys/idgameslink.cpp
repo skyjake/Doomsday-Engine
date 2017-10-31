@@ -47,7 +47,7 @@ DENG2_PIMPL(IdgamesLink)
 
         String descriptionPath() const
         {
-            return path().toString().fileNameAndPathWithoutExtension() + ".TXT";
+            return file->path().toString().fileNameAndPathWithoutExtension() + ".txt";
         }
     };
     PathTreeT<PackageIndexEntry> packageIndex;
@@ -82,10 +82,14 @@ DENG2_PIMPL(IdgamesLink)
             }
             if (path.segment(1) == CATEGORY_LEVELS)
             {
-                return String("%1.%2.%3.%4")
+                String subset;
+                if      (path.segment(3) == QStringLiteral("deathmatch")) subset = QStringLiteral("deathmatch.");
+                else if (path.segment(3) == QStringLiteral("megawads"))   subset = QStringLiteral("megawads.");
+                return String("%1.%2.%3.%4%5")
                         .arg(DOMAIN_IDGAMES)
                         .arg(CATEGORY_LEVELS)
                         .arg(path.segment(2))
+                        .arg(subset)
                         .arg(id);
             }
             return String("%1.%2").arg(DOMAIN_IDGAMES).arg(id);
@@ -108,7 +112,7 @@ DENG2_PIMPL(IdgamesLink)
             {
                 auto const id_ver = Package::split(pkg);
                 auto &pkgEntry = packageIndex.insert(DotPath(id_ver.first));
-                pkgEntry.file = &fileEntry;
+                pkgEntry.file    = &fileEntry;
                 pkgEntry.version = id_ver.second;
             }
         }
@@ -132,7 +136,10 @@ DENG2_PIMPL(IdgamesLink)
 
     RemoteFile &makeRemoteFile(Folder &folder, String const &remotePath, Block const &remoteMetaId)
     {
-        auto *file = new RemoteFile(remotePath.fileName(), remotePath, remoteMetaId);
+        auto *file = new RemoteFile(remotePath.fileName(),
+                                    remotePath,
+                                    remoteMetaId,
+                                    self().address());
         folder.add(file);
         FS::get().index(*file);
         return *file;
@@ -260,11 +267,19 @@ File *IdgamesLink::populateRemotePath(String const &packageId,
     auto &pkgFolder = FS::get().makeFolder(path.localPath, FS::DontInheritFeeds);
 
     // The main data file of the package.
-    auto &dataFile = d->makeRemoteFile(pkgFolder, pkgEntry->file->path(), pkgEntry->file->metaId(*this));
+    auto &dataFile = d->makeRemoteFile(pkgFolder,
+                                       pkgEntry->file->path(),
+                                       pkgEntry->file->metaId(*this));
+    dataFile.setStatus(File::Status(pkgEntry->file->size, pkgEntry->file->modTime));
 
     // Additional description.
-    auto &txtFile = d->makeRemoteFile(pkgFolder, pkgEntry->descriptionPath(),
+    auto &txtFile = d->makeRemoteFile(pkgFolder,
+                                      pkgEntry->descriptionPath(),
                                       md5Hash(address(), pkgEntry->descriptionPath(), pkgEntry->file->modTime));
+    if (auto const *txtEntry = findFile(pkgEntry->descriptionPath()))
+    {
+        txtFile.setStatus(File::Status(txtEntry->size, txtEntry->modTime));
+    }
 
     auto *infoFile = new IdgamesPackageInfoFile("info.dei");
     infoFile->setSourceFiles(dataFile, txtFile);

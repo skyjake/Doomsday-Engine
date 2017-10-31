@@ -83,6 +83,7 @@ DENG2_PIMPL(DoomsdayApp)
 {
     std::string ddBasePath; // Doomsday root directory is at...?
 
+    Binder binder;
     bool initialized = false;
     bool gameBeingChanged = false;
     bool shuttingDown = false;
@@ -126,9 +127,12 @@ DENG2_PIMPL(DoomsdayApp)
         : Base(i)
         , players(playerConstructor)
     {
+        // Script bindings.
         Record &appModule = App::scriptSystem().nativeModule("App");
         appModule.addArray("audienceForGameChange"); // game change observers
         audienceForGameChange += scriptAudienceForGameChange;
+
+        initBindings(binder);
 
         gameProfiles.setGames(games);
         saveGames   .setGames(games);

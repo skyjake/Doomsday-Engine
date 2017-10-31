@@ -74,6 +74,8 @@ public:
      */
     de::String packageId() const;
 
+    de::String versionedPackageId() const;
+
     /**
      * Generates appropriate packages according to the contents of the data bundle.
      * @return @c true, if the bundle was identid and linked as a package.
@@ -128,6 +130,8 @@ public:
      * a guess.
      */
     de::String guessCompatibleGame() const;
+
+    void checkAuxiliaryNotes(de::Record &packageMetadata);
 
     // Implements IByteArray.
     Size size() const;
