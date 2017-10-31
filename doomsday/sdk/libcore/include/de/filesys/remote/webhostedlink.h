@@ -29,10 +29,10 @@ namespace filesys {
  * Repository of files hosted on a web server as a file tree. Assumed to come
  * with a Unix-style "ls-laR.gz" directory tree index (e.g., an idgames mirror).
  */
-class WebHostedLink : public Link
+class DENG2_PUBLIC WebHostedLink : public Link
 {
 public:
-    struct FileEntry : public PathTree::Node
+    struct DENG2_PUBLIC FileEntry : public PathTree::Node
     {
         duint64 size = 0;
         Time modTime;
