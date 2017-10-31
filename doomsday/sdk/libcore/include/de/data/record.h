@@ -470,6 +470,10 @@ public:
      */
     Variable const &operator [] (String const &name) const;
 
+    Variable *tryFind(String const &name);
+
+    Variable const *tryFind(String const &name) const;
+
     inline Variable &member(String const &name) {
         return (*this)[name];
     }

@@ -849,6 +849,16 @@ Variable const &Record::operator [] (String const &name) const
     throw NotFoundError("Record::operator []", "Variable '" + name + "' not found");
 }
 
+Variable *Record::tryFind(String const &name)
+{
+    return const_cast<Variable *>(d->findMemberByPath(name));
+}
+
+Variable const *Record::tryFind(String const &name) const
+{
+    return d->findMemberByPath(name);
+}
+
 Record &Record::subrecord(String const &name)
 {
     return const_cast<Record &>((const_cast<Record const *>(this))->subrecord(name));
