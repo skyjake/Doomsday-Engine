@@ -325,6 +325,19 @@ public:
      */
     void deindex(File &file);
 
+    void timeChanged(Clock const &);
+
+public:
+    template <typename T>
+    static T &locate(String const &path) {
+        return FileSystem::get().root().locate<T>(path);
+    }
+
+    template <typename T>
+    static T *tryLocate(String const &path) {
+        return FileSystem::get().root().tryLocate<T>(path);
+    }
+
     enum CopyBehavior
     {
         PlainFileCopy          = 0,
@@ -343,24 +356,11 @@ public:
      * @param destinationPath  Destination path.
      * @param behavior         Copy behavior: which members to copy.
      */
-    File &copySerialized(String const &sourcePath, String const &destinationPath,
-                         CopyBehaviors behavior = DefaultCopyBehavior);
+    static File &copySerialized(String const &sourcePath, String const &destinationPath,
+                                CopyBehaviors behavior = DefaultCopyBehavior);
 
-    String accessNativeLocation(NativePath const &nativePath,
-                                File::Flags flags = File::ReadOnly);
-
-    void timeChanged(Clock const &);
-
-public:
-    template <typename T>
-    static T &locate(String const &path) {
-        return FileSystem::get().root().locate<T>(path);
-    }
-
-    template <typename T>
-    static T *tryLocate(String const &path) {
-        return FileSystem::get().root().tryLocate<T>(path);
-    }
+    static String accessNativeLocation(NativePath const &nativePath,
+                                       File::Flags flags = File::ReadOnly);
 
 private:
     DENG2_PRIVATE(d)

@@ -147,6 +147,8 @@ public:
      */
     String concatenatePath(String const &path, QChar dirChar = '/') const;
 
+    String concatenateRelativePath(String const &path, QChar dirChar = '/') const;
+
     /**
      * Does a path concatenation on this string and the argument. Note that if
      * @a path is an absolute path (starts with '/'), the result of the
@@ -188,6 +190,9 @@ public:
 
     /// Replaces all sequences of whitespace with single space characters.
     String normalizeWhitespace() const;
+
+    /// Returns a copy of the string with matches removed.
+    String removed(QRegularExpression const &expr) const;
 
     /// Returns a lower-case version of the string.
     String lower() const;

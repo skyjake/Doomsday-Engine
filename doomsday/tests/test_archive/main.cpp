@@ -130,10 +130,10 @@ int main(int argc, char **argv)
 
         LOG_MSG("After flushing:\n") << app.homeFolder().contentsAsText();
 
-        App::fileSystem().copySerialized(updated.path(), "home/copied.zip", FS::PlainFileCopy);
+        FS::copySerialized(updated.path(), "home/copied.zip", FS::PlainFileCopy);
         LOG_MSG("Plain copy: ") << App::rootFolder().locate<File const>("home/copied.zip").description();
 
-        App::fileSystem().copySerialized(updated.path(), "home/copied.zip");
+        FS::copySerialized(updated.path(), "home/copied.zip");
         LOG_MSG("Normal copy: ") << App::rootFolder().locate<File const>("home/copied.zip").description();
     }
     catch (Error const &err)

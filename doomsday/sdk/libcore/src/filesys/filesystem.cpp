@@ -291,12 +291,14 @@ void FileSystem::deindex(File &file)
 }
 
 File &FileSystem::copySerialized(String const &sourcePath, String const &destinationPath,
-                                 CopyBehaviors behavior)
+                                 CopyBehaviors behavior) // static
 {
-    Block contents;
-    *root().locate<File const>(sourcePath).source() >> contents;
+    auto &fs = get();
 
-    File *dest = &root().replaceFile(destinationPath);
+    Block contents;
+    *fs.root().locate<File const>(sourcePath).source() >> contents;
+
+    File *dest = &fs.root().replaceFile(destinationPath);
     *dest << contents;
     dest->flush();
 
@@ -353,21 +355,22 @@ void FileSystem::printIndex()
     }
 }
 
-String FileSystem::accessNativeLocation(NativePath const &nativePath, File::Flags flags)
+String FileSystem::accessNativeLocation(NativePath const &nativePath, File::Flags flags) // static
 {
     static String const folders = "/sys/folders";
+    auto &fs = get();
 
-    makeFolder(folders);
+    fs.makeFolder(folders);
 
     String const path = folders / nativePath.fileNamePath().fileName();
-    if (!root().has(path))
+    if (!fs.root().has(path))
     {
         DirectoryFeed::Flags feedFlags = DirectoryFeed::OnlyThisFolder;
         if (flags.testFlag(File::Write)) feedFlags |= DirectoryFeed::AllowWrite;
-        makeFolderWithFeed(path,
-                           new DirectoryFeed(nativePath.fileNamePath(), feedFlags),
-                           Folder::PopulateOnlyThisFolder,
-                           FS::DontInheritFeeds | FS::PopulateNewFolder)
+        fs.makeFolderWithFeed(path,
+                              new DirectoryFeed(nativePath.fileNamePath(), feedFlags),
+                              Folder::PopulateOnlyThisFolder,
+                              FS::DontInheritFeeds | FS::PopulateNewFolder)
                 .setMode(flags);
     }
     return path / nativePath.fileName();

@@ -437,6 +437,8 @@ public:
 
     Variable &appendUniqueWord(String const &name, String const &word, String const &separator = " ");
 
+    Variable &appendMultipleUniqueWords(String const &name, String const &words, String const &separator = " ");
+
     Variable &appendToArray(String const &name, Value *value);
 
     /**

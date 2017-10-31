@@ -784,6 +784,15 @@ Variable &Record::appendUniqueWord(String const &name, String const &word, Strin
     return (*this)[name];
 }
 
+Variable &Record::appendMultipleUniqueWords(String const &name, String const &words, String const &separator)
+{
+    foreach (String word, words.split(separator, QString::SkipEmptyParts))
+    {
+        appendUniqueWord(name, word, separator);
+    }
+    return (*this)[name];
+}
+
 Variable &Record::appendToArray(String const &name, Value *value)
 {
     DENG2_GUARD(d);

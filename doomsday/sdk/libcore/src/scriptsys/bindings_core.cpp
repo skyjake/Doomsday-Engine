@@ -271,6 +271,8 @@ static Value *Function_Animation_SetValueFrom(Context &ctx, Function::ArgumentVa
 
 void initCoreModule(Binder &binder, Record &coreModule)
 {
+    // The Core module contains classes that match native classes as closely as possible.
+
     // Dictionary
     {
 
