@@ -14,9 +14,9 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
- 
+
 #include "de/WhileStatement"
 #include "de/Expression"
 #include "de/Evaluator"
@@ -49,22 +49,22 @@ void WhileStatement::execute(Context &context) const
 
 void WhileStatement::operator >> (Writer &to) const
 {
-    to << SerialId(WHILE) << *_loopCondition << _compound;
+    to << dbyte(SerialId::While) << *_loopCondition << _compound;
 }
 
 void WhileStatement::operator << (Reader &from)
 {
     SerialId id;
-    from >> id;
-    if (id != WHILE)
+    from.readAs<dbyte>(id);
+    if (id != SerialId::While)
     {
-        /// @throw DeserializationError The identifier that species the type of the 
+        /// @throw DeserializationError The identifier that species the type of the
         /// serialized statement was invalid.
         throw DeserializationError("WhileStatement::operator <<", "Invalid ID");
     }
     delete _loopCondition;
     _loopCondition = 0;
     _loopCondition = Expression::constructFrom(from);
-    
+
     from >> _compound;
 }

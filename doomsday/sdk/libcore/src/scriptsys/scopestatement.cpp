@@ -75,14 +75,14 @@ void ScopeStatement::execute(Context &context) const
 
 void ScopeStatement::operator >> (Writer &to) const
 {
-    to << SerialId(SCOPE) << *d->identifier << *d->superRecords << d->compound;
+    to << dbyte(SerialId::Scope) << *d->identifier << *d->superRecords << d->compound;
 }
 
 void ScopeStatement::operator << (Reader &from)
 {
     SerialId id;
-    from >> id;
-    if (id != SCOPE)
+    from.readAs<dbyte>(id);
+    if (id != SerialId::Scope)
     {
         /// @throw DeserializationError The identifier that species the type of the
         /// serialized statement was invalid.

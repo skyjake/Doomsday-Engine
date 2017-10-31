@@ -62,22 +62,22 @@ void PrintStatement::execute(Context &context) const
        }
        os << (*i)->asText();
     }
-    
+
     LOG_SCR_MSG(_E(m)) << msg;
-    
+
     context.proceed();
 }
 
 void PrintStatement::operator >> (Writer &to) const
 {
-    to << SerialId(PRINT) << *_arg;
+    to << dbyte(SerialId::Print) << *_arg;
 }
 
 void PrintStatement::operator << (Reader &from)
 {
     SerialId id;
-    from >> id;
-    if (id != PRINT)
+    from.readAs<dbyte>(id);
+    if (id != SerialId::Print)
     {
         /// @throw DeserializationError The identifier that species the type of the
         /// serialized statement was invalid.

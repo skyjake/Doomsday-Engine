@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_STATEMENT_H
@@ -59,21 +59,20 @@ public:
     static Statement *constructFrom(Reader &from);
 
 protected:
-    typedef dbyte SerialId;
-
-    enum SerialIds {
-        ASSIGN,
-        CATCH,
-        EXPRESSION,
-        FLOW,
-        FOR,
-        FUNCTION,
-        IF,
-        PRINT,
-        TRY,
-        WHILE,
-        DELETE,
-        SCOPE
+    enum class SerialId : dbyte
+    {
+        Assign,
+        Catch,
+        Expression,
+        Flow,
+        For,
+        Function,
+        If,
+        Print,
+        Try,
+        While,
+        Delete,
+        Scope,
     };
 
 private:

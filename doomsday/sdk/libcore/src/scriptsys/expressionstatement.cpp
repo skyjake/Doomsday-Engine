@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/ExpressionStatement"
@@ -43,16 +43,16 @@ void ExpressionStatement::execute(Context &context) const
 
 void ExpressionStatement::operator >> (Writer &to) const
 {
-    to << SerialId(EXPRESSION) << *_expression;
+    to << dbyte(SerialId::Expression) << *_expression;
 }
 
 void ExpressionStatement::operator << (Reader &from)
 {
     SerialId id;
-    from >> id;
-    if (id != EXPRESSION)
+    from.readAs<dbyte>(id);
+    if (id != SerialId::Expression)
     {
-        /// @throw DeserializationError The identifier that species the type of the 
+        /// @throw DeserializationError The identifier that species the type of the
         /// serialized statement was invalid.
         throw DeserializationError("ExpressionStatement::operator <<", "Invalid ID");
     }

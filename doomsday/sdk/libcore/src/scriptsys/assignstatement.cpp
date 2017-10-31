@@ -104,14 +104,14 @@ void AssignStatement::execute(Context &context) const
 
 void AssignStatement::operator >> (Writer &to) const
 {
-    to << SerialId(ASSIGN) << duint8(_indexCount) << _args;
+    to << dbyte(SerialId::Assign) << duint8(_indexCount) << _args;
 }
 
 void AssignStatement::operator << (Reader &from)
 {
     SerialId id;
-    from >> id;
-    if (id != ASSIGN)
+    from.readAs<dbyte>(id);
+    if (id != SerialId::Assign)
     {
         /// @throw DeserializationError The identifier that species the type of the
         /// serialized statement was invalid.

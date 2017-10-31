@@ -69,14 +69,14 @@ void ForStatement::execute(Context &context) const
 
 void ForStatement::operator >> (Writer &to) const
 {
-    to << SerialId(FOR) << *_iterator << *_iteration << _compound;
+    to << dbyte(SerialId::For) << *_iterator << *_iteration << _compound;
 }
 
 void ForStatement::operator << (Reader &from)
 {
     SerialId id;
-    from >> id;
-    if (id != FOR)
+    from.readAs<dbyte>(id);
+    if (id != SerialId::For)
     {
         /// @throw DeserializationError The identifier that species the type of the
         /// serialized statement was invalid.
