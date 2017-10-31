@@ -31,7 +31,7 @@ namespace filesys {
 
 String const NativeLink::URL_SCHEME("doomsday:");
 
-static String const PATH_SERVER_REPOSITORY_ROOT("/sys/server/files"); // serverside folder
+static String const PATH_SERVER_REPOSITORY_ROOT("/sys/server/public"); // serverside folder
 
 DENG2_PIMPL(NativeLink)
 {

@@ -55,6 +55,8 @@ protected:
 
     FileTree const &fileTree() const;
 
+    FileEntry const *findFile(Path const &path) const;
+
     virtual void parseRepositoryIndex(QByteArray data) = 0;
 
     virtual String findPackagePath(String const &packageId) const = 0;

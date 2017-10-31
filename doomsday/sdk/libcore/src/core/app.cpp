@@ -46,6 +46,7 @@
 #include "de/RemoteFeedRelay"
 #include "de/ScriptSystem"
 #include "de/StaticLibraryFeed"
+#include "de/TextValue"
 #include "de/UnixInfo"
 #include "de/Version"
 #include "de/Writer"
@@ -61,6 +62,37 @@
 namespace de {
 
 static App *singletonApp;
+
+static Value *Function_App_Locate(Context &, Function::ArgumentValues const &args)
+{
+    std::unique_ptr<DictionaryValue> result(new DictionaryValue);
+
+    String const packageId = args.first()->asText();
+
+    // Local packages.
+    if (File const *pkg = PackageLoader::get().select(packageId))
+    {
+        result->add(new TextValue(packageId), RecordValue::takeRecord(
+                        Record::withMembers(
+                            "localPath",   pkg->path(),
+                            "description", pkg->description()
+                        )));
+    }
+
+    // Remote packages.
+    auto found = App::remoteFeedRelay().locatePackages(StringList({ packageId }));
+    for (auto i = found.begin(); i != found.end(); ++i)
+    {
+        result->add(new TextValue(i.key()), RecordValue::takeRecord(
+                        Record::withMembers(
+                            "repository", i->link->address(),
+                            "localPath",  i->localPath,
+                            "remotePath", i->remotePath
+                        )));
+    }
+
+    return result.release();
+}
 
 DENG2_PIMPL(App)
 , DENG2_OBSERVES(PackageLoader, Activity)
@@ -90,10 +122,12 @@ DENG2_PIMPL(App)
     QList<System *> systems;
 
     ScriptSystem scriptSys;
+    Record appModule;
+    Binder binder;
+
     FileSystem fs;
     std::unique_ptr<MetadataBank> metaBank;
     std::unique_ptr<NativeFile> basePackFile;
-    Record appModule;
 
     /// Archive where persistent data should be stored. Written to /home/persist.pack.
     /// The archive is owned by the file system.
@@ -157,7 +191,11 @@ DENG2_PIMPL(App)
         fs.addInterpreter(intrpZipArchive);
 
         // Native App module.
-        scriptSys.addNativeModule("App", appModule);
+        {
+            scriptSys.addNativeModule("App", appModule);
+            binder.init(appModule)
+                    << DENG2_FUNC(App_Locate, "locate", "packageId");
+        }
     }
 
     ~Impl()

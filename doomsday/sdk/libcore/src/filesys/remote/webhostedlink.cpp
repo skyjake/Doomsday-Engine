@@ -41,12 +41,7 @@ DENG2_PIMPL(WebHostedLink), public Lockable
     {}
 
     ~Impl()
-    {
-        foreach (auto *reply, pendingRequests)
-        {
-            reply->deleteLater();
-        }
-    }
+    {}
 
     Block metaIdForFileEntry(FileEntry const &entry) const
     {
@@ -101,17 +96,27 @@ DENG2_PIMPL(WebHostedLink), public Lockable
         });
     }
 
-    void handleReply(QueryId id, QNetworkReply *reply)
+    void receiveFileContents(QueryId id, QNetworkReply *reply)
     {
-        reply->deleteLater();
         if (reply->error() == QNetworkReply::NoError)
         {
+            //qDebug() << "Content-Length:" << reply->header(QNetworkRequest::ContentLengthHeader);
+            dsize const contentLength = reply->header(QNetworkRequest::ContentLengthHeader).toULongLong();
+
+            //qDebug() << "pos:" << pos << contentLength << reply->url();
+
+            // Ths is the complete downloaded file.
             QByteArray const data = reply->readAll();
 
+            Query const *query = self().findQuery(id);
+            self().chunkReceived(id, query->receivedBytes, data,
+                                 contentLength? contentLength : dsize(data.size()));
         }
         else
         {
             LOG_NET_WARNING(reply->errorString());
+
+            /// @todo Abort query with error.
         }
     }
 };
@@ -153,6 +158,12 @@ WebHostedLink::FileTree const &WebHostedLink::fileTree() const
     return *d->fileTree;
 }
 
+WebHostedLink::FileEntry const *WebHostedLink::findFile(Path const &path) const
+{
+    DENG2_GUARD(d);
+    return d->fileTree->tryFind(path, PathTree::MatchFull);
+}
+
 filesys::PackagePaths WebHostedLink::locatePackages(StringList const &packageIds) const
 {
     PackagePaths remotePaths;
@@ -177,19 +188,25 @@ void WebHostedLink::transmit(Query const &query)
         return;
     }
 
-    String url = address();
-    QNetworkRequest req(url);
-    req.setRawHeader("User-Agent", Version::currentBuild().userAgent().toLatin1());
+    DENG2_ASSERT(query.fileContents);
 
-    // TODO: Configure the request.
+    String url = address();
+    QNetworkRequest req(url.concatenateRelativePath(query.path));
+    qDebug() << req.url().toString();
+    req.setRawHeader("User-Agent", Version::currentBuild().userAgent().toLatin1());
 
     QNetworkReply *reply = RemoteFeedRelay::get().network().get(req);
     d->pendingRequests.insert(reply);
 
     auto const id = query.id;
+    QObject::connect(reply, &QNetworkReply::readyRead, [this, id, reply] ()
+    {
+        d->receiveFileContents(id, reply);
+    });
     QObject::connect(reply, &QNetworkReply::finished, [this, id, reply] ()
     {
-        d->handleReply(id, reply);
+        d->pendingRequests.remove(reply);
+        reply->deleteLater();
     });
 }
 

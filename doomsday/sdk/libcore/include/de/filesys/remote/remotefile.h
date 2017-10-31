@@ -37,8 +37,11 @@ public:
     /// Data of the file has not yet been fetched. @ingroup errors
     DENG2_ERROR(UnfetchedError);
 
+    static String const CACHE_PATH;
+
 public:
-    RemoteFile(String const &name, String const &remotePath, Block const &remoteMetaId);
+    RemoteFile(String const &name, String const &remotePath, Block const &remoteMetaId,
+               String const &repositoryAddress = String());
 
     String describe() const override;
     Block  metaId()   const override;

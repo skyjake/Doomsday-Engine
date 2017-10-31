@@ -31,12 +31,13 @@ namespace de {
 
 using namespace de::filesys;
 
-static String const CACHE_PATH = "/home/cache/remote";
+String const RemoteFile::CACHE_PATH = "/home/cache/remote";
 
 DENG2_PIMPL(RemoteFile)
 {
     String remotePath;
     Block remoteMetaId;
+    String repositoryAddress; // If empty, use feed's repository.
     Block buffer;
     Request<FileContents> fetching;
 
@@ -103,22 +104,35 @@ DENG2_PIMPL(RemoteFile)
         }
         return false;
     }
+
+    String repository() const
+    {
+        if (repositoryAddress)
+        {
+            return repositoryAddress;
+        }
+        DENG2_ASSERT(is<RemoteFeed>(self().originFeed()));
+        return self().originFeed()->as<RemoteFeed>().repository();
+    }
 };
 
-RemoteFile::RemoteFile(String const &name, String const &remotePath, Block const &remoteMetaId)
+RemoteFile::RemoteFile(String const &name, String const &remotePath, Block const &remoteMetaId,
+                       String const &repositoryAddress)
     : LinkFile(name)
     , d(new Impl(this))
 {
     objectNamespace().addSuperRecord(ScriptSystem::builtInClass(QStringLiteral("RemoteFile")));
-    d->remotePath   = remotePath;
-    d->remoteMetaId = remoteMetaId;
+    d->repositoryAddress = repositoryAddress;
+    d->remotePath        = remotePath;
+    d->remoteMetaId      = remoteMetaId;
+
+    qDebug() << "RemoteFile remotePath:" << remotePath;
+
     setState(NotReady);
 }
 
 void RemoteFile::download()
 {
-    DENG2_ASSERT(is<RemoteFeed>(originFeed()));
-
     if (state() != NotReady) return;
 
     setState(Recovering);
@@ -136,7 +150,7 @@ void RemoteFile::download()
     LOG_NET_MSG("Requesting download of \"%s\"") << name();
 
     d->fetching = filesys::RemoteFeedRelay::get().fetchFileContents
-            (originFeed()->as<RemoteFeed>().repository(),
+            (d->repository(),
              d->remotePath,
              [this] (duint64 startOffset, Block const &chunk, duint64 remainingBytes)
     {
