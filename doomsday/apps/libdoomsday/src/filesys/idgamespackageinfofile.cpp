@@ -38,6 +38,7 @@ DENG2_PIMPL(IdgamesPackageInfoFile)
     AssetGroup assets;
     SafePtr<RemoteFile const> dataFile;
     SafePtr<RemoteFile const> descriptionFile;
+    Block serializedContent;
 
     Impl(Public *i) : Base(i)
     {
@@ -171,6 +172,25 @@ DENG2_PIMPL(IdgamesPackageInfoFile)
                 // Apply metadata to the folder representing the package.
                 auto &pkgMeta = Package::initializeMetadata(packFolder, packageId);
                 pkgMeta.copyMembersFrom(meta);
+
+                // Prepare the required package info in case this is installed locally.
+                {
+                    Record info { pkgMeta, Record::IgnoreDoubleUnderscoreMembers };
+                    delete info.remove("ID");
+                    delete info.remove("path");
+                    String const cachePath = cacheFolderPath();
+                    ArrayValue *pkgData = new ArrayValue;
+                    foreach (String path, info.getStringList("dataFiles"))
+                    {
+                        if (path.startsWith(cachePath))
+                        {
+                            path.remove(0, cachePath.size() + 1);
+                        }
+                        pkgData->add(new TextValue(path));
+                    }
+                    info.set("dataFiles", pkgData);
+                    serializedContent = info.asInfo().toUtf8();
+                }
             }
 
             // Everythis is complete.
@@ -222,6 +242,6 @@ void IdgamesPackageInfoFile::cancelDownload()
 
 IIStream const &IdgamesPackageInfoFile::operator >> (IByteArray &bytes) const
 {
-
+    bytes.set(0, d->serializedContent.dataConst(), d->serializedContent.size());
     return *this;
 }
