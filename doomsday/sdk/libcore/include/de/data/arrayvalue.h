@@ -212,7 +212,7 @@ public:
     Value const &element(dint index) const;
     Value const &operator [] (dint index) const;
 
-    String asTextWithInfoSyntax() const;
+    String asInfo() const;
 
 private:
     Elements::iterator indexToIterator(dint index);

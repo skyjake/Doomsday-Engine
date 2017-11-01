@@ -411,7 +411,7 @@ String GameStateFolder::Metadata::asStyledText() const
  * See the Doomsday Wiki for an example of the syntax:
  * http://dengine.net/dew/index.php?title=Info
  */
-String GameStateFolder::Metadata::asTextWithInfoSyntax() const
+String GameStateFolder::Metadata::asInfo() const
 {
     /// @todo Use a more generic Record => Info conversion logic.
 
@@ -422,7 +422,7 @@ String GameStateFolder::Metadata::asTextWithInfoSyntax() const
     if (has("gameIdentityKey")) os <<   "gameIdentityKey: " << gets("gameIdentityKey");
     if (has("packages"))
     {
-        os << "\npackages " << geta("packages").asTextWithInfoSyntax();
+        os << "\npackages " << geta("packages").asInfo();
     }
     if (has("episode"))         os << "\nepisode: "         << gets("episode");
     if (has("mapTime"))         os << "\nmapTime: "         << String::number(geti("mapTime"));
@@ -441,7 +441,7 @@ String GameStateFolder::Metadata::asTextWithInfoSyntax() const
     }
     if (has("visitedMaps"))
     {
-        os << "\nvisitedMaps " << geta("visitedMaps").asTextWithInfoSyntax();
+        os << "\nvisitedMaps " << geta("visitedMaps").asInfo();
     }
     if (has("sessionId"))       os << "\nsessionId: "       << String::number(geti("sessionId"));
     if (has("userDescription")) os << "\nuserDescription: " << gets("userDescription");

@@ -404,7 +404,7 @@ Value const &ArrayValue::operator [] (dint index) const
     return element(index);
 }
 
-String ArrayValue::asTextWithInfoSyntax() const
+String ArrayValue::asInfo() const
 {
     StringList values;
     for (Value const *value : elements())

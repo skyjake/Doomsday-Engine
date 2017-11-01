@@ -64,7 +64,7 @@ public:
         /**
          * Generates a textual representation of the session metadata with Info syntax.
          */
-        de::String asTextWithInfoSyntax() const;
+        de::String asInfo() const;
     };
 
     /**

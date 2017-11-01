@@ -22,6 +22,7 @@
 #include "de/BlockValue"
 #include "de/DictionaryValue"
 #include "de/FunctionValue"
+#include "de/Info"
 #include "de/LogBuffer"
 #include "de/NumberValue"
 #include "de/Reader"
@@ -554,6 +555,15 @@ Variable *Record::remove(Variable &variable)
 Variable *Record::remove(String const &variableName)
 {
     return remove((*this)[variableName]);
+}
+
+Variable *Record::tryRemove(String const &variableName)
+{
+    if (has(variableName))
+    {
+        return remove(variableName);
+    }
+    return nullptr;
 }
 
 Variable &Record::add(String const &name)
@@ -1136,6 +1146,43 @@ Record const &Record::parentRecordForMember(String const &name) const
 
     // Omit the final segment of the dotted path to find out the parent record.
     return (*this)[lastOmitted];
+}
+
+String Record::asInfo() const
+{
+    String out;
+    QTextStream os(&out);
+    os.setCodec("UTF-8");
+    for (auto i = d->members.constBegin(); i != d->members.constEnd(); ++i)
+    {
+        Variable const &var = *i.value();
+        String src = i.key();
+
+        if (is<RecordValue>(var.value()))
+        {
+            src += " {\n" + var.valueAsRecord().asInfo();
+            src.replace("\n", "\n    ");
+            src += "\n}";
+        }
+        else if (is<ArrayValue>(var.value()))
+        {
+            src += " " + var.value<ArrayValue>().asInfo();
+        }
+        else
+        {
+            String valueText = var.value().asText();
+            if (valueText.contains("\n"))
+            {
+                src += " = " + Info::quoteString(var.value().asText());
+            }
+            else
+            {
+                src += ": " + valueText;
+            }
+        }
+        os << src << "\n";
+    }
+    return out;
 }
 
 QTextStream &operator << (QTextStream &os, Record const &record)

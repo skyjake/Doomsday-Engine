@@ -225,7 +225,7 @@ String String::normalizeWhitespace() const
     static QRegularExpression const reg("\\s+");
     String s = *this;
     s.replace(reg, " ");
-    return s;
+    return s.strip();
 }
 
 String String::removed(const QRegularExpression &expr) const

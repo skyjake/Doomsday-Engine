@@ -3116,14 +3116,14 @@ String Map::objectsDescription() const
     String str;
     QTextStream os(&str);
 
-    if (gx.MobjStateAsInfoText)
+    if (gx.MobjStateAsInfo)
     {
         // Print out a state description for each thinker.
         thinkers().forAll(0x3, [&os] (thinker_t *th)
         {
             if (Thinker_IsMobj(th))
             {
-                os << gx.MobjStateAsInfoText(reinterpret_cast<mobj_t const *>(th));
+                os << gx.MobjStateAsInfo(reinterpret_cast<mobj_t const *>(th));
             }
             return LoopContinue;
         });
@@ -3136,7 +3136,7 @@ void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMap
 {
     /// @todo Generalize from mobjs to all thinkers?
 
-    if (!gx.MobjStateAsInfoText || !gx.MobjRestoreState) return;
+    if (!gx.MobjStateAsInfo || !gx.MobjRestoreState) return;
 
     // Look up all the mobjs.
     QList<thinker_t const *> mobjs;
@@ -3175,7 +3175,7 @@ void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMap
             #if defined (DENG2_DEBUG)
             {
                 // Verify that the state is now correct.
-                Info const currentDesc(gx.MobjStateAsInfoText(found->as<MobjThinkerData>().mobj()));
+                Info const currentDesc(gx.MobjStateAsInfo(found->as<MobjThinkerData>().mobj()));
                 Info::BlockElement const &currentState = currentDesc.root().contentsInOrder()
                         .first()->as<Info::BlockElement>();
                 DENG2_ASSERT(currentState.name() == state.name());

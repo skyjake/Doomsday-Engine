@@ -236,7 +236,7 @@ void Mobj_InflictDamage(mobj_t *mob, mobj_t const *inflictor, int damage);
  * @param mob  Map object.
  * @return Description text.
  */
-de::String Mobj_AsTextWithInfoSyntax(mobj_t const *mob);
+de::String Mobj_StateAsInfo(mobj_t const *mob);
 
 void Mobj_RestoreObjectState(mobj_t *mob, de::Info::BlockElement const &state);
 

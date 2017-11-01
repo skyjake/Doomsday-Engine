@@ -210,7 +210,7 @@ struct GameExports
     coord_t     (*MobjFriction) (struct mobj_s const *mobj);  // Returns a friction factor.
     dd_bool     (*MobjCheckPositionXYZ) (struct mobj_s *mobj, coord_t x, coord_t y, coord_t z);
     dd_bool     (*MobjTryMoveXYZ) (struct mobj_s *mobj, coord_t x, coord_t y, coord_t z);
-    de::String  (*MobjStateAsInfoText) (struct mobj_s const *);
+    de::String  (*MobjStateAsInfo) (struct mobj_s const *);
     void        (*MobjRestoreState) (struct mobj_s *, de::Info::BlockElement const &stateInfoBlockElement);
 
     void        (*SectorHeightChangeNotification)(int sectorIdx);  // Applies necessary checks on objects.

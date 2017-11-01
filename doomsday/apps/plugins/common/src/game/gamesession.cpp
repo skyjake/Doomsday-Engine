@@ -75,7 +75,7 @@ namespace internal
            << "\n# Date: " + now.asDateTime().toString(Qt::SystemLocaleShortDate);
 
         // Write metadata.
-        os << "\n\n" + metadata.asTextWithInfoSyntax() + "\n";
+        os << "\n\n" + metadata.asInfo() + "\n";
 
         return info;
     }

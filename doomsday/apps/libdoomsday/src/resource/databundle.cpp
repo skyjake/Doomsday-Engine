@@ -647,7 +647,7 @@ DENG2_PIMPL(DataBundle), public Lockable
             auto match = reTitle.match(line);
             if (match.hasMatch())
             {
-                meta.set(VAR_TITLE, match.captured(1));
+                meta.set(VAR_TITLE, match.captured(1).trimmed());
                 continue;
             }
 
@@ -683,14 +683,14 @@ DENG2_PIMPL(DataBundle), public Lockable
             match = reAuthor.match(line);
             if (match.hasMatch())
             {
-                meta.set(VAR_AUTHOR, match.captured(2));
+                meta.set(VAR_AUTHOR, match.captured(2).trimmed());
                 continue;
             }
 
             match = reContact.match(line);
             if (match.hasMatch())
             {
-                meta.set("contact", match.captured(1));
+                meta.set("contact", match.captured(1).trimmed());
                 continue;
             }
         }

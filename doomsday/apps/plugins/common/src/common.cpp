@@ -60,7 +60,7 @@ void *Common_GetGameAPI(char const *name)
         HASH_ENTRY("MobjCheckPositionXYZ",  P_CheckPositionXYZ),
         HASH_ENTRY("MobjFriction",          Mobj_Friction),
         HASH_ENTRY("MobjRestoreState",      Mobj_RestoreObjectState),
-        HASH_ENTRY("MobjStateAsInfoText",   Mobj_AsTextWithInfoSyntax),
+        HASH_ENTRY("MobjStateAsInfo",       Mobj_StateAsInfo),
         HASH_ENTRY("MobjThinker",           P_MobjThinker),
         HASH_ENTRY("MobjTryMoveXYZ",        P_TryMoveXYZ),
         HASH_ENTRY("NetConnect",            D_NetConnect),

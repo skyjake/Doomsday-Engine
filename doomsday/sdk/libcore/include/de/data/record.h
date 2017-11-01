@@ -244,6 +244,8 @@ public:
      */
     Variable *remove(String const &variableName);
 
+    Variable *tryRemove(String const &variableName);
+
     /**
      * Adds a new variable to the record with a NoneValue. If there is an existing
      * variable with the given name, the old variable is deleted first.
@@ -608,6 +610,8 @@ public:
      * @return Record containing the @a name.
      */
     Record const &parentRecordForMember(String const &name) const;
+
+    String asInfo() const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

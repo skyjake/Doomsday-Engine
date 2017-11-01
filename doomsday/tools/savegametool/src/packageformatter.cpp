@@ -50,7 +50,7 @@ String PackageFormatter::composeInfo(GameStateMetadata const &metadata, Path con
        << "\n# Source version: "  + String::number(oldSaveVersion);
 
     // Write metadata.
-    os << "\n\n" + metadata.asTextWithInfoSyntax() + "\n";
+    os << "\n\n" + metadata.asInfo() + "\n";
 
     return info;
 }

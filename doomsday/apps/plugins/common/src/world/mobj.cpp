@@ -1061,7 +1061,7 @@ void Mobj_InflictDamage(mobj_t *mob, mobj_t const *inflictor, int damage)
     THINKER_DATA(mob->thinker, MobjThinkerData).damageReceived(damage, inflictor);
 }
 
-de::String Mobj_AsTextWithInfoSyntax(mobj_t const *mob)
+de::String Mobj_StateAsInfo(mobj_t const *mob)
 {
     using de::String;
 

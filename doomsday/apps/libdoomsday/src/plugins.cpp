@@ -331,7 +331,7 @@ bool Plugins::exchangeGameEntryPoints(pluginid_t pluginId)
         GET_FUNC(MobjFriction);
         GET_FUNC(MobjCheckPositionXYZ);
         GET_FUNC(MobjTryMoveXYZ);
-        GET_FUNC(MobjStateAsInfoText);
+        GET_FUNC(MobjStateAsInfo);
         GET_FUNC(MobjRestoreState);
 
         GET_FUNC(SectorHeightChangeNotification);
