@@ -397,9 +397,10 @@ DENG2_PIMPL(DoomsdayApp)
 
     void initRemoteRepositories()
     {
+#if 0
         filesys::RemoteFeedRelay::get().addRepository("https://www.quaddicted.com/files/idgames/",
                                                       "/remote/www.quaddicted.com");
-        //filesys::RemoteFeedRelay::get().audienceForStatus() += this;
+#endif
     }
 
 //    void remoteRepositoryStatusChanged(String const &address, filesys::RemoteFeedRelay::Status status) override

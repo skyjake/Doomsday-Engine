@@ -1352,7 +1352,11 @@ static dint DD_StartupWorker(void * /*context*/)
     //
 
     // Make sure all files have been found so we can determine which games are playable.
-    Folder::waitForPopulation();
+    Folder::waitForPopulation(
+            #if defined (__SERVER__)
+                Folder::BlockingMainThread
+            #endif
+                );
     DoomsdayApp::bundles().waitForEverythingIdentified();
 
     /*String foundPath = App_FileSystem().findPath(de::Uri("doomsday.pk3", RC_PACKAGE),
