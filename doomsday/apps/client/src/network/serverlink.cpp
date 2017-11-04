@@ -430,11 +430,7 @@ void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
         }
 
         // The server makes certain packages available for clients to download.
-        d->downloader.mountServerRepository(info);
-
-        // Wait async until remote files have been populated so we can decide if
-        // anything needs to be downloaded.
-        Folder::afterPopulation([this, joinProfile, info] ()
+        d->downloader.mountServerRepository(info, [this, joinProfile, info] (filesys::Link const *)
         {
             // Now we know all the files that the server will be providing.
             // If we are missing any of the packages, download a copy from the server.

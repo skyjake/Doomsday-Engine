@@ -21,6 +21,7 @@
 
 #include <de/Range>
 #include <de/String>
+#include <de/filesys/Link>
 #include "ServerInfo"
 
 namespace de {
@@ -38,9 +39,11 @@ public:
     /**
      * Mount a server's remote file repository.
      *
-     * @param serverInfo  Server information.
+     * @param serverInfo      Server information.
+     * @param afterConnected  Callback to call when the repository is connected and ready for use.
      */
-    void mountServerRepository(ServerInfo const &serverInfo);
+    void mountServerRepository(ServerInfo const &serverInfo,
+                               std::function<void (filesys::Link const *)> afterConnected);
 
     void unmountServerRepository();
 

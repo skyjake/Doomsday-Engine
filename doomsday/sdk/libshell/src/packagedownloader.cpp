@@ -36,11 +36,13 @@ static String const PATH_REMOTE_PACKS  = "/remote/packs";
 static String const PATH_REMOTE_SERVER = "/remote/server"; // local folder for RemoteFeed
 
 DENG2_PIMPL(PackageDownloader)
+, DENG2_OBSERVES(filesys::RemoteFeedRelay, Status)
 , DENG2_OBSERVES(Asset, StateChange)
 , DENG2_OBSERVES(RemoteFile, Download)
 , DENG2_OBSERVES(Deletable, Deletion)
 {
     String fileRepository;
+    std::function<void (filesys::Link const *)> afterConnected;
     bool isCancelled = false;
     dint64 totalBytes = 0;
     int numDownloads = 0;
@@ -48,8 +50,26 @@ DENG2_PIMPL(PackageDownloader)
     QHash<IDownloadable *, Rangei64> downloadBytes;
     std::function<void ()> postDownloadCallback;
 
-    Impl(Public *i) : Base(i)
-    {}
+    Impl(Public *i) : Base(i) {}
+
+    void remoteRepositoryStatusChanged(String const &address,
+                                       filesys::RemoteFeedRelay::Status) override
+    {
+        if (address == fileRepository)
+        {
+            auto *relay = &filesys::RemoteFeedRelay::get();
+            relay->audienceForStatus() -= this;
+
+            // Populate remote folders before notifying so everything is ready to go.
+            Folder::afterPopulation([this, relay] ()
+            {
+                if (afterConnected)
+                {
+                    afterConnected(relay->repository(fileRepository));
+                }
+            });
+        }
+    }
 
     void downloadFile(File &file)
     {
@@ -240,7 +260,8 @@ bool PackageDownloader::isActive() const
     return !d->downloads.isEmpty() && !d->downloads.isReady();
 }
 
-void PackageDownloader::mountServerRepository(shell::ServerInfo const &info)
+void PackageDownloader::mountServerRepository(shell::ServerInfo const &info,
+                                              std::function<void (filesys::Link const *)> afterConnected)
 {
     // The remote repository feature was added in 2.1. Trying to send a RemoteFeed
     // request to an older server would just result in us getting immediately
@@ -248,9 +269,19 @@ void PackageDownloader::mountServerRepository(shell::ServerInfo const &info)
 
     if (info.version() > Version(2, 1, 0, 2484))
     {
+        auto &relay = filesys::RemoteFeedRelay::get();
+
         d->fileRepository = filesys::NativeLink::URL_SCHEME + info.address().asText();
         d->isCancelled = false;
-        filesys::RemoteFeedRelay::get().addRepository(d->fileRepository, PATH_REMOTE_SERVER);
+        relay.addRepository(d->fileRepository, PATH_REMOTE_SERVER);
+
+        // Notify after repository is available.
+        d->afterConnected = afterConnected;
+        relay.audienceForStatus() += d;
+    }
+    else if (afterConnected)
+    {
+        afterConnected(nullptr);
     }
 }
 
