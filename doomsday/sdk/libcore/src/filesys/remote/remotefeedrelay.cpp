@@ -107,6 +107,16 @@ void RemoteFeedRelay::removeRepository(String const &address)
     }
 }
 
+Link *RemoteFeedRelay::repository(String const &address) const
+{
+    auto found = d->repositories.constFind(address);
+    if (found != d->repositories.constEnd())
+    {
+        return found.value();
+    }
+    return nullptr;
+}
+
 StringList RemoteFeedRelay::repositories() const
 {
     StringList repos;
@@ -119,10 +129,9 @@ StringList RemoteFeedRelay::repositories() const
 
 bool RemoteFeedRelay::isConnected(String const &address) const
 {
-    auto found = d->repositories.constFind(address);
-    if (found != d->repositories.constEnd())
+    if (auto *repo = repository(address))
     {
-        return found.value()->state() == Link::Ready;
+        return repo->state() == Link::Ready;
     }
     return false;
 }

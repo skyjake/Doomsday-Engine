@@ -40,6 +40,7 @@ String const Package::VAR_ID           ("ID");
 String const Package::VAR_TITLE        ("title");
 String const Package::VAR_VERSION      ("version");
 
+static String const PACKAGE_VERSION    ("package.version");
 static String const PACKAGE_ORDER      ("package.__order__");
 static String const PACKAGE_IMPORT_PATH("package.importPath");
 static String const PACKAGE_REQUIRES   ("package.requires");
@@ -481,6 +482,11 @@ String Package::versionedIdentifierForFile(File const &file)
     if (id_ver.second.isValid())
     {
         return String("%1_%2").arg(id).arg(id_ver.second.fullNumber());
+    }
+    // The version may be specified in metadata.
+    if (auto const *pkgVer = file.objectNamespace().tryFind(PACKAGE_VERSION))
+    {
+        return String("%1_%2").arg(id).arg(Version(pkgVer->value().asText()).fullNumber());
     }
     return id;
 }

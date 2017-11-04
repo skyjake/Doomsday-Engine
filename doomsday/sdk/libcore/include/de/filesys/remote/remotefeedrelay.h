@@ -61,6 +61,8 @@ public:
 
     void removeRepository(String const &address);
 
+    Link *repository(String const &address) const;
+
     StringList repositories() const;
 
     bool isConnected(String const &address) const;
