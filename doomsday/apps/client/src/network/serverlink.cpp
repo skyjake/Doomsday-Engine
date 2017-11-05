@@ -438,6 +438,8 @@ void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
             LOG_RES_MSG("Received metadata about server files");
 
             StringList const neededPackages = joinProfile->unavailablePackages();
+            LOG_RES_MSG("Packages needed to join: ")
+                    << String::join(neededPackages, " ");
 
             // Show the download popup.
             auto *dlPopup = new FileDownloadDialog(d->downloader);

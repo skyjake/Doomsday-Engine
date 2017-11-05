@@ -23,6 +23,7 @@
 #include "lumpdirectory.h"
 #include <de/filesys/IInterpreter>
 #include <de/Folder>
+#include <de/Package>
 #include <de/Version>
 
 /**
@@ -152,6 +153,8 @@ public:
     static Format packageBundleFormat(de::String const &packageId);
 
     static DataBundle const *bundleForPackage(de::String const &packageId);
+
+    static DataBundle const *tryLocateDataFile(de::Package const &package, de::String const &dataFilePath);
 
     /**
      * Compiles a list of all data bundles that have been loaded via

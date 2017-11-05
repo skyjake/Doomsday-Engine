@@ -49,6 +49,7 @@ DENG2_PIMPL(PackageDownloader)
     AssetGroup downloads;
     QHash<IDownloadable *, Rangei64> downloadBytes;
     std::function<void ()> postDownloadCallback;
+    LoopCallback deferred;
 
     Impl(Public *i) : Base(i) {}
 
@@ -57,16 +58,23 @@ DENG2_PIMPL(PackageDownloader)
     {
         if (address == fileRepository)
         {
-            auto *relay = &filesys::RemoteFeedRelay::get();
-            relay->audienceForStatus() -= this;
+            // When NativeLink is connected, any pending folder populations will be
+            // started. We'll defer this callback so that NativeLink gets to react
+            // first to the status change notification.
 
-            // Populate remote folders before notifying so everything is ready to go.
-            Folder::afterPopulation([this, relay] ()
+            deferred.enqueue([this] ()
             {
-                if (afterConnected)
+                auto *relay = &filesys::RemoteFeedRelay::get();
+                relay->audienceForStatus() -= this;
+
+                // Populate remote folders before notifying so everything is ready to go.
+                Folder::afterPopulation([this, relay] ()
                 {
-                    afterConnected(relay->repository(fileRepository));
-                }
+                    if (afterConnected)
+                    {
+                        afterConnected(relay->repository(fileRepository));
+                    }
+                });
             });
         }
     }

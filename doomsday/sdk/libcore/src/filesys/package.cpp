@@ -151,7 +151,11 @@ File const &Package::sourceFile() const
 Folder const &Package::root() const
 {
     d->verifyFile();
-    return expectedAs<Folder>(&d->file->target());
+    if (Folder const *f = maybeAs<Folder>(&d->file->target()))
+    {
+        return *f;
+    }
+    return *sourceFile().parent();
 }
 
 Record &Package::objectNamespace()

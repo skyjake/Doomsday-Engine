@@ -1142,6 +1142,20 @@ DataBundle const *DataBundle::bundleForPackage(String const &packageId) // stati
     return nullptr;
 }
 
+DataBundle const *DataBundle::tryLocateDataFile(Package const &package, String const &dataFilePath)
+{
+    if (DataBundle const *bundle = package.root().tryLocate<DataBundle const>(dataFilePath))
+    {
+        return bundle;
+    }
+    // The package may itself be a link to a data bundle.
+    if (DataBundle const *bundle = maybeAs<DataBundle>(package.sourceFile().target()))
+    {
+        return bundle;
+    }
+    return nullptr;
+}
+
 void DataBundle::setFormat(Format format)
 {
     d->format = format;
@@ -1287,7 +1301,7 @@ QList<DataBundle const *> DataBundle::loadedBundles() // static
                     String const dataFilePath = v->asText();
 
                     // Look up the data bundle file.
-                    if (DataBundle const *bundle = pkg->root().tryLocate<DataBundle const>(dataFilePath))
+                    if (DataBundle const *bundle = tryLocateDataFile(*pkg, dataFilePath))
                     {
                         // Identify it now (if not already identified). Note that data
                         // files inside packages usually aren't identified during

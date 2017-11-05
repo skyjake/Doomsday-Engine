@@ -461,12 +461,14 @@ inline X_ const *maybeAs(T_ const &obj) {
 template <typename X_, typename T_>
 inline X_ &expectedAs(T_ *ptr) {
     if (auto *t = maybeAs<X_>(ptr)) return *t;
+    DENG2_ASSERT(false);
     throw CastError(QString("Cannot cast %1 to %2").arg(DENG2_TYPE_NAME(T_)).arg(DENG2_TYPE_NAME(X_)));
 }
 
 template <typename X_, typename T_>
 inline X_ const &expectedAs(T_ const *ptr) {
     if (auto const *t = maybeAs<X_>(ptr)) return *t;
+    DENG2_ASSERT(false);
     throw CastError(QString("Cannot cast %1 to %2").arg(DENG2_TYPE_NAME(T_)).arg(DENG2_TYPE_NAME(X_)));
 }
 
