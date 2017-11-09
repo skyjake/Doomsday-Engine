@@ -107,6 +107,9 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
         self().header().menuButton().setPopup([this] (PopupButtonWidget const &) -> PopupWidget * {
             auto *menu = new PopupMenuWidget;
             menu->items()
+                    << new ui::ActionItem(tr("Install Mods..."),
+                                          new CallbackAction([this] () { openRepositoryBrowser(); }))
+                    //<< new ui::Item(ui::Item::Separator)
                     << new ui::ActionItem(tr("Refresh"),
                                           new CallbackAction([this] () { packages->refreshPackages(); }));
                 return menu;
@@ -116,6 +119,11 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
     void currentGameChanged(Game const &game) override
     {
         folderOptionsButton->show(game.isNull());
+    }
+
+    void openRepositoryBrowser()
+    {
+
     }
 };
 
