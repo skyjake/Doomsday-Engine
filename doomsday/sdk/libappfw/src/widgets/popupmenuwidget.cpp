@@ -431,6 +431,11 @@ void PopupMenuWidget::setParentPopup(PopupWidget *parentPopup)
     d->parentPopup.reset(parentPopup);
 }
 
+PopupWidget *PopupMenuWidget::parentPopup() const
+{
+    return d->parentPopup;
+}
+
 MenuWidget &PopupMenuWidget::menu() const
 {
     return static_cast<MenuWidget &>(content());
