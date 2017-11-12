@@ -20,6 +20,14 @@ def setDefaults(d)
     record d.resource()
         iwadFolder = ''
         packageFolder = ''
+        repositories = {
+            'idgames archive (gamers.org)': 'http://www.gamers.org/pub/idgames/',
+            'idgames mirror (Idaho, USA)': 'http://mirrors.syringanetworks.net/idgames/',
+            'idgames mirror (New York, USA)': 'http://youfailit.net/pub/idgames/',
+            'idgames mirror (Germany)': 'https://www.quaddicted.com/files/idgames/',
+            'idgames mirror (Greece)': 'http://ftp.ntua.gr/pub/vendors/idgames/',
+            'idgames mirror (Texas, USA)': 'http://ftp.mancubus.net/pub/idgames/'
+        }        
     end
     
     try

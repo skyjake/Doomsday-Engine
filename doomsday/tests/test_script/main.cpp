@@ -33,7 +33,7 @@ int main(int argc, char **argv)
         TextApp app(argc, argv);
         app.initSubsystems(App::DisablePlugins);
 
-        Script testScript(app.fileSystem().find("kitchen_sink.de"));
+        Script testScript(app.fileSystem().find("kitchen_sink.ds"));
 #if 0
         Script testScript("def returnValue(a): return a\n"
                           "returnValue(True) and returnValue(True)\n");
