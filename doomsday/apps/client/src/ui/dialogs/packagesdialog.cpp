@@ -217,6 +217,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         browser->setActionsAlwaysShown(true);
         browser->setRightClickToOpenContextMenu(true);
         browser->setPackageStatus(*this);
+        browser->searchTermsEditor().setEmptyContentHint(tr("Search mods"));
 
         // Action for showing information about the package.
         actions << new ui::SubwidgetItem(tr("..."), ui::Up, [this] () -> PopupWidget *
