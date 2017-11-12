@@ -110,7 +110,8 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
             menu->items()
                     << new ui::ActionItem(tr("Install Mods..."),
                                           new CallbackAction([this] () { openRepositoryBrowser(); }))
-                    << new ui::SubwidgetItem(tr("Settings"), ui::Left, makePopup<DataFileSettingsDialog>)
+                    << new ui::SubwidgetItem(ui::Item::ShownAsButton | ui::Item::ClosesParentPopup,
+                                             tr("Settings"), ui::Left, makePopup<DataFileSettingsDialog>)
                     << new ui::Item(ui::Item::Separator)
                     << new ui::ActionItem(tr("Refresh List"),
                                           new CallbackAction([this] () { packages->refreshPackages(); }));
