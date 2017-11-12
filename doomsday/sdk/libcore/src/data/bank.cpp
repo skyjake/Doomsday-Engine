@@ -917,7 +917,7 @@ Bank::IData &Bank::data(DotPath const &path) const
     d->load(path, BeforeQueued);
     item.wait();
 
-    TimeDelta const waitTime = requestedAt.since();
+    TimeSpan const waitTime = requestedAt.since();
 
     item.lock();
     if (!item.data.get())

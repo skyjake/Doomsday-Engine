@@ -54,7 +54,7 @@ public:
 
     void setupVisPSprite(vispsprite_t &spr) const;
 
-    void advanceTime(de::TimeDelta const &elapsed);
+    void advanceTime(de::TimeSpan const &elapsed);
 
 private:
     DENG2_PRIVATE(d)

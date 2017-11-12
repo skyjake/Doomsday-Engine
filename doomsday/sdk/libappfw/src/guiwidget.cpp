@@ -771,7 +771,7 @@ GuiWidget::Background const &GuiWidget::background() const
     return d->background;
 }
 
-void GuiWidget::setOpacity(float opacity, TimeDelta span, TimeDelta startDelay)
+void GuiWidget::setOpacity(float opacity, TimeSpan span, TimeSpan startDelay)
 {
     d->opacity.setValue(opacity, span, startDelay);
 }

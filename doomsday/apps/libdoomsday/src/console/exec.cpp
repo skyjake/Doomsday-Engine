@@ -397,7 +397,7 @@ static dd_bool Con_CheckExecBuffer(void)
 
     storage[255] = 0;
 
-    TimeDelta const now = TimeDelta::sinceStartOfProcess();
+    TimeSpan const now = TimeSpan::sinceStartOfProcess();
 
     // Execute the commands whose time has come.
     for (i = 0; i < exBuffSize; ++i)
@@ -845,7 +845,7 @@ static void Con_SplitIntoSubCommands(const char *command,
         }
 
         // Queue it.
-        Con_QueueCmd(subCmd, TimeDelta::sinceStartOfProcess() + markerOffset, src, isNetCmd);
+        Con_QueueCmd(subCmd, TimeSpan::sinceStartOfProcess() + markerOffset, src, isNetCmd);
 
         scPos = 0;
     }

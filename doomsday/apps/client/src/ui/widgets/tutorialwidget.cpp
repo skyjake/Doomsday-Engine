@@ -37,7 +37,7 @@
 
 using namespace de;
 
-static TimeDelta const FLASH_SPAN = 0.6;
+static TimeSpan const FLASH_SPAN = 0.6;
 
 DENG_GUI_PIMPL(TutorialWidget)
 {

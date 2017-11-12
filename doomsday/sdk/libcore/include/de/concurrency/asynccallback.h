@@ -52,7 +52,7 @@ public:
         _done.post();
     }
 
-    void wait(TimeDelta const &timeout)
+    void wait(TimeSpan const &timeout)
     {
         try
         {

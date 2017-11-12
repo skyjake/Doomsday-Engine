@@ -20,6 +20,7 @@
 #include "ui/widgets/packageswidget.h"
 #include "ui/dialogs/packageinfodialog.h"
 #include "ui/dialogs/datafilesettingsdialog.h"
+#include "ui/dialogs/repositorybrowserdialog.h"
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/widgets/homemenuwidget.h"
 
@@ -109,8 +110,9 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
             menu->items()
                     << new ui::ActionItem(tr("Install Mods..."),
                                           new CallbackAction([this] () { openRepositoryBrowser(); }))
-                    //<< new ui::Item(ui::Item::Separator)
-                    << new ui::ActionItem(tr("Refresh"),
+                    << new ui::SubwidgetItem(tr("Settings"), ui::Left, makePopup<DataFileSettingsDialog>)
+                    << new ui::Item(ui::Item::Separator)
+                    << new ui::ActionItem(tr("Refresh List"),
                                           new CallbackAction([this] () { packages->refreshPackages(); }));
                 return menu;
         }, ui::Down);
@@ -123,7 +125,9 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
 
     void openRepositoryBrowser()
     {
-
+        auto *dlg = new RepositoryBrowserDialog;
+        dlg->setDeleteAfterDismissed(true);
+        dlg->exec(root());
     }
 };
 

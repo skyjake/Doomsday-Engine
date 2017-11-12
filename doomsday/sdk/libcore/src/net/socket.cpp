@@ -86,7 +86,7 @@ struct Counters
     Time periodStartedAt;
 };
 static LockableT<Counters> counters;
-static TimeDelta const sendPeriodDuration = 5;
+static TimeSpan const sendPeriodDuration = 5;
 
 /// Maximum number of channels.
 static duint const MAX_CHANNELS = 2;
@@ -436,7 +436,7 @@ Socket::Socket() : d(new Impl)
     QObject::connect(d->socket, SIGNAL(connected()), this, SIGNAL(connected()));
 }
 
-Socket::Socket(Address const &address, TimeDelta const &timeOut) : d(new Impl) // blocking
+Socket::Socket(Address const &address, TimeSpan const &timeOut) : d(new Impl) // blocking
 {
     LOG_AS("Socket");
 

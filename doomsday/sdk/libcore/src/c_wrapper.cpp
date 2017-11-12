@@ -94,7 +94,7 @@ void App_Log(unsigned int metadata, char const *format, ...)
 
 void App_Timer(unsigned int milliseconds, void (*callback)(void))
 {
-    de::Loop::timer(de::TimeDelta::fromMilliSeconds(milliseconds), callback);
+    de::Loop::timer(de::TimeSpan::fromMilliSeconds(milliseconds), callback);
 }
 
 void App_FatalError(char const *msgFormat, ...)

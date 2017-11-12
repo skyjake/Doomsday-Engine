@@ -32,7 +32,7 @@
 
 namespace de {
 
-static TimeDelta const POPULATE_TIMEOUT = 15.0;
+static TimeSpan const POPULATE_TIMEOUT = 15.0;
 
 DENG2_PIMPL(RemoteFeed)
 , DENG2_OBSERVES(filesys::RemoteFeedRelay, Status)

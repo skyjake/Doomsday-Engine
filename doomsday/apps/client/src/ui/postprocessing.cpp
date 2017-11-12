@@ -49,9 +49,9 @@ DENG2_PIMPL(PostProcessing)
     struct QueueEntry {
         String shaderName;
         float fade;
-        TimeDelta span;
+        TimeSpan span;
 
-        QueueEntry(String const &name, float f, TimeDelta const &s)
+        QueueEntry(String const &name, float f, TimeSpan const &s)
             : shaderName(name), fade(f), span(s) {}
     };
     typedef QList<QueueEntry> Queue;
@@ -163,12 +163,12 @@ bool PostProcessing::isActive() const
     return d->isActive();
 }
 
-void PostProcessing::fadeInShader(String const &fxPostShader, TimeDelta const &span)
+void PostProcessing::fadeInShader(String const &fxPostShader, TimeSpan const &span)
 {
     d->queue.append(Impl::QueueEntry(fxPostShader, 1, span));
 }
 
-void PostProcessing::fadeOut(TimeDelta const &span)
+void PostProcessing::fadeOut(TimeSpan const &span)
 {
     d->queue.append(Impl::QueueEntry("", 0, span));
 }
@@ -224,7 +224,7 @@ D_CMD(PostFx)
 
     int console = String(argv[1]).toInt();
     String const shader = argv[2];
-    TimeDelta const span = (argc == 4? String(argv[3]).toDouble() : 0);
+    TimeSpan const span = (argc == 4? String(argv[3]).toDouble() : 0);
 
     if (console < 0 || console >= DDMAXPLAYERS)
     {

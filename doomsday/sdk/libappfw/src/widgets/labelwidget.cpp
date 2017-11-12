@@ -58,7 +58,7 @@ public Font::RichFormat::IStyle
     Rule const *outHeight;
     AnimationRule *appearSize;
     LabelWidget::AppearanceAnimation appearType;
-    TimeDelta appearSpan;
+    TimeSpan appearSpan;
 
     // Style.
     DotPath gapId;
@@ -900,7 +900,7 @@ void LabelWidget::setHeightPolicy(SizePolicy policy)
     }
 }
 
-void LabelWidget::setAppearanceAnimation(AppearanceAnimation method, TimeDelta const &span)
+void LabelWidget::setAppearanceAnimation(AppearanceAnimation method, TimeSpan const &span)
 {
     d->appearType = method;
     d->appearSpan = span;

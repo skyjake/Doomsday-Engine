@@ -77,7 +77,7 @@ DENG2_PIMPL(ServerLink)
     Servers discovered;
     Servers fromMaster;
     QElapsedTimer pingTimer;
-    QList<TimeDelta> pings;
+    QList<TimeSpan> pings;
     int pingCounter;
     std::unique_ptr<GameProfile> serverProfile; ///< Profile used when joining.
     std::function<void (GameProfile const *)> profileResultCallback;
@@ -537,7 +537,7 @@ void ServerLink::ping(Address const &address)
     }
 }
 
-void ServerLink::connectDomain(String const &domain, TimeDelta const &timeout)
+void ServerLink::connectDomain(String const &domain, TimeSpan const &timeout)
 {
     LOG_AS("ServerLink::connectDomain");
 
@@ -752,7 +752,7 @@ void ServerLink::handleIncomingPackets()
             if (packetData.size() == 4 && packetData == "Pong" &&
                 d->pingCounter-- > 0)
             {
-                d->pings.append(TimeDelta::fromMilliSeconds(d->pingTimer.elapsed()));
+                d->pings.append(TimeSpan::fromMilliSeconds(d->pingTimer.elapsed()));
                 *this << ByteRefArray("Ping?", 5);
                 d->pingTimer.restart();
             }
@@ -765,8 +765,8 @@ void ServerLink::handleIncomingPackets()
                 // Notify about the average ping time.
                 if (d->pings.count())
                 {
-                    TimeDelta average = 0;
-                    for (TimeDelta i : d->pings) average += i;
+                    TimeSpan average = 0;
+                    for (TimeSpan i : d->pings) average += i;
                     average /= d->pings.count();
 
                     DENG2_FOR_AUDIENCE2(PingResponse, i)

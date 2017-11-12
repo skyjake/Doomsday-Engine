@@ -256,7 +256,7 @@ void ProgressWidget::setRange(Rangei const &range, Rangef const &visualRange)
     setMode(Ranged);
 }
 
-void ProgressWidget::setProgress(int currentProgress, TimeDelta const &transitionSpan)
+void ProgressWidget::setProgress(int currentProgress, TimeSpan const &transitionSpan)
 {
     DENG2_GUARD(d);
 
@@ -277,7 +277,7 @@ void ProgressWidget::update()
         // Keep rotating the wheel.
         Time const now = Time();
         if (!d->updateAt.isValid()) d->updateAt = now;
-        TimeDelta const elapsed = d->updateAt.since();
+        TimeSpan const elapsed = d->updateAt.since();
         d->updateAt = now;
 
         d->angle = de::wrap(d->angle + float(elapsed * d->rotationSpeed), 0.f, 360.f);

@@ -33,7 +33,7 @@ static Loop *loopSingleton = 0;
 
 DENG2_PIMPL(Loop)
 {
-    TimeDelta interval;
+    TimeSpan interval;
     bool running;
     QTimer *timer;
     LoopCallback mainCall;
@@ -95,7 +95,7 @@ void Loop::resume()
     d->timer->start();
 }
 
-void Loop::timer(TimeDelta const &delay, std::function<void ()> func)
+void Loop::timer(TimeSpan const &delay, std::function<void ()> func)
 {
     // The timer will delete itself after it's triggered.
     internal::CallbackTimer *timer = new internal::CallbackTimer(func, qApp);

@@ -454,7 +454,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
                     {
                         popup->detachAnchor();
                         // Animate the widget to fade it away.
-                        TimeDelta const SPAN = 0.2;
+                        TimeSpan const SPAN = 0.2;
                         button->setOpacity(0, SPAN);
                         Loop::get().timer(SPAN, [profileItem] ()
                         {
@@ -499,7 +499,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     void buttonStateChanged(ButtonWidget &button, ButtonWidget::State state)
     {
-        TimeDelta const SPAN = 0.25;
+        TimeSpan const SPAN = 0.25;
         switch (state)
         {
         case ButtonWidget::Up:

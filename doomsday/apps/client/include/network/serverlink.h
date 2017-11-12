@@ -39,7 +39,7 @@ class ServerLink : public de::shell::AbstractLink
 
 public:
     DENG2_DEFINE_AUDIENCE2(DiscoveryUpdate, void linkDiscoveryUpdate(ServerLink const &link))
-    DENG2_DEFINE_AUDIENCE2(PingResponse,    void pingResponse(de::Address const &, de::TimeDelta))
+    DENG2_DEFINE_AUDIENCE2(PingResponse,    void pingResponse(de::Address const &, de::TimeSpan))
     DENG2_DEFINE_AUDIENCE2(MapOutline,      void mapOutlineReceived(de::Address const &, de::shell::MapOutlinePacket const &))
 
     DENG2_DEFINE_AUDIENCE2(Join,  void networkGameJoined())
@@ -95,7 +95,7 @@ public:
 
     void ping(de::Address const &address);
 
-    void connectDomain(de::String const &domain, de::TimeDelta const &timeout = 0) override;
+    void connectDomain(de::String const &domain, de::TimeSpan const &timeout = 0) override;
     void connectHost(de::Address const &address) override;
 
     /**

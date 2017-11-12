@@ -54,7 +54,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
     String domainName;
     GameProfile profile;
     shell::ServerInfo serverInfo;
-    TimeDelta ping = -1;
+    TimeSpan ping = -1;
 
     // Network queries.
     ServerLink link; // querying details from the server
@@ -436,7 +436,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         startQuery(QueryPing);
     }
 
-    void pingResponse(Address const &, TimeDelta pingTime)
+    void pingResponse(Address const &, TimeSpan pingTime)
     {
         ping = pingTime;
         updateContent();

@@ -31,7 +31,7 @@
 
 namespace de {
 
-static TimeDelta const FLASH_ANIM_SPAN = 0.75;
+static TimeSpan const FLASH_ANIM_SPAN = 0.75;
 
 /**
  * Compares dialog button items to determine the order in which they

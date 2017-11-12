@@ -167,7 +167,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
         if (buttonsShown)
         {
             labelRightMargin->set(*buttonsWidth,
-                                  labelRightMargin->animation().done()? TimeDelta(0.4) :
+                                  labelRightMargin->animation().done()? TimeSpan(0.4) :
                                   labelRightMargin->animation().remainingTime());
         }
     }
@@ -194,7 +194,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
             }
         }
 
-        TimeDelta const SPAN = (self().hasBeenUpdated()? 0.4 : 0.0);
+        TimeSpan const SPAN = (self().hasBeenUpdated()? 0.4 : 0.0);
         if (show)
         {
             labelRightMargin->set(*buttonsWidth, SPAN/2);

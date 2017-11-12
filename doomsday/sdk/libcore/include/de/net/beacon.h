@@ -75,7 +75,7 @@ public:
      *                  is zero or negative, discovery will not end.
      * @param interval  Interval between query broadcasts.
      */
-    void discover(TimeDelta const &timeOut, TimeDelta const &interval = TimeDelta(1.0));
+    void discover(TimeSpan const &timeOut, TimeSpan const &interval = TimeSpan(1.0));
 
     QList<Address> foundHosts() const;
     Block messageFromHost(Address const &host) const;

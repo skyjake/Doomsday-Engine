@@ -37,7 +37,7 @@ namespace de {
 
 using namespace ui;
 
-static TimeDelta const HEIGHT_ANIM_SPAN = .5f;
+static TimeSpan const HEIGHT_ANIM_SPAN = .5f;
 static duint const ID_BUF_TEXT   = 1;
 static duint const ID_BUF_CURSOR = 2;
 

@@ -82,7 +82,7 @@ DENG2_PIMPL(StateAnimator)
         int priority = ANIM_DEFAULT_PRIORITY;
         Timeline const *timeline = nullptr; // owned by ModelRenderer::AnimSequence
         std::unique_ptr<Timeline::Clock> clock;
-        TimeDelta overrideDuration = -1.0;
+        TimeSpan overrideDuration = -1.0;
 
         Sequence() {}
 
@@ -750,7 +750,7 @@ int StateAnimator::animationId(String const &name) const
     return d->animationId(name);
 }
 
-void StateAnimator::advanceTime(TimeDelta const &elapsed)
+void StateAnimator::advanceTime(TimeSpan const &elapsed)
 {
     ModelDrawable::Animator::advanceTime(elapsed);
 
@@ -777,7 +777,7 @@ void StateAnimator::advanceTime(TimeDelta const &elapsed)
         // TODO: Determine actual time factor.
 
         // Advance the sequence.
-        TimeDelta animElapsed = factor * elapsed;
+        TimeSpan animElapsed = factor * elapsed;
         anim.time += animElapsed;
 
         if (anim.looping == Sequence::NotLooping)

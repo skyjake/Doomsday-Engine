@@ -105,7 +105,7 @@ public:
 
     bool isOpeningOrClosing() const;
 
-    void close(TimeDelta delayBeforeClosing);
+    void close(TimeSpan delayBeforeClosing);
 
     // Events.
     void viewResized() override;

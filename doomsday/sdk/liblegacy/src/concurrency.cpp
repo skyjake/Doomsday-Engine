@@ -123,7 +123,7 @@ dd_bool Sys_InMainThread(void)
 
 void Thread_Sleep(int milliseconds)
 {
-    de::TimeDelta::fromMilliSeconds(milliseconds).sleep();
+    de::TimeSpan::fromMilliSeconds(milliseconds).sleep();
 }
 
 thread_t Sys_StartThread(systhreadfunc_t startpos, void *parm, void (*terminationFunc)(systhreadexitstatus_t))

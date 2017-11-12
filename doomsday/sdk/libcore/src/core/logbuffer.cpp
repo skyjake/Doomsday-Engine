@@ -39,7 +39,7 @@
 
 namespace de {
 
-TimeDelta const FLUSH_INTERVAL = .2; // seconds
+TimeSpan const FLUSH_INTERVAL = .2; // seconds
 
 DENG2_PIMPL(LogBuffer)
 {
@@ -262,7 +262,7 @@ void LogBuffer::enableFlushing(bool yes)
     d->enableAutoFlush(true);
 }
 
-void LogBuffer::setAutoFlushInterval(TimeDelta const &interval)
+void LogBuffer::setAutoFlushInterval(TimeSpan const &interval)
 {
     enableFlushing();
 

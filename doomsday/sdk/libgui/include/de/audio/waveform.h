@@ -96,7 +96,7 @@ public:
      * Playing duration of the audio waveform, assuming sample count and sample rate
      * are known.
      */
-    TimeDelta duration() const;
+    TimeSpan duration() const;
 
 private:
     DENG2_PRIVATE(d)

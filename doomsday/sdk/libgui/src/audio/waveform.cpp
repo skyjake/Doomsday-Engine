@@ -247,7 +247,7 @@ duint Waveform::sampleRate() const
     return d->sampleRate;
 }
 
-TimeDelta Waveform::duration() const
+TimeSpan Waveform::duration() const
 {
     return d->sampleRate * d->sampleCount;
 }

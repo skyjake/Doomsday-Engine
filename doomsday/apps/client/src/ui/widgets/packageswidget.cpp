@@ -57,7 +57,7 @@ static String const TAG_HIDDEN ("hidden");
 static String const TAG_LOADED ("loaded");
 static String const TAG_CACHED ("cached");
 
-static TimeDelta const REFILTER_DELAY(0.2);
+static TimeSpan const REFILTER_DELAY(0.2);
 
 struct PackageLoadStatus : public PackagesWidget::IPackageStatus {
     bool isPackageHighlighted(String const &packageId) const {
@@ -1024,7 +1024,7 @@ void PackagesWidget::update()
 
     if (d->searchMinY)
     {
-        TimeDelta const SPAN = 0.3;
+        TimeSpan const SPAN = 0.3;
 
         // Time to show or hide the background?
         if (d->searchBackgroundOpacity.target() < .5f &&

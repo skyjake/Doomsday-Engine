@@ -44,9 +44,9 @@ DENG2_PIMPL_NOREF(HighPerformanceTimer)
 HighPerformanceTimer::HighPerformanceTimer() : d(new Impl)
 {}
 
-TimeDelta HighPerformanceTimer::elapsed() const
+TimeSpan HighPerformanceTimer::elapsed() const
 {
-    return TimeDelta(d->milliSeconds() / 1000.0);
+    return TimeSpan(d->milliSeconds() / 1000.0);
 }
 
 Time HighPerformanceTimer::startedAt() const

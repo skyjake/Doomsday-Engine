@@ -893,7 +893,7 @@ void ClientServerWorld::advanceTime(timespan_t delta)
 #endif
     {
         d->time += delta;
-        d->scheduler.advanceTime(TimeDelta(delta));
+        d->scheduler.advanceTime(TimeSpan(delta));
     }
 }
 

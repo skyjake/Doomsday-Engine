@@ -25,7 +25,7 @@ namespace de {
 
 using namespace ui;
 
-static TimeDelta const INDICATOR_ANIM_SPAN = 0.6;
+static TimeSpan const INDICATOR_ANIM_SPAN = 0.6;
 
 DENG2_PIMPL_NOREF(FoldPanelWidget)
 {

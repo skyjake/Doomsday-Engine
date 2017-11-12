@@ -45,8 +45,8 @@
 
 using namespace de;
 
-static TimeDelta const SCROLL_SPAN = .5;
-static TimeDelta const DISMISS_SPAN = 1.5;
+static TimeSpan const SCROLL_SPAN = .5;
+static TimeSpan const DISMISS_SPAN = 1.5;
 
 DENG_GUI_PIMPL(HomeWidget)
 , DENG2_OBSERVES(App,          StartupComplete)
@@ -301,7 +301,7 @@ DENG_GUI_PIMPL(HomeWidget)
         }
         else
         {
-            TimeDelta span = DISMISS_SPAN;
+            TimeSpan span = DISMISS_SPAN;
             auto &win = self().root().window().as<ClientWindow>();
             if (win.isGameMinimized())
             {
@@ -327,7 +327,7 @@ DENG_GUI_PIMPL(HomeWidget)
         updateVisibleTabsAndLayout();
     }
 
-    void moveOffscreen(TimeDelta span = DISMISS_SPAN)
+    void moveOffscreen(TimeSpan span = DISMISS_SPAN)
     {
         self().disable();
         self().setBehavior(DisableEventDispatchToChildren);
@@ -344,7 +344,7 @@ DENG_GUI_PIMPL(HomeWidget)
         }
     }
 
-    void moveOnscreen(TimeDelta span = DISMISS_SPAN)
+    void moveOnscreen(TimeSpan span = DISMISS_SPAN)
     {
         if (!fequal(dismissOffset->animation().target(), 0.f))
         {
@@ -455,7 +455,7 @@ DENG_GUI_PIMPL(HomeWidget)
      * @param pos   Column/tab index.
      * @param span  Animation duration.
      */
-    void scrollToTab(int pos, TimeDelta span)
+    void scrollToTab(int pos, TimeSpan span)
     {
         pos = de::clamp(0, pos, columns.size() - 1);
 
@@ -481,7 +481,7 @@ DENG_GUI_PIMPL(HomeWidget)
         setScrollOffset(currentOffsetTab, span);
     }
 
-    void setScrollOffset(int tab, TimeDelta const &span)
+    void setScrollOffset(int tab, TimeSpan const &span)
     {
         scrollOffset->set(*columnWidth * tab, span);
     }
@@ -639,12 +639,12 @@ bool HomeWidget::handleEvent(Event const &event)
     return false;
 }
 
-void HomeWidget::moveOnscreen(TimeDelta span)
+void HomeWidget::moveOnscreen(TimeSpan span)
 {
     d->moveOnscreen(span);
 }
 
-void HomeWidget::moveOffscreen(TimeDelta span)
+void HomeWidget::moveOffscreen(TimeSpan span)
 {
     d->moveOffscreen(span);
 }

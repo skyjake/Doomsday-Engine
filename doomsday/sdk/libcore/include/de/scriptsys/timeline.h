@@ -63,7 +63,7 @@ public:
      *
      * @return Scheduled Script (owned by Timeline).
      */
-    Script &addScript(TimeDelta at, String const &source, String const &sourcePath = "");
+    Script &addScript(TimeSpan at, String const &source, String const &sourcePath = "");
 
     void addFromInfo(Record const &timelineRecord);
 
@@ -78,14 +78,14 @@ public:
         /**
          * Returns the current time of the clock.
          */
-        TimeDelta at() const;
+        TimeSpan at() const;
 
         /**
          * Rewinds the clock back to zero.
          *
          * @param toTime  Rewind destination time.
          */
-        void rewind(TimeDelta const &toTime = 0.0);
+        void rewind(TimeSpan const &toTime = 0.0);
 
         /**
          * Advances the current time of the clock and executes any scripts whose
@@ -93,7 +93,7 @@ public:
          *
          * @param elapsed  Time elapsed since the previous call.
          */
-        void advanceTime(TimeDelta const &elapsed);
+        void advanceTime(TimeSpan const &elapsed);
 
         /**
          * Checks if there are no more scheduled sheduler is out of scheduled scripts.

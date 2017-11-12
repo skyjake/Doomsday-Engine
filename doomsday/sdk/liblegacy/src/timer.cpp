@@ -125,7 +125,7 @@ unsigned int Timer_RealMilliseconds(void)
 #endif
 
     de::Time::updateCurrentHighPerformanceTime();
-    de::TimeDelta const delta = de::Time::currentHighPerformanceTime() - startedAt;
+    de::TimeSpan const delta = de::Time::currentHighPerformanceTime() - startedAt;
     return (unsigned int) delta.asMilliSeconds();
 }
 

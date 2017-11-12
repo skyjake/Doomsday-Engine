@@ -62,7 +62,7 @@ public:
      */
     void stop(String const &name);
 
-    void advanceTime(TimeDelta const &elapsed);
+    void advanceTime(TimeSpan const &elapsed);
 
 private:
     DENG2_PRIVATE(d)

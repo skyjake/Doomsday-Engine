@@ -58,12 +58,12 @@ void Clock::setTime(Time const &currentTime)
     }
 }
 
-void Clock::advanceTime(TimeDelta const &span)
+void Clock::advanceTime(TimeSpan const &span)
 {
     setTime(d->time + span);
 }
 
-TimeDelta Clock::elapsed() const
+TimeSpan Clock::elapsed() const
 {
     return d->time - d->startedAt;
 }

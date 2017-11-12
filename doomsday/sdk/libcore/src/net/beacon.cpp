@@ -107,7 +107,7 @@ void Beacon::stop()
     d->socket = 0;
 }
 
-void Beacon::discover(TimeDelta const &timeOut, TimeDelta const &interval)
+void Beacon::discover(TimeSpan const &timeOut, TimeSpan const &interval)
 {
     if (d->timer) return; // Already discovering.
 

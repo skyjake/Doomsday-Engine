@@ -25,7 +25,7 @@
 
 namespace de {
 
-static TimeDelta const SWITCH_ANIM_SPAN = 0.3;
+static TimeSpan const SWITCH_ANIM_SPAN = 0.3;
 
 DENG2_PIMPL(ToggleWidget),
 DENG2_OBSERVES(ButtonWidget, Press)
@@ -48,7 +48,7 @@ DENG2_OBSERVES(ButtonWidget, Press)
 
         void setState(ToggleState st, bool animate)
         {
-            _pos.setValue(st == Active? 1 : 0, animate? SWITCH_ANIM_SPAN : TimeDelta());
+            _pos.setValue(st == Active? 1 : 0, animate? SWITCH_ANIM_SPAN : TimeSpan());
             _animating = true;
         }
 

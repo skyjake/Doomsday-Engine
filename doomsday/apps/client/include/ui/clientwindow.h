@@ -144,11 +144,11 @@ public:
 
     enum FadeDirection { FadeFromBlack, FadeToBlack };
 
-    void fadeContent(FadeDirection fadeDirection, de::TimeDelta const &duration);
+    void fadeContent(FadeDirection fadeDirection, de::TimeSpan const &duration);
     de::FadeToBlackWidget *contentFade();
 
-    void fadeInTaskBarBlur(de::TimeDelta span);
-    void fadeOutTaskBarBlur(de::TimeDelta span);
+    void fadeInTaskBarBlur(de::TimeSpan span);
+    void fadeOutTaskBarBlur(de::TimeSpan span);
 
     void updateRootSize();
 

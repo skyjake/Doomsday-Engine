@@ -38,7 +38,7 @@ static HighPerformanceTimer &highPerfTimer()
     return hpt;
 }
 
-static TimeDelta currentHighPerfDelta;
+static TimeSpan currentHighPerfDelta;
 
 namespace internal {
 
@@ -58,37 +58,37 @@ public:
 
 } // namespace internal
 
-duint64 Time::Delta::asMicroSeconds() const
+duint64 Time::Span::asMicroSeconds() const
 {
     return duint64(_seconds * 1000000);
 }
 
-duint64 TimeDelta::asMilliSeconds() const
+duint64 TimeSpan::asMilliSeconds() const
 {
     return duint64(_seconds * 1000);
 }
 
-ddouble TimeDelta::asMinutes() const
+ddouble TimeSpan::asMinutes() const
 {
     return _seconds / 60;
 }
 
-ddouble TimeDelta::asHours() const
+ddouble TimeSpan::asHours() const
 {
     return _seconds / 3600;
 }
 
-ddouble TimeDelta::asDays() const
+ddouble TimeSpan::asDays() const
 {
     return asHours() / 24;
 }
 
-Time::Delta Time::Delta::sinceStartOfProcess()
+Time::Span Time::Span::sinceStartOfProcess()
 {
     return highPerfTimer().elapsed();
 }
 
-void TimeDelta::sleep() const
+void TimeSpan::sleep() const
 {
     if (_seconds < 60)
     {
@@ -100,12 +100,12 @@ void TimeDelta::sleep() const
     }
 }
 
-void TimeDelta::operator >> (Writer &to) const
+void TimeSpan::operator >> (Writer &to) const
 {
     to << _seconds;
 }
 
-void TimeDelta::operator << (Reader &from)
+void TimeSpan::operator << (Reader &from)
 {
     from >> _seconds;
 }
@@ -120,7 +120,7 @@ DENG2_PIMPL_NOREF(Time)
 
     Flags flags;
     QDateTime dateTime;
-    Delta highPerfElapsed;
+    Span highPerfElapsed;
 
     Impl()
         : flags(DateTime | HighPerformance)
@@ -130,7 +130,7 @@ DENG2_PIMPL_NOREF(Time)
 
     Impl(QDateTime const &dt) : flags(DateTime), dateTime(dt) {}
 
-    Impl(Delta const &delta) : flags(HighPerformance), highPerfElapsed(delta) {}
+    Impl(Span const &span) : flags(HighPerformance), highPerfElapsed(span) {}
 
     Impl(Impl const &other)
         : de::IPrivate()
@@ -197,7 +197,7 @@ DENG2_PIMPL_NOREF(Time)
         return false;
     }
 
-    void add(Delta const &delta)
+    void add(Span const &delta)
     {
         if (flags.testFlag(DateTime))
         {
@@ -209,7 +209,7 @@ DENG2_PIMPL_NOREF(Time)
         }
     }
 
-    Delta delta(Impl const &earlier) const
+    Span delta(Impl const &earlier) const
     {
         if (flags.testFlag(HighPerformance) && earlier.flags.testFlag(HighPerformance))
         {
@@ -246,7 +246,7 @@ Time::Time(Time &&moved) : d(std::move(moved.d))
 Time::Time(QDateTime const &t) : d(new Impl(t))
 {}
 
-Time::Time(TimeDelta const &highPerformanceDelta)
+Time::Time(TimeSpan const &highPerformanceDelta)
     : ISerializable(), d(new Impl(highPerformanceDelta))
 {}
 
@@ -282,20 +282,20 @@ bool Time::operator == (Time const &t) const
     return d->isEqualTo(*t.d);
 }
 
-Time Time::operator + (Delta const &delta) const
+Time Time::operator + (Span const &span) const
 {
     Time result = *this;
-    result += delta;
+    result += span;
     return result;
 }
 
-Time &Time::operator += (Delta const &delta)
+Time &Time::operator += (Span const &span)
 {
-    d->add(delta);
+    d->add(span);
     return *this;
 }
 
-TimeDelta Time::operator - (Time const &earlierTime) const
+TimeSpan Time::operator - (Time const &earlierTime) const
 {
     return d->delta(*earlierTime.d);
 }
@@ -332,7 +332,7 @@ String Time::asText(Format format) const
         else if (format == BuildNumberAndSecondsSinceStart ||
                  format == SecondsSinceStart)
         {
-            TimeDelta elapsed;
+            TimeSpan elapsed;
             if (d->flags.testFlag(Impl::HighPerformance))
             {
                 elapsed = d->highPerfElapsed;
@@ -342,7 +342,7 @@ String Time::asText(Format format) const
                 elapsed = highPerfTimer().startedAt().deltaTo(Time(d->dateTime));
             }
             int hours = int(elapsed.asHours());
-            TimeDelta sec = elapsed - hours * 3600.0;
+            TimeSpan sec = elapsed - hours * 3600.0;
             QString prefix;
             if (format == BuildNumberAndSecondsSinceStart)
             {
@@ -551,8 +551,8 @@ void Time::operator << (Reader &from)
     if (from.version() >= DENG2_PROTOCOL_1_11_0_Time_high_performance)
     {
         /*
-         * Starting from build 926, Time can optionally contain a
-         * high-performance delta component.
+         * Starting from build 926, Time can optionally contain a high-performance delta
+         * component.
          */
 
         duint8 flags;
@@ -606,7 +606,7 @@ void Time::operator << (Reader &from)
     }
 }
 
-TimeDelta Time::highPerformanceTime() const
+TimeSpan Time::highPerformanceTime() const
 {
     DENG2_ASSERT(d->flags & Impl::HighPerformance);
     return d->highPerfElapsed;

@@ -51,7 +51,7 @@
 
 using namespace de;
 
-static TimeDelta const LOG_OPEN_CLOSE_SPAN = 0.2;
+static TimeSpan const LOG_OPEN_CLOSE_SPAN = 0.2;
 
 DENG_GUI_PIMPL(ConsoleWidget)
 , DENG2_OBSERVES(Variable, Change)
