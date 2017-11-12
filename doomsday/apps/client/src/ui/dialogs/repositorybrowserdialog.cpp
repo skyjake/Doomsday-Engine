@@ -89,7 +89,7 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
         files->setBehavior(ChildVisibilityClipping);
         files->organizer().setWidgetFactory(*this);
         files->rule()
-                .setInput(Rule::Height, Const(200));
+                .setInput(Rule::Height, Const(200))
                 .setInput(Rule::Width, Const(500));
 
         QObject::connect(repo, &ChoiceWidget::selectionChangedByUser, [this] (uint)
