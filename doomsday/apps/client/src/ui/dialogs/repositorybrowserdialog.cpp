@@ -33,10 +33,12 @@ using namespace de;
 
 DENG_GUI_PIMPL(RepositoryBrowserDialog)
 , DENG2_OBSERVES(filesys::RemoteFeedRelay, Status)
+, public ChildWidgetOrganizer::IWidgetFactory
 , public AsyncScope
 {
     using RFRelay = filesys::RemoteFeedRelay;
 
+    ui::ListData categoryData;
     std::shared_ptr<ui::ListData> data;
     std::unique_ptr<ui::FilteredData> shownData;
     std::unique_ptr<AsyncScope> populating;
@@ -78,10 +80,17 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
                     << er.asText();
         }
 
-        /*data.setFilter([this] (ui::Item const &item)
-        {
-            return filterItem(item);
-        });*/
+        category->setItems(categoryData);
+        category->setGridSize(0, ui::Expand, 1, ui::Expand, GridLayout::RowFirst);
+        category->organizer().setWidgetFactory(*this);
+
+        files->setVirtualizationEnabled(true, style().fonts().font("default").height().valuei() +
+                                        rule("unit").valuei() * 2);
+        files->setBehavior(ChildVisibilityClipping);
+        files->organizer().setWidgetFactory(*this);
+        files->rule()
+                .setInput(Rule::Height, Const(200));
+                .setInput(Rule::Width, Const(500));
 
         QObject::connect(repo, &ChoiceWidget::selectionChangedByUser, [this] (uint)
         {
@@ -89,6 +98,8 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
         });
 
         RFRelay::get().audienceForStatus() += this;
+
+        updateSelectedRepository();
     }
 
     ~Impl()
@@ -102,6 +113,34 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
         return true;
     }
 
+    GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *parent) override
+    {
+        if (parent == category)
+        {
+            return new ButtonWidget;
+        }
+        return new LabelWidget;
+    }
+
+    void updateItemWidget(GuiWidget &widget, ui::Item const &item) override
+    {
+        if (widget.parentGuiWidget() == category)
+        {
+            auto &catButton = widget.as<ButtonWidget>();
+            catButton.setText(item.label());
+            catButton.setSizePolicy(ui::Expand, ui::Expand);
+            catButton.margins().set("dialog.gap");
+        }
+        else
+        {
+            auto &label = widget.as<LabelWidget>();
+            label.setText(item.label());
+            label.setSizePolicy(ui::Expand, ui::Expand);
+            label.margins().set("unit");
+            label.set(Background());
+        }
+    }
+
     void updateSelectedRepository()
     {
         qDebug() << "connecting to" << repo->selectedItem().data().toString();
@@ -111,6 +150,8 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
 
     void connect(String address)
     {
+        repo->disable();
+
         // Disconnecting may involve waiting for an operation to finish first, so
         // we'll do it async.
         *this += async([this] ()
@@ -121,8 +162,7 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
         [this, address] (int)
         {
             QUrl const url(address);
-            String const localPath = "/remote" / url.host();
-            RFRelay::get().addRepository(address, localPath);
+            RFRelay::get().addRepository(address, "/remote" / url.host());
             connectedRepository = address;
         });
     }
@@ -131,6 +171,7 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
     {
         if (repository == connectedRepository)
         {
+            repo->enable();
             if (status == RFRelay::Connected)
             {
                 populateAsync();
@@ -145,7 +186,6 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
     void disconnect()
     {
         populating.reset();
-
         if (connectedRepository)
         {
             DENG2_GUARD(linkBusy);
@@ -153,8 +193,6 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
             connectedRepository.clear();
             RFRelay::get().removeRepository(connectedRepository);
         }
-
-        if (data) data->clear();
     }
 
     filesys::Link &link()
@@ -189,11 +227,25 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
 
     void setData(std::shared_ptr<ui::ListData> newData)
     {
+        DENG2_ASSERT_IN_MAIN_THREAD();
+        qDebug() << "got new data with" << newData->size() << "items";
+
+        files->useDefaultItems();
         shownData.reset(new ui::FilteredData(*newData));
         shownData->setFilter([this] (ui::Item const &i) { return filterItem(i); });
         data = newData;
+        files->setItems(*shownData);
 
-        qDebug() << "got new data with" << data->size() << "items";
+        categoryData.clear();
+        categoryData.append(new ui::Item(ui::Item::ShownAsButton, tr("All Categories")));
+        StringList tags = link().categoryTags();
+        qSort(tags);
+        foreach (String category, tags)
+        {
+            categoryData.append(new ui::Item(ui::Item::ShownAsButton, category));
+        }
+
+        repo->enable();
     }
 };
 
