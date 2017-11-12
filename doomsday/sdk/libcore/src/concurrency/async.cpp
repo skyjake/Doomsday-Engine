@@ -22,7 +22,8 @@ namespace de {
 
 AsyncScope::~AsyncScope()
 {
-    foreach (AsyncTask *task, _tasks)
+    DENG2_GUARD(_tasks);
+    foreach (AsyncTask *task, _tasks.value)
     {
         task->invalidate();
     }
@@ -32,13 +33,43 @@ AsyncScope &AsyncScope::operator += (AsyncTask *task)
 {
     if (task)
     {
-        _tasks.insert(task);
+        {
+            DENG2_GUARD(_tasks);
+            _tasks.value.insert(task);
+        }
+
         QObject::connect(task, &QObject::destroyed, [this] (QObject *obj)
         {
-            _tasks.remove(static_cast<AsyncTask *>(obj));
+            DENG2_GUARD(_tasks);
+            _tasks.value.remove(static_cast<AsyncTask *>(obj));
         });
     }
     return *this;
+}
+
+bool AsyncScope::isAsyncFinished() const
+{
+    DENG2_GUARD(_tasks);
+    return _tasks.value.isEmpty();
+}
+
+void AsyncScope::waitForFinished(TimeSpan timeout)
+{
+    forever
+    {
+        AsyncTask *task = nullptr;
+        {
+            DENG2_GUARD(_tasks);
+            if (!_tasks.value.isEmpty())
+            {
+                auto i = _tasks.value.begin();
+                task = *i;
+                _tasks.value.erase(i);
+            }
+        }
+        if (!task) break;
+        task->wait(timeout.asMilliSeconds());
+    }
 }
 
 } // namespace de
