@@ -157,6 +157,11 @@ Link::State Link::state() const
     return d->state;
 }
 
+StringList Link::categoryTags() const
+{
+    return StringList();
+}
+
 void Link::wasConnected()
 {
     DENG2_ASSERT_IN_MAIN_THREAD();

@@ -233,6 +233,14 @@ void IdgamesLink::parseRepositoryIndex(QByteArray data)
 });
 }
 
+StringList IdgamesLink::categoryTags() const
+{
+    return StringList({ CATEGORY_LEVELS,
+                        CATEGORY_MUSIC,
+                        CATEGORY_SOUNDS,
+                        CATEGORY_THEMES });
+}
+
 LoopResult IdgamesLink::forPackageIds(std::function<LoopResult (String const &)> func) const
 {
     PathTreeIterator<Impl::PackageIndexEntry> iter(d->packageIndex.leafNodes());
