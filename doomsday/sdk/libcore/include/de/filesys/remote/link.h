@@ -71,6 +71,12 @@ public:
      */
     virtual PackagePaths locatePackages(StringList const &packageIds) const = 0;
 
+    /**
+     * Iterates the full list of all packages available in the repository. Note this
+     * may be large set of packages.
+     */
+    virtual LoopResult forPackageIds(std::function<LoopResult (String const &packageId)> func) const = 0;
+
     QueryId sendQuery(Query query);
 
     virtual File *populateRemotePath(String const &packageId, RepositoryPath const &path) const;

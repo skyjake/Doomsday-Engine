@@ -128,6 +128,18 @@ PackagePaths NativeLink::locatePackages(StringList const &packageIds) const
     return remotePaths;
 }
 
+LoopResult filesys::NativeLink::forPackageIds(std::function<LoopResult (String const &)> func) const
+{
+    return FS::locate<Folder>("/remote/server").forContents([&func] (String name, File &) -> LoopResult
+    {
+        if (auto result = func(name))
+        {
+            return result;
+        }
+        return LoopContinue;
+    });
+}
+
 void NativeLink::wasConnected()
 {
     d->socket << ByteRefArray("RemoteFeed", 10);

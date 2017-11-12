@@ -125,7 +125,15 @@ Link::Link(String const &address)
 }
 
 Link::~Link()
-{}
+{
+    d->cancelAllQueries();
+
+    // Normally, the local folder will be deleted when the link is disconnected.
+    if (auto *folder = FS::tryLocate<Folder>(d->localRootPath))
+    {
+        delete folder;
+    }
+}
 
 void Link::setLocalRoot(String const &rootPath)
 {
