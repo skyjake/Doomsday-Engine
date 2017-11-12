@@ -31,6 +31,8 @@ public:
 
     void parseRepositoryIndex(QByteArray data) override;
 
+    de::LoopResult forPackageIds(std::function<de::LoopResult (de::String const &packageId)> func) const override;
+
     de::String findPackagePath(de::String const &packageId) const override;
 
 protected:
