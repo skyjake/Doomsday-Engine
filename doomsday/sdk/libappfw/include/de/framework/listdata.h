@@ -42,6 +42,7 @@ public:
     Item &at(Pos pos);
     Item const &at(Pos pos) const;
     Pos find(Item const &item) const;
+    Pos findLabel(String const &label) const;
     Pos findData(QVariant const &data) const;
 
     Data &clear();

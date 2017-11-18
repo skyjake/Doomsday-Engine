@@ -78,6 +78,7 @@ public:
     Item &at(Pos pos) override;
     Item const &at(Pos pos) const override;
     Pos find(Item const &item) const override;
+    Pos findLabel(String const &label) const override;
     Pos findData(QVariant const &data) const override;
     void sort(SortMethod method = Ascending) override {
         Data::sort(method);
