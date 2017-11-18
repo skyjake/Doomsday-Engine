@@ -607,16 +607,16 @@ DENG2_PIMPL(Textures)
             File1 &file = index[i];
             String fileName = file.name().fileNameWithoutExtension();
 
-            if (fileName.beginsWith('S', Qt::CaseInsensitive) && fileName.length() >= 5)
+            if (fileName.beginsWith('S', String::CaseInsensitive) && fileName.length() >= 5)
             {
-                if (fileName.endsWith("_START", Qt::CaseInsensitive))
+                if (fileName.endsWith("_START", String::CaseInsensitive))
                 {
                     // We've arrived at *a* sprite block.
                     Stack_Push(stack, NULL);
                     continue;
                 }
 
-                if (fileName.endsWith("_END", Qt::CaseInsensitive))
+                if (fileName.endsWith("_END", String::CaseInsensitive))
                 {
                     // The sprite block ends.
                     Stack_Pop(stack);

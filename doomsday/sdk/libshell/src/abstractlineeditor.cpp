@@ -308,15 +308,15 @@ DENG2_PIMPL(AbstractLineEditor)
 
     QStringList completionsForBase(String base, String &commonPrefix) const
     {
-        Qt::CaseSensitivity const sensitivity =
-                lexicon.isCaseSensitive()? Qt::CaseSensitive : Qt::CaseInsensitive;
+        String::CaseSensitivity const sensitivity =
+                lexicon.isCaseSensitive()? String::CaseSensitive : String::CaseInsensitive;
 
         bool first = true;
         QStringList sugs;
 
         foreach (String term, lexicon.terms())
         {
-            if (term.startsWith(base, sensitivity) && term.size() > base.size())
+            if (term.beginsWith(base, sensitivity) && term.size() > base.size())
             {
                 sugs << term;
 

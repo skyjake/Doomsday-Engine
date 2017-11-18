@@ -142,7 +142,7 @@ static void interpretGraphic(FileHandle &hndl, String filePath, image_t &img)
 /// @return  @c true if the file name in @a path ends with the "color key" suffix.
 static inline bool isColorKeyed(String path)
 {
-    return path.fileNameWithoutExtension().endsWith("-ck", Qt::CaseInsensitive);
+    return path.fileNameWithoutExtension().endsWith("-ck", String::CaseInsensitive);
 }
 
 void Image_Init(image_t &img)

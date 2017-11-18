@@ -2072,7 +2072,7 @@ uint G_MapNumberFor(de::Uri const &mapUri)
             }
         }
 #endif
-        if (path.beginsWith("map", Qt::CaseInsensitive))
+        if (path.beginsWith("map", String::CaseInsensitive))
         {
             return path.substr(3).toInt() - 1;
         }

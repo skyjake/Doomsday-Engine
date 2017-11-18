@@ -1254,7 +1254,7 @@ File *DataBundle::Interpreter::interpretFile(File *sourceData) const
     //String const ext = sourceData->extension();
     for (auto const &fmt : formats)
     {
-        if (sourceData->name().endsWith(fmt.str, Qt::CaseInsensitive))
+        if (sourceData->name().endsWith(fmt.str, String::CaseInsensitive))
         {
             LOG_RES_XVERBOSE("Interpreted %s as %s",
                              sourceData->description() <<
@@ -1352,7 +1352,7 @@ QList<DataBundle const *> DataBundle::findAllNative(String const &fileNameOrPart
             if (bundlePath.isEmpty()) return false;
             //qDebug() << "bundle:" << path.asText() << "searchTerm:" << searchPath.fileNamePath();
             if (bundlePath.toString().endsWith(searchPath.fileNamePath(),
-                                               Qt::CaseInsensitive))
+                                               String::CaseInsensitive))
             {
                 return true;
             }
