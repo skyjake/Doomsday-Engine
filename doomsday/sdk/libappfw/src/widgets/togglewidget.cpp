@@ -114,13 +114,12 @@ DENG2_OBSERVES(ButtonWidget, Press)
     ToggleProceduralImage *procImage; // not owned
     bool hasBeenUpdated = false;
 
-    Impl(Public *i)
-        : Base(i),
-          state(Inactive),
-          procImage(new ToggleProceduralImage(*i))
+    Impl(Public *i, Flags const &flags)
+        : Base(i)
+        , state(Inactive)
+        , procImage(!(flags & WithoutIndicator)? new ToggleProceduralImage(*i) : nullptr)
     {
-        self().setImage(procImage); // base class owns it
-
+        if (procImage) self().setImage(procImage); // base class owns it
         self().audienceForPress() += this;
     }
 
@@ -137,7 +136,9 @@ DENG2_OBSERVES(ButtonWidget, Press)
 
 DENG2_AUDIENCE_METHOD(ToggleWidget, Toggle)
 
-ToggleWidget::ToggleWidget(String const &name) : ButtonWidget(name), d(new Impl(this))
+ToggleWidget::ToggleWidget(Flags const &flags, String const &name)
+    : ButtonWidget(name)
+    , d(new Impl(this, flags))
 {
     setTextAlignment(ui::AlignRight);
     setTextLineAlignment(ui::AlignLeft);
@@ -148,7 +149,10 @@ void ToggleWidget::setToggleState(ToggleState state, bool notify)
     if (d->state != state)
     {
         d->state = state;
-        d->procImage->setState(state, hasBeenUpdated());
+        if (d->procImage)
+        {
+            d->procImage->setState(state, hasBeenUpdated());
+        }
 
         if (notify)
         {
@@ -165,7 +169,10 @@ ToggleWidget::ToggleState ToggleWidget::toggleState() const
 
 void ToggleWidget::finishAnimation()
 {
-    d->procImage->finishAnimation();
+    if (d->procImage)
+    {
+        d->procImage->finishAnimation();
+    }
 }
 
 } // namespace de

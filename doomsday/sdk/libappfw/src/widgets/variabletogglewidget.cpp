@@ -79,11 +79,13 @@ DENG2_OBSERVES(ToggleWidget, Toggle  )
 };
 
 VariableToggleWidget::VariableToggleWidget(Variable &variable, String const &name)
-    : ToggleWidget(name), d(new Impl(this, variable))
+    : ToggleWidget(DefaultFlags, name)
+    , d(new Impl(this, variable))
 {}
 
 VariableToggleWidget::VariableToggleWidget(String const &label, Variable &variable, String const &name)
-    : ToggleWidget(name), d(new Impl(this, variable))
+    : ToggleWidget(DefaultFlags, name)
+    , d(new Impl(this, variable))
 {
     setText(label);
 }
