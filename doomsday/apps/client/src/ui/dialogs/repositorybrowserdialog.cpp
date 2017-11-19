@@ -17,6 +17,8 @@
  */
 
 #include "ui/dialogs/repositorybrowserdialog.h"
+#include "ui/widgets/homemenuwidget.h"
+#include "ui/widgets/homeitemwidget.h"
 
 #include <de/Async>
 #include <de/ChoiceWidget>
@@ -26,10 +28,14 @@
 #include <de/FileSystem>
 #include <de/Folder>
 #include <de/LineEditWidget>
-#include <de/ui/FilteredData>
+#include <de/ProgressWidget>
 #include <de/RemoteFeedRelay>
+#include <de/SequentialLayout>
+#include <de/ui/FilteredData>
 
 using namespace de;
+
+static String const VAR_RESOURCE_BROWSER_REPOSITORY("resource.browserRepository");
 
 DENG_GUI_PIMPL(RepositoryBrowserDialog)
 , DENG2_OBSERVES(filesys::RemoteFeedRelay, Status)
@@ -44,23 +50,45 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
     std::unique_ptr<AsyncScope> populating;
     Lockable linkBusy;
 
+    ProgressWidget *refreshProgress;
     ChoiceWidget *repo;
     LineEditWidget *search;
     MenuWidget *category;
-    MenuWidget *files;
+    LabelWidget *statusText;
+    HomeMenuWidget *nameList;
     DocumentWidget *description;
     String connectedRepository;
     String mountPath;
+    QSet<String> filterTerms;
 
     Impl(Public *i) : Base(i)
     {
         auto &area = self().area();
 
+        // The dialog contains scrollable widgets.
+        area.enableScrolling(false);
+        area.enableIndicatorDraw(false);
+        area.enablePageKeys(false);
+
+        self().add(refreshProgress = new ProgressWidget);
+
+        refreshProgress->useMiniStyle();
+        refreshProgress->setOpacity(0);
+        refreshProgress->setColor("altaccent");
+        refreshProgress->setTextColor("altaccent");
+        refreshProgress->setText(tr("Loading..."));
+        refreshProgress->setTextAlignment(ui::AlignLeft);
+        refreshProgress->setSizePolicy(ui::Expand, ui::Expand);
+
+        area.add(statusText  = new LabelWidget);
         area.add(repo        = new ChoiceWidget);
         area.add(search      = new LineEditWidget);
         area.add(category    = new MenuWidget);
-        area.add(files       = new MenuWidget);
+        area.add(nameList    = new HomeMenuWidget);
         area.add(description = new DocumentWidget);
+
+        //statusText->setFont("small");
+        statusText->setTextColor("altaccent");
 
         // Insert known repositories.
         try
@@ -71,7 +99,7 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
                 repo->items()
                         << new ChoiceItem(i->first.value->asText(), i->second->asText());
             }
-            repo->setSelected(0);
+            repo->setSelected(repo->items().findLabel(App::config().gets(VAR_RESOURCE_BROWSER_REPOSITORY, "")));
         }
         catch (Error const &er)
         {
@@ -84,19 +112,23 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
         category->setGridSize(0, ui::Expand, 1, ui::Expand, GridLayout::RowFirst);
         category->organizer().setWidgetFactory(*this);
 
-        files->setVirtualizationEnabled(true, style().fonts().font("default").height().valuei() +
-                                        rule("unit").valuei() * 2);
-        files->setBehavior(ChildVisibilityClipping);
-        files->organizer().setWidgetFactory(*this);
-        files->rule()
-                .setInput(Rule::Height, Const(200))
-                .setInput(Rule::Width, Const(500));
+        nameList->setVirtualizationEnabled(true, style().fonts().font("default").height().valuei() +
+                                           rule("unit").valuei() * 2);
+        nameList->organizer().setWidgetFactory(*this);
+        nameList->enableScrolling(true);
+        nameList->enablePageKeys(true);
+        nameList->setGridSize(1, ui::Filled, 0, ui::Fixed);
+        nameList->layout().setRowPadding(Const(0));
+        nameList->setBehavior(ChildVisibilityClipping);
 
         QObject::connect(repo, &ChoiceWidget::selectionChangedByUser, [this] (uint)
         {
             updateSelectedRepository();
         });
-
+        QObject::connect(search, &LineEditWidget::editorContentChanged, [this] ()
+        {
+            updateFilter();
+        });
         RFRelay::get().audienceForStatus() += this;
 
         updateSelectedRepository();
@@ -110,7 +142,45 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
 
     bool filterItem(ui::Item const &item) const
     {
+        if (filterTerms.isEmpty()) return true;
+
+        DotPath const path(item.label());
+        for (String const &term : filterTerms)
+        {
+            bool matched = false;
+            for (int i = 0; i < path.segmentCount(); ++i)
+            {
+                if (path.segment(i).toStringRef().contains(term))
+                {
+                    matched = true;
+                    break;
+                }
+            }
+            if (!matched) return false;
+        }
         return true;
+    }
+
+    void updateFilter()
+    {
+        const auto oldTerms = filterTerms;
+        filterTerms.clear();
+        foreach (String term, search->text().split(' '))
+        {
+            if (auto cleaned = term.strip())
+            {
+                filterTerms.insert(cleaned.toLower());
+            }
+        }
+        if (oldTerms != filterTerms && shownData)
+        {
+            shownData->refilter();
+            shownData->stableSort([] (ui::Item const &a, ui::Item const &b)
+            {
+                return a.label().compare(b.label()) < 0;
+            });
+            updateStatusText();
+        }
     }
 
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *parent) override
@@ -119,7 +189,8 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
         {
             return new ButtonWidget;
         }
-        return new LabelWidget;
+        return new HomeItemWidget(HomeItemWidget::NonAnimatedHeight |
+                                  HomeItemWidget::WithoutIcon);
     }
 
     void updateItemWidget(GuiWidget &widget, ui::Item const &item) override
@@ -133,23 +204,29 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
         }
         else
         {
-            auto &label = widget.as<LabelWidget>();
-            label.setText(item.label());
-            label.setSizePolicy(ui::Expand, ui::Expand);
-            label.margins().set("unit");
-            label.set(Background());
+            auto &w = widget.as<HomeItemWidget>();
+            w.useColorTheme(Normal, Inverted);
+            w.label().margins().set("unit");
+            w.label().setText(item.label().fileName('.'));
+            //label.setSizePolicy(ui::Expand, ui::Expand);
+            //label.margins().set("unit");
+            //label.set(Background());
         }
     }
 
     void updateSelectedRepository()
     {
-        qDebug() << "connecting to" << repo->selectedItem().data().toString();
-
-        connect(repo->selectedItem().data().toString());
+        if (repo->isValidSelection())
+        {
+            auto const &selItem = repo->selectedItem();
+            App::config().set(VAR_RESOURCE_BROWSER_REPOSITORY, selItem.label());
+            connect(selItem.data().toString());
+        }
     }
 
     void connect(String address)
     {
+        refreshProgress->setOpacity(1, 0.5);
         repo->disable();
 
         // Disconnecting may involve waiting for an operation to finish first, so
@@ -172,6 +249,8 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
         if (repository == connectedRepository)
         {
             repo->enable();
+            refreshProgress->setOpacity(0, 0.5);
+
             if (status == RFRelay::Connected)
             {
                 populateAsync();
@@ -228,13 +307,14 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
     void setData(std::shared_ptr<ui::ListData> newData)
     {
         DENG2_ASSERT_IN_MAIN_THREAD();
-        qDebug() << "got new data with" << newData->size() << "items";
+        //qDebug() << "got new data with" << newData->size() << "items";
 
-        files->useDefaultItems();
+        nameList->useDefaultItems();
         shownData.reset(new ui::FilteredData(*newData));
         shownData->setFilter([this] (ui::Item const &i) { return filterItem(i); });
         data = newData;
-        files->setItems(*shownData);
+        shownData->sort();
+        nameList->setItems(*shownData);
 
         categoryData.clear();
         categoryData.append(new ui::Item(ui::Item::ShownAsButton, tr("All Categories")));
@@ -245,7 +325,15 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
             categoryData.append(new ui::Item(ui::Item::ShownAsButton, category));
         }
 
+        updateStatusText();
+
         repo->enable();
+        refreshProgress->setOpacity(0, 0.5);
+    }
+
+    void updateStatusText()
+    {
+        statusText->setText(tr("showing %1 out of %2 mods").arg(shownData->size()).arg(data->size()));
     }
 };
 
@@ -256,20 +344,64 @@ RepositoryBrowserDialog::RepositoryBrowserDialog()
     heading().setText(tr("Install Mods"));
     heading().setStyleImage("package.icon", heading().fontId());
 
-    auto *repoLabel   = LabelWidget::newWithText(tr("Repository:"), &area());
+    AutoRef<Rule> nameListWidth(new ConstantRule(2*175));
+    AutoRef<Rule> descriptionWidth(new ConstantRule(2*525));
+    AutoRef<Rule> listHeight(new ConstantRule(2*325));
+
+    auto &acRule = area().contentRule();
+
     auto *searchLabel = LabelWidget::newWithText(tr("Search:"), &area());
+    auto *repoLabel   = LabelWidget::newWithText(tr("Repository:"), &area());
 
-    GridLayout layout(area().contentRule().left(),
-                      area().contentRule().top());
-    layout.setGridSize(2, 0);
-    layout << *repoLabel << *d->repo
-           << *searchLabel << *d->search;
-    layout.append(*d->category, 2)
-           << *d->files << *d->description;
+    {
+        SequentialLayout layout(acRule.left(),
+                                acRule.top(),
+                                ui::Right);
+        layout << *searchLabel << *d->search << *repoLabel << *d->repo;
 
-    area().setContentSize(layout);
+        d->search->rule().setInput(Rule::Width,
+                                   acRule.width() -
+                                   searchLabel->rule().width() -
+                                   repoLabel->rule().width() -
+                                   d->repo->rule().width());
+    }
 
-    buttons() << new DialogButtonItem(Default | Accept, tr("Close"));
+    d->category->rule()
+            .setInput(Rule::Left, acRule.left())
+            .setInput(Rule::Top, d->search->rule().bottom());
+
+    d->statusText->rule()
+            .setInput(Rule::Right, acRule.right())
+            .setInput(Rule::Top, d->category->rule().top())
+            .setInput(Rule::Height, d->category->rule().height());
+
+    d->nameList->rule()
+            .setSize(nameListWidth, listHeight)
+            .setInput(Rule::Left, acRule.left())
+            .setInput(Rule::Top, d->category->rule().bottom());
+
+    d->description->rule()
+            .setSize(descriptionWidth, listHeight)
+            .setInput(Rule::Left, d->nameList->rule().right())
+            .setInput(Rule::Top, d->nameList->rule().top());
+
+    area().setContentSize(nameListWidth + descriptionWidth,
+                          d->search->rule().height() + d->category->rule().height() +
+                          listHeight);
+
+    d->refreshProgress->rule()
+            .setInput(Rule::Right, rule().right() - area().margins().right())
+            .setInput(Rule::Top,   rule().top() + area().margins().top());
+
+    buttons() << new DialogButtonItem(Default | Accept, tr("Close"))
+              << new DialogButtonItem(Action  | Id1,    tr("Download & Install"))
+              << new DialogButtonItem(Action  | Id2,    tr("Try in..."));
+
+    // Actions are unavaiable until something is selected.
+    buttonWidget(Id1)->disable();
+    buttonWidget(Id2)->disable();
+
+    extraButtonsMenu().margins().setLeft(area().margins().left() + nameListWidth);
 }
 
 void RepositoryBrowserDialog::finish(int result)
