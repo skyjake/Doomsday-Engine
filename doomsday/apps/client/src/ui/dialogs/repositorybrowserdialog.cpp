@@ -31,11 +31,13 @@
 #include <de/ProgressWidget>
 #include <de/RemoteFeedRelay>
 #include <de/SequentialLayout>
+#include <de/ToggleWidget>
 #include <de/ui/FilteredData>
 
 using namespace de;
 
 static String const VAR_RESOURCE_BROWSER_REPOSITORY("resource.browserRepository");
+static String const ALL_CATEGORIES(QObject::tr("All Categories"));
 
 DENG_GUI_PIMPL(RepositoryBrowserDialog)
 , DENG2_OBSERVES(filesys::RemoteFeedRelay, Status)
@@ -117,6 +119,7 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
         nameList->organizer().setWidgetFactory(*this);
         nameList->enableScrolling(true);
         nameList->enablePageKeys(true);
+        nameList->enableIndicatorDraw(true);
         nameList->setGridSize(1, ui::Filled, 0, ui::Fixed);
         nameList->layout().setRowPadding(Const(0));
         nameList->setBehavior(ChildVisibilityClipping);
@@ -187,7 +190,17 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
     {
         if (parent == category)
         {
-            return new ButtonWidget;
+            auto *toggle = new ToggleWidget(ToggleWidget::WithoutIndicator);
+            QObject::connect(toggle, &ToggleWidget::stateChanged,
+                             [toggle, &item] (ToggleWidget::ToggleState state)
+            {
+                toggle->setColorTheme(state == ToggleWidget::Active? Inverted : Normal);
+            });
+            if (item.label() == ALL_CATEGORIES)
+            {
+                toggle->setToggleState(ToggleWidget::Active);
+            }
+            return toggle;
         }
         return new HomeItemWidget(HomeItemWidget::NonAnimatedHeight |
                                   HomeItemWidget::WithoutIcon);
@@ -317,7 +330,7 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
         nameList->setItems(*shownData);
 
         categoryData.clear();
-        categoryData.append(new ui::Item(ui::Item::ShownAsButton, tr("All Categories")));
+        categoryData.append(new ui::Item(ui::Item::ShownAsButton, ALL_CATEGORIES));
         StringList tags = link().categoryTags();
         qSort(tags);
         foreach (String category, tags)
