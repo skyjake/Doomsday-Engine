@@ -41,22 +41,23 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
     Rule *maxX;
     Rule *maxY;
 
-    Origin origin = Top;
-    bool pageKeysEnabled = true;
-    bool scrollingEnabled = true;
-    Animation scrollOpacity { 0 };
-    int scrollBarWidth = 0;
-    Rectanglef indicatorUv;
-    bool indicatorAnimating = false;
     String scrollBarColorId { "accent" };
     ColorBank::Colorf scrollBarColor;
     ColorBank::Colorf scrollBarHoverColor;
-    bool scrollBarGrabbed = false;
+    Animation scrollOpacity { 0 };
+    Origin origin = Top;
+    int scrollBarWidth { 0 };
     int grabOffset;
 
+    bool scrollBarGrabbed { false };
+    bool indicatorAnimating { false };
+    bool pageKeysEnabled { true };
+    bool scrollingEnabled { true };
+
     // GL objects.
-    bool indicatorDrawEnabled = false;
-    bool scrollBarHover = false;
+    bool indicatorDrawEnabled { false };
+    bool scrollBarHover { false };
+    Rectanglef indicatorUv;
     Rectanglef scrollBarVisRect;
     Rectanglef scrollBarLaneRect;
     GuiVertexBuilder verts;
