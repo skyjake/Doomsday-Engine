@@ -91,9 +91,10 @@ DENG_GUI_PIMPL(HomeItemWidget)
         }
     };
 
+    Flags flags;
     AssetGroup assets;
     LabelWidget *background;
-    LabelWidget *icon;
+    LabelWidget *icon { nullptr };
     LabelWidget *label;
     QList<GuiWidget *> buttons;
     AnimationRule *labelRightMargin;
@@ -108,23 +109,30 @@ DENG_GUI_PIMPL(HomeItemWidget)
     DotPath selectedTextColor { "text" };
     QTimer buttonHideTimer;
 
-    Impl(Public *i) : Base(i)
+    Impl(Public *i, Flags flags) : Base(i), flags(flags)
     {
-        labelRightMargin    = new AnimationRule(0);
+        labelRightMargin = new AnimationRule(0);
 
         self().add(background = new LabelWidget);
-        self().add(icon       = new LabelWidget);
-        self().add(label      = new LabelWidget);
+        if (!(flags & WithoutIcon))
+        {
+            self().add(icon = new LabelWidget);
+        }
+        self().add(label = new LabelWidget);
 
         // Observe state of the labels.
         assets += *background;
-        assets += *icon;
         assets += *label;
 
-        icon->setBehavior(ContentClipping);
-        icon->setImageFit(ui::CoverArea | ui::OriginalAspectRatio);
-        icon->setSizePolicy(ui::Filled, ui::Filled);
-        icon->margins().setZero();
+        if (icon)
+        {
+            assets += *icon;
+
+            icon->setBehavior(ContentClipping);
+            icon->setImageFit(ui::CoverArea | ui::OriginalAspectRatio);
+            icon->setSizePolicy(ui::Filled, ui::Filled);
+            icon->margins().setZero();
+        }
 
         label->setSizePolicy(ui::Filled, ui::Expand);
         label->setTextLineAlignment(ui::AlignLeft);
@@ -218,11 +226,14 @@ DENG_GUI_PIMPL(HomeItemWidget)
     void updateColors()
     {
         auto bg = Background(style().colors().colorf(selected? selectedBgColor : bgColor));
-        icon->set(bg);
         background->set(bg);
         label->setTextColor(selected? selectedTextColor : textColor);
         // Icon matches text color.
-        icon->setImageColor(label->textColorf());
+        if (icon)
+        {
+            icon->setImageColor(label->textColorf());
+            icon->set(bg);
+        }
     }
 
     /**
@@ -241,15 +252,11 @@ DENG_GUI_PIMPL(HomeItemWidget)
 
 HomeItemWidget::HomeItemWidget(Flags flags, String const &name)
     : GuiWidget(name)
-    , d(new Impl(this))
+    , d(new Impl(this, flags))
 {
     setBehavior(Focusable | ContentClipping);
     setAttribute(AutomaticOpacity);
     addEventHandler(new Impl::ClickHandler(*this));
-
-    Rule const &iconSize = d->label->margins().height() +
-                           style().fonts().font("default").height() +
-                           style().fonts().font("default").lineSpacing();
 
     AutoRef<Rule> height;
     if (flags.testFlag(AnimatedHeight))
@@ -264,19 +271,25 @@ HomeItemWidget::HomeItemWidget(Flags flags, String const &name)
     d->background->rule()
             .setInput(Rule::Top,    rule().top())
             .setInput(Rule::Height, height)
-            .setInput(Rule::Left,   d->icon->rule().right())
+            .setInput(Rule::Left,   d->icon? d->icon->rule().right() : rule().left())
             .setInput(Rule::Right,  rule().right());
 
-    d->icon->rule()
-            .setSize(iconSize,    height)
-            .setInput(Rule::Left, rule().left())
-            .setInput(Rule::Top,  rule().top());
-    d->icon->set(Background(Background::BorderGlow,
-                            style().colors().colorf("home.icon.shadow"), 20));
+    if (d->icon)
+    {
+        d->icon->rule()
+                .setSize(d->label->margins().height() +
+                         style().fonts().font("default").height() +
+                         style().fonts().font("default").lineSpacing(),
+                         height)
+                .setInput(Rule::Left, rule().left())
+                .setInput(Rule::Top,  rule().top());
+        d->icon->set(Background(Background::BorderGlow,
+                                style().colors().colorf("home.icon.shadow"), 20));
+    }
 
     d->label->rule()
             .setInput(Rule::Top,   rule().top())
-            .setInput(Rule::Left,  d->icon->rule().right())
+            .setInput(Rule::Left,  d->icon? d->icon->rule().right() : rule().left())
             .setInput(Rule::Right, rule().right());
     d->label->margins().setRight(OperatorRule::maximum(*d->labelMinRightMargin,
                                                        *d->labelRightMargin) + rule("gap"));
@@ -292,6 +305,7 @@ AssetGroup &HomeItemWidget::assets()
 
 LabelWidget &HomeItemWidget::icon()
 {
+    DENG2_ASSERT(d->icon);
     return *d->icon;
 }
 
