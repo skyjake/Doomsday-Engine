@@ -616,7 +616,7 @@ DENG2_PIMPL(Textures)
                     continue;
                 }
 
-                if (fileName.endsWith("_END", Qt::CaseInsensitive))
+                if (Stack_Height(stack) > 0 && fileName.endsWith("_END", Qt::CaseInsensitive))
                 {
                     // The sprite block ends.
                     Stack_Pop(stack);
