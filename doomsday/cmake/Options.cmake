@@ -18,7 +18,7 @@ option (DENG_ENABLE_SDK      "Enable/disable installation of the Doomsday 2 SDK"
 option (DENG_ENABLE_TOOLS    "Compile the Doomsday tools" ON)
 option (DENG_ENABLE_DEPLOYQT "Enable/disable the *deployqt tool" ON)
 
-if (CCACHE_FOUND OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+if (APPLE OR CCACHE_FOUND OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     # GCC seems to have trouble with cotire when using C++11.
     set (DENG_ENABLE_COTIRE_DEFAULT OFF) # just use the cache
 else ()
