@@ -82,7 +82,7 @@ public:
      */
     void setRange(Rangei const &range, Rangef const &visualRange = Rangef(0.f, 1.f));
 
-    void setProgress(int currentProgress, TimeDelta const &transitionSpan = 0.5);
+    void setProgress(int currentProgress, TimeSpan const &transitionSpan = 0.5);
 
     // Events.
     void update();

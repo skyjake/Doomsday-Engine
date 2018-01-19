@@ -459,13 +459,13 @@ dint String::compareWithoutCase(String const &str, int n) const
     return leftRef(n).compare(str.leftRef(n), Qt::CaseInsensitive);
 }
 
-int String::commonPrefixLength(String const &str, Qt::CaseSensitivity sensitivity) const
+int String::commonPrefixLength(String const &str, CaseSensitivity sensitivity) const
 {
     int count = 0;
     int len = qMin(str.size(), size());
     for (int i = 0; i < len; ++i, ++count)
     {
-        if (sensitivity == Qt::CaseSensitive)
+        if (sensitivity == CaseSensitive)
         {
             if (at(i) != str.at(i)) break;
         }

@@ -155,7 +155,7 @@ public:
      *
      * @param interval  Interval for autoflushing.
      */
-    void setAutoFlushInterval(TimeDelta const &interval);
+    void setAutoFlushInterval(TimeSpan const &interval);
 
     enum OutputChangeBehavior {
         FlushFirstToOldOutputs,

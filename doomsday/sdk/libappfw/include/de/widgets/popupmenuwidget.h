@@ -35,6 +35,7 @@ public:
     PopupMenuWidget(String const &name = String());
 
     void setParentPopup(PopupWidget *parentPopup);
+    PopupWidget *parentPopup() const;
 
     MenuWidget &menu() const;
 

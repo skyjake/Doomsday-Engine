@@ -48,6 +48,12 @@ public:
         , _constructor(constructor)
         , _dir(openingDirection) {}
 
+    SubwidgetItem(Semantics semantics, String const &label, ui::Direction openingDirection,
+                  WidgetConstructor constructor)
+        : ImageItem(semantics, label)
+        , _constructor(constructor)
+        , _dir(openingDirection) {}
+
     SubwidgetItem(Image const &image, String const &label, ui::Direction openingDirection,
                   WidgetConstructor constructor)
         : ImageItem(ShownAsButton, image, label)

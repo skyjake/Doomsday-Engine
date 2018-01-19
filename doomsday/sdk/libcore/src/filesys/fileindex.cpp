@@ -98,7 +98,7 @@ DENG2_PIMPL(FileIndex), public ReadWriteLockable
         for (Index::const_iterator i = range.first; i != range.second; ++i)
         {
             File *file = i->second;
-            if (file->path().fileNamePath().endsWith(dir, Qt::CaseInsensitive))
+            if (file->path().fileNamePath().endsWith(dir, String::CaseInsensitive))
             {
                 found.push_back(file);
             }

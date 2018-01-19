@@ -22,7 +22,7 @@
 
 namespace de {
 
-static TimeDelta FLASH_SPAN = .5;
+static TimeSpan FLASH_SPAN = .5;
 
 DENG2_PIMPL(FocusWidget)
 {

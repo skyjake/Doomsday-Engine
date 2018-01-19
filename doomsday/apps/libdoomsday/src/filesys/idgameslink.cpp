@@ -230,7 +230,28 @@ void IdgamesLink::parseRepositoryIndex(QByteArray data)
             handleError("Failed to parse directory listing: " + errorMessage);
             wasDisconnected();
         }
-    });
+});
+}
+
+StringList IdgamesLink::categoryTags() const
+{
+    return StringList({ CATEGORY_LEVELS,
+                        CATEGORY_MUSIC,
+                        CATEGORY_SOUNDS,
+                        CATEGORY_THEMES });
+}
+
+LoopResult IdgamesLink::forPackageIds(std::function<LoopResult (String const &)> func) const
+{
+    PathTreeIterator<Impl::PackageIndexEntry> iter(d->packageIndex.leafNodes());
+    while (iter.hasNext())
+    {
+        if (auto result = func(iter.next().path('.')))
+        {
+            return result;
+        }
+    }
+    return LoopContinue;
 }
 
 String IdgamesLink::findPackagePath(String const &packageId) const

@@ -34,7 +34,7 @@
 
 using namespace de;
 
-static TimeDelta const SHOW_ANIM_SPAN = 0.3;
+static TimeSpan const SHOW_ANIM_SPAN = 0.3;
 
 DENG_GUI_PIMPL(UpdateAvailableDialog),
 DENG2_OBSERVES(ToggleWidget, Toggle)
@@ -67,7 +67,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         updateResult(latest, 0);
     }
 
-    void showProgress(bool show, TimeDelta span)
+    void showProgress(bool show, TimeSpan span)
     {
         checking->setOpacity(show? 1 : 0, span);
         self().area().setOpacity(show? 0 : 1, span);
@@ -106,7 +106,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         return false;
     }
 
-    void updateResult(Version const &latest, TimeDelta showSpan)
+    void updateResult(Version const &latest, TimeSpan showSpan)
     {
         showProgress(false, showSpan);
 

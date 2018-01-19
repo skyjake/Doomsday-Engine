@@ -59,6 +59,7 @@ public:
         ActivationClosesPopup = 0x100,
         Separator             = 0x200,
         Annotation            = 0x400 | Separator,
+        ClosesParentPopup     = 0x800,
 
         DefaultSemantics      = ShownAsLabel
     };

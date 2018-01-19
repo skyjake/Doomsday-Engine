@@ -30,8 +30,8 @@
 
 namespace de {
 
-static TimeDelta const OPENING_ANIM_SPAN = 0.4;
-static TimeDelta const CLOSING_ANIM_SPAN = 0.3;
+static TimeSpan const OPENING_ANIM_SPAN = 0.4;
+static TimeSpan const CLOSING_ANIM_SPAN = 0.3;
 
 DENG_GUI_PIMPL(PanelWidget)
 , DENG2_OBSERVES(Asset, StateChange)
@@ -112,7 +112,7 @@ DENG_GUI_PIMPL(PanelWidget)
         }
     }
 
-    void startOpeningAnimation(TimeDelta span)
+    void startOpeningAnimation(TimeSpan span)
     {
         if (isVerticalAnimation())
         {
@@ -134,7 +134,7 @@ DENG_GUI_PIMPL(PanelWidget)
         }
     }
 
-    void close(TimeDelta delay)
+    void close(TimeSpan delay)
     {
         if (!opened) return;
 
@@ -306,7 +306,7 @@ bool PanelWidget::isOpeningOrClosing() const
     return !d->openingRule->animation().done();
 }
 
-void PanelWidget::close(TimeDelta delayBeforeClosing)
+void PanelWidget::close(TimeSpan delayBeforeClosing)
 {
     d->close(delayBeforeClosing);
 }

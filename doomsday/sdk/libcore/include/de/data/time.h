@@ -54,15 +54,15 @@ public:
     /**
      * Difference between two points in time. @ingroup types
      */
-    class DENG2_PUBLIC Delta : public ISerializable
+    class DENG2_PUBLIC Span : public ISerializable
     {
     public:
         /**
-         * Constructs a time delta.
+         * Constructs a time span.
          *
-         * @param seconds  Length of the delta.
+         * @param seconds  Length of the time span.
          */
-        Delta(ddouble seconds = 0) : _seconds(seconds) {}
+        Span(ddouble seconds = 0) : _seconds(seconds) {}
 
         /**
          * Conversion to the numeric type (floating-point seconds).
@@ -81,30 +81,30 @@ public:
             return fequal(_seconds, d);
         }
 
-        inline Delta operator + (ddouble const &d) const {
+        inline Span operator + (ddouble const &d) const {
             return _seconds + d;
         }
 
-        inline Delta &operator += (ddouble const &d) {
+        inline Span &operator += (ddouble const &d) {
             _seconds += d;
             return *this;
         }
 
-        inline Delta operator - (ddouble const &d) const {
+        inline Span operator - (ddouble const &d) const {
             return _seconds - d;
         }
 
-        inline Delta &operator -= (ddouble const &d) {
+        inline Span &operator -= (ddouble const &d) {
             _seconds -= d;
             return *this;
         }
 
-        inline Delta &operator *= (ddouble const &d) {
+        inline Span &operator *= (ddouble const &d) {
             _seconds *= d;
             return *this;
         }
 
-        inline Delta &operator /= (ddouble const &d) {
+        inline Span &operator /= (ddouble const &d) {
             _seconds /= d;
             return *this;
         }
@@ -112,7 +112,7 @@ public:
         duint64 asMicroSeconds() const;
 
         /**
-         * Convert the delta to milliseconds.
+         * Convert the time span to milliseconds.
          *
          * @return  Milliseconds.
          */
@@ -124,15 +124,15 @@ public:
 
         ddouble asDays() const;
 
-        static Delta fromMilliSeconds(duint64 milliseconds) {
-            return Delta(milliseconds/1000.0);
+        static Span fromMilliSeconds(duint64 milliseconds) {
+            return Span(milliseconds/1000.0);
         }
 
         /**
          * Determines the amount of time passed since the beginning of the native
          * process (i.e., since creation of the high performance timer).
          */
-        static Delta sinceStartOfProcess();
+        static Span sinceStartOfProcess();
 
         /**
          * Blocks the thread.
@@ -176,7 +176,7 @@ public:
      *
      * @param highPerformanceDelta Elapsed time since the high performance timer was started.
      */
-    Time(Delta const &highPerformanceDelta);
+    Time(Span const &highPerformanceDelta);
 
     static Time invalidTime();
 
@@ -199,72 +199,72 @@ public:
     inline bool operator != (Time const &t) const { return !(*this == t); }
 
     /**
-     * Add a delta to the point of time.
+     * Add a time span to the point of time.
      *
-     * @param delta  Delta to add.
+     * @param span  Time span to add.
      *
      * @return  Modified time.
      */
-    Time operator + (Delta const &delta) const;
+    Time operator + (Span const &span) const;
 
     /**
-     * Subtract a delta from the point of time.
+     * Subtract a time span from the point of time.
      *
-     * @param delta  Delta to subtract.
+     * @param span  Time span to subtract.
      *
      * @return  Modified time.
      */
-    inline Time operator - (Delta const &delta) const { return *this + (-delta); }
+    inline Time operator - (Span const &span) const { return *this + (-span); }
 
     /**
      * Modify point of time.
      *
-     * @param delta  Delta to add.
+     * @param span  Time span to add.
      *
      * @return  Reference to this Time.
      */
-    Time &operator += (Delta const &delta);
+    Time &operator += (Span const &span);
 
     /**
      * Modify point of time.
      *
-     * @param delta  Delta to subtract.
+     * @param span  Time span to subtract.
      *
      * @return  Reference to this Time.
      */
-    inline Time &operator -= (Delta const &delta) { return *this += -delta; }
+    inline Time &operator -= (Span const &span) { return *this += -span; }
 
     /**
      * Difference between two times.
      *
      * @param earlierTime  Time at some point before this time.
      */
-    Delta operator - (Time const &earlierTime) const;
+    Span operator - (Time const &earlierTime) const;
 
     /**
      * Difference between this time and the current point of time.
      * Returns positive deltas if current time is past this time.
      *
-     * @return  Delta.
+     * @return  Span.
      */
-    inline Delta since() const { return deltaTo(Time()); }
+    inline Span since() const { return deltaTo(Time()); }
 
     /**
      * Difference between current time and this time.
      * Returns positive deltas if current time is before this time.
      *
-     * @return  Delta.
+     * @return  Span.
      */
-    inline Delta until() const { return Time().deltaTo(*this); }
+    inline Span until() const { return Time().deltaTo(*this); }
 
     /**
      * Difference to a later point in time.
      *
      * @param laterTime  Time.
      *
-     * @return  Delta.
+     * @return  Span.
      */
-    inline Delta deltaTo(Time const &laterTime) const { return laterTime - *this; }
+    inline Span deltaTo(Time const &laterTime) const { return laterTime - *this; }
 
     /**
      * Makes a text representation of the time (default is ISO format, e.g.,
@@ -302,7 +302,7 @@ public:
      */
     dint asBuildNumber() const;
 
-    Delta highPerformanceTime() const;
+    Span highPerformanceTime() const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;
@@ -325,7 +325,7 @@ private:
 
 DENG2_PUBLIC QTextStream &operator << (QTextStream &os, Time const &t);
 
-typedef Time::Delta TimeDelta;
+typedef Time::Span TimeSpan;
 
 } // namespace de
 

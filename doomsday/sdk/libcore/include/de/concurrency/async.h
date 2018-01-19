@@ -148,9 +148,11 @@ public:
     ~AsyncScope();
 
     AsyncScope &operator += (AsyncTask *task);
+    bool isAsyncFinished() const;
+    void waitForFinished(TimeSpan timeout = 0.0);
 
 private:
-    QSet<AsyncTask *> _tasks;
+    LockableT<QSet<AsyncTask *>> _tasks;
 };
 
 } // namespace de

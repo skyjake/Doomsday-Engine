@@ -38,7 +38,7 @@ void Waitable::wait() const
     wait(0.0);
 }
 
-void Waitable::wait(TimeDelta const &timeOut) const
+void Waitable::wait(TimeSpan const &timeOut) const
 {
     if (!tryWait(timeOut))
     {
@@ -47,7 +47,7 @@ void Waitable::wait(TimeDelta const &timeOut) const
     }
 }
 
-bool Waitable::tryWait(TimeDelta const &timeOut) const
+bool Waitable::tryWait(TimeSpan const &timeOut) const
 {
     if (timeOut <= 0.0)
     {

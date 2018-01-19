@@ -470,11 +470,11 @@ DENG2_PIMPL(PersistentGLWindow)
 
         Type type;
         Rectanglei rect;
-        TimeDelta delay; ///< How long to wait before doing this.
+        TimeSpan delay; ///< How long to wait before doing this.
 
-        Task(Type t, TimeDelta defer = 0)
+        Task(Type t, TimeSpan defer = 0)
             : type(t), delay(defer) {}
-        Task(Rectanglei const &r, TimeDelta defer = 0)
+        Task(Rectanglei const &r, TimeSpan defer = 0)
             : type(SetGeometry), rect(r), delay(defer) {}
     };
 
@@ -611,7 +611,7 @@ DENG2_PIMPL(PersistentGLWindow)
 
         // If the display mode needs to change, we will have to defer the rest
         // of the state changes so that everything catches up after the change.
-        TimeDelta defer = 0;
+        TimeSpan defer = 0;
         DisplayMode const *newMode = newState.displayMode();
         bool modeChanged = false;
 

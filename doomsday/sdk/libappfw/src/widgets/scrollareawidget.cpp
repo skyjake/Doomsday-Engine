@@ -41,22 +41,23 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
     Rule *maxX;
     Rule *maxY;
 
-    Origin origin = Top;
-    bool pageKeysEnabled = true;
-    bool scrollingEnabled = true;
-    Animation scrollOpacity { 0 };
-    int scrollBarWidth = 0;
-    Rectanglef indicatorUv;
-    bool indicatorAnimating = false;
     String scrollBarColorId { "accent" };
     ColorBank::Colorf scrollBarColor;
     ColorBank::Colorf scrollBarHoverColor;
-    bool scrollBarGrabbed = false;
+    Animation scrollOpacity { 0 };
+    Origin origin = Top;
+    int scrollBarWidth { 0 };
     int grabOffset;
 
+    bool scrollBarGrabbed { false };
+    bool indicatorAnimating { false };
+    bool pageKeysEnabled { true };
+    bool scrollingEnabled { true };
+
     // GL objects.
-    bool indicatorDrawEnabled = false;
-    bool scrollBarHover = false;
+    bool indicatorDrawEnabled { false };
+    bool scrollBarHover { false };
+    Rectanglef indicatorUv;
     Rectanglef scrollBarVisRect;
     Rectanglef scrollBarLaneRect;
     GuiVertexBuilder verts;
@@ -376,24 +377,24 @@ Vector2i ScrollAreaWidget::maximumScroll() const
     return Vector2i(maximumScrollX().valuei(), maximumScrollY().valuei());
 }
 
-void ScrollAreaWidget::scroll(Vector2i const &to, TimeDelta span)
+void ScrollAreaWidget::scroll(Vector2i const &to, TimeSpan span)
 {
     scrollX(to.x, span);
     scrollY(to.y, span);
 }
 
-void ScrollAreaWidget::scrollX(int to, TimeDelta span)
+void ScrollAreaWidget::scrollX(int to, TimeSpan span)
 {
     d->x->set(de::clamp(0, to, maximumScrollX().valuei()), span);
 }
 
-void ScrollAreaWidget::scrollY(int to, TimeDelta span)
+void ScrollAreaWidget::scrollY(int to, TimeSpan span)
 {
     d->y->set(de::clamp(0, to, maximumScrollY().valuei()), span);
     d->restartScrollOpacityFade();
 }
 
-void ScrollAreaWidget::scrollY(Rule const &to, TimeDelta span)
+void ScrollAreaWidget::scrollY(Rule const &to, TimeSpan span)
 {
     d->y->set(OperatorRule::clamped(to, Const(0), maximumScrollY()), span);
     d->restartScrollOpacityFade();
@@ -557,7 +558,7 @@ bool ScrollAreaWidget::handleEvent(Event const &event)
     return GuiWidget::handleEvent(event);
 }
 
-void ScrollAreaWidget::scrollToTop(TimeDelta span)
+void ScrollAreaWidget::scrollToTop(TimeSpan span)
 {
     if (d->origin == Top)
     {
@@ -569,7 +570,7 @@ void ScrollAreaWidget::scrollToTop(TimeDelta span)
     }
 }
 
-void ScrollAreaWidget::scrollToBottom(TimeDelta span)
+void ScrollAreaWidget::scrollToBottom(TimeSpan span)
 {
     if (d->origin == Top)
     {
@@ -581,17 +582,17 @@ void ScrollAreaWidget::scrollToBottom(TimeDelta span)
     }
 }
 
-void ScrollAreaWidget::scrollToLeft(TimeDelta span)
+void ScrollAreaWidget::scrollToLeft(TimeSpan span)
 {
     scrollX(0, span);
 }
 
-void ScrollAreaWidget::scrollToRight(TimeDelta span)
+void ScrollAreaWidget::scrollToRight(TimeSpan span)
 {
     scrollX(maximumScrollX().valuei(), span);
 }
 
-void ScrollAreaWidget::scrollToWidget(GuiWidget const &widget, TimeDelta span)
+void ScrollAreaWidget::scrollToWidget(GuiWidget const &widget, TimeSpan span)
 {
     int off = widget.rule().midY().valuei() - contentRule().top().valuei() -
               rule().height().valuei()/2;

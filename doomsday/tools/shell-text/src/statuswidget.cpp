@@ -97,7 +97,7 @@ void StatusWidget::draw()
         if (!d->rules.isEmpty()) msg += " (" + d->rules + ")";
         buf.drawText(Vector2i(1, 0), msg);
 
-        TimeDelta elapsed = d->link->connectedAt().since();
+        TimeSpan elapsed = d->link->connectedAt().since();
         String time = String("| %1:%2:%3")
                 .arg(int(elapsed.asHours()))
                 .arg(int(elapsed.asMinutes()) % 60, 2, 10, QLatin1Char('0'))

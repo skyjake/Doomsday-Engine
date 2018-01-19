@@ -33,10 +33,10 @@ DENG2_PIMPL(Timeline)
     Record *context = nullptr;
 
     struct Event {
-        TimeDelta at;
+        TimeSpan at;
         Script script;
 
-        Event(TimeDelta at, String const &source, String const &sourcePath)
+        Event(TimeSpan at, String const &source, String const &sourcePath)
             : at(at)
             , script(source)
         {
@@ -103,7 +103,7 @@ Record *Timeline::context() const
     return d->context;
 }
 
-Script &Timeline::addScript(TimeDelta at, String const &source, String const &sourcePath)
+Script &Timeline::addScript(TimeSpan at, String const &source, String const &sourcePath)
 {
     auto *ev = new Impl::Event(at, source, sourcePath);
     d->events.push(ev);
@@ -140,10 +140,10 @@ DENG2_PIMPL_NOREF(Timeline::Clock)
 
     Record *context = nullptr;
     Timeline const *scheduler = nullptr;
-    TimeDelta at = 0.0;
+    TimeSpan at = 0.0;
     Events events;
 
-    void rewind(TimeDelta const &toTime)
+    void rewind(TimeSpan const &toTime)
     {
         at = toTime;
 
@@ -159,7 +159,7 @@ DENG2_PIMPL_NOREF(Timeline::Clock)
         }
     }
 
-    void advanceTime(TimeDelta const &elapsed)
+    void advanceTime(TimeSpan const &elapsed)
     {
         at += elapsed;
 
@@ -186,17 +186,17 @@ Timeline::Clock::Clock(Timeline const &schedule, Record *context)
     d->rewind(0.0);
 }
 
-TimeDelta Timeline::Clock::at() const
+TimeSpan Timeline::Clock::at() const
 {
     return d->at;
 }
 
-void Timeline::Clock::rewind(TimeDelta const &toTime)
+void Timeline::Clock::rewind(TimeSpan const &toTime)
 {
     d->rewind(toTime);
 }
 
-void Timeline::Clock::advanceTime(TimeDelta const &elapsed)
+void Timeline::Clock::advanceTime(TimeSpan const &elapsed)
 {
     d->advanceTime(elapsed);
 }

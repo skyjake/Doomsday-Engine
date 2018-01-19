@@ -529,7 +529,7 @@ DENG2_PIMPL(ClientWindow)
 
     void showOrHideQuitButton()
     {
-        TimeDelta const SPAN = 0.6;
+        TimeSpan const SPAN = 0.6;
         if (self().isFullScreen() && !DoomsdayApp::isGameLoaded())
         {
             quitX->set(-quitButton->rule().width() - Style::get().rules().rule("gap"), SPAN);
@@ -716,7 +716,7 @@ DENG2_PIMPL(ClientWindow)
 
     void minimizeGame(bool mini)
     {
-        TimeDelta const SPAN = 1.0;
+        TimeSpan const SPAN = 1.0;
 
         if (mini && !isGameMini)
         {
@@ -769,7 +769,7 @@ DENG2_PIMPL(ClientWindow)
 #endif
     }
 
-    void setupFade(FadeDirection fadeDir, TimeDelta const &span)
+    void setupFade(FadeDirection fadeDir, TimeSpan const &span)
     {
         if (!fader)
         {
@@ -1013,14 +1013,14 @@ void ClientWindow::grab(image_t &img, bool halfSized) const
     DENG_ASSERT(img.pixelSize != 0);
 }
 
-void ClientWindow::fadeInTaskBarBlur(TimeDelta span)
+void ClientWindow::fadeInTaskBarBlur(TimeSpan span)
 {
     d->taskBarBlur->setAttribute(GuiWidget::DontDrawContent, UnsetFlags);
     d->taskBarBlur->setOpacity(0);
     d->taskBarBlur->setOpacity(1, span);
 }
 
-void ClientWindow::fadeOutTaskBarBlur(TimeDelta span)
+void ClientWindow::fadeOutTaskBarBlur(TimeSpan span)
 {
     d->taskBarBlur->setOpacity(0, span);
     QTimer::singleShot(span.asMilliSeconds(), this, SLOT(hideTaskBarBlur()));
@@ -1102,7 +1102,7 @@ bool ClientWindow::handleFallbackEvent(Event const &event)
     return d->handleFallbackEvent(event);
 }
 
-void ClientWindow::fadeContent(FadeDirection fadeDirection, TimeDelta const &duration)
+void ClientWindow::fadeContent(FadeDirection fadeDirection, TimeSpan const &duration)
 {
     d->setupFade(fadeDirection, duration);
 }

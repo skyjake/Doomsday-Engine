@@ -50,9 +50,9 @@ public:
      * @param fxPostShader  Name of the shader under "fx.post".
      * @param span          Duration of the fade in animation.
      */
-    void fadeInShader(de::String const &fxPostShader, de::TimeDelta const &span);
+    void fadeInShader(de::String const &fxPostShader, de::TimeSpan const &span);
 
-    void fadeOut(de::TimeDelta const &span);
+    void fadeOut(de::TimeSpan const &span);
 
     /**
      * Sets a constant opacity factor that is applied in addition to the fade.

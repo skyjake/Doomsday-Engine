@@ -123,7 +123,7 @@ public:
      *                         (1, 1) to the bottom right.
      * @param transition       Transition time for the change.
      */
-    void setAnchorPoint(Vector2f const &normalizedPoint, TimeDelta const &transition = 0);
+    void setAnchorPoint(Vector2f const &normalizedPoint, TimeSpan const &transition = 0);
 
     /**
      * Returns the current rectangle as defined by the input rules.

@@ -79,7 +79,7 @@ void MultiplayerStatusWidget::updateElapsedTime()
     if (d->link().status() != ServerLink::Connected)
         return;
 
-    TimeDelta const elapsed = d->link().connectedAt().since();
+    TimeSpan const elapsed = d->link().connectedAt().since();
 
     items().at(POS_STATUS).setLabel(
                 _E(s)_E(l) + tr("Server:") + _E(.) " " + d->link().address().asText() + "\n"

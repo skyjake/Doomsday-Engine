@@ -414,12 +414,12 @@ DENG_GUI_PIMPL(GameColumnWidget)
             }
             else
             {
-                popup->items() << new ui::ActionItem(tr("Packages..."), new SignalAction(button, SLOT(selectPackages())));
+                popup->items() << new ui::ActionItem(tr("Mods..."), new SignalAction(button, SLOT(selectPackages())));
             }
 
             // Items suitable for all types of profiles.
             popup->items()
-                << new ui::ActionItem(tr("Clear Packages"), new CallbackAction([this, button] ()
+                << new ui::ActionItem(tr("Clear Mods"), new CallbackAction([this, button] ()
                 {
                     button->clearPackages();
                 }))
@@ -454,7 +454,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
                     {
                         popup->detachAnchor();
                         // Animate the widget to fade it away.
-                        TimeDelta const SPAN = 0.2;
+                        TimeSpan const SPAN = 0.2;
                         button->setOpacity(0, SPAN);
                         Loop::get().timer(SPAN, [profileItem] ()
                         {
@@ -499,7 +499,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     void buttonStateChanged(ButtonWidget &button, ButtonWidget::State state)
     {
-        TimeDelta const SPAN = 0.25;
+        TimeSpan const SPAN = 0.25;
         switch (state)
         {
         case ButtonWidget::Up:

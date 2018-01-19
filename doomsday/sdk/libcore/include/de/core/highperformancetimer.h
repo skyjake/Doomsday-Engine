@@ -35,7 +35,7 @@ public:
     /**
      * Returns the amount of time elapsed since the creation of the timer.
      */
-    TimeDelta elapsed() const;
+    TimeSpan elapsed() const;
 
     /**
      * Returns the time when the timer was started.

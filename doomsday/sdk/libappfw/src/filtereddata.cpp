@@ -216,6 +216,15 @@ Data::Pos FilteredData::find(Item const &item) const
     return InvalidPos;
 }
 
+Data::Pos FilteredData::findLabel(String const &label) const
+{
+    for (Pos i = 0; i < Pos(d->items.size()); ++i)
+    {
+        if (d->items.at(i)->label() == label) return i;
+    }
+    return InvalidPos;
+}
+
 Data::Pos FilteredData::findData(QVariant const &data) const
 {
     for (Pos i = 0; i < Pos(d->items.size()); ++i)

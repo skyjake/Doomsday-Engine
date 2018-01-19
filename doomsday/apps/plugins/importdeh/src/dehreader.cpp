@@ -240,12 +240,12 @@ public:
 
     void parse()
     {
-        LOG_AS_STRING(stackDepth == 1? "DehReader" : QString("[%1]").arg(stackDepth - 1));
+        LOG_AS_STRING(stackDepth == 1? "DehReader" : String("[%1]").arg(stackDepth - 1));
 
         skipToNextLine();
 
         // Attempt to parse the DeHackEd patch signature and version numbers.
-        if(line.beginsWith("Patch File for DeHackEd v", Qt::CaseInsensitive))
+        if(line.beginsWith("Patch File for DeHackEd v", String::CaseInsensitive))
         {
             skipToNextLine();
             parsePatchSignature();
@@ -274,12 +274,12 @@ public:
                 try
                 {
                     /// @note Some sections have their own grammar quirks!
-                    if(line.beginsWith("include", Qt::CaseInsensitive)) // BEX
+                    if(line.beginsWith("include", String::CaseInsensitive)) // BEX
                     {
                         parseInclude(line.substr(7).leftStrip());
                         skipToNextSection();
                     }
-                    else if(line.beginsWith("Thing", Qt::CaseInsensitive))
+                    else if(line.beginsWith("Thing", String::CaseInsensitive))
                     {
                         Record *mobj;
                         Record dummyMobj;
@@ -300,7 +300,7 @@ public:
                         skipToNextLine();
                         parseThing(*mobj, mobj == &dummyMobj);
                     }
-                    else if(line.beginsWith("Frame", Qt::CaseInsensitive))
+                    else if(line.beginsWith("Frame", String::CaseInsensitive))
                     {
                         Record *state;
                         Record dummyState;
@@ -321,7 +321,7 @@ public:
                         skipToNextLine();
                         parseFrame(*state, state == &dummyState);
                     }
-                    else if(line.beginsWith("Pointer", Qt::CaseInsensitive))
+                    else if(line.beginsWith("Pointer", String::CaseInsensitive))
                     {
                         Record *state;
                         Record dummyState;
@@ -342,7 +342,7 @@ public:
                         skipToNextLine();
                         parsePointer(*state, state == &dummyState);
                     }
-                    else if(line.beginsWith("Sprite", Qt::CaseInsensitive))
+                    else if(line.beginsWith("Sprite", String::CaseInsensitive))
                     {
                         ded_sprid_t *sprite;
                         Dummy<ded_sprid_t> dummySprite;
@@ -363,7 +363,7 @@ public:
                         skipToNextLine();
                         parseSprite(sprite, sprite == &dummySprite);
                     }
-                    else if(line.beginsWith("Ammo", Qt::CaseInsensitive))
+                    else if(line.beginsWith("Ammo", String::CaseInsensitive))
                     {
                         String const arg          = line.substr(4).leftStrip();
                         int ammoNum               = 0;
@@ -378,7 +378,7 @@ public:
                         skipToNextLine();
                         parseAmmo(ammoNum, ignore);
                     }
-                    else if(line.beginsWith("Weapon", Qt::CaseInsensitive))
+                    else if(line.beginsWith("Weapon", String::CaseInsensitive))
                     {
                         String const arg            = line.substr(6).leftStrip();
                         int weaponNum               = 0;
@@ -393,7 +393,7 @@ public:
                         skipToNextLine();
                         parseWeapon(weaponNum, ignore);
                     }
-                    else if(line.beginsWith("Sound", Qt::CaseInsensitive))
+                    else if(line.beginsWith("Sound", String::CaseInsensitive))
                     {
                         ded_sound_t *sound;
                         Dummy<ded_sound_t> dummySound;
@@ -414,7 +414,7 @@ public:
                         skipToNextLine();
                         parseSound(sound, sound == &dummySound);
                     }
-                    else if(line.beginsWith("Text", Qt::CaseInsensitive))
+                    else if(line.beginsWith("Text", String::CaseInsensitive))
                     {
                         String args = line.substr(4).leftStrip();
                         int firstArgEnd = args.indexOf(' ');
@@ -443,12 +443,12 @@ public:
 
                         parseText(oldSize, newSize);
                     }
-                    else if(line.beginsWith("Misc", Qt::CaseInsensitive))
+                    else if(line.beginsWith("Misc", String::CaseInsensitive))
                     {
                         skipToNextLine();
                         parseMisc();
                     }
-                    else if(line.beginsWith("Cheat", Qt::CaseInsensitive))
+                    else if(line.beginsWith("Cheat", String::CaseInsensitive))
                     {
                         if(!(!patchIsCustom && DoomsdayApp::game().id() == "hacx"))
                         {
@@ -456,41 +456,41 @@ public:
                         }
                         skipToNextSection();
                     }
-                    else if(line.beginsWith("[CODEPTR]", Qt::CaseInsensitive)) // BEX
+                    else if(line.beginsWith("[CODEPTR]", String::CaseInsensitive)) // BEX
                     {
                         skipToNextLine();
                         parseCodePointers();
                     }
-                    else if(line.beginsWith("[PARS]", Qt::CaseInsensitive)) // BEX
+                    else if(line.beginsWith("[PARS]", String::CaseInsensitive)) // BEX
                     {
                         skipToNextLine();
                         parsePars();
                     }
-                    else if(line.beginsWith("[STRINGS]", Qt::CaseInsensitive)) // BEX
+                    else if(line.beginsWith("[STRINGS]", String::CaseInsensitive)) // BEX
                     {
                         skipToNextLine();
                         parseStrings();
                     }
-                    else if(line.beginsWith("[HELPER]", Qt::CaseInsensitive)) // Eternity
+                    else if(line.beginsWith("[HELPER]", String::CaseInsensitive)) // Eternity
                     {
                         // Not yet supported (Helper Dogs from MBF).
                         //skipToNextLine();
                         parseHelper();
                         skipToNextSection();
                     }
-                    else if(line.beginsWith("[SPRITES]", Qt::CaseInsensitive)) // Eternity
+                    else if(line.beginsWith("[SPRITES]", String::CaseInsensitive)) // Eternity
                     {
                         // Not yet supported.
                         //skipToNextLine();
                         parseSprites();
                         skipToNextSection();
                     }
-                    else if(line.beginsWith("[SOUNDS]", Qt::CaseInsensitive)) // Eternity
+                    else if(line.beginsWith("[SOUNDS]", String::CaseInsensitive)) // Eternity
                     {
                         skipToNextLine();
                         parseSounds();
                     }
-                    else if(line.beginsWith("[MUSIC]", Qt::CaseInsensitive)) // Eternity
+                    else if(line.beginsWith("[MUSIC]", String::CaseInsensitive)) // Eternity
                     {
                         skipToNextLine();
                         parseMusic();
@@ -645,7 +645,7 @@ public:
         }
     }
 
-    void parseInclude(QString arg)
+    void parseInclude(String arg)
     {
         if(flags & NoInclude)
         {
@@ -672,7 +672,7 @@ public:
         {
             DehReaderFlags includeFlags = flags & DehReaderFlagsIncludeMask;
 
-            if(arg.startsWith("notext ", Qt::CaseInsensitive))
+            if(arg.beginsWith("notext ", String::CaseInsensitive))
             {
                 includeFlags |= NoText;
                 arg.remove(0, 7);
@@ -804,7 +804,7 @@ public:
             String var, expr;
             parseAssignmentStatement(line, var, expr);
 
-            if(var.endsWith(" frame", Qt::CaseInsensitive))
+            if(var.endsWith(" frame", String::CaseInsensitive))
             {
                 StateMapping const *mapping;
                 String const dehStateName = var.left(var.size() - 6);
@@ -842,7 +842,7 @@ public:
                     }
                 }
             }
-            else if(var.endsWith(" sound", Qt::CaseInsensitive))
+            else if(var.endsWith(" sound", String::CaseInsensitive))
             {
                 SoundMapping const *mapping;
                 String const dehSoundName = var.left(var.size() - 6);
@@ -1122,7 +1122,7 @@ public:
                         << stateNum << state.gets("id") << state.geti("frame");
                 }
             }
-            else if(var.startsWith("Unknown ", Qt::CaseInsensitive))
+            else if(var.beginsWith("Unknown ", String::CaseInsensitive))
             {
                 int const miscIdx = var.substr(8).toInt(0, 10, String::AllowSuffix);
                 int const value   = expr.toInt(0, 10, String::AllowSuffix);
@@ -1141,7 +1141,7 @@ public:
                     }
                 }
             }
-            else if(var.beginsWith("Args", Qt::CaseInsensitive)) // Eternity
+            else if(var.beginsWith("Args", String::CaseInsensitive)) // Eternity
             {
                 LOG_WARNING("DeHackEd Frame.%s is not supported") << var;
             }
@@ -1326,7 +1326,7 @@ public:
             String var, expr;
             parseAssignmentStatement(line, var, expr);
 
-            if(var.endsWith(" frame", Qt::CaseInsensitive))
+            if(var.endsWith(" frame", String::CaseInsensitive))
             {
                 String const dehStateName = var.left(var.size() - 6);
                 int const value           = expr.toInt(0, 0, String::AllowSuffix);
@@ -1454,7 +1454,7 @@ public:
 
             try
             {
-                if(line.beginsWith("par", Qt::CaseInsensitive))
+                if(line.beginsWith("par", String::CaseInsensitive))
                 {
                     String const argStr = line.substr(3).leftStrip();
                     if(argStr.isEmpty())
@@ -1606,7 +1606,7 @@ public:
             String var, expr;
             parseAssignmentStatement(line, var, expr);
 
-            if(var.startsWith("Frame ", Qt::CaseInsensitive))
+            if(var.beginsWith("Frame ", String::CaseInsensitive))
             {
                 int const stateNum = var.substr(6).toInt(0, 0, String::AllowSuffix);
                 if(stateNum < 0 || stateNum >= ded->states.size())
@@ -1620,7 +1620,7 @@ public:
 
                     // Compose the action name.
                     String action = expr.rightStrip();
-                    if(!action.startsWith("A_", Qt::CaseInsensitive))
+                    if(!action.beginsWith("A_", String::CaseInsensitive))
                         action.prepend("A_");
                     action.truncate(32);
 

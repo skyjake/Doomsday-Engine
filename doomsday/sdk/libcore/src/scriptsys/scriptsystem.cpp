@@ -255,7 +255,7 @@ File const *ScriptSystem::tryFindModuleSource(String const &name, String const &
         }
         else if (dir == "*")
         {
-            App::fileSystem().findAll(name + ".de", matching);
+            App::fileSystem().findAll(name + ".ds", matching);
             if (matching.empty())
             {
                 continue;
@@ -271,7 +271,7 @@ File const *ScriptSystem::tryFindModuleSource(String const &name, String const &
         }
         if (!found)
         {
-            found = App::rootFolder().tryLocateFile(p + ".de");
+            found = App::rootFolder().tryLocateFile(p + ".ds");
         }
         if (found)
         {

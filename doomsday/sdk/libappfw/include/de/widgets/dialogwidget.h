@@ -36,7 +36,7 @@ class DialogContentStylist;
  * the bottom of the dialog, for the actions available to the user.
  *
  * The contents of the dialog should be placed under the scroll area returned
- * by DialogWidget::content() and positioned in relation to its content rule.
+ * by DialogWidget::area() and positioned in relation to its content rule.
  * When the dialog is set up, one must define the size of the content scroll
  * area (width and height rules).
  *

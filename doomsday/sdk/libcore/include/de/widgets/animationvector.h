@@ -40,13 +40,13 @@ public:
         return *this;
     }
 
-    void setValue(Vector2f const &vector, TimeDelta transitionSpan = 0.0)
+    void setValue(Vector2f const &vector, TimeSpan transitionSpan = 0.0)
     {
         x.setValue(vector.x, transitionSpan);
         y.setValue(vector.y, transitionSpan);
     }
 
-    void setValueIfDifferentTarget(Vector2f const &vector, TimeDelta transitionSpan = 0.0)
+    void setValueIfDifferentTarget(Vector2f const &vector, TimeSpan transitionSpan = 0.0)
     {
         if (!fequal(x.target(), vector.x))
         {

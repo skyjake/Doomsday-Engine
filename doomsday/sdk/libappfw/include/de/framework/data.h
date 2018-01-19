@@ -104,6 +104,8 @@ public:
      */
     virtual Pos find(Item const &item) const = 0;
 
+    virtual Pos findLabel(String const &label) const = 0;
+
     /**
      * Finds the position of an item with a specific data.
      *

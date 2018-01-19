@@ -54,7 +54,7 @@ DENG2_PIMPL(GLWindow)
     QOpenGLTimerQuery *timerQuery = nullptr;
     bool timerQueryPending = false;
     QElapsedTimer gpuTimeRecordingStartedAt;
-    QVector<TimeDelta> recordedGpuTimes;
+    QVector<TimeSpan> recordedGpuTimes;
 #endif
 
     Impl(Public *i) : Base(i) {}
@@ -157,7 +157,7 @@ DENG2_PIMPL(GLWindow)
             // a second to find out a reasonable value.
             if (gpuTimeRecordingStartedAt.elapsed() > 1000)
             {
-                TimeDelta average = 0;
+                TimeSpan average = 0;
                 for (auto dt : recordedGpuTimes) average += dt;
                 average = average / recordedGpuTimes.size();
                 recordedGpuTimes.clear();
@@ -181,7 +181,7 @@ DENG2_PIMPL(GLWindow)
         frameCount++;
 
         // Count the frames every other second.
-        TimeDelta elapsed = nowTime - lastFpsTime;
+        TimeSpan elapsed = nowTime - lastFpsTime;
         if (elapsed > 2.5)
         {
             fps = frameCount / elapsed;

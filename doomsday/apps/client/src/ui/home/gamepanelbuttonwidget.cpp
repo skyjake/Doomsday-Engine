@@ -317,7 +317,7 @@ void GamePanelButtonWidget::updateContent()
 
     if (!isPlayable && isGamePlayable)
     {
-        meta = _E(D) + tr("Selected packages missing") + _E(.);
+        meta = _E(D) + tr("Selected mods missing") + _E(.);
     }
 
     label().setText(String(_E(b) "%1\n" _E(l) "%2")

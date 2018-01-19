@@ -125,8 +125,8 @@ public:
      *
      * This method must be called before initSubsystems().
      *
-     * @param path  Location of the @em Config.de script file. The default path of the
-     *              script is "/modules/Config.de".
+     * @param path  Location of the @em Config.ds script file. The default path of the
+     *              script is "/modules/Config.ds".
      */
     void setConfigScript(Path const &path);
 

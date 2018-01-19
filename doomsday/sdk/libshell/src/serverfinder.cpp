@@ -31,7 +31,7 @@
 namespace de {
 namespace shell {
 
-static TimeDelta MSG_EXPIRATION_SECS = 4;
+static TimeSpan MSG_EXPIRATION_SECS = 4;
 
 DENG2_PIMPL_NOREF(ServerFinder)
 {

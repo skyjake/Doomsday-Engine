@@ -121,7 +121,7 @@ int main(int argc, char **argv)
 
         LOG_MSG("Before flushing:\n") << app.homeFolder().contentsAsText();
 
-        TimeDelta(0.5).sleep(); // make the time difference clearer
+        TimeSpan(0.5).sleep(); // make the time difference clearer
 
         // Changes were made to the archive via files. The archive won't be
         // written back to its source file until the ArchiveFolder instance

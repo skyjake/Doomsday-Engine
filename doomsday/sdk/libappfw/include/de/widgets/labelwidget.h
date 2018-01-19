@@ -251,7 +251,7 @@ public:
      *                    to the appropriate height in the specified time span.
      * @param span  Animation time span for the appearance.
      */
-    void setAppearanceAnimation(AppearanceAnimation method, TimeDelta const &span = 0.0);
+    void setAppearanceAnimation(AppearanceAnimation method, TimeSpan const &span = 0.0);
 
     // Events.
     void update() override;

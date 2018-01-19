@@ -238,7 +238,7 @@ namespace internal {
             {
                 return de::max(path.substr(3).toInt(0, 10, String::AllowSuffix), 1);
             }
-            if(path.beginsWith("map", Qt::CaseInsensitive))
+            if(path.beginsWith("map", String::CaseInsensitive))
             {
                 return de::max(path.substr(3).toInt(0, 10, String::AllowSuffix), 1);
             }
@@ -297,8 +297,8 @@ namespace internal {
             while(lexer.readToken())
             {
                 String tok = Str_Text(lexer.token());
-                if(tok.beginsWith("cd_", Qt::CaseInsensitive) &&
-                   tok.endsWith("_track", Qt::CaseInsensitive))
+                if(tok.beginsWith("cd_", String::CaseInsensitive) &&
+                   tok.endsWith("_track", String::CaseInsensitive))
                 {
                     String const pubName = tok.substr(3, tok.length() - 6 - 3);
                     MusicMappings::const_iterator found = musicMap.constFind(pubName);
@@ -752,7 +752,7 @@ namespace internal {
                     info->set("hub", hubNum);
                     continue;
                 }
-                if(String(Str_Text(lexer.token())).beginsWith("compat_", Qt::CaseInsensitive)) // ZDoom
+                if(String(Str_Text(lexer.token())).beginsWith("compat_", String::CaseInsensitive)) // ZDoom
                 {
                     LOG_WARNING("MAPINFO Map.%s is not supported.") << lexer.token();
                     lexer.readNumber();

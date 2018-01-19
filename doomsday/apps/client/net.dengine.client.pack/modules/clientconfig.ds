@@ -93,9 +93,12 @@ def setDefaults(d)
 
     # Resource settings.
     record d.resource()
-        # Local packaegs are disabled by default in MP games.
+        browserRepository = 'idgames mirror (Idaho, USA)'
+
+        # Local packages are disabled by default in MP games.
         localPackages = False
         localPackagesForGame = {}
+
         # Textures.
         noHighResTex = False
         noHighResPatches = False

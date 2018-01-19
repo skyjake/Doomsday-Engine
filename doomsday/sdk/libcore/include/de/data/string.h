@@ -77,6 +77,8 @@ public:
 
     typedef dint size_type;
 
+    enum CaseSensitivity { CaseInsensitive, CaseSensitive };
+
 public:
     static size_type const npos;
 
@@ -122,11 +124,30 @@ public:
     /// Returns the last character of the string.
     QChar last() const;
 
-    bool beginsWith(QString const &s, Qt::CaseSensitivity cs = Qt::CaseSensitive) const {
-        return startsWith(s, cs);
+    bool beginsWith(QString const &s, CaseSensitivity cs = CaseSensitive) const {
+        return startsWith(s, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
     }
-    bool beginsWith(QChar const &c, Qt::CaseSensitivity cs = Qt::CaseSensitive) const {
-        return startsWith(c, cs);
+    bool beginsWith(QChar c, CaseSensitivity cs = CaseSensitive) const {
+        return startsWith(c, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
+    }
+    bool beginsWith(QLatin1String ls, CaseSensitivity cs = CaseSensitive) const {
+        return startsWith(ls, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
+    }
+    bool beginsWith(char const *ls, CaseSensitivity cs = CaseSensitive) const {
+        return beginsWith(QLatin1String(ls), cs);
+    }
+
+    bool endsWith(QString const &s, CaseSensitivity cs = CaseSensitive) const {
+        return QString::endsWith(s, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
+    }
+    bool endsWith(QChar c, CaseSensitivity cs = CaseSensitive) const {
+        return QString::endsWith(c, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
+    }
+    bool endsWith(QLatin1String ls, CaseSensitivity cs = CaseSensitive) const {
+        return QString::endsWith(ls, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
+    }
+    bool endsWith(char const *ls, CaseSensitivity cs = CaseSensitive) const {
+        return endsWith(QLatin1String(ls), cs);
     }
 
     String substr(int position, int n = -1) const {
@@ -263,7 +284,7 @@ public:
      *
      * @return  Number of characters the two strings have in common from the left.
      */
-    int commonPrefixLength(String const &str, Qt::CaseSensitivity sensitivity = Qt::CaseSensitive) const;
+    int commonPrefixLength(String const &str, CaseSensitivity sensitivity = CaseSensitive) const;
 
     /**
      * Converts the string to UTF-8 and returns it as a byte block.

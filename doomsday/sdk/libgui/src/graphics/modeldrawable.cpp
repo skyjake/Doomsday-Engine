@@ -1897,7 +1897,7 @@ void ModelDrawable::Animator::clear()
     d->anims.clear();
 }
 
-void ModelDrawable::Animator::advanceTime(TimeDelta const &)
+void ModelDrawable::Animator::advanceTime(TimeSpan const &)
 {
     // overridden
 }

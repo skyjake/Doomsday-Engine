@@ -370,7 +370,7 @@ Rule const &RuleRectangle::inputRule(Rule::Semantic inputRule)
     return *d->ruleRef(inputRule);
 }
 
-void RuleRectangle::setAnchorPoint(Vector2f const &normalizedPoint, TimeDelta const &transition)
+void RuleRectangle::setAnchorPoint(Vector2f const &normalizedPoint, TimeSpan const &transition)
 {
     d->normalizedAnchorX()->set(normalizedPoint.x, transition);
     d->normalizedAnchorY()->set(normalizedPoint.y, transition);

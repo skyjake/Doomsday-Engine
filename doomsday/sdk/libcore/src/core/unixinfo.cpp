@@ -95,7 +95,7 @@ UnixInfo::UnixInfo() : d(new Impl)
 #ifdef UNIX
     /**
      * @note There is only the "paths" and "plugins" config files for now; more
-     * could be added for different purposes. There could also be .de scripts
+     * could be added for different purposes. There could also be .ds scripts
      * for configuration.
      */
     d->paths    = new Infos("paths");

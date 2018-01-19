@@ -500,7 +500,7 @@ int FS1::Scheme::findAll(String name, FoundNodes &found)
             FileRef &fileRef = hashNode->fileRef;
             PathTree::Node &node = fileRef.directoryNode();
 
-            if (!name.isEmpty() && !node.name().beginsWith(name, Qt::CaseInsensitive)) continue;
+            if (!name.isEmpty() && !node.name().beginsWith(name, String::CaseInsensitive)) continue;
 
             found.push_back(&node);
         }
@@ -519,7 +519,7 @@ bool FS1::Scheme::mapPath(String &path) const
     // Does this path qualify for mapping?
     if (path.length() <= name().length()) return false;
     if (path.at(name().length()) != '/')  return false;
-    if (!path.beginsWith(name(), Qt::CaseInsensitive)) return false;
+    if (!path.beginsWith(name(), String::CaseInsensitive)) return false;
 
     // Yes.
     path = String("$(App.DataPath)/$(GamePlugin.Name)") / path;

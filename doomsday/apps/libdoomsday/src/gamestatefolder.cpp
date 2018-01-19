@@ -306,7 +306,7 @@ void GameStateFolder::Metadata::parse(String const &source)
         }
 
         // Ensure the map URI has the "Maps" scheme set.
-        if (!gets("mapUri").beginsWith("Maps:", Qt::CaseInsensitive))
+        if (!gets("mapUri").beginsWith("Maps:", String::CaseInsensitive))
         {
             set("mapUri", String("Maps:") + gets("mapUri"));
         }
@@ -318,7 +318,7 @@ void GameStateFolder::Metadata::parse(String const &source)
         if (!has("episode"))
         {
             String const mapUriPath = gets("mapUri").substr(5);
-            if (mapUriPath.beginsWith("MAP", Qt::CaseInsensitive))
+            if (mapUriPath.beginsWith("MAP", String::CaseInsensitive))
             {
                 set("episode", "1");
             }

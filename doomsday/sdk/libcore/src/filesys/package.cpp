@@ -242,7 +242,8 @@ void Package::parseMetadata(File &packageFile) // static
 
     if (Folder *folder = maybeAs<Folder>(packageFile))
     {
-        File *initializerScript = folder->tryLocateFile(QStringLiteral("__init__.de"));
+        File *initializerScript = folder->tryLocateFile(QStringLiteral("__init__.ds"));
+        if (!initializerScript) initializerScript = folder->tryLocateFile(QStringLiteral("__init__.de")); // old extension
         File *metadataInfo      = folder->tryLocateFile(QStringLiteral("Info.dei"));
         if (!metadataInfo) metadataInfo = folder->tryLocateFile(QStringLiteral("Info")); // alternate name
         Time parsedAt           = Time::invalidTime();

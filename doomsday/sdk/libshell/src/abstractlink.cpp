@@ -32,7 +32,7 @@ DENG2_PIMPL(AbstractLink)
 {
     String tryingToConnectToHost;
     Time startedTryingAt;
-    TimeDelta timeout;
+    TimeSpan timeout;
     Address peerAddress;
     std::unique_ptr<Socket> socket;
     Status status;
@@ -56,7 +56,7 @@ DENG2_PIMPL(AbstractLink)
 AbstractLink::AbstractLink() : d(new Impl(this))
 {}
 
-void AbstractLink::connectDomain(String const &domain, TimeDelta const &timeout)
+void AbstractLink::connectDomain(String const &domain, TimeSpan const &timeout)
 {
     disconnect();
 

@@ -68,7 +68,7 @@
 using namespace de;
 using namespace de::ui;
 
-static TimeDelta OPEN_CLOSE_SPAN = 0.2;
+static TimeSpan OPEN_CLOSE_SPAN = 0.2;
 
 enum MenuItemPositions
 {

@@ -38,6 +38,8 @@ public:
 
     PackagePaths locatePackages(StringList const &packageIds) const override;
 
+    LoopResult forPackageIds(std::function<LoopResult (String const &packageId)> func) const override;
+
 protected:
     NativeLink(String const &address);
 

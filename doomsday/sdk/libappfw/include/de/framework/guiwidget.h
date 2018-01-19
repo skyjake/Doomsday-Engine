@@ -331,7 +331,7 @@ public:
      * @param span        Animation transition span.
      * @param startDelay  Starting delay.
      */
-    void setOpacity(float opacity, TimeDelta span = 0, TimeDelta startDelay = 0);
+    void setOpacity(float opacity, TimeSpan span = 0, TimeSpan startDelay = 0);
 
     /**
      * Determines the widget's opacity animation.

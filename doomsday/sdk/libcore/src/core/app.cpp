@@ -155,7 +155,7 @@ DENG2_PIMPL(App)
         , cmdLine(args)
         , unixHomeFolder(".doomsday")
         , persistentData(0)
-        , configPath("/packs/net.dengine.stdlib/modules/Config.de")
+        , configPath("/packs/net.dengine.stdlib/modules/Config.ds")
         , config(0)
         , terminateFunc(0)
     {

@@ -186,7 +186,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
 
     }
 
-    void advanceAnimations(TimeDelta const &delta)
+    void advanceAnimations(TimeSpan const &delta)
     {
         if (animator)
         {

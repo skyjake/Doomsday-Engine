@@ -29,16 +29,16 @@ namespace de {
 DENG_GUI_PIMPL(ButtonWidget),
 DENG2_OBSERVES(Action, Triggered)
 {
-    State state                   = Up;
+    State state                   { Up };
     DotPath bgColorId             { "background" };
     DotPath borderColorId         { "text" };
-    HoverColorMode hoverColorMode = ReplaceColor;
-    ColorTheme colorTheme         = Normal;
-    Background::Type bgType       = Background::GradientFrame;
-    Action *action                = nullptr;
+    HoverColorMode hoverColorMode { ReplaceColor };
+    ColorTheme colorTheme         { Normal };
+    Background::Type bgType       { Background::GradientFrame };
+    Action *action                { nullptr };
     Animation scale               { 1.f };
     Animation frameOpacity        { .08f, Animation::Linear };
-    bool animating                = false;
+    bool animating                { false };
     DotPath hoverTextColor;
     DotPath originalTextColor;
     Vector4f originalTextModColor;
