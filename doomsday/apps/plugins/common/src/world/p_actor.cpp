@@ -74,23 +74,23 @@ void P_MobjRemove(mobj_t *mo, dd_bool noRespawn)
     DENG_UNUSED(noRespawn);
 #endif
 
-    if(mo->ddFlags & DDMF_REMOTE)
+    if (mo->ddFlags & DDMF_REMOTE)
         goto justDoIt;
 
 #if __JDOOM__ || __JDOOM64__
-    if(!noRespawn)
+    if (!noRespawn)
     {
-        if(
+        if (
 # if __JDOOM__
             // Only respawn items in deathmatch 2 and optionally in coop.
-           !(COMMON_GAMESESSION->rules().deathmatch != 2 &&
-             (!cfg.coopRespawnItems || !IS_NETGAME || COMMON_GAMESESSION->rules().deathmatch)) &&
+            (COMMON_GAMESESSION->rules().deathmatch == 2 ||
+             (cfg.coopRespawnItems && IS_NETGAME && !COMMON_GAMESESSION->rules().deathmatch)) &&
 # endif /*#elif __JDOOM64__
            (spot->flags & MTF_RESPAWN) &&
 # endif*/
-           (mo->flags & MF_SPECIAL) && !(mo->flags & MF_DROPPED)
+            (mo->flags & MF_SPECIAL) && !(mo->flags & MF_DROPPED)
 # if __JDOOM__ || __JDOOM64__
-           && (mo->type != MT_INV) && (mo->type != MT_INS)
+            && (mo->type != MT_INV) && (mo->type != MT_INS)
 # endif
            )
         {
@@ -102,7 +102,7 @@ void P_MobjRemove(mobj_t *mo, dd_bool noRespawn)
 #endif
 
 #if __JHEXEN__
-    if((mo->flags & MF_COUNTKILL) && (mo->flags & MF_CORPSE))
+    if ((mo->flags & MF_COUNTKILL) && (mo->flags & MF_CORPSE))
     {
         P_RemoveCorpseInQueue(mo);
     }
