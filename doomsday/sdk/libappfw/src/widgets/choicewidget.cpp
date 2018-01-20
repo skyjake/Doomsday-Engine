@@ -56,9 +56,9 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
     };
 
     PopupMenuWidget *choices;
-    IndirectRule *maxWidth;
-    Data::Pos selected; ///< One item is always selected.
-    String noSelectionHint;
+    IndirectRule *   maxWidth;
+    Data::Pos        selected; ///< One item is always selected.
+    String           noSelectionHint;
 
     Impl(Public *i) : Base(i), selected(Data::InvalidPos)
     {

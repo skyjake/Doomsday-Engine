@@ -26,8 +26,8 @@ using namespace ui;
 
 DENG_GUI_PIMPL(MessageDialog)
 {
-    LabelWidget *title;
-    LabelWidget *message;
+    LabelWidget *        title;
+    LabelWidget *        message;
     DialogContentStylist buttonStylist;
 
     Impl(Public *i) : Base(i)

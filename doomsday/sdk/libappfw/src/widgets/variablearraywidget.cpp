@@ -27,13 +27,13 @@ DENG_GUI_PIMPL(VariableArrayWidget)
 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 {
-    Variable *var = nullptr;
+    Variable *    var = nullptr;
     IndirectRule *maxWidth;
-    MenuWidget *menu;
+    MenuWidget *  menu;
     ButtonWidget *addButton;
     ButtonWidget *deleteButton;
-    ui::DataPos hoverItem = ui::Data::InvalidPos;
-    bool mouseWasInside = false;
+    ui::DataPos   hoverItem      = ui::Data::InvalidPos;
+    bool          mouseWasInside = false;
 
     /// Notifies the widget when the mouse is over one of the items.
     struct HoverHandler : public GuiWidget::IEventHandler

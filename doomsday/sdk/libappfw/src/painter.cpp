@@ -30,11 +30,11 @@ using namespace de::internal;
 
 DENG2_PIMPL(Painter), public Asset
 {
-    GLAtlasBuffer vertexBuf;    ///< Per-frame allocations.
-    GLDrawQueue queue;
-    GLProgram batchProgram;
-    GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
-    Rectanglef normScissorRect;
+    GLAtlasBuffer vertexBuf; ///< Per-frame allocations.
+    GLDrawQueue   queue;
+    GLProgram     batchProgram;
+    GLUniform     uMvpMatrix{"uMvpMatrix", GLUniform::Mat4};
+    Rectanglef    normScissorRect;
 
     Impl(Public *i)
         : Base(i)

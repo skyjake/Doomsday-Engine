@@ -29,8 +29,8 @@ namespace de {
 DENG_GUI_PIMPL(CommandWidget)
 {
     shell::EditorHistory history;
-    DocumentPopupWidget *popup; ///< Popup for autocompletions.
-    bool allowReshow;   ///< Contents must still be valid.
+    DocumentPopupWidget *popup;       ///< Popup for autocompletions.
+    bool                 allowReshow; ///< Contents must still be valid.
 
     Impl(Public *i) : Base(i), history(i), allowReshow(false)
     {

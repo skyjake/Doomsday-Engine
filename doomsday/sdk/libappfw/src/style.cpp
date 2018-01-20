@@ -32,9 +32,9 @@ namespace de {
 
 DENG2_PIMPL(Style)
 {
-    Record module;
-    RuleBank rules;
-    FontBank fonts;
+    Record    module;
+    RuleBank  rules;
+    FontBank  fonts;
     ColorBank colors;
     ImageBank images;
 
