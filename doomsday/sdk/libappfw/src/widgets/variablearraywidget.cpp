@@ -33,6 +33,7 @@ DENG_GUI_PIMPL(VariableArrayWidget)
     ButtonWidget *addButton;
     ButtonWidget *deleteButton;
     ui::DataPos hoverItem = ui::Data::InvalidPos;
+    bool mouseWasInside = false;
 
     /// Notifies the widget when the mouse is over one of the items.
     struct HoverHandler : public GuiWidget::IEventHandler
@@ -163,6 +164,7 @@ VariableArrayWidget::VariableArrayWidget(Variable &variable, String const &name)
     d->deleteButton->margins().setLeft(RuleBank::UNIT).setRight("dialog.gap");
     d->deleteButton->setBehavior(Focusable, UnsetFlags);
     d->deleteButton->set(Background());
+    d->deleteButton->hide();
 
     d->menu->margins()
             .setLeft(d->deleteButton->rule().width())
@@ -243,6 +245,22 @@ ui::Item *VariableArrayWidget::makeItem(Value const &value)
     auto *item = new ui::Item(ui::Item::ShownAsLabel, labelForElement(value));
     item->setData(value.asText());
     return item;
+}
+
+bool VariableArrayWidget::handleEvent(Event const &event)
+{
+    // Hide the delete button when mouse leaves the widget's bounds.
+    if (event.isMouse())
+    {
+        MouseEvent const &mouse = event.as<MouseEvent>();
+        bool const isInside = rule().recti().contains(mouse.pos());
+        if (d->mouseWasInside && !isInside)
+        {
+            d->deleteButton->hide();
+        }
+        d->mouseWasInside = isInside;
+    }
+    return GuiWidget::handleEvent(event);
 }
 
 void VariableArrayWidget::updateFromVariable()

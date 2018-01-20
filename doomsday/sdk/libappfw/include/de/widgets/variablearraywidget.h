@@ -62,6 +62,9 @@ public:
 
     ui::Item *makeItem(Value const &value);
 
+    // Events.
+    bool handleEvent(Event const &event) override;
+
 signals:
     void arrayChanged();
 
