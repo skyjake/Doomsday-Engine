@@ -109,10 +109,10 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
         self().header().menuButton().setPopup([this] (PopupButtonWidget const &) -> PopupWidget * {
             auto *menu = new PopupMenuWidget;
             menu->items()
-                    << new ui::ActionItem(tr("Install Mods..."),
-                                          new CallbackAction([this] () { openRepositoryBrowser(); }))
                     << new ui::SubwidgetItem(ui::Item::ShownAsButton | ui::Item::ClosesParentPopup,
                                              tr("Settings"), ui::Right, makePopup<DataFileSettingsDialog>)
+                    << new ui::ActionItem(tr("Install Mods..." _E(l)_E(s)_E(D) " BETA"),
+                                          new CallbackAction([this] () { openRepositoryBrowser(); }))
                     << new ui::Item(ui::Item::Separator)
                     << new ui::ActionItem(tr("Refresh List"),
                                           new CallbackAction([this] () { packages->refreshPackages(); }));
