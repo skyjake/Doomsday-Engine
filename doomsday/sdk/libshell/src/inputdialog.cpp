@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/shell/InputDialog"
@@ -22,16 +22,15 @@
 #include "de/shell/MenuWidget"
 #include "de/shell/TextRootWidget"
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 DENG2_PIMPL_NOREF(InputDialog)
 {
-    LabelWidget *label;
+    LabelWidget *   label;
     LineEditWidget *edit;
-    MenuWidget *menu;
-    String userText;
-    int result;
+    MenuWidget *    menu;
+    String          userText;
+    int             result;
 
     Impl() : label(0), edit(0), menu(0), result(0)
     {}
@@ -168,5 +167,4 @@ int InputDialog::result() const
     return d->result;
 }
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell

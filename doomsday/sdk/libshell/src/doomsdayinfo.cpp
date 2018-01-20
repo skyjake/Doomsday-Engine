@@ -25,8 +25,7 @@
 #include "de/shell/DoomsdayInfo"
 #include <QDir>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 static struct
 {
@@ -159,5 +158,4 @@ DoomsdayInfo::GameOption::GameOption(OptionType type, String title,
     , allowedValues(allowedValues)
 {}
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell

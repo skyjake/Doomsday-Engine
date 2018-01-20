@@ -25,18 +25,18 @@
 #include <de/Time>
 #include <QTimer>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 DENG2_PIMPL(AbstractLink)
 {
-    String tryingToConnectToHost;
-    Time startedTryingAt;
+    String   tryingToConnectToHost;
+    Time     startedTryingAt;
     TimeSpan timeout;
-    Address peerAddress;
+    Address  peerAddress;
+    Status   status;
+    Time     connectedAt;
+
     std::unique_ptr<Socket> socket;
-    Status status;
-    Time connectedAt;
 
     Impl(Public *i)
         : Base(i),
@@ -212,5 +212,4 @@ void AbstractLink::socketDisconnected()
     d->connectedAt = Time::invalidTime();
 }
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell

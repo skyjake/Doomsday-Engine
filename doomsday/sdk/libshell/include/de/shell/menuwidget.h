@@ -23,8 +23,7 @@
 #include "Action"
 #include "TextCanvas"
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 /**
  * Menu with Action instances as items.
@@ -43,17 +42,12 @@ class LIBSHELL_PUBLIC MenuWidget : public TextWidget
     Q_OBJECT
 
 public:
-    enum Preset
-    {
-        Popup,      ///< Menu initially hidden, will popup on demand.
-        AlwaysOpen  ///< Menu initially shown, stays open.
+    enum Preset {
+        Popup,     ///< Menu initially hidden, will popup on demand.
+        AlwaysOpen ///< Menu initially shown, stays open.
     };
 
-    enum BorderStyle
-    {
-        NoBorder,
-        LineBorder
-    };
+    enum BorderStyle { NoBorder, LineBorder };
 
 public:
     MenuWidget(Preset preset, String const &name = String());
@@ -130,7 +124,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif // LIBSHELL_MENUWIDGET_H

@@ -22,8 +22,7 @@
 #include "TextWidget"
 #include "TextCanvas"
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 /**
  * Widget for showing a text label.
@@ -57,7 +56,8 @@ public:
      * @param text     Text to show.
      * @param attribs  Attributes for the text.
      */
-    void setLabel(String const &text, TextCanvas::Char::Attribs attribs = TextCanvas::Char::DefaultAttributes);
+    void setLabel(String const &            text,
+                  TextCanvas::Char::Attribs attribs = TextCanvas::Char::DefaultAttributes);
 
     void setAttribs(TextCanvas::Char::Attribs const &attribs);
 
@@ -85,7 +85,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif // LIBSHELL_LABELWIDGET_H

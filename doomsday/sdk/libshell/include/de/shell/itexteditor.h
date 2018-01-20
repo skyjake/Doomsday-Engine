@@ -21,8 +21,7 @@
 
 #include "libshell.h"
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 /**
  * Interface for a text editor: text content and a cursor position.
@@ -35,13 +34,12 @@ public:
     virtual ~ITextEditor() {}
 
     virtual void setText(String const &text) = 0;
-    virtual void setCursor(int pos) = 0;
+    virtual void setCursor(int pos)          = 0;
 
-    virtual String text() const = 0;
-    virtual int cursor() const = 0;
+    virtual String text() const   = 0;
+    virtual int    cursor() const = 0;
 };
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif // LIBSHELL_ITEXTEDITOR_H

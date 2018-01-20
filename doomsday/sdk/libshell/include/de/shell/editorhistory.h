@@ -21,8 +21,7 @@
 
 #include "ITextEditor"
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 /**
  * History buffer for a text editor. Remembers past entries entered into the
@@ -35,7 +34,7 @@ class LIBSHELL_PUBLIC EditorHistory
 public:
     EditorHistory(ITextEditor *editor = 0);
 
-    void setEditor(ITextEditor &editor);
+    void         setEditor(ITextEditor &editor);
     ITextEditor &editor();
 
     /**
@@ -79,7 +78,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif // LIBSHELL_ABSTRACTCOMMANDLINEEDITOR_H

@@ -21,8 +21,7 @@
 
 #include "TextWidget"
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 /**
  * Base class for modal dialogs.
@@ -79,7 +78,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace shell
-} // namespace shell
+}} // namespace de::shell
 
 #endif // LIBSHELL_DIALOGWIDGET_H

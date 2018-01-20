@@ -13,25 +13,23 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/shell/TextCanvas"
 #include <QList>
 #include <QDebug>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 DENG2_PIMPL_NOREF(TextCanvas)
 {
-    Size size;
+    Size          size;
     QList<Char *> lines;
 
-    struct RichFormat
-    {
+    struct RichFormat {
         Char::Attribs attrib;
-        Rangei range;
+        Rangei        range;
     };
     QList<RichFormat> richFormats;
 
@@ -210,7 +208,7 @@ void TextCanvas::setRichFormatRange(Char::Attribs const &attribs, Rangei const &
 {
     Impl::RichFormat rf;
     rf.attrib = attribs;
-    rf.range = range;
+    rf.range  = range;
     d->richFormats.append(rf);
 }
 
@@ -298,8 +296,6 @@ void TextCanvas::show()
     d->markAllAsDirty(false);
 }
 
-void TextCanvas::setCursorPosition(Vector2i const &)
-{}
+void TextCanvas::setCursorPosition(Vector2i const &) {}
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell

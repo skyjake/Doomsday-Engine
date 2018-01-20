@@ -24,8 +24,7 @@
 #include <de/NativePath>
 #include <QList>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 /**
  * Information about Doomsday Engine and its plugins.
@@ -35,42 +34,34 @@ namespace shell {
 class LIBSHELL_PUBLIC DoomsdayInfo
 {
 public:
-    struct Game
-    {
+    struct Game {
         String title;
         String option; ///< Mode identifier.
     };
 
-    enum OptionType
-    {
-        Toggle,
-        Choice,
-        Text
-    };
+    enum OptionType { Toggle, Choice, Text };
 
-    struct LIBSHELL_PUBLIC GameOption
-    {
-        struct LIBSHELL_PUBLIC Value
-        {
+    struct LIBSHELL_PUBLIC GameOption {
+        struct LIBSHELL_PUBLIC Value {
             String value;
             String label;
             String ruleSemantic; // for determining if the option is set
 
             Value(String const &value = String(), String const &label = String(),
                   String const &ruleSemantic = String())
-                : value(value), label(label), ruleSemantic(ruleSemantic) {}
+                : value(value)
+                , label(label)
+                , ruleSemantic(ruleSemantic)
+            {}
         };
 
-        OptionType type;
-        String title;
-        String command; // e.g., "setmap %1"
-        Value defaultValue;
+        OptionType   type;
+        String       title;
+        String       command; // e.g., "setmap %1"
+        Value        defaultValue;
         QList<Value> allowedValues;
 
-        GameOption(OptionType type,
-                   String title,
-                   String command,
-                   Value defaultValue = Value(),
+        GameOption(OptionType type, String title, String command, Value defaultValue = Value(),
                    QList<Value> allowedValues = QList<Value>());
     };
 
@@ -88,7 +79,6 @@ public:
     static NativePath defaultServerRuntimeFolder();
 };
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif // LIBSHELL_DOOMSDAYINFO_H

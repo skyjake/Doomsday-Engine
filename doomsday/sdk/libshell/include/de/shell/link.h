@@ -28,8 +28,7 @@
 #include <de/shell/Protocol>
 #include <QObject>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 /**
  * Network connection to a server using the shell protocol.
@@ -78,13 +77,12 @@ public:
 
 protected:
     Packet *interpret(Message const &msg);
-    void initiateCommunications();
+    void    initiateCommunications();
 
 private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif // LIBSHELL_LINK_H

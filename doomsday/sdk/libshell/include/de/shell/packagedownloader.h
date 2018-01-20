@@ -24,8 +24,7 @@
 #include <de/filesys/Link>
 #include "ServerInfo"
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 /**
  * Utility for downloading packages from remote repositories.
@@ -36,14 +35,15 @@ class LIBSHELL_PUBLIC PackageDownloader
 public:
     PackageDownloader();
 
+    typedef std::function<void(filesys::Link const *)> MountCallback;
+
     /**
      * Mount a server's remote file repository.
      *
      * @param serverInfo      Server information.
      * @param afterConnected  Callback to call when the repository is connected and ready for use.
      */
-    void mountServerRepository(ServerInfo const &serverInfo,
-                               std::function<void (filesys::Link const *)> afterConnected);
+    void mountServerRepository(ServerInfo const &serverInfo, MountCallback afterConnected);
 
     void unmountServerRepository();
 
@@ -54,7 +54,7 @@ public:
      * @param packageIds  Packages to download from the remote repository.
      * @param callback    Called when the downloads are finished or cancelled.
      */
-    void download(StringList packageIds, std::function<void ()> callback);
+    void download(StringList packageIds, std::function<void()> callback);
 
     de::String fileRepository() const;
 
@@ -77,14 +77,13 @@ public:
      * remaining to download. `bytes.size()` is the number of bytes downloaded so far.
      * `bytes.end` is the total number of bytes overall.
      */
-    DENG2_DEFINE_AUDIENCE2(Status, void downloadStatusUpdate(Rangei64 const &bytes,
-                                                             Rangei   const &files))
+    DENG2_DEFINE_AUDIENCE2(Status,
+                           void downloadStatusUpdate(Rangei64 const &bytes, Rangei const &files))
 
 private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif // LIBSHELL_PACKAGEDOWNLOADER_H

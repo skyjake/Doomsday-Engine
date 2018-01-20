@@ -21,8 +21,7 @@
 
 #include "DialogWidget"
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 class LabelWidget;
 class LineEditWidget;
@@ -38,9 +37,9 @@ class InputDialog : public de::shell::DialogWidget
 public:
     InputDialog(de::String const &name = de::String());
 
-    LabelWidget &label();
+    LabelWidget &   label();
     LineEditWidget &lineEdit();
-    MenuWidget &menu();
+    MenuWidget &    menu();
 
     /**
      * Sets the width of the dialog. The default width is 50.
@@ -73,7 +72,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif // LIBSHELL_INPUTDIALOG_H

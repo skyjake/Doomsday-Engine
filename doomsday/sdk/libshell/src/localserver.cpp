@@ -25,19 +25,18 @@
 
 #if !defined (DENG_MOBILE)
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 static String const ERROR_LOG_NAME = "doomsday-errors.out";
 
 DENG2_PIMPL_NOREF(LocalServer)
 {
-    Link *link = nullptr;
+    Link *     link = nullptr;
     NativePath appPath; // where to find the server
-    duint16 port = 0;
-    String name;
+    duint16    port = 0;
+    String     name;
     NativePath userDir;
-    QProcess *proc = nullptr; // not deleted until stopped
+    QProcess * proc = nullptr; // not deleted until stopped
 
     ~Impl()
     {
@@ -192,7 +191,6 @@ NativePath LocalServer::errorLogPath() const
     return d->userDir / ERROR_LOG_NAME;
 }
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif

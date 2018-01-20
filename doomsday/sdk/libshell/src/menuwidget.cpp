@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/shell/MenuWidget"
@@ -21,20 +21,19 @@
 #include <de/ConstantRule>
 #include <QList>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 DENG2_PIMPL(MenuWidget)
 {
-    ConstantRule *width;
-    ConstantRule *height;
+    ConstantRule *            width;
+    ConstantRule *            height;
     TextCanvas::Char::Attribs borderAttr;
     TextCanvas::Char::Attribs backgroundAttr;
     TextCanvas::Char::Attribs selectionAttr;
-    BorderStyle borderStyle;
-    Vector2i cursorPos; ///< Visual position.
-    bool closable;
-    bool cycleCursor;
+    BorderStyle               borderStyle;
+    Vector2i                  cursorPos; ///< Visual position.
+    bool                      closable;
+    bool                      cycleCursor;
 
     struct Item
     {
@@ -460,5 +459,4 @@ bool MenuWidget::handleEvent(Event const &event)
     return false;
 }
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell

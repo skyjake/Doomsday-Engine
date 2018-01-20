@@ -22,8 +22,7 @@
 #include <de/shell/TextWidget>
 #include <de/LogSink>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 /**
  * Text-based log widget.
@@ -91,7 +90,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif // LOGWIDGET_H

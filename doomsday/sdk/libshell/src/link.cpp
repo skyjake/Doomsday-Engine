@@ -24,16 +24,15 @@
 #include <de/Log>
 #include <de/ByteRefArray>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 DENG2_PIMPL(Link)
 {
-    String    connectDomain;
+    String   connectDomain;
     TimeSpan connectTimeout;
-    Address   connectAddress;
+    Address  connectAddress;
 
-    Protocol  protocol;
+    Protocol protocol;
 
     Impl(Public *i) : Base(i)
     {}
@@ -87,5 +86,4 @@ void Link::initiateCommunications()
     *this << ByteRefArray("Shell", 5);
 }
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell

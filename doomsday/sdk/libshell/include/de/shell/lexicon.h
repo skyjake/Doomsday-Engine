@@ -23,8 +23,7 @@
 #include <QSet>
 #include <de/String>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 /**
  * Lexicon containing terms and grammatical rules. By default, the lexicon is
@@ -40,7 +39,7 @@ public:
 public:
     Lexicon();
     Lexicon(Lexicon const &other);
-    Lexicon &operator = (Lexicon const &other);
+    Lexicon &operator=(Lexicon const &other);
 
     Terms terms() const;
 
@@ -60,7 +59,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif // LIBSHELL_LEXICON_H

@@ -28,8 +28,7 @@
 #include <QMap>
 #include <QTimer>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 static TimeSpan MSG_EXPIRATION_SECS = 4;
 
@@ -194,5 +193,4 @@ void ServerFinder::expire()
     QTimer::singleShot(1000, this, SLOT(expire()));
 }
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell

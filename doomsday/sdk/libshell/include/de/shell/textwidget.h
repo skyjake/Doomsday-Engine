@@ -26,8 +26,7 @@
 #include <QFlags>
 #include "TextCanvas"
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 class TextRootWidget;
 class Action;
@@ -46,7 +45,9 @@ class Action;
  *
  * @ingroup textUi
  */
-class LIBSHELL_PUBLIC TextWidget : public QObject, public Widget
+class LIBSHELL_PUBLIC TextWidget
+    : public QObject
+    , public Widget
 {
     Q_OBJECT
 
@@ -128,7 +129,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif // LIBSHELL_TEXTWIDGET_H

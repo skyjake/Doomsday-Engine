@@ -25,8 +25,7 @@
 #include <QCryptographicHash>
 #include <QList>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 static String const PT_COMMAND    = "shell.command";
 static String const PT_LEXICON    = "shell.lexicon";
@@ -367,5 +366,4 @@ RecordPacket *Protocol::newGameState(String const &mode,
     return gs;
 }
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell

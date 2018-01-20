@@ -26,8 +26,7 @@
 #include <de/Transmitter>
 #include <QObject>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 /**
  * Abstract network connection to a server.
@@ -36,17 +35,14 @@ namespace shell {
  *
  * @ingroup shell
  */
-class LIBSHELL_PUBLIC AbstractLink : public QObject, public Transmitter
+class LIBSHELL_PUBLIC AbstractLink
+    : public QObject
+    , public Transmitter
 {
     Q_OBJECT
 
 public:
-    enum Status
-    {
-        Disconnected,
-        Connecting,
-        Connected
-    };
+    enum Status { Disconnected, Connecting, Connected };
 
 public:
     AbstractLink();
@@ -128,7 +124,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif // LIBSHELL_ABSTRACTLINK_H

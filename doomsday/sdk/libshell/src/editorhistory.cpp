@@ -19,8 +19,7 @@
 #include "de/shell/EditorHistory"
 #include <de/math.h>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 DENG2_PIMPL(EditorHistory)
 {
@@ -33,7 +32,7 @@ DENG2_PIMPL(EditorHistory)
     {
         String text;
         String original; ///< For undoing editing in history.
-        int cursor; ///< Index in range [0...text.size()]
+        int    cursor;   ///< Index in range [0...text.size()]
 
         Command() : cursor(0) {}
     };
@@ -219,5 +218,4 @@ void EditorHistory::setFullHistory(StringList history)
     d->restore(history);
 }
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell

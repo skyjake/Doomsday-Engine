@@ -29,8 +29,7 @@
 #include <de/RemoteFeedRelay>
 #include <de/RemoteFile>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 static String const PATH_REMOTE_PACKS  = "/remote/packs";
 static String const PATH_REMOTE_SERVER = "/remote/server"; // local folder for RemoteFeed
@@ -41,15 +40,15 @@ DENG2_PIMPL(PackageDownloader)
 , DENG2_OBSERVES(RemoteFile, Download)
 , DENG2_OBSERVES(Deletable, Deletion)
 {
-    String fileRepository;
-    std::function<void (filesys::Link const *)> afterConnected;
-    bool isCancelled = false;
-    dint64 totalBytes = 0;
-    int numDownloads = 0;
-    AssetGroup downloads;
+    String                           fileRepository;
+    MountCallback                    afterConnected;
+    bool                             isCancelled  = false;
+    dint64                           totalBytes   = 0;
+    int                              numDownloads = 0;
+    AssetGroup                       downloads;
     QHash<IDownloadable *, Rangei64> downloadBytes;
-    std::function<void ()> postDownloadCallback;
-    LoopCallback deferred;
+    std::function<void()>            postDownloadCallback;
+    LoopCallback                     deferred;
 
     Impl(Public *i) : Base(i) {}
 
@@ -269,7 +268,7 @@ bool PackageDownloader::isActive() const
 }
 
 void PackageDownloader::mountServerRepository(shell::ServerInfo const &info,
-                                              std::function<void (filesys::Link const *)> afterConnected)
+                                              MountCallback afterConnected)
 {
     // The remote repository feature was added in 2.1. Trying to send a RemoteFeed
     // request to an older server would just result in us getting immediately
@@ -280,7 +279,7 @@ void PackageDownloader::mountServerRepository(shell::ServerInfo const &info,
         auto &relay = filesys::RemoteFeedRelay::get();
 
         d->fileRepository = filesys::NativeLink::URL_SCHEME + info.address().asText();
-        d->isCancelled = false;
+        d->isCancelled    = false;
         relay.addRepository(d->fileRepository, PATH_REMOTE_SERVER);
 
         // Notify after repository is available.
@@ -345,5 +344,4 @@ void PackageDownloader::download(StringList packageIds, std::function<void ()> c
     }
 }
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell

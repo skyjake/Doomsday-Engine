@@ -22,8 +22,7 @@
 #include "LabelWidget"
 #include <QList>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 /**
  * Widget for selecting an item from multiple choices.
@@ -73,7 +72,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif // LIBSHELL_CHOICEWIDGET_H

@@ -23,15 +23,16 @@
 #include <de/Action>
 #include <QObject>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 /**
  * Maps a key event to a signal.
  *
  * @ingroup textUi
  */
-class Action : public QObject, public de::Action
+class Action
+    : public QObject
+    , public de::Action
 {
     Q_OBJECT
 
@@ -66,13 +67,12 @@ protected:
     ~Action();
 
 private:
-    KeyEvent _event;
-    String _label;
-    QObject *_target;
+    KeyEvent    _event;
+    String      _label;
+    QObject *   _target;
     char const *_slot;
 };
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif // LIBSHELL_ACTION_H

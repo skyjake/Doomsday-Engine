@@ -22,8 +22,7 @@
 #include <de/Log>
 #include <de/data/json.h>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 static String const VAR_VERSION                 ("ver");
 static String const VAR_COMPATIBILITY_VERSION   ("cver");
@@ -355,5 +354,4 @@ void ServerInfo::printToLog(int indexNumber, bool includeHeader) const
     }
 }
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell

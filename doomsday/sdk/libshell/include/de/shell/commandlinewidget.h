@@ -21,8 +21,7 @@
 
 #include "LineEditWidget"
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 /**
  * Text editor with a history.
@@ -47,7 +46,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif // LIBSHELL_COMMANDLINEWIDGET_H
