@@ -26,7 +26,7 @@ namespace internal {
 
 struct WAVChunk : public IReadable
 {
-    Block id;
+    Block   id;
     duint32 size;
 
     WAVChunk() : id(4), size(0) {}

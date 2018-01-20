@@ -39,17 +39,17 @@ using namespace gl;
 
 DENG2_PIMPL(GLTexture)
 {
-    Size size;
+    Size          size;
     Image::Format format;
-    GLuint name;
-    GLenum texTarget;
-    Filter minFilter;
-    Filter magFilter;
-    MipFilter mipFilter;
-    Wraps wrap;
-    dfloat maxAnisotropy;
-    dfloat maxLevel;
-    TextureFlags flags;
+    GLuint        name;
+    GLenum        texTarget;
+    Filter        minFilter;
+    Filter        magFilter;
+    MipFilter     mipFilter;
+    Wraps         wrap;
+    dfloat        maxAnisotropy;
+    dfloat        maxLevel;
+    TextureFlags  flags;
 
     Impl(Public *i)
         : Base(i)

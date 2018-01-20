@@ -50,17 +50,17 @@ DENG2_PIMPL(GLProgram)
     /// in each stack is the active one at any given time.
     QHash<Block, QStack<GLUniform const *>> stacks;
 
-    Uniforms allBound;
-    Uniforms active; ///< Currently active bindings.
-    Uniforms changed;
+    Uniforms    allBound;
+    Uniforms    active; ///< Currently active bindings.
+    Uniforms    changed;
     UniformList textures;
-    bool texturesChanged;
-    int attribLocation[AttribSpec::NUM_SEMANTICS]; ///< Where each attribute is bound.
+    bool        texturesChanged;
+    int         attribLocation[AttribSpec::NUM_SEMANTICS]; ///< Where each attribute is bound.
 
-    GLuint name;
+    GLuint  name;
     Shaders shaders;
-    bool inUse;
-    bool needRebuild;
+    bool    inUse;
+    bool    needRebuild;
 
     Impl(Public *i)
         : Base(i)

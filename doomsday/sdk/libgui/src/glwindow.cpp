@@ -39,22 +39,22 @@ static GLWindow *mainWindow = nullptr;
 
 DENG2_PIMPL(GLWindow)
 {
-    LoopCallback mainCall;
-    GLFramebuffer backing; // Represents QOpenGLWindow's framebuffer.
-    WindowEventHandler *handler = nullptr; ///< Event handler.
-    bool readyPending = false;
-    bool readyNotified = false;
-    Size currentSize;
-    Size pendingSize;
+    LoopCallback        mainCall;
+    GLFramebuffer       backing;                 // Represents QOpenGLWindow's framebuffer.
+    WindowEventHandler *handler       = nullptr; ///< Event handler.
+    bool                readyPending  = false;
+    bool                readyNotified = false;
+    Size                currentSize;
+    Size                pendingSize;
 
-    unsigned int frameCount = 0;
-    float fps = 0;
+    uint  frameCount = 0;
+    float fps        = 0;
 
-#if defined (DENG_HAVE_TIMER_QUERY)
-    QOpenGLTimerQuery *timerQuery = nullptr;
-    bool timerQueryPending = false;
-    QElapsedTimer gpuTimeRecordingStartedAt;
-    QVector<TimeSpan> recordedGpuTimes;
+#if defined(DENG_HAVE_TIMER_QUERY)
+    bool               timerQueryPending = false;
+    QOpenGLTimerQuery *timerQuery        = nullptr;
+    QElapsedTimer      gpuTimeRecordingStartedAt;
+    QVector<TimeSpan>  recordedGpuTimes;
 #endif
 
     Impl(Public *i) : Base(i) {}

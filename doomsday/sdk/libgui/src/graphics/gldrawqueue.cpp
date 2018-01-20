@@ -33,11 +33,11 @@ int GLDrawQueue_queuedElems = 0;
 
 DENG2_PIMPL_NOREF(GLDrawQueue)
 {
-    GLProgram *currentProgram = nullptr;
-    GLBuffer const *currentBuffer = nullptr;
+    GLProgram *       currentProgram = nullptr;
+    GLBuffer const *  currentBuffer  = nullptr;
     GLBuffer::Indices indices;
     QList<GLBuffer *> indexBuffers;
-    int indexBufferPos = 0;
+    int               indexBufferPos = 0;
 
     dsize batchIndex = 0;
 

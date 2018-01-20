@@ -127,15 +127,15 @@ static duint drawCounter = 0;
 
 DENG2_PIMPL(GLBuffer)
 {
-    GLuint vao = 0;
+    GLuint           vao             = 0;
     GLProgram const *vaoBoundProgram = nullptr;
-    GLuint name = 0;
-    GLuint idxName = 0;
-    dsize count = 0;
-    dsize idxCount = 0;
-    DrawRanges defaultRange; ///< All vertices.
-    Primitive prim = Points;
-    AttribSpecs specs { nullptr, 0 };
+    GLuint           name            = 0;
+    GLuint           idxName         = 0;
+    dsize            count           = 0;
+    dsize            idxCount        = 0;
+    DrawRanges       defaultRange; ///< All vertices.
+    Primitive        prim  = Points;
+    AttribSpecs      specs{nullptr, 0};
 
     Impl(Public *i) : Base(i)
     {}

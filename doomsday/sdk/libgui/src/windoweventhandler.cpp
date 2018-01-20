@@ -31,13 +31,13 @@ namespace de {
 DENG2_PIMPL(WindowEventHandler)
 {
     GLWindow *window;
-    bool mouseGrabbed = false;
-    QPoint prevMousePos;
-    QTime prevWheelAt;
-    QPoint wheelAngleAccum;
-    int wheelDir[2];
-#ifdef WIN32
-    bool altIsDown = false;
+    bool      mouseGrabbed = false;
+    QPoint    prevMousePos;
+    QTime     prevWheelAt;
+    QPoint    wheelAngleAccum;
+    int       wheelDir[2];
+#if defined(WIN32)
+    bool      altIsDown = false;
 #endif
 
     Impl(Public *i, GLWindow *parentWindow)

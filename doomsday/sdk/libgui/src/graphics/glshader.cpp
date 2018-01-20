@@ -30,8 +30,8 @@ namespace de {
 DENG2_PIMPL(GLShader)
 {
     GLuint name;
-    Type type;
-    Block compiledSource;
+    Type   type;
+    Block  compiledSource;
 
     Impl(Public *i) : Base(i), name(0), type(Vertex)
     {}

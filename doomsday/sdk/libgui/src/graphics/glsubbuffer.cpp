@@ -22,18 +22,17 @@ namespace de {
 
 DENG2_PIMPL_NOREF(GLSubBuffer)
 {
-    GLBuffer *host = nullptr;
-    Rangeui16 hostRange;
-    dsize size = 0;
+    GLBuffer *            host = nullptr;
+    Rangeui16             hostRange;
+    dsize                 size = 0;
     internal::AttribSpecs format;
-    int batchIndexOffset = -1;
+    int                   batchIndexOffset = -1;
 };
 
 GLSubBuffer::GLSubBuffer(Rangeui16 const &hostRange, GLBuffer &hostBuffer)
     : d(new Impl)
 {
-    //d->reservedSize = reservedSize;
-    d->host = &hostBuffer;
+    d->host      = &hostBuffer;
     d->hostRange = hostRange;
 }
 

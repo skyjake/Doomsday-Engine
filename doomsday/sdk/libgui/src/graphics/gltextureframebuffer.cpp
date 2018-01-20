@@ -32,12 +32,12 @@ DENG2_PIMPL(GLTextureFramebuffer)
 , DENG2_OBSERVES(DefaultSampleCount, Change)
 {
     Image::Format colorFormat;
-    Size size;
-    int _samples; ///< don't touch directly (0 == default)
-    GLTexture color;
-    GLTexture depthStencil;
+    Size          size;
+    int           _samples; ///< don't touch directly (0 == default)
+    GLTexture     color;
+    GLTexture     depthStencil;
     GLFramebuffer resolvedFbo;
-    Asset texFboState;
+    Asset         texFboState;
 
     Impl(Public *i)
         : Base(i)

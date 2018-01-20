@@ -46,14 +46,14 @@ static dsize const HEADER_SIZE  = 128;
 
 struct Header : public IReadable
 {
-    dbyte magic;
-    dbyte version;
-    dbyte encoding;
-    dbyte bitsPerPixel;
+    dbyte   magic;
+    dbyte   version;
+    dbyte   encoding;
+    dbyte   bitsPerPixel;
     duint16 xMin, yMin;
     duint16 xMax, yMax;
     duint16 hRes, vRes;
-    dbyte colorPlanes;
+    dbyte   colorPlanes;
     duint16 bytesPerLine;
     duint16 paletteType;
 

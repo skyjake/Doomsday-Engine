@@ -22,14 +22,14 @@ namespace de {
 
 DENG2_PIMPL(Sound)
 {
-    dfloat volume;
-    dfloat pan;
-    dfloat frequency;
-    Vector3f position;
-    Vector3f velocity;
+    dfloat      volume;
+    dfloat      pan;
+    dfloat      frequency;
+    Vector3f    position;
+    Vector3f    velocity;
     Positioning positioning;
-    dfloat minDistance;
-    dfloat spread;
+    dfloat      minDistance;
+    dfloat      spread;
 
     Impl(Public *i)
         : Base(i)

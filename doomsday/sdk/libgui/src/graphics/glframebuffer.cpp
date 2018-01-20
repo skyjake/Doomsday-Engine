@@ -78,16 +78,16 @@ DENG2_OBSERVES(Asset, Deletion)
                                  GL_DEPTH_STENCIL_ATTACHMENT;
     }
 
-    GLuint fbo;
-    GLuint renderBufs[MAX_ATTACHMENTS];
-    GLTexture *bufTextures[MAX_ATTACHMENTS];
-    Flags flags;
-    Flags textureAttachment;    ///< Where to attach @a texture.
-    GLTexture *texture;
-    Vector2ui size;
-    Vector4f clearColor;
+    GLuint      fbo;
+    GLuint      renderBufs[MAX_ATTACHMENTS];
+    GLTexture * bufTextures[MAX_ATTACHMENTS];
+    Flags       flags;
+    Flags       textureAttachment; ///< Where to attach @a texture.
+    GLTexture * texture;
+    Vector2ui   size;
+    Vector4f    clearColor;
     Rectangleui activeRect; ///< Initially null.
-    int sampleCount;
+    int         sampleCount;
 
     Impl(Public *i)
         : Base(i)
