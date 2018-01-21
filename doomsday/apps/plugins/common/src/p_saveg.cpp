@@ -873,20 +873,20 @@ void SV_LoadGameClient(uint /*sessionId*/)
 
     int const saveVersion = (*metadata)["version"].value().asNumber();
     Uri *mapUri           = Uri_NewWithPath2((*metadata)["mapUri"].value().asText().toUtf8().constData(), RC_NULL);
-    GameRuleset *rules    = 0;
+    GameRules *rules    = 0;
     if(metadata->hasSubrecord("gameRules"))
     {
-        rules = GameRuleset::fromRecord(metadata->subrecord("gameRules"));
+        rules = GameRules::fromRecord(metadata->subrecord("gameRules"));
     }
 
     // Do we need to change the map?
-    if(COMMON_GAMESESSION->mapUri() != *reinterpret_cast<de::Uri *>(mapUri))
+    if(gfw_Session()->mapUri() != *reinterpret_cast<de::Uri *>(mapUri))
     {
-        COMMON_GAMESESSION->begin(*mapUri, 0/*default*/, *rules);
+        gfw_Session()->begin(*mapUri, 0/*default*/, *rules);
     }
     else if(rules)
     {
-        COMMON_GAMESESSION->rules() = *rules;
+        gfw_Session()->rules() = *rules;
     }
 
     delete rules; rules = 0;

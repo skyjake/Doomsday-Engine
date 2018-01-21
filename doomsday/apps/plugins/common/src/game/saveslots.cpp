@@ -67,7 +67,7 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
         {
             status = Incompatible;
             // Game identity key missmatch?
-            if (!session->metadata().gets("gameIdentityKey", "").compareWithoutCase(COMMON_GAMESESSION->gameId()))
+            if (!session->metadata().gets("gameIdentityKey", "").compareWithoutCase(gfw_Session()->gameId()))
             {
                 /// @todo Validate loaded add-ons and checksum the definition database.
                 status = Loadable; // It's good!
@@ -349,7 +349,7 @@ SaveSlots::Slot *SaveSlots::slotBySavedUserDescription(String const &description
     {
         DENG2_FOR_EACH_CONST(Impl::Slots, i, d->sslots)
         {
-            if (!COMMON_GAMESESSION->savedUserDescription(i->second->saveName())
+            if (!gfw_Session()->savedUserDescription(i->second->saveName())
                                       .compareWithoutCase(description))
             {
                 return i->second;

@@ -21,9 +21,6 @@
 
 #include "jhexen.h"
 #include "m_cheat.h"
-
-#include <cerrno>
-#include <cstdlib>
 #include "d_net.h"
 #include "d_netcl.h"
 #include "d_netsv.h"
@@ -35,6 +32,10 @@
 #include "p_inventory.h"
 #include "p_user.h"
 #include "player.h"
+#include "acs/system.h"
+
+#include <cerrno>
+#include <cstdlib>
 
 typedef eventsequencehandler_t cheatfunc_t;
 
@@ -52,7 +53,7 @@ typedef eventsequencehandler_t cheatfunc_t;
 
 static inline acs::System &acscriptSys()
 {
-    return COMMON_GAMESESSION->acsSystem();
+    return gfw_Session()->acsSystem();
 }
 
 CHEAT_FUNC(Class);
@@ -101,7 +102,7 @@ CHEAT_FUNC(Init)
     player_t *plr = &players[player];
 
     if(IS_NETGAME) return false;
-    if(G_Ruleset_Skill() == SM_NIGHTMARE) return false;
+    if(gfw_Rule(skill) == SM_NIGHTMARE) return false;
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
 
@@ -118,7 +119,7 @@ CHEAT_FUNC(IDKFA)
 
     player_t *plr = &players[player];
 
-    if(G_Ruleset_Skill() == SM_NIGHTMARE) return false;
+    if(gfw_Rule(skill) == SM_NIGHTMARE) return false;
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
     if(plr->morphTics) return false;
@@ -161,7 +162,7 @@ CHEAT_FUNC(Quicken3)
 
     player_t *plr = &players[player];
 
-    if(G_Ruleset_Skill() == SM_NIGHTMARE) return false;
+    if(gfw_Rule(skill) == SM_NIGHTMARE) return false;
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
 
@@ -208,8 +209,8 @@ CHEAT_FUNC(Reveal)
 
     player_t *plr = &players[player];
 
-    if(IS_NETGAME && G_Ruleset_Deathmatch()) return false;
-    if(G_Ruleset_Skill() == SM_NIGHTMARE) return false;
+    if(IS_NETGAME && gfw_Rule(deathmatch)) return false;
+    if(gfw_Rule(skill) == SM_NIGHTMARE) return false;
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
 
@@ -253,7 +254,7 @@ D_CMD(CheatGod)
         {
             NetCl_CheatRequest("god");
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || G_Ruleset_Skill() == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || gfw_Rule(skill) == SM_NIGHTMARE)
         {
             return false;
         }
@@ -292,7 +293,7 @@ D_CMD(CheatNoClip)
         {
             NetCl_CheatRequest("noclip");
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || G_Ruleset_Skill() == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || gfw_Rule(skill) == SM_NIGHTMARE)
         {
             return false;
         }
@@ -457,7 +458,7 @@ D_CMD(CheatGive)
         return true;
     }
 
-    if((IS_NETGAME && !netSvAllowCheats) || G_Ruleset_Skill() == SM_NIGHTMARE)
+    if((IS_NETGAME && !netSvAllowCheats) || gfw_Rule(skill) == SM_NIGHTMARE)
         return false;
 
     player_t *plr = &players[player];
@@ -637,7 +638,7 @@ D_CMD(CheatMassacre)
         {
             NetCl_CheatRequest("kill");
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || G_Ruleset_Skill() == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || gfw_Rule(skill) == SM_NIGHTMARE)
         {
             return false;
         }
@@ -665,7 +666,7 @@ D_CMD(CheatWhere)
 
     char textBuffer[256];
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
-                        COMMON_GAMESESSION->mapUri().path().toUtf8().constData(),
+                        gfw_Session()->mapUri().path().toUtf8().constData(),
                         plrMo->origin[VX], plrMo->origin[VY], plrMo->origin[VZ]);
     P_SetMessageWithFlags(plr, textBuffer, LMF_NO_HIDE);
 
@@ -700,7 +701,7 @@ D_CMD(CheatMorph)
         {
             NetCl_CheatRequest("pig");
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || G_Ruleset_Skill() == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || gfw_Rule(skill) == SM_NIGHTMARE)
         {
             return false;
         }
@@ -748,7 +749,7 @@ D_CMD(CheatShadowcaster)
             AutoStr *cmd = Str_Appendf(AutoStr_NewStd(), "class %i", (int)newClass);
             NetCl_CheatRequest(Str_Text(cmd));
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || G_Ruleset_Skill() == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || gfw_Rule(skill) == SM_NIGHTMARE)
         {
             return false;
         }
@@ -787,7 +788,7 @@ D_CMD(CheatRunScript)
             AutoStr *cmd = Str_Appendf(AutoStr_NewStd(), "runscript %i", scriptNum);
             NetCl_CheatRequest(Str_Text(cmd));
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || G_Ruleset_Skill() == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || gfw_Rule(skill) == SM_NIGHTMARE)
         {
             return false;
         }

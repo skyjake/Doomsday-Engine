@@ -85,7 +85,7 @@ void *Common_GetGameAPI(char const *name)
 #ifdef __JDOOM__
 void fastMonstersChanged()
 {
-    G_Ruleset_UpdateDefaults();
+    GameRules_UpdateDefaultsFromCVars();
 }
 #endif
 

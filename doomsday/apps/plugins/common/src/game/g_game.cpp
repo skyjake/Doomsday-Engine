@@ -82,7 +82,7 @@ using namespace common;
 void R_LoadVectorGraphics();
 int Hook_DemoStop(int hookType, int val, void *parm);
 
-GameRuleset defaultGameRules;
+GameRules defaultGameRules;
 
 game_config_t cfg; // The global cfg.
 
@@ -122,7 +122,7 @@ static SaveSlots *sslots;
 static gameaction_t gameAction;
 
 // Game action parameters:
-static GameRuleset gaNewSessionRules;
+static GameRules gaNewSessionRules;
 static String gaNewSessionEpisodeId;
 static de::Uri gaNewSessionMapUri;
 static uint gaNewSessionMapEntrance;
@@ -147,7 +147,7 @@ void G_SetGameAction(gameaction_t newAction)
     }
 }
 
-void G_SetGameActionNewSession(GameRuleset const &rules, String episodeId,
+void G_SetGameActionNewSession(GameRules const &rules, String episodeId,
     de::Uri const &mapUri, uint mapEntrance)
 {
     ::gaNewSessionRules       = rules; // make a copy.
@@ -160,7 +160,7 @@ void G_SetGameActionNewSession(GameRuleset const &rules, String episodeId,
 
 bool G_SetGameActionSaveSession(String slotId, String *userDescription)
 {
-    if (!COMMON_GAMESESSION->isSavingPossible()) return false;
+    if (!gfw_Session()->isSavingPossible()) return false;
     if (!G_SaveSlots().has(slotId)) return false;
 
     ::gaSaveSessionSlot = slotId;
@@ -184,7 +184,7 @@ bool G_SetGameActionSaveSession(String slotId, String *userDescription)
 
 bool G_SetGameActionLoadSession(String slotId)
 {
-    if (!COMMON_GAMESESSION->isLoadingPossible()) return false;
+    if (!gfw_Session()->isLoadingPossible()) return false;
 
     // Check whether this slot is in use. We do this here also because we need to provide our
     // caller with instant feedback. Naturally this is no guarantee that the game-save will
@@ -279,7 +279,7 @@ void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoi
 
 void G_SetGameActionMapCompletedAndSetNextMap()
 {
-    G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("next"));
+    G_SetGameActionMapCompleted(gfw_Session()->mapUriForNamedExit("next"));
 }
 
 static void initSaveSlots()
@@ -311,7 +311,7 @@ void G_CommonPreInit()
     ::quitInProgress = false;
 
     // Apply the default game rules.
-    COMMON_GAMESESSION->applyNewRules(defaultGameRules = GameRuleset());
+    gfw_Session()->applyNewRules(defaultGameRules = GameRules());
 
     // Register hooks.
     Plug_AddHook(HOOK_DEMO_STOP, Hook_DemoStop);
@@ -900,16 +900,16 @@ void G_AutoStartOrBeginTitleLoop()
         LOG_NOTE("Auto-starting episode '%s', map \"%s\", skill %i")
                 << startEpisodeId
                 << startMapUri
-                << ::defaultGameRules.skill;
+                << gfw_DefaultRule(skill);
 
         // Don't brief when autostarting.
         ::briefDisabled = true;
 
-        G_SetGameActionNewSession(::defaultGameRules, startEpisodeId, startMapUri);
+        G_SetGameActionNewSession(defaultGameRules, startEpisodeId, startMapUri);
     }
     else
     {
-        COMMON_GAMESESSION->endAndBeginTitle(); // Start up intro loop.
+        gfw_Session()->endAndBeginTitle(); // Start up intro loop.
     }
 }
 
@@ -919,7 +919,7 @@ void G_AutoStartOrBeginTitleLoop()
  */
 void G_CommonShutdown()
 {
-    COMMON_GAMESESSION->end();
+    gfw_Session()->end();
 
     Plug_RemoveHook(HOOK_DEMO_STOP, Hook_DemoStop);
 
@@ -1097,8 +1097,8 @@ void G_BeginMap()
 
     // Print a map banner to the log.
     LOG_MSG(DE2_ESC(R));
-    LOG_NOTE("%s") << G_MapDescription(COMMON_GAMESESSION->episodeId(),
-                                       COMMON_GAMESESSION->mapUri());
+    LOG_NOTE("%s") << G_MapDescription(gfw_Session()->episodeId(),
+                                       gfw_Session()->mapUri());
     LOG_MSG(DE2_ESC(R));
 }
 
@@ -1223,12 +1223,12 @@ static sfxenum_t randomQuitSound()
 static bool intermissionEnabled()
 {
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    if (COMMON_GAMESESSION->mapInfo().geti("flags") & MIF_NO_INTERMISSION)
+    if (gfw_Session()->mapInfo().geti("flags") & MIF_NO_INTERMISSION)
     {
         return false;
     }
 #elif __JHEXEN__
-    if (!COMMON_GAMESESSION->rules().deathmatch)
+    if (!gfw_Rule(deathmatch))
     {
         return false;
     }
@@ -1260,7 +1260,7 @@ void G_PrepareWIData()
     info->maxFrags = 0;
 
     // See if there is a par time definition.
-    float parTime = COMMON_GAMESESSION->mapInfo().getf("parTime");
+    float parTime = gfw_Session()->mapInfo().getf("parTime");
     info->parTime = (parTime > 0? TICRATE * int(parTime) : -1 /*N/A*/);
 
     info->pNum = CONSOLEPLAYER;
@@ -1286,7 +1286,7 @@ static int prepareIntermission(void * /*context*/)
     ::wmInfo.nextMapEntryPoint = ::nextMapEntryPoint;
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    ::wmInfo.currentMap        = COMMON_GAMESESSION->mapUri();
+    ::wmInfo.currentMap        = gfw_Session()->mapUri();
     ::wmInfo.didSecret         = ::players[CONSOLEPLAYER].didSecret;
 # if __JDOOM__ || __JDOOM64__
     ::wmInfo.maxKills          = de::max(1, ::totalKills);
@@ -1354,18 +1354,18 @@ static void runGameAction()
         switch (currentAction)
         {
         case GA_NEWSESSION:
-            COMMON_GAMESESSION->end();
-            COMMON_GAMESESSION->begin(::gaNewSessionRules, ::gaNewSessionEpisodeId,
+            gfw_Session()->end();
+            gfw_Session()->begin(::gaNewSessionRules, ::gaNewSessionEpisodeId,
                                       ::gaNewSessionMapUri, ::gaNewSessionMapEntrance);
             break;
 
         case GA_LOADSESSION:
-            COMMON_GAMESESSION->end();
+            gfw_Session()->end();
 
             try
             {
                 SaveSlot const &sslot = G_SaveSlots()[::gaLoadSessionSlot];
-                COMMON_GAMESESSION->load(sslot.saveName());
+                gfw_Session()->load(sslot.saveName());
 
                 // Make note of the last used save slot.
                 Con_SetInteger2("game-save-last-slot", sslot.id().toInt(), SVF_WRITE_OVERRIDE);
@@ -1377,9 +1377,9 @@ static void runGameAction()
             }
 
             // Return to the title loop if loading did not succeed.
-            if (!COMMON_GAMESESSION->hasBegun())
+            if (!gfw_Session()->hasBegun())
             {
-                COMMON_GAMESESSION->endAndBeginTitle();
+                gfw_Session()->endAndBeginTitle();
             }
             break;
 
@@ -1387,7 +1387,7 @@ static void runGameAction()
             try
             {
                 SaveSlot const &sslot = G_SaveSlots()[::gaSaveSessionSlot];
-                COMMON_GAMESESSION->save(sslot.saveName(), ::gaSaveSessionUserDescription);
+                gfw_Session()->save(sslot.saveName(), ::gaSaveSessionUserDescription);
 
                 // Make note of the last used save slot.
                 Con_SetInteger2("game-save-last-slot", sslot.id().toInt(), SVF_WRITE_OVERRIDE);
@@ -1418,23 +1418,23 @@ static void runGameAction()
             // Check that the map truly exists.
             if (!P_MapExists(::nextMapUri.compose().toUtf8().constData()))
             {
-                ::nextMapUri = de::makeUri(COMMON_GAMESESSION->episodeDef()->gets("startMap"));
+                ::nextMapUri = de::makeUri(gfw_Session()->episodeDef()->gets("startMap"));
             }
-            COMMON_GAMESESSION->leaveMap(::nextMapUri, ::nextMapEntryPoint);
+            gfw_Session()->leaveMap(::nextMapUri, ::nextMapEntryPoint);
             break;
 
         case GA_RESTARTMAP:
-            COMMON_GAMESESSION->reloadMap();
+            gfw_Session()->reloadMap();
             break;
 
         case GA_MAPCOMPLETED: {
             // Leaving the current hub?
             dd_bool newHub = true;
 #if __JHEXEN__
-            if (Record const *episodeDef = COMMON_GAMESESSION->episodeDef())
+            if (Record const *episodeDef = gfw_Session()->episodeDef())
             {
                 defn::Episode epsd(*episodeDef);
-                Record const *currentHub = epsd.tryFindHubByMapId(COMMON_GAMESESSION->mapUri().compose());
+                Record const *currentHub = epsd.tryFindHubByMapId(gfw_Session()->mapUri().compose());
                 newHub = (!currentHub || currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()));
             }
 #endif
@@ -1481,7 +1481,7 @@ static void runGameAction()
 
         case GA_SCREENSHOT: {
             // Find an unused screenshot file name.
-            String fileName = COMMON_GAMESESSION->gameId() + "-";
+            String fileName = gfw_Session()->gameId() + "-";
             int const numPos = fileName.length();
             for (int i = 0; i < 1e6; ++i) // Stop eventually...
             {
@@ -1534,7 +1534,7 @@ static int rebornLoadConfirmed(msgresponse_t response, int, void *)
 static void rebornPlayers()
 {
     // Reborns are impossible if no game session is in progress.
-    if (!COMMON_GAMESESSION->hasBegun()) return;
+    if (!gfw_Session()->hasBegun()) return;
     // ...or if no map is currently loaded.
     if (G_GameState() != GS_MAP) return;
 
@@ -1547,10 +1547,10 @@ static void rebornPlayers()
                 return;
 
             // Do we need user confirmation?
-            if (COMMON_GAMESESSION->progressRestoredOnReload() && cfg.common.confirmRebornLoad)
+            if (gfw_Session()->progressRestoredOnReload() && cfg.common.confirmRebornLoad)
             {
                 S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
-                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, COMMON_GAMESESSION->userDescription().toUtf8().constData());
+                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, gfw_Session()->userDescription().toUtf8().constData());
                 Hu_MsgStart(MSG_YESNO, Str_Text(msg), rebornLoadConfirmed, 0, 0);
                 return;
             }
@@ -1826,7 +1826,7 @@ void G_PlayerReborn(int player)
     p->weapons[WT_SECOND].owned = true;
     p->ammo[AT_CRYSTAL].owned = 50;
 
-    de::Uri const mapUri = COMMON_GAMESESSION->mapUri();
+    de::Uri const mapUri = gfw_Session()->mapUri();
     if (secret ||
        (mapUri.path() == "E1M9" ||
         mapUri.path() == "E2M9" ||
@@ -1891,46 +1891,10 @@ void G_QueueBody(mobj_t *mo)
 }
 #endif
 
-int G_Ruleset_Skill()
-{
-    return COMMON_GAMESESSION->rules().skill;
-}
-
-#if !__JHEXEN__
-byte G_Ruleset_Fast()
-{
-    return COMMON_GAMESESSION->rules().fast;
-}
-#endif
-
-byte G_Ruleset_Deathmatch()
-{
-    return COMMON_GAMESESSION->rules().deathmatch;
-}
-
-byte G_Ruleset_NoMonsters()
-{
-    return COMMON_GAMESESSION->rules().noMonsters;
-}
-
-#if __JHEXEN__
-byte G_Ruleset_RandomClasses()
-{
-    return COMMON_GAMESESSION->rules().randomClasses;
-}
-#endif
-
-#if !__JHEXEN__
-byte G_Ruleset_RespawnMonsters()
-{
-    return COMMON_GAMESESSION->rules().respawnMonsters;
-}
-#endif
-
-void G_Ruleset_UpdateDefaults()
+void GameRules_UpdateDefaultsFromCVars()
 {
 #if !__JHEXEN__
-    defaultGameRules.fast = cfg.common.defaultRuleFastMonsters;
+    gfw_SetDefaultRule(fast, cfg.common.defaultRuleFastMonsters);
 #endif
 }
 
@@ -1944,8 +1908,8 @@ static Record const *finaleDebriefing()
 #if __JHEXEN__
     if (::cfg.overrideHubMsg && G_GameState() == GS_MAP)
     {
-        defn::Episode epsd(*COMMON_GAMESESSION->episodeDef());
-        Record const *currentHub = epsd.tryFindHubByMapId(COMMON_GAMESESSION->mapUri().compose());
+        defn::Episode epsd(*gfw_Session()->episodeDef());
+        Record const *currentHub = epsd.tryFindHubByMapId(gfw_Session()->mapUri().compose());
         if (!currentHub || currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()))
         {
             return 0;
@@ -1960,7 +1924,7 @@ static Record const *finaleDebriefing()
     if (G_GameState() == GS_INFINE) return 0;
 
     // Is there such a finale definition?
-    return Defs().finales.tryFind("after", COMMON_GAMESESSION->mapUri().compose());
+    return Defs().finales.tryFind("after", gfw_Session()->mapUri().compose());
 }
 
 /// @todo common::GameSession should handle this -ds
@@ -1998,7 +1962,7 @@ String G_DefaultGameStateFolderUserDescription(String const &saveName, bool auto
     // If the slot is already in use then choose existing description.
     if (!saveName.isEmpty())
     {
-        String const existing = COMMON_GAMESESSION->savedUserDescription(saveName);
+        String const existing = gfw_Session()->savedUserDescription(saveName);
         if (!existing.isEmpty()) return existing;
     }
 
@@ -2008,7 +1972,7 @@ String G_DefaultGameStateFolderUserDescription(String const &saveName, bool auto
     String description;
 
     // Include the source file name, for custom maps.
-    de::Uri const mapUri = COMMON_GAMESESSION->mapUri();
+    de::Uri const mapUri = gfw_Session()->mapUri();
     String mapUriAsText  = mapUri.compose();
     if (P_MapIsCustom(mapUriAsText.toUtf8().constData()))
     {
@@ -2082,7 +2046,7 @@ uint G_MapNumberFor(de::Uri const &mapUri)
 
 AutoStr *G_CurrentMapUriPath()
 {
-    return AutoStr_FromTextStd(COMMON_GAMESESSION->mapUri().path().toStringRef().toUtf8().constData());
+    return AutoStr_FromTextStd(gfw_Session()->mapUri().path().toStringRef().toUtf8().constData());
 }
 
 
@@ -2250,16 +2214,16 @@ int Hook_DemoStop(int /*hookType*/, int val, void * /*context*/)
     if (IS_NETGAME && IS_CLIENT)
     {
         // Restore normal game state.
-        GameRuleset newRules(COMMON_GAMESESSION->rules());
-        newRules.deathmatch      = false;
-        newRules.noMonsters      = false;
+        GameRules newRules(gfw_Session()->rules());
+        GameRules_Set(newRules, deathmatch, 0);
+        GameRules_Set(newRules, noMonsters, false);
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        newRules.respawnMonsters = false;
+        GameRules_Set(newRules, respawnMonsters, false);
 #endif
 #if __JHEXEN__
-        newRules.randomClasses   = false;
+        GameRules_Set(newRules, randomClasses, false);
 #endif
-        COMMON_GAMESESSION->applyNewRules(newRules);
+        gfw_Session()->applyNewRules(newRules);
     }
 
     for (int i = 0; i < MAXPLAYERS; ++i)
@@ -2306,7 +2270,7 @@ D_CMD(OpenLoadMenu)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if (!COMMON_GAMESESSION->isLoadingPossible()) return false;
+    if (!gfw_Session()->isLoadingPossible()) return false;
     DD_Execute(true, "menu loadgame");
     return true;
 }
@@ -2315,7 +2279,7 @@ D_CMD(OpenSaveMenu)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if (!COMMON_GAMESESSION->isSavingPossible()) return false;
+    if (!gfw_Session()->isSavingPossible()) return false;
     DD_Execute(true, "menu savegame");
     return true;
 }
@@ -2341,7 +2305,7 @@ D_CMD(EndSession)
         return false;
     }
 
-    if (!COMMON_GAMESESSION->hasBegun())
+    if (!gfw_Session()->hasBegun())
     {
         if (IS_NETGAME && IS_CLIENT)
         {
@@ -2364,7 +2328,7 @@ D_CMD(EndSession)
         }
         else
         {
-            COMMON_GAMESESSION->endAndBeginTitle();
+            gfw_Session()->endAndBeginTitle();
         }
     }
     else
@@ -2394,7 +2358,7 @@ D_CMD(LoadSession)
     bool const confirmed = (argc == 3 && !qstricmp(argv[2], "confirm"));
 
     if (G_QuitInProgress()) return false;
-    if (!COMMON_GAMESESSION->isLoadingPossible()) return false;
+    if (!gfw_Session()->isLoadingPossible()) return false;
 
     if (IS_NETGAME)
     {
@@ -2421,7 +2385,7 @@ D_CMD(LoadSession)
             S_LocalSound(SFX_QUICKLOAD_PROMPT, nullptr);
 
             // Compose the confirmation message.
-            String const &existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
+            String const &existingDescription = gfw_Session()->savedUserDescription(sslot->saveName());
             AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT,
                                        sslot->id().toUtf8().constData(),
                                        existingDescription.toUtf8().constData());
@@ -2535,7 +2499,7 @@ D_CMD(SaveSession)
             S_LocalSound(SFX_QUICKSAVE_PROMPT, nullptr);
 
             // Compose the confirmation message.
-            String const existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
+            String const existingDescription = gfw_Session()->savedUserDescription(sslot->saveName());
             AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT,
                                        sslot->id().toUtf8().constData(),
                                        existingDescription.toUtf8().constData());
@@ -2603,7 +2567,7 @@ D_CMD(DeleteSaveGame)
 
             if (confirmed)
             {
-                COMMON_GAMESESSION->removeSaved(sslot->saveName());
+                gfw_Session()->removeSaved(sslot->saveName());
             }
             else
             {
@@ -2613,7 +2577,7 @@ D_CMD(DeleteSaveGame)
                 S_LocalSound(SFX_DELETESAVEGAME_CONFIRM, nullptr);
 
                 // Compose the confirmation message.
-                String const existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
+                String const existingDescription = gfw_Session()->savedUserDescription(sslot->saveName());
                 AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, existingDescription.toUtf8().constData());
                 Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteGameStateFolderConfirmed, 0, new String(sslot->saveName()));
             }
@@ -2667,7 +2631,7 @@ D_CMD(LeaveMap)
         return false;
     }
 
-    G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit(exitName));
+    G_SetGameActionMapCompleted(gfw_Session()->mapUriForNamedExit(exitName));
     return true;
 }
 
@@ -2680,10 +2644,10 @@ D_CMD(SetDefaultSkill)
         LOG_SCR_NOTE("Usage: %s (skill)") << argv[0];
         return true;
     }
-    defaultGameRules.skill = String(argv[1]).toInt() - 1;
-    if (defaultGameRules.skill < SM_BABY || defaultGameRules.skill >= NUM_SKILL_MODES)
+    gfw_SetDefaultRule(skill, String(argv[1]).toInt() - 1);
+    if (gfw_DefaultRule(skill) < SM_BABY || gfw_DefaultRule(skill) >= NUM_SKILL_MODES)
     {
-        defaultGameRules.skill = SM_MEDIUM;
+        gfw_SetDefaultRule(skill, SM_MEDIUM);
     }
     char const *skillNames[] = {
         "Novice",
@@ -2692,7 +2656,7 @@ D_CMD(SetDefaultSkill)
         "Hard",
         "Nightmare!"
     };
-    LOG_SCR_MSG("Default skill level for new games: %s") << skillNames[defaultGameRules.skill];
+    LOG_SCR_MSG("Default skill level for new games: %s") << skillNames[gfw_DefaultRule(skill)];
     return true;
 }
 
@@ -2730,7 +2694,7 @@ D_CMD(WarpMap)
     }
 
     // If a session is already in progress, the default episode is the current.
-    String episodeId = COMMON_GAMESESSION->episodeId();
+    String episodeId = gfw_Session()->episodeId();
 
     // Otherwise if only one playable episode is defined - select it.
     if (episodeId.isEmpty() && PlayableEpisodeCount() == 1)
@@ -2814,9 +2778,9 @@ D_CMD(WarpMap)
     }
 
     bool forceNewSession = (IS_NETGAME != 0);
-    if (COMMON_GAMESESSION->hasBegun())
+    if (gfw_Session()->hasBegun())
     {
-        if (COMMON_GAMESESSION->episodeId().compareWithoutCase(episodeId))
+        if (gfw_Session()->episodeId().compareWithoutCase(episodeId))
         {
             forceNewSession = true;
         }
@@ -2824,7 +2788,7 @@ D_CMD(WarpMap)
 
 #if __JHEXEN__
     // Hexen does not allow warping to the current map.
-    if (!forceNewSession && COMMON_GAMESESSION->mapUri() == mapUri)
+    if (!forceNewSession && gfw_Session()->mapUri() == mapUri)
     {
         P_SetMessageWithFlags(&players[CONSOLEPLAYER], "Cannot warp to the current map.", LMF_NO_HIDE);
         return false;
@@ -2843,27 +2807,26 @@ D_CMD(WarpMap)
     ::briefDisabled = true;
 
     // So be it.
-    if (!forceNewSession && COMMON_GAMESESSION->hasBegun())
+    if (!forceNewSession && gfw_Session()->hasBegun())
     {
 #if __JHEXEN__
         ::nextMapUri        = mapUri;
         ::nextMapEntryPoint = 0;
         G_SetGameAction(GA_LEAVEMAP);
 #else
-        G_SetGameActionNewSession(COMMON_GAMESESSION->rules(), COMMON_GAMESESSION->episodeId(), mapUri);
+        G_SetGameActionNewSession(gfw_Session()->rules(), gfw_Session()->episodeId(), mapUri);
 #endif
     }
     else
     {
         // If a session is already in progress then copy the rules from it.
-        GameRuleset rules = (COMMON_GAMESESSION->hasBegun()? COMMON_GAMESESSION->rules()
-                                                           : defaultGameRules);
+        GameRules rules = (gfw_Session()->hasBegun() ? gfw_Session()->rules() : defaultGameRules);
         if (IS_DEDICATED)
         {
             // Why is this necessary to set here? Changing the rules in P_SetupMap()
             // causes the skill change to be effective on the _next_ map load, not
             // the current one. -jk
-            rules.skill = cfg.common.netSkill;
+            GameRules_Set(rules, skill, cfg.common.netSkill);
         }
         G_SetGameActionNewSession(rules, episodeId, mapUri);
     }

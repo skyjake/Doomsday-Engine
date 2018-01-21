@@ -103,7 +103,7 @@ dd_bool R_ViewFilterColor(float rgba[4], int filter)
         rgba[CR] = 1;
         rgba[CG] = 0;
         rgba[CB] = 0;
-        rgba[CA] = (COMMON_GAMESESSION->rules().deathmatch? 1.0f : cfg.common.filterStrength) * (filter+1) / (float)NUMREDPALS;
+        rgba[CA] = (gfw_Rule(deathmatch)? 1.0f : cfg.common.filterStrength) * (filter+1) / (float)NUMREDPALS;
         return true;
     }
 

@@ -49,7 +49,7 @@ using namespace common;
 
 static inline acs::System &acscriptSys()
 {
-    return COMMON_GAMESESSION->acsSystem();
+    return gfw_Session()->acsSystem();
 }
 
 LightningAnimator lightningAnimator;
@@ -370,7 +370,7 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
             if(!(mo && mo->player && mo->player->playerState == PST_DEAD))
             {
                 // Assume the referenced map is from the current episode.
-                dint epIdx  = COMMON_GAMESESSION->episodeId().toInt();
+                dint epIdx  = gfw_Session()->episodeId().toInt();
                 if(epIdx > 0) epIdx -= 1;
                 dint mapIdx = args[0];
                 if(mapIdx > 0) mapIdx -= 1;
@@ -387,10 +387,10 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
             if(!(mo && mo->player && mo->player->playerState == PST_DEAD))
             {
                 success = true;
-                if(G_Ruleset_Deathmatch())
+                if(gfw_Rule(deathmatch))
                 {
                     // Winning in deathmatch goes back to the first map of the current episode.
-                    G_SetGameActionMapCompleted(de::makeUri(COMMON_GAMESESSION->episodeDef()->gets("startMap")));
+                    G_SetGameActionMapCompleted(de::makeUri(gfw_Session()->episodeDef()->gets("startMap")));
                 }
                 else
                 {
@@ -426,13 +426,13 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         acs::Script::Args const scriptArgs(&args[2], 3);
 
         // Assume the referenced map is from the current episode.
-        dint epIdx  = COMMON_GAMESESSION->episodeId().toInt();
+        dint epIdx  = gfw_Session()->episodeId().toInt();
         if(epIdx > 0) epIdx -= 1;
 
         dint mapIdx = args[1];
-        de::Uri const mapUri = (mapIdx == 0? COMMON_GAMESESSION->mapUri()
+        de::Uri const mapUri = (mapIdx == 0? gfw_Session()->mapUri()
                                            : G_ComposeMapUri(epIdx, mapIdx - 1) );
-        if(COMMON_GAMESESSION->mapUri() == mapUri)
+        if(gfw_Session()->mapUri() == mapUri)
         {
             if(acscriptSys().hasScript(scriptNumber))
             {

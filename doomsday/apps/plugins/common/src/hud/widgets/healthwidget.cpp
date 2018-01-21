@@ -139,7 +139,7 @@ void SBarHealthWidget_Draw(guidata_health_t *hlth, Point2Raw const *offset)
     //dfloat const iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
 
 #if __JHERETIC__ || __JHEXEN__
-    if(G_Ruleset_Deathmatch()) return;
+    if(gfw_Rule(deathmatch)) return;
     if(Hu_InventoryIsOpen(hlth->player())) return;
 #endif
 
@@ -232,7 +232,7 @@ void SBarHealthWidget_UpdateGeometry(guidata_health_t *hlth)
     if(hlth->_value == 1994) return;
 
 #if __JHERETIC__ || __JHEXEN__
-    if(G_Ruleset_Deathmatch()) return;
+    if(gfw_Rule(deathmatch)) return;
     if(Hu_InventoryIsOpen(hlth->player())) return;
 #endif
 

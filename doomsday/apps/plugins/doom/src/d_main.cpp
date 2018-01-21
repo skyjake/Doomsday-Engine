@@ -410,31 +410,31 @@ void D_PostInit()
     }
 
     // Get skill / episode / map from parms.
-    ::defaultGameRules.skill = /*startSkill =*/ SM_MEDIUM;
+    gfw_SetDefaultRule(skill, /*startSkill =*/ SM_MEDIUM);
 
-    if(cmdLine.check("-altdeath"))
+    if (cmdLine.check("-altdeath"))
     {
         ::cfg.common.netDeathmatch = 2;
     }
-    else if(cmdLine.check("-deathmatch"))
+    else if (cmdLine.check("-deathmatch"))
     {
         ::cfg.common.netDeathmatch = 1;
     }
 
-    ::defaultGameRules.fast = cfg.common.defaultRuleFastMonsters;
+    gfw_SetDefaultRule(fast, cfg.common.defaultRuleFastMonsters);
 
     // Apply these rules.
-    ::defaultGameRules.noMonsters      = cmdLine.check("-nomonsters")? true : false;
-    ::defaultGameRules.respawnMonsters = cmdLine.check("-respawn")   ? true : false;
-    ::defaultGameRules.fast            = cmdLine.check("-fast")      ? true : false;
+    gfw_SetDefaultRule(noMonsters     , cmdLine.check("-nomonsters")? true : false);
+    gfw_SetDefaultRule(respawnMonsters, cmdLine.check("-respawn")   ? true : false);
+    gfw_SetDefaultRule(fast           , cmdLine.check("-fast")      ? true : false);
 
-    if(::defaultGameRules.deathmatch)
+    if (gfw_DefaultRule(deathmatch))
     {
-        if(int arg = cmdLine.check("-timer", 1))
+        if (int arg = cmdLine.check("-timer", 1))
         {
             bool isNumber;
             int mins = cmdLine.at(arg + 1).toInt(&isNumber);
-            if(isNumber)
+            if (isNumber)
             {
                 LOG_NOTE("Maps will end after %i %s")
                         << mins << (mins == 1? "minute" : "minutes");
@@ -444,10 +444,10 @@ void D_PostInit()
 
     // Change the turbo multiplier?
     ::turboMul = 1.0f;
-    if(int arg = cmdLine.check("-turbo"))
+    if (int arg = cmdLine.check("-turbo"))
     {
         int scale = 200;
-        if(arg + 1 < cmdLine.count() && !cmdLine.isOption(arg + 1))
+        if (arg + 1 < cmdLine.count() && !cmdLine.isOption(arg + 1))
         {
             scale = cmdLine.at(arg + 1).toInt();
         }
@@ -458,11 +458,11 @@ void D_PostInit()
     }
 
     // Load a saved game?
-    if(int arg = cmdLine.check("-loadgame", 1))
+    if (int arg = cmdLine.check("-loadgame", 1))
     {
-        if(SaveSlot *sslot = G_SaveSlots().slotByUserInput(cmdLine.at(arg + 1)))
+        if (SaveSlot *sslot = G_SaveSlots().slotByUserInput(cmdLine.at(arg + 1)))
         {
-            if(sslot->isUserWritable() && G_SetGameActionLoadSession(sslot->id()))
+            if (sslot->isUserWritable() && G_SetGameActionLoadSession(sslot->id()))
             {
                 // No further initialization is to be done.
                 return;
@@ -471,10 +471,10 @@ void D_PostInit()
     }
 
     // Change the default skill mode?
-    if(int arg = cmdLine.check("-skill", 1))
+    if (int arg = cmdLine.check("-skill", 1))
     {
         int skillNumber = cmdLine.at(arg + 1).toInt();
-        ::defaultGameRules.skill = (skillmode_t)(skillNumber > 0? skillNumber - 1 : skillNumber);
+        gfw_SetDefaultRule(skill, skillmode_t(skillNumber > 0? skillNumber - 1 : skillNumber));
     }
 
     G_AutoStartOrBeginTitleLoop();

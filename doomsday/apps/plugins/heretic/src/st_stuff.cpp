@@ -185,7 +185,7 @@ void SBarBackground_Drawer(HudWidget *wi, Point2Raw const *offset)
         }
 
         patchid_t panel = Hu_InventoryIsOpen(wi->player())? pInvBar
-                        : G_Ruleset_Deathmatch()          ? pStatBar : pLifeBar;
+                        : gfw_Rule(deathmatch)          ? pStatBar : pLifeBar;
         GL_DrawPatch(panel, Vector2i(ORIGINX + 34, ORIGINY + 2));
 
         DGL_Disable(DGL_TEXTURE_2D);
@@ -225,7 +225,7 @@ void SBarBackground_Drawer(HudWidget *wi, Point2Raw const *offset)
         }
 
         patchid_t panel = Hu_InventoryIsOpen(wi->player())? pInvBar
-                        : G_Ruleset_Deathmatch()          ? pStatBar : pLifeBar;
+                        : gfw_Rule(deathmatch)          ? pStatBar : pLifeBar;
         GL_DrawPatch(panel, Vector2i(ORIGINX + 34, ORIGINY + 2));
 
         DGL_Disable(DGL_TEXTURE_2D);
@@ -736,7 +736,7 @@ static void initAutomapForCurrentMap(AutomapWidget &automap)
     automap.clearAllPoints(true/*silent*/);
 
 #if !__JHEXEN__
-    if(G_Ruleset_Skill() == SM_BABY && cfg.common.automapBabyKeys)
+    if(gfw_Rule(skill) == SM_BABY && cfg.common.automapBabyKeys)
     {
         automap.setFlags(automap.flags() | AWF_SHOW_KEYS);
     }

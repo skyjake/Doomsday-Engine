@@ -76,7 +76,7 @@ void FragsWidget_Draw(guidata_frags_t *frags, Point2Raw const *offset)
     if(!::cfg.hudShown[HUD_FRAGS]) return;
 #endif
 
-    if(!G_Ruleset_Deathmatch()) return;
+    if(!gfw_Rule(deathmatch)) return;
     if(ST_AutomapIsOpen(frags->player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[frags->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
@@ -118,7 +118,7 @@ void FragsWidget_UpdateGeometry(guidata_frags_t *frags)
     if(!::cfg.hudShown[HUD_FRAGS]) return;
 #endif
 
-    if(!G_Ruleset_Deathmatch()) return;
+    if(!gfw_Rule(deathmatch)) return;
     if(ST_AutomapIsOpen(frags->player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[frags->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
@@ -166,7 +166,7 @@ void SBarFragsWidget_Draw(guidata_frags_t *frags, Point2Raw const *offset)
     dfloat const textOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
     //dfloat const iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
 
-    if(!G_Ruleset_Deathmatch()) return;
+    if(!gfw_Rule(deathmatch)) return;
 #if __JHERETIC__ || __JHEXEN__
     if(Hu_InventoryIsOpen(frags->player())) return;
 #endif
@@ -227,7 +227,7 @@ void SBarFragsWidget_UpdateGeometry(guidata_frags_t *frags)
 
     Rect_SetWidthHeight(&frags->geometry(), 0, 0);
 
-    if(!G_Ruleset_Deathmatch()) return;
+    if(!gfw_Rule(deathmatch)) return;
 #if __JHERETIC__ || __JHEXEN__
     if(Hu_InventoryIsOpen(frags->player())) return;
 #endif

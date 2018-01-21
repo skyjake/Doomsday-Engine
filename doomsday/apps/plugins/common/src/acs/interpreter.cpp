@@ -827,7 +827,7 @@ namespace internal
         {
             gametype = 0; // singleplayer
         }
-        else if(COMMON_GAMESESSION->rules().deathmatch)
+        else if(gfw_Rule(deathmatch))
         {
             gametype = 2; // deathmatch
         }
@@ -842,7 +842,7 @@ namespace internal
 
     ACS_COMMAND(GameSkill)
     {
-        interp.locals.push((int)COMMON_GAMESESSION->rules().skill);
+        interp.locals.push((int)gfw_Rule(skill));
         return Continue;
     }
 
@@ -1131,7 +1131,7 @@ void Interpreter::think()
 
 System &Interpreter::scriptSys() const
 {
-    return COMMON_GAMESESSION->acsSystem();
+    return gfw_Session()->acsSystem();
 }
 
 Script &Interpreter::script() const

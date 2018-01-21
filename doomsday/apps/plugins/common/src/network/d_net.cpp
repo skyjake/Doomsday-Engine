@@ -215,15 +215,15 @@ int D_NetServerStarted(int before)
     de::Uri mapUri = *reinterpret_cast<de::Uri const *>(Con_GetUri("server-game-map"));
     if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
 
-    GameRuleset rules(COMMON_GAMESESSION->rules()); // Make a copy of the current rules.
-    rules.skill = skillmode_t(cfg.common.netSkill);
+    GameRules rules(gfw_Session()->rules()); // Make a copy of the current rules.
+    GameRules_Set(rules, skill, skillmode_t(cfg.common.netSkill));
 
-    COMMON_GAMESESSION->end();
+    gfw_Session()->end();
 
     try
     {
         // First try the configured map.
-        COMMON_GAMESESSION->begin(rules, episodeId, mapUri);
+        gfw_Session()->begin(rules, episodeId, mapUri);
     }
     catch(Error const &er)
     {
@@ -233,7 +233,7 @@ int D_NetServerStarted(int before)
         LOG_INFO("Using the default map (%s) to start the server due to failure to load the configured map")
                 << mapUri;
 
-        COMMON_GAMESESSION->begin(rules, episodeId, mapUri);
+        gfw_Session()->begin(rules, episodeId, mapUri);
     }
 
     G_SetGameAction(GA_NONE); /// @todo Necessary?
@@ -243,7 +243,7 @@ int D_NetServerStarted(int before)
 
 int D_NetServerClose(int before)
 {
-    if(!before)
+    if (!before)
     {
         P_ResetPlayerRespawnClasses();
 
@@ -251,16 +251,15 @@ int D_NetServerClose(int before)
         /// @todo fixme: "normal" is defined by the game rules config which may
         /// be changed from the command line (e.g., -fast, -nomonsters).
         /// In order to "restore normal" this logic is insufficient.
-        GameRuleset newRules(COMMON_GAMESESSION->rules());
-        newRules.deathmatch    = false;
-        newRules.noMonsters    = false;
+        GameRules newRules(gfw_Session()->rules());
+        GameRules_Set(newRules, deathmatch, 0);
+        GameRules_Set(newRules, noMonsters, false);
 #if __JHEXEN__
-        newRules.randomClasses = false;
+        GameRules_Set(newRules, randomClasses, false);
 #endif
-        COMMON_GAMESESSION->applyNewRules(newRules);
+        gfw_Session()->applyNewRules(newRules);
 
         D_NetMessage(CONSOLEPLAYER, "NETGAME ENDS");
-
         D_NetClearBuffer();
     }
     return true;
@@ -295,15 +294,15 @@ int D_NetDisconnect(int before)
     D_NetClearBuffer();
 
     // Start demo.
-    COMMON_GAMESESSION->endAndBeginTitle();
+    gfw_Session()->endAndBeginTitle();
 
-    /*GameRuleset newRules(COMMON_GAMESESSION->rules());
+    /*GameRules newRules(gfw_Session()->rules());
     newRules.deathmatch    = false;
     newRules.noMonsters    = false;
 #if __JHEXEN__
     newRules.randomClasses = false;
 #endif
-    COMMON_GAMESESSION->applyNewRules(newRules);*/
+    gfw_Session()->applyNewRules(newRules);*/
 
     return true;
 }
@@ -443,14 +442,14 @@ int D_NetWorldEvent(int type, int parm, void *data)
             G_DemoEnds();
 
         // Restore normal game state.
-        COMMON_GAMESESSION->rules().deathmatch = false;
-        COMMON_GAMESESSION->rules().noMonsters = false;
+        gfw_Rule(deathmatch) = false;
+        gfw_Session()->rules().noMonsters = false;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        COMMON_GAMESESSION->rules().respawnMonsters = false;
+        gfw_Rule(espawnMonsters) = false;
 #endif
 
 #if __JHEXEN__
-        COMMON_GAMESESSION->rules().randomClasses = false;
+        gfw_Session()->rules().randomClasses = false;
 #endif
         break;
 #endif
@@ -637,7 +636,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
     case GPT_DISMISS_HUDS:
         NetCl_DismissHUDs(reader);
         break;
-            
+
     default:
         App_Log(DE2_NET_WARNING, "Game received unknown packet (type:%i)", type);
     }

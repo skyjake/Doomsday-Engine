@@ -75,7 +75,7 @@ D_CMD(CheatGod)
             NetCl_CheatRequest("god");
         }
         else if((IS_NETGAME && !netSvAllowCheats) 
-                || COMMON_GAMESESSION->rules().skill == SM_HARD)
+                || gfw_Rule(skill) == SM_HARD)
         {
             return false;
         }
@@ -125,7 +125,7 @@ D_CMD(CheatNoClip)
             NetCl_CheatRequest("noclip");
         }
         else if((IS_NETGAME && !netSvAllowCheats)
-                || COMMON_GAMESESSION->rules().skill == SM_HARD)
+                || gfw_Rule(skill) == SM_HARD)
         {
             return false;
         }
@@ -317,7 +317,7 @@ D_CMD(CheatGive)
     {
         return false;
     }
-    else if(COMMON_GAMESESSION->rules().skill == SM_HARD) 
+    else if(gfw_Rule(skill) == SM_HARD) 
     {
         return false;
     }
@@ -488,7 +488,7 @@ static void printDebugInfo(player_t *plr)
     {
         char textBuffer[256];
         sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
-                            COMMON_GAMESESSION->mapUri().path().toUtf8().constData(),
+                            gfw_Session()->mapUri().path().toUtf8().constData(),
                             plrMo->origin[VX], plrMo->origin[VY], plrMo->origin[VZ]);
 
         P_SetMessageWithFlags(plr, textBuffer, LMF_NO_HIDE);

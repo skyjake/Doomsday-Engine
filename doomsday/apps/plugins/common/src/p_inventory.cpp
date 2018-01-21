@@ -190,7 +190,7 @@ static dd_bool giveItem(playerinventory_t *inv, inventoryitemtype_t type)
 #if __JHEXEN__
     // Can't carry more than 1 puzzle item in coop netplay.
     if(count && type >= IIT_FIRSTPUZZITEM && IS_NETGAME &&
-       !COMMON_GAMESESSION->rules().deathmatch)
+       !gfw_Rule(deathmatch))
     {
         return false;
     }

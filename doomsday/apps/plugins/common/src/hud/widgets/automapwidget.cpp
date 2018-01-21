@@ -916,7 +916,7 @@ DENG2_PIMPL(AutomapWidget)
         for (dint i = 0; i < MAXPLAYERS; ++i)
         {
             // Do not show markers for other players in deathmatch.
-            if (COMMON_GAMESESSION->rules().deathmatch && i != self().player())
+            if (gfw_Rule(deathmatch) && i != self().player())
             {
                 continue;
             }

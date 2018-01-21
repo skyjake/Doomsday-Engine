@@ -216,12 +216,12 @@ bool System::deferScriptStart(de::Uri const &mapUri, dint scriptNumber,
     Script::Args const &scriptArgs)
 {
     DENG2_ASSERT(!IS_CLIENT);
-    DENG2_ASSERT(COMMON_GAMESESSION->mapUri() != mapUri);
+    DENG2_ASSERT(gfw_Session()->mapUri() != mapUri);
     LOG_AS("acs::System");
 
     // Don't defer tasks in deathmatch.
     /// @todo Why the restriction? -ds
-    if(COMMON_GAMESESSION->rules().deathmatch)
+    if (gfw_Rule(deathmatch))
         return true;
 
     // Don't allow duplicates.
@@ -335,7 +335,7 @@ void System::worldSystemMapChanged()
 D_CMD(InspectACScript)
 {
     DENG2_UNUSED2(src, argc);
-    System &scriptSys       = COMMON_GAMESESSION->acsSystem();
+    System &scriptSys       = gfw_Session()->acsSystem();
     dint const scriptNumber = String(argv[1]).toInt();
 
     if(!scriptSys.hasScript(scriptNumber))
@@ -359,7 +359,7 @@ D_CMD(InspectACScript)
 D_CMD(ListACScripts)
 {
     DENG2_UNUSED3(src, argc, argv);
-    System &scriptSys = COMMON_GAMESESSION->acsSystem();
+    System &scriptSys = gfw_Session()->acsSystem();
 
     if(scriptSys.scriptCount())
     {

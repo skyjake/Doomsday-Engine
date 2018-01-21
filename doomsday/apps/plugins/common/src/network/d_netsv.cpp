@@ -100,17 +100,17 @@ static int oldClasses[MAXPLAYERS];
 
 void NetSv_UpdateGameConfigDescription()
 {
-    if(IS_CLIENT) return;
+    if (IS_CLIENT) return;
 
-    GameRuleset const &gameRules = COMMON_GAMESESSION->rules();
+    GameRules const &gameRules = gfw_Session()->rules();
 
-    QByteArray str = "skill" + QByteArray::number(gameRules.skill + 1);
+    QByteArray str = "skill" + QByteArray::number(gameRules.values.skill + 1);
 
-    if(gameRules.deathmatch > 1)
+    if (gameRules.values.deathmatch > 1)
     {
-        str += " dm" + QByteArray::number(gameRules.deathmatch);
+        str += " dm" + QByteArray::number(gameRules.values.deathmatch);
     }
-    else if(gameRules.deathmatch)
+    else if (gameRules.values.deathmatch)
     {
         str += " dm";
     }
@@ -119,18 +119,18 @@ void NetSv_UpdateGameConfigDescription()
         str += " coop";
     }
 
-    if(gameRules.noMonsters)
+    if (gameRules.values.noMonsters)
     {
         str += " nomonst";
     }
 #if !__JHEXEN__
-    if(gameRules.respawnMonsters)
+    if (gameRules.values.respawnMonsters)
     {
         str += " respawn";
     }
 #endif
 
-    if(cfg.common.jumpEnabled)
+    if (cfg.common.jumpEnabled)
     {
         str += " jump";
     }
@@ -354,7 +354,7 @@ static de::Uri NetSv_ScanCycle(int index, maprule_t *rules = 0)
 
 #if __JHEXEN__
                     // In Hexen map numbers must be translated (urgh...).
-                    de::Uri mapUri = TranslateMapWarpNumber(COMMON_GAMESESSION->episodeId(), map);
+                    de::Uri mapUri = TranslateMapWarpNumber(gfw_Session()->episodeId(), map);
 #else
                     de::Uri mapUri = G_ComposeMapUri(episode, map);
 #endif
@@ -563,7 +563,7 @@ void NetSv_NewPlayerEnters(int plrNum)
     NetSv_ResetPlayerFrags(plrNum);
 
     // Spawn the player into the world.
-    if(COMMON_GAMESESSION->rules().deathmatch)
+    if(gfw_Rule(deathmatch))
     {
         G_DeathMatchSpawnPlayer(plrNum);
     }
@@ -572,7 +572,7 @@ void NetSv_NewPlayerEnters(int plrNum)
         playerclass_t pClass = P_ClassForPlayerWhenRespawning(plrNum, false);
         playerstart_t const *start;
 
-        if((start = P_GetPlayerStart(COMMON_GAMESESSION->mapEntryPoint(), plrNum, false)))
+        if((start = P_GetPlayerStart(gfw_Session()->mapEntryPoint(), plrNum, false)))
         {
             mapspot_t const *spot = &mapSpots[start->spot];
 
@@ -661,9 +661,9 @@ void NetSv_SendGameState(int flags, int to)
 {
     if(!IS_NETWORK_SERVER) return;
 
-    AutoStr *gameId    = AutoStr_FromTextStd(COMMON_GAMESESSION->gameId().toLatin1().constData());
-    AutoStr *episodeId = AutoStr_FromTextStd(COMMON_GAMESESSION->episodeId().toLatin1().constData());
-    de::Uri mapUri     = COMMON_GAMESESSION->mapUri();
+    AutoStr *gameId    = AutoStr_FromTextStd(gfw_Session()->gameId().toLatin1().constData());
+    AutoStr *episodeId = AutoStr_FromTextStd(gfw_Session()->episodeId().toLatin1().constData());
+    de::Uri mapUri     = gfw_Session()->mapUri();
 
     // Print a short message that describes the game state.
     LOG_NET_NOTE("Sending game setup: %s %s %s %s")
@@ -693,17 +693,17 @@ void NetSv_SendGameState(int flags, int to)
         // Old map number. Presently unused.
         Writer_WriteByte(writer, 0);
 
-        Writer_WriteByte(writer, (COMMON_GAMESESSION->rules().deathmatch & 0x3)
-            | (!COMMON_GAMESESSION->rules().noMonsters? 0x4 : 0)
+        Writer_WriteByte(writer, (gfw_Rule(deathmatch) & 0x3)
+            | (!gfw_Rule(noMonsters)? 0x4 : 0)
 #if !__JHEXEN__
-            | (COMMON_GAMESESSION->rules().respawnMonsters? 0x8 : 0)
+            | (gfw_Rule(respawnMonsters)? 0x8 : 0)
 #else
             | 0
 #endif
             | (cfg.common.jumpEnabled? 0x10 : 0));
 
         // Note that SM_NOTHINGS will result in a value of '7'.
-        Writer_WriteByte(writer, COMMON_GAMESESSION->rules().skill & 0x7);
+        Writer_WriteByte(writer, gfw_Rule(skill) & 0x7);
         Writer_WriteFloat(writer, (float)P_GetGravity());
 
         if(flags & GSF_CAMERA_INIT)
@@ -1136,7 +1136,7 @@ void NetSv_KillMessage(player_t *killer, player_t *fragged, dd_bool stomping)
 {
 #if __JDOOM__ || __JDOOM64__
     if(!cfg.killMessages) return;
-    if(!COMMON_GAMESESSION->rules().deathmatch) return;
+    if(!gfw_Rule(deathmatch)) return;
 
     char buf[500];
     buf[0] = 0;

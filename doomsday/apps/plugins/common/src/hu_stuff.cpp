@@ -349,7 +349,7 @@ int scoreInfoCompare(void const *a_, void const *b_)
     if(a->kills > b->kills) return -1;
     if(b->kills > a->kills) return 1;
 
-    if(COMMON_GAMESESSION->rules().deathmatch)
+    if(gfw_Rule(deathmatch))
     {
         // In deathmatch, suicides affect your place on the scoreboard.
         if(a->suicides < b->suicides) return -1;
@@ -424,7 +424,7 @@ static int populateScoreInfo(scoreinfo_t* scoreBoard, int maxPlayers, int player
         }
 #endif
 
-        if(COMMON_GAMESESSION->rules().deathmatch)
+        if(gfw_Rule(deathmatch))
         {
             for(int j = 0; j < maxPlayers; ++j)
             {
@@ -682,11 +682,11 @@ static void drawMapMetaData(float x, float y, float alpha)
 {
 #define BORDER              2
 
-    de::String title = G_MapTitle(COMMON_GAMESESSION->mapUri());
+    de::String title = G_MapTitle(gfw_Session()->mapUri());
     if(title.isEmpty()) title = "Unnamed";
 
     char buf[256];
-    dd_snprintf(buf, 256, "%s - %s", COMMON_GAMESESSION->rules().description().toLatin1().constData(),
+    dd_snprintf(buf, 256, "%s - %s", gfw_Session()->rules().description().toLatin1().constData(),
                                      title.toLatin1().constData());
 
     FR_SetColorAndAlpha(1, 1, 1, alpha);
@@ -1362,7 +1362,7 @@ dd_bool Hu_IsStatusBarVisible(int player)
 int Hu_MapTitleFirstLineHeight()
 {
     int y = 0;
-    de::Uri titleImage = G_MapTitleImage(COMMON_GAMESESSION->mapUri());
+    de::Uri titleImage = G_MapTitleImage(gfw_Session()->mapUri());
     if(!titleImage.isEmpty())
     {
         if(!titleImage.scheme().compareWithoutCase("Patches"))
@@ -1381,7 +1381,7 @@ int Hu_MapTitleFirstLineHeight()
 
 dd_bool Hu_IsMapTitleAuthorVisible()
 {
-    de::String const author = G_MapAuthor(COMMON_GAMESESSION->mapUri(), CPP_BOOL(cfg.common.hideIWADAuthor));
+    de::String const author = G_MapAuthor(gfw_Session()->mapUri(), CPP_BOOL(cfg.common.hideIWADAuthor));
     return !author.isEmpty() && (actualMapTime <= 6 * TICSPERSEC);
 }
 
@@ -1400,7 +1400,7 @@ int Hu_MapTitleHeight(void)
 
 void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 {
-    de::Uri const mapUri    = COMMON_GAMESESSION->mapUri();
+    de::Uri const mapUri    = gfw_Session()->mapUri();
     de::String const title  = G_MapTitle(mapUri);
     de::String const author = G_MapAuthor(mapUri, CPP_BOOL(cfg.common.hideIWADAuthor));
 

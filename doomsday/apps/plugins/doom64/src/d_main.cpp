@@ -333,7 +333,7 @@ void D_PostInit()
     }
 
     // Get skill / episode / map from parms.
-    ::defaultGameRules.skill = /*startSkill =*/ SM_MEDIUM;
+    gfw_SetDefaultRule(skill, /*startSkill =*/ SM_MEDIUM);
 
     if(cmdLine.check("-altdeath"))
     {
@@ -345,11 +345,11 @@ void D_PostInit()
     }
 
     // Apply these rules.
-    ::defaultGameRules.noMonsters      = cmdLine.check("-nomonsters")? true : false;
-    ::defaultGameRules.respawnMonsters = cmdLine.check("-respawn")   ? true : false;
-    ::defaultGameRules.fast            = cmdLine.check("-fast")      ? true : false;
+    gfw_SetDefaultRule(noMonsters     , cmdLine.check("-nomonsters")? true : false);
+    gfw_SetDefaultRule(respawnMonsters, cmdLine.check("-respawn")   ? true : false);
+    gfw_SetDefaultRule(fast           , cmdLine.check("-fast")      ? true : false);
 
-    if(::defaultGameRules.deathmatch)
+    if (gfw_DefaultRule(deathmatch))
     {
         if(int arg = cmdLine.check("-timer", 1))
         {
@@ -392,10 +392,10 @@ void D_PostInit()
     }
 
     // Change the default skill mode?
-    if(int arg = cmdLine.check("-skill", 1))
+    if (auto arg = cmdLine.check("-skill", 1))
     {
-        int skillNumber = cmdLine.at(arg + 1).toInt();
-        ::defaultGameRules.skill = (skillmode_t)(skillNumber > 0? skillNumber - 1 : skillNumber);
+        int const skillNumber = arg.params.first().toInt();
+        gfw_SetDefaultRule(skill, skillmode_t(skillNumber > 0? skillNumber - 1 : skillNumber));
     }
 
     G_AutoStartOrBeginTitleLoop();

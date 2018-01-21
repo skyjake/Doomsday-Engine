@@ -68,8 +68,8 @@ static dd_bool giveOneAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
     }
 
     // Give extra rounds at easy/nightmare skill levels.
-    if(G_Ruleset_Skill() == SM_BABY ||
-       G_Ruleset_Skill() == SM_NIGHTMARE)
+    if(gfw_Rule(skill) == SM_BABY ||
+       gfw_Rule(skill) == SM_NIGHTMARE)
     {
         numRounds += numRounds >> 1;
     }
@@ -147,7 +147,7 @@ static dd_bool giveOneWeapon(player_t *plr, weapontype_t weaponType)
         plr->update |= PSF_OWNED_WEAPONS;
 
         // Animate a pickup bonus flash?
-        if(IS_NETGAME && !G_Ruleset_Deathmatch())
+        if(IS_NETGAME && !gfw_Rule(deathmatch))
         {
             plr->bonusCount += BONUSADD;
         }
@@ -429,7 +429,7 @@ static void setDormantItem(mobj_t* mo)
 {
     mo->flags &= ~MF_SPECIAL;
 
-    if(G_Ruleset_Deathmatch() && (mo->type != MT_ARTIINVULNERABILITY) &&
+    if(gfw_Rule(deathmatch) && (mo->type != MT_ARTIINVULNERABILITY) &&
        (mo->type != MT_ARTIINVISIBILITY))
     {
         P_MobjChangeState(mo, S_DORMANTARTI1);
@@ -555,7 +555,7 @@ static dd_bool pickupWeapon(player_t *plr, weapontype_t weaponType,
     if(plr->weapons[weaponType].owned)
     {
         // Leave placed weapons forever on net games.
-        if(IS_NETGAME && !G_Ruleset_Deathmatch())
+        if(IS_NETGAME && !gfw_Rule(deathmatch))
             return false;
     }
 
@@ -573,7 +573,7 @@ static dd_bool pickupWeapon(player_t *plr, weapontype_t weaponType,
     }
 
     // Leave placed weapons forever on net games.
-    if(IS_NETGAME && !G_Ruleset_Deathmatch())
+    if(IS_NETGAME && !gfw_Rule(deathmatch))
         return false;
 
     return pickedWeapon;
@@ -956,7 +956,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         break;
 
     default:
-        if(G_Ruleset_Deathmatch() && !(special->flags & MF_DROPPED))
+        if(gfw_Rule(deathmatch) && !(special->flags & MF_DROPPED))
         {
             special->flags &= ~MF_SPECIAL;
             special->flags2 |= MF2_DONTDRAW;
@@ -1204,7 +1204,7 @@ static void autoUseHealth(player_t *player, int saveHealth)
     if(!player->plr->mo) return;
 
     /// @todo Do this in the inventory code?
-    if(G_Ruleset_Skill() == SM_BABY && normalCount * 25 >= saveHealth)
+    if(gfw_Rule(skill) == SM_BABY && normalCount * 25 >= saveHealth)
     {
         // Use quartz flasks.
         count = (saveHealth + 24) / 25;
@@ -1224,7 +1224,7 @@ static void autoUseHealth(player_t *player, int saveHealth)
             P_InventoryTake(plrnum, IIT_SUPERHEALTH, false);
         }
     }
-    else if(G_Ruleset_Skill() == SM_BABY &&
+    else if(gfw_Rule(skill) == SM_BABY &&
             superCount * 100 + normalCount * 25 >= saveHealth)
     {
         // Use mystic urns and quartz flasks.
@@ -1292,7 +1292,7 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         if(source && source->player && source->player != target->player)
         {
             // Co-op damage disabled?
-            if(IS_NETGAME && !G_Ruleset_Deathmatch() && cfg.noCoopDamage)
+            if(IS_NETGAME && !gfw_Rule(deathmatch) && cfg.noCoopDamage)
                 return 0;
 
             // Same color, no damage?
@@ -1314,7 +1314,7 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     }
 
     player = target->player;
-    if(player && G_Ruleset_Skill() == SM_BABY)
+    if(player && gfw_Rule(skill) == SM_BABY)
         damage /= 2; // Take half damage in trainer mode.
 
     // Use the cvar damage multiplier netMobDamageModifier only if the
@@ -1542,7 +1542,7 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         }
 
         if(damage >= player->health &&
-           (G_Ruleset_Skill() == SM_BABY || G_Ruleset_Deathmatch()) &&
+           (gfw_Rule(skill) == SM_BABY || gfw_Rule(deathmatch)) &&
            !player->morphTics)
         {
             // Try to use some inventory health.

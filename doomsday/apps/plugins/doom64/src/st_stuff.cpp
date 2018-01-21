@@ -352,7 +352,7 @@ static void initAutomapForCurrentMap(AutomapWidget& map)
     }
 
     // Enable keyboard guide for "baby" mode
-    if (G_Ruleset_Skill() == SM_BABY && cfg.common.automapBabyKeys)
+    if (gfw_Rule(skill) == SM_BABY && cfg.common.automapBabyKeys)
     {
         map.setFlags(map.flags() | AWF_SHOW_KEYS);
     }

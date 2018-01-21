@@ -345,14 +345,14 @@ static common::GameSession::VisitedMaps visitedMaps()
 {
     // Newer versions of the savegame format include a breakdown of the maps previously visited
     // during the current game session.
-    if(COMMON_GAMESESSION->allVisitedMaps().isEmpty())
+    if(gfw_Session()->allVisitedMaps().isEmpty())
     {
         // For backward compatible intermission behavior we'll have to use a specially prepared
         // version of this information, using the original map progression assumptions.
         if(!(gameModeBits & GM_ANY_DOOM2))
         {
             bool isNumber;
-            int oldEpisodeNum = COMMON_GAMESESSION->episodeId().toInt(&isNumber) - 1; // 1-based
+            int oldEpisodeNum = gfw_Session()->episodeId().toInt(&isNumber) - 1; // 1-based
             DENG2_ASSERT(isNumber);
             DENG2_UNUSED(isNumber);
 
@@ -372,7 +372,7 @@ static common::GameSession::VisitedMaps visitedMaps()
             return visited.toList();
         }
     }
-    return COMMON_GAMESESSION->allVisitedMaps();
+    return gfw_Session()->allVisitedMaps();
 }
 
 static void drawBackground()
@@ -382,7 +382,7 @@ static void drawBackground()
 
     GL_DrawPatch(pBackground, Vector2i(0, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
 
-    if(Animations const *anims = animationsForEpisode(COMMON_GAMESESSION->episodeId()))
+    if(Animations const *anims = animationsForEpisode(gfw_Session()->episodeId()))
     {
         FR_SetFont(FID(GF_FONTB));
         FR_LoadDefaultAttrib();
@@ -531,7 +531,7 @@ static void drawPatchIfFits(patchid_t patchId, Vector2i const &origin)
  */
 static void beginAnimations()
 {
-    Animations const *anims = animationsForEpisode(COMMON_GAMESESSION->episodeId());
+    Animations const *anims = animationsForEpisode(gfw_Session()->episodeId());
     if(!anims) return;
 
     for(int i = 0; i < anims->count(); ++i)
@@ -565,7 +565,7 @@ static void beginAnimations()
 
 static void animateBackground()
 {
-    Animations const *anims = animationsForEpisode(COMMON_GAMESESSION->episodeId());
+    Animations const *anims = animationsForEpisode(gfw_Session()->episodeId());
     if(!anims) return;
 
     for(int i = 0; i < anims->count(); ++i)
@@ -656,7 +656,7 @@ static void tickShowNextMap()
  */
 static void drawLocationMarks()
 {
-    Locations const *locations = locationsForEpisode(COMMON_GAMESESSION->episodeId());
+    Locations const *locations = locationsForEpisode(gfw_Session()->episodeId());
     if(!locations) return;
 
     DGL_Enable(DGL_TEXTURE_2D);
@@ -1185,7 +1185,7 @@ static void initShowStats()
 
 static void tickShowStats()
 {
-    if(G_Ruleset_Deathmatch())
+    if(gfw_Rule(deathmatch))
     {
         updateDeathmatchStats();
         return;
@@ -1303,7 +1303,7 @@ static void tickShowStats()
 
 static void drawStats()
 {
-    if(G_Ruleset_Deathmatch())
+    if(gfw_Rule(deathmatch))
     {
         drawDeathmatchStats();
     }
@@ -1380,7 +1380,7 @@ void IN_Ticker()
 
 static void loadData()
 {
-    String const episodeId = COMMON_GAMESESSION->episodeId();
+    String const episodeId = gfw_Session()->episodeId();
 
     // Determine which patch to use for the background.
     pBackground = R_DeclarePatch(backgroundPatchForEpisode(episodeId).toUtf8().constData());
@@ -1520,7 +1520,7 @@ void IN_Begin(wbstartstruct_t const &wbstartstruct)
         }
     }
 
-    if(G_Ruleset_Deathmatch())
+    if(gfw_Rule(deathmatch))
     {
         initDeathmatchStats();
         beginAnimations();

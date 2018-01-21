@@ -40,6 +40,7 @@
 #include "r_common.h"
 #include "thinkerinfo.h"
 #include "gamesession.h"
+#include "acs/system.h"
 
 namespace internal
 {
@@ -675,7 +676,7 @@ DENG2_PIMPL(MapStateReader)
     {
 #if __JHEXEN__
         beginSegment(ASEG_SCRIPTS);
-        COMMON_GAMESESSION->acsSystem().readMapState(thisPublic);
+        gfw_Session()->acsSystem().readMapState(thisPublic);
         // endSegment();
 #endif
     }

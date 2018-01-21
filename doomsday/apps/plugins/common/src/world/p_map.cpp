@@ -195,7 +195,7 @@ static int PIT_StompThing(mobj_t *mo, void *context)
             return true;
 #elif __JDOOM__
         // Monsters only stomp on a boss map.
-        if(!Mobj_IsPlayer(parm.stompMobj) && COMMON_GAMESESSION->mapUri().path() != "MAP30")
+        if(!Mobj_IsPlayer(parm.stompMobj) && gfw_Session()->mapUri().path() != "MAP30")
             return true;
 #endif
     }
@@ -479,7 +479,7 @@ static int PIT_CheckThing(mobj_t *thing, void * /*context*/)
         {
             if((thing->flags & MF_SHOOTABLE) && thing != tmThing->target)
             {
-                if(IS_NETGAME && !COMMON_GAMESESSION->rules().deathmatch && thing->player)
+                if(IS_NETGAME && !gfw_Rule(deathmatch) && thing->player)
                 {
                     return false; // don't attack other co-op players
                 }
@@ -2065,7 +2065,7 @@ static int PTR_AimTraverse(Intercept const *icpt, void * /*context*/)
 
 #if __JDOOM__ || __JHEXEN__ || __JDOOM64__
     if(Mobj_IsPlayer(shooterThing) && Mobj_IsPlayer(th) &&
-       IS_NETGAME && !COMMON_GAMESESSION->rules().deathmatch)
+       IS_NETGAME && !gfw_Rule(deathmatch))
     {
         // In co-op, players don't aim at fellow players (although manually aiming is
         // always possible).
@@ -3249,11 +3249,11 @@ static int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
         }
 
         // A known ACScript?
-        if(COMMON_GAMESESSION->acsSystem().hasScript(xline->arg2))
+        if(gfw_Session()->acsSystem().hasScript(xline->arg2))
         {
             /// @todo fixme: Really interpret the first byte of xline_t::flags as a
             /// script argument? (I wonder if any scripts rely on this). -ds
-            COMMON_GAMESESSION->acsSystem()
+            gfw_Session()->acsSystem()
                     .script(xline->arg2)
                         .start(acs::Script::Args(&xline->arg3, 4/*3*/), parm.useMobj,
                                icpt->line, 0);
@@ -3281,11 +3281,11 @@ static int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
         }
 
         // A known ACScript?
-        if(COMMON_GAMESESSION->acsSystem().hasScript(mob.args[1]))
+        if(gfw_Session()->acsSystem().hasScript(mob.args[1]))
         {
             /// @todo fixme: Really interpret the first byte of mobj_t::turnTime as a
             /// script argument? (I wonder if any scripts rely on this). -ds
-            COMMON_GAMESESSION->acsSystem()
+            gfw_Session()->acsSystem()
                     .script(mob.args[1])
                         .start(acs::Script::Args(&mob.args[2], 4/*3*/), parm.useMobj,
                                nullptr, 0);

@@ -128,7 +128,7 @@ void guidata_weaponslot_t::draw(Vector2i const &offset) const
     float const textOpacity = (activeHud == 0? 1 : uiRendState->pageAlpha * cfg.common.statusbarCounterAlpha);
     //float const iconOpacity = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.common.statusbarCounterAlpha);
 
-    if(G_Ruleset_Deathmatch()) return;
+    if(gfw_Rule(deathmatch)) return;
     if(ST_AutomapIsOpen(player()) && cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
@@ -165,7 +165,7 @@ void guidata_weaponslot_t::updateGeometry()
 {
     Rect_SetWidthHeight(&geometry(), 0, 0);
 
-    if(G_Ruleset_Deathmatch()) return;
+    if(gfw_Rule(deathmatch)) return;
     if(ST_AutomapIsOpen(player()) && cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[player()].plr->mo) && Get(DD_PLAYBACK)) return;
 

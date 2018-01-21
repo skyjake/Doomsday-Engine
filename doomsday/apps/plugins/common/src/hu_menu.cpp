@@ -3384,8 +3384,8 @@ static void Hu_MenuInitNewGame(bool confirmed)
     cfg.playerClass[CONSOLEPLAYER] = playerclass_t(mnPlrClass);
 #endif
 
-    GameRuleset newRules(defaultGameRules);
-    newRules.skill = mnSkillmode;
+    GameRules newRules(defaultGameRules);
+    GameRules_Set(newRules, skill, mnSkillmode);
 
     Record const &episodeDef = Defs().episodes.find("id", mnEpisode);
     G_SetGameActionNewSession(newRules, mnEpisode, de::makeUri(episodeDef.gets("startMap")));

@@ -86,7 +86,7 @@ void C_DECL A_PotteryExplode(mobj_t* actor)
     if(actor->args[0])
     {
         // Spawn an item.
-        if(!G_Ruleset_NoMonsters() ||
+        if(!gfw_Rule(noMonsters) ||
            !(MOBJINFO[TranslateThingType[actor->args[0]]].
              flags & MF_COUNTKILL))
         {
@@ -858,7 +858,7 @@ void C_DECL A_SoAExplode(mobj_t* actor)
     if(actor->args[0])
     {
         // Spawn an item.
-        if(!G_Ruleset_NoMonsters() ||
+        if(!gfw_Rule(noMonsters) ||
            !(MOBJINFO[TranslateThingType[actor->args[0]]].
              flags & MF_COUNTKILL))
         {

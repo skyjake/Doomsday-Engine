@@ -210,12 +210,12 @@ static common::GameSession::VisitedMaps visitedMaps()
 {
     // Newer versions of the savegame format include a breakdown of the maps previously visited
     // during the current game session.
-    if(COMMON_GAMESESSION->allVisitedMaps().isEmpty())
+    if(gfw_Session()->allVisitedMaps().isEmpty())
     {
         // For backward compatible intermission behavior we'll have to use a specially prepared
         // version of this information, using the original map progression assumptions.
         bool isNumber;
-        int oldEpisodeNum = COMMON_GAMESESSION->episodeId().toInt(&isNumber) - 1; // 1-based
+        int oldEpisodeNum = gfw_Session()->episodeId().toInt(&isNumber) - 1; // 1-based
         DENG2_ASSERT(isNumber);
         DENG2_UNUSED(isNumber);
 
@@ -234,7 +234,7 @@ static common::GameSession::VisitedMaps visitedMaps()
         }
         return visited.toList();
     }
-    return COMMON_GAMESESSION->allVisitedMaps();
+    return gfw_Session()->allVisitedMaps();
 }
 
 void IN_End()
@@ -311,7 +311,7 @@ static void drawEnteringTitle()
  */
 static void drawLocationMarks(bool drawYouAreHere = false, bool flashCurrent = true)
 {
-    Locations const *locations = locationsForEpisode(COMMON_GAMESESSION->episodeId());
+    Locations const *locations = locationsForEpisode(gfw_Session()->episodeId());
     if(!locations) return;
 
     DGL_Enable(DGL_TEXTURE_2D);
@@ -931,7 +931,7 @@ void IN_Ticker()
 
 static void loadData()
 {
-    String const episodeId = COMMON_GAMESESSION->episodeId();
+    String const episodeId = gfw_Session()->episodeId();
 
     // Determine which patch to use for the background.
     pBackground = R_DeclarePatch(backgroundPatchForEpisode(episodeId).toUtf8().constData());
@@ -1053,7 +1053,7 @@ static void initVariables(wbstartstruct_t const &wbstartstruct)
     advanceState    = false;
     interTime       = 0;
     oldInterTime    = 0;
-    haveLocationMap = locationsForEpisode(COMMON_GAMESESSION->episodeId()) != 0;
+    haveLocationMap = locationsForEpisode(gfw_Session()->episodeId()) != 0;
 }
 
 void IN_Begin(wbstartstruct_t const &wbstartstruct)
@@ -1086,7 +1086,7 @@ void IN_Begin(wbstartstruct_t const &wbstartstruct)
     {
         initShowStats();
     }
-    else if( /*IS_NETGAME && */ !COMMON_GAMESESSION->rules().deathmatch)
+    else if( /*IS_NETGAME && */ !gfw_Rule(deathmatch))
     {
         initNetgameStats();
     }

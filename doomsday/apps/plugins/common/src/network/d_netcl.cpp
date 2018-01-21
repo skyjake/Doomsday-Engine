@@ -65,20 +65,22 @@ void NetCl_UpdateGameState(reader_s *msg)
 
     byte configFlags = Reader_ReadByte(msg);
 
-    GameRuleset gsRules(COMMON_GAMESESSION->rules()); // Initialize with a copy of the current rules.
-    gsRules.deathmatch      = configFlags & 0x3;
-    gsRules.noMonsters      = !(configFlags & 0x4? true : false);
+    GameRules gsRules(gfw_Session()->rules()); // Initialize with a copy of the current rules.
+    gsRules.set(GameRules::KEY_deathmatch, configFlags & 0x3);
+    gsRules.set(GameRules::KEY_noMonsters, !(configFlags & 0x4? true : false));
 #if !__JHEXEN__
-    gsRules.respawnMonsters = (configFlags & 0x8? true : false);
+    gsRules.set(GameRules::KEY_respawnMonsters, (configFlags & 0x8? true : false));
 #endif
     /// @todo Not applied??
     //byte gsJumping          = (configFlags & 0x10? true : false);
 
-    gsRules.skill           = skillmode_t(Reader_ReadByte(msg));
+    gsRules.set(GameRules::KEY_skill, skillmode_t(Reader_ReadByte(msg)));
+    gsRules.update();
+
     // Interpret skill modes outside the normal range as "spawn no things".
-    if(gsRules.skill < SM_BABY || gsRules.skill >= NUM_SKILL_MODES)
+    if(gsRules.values.skill < SM_BABY || gsRules.values.skill >= NUM_SKILL_MODES)
     {
-        gsRules.skill       = SM_NOTHINGS;
+        gsRules.set(GameRules::KEY_skill, SM_NOTHINGS);
     }
 
     coord_t gsGravity = Reader_ReadFloat(msg);
@@ -96,10 +98,10 @@ void NetCl_UpdateGameState(reader_s *msg)
     /// @todo  Automatically load the server's game if it is available.
     /// However, note that this can only occur if the server changes its game
     /// while a netgame is running (which currently will end the netgame).
-    if(COMMON_GAMESESSION->gameId().compare(Str_Text(gsGameId)))
+    if(gfw_Session()->gameId().compare(Str_Text(gsGameId)))
     {
         LOG_NET_ERROR("Game mismatch: server's identity key (%s) is different to yours (%s)")
-                << gsGameId << COMMON_GAMESESSION->gameId();
+                << gsGameId << gfw_Session()->gameId();
         DD_Execute(false, "net disconnect");
         Uri_Delete(gsMapUri);
         return;
@@ -114,19 +116,19 @@ void NetCl_UpdateGameState(reader_s *msg)
     // Do we need to change the map?
     if(gsFlags & GSF_CHANGE_MAP)
     {
-        COMMON_GAMESESSION->end();
-        COMMON_GAMESESSION->begin(gsRules, Str_Text(gsEpisodeId),
+        gfw_Session()->end();
+        gfw_Session()->begin(gsRules, Str_Text(gsEpisodeId),
                                   *reinterpret_cast<de::Uri *>(gsMapUri),
-                                  COMMON_GAMESESSION->mapEntryPoint() /*gsMapEntrance*/);
+                                  gfw_Session()->mapEntryPoint() /*gsMapEntrance*/);
     }
     else
     {
         /// @todo Breaks session management logic; rules cannot change once the session has
         /// begun and setting the current map and/or entrance is illogical at this point.
-        DENG2_ASSERT(!Str_Compare(gsEpisodeId, COMMON_GAMESESSION->episodeId().toLatin1().constData()));
-        DENG2_ASSERT(*reinterpret_cast<de::Uri *>(gsMapUri) == COMMON_GAMESESSION->mapUri());
+        DENG2_ASSERT(!Str_Compare(gsEpisodeId, gfw_Session()->episodeId().toLatin1().constData()));
+        DENG2_ASSERT(*reinterpret_cast<de::Uri *>(gsMapUri) == gfw_Session()->mapUri());
 
-        COMMON_GAMESESSION->applyNewRules(gsRules);
+        gfw_Session()->applyNewRules(gsRules);
     }
 
     // Set gravity.

@@ -83,8 +83,8 @@ void P_MobjRemove(mobj_t *mo, dd_bool noRespawn)
         if (
 # if __JDOOM__
             // Only respawn items in deathmatch 2 and optionally in coop.
-            (COMMON_GAMESESSION->rules().deathmatch == 2 ||
-             (cfg.coopRespawnItems && IS_NETGAME && !COMMON_GAMESESSION->rules().deathmatch)) &&
+            (gfw_Rule(deathmatch) == 2 ||
+             (cfg.coopRespawnItems && IS_NETGAME && !gfw_Rule(deathmatch))) &&
 # endif /*#elif __JDOOM64__
            (spot->flags & MTF_RESPAWN) &&
 # endif*/

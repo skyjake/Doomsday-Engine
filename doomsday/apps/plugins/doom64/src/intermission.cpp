@@ -764,7 +764,7 @@ static void initShowStats()
 
 static void tickShowStats()
 {
-    if(G_Ruleset_Deathmatch())
+    if(gfw_Rule(deathmatch))
     {
         updateDeathmatchStats();
         return;
@@ -879,7 +879,7 @@ static void tickShowStats()
 
 static void drawStats()
 {
-    if(G_Ruleset_Deathmatch())
+    if(gfw_Rule(deathmatch))
     {
         drawDeathmatchStats();
     }
@@ -1077,7 +1077,7 @@ void IN_Begin(wbstartstruct_t const &wbstartstruct)
         }
     }
 
-    if(G_Ruleset_Deathmatch())
+    if(gfw_Rule(deathmatch))
     {
         initDeathmatchStats();
     }

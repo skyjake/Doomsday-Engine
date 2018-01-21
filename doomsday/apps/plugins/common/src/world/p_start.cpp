@@ -365,7 +365,7 @@ playerstart_t const *P_GetPlayerStart(uint entryPoint, int pnum, dd_bool deathma
     {
         playerstart_t const *start = &playerStarts[i];
 
-        if(start->entryPoint == COMMON_GAMESESSION->mapEntryPoint() && start->plrNum - 1 == pnum)
+        if(start->entryPoint == gfw_Session()->mapEntryPoint() && start->plrNum - 1 == pnum)
             return start;
         if(!start->entryPoint && start->plrNum - 1 == pnum)
             def = start;
@@ -546,7 +546,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
     p->viewOffset[VX] = p->viewOffset[VY] = p->viewOffset[VZ] = 0;
 
     // Give all cards in death match mode.
-    if(COMMON_GAMESESSION->rules().deathmatch)
+    if(gfw_Rule(deathmatch))
     {
 #if __JHEXEN__
         p->keys = 2047;
@@ -714,7 +714,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
     }
 
     // Spawn at random spot if in death match.
-    if(COMMON_GAMESESSION->rules().deathmatch)
+    if(gfw_Rule(deathmatch))
     {
         G_DeathMatchSpawnPlayer(plrNum);
         return;
@@ -752,7 +752,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
     int spawnFlags = 0;
     dd_bool makeCamera = false;
 
-    uint entryPoint = COMMON_GAMESESSION->mapEntryPoint();
+    uint entryPoint = gfw_Session()->mapEntryPoint();
     dd_bool foundSpot = false;
     playerstart_t const *assigned = P_GetPlayerStart(entryPoint, plrNum, false);
 
@@ -959,7 +959,7 @@ void P_SpawnPlayers()
     }
 
     // If deathmatch, randomly spawn the active players.
-    if(COMMON_GAMESESSION->rules().deathmatch)
+    if(gfw_Rule(deathmatch))
     {
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
@@ -1058,7 +1058,7 @@ void G_DeathMatchSpawnPlayer(int playerNum)
 
     playerclass_t pClass;
 #if __JHEXEN__
-    if(COMMON_GAMESESSION->rules().randomClasses)
+    if (gfw_Rule(randomClasses))
     {
         pClass = playerclass_t(P_Random() % 3);
         if(pClass == cfg.playerClass[playerNum]) // Not the same class, please.
@@ -1070,20 +1070,19 @@ void G_DeathMatchSpawnPlayer(int playerNum)
         pClass = P_ClassForPlayerWhenRespawning(playerNum, false);
     }
 
-    if(IS_CLIENT)
+    if (IS_CLIENT)
     {
-        if(G_GameState() == GS_MAP)
+        if (G_GameState() == GS_MAP)
         {
             // Anywhere will do, for now.
             spawnPlayer(playerNum, pClass, -30000, -30000, 0, 0, MSF_Z_FLOOR, false,
                         false, false);
         }
-
         return;
     }
 
     // Now let's find an available deathmatch start.
-    if(numPlayerDMStarts < 2)
+    if (numPlayerDMStarts < 2)
         Con_Error("G_DeathMatchSpawnPlayer: Error, minimum of two "
                   "(deathmatch) mapspots required for deathmatch.");
 

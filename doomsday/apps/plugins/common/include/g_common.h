@@ -31,7 +31,10 @@
 #if __cplusplus
 class SaveSlots;
 
-extern GameRuleset defaultGameRules;
+extern GameRules defaultGameRules;
+
+#define gfw_DefaultRule(name)           (defaultGameRules.values.name)
+#define gfw_SetDefaultRule(name, value) GameRules_Set(defaultGameRules, name, value)
 
 extern de::Uri nextMapUri;
 extern uint nextMapEntryPoint;
@@ -44,7 +47,7 @@ extern uint nextMapEntryPoint;
  * @param mapUri       Map identifier.
  * @param mapEntrance  Logical map entry point number.
  */
-void G_SetGameActionNewSession(GameRuleset const &rules, de::String episodeId,
+void G_SetGameActionNewSession(GameRules const &rules, de::String episodeId,
                                de::Uri const &mapUri, uint mapEntrance = 0);
 
 /**
@@ -211,18 +214,7 @@ void G_IntermissionDone(void);
 
 AutoStr *G_CurrentMapUriPath(void);
 
-int G_Ruleset_Skill();
-#if !__JHEXEN__
-byte G_Ruleset_Fast();
-#endif
-byte G_Ruleset_Deathmatch();
-byte G_Ruleset_NoMonsters();
-#if __JHEXEN__
-byte G_Ruleset_RandomClasses();
-#else
-byte G_Ruleset_RespawnMonsters();
-#endif
-void G_Ruleset_UpdateDefaults();
+void GameRules_UpdateDefaultsFromCVars();
 
 /// @todo remove me
 void G_SetGameActionMapCompletedAndSetNextMap(void);
