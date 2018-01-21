@@ -31,13 +31,13 @@
 #if __cplusplus
 class SaveSlots;
 
-extern GameRules defaultGameRules;
+GameRules &gfw_DefaultGameRules();
 
-#define gfw_DefaultRule(name)           (defaultGameRules.values.name)
-#define gfw_SetDefaultRule(name, value) GameRules_Set(defaultGameRules, name, value)
+#define gfw_DefaultRule(name)           (gfw_DefaultGameRules().values.name)
+#define gfw_SetDefaultRule(name, value) GameRules_Set(gfw_DefaultGameRules(), name, value)
 
 extern de::Uri nextMapUri;
-extern uint nextMapEntryPoint;
+extern uint    nextMapEntryPoint;
 
 /**
  * Schedule a new game session (deferred).

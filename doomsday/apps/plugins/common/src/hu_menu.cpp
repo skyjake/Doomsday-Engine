@@ -3384,7 +3384,7 @@ static void Hu_MenuInitNewGame(bool confirmed)
     cfg.playerClass[CONSOLEPLAYER] = playerclass_t(mnPlrClass);
 #endif
 
-    GameRules newRules(defaultGameRules);
+    GameRules newRules{gfw_DefaultGameRules()};
     GameRules_Set(newRules, skill, mnSkillmode);
 
     Record const &episodeDef = Defs().episodes.find("id", mnEpisode);

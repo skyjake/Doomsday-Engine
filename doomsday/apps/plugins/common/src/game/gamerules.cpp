@@ -35,17 +35,15 @@ String const GameRules::KEY_noMonsters      = "noMonsters";
 String const GameRules::KEY_respawnMonsters = "respawnMonsters";
 String const GameRules::KEY_randomClasses   = "randomClasses";
 
-static Record const builtInDefaults =
-    Record::withMembers(GameRules::KEY_skill,           2, // medium
-                        GameRules::KEY_fast,            false,
-                        GameRules::KEY_deathmatch,      0,
-                        GameRules::KEY_noMonsters,      false,
-                        GameRules::KEY_randomClasses,   false,
-                        GameRules::KEY_respawnMonsters, false);
-
 DENG2_PIMPL_NOREF(GameRules)
 {
-    Record rules { builtInDefaults };
+    Record rules {
+        Record::withMembers(GameRules::KEY_skill,           2, // medium
+                            GameRules::KEY_fast,            false,
+                            GameRules::KEY_deathmatch,      0,
+                            GameRules::KEY_noMonsters,      false,
+                            GameRules::KEY_randomClasses,   false,
+                            GameRules::KEY_respawnMonsters, false) };
 
     Impl() {}
 

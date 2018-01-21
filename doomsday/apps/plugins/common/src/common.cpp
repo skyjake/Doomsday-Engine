@@ -82,6 +82,19 @@ void *Common_GetGameAPI(char const *name)
     return nullptr;
 }
 
+GameRules &gfw_DefaultGameRules()
+{
+    static GameRules defaultGameRules;
+    return defaultGameRules;
+}
+
+void GameRules_UpdateDefaultsFromCVars()
+{
+#if !__JHEXEN__
+    gfw_SetDefaultRule(fast, cfg.common.defaultRuleFastMonsters);
+#endif
+}
+
 #ifdef __JDOOM__
 void fastMonstersChanged()
 {

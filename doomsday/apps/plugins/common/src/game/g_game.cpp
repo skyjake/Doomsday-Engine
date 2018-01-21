@@ -82,8 +82,6 @@ using namespace common;
 void R_LoadVectorGraphics();
 int Hook_DemoStop(int hookType, int val, void *parm);
 
-GameRules defaultGameRules;
-
 game_config_t cfg; // The global cfg.
 
 #if __JDOOM__ || __JDOOM64__
@@ -122,13 +120,17 @@ static SaveSlots *sslots;
 static gameaction_t gameAction;
 
 // Game action parameters:
-static GameRules gaNewSessionRules;
-static String gaNewSessionEpisodeId;
+static GameRules &G_NewSessionRules()
+{
+    static GameRules gaNewSessionRules;
+    return gaNewSessionRules;
+}
+static String  gaNewSessionEpisodeId;
 static de::Uri gaNewSessionMapUri;
-static uint gaNewSessionMapEntrance;
+static uint    gaNewSessionMapEntrance;
 
 static String gaSaveSessionSlot;
-static bool gaSaveSessionGenerateDescription = true;
+static bool   gaSaveSessionGenerateDescription = true;
 static String gaSaveSessionUserDescription;
 static String gaLoadSessionSlot;
 
@@ -147,10 +149,10 @@ void G_SetGameAction(gameaction_t newAction)
     }
 }
 
-void G_SetGameActionNewSession(GameRules const &rules, String episodeId,
-    de::Uri const &mapUri, uint mapEntrance)
+void G_SetGameActionNewSession(GameRules const &rules, String episodeId, de::Uri const &mapUri,
+                               uint mapEntrance)
 {
-    ::gaNewSessionRules       = rules; // make a copy.
+    G_NewSessionRules()       = rules;
     ::gaNewSessionEpisodeId   = episodeId;
     ::gaNewSessionMapUri      = mapUri;
     ::gaNewSessionMapEntrance = mapEntrance;
@@ -311,7 +313,7 @@ void G_CommonPreInit()
     ::quitInProgress = false;
 
     // Apply the default game rules.
-    gfw_Session()->applyNewRules(defaultGameRules = GameRules());
+    gfw_Session()->applyNewRules(gfw_DefaultGameRules() = GameRules());
 
     // Register hooks.
     Plug_AddHook(HOOK_DEMO_STOP, Hook_DemoStop);
@@ -905,7 +907,7 @@ void G_AutoStartOrBeginTitleLoop()
         // Don't brief when autostarting.
         ::briefDisabled = true;
 
-        G_SetGameActionNewSession(defaultGameRules, startEpisodeId, startMapUri);
+        G_SetGameActionNewSession(gfw_DefaultGameRules(), startEpisodeId, startMapUri);
     }
     else
     {
@@ -1355,8 +1357,10 @@ static void runGameAction()
         {
         case GA_NEWSESSION:
             gfw_Session()->end();
-            gfw_Session()->begin(::gaNewSessionRules, ::gaNewSessionEpisodeId,
-                                      ::gaNewSessionMapUri, ::gaNewSessionMapEntrance);
+            gfw_Session()->begin(G_NewSessionRules(),
+                                 ::gaNewSessionEpisodeId,
+                                 ::gaNewSessionMapUri,
+                                 ::gaNewSessionMapEntrance);
             break;
 
         case GA_LOADSESSION:
@@ -1890,13 +1894,6 @@ void G_QueueBody(mobj_t *mo)
     bodyQueueSlot++;
 }
 #endif
-
-void GameRules_UpdateDefaultsFromCVars()
-{
-#if !__JHEXEN__
-    gfw_SetDefaultRule(fast, cfg.common.defaultRuleFastMonsters);
-#endif
-}
 
 /**
  * Lookup the debriefing Finale for the current episode and map (if any).
@@ -2820,7 +2817,7 @@ D_CMD(WarpMap)
     else
     {
         // If a session is already in progress then copy the rules from it.
-        GameRules rules = (gfw_Session()->hasBegun() ? gfw_Session()->rules() : defaultGameRules);
+        GameRules rules = (gfw_Session()->hasBegun() ? gfw_Session()->rules() : gfw_DefaultGameRules());
         if (IS_DEDICATED)
         {
             // Why is this necessary to set here? Changing the rules in P_SetupMap()
