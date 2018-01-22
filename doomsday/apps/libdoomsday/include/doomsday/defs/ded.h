@@ -39,7 +39,7 @@
  * DED_Write() and DED_Read() routines.
  *
  * It is VERY important not to sort the data arrays in any way: the index numbers are
- * important. The Game DLL must be recompiled with the new constants if the order of the
+ * important. The game plugins must be recompiled with the new constants if the order of the
  * array items changes.
  */
 struct LIBDOOMSDAY_PUBLIC ded_s
