@@ -28,22 +28,22 @@ using namespace de;
  * These keys are used for serialization, so if changed, the only keys still need to be changed
  * when reading data.
  */
-String const GameRules::KEY_skill           = "skill";
-String const GameRules::KEY_fast            = "fast";
-String const GameRules::KEY_deathmatch      = "deathmatch";
-String const GameRules::KEY_noMonsters      = "noMonsters";
-String const GameRules::KEY_respawnMonsters = "respawnMonsters";
-String const GameRules::KEY_randomClasses   = "randomClasses";
+String const GameRules::VAR_skill           = "skill";
+String const GameRules::VAR_fast            = "fast";
+String const GameRules::VAR_deathmatch      = "deathmatch";
+String const GameRules::VAR_noMonsters      = "noMonsters";
+String const GameRules::VAR_respawnMonsters = "respawnMonsters";
+String const GameRules::VAR_randomClasses   = "randomClasses";
 
 DENG2_PIMPL_NOREF(GameRules)
 {
     Record rules {
-        Record::withMembers(GameRules::KEY_skill,           2, // medium
-                            GameRules::KEY_fast,            false,
-                            GameRules::KEY_deathmatch,      0,
-                            GameRules::KEY_noMonsters,      false,
-                            GameRules::KEY_randomClasses,   false,
-                            GameRules::KEY_respawnMonsters, false) };
+        Record::withMembers(GameRules::VAR_skill,           2, // medium
+                            GameRules::VAR_fast,            false,
+                            GameRules::VAR_deathmatch,      0,
+                            GameRules::VAR_noMonsters,      false,
+                            GameRules::VAR_randomClasses,   false,
+                            GameRules::VAR_respawnMonsters, false) };
 
     Impl() {}
 
@@ -103,6 +103,8 @@ GameRules *GameRules::fromRecord(Record const &record, GameRules const *defaults
 //#endif
 
     //if(rec != &record) delete rec;
+
+    //qDebug() << "GameRules from Record:\n" << gr->d->rules.asText().toUtf8().constData();
 
     return gr;
 }
@@ -226,13 +228,13 @@ void GameRules::update()
 {
     Values *vals = const_cast<Values *>(&values);
 
-    vals->skill           = d->rules.geti(KEY_skill);
-    vals->fast            = d->rules.getb(KEY_fast);
-    vals->deathmatch      = byte(d->rules.geti(KEY_deathmatch));
-    vals->noMonsters      = d->rules.getb(KEY_noMonsters);
-    vals->respawnMonsters = d->rules.getb(KEY_respawnMonsters);
+    vals->skill           = d->rules.geti(VAR_skill);
+    vals->fast            = d->rules.getb(VAR_fast);
+    vals->deathmatch      = byte(d->rules.geti(VAR_deathmatch));
+    vals->noMonsters      = d->rules.getb(VAR_noMonsters);
+    vals->respawnMonsters = d->rules.getb(VAR_respawnMonsters);
 #if defined(__JHEXEN__)
-    vals->randomClasses = d->rules.getb(KEY_randomClasses);
+    vals->randomClasses = d->rules.getb(VAR_randomClasses);
 #endif
 }
 

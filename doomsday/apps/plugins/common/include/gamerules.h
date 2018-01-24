@@ -54,12 +54,12 @@ public:
     };
     Values const values{};
 
-    static de::String const KEY_skill;
-    static de::String const KEY_fast;
-    static de::String const KEY_deathmatch;
-    static de::String const KEY_noMonsters;
-    static de::String const KEY_respawnMonsters;
-    static de::String const KEY_randomClasses;
+    static de::String const VAR_skill;
+    static de::String const VAR_fast;
+    static de::String const VAR_deathmatch;
+    static de::String const VAR_noMonsters;
+    static de::String const VAR_respawnMonsters;
+    static de::String const VAR_randomClasses;
 
 public:
     GameRules();
@@ -92,17 +92,21 @@ private:
 };
 
 #define gfw_Rule(name) (gfw_Session()->rules().values.name)
-#define GameRules_Set(d, name, value) {        \
-    (d).set(GameRules::KEY_##name, value); \
+#define GameRules_Set(d, name, value) {    \
+    (d).set(GameRules::VAR_##name, value); \
     (d).update();                          \
 }
 #define gfw_SetRule(name, value) \
     GameRules_Set(gfw_Session()->rules(), name, value)
 
 #else
+
+// C API
+
 typedef void *GameRules;
 int gfw_SessionRule(gfw_gamerule_t rule);
 #define gfw_Rule(name) gfw_SessionRule(GFW_RULE_##name)
-#endif
+
+#endif // __cplusplus
 
 #endif // LIBCOMMON_GAMERULES_H

@@ -66,21 +66,20 @@ void NetCl_UpdateGameState(reader_s *msg)
     byte configFlags = Reader_ReadByte(msg);
 
     GameRules gsRules(gfw_Session()->rules()); // Initialize with a copy of the current rules.
-    gsRules.set(GameRules::KEY_deathmatch, configFlags & 0x3);
-    gsRules.set(GameRules::KEY_noMonsters, !(configFlags & 0x4? true : false));
+    GameRules_Set(gsRules, deathmatch, configFlags & 0x3);
+    GameRules_Set(gsRules, noMonsters, !(configFlags & 0x4? true : false));
 #if !__JHEXEN__
-    gsRules.set(GameRules::KEY_respawnMonsters, (configFlags & 0x8? true : false));
+    GameRules_Set(gsRules, respawnMonsters, (configFlags & 0x8? true : false));
 #endif
     /// @todo Not applied??
     //byte gsJumping          = (configFlags & 0x10? true : false);
 
-    gsRules.set(GameRules::KEY_skill, skillmode_t(Reader_ReadByte(msg)));
-    gsRules.update();
+    GameRules_Set(gsRules, skill, skillmode_t(Reader_ReadByte(msg)));
 
     // Interpret skill modes outside the normal range as "spawn no things".
     if(gsRules.values.skill < SM_BABY || gsRules.values.skill >= NUM_SKILL_MODES)
     {
-        gsRules.set(GameRules::KEY_skill, SM_NOTHINGS);
+        GameRules_Set(gsRules, skill, SM_NOTHINGS);
     }
 
     coord_t gsGravity = Reader_ReadFloat(msg);
