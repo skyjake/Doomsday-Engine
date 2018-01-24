@@ -27,27 +27,31 @@ using namespace de;
 
 namespace defn {
 
+static String const VAR_TEXTURE = "texture";
+static String const VAR_FLAGS   = "flags";
+static String const VAR_LIGHT   = "light";
+
 void Decoration::resetToDefaults()
 {
     Definition::resetToDefaults();
 
     // Add all expected fields with their default values.
-    def().addText  ("texture", "");  // URI. Unknown.
-    def().addNumber("flags", 0);
-    def().addArray ("light", new ArrayValue);
+    def().addText  (VAR_TEXTURE, "");  // URI. Unknown.
+    def().addNumber(VAR_FLAGS, 0);
+    def().addArray (VAR_LIGHT, new ArrayValue);
 }
 
 Record &Decoration::addLight()
 {
     auto *decor = new Record;
     MaterialDecoration(*decor).resetToDefaults();
-    def()["light"].array().add(new RecordValue(decor, RecordValue::OwnsRecord));
+    def()[VAR_LIGHT].array().add(new RecordValue(decor, RecordValue::OwnsRecord));
     return *decor;
 }
 
 int Decoration::lightCount() const
 {
-    return int(geta("light").size());
+    return int(geta(VAR_LIGHT).size());
 }
 
 bool Decoration::hasLight(int index) const
@@ -57,12 +61,12 @@ bool Decoration::hasLight(int index) const
 
 Record &Decoration::light(int index)
 {
-    return *def().geta("light")[index].as<RecordValue>().record();
+    return *def().geta(VAR_LIGHT)[index].as<RecordValue>().record();
 }
 
 Record const &Decoration::light(int index) const
 {
-    return *geta("light")[index].as<RecordValue>().record();
+    return *geta(VAR_LIGHT)[index].as<RecordValue>().record();
 }
 
 } // namespace defn
