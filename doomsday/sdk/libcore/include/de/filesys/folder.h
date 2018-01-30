@@ -380,6 +380,8 @@ public:
 
     static bool isPopulatingAsync();
 
+    static void checkDefaultSettings();
+
 private:
     DENG2_PRIVATE(d)
 };

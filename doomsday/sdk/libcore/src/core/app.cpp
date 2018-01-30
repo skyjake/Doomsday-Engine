@@ -237,6 +237,8 @@ DENG2_PIMPL(App)
 
     void initFileSystem(bool allowPlugins)
     {
+        Folder::checkDefaultSettings();
+
         // Executables.
         Folder &binFolder = fs.makeFolder("/bin");
 

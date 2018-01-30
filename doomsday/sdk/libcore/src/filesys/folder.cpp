@@ -27,9 +27,11 @@
 #include "de/Guard"
 #include "de/LogBuffer"
 #include "de/NumberValue"
+#include "de/ScriptedInfo"
 #include "de/ScriptSystem"
 #include "de/Task"
 #include "de/TaskPool"
+#include "de/UnixInfo"
 
 namespace de {
 
@@ -38,6 +40,7 @@ FolderPopulationAudience audienceForFolderPopulation; // public
 namespace internal
 {
     static TaskPool populateTasks;
+    static bool enableBackgroundPopulation = true;
 
     /// Forwards internal folder population notifications to the public audience.
     struct PopulationNotifier : DENG2_OBSERVES(TaskPool, Done)
@@ -46,6 +49,9 @@ namespace internal
             populateTasks.audienceForDone() += this;
         }
         void taskPoolDone(TaskPool &) {
+            notify();
+        }
+        void notify() {
             DENG2_FOR_AUDIENCE(FolderPopulation, i) i->folderPopulationFinished();
         }
     };
@@ -301,13 +307,16 @@ void Folder::populate(PopulationBehaviors behavior)
         }
     };
 
-    if (behavior & PopulateAsync)
+    if (internal::enableBackgroundPopulation && (behavior & PopulateAsync))
     {
         internal::populateTasks.start(populationTask, TaskPool::MediumPriority);
     }
     else
     {
         populationTask();
+
+        // Each population gets an individual notification since they're done synchronously.
+        internal::populationNotifier.notify();
     }
 }
 
@@ -541,6 +550,15 @@ AsyncTask *Folder::afterPopulation(std::function<void ()> func)
 bool Folder::isPopulatingAsync()
 {
     return !internal::populateTasks.isDone();
+}
+
+void Folder::checkDefaultSettings()
+{
+    String mtEnabled;
+    if (App::app().unixInfo().defaults("fs:multithreaded", mtEnabled))
+    {
+        internal::enableBackgroundPopulation = !ScriptedInfo::isFalse(mtEnabled);
+    }
 }
 
 filesys::Node const *Folder::tryFollowPath(PathRef const &path) const
