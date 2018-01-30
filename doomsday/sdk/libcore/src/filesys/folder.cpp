@@ -37,26 +37,22 @@ namespace de {
 
 FolderPopulationAudience audienceForFolderPopulation; // public
 
-namespace internal
-{
-    static TaskPool populateTasks;
-    static bool enableBackgroundPopulation = true;
+namespace internal {
 
-    /// Forwards internal folder population notifications to the public audience.
-    struct PopulationNotifier : DENG2_OBSERVES(TaskPool, Done)
-    {
-        PopulationNotifier() {
-            populateTasks.audienceForDone() += this;
-        }
-        void taskPoolDone(TaskPool &) {
-            notify();
-        }
-        void notify() {
-            DENG2_FOR_AUDIENCE(FolderPopulation, i) i->folderPopulationFinished();
-        }
-    };
-    static PopulationNotifier populationNotifier;
-}
+static TaskPool populateTasks;
+static bool     enableBackgroundPopulation = true;
+
+/// Forwards internal folder population notifications to the public audience.
+struct PopulationNotifier : DENG2_OBSERVES(TaskPool, Done)
+{
+    PopulationNotifier() { populateTasks.audienceForDone() += this; }
+    void taskPoolDone(TaskPool &) { notify(); }
+    void notify() { DENG2_FOR_AUDIENCE(FolderPopulation, i) i->folderPopulationFinished(); }
+};
+
+static PopulationNotifier populationNotifier;
+
+} // namespace internal
 
 DENG2_PIMPL(Folder)
 {
@@ -285,13 +281,14 @@ void Folder::populate(PopulationBehaviors behavior)
             DENG2_GUARD(this);
             for (File *i : newFiles)
             {
-                if (!i) continue;
-
-                std::unique_ptr<File> file(i);
-                if (!d->contents.contains(i->name().toLower()))
+                if (i)
                 {
-                    d->add(file.release());
-                    fileSystem().index(*i);
+                    std::unique_ptr<File> file(i);
+                    if (!d->contents.contains(i->name().toLower()))
+                    {
+                        d->add(file.release());
+                        fileSystem().index(*i);
+                    }
                 }
             }
             newFiles.clear();
@@ -302,28 +299,39 @@ void Folder::populate(PopulationBehaviors behavior)
             // Call populate on subfolders.
             for (Folder *folder : d->subfolders())
             {
-                folder->populate(behavior);
+                folder->populate(behavior | PopulateCalledRecursively);
             }
         }
     };
 
-    if (internal::enableBackgroundPopulation && (behavior & PopulateAsync))
+    if (internal::enableBackgroundPopulation)
     {
-        internal::populateTasks.start(populationTask, TaskPool::MediumPriority);
+        if (behavior & PopulateAsync)
+        {
+            internal::populateTasks.start(populationTask, TaskPool::MediumPriority);
+        }
+        else
+        {
+            populationTask();
+        }
     }
     else
     {
+        // Only synchronous population is enabled.
         populationTask();
 
         // Each population gets an individual notification since they're done synchronously.
-        internal::populationNotifier.notify();
+        // However, only notify once a full hierarchy of populations has finished.
+        if (!(behavior & PopulateCalledRecursively))
+        {
+            internal::populationNotifier.notify();
+        }
     }
 }
 
 Folder::Contents Folder::contents() const
 {
     DENG2_GUARD(this);
-
     return d->contents;
 }
 

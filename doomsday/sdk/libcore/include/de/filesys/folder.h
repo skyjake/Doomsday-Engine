@@ -74,7 +74,9 @@ public:
         PopulateFullTree       = 0x1,   ///< The full tree is populated.
         PopulateOnlyThisFolder = 0x2,   ///< Do not descend into subfolders while populating.
         PopulateAsync          = 0x4,   ///< Do not block until complete.
-        PopulateAsyncFullTree  = PopulateAsync | PopulateFullTree
+        PopulateAsyncFullTree  = PopulateAsync | PopulateFullTree,
+
+        PopulateCalledRecursively = 0x1000, // internal use
     };
     Q_DECLARE_FLAGS(PopulationBehaviors, PopulationBehavior)
 
