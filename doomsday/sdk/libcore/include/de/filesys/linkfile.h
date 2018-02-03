@@ -75,14 +75,14 @@ public:
      */
     bool isBroken() const;
 
-    String describe() const;
+    String describe() const override;
 
     // Stream access:
     IIStream const &operator >> (IByteArray &bytes) const override;
 
     // filesys::Node overrides:
-    Node const *tryFollowPath(PathRef const &path) const;
-    Node const *tryGetChild(String const &name) const;
+    Node const *tryFollowPath(PathRef const &path) const override;
+    Node const *tryGetChild(String const &name) const override;
 
 public:
     /**
