@@ -58,16 +58,3 @@ macro (link_framework target linkType fw)
     mark_as_advanced (${fw}_LIBRARY)
     target_link_libraries (${target} ${linkType} ${${fw}_LIBRARY})
 endmacro (link_framework)
-
-macro (deng_xcode_attribs target)
-    set_target_properties (${target} PROPERTIES
-        XCODE_ATTRIBUTE_USE_HEADERMAP NO
-        XCODE_ATTRIBUTE_GCC_SYMBOLS_PRIVATE_EXTERN NO
-        XCODE_ATTRIBUTE_GCC_INLINES_ARE_PRIVATE_EXTERN NO
-    )
-endmacro (deng_xcode_attribs)
-
-macro (macx_set_bundle_name name)
-    # Underscores are not allowed in bundle identifiers.
-    string (REPLACE "_" "." MACOSX_BUNDLE_BUNDLE_NAME ${name})
-endmacro (macx_set_bundle_name)
