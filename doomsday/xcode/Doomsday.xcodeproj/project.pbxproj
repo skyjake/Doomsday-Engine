@@ -1637,112 +1637,112 @@
 
 /* Begin PBXFileReference section */
 		0635752C1EBF39880074E6D4 /* libdeng_shell.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libdeng_shell.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		063575681EBF39FA0074E6D4 /* abstractlineeditor.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = abstractlineeditor.cpp; path = ../sdk/libshell/src/abstractlineeditor.cpp; sourceTree = "<group>"; };
-		063575691EBF39FA0074E6D4 /* abstractlink.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = abstractlink.cpp; path = ../sdk/libshell/src/abstractlink.cpp; sourceTree = "<group>"; };
-		0635756A1EBF39FA0074E6D4 /* action.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = action.cpp; path = ../sdk/libshell/src/action.cpp; sourceTree = "<group>"; };
-		0635756B1EBF39FA0074E6D4 /* choicewidget.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = choicewidget.cpp; path = ../sdk/libshell/src/choicewidget.cpp; sourceTree = "<group>"; };
-		0635756C1EBF39FA0074E6D4 /* commandlinewidget.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = commandlinewidget.cpp; path = ../sdk/libshell/src/commandlinewidget.cpp; sourceTree = "<group>"; };
-		0635756D1EBF39FA0074E6D4 /* dialogwidget.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = dialogwidget.cpp; path = ../sdk/libshell/src/dialogwidget.cpp; sourceTree = "<group>"; };
-		0635756E1EBF39FA0074E6D4 /* doomsdayinfo.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = doomsdayinfo.cpp; path = ../sdk/libshell/src/doomsdayinfo.cpp; sourceTree = "<group>"; };
-		0635756F1EBF39FA0074E6D4 /* editorhistory.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = editorhistory.cpp; path = ../sdk/libshell/src/editorhistory.cpp; sourceTree = "<group>"; };
-		063575701EBF39FA0074E6D4 /* inputdialog.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = inputdialog.cpp; path = ../sdk/libshell/src/inputdialog.cpp; sourceTree = "<group>"; };
-		063575711EBF39FA0074E6D4 /* labelwidget.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = labelwidget.cpp; path = ../sdk/libshell/src/labelwidget.cpp; sourceTree = "<group>"; };
-		063575721EBF39FA0074E6D4 /* lexicon.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = lexicon.cpp; path = ../sdk/libshell/src/lexicon.cpp; sourceTree = "<group>"; };
-		063575731EBF39FA0074E6D4 /* libshell.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = libshell.cpp; path = ../sdk/libshell/src/libshell.cpp; sourceTree = "<group>"; };
-		063575741EBF39FA0074E6D4 /* lineeditwidget.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = lineeditwidget.cpp; path = ../sdk/libshell/src/lineeditwidget.cpp; sourceTree = "<group>"; };
-		063575751EBF39FA0074E6D4 /* link.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = link.cpp; path = ../sdk/libshell/src/link.cpp; sourceTree = "<group>"; };
-		063575761EBF39FA0074E6D4 /* localserver.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = localserver.cpp; path = ../sdk/libshell/src/localserver.cpp; sourceTree = "<group>"; };
-		063575771EBF39FA0074E6D4 /* logwidget.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = logwidget.cpp; path = ../sdk/libshell/src/logwidget.cpp; sourceTree = "<group>"; };
-		063575781EBF39FA0074E6D4 /* menuwidget.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = menuwidget.cpp; path = ../sdk/libshell/src/menuwidget.cpp; sourceTree = "<group>"; };
-		063575791EBF39FA0074E6D4 /* monospacelinewrapping.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = monospacelinewrapping.cpp; path = ../sdk/libshell/src/monospacelinewrapping.cpp; sourceTree = "<group>"; };
-		0635757A1EBF39FA0074E6D4 /* protocol.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = protocol.cpp; path = ../sdk/libshell/src/protocol.cpp; sourceTree = "<group>"; };
-		0635757B1EBF39FA0074E6D4 /* serverfinder.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = serverfinder.cpp; path = ../sdk/libshell/src/serverfinder.cpp; sourceTree = "<group>"; };
-		0635757C1EBF39FA0074E6D4 /* serverinfo.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = serverinfo.cpp; path = ../sdk/libshell/src/serverinfo.cpp; sourceTree = "<group>"; };
-		0635757D1EBF39FA0074E6D4 /* textcanvas.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = textcanvas.cpp; path = ../sdk/libshell/src/textcanvas.cpp; sourceTree = "<group>"; };
-		0635757E1EBF39FA0074E6D4 /* textrootwidget.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = textrootwidget.cpp; path = ../sdk/libshell/src/textrootwidget.cpp; sourceTree = "<group>"; };
-		0635757F1EBF39FA0074E6D4 /* textwidget.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = textwidget.cpp; path = ../sdk/libshell/src/textwidget.cpp; sourceTree = "<group>"; };
-		063575991EBF3A1F0074E6D4 /* abstractlineeditor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = abstractlineeditor.h; path = ../sdk/libshell/include/de/shell/abstractlineeditor.h; sourceTree = "<group>"; };
-		0635759A1EBF3A1F0074E6D4 /* abstractlink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = abstractlink.h; path = ../sdk/libshell/include/de/shell/abstractlink.h; sourceTree = "<group>"; };
-		0635759B1EBF3A1F0074E6D4 /* action.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = action.h; path = ../sdk/libshell/include/de/shell/action.h; sourceTree = "<group>"; };
-		0635759C1EBF3A1F0074E6D4 /* choicewidget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = choicewidget.h; path = ../sdk/libshell/include/de/shell/choicewidget.h; sourceTree = "<group>"; };
-		0635759D1EBF3A1F0074E6D4 /* commandlinewidget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = commandlinewidget.h; path = ../sdk/libshell/include/de/shell/commandlinewidget.h; sourceTree = "<group>"; };
-		0635759E1EBF3A1F0074E6D4 /* dialogwidget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dialogwidget.h; path = ../sdk/libshell/include/de/shell/dialogwidget.h; sourceTree = "<group>"; };
-		0635759F1EBF3A1F0074E6D4 /* doomsdayinfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = doomsdayinfo.h; path = ../sdk/libshell/include/de/shell/doomsdayinfo.h; sourceTree = "<group>"; };
-		063575A01EBF3A1F0074E6D4 /* editorhistory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = editorhistory.h; path = ../sdk/libshell/include/de/shell/editorhistory.h; sourceTree = "<group>"; };
-		063575A11EBF3A1F0074E6D4 /* inputdialog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = inputdialog.h; path = ../sdk/libshell/include/de/shell/inputdialog.h; sourceTree = "<group>"; };
-		063575A21EBF3A1F0074E6D4 /* itexteditor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = itexteditor.h; path = ../sdk/libshell/include/de/shell/itexteditor.h; sourceTree = "<group>"; };
-		063575A31EBF3A1F0074E6D4 /* keyevent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = keyevent.h; path = ../sdk/libshell/include/de/shell/keyevent.h; sourceTree = "<group>"; };
-		063575A41EBF3A1F0074E6D4 /* labelwidget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = labelwidget.h; path = ../sdk/libshell/include/de/shell/labelwidget.h; sourceTree = "<group>"; };
-		063575A51EBF3A1F0074E6D4 /* lexicon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lexicon.h; path = ../sdk/libshell/include/de/shell/lexicon.h; sourceTree = "<group>"; };
-		063575A61EBF3A1F0074E6D4 /* libshell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = libshell.h; path = ../sdk/libshell/include/de/shell/libshell.h; sourceTree = "<group>"; };
-		063575A71EBF3A1F0074E6D4 /* lineeditwidget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lineeditwidget.h; path = ../sdk/libshell/include/de/shell/lineeditwidget.h; sourceTree = "<group>"; };
-		063575A81EBF3A1F0074E6D4 /* link.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = link.h; path = ../sdk/libshell/include/de/shell/link.h; sourceTree = "<group>"; };
-		063575A91EBF3A1F0074E6D4 /* localserver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = localserver.h; path = ../sdk/libshell/include/de/shell/localserver.h; sourceTree = "<group>"; };
-		063575AA1EBF3A1F0074E6D4 /* logwidget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = logwidget.h; path = ../sdk/libshell/include/de/shell/logwidget.h; sourceTree = "<group>"; };
-		063575AB1EBF3A1F0074E6D4 /* menuwidget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = menuwidget.h; path = ../sdk/libshell/include/de/shell/menuwidget.h; sourceTree = "<group>"; };
-		063575AC1EBF3A1F0074E6D4 /* monospacelinewrapping.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = monospacelinewrapping.h; path = ../sdk/libshell/include/de/shell/monospacelinewrapping.h; sourceTree = "<group>"; };
-		063575AD1EBF3A1F0074E6D4 /* protocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = protocol.h; path = ../sdk/libshell/include/de/shell/protocol.h; sourceTree = "<group>"; };
-		063575AE1EBF3A1F0074E6D4 /* serverfinder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = serverfinder.h; path = ../sdk/libshell/include/de/shell/serverfinder.h; sourceTree = "<group>"; };
-		063575AF1EBF3A1F0074E6D4 /* serverinfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = serverinfo.h; path = ../sdk/libshell/include/de/shell/serverinfo.h; sourceTree = "<group>"; };
-		063575B01EBF3A1F0074E6D4 /* textcanvas.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = textcanvas.h; path = ../sdk/libshell/include/de/shell/textcanvas.h; sourceTree = "<group>"; };
-		063575B11EBF3A1F0074E6D4 /* textrootwidget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = textrootwidget.h; path = ../sdk/libshell/include/de/shell/textrootwidget.h; sourceTree = "<group>"; };
-		063575B21EBF3A1F0074E6D4 /* textwidget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = textwidget.h; path = ../sdk/libshell/include/de/shell/textwidget.h; sourceTree = "<group>"; };
+		063575681EBF39FA0074E6D4 /* abstractlineeditor.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = abstractlineeditor.cpp; path = ../libs/shell/src/abstractlineeditor.cpp; sourceTree = "<group>"; };
+		063575691EBF39FA0074E6D4 /* abstractlink.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = abstractlink.cpp; path = ../libs/shell/src/abstractlink.cpp; sourceTree = "<group>"; };
+		0635756A1EBF39FA0074E6D4 /* action.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = action.cpp; path = ../libs/shell/src/action.cpp; sourceTree = "<group>"; };
+		0635756B1EBF39FA0074E6D4 /* choicewidget.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = choicewidget.cpp; path = ../libs/shell/src/choicewidget.cpp; sourceTree = "<group>"; };
+		0635756C1EBF39FA0074E6D4 /* commandlinewidget.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = commandlinewidget.cpp; path = ../libs/shell/src/commandlinewidget.cpp; sourceTree = "<group>"; };
+		0635756D1EBF39FA0074E6D4 /* dialogwidget.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = dialogwidget.cpp; path = ../libs/shell/src/dialogwidget.cpp; sourceTree = "<group>"; };
+		0635756E1EBF39FA0074E6D4 /* doomsdayinfo.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = doomsdayinfo.cpp; path = ../libs/shell/src/doomsdayinfo.cpp; sourceTree = "<group>"; };
+		0635756F1EBF39FA0074E6D4 /* editorhistory.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = editorhistory.cpp; path = ../libs/shell/src/editorhistory.cpp; sourceTree = "<group>"; };
+		063575701EBF39FA0074E6D4 /* inputdialog.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = inputdialog.cpp; path = ../libs/shell/src/inputdialog.cpp; sourceTree = "<group>"; };
+		063575711EBF39FA0074E6D4 /* labelwidget.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = labelwidget.cpp; path = ../libs/shell/src/labelwidget.cpp; sourceTree = "<group>"; };
+		063575721EBF39FA0074E6D4 /* lexicon.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = lexicon.cpp; path = ../libs/shell/src/lexicon.cpp; sourceTree = "<group>"; };
+		063575731EBF39FA0074E6D4 /* libshell.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = libshell.cpp; path = ../libs/shell/src/libshell.cpp; sourceTree = "<group>"; };
+		063575741EBF39FA0074E6D4 /* lineeditwidget.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = lineeditwidget.cpp; path = ../libs/shell/src/lineeditwidget.cpp; sourceTree = "<group>"; };
+		063575751EBF39FA0074E6D4 /* link.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = link.cpp; path = ../libs/shell/src/link.cpp; sourceTree = "<group>"; };
+		063575761EBF39FA0074E6D4 /* localserver.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = localserver.cpp; path = ../libs/shell/src/localserver.cpp; sourceTree = "<group>"; };
+		063575771EBF39FA0074E6D4 /* logwidget.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = logwidget.cpp; path = ../libs/shell/src/logwidget.cpp; sourceTree = "<group>"; };
+		063575781EBF39FA0074E6D4 /* menuwidget.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = menuwidget.cpp; path = ../libs/shell/src/menuwidget.cpp; sourceTree = "<group>"; };
+		063575791EBF39FA0074E6D4 /* monospacelinewrapping.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = monospacelinewrapping.cpp; path = ../libs/shell/src/monospacelinewrapping.cpp; sourceTree = "<group>"; };
+		0635757A1EBF39FA0074E6D4 /* protocol.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = protocol.cpp; path = ../libs/shell/src/protocol.cpp; sourceTree = "<group>"; };
+		0635757B1EBF39FA0074E6D4 /* serverfinder.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = serverfinder.cpp; path = ../libs/shell/src/serverfinder.cpp; sourceTree = "<group>"; };
+		0635757C1EBF39FA0074E6D4 /* serverinfo.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = serverinfo.cpp; path = ../libs/shell/src/serverinfo.cpp; sourceTree = "<group>"; };
+		0635757D1EBF39FA0074E6D4 /* textcanvas.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = textcanvas.cpp; path = ../libs/shell/src/textcanvas.cpp; sourceTree = "<group>"; };
+		0635757E1EBF39FA0074E6D4 /* textrootwidget.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = textrootwidget.cpp; path = ../libs/shell/src/textrootwidget.cpp; sourceTree = "<group>"; };
+		0635757F1EBF39FA0074E6D4 /* textwidget.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = textwidget.cpp; path = ../libs/shell/src/textwidget.cpp; sourceTree = "<group>"; };
+		063575991EBF3A1F0074E6D4 /* abstractlineeditor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = abstractlineeditor.h; path = ../libs/shell/include/de/shell/abstractlineeditor.h; sourceTree = "<group>"; };
+		0635759A1EBF3A1F0074E6D4 /* abstractlink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = abstractlink.h; path = ../libs/shell/include/de/shell/abstractlink.h; sourceTree = "<group>"; };
+		0635759B1EBF3A1F0074E6D4 /* action.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = action.h; path = ../libs/shell/include/de/shell/action.h; sourceTree = "<group>"; };
+		0635759C1EBF3A1F0074E6D4 /* choicewidget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = choicewidget.h; path = ../libs/shell/include/de/shell/choicewidget.h; sourceTree = "<group>"; };
+		0635759D1EBF3A1F0074E6D4 /* commandlinewidget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = commandlinewidget.h; path = ../libs/shell/include/de/shell/commandlinewidget.h; sourceTree = "<group>"; };
+		0635759E1EBF3A1F0074E6D4 /* dialogwidget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dialogwidget.h; path = ../libs/shell/include/de/shell/dialogwidget.h; sourceTree = "<group>"; };
+		0635759F1EBF3A1F0074E6D4 /* doomsdayinfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = doomsdayinfo.h; path = ../libs/shell/include/de/shell/doomsdayinfo.h; sourceTree = "<group>"; };
+		063575A01EBF3A1F0074E6D4 /* editorhistory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = editorhistory.h; path = ../libs/shell/include/de/shell/editorhistory.h; sourceTree = "<group>"; };
+		063575A11EBF3A1F0074E6D4 /* inputdialog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = inputdialog.h; path = ../libs/shell/include/de/shell/inputdialog.h; sourceTree = "<group>"; };
+		063575A21EBF3A1F0074E6D4 /* itexteditor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = itexteditor.h; path = ../libs/shell/include/de/shell/itexteditor.h; sourceTree = "<group>"; };
+		063575A31EBF3A1F0074E6D4 /* keyevent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = keyevent.h; path = ../libs/shell/include/de/shell/keyevent.h; sourceTree = "<group>"; };
+		063575A41EBF3A1F0074E6D4 /* labelwidget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = labelwidget.h; path = ../libs/shell/include/de/shell/labelwidget.h; sourceTree = "<group>"; };
+		063575A51EBF3A1F0074E6D4 /* lexicon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lexicon.h; path = ../libs/shell/include/de/shell/lexicon.h; sourceTree = "<group>"; };
+		063575A61EBF3A1F0074E6D4 /* libshell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = libshell.h; path = ../libs/shell/include/de/shell/libshell.h; sourceTree = "<group>"; };
+		063575A71EBF3A1F0074E6D4 /* lineeditwidget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lineeditwidget.h; path = ../libs/shell/include/de/shell/lineeditwidget.h; sourceTree = "<group>"; };
+		063575A81EBF3A1F0074E6D4 /* link.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = link.h; path = ../libs/shell/include/de/shell/link.h; sourceTree = "<group>"; };
+		063575A91EBF3A1F0074E6D4 /* localserver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = localserver.h; path = ../libs/shell/include/de/shell/localserver.h; sourceTree = "<group>"; };
+		063575AA1EBF3A1F0074E6D4 /* logwidget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = logwidget.h; path = ../libs/shell/include/de/shell/logwidget.h; sourceTree = "<group>"; };
+		063575AB1EBF3A1F0074E6D4 /* menuwidget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = menuwidget.h; path = ../libs/shell/include/de/shell/menuwidget.h; sourceTree = "<group>"; };
+		063575AC1EBF3A1F0074E6D4 /* monospacelinewrapping.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = monospacelinewrapping.h; path = ../libs/shell/include/de/shell/monospacelinewrapping.h; sourceTree = "<group>"; };
+		063575AD1EBF3A1F0074E6D4 /* protocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = protocol.h; path = ../libs/shell/include/de/shell/protocol.h; sourceTree = "<group>"; };
+		063575AE1EBF3A1F0074E6D4 /* serverfinder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = serverfinder.h; path = ../libs/shell/include/de/shell/serverfinder.h; sourceTree = "<group>"; };
+		063575AF1EBF3A1F0074E6D4 /* serverinfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = serverinfo.h; path = ../libs/shell/include/de/shell/serverinfo.h; sourceTree = "<group>"; };
+		063575B01EBF3A1F0074E6D4 /* textcanvas.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = textcanvas.h; path = ../libs/shell/include/de/shell/textcanvas.h; sourceTree = "<group>"; };
+		063575B11EBF3A1F0074E6D4 /* textrootwidget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = textrootwidget.h; path = ../libs/shell/include/de/shell/textrootwidget.h; sourceTree = "<group>"; };
+		063575B21EBF3A1F0074E6D4 /* textwidget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = textwidget.h; path = ../libs/shell/include/de/shell/textwidget.h; sourceTree = "<group>"; };
 		063575D21EBF3AD50074E6D4 /* libdeng_legacy.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libdeng_legacy.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		063575D31EBF3B430074E6D4 /* aabox.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = aabox.c; path = ../sdk/liblegacy/src/aabox.c; sourceTree = "<group>"; };
-		063575D41EBF3B430074E6D4 /* animator.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = animator.c; path = ../sdk/liblegacy/src/animator.c; sourceTree = "<group>"; };
-		063575D51EBF3B430074E6D4 /* binangle.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = binangle.c; path = ../sdk/liblegacy/src/binangle.c; sourceTree = "<group>"; };
-		063575D61EBF3B430074E6D4 /* findfile_unix.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = findfile_unix.c; path = ../sdk/liblegacy/src/findfile_unix.c; sourceTree = "<group>"; };
-		063575D71EBF3B430074E6D4 /* fixedpoint.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = fixedpoint.c; path = ../sdk/liblegacy/src/fixedpoint.c; sourceTree = "<group>"; };
-		063575D81EBF3B430074E6D4 /* liblegacy.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = liblegacy.c; path = ../sdk/liblegacy/src/liblegacy.c; sourceTree = "<group>"; };
-		063575D91EBF3B430074E6D4 /* mathutil.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = mathutil.c; path = ../sdk/liblegacy/src/mathutil.c; sourceTree = "<group>"; };
-		063575DA1EBF3B430074E6D4 /* memory.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = memory.c; path = ../sdk/liblegacy/src/memory.c; sourceTree = "<group>"; };
-		063575DB1EBF3B430074E6D4 /* memoryblockset.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = memoryblockset.c; path = ../sdk/liblegacy/src/memoryblockset.c; sourceTree = "<group>"; };
-		063575DC1EBF3B430074E6D4 /* memoryzone.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = memoryzone.c; path = ../sdk/liblegacy/src/memoryzone.c; sourceTree = "<group>"; };
-		063575DD1EBF3B430074E6D4 /* nodepile.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = nodepile.c; path = ../sdk/liblegacy/src/nodepile.c; sourceTree = "<group>"; };
-		063575DE1EBF3B430074E6D4 /* point.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = point.c; path = ../sdk/liblegacy/src/point.c; sourceTree = "<group>"; };
-		063575DF1EBF3B430074E6D4 /* reader1.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = reader1.c; path = ../sdk/liblegacy/src/reader1.c; sourceTree = "<group>"; };
-		063575E01EBF3B430074E6D4 /* rect.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = rect.c; path = ../sdk/liblegacy/src/rect.c; sourceTree = "<group>"; };
-		063575E11EBF3B430074E6D4 /* size.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = size.c; path = ../sdk/liblegacy/src/size.c; sourceTree = "<group>"; };
-		063575E21EBF3B430074E6D4 /* stack.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = stack.c; path = ../sdk/liblegacy/src/stack.c; sourceTree = "<group>"; };
-		063575E31EBF3B430074E6D4 /* str.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = str.c; path = ../sdk/liblegacy/src/str.c; sourceTree = "<group>"; };
-		063575E41EBF3B430074E6D4 /* strutil.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = strutil.c; path = ../sdk/liblegacy/src/strutil.c; sourceTree = "<group>"; };
-		063575E51EBF3B430074E6D4 /* texgamma.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = texgamma.c; path = ../sdk/liblegacy/src/texgamma.c; sourceTree = "<group>"; };
-		063575E61EBF3B430074E6D4 /* vector1.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = vector1.c; path = ../sdk/liblegacy/src/vector1.c; sourceTree = "<group>"; };
-		063575E71EBF3B430074E6D4 /* writer1.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = writer1.c; path = ../sdk/liblegacy/src/writer1.c; sourceTree = "<group>"; };
-		063575E81EBF3B430074E6D4 /* concurrency.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = concurrency.cpp; path = ../sdk/liblegacy/src/concurrency.cpp; sourceTree = "<group>"; };
-		063575EA1EBF3B430074E6D4 /* smoother.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = smoother.cpp; path = ../sdk/liblegacy/src/smoother.cpp; sourceTree = "<group>"; };
-		063575EB1EBF3B430074E6D4 /* stringarray.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = stringarray.cpp; path = ../sdk/liblegacy/src/stringarray.cpp; sourceTree = "<group>"; };
-		063575EC1EBF3B430074E6D4 /* timer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = timer.cpp; path = ../sdk/liblegacy/src/timer.cpp; sourceTree = "<group>"; };
-		063576081EBF3B6C0074E6D4 /* aabox.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = aabox.h; path = ../sdk/liblegacy/include/de/aabox.h; sourceTree = "<group>"; };
-		063576091EBF3B6C0074E6D4 /* animator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = animator.h; path = ../sdk/liblegacy/include/de/animator.h; sourceTree = "<group>"; };
-		0635760A1EBF3B6C0074E6D4 /* binangle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = binangle.h; path = ../sdk/liblegacy/include/de/binangle.h; sourceTree = "<group>"; };
-		0635760B1EBF3B6C0074E6D4 /* concurrency.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = concurrency.h; path = ../sdk/liblegacy/include/de/concurrency.h; sourceTree = "<group>"; };
-		0635760C1EBF3B6C0074E6D4 /* ddstring.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ddstring.h; path = ../sdk/liblegacy/include/de/ddstring.h; sourceTree = "<group>"; };
-		0635760D1EBF3B6C0074E6D4 /* findfile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = findfile.h; path = ../sdk/liblegacy/include/de/findfile.h; sourceTree = "<group>"; };
-		0635760E1EBF3B6C0074E6D4 /* fixedpoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fixedpoint.h; path = ../sdk/liblegacy/include/de/fixedpoint.h; sourceTree = "<group>"; };
-		0635760F1EBF3B6C0074E6D4 /* liblegacy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = liblegacy.h; path = ../sdk/liblegacy/include/de/liblegacy.h; sourceTree = "<group>"; };
-		063576101EBF3B6C0074E6D4 /* mathutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mathutil.h; path = ../sdk/liblegacy/include/de/mathutil.h; sourceTree = "<group>"; };
-		063576111EBF3B6C0074E6D4 /* memory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = memory.h; path = ../sdk/liblegacy/include/de/memory.h; sourceTree = "<group>"; };
-		063576121EBF3B6C0074E6D4 /* memoryblockset.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = memoryblockset.h; path = ../sdk/liblegacy/include/de/memoryblockset.h; sourceTree = "<group>"; };
-		063576131EBF3B6C0074E6D4 /* memoryzone.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = memoryzone.h; path = ../sdk/liblegacy/include/de/memoryzone.h; sourceTree = "<group>"; };
-		063576141EBF3B6C0074E6D4 /* nodepile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = nodepile.h; path = ../sdk/liblegacy/include/de/nodepile.h; sourceTree = "<group>"; };
-		063576151EBF3B6C0074E6D4 /* point.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = point.h; path = ../sdk/liblegacy/include/de/point.h; sourceTree = "<group>"; };
-		063576161EBF3B6C0074E6D4 /* reader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = reader.h; path = ../sdk/liblegacy/include/de/reader.h; sourceTree = "<group>"; };
-		063576171EBF3B6C0074E6D4 /* rect.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = rect.h; path = ../sdk/liblegacy/include/de/rect.h; sourceTree = "<group>"; };
-		063576181EBF3B6C0074E6D4 /* size.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = size.h; path = ../sdk/liblegacy/include/de/size.h; sourceTree = "<group>"; };
-		063576191EBF3B6C0074E6D4 /* smoother.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = smoother.h; path = ../sdk/liblegacy/include/de/smoother.h; sourceTree = "<group>"; };
-		0635761A1EBF3B6C0074E6D4 /* stack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stack.h; path = ../sdk/liblegacy/include/de/stack.h; sourceTree = "<group>"; };
-		0635761B1EBF3B6C0074E6D4 /* str.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = str.h; path = ../sdk/liblegacy/include/de/str.h; sourceTree = "<group>"; };
-		0635761C1EBF3B6C0074E6D4 /* stringarray.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stringarray.h; path = ../sdk/liblegacy/include/de/stringarray.h; sourceTree = "<group>"; };
-		0635761D1EBF3B6C0074E6D4 /* strutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = strutil.h; path = ../sdk/liblegacy/include/de/strutil.h; sourceTree = "<group>"; };
-		0635761E1EBF3B6C0074E6D4 /* texgamma.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = texgamma.h; path = ../sdk/liblegacy/include/de/texgamma.h; sourceTree = "<group>"; };
-		0635761F1EBF3B6C0074E6D4 /* timer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = timer.h; path = ../sdk/liblegacy/include/de/timer.h; sourceTree = "<group>"; };
-		063576201EBF3B6C0074E6D4 /* types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = types.h; path = ../sdk/liblegacy/include/de/types.h; sourceTree = "<group>"; };
-		063576211EBF3B6C0074E6D4 /* unittest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = unittest.h; path = ../sdk/liblegacy/include/de/unittest.h; sourceTree = "<group>"; };
-		063576221EBF3B6C0074E6D4 /* vector1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = vector1.h; path = ../sdk/liblegacy/include/de/vector1.h; sourceTree = "<group>"; };
-		063576231EBF3B6C0074E6D4 /* writer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = writer.h; path = ../sdk/liblegacy/include/de/writer.h; sourceTree = "<group>"; };
-		063576241EBF3B6C0074E6D4 /* str.hh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = str.hh; path = ../sdk/liblegacy/include/de/str.hh; sourceTree = "<group>"; };
-		063576251EBF3B6C0074E6D4 /* memoryzone_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = memoryzone_private.h; path = ../sdk/liblegacy/src/memoryzone_private.h; sourceTree = "<group>"; };
+		063575D31EBF3B430074E6D4 /* aabox.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = aabox.c; path = ../libs/legacy/src/aabox.c; sourceTree = "<group>"; };
+		063575D41EBF3B430074E6D4 /* animator.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = animator.c; path = ../libs/legacy/src/animator.c; sourceTree = "<group>"; };
+		063575D51EBF3B430074E6D4 /* binangle.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = binangle.c; path = ../libs/legacy/src/binangle.c; sourceTree = "<group>"; };
+		063575D61EBF3B430074E6D4 /* findfile_unix.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = findfile_unix.c; path = ../libs/legacy/src/findfile_unix.c; sourceTree = "<group>"; };
+		063575D71EBF3B430074E6D4 /* fixedpoint.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = fixedpoint.c; path = ../libs/legacy/src/fixedpoint.c; sourceTree = "<group>"; };
+		063575D81EBF3B430074E6D4 /* liblegacy.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = liblegacy.c; path = ../libs/legacy/src/liblegacy.c; sourceTree = "<group>"; };
+		063575D91EBF3B430074E6D4 /* mathutil.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = mathutil.c; path = ../libs/legacy/src/mathutil.c; sourceTree = "<group>"; };
+		063575DA1EBF3B430074E6D4 /* memory.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = memory.c; path = ../libs/legacy/src/memory.c; sourceTree = "<group>"; };
+		063575DB1EBF3B430074E6D4 /* memoryblockset.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = memoryblockset.c; path = ../libs/legacy/src/memoryblockset.c; sourceTree = "<group>"; };
+		063575DC1EBF3B430074E6D4 /* memoryzone.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = memoryzone.c; path = ../libs/legacy/src/memoryzone.c; sourceTree = "<group>"; };
+		063575DD1EBF3B430074E6D4 /* nodepile.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = nodepile.c; path = ../libs/legacy/src/nodepile.c; sourceTree = "<group>"; };
+		063575DE1EBF3B430074E6D4 /* point.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = point.c; path = ../libs/legacy/src/point.c; sourceTree = "<group>"; };
+		063575DF1EBF3B430074E6D4 /* reader1.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = reader1.c; path = ../libs/legacy/src/reader1.c; sourceTree = "<group>"; };
+		063575E01EBF3B430074E6D4 /* rect.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = rect.c; path = ../libs/legacy/src/rect.c; sourceTree = "<group>"; };
+		063575E11EBF3B430074E6D4 /* size.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = size.c; path = ../libs/legacy/src/size.c; sourceTree = "<group>"; };
+		063575E21EBF3B430074E6D4 /* stack.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = stack.c; path = ../libs/legacy/src/stack.c; sourceTree = "<group>"; };
+		063575E31EBF3B430074E6D4 /* str.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = str.c; path = ../libs/legacy/src/str.c; sourceTree = "<group>"; };
+		063575E41EBF3B430074E6D4 /* strutil.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = strutil.c; path = ../libs/legacy/src/strutil.c; sourceTree = "<group>"; };
+		063575E51EBF3B430074E6D4 /* texgamma.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = texgamma.c; path = ../libs/legacy/src/texgamma.c; sourceTree = "<group>"; };
+		063575E61EBF3B430074E6D4 /* vector1.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = vector1.c; path = ../libs/legacy/src/vector1.c; sourceTree = "<group>"; };
+		063575E71EBF3B430074E6D4 /* writer1.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = writer1.c; path = ../libs/legacy/src/writer1.c; sourceTree = "<group>"; };
+		063575E81EBF3B430074E6D4 /* concurrency.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = concurrency.cpp; path = ../libs/legacy/src/concurrency.cpp; sourceTree = "<group>"; };
+		063575EA1EBF3B430074E6D4 /* smoother.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = smoother.cpp; path = ../libs/legacy/src/smoother.cpp; sourceTree = "<group>"; };
+		063575EB1EBF3B430074E6D4 /* stringarray.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = stringarray.cpp; path = ../libs/legacy/src/stringarray.cpp; sourceTree = "<group>"; };
+		063575EC1EBF3B430074E6D4 /* timer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = timer.cpp; path = ../libs/legacy/src/timer.cpp; sourceTree = "<group>"; };
+		063576081EBF3B6C0074E6D4 /* aabox.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = aabox.h; path = ../libs/legacy/include/de/aabox.h; sourceTree = "<group>"; };
+		063576091EBF3B6C0074E6D4 /* animator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = animator.h; path = ../libs/legacy/include/de/animator.h; sourceTree = "<group>"; };
+		0635760A1EBF3B6C0074E6D4 /* binangle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = binangle.h; path = ../libs/legacy/include/de/binangle.h; sourceTree = "<group>"; };
+		0635760B1EBF3B6C0074E6D4 /* concurrency.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = concurrency.h; path = ../libs/legacy/include/de/concurrency.h; sourceTree = "<group>"; };
+		0635760C1EBF3B6C0074E6D4 /* ddstring.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ddstring.h; path = ../libs/legacy/include/de/ddstring.h; sourceTree = "<group>"; };
+		0635760D1EBF3B6C0074E6D4 /* findfile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = findfile.h; path = ../libs/legacy/include/de/findfile.h; sourceTree = "<group>"; };
+		0635760E1EBF3B6C0074E6D4 /* fixedpoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fixedpoint.h; path = ../libs/legacy/include/de/fixedpoint.h; sourceTree = "<group>"; };
+		0635760F1EBF3B6C0074E6D4 /* liblegacy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = liblegacy.h; path = ../libs/legacy/include/de/liblegacy.h; sourceTree = "<group>"; };
+		063576101EBF3B6C0074E6D4 /* mathutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mathutil.h; path = ../libs/legacy/include/de/mathutil.h; sourceTree = "<group>"; };
+		063576111EBF3B6C0074E6D4 /* memory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = memory.h; path = ../libs/legacy/include/de/memory.h; sourceTree = "<group>"; };
+		063576121EBF3B6C0074E6D4 /* memoryblockset.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = memoryblockset.h; path = ../libs/legacy/include/de/memoryblockset.h; sourceTree = "<group>"; };
+		063576131EBF3B6C0074E6D4 /* memoryzone.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = memoryzone.h; path = ../libs/legacy/include/de/memoryzone.h; sourceTree = "<group>"; };
+		063576141EBF3B6C0074E6D4 /* nodepile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = nodepile.h; path = ../libs/legacy/include/de/nodepile.h; sourceTree = "<group>"; };
+		063576151EBF3B6C0074E6D4 /* point.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = point.h; path = ../libs/legacy/include/de/point.h; sourceTree = "<group>"; };
+		063576161EBF3B6C0074E6D4 /* reader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = reader.h; path = ../libs/legacy/include/de/reader.h; sourceTree = "<group>"; };
+		063576171EBF3B6C0074E6D4 /* rect.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = rect.h; path = ../libs/legacy/include/de/rect.h; sourceTree = "<group>"; };
+		063576181EBF3B6C0074E6D4 /* size.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = size.h; path = ../libs/legacy/include/de/size.h; sourceTree = "<group>"; };
+		063576191EBF3B6C0074E6D4 /* smoother.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = smoother.h; path = ../libs/legacy/include/de/smoother.h; sourceTree = "<group>"; };
+		0635761A1EBF3B6C0074E6D4 /* stack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stack.h; path = ../libs/legacy/include/de/stack.h; sourceTree = "<group>"; };
+		0635761B1EBF3B6C0074E6D4 /* str.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = str.h; path = ../libs/legacy/include/de/str.h; sourceTree = "<group>"; };
+		0635761C1EBF3B6C0074E6D4 /* stringarray.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stringarray.h; path = ../libs/legacy/include/de/stringarray.h; sourceTree = "<group>"; };
+		0635761D1EBF3B6C0074E6D4 /* strutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = strutil.h; path = ../libs/legacy/include/de/strutil.h; sourceTree = "<group>"; };
+		0635761E1EBF3B6C0074E6D4 /* texgamma.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = texgamma.h; path = ../libs/legacy/include/de/texgamma.h; sourceTree = "<group>"; };
+		0635761F1EBF3B6C0074E6D4 /* timer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = timer.h; path = ../libs/legacy/include/de/timer.h; sourceTree = "<group>"; };
+		063576201EBF3B6C0074E6D4 /* types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = types.h; path = ../libs/legacy/include/de/types.h; sourceTree = "<group>"; };
+		063576211EBF3B6C0074E6D4 /* unittest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = unittest.h; path = ../libs/legacy/include/de/unittest.h; sourceTree = "<group>"; };
+		063576221EBF3B6C0074E6D4 /* vector1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = vector1.h; path = ../libs/legacy/include/de/vector1.h; sourceTree = "<group>"; };
+		063576231EBF3B6C0074E6D4 /* writer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = writer.h; path = ../libs/legacy/include/de/writer.h; sourceTree = "<group>"; };
+		063576241EBF3B6C0074E6D4 /* str.hh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = str.hh; path = ../libs/legacy/include/de/str.hh; sourceTree = "<group>"; };
+		063576251EBF3B6C0074E6D4 /* memoryzone_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = memoryzone_private.h; path = ../libs/legacy/src/memoryzone_private.h; sourceTree = "<group>"; };
 		063576271EBF3C970074E6D4 /* sound.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sound.cpp; sourceTree = "<group>"; };
 		063576281EBF3C970074E6D4 /* waveform.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = waveform.cpp; sourceTree = "<group>"; };
 		063576291EBF3C970074E6D4 /* waveformbank.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = waveformbank.cpp; sourceTree = "<group>"; };
@@ -1784,13 +1784,13 @@
 		063576511EBF3C970074E6D4 /* font_richformat.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = font_richformat.cpp; sourceTree = "<group>"; };
 		063576521EBF3C970074E6D4 /* fontbank.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = fontbank.cpp; sourceTree = "<group>"; };
 		063576531EBF3C970074E6D4 /* nativefont.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = nativefont.cpp; sourceTree = "<group>"; };
-		063576561EBF3C970074E6D4 /* displaymode_dummy.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = displaymode_dummy.cpp; path = ../sdk/libgui/src/displaymode_dummy.cpp; sourceTree = "<group>"; };
-		063576571EBF3C970074E6D4 /* displaymode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = displaymode.cpp; path = ../sdk/libgui/src/displaymode.cpp; sourceTree = "<group>"; };
-		063576581EBF3C970074E6D4 /* glwindow_qml.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = glwindow_qml.cpp; path = ../sdk/libgui/src/glwindow_qml.cpp; sourceTree = "<group>"; };
-		063576591EBF3C970074E6D4 /* guiapp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = guiapp.cpp; path = ../sdk/libgui/src/guiapp.cpp; sourceTree = "<group>"; };
-		0635765A1EBF3C970074E6D4 /* guiloop.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = guiloop.cpp; path = ../sdk/libgui/src/guiloop.cpp; sourceTree = "<group>"; };
-		0635765B1EBF3C970074E6D4 /* persistentglwindow.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = persistentglwindow.cpp; path = ../sdk/libgui/src/persistentglwindow.cpp; sourceTree = "<group>"; };
-		0635765C1EBF3C970074E6D4 /* windoweventhandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = windoweventhandler.cpp; path = ../sdk/libgui/src/windoweventhandler.cpp; sourceTree = "<group>"; };
+		063576561EBF3C970074E6D4 /* displaymode_dummy.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = displaymode_dummy.cpp; path = ../libs/gui/src/displaymode_dummy.cpp; sourceTree = "<group>"; };
+		063576571EBF3C970074E6D4 /* displaymode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = displaymode.cpp; path = ../libs/gui/src/displaymode.cpp; sourceTree = "<group>"; };
+		063576581EBF3C970074E6D4 /* glwindow_qml.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = glwindow_qml.cpp; path = ../libs/gui/src/glwindow_qml.cpp; sourceTree = "<group>"; };
+		063576591EBF3C970074E6D4 /* guiapp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = guiapp.cpp; path = ../libs/gui/src/guiapp.cpp; sourceTree = "<group>"; };
+		0635765A1EBF3C970074E6D4 /* guiloop.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = guiloop.cpp; path = ../libs/gui/src/guiloop.cpp; sourceTree = "<group>"; };
+		0635765B1EBF3C970074E6D4 /* persistentglwindow.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = persistentglwindow.cpp; path = ../libs/gui/src/persistentglwindow.cpp; sourceTree = "<group>"; };
+		0635765C1EBF3C970074E6D4 /* windoweventhandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = windoweventhandler.cpp; path = ../libs/gui/src/windoweventhandler.cpp; sourceTree = "<group>"; };
 		063576AD1EBF3CD20074E6D4 /* libdeng_gui.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libdeng_gui.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		063576E21EBF3D240074E6D4 /* sound.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sound.h; sourceTree = "<group>"; };
 		063576E31EBF3D240074E6D4 /* waveform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = waveform.h; sourceTree = "<group>"; };
@@ -1881,33 +1881,33 @@
 		0635774F1EBF42C10074E6D4 /* variablelineeditwidget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = variablelineeditwidget.cpp; sourceTree = "<group>"; };
 		063577501EBF42C10074E6D4 /* variablesliderwidget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = variablesliderwidget.cpp; sourceTree = "<group>"; };
 		063577511EBF42C10074E6D4 /* variabletogglewidget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = variabletogglewidget.cpp; sourceTree = "<group>"; };
-		063577521EBF42C10074E6D4 /* baseguiapp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = baseguiapp.cpp; path = ../sdk/libappfw/src/baseguiapp.cpp; sourceTree = "<group>"; };
-		063577531EBF42C10074E6D4 /* basewindow.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = basewindow.cpp; path = ../sdk/libappfw/src/basewindow.cpp; sourceTree = "<group>"; };
-		063577541EBF42C10074E6D4 /* callbackaction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = callbackaction.cpp; path = ../sdk/libappfw/src/callbackaction.cpp; sourceTree = "<group>"; };
-		063577551EBF42C10074E6D4 /* childwidgetorganizer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = childwidgetorganizer.cpp; path = ../sdk/libappfw/src/childwidgetorganizer.cpp; sourceTree = "<group>"; };
-		063577561EBF42C10074E6D4 /* data.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = data.cpp; path = ../sdk/libappfw/src/data.cpp; sourceTree = "<group>"; };
-		063577571EBF42C10074E6D4 /* dialogcontentstylist.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dialogcontentstylist.cpp; path = ../sdk/libappfw/src/dialogcontentstylist.cpp; sourceTree = "<group>"; };
-		063577581EBF42C10074E6D4 /* filtereddata.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = filtereddata.cpp; path = ../sdk/libappfw/src/filtereddata.cpp; sourceTree = "<group>"; };
-		063577591EBF42C10074E6D4 /* fontlinewrapping.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fontlinewrapping.cpp; path = ../sdk/libappfw/src/fontlinewrapping.cpp; sourceTree = "<group>"; };
-		0635775A1EBF42C10074E6D4 /* gltextcomposer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = gltextcomposer.cpp; path = ../sdk/libappfw/src/gltextcomposer.cpp; sourceTree = "<group>"; };
-		0635775B1EBF42C10074E6D4 /* gridlayout.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = gridlayout.cpp; path = ../sdk/libappfw/src/gridlayout.cpp; sourceTree = "<group>"; };
-		0635775C1EBF42C10074E6D4 /* guirootwidget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = guirootwidget.cpp; path = ../sdk/libappfw/src/guirootwidget.cpp; sourceTree = "<group>"; };
-		0635775D1EBF42C10074E6D4 /* guiwidget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = guiwidget.cpp; path = ../sdk/libappfw/src/guiwidget.cpp; sourceTree = "<group>"; };
-		0635775E1EBF42C10074E6D4 /* imageitem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = imageitem.cpp; path = ../sdk/libappfw/src/imageitem.cpp; sourceTree = "<group>"; };
-		0635775F1EBF42C10074E6D4 /* item.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = item.cpp; path = ../sdk/libappfw/src/item.cpp; sourceTree = "<group>"; };
-		063577601EBF42C10074E6D4 /* listdata.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = listdata.cpp; path = ../sdk/libappfw/src/listdata.cpp; sourceTree = "<group>"; };
-		063577611EBF42C10074E6D4 /* margins.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = margins.cpp; path = ../sdk/libappfw/src/margins.cpp; sourceTree = "<group>"; };
-		063577621EBF42C10074E6D4 /* painter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = painter.cpp; path = ../sdk/libappfw/src/painter.cpp; sourceTree = "<group>"; };
-		063577631EBF42C10074E6D4 /* persistentstate.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = persistentstate.cpp; path = ../sdk/libappfw/src/persistentstate.cpp; sourceTree = "<group>"; };
-		063577641EBF42C10074E6D4 /* proceduralimage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = proceduralimage.cpp; path = ../sdk/libappfw/src/proceduralimage.cpp; sourceTree = "<group>"; };
-		063577651EBF42C10074E6D4 /* sequentiallayout.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sequentiallayout.cpp; path = ../sdk/libappfw/src/sequentiallayout.cpp; sourceTree = "<group>"; };
-		063577661EBF42C10074E6D4 /* signalaction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = signalaction.cpp; path = ../sdk/libappfw/src/signalaction.cpp; sourceTree = "<group>"; };
-		063577671EBF42C10074E6D4 /* style.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = style.cpp; path = ../sdk/libappfw/src/style.cpp; sourceTree = "<group>"; };
-		063577681EBF42C10074E6D4 /* textdrawable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = textdrawable.cpp; path = ../sdk/libappfw/src/textdrawable.cpp; sourceTree = "<group>"; };
-		063577691EBF42C10074E6D4 /* untrapper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = untrapper.cpp; path = ../sdk/libappfw/src/untrapper.cpp; sourceTree = "<group>"; };
-		0635776A1EBF42C10074E6D4 /* vrwindowtransform.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = vrwindowtransform.cpp; path = ../sdk/libappfw/src/vrwindowtransform.cpp; sourceTree = "<group>"; };
-		0635776B1EBF42C10074E6D4 /* windowsystem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = windowsystem.cpp; path = ../sdk/libappfw/src/windowsystem.cpp; sourceTree = "<group>"; };
-		0635776C1EBF42C10074E6D4 /* windowtransform.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = windowtransform.cpp; path = ../sdk/libappfw/src/windowtransform.cpp; sourceTree = "<group>"; };
+		063577521EBF42C10074E6D4 /* baseguiapp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = baseguiapp.cpp; path = ../libs/appfw/src/baseguiapp.cpp; sourceTree = "<group>"; };
+		063577531EBF42C10074E6D4 /* basewindow.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = basewindow.cpp; path = ../libs/appfw/src/basewindow.cpp; sourceTree = "<group>"; };
+		063577541EBF42C10074E6D4 /* callbackaction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = callbackaction.cpp; path = ../libs/appfw/src/callbackaction.cpp; sourceTree = "<group>"; };
+		063577551EBF42C10074E6D4 /* childwidgetorganizer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = childwidgetorganizer.cpp; path = ../libs/appfw/src/childwidgetorganizer.cpp; sourceTree = "<group>"; };
+		063577561EBF42C10074E6D4 /* data.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = data.cpp; path = ../libs/appfw/src/data.cpp; sourceTree = "<group>"; };
+		063577571EBF42C10074E6D4 /* dialogcontentstylist.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dialogcontentstylist.cpp; path = ../libs/appfw/src/dialogcontentstylist.cpp; sourceTree = "<group>"; };
+		063577581EBF42C10074E6D4 /* filtereddata.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = filtereddata.cpp; path = ../libs/appfw/src/filtereddata.cpp; sourceTree = "<group>"; };
+		063577591EBF42C10074E6D4 /* fontlinewrapping.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fontlinewrapping.cpp; path = ../libs/appfw/src/fontlinewrapping.cpp; sourceTree = "<group>"; };
+		0635775A1EBF42C10074E6D4 /* gltextcomposer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = gltextcomposer.cpp; path = ../libs/appfw/src/gltextcomposer.cpp; sourceTree = "<group>"; };
+		0635775B1EBF42C10074E6D4 /* gridlayout.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = gridlayout.cpp; path = ../libs/appfw/src/gridlayout.cpp; sourceTree = "<group>"; };
+		0635775C1EBF42C10074E6D4 /* guirootwidget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = guirootwidget.cpp; path = ../libs/appfw/src/guirootwidget.cpp; sourceTree = "<group>"; };
+		0635775D1EBF42C10074E6D4 /* guiwidget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = guiwidget.cpp; path = ../libs/appfw/src/guiwidget.cpp; sourceTree = "<group>"; };
+		0635775E1EBF42C10074E6D4 /* imageitem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = imageitem.cpp; path = ../libs/appfw/src/imageitem.cpp; sourceTree = "<group>"; };
+		0635775F1EBF42C10074E6D4 /* item.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = item.cpp; path = ../libs/appfw/src/item.cpp; sourceTree = "<group>"; };
+		063577601EBF42C10074E6D4 /* listdata.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = listdata.cpp; path = ../libs/appfw/src/listdata.cpp; sourceTree = "<group>"; };
+		063577611EBF42C10074E6D4 /* margins.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = margins.cpp; path = ../libs/appfw/src/margins.cpp; sourceTree = "<group>"; };
+		063577621EBF42C10074E6D4 /* painter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = painter.cpp; path = ../libs/appfw/src/painter.cpp; sourceTree = "<group>"; };
+		063577631EBF42C10074E6D4 /* persistentstate.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = persistentstate.cpp; path = ../libs/appfw/src/persistentstate.cpp; sourceTree = "<group>"; };
+		063577641EBF42C10074E6D4 /* proceduralimage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = proceduralimage.cpp; path = ../libs/appfw/src/proceduralimage.cpp; sourceTree = "<group>"; };
+		063577651EBF42C10074E6D4 /* sequentiallayout.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sequentiallayout.cpp; path = ../libs/appfw/src/sequentiallayout.cpp; sourceTree = "<group>"; };
+		063577661EBF42C10074E6D4 /* signalaction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = signalaction.cpp; path = ../libs/appfw/src/signalaction.cpp; sourceTree = "<group>"; };
+		063577671EBF42C10074E6D4 /* style.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = style.cpp; path = ../libs/appfw/src/style.cpp; sourceTree = "<group>"; };
+		063577681EBF42C10074E6D4 /* textdrawable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = textdrawable.cpp; path = ../libs/appfw/src/textdrawable.cpp; sourceTree = "<group>"; };
+		063577691EBF42C10074E6D4 /* untrapper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = untrapper.cpp; path = ../libs/appfw/src/untrapper.cpp; sourceTree = "<group>"; };
+		0635776A1EBF42C10074E6D4 /* vrwindowtransform.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = vrwindowtransform.cpp; path = ../libs/appfw/src/vrwindowtransform.cpp; sourceTree = "<group>"; };
+		0635776B1EBF42C10074E6D4 /* windowsystem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = windowsystem.cpp; path = ../libs/appfw/src/windowsystem.cpp; sourceTree = "<group>"; };
+		0635776C1EBF42C10074E6D4 /* windowtransform.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = windowtransform.cpp; path = ../libs/appfw/src/windowtransform.cpp; sourceTree = "<group>"; };
 		063578061EBF42D10074E6D4 /* libdeng_appfw.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libdeng_appfw.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		063578941EBF43A30074E6D4 /* libdeng_doomsday.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libdeng_doomsday.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		063578961EBF43DE0074E6D4 /* library.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = library.cpp; sourceTree = "<group>"; };
@@ -2717,7 +2717,7 @@
 		065548721EC8BB670000E33E /* variablelineeditwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = variablelineeditwidget.h; sourceTree = "<group>"; };
 		065548731EC8BB670000E33E /* variablesliderwidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = variablesliderwidget.h; sourceTree = "<group>"; };
 		065548741EC8BB670000E33E /* variabletogglewidget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = variabletogglewidget.h; sourceTree = "<group>"; };
-		065548751EC8BB670000E33E /* libappfw.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = libappfw.h; path = ../sdk/libappfw/include/de/libappfw.h; sourceTree = "<group>"; };
+		065548751EC8BB670000E33E /* libappfw.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = libappfw.h; path = ../libs/appfw/include/de/libappfw.h; sourceTree = "<group>"; };
 		067AD9091EBF143600B808B2 /* libimportidtech1.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libimportidtech1.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		067AD9131EBF148F00B808B2 /* hexlex.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = hexlex.cpp; path = ../apps/plugins/importidtech1/src/hexlex.cpp; sourceTree = "<group>"; };
 		067AD9141EBF148F00B808B2 /* importidtech1.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = importidtech1.cpp; path = ../apps/plugins/importidtech1/src/importidtech1.cpp; sourceTree = "<group>"; };
@@ -2725,8 +2725,8 @@
 		067AD9161EBF148F00B808B2 /* mapimporter_loadblockmap.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = mapimporter_loadblockmap.cpp; path = ../apps/plugins/importidtech1/src/mapimporter_loadblockmap.cpp; sourceTree = "<group>"; };
 		067AD9171EBF148F00B808B2 /* mapinfotranslator.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = mapinfotranslator.cpp; path = ../apps/plugins/importidtech1/src/mapinfotranslator.cpp; sourceTree = "<group>"; };
 		067AD9291EBF14E000B808B2 /* libdeng_core.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libdeng_core.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		067AD92A1EBF151100B808B2 /* c_wrapper.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = c_wrapper.cpp; path = ../sdk/libcore/src/c_wrapper.cpp; sourceTree = "<group>"; };
-		067AD92B1EBF151100B808B2 /* charsymbols.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = charsymbols.cpp; path = ../sdk/libcore/src/charsymbols.cpp; sourceTree = "<group>"; };
+		067AD92A1EBF151100B808B2 /* c_wrapper.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = c_wrapper.cpp; path = ../libs/core/src/c_wrapper.cpp; sourceTree = "<group>"; };
+		067AD92B1EBF151100B808B2 /* charsymbols.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = charsymbols.cpp; path = ../libs/core/src/charsymbols.cpp; sourceTree = "<group>"; };
 		067AD92D1EBF151100B808B2 /* guard.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = guard.cpp; sourceTree = "<group>"; };
 		067AD92E1EBF151100B808B2 /* lockable.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = lockable.cpp; sourceTree = "<group>"; };
 		067AD92F1EBF151100B808B2 /* readwritelockable.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = readwritelockable.cpp; sourceTree = "<group>"; };
@@ -2804,7 +2804,7 @@
 		067AD9791EBF151100B808B2 /* variable.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = variable.cpp; sourceTree = "<group>"; };
 		067AD97A1EBF151100B808B2 /* writer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = writer.cpp; sourceTree = "<group>"; };
 		067AD97B1EBF151100B808B2 /* ziparchive.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ziparchive.cpp; sourceTree = "<group>"; };
-		067AD97C1EBF151100B808B2 /* error.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = error.cpp; path = ../sdk/libcore/src/error.cpp; sourceTree = "<group>"; };
+		067AD97C1EBF151100B808B2 /* error.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = error.cpp; path = ../libs/core/src/error.cpp; sourceTree = "<group>"; };
 		067AD97E1EBF151100B808B2 /* archiveentryfile.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = archiveentryfile.cpp; sourceTree = "<group>"; };
 		067AD97F1EBF151100B808B2 /* archivefeed.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = archivefeed.cpp; sourceTree = "<group>"; };
 		067AD9801EBF151100B808B2 /* archivefolder.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = archivefolder.cpp; sourceTree = "<group>"; };
@@ -2826,8 +2826,8 @@
 		067AD9901EBF151100B808B2 /* packagefeed.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = packagefeed.cpp; sourceTree = "<group>"; };
 		067AD9911EBF151100B808B2 /* packageloader.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = packageloader.cpp; sourceTree = "<group>"; };
 		067AD9921EBF151100B808B2 /* staticlibraryfeed.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = staticlibraryfeed.cpp; sourceTree = "<group>"; };
-		067AD9931EBF151100B808B2 /* math.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = math.cpp; path = ../sdk/libcore/src/math.cpp; sourceTree = "<group>"; };
-		067AD9941EBF151100B808B2 /* matrix.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = matrix.cpp; path = ../sdk/libcore/src/matrix.cpp; sourceTree = "<group>"; };
+		067AD9931EBF151100B808B2 /* math.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = math.cpp; path = ../libs/core/src/math.cpp; sourceTree = "<group>"; };
+		067AD9941EBF151100B808B2 /* matrix.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = matrix.cpp; path = ../libs/core/src/matrix.cpp; sourceTree = "<group>"; };
 		067AD9961EBF151100B808B2 /* address.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = address.cpp; sourceTree = "<group>"; };
 		067AD9971EBF151100B808B2 /* beacon.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = beacon.cpp; sourceTree = "<group>"; };
 		067AD9981EBF151100B808B2 /* blockpacket.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = blockpacket.cpp; sourceTree = "<group>"; };
@@ -2882,7 +2882,7 @@
 		067AD9CB1EBF151100B808B2 /* tokenrange.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = tokenrange.cpp; sourceTree = "<group>"; };
 		067AD9CC1EBF151100B808B2 /* trystatement.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = trystatement.cpp; sourceTree = "<group>"; };
 		067AD9CD1EBF151100B808B2 /* whilestatement.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = whilestatement.cpp; sourceTree = "<group>"; };
-		067AD9CE1EBF151100B808B2 /* version.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = version.cpp; path = ../sdk/libcore/src/version.cpp; sourceTree = "<group>"; };
+		067AD9CE1EBF151100B808B2 /* version.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = version.cpp; path = ../libs/core/src/version.cpp; sourceTree = "<group>"; };
 		067AD9D01EBF151100B808B2 /* action.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = action.cpp; sourceTree = "<group>"; };
 		067AD9D11EBF151100B808B2 /* animation.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = animation.cpp; sourceTree = "<group>"; };
 		067AD9D21EBF151100B808B2 /* animationrule.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = animationrule.cpp; sourceTree = "<group>"; };
@@ -2899,8 +2899,8 @@
 		067ADA8C1EBF159900B808B2 /* mapimporter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = mapimporter.h; path = ../apps/plugins/importidtech1/include/mapimporter.h; sourceTree = "<group>"; };
 		067ADA8D1EBF159900B808B2 /* mapinfotranslator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = mapinfotranslator.h; path = ../apps/plugins/importidtech1/include/mapinfotranslator.h; sourceTree = "<group>"; };
 		067ADA8E1EBF159900B808B2 /* version.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = version.h; path = ../apps/plugins/importidtech1/include/version.h; sourceTree = "<group>"; };
-		067ADA961EBF16B600B808B2 /* c_wrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = c_wrapper.h; path = ../sdk/libcore/include/de/c_wrapper.h; sourceTree = "<group>"; };
-		067ADA971EBF16B600B808B2 /* charsymbols.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = charsymbols.h; path = ../sdk/libcore/include/de/charsymbols.h; sourceTree = "<group>"; };
+		067ADA961EBF16B600B808B2 /* c_wrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = c_wrapper.h; path = ../libs/core/include/de/c_wrapper.h; sourceTree = "<group>"; };
+		067ADA971EBF16B600B808B2 /* charsymbols.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = charsymbols.h; path = ../libs/core/include/de/charsymbols.h; sourceTree = "<group>"; };
 		067ADA991EBF16B600B808B2 /* app.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = app.h; sourceTree = "<group>"; };
 		067ADA9A1EBF16B600B808B2 /* asset.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = asset.h; sourceTree = "<group>"; };
 		067ADA9B1EBF16B600B808B2 /* clock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = clock.h; sourceTree = "<group>"; };
@@ -2989,7 +2989,7 @@
 		067ADAEF1EBF16B600B808B2 /* writer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = writer.h; sourceTree = "<group>"; };
 		067ADAF01EBF16B600B808B2 /* zeroed.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zeroed.h; sourceTree = "<group>"; };
 		067ADAF11EBF16B600B808B2 /* ziparchive.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ziparchive.h; sourceTree = "<group>"; };
-		067ADAF21EBF16B600B808B2 /* error.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = error.h; path = ../sdk/libcore/include/de/error.h; sourceTree = "<group>"; };
+		067ADAF21EBF16B600B808B2 /* error.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = error.h; path = ../libs/core/include/de/error.h; sourceTree = "<group>"; };
 		067ADAF41EBF16B600B808B2 /* archiveentryfile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = archiveentryfile.h; sourceTree = "<group>"; };
 		067ADAF51EBF16B600B808B2 /* archivefeed.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = archivefeed.h; sourceTree = "<group>"; };
 		067ADAF61EBF16B600B808B2 /* archivefolder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = archivefolder.h; sourceTree = "<group>"; };
@@ -3015,8 +3015,8 @@
 		067ADB0A1EBF16B600B808B2 /* packagefeed.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = packagefeed.h; sourceTree = "<group>"; };
 		067ADB0B1EBF16B600B808B2 /* packageloader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = packageloader.h; sourceTree = "<group>"; };
 		067ADB0C1EBF16B600B808B2 /* staticlibraryfeed.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = staticlibraryfeed.h; sourceTree = "<group>"; };
-		067ADB0D1EBF16B600B808B2 /* libcore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = libcore.h; path = ../sdk/libcore/include/de/libcore.h; sourceTree = "<group>"; };
-		067ADB0E1EBF16B600B808B2 /* math.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = math.h; path = ../sdk/libcore/include/de/math.h; sourceTree = "<group>"; };
+		067ADB0D1EBF16B600B808B2 /* libcore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = libcore.h; path = ../libs/core/include/de/libcore.h; sourceTree = "<group>"; };
+		067ADB0E1EBF16B600B808B2 /* math.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = math.h; path = ../libs/core/include/de/math.h; sourceTree = "<group>"; };
 		067ADB101EBF16B600B808B2 /* address.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = address.h; sourceTree = "<group>"; };
 		067ADB111EBF16B600B808B2 /* beacon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = beacon.h; sourceTree = "<group>"; };
 		067ADB121EBF16B600B808B2 /* blockpacket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = blockpacket.h; sourceTree = "<group>"; };
@@ -3329,7 +3329,7 @@
 				063576291EBF3C970074E6D4 /* waveformbank.cpp */,
 			);
 			name = audio;
-			path = ../sdk/libgui/src/audio;
+			path = ../libs/gui/src/audio;
 			sourceTree = "<group>";
 		};
 		0635762A1EBF3C970074E6D4 /* graphics */ = {
@@ -3365,7 +3365,7 @@
 				063576461EBF3C970074E6D4 /* texturebank.cpp */,
 			);
 			name = graphics;
-			path = ../sdk/libgui/src/graphics;
+			path = ../libs/gui/src/graphics;
 			sourceTree = "<group>";
 		};
 		063576471EBF3C970074E6D4 /* input */ = {
@@ -3377,7 +3377,7 @@
 				0635764C1EBF3C970074E6D4 /* mouseeventsource.cpp */,
 			);
 			name = input;
-			path = ../sdk/libgui/src/input;
+			path = ../libs/gui/src/input;
 			sourceTree = "<group>";
 		};
 		0635764D1EBF3C970074E6D4 /* text */ = {
@@ -3391,7 +3391,7 @@
 				063576531EBF3C970074E6D4 /* nativefont.cpp */,
 			);
 			name = text;
-			path = ../sdk/libgui/src/text;
+			path = ../libs/gui/src/text;
 			sourceTree = "<group>";
 		};
 		063576E01EBF3D0F0074E6D4 /* Headers */ = {
@@ -3414,7 +3414,7 @@
 				063576E41EBF3D240074E6D4 /* waveformbank.h */,
 			);
 			name = audio;
-			path = ../sdk/libgui/include/de/audio;
+			path = ../libs/gui/include/de/audio;
 			sourceTree = "<group>";
 		};
 		063576E51EBF3D240074E6D4 /* graphics */ = {
@@ -3452,7 +3452,7 @@
 				063577031EBF3D240074E6D4 /* vertexbuilder.h */,
 			);
 			name = graphics;
-			path = ../sdk/libgui/include/de/graphics;
+			path = ../libs/gui/include/de/graphics;
 			sourceTree = "<group>";
 		};
 		063577041EBF3D240074E6D4 /* gui */ = {
@@ -3468,7 +3468,7 @@
 				0635770C1EBF3D240074E6D4 /* windoweventhandler.h */,
 			);
 			name = gui;
-			path = ../sdk/libgui/include/de/gui;
+			path = ../libs/gui/include/de/gui;
 			sourceTree = "<group>";
 		};
 		0635770D1EBF3D240074E6D4 /* input */ = {
@@ -3481,7 +3481,7 @@
 				063577121EBF3D240074E6D4 /* mouseeventsource.h */,
 			);
 			name = input;
-			path = ../sdk/libgui/include/de/input;
+			path = ../libs/gui/include/de/input;
 			sourceTree = "<group>";
 		};
 		063577131EBF3D240074E6D4 /* text */ = {
@@ -3492,7 +3492,7 @@
 				063577161EBF3D240074E6D4 /* nativefont.h */,
 			);
 			name = text;
-			path = ../sdk/libgui/include/de/text;
+			path = ../libs/gui/include/de/text;
 			sourceTree = "<group>";
 		};
 		063577271EBF42C10074E6D4 /* dialogs */ = {
@@ -3503,7 +3503,7 @@
 				0635772A1EBF42C10074E6D4 /* messagedialog.cpp */,
 			);
 			name = dialogs;
-			path = ../sdk/libappfw/src/dialogs;
+			path = ../libs/appfw/src/dialogs;
 			sourceTree = "<group>";
 		};
 		0635772B1EBF42C10074E6D4 /* vr */ = {
@@ -3513,7 +3513,7 @@
 				0635772D1EBF42C10074E6D4 /* vrconfig.cpp */,
 			);
 			name = vr;
-			path = ../sdk/libappfw/src/vr;
+			path = ../libs/appfw/src/vr;
 			sourceTree = "<group>";
 		};
 		0635772E1EBF42C10074E6D4 /* widgets */ = {
@@ -3556,7 +3556,7 @@
 				063577511EBF42C10074E6D4 /* variabletogglewidget.cpp */,
 			);
 			name = widgets;
-			path = ../sdk/libappfw/src/widgets;
+			path = ../libs/appfw/src/widgets;
 			sourceTree = "<group>";
 		};
 		063578951EBF43DE0074E6D4 /* c_wrapper */ = {
@@ -4535,7 +4535,7 @@
 				065548191EC8BB670000E33E /* messagedialog.h */,
 			);
 			name = dialogs;
-			path = ../sdk/libappfw/include/de/dialogs;
+			path = ../libs/appfw/include/de/dialogs;
 			sourceTree = "<group>";
 		};
 		0655481A1EC8BB670000E33E /* framework */ = {
@@ -4580,7 +4580,7 @@
 				0655483F1EC8BB670000E33E /* windowtransform.h */,
 			);
 			name = framework;
-			path = ../sdk/libappfw/include/de/framework;
+			path = ../libs/appfw/include/de/framework;
 			sourceTree = "<group>";
 		};
 		065548401EC8BB670000E33E /* ui */ = {
@@ -4601,7 +4601,7 @@
 				0655484D1EC8BB670000E33E /* VariantActionItem */,
 			);
 			name = ui;
-			path = ../sdk/libappfw/include/de/ui;
+			path = ../libs/appfw/include/de/ui;
 			sourceTree = "<group>";
 		};
 		0655484E1EC8BB670000E33E /* vr */ = {
@@ -4611,7 +4611,7 @@
 				065548501EC8BB670000E33E /* vrconfig.h */,
 			);
 			name = vr;
-			path = ../sdk/libappfw/include/de/vr;
+			path = ../libs/appfw/include/de/vr;
 			sourceTree = "<group>";
 		};
 		065548511EC8BB670000E33E /* widgets */ = {
@@ -4654,7 +4654,7 @@
 				065548741EC8BB670000E33E /* variabletogglewidget.h */,
 			);
 			name = widgets;
-			path = ../sdk/libappfw/include/de/widgets;
+			path = ../libs/appfw/include/de/widgets;
 			sourceTree = "<group>";
 		};
 		067AD92C1EBF151100B808B2 /* concurrency */ = {
@@ -4668,7 +4668,7 @@
 				067AD9321EBF151100B808B2 /* waitable.cpp */,
 			);
 			name = concurrency;
-			path = ../sdk/libcore/src/concurrency;
+			path = ../libs/core/src/concurrency;
 			sourceTree = "<group>";
 		};
 		067AD9331EBF151100B808B2 /* core */ = {
@@ -4701,7 +4701,7 @@
 				067AD94C1EBF151100B808B2 /* unixinfo.cpp */,
 			);
 			name = core;
-			path = ../sdk/libcore/src/core;
+			path = ../libs/core/src/core;
 			sourceTree = "<group>";
 		};
 		067AD94D1EBF151100B808B2 /* data */ = {
@@ -4755,7 +4755,7 @@
 				067AD97B1EBF151100B808B2 /* ziparchive.cpp */,
 			);
 			name = data;
-			path = ../sdk/libcore/src/data;
+			path = ../libs/core/src/data;
 			sourceTree = "<group>";
 		};
 		067AD97D1EBF151100B808B2 /* filesys */ = {
@@ -4784,7 +4784,7 @@
 				067AD9921EBF151100B808B2 /* staticlibraryfeed.cpp */,
 			);
 			name = filesys;
-			path = ../sdk/libcore/src/filesys;
+			path = ../libs/core/src/filesys;
 			sourceTree = "<group>";
 		};
 		067AD9951EBF151100B808B2 /* net */ = {
@@ -4805,7 +4805,7 @@
 				067AD9A21EBF151100B808B2 /* transmitter.cpp */,
 			);
 			name = net;
-			path = ../sdk/libcore/src/net;
+			path = ../libs/core/src/net;
 			sourceTree = "<group>";
 		};
 		067AD9A41EBF151100B808B2 /* scriptsys */ = {
@@ -4854,7 +4854,7 @@
 				067AD9CD1EBF151100B808B2 /* whilestatement.cpp */,
 			);
 			name = scriptsys;
-			path = ../sdk/libcore/src/scriptsys;
+			path = ../libs/core/src/scriptsys;
 			sourceTree = "<group>";
 		};
 		067AD9CF1EBF151100B808B2 /* widgets */ = {
@@ -4873,7 +4873,7 @@
 				067AD9DA1EBF151100B808B2 /* widget.cpp */,
 			);
 			name = widgets;
-			path = ../sdk/libcore/src/widgets;
+			path = ../libs/core/src/widgets;
 			sourceTree = "<group>";
 		};
 		067ADA981EBF16B600B808B2 /* core */ = {
@@ -4909,7 +4909,7 @@
 				067ADAB41EBF16B600B808B2 /* version.h */,
 			);
 			name = core;
-			path = ../sdk/libcore/include/de/core;
+			path = ../libs/core/include/de/core;
 			sourceTree = "<group>";
 		};
 		067ADAB51EBF16B600B808B2 /* data */ = {
@@ -4977,7 +4977,7 @@
 				067ADAF11EBF16B600B808B2 /* ziparchive.h */,
 			);
 			name = data;
-			path = ../sdk/libcore/include/de/data;
+			path = ../libs/core/include/de/data;
 			sourceTree = "<group>";
 		};
 		067ADAF31EBF16B600B808B2 /* filesys */ = {
@@ -5010,7 +5010,7 @@
 				067ADB0C1EBF16B600B808B2 /* staticlibraryfeed.h */,
 			);
 			name = filesys;
-			path = ../sdk/libcore/include/de/filesys;
+			path = ../libs/core/include/de/filesys;
 			sourceTree = "<group>";
 		};
 		067ADB0F1EBF16B600B808B2 /* net */ = {
@@ -5029,7 +5029,7 @@
 				067ADB1A1EBF16B600B808B2 /* transmitter.h */,
 			);
 			name = net;
-			path = ../sdk/libcore/include/de/net;
+			path = ../libs/core/include/de/net;
 			sourceTree = "<group>";
 		};
 		067ADB1B1EBF16B600B808B2 /* scriptsys */ = {
@@ -5076,7 +5076,7 @@
 				067ADB421EBF16B600B808B2 /* whilestatement.h */,
 			);
 			name = scriptsys;
-			path = ../sdk/libcore/include/de/scriptsys;
+			path = ../libs/core/include/de/scriptsys;
 			sourceTree = "<group>";
 		};
 		067ADB431EBF16B600B808B2 /* widgets */ = {
@@ -5097,7 +5097,7 @@
 				067ADB501EBF16B600B808B2 /* widget.h */,
 			);
 			name = widgets;
-			path = ../sdk/libcore/include/de/widgets;
+			path = ../libs/core/include/de/widgets;
 			sourceTree = "<group>";
 		};
 		067ADB511EBF16EC00B808B2 /* Headers */ = {
@@ -6120,7 +6120,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "$SRCROOT/../build/scripts/xcmoc.py $SRCROOT/../sdk/libcore\n";
+			shellScript = "$SRCROOT/../build/scripts/xcmoc.py $SRCROOT/../libs/core\n";
 			showEnvVarsInLog = 0;
 		};
 		063581851EBFB2390074E6D4 /* ShellScript */ = {
@@ -6134,7 +6134,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "$SRCROOT/../build/scripts/xcmoc.py $SRCROOT/../sdk/libshell\n";
+			shellScript = "$SRCROOT/../build/scripts/xcmoc.py $SRCROOT/../libs/shell\n";
 			showEnvVarsInLog = 0;
 		};
 		0635818D1EBFB5F20074E6D4 /* ShellScript */ = {
@@ -6148,7 +6148,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "$SRCROOT/../build/scripts/xcmoc.py $SRCROOT/../sdk/libgui\n";
+			shellScript = "$SRCROOT/../build/scripts/xcmoc.py $SRCROOT/../libs/gui\n";
 			showEnvVarsInLog = 0;
 		};
 		0635818E1EBFB6090074E6D4 /* ShellScript */ = {
@@ -6162,7 +6162,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "$SRCROOT/../build/scripts/xcmoc.py $SRCROOT/../sdk/libappfw\n";
+			shellScript = "$SRCROOT/../build/scripts/xcmoc.py $SRCROOT/../libs/appfw\n";
 			showEnvVarsInLog = 0;
 		};
 		0635818F1EBFB6210074E6D4 /* ShellScript */ = {
@@ -6176,7 +6176,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "$SRCROOT/../build/scripts/xcmoc.py $SRCROOT/../sdk/liblegacy\n";
+			shellScript = "$SRCROOT/../build/scripts/xcmoc.py $SRCROOT/../libs/legacy\n";
 		};
 		063581901EBFB6320074E6D4 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -8386,11 +8386,11 @@
 					$QT_DIR/include/QtGui,
 					$QT_DIR/include/QtCore,
 					$QT_DIR/include,
-					$SRCROOT/../sdk/libcore/include,
-					$SRCROOT/../sdk/libappfw/include,
-					$SRCROOT/../sdk/libgui/include,
-					$SRCROOT/../sdk/libshell/include,
-					$SRCROOT/../sdk/liblegacy/include,
+					$SRCROOT/../libs/core/include,
+					$SRCROOT/../libs/appfw/include,
+					$SRCROOT/../libs/gui/include,
+					$SRCROOT/../libs/shell/include,
+					$SRCROOT/../libs/legacy/include,
 					$SRCROOT/../apps/libdoomsday/include,
 					$SRCROOT/../apps/plugins/libgamefw/include,
 					$SRCROOT/../apps/api,
@@ -8474,11 +8474,11 @@
 					$QT_DIR/include/QtGui,
 					$QT_DIR/include/QtCore,
 					$QT_DIR/include,
-					$SRCROOT/../sdk/libcore/include,
-					$SRCROOT/../sdk/libappfw/include,
-					$SRCROOT/../sdk/libgui/include,
-					$SRCROOT/../sdk/libshell/include,
-					$SRCROOT/../sdk/liblegacy/include,
+					$SRCROOT/../libs/core/include,
+					$SRCROOT/../libs/appfw/include,
+					$SRCROOT/../libs/gui/include,
+					$SRCROOT/../libs/shell/include,
+					$SRCROOT/../libs/legacy/include,
 					$SRCROOT/../apps/libdoomsday/include,
 					$SRCROOT/../apps/plugins/libgamefw/include,
 					$SRCROOT/../apps/api,

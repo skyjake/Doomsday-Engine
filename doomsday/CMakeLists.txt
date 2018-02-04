@@ -6,7 +6,7 @@ project (Doomsday)
 
 include (cmake/Config.cmake)
 
-add_subdirectory (sdk)
+add_subdirectory (libs)
 add_subdirectory (apps)
 if (NOT IOS)
     if (DENG_ENABLE_TOOLS)

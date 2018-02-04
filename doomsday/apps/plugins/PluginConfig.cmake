@@ -31,7 +31,7 @@ macro (deng_add_plugin target)
     add_library (${target} ${_libType} ${_src} ${DENG_RESOURCES})
     target_include_directories (${target}
         PUBLIC "${DENG_API_DIR}"
-        PRIVATE "${DENG_SOURCE_DIR}/sdk/libgui/include"
+        PRIVATE "${DENG_SOURCE_DIR}/libs/gui/include"
     )
     target_link_libraries (${target} PUBLIC Deng::libdoomsday Deng::libgamefw)
     enable_cxx11 (${target})

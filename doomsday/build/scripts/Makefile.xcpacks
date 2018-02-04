@@ -8,8 +8,8 @@ HERETIC_DATA 	:= {ROOT}/apps/plugins/heretic/data
 HEXEN_DATA 	:= {ROOT}/apps/plugins/hexen/data
 DOOM64_DATA 	:= ${ROOT}/apps/plugins/doom64/data
 
-STDLIB_FILES 	 := $(shell find $(ROOT)/sdk/libcore/net.dengine.stdlib.pack)
-STDLIB_GUI_FILES := $(shell find $(ROOT)/sdk/libgui/net.dengine.stdlib.gui.pack)
+STDLIB_FILES 	 := $(shell find $(ROOT)/libs/core/net.dengine.stdlib.pack)
+STDLIB_GUI_FILES := $(shell find $(ROOT)/libs/gui/net.dengine.stdlib.gui.pack)
 BASE_FILES 	 := $(shell find $(ROOT)/apps/libdoomsday/net.dengine.base.pack)
 CLIENT_FILES 	 := $(shell find $(ROOT)/apps/client/net.dengine.client.pack | \
 			sed -e 's/ /\\ /g')
@@ -37,10 +37,10 @@ doomsday.pk3 libdoom.pk3 libheretic.pk3 libhexen.pk3: ${PACK_FILES}
 	cd ${SCRIPTS} && ./packres.py --quiet $(PROJECT_TEMP_DIR)
 	
 net.dengine.stdlib.pack: ${STDLIB_FILES}
-	${SCRIPTS}/buildpackage.py $(ROOT)/sdk/libcore/net.dengine.stdlib.pack $(PROJECT_TEMP_DIR)
+	${SCRIPTS}/buildpackage.py $(ROOT)/libs/core/net.dengine.stdlib.pack $(PROJECT_TEMP_DIR)
 	
 net.dengine.stdlib.gui.pack: ${STDLIB_GUI_FILES}
-	${SCRIPTS}/buildpackage.py $(ROOT)/sdk/libgui/net.dengine.stdlib.gui.pack $(PROJECT_TEMP_DIR)
+	${SCRIPTS}/buildpackage.py $(ROOT)/libs/gui/net.dengine.stdlib.gui.pack $(PROJECT_TEMP_DIR)
 	
 net.dengine.base.pack: ${BASE_FILES}
 	${SCRIPTS}/buildpackage.py $(ROOT)/apps/libdoomsday/net.dengine.base.pack $(PROJECT_TEMP_DIR)

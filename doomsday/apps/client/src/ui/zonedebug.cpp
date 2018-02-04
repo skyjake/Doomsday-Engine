@@ -35,7 +35,7 @@
 
 /// @todo Find a better way to access the private data of the zone
 /// (e.g., move this into the library and use an abstract graphics interface).
-#include "../../../sdk/liblegacy/src/memoryzone_private.h"
+#include "../../../libs/legacy/src/memoryzone_private.h"
 
 #include "gl/gl_main.h"
 #include "gl/gl_draw.h"

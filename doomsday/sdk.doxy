@@ -7,8 +7,8 @@ PROJECT_BRIEF           = "Core engine library and supporting libraries"
 PROJECT_LOGO            = doc/apidoc-logo.png
 OUTPUT_DIRECTORY        = apidoc/sdk/
 
-INPUT                   = sdk/libcore/include sdk/libgui/include sdk/libappfw/include sdk/libshell/include sdk/liblegacy/include \
-                          sdk/libcore/src     sdk/libgui/src     sdk/libappfw/src     sdk/libshell/src     sdk/liblegacy/src
+INPUT                   = libs/core/include libs/gui/include libs/appfw/include libs/shell/include libs/legacy/include \
+                          libs/core/src     libs/gui/src     libs/appfw/src     libs/shell/src     libs/legacy/src
 FILE_PATTERNS           = *
 PREDEFINED              = __cplusplus __DENG2__ __LIBGUI__ __LIBSHELL__ __LIBAPPFW__ __DENG__ \
                           "DENG2_PIMPL(ClassName)=typedef ClassName Public; struct ClassName::Instance : public de::Private<ClassName>" \
