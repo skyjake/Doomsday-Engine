@@ -1,1 +1,13 @@
 image logo { path = "images/deng-logo-256.png" }
+
+group world {
+    image stone { path = "images/mat-stone.png" }
+    image grass { path = "images/mat-grass.jpg" }
+    image dirt  { path = "images/mat-dirt.jpg" }    
+}
+
+group sky {
+    image day     { path = "images/sky-day.jpg" }
+    image morning { path = "images/sky-morning.jpg" }
+    image evening { path = "images/sky-evening.jpg" }
+}

@@ -11,3 +11,4 @@
 @include <shaders/generic.dei>
 @include <shaders/fx-blur.dei>
 @include <shaders/ui.dei>
+@include <shaders/indirect.dei>

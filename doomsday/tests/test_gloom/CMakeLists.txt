@@ -13,27 +13,43 @@ include (../../cmake/Macros.cmake)
 
 find_package (Qt5 COMPONENTS Gui Widgets Network OpenGL OpenGLExtensions)
 find_package (DengAppfw)
+include (${DENG_SOURCE_DIR}/cmake/FindFMOD.cmake)
 
 deng_add_package (net.dengine.gloom)
 
 set (SOURCES
+    gloom/audio/audiosystem.cpp
+    gloom/audio/audiosystem.h
+    gloom/icamera.h
+    gloom/ilight.h
+    gloom/gloomwidget.cpp
+    gloom/gloomwidget.h
+    gloom/render/skybox.cpp
+    gloom/render/skybox.h
+    gloom/world/environment.cpp
+    gloom/world/environment.h
+    gloom/world/user.cpp
+    gloom/world/user.h
+    gloom/world/world.cpp
+    gloom/world/world.h
     src/approotwidget.cpp
+    src/approotwidget.h
     src/appwindowsystem.cpp
+    src/appwindowsystem.h
     src/globalshortcuts.cpp
+    src/globalshortcuts.h
+    src/gloomapp.cpp
+    src/gloomapp.h
+    src/gloomworld.cpp
+    src/gloomworld.h
     src/main.cpp
     src/mainwindow.cpp
-    src/gloomapp.cpp
-
-    src/approotwidget.h
-    src/appwindowsystem.h
-    src/globalshortcuts.h
     src/mainwindow.h
-    src/gloomapp.h
 )
 
 deng_add_application (test_gloom ${SOURCES} ${HEADERS})
 
-target_link_libraries (test_gloom Deng::libappfw)
+target_link_libraries (test_gloom Deng::libappfw fmodex)
 
 if (APPLE)
     set_target_properties (test_gloom PROPERTIES

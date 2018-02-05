@@ -20,6 +20,7 @@
 #include "gloomapp.h"
 #include "approotwidget.h"
 #include "globalshortcuts.h"
+#include "../gloom/gloomwidget.h"
 
 #include <de/CommandLine>
 #include <de/GLState>
@@ -36,7 +37,8 @@ DENG2_PIMPL(MainWindow)
     AppRootWidget    root;
     bool             needRootSizeUpdate{false};
     GlobalShortcuts *shortcuts{nullptr};
-    LabelWidget *    test{nullptr};
+    LabelWidget *    info{nullptr};
+    GloomWidget *    gloom{nullptr};
 
     Impl(Public *i)
         : Base(i)
@@ -51,11 +53,22 @@ DENG2_PIMPL(MainWindow)
 
     void setupUI()
     {
-        Style const &style = Style::get();
+        //Style const &style = Style::get();
 
         shortcuts = new GlobalShortcuts;
         root.add(shortcuts);
 
+        gloom = new GloomWidget;
+        gloom->rule().setRect(root.viewRule());
+        root.add(gloom);
+
+        info = new LabelWidget;
+        info->setText(_E(b) "Gloom");
+        info->setSizePolicy(ui::Expand, ui::Expand);
+        info->rule().setLeftTop(root.viewLeft(), root.viewTop());
+        root.add(info);
+
+        /*
         test = new LabelWidget;
         test->setText("Gloom");
         test->setImage(GloomApp::images().image("logo"));
@@ -86,6 +99,7 @@ DENG2_PIMPL(MainWindow)
                 .setInput(Rule::Top,   label->rule().top())
                 .setSize(label->rule().width(), label->rule().height());
         root.add(label2);
+        */
     }
 
     void windowInit(GLWindow &)
@@ -157,7 +171,6 @@ void MainWindow::preDraw()
 void MainWindow::postDraw()
 {
     BaseWindow::postDraw();
-
     Garbage_Recycle();
 }
 

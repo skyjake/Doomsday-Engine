@@ -21,6 +21,7 @@
 
 #include <de/BaseGuiApp>
 #include <de/ImageBank>
+#include "../gloom/audio/audiosystem.h"
 #include "appwindowsystem.h"
 
 #define OVR_FOV         122.f
@@ -36,6 +37,7 @@ public:
 
     static GloomApp &       app();
     static AppWindowSystem &windowSystem();
+    static AudioSystem &    audioSystem();
     static MainWindow &     main();
     static de::ImageBank &  images();
 

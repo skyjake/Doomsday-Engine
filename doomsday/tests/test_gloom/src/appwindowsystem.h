@@ -30,7 +30,7 @@ public:
 
     static MainWindow &main();
 
-    bool rootProcessEvent(de::Event const &event);
+    bool rootProcessEvent(const de::Event &event);
     void rootUpdate();
 
 private:

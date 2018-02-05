@@ -17,10 +17,14 @@
  */
 
 #include "gloomapp.h"
+#include "gloomworld.h"
+#include "../gloom/gloomwidget.h"
+#include "../gloom/world/user.h"
 #include "appwindowsystem.h"
 
 #include <de/DisplayMode>
 #include <de/FileSystem>
+#include <de/PackageLoader>
 #include <de/ScriptSystem>
 
 using namespace de;
@@ -28,7 +32,9 @@ using namespace de;
 DENG2_PIMPL(GloomApp)
 {
     std::unique_ptr<AppWindowSystem> winSys;
-    ImageBank images;
+    std::unique_ptr<AudioSystem>     audioSys;
+    ImageBank                        images;
+    GloomWorld                       world;
 
     Impl(Public *i) : Base(i) {}
 
@@ -65,19 +71,29 @@ void GloomApp::initialize()
     initSubsystems(App::DisablePlugins);
 
     // Create subsystems.
-    d->winSys.reset(new AppWindowSystem);
-    addSystem(*d->winSys);
+    {
+        d->winSys.reset(new AppWindowSystem);
+        addSystem(*d->winSys);
+
+        d->audioSys.reset(new AudioSystem);
+        addSystem(*d->audioSys);
+    }
 
     d->loadAllShaders();
 
-    // Also load images.
-    d->images.addFromInfo(rootFolder().locate<File>("/packs/net.dengine.gloom/images.dei"));
+    // Load resource banks.
+    {
+        const Package &base = App::packageLoader().package("net.dengine.gloom");
+        d->images  .addFromInfo(base.root().locate<File>("images.dei"));
+        waveforms().addFromInfo(base.root().locate<File>("audio.dei"));
+    }
 
     // Create the window.
     MainWindow *win = d->winSys->newWindow<MainWindow>("main");
 
-    scriptSystem().importModule("bootstrap");
+    win->root().find("gloomwidget")->as<GloomWidget>().setWorld(&d->world);
 
+    scriptSystem().importModule("bootstrap");
     win->show();
 }
 
@@ -89,6 +105,11 @@ GloomApp &GloomApp::app()
 AppWindowSystem &GloomApp::windowSystem()
 {
     return *app().d->winSys;
+}
+
+AudioSystem &GloomApp::audioSystem()
+{
+    return *app().d->audioSys;
 }
 
 MainWindow &GloomApp::main()

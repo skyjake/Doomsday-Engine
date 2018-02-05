@@ -24,11 +24,12 @@ using namespace de;
 
 DENG2_PIMPL(AppRootWidget)
 {
-    Impl(Public *i) : Base(i) {}
+    Impl(Public * i) : Base(i) {}
 };
 
 AppRootWidget::AppRootWidget(GLWindow *window)
-    : GuiRootWidget(window), d(new Impl(this))
+    : GuiRootWidget(window)
+    , d(new Impl(this))
 {}
 
 MainWindow &AppRootWidget::window()
@@ -41,7 +42,7 @@ void AppRootWidget::dispatchLatestMousePosition()
     GloomApp::windowSystem().dispatchLatestMousePosition();
 }
 
-void AppRootWidget::handleEventAsFallback(Event const &/*event*/)
+void AppRootWidget::handleEventAsFallback(Event const & /*event*/)
 {
     // Handle event at global level, if applicable.
 }

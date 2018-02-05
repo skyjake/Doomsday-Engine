@@ -1,0 +1,50 @@
+group indirect 
+{
+    group textured 
+    {
+        # Shader with one texture plus a color per vertex. Texture coords
+        # are indirectly mapped within the aBounds attribute. Uses a combined
+        # model-view-projection matrix. Texture coordinates also repeat within
+        # the bounds.       
+        shader color 
+        {
+            path.vertex = "indirect-textured.vsh"
+            fragment = "
+                #include 'miplevel.glsl'
+                
+                uniform sampler2D uTex;
+                DENG_VAR highp vec2 vUV;
+                DENG_VAR highp vec2 vTexSize;
+                DENG_VAR highp vec4 vColor;
+                DENG_VAR highp vec4 vBounds;
+
+                void main(void) {
+                    highp vec2 uv = vBounds.xy + clamp(vUV, vec2(0.0, 0.0), vec2(1.0, 1.0)) * vBounds.zw;
+                    highp vec4 color = vColor * textureLod(uTex, uv, mipLevel(vUV, vTexSize) - 0.5);
+                    if (color.a < 0.005) discard;
+                    out_FragColor = color;
+                }"
+        }
+        
+        shader color_repeat 
+        {
+            path.vertex = "indirect-textured.vsh"
+            fragment = "
+                #include 'miplevel.glsl'
+                
+                uniform sampler2D uTex;
+                DENG_VAR highp vec2 vUV;
+                DENG_VAR highp vec2 vTexSize;
+                DENG_VAR highp vec4 vColor;
+                DENG_VAR highp vec4 vBounds;
+
+                void main(void) {
+                    highp vec2 uv = vBounds.xy + fract(vUV) * vBounds.zw;
+                    highp vec4 color = vColor * textureLod(uTex, uv, mipLevel(vUV, vTexSize) - 0.5);
+                    if (color.a < 0.005) discard;
+                    out_FragColor = color;
+                }"
+        }
+    }
+}
+
