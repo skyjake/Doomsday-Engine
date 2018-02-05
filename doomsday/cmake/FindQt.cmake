@@ -1,6 +1,7 @@
 # Qmake is used to find out the Qt install location.
 if (NOT QMAKE)
-    find_program (QMAKE NAMES qmake-qt5 qt5-qmake qmake qmake-qt4 qt4-qmake ${QT_QMAKE_EXECUTABLE}
+    find_program (QMAKE
+        NAMES qmake-qt5 qt5-qmake qmake qmake-qt4 qt4-qmake ${QT_QMAKE_EXECUTABLE}
         PATHS ENV PATH
         HINTS ${QT_QMAKE_EXECUTABLE} ENV DENG_DEPEND_PATH
         DOC "Path of the qmake executable to use"

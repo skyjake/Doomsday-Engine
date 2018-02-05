@@ -1,6 +1,7 @@
 cmake_minimum_required (VERSION 3.1)
 project (GLOOM)
 
+set (DENG_OPENGL_API 3.3)
 set (CMAKE_AUTOMOC ON)
 set (CMAKE_AUTORCC ON)
 set (DENG_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/../..)
