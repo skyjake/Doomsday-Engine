@@ -241,6 +241,7 @@ macro (deng_merge_sources srcName globbing)
         # The original source files should not be compiled any more.
         # They remain part of the project so they are available in the IDE.
         set_property (SOURCE ${_mergingSources} PROPERTY HEADER_FILE_ONLY YES)
+        set_property (SOURCE ${_turbo} PROPERTY SKIP_AUTOMOC YES)
         list (APPEND SOURCES ${_turbo};${_mergingSources})
         set (_files)
         set (_mergingSources)
