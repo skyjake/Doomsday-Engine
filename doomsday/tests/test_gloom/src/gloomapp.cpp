@@ -17,10 +17,10 @@
  */
 
 #include "gloomapp.h"
-#include "gloomworld.h"
+#include "appwindowsystem.h"
+#include "../gloom/gloomworld.h"
 #include "../gloom/gloomwidget.h"
 #include "../gloom/world/user.h"
-#include "appwindowsystem.h"
 
 #include <de/DisplayMode>
 #include <de/FileSystem>

@@ -1,10 +1,10 @@
+//#include "gloomapp.h"
 #include "gloomworld.h"
-#include "gloomapp.h"
-#include "../gloom/audio/audiosystem.h"
-#include "../gloom/ilight.h"
-#include "../gloom/render/skybox.h"
-#include "../gloom/world/environment.h"
-#include "../gloom/world/user.h"
+#include "ilight.h"
+#include "audio/audiosystem.h"
+#include "render/skybox.h"
+#include "world/environment.h"
+#include "world/user.h"
 
 #include <de/TextureBank>
 #include <de/Drawable>

@@ -25,6 +25,8 @@ set (SOURCES
     gloom/ilight.h
     gloom/gloomwidget.cpp
     gloom/gloomwidget.h
+    gloom/gloomworld.cpp
+    gloom/gloomworld.h
     gloom/render/skybox.cpp
     gloom/render/skybox.h
     gloom/world/environment.cpp
@@ -41,8 +43,6 @@ set (SOURCES
     src/globalshortcuts.h
     src/gloomapp.cpp
     src/gloomapp.h
-    src/gloomworld.cpp
-    src/gloomworld.h
     src/main.cpp
     src/mainwindow.cpp
     src/mainwindow.h
