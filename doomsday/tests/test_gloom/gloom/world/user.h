@@ -37,11 +37,14 @@ public:
     void setYaw(float yaw);
     void setPain(float pain);
     void setInputState(InputState const &state);
+    void turn(float yaw, float pitch);
+    void turn(const de::Vector2f &angles) { turn(angles.x, angles.y); }
 
     void update(de::TimeSpan const &elapsed);
 
     de::Vector3f position() const;
     float        yaw() const;
+    float        pitch() const;
     de::Sound &  fastWindSound();
 
 private:

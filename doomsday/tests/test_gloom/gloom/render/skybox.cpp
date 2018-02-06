@@ -46,7 +46,7 @@ void SkyBox::glInit()
     v.texCoord[1] = Vector2f(512, 512);
     v.rgba        = Vector4f(1, 1, 1, 1);
 
-    float gap = 4.f / (6*512);
+    const float gap = 4.f / (6*512);
 
     v.pos = Vector3f(-1, -1, -1); v.texCoord[0] = Vector2f(gap, gap); verts << v;
     v.pos = Vector3f(-1,  1, -1); v.texCoord[0] = Vector2f(gap, 1); verts << v;

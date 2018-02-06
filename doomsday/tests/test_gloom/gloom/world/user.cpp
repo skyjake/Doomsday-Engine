@@ -11,18 +11,18 @@ using namespace de;
 
 DENG2_PIMPL(User)
 {
-    World const *world;
+    World const *world = nullptr;
 
     InputState input;
     Vector3f   eyePos;
-    float      yaw;
-    float      zeroYaw;
+    float      yaw   = 0;
+    float      pitch = 0;
     Vector3f   momentum;
-    float      angularMomentum;
-    bool       onGround;
-    bool       firstUpdate;
-    float      crouch;
-    float      crouchMomentum;
+    float      angularMomentum = 0;
+    bool       onGround        = false;
+    bool       firstUpdate     = true;
+    float      crouch          = 0;
+    float      crouchMomentum  = 0;
 
     // For notification:
     Vector3f prevPosition;
@@ -31,23 +31,12 @@ DENG2_PIMPL(User)
     // Audio:
     TimeSpan  stepElapsed;
     Sound *   fastWind;
-    Animation windVolume;
-    Animation windFreq;
+    Animation windVolume{0, Animation::Linear};
+    Animation windFreq{0, Animation::Linear};
 
-    Impl(Public * i)
-        : Base(i)
-        , world(0)
-        , yaw(0)
-        , angularMomentum(0)
-        , onGround(false)
-        , firstUpdate(true)
-        , crouch(0)
-        , crouchMomentum(0)
-        , windVolume(0, Animation::Linear)
-        , windFreq(0, Animation::Linear)
-    //        , playback(false)
+    Impl(Public * i) : Base(i)
     {
-        eyePos = Vector3f(0, -1.8f, 0);
+        eyePos = Vector3f(0, 0, 0);
 
         fastWind = &AudioSystem::get().newSound("user.fastwind");
         fastWind->setVolume(0).play(Sound::Looping);
@@ -169,8 +158,7 @@ DENG2_PIMPL(User)
         if (world)
         {
             // Keep viewer on the ground.
-            float surface =
-                world->groundSurfaceHeight(eyePos); // - VRSenseApp::vr().eyeHeightInMapUnits();
+            float surface = world->groundSurfaceHeight(eyePos);
             if (onGround)
             {
                 if (eyePos.y >= surface - 10 * elapsed)
@@ -315,8 +303,7 @@ DENG2_PIMPL(User)
     }
 };
 
-User::User()
-    : d(new Impl(this))
+User::User() : d(new Impl(this))
 {}
 
 //void User::resetYaw()
@@ -349,6 +336,11 @@ float User::yaw() const
     return d->yaw;
 }
 
+float User::pitch() const
+{
+    return d->pitch;
+}
+
 void User::setPosition(Vector3f const &pos)
 {
     auto oldPos = d->eyePos;
@@ -377,6 +369,12 @@ void User::setPain(float pain)
 void User::setInputState(InputState const &state)
 {
     d->input = state;
+}
+
+void User::turn(float yaw, float pitch)
+{
+    d->yaw   = de::wrap(d->yaw + yaw, -180.f, 180.f);
+    d->pitch = Rangef(-89, 89).clamp(d->pitch + pitch);
 }
 
 void User::update(TimeSpan const &elapsed)

@@ -19,6 +19,8 @@ DENG_GUI_PIMPL(GloomWidget)
     Time             previousUpdateAt;
     User             user;
     User::InputState inputs;
+    bool             mouseLook = false;
+    Vector2i         lastMousePos;
 
     Impl(Public *i) : Base(i)
     {}
@@ -32,8 +34,9 @@ DENG_GUI_PIMPL(GloomWidget)
 
     void updateModelView()
     {
-        modelView = Matrix4f::rotate(user.yaw(), Vector3f(0, 1, 0)) *
-                    Matrix4f::rotate(180, Vector3f(0, 0, 1)) *
+        modelView = Matrix4f::rotate(user.pitch(), Vector3f(1, 0, 0)) *
+                    Matrix4f::rotate(user.yaw(),   Vector3f(0, 1, 0)) *
+                    Matrix4f::rotate(180,          Vector3f(0, 0, 1)) *
                     Matrix4f::translate(-user.position());
     }
 
@@ -158,22 +161,22 @@ bool GloomWidget::handleEvent(Event const &event)
 {
     if (event.isKey())
     {
-        KeyEvent const &key = event.as<KeyEvent>();
+        const KeyEvent &key = event.as<KeyEvent>();
 
         User::InputBit bit = User::Inert;
         switch (key.ddKey())
         {
         case 'q':
-        case DDKEY_LEFTARROW:  bit = User::TurnLeft; break;
+        case DDKEY_LEFTARROW:  bit = User::TurnLeft;  break;
         case 'e':
         case DDKEY_RIGHTARROW: bit = User::TurnRight; break;
         case 'w':
-        case DDKEY_UPARROW:    bit = User::Forward; break;
+        case DDKEY_UPARROW:    bit = User::Forward;   break;
         case 's':
-        case DDKEY_DOWNARROW:  bit = User::Backward; break;
-        case 'a':              bit = User::StepLeft; break;
+        case DDKEY_DOWNARROW:  bit = User::Backward;  break;
+        case 'a':              bit = User::StepLeft;  break;
         case 'd':              bit = User::StepRight; break;
-        case DDKEY_LSHIFT:     bit = User::Shift; break;
+        case DDKEY_LSHIFT:     bit = User::Shift;     break;
         default:               break;
         }
 
@@ -183,6 +186,36 @@ bool GloomWidget::handleEvent(Event const &event)
                 d->inputs |= bit;
             else
                 d->inputs &= ~bit;
+        }
+    }
+
+    if (event.isMouse())
+    {
+        const MouseEvent &mouse = event.as<MouseEvent>();
+        auto &eventHandler = root().window().eventHandler();
+
+        if (d->mouseLook)
+        {
+            const Vector2i delta = mouse.pos() - d->lastMousePos;
+            d->lastMousePos = mouse.pos();
+
+            d->user.turn(Vector2f(delta)/7.f);
+        }
+
+        switch (handleMouseClick(event, MouseEvent::Left))
+        {
+            case MouseClickStarted:
+                d->lastMousePos = mouse.pos();
+                d->mouseLook = true;
+                break;
+
+            default:
+                d->mouseLook = false;
+                break;
+
+            case MouseClickUnrelated:
+                break;
+
         }
     }
 
