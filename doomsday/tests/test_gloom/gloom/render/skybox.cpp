@@ -59,10 +59,17 @@ void SkyBox::glInit()
     v.pos = Vector3f(-1, -1, -1); v.texCoord[0] = Vector2f(4.f/6.f - gap, gap); verts << v;
     v.pos = Vector3f(-1,  1, -1); v.texCoord[0] = Vector2f(4.f/6.f - gap, 1); verts << v << v;
 
+    // Top cap.
     v.pos = Vector3f( 1, -1, -1); v.texCoord[0] = Vector2f(6.f/6.f - gap, gap); verts << v << v;
     v.pos = Vector3f(-1, -1, -1); v.texCoord[0] = Vector2f(5.f/6.f + gap, gap); verts << v;
     v.pos = Vector3f( 1, -1,  1); v.texCoord[0] = Vector2f(6.f/6.f - gap, 1 - gap); verts << v;
-    v.pos = Vector3f(-1, -1,  1); v.texCoord[0] = Vector2f(5.f/6.f + gap, 1 - gap); verts << v;
+    v.pos = Vector3f(-1, -1,  1); v.texCoord[0] = Vector2f(5.f/6.f + gap, 1 - gap); verts << v << v;
+
+    // Bottom cap.
+    v.pos = Vector3f( 1,  1, -1); v.texCoord[0] = Vector2f(5.f/6.f - gap, gap); verts << v << v;
+    v.pos = Vector3f(-1,  1, -1); v.texCoord[0] = Vector2f(4.f/6.f + gap, gap); verts << v;
+    v.pos = Vector3f( 1,  1,  1); v.texCoord[0] = Vector2f(5.f/6.f - gap, 1 - gap); verts << v;
+    v.pos = Vector3f(-1,  1,  1); v.texCoord[0] = Vector2f(4.f/6.f + gap, 1 - gap); verts << v;
 
     buf->setVertices(gl::TriangleStrip, verts, gl::Static);
     d->skyBox.addBuffer(buf);

@@ -313,17 +313,12 @@ User *GloomWorld::localUser() const
 
 World::POI GloomWorld::initialViewPosition() const
 {
-    return POI(Vector3f(-568, 0, 1197), 90);
+    return POI(Vector3f(0, 0, 0), 90);
 }
 
 QList<World::POI> GloomWorld::pointsOfInterest() const
 {
-    QList<POI> pois;
-    pois << POI(initialViewPosition())            // on top of a spire
-         << POI(Vector3f(-839, -50, 959), -140)   // fall into a hole
-         << POI(Vector3f(1198, 50, 520.6f), 130)  // the fields
-         << POI(Vector3f(-1209, 48, -763), -90);  // passageway
-    return pois;
+    return QList<POI>({ POI(initialViewPosition()) });
 }
 
 float GloomWorld::groundSurfaceHeight(Vector3f const &pos) const

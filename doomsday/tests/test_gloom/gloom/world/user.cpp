@@ -59,7 +59,6 @@ DENG2_PIMPL(User)
     ~Impl()
     {
         //App::config()["zeroYaw"].audienceForChange() -= this;
-        //        VRSenseApp::recorder().audienceForState -= this;
 
         DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->userBeingDeleted(self());
     }
@@ -67,11 +66,6 @@ DENG2_PIMPL(User)
     //    void variableValueChanged(Variable &, Value const &newValue)
     //    {
     //        VRSenseApp::vr().oculusRift().setYawOffset(newValue.asNumber());
-    //    }
-
-    //    void recorderStateChanged(Recorder::State state)
-    //    {
-    //        self.setPlaybackMode(state == Recorder::Playback);
     //    }
 
     Vector3f frontVector() const
@@ -263,7 +257,7 @@ DENG2_PIMPL(User)
 
         // Update wind in the ears.
         windVolume.setValue(clamp(0.0f, float((float(momentum.length() / 20 - .3))), 1.0f), .1);
-        windFreq.setValue(clamp(.6f, .6f + float(momentum.length() / 50 - .3), 1.15f), .1);
+        windFreq  .setValue(clamp(.6f, .6f + float(momentum.length() / 50 - .3), 1.15f), .1);
         fastWind->setVolume(windVolume);
         fastWind->setFrequency(windFreq);
 

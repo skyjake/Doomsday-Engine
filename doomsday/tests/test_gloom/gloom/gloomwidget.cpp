@@ -2,7 +2,6 @@
 #include "audio/audiosystem.h"
 #include "world/world.h"
 #include "world/user.h"
-//#include "../src/approotwidget.h"
 
 #include <de/Drawable>
 #include <de/GLBuffer>
@@ -210,7 +209,7 @@ Vector3f GloomWidget::cameraUp() const
 Matrix4f GloomWidget::cameraProjection() const
 {
     const auto size = rule().size();
-    return Matrix4f::perspective(100, size.x / size.y, 0.01f, 5000.f);
+    return Matrix4f::perspective(80, size.x / size.y, 0.1f, 2500.f);
 }
 
 Matrix4f GloomWidget::cameraModelView() const
