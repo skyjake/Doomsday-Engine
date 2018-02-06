@@ -31,6 +31,8 @@ set (SOURCES
     gloom/render/skybox.h
     gloom/world/environment.cpp
     gloom/world/environment.h
+    gloom/world/map.cpp
+    gloom/world/map.h
     gloom/world/user.cpp
     gloom/world/user.h
     gloom/world/world.cpp

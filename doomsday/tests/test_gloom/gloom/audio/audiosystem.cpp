@@ -10,6 +10,8 @@
 
 using namespace de;
 
+namespace gloom {
+
 /**
  * Adapter that allows FMOD to read files via Doomsday.
  */
@@ -532,3 +534,5 @@ const ICamera *AudioSystem::listener() const
 {
     return d->listenerCamera;
 }
+
+} // namespace gloom

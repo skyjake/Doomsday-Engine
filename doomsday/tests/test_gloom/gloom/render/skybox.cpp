@@ -5,6 +5,8 @@
 
 using namespace de;
 
+namespace gloom {
+
 DENG2_PIMPL_NOREF(SkyBox)
 {
     typedef GLBufferT<Vertex3Tex2BoundsRgba> VBuf;
@@ -48,28 +50,29 @@ void SkyBox::glInit()
 
     const float gap = 4.f / (6*512);
 
-    v.pos = Vector3f(-1, -1, -1); v.texCoord[0] = Vector2f(gap, gap); verts << v;
-    v.pos = Vector3f(-1,  1, -1); v.texCoord[0] = Vector2f(gap, 1); verts << v;
-    v.pos = Vector3f(-1, -1,  1); v.texCoord[0] = Vector2f(1.f/6.f, gap); verts << v;
-    v.pos = Vector3f(-1,  1,  1); v.texCoord[0] = Vector2f(1.f/6.f, 1); verts << v;
-    v.pos = Vector3f( 1, -1,  1); v.texCoord[0] = Vector2f(2.f/6.f, gap); verts << v;
-    v.pos = Vector3f( 1,  1,  1); v.texCoord[0] = Vector2f(2.f/6.f, 1); verts << v;
-    v.pos = Vector3f( 1, -1, -1); v.texCoord[0] = Vector2f(3.f/6.f, gap); verts << v;
-    v.pos = Vector3f( 1,  1, -1); v.texCoord[0] = Vector2f(3.f/6.f, 1); verts << v;
-    v.pos = Vector3f(-1, -1, -1); v.texCoord[0] = Vector2f(4.f/6.f - gap, gap); verts << v;
-    v.pos = Vector3f(-1,  1, -1); v.texCoord[0] = Vector2f(4.f/6.f - gap, 1); verts << v << v;
+    // Sides.
+    v.pos = Vector3f(-1, -1, -1); v.texCoord[0] = Vector2f(gap,             1 - gap); verts << v;
+    v.pos = Vector3f(-1,  1, -1); v.texCoord[0] = Vector2f(gap,             gap); verts << v;
+    v.pos = Vector3f(-1, -1,  1); v.texCoord[0] = Vector2f(1.f/6.f,         1 - gap); verts << v;
+    v.pos = Vector3f(-1,  1,  1); v.texCoord[0] = Vector2f(1.f/6.f,         gap); verts << v;
+    v.pos = Vector3f( 1, -1,  1); v.texCoord[0] = Vector2f(2.f/6.f,         1 - gap); verts << v;
+    v.pos = Vector3f( 1,  1,  1); v.texCoord[0] = Vector2f(2.f/6.f,         gap); verts << v;
+    v.pos = Vector3f( 1, -1, -1); v.texCoord[0] = Vector2f(3.f/6.f,         1 - gap); verts << v;
+    v.pos = Vector3f( 1,  1, -1); v.texCoord[0] = Vector2f(3.f/6.f,         gap); verts << v;
+    v.pos = Vector3f(-1, -1, -1); v.texCoord[0] = Vector2f(4.f/6.f - gap,   1 - gap); verts << v;
+    v.pos = Vector3f(-1,  1, -1); v.texCoord[0] = Vector2f(4.f/6.f - gap,   gap); verts << v << v;
 
     // Top cap.
-    v.pos = Vector3f( 1, -1, -1); v.texCoord[0] = Vector2f(6.f/6.f - gap, gap); verts << v << v;
-    v.pos = Vector3f(-1, -1, -1); v.texCoord[0] = Vector2f(5.f/6.f + gap, gap); verts << v;
-    v.pos = Vector3f( 1, -1,  1); v.texCoord[0] = Vector2f(6.f/6.f - gap, 1 - gap); verts << v;
-    v.pos = Vector3f(-1, -1,  1); v.texCoord[0] = Vector2f(5.f/6.f + gap, 1 - gap); verts << v << v;
+    v.pos = Vector3f( 1,  1, -1); v.texCoord[0] = Vector2f(6.f/6.f - gap, gap); verts << v << v;
+    v.pos = Vector3f(-1,  1, -1); v.texCoord[0] = Vector2f(5.f/6.f + gap, gap); verts << v;
+    v.pos = Vector3f( 1,  1,  1); v.texCoord[0] = Vector2f(6.f/6.f - gap, 1 - gap); verts << v;
+    v.pos = Vector3f(-1,  1,  1); v.texCoord[0] = Vector2f(5.f/6.f + gap, 1 - gap); verts << v << v;
 
     // Bottom cap.
-    v.pos = Vector3f( 1,  1, -1); v.texCoord[0] = Vector2f(5.f/6.f - gap, gap); verts << v << v;
-    v.pos = Vector3f(-1,  1, -1); v.texCoord[0] = Vector2f(4.f/6.f + gap, gap); verts << v;
-    v.pos = Vector3f( 1,  1,  1); v.texCoord[0] = Vector2f(5.f/6.f - gap, 1 - gap); verts << v;
-    v.pos = Vector3f(-1,  1,  1); v.texCoord[0] = Vector2f(4.f/6.f + gap, 1 - gap); verts << v;
+    v.pos = Vector3f( 1, -1, -1); v.texCoord[0] = Vector2f(5.f/6.f - gap, gap); verts << v << v;
+    v.pos = Vector3f(-1, -1, -1); v.texCoord[0] = Vector2f(4.f/6.f + gap, gap); verts << v;
+    v.pos = Vector3f( 1, -1,  1); v.texCoord[0] = Vector2f(5.f/6.f - gap, 1 - gap); verts << v;
+    v.pos = Vector3f(-1, -1,  1); v.texCoord[0] = Vector2f(4.f/6.f + gap, 1 - gap); verts << v;
 
     buf->setVertices(gl::TriangleStrip, verts, gl::Static);
     d->skyBox.addBuffer(buf);
@@ -86,7 +89,13 @@ void SkyBox::glDeinit()
 
 void SkyBox::render(Matrix4f const &mvpMatrix)
 {
+    GLState::push().setDepthWrite(false);
+
     DENG2_ASSERT(d->skyBox.program().isReady());
     d->uMvpMatrix = mvpMatrix * Matrix4f::scale(d->scale);
     d->skyBox.draw();
+
+    GLState::pop();
 }
+
+} // namespace gloom

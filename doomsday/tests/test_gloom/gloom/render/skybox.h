@@ -4,6 +4,8 @@
 #include <de/AtlasTexture>
 #include <de/Matrix>
 
+namespace gloom {
+
 class SkyBox
 {
 public:
@@ -19,5 +21,7 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+} // namespace gloom
 
 #endif // SKYBOX_H

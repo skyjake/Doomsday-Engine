@@ -5,6 +5,8 @@
 #include "../gloom/world/user.h"
 #include "../gloom/world/world.h"
 
+namespace gloom {
+
 class GloomWorld : public World
 {
 public:
@@ -33,5 +35,7 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+} // namespace gloom
 
 #endif // GLOOMWORLD_H

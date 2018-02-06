@@ -4,6 +4,8 @@
 #include <de/GuiWidget>
 #include "icamera.h"
 
+namespace gloom {
+
 class World;
 class User;
 
@@ -46,5 +48,7 @@ protected:
 private:
     DENG2_PRIVATE(d)
 };
+
+} // namespace gloom
 
 #endif // GLOOMWIDGET_H

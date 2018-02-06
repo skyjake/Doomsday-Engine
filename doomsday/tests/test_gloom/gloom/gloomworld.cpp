@@ -5,6 +5,7 @@
 #include "render/skybox.h"
 #include "world/environment.h"
 #include "world/user.h"
+#include "world/map.h"
 
 #include <de/TextureBank>
 #include <de/Drawable>
@@ -12,22 +13,7 @@
 
 using namespace de;
 
-/*
-// Vertex format for model instance attributes.
-struct InstanceData
-{
-    Matrix4f matrix;
-    Vector4f color;
-    LIBGUI_DECLARE_VERTEX_FORMAT(2)
-};
-internal::AttribSpec const InstanceData::_spec[2] = {
-    { internal::AttribSpec::InstanceMatrix, 16, GL_FLOAT, false, sizeof(InstanceData), 0 },
-    { internal::AttribSpec::InstanceColor,  4,  GL_FLOAT, false, sizeof(InstanceData), 16 * sizeof(float) }
-};
-LIBGUI_VERTEX_FORMAT_SPEC(InstanceData, 20 * sizeof(float))
-*/
-
-//#define NUM_MODELS  3
+namespace gloom {
 
 DENG2_PIMPL(GloomWorld), public ILight
 , DENG2_OBSERVES(User, Warp)
@@ -38,6 +24,7 @@ DENG2_PIMPL(GloomWorld), public ILight
     SkyBox sky;
 //    EntityMap ents;
     Environment environ;
+    Map map;
 
     float visibleDistance;
 //    Vector2f mapSize;
@@ -352,3 +339,5 @@ void GloomWorld::setLocalUser(User *user)
         d->localUser->audienceForWarp += d;
     }
 }
+
+} // namespace gloom

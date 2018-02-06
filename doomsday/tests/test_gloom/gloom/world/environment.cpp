@@ -4,6 +4,8 @@
 
 using namespace de;
 
+namespace gloom {
+
 DENG2_PIMPL(Environment)
 {
     World *world;
@@ -126,3 +128,5 @@ void Environment::update(TimeSpan const &elapsed)
 {
     d->update(elapsed);
 }
+
+} // namespace gloom

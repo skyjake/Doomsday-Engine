@@ -6,6 +6,8 @@
 #include <de/Observers>
 #include <de/Sound>
 
+namespace gloom {
+
 class World;
 
 class User
@@ -52,5 +54,7 @@ private:
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(User::InputState)
+
+} // namespace gloom
 
 #endif // USER_H

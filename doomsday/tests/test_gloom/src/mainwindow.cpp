@@ -29,6 +29,7 @@
 #include <de/LogBuffer>
 
 using namespace de;
+using namespace gloom;
 
 DENG2_PIMPL(MainWindow)
 , DENG2_OBSERVES(GLWindow, Init)

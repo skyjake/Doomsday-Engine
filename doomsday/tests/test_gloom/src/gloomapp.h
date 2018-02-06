@@ -24,10 +24,6 @@
 #include "../gloom/audio/audiosystem.h"
 #include "appwindowsystem.h"
 
-#define OVR_FOV         122.f
-#define OVR_NEAR_CLIP   .1f
-#define OVR_FAR_CLIP    1300.f
-
 class GloomApp : public de::BaseGuiApp
 {
 public:
@@ -35,11 +31,11 @@ public:
 
     void initialize();
 
-    static GloomApp &       app();
-    static AppWindowSystem &windowSystem();
-    static AudioSystem &    audioSystem();
-    static MainWindow &     main();
-    static de::ImageBank &  images();
+    static GloomApp &          app();
+    static AppWindowSystem &   windowSystem();
+    static gloom::AudioSystem &audioSystem();
+    static MainWindow &        main();
+    static de::ImageBank &     images();
 
 private:
     DENG2_PRIVATE(d)

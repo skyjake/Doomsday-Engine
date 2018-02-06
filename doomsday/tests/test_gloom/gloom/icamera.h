@@ -3,6 +3,8 @@
 
 #include <de/Matrix>
 
+namespace gloom {
+
 class ICamera
 {
 public:
@@ -25,5 +27,7 @@ public:
         return cameraProjection() * cameraModelView();
     }
 };
+
+} // namespace gloom
 
 #endif // ICAMERA_H

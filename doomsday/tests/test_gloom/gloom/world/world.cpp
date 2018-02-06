@@ -8,6 +8,8 @@
 
 using namespace de;
 
+namespace gloom {
+
 World::World()
 {}
 
@@ -45,3 +47,5 @@ float World::ceilingHeight(Vector3f const &) const
 {
     return -1000;
 }
+
+} // namespace gloom

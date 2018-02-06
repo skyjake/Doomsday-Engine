@@ -7,6 +7,8 @@
 
 #include <QList>
 
+namespace gloom {
+
 class User;
 
 class World
@@ -42,5 +44,7 @@ public:
 public:
     DENG2_DEFINE_AUDIENCE(Ready, void worldReady(World &))
 };
+
+} // namespace gloom
 
 #endif // WORLD_H

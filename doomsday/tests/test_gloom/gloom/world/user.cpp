@@ -9,6 +9,8 @@
 
 using namespace de;
 
+namespace gloom {
+
 DENG2_PIMPL(User)
 {
     World const *world = nullptr;
@@ -386,3 +388,5 @@ Sound &User::fastWindSound()
 {
     return *d->fastWind;
 }
+
+} // namespace gloom

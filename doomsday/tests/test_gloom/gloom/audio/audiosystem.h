@@ -6,6 +6,8 @@
 #include <de/Sound>
 #include <de/DotPath>
 
+namespace gloom {
+
 class ICamera;
 
 class AudioSystem : public de::System
@@ -53,5 +55,7 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+} // namespace gloom
 
 #endif // AUDIOSYSTEM_H

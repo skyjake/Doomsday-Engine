@@ -28,6 +28,7 @@
 #include <de/ScriptSystem>
 
 using namespace de;
+using namespace gloom;
 
 DENG2_PIMPL(GloomApp)
 {

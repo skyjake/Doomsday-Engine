@@ -12,6 +12,8 @@
 
 using namespace de;
 
+namespace gloom {
+
 DENG_GUI_PIMPL(GloomWidget)
 {
     Matrix4f         modelView;
@@ -36,7 +38,7 @@ DENG_GUI_PIMPL(GloomWidget)
     {
         modelView = Matrix4f::rotate(user.pitch(), Vector3f(1, 0, 0)) *
                     Matrix4f::rotate(user.yaw(),   Vector3f(0, 1, 0)) *
-                    Matrix4f::rotate(180,          Vector3f(0, 0, 1)) *
+                    //Matrix4f::rotate(180,          Vector3f(0, 0, 1)) *
                     Matrix4f::translate(-user.position());
     }
 
@@ -235,7 +237,7 @@ Vector3f GloomWidget::cameraFront() const
 
 Vector3f GloomWidget::cameraUp() const
 {
-    Vector3f v = d->viewMatrix().inverse() * Vector4f(0, -1, 0, 0);
+    Vector3f v = d->viewMatrix().inverse() * Vector4f(0, 1, 0, 0);
     return v.normalize();
 }
 
@@ -261,3 +263,5 @@ void GloomWidget::glDeinit()
     GuiWidget::glDeinit();
     d->glDeinit();
 }
+
+} // namespace gloom

@@ -3,6 +3,8 @@
 
 #include <de/Time>
 
+namespace gloom {
+
 class World;
 
 class Environment
@@ -19,5 +21,7 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+} // namespace gloom
 
 #endif // ENVIRONMENT_H
