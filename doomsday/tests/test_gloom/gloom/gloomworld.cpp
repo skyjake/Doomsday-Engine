@@ -3,6 +3,7 @@
 #include "ilight.h"
 #include "audio/audiosystem.h"
 #include "render/skybox.h"
+#include "render/mapbuild.h"
 #include "world/environment.h"
 #include "world/user.h"
 #include "world/map.h"

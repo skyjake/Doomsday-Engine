@@ -27,6 +27,10 @@ set (SOURCES
     gloom/gloomwidget.h
     gloom/gloomworld.cpp
     gloom/gloomworld.h
+    gloom/render/mapbuild.cpp
+    gloom/render/mapbuild.h
+    gloom/render/mapgeom.cpp
+    gloom/render/mapgeom.h
     gloom/render/skybox.cpp
     gloom/render/skybox.h
     gloom/world/environment.cpp
