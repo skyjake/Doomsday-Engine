@@ -29,14 +29,18 @@ namespace de {
  * @ingroup gl
  */
 struct LIBGUI_PUBLIC GLPixelFormat {
+    duint internalFormat;
     duint format;
     duint type;
     duint rowAlignment;
 
-    GLPixelFormat(duint glFormat, duint glDataType = 0, duint glRowAlignment = 0)
-        : format(glFormat)
+    GLPixelFormat(duint glInternalFormat, duint glFormat, duint glDataType = 0,
+                  duint glRowAlignment = 0)
+        : internalFormat(glInternalFormat)
+        , format(glFormat)
         , type(glDataType)
-        , rowAlignment(glRowAlignment) {}
+        , rowAlignment(glRowAlignment)
+    {}
 };
 
 } // namespace de

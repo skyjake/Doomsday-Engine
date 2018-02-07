@@ -180,23 +180,20 @@ DENG2_PIMPL(GLTexture)
     void glImage(int level, Size const &size, GLPixelFormat const &glFormat,
                  void const *data, CubeFace face = PositiveX)
     {
-        /// @todo GLES2: Check for the BGRA extension.
-
-        // Choose suitable informal format.
-        GLenum const internalFormat =
-                (glFormat.format == GL_BGRA?          GL_RGBA :
-                 glFormat.format == GL_DEPTH_STENCIL? GL_DEPTH24_STENCIL8 :
-                                                      glFormat.format);
-
         /*qDebug() << "glTexImage2D:" << name << (isCube()? glFace(face) : texTarget)
                 << level << internalFormat << size.x << size.y << 0
                 << glFormat.format << glFormat.type << data;*/
 
         if (data) LIBGUI_GL.glPixelStorei(GL_UNPACK_ALIGNMENT, GLint(glFormat.rowAlignment));
-        LIBGUI_GL.glTexImage2D(isCube()? glFace(face) : texTarget,
-                     level, internalFormat, size.x, size.y, 0,
-                     glFormat.format, glFormat.type, data);
-
+        LIBGUI_GL.glTexImage2D(isCube() ? glFace(face) : texTarget,
+                               level,
+                               glFormat.internalFormat,
+                               size.x,
+                               size.y,
+                               0,
+                               glFormat.format,
+                               glFormat.type,
+                               data);
         LIBGUI_ASSERT_GL_OK();
     }
 
@@ -204,10 +201,15 @@ DENG2_PIMPL(GLTexture)
                     GLPixelFormat const &glFormat, void const *data, CubeFace face = PositiveX)
     {
         if (data) LIBGUI_GL.glPixelStorei(GL_UNPACK_ALIGNMENT, GLint(glFormat.rowAlignment));
-        LIBGUI_GL.glTexSubImage2D(isCube()? glFace(face) : texTarget,
-                        level, pos.x, pos.y, size.x, size.y,
-                        glFormat.format, glFormat.type, data);
-
+        LIBGUI_GL.glTexSubImage2D(isCube() ? glFace(face) : texTarget,
+                                  level,
+                                  pos.x,
+                                  pos.y,
+                                  size.x,
+                                  size.y,
+                                  glFormat.format,
+                                  glFormat.type,
+                                  data);
         LIBGUI_ASSERT_GL_OK();
     }
 
@@ -402,7 +404,9 @@ void GLTexture::setUndefinedContent(CubeFace face, Size const &size, GLPixelForm
 
 void GLTexture::setDepthStencilContent(Size const &size)
 {
-    setUndefinedContent(size, GLPixelFormat(GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8));
+    setUndefinedContent(size, GLPixelFormat(GL_DEPTH24_STENCIL8,
+                                            GL_DEPTH_STENCIL,
+                                            GL_UNSIGNED_INT_24_8));
 }
 
 void GLTexture::setImage(Image const &image, int level)

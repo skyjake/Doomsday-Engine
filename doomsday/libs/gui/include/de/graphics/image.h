@@ -50,22 +50,33 @@ public:
      * Supported GL-friendly formats. Note that all QImage formats cannot be
      * uploaded to OpenGL.
      */
-    enum Format
-    {
-        Unknown = -1,
-        UseQImageFormat = 0,    ///< May not be GL friendly.
+    enum Format {
+        Unknown           = -1,
+        UseQImageFormat   = 0, ///< May not be GL friendly.
 
-        Luminance_8 = 1,
+        Luminance_8       = 1,
         LuminanceAlpha_88 = 2,
-        Alpha_8 = 3,
-        RGB_555 = 4,
-        RGB_565 = 5,
-        RGB_444 = 6,
-        RGB_888 = 7,            ///< 24-bit depth.
-        RGBA_4444 = 8,
-        RGBA_5551 = 9,
-        RGBA_8888 = 10,
-        RGBx_8888 = 11          ///< 32-bit depth, alpha data ignored.
+        Alpha_8           = 3,
+        RGB_555           = 4,
+        RGB_565           = 5,
+        RGB_444           = 6,
+        RGB_888           = 7, ///< 24-bit depth.
+        RGBA_4444         = 8,
+        RGBA_5551         = 9,
+        RGBA_8888         = 10,
+        RGBx_8888         = 11, ///< 32-bit depth, alpha data ignored.
+        R_32f             = 12,
+        RG_32f            = 13,
+        RGB_32f           = 14,
+        RGBA_32f          = 15,
+        R_32i             = 16,
+        RG_32i            = 17,
+        RGB_32i           = 18,
+        RGBA_32i          = 19,
+        R_32ui            = 20,
+        RG_32ui           = 21,
+        RGB_32ui          = 22,
+        RGBA_32ui         = 23,
     };
 
     typedef Vector2ui Size;

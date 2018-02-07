@@ -443,6 +443,26 @@ int Image::depth() const
     case RGBx_8888:
         return 32;
 
+    case R_32f:
+    case R_32i:
+    case R_32ui:
+        return 32;
+
+    case RG_32f:
+    case RG_32i:
+    case RG_32ui:
+        return 64;
+
+    case RGB_32f:
+    case RGB_32i:
+    case RGB_32ui:
+        return 96;
+
+    case RGBA_32f:
+    case RGBA_32i:
+    case RGBA_32ui:
+        return 128;
+
     default:
         return 0;
     }
@@ -520,7 +540,7 @@ bool Image::isGLCompatible() const
             return false;
         }
     }
-    return d->format >= Luminance_8 && d->format <= RGBx_8888;
+    return d->format >= Luminance_8 && d->format <= RGBA_32ui;
 }
 
 bool Image::canConvertToQImage() const
@@ -763,43 +783,79 @@ void Image::operator << (Reader &from)
 
 GLPixelFormat Image::glFormat(Format imageFormat)
 {
-    DENG2_ASSERT(imageFormat >= Luminance_8 && imageFormat <= RGBx_8888);
+    DENG2_ASSERT(imageFormat >= Luminance_8 && imageFormat <= RGBA_32ui);
 
     switch (imageFormat)
     {
     case Luminance_8:
-        return GLPixelFormat(GL_LUMINANCE, GL_UNSIGNED_BYTE, 1);
+        return GLPixelFormat(GL_R8, GL_RED, GL_UNSIGNED_BYTE, 1);
 
     case LuminanceAlpha_88:
-        return GLPixelFormat(GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, 2);
+        return GLPixelFormat(GL_RG8, GL_RG, GL_UNSIGNED_BYTE, 2);
 
     case Alpha_8:
-        return GLPixelFormat(GL_ALPHA, GL_UNSIGNED_BYTE, 1);
+        return GLPixelFormat(GL_R8, GL_ALPHA, GL_UNSIGNED_BYTE, 1);
 
     case RGB_555:
-        return GLPixelFormat(GL_RGB, GL_UNSIGNED_SHORT_5_5_5_1, 2);
+        return GLPixelFormat(GL_RGB5, GL_RGB, GL_UNSIGNED_SHORT_5_5_5_1, 2);
 
     case RGB_565:
-        return GLPixelFormat(GL_RGB, GL_UNSIGNED_SHORT_5_6_5, 2);
+        return GLPixelFormat(GL_RGB5, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, 2);
 
     case RGB_444:
-        return GLPixelFormat(GL_RGB, GL_UNSIGNED_SHORT_4_4_4_4, 2);
+        return GLPixelFormat(GL_RGB4, GL_RGB, GL_UNSIGNED_SHORT_4_4_4_4, 2);
 
     case RGB_888:
-        return GLPixelFormat(GL_RGB, GL_UNSIGNED_BYTE, 1);
+        return GLPixelFormat(GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, 1);
 
     case RGBA_4444:
-        return GLPixelFormat(GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, 2);
+        return GLPixelFormat(GL_RGBA4, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, 2);
 
     case RGBA_5551:
-        return GLPixelFormat(GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, 2);
+        return GLPixelFormat(GL_RGB5_A1, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, 2);
 
     case RGBA_8888:
-        return GLPixelFormat(GL_RGBA, GL_UNSIGNED_BYTE, 4);
+        return GLPixelFormat(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, 4);
 
     default:
     case RGBx_8888:
-        return GLPixelFormat(GL_RGBA, GL_UNSIGNED_BYTE, 4);
+        return GLPixelFormat(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, 4);
+
+    case R_32f:
+        return GLPixelFormat(GL_R32F, GL_RED, GL_FLOAT, 4);
+
+    case RG_32f:
+        return GLPixelFormat(GL_RG32F, GL_RG, GL_FLOAT, 8);
+
+    case RGB_32f:
+        return GLPixelFormat(GL_RGB32F, GL_RGB, GL_FLOAT, 12);
+
+    case RGBA_32f:
+        return GLPixelFormat(GL_RGBA32F, GL_RGBA, GL_FLOAT, 16);
+
+    case R_32i:
+        return GLPixelFormat(GL_R32I, GL_RED, GL_INT, 4);
+
+    case RG_32i:
+        return GLPixelFormat(GL_RG32I, GL_RG, GL_INT, 8);
+
+    case RGB_32i:
+        return GLPixelFormat(GL_RGB32I, GL_RGB, GL_INT, 12);
+
+    case RGBA_32i:
+        return GLPixelFormat(GL_RGBA32I, GL_RGBA, GL_INT, 16);
+
+    case R_32ui:
+        return GLPixelFormat(GL_R32UI, GL_RED, GL_UNSIGNED_INT, 4);
+
+    case RG_32ui:
+        return GLPixelFormat(GL_RG32UI, GL_RG, GL_UNSIGNED_INT, 8);
+
+    case RGB_32ui:
+        return GLPixelFormat(GL_RGB32UI, GL_RGB, GL_UNSIGNED_INT, 12);
+
+    case RGBA_32ui:
+        return GLPixelFormat(GL_RGBA32UI, GL_RGBA, GL_UNSIGNED_INT, 16);
     }
 }
 
@@ -808,39 +864,39 @@ GLPixelFormat Image::glFormat(QImage::Format format)
     switch (format)
     {
     case QImage::Format_Indexed8:
-        return GLPixelFormat(GL_LUMINANCE, GL_UNSIGNED_BYTE, 1);
+        return GLPixelFormat(GL_R8UI, GL_RED, GL_UNSIGNED_BYTE, 1);
 
     case QImage::Format_RGB444:
-        return GLPixelFormat(GL_RGB, GL_UNSIGNED_SHORT_4_4_4_4, 2);
+        return GLPixelFormat(GL_RGB4, GL_RGB, GL_UNSIGNED_SHORT_4_4_4_4, 2);
 
     case QImage::Format_ARGB4444_Premultiplied:
-        return GLPixelFormat(GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, 2);
+        return GLPixelFormat(GL_RGBA4, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, 2);
 
     case QImage::Format_RGB555:
-        return GLPixelFormat(GL_RGB, GL_UNSIGNED_SHORT_5_5_5_1, 2);
+        return GLPixelFormat(GL_RGB5, GL_RGB, GL_UNSIGNED_SHORT_5_5_5_1, 2);
 
     case QImage::Format_RGB16:
-        return GLPixelFormat(GL_RGB, GL_UNSIGNED_SHORT_5_6_5, 2);
+        return GLPixelFormat(GL_RGB5, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, 2);
 
     case QImage::Format_RGB888:
-        return GLPixelFormat(GL_RGB, GL_UNSIGNED_BYTE, 1);
+        return GLPixelFormat(GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, 1);
 
     case QImage::Format_RGB32:
 #if defined (DENG_OPENGL)
         /// @todo Is GL_BGR in any GL standard spec? Check for EXT_bgra.
-        return GLPixelFormat(GL_BGR, GL_UNSIGNED_BYTE, 4);
+        return GLPixelFormat(GL_RGB8, GL_BGR, GL_UNSIGNED_BYTE, 4);
 #else
         return GLPixelFormat(GL_BGRA8_EXT, GL_UNSIGNED_BYTE, 4);
 #endif
 
     case QImage::Format_ARGB32:
         /// @todo Is GL_BGRA in any GL standard spec? Check for EXT_bgra.
-        return GLPixelFormat(GL_BGRA, GL_UNSIGNED_BYTE, 4);
+        return GLPixelFormat(GL_RGBA8, GL_BGRA, GL_UNSIGNED_BYTE, 4);
 
     default:
         break;
     }
-    return GLPixelFormat(GL_RGBA, GL_UNSIGNED_BYTE, 4);
+    return GLPixelFormat(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, 4);
 }
 
 Image Image::solidColor(Color const &color, Size const &size)
