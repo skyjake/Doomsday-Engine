@@ -1,34 +1,35 @@
 #!/usr/bin/env python2.7
 #
 # Command line utility for zipping a directory of files into a .pack.
-# Checks that the required Info file is present.  
+# Checks that the required Info file is present.
 #
 # Usage:
 #   buildpackage (pack-dir) (output-dir)
 #
 
+from __future__ import print_function
 import sys, os, os.path, zipfile, time
 
 if len(sys.argv) < 2:
-    print "Usage: %s (pack-dir) (output-dir)" % sys.argv[0]
+    print("Usage: %s (pack-dir) (output-dir)" % sys.argv[0])
     sys.exit(0)
 
 # Check quiet flag.
 class Package:
     def __init__(self, sourcePath):
         self.sourcePath = sourcePath
-        
+
     def build(self, outputPath):
         # Ensure the output path exists.
         try:
             os.makedirs(outputPath)
         except:
             pass
-    
+
         outputName = os.path.join(outputPath, os.path.basename(self.sourcePath))
-        pack = zipfile.ZipFile(outputName, 'w', zipfile.ZIP_DEFLATED)        
+        pack = zipfile.ZipFile(outputName, 'w', zipfile.ZIP_DEFLATED)
         contents = []
-            
+
         # Index the contents of the folder recursively.
         def descend(path):
             for name in os.listdir(os.path.join(self.sourcePath, path)):
@@ -40,7 +41,7 @@ class Package:
                 else:
                     internalPath = name
                 fullPath = os.path.join(self.sourcePath, internalPath)
-                    
+
                 if os.path.isfile(fullPath):
                     contents.append((fullPath, internalPath))
                 elif os.path.isdir(fullPath):
@@ -52,21 +53,21 @@ class Package:
         for full, internal in contents:
             if internal.lower() == 'info' or internal.lower() == 'info.dei':
                 foundInfo = True
-                break            
+                break
         if not foundInfo:
-            print "No 'Info' file found in \"%s\"!" % self.sourcePath
+            print("No 'Info' file found in \"%s\"!" % self.sourcePath)
             sys.exit(1)
-        
+
         # Write entries in alphabetical order.
         date_time = time.localtime(int(os.environ.get('SOURCE_DATE_EPOCH', time.time())))
         for full, internal in sorted(contents):
             info = zipfile.ZipInfo(internal, date_time)
-            info.external_attr = 0644 << 16L
+            info.external_attr = 0o644 << 16
             with open(full, 'rb') as f:
                 pack.writestr(info, f.read())
-            
+
         # Write it out.
-        print "Wrote %s (contains %i files)." % (outputName.replace("\\", "/"), len(pack.namelist()))
+        print("Wrote %s (contains %i files)." % (outputName.replace("\\", "/"), len(pack.namelist())))
         pack.close()
 
 if __name__ == "__main__":
