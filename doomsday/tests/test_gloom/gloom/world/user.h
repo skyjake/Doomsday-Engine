@@ -44,7 +44,7 @@ public:
 
     void update(de::TimeSpan const &elapsed);
 
-    de::Vector3f position() const;
+    de::Vector3f position() const; // User eye position.
     float        yaw() const;
     float        pitch() const;
     de::Sound &  fastWindSound();

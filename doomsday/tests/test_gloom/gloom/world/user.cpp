@@ -16,7 +16,9 @@ DENG2_PIMPL(User)
     World const *world = nullptr;
 
     InputState input;
-    Vector3f   eyePos;
+    Vector3f   pos;                 // Current position of the user (feet).
+    float      height = 1.8f;       // Height from feet to top of the head.
+    float      viewHeight = 1.66f;  // Eye height.
     float      yaw   = 0;
     float      pitch = 0;
     Vector3f   momentum;
@@ -38,32 +40,21 @@ DENG2_PIMPL(User)
 
     Impl(Public * i) : Base(i)
     {
-        eyePos = Vector3f(0, 0, 0);
+        pos = Vector3f(0, 0, 0);
 
         fastWind = &AudioSystem::get().newSound("user.fastwind");
         fastWind->setVolume(0).play(Sound::Looping);
-
-        //App::config()["zeroYaw"].audienceForChange() += this;
-        //VRSenseApp::vr().oculusRift().setYawOffset(App::config().getd("zeroYaw"));
     }
 
     ~Impl()
     {
-        //App::config()["zeroYaw"].audienceForChange() -= this;
-
         DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->userBeingDeleted(self());
     }
 
-    //    void variableValueChanged(Variable &, Value const &newValue)
-    //    {
-    //        VRSenseApp::vr().oculusRift().setYawOffset(newValue.asNumber());
-    //    }
-
     Vector3f frontVector() const
     {
-        float yawForMove =
-            yaw; // - radianToDegree(VRSenseApp::vr().oculusRift().headOrientation().z);
-        return Matrix4f::rotate(yawForMove, Vector3f(0, 1, 0)) * Vector3f(0, 0, -1);
+        float yawForMove = yaw;
+        return Matrix4f::rotate(yawForMove, Vector3f(0, -1, 0)) * Vector3f(0, 0, -1);
     }
 
     void move(TimeSpan const &elapsed)
@@ -95,12 +86,12 @@ DENG2_PIMPL(User)
 
         //float yawForMove = yaw - radianToDegree(VRSenseApp::vr().oculusRift().headOrientation().z);
 
-        Vector3f front = frontVector();
-        Vector3f side  = front.cross(Vector3f(0, -1, 0));
+        const Vector3f front = frontVector();
+        const Vector3f side  = front.cross(Vector3f(0, 1, 0));
 
         momentum += (front * accel + side * sideAccel) * elapsed;
 
-#if 1
+#if 0
         // "Vehicle" momentum: keep moving toward the front vector.
         if (onGround)
         {
@@ -121,10 +112,9 @@ DENG2_PIMPL(User)
         }
 #endif
 
-        //if(onGround)
+        if (onGround)
         {
-
-            float moveFriction = 3;
+            float moveFriction = 5;
 
             // Apply friction.
             Vector2f planar = momentum.xz();
@@ -147,7 +137,7 @@ DENG2_PIMPL(User)
             // Gravity.
             if (!onGround)
             {
-                momentum.y += elapsed * 9.81f;
+                momentum.y -= elapsed * 9.81f;
             }
         }
         else
@@ -155,46 +145,46 @@ DENG2_PIMPL(User)
             momentum.y = 0;
         }
 
-        eyePos += momentum * elapsed;
+        pos += momentum * elapsed;
 
         if (world)
         {
             // Keep viewer on the ground.
-            float surface = world->groundSurfaceHeight(eyePos);
+            float surface = world->groundSurfaceHeight(pos);
             if (onGround)
             {
-                if (eyePos.y >= surface - 10 * elapsed)
+                if (pos.y <= surface - 10 * elapsed)
                 {
-                    double surfaceMomentum = (surface - eyePos.y) / elapsed;
-                    if (surfaceMomentum > 0 && surfaceMomentum < 5)
+                    double surfaceMomentum = (pos.y - surface) / elapsed;
+                    if (surfaceMomentum < 0 && surfaceMomentum > -5)
                     {
                         // Stay on ground?
-                        eyePos.y = surface;
+                        pos.y = surface;
                     }
                 }
             }
 
-            if (eyePos.y >= surface - de::FLOAT_EPSILON)
+            if (pos.y <= surface - FLOAT_EPSILON)
             {
                 if (!onGround)
                 {
                     playFallDownSound();
                     if (!firstUpdate)
                     {
-                        crouchMomentum = max(crouchMomentum, momentum.y - 14);
+                        crouchMomentum = min(crouchMomentum, momentum.y - 14);
                     }
                     momentum.y = 0;
                 }
                 else
                 {
-                    double surfaceMomentum = (surface - eyePos.y) / elapsed;
-                    if (surfaceMomentum < 0)
+                    double surfaceMomentum = (surface - pos.y) / elapsed;
+                    if (surfaceMomentum > 0)
                     {
                         // Push upward.
                         momentum.y = surfaceMomentum;
                     }
                 }
-                eyePos.y = surface;
+                pos.y = surface;
                 onGround = true;
             }
             else
@@ -203,9 +193,10 @@ DENG2_PIMPL(User)
             }
 
             // Hit the ceiling?
-            if (eyePos.y < world->ceilingHeight(eyePos))
+            const float ceiling = world->ceilingHeight(pos);
+            if (pos.y + height > ceiling)
             {
-                eyePos.y   = world->ceilingHeight(eyePos);
+                pos.y      = ceiling - height;
                 momentum.y = 0;
             }
         }
@@ -216,20 +207,21 @@ DENG2_PIMPL(User)
 
         // Move in crouch.
         crouch += crouchMomentum * elapsed;
-        crouchMomentum -= 2 * elapsed;
-        if (crouch < 0)
+        crouchMomentum += 2 * elapsed;
+        if (crouch > 0)
         {
             crouch         = 0;
             crouchMomentum = 0;
         }
-        if (crouch > .6f)
+        const float maxCrouch = -.6f;
+        if (crouch < maxCrouch) // max crouch?
         {
-            crouch         = .6f;
+            crouch         = maxCrouch;
             crouchMomentum = 0;
         }
 
         // Notifications.
-        DENG2_FOR_PUBLIC_AUDIENCE(PainLevel, i) { i->userPainLevel(self(), crouch / .6f); }
+        DENG2_FOR_PUBLIC_AUDIENCE(PainLevel, i) { i->userPainLevel(self(), crouch / maxCrouch); }
 
         if (prevPosition != self().position())
         {
@@ -258,7 +250,7 @@ DENG2_PIMPL(User)
     {
         if (firstUpdate) return;
 
-        if (momentum.y < 15)
+        if (momentum.y > -15)
         {
             if (stepElapsed > .3)
             {
@@ -330,7 +322,7 @@ void User::setWorld(World const *world)
 
 de::Vector3f User::position() const
 {
-    return d->eyePos + Vector3f(0, d->crouch, 0);
+    return d->pos + Vector3f(0, d->viewHeight + d->crouch, 0);
 }
 
 float User::yaw() const
@@ -345,10 +337,10 @@ float User::pitch() const
 
 void User::setPosition(Vector3f const &pos)
 {
-    auto oldPos = d->eyePos;
+    auto oldPos = d->pos;
 
     d->onGround = false;
-    d->eyePos   = pos;
+    d->pos   = pos;
     d->momentum = Vector3f();
 
     if ((oldPos - pos).length() > 15)
