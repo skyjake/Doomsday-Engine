@@ -194,7 +194,6 @@ bool GloomWidget::handleEvent(Event const &event)
     if (event.isMouse())
     {
         const MouseEvent &mouse = event.as<MouseEvent>();
-        auto &eventHandler = root().window().eventHandler();
 
         if (d->mouseLook)
         {

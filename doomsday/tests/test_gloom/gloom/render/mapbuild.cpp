@@ -4,11 +4,24 @@ using namespace de;
 
 namespace gloom {
 
+internal::AttribSpec const MapVertex::_spec[4] =
+{
+    { internal::AttribSpec::Position,  3, GL_FLOAT,        false, sizeof(MapVertex), 0     },
+    { internal::AttribSpec::Normal,    3, GL_FLOAT,        false, sizeof(MapVertex), 3 * 4 },
+    { internal::AttribSpec::TexCoord0, 2, GL_FLOAT,        false, sizeof(MapVertex), 6 * 4 },
+    { internal::AttribSpec::Texture,   1, GL_UNSIGNED_INT, false, sizeof(MapVertex), 8 * 4 }
+};
+LIBGUI_VERTEX_FORMAT_SPEC(MapVertex, 9 * 4)
+
 DENG2_PIMPL_NOREF(MapBuild)
 {
     const Map &map;
+    TextureIds textures;
 
-    Impl(const Map &map) : map(map) {}
+    Impl(const Map &map, const TextureIds &textures)
+        : map(map)
+        , textures(textures)
+    {}
 
     Point mapPoint(ID id) const
     {
@@ -28,9 +41,9 @@ DENG2_PIMPL_NOREF(MapBuild)
 
     Vector3f projectPoint(ID pointId, const Plane &plane) const
     {
-        Vector3f pos   = vertex(pointId);
-        Vector3f delta = pos - plane.point;
-        double   dist  = delta.dot(plane.normal);
+        const Vector3f pos   = vertex(pointId);
+        const Vector3f delta = pos - plane.point;
+        const double   dist  = delta.dot(plane.normal);
         return pos - plane.normal * dist;
     }
 
@@ -71,30 +84,39 @@ DENG2_PIMPL_NOREF(MapBuild)
                 for (const ID lineId : sector.lines)
                 {
                     const Line &   line   = map.lines()[lineId];
+                    const ID       start  = line.points[0];
+                    const ID       end    = line.points[1];
                     const Vector3f normal = normalVector(line);
-
+                    const float    length = float((planeVerts[0][end] - planeVerts[0][start]).length());
+                    const float    height[2] = {planeVerts[1][start].y - planeVerts[0][start].y,
+                                                planeVerts[1][end].y   - planeVerts[0][end].y};
                     Buffer::Type v;
 
-                    v.rgba     = Vector4f(1, 1, 1, 1);
-                    v.normal   = normal;
+                    v.texture = textures["world.stone"];
+                    v.normal  = normal;
+
+                    v.pos = planeVerts[0][start];
                     v.texCoord = Vector2f(0, 0);
-
-                    v.pos = planeVerts[1][line.points[0]];
                     verts << v;
 
-                    v.pos = planeVerts[1][line.points[1]];
+                    v.pos = planeVerts[0][end];
+                    v.texCoord = Vector2f(length, 0);
                     verts << v;
 
-                    v.pos = planeVerts[0][line.points[1]];
+                    v.pos = planeVerts[1][end];
+                    v.texCoord = Vector2f(length, height[1]);
                     verts << v;
 
-                    v.pos = planeVerts[1][line.points[0]];
+                    v.pos = planeVerts[0][start];
+                    v.texCoord = Vector2f(0, 0);
                     verts << v;
 
-                    v.pos = planeVerts[0][line.points[1]];
+                    v.pos = planeVerts[1][end];
+                    v.texCoord = Vector2f(length, height[1]);
                     verts << v;
 
-                    v.pos = planeVerts[0][line.points[0]];
+                    v.pos = planeVerts[1][start];
+                    v.texCoord = Vector2f(0, height[0]);
                     verts << v;
                 }
             }
@@ -105,8 +127,8 @@ DENG2_PIMPL_NOREF(MapBuild)
     }
 };
 
-MapBuild::MapBuild(const Map &map)
-    : d(new Impl(map))
+MapBuild::MapBuild(const Map &map, const TextureIds &textures)
+    : d(new Impl(map, textures))
 {}
 
 MapBuild::Buffer *MapBuild::build()

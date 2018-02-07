@@ -4,16 +4,33 @@
 #include "../world/map.h"
 
 #include <de/GLBuffer>
+#include <de/Id>
 
 namespace gloom {
+
+/**
+ * Vertex format with 3D coordinates, normal vector, one set of texture
+ * coordinates, and an RGBA color.
+ */
+struct MapVertex
+{
+    de::Vector3f pos;
+    de::Vector3f normal;
+    de::Vector2f texCoord;
+    uint32_t texture;
+
+    LIBGUI_DECLARE_VERTEX_FORMAT(4)
+};
 
 class MapBuild
 {
 public:
-    typedef de::GLBufferT<de::Vertex3NormalTexRgba> Buffer;
+    typedef de::GLBufferT<MapVertex> Buffer;
 
 public:
-    MapBuild(const Map &map);
+    typedef QHash<de::String, uint32_t> TextureIds;
+
+    MapBuild(const Map &map, const TextureIds &textures);
 
     Buffer *build();
 

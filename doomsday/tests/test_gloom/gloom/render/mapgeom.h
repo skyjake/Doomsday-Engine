@@ -1,7 +1,8 @@
 #ifndef GLOOM_MAPGEOM_H
 #define GLOOM_MAPGEOM_H
 
-#include "mapbuild.h"
+#include <de/AtlasTexture>
+#include "../world/map.h"
 
 namespace gloom {
 
@@ -12,6 +13,7 @@ class MapGeom
 public:
     MapGeom();
 
+    void setAtlas(de::AtlasTexture &atlas);
     void setMap(const Map &map);
 
     void glInit();

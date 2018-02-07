@@ -3,7 +3,7 @@
 #include "ilight.h"
 #include "audio/audiosystem.h"
 #include "render/skybox.h"
-#include "render/mapbuild.h"
+#include "render/mapgeom.h"
 #include "world/environment.h"
 #include "world/user.h"
 #include "world/map.h"
@@ -26,6 +26,7 @@ DENG2_PIMPL(GloomWorld), public ILight
 //    EntityMap ents;
     Environment environ;
     Map map;
+    MapGeom mapGeom;
 
     float visibleDistance;
 //    Vector2f mapSize;
@@ -114,6 +115,10 @@ DENG2_PIMPL(GloomWorld), public ILight
         sky.setSize(visibleDistance);
         sky.glInit();
 
+        mapGeom.setMap(map);
+        mapGeom.setAtlas(*atlas);
+        mapGeom.glInit();
+
 //        land.glInit();
 //        land.setCamera(VRSenseApp::camera());
 //        land.setAtlas(*atlas);
@@ -140,6 +145,7 @@ DENG2_PIMPL(GloomWorld), public ILight
 //        }
 //        land.glDeinit();
         sky.glDeinit();
+        mapGeom.glDeinit();
 
         atlas->clear();
 
@@ -278,14 +284,15 @@ void GloomWorld::render(ICamera const &camera)
     //DENG2_ASSERT(d->modelProgram.isReady());
 
     GLState::push()
-            .setCull(gl::None)
-            .setDepthTest(false);
+            .setCull(gl::Back)
+            .setDepthTest(true);
 
     const Matrix4f mvp = camera.cameraModelViewProjection();
 
     d->uViewPos  = camera.cameraPosition();
     d->uLightDir = d->lightDirection();
 
+    d->mapGeom.render(camera);
     d->sky.render(mvp * Matrix4f::translate(camera.cameraPosition()));
 
 //    d->land.draw(mvp);
@@ -324,7 +331,7 @@ float GloomWorld::groundSurfaceHeight(Vector2f const &worldMapPos) const
 float GloomWorld::ceilingHeight(Vector3f const &) const
 {
     //return -d->heightRange * 2;
-    return -1000;
+    return 1000;
 }
 
 void GloomWorld::setLocalUser(User *user)
