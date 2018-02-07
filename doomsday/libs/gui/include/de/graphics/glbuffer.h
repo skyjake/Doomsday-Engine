@@ -56,6 +56,7 @@ namespace internal
             InstanceMatrix,     // x4
             InstanceColor,
             Index,
+            Texture,
 
             NUM_SEMANTICS
         };
@@ -72,14 +73,14 @@ namespace internal
 }
 
 #define LIBGUI_DECLARE_VERTEX_FORMAT(NumElems) \
-    public:  static internal::AttribSpecs formatSpec(); \
-    private: static internal::AttribSpec const _spec[NumElems]; \
+    public:  static de::internal::AttribSpecs formatSpec(); \
+    private: static de::internal::AttribSpec const _spec[NumElems]; \
     public:
 
 #define LIBGUI_VERTEX_FORMAT_SPEC(TypeName, ExpectedSize) \
-    internal::AttribSpecs TypeName::formatSpec() { \
+    de::internal::AttribSpecs TypeName::formatSpec() { \
         DENG2_ASSERT(sizeof(TypeName) == ExpectedSize); /* sanity check */ \
-        return internal::AttribSpecs(_spec, sizeof(_spec)/sizeof(_spec[0])); \
+        return de::internal::AttribSpecs(_spec, sizeof(_spec)/sizeof(_spec[0])); \
     }
 
 /**
