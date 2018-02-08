@@ -825,37 +825,37 @@ GLPixelFormat Image::glFormat(Format imageFormat)
         return GLPixelFormat(GL_R32F, GL_RED, GL_FLOAT, 4);
 
     case RG_32f:
-        return GLPixelFormat(GL_RG32F, GL_RG, GL_FLOAT, 8);
+        return GLPixelFormat(GL_RG32F, GL_RG, GL_FLOAT, 4);
 
     case RGB_32f:
-        return GLPixelFormat(GL_RGB32F, GL_RGB, GL_FLOAT, 12);
+        return GLPixelFormat(GL_RGB32F, GL_RGB, GL_FLOAT, 4);
 
     case RGBA_32f:
-        return GLPixelFormat(GL_RGBA32F, GL_RGBA, GL_FLOAT, 16);
+        return GLPixelFormat(GL_RGBA32F, GL_RGBA, GL_FLOAT, 4);
 
     case R_32i:
         return GLPixelFormat(GL_R32I, GL_RED, GL_INT, 4);
 
     case RG_32i:
-        return GLPixelFormat(GL_RG32I, GL_RG, GL_INT, 8);
+        return GLPixelFormat(GL_RG32I, GL_RG, GL_INT, 4);
 
     case RGB_32i:
-        return GLPixelFormat(GL_RGB32I, GL_RGB, GL_INT, 12);
+        return GLPixelFormat(GL_RGB32I, GL_RGB, GL_INT, 4);
 
     case RGBA_32i:
-        return GLPixelFormat(GL_RGBA32I, GL_RGBA, GL_INT, 16);
+        return GLPixelFormat(GL_RGBA32I, GL_RGBA, GL_INT, 4);
 
     case R_32ui:
         return GLPixelFormat(GL_R32UI, GL_RED, GL_UNSIGNED_INT, 4);
 
     case RG_32ui:
-        return GLPixelFormat(GL_RG32UI, GL_RG, GL_UNSIGNED_INT, 8);
+        return GLPixelFormat(GL_RG32UI, GL_RG, GL_UNSIGNED_INT, 4);
 
     case RGB_32ui:
-        return GLPixelFormat(GL_RGB32UI, GL_RGB, GL_UNSIGNED_INT, 12);
+        return GLPixelFormat(GL_RGB32UI, GL_RGB, GL_UNSIGNED_INT, 4);
 
     case RGBA_32ui:
-        return GLPixelFormat(GL_RGBA32UI, GL_RGBA, GL_UNSIGNED_INT, 16);
+        return GLPixelFormat(GL_RGBA32UI, GL_RGBA, GL_UNSIGNED_INT, 4);
     }
 }
 

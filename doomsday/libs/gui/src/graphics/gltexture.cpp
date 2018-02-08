@@ -184,7 +184,7 @@ DENG2_PIMPL(GLTexture)
                 << level << internalFormat << size.x << size.y << 0
                 << glFormat.format << glFormat.type << data;*/
 
-        if (data) LIBGUI_GL.glPixelStorei(GL_UNPACK_ALIGNMENT, GLint(glFormat.rowAlignment));
+        if (data) LIBGUI_GL.glPixelStorei(GL_UNPACK_ALIGNMENT, GLint(glFormat.rowStartAlignment));
         LIBGUI_GL.glTexImage2D(isCube() ? glFace(face) : texTarget,
                                level,
                                glFormat.internalFormat,
@@ -200,7 +200,7 @@ DENG2_PIMPL(GLTexture)
     void glSubImage(int level, Vector2i const &pos, Size const &size,
                     GLPixelFormat const &glFormat, void const *data, CubeFace face = PositiveX)
     {
-        if (data) LIBGUI_GL.glPixelStorei(GL_UNPACK_ALIGNMENT, GLint(glFormat.rowAlignment));
+        if (data) LIBGUI_GL.glPixelStorei(GL_UNPACK_ALIGNMENT, GLint(glFormat.rowStartAlignment));
         LIBGUI_GL.glTexSubImage2D(isCube() ? glFace(face) : texTarget,
                                   level,
                                   pos.x,
@@ -218,7 +218,7 @@ DENG2_PIMPL(GLTexture)
     {
         auto const &glFormat = image.glFormat();
 
-        LIBGUI_GL.glPixelStorei(GL_UNPACK_ALIGNMENT,  GLint(glFormat.rowAlignment));
+        LIBGUI_GL.glPixelStorei(GL_UNPACK_ALIGNMENT,  GLint(glFormat.rowStartAlignment));
         LIBGUI_GL.glPixelStorei(GL_UNPACK_ROW_LENGTH, GLint(image.width()));
 
         int const bytesPerPixel = image.depth() / 8;

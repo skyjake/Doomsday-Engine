@@ -32,14 +32,14 @@ struct LIBGUI_PUBLIC GLPixelFormat {
     duint internalFormat;
     duint format;
     duint type;
-    duint rowAlignment;
+    duint rowStartAlignment; // 1, 2, 4, 8
 
     GLPixelFormat(duint glInternalFormat, duint glFormat, duint glDataType = 0,
-                  duint glRowAlignment = 0)
+                  duint glRowStartAlignment = 0)
         : internalFormat(glInternalFormat)
         , format(glFormat)
         , type(glDataType)
-        , rowAlignment(glRowAlignment)
+        , rowStartAlignment(glRowStartAlignment)
     {}
 };
 
