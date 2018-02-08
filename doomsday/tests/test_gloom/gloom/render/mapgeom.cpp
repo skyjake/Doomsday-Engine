@@ -16,19 +16,19 @@ DENG2_PIMPL(MapGeom)
     AtlasTexture *atlas = nullptr;
     MapBuild::TextureIds textures;
 
-    GLTexture metricsBuf;
-    QHash<String, Id> loadedTextures;
+    QHash<String, Id> loadedTextures; // name => atlas ID
+    GLTexture metricsBuf; // array of metrics for use in shader
     struct Metrics {
         Vector4f uvRect;
         Vector4f texelSize;
     };
-    QVector<Metrics> textureMetrics;
+    QVector<Metrics> textureMetrics; // contents for metricsBuf
 
     Drawable  mapDrawable;
     GLUniform uMvpMatrix        {"uMvpMatrix",      GLUniform::Mat4};
     GLUniform uTex              {"uTex",            GLUniform::Sampler2D};
     GLUniform uTextureMetrics   {"uTextureMetrics", GLUniform::Sampler2D};
-    //GLUniform uColor    {"uColor",     GLUniform::Vec4};
+    GLUniform uTexelsPerMeter   {"uTexelsPerMeter", GLUniform::Float};
 
     Impl(Public *i) : Base(i)
     {}
@@ -76,6 +76,8 @@ DENG2_PIMPL(MapGeom)
     {
         //uColor = Vector4f(1, 1, 1, 1);
 
+        uTexelsPerMeter = 200;
+
         // Load some textures.
         {
 
@@ -102,7 +104,7 @@ DENG2_PIMPL(MapGeom)
         mapDrawable.addBuffer(buf);
 
         GloomApp::shaders().build(mapDrawable.program(), "gloom.surface")
-                << uMvpMatrix << uTex << uTextureMetrics;
+                << uMvpMatrix << uTex << uTextureMetrics << uTexelsPerMeter;
     }
 
     void glDeinit()
