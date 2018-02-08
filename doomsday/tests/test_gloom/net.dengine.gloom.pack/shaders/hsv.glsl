@@ -21,14 +21,14 @@
 /**
  * Converts an RGBA value to HSVA. Hue uses degrees as the unit.
  */
-highp vec4 rgbToHsv(highp vec4 rgb)
+vec4 rgbToHsv(vec4 rgb)
 {
-    highp vec4 hsv;
-    hsv.a = rgb.a;    
+    vec4 hsv;
+    hsv.a = rgb.a;
 
-    highp float rgbMin = min(min(rgb.r, rgb.g), rgb.b);
-    highp float rgbMax = max(max(rgb.r, rgb.g), rgb.b); 
-    highp float delta  = rgbMax - rgbMin;
+    float rgbMin = min(min(rgb.r, rgb.g), rgb.b);
+    float rgbMax = max(max(rgb.r, rgb.g), rgb.b);
+    float delta  = rgbMax - rgbMin;
 
     hsv.z = rgbMax;
 
@@ -42,12 +42,12 @@ highp vec4 rgbToHsv(highp vec4 rgb)
     {
         hsv.y = delta / rgbMax;
     }
-    else 
+    else
     {
         hsv.xy = vec2(0.0);
         return hsv;
     }
-        
+
     if (rgb.r >= rgbMax)
     {
         hsv.x = (rgb.g - rgb.b) / delta;
@@ -72,25 +72,25 @@ highp vec4 rgbToHsv(highp vec4 rgb)
     return hsv;
 }
 
-highp vec4 hsvToRgb(highp vec4 hsv)
+vec4 hsvToRgb(vec4 hsv)
 {
-    highp vec4 rgb;
+    vec4 rgb;
     rgb.a = hsv.a;
 
-    if (hsv.y <= 0.0) 
+    if (hsv.y <= 0.0)
     {
        rgb.rgb = vec3(hsv.z);
        return rgb;
     }
-    
-    highp float hh = hsv.x;
+
+    float hh = hsv.x;
     if (hh >= 360.0) hh = 0.0;
     hh /= 60.0;
-    
-    highp float ff = fract(hh); 
-    highp float p = hsv.z * (1.0 -  hsv.y);
-    highp float q = hsv.z * (1.0 - (hsv.y *        ff));
-    highp float t = hsv.z * (1.0 - (hsv.y * (1.0 - ff)));
+
+    float ff = fract(hh);
+    float p = hsv.z * (1.0 -  hsv.y);
+    float q = hsv.z * (1.0 - (hsv.y *        ff));
+    float t = hsv.z * (1.0 - (hsv.y * (1.0 - ff)));
 
     int i = int(hh);
 
@@ -114,7 +114,7 @@ highp vec4 hsvToRgb(highp vec4 hsv)
     {
         rgb.rgb = vec3(t, p, hsv.z);
     }
-    else 
+    else
     {
         rgb.rgb = vec3(hsv.z, p, q);
     }

@@ -1,34 +1,34 @@
-group fx.blur 
+group fx.blur
 {
     # The same vertex shader is used for both blur steps.
     vertexShader = """
-        uniform highp mat4 uMvpMatrix;
-        uniform highp vec4 uColor;
-        uniform highp vec4 uWindow;
+        uniform mat4 uMvpMatrix;
+        uniform vec4 uColor;
+        uniform vec4 uWindow;
 
-        DENG_ATTRIB highp vec4 aVertex;
-        DENG_ATTRIB highp vec2 aUV;
-        DENG_ATTRIB highp vec4 aColor;
+        DENG_ATTRIB vec4 aVertex;
+        DENG_ATTRIB vec2 aUV;
+        DENG_ATTRIB vec4 aColor;
 
-        DENG_VAR highp vec2 vUV;
-        DENG_VAR highp vec4 vColor;
+        DENG_VAR vec2 vUV;
+        DENG_VAR vec4 vColor;
 
         void main(void) {
             gl_Position = uMvpMatrix * aVertex;
             vUV = uWindow.xy + aUV * uWindow.zw;
             vColor = aColor * uColor;
         }"""
-    
-    shader horizontal 
+
+    shader horizontal
     {
         vertex $= fx.blur.vertexShader
         fragment = "
             uniform sampler2D uTex;
-            uniform highp vec2 uBlurStep;
-            DENG_VAR highp vec2 vUV;
-            DENG_VAR highp vec4 vColor;
+            uniform vec2 uBlurStep;
+            DENG_VAR vec2 vUV;
+            DENG_VAR vec4 vColor;
             void main(void) {
-                highp vec4 sum = vec4(0.0);
+                vec4 sum = vec4(0.0);
                 sum += texture(uTex, vec2(vUV.s - 4.0 * uBlurStep.s, vUV.t)) * 0.05;
                 sum += texture(uTex, vec2(vUV.s - 3.0 * uBlurStep.s, vUV.t)) * 0.09;
                 sum += texture(uTex, vec2(vUV.s - 2.0 * uBlurStep.s, vUV.t)) * 0.123;
@@ -42,17 +42,17 @@ group fx.blur
                 out_FragColor.a = 1.0;
             }"
     }
-    
-    shader vertical 
+
+    shader vertical
     {
         vertex $= fx.blur.vertexShader
         fragment = "
             uniform sampler2D uTex;
-            uniform highp vec2 uBlurStep;
-            DENG_VAR highp vec2 vUV;
-            DENG_VAR highp vec4 vColor;
+            uniform vec2 uBlurStep;
+            DENG_VAR vec2 vUV;
+            DENG_VAR vec4 vColor;
             void main(void) {
-                highp vec4 sum = vec4(0.0);
+                vec4 sum = vec4(0.0);
                 sum += texture(uTex, vec2(vUV.s, vUV.t - 4.0 * uBlurStep.t)) * 0.05;
                 sum += texture(uTex, vec2(vUV.s, vUV.t - 3.0 * uBlurStep.t)) * 0.09;
                 sum += texture(uTex, vec2(vUV.s, vUV.t - 2.0 * uBlurStep.t)) * 0.123;
@@ -66,4 +66,3 @@ group fx.blur
             }"
     }
 }
-
