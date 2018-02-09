@@ -63,6 +63,12 @@ inline Type sign(Type a) {
     if (a < 0) return Type(-1); else return Type(1);
 }
 
+template <typename Integer>
+inline Integer mod(Integer a, Integer b) {
+    const Integer r = a % b;
+    return r < 0 ? (r + b) : r;
+}
+
 /// Minimum of two values.
 template <typename Type>
 inline Type min(Type a, Type b) {

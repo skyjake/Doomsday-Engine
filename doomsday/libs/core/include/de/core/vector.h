@@ -246,6 +246,9 @@ public:
     ddouble dot(Vector2 const &other) const {
         return x * other.x + y * other.y;
     }
+    ddouble cross(Vector2 const &other) const {
+        return x * other.y - y * other.x;
+    }
     Vector2 min(Vector2 const &other) const {
         return Vector2(de::min(x, other.x), de::min(y, other.y));
     }
