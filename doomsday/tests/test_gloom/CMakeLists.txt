@@ -23,6 +23,7 @@ set (SOURCES
     gloom/audio/audiosystem.h
     gloom/icamera.h
     gloom/ilight.h
+    gloom/geomath.h
     gloom/gloomwidget.cpp
     gloom/gloomwidget.h
     gloom/gloomworld.cpp
@@ -31,6 +32,8 @@ set (SOURCES
     gloom/render/mapbuild.h
     gloom/render/mapgeom.cpp
     gloom/render/mapgeom.h
+    gloom/render/polygon.cpp
+    gloom/render/polygon.h
     gloom/render/skybox.cpp
     gloom/render/skybox.h
     gloom/world/environment.cpp
