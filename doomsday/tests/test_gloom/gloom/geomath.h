@@ -20,8 +20,19 @@
 #define GLOOM_GEOMATH_H
 
 #include <de/Vector>
+#include <QVector2D>
 
 namespace gloom { namespace geo {
+
+inline de::Vector2d toVector2d(const QVector2D &vec)
+{
+    return de::Vector2d(vec.x(), vec.y());
+}
+
+inline QVector2D toQVector2D(const de::Vector2d &vec)
+{
+    return QVector2D(float(vec.x), float(vec.y));
+}
 
 /**
  * 2D line.
@@ -42,6 +53,11 @@ struct Line
         : start(a)
         , end(b)
     {}
+
+    double length() const
+    {
+        return span().length();
+    }
 
     T span() const
     {
@@ -79,6 +95,19 @@ struct Line
         // It has to hit somewhere on `other`.
         const double u = (q - p).cross(s) / r_s;
         return u >= 0 && u <= 1;
+    }
+
+    double distanceTo(const T &p) const
+    {
+        const T delta = p - start;
+        double dist = de::min(delta.length(), (p - end).length());
+        double n = de::abs(normal().dot(delta));
+        double t = dir().dot(delta);
+        if (t >= 0 && t <= length())
+        {
+            return de::min(n, dist);
+        }
+        return dist;
     }
 };
 

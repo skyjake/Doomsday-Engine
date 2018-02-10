@@ -24,12 +24,16 @@
 #include "../gloom/audio/audiosystem.h"
 #include "appwindowsystem.h"
 
+#include <QDir>
+
 class GloomApp : public de::BaseGuiApp
 {
 public:
     GloomApp(int &argc, char **argv);
 
     void initialize();
+
+    QDir userDir() const;
 
     static GloomApp &          app();
     static AppWindowSystem &   windowSystem();

@@ -61,7 +61,12 @@ class Map
 {
 public:
     Map();
+    Map(const Map &);
 
+    Map &operator=(const Map &);
+
+    void clear();
+    void removeInvalid();
     ID newID();
 
     template <typename H, typename T>
@@ -83,6 +88,9 @@ public:
     const Planes & planes() const;
     const Sectors &sectors() const;
     const Volumes &volumes() const;
+
+    de::Block serialize() const;
+    void deserialize(const de::Block &data);
 
 private:
     DENG2_PRIVATE(d)

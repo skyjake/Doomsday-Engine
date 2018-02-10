@@ -33,7 +33,7 @@ using namespace gloom;
 
 DENG2_PIMPL(GloomApp)
 {
-    Editor *                         editor;
+    std::unique_ptr<Editor>          editor;
     std::unique_ptr<AppWindowSystem> winSys;
     std::unique_ptr<AudioSystem>     audioSys;
     ImageBank                        images;
@@ -64,12 +64,12 @@ GloomApp::GloomApp(int &argc, char **argv)
     : BaseGuiApp(argc, argv), d(new Impl(this))
 {
     setMetadata("Deng Team", "dengine.net", "Gloom Test", "1.0");
-    setUnixHomeFolderName(".test_gloom");
+    setUnixHomeFolderName(".gloom");
 }
 
 void GloomApp::initialize()
 {
-    d->editor = new Editor();
+    d->editor.reset(new Editor());
     d->editor->show();
     d->editor->raise();
 
@@ -102,6 +102,17 @@ void GloomApp::initialize()
 
     scriptSystem().importModule("bootstrap");
     win->show();
+}
+
+QDir GloomApp::userDir() const
+{
+    const QDir home = QDir::home();
+    const QDir dir = home.filePath(unixHomeFolderName());
+    if (!dir.exists())
+    {
+        home.mkdir(unixHomeFolderName());
+    }
+    return dir;
 }
 
 GloomApp &GloomApp::app()
