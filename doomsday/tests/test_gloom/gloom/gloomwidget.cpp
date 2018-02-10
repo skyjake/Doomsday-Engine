@@ -196,6 +196,7 @@ bool GloomWidget::handleEvent(Event const &event)
         case DDKEY_DOWNARROW:  bit = User::Backward;  break;
         case 'a':              bit = User::StepLeft;  break;
         case 'd':              bit = User::StepRight; break;
+        case ' ':              bit = User::Jump;      break;
         case DDKEY_LSHIFT:     bit = User::Shift;     break;
         default:               break;
         }

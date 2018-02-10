@@ -33,13 +33,14 @@ class User
 public:
     enum InputBit {
         Inert     = 0,
-        TurnLeft  = 0x1,
-        TurnRight = 0x2,
-        Forward   = 0x4,
-        Backward  = 0x8,
-        StepLeft  = 0x10,
-        StepRight = 0x20,
-        Shift     = 0x40
+        Shift     = 0x1,
+        TurnLeft  = 0x2,
+        TurnRight = 0x4,
+        Forward   = 0x8,
+        Backward  = 0x10,
+        StepLeft  = 0x20,
+        StepRight = 0x40,
+        Jump      = 0x80,
     };
     Q_DECLARE_FLAGS(InputState, InputBit)
 

@@ -34,17 +34,18 @@ DENG2_PIMPL(User)
     World const *world = nullptr;
 
     InputState input;
-    Vector3f   pos;                 // Current position of the user (feet).
-    float      height = 1.8f;       // Height from feet to top of the head.
-    float      viewHeight = 1.66f;  // Eye height.
-    float      yaw   = 0;
-    float      pitch = 0;
+    Vector3f   pos;                // Current position of the user (feet).
+    float      height     = 1.8f;  // Height from feet to top of the head.
+    float      viewHeight = 1.66f; // Eye height.
+    float      yaw        = 0;
+    float      pitch      = 0;
     Vector3f   momentum;
     float      angularMomentum = 0;
     bool       onGround        = false;
     bool       firstUpdate     = true;
     float      crouch          = 0;
     float      crouchMomentum  = 0;
+    bool       jumpPending     = false;
 
     // For notification:
     Vector3f prevPosition;
@@ -132,7 +133,7 @@ DENG2_PIMPL(User)
 
         if (onGround)
         {
-            float moveFriction = 5;
+            float moveFriction = 2; //5;
 
             // Apply friction.
             Vector2f planar = momentum.xz();
@@ -148,6 +149,22 @@ DENG2_PIMPL(User)
                 momentum.x += fric.x;
                 momentum.z += fric.y;
             }
+
+            // Jump.
+            if (input & Jump)
+            {
+                jumpPending = true;
+            }
+            else if (jumpPending)
+            {
+                jumpPending = false;
+                momentum.y += 9;
+            }
+        }
+        else
+        {
+            // Can't jump in air.
+            jumpPending = false;
         }
 
         if (world)
@@ -182,14 +199,14 @@ DENG2_PIMPL(User)
                 }
             }
 
-            if (pos.y <= surface - FLOAT_EPSILON)
+            if (pos.y <= surface + FLOAT_EPSILON)
             {
                 if (!onGround)
                 {
                     playFallDownSound();
                     if (!firstUpdate)
                     {
-                        crouchMomentum = min(crouchMomentum, momentum.y - 14);
+                        crouchMomentum = min(crouchMomentum, momentum.y + 8);
                     }
                     momentum.y = 0;
                 }
@@ -225,7 +242,7 @@ DENG2_PIMPL(User)
 
         // Move in crouch.
         crouch += crouchMomentum * elapsed;
-        crouchMomentum += 2 * elapsed;
+        crouchMomentum += 3 * elapsed;
         if (crouch > 0)
         {
             crouch         = 0;
