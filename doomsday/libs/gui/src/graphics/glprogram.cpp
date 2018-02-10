@@ -183,6 +183,7 @@ DENG2_PIMPL(GLProgram)
             { AttribSpec::BoneWeights,    "aBoneWeights" },
             { AttribSpec::Index,          "aIndex"       },
             { AttribSpec::Texture,        "aTexture"     },
+            { AttribSpec::Flags,          "aFlags"       },
 
             { AttribSpec::InstanceMatrix, "aInstanceMatrix" }, // x4
             { AttribSpec::InstanceColor,  "aInstanceColor"  }

@@ -57,6 +57,7 @@ namespace internal
             InstanceColor,
             Index,
             Texture,
+            Flags,
 
             NUM_SEMANTICS
         };
