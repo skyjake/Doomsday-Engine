@@ -24,14 +24,15 @@ using namespace de;
 
 namespace gloom {
 
-internal::AttribSpec const MapVertex::_spec[4] =
+internal::AttribSpec const MapVertex::_spec[5] =
 {
     { internal::AttribSpec::Position,  3, GL_FLOAT,        false, sizeof(MapVertex), 0     },
     { internal::AttribSpec::Normal,    3, GL_FLOAT,        false, sizeof(MapVertex), 3 * 4 },
     { internal::AttribSpec::TexCoord0, 2, GL_FLOAT,        false, sizeof(MapVertex), 6 * 4 },
-    { internal::AttribSpec::Texture,   1, GL_UNSIGNED_INT, false, sizeof(MapVertex), 8 * 4 }
+    { internal::AttribSpec::Texture,   1, GL_UNSIGNED_INT, false, sizeof(MapVertex), 8 * 4 },
+    { internal::AttribSpec::Flags,     1, GL_FLOAT,        false, sizeof(MapVertex), 9 * 4 },
 };
-LIBGUI_VERTEX_FORMAT_SPEC(MapVertex, 9 * 4)
+LIBGUI_VERTEX_FORMAT_SPEC(MapVertex, 10 * 4)
 
 DENG2_PIMPL_NOREF(MapBuild)
 {
@@ -120,10 +121,12 @@ DENG2_PIMPL_NOREF(MapBuild)
                     QHash<ID, Buffer::Index> pointIndices;
 
                     f.texture = textures["world.grass"];
-                    f.normal = Vector3f(0, 1, 0);
+                    f.normal  = Vector3f(0, 1, 0);
+                    f.flags   = MapVertex::WorldSpaceXZToTexCoords;
 
                     c.texture = textures["world.stone"];
-                    c.normal = Vector3f(0, -1, 0);
+                    c.normal  = Vector3f(0, -1, 0);
+                    c.flags   = MapVertex::WorldSpaceXZToTexCoords;
 
                     for (const ID pointID : planeVerts[0].keys())
                     {
@@ -182,6 +185,7 @@ DENG2_PIMPL_NOREF(MapBuild)
 
                     v.texture = textures["world.dirt"];
                     v.normal  = normal;
+                    v.flags   = 0;
 
                     v.pos = planeVerts[0][start];
                     v.texCoord = Vector2f(0, 0);
@@ -204,6 +208,10 @@ DENG2_PIMPL_NOREF(MapBuild)
 
         buf->setVertices(verts, gl::Static);
         buf->setIndices(gl::Triangles, indices, gl::Static);
+
+        DENG2_ASSERT(indices.size() % 3 == 0);
+
+        qDebug() << "Built" << verts.size() << "vertices and" << indices.size() << "indices";
 
         return buf;
     }

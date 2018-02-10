@@ -36,8 +36,13 @@ struct MapVertex
     de::Vector3f normal;
     de::Vector2f texCoord;
     uint32_t texture;
+    uint32_t flags;
 
-    LIBGUI_DECLARE_VERTEX_FORMAT(4)
+    LIBGUI_DECLARE_VERTEX_FORMAT(5)
+
+    enum Flag {
+        WorldSpaceXZToTexCoords = 0x1,
+    };
 };
 
 class MapBuild
