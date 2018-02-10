@@ -52,6 +52,8 @@ set (SOURCES
     src/globalshortcuts.h
     src/gloomapp.cpp
     src/gloomapp.h
+    src/editor.cpp
+    src/editor.h
     src/main.cpp
     src/mainwindow.cpp
     src/mainwindow.h

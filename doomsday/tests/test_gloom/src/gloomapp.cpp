@@ -17,6 +17,7 @@
  */
 
 #include "gloomapp.h"
+#include "editor.h"
 #include "appwindowsystem.h"
 #include "../gloom/gloomworld.h"
 #include "../gloom/gloomwidget.h"
@@ -32,6 +33,7 @@ using namespace gloom;
 
 DENG2_PIMPL(GloomApp)
 {
+    Editor *                         editor;
     std::unique_ptr<AppWindowSystem> winSys;
     std::unique_ptr<AudioSystem>     audioSys;
     ImageBank                        images;
@@ -67,6 +69,10 @@ GloomApp::GloomApp(int &argc, char **argv)
 
 void GloomApp::initialize()
 {
+    d->editor = new Editor();
+    d->editor->show();
+    d->editor->raise();
+
     DisplayMode_Init();
     addInitPackage("net.dengine.gloom");
     initSubsystems(App::DisablePlugins);

@@ -34,6 +34,7 @@ using namespace gloom;
 DENG2_PIMPL(MainWindow)
 , DENG2_OBSERVES(GLWindow, Init)
 , DENG2_OBSERVES(GLWindow, Resize)
+, DENG2_OBSERVES(WindowEventHandler, FocusChange)
 {
     AppRootWidget    root;
     bool             needRootSizeUpdate{false};
@@ -47,10 +48,8 @@ DENG2_PIMPL(MainWindow)
     {
         self().audienceForInit()   += this;
         self().audienceForResize() += this;
+        self().eventHandler().audienceForFocusChange() += this;
     }
-
-    ~Impl()
-    {}
 
     void setupUI()
     {
@@ -130,6 +129,12 @@ DENG2_PIMPL(MainWindow)
         GLState::current().setViewport(Rectangleui(0, 0, size.x, size.y));
 
         updateRootSize();
+    }
+
+    void windowFocusChanged(GLWindow &, bool hasFocus)
+    {
+        auto &loop = Loop::get();
+        loop.setRate(hasFocus? 60 : 1);
     }
 };
 

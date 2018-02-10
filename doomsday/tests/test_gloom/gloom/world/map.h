@@ -31,6 +31,7 @@ typedef de::Vector2d Point;
 struct Line
 {
     ID points[2];
+    ID sectors[2]; // front and back
 };
 struct Plane
 {
@@ -44,7 +45,7 @@ struct Volume
 struct Sector
 {
     IDList lines; // must have clockwise winding
-    IDList volumes;
+    IDList volumes; // must be ascending and share planes
 };
 
 typedef QHash<ID, Point>  Points;
