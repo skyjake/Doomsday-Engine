@@ -83,6 +83,16 @@ DENG2_PIMPL_NOREF(MapBuild)
 
         for (const Sector &sector : map.sectors())
         {
+            // Split the polygon to convex parts (for triangulation).
+            Polygon::Points polyPoints;
+            for (const ID lineId : sector.lines) // assumed to have clockwise winding
+            {
+                const Line &line = map.lines()[lineId];
+                polyPoints << Polygon::Point({map.points()[line.points[0]], line.points[0]});
+            }
+            const auto convexParts = Polygon(polyPoints).splitConvexParts();
+
+            // Each volume is built separately.
             for (const ID volId : sector.volumes)
             {
                 const Volume &volume = map.volumes()[volId];
@@ -105,19 +115,47 @@ DENG2_PIMPL_NOREF(MapBuild)
 
                 // Build the floor and ceiling of this volume.
                 {
-                    Polygon::Points polyPoints;
-                    for (const ID lineId : sector.lines) // assumed to have clockwise winding
+                    // Insert vertices of both planes to the buffer.
+                    Buffer::Type f, c;
+                    QHash<ID, Buffer::Index> pointIndices;
+
+                    f.texture = textures["world.grass"];
+                    f.normal = Vector3f(0, 1, 0);
+
+                    c.texture = textures["world.stone"];
+                    c.normal = Vector3f(0, -1, 0);
+
+                    for (const ID pointID : planeVerts[0].keys())
                     {
-                        const Line &line = map.lines()[lineId];
-                        polyPoints << Polygon::Point({map.points()[line.points[0]], line.points[0]});
+                        f.pos = planeVerts[0][pointID];
+                        c.pos = planeVerts[1][pointID];
+
+                        f.texCoord = Vector2f(0, 0); // fixed offset
+                        c.texCoord = Vector2f(0, 0); // fixed offset
+
+                        pointIndices.insert(pointID, Buffer::Index(verts.size()));
+                        verts << f << c;
                     }
-                    //for (auto pp : polyPoints) qDebug() << "Point:" << pp.id << pp.pos.asText();
-                    //qDebug() << "is convex:" << Polygon(polyPoints).isConvex();
-                    //auto convexParts = ;
-                    for (auto convex : Polygon(polyPoints).splitConvexParts())
+
+                    for (const auto &convex : convexParts)
                     {
-                        qDebug() << convex.size() << "point convex poly:";
-                        for (auto pp : convex.points) qDebug() << pp.id << pp.pos.asText();
+                        const ID baseID = convex.points[0].id;
+
+                        // Floor.
+                        for (int i = 1; i < convex.size() - 1; ++i)
+                        {
+                            indices << pointIndices[baseID]
+                                    << pointIndices[convex.points[i + 1].id]
+                                    << pointIndices[convex.points[i].id];
+                        }
+
+                        // Ceiling.
+                        for (int i = 1; i < convex.size() - 1; ++i)
+                        {
+                            indices << pointIndices[baseID] + 1
+                                    << pointIndices[convex.points[i].id] + 1
+                                    << pointIndices[convex.points[i + 1].id] + 1;
+                        }
                     }
                 }
 
@@ -142,7 +180,7 @@ DENG2_PIMPL_NOREF(MapBuild)
 
                     Buffer::Type v;
 
-                    v.texture = textures["world.stone"];
+                    v.texture = textures["world.dirt"];
                     v.normal  = normal;
 
                     v.pos = planeVerts[0][start];
@@ -166,6 +204,7 @@ DENG2_PIMPL_NOREF(MapBuild)
 
         buf->setVertices(verts, gl::Static);
         buf->setIndices(gl::Triangles, indices, gl::Static);
+
         return buf;
     }
 };

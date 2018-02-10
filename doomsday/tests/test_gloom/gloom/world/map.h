@@ -43,7 +43,7 @@ struct Volume
 };
 struct Sector
 {
-    IDList lines;
+    IDList lines; // must have clockwise winding
     IDList volumes;
 };
 
