@@ -137,22 +137,59 @@ void Map::clear()
 
 void Map::removeInvalid()
 {
-    d->points.remove(0);
+    DENG2_ASSERT(!d->points.contains(0));
+    DENG2_ASSERT(!d->planes.contains(0));
+    DENG2_ASSERT(!d->lines.contains(0));
+    DENG2_ASSERT(!d->sectors.contains(0));
+    DENG2_ASSERT(!d->volumes.contains(0));
 
-    // Check for lines that connect to missing points.
+    // Lines.
     {
-        QMutableHashIterator<ID, Line> iter(d->lines);
-        while (iter.hasNext())
+        for (QMutableHashIterator<ID, Line> iter(d->lines); iter.hasNext(); )
         {
-            iter.next();
-            const auto &line = iter.value();
+            auto &line = iter.next().value();
+            // Invalid sector references.
+            for (auto &secId : line.sectors)
+            {
+                if (!d->sectors.contains(secId))
+                {
+                    secId = 0;
+                }
+            }
+            // References to invalid points.
             if (!d->points.contains(line.points[0]) || !d->points.contains(line.points[1]))
             {
                 iter.remove();
+                continue;
             }
+            // Degenerate lines.
             if (line.points[0] == line.points[1])
             {
                 iter.remove();
+                continue;
+            }
+        }
+    }
+
+    // Sectors.
+    {
+        for (QMutableHashIterator<ID, Sector> iter(d->sectors); iter.hasNext(); )
+        {
+            auto &sector = iter.next().value();
+            // Remove missing lines.
+            for (QMutableListIterator<ID> i(sector.lines); i.hasNext(); )
+            {
+                i.next();
+                if (!d->lines.contains(i.value()))
+                {
+                    i.remove();
+                }
+            }
+            // Remove empty sectors.
+            if (sector.lines.isEmpty())
+            {
+                iter.remove();
+                continue;
             }
         }
     }
@@ -211,6 +248,126 @@ const Sectors &Map::sectors() const
 const Volumes &Map::volumes() const
 {
     return d->volumes;
+}
+
+Point &Map::point(ID id)
+{
+    DENG2_ASSERT(d->points.contains(id));
+    return d->points[id];
+}
+
+Line &Map::line(ID id)
+{
+    DENG2_ASSERT(d->lines.contains(id));
+    return d->lines[id];
+}
+
+Plane &Map::plane(ID id)
+{
+    DENG2_ASSERT(d->planes.contains(id));
+    return d->planes[id];
+}
+
+Sector &Map::sector(ID id)
+{
+    DENG2_ASSERT(d->sectors.contains(id));
+    return d->sectors[id];
+}
+
+Volume &Map::volume(ID id)
+{
+    DENG2_ASSERT(d->volumes.contains(id));
+    return d->volumes[id];
+}
+
+const Point &Map::point(ID id) const
+{
+    DENG2_ASSERT(d->points.contains(id));
+    return d->points[id];
+}
+
+const Line &Map::line(ID id) const
+{
+    DENG2_ASSERT(d->lines.contains(id));
+    return d->lines[id];
+}
+
+const Plane &Map::plane(ID id) const
+{
+    DENG2_ASSERT(d->planes.contains(id));
+    return d->planes[id];
+}
+
+const Sector &Map::sector(ID id) const
+{
+    DENG2_ASSERT(d->sectors.contains(id));
+    return d->sectors[id];
+}
+
+const Volume &Map::volume(ID id) const
+{
+    DENG2_ASSERT(d->volumes.contains(id));
+    return d->volumes[id];
+}
+
+bool Map::isLine(ID id) const
+{
+    return d->lines.contains(id);
+}
+
+void Map::forLinesAscendingDistance(const Point &pos, std::function<bool (ID)> func) const
+{
+    using DistLine = std::pair<ID, double>;
+    QVector<DistLine> distLines;
+
+    for (auto i = d->lines.begin(); i != d->lines.end(); ++i)
+    {
+        distLines << DistLine{i.key(), geoLine(i.key()).distanceTo(pos)};
+    }
+
+    qSort(distLines.begin(), distLines.end(), [](const DistLine &a, const DistLine &b) {
+        return a.second < b.second;
+    });
+
+    for (const auto &dl : distLines)
+    {
+        if (!func(dl.first)) break;
+    }
+}
+
+IDList Map::findLines(ID pointId) const
+{
+    IDList ids;
+    for (auto i = d->lines.begin(); i != d->lines.end(); ++i)
+    {
+        if (i.value().points[0] == pointId || i.value().points[1] == pointId)
+        {
+            ids << i.key();
+        }
+    }
+    return ids;
+}
+
+geo::Line2d Map::geoLine(ID lineId) const
+{
+    const auto &line = d->lines[lineId];
+    return geo::Line2d{point(line.points[0]), point(line.points[1])};
+}
+
+geo::Polygon Map::sectorPolygon(ID sectorId) const
+{
+    const auto &sec = sector(sectorId);
+    geo::Polygon poly;
+    for (ID lineId : sec.lines)
+    {
+        const auto &line    = Map::line(lineId);
+        const int   idx     = (line.sectors[0] == sectorId ? 0 : 1);
+        const ID    pointId = line.points[idx];
+
+        poly.points << geo::Polygon::Point{d->points[pointId], pointId};
+    }
+    poly.updateBounds();
+    return poly;
 }
 
 static QString idStr(ID id)
@@ -316,8 +473,8 @@ Block Map::serialize() const
 void Map::deserialize(const Block &data)
 {
     const QJsonDocument document = QJsonDocument::fromJson(data);
-    const QJsonObject json = document.object();
-    const auto map = json.toVariantHash();
+    const QJsonObject   json     = document.object();
+    const auto          map      = json.toVariantHash();
 
     clear();
 

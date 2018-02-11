@@ -77,6 +77,26 @@ struct Line
             .xz();
     }
 
+    void flip()
+    {
+        std::swap(start, end);
+    }
+
+    bool isFrontSide(const T &pos) const
+    {
+        return normal().dot(pos - start) > 0;
+    }
+
+    bool isBackSide(const T &pos) const
+    {
+        return normal().dot(pos - start) < 0;
+    }
+
+    int side(const T &pos) const
+    {
+        return isFrontSide(pos)? 0 : 1;
+    }
+
     bool intersect(const Line &other, double &t) const
     {
         const auto &p = other.start;
@@ -109,7 +129,21 @@ struct Line
         }
         return dist;
     }
+
+    double angle(const Line &other) const
+    {
+        // If the lines point to the same direction, the angle is 180 degrees.
+        const T d1 = dir();
+        const T n = normal();
+        const T d2 = other.dir();
+        double deg = 180 + de::radianToDegree(std::acos(d1.dot(d2)));
+        if (n.dot(d2) > 0) deg = 360 - deg;
+        return deg;
+        //return de::radianToDegree(std::atan2(d1.dot(d2), n.dot(d2)));
+    }
 };
+
+using Line2d = Line<de::Vector2d>;
 
 }} // namespace gloom::geo
 

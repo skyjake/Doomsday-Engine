@@ -82,16 +82,19 @@ DENG2_PIMPL_NOREF(MapBuild)
         Buffer::Vertices verts;
         Buffer::Indices indices;
 
-        for (const Sector &sector : map.sectors())
+        for (const ID sectorId : map.sectors().keys())
         {
+            const Sector &sector = map.sector(sectorId);
+
             // Split the polygon to convex parts (for triangulation).
-            Polygon::Points polyPoints;
+            /*geo::Polygon::Points polyPoints;
             for (const ID lineId : sector.lines) // assumed to have clockwise winding
             {
                 const Line &line = map.lines()[lineId];
-                polyPoints << Polygon::Point({map.points()[line.points[0]], line.points[0]});
-            }
-            const auto convexParts = Polygon(polyPoints).splitConvexParts();
+                const ID pid =
+                polyPoints << geo::Polygon::Point({map.points()[line.points[0]], line.points[0]});
+            }*/
+            const auto convexParts = map.sectorPolygon(sectorId).splitConvexParts();
 
             // Each volume is built separately.
             for (const ID volId : sector.volumes)

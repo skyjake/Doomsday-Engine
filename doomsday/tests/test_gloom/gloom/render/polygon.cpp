@@ -21,7 +21,7 @@
 
 using namespace de;
 
-namespace gloom {
+namespace gloom { namespace geo {
 
 Polygon::Polygon(const Points &points)
     : points(points)
@@ -114,8 +114,13 @@ bool Polygon::isLineInside(int start, int end) const
 
 bool Polygon::isPointInside(const Vector2d &point) const
 {
-    const Vector2d offset{bounds.width() + 1, 0};
-    return intersect(Line(point, point + offset)) % 2 == 1;
+    DENG2_ASSERT(!bounds.isNull());
+    if (bounds.contains(point))
+    {
+        const Vector2d offset{bounds.width() + 1, 0};
+        return intersect(Line(point, point + offset)) % 2 == 1;
+    }
+    return false;
 }
 
 int Polygon::intersect(const Line &line) const
@@ -201,5 +206,4 @@ QList<Polygon> Polygon::splitConvexParts() const
     return parts;
 }
 
-
-} // namespace gloom
+}} // namespace gloom::geo

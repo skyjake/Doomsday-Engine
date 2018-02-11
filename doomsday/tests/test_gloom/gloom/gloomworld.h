@@ -25,12 +25,15 @@
 
 namespace gloom {
 
+class Map;
+
 class GloomWorld : public World
 {
 public:
     GloomWorld();
 
     void setLocalUser(User *user);
+    void setMap(const Map &map);
 
     void glInit();
     void glDeinit();

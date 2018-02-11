@@ -36,6 +36,7 @@ public:
 
     void glInit();
     void glDeinit();
+    void rebuild();
     void render(const ICamera &camera);
 
 private:

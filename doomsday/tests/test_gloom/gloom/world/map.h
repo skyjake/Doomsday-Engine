@@ -21,6 +21,8 @@
 
 #include <de/Vector>
 #include <QHash>
+#include "../geomath.h"
+#include "../render/polygon.h"
 
 namespace gloom {
 
@@ -67,7 +69,7 @@ public:
 
     void clear();
     void removeInvalid();
-    ID newID();
+    ID   newID();
 
     template <typename H, typename T>
     ID append(H &hash, const T& value)
@@ -89,8 +91,26 @@ public:
     const Sectors &sectors() const;
     const Volumes &volumes() const;
 
+    Point & point(ID id);
+    Line &  line(ID id);
+    Plane & plane(ID id);
+    Sector &sector(ID id);
+    Volume &volume(ID id);
+
+    const Point & point(ID id) const;
+    const Line &  line(ID id) const;
+    const Plane & plane(ID id) const;
+    const Sector &sector(ID id) const;
+    const Volume &volume(ID id) const;
+
+    bool        isLine(ID id) const;
+    void        forLinesAscendingDistance(const Point &pos, std::function<bool(ID)>) const;
+    IDList      findLines(ID pointId) const;
+    geo::Line2d geoLine(ID lineId) const;
+    geo::Polygon sectorPolygon(ID sectorId) const;
+
     de::Block serialize() const;
-    void deserialize(const de::Block &data);
+    void      deserialize(const de::Block &data);
 
 private:
     DENG2_PRIVATE(d)

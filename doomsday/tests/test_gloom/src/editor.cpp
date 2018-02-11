@@ -57,6 +57,7 @@ DENG2_PIMPL(Editor)
         Scale,
         Rotate,
         AddLines,
+        AddSector,
     };
 
     Map map;
@@ -71,24 +72,20 @@ DENG2_PIMPL(Editor)
     QSet<ID>   selection;
     ID         hoverPoint = 0;
     ID         hoverLine = 0;
+    ID         hoverSector = 0;
 
     float    viewScale = 10;
     Vector2f viewOrigin;
     Matrix4f viewTransform;
     Matrix4f inverseViewTransform;
 
+    const QColor metaBg{255, 255, 255, 192};
+    const QColor metaColor{0, 0, 0, 128};
+    const QColor metaBg2{0, 0, 0, 128};
+    const QColor metaColor2{255, 255, 255};
+
     Impl(Public *i) : Base(i)
     {
-        /*map.append(map.points(), Point(-1, -1));
-        map.append(map.points(), Point( 1, -1));
-        map.append(map.points(), Point( 1,  1));
-        map.append(map.points(), Point(-1,  1));
-
-        map.append(map.lines(), Line{{0, 1}, {1, 0}});
-        map.append(map.lines(), Line{{1, 2}, {1, 0}});
-        map.append(map.lines(), Line{{2, 3}, {1, 0}});
-        map.append(map.lines(), Line{{3, 0}, {1, 0}});*/
-
         // Load the last map.
         {
             QFile f(persistentMapPath());
@@ -152,6 +149,7 @@ DENG2_PIMPL(Editor)
         case Scale: return "scale";
         case Rotate: return "rotate";
         case AddLines: return "add lines";
+        case AddSector: return "add sector";
         case None: break;
         }
         return "";
@@ -173,34 +171,13 @@ DENG2_PIMPL(Editor)
                 .arg(actionText());
         if (hoverPoint)
         {
-            text += String(" [P:%1]").arg(hoverPoint, 0, 16).toUpper();
+            text += String(" [Point:%1]").arg(hoverPoint, 0, 16);
         }
         if (hoverLine)
         {
-            text += String(" [L:%1]").arg(hoverLine, 0, 16).toUpper();
+            text += String(" [Line:%1]").arg(hoverLine, 0, 16);
         }
         return text;
-    }
-
-    QPointF worldToView(const Vector2d &pos) const
-    {
-        const auto p = viewTransform * Vector3f(float(pos.x), float(pos.y));
-        return QPointF(p.x, p.y);
-    }
-
-    Vector2d viewToWorld(const QPointF &pos) const
-    {
-        const auto p = inverseViewTransform * Vector3f(float(pos.x()), float(pos.y()));
-        return Vector2d(p.x, p.y);
-    }
-
-    void updateView()
-    {
-        const QSize viewSize = self().rect().size();
-
-        viewTransform = Matrix4f::translate(Vector3f(viewSize.width() / 2, viewSize.height() / 2)) *
-                        Matrix4f::scale(viewScale) * Matrix4f::translate(-viewOrigin);
-        inverseViewTransform = viewTransform.inverse();
     }
 
     void setMode(Mode newMode)
@@ -220,6 +197,7 @@ DENG2_PIMPL(Editor)
             case Rotate:
             case Scale:
             case AddLines:
+            case AddSector:
                 return true;
         }
     }
@@ -257,13 +235,32 @@ DENG2_PIMPL(Editor)
             break;
 
         case SelectRegion:
-            for (auto i = map.points().begin(); i != map.points().end(); ++i)
+            switch (mode)
             {
-                const QPointF viewPos = worldToView(i.value());
-                if (selectRect.contains(viewPos))
+            case EditPoints:
+                for (auto i = map.points().begin(); i != map.points().end(); ++i)
                 {
-                    selection.insert(i.key());
+                    const QPointF viewPos = worldToView(i.value());
+                    if (selectRect.contains(viewPos))
+                    {
+                        selection.insert(i.key());
+                    }
                 }
+                break;
+
+            case EditLines:
+            case EditSectors:
+                for (auto i = map.lines().begin(); i != map.lines().end(); ++i)
+                {
+                    const auto &line = i.value();
+                    QPointF viewPos[2] = {worldToView(map.point(line.points[0])),
+                                          worldToView(map.point(line.points[1]))};
+                    if (selectRect.contains(viewPos[0]) && selectRect.contains(viewPos[1]))
+                    {
+                        selection.insert(i.key());
+                    }
+                }
+                break;
             }
             break;
 
@@ -271,6 +268,7 @@ DENG2_PIMPL(Editor)
         case Scale:
         case Rotate:
         case AddLines:
+        case AddSector:
             break;
         }
 
@@ -283,27 +281,39 @@ DENG2_PIMPL(Editor)
         return true;
     }
 
+    QPointF worldToView(const Vector2d &pos) const
+    {
+        const auto p = viewTransform * Vector3f(float(pos.x), float(pos.y));
+        return QPointF(p.x, p.y);
+    }
+
+    Vector2d viewToWorld(const QPointF &pos) const
+    {
+        const auto p = inverseViewTransform * Vector3f(float(pos.x()), float(pos.y()));
+        return Vector2d(p.x, p.y);
+    }
+
+    void updateView()
+    {
+        const QSize viewSize = self().rect().size();
+
+        viewTransform = Matrix4f::translate(Vector3f(viewSize.width() / 2, viewSize.height() / 2)) *
+                        Matrix4f::scale(viewScale) * Matrix4f::translate(-viewOrigin);
+        inverseViewTransform = viewTransform.inverse();
+    }
+
     QPoint viewMousePos() const { return self().mapFromGlobal(QCursor().pos()); }
+
+    QLineF viewLine(const Line &line) const
+    {
+        const QPointF start = worldToView(map.point(line.points[0]));
+        const QPointF end   = worldToView(map.point(line.points[1]));
+        return QLineF(start, end);
+    }
 
     Vector2d worldMousePos() const { return viewToWorld(viewMousePos()); }
 
     Vector2d worldActionPos() const { return viewToWorld(actionPos); }
-
-    void userAdd()
-    {
-        switch (mode)
-        {
-        case EditPoints: map.append(map.points(), worldMousePos()); break;
-
-        case EditLines:
-            if (selection.size() == 1)
-            {
-                beginAction(AddLines);
-            }
-            break;
-        }
-        self().update();
-    }
 
     void pushUndo()
     {
@@ -323,6 +333,121 @@ DENG2_PIMPL(Editor)
         }
     }
 
+    void userSelectAll()
+    {
+        selection.clear();
+        switch (mode)
+        {
+        case EditPoints:
+            for (auto id : map.points().keys())
+            {
+                selection.insert(id);
+            }
+            break;
+
+        case EditLines:
+            for (auto id : map.lines().keys())
+            {
+                selection.insert(id);
+            }
+            break;
+
+        case EditSectors:
+            for (auto id : map.sectors().keys())
+            {
+                selection.insert(id);
+            }
+            break;
+        }
+        self().update();
+    }
+
+    void userSelectNone()
+    {
+        selection.clear();
+        self().update();
+    }
+
+    bool linkSectorLines(ID sectorId)
+    {
+        auto &sector = map.sector(sectorId);
+
+        IDList remaining = sector.lines;
+        IDList sorted({remaining.takeFirst()});
+        ID atLine = sorted.first();
+        ID atPoint;
+        {
+            Line &at = map.line(atLine);
+            const int side = at.sectors[0] == 0? 0 : 1;
+            atPoint = at.points[side^1];
+            at.sectors[side] = sectorId;
+        }
+
+        while (remaining.size())
+        {
+            // Find the next line.
+            for (QMutableListIterator<ID> iter(remaining); iter.hasNext(); )
+            {
+                Line &suc = map.line(iter.next());
+                if (suc.points[0] == atPoint || suc.points[1] == atPoint)
+                {
+                    sorted << iter.value();
+                    const int dir = suc.points[0] == atPoint? 1 : 0;
+                    atPoint = suc.points[dir];
+                    suc.sectors[dir^1] = sectorId;
+                    iter.remove();
+                    break;
+                }
+            }
+        }
+
+        // Complete.
+        sector.lines = sorted;
+        return true;
+    }
+
+    void userAdd()
+    {
+        switch (mode)
+        {
+        case EditPoints:
+            pushUndo();
+            map.append(map.points(), worldMousePos());
+            break;
+
+        case EditLines:
+            if (selection.size() == 1)
+            {
+                beginAction(AddLines);
+            }
+            break;
+
+        case EditSectors:
+            if (selection.size() >= 3)
+            {
+                pushUndo();
+                Sector sector;
+                for (ID id : selection)
+                {
+                    if (map.isLine(id)) sector.lines << id;
+                }
+                selection.clear();
+                ID floor = map.append(map.planes(), Plane{{Vector3d()}, {Vector3f(0, 1, 0)}});
+                ID ceil  = map.append(map.planes(), Plane{{Vector3d(0, 3, 0)}, {Vector3f(0, -1, 0)}});
+                ID vol   = map.append(map.volumes(), Volume{{floor, ceil}});
+                sector.volumes << vol;
+                ID secId = map.append(map.sectors(), sector);
+                if (!linkSectorLines(secId))
+                {
+                    popUndo();
+                }
+                selection.insert(secId);
+            }
+            break;
+        }
+        self().update();
+    }
+
     void userDelete()
     {
         switch (mode)
@@ -335,8 +460,6 @@ DENG2_PIMPL(Editor)
                 {
                     map.points().remove(id);
                 }
-                map.removeInvalid();
-                selection.clear();
             }
             break;
 
@@ -346,10 +469,20 @@ DENG2_PIMPL(Editor)
                 pushUndo();
                 map.lines().remove(hoverLine);
                 hoverLine = 0;
-                selection.remove(hoverLine);
+            }
+            break;
+
+        case EditSectors:
+            if (hoverSector)
+            {
+                pushUndo();
+                map.sectors().remove(hoverSector);
+                hoverSector = 0;
             }
             break;
         }
+        selection.clear();
+        map.removeInvalid();
         self().update();
     }
 
@@ -361,13 +494,14 @@ DENG2_PIMPL(Editor)
             if (selection.size()) prevPoint = *selection.begin();
 
             selection.clear();
-            selectClickedObject();
+            selectClickedObject(modifiers);
             if (!selection.isEmpty())
             {
                 // Connect to this point.
                 Line newLine;
                 newLine.points[0] = prevPoint;
                 newLine.points[1] = *selection.begin();
+                newLine.sectors[0] = newLine.sectors[1] = 0;
                 if (newLine.points[0] != newLine.points[1])
                 {
                     map.append(map.lines(), newLine);
@@ -383,17 +517,105 @@ DENG2_PIMPL(Editor)
             return;
         }
 
-        switch (mode)
+        if (mode == EditSectors && !hoverSector && hoverLine)
         {
-        case EditPoints:
-        case EditLines:
-            if (!(modifiers & Qt::ShiftModifier))
+            if (modifiers & Qt::ShiftModifier)
             {
-                selection.clear();
+                selectOrUnselect(hoverLine);
+                return;
             }
-            selectClickedObject();
-            break;
+
+            // Select a group of lines that might form a new sector.
+            const auto clickPos = worldMousePos();
+            ID lineId = hoverLine;
+            const ID firstLineId = lineId;
+            {
+                const auto &line = map.line(lineId);
+                geo::Line2d geoLine = map.geoLine(lineId);
+
+                // Which side are we on?
+                const int side = geoLine.side(clickPos);
+                if (side == 0 && line.sectors[0] == 0)
+                {
+//                    qDebug("Starting at line %X (%X -> %X) front:%i", lineId,
+//                           line.points[0], line.points[1],
+//                           geoLine.isFrontSide(clickPos));
+
+                    // This one is unassigned, let's select a polygon.
+                    selection.clear();
+                    selection.insert(lineId);
+
+                    ID atLine  = lineId;
+                    ID atPoint = line.points[1];
+
+                    for (;;)
+                    {
+                        bool completed = false;
+
+                        geoLine = map.geoLine(atLine);
+
+                        struct Candidate {
+                            ID line;
+                            ID nextPoint;
+                            float angle;
+                        };
+                        QList<Candidate> candidates;
+                        for (ID connectedId : map.findLines(atPoint))
+                        {
+                            if (connectedId == atLine) continue;
+
+                            const auto &connected = map.line(connectedId);
+                            const int dir = (connected.points[0] == atPoint? 1 : 0);
+                            if (connected.sectors[dir^1] == 0)
+                            {
+                                if (connectedId == firstLineId)
+                                {
+                                    completed = true;
+                                }
+                                if (!selection.contains(connectedId))
+                                {
+                                    geo::Line2d nextLine = map.geoLine(connectedId);
+                                    if (dir == 0) nextLine.flip();
+                                    const float angle = geoLine.angle(nextLine);
+                                    candidates << Candidate{connectedId, connected.points[dir], angle};
+                                }
+                            }
+                        }
+
+                        if (completed || candidates.isEmpty()) break;
+
+                        // Which line forms the tightest angle?
+                        {
+//                            qDebug() << "Choosing from:";
+//                            for (const auto &cand : candidates)
+//                            {
+//                                qDebug("    line %X, nextp %X, angle %lf",
+//                                       cand.line, cand.nextPoint, cand.angle);
+//                            }
+                            qSort(candidates.begin(),
+                                  candidates.end(),
+                                  [](const Candidate &a, const Candidate &b) {
+                                      return a.angle < b.angle;
+                                  });
+                            const auto &chosen = candidates.front();
+                            selection.insert(chosen.line);
+                            atPoint = chosen.nextPoint;
+//                            qDebug(" - at line %X, added line %X, moving to point %X",
+//                                   atLine, chosen.line, chosen.nextPoint);
+                            atLine = chosen.line;
+                        }
+                    }
+                }
+            }
+            return;
         }
+
+        // Select clicked object.
+        if (!(modifiers & Qt::ShiftModifier))
+        {
+            selection.clear();
+        }
+        selectClickedObject(modifiers);
     }
 
     void userScale()
@@ -447,11 +669,31 @@ DENG2_PIMPL(Editor)
             QVector2D dir = span.normalized();
             QVector2D normal{dir.y(), -dir.x()};
             QVector2D offsets[2] = {len*normal - 2*len*dir, -len*normal - 2*len*dir};
-            QPointF mid = (a + b) / 2;
+            QPointF mid = (a + 3*b) / 4;
 
-            ptr.drawLine(mid, mid + offsets[0].toPointF());
+            //ptr.drawLine(mid, mid + offsets[0].toPointF());
             ptr.drawLine(mid, mid + offsets[1].toPointF());
         }
+    }
+
+    void drawMetaLabel(QPainter &ptr, QPointF pos, QString text, bool lightStyle = true)
+    {
+        ptr.save();
+
+        ptr.setFont(metaFont);
+        ptr.setBrush(lightStyle? metaBg : metaBg2);
+        ptr.setPen(Qt::NoPen);
+
+        QFontMetrics metrics(metaFont);
+        const QSize dims(metrics.width(text), metrics.height());
+        const QPointF off(-dims.width()/2, dims.height()/2);
+        const QPointF gap(-3, 3);
+
+        ptr.drawRect(QRectF(pos - off - gap, pos + off + gap));
+        ptr.setPen(lightStyle? metaColor : metaColor2);
+        ptr.drawText(pos + off + QPointF(0, -metrics.descent()), text);
+
+        ptr.restore();
     }
 
     double defaultClickDistance() const
@@ -492,7 +734,7 @@ DENG2_PIMPL(Editor)
         for (auto i = map.lines().begin(); i != map.lines().end(); ++i)
         {
             const auto &line = i.value();
-            const geo::Line<Vector2d> mapLine(map.points()[line.points[0]], map.points()[line.points[1]]);
+            const geo::Line<Vector2d> mapLine(map.point(line.points[0]), map.point(line.points[1]));
             double d = mapLine.distanceTo(pos);
             if (d < dist)
             {
@@ -503,26 +745,71 @@ DENG2_PIMPL(Editor)
         return id;
     }
 
-    void selectClickedObject()
+    ID findSectorAt(const Vector2d &pos) const
+    {
+        for (ID id : map.sectors().keys())
+        {
+            if (map.sectorPolygon(id).isPointInside(pos))
+            {
+                return id;
+            }
+        }
+        return 0;
+    }
+
+    void selectOrUnselect(ID id)
+    {
+        if (!selection.contains(id))
+        {
+            selection.insert(id);
+        }
+        else
+        {
+            selection.remove(id);
+        }
+    }
+
+    void selectClickedObject(Qt::KeyboardModifiers modifiers)
     {
         const auto pos = worldActionPos();
         switch (mode)
         {
         case EditPoints:
-        case EditLines:
             if (auto id = findPointAt(pos))
             {
-                selection.insert(id);
+                selectOrUnselect(id);
+            }
+            break;
+
+        case EditLines:
+            if (modifiers & Qt::ShiftModifier)
+            {
+                if (hoverLine)
+                {
+                    selectOrUnselect(hoverLine);
+                }
+            }
+            else
+            {
+                if (auto id = findPointAt(pos))
+                {
+                    selectOrUnselect(id);
+                }
+            }
+            break;
+
+        case EditSectors:
+            if (hoverSector)
+            {
+                selectOrUnselect(hoverSector);
             }
             break;
         }
     }
 
-    QLineF viewLine(const Line &line) const
+    void build()
     {
-        const QPointF start = worldToView(map.points()[line.points[0]]);
-        const QPointF end   = worldToView(map.points()[line.points[1]]);
-        return QLineF(start, end);
+        emit self().buildMapRequested();
     }
 };
 
@@ -550,13 +837,17 @@ Editor::Editor()
     d->metaFont.setPointSizeF(d->metaFont.pointSizeF() * .75);
 
     // Actions.
-    addKeyAction("Ctrl+1", [this]() { d->setMode(Impl::EditPoints); });
-    addKeyAction("Ctrl+2", [this]() { d->setMode(Impl::EditLines); });
-    addKeyAction("Ctrl+D", [this]() { d->userAdd(); });
-    addKeyAction("Ctrl+Backspace", [this]() { d->userDelete(); });
-    addKeyAction("R", [this]() { d->userRotate(); });
-    addKeyAction("S", [this]() { d->userScale(); });
-    addKeyAction("Ctrl+Z", [this]() { d->popUndo(); });
+    addKeyAction("Ctrl+1",          [this]() { d->setMode(Impl::EditPoints); });
+    addKeyAction("Ctrl+2",          [this]() { d->setMode(Impl::EditLines); });
+    addKeyAction("Ctrl+3",          [this]() { d->setMode(Impl::EditSectors); });
+    addKeyAction("Ctrl+A",          [this]() { d->userSelectAll(); });
+    addKeyAction("Ctrl+Shift+A",    [this]() { d->userSelectNone(); });
+    addKeyAction("Ctrl+D",          [this]() { d->userAdd(); });
+    addKeyAction("Ctrl+Backspace",  [this]() { d->userDelete(); });
+    addKeyAction("R",               [this]() { d->userRotate(); });
+    addKeyAction("S",               [this]() { d->userScale(); });
+    addKeyAction("Ctrl+Z",          [this]() { d->popUndo(); });
+    addKeyAction("Return",          [this]() { d->build(); });
 }
 
 Map &Editor::map()
@@ -581,20 +872,26 @@ void Editor::paintEvent(QPaintEvent *)
     QFontMetrics fontMetrics(font());
     QFontMetrics metaMetrics(d->metaFont);
 
+    const Points & mapPoints  = d->map.points();
+    const Planes & mapPlanes  = d->map.planes();
+    const Lines &  mapLines   = d->map.lines();
+    const Sectors &mapSectors = d->map.sectors();
+    const Volumes &mapVolumes = d->map.volumes();
+
     const int lineHgt = fontMetrics.height();
     const int gap = 6;
 
     const QColor panelBg = (d->mode == Impl::EditPoints? QColor(0, 0, 0, 128)
-                          : d->mode == Impl::EditLines? QColor(0, 20, 48, 150)
-                          : QColor(64, 32, 0, 128));
-    const QColor metaBg(255, 255, 255, 64);
-    const QColor selectColor(0, 0, 255, 128);
+                          : d->mode == Impl::EditLines? QColor(0, 20, 90, 160)
+                          : QColor(255, 160, 0, 192));
+    const QColor selectColor(64, 92, 255);
+    const QColor selectColorAlpha(selectColor.red(), selectColor.green(), selectColor.blue(), 150);
     const QColor gridMajor{180, 180, 180, 255};
     const QColor gridMinor{220, 220, 220, 255};
-    const QColor textColor(255, 255, 255, 255);
-    const QColor metaColor(0, 0, 0, 92);
+    const QColor textColor = (d->mode == Impl::EditSectors? QColor(0, 0, 0) : QColor(255, 255, 255));
     const QColor pointColor(170, 0, 0, 255);
     const QColor lineColor(64, 64, 64);
+    const QColor sectorColor(128, 92, 0, 128);
 
     // Grid.
     {
@@ -602,32 +899,59 @@ void Editor::paintEvent(QPaintEvent *)
         d->drawGridLine(ptr, Vector2d(), gridMajor);
     }
 
-    // Points.
+    // Sectors.
     {
-        ptr.setPen(metaColor);
+        for (auto i = mapSectors.begin(); i != mapSectors.end(); ++i)
+        {
+            const ID    id     = i.key();
+            const auto &sector = i.value();
+
+            QPolygonF poly;
+            for (ID lineId : sector.lines)
+            {
+                const auto &line = mapLines[lineId];
+                int index = (line.sectors[0] == id? 0 : 1);
+                poly.append(d->worldToView(mapPoints[line.points[index]]));
+            }
+            if (d->selection.contains(id))
+            {
+                ptr.setPen(QPen(selectColor, 4));
+            }
+            else
+            {
+                ptr.setPen(Qt::NoPen);
+            }
+            ptr.setBrush(d->hoverSector == id? panelBg : sectorColor);
+            ptr.drawPolygon(poly);
+            if (d->selection.contains(id))
+            {
+                d->drawMetaLabel(ptr, poly.boundingRect().center(), String::format("%X", id));
+            }
+        }
+    }
+
+    // Points.
+    if (!mapPoints.isEmpty())
+    {
+        ptr.setPen(d->metaColor);
         ptr.setFont(d->metaFont);
 
         QVector<QPointF> points;
         QVector<QRectF> selected;
+        QVector<ID> selectedIds;
 
-        for (auto i = d->map.points().begin(); i != d->map.points().end(); ++i)
+        for (auto i = mapPoints.begin(); i != mapPoints.end(); ++i)
         {
             const ID      id  = i.key();
             const QPointF pos = d->worldToView(i.value());
 
             points << pos;
 
-            // Show ID numbers.
-            if (d->mode == Impl::EditPoints)
-            {
-                const String label = String::number(id, 16).toUpper();
-                ptr.drawText(pos + QPointF(-metaMetrics.width(label)/2, -gap), label);
-            }
-
             // Indicate selected points.
             if (d->selection.contains(id))
             {
                 selected << QRectF(pos - QPointF(gap, gap), QSizeF(2*gap, 2*gap));
+                selectedIds << id;
             }
         }
         ptr.setFont(font());
@@ -637,28 +961,74 @@ void Editor::paintEvent(QPaintEvent *)
 
         if (selected.size())
         {
-            ptr.setPen(QPen(selectColor));
+            ptr.setPen(QPen(selectColorAlpha));
             ptr.setBrush(Qt::NoBrush);
             ptr.drawRects(&selected[0], selected.size());
+
+            // Show ID numbers.
+            for (int i = 0; i < selected.size(); ++i)
+            {
+                d->drawMetaLabel(ptr, selected[i].center() - QPointF(0, 2*gap), String::format("%X", selectedIds[i]));
+            }
         }
     }
 
     // Lines.
+    if (!mapLines.isEmpty())
     {
         ptr.setPen(lineColor);
 
         QVector<QLineF> lines;
-        for (auto i = d->map.lines().begin(); i != d->map.lines().end(); ++i)
+        QVector<QLineF> selected;
+        QVector<ID>     selectedIds;
+
+        for (auto i = mapLines.begin(); i != mapLines.end(); ++i)
         {
-            lines << d->viewLine(i.value());
+            auto vline = d->viewLine(i.value());
+            lines << vline;
+
+            if (d->selection.contains(i.key()))
+            {
+                selected << vline;
+                selectedIds << i.key();
+            }
         }
         ptr.drawLines(&lines[0], lines.size());
 
-        if (d->mode == Impl::EditLines && d->hoverLine)
+        if ((d->mode == Impl::EditLines || d->mode == Impl::EditSectors) && d->hoverLine)
         {
-            const QLineF vl = d->viewLine(d->map.lines()[d->hoverLine]);
+            const QLineF vl = d->viewLine(mapLines[d->hoverLine]);
             ptr.setPen(QPen(lineColor, 2));
             d->drawArrow(ptr, vl.p1(), vl.p2());
+        }
+
+        if (selected.size())
+        {
+            ptr.setPen(QPen(selectColor, 3));
+            ptr.drawLines(&selected[0], selected.size());
+
+            for (int i = 0; i < selected.size(); ++i)
+            {
+                const auto &line = mapLines[selectedIds[i]];
+                const auto normal = selected[i].normalVector();
+                QPointF delta{normal.dx(), normal.dy()};
+
+                d->drawMetaLabel(ptr, selected[i].center(), String::format("%X", selectedIds[i]));
+
+                if (normal.length() > 80)
+                {
+                    delta /= normal.length();
+
+                    //if (line.sectors[0])
+                        d->drawMetaLabel(ptr,
+                                         selected[i].center() + delta * -20,
+                                         String::format("%X", line.sectors[0]), false);
+                    if (line.sectors[1])
+                        d->drawMetaLabel(ptr,
+                                         selected[i].center() + delta * 20,
+                                         String::format("%X", line.sectors[1]), false);
+                }
+            }
         }
     }
 
@@ -703,7 +1073,7 @@ void Editor::paintEvent(QPaintEvent *)
 
         if (d->selection.size())
         {
-            const auto startPos = d->worldToView(d->map.points()[*d->selection.begin()]);
+            const auto startPos = d->worldToView(d->map.point(*d->selection.begin()));
             const auto endPos   = d->viewMousePos();
 
             ptr.setPen(QPen(d->hoverPoint? validColor : invalidColor, 2));
@@ -725,6 +1095,7 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
         const auto pos = d->viewToWorld(event->pos());
         d->hoverPoint = d->findPointAt(pos);
         d->hoverLine  = d->findLineAt(pos);
+        d->hoverSector = (d->mode == Impl::EditSectors? d->findSectorAt(pos) : 0);
     }
 
     // Begin a drag action.
@@ -743,7 +1114,7 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
                 if (d->selection.size() <= 1)
                 {
                     d->selection.clear();
-                    d->selectClickedObject();
+                    d->selectClickedObject(event->modifiers());
                 }
                 if (!d->selection.isEmpty())
                 {
@@ -780,8 +1151,11 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
             d->actionPos = event->pos();
             for (auto id : d->selection)
             {
-                Vector2d worldDelta = Vector2d(delta.x(), delta.y()) / d->viewScale;
-                d->map.points()[id] += worldDelta;
+                if (d->map.points().contains(id))
+                {
+                    Vector2d worldDelta = Vector2d(delta.x(), delta.y()) / d->viewScale;
+                    d->map.point(id) += worldDelta;
+                }
             }
         }
         break;
@@ -811,8 +1185,10 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
 
         for (auto id : d->selection)
         {
-            const Vector3d p    = d->map.points()[id];
-            d->map.points()[id] = xf * p;
+            if (d->map.points().contains(id))
+            {
+                d->map.point(id) = xf * Vector3d(d->map.point(id));
+            }
         }
         break;
     }

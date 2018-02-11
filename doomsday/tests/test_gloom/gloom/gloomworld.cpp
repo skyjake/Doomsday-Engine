@@ -170,6 +170,11 @@ DENG2_PIMPL(GloomWorld), public ILight
         localUser->audienceForWarp -= this;
     }
 
+    void rebuildMap()
+    {
+        mapGeom.rebuild();
+    }
+
     Vector3f lightColor() const
     {
         return Vector3f(1, 1, 1);
@@ -364,6 +369,12 @@ void GloomWorld::setLocalUser(User *user)
     {
         d->localUser->audienceForWarp += d;
     }
+}
+
+void GloomWorld::setMap(const Map &map)
+{
+    d->map = map;
+    d->rebuildMap();
 }
 
 } // namespace gloom

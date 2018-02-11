@@ -24,7 +24,7 @@
 #include <de/Rectangle>
 #include "../geomath.h"
 
-namespace gloom {
+namespace gloom { namespace geo {
 
 struct Polygon
 {
@@ -54,6 +54,6 @@ struct Polygon
     void updateBounds();
 };
 
-} // namespace gloom
+}} // namespace gloom::geo
 
 #endif // GLOOM_POLYGON_H

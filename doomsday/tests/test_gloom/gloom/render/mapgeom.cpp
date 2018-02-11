@@ -90,6 +90,18 @@ DENG2_PIMPL(MapGeom)
         uTextureMetrics = metricsBuf;
     }
 
+    void buildMap()
+    {
+        mapDrawable.clear();
+
+        DENG2_ASSERT(map);
+        auto *buf = MapBuild(*map, textures).build();
+        mapDrawable.addBuffer(buf);
+
+        GloomApp::shaders().build(mapDrawable.program(), "gloom.surface")
+                << uMvpMatrix << uTex << uTextureMetrics << uTexelsPerMeter;
+    }
+
     void glInit()
     {
         //uColor = Vector4f(1, 1, 1, 1);
@@ -118,12 +130,7 @@ DENG2_PIMPL(MapGeom)
             updateTextureMetrics();
         }
 
-        DENG2_ASSERT(map);
-        auto *buf = MapBuild(*map, textures).build();
-        mapDrawable.addBuffer(buf);
-
-        GloomApp::shaders().build(mapDrawable.program(), "gloom.surface")
-                << uMvpMatrix << uTex << uTextureMetrics << uTexelsPerMeter;
+        buildMap();
     }
 
     void glDeinit()
@@ -163,6 +170,11 @@ void MapGeom::glInit()
 void MapGeom::glDeinit()
 {
     d->glDeinit();
+}
+
+void MapGeom::rebuild()
+{
+    d->buildMap();
 }
 
 void MapGeom::render(const ICamera &camera)

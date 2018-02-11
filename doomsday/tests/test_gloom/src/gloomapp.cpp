@@ -69,9 +69,17 @@ GloomApp::GloomApp(int &argc, char **argv)
 
 void GloomApp::initialize()
 {
-    d->editor.reset(new Editor());
-    d->editor->show();
-    d->editor->raise();
+    // Set up the editor.
+    {
+        d->editor.reset(new Editor());
+        d->editor->show();
+        d->editor->raise();
+
+        connect(d->editor.get(), &Editor::buildMapRequested, [this]() {
+            AppWindowSystem::main().glActivate();
+            d->world.setMap(d->editor->map());
+        });
+    }
 
     DisplayMode_Init();
     addInitPackage("net.dengine.gloom");

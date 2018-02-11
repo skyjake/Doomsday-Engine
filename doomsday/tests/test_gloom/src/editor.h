@@ -24,6 +24,8 @@
 
 class Editor : public QWidget
 {
+    Q_OBJECT
+
 public:
     Editor();
 
@@ -36,6 +38,9 @@ public:
     void mouseMoveEvent(QMouseEvent *) override;
     void mouseDoubleClickEvent(QMouseEvent *) override;
     void wheelEvent(QWheelEvent *) override;
+
+signals:
+    void buildMapRequested();
 
 private:
     DENG2_PRIVATE(d)
