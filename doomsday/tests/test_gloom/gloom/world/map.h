@@ -34,6 +34,21 @@ struct Line
 {
     ID points[2];
     ID sectors[2]; // front and back
+
+    bool isSelfRef() const
+    {
+        return sectors[0] == sectors[1];
+    }
+
+    bool isOneSided() const
+    {
+        return !sectors[0] || !sectors[1];
+    }
+
+    bool isTwoSided() const
+    {
+        return sectors[0] && sectors[1];
+    }
 };
 struct Plane
 {

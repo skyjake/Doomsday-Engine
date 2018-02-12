@@ -168,6 +168,23 @@ void Map::removeInvalid()
                 iter.remove();
                 continue;
             }
+            // Merge lines that share endpoints.
+            for (ID id : d->lines.keys())
+            {
+                Line &other = Map::line(id);
+                if (line.isOneSided() && other.isOneSided() && other.points[1] == line.points[0] &&
+                    other.points[0] == line.points[1])
+                {
+                    other.sectors[1] = line.sectors[0];
+                    // Sectors referencing the line must be updated.
+                    for (Sector &sec : d->sectors)
+                    {
+                        sec.replaceLine(iter.key(), id);
+                    }
+                    iter.remove();
+                    break;
+                }
+            }
         }
     }
 
@@ -358,13 +375,32 @@ geo::Polygon Map::sectorPolygon(ID sectorId) const
 {
     const auto &sec = sector(sectorId);
     geo::Polygon poly;
+    //ID prevPointId = 0;
+    ID atPoint;
+
+    //const int order[2][2] = {{ 0, 1 }, { 1, 0 }};
     for (ID lineId : sec.lines)
     {
-        const auto &line    = Map::line(lineId);
-        const int   idx     = (line.sectors[0] == sectorId ? 0 : 1);
-        const ID    pointId = line.points[idx];
-
+        const auto &line = Map::line(lineId);
+        const int   dir  = (line.sectors[0] == sectorId ? 0 : 1);
+        /*
+        ID          pointId = line.points[idx];
+        if (line.points[idx^1] == prevPointId)
+        {
+            pointId = line.points[idx^1];
+        }
         poly.points << geo::Polygon::Point{d->points[pointId], pointId};
+        prevPointId = pointId;
+        */
+        /*for (int idx : order[dir])
+        {
+            ID pointId = line.points[idx];
+            if (prevPointId != pointId)
+            {
+                poly.points << geo::Polygon::Point{d->points[pointId], pointId};
+            }
+            prevPointId = pointId;
+        }*/
     }
     poly.updateBounds();
     return poly;
@@ -542,12 +578,20 @@ void Map::deserialize(const Block &data)
         for (auto i = volumes.begin(); i != volumes.end(); ++i)
         {
             const auto obj = i.value().toHash();
-            const auto planes = variantListToIDList(obj["pln"].toList());
-            d->volumes.insert(getId(i.key()), Volume{{idNum(planes[0]), idNum(planes[1])}});
+            const IDList planes = variantListToIDList(obj["pln"].toList());
+            d->volumes.insert(getId(i.key()), Volume{{planes[0], planes[1]}});
         }
     }
 
     removeInvalid();
+}
+
+void Sector::replaceLine(ID oldId, ID newId)
+{
+    for (int i = 0; i < lines.size(); ++i)
+    {
+        if (lines[i] == oldId) lines[i] = newId;
+    }
 }
 
 } // namespace gloom

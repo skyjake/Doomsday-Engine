@@ -20,6 +20,8 @@
 #include "polygon.h"
 #include "../geomath.h"
 
+#include <array>
+
 using namespace de;
 
 namespace gloom {
@@ -82,6 +84,37 @@ DENG2_PIMPL_NOREF(MapBuild)
         Buffer::Vertices verts;
         Buffer::Indices indices;
 
+        using PlaneVerts = std::array<QHash<ID, Vector3f>, 2>;
+        auto projectPlanes = [this](const Sector &sec) {
+            const Volume *vols[2]{&map.volume(sec.volumes.first()),
+                                  &map.volume(sec.volumes.last())};
+            PlaneVerts planeVerts;
+            for (int p = 0; p < 2; ++p)
+            {
+                const Plane &plane = map.plane(vols[p]->planes[p]);
+                for (const ID lineId : sec.lines)
+                {
+                    const Line &line = map.line(lineId);
+                    for (const ID pointId : line.points)
+                    {
+                        if (!planeVerts[p].contains(pointId))
+                        {
+                            planeVerts[p].insert(pointId, projectPoint(pointId, plane));
+                        }
+                    }
+                }
+            }
+            return planeVerts;
+        };
+        QHash<ID, PlaneVerts> sectorPlaneVerts;
+
+        // Project each sector's points to their floor and ceiling planes.
+        for (const ID sectorId : map.sectors().keys())
+        {
+            sectorPlaneVerts.insert(sectorId, projectPlanes(map.sector(sectorId)));
+        }
+
+
         for (const ID sectorId : map.sectors().keys())
         {
             const Sector &sector = map.sector(sectorId);
@@ -97,16 +130,16 @@ DENG2_PIMPL_NOREF(MapBuild)
             const auto convexParts = map.sectorPolygon(sectorId).splitConvexParts();
 
             // Each volume is built separately.
-            for (const ID volId : sector.volumes)
+            //for (const ID volId : sector.volumes)
             {
-                const Volume &volume = map.volumes()[volId];
+                /*const Volume &volume = map.volume(volId);
                 QHash<ID, Vector3f> planeVerts[2];
                 for (int p = 0; p < 2; ++p)
                 {
-                    const Plane &plane = map.planes()[volume.planes[p]];
+                    const Plane &plane = map.plane(volume.planes[p]);
                     for (const ID lineId : sector.lines)
                     {
-                        const Line &line = map.lines()[lineId];
+                        const Line &line = map.line(lineId);
                         for (const ID pointId : line.points)
                         {
                             if (!planeVerts[p].contains(pointId))
@@ -115,7 +148,9 @@ DENG2_PIMPL_NOREF(MapBuild)
                             }
                         }
                     }
-                }
+                }*/
+
+                const auto &planeVerts = sectorPlaneVerts[sectorId];
 
                 // Build the floor and ceiling of this volume.
                 {
@@ -127,7 +162,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                     f.normal  = Vector3f(0, 1, 0);
                     f.flags   = MapVertex::WorldSpaceXZToTexCoords;
 
-                    c.texture = textures["world.stone"];
+                    c.texture = textures["world.dirt"];
                     c.normal  = Vector3f(0, -1, 0);
                     c.flags   = MapVertex::WorldSpaceXZToTexCoords;
 
@@ -165,18 +200,108 @@ DENG2_PIMPL_NOREF(MapBuild)
                     }
                 }
 
+                auto makeQuad = [this, &indices, &verts](const String &  textureName,
+                                                         const Vector3f &normal,
+                                                         uint32_t        flags,
+                                                         const Vector3f &p1,
+                                                         const Vector3f &p2,
+                                                         const Vector3f &p3,
+                                                         const Vector3f &p4,
+                                                         const Vector2f &uv1,
+                                                         const Vector2f &uv2,
+                                                         const Vector2f &uv3,
+                                                         const Vector2f &uv4) {
+                    const Buffer::Index baseIndex = Buffer::Index(verts.size());
+                    indices << baseIndex
+                            << baseIndex + 3
+                            << baseIndex + 2
+                            << baseIndex
+                            << baseIndex + 1
+                            << baseIndex + 3;
+
+                    Buffer::Type v;
+
+                    v.texture = textures[textureName];
+                    v.normal  = normal;
+                    v.flags   = flags;
+
+                    v.pos = p1;
+                    v.texCoord = uv1;
+                    verts << v;
+
+                    v.pos = p2;
+                    v.texCoord = uv2;
+                    verts << v;
+
+                    v.pos = p3;
+                    v.texCoord = uv3;
+                    verts << v;
+
+                    v.pos = p4;
+                    v.texCoord = uv4;
+                    verts << v;
+                };
+
                 // Build the walls.
                 for (const ID lineId : sector.lines)
                 {
-                    const Line &   line   = map.lines()[lineId];
-                    const ID       start  = line.points[0];
-                    const ID       end    = line.points[1];
+                    const Line &line = map.line(lineId);
+
+                    if (line.isSelfRef()) continue;
+
+                    const int      dir    = line.sectors[0] == sectorId? 1 : 0;
+                    const ID       start  = line.points[dir^1];
+                    const ID       end    = line.points[dir];
                     const Vector3f normal = normalVector(line);
                     const float    length = float((planeVerts[0][end] - planeVerts[0][start]).length());
                     const float    heights[2] = {planeVerts[1][start].y - planeVerts[0][start].y,
                                                  planeVerts[1][end].y   - planeVerts[0][end].y};
 
-                    const Buffer::Index baseIndex = Buffer::Index(verts.size());
+                    if (!line.isTwoSided())
+                    {
+                        makeQuad("world.stone",
+                                 normal,
+                                 0,
+                                 planeVerts[0][start],
+                                 planeVerts[0][end],
+                                 planeVerts[1][start],
+                                 planeVerts[1][end],
+                                 Vector2f(0, 0),
+                                 Vector2f(length, 0),
+                                 Vector2f(0, heights[0]),
+                                 Vector2f(length, heights[1]));
+                    }
+                    else if (dir)
+                    {
+                        const ID          backSectorId   = line.sectors[dir];
+                        //const Sector &    backSector     = map.sector(backSectorId);
+                        const PlaneVerts &backPlaneVerts = sectorPlaneVerts[backSectorId];
+
+                        makeQuad("world.stone",
+                                 normal,
+                                 0,
+                                 planeVerts[0][start],
+                                 planeVerts[0][end],
+                                 backPlaneVerts[0][start],
+                                 backPlaneVerts[0][end],
+                                 Vector2f(0, 0),
+                                 Vector2f(length, 0),
+                                 Vector2f(0, backPlaneVerts[0][start].y - planeVerts[0][start].y),
+                                 Vector2f(length, backPlaneVerts[0][end].y - planeVerts[0][end].y));
+                        makeQuad("world.stone",
+                                 normal,
+                                 0,
+                                 backPlaneVerts[1][start],
+                                 backPlaneVerts[1][end],
+                                 planeVerts[1][start],
+                                 planeVerts[1][end],
+                                 Vector2f(0, 0),
+                                 Vector2f(length, 0),
+                                 Vector2f(0, planeVerts[1][start].y - backPlaneVerts[1][start].y),
+                                 Vector2f(length, planeVerts[1][end].y - backPlaneVerts[1][end].y));
+                    }
+
+                    /* const Buffer::Index baseIndex = Buffer::Index(verts.size());
                     indices << baseIndex
                             << baseIndex + 3
                             << baseIndex + 2
@@ -204,7 +329,7 @@ DENG2_PIMPL_NOREF(MapBuild)
 
                     v.pos = planeVerts[1][end];
                     v.texCoord = Vector2f(length, heights[1]);
-                    verts << v;
+                    verts << v;*/
                 }
             }
         }

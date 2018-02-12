@@ -386,19 +386,26 @@ DENG2_PIMPL(Editor)
         while (remaining.size())
         {
             // Find the next line.
-            for (QMutableListIterator<ID> iter(remaining); iter.hasNext(); )
+            bool found = false;
+            for (int sdir = 0; sdir < 2; ++sdir) // prefer successors with line fwd dir
             {
-                Line &suc = map.line(iter.next());
-                if (suc.points[0] == atPoint || suc.points[1] == atPoint)
+                for (QMutableListIterator<ID> iter(remaining); iter.hasNext(); )
                 {
-                    sorted << iter.value();
-                    const int dir = suc.points[0] == atPoint? 1 : 0;
-                    atPoint = suc.points[dir];
-                    suc.sectors[dir^1] = sectorId;
-                    iter.remove();
-                    break;
+                    Line &suc = map.line(iter.next());
+                    if (suc.points[sdir] == atPoint)
+                    {
+                        sorted << iter.value();
+                        //const int dir = suc.points[sdir] == atPoint? 1 : 0;
+                        atPoint = suc.points[sdir^1];
+                        suc.sectors[sdir] = sectorId;
+                        iter.remove();
+                        found = true;
+                        break;
+                    }
                 }
+                if (found) break;
             }
+            if (!found) return false;
         }
 
         // Complete.
@@ -906,12 +913,14 @@ void Editor::paintEvent(QPaintEvent *)
             const ID    id     = i.key();
             const auto &sector = i.value();
 
+            const auto geoPoly = d->map.sectorPolygon(id);
+
             QPolygonF poly;
-            for (ID lineId : sector.lines)
+            for (const auto &pp : geoPoly.points)
             {
-                const auto &line = mapLines[lineId];
-                int index = (line.sectors[0] == id? 0 : 1);
-                poly.append(d->worldToView(mapPoints[line.points[index]]));
+                //const auto &line = mapLines[lineId];
+                //int index = (line.sectors[0] == id? 0 : 1);
+                poly.append(d->worldToView(pp.pos)); //mapPoints[line.points[index]]));
             }
             if (d->selection.contains(id))
             {
