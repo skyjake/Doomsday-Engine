@@ -192,18 +192,37 @@ void Map::removeInvalid()
     {
         for (QMutableHashIterator<ID, Sector> iter(d->sectors); iter.hasNext(); )
         {
+            const ID secId = iter.key();
             auto &sector = iter.next().value();
+            // Remove missing points.
+            for (QMutableListIterator<ID> i(sector.points); i.hasNext(); )
+            {
+                i.next();
+                if (!d->points.contains(i.value()))
+                {
+                    i.remove();
+                }
+            }
             // Remove missing lines.
-            for (QMutableListIterator<ID> i(sector.lines); i.hasNext(); )
+            for (QMutableListIterator<ID> i(sector.walls); i.hasNext(); )
             {
                 i.next();
                 if (!d->lines.contains(i.value()))
                 {
                     i.remove();
                 }
+                else
+                {
+                    // Missing references?
+                    const Line &line = Map::line(i.value());
+                    if (line.sectors[0] != secId && line.sectors[1] != secId)
+                    {
+                        i.remove();
+                    }
+                }
             }
             // Remove empty sectors.
-            if (sector.lines.isEmpty())
+            if (sector.points.isEmpty() || sector.walls.isEmpty())
             {
                 iter.remove();
                 continue;
@@ -373,16 +392,19 @@ geo::Line2d Map::geoLine(ID lineId) const
 
 geo::Polygon Map::sectorPolygon(ID sectorId) const
 {
-    const auto &sec = sector(sectorId);
-    geo::Polygon poly;
-    //ID prevPointId = 0;
-    ID atPoint;
+    // TODO: Store geo::Polygon in Sector; no need to rebuild it all the time.
 
-    //const int order[2][2] = {{ 0, 1 }, { 1, 0 }};
-    for (ID lineId : sec.lines)
+    const auto &sec = sector(sectorId);
+    //ID prevPointId = 0;
+    //ID atPoint;
+
+    geo::Polygon poly;
+    for (ID pid : sec.points)
     {
-        const auto &line = Map::line(lineId);
-        const int   dir  = (line.sectors[0] == sectorId ? 0 : 1);
+        poly.points << geo::Polygon::Point{point(pid), pid};
+
+        //const auto &line = Map::line(pid);
+        //const int   dir  = (line.sectors[0] == sectorId ? 0 : 1);
         /*
         ID          pointId = line.points[idx];
         if (line.points[idx^1] == prevPointId)
@@ -404,6 +426,12 @@ geo::Polygon Map::sectorPolygon(ID sectorId) const
     }
     poly.updateBounds();
     return poly;
+}
+
+void Map::buildSector(QSet<ID> sourceLines, IDList &sectorPoints, IDList &sectorWalls,
+                      bool createNewSector)
+{
+
 }
 
 static QString idStr(ID id)
@@ -483,7 +511,8 @@ Block Map::serialize() const
         for (auto i = _d->sectors.begin(); i != _d->sectors.end(); ++i)
         {
             QJsonObject secObj;
-            secObj.insert("ln", idListToJsonArray(i.value().lines));
+            secObj.insert("pt", idListToJsonArray(i.value().points));
+            secObj.insert("wl", idListToJsonArray(i.value().walls));
             secObj.insert("vol", idListToJsonArray(i.value().volumes));
             sectors.insert(idStr(i.key()), secObj);
         }
@@ -564,11 +593,14 @@ void Map::deserialize(const Block &data)
         const auto sectors = map["sectors"].toHash();
         for (auto i = sectors.begin(); i != sectors.end(); ++i)
         {
-            const auto obj = i.value().toHash();
-            const auto lines = obj["ln"].toList();
+            const auto obj     = i.value().toHash();
+            const auto points  = obj["pt"].toList();
+            const auto walls   = obj["wl"].toList();
             const auto volumes = obj["vol"].toList();
             d->sectors.insert(getId(i.key()),
-                              Sector{variantListToIDList(lines), variantListToIDList(volumes)});
+                              Sector{variantListToIDList(points),
+                                     variantListToIDList(walls),
+                                     variantListToIDList(volumes)});
         }
     }
 
@@ -588,9 +620,9 @@ void Map::deserialize(const Block &data)
 
 void Sector::replaceLine(ID oldId, ID newId)
 {
-    for (int i = 0; i < lines.size(); ++i)
+    for (int i = 0; i < walls.size(); ++i)
     {
-        if (lines[i] == oldId) lines[i] = newId;
+        if (walls[i] == oldId) walls[i] = newId;
     }
 }
 

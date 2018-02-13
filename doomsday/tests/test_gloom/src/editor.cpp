@@ -370,6 +370,8 @@ DENG2_PIMPL(Editor)
 
     bool linkSectorLines(ID sectorId)
     {
+        return false;
+        /*
         auto &sector = map.sector(sectorId);
 
         IDList remaining = sector.lines;
@@ -411,6 +413,7 @@ DENG2_PIMPL(Editor)
         // Complete.
         sector.lines = sorted;
         return true;
+        */
     }
 
     void userAdd()
@@ -436,7 +439,7 @@ DENG2_PIMPL(Editor)
                 Sector sector;
                 for (ID id : selection)
                 {
-                    if (map.isLine(id)) sector.lines << id;
+                    if (map.isLine(id)) sector.walls << id;
                 }
                 selection.clear();
                 ID floor = map.append(map.planes(), Plane{{Vector3d()}, {Vector3f(0, 1, 0)}});

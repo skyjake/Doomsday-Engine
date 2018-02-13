@@ -61,8 +61,12 @@ struct Volume
 };
 struct Sector
 {
-    IDList lines; // must have clockwise winding
-    IDList volumes; // must be ascending and share planes
+    IDList points;  // polygon, clockwise winding
+    IDList walls;   // unordered
+    IDList volumes; // must be ascending and share planes; bottom plane of first volume is the
+                    // sector floor, top plane of last volume is the sector ceiling
+
+    void replaceLine(ID oldId, ID newId);
 };
 
 typedef QHash<ID, Point>  Points;
@@ -123,6 +127,9 @@ public:
     IDList      findLines(ID pointId) const;
     geo::Line2d geoLine(ID lineId) const;
     geo::Polygon sectorPolygon(ID sectorId) const;
+
+    void buildSector(QSet<ID> sourceLines, IDList &sectorPoints, IDList &sectorWalls,
+                     bool createNewSector = false);
 
     de::Block serialize() const;
     void      deserialize(const de::Block &data);
