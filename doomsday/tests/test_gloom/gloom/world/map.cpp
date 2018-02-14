@@ -192,8 +192,9 @@ void Map::removeInvalid()
     {
         for (QMutableHashIterator<ID, Sector> iter(d->sectors); iter.hasNext(); )
         {
+            iter.next();
             const ID secId = iter.key();
-            auto &sector = iter.next().value();
+            auto &sector = iter.value();
             // Remove missing points.
             for (QMutableListIterator<ID> i(sector.points); i.hasNext(); )
             {
@@ -403,7 +404,7 @@ geo::Line2d Map::geoLine(ID lineId) const
     return geo::Line2d{point(line.points[0]), point(line.points[1])};
 }
 
-geo::Line2d Map::geoLine(SideRef ref) const
+geo::Line2d Map::geoLine(Edge ref) const
 {
     const Line &line = Map::line(ref.line);
     return geo::Line2d{point(line.startPoint(ref.side)), point(line.endPoint(ref.side))};
@@ -414,56 +415,34 @@ geo::Polygon Map::sectorPolygon(ID sectorId) const
     // TODO: Store geo::Polygon in Sector; no need to rebuild it all the time.
 
     const auto &sec = sector(sectorId);
-    //ID prevPointId = 0;
-    //ID atPoint;
 
     geo::Polygon poly;
     for (ID pid : sec.points)
     {
         poly.points << geo::Polygon::Point{point(pid), pid};
-
-        //const auto &line = Map::line(pid);
-        //const int   dir  = (line.sectors[0] == sectorId ? 0 : 1);
-        /*
-        ID          pointId = line.points[idx];
-        if (line.points[idx^1] == prevPointId)
-        {
-            pointId = line.points[idx^1];
-        }
-        poly.points << geo::Polygon::Point{d->points[pointId], pointId};
-        prevPointId = pointId;
-        */
-        /*for (int idx : order[dir])
-        {
-            ID pointId = line.points[idx];
-            if (prevPointId != pointId)
-            {
-                poly.points << geo::Polygon::Point{d->points[pointId], pointId};
-            }
-            prevPointId = pointId;
-        }*/
     }
     poly.updateBounds();
     return poly;
 }
 
-bool Map::buildSector(//QSet<ID> sourceLines,
-                      SideRef  startSide,
-                      IDList & sectorPoints,
-                      IDList & sectorWalls,
-                      bool     createNewSector)
+bool Map::buildSector(Edge         startSide,
+                      IDList &     sectorPoints,
+                      IDList &     sectorWalls,
+                      QList<Edge> &sectorEdges)
 {
-    QSet<SideRef> assigned; // these have already been assigned to the sector
-    QSet<ID> assignedLines;
+    QSet<Edge> assigned; // these have already been assigned to the sector
+    QSet<ID>   assignedLines;
 
     sectorPoints.clear();
 
     //DENG2_ASSERT(sourceLines.contains(startSide.line));
 
-    SideRef at = startSide;
+    Edge at = startSide;
     for (;;)
     {
         Line atLine = line(at.line);
+
+        sectorEdges << at;
 
 //        qDebug("At line %X:%i (%X->%X)",
 //               at.line, at.side, atLine.startPoint(at.side), atLine.endPoint(at.side));
@@ -488,7 +467,7 @@ bool Map::buildSector(//QSet<ID> sourceLines,
         geo::Line2d atGeoLine = geoLine(at);
 
         struct Candidate {
-            SideRef line;
+            Edge line;
             double angle;
         };
         QList<Candidate> candidates;
@@ -505,7 +484,7 @@ bool Map::buildSector(//QSet<ID> sourceLines,
             if ((conPoint == conLine.points[at.side]     && conLine.sectors[at.side] == 0) ||
                 (conPoint == conLine.points[at.side ^ 1] && conLine.sectors[at.side ^ 1] == 0))
             {
-                SideRef conSide{
+                Edge conSide{
                     connectedLineId,
                     Line::Side(conPoint == conLine.points[at.side] ? at.side : (at.side ^ 1))
                 };
@@ -520,7 +499,7 @@ bool Map::buildSector(//QSet<ID> sourceLines,
         if (atLine.sectors[0] == 0 && atLine.sectors[1] == 0 && candidates.isEmpty())
         {
             // We may be switch to the other side of the line.
-            SideRef otherSide = at.flipped();
+            Edge otherSide = at.flipped();
             if (!assigned.contains(otherSide))
             {
                 candidates << Candidate{otherSide, 180};
@@ -762,24 +741,24 @@ void Sector::replaceLine(ID oldId, ID newId)
     }
 }
 
-void SideRef::flip()
+void Edge::flip()
 {
     side = (side == Line::Front? Line::Back : Line::Front);
 }
 
-SideRef SideRef::flipped() const
+Edge Edge::flipped() const
 {
-    SideRef ref = *this;
+    Edge ref = *this;
     ref.flip();
     return ref;
 }
 
-bool SideRef::operator==(const SideRef &other) const
+bool Edge::operator==(const Edge &other) const
 {
     return line == other.line && side == other.side;
 }
 
-uint qHash(const SideRef &sideRef)
+uint qHash(const Edge &sideRef)
 {
     return (sideRef.line << 1) | int(sideRef.side);
 }

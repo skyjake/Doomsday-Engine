@@ -21,6 +21,7 @@
 
 #include <de/Vector>
 #include <QHash>
+#include <unordered_map>
 #include "../geomath.h"
 #include "../render/polygon.h"
 
@@ -80,17 +81,30 @@ struct Sector
 
     void replaceLine(ID oldId, ID newId);
 };
-struct SideRef
+struct Edge
 {
-    ID line;
+    ID         line;
     Line::Side side;
 
     void flip();
-    SideRef flipped() const;
-    bool operator==(const SideRef &other) const;
+    Edge flipped() const;
+    bool operator==(const Edge &other) const;
 };
 
-uint qHash(const SideRef &sideRef);
+uint qHash(const Edge &edge);
+
+/*
+template <typename K, typename V>
+struct umap : public std::unordered_map<K, V>
+{
+    using super = std::unordered_map<K, V>;
+
+    bool contains(const K &key) const
+    {
+        return find(key) != super::end();
+    }
+};
+*/
 
 typedef QHash<ID, Point>  Points;
 typedef QHash<ID, Line>   Lines;
@@ -150,14 +164,13 @@ public:
     IDList       findLines(ID pointId) const;
     IDList       findLinesStartingFrom(ID pointId, Line::Side side) const;
     geo::Line2d  geoLine(ID lineId) const;
-    geo::Line2d  geoLine(SideRef ef) const;
+    geo::Line2d  geoLine(Edge ef) const;
     geo::Polygon sectorPolygon(ID sectorId) const;
 
-    bool buildSector(//QSet<ID>   sourceLines,
-                     SideRef    startSide,
-                     IDList &   sectorPoints,
-                     IDList &   sectorWalls,
-                     bool       createNewSector = false);
+    bool buildSector(Edge         startSide,
+                     IDList &     sectorPoints,
+                     IDList &     sectorWalls,
+                     QList<Edge> &sectorEdges);
 
     de::Block serialize() const;
     void      deserialize(const de::Block &data);

@@ -368,54 +368,6 @@ DENG2_PIMPL(Editor)
         self().update();
     }
 
-    bool linkSectorLines(ID sectorId)
-    {
-        return false;
-        /*
-        auto &sector = map.sector(sectorId);
-
-        IDList remaining = sector.lines;
-        IDList sorted({remaining.takeFirst()});
-        ID atLine = sorted.first();
-        ID atPoint;
-        {
-            Line &at = map.line(atLine);
-            const int side = at.sectors[0] == 0? 0 : 1;
-            atPoint = at.points[side^1];
-            at.sectors[side] = sectorId;
-        }
-
-        while (remaining.size())
-        {
-            // Find the next line.
-            bool found = false;
-            for (int sdir = 0; sdir < 2; ++sdir) // prefer successors with line fwd dir
-            {
-                for (QMutableListIterator<ID> iter(remaining); iter.hasNext(); )
-                {
-                    Line &suc = map.line(iter.next());
-                    if (suc.points[sdir] == atPoint)
-                    {
-                        sorted << iter.value();
-                        //const int dir = suc.points[sdir] == atPoint? 1 : 0;
-                        atPoint = suc.points[sdir^1];
-                        suc.sectors[sdir] = sectorId;
-                        iter.remove();
-                        found = true;
-                        break;
-                    }
-                }
-                if (found) break;
-            }
-            if (!found) return false;
-        }
-
-        // Complete.
-        sector.lines = sorted;
-        return true;
-        */
-    }
-
     void userAdd()
     {
         switch (mode)
@@ -433,6 +385,7 @@ DENG2_PIMPL(Editor)
             break;
 
         case EditSectors:
+                /*
             if (selection.size() >= 3)
             {
                 pushUndo();
@@ -452,7 +405,7 @@ DENG2_PIMPL(Editor)
                     popUndo();
                 }
                 selection.insert(secId);
-            }
+            }*/
             break;
         }
         self().update();
@@ -537,15 +490,32 @@ DENG2_PIMPL(Editor)
 
             // Select a group of lines that might form a new sector.
             const auto clickPos = worldMousePos();
-            SideRef startRef{hoverLine, map.geoLine(hoverLine).isFrontSide(clickPos)? Line::Front : Line::Back};
+            Edge startRef{hoverLine, map.geoLine(hoverLine).isFrontSide(clickPos)? Line::Front : Line::Back};
 
             if (map.line(hoverLine).sectors[startRef.side] == 0)
             {
-                IDList secPoints;
-                IDList secWalls;
-                bool success = map.buildSector(startRef, secPoints, secWalls);
-                qDebug() << success << "points:" << secPoints;
-                qDebug() << "walls:" << secWalls;
+                IDList      secPoints;
+                IDList      secWalls;
+                QList<Edge> secEdges;
+
+                if (map.buildSector(startRef, secPoints, secWalls, secEdges))
+                {
+                    pushUndo();
+
+                    const ID floor = map.append(map.planes(), Plane{{Vector3d()}, {Vector3f(0, 1, 0)}});
+                    const ID ceil  = map.append(map.planes(), Plane{{Vector3d(0, 3, 0)}, {Vector3f(0, -1, 0)}});
+                    const ID vol   = map.append(map.volumes(), Volume{{floor, ceil}});
+
+                    Sector newSector{secPoints, secWalls, {vol}};
+                    ID secId = map.append(map.sectors(), newSector);
+
+                    for (Edge edge : secEdges)
+                    {
+                        map.line(edge.line).sectors[edge.side] = secId;
+                    }
+                    selection.clear();
+                    selection.insert(secId);
+                }
             }
 
 #if 0
@@ -905,7 +875,7 @@ void Editor::paintEvent(QPaintEvent *)
     const int gap = 6;
 
     const QColor panelBg = (d->mode == Impl::EditPoints? QColor(0, 0, 0, 128)
-                          : d->mode == Impl::EditLines? QColor(0, 20, 90, 160)
+                          : d->mode == Impl::EditLines?  QColor(0, 20, 90, 160)
                           : QColor(255, 160, 0, 192));
     const QColor selectColor(64, 92, 255);
     const QColor selectColorAlpha(selectColor.red(), selectColor.green(), selectColor.blue(), 150);
@@ -914,7 +884,7 @@ void Editor::paintEvent(QPaintEvent *)
     const QColor textColor = (d->mode == Impl::EditSectors? QColor(0, 0, 0) : QColor(255, 255, 255));
     const QColor pointColor(170, 0, 0, 255);
     const QColor lineColor(64, 64, 64);
-    const QColor sectorColor(128, 92, 0, 128);
+    const QColor sectorColor(128, 92, 0, 96);
 
     // Grid.
     {
@@ -924,12 +894,14 @@ void Editor::paintEvent(QPaintEvent *)
 
     // Sectors.
     {
-        for (auto i = mapSectors.begin(); i != mapSectors.end(); ++i)
+        for (QHashIterator<ID, Sector> i(mapSectors); i.hasNext(); )
         {
-            const ID    id     = i.key();
+            i.next();
+
+            const ID    secId  = i.key();
             const auto &sector = i.value();
 
-            const auto geoPoly = d->map.sectorPolygon(id);
+            const auto geoPoly = d->map.sectorPolygon(secId);
 
             QPolygonF poly;
             for (const auto &pp : geoPoly.points)
@@ -938,7 +910,7 @@ void Editor::paintEvent(QPaintEvent *)
                 //int index = (line.sectors[0] == id? 0 : 1);
                 poly.append(d->worldToView(pp.pos)); //mapPoints[line.points[index]]));
             }
-            if (d->selection.contains(id))
+            if (d->selection.contains(secId))
             {
                 ptr.setPen(QPen(selectColor, 4));
             }
@@ -946,11 +918,11 @@ void Editor::paintEvent(QPaintEvent *)
             {
                 ptr.setPen(Qt::NoPen);
             }
-            ptr.setBrush(d->hoverSector == id? panelBg : sectorColor);
+            ptr.setBrush(d->hoverSector == secId? panelBg : sectorColor);
             ptr.drawPolygon(poly);
-            if (d->selection.contains(id))
+            if (d->selection.contains(secId))
             {
-                d->drawMetaLabel(ptr, poly.boundingRect().center(), String::format("%X", id));
+                d->drawMetaLabel(ptr, poly.boundingRect().center(), String::format("%X", secId));
             }
         }
     }
