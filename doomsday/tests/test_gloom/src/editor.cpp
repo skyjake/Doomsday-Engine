@@ -143,13 +143,13 @@ DENG2_PIMPL(Editor)
     {
         switch (userAction)
         {
-        case TranslateView: return "translate view";
-        case SelectRegion: return "select";
-        case Move: return "move";
-        case Scale: return "scale";
-        case Rotate: return "rotate";
-        case AddLines: return "add lines";
-        case AddSector: return "add sector";
+        case TranslateView: return "Translate view";
+        case SelectRegion: return "Select";
+        case Move: return "Move";
+        case Scale: return "Scale";
+        case Rotate: return "Rotate";
+        case AddLines: return "Add lines";
+        case AddSector: return "Add sector";
         case None: break;
         }
         return "";
@@ -281,8 +281,9 @@ DENG2_PIMPL(Editor)
         return true;
     }
 
-    QPointF worldToView(const Vector2d &pos) const
+    QPointF worldToView(const Vector2d &pos, const Plane &plane = Plane{{0, 0, 0}, {0, 1, 0}}) const
     {
+
         const auto p = viewTransform * Vector3f(float(pos.x), float(pos.y));
         return QPointF(p.x, p.y);
     }
@@ -894,9 +895,10 @@ void Editor::paintEvent(QPaintEvent *)
 
     // Sectors.
     {
-        for (QHashIterator<ID, Sector> i(mapSectors); i.hasNext(); )
+        //for (QHashIterator<ID, Sector> i(mapSectors); i.hasNext(); )
+        for (auto i = mapSectors.begin(), end = mapSectors.end(); i != end; ++i)
         {
-            i.next();
+            //i.next();
 
             const ID    secId  = i.key();
             const auto &sector = i.value();
@@ -906,9 +908,7 @@ void Editor::paintEvent(QPaintEvent *)
             QPolygonF poly;
             for (const auto &pp : geoPoly.points)
             {
-                //const auto &line = mapLines[lineId];
-                //int index = (line.sectors[0] == id? 0 : 1);
-                poly.append(d->worldToView(pp.pos)); //mapPoints[line.points[index]]));
+                poly.append(d->worldToView(pp.pos));
             }
             if (d->selection.contains(secId))
             {
@@ -934,8 +934,8 @@ void Editor::paintEvent(QPaintEvent *)
         ptr.setFont(d->metaFont);
 
         QVector<QPointF> points;
-        QVector<QRectF> selected;
-        QVector<ID> selectedIds;
+        QVector<QRectF>  selected;
+        QVector<ID>      selectedIds;
 
         for (auto i = mapPoints.begin(); i != mapPoints.end(); ++i)
         {

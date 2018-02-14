@@ -23,6 +23,7 @@ set (SOURCES
     gloom/audio/audiosystem.h
     gloom/icamera.h
     gloom/ilight.h
+    gloom/geomath.cpp
     gloom/geomath.h
     gloom/gloomwidget.cpp
     gloom/gloomwidget.h

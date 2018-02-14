@@ -733,6 +733,12 @@ void Map::deserialize(const Block &data)
     removeInvalid();
 }
 
+Vector3d Plane::projectPoint(const Point &pos) const
+{
+    const double z = geo::Plane{point, normal}.project(pos);
+    return Vector3d(pos.x, z, pos.y);
+}
+
 void Sector::replaceLine(ID oldId, ID newId)
 {
     for (int i = 0; i < walls.size(); ++i)

@@ -64,10 +64,7 @@ DENG2_PIMPL_NOREF(MapBuild)
 
     Vector3f projectPoint(ID pointId, const Plane &plane) const
     {
-        const Vector3f pos   = vertex(pointId);
-        const Vector3f delta = pos - plane.point;
-        const double   dist  = delta.dot(plane.normal);
-        return pos - plane.normal * dist;
+        return plane.projectPoint(mapPoint(pointId));
     }
 
     Vector3f normalVector(const Line &line) const
@@ -96,14 +93,10 @@ DENG2_PIMPL_NOREF(MapBuild)
                 const auto poly = map.sectorPolygon(secId);
                 for (const auto &pp : poly.points)
                 {
-                    //const Line &line = map.line(lineId);
-                    //for (const ID pointId : line.points)
-                    //{
-                        if (!planeVerts[p].contains(pp.id))
-                        {
-                            planeVerts[p].insert(pp.id, projectPoint(pp.id, plane));
-                        }
-                    //}
+                    if (!planeVerts[p].contains(pp.id))
+                    {
+                        planeVerts[p].insert(pp.id, projectPoint(pp.id, plane));
+                    }
                 }
             }
             return planeVerts;
@@ -116,19 +109,11 @@ DENG2_PIMPL_NOREF(MapBuild)
             sectorPlaneVerts.insert(sectorId, projectPlanes(sectorId));
         }
 
-
         for (const ID sectorId : map.sectors().keys())
         {
             const Sector &sector = map.sector(sectorId);
 
             // Split the polygon to convex parts (for triangulation).
-            /*geo::Polygon::Points polyPoints;
-            for (const ID lineId : sector.lines) // assumed to have clockwise winding
-            {
-                const Line &line = map.lines()[lineId];
-                const ID pid =
-                polyPoints << geo::Polygon::Point({map.points()[line.points[0]], line.points[0]});
-            }*/
             const auto convexParts = map.sectorPolygon(sectorId).splitConvexParts();
 
             // Each volume is built separately.

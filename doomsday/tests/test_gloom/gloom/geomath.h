@@ -145,6 +145,14 @@ struct Line
 
 using Line2d = Line<de::Vector2d>;
 
+struct Plane
+{
+    de::Vector3d point;
+    de::Vector3f normal;
+
+    double project(const de::Vector2d &pos) const;
+};
+
 }} // namespace gloom::geo
 
 #endif // GLOOM_GEOMATH_H

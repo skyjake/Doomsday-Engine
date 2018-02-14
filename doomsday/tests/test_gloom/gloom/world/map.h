@@ -67,6 +67,8 @@ struct Plane
 {
     de::Vector3d point;
     de::Vector3f normal;
+
+    de::Vector3d projectPoint(const Point &point) const;
 };
 struct Volume
 {
