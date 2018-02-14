@@ -32,22 +32,34 @@ typedef de::Vector2d Point;
 
 struct Line
 {
+    enum Side { Front = 0, Back = 1 };
+
     ID points[2];
     ID sectors[2]; // front and back
 
+    ID startPoint(Side side) const
+    {
+        return points[side == Front? 0 : 1];
+    }
+
+    ID endPoint(Side side) const
+    {
+        return points[side == Front? 1 : 0];
+    }
+
     bool isSelfRef() const
     {
-        return sectors[0] == sectors[1];
+        return sectors[Front] == sectors[Back];
     }
 
     bool isOneSided() const
     {
-        return !sectors[0] || !sectors[1];
+        return !sectors[Front] || !sectors[Back];
     }
 
     bool isTwoSided() const
     {
-        return sectors[0] && sectors[1];
+        return sectors[Front] && sectors[Back];
     }
 };
 struct Plane
@@ -68,6 +80,17 @@ struct Sector
 
     void replaceLine(ID oldId, ID newId);
 };
+struct SideRef
+{
+    ID line;
+    Line::Side side;
+
+    void flip();
+    SideRef flipped() const;
+    bool operator==(const SideRef &other) const;
+};
+
+uint qHash(const SideRef &sideRef);
 
 typedef QHash<ID, Point>  Points;
 typedef QHash<ID, Line>   Lines;
@@ -122,14 +145,19 @@ public:
     const Sector &sector(ID id) const;
     const Volume &volume(ID id) const;
 
-    bool        isLine(ID id) const;
-    void        forLinesAscendingDistance(const Point &pos, std::function<bool(ID)>) const;
-    IDList      findLines(ID pointId) const;
-    geo::Line2d geoLine(ID lineId) const;
+    bool         isLine(ID id) const;
+    void         forLinesAscendingDistance(const Point &pos, std::function<bool(ID)>) const;
+    IDList       findLines(ID pointId) const;
+    IDList       findLinesStartingFrom(ID pointId, Line::Side side) const;
+    geo::Line2d  geoLine(ID lineId) const;
+    geo::Line2d  geoLine(SideRef ef) const;
     geo::Polygon sectorPolygon(ID sectorId) const;
 
-    void buildSector(QSet<ID> sourceLines, IDList &sectorPoints, IDList &sectorWalls,
-                     bool createNewSector = false);
+    bool buildSector(//QSet<ID>   sourceLines,
+                     SideRef    startSide,
+                     IDList &   sectorPoints,
+                     IDList &   sectorWalls,
+                     bool       createNewSector = false);
 
     de::Block serialize() const;
     void      deserialize(const de::Block &data);

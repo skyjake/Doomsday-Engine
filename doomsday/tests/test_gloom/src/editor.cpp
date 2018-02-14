@@ -537,7 +537,19 @@ DENG2_PIMPL(Editor)
 
             // Select a group of lines that might form a new sector.
             const auto clickPos = worldMousePos();
-            ID lineId = hoverLine;
+            SideRef startRef{hoverLine, map.geoLine(hoverLine).isFrontSide(clickPos)? Line::Front : Line::Back};
+
+            if (map.line(hoverLine).sectors[startRef.side] == 0)
+            {
+                IDList secPoints;
+                IDList secWalls;
+                bool success = map.buildSector(startRef, secPoints, secWalls);
+                qDebug() << success << "points:" << secPoints;
+                qDebug() << "walls:" << secWalls;
+            }
+
+#if 0
+
             const ID firstLineId = lineId;
             {
                 const auto &line = map.line(lineId);
@@ -617,6 +629,7 @@ DENG2_PIMPL(Editor)
                     }
                 }
             }
+#endif
             return;
         }
 

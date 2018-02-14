@@ -85,23 +85,25 @@ DENG2_PIMPL_NOREF(MapBuild)
         Buffer::Indices indices;
 
         using PlaneVerts = std::array<QHash<ID, Vector3f>, 2>;
-        auto projectPlanes = [this](const Sector &sec) {
+        auto projectPlanes = [this](ID secId) {
+            const Sector &sec = map.sector(secId);
             const Volume *vols[2]{&map.volume(sec.volumes.first()),
                                   &map.volume(sec.volumes.last())};
             PlaneVerts planeVerts;
             for (int p = 0; p < 2; ++p)
             {
                 const Plane &plane = map.plane(vols[p]->planes[p]);
-                for (const ID lineId : sec.lines)
+                const auto poly = map.sectorPolygon(secId);
+                for (const auto &pp : poly.points)
                 {
-                    const Line &line = map.line(lineId);
-                    for (const ID pointId : line.points)
-                    {
-                        if (!planeVerts[p].contains(pointId))
+                    //const Line &line = map.line(lineId);
+                    //for (const ID pointId : line.points)
+                    //{
+                        if (!planeVerts[p].contains(pp.id))
                         {
-                            planeVerts[p].insert(pointId, projectPoint(pointId, plane));
+                            planeVerts[p].insert(pp.id, projectPoint(pp.id, plane));
                         }
-                    }
+                    //}
                 }
             }
             return planeVerts;
@@ -111,7 +113,7 @@ DENG2_PIMPL_NOREF(MapBuild)
         // Project each sector's points to their floor and ceiling planes.
         for (const ID sectorId : map.sectors().keys())
         {
-            sectorPlaneVerts.insert(sectorId, projectPlanes(map.sector(sectorId)));
+            sectorPlaneVerts.insert(sectorId, projectPlanes(sectorId));
         }
 
 
@@ -243,7 +245,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                 };
 
                 // Build the walls.
-                for (const ID lineId : sector.lines)
+                for (const ID lineId : sector.walls)
                 {
                     const Line &line = map.line(lineId);
 

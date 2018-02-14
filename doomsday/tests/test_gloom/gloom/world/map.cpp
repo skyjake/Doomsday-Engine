@@ -384,10 +384,29 @@ IDList Map::findLines(ID pointId) const
     return ids;
 }
 
+IDList Map::findLinesStartingFrom(ID pointId, Line::Side side) const
+{
+    IDList ids;
+    for (auto i = d->lines.begin(); i != d->lines.end(); ++i)
+    {
+        if (i.value().startPoint(side) == pointId)
+        {
+            ids << i.key();
+        }
+    }
+    return ids;
+}
+
 geo::Line2d Map::geoLine(ID lineId) const
 {
     const auto &line = d->lines[lineId];
     return geo::Line2d{point(line.points[0]), point(line.points[1])};
+}
+
+geo::Line2d Map::geoLine(SideRef ref) const
+{
+    const Line &line = Map::line(ref.line);
+    return geo::Line2d{point(line.startPoint(ref.side)), point(line.endPoint(ref.side))};
 }
 
 geo::Polygon Map::sectorPolygon(ID sectorId) const
@@ -428,11 +447,122 @@ geo::Polygon Map::sectorPolygon(ID sectorId) const
     return poly;
 }
 
-void Map::buildSector(QSet<ID> sourceLines, IDList &sectorPoints, IDList &sectorWalls,
-                      bool createNewSector)
+bool Map::buildSector(//QSet<ID> sourceLines,
+                      SideRef  startSide,
+                      IDList & sectorPoints,
+                      IDList & sectorWalls,
+                      bool     createNewSector)
 {
+    QSet<SideRef> assigned; // these have already been assigned to the sector
+    QSet<ID> assignedLines;
 
+    sectorPoints.clear();
+
+    //DENG2_ASSERT(sourceLines.contains(startSide.line));
+
+    SideRef at = startSide;
+    for (;;)
+    {
+        Line atLine = line(at.line);
+
+//        qDebug("At line %X:%i (%X->%X)",
+//               at.line, at.side, atLine.startPoint(at.side), atLine.endPoint(at.side));
+
+        if (sectorPoints.isEmpty() || sectorPoints.back() != atLine.startPoint(at.side))
+        {
+            sectorPoints << atLine.startPoint(at.side);
+        }
+        if (sectorPoints.back() != atLine.endPoint(at.side))
+        {
+            sectorPoints << atLine.endPoint(at.side);
+        }
+        assigned << at;
+        assignedLines.insert(at.line);
+
+        if (sectorPoints.back() == sectorPoints.front())
+        {
+            // Closed polygon.
+            break;
+        }
+
+        geo::Line2d atGeoLine = geoLine(at);
+
+        struct Candidate {
+            SideRef line;
+            double angle;
+        };
+        QList<Candidate> candidates;
+
+        // Find potential line to continue to.
+        // This may be the other side of a line already assigned.
+        const ID conPoint = atLine.endPoint(at.side);
+        for (ID connectedLineId : findLines(conPoint))
+        {
+            const Line &conLine = line(connectedLineId);
+
+            if (connectedLineId == at.line) continue;
+
+            if ((conPoint == conLine.points[at.side]     && conLine.sectors[at.side] == 0) ||
+                (conPoint == conLine.points[at.side ^ 1] && conLine.sectors[at.side ^ 1] == 0))
+            {
+                SideRef conSide{
+                    connectedLineId,
+                    Line::Side(conPoint == conLine.points[at.side] ? at.side : (at.side ^ 1))
+                };
+                if (!assigned.contains(conSide))
+                {
+                    const geo::Line2d nextLine = geoLine(conSide);
+                    candidates << Candidate{conSide, atGeoLine.angle(nextLine)};
+                }
+            }
+        }
+
+        if (atLine.sectors[0] == 0 && atLine.sectors[1] == 0 && candidates.isEmpty())
+        {
+            // We may be switch to the other side of the line.
+            SideRef otherSide = at.flipped();
+            if (!assigned.contains(otherSide))
+            {
+                candidates << Candidate{otherSide, 180};
+            }
+        }
+
+        if (candidates.isEmpty()) return false;
+
+        // Which line forms the tightest angle?
+        {
+//            qDebug() << "Choosing from:";
+//            for (const auto &cand : candidates)
+//            {
+//                qDebug("    line %X:%d, angle %lf",
+//                       cand.line.line, cand.line.side, cand.angle);
+//            }
+            qSort(candidates.begin(),
+                  candidates.end(),
+                  [](const Candidate &a, const Candidate &b) {
+                      return a.angle < b.angle;
+                  });
+            const auto &chosen = candidates.front();
+
+            /*selection.insert(chosen.line);
+            atPoint = chosen.nextPoint;
+//                            qDebug(" - at line %X, added line %X, moving to point %X",
+//                                   atLine, chosen.line, chosen.nextPoint);
+            atLine = chosen.line;*/
+
+            at = chosen.line;
+
+            if (at == startSide) break;
+        }
+    }
+    for (ID id : assignedLines)
+    {
+        sectorWalls << id;
+    }
+    return true;
 }
+
+namespace util {
 
 static QString idStr(ID id)
 {
@@ -458,8 +588,12 @@ static IDList variantListToIDList(const QList<QVariant> &list)
     return ids;
 }
 
+} // namespace util
+
 Block Map::serialize() const
 {
+    using namespace util;
+
     const Impl *_d = d;
     QJsonObject obj;
 
@@ -537,6 +671,8 @@ Block Map::serialize() const
 
 void Map::deserialize(const Block &data)
 {
+    using namespace util;
+
     const QJsonDocument document = QJsonDocument::fromJson(data);
     const QJsonObject   json     = document.object();
     const auto          map      = json.toVariantHash();
@@ -624,6 +760,28 @@ void Sector::replaceLine(ID oldId, ID newId)
     {
         if (walls[i] == oldId) walls[i] = newId;
     }
+}
+
+void SideRef::flip()
+{
+    side = (side == Line::Front? Line::Back : Line::Front);
+}
+
+SideRef SideRef::flipped() const
+{
+    SideRef ref = *this;
+    ref.flip();
+    return ref;
+}
+
+bool SideRef::operator==(const SideRef &other) const
+{
+    return line == other.line && side == other.side;
+}
+
+uint qHash(const SideRef &sideRef)
+{
+    return (sideRef.line << 1) | int(sideRef.side);
 }
 
 } // namespace gloom
