@@ -98,7 +98,7 @@ QChar Lex::peekComment() const
 
     // Skip over the line.
     duint p = _state.pos;
-    while (p < inputSize && _input->at(++p) != '\n') {}
+    while (p < inputSize - 1 && _input->at(++p) != '\n') {}
     _nextPos = p + 1;
     return (p < inputSize? '\n' : 0);
 }
