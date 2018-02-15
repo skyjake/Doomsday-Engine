@@ -346,6 +346,7 @@ function (deng_add_package packName)
         OUTPUT_VARIABLE msg
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
+    message (STATUS "buildpackage: ${DENG_SOURCE_DIR}/build/scripts/buildpackage.py ${fullPath} ${outDir}")
     clean_paths (msg ${msg})
     message (STATUS "${msg}")
     # Find all the source files for the package.
@@ -458,9 +459,9 @@ macro (deng_deploy_library target name)
             LIBRARY DESTINATION ${DENG_INSTALL_LIB_DIR} COMPONENT libs
             ARCHIVE DESTINATION lib COMPONENT sdk
         )
-        install (EXPORT ${name} DESTINATION ${DENG_INSTALL_LIB_DIR}/cmake/${name} NAMESPACE Deng:: COMPONENT sdk)
+        install (EXPORT ${name} DESTINATION ${DENG_INSTALL_CMAKE_DIR}/${name} NAMESPACE Deng:: COMPONENT sdk)
         install (FILES ${DENG_CMAKE_DIR}/config/${name}Config.cmake
-            DESTINATION ${DENG_INSTALL_LIB_DIR}/cmake/${name} COMPONENT sdk)
+            DESTINATION ${DENG_INSTALL_CMAKE_DIR}/${name} COMPONENT sdk)
         if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/include/de)
             install (DIRECTORY include/de DESTINATION include COMPONENT sdk)
         endif ()

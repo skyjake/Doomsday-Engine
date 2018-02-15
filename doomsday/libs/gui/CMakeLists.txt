@@ -15,6 +15,7 @@ if (DENG_ASSIMP_EMBEDDED)
     set (ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "Assimp: Build tools" FORCE)
     set (ASSIMP_BUILD_TESTS OFF CACHE BOOL "Assimp: Build tests" FORCE)
     set (BUILD_SHARED_LIBS OFF CACHE BOOL "Assimp: Shared library" FORCE)
+    set (ASSIMP_INSTALL_PDB OFF CACHE BOOL "Assimp: Install PDB file (MSVC)" FORCE)
     if (APPLE OR WIN32)
         set (ASSIMP_LIB_INSTALL_DIR ${DENG_INSTALL_LIB_DIR}
             CACHE PATH "libassimp install directory" FORCE
