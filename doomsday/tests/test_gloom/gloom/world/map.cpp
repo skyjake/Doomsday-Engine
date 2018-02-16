@@ -412,17 +412,59 @@ geo::Line2d Map::geoLine(Edge ref) const
 
 geo::Polygon Map::sectorPolygon(ID sectorId) const
 {
+    return sectorPolygon(sector(sectorId));
+}
+
+geo::Polygon Map::sectorPolygon(const Sector &sector) const
+{
     // TODO: Store geo::Polygon in Sector; no need to rebuild it all the time.
-
-    const auto &sec = sector(sectorId);
-
     geo::Polygon poly;
-    for (ID pid : sec.points)
+    for (ID pid : sector.points)
     {
         poly.points << geo::Polygon::Point{point(pid), pid};
     }
     poly.updateBounds();
     return poly;
+}
+
+Map::WorldVerts Map::worldPlaneVerts(const Sector &sector, const Plane &plane) const
+{
+    WorldVerts verts;
+    const auto poly = sectorPolygon(sector);
+    for (const auto &pp : poly.points)
+    {
+        if (!verts.contains(pp.id))
+        {
+            verts.insert(pp.id, plane.projectPoint(d->points[pp.id]));
+        }
+    }
+    return verts;
+}
+
+Map::WorldPlaneVerts Map::worldSectorPlaneVerts(const Sector &sector) const
+{
+    const Impl *_d = d;
+    WorldPlaneVerts planeVerts;
+    for (const ID volId : sector.volumes)
+    {
+        const Volume &volume = _d->volumes[volId];
+        if (planeVerts.isEmpty())
+        {
+            planeVerts << worldPlaneVerts(sector, _d->planes[volume.planes[0]]);
+        }
+        planeVerts << worldPlaneVerts(sector, _d->planes[volume.planes[1]]);
+    }
+    return planeVerts;
+}
+
+QHash<ID, Map::WorldPlaneVerts> Map::worldSectorPlaneVerts() const
+{
+    QHash<ID, WorldPlaneVerts> sectorPlaneVerts;
+    for (auto i = d->sectors.constBegin(), end = d->sectors.constEnd(); i != end; ++i)
+    {
+        sectorPlaneVerts.insert(i.key(), worldSectorPlaneVerts(i.value()));
+    }
+    return sectorPlaneVerts;
 }
 
 bool Map::buildSector(Edge         startSide,
@@ -732,6 +774,8 @@ void Map::deserialize(const Block &data)
 
     removeInvalid();
 }
+
+//-------------------------------------------------------------------------------------------------
 
 Vector3d Plane::projectPoint(const Point &pos) const
 {

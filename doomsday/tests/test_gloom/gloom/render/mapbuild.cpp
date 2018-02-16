@@ -81,33 +81,30 @@ DENG2_PIMPL_NOREF(MapBuild)
         Buffer::Vertices verts;
         Buffer::Indices indices;
 
-        using PlaneVerts = std::array<QHash<ID, Vector3f>, 2>;
-        auto projectPlanes = [this](ID secId) {
-            const Sector &sec = map.sector(secId);
-            const Volume *vols[2]{&map.volume(sec.volumes.first()),
-                                  &map.volume(sec.volumes.last())};
-            PlaneVerts planeVerts;
-            for (int p = 0; p < 2; ++p)
-            {
-                const Plane &plane = map.plane(vols[p]->planes[p]);
-                const auto poly = map.sectorPolygon(secId);
-                for (const auto &pp : poly.points)
-                {
-                    if (!planeVerts[p].contains(pp.id))
-                    {
-                        planeVerts[p].insert(pp.id, projectPoint(pp.id, plane));
-                    }
-                }
-            }
-            return planeVerts;
-        };
-        QHash<ID, PlaneVerts> sectorPlaneVerts;
+//        using PlaneVerts = std::array<QHash<ID, Vector3f>, 2>;
+//        auto projectPlanes = [this](ID secId) {
+//            const Sector &sec = map.sector(secId);
+//            const Volume *vols[2]{&map.volume(sec.volumes.first()),
+//                                  &map.volume(sec.volumes.last())};
+//            PlaneVerts planeVerts;
+//            for (int p = 0; p < 2; ++p)
+//            {
+//                const Plane &plane = map.plane(vols[p]->planes[p]);
+//                const auto poly = map.sectorPolygon(secId);
+//                for (const auto &pp : poly.points)
+//                {
+//                    if (!planeVerts[p].contains(pp.id))
+//                    {
+//                        planeVerts[p].insert(pp.id, projectPoint(pp.id, plane));
+//                    }
+//                }
+//            }
+//            return planeVerts;
+//        };
+//        QHash<ID, PlaneVerts> sectorPlaneVerts;
 
         // Project each sector's points to their floor and ceiling planes.
-        for (const ID sectorId : map.sectors().keys())
-        {
-            sectorPlaneVerts.insert(sectorId, projectPlanes(sectorId));
-        }
+        const auto sectorPlaneVerts = map.worldSectorPlaneVerts();
 
         for (const ID sectorId : map.sectors().keys())
         {
@@ -138,9 +135,12 @@ DENG2_PIMPL_NOREF(MapBuild)
                 }*/
 
                 const auto &planeVerts = sectorPlaneVerts[sectorId];
+                const auto &floor      = planeVerts.front();
+                const auto &ceiling    = planeVerts.back();
 
                 // Build the floor and ceiling of this volume.
                 {
+
                     // Insert vertices of both planes to the buffer.
                     Buffer::Type f, c;
                     QHash<ID, Buffer::Index> pointIndices;
@@ -153,10 +153,10 @@ DENG2_PIMPL_NOREF(MapBuild)
                     c.normal  = Vector3f(0, -1, 0);
                     c.flags   = MapVertex::WorldSpaceXZToTexCoords;
 
-                    for (const ID pointID : planeVerts[0].keys())
+                    for (const ID pointID : floor.keys())
                     {
-                        f.pos = planeVerts[0][pointID];
-                        c.pos = planeVerts[1][pointID];
+                        f.pos = floor[pointID];
+                        c.pos = ceiling[pointID];
 
                         f.texCoord = Vector2f(0, 0); // fixed offset
                         c.texCoord = Vector2f(0, 0); // fixed offset
@@ -240,19 +240,19 @@ DENG2_PIMPL_NOREF(MapBuild)
                     const ID       start  = line.points[dir^1];
                     const ID       end    = line.points[dir];
                     const Vector3f normal = normalVector(line);
-                    const float    length = float((planeVerts[0][end] - planeVerts[0][start]).length());
-                    const float    heights[2] = {planeVerts[1][start].y - planeVerts[0][start].y,
-                                                 planeVerts[1][end].y   - planeVerts[0][end].y};
+                    const float    length = float((floor[end] - floor[start]).length());
+                    const float    heights[2] = {ceiling[start].y - floor[start].y,
+                                                 ceiling[end].y   - floor[end].y};
 
                     if (!line.isTwoSided())
                     {
                         makeQuad("world.stone",
                                  normal,
                                  0,
-                                 planeVerts[0][start],
-                                 planeVerts[0][end],
-                                 planeVerts[1][start],
-                                 planeVerts[1][end],
+                                 floor[start],
+                                 floor[end],
+                                 ceiling[start],
+                                 ceiling[end],
                                  Vector2f(0, 0),
                                  Vector2f(length, 0),
                                  Vector2f(0, heights[0]),
@@ -260,32 +260,31 @@ DENG2_PIMPL_NOREF(MapBuild)
                     }
                     else if (dir)
                     {
-                        const ID          backSectorId   = line.sectors[dir];
-                        //const Sector &    backSector     = map.sector(backSectorId);
-                        const PlaneVerts &backPlaneVerts = sectorPlaneVerts[backSectorId];
+                        const ID    backSectorId   = line.sectors[dir];
+                        const auto &backPlaneVerts = sectorPlaneVerts[backSectorId];
 
                         makeQuad("world.stone",
                                  normal,
                                  0,
-                                 planeVerts[0][start],
-                                 planeVerts[0][end],
-                                 backPlaneVerts[0][start],
-                                 backPlaneVerts[0][end],
+                                 floor[start],
+                                 floor[end],
+                                 backPlaneVerts.front()[start],
+                                 backPlaneVerts.front()[end],
                                  Vector2f(0, 0),
                                  Vector2f(length, 0),
-                                 Vector2f(0, backPlaneVerts[0][start].y - planeVerts[0][start].y),
-                                 Vector2f(length, backPlaneVerts[0][end].y - planeVerts[0][end].y));
+                                 Vector2f(0, backPlaneVerts.front()[start].y - floor[start].y),
+                                 Vector2f(length, backPlaneVerts.front()[end].y - floor[end].y));
                         makeQuad("world.stone",
                                  normal,
                                  0,
-                                 backPlaneVerts[1][start],
-                                 backPlaneVerts[1][end],
-                                 planeVerts[1][start],
-                                 planeVerts[1][end],
+                                 backPlaneVerts.back()[start],
+                                 backPlaneVerts.back()[end],
+                                 ceiling[start],
+                                 ceiling[end],
                                  Vector2f(0, 0),
                                  Vector2f(length, 0),
-                                 Vector2f(0, planeVerts[1][start].y - backPlaneVerts[1][start].y),
-                                 Vector2f(length, planeVerts[1][end].y - backPlaneVerts[1][end].y));
+                                 Vector2f(0, ceiling[start].y - backPlaneVerts.back()[start].y),
+                                 Vector2f(length, ceiling[end].y - backPlaneVerts.back()[end].y));
                     }
 
                     /* const Buffer::Index baseIndex = Buffer::Index(verts.size());

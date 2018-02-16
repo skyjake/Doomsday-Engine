@@ -54,7 +54,6 @@ public:
     typedef QHash<de::String, uint32_t> TextureIds;
 
     MapBuild(const Map &map, const TextureIds &textures);
-
     Buffer *build();
 
 private:

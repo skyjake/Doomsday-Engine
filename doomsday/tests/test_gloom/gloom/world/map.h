@@ -38,30 +38,12 @@ struct Line
     ID points[2];
     ID sectors[2]; // front and back
 
-    ID startPoint(Side side) const
-    {
-        return points[side == Front? 0 : 1];
-    }
+    ID startPoint(Side side) const { return points[side == Front ? 0 : 1]; }
+    ID endPoint(Side side) const { return points[side == Front ? 1 : 0]; }
 
-    ID endPoint(Side side) const
-    {
-        return points[side == Front? 1 : 0];
-    }
-
-    bool isSelfRef() const
-    {
-        return sectors[Front] == sectors[Back];
-    }
-
-    bool isOneSided() const
-    {
-        return !sectors[Front] || !sectors[Back];
-    }
-
-    bool isTwoSided() const
-    {
-        return sectors[Front] && sectors[Back];
-    }
+    bool isSelfRef() const { return sectors[Front] == sectors[Back]; }
+    bool isOneSided() const { return !sectors[Front] || !sectors[Back]; }
+    bool isTwoSided() const { return sectors[Front] && sectors[Back]; }
 };
 struct Plane
 {
@@ -168,6 +150,14 @@ public:
     geo::Line2d  geoLine(ID lineId) const;
     geo::Line2d  geoLine(Edge ef) const;
     geo::Polygon sectorPolygon(ID sectorId) const;
+    geo::Polygon sectorPolygon(const Sector &sector) const;
+
+    using WorldVerts      = QHash<ID, de::Vector3f>;
+    using WorldPlaneVerts = QList<WorldVerts>; // one set per plane
+
+    WorldVerts      worldPlaneVerts(const Sector &sector, const Plane &plane) const;
+    WorldPlaneVerts worldSectorPlaneVerts(const Sector &sector) const;
+    QHash<ID, Map::WorldPlaneVerts> worldSectorPlaneVerts() const;
 
     bool buildSector(Edge         startSide,
                      IDList &     sectorPoints,
