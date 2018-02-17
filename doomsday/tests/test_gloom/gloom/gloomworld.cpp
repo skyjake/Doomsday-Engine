@@ -44,7 +44,7 @@ DENG2_PIMPL(GloomWorld), public ILight
 //    EntityMap ents;
     Environment environ;
     Map map;
-    MapGeom mapGeom;
+    MapRender mapGeom;
 
     float visibleDistance;
 //    Vector2f mapSize;
@@ -299,7 +299,8 @@ void GloomWorld::glDeinit()
 
 void GloomWorld::update(TimeSpan const &elapsed)
 {
-    d->environ.update(elapsed);
+    d->environ.advanceTime(elapsed);
+    d->mapGeom.advanceTime(elapsed);
 }
 
 void GloomWorld::render(ICamera const &camera)

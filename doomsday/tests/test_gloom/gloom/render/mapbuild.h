@@ -35,13 +35,18 @@ struct MapVertex
     de::Vector3f pos;
     de::Vector3f normal;
     de::Vector2f texCoord;
-    uint32_t texture;
+    uint32_t texture[2];
+    uint32_t geoPlane;
+    uint32_t texPlane[2];
     uint32_t flags;
 
-    LIBGUI_DECLARE_VERTEX_FORMAT(5)
+    LIBGUI_DECLARE_VERTEX_FORMAT(9)
 
     enum Flag {
         WorldSpaceXZToTexCoords = 0x1,
+        WorldSpaceYToTexCoord   = 0x2,
+        FlipTexCoordY           = 0x4,
+        AnchorTopPlane          = 0x8,
     };
 };
 
@@ -52,9 +57,12 @@ public:
 
 public:
     typedef QHash<de::String, uint32_t> TextureIds;
+    typedef QHash<ID, uint32_t>         PlaneMapper;
 
     MapBuild(const Map &map, const TextureIds &textures);
     Buffer *build();
+
+    const PlaneMapper &planeMapper() const;
 
 private:
     DENG2_PRIVATE(d)

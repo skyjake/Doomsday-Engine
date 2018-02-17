@@ -28,13 +28,17 @@ using namespace de;
 
 namespace gloom {
 
-DENG2_PIMPL(MapGeom)
+DENG2_PIMPL(MapRender)
 {
-    const Map *   map   = nullptr;
-    AtlasTexture *atlas = nullptr;
+    const Map *map = nullptr;
+    double     currentTime;
+
+    AtlasTexture *       atlas = nullptr;
     MapBuild::TextureIds textures;
+    MapBuild::PlaneMapper planeMapper;
 
     QHash<String, Id> loadedTextures; // name => atlas ID
+
     GLTexture metricsBuf; // array of metrics for use in shader
     struct Metrics {
         Vector4f uvRect;
@@ -42,10 +46,18 @@ DENG2_PIMPL(MapGeom)
     };
     QVector<Metrics> textureMetrics; // contents for metricsBuf
 
+    GLTexture planeBuf;
+    Vector2ui planeBufSize;
+    struct PlaneData {
+        float y;
+    };
+    QVector<PlaneData> planeData; // contents for planeBuf
+
     Drawable  mapDrawable;
     GLUniform uMvpMatrix        {"uMvpMatrix",      GLUniform::Mat4};
     GLUniform uTex              {"uTex",            GLUniform::Sampler2D};
     GLUniform uTextureMetrics   {"uTextureMetrics", GLUniform::Sampler2D};
+    GLUniform uPlanes           {"uPlanes",         GLUniform::Sampler2D};
     GLUniform uTexelsPerMeter   {"uTexelsPerMeter", GLUniform::Float};
 
     Impl(Public *i) : Base(i)
@@ -81,13 +93,23 @@ DENG2_PIMPL(MapGeom)
         metricsBuf.clear();
         metricsBuf.setAutoGenMips(false);
         metricsBuf.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
-        const Image bufData(
+        const Image bufImg{
             Image::Size(2, textureMetrics.size()),
             Image::RGBA_32f,
-            ByteRefArray(textureMetrics.constData(), sizeof(Metrics) * textureMetrics.size()));
-        metricsBuf.setImage(bufData);
+            ByteRefArray(textureMetrics.constData(), sizeof(Metrics) * textureMetrics.size())};
+        metricsBuf.setImage(bufImg);
 
         uTextureMetrics = metricsBuf;
+    }
+
+    void updatePlaneData()
+    {
+        planeBuf.setImage(
+            Image{planeBufSize,
+                  Image::R_32f,
+                  ByteRefArray(planeData.constData(), sizeof(planeData[0]) * planeBufSize.area())});
+
+        uPlanes = planeBuf;
     }
 
     void buildMap()
@@ -95,11 +117,47 @@ DENG2_PIMPL(MapGeom)
         mapDrawable.clear();
 
         DENG2_ASSERT(map);
-        auto *buf = MapBuild(*map, textures).build();
+
+        MapBuild builder{*map, textures};
+        auto *buf = builder.build();
+
+        // Initialize the plane buffer.
+        {
+            planeMapper = builder.planeMapper();
+
+            qDebug() << "PlaneMapper has" << planeMapper.size() << "planes";
+
+            const int count = planeMapper.size();
+            if (count)
+            {
+                planeBufSize.x = de::max(4u, uint(std::sqrt(count) + 0.5));
+                planeBufSize.y = de::max(4u, uint((count + planeBufSize.x - 1) / planeBufSize.x));
+                planeData.resize(planeBufSize.x * planeBufSize.y);
+                planeData.fill(PlaneData{0});
+
+                for (auto i = planeMapper.begin(), end = planeMapper.end(); i != end; ++i)
+                {
+                    const uint32_t index = i.value();
+                    const int x = index % planeBufSize.x;
+                    const int y = index / planeBufSize.x;
+
+                    const float planeY = float(map->plane(i.key()).point.y);
+                    planeData[x + y*planeBufSize.x].y = planeY;
+
+                    //qDebug() << "Plane" << i.key() << i.value() << planeY;
+                }
+
+                planeBuf.setAutoGenMips(false);
+                planeBuf.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
+
+                updatePlaneData();
+            }
+        }
+
         mapDrawable.addBuffer(buf);
 
         GloomApp::shaders().build(mapDrawable.program(), "gloom.surface")
-                << uMvpMatrix << uTex << uTextureMetrics << uTexelsPerMeter;
+                << uMvpMatrix << uTex << uTextureMetrics << uTexelsPerMeter << uPlanes;
     }
 
     void glInit()
@@ -119,6 +177,8 @@ DENG2_PIMPL(MapGeom)
             loadTexture("world.stone");
             loadTexture("world.dirt");
             loadTexture("world.grass");
+            loadTexture("world.test");
+            loadTexture("world.test2");
 
 //            textures.insert("world.stone", atlas->alloc(images.image("world.stone")));
     //        Id grass = atlas->alloc(images.image("world.grass"));
@@ -146,39 +206,63 @@ DENG2_PIMPL(MapGeom)
     }
 };
 
-MapGeom::MapGeom()
+MapRender::MapRender()
     : d(new Impl(this))
 {}
 
-void MapGeom::setAtlas(AtlasTexture &atlas)
+void MapRender::setAtlas(AtlasTexture &atlas)
 {
     d->atlas = &atlas;
     d->uTex  = atlas;
 }
 
-void MapGeom::setMap(const Map &map)
+void MapRender::setMap(const Map &map)
 {
     d->clear();
     d->map = &map;
 }
 
-void MapGeom::glInit()
+void MapRender::glInit()
 {
     d->glInit();
 }
 
-void MapGeom::glDeinit()
+void MapRender::glDeinit()
 {
     d->glDeinit();
 }
 
-void MapGeom::rebuild()
+void MapRender::rebuild()
 {
     d->buildMap();
 }
 
-void MapGeom::render(const ICamera &camera)
+void MapRender::advanceTime(const TimeSpan &elapsed)
 {
+    d->currentTime += elapsed;
+
+    // Generate test data.
+    {
+        const auto bw = d->planeBufSize.x;
+
+        for (auto i = d->planeMapper.begin(), end = d->planeMapper.end(); i != end; ++i)
+        {
+            const uint32_t index = i.value();
+            const int x = index % bw;
+            const int y = index / bw;
+
+            const float planeY =
+                float(d->map->plane(i.key()).point.y) + float(std::sin(index + d->currentTime * .1));
+
+            d->planeData[x + y*bw].y = planeY;
+        }
+    }
+}
+
+void MapRender::render(const ICamera &camera)
+{
+    d->updatePlaneData();
+
     d->uMvpMatrix = camera.cameraModelViewProjection();
     d->mapDrawable.draw();
 }

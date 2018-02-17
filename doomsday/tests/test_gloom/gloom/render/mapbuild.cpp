@@ -26,20 +26,25 @@ using namespace de;
 
 namespace gloom {
 
-internal::AttribSpec const MapVertex::_spec[5] =
+internal::AttribSpec const MapVertex::_spec[9] =
 {
-    { internal::AttribSpec::Position,  3, GL_FLOAT,        false, sizeof(MapVertex), 0     },
-    { internal::AttribSpec::Normal,    3, GL_FLOAT,        false, sizeof(MapVertex), 3 * 4 },
-    { internal::AttribSpec::TexCoord0, 2, GL_FLOAT,        false, sizeof(MapVertex), 6 * 4 },
-    { internal::AttribSpec::Texture,   1, GL_UNSIGNED_INT, false, sizeof(MapVertex), 8 * 4 },
-    { internal::AttribSpec::Flags,     1, GL_FLOAT,        false, sizeof(MapVertex), 9 * 4 },
+    { internal::AttribSpec::Position, 3, GL_FLOAT, false, sizeof(MapVertex),  0     },
+    { internal::AttribSpec::Normal,   3, GL_FLOAT, false, sizeof(MapVertex),  3 * 4 },
+    { internal::AttribSpec::TexCoord, 2, GL_FLOAT, false, sizeof(MapVertex),  6 * 4 },
+    { internal::AttribSpec::Texture0, 1, GL_FLOAT, false, sizeof(MapVertex),  8 * 4 },
+    { internal::AttribSpec::Texture1, 1, GL_FLOAT, false, sizeof(MapVertex),  9 * 4 },
+    { internal::AttribSpec::Index0,   1, GL_FLOAT, false, sizeof(MapVertex), 10 * 4 },
+    { internal::AttribSpec::Index1,   1, GL_FLOAT, false, sizeof(MapVertex), 11 * 4 },
+    { internal::AttribSpec::Index2,   1, GL_FLOAT, false, sizeof(MapVertex), 12 * 4 },
+    { internal::AttribSpec::Flags,    1, GL_FLOAT, false, sizeof(MapVertex), 13 * 4 },
 };
-LIBGUI_VERTEX_FORMAT_SPEC(MapVertex, 10 * 4)
+LIBGUI_VERTEX_FORMAT_SPEC(MapVertex, 14 * 4)
 
 DENG2_PIMPL_NOREF(MapBuild)
 {
     const Map &map;
     TextureIds textures;
+    QHash<ID, uint32_t> planeMapper;
 
     Impl(const Map &map, const TextureIds &textures)
         : map(map)
@@ -57,16 +62,6 @@ DENG2_PIMPL_NOREF(MapBuild)
         return Vector3f{float(point.x), 0.f, float(point.y)};
     }
 
-    Vector3f lineSpan(const Line &line) const
-    {
-        return vertex(line.points[1]) - vertex(line.points[0]);
-    }
-
-    Vector3f projectPoint(ID pointId, const Plane &plane) const
-    {
-        return plane.projectPoint(mapPoint(pointId));
-    }
-
     Vector3f normalVector(const Line &line) const
     {
         return geo::Line<Vector3f>(vertex(line.points[0]), vertex(line.points[1])).normal();
@@ -77,34 +72,31 @@ DENG2_PIMPL_NOREF(MapBuild)
      */
     Buffer *build()
     {
+        planeMapper.clear();
+
         Buffer *buf = new Buffer;
         Buffer::Vertices verts;
         Buffer::Indices indices;
 
-//        using PlaneVerts = std::array<QHash<ID, Vector3f>, 2>;
-//        auto projectPlanes = [this](ID secId) {
-//            const Sector &sec = map.sector(secId);
-//            const Volume *vols[2]{&map.volume(sec.volumes.first()),
-//                                  &map.volume(sec.volumes.last())};
-//            PlaneVerts planeVerts;
-//            for (int p = 0; p < 2; ++p)
-//            {
-//                const Plane &plane = map.plane(vols[p]->planes[p]);
-//                const auto poly = map.sectorPolygon(secId);
-//                for (const auto &pp : poly.points)
-//                {
-//                    if (!planeVerts[p].contains(pp.id))
-//                    {
-//                        planeVerts[p].insert(pp.id, projectPoint(pp.id, plane));
-//                    }
-//                }
-//            }
-//            return planeVerts;
-//        };
-//        QHash<ID, PlaneVerts> sectorPlaneVerts;
+        uint32_t planeIndex = 0;
 
         // Project each sector's points to their floor and ceiling planes.
         const auto sectorPlaneVerts = map.worldSectorPlaneVerts();
+
+        // Assign indices to planes.
+        for (const Sector &sector : map.sectors())
+        {
+            for (const ID vol : sector.volumes)
+            {
+                for (const ID plane : map.volume(vol).planes)
+                {
+                    if (!planeMapper.contains(plane))
+                    {
+                        planeMapper.insert(plane, planeIndex++);
+                    }
+                }
+            }
+        }
 
         for (const ID sectorId : map.sectors().keys())
         {
@@ -113,45 +105,27 @@ DENG2_PIMPL_NOREF(MapBuild)
             // Split the polygon to convex parts (for triangulation).
             const auto convexParts = map.sectorPolygon(sectorId).splitConvexParts();
 
-            // Each volume is built separately.
-            //for (const ID volId : sector.volumes)
             {
-                /*const Volume &volume = map.volume(volId);
-                QHash<ID, Vector3f> planeVerts[2];
-                for (int p = 0; p < 2; ++p)
-                {
-                    const Plane &plane = map.plane(volume.planes[p]);
-                    for (const ID lineId : sector.lines)
-                    {
-                        const Line &line = map.line(lineId);
-                        for (const ID pointId : line.points)
-                        {
-                            if (!planeVerts[p].contains(pointId))
-                            {
-                                planeVerts[p].insert(pointId, projectPoint(pointId, plane));
-                            }
-                        }
-                    }
-                }*/
-
                 const auto &planeVerts = sectorPlaneVerts[sectorId];
                 const auto &floor      = planeVerts.front();
                 const auto &ceiling    = planeVerts.back();
 
                 // Build the floor and ceiling of this volume.
                 {
-
                     // Insert vertices of both planes to the buffer.
-                    Buffer::Type f, c;
+                    Buffer::Type f{}, c{};
                     QHash<ID, Buffer::Index> pointIndices;
 
-                    f.texture = textures["world.grass"];
-                    f.normal  = Vector3f(0, 1, 0);
-                    f.flags   = MapVertex::WorldSpaceXZToTexCoords;
+                    f.texture[0] = textures["world.test"]; // "world.grass"];
+                    f.normal   = map.floorPlane(sectorId).normal;
+                    f.flags    = MapVertex::WorldSpaceXZToTexCoords;
+                    f.geoPlane = planeMapper[map.floorPlaneId(sectorId)];
 
-                    c.texture = textures["world.dirt"];
-                    c.normal  = Vector3f(0, -1, 0);
-                    c.flags   = MapVertex::WorldSpaceXZToTexCoords;
+                    c.texture[0] = textures["world.test"]; //"world.dirt"];
+                    c.normal   = map.ceilingPlane(sectorId).normal;
+                    c.flags    = MapVertex::WorldSpaceXZToTexCoords |
+                                 MapVertex::FlipTexCoordY;
+                    c.geoPlane = planeMapper[map.ceilingPlaneId(sectorId)];
 
                     for (const ID pointID : floor.keys())
                     {
@@ -187,17 +161,22 @@ DENG2_PIMPL_NOREF(MapBuild)
                     }
                 }
 
-                auto makeQuad = [this, &indices, &verts](const String &  textureName,
+                auto makeQuad = [this, &indices, &verts](const String &  frontTextureName,
+                                                         const String &  backTextureName,
                                                          const Vector3f &normal,
+                                                         const uint32_t *planeIndex,
+                                                         //const uint32_t *texPlaneIndex,
                                                          uint32_t        flags,
                                                          const Vector3f &p1,
                                                          const Vector3f &p2,
                                                          const Vector3f &p3,
                                                          const Vector3f &p4,
+                                                         float           length
+                                                         /*float quadLength,
                                                          const Vector2f &uv1,
                                                          const Vector2f &uv2,
                                                          const Vector2f &uv3,
-                                                         const Vector2f &uv4) {
+                                                         const Vector2f &uv4 */) {
                     const Buffer::Index baseIndex = Buffer::Index(verts.size());
                     indices << baseIndex
                             << baseIndex + 3
@@ -208,24 +187,31 @@ DENG2_PIMPL_NOREF(MapBuild)
 
                     Buffer::Type v;
 
-                    v.texture = textures[textureName];
-                    v.normal  = normal;
-                    v.flags   = flags;
+                    v.texture[0]  = textures[frontTextureName];
+                    v.texture[1]  = textures[backTextureName];
+                    v.normal      = normal;
+                    v.flags       = flags;
+                    v.texPlane[0] = planeIndex[0];
+                    v.texPlane[1] = planeIndex[1];
 
-                    v.pos = p1;
-                    v.texCoord = uv1;
+                    v.pos      = p1;
+                    v.texCoord = Vector2f(0, 0);
+                    v.geoPlane = planeIndex[0];
                     verts << v;
 
-                    v.pos = p2;
-                    v.texCoord = uv2;
+                    v.pos      = p2;
+                    v.texCoord = Vector2f(length, 0);
+                    v.geoPlane = planeIndex[0];
                     verts << v;
 
-                    v.pos = p3;
-                    v.texCoord = uv3;
+                    v.pos      = p3;
+                    v.texCoord = Vector2f(0, 0);
+                    v.geoPlane = planeIndex[1];
                     verts << v;
 
-                    v.pos = p4;
-                    v.texCoord = uv4;
+                    v.pos      = p4;
+                    v.texCoord = Vector2f(length, 0);
+                    v.geoPlane = planeIndex[1];
                     verts << v;
                 };
 
@@ -241,50 +227,54 @@ DENG2_PIMPL_NOREF(MapBuild)
                     const ID       end    = line.points[dir];
                     const Vector3f normal = normalVector(line);
                     const float    length = float((floor[end] - floor[start]).length());
-                    const float    heights[2] = {ceiling[start].y - floor[start].y,
-                                                 ceiling[end].y   - floor[end].y};
+                    /*const float    heights[2] = {ceiling[start].y - floor[start].y,
+                                                 ceiling[end  ].y - floor[end  ].y};*/
+                    const uint32_t planeIndex[2] = {planeMapper[map.floorPlaneId(sectorId)],
+                                                    planeMapper[map.ceilingPlaneId(sectorId)]};
 
                     if (!line.isTwoSided())
                     {
-                        makeQuad("world.stone",
+                        makeQuad("world.test",
+                                 "world.test",
                                  normal,
-                                 0,
+                                 planeIndex,
+                                 MapVertex::WorldSpaceYToTexCoord | MapVertex::FlipTexCoordY,
                                  floor[start],
                                  floor[end],
                                  ceiling[start],
                                  ceiling[end],
-                                 Vector2f(0, 0),
-                                 Vector2f(length, 0),
-                                 Vector2f(0, heights[0]),
-                                 Vector2f(length, heights[1]));
+                                 length);
                     }
                     else if (dir)
                     {
                         const ID    backSectorId   = line.sectors[dir];
                         const auto &backPlaneVerts = sectorPlaneVerts[backSectorId];
 
-                        makeQuad("world.stone",
+                        const uint32_t botIndex[2] = {planeIndex[0],
+                                                      planeMapper[map.floorPlaneId(backSectorId)]};
+                        const uint32_t topIndex[2] = {planeMapper[map.ceilingPlaneId(backSectorId)],
+                                                      planeIndex[1]};
+
+                        makeQuad("world.test",
+                                 "world.test2",
                                  normal,
-                                 0,
+                                 botIndex,
+                                 MapVertex::WorldSpaceYToTexCoord | MapVertex::FlipTexCoordY | MapVertex::AnchorTopPlane,
                                  floor[start],
                                  floor[end],
                                  backPlaneVerts.front()[start],
                                  backPlaneVerts.front()[end],
-                                 Vector2f(0, 0),
-                                 Vector2f(length, 0),
-                                 Vector2f(0, backPlaneVerts.front()[start].y - floor[start].y),
-                                 Vector2f(length, backPlaneVerts.front()[end].y - floor[end].y));
-                        makeQuad("world.stone",
+                                 length);
+                        makeQuad("world.test",
+                                 "world.test2",
                                  normal,
-                                 0,
+                                 topIndex,
+                                 MapVertex::WorldSpaceYToTexCoord | MapVertex::FlipTexCoordY,
                                  backPlaneVerts.back()[start],
                                  backPlaneVerts.back()[end],
                                  ceiling[start],
                                  ceiling[end],
-                                 Vector2f(0, 0),
-                                 Vector2f(length, 0),
-                                 Vector2f(0, ceiling[start].y - backPlaneVerts.back()[start].y),
-                                 Vector2f(length, ceiling[end].y - backPlaneVerts.back()[end].y));
+                                 length);
                     }
 
                     /* const Buffer::Index baseIndex = Buffer::Index(verts.size());
@@ -338,6 +328,11 @@ MapBuild::MapBuild(const Map &map, const TextureIds &textures)
 MapBuild::Buffer *MapBuild::build()
 {
     return d->build();
+}
+
+const MapBuild::PlaneMapper &MapBuild::planeMapper() const
+{
+    return d->planeMapper;
 }
 
 } // namespace gloom

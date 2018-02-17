@@ -151,6 +151,10 @@ public:
     geo::Line2d  geoLine(Edge ef) const;
     geo::Polygon sectorPolygon(ID sectorId) const;
     geo::Polygon sectorPolygon(const Sector &sector) const;
+    ID           floorPlaneId(ID sectorId) const;
+    ID           ceilingPlaneId(ID sectorId) const;
+    const Plane &floorPlane(ID sectorId) const;
+    const Plane &ceilingPlane(ID sectorId) const;
 
     using WorldVerts      = QHash<ID, de::Vector3f>;
     using WorldPlaneVerts = QList<WorldVerts>; // one set per plane

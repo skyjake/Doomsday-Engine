@@ -3,7 +3,9 @@ image logo { path = "images/deng-logo-256.png" }
 group world {
     image stone { path = "images/mat-stone.png" }
     image grass { path = "images/mat-grass.jpg" }
-    image dirt  { path = "images/mat-dirt.jpg" }    
+    image dirt  { path = "images/mat-dirt.jpg" }
+    image test  { path = "images/mat-test.png" }
+    image test2 { path = "images/mat-test2.png" }
 }
 
 group sky {

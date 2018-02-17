@@ -34,7 +34,7 @@ public:
 
     void enable(bool enabled = true);
     void disable() { enable(false); }
-    void update(de::TimeSpan const &elapsed);
+    void advanceTime(de::TimeSpan const &elapsed);
 
 private:
     DENG2_PRIVATE(d)

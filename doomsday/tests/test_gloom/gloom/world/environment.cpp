@@ -142,7 +142,7 @@ void Environment::setWorld(World *world)
     d->world = world;
 }
 
-void Environment::update(TimeSpan const &elapsed)
+void Environment::advanceTime(TimeSpan const &elapsed)
 {
     d->update(elapsed);
 }

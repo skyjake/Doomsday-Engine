@@ -76,6 +76,7 @@ DENG2_PIMPL(Editor)
 
     float    viewScale = 10;
     Vector2f viewOrigin;
+    Plane    viewPlane;
     Matrix4f viewTransform;
     Matrix4f inverseViewTransform;
 
@@ -281,25 +282,27 @@ DENG2_PIMPL(Editor)
         return true;
     }
 
-    QPointF worldToView(const Vector2d &pos, const Plane &plane = Plane{{0, 0, 0}, {0, 1, 0}}) const
+    QPointF worldToView(const Vector2d &pos, const Plane *plane = nullptr) const
     {
-
-        const auto p = viewTransform * Vector3f(float(pos.x), float(pos.y));
+        if (!plane) plane = &viewPlane;
+        const auto p = viewTransform * plane->projectPoint(pos);
         return QPointF(p.x, p.y);
     }
 
     Vector2d viewToWorld(const QPointF &pos) const
     {
         const auto p = inverseViewTransform * Vector3f(float(pos.x()), float(pos.y()));
-        return Vector2d(p.x, p.y);
+        return Vector2d(p.x, p.z);
     }
 
     void updateView()
     {
         const QSize viewSize = self().rect().size();
 
+        viewPlane     = Plane{{viewOrigin.x, 0, viewOrigin.y}, {0, 1, 0}};
         viewTransform = Matrix4f::translate(Vector3f(viewSize.width() / 2, viewSize.height() / 2)) *
-                        Matrix4f::scale(viewScale) * Matrix4f::translate(-viewOrigin);
+                        Matrix4f::rotate(-90, Vector3f(1, 0, 0)) *
+                        Matrix4f::scale(viewScale) * Matrix4f::translate(-viewPlane.point);
         inverseViewTransform = viewTransform.inverse();
     }
 
@@ -518,89 +521,6 @@ DENG2_PIMPL(Editor)
                     selection.insert(secId);
                 }
             }
-
-#if 0
-
-            const ID firstLineId = lineId;
-            {
-                const auto &line = map.line(lineId);
-                geo::Line2d geoLine = map.geoLine(lineId);
-
-                // Which side are we on?
-                const int side = geoLine.side(clickPos);
-                if (side == 0 && line.sectors[0] == 0)
-                {
-//                    qDebug("Starting at line %X (%X -> %X) front:%i", lineId,
-//                           line.points[0], line.points[1],
-//                           geoLine.isFrontSide(clickPos));
-
-                    // This one is unassigned, let's select a polygon.
-                    selection.clear();
-                    selection.insert(lineId);
-
-                    ID atLine  = lineId;
-                    ID atPoint = line.points[1];
-
-                    for (;;)
-                    {
-                        bool completed = false;
-
-                        geoLine = map.geoLine(atLine);
-
-                        struct Candidate {
-                            ID line;
-                            ID nextPoint;
-                            float angle;
-                        };
-                        QList<Candidate> candidates;
-                        for (ID connectedId : map.findLines(atPoint))
-                        {
-                            if (connectedId == atLine) continue;
-
-                            const auto &connected = map.line(connectedId);
-                            const int dir = (connected.points[0] == atPoint? 1 : 0);
-                            if (connected.sectors[dir^1] == 0)
-                            {
-                                if (connectedId == firstLineId)
-                                {
-                                    completed = true;
-                                }
-                                if (!selection.contains(connectedId))
-                                {
-                                    geo::Line2d nextLine = map.geoLine(connectedId);
-                                    if (dir == 0) nextLine.flip();
-                                    const float angle = geoLine.angle(nextLine);
-                                    candidates << Candidate{connectedId, connected.points[dir], angle};
-                                }
-                            }
-                        }
-
-                        if (completed || candidates.isEmpty()) break;
-
-                        // Which line forms the tightest angle?
-                        {
-//                            qDebug() << "Choosing from:";
-//                            for (const auto &cand : candidates)
-//                            {
-//                                qDebug("    line %X, nextp %X, angle %lf",
-//                                       cand.line, cand.nextPoint, cand.angle);
-//                            }
-                            qSort(candidates.begin(),
-                                  candidates.end(),
-                                  [](const Candidate &a, const Candidate &b) {
-                                      return a.angle < b.angle;
-                                  });
-                            const auto &chosen = candidates.front();
-                            selection.insert(chosen.line);
-                            atPoint = chosen.nextPoint;
-//                            qDebug(" - at line %X, added line %X, moving to point %X",
-//                                   atLine, chosen.line, chosen.nextPoint);
-                            atLine = chosen.line;
-                        }
-                    }
-                }
-            }
-#endif
             return;
         }
 
@@ -895,11 +815,8 @@ void Editor::paintEvent(QPaintEvent *)
 
     // Sectors.
     {
-        //for (QHashIterator<ID, Sector> i(mapSectors); i.hasNext(); )
         for (auto i = mapSectors.begin(), end = mapSectors.end(); i != end; ++i)
         {
-            //i.next();
-
             const ID    secId  = i.key();
             const auto &sector = i.value();
 

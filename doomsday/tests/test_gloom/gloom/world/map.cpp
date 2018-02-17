@@ -427,6 +427,26 @@ geo::Polygon Map::sectorPolygon(const Sector &sector) const
     return poly;
 }
 
+ID Map::floorPlaneId(ID sectorId) const
+{
+    return volume(sector(sectorId).volumes.front()).planes[0];
+}
+
+ID Map::ceilingPlaneId(ID sectorId) const
+{
+    return volume(sector(sectorId).volumes.back()).planes[1];
+}
+
+const Plane &Map::floorPlane(ID sectorId) const
+{
+    return plane(floorPlaneId(sectorId));
+}
+
+const Plane &Map::ceilingPlane(ID sectorId) const
+{
+    return plane(ceilingPlaneId(sectorId));
+}
+
 Map::WorldVerts Map::worldPlaneVerts(const Sector &sector, const Plane &plane) const
 {
     WorldVerts verts;

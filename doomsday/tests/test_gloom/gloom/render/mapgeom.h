@@ -26,10 +26,10 @@ namespace gloom {
 
 class ICamera;
 
-class MapGeom
+class MapRender
 {
 public:
-    MapGeom();
+    MapRender();
 
     void setAtlas(de::AtlasTexture &atlas);
     void setMap(const Map &map);
@@ -37,6 +37,7 @@ public:
     void glInit();
     void glDeinit();
     void rebuild();
+    void advanceTime(const de::TimeSpan &elapsed);
     void render(const ICamera &camera);
 
 private:
