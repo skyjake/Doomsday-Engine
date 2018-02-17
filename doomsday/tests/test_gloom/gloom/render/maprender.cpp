@@ -1,4 +1,4 @@
-/** @file mapgeom.cpp
+/** @file maprender.cpp
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "mapgeom.h"
+#include "maprender.h"
 #include "mapbuild.h"
 #include "../icamera.h"
 #include "../../src/gloomapp.h"
@@ -168,7 +168,7 @@ DENG2_PIMPL(MapRender)
         texOffsetMapper = builder.texOffsetMapper();
 
         texOffsets.init(texOffsetMapper.size());
-        planes.init(planeMapper.size());
+        planes    .init(planeMapper.size());
 
         // Initialize the plane buffer.
         {
@@ -270,10 +270,10 @@ void MapRender::advanceTime(const TimeSpan &elapsed)
     d->currentTime += elapsed;
     d->uCurrentTime = d->currentTime;
 
-    // Generate test data.
-    {
-        const float now = float(d->currentTime);
+    const float now = float(d->currentTime);
 
+    // Testing: move some planes.
+    {
         for (auto i = d->planeMapper.begin(), end = d->planeMapper.end(); i != end; ++i)
         {
             const float planeY = float(d->map->plane(i.key()).point.y) +
@@ -281,8 +281,11 @@ void MapRender::advanceTime(const TimeSpan &elapsed)
 
             d->planes.setData(i.value(), planeY);
         }
+    }
 
-        // Scrolling.
+    // Testing: Scroll offsets.
+#if 0
+    {
         for (auto i = d->texOffsetMapper.begin(), end = d->texOffsetMapper.end(); i != end; ++i)
         {
             d->texOffsets.setData(
@@ -291,6 +294,7 @@ void MapRender::advanceTime(const TimeSpan &elapsed)
                     {0.f, 0.f}, {std::sin(i.value() + now * .25f), i.value() % 2 ? 0.1f : -.1f}});
         }
     }
+#endif
 }
 
 void MapRender::render(const ICamera &camera)

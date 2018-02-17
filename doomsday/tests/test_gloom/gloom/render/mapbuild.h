@@ -34,10 +34,10 @@ struct MapVertex
 {
     de::Vector3f pos;
     de::Vector3f normal;
-    de::Vector3f texCoord;
+    de::Vector4f texCoord;
     uint32_t texture[2];
-    uint32_t geoPlane; uint32_t texPlane[2]; // vec3
-    uint32_t texOffset[2]; // vec2
+    uint32_t geoPlane; uint32_t texPlane[2]; // Index0: vec3
+    uint32_t texOffset[2];                   // Index1: vec2
     uint32_t flags;
 
     LIBGUI_DECLARE_VERTEX_FORMAT(8)

@@ -1,4 +1,4 @@
-/** @file mapgeom.h
+/** @file maprender.h
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_MAPGEOM_H
-#define GLOOM_MAPGEOM_H
+#ifndef GLOOM_MAPRENDER_H
+#define GLOOM_MAPRENDER_H
 
 #include <de/AtlasTexture>
 #include "../world/map.h"
@@ -46,4 +46,4 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_MAPGEOM_H
+#endif // GLOOM_MAPRENDER_H

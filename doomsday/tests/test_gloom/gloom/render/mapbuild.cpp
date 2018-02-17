@@ -30,14 +30,14 @@ internal::AttribSpec const MapVertex::_spec[8] =
 {
     { internal::AttribSpec::Position, 3, GL_FLOAT, false, sizeof(MapVertex),  0     },
     { internal::AttribSpec::Normal,   3, GL_FLOAT, false, sizeof(MapVertex),  3 * 4 },
-    { internal::AttribSpec::TexCoord, 3, GL_FLOAT, false, sizeof(MapVertex),  6 * 4 },
-    { internal::AttribSpec::Texture0, 1, GL_FLOAT, false, sizeof(MapVertex),  9 * 4 },
-    { internal::AttribSpec::Texture1, 1, GL_FLOAT, false, sizeof(MapVertex), 10 * 4 },
-    { internal::AttribSpec::Index0,   3, GL_FLOAT, false, sizeof(MapVertex), 11 * 4 },
-    { internal::AttribSpec::Index1,   2, GL_FLOAT, false, sizeof(MapVertex), 14 * 4 },
-    { internal::AttribSpec::Flags,    1, GL_FLOAT, false, sizeof(MapVertex), 16 * 4 },
+    { internal::AttribSpec::TexCoord, 4, GL_FLOAT, false, sizeof(MapVertex),  6 * 4 },
+    { internal::AttribSpec::Texture0, 1, GL_FLOAT, false, sizeof(MapVertex), 10 * 4 },
+    { internal::AttribSpec::Texture1, 1, GL_FLOAT, false, sizeof(MapVertex), 11 * 4 },
+    { internal::AttribSpec::Index0,   3, GL_FLOAT, false, sizeof(MapVertex), 12 * 4 },
+    { internal::AttribSpec::Index1,   2, GL_FLOAT, false, sizeof(MapVertex), 15 * 4 },
+    { internal::AttribSpec::Flags,    1, GL_FLOAT, false, sizeof(MapVertex), 17 * 4 },
 };
-LIBGUI_VERTEX_FORMAT_SPEC(MapVertex, 17 * 4)
+LIBGUI_VERTEX_FORMAT_SPEC(MapVertex, 18 * 4)
 
 DENG2_PIMPL_NOREF(MapBuild)
 {
@@ -126,8 +126,8 @@ DENG2_PIMPL_NOREF(MapBuild)
                         f.pos = floor[pointID];
                         c.pos = ceiling[pointID];
 
-                        f.texCoord = Vector2f(0, 0); // fixed offset
-                        c.texCoord = Vector2f(0, 0); // fixed offset
+                        f.texCoord = Vector4f(0, 0, 0, 45); // fixed offset
+                        c.texCoord = Vector4f(0, 0, 0, 0); // fixed offset
 
                         pointIndices.insert(pointID, Buffer::Index(verts.size()));
                         verts << f << c;
@@ -164,7 +164,8 @@ DENG2_PIMPL_NOREF(MapBuild)
                                                          const Vector3f &p2,
                                                          const Vector3f &p3,
                                                          const Vector3f &p4,
-                                                         float           length) {
+                                                         float           length,
+                                                         float           rotation) {
                     const Buffer::Index baseIndex = Buffer::Index(verts.size());
                     indices << baseIndex
                             << baseIndex + 3
@@ -183,22 +184,22 @@ DENG2_PIMPL_NOREF(MapBuild)
                     v.texPlane[1] = planeIndex[1];
 
                     v.pos      = p1;
-                    v.texCoord = Vector3f(0, 0, length);
+                    v.texCoord = Vector4f(0, 0, length, rotation);
                     v.geoPlane = planeIndex[0];
                     verts << v;
 
                     v.pos      = p2;
-                    v.texCoord = Vector3f(length, 0, length);
+                    v.texCoord = Vector4f(length, 0, length, rotation);
                     v.geoPlane = planeIndex[0];
                     verts << v;
 
                     v.pos      = p3;
-                    v.texCoord = Vector3f(0, 0, length);
+                    v.texCoord = Vector4f(0, 0, length, rotation);
                     v.geoPlane = planeIndex[1];
                     verts << v;
 
                     v.pos      = p4;
-                    v.texCoord = Vector3f(length, 0, length);
+                    v.texCoord = Vector4f(length, 0, length, rotation);
                     v.geoPlane = planeIndex[1];
                     verts << v;
                 };
@@ -229,7 +230,8 @@ DENG2_PIMPL_NOREF(MapBuild)
                                  floor[end],
                                  ceiling[start],
                                  ceiling[end],
-                                 length);
+                                 length,
+                                 lineId * 5);
                     }
                     else if (dir)
                     {
@@ -250,7 +252,8 @@ DENG2_PIMPL_NOREF(MapBuild)
                                  floor[end],
                                  backPlaneVerts.front()[start],
                                  backPlaneVerts.front()[end],
-                                 length);
+                                 length,
+                                 lineId * 5);
                         makeQuad("world.test",
                                  "world.test2",
                                  normal,
@@ -260,7 +263,8 @@ DENG2_PIMPL_NOREF(MapBuild)
                                  backPlaneVerts.back()[end],
                                  ceiling[start],
                                  ceiling[end],
-                                 length);
+                                 length,
+                                 lineId * 5);
                     }
                 }
             }

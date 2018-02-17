@@ -6,7 +6,7 @@ uniform sampler2D   uTexOffsets;
 uniform float       uCurrentTime;
 
 DENG_ATTRIB vec4    aVertex;
-DENG_ATTRIB vec3    aUV;
+DENG_ATTRIB vec4    aUV;
 DENG_ATTRIB vec3    aNormal;
 DENG_ATTRIB float   aTexture0; // front texture
 DENG_ATTRIB float   aTexture1; // back texture
@@ -65,8 +65,15 @@ void main(void) {
 
     // Texture scrolling.
     if (testFlag(vFlags, Surface_TextureOffset)) {
-        vec4 texOffset = fetchTexOffset(floatBitsToUint(isFrontSide? aIndex1.x : aIndex1.y));
+        vec4 texOffset = fetchTexOffset(
+            floatBitsToUint(isFrontSide? aIndex1.x : aIndex1.y));
         vUV += texOffset.xy + uCurrentTime * texOffset.zw;
+    }
+
+    /* Texture rotation. */
+    if (aUV.w != 0.0) {
+        float angle = radians(aUV.w);
+        vUV = mat2(cos(angle), sin(angle), -sin(angle), cos(angle)) * vUV;
     }
 
     if (!isFrontSide) {

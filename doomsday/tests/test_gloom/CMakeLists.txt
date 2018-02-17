@@ -36,8 +36,8 @@ set (SOURCES
     gloom/gloomworld.h
     gloom/render/mapbuild.cpp
     gloom/render/mapbuild.h
-    gloom/render/mapgeom.cpp
-    gloom/render/mapgeom.h
+    gloom/render/maprender.cpp
+    gloom/render/maprender.h
     gloom/render/polygon.cpp
     gloom/render/polygon.h
     gloom/render/skybox.cpp

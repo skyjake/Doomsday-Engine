@@ -21,7 +21,7 @@
 #include "ilight.h"
 #include "audio/audiosystem.h"
 #include "render/skybox.h"
-#include "render/mapgeom.h"
+#include "render/maprender.h"
 #include "world/environment.h"
 #include "world/user.h"
 #include "world/map.h"
@@ -44,7 +44,7 @@ DENG2_PIMPL(GloomWorld), public ILight
 //    EntityMap ents;
     Environment environ;
     Map map;
-    MapRender mapGeom;
+    MapRender mapRender;
 
     float visibleDistance;
 //    Vector2f mapSize;
@@ -133,9 +133,9 @@ DENG2_PIMPL(GloomWorld), public ILight
         sky.setSize(visibleDistance);
         sky.glInit();
 
-        mapGeom.setMap(map);
-        mapGeom.setAtlas(*atlas);
-        mapGeom.glInit();
+        mapRender.setMap(map);
+        mapRender.setAtlas(*atlas);
+        mapRender.glInit();
 
 //        land.glInit();
 //        land.setCamera(VRSenseApp::camera());
@@ -163,7 +163,7 @@ DENG2_PIMPL(GloomWorld), public ILight
 //        }
 //        land.glDeinit();
         sky.glDeinit();
-        mapGeom.glDeinit();
+        mapRender.glDeinit();
 
         atlas->clear();
 
@@ -172,7 +172,7 @@ DENG2_PIMPL(GloomWorld), public ILight
 
     void rebuildMap()
     {
-        mapGeom.rebuild();
+        mapRender.rebuild();
     }
 
     Vector3f lightColor() const
@@ -300,7 +300,7 @@ void GloomWorld::glDeinit()
 void GloomWorld::update(TimeSpan const &elapsed)
 {
     d->environ.advanceTime(elapsed);
-    d->mapGeom.advanceTime(elapsed);
+    d->mapRender.advanceTime(elapsed);
 }
 
 void GloomWorld::render(ICamera const &camera)
@@ -316,7 +316,7 @@ void GloomWorld::render(ICamera const &camera)
     d->uViewPos  = camera.cameraPosition();
     d->uLightDir = d->lightDirection();
 
-    d->mapGeom.render(camera);
+    d->mapRender.render(camera);
     d->sky.render(mvp * Matrix4f::translate(camera.cameraPosition()));
 
 //    d->land.draw(mvp);
