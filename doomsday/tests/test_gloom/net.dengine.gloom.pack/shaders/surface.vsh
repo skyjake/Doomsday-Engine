@@ -2,6 +2,8 @@
 
 uniform mat4        uMvpMatrix;
 uniform sampler2D   uPlanes;
+uniform sampler2D   uTexOffsets;
+uniform float       uCurrentTime;
 
 DENG_ATTRIB vec4    aVertex;
 DENG_ATTRIB vec3    aUV;
@@ -11,6 +13,7 @@ DENG_ATTRIB float   aTexture1; // back texture
 DENG_ATTRIB float   aIndex0; // geoPlane
 DENG_ATTRIB float   aIndex1; // texPlane bottom
 DENG_ATTRIB float   aIndex2; // texPlane top
+DENG_ATTRIB float   aIndex3; // texOffset
 DENG_ATTRIB float   aFlags;
 
      DENG_VAR vec2  vUV;
@@ -21,6 +24,11 @@ flat DENG_VAR uint  vFlags;
 float fetchPlaneY(uint planeIndex) {
     uint dw = uint(textureSize(uPlanes, 0).x);
     return texelFetch(uPlanes, ivec2(planeIndex % dw, planeIndex / dw), 0).r;
+}
+
+vec4 fetchTexOffset(uint offsetIndex) {
+    uint dw = uint(textureSize(uTexOffsets, 0).x);
+    return texelFetch(uTexOffsets, ivec2(offsetIndex % dw, offsetIndex / dw), 0);
 }
 
 void main(void) {
@@ -56,10 +64,16 @@ void main(void) {
     if (testFlag(vFlags, Surface_WorldSpaceXZToTexCoords)) {
         vUV += aVertex.xz;
     }
-    if (!isFrontSide) {
-        vUV.s = wallLength - vUV.s;        
+
+    /* Texture scrolling. */ {
+        vec4 texOffset = fetchTexOffset(floatBitsToUint(aIndex3));
+        vUV += texOffset.xy + uCurrentTime * texOffset.zw;
     }
-    if (testFlag(vFlags, Surface_FlipTexCoordY)) {
+
+    if (!isFrontSide) {
+        vUV.s = wallLength - vUV.s;
+    }
+    if (!testFlag(vFlags, Surface_FlipTexCoordY)) {
         vUV.t = -vUV.t;
     }
 }

@@ -38,9 +38,10 @@ struct MapVertex
     uint32_t texture[2];
     uint32_t geoPlane;
     uint32_t texPlane[2];
+    uint32_t texOffset;
     uint32_t flags;
 
-    LIBGUI_DECLARE_VERTEX_FORMAT(9)
+    LIBGUI_DECLARE_VERTEX_FORMAT(10)
 
     enum Flag {
         WorldSpaceXZToTexCoords = 0x1,

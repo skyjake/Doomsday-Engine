@@ -26,7 +26,7 @@ using namespace de;
 
 namespace gloom {
 
-internal::AttribSpec const MapVertex::_spec[9] =
+internal::AttribSpec const MapVertex::_spec[10] =
 {
     { internal::AttribSpec::Position, 3, GL_FLOAT, false, sizeof(MapVertex),  0     },
     { internal::AttribSpec::Normal,   3, GL_FLOAT, false, sizeof(MapVertex),  3 * 4 },
@@ -36,9 +36,10 @@ internal::AttribSpec const MapVertex::_spec[9] =
     { internal::AttribSpec::Index0,   1, GL_FLOAT, false, sizeof(MapVertex), 11 * 4 },
     { internal::AttribSpec::Index1,   1, GL_FLOAT, false, sizeof(MapVertex), 12 * 4 },
     { internal::AttribSpec::Index2,   1, GL_FLOAT, false, sizeof(MapVertex), 13 * 4 },
-    { internal::AttribSpec::Flags,    1, GL_FLOAT, false, sizeof(MapVertex), 14 * 4 },
+    { internal::AttribSpec::Index3,   1, GL_FLOAT, false, sizeof(MapVertex), 14 * 4 },
+    { internal::AttribSpec::Flags,    1, GL_FLOAT, false, sizeof(MapVertex), 15 * 4 },
 };
-LIBGUI_VERTEX_FORMAT_SPEC(MapVertex, 15 * 4)
+LIBGUI_VERTEX_FORMAT_SPEC(MapVertex, 16 * 4)
 
 DENG2_PIMPL_NOREF(MapBuild)
 {
@@ -118,13 +119,13 @@ DENG2_PIMPL_NOREF(MapBuild)
 
                     f.texture[0] = textures["world.test"]; // "world.grass"];
                     f.normal   = map.floorPlane(sectorId).normal;
-                    f.flags    = MapVertex::WorldSpaceXZToTexCoords;
+                    f.flags    = MapVertex::WorldSpaceXZToTexCoords |
+                                 MapVertex::FlipTexCoordY;
                     f.geoPlane = planeMapper[map.floorPlaneId(sectorId)];
 
                     c.texture[0] = textures["world.test"]; //"world.dirt"];
                     c.normal   = map.ceilingPlane(sectorId).normal;
-                    c.flags    = MapVertex::WorldSpaceXZToTexCoords |
-                                 MapVertex::FlipTexCoordY;
+                    c.flags    = MapVertex::WorldSpaceXZToTexCoords;
                     c.geoPlane = planeMapper[map.ceilingPlaneId(sectorId)];
 
                     for (const ID pointID : floor.keys())
@@ -238,7 +239,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                                  "world.test",
                                  normal,
                                  planeIndex,
-                                 MapVertex::WorldSpaceYToTexCoord | MapVertex::FlipTexCoordY,
+                                 MapVertex::WorldSpaceYToTexCoord,
                                  floor[start],
                                  floor[end],
                                  ceiling[start],
@@ -259,7 +260,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                                  "world.test2",
                                  normal,
                                  botIndex,
-                                 MapVertex::WorldSpaceYToTexCoord | MapVertex::FlipTexCoordY | MapVertex::AnchorTopPlane,
+                                 MapVertex::WorldSpaceYToTexCoord | MapVertex::AnchorTopPlane,
                                  floor[start],
                                  floor[end],
                                  backPlaneVerts.front()[start],
@@ -269,7 +270,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                                  "world.test2",
                                  normal,
                                  topIndex,
-                                 MapVertex::WorldSpaceYToTexCoord | MapVertex::FlipTexCoordY,
+                                 MapVertex::WorldSpaceYToTexCoord,
                                  backPlaneVerts.back()[start],
                                  backPlaneVerts.back()[end],
                                  ceiling[start],
