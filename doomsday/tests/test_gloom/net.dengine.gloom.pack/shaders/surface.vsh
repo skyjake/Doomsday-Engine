@@ -10,10 +10,8 @@ DENG_ATTRIB vec3    aUV;
 DENG_ATTRIB vec3    aNormal;
 DENG_ATTRIB float   aTexture0; // front texture
 DENG_ATTRIB float   aTexture1; // back texture
-DENG_ATTRIB float   aIndex0; // geoPlane
-DENG_ATTRIB float   aIndex1; // texPlane bottom
-DENG_ATTRIB float   aIndex2; // texPlane top
-DENG_ATTRIB float   aIndex3; // texOffset
+DENG_ATTRIB vec3    aIndex0; // planes: geo, tex bottom, tex top
+DENG_ATTRIB vec2    aIndex1; // tex offset (front, back)
 DENG_ATTRIB float   aFlags;
 
      DENG_VAR vec2  vUV;
@@ -38,7 +36,7 @@ void main(void) {
     vec4 vertex = aVertex;
 
     /* Check for a plane offset. */ {
-        float planeY = fetchPlaneY(floatBitsToUint(aIndex0));
+        float planeY = fetchPlaneY(floatBitsToUint(aIndex0.x));
         //geoDeltaY = planeY - vertex.y;
         vertex.y = planeY;
     }
@@ -48,8 +46,8 @@ void main(void) {
     float wallLength = aUV.z;
 
     // Choose the side.
-    float botPlaneY = fetchPlaneY(floatBitsToUint(aIndex1));
-    float topPlaneY = fetchPlaneY(floatBitsToUint(aIndex2));
+    float botPlaneY = fetchPlaneY(floatBitsToUint(aIndex0.y));
+    float topPlaneY = fetchPlaneY(floatBitsToUint(aIndex0.z));
     int   side = (botPlaneY <= topPlaneY)? 0 : 1;
     bool  isFrontSide = (side == 0);
 
@@ -65,8 +63,9 @@ void main(void) {
         vUV += aVertex.xz;
     }
 
-    /* Texture scrolling. */ {
-        vec4 texOffset = fetchTexOffset(floatBitsToUint(aIndex3));
+    // Texture scrolling.
+    if (testFlag(vFlags, Surface_TextureOffset)) {
+        vec4 texOffset = fetchTexOffset(floatBitsToUint(isFrontSide? aIndex1.x : aIndex1.y));
         vUV += texOffset.xy + uCurrentTime * texOffset.zw;
     }
 

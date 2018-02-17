@@ -98,7 +98,8 @@ DENG2_PIMPL(MapRender)
 
     AtlasTexture *       atlas = nullptr;
     MapBuild::TextureIds textures;
-    MapBuild::PlaneMapper planeMapper;
+    MapBuild::Mapper     planeMapper;
+    MapBuild::Mapper     texOffsetMapper;
 
     QHash<String, Id> loadedTextures; // name => atlas ID
 
@@ -163,21 +164,19 @@ DENG2_PIMPL(MapRender)
         MapBuild builder{*map, textures};
         auto *buf = builder.build();
 
+        planeMapper     = builder.planeMapper();
+        texOffsetMapper = builder.texOffsetMapper();
+
+        texOffsets.init(texOffsetMapper.size());
+        planes.init(planeMapper.size());
+
         // Initialize the plane buffer.
         {
-            planeMapper = builder.planeMapper();
-
             qDebug() << "PlaneMapper has" << planeMapper.size() << "planes";
 
-            const int count = planeMapper.size();
-            if (count)
+            for (auto i = planeMapper.begin(), end = planeMapper.end(); i != end; ++i)
             {
-                planes.init(count);
-                for (auto i = planeMapper.begin(), end = planeMapper.end(); i != end; ++i)
-                {
-                    planes.setData(i.value(), float(map->plane(i.key()).point.y));
-                }
-                planes.update();
+                planes.setData(i.value(), float(map->plane(i.key()).point.y));
             }
         }
 
@@ -269,19 +268,28 @@ void MapRender::rebuild()
 void MapRender::advanceTime(const TimeSpan &elapsed)
 {
     d->currentTime += elapsed;
+    d->uCurrentTime = d->currentTime;
 
     // Generate test data.
     {
+        const float now = float(d->currentTime);
+
         for (auto i = d->planeMapper.begin(), end = d->planeMapper.end(); i != end; ++i)
         {
             const float planeY = float(d->map->plane(i.key()).point.y) +
-                                 float(std::sin(i.value() + d->currentTime * .1));
+                                 std::sin(i.value() + now * .1f);
 
             d->planes.setData(i.value(), planeY);
         }
 
         // Scrolling.
-
+        for (auto i = d->texOffsetMapper.begin(), end = d->texOffsetMapper.end(); i != end; ++i)
+        {
+            d->texOffsets.setData(
+                i.value(),
+                Impl::TexOffsetData{
+                    {0.f, 0.f}, {std::sin(i.value() + now * .25f), i.value() % 2 ? 0.1f : -.1f}});
+        }
     }
 }
 

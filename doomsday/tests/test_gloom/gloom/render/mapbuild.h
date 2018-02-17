@@ -36,18 +36,18 @@ struct MapVertex
     de::Vector3f normal;
     de::Vector3f texCoord;
     uint32_t texture[2];
-    uint32_t geoPlane;
-    uint32_t texPlane[2];
-    uint32_t texOffset;
+    uint32_t geoPlane; uint32_t texPlane[2]; // vec3
+    uint32_t texOffset[2]; // vec2
     uint32_t flags;
 
-    LIBGUI_DECLARE_VERTEX_FORMAT(10)
+    LIBGUI_DECLARE_VERTEX_FORMAT(8)
 
     enum Flag {
         WorldSpaceXZToTexCoords = 0x1,
         WorldSpaceYToTexCoord   = 0x2,
         FlipTexCoordY           = 0x4,
         AnchorTopPlane          = 0x8,
+        TextureOffset           = 0x10,
     };
 };
 
@@ -58,12 +58,27 @@ public:
 
 public:
     typedef QHash<de::String, uint32_t> TextureIds;
-    typedef QHash<ID, uint32_t>         PlaneMapper;
+
+    struct Mapper : public QHash<ID, uint32_t>
+    {
+        uint32_t insert(ID id)
+        {
+            const auto found = constFind(id);
+            if (found == constEnd())
+            {
+                const uint32_t mapped = size();
+                QHash<ID, uint32_t>::insert(id, mapped);
+                return mapped;
+            }
+            return found.value();
+        }
+    };
 
     MapBuild(const Map &map, const TextureIds &textures);
     Buffer *build();
 
-    const PlaneMapper &planeMapper() const;
+    const Mapper &planeMapper() const;
+    const Mapper &texOffsetMapper() const;
 
 private:
     DENG2_PRIVATE(d)
