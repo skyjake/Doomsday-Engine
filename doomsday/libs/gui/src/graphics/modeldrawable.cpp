@@ -214,7 +214,7 @@ AttribSpec const ModelVertex::_spec[12] = {
     { AttribSpec::Normal,      3, GL_FLOAT, false, sizeof(ModelVertex), 15 * sizeof(float) },
     { AttribSpec::Tangent,     3, GL_FLOAT, false, sizeof(ModelVertex), 18 * sizeof(float) },
     { AttribSpec::Bitangent,   3, GL_FLOAT, false, sizeof(ModelVertex), 21 * sizeof(float) },
-    { AttribSpec::TexCoord0,   2, GL_FLOAT, false, sizeof(ModelVertex), 24 * sizeof(float) },
+    { AttribSpec::TexCoord,    2, GL_FLOAT, false, sizeof(ModelVertex), 24 * sizeof(float) },
     { AttribSpec::TexBounds0,  4, GL_FLOAT, false, sizeof(ModelVertex), 26 * sizeof(float) },
     { AttribSpec::TexBounds1,  4, GL_FLOAT, false, sizeof(ModelVertex), 30 * sizeof(float) },
     { AttribSpec::TexBounds2,  4, GL_FLOAT, false, sizeof(ModelVertex), 34 * sizeof(float) },

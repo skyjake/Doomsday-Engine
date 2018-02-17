@@ -55,7 +55,7 @@ DENG2_PIMPL(GLProgram)
     Uniforms    changed;
     UniformList textures;
     bool        texturesChanged;
-    int         attribLocation[AttribSpec::NUM_SEMANTICS]; ///< Where each attribute is bound.
+    int         attribLocation[AttribSpec::MaxSemantics]; ///< Where each attribute is bound.
 
     GLuint  name;
     Shaders shaders;
@@ -161,45 +161,13 @@ DENG2_PIMPL(GLProgram)
             link();
         }
 
-        static struct {
-            AttribSpec::Semantic semantic;
-            char const *varName;
-        }
-        const names[] = {
-            { AttribSpec::Position,       "aVertex"      },
-            { AttribSpec::TexCoord0,      "aUV"          },
-            { AttribSpec::TexCoord1,      "aUV2"         },
-            { AttribSpec::TexCoord2,      "aUV3"         },
-            { AttribSpec::TexCoord3,      "aUV4"         },
-            { AttribSpec::TexBounds0,     "aBounds"      },
-            { AttribSpec::TexBounds1,     "aBounds2"     },
-            { AttribSpec::TexBounds2,     "aBounds3"     },
-            { AttribSpec::TexBounds3,     "aBounds4"     },
-            { AttribSpec::Color,          "aColor"       },
-            { AttribSpec::Normal,         "aNormal"      },
-            { AttribSpec::Tangent,        "aTangent"     },
-            { AttribSpec::Bitangent,      "aBitangent"   },
-            { AttribSpec::BoneIDs,        "aBoneIDs"     },
-            { AttribSpec::BoneWeights,    "aBoneWeights" },
-            { AttribSpec::Index,          "aIndex"       },
-            { AttribSpec::Texture,        "aTexture"     },
-            { AttribSpec::Flags,          "aFlags"       },
-
-            { AttribSpec::InstanceMatrix, "aInstanceMatrix" }, // x4
-            { AttribSpec::InstanceColor,  "aInstanceColor"  }
-        };
-
-        // Clear the locations first.
-        for (uint i = 0; i < AttribSpec::NUM_SEMANTICS; ++i)
-        {
-            attribLocation[i] = -1; // not in use
-        }
+        auto &GL = LIBGUI_GL;
 
         // Look up where the attributes ended up being linked.
-        auto &GL = LIBGUI_GL;
-        for (uint i = 0; i < sizeof(names)/sizeof(names[0]); ++i)
+        for (uint i = 0; i < AttribSpec::MaxSemantics; ++i)
         {
-            attribLocation[names[i].semantic] = GL.glGetAttribLocation(name, names[i].varName);
+            char const *var = AttribSpec::semanticVariableName(AttribSpec::Semantic(i));
+            attribLocation[i] = GL.glGetAttribLocation(name, var);
         }
     }
 
@@ -519,7 +487,7 @@ bool GLProgram::glHasUniform(char const *uniformName) const
 int GLProgram::attributeLocation(AttribSpec::Semantic semantic) const
 {
     DENG2_ASSERT(semantic >= 0);
-    DENG2_ASSERT(semantic < AttribSpec::NUM_SEMANTICS);
+    DENG2_ASSERT(semantic < AttribSpec::MaxSemantics);
 
     return d->attribLocation[semantic];
 }

@@ -160,10 +160,10 @@ void Painter::flush()
 }
 
 AttribSpec const GuiVertex::_spec[] = {
-    { AttribSpec::Position,  2, GL_FLOAT, false, sizeof(GuiVertex), 0 },
-    { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(GuiVertex), 2 * sizeof(float) },
-    { AttribSpec::Color,     4, GL_FLOAT, false, sizeof(GuiVertex), 4 * sizeof(float) },
-    { AttribSpec::Index,     1, GL_FLOAT, false, sizeof(GuiVertex), 8 * sizeof(float) },
+    { AttribSpec::Position, 2, GL_FLOAT, false, sizeof(GuiVertex), 0 },
+    { AttribSpec::TexCoord, 2, GL_FLOAT, false, sizeof(GuiVertex), 2 * sizeof(float) },
+    { AttribSpec::Color,    4, GL_FLOAT, false, sizeof(GuiVertex), 4 * sizeof(float) },
+    { AttribSpec::Index,    1, GL_FLOAT, false, sizeof(GuiVertex), 8 * sizeof(float) },
 };
 LIBGUI_VERTEX_FORMAT_SPEC(GuiVertex, 9 * sizeof(float))
 

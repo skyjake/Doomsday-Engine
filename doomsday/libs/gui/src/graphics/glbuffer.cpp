@@ -35,7 +35,7 @@ using namespace gl;
 
 AttribSpec const Vertex2Tex::_spec[2] = {
     { AttribSpec::Position,  2, GL_FLOAT, false, sizeof(Vertex2Tex), 0 },
-    { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex2Tex), 2 * sizeof(float) }
+    { AttribSpec::TexCoord,  2, GL_FLOAT, false, sizeof(Vertex2Tex), 2 * sizeof(float) }
 };
 LIBGUI_VERTEX_FORMAT_SPEC(Vertex2Tex, 4 * sizeof(float))
 
@@ -47,7 +47,7 @@ LIBGUI_VERTEX_FORMAT_SPEC(Vertex2Rgba, 6 * sizeof(float))
 
 AttribSpec const Vertex2TexRgba::_spec[3] = {
     { AttribSpec::Position,  2, GL_FLOAT, false, sizeof(Vertex2TexRgba), 0 },
-    { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex2TexRgba), 2 * sizeof(float) },
+    { AttribSpec::TexCoord,  2, GL_FLOAT, false, sizeof(Vertex2TexRgba), 2 * sizeof(float) },
     { AttribSpec::Color,     4, GL_FLOAT, false, sizeof(Vertex2TexRgba), 4 * sizeof(float) }
 };
 LIBGUI_VERTEX_FORMAT_SPEC(Vertex2TexRgba, 8 * sizeof(float))
@@ -59,21 +59,21 @@ LIBGUI_VERTEX_FORMAT_SPEC(Vertex3, 3 * sizeof(float))
 
 AttribSpec const Vertex3Tex::_spec[2] = {
     { AttribSpec::Position,  3, GL_FLOAT, false, sizeof(Vertex3Tex), 0 },
-    { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex3Tex), 3 * sizeof(float) }
+    { AttribSpec::TexCoord,  2, GL_FLOAT, false, sizeof(Vertex3Tex), 3 * sizeof(float) }
 };
 LIBGUI_VERTEX_FORMAT_SPEC(Vertex3Tex, 5 * sizeof(float))
 
 AttribSpec const Vertex3TexRgba::_spec[3] = {
     { AttribSpec::Position,  3, GL_FLOAT, false, sizeof(Vertex3TexRgba), 0 },
-    { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex3TexRgba), 3 * sizeof(float) },
+    { AttribSpec::TexCoord,  2, GL_FLOAT, false, sizeof(Vertex3TexRgba), 3 * sizeof(float) },
     { AttribSpec::Color,     4, GL_FLOAT, false, sizeof(Vertex3TexRgba), 5 * sizeof(float) }
 };
 LIBGUI_VERTEX_FORMAT_SPEC(Vertex3TexRgba, 9 * sizeof(float))
 
 AttribSpec const Vertex3TexBoundsRgba::_spec[4] = {
     { AttribSpec::Position,   3, GL_FLOAT, false, sizeof(Vertex3TexBoundsRgba), 0 },
-    { AttribSpec::TexCoord0,  2, GL_FLOAT, false, sizeof(Vertex3TexBoundsRgba), 3 * sizeof(float) },
-    { AttribSpec::TexBounds0, 4, GL_FLOAT, false, sizeof(Vertex3TexBoundsRgba), 5 * sizeof(float) },
+    { AttribSpec::TexCoord,   2, GL_FLOAT, false, sizeof(Vertex3TexBoundsRgba), 3 * sizeof(float) },
+    { AttribSpec::TexBounds,  4, GL_FLOAT, false, sizeof(Vertex3TexBoundsRgba), 5 * sizeof(float) },
     { AttribSpec::Color,      4, GL_FLOAT, false, sizeof(Vertex3TexBoundsRgba), 9 * sizeof(float) }
 };
 LIBGUI_VERTEX_FORMAT_SPEC(Vertex3TexBoundsRgba, 13 * sizeof(float))
@@ -82,7 +82,7 @@ AttribSpec const Vertex3Tex2BoundsRgba::_spec[5] = {
     { AttribSpec::Position,   3, GL_FLOAT, false, sizeof(Vertex3Tex2BoundsRgba), 0 },
     { AttribSpec::TexCoord0,  2, GL_FLOAT, false, sizeof(Vertex3Tex2BoundsRgba), 3 * sizeof(float) },
     { AttribSpec::TexCoord1,  2, GL_FLOAT, false, sizeof(Vertex3Tex2BoundsRgba), 5 * sizeof(float) },
-    { AttribSpec::TexBounds0, 4, GL_FLOAT, false, sizeof(Vertex3Tex2BoundsRgba), 7 * sizeof(float) },
+    { AttribSpec::TexBounds,  4, GL_FLOAT, false, sizeof(Vertex3Tex2BoundsRgba), 7 * sizeof(float) },
     { AttribSpec::Color,      4, GL_FLOAT, false, sizeof(Vertex3Tex2BoundsRgba), 11 * sizeof(float) }
 };
 LIBGUI_VERTEX_FORMAT_SPEC(Vertex3Tex2BoundsRgba, 15 * sizeof(float))
@@ -107,7 +107,7 @@ LIBGUI_VERTEX_FORMAT_SPEC(Vertex3Tex3Rgba, 13 * sizeof(float))
 AttribSpec const Vertex3NormalTexRgba::_spec[4] = {
     { AttribSpec::Position,  3, GL_FLOAT, false, sizeof(Vertex3NormalTexRgba), 0 },
     { AttribSpec::Normal,    3, GL_FLOAT, false, sizeof(Vertex3NormalTexRgba), 3 * sizeof(float) },
-    { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex3NormalTexRgba), 6 * sizeof(float) },
+    { AttribSpec::TexCoord,  2, GL_FLOAT, false, sizeof(Vertex3NormalTexRgba), 6 * sizeof(float) },
     { AttribSpec::Color,     4, GL_FLOAT, false, sizeof(Vertex3NormalTexRgba), 8 * sizeof(float) }
 };
 LIBGUI_VERTEX_FORMAT_SPEC(Vertex3NormalTexRgba, 12 * sizeof(float))
@@ -117,7 +117,7 @@ AttribSpec const Vertex3NormalTangentTex::_spec[5] = {
     { AttribSpec::Normal,    3, GL_FLOAT, false, sizeof(Vertex3NormalTangentTex), 3 * sizeof(float) },
     { AttribSpec::Tangent,   3, GL_FLOAT, false, sizeof(Vertex3NormalTangentTex), 6 * sizeof(float) },
     { AttribSpec::Bitangent, 3, GL_FLOAT, false, sizeof(Vertex3NormalTangentTex), 9 * sizeof(float) },
-    { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex3NormalTangentTex), 12 * sizeof(float) }
+    { AttribSpec::TexCoord,  2, GL_FLOAT, false, sizeof(Vertex3NormalTangentTex), 12 * sizeof(float) }
 };
 LIBGUI_VERTEX_FORMAT_SPEC(Vertex3NormalTangentTex, 14 * sizeof(float))
 

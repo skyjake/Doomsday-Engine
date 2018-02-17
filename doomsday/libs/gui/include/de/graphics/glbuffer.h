@@ -39,10 +39,12 @@ namespace internal
     {
         enum Semantic {
             Position,
+            TexCoord,
             TexCoord0,
             TexCoord1,
             TexCoord2,
             TexCoord3,
+            TexBounds,
             TexBounds0,
             TexBounds1,
             TexBounds2,
@@ -53,21 +55,71 @@ namespace internal
             Bitangent,
             BoneIDs,
             BoneWeights,
-            InstanceMatrix,     // x4
+            InstanceMatrix, // x4
             InstanceColor,
             Index,
+            Index0,
+            Index1,
+            Index2,
+            Index3,
             Texture,
+            Texture0,
+            Texture1,
+            Texture2,
+            Texture3,
             Flags,
 
-            NUM_SEMANTICS
+            MaxSemantics
         };
 
+        /**
+         * Returns the name of the attribute variable that matches a semantic.
+         * @param semantic  Attribute data semantic.
+         * @return Variable name.
+         */
+        static inline char const *semanticVariableName(Semantic semantic) {
+            switch (semantic) {
+                case Position:       return "aVertex";
+                case TexCoord:       return "aUV";
+                case TexCoord0:      return "aUV0";
+                case TexCoord1:      return "aUV1";
+                case TexCoord2:      return "aUV2";
+                case TexCoord3:      return "aUV3";
+                case TexBounds:      return "aBounds";
+                case TexBounds0:     return "aBounds0";
+                case TexBounds1:     return "aBounds1";
+                case TexBounds2:     return "aBounds2";
+                case TexBounds3:     return "aBounds3";
+                case Color:          return "aColor";
+                case Normal:         return "aNormal";
+                case Tangent:        return "aTangent";
+                case Bitangent:      return "aBitangent";
+                case BoneIDs:        return "aBoneIDs";
+                case BoneWeights:    return "aBoneWeights";
+                case InstanceMatrix: return "aInstanceMatrix"; // x4
+                case InstanceColor:  return "aInstanceColor";
+                case Index:          return "aIndex";
+                case Index0:         return "aIndex0";
+                case Index1:         return "aIndex1";
+                case Index2:         return "aIndex2";
+                case Index3:         return "aIndex3";
+                case Texture:        return "aTexture";
+                case Texture0:       return "aTexture0";
+                case Texture1:       return "aTexture1";
+                case Texture2:       return "aTexture2";
+                case Texture3:       return "aTexture3";
+                case Flags:          return "aFlags";
+                default:             break;
+            }
+            return "";
+        }
+
         Semantic semantic;
-        dint size;              ///< Number of components in an element.
-        GLenum type;            ///< Data type.
-        bool normalized;        ///< Whether to normalize non-floats to [0.f, 1.f].
-        dsize stride;           ///< Number of bytes between elements.
-        duint startOffset;      ///< Offset in bytes from the start of the buffer.
+        dint     size;        ///< Number of components in an element.
+        GLenum   type;        ///< Data type.
+        bool     normalized;  ///< Whether to normalize non-floats to [0.f, 1.f].
+        dsize    stride;      ///< Number of bytes between elements.
+        duint    startOffset; ///< Offset in bytes from the start of the buffer.
     };
 
     typedef std::pair<AttribSpec const *, dsize> AttribSpecs;

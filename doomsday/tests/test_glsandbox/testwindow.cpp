@@ -261,7 +261,7 @@ DENG2_OBSERVES(Bank, Load)
                         "in highp vec4 aVertex;\n"
                         "in highp vec3 aNormal;\n"
                         "in highp vec2 aUV;\n"
-                        "in highp vec4 aBounds;\n"
+                        "in highp vec4 aBounds0;\n"
                         "in highp vec4 aColor;\n"
                         "in highp vec4 aBoneIDs;\n"
                         "in highp vec4 aBoneWeights;\n"
@@ -278,7 +278,7 @@ DENG2_OBSERVES(Bank, Load)
                         "    uBoneMatrices[int(aBoneIDs.w + 0.5)] * aBoneWeights.w;\n"
                         "  highp vec4 modelPos = bone * aVertex;\n"
                         "  gl_Position = uMvpMatrix * modelPos;\n"
-                        "  vUV = aBounds.xy + aUV * aBounds.zw;\n"
+                        "  vUV = aBounds0.xy + aUV * aBounds0.zw;\n"
                         "  vColor = aColor;\n"
                         "  vNormal = (bone * vec4(aNormal, 0.0)).xyz;\n"
                         "}\n"),
