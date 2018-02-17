@@ -4,7 +4,7 @@ uniform mat4        uMvpMatrix;
 uniform sampler2D   uPlanes;
 
 DENG_ATTRIB vec4    aVertex;
-DENG_ATTRIB vec2    aUV;
+DENG_ATTRIB vec3    aUV;
 DENG_ATTRIB vec3    aNormal;
 DENG_ATTRIB float   aTexture0; // front texture
 DENG_ATTRIB float   aTexture1; // back texture
@@ -26,17 +26,18 @@ float fetchPlaneY(uint planeIndex) {
 void main(void) {
     vFlags = floatBitsToUint(aFlags);
 
-    float geoDeltaY;
+    //float geoDeltaY;
     vec4 vertex = aVertex;
 
     /* Check for a plane offset. */ {
         float planeY = fetchPlaneY(floatBitsToUint(aIndex0));
-        geoDeltaY = planeY - vertex.y;
+        //geoDeltaY = planeY - vertex.y;
         vertex.y = planeY;
     }
     gl_Position = uMvpMatrix * vertex;
 
-    vUV = aUV;
+    vUV = aUV.xy;
+    float wallLength = aUV.z;
 
     // Choose the side.
     float botPlaneY = fetchPlaneY(floatBitsToUint(aIndex1));
@@ -56,7 +57,7 @@ void main(void) {
         vUV += aVertex.xz;
     }
     if (!isFrontSide) {
-        vUV.s = -vUV.s;
+        vUV.s = wallLength - vUV.s;        
     }
     if (testFlag(vFlags, Surface_FlipTexCoordY)) {
         vUV.t = -vUV.t;

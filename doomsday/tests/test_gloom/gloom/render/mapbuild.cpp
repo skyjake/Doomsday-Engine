@@ -30,15 +30,15 @@ internal::AttribSpec const MapVertex::_spec[9] =
 {
     { internal::AttribSpec::Position, 3, GL_FLOAT, false, sizeof(MapVertex),  0     },
     { internal::AttribSpec::Normal,   3, GL_FLOAT, false, sizeof(MapVertex),  3 * 4 },
-    { internal::AttribSpec::TexCoord, 2, GL_FLOAT, false, sizeof(MapVertex),  6 * 4 },
-    { internal::AttribSpec::Texture0, 1, GL_FLOAT, false, sizeof(MapVertex),  8 * 4 },
-    { internal::AttribSpec::Texture1, 1, GL_FLOAT, false, sizeof(MapVertex),  9 * 4 },
-    { internal::AttribSpec::Index0,   1, GL_FLOAT, false, sizeof(MapVertex), 10 * 4 },
-    { internal::AttribSpec::Index1,   1, GL_FLOAT, false, sizeof(MapVertex), 11 * 4 },
-    { internal::AttribSpec::Index2,   1, GL_FLOAT, false, sizeof(MapVertex), 12 * 4 },
-    { internal::AttribSpec::Flags,    1, GL_FLOAT, false, sizeof(MapVertex), 13 * 4 },
+    { internal::AttribSpec::TexCoord, 3, GL_FLOAT, false, sizeof(MapVertex),  6 * 4 },
+    { internal::AttribSpec::Texture0, 1, GL_FLOAT, false, sizeof(MapVertex),  9 * 4 },
+    { internal::AttribSpec::Texture1, 1, GL_FLOAT, false, sizeof(MapVertex), 10 * 4 },
+    { internal::AttribSpec::Index0,   1, GL_FLOAT, false, sizeof(MapVertex), 11 * 4 },
+    { internal::AttribSpec::Index1,   1, GL_FLOAT, false, sizeof(MapVertex), 12 * 4 },
+    { internal::AttribSpec::Index2,   1, GL_FLOAT, false, sizeof(MapVertex), 13 * 4 },
+    { internal::AttribSpec::Flags,    1, GL_FLOAT, false, sizeof(MapVertex), 14 * 4 },
 };
-LIBGUI_VERTEX_FORMAT_SPEC(MapVertex, 14 * 4)
+LIBGUI_VERTEX_FORMAT_SPEC(MapVertex, 15 * 4)
 
 DENG2_PIMPL_NOREF(MapBuild)
 {
@@ -195,22 +195,22 @@ DENG2_PIMPL_NOREF(MapBuild)
                     v.texPlane[1] = planeIndex[1];
 
                     v.pos      = p1;
-                    v.texCoord = Vector2f(0, 0);
+                    v.texCoord = Vector3f(0, 0, length);
                     v.geoPlane = planeIndex[0];
                     verts << v;
 
                     v.pos      = p2;
-                    v.texCoord = Vector2f(length, 0);
+                    v.texCoord = Vector3f(length, 0, length);
                     v.geoPlane = planeIndex[0];
                     verts << v;
 
                     v.pos      = p3;
-                    v.texCoord = Vector2f(0, 0);
+                    v.texCoord = Vector3f(0, 0, length);
                     v.geoPlane = planeIndex[1];
                     verts << v;
 
                     v.pos      = p4;
-                    v.texCoord = Vector2f(length, 0);
+                    v.texCoord = Vector3f(length, 0, length);
                     v.geoPlane = planeIndex[1];
                     verts << v;
                 };

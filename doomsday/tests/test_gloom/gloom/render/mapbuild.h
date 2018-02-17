@@ -34,7 +34,7 @@ struct MapVertex
 {
     de::Vector3f pos;
     de::Vector3f normal;
-    de::Vector2f texCoord;
+    de::Vector3f texCoord;
     uint32_t texture[2];
     uint32_t geoPlane;
     uint32_t texPlane[2];
