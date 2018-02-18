@@ -47,15 +47,16 @@ public:
     DENG2_ERROR(ConfigError);
 
     enum Flag {
-        Color0  = 0x001, ///< Target has a color attachment.
-        Color1  = 0x002,
-        Color2  = 0x004,
-        Color3  = 0x008,
-        Depth   = 0x100, ///< Target has a depth attachment.
-        Stencil = 0x200, ///< Target has a stencil attachment.
+        Color0   = 0x001, ///< Target has a color attachment.
+        Color1   = 0x002,
+        Color2   = 0x004,
+        Color3   = 0x008,
+        Depth    = 0x100, ///< Target has a depth attachment.
+        Stencil  = 0x200, ///< Target has a stencil attachment.
 
         Changed = 0x1000, ///< Draw/clear has occurred on the target.
 
+        ColorAny          = Color0 | Color1 | Color2 | Color3,
         ColorDepth        = Color0 | Depth,
         ColorDepthStencil = Color0 | Depth | Stencil,
         ColorStencil      = Color0 | Stencil,

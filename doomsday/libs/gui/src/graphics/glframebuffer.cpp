@@ -186,6 +186,16 @@ DENG2_OBSERVES(Asset, Deletion)
         return MAX_ATTACHMENTS;
     }
 
+    int colorAttachmentCount() const
+    {
+        int count = 0;
+        for (int i = 0; i < 4; ++i)
+        {
+            if (flags & (Color0 << i)) count++;
+        }
+        return count;
+    }
+
     GLTexture *bufferTexture(Flags flags) const
     {
         auto attachId = flagsToAttachmentId(flags);
@@ -635,6 +645,18 @@ void GLFramebuffer::glBind() const
 
     LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     LIBGUI_ASSERT_GL_OK();
+
+    if (d->fbo)
+    {
+        static const GLenum drawBufs[4] = {
+            GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3
+        };
+        glDrawBuffers(d->colorAttachmentCount(), drawBufs);
+    }
+    else
+    {
+        LIBGUI_GL.glDrawBuffer(GL_BACK);
+    }
 }
 
 void GLFramebuffer::glRelease() const
@@ -738,23 +760,33 @@ void GLFramebuffer::releaseAttachment(Flags attachment)
 void GLFramebuffer::blit(GLFramebuffer &dest, Flags attachments, gl::Filter filtering) const
 {
     LIBGUI_ASSERT_GL_OK();
+    auto &GL = LIBGUI_GL;
 
-    LIBGUI_GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dest.glName());
+    GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dest.glName());
     LIBGUI_ASSERT_GL_OK();
 
 #if defined (DENG_HAVE_BLIT_FRAMEBUFFER)
 
-    LIBGUI_GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, glName());
+    GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, glName());
     LIBGUI_ASSERT_GL_OK();
+
+    if (attachments & ColorAny)
+    {
+        GL.glReadBuffer(attachments & Color0? GL_COLOR_ATTACHMENT0
+                      : attachments & Color1? GL_COLOR_ATTACHMENT1
+                      : attachments & Color2? GL_COLOR_ATTACHMENT2
+                      : attachments & Color3? GL_COLOR_ATTACHMENT3
+                      : GL_COLOR_ATTACHMENT0);
+    }
 
     Flags common = d->flags & dest.flags() & attachments;
 
-    LIBGUI_GL.glBlitFramebuffer(
+    GL.glBlitFramebuffer(
                 0, 0, size().x, size().y,
                 0, 0, dest.size().x, dest.size().y,
-                (common.testFlag(Color0)?  GL_COLOR_BUFFER_BIT   : 0) |
-                (common.testFlag(Depth)?   GL_DEPTH_BUFFER_BIT   : 0) |
-                (common.testFlag(Stencil)? GL_STENCIL_BUFFER_BIT : 0),
+                (common & ColorAny? GL_COLOR_BUFFER_BIT   : 0) |
+                (common & Depth?    GL_DEPTH_BUFFER_BIT   : 0) |
+                (common & Stencil?  GL_STENCIL_BUFFER_BIT : 0),
                 filtering == gl::Nearest? GL_NEAREST : GL_LINEAR);
     LIBGUI_ASSERT_GL_OK();
 
