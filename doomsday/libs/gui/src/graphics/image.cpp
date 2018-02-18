@@ -990,7 +990,8 @@ bool Image::recognize(File const &file)
 {
     String const ext = file.extension().toLower();
     return (ext == ".tga"  || ext == ".pcx" || ext == ".png"  || ext == ".jpg" ||
-            ext == ".jpeg" || ext == ".gif" || ext == ".tiff" || ext == ".ico");
+            ext == ".jpeg" || ext == ".gif" || ext == ".tiff" || ext == ".ico" ||
+            ext == ".bmp");
 }
 
 } // namespace de

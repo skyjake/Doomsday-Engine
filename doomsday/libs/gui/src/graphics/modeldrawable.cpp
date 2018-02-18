@@ -1401,7 +1401,9 @@ DENG2_PIMPL(ModelDrawable)
 
         preDraw(animation);
         setDrawProgram(program);
+        drawProgram->beginUse();
         glData.materials.at(0)->buffer->drawInstanced(attribs);
+        drawProgram->endUse();
         postDraw();
     }
 

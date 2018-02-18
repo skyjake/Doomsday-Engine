@@ -560,7 +560,15 @@ void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint 
 {
 #if defined (DENG_HAVE_INSTANCES)
 
-    if (!isReady() || !instanceAttribs.isReady() || !GLProgram::programInUse()) return;
+    if (!isReady() || !instanceAttribs.isReady() || !GLProgram::programInUse())
+    {
+#if defined (DENG2_DEBUG)
+        qDebug() << "[GLBuffer] isReady:" << isReady()
+                 << "instAttr isReady:" << instanceAttribs.isReady()
+                 << "progInUse:" << GLProgram::programInUse();
+#endif
+        return;
+    }
 
     // Mark the current target changed.
     GLState::current().target().markAsChanged();
