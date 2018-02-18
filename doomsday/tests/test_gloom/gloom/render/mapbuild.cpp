@@ -126,7 +126,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                         f.pos = floor[pointID];
                         c.pos = ceiling[pointID];
 
-                        f.texCoord = Vector4f(0, 0, 0, 45); // fixed offset
+                        f.texCoord = Vector4f(0, 0, 0, 0); // fixed offset
                         c.texCoord = Vector4f(0, 0, 0, 0); // fixed offset
 
                         pointIndices.insert(pointID, Buffer::Index(verts.size()));
@@ -231,7 +231,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                                  ceiling[start],
                                  ceiling[end],
                                  length,
-                                 lineId * 5);
+                                 0);
                     }
                     else if (dir)
                     {
@@ -253,7 +253,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                                  backPlaneVerts.front()[start],
                                  backPlaneVerts.front()[end],
                                  length,
-                                 lineId * 5);
+                                 0);
                         makeQuad("world.test",
                                  "world.test2",
                                  normal,
@@ -264,7 +264,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                                  ceiling[start],
                                  ceiling[end],
                                  length,
-                                 lineId * 5);
+                                 0);
                     }
                 }
             }

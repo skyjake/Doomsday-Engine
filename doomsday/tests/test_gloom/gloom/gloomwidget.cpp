@@ -56,22 +56,12 @@ DENG_GUI_PIMPL(GloomWidget)
     {
         modelView = Matrix4f::rotate(user.pitch(), Vector3f(1, 0, 0)) *
                     Matrix4f::rotate(user.yaw(),   Vector3f(0, 1, 0)) *
-                    //Matrix4f::rotate(180,          Vector3f(0, 0, 1)) *
                     Matrix4f::translate(-user.position());
     }
 
     Matrix4f viewMatrix() const
     {
-//        OculusRift &ovr = GloomApp::vr().oculusRift();
-
-//        Vector3f neck = Vector3f(0, .35f, -.4f) * 2;
-
-//        Matrix4f neckOff =
-//                Matrix4f::translate(neck) *
-//                Matrix4f::rotate(radianToDegree(ovr.headOrientation().x)/6, Vector3f(1, 0, 0)) *
-//                Matrix4f::translate(-neck);
-
-        return /*neckOff * ovr.eyePose() * */ modelView;
+        return modelView;
     }
 
     void glDeinit()
