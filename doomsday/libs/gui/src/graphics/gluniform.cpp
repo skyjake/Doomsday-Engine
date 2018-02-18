@@ -581,7 +581,7 @@ void GLUniform::applyInProgram(GLProgram &program) const
         // Uniform not in the program.
         LOG_AS("applyInProgram");
         LOGDEV_GL_WARNING("'%s' not in the program") << d->name.constData();
-        DENG2_ASSERT("[GLUniform] Attempted to apply a uniform that is not in the shader program"!=0);
+        DENG2_ASSERT_FAIL("[GLUniform] Attempted to apply a uniform that is not in the shader program");
         return;
     }
 

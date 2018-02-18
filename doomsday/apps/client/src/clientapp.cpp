@@ -270,7 +270,7 @@ DENG2_PIMPL(ClientApp)
         catch (Error const &er)
         {
             qWarning() << "Exception during ~ClientApp:" << er.asText();
-            DENG2_ASSERT("Unclean shutdown: exception in ~ClientApp"!=0);
+            DENG2_ASSERT_FAIL("Unclean shutdown: exception in ~ClientApp");
         }
 
 #if defined (DENG_HAVE_UPDATER)

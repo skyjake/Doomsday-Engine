@@ -584,7 +584,7 @@ void GLInfo::checkError(char const *file, int line)
             LogBuffer_Flush();
             qWarning("%s:%i: OpenGL error: 0x%x (%s)", file, line, error,
                      LIBGUI_GL_ERROR_STR(error));
-            LIBGUI_ASSERT_GL(0!="OpenGL operation failed");
+            DENG2_ASSERT_FAIL("OpenGL operation failed");
         }
     }
     while (error != GL_NO_ERROR);

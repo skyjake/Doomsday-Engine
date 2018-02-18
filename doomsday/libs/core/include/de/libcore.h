@@ -180,6 +180,8 @@
 #  define DENG2_DEBUG_ONLY(x)
 #endif
 
+#define DENG2_ASSERT_FAIL(msgCStr)  DENG2_ASSERT(msgCStr != 0)
+
 #ifdef DENG2_USE_QT
 #  ifdef UNIX
 #    include <execinfo.h>
