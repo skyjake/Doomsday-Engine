@@ -333,10 +333,10 @@ using namespace internal;
 
 DENG2_PIMPL(Image)
 {
-    Format format;
-    Size size;
-    QImage image;
-    Block pixels;
+    Format       format;
+    Size         size;
+    QImage       image;
+    Block        pixels;
     ByteRefArray refPixels;
     float pointRatio = 1.f;
 
@@ -423,48 +423,43 @@ int Image::depth() const
 {
     switch (d->format)
     {
-    case UseQImageFormat:
-        return d->image.depth();
+    case UseQImageFormat: return d->image.depth();
 
     case Luminance_8:
-    case Alpha_8:
-        return 8;
+    case Alpha_8: return 8;
 
     case LuminanceAlpha_88:
     case RGB_565:
     case RGBA_4444:
-    case RGBA_5551:
-        return 16;
+    case RGBA_5551: return 16;
 
-    case RGB_888:
-        return 24;
+    case RGB_888: return 24;
 
     case RGBA_8888:
-    case RGBx_8888:
-        return 32;
+    case RGBx_8888: return 32;
+
+    case R_16f:    return 16;
+    case RG_16f:   return 32;
+    case RGB_16f:  return 48;
+    case RGBA_16f: return 64;
 
     case R_32f:
     case R_32i:
-    case R_32ui:
-        return 32;
+    case R_32ui: return 32;
 
     case RG_32f:
     case RG_32i:
-    case RG_32ui:
-        return 64;
+    case RG_32ui: return 64;
 
     case RGB_32f:
     case RGB_32i:
-    case RGB_32ui:
-        return 96;
+    case RGB_32ui: return 96;
 
     case RGBA_32f:
     case RGBA_32i:
-    case RGBA_32ui:
-        return 128;
+    case RGBA_32ui: return 128;
 
-    default:
-        return 0;
+    default: return 0;
     }
 }
 
@@ -820,6 +815,18 @@ GLPixelFormat Image::glFormat(Format imageFormat)
     default:
     case RGBx_8888:
         return GLPixelFormat(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, 4);
+
+    case R_16f:
+        return GLPixelFormat(GL_R16F, GL_RED, GL_FLOAT, 2);
+
+    case RG_16f:
+        return GLPixelFormat(GL_RG16F, GL_RG, GL_FLOAT, 4);
+
+    case RGB_16f:
+        return GLPixelFormat(GL_RGB16F, GL_RGB, GL_FLOAT, 2);
+
+    case RGBA_16f:
+        return GLPixelFormat(GL_RGBA16F, GL_RGBA, GL_FLOAT, 4);
 
     case R_32f:
         return GLPixelFormat(GL_R32F, GL_RED, GL_FLOAT, 4);
