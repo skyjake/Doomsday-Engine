@@ -1,4 +1,4 @@
-/** @file gloomworld.h
+/** @file gbuffer.h
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,40 +16,29 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOMWORLD_H
-#define GLOOMWORLD_H
+#ifndef GLOOM_GBUFFER_H
+#define GLOOM_GBUFFER_H
 
-#include "../gloom/icamera.h"
-#include "../gloom/world/user.h"
-#include "../gloom/world/world.h"
+#include <de/GLFramebuffer>
+#include <de/GLTexture>
 
 namespace gloom {
 
-class Map;
-
-class GloomWorld : public World
+/**
+ * G-buffer used for rendering.
+ */
+class GBuffer
 {
 public:
-    GloomWorld();
-
-    void setLocalUser(User *user);
-    void setMap(const Map &map);
+    GBuffer();
 
     void glInit();
     void glDeinit();
-    void update(de::TimeSpan const &elapsed);
-    void render(ICamera const &camera);
+    void resize(const de::Vector2ui &size);
+    void clear();
+    void blit();
 
-    User *     localUser() const;
-    POI        initialViewPosition() const;
-    QList<POI> pointsOfInterest() const;
-
-    /**
-     * Determines the height of the ground at a given world coordinates.
-     */
-    float groundSurfaceHeight(de::Vector3f const &pos) const;
-
-    float ceilingHeight(de::Vector3f const &pos) const;
+    de::GLFramebuffer &framebuf();
 
 private:
     DENG2_PRIVATE(d)
@@ -57,4 +46,4 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOMWORLD_H
+#endif // GLOOM_GBUFFER_H

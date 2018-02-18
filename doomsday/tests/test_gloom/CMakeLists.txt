@@ -38,6 +38,8 @@ set (SOURCES
     gloom/render/databuffer.h
     gloom/render/entityrender.cpp
     gloom/render/entityrender.h
+    gloom/render/gbuffer.cpp
+    gloom/render/gbuffer.h
     gloom/render/mapbuild.cpp
     gloom/render/mapbuild.h
     gloom/render/maprender.cpp

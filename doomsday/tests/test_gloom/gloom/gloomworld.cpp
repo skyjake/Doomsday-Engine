@@ -19,12 +19,13 @@
 #include "gloomworld.h"
 #include "ilight.h"
 #include "audio/audiosystem.h"
-#include "render/skybox.h"
+#include "render/gbuffer.h"
 #include "render/maprender.h"
+#include "render/skybox.h"
 #include "world/entitymap.h"
 #include "world/environment.h"
-#include "world/user.h"
 #include "world/map.h"
+#include "world/user.h"
 #include "../src/gloomapp.h"
 
 #include <de/Drawable>
@@ -42,9 +43,8 @@ namespace gloom {
 DENG2_PIMPL(GloomWorld), public ILight
 , DENG2_OBSERVES(User, Warp)
 {
-    User *localUser = nullptr;
-//    HeightMap height;
-//    HeightField land;
+    User *            localUser = nullptr;
+    GBuffer           gbuffer;
     SkyBox            sky;
     Environment       environ;
     QHash<ID, double> initialPlaneY;
@@ -53,20 +53,13 @@ DENG2_PIMPL(GloomWorld), public ILight
 
     float visibleDistance;
     double currentTime{0};
-//    Vector2f mapSize;
-//    float heightRange;
-
-//    typedef GLBufferT<Vertex3Tex2BoundsRgba> SkyVBuf;
 
     std::unique_ptr<AtlasTexture> atlas;
     GLUniform uModelProj { "uViewProjMatrix",   GLUniform::Mat4 };
     GLUniform uViewPos   { "uViewPos",          GLUniform::Vec3 };
     GLUniform uFog       { "uFog",              GLUniform::Vec4 };
     GLUniform uLightDir  { "uLightDir",         GLUniform::Vec3 };
-//    ModelDrawable trees[NUM_MODELS];
     GLUniform uTex       { "uTex",              GLUniform::Sampler2D };
-//    Id heightMap;
-//    Id normalMap;
 
     Impl(Public *i)
         : Base(i)
@@ -76,7 +69,7 @@ DENG2_PIMPL(GloomWorld), public ILight
     {
         atlas.reset(AtlasTexture::newWithKdTreeAllocator(
                         Atlas::BackingStore | Atlas::WrapBordersInBackingStore,
-                        Atlas::Size(4096 + 64, 8192 /*4096 + 64*/)));
+                        Atlas::Size(4096 + 64, /*8192*/ 4096 + 64)));
         atlas->setMarginSize(0);
 #if 1
         atlas->setMaxLevel(4);
@@ -113,6 +106,8 @@ DENG2_PIMPL(GloomWorld), public ILight
         //loadTextures();
         //loadModels();
 
+        gbuffer.glInit();
+
         sky.setAtlas(*atlas);
         sky.setSize(visibleDistance);
         sky.glInit();
@@ -129,7 +124,7 @@ DENG2_PIMPL(GloomWorld), public ILight
     {
         sky.glDeinit();
         mapRender.glDeinit();
-
+        gbuffer.glDeinit();
         atlas->clear();
 
         localUser->audienceForWarp -= this;
@@ -306,7 +301,11 @@ void GloomWorld::render(ICamera const &camera)
 {
     //DENG2_ASSERT(d->modelProgram.isReady());
 
+    d->gbuffer.resize(GLState::current().target().size());
+    d->gbuffer.clear();
+
     GLState::push()
+            .setTarget(d->gbuffer.framebuf())
             .setCull(gl::Back)
             .setDepthTest(true);
 
@@ -322,6 +321,8 @@ void GloomWorld::render(ICamera const &camera)
 //    d->drawEntities(camera);
 
     GLState::pop();
+
+    d->gbuffer.blit();
 }
 
 User *GloomWorld::localUser() const
@@ -349,13 +350,6 @@ float GloomWorld::groundSurfaceHeight(Vector3f const &pos) const
     }
     return 0;
 }
-
-//float GloomWorld::groundSurfaceHeight(Vector2f const &worldMapPos) const
-//{
-//    //DENG2_UNUSED(worldMapPos);
-//    //return d->height.heightAtPosition(worldMapPos);
-//    return 0;
-//}
 
 float GloomWorld::ceilingHeight(Vector3f const &) const
 {
