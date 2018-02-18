@@ -28,12 +28,16 @@ set (SOURCES
     gloom/audio/audiosystem.h
     gloom/icamera.h
     gloom/ilight.h
+    gloom/ident.h
     gloom/geomath.cpp
     gloom/geomath.h
     gloom/gloomwidget.cpp
     gloom/gloomwidget.h
     gloom/gloomworld.cpp
     gloom/gloomworld.h
+    gloom/render/databuffer.h
+    gloom/render/entityrender.cpp
+    gloom/render/entityrender.h
     gloom/render/mapbuild.cpp
     gloom/render/mapbuild.h
     gloom/render/maprender.cpp
@@ -42,6 +46,10 @@ set (SOURCES
     gloom/render/polygon.h
     gloom/render/skybox.cpp
     gloom/render/skybox.h
+    gloom/world/entity.cpp
+    gloom/world/entity.h
+    gloom/world/entitymap.cpp
+    gloom/world/entitymap.h
     gloom/world/environment.cpp
     gloom/world/environment.h
     gloom/world/map.cpp

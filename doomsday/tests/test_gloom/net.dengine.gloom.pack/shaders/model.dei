@@ -1,0 +1,60 @@
+shader gloom.entity {
+    # include.vertex <includes/fog.glsl>
+    vertex = "
+        uniform mat4 uMvpMatrix;
+        uniform mat4 uBoneMatrices[64];
+        //uniform vec4 uFog; // RGB, max.distance
+        //uniform vec3 uViewPos; // eye in world
+
+        DENG_ATTRIB mat4 aInstanceMatrix;
+        DENG_ATTRIB vec4 aInstanceColor;
+
+        DENG_ATTRIB vec4 aVertex;
+        DENG_ATTRIB vec3 aNormal;
+        DENG_ATTRIB vec2 aUV;
+        DENG_ATTRIB vec4 aBounds0;
+        DENG_ATTRIB vec4 aBoneIDs;
+        DENG_ATTRIB vec4 aBoneWeights;
+
+        DENG_VAR vec2 vUV;
+        DENG_VAR vec4 vInstanceColor;
+        //DENG_VAR vec4 vFogColor;
+        DENG_VAR vec3 vNormal;
+
+        void main(void) {
+            mat4 bone =
+                uBoneMatrices[int(aBoneIDs.x + 0.5)] * aBoneWeights.x +
+                uBoneMatrices[int(aBoneIDs.y + 0.5)] * aBoneWeights.y +
+                uBoneMatrices[int(aBoneIDs.z + 0.5)] * aBoneWeights.z +
+                uBoneMatrices[int(aBoneIDs.w + 0.5)] * aBoneWeights.w;
+            vec4 modelPos = bone * aVertex;
+            gl_Position = uMvpMatrix * (aInstanceMatrix * modelPos);
+            vUV = aBounds0.xy + aUV * aBounds0.zw;
+            vInstanceColor = aInstanceColor;
+            //vFogColor = fogColor((aInstanceMatrix * modelPos).xyz, uViewPos, uFog);
+            vNormal = (aInstanceMatrix * bone * vec4(aNormal, 0.0)).xyz;
+        }"
+
+    #include.fragment <includes/fog.glsl,
+    #                  includes/lightmodel.glsl>
+    fragment = "
+        uniform sampler2D uTex;
+        //uniform vec4 uFog; // RGB, max.distance
+        //uniform vec3 uLightDir;
+        //uniform vec4 uColor;
+
+        DENG_VAR vec2 vUV;
+        DENG_VAR vec4 vInstanceColor;
+        //DENG_VAR vec4 vFogColor;
+        DENG_VAR vec3 vNormal;
+
+        void main(void) {
+            vec4 color = texture(uTex, vUV);
+            if (color.a < 0.5) discard;
+
+            //color.rgb *= sunLightFactor(normalize(vNormal), uLightDir, uFog);
+
+            //gl_FragColor = mixFog(color, vFogColor) * vInstanceColor;
+            out_FragColor = color * vInstanceColor;
+        }"
+}

@@ -1,88 +1,99 @@
+/** @file entitymap.cpp
+ *
+ * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
+ */
+
 #include "entitymap.h"
 
 using namespace de;
 
+namespace gloom {
+
 DENG2_PIMPL(EntityMap)
 {
-    Vector2f mapSize;
-    float blockSize;
-
-    struct Block
-    {
-        QList<Entity *> entities; // owned
-
-        Block()
-        {}
-
-        ~Block()
-        {
-            qDeleteAll(entities);
-        }
+    struct Block {
+        QList<const Entity *> entities; // owned
     };
     typedef QList<Block *> Blocks;
-    Blocks blocks;
-    Vector2i size;
 
-    Instance(Public *i) : Base(i), blockSize(64)
+    Rectangled mapBounds;
+    float      blockSize;
+    Blocks     blocks;
+    Vector2i   size;
+
+    Impl(Public *i) : Base(i), blockSize(32)
     {}
 
     void clear()
     {
-        qDeleteAll(blocks);
         blocks.clear();
     }
 
-    void initForSize(Vector2f const &sizeInMeters)
+    void initForSize(const Rectangled &boundsInMeters)
     {
         clear();
 
-        mapSize = sizeInMeters;
-        size.x = ceil(mapSize.x / blockSize);
-        size.y = ceil(mapSize.y / blockSize);
+        mapBounds = boundsInMeters;
+        size.x = int(std::ceil(mapBounds.width() / blockSize));
+        size.y = int(std::ceil(mapBounds.height() / blockSize));
 
-        qDebug() << "Total blocks:" << size.x * size.y;
-        for(int i = 0; i < size.x * size.y; ++i)
+        qDebug() << "Total blocks:" << size.area();
+        for (int i = 0; i < size.area(); ++i)
+        {
             blocks << 0;
+        }
     }
 
-    Vector2i blockCoord(Vector2f const &pos) const
+    Vector2i blockCoord(const Vector2f &pos) const
     {
-        return Vector2i(clamp(0.f, (pos.x + mapSize.x/2) / blockSize, size.x - 1.f),
-                        clamp(0.f, (pos.y + mapSize.y/2) / blockSize, size.y - 1.f));
+        return Vector2i(int(clamp(0.0, (pos.x + mapBounds.width()/2)  / blockSize, size.x - 1.0)),
+                        int(clamp(0.0, (pos.y + mapBounds.height()/2) / blockSize, size.y - 1.0)));
     }
 
-    int blockIndex(Vector2f const &pos) const
+    int blockIndex(const Vector2f &pos) const
     {
         Vector2i coord = blockCoord(pos);
         return coord.x + coord.y * size.x;
     }
 
-    Block &block(Vector2f const &pos)
+    Block &block(const Vector2f &pos)
     {
         int idx = blockIndex(pos);
-        if(!blocks[idx])
+        if (!blocks[idx])
         {
             blocks[idx] = new Block;
         }
         return *blocks[idx];
     }
 
-    Block const *block(Vector2f const &pos) const
+    const Block *block(const Vector2f &pos) const
     {
         return blocks.at(blockIndex(pos));
     }
 
-    Block const *blockAtCoord(Vector2i const &blockPos) const
+    const Block *blockAtCoord(const Vector2i &blockPos) const
     {
-        int idx = blockPos.x + blockPos.y * size.x;
-        if(idx < 0 || idx >= blocks.size()) return 0;
+        const int idx = blockPos.x + blockPos.y * size.x;
+        if (idx < 0 || idx >= blocks.size()) return 0;
         return blocks.at(idx);
     }
 
-    void insert(Entity *entity)
+    void insert(const Entity &entity)
     {
-        Block &bk = block(entity->position().xz());
-        bk.entities.append(entity);
+        block(entity.position().xz()).entities.append(&entity);
     }
 
     /*
@@ -116,36 +127,39 @@ DENG2_PIMPL(EntityMap)
     }*/
 };
 
-EntityMap::EntityMap() : d(new Instance(this))
+EntityMap::EntityMap() : d(new Impl(this))
 {}
 
-void EntityMap::setSize(Vector2f const &size)
+void EntityMap::clear()
 {
-    d->initForSize(size);
+    d->clear();
 }
 
-void EntityMap::insert(Entity *entity)
+void EntityMap::setBounds(const Rectangled &bounds)
+{
+    d->initForSize(bounds);
+}
+
+void EntityMap::insert(const Entity &entity)
 {
     d->insert(entity);
 }
 
-QList<Entity const *> EntityMap::listRegionBackToFront(const Vector3f &pos, float radius) const
+EntityMap::EntityList EntityMap::listRegionBackToFront(const Vector3f &pos, float radius) const
 {
     Vector2i min = d->blockCoord(pos.xz() - Vector2f(radius, radius));
     Vector2i max = d->blockCoord(pos.xz() + Vector2f(radius, radius));
 
-    QList<Entity const *> found;
-
-    for(int y = min.y; y <= max.y; ++y)
+    EntityList found;
+    for (int y = min.y; y <= max.y; ++y)
     {
-        for(int x = min.x; x <= max.x; ++x)
+        for (int x = min.x; x <= max.x; ++x)
         {
-            Instance::Block const *bk = d->blockAtCoord(Vector2i(x, y));
-            if(bk)
+            if (const auto *bk = d->blockAtCoord(Vector2i(x, y)))
             {
-                foreach(Entity const *e, bk->entities)
+                foreach (Entity const *e, bk->entities)
                 {
-                    if((e->position() - pos).length() < radius)
+                    if ((e->position() - pos).length() < radius)
                     {
                         found << e;
                     }
@@ -155,7 +169,7 @@ QList<Entity const *> EntityMap::listRegionBackToFront(const Vector3f &pos, floa
     }
 
     // Sort by distance to the center.
-    qSort(found.begin(), found.end(), [&] (Entity const *a, Entity const *b) {
+    qSort(found.begin(), found.end(), [&pos] (const Entity *a, const Entity *b) {
         return (a->position() - pos).lengthSquared() >
                (b->position() - pos).lengthSquared();
     });
@@ -163,11 +177,15 @@ QList<Entity const *> EntityMap::listRegionBackToFront(const Vector3f &pos, floa
     return found;
 }
 
-void EntityMap::iterateRegion(Vector3f const &pos, float radius, Callback const &callback) const
+void EntityMap::iterateRegion(const Vector3f &                    pos,
+                              float                               radius,
+                              std::function<void(const Entity &)> callback) const
 {
     // Do the callback for each.
-    foreach(Entity const *e, listRegionBackToFront(pos, radius))
+    foreach (Entity const *e, listRegionBackToFront(pos, radius))
     {
         callback(*e);
     }
 }
+
+} // namespace gloom

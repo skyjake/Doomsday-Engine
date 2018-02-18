@@ -18,6 +18,8 @@
 
 #include "maprender.h"
 #include "mapbuild.h"
+#include "databuffer.h"
+#include "entityrender.h"
 #include "../icamera.h"
 #include "../../src/gloomapp.h"
 
@@ -27,69 +29,6 @@
 using namespace de;
 
 namespace gloom {
-
-template <typename Type>
-struct DataBuffer
-{
-    GLUniform var;
-    GLTexture buf;
-    Vector2ui size;
-    QVector<Type> data;
-    Image::Format format;
-    uint texelsPerElement; // number of pixels needed to represent one element
-    uint maxWidth;
-
-    DataBuffer(const char *uName, Image::Format format, uint texelsPerElement = 1, uint maxWidth = 0)
-        : var{uName, GLUniform::Sampler2D}
-        , format(format)
-        , texelsPerElement(texelsPerElement)
-        , maxWidth(maxWidth)
-    {
-        buf.setAutoGenMips(false);
-        buf.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
-        var = buf;
-    }
-
-    void init(int count)
-    {
-        size.x = de::max(4u, uint(std::sqrt(count) + 0.5));
-        if (maxWidth) size.x = de::min(maxWidth, size.x);
-        size.y = de::max(4u, uint((count + size.x - 1) / size.x));
-        data.resize(size.area());
-        data.fill(Type{});
-    }
-
-    void clear()
-    {
-        buf.clear();
-        data.clear();
-        size = Vector2ui();
-    }
-
-    void setData(uint index, const Type &value)
-    {
-        const int x = index % size.x;
-        const int y = index / size.x;
-        data[x + y*size.x] = value;
-    }
-
-    uint32_t append(const Type &value)
-    {
-        DENG2_ASSERT(maxWidth > 0);
-        size.x = maxWidth;
-        size.y++;
-        const uint32_t oldSize = data.size();
-        data << value;
-        return oldSize;
-    }
-
-    void update()
-    {
-        buf.setImage(Image{Image::Size(size.x * texelsPerElement, size.y),
-                           format,
-                           ByteRefArray(data.constData(), sizeof(data[0]) * size.area())});
-    }
-};
 
 DENG2_PIMPL(MapRender)
 {
@@ -117,18 +56,20 @@ DENG2_PIMPL(MapRender)
     };
     DataBuffer<TexOffsetData> texOffsets{"uTexOffsets", Image::RGBA_32f};
 
-    Drawable  mapDrawable;
     GLUniform uMvpMatrix        {"uMvpMatrix",      GLUniform::Mat4};
     GLUniform uTex              {"uTex",            GLUniform::Sampler2D};
     GLUniform uCurrentTime      {"uCurrentTime",    GLUniform::Float};
     GLUniform uTexelsPerMeter   {"uTexelsPerMeter", GLUniform::Float};
+    Drawable  drawable;
+
+    EntityRender ents;
 
     Impl(Public *i) : Base(i)
     {}
 
     void clear()
     {
-        mapDrawable.clear();
+        drawable.clear();
     }
 
     void loadTexture(const String &name)
@@ -157,7 +98,7 @@ DENG2_PIMPL(MapRender)
 
     void buildMap()
     {
-        mapDrawable.clear();
+        drawable.clear();
 
         DENG2_ASSERT(map);
 
@@ -180,48 +121,36 @@ DENG2_PIMPL(MapRender)
             }
         }
 
-        mapDrawable.addBuffer(buf);
+        drawable.addBuffer(buf);
 
-        GloomApp::shaders().build(mapDrawable.program(), "gloom.surface")
+        GloomApp::shaders().build(drawable.program(), "gloom.surface")
             << uMvpMatrix << uCurrentTime << uTexelsPerMeter << uTex << textureMetrics.var
             << planes.var << texOffsets.var;
     }
 
     void glInit()
     {
-        //uColor = Vector4f(1, 1, 1, 1);
+        ents.setAtlas(atlas);
+        ents.setMap(map);
+        ents.glInit();
 
         uTexelsPerMeter = 200;
 
         // Load some textures.
+        for (const char *name :
+             {"world.stone", "world.dirt", "world.grass", "world.test", "world.test2"})
         {
-
-    //        height.loadGrayscale(images.image("world.heightmap"));
-    //        height.setMapSize(mapSize, heightRange);
-    //        heightMap = atlas->alloc(height.toImage());
-    //        normalMap = atlas->alloc(height.makeNormalMap());
-
-            loadTexture("world.stone");
-            loadTexture("world.dirt");
-            loadTexture("world.grass");
-            loadTexture("world.test");
-            loadTexture("world.test2");
-
-//            textures.insert("world.stone", atlas->alloc(images.image("world.stone")));
-    //        Id grass = atlas->alloc(images.image("world.grass"));
-//            textures.insert("world.dirt", atlas->alloc(images.image("world.dirt")));
-        //        land.setMaterial(HeightField::Stone, atlas->imageRectf(stone));
-        //        land.setMaterial(HeightField::Grass, atlas->imageRectf(grass));
-        //        land.setMaterial(HeightField::Dirt,  atlas->imageRectf(dirt));
-
-            updateTextureMetrics();
+            loadTexture(name);
         }
+        updateTextureMetrics();
 
         buildMap();
+        ents.createEntities();
     }
 
     void glDeinit()
     {
+        ents.glDeinit();
         for (const Id &texId : loadedTextures)
         {
             atlas->release(texId);
@@ -263,6 +192,7 @@ void MapRender::glDeinit()
 void MapRender::rebuild()
 {
     d->buildMap();
+    d->ents.createEntities();
 }
 
 void MapRender::advanceTime(const TimeSpan &elapsed)
@@ -303,7 +233,9 @@ void MapRender::render(const ICamera &camera)
     d->texOffsets.update();
 
     d->uMvpMatrix = camera.cameraModelViewProjection();
-    d->mapDrawable.draw();
+    d->drawable.draw();
+
+    d->ents.render(camera);
 }
 
 } // namespace gloom

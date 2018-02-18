@@ -1,0 +1,202 @@
+/** @file entityrender.cpp
+ *
+ * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
+ */
+
+#include "entityrender.h"
+#include "../world/map.h"
+#include "../icamera.h"
+#include "../../src/gloomapp.h"
+
+#include <de/PackageLoader>
+#include <de/ModelDrawable>
+#include <de/GLProgram>
+
+using namespace de;
+
+namespace gloom {
+
+struct InstanceData {
+    Matrix4f matrix;
+    Vector4f color;
+    LIBGUI_DECLARE_VERTEX_FORMAT(2)
+};
+internal::AttribSpec const InstanceData::_spec[2] = {
+    { internal::AttribSpec::InstanceMatrix, 16, GL_FLOAT, false, sizeof(InstanceData), 0 },
+    { internal::AttribSpec::InstanceColor,  4,  GL_FLOAT, false, sizeof(InstanceData), 16 * sizeof(float) }
+};
+LIBGUI_VERTEX_FORMAT_SPEC(InstanceData, 20 * sizeof(float))
+
+DENG2_PIMPL(EntityRender)
+{
+    const Map    *map = nullptr;
+    AtlasTexture *atlas;
+    EntityMap     ents;
+    ModelDrawable entityModels[3];
+    GLProgram     modelProgram;
+    GLUniform     uMvpMatrix{"uMvpMatrix", GLUniform::Mat4};
+    GLUniform     uTex      {"uTex",       GLUniform::Sampler2D};
+
+    Impl(Public *i)
+        : Base(i)
+    {}
+
+    void init()
+    {
+        loadModels();
+        for (auto &model : entityModels)
+        {
+            model.glInit();
+        }
+    }
+
+    void deinit()
+    {
+        for (auto &model : entityModels)
+        {
+            model.glDeinit();
+        }
+    }
+
+    void loadModels()
+    {
+        auto const &pkg = PackageLoader::get().package("net.dengine.gloom");
+
+        const char *filenames[] = {
+            "models/tree1/t2.3ds",
+            "models/tree2/t3.3ds",
+            "models/tree3/t4.3ds",
+        };
+
+        int idx = 0;
+        for (auto &model : entityModels)
+        {
+            model.load(pkg.root().locate<File>(filenames[idx]));
+            model.setAtlas(*atlas);
+            model.setProgram(&modelProgram);
+            idx++;
+        }
+
+        GloomApp::shaders().build(modelProgram, "gloom.entity") << uMvpMatrix << uTex;
+    }
+
+    void create()
+    {
+        DENG2_ASSERT(map);
+
+        ents.clear();
+        ents.setBounds(map->bounds());
+
+        // Create entities for all objects defined in the map.
+        for (auto i = map->entities().begin(), end = map->entities().end(); i != end; ++i)
+        {
+            ents.insert(*i.value());
+        }
+    }
+
+    typedef GLBufferT<InstanceData> InstanceBuf;
+
+    void render(const ICamera &camera)
+    {
+        uMvpMatrix = camera.cameraModelViewProjection();
+
+        float fullDist = 500;
+        const auto entities = ents.listRegionBackToFront(camera.cameraPosition(), fullDist);
+
+        InstanceBuf ibuf;
+
+        // Draw all model types.
+        int entType = Entity::Tree1;
+        for (const auto &model : entityModels)
+        {
+            InstanceBuf::Builder data;
+
+            // Set up the instance buffer.
+            foreach (const Entity *e, entities)
+            {
+                if (e->type() != entType) continue;
+
+                float dims = model.dimensions().z * e->scale().y;
+
+                float maxDist = min(fullDist, dims * 10);
+                float fadeItv = .333f * maxDist;
+                float distance = float((e->position() - camera.cameraPosition()).length());
+
+                if (distance < maxDist)
+                {
+                    InstanceBuf::Type inst{
+                        Matrix4f::translate(e->position()) *
+                            Matrix4f::rotate(e->angle(), Vector3f(0, -1, 0)) *
+                            Matrix4f::rotate(-90, Vector3f(1, 0, 0)) *
+                            Matrix4f::scale(e->scale() * 0.1f),
+                        Vector4f(1, 1, 1,
+                                 clamp(0.f, 1.f - (distance - maxDist + fadeItv) / fadeItv, 1.f))};
+                    data << inst;
+                }
+            }
+
+            if (!data.isEmpty())
+            {
+                ibuf.setVertices(data, gl::Dynamic);
+                model.drawInstanced(ibuf);
+            }
+
+            entType++;
+        }
+    }
+};
+
+EntityRender::EntityRender()
+    : d(new Impl(this))
+{}
+
+void EntityRender::setAtlas(AtlasTexture *atlas)
+{
+    d->atlas = atlas;
+    d->uTex  = *atlas;
+}
+
+void EntityRender::glInit()
+{
+    d->init();
+}
+
+void EntityRender::glDeinit()
+{
+    d->deinit();
+}
+
+void EntityRender::createEntities()
+{
+    d->create();
+}
+
+EntityMap &EntityRender::entityMap()
+{
+    return d->ents;
+}
+
+void EntityRender::setMap(const Map *map)
+{
+    d->map = map;
+}
+
+void EntityRender::render(const ICamera &camera)
+{
+    d->render(camera);
+}
+
+} // namespace gloom

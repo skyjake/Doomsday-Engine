@@ -48,6 +48,7 @@ DENG2_PIMPL(Editor)
         EditPoints,
         EditLines,
         EditSectors,
+        EditEntities,
     };
     enum UserAction {
         None,
@@ -70,9 +71,10 @@ DENG2_PIMPL(Editor)
     QFont      metaFont;
     QRectF     selectRect;
     QSet<ID>   selection;
-    ID         hoverPoint = 0;
-    ID         hoverLine = 0;
+    ID         hoverPoint  = 0;
+    ID         hoverLine   = 0;
     ID         hoverSector = 0;
+    ID         hoverEntity = 0;
 
     float    viewScale = 10;
     Vector2f viewOrigin;
@@ -132,10 +134,11 @@ DENG2_PIMPL(Editor)
 
     String modeText() const
     {
-        const char *modeStr[3] = {
+        const char *modeStr[4] = {
             "Points",
             "Lines",
             "Sectors",
+            "Entities",
         };
         return modeStr[mode];
     }
@@ -165,9 +168,11 @@ DENG2_PIMPL(Editor)
         }
         String text = String("%1 (%2%3) %4")
                 .arg(modeText())
-                .arg(mode == EditPoints  ? map.points() .size()
-                   : mode == EditLines   ? map.lines()  .size()
-                   : mode == EditSectors ? map.sectors().size() : 0)
+                .arg(mode == EditPoints   ? map.points()  .size()
+                   : mode == EditLines    ? map.lines()   .size()
+                   : mode == EditSectors  ? map.sectors() .size()
+                   : mode == EditEntities ? map.entities().size()
+                   : 0)
                 .arg(selText)
                 .arg(actionText());
         if (hoverPoint)
@@ -177,6 +182,10 @@ DENG2_PIMPL(Editor)
         if (hoverLine)
         {
             text += String(" [Line:%1]").arg(hoverLine, 0, 16);
+        }
+        if (hoverEntity)
+        {
+            text += String(" [Entity:%1]").arg(hoverEntity, 0, 16);
         }
         return text;
     }
@@ -362,6 +371,13 @@ DENG2_PIMPL(Editor)
                 selection.insert(id);
             }
             break;
+
+        case EditEntities:
+            for (auto id : map.entities().keys())
+            {
+                selection.insert(id);
+            }
+            break;
         }
         self().update();
     }
@@ -411,6 +427,14 @@ DENG2_PIMPL(Editor)
                 selection.insert(secId);
             }*/
             break;
+
+        case EditEntities:
+            pushUndo();
+            std::shared_ptr<Entity> ent(new Entity);
+            Vector3d pos = worldMousePos();
+            ent->setPosition(Vector3d(pos.x, 0, pos.y));
+            ent->setId(map.append(map.entities(), ent));
+            break;
         }
         self().update();
     }
@@ -447,6 +471,15 @@ DENG2_PIMPL(Editor)
                 hoverSector = 0;
             }
             break;
+
+        case EditEntities:
+            if (hoverEntity)
+            {
+                pushUndo();
+                map.entities().remove(hoverEntity);
+                hoverEntity = 0;
+            }
+            break;
         }
         selection.clear();
         map.removeInvalid();
@@ -466,8 +499,8 @@ DENG2_PIMPL(Editor)
             {
                 // Connect to this point.
                 Line newLine;
-                newLine.points[0] = prevPoint;
-                newLine.points[1] = *selection.begin();
+                newLine.points[0]  = prevPoint;
+                newLine.points[1]  = *selection.begin();
                 newLine.sectors[0] = newLine.sectors[1] = 0;
                 if (newLine.points[0] != newLine.points[1])
                 {
@@ -638,10 +671,7 @@ DENG2_PIMPL(Editor)
 
     ID findLineAt(const Vector2d &pos, double maxDistance = -1) const
     {
-        if (maxDistance < 0)
-        {
-            maxDistance = defaultClickDistance();
-        }
+        if (maxDistance < 0) maxDistance = defaultClickDistance();
 
         ID id = 0;
         double dist = maxDistance;
@@ -669,6 +699,25 @@ DENG2_PIMPL(Editor)
             }
         }
         return 0;
+    }
+
+    ID findEntityAt(const Vector2d &pos, double maxDistance = -1) const
+    {
+        if (maxDistance < 0) maxDistance = defaultClickDistance();
+
+        ID id = 0;
+        double dist = maxDistance;
+        for (auto i = map.entities().begin(), end = map.entities().end(); i != end; ++i)
+        {
+            const auto &ent = i.value();
+            double d = (ent->position().xz() - pos).length();
+            if (d < dist)
+            {
+                id = i.key();
+                dist = d;
+            }
+        }
+        return id;
     }
 
     void selectOrUnselect(ID id)
@@ -718,6 +767,13 @@ DENG2_PIMPL(Editor)
                 selectOrUnselect(hoverSector);
             }
             break;
+
+        case EditEntities:
+            if (hoverEntity)
+            {
+                selectOrUnselect(hoverEntity);
+            }
+            break;
         }
     }
 
@@ -754,6 +810,7 @@ Editor::Editor()
     addKeyAction("Ctrl+1",          [this]() { d->setMode(Impl::EditPoints); });
     addKeyAction("Ctrl+2",          [this]() { d->setMode(Impl::EditLines); });
     addKeyAction("Ctrl+3",          [this]() { d->setMode(Impl::EditSectors); });
+    addKeyAction("Ctrl+4",          [this]() { d->setMode(Impl::EditEntities); });
     addKeyAction("Ctrl+A",          [this]() { d->userSelectAll(); });
     addKeyAction("Ctrl+Shift+A",    [this]() { d->userSelectNone(); });
     addKeyAction("Ctrl+D",          [this]() { d->userAdd(); });
@@ -786,17 +843,19 @@ void Editor::paintEvent(QPaintEvent *)
     QFontMetrics fontMetrics(font());
     QFontMetrics metaMetrics(d->metaFont);
 
-    const Points & mapPoints  = d->map.points();
-    const Planes & mapPlanes  = d->map.planes();
-    const Lines &  mapLines   = d->map.lines();
-    const Sectors &mapSectors = d->map.sectors();
-    const Volumes &mapVolumes = d->map.volumes();
+    const Points &  mapPoints  = d->map.points();
+    const Planes &  mapPlanes  = d->map.planes();
+    const Lines &   mapLines   = d->map.lines();
+    const Sectors & mapSectors = d->map.sectors();
+    const Volumes & mapVolumes = d->map.volumes();
+    const Entities &mapEnts    = d->map.entities();
 
     const int lineHgt = fontMetrics.height();
-    const int gap = 6;
+    const int gap     = 6;
 
-    const QColor panelBg = (d->mode == Impl::EditPoints? QColor(0, 0, 0, 128)
-                          : d->mode == Impl::EditLines?  QColor(0, 20, 90, 160)
+    const QColor panelBg = (d->mode == Impl::EditPoints?   QColor(0, 0, 0, 128)
+                          : d->mode == Impl::EditLines?    QColor(0, 20, 90, 160)
+                          : d->mode == Impl::EditEntities? QColor(140, 10, 0, 160)
                           : QColor(255, 160, 0, 192));
     const QColor selectColor(64, 92, 255);
     const QColor selectColorAlpha(selectColor.red(), selectColor.green(), selectColor.blue(), 150);
@@ -946,6 +1005,21 @@ void Editor::paintEvent(QPaintEvent *)
         }
     }
 
+    // Entities.
+    {
+        ptr.setPen(Qt::black);
+
+        for (auto i = mapEnts.begin(), end = mapEnts.end(); i != end; ++i)
+        {
+            const auto &  ent = i.value();
+            const QPointF pos = d->worldToView(ent->position().xz());
+
+            float radius = 0.5f * d->viewScale;
+            ptr.setBrush(d->selection.contains(i.key())? selectColor : QColor(Qt::white));
+            ptr.drawEllipse(pos, radius, radius);
+        }
+    }
+
     // Status bar.
     {
         const int statusHgt = lineHgt + 2*gap;
@@ -1010,6 +1084,7 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
         d->hoverPoint = d->findPointAt(pos);
         d->hoverLine  = d->findLineAt(pos);
         d->hoverSector = (d->mode == Impl::EditSectors? d->findSectorAt(pos) : 0);
+        d->hoverEntity = d->findEntityAt(pos);
     }
 
     // Begin a drag action.
@@ -1059,16 +1134,21 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
         break;
 
     case Impl::Move: {
-        if (d->mode == Impl::EditPoints)
+        if (d->mode == Impl::EditPoints || d->mode == Impl::EditEntities)
         {
             QPoint delta = event->pos() - d->actionPos;
             d->actionPos = event->pos();
+            const Vector2d worldDelta = Vector2d(delta.x(), delta.y()) / d->viewScale;
             for (auto id : d->selection)
             {
-                if (d->map.points().contains(id))
+                if (d->mode == Impl::EditPoints && d->map.points().contains(id))
                 {
-                    Vector2d worldDelta = Vector2d(delta.x(), delta.y()) / d->viewScale;
                     d->map.point(id) += worldDelta;
+                }
+                else if (d->mode == Impl::EditEntities && d->map.entities().contains(id))
+                {
+                    auto &ent = d->map.entity(id);
+                    ent.setPosition(ent.position() + Vector3d(worldDelta.x, 0, worldDelta.y));
                 }
             }
         }

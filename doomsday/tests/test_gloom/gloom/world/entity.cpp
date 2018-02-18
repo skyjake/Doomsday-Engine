@@ -1,29 +1,55 @@
+/** @file entity.h
+ *
+ * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
+ */
+
 #include "entity.h"
 
 using namespace de;
 
+namespace gloom {
+
 DENG2_PIMPL_NOREF(Entity)
 {
-    Type type;
-    Vector3f pos;
-    float angle;
-    Vector3f scale;
+    ID       id;
+    Type     type{Tree1};
+    Vector3d pos;
+    float    angle{0};
+    Vector3f scale{1, 1, 1};
 
-    Instance()
+    Impl()
         : type(Tree1)
         , angle(0)
     {}
 };
 
-Entity::Entity() : d(new Instance)
+Entity::Entity() : d(new Impl)
 {}
 
-void Entity::setType(Entity::Type t)
+void Entity::setId(ID id)
+{
+    d->id = id;
+}
+
+void Entity::setType(Type t)
 {
     d->type = t;
 }
 
-void Entity::setPosition(Vector3f const &pos)
+void Entity::setPosition(Vector3d const &pos)
 {
     d->pos = pos;
 }
@@ -43,12 +69,17 @@ void Entity::setAngle(float yawDegrees)
     d->angle = yawDegrees;
 }
 
+ID Entity::id() const
+{
+    return d->id;
+}
+
 Entity::Type Entity::type() const
 {
     return d->type;
 }
 
-Vector3f Entity::position() const
+Vector3d Entity::position() const
 {
     return d->pos;
 }
@@ -62,3 +93,5 @@ float Entity::angle() const
 {
     return d->angle;
 }
+
+} // namespace gloom

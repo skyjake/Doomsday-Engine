@@ -16,19 +16,24 @@
  * http://www.gnu.org/licenses</small>
  */
 
-//#include "gloomapp.h"
 #include "gloomworld.h"
 #include "ilight.h"
 #include "audio/audiosystem.h"
 #include "render/skybox.h"
 #include "render/maprender.h"
+#include "world/entitymap.h"
 #include "world/environment.h"
 #include "world/user.h"
 #include "world/map.h"
+#include "../src/gloomapp.h"
 
-#include <de/TextureBank>
 #include <de/Drawable>
+#include <de/File>
+#include <de/Folder>
+#include <de/PackageLoader>
 #include <de/GLState>
+#include <de/ModelDrawable>
+#include <de/TextureBank>
 
 using namespace de;
 
@@ -41,7 +46,6 @@ DENG2_PIMPL(GloomWorld), public ILight
 //    HeightMap height;
 //    HeightField land;
     SkyBox sky;
-//    EntityMap ents;
     Environment environ;
     Map map;
     MapRender mapRender;
@@ -50,10 +54,9 @@ DENG2_PIMPL(GloomWorld), public ILight
 //    Vector2f mapSize;
 //    float heightRange;
 
-    typedef GLBufferT<Vertex3Tex2BoundsRgba> SkyVBuf;
+//    typedef GLBufferT<Vertex3Tex2BoundsRgba> SkyVBuf;
 
     std::unique_ptr<AtlasTexture> atlas;
-//    GLProgram modelProgram;
     GLUniform uModelProj { "uViewProjMatrix",   GLUniform::Mat4 };
     GLUniform uViewPos   { "uViewPos",          GLUniform::Vec3 };
     GLUniform uFog       { "uFog",              GLUniform::Vec4 };
@@ -84,8 +87,8 @@ DENG2_PIMPL(GloomWorld), public ILight
         environ.setWorld(thisPublic);
     }
 
-    void loadTextures()
-    {
+    //void loadTextures()
+    //{
 //        const ImageBank &images = GloomApp::images();
 
 //        height.loadGrayscale(images.image("world.heightmap"));
@@ -99,35 +102,14 @@ DENG2_PIMPL(GloomWorld), public ILight
 //        land.setMaterial(HeightField::Stone, atlas->imageRectf(stone));
 //        land.setMaterial(HeightField::Grass, atlas->imageRectf(grass));
 //        land.setMaterial(HeightField::Dirt,  atlas->imageRectf(dirt));
-    }
-
-//    void loadModels()
-//    {
-//        auto const &pkg = App::packageLoader().package("com.nokia.vrsense");
-//        trees[0].load(pkg.root().locate<File>("data/models/tree1/t2.3ds"));
-//        trees[1].load(pkg.root().locate<File>("data/models/tree2/t3.3ds"));
-//        trees[2].load(pkg.root().locate<File>("data/models/tree3/t4.3ds"));
-
-//        for(int i = 0; i < NUM_MODELS; ++i)
-//        {
-//            trees[i].setAtlas(*atlas);
-//            trees[i].setProgram(modelProgram);
-//        }
-
-//        VRSenseApp::shaders().build(modelProgram, "vrsense.model")
-//                << uModelProj
-//                << uTex
-//                << uViewPos
-//                << uFog
-//                << uLightDir;
 //    }
 
     void glInit()
     {
         DENG2_ASSERT(localUser);
 
-        loadTextures();
-//        loadModels();
+        //loadTextures();
+        //loadModels();
 
         sky.setAtlas(*atlas);
         sky.setSize(visibleDistance);
@@ -137,21 +119,11 @@ DENG2_PIMPL(GloomWorld), public ILight
         mapRender.setAtlas(*atlas);
         mapRender.glInit();
 
-//        land.glInit();
-//        land.setCamera(VRSenseApp::camera());
-//        land.setAtlas(*atlas);
-//        land.setHeightMap(atlas->imageRectf(heightMap));
-//        land.setNormalMap(atlas->imageRectf(normalMap));
-//        land.setVisibleDistance(visibleDistance);
-//        land.setMapSize(mapSize, heightRange);
-//        land.setFogColor(fogColor);
-//        land.setLight(this);
-
         Vector3f const fogColor{.83f, .89f, 1.f};
         uFog = Vector4f(fogColor, visibleDistance);
 
         // Entities.
-//        ents.setSize(mapSize);
+        //ents.setSize(mapSize);
 //        generateEntities();
     }
 

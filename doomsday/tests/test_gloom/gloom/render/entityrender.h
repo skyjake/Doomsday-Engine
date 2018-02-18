@@ -1,4 +1,4 @@
-/** @file entity.h
+/** @file entityrender.h
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,34 +16,32 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_ENTITY_H
-#define GLOOM_ENTITY_H
+#ifndef GLOOM_ENTITIES_H
+#define GLOOM_ENTITIES_H
 
-#include <de/Vector>
-#include "../ident.h"
+#include "../world/entitymap.h"
+
+#include <de/AtlasTexture>
 
 namespace gloom {
 
-class Entity
+class ICamera;
+class Map;
+
+class EntityRender
 {
 public:
-    enum Type { None = 0, Tree1, Tree2, Tree3 };
+    EntityRender();
 
-public:
-    Entity();
+    EntityMap &entityMap();
 
-    void setId(ID id);
-    void setType(Type t);
-    void setPosition(de::Vector3d const &pos);
-    void setScale(float scale);
-    void setScale(de::Vector3f const &scale);
-    void setAngle(float yawDegrees);
+    void setMap(const Map *map);
+    void setAtlas(de::AtlasTexture *atlas);
+    void glInit();
+    void glDeinit();
+    void render(const ICamera &camera);
 
-    ID           id() const;
-    Type         type() const;
-    de::Vector3d position() const;
-    de::Vector3f scale() const;
-    float        angle() const;
+    void createEntities();
 
 private:
     DENG2_PRIVATE(d)
@@ -51,4 +49,4 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_ENTITY_H
+#endif // GLOOM_ENTITIES_H

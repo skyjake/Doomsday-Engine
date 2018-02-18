@@ -19,16 +19,17 @@
 #ifndef GLOOM_MAP_H
 #define GLOOM_MAP_H
 
+#include <de/Rectangle>
 #include <de/Vector>
 #include <QHash>
 #include <unordered_map>
+#include "entity.h"
+#include "../ident.h"
 #include "../geomath.h"
 #include "../render/polygon.h"
 
 namespace gloom {
 
-typedef uint32_t     ID;
-typedef QList<ID>    IDList;
 typedef de::Vector2d Point;
 
 struct Line
@@ -45,6 +46,7 @@ struct Line
     bool isOneSided() const { return !sectors[Front] || !sectors[Back]; }
     bool isTwoSided() const { return sectors[Front] && sectors[Back]; }
 };
+
 struct Plane
 {
     de::Vector3d point;
@@ -52,10 +54,12 @@ struct Plane
 
     de::Vector3d projectPoint(const Point &point) const;
 };
+
 struct Volume
 {
     ID planes[2];
 };
+
 struct Sector
 {
     IDList points;  // polygon, clockwise winding
@@ -65,6 +69,7 @@ struct Sector
 
     void replaceLine(ID oldId, ID newId);
 };
+
 struct Edge
 {
     ID         line;
@@ -95,6 +100,7 @@ typedef QHash<ID, Line>   Lines;
 typedef QHash<ID, Plane>  Planes;
 typedef QHash<ID, Sector> Sectors;
 typedef QHash<ID, Volume> Volumes;
+typedef QHash<ID, std::shared_ptr<Entity>> Entities;
 
 /**
  * Describes a map of polygon-based sectors.
@@ -119,42 +125,47 @@ public:
         return id;
     }
 
-    Points & points();
-    Lines &  lines();
-    Planes & planes();
-    Sectors &sectors();
-    Volumes &volumes();
+    Points &  points();
+    Lines &   lines();
+    Planes &  planes();
+    Sectors & sectors();
+    Volumes & volumes();
+    Entities &entities();
 
-    const Points & points() const;
-    const Lines &  lines() const;
-    const Planes & planes() const;
-    const Sectors &sectors() const;
-    const Volumes &volumes() const;
+    const Points &  points() const;
+    const Lines &   lines() const;
+    const Planes &  planes() const;
+    const Sectors & sectors() const;
+    const Volumes & volumes() const;
+    const Entities &entities() const;
 
     Point & point(ID id);
     Line &  line(ID id);
     Plane & plane(ID id);
     Sector &sector(ID id);
     Volume &volume(ID id);
+    Entity &entity(ID id);
 
     const Point & point(ID id) const;
     const Line &  line(ID id) const;
     const Plane & plane(ID id) const;
     const Sector &sector(ID id) const;
     const Volume &volume(ID id) const;
+    const Entity &entity(ID id) const;
 
-    bool         isLine(ID id) const;
-    void         forLinesAscendingDistance(const Point &pos, std::function<bool(ID)>) const;
-    IDList       findLines(ID pointId) const;
-    IDList       findLinesStartingFrom(ID pointId, Line::Side side) const;
-    geo::Line2d  geoLine(ID lineId) const;
-    geo::Line2d  geoLine(Edge ef) const;
-    geo::Polygon sectorPolygon(ID sectorId) const;
-    geo::Polygon sectorPolygon(const Sector &sector) const;
-    ID           floorPlaneId(ID sectorId) const;
-    ID           ceilingPlaneId(ID sectorId) const;
-    const Plane &floorPlane(ID sectorId) const;
-    const Plane &ceilingPlane(ID sectorId) const;
+    de::Rectangled bounds() const;
+    bool           isLine(ID id) const;
+    void           forLinesAscendingDistance(const Point &pos, std::function<bool(ID)>) const;
+    IDList         findLines(ID pointId) const;
+    IDList         findLinesStartingFrom(ID pointId, Line::Side side) const;
+    geo::Line2d    geoLine(ID lineId) const;
+    geo::Line2d    geoLine(Edge ef) const;
+    geo::Polygon   sectorPolygon(ID sectorId) const;
+    geo::Polygon   sectorPolygon(const Sector &sector) const;
+    ID             floorPlaneId(ID sectorId) const;
+    ID             ceilingPlaneId(ID sectorId) const;
+    const Plane &  floorPlane(ID sectorId) const;
+    const Plane &  ceilingPlane(ID sectorId) const;
 
     using WorldVerts      = QHash<ID, de::Vector3f>;
     using WorldPlaneVerts = QList<WorldVerts>; // one set per plane

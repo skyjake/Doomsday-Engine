@@ -32,12 +32,13 @@ namespace gloom {
 
 DENG2_PIMPL(Map)
 {
-    ID      idGen{0};
-    Points  points;
-    Lines   lines;
-    Planes  planes;
-    Sectors sectors;
-    Volumes volumes;
+    ID       idGen{0};
+    Points   points;
+    Lines    lines;
+    Planes   planes;
+    Sectors  sectors;
+    Volumes  volumes;
+    Entities entities;
 
     Impl(Public *i) : Base(i)
     {}
@@ -50,75 +51,12 @@ DENG2_PIMPL(Map)
         , planes(other.planes)
         , sectors(other.sectors)
         , volumes(other.volumes)
+        , entities(other.entities)
     {}
 };
 
 Map::Map() : d(new Impl(this))
-{
-    /*
-    {
-        geo::Line<Vector2d> line(Vector2d(1, 1), Vector2d(1, 0));
-        double t;
-        if (line.intersect(geo::Line<Vector2d>(Vector2d(-2, 2), Vector2d(.9, 2)), t))
-        {
-            qDebug() << "Line(0,1) intersects at t =" << t << "at:"
-                     << (line.start + line.span()*t).asText();
-        }
-        else
-        {
-            qDebug() << "Line(0,1) does not intersect";
-        }
-    }
-*/
-#if 0
-    ID vols[2];
-    {
-        ID floor = append(planes(), Plane{{0, 0, 0}, {0, 1, 0}});
-        ID ceil  = append(planes(), Plane{{0, 3, 0}, {0, -1, 0}});
-        vols[0] = append(volumes(), Volume{{floor, ceil}});
-    }
-    {
-        ID floor = append(planes(), Plane{{0, .25, 0}, {0, 1, 0}});
-        ID ceil  = append(planes(), Plane{{0, 2.5, 0}, {0, -1, 0}});
-        vols[1] = append(volumes(), Volume{{floor, ceil}});
-    }
-
-    ID rooms[2] = {
-        append(sectors(), Sector{IDList(), IDList({vols[0]})}),
-        append(sectors(), Sector{IDList(), IDList({vols[1]})})
-    };
-
-    ID doorwayID[2];
-    IDList corners{{ append(points(), Point{-4, -4}),
-                     append(points(), Point{ 4, -4}),
-                     append(points(), Point{ 4,  4}),
-                     append(points(), Point{ 0,  4}),
-                     append(points(), Point{ 0,  8}),
-                     append(points(), Point{-4,  8}),
-                     doorwayID[0] = append(points(), Point(-4,  5)),
-                     doorwayID[1] = append(points(), Point(-4,  3)),
-                     append(points(), Point{ 8,  3}),
-                     append(points(), Point{ 8,  5}),
-                   }};
-
-    ID openLine;
-    sectors()[rooms[0]].lines =
-        IDList{{append(lines(), Line{{corners[0], corners[1]}, {rooms[0], 0}}),
-                append(lines(), Line{{corners[1], corners[2]}, {rooms[0], 0}}),
-                append(lines(), Line{{corners[2], corners[3]}, {rooms[0], 0}}),
-                append(lines(), Line{{corners[3], corners[4]}, {rooms[0], 0}}),
-                append(lines(), Line{{corners[4], corners[5]}, {rooms[0], 0}}),
-                append(lines(), Line{{corners[5], corners[6]}, {rooms[0], 0}}),
-                openLine = append(lines(), Line{{corners[6], corners[7]}, {rooms[0], rooms[1]}}),
-                append(lines(), Line{{corners[7], corners[0]}, {rooms[0], 0}})}};
-
-    sectors()[rooms[1]].lines =
-        IDList{{openLine,
-                append(lines(), Line{{doorwayID[1], corners[8]}, {rooms[1], 0}}),
-                append(lines(), Line{{corners[8], corners[9]}, {rooms[1], 0}}),
-                append(lines(), Line{{corners[9], doorwayID[0]}, {rooms[1], 0}})}};
-#endif
-}
+{}
 
 Map::Map(const Map &other)
     : d(new Impl(this, *other.d))
@@ -142,6 +80,7 @@ void Map::removeInvalid()
     DENG2_ASSERT(!d->lines.contains(0));
     DENG2_ASSERT(!d->sectors.contains(0));
     DENG2_ASSERT(!d->volumes.contains(0));
+    DENG2_ASSERT(!d->entities.contains(0));
 
     // Lines.
     {
@@ -262,6 +201,11 @@ Volumes &Map::volumes()
     return d->volumes;
 }
 
+Entities &Map::entities()
+{
+    return d->entities;
+}
+
 const Points &Map::points() const
 {
     return d->points;
@@ -285,6 +229,11 @@ const Sectors &Map::sectors() const
 const Volumes &Map::volumes() const
 {
     return d->volumes;
+}
+
+const Entities &Map::entities() const
+{
+    return d->entities;
 }
 
 Point &Map::point(ID id)
@@ -317,6 +266,11 @@ Volume &Map::volume(ID id)
     return d->volumes[id];
 }
 
+Entity &Map::entity(ID id)
+{
+    return *d->entities[id];
+}
+
 const Point &Map::point(ID id) const
 {
     DENG2_ASSERT(d->points.contains(id));
@@ -345,6 +299,26 @@ const Volume &Map::volume(ID id) const
 {
     DENG2_ASSERT(d->volumes.contains(id));
     return d->volumes[id];
+}
+
+const Entity &Map::entity(ID id) const
+{
+    DENG2_ASSERT(d->entities.contains(id));
+    return *d->entities[id];
+}
+
+Rectangled Map::bounds() const
+{
+    Rectangled rect;
+    if (!d->points.isEmpty())
+    {
+        rect = Rectangled(*d->points.values().begin(), *d->points.values().begin());
+        for (const auto &p : d->points.values())
+        {
+            rect.include(p);
+        }
+    }
+    return rect;
 }
 
 bool Map::isLine(ID id) const
@@ -707,6 +681,22 @@ Block Map::serialize() const
         obj.insert("volumes", volumes);
     }
 
+    // Entities.
+    {
+        QJsonObject ents;
+        for (auto i = _d->entities.begin(); i != _d->entities.end(); ++i)
+        {
+            const auto &ent = i.value();
+            QJsonObject entObj;
+            entObj.insert("pos", QJsonArray({ent->position().x, ent->position().y, ent->position().z}));
+            entObj.insert("angle", ent->angle());
+            entObj.insert("type", int(ent->type()));
+            entObj.insert("scale", QJsonArray({ent->scale().x, ent->scale().y, ent->scale().z}));
+            ents.insert(idStr(i.key()), entObj);
+        }
+        obj.insert("entities", ents);
+    }
+
     return QJsonDocument(obj).toJson(QJsonDocument::Compact);
 }
 
@@ -789,6 +779,23 @@ void Map::deserialize(const Block &data)
             const auto obj = i.value().toHash();
             const IDList planes = variantListToIDList(obj["pln"].toList());
             d->volumes.insert(getId(i.key()), Volume{{planes[0], planes[1]}});
+        }
+    }
+
+    // Entities.
+    {
+        const auto ents = map["entities"].toHash();
+        for (auto i = ents.begin(); i != ents.end(); ++i)
+        {
+            const auto ent = i.value().toHash();
+            const auto pos = ent["pos"].toList();
+            const auto sc = ent["scale"].toList();
+            std::shared_ptr<Entity> entity(new Entity);
+            entity->setType(Entity::Type(ent["type"].toInt()));
+            entity->setPosition(Vector3d{pos[0].toDouble(), pos[1].toDouble(), pos[2].toDouble()});
+            entity->setAngle(ent["angle"].toFloat());
+            entity->setScale(Vector3f{sc[0].toFloat(), sc[1].toFloat(), sc[2].toFloat()});
+            d->entities.insert(getId(i.key()), entity);
         }
     }
 

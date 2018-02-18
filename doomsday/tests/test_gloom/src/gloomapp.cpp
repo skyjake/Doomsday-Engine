@@ -44,6 +44,9 @@ DENG2_PIMPL(GloomApp)
     ~Impl()
     {
         // Windows will be closed; OpenGL context will be gone.
+        // Deinitalize everything.
+        winSys->main().glActivate();
+        world.glDeinit();
         self().glDeinit();
     }
 

@@ -26,11 +26,11 @@ namespace gloom {
 
 DENG2_PIMPL(Environment)
 {
-    World *world;
+    World *       world;
     QSet<Sound *> sounds;
-    float maxDist;
-    TimeSpan sinceLastUpdate;
-    bool enabled;
+    float         maxDist;
+    TimeSpan      sinceLastUpdate;
+    bool          enabled;
 
     Impl(Public *i)
         : Base(i)

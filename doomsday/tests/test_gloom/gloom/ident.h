@@ -1,4 +1,4 @@
-/** @file entity.h
+/** @file ident.h
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,39 +16,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_ENTITY_H
-#define GLOOM_ENTITY_H
+#ifndef GLOOM_IDENT_H
+#define GLOOM_IDENT_H
 
-#include <de/Vector>
-#include "../ident.h"
+#include <QList>
 
 namespace gloom {
 
-class Entity
-{
-public:
-    enum Type { None = 0, Tree1, Tree2, Tree3 };
-
-public:
-    Entity();
-
-    void setId(ID id);
-    void setType(Type t);
-    void setPosition(de::Vector3d const &pos);
-    void setScale(float scale);
-    void setScale(de::Vector3f const &scale);
-    void setAngle(float yawDegrees);
-
-    ID           id() const;
-    Type         type() const;
-    de::Vector3d position() const;
-    de::Vector3f scale() const;
-    float        angle() const;
-
-private:
-    DENG2_PRIVATE(d)
-};
+typedef uint32_t     ID;
+typedef QList<ID>    IDList;
 
 } // namespace gloom
 
-#endif // GLOOM_ENTITY_H
+#endif // GLOOM_IDENT_H
