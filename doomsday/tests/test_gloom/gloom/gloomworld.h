@@ -49,7 +49,7 @@ public:
      */
     float groundSurfaceHeight(de::Vector3f const &pos) const;
 
-    float groundSurfaceHeight(de::Vector2f const &worldMapPos) const;
+    //float groundSurfaceHeight(de::Vector2f const &worldMapPos) const;
 
     float ceilingHeight(de::Vector3f const &pos) const;
 

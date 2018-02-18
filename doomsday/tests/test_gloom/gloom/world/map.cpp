@@ -577,6 +577,29 @@ bool Map::buildSector(Edge         startSide,
     return true;
 }
 
+std::pair<ID, ID> Map::findSectorAndVolumeAt(const de::Vector3d &pos) const
+{
+    for (ID sectorId : d->sectors.keys())
+    {
+        if (sectorPolygon(sectorId).isPointInside(pos.xz()))
+        {
+            // Which volume?
+            const Sector &sector = d->sectors[sectorId];
+            for (ID volumeId : sector.volumes)
+            {
+                const Plane &floor   = d->planes[d->volumes[volumeId].planes[0]];
+                const Plane &ceiling = d->planes[d->volumes[volumeId].planes[1]];
+                if (floor.isPointAbove(pos) && ceiling.isPointAbove(pos))
+                {
+                    return std::make_pair(sectorId, volumeId);
+                }
+            }
+            return std::make_pair(sectorId, sector.volumes[0]);
+        }
+    }
+    return std::make_pair(ID{0}, ID{0});
+}
+
 namespace util {
 
 static QString idStr(ID id)
@@ -803,6 +826,11 @@ void Map::deserialize(const Block &data)
 }
 
 //-------------------------------------------------------------------------------------------------
+
+bool Plane::isPointAbove(const Vector3d &pos) const
+{
+    return geo::Plane{point, normal}.isPointAbove(pos);
+}
 
 Vector3d Plane::projectPoint(const Point &pos) const
 {

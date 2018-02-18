@@ -216,7 +216,7 @@ DENG2_PIMPL(User)
                     if (surfaceMomentum > 0)
                     {
                         // Push upward.
-                        momentum.y = surfaceMomentum;
+                        momentum.y = surfaceMomentum/20;
                     }
                 }
                 pos.y = surface;

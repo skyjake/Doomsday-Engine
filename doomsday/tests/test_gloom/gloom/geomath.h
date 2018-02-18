@@ -150,6 +150,7 @@ struct Plane
     de::Vector3d point;
     de::Vector3f normal;
 
+    bool isPointAbove(const de::Vector3d &pos) const;
     double project(const de::Vector2d &pos) const;
 };
 

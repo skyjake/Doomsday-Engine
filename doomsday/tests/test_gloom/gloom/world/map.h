@@ -52,7 +52,8 @@ struct Plane
     de::Vector3d point;
     de::Vector3f normal;
 
-    de::Vector3d projectPoint(const Point &point) const;
+    bool isPointAbove(const de::Vector3d &pos) const;
+    de::Vector3d projectPoint(const Point &pos) const;
 };
 
 struct Volume
@@ -158,6 +159,7 @@ public:
     void           forLinesAscendingDistance(const Point &pos, std::function<bool(ID)>) const;
     IDList         findLines(ID pointId) const;
     IDList         findLinesStartingFrom(ID pointId, Line::Side side) const;
+    std::pair<ID, ID> findSectorAndVolumeAt(const de::Vector3d &pos) const;
     geo::Line2d    geoLine(ID lineId) const;
     geo::Line2d    geoLine(Edge ef) const;
     geo::Polygon   sectorPolygon(ID sectorId) const;

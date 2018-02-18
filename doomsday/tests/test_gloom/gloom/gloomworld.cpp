@@ -45,12 +45,14 @@ DENG2_PIMPL(GloomWorld), public ILight
     User *localUser = nullptr;
 //    HeightMap height;
 //    HeightField land;
-    SkyBox sky;
-    Environment environ;
-    Map map;
-    MapRender mapRender;
+    SkyBox            sky;
+    Environment       environ;
+    QHash<ID, double> initialPlaneY;
+    Map               map;
+    MapRender         mapRender;
 
     float visibleDistance;
+    double currentTime{0};
 //    Vector2f mapSize;
 //    float heightRange;
 
@@ -121,19 +123,10 @@ DENG2_PIMPL(GloomWorld), public ILight
 
         Vector3f const fogColor{.83f, .89f, 1.f};
         uFog = Vector4f(fogColor, visibleDistance);
-
-        // Entities.
-        //ents.setSize(mapSize);
-//        generateEntities();
     }
 
     void glDeinit()
     {
-//        for(int i = 0; i < NUM_MODELS; ++i)
-//        {
-//            trees[i].glDeinit();
-//        }
-//        land.glDeinit();
         sky.glDeinit();
         mapRender.glDeinit();
 
@@ -145,6 +138,14 @@ DENG2_PIMPL(GloomWorld), public ILight
     void rebuildMap()
     {
         mapRender.rebuild();
+
+        // Remember the initial plane heights.
+        {
+            for (auto i = map.planes().constBegin(), end = map.planes().constEnd(); i != end; ++i)
+            {
+                initialPlaneY.insert(i.key(), i.value().point.y);
+            }
+        }
     }
 
     Vector3f lightColor() const
@@ -157,9 +158,34 @@ DENG2_PIMPL(GloomWorld), public ILight
         return Vector3f(-.45f, .5f, -.89f).normalize();
     }
 
-    void userWarped(User const &)
+    void userWarped(const User &)
     {
         //land.skipMeshBlending();
+    }
+
+    void update(const TimeSpan &elapsed)
+    {
+        currentTime += elapsed;
+
+        for (auto i = map.planes().begin(), end = map.planes().end(); i != end; ++i)
+        {
+            const float planeY = float(initialPlaneY[i.key()]) +
+                                 std::sin(i.key() + float(currentTime) * .1f);
+            i.value().point.y = planeY;
+        }
+
+        updateEntities(elapsed);
+    }
+
+    void updateEntities(const TimeSpan &)
+    {
+        for (auto i = map.entities().begin(), end = map.entities().end(); i != end; ++i)
+        {
+            auto &ent = *i.value();
+            Vector3d pos = ent.position();
+            pos.y = self().groundSurfaceHeight(pos);
+            ent.setPosition(pos);
+        }
     }
 
 //    void positionOnGround(Entity &ent, Vector2f const &surfacePos)
@@ -271,6 +297,7 @@ void GloomWorld::glDeinit()
 
 void GloomWorld::update(TimeSpan const &elapsed)
 {
+    d->update(elapsed);
     d->environ.advanceTime(elapsed);
     d->mapRender.advanceTime(elapsed);
 }
@@ -314,15 +341,21 @@ QList<World::POI> GloomWorld::pointsOfInterest() const
 
 float GloomWorld::groundSurfaceHeight(Vector3f const &pos) const
 {
-    return groundSurfaceHeight(Vector2f(pos.x, pos.z));
-}
-
-float GloomWorld::groundSurfaceHeight(Vector2f const &worldMapPos) const
-{
-    DENG2_UNUSED(worldMapPos);
-    //return d->height.heightAtPosition(worldMapPos);
+    const auto sec_vol = d->map.findSectorAndVolumeAt(pos);
+    if (sec_vol.first)
+    {
+        const Volume &vol = d->map.volume(sec_vol.second);
+        return float(d->map.plane(vol.planes[0]).projectPoint(pos.xz()).y);
+    }
     return 0;
 }
+
+//float GloomWorld::groundSurfaceHeight(Vector2f const &worldMapPos) const
+//{
+//    //DENG2_UNUSED(worldMapPos);
+//    //return d->height.heightAtPosition(worldMapPos);
+//    return 0;
+//}
 
 float GloomWorld::ceilingHeight(Vector3f const &) const
 {

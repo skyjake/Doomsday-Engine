@@ -198,16 +198,16 @@ void MapRender::rebuild()
 void MapRender::advanceTime(const TimeSpan &elapsed)
 {
     d->currentTime += elapsed;
-    d->uCurrentTime = d->currentTime;
 
     const float now = float(d->currentTime);
+    d->uCurrentTime = now;
 
-    // Testing: move some planes.
+    // Update plane heights.
     {
         for (auto i = d->planeMapper.begin(), end = d->planeMapper.end(); i != end; ++i)
         {
-            const float planeY = float(d->map->plane(i.key()).point.y) +
-                                 std::sin(i.value() + now * .1f);
+            const float planeY = float(d->map->plane(i.key()).point.y); // +
+                                 //std::sin(i.value() + now * .1f);
 
             d->planes.setData(i.value(), planeY);
         }

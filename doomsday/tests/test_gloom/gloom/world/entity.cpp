@@ -33,7 +33,9 @@ DENG2_PIMPL_NOREF(Entity)
     Impl()
         : type(Tree1)
         , angle(0)
-    {}
+    {
+        angle = rand() % 360;
+    }
 };
 
 Entity::Entity() : d(new Impl)
