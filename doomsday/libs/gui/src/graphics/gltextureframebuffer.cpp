@@ -31,17 +31,21 @@ DENG2_STATIC_PROPERTY(DefaultSampleCount, int)
 DENG2_PIMPL(GLTextureFramebuffer)
 , DENG2_OBSERVES(DefaultSampleCount, Change)
 {
-    Image::Format colorFormat;
+    struct ColorAttachment {
+        Image::Format format;
+        std::shared_ptr<GLTexture> texture;
+    };
+    //QList<Image::Format> colorFormats; //
     Size          size;
-    int           _samples; ///< don't touch directly (0 == default)
-    GLTexture     color;
+    int           _samples{0}; ///< don't touch directly (0 == default)
+    //QList<GLTexture     color;
+    QList<ColorAttachment> color;
     GLTexture     depthStencil;
     GLFramebuffer resolvedFbo;
     Asset         texFboState;
 
     Impl(Public *i)
         : Base(i)
-        , colorFormat(Image::RGB_888)
         , _samples(0)
     {
         pDefaultSampleCount.audienceForChange() += this;
@@ -68,77 +72,28 @@ DENG2_PIMPL(GLTextureFramebuffer)
         reconfigure();
     }
 
+    QList<GLTexture *> colorAttachments()
+    {
+        QList<GLTexture *> attachments;
+        for (const auto &cb : color)
+        {
+            attachments << cb.texture.get();
+        }
+        return attachments;
+    }
+
     void release()
     {
-        color.clear();
+        for (auto &buf : color)
+        {
+            buf.texture->clear();
+        }
         depthStencil.clear();
         self().deinit();
         resolvedFbo.deinit();
 
         texFboState.setState(NotReady);
     }
-
-#if 0
-    void configureTexturesWithFallback(GLFramebuffer &fbo)
-    {
-        fbo.configure(&color, &depthStencil);
-        // Try a couple of different ways to set up the FBO.
-        for (int attempt = 0; ; ++attempt)
-        {
-            String failMsg;
-            try
-            {
-                switch (attempt)
-                {
-                case 0:
-                    // Most preferred: render both color and depth+stencil to textures.
-                    // Allows shaders to access contents of the entire framebuffer.
-                    failMsg = "Texture-based framebuffer failed: %s\n"
-                              "Trying again without depth/stencil texture";
-                    fbo.configure(&color, &depthStencil);
-                    break;
-
-                case 1:
-                    failMsg = "Color texture with unified depth/stencil renderbuffer failed: %s\n"
-                              "Trying again without stencil";
-                    fbo.configure(GLFramebuffer::Color, color, GLFramebuffer::DepthStencil);
-                    LOG_GL_WARNING("Renderer feature unavailable: lensflare depth");
-                    break;
-
-                case 2:
-                    failMsg = "Color texture with depth renderbuffer failed: %s\n"
-                              "Trying again without texture buffers";
-                    fbo.configure(GLFramebuffer::Color, color, GLFramebuffer::Depth);
-                    LOG_GL_WARNING("Renderer features unavailable: sky mask, lensflare depth");
-                    break;
-
-                case 3:
-                    failMsg = "Renderbuffer-based framebuffer failed: %s\n"
-                              "Trying again without stencil";
-                    fbo.configure(size, GLFramebuffer::ColorDepthStencil);
-                    LOG_GL_WARNING("Renderer features unavailable: postfx, lensflare depth");
-                    break;
-
-                case 4:
-                    // Final fallback: simple FBO with just color+depth renderbuffers.
-                    // No postfx, no access from shaders, no sky mask.
-                    fbo.configure(size, GLFramebuffer::ColorDepth);
-                    LOG_GL_WARNING("Renderer features unavailable: postfx, sky mask, lensflare depth");
-                    break;
-
-                default:
-                    break;
-                }
-                break; // success!
-            }
-            catch (GLFramebuffer::ConfigError const &er)
-            {
-                if (failMsg.isEmpty()) throw er; // Can't handle it.
-                LOG_GL_NOTE(failMsg) << er.asText();
-            }
-        }
-    }
-#endif
 
     void reconfigure()
     {
@@ -148,11 +103,14 @@ DENG2_PIMPL(GLTextureFramebuffer)
                 << size.asText() << sampleCount();
 
         // Configure textures for the framebuffer.
-        color.setUndefinedImage(size, colorFormat);
-        color.setWrap(gl::ClampToEdge, gl::ClampToEdge);
-        color.setFilter(gl::Nearest, gl::Linear, gl::MipNone);
+        for (auto &colorBuf : color)
+        {
+            colorBuf.texture->setUndefinedImage(size, colorBuf.format);
+            colorBuf.texture->setWrap(gl::ClampToEdge, gl::ClampToEdge);
+            colorBuf.texture->setFilter(gl::Nearest, gl::Linear, gl::MipNone);
 
-        DENG2_ASSERT(color.isReady());
+            DENG2_ASSERT(colorBuf.texture->isReady());
+        }
 
         depthStencil.setDepthStencilContent(size);
         depthStencil.setWrap(gl::ClampToEdge, gl::ClampToEdge);
@@ -167,13 +125,20 @@ DENG2_PIMPL(GLTextureFramebuffer)
         if (isMultisampled())
         {
             self().configure(size, ColorDepthStencil, sampleCount());
-            resolvedFbo.configure(&color, &depthStencil);
+            resolvedFbo.configure(color[0].texture.get(), &depthStencil);
         }
         else
         {
             try
             {
-                self().configure(&color, &depthStencil);
+                if (color.size() == 1)
+                {
+                    self().configure(color[0].texture.get(), &depthStencil);
+                }
+                else
+                {
+                    self().configure(colorAttachments(), &depthStencil);
+                }
                 resolvedFbo.setState(NotReady);
             }
             catch (ConfigError const &er)
@@ -185,7 +150,7 @@ DENG2_PIMPL(GLTextureFramebuffer)
                                    "are inaccessible in shaders): ") << er.asText();
 
                     self().configure(size, ColorDepthStencil);
-                    resolvedFbo.configure(Color, color);
+                    resolvedFbo.configure(Color0, *color[0].texture);
                 }
                 catch (ConfigError const &er)
                 {
@@ -195,7 +160,7 @@ DENG2_PIMPL(GLTextureFramebuffer)
                                        "(only depth used for rendering, depth & stencil "
                                        "inaccessible in shaders): ") << er.asText();
 
-                        self().configure(Color, color, Depth);
+                        self().configure(Color0, *color[0].texture, Depth);
                         resolvedFbo.setState(NotReady);
                     }
                     catch (ConfigError const &er)
@@ -204,7 +169,7 @@ DENG2_PIMPL(GLTextureFramebuffer)
                                        "(only depth used for rendering, depth & stencil "
                                        "inaccessible in shaders): ") << er.asText();
                         self().configure(size, ColorDepth);
-                        resolvedFbo.configure(GLFramebuffer::Color, color);
+                        resolvedFbo.configure(Color0, *color[0].texture);
                     }
                 }
             }
@@ -226,12 +191,24 @@ DENG2_PIMPL(GLTextureFramebuffer)
     }
 };
 
-GLTextureFramebuffer::GLTextureFramebuffer(Image::Format const &colorFormat, Size const &initialSize, int sampleCount)
+GLTextureFramebuffer::GLTextureFramebuffer(Image::Format colorFormat,
+                                           Size const &  initialSize,
+                                           int           sampleCount)
     : d(new Impl(this))
 {
-    d->colorFormat = colorFormat;
-    d->size        = initialSize;
-    d->_samples    = sampleCount;
+    d->color << Impl::ColorAttachment{colorFormat, std::make_shared<GLTexture>()};
+
+    d->size     = initialSize;
+    d->_samples = sampleCount;
+}
+
+GLTextureFramebuffer::GLTextureFramebuffer(QList<Image::Format> colorFormats)
+    : d(new Impl(this))
+{
+    for (auto format : colorFormats)
+    {
+        d->color << Impl::ColorAttachment{format, std::make_shared<GLTexture>()};
+    }
 }
 
 bool GLTextureFramebuffer::areTexturesReady() const
@@ -270,11 +247,11 @@ void GLTextureFramebuffer::setSampleCount(int sampleCount)
     }
 }
 
-void GLTextureFramebuffer::setColorFormat(Image::Format const &colorFormat)
+void GLTextureFramebuffer::setColorFormat(Image::Format colorFormat)
 {
-    if (d->colorFormat != colorFormat)
+    if (d->color[0].format != colorFormat)
     {
-        d->colorFormat = colorFormat;
+        d->color[0].format = colorFormat;
         d->reconfigure();
     }
 }
@@ -310,7 +287,7 @@ GLTextureFramebuffer::Size GLTextureFramebuffer::size() const
 
 GLTexture &GLTextureFramebuffer::colorTexture() const
 {
-    return d->color;
+    return *d->color[0].texture;
 }
 
 GLTexture &GLTextureFramebuffer::depthStencilTexture() const
@@ -323,7 +300,7 @@ int GLTextureFramebuffer::sampleCount() const
     return d->sampleCount();
 }
 
-GLTexture *GLTextureFramebuffer::attachedTexture(Flags const &attachment) const
+GLTexture *GLTextureFramebuffer::attachedTexture(Flags attachment) const
 {
     if (d->resolvedFbo.isReady())
     {
@@ -331,18 +308,6 @@ GLTexture *GLTextureFramebuffer::attachedTexture(Flags const &attachment) const
     }
     return GLFramebuffer::attachedTexture(attachment);
 }
-
-/*void GLTextureFramebuffer::drawBuffer(float opacity)
-{
-    d->uColor = Vector4f(1, 1, 1, opacity);
-    GLState::push()
-            .setCull(gl::None)
-            .setDepthTest(false)
-            .setDepthWrite(false);
-    d->drawSwap();
-    GLState::pop();
-    d->uColor = Vector4f(1, 1, 1, 1);
-}*/
 
 bool GLTextureFramebuffer::setDefaultMultisampling(int sampleCount)
 {

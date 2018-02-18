@@ -50,9 +50,11 @@ namespace de {
 class LIBGUI_PUBLIC GLTextureFramebuffer : public GLFramebuffer
 {
 public:
-    GLTextureFramebuffer(Image::Format const &colorFormat = Image::RGB_888,
-                         Size          const &initialSize = Size(),
-                         int                  sampleCount = 0 /*default*/);
+    GLTextureFramebuffer(Image::Format colorFormat = Image::RGB_888,
+                         Size const &  initialSize = Size(),
+                         int           sampleCount = 0 /*default*/);
+
+    GLTextureFramebuffer(QList<Image::Format> colorFormats);
 
     bool areTexturesReady() const;
 
@@ -60,7 +62,7 @@ public:
     void glDeinit();
 
     void setSampleCount(int sampleCount);
-    void setColorFormat(Image::Format const &colorFormat);
+    void setColorFormat(Image::Format colorFormat);
 
     /**
      * Resizes the framebuffer's textures. If the new size is the same as the
@@ -83,7 +85,7 @@ public:
     GLTexture &depthStencilTexture() const;
     int sampleCount() const;
 
-    GLTexture *attachedTexture(Flags const &attachment) const override;
+    GLTexture *attachedTexture(Flags attachment) const override;
 
 public:
     /**

@@ -99,7 +99,7 @@ DENG2_PIMPL(Bloom)
     void draw()
     {
         GLFramebuffer &target = GLState::current().target();
-        GLTexture *colorTex = target.attachedTexture(GLFramebuffer::Color);
+        GLTexture *colorTex = target.attachedTexture(GLFramebuffer::Color0);
 
         //qDebug() << "bloom with" << colorTex;
 
@@ -163,7 +163,7 @@ DENG2_PIMPL(Bloom)
         uIntensity = bloomIntensity * weight;
 
         // Initialize the work buffer for this pass.
-        workFB.clear(GLFramebuffer::Color);
+        workFB.clear(GLFramebuffer::Color0);
 
         // Divert rendering to the work area (full or partial area used).
         //GLFramebuffer &target = GLState::current().target();

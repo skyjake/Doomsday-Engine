@@ -47,86 +47,28 @@ public:
     DENG2_ERROR(ConfigError);
 
     enum Flag {
-        Color   = 0x1,  ///< Target has a color attachment.
-        Depth   = 0x2,  ///< Target has a depth attachment.
-        Stencil = 0x4,  ///< Target has a stencil attachment.
+        Color0  = 0x001, ///< Target has a color attachment.
+        Color1  = 0x002,
+        Color2  = 0x004,
+        Color3  = 0x008,
+        Depth   = 0x100, ///< Target has a depth attachment.
+        Stencil = 0x200, ///< Target has a stencil attachment.
 
-        Changed = 0x8, ///< Draw/clear has occurred on the target.
+        Changed = 0x1000, ///< Draw/clear has occurred on the target.
 
-        ColorDepth        = Color | Depth,
-        ColorDepthStencil = Color | Depth | Stencil,
-        ColorStencil      = Color | Stencil,
-        DepthStencil      = Depth | Stencil,
+        ColorDepth        = Color0 | Depth,
+        ColorDepthStencil = Color0 | Depth | Stencil,
+        ColorStencil      = Color0 | Stencil,
+        DepthStencil      = Depth  | Stencil,
 
-        SeparateDepthAndStencil = 0x10, ///< Depth and stencil should use separate buffers.
+        SeparateDepthAndStencil = 0x2000, ///< Depth and stencil should use separate buffers.
 
         NoAttachments = 0,
-        DefaultFlags  = ColorDepth
+        DefaultFlags  = ColorDepth,
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
     typedef Vector2ui Size;
-
-#if 0
-    /**
-     * Utility for temporarily using an alternative buffer as one of a render
-     * target's attachments. Usage:
-     * - construct as a local variable
-     * - init
-     * - automatically deinited when goes out of scope
-     */
-    class LIBGUI_PUBLIC AlternativeBuffer
-    {
-    public:
-        /**
-         * Prepares an alternative texture attachment. The new texture is not
-         * taken into use yet.
-         *
-         * @param target      The rendering target this is for.
-         * @param texture     Texture to use as alternative attachment.
-         * @param attachment  Which attachment.
-         */
-        AlternativeBuffer(GLFramebuffer &target, GLTexture &texture, Flags const &attachment);
-
-        /**
-         * Prepares an alternative render buffer attachment.
-         *
-         * @param target      The rendering target this is for.
-         * @param attachment  Which attachment (only DepthStencil supported).
-         */
-        AlternativeBuffer(GLFramebuffer &target, Flags const &attachment);
-
-        /**
-         * Automatically deinitialize the alternative buffer, if it was taken
-         * into use.
-         */
-        ~AlternativeBuffer();
-
-        /**
-         * Take the alternative buffer into use. The original buffer is
-         * remembered and will be restored when the alternative buffer is no
-         * longer in use. Nothing happens if this already has been called
-         * previously.
-         *
-         * @return @c true, if initialization was done. Otherwise, @c false
-         * (for example if already initialized).
-         */
-        bool init();
-
-        /**
-         * Restores the original attachment.
-         *
-         * @return @c true, if the original attachment was restored. Otherwise,
-         * @c false (for example if already deinitialized).
-         */
-        bool deinit();
-
-        GLFramebuffer &target() const;
-
-    private:
-        DENG2_PRIVATE(d)
-    };
-#endif
 
 public:
     static void setDefaultFramebuffer(GLuint defaultFBO);
@@ -143,7 +85,7 @@ public:
      * @param colorTarget       Target texture for Color attachment.
      * @param otherAttachments  Other supporting attachments (renderbuffers).
      */
-    GLFramebuffer(GLTexture &colorTarget, Flags const &otherAttachments = NoAttachments);
+    GLFramebuffer(GLTexture &colorTarget, Flags otherAttachments = NoAttachments);
 
     /**
      * Constructs a render target with a texture attachment and optionally
@@ -153,8 +95,8 @@ public:
      * @param texture           Texture to render on.
      * @param otherAttachments  Other supporting attachments (renderbuffers).
      */
-    GLFramebuffer(Flags const &attachment, GLTexture &texture,
-                  Flags const &otherAttachments = NoAttachments);
+    GLFramebuffer(Flags attachment, GLTexture &texture,
+                  Flags otherAttachments = NoAttachments);
 
     //GLFramebuffer(GLTexture *color, GLTexture *depth = 0, GLTexture *stencil = 0);
 
@@ -164,7 +106,7 @@ public:
      * @param size   Size of the render target.
      * @param flags  Attachments to set up.
      */
-    GLFramebuffer(Vector2ui const &size, Flags const &flags = DefaultFlags);
+    GLFramebuffer(Vector2ui const &size, Flags flags = DefaultFlags);
 
     Flags flags() const;
 
@@ -190,7 +132,7 @@ public:
      * @param sampleCount  Number of samples per pixel in each attachment.
      */
     void configure(Vector2ui const &size,
-                   Flags const &flags = DefaultFlags,
+                   Flags flags = DefaultFlags,
                    int sampleCount = 1);
 
     /**
@@ -208,6 +150,14 @@ public:
     void configure(GLTexture *colorTex, GLTexture *depthStencilTex);
 
     /**
+     * Reconfigures the framebuffer with multiple textures.
+     *
+     * @param colorTextures    Textures for color attachments.
+     * @param depthStencilTex  Texture for depth/stencil values.
+     */
+    void configure(QList<GLTexture *> colorTextures, GLTexture *depthStencilTex);
+
+    /**
      * Changes the configuration of the render target. Any previously allocated
      * renderbuffers are released.
      *
@@ -215,9 +165,9 @@ public:
      * @param texture     Texture to render on.
      * @param otherAttachments  Other supporting attachments (renderbuffers).
      */
-    void configure(Flags const &attachment,
+    void configure(Flags attachment,
                    GLTexture &texture,
-                   Flags const &otherAttachments = NoAttachments);
+                   Flags otherAttachments = NoAttachments);
 
     /**
      * Release all GL resources for the framebuffer. This is the opposite to configure().
@@ -256,7 +206,7 @@ public:
      *
      * @param attachments  Which ones to clear.
      */
-    void clear(Flags const &attachments);
+    void clear(Flags attachments);
 
     /**
      * Resizes the target's attached buffers and/or textures to a new size.
@@ -273,7 +223,7 @@ public:
      * @param attachment  Which attachment.
      * @return
      */
-    virtual GLTexture *attachedTexture(Flags const &attachment) const;
+    virtual GLTexture *attachedTexture(Flags attachment) const;
 
     /**
      * Returns the render buffer attachment, if one exists.
@@ -282,7 +232,7 @@ public:
      *
      * @return GL name of the render buffer.
      */
-    GLuint attachedRenderBuffer(Flags const &attachment) const;
+    GLuint attachedRenderBuffer(Flags attachment) const;
 
     /**
      * Replaces a currently attached texture with another.
@@ -290,7 +240,7 @@ public:
      * @param attachment  Which attachment.
      * @param texture     New texture to use as the attachment.
      */
-    void replaceAttachment(Flags const &attachment, GLTexture &texture);
+    void replaceAttachment(Flags attachment, GLTexture &texture);
 
     /**
      * Replaces an attachment with a render buffer.
@@ -298,11 +248,11 @@ public:
      * @param attachment      Which attachment.
      * @param renderBufferId  GL name of a render buffer.
      */
-    void replaceAttachment(Flags const &attachment, GLuint renderBufferId);
+    void replaceAttachment(Flags attachment, GLuint renderBufferId);
 
-    void replaceWithNewRenderBuffer(Flags const &attachment);
+    void replaceWithNewRenderBuffer(Flags attachment);
 
-    void releaseAttachment(Flags const &attachment);
+    void releaseAttachment(Flags attachment);
 
     /**
      * Blits this target's contents to the @a copy target.
@@ -312,7 +262,9 @@ public:
      * @param filtering    Filtering to use if source and destinations sizes
      *                     aren't the same.
      */
-    void blit(GLFramebuffer &dest, Flags const &attachments = Color, gl::Filter filtering = gl::Nearest) const;
+    void blit(GLFramebuffer &dest,
+              Flags          attachments = Color0,
+              gl::Filter     filtering   = gl::Nearest) const;
 
     /**
      * Blits this target's contents to the default framebuffer.

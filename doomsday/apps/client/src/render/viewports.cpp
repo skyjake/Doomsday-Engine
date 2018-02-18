@@ -1043,7 +1043,7 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
         ClientApp::world().map().isPointInVoid(Rend_EyeOrigin().xzy()))
     {
         // Putting one's head in the wall will cause a blank screen.
-        GLState::current().target().clear(GLFramebuffer::Color);
+        GLState::current().target().clear(GLFramebuffer::Color0);
         return;
     }
 

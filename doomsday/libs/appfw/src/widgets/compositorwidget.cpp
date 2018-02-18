@@ -150,7 +150,7 @@ void CompositorWidget::preDrawChildren()
                 .setTarget(*buf->offscreen)
                 .setViewport(Rectangleui::fromSize(buf->texture.size()));
 
-        buf->offscreen->clear(GLFramebuffer::Color);
+        buf->offscreen->clear(GLFramebuffer::Color0);
     }
 }
 

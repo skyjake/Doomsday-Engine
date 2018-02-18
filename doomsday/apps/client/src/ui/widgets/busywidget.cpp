@@ -218,7 +218,7 @@ void BusyWidget::clearTransitionFrameToBlack()
 {
     if (d->haveTransitionFrame())
     {
-        d->transitionFrame.clear(GLFramebuffer::Color);
+        d->transitionFrame.clear(GLFramebuffer::Color0);
     }
 }
 
