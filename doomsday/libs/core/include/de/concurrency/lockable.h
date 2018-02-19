@@ -39,9 +39,8 @@ class DENG2_PUBLIC Lockable
 {
 public:
     /// Acquire the lock.  Blocks until the operation succeeds.
-    inline void lock() const {
-        _mutex.lock();
-    }
+    /// @return @c true, if the lock succeeded. @c false, if there was an error.
+    bool lock() const noexcept;
 
     /// Release the lock.
     inline void unlock() const {

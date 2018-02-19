@@ -23,6 +23,18 @@
 
 namespace de {
 
-// nothing here
+bool Lockable::lock() const noexcept
+{
+    try
+    {
+        _mutex.lock();
+        return true;
+    }
+    catch (...)
+    {
+        qWarning("[Lockable] (%p) Failed to lock mutex!", static_cast<void const *>(this));
+        return false;
+    }
+}
 
 } // namespace de
