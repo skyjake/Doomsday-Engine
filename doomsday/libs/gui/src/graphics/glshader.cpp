@@ -174,7 +174,7 @@ void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
 
 #if defined (DENG_OPENGL) || (defined (DENG_OPENGL_ES) && DENG_OPENGL_ES == 30)
         preamble += "#define DENG_VAR in\n"
-                    "out vec4 out_FragColor;\n";
+                   "layout(location = 0) out vec4 out_FragColor;\n";
 #else
         preamble += "#define DENG_VAR varying\n"
                     "#define out_FragColor gl_FragColor\n";

@@ -174,13 +174,13 @@ DENG2_OBSERVES(Asset, Deletion)
         {
             return DepthBuffer;
         }
-        if (flags == Stencil)
-        {
-            return StencilBuffer;
-        }
         if (flags == DepthStencil)
         {
             return DepthStencilBuffer;
+        }
+        if (flags == Stencil)
+        {
+            return StencilBuffer;
         }
         DENG2_ASSERT_FAIL("Invalid attachment flags");
         return MAX_ATTACHMENTS;
