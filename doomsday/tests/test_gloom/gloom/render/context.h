@@ -1,4 +1,4 @@
-/** @file entityrender.h
+/** @file context.h
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,35 +16,32 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_ENTITIES_H
-#define GLOOM_ENTITIES_H
+#ifndef GLOOM_CONTEXT_H
+#define GLOOM_CONTEXT_H
 
-#include "gloom/world/entitymap.h"
-#include "gloom/render/render.h"
+#include "gloom/render/view.h"
+#include "gloom/world/map.h"
 
 #include <de/AtlasTexture>
+#include <de/ImageBank>
+#include <de/GLProgram>
+#include <de/GLShaderBank>
 
 namespace gloom {
 
-class ICamera;
-class Map;
+struct Context {
+    const de::ImageBank *images;
+    de::GLShaderBank *   shaders;
+    const Map *          map;
+    de::AtlasTexture *   atlas;
+    View                 view;
 
-class EntityRender : public Render
-{
-public:
-    EntityRender();
+    de::GLUniform uAtlas        {"uTex",            de::GLUniform::Sampler2D};
+    de::GLUniform uCurrentTime  {"uCurrentTime",    de::GLUniform::Float};
 
-    EntityMap &entityMap();
-    void createEntities();
-
-    void glInit(const Context &) override;
-    void glDeinit() override;
-    void render() override;
-
-private:
-    DENG2_PRIVATE(d)
+    void bind(de::GLProgram &) const;
 };
 
 } // namespace gloom
 
-#endif // GLOOM_ENTITIES_H
+#endif // GLOOM_CONTEXT_H

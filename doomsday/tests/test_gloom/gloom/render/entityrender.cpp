@@ -17,9 +17,9 @@
  */
 
 #include "entityrender.h"
-#include "../world/map.h"
-#include "../icamera.h"
-#include "../../src/gloomapp.h"
+#include "gloom/world/map.h"
+#include "gloom/icamera.h"
+#include "src/gloomapp.h"
 
 #include <de/PackageLoader>
 #include <de/ModelDrawable>
@@ -42,13 +42,15 @@ LIBGUI_VERTEX_FORMAT_SPEC(InstanceData, 20 * sizeof(float))
 
 DENG2_PIMPL(EntityRender)
 {
-    const Map    *map = nullptr;
-    AtlasTexture *atlas;
+//    const Context *context = nullptr;
+//    const View *  view = nullptr;
+//    const Map *   map  = nullptr;
+//    AtlasTexture *atlas;
     EntityMap     ents;
     ModelDrawable entityModels[3];
     GLProgram     modelProgram;
-    GLUniform     uMvpMatrix{"uMvpMatrix", GLUniform::Mat4};
-    GLUniform     uTex      {"uTex",       GLUniform::Sampler2D};
+//    GLUniform     uMvpMatrix        {"uMvpMatrix",         GLUniform::Mat4};
+//    GLUniform     uWorldToViewMatrix{"uWorldToViewMatrix", GLUniform::Mat3};
 
     Impl(Public *i)
         : Base(i)
@@ -73,6 +75,7 @@ DENG2_PIMPL(EntityRender)
 
     void loadModels()
     {
+        const auto &context = self().context();
         auto const &pkg = PackageLoader::get().package("net.dengine.gloom");
 
         const char *filenames[] = {
@@ -85,23 +88,28 @@ DENG2_PIMPL(EntityRender)
         for (auto &model : entityModels)
         {
             model.load(pkg.root().locate<File>(filenames[idx]));
-            model.setAtlas(*atlas);
+            model.setAtlas(*context.atlas);
             model.setProgram(&modelProgram);
             idx++;
         }
 
-        GloomApp::shaders().build(modelProgram, "gloom.entity") << uMvpMatrix << uTex;
+        GloomApp::shaders().build(modelProgram, "gloom.entity")
+            << context.view.uMvpMatrix
+            << context.view.uWorldToViewMatrix
+            << context.uAtlas;
     }
 
     void create()
     {
-        DENG2_ASSERT(map);
+        DENG2_ASSERT(self().context().map);
+
+        const auto &map = *self().context().map;
 
         ents.clear();
-        ents.setBounds(map->bounds());
+        ents.setBounds(map.bounds());
 
         // Create entities for all objects defined in the map.
-        for (auto i = map->entities().begin(), end = map->entities().end(); i != end; ++i)
+        for (auto i = map.entities().begin(), end = map.entities().end(); i != end; ++i)
         {
             ents.insert(*i.value());
         }
@@ -109,9 +117,9 @@ DENG2_PIMPL(EntityRender)
 
     typedef GLBufferT<InstanceData> InstanceBuf;
 
-    void render(const ICamera &camera)
+    void render()
     {
-        uMvpMatrix = camera.cameraModelViewProjection();
+        const ICamera &camera = *self().context().view.camera;
 
         float fullDist = 500;
         const auto entities = ents.listRegionBackToFront(camera.cameraPosition(), fullDist);
@@ -163,20 +171,16 @@ EntityRender::EntityRender()
     : d(new Impl(this))
 {}
 
-void EntityRender::setAtlas(AtlasTexture *atlas)
+void EntityRender::glInit(const Context &context)
 {
-    d->atlas = atlas;
-    d->uTex  = *atlas;
-}
-
-void EntityRender::glInit()
-{
+    Render::glInit(context);
     d->init();
 }
 
 void EntityRender::glDeinit()
 {
     d->deinit();
+    Render::glDeinit();
 }
 
 void EntityRender::createEntities()
@@ -189,14 +193,9 @@ EntityMap &EntityRender::entityMap()
     return d->ents;
 }
 
-void EntityRender::setMap(const Map *map)
+void EntityRender::render()
 {
-    d->map = map;
-}
-
-void EntityRender::render(const ICamera &camera)
-{
-    d->render(camera);
+    d->render();
 }
 
 } // namespace gloom

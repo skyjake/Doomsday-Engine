@@ -21,7 +21,8 @@
 
 #include <de/Rectangle>
 #include <de/Vector>
-#include "entity.h"
+
+#include "gloom/world/entity.h"
 
 namespace gloom {
 

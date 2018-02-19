@@ -20,7 +20,7 @@
 #define GLOOM_ENTITY_H
 
 #include <de/Vector>
-#include "../ident.h"
+#include "gloom/ident.h"
 
 namespace gloom {
 

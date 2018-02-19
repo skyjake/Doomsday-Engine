@@ -1,4 +1,4 @@
-/** @file entityrender.h
+/** @file view.cpp
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,35 +16,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_ENTITIES_H
-#define GLOOM_ENTITIES_H
-
-#include "gloom/world/entitymap.h"
-#include "gloom/render/render.h"
-
-#include <de/AtlasTexture>
+#include "gloom/render/view.h"
 
 namespace gloom {
 
-class ICamera;
-class Map;
-
-class EntityRender : public Render
+void View::setCamera(const ICamera &camera)
 {
-public:
-    EntityRender();
+    this->camera = &camera;
 
-    EntityMap &entityMap();
-    void createEntities();
-
-    void glInit(const Context &) override;
-    void glDeinit() override;
-    void render() override;
-
-private:
-    DENG2_PRIVATE(d)
-};
+    uMvpMatrix         = camera.cameraModelViewProjection();
+    uWorldToViewMatrix = camera.cameraModelView().submatrix(0, 0);
+}
 
 } // namespace gloom
-
-#endif // GLOOM_ENTITIES_H

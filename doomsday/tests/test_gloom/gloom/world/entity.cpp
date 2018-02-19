@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "entity.h"
+#include "gloom/world/entity.h"
 
 using namespace de;
 

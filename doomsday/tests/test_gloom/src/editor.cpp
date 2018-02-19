@@ -18,7 +18,7 @@
 
 #include "editor.h"
 #include "../src/gloomapp.h"
-#include "../gloom/geomath.h"
+#include "gloom/geo/geomath.h"
 
 #include <de/Matrix>
 

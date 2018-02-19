@@ -38,6 +38,8 @@ shader gloom.entity {
     #include.fragment <includes/fog.glsl,
     #                  includes/lightmodel.glsl>
     fragment = "
+        #include 'gbuffer.glsl'
+
         uniform sampler2D uTex;
         //uniform vec4 uFog; // RGB, max.distance
         //uniform vec3 uLightDir;
@@ -56,5 +58,6 @@ shader gloom.entity {
 
             //gl_FragColor = mixFog(color, vFogColor) * vInstanceColor;
             out_FragColor = color * vInstanceColor;
+            GBuffer_SetFragmentNormal(vNormal);
         }"
 }

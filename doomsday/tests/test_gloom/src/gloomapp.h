@@ -21,7 +21,7 @@
 
 #include <de/BaseGuiApp>
 #include <de/ImageBank>
-#include "../gloom/audio/audiosystem.h"
+#include "gloom/audio/audiosystem.h"
 #include "appwindowsystem.h"
 
 #include <QDir>

@@ -16,17 +16,18 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "gloomworld.h"
-#include "ilight.h"
-#include "audio/audiosystem.h"
-#include "render/gbuffer.h"
-#include "render/maprender.h"
-#include "render/skybox.h"
-#include "world/entitymap.h"
-#include "world/environment.h"
-#include "world/map.h"
-#include "world/user.h"
-#include "../src/gloomapp.h"
+#include "gloom/gloomworld.h"
+#include "gloom/ilight.h"
+#include "gloom/audio/audiosystem.h"
+#include "gloom/render/context.h"
+#include "gloom/render/gbuffer.h"
+#include "gloom/render/maprender.h"
+#include "gloom/render/skybox.h"
+#include "gloom/world/entitymap.h"
+#include "gloom/world/environment.h"
+#include "gloom/world/map.h"
+#include "gloom/world/user.h"
+#include "../src/gloomapp.h" // access to shader bank
 
 #include <de/Drawable>
 #include <de/File>
@@ -40,26 +41,28 @@ using namespace de;
 
 namespace gloom {
 
-DENG2_PIMPL(GloomWorld), public ILight
+DENG2_PIMPL(GloomWorld), public Asset, public ILight
 , DENG2_OBSERVES(User, Warp)
 {
     User *            localUser = nullptr;
+    Context           renderContext;
+    Environment       environ;
     GBuffer           gbuffer;
     SkyBox            sky;
-    Environment       environ;
-    QHash<ID, double> initialPlaneY;
     Map               map;
+    QHash<ID, double> initialPlaneY;
     MapRender         mapRender;
 
-    float visibleDistance;
-    double currentTime{0};
+    float  visibleDistance;
+    double currentTime = 0.0;
 
     std::unique_ptr<AtlasTexture> atlas;
-    GLUniform uModelProj { "uViewProjMatrix",   GLUniform::Mat4 };
-    GLUniform uViewPos   { "uViewPos",          GLUniform::Vec3 };
-    GLUniform uFog       { "uFog",              GLUniform::Vec4 };
-    GLUniform uLightDir  { "uLightDir",         GLUniform::Vec3 };
-    GLUniform uTex       { "uTex",              GLUniform::Sampler2D };
+
+//    GLUniform uModelProj { "uViewProjMatrix",   GLUniform::Mat4 };
+//    GLUniform uViewPos   { "uViewPos",          GLUniform::Vec3 };
+//    GLUniform uFog       { "uFog",              GLUniform::Vec4 };
+//    GLUniform uLightDir  { "uLightDir",         GLUniform::Vec3 };
+//    GLUniform uTex       { "uTex",              GLUniform::Sampler2D };
 
     Impl(Public *i)
         : Base(i)
@@ -77,7 +80,12 @@ DENG2_PIMPL(GloomWorld), public ILight
         atlas->setAutoGenMips(true);
         atlas->setFilter(gl::Linear, gl::Linear, gl::MipNearest);
 #endif
-        uTex = *atlas;
+
+        renderContext.images  = &GloomApp::images();
+        renderContext.shaders = &GloomApp::shaders(); // TODO: remove dependency on App
+        renderContext.atlas   = atlas.get();
+        renderContext.uAtlas  = renderContext.atlas;
+        renderContext.map     = &map;
 
         environ.setWorld(thisPublic);
     }
@@ -99,32 +107,45 @@ DENG2_PIMPL(GloomWorld), public ILight
 //        land.setMaterial(HeightField::Dirt,  atlas->imageRectf(dirt));
 //    }
 
-    void glInit()
+    bool glInit()
     {
+        if (isReady()) return false;
+
+        qDebug() << "[GloomWorld] glInit";
+
         DENG2_ASSERT(localUser);
 
         //loadTextures();
         //loadModels();
 
-        gbuffer.glInit();
+//        gbuffer.setContext(renderContext);
+        gbuffer.glInit(renderContext);
 
-        sky.setAtlas(*atlas);
+//        sky.setContext(renderContext);
+//        sky.setAtlas(*atlas);
         sky.setSize(visibleDistance);
-        sky.glInit();
+        sky.glInit(renderContext);
 
-        mapRender.setMap(map);
-        mapRender.setAtlas(*atlas);
-        mapRender.glInit();
+//        mapRender.setContext(renderContext);
+//        mapRender.setMap(map);
+//        mapRender.setAtlas(*atlas);
+        mapRender.glInit(renderContext);
 
-        Vector3f const fogColor{.83f, .89f, 1.f};
-        uFog = Vector4f(fogColor, visibleDistance);
+//        Vector3f const fogColor{.83f, .89f, 1.f};
+//        uFog = Vector4f(fogColor, visibleDistance);
+
+        setState(Ready);
+        return true;
     }
 
     void glDeinit()
     {
-        sky.glDeinit();
+        setState(NotReady);
+
         mapRender.glDeinit();
-        gbuffer.glDeinit();
+        sky      .glDeinit();
+        gbuffer  .glDeinit();
+
         atlas->clear();
 
         localUser->audienceForWarp -= this;
@@ -161,6 +182,8 @@ DENG2_PIMPL(GloomWorld), public ILight
     void update(const TimeSpan &elapsed)
     {
         currentTime += elapsed;
+
+        renderContext.uCurrentTime = float(currentTime);
 
         for (auto i = map.planes().begin(), end = map.planes().end(); i != end; ++i)
         {
@@ -199,78 +222,6 @@ DENG2_PIMPL(GloomWorld), public ILight
 //                height.normalAtPosition(pos + Vector2f(1, 1)).y < -.9);
 //    }
 
-//    void generateEntities()
-//    {
-//        for(int i = 0; i < 10000; ++i)
-//        {
-//            Vector2f pos;
-//            do
-//            {
-//                pos = -mapSize/2 + Vector2f(frand() * mapSize.x, frand() * mapSize.y);
-//            }
-//            while(!isFlatSurface(pos));
-
-//            Entity *ent = new Entity;
-//            ent->setType(frand() < .333? Entity::Tree1 : frand() < .5? Entity::Tree2 : Entity::Tree3);
-//            ent->setAngle(frand() * 360);
-//            ent->setScale(.05f + frand() * .28);
-//            positionOnGround(*ent, pos);
-//            ents.insert(ent);
-//        }
-//    }
-
-//    typedef GLBufferT<InstanceData> InstanceBuf;
-
-//    void drawEntities(ICamera const &camera)
-//    {
-//        uModelProj = camera.cameraModelViewProjection();
-
-//        float fullDist = 500;
-//        QList<Entity const *> entities = ents.listRegionBackToFront(camera.cameraPosition(), fullDist);
-
-//        InstanceBuf ibuf;
-
-//        // Draw all model types.
-//        for(int i = 0; i < NUM_MODELS; ++i)
-//        {
-//            InstanceBuf::Builder data;
-
-//            ModelDrawable const *model = &trees[i];
-
-//            // Set up the instance buffer.
-//            foreach(Entity const *e, entities)
-//            {
-//                if(e->type() != Entity::Tree1 + i) continue;
-
-//                float dims = model->dimensions().z * e->scale().y;
-
-//                float maxDist = min(fullDist, dims * 10);
-//                float fadeItv = .333f * maxDist;
-//                float distance = (e->position() - camera.cameraPosition()).length();
-
-//                if(distance < maxDist)
-//                {
-//                    InstanceBuf::Type inst;
-//                    inst.matrix =
-//                            Matrix4f::translate(e->position()) *
-//                            Matrix4f::rotate(e->angle(), Vector3f(0, -1, 0)) *
-//                            Matrix4f::rotate(90, Vector3f(1, 0, 0)) *
-//                            Matrix4f::scale(e->scale());
-
-//                    // Fade in the distance.
-//                    inst.color = Vector4f(1, 1, 1, clamp(0.f, 1.f - (distance - maxDist + fadeItv)/fadeItv, 1.f));
-
-//                    data << inst;
-//                }
-//            }
-
-//            if(!data.isEmpty())
-//            {
-//                ibuf.setVertices(data, gl::Dynamic);
-//                model->drawInstanced(ibuf);
-//            }
-//        }
-//    }
 };
 
 GloomWorld::GloomWorld() : d(new Impl(this))
@@ -278,10 +229,12 @@ GloomWorld::GloomWorld() : d(new Impl(this))
 
 void GloomWorld::glInit()
 {
-    d->glInit();
-    DENG2_FOR_AUDIENCE(Ready, i)
+    if (d->glInit())
     {
-        i->worldReady(*this);
+        DENG2_FOR_AUDIENCE(Ready, i)
+        {
+            i->worldReady(*this);
+        }
     }
 }
 
@@ -299,8 +252,6 @@ void GloomWorld::update(TimeSpan const &elapsed)
 
 void GloomWorld::render(ICamera const &camera)
 {
-    //DENG2_ASSERT(d->modelProgram.isReady());
-
     d->gbuffer.resize(GLState::current().target().size());
     d->gbuffer.clear();
 
@@ -309,20 +260,22 @@ void GloomWorld::render(ICamera const &camera)
             .setCull(gl::Back)
             .setDepthTest(true);
 
-    const Matrix4f mvp = camera.cameraModelViewProjection();
+    //const Matrix4f mvp = camera.cameraModelViewProjection();
 
-    d->uViewPos  = camera.cameraPosition();
-    d->uLightDir = d->lightDirection();
+    d->renderContext.view.setCamera(camera);
 
-    d->mapRender.render(camera);
-    d->sky.render(mvp * Matrix4f::translate(camera.cameraPosition()));
+//    d->uViewPos  = camera.cameraPosition();
+//    d->uLightDir = d->lightDirection();
+
+    d->mapRender.render();
+    d->sky.render(); //mvp * Matrix4f::translate(camera.cameraPosition()));
 
 //    d->land.draw(mvp);
 //    d->drawEntities(camera);
 
     GLState::pop();
 
-    d->gbuffer.blit();
+    d->gbuffer.render();
 }
 
 User *GloomWorld::localUser() const
@@ -375,6 +328,11 @@ void GloomWorld::setMap(const Map &map)
 {
     d->map = map;
     d->rebuildMap();
+}
+
+void GloomWorld::setDebugMode(int debugMode)
+{
+    d->gbuffer.setDebugMode(debugMode);
 }
 
 } // namespace gloom

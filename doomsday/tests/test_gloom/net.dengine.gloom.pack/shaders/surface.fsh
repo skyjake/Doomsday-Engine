@@ -1,4 +1,5 @@
-#include 'miplevel.glsl'
+#include "miplevel.glsl"
+#include "gbuffer.glsl"
 
 #line 3
 
@@ -27,9 +28,9 @@ void main(void) {
     vec4 color = textureLod(uTex, uv, mipLevel(normUV, texelSize.xy) - 0.5);
     if (color.a < 0.005)
     {
-        out_FragColor = vec4(1.0, 0.0, 1.0, 1.0);
-        return;
+        discard;
     }
 
     out_FragColor = color;
+    GBuffer_SetFragmentNormal(vNormal);
 }

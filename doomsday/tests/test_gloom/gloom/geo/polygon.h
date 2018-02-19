@@ -22,7 +22,7 @@
 #include <QVector>
 #include <de/Vector>
 #include <de/Rectangle>
-#include "../geomath.h"
+#include "gloom/geo/geomath.h"
 
 namespace gloom { namespace geo {
 

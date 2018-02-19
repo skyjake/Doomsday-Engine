@@ -16,17 +16,17 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "gloomwidget.h"
-#include "audio/audiosystem.h"
-#include "world/world.h"
-#include "world/user.h"
+#include "gloom/gloomwidget.h"
+#include "gloom/audio/audiosystem.h"
+#include "gloom/gloomworld.h"
+#include "gloom/world/user.h"
+#include "gloom/world/world.h"
 
 #include <de/Drawable>
 #include <de/GLBuffer>
-#include <de/BaseGuiApp>
+#include <de/KeyEvent>
 #include <de/Matrix>
 #include <de/VRConfig>
-#include <de/KeyEvent>
 
 using namespace de;
 
@@ -35,7 +35,7 @@ namespace gloom {
 DENG_GUI_PIMPL(GloomWidget)
 {
     Matrix4f         modelView;
-    World *          world = nullptr;
+    SafePtr<World>   world;
     Time             previousUpdateAt;
     User             user;
     User::InputState inputs;
@@ -173,6 +173,16 @@ bool GloomWidget::handleEvent(Event const &event)
     {
         const KeyEvent &key = event.as<KeyEvent>();
 
+        // Check for some key commands.
+        if (key.isKeyDown())
+        {
+            if (key.ddKey() == '1' || key.ddKey() == '2')
+            {
+                d->world->as<GloomWorld>().setDebugMode(key.ddKey() - '1');
+                return true;
+            }
+        }
+
         User::InputBit bit = User::Inert;
         switch (key.ddKey())
         {
@@ -203,6 +213,12 @@ bool GloomWidget::handleEvent(Event const &event)
     if (event.isMouse())
     {
         const MouseEvent &mouse = event.as<MouseEvent>();
+
+        if (mouse.type() == Event::MouseWheel)
+        {
+            d->user.turn(Vector2f(mouse.wheel())/10.f);
+            return true;
+        }
 
         if (d->mouseLook)
         {

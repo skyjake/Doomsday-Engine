@@ -29,12 +29,16 @@ set (SOURCES
     gloom/icamera.h
     gloom/ilight.h
     gloom/ident.h
-    gloom/geomath.cpp
-    gloom/geomath.h
+    gloom/geo/geomath.cpp
+    gloom/geo/geomath.h
+    gloom/geo/polygon.cpp
+    gloom/geo/polygon.h
     gloom/gloomwidget.cpp
     gloom/gloomwidget.h
     gloom/gloomworld.cpp
     gloom/gloomworld.h
+    gloom/render/context.cpp
+    gloom/render/context.h
     gloom/render/databuffer.h
     gloom/render/entityrender.cpp
     gloom/render/entityrender.h
@@ -44,10 +48,12 @@ set (SOURCES
     gloom/render/mapbuild.h
     gloom/render/maprender.cpp
     gloom/render/maprender.h
-    gloom/render/polygon.cpp
-    gloom/render/polygon.h
+    gloom/render/render.cpp
+    gloom/render/render.h
     gloom/render/skybox.cpp
     gloom/render/skybox.h
+    gloom/render/view.cpp
+    gloom/render/view.h
     gloom/world/entity.cpp
     gloom/world/entity.h
     gloom/world/entitymap.cpp
@@ -77,6 +83,7 @@ set (SOURCES
 
 deng_add_application (test_gloom ${SOURCES} ${HEADERS})
 
+target_include_directories (test_gloom PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries (test_gloom Deng::libappfw fmodex)
 
 if (APPLE)

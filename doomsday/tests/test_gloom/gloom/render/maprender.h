@@ -20,25 +20,25 @@
 #define GLOOM_MAPRENDER_H
 
 #include <de/AtlasTexture>
-#include "../world/map.h"
+
+#include "gloom/world/map.h"
+#include "gloom/render/render.h"
 
 namespace gloom {
 
 class ICamera;
 
-class MapRender
+class MapRender : public Render
 {
 public:
     MapRender();
 
-    void setAtlas(de::AtlasTexture &atlas);
-    void setMap(const Map &map);
+    void glInit(const Context &) override;
+    void glDeinit() override;
+    void advanceTime(de::TimeSpan elapsed) override;
+    void render() override;
 
-    void glInit();
-    void glDeinit();
     void rebuild();
-    void advanceTime(const de::TimeSpan &elapsed);
-    void render(const ICamera &camera);
 
 private:
     DENG2_PRIVATE(d)

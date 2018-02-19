@@ -16,13 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "world.h"
-#include "../../src/gloomapp.h"
-#include <de/Drawable>
-#include <de/GLBuffer>
-#include <de/BaseGuiApp>
-#include <de/Matrix>
-#include <de/VRConfig>
+#include "gloom/world/world.h"
 
 using namespace de;
 

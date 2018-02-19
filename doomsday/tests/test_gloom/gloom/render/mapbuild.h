@@ -19,7 +19,7 @@
 #ifndef GLOOM_MAPBUILD_H
 #define GLOOM_MAPBUILD_H
 
-#include "../world/map.h"
+#include "gloom/world/map.h"
 
 #include <de/GLBuffer>
 #include <de/Id>

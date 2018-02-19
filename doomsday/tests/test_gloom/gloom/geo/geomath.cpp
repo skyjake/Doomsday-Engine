@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "geomath.h"
+#include "gloom/geo/geomath.h"
 
 using namespace de;
 

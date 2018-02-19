@@ -71,10 +71,12 @@ struct Line
 
     T normal() const
     {
-        const auto dirVec = dir();
+        /*const auto dirVec = dir();
         return de::Vector3<typename T::ValueType>(dirVec.x, 0.0, dirVec.y)
             .cross(de::Vector3<typename T::ValueType>(0, 1, 0))
-            .xz();
+            .xz();*/
+        const auto vec = dir();
+        return T(-vec.y, vec.x);
     }
 
     void flip()

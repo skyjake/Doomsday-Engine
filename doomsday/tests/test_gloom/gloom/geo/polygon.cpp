@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "polygon.h"
-#include "../geomath.h"
+#include "gloom/geo/polygon.h"
+#include "gloom/geo/geomath.h"
 
 using namespace de;
 

@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "environment.h"
-#include "world.h"
-#include "../audio/audiosystem.h"
+#include "gloom/world/environment.h"
+#include "gloom/world/world.h"
+#include "gloom/audio/audiosystem.h"
 
 using namespace de;
 

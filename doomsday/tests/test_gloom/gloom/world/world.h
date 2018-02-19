@@ -21,7 +21,7 @@
 
 #include <de/AtlasTexture>
 #include <de/Matrix>
-#include "../icamera.h"
+#include "gloom/icamera.h"
 
 #include <QList>
 
@@ -29,7 +29,7 @@ namespace gloom {
 
 class User;
 
-class World
+class World : public de::Deletable
 {
 public:
     World();
@@ -58,6 +58,8 @@ public:
 
     virtual float groundSurfaceHeight(de::Vector3f const &pos) const;
     virtual float ceilingHeight(de::Vector3f const &pos) const;
+
+    DENG2_CAST_METHODS()
 
 public:
     DENG2_DEFINE_AUDIENCE(Ready, void worldReady(World &))

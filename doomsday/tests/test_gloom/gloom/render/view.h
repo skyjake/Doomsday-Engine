@@ -1,4 +1,4 @@
-/** @file entityrender.h
+/** @file view.h
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,35 +16,24 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_ENTITIES_H
-#define GLOOM_ENTITIES_H
+#ifndef GLOOM_VIEW_H
+#define GLOOM_VIEW_H
 
-#include "gloom/world/entitymap.h"
-#include "gloom/render/render.h"
-
-#include <de/AtlasTexture>
+#include <de/GLUniform>
+#include "gloom/icamera.h"
 
 namespace gloom {
 
-class ICamera;
-class Map;
-
-class EntityRender : public Render
+struct View
 {
-public:
-    EntityRender();
+    const ICamera *camera;
 
-    EntityMap &entityMap();
-    void createEntities();
+    de::GLUniform uMvpMatrix            {"uMvpMatrix",          de::GLUniform::Mat4};
+    de::GLUniform uWorldToViewMatrix    {"uWorldToViewMatrix",  de::GLUniform::Mat3};
 
-    void glInit(const Context &) override;
-    void glDeinit() override;
-    void render() override;
-
-private:
-    DENG2_PRIVATE(d)
+    void setCamera(const ICamera &camera);
 };
 
 } // namespace gloom
 
-#endif // GLOOM_ENTITIES_H
+#endif // GLOOM_VIEW_H

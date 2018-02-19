@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "entitymap.h"
+#include "gloom/world/entitymap.h"
 
 using namespace de;
 

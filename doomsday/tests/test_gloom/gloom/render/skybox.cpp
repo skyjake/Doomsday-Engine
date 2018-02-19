@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "skybox.h"
-#include "../../src/gloomapp.h"
+#include "gloom/render/skybox.h"
 
 #include <de/Drawable>
 
@@ -29,40 +28,55 @@ DENG2_PIMPL_NOREF(SkyBox)
 {
     typedef GLBufferT<Vertex3Tex2BoundsRgba> VBuf;
 
-    AtlasTexture *atlas{nullptr};
+//    const Context *context = nullptr;
+//    AtlasTexture *atlas{nullptr};
     Id            skyTex;
     Drawable      skyBox;
     GLUniform     uMvpMatrix{"uMvpMatrix", GLUniform::Mat4};
-    GLUniform     uTex      {"uTex",       GLUniform::Sampler2D};
+//    GLUniform     uTex      {"uTex",       GLUniform::Sampler2D};
     float         scale = 1.f;
 };
 
 SkyBox::SkyBox() : d(new Impl)
 {}
 
-void SkyBox::setAtlas(AtlasTexture &atlas)
-{
-    d->atlas = &atlas;
-    d->uTex  = atlas;
-}
+//void SkyBox::setContext(const Context &ctx)
+//{
+//    d->context = &ctx;
+//}
+
+//void SkyBox::setAtlas(AtlasTexture &atlas)
+//{
+//    d->atlas = &atlas;
+//    d->uTex  = atlas;
+//}
+
+//void gloom::SkyBox::setView(const View &view)
+//{
+//    d->view = &view;
+//}
 
 void SkyBox::setSize(float scale)
 {
     d->scale = scale;
 }
 
-void SkyBox::glInit()
+void SkyBox::glInit(const Context &context)
 {
+    Render::glInit(context);
+
     using VBuf = Impl::VBuf;
 
-    d->skyTex = d->atlas->alloc(GloomApp::images().image("sky.day"));
+    auto *atlas = context.atlas;
+
+    d->skyTex = atlas->alloc(context.images->image("sky.day"));
 
     // Make a sky box.
     VBuf *buf = new VBuf;
     VBuf::Builder verts;
     VBuf::Type v;
 
-    v.texBounds   = d->atlas->imageRectf(d->skyTex).xywh();
+    v.texBounds   = atlas->imageRectf(d->skyTex).xywh();
     v.texCoord[1] = Vector2f(512, 512);
     v.rgba        = Vector4f(1, 1, 1, 1);
 
@@ -95,22 +109,26 @@ void SkyBox::glInit()
     buf->setVertices(gl::TriangleStrip, verts, gl::Static);
     d->skyBox.addBuffer(buf);
 
-    GloomApp::shaders().build(d->skyBox.program(), "indirect.textured.color")
+    context.shaders->build(d->skyBox.program(), "indirect.textured.color")
             << d->uMvpMatrix
-            << d->uTex;
+            << context.uAtlas;
 }
 
 void SkyBox::glDeinit()
 {
     d->skyBox.clear();
+    Render::glDeinit();
 }
 
-void SkyBox::render(Matrix4f const &mvpMatrix)
+void SkyBox::render()
 {
     GLState::push().setDepthWrite(false);
 
     DENG2_ASSERT(d->skyBox.program().isReady());
-    d->uMvpMatrix = mvpMatrix * Matrix4f::scale(d->scale);
+
+    d->uMvpMatrix = context().view.uMvpMatrix.toMatrix4f() *
+                    Matrix4f::translate(context().view.camera->cameraPosition()) *
+                    Matrix4f::scale(d->scale);
     d->skyBox.draw();
 
     GLState::pop();

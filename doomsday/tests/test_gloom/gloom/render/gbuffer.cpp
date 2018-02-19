@@ -16,22 +16,41 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "gbuffer.h"
+#include "gloom/render/gbuffer.h"
 
-#include <de/GLState>
+#include <de/Drawable>
 #include <de/GLTextureFramebuffer>
+#include <de/GLProgram>
+#include <de/GLState>
+#include <de/GLUniform>
 
 using namespace de;
 
 namespace gloom {
 
+static const int BUF_ID = 1;
+
 DENG2_PIMPL(GBuffer)
 {
     GLTextureFramebuffer frame{
-        QList<Image::Format>({Image::RGBA_16f /* albedo */, Image::RGB_888 /* normals */})};
+        QList<Image::Format>({Image::RGBA_16f /* albedo */, Image::RGBA_8888 /* normals */})};
+    Drawable drawable;
+    GLState state;
+    GLUniform uMvpMatrix        {"uMvpMatrix",         GLUniform::Mat4};
+    GLUniform uGBufferAlbedo    {"uGBufferAlbedo",     GLUniform::Sampler2D};
+    GLUniform uGBufferNormal    {"uGBufferNormal",     GLUniform::Sampler2D};
+    GLUniform uGBufferDepth     {"uGBufferDepth",      GLUniform::Sampler2D};
+    GLUniform uDebugMode        {"uDebugMode",         GLUniform::Int};
 
     Impl(Public *i) : Base(i)
-    {}
+    {
+        state.setBlend(false);
+        state.setCull(gl::None);
+        state.setDepthTest(false);
+        state.setDepthWrite(false);
+
+        uDebugMode = 0;
+    }
 
     void setSize(const Vector2ui &size)
     {
@@ -43,14 +62,29 @@ GBuffer::GBuffer()
     : d(new Impl(this))
 {}
 
-void GBuffer::glInit()
+void GBuffer::glInit(const Context &context)
 {
+    Render::glInit(context);
     d->frame.glInit();
+
+    using VBuf = GLBufferT<Vertex2Tex>;
+    VBuf *vbuf = new VBuf;
+    vbuf->setVertices(gl::TriangleStrip,
+                      VBuf::Builder().makeQuad(Rectanglef(0, 0, 1, 1), Rectanglef(0, 1, 1, -1)),
+                      gl::Static);
+    d->drawable.addBuffer(BUF_ID, vbuf);
+
+    context.shaders->build(d->drawable.program(), "gloom.finalize")
+        << d->uMvpMatrix
+        << d->uGBufferAlbedo << d->uGBufferNormal << d->uGBufferDepth
+        << d->uDebugMode;
 }
 
 void GBuffer::glDeinit()
 {
+    d->drawable.clear();
     d->frame.glDeinit();
+    Render::glDeinit();
 }
 
 void GBuffer::resize(const Vector2ui &size)
@@ -63,9 +97,27 @@ void GBuffer::clear()
     d->frame.clear(GLFramebuffer::ColorAny | GLFramebuffer::DepthStencil);
 }
 
-void GBuffer::blit()
+void GBuffer::render()
 {
-    d->frame.blit(GLState::current().target());
+    d->uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
+
+    d->state.setViewport(GLState::current().viewport())
+            .setTarget  (GLState::current().target());
+
+    d->drawable.setState(BUF_ID, d->state);
+
+    d->uGBufferAlbedo = d->frame.attachedTexture(GLFramebuffer::Color0);
+    d->uGBufferNormal = d->frame.attachedTexture(GLFramebuffer::Color1);
+    d->uGBufferDepth  = d->frame.attachedTexture(GLFramebuffer::DepthStencil);
+
+    d->drawable.draw();
+}
+
+void gloom::GBuffer::setDebugMode(int debugMode)
+{
+    LOG_AS("GBuffer");
+    LOG_MSG("Changing debug mode: %i") << debugMode;
+    d->uDebugMode = debugMode;
 }
 
 GLFramebuffer &GBuffer::framebuf()

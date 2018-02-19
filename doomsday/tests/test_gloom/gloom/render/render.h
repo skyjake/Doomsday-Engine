@@ -1,4 +1,4 @@
-/** @file entityrender.h
+/** @file render.h
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,30 +16,30 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_ENTITIES_H
-#define GLOOM_ENTITIES_H
+#ifndef GLOOM_RENDER_H
+#define GLOOM_RENDER_H
 
-#include "gloom/world/entitymap.h"
-#include "gloom/render/render.h"
-
-#include <de/AtlasTexture>
+#include "gloom/render/context.h"
+#include <de/Time>
 
 namespace gloom {
 
-class ICamera;
-class Map;
-
-class EntityRender : public Render
+/**
+ * Renderer component.
+ */
+class Render
 {
 public:
-    EntityRender();
+    Render();
+    virtual ~Render();
 
-    EntityMap &entityMap();
-    void createEntities();
+    const Context &context() const;
 
-    void glInit(const Context &) override;
-    void glDeinit() override;
-    void render() override;
+    virtual void glInit(const Context &context);
+    virtual void glDeinit();
+
+    virtual void advanceTime(de::TimeSpan elapsed);
+    virtual void render() = 0;
 
 private:
     DENG2_PRIVATE(d)
@@ -47,4 +47,4 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_ENTITIES_H
+#endif // GLOOM_RENDER_H

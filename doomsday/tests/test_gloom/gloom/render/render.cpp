@@ -1,4 +1,4 @@
-/** @file entityrender.h
+/** @file render.cpp
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,35 +16,43 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_ENTITIES_H
-#define GLOOM_ENTITIES_H
-
-#include "gloom/world/entitymap.h"
 #include "gloom/render/render.h"
-
-#include <de/AtlasTexture>
 
 namespace gloom {
 
-class ICamera;
-class Map;
-
-class EntityRender : public Render
+DENG2_PIMPL_NOREF(Render)
 {
-public:
-    EntityRender();
-
-    EntityMap &entityMap();
-    void createEntities();
-
-    void glInit(const Context &) override;
-    void glDeinit() override;
-    void render() override;
-
-private:
-    DENG2_PRIVATE(d)
+    const Context *context = nullptr;
 };
 
-} // namespace gloom
+Render::Render()
+    : d(new Impl)
+{}
 
-#endif // GLOOM_ENTITIES_H
+Render::~Render()
+{
+    DENG2_ASSERT(d->context == nullptr);
+}
+
+const Context &Render::context() const
+{
+    DENG2_ASSERT(d->context);
+    return *d->context;
+}
+
+void Render::glInit(const Context &context)
+{
+    DENG2_ASSERT(d->context == nullptr);
+    d->context = &context;
+}
+
+void Render::glDeinit()
+{
+    DENG2_ASSERT(d->context != nullptr);
+    d->context = nullptr;
+}
+
+void Render::advanceTime(de::TimeSpan)
+{}
+
+} // namespace gloom

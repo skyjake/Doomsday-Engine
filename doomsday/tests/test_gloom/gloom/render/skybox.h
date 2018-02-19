@@ -16,25 +16,26 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef SKYBOX_H
-#define SKYBOX_H
+#ifndef GLOOM_SKYBOX_H
+#define GLOOM_SKYBOX_H
 
 #include <de/AtlasTexture>
 #include <de/Matrix>
 
+#include "gloom/render/render.h"
+
 namespace gloom {
 
-class SkyBox
+class SkyBox : public Render
 {
 public:
     SkyBox();
 
-    void setAtlas(de::AtlasTexture &atlas);
     void setSize(float scale);
 
-    void glInit();
-    void glDeinit();
-    void render(de::Matrix4f const &mvpMatrix);
+    void glInit(const Context &) override;
+    void glDeinit() override;
+    void render() override;
 
 private:
     DENG2_PRIVATE(d)
@@ -42,4 +43,4 @@ private:
 
 } // namespace gloom
 
-#endif // SKYBOX_H
+#endif // GLOOM_SKYBOX_H

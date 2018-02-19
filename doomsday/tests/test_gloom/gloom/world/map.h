@@ -23,10 +23,11 @@
 #include <de/Vector>
 #include <QHash>
 #include <unordered_map>
-#include "entity.h"
-#include "../ident.h"
-#include "../geomath.h"
-#include "../render/polygon.h"
+
+#include "gloom/geo/geomath.h"
+#include "gloom/geo/polygon.h"
+#include "gloom/ident.h"
+#include "gloom/world/entity.h"
 
 namespace gloom {
 

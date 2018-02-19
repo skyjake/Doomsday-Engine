@@ -20,7 +20,7 @@
 #define GLOOMWIDGET_H
 
 #include <de/GuiWidget>
-#include "icamera.h"
+#include "gloom/icamera.h"
 
 namespace gloom {
 

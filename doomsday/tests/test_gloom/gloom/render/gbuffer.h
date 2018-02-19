@@ -22,21 +22,25 @@
 #include <de/GLFramebuffer>
 #include <de/GLTexture>
 
+#include "gloom/render/render.h"
+
 namespace gloom {
 
 /**
  * G-buffer used for rendering.
  */
-class GBuffer
+class GBuffer : public Render
 {
 public:
     GBuffer();
 
-    void glInit();
-    void glDeinit();
-    void resize(const de::Vector2ui &size);
+    void glInit(const Context &) override;
+    void glDeinit() override;
+    void render() override;
+
     void clear();
-    void blit();
+    void resize(const de::Vector2ui &size);
+    void setDebugMode(int debugMode);
 
     de::GLFramebuffer &framebuf();
 

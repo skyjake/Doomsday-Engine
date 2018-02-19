@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "mapbuild.h"
-#include "polygon.h"
-#include "../geomath.h"
+#include "gloom/render/mapbuild.h"
+#include "gloom/geo/polygon.h"
+#include "gloom/geo/geomath.h"
 
 #include <array>
 
@@ -51,15 +51,10 @@ DENG2_PIMPL_NOREF(MapBuild)
         , textures(textures)
     {}
 
-    Vector3f vertex(ID id) const
+    Vector3f worldNormalVector(const Line &line) const
     {
-        const Point &point = map.point(id);
-        return Vector3f{float(point.x), 0.f, float(point.y)};
-    }
-
-    Vector3f normalVector(const Line &line) const
-    {
-        return geo::Line<Vector3f>(vertex(line.points[0]), vertex(line.points[1])).normal();
+        Vector2d norm = geo::Line2d(map.point(line.points[0]), map.point(line.points[1])).normal();
+        return Vector3d(norm.x, 0.0, norm.y);
     }
 
     /**
@@ -214,7 +209,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                     const int      dir    = line.sectors[0] == sectorId? 1 : 0;
                     const ID       start  = line.points[dir^1];
                     const ID       end    = line.points[dir];
-                    const Vector3f normal = normalVector(line);
+                    const Vector3f normal = worldNormalVector(line);
                     const float    length = float((floor[end] - floor[start]).length());
                     const uint32_t planeIndex[2] = {planeMapper[map.floorPlaneId(sectorId)],
                                                     planeMapper[map.ceilingPlaneId(sectorId)]};

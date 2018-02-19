@@ -19,9 +19,9 @@
 #ifndef GLOOMWORLD_H
 #define GLOOMWORLD_H
 
-#include "../gloom/icamera.h"
-#include "../gloom/world/user.h"
-#include "../gloom/world/world.h"
+#include "gloom/icamera.h"
+#include "gloom/world/user.h"
+#include "gloom/world/world.h"
 
 namespace gloom {
 
@@ -34,6 +34,7 @@ public:
 
     void setLocalUser(User *user);
     void setMap(const Map &map);
+    void setDebugMode(int debugMode);
 
     void glInit();
     void glDeinit();

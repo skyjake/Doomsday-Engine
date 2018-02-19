@@ -3,4 +3,31 @@ group gloom {
         path.vertex = "surface.vsh"
         path.fragment = "surface.fsh"
     }
+    shader finalize {
+        vertex = "
+            uniform mat4 uMvpMatrix;
+            DENG_ATTRIB vec4 aVertex;
+            DENG_ATTRIB vec2 aUV;
+            DENG_VAR vec2 vUV;
+            void main(void) {
+                gl_Position = uMvpMatrix * aVertex;
+                vUV = aUV;
+            }
+        "
+        fragment = "
+            uniform sampler2D uGBufferAlbedo;
+            uniform sampler2D uGBufferNormal;
+            uniform sampler2D uGBufferDepth;
+            uniform int uDebugMode;
+            DENG_VAR vec2 vUV;
+            void main(void) {
+                if (uDebugMode == 0) {
+                    out_FragColor = texture(uGBufferAlbedo, vUV);
+                }
+                else if (uDebugMode == 1) {
+                    out_FragColor = texture(uGBufferNormal, vUV);
+                }
+            }
+        "
+    }
 }

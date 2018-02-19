@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef USER_H
-#define USER_H
+#ifndef GLOOM_USER_H
+#define GLOOM_USER_H
 
 #include <de/Vector>
 #include <de/Time>
@@ -76,4 +76,4 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(User::InputState)
 
 } // namespace gloom
 
-#endif // USER_H
+#endif // GLOOM_USER_H

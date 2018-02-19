@@ -33,11 +33,11 @@ using namespace gloom;
 
 DENG2_PIMPL(GloomApp)
 {
+    ImageBank                        images;
     std::unique_ptr<Editor>          editor;
     std::unique_ptr<AppWindowSystem> winSys;
     std::unique_ptr<AudioSystem>     audioSys;
-    ImageBank                        images;
-    GloomWorld                       world;
+    std::unique_ptr<GloomWorld>      world;
 
     Impl(Public *i) : Base(i) {}
 
@@ -46,7 +46,9 @@ DENG2_PIMPL(GloomApp)
         // Windows will be closed; OpenGL context will be gone.
         // Deinitalize everything.
         winSys->main().glActivate();
-        world.glDeinit();
+        world->glDeinit();
+        world.reset();
+
         self().glDeinit();
     }
 
@@ -72,6 +74,8 @@ GloomApp::GloomApp(int &argc, char **argv)
 
 void GloomApp::initialize()
 {
+    d->world.reset(new GloomWorld);
+
     // Set up the editor.
     {
         d->editor.reset(new Editor());
@@ -80,7 +84,7 @@ void GloomApp::initialize()
 
         connect(d->editor.get(), &Editor::buildMapRequested, [this]() {
             AppWindowSystem::main().glActivate();
-            d->world.setMap(d->editor->map());
+            d->world->setMap(d->editor->map());
         });
     }
 
@@ -109,7 +113,7 @@ void GloomApp::initialize()
     // Create the window.
     MainWindow *win = d->winSys->newWindow<MainWindow>("main");
 
-    win->root().find("gloomwidget")->as<GloomWidget>().setWorld(&d->world);
+    win->root().find("gloomwidget")->as<GloomWidget>().setWorld(d->world.get());
 
     scriptSystem().importModule("bootstrap");
     win->show();

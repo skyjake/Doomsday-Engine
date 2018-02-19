@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "map.h"
-#include "../geomath.h"
+#include "gloom/world/map.h"
 
 #include <de/Block>
 

@@ -20,7 +20,7 @@
 #define GLOOM_EDITOR_H
 
 #include <QWidget>
-#include "../gloom/world/map.h"
+#include "gloom/world/map.h"
 
 class Editor : public QWidget
 {

@@ -16,12 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "maprender.h"
-#include "mapbuild.h"
-#include "databuffer.h"
-#include "entityrender.h"
-#include "../icamera.h"
-#include "../../src/gloomapp.h"
+#include "gloom/render/maprender.h"
+#include "gloom/render/mapbuild.h"
+#include "gloom/render/databuffer.h"
+#include "gloom/render/entityrender.h"
+#include "gloom/icamera.h"
 
 #include <de/Drawable>
 #include <de/GLUniform>
@@ -32,10 +31,10 @@ namespace gloom {
 
 DENG2_PIMPL(MapRender)
 {
-    const Map *map = nullptr;
-    double     currentTime;
+//    const Context *context = nullptr;
+//    double      currentTime;
 
-    AtlasTexture *       atlas = nullptr;
+//    AtlasTexture *       atlas = nullptr;
     MapBuild::TextureIds textures;
     MapBuild::Mapper     planeMapper;
     MapBuild::Mapper     texOffsetMapper;
@@ -56,10 +55,11 @@ DENG2_PIMPL(MapRender)
     };
     DataBuffer<TexOffsetData> texOffsets{"uTexOffsets", Image::RGBA_32f};
 
-    GLUniform uMvpMatrix        {"uMvpMatrix",      GLUniform::Mat4};
-    GLUniform uTex              {"uTex",            GLUniform::Sampler2D};
-    GLUniform uCurrentTime      {"uCurrentTime",    GLUniform::Float};
-    GLUniform uTexelsPerMeter   {"uTexelsPerMeter", GLUniform::Float};
+//    GLUniform uMvpMatrix        {"uMvpMatrix",          GLUniform::Mat4};
+//    GLUniform uWorldToViewMatrix{"uWorldToViewMatrix",  GLUniform::Mat3};
+//    GLUniform uTex              {"uTex",                GLUniform::Sampler2D};
+//    GLUniform uCurrentTime      {"uCurrentTime",        GLUniform::Float};
+    GLUniform uTexelsPerMeter   {"uTexelsPerMeter",     GLUniform::Float};
     Drawable  drawable;
 
     EntityRender ents;
@@ -74,7 +74,7 @@ DENG2_PIMPL(MapRender)
 
     void loadTexture(const String &name)
     {
-        const Id id = atlas->alloc(GloomApp::images().image(name));
+        const Id id = self().context().atlas->alloc(self().context().images->image(name));
         loadedTextures.insert(name, id);
     }
 
@@ -86,8 +86,8 @@ DENG2_PIMPL(MapRender)
         for (auto i = loadedTextures.begin(); i != loadedTextures.end(); ++i)
         {
             // Load up metrics in an array.
-            const Rectanglei rect  = atlas->imageRect(i.value());
-            const Rectanglef rectf = atlas->imageRectf(i.value());
+            const Rectanglei rect  = self().context().atlas->imageRect(i.value());
+            const Rectanglef rectf = self().context().atlas->imageRectf(i.value());
             const uint32_t   texId = textureMetrics.append(
                 Metrics{{rectf.xywh()}, {Vector4f(rect.width(), rect.height())}});
             textures.insert(i.key(), texId);
@@ -98,6 +98,9 @@ DENG2_PIMPL(MapRender)
 
     void buildMap()
     {
+        const auto &context = self().context();
+        const auto *map = context.map;
+
         drawable.clear();
 
         DENG2_ASSERT(map);
@@ -123,16 +126,14 @@ DENG2_PIMPL(MapRender)
 
         drawable.addBuffer(buf);
 
-        GloomApp::shaders().build(drawable.program(), "gloom.surface")
-            << uMvpMatrix << uCurrentTime << uTexelsPerMeter << uTex << textureMetrics.var
-            << planes.var << texOffsets.var;
+        context.shaders->build(drawable.program(), "gloom.surface")
+            << uTexelsPerMeter << textureMetrics.var << planes.var << texOffsets.var;
+        context.bind(drawable.program());
     }
 
     void glInit()
     {
-        ents.setAtlas(atlas);
-        ents.setMap(map);
-        ents.glInit();
+        ents.glInit(self().context());
 
         uTexelsPerMeter = 200;
 
@@ -151,9 +152,10 @@ DENG2_PIMPL(MapRender)
     void glDeinit()
     {
         ents.glDeinit();
+
         for (const Id &texId : loadedTextures)
         {
-            atlas->release(texId);
+            self().context().atlas->release(texId);
         }
         loadedTextures.clear();
         textureMetrics.clear();
@@ -167,26 +169,16 @@ MapRender::MapRender()
     : d(new Impl(this))
 {}
 
-void MapRender::setAtlas(AtlasTexture &atlas)
+void MapRender::glInit(const Context &context)
 {
-    d->atlas = &atlas;
-    d->uTex  = atlas;
-}
-
-void MapRender::setMap(const Map &map)
-{
-    d->clear();
-    d->map = &map;
-}
-
-void MapRender::glInit()
-{
+    Render::glInit(context);
     d->glInit();
 }
 
 void MapRender::glDeinit()
 {
     d->glDeinit();
+    Render::glDeinit();
 }
 
 void MapRender::rebuild()
@@ -195,18 +187,18 @@ void MapRender::rebuild()
     d->ents.createEntities();
 }
 
-void MapRender::advanceTime(const TimeSpan &elapsed)
+void MapRender::advanceTime(TimeSpan)
 {
-    d->currentTime += elapsed;
+//    d->currentTime += elapsed;
 
-    const float now = float(d->currentTime);
-    d->uCurrentTime = now;
+//    const float now = float(d->currentTime);
+//    d->uCurrentTime = now;
 
     // Update plane heights.
     {
         for (auto i = d->planeMapper.begin(), end = d->planeMapper.end(); i != end; ++i)
         {
-            const float planeY = float(d->map->plane(i.key()).point.y); // +
+            const float planeY = float(context().map->plane(i.key()).point.y); // +
                                  //std::sin(i.value() + now * .1f);
 
             d->planes.setData(i.value(), planeY);
@@ -225,17 +217,15 @@ void MapRender::advanceTime(const TimeSpan &elapsed)
         }
     }
 #endif
+
+    d->texOffsets.update();
+    d->planes.update();
 }
 
-void MapRender::render(const ICamera &camera)
+void MapRender::render()
 {
-    d->planes    .update();
-    d->texOffsets.update();
-
-    d->uMvpMatrix = camera.cameraModelViewProjection();
     d->drawable.draw();
-
-    d->ents.render(camera);
+    d->ents.render();
 }
 
 } // namespace gloom

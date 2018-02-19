@@ -16,12 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "user.h"
-#include "world.h"
-#include "../../src/gloomapp.h"
-#include "../audio/audiosystem.h"
+#include "gloom/world/user.h"
+#include "gloom/world/world.h"
+#include "gloom/audio/audiosystem.h"
 
-#include <de/VRConfig>
 #include <de/Animation>
 #include <de/Variable>
 
