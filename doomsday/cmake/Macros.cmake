@@ -339,15 +339,25 @@ function (deng_add_package packName)
         message (FATAL_ERROR "deng_package: \"${outName}\" not found")
     endif ()
     set (outDir ${CMAKE_CURRENT_BINARY_DIR})
+    # Build the package immediately during the CMake run.
     execute_process (COMMAND ${PYTHON_EXECUTABLE}
-        "${DENG_SOURCE_DIR}/build/scripts/buildpackage.py"
-        ${fullPath} ${outDir}
+        "${DENG_SOURCE_DIR}/build/scripts/buildpackage.py" ${fullPath} ${outDir}
         OUTPUT_VARIABLE msg
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
     clean_paths (msg ${msg})
     message (STATUS "${msg}")
-    add_custom_target (${packName})
+    # Find all the source files for the package.
+    file (GLOB_RECURSE packSrc "${fullPath}/*")
+    list_remove_matches (packSrc ".*\\.DS_Store")
+    # Ensure the package gets rebuilt if the source files are edited.
+    add_custom_command (OUTPUT ${outDir}/${outName}
+        COMMAND "${DENG_SOURCE_DIR}/build/scripts/buildpackage.py" ${fullPath} ${outDir}
+        DEPENDS ${packSrc}
+        COMMENT "Packaging ${packName}..."
+    )
+    # The package target is used for dependency tracking and deployment.
+    add_custom_target (${packName} SOURCES ${packSrc})
     set_target_properties (${packName} PROPERTIES
         DENG_LOCATION "${outDir}/${outName}"
         FOLDER Packages
