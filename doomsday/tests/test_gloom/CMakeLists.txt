@@ -50,8 +50,12 @@ set (SOURCES
     gloom/render/maprender.h
     gloom/render/render.cpp
     gloom/render/render.h
+    gloom/render/screenquad.cpp
+    gloom/render/screenquad.h
     gloom/render/skybox.cpp
     gloom/render/skybox.h
+    gloom/render/ssao.cpp
+    gloom/render/ssao.h
     gloom/render/view.cpp
     gloom/render/view.h
     gloom/world/entity.cpp

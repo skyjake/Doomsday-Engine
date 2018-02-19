@@ -17,6 +17,7 @@
  */
 
 #include "gloom/render/gbuffer.h"
+#include "gloom/render/screenquad.h"
 
 #include <de/Drawable>
 #include <de/GLTextureFramebuffer>
@@ -28,14 +29,11 @@ using namespace de;
 
 namespace gloom {
 
-static const int BUF_ID = 1;
-
 DENG2_PIMPL(GBuffer)
 {
+    ScreenQuad quad;
     GLTextureFramebuffer frame{
         QList<Image::Format>({Image::RGBA_16f /* albedo */, Image::RGBA_8888 /* normals */})};
-    Drawable drawable;
-    GLState state;
     GLUniform uMvpMatrix        {"uMvpMatrix",         GLUniform::Mat4};
     GLUniform uGBufferAlbedo    {"uGBufferAlbedo",     GLUniform::Sampler2D};
     GLUniform uGBufferNormal    {"uGBufferNormal",     GLUniform::Sampler2D};
@@ -44,11 +42,6 @@ DENG2_PIMPL(GBuffer)
 
     Impl(Public *i) : Base(i)
     {
-        state.setBlend(false);
-        state.setCull(gl::None);
-        state.setDepthTest(false);
-        state.setDepthWrite(false);
-
         uDebugMode = 0;
     }
 
@@ -65,26 +58,18 @@ GBuffer::GBuffer()
 void GBuffer::glInit(const Context &context)
 {
     Render::glInit(context);
-    d->frame.glInit();
-
-    using VBuf = GLBufferT<Vertex2Tex>;
-
-    auto *vbuf = new VBuf;
-    vbuf->setVertices(gl::TriangleStrip,
-                      VBuf::Builder().makeQuad(Rectanglef(0, 0, 1, 1), Rectanglef(0, 1, 1, -1)),
-                      gl::Static);
-    d->drawable.addBuffer(BUF_ID, vbuf);
-
-    context.shaders->build(d->drawable.program(), "gloom.finalize")
+    d->quad.glInit(context);
+    context.shaders->build(d->quad.program(), "gloom.finalize")
         << d->uMvpMatrix
         << context.view.uInverseProjMatrix
         << d->uGBufferAlbedo << d->uGBufferNormal << d->uGBufferDepth
         << d->uDebugMode;
+    d->frame.glInit();
 }
 
 void GBuffer::glDeinit()
 {
-    d->drawable.clear();
+    d->quad.glDeinit();
     d->frame.glDeinit();
     Render::glDeinit();
 }
@@ -103,22 +88,18 @@ void GBuffer::render()
 {
     d->uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
 
-    d->state.setViewport(GLState::current().viewport())
-            .setTarget  (GLState::current().target());
-
-    d->drawable.setState(BUF_ID, d->state);
-
     d->uGBufferAlbedo = d->frame.attachedTexture(GLFramebuffer::Color0);
     d->uGBufferNormal = d->frame.attachedTexture(GLFramebuffer::Color1);
     d->uGBufferDepth  = d->frame.attachedTexture(GLFramebuffer::DepthStencil);
 
-    d->drawable.draw();
+    d->quad.render();
 }
 
 void gloom::GBuffer::setDebugMode(int debugMode)
 {
     LOG_AS("GBuffer");
     LOG_MSG("Changing debug mode: %i") << debugMode;
+
     d->uDebugMode = debugMode;
 }
 

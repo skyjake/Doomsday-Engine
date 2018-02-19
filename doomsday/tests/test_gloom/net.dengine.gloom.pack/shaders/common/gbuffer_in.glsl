@@ -4,6 +4,7 @@
 layout (pixel_center_integer) in vec4 gl_FragCoord;
 
 uniform mat4 uInverseProjMatrix;
+
 uniform sampler2D uGBufferAlbedo;
 uniform sampler2D uGBufferNormal;
 uniform sampler2D uGBufferDepth;

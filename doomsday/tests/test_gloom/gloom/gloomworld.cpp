@@ -23,6 +23,7 @@
 #include "gloom/render/gbuffer.h"
 #include "gloom/render/maprender.h"
 #include "gloom/render/skybox.h"
+#include "gloom/render/ssao.h"
 #include "gloom/world/entitymap.h"
 #include "gloom/world/environment.h"
 #include "gloom/world/map.h"
@@ -52,6 +53,7 @@ DENG2_PIMPL(GloomWorld), public Asset, public ILight
     Map               map;
     QHash<ID, double> initialPlaneY;
     MapRender         mapRender;
+    SSAO              ssao;
 
     float  visibleDistance;
     double currentTime = 0.0;
@@ -98,12 +100,12 @@ DENG2_PIMPL(GloomWorld), public Asset, public ILight
 
         DENG2_ASSERT(localUser);
 
-        gbuffer.glInit(renderContext);
-
         sky.setSize(visibleDistance);
-        sky.glInit(renderContext);
 
+        gbuffer  .glInit(renderContext);
+        sky      .glInit(renderContext);
         mapRender.glInit(renderContext);
+        ssao     .glInit(renderContext);
 
 //        Vector3f const fogColor{.83f, .89f, 1.f};
 //        uFog = Vector4f(fogColor, visibleDistance);
@@ -116,6 +118,7 @@ DENG2_PIMPL(GloomWorld), public Asset, public ILight
     {
         setState(NotReady);
 
+        ssao     .glDeinit();
         mapRender.glDeinit();
         sky      .glDeinit();
         gbuffer  .glDeinit();
@@ -149,9 +152,7 @@ DENG2_PIMPL(GloomWorld), public Asset, public ILight
     }
 
     void userWarped(const User &)
-    {
-
-    }
+    {}
 
     void update(const TimeSpan &elapsed)
     {
@@ -241,6 +242,7 @@ void GloomWorld::render(ICamera const &camera)
 
     GLState::pop();
 
+    d->ssao.render();
     d->gbuffer.render();
 }
 
