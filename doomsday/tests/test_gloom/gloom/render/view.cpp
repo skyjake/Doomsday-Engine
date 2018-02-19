@@ -26,6 +26,7 @@ void View::setCamera(const ICamera &camera)
 
     uMvpMatrix         = camera.cameraModelViewProjection();
     uWorldToViewMatrix = camera.cameraModelView().submatrix(0, 0);
+    uInverseProjMatrix = camera.cameraProjection().inverse();
 }
 
 } // namespace gloom

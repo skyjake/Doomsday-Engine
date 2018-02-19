@@ -171,7 +171,7 @@ bool GloomWidget::handleEvent(Event const &event)
         // Check for some key commands.
         if (key.isKeyDown())
         {
-            if (key.ddKey() == '1' || key.ddKey() == '2')
+            if (key.ddKey() >= '1' && key.ddKey() <= '3')
             {
                 d->world->as<GloomWorld>().setDebugMode(key.ddKey() - '1');
                 return true;

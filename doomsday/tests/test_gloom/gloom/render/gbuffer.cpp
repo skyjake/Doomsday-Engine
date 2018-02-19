@@ -76,6 +76,7 @@ void GBuffer::glInit(const Context &context)
 
     context.shaders->build(d->drawable.program(), "gloom.finalize")
         << d->uMvpMatrix
+        << context.view.uInverseProjMatrix
         << d->uGBufferAlbedo << d->uGBufferNormal << d->uGBufferDepth
         << d->uDebugMode;
 }

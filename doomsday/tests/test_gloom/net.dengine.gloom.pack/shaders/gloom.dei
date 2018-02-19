@@ -28,6 +28,9 @@ group gloom {
                 else if (uDebugMode == 1) {
                     out_FragColor = texture(uGBufferNormal, vUV);
                 }
+                else if (uDebugMode == 2) {
+                    out_FragColor = GBuffer_FragmentViewSpacePos();
+                }
             }
         "
     }
