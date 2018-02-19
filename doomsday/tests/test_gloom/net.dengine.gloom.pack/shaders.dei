@@ -1,6 +1,2 @@
-@include <shaders/generic.dei>
-@include <shaders/fx-blur.dei>
-@include <shaders/ui.dei>
-@include <shaders/indirect.dei>
+@include <shaders/app/app.dei>
 @include <shaders/gloom.dei>
-@include <shaders/model.dei>

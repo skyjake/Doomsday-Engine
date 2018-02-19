@@ -1,4 +1,4 @@
-#include 'flags.glsl'
+#include "common/flags.glsl"
 
 uniform mat4        uMvpMatrix;
 uniform sampler2D   uPlanes;

@@ -1,16 +1,13 @@
-group indirect
-{
-    group textured
-    {
+group gloom.indirect {
+    group textured {
         # Shader with one texture plus a color per vertex. Texture coords
         # are indirectly mapped within the aBounds attribute. Uses a combined
         # model-view-projection matrix. Texture coordinates also repeat within
         # the bounds.
-        shader color
-        {
-            path.vertex = "indirect-textured.vsh"
+        shader color {
+            path.vertex = "indirect_textured.vsh"
             fragment = "
-                #include 'miplevel.glsl'
+                #include 'common/miplevel.glsl'
 
                 uniform sampler2D uTex;
                 DENG_VAR vec2 vUV;
@@ -26,11 +23,10 @@ group indirect
                 }"
         }
 
-        shader color_repeat
-        {
-            path.vertex = "indirect-textured.vsh"
+        shader color_repeat {
+            path.vertex = "indirect_textured.vsh"
             fragment = "
-                #include 'miplevel.glsl'
+                #include 'common/miplevel.glsl'
 
                 uniform sampler2D uTex;
                 DENG_VAR vec2 vUV;

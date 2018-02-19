@@ -1,7 +1,5 @@
-#include "miplevel.glsl"
-#include "gbuffer.glsl"
-
-#line 3
+#include "common/gbuffer_out.glsl"
+#include "common/miplevel.glsl"
 
 uniform sampler2D uTex;
 uniform sampler2D uTextureMetrics;

@@ -90,7 +90,7 @@ void SkyBox::glInit(const Context &context)
     buf->setVertices(gl::TriangleStrip, verts, gl::Static);
     d->skyBox.addBuffer(buf);
 
-    context.shaders->build(d->skyBox.program(), "indirect.textured.color")
+    context.shaders->build(d->skyBox.program(), "gloom.indirect.textured.color")
             << d->uMvpMatrix
             << context.uAtlas;
 }

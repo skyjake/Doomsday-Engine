@@ -1,5 +1,4 @@
-group fx.blur
-{
+group fx.blur {
     # The same vertex shader is used for both blur steps.
     vertexShader = """
         uniform mat4 uMvpMatrix;
@@ -19,8 +18,7 @@ group fx.blur
             vColor = aColor * uColor;
         }"""
 
-    shader horizontal
-    {
+    shader horizontal {
         vertex $= fx.blur.vertexShader
         fragment = "
             uniform sampler2D uTex;
@@ -43,8 +41,7 @@ group fx.blur
             }"
     }
 
-    shader vertical
-    {
+    shader vertical {
         vertex $= fx.blur.vertexShader
         fragment = "
             uniform sampler2D uTex;

@@ -26,8 +26,8 @@ ui {
                 vScissor = uScissorRect[index];
                 vSaturation = uSaturation[index];
             }"
-        include.fragment <hsv.glsl>
         fragment = "
+            #include 'hsv.glsl'
             uniform sampler2D uTex;
 
             DENG_VAR vec2 vUV;

@@ -38,7 +38,7 @@ shader gloom.entity {
     #include.fragment <includes/fog.glsl,
     #                  includes/lightmodel.glsl>
     fragment = "
-        #include 'gbuffer.glsl'
+        #include 'common/gbuffer_out.glsl'
 
         uniform sampler2D uTex;
         //uniform vec4 uFog; // RGB, max.distance

@@ -1,3 +1,6 @@
+@include <indirect.dei>
+@include <entity.dei>
+
 group gloom {
     shader surface {
         path.vertex = "surface.vsh"
@@ -15,9 +18,7 @@ group gloom {
             }
         "
         fragment = "
-            uniform sampler2D uGBufferAlbedo;
-            uniform sampler2D uGBufferNormal;
-            uniform sampler2D uGBufferDepth;
+            #include 'common/gbuffer_in.glsl'
             uniform int uDebugMode;
             DENG_VAR vec2 vUV;
             void main(void) {
