@@ -90,23 +90,6 @@ DENG2_PIMPL(GloomWorld), public Asset, public ILight
         environ.setWorld(thisPublic);
     }
 
-    //void loadTextures()
-    //{
-//        const ImageBank &images = GloomApp::images();
-
-//        height.loadGrayscale(images.image("world.heightmap"));
-//        height.setMapSize(mapSize, heightRange);
-//        heightMap = atlas->alloc(height.toImage());
-//        normalMap = atlas->alloc(height.makeNormalMap());
-
-//        Id stone = atlas->alloc(images.image("world.stone"));
-//        Id grass = atlas->alloc(images.image("world.grass"));
-//        Id dirt  = atlas->alloc(images.image("world.dirt"));
-//        land.setMaterial(HeightField::Stone, atlas->imageRectf(stone));
-//        land.setMaterial(HeightField::Grass, atlas->imageRectf(grass));
-//        land.setMaterial(HeightField::Dirt,  atlas->imageRectf(dirt));
-//    }
-
     bool glInit()
     {
         if (isReady()) return false;
@@ -115,20 +98,11 @@ DENG2_PIMPL(GloomWorld), public Asset, public ILight
 
         DENG2_ASSERT(localUser);
 
-        //loadTextures();
-        //loadModels();
-
-//        gbuffer.setContext(renderContext);
         gbuffer.glInit(renderContext);
 
-//        sky.setContext(renderContext);
-//        sky.setAtlas(*atlas);
         sky.setSize(visibleDistance);
         sky.glInit(renderContext);
 
-//        mapRender.setContext(renderContext);
-//        mapRender.setMap(map);
-//        mapRender.setAtlas(*atlas);
         mapRender.glInit(renderContext);
 
 //        Vector3f const fogColor{.83f, .89f, 1.f};
@@ -176,7 +150,7 @@ DENG2_PIMPL(GloomWorld), public Asset, public ILight
 
     void userWarped(const User &)
     {
-        //land.skipMeshBlending();
+
     }
 
     void update(const TimeSpan &elapsed)
@@ -260,18 +234,10 @@ void GloomWorld::render(ICamera const &camera)
             .setCull(gl::Back)
             .setDepthTest(true);
 
-    //const Matrix4f mvp = camera.cameraModelViewProjection();
-
     d->renderContext.view.setCamera(camera);
 
-//    d->uViewPos  = camera.cameraPosition();
-//    d->uLightDir = d->lightDirection();
-
     d->mapRender.render();
-    d->sky.render(); //mvp * Matrix4f::translate(camera.cameraPosition()));
-
-//    d->land.draw(mvp);
-//    d->drawEntities(camera);
+    d->sky.render();
 
     GLState::pop();
 

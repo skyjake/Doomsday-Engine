@@ -28,33 +28,14 @@ DENG2_PIMPL_NOREF(SkyBox)
 {
     typedef GLBufferT<Vertex3Tex2BoundsRgba> VBuf;
 
-//    const Context *context = nullptr;
-//    AtlasTexture *atlas{nullptr};
     Id            skyTex;
     Drawable      skyBox;
     GLUniform     uMvpMatrix{"uMvpMatrix", GLUniform::Mat4};
-//    GLUniform     uTex      {"uTex",       GLUniform::Sampler2D};
     float         scale = 1.f;
 };
 
 SkyBox::SkyBox() : d(new Impl)
 {}
-
-//void SkyBox::setContext(const Context &ctx)
-//{
-//    d->context = &ctx;
-//}
-
-//void SkyBox::setAtlas(AtlasTexture &atlas)
-//{
-//    d->atlas = &atlas;
-//    d->uTex  = atlas;
-//}
-
-//void gloom::SkyBox::setView(const View &view)
-//{
-//    d->view = &view;
-//}
 
 void SkyBox::setSize(float scale)
 {

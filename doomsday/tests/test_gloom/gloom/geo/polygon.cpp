@@ -85,9 +85,6 @@ QVector<int> Polygon::concavePoints() const
 
 bool Polygon::isLineInside(int start, int end) const
 {
-    //if (mod(start + 1, size()) == end  ) return false;
-    //if (mod(end   + 1, size()) == start) return false;
-
     const auto &a = points[start].pos;
     const auto &b = points[end  ].pos;
     const Line line(a, b);

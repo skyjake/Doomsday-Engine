@@ -84,19 +84,6 @@ struct Edge
 
 uint qHash(const Edge &edge);
 
-/*
-template <typename K, typename V>
-struct umap : public std::unordered_map<K, V>
-{
-    using super = std::unordered_map<K, V>;
-
-    bool contains(const K &key) const
-    {
-        return find(key) != super::end();
-    }
-};
-*/
-
 typedef QHash<ID, Point>  Points;
 typedef QHash<ID, Line>   Lines;
 typedef QHash<ID, Plane>  Planes;

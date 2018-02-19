@@ -101,8 +101,6 @@ DENG2_PIMPL(User)
         // Turn according to momentum.
         yaw += angularMomentum * elapsed;
 
-        //float yawForMove = yaw - radianToDegree(VRSenseApp::vr().oculusRift().headOrientation().z);
-
         const Vector3f front = frontVector();
         const Vector3f side  = front.cross(Vector3f(0, 1, 0));
 
@@ -332,13 +330,6 @@ DENG2_PIMPL(User)
 
 User::User() : d(new Impl(this))
 {}
-
-//void User::resetYaw()
-//{
-//    OculusRift &ovr = VRSenseApp::vr().oculusRift();
-//    ovr.resetYaw();
-//    App::config().set("zeroYaw", ovr.yawOffset());
-//}
 
 void User::setWorld(World const *world)
 {

@@ -129,11 +129,6 @@ void GloomWidget::setWorld(World *world)
     }
 }
 
-//void GloomWidget::viewResized()
-//{
-//    GuiWidget::viewResized();
-//}
-
 void GloomWidget::update()
 {
     GuiWidget::update();

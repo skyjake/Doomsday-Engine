@@ -31,10 +31,6 @@ namespace gloom {
 
 DENG2_PIMPL(MapRender)
 {
-//    const Context *context = nullptr;
-//    double      currentTime;
-
-//    AtlasTexture *       atlas = nullptr;
     MapBuild::TextureIds textures;
     MapBuild::Mapper     planeMapper;
     MapBuild::Mapper     texOffsetMapper;
@@ -55,10 +51,6 @@ DENG2_PIMPL(MapRender)
     };
     DataBuffer<TexOffsetData> texOffsets{"uTexOffsets", Image::RGBA_32f};
 
-//    GLUniform uMvpMatrix        {"uMvpMatrix",          GLUniform::Mat4};
-//    GLUniform uWorldToViewMatrix{"uWorldToViewMatrix",  GLUniform::Mat3};
-//    GLUniform uTex              {"uTex",                GLUniform::Sampler2D};
-//    GLUniform uCurrentTime      {"uCurrentTime",        GLUniform::Float};
     GLUniform uTexelsPerMeter   {"uTexelsPerMeter",     GLUniform::Float};
     Drawable  drawable;
 
@@ -189,11 +181,6 @@ void MapRender::rebuild()
 
 void MapRender::advanceTime(TimeSpan)
 {
-//    d->currentTime += elapsed;
-
-//    const float now = float(d->currentTime);
-//    d->uCurrentTime = now;
-
     // Update plane heights.
     {
         for (auto i = d->planeMapper.begin(), end = d->planeMapper.end(); i != end; ++i)

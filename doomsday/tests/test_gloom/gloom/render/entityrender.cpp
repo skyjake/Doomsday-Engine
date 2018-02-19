@@ -42,15 +42,9 @@ LIBGUI_VERTEX_FORMAT_SPEC(InstanceData, 20 * sizeof(float))
 
 DENG2_PIMPL(EntityRender)
 {
-//    const Context *context = nullptr;
-//    const View *  view = nullptr;
-//    const Map *   map  = nullptr;
-//    AtlasTexture *atlas;
     EntityMap     ents;
     ModelDrawable entityModels[3];
     GLProgram     modelProgram;
-//    GLUniform     uMvpMatrix        {"uMvpMatrix",         GLUniform::Mat4};
-//    GLUniform     uWorldToViewMatrix{"uWorldToViewMatrix", GLUniform::Mat3};
 
     Impl(Public *i)
         : Base(i)

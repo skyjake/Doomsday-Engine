@@ -71,10 +71,6 @@ struct Line
 
     T normal() const
     {
-        /*const auto dirVec = dir();
-        return de::Vector3<typename T::ValueType>(dirVec.x, 0.0, dirVec.y)
-            .cross(de::Vector3<typename T::ValueType>(0, 1, 0))
-            .xz();*/
         const auto vec = dir();
         return T(-vec.y, vec.x);
     }
@@ -141,7 +137,6 @@ struct Line
         double deg = 180 + de::radianToDegree(std::acos(d1.dot(d2)));
         if (n.dot(d2) > 0) deg = 360 - deg;
         return deg;
-        //return de::radianToDegree(std::atan2(d1.dot(d2), n.dot(d2)));
     }
 };
 
