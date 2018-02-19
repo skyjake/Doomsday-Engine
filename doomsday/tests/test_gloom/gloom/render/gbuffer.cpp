@@ -68,7 +68,8 @@ void GBuffer::glInit(const Context &context)
     d->frame.glInit();
 
     using VBuf = GLBufferT<Vertex2Tex>;
-    VBuf *vbuf = new VBuf;
+
+    auto *vbuf = new VBuf;
     vbuf->setVertices(gl::TriangleStrip,
                       VBuf::Builder().makeQuad(Rectanglef(0, 0, 1, 1), Rectanglef(0, 1, 1, -1)),
                       gl::Static);

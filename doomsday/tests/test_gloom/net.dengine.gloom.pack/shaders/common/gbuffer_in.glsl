@@ -17,8 +17,7 @@ vec4 GBuffer_FragmentViewSpacePos(void) {
     vec4 clipSpacePos = vec4(normCoord * 2.0 - 1.0, z, 1.0);
     vec4 viewSpacePos = uInverseProjMatrix * clipSpacePos;
     vec3 pos = viewSpacePos.xyz / viewSpacePos.w;
-    //return vec4(pos, 1.0);
-    return vec4(0.0, length(pos)/10.0, 0.0, 1.0);
+    return vec4(pos, 1.0);
 }
 
 #endif // GLOOM_GBUFFER_IN_H
