@@ -311,6 +311,13 @@ public:
         m[14] = 0;
         return m;
     }
+    Matrix3<Type> submatrix(int row, int col) const {
+        Matrix3<Type> sub(Matrix3<Type>::Uninitialized);
+        for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 3; ++j)
+                sub.at(i, j) = at(i + row, j + col);
+        return sub;
+    }
 
     String asText() const {
         String str;
