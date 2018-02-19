@@ -718,7 +718,9 @@ DENG2_PIMPL(ModelDrawable)
         animNameToIndex.clear();
         for (duint i = 0; i < scene->mNumAnimations; ++i)
         {
-            LOG_GL_VERBOSE("Animation #%i name:%s") << i << scene->mAnimations[i]->mName.C_Str();
+            LOG_GL_VERBOSE("Animation #%i name:%s tps:%f")
+                    << i << scene->mAnimations[i]->mName.C_Str()
+                    << scene->mAnimations[i]->mTicksPerSecond;
 
             String const name = scene->mAnimations[i]->mName.C_Str();
             if (!name.isEmpty())
