@@ -816,6 +816,12 @@ GLPixelFormat Image::glFormat(Format imageFormat)
     case RGBx_8888:
         return GLPixelFormat(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, 4);
 
+    case R_8:
+        return GLPixelFormat(GL_R8, GL_RED, GL_UNSIGNED_BYTE, 1);
+
+    case RG_88:
+        return GLPixelFormat(GL_RG8, GL_RG, GL_UNSIGNED_BYTE, 2);
+
     case R_16f:
         return GLPixelFormat(GL_R16F, GL_RED, GL_FLOAT, 4);
 
