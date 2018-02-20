@@ -445,6 +445,17 @@ GLUniform &GLUniform::set(float const *floatArray, dsize count)
     return *this;
 }
 
+GLUniform &GLUniform::set(const Vector3f *vectorArray, dsize count)
+{
+    DENG2_ASSERT(d->type == Vec3Array);
+    DENG2_ASSERT(count <= d->elemCount);
+
+    memcpy(d->value.vector, vectorArray, sizeof(Vector3f) * count);
+    d->usedElemCount = duint16(count);
+    d->markAsChanged();
+    return *this;
+}
+
 GLUniform &GLUniform::set(Vector4f const *vectorArray, dsize count)
 {
     DENG2_ASSERT(d->type == Vec4Array);

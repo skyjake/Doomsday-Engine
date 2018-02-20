@@ -817,13 +817,13 @@ GLPixelFormat Image::glFormat(Format imageFormat)
         return GLPixelFormat(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, 4);
 
     case R_16f:
-        return GLPixelFormat(GL_R16F, GL_RED, GL_FLOAT, 2);
+        return GLPixelFormat(GL_R16F, GL_RED, GL_FLOAT, 4);
 
     case RG_16f:
         return GLPixelFormat(GL_RG16F, GL_RG, GL_FLOAT, 4);
 
     case RGB_16f:
-        return GLPixelFormat(GL_RGB16F, GL_RGB, GL_FLOAT, 2);
+        return GLPixelFormat(GL_RGB16F, GL_RGB, GL_FLOAT, 4);
 
     case RGBA_16f:
         return GLPixelFormat(GL_RGBA16F, GL_RGBA, GL_FLOAT, 4);

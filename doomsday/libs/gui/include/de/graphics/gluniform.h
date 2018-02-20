@@ -122,6 +122,7 @@ public:
     GLUniform &set(dint const *intArray, dsize count);
     GLUniform &set(float const *floatArray, dsize count);
     GLUniform &set(Vector2f const *vectorArray, dsize count);
+    GLUniform &set(Vector3f const *vectorArray, dsize count);
     GLUniform &set(Vector4f const *vectorArray, dsize count);
     GLUniform &set(Matrix4f const *mat4Array, dsize count);
 
