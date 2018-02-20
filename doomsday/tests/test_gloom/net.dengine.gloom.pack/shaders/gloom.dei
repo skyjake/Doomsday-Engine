@@ -2,10 +2,8 @@
 @include <entity.dei>
 
 group gloom {
-    shader surface {
-        path.vertex = "surface.vsh"
-        path.fragment = "surface.fsh"
-    }
+    shader surface { path = "surface" }
+    shader ssao { path = "ssao" }
     shader finalize {
         vertex = "
             uniform mat4 uMvpMatrix;

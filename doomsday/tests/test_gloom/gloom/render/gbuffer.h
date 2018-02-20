@@ -43,6 +43,9 @@ public:
     void setDebugMode(int debugMode);
 
     de::GLFramebuffer &framebuf();
+    de::GLUniform &uGBufferAlbedo();
+    de::GLUniform &uGBufferNormal();
+    de::GLUniform &uGBufferDepth();
 
 private:
     DENG2_PRIVATE(d)

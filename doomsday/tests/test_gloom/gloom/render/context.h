@@ -29,12 +29,15 @@
 
 namespace gloom {
 
+class GBuffer;
+
 struct Context {
     const de::ImageBank *images;
     de::GLShaderBank *   shaders;
     const Map *          map;
     de::AtlasTexture *   atlas;
     View                 view;
+    GBuffer *            gbuffer;
 
     de::GLUniform uAtlas        {"uTex",            de::GLUniform::Sampler2D};
     de::GLUniform uCurrentTime  {"uCurrentTime",    de::GLUniform::Float};

@@ -28,6 +28,7 @@ DENG2_PIMPL_NOREF(ScreenQuad)
 {
     Drawable drawable;
     GLState state;
+    GLUniform uMvpMatrix{"uMvpMatrix", GLUniform::Mat4};
 
     Impl()
     {
@@ -54,6 +55,9 @@ void ScreenQuad::glInit(const Context &context)
                       gl::Static);
     d->drawable.addBuffer(BUF_ID, vbuf);
     d->drawable.setState(BUF_ID, d->state);
+
+    d->uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
+    d->drawable.program() << d->uMvpMatrix;
 }
 
 void ScreenQuad::glDeinit()
@@ -64,8 +68,7 @@ void ScreenQuad::glDeinit()
 
 void ScreenQuad::render()
 {
-    d->state.setViewport(GLState::current().viewport())
-            .setTarget  (GLState::current().target());
+    d->state.setViewport(GLState::current().viewport());
     d->drawable.draw();
 }
 

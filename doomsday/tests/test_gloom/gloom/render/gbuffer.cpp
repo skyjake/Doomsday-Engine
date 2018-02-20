@@ -34,7 +34,6 @@ DENG2_PIMPL(GBuffer)
     ScreenQuad quad;
     GLTextureFramebuffer frame{
         QList<Image::Format>({Image::RGBA_16f /* albedo */, Image::RGBA_8888 /* normals */})};
-    GLUniform uMvpMatrix        {"uMvpMatrix",         GLUniform::Mat4};
     GLUniform uGBufferAlbedo    {"uGBufferAlbedo",     GLUniform::Sampler2D};
     GLUniform uGBufferNormal    {"uGBufferNormal",     GLUniform::Sampler2D};
     GLUniform uGBufferDepth     {"uGBufferDepth",      GLUniform::Sampler2D};
@@ -48,6 +47,14 @@ DENG2_PIMPL(GBuffer)
     void setSize(const Vector2ui &size)
     {
         frame.resize(size);
+        updateUniforms();
+    }
+
+    void updateUniforms()
+    {
+        uGBufferAlbedo = frame.attachedTexture(GLFramebuffer::Color0);
+        uGBufferNormal = frame.attachedTexture(GLFramebuffer::Color1);
+        uGBufferDepth  = frame.attachedTexture(GLFramebuffer::DepthStencil);
     }
 };
 
@@ -60,11 +67,12 @@ void GBuffer::glInit(const Context &context)
     Render::glInit(context);
     d->quad.glInit(context);
     context.shaders->build(d->quad.program(), "gloom.finalize")
-        << d->uMvpMatrix
         << context.view.uInverseProjMatrix
         << d->uGBufferAlbedo << d->uGBufferNormal << d->uGBufferDepth
         << d->uDebugMode;
+
     d->frame.glInit();
+    d->updateUniforms();
 }
 
 void GBuffer::glDeinit()
@@ -86,12 +94,7 @@ void GBuffer::clear()
 
 void GBuffer::render()
 {
-    d->uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
-
-    d->uGBufferAlbedo = d->frame.attachedTexture(GLFramebuffer::Color0);
-    d->uGBufferNormal = d->frame.attachedTexture(GLFramebuffer::Color1);
-    d->uGBufferDepth  = d->frame.attachedTexture(GLFramebuffer::DepthStencil);
-
+    d->quad.state().setTarget(GLState::current().target());
     d->quad.render();
 }
 
@@ -106,6 +109,21 @@ void gloom::GBuffer::setDebugMode(int debugMode)
 GLFramebuffer &GBuffer::framebuf()
 {
     return d->frame;
+}
+
+GLUniform &GBuffer::uGBufferAlbedo()
+{
+    return d->uGBufferAlbedo;
+}
+
+GLUniform &GBuffer::uGBufferNormal()
+{
+    return d->uGBufferNormal;
+}
+
+GLUniform &GBuffer::uGBufferDepth()
+{
+    return d->uGBufferDepth;
 }
 
 } // namespace gloom

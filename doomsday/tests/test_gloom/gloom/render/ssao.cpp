@@ -17,11 +17,24 @@
  */
 
 #include "gloom/render/ssao.h"
+#include "gloom/render/screenquad.h"
+#include "gloom/render/gbuffer.h"
+#include "gloom/render/databuffer.h"
+
+#include <de/GLState>
+
+using namespace de;
 
 namespace gloom {
 
+static const dsize SAMPLE_COUNT = 64;
+
 DENG2_PIMPL(SSAO)
 {
+    ScreenQuad quad;
+    GLUniform uSamples{"uSamples", GLUniform::Vec3Array, SAMPLE_COUNT};
+    DataBuffer<Vector3f> noise{"uNoise", Image::RGB_16f};
+
     Impl(Public *i) : Base(i)
     {}
 };
@@ -33,16 +46,56 @@ SSAO::SSAO()
 void SSAO::glInit(const Context &context)
 {
     Render::glInit(context);
+    d->quad.glInit(context);
+    context.shaders->build(d->quad.program(), "gloom.ssao")
+            << context.gbuffer->uGBufferAlbedo()
+            << context.gbuffer->uGBufferNormal()
+            << context.gbuffer->uGBufferDepth()
+            << context.view.uInverseProjMatrix
+            << context.view.uProjMatrix;
+
+    // Generate sample kernel.
+    {
+        Vector3f samples[SAMPLE_COUNT];
+        for (auto &sample : samples)
+        {
+            // Normal-oriented hemisphere.
+            sample = Vector3f{Rangef(0, 2).random() - 1,
+                              Rangef(0, 2).random() - 1,
+                              Rangef(0, 1).random()};
+            sample = sample.normalize();
+            const float scale = Rangef(0, 1).random();
+            // Bias the samples closer to the center.
+            sample *= .1f + .9f * scale * scale;
+        }
+        d->uSamples.set(samples, SAMPLE_COUNT);
+        d->quad.program() << d->uSamples;
+    }
+
+    // Noise.
+    {
+        d->noise.init(64);
+        for (int i = 0; i < d->noise.elementCount; ++i)
+        {
+            d->noise.setData(i, Vector3f{Rangef(0, 2).random() - 1,
+                                         Rangef(0, 2).random() - 1,
+                                         0});
+        }
+        d->noise.update();
+        d->quad.program() << d->noise.var;
+    }
 }
 
 void SSAO::glDeinit()
 {
+    d->quad.glDeinit();
     Render::glDeinit();
 }
 
 void SSAO::render()
 {
-
+    d->quad.state().setTarget(GLState::current().target()); // target is gbuffer
+    d->quad.render();
 }
 
 } // namespace gloom

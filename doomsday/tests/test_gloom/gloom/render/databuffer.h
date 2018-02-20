@@ -29,6 +29,7 @@ namespace gloom {
 template <typename Type>
 struct DataBuffer
 {
+    int elementCount = 0;
     de::GLUniform var;
     de::GLTexture buf;
     de::Vector2ui size;
@@ -53,6 +54,7 @@ struct DataBuffer
 
     void init(int count)
     {
+        elementCount = count;
         size.x = de::max(4u, uint(std::sqrt(count) + 0.5));
         if (maxWidth) size.x = de::min(maxWidth, size.x);
         size.y = de::max(4u, uint((count + size.x - 1) / size.x));
@@ -62,6 +64,7 @@ struct DataBuffer
 
     void clear()
     {
+        elementCount = 0;
         buf.clear();
         data.clear();
         size = de::Vector2ui();
@@ -79,6 +82,7 @@ struct DataBuffer
         DENG2_ASSERT(maxWidth > 0);
         size.x = maxWidth;
         size.y++;
+        elementCount++;
         const uint32_t oldSize = data.size();
         data << value;
         return oldSize;

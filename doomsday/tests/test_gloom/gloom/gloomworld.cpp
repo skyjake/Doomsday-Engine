@@ -88,6 +88,7 @@ DENG2_PIMPL(GloomWorld), public Asset, public ILight
         renderContext.atlas   = atlas.get();
         renderContext.uAtlas  = renderContext.atlas;
         renderContext.map     = &map;
+        renderContext.gbuffer = &gbuffer;
 
         environ.setWorld(thisPublic);
     }
@@ -238,11 +239,11 @@ void GloomWorld::render(ICamera const &camera)
     d->renderContext.view.setCamera(camera);
 
     d->mapRender.render();
+    d->ssao.render();
     d->sky.render();
 
     GLState::pop();
 
-    d->ssao.render();
     d->gbuffer.render();
 }
 
