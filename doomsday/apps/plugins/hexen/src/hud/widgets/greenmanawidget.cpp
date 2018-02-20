@@ -87,7 +87,7 @@ void SBarGreenManaWidget_Draw(guidata_greenmana_t *mana, Point2Raw const *offset
 #define X_OFFSET                ( 123 )
 #define Y_OFFSET                (  19 )
 
-    static Vector2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
+    static Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
 
     DENG2_ASSERT(mana);
     dint const activeHud     = ST_ActiveHud(mana->player());

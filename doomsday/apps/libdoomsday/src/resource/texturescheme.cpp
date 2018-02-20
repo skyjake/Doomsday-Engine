@@ -189,7 +189,7 @@ String const &TextureScheme::name() const
 }
 
 TextureManifest &TextureScheme::declare(Path const &path,
-    Texture::Flags flags, Vector2ui const &dimensions, Vector2i const &origin,
+    Texture::Flags flags, Vec2ui const &dimensions, Vec2i const &origin,
     int uniqueId, de::Uri const *resourceUri)
 {
     LOG_AS("TextureScheme::declare");

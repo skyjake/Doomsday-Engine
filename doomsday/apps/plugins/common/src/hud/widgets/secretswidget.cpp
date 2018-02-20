@@ -28,7 +28,7 @@ using namespace de;
 static void SecretsWidget_Draw(guidata_secrets_t *scrts, Point2Raw const *offset)
 {
     DENG2_ASSERT(scrts);
-    scrts->draw(offset? Vector2i(offset->xy) : Vector2i());
+    scrts->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void SecretsWidget_UpdateGeometry(guidata_secrets_t *scrts)
@@ -51,7 +51,7 @@ void guidata_secrets_t::reset()
     _value = 1994;
 }
 
-void guidata_secrets_t::draw(Vector2i const &offset) const
+void guidata_secrets_t::draw(Vec2i const &offset) const
 {
 #if !__JHEXEN__
 

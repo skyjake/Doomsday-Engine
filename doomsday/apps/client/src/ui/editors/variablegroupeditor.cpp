@@ -139,7 +139,7 @@ VariableGroupEditor::VariableGroupEditor(IOwner *owner, String const &name,
     d->resetButton->rule()
             .setInput(Rule::Right,   d->owner->containerWidget().contentRule().right())
             .setInput(Rule::AnchorY, title().rule().top() + title().rule().height() / 2)
-            .setAnchorPoint(Vector2f(0, .5f));
+            .setAnchorPoint(Vec2f(0, .5f));
     d->resetButton->disable();
 
     d->owner->containerWidget().add(&title());
@@ -202,7 +202,7 @@ LabelWidget *VariableGroupEditor::addLabel(String const &text, LabelType labelTy
     }
     else
     {
-        d->layout.setCellAlignment(Vector2i(0, d->layout.gridSize().y), ui::AlignLeft);
+        d->layout.setCellAlignment(Vec2i(0, d->layout.gridSize().y), ui::AlignLeft);
         d->layout.append(*w, 2);
     }
     return w;
@@ -285,7 +285,7 @@ void VariableGroupEditor::commit()
     // Calculate the maximum rule for the first column items.
     for (int i = 0; i < d->layout.gridSize().y; ++i)
     {
-        GuiWidget const *w = d->layout.at(Vector2i(0, i));
+        GuiWidget const *w = d->layout.at(Vec2i(0, i));
         if (w && d->layout.widgetCellSpan(*w) == 1)
         {
             changeRef(d->firstColumnWidth,

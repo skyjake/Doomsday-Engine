@@ -52,7 +52,7 @@ DENG2_PIMPL(Page)
     String   name; ///< Symbolic name/identifier.
     Children children;
 
-    Vector2i   origin;
+    Vec2i      origin;
     Rectanglei geometry; ///< "Physical" geometry, in fixed 320x200 screen coordinate space.
     Animation  scrollOrigin;
     Rectanglei viewRegion;
@@ -96,7 +96,7 @@ DENG2_PIMPL(Page)
     {
         for(Widget *wi : children)
         {
-            wi->geometry().moveTopLeft(Vector2i(0, 0));
+            wi->geometry().moveTopLeft(Vec2i(0, 0));
             wi->updateGeometry();
         }
     }
@@ -123,8 +123,8 @@ DENG2_PIMPL(Page)
 
     void applyLayout()
     {
-        geometry.topLeft = Vector2i(0, 0);
-        geometry.setSize(Vector2ui(0, 0));
+        geometry.topLeft = Vec2i(0, 0);
+        geometry.setSize(Vec2ui(0, 0));
 
         if (children.empty()) return;
 
@@ -331,7 +331,7 @@ DENG2_PIMPL(Page)
             }
             if(CVarColorEditWidget *cbox = maybeAs<CVarColorEditWidget>(wi))
             {
-                cbox->setColor(Vector4f(Con_GetFloat(cbox->redCVarPath()),
+                cbox->setColor(Vec4f(Con_GetFloat(cbox->redCVarPath()),
                                         Con_GetFloat(cbox->greenCVarPath()),
                                         Con_GetFloat(cbox->blueCVarPath()),
                                         (cbox->rgbaMode()? Con_GetFloat(cbox->alphaCVarPath()) : 1.f)));
@@ -415,7 +415,7 @@ static inline String subpageText(int page = 0, int totalPages = 0)
 }
 #endif
 
-static void drawNavigation(Vector2i const origin)
+static void drawNavigation(Vec2i const origin)
 {
     int const currentPage = 0;//(page->firstObject + page->numVisObjects/2) / page->numVisObjects + 1;
     int const totalPages  = 1;//(int)ceil((float)page->objectsCount/page->numVisObjects);
@@ -440,8 +440,8 @@ static void drawNavigation(Vector2i const origin)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
 
-    GL_DrawPatch( pInvPageLeft[currentPage == 0 || (menuTime & 8)]           , origin - Vector2i(144, 0), ALIGN_RIGHT);
-    GL_DrawPatch(pInvPageRight[currentPage == totalPages-1 || (menuTime & 8)], origin + Vector2i(144, 0), ALIGN_LEFT);
+    GL_DrawPatch( pInvPageLeft[currentPage == 0 || (menuTime & 8)]           , origin - Vec2i(144, 0), ALIGN_RIGHT);
+    GL_DrawPatch(pInvPageRight[currentPage == totalPages-1 || (menuTime & 8)], origin + Vec2i(144, 0), ALIGN_LEFT);
 
     DGL_Disable(DGL_TEXTURE_2D);
 #endif
@@ -451,7 +451,7 @@ static void drawTitle(String const &title)
 {
     if(title.isEmpty()) return;
 
-    Vector2i origin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) - ((SCREENHEIGHT / 2 - 5) / cfg.common.menuScale));
+    Vec2i origin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) - ((SCREENHEIGHT / 2 - 5) / cfg.common.menuScale));
 
     FR_PushAttrib();
     Hu_MenuDrawPageTitle(title, origin); origin.y += 16;
@@ -471,7 +471,7 @@ static void setupRenderStateForPageDrawing(Page &page, float alpha)
     }
     for(int i = 0; i < MENU_COLOR_COUNT; ++i)
     {
-        rs.textColors[i] = Vector4f(page.predefinedColor(mn_page_colorid_t(i)), alpha);
+        rs.textColors[i] = Vec4f(page.predefinedColor(mn_page_colorid_t(i)), alpha);
     }
 
     // Configure the font renderer (assume state has already been pushed if necessary).
@@ -504,7 +504,7 @@ void Page::draw(float alpha, bool showFocusCursor)
         focused = 0;
     }
 
-    Vector2i cursorOrigin;
+    Vec2i cursorOrigin;
     if (focused)
     {
         // Determine the origin and dimensions of the cursor.
@@ -611,12 +611,12 @@ String Page::title() const
     return d->title;
 }
 
-void Page::setOrigin(Vector2i const &newOrigin)
+void Page::setOrigin(Vec2i const &newOrigin)
 {
     d->origin = newOrigin;
 }
 
-Vector2i Page::origin() const
+Vec2i Page::origin() const
 {
     return d->origin;
 }
@@ -763,11 +763,11 @@ void Page::setPredefinedFont(mn_page_fontid_t id, fontid_t fontId)
     d->fonts[id] = fontId;
 }
 
-Vector3f Page::predefinedColor(mn_page_colorid_t id)
+Vec3f Page::predefinedColor(mn_page_colorid_t id)
 {
     DENG2_ASSERT(VALID_MNPAGE_COLORID(id));
     uint const colorIndex = d->colors[id];
-    return Vector3f(cfg.common.menuTextColors[colorIndex]);
+    return Vec3f(cfg.common.menuTextColors[colorIndex]);
 }
 
 int Page::timer()

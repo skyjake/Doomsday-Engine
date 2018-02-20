@@ -322,7 +322,7 @@ static res::Source loadRaw(image_t &image, rawtex_t const &raw)
         size_t const fileLength = file.length();
 
         Image_Init(image);
-        image.size      = Vector2ui(RAW_WIDTH, fileLength / RAW_WIDTH);
+        image.size      = Vec2ui(RAW_WIDTH, fileLength / RAW_WIDTH);
         image.pixelSize = 1;
 
         // Load the raw image data.

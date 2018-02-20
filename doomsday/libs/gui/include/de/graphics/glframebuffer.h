@@ -69,7 +69,7 @@ public:
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
-    typedef Vector2ui Size;
+    typedef Vec2ui Size;
 
 public:
     static void setDefaultFramebuffer(GLuint defaultFBO);
@@ -107,7 +107,7 @@ public:
      * @param size   Size of the render target.
      * @param flags  Attachments to set up.
      */
-    GLFramebuffer(Vector2ui const &size, Flags flags = DefaultFlags);
+    GLFramebuffer(Vec2ui const &size, Flags flags = DefaultFlags);
 
     Flags flags() const;
 
@@ -132,7 +132,7 @@ public:
      * @param flags        Which attachments to set up.
      * @param sampleCount  Number of samples per pixel in each attachment.
      */
-    void configure(Vector2ui const &size,
+    void configure(Vec2ui const &size,
                    Flags flags = DefaultFlags,
                    int sampleCount = 1);
 
@@ -200,7 +200,7 @@ public:
      *
      * @param color  Color for clearing.
      */
-    void setClearColor(Vector4f const &color);
+    void setClearColor(Vec4f const &color);
 
     /**
      * Clears the contents of the render target's attached buffers.
@@ -287,8 +287,8 @@ public:
 
     void unsetActiveRect(bool applyGLState = false);
 
-    Vector2f activeRectScale() const;
-    Vector2f activeRectNormalizedOffset() const;
+    Vec2f activeRectScale() const;
+    Vec2f activeRectNormalizedOffset() const;
     Rectangleui scaleToActiveRect(Rectangleui const &rect) const;
     Rectangleui const &activeRect() const;
     bool hasActiveRect() const;

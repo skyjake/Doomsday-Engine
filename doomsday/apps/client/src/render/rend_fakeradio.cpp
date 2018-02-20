@@ -133,9 +133,9 @@ static inline ddouble wallWidth(WallEdge const &leftEdge, WallEdge const &rightE
  * @see wallHeight()
  */
 #if 0
-static Vector2d wallDimensions(WallEdge const &leftEdge, WallEdge const &rightEdge)
+static Vec2d wallDimensions(WallEdge const &leftEdge, WallEdge const &rightEdge)
 {
-    return Vector2d(wallWidth(leftEdge, rightEdge), wallHeight(leftEdge, rightEdge));
+    return Vec2d(wallWidth(leftEdge, rightEdge), wallHeight(leftEdge, rightEdge));
 }
 #endif
 
@@ -238,9 +238,9 @@ static inline dfloat calcTexCoordY(dfloat z, dfloat bottom, dfloat top, dfloat t
 struct ProjectedShadowData
 {
     lightingtexid_t texture;
-    Vector2f texOrigin;
-    Vector2f texDimensions;
-    Vector2f texCoords[4];  ///< { bl, tl, br, tr }
+    Vec2f texOrigin;
+    Vec2f texDimensions;
+    Vec2f texCoords[4];  ///< { bl, tl, br, tr }
 };
 
 static void setTopShadowParams(WallEdge const &leftEdge, WallEdge const &rightEdge, ddouble shadowSize,
@@ -254,8 +254,8 @@ static void setTopShadowParams(WallEdge const &leftEdge, WallEdge const &rightEd
     Plane const &visCeiling = subsec.visCeiling();
 
     projected = {};
-    projected.texDimensions = Vector2f(0, shadowSize);
-    projected.texOrigin     = Vector2f(0, calcTexCoordY(leftEdge.top().z(), subsec.visFloor().heightSmoothed()
+    projected.texDimensions = Vec2f(0, shadowSize);
+    projected.texOrigin     = Vec2f(0, calcTexCoordY(leftEdge.top().z(), subsec.visFloor().heightSmoothed()
                                                         , subsec.visCeiling().heightSmoothed(), shadowSize));
     projected.texture       = LST_RADIO_OO;
 
@@ -569,8 +569,8 @@ static void setSideShadowParams(WallEdge const &leftEdge, WallEdge const &rightE
     DENG2_ASSERT(visFloor.castsShadow() || visCeiling.castsShadow());  // sanity check.
 
     projected = {};
-    projected.texOrigin     = Vector2f(0, leftEdge.bottom().z() - visFloor.heightSmoothed());
-    projected.texDimensions = Vector2f(0, visCeiling.heightSmoothed() - visFloor.heightSmoothed());
+    projected.texOrigin     = Vec2f(0, leftEdge.bottom().z() - visFloor.heightSmoothed());
+    projected.texDimensions = Vec2f(0, visCeiling.heightSmoothed() - visFloor.heightSmoothed());
 
     if(rightSide)
     {
@@ -685,23 +685,23 @@ static void setSideShadowParams(WallEdge const &leftEdge, WallEdge const &rightE
     }
 }
 
-static void quadTexCoords(Vector2f *tc, WallEdge const &leftEdge, WallEdge const &rightEdge,
-    Vector2f const &texOrigin, Vector2f const &texDimensions, bool horizontal)
+static void quadTexCoords(Vec2f *tc, WallEdge const &leftEdge, WallEdge const &rightEdge,
+    Vec2f const &texOrigin, Vec2f const &texDimensions, bool horizontal)
 {
     DENG2_ASSERT(tc);
     if(horizontal)
     {
         tc[0] = (texOrigin / texDimensions).yx();
-        tc[2] = tc[0] + Vector2f(0                              , wallWidth(leftEdge, rightEdge)) / texDimensions.yx();
-        tc[3] = tc[0] + Vector2f(wallHeight(leftEdge, rightEdge), wallWidth(leftEdge, rightEdge)) / texDimensions.yx();
-        tc[1] = Vector2f(tc[3].x, tc[0].y);
+        tc[2] = tc[0] + Vec2f(0                              , wallWidth(leftEdge, rightEdge)) / texDimensions.yx();
+        tc[3] = tc[0] + Vec2f(wallHeight(leftEdge, rightEdge), wallWidth(leftEdge, rightEdge)) / texDimensions.yx();
+        tc[1] = Vec2f(tc[3].x, tc[0].y);
     }
     else  // Vertical.
     {
         tc[1] = texOrigin / texDimensions;
-        tc[0] = tc[1] + Vector2f(0                             , wallHeight(leftEdge, rightEdge)) / texDimensions;
-        tc[2] = tc[1] + Vector2f(wallWidth(leftEdge, rightEdge), wallHeight(leftEdge, rightEdge)) / texDimensions;
-        tc[3] = Vector2f(tc[2].x, tc[1].y);
+        tc[0] = tc[1] + Vec2f(0                             , wallHeight(leftEdge, rightEdge)) / texDimensions;
+        tc[2] = tc[1] + Vec2f(wallWidth(leftEdge, rightEdge), wallHeight(leftEdge, rightEdge)) / texDimensions;
+        tc[3] = Vec2f(tc[2].x, tc[1].y);
     }
 }
 
@@ -741,13 +741,13 @@ static bool projectWallShadow(WallEdge const &leftEdge, WallEdge const &rightEdg
     return false;
 }
 
-static void drawWallShadow(Vector3f const *posCoords, WallEdge const &leftEdge, WallEdge const &rightEdge,
+static void drawWallShadow(Vec3f const *posCoords, WallEdge const &leftEdge, WallEdge const &rightEdge,
     dfloat shadowDark, ProjectedShadowData const &tp)
 {
     DENG2_ASSERT(posCoords);
 
     // Uniform color - shadows are black.
-    Vector4ub const shadowColor(0, 0, 0, 255 * de::clamp(0.f, shadowDark, 1.0f));
+    Vec4ub const shadowColor(0, 0, 0, 255 * de::clamp(0.f, shadowDark, 1.0f));
 
     DrawListSpec listSpec;
     listSpec.group = ShadowGeom;
@@ -792,7 +792,7 @@ static void drawWallShadow(Vector3f const *posCoords, WallEdge const &leftEdge, 
 
                 buffer.posCoords   [indices[2 + i]] = icpt.origin();
                 buffer.colorCoords [indices[2 + i]] = shadowColor;
-                buffer.texCoords[0][indices[2 + i]] = Vector2f(tp.texCoords[3].x, tp.texCoords[2].y + (tp.texCoords[3].y - tp.texCoords[2].y) * icpt.distance());
+                buffer.texCoords[0][indices[2 + i]] = Vec2f(tp.texCoords[3].x, tp.texCoords[2].y + (tp.texCoords[3].y - tp.texCoords[2].y) * icpt.distance());
             }
 
             // Write the geometry?
@@ -832,7 +832,7 @@ static void drawWallShadow(Vector3f const *posCoords, WallEdge const &leftEdge, 
 
                 buffer.posCoords   [indices[2 + i]] = icpt.origin();
                 buffer.colorCoords [indices[2 + i]] = shadowColor;
-                buffer.texCoords[0][indices[2 + i]] = Vector2f(tp.texCoords[0].x, tp.texCoords[0].y + (tp.texCoords[1].y - tp.texCoords[0].y) * icpt.distance());
+                buffer.texCoords[0][indices[2 + i]] = Vec2f(tp.texCoords[0].x, tp.texCoords[0].y + (tp.texCoords[1].y - tp.texCoords[0].y) * icpt.distance());
             }
 
             // Write the geometry?
@@ -888,7 +888,7 @@ void Rend_DrawWallRadio(WallEdge const &leftEdge, WallEdge const &rightEdge, dfl
     // Ensure we have up-to-date information for generating shadow geometry.
     leftEdge.lineSide().updateRadioForFrame(R_FrameCount());
 
-    Vector3f const posCoords[] = {
+    Vec3f const posCoords[] = {
         leftEdge .bottom().origin(),
         leftEdge .top   ().origin(),
         rightEdge.bottom().origin(),
@@ -963,8 +963,8 @@ static uint makeFlatShadowGeometry(DrawList::Indices &indices, Store &verts, gl:
     static duint const floorOrder[][4] = { { 0, 1, 2, 3 }, { 1, 2, 3, 0 } };
     static duint const ceilOrder [][4] = { { 0, 3, 2, 1 }, { 1, 0, 3, 2 } };
 
-    static Vector4ub const white(255, 255, 255, 0);
-    static Vector4ub const black(  0,   0,   0, 0);
+    static Vec4ub const white(255, 255, 255, 0);
+    static Vec4ub const black(  0,   0,   0, 0);
 
     // What vertex winding order (0 = left, 1 = right)? (For best results, the cross edge
     // should always be the shortest.)
@@ -989,9 +989,9 @@ static uint makeFlatShadowGeometry(DrawList::Indices &indices, Store &verts, gl:
     verts.posCoords[indices[order[3]]] = edges[0].inner();
     // Set uniform color.
 #if defined (DENG_OPENGL)
-    Vector4ub const &uniformColor = (::renderWireframe? white : black);  // White to assist visual debugging.
+    Vec4ub const &uniformColor = (::renderWireframe? white : black);  // White to assist visual debugging.
 #else
-    Vector4ub const &uniformColor = black;
+    Vec4ub const &uniformColor = black;
 #endif
     for(duint i = 0; i < 4; ++i)
     {
@@ -1025,7 +1025,7 @@ void Rend_DrawFlatRadio(ConvexSubspace const &subspace)
     static ShadowEdge shadowEdges[2/*left, right*/];  // Keep these around (needed often).
 
     // Can skip drawing for Planes that do not face the viewer - find the 2D vector to subspace center.
-    auto const eyeToSubspace = Vector2f(Rend_EyeOrigin().xz() - subspace.poly().center());
+    auto const eyeToSubspace = Vec2f(Rend_EyeOrigin().xz() - subspace.poly().center());
 
     // All shadow geometry uses the same texture (i.e., none) - use the same list.
     DrawList &shadowList = ClientApp::renderSystem().drawLists().find(
@@ -1054,7 +1054,7 @@ void Rend_DrawFlatRadio(ConvexSubspace const &subspace)
                 if (!plane.receivesShadow()) continue;
 
                 // Skip Planes facing away from the viewer.
-                if (Vector3f(eyeToSubspace, Rend_EyeOrigin().y - plane.heightSmoothed())
+                if (Vec3f(eyeToSubspace, Rend_EyeOrigin().y - plane.heightSmoothed())
                          .dot(plane.surface().normal()) >= 0)
                 {
                     HEdge const *hEdges[2/*left, right*/] = { side.leftHEdge(), side.leftHEdge() };

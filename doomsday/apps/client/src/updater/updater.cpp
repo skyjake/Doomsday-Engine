@@ -127,7 +127,7 @@ public:
 
     void hideIcon()
     {
-        _icon->setImageColor(Vector4f());
+        _icon->setImageColor(Vec4f());
     }
 
     PopupButtonWidget &popupButton()

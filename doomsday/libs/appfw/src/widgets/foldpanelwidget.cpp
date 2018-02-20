@@ -89,8 +89,8 @@ DENG2_PIMPL_NOREF(FoldPanelWidget)
                                     atlas.imageRectf(root.roundCorners()));*/
 
             Rectanglef uv = atlas.imageRectf(root.styleTexture("fold"));
-            Matrix4f const turn = Matrix4f::rotateAround(rect.middle(), angle);
-            verts.makeQuad(rect, textColor * Vector4f(1, 1, 1, .5f), uv, &turn);
+            Mat4f const turn = Mat4f::rotateAround(rect.middle(), angle);
+            verts.makeQuad(rect, textColor * Vec4f(1, 1, 1, .5f), uv, &turn);
         }
     };
 

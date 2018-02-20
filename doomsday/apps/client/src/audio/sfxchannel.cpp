@@ -56,18 +56,18 @@ DENG2_PIMPL_NOREF(SfxChannel)
 
     Impl() { zap(origin); }
 
-    Vector3d findOrigin() const
+    Vec3d findOrigin() const
     {
         // Originless sounds have no fixed/moveable emission point.
         if (flags & SFXCF_NO_ORIGIN)
         {
-            return Vector3d();
+            return Vec3d();
         }
 
         // When tracking an emitter - use it's origin.
         if (emitter)
         {
-            Vector3d point(emitter->origin);
+            Vec3d point(emitter->origin);
 
             // Position on the Z axis at the map-object's center?
             if (Thinker_IsMobj(&emitter->thinker))
@@ -78,7 +78,7 @@ DENG2_PIMPL_NOREF(SfxChannel)
         }
 
         // Use the fixed origin.
-        return Vector3d(origin);
+        return Vec3d(origin);
     }
 
     inline void updateOrigin()
@@ -164,14 +164,14 @@ void SfxChannel::setEmitter(mobj_t const *newEmitter)
     d->emitter = newEmitter;
 }
 
-void SfxChannel::setFixedOrigin(Vector3d const &newOrigin)
+void SfxChannel::setFixedOrigin(Vec3d const &newOrigin)
 {
     d->origin[0] = newOrigin.x;
     d->origin[1] = newOrigin.y;
     d->origin[2] = newOrigin.z;
 }
 
-Vector3d SfxChannel::origin() const
+Vec3d SfxChannel::origin() const
 {
     return d->origin;
 }

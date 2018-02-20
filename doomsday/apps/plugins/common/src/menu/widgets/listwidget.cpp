@@ -97,7 +97,7 @@ ListWidget::Items const &ListWidget::items() const
 
 void ListWidget::updateGeometry()
 {
-    geometry().setSize(Vector2ui(0, 0));
+    geometry().setSize(Vec2ui(0, 0));
     FR_PushAttrib();
     FR_SetFont(page().predefinedFont(mn_page_fontid_t(font())));
 
@@ -112,7 +112,7 @@ void ListWidget::updateGeometry()
             itemGeometry.size.height *= 1 + MNDATA_LIST_LEADING;
         }
 
-        geometry() |= Rectanglei::fromSize(Vector2i(itemGeometry.origin.xy), Vector2ui(itemGeometry.size.width, itemGeometry.size.height));
+        geometry() |= Rectanglei::fromSize(Vec2i(itemGeometry.origin.xy), Vec2ui(itemGeometry.size.width, itemGeometry.size.height));
 
         itemGeometry.origin.y += itemGeometry.size.height;
     }
@@ -122,7 +122,7 @@ void ListWidget::updateGeometry()
 void ListWidget::draw() const
 {
     bool const flashSelection = (isActive() && selectionIsVisible());
-    Vector4f const &textColor = mnRendState->textColors[color()];
+    Vec4f const &textColor = mnRendState->textColors[color()];
     float t = flashSelection? 1 : 0;
 
     Vector4f flashColor = textColor;
@@ -138,18 +138,19 @@ void ListWidget::draw() const
 
 
 //    Vector4f const flashColor = de::lerp(textColor, Vector4f(Vector3f(cfg.common.menuTextFlashColor), textColor.w), t);
-    Vector4f const dimColor   = Vector4f(Vector3f(textColor) * MNDATA_LIST_NONSELECTION_LIGHT, textColor.w);
+    Vec4f const dimColor = Vec4f(Vec3f(textColor) * MNDATA_LIST_NONSELECTION_LIGHT, textColor.w);
 
     if(d->first < d->items.count() && d->numvis > 0)
     {
         DGL_Enable(DGL_TEXTURE_2D);
         FR_SetFont(mnRendState->textFonts[font()]);
 
-        Vector2i origin = geometry().topLeft;
+        Vec2i origin = geometry().topLeft;
         int itemIdx = d->first;
         do
         {
             const Item *item = d->items[itemIdx];
+            Vec4f const &color = d->selection == itemIdx? (flashSelection? flashColor : textColor) : dimColor;
 
             const Vector4f &color =
                 d->selection == itemIdx ? (flashSelection ? flashColor : textColor) : dimColor;

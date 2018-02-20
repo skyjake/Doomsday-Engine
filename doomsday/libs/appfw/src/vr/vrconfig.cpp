@@ -194,7 +194,7 @@ int VRConfig::riftFramebufferSampleCount() const
     return d->riftFramebufferSamples;
 }
 
-float VRConfig::viewAspect(Vector2f const &viewPortSize) const
+float VRConfig::viewAspect(Vec2f const &viewPortSize) const
 {
     /*if (mode() == OculusRift)
     {
@@ -206,7 +206,7 @@ float VRConfig::viewAspect(Vector2f const &viewPortSize) const
     return viewPortSize.x / viewPortSize.y;
 }
 
-float VRConfig::verticalFieldOfView(float horizFovDegrees, Vector2f const &viewPortSize) const
+float VRConfig::verticalFieldOfView(float horizFovDegrees, Vec2f const &viewPortSize) const
 {
     // We're assuming pixels are squares.
     float const aspect = viewAspect(viewPortSize);
@@ -221,8 +221,8 @@ float VRConfig::verticalFieldOfView(float horizFovDegrees, Vector2f const &viewP
     return clamp(1.f, horizFovDegrees / aspect, 179.f);
 }
 
-Matrix4f VRConfig::projectionMatrix(float fovDegrees,
-                                    Vector2f const &viewPortSize,
+Mat4f VRConfig::projectionMatrix(float fovDegrees,
+                                    Vec2f const &viewPortSize,
                                     float nearClip, float farClip) const
 {
     if (mode() == OculusRift && oculusRift().isReady())
@@ -230,10 +230,10 @@ Matrix4f VRConfig::projectionMatrix(float fovDegrees,
         // OVR will calculate our projection matrix.
         float const mapUnits = d->mapUnitsPerMeter();
         return oculusRift().projection(nearClip, farClip) *
-               Matrix4f::translate(oculusRift().eyeOffset() * mapUnits);
+               Mat4f::translate(oculusRift().eyeOffset() * mapUnits);
     }
-    return Matrix4f::perspective(fovDegrees, viewAspect(viewPortSize), nearClip, farClip) *
-           Matrix4f::translate(Vector3f(-eyeShift(), 0, 0));
+    return Mat4f::perspective(fovDegrees, viewAspect(viewPortSize), nearClip, farClip) *
+           Mat4f::translate(Vec3f(-eyeShift(), 0, 0));
 
 #if 0
     float const yfov = verticalFieldOfView(fovDegrees, viewPortSize);
@@ -255,10 +255,10 @@ Matrix4f VRConfig::projectionMatrix(float fovDegrees,
         shift = eyeShift() * nearClip / screenDistance();
     }
 
-    return Matrix4f::frustum(-fW - shift, fW - shift,
+    return Mat4f::frustum(-fW - shift, fW - shift,
                              -fH, fH,
                              nearClip, farClip) *
-           Matrix4f::translate(Vector3f(-eyeShift(), 0, 0));
+           Mat4f::translate(Vec3f(-eyeShift(), 0, 0));
 #endif
 }
 

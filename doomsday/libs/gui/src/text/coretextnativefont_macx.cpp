@@ -320,8 +320,8 @@ Rectanglei CoreTextNativeFont::nativeFontMeasure(String const &text) const
 
     //CGLineGetImageBounds(d->line, d->gc); // more accurate but slow
 
-    Rectanglei rect(Vector2i(0, -d->ascent),
-                    Vector2i(roundi(CTLineGetTypographicBounds(d->cache.line, NULL, NULL, NULL)),
+    Rectanglei rect(Vec2i(0, -d->ascent),
+                    Vec2i(roundi(CTLineGetTypographicBounds(d->cache.line, NULL, NULL, NULL)),
                              d->descent));
 
     return rect;
@@ -334,8 +334,8 @@ int CoreTextNativeFont::nativeFontWidth(String const &text) const
 }
 
 QImage CoreTextNativeFont::nativeFontRasterize(String const &text,
-                                               Vector4ub const &foreground,
-                                               Vector4ub const &background) const
+                                               Vec4ub const &foreground,
+                                               Vec4ub const &background) const
 {
 #if 0
     DENG2_ASSERT(fequal(fontCache.fontSize(d->font), size()));
@@ -343,7 +343,7 @@ QImage CoreTextNativeFont::nativeFontRasterize(String const &text,
 #endif
 
     // Text color.
-    Vector4d const fg = foreground.zyxw().toVector4f() / 255.f;
+    Vec4d const fg = foreground.zyxw().toVector4f() / 255.f;
     CGFloat fgValues[4] = { fg.x, fg.y, fg.z, fg.w };
     CGColorRef fgColor = CGColorCreate(fontCache.colorspace(), fgValues);
 

@@ -32,7 +32,7 @@ DENG2_PIMPL(EntityMap)
     Rectangled mapBounds;
     float      blockSize;
     Blocks     blocks;
-    Vector2i   size;
+    Vec2i   size;
 
     Impl(Public *i) : Base(i), blockSize(32)
     {}
@@ -57,19 +57,19 @@ DENG2_PIMPL(EntityMap)
         }
     }
 
-    Vector2i blockCoord(const Vector2f &pos) const
+    Vec2i blockCoord(const Vec2f &pos) const
     {
-        return Vector2i(int(clamp(0.0, (pos.x + mapBounds.width()/2)  / blockSize, size.x - 1.0)),
+        return Vec2i(int(clamp(0.0, (pos.x + mapBounds.width()/2)  / blockSize, size.x - 1.0)),
                         int(clamp(0.0, (pos.y + mapBounds.height()/2) / blockSize, size.y - 1.0)));
     }
 
-    int blockIndex(const Vector2f &pos) const
+    int blockIndex(const Vec2f &pos) const
     {
-        Vector2i coord = blockCoord(pos);
+        Vec2i coord = blockCoord(pos);
         return coord.x + coord.y * size.x;
     }
 
-    Block &block(const Vector2f &pos)
+    Block &block(const Vec2f &pos)
     {
         int idx = blockIndex(pos);
         if (!blocks[idx])
@@ -79,12 +79,12 @@ DENG2_PIMPL(EntityMap)
         return *blocks[idx];
     }
 
-    const Block *block(const Vector2f &pos) const
+    const Block *block(const Vec2f &pos) const
     {
         return blocks.at(blockIndex(pos));
     }
 
-    const Block *blockAtCoord(const Vector2i &blockPos) const
+    const Block *blockAtCoord(const Vec2i &blockPos) const
     {
         const int idx = blockPos.x + blockPos.y * size.x;
         if (idx < 0 || idx >= blocks.size()) return 0;
@@ -97,7 +97,7 @@ DENG2_PIMPL(EntityMap)
     }
 
     /*
-    void iterateBlockAtCoord(Vector2i const &coord, Vector3f const &origin, float radius,
+    void iterateBlockAtCoord(Vec2i const &coord, Vec3f const &origin, float radius,
                              Callback const &callback) const
     {
         Instance::Block const *bk = blockAtCoord(coord);
@@ -145,17 +145,17 @@ void EntityMap::insert(const Entity &entity)
     d->insert(entity);
 }
 
-EntityMap::EntityList EntityMap::listRegionBackToFront(const Vector3f &pos, float radius) const
+EntityMap::EntityList EntityMap::listRegionBackToFront(const Vec3f &pos, float radius) const
 {
-    Vector2i min = d->blockCoord(pos.xz() - Vector2f(radius, radius));
-    Vector2i max = d->blockCoord(pos.xz() + Vector2f(radius, radius));
+    Vec2i min = d->blockCoord(pos.xz() - Vec2f(radius, radius));
+    Vec2i max = d->blockCoord(pos.xz() + Vec2f(radius, radius));
 
     EntityList found;
     for (int y = min.y; y <= max.y; ++y)
     {
         for (int x = min.x; x <= max.x; ++x)
         {
-            if (const auto *bk = d->blockAtCoord(Vector2i(x, y)))
+            if (const auto *bk = d->blockAtCoord(Vec2i(x, y)))
             {
                 foreach (Entity const *e, bk->entities)
                 {
@@ -177,7 +177,7 @@ EntityMap::EntityList EntityMap::listRegionBackToFront(const Vector3f &pos, floa
     return found;
 }
 
-void EntityMap::iterateRegion(const Vector3f &                    pos,
+void EntityMap::iterateRegion(const Vec3f &                    pos,
                               float                               radius,
                               std::function<void(const Entity &)> callback) const
 {

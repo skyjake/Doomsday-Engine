@@ -65,21 +65,21 @@ DENG2_PIMPL(Surface)
 {
     dint flags = 0;                             ///< @ref sufFlags
 
-    Matrix3f tangentMatrix { Matrix3f::Zero };  ///< Tangent space vectors.
+    Mat3f tangentMatrix { Mat3f::Zero };  ///< Tangent space vectors.
     bool needUpdateTangentMatrix = false;       ///< @c true= marked for update.
 
     Material *material = nullptr;               ///< Currently bound material.
     bool materialIsMissingFix = false;          ///< @c true= @ref material is a "missing fix".
 
-    Vector2f origin;                            ///< @em sharp offset to surface-space origin.
-    Vector3f color;
+    Vec2f origin;                            ///< @em sharp offset to surface-space origin.
+    Vec3f color;
     dfloat opacity = 0;
     blendmode_t blendMode { BM_NORMAL };
 
 #ifdef __CLIENT__
-    Vector2f oldOrigin[2];                      ///< Old @em sharp surface space material origins, for smoothing.
-    Vector2f originSmoothed;                    ///< @em smoothed surface space material origin.
-    Vector2f originSmoothedDelta;               ///< Delta between @em sharp and @em smoothed.
+    Vec2f oldOrigin[2];                      ///< Old @em sharp surface space material origins, for smoothing.
+    Vec2f originSmoothed;                    ///< @em smoothed surface space material origin.
+    Vec2f originSmoothedDelta;               ///< Delta between @em sharp and @em smoothed.
     MaterialAnimator *matAnimator = nullptr;
 #endif
 
@@ -116,11 +116,11 @@ DENG2_PIMPL(Surface)
         needUpdateTangentMatrix = false;
 
         dfloat values[9];
-        Vector3f normal = tangentMatrix.column(2);
+        Vec3f normal = tangentMatrix.column(2);
         V3f_Set(values + 6, normal.x, normal.y, normal.z);
         V3f_BuildTangents(values, values + 3, values + 6);
 
-        tangentMatrix = Matrix3f(values);
+        tangentMatrix = Mat3f(values);
     }
 
 #ifdef __CLIENT__
@@ -149,7 +149,7 @@ DENG2_AUDIENCE_METHOD(Surface, OriginChange)
 DENG2_AUDIENCE_METHOD(Surface, OriginSmoothedChange)
 #endif
 
-Surface::Surface(MapElement &owner, dfloat opacity, Vector3f const &color)
+Surface::Surface(MapElement &owner, dfloat opacity, Vec3f const &color)
     : MapElement(DMU_SURFACE, &owner)
     , d(new Impl(this))
 {
@@ -178,7 +178,7 @@ String Surface::description() const
     return desc;
 }
 
-Matrix3f const &Surface::tangentMatrix() const
+Mat3f const &Surface::tangentMatrix() const
 {
     // Perform any scheduled update now.
     if (d->needUpdateTangentMatrix)
@@ -188,10 +188,10 @@ Matrix3f const &Surface::tangentMatrix() const
     return d->tangentMatrix;
 }
 
-Surface &Surface::setNormal(Vector3f const &newNormal)
+Surface &Surface::setNormal(Vec3f const &newNormal)
 {
-    Vector3f const oldNormal = normal();
-    Vector3f const newNormalNormalized = newNormal.normalize();
+    Vec3f const oldNormal = normal();
+    Vec3f const newNormalNormalized = newNormal.normalize();
     if (oldNormal != newNormalNormalized)
     {
         for (dint i = 0; i < 3; ++i)
@@ -272,12 +272,12 @@ Surface &Surface::setMaterial(Material *newMaterial, bool isMissingFix)
     return *this;
 }
 
-Vector2f const &Surface::origin() const
+Vec2f const &Surface::origin() const
 {
     return d->origin;
 }
 
-Surface &Surface::setOrigin(Vector2f const &newOrigin)
+Surface &Surface::setOrigin(Vec2f const &newOrigin)
 {
     if (d->origin != newOrigin)
     {
@@ -287,7 +287,7 @@ Surface &Surface::setOrigin(Vector2f const &newOrigin)
         {
             // During map setup we'll apply this immediately to the visual origin also.
             d->originSmoothed = d->origin;
-            d->originSmoothedDelta = Vector2f();
+            d->originSmoothedDelta = Vec2f();
 
             d->oldOrigin[0] = d->oldOrigin[1] = d->origin;
         }
@@ -315,9 +315,9 @@ bool Surface::materialMirrorY() const
     return (d->flags & DDSUF_MATERIAL_FLIPV) != 0;
 }
 
-Vector2f Surface::materialScale() const
+Vec2f Surface::materialScale() const
 {
-    return Vector2f(materialMirrorX()? -1 : 1, materialMirrorY()? -1 : 1);
+    return Vec2f(materialMirrorX()? -1 : 1, materialMirrorY()? -1 : 1);
 }
 
 de::Uri Surface::composeMaterialUri() const
@@ -349,14 +349,14 @@ Surface &Surface::setOpacity(dfloat newOpacity)
     return *this;
 }
 
-Vector3f const &Surface::color() const
+Vec3f const &Surface::color() const
 {
     return d->color;
 }
 
-Surface &Surface::setColor(Vector3f const &newColor)
+Surface &Surface::setColor(Vec3f const &newColor)
 {
-    Vector3f const newColorClamped(de::clamp(0.f, newColor.x, 1.f),
+    Vec3f const newColorClamped(de::clamp(0.f, newColor.x, 1.f),
                                    de::clamp(0.f, newColor.y, 1.f),
                                    de::clamp(0.f, newColor.z, 1.f));
 
@@ -508,7 +508,7 @@ dint Surface::setProperty(DmuArgs const &args)
         break;
 
     case DMU_COLOR: {
-        Vector3f newColor = d->color;
+        Vec3f newColor = d->color;
         args.value(DMT_SURFACE_RGBA, &newColor.x, 0);
         args.value(DMT_SURFACE_RGBA, &newColor.y, 1);
         args.value(DMT_SURFACE_RGBA, &newColor.z, 2);
@@ -516,19 +516,19 @@ dint Surface::setProperty(DmuArgs const &args)
         break; }
 
     case DMU_COLOR_RED: {
-        Vector3f newColor = d->color;
+        Vec3f newColor = d->color;
         args.value(DMT_SURFACE_RGBA, &newColor.x, 0);
         setColor(newColor);
         break; }
 
     case DMU_COLOR_GREEN: {
-        Vector3f newColor = d->color;
+        Vec3f newColor = d->color;
         args.value(DMT_SURFACE_RGBA, &newColor.y, 0);
         setColor(newColor);
         break; }
 
     case DMU_COLOR_BLUE: {
-        Vector3f newColor = d->color;
+        Vec3f newColor = d->color;
         args.value(DMT_SURFACE_RGBA, &newColor.z, 0);
         setColor(newColor);
         break; }
@@ -546,19 +546,19 @@ dint Surface::setProperty(DmuArgs const &args)
         break; }
 
     case DMU_OFFSET_X: {
-        Vector2f newOrigin = d->origin;
+        Vec2f newOrigin = d->origin;
         args.value(DMT_SURFACE_OFFSET, &newOrigin.x, 0);
         setOrigin(newOrigin);
         break; }
 
     case DMU_OFFSET_Y: {
-        Vector2f newOrigin = d->origin;
+        Vec2f newOrigin = d->origin;
         args.value(DMT_SURFACE_OFFSET, &newOrigin.y, 0);
         setOrigin(newOrigin);
         break; }
 
     case DMU_OFFSET_XY: {
-        Vector2f newOrigin = d->origin;
+        Vec2f newOrigin = d->origin;
         args.value(DMT_SURFACE_OFFSET, &newOrigin.x, 0);
         args.value(DMT_SURFACE_OFFSET, &newOrigin.y, 1);
         setOrigin(newOrigin);
@@ -590,12 +590,12 @@ void Surface::resetLookups()
     d->matAnimator = nullptr;
 }
 
-Vector2f const &Surface::originSmoothed() const
+Vec2f const &Surface::originSmoothed() const
 {
     return d->originSmoothed;
 }
 
-Vector2f const &Surface::originSmoothedAsDelta() const
+Vec2f const &Surface::originSmoothedAsDelta() const
 {
     return d->originSmoothedDelta;
 }
@@ -616,7 +616,7 @@ void Surface::resetSmoothedOrigin()
 {
     // $smoothmaterialorigin
     d->originSmoothed = d->oldOrigin[0] = d->oldOrigin[1] = origin();
-    d->originSmoothedDelta = Vector2f();
+    d->originSmoothedDelta = Vec2f();
 
     d->notifyOriginSmoothedChanged();
 }
@@ -629,7 +629,7 @@ void Surface::updateOriginTracking()
 
     if (d->oldOrigin[0] != d->oldOrigin[1])
     {
-        dfloat moveDistance = de::abs(Vector2f(d->oldOrigin[1] - d->oldOrigin[0]).length());
+        dfloat moveDistance = de::abs(Vec2f(d->oldOrigin[1] - d->oldOrigin[0]).length());
 
         if (moveDistance >= MAX_SMOOTH_MATERIAL_MOVE)
         {
@@ -639,11 +639,11 @@ void Surface::updateOriginTracking()
     }
 }
 
-dfloat Surface::glow(Vector3f &color) const
+dfloat Surface::glow(Vec3f &color) const
 {
     if (!hasMaterial() || material().isSkyMasked())
     {
-        color = Vector3f();
+        color = Vec3f();
         return 0;
     }
 
@@ -661,7 +661,7 @@ dfloat Surface::glow(Vector3f &color) const
         return 0;
     }
 
-    color = Vector3f(avgColorAmplified->color.rgb);
+    color = Vec3f(avgColorAmplified->color.rgb);
     return matAnimator.glowStrength() * glowFactor; // Global scale factor.
 }
 

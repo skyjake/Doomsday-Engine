@@ -163,9 +163,9 @@ DENG_EXTERN_C dd_bool R_GetSpriteInfo(dint id, dint frame, spriteinfo_t *info)
             .getAnimator(pspriteMaterialSpec_GetSpriteInfo());
     matAnimator.prepare();  // Ensure we have up-to-date info.
 
-    Vector2ui const &matDimensions = matAnimator.dimensions();
+    Vec2ui const &matDimensions = matAnimator.dimensions();
     TextureVariant *tex            = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
-    Vector2i const &texDimensions  = tex->base().origin();
+    Vec2i const &texDimensions  = tex->base().origin();
     dint const texBorder           = tex->spec().variant.border;
 
     info->geometry.origin.x    = -texDimensions.x + -texBorder;

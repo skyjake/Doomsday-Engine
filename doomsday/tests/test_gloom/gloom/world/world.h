@@ -43,10 +43,10 @@ public:
     virtual void render(ICamera const &camera);
 
     struct POI {
-        de::Vector3f position;
+        de::Vec3f position;
         float        yaw;
 
-        POI(de::Vector3f const &pos, float yawAngle = 0)
+        POI(de::Vec3f const &pos, float yawAngle = 0)
             : position(pos)
             , yaw(yawAngle)
         {}
@@ -56,8 +56,8 @@ public:
     virtual POI        initialViewPosition() const;
     virtual QList<POI> pointsOfInterest() const;
 
-    virtual float groundSurfaceHeight(de::Vector3f const &pos) const;
-    virtual float ceilingHeight(de::Vector3f const &pos) const;
+    virtual float groundSurfaceHeight(de::Vec3f const &pos) const;
+    virtual float ceilingHeight(de::Vec3f const &pos) const;
 
     DENG2_CAST_METHODS()
 

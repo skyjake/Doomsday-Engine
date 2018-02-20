@@ -91,13 +91,13 @@ public:
     struct mobj_s const *emitter() const;
     void setEmitter(struct mobj_s const *newEmitter);
 
-    void setFixedOrigin(de::Vector3d const &newOrigin);
+    void setFixedOrigin(de::Vec3d const &newOrigin);
 
     /**
      * Returns the @em effective origin point in the soundstage for the channel. This point
      * is used to apply positional audio effects during playback (both 3D and stereo models).
      */
-    de::Vector3d origin() const;
+    de::Vec3d origin() const;
 
     /**
      * Calculate priority points for a sound playing on the channel. They are used to determine

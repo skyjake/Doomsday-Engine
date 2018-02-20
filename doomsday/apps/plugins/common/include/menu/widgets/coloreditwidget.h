@@ -45,7 +45,7 @@ namespace menu {
 class ColorEditWidget : public Widget
 {
 public:
-    explicit ColorEditWidget(de::Vector4f const &color = de::Vector4f(),
+    explicit ColorEditWidget(de::Vec4f const &color = de::Vec4f(),
                              bool rgbaMode = false);
     virtual ~ColorEditWidget();
 
@@ -60,12 +60,12 @@ public:
      *
      * @return  Reference to this ColorEditWidget.
      */
-    ColorEditWidget &setPreviewDimensions(de::Vector2i const &newDimensions);
+    ColorEditWidget &setPreviewDimensions(de::Vec2i const &newDimensions);
 
     /**
      * Returns the dimensions of the preview area (in fixed 320x200 space).
      */
-    de::Vector2i previewDimensions() const;
+    de::Vec2i previewDimensions() const;
 
     /**
      * Returns @c true if operating in RGBA mode.
@@ -75,7 +75,7 @@ public:
     /**
      * Returns a copy of the current color.
      */
-    de::Vector4f color() const;
+    de::Vec4f color() const;
 
     inline float red  () const { return color().x; }
     inline float green() const { return color().y; }
@@ -90,7 +90,7 @@ public:
      *
      * @return  Reference to this ColorEditWidget.
      */
-    ColorEditWidget &setColor(de::Vector4f const &newColor, int flags = MNCOLORBOX_SCF_NO_ACTION);
+    ColorEditWidget &setColor(de::Vec4f const &newColor, int flags = MNCOLORBOX_SCF_NO_ACTION);
 
     ColorEditWidget &setRed  (float newRed,   int flags = MNCOLORBOX_SCF_NO_ACTION);
     ColorEditWidget &setGreen(float newGreen, int flags = MNCOLORBOX_SCF_NO_ACTION);

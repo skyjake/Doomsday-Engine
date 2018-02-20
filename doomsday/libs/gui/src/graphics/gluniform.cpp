@@ -38,10 +38,10 @@ DENG2_PIMPL(GLUniform)
         dint     *ints;
         dfloat   *floats;
         Vector2f *vec2array;
-        Vector3f *vec3array;
-        Vector4f *vector;
-        Matrix3f *mat3;
-        Matrix4f *mat4;
+        Vec3f *vec3array;
+        Vec4f *vector;
+        Mat3f *mat3;
+        Mat4f *mat4;
         GLTexture const *tex;
     } value;
     duint16 usedElemCount;
@@ -69,7 +69,7 @@ DENG2_PIMPL(GLUniform)
         case Vec2:
         case Vec3:
         case Vec4:
-            value.vector = new Vector4f;
+            value.vector = new Vec4f;
             break;
 
         case IntArray:
@@ -85,23 +85,23 @@ DENG2_PIMPL(GLUniform)
             break;
 
         case Vec3Array:
-            value.vec3array = new Vector3f[elemCount];
+            value.vec3array = new Vec3f[elemCount];
             break;
 
         case Vec4Array:
-            value.vector = new Vector4f[elemCount];
+            value.vector = new Vec4f[elemCount];
             break;
 
         case Mat3:
-            value.mat3 = new Matrix3f;
+            value.mat3 = new Mat3f;
             break;
 
         case Mat4:
-            value.mat4 = new Matrix4f;
+            value.mat4 = new Mat4f;
             break;
 
         case Mat4Array:
-            value.mat4 = new Matrix4f[elemCount];
+            value.mat4 = new Mat4f[elemCount];
             break;
 
         default:
@@ -288,23 +288,23 @@ GLUniform &GLUniform::operator = (ddouble value)
     return *this = dfloat(value);
 }
 
-GLUniform &GLUniform::operator = (Vector2f const &vec)
+GLUniform &GLUniform::operator = (Vec2f const &vec)
 {
     DENG2_ASSERT(d->type == Vec2);
 
-    if (Vector2f(*d->value.vector) != vec)
+    if (Vec2f(*d->value.vector) != vec)
     {
-        *d->value.vector = Vector4f(vec);
+        *d->value.vector = Vec4f(vec);
         d->markAsChanged();
     }
     return *this;
 }
 
-GLUniform &GLUniform::operator = (Vector3f const &vec)
+GLUniform &GLUniform::operator = (Vec3f const &vec)
 {
     DENG2_ASSERT(d->type == Vec3);
 
-    if (Vector3f(*d->value.vector) != vec)
+    if (Vec3f(*d->value.vector) != vec)
     {
         *d->value.vector = vec;
         d->markAsChanged();
@@ -312,7 +312,7 @@ GLUniform &GLUniform::operator = (Vector3f const &vec)
     return *this;
 }
 
-GLUniform &GLUniform::operator = (Vector4f const &vec)
+GLUniform &GLUniform::operator = (Vec4f const &vec)
 {
     DENG2_ASSERT(d->type == Vec4);
 
@@ -324,7 +324,7 @@ GLUniform &GLUniform::operator = (Vector4f const &vec)
     return *this;
 }
 
-GLUniform &GLUniform::operator = (Matrix3f const &mat)
+GLUniform &GLUniform::operator = (Mat3f const &mat)
 {
     DENG2_ASSERT(d->type == Mat3);
 
@@ -334,7 +334,7 @@ GLUniform &GLUniform::operator = (Matrix3f const &mat)
     return *this;
 }
 
-GLUniform &GLUniform::operator = (Matrix4f const &mat)
+GLUniform &GLUniform::operator = (Mat4f const &mat)
 {
     DENG2_ASSERT(d->type == Mat4);
 
@@ -383,7 +383,7 @@ GLUniform &GLUniform::set(duint elementIndex, dfloat value)
     return *this;
 }
 
-GLUniform &GLUniform::set(duint elementIndex, Vector3f const &vec)
+GLUniform &GLUniform::set(duint elementIndex, Vec3f const &vec)
 {
     DENG2_ASSERT(d->type == Vec3Array);
     DENG2_ASSERT(elementIndex < d->elemCount);
@@ -397,7 +397,7 @@ GLUniform &GLUniform::set(duint elementIndex, Vector3f const &vec)
     return *this;
 }
 
-GLUniform &GLUniform::set(duint elementIndex, Vector4f const &vec)
+GLUniform &GLUniform::set(duint elementIndex, Vec4f const &vec)
 {
     DENG2_ASSERT(d->type == Vec4Array);
     DENG2_ASSERT(elementIndex < d->elemCount);
@@ -411,7 +411,7 @@ GLUniform &GLUniform::set(duint elementIndex, Vector4f const &vec)
     return *this;
 }
 
-GLUniform &GLUniform::set(duint elementIndex, Matrix4f const &mat)
+GLUniform &GLUniform::set(duint elementIndex, Mat4f const &mat)
 {
     DENG2_ASSERT(d->type == Mat4Array);
     DENG2_ASSERT(elementIndex < d->elemCount);
@@ -445,23 +445,23 @@ GLUniform &GLUniform::set(float const *floatArray, dsize count)
     return *this;
 }
 
-GLUniform &GLUniform::set(const Vector3f *vectorArray, dsize count)
+GLUniform &GLUniform::set(const Vec3f *vectorArray, dsize count)
 {
     DENG2_ASSERT(d->type == Vec3Array);
     DENG2_ASSERT(count <= d->elemCount);
 
-    memcpy(d->value.vector, vectorArray, sizeof(Vector3f) * count);
+    memcpy(d->value.vector, vectorArray, sizeof(Vec3f) * count);
     d->usedElemCount = duint16(count);
     d->markAsChanged();
     return *this;
 }
 
-GLUniform &GLUniform::set(Vector4f const *vectorArray, dsize count)
+GLUniform &GLUniform::set(Vec4f const *vectorArray, dsize count)
 {
     DENG2_ASSERT(d->type == Vec4Array);
     DENG2_ASSERT(count <= d->elemCount);
 
-    memcpy(d->value.vector, vectorArray, sizeof(Vector4f) * count);
+    memcpy(d->value.vector, vectorArray, sizeof(Vec4f) * count);
     d->usedElemCount = duint16(count);
     d->markAsChanged();
     return *this;
@@ -546,31 +546,31 @@ dfloat GLUniform::toFloat() const
     }
 }
 
-Vector2f const &GLUniform::toVector2f() const
+Vec2f const &GLUniform::toVector2f() const
 {
     DENG2_ASSERT(d->type == Vec2 || d->type == Vec3 || d->type == Vec4);
     return *d->value.vector;
 }
 
-Vector3f const &GLUniform::toVector3f() const
+Vec3f const &GLUniform::toVector3f() const
 {
     DENG2_ASSERT(d->type == Vec2 || d->type == Vec3 || d->type == Vec4);
     return *d->value.vector;
 }
 
-Vector4f const &GLUniform::toVector4f() const
+Vec4f const &GLUniform::toVector4f() const
 {
     DENG2_ASSERT(d->type == Vec2 || d->type == Vec3 || d->type == Vec4);
     return *d->value.vector;
 }
 
-Matrix3f const &GLUniform::toMatrix3f() const
+Mat3f const &GLUniform::toMatrix3f() const
 {
     DENG2_ASSERT(d->type == Mat3);
     return *d->value.mat3;
 }
 
-Matrix4f const &GLUniform::toMatrix4f() const
+Mat4f const &GLUniform::toMatrix4f() const
 {
     DENG2_ASSERT(d->type == Mat4);
     return *d->value.mat4;

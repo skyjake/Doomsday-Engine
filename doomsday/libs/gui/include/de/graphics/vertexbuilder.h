@@ -42,7 +42,7 @@ struct VertexBuilder
         explicit operator bool() const {
             return !Base::isEmpty();
         }
-        void transform(Matrix4f const &matrix) {
+        void transform(Mat4f const &matrix) {
             for (int i = 0; i < Base::size(); ++i) {
                 (*this)[i].pos = matrix * (*this)[i].pos;
             }
@@ -55,7 +55,7 @@ struct VertexBuilder
             Vertices v(*this);
             return v += other;
         }
-        Vertices &makeQuad(Rectanglef const &rect, Vector4f const &color, Vector2f const &uv) {
+        Vertices &makeQuad(Rectanglef const &rect, Vec4f const &color, Vec2f const &uv) {
             Vertices quad;
             VertexType v;
             v.rgba = color;
@@ -75,8 +75,8 @@ struct VertexBuilder
             v.pos = rect.bottomRight;  v.texCoord = uv.bottomRight;  quad << v;
             return *this += quad;
         }
-        Vertices &makeQuad(Rectanglef const &rect, Vector4f const &color, Rectanglef const &uv,
-                           Matrix4f const *matrix = 0) {
+        Vertices &makeQuad(Rectanglef const &rect, Vec4f const &color, Rectanglef const &uv,
+                           Mat4f const *matrix = 0) {
             Vertices quad;
             VertexType v;
             v.rgba = color;
@@ -89,10 +89,10 @@ struct VertexBuilder
         }
         /// Makes a 3D quad with indirect UV coords. The points p1...p4 are specified
         /// with a clockwise winding (use Vertex3Tex2BoundsRgba).
-        Vertices &makeQuadIndirect(Vector3f const &p1, Vector3f const &p2,
-                                   Vector3f const &p3, Vector3f const &p4,
-                                   Vector4f const &color, Rectanglef const &uv,
-                                   Vector4f const &uvBounds, Vector2f const &texSize) {
+        Vertices &makeQuadIndirect(Vec3f const &p1, Vec3f const &p2,
+                                   Vec3f const &p3, Vec3f const &p4,
+                                   Vec4f const &color, Rectanglef const &uv,
+                                   Vec4f const &uvBounds, Vec2f const &texSize) {
             Vertices quad;
             VertexType v;
             v.rgba = color;
@@ -104,58 +104,58 @@ struct VertexBuilder
             v.pos = p3; v.texCoord[0] = uv.bottomRight;  quad << v;
             return *this += quad;
         }
-        Vertices &makeCubeIndirect(Vector3f const &minPoint,
-                                   Vector3f const &maxPoint,
+        Vertices &makeCubeIndirect(Vec3f const &minPoint,
+                                   Vec3f const &maxPoint,
                                    Rectanglef const &uv,
-                                   Vector4f const &uvBounds,
-                                   Vector2f const &texSize,
-                                   Vector4f const faceColors[6]) {
+                                   Vec4f const &uvBounds,
+                                   Vec2f const &texSize,
+                                   Vec4f const faceColors[6]) {
             // Back.
             makeQuadIndirect(minPoint,
-                             Vector3f(maxPoint.x, minPoint.y, minPoint.z),
-                             Vector3f(maxPoint.x, maxPoint.y, minPoint.z),
-                             Vector3f(minPoint.x, maxPoint.y, minPoint.z),
+                             Vec3f(maxPoint.x, minPoint.y, minPoint.z),
+                             Vec3f(maxPoint.x, maxPoint.y, minPoint.z),
+                             Vec3f(minPoint.x, maxPoint.y, minPoint.z),
                              faceColors[0], uv, uvBounds, texSize);
 
             // Front.
-            makeQuadIndirect(Vector3f(minPoint.x, minPoint.y, maxPoint.z),
-                             Vector3f(maxPoint.x, minPoint.y, maxPoint.z),
+            makeQuadIndirect(Vec3f(minPoint.x, minPoint.y, maxPoint.z),
+                             Vec3f(maxPoint.x, minPoint.y, maxPoint.z),
                              maxPoint,
-                             Vector3f(minPoint.x, maxPoint.y, maxPoint.z),
+                             Vec3f(minPoint.x, maxPoint.y, maxPoint.z),
                              faceColors[1], uv, uvBounds, texSize);
 
             // Left.
-            makeQuadIndirect(Vector3f(minPoint.x, minPoint.y, maxPoint.z),
+            makeQuadIndirect(Vec3f(minPoint.x, minPoint.y, maxPoint.z),
                              minPoint,
-                             Vector3f(minPoint.x, maxPoint.y, minPoint.z),
-                             Vector3f(minPoint.x, maxPoint.y, maxPoint.z),
+                             Vec3f(minPoint.x, maxPoint.y, minPoint.z),
+                             Vec3f(minPoint.x, maxPoint.y, maxPoint.z),
                              faceColors[2], uv, uvBounds, texSize);
 
             // Right.
-            makeQuadIndirect(Vector3f(maxPoint.x, minPoint.y, minPoint.z),
-                             Vector3f(maxPoint.x, minPoint.y, maxPoint.z),
+            makeQuadIndirect(Vec3f(maxPoint.x, minPoint.y, minPoint.z),
+                             Vec3f(maxPoint.x, minPoint.y, maxPoint.z),
                              maxPoint,
-                             Vector3f(maxPoint.x, maxPoint.y, minPoint.z),
+                             Vec3f(maxPoint.x, maxPoint.y, minPoint.z),
                              faceColors[3], uv, uvBounds, texSize);
 
             // Floor.
-            makeQuadIndirect(Vector3f(minPoint.x, maxPoint.y, minPoint.z),
-                             Vector3f(maxPoint.x, maxPoint.y, minPoint.z),
+            makeQuadIndirect(Vec3f(minPoint.x, maxPoint.y, minPoint.z),
+                             Vec3f(maxPoint.x, maxPoint.y, minPoint.z),
                              maxPoint,
-                             Vector3f(minPoint.x, maxPoint.y, maxPoint.z),
+                             Vec3f(minPoint.x, maxPoint.y, maxPoint.z),
                              faceColors[4], uv, uvBounds, texSize);
 
             // Ceiling.
-            makeQuadIndirect(Vector3f(minPoint.x, minPoint.y, maxPoint.z),
-                             Vector3f(maxPoint.x, minPoint.y, maxPoint.z),
-                             Vector3f(maxPoint.x, minPoint.y, minPoint.z),
+            makeQuadIndirect(Vec3f(minPoint.x, minPoint.y, maxPoint.z),
+                             Vec3f(maxPoint.x, minPoint.y, maxPoint.z),
+                             Vec3f(maxPoint.x, minPoint.y, minPoint.z),
                              minPoint,
                              faceColors[5], uv, uvBounds, texSize);
 
             return *this;
         }
-        Vertices &makeRing(Vector2f const &center, float outerRadius, float innerRadius,
-                           int divisions, Vector4f const &color, Rectanglef const &uv,
+        Vertices &makeRing(Vec2f const &center, float outerRadius, float innerRadius,
+                           int divisions, Vec4f const &color, Rectanglef const &uv,
                            float innerTexRadius = -1) {
             if (innerTexRadius < 0) innerTexRadius = innerRadius / outerRadius;
             Vertices ring;
@@ -163,7 +163,7 @@ struct VertexBuilder
             v.rgba = color;
             for (int i = 0; i <= divisions; ++i) {
                 float const ang = 2 * PI * (i == divisions? 0 : i) / divisions;
-                Vector2f r(cos(ang), sin(ang));
+                Vec2f r(cos(ang), sin(ang));
                 // Outer.
                 v.pos = center + r * outerRadius;
                 v.texCoord = uv.middle() + r * .5f * uv.size();
@@ -175,13 +175,13 @@ struct VertexBuilder
             }
             return *this += ring;
         }
-        Vertices &makeRing(Vector2f const &center, float outerRadius, float innerRadius,
-                           int divisions, Vector4f const &color, Vector2f const &uv) {
+        Vertices &makeRing(Vec2f const &center, float outerRadius, float innerRadius,
+                           int divisions, Vec4f const &color, Vec2f const &uv) {
             return makeRing(center, outerRadius, innerRadius, divisions, color, Rectanglef(uv, uv));
         }
         Vertices &makeFlexibleFrame(Rectanglef const &rect, float cornerThickness,
-                                    Vector4f const &color, Rectanglef const &uv) {
-            Vector2f const uvOff = uv.size() / 2;
+                                    Vec4f const &color, Rectanglef const &uv) {
+            Vec2f const uvOff = uv.size() / 2;
             Vertices verts;
             VertexType v;
 
@@ -192,83 +192,83 @@ struct VertexBuilder
             v.texCoord = uv.topLeft;
             verts << v;
 
-            v.pos      = rect.topLeft + Vector2f(0, cornerThickness);
-            v.texCoord = uv.topLeft + Vector2f(0, uvOff.y);
+            v.pos      = rect.topLeft + Vec2f(0, cornerThickness);
+            v.texCoord = uv.topLeft + Vec2f(0, uvOff.y);
             verts << v;
 
-            v.pos      = rect.topLeft + Vector2f(cornerThickness, 0);
-            v.texCoord = uv.topLeft + Vector2f(uvOff.x, 0);
+            v.pos      = rect.topLeft + Vec2f(cornerThickness, 0);
+            v.texCoord = uv.topLeft + Vec2f(uvOff.x, 0);
             verts << v;
 
-            v.pos      = rect.topLeft + Vector2f(cornerThickness, cornerThickness);
+            v.pos      = rect.topLeft + Vec2f(cornerThickness, cornerThickness);
             v.texCoord = uv.topLeft + uvOff;
             verts << v;
 
             // Top right corner.
-            v.pos      = rect.topRight() + Vector2f(-cornerThickness, 0);
-            v.texCoord = uv.topRight() + Vector2f(-uvOff.x, 0);
+            v.pos      = rect.topRight() + Vec2f(-cornerThickness, 0);
+            v.texCoord = uv.topRight() + Vec2f(-uvOff.x, 0);
             verts << v;
 
-            v.pos      = rect.topRight() + Vector2f(-cornerThickness, cornerThickness);
-            v.texCoord = uv.topRight() + Vector2f(-uvOff.x, uvOff.y);
+            v.pos      = rect.topRight() + Vec2f(-cornerThickness, cornerThickness);
+            v.texCoord = uv.topRight() + Vec2f(-uvOff.x, uvOff.y);
             verts << v;
 
             v.pos      = rect.topRight();
             v.texCoord = uv.topRight();
             verts << v;
 
-            v.pos      = rect.topRight() + Vector2f(0, cornerThickness);
-            v.texCoord = uv.topRight() + Vector2f(0, uvOff.y);
+            v.pos      = rect.topRight() + Vec2f(0, cornerThickness);
+            v.texCoord = uv.topRight() + Vec2f(0, uvOff.y);
             verts << v;
 
             // Discontinuity.
             verts << v;
             verts << v;
 
-            v.pos      = rect.topRight() + Vector2f(-cornerThickness, cornerThickness);
-            v.texCoord = uv.topRight() + Vector2f(-uvOff.x, uvOff.y);
+            v.pos      = rect.topRight() + Vec2f(-cornerThickness, cornerThickness);
+            v.texCoord = uv.topRight() + Vec2f(-uvOff.x, uvOff.y);
             verts << v;
 
             // Bottom right corner.
-            v.pos      = rect.bottomRight + Vector2f(0, -cornerThickness);
-            v.texCoord = uv.bottomRight + Vector2f(0, -uvOff.y);
+            v.pos      = rect.bottomRight + Vec2f(0, -cornerThickness);
+            v.texCoord = uv.bottomRight + Vec2f(0, -uvOff.y);
             verts << v;
 
-            v.pos      = rect.bottomRight + Vector2f(-cornerThickness, -cornerThickness);
-            v.texCoord = uv.bottomRight + Vector2f(-uvOff.x, -uvOff.y);
+            v.pos      = rect.bottomRight + Vec2f(-cornerThickness, -cornerThickness);
+            v.texCoord = uv.bottomRight + Vec2f(-uvOff.x, -uvOff.y);
             verts << v;
 
             v.pos      = rect.bottomRight;
             v.texCoord = uv.bottomRight;
             verts << v;
 
-            v.pos      = rect.bottomRight + Vector2f(-cornerThickness, 0);
-            v.texCoord = uv.bottomRight + Vector2f(-uvOff.x, 0);
+            v.pos      = rect.bottomRight + Vec2f(-cornerThickness, 0);
+            v.texCoord = uv.bottomRight + Vec2f(-uvOff.x, 0);
             verts << v;
 
             // Discontinuity.
             verts << v;
             verts << v;
 
-            v.pos      = rect.bottomRight + Vector2f(-cornerThickness, -cornerThickness);
-            v.texCoord = uv.bottomRight + Vector2f(-uvOff.x, -uvOff.y);
+            v.pos      = rect.bottomRight + Vec2f(-cornerThickness, -cornerThickness);
+            v.texCoord = uv.bottomRight + Vec2f(-uvOff.x, -uvOff.y);
             verts << v;
 
             // Bottom left corner.
-            v.pos      = rect.bottomLeft() + Vector2f(cornerThickness, 0);
-            v.texCoord = uv.bottomLeft() + Vector2f(uvOff.x, 0);
+            v.pos      = rect.bottomLeft() + Vec2f(cornerThickness, 0);
+            v.texCoord = uv.bottomLeft() + Vec2f(uvOff.x, 0);
             verts << v;
 
-            v.pos      = rect.bottomLeft() + Vector2f(cornerThickness, -cornerThickness);
-            v.texCoord = uv.bottomLeft() + Vector2f(uvOff.x, -uvOff.y);
+            v.pos      = rect.bottomLeft() + Vec2f(cornerThickness, -cornerThickness);
+            v.texCoord = uv.bottomLeft() + Vec2f(uvOff.x, -uvOff.y);
             verts << v;
 
             v.pos      = rect.bottomLeft();
             v.texCoord = uv.bottomLeft();
             verts << v;
 
-            v.pos      = rect.bottomLeft() + Vector2f(0, -cornerThickness);
-            v.texCoord = uv.bottomLeft() + Vector2f(0, -uvOff.y);
+            v.pos      = rect.bottomLeft() + Vec2f(0, -cornerThickness);
+            v.texCoord = uv.bottomLeft() + Vec2f(0, -uvOff.y);
             verts << v;
 
             // Discontinuity.
@@ -276,16 +276,16 @@ struct VertexBuilder
             verts << v;
 
             // Closing the loop.
-            v.pos      = rect.bottomLeft() + Vector2f(cornerThickness, -cornerThickness);
-            v.texCoord = uv.bottomLeft() + Vector2f(uvOff.x, -uvOff.y);
+            v.pos      = rect.bottomLeft() + Vec2f(cornerThickness, -cornerThickness);
+            v.texCoord = uv.bottomLeft() + Vec2f(uvOff.x, -uvOff.y);
             verts << v;
 
-            v.pos      = rect.topLeft + Vector2f(0, cornerThickness);
-            v.texCoord = uv.topLeft + Vector2f(0, uvOff.y);
+            v.pos      = rect.topLeft + Vec2f(0, cornerThickness);
+            v.texCoord = uv.topLeft + Vec2f(0, uvOff.y);
             verts << v;
 
-            v.pos      = rect.topLeft + Vector2f(cornerThickness, cornerThickness);
-            v.texCoord = uv.topLeft + Vector2f(uvOff.x, uvOff.y);
+            v.pos      = rect.topLeft + Vec2f(cornerThickness, cornerThickness);
+            v.texCoord = uv.topLeft + Vec2f(uvOff.x, uvOff.y);
             verts << v;
 
             return *this += verts;

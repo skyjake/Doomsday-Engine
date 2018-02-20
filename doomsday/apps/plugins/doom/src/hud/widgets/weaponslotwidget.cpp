@@ -37,7 +37,7 @@ static patchid_t pArms[6][2];
 static void WeaponSlotWidget_Draw(guidata_weaponslot_t *ws, Point2Raw const *offset)
 {
     DENG2_ASSERT(ws);
-    ws->draw(offset? Vector2i(offset->xy) : Vector2i());
+    ws->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void WeaponSlotWidget_UpdateGeometry(guidata_weaponslot_t *ws)
@@ -107,21 +107,21 @@ void guidata_weaponslot_t::tick(timespan_t /*elapsed*/)
     _patchId = pArms[_slot - 1][dint( used )];
 }
 
-void guidata_weaponslot_t::draw(Vector2i const &offset) const
+void guidata_weaponslot_t::draw(Vec2i const &offset) const
 {
 #define ORIGINX (-ST_WIDTH/2)
 #define ORIGINY (-ST_HEIGHT)
 
-    static Vector2i const elements[] = {
-        Vector2i( ORIGINX+ST_ARMSX,                     ORIGINY+ST_ARMSY ),
-        Vector2i( ORIGINX+ST_ARMSX + ST_ARMSXSPACE,     ORIGINY+ST_ARMSY ),
-        Vector2i( ORIGINX+ST_ARMSX + ST_ARMSXSPACE*2,   ORIGINY+ST_ARMSY ),
-        Vector2i( ORIGINX+ST_ARMSX,                     ORIGINY+ST_ARMSY + ST_ARMSYSPACE ),
-        Vector2i( ORIGINX+ST_ARMSX + ST_ARMSXSPACE,     ORIGINY+ST_ARMSY + ST_ARMSYSPACE ),
-        Vector2i( ORIGINX+ST_ARMSX + ST_ARMSXSPACE*2,   ORIGINY+ST_ARMSY + ST_ARMSYSPACE ),
+    static Vec2i const elements[] = {
+        Vec2i( ORIGINX+ST_ARMSX,                     ORIGINY+ST_ARMSY ),
+        Vec2i( ORIGINX+ST_ARMSX + ST_ARMSXSPACE,     ORIGINY+ST_ARMSY ),
+        Vec2i( ORIGINX+ST_ARMSX + ST_ARMSXSPACE*2,   ORIGINY+ST_ARMSY ),
+        Vec2i( ORIGINX+ST_ARMSX,                     ORIGINY+ST_ARMSY + ST_ARMSYSPACE ),
+        Vec2i( ORIGINX+ST_ARMSX + ST_ARMSXSPACE,     ORIGINY+ST_ARMSY + ST_ARMSYSPACE ),
+        Vec2i( ORIGINX+ST_ARMSX + ST_ARMSXSPACE*2,   ORIGINY+ST_ARMSY + ST_ARMSYSPACE ),
     };
 
-    Vector2i const &element = elements[_slot - 1];
+    Vec2i const &element = elements[_slot - 1];
 
     int const activeHud     = ST_ActiveHud(player());
     int const yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(player()));

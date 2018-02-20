@@ -141,7 +141,7 @@ const char* TGA_LastError(void)
     return 0;
 }
 
-uint8_t *TGA_Load(FileHandle &file, Vector2ui &outSize, int &pixelSize)
+uint8_t *TGA_Load(FileHandle &file, Vec2ui &outSize, int &pixelSize)
 {
     uint8_t *dstBuf = 0;
 
@@ -156,7 +156,7 @@ uint8_t *TGA_Load(FileHandle &file, Vector2ui &outSize, int &pixelSize)
     tga_imagespec_t imageSpec;
     readImageSpec(&imageSpec, file);
 
-    outSize = Vector2ui(imageSpec.width, imageSpec.height);
+    outSize = Vec2ui(imageSpec.width, imageSpec.height);
 
     if (header.imageType != 2 ||
        (imageSpec.pixelDepth != 32 && imageSpec.pixelDepth != 24) ||

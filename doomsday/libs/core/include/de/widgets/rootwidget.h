@@ -42,7 +42,7 @@ class RuleRectangle;
 class DENG2_PUBLIC RootWidget : public Widget, public Lockable
 {
 public:
-    typedef Vector2ui Size;
+    typedef Vec2ui Size;
 
     /// Notified when the focused widget changes.
     DENG2_DEFINE_AUDIENCE2(FocusChange, void focusedWidgetChanged(Widget *))

@@ -107,7 +107,7 @@ public:
 
     void setBorderAttribs(TextCanvas::Char::Attribs const &attribs);
 
-    Vector2i cursorPosition() const;
+    Vec2i cursorPosition() const;
 
     // Events.
     void draw();

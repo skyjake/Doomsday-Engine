@@ -86,14 +86,14 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
     matAnimator.prepare();
 
     TextureVariant const &tex             = *matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
-    Vector2i const &texOrigin             = tex.base().origin();
+    Vec2i const &texOrigin             = tex.base().origin();
     variantspecification_t const &texSpec = tex.spec().variant;
 
     parm.pos[0] = psp.pos[0] + texOrigin.x + pspOffset[0] - texSpec.border;
     parm.pos[1] = WEAPONTOP + offScaleY * (psp.pos[1] - WEAPONTOP) + texOrigin.y
                 + pspOffset[1] - texSpec.border;
 
-    Vector2ui const dimensions = matAnimator.dimensions() + Vector2ui(texSpec.border, texSpec.border) * 2;
+    Vec2ui const dimensions = matAnimator.dimensions() + Vec2ui(texSpec.border, texSpec.border) * 2;
     parm.width  = dimensions.x;
     parm.height = dimensions.y;
 
@@ -120,7 +120,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
         if (useBias && map.hasLightGrid())
         {
             // Evaluate the position in the light grid.
-            Vector4f color = map.lightGrid().evaluate(vs.origin);
+            Vec4f color = map.lightGrid().evaluate(vs.origin);
 
             // Apply light range compression.
             for (dint i = 0; i < 3; ++i)
@@ -134,7 +134,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
 #endif
         {
             auto const &subsec   = vs.bspLeaf->subspace().subsector().as<world::ClientSubsector>();
-            Vector4f const color = subsec.lightSourceColorfIntensity();
+            Vec4f const color = subsec.lightSourceColorfIntensity();
 
             // No need for distance attentuation.
             dfloat lightLevel = color.w;
@@ -156,7 +156,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
         Rend_ApplyTorchLight(parm.ambientColor, 0);
 
         parm.vLightListIdx =
-                Rend_CollectAffectingLights(vs.origin, Vector3f(parm.ambientColor),
+                Rend_CollectAffectingLights(vs.origin, Vec3f(parm.ambientColor),
                                             vs.bspLeaf->subspacePtr());
     }
 }
@@ -281,7 +281,7 @@ void Rend_Draw3DPlayerSprites()
         {
             vispsprite_t lit = spr;
             /// @todo Apply the origin offset here and when rendering.
-            lit.light.setupLighting(spr.origin + Vector3d(0, 0, -10), -10, *spr.bspLeaf);
+            lit.light.setupLighting(spr.origin + Vec3d(0, 0, -10), -10, *spr.bspLeaf);
             ClientApp::renderSystem().modelRenderer()
                     .render(lit, viewPlayer->publicData().mo);
         }

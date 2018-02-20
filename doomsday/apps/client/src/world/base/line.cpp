@@ -216,7 +216,7 @@ DENG2_PIMPL(Line::Side)
         return *sections->sections[sectionId];
     }
 
-    void sortSegments(Vector2d lineSideOrigin)
+    void sortSegments(Vec2d lineSideOrigin)
     {
         needSortSegments = false;
 
@@ -552,7 +552,7 @@ void Line::Side::updateSoundEmitterOrigin(dint sectionId)
 
     SoundEmitter &emitter = d->sectionById(sectionId).soundEmitter;
 
-    Vector2d lineCenter = line().center();
+    Vec2d lineCenter = line().center();
     emitter.origin[0] = lineCenter.x;
     emitter.origin[1] = lineCenter.y;
 
@@ -614,7 +614,7 @@ void Line::Side::updateAllSurfaceNormals()
 {
     if (!hasSections()) return;
 
-    Vector3f normal((  to().origin().y - from().origin().y) / line().length(),
+    Vec3f normal((  to().origin().y - from().origin().y) / line().length(),
                     (from().origin().x -   to().origin().x) / line().length(),
                     0);
 
@@ -634,8 +634,8 @@ void Line::Side::setFlags(dint flagsToChange, FlagOp operation)
     applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
-void Line::Side::chooseSurfaceColors(dint sectionId, Vector3f const **topColor,
-    Vector3f const **bottomColor) const
+void Line::Side::chooseSurfaceColors(dint sectionId, Vec3f const **topColor,
+    Vec3f const **bottomColor) const
 {
     if (hasSections())
     {
@@ -1078,7 +1078,7 @@ DENG2_PIMPL(Line)
      */
     struct GeomData
     {
-        Vector2d direction;     ///< From start to end vertex.
+        Vec2d direction;     ///< From start to end vertex.
         ddouble length;         ///< Accurate length.
         binangle_t angle;       ///< Calculated from the direction vector.
         slopetype_t slopeType;  ///< Logical line slope (i.e., world angle) classification.
@@ -1292,13 +1292,13 @@ binangle_t Line::angle() const
     return d->geom().angle;
 }
 
-Vector2d Line::center() const
+Vec2d Line::center() const
 {
     /// @todo Worth caching in Impl::GeomData? -dj
     return from().origin() + direction() / 2;
 }
 
-Vector2d const &Line::direction() const
+Vec2d const &Line::direction() const
 {
     return d->geom().direction;
 }
@@ -1346,9 +1346,9 @@ int Line::boxOnSide_FixedPrecision(AABoxd const &box) const
     return M_BoxOnLineSide_FixedPrecision(boxx, pos, delta);
 }
 
-ddouble Line::pointDistance(Vector2d const &point, ddouble *offset) const
+ddouble Line::pointDistance(Vec2d const &point, ddouble *offset) const
 {
-    Vector2d lineVec = direction() - from().origin();
+    Vec2d lineVec = direction() - from().origin();
     ddouble len = lineVec.length();
     if (len == 0)
     {
@@ -1356,7 +1356,7 @@ ddouble Line::pointDistance(Vector2d const &point, ddouble *offset) const
         return 0;
     }
 
-    Vector2d delta = from().origin() - point;
+    Vec2d delta = from().origin() - point;
     if (offset)
     {
         *offset = (  delta.y * (from().y() - direction().y)
@@ -1367,9 +1367,9 @@ ddouble Line::pointDistance(Vector2d const &point, ddouble *offset) const
     return (delta.y * lineVec.x - delta.x * lineVec.y) / len;
 }
 
-ddouble Line::pointOnSide(Vector2d const &point) const
+ddouble Line::pointOnSide(Vec2d const &point) const
 {
-    Vector2d delta = from().origin() - point;
+    Vec2d delta = from().origin() - point;
     return delta.y * direction().x - delta.x * direction().y;
 }
 

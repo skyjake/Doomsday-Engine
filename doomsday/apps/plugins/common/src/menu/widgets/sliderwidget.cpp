@@ -150,8 +150,8 @@ void SliderWidget::draw() const
     const float fadeout = scrollingFadeout();
     if (fadeout < .001f) return;
 
-    Vector2f origin = geometry().topLeft;
-    origin += Vector2f(MNDATA_SLIDER_OFFSET_X + leftInfo.geometry.size.width, MNDATA_SLIDER_OFFSET_Y) * MNDATA_SLIDER_SCALE;
+    Vec2f origin = geometry().topLeft;
+    origin += Vec2f(MNDATA_SLIDER_OFFSET_X + leftInfo.geometry.size.width, MNDATA_SLIDER_OFFSET_Y) * MNDATA_SLIDER_SCALE;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -169,14 +169,14 @@ void SliderWidget::draw() const
 
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha * fadeout);
 
-    GL_DrawPatch(pSliderLeft,  Vector2i(0, 0), ALIGN_TOPRIGHT, DPF_NO_OFFSETX);
-    GL_DrawPatch(pSliderRight, Vector2i(MNDATA_SLIDER_SLOTS * WIDTH, 0));
+    GL_DrawPatch(pSliderLeft,  Vec2i(0, 0), ALIGN_TOPRIGHT, DPF_NO_OFFSETX);
+    GL_DrawPatch(pSliderRight, Vec2i(MNDATA_SLIDER_SLOTS * WIDTH, 0));
 
     DGL_SetPatch(pSliderMiddle, DGL_REPEAT, DGL_REPEAT);
     DGL_DrawRectf2Tiled(0, middleInfo.geometry.origin.y, MNDATA_SLIDER_SLOTS * WIDTH, HEIGHT, middleInfo.geometry.size.width, middleInfo.geometry.size.height);
 
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha * fadeout);
-    GL_DrawPatch(pSliderHandle, Vector2i(d->thumbPos(), 1), ALIGN_TOP, DPF_NO_OFFSET);
+    GL_DrawPatch(pSliderHandle, {d->thumbPos(), 1}, ALIGN_TOP, DPF_NO_OFFSET);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -228,21 +228,21 @@ void SliderWidget::updateGeometry()
     if(!R_GetPatchInfo(pSliderMiddle, &info)) return;
 
     int middleWidth = info.geometry.size.width * MNDATA_SLIDER_SLOTS;
-    geometry().setSize(Vector2ui(middleWidth, info.geometry.size.height));
+    geometry().setSize(Vec2ui(middleWidth, info.geometry.size.height));
 
     if(R_GetPatchInfo(pSliderLeft, &info))
     {
         info.geometry.origin.x = -info.geometry.size.width;
-        geometry() |= Rectanglei::fromSize(Vector2i(info.geometry.origin.xy), Vector2ui(info.geometry.size.width, info.geometry.size.height));
+        geometry() |= Rectanglei::fromSize(Vec2i(info.geometry.origin.xy), Vec2ui(info.geometry.size.width, info.geometry.size.height));
     }
 
     if(R_GetPatchInfo(pSliderRight, &info))
     {
         info.geometry.origin.x += middleWidth;
-        geometry() |= Rectanglei::fromSize(Vector2i(info.geometry.origin.xy), Vector2ui(info.geometry.size.width, info.geometry.size.height));
+        geometry() |= Rectanglei::fromSize(Vec2i(info.geometry.origin.xy), Vec2ui(info.geometry.size.width, info.geometry.size.height));
     }
 
-    geometry().setSize(Vector2ui(.5f + geometry().width()  * MNDATA_SLIDER_SCALE,
+    geometry().setSize(Vec2ui(.5f + geometry().width()  * MNDATA_SLIDER_SCALE,
                                  .5f + geometry().height() * MNDATA_SLIDER_SCALE));
 }
 

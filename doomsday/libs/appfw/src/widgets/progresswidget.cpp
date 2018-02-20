@@ -51,7 +51,7 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
     {
         if (mini)
         {
-            self().setImageColor(Vector4f());
+            self().setImageColor(Vec4f());
         }
         else
         {
@@ -85,7 +85,7 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
         float gradientThick = layout.image.width() * 2.f;
         float solidThick    = layout.image.width() * .53f;
 
-        Vector4f const shadowColor = style().colors().colorf(shadowColorId);
+        Vec4f const shadowColor = style().colors().colorf(shadowColorId);
         verts.makeRing(layout.image.middle(),
                        solidThick, 0, 30,
                        shadowColor,
@@ -117,11 +117,11 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
         int const edgeCount = de::max(1, int(pos * 30));
         float const radius = layout.image.width() / 2;
 
-        Matrix4f const rotation = Matrix4f::rotateAround(tc.middle(), -angle);
+        Mat4f const rotation = Mat4f::rotateAround(tc.middle(), -angle);
 
         GuiVertexBuilder gear;
         GuiVertex v;
-        v.rgba = style().colors().colorf(colorId) * Vector4f(1, 1, 1, mini? 1.f : 1.9f);
+        v.rgba = style().colors().colorf(colorId) * Vec4f(1, 1, 1, mini? 1.f : 1.9f);
 
         for (int i = 0; i <= edgeCount; ++i)
         {
@@ -132,8 +132,8 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
 
             // Outer vertex.
             float const angle = 2 * PI * pos * (i / (float)edgeCount) + PI/2;
-            v.pos = v.pos + Vector2f(cos(angle)*radius*1.05f, sin(angle)*radius*1.05f);
-            v.texCoord = rotation * (tc.topLeft + tc.size() * Vector2f(.5f + cos(angle)*.5f,
+            v.pos = v.pos + Vec2f(cos(angle)*radius*1.05f, sin(angle)*radius*1.05f);
+            v.texCoord = rotation * (tc.topLeft + tc.size() * Vec2f(.5f + cos(angle)*.5f,
                                                                        .5f + sin(angle)*.5f));
             gear << v;
         }
@@ -148,18 +148,18 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
         Rectanglei rect = self().contentRect().shrunk(dotSize.x / 2);
         int const midY  = rect.middle().y;
         int count       = range.size();
-        Vector4f color  = style().colors().colorf(colorId);
+        Vec4f color  = style().colors().colorf(colorId);
         int const gap   = rule(RuleBank::UNIT).valuei();
         int totalWidth  = count * dotSize.x + (count - 1) * gap;
 
         for (int i = 0; i < count; ++i)
         {
             // Current progress determines the color of the dot.
-            Vector4f dotColor = (float(i)/float(count) <= pos.value()? color : Vector4f(color, .166f));
+            Vec4f dotColor = (float(i)/float(count) <= pos.value()? color : Vec4f(color, .166f));
 
             float midX = rect.middle().x - totalWidth/2 + i * (dotSize.x + gap);
 
-            verts.makeQuad(Rectanglef::fromSize(Vector2f(midX, midY) - dotSize/2, dotSize),
+            verts.makeQuad(Rectanglef::fromSize(Vec2f(midX, midY) - dotSize/2, dotSize),
                            dotColor, atlas().imageRectf(root().tinyDot()));
         }
     }

@@ -39,7 +39,7 @@ public:
 
     void tick(timespan_t elapsed);
     void updateGeometry();
-    void draw(de::Vector2i const &offset = de::Vector2i()) const;
+    void draw(de::Vec2i const &offset = de::Vec2i()) const;
 };
 
 #endif  // LIBCOMMON_UI_HEALTHICONWIDGET_H

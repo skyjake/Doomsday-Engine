@@ -43,7 +43,7 @@ public:
     /**
      * RGB color of the emitted light.
      */
-    typedef de::Vector3f Colorf;
+    typedef de::Vec3f Colorf;
 
 public:
     virtual ~ILightSource() {}
@@ -64,7 +64,7 @@ public:
      *                   the intensity may vary depending on the relative direction
      *                   and/or position of the viewer.
      */
-    virtual de::dfloat lightSourceIntensity(de::Vector3d const &viewPoint) const = 0;
+    virtual de::dfloat lightSourceIntensity(de::Vec3d const &viewPoint) const = 0;
 };
 
 /**
@@ -75,7 +75,7 @@ public:
 class IPointLightSource : public ILightSource
 {
 public:
-    typedef de::Vector3d Origin;
+    typedef de::Vec3d Origin;
 
 public:
     virtual ~IPointLightSource() {}

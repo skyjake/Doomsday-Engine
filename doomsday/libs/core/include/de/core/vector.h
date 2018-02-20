@@ -804,24 +804,24 @@ QTextStream &operator << (QTextStream &os, Vector4<Type> const &vec4)
 
 ///@{
 /// @ingroup types
-typedef Vector2<dint>    Vector2i;  ///< 2-component vector of integer values.
-typedef Vector2<duint>   Vector2ui; ///< 2-component vector of unsigned integer values.
-typedef Vector2<dfloat>  Vector2f;  ///< 2-component vector of floating point values.
-typedef Vector2<ddouble> Vector2d;  ///< 2-component vector of high-precision floating point values.
-typedef Vector3<dbyte>   Vector3ub; ///< 3-component vector of unsigned byte values.
-typedef Vector3<dint>    Vector3i;  ///< 3-component vector of integer values.
-typedef Vector3<duint>   Vector3ui; ///< 3-component vector of unsigned integer values.
-typedef Vector3<dfloat>  Vector3f;  ///< 3-component vector of floating point values.
-typedef Vector3<ddouble> Vector3d;  ///< 3-component vector of high-precision floating point values.
-typedef Vector4<dbyte>   Vector4ub; ///< 4-component vector of unsigned byte values.
-typedef Vector4<dint>    Vector4i;  ///< 4-component vector of integer values.
-typedef Vector4<duint>   Vector4ui; ///< 4-component vector of unsigned integer values.
-typedef Vector4<dfloat>  Vector4f;  ///< 4-component vector of floating point values.
-typedef Vector4<ddouble> Vector4d;  ///< 4-component vector of high-precision floating point values.
+typedef Vector2<dint>    Vec2i;  ///< 2-component vector of integer values.
+typedef Vector2<duint>   Vec2ui; ///< 2-component vector of unsigned integer values.
+typedef Vector2<dfloat>  Vec2f;  ///< 2-component vector of floating point values.
+typedef Vector2<ddouble> Vec2d;  ///< 2-component vector of high-precision floating point values.
+typedef Vector3<dbyte>   Vec3ub; ///< 3-component vector of unsigned byte values.
+typedef Vector3<dint>    Vec3i;  ///< 3-component vector of integer values.
+typedef Vector3<duint>   Vec3ui; ///< 3-component vector of unsigned integer values.
+typedef Vector3<dfloat>  Vec3f;  ///< 3-component vector of floating point values.
+typedef Vector3<ddouble> Vec3d;  ///< 3-component vector of high-precision floating point values.
+typedef Vector4<dbyte>   Vec4ub; ///< 4-component vector of unsigned byte values.
+typedef Vector4<dint>    Vec4i;  ///< 4-component vector of integer values.
+typedef Vector4<duint>   Vec4ui; ///< 4-component vector of unsigned integer values.
+typedef Vector4<dfloat>  Vec4f;  ///< 4-component vector of floating point values.
+typedef Vector4<ddouble> Vec4d;  ///< 4-component vector of high-precision floating point values.
 ///@}
 
 // Qt hash functions:
-inline quint32 qHash(Vector2i const &vec) { return vec.x * vec.y + vec.x - vec.y; }
+inline quint32 qHash(Vec2i const &vec) { return vec.x * vec.y + vec.x - vec.y; }
 
 } // namespace de
 

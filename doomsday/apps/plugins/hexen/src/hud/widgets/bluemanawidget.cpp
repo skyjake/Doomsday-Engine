@@ -89,7 +89,7 @@ void SBarBlueManaWidget_Draw(guidata_bluemana_t *mana, Point2Raw const *offset)
 #define TRACKING                (  0 )
 
     DENG2_ASSERT(mana);
-    static Vector2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
+    static Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
 
     dint const activeHud     = ST_ActiveHud(mana->player());
     dfloat const yOffset     = ST_HEIGHT * (1 - ST_StatusBarShown(mana->player()));

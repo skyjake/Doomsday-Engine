@@ -158,18 +158,18 @@ DENG2_PIMPL(Atlas)
                 {
                     // Wrap using the source image (left, right, top, bottom edges).
                     backing.drawPartial(image, Rectanglei(0, 0, border, image.height()),
-                                           rect.topRight() + Vector2i(-border, border));
+                                           rect.topRight() + Vec2i(-border, border));
 
                     backing.drawPartial(image, Rectanglei(image.width() - border, 0,
                                                              border, image.height()),
-                                           rect.topLeft + Vector2i(0, border));
+                                           rect.topLeft + Vec2i(0, border));
 
                     backing.drawPartial(image, Rectanglei(0, 0, image.width(), border),
-                                           rect.bottomLeft() + Vector2i(border, -border));
+                                           rect.bottomLeft() + Vec2i(border, -border));
 
                     backing.drawPartial(image, Rectanglei(0, image.height() - border,
                                                              image.width(), border),
-                                           rect.topLeft + Vector2i(border, 0));
+                                           rect.topLeft + Vec2i(border, 0));
                 }
             }
             backing.draw(image, noBorders.topLeft);

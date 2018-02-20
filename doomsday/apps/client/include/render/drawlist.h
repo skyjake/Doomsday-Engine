@@ -137,22 +137,22 @@ public:
         Q_DECLARE_FLAGS(Flags, Flag)
 
         de::duint32  flags_blendMode;
-        de::Vector2f texScale;
-        de::Vector2f texOffset;
-        de::Vector2f detailTexScale;
-        de::Vector2f detailTexOffset;
+        de::Vec2f texScale;
+        de::Vec2f texOffset;
+        de::Vec2f detailTexScale;
+        de::Vec2f detailTexOffset;
         DGLuint      modTexture;    ///< GL-name of the modulation texture; otherwise @c 0.
-        de::Vector3f modColor;      ///< Modulation color.
+        de::Vec3f modColor;      ///< Modulation color.
 
         PrimitiveParams(de::gl::Primitive type,
-                        de::Vector2f texScale        = de::Vector2f(1, 1),
-                        de::Vector2f texOffset       = de::Vector2f(0, 0),
-                        de::Vector2f detailTexScale  = de::Vector2f(1, 1),
-                        de::Vector2f detailTexOffset = de::Vector2f(0, 0),
+                        de::Vec2f texScale        = de::Vec2f(1, 1),
+                        de::Vec2f texOffset       = de::Vec2f(0, 0),
+                        de::Vec2f detailTexScale  = de::Vec2f(1, 1),
+                        de::Vec2f detailTexOffset = de::Vec2f(0, 0),
                         Flags        flags           = Unlit,
                         blendmode_t  blendMode       = BM_NORMAL,
                         DGLuint      modTexture      = 0,
-                        de::Vector3f modColor        = de::Vector3f());
+                        de::Vec3f modColor        = de::Vec3f());
     };
 
 public:

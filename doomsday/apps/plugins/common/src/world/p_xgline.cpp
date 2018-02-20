@@ -112,7 +112,7 @@ using namespace de;
         : DMU_BOTTOM_COLOR_BLUE)
 
 void XL_ChangeMaterial(Line *line, int sidenum, int section, world_Material *mat,
-    blendmode_t blend = BM_NORMAL, Vector4f const &tintColor = Vector4f(), int flags = 0);
+    blendmode_t blend = BM_NORMAL, Vec4f const &tintColor = Vec4f(), int flags = 0);
 
 int XL_DoChainSequence(Line *line, dd_bool ceiling, void *context, void *context2, mobj_t *activator);
 int XL_DoDamage(Line *line, dd_bool ceiling, void *context, void *context2, mobj_t *activator);
@@ -1766,7 +1766,7 @@ int XLTrav_ChangeWallMaterial(Line *line, dd_bool /*ceiling*/, void * /*context*
 
     XL_ChangeMaterial(line, info->iparm[2], LWS_UPPER,
                       (world_Material *)P_ToPtr(DMU_MATERIAL, info->iparm[3]),
-                      BM_NORMAL, Vector3f(info->iparm[9], info->iparm[10], info->iparm[11]) / 255.f,
+                      BM_NORMAL, Vec3f(info->iparm[9], info->iparm[10], info->iparm[11]) / 255.f,
                       info->iparm[7]);
 
     world_Material *mat = 0;
@@ -1780,12 +1780,12 @@ int XLTrav_ChangeWallMaterial(Line *line, dd_bool /*ceiling*/, void * /*context*
 
     XL_ChangeMaterial(line, info->iparm[2], LWS_MID, mat,
                       blendmode_t(info->iparm[8]),
-                      Vector4f(info->iparm[12], info->iparm[13], info->iparm[14], info->iparm[15]) / 255.f,
+                      Vec4f(info->iparm[12], info->iparm[13], info->iparm[14], info->iparm[15]) / 255.f,
                       info->iparm[7]);
 
     XL_ChangeMaterial(line, info->iparm[2], LWS_LOWER,
                       (world_Material *)P_ToPtr(DMU_MATERIAL, info->iparm[5]),
-                      BM_NORMAL, Vector3f(info->iparm[16], info->iparm[17], info->iparm[18]) / 255.f,
+                      BM_NORMAL, Vec3f(info->iparm[16], info->iparm[17], info->iparm[18]) / 255.f,
                       info->iparm[7]);
 
     return true;
@@ -2184,7 +2184,7 @@ int XL_CheckMobjGone(thinker_t *th, void *context)
     {
         // Not dead.
         LOG_MAP_MSG_XGDEVONLY2("Thing type %i: Found mo id=%i, health=%i, pos=%s",
-               thingtype << mo->thinker.id << mo->health << Vector4d(mo->origin).asText());
+               thingtype << mo->thinker.id << mo->health << Vec4d(mo->origin).asText());
         return true; // Stop iteration.
     }
 
@@ -2211,7 +2211,7 @@ void XL_SwapSwitchTextures(Line *line, int snum)
  * Changes material of the given line.
  */
 void XL_ChangeMaterial(Line *line, int sidenum, int section, world_Material *mat,
-    blendmode_t blendmode, Vector4f const &tintColor, int flags)
+    blendmode_t blendmode, Vec4f const &tintColor, int flags)
 {
     Side *side = (Side *)P_GetPtrp(line, sidenum? DMU_BACK:DMU_FRONT);
     if(!side) return;

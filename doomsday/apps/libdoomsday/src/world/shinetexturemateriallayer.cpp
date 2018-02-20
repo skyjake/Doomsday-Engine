@@ -44,8 +44,8 @@ static de::Uri findTextureForShineStage(ded_shine_stage_t const &def, bool findM
 
 ShineTextureMaterialLayer::AnimationStage::AnimationStage(de::Uri const &texture, int tics,
     float variance, de::Uri const &maskTexture, blendmode_t blendMode, float opacity,
-    Vector3f const &minColor, Vector2f const &maskDimensions)
-    : TextureMaterialLayer::AnimationStage(texture, tics, variance, 0, 0, Vector2f(0, 0),
+    Vec3f const &minColor, Vec2f const &maskDimensions)
+    : TextureMaterialLayer::AnimationStage(texture, tics, variance, 0, 0, Vec2f(0, 0),
                                            maskTexture, maskDimensions, blendMode, opacity)
     , minColor(minColor)
 {
@@ -63,8 +63,8 @@ ShineTextureMaterialLayer::AnimationStage::~AnimationStage()
 void ShineTextureMaterialLayer::AnimationStage::resetToDefaults()
 {
     TextureMaterialLayer::AnimationStage::resetToDefaults();
-    //addArray("minColor", new ArrayValue(Vector3f(0, 0, 0)));
-    minColor = Vector3f();
+    //addArray("minColor", new ArrayValue(Vec3f(0, 0, 0)));
+    minColor = Vec3f();
 }
 
 ShineTextureMaterialLayer::AnimationStage *
@@ -74,8 +74,8 @@ ShineTextureMaterialLayer::AnimationStage::fromDef(ded_shine_stage_t const &def)
     de::Uri const maskTexture = findTextureForShineStage(def, true/*mask*/);
 
     return new AnimationStage(texture, def.tics, def.variance, maskTexture,
-                              def.blendMode, def.shininess, Vector3f(def.minColor),
-                              Vector2f(def.maskWidth, def.maskHeight));
+                              def.blendMode, def.shininess, Vec3f(def.minColor),
+                              Vec2f(def.maskWidth, def.maskHeight));
 }
 
 // ------------------------------------------------------------------------------------

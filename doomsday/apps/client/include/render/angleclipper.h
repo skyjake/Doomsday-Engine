@@ -86,7 +86,7 @@ public:
      *
      * @param point  Map-space coordinates to test.
      */
-    de::dint isPointVisible(de::Vector3d const &point) const;
+    de::dint isPointVisible(de::Vec3d const &point) const;
 
     /**
      * Returns non-zero if @em any portion of the given map-space, convex face geometry
@@ -115,7 +115,7 @@ public:  // --------------------------------------------------------------------
      * @param from  Map-space coordinates describing the start-point.
      * @param to    Map-space coordinates describing the end-point.
      */
-    void addRangeFromViewRelPoints(de::Vector2d const &from, de::Vector2d const &to);
+    void addRangeFromViewRelPoints(de::Vec2d const &from, de::Vec2d const &to);
 
     /**
      * Add an occlusion segment relative to the current viewpoint.
@@ -125,7 +125,7 @@ public:  // --------------------------------------------------------------------
      * @param height
      * @param topHalf
      */
-    void addViewRelOcclusion(de::Vector2d const &from, de::Vector2d const &to,
+    void addViewRelOcclusion(de::Vec2d const &from, de::Vec2d const &to,
                              coord_t height, bool topHalf);
 
     /**
@@ -134,7 +134,7 @@ public:  // --------------------------------------------------------------------
      * @param from  Map-space coordinates for the start-point.
      * @param to    Map-space coordinates for the end-point.
      */
-    de::dint checkRangeFromViewRelPoints(de::Vector2d const &from, de::Vector2d const &to);
+    de::dint checkRangeFromViewRelPoints(de::Vec2d const &from, de::Vec2d const &to);
 
 #ifdef DENG2_DEBUG
     /**

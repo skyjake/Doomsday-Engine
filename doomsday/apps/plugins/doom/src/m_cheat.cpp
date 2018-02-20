@@ -162,7 +162,7 @@ CHEAT_FUNC(MyPos)
     mobj_t const *mob = players[CONSOLEPLAYER].plr->mo;
     String const text = String("angle:0x%1 position:%2")
                             .arg(mob->angle, 0, 16)
-                            .arg(Vector3d(mob->origin).asText());
+                            .arg(Vec3d(mob->origin).asText());
     P_SetMessageWithFlags(&players[player], text.toUtf8().constData(), LMF_NO_HIDE);
     return true;
 }
@@ -580,7 +580,7 @@ D_CMD(CheatWhere)
 
     String const text = String("Map:%1 position:%2")
                             .arg(gfw_Session()->mapUri().asText())
-                            .arg(Vector3d(plrMo->origin).asText());
+                            .arg(Vec3d(plrMo->origin).asText());
     P_SetMessageWithFlags(plr, text.toUtf8().constData(), LMF_NO_HIDE);
 
     // Also print the some information to the console.

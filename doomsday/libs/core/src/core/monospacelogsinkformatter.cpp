@@ -118,7 +118,7 @@ struct TabFiller
     bool fillTabs(QStringList &fills, int maxStop, int minIndent) const
     {
         // The T` escape marks the place where tab stops are completely reset.
-        Vector2i resetAt(-1, -1);
+        Vec2i resetAt(-1, -1);
 
         for (int stop = 0; stop <= maxStop; ++stop)
         {
@@ -170,7 +170,7 @@ replaceTabs:
                         {
                             // This T` escape will be removed once we've checked
                             // all the tab stops preceding it.
-                            resetAt = Vector2i(idx, i - 1);
+                            resetAt = Vec2i(idx, i - 1);
                             goto nextStop;
                         }
                         if (ln.at(i) == '+' || ln.at(i).toLatin1() - 'a' == stop)

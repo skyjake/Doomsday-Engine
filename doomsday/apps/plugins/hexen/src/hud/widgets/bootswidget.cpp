@@ -32,7 +32,7 @@ static patchid_t pBootsIcon[FRAME_COUNT];
 static void BootsWidget_Draw(guidata_boots_t *boots, Point2Raw const *offset)
 {
     DENG2_ASSERT(boots);
-    boots->draw(offset? Vector2i(offset->xy) : Vector2i());
+    boots->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void BootsWidget_UpdateGeometry(guidata_boots_t *boots)
@@ -69,7 +69,7 @@ void guidata_boots_t::tick(timespan_t /*elapsed*/)
     }
 }
 
-void guidata_boots_t::draw(Vector2i const &offset) const
+void guidata_boots_t::draw(Vec2i const &offset) const
 {
     player_t const &plr      = ::players[player()];
     dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
@@ -86,7 +86,7 @@ void guidata_boots_t::draw(Vector2i const &offset) const
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, iconOpacity);
-    GL_DrawPatch(_patchId, Vector2i(12, 14));
+    GL_DrawPatch(_patchId, Vec2i(12, 14));
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);

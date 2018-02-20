@@ -59,10 +59,10 @@ LineEditWidget::LineEditWidget(de::String const &name)
     rule().setInput(Rule::Height, *d->height);
 }
 
-Vector2i LineEditWidget::cursorPosition() const
+Vec2i LineEditWidget::cursorPosition() const
 {
     de::Rectanglei pos = rule().recti();
-    return pos.topLeft + Vector2i(prompt().size(), 0) + lineCursorPos();
+    return pos.topLeft + Vec2i(prompt().size(), 0) + lineCursorPos();
 }
 
 void LineEditWidget::viewResized()
@@ -86,7 +86,7 @@ void LineEditWidget::draw()
             (hasFocus()? TextCanvas::Char::Reverse : TextCanvas::Char::DefaultAttributes);
     buf.clear(TextCanvas::Char(' ', attr));
 
-    buf.drawText(Vector2i(0, 0), prompt(), attr | TextCanvas::Char::Bold);
+    buf.drawText(Vec2i(0, 0), prompt(), attr | TextCanvas::Char::Bold);
 
     // Underline the suggestion for completion.
     if (isSuggestingCompletion())
@@ -100,7 +100,7 @@ void LineEditWidget::draw()
     {
         txt = String(txt.size(), '*');
     }
-    buf.drawWrappedText(Vector2i(prompt().size(), 0), txt, lineWraps(), attr);
+    buf.drawWrappedText(Vec2i(prompt().size(), 0), txt, lineWraps(), attr);
 
     targetCanvas().draw(buf, pos.topLeft);
 }

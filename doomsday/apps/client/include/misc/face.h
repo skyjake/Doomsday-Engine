@@ -74,7 +74,7 @@ public:
      * Returns the point described by the average origin coordinates of all the
      * vertexes which define the geometry.
      */
-    Vector2d const &center() const;
+    Vec2d const &center() const;
 
     /**
      * Update the center point of the geometry.

@@ -30,7 +30,7 @@ using namespace de;
 static void ChainWidget_Draw(guidata_chain_t *chain, Point2Raw const *offset)
 {
     DENG2_ASSERT(chain);
-    chain->draw(offset? Vector2i(offset->xy) : Vector2i());
+    chain->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void ChainWidget_UpdateGeometry(guidata_chain_t *chain)
@@ -121,7 +121,7 @@ static void drawShadows(dint x, dint y, dfloat alpha)
 }
 #endif
 
-void guidata_chain_t::draw(Vector2i const &offset) const
+void guidata_chain_t::draw(Vec2i const &offset) const
 {
 #if __JHERETIC__
 
@@ -212,7 +212,7 @@ void guidata_chain_t::draw(Vector2i const &offset) const
 
     // Draw the life gem.
     DGL_Color4f(1, 1, 1, iconOpacity);
-    GL_DrawPatch(pGemInfo.id, Vector2i(x + gemXOffset, chainY));
+    GL_DrawPatch(pGemInfo.id, Vec2i(x + gemXOffset, chainY));
 
     DGL_Disable(DGL_TEXTURE_2D);
 

@@ -46,21 +46,21 @@ void LineBlockmap::link(Line &line)
             continue;
         }
 
-        Vector2d const point(origin() + cellDimensions() * cell);
+        Vec2d const point(origin() + cellDimensions() * cell);
 
         // Choose a cell diagonal to test.
-        Vector2d from, to;
+        Vec2d from, to;
         if(line.slopeType() == ST_POSITIVE)
         {
             // Line slope / vs \ cell diagonal.
-            from = Vector2d(point.x, point.y + cellDimensions().y);
-            to   = Vector2d(point.x + cellDimensions().x, point.y);
+            from = Vec2d(point.x, point.y + cellDimensions().y);
+            to   = Vec2d(point.x + cellDimensions().x, point.y);
         }
         else
         {
             // Line slope \ vs / cell diagonal.
-            from = Vector2d(point.x + cellDimensions().x, point.y + cellDimensions().y);
-            to   = Vector2d(point.x, point.y);
+            from = Vec2d(point.x + cellDimensions().x, point.y + cellDimensions().y);
+            to   = Vec2d(point.x, point.y);
         }
 
         // Would Line intersect this?

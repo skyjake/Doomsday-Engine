@@ -327,7 +327,7 @@ void Face_Drawer(guidata_face_t *face, Point2Raw const *offset)
     }
 
     // Draw the face:
-    GL_DrawPatch(pFace, Vector2i(x, -1));
+    GL_DrawPatch(pFace, Vec2i(x, -1));
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -344,7 +344,7 @@ void SBarFace_Drawer(guidata_face_t *face, Point2Raw const *offset)
 #define Y_OFFSET                (   0 )
 #define SCALE                   ( 1.0 )
 
-    Vector2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
+    Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
 
     dint const activeHud     = ST_ActiveHud(face->player());
     dint const yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(face->player()));
@@ -366,7 +366,7 @@ void SBarFace_Drawer(guidata_face_t *face, Point2Raw const *offset)
     DGL_Color4f(1, 1, 1, iconOpacity);
 
     // Draw the face:
-    GL_DrawPatch(patchId, origin + Vector2i(X_OFFSET, Y_OFFSET), ALIGN_TOPLEFT);
+    GL_DrawPatch(patchId, origin + Vec2i(X_OFFSET, Y_OFFSET), ALIGN_TOPLEFT);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);

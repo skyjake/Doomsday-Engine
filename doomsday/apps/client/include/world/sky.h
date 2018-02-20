@@ -246,7 +246,7 @@ public:
      *
      * Alternatively, this color can be overridden manually by calling @ref setAmbientColor().
      */
-    de::Vector3f const &ambientColor() const;
+    de::Vec3f const &ambientColor() const;
 
     /**
      * Override the automatically calculated ambient color.
@@ -255,7 +255,7 @@ public:
      *
      * @see ambientColor()
      */
-    void setAmbientColor(de::Vector3f const &newColor);
+    void setAmbientColor(de::Vec3f const &newColor);
 
 #endif // __CLIENT__
 

@@ -147,9 +147,9 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         // Right column.
 
         LabelWidget *bg = new LabelWidget;
-        bg->set(Background(Vector4f(style().colors().colorf("inverted.altaccent"), .1f),
+        bg->set(Background(Vec4f(style().colors().colorf("inverted.altaccent"), .1f),
                            Background::GradientFrameWithRoundedFill,
-                           Vector4f(), 8));
+                           Vec4f(), 8));
         area.add(bg);
 
         mapOutline = new MapOutlineWidget;

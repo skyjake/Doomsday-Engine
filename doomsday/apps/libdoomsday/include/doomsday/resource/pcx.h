@@ -36,7 +36,7 @@
  * Reads the given PCX image and returns a pointer to a planar RGBA buffer.
  * The caller must free the allocated buffer with Z_Free.
  */
-LIBDOOMSDAY_PUBLIC uint8_t *PCX_Load(de::FileHandle &file, de::Vector2ui &outSize, int &pixelSize);
+LIBDOOMSDAY_PUBLIC uint8_t *PCX_Load(de::FileHandle &file, de::Vec2ui &outSize, int &pixelSize);
 
 /**
  * @return  Textual message detailing the last error encountered else @c 0.

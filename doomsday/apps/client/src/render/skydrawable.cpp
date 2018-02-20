@@ -81,12 +81,12 @@ struct Hemisphere
     float height        = 0.49f;
     float horizonOffset = -0.105f;
 
-    typedef QVector<Vector3f> VBuf;
+    typedef QVector<Vec3f> VBuf;
     VBuf verts;
     bool needRebuild = true;
 
     // Look up the precalculated vertex.
-    inline Vector3f const &vertex(int r, int c) const {
+    inline Vec3f const &vertex(int r, int c) const {
         return verts[r * columns + c % columns];
     }
 
@@ -113,7 +113,7 @@ struct Hemisphere
     /**
      * Determine the cap/fadeout color to use for the given sky @a layer.
      */
-    static Vector3f chooseCapColor(SphereComponent hemisphere, SkyLayer const &layer,
+    static Vec3f chooseCapColor(SphereComponent hemisphere, SkyLayer const &layer,
                                    bool *needFadeOut = nullptr)
     {
         if (world::Material *mat = chooseMaterialForSkyLayer(layer))
@@ -136,7 +136,7 @@ struct Hemisphere
             }
 
             // Is the colored fadeout in use?
-            Vector3f color(avgColor->color.rgb);
+            Vec3f color(avgColor->color.rgb);
             dfloat const fadeOutLimit = layer.fadeOutLimit();
             if (color.x >= fadeOutLimit || color.y >= fadeOutLimit || color.z >= fadeOutLimit)
             {
@@ -144,10 +144,10 @@ struct Hemisphere
                 return color;
             }
         }
-        return Vector3f(); // Default color is black.
+        return Vec3f(); // Default color is black.
     }
 
-    void drawCap(Vector3f const &color, bool drawFadeOut) const
+    void drawCap(Vec3f const &color, bool drawFadeOut) const
     {
         GL_SetNoTexture();
 
@@ -157,7 +157,7 @@ struct Hemisphere
         DGL_Begin(DGL_TRIANGLE_FAN);
         for(int c = 0; c < columns; ++c)
         {
-            Vector3f const &vtx = vertex(0, c);
+            Vec3f const &vtx = vertex(0, c);
             DGL_Vertex3f(vtx.x, vtx.y, vtx.z);
         }
         DGL_End();
@@ -167,7 +167,7 @@ struct Hemisphere
 
         // We must fill the background for the top row since it'll be translucent.
         DGL_Begin(DGL_TRIANGLE_STRIP);
-        Vector3f const *vtx = &vertex(0, 0);
+        Vec3f const *vtx = &vertex(0, 0);
         DGL_Vertex3f(vtx->x, vtx->y, vtx->z);
         int c = 0;
         for(; c < columns; ++c)
@@ -228,7 +228,7 @@ struct Hemisphere
                 DGL_MatrixMode(DGL_TEXTURE);
                 DGL_PushMatrix();
                 DGL_LoadIdentity();
-                Vector2ui const &texSize = layerTex->base().dimensions();
+                Vec2ui const &texSize = layerTex->base().dimensions();
                 if (texSize.x > 0)
                 {
                     DGL_Translatef(ldata.offset / texSize.x, 0, 0);
@@ -264,7 +264,7 @@ struct Hemisphere
     DGL_Vertex3f(svtx->x, svtx->y, svtx->z); \
 }
 
-            Vector3f const *svtx;
+            Vec3f const *svtx;
             for (dint r = 0; r < rows; ++r)
             {
                 DGL_Begin(DGL_TRIANGLE_STRIP);
@@ -322,13 +322,13 @@ struct Hemisphere
         for(int r = 0; r < rows + 1; ++r)
         for(int c = 0; c < columns; ++c)
         {
-            Vector3f &svtx = verts[r * columns + c % columns];
+            Vec3f &svtx = verts[r * columns + c % columns];
 
             float const topAngle  = ((c / float(columns)) * 2) * PI;
             float const sideAngle = sideOffset + maxSideAngle * (rows - r) / float(rows);
             float const radius    = cos(sideAngle);
 
-            svtx = Vector3f(radius * cos(topAngle),
+            svtx = Vec3f(radius * cos(topAngle),
                             sin(sideAngle), // The height.
                             radius * sin(topAngle));
         }
@@ -480,11 +480,11 @@ DENG2_PIMPL(SkyDrawable)
             // Prepare a vissprite for ordered drawing.
             vissprite_t vis;
 
-            vis.pose.origin          = vOrigin.xzy() * -Vector3f(skyModelDef.get("originOffset")).xzy();
+            vis.pose.origin          = vOrigin.xzy() * -Vec3f(skyModelDef.get("originOffset")).xzy();
             vis.pose.topZ            = vis.pose.origin.z;
             vis.pose.distance        = 1;
 
-            Vector2f rotate(skyModelDef.get("rotate"));
+            Vec2f rotate(skyModelDef.get("rotate"));
             vis.pose.yaw             = mstate.yaw;
             vis.pose.extraYawAngle   = vis.pose.yawAngleOffset   = rotate.x;
             vis.pose.extraPitchAngle = vis.pose.pitchAngleOffset = rotate.y;
@@ -496,7 +496,7 @@ DENG2_PIMPL(SkyDrawable)
             visModel.shineTranslateWithViewerPos = true;
             ClientApp::resources().setModelDefFrame(*modef, mstate.frame);
 
-            vis.light.ambientColor = Vector4f(skyModelDef.get("color"), 1);
+            vis.light.ambientColor = Vec4f(skyModelDef.get("color"), 1);
 
             Rend_DrawModel(vis);
         }

@@ -25,8 +25,8 @@ DENG2_PIMPL(Sound)
     dfloat      volume;
     dfloat      pan;
     dfloat      frequency;
-    Vector3f    position;
-    Vector3f    velocity;
+    Vec3f    position;
+    Vec3f    velocity;
     Positioning positioning;
     dfloat      minDistance;
     dfloat      spread;
@@ -85,7 +85,7 @@ Sound &Sound::setFrequency(dfloat factor)
     return *this;
 }
 
-Sound &Sound::setPosition(Vector3f const &position, Positioning positioning)
+Sound &Sound::setPosition(Vec3f const &position, Positioning positioning)
 {
     d->position = position;
     d->positioning = positioning;
@@ -93,7 +93,7 @@ Sound &Sound::setPosition(Vector3f const &position, Positioning positioning)
     return *this;
 }
 
-Sound &Sound::setVelocity(Vector3f const &velocity)
+Sound &Sound::setVelocity(Vec3f const &velocity)
 {
     d->velocity = velocity;
     d->update();
@@ -134,7 +134,7 @@ dfloat Sound::frequency() const
     return d->frequency;
 }
 
-Vector3f Sound::position() const
+Vec3f Sound::position() const
 {
     return d->position;
 }
@@ -144,7 +144,7 @@ Sound::Positioning Sound::positioning() const
     return d->positioning;
 }
 
-Vector3f Sound::velocity() const
+Vec3f Sound::velocity() const
 {
     return d->velocity;
 }

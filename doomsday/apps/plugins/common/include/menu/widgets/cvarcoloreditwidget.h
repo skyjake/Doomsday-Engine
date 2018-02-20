@@ -36,7 +36,7 @@ class CVarColorEditWidget : public ColorEditWidget
 public:
     explicit CVarColorEditWidget(char const *redCVarPath,  char const *greenCVarPath,
                                  char const *blueCVarPath, char const *alphaCVarPath = 0,
-                                 de::Vector4f const &color = de::Vector4f(),
+                                 de::Vec4f const &color = de::Vec4f(),
                                  bool rgbaMode = false);
     virtual ~CVarColorEditWidget();
 

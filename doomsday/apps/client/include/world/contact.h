@@ -64,7 +64,7 @@ struct Contact
     /**
      * Returns a copy of the linked object's origin in map space.
      */
-    de::Vector3d objectOrigin() const;
+    de::Vec3d objectOrigin() const;
 
     /**
      * Returns the linked object's radius in map space.

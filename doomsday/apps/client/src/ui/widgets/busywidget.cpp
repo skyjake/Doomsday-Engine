@@ -63,7 +63,7 @@ DENG_GUI_PIMPL(BusyWidget)
         VertexBuf *buf = new VertexBuf;
 
         VertexBuf::Builder verts;
-        verts.makeQuad(Rectanglef(0, 0, 1, 1), Vector4f(1, 1, 1, 1), Rectanglef(0, 0, 1, 1));
+        verts.makeQuad(Rectanglef(0, 0, 1, 1), Vec4f(1, 1, 1, 1), Rectanglef(0, 0, 1, 1));
         buf->setVertices(gl::TriangleStrip, verts, gl::Static);
 
         drawable.addBuffer(buf);
@@ -148,9 +148,9 @@ void BusyWidget::drawContent()
 
         // Draw the texture.
         Rectanglei pos = rule().recti();
-        d->uMvpMatrix = Matrix4f::scale(Vector3f(1, -1, 1)) *
+        d->uMvpMatrix = Mat4f::scale(Vec3f(1, -1, 1)) *
                 root().projMatrix2D() *
-                Matrix4f::scaleThenTranslate(pos.size(), pos.topLeft);
+                Mat4f::scaleThenTranslate(pos.size(), pos.topLeft);
         d->drawable.draw();
 
         GLState::pop();

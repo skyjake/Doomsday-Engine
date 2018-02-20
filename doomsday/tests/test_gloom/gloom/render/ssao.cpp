@@ -31,11 +31,11 @@ static const dsize SAMPLE_COUNT = 64;
 
 DENG2_PIMPL(SSAO)
 {
-    ScreenQuad           quad;
-    GLUniform            uSamples{"uSamples", GLUniform::Vec3Array, SAMPLE_COUNT};
-    DataBuffer<Vector3f> noise{"uNoise", Image::RGB_16f};
-    GLFramebuffer        ssaoFrameBuf;
-    GLTexture            ssaoBuf;
+    ScreenQuad        quad;
+    GLUniform         uSamples{"uSamples", GLUniform::Vec3Array, SAMPLE_COUNT};
+    DataBuffer<Vec3f> noise{"uNoise", Image::RGB_16f};
+    GLFramebuffer     ssaoFrameBuf;
+    GLTexture         ssaoBuf;
 
     Impl(Public *i) : Base(i)
     {}
@@ -68,11 +68,11 @@ void SSAO::glInit(const Context &context)
 
     // Generate sample kernel.
     {
-        Vector3f samples[SAMPLE_COUNT];
+        Vec3f samples[SAMPLE_COUNT];
         for (auto &sample : samples)
         {
             // Normal-oriented hemisphere.
-            sample = Vector3f{Rangef(0, 2).random() - 1,
+            sample = Vec3f{Rangef(0, 2).random() - 1,
                               Rangef(0, 2).random() - 1,
                               Rangef(0, 1).random()};
             sample = sample.normalize();
@@ -89,7 +89,7 @@ void SSAO::glInit(const Context &context)
         d->noise.init(64);
         for (int i = 0; i < d->noise.elementCount; ++i)
         {
-            d->noise.setData(i, Vector3f{Rangef(0, 2).random() - 1,
+            d->noise.setData(i, Vec3f{Rangef(0, 2).random() - 1,
                                          Rangef(0, 2).random() - 1,
                                          0});
         }

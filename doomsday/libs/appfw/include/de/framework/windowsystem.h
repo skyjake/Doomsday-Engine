@@ -113,7 +113,7 @@ public:
      */
     void dispatchLatestMousePosition();
 
-    Vector2i latestMousePosition() const;
+    Vec2i latestMousePosition() const;
 
     // System.
     bool processEvent(Event const &);

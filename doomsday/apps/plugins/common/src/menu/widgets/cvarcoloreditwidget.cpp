@@ -30,7 +30,7 @@ namespace common {
 namespace menu {
 
 CVarColorEditWidget::CVarColorEditWidget(char const *redCVarPath, char const *greenCVarPath,
-    char const *blueCVarPath, char const *alphaCVarPath, Vector4f const &color, bool rgbaMode)
+    char const *blueCVarPath, char const *alphaCVarPath, Vec4f const &color, bool rgbaMode)
     : ColorEditWidget(color, rgbaMode)
 {
     setAction(Modified,    CVarColorEditWidget_UpdateCVar);

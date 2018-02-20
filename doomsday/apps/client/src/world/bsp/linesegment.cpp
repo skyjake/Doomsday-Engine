@@ -43,7 +43,7 @@ DENG2_PIMPL_NOREF(LineSegment::Side)
     LineSegment *line = nullptr;
 
     /// Direction vector from -> to.
-    Vector2d direction;
+    Vec2d direction;
 
     /// Map Line side that "this" segment initially comes from or @c 0 signifying
     /// a partition line segment (not owned).
@@ -109,7 +109,7 @@ int LineSegment::Side::lineSideId() const
     return &d->line->front() == this? LineSegment::Front : LineSegment::Back;
 }
 
-Vector2d const &LineSegment::Side::direction() const
+Vec2d const &LineSegment::Side::direction() const
 {
     return d->direction;
 }
@@ -240,7 +240,7 @@ coord_t LineSegment::Side::length() const
     return d->pLength;
 }
 
-coord_t LineSegment::Side::distance(Vector2d point) const
+coord_t LineSegment::Side::distance(Vec2d point) const
 {
     coord_t const pointV1[2]     = { point.x, point.y };
     coord_t const directionV1[2] = { d->direction.x, d->direction.y };
@@ -406,8 +406,8 @@ Vertex &LineSegment::vertex(int to) const
 AABoxd LineSegment::bounds() const
 {
     AABoxd bounds;
-    Vector2d min = d->from->origin().min(d->to->origin());
-    Vector2d max = d->from->origin().max(d->to->origin());
+    Vec2d min = d->from->origin().min(d->to->origin());
+    Vec2d max = d->from->origin().max(d->to->origin());
     V2d_Set(bounds.min, min.x, min.y);
     V2d_Set(bounds.max, max.x, max.y);
     return bounds;

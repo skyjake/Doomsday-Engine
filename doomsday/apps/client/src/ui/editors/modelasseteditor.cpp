@@ -189,7 +189,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
         label.setSizePolicy(ui::Fixed, ui::Expand);
         label.setAlignment(ui::AlignLeft);
         label.set(GuiWidget::Background(style().colors().colorf("altaccent") *
-                                        Vector4f(1, 1, 1, .2f)));
+                                        Vec4f(1, 1, 1, .2f)));
         Rule const &maxWidth = rule("sidebar.width");
         label.rule().setInput(Rule::Width, maxWidth);
         label.setMaximumTextWidth(maxWidth);
@@ -334,7 +334,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
         mobj_t const *mo = Mobj_ById(id);
         if (mo)
         {
-            return (Rend_EyeOrigin().xzy() - Vector3d(mo->origin)).length();
+            return (Rend_EyeOrigin().xzy() - Vec3d(mo->origin)).length();
         }
         return -1;
     }
@@ -595,7 +595,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
         if (render::StateAnimator *anim = assetAnimator())
         {
             render::Model *model = const_cast<render::Model *>(&anim->model());
-            model->offset = Vector3f(offsetX->value(), offsetY->value(), offsetZ->value());
+            model->offset = Vec3f(offsetX->value(), offsetY->value(), offsetZ->value());
         }
     }
 };

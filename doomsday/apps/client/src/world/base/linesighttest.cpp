@@ -43,8 +43,8 @@ namespace world {
 DENG2_PIMPL_NOREF(LineSightTest)
 {
     dint flags = 0;      ///< LS_* flags @ref lineSightFlags
-    Vector3d from;       ///< Ray origin.
-    Vector3d to;         ///< Ray target.
+    Vec3d from;       ///< Ray origin.
+    Vec3d to;         ///< Ray target.
     dfloat bottomSlope;  ///< Slope to bottom of target.
     dfloat topSlope;     ///< Slope to top of target.
 
@@ -55,7 +55,7 @@ DENG2_PIMPL_NOREF(LineSightTest)
         fixed_t direction[2];
         AABoxd bounds;
 
-        Ray(Vector3d const &from, Vector3d const &to)
+        Ray(Vec3d const &from, Vec3d const &to)
         {
             origin[0]    = DBL2FIX(from.x);
             origin[1]    = DBL2FIX(from.y);
@@ -70,7 +70,7 @@ DENG2_PIMPL_NOREF(LineSightTest)
         }
     } ray;
 
-    Impl(Vector3d const &from, Vector3d const to, dfloat bottomSlope, dfloat topSlope)
+    Impl(Vec3d const &from, Vec3d const to, dfloat bottomSlope, dfloat topSlope)
         : from       (from)
         , to         (to)
         , bottomSlope(bottomSlope)
@@ -143,7 +143,7 @@ DENG2_PIMPL_NOREF(LineSightTest)
             // Does the ray pass from left to right?
             if (flags & LS_PASSLEFT) // Allowed.
             {
-                if (line.pointOnSide(Vector2d(from.x, from.y)) < 0)
+                if (line.pointOnSide(Vec2d(from.x, from.y)) < 0)
                     return true;
             }
 
@@ -288,8 +288,8 @@ DENG2_PIMPL_NOREF(LineSightTest)
 
             // Does the ray intersect the partition?
             /// @todo Optionally use the fixed precision version -ds
-            dint const fromSide = bspNode.pointOnSide(Vector2d(from.x, from.y)) < 0;
-            dint const toSide   = bspNode.pointOnSide(Vector2d(to.x, to.y)) < 0;
+            dint const fromSide = bspNode.pointOnSide(Vec2d(from.x, from.y)) < 0;
+            dint const toSide   = bspNode.pointOnSide(Vec2d(to.x, to.y)) < 0;
             if (fromSide != toSide)
             {
                 // Yes.
@@ -317,7 +317,7 @@ DENG2_PIMPL_NOREF(LineSightTest)
     }
 };
 
-LineSightTest::LineSightTest(Vector3d const &from, Vector3d const &to, dfloat bottomSlope,
+LineSightTest::LineSightTest(Vec3d const &from, Vec3d const &to, dfloat bottomSlope,
     dfloat topSlope, dint flags)
     : d(new Impl(from, to, bottomSlope, topSlope))
 {

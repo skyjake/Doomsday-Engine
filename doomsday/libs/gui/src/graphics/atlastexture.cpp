@@ -64,7 +64,7 @@ void AtlasTexture::commitFull(Image const &fullImage) const
     const_cast<AtlasTexture *>(this)->setImage(fullImage);
 }
 
-void AtlasTexture::commit(Image const &image, Vector2i const &topLeft) const
+void AtlasTexture::commit(Image const &image, Vec2i const &topLeft) const
 {
     GLTexture *tex = const_cast<AtlasTexture *>(this);
 

@@ -56,8 +56,8 @@ DENG2_PIMPL(BitmapFont)
 {
     String filePath;        ///< The "archived" version of this font (if any).
     GLuint texGLName;       ///< GL-texture name.
-    Vector2ui texMargin;    ///< Margin in pixels.
-    Vector2i texDimensions; ///< Texture dimensions in pixels.
+    Vec2ui texMargin;    ///< Margin in pixels.
+    Vec2i texDimensions; ///< Texture dimensions in pixels.
     bool needGLInit;
 
     /// Font metrics.
@@ -98,9 +98,9 @@ DENG2_PIMPL(BitmapFont)
      *
      * @todo Could be smarter. Presently this treats @em all glyphs equally.
      */
-    Vector2ui findMissingGlyphSize()
+    Vec2ui findMissingGlyphSize()
     {
-        Vector2ui accumSize;
+        Vec2ui accumSize;
         int glyphCount = 0;
         for(int i = 0; i < MAX_CHARS; ++i)
         {
@@ -119,7 +119,7 @@ DENG2_PIMPL(BitmapFont)
 
         self()._flags |= AbstractFont::Colorize;
         self()._flags &= ~AbstractFont::Shadowed;
-        texMargin = Vector2ui(0, 0);
+        texMargin = Vec2ui(0, 0);
 
         // Load in the data.
         texDimensions.x = inShort(file);
@@ -134,8 +134,8 @@ DENG2_PIMPL(BitmapFont)
             ushort w = inByte(file);
             ushort h = inByte(file);
 
-            ch->posCoords = Rectanglei::fromSize(Vector2i(0, 0), Vector2ui(w, h));
-            ch->texCoords = Rectanglei::fromSize(Vector2i(x, y), Vector2ui(w, h));
+            ch->posCoords = Rectanglei::fromSize(Vec2i(0, 0), Vec2ui(w, h));
+            ch->texCoords = Rectanglei::fromSize(Vec2i(x, y), Vec2ui(w, h));
         }
 
         missingGlyph.posCoords.setSize(findMissingGlyphSize());
@@ -203,8 +203,8 @@ DENG2_PIMPL(BitmapFont)
             ushort w = inShort(file);
             ushort h = inShort(file);
 
-            ch->posCoords = Rectanglei::fromSize(Vector2i(0, 0), Vector2ui(w, h) - texMargin * 2);
-            ch->texCoords = Rectanglei::fromSize(Vector2i(x, y), Vector2ui(w, h));
+            ch->posCoords = Rectanglei::fromSize(Vec2i(0, 0), Vec2ui(w, h) - texMargin * 2);
+            ch->texCoords = Rectanglei::fromSize(Vec2i(x, y), Vec2ui(w, h));
         }
 
         missingGlyph.posCoords.setSize(findMissingGlyphSize());
@@ -372,12 +372,12 @@ uint BitmapFont::textureGLName() const
     return d->texGLName;
 }
 
-Vector2i const &BitmapFont::textureDimensions() const
+Vec2i const &BitmapFont::textureDimensions() const
 {
     return d->texDimensions;
 }
 
-Vector2ui const &BitmapFont::textureMargin() const
+Vec2ui const &BitmapFont::textureMargin() const
 {
     return d->texMargin;
 }

@@ -24,12 +24,12 @@
 
 namespace gloom { namespace geo {
 
-inline de::Vector2d toVector2d(const QVector2D &vec)
+inline de::Vec2d toVector2d(const QVector2D &vec)
 {
-    return de::Vector2d(vec.x(), vec.y());
+    return de::Vec2d(vec.x(), vec.y());
 }
 
-inline QVector2D toQVector2D(const de::Vector2d &vec)
+inline QVector2D toQVector2D(const de::Vec2d &vec)
 {
     return QVector2D(float(vec.x), float(vec.y));
 }
@@ -140,15 +140,15 @@ struct Line
     }
 };
 
-using Line2d = Line<de::Vector2d>;
+using Line2d = Line<de::Vec2d>;
 
 struct Plane
 {
-    de::Vector3d point;
-    de::Vector3f normal;
+    de::Vec3d point;
+    de::Vec3f normal;
 
-    bool isPointAbove(const de::Vector3d &pos) const;
-    double project(const de::Vector2d &pos) const;
+    bool isPointAbove(const de::Vec3d &pos) const;
+    double project(const de::Vec2d &pos) const;
 };
 
 }} // namespace gloom::geo

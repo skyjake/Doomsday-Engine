@@ -31,7 +31,7 @@ static patchid_t pArmorIcon[NUMARMOR];
 static void ArmorIconsWidget_Draw(guidata_armoricons_t *icons, Point2Raw const *offset)
 {
     DENG2_ASSERT(icons);
-    icons->draw(offset? Vector2i(offset->xy) : Vector2i());
+    icons->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void ArmorIconsWidget_UpdateGeometry(guidata_armoricons_t *icons)
@@ -65,12 +65,12 @@ void guidata_armoricons_t::tick(timespan_t /*elapsed*/)
     }
 }
 
-void guidata_armoricons_t::draw(Vector2i const &offset) const
+void guidata_armoricons_t::draw(Vec2i const &offset) const
 {
 #define X_OFFSET                ( 150 )
 #define Y_OFFSET                (   2 )
 
-    static Vector2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
+    static Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
 
     dint const plrClass      = ::cfg.playerClass[player()];  // Original player class (i.e. not pig).
     dint const activeHud     = ST_ActiveHud(player());
@@ -104,7 +104,7 @@ void guidata_armoricons_t::draw(Vector2i const &offset) const
 
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconOpacity * opacity);
-        GL_DrawPatch(::pArmorIcon[i], origin + Vector2i(X_OFFSET + 31 * i, Y_OFFSET));
+        GL_DrawPatch(::pArmorIcon[i], origin + Vec2i(X_OFFSET + 31 * i, Y_OFFSET));
         DGL_Disable(DGL_TEXTURE_2D);
     }
 

@@ -113,7 +113,7 @@ void R_ResetFrameCount()
 DENG_EXTERN_C void R_SetViewOrigin(dint consoleNum, coord_t const origin[3])
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
-    DD_Player(consoleNum)->viewport().latest.origin = Vector3d(origin);
+    DD_Player(consoleNum)->viewport().latest.origin = Vec3d(origin);
 }
 
 #undef R_SetViewAngle
@@ -137,7 +137,7 @@ void R_SetupDefaultViewWindow(dint consoleNum)
 
     vd->window =
         vd->windowOld =
-            vd->windowTarget = Rectanglei::fromSize(Vector2i(0, 0), Vector2ui(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT));
+            vd->windowTarget = Rectanglei::fromSize(Vec2i(0, 0), Vec2ui(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT));
     vd->windowInter = 1;
 }
 
@@ -156,9 +156,9 @@ void R_ViewWindowTicker(dint consoleNum, timespan_t ticLength)
     }
     else
     {
-        vd->window.moveTopLeft(Vector2i(de::roundf(de::lerp<dfloat>(vd->windowOld.topLeft.x, vd->windowTarget.topLeft.x, vd->windowInter)),
+        vd->window.moveTopLeft(Vec2i(de::roundf(de::lerp<dfloat>(vd->windowOld.topLeft.x, vd->windowTarget.topLeft.x, vd->windowInter)),
                                         de::roundf(de::lerp<dfloat>(vd->windowOld.topLeft.y, vd->windowTarget.topLeft.y, vd->windowInter))));
-        vd->window.setSize(Vector2ui(de::roundf(de::lerp<dfloat>(vd->windowOld.width(),  vd->windowTarget.width(),  vd->windowInter)),
+        vd->window.setSize(Vec2ui(de::roundf(de::lerp<dfloat>(vd->windowOld.width(),  vd->windowTarget.width(),  vd->windowInter)),
                                      de::roundf(de::lerp<dfloat>(vd->windowOld.height(), vd->windowTarget.height(), vd->windowInter))));
     }
 }
@@ -215,9 +215,9 @@ DENG_EXTERN_C void R_SetViewWindowGeometry(dint player, RectRaw const *geometry,
     viewport_t const *vp = &viewportOfLocalPlayer[p];
     viewdata_t *vd = &DD_Player(player)->viewport();
 
-    Rectanglei newGeom = Rectanglei::fromSize(Vector2i(de::clamp<dint>(0, geometry->origin.x, vp->geometry.width()),
+    Rectanglei newGeom = Rectanglei::fromSize(Vec2i(de::clamp<dint>(0, geometry->origin.x, vp->geometry.width()),
                                                        de::clamp<dint>(0, geometry->origin.y, vp->geometry.height())),
-                                              Vector2ui(de::abs(geometry->size.width),
+                                              Vec2ui(de::abs(geometry->size.width),
                                                         de::abs(geometry->size.height)));
 
     if((unsigned) newGeom.bottomRight.x > vp->geometry.width())
@@ -240,7 +240,7 @@ DENG_EXTERN_C void R_SetViewWindowGeometry(dint player, RectRaw const *geometry,
 
     // Restart or advance the interpolation timer?
     // If dimensions have not yet been set - do not interpolate.
-    if(interpolate && vd->window.size() != Vector2ui(0, 0))
+    if(interpolate && vd->window.size() != Vec2ui(0, 0))
     {
         vd->windowOld   = vd->window;
         vd->windowInter = 0;
@@ -314,9 +314,9 @@ void R_UpdateViewPortGeometry(viewport_t *port, dint col, dint row)
 {
     DENG2_ASSERT(port);
 
-    Rectanglei newGeom = Rectanglei(Vector2i(DENG_GAMEVIEW_X + col * DENG_GAMEVIEW_WIDTH  / gridCols,
+    Rectanglei newGeom = Rectanglei(Vec2i(DENG_GAMEVIEW_X + col * DENG_GAMEVIEW_WIDTH  / gridCols,
                                              DENG_GAMEVIEW_Y + row * DENG_GAMEVIEW_HEIGHT / gridRows),
-                                    Vector2i(DENG_GAMEVIEW_X + (col+1) * DENG_GAMEVIEW_WIDTH  / gridCols,
+                                    Vec2i(DENG_GAMEVIEW_X + (col+1) * DENG_GAMEVIEW_WIDTH  / gridCols,
                                              DENG_GAMEVIEW_Y + (row+1) * DENG_GAMEVIEW_HEIGHT / gridRows));
     ddhook_viewport_reshape_t p;
 
@@ -452,7 +452,7 @@ viewer_t R_SharpViewer(ClientPlayer &player)
         duint angle = view.angle() >> ANGLETOFINESHIFT;
         duint pitch = angle_t(LOOKDIR2DEG(view.pitch) / 360 * ANGLE_MAX) >> ANGLETOFINESHIFT;
 
-        view.origin -= Vector3d(FIX2FLT(fineCosine[angle]),
+        view.origin -= Vec3d(FIX2FLT(fineCosine[angle]),
                                 FIX2FLT(finesine[angle]),
                                 FIX2FLT(finesine[pitch])) * distance;
     }
@@ -595,7 +595,7 @@ void R_UpdateViewer(dint consoleNum)
         {
             struct OldPos {
                 ddouble time;
-                Vector3f pos;
+                Vec3f pos;
             };
 
             static OldPos oldPos[DDMAXPLAYERS];
@@ -702,8 +702,8 @@ void R_UseViewPort(viewport_t const *vp)
     {
         currentViewport = nullptr;
         /*ClientWindow::main().game().glApplyViewport(
-                Rectanglei::fromSize(Vector2i(DENG_GAMEVIEW_X, DENG_GAMEVIEW_Y),
-                                     Vector2ui(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT)));*/
+                Rectanglei::fromSize(Vec2i(DENG_GAMEVIEW_X, DENG_GAMEVIEW_Y),
+                                     Vec2ui(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT)));*/
     }
     else
     {
@@ -883,7 +883,7 @@ static void setupPlayerSprites()
     }
 }
 
-static Matrix4f frameViewerMatrix;
+static Mat4f frameViewerMatrix;
 
 static void setupViewMatrix()
 {
@@ -896,7 +896,7 @@ static void setupViewMatrix()
     frameViewerMatrix        = rend.uProjectionMatrix().toMatrix4f() * rend.uViewMatrix().toMatrix4f();
 }
 
-Matrix4f const &Viewer_Matrix()
+Mat4f const &Viewer_Matrix()
 {
     return frameViewerMatrix;
 }
@@ -1003,8 +1003,8 @@ static void changeViewState(ViewState viewState) //, viewport_t const *port, vie
     //viewpw = de::min(port->geometry.width(), viewData->window.width());
     //viewph = de::min(port->geometry.height(), viewData->window.height());
 
-    /*ClientWindow::main().game().glApplyViewport(Rectanglei::fromSize(Vector2i(viewpx, viewpy),
-                                                                     Vector2ui(viewpw, viewph)));*/
+    /*ClientWindow::main().game().glApplyViewport(Rectanglei::fromSize(Vec2i(viewpx, viewpy),
+                                                                     Vec2ui(viewpw, viewph)));*/
 
 }
 
@@ -1332,7 +1332,7 @@ void R_BeginFrame()
     map.forAllLumobjs([&viewData] (Lumobj &lob)
     {
         // Approximate the distance in 3D.
-        Vector3d delta = lob.origin() - viewData->current.origin;
+        Vec3d delta = lob.origin() - viewData->current.origin;
         frameLuminous[lob.indexInMap()].distance = M_ApproxDistance3(delta.x, delta.y, delta.z * 1.2 /*correct aspect*/);
         return LoopContinue;
     });
@@ -1386,7 +1386,7 @@ void R_ViewerClipLumobj(Lumobj *lum)
     markLumobjClipped(*lum, false);
 
     /// @todo Determine the exact centerpoint of the light in addLuminous!
-    Vector3d const origin(lum->x(), lum->y(), lum->z() + lum->zOffset());
+    Vec3d const origin(lum->x(), lum->y(), lum->z() + lum->zOffset());
 
     if (!P_IsInVoid(DD_Player(displayPlayer)) && !devNoCulling)
     {
@@ -1399,7 +1399,7 @@ void R_ViewerClipLumobj(Lumobj *lum)
     {
         markLumobjClipped(*lum);
 
-        Vector3d const eye = Rend_EyeOrigin().xzy();
+        Vec3d const eye = Rend_EyeOrigin().xzy();
         if (LineSightTest(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER)
                 .trace(lum->map().bspTree()))
         {
@@ -1418,7 +1418,7 @@ void R_ViewerClipLumobjBySight(Lumobj *lob, ConvexSubspace *subspace)
 
     // We need to figure out if any of the polyobj's segments lies
     // between the viewpoint and the lumobj.
-    Vector3d const eye = Rend_EyeOrigin().xzy();
+    Vec3d const eye = Rend_EyeOrigin().xzy();
 
     subspace->forAllPolyobjs([&lob, &eye] (Polyobj &pob)
     {

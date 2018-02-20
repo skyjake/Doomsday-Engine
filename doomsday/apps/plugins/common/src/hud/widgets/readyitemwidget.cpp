@@ -108,9 +108,9 @@ void ReadyItem_Drawer(guidata_readyitem_t *item, Point2Raw const *offset)
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, iconOpacity / 2);
-        GL_DrawPatch(::pBackground, Vector2i(0, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
+        GL_DrawPatch(::pBackground, Vec2i(0, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
         DGL_Color4f(1, 1, 1, iconOpacity);
-        GL_DrawPatch(item->_patchId, Vector2i(xOffset, yOffset));
+        GL_DrawPatch(item->_patchId, Vec2i(xOffset, yOffset));
 
         inventoryitemtype_t readyItem = P_InventoryReadyItem(item->player());
         if(!(ST_ReadyItemFlashCounter(item->player()) > 0) && IIT_NONE != readyItem)
@@ -180,7 +180,7 @@ void SBarReadyItem_Drawer(guidata_readyitem_t *item, Point2Raw const *offset)
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, iconOpacity);
-    GL_DrawPatch(item->_patchId, Vector2i(x, y));
+    GL_DrawPatch(item->_patchId, Vec2i(x, y));
 
     inventoryitemtype_t readyItem = P_InventoryReadyItem(item->player());
     if(!(ST_ReadyItemFlashCounter(item->player()) > 0) && IIT_NONE != readyItem)
@@ -276,7 +276,7 @@ void ReadyItem_Drawer(guidata_readyitem_t *item, const Point2Raw* offset)
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, iconOpacity / 2);
-    GL_DrawPatch(::pBackground, Vector2i(0, 0));
+    GL_DrawPatch(::pBackground, Vec2i(0, 0));
 
     dint xOffset, yOffset;
     if(ST_ReadyItemFlashCounter(item->player()) > 0)
@@ -291,7 +291,7 @@ void ReadyItem_Drawer(guidata_readyitem_t *item, const Point2Raw* offset)
     }
 
     DGL_Color4f(1, 1, 1, iconOpacity);
-    GL_DrawPatch(item->_patchId, Vector2i(xOffset, yOffset));
+    GL_DrawPatch(item->_patchId, Vec2i(xOffset, yOffset));
 
     inventoryitemtype_t readyItem = P_InventoryReadyItem(item->player());
     if(ST_ReadyItemFlashCounter(item->player()) == 0 && readyItem != IIT_NONE)
@@ -361,7 +361,7 @@ void SBarReadyItem_Drawer(guidata_readyitem_t *item, Point2Raw const *offset)
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, iconOpacity);
-    GL_DrawPatch(item->_patchId, Vector2i(ORIGINX + x, ORIGINY + y));
+    GL_DrawPatch(item->_patchId, Vec2i(ORIGINX + x, ORIGINY + y));
 
     inventoryitemtype_t readyItem = P_InventoryReadyItem(item->player());
     if(!(ST_ReadyItemFlashCounter(item->player()) > 0) && readyItem != IIT_NONE)

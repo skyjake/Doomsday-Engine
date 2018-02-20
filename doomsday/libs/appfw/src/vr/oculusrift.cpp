@@ -37,9 +37,9 @@ using namespace OVR;
 namespace de {
 
 #ifdef DENG_HAVE_OCULUS_API
-Vector3f quaternionToPRYAngles(Quatf const &q)
+Vec3f quaternionToPRYAngles(Quatf const &q)
 {
-    Vector3f pry;
+    Vec3f pry;
     q.GetEulerAngles<Axis_Y, Axis_X, Axis_Z>(&pry.z, &pry.x, &pry.y);
     return pry;
 }
@@ -62,10 +62,10 @@ DENG2_PIMPL(OculusRift)
     float fovXDegrees;
     ovrFrameTiming timing;
 #endif
-    Matrix4f eyeMatrix[2];
-    Vector3f pitchRollYaw;
-    Vector3f headPosition;
-    Vector3f eyeOffset[2];
+    Mat4f eyeMatrix[2];
+    Vec3f pitchRollYaw;
+    Vec3f headPosition;
+    Vec3f eyeOffset[2];
     float aspect = 1.f;
 
     BaseWindow *window = nullptr;
@@ -75,10 +75,10 @@ DENG2_PIMPL(OculusRift)
     bool frameOngoing = false;
     bool needPoseUpdate = false;
     bool densityChanged = false;
-    //Vector2f screenSize;
+    //Vec2f screenSize;
     //float lensSeparationDistance;
-    //Vector4f hmdWarpParam;
-    //Vector4f chromAbParam;
+    //Vec4f hmdWarpParam;
+    //Vec4f chromAbParam;
     float eyeToScreenDistance;
     //float latency;
     //float ipd;
@@ -276,7 +276,7 @@ DENG2_PIMPL(OculusRift)
 
         for (int i = 0; i < 2; ++i)
         {
-            eyeOffset[i] = Vector3f(render[i].HmdToEyeViewOffset.x,
+            eyeOffset[i] = Vec3f(render[i].HmdToEyeViewOffset.x,
                                     render[i].HmdToEyeViewOffset.y,
                                     render[i].HmdToEyeViewOffset.z);
         }
@@ -463,7 +463,7 @@ DENG2_PIMPL(OculusRift)
         ovrTrackingState ts = ovrHmd_GetTrackingState(hmd, ovr_GetTimeInSeconds());
         if (ts.StatusFlags & ovrStatus_OrientationTracked)
         {
-            OVR::Vector3f rawAccel(ts.RawSensorData.Accelerometer.x,
+            OVR::Vec3f rawAccel(ts.RawSensorData.Accelerometer.x,
                                    ts.RawSensorData.Accelerometer.y,
                                    ts.RawSensorData.Accelerometer.z);
 
@@ -490,7 +490,7 @@ DENG2_PIMPL(OculusRift)
 
         pitchRollYaw = quaternionToPRYAngles(headPose[0].Orientation);
 
-        headPosition = Vector3f((headPose[0].Position.x + headPose[1].Position.x)/2,
+        headPosition = Vec3f((headPose[0].Position.x + headPose[1].Position.x)/2,
                                 (headPose[0].Position.y + headPose[1].Position.y)/2,
                                 (headPose[0].Position.z + headPose[1].Position.z)/2);
 
@@ -498,15 +498,15 @@ DENG2_PIMPL(OculusRift)
         {
             // TODO: Rotate using provided quaternion.
             // Note that Doomsday doesn't currently use this matrix!
-            eyeMatrix[i] = Matrix4f::translate(Vector3f(headPose[i].Position.x,
+            eyeMatrix[i] = Mat4f::translate(Vec3f(headPose[i].Position.x,
                                                         headPose[i].Position.y,
                                                         headPose[i].Position.z))
                         *
-                        Matrix4f::rotate(-radianToDegree(pitchRollYaw[1]), Vector3f(0, 0, 1)) *
-                        Matrix4f::rotate(-radianToDegree(pitchRollYaw[0]), Vector3f(1, 0, 0)) *
-                        Matrix4f::rotate(-radianToDegree(pitchRollYaw[2]), Vector3f(0, 1, 0));
+                        Mat4f::rotate(-radianToDegree(pitchRollYaw[1]), Vec3f(0, 0, 1)) *
+                        Mat4f::rotate(-radianToDegree(pitchRollYaw[0]), Vec3f(1, 0, 0)) *
+                        Mat4f::rotate(-radianToDegree(pitchRollYaw[2]), Vec3f(0, 1, 0));
                         //*
-                        //Matrix4f::translate(-eyeOffset[i]);
+                        //Mat4f::translate(-eyeOffset[i]);
         }
     }
 
@@ -622,13 +622,13 @@ OculusRift::Eye OculusRift::currentEye() const
 #endif
 }
 
-Vector2ui OculusRift::resolution() const
+Vec2ui OculusRift::resolution() const
 {
 #ifdef DENG_HAVE_OCULUS_API
-    if (!d->hmd) return Vector2ui();
-    return Vector2ui(d->hmd->Resolution.w, d->hmd->Resolution.h);
+    if (!d->hmd) return Vec2ui();
+    return Vec2ui(d->hmd->Resolution.w, d->hmd->Resolution.h);
 #else
-    return Vector2ui();
+    return Vec2ui();
 #endif
 }
 
@@ -672,28 +672,28 @@ bool OculusRift::isReady() const
 #endif
 }
 
-Vector3f OculusRift::headOrientation() const
+Vec3f OculusRift::headOrientation() const
 {
 #ifdef DENG_HAVE_OCULUS_API
     if (d->needPoseUpdate) d->updateEyePoses();
 #endif
-    Vector3f pry = d->pitchRollYaw;
+    Vec3f pry = d->pitchRollYaw;
     pry.z = wrap(pry.z + d->yawOffset, -PIf, PIf);
     return pry;
 }
 
-Matrix4f OculusRift::eyePose() const
+Mat4f OculusRift::eyePose() const
 {
 #ifdef DENG_HAVE_OCULUS_API
-    if (!isReady()) return Matrix4f();
+    if (!isReady()) return Mat4f();
     if (d->needPoseUpdate) d->updateEyePoses();
     return d->eyeMatrix[d->currentEye];
 #else
-    return Matrix4f();
+    return Mat4f();
 #endif
 }
 
-Vector3f OculusRift::headPosition() const
+Vec3f OculusRift::headPosition() const
 {
 #ifdef DENG_HAVE_OCULUS_API
     if (d->needPoseUpdate) d->updateEyePoses();
@@ -701,24 +701,24 @@ Vector3f OculusRift::headPosition() const
     return d->headPosition;
 }
 
-Vector3f OculusRift::eyeOffset() const
+Vec3f OculusRift::eyeOffset() const
 {
 #ifdef DENG_HAVE_OCULUS_API
     return d->eyeOffset[d->currentEye];
 #else
-    return Vector3f();
+    return Vec3f();
 #endif
 }
 
-Matrix4f OculusRift::projection(float nearDist, float farDist) const
+Mat4f OculusRift::projection(float nearDist, float farDist) const
 {
 #ifdef DENG_HAVE_OCULUS_API
     DENG2_ASSERT(isReady());
-    return Matrix4f(ovrMatrix4f_Projection(d->fov[d->currentEye], nearDist, farDist,
+    return Mat4f(ovrMatrix4f_Projection(d->fov[d->currentEye], nearDist, farDist,
                     true /* right-handed */).M[0]).transpose();
 #else
     DENG2_UNUSED2(nearDist, farDist);
-    return Matrix4f();
+    return Mat4f();
 #endif
 }
 

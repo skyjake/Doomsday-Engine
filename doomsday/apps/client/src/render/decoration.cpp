@@ -33,7 +33,7 @@ DENG2_PIMPL_NOREF(Decoration)
     Surface *surface = nullptr;
 };
 
-Decoration::Decoration(MaterialAnimator::Decoration const &source, Vector3d const &origin)
+Decoration::Decoration(MaterialAnimator::Decoration const &source, Vec3d const &origin)
     : MapObject(origin)
     , d(new Impl)
 {

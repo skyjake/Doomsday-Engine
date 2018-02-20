@@ -65,7 +65,7 @@ public:
      * @param lightColor  Ambient light color.
      */
     Sector(de::dfloat lightLevel          = 1,
-           de::Vector3f const &lightColor = de::Vector3f(1, 1, 1));
+           de::Vec3f const &lightColor = de::Vec3f(1, 1, 1));
 
 //- Lighting ----------------------------------------------------------------------------
 
@@ -99,7 +99,7 @@ public:
      *
      * @see setLightColor()
      */
-    de::Vector3f const &lightColor() const;
+    de::Vec3f const &lightColor() const;
 
     /**
      * Change the ambient light color in the sector. The LightColorChange audience is
@@ -109,7 +109,7 @@ public:
      *
      * @see lightColor()
      */
-    void setLightColor(de::Vector3f const &newLightColor);
+    void setLightColor(de::Vec3f const &newLightColor);
 
 //- Map objects -------------------------------------------------------------------------
 
@@ -195,7 +195,7 @@ public:
      *
      * @return  The newly constructed Plane.
      */
-    Plane *addPlane(de::Vector3f const &normal, de::ddouble height);
+    Plane *addPlane(de::Vec3f const &normal, de::ddouble height);
 
 //- Subsectors --------------------------------------------------------------------------
 

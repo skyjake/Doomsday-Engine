@@ -95,7 +95,7 @@ void P_InitUnusedMobjList()
 /**
  * All mobjs must be allocated through this routine. Part of the public API.
  */
-mobj_t *P_MobjCreate(thinkfunc_t function, Vector3d const &origin, angle_t angle,
+mobj_t *P_MobjCreate(thinkfunc_t function, Vec3d const &origin, angle_t angle,
     coord_t radius, coord_t height, dint ddflags)
 {
     if (!function)
@@ -213,14 +213,14 @@ DENG_EXTERN_C void Mobj_SetState(mobj_t *mob, int statenum)
     }
 }
 
-Vector3d Mobj_Origin(mobj_t const &mob)
+Vec3d Mobj_Origin(mobj_t const &mob)
 {
-    return Vector3d(mob.origin);
+    return Vec3d(mob.origin);
 }
 
-Vector3d Mobj_Center(mobj_t &mob)
+Vec3d Mobj_Center(mobj_t &mob)
 {
-    return Vector3d(mob.origin[0], mob.origin[1], mob.origin[2] + mob.height / 2);
+    return Vec3d(mob.origin[0], mob.origin[1], mob.origin[2] + mob.height / 2);
 }
 
 dd_bool Mobj_SetOrigin(struct mobj_s *mob, coord_t x, coord_t y, coord_t z)
@@ -485,7 +485,7 @@ void Mobj_GenerateLumobjs(mobj_t *mob)
 
     TextureVariant *tex = matAnimator->texUnit(MaterialAnimator::TU_LAYER0).texture;
     if (!tex) return;  // Unloadable texture?
-    Vector2i const &texOrigin = tex->base().origin();
+    Vec2i const &texOrigin = tex->base().origin();
 
     // Will the visual be allowed to go inside the floor?
     /// @todo Handle this as occlusion so that the halo fades smoothly.
@@ -515,7 +515,7 @@ void Mobj_GenerateLumobjs(mobj_t *mob)
             lum->setZOffset(-texOrigin.y - def->offset[1]);
         }
 
-        if (Vector3f(def->color) != Vector3f(0, 0, 0))
+        if (Vec3f(def->color) != Vec3f(0, 0, 0))
         {
             lum->setColor(def->color);
         }
@@ -923,7 +923,7 @@ coord_t Mobj_VisualRadius(mobj_t const &mob)
 
 AABoxd Mobj_Bounds(mobj_t const &mobj)
 {
-    Vector2d const origin = Mobj_Origin(mobj);
+    Vec2d const origin = Mobj_Origin(mobj);
     ddouble const radius  = Mobj_Radius(mobj);
     return AABoxd(origin.x - radius, origin.y - radius,
                   origin.x + radius, origin.y + radius);
@@ -971,8 +971,8 @@ D_CMD(InspectMobj)
     LOG_MAP_MSG("Height:%f Radius:%f") << mob->height << mob->radius;
     LOG_MAP_MSG("Angle:%x Pos:%s Mom:%s")
             << mob->angle
-            << Vector3d(mob->origin).asText()
-            << Vector3d(mob->mom).asText();
+            << Vec3d(mob->origin).asText()
+            << Vec3d(mob->mom).asText();
 #ifdef __CLIENT__
     LOG_MAP_MSG("VisAngle:%x") << mob->visAngle;
 #endif

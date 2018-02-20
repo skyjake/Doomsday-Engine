@@ -31,7 +31,7 @@ static patchid_t pBlueBackground[2];  ///< [ dim, bright ]
 static void BlueManaVialWidget_Draw(guidata_bluemanavial_t *vial, Point2Raw const *offset)
 {
     DENG2_ASSERT(vial);
-    vial->draw(offset? Vector2i(offset->xy) : Vector2i());
+    vial->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void BlueManaVialWidget_UpdateGeometry(guidata_bluemanavial_t *vial)
@@ -77,14 +77,14 @@ void guidata_bluemanavial_t::tick(timespan_t /*elapsed*/)
     _filled = de::clamp(0.f, dfloat( plr.ammo[AT_BLUEMANA].owned ) / MAX_MANA, 1.f);
 }
 
-void guidata_bluemanavial_t::draw(Vector2i const &offset) const
+void guidata_bluemanavial_t::draw(Vec2i const &offset) const
 {
 #define X_OFFSET            ( 94 )
 #define Y_OFFSET            (  2 )
 #define VIAL_WIDTH          (  3 )
 #define VIAL_HEIGHT         ( 22 )
 
-    static Vector2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
+    static Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
 
     dint const activeHud     = ST_ActiveHud(player());
     dfloat const yOffset     = ST_HEIGHT * (1 - ST_StatusBarShown(player()));
@@ -104,7 +104,7 @@ void guidata_bluemanavial_t::draw(Vector2i const &offset) const
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconOpacity);
-        GL_DrawPatch(::pBlueBackground[_backgroundIdx], origin + Vector2i(X_OFFSET, Y_OFFSET));
+        GL_DrawPatch(::pBlueBackground[_backgroundIdx], origin + Vec2i(X_OFFSET, Y_OFFSET));
         DGL_Disable(DGL_TEXTURE_2D);
     }
 

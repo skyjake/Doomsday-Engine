@@ -87,9 +87,9 @@ struct Model : public de::ModelDrawable
     Alignment alignPitch = NotAligned;
 
     /// Combined scaling and rotation of the model.
-    de::Matrix4f transformation;
+    de::Mat4f transformation;
 
-    de::Vector3f offset;
+    de::Vec3f offset;
 
     de::gl::Cull cull = de::gl::Back;
 

@@ -74,8 +74,8 @@ static void drawSubspace(ConvexSubspace const &subspace)
     HEdge *hedge = base;
     do
     {
-        Vector2d start = hedge->origin();
-        Vector2d end   = hedge->twin().origin();
+        Vec2d start = hedge->origin();
+        Vec2d end   = hedge->twin().origin();
 
         DGL_Begin(DGL_LINES);
             DGL_Vertex2f(start.x, start.y);
@@ -85,8 +85,8 @@ static void drawSubspace(ConvexSubspace const &subspace)
         ddouble length = (end - start).length();
         if (length > 0)
         {
-            Vector2d const unit = (end - start) / length;
-            Vector2d const normal(-unit.y, unit.x);
+            Vec2d const unit = (end - start) / length;
+            Vec2d const normal(-unit.y, unit.x);
 
             GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC));
             DGL_Enable(DGL_TEXTURE_2D);
@@ -108,8 +108,8 @@ static void drawSubspace(ConvexSubspace const &subspace)
         }
 
         // Draw a bounding box for the leaf's face geometry.
-        start = Vector2d(poly.bounds().minX, poly.bounds().minY);
-        end   = Vector2d(poly.bounds().maxX, poly.bounds().maxY);
+        start = Vec2d(poly.bounds().minX, poly.bounds().minY);
+        end   = Vec2d(poly.bounds().maxX, poly.bounds().maxY);
 
         DGL_Begin(DGL_LINES);
             DGL_Vertex2f(start.x, start.y);
@@ -238,7 +238,7 @@ static void drawBackground(Blockmap const &bmap)
     DGL_PopMatrix();
 }
 
-static void drawCellInfo(Vector2d const &origin_, char const *info)
+static void drawCellInfo(Vec2d const &origin_, char const *info)
 {
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -263,7 +263,7 @@ static void drawCellInfo(Vector2d const &origin_, char const *info)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static void drawBlockmapInfo(Vector2d const &origin_, Blockmap const &blockmap)
+static void drawBlockmapInfo(Vec2d const &origin_, Blockmap const &blockmap)
 {
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -290,7 +290,7 @@ static void drawBlockmapInfo(Vector2d const &origin_, Blockmap const &blockmap)
     UI_TextOutEx2("Blockmap", &origin, UI_Color(UIC_TITLE), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
     origin.y += th;
 
-    Vector2ui const &bmapDimensions = blockmap.dimensions();
+    Vec2ui const &bmapDimensions = blockmap.dimensions();
     char buf[80];
     dd_snprintf(buf, 80, "Dimensions:(%u, %u) #%li", bmapDimensions.x, bmapDimensions.y,
                                                     (long) bmapDimensions.y * bmapDimensions.x);
@@ -309,7 +309,7 @@ static void drawBlockmapInfo(Vector2d const &origin_, Blockmap const &blockmap)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static void drawCellInfoBox(Vector2d const &origin, Blockmap const &blockmap,
+static void drawCellInfoBox(Vec2d const &origin, Blockmap const &blockmap,
     char const *objectTypeName, BlockmapCell const &cell)
 {
     uint count = blockmap.cellElementCount(cell);
@@ -329,7 +329,7 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
     BlockmapCell vCell;
 
     BlockmapCell const &dimensions = bmap.dimensions();
-    Vector2d const cellDimensions = bmap.cellDimensions();
+    Vec2d const cellDimensions = bmap.cellDimensions();
 
     if (followMobj)
     {
@@ -389,8 +389,8 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
                 DGL_Color4f(.33f, .33f, .66f, .33f);
             }
 
-            Vector2d const start = cellDimensions * cell;
-            Vector2d const end   = start + cellDimensions;
+            Vec2d const start = cellDimensions * cell;
+            Vec2d const end   = start + cellDimensions;
 
             DGL_Vertex2f(start.x, start.y);
             DGL_Vertex2f(  end.x, start.y);
@@ -586,13 +586,13 @@ void Rend_BlockmapDebug()
         BlockmapCell cell = blockmap->toCell(followMobj->origin, &didClip);
         if (!didClip)
         {
-            drawCellInfoBox(Vector2d(DENG_GAMEVIEW_WIDTH / 2, 30), *blockmap,
+            drawCellInfoBox(Vec2d(DENG_GAMEVIEW_WIDTH / 2, 30), *blockmap,
                             objectTypeName, cell);
         }
     }
 
     // About the Blockmap itself.
-    drawBlockmapInfo(Vector2d(DENG_GAMEVIEW_WIDTH - 10, DENG_GAMEVIEW_HEIGHT - 10),
+    drawBlockmapInfo(Vec2d(DENG_GAMEVIEW_WIDTH - 10, DENG_GAMEVIEW_HEIGHT - 10),
                      *blockmap);
 
     DGL_MatrixMode(DGL_PROJECTION);

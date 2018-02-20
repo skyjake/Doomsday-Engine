@@ -36,8 +36,8 @@ public:
 
     Type type() const;
 
-    virtual de::Vector3f lightDirection() const = 0;
-    virtual de::Vector3f lightColor() const = 0;
+    virtual de::Vec3f lightDirection() const = 0;
+    virtual de::Vec3f lightColor() const = 0;
 };
 
 } // namespace gloom

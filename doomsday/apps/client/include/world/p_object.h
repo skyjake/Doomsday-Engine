@@ -70,7 +70,7 @@ void P_InitUnusedMobjList();
  */
 void Mobj_ConsoleRegister();
 
-mobj_t *P_MobjCreate(thinkfunc_t function, de::Vector3d const &origin, angle_t angle,
+mobj_t *P_MobjCreate(thinkfunc_t function, de::Vec3d const &origin, angle_t angle,
     coord_t radius, coord_t height, de::dint ddflags);
 
 void P_MobjRecycle(mobj_t *mob);
@@ -97,12 +97,12 @@ bool Mobj_IsLinked(mobj_t const &mob);
 /**
  * Returns a copy of the map-object's origin in map space.
  */
-de::Vector3d Mobj_Origin(mobj_t const &mob);
+de::Vec3d Mobj_Origin(mobj_t const &mob);
 
 /**
  * Returns the map-object's visual center (i.e., origin plus z-height offset).
  */
-de::Vector3d Mobj_Center(mobj_t &mob);
+de::Vec3d Mobj_Center(mobj_t &mob);
 
 /**
  * Set the origin of the map-object in map space.

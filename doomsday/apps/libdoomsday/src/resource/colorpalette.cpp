@@ -34,9 +34,9 @@ namespace res {
 /*
  * Example: "R8G8B8"
  */
-static void parseColorFormat(QString const &fmt, Vector3ui &compOrder, Vector3ui &compBits)
+static void parseColorFormat(QString const &fmt, Vec3ui &compOrder, Vec3ui &compBits)
 {
-    compBits = Vector3ui();
+    compBits = Vec3ui();
 
     int const end = fmt.length();
 
@@ -87,13 +87,13 @@ static void parseColorFormat(QString const &fmt, Vector3ui &compOrder, Vector3ui
     }
 }
 
-typedef QVector<de::Vector3ub> ColorTable;
+typedef QVector<de::Vec3ub> ColorTable;
 
 ColorTable ColorTableReader::read(String format, int colorCount,
     dbyte const *colorData) // static
 {
-    Vector3ui order;
-    Vector3ui bits;
+    Vec3ui order;
+    Vec3ui bits;
     parseColorFormat(format, order, bits);
 
     ColorTable colors(colorCount);
@@ -105,7 +105,7 @@ ColorTable ColorTableReader::read(String format, int colorCount,
         dbyte const *src = colorData;
         for (int i = 0; i < colorCount; ++i, src += 3)
         {
-            colors[i] = Vector3ub(src[order.x], src[order.y], src[order.z]);
+            colors[i] = Vec3ub(src[order.x], src[order.y], src[order.z]);
         }
     }
     else
@@ -115,9 +115,9 @@ ColorTable ColorTableReader::read(String format, int colorCount,
         dbyte cb = 0;
         for (int i = 0; i < colorCount; ++i)
         {
-            Vector3ub &dst = colors[i];
+            Vec3ub &dst = colors[i];
 
-            Vector3i tmp;
+            Vec3i tmp;
             M_ReadBits(bits[order.x], &src, &cb, (dbyte *) &(tmp[order.x]));
             M_ReadBits(bits[order.y], &src, &cb, (dbyte *) &(tmp[order.y]));
             M_ReadBits(bits[order.z], &src, &cb, (dbyte *) &(tmp[order.z]));
@@ -148,7 +148,7 @@ ColorTable ColorTableReader::read(String format, int colorCount,
             }
 
             // Store the final color.
-            dst = Vector3ub(de::clamp<dbyte>(0, tmp.x, 255),
+            dst = Vec3ub(de::clamp<dbyte>(0, tmp.x, 255),
                             de::clamp<dbyte>(0, tmp.y, 255),
                             de::clamp<dbyte>(0, tmp.z, 255));
         }
@@ -159,7 +159,7 @@ ColorTable ColorTableReader::read(String format, int colorCount,
 
 DENG2_PIMPL(ColorPalette)
 {
-    typedef Vector3ub Color;
+    typedef Vec3ub Color;
     typedef QVector<Color> ColorTable;
     ColorTable colors;
 
@@ -279,7 +279,7 @@ ColorPalette &ColorPalette::replaceColorTable(ColorTable const &colorTable)
     return *this;
 }
 
-Vector3ub ColorPalette::color(int colorIndex) const
+Vec3ub ColorPalette::color(int colorIndex) const
 {
     LOG_AS("ColorPalette");
 
@@ -294,15 +294,15 @@ Vector3ub ColorPalette::color(int colorIndex) const
         return d->colors[de::clamp(0, colorIndex, d->colors.count() - 1)];
     }
 
-    return Vector3ub();
+    return Vec3ub();
 }
 
-Vector3f ColorPalette::colorf(int colorIdx) const
+Vec3f ColorPalette::colorf(int colorIdx) const
 {
     return color(colorIdx).toVector3f() * reciprocal255;
 }
 
-int ColorPalette::nearestIndex(Vector3ub const &rgb) const
+int ColorPalette::nearestIndex(Vec3ub const &rgb) const
 {
     LOG_AS("ColorPalette");
 

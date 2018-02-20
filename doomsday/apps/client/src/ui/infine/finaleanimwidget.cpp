@@ -135,26 +135,26 @@ static void useColor(animator_t const *color, int components)
 }
 
 static int buildGeometry(float const /*dimensions*/[3], dd_bool flipTextureS,
-    Vector4f const &bottomColor, Vector4f const &topColor, Vector3f **posCoords,
-    Vector4f **colorCoords, Vector2f **texCoords)
+    Vec4f const &bottomColor, Vec4f const &topColor, Vec3f **posCoords,
+    Vec4f **colorCoords, Vec2f **texCoords)
 {
-    static Vector3f posCoordBuf[4];
-    static Vector4f colorCoordBuf[4];
-    static Vector2f texCoordBuf[4];
+    static Vec3f posCoordBuf[4];
+    static Vec4f colorCoordBuf[4];
+    static Vec2f texCoordBuf[4];
 
     // 0 - 1
     // | / |  Vertex layout
     // 2 - 3
 
-    posCoordBuf[0] = Vector3f(0, 0, 0);
-    posCoordBuf[1] = Vector3f(1, 0, 0);
-    posCoordBuf[2] = Vector3f(0, 1, 0);
-    posCoordBuf[3] = Vector3f(1, 1, 0);
+    posCoordBuf[0] = Vec3f(0, 0, 0);
+    posCoordBuf[1] = Vec3f(1, 0, 0);
+    posCoordBuf[2] = Vec3f(0, 1, 0);
+    posCoordBuf[3] = Vec3f(1, 1, 0);
 
-    texCoordBuf[0] = Vector2f((flipTextureS? 1:0), 0);
-    texCoordBuf[1] = Vector2f((flipTextureS? 0:1), 0);
-    texCoordBuf[2] = Vector2f((flipTextureS? 1:0), 1);
-    texCoordBuf[3] = Vector2f((flipTextureS? 0:1), 1);
+    texCoordBuf[0] = Vec2f((flipTextureS? 1:0), 0);
+    texCoordBuf[1] = Vec2f((flipTextureS? 0:1), 0);
+    texCoordBuf[2] = Vec2f((flipTextureS? 1:0), 1);
+    texCoordBuf[3] = Vec2f((flipTextureS? 0:1), 1);
 
     colorCoordBuf[0] = bottomColor;
     colorCoordBuf[1] = bottomColor;
@@ -168,13 +168,13 @@ static int buildGeometry(float const /*dimensions*/[3], dd_bool flipTextureS,
     return 4;
 }
 
-static void drawGeometry(int numVerts, Vector3f const *posCoords,
-    Vector4f const *colorCoords, Vector2f const *texCoords)
+static void drawGeometry(int numVerts, Vec3f const *posCoords,
+    Vec4f const *colorCoords, Vec2f const *texCoords)
 {
     DGL_Begin(DGL_TRIANGLE_STRIP);
-    Vector3f const *posIt   = posCoords;
-    Vector4f const *colorIt = colorCoords;
-    Vector2f const *texIt   = texCoords;
+    Vec3f const *posIt   = posCoords;
+    Vec4f const *colorIt = colorCoords;
+    Vec2f const *texIt   = texCoords;
     for (int i = 0; i < numVerts; ++i, posIt++, colorIt++, texIt++)
     {
         if (texCoords)
@@ -197,7 +197,7 @@ static inline MaterialVariantSpec const &uiMaterialSpec_FinaleAnim()
 
 static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3],
     float /*const*/ scale[3], float const rgba[4], float const rgba2[4], float angle,
-    Vector3f const &worldOffset)
+    Vec3f const &worldOffset)
 {
     vec3f_t offset = { 0, 0, 0 }, dimensions, origin, originOffset, center;
     vec2f_t texScale = { 1, 1 };
@@ -206,9 +206,9 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
     dd_bool mustPopTextureMatrix = false;
     dd_bool textureEnabled = false;
     int numVerts;
-    Vector3f *posCoords;
-    Vector4f *colorCoords;
-    Vector2f *texCoords;
+    Vec3f *posCoords;
+    Vec4f *colorCoords;
+    Vec2f *texCoords;
 
     if (p->frameCount())
     {
@@ -263,7 +263,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
                 // Ensure we've up to date info about the material.
                 matAnimator.prepare();
 
-                Vector2ui const &matDimensions = matAnimator.dimensions();
+                Vec2ui const &matDimensions = matAnimator.dimensions();
                 TextureVariant *tex            = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
                 int const texBorder            = tex->spec().variant.border;
 
@@ -406,7 +406,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
     DGL_PopMatrix();
 }
 
-void FinaleAnimWidget::draw(Vector3f const &offset)
+void FinaleAnimWidget::draw(Vec3f const &offset)
 {
     // Fully transparent pics will not be drawn.
     if (!(d->color[3].value > 0)) return;
@@ -515,7 +515,7 @@ animator_t const *FinaleAnimWidget::color() const
     return d->color;
 }
 
-FinaleAnimWidget &FinaleAnimWidget::setColor(Vector3f const &newColor, int steps)
+FinaleAnimWidget &FinaleAnimWidget::setColor(Vec3f const &newColor, int steps)
 {
     AnimatorVector3_Set(d->color, newColor.x, newColor.y, newColor.z, steps);
     return *this;
@@ -527,7 +527,7 @@ FinaleAnimWidget &FinaleAnimWidget::setAlpha(float newAlpha, int steps)
     return *this;
 }
 
-FinaleAnimWidget &FinaleAnimWidget::setColorAndAlpha(Vector4f const &newColorAndAlpha, int steps)
+FinaleAnimWidget &FinaleAnimWidget::setColorAndAlpha(Vec4f const &newColorAndAlpha, int steps)
 {
     AnimatorVector4_Set(d->color, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
     return *this;
@@ -538,7 +538,7 @@ animator_t const *FinaleAnimWidget::edgeColor() const
     return d->edgeColor;
 }
 
-FinaleAnimWidget &FinaleAnimWidget::setEdgeColor(Vector3f const &newColor, int steps)
+FinaleAnimWidget &FinaleAnimWidget::setEdgeColor(Vec3f const &newColor, int steps)
 {
     AnimatorVector3_Set(d->edgeColor, newColor.x, newColor.y, newColor.z, steps);
     return *this;
@@ -550,7 +550,7 @@ FinaleAnimWidget &FinaleAnimWidget::setEdgeAlpha(float newAlpha, int steps)
     return *this;
 }
 
-FinaleAnimWidget &FinaleAnimWidget::setEdgeColorAndAlpha(Vector4f const &newColorAndAlpha, int steps)
+FinaleAnimWidget &FinaleAnimWidget::setEdgeColorAndAlpha(Vec4f const &newColorAndAlpha, int steps)
 {
     AnimatorVector4_Set(d->edgeColor, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
     return *this;
@@ -561,7 +561,7 @@ animator_t const *FinaleAnimWidget::otherColor() const
     return d->otherColor;
 }
 
-FinaleAnimWidget &FinaleAnimWidget::setOtherColor(de::Vector3f const &newColor, int steps)
+FinaleAnimWidget &FinaleAnimWidget::setOtherColor(de::Vec3f const &newColor, int steps)
 {
     AnimatorVector3_Set(d->otherColor, newColor.x, newColor.y, newColor.z, steps);
     return *this;
@@ -573,7 +573,7 @@ FinaleAnimWidget &FinaleAnimWidget::setOtherAlpha(float newAlpha, int steps)
     return *this;
 }
 
-FinaleAnimWidget &FinaleAnimWidget::setOtherColorAndAlpha(Vector4f const &newColorAndAlpha, int steps)
+FinaleAnimWidget &FinaleAnimWidget::setOtherColorAndAlpha(Vec4f const &newColorAndAlpha, int steps)
 {
     AnimatorVector4_Set(d->otherColor, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
     return *this;
@@ -584,7 +584,7 @@ animator_t const *FinaleAnimWidget::otherEdgeColor() const
     return d->otherEdgeColor;
 }
 
-FinaleAnimWidget &FinaleAnimWidget::setOtherEdgeColor(de::Vector3f const &newColor, int steps)
+FinaleAnimWidget &FinaleAnimWidget::setOtherEdgeColor(de::Vec3f const &newColor, int steps)
 {
     AnimatorVector3_Set(d->otherEdgeColor, newColor.x, newColor.y, newColor.z, steps);
     return *this;
@@ -596,7 +596,7 @@ FinaleAnimWidget &FinaleAnimWidget::setOtherEdgeAlpha(float newAlpha, int steps)
     return *this;
 }
 
-FinaleAnimWidget &FinaleAnimWidget::setOtherEdgeColorAndAlpha(Vector4f const &newColorAndAlpha, int steps)
+FinaleAnimWidget &FinaleAnimWidget::setOtherEdgeColorAndAlpha(Vec4f const &newColorAndAlpha, int steps)
 {
     AnimatorVector4_Set(d->otherEdgeColor, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
     return *this;

@@ -44,9 +44,9 @@ public:
                        float variance                     = 0,
                        float glowStrength                 = 0,
                        float glowStrengthVariance         = 0,
-                       de::Vector2f const origin          = de::Vector2f(),
+                       de::Vec2f const origin          = de::Vec2f(),
                        de::Uri const &maskTexture         = de::Uri(),
-                       de::Vector2f const &maskDimensions = de::Vector2f(1, 1),
+                       de::Vec2f const &maskDimensions = de::Vec2f(1, 1),
                        blendmode_t blendMode              = BM_NORMAL,
                        float opacity                      = 1);
         AnimationStage(AnimationStage const &other);
@@ -65,9 +65,9 @@ public:
         de::Uri      texture;
         float        glowStrength;
         float        glowStrengthVariance;
-        de::Vector2f origin;
+        de::Vec2f origin;
         de::Uri      maskTexture;
-        de::Vector2f maskDimensions;
+        de::Vec2f maskDimensions;
         blendmode_t  blendMode;
         float        opacity;
     };

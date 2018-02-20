@@ -44,7 +44,7 @@ static int const BLINK_INTERVAL   = 500;       // ms
 DENG2_PIMPL(QtRootWidget)
 {
     int margin;
-    Vector2i charSize;
+    Vec2i charSize;
     float dpiFactor;
     QtTextCanvas *canvas;
     TextRootWidget root;
@@ -61,7 +61,7 @@ DENG2_PIMPL(QtRootWidget)
         : Base(inst)
         , margin(4)
         , dpiFactor(1)
-        , canvas(new QtTextCanvas(Vector2ui(1, 1)))
+        , canvas(new QtTextCanvas(Vec2ui(1, 1)))
         , root(canvas)
         , blinkTimer(0)
         , cursorTimer(0)
@@ -92,7 +92,7 @@ DENG2_PIMPL(QtRootWidget)
         if (!charSize.x || !charSize.y) return;
 
         // Determine number of characters that fits in the new size.
-        Vector2ui size((widthPx - 2*margin) / charSize.x, (heightPx - 2*margin) / charSize.y);
+        Vec2ui size((widthPx - 2*margin) / charSize.x, (heightPx - 2*margin) / charSize.y);
         root.setViewSize(size);
 
         origin = QPoint(margin, heightPx - canvas->image().height()/dpiFactor - margin);

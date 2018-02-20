@@ -859,8 +859,8 @@ static void redecorateMaterial(ClientMaterial &material, Record const &def)
                 DENG2_ASSERT(decorDef.stageCount() == 1); // sanity check.
 
                 std::unique_ptr<LightMaterialDecoration> decor(
-                        new LightMaterialDecoration(Vector2i(decorDef.geta("patternSkip")),
-                                                    Vector2i(decorDef.geta("patternOffset")),
+                        new LightMaterialDecoration(Vec2i(decorDef.geta("patternSkip")),
+                                                    Vec2i(decorDef.geta("patternOffset")),
                                                     false /*don't use interpolation*/));
 
                 std::unique_ptr<LightMaterialDecoration::AnimationStage> definedDecorStage(
@@ -872,7 +872,7 @@ static void redecorateMaterial(ClientMaterial &material, Record const &def)
                 {
                     LightMaterialDecoration::AnimationStage preStage(*definedDecorStage);
                     preStage.tics  = layer0.stage(m).tics;
-                    preStage.color = Vector3f();
+                    preStage.color = Vec3f();
                     decor->addStage(preStage);  // makes a copy.
                 }
 
@@ -882,7 +882,7 @@ static void redecorateMaterial(ClientMaterial &material, Record const &def)
                 {
                     LightMaterialDecoration::AnimationStage postStage(*definedDecorStage);
                     postStage.tics  = layer0.stage(m).tics;
-                    postStage.color = Vector3f();
+                    postStage.color = Vec3f();
                     decor->addStage(postStage);
                 }
 
@@ -933,7 +933,7 @@ static void configureMaterial(world::Material &mat, Record const &definition)
     de::Uri const materialUri(matDef.gets("id"), RC_NULL);
 
     // Reconfigure basic properties.
-    mat.setDimensions(Vector2ui(matDef.geta("dimensions")));
+    mat.setDimensions(Vec2ui(matDef.geta("dimensions")));
     mat.markDontDraw((matDef.geti("flags") & MATF_NO_DRAW) != 0);
     mat.markSkyMasked((matDef.geti("flags") & MATF_SKYMASK) != 0);
 
@@ -1076,8 +1076,8 @@ static void configureMaterial(world::Material &mat, Record const &definition)
                                                  (texture.composeUri(), stage.tics, stage.variance,
                                                   maskTexture->composeUri(), shineDef->stage.blendMode,
                                                   shineDef->stage.shininess,
-                                                  Vector3f(shineDef->stage.minColor),
-                                                  Vector2f(shineDef->stage.maskWidth, shineDef->stage.maskHeight)));
+                                                  Vec3f(shineDef->stage.minColor),
+                                                  Vec2f(shineDef->stage.maskWidth, shineDef->stage.maskHeight)));
                             }
                             catch (Resources::MissingResourceManifestError const &)
                             {}  // Ignore this error.
@@ -1311,7 +1311,7 @@ void Def_Read()
         for (dint k = 0; k < decorDef.lightCount(); ++k)
         {
             Record const &st = defn::MaterialDecoration(decorDef.light(k)).stage(0);
-            if (Vector3f(st.geta("color")) != Vector3f(0, 0, 0))
+            if (Vec3f(st.geta("color")) != Vec3f(0, 0, 0))
             {
                 defineLightmap(de::makeUri(st["lightmapUp"]));
                 defineLightmap(de::makeUri(st["lightmapDown"]));
@@ -1353,7 +1353,7 @@ void Def_Read()
         if (ref->stage.maskTexture)
         {
             res::Textures::get().defineTexture("Masks", *ref->stage.maskTexture,
-                            Vector2ui(ref->stage.maskWidth, ref->stage.maskHeight));
+                            Vec2ui(ref->stage.maskWidth, ref->stage.maskHeight));
         }
     }
 

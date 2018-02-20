@@ -74,7 +74,7 @@ void ClPolyMover::think()
     if (_move)
     {
         // How much to go?
-        Vector2d delta = Vector2d(po->dest) - Vector2d(po->origin);
+        Vec2d delta = Vec2d(po->dest) - Vec2d(po->origin);
 
         ddouble dist = M_ApproxDistance(delta.x, delta.y);
         if (dist <= po->speed || de::fequal(po->speed, 0))

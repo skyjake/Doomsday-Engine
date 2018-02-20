@@ -296,7 +296,7 @@ protected:
      * @param image    Image to commit.
      * @param topLeft  Top left corner of where to place the image.
      */
-    virtual void commit(Image const &image, Vector2i const &topLeft) const = 0;
+    virtual void commit(Image const &image, Vec2i const &topLeft) const = 0;
 
     /**
      * Commits a subregion of an image to the actual physical atlas storage.

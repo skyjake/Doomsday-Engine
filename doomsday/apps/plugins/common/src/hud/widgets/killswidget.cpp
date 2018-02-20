@@ -28,7 +28,7 @@ using namespace de;
 static void KillsWidget_Draw(guidata_kills_t *kills, Point2Raw const *offset)
 {
     DENG2_ASSERT(kills);
-    kills->draw(offset? Vector2i(offset->xy) : Vector2i());
+    kills->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void KillsWidget_UpdateGeometry(guidata_kills_t *kills)
@@ -59,7 +59,7 @@ void guidata_kills_t::tick(timespan_t /*elapsed*/)
     _value = plr->killCount;
 }
 
-void guidata_kills_t::draw(Vector2i const &offset) const
+void guidata_kills_t::draw(Vec2i const &offset) const
 {
 #if !__JHEXEN__
 

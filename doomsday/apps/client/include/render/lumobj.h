@@ -63,7 +63,7 @@ public:
          *
          * @param eye  Position of the eye in map space.
          */
-        virtual float occlusion(de::Vector3d const &eye) const;
+        virtual float occlusion(de::Vec3d const &eye) const;
     };
 
 public:
@@ -74,9 +74,9 @@ public:
      * @param radius       Radius in map space units.
      * @param color        Color/intensity.
      */
-    Lumobj(de::Vector3d const &origin = de::Vector3d(),
+    Lumobj(de::Vec3d const &origin = de::Vec3d(),
            double radius              = 256,
-           de::Vector3f const &color  = de::Vector3f(1, 1, 1));
+           de::Vec3f const &color  = de::Vec3f(1, 1, 1));
 
     /// Construct a new luminious object by copying @a other.
     Lumobj(Lumobj const &other);
@@ -117,7 +117,7 @@ public:
      *
      * @see setColor()
      */
-    de::Vector3f const &color() const;
+    de::Vec3f const &color() const;
 
     /**
      * Change the light color/intensity of the lumobj.
@@ -126,7 +126,7 @@ public:
      *
      * @see color()
      */
-    Lumobj &setColor(de::Vector3f const &newColor);
+    Lumobj &setColor(de::Vec3f const &newColor);
 
     /**
      * Returns the radius of the lumobj in map space units.
@@ -245,7 +245,7 @@ public:
      * @param eye          Position of the viewer in map space.
      * @param distFromEye  Distance between the lumobj and the viewer.
      */
-    void generateFlare(de::Vector3d const &eye, double distFromEye);
+    void generateFlare(de::Vec3d const &eye, double distFromEye);
 
 private:
     DENG2_PRIVATE(d)

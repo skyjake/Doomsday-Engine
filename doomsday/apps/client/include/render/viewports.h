@@ -42,10 +42,10 @@ struct viewport_t
 
 struct viewer_t
 {
-    de::Vector3d origin;
+    de::Vec3d origin;
     float pitch;
 
-    viewer_t(de::Vector3d const &origin = de::Vector3d(),
+    viewer_t(de::Vec3d const &origin = de::Vec3d(),
              angle_t angle              = 0,
              float pitch                = 0)
         : origin(origin)
@@ -83,7 +83,7 @@ struct viewdata_t
      * these must note that it might be necessary to fix the aspect ratio of the
      * Y axis by dividing the Y coordinate by 1.2.
      */
-    de::Vector3f frontVec, upVec, sideVec; /* to the left */
+    de::Vec3f frontVec, upVec, sideVec; /* to the left */
 
     float viewCos = 0.f;
     float viewSin = 0.f;
@@ -237,6 +237,6 @@ void R_ViewWindowTicker(int consoleNum, timespan_t ticLength);
  *
  * @return MVP matrix.
  */
-de::Matrix4f const &Viewer_Matrix();
+de::Mat4f const &Viewer_Matrix();
 
 #endif // DENG_CLIENT_VIEWPORTS_H

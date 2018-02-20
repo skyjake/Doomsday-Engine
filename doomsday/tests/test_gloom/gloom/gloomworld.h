@@ -48,9 +48,9 @@ public:
     /**
      * Determines the height of the ground at a given world coordinates.
      */
-    float groundSurfaceHeight(de::Vector3f const &pos) const;
+    float groundSurfaceHeight(de::Vec3f const &pos) const;
 
-    float ceilingHeight(de::Vector3f const &pos) const;
+    float ceilingHeight(de::Vec3f const &pos) const;
 
 private:
     DENG2_PRIVATE(d)

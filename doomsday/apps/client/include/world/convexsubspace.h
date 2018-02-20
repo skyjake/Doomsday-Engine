@@ -80,7 +80,7 @@ public:
      *
      * @see http://www.alienryderflex.com/polygon/
      */
-    bool contains(de::Vector2d const &point) const;
+    bool contains(de::Vec2d const &point) const;
 
     /**
      * Provides access to the attributed convex geometry (a polygon).
@@ -190,7 +190,7 @@ public:
      *
      * @see bounds()
      */
-    de::Vector2d const &worldGridOffset() const;
+    de::Vec2d const &worldGridOffset() const;
 
     /**
      * Returns a pointer to the face geometry half-edge which has been chosen for use as

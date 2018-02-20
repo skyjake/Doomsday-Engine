@@ -97,7 +97,7 @@ UISettingsDialog::UISettingsDialog(String const &name)
 //           << Const(0) << *restartNotice
            << Const(0) << *d->showAnnotations
            << Const(0) << *annots;
-//    layout.setCellAlignment(Vector2i(0, layout.gridSize().y), ui::AlignLeft);
+//    layout.setCellAlignment(Vec2i(0, layout.gridSize().y), ui::AlignLeft);
 //    layout.append(*library, 2);
     auto *library = LabelWidget::appendSeparatorWithText("Game Library", &area(), &layout);
 

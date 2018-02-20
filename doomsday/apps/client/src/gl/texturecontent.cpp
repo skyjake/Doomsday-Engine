@@ -216,7 +216,7 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
             int newWidth = 0, newHeight = 0;
             newPixels = GL_SmartFilter(scaleMethod, image.pixels, image.size.x, image.size.y,
                                        0, &newWidth, &newHeight);
-            image.size = Vector2ui(newWidth, newHeight);
+            image.size = Vec2ui(newWidth, newHeight);
             if (newPixels != image.pixels)
             {
                 M_Free(image.pixels);
@@ -980,7 +980,7 @@ void GL_UploadTextureContent(texturecontent_t const &content, gl::UploadMethod m
         {
             throw Error("GL_UploadTextureContent", QString("TexImage failed (%1:%2 fmt%3)")
                                                        .arg(content.name)
-                                                       .arg(Vector2i(loadWidth, loadHeight).asText())
+                                                       .arg(Vec2i(loadWidth, loadHeight).asText())
                                                        .arg(int(dglFormat)));
         }
     }
@@ -1004,7 +1004,7 @@ void GL_UploadTextureContent(texturecontent_t const &content, gl::UploadMethod m
         {
             throw Error("GL_UploadTextureContent", QString("TexImageGrayMipmap failed (%1:%2 fmt%3)")
                                                        .arg(content.name)
-                                                       .arg(Vector2i(loadWidth, loadHeight).asText())
+                                                       .arg(Vec2i(loadWidth, loadHeight).asText())
                                                        .arg(int(dglFormat)));
         }
     }

@@ -74,8 +74,8 @@ DENG_GUI_PIMPL(MapOutlineWidget)
 
         mapBounds = Rectanglei();
 
-        Vector4f const oneSidedColor = style().colors().colorf("inverted.altaccent");
-        Vector4f const twoSidedColor = style().colors().colorf("altaccent");
+        Vec4f const oneSidedColor = style().colors().colorf("inverted.altaccent");
+        Vec4f const twoSidedColor = style().colors().colorf("altaccent");
 
         DefaultVertexBuf::Builder verts;
         DefaultVertexBuf::Type vtx;
@@ -101,7 +101,7 @@ DENG_GUI_PIMPL(MapOutlineWidget)
             mapBounds.include(line.end);
         }
 
-//        vtx.rgba = Vector4f(1, 0, 1, 1);
+//        vtx.rgba = Vec4f(1, 0, 1, 1);
 //        vtx.pos = mapBounds.topLeft; verts << vtx;
 //        vtx.pos = mapBounds.bottomRight; verts << vtx;
 
@@ -110,18 +110,18 @@ DENG_GUI_PIMPL(MapOutlineWidget)
         root().window().glDone();
     }
 
-    Matrix4f modelMatrix() const
+    Mat4f modelMatrix() const
     {
         DENG2_ASSERT(vbuf);
 
-        if (mapBounds.isNull()) return Matrix4f();
+        if (mapBounds.isNull()) return Mat4f();
 
         Rectanglef const rect = self().contentRect();
         float const scale = de::min(rect.width()  / mapBounds.width(),
                                     rect.height() / mapBounds.height());
-        return Matrix4f::translate(rect.middle()) *
-               Matrix4f::scale    (Vector3f(scale, -scale, 1)) *
-               Matrix4f::translate(Vector2f(-mapBounds.middle()));
+        return Mat4f::translate(rect.middle()) *
+               Mat4f::scale    (Vec3f(scale, -scale, 1)) *
+               Mat4f::translate(Vec2f(-mapBounds.middle()));
     }
 };
 
@@ -144,7 +144,7 @@ void MapOutlineWidget::drawContent()
         painter.flush();
         GLState::push().setNormalizedScissor(painter.normalizedScissor());
         d->uMvpMatrix = root().projMatrix2D() * d->modelMatrix();
-        d->uColor = Vector4f(1, 1, 1, d->mapOpacity * visibleOpacity());
+        d->uColor = Vec4f(1, 1, 1, d->mapOpacity * visibleOpacity());
         d->drawable.draw();
         GLState::pop();
     }

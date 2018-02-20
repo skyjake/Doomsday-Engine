@@ -120,7 +120,7 @@ public:
     DENG2_DEFINE_AUDIENCE(OneWayWindowFound, void oneWayWindowFound(Line &line, Sector &backFacingSector))
 
     /// Notified when an unclosed sector is first found.
-    DENG2_DEFINE_AUDIENCE(UnclosedSectorFound, void unclosedSectorFound(Sector &sector, de::Vector2d const &nearPoint))
+    DENG2_DEFINE_AUDIENCE(UnclosedSectorFound, void unclosedSectorFound(Sector &sector, de::Vec2d const &nearPoint))
 
     /*
      * Constants:
@@ -166,12 +166,12 @@ public:
      */
     AABoxd const &bounds() const;
 
-    inline de::Vector2d origin    () const {
-        return de::Vector2d(bounds().min);
+    inline de::Vec2d origin    () const {
+        return de::Vec2d(bounds().min);
     }
 
-    inline de::Vector2d dimensions() const {
-        return de::Vector2d(bounds().max) - de::Vector2d(bounds().min);
+    inline de::Vec2d dimensions() const {
+        return de::Vec2d(bounds().max) - de::Vec2d(bounds().min);
     }
 
     /**
@@ -251,7 +251,7 @@ public:  //- Light sources -----------------------------------------------------
      *
      * @note This result is not cached. May return @c 0 if no bias sources exist.
      */
-    BiasSource *biasSourceNear(de::Vector3d const &point) const;
+    BiasSource *biasSourceNear(de::Vec3d const &point) const;
 
     /**
      * Iterate the BiasSources in the map, making a function @a callback for each.
@@ -557,7 +557,7 @@ public:  //- Polyobjects -------------------------------------------------------
      * @return  Subsector containing the specified point if any or @c nullptr if the
      * subsectors have not yet been built.
      */
-    Subsector *subsectorAt(de::Vector2d const &point) const;
+    Subsector *subsectorAt(de::Vec2d const &point) const;
 
 //- Skies -------------------------------------------------------------------------------
 
@@ -609,7 +609,7 @@ public:  //- Subspaces ---------------------------------------------------------
     /**
     * Returns @c true if the given @a point is in the void (outside all map subspaces).
     */
-    bool isPointInVoid(de::Vector3d const &pos) const;
+    bool isPointInVoid(de::Vec3d const &pos) const;
 #endif
 
 public:  //- Vertexs --------------------------------------------------------------------
@@ -688,7 +688,7 @@ public:  //- Data structures ---------------------------------------------------
      *
      * @return  BspLeaf instance for that BSP node's leaf.
      */
-    BspLeaf &bspLeafAt(de::Vector2d const &point) const;
+    BspLeaf &bspLeafAt(de::Vec2d const &point) const;
 
     /**
      * @copydoc bspLeafAt()
@@ -697,7 +697,7 @@ public:  //- Data structures ---------------------------------------------------
      * DOOM. Note that this means there is a maximum size for the point: it cannot exceed
      * the fixed-point 16.16 range (about 65k units).
      */
-    BspLeaf &bspLeafAt_FixedPrecision(de::Vector2d const &point) const;
+    BspLeaf &bspLeafAt_FixedPrecision(de::Vec2d const &point) const;
 
     /**
      * Given an @a emitter origin, attempt to identify the map element to which it belongs.
@@ -922,7 +922,7 @@ public:  //- Editing -----------------------------------------------------------
     /**
      * @see isEditable()
      */
-    Vertex *createVertex(de::Vector2d const &origin,
+    Vertex *createVertex(de::Vec2d const &origin,
                          de::dint archiveIndex = MapElement::NoIndex);
 
     /**
@@ -935,12 +935,12 @@ public:  //- Editing -----------------------------------------------------------
     /**
      * @see isEditable()
      */
-    Polyobj *createPolyobj(de::Vector2d const &origin);
+    Polyobj *createPolyobj(de::Vec2d const &origin);
 
     /**
      * @see isEditable()
      */
-    Sector *createSector(de::dfloat lightLevel, de::Vector3f const &lightColor,
+    Sector *createSector(de::dfloat lightLevel, de::Vec3f const &lightColor,
                          de::dint archiveIndex = MapElement::NoIndex);
 
     /**

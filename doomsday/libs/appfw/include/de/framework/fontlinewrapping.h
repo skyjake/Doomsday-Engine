@@ -105,7 +105,7 @@ public:
      *
      * @return XY coordinates of the character.
      */
-    Vector2i charTopLeftInPixels(int line, int charIndex);
+    Vec2i charTopLeftInPixels(int line, int charIndex);
 
     struct LineInfo
     {

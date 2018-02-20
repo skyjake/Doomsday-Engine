@@ -34,15 +34,15 @@ public:
 
     void setId(ID id);
     void setType(Type t);
-    void setPosition(de::Vector3d const &pos);
+    void setPosition(de::Vec3d const &pos);
     void setScale(float scale);
-    void setScale(de::Vector3f const &scale);
+    void setScale(de::Vec3f const &scale);
     void setAngle(float yawDegrees);
 
     ID           id() const;
     Type         type() const;
-    de::Vector3d position() const;
-    de::Vector3f scale() const;
+    de::Vec3d position() const;
+    de::Vec3f scale() const;
     float        angle() const;
 
 private:

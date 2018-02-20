@@ -72,7 +72,7 @@ public:
     /**
      * Returns the logical size of the window contents (e.g., root widget).
      */
-    virtual Vector2f windowContentSize() const = 0;
+    virtual Vec2f windowContentSize() const = 0;
 
     /**
      * Request drawing the contents of the window as soon as possible.

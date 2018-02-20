@@ -38,7 +38,7 @@ public:
      *
      * @param pixelSize  Pixel size of characters.
      */
-    void setCharSize(de::Vector2i const &pixelSize);
+    void setCharSize(de::Vec2i const &pixelSize);
 
     /**
      * Sets the font used for drawing.

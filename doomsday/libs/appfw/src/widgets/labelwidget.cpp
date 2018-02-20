@@ -49,9 +49,9 @@ public Font::RichFormat::IStyle
     const Rule *overrideImageWidth = nullptr;
     const Rule *overrideImageHeight = nullptr;
     float imageScale;
-    Vector4f imageColor;
-    Vector4f textGLColor;
-    Vector4f shadowColor;
+    Vec4f imageColor;
+    Vec4f textGLColor;
+    Vec4f shadowColor;
     Rule const *maxTextWidth;
 
     ConstantRule *width;
@@ -75,7 +75,7 @@ public Font::RichFormat::IStyle
 
     String styledText;
     TextDrawable glText;
-    mutable Vector2ui latestTextSize;
+    mutable Vec2ui latestTextSize;
 
     std::unique_ptr<ProceduralImage> image;
     std::unique_ptr<ProceduralImage> overlayImage;
@@ -145,7 +145,7 @@ public Font::RichFormat::IStyle
         self().requestGeometry();
     }
 
-    Vector4i margin() const
+    Vec4i margin() const
     {
         return self().margins().toVector();
     }
@@ -236,9 +236,9 @@ public Font::RichFormat::IStyle
         return !glText.text().isEmpty();
     }
 
-    Vector2f imageSize() const
+    Vec2f imageSize() const
     {
-        Vector2f size = image ? pointsToPixels(image->pointSize()) : Vector2f();
+        Vec2f size = image ? pointsToPixels(image->pointSize()) : Vec2f();
 
         // Override components separately.
         if (overrideImageWidth)
@@ -252,7 +252,7 @@ public Font::RichFormat::IStyle
         return size;
     }
 
-    Vector2ui textSize() const
+    Vec2ui textSize() const
     {
         if (!glText.isBeingWrapped())
         {
@@ -270,7 +270,7 @@ public Font::RichFormat::IStyle
     {
         Rectanglei const contentRect = self().contentRect();
 
-        Vector2f const imgSize = imageSize() * imageScale;
+        Vec2f const imgSize = imageSize() * imageScale;
 
         // Determine the sizes of the elements first.
         layout.image = Rectanglef::fromSize(imgSize);
@@ -353,7 +353,7 @@ public Font::RichFormat::IStyle
                 scale = vertScale;
             }
 
-            layout.image.setSize(Vector2f(layout.image.size()) * scale);
+            layout.image.setSize(Vec2f(layout.image.size()) * scale);
 
             // Apply additional user-provided image scaling factor now.
             if (horizPolicy == Filled)
@@ -367,7 +367,7 @@ public Font::RichFormat::IStyle
         }
 
         // By default the image and the text are centered over each other.
-        layout.image.move((Vector2f(layout.text.size()) - layout.image.size()) / 2);
+        layout.image.move((Vec2f(layout.text.size()) - layout.image.size()) / 2);
 
         if (hasImage() && hasText())
         {
@@ -421,7 +421,7 @@ public Font::RichFormat::IStyle
                  alignMode == AlignOnlyByImage?    layout.image :
                                                    layout.text);
 
-        Vector2f delta = applyAlignment(align, combined.size(), contentRect);
+        Vec2f delta = applyAlignment(align, combined.size(), contentRect);
         delta -= combined.topLeft;
 
         layout.image.move(delta);
@@ -458,7 +458,7 @@ public Font::RichFormat::IStyle
             if (textAlign & (AlignLeft | AlignRight))
             {
                 // Image will be placed beside the text.
-                Vector2f imgSize = imageSize() * imageScale;
+                Vec2f imgSize = imageSize() * imageScale;
 
                 if (vertPolicy != Expand)
                 {
@@ -542,13 +542,13 @@ public Font::RichFormat::IStyle
         {
             auto &painter = root().painter();
 
-            Matrix4f mvp;
+            Mat4f mvp;
             bool const isCustomMvp = self().updateModelViewProjection(mvp);
             if (isCustomMvp)
             {
                 painter.setModelViewProjection(mvp);
             }
-            painter.setColor(Vector4f(1, 1, 1, self().visibleOpacity()));
+            painter.setColor(Vec4f(1, 1, 1, self().visibleOpacity()));
             painter.drawTriangleStrip(verts);
             if (isCustomMvp)
             {
@@ -656,7 +656,7 @@ String LabelWidget::text() const
     return d->glText.text();
 }
 
-Vector2ui LabelWidget::textSize() const
+Vec2ui LabelWidget::textSize() const
 {
     return d->textSize();
 }
@@ -715,13 +715,13 @@ void LabelWidget::setTextLineAlignment(Alignment const &textLineAlign)
     d->lineAlign = textLineAlign;
 }
 
-void LabelWidget::setTextModulationColorf(Vector4f const &colorf)
+void LabelWidget::setTextModulationColorf(Vec4f const &colorf)
 {
     d->textGLColor = colorf;
     requestGeometry();
 }
 
-Vector4f LabelWidget::textModulationColorf() const
+Vec4f LabelWidget::textModulationColorf() const
 {
     return d->textGLColor;
 }
@@ -769,12 +769,27 @@ void LabelWidget::setTextStyle(Font::RichFormat::IStyle const *richStyle)
     d->richStyle = richStyle;
 }
 
+void LabelWidget::setOverrideImageSize(Vec2f const &size)
+{
+    d->overrideImageSize = size;
+}
+
+Vec2f LabelWidget::overrideImageSize() const
+{
+    return d->overrideImageSize;
+}
+
+void LabelWidget::setOverrideImageSize(float widthAndHeight)
+{
+    d->overrideImageSize = Vec2f(widthAndHeight, widthAndHeight);
+}
+
 void LabelWidget::setImageScale(float scaleFactor)
 {
     d->imageScale = scaleFactor;
 }
 
-void LabelWidget::setImageColor(Vector4f const &imageColor)
+void LabelWidget::setImageColor(Vec4f const &imageColor)
 {
     d->imageColor = imageColor;
     requestGeometry();
@@ -842,8 +857,8 @@ void LabelWidget::glMakeGeometry(GuiVertexBuilder &verts)
             Rectanglef textBox = Rectanglef::fromSize(textSize());
             ui::applyAlignment(d->lineAlign, textBox, layout.text);
             int const boxSize = pointsToPixels(114);
-            Vector2f const off(0, textBox.height() * .08f);
-            Vector2f const hoff(textBox.height()/2, 0);
+            Vec2f const off(0, textBox.height() * .08f);
+            Vec2f const hoff(textBox.height()/2, 0);
             verts.makeFlexibleFrame(Rectanglef(textBox.midLeft() + hoff + off,
                                                textBox.midRight() - hoff + off)
                                         .expanded(boxSize),
@@ -868,7 +883,7 @@ void LabelWidget::updateStyle()
     d->updateStyle();
 }
 
-bool LabelWidget::updateModelViewProjection(Matrix4f &)
+bool LabelWidget::updateModelViewProjection(Mat4f &)
 {
     return false;
 }

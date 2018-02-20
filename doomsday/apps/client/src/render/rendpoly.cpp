@@ -68,9 +68,9 @@ void R_InitRendPolyPools()
     numrendpolys = maxrendpolys = 0;
     rendPolys = 0;
 
-    Vector3f *rvertices  = R_AllocRendVertices(24);
-    Vector4f *rcolors    = R_AllocRendColors(24);
-    Vector2f *rtexcoords = R_AllocRendTexCoords(24);
+    Vec3f *rvertices  = R_AllocRendVertices(24);
+    Vec4f *rcolors    = R_AllocRendColors(24);
+    Vec2f *rtexcoords = R_AllocRendTexCoords(24);
 
     // Mark unused.
     R_FreeRendVertices(rvertices);
@@ -78,7 +78,7 @@ void R_InitRendPolyPools()
     R_FreeRendTexCoords(rtexcoords);
 }
 
-Vector3f *R_AllocRendVertices(uint num)
+Vec3f *R_AllocRendVertices(uint num)
 {
     uint idx;
     dd_bool found = false;
@@ -92,7 +92,7 @@ Vector3f *R_AllocRendVertices(uint num)
         {
             // Use this one.
             rendPolys[idx]->inUse = true;
-            return (Vector3f *) rendPolys[idx]->data;
+            return (Vec3f *) rendPolys[idx]->data;
         }
         else if(rendPolys[idx]->num == 0)
         {
@@ -135,12 +135,12 @@ Vector3f *R_AllocRendVertices(uint num)
     rendPolys[idx]->inUse = true;
     rendPolys[idx]->type  = RPT_VERT;
     rendPolys[idx]->num   = num;
-    rendPolys[idx]->data  = Z_Malloc(sizeof(Vector3f) * num, PU_MAP, 0);
+    rendPolys[idx]->data  = Z_Malloc(sizeof(Vec3f) * num, PU_MAP, 0);
 
-    return (Vector3f *) rendPolys[idx]->data;
+    return (Vec3f *) rendPolys[idx]->data;
 }
 
-Vector4f *R_AllocRendColors(uint num)
+Vec4f *R_AllocRendColors(uint num)
 {
     uint idx;
     dd_bool found = false;
@@ -154,7 +154,7 @@ Vector4f *R_AllocRendColors(uint num)
         {
             // Use this one.
             rendPolys[idx]->inUse = true;
-            return (Vector4f *) rendPolys[idx]->data;
+            return (Vec4f *) rendPolys[idx]->data;
         }
         else if(rendPolys[idx]->num == 0)
         {
@@ -197,12 +197,12 @@ Vector4f *R_AllocRendColors(uint num)
     rendPolys[idx]->inUse = true;
     rendPolys[idx]->type  = RPT_COLOR;
     rendPolys[idx]->num   = num;
-    rendPolys[idx]->data  = Z_Malloc(sizeof(Vector4f) * num, PU_MAP, 0);
+    rendPolys[idx]->data  = Z_Malloc(sizeof(Vec4f) * num, PU_MAP, 0);
 
-    return (Vector4f *) rendPolys[idx]->data;
+    return (Vec4f *) rendPolys[idx]->data;
 }
 
-Vector2f *R_AllocRendTexCoords(uint num)
+Vec2f *R_AllocRendTexCoords(uint num)
 {
     uint idx;
     dd_bool found = false;
@@ -216,7 +216,7 @@ Vector2f *R_AllocRendTexCoords(uint num)
         {
             // Use this one.
             rendPolys[idx]->inUse = true;
-            return (Vector2f *) rendPolys[idx]->data;
+            return (Vec2f *) rendPolys[idx]->data;
         }
         else if(rendPolys[idx]->num == 0)
         {
@@ -260,12 +260,12 @@ Vector2f *R_AllocRendTexCoords(uint num)
     rendPolys[idx]->inUse = true;
     rendPolys[idx]->type  = RPT_TEXCOORD;
     rendPolys[idx]->num   = num;
-    rendPolys[idx]->data  = Z_Malloc(sizeof(Vector2f) * num, PU_MAP, 0);
+    rendPolys[idx]->data  = Z_Malloc(sizeof(Vec2f) * num, PU_MAP, 0);
 
-    return (Vector2f *) rendPolys[idx]->data;
+    return (Vec2f *) rendPolys[idx]->data;
 }
 
-void R_FreeRendVertices(Vector3f *rvertices)
+void R_FreeRendVertices(Vec3f *rvertices)
 {
     if(!rvertices) return;
 
@@ -281,7 +281,7 @@ void R_FreeRendVertices(Vector3f *rvertices)
     LOGDEV_GL_WARNING("R_FreeRendPoly: Dangling poly ptr!");
 }
 
-void R_FreeRendColors(Vector4f *rcolors)
+void R_FreeRendColors(Vec4f *rcolors)
 {
     if(!rcolors) return;
 
@@ -297,7 +297,7 @@ void R_FreeRendColors(Vector4f *rcolors)
     LOGDEV_GL_WARNING("R_FreeRendPoly: Dangling poly ptr!");
 }
 
-void R_FreeRendTexCoords(Vector2f *rtexcoords)
+void R_FreeRendTexCoords(Vec2f *rtexcoords)
 {
     if(!rtexcoords) return;
 
@@ -313,7 +313,7 @@ void R_FreeRendTexCoords(Vector2f *rtexcoords)
     LOGDEV_GL_WARNING("R_FreeRendPoly: Dangling poly ptr!");
 }
 
-void R_DivVerts(Vector3f *dst, Vector3f const *src,
+void R_DivVerts(Vec3f *dst, Vec3f const *src,
     WorldEdge const &leftEdge, WorldEdge const &rightEdge)
 {
     int const numR = 3 + rightEdge.divisionCount();
@@ -344,7 +344,7 @@ void R_DivVerts(Vector3f *dst, Vector3f const *src,
     }
 }
 
-void R_DivTexCoords(Vector2f *dst, Vector2f const *src,
+void R_DivTexCoords(Vec2f *dst, Vec2f const *src,
     WorldEdge const &leftEdge, WorldEdge const &rightEdge)
 {
     int const numR = 3 + rightEdge.divisionCount();
@@ -377,7 +377,7 @@ void R_DivTexCoords(Vector2f *dst, Vector2f const *src,
     }
 }
 
-void R_DivVertColors(Vector4f *dst, Vector4f const *src,
+void R_DivVertColors(Vec4f *dst, Vec4f const *src,
     WorldEdge const &leftEdge, WorldEdge const &rightEdge)
 {
     int const numR = 3 + rightEdge.divisionCount();

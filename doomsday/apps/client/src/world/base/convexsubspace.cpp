@@ -39,10 +39,10 @@ using namespace de;
 #ifdef __CLIENT__
 
 /// Compute the area of a triangle defined by three 2D point vectors.
-ddouble triangleArea(Vector2d const &v1, Vector2d const &v2, Vector2d const &v3)
+ddouble triangleArea(Vec2d const &v1, Vec2d const &v2, Vec2d const &v3)
 {
-    Vector2d a = v2 - v1;
-    Vector2d b = v3 - v1;
+    Vec2d a = v2 - v1;
+    Vec2d b = v3 - v1;
     return (a.x * b.y - b.x * a.y) / 2;
 }
 
@@ -61,7 +61,7 @@ DENG2_PIMPL(ConvexSubspace)
     Polyobjs polyobjs;                     ///< Linked polyobjs (not owned).
 
 #ifdef __CLIENT__
-    Vector2d worldGridOffset;              ///< For aligning the materials to the map space grid.
+    Vec2d worldGridOffset;              ///< For aligning the materials to the map space grid.
 
     typedef QSet<Lumobj *> Lumobjs;
     Lumobjs lumobjs;                       ///< Linked lumobjs (not owned).
@@ -169,7 +169,7 @@ ConvexSubspace::ConvexSubspace(Face &convexPolygon, BspLeaf *bspLeaf)
     d->poly = &convexPolygon;
 #ifdef __CLIENT__
     // Determine the world grid offset.
-    d->worldGridOffset = Vector2d(fmod(poly().bounds().minX, 64),
+    d->worldGridOffset = Vec2d(fmod(poly().bounds().minX, 64),
                                   fmod(poly().bounds().maxY, 64));
 #endif
     poly().setMapElement(this);
@@ -197,7 +197,7 @@ Face &ConvexSubspace::poly() const
     return *d->poly;
 }
 
-bool ConvexSubspace::contains(Vector2d const &point) const
+bool ConvexSubspace::contains(Vec2d const &point) const
 {
     HEdge const *hedge = poly().hedge();
     do
@@ -301,7 +301,7 @@ void ConvexSubspace::setValidCount(dint newValidCount)
 
 #ifdef __CLIENT__
 
-Vector2d const &ConvexSubspace::worldGridOffset() const
+Vec2d const &ConvexSubspace::worldGridOffset() const
 {
     return d->worldGridOffset;
 }

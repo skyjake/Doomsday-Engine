@@ -26,9 +26,9 @@ DENG2_PIMPL_NOREF(Entity)
 {
     ID       id;
     Type     type{Tree1};
-    Vector3d pos;
+    Vec3d pos;
     float    angle{0};
-    Vector3f scale{1, 1, 1};
+    Vec3f scale{1, 1, 1};
 
     Impl()
         : type(Tree1)
@@ -51,17 +51,17 @@ void Entity::setType(Type t)
     d->type = t;
 }
 
-void Entity::setPosition(Vector3d const &pos)
+void Entity::setPosition(Vec3d const &pos)
 {
     d->pos = pos;
 }
 
 void Entity::setScale(float scale)
 {
-    d->scale = Vector3f(scale, scale, scale);
+    d->scale = Vec3f(scale, scale, scale);
 }
 
-void Entity::setScale(Vector3f const &scale)
+void Entity::setScale(Vec3f const &scale)
 {
     d->scale = scale;
 }
@@ -81,12 +81,12 @@ Entity::Type Entity::type() const
     return d->type;
 }
 
-Vector3d Entity::position() const
+Vec3d Entity::position() const
 {
     return d->pos;
 }
 
-Vector3f Entity::scale() const
+Vec3f Entity::scale() const
 {
     return d->scale;
 }

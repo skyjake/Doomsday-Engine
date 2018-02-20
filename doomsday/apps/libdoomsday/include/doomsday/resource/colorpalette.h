@@ -53,7 +53,7 @@ public:
      * @param colorCount  Number of discreet colors in @a colorData.
      * @param colorData   Color data (at least @a colorCount * 3 values).
      */
-    static QVector<de::Vector3ub> read(de::String format, int colorCount,
+    static QVector<de::Vec3ub> read(de::String format, int colorCount,
                                        de::dbyte const *colorData);
 };
 
@@ -85,10 +85,10 @@ public:
      *
      * @param colors  Color table to initialize from. A copy is made.
      */
-    ColorPalette(QVector<de::Vector3ub> const &colors);
+    ColorPalette(QVector<de::Vec3ub> const &colors);
 
     /// @see color()
-    inline de::Vector3ub operator [] (int colorIndex) const {
+    inline de::Vec3ub operator [] (int colorIndex) const {
         return color(colorIndex);
     }
 
@@ -112,12 +112,12 @@ public:
      *
      * @see colorf(), operator []
      */
-    de::Vector3ub color(int colorIndex) const;
+    de::Vec3ub color(int colorIndex) const;
 
     /**
      * Same as @ref color() except the color is returned in [0..1] floating-point.
      */
-    de::Vector3f colorf(int colorIndex) const;
+    de::Vec3f colorf(int colorIndex) const;
 
     /**
      * Replace the entire color table. The ColorTableChange audience is notified
@@ -128,7 +128,7 @@ public:
      *
      * @param colorTable  The replacement color table. A copy is made.
      */
-    ColorPalette &replaceColorTable(QVector<de::Vector3ub> const &colorTable);
+    ColorPalette &replaceColorTable(QVector<de::Vec3ub> const &colorTable);
 
     /**
      * Given an R8G8B8 color triplet return the closet matching color index.
@@ -137,7 +137,7 @@ public:
      *
      * @return  Closet matching color index or @c -1 if no colors in the palette.
      */
-    int nearestIndex(de::Vector3ub const &rgb) const;
+    int nearestIndex(de::Vec3ub const &rgb) const;
 
     /**
      * Clear all translation maps.

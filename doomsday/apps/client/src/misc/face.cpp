@@ -28,7 +28,7 @@ DENG2_PIMPL_NOREF(Face)
 {
     HEdge *hedge = nullptr;  ///< First half-edge in the face geometry.
     AABoxd bounds;           ///< Vertex bounding box.
-    Vector2d center;         ///< Center of vertices.
+    Vec2d center;         ///< Center of vertices.
 };
 
 Face::Face(Mesh &mesh)
@@ -72,7 +72,7 @@ void Face::updateBounds()
     }
 }
 
-Vector2d const &Face::center() const
+Vec2d const &Face::center() const
 {
     return d->center;
 }
@@ -80,8 +80,8 @@ Vector2d const &Face::center() const
 void Face::updateCenter()
 {
     // The center is the middle of our AABox.
-    d->center = Vector2d(d->bounds.min)
-              + (Vector2d(d->bounds.max) - Vector2d(d->bounds.min)) / 2;
+    d->center = Vec2d(d->bounds.min)
+              + (Vec2d(d->bounds.max) - Vec2d(d->bounds.min)) / 2;
 }
 
 bool Face::isConvex() const
@@ -99,7 +99,7 @@ String Face::description() const
     {
         do
         {
-            Vector2d direction = hedge->origin() - d->center;
+            Vec2d direction = hedge->origin() - d->center;
             coord_t angle      = M_DirectionToAngleXY(direction.x, direction.y);
 
             text += String("\n  [0x%1]: Angle %2.6f %3 -> %4")

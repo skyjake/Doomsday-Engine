@@ -28,7 +28,7 @@ DENG2_PIMPL_NOREF(FadeToBlackWidget)
 
 FadeToBlackWidget::FadeToBlackWidget() : d(new Impl)
 {
-    set(Background(Vector4f(0, 0, 0, 1)));
+    set(Background(Vec4f(0, 0, 0, 1)));
 }
 
 void FadeToBlackWidget::initFadeFromBlack(TimeSpan const &span)

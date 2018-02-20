@@ -30,9 +30,9 @@
 struct ProjectedTextureData
 {
     DGLuint texture = 0;
-    de::Vector2f topLeft;
-    de::Vector2f bottomRight;
-    de::Vector4f color;
+    de::Vec2f topLeft;
+    de::Vec2f bottomRight;
+    de::Vec4f color;
 };
 
 #endif  // CLIENT_RENDER_PROJECTEDTEXTUREDATA_H

@@ -41,7 +41,7 @@ static void KeySlotWidget_UpdateGeometry(guidata_keyslot_t *kslt)
 static void KeySlotWidget_Draw(guidata_keyslot_t *kslt, Point2Raw const *offset)
 {
     DENG2_ASSERT(kslt);
-    kslt->draw(offset? Vector2i(offset->xy) : Vector2i());
+    kslt->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 DENG2_PIMPL_NOREF(guidata_keyslot_t)
@@ -112,9 +112,9 @@ void guidata_keyslot_t::tick(timespan_t /*elapsed*/)
 #endif
 }
 
-void guidata_keyslot_t::draw(Vector2i const &offset) const
+void guidata_keyslot_t::draw(Vec2i const &offset) const
 {
-    Vector2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
+    Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
 
     dint const activeHud     = ST_ActiveHud(player());
     dint const yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(player()));
@@ -143,14 +143,14 @@ void guidata_keyslot_t::draw(Vector2i const &offset) const
     DGL_Color4f(1, 1, 1, iconOpacity);
 
 #if __JDOOM__
-    Vector2i const comboOffset((d->patchId2 > 0? -1 : 0), (d->patchId2 > 0? -1 : 0));
-    GL_DrawPatch(d->patchId, origin + Vector2i(239, 3 + 10 * d->slotNum) + comboOffset);
+    Vec2i const comboOffset((d->patchId2 > 0? -1 : 0), (d->patchId2 > 0? -1 : 0));
+    GL_DrawPatch(d->patchId, origin + Vec2i(239, 3 + 10 * d->slotNum) + comboOffset);
     if(d->patchId2 > 0)
     {
-        GL_DrawPatch(d->patchId2, origin + Vector2i(239, 3 + 10 * d->slotNum) - comboOffset);
+        GL_DrawPatch(d->patchId2, origin + Vec2i(239, 3 + 10 * d->slotNum) - comboOffset);
     }
 #else
-    GL_DrawPatch(d->patchId, origin + Vector2i(153, 6 + 8 * d->keyTypeA));
+    GL_DrawPatch(d->patchId, origin + Vec2i(153, 6 + 8 * d->keyTypeA));
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);

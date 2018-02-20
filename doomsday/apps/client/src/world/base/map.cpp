@@ -383,7 +383,7 @@ DENG2_PIMPL(Map)
     }
 
     // Observes bsp::Partitioner UnclosedSectorFound.
-    void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint)
+    void unclosedSectorFound(Sector &sector, Vec2d const &nearPoint)
     {
         // Notify interested parties that an unclosed sector was found.
         DENG2_FOR_PUBLIC_AUDIENCE(UnclosedSectorFound, i) i->unclosedSectorFound(sector, nearPoint);
@@ -410,7 +410,7 @@ DENG2_PIMPL(Map)
         Line *backLine      = nullptr;
         Line *testLine      = nullptr;
         bool castHorizontal = false;
-        Vector2d testLineCenter;
+        Vec2d testLineCenter;
     };
 
     static bool lineHasZeroLength(Line const &line)
@@ -1607,7 +1607,7 @@ void Map::initLightGrid()
     // Determine how many subsector samples we'll make per block and
     // allocate the tempoary storage.
     dint const numSamples = multisample[de::clamp(0, lgMXSample, MSFACTORS)];
-    QVector<Vector2d> samplePoints(numSamples);
+    QVector<Vec2d> samplePoints(numSamples);
     QVector<dint>     sampleHits(numSamples);
 
     /// It would be possible to only allocate memory for the unique
@@ -1655,7 +1655,7 @@ void Map::initLightGrid()
     if (center == 0)
     {
         // Zero is the center so do that first.
-        samplePoints[0] = Vector2d(lg.blockSize() / 2, lg.blockSize() / 2);
+        samplePoints[0] = Vec2d(lg.blockSize() / 2, lg.blockSize() / 2);
     }
 
     if (numSamples > 1)
@@ -1668,7 +1668,7 @@ void Map::initLightGrid()
         for (dint y = 0; y < size; ++y)
         for (dint x = 0; x < size; ++x, ++idx)
         {
-            samplePoints[idx] = Vector2d(de::round<ddouble>(x * bSize),
+            samplePoints[idx] = Vec2d(de::round<ddouble>(x * bSize),
                                          de::round<ddouble>(y * bSize));
         }
     }
@@ -1678,7 +1678,7 @@ void Map::initLightGrid()
     for (dint x = 0; x < lg.dimensions().x; ++x)
     {
         LightGrid::Index const blk = lg.toIndex(x, y);
-        Vector2d const off(x * lg.blockSize(), y * lg.blockSize());
+        Vec2d const off(x * lg.blockSize(), y * lg.blockSize());
 
         dint sampleOffset = 0;
         if (center == 0)
@@ -1885,10 +1885,10 @@ void Map::initRadio()
             AABoxd bounds = line->bounds();
 
             // Use the extended points, they are wider than inoffsets.
-            Vector2d const sv0 = vtx0.origin() + vo0->extendedShadowOffset();
+            Vec2d const sv0 = vtx0.origin() + vo0->extendedShadowOffset();
             V2d_AddToBoxXY(bounds.arvec2, sv0.x, sv0.y);
 
-            Vector2d const sv1 = vtx1.origin() + vo1->extendedShadowOffset();
+            Vec2d const sv1 = vtx1.origin() + vo1->extendedShadowOffset();
             V2d_AddToBoxXY(bounds.arvec2, sv1.x, sv1.y);
 
             // Link the shadowing line to all the subspaces whose axis-aligned bounding box
@@ -2124,7 +2124,7 @@ dint Map::sectorCount() const
 }
 
 #ifdef __CLIENT__
-bool Map::isPointInVoid(de::Vector3d const &point) const
+bool Map::isPointInVoid(de::Vec3d const &point) const
 {
     BspLeaf const &bspLeaf = bspLeafAt(point);
     if (bspLeaf.hasSubspace() && bspLeaf.subspace().contains(point) && bspLeaf.subspace().hasSubsector())
@@ -2315,7 +2315,7 @@ LoopResult Map::forAllSectors(std::function<LoopResult (Sector &)> func) const
     return LoopContinue;
 }
 
-Subsector *Map::subsectorAt(Vector2d const &point) const
+Subsector *Map::subsectorAt(Vec2d const &point) const
 {
     BspLeaf &bspLeaf = bspLeafAt(point);
     if (bspLeaf.hasSubspace() && bspLeaf.subspace().contains(point))
@@ -2651,7 +2651,7 @@ LoopResult Map::forAllLinesInBox(AABoxd const &box, dint flags, std::function<Lo
     return result;
 }
 
-BspLeaf &Map::bspLeafAt(Vector2d const &point) const
+BspLeaf &Map::bspLeafAt(Vec2d const &point) const
 {
     if (!d->bsp.tree)
         /// @throw MissingBspTreeError  No BSP data is available.
@@ -2671,7 +2671,7 @@ BspLeaf &Map::bspLeafAt(Vector2d const &point) const
     return bspTree->userData()->as<BspLeaf>();
 }
 
-BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
+BspLeaf &Map::bspLeafAt_FixedPrecision(Vec2d const &point) const
 {
     if (!d->bsp.tree)
         /// @throw MissingBspTreeError  No BSP data is available.
@@ -3025,7 +3025,7 @@ BiasSource *Map::biasSourcePtr(dint index) const
  * @todo Implement a blockmap for these?
  * @todo Cache this result (MRU?).
  */
-BiasSource *Map::biasSourceNear(Vector3d const &point) const
+BiasSource *Map::biasSourceNear(Vec3d const &point) const
 {
     BiasSource *nearest = nullptr;
     ddouble minDist = 0;
@@ -3491,7 +3491,7 @@ D_CMD(InspectMap)
 
     LOG_SCR_MSG(_E(R) "\n");
 
-    auto geometryDimensions = Vector2d(map.bounds().max) - Vector2d(map.bounds().min);
+    auto geometryDimensions = Vec2d(map.bounds().max) - Vec2d(map.bounds().min);
     LOG_SCR_MSG(_E(l) "Geometry dimensions: " _E(.) _E(i)) << geometryDimensions.asText();
 
     if (map.hasBspTree())
@@ -4062,7 +4062,7 @@ bool Map::endEditing()
     return true;
 }
 
-Vertex *Map::createVertex(Vector2d const &origin, dint archiveIndex)
+Vertex *Map::createVertex(Vec2d const &origin, dint archiveIndex)
 {
     if (!d->editingEnabled)
         /// @throw EditError  Attempted when not editing.
@@ -4100,7 +4100,7 @@ Line *Map::createLine(Vertex &v1, Vertex &v2, int flags, Sector *frontSector,
     return line;
 }
 
-Sector *Map::createSector(dfloat lightLevel, Vector3f const &lightColor, dint archiveIndex)
+Sector *Map::createSector(dfloat lightLevel, Vec3f const &lightColor, dint archiveIndex)
 {
     if (!d->editingEnabled)
         /// @throw EditError  Attempted when not editing.
@@ -4118,7 +4118,7 @@ Sector *Map::createSector(dfloat lightLevel, Vector3f const &lightColor, dint ar
     return sector;
 }
 
-Polyobj *Map::createPolyobj(Vector2d const &origin)
+Polyobj *Map::createPolyobj(Vec2d const &origin)
 {
     if (!d->editingEnabled)
         /// @throw EditError  Attempted when not editing.

@@ -94,7 +94,7 @@ void SBarBlueManaIconWidget_Draw(guidata_bluemanaicon_t *icon, Point2Raw const *
 #define Y_OFFSET                (  2 )
 
     DENG2_ASSERT(icon);
-    static Vector2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
+    static Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
 
     dint const activeHud     = ST_ActiveHud(icon->player());
     dfloat const yOffset     = ST_HEIGHT * (1 - ST_StatusBarShown(icon->player()));
@@ -114,7 +114,7 @@ void SBarBlueManaIconWidget_Draw(guidata_bluemanaicon_t *icon, Point2Raw const *
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, iconOpacity);
-    GL_DrawPatch(::pBlueManaIcon[icon->_iconIdx], origin + Vector2i(X_OFFSET, Y_OFFSET));
+    GL_DrawPatch(::pBlueManaIcon[icon->_iconIdx], origin + Vec2i(X_OFFSET, Y_OFFSET));
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);

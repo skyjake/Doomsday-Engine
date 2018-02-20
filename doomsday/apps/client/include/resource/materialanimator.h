@@ -86,11 +86,11 @@ public:
          */
         MaterialDecoration &decor() const;
 
-        de::Vector2f origin() const;
+        de::Vec2f origin() const;
         float elevation() const;
 
         float radius() const;
-        de::Vector3f color() const;
+        de::Vec3f color() const;
         void lightLevels(float &min, float &max) const;
 
         ClientTexture *tex() const;
@@ -175,7 +175,7 @@ public:
     /**
      * Returns the current dimension metrics for the animated Material.
      */
-    de::Vector2ui const &dimensions() const;
+    de::Vec2ui const &dimensions() const;
 
     /**
      * Returns the current glow strength factor for the animated Material.
@@ -190,7 +190,7 @@ public:
     /**
      * Returns the current shine effect minimum color for the animated Material.
      */
-    de::Vector3f const &shineMinColor() const;
+    de::Vec3f const &shineMinColor() const;
 
     /**
      * Lookup a prepared GLTextureUnit by it's unique @a unitIndex.

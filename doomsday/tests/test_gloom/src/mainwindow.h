@@ -32,7 +32,7 @@ public:
 
     AppRootWidget &root();
 
-    de::Vector2f windowContentSize() const override;
+    de::Vec2f windowContentSize() const override;
 
 //    void addOnTop(de::GuiWidget *widget);
     void drawWindowContent() override;

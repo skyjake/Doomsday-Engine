@@ -116,8 +116,8 @@ public:
         /**
          * Construct a new material Decoration with the given skip pattern configuration.
          */
-        Decoration(de::Vector2i const &patternSkip   = de::Vector2i(),
-                   de::Vector2i const &patternOffset = de::Vector2i());
+        Decoration(de::Vec2i const &patternSkip   = de::Vec2i(),
+                   de::Vec2i const &patternOffset = de::Vec2i());
         virtual ~Decoration();
 
         DENG2_CAST_METHODS()
@@ -145,14 +145,14 @@ public:
          *
          * @see patternOffset()
          */
-        de::Vector2i const &patternSkip() const;
+        de::Vec2i const &patternSkip() const;
 
         /**
          * Returns the pattern offset configuration for the decoration.
          *
          * @see patternSkip()
          */
-        de::Vector2i const &patternOffset() const;
+        de::Vec2i const &patternOffset() const;
 
         /**
          * Returns the total number of animation Stages for the decoration.

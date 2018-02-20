@@ -158,7 +158,7 @@ public:
     /**
      * Returns the logical dimensions property of the manifest.
      */
-    de::Vector2ui const &logicalDimensions() const;
+    de::Vec2ui const &logicalDimensions() const;
 
     /**
      * Change the logical dimensions property of the manifest.
@@ -167,19 +167,19 @@ public:
      * which case their value will be inherited from the pixel dimensions of
      * the image at load time.
      */
-    bool setLogicalDimensions(de::Vector2ui const &newDimensions);
+    bool setLogicalDimensions(de::Vec2ui const &newDimensions);
 
     /**
      * Returns the world origin offset property of the manifest.
      */
-    de::Vector2i const &origin() const;
+    de::Vec2i const &origin() const;
 
     /**
      * Change the world origin offest property of the manifest.
      *
      * @param newOrigin  New origin offset.
      */
-    void setOrigin(de::Vector2i const &newOrigin);
+    void setOrigin(de::Vec2i const &newOrigin);
 
     /**
      * Returns the texture flags property of the manifest.

@@ -31,10 +31,10 @@ DENG2_PIMPL_NOREF(MapObject)
     Map *map = nullptr;
     dint indexInMap = NoIndex;
     BspLeaf *bspLeaf = nullptr;  ///< BSP leaf at @ref origin in the map (not owned).
-    Vector3d origin;             ///< Position in map space.
+    Vec3d origin;             ///< Position in map space.
 };
 
-MapObject::MapObject(Vector3d const &origin) : d(new Impl)
+MapObject::MapObject(Vec3d const &origin) : d(new Impl)
 {
     d->origin = origin;
 }
@@ -42,12 +42,12 @@ MapObject::MapObject(Vector3d const &origin) : d(new Impl)
 MapObject::~MapObject()
 {}
 
-Vector3d const &MapObject::origin() const
+Vec3d const &MapObject::origin() const
 {
     return d->origin;
 }
 
-void MapObject::setOrigin(Vector3d const &newOrigin)
+void MapObject::setOrigin(Vec3d const &newOrigin)
 {
     if(d->origin != newOrigin)
     {
@@ -62,7 +62,7 @@ void MapObject::setOrigin(Vector3d const &newOrigin)
     }
 }
 
-void MapObject::move(Vector3d const &delta)
+void MapObject::move(Vec3d const &delta)
 {
     setOrigin(d->origin + delta);
 }

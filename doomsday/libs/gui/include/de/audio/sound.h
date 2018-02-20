@@ -85,8 +85,8 @@ public:
     virtual Sound &setVolume(dfloat volume);
     virtual Sound &setPan(dfloat pan);
     virtual Sound &setFrequency(dfloat factor);
-    virtual Sound &setPosition(Vector3f const &position, Positioning positioning = Absolute);
-    virtual Sound &setVelocity(Vector3f const &velocity);
+    virtual Sound &setPosition(Vec3f const &position, Positioning positioning = Absolute);
+    virtual Sound &setVelocity(Vec3f const &velocity);
     virtual Sound &setMinDistance(dfloat minDistance);
     virtual Sound &setSpatialSpread(dfloat degrees);
 
@@ -100,8 +100,8 @@ public:
     virtual dfloat pan() const;
     virtual dfloat frequency() const;
     virtual Positioning positioning() const;
-    virtual Vector3f position() const;
-    virtual Vector3f velocity() const;
+    virtual Vec3f position() const;
+    virtual Vec3f velocity() const;
     virtual dfloat minDistance() const;
     virtual dfloat spatialSpread() const;
 

@@ -132,8 +132,8 @@ static inline float fadeFactorAt(coord_t distToViewer)
     return 1;
 }
 
-bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
-    Vector3f const &color, coord_t distanceToViewer,
+bool H_RenderHalo(Vec3d const &origin, float size, DGLuint tex,
+    Vec3f const &color, coord_t distanceToViewer,
     float occlusionFactor, float brightnessFactor, float viewXOffset,
     bool doPrimary, bool viewRelativeRotate)
 {
@@ -149,22 +149,22 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
 
     // viewSideVec is to the left.
     viewdata_t const *viewData = &viewPlayer->viewport();
-    Vector3f const leftOff  = viewData->upVec + viewData->sideVec;
-    Vector3f const rightOff = viewData->upVec - viewData->sideVec;
+    Vec3f const leftOff  = viewData->upVec + viewData->sideVec;
+    Vec3f const rightOff = viewData->upVec - viewData->sideVec;
 
     // Calculate the center of the flare.
     // Apply the flare's X offset. (Positive is to the right.)
-    Vector3f const center = Vector3f(origin.x, origin.z, origin.y)
+    Vec3f const center = Vec3f(origin.x, origin.z, origin.y)
                           - viewData->sideVec * viewXOffset;
 
     // Calculate the mirrored position.
     // Project viewtocenter vector onto viewSideVec.
-    Vector3f const viewToCenter = center - Rend_EyeOrigin();
+    Vec3f const viewToCenter = center - Rend_EyeOrigin();
 
     // Calculate the 'mirror' vector.
     float const scale = viewToCenter.dot(viewData->frontVec)
                         / viewData->frontVec.dot(viewData->frontVec);
-    Vector3f const mirror =
+    Vec3f const mirror =
         (viewData->frontVec * scale - viewToCenter) * 2;
 
     // Calculate dimming factors.
@@ -176,7 +176,7 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
     if(viewRelativeRotate)
     {
         // Normalize the mirror vector so that both are on the view plane.
-        Vector3f haloPos = mirror.normalize();
+        Vec3f haloPos = mirror.normalize();
         if(haloPos.length())
         {
             turnAngle = de::clamp<float>(-1, haloPos.dot(viewData->upVec), 1);
@@ -307,7 +307,7 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
         }
 
         // Determine the final position of the flare.
-        Vector3f pos = center;
+        Vec3f pos = center;
 
         // Secondary halos are mirrored according to the flare table.
         if(secondary)

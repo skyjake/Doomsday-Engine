@@ -48,8 +48,8 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(Alignment)
 class LIBSHELL_PUBLIC TextCanvas
 {
 public:
-    typedef Vector2ui Size;
-    typedef Vector2i  Coord;
+    typedef Vec2ui Size;
+    typedef Vec2i  Coord;
 
     struct Char {
         enum Attrib {

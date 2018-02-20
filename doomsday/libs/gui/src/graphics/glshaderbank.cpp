@@ -387,17 +387,17 @@ Bank::IData *GLShaderBank::loadFromSource(ISource &source)
 
             case 2:
                 uniform.reset(new GLUniform(uName, GLUniform::Vec2));
-                *uniform = vectorFromValue<Vector2f>(*array);
+                *uniform = vectorFromValue<Vec2f>(*array);
                 break;
 
             case 3:
                 uniform.reset(new GLUniform(uName, GLUniform::Vec3));
-                *uniform = vectorFromValue<Vector3f>(*array);
+                *uniform = vectorFromValue<Vec3f>(*array);
                 break;
 
             case 4:
                 uniform.reset(new GLUniform(uName, GLUniform::Vec4));
-                *uniform = vectorFromValue<Vector4f>(*array);
+                *uniform = vectorFromValue<Vec4f>(*array);
                 break;
             }
         }

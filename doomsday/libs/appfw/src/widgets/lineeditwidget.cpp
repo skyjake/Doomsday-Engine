@@ -53,7 +53,7 @@ DENG_GUI_PIMPL(LineEditWidget)
 
     // Style.
     ColorTheme colorTheme = Normal;
-    Vector4f textColor;
+    Vec4f textColor;
     Font const *font;
     Time blinkTime;
     Animation hovering;
@@ -80,7 +80,7 @@ DENG_GUI_PIMPL(LineEditWidget)
     {
         height = new AnimationRule(0);
 
-        self().set(Background(Vector4f(1, 1, 1, 1), Background::GradientFrame));
+        self().set(Background(Vec4f(1, 1, 1, 1), Background::GradientFrame));
         self().setFont("editor.plaintext");
         updateStyle();
     }
@@ -127,13 +127,13 @@ DENG_GUI_PIMPL(LineEditWidget)
         if (self().background().type == Background::GradientFrame)
         {
             Background bg;
-            Vector3f const frameColor = style().colors().colorf(colorTheme == Normal? "text" : "inverted.text");
+            Vec3f const frameColor = style().colors().colorf(colorTheme == Normal? "text" : "inverted.text");
             if (!self().hasFocus())
             {
-                bg = Background(Background::GradientFrame, Vector4f(frameColor, .15f + hovering * .2f), 6);
+                bg = Background(Background::GradientFrame, Vec4f(frameColor, .15f + hovering * .2f), 6);
                 if (unfocusedBackgroundOpacity > 0.f)
                 {
-                    bg.solidFill = Vector4f(style().colors().colorf(colorTheme == Normal? "background"
+                    bg.solidFill = Vec4f(style().colors().colorf(colorTheme == Normal? "background"
                                                                                         : "inverted.background").xyz(),
                                             unfocusedBackgroundOpacity);
                 }
@@ -143,7 +143,7 @@ DENG_GUI_PIMPL(LineEditWidget)
                 bg = Background(style().colors().colorf(colorTheme == Normal? "background"
                                                                             : "inverted.background"),
                                 Background::GradientFrame,
-                                Vector4f(frameColor, .25f + hovering * .3f), 6);
+                                Vec4f(frameColor, .25f + hovering * .3f), 6);
             }
             self().set(bg);
         }
@@ -204,14 +204,14 @@ DENG_GUI_PIMPL(LineEditWidget)
         Rectanglei const caret = self().cursorRect();
 
         verts.clear();
-        verts.makeQuad(caret, Vector4f(1, 1, 1, 1),
+        verts.makeQuad(caret, Vec4f(1, 1, 1, 1),
                        atlas().imageRectf(self().root().solidWhitePixel()).middle());
 
         drawable.buffer<VertexBuf>(ID_BUF_CURSOR)
                 .setVertices(gl::TriangleStrip, verts, gl::Static);
     }
 
-    void updateHover(Vector2i const &pos)
+    void updateHover(Vec2i const &pos)
     {
         if (/*!self().hasFocus() && */ self().hitTest(pos))
         {
@@ -295,12 +295,12 @@ void LineEditWidget::setSignalOnEnter(bool enterSignal)
 
 Rectanglei LineEditWidget::cursorRect() const
 {
-    Vector2i const cursorPos = lineCursorPos();
-    Vector2i const cp = d->wraps.charTopLeftInPixels(cursorPos.y, cursorPos.x) +
+    Vec2i const cursorPos = lineCursorPos();
+    Vec2i const cp = d->wraps.charTopLeftInPixels(cursorPos.y, cursorPos.x) +
             contentRect().topLeft;
 
-    return Rectanglei(cp + pointsToPixels(Vector2i(-1, 0)),
-                      cp + Vector2i(pointsToPixels(1), d->font->height().valuei()));
+    return Rectanglei(cp + pointsToPixels(Vec2i(-1, 0)),
+                      cp + Vec2i(pointsToPixels(1), d->font->height().valuei()));
 }
 
 void LineEditWidget::setColorTheme(ColorTheme theme)
@@ -344,20 +344,20 @@ void LineEditWidget::glMakeGeometry(GuiVertexBuilder &verts)
     if (isSuggestingCompletion())
     {
         Rangei const   comp     = completionRange();
-        Vector2i const startPos = linePos(comp.start);
-        Vector2i const endPos   = linePos(comp.end);
+        Vec2i const startPos = linePos(comp.start);
+        Vec2i const endPos   = linePos(comp.end);
 
-        Vector2i const offset = contentRect.topLeft + Vector2i(0, d->font->ascent().valuei() + pointsToPixels(2));
+        Vec2i const offset = contentRect.topLeft + Vec2i(0, d->font->ascent().valuei() + pointsToPixels(2));
 
         // It may span multiple lines.
         for (int i = startPos.y; i <= endPos.y; ++i)
         {
             Rangei const span = d->wraps.line(i).range;
-            Vector2i start = d->wraps.charTopLeftInPixels(i, i == startPos.y? startPos.x : span.start) + offset;
-            Vector2i end   = d->wraps.charTopLeftInPixels(i, i == endPos.y?   endPos.x   : span.end)   + offset;
+            Vec2i start = d->wraps.charTopLeftInPixels(i, i == startPos.y? startPos.x : span.start) + offset;
+            Vec2i end   = d->wraps.charTopLeftInPixels(i, i == endPos.y?   endPos.x   : span.end)   + offset;
 
-            verts.makeQuad(Rectanglef(start, end + pointsToPixels(Vector2i(0, 1))),
-                           Vector4f(1, 1, 1, 1), solidWhiteUv.middle());
+            verts.makeQuad(Rectanglef(start, end + pointsToPixels(Vec2i(0, 1))),
+                           Vec4f(1, 1, 1, 1), solidWhiteUv.middle());
         }
     }
 }
@@ -452,10 +452,10 @@ void LineEditWidget::drawContent()
     GLState::push().setNormalizedScissor(painter.normalizedScissor());
 
     float const opac = visibleOpacity();
-    d->uColor = Vector4f(1, 1, 1, opac); // Overall opacity.
+    d->uColor = Vec4f(1, 1, 1, opac); // Overall opacity.
 
     // Blink the cursor.
-    Vector4f col = style().colors().colorf("editor.cursor");
+    Vec4f col = style().colors().colorf("editor.cursor");
     col.w *= (int(d->blinkTime.since() * 2) & 1? .25f : 1.f) * opac;
     if (!hasFocus())
     {

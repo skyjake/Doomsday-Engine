@@ -109,7 +109,7 @@ public:
 
     render::StateAnimator const *animator() const;
 
-    de::Matrix4f const &modelTransformation() const;
+    de::Mat4f const &modelTransformation() const;
 
     void operator << (de::Reader &from) override;
     void operator >> (de::Writer &to) const override;

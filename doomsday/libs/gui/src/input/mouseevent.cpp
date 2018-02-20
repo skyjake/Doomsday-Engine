@@ -27,7 +27,7 @@ MouseEvent::MouseEvent()
       _state(Released)
 {}
 
-MouseEvent::MouseEvent(MotionType motion, Vector2i const &pos)
+MouseEvent::MouseEvent(MotionType motion, Vec2i const &pos)
     : Event(motion == Absolute? MousePosition :
             motion == Relative? MouseMotion :
                                 MouseWheel),
@@ -38,12 +38,12 @@ MouseEvent::MouseEvent(MotionType motion, Vector2i const &pos)
 {
     if (motion == Wheel)
     {
-        _pos = Vector2i();
+        _pos = Vec2i();
         _wheel = pos;
     }
 }
 
-MouseEvent::MouseEvent(WheelMotion wheelMotion, Vector2i const &wheel, Vector2i const &pos)
+MouseEvent::MouseEvent(WheelMotion wheelMotion, Vec2i const &wheel, Vec2i const &pos)
     : Event(MouseWheel),
       _pos(pos),
       _wheelMotion(wheelMotion),
@@ -52,7 +52,7 @@ MouseEvent::MouseEvent(WheelMotion wheelMotion, Vector2i const &wheel, Vector2i 
       _state(Released)
 {}
 
-MouseEvent::MouseEvent(Button button, ButtonState state, Vector2i const &pos)
+MouseEvent::MouseEvent(Button button, ButtonState state, Vec2i const &pos)
     : Event(MouseButton),
       _pos(pos),
       _button(button),

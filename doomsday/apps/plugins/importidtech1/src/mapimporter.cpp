@@ -682,8 +682,8 @@ DENG2_PIMPL(MapImporter)
         return vertCoords.count() / 2;
     }
 
-    inline Vector2d vertexAsVector2d(dint vertexIndex) const {
-        return Vector2d(vertCoords[vertexIndex * 2], vertCoords[vertexIndex * 2 + 1]);
+    inline Vec2d vertexAsVector2d(dint vertexIndex) const {
+        return Vec2d(vertCoords[vertexIndex * 2], vertCoords[vertexIndex * 2 + 1]);
     }
 
     /// @todo fixme: A real performance killer...
@@ -1122,7 +1122,7 @@ DENG2_PIMPL(MapImporter)
      * @param lineList  @c NULL, will cause IterFindPolyLines to count the number
      *                  of lines in the polyobj.
      */
-    void collectPolyobjLinesWorker(Polyobj::LineIndices &lineList, Vector2d const &point)
+    void collectPolyobjLinesWorker(Polyobj::LineIndices &lineList, Vec2d const &point)
     {
         DENG2_FOR_EACH(Lines, i, lines)
         {

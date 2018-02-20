@@ -121,7 +121,7 @@ public:
     /**
      * Construct a new vertex.
      */
-    Vertex *newVertex(Vector2d const &origin = de::Vector2d());
+    Vertex *newVertex(Vec2d const &origin = de::Vec2d());
 
     /**
      * Construct a new half-edge.

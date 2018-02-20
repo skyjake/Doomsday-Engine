@@ -32,12 +32,12 @@ DENG2_PIMPL_NOREF(QtTextCanvas)
     Size dims;
     QImage backBuffer;
     float dpiFactor;
-    Vector2i charSizePx;
+    Vec2i charSizePx;
     QFont font;
     QFont boldFont;
     QColor foreground;
     QColor background;
-    Vector2i cursorPos;
+    Vec2i cursorPos;
     bool blinkVisible;
 
     typedef QMap<Char, QImage> Cache;
@@ -137,7 +137,7 @@ void QtTextCanvas::resize(TextCanvas::Size const &newSize)
     d->createBackbuffer();
 }
 
-void QtTextCanvas::setCharSize(Vector2i const &pixelSize)
+void QtTextCanvas::setCharSize(Vec2i const &pixelSize)
 {
     d->clearCache();
     d->charSizePx = pixelSize;

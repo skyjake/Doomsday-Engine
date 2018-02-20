@@ -30,7 +30,7 @@ namespace menu {
 
 DENG2_PIMPL_NOREF(RectWidget)
 {
-    Vector2ui dimensions;  ///< Dimensions of the rectangle.
+    Vec2ui dimensions;  ///< Dimensions of the rectangle.
     patchid_t patch = 0;   ///< Background patch.
 };
 
@@ -49,7 +49,7 @@ RectWidget::~RectWidget()
 
 void RectWidget::draw() const
 {
-    Vector2i const origin = geometry().topLeft;
+    Vec2i const origin = geometry().topLeft;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(origin.x, origin.y, 0);
@@ -74,13 +74,13 @@ void RectWidget::draw() const
 
 void RectWidget::updateGeometry()
 {
-    if(d->dimensions == Vector2ui(0, 0))
+    if(d->dimensions == Vec2ui(0, 0))
     {
         // Inherit dimensions from the patch.
         patchinfo_t info;
         if(R_GetPatchInfo(d->patch, &info))
         {
-            d->dimensions = Vector2ui(info.geometry.size.width, info.geometry.size.height);
+            d->dimensions = Vec2ui(info.geometry.size.width, info.geometry.size.height);
         }
     }
     geometry().setSize(d->dimensions);

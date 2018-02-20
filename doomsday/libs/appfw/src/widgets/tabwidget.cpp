@@ -57,7 +57,7 @@ DENG_GUI_PIMPL(TabWidget)
         buttons->rule()
                 .setInput(Rule::AnchorX, self().rule().left() + self().rule().width() / 2)
                 .setInput(Rule::Top, self().rule().top())
-                .setAnchorPoint(Vector2f(.5f, 0));
+                .setAnchorPoint(Vec2f(.5f, 0));
 
         // Selection highlight.
         self().add(selected = new LabelWidget);

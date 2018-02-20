@@ -744,17 +744,17 @@ int FontLineWrapping::maximumWidth() const
     return d->maxWidth;
 }
 
-Vector2i FontLineWrapping::charTopLeftInPixels(int line, int charIndex)
+Vec2i FontLineWrapping::charTopLeftInPixels(int line, int charIndex)
 {
     DENG2_GUARD(this);
 
-    if (line >= height()) return Vector2i();
+    if (line >= height()) return Vec2i();
 
     WrappedLine const span = d->lines[line]->line;
     Rangei const range(span.range.start,
                        de::min(span.range.end, span.range.start + charIndex));
 
-    Vector2i cp;
+    Vec2i cp;
     cp.x = d->rangeAdvanceWidth(range);
     cp.y = line * d->font->lineSpacing().valuei();
 

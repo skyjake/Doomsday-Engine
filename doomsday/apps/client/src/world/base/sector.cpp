@@ -140,7 +140,7 @@ DENG2_PIMPL(Sector)
     ThinkerT<SoundEmitter> emitter;  ///< Head of the sound emitter chain.
 
     dfloat lightLevel = 0;           ///< Ambient light level.
-    Vector3f lightColor;             ///< Ambient light color.
+    Vec3f lightColor;             ///< Ambient light color.
 
     std::unique_ptr<GeomData> gdata; ///< Additional geometry info/metrics (cache).
 
@@ -256,13 +256,13 @@ DENG2_PIMPL(Sector)
 DENG2_AUDIENCE_METHOD(Sector, LightLevelChange)
 DENG2_AUDIENCE_METHOD(Sector, LightColorChange)
 
-Sector::Sector(dfloat lightLevel, Vector3f const &lightColor)
+Sector::Sector(dfloat lightLevel, Vec3f const &lightColor)
     : MapElement(DMU_SECTOR)
     , d(new Impl(this))
     , _lookupPlanes(nullptr)
 {
     d->lightLevel = de::clamp(0.f, lightLevel, 1.f);
-    d->lightColor = lightColor.min(Vector3f(1, 1, 1)).max(Vector3f(0, 0, 0));
+    d->lightColor = lightColor.min(Vec3f(1, 1, 1)).max(Vec3f(0, 0, 0));
 }
 
 void Sector::unlink(mobj_t *mob)
@@ -313,7 +313,7 @@ LoopResult Sector::forAllPlanes(std::function<LoopResult (Plane const &)> func) 
     return LoopContinue;
 }
 
-Plane *Sector::addPlane(Vector3f const &normal, ddouble height)
+Plane *Sector::addPlane(Vec3f const &normal, ddouble height)
 {
     auto *plane = new Plane(*this, normal, height);
 
@@ -485,14 +485,14 @@ void Sector::setLightLevel(dfloat newLightLevel)
     }
 }
 
-Vector3f const &Sector::lightColor() const
+Vec3f const &Sector::lightColor() const
 {
     return d->lightColor;
 }
 
-void Sector::setLightColor(Vector3f const &newLightColor)
+void Sector::setLightColor(Vec3f const &newLightColor)
 {
-    auto newColorClamped = newLightColor.min(Vector3f(1, 1, 1)).max(Vector3f(0, 0, 0));
+    auto newColorClamped = newLightColor.min(Vec3f(1, 1, 1)).max(Vec3f(0, 0, 0));
     if (d->lightColor != newColorClamped)
     {
         d->lightColor = newColorClamped;
@@ -573,24 +573,24 @@ dint Sector::setProperty(DmuArgs const &args)
     switch (args.prop)
     {
     case DMU_COLOR: {
-        Vector3f newColor = d->lightColor;
+        Vec3f newColor = d->lightColor;
         args.value(DMT_SECTOR_RGB, &newColor.x, 0);
         args.value(DMT_SECTOR_RGB, &newColor.y, 1);
         args.value(DMT_SECTOR_RGB, &newColor.z, 2);
         setLightColor(newColor);
         break; }
     case DMU_COLOR_RED: {
-        Vector3f newColor = d->lightColor;
+        Vec3f newColor = d->lightColor;
         args.value(DMT_SECTOR_RGB, &newColor.x, 0);
         setLightColor(newColor);
         break; }
     case DMU_COLOR_GREEN: {
-        Vector3f newColor = d->lightColor;
+        Vec3f newColor = d->lightColor;
         args.value(DMT_SECTOR_RGB, &newColor.y, 0);
         setLightColor(newColor);
         break; }
     case DMU_COLOR_BLUE: {
-        Vector3f newColor = d->lightColor;
+        Vec3f newColor = d->lightColor;
         args.value(DMT_SECTOR_RGB, &newColor.z, 0);
         setLightColor(newColor);
         break; }

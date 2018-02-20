@@ -178,9 +178,9 @@ void Z_DebugDrawer(void)
     {
         int size = de::min(400, DENG_GAMEVIEW_WIDTH);
         Z_DebugDrawVolume(&pd, volume,
-                          Rectanglei::fromSize(Vector2i(DENG_GAMEVIEW_WIDTH - size - 1,
+                          Rectanglei::fromSize(Vec2i(DENG_GAMEVIEW_WIDTH - size - 1,
                                                         DENG_GAMEVIEW_HEIGHT - size * (i+1) - 10*i - 1),
-                                               Vector2ui(size, size)));
+                                               Vec2ui(size, size)));
     }
 
     pd.unlock();

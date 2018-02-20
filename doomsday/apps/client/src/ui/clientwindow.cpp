@@ -302,7 +302,7 @@ DENG2_PIMPL(ClientWindow)
         // Everything behind the task bar can be blurred with this widget.
         if (style.isBlurringAllowed())
         {
-            taskBarBlur->set(GuiWidget::Background(Vector4f(1, 1, 1, 1), GuiWidget::Background::Blurred));
+            taskBarBlur->set(GuiWidget::Background(Vec4f(1, 1, 1, 1), GuiWidget::Background::Blurred));
         }
         taskBarBlur->rule().setRect(root.viewRule());
         taskBarBlur->setAttribute(GuiWidget::DontDrawContent);
@@ -736,7 +736,7 @@ DENG2_PIMPL(ClientWindow)
 
         needRootSizeUpdate = false;
 
-        Vector2ui const size = contentXf.logicalRootSize(self().pixelSize());
+        Vec2ui const size = contentXf.logicalRootSize(self().pixelSize());
 
         // Tell the widgets.
         root.setViewSize(size);
@@ -782,7 +782,7 @@ DENG2_PIMPL(ClientWindow)
                 cursorHasBeenHidden = true;
             }
 
-            Vector2i cp = ClientApp::windowSystem().latestMousePosition();
+            Vec2i cp = ClientApp::windowSystem().latestMousePosition();
             cursorX->set(cp.x);
             cursorY->set(cp.y);
         }
@@ -850,7 +850,7 @@ ClientWindow::ClientWindow(String const &id)
     // Stay out from under the virtual keyboard.
     connect(this, &GLWindow::rootDimensionsChanged, [this] (QRect rect)
     {
-        d->root.rootOffset().setValue(Vector2f(0, int(rect.height()) - int(pixelSize().y)),
+        d->root.rootOffset().setValue(Vec2f(0, int(rect.height()) - int(pixelSize().y)),
                                       0.3);
     });
 #endif
@@ -955,9 +955,9 @@ void ClientWindow::preDraw()
     BaseWindow::preDraw();
 }
 
-Vector2f ClientWindow::windowContentSize() const
+Vec2f ClientWindow::windowContentSize() const
 {
-    return Vector2f(d->root.viewWidth().value(), d->root.viewHeight().value());
+    return Vec2f(d->root.viewWidth().value(), d->root.viewHeight().value());
 }
 
 void ClientWindow::drawWindowContent()
@@ -1028,7 +1028,7 @@ void ClientWindow::grab(image_t &img, bool halfSized) const
     QImage grabbed = grabImage(outputSize);
 
     Image_Init(img);
-    img.size      = Vector2ui(grabbed.width(), grabbed.height());
+    img.size      = Vec2ui(grabbed.width(), grabbed.height());
     img.pixelSize = grabbed.depth()/8;
 
     img.pixels = (uint8_t *) malloc(grabbed.byteCount());

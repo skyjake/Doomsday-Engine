@@ -32,9 +32,9 @@ namespace gloom {
  */
 struct MapVertex
 {
-    de::Vector3f pos;
-    de::Vector3f normal;
-    de::Vector4f texCoord;
+    de::Vec3f pos;
+    de::Vec3f normal;
+    de::Vec4f texCoord;
     uint32_t texture[2];
     uint32_t geoPlane; uint32_t texPlane[2]; // Index0: vec3
     uint32_t texOffset[2];                   // Index1: vec2

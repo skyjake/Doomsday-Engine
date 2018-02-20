@@ -52,7 +52,7 @@ DENG2_PIMPL(Environment)
     {
         if (const auto *cam = AudioSystem::get().listener())
         {
-            Vector3f const pos = cam->cameraPosition();
+            Vec3f const pos = cam->cameraPosition();
             foreach (Sound *snd, sounds)
             {
                 if ((pos - snd->position()).length() > maxDist)
@@ -70,8 +70,8 @@ DENG2_PIMPL(Environment)
         if (!cam) return;
 
         // Choose a position.
-        Vector3f pos = cam->cameraPosition() + Matrix4f::rotate(qrand() % 360, Vector3f(0, 1, 0)) *
-                                                   Vector3f(sounds.isEmpty() ? 5 : 30, 0, 0);
+        Vec3f pos = cam->cameraPosition() + Mat4f::rotate(qrand() % 360, Vec3f(0, 1, 0)) *
+                                                   Vec3f(sounds.isEmpty() ? 5 : 30, 0, 0);
 
         pos.y = world->groundSurfaceHeight(pos) - 3;
 

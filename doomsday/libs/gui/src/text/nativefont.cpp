@@ -213,8 +213,8 @@ int NativeFont::width(String const &text) const
 }
 
 QImage NativeFont::rasterize(String const &text,
-                             Vector4ub const &foreground,
-                             Vector4ub const &background) const
+                             Vec4ub const &foreground,
+                             Vec4ub const &background) const
 {
     d->prepare();
     return nativeFontRasterize(text, foreground, background);

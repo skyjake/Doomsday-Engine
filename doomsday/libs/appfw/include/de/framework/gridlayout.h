@@ -60,7 +60,7 @@ public:
      * @param cell       Cell position.
      * @param cellAlign  Alignment for the cell.
      */
-    void setCellAlignment(Vector2i const &cell, ui::Alignment cellAlign);
+    void setCellAlignment(Vec2i const &cell, ui::Alignment cellAlign);
 
     void setColumnFixedWidth(int column, Rule const &fixedWidth);
 
@@ -104,13 +104,13 @@ public:
     /**
      * Returns the maximum grid size. These values were given to setGridSize().
      */
-    Vector2i maxGridSize() const;
+    Vec2i maxGridSize() const;
 
     /**
      * Returns the actual grid size in columns and rows. This depends on how
      * many widgets have been added to the grid.
      */
-    Vector2i gridSize() const;
+    Vec2i gridSize() const;
 
     /**
      * Determines the cell coordinates of a particular widget. The widget
@@ -120,9 +120,9 @@ public:
      *
      * @return Cell coordinates.
      */
-    Vector2i widgetPos(GuiWidget &widget) const;
+    Vec2i widgetPos(GuiWidget &widget) const;
 
-    GuiWidget *at(Vector2i const &cell) const;
+    GuiWidget *at(Vec2i const &cell) const;
 
     int widgetCellSpan(GuiWidget const &widget) const;
 

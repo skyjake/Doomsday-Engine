@@ -72,7 +72,7 @@ namespace gl {
 class LIBGUI_PUBLIC GLTexture : public Asset
 {
 public:
-    typedef Vector2ui Size;
+    typedef Vec2ui Size;
     typedef Vector2<gl::Wrapping> Wraps;
 
 public:
@@ -190,7 +190,7 @@ public:
      * @param pos    Position where the image is being copied.
      * @param level  Mipmap level.
      */
-    void setSubImage(Image const &image, Vector2i const &pos, int level = 0);
+    void setSubImage(Image const &image, Vec2i const &pos, int level = 0);
 
     /**
      * Replaces a portion of existing content. The image must be provided in the same
@@ -204,7 +204,7 @@ public:
      */
     void setSubImage(Image const &image, Rectanglei const &rect, int level = 0);
 
-    void setSubImage(gl::CubeFace face, Image const &image, Vector2i const &pos, int level = 0);
+    void setSubImage(gl::CubeFace face, Image const &image, Vec2i const &pos, int level = 0);
     void setSubImage(gl::CubeFace face, Image const &image, Rectanglei const &rect, int level = 0);
 
     /**

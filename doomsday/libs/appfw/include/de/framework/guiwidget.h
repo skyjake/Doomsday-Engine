@@ -112,31 +112,31 @@ public:
             SharedBlurWithBorderGlow,
             Rounded
         };
-        Vector4f solidFill;     ///< Always applied if opacity > 0.
+        Vec4f solidFill;     ///< Always applied if opacity > 0.
         Type type;
-        Vector4f color;         ///< Secondary color.
+        Vec4f color;         ///< Secondary color.
         float thickness;        ///< Frame border thickenss.
         GuiWidget *blur;
 
         Background()
             : type(None), thickness(0), blur(0) {}
 
-        Background(GuiWidget &blurred, Vector4f const &blurColor)
+        Background(GuiWidget &blurred, Vec4f const &blurColor)
             : solidFill(blurColor), type(SharedBlur), thickness(0), blur(&blurred) {}
 
-        Background(Vector4f const &solid, Type t = None)
+        Background(Vec4f const &solid, Type t = None)
             : solidFill(solid), type(t), thickness(0), blur(0) {}
 
-        Background(Type t, Vector4f const &borderColor, float borderThickness = 0)
+        Background(Type t, Vec4f const &borderColor, float borderThickness = 0)
             : type(t), color(borderColor), thickness(borderThickness), blur(0) {}
 
-        Background(Vector4f const &solid, Type t,
-                   Vector4f const &borderColor,
+        Background(Vec4f const &solid, Type t,
+                   Vec4f const &borderColor,
                    float borderThickness = 0)
             : solidFill(solid), type(t), color(borderColor), thickness(borderThickness),
               blur(0) {}
 
-        inline Background withSolidFill(Vector4f const &newSolidFill) const {
+        inline Background withSolidFill(Vec4f const &newSolidFill) const {
             Background bg = *this;
             bg.solidFill = newSolidFill;
             return bg;
@@ -402,7 +402,7 @@ public:
      *
      * @return @c true, if hit.
      */
-    virtual bool hitTest(Vector2i const &pos) const;
+    virtual bool hitTest(Vec2i const &pos) const;
 
     bool hitTest(Event const &event) const;
 
@@ -413,7 +413,7 @@ public:
      *
      * @return  The child that occupied the position in the view.
      */
-    GuiWidget const *treeHitTest(Vector2i const &pos) const;
+    GuiWidget const *treeHitTest(Vec2i const &pos) const;
 
     /**
      * Returns the rule rectangle used for hit testing. Defaults to a rectangle
@@ -548,7 +548,7 @@ protected:
      */
     virtual void drawContent();
 
-    void drawBlurredRect(Rectanglei const &rect, Vector4f const &color, float opacity = 1.0f);
+    void drawBlurredRect(Rectanglei const &rect, Vec4f const &color, float opacity = 1.0f);
 
     /**
      * Extensible mechanism for derived widgets to build their geometry. The

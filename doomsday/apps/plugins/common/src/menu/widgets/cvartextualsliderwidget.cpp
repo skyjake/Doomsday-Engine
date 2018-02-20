@@ -135,9 +135,9 @@ CVarTextualSliderWidget::~CVarTextualSliderWidget()
 
 void CVarTextualSliderWidget::draw() const
 {
-    Vector2i const &origin    = geometry().topLeft;
+    Vec2i const &origin    = geometry().topLeft;
     String const valueAsText  = d->valueAsText();
-    Vector4f const &textColor = mnRendState->textColors[color()];
+    Vec4f const &textColor = mnRendState->textColors[color()];
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(origin.x, origin.y, 0);
@@ -161,7 +161,7 @@ void CVarTextualSliderWidget::updateGeometry()
     FR_PushAttrib();
     FR_SetFont(page().predefinedFont(mn_page_fontid_t(font())));
     Size2Raw size; FR_TextSize(&size, valueAsText.toUtf8().constData());
-    geometry().setSize(Vector2ui(size.width, size.height));
+    geometry().setSize(Vec2ui(size.width, size.height));
     FR_PopAttrib();
 }
 

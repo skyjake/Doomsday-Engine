@@ -75,7 +75,7 @@ void StatusWidget::draw()
     if (!d->link || d->link->status() == Link::Disconnected)
     {
         String msg = tr("Not connected to a server");
-        buf.drawText(Vector2i(buf.size().x/2 - msg.size()/2), msg /*, TextCanvas::Char::Bold*/);
+        buf.drawText(Vec2i(buf.size().x/2 - msg.size()/2), msg /*, TextCanvas::Char::Bold*/);
     }
     else if (d->link->status() == Link::Connecting)
     {
@@ -88,14 +88,14 @@ void StatusWidget::draw()
         {
             msg = tr("Looking up host...");
         }
-        buf.drawText(Vector2i(buf.size().x/2 - msg.size()/2), msg);
+        buf.drawText(Vec2i(buf.size().x/2 - msg.size()/2), msg);
     }
     else if (d->link->status() == Link::Connected)
     {
         String msg = d->gameMode;
         if (!d->mapId.isEmpty()) msg += " " + d->mapId;
         if (!d->rules.isEmpty()) msg += " (" + d->rules + ")";
-        buf.drawText(Vector2i(1, 0), msg);
+        buf.drawText(Vec2i(1, 0), msg);
 
         TimeSpan elapsed = d->link->connectedAt().since();
         String time = String("| %1:%2:%3")

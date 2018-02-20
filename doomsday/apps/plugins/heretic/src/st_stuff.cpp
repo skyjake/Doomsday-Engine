@@ -175,21 +175,21 @@ void SBarBackground_Drawer(HudWidget *wi, Point2Raw const *offset)
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, 1);
-        GL_DrawPatch(pStatusbarTopLeft,  Vector2i(ORIGINX      , ORIGINY - 10));
-        GL_DrawPatch(pStatusbarTopRight, Vector2i(ORIGINX + 290, ORIGINY - 10));
+        GL_DrawPatch(pStatusbarTopLeft,  Vec2i(ORIGINX      , ORIGINY - 10));
+        GL_DrawPatch(pStatusbarTopRight, Vec2i(ORIGINX + 290, ORIGINY - 10));
 
         // Faces.
-        GL_DrawPatch(pStatusbar, Vector2i(ORIGINX, ORIGINY));
+        GL_DrawPatch(pStatusbar, Vec2i(ORIGINX, ORIGINY));
 
         if (godEyes)
         {
-            GL_DrawPatch(pGodLeft,  Vector2i(ORIGINX + 16 , ORIGINY + 9));
-            GL_DrawPatch(pGodRight, Vector2i(ORIGINX + 287, ORIGINY + 9));
+            GL_DrawPatch(pGodLeft,  Vec2i(ORIGINX + 16 , ORIGINY + 9));
+            GL_DrawPatch(pGodRight, Vec2i(ORIGINX + 287, ORIGINY + 9));
         }
 
         patchid_t panel = Hu_InventoryIsOpen(wi->player())? pInvBar
                         : gfw_Rule(deathmatch)          ? pStatBar : pLifeBar;
-        GL_DrawPatch(panel, Vector2i(ORIGINX + 34, ORIGINY + 2));
+        GL_DrawPatch(panel, Vec2i(ORIGINX + 34, ORIGINY + 2));
 
         DGL_Disable(DGL_TEXTURE_2D);
     }
@@ -200,8 +200,8 @@ void SBarBackground_Drawer(HudWidget *wi, Point2Raw const *offset)
         DGL_Color4f(1, 1, 1, iconOpacity);
 
         // Top bits.
-        GL_DrawPatch(pStatusbarTopLeft,  Vector2i(ORIGINX      , ORIGINY - 10));
-        GL_DrawPatch(pStatusbarTopRight, Vector2i(ORIGINX + 290, ORIGINY - 10));
+        GL_DrawPatch(pStatusbarTopLeft,  Vec2i(ORIGINX      , ORIGINY - 10));
+        GL_DrawPatch(pStatusbarTopRight, Vec2i(ORIGINX + 290, ORIGINY - 10));
 
         DGL_SetPatch(pStatusbar, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
@@ -218,8 +218,8 @@ void SBarBackground_Drawer(HudWidget *wi, Point2Raw const *offset)
             DGL_DrawCutRectf2Tiled(ORIGINX, ORIGINY, 34, 42, 320, 42, 0, 0, ORIGINX+16, ORIGINY+9, 16, 8);
             DGL_DrawCutRectf2Tiled(ORIGINX+282, ORIGINY, 38, 42, 320, 42, 282, 0, ORIGINX+287, ORIGINY+9, 16, 8);
 
-            GL_DrawPatch(pGodLeft,  Vector2i(ORIGINX + 16 , ORIGINY + 9));
-            GL_DrawPatch(pGodRight, Vector2i(ORIGINX + 287, ORIGINY + 9));
+            GL_DrawPatch(pGodLeft,  Vec2i(ORIGINX + 16 , ORIGINY + 9));
+            GL_DrawPatch(pGodRight, Vec2i(ORIGINX + 287, ORIGINY + 9));
         }
         else
         {
@@ -229,7 +229,7 @@ void SBarBackground_Drawer(HudWidget *wi, Point2Raw const *offset)
 
         patchid_t panel = Hu_InventoryIsOpen(wi->player())? pInvBar
                         : gfw_Rule(deathmatch)          ? pStatBar : pLifeBar;
-        GL_DrawPatch(panel, Vector2i(ORIGINX + 34, ORIGINY + 2));
+        GL_DrawPatch(panel, Vec2i(ORIGINX + 34, ORIGINY + 2));
 
         DGL_Disable(DGL_TEXTURE_2D);
     }
@@ -753,7 +753,7 @@ static void initAutomapForCurrentMap(AutomapWidget &automap)
     // Are we re-centering on a followed mobj?
     if(mobj_t *mob = automap.followMobj())
     {
-        automap.setCameraOrigin(Vector2d(mob->origin), true);
+        automap.setCameraOrigin(Vec2d(mob->origin), true);
     }
 
     if(IS_NETGAME)
@@ -1183,7 +1183,7 @@ int ST_AutomapAddPoint(int localPlayer, coord_t x, coord_t y, coord_t z)
 {
     if(auto *automap = ST_TryFindAutomapWidget(localPlayer))
     {
-        return automap->addPoint(Vector3d(x, y, z));
+        return automap->addPoint(Vec3d(x, y, z));
     }
     return -1;
 }

@@ -58,12 +58,12 @@
 using namespace de;
 using namespace world;
 
-static void evaluateLighting(Vector3d const &origin, ConvexSubspace &subspaceAtOrigin,
-    coord_t distToEye, bool fullbright, Vector4f &ambientColor, duint *vLightListIdx)
+static void evaluateLighting(Vec3d const &origin, ConvexSubspace &subspaceAtOrigin,
+    coord_t distToEye, bool fullbright, Vec4f &ambientColor, duint *vLightListIdx)
 {
     if(fullbright)
     {
-        ambientColor = Vector3f(1, 1, 1);
+        ambientColor = Vec3f(1, 1, 1);
         *vLightListIdx = 0;
     }
     else
@@ -75,7 +75,7 @@ static void evaluateLighting(Vector3d const &origin, ConvexSubspace &subspaceAtO
         if(useBias && map.hasLightGrid())
         {
             // Evaluate the position in the light grid.
-            Vector4f color = map.lightGrid().evaluate(origin);
+            Vec4f color = map.lightGrid().evaluate(origin);
             // Apply light range compression.
             for(dint i = 0; i < 3; ++i)
             {
@@ -86,7 +86,7 @@ static void evaluateLighting(Vector3d const &origin, ConvexSubspace &subspaceAtO
         else
 #endif
         {
-            Vector4f const color = subsec.lightSourceColorfIntensity();
+            Vec4f const color = subsec.lightSourceColorfIntensity();
 
             dfloat lightLevel = color.w;
             /* if(spr->type == VSPR_DECORATION)
@@ -113,7 +113,7 @@ static void evaluateLighting(Vector3d const &origin, ConvexSubspace &subspaceAtO
 }
 
 /// @todo use Mobj_OriginSmoothed
-static Vector3d mobjOriginSmoothed(mobj_t *mob)
+static Vec3d mobjOriginSmoothed(mobj_t *mob)
 {
     DENG2_ASSERT(mob);
     coord_t origin[] = { mob->origin[0], mob->origin[1], mob->origin[2] };
@@ -177,7 +177,7 @@ void R_ProjectSprite(mobj_t &mob)
     ClientMobjThinkerData const *mobjData = THINKER_DATA_MAYBE(mob.thinker, ClientMobjThinkerData);
 
     // Determine distance to object.
-    Vector3d const moPos = mobjOriginSmoothed(&mob);
+    Vec3d const moPos = mobjOriginSmoothed(&mob);
     coord_t const distFromEye = Rend_PointDist2D(moPos);
 
     // Should we use a 3D model?
@@ -237,7 +237,7 @@ void R_ProjectSprite(mobj_t &mob)
     // Ensure we've up to date info about the material.
     matAnimator.prepare();
 
-    Vector2ui const &matDimensions = matAnimator.dimensions();
+    Vec2ui const &matDimensions = matAnimator.dimensions();
     TextureVariant *tex            = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
 
     // A valid sprite texture in the "Sprites" scheme is required.
@@ -255,7 +255,7 @@ void R_ProjectSprite(mobj_t &mob)
     // relative to the viewer and determining if the whole of the segment has
     // been clipped away according to the 360 degree angle clipper.
     coord_t const visWidth = Mobj_VisualRadius(mob) * 2;  /// @todo ignorant of rotation...
-    Vector2d v1, v2;
+    Vec2d v1, v2;
     R_ProjectViewRelativeLine2D(moPos, hasModel || viewAlign, visWidth,
                                 (hasModel? 0 : coord_t(-tex->base().origin().x) - (visWidth / 2.0f)),
                                 v1, v2);
@@ -271,7 +271,7 @@ void R_ProjectSprite(mobj_t &mob)
         // If the model is close to the viewpoint we should still to draw it,
         // otherwise large models are likely to disappear too early.
         viewdata_t const *viewData = &viewPlayer->viewport();
-        Vector2d delta(distFromEye, moPos.z + (mob.height / 2) - viewData->current.origin.z);
+        Vec2d delta(distFromEye, moPos.z + (mob.height / 2) - viewData->current.origin.z);
         if(M_ApproxDistance(delta.x, delta.y) > MAX_OBJECT_RADIUS)
             return;
     }
@@ -315,7 +315,7 @@ void R_ProjectSprite(mobj_t &mob)
     {
         // Transform the origin point.
         viewdata_t const *viewData = &viewPlayer->viewport();
-        Vector2d delta(moPos.y - viewData->current.origin.y,
+        Vec2d delta(moPos.y - viewData->current.origin.y,
                        moPos.x - viewData->current.origin.x);
 
         yaw = 90 - (BANG2RAD(bamsAtan2(delta.x * 10, delta.y * 10)) - PI / 2) / PI * 180;
@@ -345,7 +345,7 @@ void R_ProjectSprite(mobj_t &mob)
        (animator && animator->model().alignPitch == render::Model::AlignToView))
     {
         viewdata_t const *viewData = &viewPlayer->viewport();
-        Vector2d delta(vis->pose.midZ() - viewData->current.origin.z, distFromEye);
+        Vec2d delta(vis->pose.midZ() - viewData->current.origin.z, distFromEye);
 
         pitch = -BANG2DEG(bamsAtan2(delta.x * 10, delta.y * 10));
     }
@@ -356,12 +356,12 @@ void R_ProjectSprite(mobj_t &mob)
     }
 
     // Determine possible short-range visual offset.
-    Vector3d visOff;
+    Vec3d visOff;
     if((hasModel && useSRVO > 0) || (!hasModel && useSRVO > 1))
     {
         if(mob.tics >= 0)
         {
-            visOff = Vector3d(mob.srvo) * (mob.tics - frameTimePos) / (float) mob.state->tics;
+            visOff = Vec3d(mob.srvo) * (mob.tics - frameTimePos) / (float) mob.state->tics;
         }
 
         if(!INRANGE_OF(mob.mom[0], 0, NOMOMENTUM_THRESHOLD) ||
@@ -372,9 +372,9 @@ void R_ProjectSprite(mobj_t &mob)
             // Note that the object may have momentum but still be blocked from moving
             // (e.g., Heretic gas pods).
 
-            visOff += Vector3d(~mob.ddFlags & DDMF_MOVEBLOCKEDX ? mob.mom[VX] : 0.0,
-                               ~mob.ddFlags & DDMF_MOVEBLOCKEDY ? mob.mom[VY] : 0.0,
-                               ~mob.ddFlags & DDMF_MOVEBLOCKEDZ ? mob.mom[VZ] : 0.0) *
+            visOff += Vec3d(~mob.ddFlags & DDMF_MOVEBLOCKEDX ? mob.mom[VX] : 0.0,
+                            ~mob.ddFlags & DDMF_MOVEBLOCKEDY ? mob.mom[VY] : 0.0,
+                            ~mob.ddFlags & DDMF_MOVEBLOCKEDZ ? mob.mom[VZ] : 0.0) *
                       frameTimePos;
         }
     }
@@ -416,8 +416,8 @@ void R_ProjectSprite(mobj_t &mob)
         // Adjust by the floor clip.
         topZ -= floorClip;
 
-        Vector3d const origin(vis->pose.origin.x, vis->pose.origin.y, topZ - matDimensions.y / 2.0f);
-        Vector4f ambientColor;
+        Vec3d const origin(vis->pose.origin.x, vis->pose.origin.y, topZ - matDimensions.y / 2.0f);
+        Vec4f ambientColor;
         duint vLightListIdx = 0;
         evaluateLighting(origin, subspace, vis->pose.distance, fullbright, ambientColor, &vLightListIdx);
 
@@ -435,7 +435,7 @@ void R_ProjectSprite(mobj_t &mob)
     }
     else // It will be drawn as a 3D model.
     {
-        Vector4f ambientColor;
+        Vec4f ambientColor;
         duint vLightListIdx = 0;
         evaluateLighting(vis->pose.origin, subspace, vis->pose.distance,
                          fullbright && !animator, // GL2 models lit with more granularity
@@ -448,7 +448,7 @@ void R_ProjectSprite(mobj_t &mob)
         {
             // Set up a GL2 model for drawing.
             vis->pose = VisEntityPose(vis->pose.origin,
-                                      Vector3d(visOff.x, visOff.y, visOff.z - floorClip),
+                                      Vec3d(visOff.x, visOff.y, visOff.z - floorClip),
                                       /*viewAlign*/ false, topZ, yaw, 0, pitch, 0);
             vis->light = VisEntityLighting(ambientColor, vLightListIdx);
 
@@ -461,7 +461,7 @@ void R_ProjectSprite(mobj_t &mob)
             DENG2_ASSERT(mf);
             VisSprite_SetupModel(vis,
                                  VisEntityPose(vis->pose.origin,
-                                               Vector3d(visOff.x, visOff.y, visOff.z - floorClip),
+                                               Vec3d(visOff.x, visOff.y, visOff.z - floorClip),
                                                viewAlign, topZ, yaw, 0, pitch, 0),
                                  VisEntityLighting(ambientColor, vLightListIdx),
                                  mf, nextmf, interp,
@@ -485,7 +485,7 @@ void R_ProjectSprite(mobj_t &mob)
                     .getAnimator(Rend_SpriteMaterialSpec(mob.tclass, mob.tmap));
             matAnimator.prepare();
 
-            Vector2ui const &matDimensions = matAnimator.dimensions();
+            Vec2ui const &matDimensions = matAnimator.dimensions();
             TextureVariant *tex            = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
 
             // A valid sprite texture in the "Sprites" scheme is required.

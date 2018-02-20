@@ -204,7 +204,7 @@ void PostProcessing::update()
     }
 }
 
-void PostProcessing::draw(Matrix4f const &mvpMatrix, GLTexture const &frame)
+void PostProcessing::draw(Mat4f const &mvpMatrix, GLTexture const &frame)
 {
     d->uMvpMatrix = mvpMatrix;
     d->uFrame     = frame;

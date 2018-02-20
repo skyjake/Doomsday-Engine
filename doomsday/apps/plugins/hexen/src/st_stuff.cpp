@@ -184,7 +184,7 @@ void SBarBackground_Drawer(HudWidget *wi, Point2Raw const *offset)
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, 1);
-        GL_DrawPatch(pStatusBar, Vector2i(ORIGINX, ORIGINY - 28));
+        GL_DrawPatch(pStatusBar, Vec2i(ORIGINX, ORIGINY - 28));
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -199,30 +199,30 @@ void SBarBackground_Drawer(HudWidget *wi, Point2Raw const *offset)
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, 1);
-        GL_DrawPatch(pStatusBarTop, Vector2i(ORIGINX, ORIGINY - 28));
+        GL_DrawPatch(pStatusBarTop, Vec2i(ORIGINX, ORIGINY - 28));
 
         if(!Hu_InventoryIsOpen(wi->player()))
         {
             // Main interface
             if(!ST_AutomapIsOpen(wi->player()))
             {
-                GL_DrawPatch(pStatBar, Vector2i(ORIGINX + 38, ORIGINY));
+                GL_DrawPatch(pStatBar, Vec2i(ORIGINX + 38, ORIGINY));
 
                 if(gfw_Rule(deathmatch))
                 {
-                    GL_DrawPatch(pKills, Vector2i(ORIGINX + 38, ORIGINY));
+                    GL_DrawPatch(pKills, Vec2i(ORIGINX + 38, ORIGINY));
                 }
 
-                GL_DrawPatch(pWeaponSlot[pClass], Vector2i(ORIGINX + 190, ORIGINY));
+                GL_DrawPatch(pWeaponSlot[pClass], Vec2i(ORIGINX + 190, ORIGINY));
             }
             else
             {
-                GL_DrawPatch(pKeyBar, Vector2i(ORIGINX + 38, ORIGINY));
+                GL_DrawPatch(pKeyBar, Vec2i(ORIGINX + 38, ORIGINY));
             }
         }
         else
         {
-            GL_DrawPatch(pInventoryBar, Vector2i(ORIGINX + 38, ORIGINY));
+            GL_DrawPatch(pInventoryBar, Vec2i(ORIGINX + 38, ORIGINY));
         }
 
         DGL_Disable(DGL_TEXTURE_2D);
@@ -316,13 +316,13 @@ void SBarBackground_Drawer(HudWidget *wi, Point2Raw const *offset)
                     DGL_DrawCutRectf2Tiled(x, y, w, h, pStatBarInfo.geometry.size.width, pStatBarInfo.geometry.size.height, gfw_Rule(deathmatch)?30:0, 0, ORIGINX+190, ORIGINY, 57, 30);
                 }
 
-                GL_DrawPatch(pWeaponSlot[pClass], Vector2i(ORIGINX + 190, ORIGINY));
+                GL_DrawPatch(pWeaponSlot[pClass], Vec2i(ORIGINX + 190, ORIGINY));
                 if(gfw_Rule(deathmatch))
-                    GL_DrawPatch(pKills, Vector2i(ORIGINX + 38, ORIGINY));
+                    GL_DrawPatch(pKills, Vec2i(ORIGINX + 38, ORIGINY));
             }
             else
             {
-                GL_DrawPatch(pKeyBar, Vector2i(ORIGINX + 38, ORIGINY));
+                GL_DrawPatch(pKeyBar, Vec2i(ORIGINX + 38, ORIGINY));
             }
 
             DGL_Disable(DGL_TEXTURE_2D);
@@ -625,7 +625,7 @@ static void initAutomapForCurrentMap(AutomapWidget &automap)
     // Are we re-centering on a followed mobj?
     if (mobj_t *mob = automap.followMobj())
     {
-        automap.setCameraOrigin(Vector2d(mob->origin), true);
+        automap.setCameraOrigin(Vec2d(mob->origin), true);
     }
 
     if(IS_NETGAME)
@@ -1075,7 +1075,7 @@ int ST_AutomapAddPoint(int localPlayer, coord_t x, coord_t y, coord_t z)
 {
     if(auto *automap = ST_TryFindAutomapWidget(localPlayer))
     {
-        return automap->addPoint(Vector3d(x, y, z));
+        return automap->addPoint(Vec3d(x, y, z));
     }
     return -1;
 }

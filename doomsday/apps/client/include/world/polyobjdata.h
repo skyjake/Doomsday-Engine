@@ -40,7 +40,7 @@ class PolyobjData : public Thinker::IData
 {
 public:
     /// Used to store the original/previous vertex coordinates.
-    typedef QVector<de::Vector2d> VertexCoords;
+    typedef QVector<de::Vec2d> VertexCoords;
 
 public:
     PolyobjData();

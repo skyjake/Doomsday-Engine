@@ -465,7 +465,7 @@ Font::RichFormat::IStyle::Color Font::RichFormat::Iterator::color() const
         return format.format().d->style->richStyleColor(colorIndex());
     }
     // Fall back to white.
-    return Vector4ub(255, 255, 255, 255);
+    return Vec4ub(255, 255, 255, 255);
 }
 
 bool Font::RichFormat::Iterator::markIndent() const

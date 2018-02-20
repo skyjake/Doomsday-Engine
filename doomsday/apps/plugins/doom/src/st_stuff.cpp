@@ -756,7 +756,7 @@ static void initAutomapForCurrentMap(AutomapWidget &automap)
     // Are we re-centering on a followed mobj?
     if (mobj_t *mob = automap.followMobj())
     {
-        automap.setCameraOrigin(Vector2d(mob->origin), true);
+        automap.setCameraOrigin(Vec2d(mob->origin), true);
     }
 
     if(IS_NETGAME)
@@ -1182,7 +1182,7 @@ int ST_AutomapAddPoint(int localPlayer, coord_t x, coord_t y, coord_t z)
 {
     if(auto *automap = ST_TryFindAutomapWidget(localPlayer))
     {
-        return automap->addPoint(Vector3d(x, y, z));
+        return automap->addPoint(Vec3d(x, y, z));
     }
     return -1;
 }

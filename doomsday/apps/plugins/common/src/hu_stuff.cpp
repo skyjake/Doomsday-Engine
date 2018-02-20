@@ -1105,7 +1105,7 @@ de::String Hu_ChoosePatchReplacement(patchreplacemode_t mode, patchid_t patchId,
     return ""; // No replacement available/wanted.
 }
 
-void WI_DrawPatch(patchid_t patchId, de::String const &replacement, de::Vector2i const &origin,
+void WI_DrawPatch(patchid_t patchId, de::String const &replacement, de::Vec2i const &origin,
     int alignFlags, int patchFlags, short textFlags)
 {
     if(!replacement.isEmpty())
@@ -1311,7 +1311,7 @@ void Hu_Drawer()
         FR_SetLeading(0);
 
         WI_DrawPatch(m_pause, Hu_ChoosePatchReplacement(PRM_ALLOW_TEXT, m_pause),
-                     de::Vector2i(), ALIGN_TOP, DPF_NO_OFFSET, 0);
+                     de::Vec2i(), ALIGN_TOP, DPF_NO_OFFSET, 0);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -1424,7 +1424,7 @@ void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
         }
     }
     WI_DrawPatch(patchId, Hu_ChoosePatchReplacement(PRM_ALLOW_TEXT, patchId, title),
-                 de::Vector2i(), ALIGN_TOP, 0, DTF_ONLY_SHADOW);
+                 de::Vec2i(), ALIGN_TOP, 0, DTF_ONLY_SHADOW);
 
     // Following line of text placed according to patch height.
     y += Hu_MapTitleFirstLineHeight();
@@ -1577,10 +1577,10 @@ void M_DrawShadowedPatch3(patchid_t id, int x, int y, int alignFlags, int patchF
         return;
 
     DGL_Color4f(0, 0, 0, a * .4f);
-    GL_DrawPatch(id, Vector2i(x + 2, y + 2), alignFlags, patchFlags);
+    GL_DrawPatch(id, Vec2i(x + 2, y + 2), alignFlags, patchFlags);
 
     DGL_Color4f(r, g, b, a);
-    GL_DrawPatch(id, Vector2i(x, y), alignFlags, patchFlags);
+    GL_DrawPatch(id, Vec2i(x, y), alignFlags, patchFlags);
 }
 
 void M_DrawShadowedPatch2(patchid_t id, int x, int y, int alignFlags, int patchFlags)

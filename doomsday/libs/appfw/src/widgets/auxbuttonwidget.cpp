@@ -46,12 +46,12 @@ DENG_GUI_PIMPL(AuxButtonWidget)
         self().margins().setRight(aux->rule().width() + rule("gap"));
     }
 
-    void setAuxBorderColorf(Vector4f const &colorf)
+    void setAuxBorderColorf(Vec4f const &colorf)
     {
         aux->set(Background(Background::Rounded, colorf, 6));
     }
 
-    void setAuxBorderColorf(Vector4f const &colorf, Vector4f const &bgColor)
+    void setAuxBorderColorf(Vec4f const &colorf, Vec4f const &bgColor)
     {
         aux->set(Background(bgColor, Background::Rounded, colorf, 6));
     }

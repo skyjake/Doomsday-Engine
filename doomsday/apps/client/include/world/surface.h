@@ -73,7 +73,7 @@ public:
      */
     Surface(world::MapElement &owner,
             de::dfloat opacity        = 1,
-            de::Vector3f const &color = de::Vector3f(1, 1, 1));
+            de::Vec3f const &color = de::Vec3f(1, 1, 1));
 
     /**
      * Composes a human-friendly, styled, textual description of the surface.
@@ -84,11 +84,11 @@ public:
      * Returns the normalized tangent space matrix for the surface.
      * (col0: tangent, col1: bitangent, col2: normal)
      */
-    de::Matrix3f const &tangentMatrix() const;
+    de::Mat3f const &tangentMatrix() const;
 
-    inline de::Vector3f tangent()   const { return tangentMatrix().column(0); }
-    inline de::Vector3f bitangent() const { return tangentMatrix().column(1); }
-    inline de::Vector3f normal()    const { return tangentMatrix().column(2); }
+    inline de::Vec3f tangent()   const { return tangentMatrix().column(0); }
+    inline de::Vec3f bitangent() const { return tangentMatrix().column(1); }
+    inline de::Vec3f normal()    const { return tangentMatrix().column(2); }
 
     /**
      * Change the tangent space normal vector for the surface. If changed, the
@@ -97,7 +97,7 @@ public:
      *
      * @param newNormal  New normal vector (will be normalized if needed).
      */
-    Surface &setNormal(de::Vector3f const &newNormal);
+    Surface &setNormal(de::Vec3f const &newNormal);
 
     /**
      * Returns the opacity of the surface. The OpacityChange audience is notified
@@ -111,8 +111,8 @@ public:
     /**
      * Returns the material origin offset for the surface.
      */
-    de::Vector2f const &origin() const;
-    Surface &setOrigin(de::Vector2f const &newOrigin);
+    de::Vec2f const &origin() const;
+    Surface &setOrigin(de::Vec2f const &newOrigin);
 
     /**
      * Returns the tint color of the surface. The ColorChange audience is
@@ -120,8 +120,8 @@ public:
      *
      * @see setColor()
      */
-    de::Vector3f const &color() const;
-    Surface &setColor(de::Vector3f const &newColor);
+    de::Vec3f const &color() const;
+    Surface &setColor(de::Vec3f const &newColor);
 
     /**
      * Returns the blendmode for the surface.
@@ -202,7 +202,7 @@ public:
     /**
      * Returns the material scale factors for the surface.
      */
-    de::Vector2f materialScale() const;
+    de::Vec2f materialScale() const;
 
     /**
      * Compose a URI for the surface's material. If no material is bound then a
@@ -241,7 +241,7 @@ public:
      *
      * @see setOrigin()
      */
-    de::Vector2f const &originSmoothed() const;
+    de::Vec2f const &originSmoothed() const;
 
     /**
      * Returns the delta between current and the smoothed material origin for
@@ -249,7 +249,7 @@ public:
      *
      * @see setOrigin(), smoothOrigin()
      */
-    de::Vector2f const &originSmoothedAsDelta() const;
+    de::Vec2f const &originSmoothedAsDelta() const;
 
     /**
      * Perform smoothed material origin interpolation.
@@ -280,7 +280,7 @@ public:
      *
      * @return  Glow strength/intensity or @c 0 if not presently glowing.
      */
-    de::dfloat glow(de::Vector3f &color) const;
+    de::dfloat glow(de::Vec3f &color) const;
 
 #endif // __CLIENT__
 

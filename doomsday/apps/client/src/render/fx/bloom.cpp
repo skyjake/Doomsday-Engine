@@ -84,7 +84,7 @@ DENG2_PIMPL(Bloom)
         ClientApp::shaders().build(bloom.program("vert"), "fx.bloom.vertical")
                 << uMvpMatrix << uTex << uBlurStep << uWindow;
 
-        uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
+        uMvpMatrix = Mat4f::ortho(0, 1, 0, 1);
     }
 
     void glDeinit()
@@ -108,11 +108,11 @@ DENG2_PIMPL(Bloom)
 
         // Determine the dimensions of the viewport and the target.
         //Rectanglef const rectf(0, 0, 1, 1); //= GLState::current().normalizedViewport();
-        Vector2ui const targetSize = colorTex->size(); // (rectf.size() * target.rectInUse().size()).toVector2ui();
+        Vec2ui const targetSize = colorTex->size(); // (rectf.size() * target.rectInUse().size()).toVector2ui();
 
         // Quarter resolution is used for better efficiency (without significant loss
         // of quality).
-        Vector2ui blurSize = (targetSize / 4).max(Vector2ui(1, 1));
+        Vec2ui blurSize = (targetSize / 4).max(Vec2ui(1, 1));
 
         // Update the size of the work buffer if needed. Also ensure linear filtering
         // is used for better-quality blurring.
@@ -155,7 +155,7 @@ DENG2_PIMPL(Bloom)
      * @param weight       Weight factor for intensity.
      * @param targetOp     Blending factor (should be gl::One unless debugging).
      */
-    void drawBloomPass(//Rectanglef const &rectf, //Vector2ui const &/*targetSize*/,
+    void drawBloomPass(//Rectanglef const &rectf, //Vec2ui const &/*targetSize*/,
                        GLTexture &colorTarget, float bloomSize, float weight,
                        gl::Blend targetOp = gl::One)
     {
@@ -167,13 +167,13 @@ DENG2_PIMPL(Bloom)
 
         // Divert rendering to the work area (full or partial area used).
         //GLFramebuffer &target = GLState::current().target();
-        Vector2ui const workSize = workFB.size() * bloomSize;
+        Vec2ui const workSize = workFB.size() * bloomSize;
         GLState::push()
                 .setTarget(workFB)
                 .setViewport(Rectangleui::fromSize(workSize));
 
         // Normalized active rectangle of the target.
-        /*Vector4f const active(target.activeRectScale(),
+        /*Vec4f const active(target.activeRectScale(),
                               target.activeRectNormalizedOffset());*/
 
         /*
@@ -185,14 +185,14 @@ DENG2_PIMPL(Bloom)
         // be flipped because the shader uses the bottom left corner as UV origin.
         // Also need to apply the active rectangle as it affects where the viewport
         // ends up inside the frame buffer.
-        uWindow = Vector4f(0, 0, 1, 1); /*Vector4f(rectf.left() * active.x        + active.z,
+        uWindow = Vec4f(0, 0, 1, 1); /*Vec4f(rectf.left() * active.x        + active.z,
                            1 - (rectf.bottom() * active.y + active.w),
                            rectf.width()  * active.x,
                            rectf.height() * active.y);*/
 
         // Spread out or contract the texture sampling of the Gaussian blur kernel.
         // If dispersion is too large, the quality of the blur will suffer.
-        uBlurStep = Vector2f(bloomDispersion / workFB.size().x,
+        uBlurStep = Vec2f(bloomDispersion / workFB.size().x,
                              bloomDispersion / workFB.size().y);
 
         bloom.setProgram(bloom.program()); // horizontal shader
@@ -211,7 +211,7 @@ DENG2_PIMPL(Bloom)
 
         // Use the work buffer's texture as the source.
         uTex    = workFB.colorTexture();
-        uWindow = Vector4f(0, 1 - bloomSize, bloomSize, bloomSize);
+        uWindow = Vec4f(0, 1 - bloomSize, bloomSize, bloomSize);
 
         bloom.setProgram("vert"); // vertical shader
         bloom.draw();

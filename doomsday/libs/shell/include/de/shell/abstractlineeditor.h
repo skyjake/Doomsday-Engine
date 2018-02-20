@@ -67,9 +67,9 @@ public:
      * The Y component is the wrapped line index and the X component is the
      * character index on that line.
      */
-    Vector2i linePos(int index) const;
+    Vec2i linePos(int index) const;
 
-    Vector2i lineCursorPos() const { return linePos(cursor()); }
+    Vec2i lineCursorPos() const { return linePos(cursor()); }
 
     bool        isSuggestingCompletion() const;
     Rangei      completionRange() const;

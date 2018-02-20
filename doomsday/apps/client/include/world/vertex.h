@@ -58,12 +58,12 @@ public: /// @todo Move to the map loader:
     uint _twosOwnerCount = 0;
 
 public:
-    Vertex(de::Mesh &mesh, de::Vector2d const &origin = de::Vector2d());
+    Vertex(de::Mesh &mesh, de::Vec2d const &origin = de::Vec2d());
 
     /**
      * Returns the origin (i.e., position) of the vertex in the map coordinate space.
      */
-    de::Vector2d const &origin() const;
+    de::Vec2d const &origin() const;
 
     /**
      * Returns the X axis origin (i.e., position) of the vertex in the map coordinate space.
@@ -81,7 +81,7 @@ public:
      *
      * @param newOrigin  New origin in map coordinate space units.
      */
-    void setOrigin(de::Vector2d const &newOrigin);
+    void setOrigin(de::Vec2d const &newOrigin);
 
     /**
      * @copydoc setOrigin()
@@ -89,7 +89,7 @@ public:
      * @param x  New X origin in map coordinate space units.
      * @param y  New Y origin in map coordinate space units.
      */
-    inline void setOrigin(float x, float y) { return setOrigin(de::Vector2d(x, y)); }
+    inline void setOrigin(float x, float y) { return setOrigin(de::Vec2d(x, y)); }
 
 #ifdef __CLIENT__
     /**
@@ -138,7 +138,7 @@ protected:
     int property(world::DmuArgs &args) const;
 
 private:
-    de::Vector2d _origin;  ///< Map-space coordinates.
+    de::Vec2d _origin;  ///< Map-space coordinates.
 };
 
 #endif  // DENG_WORLD_VERTEX_H

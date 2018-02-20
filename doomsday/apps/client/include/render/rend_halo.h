@@ -59,8 +59,8 @@ void H_SetupState(bool dosetup);
  *
  * @return          @c true, iff a halo was rendered.
  */
-bool H_RenderHalo(de::Vector3d const &origin, float size,
-                  DGLuint tex, de::Vector3f const &color,
+bool H_RenderHalo(de::Vec3d const &origin, float size,
+                  DGLuint tex, de::Vec3f const &color,
                   coord_t distanceToViewer, float occlusionFactor,
                   float brightnessFactor, float viewXOffset,
                   bool primary, bool viewRelativeRotate);

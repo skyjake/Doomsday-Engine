@@ -195,9 +195,9 @@ AABoxd const &Subsector::bounds() const
     return *d->bounds;
 }
 
-Vector2d Subsector::center() const
+Vec2d Subsector::center() const
 {
-    return (Vector2d(bounds().min) + Vector2d(bounds().max)) / 2;
+    return (Vec2d(bounds().min) + Vec2d(bounds().max)) / 2;
 }
 
 ddouble Subsector::roughArea() const

@@ -101,11 +101,11 @@ DENG_GUI_PIMPL(HomeWidget)
         tabsBackground = new LabelWidget;
         if (style().isBlurringAllowed())
         {
-            tabsBackground->set(Background(Vector4f(1, 1, 1, 1), Background::Blurred));
+            tabsBackground->set(Background(Vec4f(1, 1, 1, 1), Background::Blurred));
         }
         else
         {
-            tabsBackground->set(Background(Vector4f(0, 0, 0, 1)));
+            tabsBackground->set(Background(Vec4f(0, 0, 0, 1)));
         }
 
         // Create the column navigation buttons.
@@ -171,7 +171,7 @@ DENG_GUI_PIMPL(HomeWidget)
     {
         // Edge navigation buttons are only visible when hoving on them.
         button.set(Background(style().colors().colorf("text")));
-        //button.setImageColor(style().colors().colorf("inverted.text") + Vector4f(0, 0, 0, 2));
+        //button.setImageColor(style().colors().colorf("inverted.text") + Vec4f(0, 0, 0, 2));
         //button.setOverrideImageSize(style().fonts().font("default").height().value() * 2);
         button.setOpacity(0);
         button.setBehavior(Widget::Focusable, UnsetFlags); // only for the mouse

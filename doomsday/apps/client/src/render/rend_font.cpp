@@ -427,7 +427,7 @@ void FR_CharSize(Size2Raw *size, uchar ch)
     errorIfNotInited("FR_CharSize");
     if (size)
     {
-        Vector2ui dimensions = App_Resources().font(fr.fontNum).glyphPosCoords(ch).size();
+        Vec2ui dimensions = App_Resources().font(fr.fontNum).glyphPosCoords(ch).size();
         size->width  = dimensions.x;
         size->height = dimensions.y;
     }
@@ -845,10 +845,10 @@ static void drawChar(uchar ch, float x, float y, const AbstractFont &font, int a
         geometry = geometry.expanded(compFont->glyphTextureBorder(ch));
     }
 
-    Vector2i coords[4] = { font.glyphTexCoords(ch).topLeft,
-                           font.glyphTexCoords(ch).topRight(),
-                           font.glyphTexCoords(ch).bottomRight,
-                           font.glyphTexCoords(ch).bottomLeft() };
+    Vec2i coords[4] = { font.glyphTexCoords(ch).topLeft,
+                        font.glyphTexCoords(ch).topRight(),
+                        font.glyphTexCoords(ch).bottomRight,
+                        font.glyphTexCoords(ch).bottomLeft() };
 
     GL_DrawRectWithCoords(geometry, coords);
 

@@ -114,7 +114,7 @@ DENG_EXTERN_C colorpaletteid_t R_CreateColorPalette(char const *colorFormatDescr
             return 0;
         }
 
-        QVector<Vector3ub> colors =
+        QVector<Vec3ub> colors =
             ColorTableReader::read(colorFormatDescriptor, colorCount, colorData);
 
         auto &palettes = Resources::get().colorPalettes();
@@ -230,7 +230,7 @@ DENG_EXTERN_C void R_GetColorPaletteRGBubv(colorpaletteid_t paletteId, int color
 
     try
     {
-        Vector3ub palColor = App_Resources().colorPalettes().colorPalette(paletteId)[colorIdx];
+        Vec3ub palColor = App_Resources().colorPalettes().colorPalette(paletteId)[colorIdx];
         rgb[0] = palColor.x;
         rgb[1] = palColor.y;
         rgb[2] = palColor.z;
@@ -268,14 +268,14 @@ DENG_EXTERN_C void R_GetColorPaletteRGBf(colorpaletteid_t paletteId, int colorId
         res::ColorPalette &palette = App_Resources().colorPalettes().colorPalette(paletteId);
         if(applyTexGamma)
         {
-            Vector3ub palColor = palette[colorIdx];
+            Vec3ub palColor = palette[colorIdx];
             rgb[0] = R_TexGammaLut(palColor.x) * reciprocal255;
             rgb[1] = R_TexGammaLut(palColor.y) * reciprocal255;
             rgb[2] = R_TexGammaLut(palColor.z) * reciprocal255;
         }
         else
         {
-            Vector3f palColor = palette.colorf(colorIdx);
+            Vec3f palColor = palette.colorf(colorIdx);
             rgb[0] = palColor.x;
             rgb[1] = palColor.y;
             rgb[2] = palColor.z;

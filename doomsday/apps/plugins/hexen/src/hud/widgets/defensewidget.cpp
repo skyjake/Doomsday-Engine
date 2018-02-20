@@ -32,7 +32,7 @@ static patchid_t pDefenseIcon[FRAME_COUNT];
 static void DefenseWidget_Draw(guidata_defense_t *dfns, Point2Raw const *offset)
 {
     DENG2_ASSERT(dfns);
-    dfns->draw(offset? Vector2i(offset->xy) : Vector2i());
+    dfns->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void DefenseWidget_UpdateGeometry(guidata_defense_t *dfns)
@@ -69,7 +69,7 @@ void guidata_defense_t::tick(timespan_t /*elapsed*/)
     }
 }
 
-void guidata_defense_t::draw(Vector2i const &offset) const
+void guidata_defense_t::draw(Vec2i const &offset) const
 {
     dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
 
@@ -85,7 +85,7 @@ void guidata_defense_t::draw(Vector2i const &offset) const
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, iconOpacity);
-    GL_DrawPatch(_patchId, Vector2i(13, 14));
+    GL_DrawPatch(_patchId, Vec2i(13, 14));
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);

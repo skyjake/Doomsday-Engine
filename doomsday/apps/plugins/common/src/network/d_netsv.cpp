@@ -754,7 +754,7 @@ void NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, float z, int an
     if(!IS_SERVER) return;
 
     LOGDEV_NET_MSG("NetSv_SendPlayerSpawnPosition: Player #%i pos:%s angle:%x")
-            << plrNum << de::Vector3f(x, y, z).asText() << angle;
+            << plrNum << de::Vec3f(x, y, z).asText() << angle;
 
     writer_s *writer = D_NetWrite();
     Writer_WriteFloat(writer, x);

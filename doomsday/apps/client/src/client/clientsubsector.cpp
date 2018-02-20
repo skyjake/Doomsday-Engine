@@ -865,8 +865,8 @@ DENG2_PIMPL(ClientSubsector)
             reverb.volume = 1;
     }
 
-    bool prepareGeometry(Surface &surface, Vector3d &topLeft, Vector3d &bottomRight,
-                         Vector2f &materialOrigin) const
+    bool prepareGeometry(Surface &surface, Vec3d &topLeft, Vec3d &bottomRight,
+                         Vec2f &materialOrigin) const
     {
         if (surface.parent().type() == DMU_SIDE)
         {
@@ -903,15 +903,15 @@ DENG2_PIMPL(ClientSubsector)
             auto &plane = surface.parent().as<Plane>();
             AABoxd const &sectorBounds = plane.sector().bounds();
 
-            topLeft = Vector3d(sectorBounds.minX,
+            topLeft = Vec3d(sectorBounds.minX,
                                plane.isSectorFloor() ? sectorBounds.maxY : sectorBounds.minY,
                                plane.heightSmoothed());
 
-            bottomRight = Vector3d(sectorBounds.maxX,
+            bottomRight = Vec3d(sectorBounds.maxX,
                                    plane.isSectorFloor() ? sectorBounds.minY : sectorBounds.maxY,
                                    plane.heightSmoothed());
 
-            materialOrigin = Vector2f(-fmod(sectorBounds.minX, 64), -fmod(sectorBounds.minY, 64))
+            materialOrigin = Vec2f(-fmod(sectorBounds.minX, 64), -fmod(sectorBounds.minY, 64))
                            - surface.originSmoothed();
 
             return true;
@@ -921,16 +921,16 @@ DENG2_PIMPL(ClientSubsector)
     }
 
     void projectDecorations(Surface &suf, MaterialAnimator &matAnimator,
-                            Vector2f const &materialOrigin, Vector3d const &topLeft,
-                            Vector3d const &bottomRight)
+                            Vec2f const &materialOrigin, Vec3d const &topLeft,
+                            Vec3d const &bottomRight)
     {
-        Vector3d delta = bottomRight - topLeft;
+        Vec3d delta = bottomRight - topLeft;
         if (de::fequal(delta.length(), 0)) return;
 
         ClientMaterial &material = matAnimator.material();
         dint const axis = suf.normal().maxAxis();
 
-        Vector2d sufDimensions;
+        Vec2d sufDimensions;
         if (axis == 0 || axis == 1)
         {
             sufDimensions.x = std::sqrt(de::squared(delta.x) + de::squared(delta.y));
@@ -953,18 +953,18 @@ DENG2_PIMPL(ClientSubsector)
                                    , &delta, &axis, &sufDimensions, &decorIndex]
                                    (MaterialDecoration &decor)
         {
-            Vector2ui const &matDimensions = matAnimator.material().dimensions();
+            Vec2ui const &matDimensions = matAnimator.material().dimensions();
             MaterialAnimator::Decoration const &decorSS = matAnimator.decoration(decorIndex);
 
             // Skip values must be at least one.
-            Vector2i skip = Vector2i(decor.patternSkip().x + 1, decor.patternSkip().y + 1)
-                .max(Vector2i(1, 1));
+            Vec2i skip = Vec2i(decor.patternSkip().x + 1, decor.patternSkip().y + 1)
+                .max(Vec2i(1, 1));
 
-            Vector2f repeat = skip.toVector2ui() * matDimensions;
-            if (repeat == Vector2f(0, 0))
+            Vec2f repeat = skip.toVector2ui() * matDimensions;
+            if (repeat == Vec2f(0, 0))
                 return LoopAbort;
 
-            Vector3d origin = topLeft + suf.normal() * decorSS.elevation();
+            Vec3d origin = topLeft + suf.normal() * decorSS.elevation();
 
             dfloat s = de::wrap(decorSS.origin().x - matDimensions.x * decor.patternOffset().x + materialOrigin.x,
                                 0.f, repeat.x);
@@ -978,12 +978,12 @@ DENG2_PIMPL(ClientSubsector)
 
                 for (; t < sufDimensions.y; t += repeat.y)
                 {
-                    auto const offset = Vector2f(s, t) / sufDimensions;
-                    Vector3d patternOffset(offset.x,
+                    auto const offset = Vec2f(s, t) / sufDimensions;
+                    Vec3d patternOffset(offset.x,
                                            axis == 2 ? offset.y : offset.x,
                                            axis == 2 ? offset.x : offset.y);
 
-                    Vector3d decorOrigin = origin + delta * patternOffset;
+                    Vec3d decorOrigin = origin + delta * patternOffset;
                     // The point must be in the correct subsector.
                     if (suf.map().subsectorAt(decorOrigin) == thisPublic)
                     {
@@ -1033,8 +1033,8 @@ DENG2_PIMPL(ClientSubsector)
         // Clear any existing decorations.
         if (surface.hasMaterial())
         {
-            Vector2f materialOrigin;
-            Vector3d bottomRight, topLeft;
+            Vec2f materialOrigin;
+            Vec3d bottomRight, topLeft;
             if (prepareGeometry(surface, topLeft, bottomRight, materialOrigin))
             {
                 MaterialAnimator &animator = *surface.materialAnimator();
@@ -1654,7 +1654,7 @@ ClientSubsector::LightId ClientSubsector::lightSourceId() const
     return LightId(sector().indexInMap());
 }
 
-Vector3f ClientSubsector::lightSourceColorf() const
+Vec3f ClientSubsector::lightSourceColorf() const
 {
     if (Rend_SkyLightIsEnabled() && hasSkyPlane())
     {
@@ -1666,7 +1666,7 @@ Vector3f ClientSubsector::lightSourceColorf() const
     return sector().lightColor();
 }
 
-dfloat ClientSubsector::lightSourceIntensity(Vector3d const &/*viewPoint*/) const
+dfloat ClientSubsector::lightSourceIntensity(Vec3d const &/*viewPoint*/) const
 {
     return sector().lightLevel();
 }
@@ -1767,7 +1767,7 @@ bool ClientSubsector::updateBiasContributors(Shard *shard)
             Plane const &plane     = visPlane(gdata->geomId);
             Surface const &surface = plane.surface();
 
-            Vector3d const surfacePoint(subspace.poly().center(), plane.heightSmoothed());
+            Vec3d const surfacePoint(subspace.poly().center(), plane.heightSmoothed());
 
             map.forAllBiasSources([&tracker, &subspace, &surface, &surfacePoint] (BiasSource &source)
             {
@@ -1775,7 +1775,7 @@ bool ClientSubsector::updateBiasContributors(Shard *shard)
                 if (source.intensity() <= 0)
                     return LoopContinue;
 
-                Vector3d sourceToSurface = (source.origin() - surfacePoint).normalize();
+                Vec3d sourceToSurface = (source.origin() - surfacePoint).normalize();
                 ddouble distance = 0;
 
                 // Calculate minimum 2D distance to the subspace.
@@ -1784,7 +1784,7 @@ bool ClientSubsector::updateBiasContributors(Shard *shard)
                 HEdge *node = baseNode;
                 do
                 {
-                    ddouble len = (Vector2d(source.origin()) - node->origin()).length();
+                    ddouble len = (Vec2d(source.origin()) - node->origin()).length();
                     if (node == baseNode || len < distance)
                         distance = len;
                 } while ((node = &node->next()) != baseNode);
@@ -1800,9 +1800,9 @@ bool ClientSubsector::updateBiasContributors(Shard *shard)
         case DMU_SEGMENT: {
             auto &seg              = gdata->mapElement->as<LineSideSegment>();
             Surface const &surface = seg.lineSide().middle();
-            Vector2d const &from   = seg.hedge().origin();
-            Vector2d const &to     = seg.hedge().twin().origin();
-            Vector2d const center  = (from + to) / 2;
+            Vec2d const &from   = seg.hedge().origin();
+            Vec2d const &to     = seg.hedge().twin().origin();
+            Vec2d const center  = (from + to) / 2;
 
             map.forAllBiasSources([&tracker, &surface, &from, &to, &center] (BiasSource &source)
             {
@@ -1810,13 +1810,13 @@ bool ClientSubsector::updateBiasContributors(Shard *shard)
                 if (source.intensity() <= 0)
                     return LoopContinue;
 
-                Vector3d sourceToSurface = (source.origin() - center).normalize();
+                Vec3d sourceToSurface = (source.origin() - center).normalize();
 
                 // Calculate minimum 2D distance to the segment.
                 ddouble distance = 0;
                 for (dint k = 0; k < 2; ++k)
                 {
-                    ddouble len = (Vector2d(source.origin()) - (!k? from : to)).length();
+                    ddouble len = (Vec2d(source.origin()) - (!k? from : to)).length();
                     if (k == 0 || len < distance)
                         distance = len;
                 }

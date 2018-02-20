@@ -22,12 +22,12 @@ using namespace de;
 
 namespace gloom { namespace geo {
 
-bool Plane::isPointAbove(const Vector3d &pos) const
+bool Plane::isPointAbove(const Vec3d &pos) const
 {
     return (pos - point).dot(normal) >= 0;
 }
 
-double Plane::project(const Vector2d &pos) const
+double Plane::project(const Vec2d &pos) const
 {
     const double d = -normal.x * point.x - normal.y * point.y - normal.z * point.z;
     return (-normal.x * pos.x - normal.z * pos.y - d) / normal.y;

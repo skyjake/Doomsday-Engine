@@ -32,7 +32,7 @@ struct DataBuffer
     int elementCount = 0;
     de::GLUniform var;
     de::GLTexture buf;
-    de::Vector2ui size;
+    de::Vec2ui size;
     QVector<Type> data;
     de::Image::Format format;
     uint texelsPerElement; // number of pixels needed to represent one element
@@ -67,7 +67,7 @@ struct DataBuffer
         elementCount = 0;
         buf.clear();
         data.clear();
-        size = de::Vector2ui();
+        size = de::Vec2ui();
     }
 
     void setData(uint index, const Type &value)

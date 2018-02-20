@@ -117,7 +117,7 @@ class MapConversionReporter
 {
     /// Record "unclosed sectors".
     /// Sector index => world point relatively near to the problem area.
-    typedef std::map<dint, Vector2i> UnclosedSectorMap;
+    typedef std::map<dint, Vec2i> UnclosedSectorMap;
 
     /// Record "one-way window lines".
     /// Line index => Sector index the back side faces.
@@ -219,7 +219,7 @@ public:
 
 protected:
     /// Observes Map UnclosedSectorFound.
-    void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint)
+    void unclosedSectorFound(Sector &sector, Vec2d const &nearPoint)
     {
         _unclosedSectors.insert(std::make_pair(sector.indexInArchive(), nearPoint.toVector2i()));
     }

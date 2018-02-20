@@ -751,7 +751,7 @@ dd_bool GL_PalettizeImage(uint8_t *out, int outformat, res::ColorPalette const *
 
         for(long i = 0; i < numPels; ++i)
         {
-            de::Vector3ub palColor = palette->color(*in);
+            de::Vec3ub palColor = palette->color(*in);
 
             out[0] = palColor.x;
             out[1] = palColor.y;
@@ -794,7 +794,7 @@ dd_bool GL_QuantizeImageToPalette(uint8_t *out, int outformat, res::ColorPalette
         for(i = 0; i < numPixels; ++i, in += inSize, out += outSize)
         {
             // Convert the color value.
-            *out = palette->nearestIndex(de::Vector3ub(in));
+            *out = palette->nearestIndex(de::Vec3ub(in));
 
             // Alpha channel?
             if(outformat == 2)
@@ -823,7 +823,7 @@ void GL_DeSaturatePalettedImage(uint8_t *pixels, res::ColorPalette const &palett
     int max = 0;
     for(long i = 0; i < numPels; ++i)
     {
-        de::Vector3ub palColor = palette[pixels[i]];
+        de::Vec3ub palColor = palette[pixels[i]];
         if(palColor.x == palColor.y && palColor.x == palColor.z)
         {
             if(palColor.x > max)
@@ -839,7 +839,7 @@ void GL_DeSaturatePalettedImage(uint8_t *pixels, res::ColorPalette const &palett
 
     for(long i = 0; i < numPels; ++i)
     {
-        de::Vector3ub palColor = palette[pixels[i]];
+        de::Vec3ub palColor = palette[pixels[i]];
         if(palColor.x == palColor.y && palColor.x == palColor.z)
         {
             continue;
@@ -849,7 +849,7 @@ void GL_DeSaturatePalettedImage(uint8_t *pixels, res::ColorPalette const &palett
         int temp = (2 * int( palColor.x ) + 4 * int( palColor.y ) + 3 * int( palColor.z )) / 9;
         if(max) temp *= 255.f / max;
 
-        pixels[i] = palette.nearestIndex(de::Vector3ub(temp, temp, temp));
+        pixels[i] = palette.nearestIndex(de::Vec3ub(temp, temp, temp));
     }
 }
 
@@ -883,7 +883,7 @@ void FindAverageLineColorIdx(uint8_t const *data, int w, int h, int line,
     {
         if(!hasAlpha || alphaStart[i])
         {
-            de::Vector3ub palColor = palette[start[i]];
+            de::Vec3ub palColor = palette[start[i]];
             avg[0] += palColor.x;
             avg[1] += palColor.y;
             avg[2] += palColor.z;
@@ -992,7 +992,7 @@ void FindAverageColorIdx(uint8_t const *data, int w, int h, res::ColorPalette co
     {
         if(!hasAlpha || alphaStart[i])
         {
-            de::Vector3ub palColor = palette[data[i]];
+            de::Vec3ub palColor = palette[data[i]];
             avg[0] += palColor.x;
             avg[1] += palColor.y;
             avg[2] += palColor.z;

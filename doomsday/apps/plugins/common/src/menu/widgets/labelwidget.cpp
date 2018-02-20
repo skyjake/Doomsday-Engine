@@ -54,7 +54,7 @@ LabelWidget::~LabelWidget()
 void LabelWidget::draw() const
 {
     fontid_t fontId           = mnRendState->textFonts[font()];
-    Vector4f const &textColor = mnRendState->textColors[color()];
+    Vec4f const &textColor = mnRendState->textColors[color()];
 //    float t = (isFocused()? 1 : 0);
 
 //    // Flash if focused.
@@ -102,7 +102,7 @@ void LabelWidget::updateGeometry()
     {
         patchinfo_t info;
         R_GetPatchInfo(*d->patch, &info);
-        geometry().setSize(Vector2ui(info.geometry.size.width, info.geometry.size.height));
+        geometry().setSize(Vec2ui(info.geometry.size.width, info.geometry.size.height));
         return;
     }
 
@@ -110,7 +110,7 @@ void LabelWidget::updateGeometry()
     Size2Raw size;
     FR_SetFont(page().predefinedFont(mn_page_fontid_t(font())));
     FR_TextSize(&size, d->text.toUtf8().constData());
-    geometry().setSize(Vector2ui(size.width, size.height));
+    geometry().setSize(Vec2ui(size.width, size.height));
     FR_PopAttrib();
 }
 

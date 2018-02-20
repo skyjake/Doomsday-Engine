@@ -115,7 +115,7 @@ public:
      * units. The DimensionsChange audience is notified whenever dimensions
      * are changed.
      */
-    de::Vector2ui const &dimensions() const;
+    de::Vec2ui const &dimensions() const;
 
     /**
      * Convenient accessor method for returning the X axis size (width) of
@@ -139,7 +139,7 @@ public:
      *
      * @todo Update any Materials (and thus Surfaces) which reference this.
      */
-    void setDimensions(de::Vector2ui const &newDimensions);
+    void setDimensions(de::Vec2ui const &newDimensions);
 
     /**
      * Change the world width of the texture.
@@ -160,13 +160,13 @@ public:
     /**
      * Returns the world origin offset of texture in map coordinate space units.
      */
-    de::Vector2i const &origin() const;
+    de::Vec2i const &origin() const;
 
     /**
      * Change the world origin offset of the texture.
      * @param newOrigin  New origin in map coordinate space units.
      */
-    void setOrigin(de::Vector2i const &newOrigin);
+    void setOrigin(de::Vec2i const &newOrigin);
 
     /**
      * Returns @c true if the texture is flagged @a flagsToTest.

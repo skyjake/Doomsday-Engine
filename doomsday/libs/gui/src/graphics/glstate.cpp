@@ -509,9 +509,9 @@ GLState &GLState::setViewport(Rectangleui const &viewportRect)
 GLState &GLState::setNormalizedViewport(Rectanglef const &normViewportRect)
 {
     GLFramebuffer::Size const size = target().size();
-    Rectangleui vp(Vector2ui(normViewportRect.left() * size.x,
+    Rectangleui vp(Vec2ui(normViewportRect.left() * size.x,
                              normViewportRect.top()  * size.y),
-                   Vector2ui(std::ceil(normViewportRect.right()  * size.x),
+                   Vec2ui(std::ceil(normViewportRect.right()  * size.x),
                              std::ceil(normViewportRect.bottom() * size.y)));
     return setViewport(vp);
 }
@@ -544,9 +544,9 @@ GLState &GLState::setScissor(Rectangleui const &newScissorRect)
 GLState &GLState::setNormalizedScissor(Rectanglef const &normScissorRect)
 {
     Rectangleui vp = viewport();
-    Rectanglei scis(Vector2i(normScissorRect.left()   * vp.width(),
+    Rectanglei scis(Vec2i(normScissorRect.left()   * vp.width(),
                              normScissorRect.top()    * vp.height()),
-                    Vector2i(std::ceil(normScissorRect.right()  * vp.width()),
+                    Vec2i(std::ceil(normScissorRect.right()  * vp.width()),
                              std::ceil(normScissorRect.bottom() * vp.height())));
     return setScissor(scis.moved(vp.topLeft.toVector2i()));
 }

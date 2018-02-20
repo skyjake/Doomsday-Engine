@@ -58,12 +58,12 @@ inline bool isVertical(Direction dir) {
     return dir == ui::Up || dir == ui::Down;
 }
 
-inline Vector2f directionVector(Direction dir) {
-    return dir == ui::Left?  Vector2f(-1,  0) :
-           dir == ui::Right? Vector2f( 1,  0) :
-           dir == ui::Up?    Vector2f( 0, -1) :
-           dir == ui::Down?  Vector2f( 0,  1) :
-                             Vector2f();
+inline Vec2f directionVector(Direction dir) {
+    return dir == ui::Left?  Vec2f(-1,  0) :
+           dir == ui::Right? Vec2f( 1,  0) :
+           dir == ui::Up?    Vec2f( 0, -1) :
+           dir == ui::Down?  Vec2f( 0,  1) :
+                             Vec2f();
 }
 
 /**

@@ -197,20 +197,20 @@ public:
      * sky light color if one or more Plane Surfaces in the subsector are using a sky-masked
      * Material).
      */
-    de::Vector3f lightSourceColorf() const;
+    de::Vec3f lightSourceColorf() const;
 
     /**
      * Returns the final ambient light intensity for the source.
      * @see lightSourceColorf()
      */
-    de::dfloat lightSourceIntensity(de::Vector3d const &viewPoint = de::Vector3d(0, 0, 0)) const;
+    de::dfloat lightSourceIntensity(de::Vec3d const &viewPoint = de::Vec3d(0, 0, 0)) const;
 
     /**
      * Returns the final ambient light color and intensity for the source.
      * @see lightSourceColorf()
      */
-    inline de::Vector4f lightSourceColorfIntensity() const {
-        return de::Vector4f(lightSourceColorf(), lightSourceIntensity());
+    inline de::Vec4f lightSourceColorfIntensity() const {
+        return de::Vec4f(lightSourceColorf(), lightSourceIntensity());
     }
 
     /**

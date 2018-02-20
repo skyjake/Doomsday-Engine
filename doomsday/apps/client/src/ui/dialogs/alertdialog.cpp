@@ -220,7 +220,7 @@ DENG_GUI_PIMPL(AlertDialog)
         switch (alert.level())
         {
         case Minor:
-            label.setImageColor(Vector4f(style().colors().colorf("text"), .5f));
+            label.setImageColor(Vec4f(style().colors().colorf("text"), .5f));
             break;
 
         case Normal:

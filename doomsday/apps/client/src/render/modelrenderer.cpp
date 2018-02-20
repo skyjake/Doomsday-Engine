@@ -60,7 +60,7 @@ DENG2_PIMPL(ModelRenderer)
     GLUniform uFogRange         { "uFogRange",         GLUniform::Vec4 };
     GLUniform uFogColor         { "uFogColor",         GLUniform::Vec4 };
 
-    Matrix4f inverseLocal; ///< Translation ignored, this is used for light vectors.
+    Mat4f inverseLocal; ///< Translation ignored, this is used for light vectors.
     int lightCount = 0;
 
     Variable lightIntensityFactor;
@@ -117,9 +117,9 @@ DENG2_PIMPL(ModelRenderer)
         });
     }
 
-    void setAmbientLight(Vector3f const &ambientIntensity)
+    void setAmbientLight(Vec3f const &ambientIntensity)
     {
-        uAmbientLight = Vector4f(ambientIntensity, 1.f);
+        uAmbientLight = Vec4f(ambientIntensity, 1.f);
     }
 
     void clearLights()
@@ -128,54 +128,55 @@ DENG2_PIMPL(ModelRenderer)
 
         for (int i = 0; i < MAX_LIGHTS; ++i)
         {
-            uLightDirs       .set(i, Vector3f());
-            uLightIntensities.set(i, Vector4f());
+            uLightDirs       .set(i, Vec3f());
+            uLightIntensities.set(i, Vec4f());
         }
     }
 
-    void addLight(Vector3f const &direction, Vector3f const &intensity)
+    void addLight(Vec3f const &direction, Vec3f const &intensity)
     {
         if (lightCount == MAX_LIGHTS) return;
 
         int idx = lightCount;
         uLightDirs       .set(idx, (inverseLocal * direction).normalize());
-        uLightIntensities.set(idx, Vector4f(intensity, intensity.max()) * lightIntensityFactor);
+        uLightIntensities.set(idx, Vec4f(intensity, intensity.max()) * lightIntensityFactor);
 
         lightCount++;
     }
 
-    void setupPose(Vector3d const &modelWorldOrigin,
-                   Vector3f const &modelOffset,
+    void setupPose(Vec3d const &modelWorldOrigin,
+                   Vec3f const &modelOffset,
                    float yawAngle,
                    float pitchAngle,
-                   Matrix4f const *preModelToLocal = nullptr)
+                   Mat4f const *preModelToLocal = nullptr)
     {
-        Vector3f const aspectCorrect(1.0f, 1.0f/1.2f, 1.0f);
-        Vector3d origin = modelWorldOrigin + modelOffset * aspectCorrect;
+        Vec3f const aspectCorrect(1.0f, 1.0f/1.2f, 1.0f);
+        Vec3d origin = modelWorldOrigin + modelOffset * aspectCorrect;
 
         // "local" == world space but with origin at model origin
 
-        Matrix4f modelToLocal =
-                Matrix4f::rotate(-90 + yawAngle, Vector3f(0, 1, 0) /* vertical axis for yaw */) *
-                Matrix4f::rotate(pitchAngle,     Vector3f(1, 0, 0));
+        Mat4f modelToLocal =
+                Mat4f::rotate(-90 + yawAngle, Vec3f(0, 1, 0) /* vertical axis for yaw */) *
+                Mat4f::rotate(pitchAngle,     Vec3f(1, 0, 0));
 
-        Vector3f relativePos = Rend_EyeOrigin() - origin;
+        Vec3f relativePos = Rend_EyeOrigin() - origin;
 
-        uReflectionMatrix = Matrix4f::rotate(-yawAngle,  Vector3f(0, 1, 0)) *
-                            Matrix4f::rotate(pitchAngle, Vector3f(0, 0, 1));
+        uReflectionMatrix = Mat4f::rotate(-yawAngle,  Vec3f(0, 1, 0)) *
+                            Mat4f::rotate(pitchAngle, Vec3f(0, 0, 1));
 
         if (preModelToLocal)
         {
             modelToLocal = modelToLocal * (*preModelToLocal);
         }
 
-        const Matrix4f localToWorld = Matrix4f::translate(origin) *
-                                      Matrix4f::scale(aspectCorrect); // Inverse aspect correction.
+        Mat4f const localToWorld =
+                Mat4f::translate(origin) *
+                Mat4f::scale(aspectCorrect); // Inverse aspect correction.
 
-        const Matrix4f viewProj = Rend_GetProjectionMatrix(weaponFixedFOV) *
+        const Mat4f viewProj = Rend_GetProjectionMatrix(weaponFixedFOV) *
                                   ClientApp::renderSystem().uViewMatrix().toMatrix4f();
 
-        const Matrix4f localToScreen = viewProj * localToWorld;
+        const Mat4f localToScreen = viewProj * localToWorld;
 
         uWorldMatrix = localToWorld * modelToLocal;
 
@@ -194,9 +195,9 @@ DENG2_PIMPL(ModelRenderer)
      *                        (object's local frame in world space).
      * @param localToScreen   Transformation from local space to screen (projected 2D) space.
      */
-    void setTransformation(Vector3f const &relativeEyePos,
-                           Matrix4f const &modelToLocal,
-                           Matrix4f const &localToScreen)
+    void setTransformation(Vec3f const &relativeEyePos,
+                           Mat4f const &modelToLocal,
+                           Mat4f const &localToScreen)
     {
         uMvpMatrix   = localToScreen * modelToLocal;
         inverseLocal = modelToLocal.inverse();
@@ -315,10 +316,10 @@ void ModelRenderer::render(vispsprite_t const &pspr, mobj_t const *playerMobj)
     dfloat yaw   = vang   + p.yawAngleOffset;
     dfloat pitch = vpitch + p.pitchAngleOffset;
 
-    Matrix4f eyeSpace = Matrix4f::rotate(180 - yaw, Vector3f(0, 1, 0))
-                      * Matrix4f::rotate(pitch    , Vector3f(1, 0, 0));
+    Mat4f eyeSpace = Mat4f::rotate(180 - yaw, Vec3f(0, 1, 0))
+                      * Mat4f::rotate(pitch    , Vec3f(1, 0, 0));
 
-    Matrix4f xform = p.model->transformation;
+    Mat4f xform = p.model->transformation;
 
     d->setupPose(Rend_EyeOrigin(), eyeSpace * p.model->offset,
                  -90 - yaw, pitch,

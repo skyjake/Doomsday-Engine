@@ -156,7 +156,7 @@ public:
     bool isFPSCounterVisible() const;
 
     // Implements BaseWindow.
-    de::Vector2f windowContentSize() const override;
+    de::Vec2f windowContentSize() const override;
     void drawWindowContent() override;
     void preDraw() override;
     void postDraw() override;

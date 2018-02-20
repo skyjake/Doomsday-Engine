@@ -210,9 +210,9 @@ DENG2_PIMPL_NOREF(ConvexSubspaceProxy)
         return false;
     }
 
-    Vector2d findCenter() const
+    Vec2d findCenter() const
     {
-        Vector2d center;
+        Vec2d center;
         int numPoints = 0;
         for(LineSegmentSide const *seg : segments)
         {
@@ -234,7 +234,7 @@ DENG2_PIMPL_NOREF(ConvexSubspaceProxy)
      * applied such that line segments with the same origin coordinates are
      * sorted by descending 'to' angle.
      */
-    void buildOrderedSegments(Vector2d const &point)
+    void buildOrderedSegments(Vec2d const &point)
     {
         needRebuildOrderedSegments = false;
 
@@ -242,8 +242,8 @@ DENG2_PIMPL_NOREF(ConvexSubspaceProxy)
 
         for(LineSegmentSide *seg : segments)
         {
-            Vector2d fromDist = seg->from().origin() - point;
-            Vector2d toDist   = seg->to().origin() - point;
+            Vec2d fromDist = seg->from().origin() - point;
+            Vec2d toDist   = seg->to().origin() - point;
 
             OrderedSegment oseg;
             oseg.segment   = seg;
@@ -428,8 +428,8 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
 
 #ifdef __CLIENT__
                 /// @todo LineSide::newSegment() should encapsulate:
-                seg->setLineSideOffset(Vector2d(mapSide->from().origin() - lineSeg->from().origin()).length());
-                seg->setLength(Vector2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
+                seg->setLineSideOffset(Vec2d(mapSide->from().origin() - lineSeg->from().origin()).length());
+                seg->setLength(Vec2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
 #else
                 DENG2_UNUSED(seg);
 #endif
@@ -524,8 +524,8 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
                 LineSideSegment *seg = mapSide->addSegment(*hedge);
 #ifdef __CLIENT__
                 /// @todo LineSide::newSegment() should encapsulate:
-                seg->setLineSideOffset(Vector2d(mapSide->from().origin() - lineSeg->from().origin()).length());
-                seg->setLength(Vector2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
+                seg->setLineSideOffset(Vec2d(mapSide->from().origin() - lineSeg->from().origin()).length());
+                seg->setLength(Vec2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
 #else
                 DENG2_UNUSED(seg);
 #endif

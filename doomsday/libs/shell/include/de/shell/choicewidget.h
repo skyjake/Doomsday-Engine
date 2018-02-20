@@ -56,7 +56,7 @@ public:
      */
     bool isOpen() const;
 
-    Vector2i cursorPosition() const;
+    Vec2i cursorPosition() const;
 
     // Events.
     void focusLost();

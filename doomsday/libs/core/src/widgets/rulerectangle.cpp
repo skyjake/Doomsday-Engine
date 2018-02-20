@@ -370,7 +370,7 @@ Rule const &RuleRectangle::inputRule(Rule::Semantic inputRule)
     return *d->ruleRef(inputRule);
 }
 
-void RuleRectangle::setAnchorPoint(Vector2f const &normalizedPoint, TimeSpan const &transition)
+void RuleRectangle::setAnchorPoint(Vec2f const &normalizedPoint, TimeSpan const &transition)
 {
     d->normalizedAnchorX()->set(normalizedPoint.x, transition);
     d->normalizedAnchorY()->set(normalizedPoint.y, transition);
@@ -378,21 +378,21 @@ void RuleRectangle::setAnchorPoint(Vector2f const &normalizedPoint, TimeSpan con
 
 Rectanglef RuleRectangle::rect() const
 {
-    return Rectanglef(Vector2f(left().value(),  top().value()),
-                      Vector2f(right().value(), bottom().value()));
+    return Rectanglef(Vec2f(left().value(),  top().value()),
+                      Vec2f(right().value(), bottom().value()));
 }
 
-Vector2f RuleRectangle::size() const
+Vec2f RuleRectangle::size() const
 {
-    return Vector2f(width().value(), height().value());
+    return Vec2f(width().value(), height().value());
 }
 
-Vector2i RuleRectangle::sizei() const
+Vec2i RuleRectangle::sizei() const
 {
-    return Vector2i(width().valuei(), height().valuei());
+    return Vec2i(width().valuei(), height().valuei());
 }
 
-Vector2ui RuleRectangle::sizeui() const
+Vec2ui RuleRectangle::sizeui() const
 {
     return sizei().toVector2ui();
 }
@@ -400,8 +400,8 @@ Vector2ui RuleRectangle::sizeui() const
 Rectanglei RuleRectangle::recti() const
 {
     Rectanglef const r = rect();
-    return Rectanglei(Vector2i(de::floor(r.topLeft.x),     de::floor(r.topLeft.y)),
-                      Vector2i(de::floor(r.bottomRight.x), de::floor(r.bottomRight.y)));
+    return Rectanglei(Vec2i(de::floor(r.topLeft.x),     de::floor(r.topLeft.y)),
+                      Vec2i(de::floor(r.bottomRight.x), de::floor(r.bottomRight.y)));
 }
 
 void RuleRectangle::setDebugName(String const &name)

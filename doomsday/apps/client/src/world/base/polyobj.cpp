@@ -136,7 +136,7 @@ bool Polyobj::blocked() const
     return false;  // All clear.
 }
 
-polyobj_s::polyobj_s(Vector2d const &origin_)
+polyobj_s::polyobj_s(Vec2d const &origin_)
 {
     zap(thinker);
 
@@ -214,7 +214,7 @@ void Polyobj::link()
         map().link(*this);
 
         // Find the center point of the polyobj.
-        Vector2d avg;
+        Vec2d avg;
         for (Line *line : lines())
         {
             avg += line->from().origin();
@@ -300,7 +300,7 @@ void Polyobj::updateOriginalVertexCoords()
     for (Vertex *vertex : uniqueVertexes())
     {
         // The original coordinates are relative to the polyobj origin.
-        (*origCoordsIt) = vertex->origin() - Vector2d(origin);
+        (*origCoordsIt) = vertex->origin() - Vec2d(origin);
         origCoordsIt++;
     }
 }
@@ -335,7 +335,7 @@ void Polyobj::updateSurfaceTangents()
     }
 }
 
-bool Polyobj::move(Vector2d const &delta)
+bool Polyobj::move(Vec2d const &delta)
 {
     LOG_AS("Polyobj::move");
     //LOG_DEBUG("Applying delta %s to [%p]") << delta.asText() << this;
@@ -354,7 +354,7 @@ bool Polyobj::move(Vector2d const &delta)
             prevCoordsIt++;
         }
 
-        Vector2d newOrigin = Vector2d(origin) + delta;
+        Vec2d newOrigin = Vec2d(origin) + delta;
         V2d_Set(origin, newOrigin.x, newOrigin.y);
 
         updateBounds();
@@ -375,7 +375,7 @@ bool Polyobj::move(Vector2d const &delta)
                 prevCoordsIt++;
             }
 
-            Vector2d newOrigin = Vector2d(origin) - delta;
+            Vec2d newOrigin = Vec2d(origin) - delta;
             V2d_Set(origin, newOrigin.x, newOrigin.y);
 
             updateBounds();
@@ -398,12 +398,12 @@ bool Polyobj::move(Vector2d const &delta)
  * @param about      Origin to rotate @a point relative to.
  * @param fineAngle  Angle to rotate (theta).
  */
-static void rotatePoint2d(Vector2d &point, Vector2d const &about, duint fineAngle)
+static void rotatePoint2d(Vec2d &point, Vec2d const &about, duint fineAngle)
 {
     ddouble const c = FIX2DBL(fineCosine[fineAngle]);
     ddouble const s = FIX2DBL(finesine[fineAngle]);
 
-    Vector2d orig = point;
+    Vec2d orig = point;
 
     point.x = orig.x * c - orig.y * s + about.x;
     point.y = orig.y * c + orig.x * s + about.y;
@@ -427,7 +427,7 @@ bool Polyobj::rotate(angle_t delta)
             (*prevCoordsIt) = vertex->origin();
 
             // Apply rotation relative to the "original" coords.
-            Vector2d newCoords = (*origCoordsIt);
+            Vec2d newCoords = (*origCoordsIt);
             rotatePoint2d(newCoords, origin, fineAngle);
             vertex->setOrigin(newCoords);
 

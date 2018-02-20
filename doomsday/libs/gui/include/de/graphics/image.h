@@ -85,8 +85,8 @@ public:
         RGBA_32ui         = 29,
     };
 
-    typedef Vector2ui Size;
-    typedef Vector4ub Color;
+    typedef Vec2ui Size;
+    typedef Vec4ub Color;
 
 public:
     Image();
@@ -175,8 +175,8 @@ public:
     void resize(Size const &size);
     void fill(Color const &color);
     void fill(Rectanglei const &rect, Color const &color);
-    void draw(Image const &image, Vector2i const &topLeft);
-    void drawPartial(Image const &image, Rectanglei const &part, Vector2i const &topLeft);
+    void draw(Image const &image, Vec2i const &topLeft);
+    void drawPartial(Image const &image, Rectanglei const &part, Vec2i const &topLeft);
     Image multiplied(Image const &factorImage) const;
     Image multiplied(Color const &color) const;
     Image colorized(Color const &color) const;

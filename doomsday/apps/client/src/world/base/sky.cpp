@@ -135,7 +135,7 @@ void Sky::Layer::setFadeoutLimit(dfloat newLimit)
 }
 
 #ifdef __CLIENT__
-static Vector3f const AmbientLightColorDefault(1, 1, 1); // Pure white.
+static Vec3f const AmbientLightColorDefault(1, 1, 1); // Pure white.
 #endif
 
 DENG2_PIMPL(Sky)
@@ -183,11 +183,11 @@ DENG2_PIMPL(Sky)
     {
         bool custom     = false;  /// @c true= defined in a MapInfo def.
         bool needUpdate = true;   /// @c true= update if not custom.
-        Vector3f color;
+        Vec3f color;
 
-        void setColor(Vector3f const &newColor, bool isCustom = true)
+        void setColor(Vec3f const &newColor, bool isCustom = true)
         {
-            color  = newColor.min(Vector3f(1, 1, 1)).max(Vector3f(0, 0, 0));
+            color  = newColor.min(Vec3f(1, 1, 1)).max(Vec3f(0, 0, 0));
             custom = isCustom;
         }
 
@@ -231,9 +231,9 @@ DENG2_PIMPL(Sky)
         // A sky with no active layer uses the default color.
         if(firstActiveLayer < 0) return;
 
-        Vector3f avgLayerColor;
-        Vector3f bottomCapColor;
-        Vector3f topCapColor;
+        Vec3f avgLayerColor;
+        Vec3f bottomCapColor;
+        Vec3f topCapColor;
 
         dint avgCount = 0;
         for(dint i = firstActiveLayer; i < layers.count(); ++i)
@@ -261,15 +261,15 @@ DENG2_PIMPL(Sky)
                     auto const *avgLineColor = reinterpret_cast<averagecolor_analysis_t const *>(tex->base().analysisDataPointer(ClientTexture::AverageTopColorAnalysis));
                     if(!avgLineColor) throw Error("calculateSkyAmbientColor", "Texture \"" + tex->base().manifest().composeUri().asText() + "\" has no AverageTopColorAnalysis");
 
-                    topCapColor = Vector3f(avgLineColor->color.rgb);
+                    topCapColor = Vec3f(avgLineColor->color.rgb);
 
                     avgLineColor = reinterpret_cast<averagecolor_analysis_t const *>(tex->base().analysisDataPointer(ClientTexture::AverageBottomColorAnalysis));
                     if(!avgLineColor) throw Error("calculateSkyAmbientColor", "Texture \"" +  tex->base().manifest().composeUri().asText() + "\" has no AverageBottomColorAnalysis");
 
-                    bottomCapColor = Vector3f(avgLineColor->color.rgb);
+                    bottomCapColor = Vec3f(avgLineColor->color.rgb);
                 }
 
-                avgLayerColor += Vector3f(avgColor->color.rgb);
+                avgLayerColor += Vec3f(avgColor->color.rgb);
                 ++avgCount;
             }
         }
@@ -366,8 +366,8 @@ void Sky::configure(defn::Sky const *def)
 #ifdef __CLIENT__
     if(def)
     {
-        Vector3f color(def->get("color"));
-        if(color != Vector3f(0, 0, 0))
+        Vec3f color(def->get("color"));
+        if(color != Vec3f(0, 0, 0))
         {
             d->ambientLight.setColor(color);
         }
@@ -528,7 +528,7 @@ dint Sky::setProperty(DmuArgs const &args)
 
 #ifdef __CLIENT__
 
-Vector3f const &Sky::ambientColor() const
+Vec3f const &Sky::ambientColor() const
 {
     if(d->ambientLight.custom || rendSkyLightAuto)
     {
@@ -538,7 +538,7 @@ Vector3f const &Sky::ambientColor() const
     return AmbientLightColorDefault;
 }
 
-void Sky::setAmbientColor(Vector3f const &newColor)
+void Sky::setAmbientColor(Vec3f const &newColor)
 {
     d->ambientLight.setColor(newColor);
 }

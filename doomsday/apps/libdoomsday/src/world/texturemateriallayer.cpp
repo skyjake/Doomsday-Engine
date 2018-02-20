@@ -25,8 +25,8 @@ using namespace de;
 namespace world {
 
 TextureMaterialLayer::AnimationStage::AnimationStage(de::Uri const &texture, int tics,
-    float variance, float glowStrength, float glowStrengthVariance, Vector2f const origin,
-    de::Uri const &maskTexture, Vector2f const &maskDimensions, blendmode_t blendMode, float opacity)
+    float variance, float glowStrength, float glowStrengthVariance, Vec2f const origin,
+    de::Uri const &maskTexture, Vec2f const &maskDimensions, blendmode_t blendMode, float opacity)
     : /*Record()
     , */ Stage(tics, variance)
     , texture(texture)
@@ -61,19 +61,19 @@ TextureMaterialLayer::AnimationStage::~AnimationStage()
 
 void TextureMaterialLayer::AnimationStage::resetToDefaults()
 {
-    origin = Vector2f();
+    origin = Vec2f();
     texture = de::Uri();
     maskTexture = de::Uri();
-    maskDimensions = Vector2f();
+    maskDimensions = Vec2f();
     blendMode = BM_NORMAL;
     opacity = 1;
     glowStrength = 0;
     glowStrengthVariance = 0;
 
-    /*addArray ("origin", new ArrayValue(Vector2f(0, 0)));
+    /*addArray ("origin", new ArrayValue(Vec2f(0, 0)));
     addText  ("texture", "");
     addText  ("maskTexture", "");
-    addArray ("maskDimensions", new ArrayValue(Vector2f(0, 0)));
+    addArray ("maskDimensions", new ArrayValue(Vec2f(0, 0)));
     addNumber("blendMode", BM_NORMAL);
     addNumber("opacity", 1);
     addNumber("glowStrength", 0);
@@ -88,7 +88,7 @@ TextureMaterialLayer::AnimationStage::fromDef(Record const &stageDef)
                               stageDef.getf("variance"),
                               stageDef.getf("glowStrength"),
                               stageDef.getf("glowStrengthVariance"),
-                              Vector2f(stageDef.geta("texOrigin")));
+                              Vec2f(stageDef.geta("texOrigin")));
 }
 
 String TextureMaterialLayer::AnimationStage::description() const

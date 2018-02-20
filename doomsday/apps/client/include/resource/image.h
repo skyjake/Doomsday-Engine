@@ -67,7 +67,7 @@ namespace res
 
 struct image_t
 {
-    typedef de::Vector2ui Size;
+    typedef de::Vec2ui Size;
 
     /// @ref imageFlags
     int flags = 0;

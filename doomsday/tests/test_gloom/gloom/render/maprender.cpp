@@ -38,16 +38,16 @@ DENG2_PIMPL(MapRender)
     QHash<String, Id> loadedTextures; // name => atlas ID
 
     struct Metrics {
-        Vector4f uvRect;
-        Vector4f texelSize;
+        Vec4f uvRect;
+        Vec4f texelSize;
     };
     DataBuffer<Metrics> textureMetrics{"uTextureMetrics", Image::RGBA_32f, 2, 1};
 
     DataBuffer<float> planes{"uPlanes", Image::R_32f};
 
     struct TexOffsetData {
-        Vector2f offset;
-        Vector2f speed;
+        Vec2f offset;
+        Vec2f speed;
     };
     DataBuffer<TexOffsetData> texOffsets{"uTexOffsets", Image::RGBA_32f};
 
@@ -81,7 +81,7 @@ DENG2_PIMPL(MapRender)
             const Rectanglei rect  = self().context().atlas->imageRect(i.value());
             const Rectanglef rectf = self().context().atlas->imageRectf(i.value());
             const uint32_t   texId = textureMetrics.append(
-                Metrics{{rectf.xywh()}, {Vector4f(rect.width(), rect.height())}});
+                Metrics{{rectf.xywh()}, {Vec4f(rect.width(), rect.height())}});
             textures.insert(i.key(), texId);
         }
 

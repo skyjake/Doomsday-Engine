@@ -86,9 +86,9 @@ public:
     void releaseLinesOutsideRange();
 
     void makeVertices(GuiVertexBuilder &triStrip,
-                      Vector2i const &topLeft,
+                      Vec2i const &topLeft,
                       ui::Alignment const &lineAlign,
-                      Vector4f const &color = Vector4f(1, 1, 1, 1));
+                      Vec4f const &color = Vec4f(1, 1, 1, 1));
 
     /**
      * Generates vertices for all the text lines and concatenates them onto the existing
@@ -104,7 +104,7 @@ public:
                       Rectanglei const &rect,
                       ui::Alignment const &alignInRect,
                       ui::Alignment const &lineAlign,
-                      Vector4f const &color = Vector4f(1, 1, 1, 1));
+                      Vec4f const &color = Vec4f(1, 1, 1, 1));
 
     /**
      * Returns the maximum width of the generated vertices. This is only valid after

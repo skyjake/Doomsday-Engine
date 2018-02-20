@@ -40,11 +40,11 @@ void Model::resetToDefaults()
     def().addNumber("selector", 0);
     def().addNumber("flags", 0);
     def().addNumber("interMark", 0);
-    def().addArray ("interRange", new ArrayValue(Vector2i(0, 1)));
+    def().addArray ("interRange", new ArrayValue(Vec2i(0, 1)));
     def().addNumber("skinTics", 0);
-    def().addArray ("scale", new ArrayValue(Vector3i(1, 1, 1)));
+    def().addArray ("scale", new ArrayValue(Vec3i(1, 1, 1)));
     def().addNumber("resize", 0);
-    def().addArray ("offset", new ArrayValue(Vector3f()));
+    def().addArray ("offset", new ArrayValue(Vec3f()));
     def().addNumber("shadowRadius", 0);
     def().addArray ("sub", new ArrayValue);
 }
@@ -62,7 +62,7 @@ Record &Model::addSub()
     sub->addNumber("flags", 0);
     sub->addNumber("skin", 0);
     sub->addNumber("skinRange", 0);
-    sub->addArray ("offset", new ArrayValue(Vector3f()));
+    sub->addArray ("offset", new ArrayValue(Vec3f()));
     sub->addNumber("alpha", 0);
     sub->addNumber("parm", 0);
     sub->addNumber("selSkinMask", 0);
@@ -74,7 +74,7 @@ Record &Model::addSub()
 
     sub->addText  ("shinySkin", "");
     sub->addNumber("shiny", 0);
-    sub->addArray ("shinyColor", new ArrayValue(Vector3f(1, 1, 1)));
+    sub->addArray ("shinyColor", new ArrayValue(Vec3f(1, 1, 1)));
     sub->addNumber("shinyReact", 1);
     sub->addNumber("blendMode", BM_NORMAL);
 

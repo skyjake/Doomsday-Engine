@@ -32,8 +32,8 @@ DENG2_PIMPL(TextureManifest)
 {
     int uniqueId;                    ///< Scheme-unique identifier (user defined).
     de::Uri resourceUri;             ///< Image resource path, to be loaded.
-    Vector2ui logicalDimensions;     ///< Dimensions in map space.
-    Vector2i origin;                 ///< Origin offset in map space.
+    Vec2ui logicalDimensions;     ///< Dimensions in map space.
+    Vec2i origin;                 ///< Origin offset in map space.
     Texture::Flags flags;            ///< Classification flags.
     std::unique_ptr<Texture> texture;///< Associated resource (if any).
     TextureScheme *ownerScheme = nullptr;
@@ -176,24 +176,24 @@ void TextureManifest::setFlags(Texture::Flags flagsToChange, FlagOp operation)
     applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
-Vector2ui const &TextureManifest::logicalDimensions() const
+Vec2ui const &TextureManifest::logicalDimensions() const
 {
     return d->logicalDimensions;
 }
 
-bool TextureManifest::setLogicalDimensions(Vector2ui const &newDimensions)
+bool TextureManifest::setLogicalDimensions(Vec2ui const &newDimensions)
 {
     if (d->logicalDimensions == newDimensions) return false;
     d->logicalDimensions = newDimensions;
     return true;
 }
 
-Vector2i const &TextureManifest::origin() const
+Vec2i const &TextureManifest::origin() const
 {
     return d->origin;
 }
 
-void TextureManifest::setOrigin(Vector2i const &newOrigin)
+void TextureManifest::setOrigin(Vec2i const &newOrigin)
 {
     if (d->origin != newOrigin)
     {

@@ -31,7 +31,7 @@ using namespace de;
 static void TomeWidget_Draw(guidata_tomeofpower_t *tome, Point2Raw const *offset)
 {
     DENG2_ASSERT(tome);
-    tome->draw(offset? Vector2i(offset->xy) : Vector2i());
+    tome->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void TomeWidget_UpdateGeometry(guidata_tomeofpower_t *tome)
@@ -99,7 +99,7 @@ void guidata_tomeofpower_t::tick(timespan_t /*elapsed*/)
     }
 }
 
-void guidata_tomeofpower_t::draw(Vector2i const &offset) const
+void guidata_tomeofpower_t::draw(Vec2i const &offset) const
 {
 #define TRACKING            ( 2 )
 
@@ -124,7 +124,7 @@ void guidata_tomeofpower_t::draw(Vector2i const &offset) const
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, iconOpacity);
-        GL_DrawPatch(d->patchId, Vector2i(13, 13));
+        GL_DrawPatch(d->patchId, Vec2i(13, 13));
 
         DGL_Disable(DGL_TEXTURE_2D);
     }

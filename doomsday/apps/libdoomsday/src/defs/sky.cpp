@@ -35,7 +35,7 @@ void Sky::resetToDefaults()
     def().addNumber("flags", 0);
     def().addNumber("height", DEFAULT_SKY_HEIGHT);
     def().addNumber("horizonOffset", DEFAULT_SKY_HORIZON_OFFSET);
-    def().addArray ("color", new ArrayValue(Vector3f()));
+    def().addArray ("color", new ArrayValue(Vec3f()));
     def().addArray ("layer", new ArrayValue);
     def().addArray ("model", new ArrayValue);
 
@@ -92,10 +92,10 @@ Record &Sky::addModel()
     model->addNumber("frameInterval", 1);
     model->addNumber("yaw", 0);
     model->addNumber("yawSpeed", 0);
-    model->addArray ("originOffset", new ArrayValue(Vector3f()));
-    model->addArray ("rotate", new ArrayValue(Vector2f()));
+    model->addArray ("originOffset", new ArrayValue(Vec3f()));
+    model->addArray ("rotate", new ArrayValue(Vec2f()));
     model->addText  ("execute", "");
-    model->addArray ("color", new ArrayValue(Vector4f(1, 1, 1, 1)));
+    model->addArray ("color", new ArrayValue(Vec4f(1, 1, 1, 1)));
 
     def()["model"].array().add(new RecordValue(model, RecordValue::OwnsRecord));
 

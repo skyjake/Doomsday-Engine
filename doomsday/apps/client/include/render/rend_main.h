@@ -61,7 +61,7 @@ namespace world {
 
 #define SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN (.05f)
 
-DENG_EXTERN_C de::Vector3d vOrigin; // Y/Z swizzled for drawing
+DENG_EXTERN_C de::Vec3d vOrigin; // Y/Z swizzled for drawing
 DENG_EXTERN_C float vang, vpitch, yfov;
 DENG_EXTERN_C float viewsidex, viewsidey;
 
@@ -87,7 +87,7 @@ DENG_EXTERN_C int renderWireframe;
 DENG_EXTERN_C int dynlightBlend;
 
 //DENG_EXTERN_C int torchAdditive;
-DENG_EXTERN_C de::Vector3f torchColor;
+DENG_EXTERN_C de::Vec3f torchColor;
 
 DENG_EXTERN_C int rAmbient;
 DENG_EXTERN_C float rendLightDistanceAttenuation;
@@ -175,9 +175,9 @@ float Rend_FieldOfView();
  */
 void Rend_ModelViewMatrix(bool inWorldSpace = true);
 
-de::Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool inWorldSpace = true);
+de::Mat4f Rend_GetModelViewMatrix(int consoleNum, bool inWorldSpace = true);
 
-de::Vector3d Rend_EyeOrigin();
+de::Vec3d Rend_EyeOrigin();
 
 /**
  * Returns the projection matrix that is used for rendering the current frame's
@@ -185,11 +185,11 @@ de::Vector3d Rend_EyeOrigin();
  *
  * @param fixedFov  If non-zero, overrides the user's FOV with a fixed value.
  */
-de::Matrix4f Rend_GetProjectionMatrix(float fixedFov = 0.f);
+de::Mat4f Rend_GetProjectionMatrix(float fixedFov = 0.f);
 
 #define Rend_PointDist2D(c) (abs((vOrigin.z-(c)[VY])*viewsidex - (vOrigin.x-(c)[VX])*viewsidey))
 
-void Rend_SetFixedView(int consoleNum, float yaw, float pitch, float fov, de::Vector2f viewportSize);
+void Rend_SetFixedView(int consoleNum, float yaw, float pitch, float fov, de::Vec2f viewportSize);
 void Rend_UnsetFixedView();
 
 /**
@@ -201,7 +201,7 @@ void Rend_UnsetFixedView();
 float Rend_ExtraLightDelta();
 
 void Rend_ApplyTorchLight(float *color3, float distance);
-void Rend_ApplyTorchLight(de::Vector4f &color, float distance);
+void Rend_ApplyTorchLight(de::Vec4f &color, float distance);
 
 /**
  * Apply range compression delta to @a lightValue.
@@ -252,7 +252,7 @@ bool Rend_SkyLightIsEnabled();
 /**
  * Returns the effective sky light color.
  */
-de::Vector3f Rend_SkyLightColor();
+de::Vec3f Rend_SkyLightColor();
 
 /**
  * Blend the given light value with the luminous object's color, applying any
@@ -263,7 +263,7 @@ de::Vector3f Rend_SkyLightColor();
  *
  * @return  Calculated result.
  */
-de::Vector3f Rend_LuminousColor(de::Vector3f const &color, de::dfloat light);
+de::Vec3f Rend_LuminousColor(de::Vec3f const &color, de::dfloat light);
 
 /**
  * Given an @a intensity determine the height of the plane glow, applying any
@@ -281,8 +281,8 @@ coord_t Rend_PlaneGlowHeight(de::dfloat intensity);
  *
  * @todo Does not belong here.
  */
-de::duint Rend_CollectAffectingLights(de::Vector3d const &point,
-    de::Vector3f const &ambientColor = de::Vector3f(1, 1, 1), world::ConvexSubspace *subspace = nullptr,
+de::duint Rend_CollectAffectingLights(de::Vec3d const &point,
+    de::Vec3f const &ambientColor = de::Vec3f(1, 1, 1), world::ConvexSubspace *subspace = nullptr,
     bool starkLight = false);
 
 void Rend_DrawVectorLight(VectorLightData const &vlight, de::dfloat alpha);
@@ -320,13 +320,13 @@ TextureVariantSpec const &Rend_MapSurfaceLightmapTextureSpec();
 TextureVariantSpec const &Rend_MapSurfaceShinyTextureSpec();
 TextureVariantSpec const &Rend_MapSurfaceShinyMaskTextureSpec();
 
-void R_DivVerts(de::Vector3f *dst, de::Vector3f const *src,
+void R_DivVerts(de::Vec3f *dst, de::Vec3f const *src,
     WorldEdge const &leftEdge, WorldEdge const &rightEdge);
 
-void R_DivTexCoords(de::Vector2f *dst, de::Vector2f const *src,
+void R_DivTexCoords(de::Vec2f *dst, de::Vec2f const *src,
     WorldEdge const &leftEdge, WorldEdge const &rightEdge);
 
-void R_DivVertColors(de::Vector4f *dst, de::Vector4f const *src,
+void R_DivVertColors(de::Vec4f *dst, de::Vec4f const *src,
     WorldEdge const &leftEdge, WorldEdge const &rightEdge);
 
 #endif // CLIENT_RENDER_MAIN_H

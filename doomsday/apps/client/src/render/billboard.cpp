@@ -245,17 +245,17 @@ static void Spr_VertexColors(dint count, dgl_color_t *out, dgl_vertex_t *normals
     DENG2_ASSERT(out && normals && _ambient);
 
     dbyte const opacity = 255 * _ambient[3];
-    Vector3f const ambient(_ambient);
-    Vector3f const saturated(1, 1, 1);
+    Vec3f const ambient(_ambient);
+    Vec3f const saturated(1, 1, 1);
 
-    Vector3ub colorClamped;
+    Vec3ub colorClamped;
     for(dint i = 0; i < count; ++i)
     {
         if(maxLights > 0)
         {
             // Accumulate contributions from all affecting lights.
-            Vector3f const normal(normals[i].xyz);
-            Vector3f accum[2];  // Begin with total darkness [color, extra].
+            Vec3f const normal(normals[i].xyz);
+            Vec3f accum[2];  // Begin with total darkness [color, extra].
             dint numProcessed = 0;
             ClientApp::renderSystem().forAllVectorLights(lightListIdx, [&maxLights, &normal
                                          , &accum, &numProcessed](VectorLightData const &vlight)
@@ -328,7 +328,7 @@ void Rend_DrawPSprite(rendpspriteparams_t const &parms)
 
     // All psprite vertices are co-plannar, so just copy the view front vector.
     // @todo: Can we do something better here?
-    Vector3f const &frontVec = viewPlayer->viewport().frontVec;
+    Vec3f const &frontVec = viewPlayer->viewport().frontVec;
     dgl_vertex_t quadNormals[4];
     for(dint i = 0; i < 4; ++i)
     {
@@ -399,7 +399,7 @@ void Rend_DrawSprite(vissprite_t const &spr)
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     TextureVariant *tex = nullptr;
-    Vector2f size;
+    Vec2f size;
     dfloat viewOffsetX = 0;  ///< View-aligned offset to center point.
     dfloat s = 1, t = 1;     ///< Bottom right coords.
 
@@ -412,7 +412,7 @@ void Rend_DrawSprite(vissprite_t const &spr)
         tex = matAnimator->texUnit(MaterialAnimator::TU_LAYER0).texture;
         dint const texBorder = tex->spec().variant.border;
 
-        size        = matAnimator->dimensions() + Vector2ui(texBorder * 2, texBorder * 2);
+        size        = matAnimator->dimensions() + Vec2ui(texBorder * 2, texBorder * 2);
         viewOffsetX = -size.x / 2 + -tex->base().origin().x;
 
         tex->glCoords(&s, &t);

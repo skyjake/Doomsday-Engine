@@ -121,10 +121,10 @@ void LabelWidget::draw()
 
     // Use the wrapped lines to determine width and height.
     DENG2_ASSERT(!d->wraps.isEmpty());
-    Vector2i labelSize(d->wraps.width(), d->wraps.height());
+    Vec2i labelSize(d->wraps.width(), d->wraps.height());
 
     // Determine position of the label based on alignment.
-    Vector2i labelPos;
+    Vec2i labelPos;
     if (d->align.testFlag(AlignRight))
     {
         labelPos.x = buf.width() - labelSize.x;

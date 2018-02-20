@@ -52,14 +52,14 @@ public:
     struct Metadata
     {
         /// Dimensions of the patch in pixels.
-        de::Vector2ui dimensions;
+        de::Vec2ui dimensions;
 
         /// Logical dimensions of the patch in pixels (@see Patch notes).
-        de::Vector2ui logicalDimensions;
+        de::Vec2ui logicalDimensions;
 
         /// Origin offset (top left) in world coordinate space units.
         /// Used for various purposes depending on context.
-        de::Vector2i origin;
+        de::Vec2i origin;
     };
 
     /**

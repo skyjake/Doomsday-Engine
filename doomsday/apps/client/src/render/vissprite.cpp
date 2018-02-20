@@ -170,14 +170,14 @@ void R_SortVisSprites()
     }
 }
 
-void VisEntityLighting::setupLighting(Vector3d const &origin, ddouble distance,
+void VisEntityLighting::setupLighting(Vec3d const &origin, ddouble distance,
                                       world::BspLeaf const &bspLeaf)
 {
 #if 0
     world::Map &map = ClientApp::world().map();
     if(useBias && map.hasLightGrid())
     {
-        Vector4f color = map.lightGrid().evaluate(origin);
+        Vec4f color = map.lightGrid().evaluate(origin);
 
         // Apply light range compression.
         for(dint i = 0; i < 3; ++i)
@@ -193,7 +193,7 @@ void VisEntityLighting::setupLighting(Vector3d const &origin, ddouble distance,
 #endif
     {
         auto const &subsec   = bspLeaf.subspace().subsector().as<world::ClientSubsector>();
-        Vector4f const color = subsec.lightSourceColorfIntensity();
+        Vec4f const color = subsec.lightSourceColorfIntensity();
 
         // No need for distance attentuation.
         dfloat lightLevel = color.w;

@@ -29,9 +29,9 @@ namespace de {
 
 struct LIBAPPFW_PUBLIC GuiVertex
 {
-    Vector2f pos;
-    Vector2f texCoord;
-    Vector4f rgba;
+    Vec2f pos;
+    Vec2f texCoord;
+    Vec4f rgba;
     float batchIndex;
 
     LIBGUI_DECLARE_VERTEX_FORMAT(4)
@@ -61,13 +61,13 @@ public:
 
     void setTexture(GLUniform &uTex);
 
-    void setModelViewProjection(Matrix4f const &mvp);
+    void setModelViewProjection(Mat4f const &mvp);
 
     void setNormalizedScissor(Rectanglef const &normScissorRect = Rectanglef(0, 0, 1, 1));
 
     Rectanglef normalizedScissor() const;
 
-    void setColor(Vector4f const &color);
+    void setColor(Vec4f const &color);
 
     void setSaturation(float saturation);
 

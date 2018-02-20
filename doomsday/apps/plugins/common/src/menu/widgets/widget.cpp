@@ -35,7 +35,7 @@ DENG2_PIMPL_NOREF(Widget)
 {
     Flags flags;
     int group = 0;             ///< Object group identifier.
-    Vector2i origin;           ///< Used with the fixed layout (in the page coordinate space).
+    Vec2i origin;           ///< Used with the fixed layout (in the page coordinate space).
 
     Rectanglei geometry;       ///< "Physical" geometry.
     Page *page = nullptr;      ///< Page which owns this object (if any).
@@ -145,13 +145,13 @@ Rectanglei const &Widget::geometry() const
     return d->geometry;
 }
 
-Widget &Widget::setFixedOrigin(Vector2i const &newOrigin)
+Widget &Widget::setFixedOrigin(Vec2i const &newOrigin)
 {
     d->origin = newOrigin;
     return *this;
 }
 
-Vector2i Widget::fixedOrigin() const
+Vec2i Widget::fixedOrigin() const
 {
     return d->origin;
 }

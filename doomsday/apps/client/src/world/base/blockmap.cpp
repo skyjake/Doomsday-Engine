@@ -212,7 +212,7 @@ DENG2_PIMPL(Blockmap)
         : Base(i)
         , bounds    (bounds)
         , cellSize  (cellSize)
-        , dimensions(Vector2ui(de::ceil((bounds.maxX - bounds.minX) / cellSize),
+        , dimensions(Vec2ui(de::ceil((bounds.maxX - bounds.minX) / cellSize),
                                de::ceil((bounds.maxY - bounds.minY) / cellSize)))
     {
         // Quadtree must subdivide the space equally into 1x1 unit cells.
@@ -400,9 +400,9 @@ Blockmap::Blockmap(AABoxd const &bounds, duint cellSize)
 Blockmap::~Blockmap()
 {}
 
-Vector2d Blockmap::origin() const
+Vec2d Blockmap::origin() const
 {
-    return Vector2d(d->bounds.min);
+    return Vec2d(d->bounds.min);
 }
 
 AABoxd const &Blockmap::bounds() const
@@ -425,7 +425,7 @@ dint Blockmap::toCellIndex(duint cellX, duint cellY) const
     return d->toCellIndex(cellX, cellY);
 }
 
-BlockmapCell Blockmap::toCell(Vector2d const &point, bool *retDidClip) const
+BlockmapCell Blockmap::toCell(Vec2d const &point, bool *retDidClip) const
 {
     bool didClipX, didClipY;
     Cell cell(d->toCellX(point.x, didClipX), d->toCellY(point.y, didClipY));
@@ -437,7 +437,7 @@ BlockmapCellBlock Blockmap::toCellBlock(AABoxd const &box, bool *retDidClip) con
 {
     bool didClipMin, didClipMax;
     CellBlock block(toCell(box.min, &didClipMin), toCell(box.max, &didClipMax));
-    block.max += Vector2ui(1, 1); // CellBlock is inclusive-exclusive.
+    block.max += Vec2ui(1, 1); // CellBlock is inclusive-exclusive.
     if(retDidClip) *retDidClip = didClipMin | didClipMax;
     return block;
 }
@@ -569,12 +569,12 @@ LoopResult Blockmap::forAllInBox(AABoxd const &box, std::function<LoopResult (vo
     return LoopContinue;
 }
 
-LoopResult Blockmap::forAllInPath(Vector2d const &from_, Vector2d const &to_,
+LoopResult Blockmap::forAllInPath(Vec2d const &from_, Vec2d const &to_,
     std::function<LoopResult (void *object)> func) const
 {
     // We may need to clip and/or adjust these points.
-    Vector2d from = from_;
-    Vector2d to   = to_;
+    Vec2d from = from_;
+    Vec2d to   = to_;
 
     // Abort if the trace originates from outside the blockmap.
     if(!(from.x >= d->bounds.minX && from.x <= d->bounds.maxX &&
@@ -601,7 +601,7 @@ LoopResult Blockmap::forAllInPath(Vector2d const &from_, Vector2d const &to_,
     ddouble const epsilon = FIX2FLT(FRACUNIT);
     ddouble const offset  = FIX2FLT(FRACUNIT);
 
-    Vector2d const delta = (to - origin()) / d->cellSize;
+    Vec2d const delta = (to - origin()) / d->cellSize;
     if(de::fequal(delta.x, 0, epsilon)) to.x += offset;
     if(de::fequal(delta.y, 0, epsilon)) to.y += offset;
 
@@ -641,20 +641,20 @@ LoopResult Blockmap::forAllInPath(Vector2d const &from_, Vector2d const &to_,
         if(ab >= 0 && ab <= 1)
             V2d_Copy(toV1, point);
 
-        from = Vector2d(fromV1);
-        to   = Vector2d(toV1);
+        from = Vec2d(fromV1);
+        to   = Vec2d(toV1);
     }
 
     BlockmapCell const originCell = toCell(from);
     BlockmapCell const destCell   = toCell(to);
 
     // Determine the starting point in blockmap space (preserving the fractional part).
-    Vector2d intercept = (from - origin()) / d->cellSize;
+    Vec2d intercept = (from - origin()) / d->cellSize;
 
     // Determine the step deltas.
-    Vector2i cellStep;
-    Vector2d interceptStep;
-    Vector2d frac;
+    Vec2i cellStep;
+    Vec2d interceptStep;
+    Vec2d frac;
     if(destCell.x == originCell.x)
     {
         cellStep.x      = 0;
@@ -742,8 +742,8 @@ void Blockmap::drawDebugVisual() const
         if(!node.isLeaf()) continue;
         if(!node.leafData) continue;
 
-        Vector2f const topLeft     = node.cell * UNIT_SIZE;
-        Vector2f const bottomRight = topLeft + Vector2f(UNIT_SIZE, UNIT_SIZE);
+        Vec2f const topLeft     = node.cell * UNIT_SIZE;
+        Vec2f const bottomRight = topLeft + Vec2f(UNIT_SIZE, UNIT_SIZE);
 
         DGL_Begin(DGL_LINE_STRIP);
             DGL_Vertex2f(topLeft.x,     topLeft.y);
@@ -757,8 +757,8 @@ void Blockmap::drawDebugVisual() const
     /*
      * Draw the bounds.
      */
-    Vector2f start;
-    Vector2f end = start + d->dimensions * UNIT_SIZE;
+    Vec2f start;
+    Vec2f end = start + d->dimensions * UNIT_SIZE;
 
     DGL_Color3f(1, .5f, .5f);
     DGL_Begin(DGL_LINES);

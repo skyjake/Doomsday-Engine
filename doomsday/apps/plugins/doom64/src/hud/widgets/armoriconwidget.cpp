@@ -28,7 +28,7 @@ using namespace de;
 static void ArmorIcon_Draw(guidata_armoricon_t *icon, Point2Raw const *offset)
 {
     DENG2_ASSERT(icon);
-    icon->draw(offset? Vector2i(offset->xy) : Vector2i());
+    icon->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void ArmorIcon_UpdateGeometry(guidata_armoricon_t *icon)
@@ -62,7 +62,7 @@ void guidata_armoricon_t::tick(timespan_t /*elapsed*/)
     currentSprite = (plr->armorType == 2 ? this->armorSprite2 : this->armorSprite1);
 }
 
-void guidata_armoricon_t::draw(Vector2i const &offset) const
+void guidata_armoricon_t::draw(Vec2i const &offset) const
 {
     dfloat const iconOpacity = uiRendState->pageAlpha * cfg.common.hudIconAlpha;
 

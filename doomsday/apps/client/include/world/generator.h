@@ -171,7 +171,7 @@ public:
      * spawn time. For all other types of generator the initial origin at generator
      * spawn time is returned.
      */
-    de::Vector3d origin() const;
+    de::Vec3d origin() const;
 
     /**
      * Returns @c true iff the generator is @em static, meaning it will not be
@@ -229,8 +229,8 @@ public: /// @todo make private:
 
     de::dfloat particleZ(ParticleInfo const &pt) const;
 
-    de::Vector3f particleOrigin(ParticleInfo const &pt) const;
-    de::Vector3f particleMomentum(ParticleInfo const &pt) const;
+    de::Vec3f particleOrigin(ParticleInfo const &pt) const;
+    de::Vec3f particleMomentum(ParticleInfo const &pt) const;
 
 public:
     /**

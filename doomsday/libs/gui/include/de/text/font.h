@@ -128,7 +128,7 @@ public:
         class LIBGUI_PUBLIC IStyle
         {
         public:
-            typedef Vector4ub Color;
+            typedef Vec4ub Color;
 
             virtual ~IStyle() {}
 
@@ -324,13 +324,13 @@ public:
      * @return Image containing the rasterized text.
      */
     QImage rasterize(String const &textLine,
-                     Vector4ub const &foreground = Vector4ub(255, 255, 255, 255),
-                     Vector4ub const &background = Vector4ub(255, 255, 255, 0)) const;
+                     Vec4ub const &foreground = Vec4ub(255, 255, 255, 255),
+                     Vec4ub const &background = Vec4ub(255, 255, 255, 0)) const;
 
     QImage rasterize(String const &textLine,
                      RichFormatRef const &format,
-                     Vector4ub const &foreground = Vector4ub(255, 255, 255, 255),
-                     Vector4ub const &background = Vector4ub(255, 255, 255, 0)) const;
+                     Vec4ub const &foreground = Vec4ub(255, 255, 255, 255),
+                     Vec4ub const &background = Vec4ub(255, 255, 255, 0)) const;
 
     Rule const &height() const;
     Rule const &ascent() const;

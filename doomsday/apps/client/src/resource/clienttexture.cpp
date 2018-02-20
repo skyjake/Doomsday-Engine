@@ -175,7 +175,7 @@ String ClientTexture::description() const
         {
             auto const *variant = d->variants.at(variantIdx);
 
-            Vector2f coords;
+            Vec2f coords;
             variant->glCoords(&coords.x, &coords.y);
 
             String textualVariantSpec = variant->spec().asText();

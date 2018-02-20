@@ -102,7 +102,7 @@ public:
      * Returns the point defined by the center of the axis-aligned bounding box in the
      * map coordinate space.
      */
-    de::Vector2d center() const;
+    de::Vec2d center() const;
 
     /**
      * Returns a rough approximation of the total area of the geometries of all subspaces

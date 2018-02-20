@@ -449,7 +449,7 @@ DENG_GUI_PIMPL(DialogWidget)
             /// @todo Should use the Style for this.
             bg.type = Background::SharedBlurWithBorderGlow;
             bg.blur = style().sharedBlurWidget();
-            bg.solidFill = Vector4f(0, 0, 0, .65f);
+            bg.solidFill = Vec4f(0, 0, 0, .65f);
         }
         else
         {

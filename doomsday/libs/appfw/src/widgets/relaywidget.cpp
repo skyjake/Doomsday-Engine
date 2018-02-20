@@ -119,7 +119,7 @@ bool RelayWidget::handleEvent(Event const &event)
     return GuiWidget::handleEvent(event);
 }
 
-bool RelayWidget::hitTest(Vector2i const &pos) const
+bool RelayWidget::hitTest(Vec2i const &pos) const
 {
     if (d->target)
     {

@@ -71,7 +71,7 @@ animatorvector3_t const &FinaleWidget::origin() const
     return d->pos;
 }
 
-FinaleWidget &FinaleWidget::setOrigin(Vector3f const &newPos, int steps)
+FinaleWidget &FinaleWidget::setOrigin(Vec3f const &newPos, int steps)
 {
     AnimatorVector3_Set(d->pos, newPos.x, newPos.y, newPos.z, steps);
     return *this;
@@ -111,7 +111,7 @@ animatorvector3_t const &FinaleWidget::scale() const
     return d->scale;
 }
 
-FinaleWidget &FinaleWidget::setScale(Vector3f const &newScale, int steps)
+FinaleWidget &FinaleWidget::setScale(Vec3f const &newScale, int steps)
 {
     AnimatorVector3_Set(d->scale, newScale.x, newScale.y, newScale.z, steps);
     return *this;

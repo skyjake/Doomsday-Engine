@@ -170,7 +170,7 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
 //    LabelWidget *texturesLabel = LabelWidget::newWithText(_E(D) + tr("Textures"), &area());
 //    texturesLabel->setFont("separator.label");
 //    texturesLabel->margins().setTop("gap");
-//    layout.setCellAlignment(Vector2i(0, layout.gridSize().y), ui::AlignLeft);
+//    layout.setCellAlignment(Vec2i(0, layout.gridSize().y), ui::AlignLeft);
 //    layout.append(*texturesLabel, 2);
     LabelWidget::appendSeparatorWithText("Textures", &area(), &layout);
 

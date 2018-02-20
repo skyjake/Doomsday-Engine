@@ -65,7 +65,7 @@ protected:
      */
     void commitFull(Image const &fullImage) const;
 
-    void commit(Image const &image, Vector2i const &topLeft) const;
+    void commit(Image const &image, Vec2i const &topLeft) const;
     void commit(Image const &fullImage, Rectanglei const &subregion) const;
 };
 

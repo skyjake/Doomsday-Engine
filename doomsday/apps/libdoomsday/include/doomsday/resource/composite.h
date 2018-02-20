@@ -67,12 +67,12 @@ public:
     struct LIBDOOMSDAY_PUBLIC Component
     {
     public:
-        explicit Component(de::Vector2i const &origin = de::Vector2i());
+        explicit Component(de::Vec2i const &origin = de::Vec2i());
 
-        void setOrigin(de::Vector2i const &origin);
+        void setOrigin(de::Vec2i const &origin);
 
         /// Origin of the top left corner of the component (in texture space units).
-        de::Vector2i const &origin() const;
+        de::Vec2i const &origin() const;
 
         bool operator == (Component const &other) const;
         bool operator != (Component const &other) const;
@@ -90,7 +90,7 @@ public:
         void setLumpNum(lumpnum_t num);
 
     private:
-        de::Vector2i _origin;    ///< Top left corner in the texture coordinate space.
+        de::Vec2i _origin;    ///< Top left corner in the texture coordinate space.
         lumpnum_t _lumpNum;  ///< Index of the lump containing the associated image.
     };
     typedef QList<Component> Components;
@@ -100,7 +100,7 @@ public:
      * Construct a default composite texture.
      */
     explicit Composite(de::String const &percentEncodedName = "",
-                       de::Vector2ui const &logicalDimensions = de::Vector2ui(),
+                       de::Vec2ui const &logicalDimensions = de::Vec2ui(),
                        Flags flags = 0);
 
     /**
@@ -137,7 +137,7 @@ public:
     de::String const &percentEncodedNameRef() const;
 
     /// Returns the logical dimensions of the texture (in map space units).
-    de::Vector2ui const &logicalDimensions() const;
+    de::Vec2ui const &logicalDimensions() const;
 
     /// Returns the logical width of the texture (in map space units).
     inline int logicalWidth() const { return int(logicalDimensions().x); }
@@ -146,7 +146,7 @@ public:
     inline int logicalHeight() const { return int(logicalDimensions().y); }
 
     /// Returns the pixel dimensions of the texture.
-    de::Vector2ui const &dimensions() const;
+    de::Vec2ui const &dimensions() const;
 
     /// Returns the pixel width of the texture.
     inline int width() const { return int(dimensions().x); }

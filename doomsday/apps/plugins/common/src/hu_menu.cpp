@@ -115,20 +115,20 @@ void Hu_MenuPlayerClassPreviewTicker(Widget &wi);
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
-void Hu_MenuDrawMainPage(Page const &page, Vector2i const &origin);
+void Hu_MenuDrawMainPage(Page const &page, Vec2i const &origin);
 #endif
 
-//void Hu_MenuDrawGameTypePage(Page const &page, Vector2i const &origin);
-void Hu_MenuDrawSkillPage(Page const &page, Vector2i const &origin);
+//void Hu_MenuDrawGameTypePage(Page const &page, Vec2i const &origin);
+void Hu_MenuDrawSkillPage(Page const &page, Vec2i const &origin);
 #if __JHEXEN__
-void Hu_MenuDrawPlayerClassPage(Page const &page, Vector2i const &origin);
+void Hu_MenuDrawPlayerClassPage(Page const &page, Vec2i const &origin);
 #endif
-void Hu_MenuDrawEpisodePage(Page const &page, Vector2i const &origin);
-void Hu_MenuDrawOptionsPage(Page const &page, Vector2i const &origin);
-void Hu_MenuDrawLoadGamePage(Page const &page, Vector2i const &origin);
-void Hu_MenuDrawSaveGamePage(Page const &page, Vector2i const &origin);
-void Hu_MenuDrawMultiplayerPage(Page const &page, Vector2i const &origin);
-void Hu_MenuDrawPlayerSetupPage(Page const &page, Vector2i const &origin);
+void Hu_MenuDrawEpisodePage(Page const &page, Vec2i const &origin);
+void Hu_MenuDrawOptionsPage(Page const &page, Vec2i const &origin);
+void Hu_MenuDrawLoadGamePage(Page const &page, Vec2i const &origin);
+void Hu_MenuDrawSaveGamePage(Page const &page, Vec2i const &origin);
+void Hu_MenuDrawMultiplayerPage(Page const &page, Vec2i const &origin);
+void Hu_MenuDrawPlayerSetupPage(Page const &page, Vec2i const &origin);
 
 int Hu_MenuColorWidgetCmdResponder(Page &page, menucommand_e cmd);
 int Hu_MenuSkipPreviousPageIfSkippingEpisodeSelection(Page &page, menucommand_e cmd);
@@ -328,16 +328,16 @@ static void Hu_MenuLoadResources()
 void Hu_MenuInitColorWidgetPage()
 {
 #if __JHERETIC__ || __JHEXEN__
-    Vector2i const origin(98, 60);
+    Vec2i const origin(98, 60);
 #else
-    Vector2i const origin(124, 60);
+    Vec2i const origin(124, 60);
 #endif
 
     Page *page = Hu_MenuAddPage(new Page("ColorWidget", origin, Page::NoScroll, NULL, Hu_MenuColorWidgetCmdResponder));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
 
-    page->addWidget(new ColorEditWidget(Vector4f(), true))
-            .setPreviewDimensions(Vector2i(SCREENHEIGHT / 7, SCREENHEIGHT / 7))
+    page->addWidget(new ColorEditWidget(Vec4f(), true))
+            .setPreviewDimensions(Vec2i(SCREENHEIGHT / 7, SCREENHEIGHT / 7))
             .setFlags(Widget::Id0 | Widget::NoFocus);
 
     page->addWidget(new LabelWidget("Red"));
@@ -377,9 +377,9 @@ void Hu_MenuInitColorWidgetPage()
 void Hu_MenuInitMainPage()
 {
 #if __JHEXEN__ || __JHERETIC__
-    Vector2i origin(110, 56);
+    Vec2i origin(110, 56);
 #else
-    Vector2i origin(97, 64);
+    Vec2i origin(97, 64);
 #endif
 
 #if __JDOOM__
@@ -400,7 +400,7 @@ void Hu_MenuInitMainPage()
 
 #if __JDOOM__ || __JDOOM64__
     page->addWidget(new LabelWidget("", &pMainTitle))
-            .setFixedOrigin(Vector2i(-3, -70));
+            .setFixedOrigin(Vec2i(-3, -70));
 #endif
 
     page->addWidget(new ButtonWidget)
@@ -515,9 +515,9 @@ void Hu_MenuInitMainPage()
 void Hu_MenuInitGameTypePage()
 {
 #if __JDOOM__ || __JDOOM64__
-    Vector2i origin(97, 65);
+    Vec2i origin(97, 65);
 #else
-    Vector2i origin(104, 65);
+    Vec2i origin(104, 65);
 #endif
 
     Page *page = Hu_MenuAddPage(new Page("GameType", origin, 0, Hu_MenuDrawGameTypePage));
@@ -551,11 +551,11 @@ void Hu_MenuInitGameTypePage()
 void Hu_MenuInitSkillPage()
 {
 #if __JHEXEN__
-    Vector2i const origin(120, 44);
+    Vec2i const origin(120, 44);
 #elif __JHERETIC__
-    Vector2i const origin(38, 30);
+    Vec2i const origin(38, 30);
 #else
-    Vector2i const origin(48, 63);
+    Vec2i const origin(48, 63);
 #endif
     Widget::Flags skillButtonFlags[NUM_SKILL_MODES] = {
         Widget::Id0,
@@ -620,9 +620,9 @@ void Hu_MenuInitSkillPage()
 void Hu_MenuInitMultiplayerPage()
 {
 #if __JHERETIC__ || __JHEXEN__
-    Vector2i const origin(97, 65);
+    Vec2i const origin(97, 65);
 #else
-    Vector2i const origin(97, 65);
+    Vec2i const origin(97, 65);
 #endif
 
     Page *page = Hu_MenuAddPage(new Page("Multiplayer", origin, 0, Hu_MenuDrawMultiplayerPage));
@@ -648,9 +648,9 @@ void Hu_MenuInitMultiplayerPage()
 void Hu_MenuInitPlayerSetupPage()
 {
 #if __JHERETIC__ || __JHEXEN__
-    Vector2i const origin(70, 34);
+    Vec2i const origin(70, 34);
 #else
-    Vector2i const origin(70, 54);
+    Vec2i const origin(70, 54);
 #endif
 
     Page *page = Hu_MenuAddPage(new Page("PlayerSetup", origin, Page::NoScroll, Hu_MenuDrawPlayerSetupPage));
@@ -661,7 +661,7 @@ void Hu_MenuInitPlayerSetupPage()
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
     page->addWidget(new MobjPreviewWidget)
-            .setFixedOrigin(Vector2i(SCREENWIDTH / 2 - 40, 60))
+            .setFixedOrigin(Vec2i(SCREENWIDTH / 2 - 40, 60))
             .setFlags(Widget::Id0 | Widget::PositionFixed);
 
     page->addWidget(new CVarLineEditWidget("net-name"))
@@ -741,7 +741,7 @@ void Hu_MenuInitPlayerSetupPage()
 
 void Hu_MenuInitSaveOptionsPage()
 {
-    Page *page = Hu_MenuAddPage(new Page("SaveOptions", Vector2i(60, 50)));
+    Page *page = Hu_MenuAddPage(new Page("SaveOptions", Vec2i(60, 50)));
     page->setTitle("Savegame Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
@@ -774,7 +774,7 @@ void Hu_MenuInitSaveOptionsPage()
 #if __JHERETIC__ || __JHEXEN__
 void Hu_MenuInitFilesPage()
 {
-    Page *page = Hu_MenuAddPage(new Page("Files", Vector2i(110, 60), Page::FixedLayout | Page::NoScroll));
+    Page *page = Hu_MenuAddPage(new Page("Files", Vec2i(110, 60), Page::FixedLayout | Page::NoScroll));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuPagePtr("Main"));
 
@@ -841,9 +841,9 @@ int Hu_MenuSaveSlotCommandResponder(Widget &wi, menucommand_e cmd)
 void Hu_MenuInitLoadGameAndSaveGamePages()
 {
 #if __JDOOM__ || __JDOOM64__
-    Vector2i const origin(50, 54);
+    Vec2i const origin(50, 54);
 #else
-    Vector2i const origin(40, 30);
+    Vec2i const origin(40, 30);
 #endif
     Widget::Flags const saveSlotObjectIds[NUMSAVESLOTS] = {
         Widget::Id0, Widget::Id1, Widget::Id2, Widget::Id3, Widget::Id4, Widget::Id5,
@@ -899,9 +899,9 @@ void Hu_MenuInitLoadGameAndSaveGamePages()
 void Hu_MenuInitOptionsPage()
 {
 #if __JHERETIC__ || __JHEXEN__
-    Vector2i const origin(110, 45);
+    Vec2i const origin(110, 45);
 #else
-    Vector2i const origin(110, 63);
+    Vec2i const origin(110, 63);
 #endif
 
     Page *page = Hu_MenuAddPage(new Page("Options", origin, Page::NoScroll, Hu_MenuDrawOptionsPage));
@@ -992,11 +992,11 @@ void Hu_MenuInitOptionsPage()
 void Hu_MenuInitGameplayOptionsPage()
 {
 #if __JHEXEN__
-    Vector2i const origin(88, 25);
+    Vec2i const origin(88, 25);
 #elif __JHERETIC__
-    Vector2i const origin(30, 40);
+    Vec2i const origin(30, 40);
 #else
-    Vector2i const origin(30, 40);
+    Vec2i const origin(30, 40);
 #endif
 
     Page *page = Hu_MenuAddPage(new Page("GameplayOptions", origin));
@@ -1201,9 +1201,9 @@ void Hu_MenuInitGameplayOptionsPage()
 void Hu_MenuInitHUDOptionsPage()
 {
 #if __JDOOM__ || __JDOOM64__
-    Vector2i const origin(97, 40);
+    Vec2i const origin(97, 40);
 #else
-    Vector2i const origin(97, 28);
+    Vec2i const origin(97, 28);
 #endif
 
     Page *page = Hu_MenuAddPage(new Page("HudOptions", origin));
@@ -1614,9 +1614,9 @@ void Hu_MenuInitHUDOptionsPage()
 void Hu_MenuInitAutomapOptionsPage()
 {
 #if __JHERETIC__ || __JHEXEN__
-    const Vector2i origin(32, 28);
+    const Vec2i origin(32, 28);
 #else
-    const Vector2i origin(70, 40);
+    const Vec2i origin(70, 40);
 #endif
 
     Page *page = Hu_MenuAddPage(new Page("AutomapOptions", origin));
@@ -1783,11 +1783,11 @@ static bool compareWeaponPriority(ListWidgetItem const *a, ListWidgetItem const 
 void Hu_MenuInitWeaponsPage()
 {
 #if __JDOOM__ || __JDOOM64__
-    Vector2i const origin(78, 40);
+    Vec2i const origin(78, 40);
 #elif __JHERETIC__
-    Vector2i const origin(78, 26);
+    Vec2i const origin(78, 26);
 #elif __JHEXEN__
-    Vector2i const origin(78, 38);
+    Vec2i const origin(78, 38);
 #endif
 
     const struct {
@@ -1925,7 +1925,7 @@ void Hu_MenuInitWeaponsPage()
 #if __JHERETIC__ || __JHEXEN__
 void Hu_MenuInitInventoryOptionsPage()
 {
-    Page *page = Hu_MenuAddPage(new Page("InventoryOptions", Vector2i(78, 48)));
+    Page *page = Hu_MenuAddPage(new Page("InventoryOptions", Vec2i(78, 48)));
     page->setLeftColumnWidth(.65f);
     page->setTitle("Inventory Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
@@ -1996,7 +1996,7 @@ void Hu_MenuInitSoundOptionsPage()
 //#elif __JHERETIC__
 //    Vector2i const origin(97, 30);
 //#elif __JDOOM__ || __JDOOM64__
-    Vector2i const origin(97, 40);
+    Vec2i const origin(97, 40);
 //#endif
 
     Page *page = Hu_MenuAddPage(new Page("SoundOptions", origin));
@@ -2024,11 +2024,11 @@ void Hu_MenuInitSoundOptionsPage()
 void Hu_MenuInitEpisodePage()
 {
 #if __JHEXEN__
-    Vector2i const origin(120, 44);
+    Vec2i const origin(120, 44);
 #elif __JHERETIC__
-    Vector2i const origin(80, 50);
+    Vec2i const origin(80, 50);
 #else
-    Vector2i const origin(48, 63);
+    Vec2i const origin(48, 63);
 #endif
 
     Page *page =
@@ -2156,7 +2156,7 @@ void Hu_MenuInitPlayerClassPage()
         }
     }
 
-    Page *page = Hu_MenuAddPage(new Page("PlayerClass", Vector2i(66, 66), Page::FixedLayout | Page::NoScroll,
+    Page *page = Hu_MenuAddPage(new Page("PlayerClass", Vec2i(66, 66), Page::FixedLayout | Page::NoScroll,
                                          Hu_MenuDrawPlayerClassPage, Hu_MenuSkipPreviousPageIfSkippingEpisodeSelection));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuPagePtr("Episode"));
@@ -2209,13 +2209,13 @@ void Hu_MenuInitPlayerClassPage()
     // Mobj preview background.
     page->addWidget(new RectWidget)
             .setFlags(Widget::NoFocus | Widget::Id1)
-            .setFixedOrigin(Vector2i(108, -58))
+            .setFixedOrigin(Vec2i(108, -58))
             .setOnTickCallback(Hu_MenuPlayerClassBackgroundTicker);
 
     // Mobj preview.
     page->addWidget(new MobjPreviewWidget)
             .setFlags(Widget::Id0)
-            .setFixedOrigin(Vector2i(108 + 55, -58 + 76))
+            .setFixedOrigin(Vec2i(108 + 55, -58 + 76))
             .setOnTickCallback(Hu_MenuPlayerClassPreviewTicker);
 }
 #endif
@@ -2426,7 +2426,7 @@ short Hu_MenuMergeEffectWithDrawTextFlags(short f)
     return ((~cfg.common.menuEffectFlags & DTF_NO_EFFECTS) | (f & ~DTF_NO_EFFECTS));
 }
 
-void Hu_MenuDrawFocusCursor(Vector2i const &origin, float scale, float alpha)
+void Hu_MenuDrawFocusCursor(Vec2i const &origin, float scale, float alpha)
 {
 #if __JDOOM__ || __JDOOM64__
 # define OFFSET_X         (-22)
@@ -2445,7 +2445,7 @@ void Hu_MenuDrawFocusCursor(Vector2i const &origin, float scale, float alpha)
         return;
 
 //    float const scale = /*de::min((focusObjectHeight * 1.267f) /*/ 1; //info.geometry.size.height; //, 1.f);
-    Vector2i pos = origin + Vector2i(OFFSET_X, OFFSET_Y) * scale;
+    Vec2i pos = origin + Vec2i(OFFSET_X, OFFSET_Y) * scale;
 //    pos.y -= info.geometry.size.height / 2;
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2458,7 +2458,7 @@ void Hu_MenuDrawFocusCursor(Vector2i const &origin, float scale, float alpha)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, alpha);
 
-    GL_DrawPatch(pCursor, Vector2i(0, 0), 0, DPF_NO_OFFSET);
+    GL_DrawPatch(pCursor, Vec2i(0, 0), 0, DPF_NO_OFFSET);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -2469,7 +2469,7 @@ void Hu_MenuDrawFocusCursor(Vector2i const &origin, float scale, float alpha)
 #undef OFFSET_X
 }
 
-void Hu_MenuDrawPageTitle(String title, Vector2i const &origin)
+void Hu_MenuDrawPageTitle(String title, Vec2i const &origin)
 {
     title = Widget::labelText(title);
 
@@ -2485,7 +2485,7 @@ void Hu_MenuDrawPageTitle(String title, Vector2i const &origin)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void Hu_MenuDrawPageHelp(String helpText, Vector2i const &origin)
+void Hu_MenuDrawPageHelp(String helpText, Vec2i const &origin)
 {
     if(helpText.isEmpty()) return;
 
@@ -2906,7 +2906,7 @@ void Hu_MenuSelectLoadSlot(Widget &wi, Widget::Action action)
 }
 
 #if __JHERETIC__ || __JHEXEN__
-void Hu_MenuDrawMainPage(Page const & /*page*/, Vector2i const &origin)
+void Hu_MenuDrawMainPage(Page const & /*page*/, Vec2i const &origin)
 {
 #define TITLEOFFSET_X         (-22)
 #define TITLEOFFSET_Y         (-56)
@@ -2921,13 +2921,13 @@ void Hu_MenuDrawMainPage(Page const & /*page*/, Vector2i const &origin)
     FR_SetColorAndAlpha(1, 1, 1, mnRendState->pageAlpha);
 
     WI_DrawPatch(pMainTitle, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.menuPatchReplaceMode), pMainTitle),
-                 Vector2i(origin.x + TITLEOFFSET_X, origin.y + TITLEOFFSET_Y), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
+                 Vec2i(origin.x + TITLEOFFSET_X, origin.y + TITLEOFFSET_Y), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
 #if __JHEXEN__
-    GL_DrawPatch(pBullWithFire[(frame + 2) % 7], origin + Vector2i(-73, 24));
-    GL_DrawPatch(pBullWithFire[frame],           origin + Vector2i(168, 24));
+    GL_DrawPatch(pBullWithFire[(frame + 2) % 7], origin + Vec2i(-73, 24));
+    GL_DrawPatch(pBullWithFire[frame],           origin + Vec2i(168, 24));
 #elif __JHERETIC__
-    GL_DrawPatch(pRotatingSkull[17 - frame],     origin + Vector2i(-70, -46));
-    GL_DrawPatch(pRotatingSkull[frame],          origin + Vector2i(122, -46));
+    GL_DrawPatch(pRotatingSkull[17 - frame],     origin + Vec2i(-70, -46));
+    GL_DrawPatch(pRotatingSkull[frame],          origin + Vec2i(122, -46));
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -2937,9 +2937,9 @@ void Hu_MenuDrawMainPage(Page const & /*page*/, Vector2i const &origin)
 }
 #endif
 
-void Hu_MenuDrawGameTypePage(Page const & /*page*/, Vector2i const &origin)
+void Hu_MenuDrawGameTypePage(Page const & /*page*/, Vec2i const &origin)
 {
-    Hu_MenuDrawPageTitle(GET_TXT(TXT_PICKGAMETYPE), Vector2i(SCREENWIDTH / 2, origin.y - 28));
+    Hu_MenuDrawPageTitle(GET_TXT(TXT_PICKGAMETYPE), Vec2i(SCREENWIDTH / 2, origin.y - 28));
 }
 
 #if __JHEXEN__
@@ -3002,7 +3002,7 @@ void Hu_MenuPlayerClassPreviewTicker(Widget &wi)
     }
 }
 
-void Hu_MenuDrawPlayerClassPage(Page const & /*page*/, Vector2i const &origin)
+void Hu_MenuDrawPlayerClassPage(Page const & /*page*/, Vec2i const &origin)
 {
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(FID(GF_FONTB));
@@ -3015,7 +3015,7 @@ void Hu_MenuDrawPlayerClassPage(Page const & /*page*/, Vector2i const &origin)
 }
 #endif
 
-void Hu_MenuDrawEpisodePage(Page const &page, Vector2i const &origin)
+void Hu_MenuDrawEpisodePage(Page const &page, Vec2i const &origin)
 {
 #if __JDOOM__
     DENG2_UNUSED(page);
@@ -3028,7 +3028,7 @@ void Hu_MenuDrawEpisodePage(Page const &page, Vector2i const &origin)
     FR_SetAlpha(mnRendState->pageAlpha);
 
     WI_DrawPatch(pEpisode, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.menuPatchReplaceMode), pEpisode),
-                 Vector2i(origin.x + 7, origin.y - 25), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
+                 Vec2i(origin.x + 7, origin.y - 25), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 #else
@@ -3056,7 +3056,7 @@ void Hu_MenuDrawEpisodePage(Page const &page, Vector2i const &origin)
 #endif
 }
 
-void Hu_MenuDrawSkillPage(Page const & /*page*/, Vector2i const &origin)
+void Hu_MenuDrawSkillPage(Page const & /*page*/, Vec2i const &origin)
 {
 #if __JDOOM__ || __JDOOM64__
     DGL_Enable(DGL_TEXTURE_2D);
@@ -3065,11 +3065,13 @@ void Hu_MenuDrawSkillPage(Page const & /*page*/, Vector2i const &origin)
     FR_SetColorAndAlpha(cfg.common.menuTextColors[0][CR], cfg.common.menuTextColors[0][CG], cfg.common.menuTextColors[0][CB], mnRendState->pageAlpha);
 
     WI_DrawPatch(pNewGame, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.menuPatchReplaceMode), pNewGame),
-                 Vector2i(origin.x + 48, origin.y - 49), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
+                 Vec2i(origin.x + 48, origin.y - 49), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
     WI_DrawPatch(pSkill, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.menuPatchReplaceMode), pSkill),
-                 Vector2i(origin.x + 6,  origin.y - 25), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
+                 Vec2i(origin.x + 6,  origin.y - 25), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
+#elif __JHEXEN__
+    Hu_MenuDrawPageTitle("Choose Skill Level:", Vec2i(origin.x + 36, origin.y - 28));
 #else
 #if defined (__JHERETIC__)
     String titleText;
@@ -3157,7 +3159,7 @@ void Hu_MenuActivateColorWidget(Widget &wi, Widget::Action action)
     sldrAlpha. setFlags(Widget::Disabled | Widget::Hidden, (cbox.rgbaMode()? UnsetFlags : SetFlags));
 }
 
-void Hu_MenuDrawLoadGamePage(Page const & /*page*/, Vector2i const &origin)
+void Hu_MenuDrawLoadGamePage(Page const & /*page*/, Vec2i const &origin)
 {
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
@@ -3168,18 +3170,18 @@ void Hu_MenuDrawLoadGamePage(Page const & /*page*/, Vector2i const &origin)
     FR_DrawTextXY3(Widget::labelText("Load Game").toLatin1(), SCREENWIDTH / 2, origin.y - 20, ALIGN_TOP, Hu_MenuMergeEffectWithDrawTextFlags(0));
 #else
     WI_DrawPatch(pLoadGame, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.menuPatchReplaceMode), pLoadGame),
-                 Vector2i(origin.x - 8, origin.y - 26), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
+                 Vec2i(origin.x - 8, origin.y - 26), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
 #endif
     DGL_Disable(DGL_TEXTURE_2D);
 
-    Vector2i helpOrigin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.common.menuScale));
+    Vec2i helpOrigin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.common.menuScale));
     Hu_MenuDrawPageHelp("Select to load, [Del] to clear", helpOrigin);
 }
 
-void Hu_MenuDrawSaveGamePage(Page const & /*page*/, Vector2i const &origin)
+void Hu_MenuDrawSaveGamePage(Page const & /*page*/, Vec2i const &origin)
 {
 #if __JHERETIC__ || __JHEXEN__
-    Hu_MenuDrawPageTitle("Save Game", Vector2i(SCREENWIDTH / 2, origin.y - 20));
+    Hu_MenuDrawPageTitle("Save Game", Vec2i(SCREENWIDTH / 2, origin.y - 20));
 #else
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
@@ -3187,12 +3189,12 @@ void Hu_MenuDrawSaveGamePage(Page const & /*page*/, Vector2i const &origin)
     FR_SetColorAndAlpha(cfg.common.menuTextColors[0][CR], cfg.common.menuTextColors[0][CG], cfg.common.menuTextColors[0][CB], mnRendState->pageAlpha);
 
     WI_DrawPatch(pSaveGame, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.menuPatchReplaceMode), pSaveGame),
-                 Vector2i(origin.x - 8, origin.y - 26), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
+                 Vec2i(origin.x - 8, origin.y - 26), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 #endif
 
-    Vector2i helpOrigin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.common.menuScale));
+    Vec2i helpOrigin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.common.menuScale));
     Hu_MenuDrawPageHelp("Select to save, [Del] to clear", helpOrigin);
 }
 
@@ -3204,10 +3206,10 @@ void Hu_MenuSelectHelp(Widget & /*wi*/, Widget::Action action)
 }
 #endif
 
-void Hu_MenuDrawOptionsPage(Page const & /*page*/, Vector2i const &origin)
+void Hu_MenuDrawOptionsPage(Page const & /*page*/, Vec2i const &origin)
 {
 #if __JHERETIC__ || __JHEXEN__
-    Hu_MenuDrawPageTitle("Options", Vector2i(origin.x + 42, origin.y - 30));
+    Hu_MenuDrawPageTitle("Options", Vec2i(origin.x + 42, origin.y - 30));
 #else
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
@@ -3215,20 +3217,20 @@ void Hu_MenuDrawOptionsPage(Page const & /*page*/, Vector2i const &origin)
     FR_SetColorAndAlpha(cfg.common.menuTextColors[0][CR], cfg.common.menuTextColors[0][CG], cfg.common.menuTextColors[0][CB], mnRendState->pageAlpha);
 
     WI_DrawPatch(pOptionsTitle, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.menuPatchReplaceMode), pOptionsTitle),
-                 Vector2i(origin.x + 42, origin.y - 20), ALIGN_TOP, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
+                 Vec2i(origin.x + 42, origin.y - 20), ALIGN_TOP, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 #endif
 }
 
-void Hu_MenuDrawMultiplayerPage(Page const & /*page*/, Vector2i const &origin)
+void Hu_MenuDrawMultiplayerPage(Page const & /*page*/, Vec2i const &origin)
 {
-    Hu_MenuDrawPageTitle(GET_TXT(TXT_MULTIPLAYER), Vector2i(SCREENWIDTH / 2, origin.y - 28));
+    Hu_MenuDrawPageTitle(GET_TXT(TXT_MULTIPLAYER), Vec2i(SCREENWIDTH / 2, origin.y - 28));
 }
 
-void Hu_MenuDrawPlayerSetupPage(Page const & /*page*/, Vector2i const &origin)
+void Hu_MenuDrawPlayerSetupPage(Page const & /*page*/, Vec2i const &origin)
 {
-    Hu_MenuDrawPageTitle(GET_TXT(TXT_PLAYERSETUP), Vector2i(SCREENWIDTH / 2, origin.y - 28));
+    Hu_MenuDrawPageTitle(GET_TXT(TXT_PLAYERSETUP), Vec2i(SCREENWIDTH / 2, origin.y - 28));
 }
 
 void Hu_MenuActionSetActivePage(Widget &wi, Widget::Action action)

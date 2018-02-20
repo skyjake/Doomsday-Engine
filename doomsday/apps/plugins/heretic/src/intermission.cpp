@@ -47,10 +47,10 @@ namespace internal
 
     struct Location
     {
-        Vector2i origin;
+        Vec2i origin;
         de::Uri mapUri;
 
-        Location(Vector2i const &origin, de::Uri const &mapUri)
+        Location(Vec2i const &origin, de::Uri const &mapUri)
             : origin(origin)
             , mapUri(mapUri)
         {}
@@ -66,7 +66,7 @@ namespace internal
     static patchid_t pFaceAlive[NUMTEAMS];
     static patchid_t pFaceDead[NUMTEAMS];
 
-    static void drawTime(Vector2i origin, int hours, int minutes, int seconds, Vector4f rgba)
+    static void drawTime(Vec2i origin, int hours, int minutes, int seconds, Vec4f rgba)
     {
         char buf[20];
 
@@ -108,37 +108,37 @@ void IN_Init()
     if(!episode1Locations.isEmpty()) return;
 
     episode1Locations
-        << Location( Vector2i(172,  78), de::makeUri("Maps:E1M1") )
-        << Location( Vector2i( 86,  90), de::makeUri("Maps:E1M2") )
-        << Location( Vector2i( 73,  66), de::makeUri("Maps:E1M3") )
-        << Location( Vector2i(159,  95), de::makeUri("Maps:E1M4") )
-        << Location( Vector2i(148, 126), de::makeUri("Maps:E1M5") )
-        << Location( Vector2i(132,  54), de::makeUri("Maps:E1M6") )
-        << Location( Vector2i(131,  74), de::makeUri("Maps:E1M7") )
-        << Location( Vector2i(208, 138), de::makeUri("Maps:E1M8") )
-        << Location( Vector2i( 52,  10), de::makeUri("Maps:E1M9") );
+        << Location( Vec2i(172,  78), de::makeUri("Maps:E1M1") )
+        << Location( Vec2i( 86,  90), de::makeUri("Maps:E1M2") )
+        << Location( Vec2i( 73,  66), de::makeUri("Maps:E1M3") )
+        << Location( Vec2i(159,  95), de::makeUri("Maps:E1M4") )
+        << Location( Vec2i(148, 126), de::makeUri("Maps:E1M5") )
+        << Location( Vec2i(132,  54), de::makeUri("Maps:E1M6") )
+        << Location( Vec2i(131,  74), de::makeUri("Maps:E1M7") )
+        << Location( Vec2i(208, 138), de::makeUri("Maps:E1M8") )
+        << Location( Vec2i( 52,  10), de::makeUri("Maps:E1M9") );
 
     episode2Locations
-        << Location( Vector2i(218,  57), de::makeUri("Maps:E2M1") )
-        << Location( Vector2i(137,  81), de::makeUri("Maps:E2M2") )
-        << Location( Vector2i(155, 124), de::makeUri("Maps:E2M3") )
-        << Location( Vector2i(171,  68), de::makeUri("Maps:E2M4") )
-        << Location( Vector2i(250,  86), de::makeUri("Maps:E2M5") )
-        << Location( Vector2i(136,  98), de::makeUri("Maps:E2M6") )
-        << Location( Vector2i(203,  90), de::makeUri("Maps:E2M7") )
-        << Location( Vector2i(220, 140), de::makeUri("Maps:E2M8") )
-        << Location( Vector2i(279, 106), de::makeUri("Maps:E2M9") );
+        << Location( Vec2i(218,  57), de::makeUri("Maps:E2M1") )
+        << Location( Vec2i(137,  81), de::makeUri("Maps:E2M2") )
+        << Location( Vec2i(155, 124), de::makeUri("Maps:E2M3") )
+        << Location( Vec2i(171,  68), de::makeUri("Maps:E2M4") )
+        << Location( Vec2i(250,  86), de::makeUri("Maps:E2M5") )
+        << Location( Vec2i(136,  98), de::makeUri("Maps:E2M6") )
+        << Location( Vec2i(203,  90), de::makeUri("Maps:E2M7") )
+        << Location( Vec2i(220, 140), de::makeUri("Maps:E2M8") )
+        << Location( Vec2i(279, 106), de::makeUri("Maps:E2M9") );
 
     episode3Locations
-        << Location( Vector2i( 86,  99), de::makeUri("Maps:E3M1") )
-        << Location( Vector2i(124, 103), de::makeUri("Maps:E3M2") )
-        << Location( Vector2i(154,  79), de::makeUri("Maps:E3M3") )
-        << Location( Vector2i(202,  83), de::makeUri("Maps:E3M4") )
-        << Location( Vector2i(178,  59), de::makeUri("Maps:E3M5") )
-        << Location( Vector2i(142,  58), de::makeUri("Maps:E3M6") )
-        << Location( Vector2i(219,  66), de::makeUri("Maps:E3M7") )
-        << Location( Vector2i(247,  57), de::makeUri("Maps:E3M8") )
-        << Location( Vector2i(107,  80), de::makeUri("Maps:E3M9") );
+        << Location( Vec2i( 86,  99), de::makeUri("Maps:E3M1") )
+        << Location( Vec2i(124, 103), de::makeUri("Maps:E3M2") )
+        << Location( Vec2i(154,  79), de::makeUri("Maps:E3M3") )
+        << Location( Vec2i(202,  83), de::makeUri("Maps:E3M4") )
+        << Location( Vec2i(178,  59), de::makeUri("Maps:E3M5") )
+        << Location( Vec2i(142,  58), de::makeUri("Maps:E3M6") )
+        << Location( Vec2i(219,  66), de::makeUri("Maps:E3M7") )
+        << Location( Vec2i(247,  57), de::makeUri("Maps:E3M8") )
+        << Location( Vec2i(107,  80), de::makeUri("Maps:E3M9") );
 }
 
 void IN_Shutdown()
@@ -263,7 +263,7 @@ static void drawBackground()
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
 
-    GL_DrawPatch(pBackground, Vector2i(0, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
+    GL_DrawPatch(pBackground, Vec2i(0, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -487,8 +487,8 @@ static void drawDeathmatchStats()
             else
             {
                 DGL_Color4f(1, 1, 1, .333f);
-                GL_DrawPatch(pFaceAlive[i], Vector2i(40, ypos));
-                GL_DrawPatch(pFaceDead[i],  Vector2i(xpos, 18));
+                GL_DrawPatch(pFaceAlive[i], Vec2i(40, ypos));
+                GL_DrawPatch(pFaceDead[i],  Vec2i(xpos, 18));
             }
 
             FR_SetFont(FID(GF_FONTB));
@@ -593,10 +593,10 @@ static void drawNetgameStats()
         if(teamInfo[i].members)
         {
             DGL_Color4f(0, 0, 0, .4f);
-            GL_DrawPatch(pFaceAlive[i], Vector2i(27, ypos + 2));
+            GL_DrawPatch(pFaceAlive[i], Vec2i(27, ypos + 2));
 
             DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            GL_DrawPatch(pFaceAlive[i], Vector2i(25, ypos));
+            GL_DrawPatch(pFaceAlive[i], Vec2i(25, ypos));
 
             if(interTime < 40)
             {
@@ -745,7 +745,7 @@ static void drawSinglePlayerStats()
         FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
         FR_DrawTextXY3(labelString("TIME"), 50, 140, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
 
-        drawTime(Vector2i(284, 140), hours, minutes, seconds, Vector4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1));
+        drawTime(Vec2i(284, 160), hours, minutes, seconds, Vec4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1));
 
         DGL_Disable(DGL_TEXTURE_2D);
     }

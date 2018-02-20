@@ -45,10 +45,10 @@ DENG2_PIMPL(Texture)
     void *userData;
 
     /// World dimensions in map coordinate space units.
-    Vector2ui dimensions;
+    Vec2ui dimensions;
 
     /// World origin offset in map coordinate space units.
-    Vector2i origin;
+    Vec2i origin;
 
     /// Image analysis data, used for various purposes according to context.
     Analyses analyses;
@@ -110,12 +110,12 @@ void *Texture::userDataPointer() const
     return d->userData;
 }
 
-Vector2ui const &Texture::dimensions() const
+Vec2ui const &Texture::dimensions() const
 {
     return d->dimensions;
 }
 
-void Texture::setDimensions(Vector2ui const &newDimensions)
+void Texture::setDimensions(Vec2ui const &newDimensions)
 {
     if (d->dimensions != newDimensions)
     {
@@ -142,12 +142,12 @@ void Texture::setHeight(duint newHeight)
     }
 }
 
-Vector2i const &Texture::origin() const
+Vec2i const &Texture::origin() const
 {
     return d->origin;
 }
 
-void Texture::setOrigin(Vector2i const &newOrigin)
+void Texture::setOrigin(Vec2i const &newOrigin)
 {
     if (d->origin != newOrigin)
     {

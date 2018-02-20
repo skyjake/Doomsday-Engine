@@ -69,20 +69,20 @@ public:
     {
         FrameModel &model;
         struct Vertex {
-            de::Vector3f pos;
-            de::Vector3f norm;
+            de::Vec3f pos;
+            de::Vec3f norm;
         };
         typedef QVector<Vertex> VertexBuf;
         VertexBuf vertices;
-        de::Vector3f min;
-        de::Vector3f max;
+        de::Vec3f min;
+        de::Vec3f max;
         de::String name;
 
         Frame(FrameModel &model, de::String const &name = de::String())
             : model(model), name(name)
         {}
 
-        void bounds(de::Vector3f &min, de::Vector3f &max) const;
+        void bounds(de::Vec3f &min, de::Vec3f &max) const;
 
         float horizontalRange(float *top, float *bottom) const;
     };
@@ -109,7 +109,7 @@ public:
     {
         struct Element
         {
-            de::Vector2f texCoord;
+            de::Vec2f texCoord;
             int index; ///< Index into the model's vertex mesh.
         };
         typedef QVector<Element> Elements;

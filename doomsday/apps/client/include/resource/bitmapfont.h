@@ -41,8 +41,8 @@ public:
 
     /// @return  GL-texture name.
     uint textureGLName() const;
-    de::Vector2i const &textureDimensions() const;
-    de::Vector2ui const &textureMargin() const;
+    de::Vec2i const &textureDimensions() const;
+    de::Vec2ui const &textureMargin() const;
 
     int ascent() const override;
     int descent() const override;

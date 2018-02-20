@@ -99,7 +99,7 @@ void Painter::setTexture(GLUniform &uTex)
     d->batchProgram << uTex;
 }
 
-void Painter::setModelViewProjection(Matrix4f const &mvp)
+void Painter::setModelViewProjection(Mat4f const &mvp)
 {
     flush();
     d->uMvpMatrix = mvp;
@@ -116,15 +116,15 @@ void Painter::setNormalizedScissor(Rectanglef const &normScissorRect)
 
     Rectangleui const vp = GLState::current().viewport();
 
-    Rectangleui scis = Rectangleui(Vector2ui(d->normScissorRect.left()   * vp.width(),
+    Rectangleui scis = Rectangleui(Vec2ui(d->normScissorRect.left()   * vp.width(),
                                              d->normScissorRect.top()    * vp.height()),
-                                   Vector2ui(std::ceil(d->normScissorRect.right()  * vp.width()),
+                                   Vec2ui(std::ceil(d->normScissorRect.right()  * vp.width()),
                                              std::ceil(d->normScissorRect.bottom() * vp.height())))
             .moved(vp.topLeft);
 
     scis = GLState::current().target().scaleToActiveRect(scis);
 
-    d->queue.setBatchScissorRect(Vector4f(scis.left(),  int(vp.height()) - scis.bottom(),
+    d->queue.setBatchScissorRect(Vec4f(scis.left(),  int(vp.height()) - scis.bottom(),
                                           scis.right(), int(vp.height()) - scis.top()));
 }
 
@@ -133,7 +133,7 @@ Rectanglef Painter::normalizedScissor() const
     return d->normScissorRect;
 }
 
-void Painter::setColor(Vector4f const &color)
+void Painter::setColor(Vec4f const &color)
 {
     d->queue.setBatchColor(color);
 }

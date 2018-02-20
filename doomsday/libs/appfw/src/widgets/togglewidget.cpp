@@ -77,7 +77,7 @@ DENG2_OBSERVES(ButtonWidget, Press)
 
             // Background.
             float c = (.3f + .33f * p);
-            verts.makeQuad(recti, (_accentColor * p + _textColor * (1-p)) * Vector4f(c, c, c, 1),
+            verts.makeQuad(recti, (_accentColor * p + _textColor * (1-p)) * Vec4f(c, c, c, 1),
                            atlas().imageRectf(_owner.root().solidWhitePixel()).middle());
 
             Id onOff = _owner.root().styleTexture("toggle.onoff");
@@ -88,16 +88,16 @@ DENG2_OBSERVES(ButtonWidget, Press)
             // The flipper.
             const int  flipWidth = pointSize().x - pointSize().y + 2;
             Rectanglei flip      = Rectanglei::fromSize(
-                recti.topLeft + pointsToPixels(Vector2i(
+                recti.topLeft + pointsToPixels(Vec2i(
                                     1 + de::round<int>(p * (pointSize().x - flipWidth)), 1)),
-                pointsToPixels(Vector2ui(flipWidth, pointSize().y) - Vector2ui(2, 2)));
-            verts.makeQuad(flip, _bgColor * Vector4f(1, 1, 1, 3),
+                pointsToPixels(Vec2ui(flipWidth, pointSize().y) - Vec2ui(2, 2)));
+            verts.makeQuad(flip, _bgColor * Vec4f(1, 1, 1, 3),
                            atlas().imageRectf(_owner.root().solidWhitePixel()).middle());
         }
 
         void updateStyle()
         {
-            _bgColor     = style().colors().colorf("background").min(Vector4f(0, 0, 0, 1));
+            _bgColor     = style().colors().colorf("background").min(Vec4f(0, 0, 0, 1));
             _accentColor = style().colors().colorf("accent");
             _textColor   = style().colors().colorf("text");
         }

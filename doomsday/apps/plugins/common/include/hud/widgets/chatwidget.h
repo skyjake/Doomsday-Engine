@@ -79,7 +79,7 @@ public:
     de::dint handleMenuCommand(menucommand_e cmd);
 
     void updateGeometry();
-    void draw(de::Vector2i const &offset = de::Vector2i()) const;
+    void draw(de::Vec2i const &offset = de::Vec2i()) const;
 
 public:  // Outbound message staging: ---------------------------------------------
     /**

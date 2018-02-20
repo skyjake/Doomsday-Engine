@@ -123,7 +123,7 @@ public:
      *                         (1, 1) to the bottom right.
      * @param transition       Transition time for the change.
      */
-    void setAnchorPoint(Vector2f const &normalizedPoint, TimeSpan const &transition = 0);
+    void setAnchorPoint(Vec2f const &normalizedPoint, TimeSpan const &transition = 0);
 
     /**
      * Returns the current rectangle as defined by the input rules.
@@ -133,14 +133,14 @@ public:
     /**
      * Returns the current size of the rectangle as defined by the input rules.
      */
-    Vector2f size() const;
+    Vec2f size() const;
 
     /**
      * Returns the current size of the rectangle as defined by the input rules.
      */
-    Vector2i sizei() const;
+    Vec2i sizei() const;
 
-    Vector2ui sizeui() const;
+    Vec2ui sizeui() const;
 
     /**
      * Returns the current rectangle as defined by the input rules.

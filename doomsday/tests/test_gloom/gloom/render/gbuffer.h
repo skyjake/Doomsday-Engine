@@ -39,8 +39,8 @@ public:
     void render() override;
 
     void clear();
-    void resize(const de::Vector2ui &size);
-    de::Vector2ui size() const;
+    void resize(const de::Vec2ui &size);
+    de::Vec2ui size() const;
     void setDebugMode(int debugMode);
 
     de::GLFramebuffer &framebuf();

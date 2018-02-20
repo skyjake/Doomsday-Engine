@@ -50,7 +50,7 @@ class LIBGUI_PUBLIC GLWindow : public QOpenGLWindow, public Asset
     Q_OBJECT
 
 public:
-    typedef Vector2ui Size;
+    typedef Vec2ui Size;
 
     /**
      * Notified when the window's GL state needs to be initialized. The OpenGL
@@ -93,7 +93,7 @@ public:
     /**
      * Determines the current top left corner (origin) of the window.
      */
-    inline Vector2i pos() const { return Vector2i(x(), y()); }
+    inline Vec2i pos() const { return Vec2i(x(), y()); }
 
     Size pointSize() const;
     Size pixelSize() const;

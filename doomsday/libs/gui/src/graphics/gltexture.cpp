@@ -197,7 +197,7 @@ DENG2_PIMPL(GLTexture)
         LIBGUI_ASSERT_GL_OK();
     }
 
-    void glSubImage(int level, Vector2i const &pos, Size const &size,
+    void glSubImage(int level, Vec2i const &pos, Size const &size,
                     GLPixelFormat const &glFormat, void const *data, CubeFace face = PositiveX)
     {
         if (data) LIBGUI_GL.glPixelStorei(GL_UNPACK_ALIGNMENT, GLint(glFormat.rowStartAlignment));
@@ -447,7 +447,7 @@ void GLTexture::setImage(CubeFace face, Image const &image, int level)
     setState(Ready);
 }
 
-void GLTexture::setSubImage(Image const &image, Vector2i const &pos, int level)
+void GLTexture::setSubImage(Image const &image, Vec2i const &pos, int level)
 {
     d->texTarget = GL_TEXTURE_2D;
 
@@ -477,7 +477,7 @@ void GLTexture::setSubImage(Image const &image, Rectanglei const &rect, int leve
     }
 }
 
-void GLTexture::setSubImage(CubeFace face, Image const &image, Vector2i const &pos, int level)
+void GLTexture::setSubImage(CubeFace face, Image const &image, Vec2i const &pos, int level)
 {
     d->texTarget = GL_TEXTURE_CUBE_MAP;
 

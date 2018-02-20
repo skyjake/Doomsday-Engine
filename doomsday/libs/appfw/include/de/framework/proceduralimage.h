@@ -38,8 +38,8 @@ namespace de {
 class LIBAPPFW_PUBLIC ProceduralImage
 {
 public:
-    typedef Vector2f Size;
-    typedef Vector4f Color;
+    typedef Vec2f Size;
+    typedef Vec4f Color;
 
 public:
     ProceduralImage(Size const &pointSize = Size());

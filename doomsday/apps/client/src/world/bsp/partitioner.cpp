@@ -137,7 +137,7 @@ DENG2_PIMPL(Partitioner)
      * Returns a newly allocated Vertex at the given map space @a origin from the
      * map geometry mesh (ownership is @em not given to the caller).
      */
-    Vertex *makeVertex(Vector2d const &origin)
+    Vertex *makeVertex(Vec2d const &origin)
     {
         Vertex *vtx = mesh->newVertex(origin);
         vertexCount += 1; // We built another one.
@@ -185,7 +185,7 @@ DENG2_PIMPL(Partitioner)
             block.addRef(seg);
 
             // Determine whether further subdivision is necessary/possible.
-            Vector2i dimensions(Vector2i(bounds.max) - Vector2i(bounds.min));
+            Vec2i dimensions(Vec2i(bounds.max) - Vec2i(bounds.min));
             if(dimensions.x <= 256 && dimensions.y <= 256)
             {
                 // Thats as small as we go; link it in and return.
@@ -305,7 +305,7 @@ DENG2_PIMPL(Partitioner)
      * @note If the line segment has a twin it is also split.
      */
     LineSegmentSide &splitLineSegment(LineSegmentSide &frontLeft,
-        Vector2d const &point, bool updateEdgeTips = true)
+        Vec2d const &point, bool updateEdgeTips = true)
     {
         DENG2_ASSERT(point != frontLeft.from().origin() &&
                      point != frontLeft.to().origin());
@@ -373,25 +373,25 @@ DENG2_PIMPL(Partitioner)
      * partition plane. Takes advantage of some common situations like
      * horizontal and vertical lines to choose a 'nicer' intersection point.
      */
-    Vector2d intersectPartition(LineSegmentSide const &seg, coord_t fromDist,
+    Vec2d intersectPartition(LineSegmentSide const &seg, coord_t fromDist,
                                 coord_t toDist) const
     {
         // Horizontal partition vs vertical line segment.
         if(hplane.slopeType() == ST_HORIZONTAL && seg.slopeType() == ST_VERTICAL)
         {
-            return Vector2d(seg.from().origin().x, hplane.partition().origin.y);
+            return Vec2d(seg.from().origin().x, hplane.partition().origin.y);
         }
 
         // Vertical partition vs horizontal line segment.
         if(hplane.slopeType() == ST_VERTICAL && seg.slopeType() == ST_HORIZONTAL)
         {
-            return Vector2d(hplane.partition().origin.x, seg.from().origin().y);
+            return Vec2d(hplane.partition().origin.x, seg.from().origin().y);
         }
 
         // 0 = start, 1 = end.
         coord_t ds = fromDist / (fromDist - toDist);
 
-        Vector2d point = seg.from().origin();
+        Vec2d point = seg.from().origin();
         if(seg.slopeType() != ST_VERTICAL)
             point.x += seg.direction().x * ds;
 
@@ -468,7 +468,7 @@ DENG2_PIMPL(Partitioner)
 
         case Intersects: {
             // Calculate the intersection point and split this line segment.
-            Vector2d point = intersectPartition(seg, fromDist, toDist);
+            Vec2d point = intersectPartition(seg, fromDist, toDist);
             LineSegmentSide &newFrontRight = splitLineSegment(seg, point);
 
             // Ensure the new back left segment is inserted into the same block as
@@ -618,7 +618,7 @@ DENG2_PIMPL(Partitioner)
             {
                 if(!cur.lineSegmentIsSelfReferencing())
                 {
-                    Vector2d nearPoint = (cur.vertex().origin() + next.vertex().origin()) / 2;
+                    Vec2d nearPoint = (cur.vertex().origin() + next.vertex().origin()) / 2;
                     notifyUnclosedSectorFound(*cur.after(), nearPoint);
                 }
                 continue;
@@ -628,7 +628,7 @@ DENG2_PIMPL(Partitioner)
             {
                 if(!next.lineSegmentIsSelfReferencing())
                 {
-                    Vector2d nearPoint = (cur.vertex().origin() + next.vertex().origin()) / 2;
+                    Vec2d nearPoint = (cur.vertex().origin() + next.vertex().origin()) / 2;
                     notifyUnclosedSectorFound(*next.before(), nearPoint);
                 }
                 continue;
@@ -1010,7 +1010,7 @@ DENG2_PIMPL(Partitioner)
                         /// that we can skip them here). Presently it is sufficient to
                         /// simply not split if the would-be split point is equal to
                         /// either of the segment's existing vertexes.
-                        Vector2d const &point = b.segment->to().origin();
+                        Vec2d const &point = b.segment->to().origin();
                         if(point == a.segment->from().origin() ||
                            point == a.segment->to().origin())
                             continue;
@@ -1072,7 +1072,7 @@ DENG2_PIMPL(Partitioner)
      * @param sector    The problem sector.
      * @param nearPoint  Coordinates near to where the problem was found.
      */
-    void notifyUnclosedSectorFound(Sector &sector, Vector2d const &nearPoint)
+    void notifyUnclosedSectorFound(Sector &sector, Vec2d const &nearPoint)
     {
         DENG2_FOR_PUBLIC_AUDIENCE(UnclosedSectorFound, i)
         {

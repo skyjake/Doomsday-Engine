@@ -299,13 +299,13 @@ struct DGLDrawState
         return vertices.size();
     }
 
-    static Vector4ub colorFromFloat(const Vector4f &color)
+    static Vec4ub colorFromFloat(const Vec4f &color)
     {
-        Vector4i rgba = (color * 255 + Vector4f(0.5f, 0.5f, 0.5f, 0.5f))
+        Vec4i rgba = (color * 255 + Vec4f(0.5f, 0.5f, 0.5f, 0.5f))
                 .toVector4i()
-                .max(Vector4i(0, 0, 0, 0))
-                .min(Vector4i(255, 255, 255, 255));
-        return Vector4ub(dbyte(rgba.x), dbyte(rgba.y), dbyte(rgba.z), dbyte(rgba.w));
+                .max(Vec4i(0, 0, 0, 0))
+                .min(Vec4i(255, 255, 255, 255));
+        return Vec4ub(dbyte(rgba.x), dbyte(rgba.y), dbyte(rgba.z), dbyte(rgba.w));
     }
 
     void beginPrimitive(dglprimtype_t primitive)
@@ -717,7 +717,7 @@ void DGL_CurrentColor(DGLubyte *rgba)
 
 void DGL_CurrentColor(float *rgba)
 {
-    Vector4f colorf = Vector4ub(dglDraw.currentVertex.color).toVector4f() / 255.0;
+    Vec4f colorf = Vec4ub(dglDraw.currentVertex.color).toVector4f() / 255.0;
     std::memcpy(rgba, colorf.constPtr(), sizeof(float) * 4);
 }
 
@@ -782,7 +782,7 @@ DENG_EXTERN_C void DGL_Color3fv(float const *vec)
 {
     DENG2_ASSERT_IN_RENDER_THREAD();
 
-    const auto color = DGLDrawState::colorFromFloat({Vector3f(vec), 1.f});
+    const auto color = DGLDrawState::colorFromFloat({Vec3f(vec), 1.f});
     dglDraw.currentVertex.color[0] = color.x;
     dglDraw.currentVertex.color[1] = color.y;
     dglDraw.currentVertex.color[2] = color.z;
@@ -967,8 +967,8 @@ DENG_EXTERN_C void DGL_DrawLine(float x1, float y1, float x2, float y2, float r,
 DENG_EXTERN_C void DGL_DrawRect(RectRaw const *rect)
 {
     if (!rect) return;
-    GL_DrawRect(Rectanglei::fromSize(Vector2i(rect->origin.xy),
-                                     Vector2ui(rect->size.width, rect->size.height)));
+    GL_DrawRect(Rectanglei::fromSize(Vec2i(rect->origin.xy),
+                                     Vec2ui(rect->size.width, rect->size.height)));
 }
 
 #undef DGL_DrawRect2

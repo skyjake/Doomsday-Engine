@@ -398,7 +398,7 @@ void GL_SetupFogFromMapInfo(Record const *mapInfo)
     {
         R_SetupFog(mapInfo->getf("fogStart"), mapInfo->getf("fogEnd"),
                    mapInfo->getf("fogDensity"),
-                   Vector3f(mapInfo->get("fogColor")).data().baseAs<float>());
+                   Vec3f(mapInfo->get("fogColor")).data().baseAs<float>());
     }
     else
     {
@@ -1086,7 +1086,7 @@ void GL_CalcLuminance(duint8 const *buffer, dint width, dint height, dint pixelS
 
             if(pixelSize == 1)
             {
-                Vector3ub palColor = palette->color(*src);
+                Vec3ub palColor = palette->color(*src);
                 rgb[0] = palColor.x;
                 rgb[1] = palColor.y;
                 rgb[2] = palColor.z;
@@ -1177,7 +1177,7 @@ void GL_CalcLuminance(duint8 const *buffer, dint width, dint height, dint pixelS
             }
         }
 
-        Vector3f color(retColor->rgb);
+        Vec3f color(retColor->rgb);
         R_AmplifyColor(color);
         for(dint i = 0; i < 3; ++i)
         {
@@ -1338,7 +1338,7 @@ D_CMD(DisplayModeInfo)
     DisplayMode const *mode = DisplayMode_Current();
 
     String str = String("Current display mode:%1 depth:%2 (%3:%4")
-                     .arg(Vector2i(mode->width, mode->height).asText())
+                     .arg(Vec2i(mode->width, mode->height).asText())
                      .arg(mode->depth)
                      .arg(mode->ratioX)
                      .arg(mode->ratioY);

@@ -105,14 +105,14 @@ public:
      * yaw angles, in radians. If no head tracking is available, the returned values are
      * not valid.
      */
-    Vector3f headOrientation() const;
+    Vec3f headOrientation() const;
 
     /**
      * Returns the current real-world head position.
      */
-    Vector3f headPosition() const;
+    Vec3f headPosition() const;
 
-    Vector3f eyeOffset() const;
+    Vec3f eyeOffset() const;
 
     /**
      * Returns the eye pose for the current eye, including the head orientation and
@@ -120,16 +120,16 @@ public:
      *
      * @return Eye pose matrix.
      */
-    Matrix4f eyePose() const;
+    Mat4f eyePose() const;
 
-    Matrix4f projection(float nearDist, float farDist) const;
+    Mat4f projection(float nearDist, float farDist) const;
 
     float yawOffset() const;
 
     /**
      * Returns a model-view matrix that applies the head's orientation.
      */
-    //Matrix4f headModelViewMatrix() const;
+    //Mat4f headModelViewMatrix() const;
 
     //float predictionLatency() const;
 
@@ -140,14 +140,14 @@ public:
 
     float aspect() const;
 
-    Vector2ui resolution() const;
+    Vec2ui resolution() const;
 
-    /*Vector2f screenSize() const;
-    Vector4f chromAbParam() const;
+    /*Vec2f screenSize() const;
+    Vec4f chromAbParam() const;
     float distortionScale() const;*/
     float fovX() const; // in degrees
     //float fovY() const; // in degrees
-    //Vector4f hmdWarpParam() const;
+    //Vec4f hmdWarpParam() const;
     //float lensSeparationDistance() const;
 
     void moveWindowToScreen(Screen screen);

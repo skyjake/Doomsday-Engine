@@ -36,7 +36,7 @@ bool FrameModel::DetailLevel::hasVertex(int number) const
     return model.lodVertexUsage().testBit(number * model.lodCount() + level);
 }
 
-void FrameModel::Frame::bounds(Vector3f &retMin, Vector3f &retMax) const
+void FrameModel::Frame::bounds(Vec3f &retMin, Vec3f &retMax) const
 {
     retMin = min;
     retMax = max;
@@ -203,8 +203,8 @@ DENG2_PIMPL(FrameModel)
         for(int i = 0; i < hdr.numFrames; ++i)
         {
             md2_packedFrame_t const *pfr = (md2_packedFrame_t const *) (frameData + hdr.frameSize * i);
-            Vector3f const scale(DD_FLOAT(pfr->scale[0]), DD_FLOAT(pfr->scale[2]), DD_FLOAT(pfr->scale[1]));
-            Vector3f const translation(DD_FLOAT(pfr->translate[0]), DD_FLOAT(pfr->translate[2]), DD_FLOAT(pfr->translate[1]));
+            Vec3f const scale(DD_FLOAT(pfr->scale[0]), DD_FLOAT(pfr->scale[2]), DD_FLOAT(pfr->scale[1]));
+            Vec3f const translation(DD_FLOAT(pfr->translate[0]), DD_FLOAT(pfr->translate[2]), DD_FLOAT(pfr->translate[1]));
             String const frameName = pfr->name;
 
             FrameModelFrame *frame = new FrameModelFrame(*mdl, frameName);
@@ -217,11 +217,11 @@ DENG2_PIMPL(FrameModel)
                 frame->vertices.append(FrameModelFrame::Vertex());
                 FrameModelFrame::Vertex &vtx = frame->vertices.last();
 
-                vtx.pos = Vector3f(pVtx->vertex[0], pVtx->vertex[2], pVtx->vertex[1])
+                vtx.pos = Vec3f(pVtx->vertex[0], pVtx->vertex[2], pVtx->vertex[1])
                               * scale + translation;
                 vtx.pos.y *= aspectScale; // Aspect undoing.
 
-                vtx.norm = Vector3f(avertexnormals[pVtx->normalIndex]);
+                vtx.norm = Vec3f(avertexnormals[pVtx->normalIndex]);
 
                 if(!k)
                 {
@@ -263,7 +263,7 @@ DENG2_PIMPL(FrameModel)
 
                 prim.elements.append(FrameModel::Primitive::Element());
                 FrameModel::Primitive::Element &elem = prim.elements.last();
-                elem.texCoord = Vector2f(DD_FLOAT(v->s), DD_FLOAT(v->t));
+                elem.texCoord = Vec2f(DD_FLOAT(v->s), DD_FLOAT(v->t));
                 elem.index    = DD_LONG(v->index);
             }
         }
@@ -342,12 +342,12 @@ DENG2_PIMPL(FrameModel)
     /**
      * Packed: pppppppy yyyyyyyy. Yaw is on the XY plane.
      */
-    static Vector3f unpackVector(ushort packed)
+    static Vec3f unpackVector(ushort packed)
     {
         float const yaw   = (packed & 511) / 512.0f * 2 * PI;
         float const pitch = ((packed >> 9) / 127.0f - 0.5f) * PI;
         float const cosp  = float(cos(pitch));
-        return Vector3f(cos(yaw) * cosp, sin(yaw) * cosp, sin(pitch));
+        return Vec3f(cos(yaw) * cosp, sin(yaw) * cosp, sin(pitch));
     }
 
     /**
@@ -412,8 +412,8 @@ DENG2_PIMPL(FrameModel)
         for(int i = 0; i < info.numFrames; ++i)
         {
             dmd_packedFrame_t const *pfr = (dmd_packedFrame_t *) (frameData + info.frameSize * i);
-            Vector3f const scale(DD_FLOAT(pfr->scale[0]), DD_FLOAT(pfr->scale[2]), DD_FLOAT(pfr->scale[1]));
-            Vector3f const translation(DD_FLOAT(pfr->translate[0]), DD_FLOAT(pfr->translate[2]), DD_FLOAT(pfr->translate[1]));
+            Vec3f const scale(DD_FLOAT(pfr->scale[0]), DD_FLOAT(pfr->scale[2]), DD_FLOAT(pfr->scale[1]));
+            Vec3f const translation(DD_FLOAT(pfr->translate[0]), DD_FLOAT(pfr->translate[2]), DD_FLOAT(pfr->translate[1]));
             String const frameName = pfr->name;
 
             Frame *frame = new Frame(*mdl, frameName);
@@ -426,7 +426,7 @@ DENG2_PIMPL(FrameModel)
                 frame->vertices.append(Frame::Vertex());
                 Frame::Vertex &vtx = frame->vertices.last();
 
-                vtx.pos = Vector3f(pVtx->vertex[0], pVtx->vertex[2], pVtx->vertex[1])
+                vtx.pos = Vec3f(pVtx->vertex[0], pVtx->vertex[2], pVtx->vertex[1])
                               * scale + translation;
                 vtx.pos.y *= aspectScale; // Aspect undo.
 
@@ -494,7 +494,7 @@ DENG2_PIMPL(FrameModel)
                     prim.elements.append(Primitive::Element());
                     Primitive::Element &elem = prim.elements.last();
 
-                    elem.texCoord = Vector2f(DD_FLOAT(v->s), DD_FLOAT(v->t));
+                    elem.texCoord = Vec2f(DD_FLOAT(v->s), DD_FLOAT(v->t));
                     elem.index    = DD_LONG(v->index);
                 }
             }

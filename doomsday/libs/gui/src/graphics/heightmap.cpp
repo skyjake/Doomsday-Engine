@@ -26,17 +26,17 @@ DENG2_PIMPL_NOREF(HeightMap)
 {
     QImage   heightImage;
     QImage   normalImage;
-    Vector2f mapSize;
+    Vec2f mapSize;
     float    heightRange = 1.f;
 
-    Vector2f pixelCoordf(Vector2f const &worldPos) const
+    Vec2f pixelCoordf(Vec2f const &worldPos) const
     {
-        Vector2f normPos = worldPos / mapSize + Vector2f(.5f, .5f);
-        return normPos * Vector2f(heightImage.width(), heightImage.height())
-                - Vector2f(.5f, .5f);
+        Vec2f normPos = worldPos / mapSize + Vec2f(.5f, .5f);
+        return normPos * Vec2f(heightImage.width(), heightImage.height())
+                - Vec2f(.5f, .5f);
     }
 
-    Vector3f normalAtCoord(Vector2i const &pos) const
+    Vec3f normalAtCoord(Vec2i const &pos) const
     {
         int const w = heightImage.width();
         int const h = heightImage.height();
@@ -52,15 +52,15 @@ DENG2_PIMPL_NOREF(HeightMap)
         float up    = qRed(heightImage.pixel(pos.x, y0))    / 255.f;
         float down  = qRed(heightImage.pixel(pos.x, y2))    / 255.f;
 
-        return (Vector3f(base - right, base - down, NORMAL_Z) +
-                Vector3f(left - base,  up - base,   NORMAL_Z)).normalize();
+        return (Vec3f(base - right, base - down, NORMAL_Z) +
+                Vec3f(left - base,  up - base,   NORMAL_Z)).normalize();
     }
 };
 
 HeightMap::HeightMap() : d(new Impl)
 {}
 
-void HeightMap::setMapSize(Vector2f const &worldSize, float heightRange)
+void HeightMap::setMapSize(Vec2f const &worldSize, float heightRange)
 {
     d->mapSize     = worldSize;
     d->heightRange = heightRange;
@@ -89,7 +89,7 @@ Image HeightMap::makeNormalMap() const
     {
         for (int x = 0; x < w; x++)
         {
-            Vector3f norm = d->normalAtCoord(Vector2i(x, y));
+            Vec3f norm = d->normalAtCoord(Vec2i(x, y));
 
             img.setPixel(x, y, qRgba(clamp(0.f, (norm.x + 1) * 128.f, 255.f),
                                      clamp(0.f, (norm.y + 1) * 128.f, 255.f),
@@ -103,12 +103,12 @@ Image HeightMap::makeNormalMap() const
     return img;
 }
 
-float HeightMap::heightAtPosition(Vector2f const &worldPos) const
+float HeightMap::heightAtPosition(Vec2f const &worldPos) const
 {
     QImage const &img = d->heightImage;
 
-    Vector2f coord = d->pixelCoordf(worldPos);
-    Vector2i pixelCoord = coord.toVector2i();
+    Vec2f coord = d->pixelCoordf(worldPos);
+    Vec2i pixelCoord = coord.toVector2i();
 
     if (pixelCoord.x < 0 || pixelCoord.y < 0 ||
        pixelCoord.x >= img.width() - 1 || pixelCoord.y >= img.height() - 1) return 0;
@@ -119,16 +119,16 @@ float HeightMap::heightAtPosition(Vector2f const &worldPos) const
     float D = qRed(img.pixel(pixelCoord.x,     pixelCoord.y + 1)) / 255.f - 0.5f;
 
     // Bilinear interpolation.
-    Vector2f i(fract(coord.x), fract(coord.y));
+    Vec2f i(fract(coord.x), fract(coord.y));
     float value = A + i.x * (B - A) + i.y * (D - A) + i.x * i.y * (A - B - D + C);
 
     return value * -d->heightRange;
 }
 
-Vector3f HeightMap::normalAtPosition(Vector2f const &worldPos) const
+Vec3f HeightMap::normalAtPosition(Vec2f const &worldPos) const
 {
-    Vector2i const pos = d->pixelCoordf(worldPos).toVector2i();
-    return d->normalAtCoord(pos); // * Vector3f(1, 1, NORMAL_Z)).normalize();
+    Vec2i const pos = d->pixelCoordf(worldPos).toVector2i();
+    return d->normalAtCoord(pos); // * Vec3f(1, 1, NORMAL_Z)).normalize();
 }
 
 } // namespace de

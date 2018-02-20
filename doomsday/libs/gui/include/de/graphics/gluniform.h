@@ -102,27 +102,28 @@ public:
     GLUniform &operator = (duint value);
     GLUniform &operator = (dfloat value);
     GLUniform &operator = (ddouble value);
-    GLUniform &operator = (Vector2f const &vec);
-    GLUniform &operator = (Vector3f const &vec);
-    GLUniform &operator = (Vector4f const &vec);
-    GLUniform &operator = (Matrix3f const &vec);
-    GLUniform &operator = (Matrix4f const &mat);
+    GLUniform &operator = (Vec2f const &vec);
+    GLUniform &operator = (Vec3f const &vec);
+    GLUniform &operator = (Vec4f const &vec);
+    GLUniform &operator = (Mat3f const &vec);
+    GLUniform &operator = (Mat4f const &mat);
     GLUniform &operator = (GLTexture const &texture);
     GLUniform &operator = (GLTexture const *texture);
 
     GLUniform &set(duint elementIndex, dfloat value);
     GLUniform &set(duint elementIndex, dint value);
-    GLUniform &set(duint elementIndex, Vector2f const &vec);
-    GLUniform &set(duint elementIndex, Vector3f const &vec);
-    GLUniform &set(duint elementIndex, Vector4f const &vec);
-    GLUniform &set(duint elementIndex, Matrix4f const &mat);
+    GLUniform &set(duint elementIndex, Vec2f const &vec);
+    GLUniform &set(duint elementIndex, Vec3f const &vec);
+    GLUniform &set(duint elementIndex, Vec4f const &vec);
+    GLUniform &set(duint elementIndex, Mat4f const &mat);
 
     GLUniform &setUsedElementCount(duint elementCount);
 
     GLUniform &set(dint const *intArray, dsize count);
     GLUniform &set(float const *floatArray, dsize count);
-    GLUniform &set(Vector2f const *vectorArray, dsize count);
-    GLUniform &set(Vector3f const *vectorArray, dsize count);
+    GLUniform &set(Vec2f const *vectorArray, dsize count);
+    GLUniform &set(Vec3f const *vectorArray, dsize count);
+    GLUniform &set(Vec4f const *vectorArray, dsize count);
     GLUniform &set(Vector4f const *vectorArray, dsize count);
     GLUniform &set(Matrix4f const *mat4Array, dsize count);
 
@@ -130,21 +131,21 @@ public:
     operator duint() const             { return toUInt(); }
     operator dfloat() const            { return toFloat(); }
     operator ddouble() const           { return ddouble(toFloat()); }
-    operator Vector2f() const          { return toVector2f(); }
-    operator Vector3f() const          { return toVector3f(); }
-    operator Vector4f() const          { return toVector4f(); }
-    operator Matrix3f const &() const  { return toMatrix3f(); }
-    operator Matrix4f const &() const  { return toMatrix4f(); }
+    operator Vec2f() const          { return toVector2f(); }
+    operator Vec3f() const          { return toVector3f(); }
+    operator Vec4f() const          { return toVector4f(); }
+    operator Mat3f const &() const  { return toMatrix3f(); }
+    operator Mat4f const &() const  { return toMatrix4f(); }
     operator GLTexture const *() const { return texture(); }
 
     dint toInt() const;
     duint toUInt() const;
     dfloat toFloat() const;
-    Vector2f const &toVector2f() const;
-    Vector3f const &toVector3f() const;
-    Vector4f const &toVector4f() const;
-    Matrix3f const &toMatrix3f() const;
-    Matrix4f const &toMatrix4f() const;
+    Vec2f const &toVector2f() const;
+    Vec3f const &toVector3f() const;
+    Vec4f const &toVector4f() const;
+    Mat3f const &toMatrix3f() const;
+    Mat4f const &toMatrix4f() const;
 
     GLTexture const *texture() const;
 

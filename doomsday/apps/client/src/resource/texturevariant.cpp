@@ -437,7 +437,7 @@ static void performImageAnalyses(image_t const &image,
                                     App_Resources().colorPalettes().colorPalette(image.paletteId),
                                     false, &ac->color);
             }
-            Vector3f color(ac->color.rgb);
+            Vec3f color(ac->color.rgb);
             R_AmplifyColor(color);
             for(int i = 0; i < 3; ++i)
             {

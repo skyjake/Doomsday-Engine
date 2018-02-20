@@ -476,7 +476,7 @@ DENG2_PIMPL(Textures)
             {
                 TextureManifest &manifest =
                     self().declareTexture(uri, flags, def.logicalDimensions(),
-                                        Vector2i(), def.origIndex());
+                                        Vec2i(), def.origIndex());
 
                 // Are we redefining an existing texture?
                 if (manifest.hasTexture())
@@ -572,8 +572,8 @@ DENG2_PIMPL(Textures)
                  *
                  * @todo Always determine size from the lowres original.
                  */
-                Vector2ui dimensions(64, 64);
-                Vector2i origin(0, 0);
+                Vec2ui dimensions(64, 64);
+                Vec2i origin(0, 0);
                 int const uniqueId  = lumpNum - (firstFlatMarkerLumpNum + 1);
                 de::Uri resourceUri = LumpIndex::composeResourceUrn(lumpNum);
 
@@ -642,8 +642,8 @@ DENG2_PIMPL(Textures)
                 flags |= Texture::Custom;
             }
 
-            Vector2ui dimensions;
-            Vector2i origin;
+            Vec2ui dimensions;
+            Vec2i origin;
 
             if (file.size())
             {
@@ -865,8 +865,8 @@ TextureManifest &Textures::declareSystemTexture(Path const &texturePath, de::Uri
     dint const uniqueId = scheme.count() + 1;
     return scheme.declare(texturePath,
                           Texture::Custom,
-                          Vector2ui(),
-                          Vector2i(),
+                          Vec2ui(),
+                          Vec2i(),
                           uniqueId,
                           &resourceUri);
 }
@@ -893,7 +893,7 @@ Texture *Textures::tryFindTextureByResourceUri(String const &schemeName, de::Uri
 
 Texture *Textures::defineTexture(String const &schemeName,
                                  de::Uri const &resourceUri,
-                                 Vector2ui const &dimensions)
+                                 Vec2ui const &dimensions)
 {
     LOG_AS("Textures::defineTexture");
 
@@ -918,7 +918,7 @@ Texture *Textures::defineTexture(String const &schemeName,
     try
     {
         TextureManifest &manifest = declareTexture(uri, Texture::Custom, dimensions,
-                                                   Vector2i(), uniqueId, &resourceUri);
+                                                   Vec2i(), uniqueId, &resourceUri);
 
         /// @todo Defer until necessary (manifest texture is first referenced).
         return deriveTexture(manifest);
@@ -985,8 +985,8 @@ patchid_t Textures::declarePatch(String const &encodedName)
     Texture::Flags flags;
     if (file.container().hasCustom()) flags |= Texture::Custom;
 
-    Vector2ui dimensions;
-    Vector2i origin;
+    Vec2ui dimensions;
+    Vec2i origin;
 
     // If this is a Patch (the format) read the world dimension and origin offset values.
     ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
@@ -997,7 +997,7 @@ patchid_t Textures::declarePatch(String const &encodedName)
             auto info = Patch::loadMetadata(fileData);
 
             dimensions = info.logicalDimensions;
-            origin     = Vector2i(-info.origin.x, -info.origin.y);
+            origin     = Vec2i(-info.origin.x, -info.origin.y);
         }
         catch (IByteArray::OffsetError const &)
         {

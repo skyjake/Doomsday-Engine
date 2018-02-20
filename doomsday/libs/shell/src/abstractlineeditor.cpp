@@ -101,14 +101,14 @@ DENG2_PIMPL(AbstractLineEditor)
         }
     }
 
-    de::Vector2i lineCursorPos() const
+    de::Vec2i lineCursorPos() const
     {
         return linePos(cursor);
     }
 
-    de::Vector2i linePos(int mark) const
+    de::Vec2i linePos(int mark) const
     {
-        de::Vector2i pos(mark);
+        de::Vec2i pos(mark);
         for (pos.y = 0; pos.y < wraps->height(); ++pos.y)
         {
             WrappedLine span = lineSpan(pos.y);
@@ -135,7 +135,7 @@ DENG2_PIMPL(AbstractLineEditor)
 
         DENG2_ASSERT(lineOff == 1 || lineOff == -1);
 
-        Vector2i const linePos = lineCursorPos();
+        Vec2i const linePos = lineCursorPos();
         int const destWidth = wraps->rangeWidth(Rangei(lineSpan(linePos.y).range.start, cursor));
 
         // Check for no room.
@@ -508,7 +508,7 @@ int AbstractLineEditor::cursor() const
     return d->cursor;
 }
 
-Vector2i AbstractLineEditor::linePos(int index) const
+Vec2i AbstractLineEditor::linePos(int index) const
 {
     return d->linePos(index);
 }

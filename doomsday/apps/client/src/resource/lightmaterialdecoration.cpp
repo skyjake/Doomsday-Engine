@@ -26,7 +26,7 @@
 using namespace de;
 
 LightMaterialDecoration::AnimationStage::AnimationStage(int tics, float variance,
-    Vector2f const &origin, float elevation, Vector3f const &color, float radius,
+    Vec2f const &origin, float elevation, Vec3f const &color, float radius,
     float haloRadius, LightRange const &lightLevels, ClientTexture *ceilingTexture,
     ClientTexture *floorTexture, ClientTexture *texture, ClientTexture *flareTexture, int sysFlareIdx)
     : Stage(tics, variance)
@@ -83,10 +83,10 @@ LightMaterialDecoration::AnimationStage::fromDef(Record const &stageDef)
     }
 
     return new AnimationStage(stageDef.geti("tics"), stageDef.getf("variance"),
-                              Vector2f(stageDef.geta("origin")), stageDef.getf("elevation"),
-                              Vector3f(stageDef.geta("color")), stageDef.getf("radius"),
+                              Vec2f(stageDef.geta("origin")), stageDef.getf("elevation"),
+                              Vec3f(stageDef.geta("color")), stageDef.getf("radius"),
                               stageDef.getf("haloRadius"),
-                              LightRange(Vector2f(stageDef.geta("lightLevels"))),
+                              LightRange(Vec2f(stageDef.geta("lightLevels"))),
                               lightmapUp, lightmapDown, lightmapSide,
                               haloTexture, haloTextureIndex);
 }
@@ -104,8 +104,8 @@ String LightMaterialDecoration::AnimationStage::description() const
 
 // ------------------------------------------------------------------------------------
 
-LightMaterialDecoration::LightMaterialDecoration(Vector2i const &patternSkip,
-    Vector2i const &patternOffset, bool useInterpolation)
+LightMaterialDecoration::LightMaterialDecoration(Vec2i const &patternSkip,
+    Vec2i const &patternOffset, bool useInterpolation)
     : Decoration(patternSkip, patternOffset)
     , _useInterpolation(useInterpolation)
 {}
@@ -117,8 +117,8 @@ LightMaterialDecoration *LightMaterialDecoration::fromDef(Record const &definiti
 {
     defn::MaterialDecoration decorDef(definition);
 
-    auto *decor = new LightMaterialDecoration(Vector2i(decorDef.geta("patternSkip")),
-                                              Vector2i(decorDef.geta("patternOffset")));
+    auto *decor = new LightMaterialDecoration(Vec2i(decorDef.geta("patternSkip")),
+                                              Vec2i(decorDef.geta("patternOffset")));
     for(int i = 0; i < decorDef.stageCount(); ++i)
     {
         decor->_stages.append(AnimationStage::fromDef(decorDef.stage(i)));

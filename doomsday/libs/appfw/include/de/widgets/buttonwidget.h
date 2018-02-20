@@ -133,7 +133,7 @@ signals:
     void pressed();
 
 protected:
-    bool updateModelViewProjection(Matrix4f &mvp) override;
+    bool updateModelViewProjection(Mat4f &mvp) override;
     void updateStyle() override;
 
 private:

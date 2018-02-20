@@ -43,8 +43,8 @@ public:
      * @param context   Passed to the @a callback.
      */
     Interceptor(traverser_t callback,
-                de::Vector2d const &from = de::Vector2d(),
-                de::Vector2d const &to   = de::Vector2d(),
+                de::Vec2d const &from = de::Vec2d(),
+                de::Vec2d const &to   = de::Vec2d(),
                 de::dint flags           = PTF_ALL,
                 void *context            = nullptr);
 

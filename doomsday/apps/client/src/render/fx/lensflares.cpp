@@ -111,21 +111,21 @@ struct FlareData
         return atlas.imageRectf(flare[id]);
     }
 
-    Vector2f flareCorner(FlareId id, Corner corner) const
+    Vec2f flareCorner(FlareId id, Corner corner) const
     {
-        Vector2f p;
+        Vec2f p;
         switch (corner)
         {
-        case TopLeft:     p = Vector2f(-1, -1); break;
-        case TopRight:    p = Vector2f( 1, -1); break;
-        case BottomRight: p = Vector2f( 1,  1); break;
-        case BottomLeft:  p = Vector2f(-1,  1); break;
+        case TopLeft:     p = Vec2f(-1, -1); break;
+        case TopRight:    p = Vec2f( 1, -1); break;
+        case BottomRight: p = Vec2f( 1,  1); break;
+        case BottomLeft:  p = Vec2f(-1,  1); break;
         }
 
         if (id == Burst)
         {
             // Non-square.
-            p *= Vector2f(4, .25f);
+            p *= Vec2f(4, .25f);
         }
 
         return p;
@@ -156,7 +156,7 @@ public:
     Colorf lightSourceColorf() const {
         return color;
     }
-    dfloat lightSourceIntensity(de::Vector3d const &) const {
+    dfloat lightSourceIntensity(de::Vec3d const &) const {
         return intensity;
     }
 };
@@ -238,7 +238,7 @@ DENG2_PIMPL(LensFlares)
     typedef QHash<IPointLightSource::LightId, PVLight *> PVSet;
     PVSet pvs;
 
-    Vector3f eyeFront;
+    Vec3f eyeFront;
 
     typedef GLBufferT<Vertex3Tex3Rgba> VBuf;
     VBuf *buffer;
@@ -316,7 +316,7 @@ DENG2_PIMPL(LensFlares)
                    FlareData::FlareId id,
                    float              axisPos,
                    float              radius,
-                   Vector4f           color,
+                   Vec4f           color,
                    PVLight const *    pvl)
     {
         Rectanglef const uvRect = res->uvRect(id);
@@ -324,8 +324,8 @@ DENG2_PIMPL(LensFlares)
 
         VBuf::Type vtx;
         vtx.pos  = pvl->light->lightSourceOrigin().xzy();
-        vtx.rgba = Vector4f(pvl->light->lightSourceColorf(), 1.f) * color;
-        vtx.texCoord[2] = Vector2f(axisPos, 0);
+        vtx.rgba = Vec4f(pvl->light->lightSourceColorf(), 1.f) * color;
+        vtx.texCoord[2] = Vec2f(axisPos, 0);
 
         vtx.texCoord[0] = uvRect.topLeft;
         vtx.texCoord[1] = res->flareCorner(id, FlareData::TopLeft) * radius;
@@ -392,7 +392,7 @@ DENG2_PIMPL(LensFlares)
             struct Spec {
                 float axisPos;
                 FlareData::FlareId id;
-                Vector4f color;
+                Vec4f color;
                 float size;
                 Rangef minIntensity;
                 Rangef maxIntensity;
@@ -404,21 +404,21 @@ DENG2_PIMPL(LensFlares)
             typedef Rangef Rgf;
             static Spec const specs[] = {
                 //  axisPos id                   color                          size    intensity min/max              radius min/max          angle min/max
-                {   1,      FlareData::Burst,    Vector4f(1, 1, 1, 1),          1,      Rgf(1.0e-8f, 1.0e-6f), Rgf(),  Rgf(), Rgf(.5f, .8f),   Rgf(), Rgf() },
-                {   1,      FlareData::Star,     Vector4f(1, 1, 1, 1),          1,      Rgf(1.0e-6f, 1.0e-5f), Rgf(),  Rgf(.5f, .7f), Rgf(),   Rgf(), Rgf() },
-                {   1,      FlareData::Exponent, Vector4f(1, 1, 1, 1),          2.5f,   Rgf(1.0e-6f, 1.0e-5f), Rgf(),  Rgf(.1f, .2f), Rgf(),   Rgf(), Rgf() },
+                {   1,      FlareData::Burst,    Vec4f(1, 1, 1, 1),          1,      Rgf(1.0e-8f, 1.0e-6f), Rgf(),  Rgf(), Rgf(.5f, .8f),   Rgf(), Rgf() },
+                {   1,      FlareData::Star,     Vec4f(1, 1, 1, 1),          1,      Rgf(1.0e-6f, 1.0e-5f), Rgf(),  Rgf(.5f, .7f), Rgf(),   Rgf(), Rgf() },
+                {   1,      FlareData::Exponent, Vec4f(1, 1, 1, 1),          2.5f,   Rgf(1.0e-6f, 1.0e-5f), Rgf(),  Rgf(.1f, .2f), Rgf(),   Rgf(), Rgf() },
 
-                {  .8f,     FlareData::Halo,     Vector4f(1, 1, 1, .5f),        1,      Rgf(5.0e-6f, 5.0e-5f), Rgf(),  Rgf(.5f, .7f), Rgf(),   Rgf(), Rgf(30, 60) },
+                {  .8f,     FlareData::Halo,     Vec4f(1, 1, 1, .5f),        1,      Rgf(5.0e-6f, 5.0e-5f), Rgf(),  Rgf(.5f, .7f), Rgf(),   Rgf(), Rgf(30, 60) },
 
-                {  -.8f,    FlareData::Ring,     Vector4f(.4f, 1, .4f, .26f),   .4f,    Rgf(1.0e-5f, 1.0e-4f), Rgf(),  Rgf(.1f, .5f), Rgf(),   Rgf(5, 20), Rgf(40, 50) },
-                {  -1,      FlareData::Circle,   Vector4f(.4f, .4f, 1, .30f),   .5f,    Rgf(4.0e-6f, 4.0e-5f), Rgf(),  Rgf(.08f, .45f), Rgf(), Rgf(0, 23), Rgf(30, 60) },
-                {  -1.2f ,  FlareData::Ring,     Vector4f(1, .4f, .4f, .26f),   .56f,   Rgf(1.0e-5f, 1.0e-4f), Rgf(),  Rgf(.1f, .5f), Rgf(),   Rgf(10, 25), Rgf(35, 50) },
+                {  -.8f,    FlareData::Ring,     Vec4f(.4f, 1, .4f, .26f),   .4f,    Rgf(1.0e-5f, 1.0e-4f), Rgf(),  Rgf(.1f, .5f), Rgf(),   Rgf(5, 20), Rgf(40, 50) },
+                {  -1,      FlareData::Circle,   Vec4f(.4f, .4f, 1, .30f),   .5f,    Rgf(4.0e-6f, 4.0e-5f), Rgf(),  Rgf(.08f, .45f), Rgf(), Rgf(0, 23), Rgf(30, 60) },
+                {  -1.2f ,  FlareData::Ring,     Vec4f(1, .4f, .4f, .26f),   .56f,   Rgf(1.0e-5f, 1.0e-4f), Rgf(),  Rgf(.1f, .5f), Rgf(),   Rgf(10, 25), Rgf(35, 50) },
 
-                {  1.333f,  FlareData::Ring,     Vector4f(.5f, .5f, 1, .1f),    1.2f,   Rgf(1.0e-8f, 1.0e-7f), Rgf(),  Rgf(.1f, .5f), Rgf(),   Rgf(10, 25), Rgf(25, 45) },
-                {  1.45f,   FlareData::Ring,     Vector4f(1, .5f, .5f, .15f),   1.15f,  Rgf(1.0e-8f, 1.0e-7f), Rgf(),  Rgf(.1f, .5f), Rgf(),   Rgf(10, 25), Rgf(25, 45) },
+                {  1.333f,  FlareData::Ring,     Vec4f(.5f, .5f, 1, .1f),    1.2f,   Rgf(1.0e-8f, 1.0e-7f), Rgf(),  Rgf(.1f, .5f), Rgf(),   Rgf(10, 25), Rgf(25, 45) },
+                {  1.45f,   FlareData::Ring,     Vec4f(1, .5f, .5f, .15f),   1.15f,  Rgf(1.0e-8f, 1.0e-7f), Rgf(),  Rgf(.1f, .5f), Rgf(),   Rgf(10, 25), Rgf(25, 45) },
 
-                {  -1.45f,  FlareData::Ring,     Vector4f(1, 1, .9f, .25f),     .2f,    Rgf(1.0e-5f, 1.0e-4f), Rgf(),  Rgf(.1f, .4f), Rgf(),   Rgf(5, 10), Rgf(15, 30) },
-                {  -.2f,    FlareData::Circle,   Vector4f(1, 1, .9f, .2f),      .23f,   Rgf(1.0e-5f, 1.0e-4f), Rgf(),  Rgf(.1f, .4f), Rgf(),   Rgf(5, 10), Rgf(15, 30) },
+                {  -1.45f,  FlareData::Ring,     Vec4f(1, 1, .9f, .25f),     .2f,    Rgf(1.0e-5f, 1.0e-4f), Rgf(),  Rgf(.1f, .4f), Rgf(),   Rgf(5, 10), Rgf(15, 30) },
+                {  -.2f,    FlareData::Circle,   Vec4f(1, 1, .9f, .2f),      .23f,   Rgf(1.0e-5f, 1.0e-4f), Rgf(),  Rgf(.1f, .4f), Rgf(),   Rgf(5, 10), Rgf(15, 30) },
             };
 
             for (uint i = 0; i < sizeof(specs)/sizeof(specs[0]); ++i)
@@ -426,7 +426,7 @@ DENG2_PIMPL(LensFlares)
                 Spec const &spec = specs[i];
 
                 float size = radius * spec.size;
-                Vector4f color = spec.color;
+                Vec4f color = spec.color;
 
                 // Apply limits.
                 color.w *= linearRangeFactor(intensity, spec.minIntensity, spec.maxIntensity);
@@ -444,13 +444,13 @@ DENG2_PIMPL(LensFlares)
 
             /*
             // Project viewtocenter vector onto viewSideVec.
-            Vector3f const eyeToFlare = pvl->lightSourceOrigin() - eyePos;
+            Vec3f const eyeToFlare = pvl->lightSourceOrigin() - eyePos;
 
             // Calculate the 'mirror' vector.
             float const scale = viewToCenter.dot(viewData->frontVec)
-                                / Vector3f(viewData->frontVec).dot(viewData->frontVec);
-            Vector3f const mirror =
-                (Vector3f(viewData->frontVec) * scale - viewToCenter) * 2;
+                                / Vec3f(viewData->frontVec).dot(viewData->frontVec);
+            Vec3f const mirror =
+                (Vec3f(viewData->frontVec) * scale - viewToCenter) * 2;
             */
         }
 
@@ -508,15 +508,15 @@ void LensFlares::draw()
     if (!viewPlayer) return; /// @todo How'd we get here? -ds
 
     viewdata_t const *viewData = &DD_Player(console())->viewport();
-    d->eyeFront = Vector3f(viewData->frontVec);
+    d->eyeFront = Vec3f(viewData->frontVec);
 
     Rectanglef const rect = viewRect();
     float const aspect = rect.height() / rect.width();
 
     GLWindow &window = ClientWindow::main();
 
-    d->uViewUnit  = Vector2f(aspect, 1.f);
-    d->uPixelAsUv = Vector2f(1.f / window.pixelWidth(), 1.f / window.pixelHeight());
+    d->uViewUnit  = Vec2f(aspect, 1.f);
+    d->uPixelAsUv = Vec2f(1.f / window.pixelWidth(), 1.f / window.pixelHeight());
     d->uMvpMatrix = Viewer_Matrix(); //Rend_GetProjectionMatrix() * Rend_GetModelViewMatrix(console());
 
     DENG2_ASSERT(console() == displayPlayer);
@@ -537,7 +537,7 @@ void LensFlares::draw()
 
     // The active rectangle is specified with top/left coordinates, but the shader
     // works with bottom/left ones.
-    Vector4f active(target.activeRectScale(), target.activeRectNormalizedOffset());
+    Vec4f active(target.activeRectScale(), target.activeRectNormalizedOffset());
     active.w = 1 - (active.w + active.y); // flip y
     d->uActiveRect = active;
 

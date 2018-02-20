@@ -49,7 +49,7 @@ public:
     IdTech1Image(de::IByteArray const &data, de::IByteArray const &palette,
                  Format format = Automatic);
 
-    de::Vector2i origin() const;
+    de::Vec2i origin() const;
 
     /**
      * Size of the image data as declared in its metadata. May not match the actual

@@ -78,7 +78,7 @@ ddouble SkyFixEdge::Event::distance() const
     return d->distance;
 }
 
-Vector3d SkyFixEdge::Event::origin() const
+Vec3d SkyFixEdge::Event::origin() const
 {
     return d->owner.pOrigin() + d->owner.pDirection() * distance();
 }
@@ -89,8 +89,8 @@ DENG2_PIMPL(SkyFixEdge)
     FixType fixType;
     dint edge;
 
-    Vector3d pOrigin;
-    Vector3d pDirection;
+    Vec3d pOrigin;
+    Vec3d pDirection;
 
     coord_t lo, hi;
 
@@ -98,10 +98,10 @@ DENG2_PIMPL(SkyFixEdge)
     Event top;
     bool isValid;
 
-    Vector2f materialOrigin;
+    Vec2f materialOrigin;
 
     Impl(Public *i, HEdge &hedge, FixType fixType, int edge,
-             Vector2f const &materialOrigin)
+             Vec2f const &materialOrigin)
         : Base(i),
           hedge(&hedge),
           fixType(fixType),
@@ -221,30 +221,30 @@ DENG2_PIMPL(SkyFixEdge)
         isValid = hi > lo;
         if (!isValid) return;
 
-        pOrigin = Vector3d(self().origin(), lo);
-        pDirection = Vector3d(0, 0, hi - lo);
+        pOrigin = Vec3d(self().origin(), lo);
+        pDirection = Vec3d(0, 0, hi - lo);
     }
 };
 
 SkyFixEdge::SkyFixEdge(HEdge &hedge, FixType fixType, int edge, float materialOffsetS)
     : WorldEdge((edge? hedge.twin() : hedge).origin()),
-      d(new Impl(this, hedge, fixType, edge, Vector2f(materialOffsetS, 0)))
+      d(new Impl(this, hedge, fixType, edge, Vec2f(materialOffsetS, 0)))
 {
     /// @todo Defer until necessary.
     d->prepare();
 }
 
-Vector3d const &SkyFixEdge::pOrigin() const
+Vec3d const &SkyFixEdge::pOrigin() const
 {
     return d->pOrigin;
 }
 
-Vector3d const &SkyFixEdge::pDirection() const
+Vec3d const &SkyFixEdge::pDirection() const
 {
     return d->pDirection;
 }
 
-Vector2f SkyFixEdge::materialOrigin() const
+Vec2f SkyFixEdge::materialOrigin() const
 {
     return d->materialOrigin;
 }

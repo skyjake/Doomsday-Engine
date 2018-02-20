@@ -47,23 +47,23 @@ public:
     DENG2_DEFINE_AUDIENCE(Deletion,  void userBeingDeleted  (User &))
     DENG2_DEFINE_AUDIENCE(Warp,      void userWarped        (User const &))
     DENG2_DEFINE_AUDIENCE(PainLevel, void userPainLevel     (User const &, float pain))
-    DENG2_DEFINE_AUDIENCE(Move,      void userMoved         (User const &, de::Vector3f const &pos))
+    DENG2_DEFINE_AUDIENCE(Move,      void userMoved         (User const &, de::Vec3f const &pos))
     DENG2_DEFINE_AUDIENCE(Turn,      void userTurned        (User const &, float yaw))
 
 public:
     User();
 
     void setWorld(World const *world);
-    void setPosition(de::Vector3f const &pos);
+    void setPosition(de::Vec3f const &pos);
     void setYaw(float yaw);
     void setPain(float pain);
     void setInputState(InputState const &state);
     void turn(float yaw, float pitch);
-    void turn(const de::Vector2f &angles) { turn(angles.x, angles.y); }
+    void turn(const de::Vec2f &angles) { turn(angles.x, angles.y); }
 
     void update(de::TimeSpan const &elapsed);
 
-    de::Vector3f position() const; // User eye position.
+    de::Vec3f position() const; // User eye position.
     float        yaw() const;
     float        pitch() const;
     de::Sound &  fastWindSound();

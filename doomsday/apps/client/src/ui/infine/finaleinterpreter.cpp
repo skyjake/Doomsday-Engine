@@ -1353,8 +1353,8 @@ static void changePageBackground(FinalePageWidget &page, world::Material *newMat
     // If the page does not yet have a background set we must setup the color+alpha.
     if (newMaterial && !page.backgroundMaterial())
     {
-        page.setBackgroundTopColorAndAlpha   (Vector4f(1, 1, 1, 1))
-            .setBackgroundBottomColorAndAlpha(Vector4f(1, 1, 1, 1));
+        page.setBackgroundTopColorAndAlpha   (Vec4f(1, 1, 1, 1))
+            .setBackgroundBottomColorAndAlpha(Vec4f(1, 1, 1, 1));
     }
     page.setBackgroundMaterial(newMaterial);
 }
@@ -1424,16 +1424,16 @@ DEFFC(Color)
 {
     DENG2_UNUSED(cmd);
     fi.page(FinaleInterpreter::Anims)
-            .setBackgroundTopColor   (Vector3f(OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2)), fi.inTime())
-            .setBackgroundBottomColor(Vector3f(OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2)), fi.inTime());
+            .setBackgroundTopColor   (Vec3f(OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2)), fi.inTime())
+            .setBackgroundBottomColor(Vec3f(OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2)), fi.inTime());
 }
 
 DEFFC(ColorAlpha)
 {
     DENG2_UNUSED(cmd);
     fi.page(FinaleInterpreter::Anims)
-            .setBackgroundTopColorAndAlpha   (Vector4f(OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3)), fi.inTime())
-            .setBackgroundBottomColorAndAlpha(Vector4f(OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3)), fi.inTime());
+            .setBackgroundTopColorAndAlpha   (Vec4f(OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3)), fi.inTime())
+            .setBackgroundBottomColorAndAlpha(Vec4f(OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3)), fi.inTime());
 }
 
 DEFFC(Pause)
@@ -1616,7 +1616,7 @@ DEFFC(ImageAt)
     float y = OP_FLOAT(2);
 
     anim.clearAllFrames()
-        .setOrigin(Vector2f(x, y));
+        .setOrigin(Vec2f(x, y));
 
 #ifdef __CLIENT__
     char const *name  = OP_CSTRING(3);
@@ -1692,7 +1692,7 @@ DEFFC(Patch)
     FinaleAnimWidget &anim  = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
     char const *encodedName = OP_CSTRING(3);
 
-    anim.setOrigin(Vector2f(OP_FLOAT(1), OP_FLOAT(2)));
+    anim.setOrigin(Vec2f(OP_FLOAT(1), OP_FLOAT(2)));
     anim.clearAllFrames();
 
     patchid_t patchId = R_DeclarePatch(encodedName);
@@ -1866,7 +1866,7 @@ DEFFC(ObjectRGB)
     DENG2_UNUSED(cmd);
     if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
-        Vector3f const color(OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3));
+        Vec3f const color(OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3));
         if (FinaleTextWidget *text = maybeAs<FinaleTextWidget>(wi))
         {
             text->setColor(color, fi.inTime());
@@ -1952,7 +1952,7 @@ DEFFC(ObjectScaleXYZ)
     DENG2_UNUSED(cmd);
     if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
-        wi->setScale(Vector3f(OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3)), fi.inTime());
+        wi->setScale(Vec3f(OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3)), fi.inTime());
     }
 }
 
@@ -1976,8 +1976,8 @@ DEFFC(Rect)
     anim.clearAllFrames()
         .resetAllColors()
         .setLooping(false) // Yeah?
-        .setOrigin(Vector3f(OP_FLOAT(1), OP_FLOAT(2), 0))
-        .setScale(Vector3f(OP_FLOAT(3), OP_FLOAT(4), 1));
+        .setOrigin(Vec3f(OP_FLOAT(1), OP_FLOAT(2), 0))
+        .setScale(Vec3f(OP_FLOAT(3), OP_FLOAT(4), 1));
 }
 
 DEFFC(FillColor)
@@ -1993,7 +1993,7 @@ DEFFC(FillColor)
     else if (!qstricmp(OP_CSTRING(1), "bottom")) which |= 2;
     else                                         which = 3;
 
-    Vector4f color;
+    Vec4f color;
     for (int i = 0; i < 4; ++i)
     {
         color[i] = OP_FLOAT(2 + i);
@@ -2018,7 +2018,7 @@ DEFFC(EdgeColor)
     else if (!qstricmp(OP_CSTRING(1), "bottom")) which |= 2;
     else                                        which = 3;
 
-    Vector4f color;
+    Vec4f color;
     for (int i = 0; i < 4; ++i)
     {
         color[i] = OP_FLOAT(2 + i);
@@ -2091,7 +2091,7 @@ DEFFC(MusicOnce)
 DEFFC(Filter)
 {
     DENG2_UNUSED(cmd);
-    fi.page(FinaleInterpreter::Texts).setFilterColorAndAlpha(Vector4f(OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3)), fi.inTime());
+    fi.page(FinaleInterpreter::Texts).setFilterColorAndAlpha(Vec4f(OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3)), fi.inTime());
 }
 
 DEFFC(Text)
@@ -2101,7 +2101,7 @@ DEFFC(Text)
 
     text.setText(OP_CSTRING(3))
         .setCursorPos(0) // Restart the text.
-        .setOrigin(Vector3f(OP_FLOAT(1), OP_FLOAT(2), 0));
+        .setOrigin(Vec3f(OP_FLOAT(1), OP_FLOAT(2), 0));
 }
 
 DEFFC(TextFromDef)
@@ -2112,7 +2112,7 @@ DEFFC(TextFromDef)
 
     text.setText(textIdx >= 0? DED_Definitions()->text[textIdx].text : "(undefined)")
         .setCursorPos(0) // Restart the type-in animation (if any).
-        .setOrigin(Vector3f(OP_FLOAT(1), OP_FLOAT(2), 0));
+        .setOrigin(Vec3f(OP_FLOAT(1), OP_FLOAT(2), 0));
 }
 
 DEFFC(TextFromLump)
@@ -2120,7 +2120,7 @@ DEFFC(TextFromLump)
     DENG2_UNUSED(cmd);
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
 
-    text.setOrigin(Vector3f(OP_FLOAT(1), OP_FLOAT(2), 0));
+    text.setOrigin(Vec3f(OP_FLOAT(1), OP_FLOAT(2), 0));
 
     lumpnum_t lumpNum = App_FileSystem().lumpNumForName(OP_CSTRING(3));
     if (lumpNum >= 0)
@@ -2184,10 +2184,10 @@ DEFFC(PredefinedColor)
     DENG2_UNUSED(cmd);
     fi.page(FinaleInterpreter::Texts)
             .setPredefinedColor(de::clamp(1, OP_INT(0), FIPAGE_NUM_PREDEFINED_COLORS) - 1,
-                                Vector3f(OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3)), fi.inTime());
+                                Vec3f(OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3)), fi.inTime());
     fi.page(FinaleInterpreter::Anims)
             .setPredefinedColor(de::clamp(1, OP_INT(0), FIPAGE_NUM_PREDEFINED_COLORS) - 1,
-                                Vector3f(OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3)), fi.inTime());
+                                Vec3f(OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3)), fi.inTime());
 }
 
 DEFFC(PredefinedFont)
@@ -2216,7 +2216,7 @@ DEFFC(TextRGB)
 {
     DENG2_UNUSED(cmd);
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
-    text.setColor(Vector3f(OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3)), fi.inTime());
+    text.setColor(Vec3f(OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3)), fi.inTime());
 }
 
 DEFFC(TextAlpha)

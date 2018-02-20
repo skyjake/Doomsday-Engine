@@ -32,7 +32,7 @@ static patchid_t pServantIcon[FRAME_COUNT];
 static void ServantWidget_Draw(guidata_servant_t *svnt, Point2Raw const *offset)
 {
     DENG2_ASSERT(svnt);
-    svnt->draw(offset? Vector2i(offset->xy) : Vector2i());
+    svnt->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void ServantWidget_UpdateGeometry(guidata_servant_t *svnt)
@@ -69,7 +69,7 @@ void guidata_servant_t::tick(timespan_t /*elapsed*/)
     }
 }
 
-void guidata_servant_t::draw(Vector2i const &offset) const
+void guidata_servant_t::draw(Vec2i const &offset) const
 {
     dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
 
@@ -85,7 +85,7 @@ void guidata_servant_t::draw(Vector2i const &offset) const
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, iconOpacity);
-    GL_DrawPatch(_patchId, Vector2i(13, 17));
+    GL_DrawPatch(_patchId, Vec2i(13, 17));
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);

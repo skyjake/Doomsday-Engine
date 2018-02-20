@@ -1301,15 +1301,15 @@ DENG2_PIMPL(AudioSystem)
     /**
      * Returns the 3D position of the sound effect listener, in map space.
      */
-    Vector3d getSfxListenerOrigin() const
+    Vec3d getSfxListenerOrigin() const
     {
         if (sfxListener)
         {
-            auto origin = Vector3d(sfxListener->origin);
+            auto origin = Vec3d(sfxListener->origin);
             origin.z += sfxListener->height - 5;  /// @todo Make it exactly eye-level! (viewheight).
             return origin;
         }
-        return Vector3d();
+        return Vec3d();
     }
 
     void sfxListenerNoReverb()
@@ -1336,7 +1336,7 @@ DENG2_PIMPL(AudioSystem)
         {
             {
                 // Origin. At eye-level.
-                auto const origin = Vector4f(getSfxListenerOrigin().toVector3f(), 0);
+                auto const origin = Vec4f(getSfxListenerOrigin().toVector3f(), 0);
                 dfloat vec[4];
                 origin.decompose(vec);
                 self().sfx()->Listenerv(SFXLP_POSITION, vec);
@@ -1351,7 +1351,7 @@ DENG2_PIMPL(AudioSystem)
             }
             {
                 // Velocity. The unit is world distance units per second
-                auto const velocity = Vector4f(Vector3d(sfxListener->mom).toVector3f(), 0) * TICSPERSEC;
+                auto const velocity = Vec4f(Vec3d(sfxListener->mom).toVector3f(), 0) * TICSPERSEC;
                 dfloat vec[4];
                 velocity.decompose(vec);
                 self().sfx()->Listenerv(SFXLP_VELOCITY, vec);
@@ -2306,7 +2306,7 @@ dint AudioSystem::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mob
         selCh->setEmitter(emitter);
         if (fixedOrigin)
         {
-            selCh->setFixedOrigin(Vector3d(fixedOrigin));
+            selCh->setFixedOrigin(Vec3d(fixedOrigin));
         }
     }
 

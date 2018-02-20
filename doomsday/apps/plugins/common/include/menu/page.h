@@ -36,7 +36,7 @@ struct mn_rendstate_t
     float pageAlpha;
     float textGlitter;
     float textShadow;
-    de::Vector4f textColors[MENU_COLOR_COUNT];
+    de::Vec4f textColors[MENU_COLOR_COUNT];
     fontid_t textFonts[MENU_FONT_COUNT];
 };
 extern mn_rendstate_t const *mnRendState;
@@ -65,6 +65,9 @@ public:
 
     using Children = WidgetList;
 
+    typedef void (*OnActiveCallback) (Page &);
+    typedef void (*OnDrawCallback)   (Page const &, de::Vec2i const &);
+
     using OnActiveCallback = std::function<void(Page &)>;
     using OnDrawCallback   = std::function<void(Page const &, de::Vector2i const &)>;
     using CommandResponder = std::function<int(Page &, menucommand_e)>;
@@ -80,7 +83,7 @@ public:
      * @param cmdResponder
      */
     explicit Page(de::String              name,
-                  de::Vector2i const &    origin       = de::Vector2i(),
+                  de::Vec2i const &       origin       = {},
                   Flags const &           flags        = DefaultFlags,
                   const OnDrawCallback &  drawer       = {},
                   const CommandResponder &cmdResponder = {});
@@ -95,8 +98,8 @@ public:
     void setTitle(de::String const &newTitle);
     de::String title() const;
 
-    void setOrigin(de::Vector2i const &newOrigin);
-    de::Vector2i origin() const;
+    void setOrigin(de::Vec2i const &newOrigin);
+    de::Vec2i origin() const;
 
     Flags flags() const;
     de::Rectanglei viewRegion() const;
@@ -200,7 +203,7 @@ public:
      *
      * @param id   Unique identifier of the predefined color being retrieved.
      */
-    de::Vector3f predefinedColor(mn_page_colorid_t id);
+    de::Vec3f predefinedColor(mn_page_colorid_t id);
 
     void setPredefinedFont(mn_page_fontid_t id, fontid_t fontId);
 

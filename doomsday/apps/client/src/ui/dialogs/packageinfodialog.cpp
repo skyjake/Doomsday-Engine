@@ -159,7 +159,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
     void setPackageIcon(Image const &iconImage)
     {
         icon->setImage(iconImage);
-        icon->setImageColor(Vector4f(1, 1, 1, 1));
+        icon->setImageColor(Vec4f(1, 1, 1, 1));
         icon->setImageFit(ui::FitToWidth | ui::OriginalAspectRatio);
         icon->setImageScale(1);
         icon->setBehavior(ContentClipping, true);

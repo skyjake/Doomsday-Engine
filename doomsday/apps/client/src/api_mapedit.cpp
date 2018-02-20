@@ -210,7 +210,7 @@ dd_bool MPE_End()
 int MPE_VertexCreate(coord_t x, coord_t y, int archiveIndex)
 {
     ERROR_IF_NOT_INITIALIZED();
-    return editMap->createVertex(Vector2d(x, y), archiveIndex)->indexInMap();
+    return editMap->createVertex(Vec2d(x, y), archiveIndex)->indexInMap();
 }
 
 #undef MPE_VertexCreatev
@@ -224,7 +224,7 @@ dd_bool MPE_VertexCreatev(int num, coord_t const *values, int *archiveIndices, i
     // Create many vertexes.
     for(int n = 0; n < num; ++n)
     {
-        Vertex *vertex = editMap->createVertex(Vector2d(values[n * 2], values[n * 2 + 1]),
+        Vertex *vertex = editMap->createVertex(Vec2d(values[n * 2], values[n * 2 + 1]),
                                                archiveIndices[n]);
         if(retIndices)
         {
@@ -251,7 +251,7 @@ int MPE_LineCreate(int v1, int v2, int frontSectorIdx, int backSectorIdx, int fl
     /// @todo fixme: We need to allow these... -ds
     Vertex &vtx1 = editMap->vertex(v1);
     Vertex &vtx2 = editMap->vertex(v2);
-    if(de::abs(Vector2d(vtx1.origin() - vtx2.origin()).length()) <= 0.0001) return -1;
+    if(de::abs(Vec2d(vtx1.origin() - vtx2.origin()).length()) <= 0.0001) return -1;
 
     Sector *frontSector = (frontSectorIdx >= 0? editMap->editableSectors().at(frontSectorIdx) : 0);
     Sector *backSector  = (backSectorIdx  >= 0? editMap->editableSectors().at(backSectorIdx) : 0);
@@ -284,19 +284,19 @@ void MPE_LineAddSide(int lineIdx, int sideId, short flags, ddstring_t const *top
     // Assign the resolved material if found.
     side.top()
         .setMaterial(findMaterialInDict(topMaterialUri))
-        .setOrigin(Vector2f(topOffsetX, topOffsetY))
-        .setColor(Vector3f(topRed, topGreen, topBlue));
+        .setOrigin(Vec2f(topOffsetX, topOffsetY))
+        .setColor(Vec3f(topRed, topGreen, topBlue));
 
     side.middle()
         .setMaterial(findMaterialInDict(middleMaterialUri))
-        .setOrigin(Vector2f(middleOffsetX, middleOffsetY))
-        .setColor(Vector3f(middleRed, middleGreen, middleBlue))
+        .setOrigin(Vec2f(middleOffsetX, middleOffsetY))
+        .setColor(Vec3f(middleRed, middleGreen, middleBlue))
         .setOpacity(middleOpacity);
 
     side.bottom()
         .setMaterial(findMaterialInDict(bottomMaterialUri))
-        .setOrigin(Vector2f(bottomOffsetX, bottomOffsetY))
-        .setColor(Vector3f(bottomRed, bottomGreen, bottomBlue));
+        .setOrigin(Vec2f(bottomOffsetX, bottomOffsetY))
+        .setColor(Vec3f(bottomRed, bottomGreen, bottomBlue));
 }
 
 #undef MPE_PlaneCreate
@@ -309,14 +309,14 @@ int MPE_PlaneCreate(int sectorIdx, coord_t height, ddstring_t const *materialUri
     if(sectorIdx < 0 || sectorIdx >= editMap->editableSectorCount()) return -1;
 
     Sector *sector = editMap->editableSectors().at(sectorIdx);
-    Plane *plane = sector->addPlane(Vector3f(normalX, normalY, normalZ), height);
+    Plane *plane = sector->addPlane(Vec3f(normalX, normalY, normalZ), height);
 
     plane->setIndexInArchive(archiveIndex);
 
     plane->surface()
         .setMaterial(findMaterialInDict(materialUri))
-        .setColor(Vector3f(tintRed, tintGreen, tintBlue))
-        .setOrigin(Vector2f(matOffsetX, matOffsetY));
+        .setColor(Vec3f(tintRed, tintGreen, tintBlue))
+        .setOrigin(Vec2f(matOffsetX, matOffsetY));
 
     if(!plane->isSectorFloor() && !plane->isSectorCeiling())
     {
@@ -331,7 +331,7 @@ int MPE_SectorCreate(float lightlevel, float red, float green, float blue,
                      int archiveIndex)
 {
     ERROR_IF_NOT_INITIALIZED();
-    return editMap->createSector(lightlevel, Vector3f(red, green, blue),
+    return editMap->createSector(lightlevel, Vec3f(red, green, blue),
                                  archiveIndex)->indexInMap();
 }
 
@@ -355,7 +355,7 @@ int MPE_PolyobjCreate(int const *lines, int lineCount, int tag, int sequenceType
         if(line->definesPolyobj()) return -1;
     }
 
-    Polyobj *po = editMap->createPolyobj(Vector2d(originX, originY));
+    Polyobj *po = editMap->createPolyobj(Vec2d(originX, originY));
     po->setSequenceType(sequenceType);
     po->setTag(tag);
 

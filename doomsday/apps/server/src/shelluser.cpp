@@ -170,7 +170,7 @@ void ShellUser::sendPlayerInfo()
 
         info.number   = i;
         info.name     = plr->name;
-        info.position = de::Vector2i(plr->publicData().mo->origin[VX],
+        info.position = de::Vec2i(plr->publicData().mo->origin[VX],
                                      plr->publicData().mo->origin[VY]);
 
         /**

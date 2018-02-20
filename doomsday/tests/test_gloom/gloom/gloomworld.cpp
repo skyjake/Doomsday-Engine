@@ -100,8 +100,8 @@ DENG2_PIMPL(GloomWorld), public Asset
         mapRender.glInit(renderContext);
         ssao     .glInit(renderContext);
 
-//        Vector3f const fogColor{.83f, .89f, 1.f};
-//        uFog = Vector4f(fogColor, visibleDistance);
+//        Vec3f const fogColor{.83f, .89f, 1.f};
+//        uFog = Vec4f(fogColor, visibleDistance);
 
         setState(Ready);
         return true;
@@ -134,14 +134,14 @@ DENG2_PIMPL(GloomWorld), public Asset
         }
     }
 
-    Vector3f lightColor() const
+    Vec3f lightColor() const
     {
-        return Vector3f(1, 1, 1);
+        return Vec3f(1, 1, 1);
     }
 
-    Vector3f lightDirection() const
+    Vec3f lightDirection() const
     {
-        return Vector3f(-.45f, .5f, -.89f).normalize();
+        return Vec3f(-.45f, .5f, -.89f).normalize();
     }
 
     void userWarped(const User &)
@@ -168,26 +168,26 @@ DENG2_PIMPL(GloomWorld), public Asset
         for (auto i = map.entities().begin(), end = map.entities().end(); i != end; ++i)
         {
             auto &ent = *i.value();
-            Vector3d pos = ent.position();
+            Vec3d pos = ent.position();
             pos.y = self().groundSurfaceHeight(pos);
             ent.setPosition(pos);
         }
     }
 
-//    void positionOnGround(Entity &ent, Vector2f const &surfacePos)
+//    void positionOnGround(Entity &ent, Vec2f const &surfacePos)
 //    {
-//        ent.setPosition(Vector3f(surfacePos.x,
+//        ent.setPosition(Vec3f(surfacePos.x,
 //                                 height.heightAtPosition(surfacePos) + .05f,
 //                                 surfacePos.y));
 //    }
 
-//    bool isFlatSurface(Vector2f const &pos) const
+//    bool isFlatSurface(Vec2f const &pos) const
 //    {
 //        return (height.normalAtPosition(pos).y < -.9 &&
-//                height.normalAtPosition(pos + Vector2f(-1, -1)).y < -.9 &&
-//                height.normalAtPosition(pos + Vector2f(1, -1)).y < -.9 &&
-//                height.normalAtPosition(pos + Vector2f(-1, 1)).y < -.9 &&
-//                height.normalAtPosition(pos + Vector2f(1, 1)).y < -.9);
+//                height.normalAtPosition(pos + Vec2f(-1, -1)).y < -.9 &&
+//                height.normalAtPosition(pos + Vec2f(1, -1)).y < -.9 &&
+//                height.normalAtPosition(pos + Vec2f(-1, 1)).y < -.9 &&
+//                height.normalAtPosition(pos + Vec2f(1, 1)).y < -.9);
 //    }
 
 };
@@ -246,7 +246,7 @@ User *GloomWorld::localUser() const
 
 World::POI GloomWorld::initialViewPosition() const
 {
-    return POI(Vector3f(0, 0, 0), 90);
+    return POI(Vec3f(0, 0, 0), 90);
 }
 
 QList<World::POI> GloomWorld::pointsOfInterest() const
@@ -254,7 +254,7 @@ QList<World::POI> GloomWorld::pointsOfInterest() const
     return QList<POI>({ POI(initialViewPosition()) });
 }
 
-float GloomWorld::groundSurfaceHeight(Vector3f const &pos) const
+float GloomWorld::groundSurfaceHeight(Vec3f const &pos) const
 {
     const auto sec_vol = d->map.findSectorAndVolumeAt(pos);
     if (sec_vol.first)
@@ -265,7 +265,7 @@ float GloomWorld::groundSurfaceHeight(Vector3f const &pos) const
     return 0;
 }
 
-float GloomWorld::ceilingHeight(Vector3f const &) const
+float GloomWorld::ceilingHeight(Vec3f const &) const
 {
     //return -d->heightRange * 2;
     return 1000;

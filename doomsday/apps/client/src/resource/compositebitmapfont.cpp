@@ -99,7 +99,7 @@ Rectanglei const &CompositeBitmapFont::glyphPosCoords(uchar ch) const
 
 Rectanglei const &CompositeBitmapFont::glyphTexCoords(uchar /*ch*/) const
 {
-    static Rectanglei coords(Vector2i(0, 0), Vector2i(1, 1));
+    static Rectanglei coords(Vec2i(0, 0), Vec2i(1, 1));
     glInit();
     return coords;
 }
@@ -149,7 +149,7 @@ void CompositeBitmapFont::glInit() const
     glDeinit();
 
     int foundGlyphs = 0;
-    Vector2ui avgSize;
+    Vec2ui avgSize;
     for(int i = 0; i < MAX_CHARS; ++i)
     {
         Glyph *ch = &d->glyphs[i];

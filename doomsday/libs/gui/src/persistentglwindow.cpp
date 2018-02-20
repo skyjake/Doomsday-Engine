@@ -61,11 +61,11 @@ static QRect desktopRect()
 #endif
 }
 
-static QRect centeredQRect(Vector2ui const &size)
+static QRect centeredQRect(Vec2ui const &size)
 {
-    Vector2ui const screenSize(desktopRect().size().width(),
+    Vec2ui const screenSize(desktopRect().size().width(),
                                desktopRect().size().height());
-    Vector2ui const clamped = size.min(screenSize);
+    Vec2ui const clamped = size.min(screenSize);
 
     LOGDEV_GL_XVERBOSE("centeredGeometry: Current desktop rect %i x %i",
                        screenSize.x << screenSize.y);
@@ -76,7 +76,7 @@ static QRect centeredQRect(Vector2ui const &size)
                  QSize(clamped.x, clamped.y));
 }
 
-static Rectanglei centeredRect(Vector2ui const &size)
+static Rectanglei centeredRect(Vec2ui const &size)
 {
     QRect rect = centeredQRect(size);
     return Rectanglei(rect.left(), rect.top(), rect.width(), rect.height());
@@ -273,11 +273,11 @@ DENG2_PIMPL(PersistentGLWindow)
                 switch (attribs[i++])
                 {
                 case PersistentGLWindow::Left:
-                    windowRect.moveTopLeft(Vector2i(attribs[i], windowRect.topLeft.y));
+                    windowRect.moveTopLeft(Vec2i(attribs[i], windowRect.topLeft.y));
                     break;
 
                 case PersistentGLWindow::Top:
-                    windowRect.moveTopLeft(Vector2i(windowRect.topLeft.x, attribs[i]));
+                    windowRect.moveTopLeft(Vec2i(windowRect.topLeft.x, attribs[i]));
                     break;
 
                 case PersistentGLWindow::Width:
@@ -1015,7 +1015,7 @@ void PersistentGLWindow::resizeEvent(QResizeEvent *ev)
     /*
     if (!isMaximized() && !isFullScreen())
     {
-        d->state.windowRect.setSize(Vector2i(ev->size().width(), ev->size().height()));
+        d->state.windowRect.setSize(Vec2i(ev->size().width(), ev->size().height()));
     }*/
 }
 

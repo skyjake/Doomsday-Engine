@@ -29,8 +29,8 @@
 struct VectorLightData
 {
     float approxDist = 0.f;   ///< Only an approximation.
-    de::Vector3f direction;   ///< Normalized vector from light origin to illumination point.
-    de::Vector3f color;       ///< How intense the light is (0..1, RGB).
+    de::Vec3f direction;      ///< Normalized vector from light origin to illumination point.
+    de::Vec3f color;          ///< How intense the light is (0..1, RGB).
     float offset = 0.f;
     float lightSide = 0.f;
     float darkSide = 0.f;     ///< Factors for world light.

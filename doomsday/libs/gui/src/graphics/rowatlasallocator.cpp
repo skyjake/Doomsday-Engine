@@ -343,7 +343,7 @@ DENG2_PIMPL(RowAtlasAllocator)
                 addVacant(addedSlot);
             }
             slotsById.insert(slot->id, slot);
-            rect = Rectanglei::fromSize(Vector2i(slot->x, slot->row->y), size);
+            rect = Rectanglei::fromSize(Vec2i(slot->x, slot->row->y), size);
             slot->usedArea = size.x * size.y;
             usedArea += slot->usedArea;
 
@@ -446,7 +446,7 @@ DENG2_PIMPL(RowAtlasAllocator)
         Id::Type id;
         Atlas::Size size;
 
-        ContentSize(Id const &allocId, Vector2ui const &sz) : id(allocId), size(sz) {}
+        ContentSize(Id const &allocId, Vec2ui const &sz) : id(allocId), size(sz) {}
         bool operator < (ContentSize const &other) const {
             if (size.y == other.size.y) {
                 // Secondary sorting by descending width.

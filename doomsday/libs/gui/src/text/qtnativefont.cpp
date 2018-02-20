@@ -98,8 +98,8 @@ Rectanglei QtNativeFont::nativeFontMeasure(String const &text) const
 #ifdef LIBGUI_ACCURATE_TEXT_BOUNDS
     Rectanglei rect = Rectanglei::fromQRect(d->metrics->boundingRect(text));
 #else
-    Rectanglei rect(Vector2i(0, -d->metrics->ascent()),
-                    Vector2i(d->metrics->width(text),
+    Rectanglei rect(Vec2i(0, -d->metrics->ascent()),
+                    Vec2i(d->metrics->width(text),
                              d->metrics->descent()));
 #endif
 
@@ -119,8 +119,8 @@ int QtNativeFont::nativeFontWidth(String const &text) const
 }
 
 QImage QtNativeFont::nativeFontRasterize(String const &text,
-                                         Vector4ub const &foreground,
-                                         Vector4ub const &background) const
+                                         Vec4ub const &foreground,
+                                         Vec4ub const &background) const
 {
     Rectanglei const bounds = measure(text);
 

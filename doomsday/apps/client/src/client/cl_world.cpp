@@ -198,7 +198,7 @@ void Cl_ReadSectorDelta(dint /*deltaType*/)
 
     if (df & (SDF_COLOR_RED | SDF_COLOR_GREEN | SDF_COLOR_BLUE))
     {
-        Vector3f newColor = sec->lightColor();
+        Vec3f newColor = sec->lightColor();
         if (df & SDF_COLOR_RED)
             newColor.x = Reader_ReadByte(msgReader) / 255.f;
         if (df & SDF_COLOR_GREEN)
@@ -210,7 +210,7 @@ void Cl_ReadSectorDelta(dint /*deltaType*/)
 
     if (df & (SDF_FLOOR_COLOR_RED | SDF_FLOOR_COLOR_GREEN | SDF_FLOOR_COLOR_BLUE))
     {
-        Vector3f newColor = sec->floor().surface().color();
+        Vec3f newColor = sec->floor().surface().color();
         if (df & SDF_FLOOR_COLOR_RED)
             newColor.x = Reader_ReadByte(msgReader) / 255.f;
         if (df & SDF_FLOOR_COLOR_GREEN)
@@ -222,7 +222,7 @@ void Cl_ReadSectorDelta(dint /*deltaType*/)
 
     if (df & (SDF_CEIL_COLOR_RED | SDF_CEIL_COLOR_GREEN | SDF_CEIL_COLOR_BLUE))
     {
-        Vector3f newColor = sec->ceiling().surface().color();
+        Vec3f newColor = sec->ceiling().surface().color();
         if (df & SDF_CEIL_COLOR_RED)
             newColor.x = Reader_ReadByte(msgReader) / 255.f;
         if (df & SDF_CEIL_COLOR_GREEN)
@@ -296,7 +296,7 @@ void Cl_ReadSideDelta(dint /*deltaType*/)
 
     if (df & (SIDF_TOP_COLOR_RED | SIDF_TOP_COLOR_GREEN | SIDF_TOP_COLOR_BLUE))
     {
-        Vector3f newColor = side->top().color();
+        Vec3f newColor = side->top().color();
         if (df & SIDF_TOP_COLOR_RED)
             newColor.x = Reader_ReadByte(msgReader) / 255.f;
         if (df & SIDF_TOP_COLOR_GREEN)
@@ -308,7 +308,7 @@ void Cl_ReadSideDelta(dint /*deltaType*/)
 
     if (df & (SIDF_MID_COLOR_RED | SIDF_MID_COLOR_GREEN | SIDF_MID_COLOR_BLUE))
     {
-        Vector3f newColor = side->middle().color();
+        Vec3f newColor = side->middle().color();
         if (df & SIDF_MID_COLOR_RED)
             newColor.x = Reader_ReadByte(msgReader) / 255.f;
         if (df & SIDF_MID_COLOR_GREEN)
@@ -324,7 +324,7 @@ void Cl_ReadSideDelta(dint /*deltaType*/)
 
     if (df & (SIDF_BOTTOM_COLOR_RED | SIDF_BOTTOM_COLOR_GREEN | SIDF_BOTTOM_COLOR_BLUE))
     {
-        Vector3f newColor = side->bottom().color();
+        Vec3f newColor = side->bottom().color();
         if (df & SIDF_BOTTOM_COLOR_RED)
             newColor.x = Reader_ReadByte(msgReader) / 255.f;
         if (df & SIDF_BOTTOM_COLOR_GREEN)

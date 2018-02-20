@@ -41,7 +41,7 @@ DENG2_OBSERVES(Action, Triggered)
     bool animating                { false };
     DotPath hoverTextColor;
     DotPath originalTextColor;
-    Vector4f originalTextModColor;
+    Vec4f originalTextModColor;
     String shortcut;
 
     Impl(Public *i) : Base(i)
@@ -111,7 +111,7 @@ DENG2_OBSERVES(Action, Triggered)
         }
     }
 
-    void updateHover(Vector2i const &pos)
+    void updateHover(Vec2i const &pos)
     {
         if (state == Down) return;
         if (self().isDisabled())
@@ -130,10 +130,10 @@ DENG2_OBSERVES(Action, Triggered)
         }
     }
 
-    Vector4f borderColor() const
+    Vec4f borderColor() const
     {
         return style().colors().colorf(borderColorId) *
-               Vector4f(1, 1, 1, frameOpacity);
+               Vec4f(1, 1, 1, frameOpacity);
     }
 
     void setDefaultBackground()
@@ -212,7 +212,7 @@ void ButtonWidget::setColorTheme(ColorTheme theme)
     auto bg = background();
 
     d->colorTheme = theme;
-    setTextModulationColorf(Vector4f(1, 1, 1, 1));
+    setTextModulationColorf(Vec4f(1, 1, 1, 1));
     d->originalTextModColor = textModulationColorf();
     if (theme == Inverted)
     {
@@ -404,7 +404,7 @@ bool ButtonWidget::handleEvent(Event const &event)
     return LabelWidget::handleEvent(event);
 }
 
-bool ButtonWidget::updateModelViewProjection(Matrix4f &mvp)
+bool ButtonWidget::updateModelViewProjection(Mat4f &mvp)
 {
     if (!fequal(d->scale, 1.f))
     {
@@ -412,8 +412,8 @@ bool ButtonWidget::updateModelViewProjection(Matrix4f &mvp)
 
         // Apply a scale animation to indicate button response.
         mvp = root().projMatrix2D() *
-              Matrix4f::scaleThenTranslate(d->scale, pos.middle()) *
-              Matrix4f::translate(-pos.middle());
+              Mat4f::scaleThenTranslate(d->scale, pos.middle()) *
+              Mat4f::translate(-pos.middle());
         return true;
     }
     return false;

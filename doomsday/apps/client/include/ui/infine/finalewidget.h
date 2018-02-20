@@ -47,7 +47,7 @@ public:
     DENG2_CAST_METHODS()
 
 #ifdef __CLIENT__
-    virtual void draw(de::Vector3f const &offset) = 0;
+    virtual void draw(de::Vec3f const &offset) = 0;
 #endif
     virtual void runTicks(/*timespan_t timeDelta*/);
 
@@ -63,7 +63,7 @@ public:
     FinaleWidget &setName(de::String const &newName);
 
     animatorvector3_t const &origin() const;
-    FinaleWidget &setOrigin(de::Vector3f const &newOrigin, int steps = 0);
+    FinaleWidget &setOrigin(de::Vec3f const &newOrigin, int steps = 0);
     FinaleWidget &setOriginX(float newX, int steps = 0);
     FinaleWidget &setOriginY(float newY, int steps = 0);
     FinaleWidget &setOriginZ(float newZ, int steps = 0);
@@ -72,7 +72,7 @@ public:
     FinaleWidget &setAngle(float newAngle, int steps = 0);
 
     animatorvector3_t const &scale() const;
-    FinaleWidget &setScale(de::Vector3f const &newScale, int steps = 0);
+    FinaleWidget &setScale(de::Vec3f const &newScale, int steps = 0);
     FinaleWidget &setScaleX(float newScaleX, int steps = 0);
     FinaleWidget &setScaleY(float newScaleY, int steps = 0);
     FinaleWidget &setScaleZ(float newScaleZ, int steps = 0);

@@ -209,7 +209,7 @@ static Block compositeImage(Reader &reader, ColorPaletteTranslation const *xlatT
 #endif
 
     // Determine the dimensions of the output buffer.
-    Vector2ui const &dimensions = clipToLogicalDimensions? meta.logicalDimensions : meta.dimensions;
+    Vec2ui const &dimensions = clipToLogicalDimensions? meta.logicalDimensions : meta.dimensions;
     int const w = dimensions.x;
     int const h = dimensions.y;
     size_t const pels = w * h;
@@ -305,9 +305,9 @@ static Block compositeImage(Reader &reader, ColorPaletteTranslation const *xlatT
 static Patch::Metadata prepareMetadata(Header const &hdr, int realHeight)
 {
     Patch::Metadata meta;
-    meta.dimensions         = Vector2ui(hdr.dimensions[0], realHeight);
-    meta.logicalDimensions  = Vector2ui(hdr.dimensions[0], hdr.dimensions[1]);
-    meta.origin             = Vector2i (hdr.origin[0], hdr.origin[1]);
+    meta.dimensions         = Vec2ui(hdr.dimensions[0], realHeight);
+    meta.logicalDimensions  = Vec2ui(hdr.dimensions[0], hdr.dimensions[1]);
+    meta.origin             = Vec2i (hdr.origin[0], hdr.origin[1]);
     return meta;
 }
 

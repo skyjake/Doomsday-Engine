@@ -130,9 +130,9 @@ RuleRectangle const &TextWidget::rule() const
     return *d->rule;
 }
 
-Vector2i TextWidget::cursorPosition() const
+Vec2i TextWidget::cursorPosition() const
 {
-    return Vector2i(rule().left().valuei(),
+    return Vec2i(rule().left().valuei(),
                     rule().top().valuei());
 }
 

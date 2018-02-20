@@ -193,15 +193,15 @@ static int const MAX_TEXTURES = 4;
 
 struct ModelVertex
 {
-    Vector3f pos;
-    Vector4f color;
-    Vector4f boneIds;
-    Vector4f boneWeights;
-    Vector3f normal;
-    Vector3f tangent;
-    Vector3f bitangent;
-    Vector2f texCoord;
-    Vector4f texBounds[4];
+    Vec3f pos;
+    Vec4f color;
+    Vec4f boneIds;
+    Vec4f boneWeights;
+    Vec3f normal;
+    Vec3f tangent;
+    Vec3f bitangent;
+    Vec2f texCoord;
+    Vec4f texBounds[4];
 
     LIBGUI_DECLARE_VERTEX_FORMAT(12)
 };
@@ -222,9 +222,9 @@ AttribSpec const ModelVertex::_spec[12] = {
 };
 LIBGUI_VERTEX_FORMAT_SPEC(ModelVertex, 42 * sizeof(float))
 
-static Matrix4f convertMatrix(aiMatrix4x4 const &aiMat)
+static Mat4f convertMatrix(aiMatrix4x4 const &aiMat)
 {
-    return Matrix4f(&aiMat.a1).transpose();
+    return Mat4f(&aiMat.a1).transpose();
 }
 
 static ddouble secondsToTicks(ddouble seconds, aiAnimation const &anim)
@@ -290,7 +290,7 @@ DENG2_PIMPL(ModelDrawable)
 
     struct BoneData
     {
-        Matrix4f offset;
+        Mat4f offset;
     };
 
     Asset modelAsset;
@@ -299,9 +299,9 @@ DENG2_PIMPL(ModelDrawable)
     Assimp::Importer importer;
     aiScene const *scene { nullptr };
 
-    Vector3f minPoint; ///< Bounds in default pose.
-    Vector3f maxPoint;
-    Matrix4f globalInverse;
+    Vec3f minPoint; ///< Bounds in default pose.
+    Vec3f maxPoint;
+    Mat4f globalInverse;
 
     QVector<VertexBone> vertexBones; // indexed by vertex
     QHash<String, duint16> boneNameToIndex;
@@ -695,8 +695,8 @@ DENG2_PIMPL(ModelDrawable)
         initBones();
 
         globalInverse = convertMatrix(scene->mRootNode->mTransformation).inverse();
-        maxPoint      = Vector3f(1.0e-9f, 1.0e-9f, 1.0e-9f);
-        minPoint      = Vector3f(1.0e9f,  1.0e9f,  1.0e9f);
+        maxPoint      = Vec3f(1.0e-9f, 1.0e-9f, 1.0e-9f);
+        minPoint      = Vec3f(1.0e9f,  1.0e9f,  1.0e9f);
 
         // Determine the total bounding box.
         for (duint i = 0; i < scene->mNumMeshes; ++i)
@@ -704,7 +704,7 @@ DENG2_PIMPL(ModelDrawable)
             aiMesh const &mesh = *scene->mMeshes[i];
             for (duint i = 0; i < mesh.mNumVertices; ++i)
             {
-                addToBounds(Vector3f(&mesh.mVertices[i].x));
+                addToBounds(Vec3f(&mesh.mVertices[i].x));
             }
         }
 
@@ -807,7 +807,7 @@ DENG2_PIMPL(ModelDrawable)
         modelAsset.setState(NotReady);
     }
 
-    void addToBounds(Vector3f const &point)
+    void addToBounds(Vec3f const &point)
     {
         minPoint = minPoint.min(point);
         maxPoint = maxPoint.max(point);
@@ -919,7 +919,7 @@ DENG2_PIMPL(ModelDrawable)
         {
             // No bones; make one dummy bone so we can render it the same way.
             duint const boneIndex = addOrFindBone(DUMMY_BONE_NAME);
-            bones[boneIndex].offset = Matrix4f();
+            bones[boneIndex].offset = Mat4f();
 
             // All vertices fully affected by this bone.
             for (duint i = 0; i < mesh.mNumVertices; ++i)
@@ -992,18 +992,18 @@ DENG2_PIMPL(ModelDrawable)
 
                 VBuf::Type v;
 
-                v.pos       = Vector3f(pos->x, pos->y, pos->z);
-                v.color     = Vector4f(color->r, color->g, color->b, color->a);
+                v.pos       = Vec3f(pos->x, pos->y, pos->z);
+                v.color     = Vec4f(color->r, color->g, color->b, color->a);
 
-                v.normal    = Vector3f(normal ->x, normal ->y, normal ->z);
-                v.tangent   = Vector3f(tangent->x, tangent->y, tangent->z);
-                v.bitangent = Vector3f(bitang ->x, bitang ->y, bitang ->z);
+                v.normal    = Vec3f(normal ->x, normal ->y, normal ->z);
+                v.tangent   = Vec3f(tangent->x, tangent->y, tangent->z);
+                v.bitangent = Vec3f(bitang ->x, bitang ->y, bitang ->z);
 
-                v.texCoord     = Vector2f(texCoord->x, texCoord->y);
-                v.texBounds[0] = Vector4f(0, 0, 1, 1);
-                v.texBounds[1] = Vector4f(0, 0, 1, 1);
-                v.texBounds[2] = Vector4f(0, 0, 1, 1);
-                v.texBounds[3] = Vector4f(0, 0, 1, 1);
+                v.texCoord     = Vec2f(texCoord->x, texCoord->y);
+                v.texBounds[0] = Vec4f(0, 0, 1, 1);
+                v.texBounds[1] = Vec4f(0, 0, 1, 1);
+                v.texBounds[2] = Vec4f(0, 0, 1, 1);
+                v.texBounds[3] = Vec4f(0, 0, 1, 1);
 
                 auto const &meshTextures = material.meshTextures[m];
 
@@ -1024,7 +1024,7 @@ DENG2_PIMPL(ModelDrawable)
                     else
                     {
                         // Not included in material.
-                        v.texBounds[t] = Vector4f();
+                        v.texBounds[t] = Vec4f();
                     }
                 }
 
@@ -1067,7 +1067,7 @@ DENG2_PIMPL(ModelDrawable)
         Animator const &animator;
         ddouble time = 0.0;
         aiAnimation const *anim = nullptr;
-        QVector<Matrix4f> finalTransforms;
+        QVector<Mat4f> finalTransforms;
 
         AccumData(Animator const &animator, int boneCount)
             : animator(animator)
@@ -1109,25 +1109,25 @@ DENG2_PIMPL(ModelDrawable)
     }
 
     void accumulateTransforms(aiNode const &node, AccumData &data,
-                              Matrix4f const &parentTransform = Matrix4f()) const
+                              Mat4f const &parentTransform = Mat4f()) const
     {
-        Matrix4f nodeTransform = convertMatrix(node.mTransformation);
+        Mat4f nodeTransform = convertMatrix(node.mTransformation);
 
         // Additional rotation?
-        Vector4f const axisAngle = data.animator.extraRotationForNode(node.mName.C_Str());
+        Vec4f const axisAngle = data.animator.extraRotationForNode(node.mName.C_Str());
 
         // Transform according to the animation sequence.
         if (aiNodeAnim const *anim = data.findNodeAnim(node))
         {
             // Interpolate for this point in time.
-            Matrix4f const translation = Matrix4f::translate(interpolatePosition(data.time, *anim));
-            Matrix4f const scaling     = Matrix4f::scale(interpolateScaling(data.time, *anim));
-            Matrix4f       rotation    = convertMatrix(aiMatrix4x4(interpolateRotation(data.time, *anim).GetMatrix()));
+            Mat4f const translation = Mat4f::translate(interpolatePosition(data.time, *anim));
+            Mat4f const scaling     = Mat4f::scale(interpolateScaling(data.time, *anim));
+            Mat4f       rotation    = convertMatrix(aiMatrix4x4(interpolateRotation(data.time, *anim).GetMatrix()));
 
             if (!fequal(axisAngle.w, 0))
             {
                 // Include the custom extra rotation.
-                rotation = Matrix4f::rotate(axisAngle.w, axisAngle) * rotation;
+                rotation = Mat4f::rotate(axisAngle.w, axisAngle) * rotation;
             }
 
             nodeTransform = translation * rotation * scaling;
@@ -1138,11 +1138,11 @@ DENG2_PIMPL(ModelDrawable)
             // Only apply the possible additional rotation.
             if (!fequal(axisAngle.w, 0))
             {
-                nodeTransform = Matrix4f::rotate(axisAngle.w, axisAngle) * nodeTransform;
+                nodeTransform = Mat4f::rotate(axisAngle.w, axisAngle) * nodeTransform;
             }
         }
 
-        Matrix4f globalTransform = parentTransform * nodeTransform;
+        Mat4f globalTransform = parentTransform * nodeTransform;
 
         int boneIndex = findBone(String(node.mName.C_Str()));
         if (boneIndex >= 0)
@@ -1173,10 +1173,10 @@ DENG2_PIMPL(ModelDrawable)
         return 0;
     }
 
-    static Vector3f interpolateVectorKey(ddouble time, aiVectorKey const *keys, duint at)
+    static Vec3f interpolateVectorKey(ddouble time, aiVectorKey const *keys, duint at)
     {
-        Vector3f const start(&keys[at]    .mValue.x);
-        Vector3f const end  (&keys[at + 1].mValue.x);
+        Vec3f const start(&keys[at]    .mValue.x);
+        Vec3f const end  (&keys[at + 1].mValue.x);
 
         return start + (end - start) *
                float((time - keys[at].mTime) / (keys[at + 1].mTime - keys[at].mTime));
@@ -1198,22 +1198,22 @@ DENG2_PIMPL(ModelDrawable)
         return interp;
     }
 
-    static Vector3f interpolateScaling(ddouble time, aiNodeAnim const &anim)
+    static Vec3f interpolateScaling(ddouble time, aiNodeAnim const &anim)
     {
         if (anim.mNumScalingKeys == 1)
         {
-            return Vector3f(&anim.mScalingKeys[0].mValue.x);
+            return Vec3f(&anim.mScalingKeys[0].mValue.x);
         }
         return interpolateVectorKey(time, anim.mScalingKeys,
                                     findAnimKey(time, anim.mScalingKeys,
                                                 anim.mNumScalingKeys));
     }
 
-    static Vector3f interpolatePosition(ddouble time, aiNodeAnim const &anim)
+    static Vec3f interpolatePosition(ddouble time, aiNodeAnim const &anim)
     {
         if (anim.mNumPositionKeys == 1)
         {
-            return Vector3f(&anim.mPositionKeys[0].mValue.x);
+            return Vec3f(&anim.mPositionKeys[0].mValue.x);
         }
         return interpolateVectorKey(time, anim.mPositionKeys,
                                     findAnimKey(time, anim.mPositionKeys,
@@ -1675,12 +1675,12 @@ GLProgram *ModelDrawable::currentProgram() const
     return d->drawProgram;
 }
 
-Vector3f ModelDrawable::dimensions() const
+Vec3f ModelDrawable::dimensions() const
 {
     return d->maxPoint - d->minPoint;
 }
 
-Vector3f ModelDrawable::midPoint() const
+Vec3f ModelDrawable::midPoint() const
 {
     return (d->maxPoint + d->minPoint) / 2.f;
 }
@@ -1917,9 +1917,9 @@ ddouble ModelDrawable::Animator::currentTime(int index) const
     return t;
 }
 
-Vector4f ModelDrawable::Animator::extraRotationForNode(String const &) const
+Vec4f ModelDrawable::Animator::extraRotationForNode(String const &) const
 {
-    return Vector4f();
+    return Vec4f();
 }
 
 void ModelDrawable::Animator::operator >> (Writer &to) const

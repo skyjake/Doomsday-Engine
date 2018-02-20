@@ -37,9 +37,9 @@ public:
     void setBounds(de::Rectangled const &bounds);
     void insert(const Entity &entity);
 
-    EntityList listRegionBackToFront(const de::Vector3f &pos, float radius) const;
+    EntityList listRegionBackToFront(const de::Vec3f &pos, float radius) const;
 
-    void iterateRegion(const de::Vector3f &                pos,
+    void iterateRegion(const de::Vec3f &                pos,
                        float                               radius,
                        std::function<void(const Entity &)> callback) const;
 

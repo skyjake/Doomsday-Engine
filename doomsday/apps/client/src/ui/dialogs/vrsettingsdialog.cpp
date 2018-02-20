@@ -143,7 +143,7 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
     ovrLabel->margins().setTop("gap");
     sampleLabel->setTextLineAlignment(ui::AlignRight);
 
-    layout.setCellAlignment(Vector2i(0, 5), ui::AlignLeft);
+    layout.setCellAlignment(Vec2i(0, 5), ui::AlignLeft);
     layout.append(*ovrLabel, 2);
 
     LabelWidget *utilLabel = LabelWidget::newWithText(tr("Utilities:"), &area());

@@ -42,7 +42,7 @@ void World::render(ICamera const &)
 
 World::POI World::initialViewPosition() const
 {
-    return Vector3f();
+    return Vec3f();
 }
 
 QList<World::POI> World::pointsOfInterest() const
@@ -50,12 +50,12 @@ QList<World::POI> World::pointsOfInterest() const
     return QList<POI>();
 }
 
-float World::groundSurfaceHeight(Vector3f const &) const
+float World::groundSurfaceHeight(Vec3f const &) const
 {
     return 0;
 }
 
-float World::ceilingHeight(Vector3f const &) const
+float World::ceilingHeight(Vec3f const &) const
 {
     return -1000;
 }

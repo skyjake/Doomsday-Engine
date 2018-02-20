@@ -55,11 +55,11 @@ public:
 
     int batchIndex() const;
 
-    void setBatchColor(Vector4f const &color);
+    void setBatchColor(Vec4f const &color);
 
     void setBatchSaturation(float saturation);
 
-    void setBatchScissorRect(Vector4f const &scissor);
+    void setBatchScissorRect(Vec4f const &scissor);
 
     void setBuffer(GLBuffer const &buffer);
 

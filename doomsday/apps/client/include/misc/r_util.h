@@ -42,7 +42,7 @@ struct LightRange
 
     LightRange(float _min = 0, float _max = 0) : min(_min), max(_max)    {}
     LightRange(float const minMax[2]) : min(minMax[0]), max(minMax[1])   {}
-    LightRange(de::Vector2f const &minMax) : min(minMax.x), max(minMax.y) {}
+    LightRange(de::Vec2f const &minMax) : min(minMax.x), max(minMax.y) {}
     LightRange(LightRange const &other) : min(other.min), max(other.max) {}
 
     /// Returns a textual representation of the lightlevels.
@@ -68,11 +68,11 @@ float R_MovementXYZPitch(float momx, float momy, float momz);
  *
  * @return  Angle between the test point and view x,y.
  */
-angle_t R_ViewPointToAngle(de::Vector2d point);
+angle_t R_ViewPointToAngle(de::Vec2d point);
 
 /// @copydoc R_ViewPointToAngle()
 inline angle_t R_ViewPointToAngle(coord_t x, coord_t y) {
-    return R_ViewPointToAngle(de::Vector2d(x, y));
+    return R_ViewPointToAngle(de::Vec2d(x, y));
 }
 
 /**
@@ -87,23 +87,23 @@ coord_t R_ViewPointDistance(coord_t x, coord_t y);
 
 #endif
 
-de::Vector3d R_ClosestPointOnPlane(de::Vector3f const &planeNormal,
-    de::Vector3d const &planePoint, de::Vector3d const &origin);
+de::Vec3d R_ClosestPointOnPlane(de::Vec3f const &planeNormal,
+    de::Vec3d const &planePoint, de::Vec3d const &origin);
 
 #ifdef __CLIENT__
 
 void R_ProjectViewRelativeLine2D(coord_t const center[2], dd_bool alignToViewPlane,
     coord_t width, coord_t offset, coord_t start[2], coord_t end[2]);
 
-void R_ProjectViewRelativeLine2D(de::Vector2d const center, bool alignToViewPlane,
-    coord_t width, coord_t offset, de::Vector2d &start, de::Vector2d &end);
+void R_ProjectViewRelativeLine2D(de::Vec2d const center, bool alignToViewPlane,
+    coord_t width, coord_t offset, de::Vec2d &start, de::Vec2d &end);
 
 #endif
 
 /**
  * Scale @a color uniformly so that the highest component becomes one.
  */
-void R_AmplifyColor(de::Vector3f &color);
+void R_AmplifyColor(de::Vec3f &color);
 
 void R_ScaleAmbientRGB(float *out, float const *in, float mul);
 
@@ -121,9 +121,9 @@ void R_ScaleAmbientRGB(float *out, float const *in, float mul);
  *
  * @return  @c true if the generated coords are within bounds.
  */
-bool R_GenerateTexCoords(de::Vector2f &s, de::Vector2f &t, de::Vector3d const &point,
-    float xScale, float yScale, de::Vector3d const &v1, de::Vector3d const &v2,
-    de::Matrix3f const &tangentMatrix);
+bool R_GenerateTexCoords(de::Vec2f &s, de::Vec2f &t, de::Vec3d const &point,
+    float xScale, float yScale, de::Vec3d const &v1, de::Vec3d const &v2,
+    de::Mat3f const &tangentMatrix);
 
 char const *R_NameForBlendMode(blendmode_t mode);
 

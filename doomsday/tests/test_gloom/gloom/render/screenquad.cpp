@@ -56,7 +56,7 @@ void ScreenQuad::glInit(const Context &context)
     d->drawable.addBuffer(BUF_ID, vbuf);
     d->drawable.setState(BUF_ID, d->state);
 
-    d->uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
+    d->uMvpMatrix = Mat4f::ortho(0, 1, 0, 1);
     d->drawable.program() << d->uMvpMatrix;
 }
 

@@ -31,7 +31,7 @@ DENG2_PIMPL(MenuWidget)
     TextCanvas::Char::Attribs backgroundAttr;
     TextCanvas::Char::Attribs selectionAttr;
     BorderStyle               borderStyle;
-    Vector2i                  cursorPos; ///< Visual position.
+    Vec2i                  cursorPos; ///< Visual position.
     bool                      closable;
     bool                      cycleCursor;
 
@@ -275,7 +275,7 @@ void MenuWidget::setBorderAttribs(TextCanvas::Char::Attribs const &attribs)
     redraw();
 }
 
-Vector2i MenuWidget::cursorPosition() const
+Vec2i MenuWidget::cursorPosition() const
 {
     return d->cursorPos;
 }
@@ -321,20 +321,20 @@ void MenuWidget::draw()
         // Cursor.
         if (d->cursor == i)
         {
-            buf.fill(Rectanglei(Vector2i(border, y), Vector2i(pos.width() - border, y + 1)),
+            buf.fill(Rectanglei(Vec2i(border, y), Vec2i(pos.width() - border, y + 1)),
                      TextCanvas::Char(' ', itemAttr));
 
-            d->cursorPos = Vector2i(border + 1, y);
+            d->cursorPos = Vec2i(border + 1, y);
             buf.put(d->cursorPos, TextCanvas::Char('*', itemAttr));
             d->cursorPos += pos.topLeft;
         }
 
-        buf.drawText(Vector2i(border + 3, y), item.action->label(),
+        buf.drawText(Vec2i(border + 3, y), item.action->label(),
                      itemAttr | (d->cursor == i? TextCanvas::Char::Bold : TextCanvas::Char::DefaultAttributes));
 
         if (item.shortcutLabel)
         {
-            buf.drawText(Vector2i(buf.width() - 1 - border - item.shortcutLabel.size(), y),
+            buf.drawText(Vec2i(buf.width() - 1 - border - item.shortcutLabel.size(), y),
                          item.shortcutLabel, itemAttr);
         }
 
@@ -343,7 +343,7 @@ void MenuWidget::draw()
         // Draw a separator.
         if (item.separatorAfter)
         {
-            buf.fill(Rectanglei(Vector2i(border, y), Vector2i(pos.width() - border, y + 1)),
+            buf.fill(Rectanglei(Vec2i(border, y), Vec2i(pos.width() - border, y + 1)),
                      TextCanvas::Char('-', d->borderAttr));
             y++;
         }

@@ -189,11 +189,11 @@ public:
      * @param ob  MNObject-derived instance.
      * @return  Fixed origin.
      */
-    de::Vector2i fixedOrigin() const;
+    de::Vec2i fixedOrigin() const;
     inline int fixedX() const { return fixedOrigin().x; }
     inline int fixedY() const { return fixedOrigin().y; }
 
-    Widget &setFixedOrigin(de::Vector2i const &newOrigin);
+    Widget &setFixedOrigin(de::Vec2i const &newOrigin);
     Widget &setFixedX(int x);
     Widget &setFixedY(int y);
 

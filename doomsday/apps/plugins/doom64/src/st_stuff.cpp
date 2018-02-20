@@ -370,7 +370,7 @@ static void initAutomapForCurrentMap(AutomapWidget& map)
 
         if (followTarget)
         {
-            map.setCameraOrigin(Vector2d(followTarget->origin), true);
+            map.setCameraOrigin(Vec2d(followTarget->origin), true);
         }
     }
 
@@ -1206,7 +1206,7 @@ int ST_AutomapAddPoint(int player, coord_t x, coord_t y, coord_t z)
 
     if (map)
     {
-        return map->addPoint(Vector3d(x, y, z));
+        return map->addPoint(Vec3d(x, y, z));
     }
     else
     {

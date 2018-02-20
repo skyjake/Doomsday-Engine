@@ -218,7 +218,7 @@ static controlconfig_t controlConfig[] =
 //    { "Reset Tracking", 0, 0, "resetriftpose", 0 }
 };
 
-static void Hu_MenuDrawControlsPage(Page const &page, Vector2i const &offset);
+static void Hu_MenuDrawControlsPage(Page const &page, Vec2i const &offset);
 
 void Hu_MenuActivateBindingsGrab(Widget &, Widget::Action)
 {
@@ -228,7 +228,7 @@ void Hu_MenuActivateBindingsGrab(Widget &, Widget::Action)
 
 void Hu_MenuInitControlsPage()
 {
-    Page *page = Hu_MenuAddPage(new Page("ControlOptions", Vector2i(32, 40), 0, Hu_MenuDrawControlsPage));
+    Page *page = Hu_MenuAddPage(new Page("ControlOptions", Vec2i(32, 40), 0, Hu_MenuDrawControlsPage));
     page->setLeftColumnWidth(.4f);
     page->setTitle("Controls");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
@@ -271,9 +271,9 @@ void Hu_MenuInitControlsPage()
     }
 }
 
-static void Hu_MenuDrawControlsPage(Page const & /*page*/, Vector2i const & /*offset*/)
+static void Hu_MenuDrawControlsPage(Page const & /*page*/, Vec2i const & /*offset*/)
 {
-    Vector2i origin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.common.menuScale));
+    Vec2i origin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.common.menuScale));
     Hu_MenuDrawPageHelp("Select to assign new, [Del] to clear", origin);
 }
 

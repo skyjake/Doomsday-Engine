@@ -38,7 +38,7 @@ static void PlayerLogWidget_UpdateGeometry(PlayerLogWidget *log)
 static void PlayerLogWidget_Draw(PlayerLogWidget *log, Point2Raw const *offset)
 {
     DENG2_ASSERT(log);
-    log->draw(offset? Vector2i(offset->xy) : Vector2i());
+    log->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 DENG2_PIMPL(PlayerLogWidget)
@@ -200,7 +200,7 @@ void PlayerLogWidget::tick(timespan_t /*tickLength*/)
     }
 }
 
-void PlayerLogWidget::draw(Vector2i const &offset)
+void PlayerLogWidget::draw(Vec2i const &offset)
 {
     dint pvisEntryCount = de::min(d->pvisEntryCount, de::max(0, cfg.common.msgCount));
     dint firstEntry     = d->firstPVisEntryIdx();
@@ -303,7 +303,7 @@ void PlayerLogWidget::draw(Vector2i const &offset)
                 dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
 
                 // ::w is used for opacity
-                Vector4f rgba(cfg.common.msgColor, textOpacity);
+                Vec4f rgba(cfg.common.msgColor, textOpacity);
                 
                 // Fading HUD messages:
                 // If fading, update colour opacity each pass until it has completely faded

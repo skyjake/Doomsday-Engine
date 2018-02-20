@@ -43,8 +43,8 @@ DENG2_PIMPL_NOREF(ShadowEdge)
     HEdge const *leftMostHEdge = nullptr;
     dint edge = 0;
 
-    Vector3d inner;
-    Vector3d outer;
+    Vec3d inner;
+    Vec3d outer;
     dfloat sectorOpenness = 0;
     dfloat openness = 0;
 };
@@ -57,7 +57,7 @@ void ShadowEdge::init(HEdge const &leftMostHEdge, dint edge)
     d->leftMostHEdge = &leftMostHEdge;
     d->edge          = edge;
 
-    d->inner = d->outer = Vector3d();
+    d->inner = d->outer = Vec3d();
     d->sectorOpenness = d->openness = 0;
 }
 
@@ -280,24 +280,24 @@ void ShadowEdge::prepare(dint planeIndex)
         LineOwner *vo = lineSide.line().vertexOwner(lineSide.sideId() ^ d->edge);
         if (d->edge) vo = vo->prev();
 
-        d->inner = Vector3d(lineSide.vertex(d->edge).origin() + vo->innerShadowOffset(),
+        d->inner = Vec3d(lineSide.vertex(d->edge).origin() + vo->innerShadowOffset(),
                             plane.heightSmoothed());
     }
     else
     {
-        d->inner = Vector3d(lineSide.vertex(d->edge).origin() + vo->extendedShadowOffset(),
+        d->inner = Vec3d(lineSide.vertex(d->edge).origin() + vo->extendedShadowOffset(),
                             plane.heightSmoothed());
     }
 
-    d->outer = Vector3d(lineSide.vertex(d->edge).origin(), plane.heightSmoothed());
+    d->outer = Vec3d(lineSide.vertex(d->edge).origin(), plane.heightSmoothed());
 }
 
-Vector3d const &ShadowEdge::inner() const
+Vec3d const &ShadowEdge::inner() const
 {
     return d->inner;
 }
 
-Vector3d const &ShadowEdge::outer() const
+Vec3d const &ShadowEdge::outer() const
 {
     return d->outer;
 }

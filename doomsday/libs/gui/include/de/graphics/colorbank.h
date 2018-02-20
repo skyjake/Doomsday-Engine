@@ -34,8 +34,8 @@ namespace de {
 class LIBGUI_PUBLIC ColorBank : public InfoBank
 {
 public:
-    typedef Vector4ub Color;
-    typedef Vector4f Colorf;
+    typedef Vec4ub Color;
+    typedef Vec4f Colorf;
 
 public:
     ColorBank();

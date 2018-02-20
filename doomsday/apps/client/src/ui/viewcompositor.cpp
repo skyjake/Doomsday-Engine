@@ -232,7 +232,7 @@ void ViewCompositor::drawCompositedLayers()
     // 3D world view (using the previously rendered texture).
     d->postProcessing.update();
     d->postProcessing.draw(ClientWindow::main().root().projMatrix2D() *
-                           Matrix4f::scaleThenTranslate(view3D.size(), view3D.topLeft),
+                           Mat4f::scaleThenTranslate(view3D.size(), view3D.topLeft),
                            d->viewFramebuf.colorTexture());
 
     DGL_MatrixMode(DGL_PROJECTION);

@@ -636,7 +636,7 @@ void XS_ChangePlaneMaterial(Sector &sector, bool ceiling, world_Material &newMat
     P_SetPtrp(&sector, ceiling ? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL, &newMaterial);
 }
 
-void XS_ChangePlaneColor(Sector &sector, bool ceiling, de::Vector3f const &newColor, bool isDelta)
+void XS_ChangePlaneColor(Sector &sector, bool ceiling, de::Vec3f const &newColor, bool isDelta)
 {
     LOG_AS("XS_ChangePlaneColor");
     LOG_MAP_MSG_XGDEVONLY2("Sector %i, %s, tintColor:%s",
@@ -1936,7 +1936,7 @@ int C_DECL XSTrav_PlaneMaterial(Sector *sec, dd_bool ceiling, void *context,
 
     if(info->iparm[7])
     {
-        de::Vector3f const color(info->iparm[4], info->iparm[5], info->iparm[6]);
+        de::Vec3f const color(info->iparm[4], info->iparm[5], info->iparm[6]);
         XS_ChangePlaneColor(*sec, ceiling, color / 255.f);
     }
 

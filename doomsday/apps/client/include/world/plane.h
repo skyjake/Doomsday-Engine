@@ -79,7 +79,7 @@ public:
      * @param height  Height of the plane in map space coordinates.
      */
     Plane(Sector &sector,
-          de::Vector3f const &normal = de::Vector3f(0, 0, 1),
+          de::Vec3f const &normal = de::Vec3f(0, 0, 1),
           de::ddouble height         = 0);
 
     /**
@@ -133,7 +133,7 @@ public:
      * @post The plane's tangent vectors and logical plane type will have been
      * updated also.
      */
-    void setNormal(de::Vector3f const &newNormal);
+    void setNormal(de::Vec3f const &newNormal);
 
     /**
      * Returns the sound emitter for the plane.

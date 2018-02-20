@@ -107,7 +107,7 @@ duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
         {
             // A statement ending character? Open brackets prevent the statement
             // from ending here.
-            if (Vector3i(bracketLevel).max() > 0)
+            if (Vec3i(bracketLevel).max() > 0)
                 continue;
             else
                 break;
@@ -197,7 +197,7 @@ duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
                 if (c == '{') bracketLevel[BRACKET_CURLY]++;
                 if (c == '}') bracketLevel[BRACKET_CURLY]--;
 
-                if (Vector3i(bracketLevel).min() < 0)
+                if (Vec3i(bracketLevel).min() < 0)
                 {
                     // Very unusual!
                     throw MismatchedBracketError("ScriptLex::getStatement",

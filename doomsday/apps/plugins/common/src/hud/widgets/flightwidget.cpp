@@ -35,7 +35,7 @@ static void FlightWidget_UpdateGeometry(guidata_flight_t *flht)
 static void FlightWidget_Draw(guidata_flight_t *flht, Point2Raw const *offset)
 {
     DENG2_ASSERT(flht);
-    flht->draw(offset? Vector2i(offset->xy) : Vector2i());
+    flht->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 guidata_flight_t::guidata_flight_t(de::dint player)
@@ -94,7 +94,7 @@ void guidata_flight_t::tick(timespan_t /*elapsed*/)
 #endif
 }
 
-void guidata_flight_t::draw(Vector2i const &offset) const
+void guidata_flight_t::draw(Vec2i const &offset) const
 {
 #if __JHERETIC__ || __JHEXEN__
     dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
@@ -111,7 +111,7 @@ void guidata_flight_t::draw(Vector2i const &offset) const
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, iconOpacity);
-        GL_DrawPatch(_patchId, Vector2i(16, 14));
+        GL_DrawPatch(_patchId, Vec2i(16, 14));
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);

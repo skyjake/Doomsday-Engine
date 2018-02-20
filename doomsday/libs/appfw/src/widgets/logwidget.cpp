@@ -215,7 +215,7 @@ public Font::RichFormat::IStyle
         void make(GuiVertexBuilder &verts, int y)
         {
             DENG2_ASSERT(isReady());
-            drawable.makeVertices(verts, Vector2i(0, y), AlignLeft);
+            drawable.makeVertices(verts, Vec2i(0, y), AlignLeft);
         }
 
         void releaseFromAtlas()
@@ -354,8 +354,8 @@ public Font::RichFormat::IStyle
     GLUniform uShadowColor;
     GLUniform uColor;
     GLUniform uBgMvpMatrix;
-    Matrix4f projMatrix;
-    Matrix4f viewMatrix;
+    Mat4f projMatrix;
+    Mat4f viewMatrix;
     Id scrollTex;
 
     Impl(Public *i)
@@ -471,7 +471,7 @@ public Font::RichFormat::IStyle
         //self().setIndicatorUv(root().atlas().imageRectf(root().solidWhitePixel()).middle());
 
         uTex = entryAtlas;
-        uColor = Vector4f(1, 1, 1, 1);
+        uColor = Vec4f(1, 1, 1, 1);
 
         background.addBuffer(bgBuf = new VertexBuf);
         shaders().build(background.program(), "generic.textured.color")
@@ -638,7 +638,7 @@ public Font::RichFormat::IStyle
     {
         bool needHeightNotify = false; // if changed as entries are updated
         int heightDelta = 0;
-        Vector2i const contentSize = self().viewportSize();
+        Vec2i const contentSize = self().viewportSize();
 
         // If the width of the widget changes, text needs to be reflowed with the
         // new width.
@@ -778,18 +778,18 @@ nextAttempt:
             // Leave room for the indicator in the scissor.
             st.setNormalizedScissor(
                     self().normalizedRect(
-                            vp.adjusted(Vector2i(), Vector2i(self().margins().right().valuei(), 0))));
+                            vp.adjusted(Vec2i(), Vec2i(self().margins().right().valuei(), 0))));
 
             // First draw the shadow of the text.
-            uMvpMatrix = projMatrix * Matrix4f::translate(
-                         Vector2f(vp.topLeft + Vector2i(0, contentOffsetForDrawing)));
-            uShadowColor = Vector4f(0, 0, 0, 1);
+            uMvpMatrix = projMatrix * Mat4f::translate(
+                         Vec2f(vp.topLeft + Vec2i(0, contentOffsetForDrawing)));
+            uShadowColor = Vec4f(0, 0, 0, 1);
             contents.draw();
 
             // Draw the text itself.
-            uMvpMatrix = projMatrix * Matrix4f::translate(
-                         Vector2f(vp.topLeft + Vector2i(0, contentOffsetForDrawing - 1)));
-            uShadowColor = Vector4f(1, 1, 1, 1);
+            uMvpMatrix = projMatrix * Mat4f::translate(
+                         Vec2f(vp.topLeft + Vec2i(0, contentOffsetForDrawing - 1)));
+            uShadowColor = Vec4f(1, 1, 1, 1);
             contents.draw();
 
             GLState::pop();

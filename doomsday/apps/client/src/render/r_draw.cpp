@@ -221,7 +221,7 @@ void R_DrawViewBorder()
     if (vd->window.isNull()) return;
     if (vd->window.size() >= port->geometry.size()) return;
 
-    Vector2i const origin = port->geometry.topLeft;
+    Vec2i const origin = port->geometry.topLeft;
 
     DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -258,7 +258,7 @@ void R_DrawViewBorder()
         matAnimator.prepare();
 
         GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
-        Vector2ui const &matDimensions = matAnimator.dimensions();
+        Vec2ui const &matDimensions = matAnimator.dimensions();
 
         GL_DrawCutRectf2Tiled(origin.x, origin.y, port->geometry.width(), port->geometry.height(),
                               matDimensions.x, matDimensions.y, 0, 0,

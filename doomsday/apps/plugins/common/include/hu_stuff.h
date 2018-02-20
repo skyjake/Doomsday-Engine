@@ -183,7 +183,7 @@ de::String Hu_ChoosePatchReplacement(patchreplacemode_t replaceMode, patchid_t p
  */
 void WI_DrawPatch(patchid_t patchId,
                   de::String const &replacement = "",
-                  de::Vector2i const &origin    = de::Vector2i(0, 0),
+                  de::Vec2i const &origin    = de::Vec2i(0, 0),
                   int alignFlags                = ALIGN_TOPLEFT,
                   int patchFlags                = 0,
                   short textFlags               = 0);

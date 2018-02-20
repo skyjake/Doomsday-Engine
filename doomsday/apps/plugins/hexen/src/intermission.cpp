@@ -350,8 +350,8 @@ static void drawDeathTally()
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, 1);
-    GL_DrawPatch(dpTallyTop,  Vector2i(TALLY_TOP_X, TALLY_TOP_Y));
-    GL_DrawPatch(dpTallyLeft, Vector2i(TALLY_LEFT_X, TALLY_LEFT_Y));
+    GL_DrawPatch(dpTallyTop,  Vec2i(TALLY_TOP_X, TALLY_TOP_Y));
+    GL_DrawPatch(dpTallyLeft, Vec2i(TALLY_LEFT_X, TALLY_LEFT_Y));
 
     fixed_t xPos, yPos, xDelta, yDelta, xStart, scale;
     if(interTime < TALLY_EFFECT_TICKS)

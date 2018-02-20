@@ -136,7 +136,7 @@ DENG2_PIMPL(KdTreeAtlasAllocator)
             inserted->setUserData(part);
 
             // Remove the margin for the actual allocated rectangle.
-            rect = part.area.adjusted(Vector2i(), Vector2i(-margin, -margin));
+            rect = part.area.adjusted(Vec2i(), Vec2i(-margin, -margin));
             return part.alloc;
         }
 
@@ -172,7 +172,7 @@ DENG2_PIMPL(KdTreeAtlasAllocator)
         Id::Type id;
         duint64 area;
 
-        ContentSize(Id const &allocId, Vector2ui const &size)
+        ContentSize(Id const &allocId, Vec2ui const &size)
             : id(allocId), area(size.x * size.y) {}
 
         // Sort descending.

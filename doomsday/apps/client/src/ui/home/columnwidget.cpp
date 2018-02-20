@@ -69,12 +69,12 @@ DENG_GUI_PIMPL(ColumnWidget)
             if (!allocId().isNone())
             {
                 Rectanglef uv = root().atlas().imageRectf(allocId());
-                Vector2f const reduction(uv.width() / 40, uv.height() / 40);
+                Vec2f const reduction(uv.width() / 40, uv.height() / 40);
                 uv = uv.adjusted(reduction, -reduction);
 
                 Rectanglef const norm = owner().normalizedRect();
                 verts.makeQuad(rect,
-                               Vector4f(colorAnim.value(), 1.f),
+                               Vec4f(colorAnim.value(), 1.f),
                                Rectanglef(uv.topLeft + norm.topLeft     * uv.size(),
                                           uv.topLeft + norm.bottomRight * uv.size()));
 
@@ -82,10 +82,10 @@ DENG_GUI_PIMPL(ColumnWidget)
                 auto const edgeUv = owner().root().atlas().imageRectf(owner().root().solidWhitePixel());
                 verts.makeQuad(Rectanglef(rect.left(), rect.top(),
                                           edgeWidth, rect.height()),
-                               Vector4f(0, 0, 0, 1), edgeUv);
+                               Vec4f(0, 0, 0, 1), edgeUv);
                 verts.makeQuad(Rectanglef(rect.right() - edgeWidth, rect.top(),
                                           edgeWidth, rect.height()),
-                               Vector4f(0, 0, 0, 1), edgeUv);
+                               Vec4f(0, 0, 0, 1), edgeUv);
             }
         }
     };
@@ -95,7 +95,7 @@ DENG_GUI_PIMPL(ColumnWidget)
     ScrollAreaWidget *scrollArea;
     HeaderWidget *header;
     Rule const *maxContentWidth = nullptr;
-    Vector4f backTintColor;
+    Vec4f backTintColor;
     Animation backSaturation { 0.f, Animation::Linear };
 
     Impl(Public *i) : Base(i)
@@ -191,7 +191,7 @@ void ColumnWidget::setHighlighted(bool highlighted)
         d->highlighted = highlighted;
 
         auto &img = d->back->image()->as<Impl::BackgroundImage>();
-        img.setColor(highlighted? Vector4f(1, 1, 1, 1) : d->backTintColor);
+        img.setColor(highlighted? Vec4f(1, 1, 1, 1) : d->backTintColor);
 
         d->backSaturation.setValue(highlighted? 1.f : 0.f, 0.5);
     }
@@ -213,7 +213,7 @@ void ColumnWidget::updateStyle()
 {
     GuiWidget::updateStyle();
 
-    d->backTintColor = Vector4f(style().colors().colorf("home.background.tint"), 1.f);
+    d->backTintColor = Vec4f(style().colors().colorf("home.background.tint"), 1.f);
 }
 
 bool ColumnWidget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &))

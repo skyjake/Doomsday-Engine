@@ -43,19 +43,19 @@ using namespace de;
 struct DGLState
 {
     int matrixMode = 0;
-    QVector<Matrix4f> matrixStacks[4];
+    QVector<Mat4f> matrixStacks[4];
 
     int activeTexture = 0;
     bool enableTexture[2] { true, false };
     int textureModulation = 1;
-    Vector4f textureModulationColor;
+    Vec4f textureModulationColor;
 
     bool enableFog = false;
     DGLenum fogMode = DGL_LINEAR;
     float fogStart = 0;
     float fogEnd = 0;
     float fogDensity = 0;
-    Vector4f fogColor;
+    Vec4f fogColor;
     bool flushBacktrace = false;
 
     DGLState()
@@ -63,7 +63,7 @@ struct DGLState
         // The matrix stacks initially contain identity matrices.
         for (auto &stack : matrixStacks)
         {
-            stack.append(Matrix4f());
+            stack.append(Mat4f());
         }
     }
 
@@ -100,14 +100,14 @@ struct DGLState
         stack.pop_back();
     }
 
-    void loadMatrix(Matrix4f const &mat)
+    void loadMatrix(Mat4f const &mat)
     {
         auto &stack = matrixStacks[matrixMode];
         DENG2_ASSERT(!stack.isEmpty());
         stack.back() = mat;
     }
 
-    void multMatrix(Matrix4f const &mat)
+    void multMatrix(Mat4f const &mat)
     {
         auto &stack = matrixStacks[matrixMode];
         DENG2_ASSERT(!stack.isEmpty());
@@ -117,17 +117,17 @@ struct DGLState
 
 static DGLState dgl;
 
-Matrix4f DGL_Matrix(DGLenum matrixMode)
+Mat4f DGL_Matrix(DGLenum matrixMode)
 {
     return dgl.matrixStacks[dgl.stackIndex(matrixMode)].back();
 }
 
-void DGL_SetModulationColor(Vector4f const &modColor)
+void DGL_SetModulationColor(Vec4f const &modColor)
 {
     dgl.textureModulationColor = modColor;
 }
 
-Vector4f DGL_ModulationColor()
+Vec4f DGL_ModulationColor()
 {
     return dgl.textureModulationColor;
 }
@@ -136,7 +136,7 @@ void DGL_FogParams(GLUniform &fogRange, GLUniform &fogColor)
 {
     if (dgl.enableFog)
     {
-        fogColor = Vector4f(dgl.fogColor[0],
+        fogColor = Vec4f(dgl.fogColor[0],
                             dgl.fogColor[1],
                             dgl.fogColor[2],
                             1.f);
@@ -145,14 +145,14 @@ void DGL_FogParams(GLUniform &fogRange, GLUniform &fogColor)
 
         Rangef const depthPlanes = GL_DepthClipRange();
         float const fogDepth = dgl.fogEnd - dgl.fogStart;
-        fogRange = Vector4f(dgl.fogStart,
+        fogRange = Vec4f(dgl.fogStart,
                             fogDepth,
                             depthPlanes.start,
                             depthPlanes.end);
     }
     else
     {
-        fogColor = Vector4f();
+        fogColor = Vec4f();
     }
 }
 
@@ -1105,7 +1105,7 @@ void DGL_LoadIdentity(void)
 {
     //DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dgl.loadMatrix(Matrix4f());
+    dgl.loadMatrix(Mat4f());
 }
 
 #undef DGL_LoadMatrix
@@ -1113,7 +1113,7 @@ void DGL_LoadMatrix(float const *matrix4x4)
 {
     //DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dgl.loadMatrix(Matrix4f(matrix4x4));
+    dgl.loadMatrix(Mat4f(matrix4x4));
 }
 
 #undef DGL_Translatef
@@ -1121,7 +1121,7 @@ void DGL_Translatef(float x, float y, float z)
 {
     //DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dgl.multMatrix(Matrix4f::translate(Vector3f(x, y, z)));
+    dgl.multMatrix(Mat4f::translate(Vec3f(x, y, z)));
 }
 
 #undef DGL_Rotatef
@@ -1129,7 +1129,7 @@ void DGL_Rotatef(float angle, float x, float y, float z)
 {
     //DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dgl.multMatrix(Matrix4f::rotate(angle, Vector3f(x, y, z)));
+    dgl.multMatrix(Mat4f::rotate(angle, Vec3f(x, y, z)));
 }
 
 #undef DGL_Scalef
@@ -1137,7 +1137,7 @@ void DGL_Scalef(float x, float y, float z)
 {
     //DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dgl.multMatrix(Matrix4f::scale(Vector3f(x, y, z)));
+    dgl.multMatrix(Mat4f::scale(Vec3f(x, y, z)));
 }
 
 #undef DGL_Ortho
@@ -1145,7 +1145,7 @@ void DGL_Ortho(float left, float top, float right, float bottom, float znear, fl
 {
     //DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dgl.multMatrix(Matrix4f::ortho(left, right, top, bottom, znear, zfar));
+    dgl.multMatrix(Mat4f::ortho(left, right, top, bottom, znear, zfar));
 }
 
 #undef DGL_Fogi
@@ -1177,7 +1177,7 @@ void DGL_Fogfv(DGLenum property, float const *values)
         break;
 
     case DGL_FOG_COLOR:
-        dgl.fogColor = Vector4f(values);
+        dgl.fogColor = Vec4f(values);
         break;
     }
 }

@@ -135,7 +135,7 @@ void SBarArmorWidget_Draw(guidata_armor_t *armor, Point2Raw const *offset)
 #  define TRACKING              ( 0 )
 #endif
 
-    static Vector2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
+    static Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
 
     dint const activeHud     = ST_ActiveHud(armor->player());
     dint const yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(armor->player()));

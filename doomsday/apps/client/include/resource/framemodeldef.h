@@ -73,7 +73,7 @@ struct SubmodelDef
     int _flags;
     short skin;
     char skinRange;
-    de::Vector3f offset;
+    de::Vec3f offset;
     byte alpha;
     res::Texture *shinySkin;
     blendmode_t blendMode;
@@ -125,11 +125,11 @@ struct FrameModelDef
     /// [0,1) When is this frame in effect?
     float interMark     = 0;
     float interRange[2];
-    de::Vector3f offset;
+    de::Vec3f offset;
     float resize        = 0;
-    de::Vector3f scale;
+    de::Vec3f scale;
 
-    typedef std::vector<de::Vector3f> PtcOffsets;
+    typedef std::vector<de::Vec3f> PtcOffsets;
     PtcOffsets _ptcOffset;
 
     float visualRadius  = 0;
@@ -157,7 +157,7 @@ struct FrameModelDef
     SubmodelDef *addSub()
     {
         _sub.push_back(SubmodelDef());
-        _ptcOffset.push_back(de::Vector3f());
+        _ptcOffset.push_back(de::Vec3f());
         return &_sub.back();
     }
 
@@ -201,17 +201,17 @@ struct FrameModelDef
         return subnum < _sub.size();
     }
 
-    de::Vector3f particleOffset(unsigned int subnum) const
+    de::Vec3f particleOffset(unsigned int subnum) const
     {
         if(hasSub(subnum))
         {
             DENG2_ASSERT(subnum < _ptcOffset.size());
             return _ptcOffset[subnum];
         }
-        return de::Vector3f();
+        return de::Vec3f();
     }
 
-    void setParticleOffset(unsigned int subnum, de::Vector3f const &off)
+    void setParticleOffset(unsigned int subnum, de::Vec3f const &off)
     {
         DENG2_ASSERT(hasSub(subnum));
         _ptcOffset[subnum] = off;

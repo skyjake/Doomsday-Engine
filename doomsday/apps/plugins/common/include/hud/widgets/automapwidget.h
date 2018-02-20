@@ -34,7 +34,7 @@
 class MapPoint
 {
 public:
-    MapPoint(de::Vector3d const &origin = de::Vector3d()) {
+    MapPoint(de::Vec3d const &origin = de::Vec3d()) {
         setOrigin(origin);
     }
     virtual ~MapPoint() {}
@@ -42,13 +42,13 @@ public:
     /**
      * Returns the origin of the point in world space.
      */
-    de::Vector3d origin() const { return _origin; }
-    void setOrigin(de::Vector3d const &newOrigin = de::Vector3d()) {
+    de::Vec3d origin() const { return _origin; }
+    void setOrigin(de::Vec3d const &newOrigin = de::Vec3d()) {
         _origin = newOrigin;
     }
 
 private:
-    de::Vector3d _origin;
+    de::Vec3d _origin;
 };
 
 class AutomapStyle;
@@ -185,7 +185,7 @@ public:  // Map space camera: --------------------------------------------------
      *
      * @see setCameraOrigin()
      */
-    de::Vector2d cameraOrigin() const;
+    de::Vec2d cameraOrigin() const;
 
     /**
      * Change the world space origin of the camera to @a newOrigin.
@@ -195,7 +195,7 @@ public:  // Map space camera: --------------------------------------------------
      *
      * @see moveCameraOrigin()
      */
-    void setCameraOrigin(de::Vector2d const &newOrigin, bool instantly = false);
+    void setCameraOrigin(de::Vec2d const &newOrigin, bool instantly = false);
 
     /**
      * Translate the world space origin of the camera given the relative @a delta.
@@ -205,7 +205,7 @@ public:  // Map space camera: --------------------------------------------------
      *
      * @see AutomapWidget_SetCameraOrigin()
      */
-    inline void moveCameraOrigin(de::Vector2d const &delta, bool instantly = false) {
+    inline void moveCameraOrigin(de::Vec2d const &delta, bool instantly = false) {
         setCameraOrigin(cameraOrigin() + delta, instantly);
     }
 
@@ -223,7 +223,7 @@ public:  // Marked map space points of interest: -------------------------------
      *
      * @return  Index number of the newly added point (base 0).
      */
-    de::dint addPoint(de::Vector3d const &origin);
+    de::dint addPoint(de::Vec3d const &origin);
 
     /**
      * Returns @c true if @a index is a known point of interest.
@@ -266,7 +266,7 @@ public:  /// @todo make private:
 
     void tick(timespan_t elapsed);
     void updateGeometry();
-    void draw(de::Vector2i const &offset = de::Vector2i()) const;
+    void draw(de::Vec2i const &offset = de::Vec2i()) const;
 
     void pvisibleBounds(coord_t *lowX, coord_t *hiX, coord_t *lowY, coord_t *hiY) const;
 

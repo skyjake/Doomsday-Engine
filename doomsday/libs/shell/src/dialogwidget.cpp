@@ -72,7 +72,7 @@ int DialogWidget::exec(TextRootWidget &root)
 
 void DialogWidget::draw()
 {
-    Rectanglei pos = rule().recti().adjusted(Vector2i(-2, -1), Vector2i(2, 1));
+    Rectanglei pos = rule().recti().adjusted(Vec2i(-2, -1), Vec2i(2, 1));
 
     // Draw a background frame.
     targetCanvas().fill(pos, TextCanvas::Char());

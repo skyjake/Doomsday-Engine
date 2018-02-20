@@ -434,7 +434,7 @@ void Sv_RegisterSector(dt_sector_t *reg, dint number)
         // Surface properties.
         Surface const &surface = plane.surface();
 
-        Vector3f const &tintColor = surface.color();
+        Vec3f const &tintColor = surface.color();
         for (dint c = 0; c < 3; ++c)
         {
             reg->planes[i].surface.rgba[c] = tintColor[c];

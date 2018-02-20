@@ -59,7 +59,7 @@ public:
      */
     void setAllowDirectionFlip(bool flex);
 
-    void setAnchor(Vector2i const &pos);
+    void setAnchor(Vec2i const &pos);
     void setAnchorX(int xPos);
     void setAnchorY(int yPos);
     void setAnchor(Rule const &x, Rule const &y);

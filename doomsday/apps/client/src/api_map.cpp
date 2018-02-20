@@ -1678,7 +1678,7 @@ DENG_EXTERN_C dd_bool Interceptor_AdjustOpening(Interceptor *trace, Line *line)
 DENG_EXTERN_C mobj_t *Mobj_CreateXYZ(thinkfunc_t function, coord_t x, coord_t y, coord_t z,
     angle_t angle, coord_t radius, coord_t height, int ddflags)
 {
-    return P_MobjCreate(function, Vector3d(x, y, z), angle, radius, height, ddflags);
+    return P_MobjCreate(function, Vec3d(x, y, z), angle, radius, height, ddflags);
 }
 
 // p_mobj.c

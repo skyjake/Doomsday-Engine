@@ -381,6 +381,9 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
         layout << *LabelWidget::newWithText(tr("Starts in:"), form) << *d->autoStartMap
                << *LabelWidget::newWithText(tr("Skill:"), form) << *d->autoStartSkill;
         form->rule().setSize(layout);
+    optionsLabel->setFont("separator.label");
+    optionsLabel->margins().setTop("gap");
+    layout.setCellAlignment(Vec2i(0, layout.gridSize().y), ui::AlignLeft);
     }
 
     // Additional options defined by the game.

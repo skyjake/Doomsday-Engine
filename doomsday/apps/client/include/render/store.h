@@ -27,10 +27,10 @@
  */
 struct Store
 {
-    de::Vector3f *posCoords    = nullptr;
-    de::Vector4ub *colorCoords = nullptr;
-    de::Vector2f *texCoords[2];
-    de::Vector2f *modCoords    = nullptr;
+    de::Vec3f *posCoords    = nullptr;
+    de::Vec4ub *colorCoords = nullptr;
+    de::Vec2f *texCoords[2];
+    de::Vec2f *modCoords    = nullptr;
 
     Store();
     ~Store();

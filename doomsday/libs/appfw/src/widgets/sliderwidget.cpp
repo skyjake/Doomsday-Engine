@@ -85,7 +85,7 @@ DENG_GUI_PIMPL(SliderWidget)
         Grabbed
     };
     State state;
-    Vector2i grabFrom;
+    Vec2i grabFrom;
     ddouble grabValue;
     SafeWidgetPtr<ValuePopup> editPop;
 
@@ -174,8 +174,8 @@ DENG_GUI_PIMPL(SliderWidget)
     Rectanglei sliderRect() const
     {
         Rectanglei const rect = self().contentRect();
-        return Rectanglei(Vector2i(rect.topLeft.x + endLabelSize,     rect.topLeft.y),
-                          Vector2i(rect.bottomRight.x - endLabelSize, rect.bottomRight.y));
+        return Rectanglei(Vec2i(rect.topLeft.x + endLabelSize,     rect.topLeft.y),
+                          Vec2i(rect.bottomRight.x - endLabelSize, rect.bottomRight.y));
     }
 
     /// Determines the area where the slider currently is.
@@ -183,10 +183,10 @@ DENG_GUI_PIMPL(SliderWidget)
     {
         Rectanglei const area = sliderRect();
         ddouble i = range.size() > 0? (pos - range.start) / range.size() : 0;
-        return Rectanglei::fromSize(Vector2i(area.topLeft.x +
+        return Rectanglei::fromSize(Vec2i(area.topLeft.x +
                                              (area.width() - endLabelSize) * i,
                                              area.topLeft.y),
-                                    Vector2ui(endLabelSize, area.height()));
+                                    Vec2ui(endLabelSize, area.height()));
     }
 
     void updateGeometry()
@@ -209,7 +209,7 @@ DENG_GUI_PIMPL(SliderWidget)
 
         if (!self().geometryRequested()) return;
 
-        Vector4i const margin = self().margins().toVector();
+        Vec4i const margin = self().margins().toVector();
         rect = rect.adjusted(margin.xy(), -margin.zw());
 
         //DefaultVertexBuf::Builder verts;
@@ -233,10 +233,10 @@ DENG_GUI_PIMPL(SliderWidget)
         for (int i = 0; i < numDots; ++i)
         {
             // dotSpace converted back to device pixels.
-            Vector2i dotPos(dotX + pointsToPixels(dotSpace * float(i) / float(numDots - 1)),
-                            sliderArea.middle().y);
+            Vec2i dotPos(dotX + pointsToPixels(dotSpace * float(i) / float(numDots - 1)),
+                         sliderArea.middle().y);
 
-            Vector4f dotColor = textColor;
+            Vec4f dotColor = textColor;
             dotColor.w *= .666f;
             if (altAlpha > 0 && i % 2)
             {
@@ -253,7 +253,7 @@ DENG_GUI_PIMPL(SliderWidget)
                        atlas().imageRectf(root().solidWhitePixel()).middle());
         verts.makeFlexibleFrame(slider.expanded(pointsToPixels(5)),
                                 pointsToPixels(6),
-                                Vector4f(1, 1, 1, frameOpacity),
+                                Vec4f(1, 1, 1, frameOpacity),
                                 atlas().imageRectf(root().boldRoundCorners()));
 
         // Labels.
@@ -261,7 +261,7 @@ DENG_GUI_PIMPL(SliderWidget)
         {
             labels[Start].makeVertices(verts,
                                        Rectanglei(rect.topLeft,
-                                                  Vector2i(rect.topLeft.x + endLabelSize,
+                                                  Vec2i(rect.topLeft.x + endLabelSize,
                                                            rect.bottomRight.y)),
                                        ui::AlignCenter, ui::AlignCenter,
                                        textColor);
@@ -269,7 +269,7 @@ DENG_GUI_PIMPL(SliderWidget)
         if (labels[End].isReady())
         {
             labels[End].makeVertices(verts,
-                                     Rectanglei(Vector2i(rect.bottomRight.x - endLabelSize,
+                                     Rectanglei(Vec2i(rect.bottomRight.x - endLabelSize,
                                                          rect.topLeft.y),
                                                 rect.bottomRight),
                                      ui::AlignCenter, ui::AlignCenter,
@@ -293,7 +293,7 @@ DENG_GUI_PIMPL(SliderWidget)
         updateGeometry();
 
         auto &painter = root().painter();
-        painter.setColor(Vector4f(1, 1, 1, self().visibleOpacity()));
+        painter.setColor(Vec4f(1, 1, 1, self().visibleOpacity()));
         painter.drawTriangleStrip(verts); //drawable.draw();
     }
 
@@ -328,7 +328,7 @@ DENG_GUI_PIMPL(SliderWidget)
         self().requestGeometry();
     }
 
-    void updateHover(Vector2i const &pos)
+    void updateHover(Vec2i const &pos)
     {
         if (state == Grabbed) return;
 

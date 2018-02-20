@@ -51,10 +51,10 @@ DENG2_PIMPL_NOREF(MapBuild)
         , textures(textures)
     {}
 
-    Vector3f worldNormalVector(const Line &line) const
+    Vec3f worldNormalVector(const Line &line) const
     {
-        Vector2d norm = geo::Line2d(map.point(line.points[0]), map.point(line.points[1])).normal();
-        return Vector3d(norm.x, 0.0, norm.y);
+        Vec2d norm = geo::Line2d(map.point(line.points[0]), map.point(line.points[1])).normal();
+        return Vec3d(norm.x, 0.0, norm.y);
     }
 
     /**
@@ -121,8 +121,8 @@ DENG2_PIMPL_NOREF(MapBuild)
                         f.pos = floor[pointID];
                         c.pos = ceiling[pointID];
 
-                        f.texCoord = Vector4f(0, 0, 0, 0); // fixed offset
-                        c.texCoord = Vector4f(0, 0, 0, 0); // fixed offset
+                        f.texCoord = Vec4f(0, 0, 0, 0); // fixed offset
+                        c.texCoord = Vec4f(0, 0, 0, 0); // fixed offset
 
                         pointIndices.insert(pointID, Buffer::Index(verts.size()));
                         verts << f << c;
@@ -152,13 +152,13 @@ DENG2_PIMPL_NOREF(MapBuild)
 
                 auto makeQuad = [this, &indices, &verts](const String &  frontTextureName,
                                                          const String &  backTextureName,
-                                                         const Vector3f &normal,
+                                                         const Vec3f &normal,
                                                          const uint32_t *planeIndex,
                                                          uint32_t        flags,
-                                                         const Vector3f &p1,
-                                                         const Vector3f &p2,
-                                                         const Vector3f &p3,
-                                                         const Vector3f &p4,
+                                                         const Vec3f &p1,
+                                                         const Vec3f &p2,
+                                                         const Vec3f &p3,
+                                                         const Vec3f &p4,
                                                          float           length,
                                                          float           rotation) {
                     const Buffer::Index baseIndex = Buffer::Index(verts.size());
@@ -179,22 +179,22 @@ DENG2_PIMPL_NOREF(MapBuild)
                     v.texPlane[1] = planeIndex[1];
 
                     v.pos      = p1;
-                    v.texCoord = Vector4f(0, 0, length, rotation);
+                    v.texCoord = Vec4f(0, 0, length, rotation);
                     v.geoPlane = planeIndex[0];
                     verts << v;
 
                     v.pos      = p2;
-                    v.texCoord = Vector4f(length, 0, length, rotation);
+                    v.texCoord = Vec4f(length, 0, length, rotation);
                     v.geoPlane = planeIndex[0];
                     verts << v;
 
                     v.pos      = p3;
-                    v.texCoord = Vector4f(0, 0, length, rotation);
+                    v.texCoord = Vec4f(0, 0, length, rotation);
                     v.geoPlane = planeIndex[1];
                     verts << v;
 
                     v.pos      = p4;
-                    v.texCoord = Vector4f(length, 0, length, rotation);
+                    v.texCoord = Vec4f(length, 0, length, rotation);
                     v.geoPlane = planeIndex[1];
                     verts << v;
                 };
@@ -209,7 +209,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                     const int      dir    = line.sectors[0] == sectorId? 1 : 0;
                     const ID       start  = line.points[dir^1];
                     const ID       end    = line.points[dir];
-                    const Vector3f normal = worldNormalVector(line);
+                    const Vec3f normal = worldNormalVector(line);
                     const float    length = float((floor[end] - floor[start]).length());
                     const uint32_t planeIndex[2] = {planeMapper[map.floorPlaneId(sectorId)],
                                                     planeMapper[map.ceilingPlaneId(sectorId)]};

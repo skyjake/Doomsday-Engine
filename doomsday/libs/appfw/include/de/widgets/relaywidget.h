@@ -50,7 +50,7 @@ public:
     void viewResized();
     void update();
     bool handleEvent(Event const &event);
-    bool hitTest(Vector2i const &pos) const;
+    bool hitTest(Vec2i const &pos) const;
     void drawContent();
 
 public:

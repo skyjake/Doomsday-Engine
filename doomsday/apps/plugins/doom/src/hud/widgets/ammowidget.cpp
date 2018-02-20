@@ -33,7 +33,7 @@ static void AmmoWidget_UpdateGeometry(guidata_ammo_t *ammo)
 static void AmmoWidget_Draw(guidata_ammo_t *wi, Point2Raw const *offset)
 {
     DENG2_ASSERT(wi);
-    wi->draw(offset? Vector2i(offset->xy) : Vector2i());
+    wi->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 guidata_ammo_t::guidata_ammo_t(dint player)
@@ -64,10 +64,10 @@ void guidata_ammo_t::tick(timespan_t /*elapsed*/)
     _value = plr->ammo[_ammotype].owned;
 }
 
-void guidata_ammo_t::draw(Vector2i const &offset) const
+void guidata_ammo_t::draw(Vec2i const &offset) const
 {
-    static Vector2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
-    static Vector2i const offsets[NUM_AMMO_TYPES] = {
+    static Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
+    static Vec2i const offsets[NUM_AMMO_TYPES] = {
         { 288, 5 + 6 * 0 }, { 288, 5 + 6 * 1 }, { 288, 5 + 6 * 3 }, { 288, 5 + 6 * 2 },
     };
 
@@ -80,7 +80,7 @@ void guidata_ammo_t::draw(Vector2i const &offset) const
 
     if(_value == 1994) return;
 
-    Vector2i const pos     = origin + offsets[dint( _ammotype )];
+    Vec2i const pos     = origin + offsets[dint( _ammotype )];
     auto const valueAsText = String::number(_value);
 
     DGL_MatrixMode(DGL_MODELVIEW);

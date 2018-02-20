@@ -103,7 +103,7 @@ public:
      *
      * @return Cursor position.
      */
-    virtual Vector2i cursorPosition() const;
+    virtual Vec2i cursorPosition() const;
 
     /**
      * Adds a new action for the widget. During event processing actions are

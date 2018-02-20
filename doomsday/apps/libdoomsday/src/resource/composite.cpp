@@ -50,12 +50,12 @@ static String readAndPercentEncodeRawName(de::Reader &from)
 
 } // namespace internal
 
-Composite::Component::Component(Vector2i const &origin)
+Composite::Component::Component(Vec2i const &origin)
     : _origin (origin)
     , _lumpNum(-1)
 {}
 
-void Composite::Component::setOrigin(const Vector2i &origin)
+void Composite::Component::setOrigin(const Vec2i &origin)
 {
     _origin = origin;
 }
@@ -72,7 +72,7 @@ bool Composite::Component::operator != (Component const &other) const
     return !(*this == other);
 }
 
-Vector2i const &Composite::Component::origin() const
+Vec2i const &Composite::Component::origin() const
 {
     return _origin;
 }
@@ -91,8 +91,8 @@ DENG2_PIMPL_NOREF(Composite)
 {
     String name;                 ///< Symbolic, percent encoded.
     Flags flags;                 ///< Usage traits.
-    Vector2ui logicalDimensions; ///< In map space units.
-    Vector2ui dimensions;        ///< In pixels.
+    Vec2ui logicalDimensions; ///< In map space units.
+    Vec2ui dimensions;        ///< In pixels.
     int origIndex;               ///< Determined by the original game logic.
     Components components;       ///< Images to be composited.
 
@@ -100,7 +100,7 @@ DENG2_PIMPL_NOREF(Composite)
 };
 
 Composite::Composite(String const &percentEncodedName,
-    Vector2ui const &logicalDimensions, Flags flags)
+    Vec2ui const &logicalDimensions, Flags flags)
     : d(new Impl)
 {
     d->name              = percentEncodedName;
@@ -133,12 +133,12 @@ String const &Composite::percentEncodedNameRef() const
     return d->name;
 }
 
-Vector2ui const &Composite::logicalDimensions() const
+Vec2ui const &Composite::logicalDimensions() const
 {
     return d->logicalDimensions;
 }
 
-Vector2ui const &Composite::dimensions() const
+Vec2ui const &Composite::dimensions() const
 {
     return d->dimensions;
 }
@@ -191,7 +191,7 @@ Composite *Composite::constructFrom(de::Reader &reader,
     // We'll initially accept these values as logical dimensions. However
     // we may need to adjust once we've checked the patch dimensions.
     pctex->d->logicalDimensions =
-        pctex->d->dimensions = Vector2ui(dimensions[0], dimensions[1]);
+        pctex->d->dimensions = Vec2ui(dimensions[0], dimensions[1]);
 
     if (format == DoomFormat)
     {
@@ -218,7 +218,7 @@ Composite *Composite::constructFrom(de::Reader &reader,
 
         dint16 origin16[2];
         reader >> origin16[0] >> origin16[1];
-        comp.setOrigin(Vector2i(origin16[0], origin16[1]));
+        comp.setOrigin(Vec2i(origin16[0], origin16[1]));
 
         dint16 pnamesIndex;
         reader >> pnamesIndex;

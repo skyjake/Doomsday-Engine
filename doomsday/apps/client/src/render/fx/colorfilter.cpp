@@ -28,7 +28,7 @@
 using namespace de;
 
 static bool drawFilter = false;
-static Vector4f filterColor;
+static Vec4f filterColor;
 
 #undef GL_SetFilter
 DENG_EXTERN_C void GL_SetFilter(dd_bool enabled)
@@ -39,7 +39,7 @@ DENG_EXTERN_C void GL_SetFilter(dd_bool enabled)
 #undef GL_SetFilterColor
 DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a)
 {
-    Vector4f newColorClamped(de::clamp(0.f, r, 1.f),
+    Vec4f newColorClamped(de::clamp(0.f, r, 1.f),
                              de::clamp(0.f, g, 1.f),
                              de::clamp(0.f, b, 1.f),
                              de::clamp(0.f, a, 1.f));

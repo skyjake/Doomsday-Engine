@@ -81,7 +81,7 @@ void Mesh::clear()
     qDeleteAll(d->faces); d->faces.clear();
 }
 
-Vertex *Mesh::newVertex(Vector2d const &origin)
+Vertex *Mesh::newVertex(Vec2d const &origin)
 {
     auto *vtx = new Vertex(*this, origin);
     d->vertexs.append(vtx);

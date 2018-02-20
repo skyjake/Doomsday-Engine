@@ -73,7 +73,7 @@ public:
      *
      * @see inner()
      */
-    Vector3d const &outer() const;
+    Vec3d const &outer() const;
 
     /**
      * Returns the origin of the @em inner vertex (that which extends away from
@@ -81,7 +81,7 @@ public:
      *
      * @see outer()
      */
-    Vector3d const &inner() const;
+    Vec3d const &inner() const;
 
     /**
      * Returns the length of the shadow edge, which is measured as the distance
@@ -90,7 +90,7 @@ public:
      * @see outer(), inner()
      */
     inline coord_t length() const {
-        return Vector3d(inner() - outer()).abs().length();
+        return Vec3d(inner() - outer()).abs().length();
     }
 
 private:

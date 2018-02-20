@@ -35,7 +35,7 @@ namespace internal
     /**
      * @param point  @em View-relative point in map-space.
      */
-    static inline binangle_t pointToAngle(Vector2d const &point)
+    static inline binangle_t pointToAngle(Vec2d const &point)
     {
         // Shift for more accuracy;
         return bamsAtan2(dint(point.y * 100), dint(point.x * 100));
@@ -166,7 +166,7 @@ DENG2_PIMPL_NOREF(AngleClipper)
         Occluder *next;
 
         bool topHalf;              ///< @c true= top, rather than bottom, half.
-        Vector3f normal;           ///< Of the occlusion plane.
+        Vec3f normal;           ///< Of the occlusion plane.
     };
     ElementPool occNodes;          ///< The list of occlusion nodes.
     Occluder *occHead = nullptr;   ///< Head of the occlusion-range list.
@@ -456,7 +456,7 @@ DENG2_PIMPL_NOREF(AngleClipper)
         occNodes.release(orange);
     }
 
-    Occluder *newOcclusionRange(binangle_t from, binangle_t to, Vector3f const &normal,
+    Occluder *newOcclusionRange(binangle_t from, binangle_t to, Vec3f const &normal,
         bool topHalf)
     {
         // Perhaps a previously-used occluder can be reused?
@@ -481,7 +481,7 @@ DENG2_PIMPL_NOREF(AngleClipper)
     /**
      * @pre The given range is "safe".
      */
-    void addOcclusionRange(binangle_t from, binangle_t to, Vector3f const &normal,
+    void addOcclusionRange(binangle_t from, binangle_t to, Vec3f const &normal,
         bool topHalf)
     {
         // Is the range valid?
@@ -536,7 +536,7 @@ DENG2_PIMPL_NOREF(AngleClipper)
      * If necessary, cut the given range in two.
      */
     void safeAddOcclusionRange(binangle_t startAngle, binangle_t endAngle,
-                               Vector3f const &normal, bool tophalf)
+                               Vec3f const &normal, bool tophalf)
     {
         // Is this range already clipped?
         if(!safeCheckRange(startAngle, endAngle)) return;
@@ -574,7 +574,7 @@ DENG2_PIMPL_NOREF(AngleClipper)
         if(!orange->normal.z) return 0;
 
         // Where do they cross?
-        Vector3f cross = orange->normal.cross(other->normal);
+        Vec3f cross = orange->normal.cross(other->normal);
         if(!cross.x && !cross.y && !cross.z)
         {
             // These two planes are exactly the same! Remove one.
@@ -789,11 +789,11 @@ dint AngleClipper::isAngleVisible(binangle_t bang) const
     return true;  // Not occluded.
 }
 
-dint AngleClipper::isPointVisible(Vector3d const &point) const
+dint AngleClipper::isPointVisible(Vec3d const &point) const
 {
     if(::devNoCulling) return true;
 
-    Vector3d const viewRelPoint = point - Rend_EyeOrigin().xzy();
+    Vec3d const viewRelPoint = point - Rend_EyeOrigin().xzy();
     binangle_t const angle      = pointToAngle(viewRelPoint);
 
     if(!isAngleVisible(angle)) return false;
@@ -829,7 +829,7 @@ dint AngleClipper::isPolyVisible(Face const &poly) const
     }
 
     // Find angles to all corners.
-    Vector2d const eyeOrigin = Rend_EyeOrigin().xz();
+    Vec2d const eyeOrigin = Rend_EyeOrigin().xz();
     dint n = 0;
     HEdge const *hedge = poly.hedge();
     do
@@ -892,22 +892,22 @@ dint AngleClipper::safeAddRange(binangle_t from, binangle_t to)
     return true;
 }
 
-void AngleClipper::addRangeFromViewRelPoints(Vector2d const &from, Vector2d const &to)
+void AngleClipper::addRangeFromViewRelPoints(Vec2d const &from, Vec2d const &to)
 {
-    Vector2d const eyeOrigin = Rend_EyeOrigin().xz();
+    Vec2d const eyeOrigin = Rend_EyeOrigin().xz();
     safeAddRange(pointToAngle(to   - eyeOrigin),
                  pointToAngle(from - eyeOrigin));
 }
 
 /// @todo Optimize:: Check if the given line is already occluded?
-void AngleClipper::addViewRelOcclusion(Vector2d const &from, Vector2d const &to,
+void AngleClipper::addViewRelOcclusion(Vec2d const &from, Vec2d const &to,
     coord_t height, bool topHalf)
 {
     // Calculate the occlusion plane normal.
     // We'll use the game's coordinate system (left-handed, but Y and Z are swapped).
-    Vector3d const eyeOrigin    = Rend_EyeOrigin().xzy();
-    auto const eyeToV1          = Vector3d(from, height) - eyeOrigin;
-    auto const eyeToV2          = Vector3d(to,   height) - eyeOrigin;
+    Vec3d const eyeOrigin    = Rend_EyeOrigin().xzy();
+    auto const eyeToV1          = Vec3d(from, height) - eyeOrigin;
+    auto const eyeToV2          = Vec3d(to,   height) - eyeOrigin;
 
     binangle_t const startAngle = pointToAngle(eyeToV2);
     binangle_t const endAngle   = pointToAngle(eyeToV1);
@@ -916,15 +916,15 @@ void AngleClipper::addViewRelOcclusion(Vector2d const &from, Vector2d const &to,
     if(startAngle == endAngle) return;
 
     // The normal points to the half we want to occlude.
-    Vector3f const normal = (topHalf? eyeToV2 : eyeToV1).cross(topHalf? eyeToV1 : eyeToV2);
+    Vec3f const normal = (topHalf? eyeToV2 : eyeToV1).cross(topHalf? eyeToV1 : eyeToV2);
 
 #ifdef DENG2_DEBUG
-    if(Vector3f(0, 0, (topHalf ? 1000 : -1000)).dot(normal) < 0)
+    if(Vec3f(0, 0, (topHalf ? 1000 : -1000)).dot(normal) < 0)
     {
         LOG_AS("AngleClipper::addViewRelOcclusion");
         LOGDEV_GL_WARNING("Wrong side v1:%s v2:%s eyeOrigin:%s!")
                 << from.asText() << to.asText()
-                << Vector2d(eyeOrigin).asText();
+                << Vec2d(eyeOrigin).asText();
         DENG2_ASSERT(!"Failed AngleClipper::addViewRelOcclusion: Side test");
     }
 #endif
@@ -933,11 +933,11 @@ void AngleClipper::addViewRelOcclusion(Vector2d const &from, Vector2d const &to,
     d->safeAddOcclusionRange(startAngle, endAngle, normal, topHalf);
 }
 
-dint AngleClipper::checkRangeFromViewRelPoints(Vector2d const &from, Vector2d const &to)
+dint AngleClipper::checkRangeFromViewRelPoints(Vec2d const &from, Vec2d const &to)
 {
     if(::devNoCulling) return true;
 
-    Vector2d const eyeOrigin = Rend_EyeOrigin().xz();
+    Vec2d const eyeOrigin = Rend_EyeOrigin().xz();
     return d->safeCheckRange(pointToAngle(to   - eyeOrigin) - BANG_45/90,
                              pointToAngle(from - eyeOrigin) + BANG_45/90);
 }

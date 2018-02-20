@@ -57,7 +57,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
     Flags flags;
     std::unique_ptr<RemoteSync> sync;
     std::unique_ptr<render::StateAnimator> animator;
-    Matrix4f modelMatrix;
+    Mat4f modelMatrix;
 
     Impl(Public *i) : Base(i)
     {}
@@ -132,8 +132,8 @@ DENG2_PIMPL(ClientMobjThinkerData)
                 modelMatrix = model.transformation;
                 if (model.flags & render::Model::AutoscaleToThingHeight)
                 {
-                    Vector3f const dims = modelMatrix * model.dimensions();
-                    modelMatrix = Matrix4f::scale(self().mobj()->height / dims.y * 1.2f /*aspect correct*/) * modelMatrix;
+                    Vec3f const dims = modelMatrix * model.dimensions();
+                    modelMatrix = Mat4f::scale(self().mobj()->height / dims.y * 1.2f /*aspect correct*/) * modelMatrix;
                 }
             }
             catch (Error const &er)
@@ -263,7 +263,7 @@ render::StateAnimator const *ClientMobjThinkerData::animator() const
     return d->animator.get();
 }
 
-Matrix4f const &ClientMobjThinkerData::modelTransformation() const
+Mat4f const &ClientMobjThinkerData::modelTransformation() const
 {
     return d->modelMatrix;
 }

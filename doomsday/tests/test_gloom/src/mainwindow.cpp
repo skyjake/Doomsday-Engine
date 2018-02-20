@@ -81,7 +81,7 @@ DENG2_PIMPL(MainWindow)
         label->setImage(GloomApp::images().image("logo"));
         label->setSizePolicy(ui::Filled, ui::Filled);
         label->setImageFit(ui::OriginalAspectRatio | ui::FitToHeight | ui::FitToSize);
-        label->set(GuiWidget::Background(Vector4f(1.f, 1.f, 1.f, .5f)));
+        label->set(GuiWidget::Background(Vec4f(1.f, 1.f, 1.f, .5f)));
         label->rule()
                 .setInput(Rule::Right,  root.viewRule().midX())
                 .setInput(Rule::Top,    root.viewRule().top())
@@ -93,7 +93,7 @@ DENG2_PIMPL(MainWindow)
         label2->setImage(GloomApp::images().image("logo"));
         label2->setSizePolicy(ui::Filled, ui::Filled);
         label2->setImageFit(ui::OriginalAspectRatio | ui::FitToHeight);
-        label2->set(GuiWidget::Background(Vector4f(1.f, .5f, 0.f, .5f)));
+        label2->set(GuiWidget::Background(Vec4f(1.f, .5f, 0.f, .5f)));
         label2->rule()
                 .setInput(Rule::Left,  label->rule().right())
                 .setInput(Rule::Top,   label->rule().top())
@@ -150,7 +150,7 @@ AppRootWidget &MainWindow::root()
     return d->root;
 }
 
-Vector2f MainWindow::windowContentSize() const
+Vec2f MainWindow::windowContentSize() const
 {
     // Current root widget size.
     return d->root.viewRule().size();

@@ -305,7 +305,7 @@ Rectanglei Font::measure(String const &textLine, RichFormatRef const &format) co
         Rectanglei rect = altFont.measure(part);
 
         // Combine to the total bounds.
-        rect.moveTopLeft(Vector2i(advance, rect.top()));
+        rect.moveTopLeft(Vec2i(advance, rect.top()));
         bounds |= rect;
 
         advance += altFont.width(part);
@@ -334,16 +334,16 @@ int Font::advanceWidth(String const &textLine, RichFormatRef const &format) cons
 }
 
 QImage Font::rasterize(String const &textLine,
-                       Vector4ub const &foreground,
-                       Vector4ub const &background) const
+                       Vec4ub const &foreground,
+                       Vec4ub const &background) const
 {
     return rasterize(textLine, RichFormat::fromPlainText(textLine), foreground, background);
 }
 
 QImage Font::rasterize(String const &textLine,
                        RichFormatRef const &format,
-                       Vector4ub const &foreground,
-                       Vector4ub const &background) const
+                       Vec4ub const &foreground,
+                       Vec4ub const &background) const
 {
     if (textLine.isEmpty())
     {
@@ -362,8 +362,8 @@ QImage Font::rasterize(String const &textLine,
 
     QColor bgColor(background.x, background.y, background.z, background.w);
 
-    Vector4ub fg = foreground;
-    Vector4ub bg = background;
+    Vec4ub fg = foreground;
+    Vec4ub bg = background;
 
     QImage img(QSize(bounds.width(),
                      de::max(duint(plat.font.height()), bounds.height())),
@@ -396,7 +396,7 @@ QImage Font::rasterize(String const &textLine,
             if (iter.colorIndex() != RichFormat::OriginalColor)
             {
                 fg = iter.color();
-                bg = Vector4ub(fg, 0);
+                bg = Vec4ub(fg, 0);
             }
             else
             {
@@ -412,9 +412,9 @@ QImage Font::rasterize(String const &textLine,
         // illusion of thinness.
         if (iter.weight() == RichFormat::Light)
         {
-            if (Vector3ub(60, 60, 60) > fg) // dark
+            if (Vec3ub(60, 60, 60) > fg) // dark
                 fg.w *= .66f;
-            else if (Vector3ub(230, 230, 230) < fg) // light
+            else if (Vec3ub(230, 230, 230) < fg) // light
                 fg.w *= .85f;
             else
                 fg.w *= .925f;

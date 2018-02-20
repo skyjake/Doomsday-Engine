@@ -112,7 +112,7 @@ DENG_GUI_PIMPL(SaveListWidget)
         button.setSizePolicy(ui::Filled, ui::Expand);
         button.setText(item.label());
         button.margins().set("dialog.gap");
-        button.set(Background(Vector4f()));
+        button.set(Background(Vec4f()));
 
         button.setActionFn([this, &button] () {
             toggleSelectedItem(button);

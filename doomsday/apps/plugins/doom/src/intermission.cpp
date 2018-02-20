@@ -51,13 +51,13 @@ namespace internal
 
     struct Animation
     {
-        Vector2i origin;
+        Vec2i origin;
         int tics;                     ///< Number of tics each frame of the animation lasts for.
         StringList patchNames;        ///< For each frame of the animation.
         de::Uri mapUri;               ///< If path is not zero-length the animation should only be displayed on this map.
         interludestate_t beginState;  ///< State at which this animation begins/becomes visible.
 
-        Animation(Vector2i const &origin, int tics, StringList patchNames,
+        Animation(Vec2i const &origin, int tics, StringList patchNames,
                   de::Uri const &mapUri       = de::makeUri("Maps:"),
                   interludestate_t beginState = ILS_SHOW_STATS)
             : origin    (origin)
@@ -74,10 +74,10 @@ namespace internal
 
     struct Location
     {
-        Vector2i origin;
+        Vec2i origin;
         de::Uri mapUri;
 
-        Location(Vector2i const &origin, de::Uri const &mapUri)
+        Location(Vec2i const &origin, de::Uri const &mapUri)
             : origin(origin)
             , mapUri(mapUri)
         {}
@@ -129,21 +129,21 @@ namespace internal
                                          patchId, text);
     }
 
-    static void drawChar(QChar const ch, Vector2i const &origin,
+    static void drawChar(QChar const ch, Vec2i const &origin,
                          int alignFlags = ALIGN_TOPLEFT, int textFlags = DTF_NO_TYPEIN)
     {
         const Point2Raw rawOrigin = {{{origin.x, origin.y}}};
         FR_DrawChar3(ch.toLatin1(), &rawOrigin, alignFlags, textFlags);
     }
 
-    static void drawText(String const &text, Vector2i const &origin,
+    static void drawText(String const &text, Vec2i const &origin,
                          int alignFlags = ALIGN_TOPLEFT, int textFlags = DTF_NO_TYPEIN)
     {
         const Point2Raw rawOrigin = {{{origin.x, origin.y}}};
         FR_DrawText3(text.toUtf8().constData(), &rawOrigin, alignFlags, textFlags);
     }
 
-    static void drawPercent(int percent, Vector2i const &origin)
+    static void drawPercent(int percent, Vec2i const &origin)
     {
         if(percent < 0) return;
         drawChar('%', origin, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
@@ -153,7 +153,7 @@ namespace internal
     /**
      * Display map completion time and par, or "sucks" message if overflow.
      */
-    static void drawTime(Vector2i origin, int t)
+    static void drawTime(Vec2i origin, int t)
     {
         if(t < 0) return;
 
@@ -169,7 +169,7 @@ namespace internal
             {
                 drawText(String::number(minutes), origin, ALIGN_TOPRIGHT);
             }
-            drawText(String("%1").arg(seconds, 2, 10, QChar('0')), origin + Vector2i(FR_CharWidth(':'), 0));
+            drawText(String("%1").arg(seconds, 2, 10, QChar('0')), origin + Vec2i(FR_CharWidth(':'), 0));
 
             return;
         }
@@ -178,7 +178,7 @@ namespace internal
         patchinfo_t info;
         if(!R_GetPatchInfo(pSucks, &info)) return;
 
-        WI_DrawPatch(pSucks, patchReplacementText(pSucks), Vector2i(origin.x - info.geometry.size.width, origin.y), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+        WI_DrawPatch(pSucks, patchReplacementText(pSucks), Vec2i(origin.x - info.geometry.size.width, origin.y), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
     }
 }
 
@@ -192,68 +192,68 @@ void IN_Init()
     if(gameModeBits & GM_ANY_DOOM2) return;
 
     episode1Anims
-        << Animation( Vector2i(224, 104), 11, StringList() << String("wia00000") << String("wia00001") << String("wia00002") )
-        << Animation( Vector2i(184, 160), 11, StringList() << String("wia00100") << String("wia00101") << String("wia00102") )
-        << Animation( Vector2i(112, 136), 11, StringList() << String("wia00200") << String("wia00201") << String("wia00202") )
-        << Animation( Vector2i( 72, 112), 11, StringList() << String("wia00300") << String("wia00301") << String("wia00302") )
-        << Animation( Vector2i( 88,  96), 11, StringList() << String("wia00400") << String("wia00401") << String("wia00402") )
-        << Animation( Vector2i( 64,  48), 11, StringList() << String("wia00500") << String("wia00501") << String("wia00502") )
-        << Animation( Vector2i(192,  40), 11, StringList() << String("wia00600") << String("wia00601") << String("wia00602") )
-        << Animation( Vector2i(136,  16), 11, StringList() << String("wia00700") << String("wia00701") << String("wia00702") )
-        << Animation( Vector2i( 80,  16), 11, StringList() << String("wia00800") << String("wia00801") << String("wia00802") )
-        << Animation( Vector2i( 64,  24), 11, StringList() << String("wia00900") << String("wia00901") << String("wia00902") );
+        << Animation( Vec2i(224, 104), 11, StringList() << String("wia00000") << String("wia00001") << String("wia00002") )
+        << Animation( Vec2i(184, 160), 11, StringList() << String("wia00100") << String("wia00101") << String("wia00102") )
+        << Animation( Vec2i(112, 136), 11, StringList() << String("wia00200") << String("wia00201") << String("wia00202") )
+        << Animation( Vec2i( 72, 112), 11, StringList() << String("wia00300") << String("wia00301") << String("wia00302") )
+        << Animation( Vec2i( 88,  96), 11, StringList() << String("wia00400") << String("wia00401") << String("wia00402") )
+        << Animation( Vec2i( 64,  48), 11, StringList() << String("wia00500") << String("wia00501") << String("wia00502") )
+        << Animation( Vec2i(192,  40), 11, StringList() << String("wia00600") << String("wia00601") << String("wia00602") )
+        << Animation( Vec2i(136,  16), 11, StringList() << String("wia00700") << String("wia00701") << String("wia00702") )
+        << Animation( Vec2i( 80,  16), 11, StringList() << String("wia00800") << String("wia00801") << String("wia00802") )
+        << Animation( Vec2i( 64,  24), 11, StringList() << String("wia00900") << String("wia00901") << String("wia00902") );
 
     episode1Locations
-        << Location( Vector2i(185, 164), de::makeUri("Maps:E1M1") )
-        << Location( Vector2i(148, 143), de::makeUri("Maps:E1M2") )
-        << Location( Vector2i( 69, 122), de::makeUri("Maps:E1M3") )
-        << Location( Vector2i(209, 102), de::makeUri("Maps:E1M4") )
-        << Location( Vector2i(116,  89), de::makeUri("Maps:E1M5") )
-        << Location( Vector2i(166,  55), de::makeUri("Maps:E1M6") )
-        << Location( Vector2i( 71,  56), de::makeUri("Maps:E1M7") )
-        << Location( Vector2i(135,  29), de::makeUri("Maps:E1M8") )
-        << Location( Vector2i( 71,  24), de::makeUri("Maps:E1M9") );
+        << Location( Vec2i(185, 164), de::makeUri("Maps:E1M1") )
+        << Location( Vec2i(148, 143), de::makeUri("Maps:E1M2") )
+        << Location( Vec2i( 69, 122), de::makeUri("Maps:E1M3") )
+        << Location( Vec2i(209, 102), de::makeUri("Maps:E1M4") )
+        << Location( Vec2i(116,  89), de::makeUri("Maps:E1M5") )
+        << Location( Vec2i(166,  55), de::makeUri("Maps:E1M6") )
+        << Location( Vec2i( 71,  56), de::makeUri("Maps:E1M7") )
+        << Location( Vec2i(135,  29), de::makeUri("Maps:E1M8") )
+        << Location( Vec2i( 71,  24), de::makeUri("Maps:E1M9") );
 
     episode2Anims
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10000"), de::makeUri("Maps:E2M2") )
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10100"), de::makeUri("Maps:E2M3") )
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10200"), de::makeUri("Maps:E2M4") )
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10300"), de::makeUri("Maps:E2M5") )
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10400"), de::makeUri("Maps:E2M6") )
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10400"), de::makeUri("Maps:E2M9") )
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10500"), de::makeUri("Maps:E2M7") )
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10600"), de::makeUri("Maps:E2M8") )
-        << Animation( Vector2i(192, 144), 11, StringList() << String("wia10700") << String("wia10701") << String("wia10702"), de::makeUri("Maps:E2M9"), ILS_SHOW_NEXTMAP );
+        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10000"), de::makeUri("Maps:E2M2") )
+        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10100"), de::makeUri("Maps:E2M3") )
+        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10200"), de::makeUri("Maps:E2M4") )
+        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10300"), de::makeUri("Maps:E2M5") )
+        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10400"), de::makeUri("Maps:E2M6") )
+        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10400"), de::makeUri("Maps:E2M9") )
+        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10500"), de::makeUri("Maps:E2M7") )
+        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10600"), de::makeUri("Maps:E2M8") )
+        << Animation( Vec2i(192, 144), 11, StringList() << String("wia10700") << String("wia10701") << String("wia10702"), de::makeUri("Maps:E2M9"), ILS_SHOW_NEXTMAP );
 
     episode2Locations
-        << Location( Vector2i(254,  25), de::makeUri("Maps:E2M1") )
-        << Location( Vector2i( 97,  50), de::makeUri("Maps:E2M2") )
-        << Location( Vector2i(188,  64), de::makeUri("Maps:E2M3") )
-        << Location( Vector2i(128,  78), de::makeUri("Maps:E2M4") )
-        << Location( Vector2i(214,  92), de::makeUri("Maps:E2M5") )
-        << Location( Vector2i(133, 130), de::makeUri("Maps:E2M6") )
-        << Location( Vector2i(208, 136), de::makeUri("Maps:E2M7") )
-        << Location( Vector2i(148, 140), de::makeUri("Maps:E2M8") )
-        << Location( Vector2i(235, 158), de::makeUri("Maps:E2M9") );
+        << Location( Vec2i(254,  25), de::makeUri("Maps:E2M1") )
+        << Location( Vec2i( 97,  50), de::makeUri("Maps:E2M2") )
+        << Location( Vec2i(188,  64), de::makeUri("Maps:E2M3") )
+        << Location( Vec2i(128,  78), de::makeUri("Maps:E2M4") )
+        << Location( Vec2i(214,  92), de::makeUri("Maps:E2M5") )
+        << Location( Vec2i(133, 130), de::makeUri("Maps:E2M6") )
+        << Location( Vec2i(208, 136), de::makeUri("Maps:E2M7") )
+        << Location( Vec2i(148, 140), de::makeUri("Maps:E2M8") )
+        << Location( Vec2i(235, 158), de::makeUri("Maps:E2M9") );
 
     episode3Anims
-        << Animation( Vector2i(104, 168), 11, StringList() << String("wia20000") << String("wia20001") << String("wia20002") )
-        << Animation( Vector2i( 40, 136), 11, StringList() << String("wia20100") << String("wia20101") << String("wia20102") )
-        << Animation( Vector2i(160,  96), 11, StringList() << String("wia20200") << String("wia20201") << String("wia20202") )
-        << Animation( Vector2i(104,  80), 11, StringList() << String("wia20300") << String("wia20301") << String("wia20302") )
-        << Animation( Vector2i(120,  32), 11, StringList() << String("wia20400") << String("wia20401") << String("wia20402") )
-        << Animation( Vector2i( 40,   0),  8, StringList() << String("wia20500") << String("wia20501") << String("wia20502") );
+        << Animation( Vec2i(104, 168), 11, StringList() << String("wia20000") << String("wia20001") << String("wia20002") )
+        << Animation( Vec2i( 40, 136), 11, StringList() << String("wia20100") << String("wia20101") << String("wia20102") )
+        << Animation( Vec2i(160,  96), 11, StringList() << String("wia20200") << String("wia20201") << String("wia20202") )
+        << Animation( Vec2i(104,  80), 11, StringList() << String("wia20300") << String("wia20301") << String("wia20302") )
+        << Animation( Vec2i(120,  32), 11, StringList() << String("wia20400") << String("wia20401") << String("wia20402") )
+        << Animation( Vec2i( 40,   0),  8, StringList() << String("wia20500") << String("wia20501") << String("wia20502") );
 
     episode3Locations
-        << Location( Vector2i(156, 168), de::makeUri("Maps:E3M1") )
-        << Location( Vector2i( 48, 154), de::makeUri("Maps:E3M2") )
-        << Location( Vector2i(174,  95), de::makeUri("Maps:E3M3") )
-        << Location( Vector2i(265,  75), de::makeUri("Maps:E3M4") )
-        << Location( Vector2i(130,  48), de::makeUri("Maps:E3M5") )
-        << Location( Vector2i(279,  23), de::makeUri("Maps:E3M6") )
-        << Location( Vector2i(198,  48), de::makeUri("Maps:E3M7") )
-        << Location( Vector2i(140,  25), de::makeUri("Maps:E3M8") )
-        << Location( Vector2i(281, 136), de::makeUri("Maps:E3M9") );
+        << Location( Vec2i(156, 168), de::makeUri("Maps:E3M1") )
+        << Location( Vec2i( 48, 154), de::makeUri("Maps:E3M2") )
+        << Location( Vec2i(174,  95), de::makeUri("Maps:E3M3") )
+        << Location( Vec2i(265,  75), de::makeUri("Maps:E3M4") )
+        << Location( Vec2i(130,  48), de::makeUri("Maps:E3M5") )
+        << Location( Vec2i(279,  23), de::makeUri("Maps:E3M6") )
+        << Location( Vec2i(198,  48), de::makeUri("Maps:E3M7") )
+        << Location( Vec2i(140,  25), de::makeUri("Maps:E3M8") )
+        << Location( Vec2i(281, 136), de::makeUri("Maps:E3M9") );
 }
 
 void IN_Shutdown()
@@ -380,7 +380,7 @@ static void drawBackground()
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
 
-    GL_DrawPatch(pBackground, Vector2i(0, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
+    GL_DrawPatch(pBackground, Vec2i(0, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
 
     if(Animations const *anims = animationsForEpisode(gfw_Session()->episodeId()))
     {
@@ -403,7 +403,7 @@ static void drawBackground()
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static void drawFinishedTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TITLEY))
+static void drawFinishedTitle(Vec2i origin = Vec2i(SCREENWIDTH / 2, WI_TITLEY))
 {
     DENG2_ASSERT(!wbs->currentMap.isEmpty());
 
@@ -447,7 +447,7 @@ static void drawFinishedTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static void drawEnteringTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TITLEY))
+static void drawEnteringTitle(Vec2i origin = Vec2i(SCREENWIDTH / 2, WI_TITLEY))
 {
     if(wbs->nextMap.isEmpty()) return;
 
@@ -494,7 +494,7 @@ static void drawEnteringTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static bool patchFits(patchid_t patchId, Vector2i const &origin)
+static bool patchFits(patchid_t patchId, Vec2i const &origin)
 {
     patchinfo_t info;
     if(!R_GetPatchInfo(patchId, &info)) return false;
@@ -506,7 +506,7 @@ static bool patchFits(patchid_t patchId, Vector2i const &origin)
     return (left >= 0 && right < SCREENWIDTH && top >= 0 && bottom < SCREENHEIGHT);
 }
 
-static patchid_t chooseYouAreHerePatch(Vector2i const &origin)
+static patchid_t chooseYouAreHerePatch(Vec2i const &origin)
 {
     if(patchFits(pYouAreHereRight, origin))
         return pYouAreHereRight;
@@ -517,7 +517,7 @@ static patchid_t chooseYouAreHerePatch(Vector2i const &origin)
     return 0; // None fits.
 }
 
-static void drawPatchIfFits(patchid_t patchId, Vector2i const &origin)
+static void drawPatchIfFits(patchid_t patchId, Vec2i const &origin)
 {
     if(patchFits(patchId, origin))
     {
@@ -791,7 +791,7 @@ static void updateDeathmatchStats()
     }
 }
 
-static void drawDeathmatchStats(Vector2i origin = Vector2i(DM_MATRIXX + DM_SPACINGX, DM_MATRIXY))
+static void drawDeathmatchStats(Vec2i origin = Vec2i(DM_MATRIXX + DM_SPACINGX, DM_MATRIXY))
 {
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
@@ -804,11 +804,11 @@ static void drawDeathmatchStats(Vector2i origin = Vector2i(DM_MATRIXX + DM_SPACI
     patchinfo_t info;
     if(R_GetPatchInfo(pTotal, &info))
     {
-        WI_DrawPatch(pTotal, patchReplacementText(pTotal), Vector2i(DM_TOTALSX - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY + 10), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+        WI_DrawPatch(pTotal, patchReplacementText(pTotal), Vec2i(DM_TOTALSX - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY + 10), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
     }
 
-    WI_DrawPatch(pKillers, patchReplacementText(pKillers), Vector2i(DM_KILLERSX, DM_KILLERSY), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-    WI_DrawPatch(pVictims, patchReplacementText(pVictims), Vector2i(DM_VICTIMSX, DM_VICTIMSY), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatch(pKillers, patchReplacementText(pKillers), Vec2i(DM_KILLERSX, DM_KILLERSY), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatch(pVictims, patchReplacementText(pVictims), Vec2i(DM_VICTIMSX, DM_VICTIMSY), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
 
     for(int i = 0; i < NUMTEAMS; ++i)
     {
@@ -821,13 +821,13 @@ static void drawDeathmatchStats(Vector2i origin = Vector2i(DM_MATRIXX + DM_SPACI
 
             patchinfo_t info;
             R_GetPatchInfo(patchId, &info);
-            WI_DrawPatch(patchId, replacement, Vector2i(origin.x - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-            WI_DrawPatch(patchId, replacement, Vector2i(DM_MATRIXX - info.geometry.size.width / 2, origin.y), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+            WI_DrawPatch(patchId, replacement, Vec2i(origin.x - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+            WI_DrawPatch(patchId, replacement, Vec2i(DM_MATRIXX - info.geometry.size.width / 2, origin.y), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
 
             if(i == inPlayerTeam)
             {
-                WI_DrawPatch(pFaceDead, patchReplacementText(pFaceDead), Vector2i(origin.x - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-                WI_DrawPatch(pFaceAlive, patchReplacementText(pFaceAlive), Vector2i(DM_MATRIXX - info.geometry.size.width / 2, origin.y), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+                WI_DrawPatch(pFaceDead, patchReplacementText(pFaceDead), Vec2i(origin.x - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+                WI_DrawPatch(pFaceAlive, patchReplacementText(pFaceAlive), Vec2i(DM_MATRIXX - info.geometry.size.width / 2, origin.y), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
             }
 
             // If more than 1 member, show the member count.
@@ -836,8 +836,8 @@ static void drawDeathmatchStats(Vector2i origin = Vector2i(DM_MATRIXX + DM_SPACI
                 String const count = String::number(teamInfo[i].playerCount);
 
                 FR_SetFont(FID(GF_FONTA));
-                drawText(count, Vector2i(origin.x   - info.geometry.size.width / 2 + 1, DM_MATRIXY - WI_SPACINGY + info.geometry.size.height - 8));
-                drawText(count, Vector2i(DM_MATRIXX - info.geometry.size.width / 2 + 1, origin.y + info.geometry.size.height - 8));
+                drawText(count, Vec2i(origin.x   - info.geometry.size.width / 2 + 1, DM_MATRIXY - WI_SPACINGY + info.geometry.size.height - 8));
+                drawText(count, Vec2i(DM_MATRIXX - info.geometry.size.width / 2 + 1, origin.y + info.geometry.size.height - 8));
             }
         }
         else
@@ -849,8 +849,8 @@ static void drawDeathmatchStats(Vector2i origin = Vector2i(DM_MATRIXX + DM_SPACI
 
             patchinfo_t info;
             R_GetPatchInfo(patchId, &info);
-            WI_DrawPatch(patchId, replacement, Vector2i(origin.x - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY + 10), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-            WI_DrawPatch(patchId, replacement, Vector2i(DM_MATRIXX - info.geometry.size.width / 2, origin.y + 10), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+            WI_DrawPatch(patchId, replacement, Vec2i(origin.x - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY + 10), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+            WI_DrawPatch(patchId, replacement, Vec2i(DM_MATRIXX - info.geometry.size.width / 2, origin.y + 10), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
         }
 
         origin.x += DM_SPACINGX;
@@ -872,11 +872,11 @@ static void drawDeathmatchStats(Vector2i origin = Vector2i(DM_MATRIXX + DM_SPACI
             {
                 if(teamInfo[k].playerCount > 0)
                 {
-                    drawText(String::number(dmFrags[i][k]), origin + Vector2i(w, 0), ALIGN_TOPRIGHT);
+                    drawText(String::number(dmFrags[i][k]), origin + Vec2i(w, 0), ALIGN_TOPRIGHT);
                 }
                 origin.x += DM_SPACINGX;
             }
-            drawText(String::number(dmTotals[i]), Vector2i(DM_TOTALSX + w, origin.y), ALIGN_TOPRIGHT);
+            drawText(String::number(dmTotals[i]), Vec2i(DM_TOTALSX + w, origin.y), ALIGN_TOPRIGHT);
         }
 
         origin.y += WI_SPACINGY;
@@ -1069,14 +1069,14 @@ static void drawNetgameStats()
 
     // Draw stat titles (top line).
     R_GetPatchInfo(pKills, &info);
-    WI_DrawPatch(pKills, patchReplacementText(pKills), Vector2i(ORIGINX + NG_SPACINGX, NG_STATSY), ALIGN_TOPRIGHT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatch(pKills, patchReplacementText(pKills), Vec2i(ORIGINX + NG_SPACINGX, NG_STATSY), ALIGN_TOPRIGHT, 0, DTF_NO_TYPEIN);
     int y = NG_STATSY + info.geometry.size.height;
 
-    WI_DrawPatch(pItems, patchReplacementText(pItems), Vector2i(ORIGINX + 2 * NG_SPACINGX, NG_STATSY), ALIGN_TOPRIGHT, 0, DTF_NO_TYPEIN);
-    WI_DrawPatch(pSecret, patchReplacementText(pSecret), Vector2i(ORIGINX + 3 * NG_SPACINGX, NG_STATSY), ALIGN_TOPRIGHT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatch(pItems, patchReplacementText(pItems), Vec2i(ORIGINX + 2 * NG_SPACINGX, NG_STATSY), ALIGN_TOPRIGHT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatch(pSecret, patchReplacementText(pSecret), Vec2i(ORIGINX + 3 * NG_SPACINGX, NG_STATSY), ALIGN_TOPRIGHT, 0, DTF_NO_TYPEIN);
     if(doFrags)
     {
-        WI_DrawPatch(pFrags, patchReplacementText(pFrags), Vector2i(ORIGINX + 4 * NG_SPACINGX, NG_STATSY), ALIGN_TOPRIGHT, 0, DTF_NO_TYPEIN);
+        WI_DrawPatch(pFrags, patchReplacementText(pFrags), Vec2i(ORIGINX + 4 * NG_SPACINGX, NG_STATSY), ALIGN_TOPRIGHT, 0, DTF_NO_TYPEIN);
     }
 
     // Draw stats.
@@ -1092,13 +1092,13 @@ static void drawNetgameStats()
 
         patchinfo_t info;
         R_GetPatchInfo(pTeamBackgrounds[i], &info);
-        WI_DrawPatch(pTeamBackgrounds[i], patchReplacementText(pTeamBackgrounds[i]), Vector2i(x - info.geometry.size.width, y), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+        WI_DrawPatch(pTeamBackgrounds[i], patchReplacementText(pTeamBackgrounds[i]), Vec2i(x - info.geometry.size.width, y), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
 
         // If more than 1 member, show the member count.
         if(1 != teamInfo[i].playerCount)
         {
             drawText(String::number(teamInfo[i].playerCount),
-                     Vector2i(x - info.geometry.size.width + 1,
+                     Vec2i(x - info.geometry.size.width + 1,
                               y + info.geometry.size.height - 8), ALIGN_TOPLEFT);
         }
 
@@ -1106,23 +1106,23 @@ static void drawNetgameStats()
 
         if(i == inPlayerTeam)
         {
-            WI_DrawPatch(pFaceAlive, patchReplacementText(pFaceAlive), Vector2i(x - info.geometry.size.width, y), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+            WI_DrawPatch(pFaceAlive, patchReplacementText(pFaceAlive), Vec2i(x - info.geometry.size.width, y), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
         }
         x += NG_SPACINGX;
 
         FR_SetFont(FID(GF_SMALL));
-        drawPercent(cntKills[i], Vector2i(x - pwidth, y + 10));
+        drawPercent(cntKills[i], Vec2i(x - pwidth, y + 10));
         x += NG_SPACINGX;
 
-        drawPercent(cntItems[i], Vector2i(x - pwidth, y + 10));
+        drawPercent(cntItems[i], Vec2i(x - pwidth, y + 10));
         x += NG_SPACINGX;
 
-        drawPercent(cntSecret[i], Vector2i(x - pwidth, y + 10));
+        drawPercent(cntSecret[i], Vec2i(x - pwidth, y + 10));
         x += NG_SPACINGX;
 
         if(doFrags)
         {
-            drawText(String::number(cntFrags[i]), Vector2i(x, y + 10), ALIGN_TOPRIGHT);
+            drawText(String::number(cntFrags[i]), Vec2i(x, y + 10), ALIGN_TOPRIGHT);
         }
 
         y += WI_SPACINGY;
@@ -1144,28 +1144,28 @@ static void drawSinglePlayerStats()
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
-    WI_DrawPatch(pKills   , patchReplacementText(pKills)   , Vector2i(SP_STATSX, SP_STATSY)         , ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-    WI_DrawPatch(pItems   , patchReplacementText(pItems)   , Vector2i(SP_STATSX, SP_STATSY + lh)    , ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-    WI_DrawPatch(pSecretSP, patchReplacementText(pSecretSP), Vector2i(SP_STATSX, SP_STATSY + 2 * lh), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-    WI_DrawPatch(pTime    , patchReplacementText(pTime)    , Vector2i(SP_TIMEX, SP_TIMEY)           , ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatch(pKills   , patchReplacementText(pKills)   , Vec2i(SP_STATSX, SP_STATSY)         , ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatch(pItems   , patchReplacementText(pItems)   , Vec2i(SP_STATSX, SP_STATSY + lh)    , ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatch(pSecretSP, patchReplacementText(pSecretSP), Vec2i(SP_STATSX, SP_STATSY + 2 * lh), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatch(pTime    , patchReplacementText(pTime)    , Vec2i(SP_TIMEX, SP_TIMEY)           , ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
     if(wbs->parTime != -1)
     {
-        WI_DrawPatch(pPar, patchReplacementText(pPar), Vector2i(SCREENWIDTH / 2 + SP_TIMEX, SP_TIMEY), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+        WI_DrawPatch(pPar, patchReplacementText(pPar), Vec2i(SCREENWIDTH / 2 + SP_TIMEX, SP_TIMEY), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
     }
 
     FR_SetFont(FID(GF_SMALL));
-    drawPercent(cntKills[0] , Vector2i(SCREENWIDTH - SP_STATSX, SP_STATSY));
-    drawPercent(cntItems[0] , Vector2i(SCREENWIDTH - SP_STATSX, SP_STATSY + lh));
-    drawPercent(cntSecret[0], Vector2i(SCREENWIDTH - SP_STATSX, SP_STATSY + 2 * lh));
+    drawPercent(cntKills[0] , Vec2i(SCREENWIDTH - SP_STATSX, SP_STATSY));
+    drawPercent(cntItems[0] , Vec2i(SCREENWIDTH - SP_STATSX, SP_STATSY + lh));
+    drawPercent(cntSecret[0], Vec2i(SCREENWIDTH - SP_STATSX, SP_STATSY + 2 * lh));
 
     if(cntTime >= 0)
     {
-        drawTime(Vector2i(SCREENWIDTH / 2 - SP_TIMEX, SP_TIMEY), cntTime / TICRATE);
+        drawTime(Vec2i(SCREENWIDTH / 2 - SP_TIMEX, SP_TIMEY), cntTime / TICRATE);
     }
 
     if(wbs->parTime != -1 && cntPar >= 0)
     {
-        drawTime(Vector2i(SCREENWIDTH - SP_TIMEX, SP_TIMEY), cntPar / TICRATE);
+        drawTime(Vec2i(SCREENWIDTH - SP_TIMEX, SP_TIMEY), cntPar / TICRATE);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);

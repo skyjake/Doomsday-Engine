@@ -241,10 +241,10 @@ void Hu_MenuConsoleRegister();
 
 void Hu_MenuDefaultFocusAction(menu::Widget &wi, menu::Widget::Action action);
 
-void Hu_MenuDrawFocusCursor(de::Vector2i const &origin, float scale, float alpha);
+void Hu_MenuDrawFocusCursor(de::Vec2i const &origin, float scale, float alpha);
 
-void Hu_MenuDrawPageTitle(de::String titleText, de::Vector2i const &origin);
-void Hu_MenuDrawPageHelp(de::String helpText, de::Vector2i const &origin);
+void Hu_MenuDrawPageTitle(de::String titleText, de::Vec2i const &origin);
+void Hu_MenuDrawPageHelp(de::String helpText, de::Vec2i const &origin);
 
 /**
  * @defgroup menuEffectFlags  Menu Effect Flags

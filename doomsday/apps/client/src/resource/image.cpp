@@ -147,7 +147,7 @@ static inline bool isColorKeyed(String path)
 
 void Image_Init(image_t &img)
 {
-    img.size      = Vector2ui(0, 0);
+    img.size      = Vec2ui(0, 0);
     img.pixelSize = 0;
     img.flags     = 0;
     img.paletteId = 0;
@@ -358,7 +358,7 @@ bool Image_LoadFromFileWithFormat(image_t &img, char const *format, FileHandle &
     // Swap the red and blue channels for GL.
     image = image.rgbSwapped();
 
-    img.size      = Vector2ui(image.width(), image.height());
+    img.size      = Vec2ui(image.width(), image.height());
     img.pixelSize = image.depth() / 8;
 
     LOGDEV_RES_VERBOSE("size:%s depth:%i alpha:%b bytes:%i")
@@ -508,11 +508,11 @@ static Source loadExternalTexture(image_t &image, String encodedSearchPath,
  *
  * @todo Optimize: Should be redesigned to composite whole rows -ds
  */
-static void compositePaletted(dbyte *dst, Vector2ui const &dstDimensions,
-    IByteArray const &src, Vector2ui const &srcDimensions, Vector2i const &origin)
+static void compositePaletted(dbyte *dst, Vec2ui const &dstDimensions,
+    IByteArray const &src, Vec2ui const &srcDimensions, Vec2i const &origin)
 {
-    if (dstDimensions == Vector2ui()) return;
-    if (srcDimensions == Vector2ui()) return;
+    if (dstDimensions == Vec2ui()) return;
+    if (srcDimensions == Vec2ui()) return;
 
     int const       srcW = srcDimensions.x;
     int const       srcH = srcDimensions.y;
@@ -598,7 +598,7 @@ static Source loadPatch(image_t &image, FileHandle &hndl, int tclass = 0,
             PatchMetadata info = Patch::loadMetadata(fileData);
 
             Image_Init(image);
-            image.size      = Vector2ui(info.logicalDimensions.x + border*2,
+            image.size      = Vec2ui(info.logicalDimensions.x + border*2,
                                         info.logicalDimensions.y + border*2);
             image.pixelSize = 1;
             image.paletteId = colorPaletteId;
@@ -606,7 +606,7 @@ static Source loadPatch(image_t &image, FileHandle &hndl, int tclass = 0,
             image.pixels = (uint8_t *) M_Calloc(2 * image.size.x * image.size.y);
 
             compositePaletted(image.pixels, image.size,
-                              patchImg, info.logicalDimensions, Vector2i(border, border));
+                              patchImg, info.logicalDimensions, Vec2i(border, border));
 
             if (palettedIsMasked(image.pixels, image.size.x, image.size.y))
             {
@@ -634,7 +634,7 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
 
     Image_Init(image);
     image.pixelSize = 1;
-    image.size      = Vector2ui(tex.width(), tex.height());
+    image.size      = Vec2ui(tex.width(), tex.height());
     image.paletteId = App_Resources().colorPalettes().defaultColorPalette();
 
     image.pixels = (uint8_t *) M_Calloc(2 * image.size.x * image.size.y);
@@ -656,10 +656,10 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
                 Block patchImg     = Patch::load(fileData, loadFlags);
                 PatchMetadata info = Patch::loadMetadata(fileData);
 
-                Vector2i origin = i->origin();
+                Vec2i origin = i->origin();
                 if (useZeroOriginIfOneComponent && texDef.componentCount() == 1)
                 {
-                    origin = Vector2i(0, 0);
+                    origin = Vec2i(0, 0);
                 }
 
                 // Draw the patch in the buffer.
@@ -695,7 +695,7 @@ static Source loadFlat(image_t &image, FileHandle &hndl)
     Image_Init(image);
 
     /// @todo not all flats are 64x64!
-    image.size      = Vector2ui(64, 64);
+    image.size      = Vec2ui(64, 64);
     image.pixelSize = 1;
     image.paletteId = App_Resources().colorPalettes().defaultColorPalette();
 

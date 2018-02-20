@@ -28,7 +28,7 @@ using namespace de;
 static void ItemsWidget_Draw(guidata_items_t *items, Point2Raw const *offset)
 {
     DENG2_ASSERT(items);
-    items->draw(offset? Vector2i(offset->xy) : Vector2i());
+    items->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void ItemsWidget_UpdateGeometry(guidata_items_t *items)
@@ -59,7 +59,7 @@ void guidata_items_t::tick(timespan_t /*elapsed*/)
     _value = plr->itemCount;
 }
 
-void guidata_items_t::draw(Vector2i const &offset) const
+void guidata_items_t::draw(Vec2i const &offset) const
 {
 #if !__JHEXEN__
 

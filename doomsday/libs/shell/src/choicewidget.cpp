@@ -60,7 +60,7 @@ ChoiceWidget::ChoiceWidget(String const &name)
     d->menu->rule()
             .setInput(Rule::Right, rule().right())
             .setInput(Rule::AnchorY, rule().top())
-            .setAnchorPoint(Vector2f(0, .5f));
+            .setAnchorPoint(Vec2f(0, .5f));
 
     connect(d->menu, SIGNAL(closed()), this, SLOT(menuClosed()));
 }
@@ -108,10 +108,10 @@ bool ChoiceWidget::isOpen() const
     return !d->menu->isHidden();
 }
 
-Vector2i ChoiceWidget::cursorPosition() const
+Vec2i ChoiceWidget::cursorPosition() const
 {
     Rectanglei rect = rule().recti();
-    return Vector2i(rect.left() + d->prompt.size(), rect.top());
+    return Vec2i(rect.left() + d->prompt.size(), rect.top());
 }
 
 void ChoiceWidget::focusLost()
@@ -132,7 +132,7 @@ void ChoiceWidget::draw()
 
     Rectanglei rect = rule().recti();
     targetCanvas().drawText(rect.topLeft, d->prompt, attribs() | TextCanvas::Char::Bold);
-    targetCanvas().put(Vector2i(rect.right() - 1, rect.top()),
+    targetCanvas().put(Vec2i(rect.right() - 1, rect.top()),
                        TextCanvas::Char('>', attribs()));
 }
 

@@ -83,28 +83,28 @@ public:
     FinaleAnimWidget &resetAllColors();
 
     animator_t const *color() const;
-    FinaleAnimWidget &setColorAndAlpha(de::Vector4f const &newColorAndAlpha, int steps = 0);
-    FinaleAnimWidget &setColor(de::Vector3f const &newColor, int steps = 0);
+    FinaleAnimWidget &setColorAndAlpha(de::Vec4f const &newColorAndAlpha, int steps = 0);
+    FinaleAnimWidget &setColor(de::Vec3f const &newColor, int steps = 0);
     FinaleAnimWidget &setAlpha(float newAlpha, int steps = 0);
 
     animator_t const *edgeColor() const;
-    FinaleAnimWidget &setEdgeColorAndAlpha(de::Vector4f const &newColorAndAlpha, int steps = 0);
-    FinaleAnimWidget &setEdgeColor(de::Vector3f const &newColor, int steps = 0);
+    FinaleAnimWidget &setEdgeColorAndAlpha(de::Vec4f const &newColorAndAlpha, int steps = 0);
+    FinaleAnimWidget &setEdgeColor(de::Vec3f const &newColor, int steps = 0);
     FinaleAnimWidget &setEdgeAlpha(float newAlpha, int steps = 0);
 
     animator_t const *otherColor() const;
-    FinaleAnimWidget &setOtherColorAndAlpha(de::Vector4f const &newColorAndAlpha, int steps = 0);
-    FinaleAnimWidget &setOtherColor(de::Vector3f const &newColor, int steps = 0);
+    FinaleAnimWidget &setOtherColorAndAlpha(de::Vec4f const &newColorAndAlpha, int steps = 0);
+    FinaleAnimWidget &setOtherColor(de::Vec3f const &newColor, int steps = 0);
     FinaleAnimWidget &setOtherAlpha(float newAlpha, int steps = 0);
 
     animator_t const *otherEdgeColor() const;
-    FinaleAnimWidget &setOtherEdgeColorAndAlpha(de::Vector4f const &newColorAndAlpha, int steps = 0);
-    FinaleAnimWidget &setOtherEdgeColor(de::Vector3f const &newColor, int steps = 0);
+    FinaleAnimWidget &setOtherEdgeColorAndAlpha(de::Vec4f const &newColorAndAlpha, int steps = 0);
+    FinaleAnimWidget &setOtherEdgeColor(de::Vec3f const &newColor, int steps = 0);
     FinaleAnimWidget &setOtherEdgeAlpha(float newAlpha, int steps = 0);
 
 protected:
 #ifdef __CLIENT__
-    void draw(de::Vector3f const &offset);
+    void draw(de::Vec3f const &offset);
 #endif
     void runTicks(/*timespan_t timeDelta*/);
 

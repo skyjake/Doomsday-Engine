@@ -576,7 +576,7 @@ bool Map::buildSector(Edge         startSide,
     return true;
 }
 
-std::pair<ID, ID> Map::findSectorAndVolumeAt(const de::Vector3d &pos) const
+std::pair<ID, ID> Map::findSectorAndVolumeAt(const de::Vec3d &pos) const
 {
     for (ID sectorId : d->sectors.keys())
     {
@@ -771,8 +771,8 @@ void Map::deserialize(const Block &data)
         for (auto i = planes.begin(); i != planes.end(); ++i)
         {
             const auto obj = i.value().toList();
-            Vector3d point{obj[0].toDouble(), obj[1].toDouble(), obj[2].toDouble()};
-            Vector3f normal{obj[3].toFloat(), obj[4].toFloat(), obj[5].toFloat()};
+            Vec3d point{obj[0].toDouble(), obj[1].toDouble(), obj[2].toDouble()};
+            Vec3f normal{obj[3].toFloat(), obj[4].toFloat(), obj[5].toFloat()};
             d->planes.insert(getId(i.key()), Plane{point, normal});
         }
     }
@@ -814,9 +814,9 @@ void Map::deserialize(const Block &data)
             const auto sc = ent["scale"].toList();
             std::shared_ptr<Entity> entity(new Entity);
             entity->setType(Entity::Type(ent["type"].toInt()));
-            entity->setPosition(Vector3d{pos[0].toDouble(), pos[1].toDouble(), pos[2].toDouble()});
+            entity->setPosition(Vec3d{pos[0].toDouble(), pos[1].toDouble(), pos[2].toDouble()});
             entity->setAngle(ent["angle"].toFloat());
-            entity->setScale(Vector3f{sc[0].toFloat(), sc[1].toFloat(), sc[2].toFloat()});
+            entity->setScale(Vec3f{sc[0].toFloat(), sc[1].toFloat(), sc[2].toFloat()});
             d->entities.insert(getId(i.key()), entity);
         }
     }
@@ -826,15 +826,15 @@ void Map::deserialize(const Block &data)
 
 //-------------------------------------------------------------------------------------------------
 
-bool Plane::isPointAbove(const Vector3d &pos) const
+bool Plane::isPointAbove(const Vec3d &pos) const
 {
     return geo::Plane{point, normal}.isPointAbove(pos);
 }
 
-Vector3d Plane::projectPoint(const Point &pos) const
+Vec3d Plane::projectPoint(const Point &pos) const
 {
     const double z = geo::Plane{point, normal}.project(pos);
-    return Vector3d(pos.x, z, pos.y);
+    return Vec3d(pos.x, z, pos.y);
 }
 
 void Sector::replaceLine(ID oldId, ID newId)

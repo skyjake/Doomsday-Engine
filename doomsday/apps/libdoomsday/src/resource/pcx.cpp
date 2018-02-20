@@ -123,7 +123,7 @@ char const *PCX_LastError()
     return 0;
 }
 
-uint8_t *PCX_Load(FileHandle &file, de::Vector2ui &outSize, int &pixelSize)
+uint8_t *PCX_Load(FileHandle &file, de::Vec2ui &outSize, int &pixelSize)
 {
     uint8_t *dstBuf = 0;
 
@@ -142,7 +142,7 @@ uint8_t *PCX_Load(FileHandle &file, de::Vector2ui &outSize, int &pixelSize)
             return 0;
         }
 
-        outSize   = Vector2ui(DD_SHORT(hdr.xmax) + 1, DD_SHORT(hdr.ymax) + 1);
+        outSize   = Vec2ui(DD_SHORT(hdr.xmax) + 1, DD_SHORT(hdr.ymax) + 1);
         pixelSize = 3;
 
         dstBufSize = 4 * outSize.x * outSize.y;

@@ -50,7 +50,7 @@ public:
      * @param origin  Origin of the decoration in map space.
      */
     Decoration(MaterialAnimator::Decoration const &source,
-               de::Vector3d const &origin = de::Vector3d());
+               de::Vec3d const &origin = de::Vec3d());
     virtual ~Decoration();
 
     de::String description() const;

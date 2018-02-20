@@ -119,16 +119,16 @@ dint Generator::age() const
     return _age;
 }
 
-Vector3d Generator::origin() const
+Vec3d Generator::origin() const
 {
     if(source)
     {
-        Vector3d origin(source->origin);
+        Vec3d origin(source->origin);
         origin.z += -source->floorClip + FIX2FLT(originAtSpawn[2]);
         return origin;
     }
 
-    return Vector3d(FIX2FLT(originAtSpawn[0]), FIX2FLT(originAtSpawn[1]), FIX2FLT(originAtSpawn[2]));
+    return Vec3d(FIX2FLT(originAtSpawn[0]), FIX2FLT(originAtSpawn[1]), FIX2FLT(originAtSpawn[2]));
 }
 
 void Generator::clearParticles()
@@ -458,7 +458,7 @@ dint Generator::newParticle()
             dfloat y = sector->bounds().minY +
                 RNG_RandFloat() * (sector->bounds().maxY - sector->bounds().minY);
 
-            subspace = map().bspLeafAt(Vector2d(x, y)).subspacePtr();
+            subspace = map().bspLeafAt(Vec2d(x, y)).subspacePtr();
             if(subspace && sector == &subspace->sector())
                 break;
 
@@ -485,7 +485,7 @@ dint Generator::newParticle()
             pinfo->origin[0] = FLT2FIX(x);
             pinfo->origin[1] = FLT2FIX(y);
 
-            if(subspace == map().bspLeafAt(Vector2d(x, y)).subspacePtr())
+            if(subspace == map().bspLeafAt(Vec2d(x, y)).subspacePtr())
                 break; // This is a good place.
         }
 
@@ -516,7 +516,7 @@ dint Generator::newParticle()
     }
     else*/
     {
-        Vector2d ptOrigin(FIX2FLT(pinfo->origin[0]), FIX2FLT(pinfo->origin[1]));
+        Vec2d ptOrigin(FIX2FLT(pinfo->origin[0]), FIX2FLT(pinfo->origin[1]));
         pinfo->bspLeaf = &map().bspLeafAt(ptOrigin);
 
         // A BSP leaf with no geometry is not a suitable place for a particle.
@@ -607,14 +607,14 @@ dfloat Generator::particleZ(ParticleInfo const &pinfo) const
     return FIX2FLT(pinfo.origin[2]);
 }
 
-Vector3f Generator::particleOrigin(ParticleInfo const &pt) const
+Vec3f Generator::particleOrigin(ParticleInfo const &pt) const
 {
-    return Vector3f(FIX2FLT(pt.origin[0]), FIX2FLT(pt.origin[1]), particleZ(pt));
+    return Vec3f(FIX2FLT(pt.origin[0]), FIX2FLT(pt.origin[1]), particleZ(pt));
 }
 
-Vector3f Generator::particleMomentum(ParticleInfo const &pt) const
+Vec3f Generator::particleMomentum(ParticleInfo const &pt) const
 {
-    return Vector3f(FIX2FLT(pt.mov[0]), FIX2FLT(pt.mov[1]), FIX2FLT(pt.mov[2]));
+    return Vec3f(FIX2FLT(pt.mov[0]), FIX2FLT(pt.mov[1]), FIX2FLT(pt.mov[2]));
 }
 
 void Generator::spinParticle(ParticleInfo &pinfo)
@@ -908,8 +908,8 @@ void Generator::moveParticle(dint index)
         }
 
         // Movement must cross the line.
-        if((line.pointOnSide(Vector2d(FIX2FLT(clParm.tmpx1), FIX2FLT(clParm.tmpy1))) < 0) ==
-           (line.pointOnSide(Vector2d(FIX2FLT(clParm.tmpx2), FIX2FLT(clParm.tmpy2))) < 0))
+        if((line.pointOnSide(Vec2d(FIX2FLT(clParm.tmpx1), FIX2FLT(clParm.tmpy1))) < 0) ==
+           (line.pointOnSide(Vec2d(FIX2FLT(clParm.tmpx2), FIX2FLT(clParm.tmpy2))) < 0))
         {
             return LoopContinue;
         }
@@ -1010,7 +1010,7 @@ void Generator::moveParticle(dint index)
     // Should we update the sector pointer?
     if(clParm.tmcross)
     {
-        pinfo->bspLeaf = &map().bspLeafAt(Vector2d(FIX2FLT(x), FIX2FLT(y)));
+        pinfo->bspLeaf = &map().bspLeafAt(Vec2d(FIX2FLT(x), FIX2FLT(y)));
 
         // A BSP leaf with no geometry is not a suitable place for a particle.
         if(!pinfo->bspLeaf->hasSubspace())

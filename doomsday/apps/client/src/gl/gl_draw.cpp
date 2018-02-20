@@ -39,7 +39,7 @@
 
 using namespace de;
 
-void GL_DrawRectWithCoords(Rectanglei const &rect, Vector2i const coords[4])
+void GL_DrawRectWithCoords(Rectanglei const &rect, Vec2i const coords[4])
 {
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
@@ -64,14 +64,14 @@ void GL_DrawRectWithCoords(Rectanglei const &rect, Vector2i const coords[4])
 
 void GL_DrawRect(Rectanglei const &rect)
 {
-    Vector2i coords[4] = { Vector2i(0, 0), Vector2i(1, 0),
-                           Vector2i(1, 1), Vector2i(0, 1) };
+    Vec2i coords[4] = { Vec2i(0, 0), Vec2i(1, 0),
+                           Vec2i(1, 1), Vec2i(0, 1) };
     GL_DrawRectWithCoords(rect, coords);
 }
 
 void GL_DrawRect2(int x, int y, int w, int h)
 {
-    GL_DrawRect(Rectanglei::fromSize(Vector2i(x, y), Vector2ui(w, h)));
+    GL_DrawRect(Rectanglei::fromSize(Vec2i(x, y), Vec2ui(w, h)));
 }
 
 void GL_DrawRectfWithCoords(const RectRawf* rect, Point2Rawf coords[4])

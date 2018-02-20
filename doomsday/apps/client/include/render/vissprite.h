@@ -50,9 +50,9 @@ enum visspritetype_t
 /// @ingroup render
 struct VisEntityPose
 {
-    de::Vector3d origin;
+    de::Vec3d origin;
     float topZ = 0.f;               ///< Global top Z coordinate (origin Z is the bottom).
-    de::Vector3d srvo;              ///< Short-range visual offset.
+    de::Vec3d srvo;                 ///< Short-range visual offset.
     coord_t distance = 0.0;         ///< Distance from viewer.
     float yaw = 0.f;
     float extraYawAngle = 0.f;
@@ -66,7 +66,7 @@ struct VisEntityPose
 
     VisEntityPose() = default;
 
-    VisEntityPose(de::Vector3d const &origin_, de::Vector3d const &visOffset,
+    VisEntityPose(de::Vec3d const &origin_, de::Vec3d const &visOffset,
                   bool viewAlign_ = false,
                   de::dfloat topZ_ = 0,
                   de::dfloat yaw_ = 0,
@@ -90,23 +90,23 @@ struct VisEntityPose
 
     inline coord_t midZ() const { return (origin.z + topZ) / 2; }
 
-    de::Vector3d mid() const { return de::Vector3d(origin.x, origin.y, midZ()); }
+    de::Vec3d mid() const { return de::Vec3d(origin.x, origin.y, midZ()); }
 };
 
 /// @ingroup render
 struct VisEntityLighting
 {
-    de::Vector4f ambientColor;
+    de::Vec4f ambientColor;
     de::duint vLightListIdx = 0;
 
     VisEntityLighting() = default;
 
-    VisEntityLighting(de::Vector4f const &ambientColor, de::duint lightListIndex)
+    VisEntityLighting(de::Vec4f const &ambientColor, de::duint lightListIndex)
         : ambientColor(ambientColor)
         , vLightListIdx(lightListIndex)
     {}
 
-    void setupLighting(de::Vector3d const &origin, de::ddouble distance, world::BspLeaf const &bspLeaf);
+    void setupLighting(de::Vec3d const &origin, de::ddouble distance, world::BspLeaf const &bspLeaf);
 };
 
 /**
@@ -162,7 +162,7 @@ struct vispsprite_t
 {
     vispspritetype_t type;
     ddpsprite_t *psp;
-    de::Vector3d origin;
+    de::Vec3d origin;
     world::BspLeaf const *bspLeaf;
     VisEntityLighting light;
 

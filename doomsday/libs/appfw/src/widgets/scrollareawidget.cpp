@@ -138,10 +138,10 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
 
     typedef std::pair<Rectanglef, Rectanglef> RectanglefPair;
 
-    RectanglefPair scrollIndicatorRects(Vector2f const &originPos) const
+    RectanglefPair scrollIndicatorRects(Vec2f const &originPos) const
     {
-        Vector2i const viewSize = self().viewportSize();
-        if (viewSize == Vector2i()) return RectanglefPair();
+        Vec2i const viewSize = self().viewportSize();
+        if (viewSize == Vec2i()) return RectanglefPair();
 
         const auto &margins = self().margins();
         const float contentHeight = float(contentRule.height().value());
@@ -159,9 +159,9 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
         if (origin == Top) indPos = 1 - indPos;
 
         float const avail = viewSize.y - indHeight;
-        Rectanglef rect { originPos + Vector2f(viewSize.x + margins.left().value() - 2 * scrollBarWidth,
+        Rectanglef rect { originPos + Vec2f(viewSize.x + margins.left().value() - 2 * scrollBarWidth,
                                                avail - indPos * avail),
-                          originPos + Vector2f(viewSize.x + margins.left().value() - scrollBarWidth,
+                          originPos + Vec2f(viewSize.x + margins.left().value() - scrollBarWidth,
                                                avail - indPos * avail + indHeight) };
 
         Rectanglef laneRect(rect.left(), originPos.y, scrollBarWidth, viewSize.y);
@@ -225,9 +225,9 @@ void ScrollAreaWidget::setIndicatorUv(Rectanglef const &uv)
     d->indicatorUv = uv;
 }
 
-void ScrollAreaWidget::setIndicatorUv(Vector2f const &uvPoint)
+void ScrollAreaWidget::setIndicatorUv(Vec2f const &uvPoint)
 {
-    d->indicatorUv = Rectanglef::fromSize(uvPoint, Vector2f(0, 0));
+    d->indicatorUv = Rectanglef::fromSize(uvPoint, Vec2f(0, 0));
 }
 
 void ScrollAreaWidget::setContentWidth(int width)
@@ -268,16 +268,16 @@ void ScrollAreaWidget::setContentSize(ISizeRule const &dimensions)
     setContentHeight(dimensions.height());
 }
 
-void ScrollAreaWidget::setContentSize(Vector2i const &size)
+void ScrollAreaWidget::setContentSize(Vec2i const &size)
 {
     DENG2_GUARD(d);
     setContentWidth(size.x);
     setContentHeight(size.y);
 }
 
-void ScrollAreaWidget::setContentSize(Vector2ui const &size)
+void ScrollAreaWidget::setContentSize(Vec2ui const &size)
 {
-    setContentSize(Vector2i(size.x, size.y));
+    setContentSize(Vec2i(size.x, size.y));
 }
 
 void ScrollAreaWidget::modifyContentWidth(int delta)
@@ -336,7 +336,7 @@ bool ScrollAreaWidget::isScrolling() const
 
 Rectanglei ScrollAreaWidget::viewport() const
 {
-    Vector4i const margin = margins().toVector();
+    Vec4i const margin = margins().toVector();
 
     Rectanglei vp = rule().recti().moved(margin.xy());
     if (int(vp.width()) <= margin.x + margin.z)
@@ -358,31 +358,31 @@ Rectanglei ScrollAreaWidget::viewport() const
     return vp;
 }
 
-Vector2i ScrollAreaWidget::viewportSize() const
+Vec2i ScrollAreaWidget::viewportSize() const
 {
-    return Vector2i(rule().width().valuei()  - margins().width().valuei(),
+    return Vec2i(rule().width().valuei()  - margins().width().valuei(),
                     rule().height().valuei() - margins().height().valuei())
-            .max(Vector2i(0, 0));
+            .max(Vec2i(0, 0));
 }
 
-Vector2i ScrollAreaWidget::scrollPosition() const
+Vec2i ScrollAreaWidget::scrollPosition() const
 {
     DENG2_GUARD(d);
-    return Vector2i(scrollPositionX().valuei(), scrollPositionY().valuei());
+    return Vec2i(scrollPositionX().valuei(), scrollPositionY().valuei());
 }
 
-Vector2i ScrollAreaWidget::scrollPageSize() const
+Vec2i ScrollAreaWidget::scrollPageSize() const
 {
     return viewportSize();
 }
 
-Vector2i ScrollAreaWidget::maximumScroll() const
+Vec2i ScrollAreaWidget::maximumScroll() const
 {
     DENG2_GUARD(d);
-    return Vector2i(maximumScrollX().valuei(), maximumScrollY().valuei());
+    return Vec2i(maximumScrollX().valuei(), maximumScrollY().valuei());
 }
 
-void ScrollAreaWidget::scroll(Vector2i const &to, TimeSpan span)
+void ScrollAreaWidget::scroll(Vec2i const &to, TimeSpan span)
 {
     scrollX(to.x, span);
     scrollY(to.y, span);
@@ -631,7 +631,7 @@ void ScrollAreaWidget::glDeinit()
 }
 
 void ScrollAreaWidget::glMakeScrollIndicatorGeometry(GuiVertexBuilder &verts,
-                                                     Vector2f const &origin)
+                                                     Vec2f const &origin)
 {
     // Draw the scroll indicator.
     if (d->scrollOpacity <= 0) return;
@@ -641,7 +641,7 @@ void ScrollAreaWidget::glMakeScrollIndicatorGeometry(GuiVertexBuilder &verts,
     d->scrollBarLaneRect = rects.second;
     if (d->scrollBarVisRect.isNull()) return;
 
-    Vector4f const barOpacity { 1, 1, 1, d->scrollOpacity };
+    Vec4f const barOpacity { 1, 1, 1, d->scrollOpacity };
 
     verts.makeQuad(d->scrollBarVisRect.expanded((d->scrollBarHover ? pointsToPixels(1) : 0)),
                    barOpacity * d->scrollBarColor,
@@ -702,7 +702,7 @@ void ScrollAreaWidget::drawContent()
         if (d->verts)
         {
         //d->drawable.draw();
-            painter.setColor(Vector4f(1, 1, 1, visibleOpacity()));
+            painter.setColor(Vec4f(1, 1, 1, visibleOpacity()));
             painter.drawTriangleStrip(d->verts);
         }
     }

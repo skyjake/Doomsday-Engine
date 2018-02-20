@@ -30,7 +30,7 @@
 
 namespace de {
 
-static Vector2ui const nullSize;
+static Vec2ui const nullSize;
 static GLuint defaultFramebuffer = 0;
 
 DENG2_PIMPL(GLFramebuffer),
@@ -99,8 +99,8 @@ DENG2_OBSERVES(Asset, Deletion)
     Flags       flags;
     Flags       textureAttachment; ///< Where to attach @a texture.
     GLTexture * texture;
-    Vector2ui   size;
-    Vector4f    clearColor;
+    Vec2ui   size;
+    Vec4f    clearColor;
     Rectangleui activeRect; ///< Initially null.
     int         sampleCount;
 
@@ -129,7 +129,7 @@ DENG2_OBSERVES(Asset, Deletion)
         zap(bufTextures);
     }
 
-    Impl(Public *i, Vector2ui const &targetSize, Flags fboFlags)
+    Impl(Public *i, Vec2ui const &targetSize, Flags fboFlags)
         : Base(i)
         , fbo(0)
         , flags(fboFlags)
@@ -242,7 +242,7 @@ DENG2_OBSERVES(Asset, Deletion)
 
     void attachRenderbuffer(AttachmentId id, GLenum type, GLenum attachment)
     {
-        DENG2_ASSERT(size != Vector2ui(0, 0));
+        DENG2_ASSERT(size != Vec2ui(0, 0));
 
         LIBGUI_GL.glGenRenderbuffers(1, &renderBufs[id]);
         LIBGUI_GL.glBindRenderbuffer(GL_RENDERBUFFER, renderBufs[id]);
@@ -507,7 +507,7 @@ GLFramebuffer::GLFramebuffer(Flags attachment, GLTexture &texture, Flags otherAt
     d->alloc();
 }
 
-GLFramebuffer::GLFramebuffer(Vector2ui const &size, Flags flags)
+GLFramebuffer::GLFramebuffer(Vec2ui const &size, Flags flags)
     : d(new Impl(this, size, flags))
 {
     LOG_AS("GLFramebuffer");
@@ -532,7 +532,7 @@ void GLFramebuffer::configure()
     setState(Ready);
 }
 
-void GLFramebuffer::configure(Vector2ui const &size, Flags flags, int sampleCount)
+void GLFramebuffer::configure(Vec2ui const &size, Flags flags, int sampleCount)
 {
     LOG_AS("GLFramebuffer");
 
@@ -688,7 +688,7 @@ QImage GLFramebuffer::toImage() const
     return QImage();
 }
 
-void GLFramebuffer::setClearColor(Vector4f const &color)
+void GLFramebuffer::setClearColor(Vec4f const &color)
 {
     d->clearColor = color;
 }
@@ -870,22 +870,22 @@ void GLFramebuffer::unsetActiveRect(bool applyGLState)
     setActiveRect(Rectangleui(), applyGLState);
 }
 
-Vector2f GLFramebuffer::activeRectScale() const
+Vec2f GLFramebuffer::activeRectScale() const
 {
     if (!hasActiveRect())
     {
-        return Vector2f(1, 1);
+        return Vec2f(1, 1);
     }
-    return Vector2f(d->activeRect.size()) / size();
+    return Vec2f(d->activeRect.size()) / size();
 }
 
-Vector2f GLFramebuffer::activeRectNormalizedOffset() const
+Vec2f GLFramebuffer::activeRectNormalizedOffset() const
 {
     if (!hasActiveRect())
     {
-        return Vector2f(0, 0);
+        return Vec2f(0, 0);
     }
-    return Vector2f(d->activeRect.topLeft) / size();
+    return Vec2f(d->activeRect.topLeft) / size();
 }
 
 Rectangleui GLFramebuffer::scaleToActiveRect(Rectangleui const &rectInTarget) const
@@ -896,7 +896,7 @@ Rectangleui GLFramebuffer::scaleToActiveRect(Rectangleui const &rectInTarget) co
         return rectInTarget;
     }
 
-    Vector2f const scaling = activeRectScale();
+    Vec2f const scaling = activeRectScale();
 
     return Rectangleui(d->activeRect.left()  + scaling.x * rectInTarget.left(),
                        d->activeRect.top()   + scaling.y * rectInTarget.top(),

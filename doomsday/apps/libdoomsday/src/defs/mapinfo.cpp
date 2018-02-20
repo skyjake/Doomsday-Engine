@@ -39,7 +39,7 @@ void MapInfo::resetToDefaults()
     def().addNumber("flags", 0);
     def().addText  ("music", "");
     def().addNumber("parTime", -1); // unknown
-    def().addArray ("fogColor", new ArrayValue(Vector3f(DEFAULT_FOG_COLOR_RED, DEFAULT_FOG_COLOR_GREEN, DEFAULT_FOG_COLOR_BLUE)));
+    def().addArray ("fogColor", new ArrayValue(Vec3f(DEFAULT_FOG_COLOR_RED, DEFAULT_FOG_COLOR_GREEN, DEFAULT_FOG_COLOR_BLUE)));
     def().addNumber("fogStart", DEFAULT_FOG_START);
     def().addNumber("fogEnd", DEFAULT_FOG_END);
     def().addNumber("fogDensity", DEFAULT_FOG_DENSITY);

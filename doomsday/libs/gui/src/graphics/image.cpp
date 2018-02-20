@@ -653,7 +653,7 @@ void Image::fill(Rectanglei const &rect, Color const &color)
                      QColor(color.x, color.y, color.z, color.w));
 }
 
-void Image::draw(Image const &image, Vector2i const &topLeft)
+void Image::draw(Image const &image, Vec2i const &topLeft)
 {
     IMAGE_ASSERT_EDITABLE(d);
     IMAGE_ASSERT_EDITABLE(image.d);
@@ -662,7 +662,7 @@ void Image::draw(Image const &image, Vector2i const &topLeft)
     painter.drawImage(QPoint(topLeft.x, topLeft.y), image.d->image);
 }
 
-void Image::drawPartial(Image const &image, Rectanglei const &part, Vector2i const &topLeft)
+void Image::drawPartial(Image const &image, Rectanglei const &part, Vec2i const &topLeft)
 {
     IMAGE_ASSERT_EDITABLE(d);
     IMAGE_ASSERT_EDITABLE(image.d);

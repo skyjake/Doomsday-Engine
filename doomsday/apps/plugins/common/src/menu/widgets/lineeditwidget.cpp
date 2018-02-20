@@ -69,7 +69,7 @@ void LineEditWidget::loadResources() // static
     pEditMiddle = R_DeclarePatch(MNDATA_EDIT_BACKGROUND_PATCH_MIDDLE);
 }
 
-static void drawEditBackground(Vector2i const &origin, int width, float alpha)
+static void drawEditBackground(Vec2i const &origin, int width, float alpha)
 {
     DGL_Color4f(1, 1, 1, alpha);
 
@@ -113,7 +113,7 @@ void LineEditWidget::draw() const
 {
     fontid_t fontId = mnRendState->textFonts[font()];
 
-    Vector2i origin = geometry().topLeft + Vector2i(MNDATA_EDIT_OFFSET_X, MNDATA_EDIT_OFFSET_Y);
+    Vec2i origin = geometry().topLeft + Vec2i(MNDATA_EDIT_OFFSET_X, MNDATA_EDIT_OFFSET_Y);
 
     String useText;
     float light = 1, textOpacity = mnRendState->pageAlpha;
@@ -135,7 +135,7 @@ void LineEditWidget::draw() const
 
     //int const numVisCharacters = de::clamp(0, useText.isNull()? 0 : useText.length(), d->maxVisibleChars);
 
-    drawEditBackground(origin + Vector2i(MNDATA_EDIT_BACKGROUND_OFFSET_X, MNDATA_EDIT_BACKGROUND_OFFSET_Y),
+    drawEditBackground(origin + Vec2i(MNDATA_EDIT_BACKGROUND_OFFSET_X, MNDATA_EDIT_BACKGROUND_OFFSET_Y),
                        geometry().width(), mnRendState->pageAlpha * fadeout);
 
     //if(string)
@@ -327,7 +327,7 @@ int LineEditWidget::handleCommand(menucommand_e cmd)
 void LineEditWidget::updateGeometry()
 {
     FR_SetFont(mnRendState->textFonts[font()]);
-    geometry().setSize(Vector2ui(FR_CharWidth('w') * d->maxLength - MNDATA_EDIT_BACKGROUND_OFFSET_X*2, 14));
+    geometry().setSize(Vec2ui(FR_CharWidth('w') * d->maxLength - MNDATA_EDIT_BACKGROUND_OFFSET_X*2, 14));
 }
 
 } // namespace menu

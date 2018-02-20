@@ -55,9 +55,9 @@ ButtonWidget::~ButtonWidget()
 
 void ButtonWidget::draw() const
 {
-    fontid_t const fontId     = mnRendState->textFonts[font()];
-    Vector4f const &textColor = mnRendState->textColors[color()];
-    //float t = (isFocused()? 1 : 0);
+    fontid_t const fontId  = mnRendState->textFonts[font()];
+    Vec4f const &textColor = mnRendState->textColors[color()];
+    float t = (isFocused()? 1 : 0);
 
     const Vector4f color = selectionFlashColor(textColor);
 
@@ -146,7 +146,7 @@ void ButtonWidget::updateGeometry()
             // Use the original patch.
             patchinfo_t info;
             R_GetPatchInfo(d->patch, &info);
-            geometry().setSize(Vector2ui(info.geometry.size.width, info.geometry.size.height));
+            geometry().setSize(Vec2ui(info.geometry.size.width, info.geometry.size.height));
             return;
         }
     }
@@ -155,7 +155,7 @@ void ButtonWidget::updateGeometry()
     Size2Raw size;
     FR_SetFont(page().predefinedFont(mn_page_fontid_t(font())));
     FR_TextSize(&size, useText.toUtf8().constData());
-    geometry().setSize(Vector2ui(size.width, size.height));
+    geometry().setSize(Vec2ui(size.width, size.height));
     FR_PopAttrib();
 }
 

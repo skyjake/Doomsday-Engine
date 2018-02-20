@@ -43,8 +43,8 @@ protected:
     Rectanglei nativeFontMeasure(String const &text) const;
     int nativeFontWidth(String const &text) const;
     QImage nativeFontRasterize(String const &text,
-                               Vector4ub const &foreground,
-                               Vector4ub const &background) const;
+                               Vec4ub const &foreground,
+                               Vec4ub const &background) const;
 
 private:
     DENG2_PRIVATE(d)

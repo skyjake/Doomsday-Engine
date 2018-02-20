@@ -32,7 +32,7 @@ static patchid_t pComplete[NUM_PLAYER_CLASSES];
 static void WeaponPiecesWidget_Draw(guidata_weaponpieces_t *wp, Point2Raw const *offset)
 {
     DENG2_ASSERT(wp);
-    wp->draw(offset? Vector2i(offset->xy) : Vector2i());
+    wp->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void WeaponPiecesWidget_UpdateGeometry(guidata_weaponpieces_t *wp)
@@ -62,9 +62,9 @@ void guidata_weaponpieces_t::tick(timespan_t /*elapsed*/)
     _ownedPieces = players[player()].pieces;
 }
 
-void guidata_weaponpieces_t::draw(Vector2i const &offset) const
+void guidata_weaponpieces_t::draw(Vec2i const &offset) const
 {
-    static Vector2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
+    static Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
 
     dint const plrClass    = ::cfg.playerClass[player()];  // Original player class (i.e. not pig).
     dint const activeHud     = ST_ActiveHud(player());
@@ -85,7 +85,7 @@ void guidata_weaponpieces_t::draw(Vector2i const &offset) const
     if(_ownedPieces == WEAPON_FOURTH_COMPLETE)
     {
         DGL_Color4f(1, 1, 1, iconOpacity);
-        GL_DrawPatch(::pComplete[plrClass], origin + Vector2i(190, 0));
+        GL_DrawPatch(::pComplete[plrClass], origin + Vec2i(190, 0));
     }
     else
     {
@@ -95,7 +95,7 @@ void guidata_weaponpieces_t::draw(Vector2i const &offset) const
             if(_ownedPieces & (1 << piece))
             {
                 DGL_Color4f(1, 1, 1, iconOpacity);
-                GL_DrawPatch(::pPiece[plrClass][piece], origin + Vector2i(pcdata.fourthWeaponPiece[piece].offset.xy));
+                GL_DrawPatch(::pPiece[plrClass][piece], origin + Vec2i(pcdata.fourthWeaponPiece[piece].offset.xy));
             }
         }
     }

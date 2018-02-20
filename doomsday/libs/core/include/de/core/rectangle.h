@@ -63,8 +63,8 @@ public:
     }
 
     // Automatic conversion to a Rectanglef.
-    operator Rectangle<Vector2f, Vector2f> () const {
-        return Rectangle<Vector2f, Vector2f>(topLeft.x, topLeft.y, width(), height());
+    operator Rectangle<Vec2f, Vec2f> () const {
+        return Rectangle<Vec2f, Vec2f>(topLeft.x, topLeft.y, width(), height());
     }
 
     SizeType width() const { return abs(bottomRight.x - topLeft.x); }
@@ -116,13 +116,13 @@ public:
     RectangleType adjusted(CornerVectorType const &tl, CornerVectorType const &br) const {
         return RectangleType(topLeft + tl, bottomRight + br);
     }
-    Rectangle<Vector2i, Vector2ui> toRectanglei() const {
-        return Rectangle<Vector2i, Vector2ui>(topLeft.toVector2i(), bottomRight.toVector2i());
+    Rectangle<Vec2i, Vec2ui> toRectanglei() const {
+        return Rectangle<Vec2i, Vec2ui>(topLeft.toVector2i(), bottomRight.toVector2i());
     }
-    Rectangle<Vector2ui, Vector2ui> toRectangleui() const {
-        Vector2ui tl(duint(de::max(Type(0), topLeft.x)),     duint(de::max(Type(0), topLeft.y)));
-        Vector2ui br(duint(de::max(Type(0), bottomRight.x)), duint(de::max(Type(0), bottomRight.y)));
-        return Rectangle<Vector2ui, Vector2ui>(tl, br);
+    Rectangle<Vec2ui, Vec2ui> toRectangleui() const {
+        Vec2ui tl(duint(de::max(Type(0), topLeft.x)),     duint(de::max(Type(0), topLeft.y)));
+        Vec2ui br(duint(de::max(Type(0), bottomRight.x)), duint(de::max(Type(0), bottomRight.y)));
+        return Rectangle<Vec2ui, Vec2ui>(tl, br);
     }
     bool contains(Corner const &point) const {
         return point >= topLeft && point < bottomRight;
@@ -204,10 +204,10 @@ public:
 };
 
 // Common types.
-typedef Rectangle<Vector2i,  Vector2ui> Rectanglei;
-typedef Rectangle<Vector2ui, Vector2ui> Rectangleui;
-typedef Rectangle<Vector2f,  Vector2f>  Rectanglef;
-typedef Rectangle<Vector2d,  Vector2d>  Rectangled;
+typedef Rectangle<Vec2i,  Vec2ui> Rectanglei;
+typedef Rectangle<Vec2ui, Vec2ui> Rectangleui;
+typedef Rectangle<Vec2f,  Vec2f>  Rectanglef;
+typedef Rectangle<Vec2d,  Vec2d>  Rectangled;
 
 } // namespace de
 

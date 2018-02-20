@@ -52,7 +52,7 @@ static void AutomapWidget_UpdateGeometry(AutomapWidget *amap)
 static void AutomapWidget_Draw(AutomapWidget *amap, Point2Raw const *offset)
 {
     DENG2_ASSERT(amap);
-    amap->draw(offset? Vector2i(offset->xy) : Vector2i());
+    amap->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 struct uiautomap_rendstate_t
@@ -78,21 +78,21 @@ static DGLuint amMaskTexture;  // Used to mask the map primitives.
 
 namespace internal
 {
-    static Vector2d rotate(Vector2d const &point, ddouble radian)
+    static Vec2d rotate(Vec2d const &point, ddouble radian)
     {
         ddouble const c = std::cos(radian);
         ddouble const s = std::sin(radian);
-        return Vector2d(c * point.x - s * point.y, s * point.x + c * point.y);
+        return Vec2d(c * point.x - s * point.y, s * point.x + c * point.y);
     }
 
-    static void initAABB(coord_t aabb[4], Vector2d const &point)
+    static void initAABB(coord_t aabb[4], Vec2d const &point)
     {
         DENG2_ASSERT(aabb);
         aabb[BOXLEFT] = aabb[BOXRIGHT ] = point.x;
         aabb[BOXTOP ] = aabb[BOXBOTTOM] = point.y;
     }
 
-    static void addToAABB(coord_t aabb[4], Vector2d const &point)
+    static void addToAABB(coord_t aabb[4], Vec2d const &point)
     {
         DENG2_ASSERT(aabb);
         if     (point.x < aabb[BOXLEFT  ]) aabb[BOXLEFT  ] = point.x;
@@ -117,9 +117,9 @@ namespace internal
         return false;
     }
 
-    static Vector2d fitPointInRectangle(Vector2d const &point, Vector2d const &topLeft,
-        Vector2d const &topRight, Vector2d const &bottomRight,
-        Vector2d const &bottomLeft, Vector2d const &viewPoint)
+    static Vec2d fitPointInRectangle(Vec2d const &point, Vec2d const &topLeft,
+        Vec2d const &topRight, Vec2d const &bottomRight,
+        Vec2d const &bottomLeft, Vec2d const &viewPoint)
     {
         ddouble pointV1[2];
         point.decompose(pointV1);
@@ -146,11 +146,11 @@ namespace internal
         if (!interceptEdge(pointV1, topRightV1, topLeftV1, viewPointV1, pointV1))
             interceptEdge(pointV1, bottomLeftV1, bottomRightV1, viewPointV1, pointV1);
 
-        return Vector2d(pointV1);
+        return Vec2d(pointV1);
     }
 
-    static void drawVectorGraphic(svgid_t vgId, Vector2d const &origin, dfloat angle,
-        dfloat scale, Vector3f const &color, dfloat opacity, blendmode_t blendmode)
+    static void drawVectorGraphic(svgid_t vgId, Vec2d const &origin, dfloat angle,
+        dfloat scale, Vec3f const &color, dfloat opacity, blendmode_t blendmode)
     {
         opacity = de::clamp(0.f, opacity, 1.f);
 
@@ -202,8 +202,8 @@ namespace internal
             opacity *= .125f;
 #endif
 
-        drawVectorGraphic(style->objectSvg(AMO_THINGPLAYER), Vector2d(origin),
-                          angle, PLAYERRADIUS, Vector3f(color), opacity, BM_NORMAL);
+        drawVectorGraphic(style->objectSvg(AMO_THINGPLAYER), Vec2d(origin),
+                          angle, PLAYERRADIUS, Vec3f(color), opacity, BM_NORMAL);
     }
 
 }  // namespace internal
@@ -238,11 +238,11 @@ DENG2_PIMPL(AutomapWidget)
     dfloat opacityTimer = 0;
 
     // Viewer location on the map:
-    Vector2d view, targetView, oldView;
+    Vec2d view, targetView, oldView;
     dfloat viewTimer = 0;
 
     coord_t maxViewPositionDelta = 128;
-//    Vector2d viewPL;  // For the parallax layer.
+//    Vec2d viewPL;  // For the parallax layer.
 
     // View frame scale:
     dfloat viewScale = 1, targetViewScale = 1, oldViewScale = 1;
@@ -257,7 +257,7 @@ DENG2_PIMPL(AutomapWidget)
     dfloat angleTimer = 0;
 
     // Bounding box of the actual visible area in map coordinates.
-    Vector2d topLeft, bottomRight, topRight, bottomLeft;
+    Vec2d topLeft, bottomRight, topRight, bottomLeft;
 
     // Axis-aligned bounding box of the potentially visible area
     // (rotation-aware) in map coordinates.
@@ -308,13 +308,13 @@ DENG2_PIMPL(AutomapWidget)
     {
         float const oldMinScale = minScaleMTOF;
 
-        Vector2d const topRight  (bounds[BOXRIGHT], bounds[BOXTOP   ]);
-        Vector2d const bottomLeft(bounds[BOXLEFT ], bounds[BOXBOTTOM]);
+        Vec2d const topRight  (bounds[BOXRIGHT], bounds[BOXTOP   ]);
+        Vec2d const bottomLeft(bounds[BOXLEFT ], bounds[BOXBOTTOM]);
         coord_t const dist = de::abs((topRight - bottomLeft).length());
 
-        Vector2f const dimensions(Rect_Width (&self().geometry()),
+        Vec2f const dimensions(Rect_Width (&self().geometry()),
                                   Rect_Height(&self().geometry()));
-        Vector2f const scale = dimensions / dist;
+        Vec2f const scale = dimensions / dist;
 
         minScaleMTOF = (scale.x < scale.y ? scale.x : scale.y);
         maxScaleMTOF = dimensions.y / minScale;
@@ -331,15 +331,15 @@ DENG2_PIMPL(AutomapWidget)
         needViewScaleUpdate = false;
     }
 
-    static void drawLine2(Vector2d const &from, Vector2d const &to,
-        Vector3f const &color, dfloat opacity, glowtype_t glowType, dfloat glowStrength,
+    static void drawLine2(Vec2d const &from, Vec2d const &to,
+        Vec3f const &color, dfloat opacity, glowtype_t glowType, dfloat glowStrength,
         dfloat glowSize, dd_bool glowOnly, dd_bool scaleGlowWithView, dd_bool caps,
         /*blendmode_t blend, */dd_bool drawNormal)
     {
         opacity *= uiRendState->pageAlpha;
 
-        Vector2d const unit = (to - from).normalize();
-        Vector2d const normal(unit.y, -unit.x);
+        Vec2d const unit = (to - from).normalize();
+        Vec2d const normal(unit.y, -unit.x);
 
         if (de::abs(unit.length()) <= 0) return;
 
@@ -362,10 +362,10 @@ DENG2_PIMPL(AutomapWidget)
             // Draw a "cap" at the start of the line?
             if (caps)
             {
-                Vector2f const v1 = from -   unit * thickness + normal * thickness;
-                Vector2f const v2 = from + normal * thickness;
-                Vector2f const v3 = from - normal * thickness;
-                Vector2f const v4 = from -   unit * thickness - normal * thickness;
+                Vec2f const v1 = from -   unit * thickness + normal * thickness;
+                Vec2f const v2 = from + normal * thickness;
+                Vec2f const v3 = from - normal * thickness;
+                Vec2f const v4 = from -   unit * thickness - normal * thickness;
 
                 //if (!addToLists)
                 {
@@ -401,10 +401,10 @@ DENG2_PIMPL(AutomapWidget)
             switch (glowType)
             {
             case GLOW_BOTH: {
-                Vector2f const v1 = from + normal * thickness;
-                Vector2f const v2 =   to + normal * thickness;
-                Vector2f const v3 =   to - normal * thickness;
-                Vector2f const v4 = from - normal * thickness;
+                Vec2f const v1 = from + normal * thickness;
+                Vec2f const v2 =   to + normal * thickness;
+                Vec2f const v3 =   to - normal * thickness;
+                Vec2f const v4 = from - normal * thickness;
 
                 //if (!addToLists)
                 {
@@ -437,8 +437,8 @@ DENG2_PIMPL(AutomapWidget)
                 break; }
 
             case GLOW_BACK: {
-                Vector2f const v1 = from + normal * thickness;
-                Vector2f const v2 =   to + normal * thickness;
+                Vec2f const v1 = from + normal * thickness;
+                Vec2f const v2 =   to + normal * thickness;
 
                 //if (!addToLists)
                 {
@@ -471,8 +471,8 @@ DENG2_PIMPL(AutomapWidget)
                 break; }
 
             case GLOW_FRONT: {
-                Vector2f const v3 =   to - normal * thickness;
-                Vector2f const v4 = from - normal * thickness;
+                Vec2f const v3 =   to - normal * thickness;
+                Vec2f const v4 = from - normal * thickness;
 
                 //if (!addToLists)
                 {
@@ -511,10 +511,10 @@ DENG2_PIMPL(AutomapWidget)
 
             if (caps)
             {
-                Vector2f const v1 = to + normal * thickness;
-                Vector2f const v2 = to +   unit * thickness + normal * thickness;
-                Vector2f const v3 = to +   unit * thickness - normal * thickness;
-                Vector2f const v4 = to - normal * thickness;
+                Vec2f const v1 = to + normal * thickness;
+                Vec2f const v2 = to +   unit * thickness + normal * thickness;
+                Vec2f const v3 = to +   unit * thickness - normal * thickness;
+                Vec2f const v4 = to - normal * thickness;
 
                 //if (!addToLists)
                 {
@@ -568,8 +568,8 @@ DENG2_PIMPL(AutomapWidget)
             {
 #define NORMTAIL_LENGTH         8
 
-                Vector2f const v1 = (from + to) / 2;
-                Vector2d const v2 = v1 + normal * NORMTAIL_LENGTH;
+                Vec2f const v1 = (from + to) / 2;
+                Vec2d const v2 = v1 + normal * NORMTAIL_LENGTH;
 
                 //if (!addToLists)
                 {
@@ -670,7 +670,7 @@ DENG2_PIMPL(AutomapWidget)
             ddouble from[2]; P_GetDoublepv(P_GetPtrp(line, DMU_VERTEX0), DMU_XY, from);
             ddouble to  [2]; P_GetDoublepv(P_GetPtrp(line, DMU_VERTEX1), DMU_XY, to);
 
-            drawLine2(Vector2d(from), Vector2d(to), Vector3f(info->rgba), info->rgba[3],
+            drawLine2(Vec2d(from), Vec2d(to), Vec3f(info->rgba), info->rgba[3],
                       (xline->special && !cfg.common.automapShowDoors ? GLOW_NONE : info->glow),
                       info->glowStrength,
                       info->glowSize, rs.glowOnly, info->scaleWithView,
@@ -747,7 +747,7 @@ DENG2_PIMPL(AutomapWidget)
         DGL_Enable(DGL_TEXTURE0);
     }
 
-    static void drawLine(Line *line, Vector3f const &color, dfloat opacity,
+    static void drawLine(Line *line, Vec3f const &color, dfloat opacity,
                          /*blendmode_t blendMode, */bool showNormal)
     {
         dfloat length = P_GetFloatp(line, DMU_LENGTH);
@@ -836,7 +836,7 @@ DENG2_PIMPL(AutomapWidget)
 
         if (automapcfg_lineinfo_t const *info = inst->style->tryFindLineInfo(amo))
         {
-            drawLine(line, Vector3f(info->rgba), info->rgba[3] * cfg.common.automapLineAlpha * opacity,
+            drawLine(line, Vec3f(info->rgba), info->rgba[3] * cfg.common.automapLineAlpha * opacity,
                      /*info->blendMode, */(inst->flags & AWF_SHOW_LINE_NORMALS));
         }
 
@@ -885,7 +885,7 @@ DENG2_PIMPL(AutomapWidget)
         // XG lines blink.
         if (!(mapTime & 4)) return false;
 
-        drawLine(line, Vector3f(.8f, 0, .8f), 1, (inst->flags & AWF_SHOW_LINE_NORMALS));
+        drawLine(line, Vec3f(.8f, 0, .8f), 1, (inst->flags & AWF_SHOW_LINE_NORMALS));
         xline->validCount = VALIDCOUNT;  // Mark as processed this frame.
 
         return false;  // Continue iteration.
@@ -1008,8 +1008,8 @@ DENG2_PIMPL(AutomapWidget)
                 /* $unifiedangles */
                 coord_t origin[3]; Mobj_OriginSmoothed(mob, origin);
 
-                drawVectorGraphic(vgId, Vector2d(origin), angle, 16 /*radius*/,
-                                  Vector3f(color), p->opacity, BM_NORMAL);
+                drawVectorGraphic(vgId, Vec2d(origin), angle, 16 /*radius*/,
+                                  Vec3f(color), p->opacity, BM_NORMAL);
             }
         }
 
@@ -1054,7 +1054,7 @@ DENG2_PIMPL(AutomapWidget)
         for (MarkedPoint const *point : points)
         {
             String const label    = String::number(idx++);
-            Vector2d const origin = fitPointInRectangle(point->origin(), topLeft, topRight, bottomRight, bottomLeft, view);
+            Vec2d const origin = fitPointInRectangle(point->origin(), topLeft, topRight, bottomRight, bottomLeft, view);
 
             DGL_MatrixMode(DGL_MODELVIEW);
             DGL_PushMatrix();
@@ -1350,7 +1350,7 @@ AutomapStyle *AutomapWidget::style() const
     return d->style;
 }
 
-void AutomapWidget::draw(Vector2i const &offset) const
+void AutomapWidget::draw(Vec2i const &offset) const
 {
     static int updateWait = 0;  /// @todo should be an instance var of AutomapWidget
 
@@ -1361,7 +1361,7 @@ void AutomapWidget::draw(Vector2i const &offset) const
 
     // Configure render state:
     rs.plr = plr;
-    const Vector2d viewPoint = cameraOrigin();
+    const Vec2d viewPoint = cameraOrigin();
     float angle = cameraAngle();
     RectRaw geom; Rect_Raw(&geometry(), &geom);
 
@@ -1498,7 +1498,7 @@ void AutomapWidget::open(bool yes, bool instantly)
             if (d->follow || cfg.common.automapPanResetOnOpen)
             {
                 coord_t origin[3]; Mobj_OriginSmoothed(mob, origin);
-                setCameraOrigin(Vector2d(origin));
+                setCameraOrigin(Vec2d(origin));
             }
 
             if (!d->follow && cfg.common.automapPanResetOnOpen)
@@ -1512,7 +1512,7 @@ void AutomapWidget::open(bool yes, bool instantly)
             // Set viewer target to the center of the map.
             coord_t aabb[4];
             pvisibleBounds(&aabb[BOXLEFT], &aabb[BOXRIGHT], &aabb[BOXBOTTOM], &aabb[BOXTOP]);
-            setCameraOrigin(Vector2d(aabb[BOXRIGHT] - aabb[BOXLEFT], aabb[BOXTOP] - aabb[BOXBOTTOM]) / 2);
+            setCameraOrigin(Vec2d(aabb[BOXRIGHT] - aabb[BOXLEFT], aabb[BOXTOP] - aabb[BOXBOTTOM]) / 2);
             setCameraAngle(0);
         }
     }
@@ -1594,8 +1594,8 @@ void AutomapWidget::tick(timespan_t elapsed)
                                         (2 * cfg.common.automapPanSpeed));
 
         /// @todo Fix sensitivity for relative axes.
-        Vector2d const delta = rotate(Vector2d(panX[0], panY[0]) * panUnitsPerSecond * elapsed +
-                                          Vector2d(panX[1], panY[1]),
+        Vec2d const delta = rotate(Vec2d(panX[0], panY[0]) * panUnitsPerSecond * elapsed +
+                                          Vec2d(panX[1], panY[1]),
                                       degreeToRadian(d->angle));
         moveCameraOrigin(delta, true /*instant move*/);
     }
@@ -1605,7 +1605,7 @@ void AutomapWidget::tick(timespan_t elapsed)
         dfloat const angle = (d->rotate ? (followMob->angle - ANGLE_90) / (dfloat) ANGLE_MAX * 360
                                         : 0); /* $unifiedangles */
         coord_t origin[3]; Mobj_OriginSmoothed(followMob, origin);
-        setCameraOrigin(Vector2d(origin));
+        setCameraOrigin(Vec2d(origin));
         setCameraAngle(angle);
     }
 
@@ -1680,24 +1680,24 @@ void AutomapWidget::tick(timespan_t elapsed)
     dint const border         = .5f + UIAUTOMAP_BORDER * aspectScale;
 
     ddouble const ang         = degreeToRadian(d->angle);
-    Vector2d const origin     = cameraOrigin();
+    Vec2d const origin     = cameraOrigin();
 
-    auto const dimensions     = Vector2d(frameToMap(Rect_Width (&geometry())),
+    auto const dimensions     = Vec2d(frameToMap(Rect_Width (&geometry())),
                                          frameToMap(Rect_Height(&geometry()))) / 2;
 
-    auto const viewDimensions = Vector2d(frameToMap(Rect_Width (&geometry()) - border * 2),
+    auto const viewDimensions = Vec2d(frameToMap(Rect_Width (&geometry()) - border * 2),
                                          frameToMap(Rect_Height(&geometry()) - border * 2)) / 2;
 
-    d->topLeft     = origin + rotate(Vector2d(-viewDimensions.x,  viewDimensions.y), ang);
-    d->bottomRight = origin + rotate(Vector2d( viewDimensions.x, -viewDimensions.y), ang);
+    d->topLeft     = origin + rotate(Vec2d(-viewDimensions.x,  viewDimensions.y), ang);
+    d->bottomRight = origin + rotate(Vec2d( viewDimensions.x, -viewDimensions.y), ang);
     d->bottomLeft  = origin + rotate(-viewDimensions, ang);
     d->topRight    = origin + rotate( viewDimensions, ang);
 
 
     // Calculate the in-view AABB (rotation aware).
     initAABB (d->viewAABB, rotate(-dimensions, ang));
-    addToAABB(d->viewAABB, rotate(Vector2d( dimensions.x, -dimensions.y), ang));
-    addToAABB(d->viewAABB, rotate(Vector2d(-dimensions.x,  dimensions.y), ang));
+    addToAABB(d->viewAABB, rotate(Vec2d( dimensions.x, -dimensions.y), ang));
+    addToAABB(d->viewAABB, rotate(Vec2d(-dimensions.x,  dimensions.y), ang));
     addToAABB(d->viewAABB, rotate( dimensions, ang));
 
     // Translate to the camera origin.
@@ -1755,12 +1755,12 @@ void AutomapWidget::setCameraAngle(dfloat newAngle)
     d->angleTimer  = 0;
 }
 
-Vector2d AutomapWidget::cameraOrigin() const
+Vec2d AutomapWidget::cameraOrigin() const
 {
     return d->view;
 }
 
-void AutomapWidget::setCameraOrigin(Vector2d const &newOrigin, bool instantly)
+void AutomapWidget::setCameraOrigin(Vec2d const &newOrigin, bool instantly)
 {
     // Already at this target?
     if (newOrigin == d->targetView)
@@ -1843,7 +1843,7 @@ dint AutomapWidget::pointCount() const
     return d->points.count();
 }
 
-dint AutomapWidget::addPoint(Vector3d const &origin)
+dint AutomapWidget::addPoint(Vec3d const &origin)
 {
     d->points << new MarkedPoint(origin);
     dint pointNum = d->points.count() - 1;  // base 0.

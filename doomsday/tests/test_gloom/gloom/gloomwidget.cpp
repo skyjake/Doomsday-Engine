@@ -34,13 +34,13 @@ namespace gloom {
 
 DENG_GUI_PIMPL(GloomWidget)
 {
-    Matrix4f         modelView;
+    Mat4f         modelView;
     SafePtr<World>   world;
     Time             previousUpdateAt;
     User             user;
     User::InputState inputs;
     bool             mouseLook = false;
-    Vector2i         lastMousePos;
+    Vec2i         lastMousePos;
 
     Impl(Public *i) : Base(i)
     {}
@@ -54,12 +54,12 @@ DENG_GUI_PIMPL(GloomWidget)
 
     void updateModelView()
     {
-        modelView = Matrix4f::rotate(user.pitch(), Vector3f(1, 0, 0)) *
-                    Matrix4f::rotate(user.yaw(),   Vector3f(0, 1, 0)) *
-                    Matrix4f::translate(-user.position());
+        modelView = Mat4f::rotate(user.pitch(), Vec3f(1, 0, 0)) *
+                    Mat4f::rotate(user.yaw(),   Vec3f(0, 1, 0)) *
+                    Mat4f::translate(-user.position());
     }
 
-    Matrix4f viewMatrix() const
+    Mat4f viewMatrix() const
     {
         return modelView;
     }
@@ -85,7 +85,7 @@ User &GloomWidget::user()
     return d->user;
 }
 
-void GloomWidget::setCameraPosition(Vector3f const &pos)
+void GloomWidget::setCameraPosition(Vec3f const &pos)
 {
     d->user.setPosition(pos);
 }
@@ -211,16 +211,16 @@ bool GloomWidget::handleEvent(Event const &event)
 
         if (mouse.type() == Event::MouseWheel)
         {
-            d->user.turn(Vector2f(mouse.wheel())/10.f);
+            d->user.turn(Vec2f(mouse.wheel())/10.f);
             return true;
         }
 
         if (d->mouseLook)
         {
-            const Vector2i delta = mouse.pos() - d->lastMousePos;
+            const Vec2i delta = mouse.pos() - d->lastMousePos;
             d->lastMousePos = mouse.pos();
 
-            d->user.turn(Vector2f(delta)/7.f);
+            d->user.turn(Vec2f(delta)/7.f);
         }
 
         switch (handleMouseClick(event, MouseEvent::Left))
@@ -243,30 +243,30 @@ bool GloomWidget::handleEvent(Event const &event)
     return GuiWidget::handleEvent(event);
 }
 
-Vector3f GloomWidget::cameraPosition() const
+Vec3f GloomWidget::cameraPosition() const
 {
     return d->user.position();
 }
 
-Vector3f GloomWidget::cameraFront() const
+Vec3f GloomWidget::cameraFront() const
 {
-    Vector4f v = d->viewMatrix().inverse() * Vector4f(0, 0, -1, 0);
+    Vec4f v = d->viewMatrix().inverse() * Vec4f(0, 0, -1, 0);
     return v.normalize();
 }
 
-Vector3f GloomWidget::cameraUp() const
+Vec3f GloomWidget::cameraUp() const
 {
-    Vector3f v = d->viewMatrix().inverse() * Vector4f(0, 1, 0, 0);
+    Vec3f v = d->viewMatrix().inverse() * Vec4f(0, 1, 0, 0);
     return v.normalize();
 }
 
-Matrix4f GloomWidget::cameraProjection() const
+Mat4f GloomWidget::cameraProjection() const
 {
     const auto size = rule().size();
-    return Matrix4f::perspective(80, size.x / size.y, 0.1f, 2500.f);
+    return Mat4f::perspective(80, size.x / size.y, 0.1f, 2500.f);
 }
 
-Matrix4f GloomWidget::cameraModelView() const
+Mat4f GloomWidget::cameraModelView() const
 {
     return d->viewMatrix();
 }

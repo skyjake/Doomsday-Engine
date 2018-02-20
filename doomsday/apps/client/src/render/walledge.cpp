@@ -84,7 +84,7 @@ ddouble WallEdge::Event::distance() const
     return IHPlane::IIntercept::distance();
 }
 
-Vector3d WallEdge::Event::origin() const
+Vec3d WallEdge::Event::origin() const
 {
     return _owner->pOrigin() + _owner->pDirection() * distance();
 }
@@ -108,8 +108,8 @@ struct WallEdge::Impl : public IHPlane
     /// The half-plane which partitions the surface coordinate space.
     Partition hplane;
 
-    Vector3d pOrigin;
-    Vector3d pDirection;
+    Vec3d pOrigin;
+    Vec3d pDirection;
 
     coord_t lo = 0, hi = 0;
 
@@ -179,9 +179,9 @@ struct WallEdge::Impl : public IHPlane
     EventArray events;
     bool needSortEvents = false;
 
-    Vector2f materialOrigin;
+    Vec2f materialOrigin;
 
-    Vector3f normal;
+    Vec3f normal;
     bool needUpdateNormal = true;
 
     Impl() {}
@@ -353,7 +353,7 @@ struct WallEdge::Impl : public IHPlane
                     hi = lineSide.back().sector().ceiling().heightSmoothed();
                 }
 
-                materialOrigin = Vector2f(middle.originSmoothed().x, 0);
+                materialOrigin = Vec2f(middle.originSmoothed().x, 0);
 
                 // Perform clipping.
                 if (middle.hasMaterial()
@@ -410,10 +410,10 @@ struct WallEdge::Impl : public IHPlane
                 break; }
             }
         }
-        materialOrigin += Vector2f(::lineSideOffset(seg, edge), 0);
+        materialOrigin += Vec2f(::lineSideOffset(seg, edge), 0);
 
-        pOrigin    = Vector3d(self->origin(), lo);
-        pDirection = Vector3d(0, 0, hi - lo);
+        pOrigin    = Vec3d(self->origin(), lo);
+        pDirection = Vec3d(0, 0, hi - lo);
     }
 
     inline LineSideSegment &lineSideSegment()
@@ -641,7 +641,7 @@ struct WallEdge::Impl : public IHPlane
         // Add intecepts for neighbor planes?
         if(shouldInterceptNeighbors())
         {
-            configure(Partition(Vector2d(0, hi - lo)));
+            configure(Partition(Vec2d(0, hi - lo)));
 
             // Add intercepts (the "divisions") in ascending distance order.
             addNeighborIntercepts(lo, hi);
@@ -725,7 +725,7 @@ struct WallEdge::Impl : public IHPlane
         if(blendSurface && shouldSmoothNormals(surface, *blendSurface, angleDiff))
         {
             // Average normals.
-            normal = Vector3f(surface.normal() + blendSurface->normal()) / 2;
+            normal = Vec3f(surface.normal() + blendSurface->normal()) / 2;
         }
         else
         {
@@ -746,22 +746,22 @@ WallEdge::~WallEdge()
     recycleImpl(d);
 }
 
-Vector3d const &WallEdge::pOrigin() const
+Vec3d const &WallEdge::pOrigin() const
 {
     return d->pOrigin;
 }
 
-Vector3d const &WallEdge::pDirection() const
+Vec3d const &WallEdge::pDirection() const
 {
     return d->pDirection;
 }
 
-Vector2f WallEdge::materialOrigin() const
+Vec2f WallEdge::materialOrigin() const
 {
     return d->materialOrigin;
 }
 
-Vector3f WallEdge::normal() const
+Vec3f WallEdge::normal() const
 {
     if(d->needUpdateNormal)
     {

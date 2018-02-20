@@ -1607,7 +1607,7 @@ DENG2_PIMPL(DEDParser)
                                     if (ISLABEL("Levels"))
                                     {
                                         FINDBEGIN;
-                                        Vector2f levels;
+                                        Vec2f levels;
                                         for (int b = 0; b < 2; ++b)
                                         {
                                             float val;
@@ -1679,7 +1679,7 @@ DENG2_PIMPL(DEDParser)
                     if (ISLABEL("Scale"))
                     {
                         float scale; READFLT(scale);
-                        mdl["scale"] = new ArrayValue(Vector3f(scale, scale, scale));
+                        mdl["scale"] = new ArrayValue(Vec3f(scale, scale, scale));
                     }
                     else
                     RV_VEC_VAR("Scale XYZ", mdl["scale"], 3)
@@ -2669,7 +2669,7 @@ DENG2_PIMPL(DEDParser)
                             if (ISLABEL("Levels"))
                             {
                                 FINDBEGIN;
-                                Vector2f levels;
+                                Vec2f levels;
                                 for (int b = 0; b < 2; ++b)
                                 {
                                     float val;

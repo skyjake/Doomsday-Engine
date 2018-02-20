@@ -60,8 +60,8 @@ DENG2_PIMPL_NOREF(Interceptor)
 {
     traverser_t callback;
     void *context;
-    Vector2d from;
-    Vector2d to;
+    Vec2d from;
+    Vec2d to;
     dint flags; ///< @ref pathTraverseFlags
 
     world::Map *map = nullptr;
@@ -71,7 +71,7 @@ DENG2_PIMPL_NOREF(Interceptor)
     vec2d_t fromV1;
     vec2d_t directionV1;
 
-    Impl(traverser_t callback, Vector2d const &from, Vector2d const &to,
+    Impl(traverser_t callback, Vec2d const &from, Vec2d const &to,
              dint flags, void *context)
         : callback(callback)
         , context (context)
@@ -206,8 +206,8 @@ DENG2_PIMPL_NOREF(Interceptor)
         }
         else
         {
-            s1 = line.pointOnSide(Vector2d(FIX2FLT(origin[0]), FIX2FLT(origin[1]))) < 0;
-            s2 = line.pointOnSide(Vector2d(FIX2FLT(origin[0] + direction[0]),
+            s1 = line.pointOnSide(Vec2d(FIX2FLT(origin[0]), FIX2FLT(origin[1]))) < 0;
+            s2 = line.pointOnSide(Vec2d(FIX2FLT(origin[0] + direction[0]),
                                            FIX2FLT(origin[1] + direction[1]))) < 0;
         }
 
@@ -326,8 +326,8 @@ DENG2_PIMPL_NOREF(Interceptor)
     }
 };
 
-Interceptor::Interceptor(traverser_t callback, Vector2d const &from,
-    Vector2d const &to, dint flags, void *context)
+Interceptor::Interceptor(traverser_t callback, Vec2d const &from,
+    Vec2d const &to, dint flags, void *context)
     : d(new Impl(callback, from, to, flags, context))
 {}
 

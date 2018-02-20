@@ -72,7 +72,7 @@ public:
     public:
         virtual ~Event() {}
 
-        virtual de::Vector3d origin() const = 0;
+        virtual de::Vec3d origin() const = 0;
     };
 
 public:
@@ -82,9 +82,9 @@ public:
 
     virtual Event const &last() const = 0;
 
-    virtual de::Vector2f materialOrigin() const { return de::Vector2f(); }
+    virtual de::Vec2f materialOrigin() const { return de::Vec2f(); }
 
-    virtual de::Vector3f normal() const { return de::Vector3f(); }
+    virtual de::Vec3f normal() const { return de::Vec3f(); }
 };
 
 /**
@@ -97,12 +97,12 @@ public:
     {
     public:
         virtual ~Event() {}
-        virtual de::Vector3d origin() const = 0;
+        virtual de::Vec3d origin() const = 0;
         inline double z() const { return origin().z; }
     };
 
 public:
-    WorldEdge(de::Vector2d origin_) : AbstractEdge(), _origin(origin_)
+    WorldEdge(de::Vec2d origin_) : AbstractEdge(), _origin(origin_)
     {}
 
     virtual ~WorldEdge() {}
@@ -110,7 +110,7 @@ public:
     /**
      * Returns the X|Y origin of the edge in the map coordinate space.
      */
-    de::Vector2d const &origin() const { return _origin; }
+    de::Vec2d const &origin() const { return _origin; }
 
     virtual Event const &first() const = 0;
 
@@ -125,11 +125,11 @@ public:
     virtual EventIndex lastDivision() const { return InvalidIndex; }
 
 private:
-    de::Vector2d _origin;
+    de::Vec2d _origin;
 };
 
-typedef QVarLengthArray<de::Vector3f, 24> PositionBuffer;
-typedef QVarLengthArray<de::Vector2f, 24> TexCoordBuffer;
+typedef QVarLengthArray<de::Vec3f, 24> PositionBuffer;
+typedef QVarLengthArray<de::Vec2f, 24> TexCoordBuffer;
 
 /**
  * Abstract triangle strip geometry builder.

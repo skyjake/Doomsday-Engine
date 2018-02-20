@@ -195,7 +195,7 @@ void LogWidget::draw()
 
         MonospaceLogSinkFormatter::Lines lines = d->formatter.logEntryToTextLines(entry);
 
-        TextCanvas *buf = new TextCanvas(Vector2ui(pos.width(), lines.size()));
+        TextCanvas *buf = new TextCanvas(Vec2ui(pos.width(), lines.size()));
         d->cache.append(buf);
 
         TextCanvas::Char::Attribs attribs = (entry.flags() & LogEntry::Remote?
@@ -204,7 +204,7 @@ void LogWidget::draw()
         // Draw the text.
         for (int i = 0; i < lines.size(); ++i)
         {
-            buf->drawText(Vector2i(0, i), lines[i], attribs);
+            buf->drawText(Vec2i(0, i), lines[i], attribs);
         }
 
         // Adjust visible offset.
@@ -227,7 +227,7 @@ void LogWidget::draw()
         yBottom -= canvas->size().y;
         if (yBottom < buf.height())
         {
-            buf.draw(*canvas, Vector2i(0, yBottom));
+            buf.draw(*canvas, Vec2i(0, yBottom));
         }
     }
 
@@ -241,7 +241,7 @@ void LogWidget::draw()
         int const avail = buf.height() - indHeight;
         for (int i = 0; i < indHeight; ++i)
         {
-            buf.put(Vector2i(buf.width() - 1, i + avail - indPos * avail),
+            buf.put(Vec2i(buf.width() - 1, i + avail - indPos * avail),
                     TextCanvas::Char(':', TextCanvas::Char::Reverse));
         }
     }

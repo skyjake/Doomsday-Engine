@@ -80,21 +80,21 @@ namespace internal
                                          patchId, text);
     }
 
-    static void drawChar(QChar const ch, Vector2i const &origin,
+    static void drawChar(QChar const ch, Vec2i const &origin,
                          int alignFlags = ALIGN_TOPLEFT, int textFlags = DTF_NO_TYPEIN)
     {
         const Point2Raw rawOrigin = {{{origin.x, origin.y}}};
         FR_DrawChar3(ch.toLatin1(), &rawOrigin, alignFlags, textFlags);
     }
 
-    static void drawText(String const &text, Vector2i const &origin,
+    static void drawText(String const &text, Vec2i const &origin,
                          int alignFlags = ALIGN_TOPLEFT, int textFlags = DTF_NO_TYPEIN)
     {
         const Point2Raw rawOrigin = {{{origin.x, origin.y}}};
         FR_DrawText3(text.toUtf8().constData(), &rawOrigin, alignFlags, textFlags);
     }
 
-    static void drawPercent(int percent, Vector2i const &origin)
+    static void drawPercent(int percent, Vec2i const &origin)
     {
         if(percent < 0) return;
         drawChar('%', origin, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
@@ -104,7 +104,7 @@ namespace internal
     /**
      * Display map completion time and par, or "sucks" message if overflow.
      */
-    static void drawTime(Vector2i origin, int t)
+    static void drawTime(Vec2i origin, int t)
     {
         if(t < 0) return;
 
@@ -121,7 +121,7 @@ namespace internal
                 drawText(String::number(minutes), origin, ALIGN_TOPRIGHT);
             }
 
-            drawText(String("%1").arg(seconds, 2, 10, QChar('0')), origin + Vector2i(FR_CharWidth(':'), 0));
+            drawText(String("%1").arg(seconds, 2, 10, QChar('0')), origin + Vec2i(FR_CharWidth(':'), 0));
 
             return;
         }
@@ -130,7 +130,7 @@ namespace internal
         patchinfo_t info;
         if(!R_GetPatchInfo(pSucks, &info)) return;
 
-        WI_DrawPatch(pSucks, patchReplacementText(pSucks), Vector2i(origin.x - info.geometry.size.width, origin.y), ALIGN_TOPLEFT, 0, DTF_NO_EFFECTS);
+        WI_DrawPatch(pSucks, patchReplacementText(pSucks), Vec2i(origin.x - info.geometry.size.width, origin.y), ALIGN_TOPLEFT, 0, DTF_NO_EFFECTS);
     }
 }
 
@@ -174,11 +174,11 @@ static void drawBackground()
 {
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
-    GL_DrawPatch(pBackground, Vector2i(0, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
+    GL_DrawPatch(pBackground, Vec2i(0, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static void drawFinishedTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TITLEY))
+static void drawFinishedTitle(Vec2i origin = Vec2i(SCREENWIDTH / 2, WI_TITLEY))
 {
     patchid_t patchId = 0;
 
@@ -215,7 +215,7 @@ static void drawFinishedTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static void drawEnteringTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TITLEY))
+static void drawEnteringTitle(Vec2i origin = Vec2i(SCREENWIDTH / 2, WI_TITLEY))
 {
     patchid_t patchId = 0;
 
@@ -373,7 +373,7 @@ static void updateDeathmatchStats()
     }
 }
 
-static void drawDeathmatchStats(Vector2i origin = Vector2i(DM_MATRIXX + DM_SPACINGX, DM_MATRIXY))
+static void drawDeathmatchStats(Vec2i origin = Vec2i(DM_MATRIXX + DM_SPACINGX, DM_MATRIXY))
 {
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
@@ -386,11 +386,11 @@ static void drawDeathmatchStats(Vector2i origin = Vector2i(DM_MATRIXX + DM_SPACI
     patchinfo_t info;
     if(R_GetPatchInfo(pTotal, &info))
     {
-        WI_DrawPatch(pTotal, patchReplacementText(pTotal), Vector2i(DM_TOTALSX - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY + 10));
+        WI_DrawPatch(pTotal, patchReplacementText(pTotal), Vec2i(DM_TOTALSX - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY + 10));
     }
 
-    WI_DrawPatch(pKillers, patchReplacementText(pKillers), Vector2i(DM_KILLERSX, DM_KILLERSY));
-    WI_DrawPatch(pVictims, patchReplacementText(pVictims), Vector2i(DM_VICTIMSX, DM_VICTIMSY));
+    WI_DrawPatch(pKillers, patchReplacementText(pKillers), Vec2i(DM_KILLERSX, DM_KILLERSY));
+    WI_DrawPatch(pVictims, patchReplacementText(pVictims), Vec2i(DM_VICTIMSX, DM_VICTIMSY));
 
     for(int i = 0; i < NUMTEAMS; ++i)
     {
@@ -403,13 +403,13 @@ static void drawDeathmatchStats(Vector2i origin = Vector2i(DM_MATRIXX + DM_SPACI
 
             patchinfo_t info;
             R_GetPatchInfo(patchId, &info);
-            WI_DrawPatch(patchId, replacement, Vector2i(origin.x - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY));
-            WI_DrawPatch(patchId, replacement, Vector2i(DM_MATRIXX - info.geometry.size.width / 2, origin.y));
+            WI_DrawPatch(patchId, replacement, Vec2i(origin.x - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY));
+            WI_DrawPatch(patchId, replacement, Vec2i(DM_MATRIXX - info.geometry.size.width / 2, origin.y));
 
             /*if(i == inPlayerTeam)
             {
-                WI_DrawPatch(pFaceDead,  Hu_ChoosePatchReplacement(pFaceDead ), Vector2i(origin.x - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY));
-                WI_DrawPatch(pFaceAlive, Hu_ChoosePatchReplacement(pFaceAlive), Vector2i(DM_MATRIXX - info.width / 2, origin.y));
+                WI_DrawPatch(pFaceDead,  Hu_ChoosePatchReplacement(pFaceDead ), Vec2i(origin.x - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY));
+                WI_DrawPatch(pFaceAlive, Hu_ChoosePatchReplacement(pFaceAlive), Vec2i(DM_MATRIXX - info.width / 2, origin.y));
             }*/
 
             // If more than 1 member, show the member count.
@@ -418,8 +418,8 @@ static void drawDeathmatchStats(Vector2i origin = Vector2i(DM_MATRIXX + DM_SPACI
                 String const count = String::number(teamInfo[i].playerCount);
 
                 FR_SetFont(FID(GF_FONTA));
-                drawText(count, Vector2i(origin.x   - info.geometry.size.width / 2 + 1, DM_MATRIXY - WI_SPACINGY + info.geometry.size.height - 8));
-                drawText(count, Vector2i(DM_MATRIXX - info.geometry.size.width / 2 + 1, origin.y   + info.geometry.size.height - 8));
+                drawText(count, Vec2i(origin.x   - info.geometry.size.width / 2 + 1, DM_MATRIXY - WI_SPACINGY + info.geometry.size.height - 8));
+                drawText(count, Vec2i(DM_MATRIXX - info.geometry.size.width / 2 + 1, origin.y   + info.geometry.size.height - 8));
             }
         }
         else
@@ -431,8 +431,8 @@ static void drawDeathmatchStats(Vector2i origin = Vector2i(DM_MATRIXX + DM_SPACI
 
             patchinfo_t info;
             R_GetPatchInfo(patchId, &info);
-            WI_DrawPatch(patchId, replacement, Vector2i(origin.x   - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY));
-            WI_DrawPatch(patchId, replacement, Vector2i(DM_MATRIXX - info.geometry.size.width / 2, origin.y));
+            WI_DrawPatch(patchId, replacement, Vec2i(origin.x   - info.geometry.size.width / 2, DM_MATRIXY - WI_SPACINGY));
+            WI_DrawPatch(patchId, replacement, Vec2i(DM_MATRIXX - info.geometry.size.width / 2, origin.y));
         }
 
         origin.x += DM_SPACINGX;
@@ -454,11 +454,11 @@ static void drawDeathmatchStats(Vector2i origin = Vector2i(DM_MATRIXX + DM_SPACI
             {
                 if(teamInfo[k].playerCount > 0)
                 {
-                    drawText(String::number(dmFrags[i][k]), origin + Vector2i(w, 0), ALIGN_TOPRIGHT);
+                    drawText(String::number(dmFrags[i][k]), origin + Vec2i(w, 0), ALIGN_TOPRIGHT);
                 }
                 origin.x += DM_SPACINGX;
             }
-            drawText(String::number(dmTotals[i]), Vector2i(DM_TOTALSX + w, origin.y), ALIGN_TOPRIGHT);
+            drawText(String::number(dmTotals[i]), Vec2i(DM_TOTALSX + w, origin.y), ALIGN_TOPRIGHT);
         }
 
         origin.y += WI_SPACINGY;
@@ -641,19 +641,19 @@ static void drawNetgameStats()
     
     // Draw stat titles (top line).
     R_GetPatchInfo(pKills, &info);
-    WI_DrawPatch(pKills, patchReplacementText(pKills), Vector2i(ORIGINX + NG_SPACINGX - info.geometry.size.width), NG_STATSY);
+    WI_DrawPatch(pKills, patchReplacementText(pKills), Vec2i(ORIGINX + NG_SPACINGX - info.geometry.size.width), NG_STATSY);
     int y = NG_STATSY + info.geometry.size.height;
 
     R_GetPatchInfo(pItems, &info);
-    WI_DrawPatch(pItems, patchReplacementText(pItems), Vector2i(ORIGINX + 2 * NG_SPACINGX - info.geometry.size.width), NG_STATSY);
+    WI_DrawPatch(pItems, patchReplacementText(pItems), Vec2i(ORIGINX + 2 * NG_SPACINGX - info.geometry.size.width), NG_STATSY);
 
     R_GetPatchInfo(pSecret, &info);
-    WI_DrawPatch(pSecret, patchReplacementText(pSecret), Vector2i(ORIGINX + 3 * NG_SPACINGX - info.geometry.size.width), NG_STATSY);
+    WI_DrawPatch(pSecret, patchReplacementText(pSecret), Vec2i(ORIGINX + 3 * NG_SPACINGX - info.geometry.size.width), NG_STATSY);
 
     if(doFrags)
     {
         R_GetPatchInfo(pFrags, &info);
-        WI_DrawPatch(pFrags, patchReplacementText(pFrags), Vector2i(ORIGINX + 4 * NG_SPACINGX - info.geometry.size.width), NG_STATSY);
+        WI_DrawPatch(pFrags, patchReplacementText(pFrags), Vec2i(ORIGINX + 4 * NG_SPACINGX - info.geometry.size.width), NG_STATSY);
     }
 
     // Draw stats.
@@ -670,14 +670,14 @@ static void drawNetgameStats()
         {
             patchid_t ptb = pTeamBackgrounds[i];
             R_GetPatchInfo(ptb, &info);
-            WI_DrawPatch(ptb, patchReplacementText(ptb), Vector2i(x - info.geometry.size.width, y));
+            WI_DrawPatch(ptb, patchReplacementText(ptb), Vec2i(x - info.geometry.size.width, y));
         }
 
         // If more than 1 member, show the member count.
         if(1 != teamInfo[i].playerCount)
         {
             drawText(String::number(teamInfo[i].playerCount),
-                     Vector2i(x - info.geometry.size.width + 1,
+                     Vec2i(x - info.geometry.size.width + 1,
                               y + info.geometry.size.height - 8), ALIGN_TOPLEFT);
         }
 
@@ -690,18 +690,18 @@ static void drawNetgameStats()
         //x += NG_SPACINGX;
 
         FR_SetFont(FID(GF_SMALL));
-        drawPercent(cntKills[1], Vector2i(x - pwidth, y + 10));
+        drawPercent(cntKills[1], Vec2i(x - pwidth, y + 10));
         x += NG_SPACINGX;
 
-        drawPercent(cntItems[i], Vector2i(x - pwidth, y + 10));
+        drawPercent(cntItems[i], Vec2i(x - pwidth, y + 10));
         x += NG_SPACINGX;
 
-        drawPercent(cntSecret[i], Vector2i(x - pwidth, y + 10));
+        drawPercent(cntSecret[i], Vec2i(x - pwidth, y + 10));
         x += NG_SPACINGX;
 
         if(doFrags)
         {
-            drawText(String::number(cntFrags[i]), Vector2i(x, y + 10), ALIGN_TOPRIGHT);
+            drawText(String::number(cntFrags[i]), Vec2i(x, y + 10), ALIGN_TOPRIGHT);
         }
 
         y += WI_SPACINGY;
@@ -723,30 +723,30 @@ static void drawSinglePlayerStats()
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
-    WI_DrawPatch(pKills, patchReplacementText(pKills), Vector2i(SP_STATSX, SP_STATSY));
-    WI_DrawPatch(pItems, patchReplacementText(pItems), Vector2i(SP_STATSX, SP_STATSY + lh));
-    WI_DrawPatch(pSecretSP, patchReplacementText(pSecretSP), Vector2i(SP_STATSX, SP_STATSY + 2 * lh));
-    WI_DrawPatch(pTime, patchReplacementText(pTime), Vector2i(SP_TIMEX, SP_TIMEY));
+    WI_DrawPatch(pKills, patchReplacementText(pKills), Vec2i(SP_STATSX, SP_STATSY));
+    WI_DrawPatch(pItems, patchReplacementText(pItems), Vec2i(SP_STATSX, SP_STATSY + lh));
+    WI_DrawPatch(pSecretSP, patchReplacementText(pSecretSP), Vec2i(SP_STATSX, SP_STATSY + 2 * lh));
+    WI_DrawPatch(pTime, patchReplacementText(pTime), Vec2i(SP_TIMEX, SP_TIMEY));
     if(wbs->parTime != -1)
     {
-        WI_DrawPatch(pPar, patchReplacementText(pPar), Vector2i(SCREENWIDTH / 2 + SP_TIMEX, SP_TIMEY));
+        WI_DrawPatch(pPar, patchReplacementText(pPar), Vec2i(SCREENWIDTH / 2 + SP_TIMEX, SP_TIMEY));
     }
 
     {   // Draw stat percentages
         int statsXAdjusted  = SCREENWIDTH - SP_STATSX;
-        drawPercent(cntKills[0],  Vector2i(statsXAdjusted, SP_STATSY));
-        drawPercent(cntItems[0],  Vector2i(statsXAdjusted, SP_STATSY + lh));
-        drawPercent(cntSecret[0], Vector2i(statsXAdjusted, SP_STATSY + (2 * lh)));
+        drawPercent(cntKills[0],  Vec2i(statsXAdjusted, SP_STATSY));
+        drawPercent(cntItems[0],  Vec2i(statsXAdjusted, SP_STATSY + lh));
+        drawPercent(cntSecret[0], Vec2i(statsXAdjusted, SP_STATSY + (2 * lh)));
     }
     
     if(cntTime >= 0) // Draw time stats
     {
-        drawTime(Vector2i(SCREENWIDTH / 2 - SP_TIMEX, SP_TIMEY), cntTime / TICRATE);
+        drawTime(Vec2i(SCREENWIDTH / 2 - SP_TIMEX, SP_TIMEY), cntTime / TICRATE);
     }
 
     if(wbs->parTime != -1 && cntPar >= 0) // Draw par time stats
     {
-        drawTime(Vector2i(SCREENWIDTH - SP_TIMEX, SP_TIMEY), cntPar / TICRATE);
+        drawTime(Vec2i(SCREENWIDTH - SP_TIMEX, SP_TIMEY), cntPar / TICRATE);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);

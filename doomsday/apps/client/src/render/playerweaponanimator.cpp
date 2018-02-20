@@ -49,7 +49,7 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
     void setupAsset(String const &identifier)
     {
         this->identifier = identifier;
-        angleOffset = Vector2f();
+        angleOffset = Vec2f();
 
         if (animator)
         {
@@ -123,7 +123,7 @@ void PlayerWeaponAnimator::setupVisPSprite(vispsprite_t &spr) const
     float bob[2] = { *(float *) gx.GetPointer(DD_PSPRITE_BOB_X),
                      *(float *) gx.GetPointer(DD_PSPRITE_BOB_Y) };
 
-    Vector2f angles(
+    Vec2f angles(
     /* yaw: */   bob[0] * weaponOffsetScale,
     /* pitch: */ (32 - bob[1]) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f);
 

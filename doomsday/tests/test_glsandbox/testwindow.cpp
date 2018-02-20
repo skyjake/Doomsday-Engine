@@ -55,8 +55,8 @@ DENG2_OBSERVES(Bank, Load)
     ImageBank imageBank;
     Drawable ob;
     Drawable atlasOb;
-    Matrix4f modelMatrix;
-    Matrix4f projMatrix;
+    Mat4f modelMatrix;
+    Mat4f projMatrix;
     GLUniform uMvpMatrix;
     GLUniform uColor;
     GLUniform uTime;
@@ -98,8 +98,8 @@ DENG2_OBSERVES(Bank, Load)
         self().audienceForResize() += this;
         Clock::get().audienceForTimeChange() += this;
 
-        uColor = Vector4f(.5f, .75f, .5f, 1);
-        atlas->setTotalSize(Vector2ui(256, 256));
+        uColor = Vec4f(.5f, .75f, .5f, 1);
+        atlas->setTotalSize(Vec2ui(256, 256));
         atlas->setBorderSize(2);
         atlas->setMagFilter(gl::Nearest);
 
@@ -155,7 +155,7 @@ DENG2_OBSERVES(Bank, Load)
         uTex = testpic;
 
         // Prepare the custom target.
-        frameTex.setUndefinedImage(Vector2ui(512, 256), Image::RGBA_8888);
+        frameTex.setUndefinedImage(Vec2ui(512, 256), Image::RGBA_8888);
         frameTarget.reset(new GLFramebuffer(frameTex));
 
         // 3D cube.
@@ -163,14 +163,14 @@ DENG2_OBSERVES(Bank, Load)
         ob.addBuffer(buf);
 
         VertexBuf::Type verts[8] = {
-            { Vector3f(-1, -1, -1), Vector2f(0, 0), Vector4f(1, 1, 1, 1) },
-            { Vector3f( 1, -1, -1), Vector2f(1, 0), Vector4f(1, 1, 0, 1) },
-            { Vector3f( 1,  1, -1), Vector2f(1, 1), Vector4f(1, 0, 0, 1) },
-            { Vector3f(-1,  1, -1), Vector2f(0, 1), Vector4f(0, 0, 1, 1) },
-            { Vector3f(-1, -1,  1), Vector2f(1, 1), Vector4f(1, 1, 1, 1) },
-            { Vector3f( 1, -1,  1), Vector2f(0, 1), Vector4f(1, 1, 0, 1) },
-            { Vector3f( 1,  1,  1), Vector2f(0, 0), Vector4f(1, 0, 0, 1) },
-            { Vector3f(-1,  1,  1), Vector2f(1, 0), Vector4f(0, 0, 1, 1) }
+            { Vec3f(-1, -1, -1), Vec2f(0, 0), Vec4f(1, 1, 1, 1) },
+            { Vec3f( 1, -1, -1), Vec2f(1, 0), Vec4f(1, 1, 0, 1) },
+            { Vec3f( 1,  1, -1), Vec2f(1, 1), Vec4f(1, 0, 0, 1) },
+            { Vec3f(-1,  1, -1), Vec2f(0, 1), Vec4f(0, 0, 1, 1) },
+            { Vec3f(-1, -1,  1), Vec2f(1, 1), Vec4f(1, 1, 1, 1) },
+            { Vec3f( 1, -1,  1), Vec2f(0, 1), Vec4f(1, 1, 0, 1) },
+            { Vec3f( 1,  1,  1), Vec2f(0, 0), Vec4f(1, 0, 0, 1) },
+            { Vec3f(-1,  1,  1), Vec2f(1, 0), Vec4f(0, 0, 1, 1) }
         };
 
         buf->setVertices(verts, 8, gl::Static);
@@ -223,10 +223,10 @@ DENG2_OBSERVES(Bank, Load)
         // The atlas objects.
         Vertex2Buf *buf2 = new Vertex2Buf;
         Vertex2Buf::Type verts2[4] = {
-            { Vector2f(0,   0),   Vector2f(0, 0) },
-            { Vector2f(100, 0),   Vector2f(1, 0) },
-            { Vector2f(100, 100), Vector2f(1, 1) },
-            { Vector2f(0,   100), Vector2f(0, 1) }
+            { Vec2f(0,   0),   Vec2f(0, 0) },
+            { Vec2f(100, 0),   Vec2f(1, 0) },
+            { Vec2f(100, 100), Vec2f(1, 1) },
+            { Vec2f(0,   100), Vec2f(0, 1) }
         };
         buf2->setVertices(gl::TriangleFan, verts2, 4, gl::Static);
         atlasOb.addBuffer(buf2);
@@ -250,7 +250,7 @@ DENG2_OBSERVES(Bank, Load)
                 << uMvpMatrix // note: uniforms shared between programs
                 << uTex;
 
-        self().framebuffer().setClearColor(Vector4f(.2f, .2f, .2f, 0));
+        self().framebuffer().setClearColor(Vec4f(.2f, .2f, .2f, 0));
 
         modelProgram.build(
                     ByteRefArray::fromCStr(
@@ -327,22 +327,22 @@ DENG2_OBSERVES(Bank, Load)
         {
         case TestRenderToTexture:
             // 3D projection.
-            projMatrix = Matrix4f::perspective(40, float(self().pixelWidth())/float(self().pixelHeight())) *
-                         Matrix4f::lookAt(Vector3f(), Vector3f(0, 0, -5), Vector3f(0, -1, 0));
+            projMatrix = Mat4f::perspective(40, float(self().pixelWidth())/float(self().pixelHeight())) *
+                         Mat4f::lookAt(Vec3f(), Vec3f(0, 0, -5), Vec3f(0, -1, 0));
             break;
 
         case TestDynamicAtlas:
             // 2D projection.
-            projMatrix = Matrix4f::ortho(-self().pointWidth()/2,  self().pointWidth()/2,
+            projMatrix = Mat4f::ortho(-self().pointWidth()/2,  self().pointWidth()/2,
                                          -self().pointHeight()/2, self().pointHeight()/2) *
-                         Matrix4f::scale(self().pointHeight()/150.f) *
-                         Matrix4f::translate(Vector2f(-50, -50));
+                         Mat4f::scale(self().pointHeight()/150.f) *
+                         Mat4f::translate(Vec2f(-50, -50));
             break;
 
         case TestModel:
             // 3D projection.
-            projMatrix = Matrix4f::perspective(40, float(self().pixelWidth())/float(self().pixelHeight())) *
-                         Matrix4f::lookAt(Vector3f(), Vector3f(0, -3, 0), Vector3f(0, 0, 1));
+            projMatrix = Mat4f::perspective(40, float(self().pixelWidth())/float(self().pixelHeight())) *
+                         Mat4f::lookAt(Vec3f(), Vec3f(0, -3, 0), Vec3f(0, 0, 1));
             break;
         }
     }
@@ -402,14 +402,14 @@ DENG2_OBSERVES(Bank, Load)
         // The left cube.
         uTex = testpic;
         uMvpMatrix = projMatrix *
-                     Matrix4f::translate(Vector3f(-1.5f, 0, 0)) *
+                     Mat4f::translate(Vec3f(-1.5f, 0, 0)) *
                      modelMatrix;
         ob.draw();
 
         // The right cube.
         uTex = frameTex;
         uMvpMatrix = projMatrix *
-                     Matrix4f::translate(Vector3f(1.5f, 0, 0)) *
+                     Mat4f::translate(Vec3f(1.5f, 0, 0)) *
                      modelMatrix;
         ob.draw();
     }
@@ -455,16 +455,16 @@ DENG2_OBSERVES(Bank, Load)
         switch (mode)
         {
         case TestRenderToTexture:
-            modelMatrix = Matrix4f::rotate(std::cos(uTime.toFloat()/2) * 45, Vector3f(1, 0, 0)) *
-                          Matrix4f::rotate(std::sin(uTime.toFloat()/3) * 60, Vector3f(0, 1, 0));
+            modelMatrix = Mat4f::rotate(std::cos(uTime.toFloat()/2) * 45, Vec3f(1, 0, 0)) *
+                          Mat4f::rotate(std::sin(uTime.toFloat()/3) * 60, Vec3f(0, 1, 0));
             break;
 
         case TestModel:
-            modelMatrix = Matrix4f::translate(Vector3f(0, std::cos(uTime.toFloat()/2.5f), 0)) *
-                          Matrix4f::rotate(std::cos(uTime.toFloat()/2) * 45, Vector3f(1, 0, 0)) *
-                          Matrix4f::rotate(std::sin(uTime.toFloat()/3) * 60, Vector3f(0, 1, 0)) *
-                          Matrix4f::scale(3.f / de::max(model.dimensions().x, model.dimensions().y, model.dimensions().z)) *
-                          Matrix4f::translate(-model.midPoint());
+            modelMatrix = Mat4f::translate(Vec3f(0, std::cos(uTime.toFloat()/2.5f), 0)) *
+                          Mat4f::rotate(std::cos(uTime.toFloat()/2) * 45, Vec3f(1, 0, 0)) *
+                          Mat4f::rotate(std::sin(uTime.toFloat()/3) * 60, Vec3f(0, 1, 0)) *
+                          Mat4f::scale(3.f / de::max(model.dimensions().x, model.dimensions().y, model.dimensions().z)) *
+                          Mat4f::translate(-model.midPoint());
             break;
 
         case TestDynamicAtlas:

@@ -43,10 +43,10 @@ DENG2_PIMPL_NOREF(GLDrawQueue)
 
     /// @todo These uniforms should be configurable.
 
-    Vector4f defaultColor;
+    Vec4f defaultColor;
     std::unique_ptr<GLUniform> uBatchColors;
 
-    Vector4f defaultScissor;
+    Vec4f defaultScissor;
     GLUniform uBatchScissors { "uScissorRect", GLUniform::Vec4Array, GLShader::MAX_BATCH_UNIFORMS };
 
     float defaultSaturation = 1.f;
@@ -128,7 +128,7 @@ int GLDrawQueue::batchIndex() const
     return int(d->batchIndex);
 }
 
-void GLDrawQueue::setBatchColor(Vector4f const &color)
+void GLDrawQueue::setBatchColor(Vec4f const &color)
 {
     if (d->uBatchColors)
     {
@@ -143,7 +143,7 @@ void GLDrawQueue::setBatchSaturation(float saturation)
     d->defaultSaturation = saturation;
 }
 
-void GLDrawQueue::setBatchScissorRect(Vector4f const &scissor)
+void GLDrawQueue::setBatchScissorRect(Vec4f const &scissor)
 {
     d->uBatchScissors.set(d->batchIndex, scissor);
     d->defaultScissor = scissor;

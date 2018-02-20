@@ -94,7 +94,7 @@ public:
 
     FontLineWrapping const &wraps() const;
 
-    Vector2ui wrappedSize() const;
+    Vec2ui wrappedSize() const;
     String text() const;
     bool isBeingWrapped() const;
     Font const &font() const;

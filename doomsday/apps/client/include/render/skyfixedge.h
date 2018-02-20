@@ -49,7 +49,7 @@ public:
 
         double distance() const;
 
-        Vector3d origin() const;
+        Vec3d origin() const;
 
     private:
         DENG2_PRIVATE(d)
@@ -62,10 +62,10 @@ public:
      */
     SkyFixEdge(HEdge &hedge, FixType fixType, int edge, float materialOffsetS = 0);
 
-    Vector3d const &pOrigin() const;
-    Vector3d const &pDirection() const;
+    Vec3d const &pOrigin() const;
+    Vec3d const &pDirection() const;
 
-    Vector2f materialOrigin() const;
+    Vec2f materialOrigin() const;
 
     /// Implement IEdge.
     bool isValid() const;

@@ -375,7 +375,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             // Package icons should always use their original colors.
             if (_iconId)
             {
-                icon().setImageColor(Vector4f(1, 1, 1, 1));
+                icon().setImageColor(Vec4f(1, 1, 1, 1));
             }
         }
 

@@ -49,7 +49,7 @@ public Font::RichFormat::IStyle
     TextDrawable glText;
     GuiVertexBuilder bgVerts;
     GuiVertexBuilder textVerts;
-    Matrix4f scrollMvpMatrix;
+    Mat4f scrollMvpMatrix;
 
     Impl(Public *i) : Base(i)
     {
@@ -188,7 +188,7 @@ public Font::RichFormat::IStyle
             if (!glText.isBeingWrapped() && progress->isVisible())
             {
                 contentMaxWidth->set(de::max(contentMaxWidth->value(), float(glText.wrappedSize().x)));
-                self().setContentSize(Vector2ui(contentMaxWidth->valuei(), glText.wrappedSize().y));
+                self().setContentSize(Vec2ui(contentMaxWidth->valuei(), glText.wrappedSize().y));
                 progress->hide();
             }
 
@@ -220,14 +220,14 @@ public Font::RichFormat::IStyle
                 glText.update(); // alloc visible lines
 
                 textVerts.clear();
-                glText.makeVertices(textVerts, Vector2i(0, 0), ui::AlignLeft);
+                glText.makeVertices(textVerts, Vec2i(0, 0), ui::AlignLeft);
 
                 // Update content size to match the generated vertices exactly.
                 self().setContentWidth(glText.verticesMaxWidth());
             }
 
             scrollMvpMatrix = root().projMatrix2D() *
-                    Matrix4f::translate(Vector2f(self().contentRule().left().valuei(),
+                    Mat4f::translate(Vec2f(self().contentRule().left().valuei(),
                                                  self().contentRule().top().valuei()));
         }
 
@@ -239,7 +239,7 @@ public Font::RichFormat::IStyle
     {
         updateGeometry();
 
-        Vector4f const color = Vector4f(1, 1, 1, self().visibleOpacity());
+        Vec4f const color = Vec4f(1, 1, 1, self().visibleOpacity());
 
         auto &painter = root().painter();
         if (bgVerts)
@@ -282,7 +282,7 @@ void DocumentWidget::setText(String const &styledText)
         d->progress->show();
 
         int indSize = rule("document.progress").valuei();
-        setContentSize(Vector2i(indSize, indSize));
+        setContentSize(Vec2i(indSize, indSize));
         d->contentMaxWidth->set(indSize);
 
         d->styledText = styledText;

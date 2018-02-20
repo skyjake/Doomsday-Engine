@@ -64,7 +64,7 @@ public:
     void glInit();
     void glDeinit();
     void update();
-    void draw(de::Matrix4f const &mvpMatrix, de::GLTexture const &frame);
+    void draw(de::Mat4f const &mvpMatrix, de::GLTexture const &frame);
 
 public:
     static void consoleRegister();

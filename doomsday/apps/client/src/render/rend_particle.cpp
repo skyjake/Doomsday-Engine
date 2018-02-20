@@ -401,12 +401,12 @@ static dint listVisibleParticles(world::Map &map)
 }
 
 static void setupModelParamsForParticle(vissprite_t &spr, ParticleInfo const *pinfo,
-    GeneratorParticleStage const *st, ded_ptcstage_t const *dst, Vector3f const &origin,
+    GeneratorParticleStage const *st, ded_ptcstage_t const *dst, Vec3f const &origin,
     dfloat dist, dfloat size, dfloat mark, dfloat alpha)
 {
     drawmodelparams_t &parm = *VS_MODEL(&spr);
 
-    spr.pose.origin     = Vector3d(origin.xz(), spr.pose.topZ = origin.y);
+    spr.pose.origin     = Vec3d(origin.xz(), spr.pose.topZ = origin.y);
     spr.pose.distance   = dist;
     spr.pose.extraScale = size;  // Extra scaling factor.
 
@@ -459,7 +459,7 @@ static void setupModelParamsForParticle(vissprite_t &spr, ParticleInfo const *pi
 #if 0
         if(useBias && map.hasLightGrid())
         {
-            Vector4f color = map.lightGrid().evaluate(spr.pose.origin);
+            Vec4f color = map.lightGrid().evaluate(spr.pose.origin);
             // Apply light range compression.
             for(dint i = 0; i < 3; ++i)
             {
@@ -472,7 +472,7 @@ static void setupModelParamsForParticle(vissprite_t &spr, ParticleInfo const *pi
         else
 #endif
         {
-            Vector4f const color = pinfo->bspLeaf->subspace().subsector().as<world::ClientSubsector>()
+            Vec4f const color = pinfo->bspLeaf->subspace().subsector().as<world::ClientSubsector>()
                                        .lightSourceColorfIntensity();
 
             dfloat lightLevel = color.w;
@@ -508,14 +508,14 @@ static void setupModelParamsForParticle(vissprite_t &spr, ParticleInfo const *pi
  *
  * @param unitVect  Unit vector is written here.
  */
-static Vector2f lineUnitVector(Line const &line)
+static Vec2f lineUnitVector(Line const &line)
 {
     ddouble len = M_ApproxDistance(line.direction().x, line.direction().y);
     if(len)
     {
         return line.direction() / len;
     }
-    return Vector2f();
+    return Vec2f();
 }
 
 static void drawParticles(dint rtype, bool withBlend)
@@ -524,8 +524,8 @@ static void drawParticles(dint rtype, bool withBlend)
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     viewdata_t const *viewData = &viewPlayer->viewport();
-    Vector3f const leftoff     = viewData->upVec + viewData->sideVec;
-    Vector3f const rightoff    = viewData->upVec - viewData->sideVec;
+    Vec3f const leftoff     = viewData->upVec + viewData->sideVec;
+    Vec3f const rightoff    = viewData->upVec - viewData->sideVec;
 
     // Should we use a texture?
     DGLuint tex = 0;
@@ -637,7 +637,7 @@ static void drawParticles(dint rtype, bool withBlend)
         // Infinitely small?
         if(!size) continue;
 
-        Vector4f color = de::lerp(Vector4f(stDef->color), Vector4f(nextStDef->color), inter);
+        Vec4f color = de::lerp(Vec4f(stDef->color), Vec4f(nextStDef->color), inter);
 
         if (!st->flags.testFlag(GeneratorParticleStage::Bright) && !levelFullBright)
         {
@@ -647,7 +647,7 @@ static void drawParticles(dint rtype, bool withBlend)
             {
                 dfloat const intensity = subspace->subsector().as<world::ClientSubsector>()
                                             .lightSourceIntensity();
-                color *= Vector4f(intensity, intensity, intensity, 1);
+                color *= Vec4f(intensity, intensity, intensity, 1);
             }
         }
 
@@ -700,11 +700,11 @@ static void drawParticles(dint rtype, bool withBlend)
                 flatOnWall = true;
         }
 
-        Vector3f center = gen->particleOrigin(pinfo).xzy();
+        Vec3f center = gen->particleOrigin(pinfo).xzy();
 
         if(!flatOnPlane && !flatOnWall)
         {
-            Vector3f offset(frameTimePos, nearPlane ? 0 : frameTimePos, frameTimePos);
+            Vec3f offset(frameTimePos, nearPlane ? 0 : frameTimePos, frameTimePos);
             center += offset * gen->particleMomentum(pinfo).xzy();
         }
 
@@ -764,7 +764,7 @@ static void drawParticles(dint rtype, bool withBlend)
                     projected[1] += diff[1] / dist * gap;
                 }
 
-                Vector2f unitVec = lineUnitVector(*pinfo.contact);
+                Vec2f unitVec = lineUnitVector(*pinfo.contact);
 
                 DGL_TexCoord2f(0, 0, 0);
                 DGL_Vertex3f(projected[0] - size * unitVec.x, center.y - size,

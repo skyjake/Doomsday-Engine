@@ -36,11 +36,11 @@ using namespace de;
 DENG2_PIMPL_NOREF(ClientMaterial::Decoration)
 {
     ClientMaterial *material = nullptr;  ///< Owning Material.
-    Vector2i patternSkip;          ///< Pattern skip intervals.
-    Vector2i patternOffset;        ///< Pattern skip interval offsets.
+    Vec2i patternSkip;          ///< Pattern skip intervals.
+    Vec2i patternOffset;        ///< Pattern skip interval offsets.
 };
 
-ClientMaterial::Decoration::Decoration(Vector2i const &patternSkip, Vector2i const &patternOffset)
+ClientMaterial::Decoration::Decoration(Vec2i const &patternSkip, Vec2i const &patternOffset)
     : d(new Impl)
 {
     d->patternSkip   = patternSkip;
@@ -69,12 +69,12 @@ void ClientMaterial::Decoration::setMaterial(ClientMaterial *newOwner)
     d->material = newOwner;
 }
 
-Vector2i const &ClientMaterial::Decoration::patternSkip() const
+Vec2i const &ClientMaterial::Decoration::patternSkip() const
 {
     return d->patternSkip;
 }
 
-Vector2i const &ClientMaterial::Decoration::patternOffset() const
+Vec2i const &ClientMaterial::Decoration::patternOffset() const
 {
     return d->patternOffset;
 }

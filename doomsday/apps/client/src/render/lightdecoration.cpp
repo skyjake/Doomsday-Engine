@@ -38,7 +38,7 @@ using namespace world;
 static dfloat angleFadeFactor = .1f; ///< cvar
 static dfloat brightFactor    = 1;   ///< cvar
 
-LightDecoration::LightDecoration(MaterialAnimator::Decoration const &source, Vector3d const &origin)
+LightDecoration::LightDecoration(MaterialAnimator::Decoration const &source, Vec3d const &origin)
     : Decoration(source, origin)
     , Source()
 {}
@@ -52,12 +52,12 @@ String LightDecoration::description() const
     return Decoration::description() + "\n" + desc;
 }
 
-dfloat LightDecoration::occlusion(Vector3d const &eye) const
+dfloat LightDecoration::occlusion(Vec3d const &eye) const
 {
     // Halo brightness drops as the angle gets too big.
     if (source().elevation() < 2 && ::angleFadeFactor > 0) // Close the surface?
     {
-        Vector3d const vecFromOriginToEye = (origin() - eye).normalize();
+        Vec3d const vecFromOriginToEye = (origin() - eye).normalize();
 
         auto dot = dfloat( -surface().normal().dot(vecFromOriginToEye) );
         if (dot < ::angleFadeFactor / 2)
@@ -85,7 +85,7 @@ static dfloat checkLightLevel(dfloat lightlevel, dfloat min, dfloat max)
 Lumobj *LightDecoration::generateLumobj() const
 {
     // Decorations with zero color intensity produce no light.
-    if (source().color() == Vector3f(0, 0, 0))
+    if (source().color() == Vec3f(0, 0, 0))
         return nullptr;
 
     ConvexSubspace *subspace = bspLeafAtOrigin().subspacePtr();

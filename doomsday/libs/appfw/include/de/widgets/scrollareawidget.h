@@ -60,7 +60,7 @@ public:
     Origin origin() const;
 
     void setIndicatorUv(Rectanglef const &uv);
-    void setIndicatorUv(Vector2f const &uvPoint);
+    void setIndicatorUv(Vec2f const &uvPoint);
 
     void setContentWidth(int width);
     void setContentWidth(Rule const &width);
@@ -68,8 +68,8 @@ public:
     void setContentHeight(Rule const &height);
     void setContentSize(Rule const &width, Rule const &height);
     void setContentSize(ISizeRule const &dimensions);
-    void setContentSize(Vector2i const &size);
-    void setContentSize(Vector2ui const &size);
+    void setContentSize(Vec2i const &size);
+    void setContentSize(Vec2ui const &size);
 
     void modifyContentWidth(int delta);
     void modifyContentHeight(int delta);
@@ -87,21 +87,21 @@ public:
     bool isScrolling() const;
 
     Rectanglei viewport() const;
-    Vector2i viewportSize() const;
+    Vec2i viewportSize() const;
 
     /**
      * Returns the current scroll XY position, with 0 being the top/left corner
      * and maximumScroll() being the bottom right position.
      */
-    Vector2i scrollPosition() const;
+    Vec2i scrollPosition() const;
 
-    virtual Vector2i scrollPageSize() const;
+    virtual Vec2i scrollPageSize() const;
 
     /**
      * Returns the maximum scroll position. The scrollMaxChanged() signal
      * is emitted whenever the maximum changes.
      */
-    Vector2i maximumScroll() const;
+    Vec2i maximumScroll() const;
 
     /**
      * Scrolls the view to a specified position. Position (0,0) means the top
@@ -110,7 +110,7 @@ public:
      * @param to    Scroll position.
      * @param span  Animation time span.
      */
-    void scroll(Vector2i const &to, TimeSpan span = 0);
+    void scroll(Vec2i const &to, TimeSpan span = 0);
 
     void scrollX(int to, TimeSpan span = 0);
     void scrollY(int to, TimeSpan span = 0);
@@ -145,7 +145,7 @@ public:
     void enableIndicatorDraw(bool enabled);
 
     void glMakeScrollIndicatorGeometry(GuiVertexBuilder &verts,
-                                       Vector2f const &origin = Vector2f(0, 0));
+                                       Vec2f const &origin = Vec2f(0, 0));
 
     // Events.
     //void viewResized() override;

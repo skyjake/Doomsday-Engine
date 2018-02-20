@@ -43,7 +43,7 @@ void Polygon::updateBounds()
     }
 }
 
-const Vector2d &Polygon::at(int pos) const
+const Vec2d &Polygon::at(int pos) const
 {
     return points[mod(pos, size())].pos;
 }
@@ -109,12 +109,12 @@ bool Polygon::isLineInside(int start, int end) const
     return isPointInside((a + b) / 2);
 }
 
-bool Polygon::isPointInside(const Vector2d &point) const
+bool Polygon::isPointInside(const Vec2d &point) const
 {
     DENG2_ASSERT(!bounds.isNull());
     if (bounds.contains(point))
     {
-        const Vector2d offset{bounds.width() + 1, 0};
+        const Vec2d offset{bounds.width() + 1, 0};
         return intersect(Line(point, point + offset)) % 2 == 1;
     }
     return false;

@@ -431,24 +431,24 @@ DENG2_PIMPL(ModelLoader)
         auto const asset = App::asset(path);
 
         // Determine the coordinate system of the model.
-        Vector3f front(0, 0, 1);
-        Vector3f up   (0, 1, 0);
+        Vec3f front(0, 0, 1);
+        Vec3f up   (0, 1, 0);
         if (asset.has(DEF_FRONT_VECTOR))
         {
-            front = Vector3f(asset.geta(DEF_FRONT_VECTOR));
+            front = Vec3f(asset.geta(DEF_FRONT_VECTOR));
         }
         if (asset.has(DEF_UP_VECTOR))
         {
-            up = Vector3f(asset.geta(DEF_UP_VECTOR));
+            up = Vec3f(asset.geta(DEF_UP_VECTOR));
         }
         bool mirror = ScriptedInfo::isTrue(asset, DEF_MIRROR);
         model.cull = mirror? gl::Back : gl::Front;
         // Assimp's coordinate system uses different handedness than Doomsday,
         // so mirroring is needed.
-        model.transformation = Matrix4f::frame(front, up, !mirror);
+        model.transformation = Mat4f::frame(front, up, !mirror);
         if (asset.has(DEF_OFFSET))
         {
-            model.offset = vectorFromValue<Vector3f>(asset.get(DEF_OFFSET));
+            model.offset = vectorFromValue<Vec3f>(asset.get(DEF_OFFSET));
         }
         applyFlagOperation(model.flags, render::Model::AutoscaleToThingHeight,
                            ScriptedInfo::isTrue(asset, DEF_AUTOSCALE)? SetFlags : UnsetFlags);

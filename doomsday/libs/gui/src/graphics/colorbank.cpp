@@ -32,7 +32,7 @@ DENG2_PIMPL(ColorBank)
         ColorSource(ColorBank &b, String const &colorId) : bank(b), id(colorId) {}
         Time modifiedAt() const { return bank.sourceModifiedAt(); }
 
-        Vector4d load() const
+        Vec4d load() const
         {
             Record const &def = bank[id];
             ArrayValue const *colorDef = 0;
@@ -51,7 +51,7 @@ DENG2_PIMPL(ColorBank)
                 alpha = colorDef->at(3).asNumber();
             }
 
-            return Vector4d(colorDef->at(0).asNumber(),
+            return Vec4d(colorDef->at(0).asNumber(),
                             colorDef->at(1).asNumber(),
                             colorDef->at(2).asNumber(),
                             alpha);
@@ -60,9 +60,9 @@ DENG2_PIMPL(ColorBank)
 
     struct ColorData : public IData
     {
-        Vector4d color;
+        Vec4d color;
 
-        ColorData(Vector4d const &c = Vector4d()) : color(c) {}
+        ColorData(Vec4d const &c = Vec4d()) : color(c) {}
     };
 
     Impl(Public *i) : Base(i)
@@ -92,8 +92,8 @@ ColorBank::Color ColorBank::color(DotPath const &path) const
 ColorBank::Colorf ColorBank::colorf(DotPath const &path) const
 {
     if (path.isEmpty()) return Colorf();
-    Vector4d clamped = data(path).as<Impl::ColorData>().color;
-    clamped = clamped.max(Vector4d(0, 0, 0, 0)).min(Vector4d(1, 1, 1, 1));
+    Vec4d clamped = data(path).as<Impl::ColorData>().color;
+    clamped = clamped.max(Vec4d(0, 0, 0, 0)).min(Vec4d(1, 1, 1, 1));
     return Colorf(float(clamped.x), float(clamped.y), float(clamped.z), float(clamped.w));
 }
 

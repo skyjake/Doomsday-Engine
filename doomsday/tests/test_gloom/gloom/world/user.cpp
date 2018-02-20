@@ -32,12 +32,12 @@ DENG2_PIMPL(User)
     World const *world = nullptr;
 
     InputState input;
-    Vector3f   pos;                // Current position of the user (feet).
+    Vec3f   pos;                // Current position of the user (feet).
     float      height     = 1.8f;  // Height from feet to top of the head.
     float      viewHeight = 1.66f; // Eye height.
     float      yaw        = 0;
     float      pitch      = 0;
-    Vector3f   momentum;
+    Vec3f   momentum;
     float      angularMomentum = 0;
     bool       onGround        = false;
     bool       firstUpdate     = true;
@@ -46,7 +46,7 @@ DENG2_PIMPL(User)
     bool       jumpPending     = false;
 
     // For notification:
-    Vector3f prevPosition;
+    Vec3f prevPosition;
     float    prevYaw;
 
     // Audio:
@@ -57,7 +57,7 @@ DENG2_PIMPL(User)
 
     Impl(Public * i) : Base(i)
     {
-        pos = Vector3f(0, 0, 0);
+        pos = Vec3f(0, 0, 0);
 
         fastWind = &AudioSystem::get().newSound("user.fastwind");
         fastWind->setVolume(0).play(Sound::Looping);
@@ -68,10 +68,10 @@ DENG2_PIMPL(User)
         DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->userBeingDeleted(self());
     }
 
-    Vector3f frontVector() const
+    Vec3f frontVector() const
     {
         float yawForMove = yaw;
-        return Matrix4f::rotate(yawForMove, Vector3f(0, -1, 0)) * Vector3f(0, 0, -1);
+        return Mat4f::rotate(yawForMove, Vec3f(0, -1, 0)) * Vec3f(0, 0, -1);
     }
 
     void move(TimeSpan const &elapsed)
@@ -101,8 +101,8 @@ DENG2_PIMPL(User)
         // Turn according to momentum.
         yaw += angularMomentum * elapsed;
 
-        const Vector3f front = frontVector();
-        const Vector3f side  = front.cross(Vector3f(0, 1, 0));
+        const Vec3f front = frontVector();
+        const Vec3f side  = front.cross(Vec3f(0, 1, 0));
 
         momentum += (front * accel + side * sideAccel) * elapsed;
 
@@ -110,12 +110,12 @@ DENG2_PIMPL(User)
         // "Vehicle" momentum: keep moving toward the front vector.
         if (onGround)
         {
-            Vector2f planarFront = front.xz().normalize();
+            Vec2f planarFront = front.xz().normalize();
             if (planarFront.dot(momentum.xz()) < 0) planarFront = -planarFront;
 
-            Vector2f frontMom = planarFront * momentum.xz().length();
+            Vec2f frontMom = planarFront * momentum.xz().length();
 
-            Vector2f delta = frontMom - momentum.xz();
+            Vec2f delta = frontMom - momentum.xz();
 
             if (delta.length() > 10 * elapsed)
             {
@@ -132,8 +132,8 @@ DENG2_PIMPL(User)
             float moveFriction = 2; //5;
 
             // Apply friction.
-            Vector2f planar = momentum.xz();
-            Vector2f fric   = -planar.normalize() * moveFriction * elapsed;
+            Vec2f planar = momentum.xz();
+            Vec2f fric   = -planar.normalize() * moveFriction * elapsed;
 
             if (fric.length() > planar.length())
             {
@@ -344,9 +344,9 @@ void User::setWorld(World const *world)
     }
 }
 
-de::Vector3f User::position() const
+de::Vec3f User::position() const
 {
-    return d->pos + Vector3f(0, d->viewHeight + d->crouch, 0);
+    return d->pos + Vec3f(0, d->viewHeight + d->crouch, 0);
 }
 
 float User::yaw() const
@@ -359,13 +359,13 @@ float User::pitch() const
     return d->pitch;
 }
 
-void User::setPosition(Vector3f const &pos)
+void User::setPosition(Vec3f const &pos)
 {
     auto oldPos = d->pos;
 
     d->onGround = false;
     d->pos   = pos;
-    d->momentum = Vector3f();
+    d->momentum = Vec3f();
 
     if ((oldPos - pos).length() > 15)
     {

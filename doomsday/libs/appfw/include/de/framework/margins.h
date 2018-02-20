@@ -82,7 +82,7 @@ public:
      * Returns all four margins as a vector. (x,y) is the left and top margins
      * and (z,w) is the right and bottom margins.
      */
-    Vector4i toVector() const;
+    Vec4i toVector() const;
 
 private:
     DENG2_PRIVATE(d)

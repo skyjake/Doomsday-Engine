@@ -27,7 +27,7 @@ using namespace de;
 static void WorldTimeWidget_Draw(guidata_worldtime_t *time, Point2Raw const *offset)
 {
     DENG2_ASSERT(time);
-    time->draw(offset? Vector2i(offset->xy) : Vector2i());
+    time->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void WorldTimeWidget_UpdateGeometry(guidata_worldtime_t *time)
@@ -72,7 +72,7 @@ void guidata_worldtime_t::tick(timespan_t /*elapsed*/)
     d->seconds = wt;
 }
 
-void guidata_worldtime_t::draw(Vector2i const &offset) const
+void guidata_worldtime_t::draw(Vec2i const &offset) const
 {
 #define LEADING         ( 0.5 )
 

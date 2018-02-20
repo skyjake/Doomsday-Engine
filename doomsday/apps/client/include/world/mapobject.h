@@ -51,7 +51,7 @@ public:
     enum { NoIndex = -1 };
 
 public:
-    MapObject(de::Vector3d const &origin = de::Vector3d());
+    MapObject(de::Vec3d const &origin = de::Vec3d());
     virtual ~MapObject();
 
     DENG2_CAST_METHODS()
@@ -69,7 +69,7 @@ public:
      *
      * @see move(), setOrigin(), bspLeafAtOrigin()
      */
-    de::Vector3d const &origin() const;
+    de::Vec3d const &origin() const;
 
     inline de::ddouble x() const { return origin().x; }
     inline de::ddouble y() const { return origin().y; }
@@ -82,7 +82,7 @@ public:
      *
      * @see move(), origin()
      */
-    virtual void setOrigin(de::Vector3d const &newOrigin);
+    virtual void setOrigin(de::Vec3d const &newOrigin);
 
     /**
      * Translate the origin of the object in map space.
@@ -91,7 +91,7 @@ public:
      *
      * @see setOrigin(), origin()
      */
-    virtual void move(de::Vector3d const &delta);
+    virtual void move(de::Vec3d const &delta);
 
     /**
      * Returns @c true iff a map is attributed to the object.

@@ -89,7 +89,7 @@ HeaderWidget::HeaderWidget()
 
     d->logo->setSizePolicy(ui::Filled, ui::Filled);
     d->logo->setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
-    //d->logo->set(Background(Vector4f(0, 0, 0, 1)));
+    //d->logo->set(Background(Vec4f(0, 0, 0, 1)));
 
     d->logoBg->setSizePolicy(ui::Filled, ui::Filled);
     d->logoBg->setImageFit(ui::FitToSize);

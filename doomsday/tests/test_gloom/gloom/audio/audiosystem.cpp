@@ -461,7 +461,7 @@ DENG2_PIMPL(AudioSystem)
     {
         if (const ICamera *cam = listenerCamera)
         {
-            const Vector3f camPos = cam->cameraPosition();
+            const Vec3f camPos = cam->cameraPosition();
 
             const FMOD_VECTOR pos = {camPos.x, camPos.y, camPos.z};
             const FMOD_VECTOR fwd = {cam->cameraFront().x, cam->cameraFront().y, cam->cameraFront().z};

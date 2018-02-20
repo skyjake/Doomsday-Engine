@@ -38,7 +38,7 @@ class HeightMap
 public:
     HeightMap();
 
-    void setMapSize(Vector2f const &worldSize, float heightRange);
+    void setMapSize(Vec2f const &worldSize, float heightRange);
 
     void loadGrayscale(Image const &heightImage);
 
@@ -46,9 +46,9 @@ public:
 
     Image makeNormalMap() const;
 
-    float heightAtPosition(Vector2f const &worldPos) const;
+    float heightAtPosition(Vec2f const &worldPos) const;
 
-    Vector3f normalAtPosition(Vector2f const &worldPos) const;
+    Vec3f normalAtPosition(Vec2f const &worldPos) const;
 
 private:
     DENG2_PRIVATE(d)

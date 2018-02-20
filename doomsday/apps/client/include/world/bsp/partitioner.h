@@ -55,7 +55,7 @@ class Partitioner
 {
 public:
     /// Notified when an unclosed sector is first found.
-    DENG2_DEFINE_AUDIENCE(UnclosedSectorFound, void unclosedSectorFound(Sector &sector, de::Vector2d const &nearPoint))
+    DENG2_DEFINE_AUDIENCE(UnclosedSectorFound, void unclosedSectorFound(Sector &sector, de::Vec2d const &nearPoint))
 
 public:
     /**

@@ -129,7 +129,7 @@ void ReadyAmmoIconWidget_Drawer(guidata_readyammoicon_t *icon, Point2Raw const *
 #else
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, iconOpacity);
-    GL_DrawPatch(icon->_patchId, Vector2i(0, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
+    GL_DrawPatch(icon->_patchId, Vec2i(0, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
     DGL_Disable(DGL_TEXTURE_2D);
 #endif
 
@@ -167,7 +167,7 @@ void SBarReadyAmmoIconWidget_Drawer(guidata_readyammoicon_t *icon, Point2Raw con
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, iconOpacity);
 
-    GL_DrawPatch(icon->_patchId, Vector2i(X, Y));
+    GL_DrawPatch(icon->_patchId, Vec2i(X, Y));
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);

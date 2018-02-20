@@ -112,7 +112,7 @@ public:
     /**
      * Returns the actual size of the text in pixels.
      */
-    Vector2ui textSize() const;
+    Vec2ui textSize() const;
 
     Rule const &contentWidth() const;
     Rule const &contentHeight() const;
@@ -162,9 +162,9 @@ public:
 
     void setTextLineAlignment(ui::Alignment const &textLineAlign);
 
-    void setTextModulationColorf(Vector4f const &colorf);
+    void setTextModulationColorf(Vec4f const &colorf);
 
-    Vector4f textModulationColorf() const;
+    Vec4f textModulationColorf() const;
 
     /**
      * Sets the maximum width used for text. By default, the maximum width is determined
@@ -216,7 +216,7 @@ public:
 
     void setImageScale(float scaleFactor);
 
-    void setImageColor(Vector4f const &imageColor);
+    void setImageColor(Vec4f const &imageColor);
 
     bool hasImage() const;
 
@@ -289,7 +289,7 @@ protected:
      * Derived classes may override this to set a custom matrix for the label.
      * @return @c true, if a customized matrix was set.
      */
-    virtual bool updateModelViewProjection(Matrix4f &mvp);
+    virtual bool updateModelViewProjection(Mat4f &mvp);
 
 private:
     DENG2_PRIVATE(d)

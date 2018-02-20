@@ -191,7 +191,7 @@ DENG2_PIMPL(GLTextComposer)
                 if (isLineVisible(i) && seg.range.size() > 0)
                 {
                     // The color is white unless a style is defined.
-                    Vector4ub fgColor(255, 255, 255, 255);
+                    Vec4ub fgColor(255, 255, 255, 255);
 
                     if (format.hasStyle())
                     {
@@ -454,9 +454,9 @@ void GLTextComposer::forceUpdate()
 }
 
 void GLTextComposer::makeVertices(GuiVertexBuilder &triStrip,
-                                  Vector2i const &topLeft,
+                                  Vec2i const &topLeft,
                                   Alignment const &lineAlign,
-                                  Vector4f const &color)
+                                  Vec4f const &color)
 {
     makeVertices(triStrip, Rectanglei(topLeft, topLeft), AlignTopLeft, lineAlign, color);
 }
@@ -465,17 +465,17 @@ void GLTextComposer::makeVertices(GuiVertexBuilder &triStrip,
                                   Rectanglei const &rect,
                                   Alignment const &alignInRect,
                                   Alignment const &lineAlign,
-                                  Vector4f const &color)
+                                  Vec4f const &color)
 {
     if (!isReady()) return;
 
     DENG2_ASSERT(d->wraps != 0);
     DENG2_ASSERT(d->font != 0);
 
-    Vector2i const contentSize(d->wraps->width(), d->wraps->totalHeightInPixels());
+    Vec2i const contentSize(d->wraps->width(), d->wraps->totalHeightInPixels());
 
     // Apply alignment within the provided rectangle.
-    Vector2f p = applyAlignment(alignInRect, contentSize, rect);
+    Vec2f p = applyAlignment(alignInRect, contentSize, rect);
 
     DENG2_ASSERT(d->wraps->height() == d->lines.size());
 
@@ -513,7 +513,7 @@ void GLTextComposer::makeVertices(GuiVertexBuilder &triStrip,
         if (d->isLineVisible(i))
         {
             FontLineWrapping::LineInfo const &info = d->wraps->lineInfo(i);
-            Vector2f linePos = p;
+            Vec2f linePos = p;
 
             for (int k = 0; k < info.segs.size(); ++k)
             {
@@ -522,7 +522,7 @@ void GLTextComposer::makeVertices(GuiVertexBuilder &triStrip,
                 // Empty lines are skipped.
                 if (seg.id.isNone()) continue;
 
-                Vector2ui size = d->atlas->imageRect(seg.id).size();
+                Vec2ui size = d->atlas->imageRect(seg.id).size();
                 if (seg.compressed)
                 {
                     size.x = seg.width;
@@ -544,7 +544,7 @@ void GLTextComposer::makeVertices(GuiVertexBuilder &triStrip,
 
                 Rectanglef const uv = d->atlas->imageRectf(seg.id);
 
-                auto const segRect = Rectanglef::fromSize(linePos + Vector2f(seg.x, 0), size);
+                auto const segRect = Rectanglef::fromSize(linePos + Vec2f(seg.x, 0), size);
                 triStrip.makeQuad(segRect, color, uv);
 
                 // Keep track of how wide the geometry really is.

@@ -39,8 +39,8 @@ InlineListWidget::~InlineListWidget()
 
 void InlineListWidget::draw() const
 {
-    const Item *   item  = items()[selection()];
-    const Vector4f color = selectionFlashColor(mnRendState->textColors[this->color()]);
+    const Item *item  = items()[selection()];
+    const Vec4f color = selectionFlashColor(mnRendState->textColors[this->color()]);
 
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(mnRendState->textFonts[font()]);
@@ -97,7 +97,7 @@ void InlineListWidget::updateGeometry()
     Size2Raw size;
     for (int i = 0; i < items().size(); ++i)
     {
-        FR_TextSize(&size, items().at(i)->text().toUtf8().constData());
+        FR_TextSize(&size, items().at(i)->text());
         maxSize.width = de::max(maxSize.width, size.width);
         maxSize.height = de::max(maxSize.height, size.height);
     }

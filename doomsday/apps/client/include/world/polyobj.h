@@ -56,7 +56,7 @@ public:
     DD_BASE_POLYOBJ_ELEMENTS()
 
 public:
-    polyobj_s(de::Vector2d const &origin = de::Vector2d());
+    polyobj_s(de::Vec2d const &origin = de::Vec2d());
 
     /// @note: Does nothing about the user data section.
     ~polyobj_s();
@@ -188,13 +188,13 @@ public:
      *
      * @param delta  Movement delta on the X|Y plane.
      */
-    bool move(de::Vector2d const &delta);
+    bool move(de::Vec2d const &delta);
 
     /**
      * @overload
      */
     inline bool move(de::ddouble x, de::ddouble y) {
-        return move(de::Vector2d(x, y));
+        return move(de::Vec2d(x, y));
     }
 
     /**

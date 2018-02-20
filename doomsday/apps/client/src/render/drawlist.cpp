@@ -66,14 +66,14 @@ Q_DECLARE_FLAGS(DrawConditions, DrawCondition)
 Q_DECLARE_OPERATORS_FOR_FLAGS(DrawConditions)
 
 DrawList::PrimitiveParams::PrimitiveParams(de::gl::Primitive type,
-                                           de::Vector2f texScale,
-                                           de::Vector2f texOffset,
-                                           de::Vector2f detailTexScale,
-                                           de::Vector2f detailTexOffset,
+                                           de::Vec2f texScale,
+                                           de::Vec2f texOffset,
+                                           de::Vec2f detailTexScale,
+                                           de::Vec2f detailTexOffset,
                                            Flags        flags,
                                            blendmode_t  blendMode,
                                            DGLuint      modTexture,
-                                           de::Vector3f modColor)
+                                           de::Vec3f modColor)
     : type           (type)
     , flags_blendMode(uint(blendMode) | uint(flags))
     , texScale       (texScale)
@@ -125,7 +125,7 @@ DENG2_PIMPL(DrawList)
                     GL_BindTextureUnmanaged(!renderTextures? 0 : primitive.modTexture,
                                             gl::ClampToEdge, gl::ClampToEdge);
 
-                    DGL_SetModulationColor(Vector4f(primitive.modColor, 0.f));
+                    DGL_SetModulationColor(Vec4f(primitive.modColor, 0.f));
                 }
 
                 if (conditions & SetMatrixTexture)
@@ -193,7 +193,7 @@ DENG2_PIMPL(DrawList)
 
                     for (dint k = 0; k < MAX_TEX_UNITS; ++k)
                     {
-                        Vector2f const *tc = nullptr;  // No mapping.
+                        Vec2f const *tc = nullptr;  // No mapping.
                         switch (texUnitMap[k])
                         {
                         case AttributeSpec::TexCoord0:   tc = buffer->texCoords[0]; break;
@@ -211,11 +211,11 @@ DENG2_PIMPL(DrawList)
 
                     if (!(conditions & NoColor))
                     {
-                        Vector4ub const &color = buffer->colorCoords[index];
+                        Vec4ub const &color = buffer->colorCoords[index];
                         DGL_Color4ub(color.x, color.y, color.z, color.w);
                     }
 
-                    Vector3f const &pos = buffer->posCoords[index];
+                    Vec3f const &pos = buffer->posCoords[index];
                     DGL_Vertex3f(pos.x, pos.z, pos.y);
                 }
                 DGL_End();

@@ -34,7 +34,7 @@ using namespace de;
 static dint radiusMax     = 320;    ///< Absolute maximum lumobj radius (cvar).
 static dfloat radiusScale = 5.2f;  ///< Radius scale factor (cvar).
 
-dfloat Lumobj::Source::occlusion(Vector3d const & /*eye*/) const
+dfloat Lumobj::Source::occlusion(Vec3d const & /*eye*/) const
 {
     return 1;  // Fully visible.
 }
@@ -44,7 +44,7 @@ DENG2_PIMPL_NOREF(Lumobj)
     Source const *source = nullptr;      ///< Source of the lumobj (if any, not owned).
     mobj_t const *sourceMobj = nullptr;  ///< Mobj associated with the lumobj (if any).
     ddouble maxDistance = 0;             ///< Used when rendering to limit the number drawn lumobjs.
-    Vector3f color = Vector3f(1, 1, 1);  ///< Light color/intensity.
+    Vec3f color = Vec3f(1, 1, 1);  ///< Light color/intensity.
     ddouble radius = 256;                ///< Radius in map space units.
     ddouble zOffset = 0;                 ///< Z-axis origin offset in map space units.
     dfloat flareSize = 0;                ///< Scale factor.
@@ -72,7 +72,7 @@ DENG2_PIMPL_NOREF(Lumobj)
     {}
 };
 
-Lumobj::Lumobj(Vector3d const &origin, ddouble radius, Vector3f const &color)
+Lumobj::Lumobj(Vec3d const &origin, ddouble radius, Vec3f const &color)
     : MapObject(origin), d(new Impl())
 {
     setRadius(radius);
@@ -98,12 +98,12 @@ mobj_t const *Lumobj::sourceMobj() const
     return d->sourceMobj;
 }
 
-Vector3f const &Lumobj::color() const
+Vec3f const &Lumobj::color() const
 {
     return d->color;
 }
 
-Lumobj &Lumobj::setColor(Vector3f const &newColor)
+Lumobj &Lumobj::setColor(Vec3f const &newColor)
 {
     if(d->color != newColor)
     {
@@ -216,7 +216,7 @@ dfloat Lumobj::attenuation(ddouble distFromEye) const
     return 1;
 }
 
-void Lumobj::generateFlare(Vector3d const &eye, ddouble distFromEye)
+void Lumobj::generateFlare(Vec3d const &eye, ddouble distFromEye)
 {
     // Is the point in range?
     if(d->maxDistance > 0 && distFromEye > d->maxDistance)

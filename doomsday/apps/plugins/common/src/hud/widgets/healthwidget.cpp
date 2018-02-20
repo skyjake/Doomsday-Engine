@@ -129,7 +129,7 @@ void SBarHealthWidget_Draw(guidata_health_t *hlth, Point2Raw const *offset)
 #endif
     DENG2_ASSERT(hlth);
 
-    Vector2i const origin((-ST_WIDTH / 2 ) + X_OFFSET, (-ST_HEIGHT ) + Y_OFFSET );
+    Vec2i const origin((-ST_WIDTH / 2 ) + X_OFFSET, (-ST_HEIGHT ) + Y_OFFSET );
 
     if(hlth->_value == 1994) return;
 

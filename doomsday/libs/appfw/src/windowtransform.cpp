@@ -48,17 +48,17 @@ void WindowTransform::glDeinit()
     // nothing to do
 }
 
-Vector2ui WindowTransform::logicalRootSize(Vector2ui const &physicalCanvasSize) const
+Vec2ui WindowTransform::logicalRootSize(Vec2ui const &physicalCanvasSize) const
 {
     return physicalCanvasSize;
 }
 
-Vector2f WindowTransform::windowToLogicalCoords(Vector2i const &pos) const
+Vec2f WindowTransform::windowToLogicalCoords(Vec2i const &pos) const
 {
     return pos;
 }
 
-Vector2f WindowTransform::logicalToWindowCoords(Vector2i const &pos) const
+Vec2f WindowTransform::logicalToWindowCoords(Vec2i const &pos) const
 {
     return pos;
 }

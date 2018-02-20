@@ -62,7 +62,7 @@ public:
         Event &operator = (Event const &other);
         bool operator < (Event const &other) const;
         de::ddouble distance() const;
-        de::Vector3d origin() const;
+        de::Vec3d origin() const;
 
     private:
         WallEdge *_owner;
@@ -84,12 +84,12 @@ public:
         return at(index);
     }
 
-    de::Vector3d const &pOrigin() const;
-    de::Vector3d const &pDirection() const;
+    de::Vec3d const &pOrigin() const;
+    de::Vec3d const &pDirection() const;
 
-    de::Vector2f materialOrigin() const;
+    de::Vec2f materialOrigin() const;
 
-    de::Vector3f normal() const;
+    de::Vec3f normal() const;
 
     WallSpec const &spec() const;
 

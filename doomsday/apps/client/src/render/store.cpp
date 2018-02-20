@@ -68,13 +68,13 @@ duint Store::allocateVertices(duint count)
             _vertMax *= 2;
         }
 
-        posCoords   = (Vector3f *)  M_Realloc(posCoords,   sizeof(*posCoords) * _vertMax);
-        colorCoords = (Vector4ub *) M_Realloc(colorCoords, sizeof(*colorCoords) * _vertMax);
+        posCoords   = (Vec3f *)  M_Realloc(posCoords,   sizeof(*posCoords) * _vertMax);
+        colorCoords = (Vec4ub *) M_Realloc(colorCoords, sizeof(*colorCoords) * _vertMax);
         for(dint i = 0; i < 2; ++i)
         {
-            texCoords[i] = (Vector2f *) M_Realloc(texCoords[i], sizeof(Vector2f) * _vertMax);
+            texCoords[i] = (Vec2f *) M_Realloc(texCoords[i], sizeof(Vec2f) * _vertMax);
         }
-        modCoords   = (Vector2f *) M_Realloc(modCoords,  sizeof(*modCoords) * _vertMax);
+        modCoords   = (Vec2f *) M_Realloc(modCoords,  sizeof(*modCoords) * _vertMax);
     }
 
     return base;

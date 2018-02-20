@@ -94,7 +94,7 @@ DENG2_PIMPL(MainWindow)
         label->setImage(TestApp::images().image("logo"));
         label->setSizePolicy(ui::Filled, ui::Filled);
         label->setImageFit(ui::OriginalAspectRatio | ui::FitToHeight | ui::FitToSize);
-        label->set(GuiWidget::Background(Vector4f(1.f, 1.f, 1.f, .5f)));
+        label->set(GuiWidget::Background(Vec4f(1.f, 1.f, 1.f, .5f)));
         label->rule()
                 .setInput(Rule::Right,  root.viewRule().midX())
                 .setInput(Rule::Top,    root.viewRule().top())
@@ -106,7 +106,7 @@ DENG2_PIMPL(MainWindow)
         label2->setImage(TestApp::images().image("logo"));
         label2->setSizePolicy(ui::Filled, ui::Filled);
         label2->setImageFit(ui::OriginalAspectRatio | ui::FitToHeight);
-        label2->set(GuiWidget::Background(Vector4f(1.f, .5f, 0.f, .5f)));
+        label2->set(GuiWidget::Background(Vec4f(1.f, .5f, 0.f, .5f)));
         label2->rule()
                 .setInput(Rule::Left,  label->rule().right())
                 .setInput(Rule::Top,   label->rule().top())
@@ -142,7 +142,7 @@ DENG2_PIMPL(MainWindow)
 
     void updateMouseCursor()
     {
-        Vector2i cp = TestApp::windowSystem().latestMousePosition();
+        Vec2i cp = TestApp::windowSystem().latestMousePosition();
         if (cp.x < 0 || cp.y < 0) return;
         cursorX->set(cp.x);
         cursorY->set(cp.y);
@@ -154,7 +154,7 @@ DENG2_PIMPL(MainWindow)
 
         needRootSizeUpdate = false;
 
-        Vector2ui const size = contentXf.logicalRootSize(self().pixelSize());
+        Vec2ui const size = contentXf.logicalRootSize(self().pixelSize());
 
         // Tell the widgets.
         root.setViewSize(size);
@@ -172,8 +172,8 @@ DENG2_PIMPL(MainWindow)
             compositor->setCompositeProjection(
                         vr.projectionMatrix(OVR_FOV, root.viewRule().size(),
                                             OVR_NEAR_CLIP, OVR_FAR_CLIP)
-                        * Matrix4f::scale(Vector3f(.5f, -.5f / vr.oculusRift().aspect(), 1))
-                        * Matrix4f::translate(Vector3f(-.5f, -.5f, -1)));
+                        * Mat4f::scale(Vec3f(.5f, -.5f / vr.oculusRift().aspect(), 1))
+                        * Mat4f::translate(Vec3f(-.5f, -.5f, -1)));
         }
         else
         {
@@ -223,7 +223,7 @@ AppRootWidget &MainWindow::root()
     return d->root;
 }
 
-Vector2f MainWindow::windowContentSize() const
+Vec2f MainWindow::windowContentSize() const
 {
     // Current root widget size.
     return d->root.viewRule().size();

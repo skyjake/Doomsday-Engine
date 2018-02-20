@@ -79,7 +79,7 @@ GridPopupWidget &GridPopupWidget::operator<<(Rule const &rule)
 GridPopupWidget &GridPopupWidget::addSpanning(GuiWidget *widget, int cellSpan)
 {
     d->container->add(widget);
-    d->layout.setCellAlignment(Vector2i(0, d->layout.gridSize().y), ui::AlignLeft);
+    d->layout.setCellAlignment(Vec2i(0, d->layout.gridSize().y), ui::AlignLeft);
     d->layout.append(*widget, cellSpan);
     return *this;
 }

@@ -323,7 +323,7 @@ public:
          * Returns a direction vector for "this" side of the line segment,
          * from the From/Start vertex origin to the To/End vertex origin.
          */
-        de::Vector2d const &direction() const;
+        de::Vec2d const &direction() const;
 
         /**
          * Returns the logical @em slopetype for "this" side of the line
@@ -355,7 +355,7 @@ public:
          *
          * @return  Distance to the point expressed as a fraction/scale factor.
          */
-        coord_t distance(de::Vector2d point) const;
+        coord_t distance(de::Vec2d point) const;
 
         /**
          * Calculate @em perpendicular distances from one or both of the
@@ -503,7 +503,7 @@ public:
      *
      * @see vertex()
      */
-    inline de::Vector2d const &vertexOrigin(int to) const {
+    inline de::Vec2d const &vertexOrigin(int to) const {
         return vertex(to).origin();
     }
 
@@ -518,7 +518,7 @@ public:
      *
      * @see from()
      */
-    inline de::Vector2d const &fromOrigin() const { return from().origin(); }
+    inline de::Vec2d const &fromOrigin() const { return from().origin(); }
 
     /**
      * Returns the To/End vertex for the line segment.
@@ -531,7 +531,7 @@ public:
      *
      * @see to()
      */
-    inline de::Vector2d const &toOrigin() const { return to().origin(); }
+    inline de::Vec2d const &toOrigin() const { return to().origin(); }
 
     /**
      * Returns the axis-aligned bounding box of the line segment (derived from

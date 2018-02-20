@@ -25,7 +25,7 @@ namespace de {
 
 DENG2_PIMPL(GridLayout)
 {
-    typedef QMap<Vector2i, ui::Alignment> CellAlignments;
+    typedef QMap<Vec2i, ui::Alignment> CellAlignments;
 
     GuiWidgetList widgets;
     Mode mode;
@@ -35,7 +35,7 @@ DENG2_PIMPL(GridLayout)
     Rule const *initialY;
     Rule const *baseX;
     Rule const *baseY;
-    Vector2i cell;
+    Vec2i cell;
     Rule const *fixedCellWidth;
     Rule const *fixedCellHeight;
     QMap<int, Rule const *> fixedColWidths;
@@ -182,12 +182,12 @@ DENG2_PIMPL(GridLayout)
             addMetric(rows);
         }
 
-        cell = Vector2i(0, 0);
+        cell = Vec2i(0, 0);
     }
 
-    Vector2i gridSize() const
+    Vec2i gridSize() const
     {
-        return Vector2i(cols.size(), rows.size());
+        return Vec2i(cols.size(), rows.size());
     }
 
     void addMetric(Metrics &list)
@@ -282,7 +282,7 @@ DENG2_PIMPL(GridLayout)
         return *rows.at(row)->minEdge;
     }
 
-    ui::Alignment alignment(Vector2i pos) const
+    ui::Alignment alignment(Vec2i pos) const
     {
         CellAlignments::const_iterator found = cellAlignment.find(pos);
         if (found != cellAlignment.end())
@@ -439,7 +439,7 @@ DENG2_PIMPL(GridLayout)
     {
         if (!needTotalUpdate) return;
 
-        Vector2i size = gridSize();
+        Vec2i size = gridSize();
 
         // Paddings must be included in the total.
         if (colPad)
@@ -621,19 +621,19 @@ bool GridLayout::isEmpty() const
     return !size();
 }
 
-Vector2i GridLayout::maxGridSize() const
+Vec2i GridLayout::maxGridSize() const
 {
-    return Vector2i(d->maxCols, d->maxRows);
+    return Vec2i(d->maxCols, d->maxRows);
 }
 
-Vector2i GridLayout::gridSize() const
+Vec2i GridLayout::gridSize() const
 {
     return d->gridSize();
 }
 
-Vector2i GridLayout::widgetPos(GuiWidget &widget) const
+Vec2i GridLayout::widgetPos(GuiWidget &widget) const
 {
-    Vector2i pos;
+    Vec2i pos;
     foreach (Widget *w, d->widgets)
     {
         if (w == &widget) return pos;
@@ -657,12 +657,12 @@ Vector2i GridLayout::widgetPos(GuiWidget &widget) const
             break;
         }
     }
-    return Vector2i(-1, -1);
+    return Vec2i(-1, -1);
 }
 
-GuiWidget *GridLayout::at(Vector2i const &cell) const
+GuiWidget *GridLayout::at(Vec2i const &cell) const
 {
-    Vector2i pos;
+    Vec2i pos;
     foreach (GuiWidget *w, d->widgets)
     {
         if (pos == cell)
@@ -763,7 +763,7 @@ Rule const &GridLayout::rowPadding() const
     return ConstantRule::zero();
 }
 
-void GridLayout::setCellAlignment(Vector2i const &cell, ui::Alignment cellAlign)
+void GridLayout::setCellAlignment(Vec2i const &cell, ui::Alignment cellAlign)
 {
     d->cellAlignment[cell] = cellAlign;
 }

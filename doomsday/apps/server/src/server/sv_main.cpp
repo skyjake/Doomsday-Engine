@@ -958,7 +958,7 @@ void Sv_SendPlayerFixes(int plrNum)
         Writer_WriteFloat(msgWriter, ddpl->mo->origin[VZ]);
 
         LOGDEV_NET_MSG("Sent position (%i): %s")
-                << ddpl->fixCounter.origin << Vector3d(ddpl->mo->origin).asText();
+                << ddpl->fixCounter.origin << Vec3d(ddpl->mo->origin).asText();
     }
 
     if (ddpl->flags & DDPF_FIXMOM)
@@ -969,7 +969,7 @@ void Sv_SendPlayerFixes(int plrNum)
         Writer_WriteFloat(msgWriter, ddpl->mo->mom[MZ]);
 
         LOGDEV_NET_MSG("Sent momentum (%i): %s")
-                << ddpl->fixCounter.mom << Vector3d(ddpl->mo->mom).asText();
+                << ddpl->fixCounter.mom << Vec3d(ddpl->mo->mom).asText();
     }
 
     Msg_End();

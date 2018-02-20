@@ -41,7 +41,7 @@ void GL_DrawRect2(int x, int y, int w, int h);
 /**
  * @param coords  [topLeft, topRight, bottomRight, bottomLeft]
  */
-void GL_DrawRectWithCoords(de::Rectanglei const &rect, de::Vector2i const coords[4]);
+void GL_DrawRectWithCoords(de::Rectanglei const &rect, de::Vec2i const coords[4]);
 
 void GL_DrawRectf(const RectRawf* rect);
 void GL_DrawRectf2(double x, double y, double w, double h);

@@ -44,7 +44,7 @@ DENG2_PIMPL(GBuffer)
         uDebugMode = 0;
     }
 
-    void setSize(const Vector2ui &size)
+    void setSize(const Vec2ui &size)
     {
         frame.resize(size);
         updateUniforms();
@@ -82,12 +82,12 @@ void GBuffer::glDeinit()
     Render::glDeinit();
 }
 
-void GBuffer::resize(const Vector2ui &size)
+void GBuffer::resize(const Vec2ui &size)
 {
     d->setSize(size);
 }
 
-Vector2ui GBuffer::size() const
+Vec2ui GBuffer::size() const
 {
     return d->frame.size();
 }

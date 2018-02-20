@@ -497,10 +497,10 @@ inline QTextStream &operator << (QTextStream &os, Matrix4<Type> const &mat4) {
 
 ///@{
 /// @ingroup types
-typedef Matrix3<dfloat>  Matrix3f;
-typedef Matrix3<ddouble> Matrix3d;
-typedef Matrix4<dfloat>  Matrix4f;
-typedef Matrix4<ddouble> Matrix4d;
+typedef Matrix3<dfloat>  Mat3f;
+typedef Matrix3<ddouble> Mat3d;
+typedef Matrix4<dfloat>  Mat4f;
+typedef Matrix4<ddouble> Mat4d;
 ///@}
 
 } // namespace de

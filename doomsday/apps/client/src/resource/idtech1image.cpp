@@ -28,7 +28,7 @@ using namespace res;
 
 DENG2_PIMPL_NOREF(IdTech1Image)
 {
-    Vector2i origin;
+    Vec2i origin;
     Size nominalSize;
 };
 
@@ -66,7 +66,7 @@ IdTech1Image::IdTech1Image(IByteArray const &data, IByteArray const &palette, Fo
     }
 }
 
-Vector2i IdTech1Image::origin() const
+Vec2i IdTech1Image::origin() const
 {
     return d->origin;
 }

@@ -50,7 +50,7 @@ public:
      * @param topSlope     Upper limit to the Z axis angle/slope range.
      * @param flags        @ref lineSightFlags dictate trace behavior/logic.
      */
-    LineSightTest(de::Vector3d const &from, de::Vector3d const &to,
+    LineSightTest(de::Vec3d const &from, de::Vec3d const &to,
                   de::dfloat bottomSlope = -1,
                   de::dfloat topSlope    = +1,
                   de::dint flags         = 0);

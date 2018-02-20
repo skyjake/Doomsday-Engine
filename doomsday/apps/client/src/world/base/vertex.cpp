@@ -31,19 +31,19 @@
 
 using namespace de;
 
-Vertex::Vertex(Mesh &mesh, Vector2d const &origin)
+Vertex::Vertex(Mesh &mesh, Vec2d const &origin)
     : MapElement(DMU_VERTEX)
     , MeshElement(mesh)
 {
     _origin = origin;
 }
 
-Vector2d const &Vertex::origin() const
+Vec2d const &Vertex::origin() const
 {
     return _origin;
 }
 
-void Vertex::setOrigin(Vector2d const &newOrigin)
+void Vertex::setOrigin(Vec2d const &newOrigin)
 {
     if(_origin != newOrigin)
     {
@@ -125,9 +125,9 @@ LineOwner *Vertex::firstLineOwner() const
  * @param point  Coordinates for the corner point are written here. Can be @c nullptr.
  * @param lp     Coordinates for the "extended" point are written here. Can be @c nullptr.
  */
-static void cornerNormalPoint(Vector2d const &lineADirection, ddouble dist1,
-                              Vector2d const &lineBDirection, ddouble dist2,
-                              Vector2d *point, Vector2d *lp)
+static void cornerNormalPoint(Vec2d const &lineADirection, ddouble dist1,
+                              Vec2d const &lineBDirection, ddouble dist2,
+                              Vec2d *point, Vec2d *lp)
 {
     // Any work to be done?
     if(!point && !lp) return;
@@ -137,8 +137,8 @@ static void cornerNormalPoint(Vector2d const &lineADirection, ddouble dist1,
     ddouble len2 = lineBDirection.length();
 
     // Calculate normals for both lines.
-    Vector2d norm1(-lineADirection.y / len1 * dist1,  lineADirection.x / len1 * dist1);
-    Vector2d norm2( lineBDirection.y / len2 * dist2, -lineBDirection.x / len2 * dist2);
+    Vec2d norm1(-lineADirection.y / len1 * dist1,  lineADirection.x / len1 * dist1);
+    Vec2d norm2( lineBDirection.y / len2 * dist2, -lineBDirection.x / len2 * dist2);
 
     // Do we need to calculate the extended points, too?  Check that
     // the extension does not bleed too badly outside the legal shadow
@@ -172,7 +172,7 @@ static void cornerNormalPoint(Vector2d const &lineADirection, ddouble dist1,
 /**
  * Returns the width (world units) of a shadow edge (scaled depending on the length of @a edge).
  */
-static ddouble shadowEdgeWidth(Vector2d const &edge)
+static ddouble shadowEdgeWidth(Vec2d const &edge)
 {
     ddouble const normalWidth = 20; //16;
     ddouble const maxWidth    = 60;
@@ -200,8 +200,8 @@ void Vertex::updateShadowOffsets()
         Line const &lineB = own->line();
         Line const &lineA = own->next()->line();
 
-        Vector2d const rightDir = (&lineB.from() == this?  lineB.direction() : -lineB.direction());
-        Vector2d const leftDir  = (&lineA.from() == this? -lineA.direction() :  lineA.direction()) * -1;  // Always flipped.
+        Vec2d const rightDir = (&lineB.from() == this?  lineB.direction() : -lineB.direction());
+        Vec2d const leftDir  = (&lineA.from() == this? -lineA.direction() :  lineA.direction()) * -1;  // Always flipped.
 
         cornerNormalPoint(leftDir,  shadowEdgeWidth(leftDir),
                           rightDir, shadowEdgeWidth(rightDir),

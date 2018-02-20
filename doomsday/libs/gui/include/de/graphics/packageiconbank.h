@@ -35,7 +35,7 @@ namespace de {
 class LIBGUI_PUBLIC PackageIconBank : public TextureBank
 {
 public:
-    typedef Vector2ui Size;
+    typedef Vec2ui Size;
 
     PackageIconBank();
 

@@ -29,11 +29,11 @@ namespace gloom { namespace geo {
 struct Polygon
 {
     struct Point {
-        de::Vector2d pos;
+        de::Vec2d pos;
         uint32_t id;
     };
     using Points = QVector<Point>;
-    using Line   = geo::Line<de::Vector2d>;
+    using Line   = geo::Line<de::Vec2d>;
 
     Points points; // clockwise winding
     de::Rectangled bounds;
@@ -42,12 +42,12 @@ struct Polygon
     Polygon(const Polygon &) = default;
 
     int size() const { return points.size(); }
-    const de::Vector2d &at(int pos) const;
+    const de::Vec2d &at(int pos) const;
     const Line lineAt(int pos) const;
     bool isConvex() const;
     QList<Polygon> splitConvexParts() const;
     QVector<int> concavePoints() const;
-    bool isPointInside(const de::Vector2d &point) const;
+    bool isPointInside(const de::Vec2d &point) const;
     bool isLineInside(int start, int end) const;
     int intersect(const Line &line) const;
     bool split(int a, int b, Polygon halves[2]) const;

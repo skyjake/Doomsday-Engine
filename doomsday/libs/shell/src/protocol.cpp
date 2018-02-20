@@ -189,7 +189,7 @@ void MapOutlinePacket::clear()
     d->lines.clear();
 }
 
-void MapOutlinePacket::addLine(Vector2i const &vertex1, Vector2i const &vertex2, LineType type)
+void MapOutlinePacket::addLine(Vec2i const &vertex1, Vec2i const &vertex2, LineType type)
 {
     Line ln;
     ln.start = vertex1;

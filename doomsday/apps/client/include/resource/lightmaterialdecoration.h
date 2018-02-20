@@ -43,9 +43,9 @@ public:
     class AnimationStage : public Stage
     {
     public:
-        de::Vector2f origin;     ///< Position in material space.
+        de::Vec2f origin;     ///< Position in material space.
         float elevation;         ///< Distance from the surface.
-        de::Vector3f color;      ///< Light color.
+        de::Vec3f color;      ///< Light color.
         float radius;            ///< Dynamic light radius (-1 = no light).
         float haloRadius;        ///< Halo radius (zero = no halo).
         LightRange lightLevels;  ///< Fade by sector lightlevel.
@@ -58,8 +58,8 @@ public:
         int sysFlareIdx;         ///< @todo Remove me
 
     public:
-        AnimationStage(int tics, float variance, de::Vector2f const &origin, float elevation,
-                       de::Vector3f const &color, float radius, float haloRadius,
+        AnimationStage(int tics, float variance, de::Vec2f const &origin, float elevation,
+                       de::Vec3f const &color, float radius, float haloRadius,
                        LightRange const &lightLevels, ClientTexture *ceilingTexture,
                        ClientTexture *floorTexture, ClientTexture *texture,
                        ClientTexture *flareTexture, int sysFlareIdx = -1);
@@ -75,8 +75,8 @@ public:
     };
 
 public:
-    LightMaterialDecoration(de::Vector2i const &patternSkip   = de::Vector2i(),
-                            de::Vector2i const &patternOffset = de::Vector2i(),
+    LightMaterialDecoration(de::Vec2i const &patternSkip   = de::Vec2i(),
+                            de::Vec2i const &patternOffset = de::Vec2i(),
                             bool useInterpolation             = true);
     virtual ~LightMaterialDecoration();
 

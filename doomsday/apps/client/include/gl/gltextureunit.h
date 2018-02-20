@@ -89,8 +89,8 @@ public:
 
     /// Shared properties:
     float opacity;
-    Vector2f scale;
-    Vector2f offset;
+    Vec2f scale;
+    Vec2f offset;
 
     GLTextureUnit()
         : texture(0)
@@ -98,9 +98,9 @@ public:
         , scale(1, 1)
     {}
     GLTextureUnit(TextureVariant &textureVariant,
-                  Vector2f const &scale          = Vector2f(1, 1),
-                  Vector2f const &offset         = Vector2f(0, 0),
-                  float opacity                  = 1)
+                  Vec2f const &scale          = Vec2f(1, 1),
+                  Vec2f const &offset         = Vec2f(0, 0),
+                  float opacity               = 1)
         : texture(&textureVariant)
         , opacity(opacity)
         , scale(scale)

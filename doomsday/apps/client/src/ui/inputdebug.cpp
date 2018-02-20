@@ -219,8 +219,8 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
     FR_TextSize(&textSize, label.toUtf8().constData());
 
     // Enlarge by BORDER pixels.
-    Rectanglei textGeom = Rectanglei::fromSize(Vector2i(0, 0),
-                                               Vector2ui(textSize.width  + BORDER * 2,
+    Rectanglei textGeom = Rectanglei::fromSize(Vec2i(0, 0),
+                                               Vec2ui(textSize.width  + BORDER * 2,
                                                          textSize.height + BORDER * 2));
 
     // Draw a background.

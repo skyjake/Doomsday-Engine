@@ -231,7 +231,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         {
             if (self().menu().isWidgetPartOfMenu(*widget))
             {
-                Vector2i cell = layout.widgetPos(*widget);
+                Vec2i cell = layout.widgetPos(*widget);
                 DENG2_ASSERT(cell.x >= 0 && cell.y >= 0);
 
                 // We want items to be hittable throughout the width of the menu, however

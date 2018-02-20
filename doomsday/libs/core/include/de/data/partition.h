@@ -37,12 +37,12 @@ namespace de {
 class Partition
 {
 public:
-    Vector2d direction;
-    Vector2d origin;
+    Vec2d direction;
+    Vec2d origin;
 
 public:
-    Partition(Vector2d const &direction = Vector2d(),
-              Vector2d const &origin    = Vector2d())
+    Partition(Vec2d const &direction = Vec2d(),
+              Vec2d const &origin    = Vec2d())
         : direction(direction), origin(origin) {}
 
     Partition(Partition const &other)
@@ -57,7 +57,7 @@ public:
      *         @c =0 Point lies directly on/incident with the line.
      *         @c >0 Point is to the right of the line.
      */
-    ddouble pointOnSide(Vector2d const &point) const {
+    ddouble pointOnSide(Vec2d const &point) const {
         return (origin.y - point.y) * direction.x - (origin.x - point.x) * direction.y;
     }
 
@@ -98,7 +98,7 @@ public:
         // Special case: parallel?
         if (divsor == 0) return 0;
 
-        Vector2d delta = origin - other.origin;
+        Vec2d delta = origin - other.origin;
         return (delta.y * other.direction.x - delta.x * other.direction.y) / divsor;
     }
 
@@ -106,7 +106,7 @@ public:
      * Determine the intercept point where "this" line and @a other intersect
      * and return the Euclidean point at which the two intercept.
      */
-    inline Vector2d intercept(Partition const &other) const {
+    inline Vec2d intercept(Partition const &other) const {
         return origin + direction * intersection(other);
     }
 

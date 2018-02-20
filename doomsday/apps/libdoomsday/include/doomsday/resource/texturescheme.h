@@ -101,8 +101,8 @@ public:
      */
     Manifest &declare(de::Path const &path,
                       Texture::Flags flags,
-                      de::Vector2ui const &dimensions,
-                      de::Vector2i const &origin,
+                      de::Vec2ui const &dimensions,
+                      de::Vec2i const &origin,
                       int uniqueId,
                       de::Uri const *resourceUri);
 

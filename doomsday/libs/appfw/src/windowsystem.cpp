@@ -33,7 +33,7 @@ DENG2_PIMPL(WindowSystem)
 
     // Mouse motion.
     bool mouseMoved;
-    Vector2i latestMousePos;
+    Vec2i latestMousePos;
 
     Impl(Public *i)
         : Base(i)
@@ -144,7 +144,7 @@ void WindowSystem::dispatchLatestMousePosition()
     d->processLatestMousePosition();
 }
 
-Vector2i WindowSystem::latestMousePosition() const
+Vec2i WindowSystem::latestMousePosition() const
 {
     return d->latestMousePos;
 }

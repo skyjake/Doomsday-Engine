@@ -197,7 +197,7 @@ void GameWidget::drawComposited()
 void GameWidget::renderCubeMap(uint size, String const &outputImagePath)
 {
     int const player = consolePlayer;
-    Vector2ui fbSize(size, size);
+    Vec2ui fbSize(size, size);
 
     GLTextureFramebuffer destFb(Image::RGB_888, fbSize, 1);
     destFb.glInit();

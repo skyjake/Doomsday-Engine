@@ -201,8 +201,8 @@ public:
     inline TextureManifest &declareTexture(
             de::Uri const &uri,
             Texture::Flags flags,
-            de::Vector2ui const &dimensions,
-            de::Vector2i const &origin,
+            de::Vec2ui const &dimensions,
+            de::Vec2i const &origin,
             de::dint uniqueId,
             de::Uri const *resourceUri = nullptr)
     {
@@ -215,7 +215,7 @@ public:
 
     Texture *defineTexture(de::String    const &schemeName,
                            de::Uri       const &resourceUri,
-                           de::Vector2ui const &dimensions = de::Vector2ui());
+                           de::Vec2ui const &dimensions = de::Vec2ui());
 
     /**
      * Ensure a texture has been derived for @a manifest.

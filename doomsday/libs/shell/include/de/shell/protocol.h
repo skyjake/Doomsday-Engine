@@ -87,12 +87,12 @@ class LIBSHELL_PUBLIC PlayerInfoPacket : public Packet
 public:
     struct Player {
         int       number;
-        Vector2i  position;
+        Vec2i  position;
         String    name;
-        Vector3ub color;
+        Vec3ub color;
 
-        Player(int num = 0, Vector2i const &pos = Vector2i(), String const &plrName = "",
-               Vector3ub const &plrColor = Vector3ub())
+        Player(int num = 0, Vec2i const &pos = Vec2i(), String const &plrName = "",
+               Vec3ub const &plrColor = Vec3ub())
             : number(num)
             , position(pos)
             , name(plrName)
@@ -138,8 +138,8 @@ public:
         TwoSidedLine = 1,
     };
     struct Line {
-        Vector2i start;
-        Vector2i end;
+        Vec2i start;
+        Vec2i end;
         LineType type;
     };
 
@@ -147,7 +147,7 @@ public:
 
     void clear();
 
-    void addLine(Vector2i const &vertex1, Vector2i const &vertex2, LineType type);
+    void addLine(Vec2i const &vertex1, Vec2i const &vertex2, LineType type);
 
     /**
      * Returns the number of lines.

@@ -30,8 +30,8 @@ using namespace de;
 namespace gloom {
 
 struct InstanceData {
-    Matrix4f matrix;
-    Vector4f color;
+    Mat4f matrix;
+    Vec4f color;
     LIBGUI_DECLARE_VERTEX_FORMAT(2)
 };
 internal::AttribSpec const InstanceData::_spec[2] = {
@@ -140,11 +140,11 @@ DENG2_PIMPL(EntityRender)
                 if (distance < maxDist)
                 {
                     InstanceBuf::Type inst{
-                        Matrix4f::translate(e->position()) *
-                            Matrix4f::rotate(e->angle(), Vector3f(0, -1, 0)) *
-                            Matrix4f::rotate(-90, Vector3f(1, 0, 0)) *
-                            Matrix4f::scale(e->scale() * 0.1f),
-                        Vector4f(1, 1, 1,
+                        Mat4f::translate(e->position()) *
+                            Mat4f::rotate(e->angle(), Vec3f(0, -1, 0)) *
+                            Mat4f::rotate(-90, Vec3f(1, 0, 0)) *
+                            Mat4f::scale(e->scale() * 0.1f),
+                        Vec4f(1, 1, 1,
                                  clamp(0.f, 1.f - (distance - maxDist + fadeItv) / fadeItv, 1.f))};
                     data << inst;
                 }

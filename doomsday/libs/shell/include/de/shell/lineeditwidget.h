@@ -55,7 +55,7 @@ public:
      */
     void setSignalOnEnter(int enterSignal);
 
-    Vector2i cursorPosition() const;
+    Vec2i cursorPosition() const;
 
     bool handleControlKey(int qtKey, KeyModifiers const &mods = Unmodified);
 

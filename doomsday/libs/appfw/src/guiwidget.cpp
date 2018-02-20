@@ -75,7 +75,7 @@ DENG2_PIMPL(GuiWidget)
     struct BlurState
     {
         Time updatedAt;
-        Vector2ui size;
+        Vec2ui size;
         QScopedPointer<GLTextureFramebuffer> fb[2];
         Drawable drawable;
         GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
@@ -187,7 +187,7 @@ DENG2_PIMPL(GuiWidget)
         blur.reset(new BlurState);
 
         // The blurred version of the view is downsampled.
-        blur->size = (self().root().viewSize() / GuiWidget::pointsToPixels(4)).max(Vector2ui(1, 1));
+        blur->size = (self().root().viewSize() / GuiWidget::pointsToPixels(4)).max(Vec2ui(1, 1));
 
         for (int i = 0; i < 2; ++i)
         {
@@ -203,11 +203,11 @@ DENG2_PIMPL(GuiWidget)
         buf->setVertices(gl::TriangleStrip,
                          DefaultVertexBuf::Builder().makeQuad(
                              Rectanglef(0, 0, 1, 1),
-                             Vector4f(1, 1, 1, 1),
+                             Vec4f(1, 1, 1, 1),
                              Rectanglef(0, 0, 1, 1)),
                          gl::Static);
 
-        blur->uBlurStep = Vector2f(1.f / float(blur->size.x),
+        blur->uBlurStep = Vec2f(1.f / float(blur->size.x),
                                    1.f / float(blur->size.y));
 
         self().root().shaders().build(blur->drawable.program(), "fx.blur.horizontal")
@@ -280,8 +280,8 @@ DENG2_PIMPL(GuiWidget)
             .setTarget(*blur->fb[1])
             .setViewport(Rectangleui::fromSize(blur->size));
         blur->uTex = blur->fb[0]->colorTexture();
-        blur->uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
-        blur->uWindow = Vector4f(0, 0, 1, 1);
+        blur->uMvpMatrix = Mat4f::ortho(0, 1, 0, 1);
+        blur->uWindow = Vec4f(0, 0, 1, 1);
         blur->drawable.setProgram(blur->drawable.program());
         blur->drawable.draw();
         GLState::pop();
@@ -317,7 +317,7 @@ DENG2_PIMPL(GuiWidget)
 
         // Pass 3: apply the vertical blur filter, drawing the final result
         // into the original target.
-        Vector4f blurColor = background.solidFill;
+        Vec4f blurColor = background.solidFill;
         float blurOpacity  = self().visibleOpacity();
         if (background.type == Background::BlurredWithSolidFill)
         {
@@ -423,7 +423,7 @@ DENG2_PIMPL(GuiWidget)
         Rectanglef const viewRect  = self().root().viewRule().rect();
         Rectanglef const selfRect  = self().hitRule().rect();
         Rectanglef const otherRect = widget.hitRule().rect();
-        Vector2f const otherMiddle =
+        Vec2f const otherMiddle =
                 (dir == ui::Up?   otherRect.midBottom() :
                  dir == ui::Down? otherRect.midTop()    :
                  dir == ui::Left? otherRect.midRight()  :
@@ -468,12 +468,12 @@ DENG2_PIMPL(GuiWidget)
             }
         }
 
-        Vector2f const middle    = (dir == ui::Up?   selfRect.midTop()    :
+        Vec2f const middle    = (dir == ui::Up?   selfRect.midTop()    :
                                     dir == ui::Down? selfRect.midBottom() :
                                     dir == ui::Left? selfRect.midLeft()   :
                                                      selfRect.midRight() );
-        Vector2f const delta     = otherMiddle - middle;
-        Vector2f const dirVector = directionVector(dir);
+        Vec2f const delta     = otherMiddle - middle;
+        Vec2f const dirVector = directionVector(dir);
         auto dotProd = delta.normalize().dot(dirVector);
         if (dotProd <= 0)
         {
@@ -670,7 +670,7 @@ RuleRectangle &GuiWidget::rule()
 
 Rectanglei GuiWidget::contentRect() const
 {
-    Vector4i const pad = margins().toVector();
+    Vec4i const pad = margins().toVector();
     return rule().recti().adjusted(pad.xy(), -pad.zw());
 }
 
@@ -698,10 +698,10 @@ Rectanglef GuiWidget::normalizedRect(de::Rectanglei const &rect,
                                      de::Rectanglei const &containerRect) // static
 {
     Rectanglef const rectf = rect.moved(-containerRect.topLeft);
-    Vector2f const contSize = containerRect.size();
-    return Rectanglef(Vector2f(rectf.left()   / contSize.x,
+    Vec2f const contSize = containerRect.size();
+    return Rectanglef(Vec2f(rectf.left()   / contSize.x,
                                rectf.top()    / contSize.y),
-                      Vector2f(rectf.right()  / contSize.x,
+                      Vec2f(rectf.right()  / contSize.x,
                                rectf.bottom() / contSize.y));
 }
 
@@ -729,14 +729,14 @@ Rectanglef GuiWidget::normalizedRect(Rectanglei const &viewSpaceRect) const
 
 Rectanglef GuiWidget::normalizedContentRect() const
 {
-    Rectanglef const rect = rule().rect().adjusted( Vector2f(margins().left().value(),
+    Rectanglef const rect = rule().rect().adjusted( Vec2f(margins().left().value(),
                                                              margins().top().value()),
-                                                   -Vector2f(margins().right().value(),
+                                                   -Vec2f(margins().right().value(),
                                                              margins().bottom().value()));
     GuiRootWidget::Size const &viewSize = root().viewSize();
-    return Rectanglef(Vector2f(float(rect.left())   / float(viewSize.x),
+    return Rectanglef(Vec2f(float(rect.left())   / float(viewSize.x),
                                float(rect.top())    / float(viewSize.y)),
-                      Vector2f(float(rect.right())  / float(viewSize.x),
+                      Vec2f(float(rect.right())  / float(viewSize.x),
                                float(rect.bottom()) / float(viewSize.y)));
 }
 
@@ -1019,7 +1019,7 @@ bool GuiWidget::handleEvent(Event const &event)
     return false;
 }
 
-bool GuiWidget::hitTest(Vector2i const &pos) const
+bool GuiWidget::hitTest(Vec2i const &pos) const
 {
     if (behavior().testFlag(Unhittable))
     {
@@ -1051,7 +1051,7 @@ bool GuiWidget::hitTest(Event const &event) const
     return event.isMouse() && hitTest(event.as<MouseEvent>().pos());
 }
 
-GuiWidget const *GuiWidget::treeHitTest(Vector2i const &pos) const
+GuiWidget const *GuiWidget::treeHitTest(Vec2i const &pos) const
 {
     Children const childs = childWidgets();
     for (int i = childs.size() - 1; i >= 0; --i)
@@ -1125,7 +1125,7 @@ void GuiWidget::glDeinit()
 void GuiWidget::drawContent()
 {}
 
-void GuiWidget::drawBlurredRect(Rectanglei const &rect, Vector4f const &color, float opacity)
+void GuiWidget::drawBlurredRect(Rectanglei const &rect, Vec4f const &color, float opacity)
 {
     auto *blur = d->blur.get();
     if (!blur) return;
@@ -1134,19 +1134,19 @@ void GuiWidget::drawBlurredRect(Rectanglei const &rect, Vector4f const &color, f
 
     root().painter().flush();
 
-    Vector2ui const viewSize = root().viewSize();
+    Vec2ui const viewSize = root().viewSize();
 
     blur->uTex = blur->fb[1]->colorTexture();
-    blur->uColor = Vector4f((1 - color.w) + color.x * color.w,
+    blur->uColor = Vec4f((1 - color.w) + color.x * color.w,
                             (1 - color.w) + color.y * color.w,
                             (1 - color.w) + color.z * color.w,
                             opacity);
-    blur->uWindow = Vector4f(rect.left()   / float(viewSize.x),
+    blur->uWindow = Vec4f(rect.left()   / float(viewSize.x),
                              rect.top()    / float(viewSize.y),
                              rect.width()  / float(viewSize.x),
                              rect.height() / float(viewSize.y));
     blur->uMvpMatrix = root().projMatrix2D() *
-                       Matrix4f::scaleThenTranslate(rect.size(), rect.topLeft);
+                       Mat4f::scaleThenTranslate(rect.size(), rect.topLeft);
     blur->drawable.setProgram(QStringLiteral("vert"));
 
     blur->drawable.draw();
@@ -1171,7 +1171,7 @@ bool GuiWidget::canBeFocused() const
 {
     if (!Widget::canBeFocused() ||
         fequal(visibleOpacity(), 0.f) ||
-        rule().recti().size() == Vector2ui())
+        rule().recti().size() == Vec2ui())
     {
         return false;
     }
@@ -1236,7 +1236,7 @@ void GuiWidget::glMakeGeometry(GuiVertexBuilder &verts)
         {
             verts.makeFlexibleFrame(rule().recti().shrunk(d->pointsToPixels(2)),
                                     thick,
-                                    Vector4f(0, 0, 0, .5f),
+                                    Vec4f(0, 0, 0, .5f),
                                     rootWgt.atlas().imageRectf(rootWgt.boldRoundCorners()));
         }
         verts.makeFlexibleFrame(rule().recti().shrunk(d->pointsToPixels(1)),

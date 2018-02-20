@@ -34,19 +34,19 @@ public:
     AnimationVector2(Animation::Style style = Animation::EaseOut)
         : x(0, style), y(0, style) {}
 
-    AnimationVector2 &operator = (Vector2f const &vector)
+    AnimationVector2 &operator = (Vec2f const &vector)
     {
         setValue(vector);
         return *this;
     }
 
-    void setValue(Vector2f const &vector, TimeSpan transitionSpan = 0.0)
+    void setValue(Vec2f const &vector, TimeSpan transitionSpan = 0.0)
     {
         x.setValue(vector.x, transitionSpan);
         y.setValue(vector.y, transitionSpan);
     }
 
-    void setValueIfDifferentTarget(Vector2f const &vector, TimeSpan transitionSpan = 0.0)
+    void setValueIfDifferentTarget(Vec2f const &vector, TimeSpan transitionSpan = 0.0)
     {
         if (!fequal(x.target(), vector.x))
         {
@@ -64,14 +64,14 @@ public:
         y.setStyle(s);
     }
 
-    Vector2f value() const
+    Vec2f value() const
     {
-        return Vector2f(x, y);
+        return Vec2f(x, y);
     }
 
-    Vector2f target() const
+    Vec2f target() const
     {
-        return Vector2f(x.target(), y.target());
+        return Vec2f(x.target(), y.target());
     }
 
     bool done() const
@@ -94,13 +94,13 @@ public:
     AnimationVector3(Animation::Style style = Animation::EaseOut)
         : x(0, style), y(0, style), z(0, style) {}
 
-    AnimationVector3 &operator = (Vector3f const &vector)
+    AnimationVector3 &operator = (Vec3f const &vector)
     {
         setValue(vector);
         return *this;
     }
 
-    void setValue(Vector3f const &vector, float transitionSpan = 0.f)
+    void setValue(Vec3f const &vector, float transitionSpan = 0.f)
     {
         x.setValue(vector.x, transitionSpan);
         y.setValue(vector.y, transitionSpan);
@@ -114,14 +114,14 @@ public:
         z.setStyle(s);
     }
 
-    Vector3f value() const
+    Vec3f value() const
     {
-        return Vector3f(x, y, z);
+        return Vec3f(x, y, z);
     }
 
-    Vector3f target() const
+    Vec3f target() const
     {
-        return Vector3f(x.target(), y.target(), z.target());
+        return Vec3f(x.target(), y.target(), z.target());
     }
 
     bool done() const

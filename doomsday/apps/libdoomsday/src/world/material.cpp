@@ -80,7 +80,7 @@ DENG2_PIMPL(Material)
 , DENG2_OBSERVES(res::Texture, DimensionsChange)
 {
     MaterialManifest *manifest = nullptr;  ///< Source manifest (always valid, not owned).
-    Vector2ui dimensions;                  ///< World dimensions in map coordinate space units.
+    Vec2ui dimensions;                  ///< World dimensions in map coordinate space units.
 
     Impl(Public *i) : Base(i) {}
 
@@ -200,12 +200,12 @@ MaterialManifest &Material::manifest() const
     return *d->manifest;
 }
 
-Vector2ui const &Material::dimensions() const
+Vec2ui const &Material::dimensions() const
 {
     return d->dimensions;
 }
 
-void Material::setDimensions(Vector2ui const &newDimensions)
+void Material::setDimensions(Vec2ui const &newDimensions)
 {
     if (d->dimensions != newDimensions)
     {
@@ -219,7 +219,7 @@ void Material::setDimensions(Vector2ui const &newDimensions)
 
 void Material::setHeight(int newHeight)
 {
-    setDimensions(Vector2ui(width(), newHeight));
+    setDimensions(Vec2ui(width(), newHeight));
 }
 
 bool Material::isAnimated() const
@@ -229,7 +229,7 @@ bool Material::isAnimated() const
 
 void Material::setWidth(int newWidth)
 {
-    setDimensions(Vector2ui(newWidth, height()));
+    setDimensions(Vec2ui(newWidth, height()));
 }
 
 void Material::markDontDraw(bool yes)

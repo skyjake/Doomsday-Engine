@@ -370,9 +370,9 @@ FontLineWrapping const &TextDrawable::wraps() const
     return *d->visibleWrap;
 }
 
-Vector2ui TextDrawable::wrappedSize() const
+Vec2ui TextDrawable::wrappedSize() const
 {
-    return Vector2ui(d->visibleWrap->width(), d->visibleWrap->totalHeightInPixels());
+    return Vec2ui(d->visibleWrap->width(), d->visibleWrap->totalHeightInPixels());
 }
 
 String TextDrawable::text() const

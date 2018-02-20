@@ -141,7 +141,7 @@ void FinaleTextWidget::runTicks(/*timespan_t timeDelta*/)
 }
 
 #ifdef __CLIENT__
-void FinaleTextWidget::draw(Vector3f const &offset)
+void FinaleTextWidget::draw(Vec3f const &offset)
 {
     if (!d->text) return;
 
@@ -364,7 +364,7 @@ FinaleTextWidget &FinaleTextWidget::setTypeInRate(int newRateInTics)
     return *this;
 }
 
-FinaleTextWidget &FinaleTextWidget::setColor(Vector3f const &newColor, int steps)
+FinaleTextWidget &FinaleTextWidget::setColor(Vec3f const &newColor, int steps)
 {
     AnimatorVector3_Set(*((animatorvector3_t *)d->color), newColor.x, newColor.y, newColor.z, steps);
     d->pageColor = 0;
@@ -377,7 +377,7 @@ FinaleTextWidget &FinaleTextWidget::setAlpha(float alpha, int steps)
     return *this;
 }
 
-FinaleTextWidget &FinaleTextWidget::setColorAndAlpha(Vector4f const &newColorAndAlpha, int steps)
+FinaleTextWidget &FinaleTextWidget::setColorAndAlpha(Vec4f const &newColorAndAlpha, int steps)
 {
     AnimatorVector4_Set(d->color, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
     d->pageColor = 0;

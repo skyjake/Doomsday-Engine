@@ -41,7 +41,7 @@ static void KeysWidget_UpdateGeometry(guidata_keys_t *keys)
 static void KeysWidget_Draw(guidata_keys_t *keys, Point2Raw const *offset)
 {
     DENG2_ASSERT(keys);
-    keys->draw(offset? Vector2i(offset->xy) : Vector2i());
+    keys->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 guidata_keys_t::guidata_keys_t(dint player)
@@ -73,7 +73,7 @@ void guidata_keys_t::tick(timespan_t /*elapsed*/)
     }
 }
 
-void guidata_keys_t::draw(Vector2i const &offset) const
+void guidata_keys_t::draw(Vec2i const &offset) const
 {
 #if __JDOOM__
 
@@ -153,7 +153,7 @@ void guidata_keys_t::draw(Vector2i const &offset) const
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconOpacity);
-        GL_DrawPatch(::pKeys[0], Vector2i(x, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
+        GL_DrawPatch(::pKeys[0], Vec2i(x, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
         DGL_Disable(DGL_TEXTURE_2D);
 
         if(R_GetPatchInfo(::pKeys[0], &pInfo))
@@ -164,7 +164,7 @@ void guidata_keys_t::draw(Vector2i const &offset) const
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconOpacity);
-        GL_DrawPatch(::pKeys[1], Vector2i(x, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
+        GL_DrawPatch(::pKeys[1], Vec2i(x, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
         DGL_Disable(DGL_TEXTURE_2D);
 
         if(R_GetPatchInfo(::pKeys[1], &pInfo))
@@ -175,7 +175,7 @@ void guidata_keys_t::draw(Vector2i const &offset) const
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconOpacity);
-        GL_DrawPatch(::pKeys[2], Vector2i(x, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
+        GL_DrawPatch(::pKeys[2], Vec2i(x, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
         DGL_Disable(DGL_TEXTURE_2D);
     }
 
@@ -207,7 +207,7 @@ void guidata_keys_t::draw(Vector2i const &offset) const
         patchid_t patch = ::pKeys[i];
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconOpacity);
-        GL_DrawPatch(patch, Vector2i(ORIGINX + 46 + numDrawn * 20, ORIGINY + 1));
+        GL_DrawPatch(patch, Vec2i(ORIGINX + 46 + numDrawn * 20, ORIGINY + 1));
 
         DGL_Disable(DGL_TEXTURE_2D);
 

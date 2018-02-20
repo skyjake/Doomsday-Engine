@@ -317,11 +317,11 @@ Painter &GuiRootWidget::painter()
     return d->painter;
 }
 
-Matrix4f GuiRootWidget::projMatrix2D() const
+Mat4f GuiRootWidget::projMatrix2D() const
 {
     RootWidget::Size const size = viewSize();
-    return Matrix4f::ortho(0, size.x, 0, size.y) *
-           Matrix4f::translate(d->rootOffset.value());
+    return Mat4f::ortho(0, size.x, 0, size.y) *
+           Mat4f::translate(d->rootOffset.value());
 }
 
 AnimationVector2 &GuiRootWidget::rootOffset()
@@ -363,7 +363,7 @@ void GuiRootWidget::loadCommonTextures()
     d->initBankContents();
 }
 
-GuiWidget const *GuiRootWidget::globalHitTest(Vector2i const &pos) const
+GuiWidget const *GuiRootWidget::globalHitTest(Vec2i const &pos) const
 {
     Widget::Children const childs = children();
     for (int i = childs.size() - 1; i >= 0; --i)

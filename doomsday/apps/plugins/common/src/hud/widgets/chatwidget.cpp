@@ -38,7 +38,7 @@ static void ChatWidget_UpdateGeometry(ChatWidget *chat)
 static void ChatWidget_Draw(ChatWidget *chat, Point2Raw const *offset)
 {
     DENG2_ASSERT(chat);
-    chat->draw(offset? Vector2i(offset->xy) : Vector2i());
+    chat->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 DENG2_PIMPL(ChatWidget)
@@ -239,7 +239,7 @@ String ChatWidget::messageAsText() const
     return d->text;
 }
 
-void ChatWidget::draw(Vector2i const &offset) const
+void ChatWidget::draw(Vec2i const &offset) const
 {
     dfloat const textOpacity = uiRendState->pageAlpha * cfg.common.hudColor[3];
     //dfloat const iconOpacity = uiRendState->pageAlpha * cfg.common.hudIconAlpha;

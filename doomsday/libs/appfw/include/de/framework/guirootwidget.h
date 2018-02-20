@@ -82,7 +82,7 @@ public:
     /**
      * Returns the default projection for 2D graphics.
      */
-    Matrix4f projMatrix2D() const;
+    Mat4f projMatrix2D() const;
     
     AnimationVector2 &rootOffset();
 
@@ -99,7 +99,7 @@ public:
      *
      * @return  Widget, or @c NULL if none were found.
      */
-    GuiWidget const *globalHitTest(Vector2i const &pos) const;
+    GuiWidget const *globalHitTest(Vec2i const &pos) const;
 
     GuiWidget const *guiFind(String const &name) const;
 

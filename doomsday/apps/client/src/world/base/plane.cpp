@@ -173,7 +173,7 @@ DENG2_AUDIENCE_METHOD(Plane, HeightChange)
 DENG2_AUDIENCE_METHOD(Plane, HeightSmoothedChange)
 #endif
 
-Plane::Plane(Sector &sector, Vector3f const &normal, ddouble height)
+Plane::Plane(Sector &sector, Vec3f const &normal, ddouble height)
     : MapElement(DMU_PLANE, &sector)
     , d(new Impl(this))
 {
@@ -243,7 +243,7 @@ Surface *Plane::surfacePtr() const
     return &d->surface;
 }
 
-void Plane::setNormal(Vector3f const &newNormal)
+void Plane::setNormal(Vec3f const &newNormal)
 {
     d->surface.setNormal(newNormal);  // will normalize
 }

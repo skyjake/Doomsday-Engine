@@ -137,7 +137,7 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         sendAck = true;
 
         LOGDEV_NET_MSG("Applying pos %s to mobj %p and clmo %i")
-                << Vector3d(state->pendingOriginFix).asText()
+                << Vec3d(state->pendingOriginFix).asText()
                 << mo << clmo->thinker.id;
 
         Mobj_SetOrigin(mo, state->pendingOriginFix[VX], state->pendingOriginFix[VY], state->pendingOriginFix[VZ]);
@@ -157,7 +157,7 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         sendAck = true;
 
         LOGDEV_NET_MSG("Applying mom %s to mobj %p and clmo %i")
-                << Vector3d(state->pendingMomFix).asText()
+                << Vec3d(state->pendingMomFix).asText()
                 << mo << clmo->thinker.id;
 
         mo->mom[MX] = clmo->mom[VX] = state->pendingMomFix[VX];
@@ -215,7 +215,7 @@ void ClPlayer_HandleFix()
         state->pendingFixes |= DDPF_FIXORIGIN;
 
         LOGDEV_NET_VERBOSE("Pending fix pos %i: %s")
-                << ddpl->fixAcked.origin << Vector3d(state->pendingOriginFix).asText();
+                << ddpl->fixAcked.origin << Vec3d(state->pendingOriginFix).asText();
     }
 
     if (fixes & 4) // fix momentum?
@@ -227,7 +227,7 @@ void ClPlayer_HandleFix()
         state->pendingFixes |= DDPF_FIXMOM;
 
         LOGDEV_NET_VERBOSE("Pending fix momentum %i: %s")
-                << ddpl->fixAcked.mom << Vector3d(state->pendingMomFix).asText();
+                << ddpl->fixAcked.mom << Vec3d(state->pendingMomFix).asText();
     }
 
     ClPlayer_ApplyPendingFixes(plrNum);
@@ -245,10 +245,10 @@ void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, bool onground)
     cpMom[MY][SECONDS_TO_TICKS(gameTime) % LOCALCAM_WRITE_TICS] = dy;
 
     // Calculate an average.
-    Vector2d mom;
+    Vec2d mom;
     for (int i = 0; i < LOCALCAM_WRITE_TICS; ++i)
     {
-        mom += Vector2d(cpMom[MX][i], cpMom[MY][i]);
+        mom += Vec2d(cpMom[MX][i], cpMom[MY][i]);
     }
     mom /= LOCALCAM_WRITE_TICS;
 
@@ -419,7 +419,7 @@ void ClPlayer_ReadDelta()
             ddpl->flags &= ~DDPF_REMOTE_VIEW_FILTER;
         }
         LOG_NET_XVERBOSE("View filter color set remotely to %s",
-                         Vector4f(ddpl->filterColor).asText());
+                         Vec4f(ddpl->filterColor).asText());
     }
 
     if (df & PDF_PSPRITES)

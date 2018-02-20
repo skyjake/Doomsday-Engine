@@ -136,8 +136,8 @@ public:
      * @return Image of the text, with the same dimensions as returned by measure().
      */
     QImage rasterize(String const &text,
-                     Vector4ub const &foreground,
-                     Vector4ub const &background) const;
+                     Vec4ub const &foreground,
+                     Vec4ub const &background) const;
 
 protected:
     NativeFont &operator = (NativeFont const &other);
@@ -155,8 +155,8 @@ protected:
     virtual int nativeFontWidth(String const &text) const = 0;
     virtual Rectanglei nativeFontMeasure(String const &text) const = 0;
     virtual QImage nativeFontRasterize(String const &text,
-                                       Vector4ub const &foreground,
-                                       Vector4ub const &background) const = 0;
+                                       Vec4ub const &foreground,
+                                       Vec4ub const &background) const = 0;
 
 private:
     DENG2_PRIVATE(d)

@@ -186,7 +186,7 @@ DENG2_PIMPL(StateAnimator)
         SafePtr<AnimationValue> angle; // not owned
         /// Units per second; added to value independently of its animation.
         SafePtr<AnimationValue> speed; // not owned
-        Vector3f axis;
+        Vec3f axis;
     };
     typedef QHash<String, AnimVar *> AnimVars;
     AnimVars animVars;
@@ -372,7 +372,7 @@ DENG2_PIMPL(StateAnimator)
             var->variableName = variableName;
             var->angle.reset(new AnimationValue(Animation(variableDef.getf(DEF_ANGLE, 0.f), Animation::Linear)));
             var->speed.reset(new AnimationValue(Animation(variableDef.getf(DEF_SPEED, 0.f), Animation::Linear)));
-            var->axis = vectorFromValue<Vector3f>(variableDef.get(DEF_AXIS));
+            var->axis = vectorFromValue<Vec3f>(variableDef.get(DEF_AXIS));
 
             addBinding(variableName.concatenateMember(DEF_ANGLE), var->angle);
             addBinding(variableName.concatenateMember(DEF_SPEED), var->speed);
@@ -894,7 +894,7 @@ ddouble StateAnimator::currentTime(int index) const
     return ModelDrawable::Animator::currentTime(index); // + frameTimePos;
 }
 
-Vector4f StateAnimator::extraRotationForNode(String const &nodeName) const
+Vec4f StateAnimator::extraRotationForNode(String const &nodeName) const
 {
     auto found = d->animVars.constFind(nodeName);
     if (found != d->animVars.constEnd())
@@ -902,10 +902,10 @@ Vector4f StateAnimator::extraRotationForNode(String const &nodeName) const
         Impl::AnimVar const &var = *found.value();
         if (var.angle)
         {
-            return Vector4f(var.axis, var.angle->animation());
+            return Vec4f(var.axis, var.angle->animation());
         }
     }
-    return Vector4f();
+    return Vec4f();
 }
 
 ModelDrawable::Appearance const &StateAnimator::appearance() const

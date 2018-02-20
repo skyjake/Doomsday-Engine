@@ -368,8 +368,8 @@ public:
          */
         void updateAllSurfaceNormals();
 
-        void chooseSurfaceColors(de::dint sectionId, de::Vector3f const **topColor,
-                                 de::Vector3f const **bottomColor) const;
+        void chooseSurfaceColors(de::dint sectionId, de::Vec3f const **topColor,
+                                 de::Vec3f const **bottomColor) const;
 
     //- SoundEmitters -------------------------------------------------------------------
 
@@ -661,14 +661,14 @@ public:
      * Returns the map space point (on the line) which lies at the center of the line's
      * two Vertexs.
      */
-    de::Vector2d center() const;
+    de::Vec2d center() const;
 
     /**
      * Returns a direction vector for the line from Start to End vertex.
      *
      * @see angle()
      */
-    de::Vector2d const &direction() const;
+    de::Vec2d const &direction() const;
 
     /**
      * Returns the accurate length of the line from Start to End vertex.
@@ -741,7 +741,7 @@ public:
     /**
      * @param offset  Returns the position of the nearest point along the line [0..1].
      */
-    de::ddouble pointDistance(de::Vector2d const &point, de::ddouble *offset = nullptr) const;
+    de::ddouble pointDistance(de::Vec2d const &point, de::ddouble *offset = nullptr) const;
 
     /**
      * Where does the given @a point lie relative to the line? Note that the line is considered
@@ -753,7 +753,7 @@ public:
      *         @c =0 Point lies directly on/incident with the line.
      *         @c >0 Point is to the right of the line.
      */
-    de::ddouble pointOnSide(de::Vector2d const &point) const;
+    de::ddouble pointOnSide(de::Vec2d const &point) const;
 
 protected:
     de::dint property(world::DmuArgs &args) const;

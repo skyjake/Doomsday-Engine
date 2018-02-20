@@ -31,7 +31,7 @@
 
 namespace gloom {
 
-typedef de::Vector2d Point;
+typedef de::Vec2d Point;
 
 struct Line
 {
@@ -50,11 +50,11 @@ struct Line
 
 struct Plane
 {
-    de::Vector3d point;
-    de::Vector3f normal;
+    de::Vec3d point;
+    de::Vec3f normal;
 
-    bool isPointAbove(const de::Vector3d &pos) const;
-    de::Vector3d projectPoint(const Point &pos) const;
+    bool isPointAbove(const de::Vec3d &pos) const;
+    de::Vec3d projectPoint(const Point &pos) const;
 };
 
 struct Volume
@@ -147,7 +147,7 @@ public:
     void           forLinesAscendingDistance(const Point &pos, std::function<bool(ID)>) const;
     IDList         findLines(ID pointId) const;
     IDList         findLinesStartingFrom(ID pointId, Line::Side side) const;
-    std::pair<ID, ID> findSectorAndVolumeAt(const de::Vector3d &pos) const;
+    std::pair<ID, ID> findSectorAndVolumeAt(const de::Vec3d &pos) const;
     geo::Line2d    geoLine(ID lineId) const;
     geo::Line2d    geoLine(Edge ef) const;
     geo::Polygon   sectorPolygon(ID sectorId) const;
@@ -157,7 +157,7 @@ public:
     const Plane &  floorPlane(ID sectorId) const;
     const Plane &  ceilingPlane(ID sectorId) const;
 
-    using WorldVerts      = QHash<ID, de::Vector3f>;
+    using WorldVerts      = QHash<ID, de::Vec3f>;
     using WorldPlaneVerts = QList<WorldVerts>; // one set per plane
 
     WorldVerts      worldPlaneVerts(const Sector &sector, const Plane &plane) const;

@@ -1049,7 +1049,7 @@ String Record::asText(String const &prefix, List *lines) const
     QString result;
     QTextStream os(&result);
     List allLines;
-    Vector2ui maxLength;
+    Vec2ui maxLength;
 
     // Collect.
     asText(prefix, &allLines);
@@ -1058,7 +1058,7 @@ String Record::asText(String const &prefix, List *lines) const
     qSort(allLines);
     for (List::iterator i = allLines.begin(); i != allLines.end(); ++i)
     {
-        maxLength = maxLength.max(Vector2ui(i->first.size(), i->second.size()));
+        maxLength = maxLength.max(Vec2ui(i->first.size(), i->second.size()));
     }
 
     os.setFieldAlignment(QTextStream::AlignLeft);

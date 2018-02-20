@@ -154,7 +154,7 @@ void MobjPreviewWidget::draw() const
 void MobjPreviewWidget::updateGeometry()
 {
     // @todo calculate visible dimensions properly!
-    geometry().setSize(Vector2ui(MNDATA_MOBJPREVIEW_WIDTH, MNDATA_MOBJPREVIEW_HEIGHT));
+    geometry().setSize(Vec2ui(MNDATA_MOBJPREVIEW_WIDTH, MNDATA_MOBJPREVIEW_HEIGHT));
 }
 
 } // namespace menu

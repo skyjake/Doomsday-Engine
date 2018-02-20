@@ -266,7 +266,7 @@ public:
          *
          * @return Rotation axis (xyz) and angle (w; degrees).
          */
-        virtual Vector4f extraRotationForNode(String const &nodeName) const;
+        virtual Vec4f extraRotationForNode(String const &nodeName) const;
 
         // ISerializable.
         void operator >> (Writer &to) const override;
@@ -575,12 +575,12 @@ public:
     /**
      * Dimensions of the default pose, in model space.
      */
-    Vector3f dimensions() const;
+    Vec3f dimensions() const;
 
     /**
      * Center of the default pose, in model space.
      */
-    Vector3f midPoint() const;
+    Vec3f midPoint() const;
 
 private:
     DENG2_PRIVATE(d)

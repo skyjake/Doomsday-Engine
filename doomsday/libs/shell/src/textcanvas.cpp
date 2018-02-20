@@ -191,7 +191,7 @@ void TextCanvas::fill(Rectanglei const &rect, Char const &ch)
     }
 }
 
-void TextCanvas::put(Vector2i const &pos, Char const &ch)
+void TextCanvas::put(Vec2i const &pos, Char const &ch)
 {
     if (isValid(pos))
     {
@@ -212,10 +212,10 @@ void TextCanvas::setRichFormatRange(Char::Attribs const &attribs, Rangei const &
     d->richFormats.append(rf);
 }
 
-void TextCanvas::drawText(Vector2i const &pos, String const &text,
+void TextCanvas::drawText(Vec2i const &pos, String const &text,
                           Char::Attribs const &attribs, int richOffset)
 {
-    Vector2i p = pos;
+    Vec2i p = pos;
     for (int i = 0; i < text.size(); ++i)
     {
         if (isValid(p))
@@ -226,7 +226,7 @@ void TextCanvas::drawText(Vector2i const &pos, String const &text,
     }
 }
 
-void TextCanvas::drawWrappedText(Vector2i const &pos, String const &text,
+void TextCanvas::drawWrappedText(Vec2i const &pos, String const &text,
                                  ILineWrapping const &wraps, Char::Attribs const &attribs,
                                  Alignment lineAlignment)
 {
@@ -245,7 +245,7 @@ void TextCanvas::drawWrappedText(Vector2i const &pos, String const &text,
         {
             x = width/2 - part.size()/2;
         }
-        drawText(pos + Vector2i(x, y), part, attribs, span.range.start);
+        drawText(pos + Vec2i(x, y), part, attribs, span.range.start);
     }
 }
 
@@ -258,21 +258,21 @@ void TextCanvas::drawLineRect(Rectanglei const &rect, Char::Attribs const &attri
     // Horizontal edges.
     for (duint x = 1; x < rect.width() - 1; ++x)
     {
-        put(rect.topLeft + Vector2i(x, 0), hEdge);
-        put(rect.bottomLeft() + Vector2i(x, -1), hEdge);
+        put(rect.topLeft + Vec2i(x, 0), hEdge);
+        put(rect.bottomLeft() + Vec2i(x, -1), hEdge);
     }
 
     // Vertical edges.
     for (duint y = 1; y < rect.height() - 1; ++y)
     {
-        put(rect.topLeft + Vector2i(0, y), vEdge);
-        put(rect.topRight() + Vector2i(-1, y), vEdge);
+        put(rect.topLeft + Vec2i(0, y), vEdge);
+        put(rect.topRight() + Vec2i(-1, y), vEdge);
     }
 
     put(rect.topLeft, corner);
-    put(rect.topRight() - Vector2i(1, 0), corner);
-    put(rect.bottomRight - Vector2i(1, 1), corner);
-    put(rect.bottomLeft() - Vector2i(0, 1), corner);
+    put(rect.topRight() - Vec2i(1, 0), corner);
+    put(rect.bottomRight - Vec2i(1, 1), corner);
+    put(rect.bottomLeft() - Vec2i(0, 1), corner);
 }
 
 void TextCanvas::draw(TextCanvas const &canvas, Coord const &topLeft)
@@ -296,6 +296,6 @@ void TextCanvas::show()
     d->markAllAsDirty(false);
 }
 
-void TextCanvas::setCursorPosition(Vector2i const &) {}
+void TextCanvas::setCursorPosition(Vec2i const &) {}
 
 }} // namespace de::shell

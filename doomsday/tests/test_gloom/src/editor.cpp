@@ -77,10 +77,10 @@ DENG2_PIMPL(Editor)
     ID         hoverEntity = 0;
 
     float    viewScale = 10;
-    Vector2f viewOrigin;
+    Vec2f viewOrigin;
     Plane    viewPlane;
-    Matrix4f viewTransform;
-    Matrix4f inverseViewTransform;
+    Mat4f viewTransform;
+    Mat4f inverseViewTransform;
 
     const QColor metaBg{255, 255, 255, 192};
     const QColor metaColor{0, 0, 0, 128};
@@ -291,17 +291,17 @@ DENG2_PIMPL(Editor)
         return true;
     }
 
-    QPointF worldToView(const Vector2d &pos, const Plane *plane = nullptr) const
+    QPointF worldToView(const Vec2d &pos, const Plane *plane = nullptr) const
     {
         if (!plane) plane = &viewPlane;
         const auto p = viewTransform * plane->projectPoint(pos);
         return QPointF(p.x, p.y);
     }
 
-    Vector2d viewToWorld(const QPointF &pos) const
+    Vec2d viewToWorld(const QPointF &pos) const
     {
-        const auto p = inverseViewTransform * Vector3f(float(pos.x()), float(pos.y()));
-        return Vector2d(p.x, p.z);
+        const auto p = inverseViewTransform * Vec3f(float(pos.x()), float(pos.y()));
+        return Vec2d(p.x, p.z);
     }
 
     void updateView()
@@ -309,9 +309,9 @@ DENG2_PIMPL(Editor)
         const QSize viewSize = self().rect().size();
 
         viewPlane     = Plane{{viewOrigin.x, 0, viewOrigin.y}, {0, 1, 0}};
-        viewTransform = Matrix4f::translate(Vector3f(viewSize.width() / 2, viewSize.height() / 2)) *
-                        Matrix4f::rotate(-90, Vector3f(1, 0, 0)) *
-                        Matrix4f::scale(viewScale) * Matrix4f::translate(-viewPlane.point);
+        viewTransform = Mat4f::translate(Vec3f(viewSize.width() / 2, viewSize.height() / 2)) *
+                        Mat4f::rotate(-90, Vec3f(1, 0, 0)) *
+                        Mat4f::scale(viewScale) * Mat4f::translate(-viewPlane.point);
         inverseViewTransform = viewTransform.inverse();
     }
 
@@ -324,9 +324,9 @@ DENG2_PIMPL(Editor)
         return QLineF(start, end);
     }
 
-    Vector2d worldMousePos() const { return viewToWorld(viewMousePos()); }
+    Vec2d worldMousePos() const { return viewToWorld(viewMousePos()); }
 
-    Vector2d worldActionPos() const { return viewToWorld(actionPos); }
+    Vec2d worldActionPos() const { return viewToWorld(actionPos); }
 
     void pushUndo()
     {
@@ -415,8 +415,8 @@ DENG2_PIMPL(Editor)
                     if (map.isLine(id)) sector.walls << id;
                 }
                 selection.clear();
-                ID floor = map.append(map.planes(), Plane{{Vector3d()}, {Vector3f(0, 1, 0)}});
-                ID ceil  = map.append(map.planes(), Plane{{Vector3d(0, 3, 0)}, {Vector3f(0, -1, 0)}});
+                ID floor = map.append(map.planes(), Plane{{Vec3d()}, {Vec3f(0, 1, 0)}});
+                ID ceil  = map.append(map.planes(), Plane{{Vec3d(0, 3, 0)}, {Vec3f(0, -1, 0)}});
                 ID vol   = map.append(map.volumes(), Volume{{floor, ceil}});
                 sector.volumes << vol;
                 ID secId = map.append(map.sectors(), sector);
@@ -431,8 +431,8 @@ DENG2_PIMPL(Editor)
         case EditEntities:
             pushUndo();
             std::shared_ptr<Entity> ent(new Entity);
-            Vector3d pos = worldMousePos();
-            ent->setPosition(Vector3d(pos.x, 0, pos.y));
+            Vec3d pos = worldMousePos();
+            ent->setPosition(Vec3d(pos.x, 0, pos.y));
             ent->setId(map.append(map.entities(), ent));
             break;
         }
@@ -539,8 +539,8 @@ DENG2_PIMPL(Editor)
                 {
                     pushUndo();
 
-                    const ID floor = map.append(map.planes(), Plane{{Vector3d()}, {Vector3f(0, 1, 0)}});
-                    const ID ceil  = map.append(map.planes(), Plane{{Vector3d(0, 3, 0)}, {Vector3f(0, -1, 0)}});
+                    const ID floor = map.append(map.planes(), Plane{{Vec3d()}, {Vec3f(0, 1, 0)}});
+                    const ID ceil  = map.append(map.planes(), Plane{{Vec3d(0, 3, 0)}, {Vec3f(0, -1, 0)}});
                     const ID vol   = map.append(map.volumes(), Volume{{floor, ceil}});
 
                     Sector newSector{secPoints, secWalls, {vol}};
@@ -592,7 +592,7 @@ DENG2_PIMPL(Editor)
     }
 
     void drawGridLine(QPainter &ptr,
-                      const Vector2d &worldPos,
+                      const Vec2d &worldPos,
                       const QColor &color,
                       Directions dirs = Both)
     {
@@ -648,7 +648,7 @@ DENG2_PIMPL(Editor)
         return 20 / viewScale;
     }
 
-    ID findPointAt(const Vector2d &pos, double maxDistance = -1) const
+    ID findPointAt(const Vec2d &pos, double maxDistance = -1) const
     {
         if (maxDistance < 0)
         {
@@ -669,7 +669,7 @@ DENG2_PIMPL(Editor)
         return id;
     }
 
-    ID findLineAt(const Vector2d &pos, double maxDistance = -1) const
+    ID findLineAt(const Vec2d &pos, double maxDistance = -1) const
     {
         if (maxDistance < 0) maxDistance = defaultClickDistance();
 
@@ -678,7 +678,7 @@ DENG2_PIMPL(Editor)
         for (auto i = map.lines().begin(); i != map.lines().end(); ++i)
         {
             const auto &line = i.value();
-            const geo::Line<Vector2d> mapLine(map.point(line.points[0]), map.point(line.points[1]));
+            const geo::Line<Vec2d> mapLine(map.point(line.points[0]), map.point(line.points[1]));
             double d = mapLine.distanceTo(pos);
             if (d < dist)
             {
@@ -689,7 +689,7 @@ DENG2_PIMPL(Editor)
         return id;
     }
 
-    ID findSectorAt(const Vector2d &pos) const
+    ID findSectorAt(const Vec2d &pos) const
     {
         for (ID id : map.sectors().keys())
         {
@@ -701,7 +701,7 @@ DENG2_PIMPL(Editor)
         return 0;
     }
 
-    ID findEntityAt(const Vector2d &pos, double maxDistance = -1) const
+    ID findEntityAt(const Vec2d &pos, double maxDistance = -1) const
     {
         if (maxDistance < 0) maxDistance = defaultClickDistance();
 
@@ -869,7 +869,7 @@ void Editor::paintEvent(QPaintEvent *)
     // Grid.
     {
         d->drawGridLine(ptr, d->worldMousePos(), gridMinor);
-        d->drawGridLine(ptr, Vector2d(), gridMajor);
+        d->drawGridLine(ptr, Vec2d(), gridMajor);
     }
 
     // Sectors.
@@ -1125,7 +1125,7 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
     case Impl::TranslateView: {
         QPoint delta = event->pos() - d->actionPos;
         d->actionPos = event->pos();
-        d->viewOrigin -= Vector2f(delta.x(), delta.y()) / d->viewScale;
+        d->viewOrigin -= Vec2f(delta.x(), delta.y()) / d->viewScale;
         d->updateView();
         break;
     }
@@ -1138,7 +1138,7 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
         {
             QPoint delta = event->pos() - d->actionPos;
             d->actionPos = event->pos();
-            const Vector2d worldDelta = Vector2d(delta.x(), delta.y()) / d->viewScale;
+            const Vec2d worldDelta = Vec2d(delta.x(), delta.y()) / d->viewScale;
             for (auto id : d->selection)
             {
                 if (d->mode == Impl::EditPoints && d->map.points().contains(id))
@@ -1148,7 +1148,7 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
                 else if (d->mode == Impl::EditEntities && d->map.entities().contains(id))
                 {
                     auto &ent = d->map.entity(id);
-                    ent.setPosition(ent.position() + Vector3d(worldDelta.x, 0, worldDelta.y));
+                    ent.setPosition(ent.position() + Vec3d(worldDelta.x, 0, worldDelta.y));
                 }
             }
         }
@@ -1160,28 +1160,28 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
         QPoint delta = event->pos() - d->actionPos;
         d->actionPos = event->pos();
 
-        Matrix4f xf;
+        Mat4f xf;
 
         if (d->userAction == Impl::Rotate)
         {
             float      angle = delta.y() / 2.f;
             const auto pivot = d->viewToWorld(d->pivotPos);
-            xf               = Matrix4f::rotateAround(
-                Vector3f(float(pivot.x), float(pivot.y)), angle, Vector3f(0, 0, 1));
+            xf               = Mat4f::rotateAround(
+                Vec3f(float(pivot.x), float(pivot.y)), angle, Vec3f(0, 0, 1));
         }
         else
         {
-            const Vector3d pivot = d->viewToWorld(d->pivotPos);
-            Vector3f scaler(1 + delta.x()/100.f, 1 + delta.y()/100.f);
+            const Vec3d pivot = d->viewToWorld(d->pivotPos);
+            Vec3f scaler(1 + delta.x()/100.f, 1 + delta.y()/100.f);
             if (!(event->modifiers() & Qt::AltModifier)) scaler.y = scaler.x;
-            xf = Matrix4f::translate(pivot) * Matrix4f::scale(scaler) * Matrix4f::translate(-pivot);
+            xf = Mat4f::translate(pivot) * Mat4f::scale(scaler) * Mat4f::translate(-pivot);
         }
 
         for (auto id : d->selection)
         {
             if (d->map.points().contains(id))
             {
-                d->map.point(id) = xf * Vector3d(d->map.point(id));
+                d->map.point(id) = xf * Vec3d(d->map.point(id));
             }
         }
         break;
@@ -1225,7 +1225,7 @@ void Editor::wheelEvent(QWheelEvent *event)
     }
     else
     {
-        d->viewOrigin -= Vector2f(delta.x(), delta.y()) / d->viewScale;
+        d->viewOrigin -= Vec2f(delta.x(), delta.y()) / d->viewScale;
     }
     d->updateView();
     update();

@@ -79,8 +79,8 @@ DENG2_PIMPL_NOREF(MaterialAnimator::Decoration)
     float inter = 0;  ///< Intermark from the current stage to the next [0..1].
 
     // State snapshot:
-    Vector2f origin;           ///< Relative position in material space.
-    Vector3f color;            ///< Light color.
+    Vec2f origin;           ///< Relative position in material space.
+    Vec3f color;            ///< Light color.
     float elevation      = 0;  ///< Distance from the surface.
     float radius         = 0;  ///< Dynamic light radius (-1 = no light).
     float lightLevels[2];      ///< Fade by sector lightlevel.
@@ -117,12 +117,12 @@ MaterialDecoration &MaterialAnimator::Decoration::decor() const
     return *d->matDecor;
 }
 
-Vector2f MaterialAnimator::Decoration::origin() const
+Vec2f MaterialAnimator::Decoration::origin() const
 {
     return d->origin;
 }
 
-Vector3f MaterialAnimator::Decoration::color() const
+Vec3f MaterialAnimator::Decoration::color() const
 {
     return d->color;
 }
@@ -232,8 +232,8 @@ void MaterialAnimator::Decoration::update()
 
 void MaterialAnimator::Decoration::reset()
 {
-    d->origin    = Vector2i(0, 0);
-    d->color     = Vector3f(0, 0, 0);
+    d->origin    = Vec2i(0, 0);
+    d->color     = Vec3f(0, 0, 0);
     d->elevation = 0;
     d->radius    = 0;
     de::zap(d->lightLevels);
@@ -301,10 +301,10 @@ DENG2_PIMPL(MaterialAnimator)
     {
         bool opaque;
         float glowStrength;
-        Vector2ui dimensions;
+        Vec2ui dimensions;
 
         blendmode_t shineBlendMode;
-        Vector3f shineMinColor;
+        Vec3f shineMinColor;
 
         /// Textures for each logical texture unit.
         std::array<TextureVariant *, MaterialAnimator::NUM_TEXTUREUNITS> textures;
@@ -317,9 +317,9 @@ DENG2_PIMPL(MaterialAnimator)
 
         void clear()
         {
-            dimensions     = Vector2ui(0, 0);
+            dimensions     = Vec2ui(0, 0);
             shineBlendMode = BM_NORMAL;
-            shineMinColor  = Vector3f(0, 0, 0);
+            shineMinColor  = Vec3f(0, 0, 0);
             opaque         = true;
             glowStrength   = 0;
 
@@ -484,7 +484,7 @@ DENG2_PIMPL(MaterialAnimator)
         snapshot->dimensions = material->dimensions();
         snapshot->opaque     = (snapshot->textures[TU_LAYER0] && !snapshot->textures[TU_LAYER0]->isMasked());
 
-        if (snapshot->dimensions == Vector2ui()) return;
+        if (snapshot->dimensions == Vec2ui()) return;
 
         if (material->isSkyMasked() && !::devRendSkyMode) return;
 
@@ -505,7 +505,7 @@ DENG2_PIMPL(MaterialAnimator)
                     if (::detailScale > .0001f) scale *= ::detailScale; // Global scale factor.
 
                     snapshot->units[TU_DETAIL] =
-                            GLTextureUnit(*tex, Vector2f(1, 1) / tex->base().dimensions() * scale);
+                            GLTextureUnit(*tex, Vec2f(1, 1) / tex->base().dimensions() * scale);
 
                     // Setup the inter detail texture unit.
                     if (TextureVariant *tex = snapshot->textures[TU_DETAIL_INTER])
@@ -531,20 +531,20 @@ DENG2_PIMPL(MaterialAnimator)
                     auto const &stage = layer.stage(ls.stage)    .as<world::ShineTextureMaterialLayer::AnimationStage>();
                     auto const &next  = layer.stage(ls.nextStage).as<world::ShineTextureMaterialLayer::AnimationStage>();
 
-                    Vector2f const origin   = de::lerp(stage.origin,   next.origin,   ls.inter);
-                    Vector3f const minColor = de::lerp(stage.minColor, next.minColor, ls.inter);
+                    Vec2f const origin   = de::lerp(stage.origin,   next.origin,   ls.inter);
+                    Vec3f const minColor = de::lerp(stage.minColor, next.minColor, ls.inter);
                     float    const opacity  = de::lerp(stage.opacity,  next.opacity,  ls.inter);
 
                     snapshot->shineBlendMode = stage.blendMode;
-                    snapshot->shineMinColor  = minColor.min(Vector3f(1, 1, 1)).max(Vector3f(0, 0, 0));
+                    snapshot->shineMinColor  = minColor.min(Vec3f(1, 1, 1)).max(Vec3f(0, 0, 0));
 
-                    snapshot->units[TU_SHINE] = GLTextureUnit(*tex, Vector2f(1, 1), origin, de::clamp(0.0f, opacity, 1.0f));
+                    snapshot->units[TU_SHINE] = GLTextureUnit(*tex, Vec2f(1, 1), origin, de::clamp(0.0f, opacity, 1.0f));
 
                     // Setup the shine mask texture unit.
                     if (TextureVariant *maskTex = snapshot->textures[TU_SHINE_MASK])
                     {
                         snapshot->units[TU_SHINE_MASK] =
-                            GLTextureUnit(*maskTex, Vector2f(1, 1) / (snapshot->dimensions * maskTex->base().dimensions()),
+                            GLTextureUnit(*maskTex, Vec2f(1, 1) / (snapshot->dimensions * maskTex->base().dimensions()),
                                           snapshot->units[TU_LAYER0].offset);
                     }
                 }
@@ -556,8 +556,8 @@ DENG2_PIMPL(MaterialAnimator)
                     world::TextureMaterialLayer::AnimationStage const &stage = texLayer->stage(ls.stage);
                     world::TextureMaterialLayer::AnimationStage const &next  = texLayer->stage(ls.nextStage);
 
-                    Vector2f const scale   = Vector2f(1, 1) / snapshot->dimensions;
-                    Vector2f const origin  = de::lerp(stage.origin,  next.origin,  ls.inter);
+                    Vec2f const scale   = Vec2f(1, 1) / snapshot->dimensions;
+                    Vec2f const origin  = de::lerp(stage.origin,  next.origin,  ls.inter);
                     float    const opacity = de::lerp(stage.opacity, next.opacity, ls.inter);
 
                     snapshot->units[TU_LAYER0 + texLayerIndex] = GLTextureUnit(*tex, scale, origin, de::clamp(0.0f, opacity, 1.0f));
@@ -772,7 +772,7 @@ bool MaterialAnimator::isOpaque() const
     return d->snapshot->opaque;
 }
 
-Vector2ui const &MaterialAnimator::dimensions() const
+Vec2ui const &MaterialAnimator::dimensions() const
 {
     d->updateSnapshotIfNeeded();
     return d->snapshot->dimensions;
@@ -790,7 +790,7 @@ blendmode_t MaterialAnimator::shineBlendMode() const
     return d->snapshot->shineBlendMode;
 }
 
-Vector3f const &MaterialAnimator::shineMinColor() const
+Vec3f const &MaterialAnimator::shineMinColor() const
 {
     d->updateSnapshotIfNeeded();
     return d->snapshot->shineMinColor;

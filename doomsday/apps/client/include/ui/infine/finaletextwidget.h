@@ -70,13 +70,13 @@ public:
     FinaleTextWidget &setPageColor(uint id);
     FinaleTextWidget &setPageFont(uint id);
 
-    FinaleTextWidget &setColorAndAlpha(de::Vector4f const &newColorAndAlpha, int steps = 0);
-    FinaleTextWidget &setColor(de::Vector3f const &newColor, int steps = 0);
+    FinaleTextWidget &setColorAndAlpha(de::Vec4f const &newColorAndAlpha, int steps = 0);
+    FinaleTextWidget &setColor(de::Vec3f const &newColor, int steps = 0);
     FinaleTextWidget &setAlpha(float alpha, int steps = 0);
 
 protected:
 #ifdef __CLIENT__
-    void draw(de::Vector3f const &offset);
+    void draw(de::Vec3f const &offset);
 #endif
     void runTicks();
 

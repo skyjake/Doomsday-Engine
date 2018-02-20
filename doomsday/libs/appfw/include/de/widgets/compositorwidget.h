@@ -49,7 +49,7 @@ public:
      *
      * @param projMatrix  Projection matrix.
      */
-    void setCompositeProjection(Matrix4f const &projMatrix);
+    void setCompositeProjection(Mat4f const &projMatrix);
 
     /**
      * Sets the projection used for displaying the composited content to the

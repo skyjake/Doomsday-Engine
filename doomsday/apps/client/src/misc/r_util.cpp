@@ -57,16 +57,16 @@ float R_MovementXYZPitch(float momx, float momy, float momz)
 
 #ifdef __CLIENT__
 
-angle_t R_ViewPointToAngle(Vector2d point)
+angle_t R_ViewPointToAngle(Vec2d point)
 {
     viewdata_t const *viewData = &viewPlayer->viewport();
-    point -= Vector2d(viewData->current.origin);
+    point -= Vec2d(viewData->current.origin);
     return M_PointXYToAngle(point.x, point.y);
 }
 
 coord_t R_ViewPointDistance(coord_t x, coord_t y)
 {
-    Vector3d const &viewOrigin = viewPlayer->viewport().current.origin;
+    Vec3d const &viewOrigin = viewPlayer->viewport().current.origin;
     coord_t viewOriginv1[2] = { viewOrigin.x, viewOrigin.y };
     coord_t pointv1[2] = { x, y };
     return M_PointDistance(viewOriginv1, pointv1);
@@ -74,8 +74,8 @@ coord_t R_ViewPointDistance(coord_t x, coord_t y)
 
 #endif // __CLIENT__
 
-Vector3d R_ClosestPointOnPlane(Vector3f const &planeNormal_,
-    Vector3d const &planePoint_, Vector3d const &origin_)
+Vec3d R_ClosestPointOnPlane(Vec3f const &planeNormal_,
+    Vec3d const &planePoint_, Vec3d const &origin_)
 {
     vec3f_t planeNormal; V3f_Set(planeNormal, planeNormal_.x, planeNormal_.y, planeNormal_.z);
     vec3d_t planePoint; V3d_Set(planePoint, planePoint_.x, planePoint_.y, planePoint_.z);
@@ -117,8 +117,8 @@ void R_ProjectViewRelativeLine2D(coord_t const center[2], dd_bool alignToViewPla
     end[VY] = start[VY] + sinrv * width;
 }
 
-void R_ProjectViewRelativeLine2D(Vector2d const center, bool alignToViewPlane,
-    coord_t width, coord_t offset, Vector2d &start, Vector2d &end)
+void R_ProjectViewRelativeLine2D(Vec2d const center, bool alignToViewPlane,
+    coord_t width, coord_t offset, Vec2d &start, Vec2d &end)
 {
     viewdata_t const *viewData = &viewPlayer->viewport();
     float sinrv, cosrv;
@@ -139,12 +139,12 @@ void R_ProjectViewRelativeLine2D(Vector2d const center, bool alignToViewPlane,
         cosrv = cos(thangle);
     }
 
-    start = center - Vector2d(cosrv * ((width / 2) + offset),
+    start = center - Vec2d(cosrv * ((width / 2) + offset),
                               sinrv * ((width / 2) + offset));
-    end = start + Vector2d(cosrv * width, sinrv * width);
+    end = start + Vec2d(cosrv * width, sinrv * width);
 }
 
-void R_AmplifyColor(de::Vector3f &rgb)
+void R_AmplifyColor(de::Vec3f &rgb)
 {
     float max = 0;
 
@@ -174,11 +174,11 @@ void R_ScaleAmbientRGB(float *out, float const *in, float mul)
     }
 }
 
-bool R_GenerateTexCoords(Vector2f &s, Vector2f &t, Vector3d const &point,
-    float xScale, float yScale, Vector3d const &v1, Vector3d const &v2,
-    Matrix3f const &tangentMatrix)
+bool R_GenerateTexCoords(Vec2f &s, Vec2f &t, Vec3d const &point,
+    float xScale, float yScale, Vec3d const &v1, Vec3d const &v2,
+    Mat3f const &tangentMatrix)
 {
-    Vector3d const v1ToPoint = v1 - point;
+    Vec3d const v1ToPoint = v1 - point;
     s[0] = v1ToPoint.dot(tangentMatrix.column(0)/*tangent*/) * xScale + .5f;
     t[0] = v1ToPoint.dot(tangentMatrix.column(1)/*bitangent*/) * yScale + .5f;
 
@@ -186,7 +186,7 @@ bool R_GenerateTexCoords(Vector2f &s, Vector2f &t, Vector3d const &point,
     if(s[0] >= 1 || t[0] >= 1)
         return false; // Right on the X axis or below on the Y axis.
 
-    Vector3d const v2ToPoint = v2 - point;
+    Vec3d const v2ToPoint = v2 - point;
     s[1] = v2ToPoint.dot(tangentMatrix.column(0)) * xScale + .5f;
     t[1] = v2ToPoint.dot(tangentMatrix.column(1)) * yScale + .5f;
 

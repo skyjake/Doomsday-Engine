@@ -53,9 +53,9 @@ namespace world {
  *         @c =0 Point lies directly on the segment.
  *         @c >0 Point is to the right/front of the segment.
  */
-static ddouble pointOnHEdgeSide(HEdge const &hedge, Vector2d const &point)
+static ddouble pointOnHEdgeSide(HEdge const &hedge, Vec2d const &point)
 {
-    Vector2d const direction = hedge.twin().origin() - hedge.origin();
+    Vec2d const direction = hedge.twin().origin() - hedge.origin();
 
     ddouble pointV1[2]      = { point.x, point.y };
     ddouble fromOriginV1[2] = { hedge.origin().x, hedge.origin().y };

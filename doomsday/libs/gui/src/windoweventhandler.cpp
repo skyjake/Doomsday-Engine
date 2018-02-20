@@ -144,9 +144,9 @@ DENG2_PIMPL(WindowEventHandler)
     }
 
     template <typename QtEventType>
-    Vector2i translatePosition(QtEventType const *ev) const
+    Vec2i translatePosition(QtEventType const *ev) const
     {
-        return Vector2i(ev->pos().x(), ev->pos().y()) * window->devicePixelRatio();
+        return Vec2i(ev->pos().x(), ev->pos().y()) * window->devicePixelRatio();
     }
 
     DENG2_PIMPL_AUDIENCE(FocusChange)
@@ -283,12 +283,12 @@ void WindowEventHandler::wheelEvent(QWheelEvent *ev)
         {
             if (numPixels.x())
             {
-                i->mouseEvent(MouseEvent(MouseEvent::FineAngle, Vector2i(devicePixels * numPixels.x(), 0),
+                i->mouseEvent(MouseEvent(MouseEvent::FineAngle, Vec2i(devicePixels * numPixels.x(), 0),
                                          d->translatePosition(ev)));
             }
             if (numPixels.y())
             {
-                i->mouseEvent(MouseEvent(MouseEvent::FineAngle, Vector2i(0, devicePixels * numPixels.y()),
+                i->mouseEvent(MouseEvent(MouseEvent::FineAngle, Vec2i(0, devicePixels * numPixels.y()),
                                          d->translatePosition(ev)));
             }
         }
@@ -301,13 +301,13 @@ void WindowEventHandler::wheelEvent(QWheelEvent *ev)
         {
             if (steps.x())
             {
-                i->mouseEvent(MouseEvent(MouseEvent::Step, Vector2i(steps.x(), 0),
-                                         !d->mouseGrabbed? d->translatePosition(ev) : Vector2i()));
+                i->mouseEvent(MouseEvent(MouseEvent::Step, Vec2i(steps.x(), 0),
+                                         !d->mouseGrabbed? d->translatePosition(ev) : Vec2i()));
             }
             if (steps.y())
             {
-                i->mouseEvent(MouseEvent(MouseEvent::Step, Vector2i(0, steps.y()),
-                                         !d->mouseGrabbed? d->translatePosition(ev) : Vector2i()));
+                i->mouseEvent(MouseEvent(MouseEvent::Step, Vec2i(0, steps.y()),
+                                         !d->mouseGrabbed? d->translatePosition(ev) : Vec2i()));
             }
         }
         d->wheelAngleAccum -= steps * 15;

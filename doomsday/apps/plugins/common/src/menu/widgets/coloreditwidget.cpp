@@ -33,8 +33,8 @@ namespace menu {
 DENG2_PIMPL(ColorEditWidget)
 {
     bool rgbaMode       = false;
-    Vector4f color      = Vector4f(0, 0, 0, 1.f);
-    Vector2i dimensions = Vector2i(MNDATA_COLORBOX_WIDTH, MNDATA_COLORBOX_HEIGHT);  ///< Inner dimensions in fixed 320x200 space.
+    Vec4f color      = Vec4f(0, 0, 0, 1.f);
+    Vec2i dimensions = Vec2i(MNDATA_COLORBOX_WIDTH, MNDATA_COLORBOX_HEIGHT);  ///< Inner dimensions in fixed 320x200 space.
 
     Impl(Public *i) : Base(i) {}
 
@@ -105,7 +105,7 @@ DENG2_PIMPL(ColorEditWidget)
     }
 };
 
-ColorEditWidget::ColorEditWidget(Vector4f const &color, bool rgbaMode)
+ColorEditWidget::ColorEditWidget(Vec4f const &color, bool rgbaMode)
     : Widget()
     , d(new Impl(this))
 {
@@ -268,7 +268,7 @@ void ColorEditWidget::updateGeometry()
     {
         info.geometry.size.width = d->dimensions.x;
         info.geometry.origin.y   = d->dimensions.y;
-        geometry() |= Rectanglei::fromSize(Vector2i(info.geometry.origin.xy), Vector2ui(info.geometry.size.width, info.geometry.size.height));
+        geometry() |= Rectanglei::fromSize(Vec2i(info.geometry.origin.xy), Vec2ui(info.geometry.size.width, info.geometry.size.height));
     }
 
     // Add right border?
@@ -276,7 +276,7 @@ void ColorEditWidget::updateGeometry()
     {
         info.geometry.size.height = d->dimensions.y;
         info.geometry.origin.x    = d->dimensions.x;
-        geometry() |= Rectanglei::fromSize(Vector2i(info.geometry.origin.xy), Vector2ui(info.geometry.size.width, info.geometry.size.height));
+        geometry() |= Rectanglei::fromSize(Vec2i(info.geometry.origin.xy), Vec2ui(info.geometry.size.width, info.geometry.size.height));
     }
 
     // Add top border?
@@ -284,7 +284,7 @@ void ColorEditWidget::updateGeometry()
     {
         info.geometry.size.width = d->dimensions.x;
         info.geometry.origin.y   = -info.geometry.size.height;
-        geometry() |= Rectanglei::fromSize(Vector2i(info.geometry.origin.xy), Vector2ui(info.geometry.size.width, info.geometry.size.height));
+        geometry() |= Rectanglei::fromSize(Vec2i(info.geometry.origin.xy), Vec2ui(info.geometry.size.width, info.geometry.size.height));
     }
 
     // Add left border?
@@ -292,7 +292,7 @@ void ColorEditWidget::updateGeometry()
     {
         info.geometry.size.height = d->dimensions.y;
         info.geometry.origin.x    = -info.geometry.size.width;
-        geometry() |= Rectanglei::fromSize(Vector2i(info.geometry.origin.xy), Vector2ui(info.geometry.size.width, info.geometry.size.height));
+        geometry() |= Rectanglei::fromSize(Vec2i(info.geometry.origin.xy), Vec2ui(info.geometry.size.width, info.geometry.size.height));
     }
 
     // Add top-left corner?
@@ -300,7 +300,7 @@ void ColorEditWidget::updateGeometry()
     {
         info.geometry.origin.x = -info.geometry.size.width;
         info.geometry.origin.y = -info.geometry.size.height;
-        geometry() |= Rectanglei::fromSize(Vector2i(info.geometry.origin.xy), Vector2ui(info.geometry.size.width, info.geometry.size.height));
+        geometry() |= Rectanglei::fromSize(Vec2i(info.geometry.origin.xy), Vec2ui(info.geometry.size.width, info.geometry.size.height));
     }
 
     // Add top-right corner?
@@ -308,7 +308,7 @@ void ColorEditWidget::updateGeometry()
     {
         info.geometry.origin.x = d->dimensions.x;
         info.geometry.origin.y = -info.geometry.size.height;
-        geometry() |= Rectanglei::fromSize(Vector2i(info.geometry.origin.xy), Vector2ui(info.geometry.size.width, info.geometry.size.height));
+        geometry() |= Rectanglei::fromSize(Vec2i(info.geometry.origin.xy), Vec2ui(info.geometry.size.width, info.geometry.size.height));
     }
 
     // Add bottom-right corner?
@@ -316,7 +316,7 @@ void ColorEditWidget::updateGeometry()
     {
         info.geometry.origin.x = d->dimensions.x;
         info.geometry.origin.y = d->dimensions.y;
-        geometry() |= Rectanglei::fromSize(Vector2i(info.geometry.origin.xy), Vector2ui(info.geometry.size.width, info.geometry.size.height));
+        geometry() |= Rectanglei::fromSize(Vec2i(info.geometry.origin.xy), Vec2ui(info.geometry.size.width, info.geometry.size.height));
     }
 
     // Add bottom-left corner?
@@ -324,17 +324,17 @@ void ColorEditWidget::updateGeometry()
     {
         info.geometry.origin.x = -info.geometry.size.width;
         info.geometry.origin.y = d->dimensions.y;
-        geometry() |= Rectanglei::fromSize(Vector2i(info.geometry.origin.xy), Vector2ui(info.geometry.size.width, info.geometry.size.height));
+        geometry() |= Rectanglei::fromSize(Vec2i(info.geometry.origin.xy), Vec2ui(info.geometry.size.width, info.geometry.size.height));
     }
 }
 
-ColorEditWidget &ColorEditWidget::setPreviewDimensions(Vector2i const &newDimensions)
+ColorEditWidget &ColorEditWidget::setPreviewDimensions(Vec2i const &newDimensions)
 {
     d->dimensions = newDimensions;
     return *this;
 }
 
-Vector2i ColorEditWidget::previewDimensions() const
+Vec2i ColorEditWidget::previewDimensions() const
 {
     return d->dimensions;
 }
@@ -344,7 +344,7 @@ bool ColorEditWidget::rgbaMode() const
     return d->rgbaMode;
 }
 
-ColorEditWidget &ColorEditWidget::setColor(Vector4f const &newColor, int flags)
+ColorEditWidget &ColorEditWidget::setColor(Vec4f const &newColor, int flags)
 {
     int setComps = 0;
     int const setCompFlags = (flags | MNCOLORBOX_SCF_NO_ACTION);
@@ -361,11 +361,11 @@ ColorEditWidget &ColorEditWidget::setColor(Vector4f const &newColor, int flags)
     return *this;
 }
 
-Vector4f ColorEditWidget::color() const
+Vec4f ColorEditWidget::color() const
 {
     if(!d->rgbaMode)
     {
-        return Vector4f(d->color, 1.0f);
+        return Vec4f(d->color, 1.0f);
     }
     return d->color;
 }

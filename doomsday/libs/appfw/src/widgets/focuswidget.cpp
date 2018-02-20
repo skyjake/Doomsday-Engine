@@ -29,7 +29,7 @@ DENG2_PIMPL(FocusWidget)
     QTimer flashing;
     SafeWidgetPtr<GuiWidget const> reference;
     Animation color { 0.f, Animation::Linear };
-    Vector4f flashColors[2];
+    Vec4f flashColors[2];
     float fadeOpacity = 0.f;
 
     Impl(Public *i) : Base(i)
@@ -55,7 +55,7 @@ DENG2_PIMPL(FocusWidget)
         }
     }
 
-    Vector4f currentColor() const
+    Vec4f currentColor() const
     {
         return flashColors[0] * (1.f - color) + flashColors[1] * color;
     }

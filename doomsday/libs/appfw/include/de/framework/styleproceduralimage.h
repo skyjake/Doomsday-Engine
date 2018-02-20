@@ -90,7 +90,7 @@ public:
     {
         if (!_id.isNone())
         {
-            Matrix4f turn = Matrix4f::rotateAround(rect.middle(), _angle);
+            Mat4f turn = Mat4f::rotateAround(rect.middle(), _angle);
             verts.makeQuad(rect, color(), root().atlas().imageRectf(_id), &turn);
         }
     }

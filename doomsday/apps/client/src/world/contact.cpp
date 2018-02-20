@@ -41,7 +41,7 @@ void *Contact::objectPtr() const
     return _object;
 }
 
-Vector3d Contact::objectOrigin() const
+Vec3d Contact::objectOrigin() const
 {
     switch(_type)
     {
@@ -51,7 +51,7 @@ Vector3d Contact::objectOrigin() const
     default: break;
     }
     DENG2_ASSERT(false);
-    return Vector3d();
+    return Vec3d();
 }
 
 ddouble Contact::objectRadius() const

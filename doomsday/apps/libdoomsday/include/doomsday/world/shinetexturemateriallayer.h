@@ -44,8 +44,8 @@ public:
                        de::Uri const &maskTexture         = de::Uri(),
                        blendmode_t blendMode              = BM_ADD,
                        float opacity                      = 1,
-                       de::Vector3f const &minColor       = de::Vector3f(0, 0, 0),
-                       de::Vector2f const &maskDimensions = de::Vector2f(1, 1));
+                       de::Vec3f const &minColor       = de::Vec3f(0, 0, 0),
+                       de::Vec2f const &maskDimensions = de::Vec2f(1, 1));
         AnimationStage(AnimationStage const &other);
         virtual ~AnimationStage();
 
@@ -57,7 +57,7 @@ public:
         void resetToDefaults();
 
     public:
-        de::Vector3f minColor;
+        de::Vec3f minColor;
     };
 
 public:

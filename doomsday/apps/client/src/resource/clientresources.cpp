@@ -809,7 +809,7 @@ DENG2_PIMPL(ClientResources)
 
         dfloat scale = destHeight / height;
 
-        mf.scale    = Vector3f(scale, scale, scale);
+        mf.scale    = Vec3f(scale, scale, scale);
         mf.offset.y = -bottom * scale + offset;
     }
 
@@ -837,7 +837,7 @@ DENG2_PIMPL(ClientResources)
         if (!def || !def->subModelId(0)) return 0;
 
         // Use the first frame bounds.
-        Vector3f min, max;
+        Vec3f min, max;
         dfloat maxRadius = 0;
         for (duint i = 0; i < def->subCount(); ++i)
         {
@@ -890,9 +890,9 @@ DENG2_PIMPL(ClientResources)
         modef->def       = def;
         modef->group     = def.getui("group");
         modef->flags     = modelScopeFlags;
-        modef->offset    = Vector3f(def.get("offset"));
+        modef->offset    = Vec3f(def.get("offset"));
         modef->offset.y += defs.modelOffset; // Common Y axis offset.
-        modef->scale     = Vector3f(def.get("scale"));
+        modef->scale     = Vec3f(def.get("scale"));
         modef->scale.y  *= defs.modelScale;  // Common Y axis scaling.
         modef->resize    = def.getf("resize");
         modef->skinTics  = de::max(def.geti("skinTics"), 1);
@@ -1110,7 +1110,7 @@ DENG2_PIMPL(ClientResources)
         }
 
         // Calculate the particle offset for each submodel.
-        Vector3f min, max;
+        Vec3f min, max;
         for (uint i = 0; i < modef->subCount(); ++i)
         {
             SubmodelDef *sub = &modef->subModelDef(i);

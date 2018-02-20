@@ -783,7 +783,7 @@ DENG2_PIMPL(InputSystem)
         ev.type      = E_AXIS;
         ev.axis.type = EAXIS_ABSOLUTE;
 
-        Vector3f const pry = vrCfg().oculusRift().headOrientation();
+        Vec3f const pry = vrCfg().oculusRift().headOrientation();
 
         // Yaw (1.0 means 180 degrees).
         ev.axis.id  = 0; // Yaw.

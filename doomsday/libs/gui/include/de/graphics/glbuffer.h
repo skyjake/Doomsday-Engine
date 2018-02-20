@@ -141,8 +141,8 @@ namespace internal
  */
 struct LIBGUI_PUBLIC Vertex2Tex
 {
-    Vector2f pos;
-    Vector2f texCoord;
+    Vec2f pos;
+    Vec2f texCoord;
 
     LIBGUI_DECLARE_VERTEX_FORMAT(2)
 };
@@ -152,8 +152,8 @@ struct LIBGUI_PUBLIC Vertex2Tex
  */
 struct LIBGUI_PUBLIC Vertex2Rgba
 {
-    Vector2f pos;
-    Vector4f rgba;
+    Vec2f pos;
+    Vec4f rgba;
 
     LIBGUI_DECLARE_VERTEX_FORMAT(2)
 };
@@ -164,9 +164,9 @@ struct LIBGUI_PUBLIC Vertex2Rgba
  */
 struct LIBGUI_PUBLIC Vertex2TexRgba
 {
-    Vector2f pos;
-    Vector2f texCoord;
-    Vector4f rgba;
+    Vec2f pos;
+    Vec2f texCoord;
+    Vec4f rgba;
 
     LIBGUI_DECLARE_VERTEX_FORMAT(3)
 };
@@ -176,7 +176,7 @@ struct LIBGUI_PUBLIC Vertex2TexRgba
  */
 struct LIBGUI_PUBLIC Vertex3
 {
-    Vector3f pos;
+    Vec3f pos;
 
     LIBGUI_DECLARE_VERTEX_FORMAT(1)
 };
@@ -186,8 +186,8 @@ struct LIBGUI_PUBLIC Vertex3
  */
 struct LIBGUI_PUBLIC Vertex3Tex
 {
-    Vector3f pos;
-    Vector2f texCoord;
+    Vec3f pos;
+    Vec2f texCoord;
 
     LIBGUI_DECLARE_VERTEX_FORMAT(2)
 };
@@ -198,9 +198,9 @@ struct LIBGUI_PUBLIC Vertex3Tex
  */
 struct LIBGUI_PUBLIC Vertex3TexRgba
 {
-    Vector3f pos;
-    Vector2f texCoord;
-    Vector4f rgba;
+    Vec3f pos;
+    Vec2f texCoord;
+    Vec4f rgba;
 
     LIBGUI_DECLARE_VERTEX_FORMAT(3)
 };
@@ -211,10 +211,10 @@ struct LIBGUI_PUBLIC Vertex3TexRgba
  */
 struct LIBGUI_PUBLIC Vertex3TexBoundsRgba
 {
-    Vector3f pos;
-    Vector2f texCoord;  ///< mapped using texBounds
-    Vector4f texBounds; ///< UV space: x, y, width, height
-    Vector4f rgba;
+    Vec3f pos;
+    Vec2f texCoord;  ///< mapped using texBounds
+    Vec4f texBounds; ///< UV space: x, y, width, height
+    Vec4f rgba;
 
     LIBGUI_DECLARE_VERTEX_FORMAT(4)
 };
@@ -225,10 +225,10 @@ struct LIBGUI_PUBLIC Vertex3TexBoundsRgba
  */
 struct LIBGUI_PUBLIC Vertex3Tex2BoundsRgba
 {
-    Vector3f pos;
-    Vector2f texCoord[2];
-    Vector4f texBounds;    ///< UV space: x, y, width, height
-    Vector4f rgba;
+    Vec3f pos;
+    Vec2f texCoord[2];
+    Vec4f texBounds;    ///< UV space: x, y, width, height
+    Vec4f rgba;
 
     LIBGUI_DECLARE_VERTEX_FORMAT(5)
 };
@@ -239,9 +239,9 @@ struct LIBGUI_PUBLIC Vertex3Tex2BoundsRgba
  */
 struct LIBGUI_PUBLIC Vertex3Tex2Rgba
 {
-    Vector3f pos;
-    Vector2f texCoord[2];
-    Vector4f rgba;
+    Vec3f pos;
+    Vec2f texCoord[2];
+    Vec4f rgba;
 
     LIBGUI_DECLARE_VERTEX_FORMAT(4)
 };
@@ -252,9 +252,9 @@ struct LIBGUI_PUBLIC Vertex3Tex2Rgba
  */
 struct LIBGUI_PUBLIC Vertex3Tex3Rgba
 {
-    Vector3f pos;
-    Vector2f texCoord[3];
-    Vector4f rgba;
+    Vec3f pos;
+    Vec2f texCoord[3];
+    Vec4f rgba;
 
     LIBGUI_DECLARE_VERTEX_FORMAT(5)
 };
@@ -265,10 +265,10 @@ struct LIBGUI_PUBLIC Vertex3Tex3Rgba
  */
 struct LIBGUI_PUBLIC Vertex3NormalTexRgba
 {
-    Vector3f pos;
-    Vector3f normal;
-    Vector2f texCoord;
-    Vector4f rgba;
+    Vec3f pos;
+    Vec3f normal;
+    Vec2f texCoord;
+    Vec4f rgba;
 
     LIBGUI_DECLARE_VERTEX_FORMAT(4)
 };
@@ -279,11 +279,11 @@ struct LIBGUI_PUBLIC Vertex3NormalTexRgba
  */
 struct LIBGUI_PUBLIC Vertex3NormalTangentTex
 {
-    Vector3f pos;
-    Vector3f normal;
-    Vector3f tangent;
-    Vector3f bitangent;
-    Vector2f texCoord;
+    Vec3f pos;
+    Vec3f normal;
+    Vec3f tangent;
+    Vec3f bitangent;
+    Vec2f texCoord;
 
     LIBGUI_DECLARE_VERTEX_FORMAT(5)
 };

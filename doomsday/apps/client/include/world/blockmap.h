@@ -36,7 +36,7 @@ namespace world {
 class Blockmap
 {
 public:
-    typedef de::Vector2ui Cell;
+    typedef de::Vec2ui Cell;
 
     /**
      * POD structure for representing an inclusive-exclusive rectangular range
@@ -65,7 +65,7 @@ public:
     /**
      * Returns the origin of the blockmap in map space.
      */
-    de::Vector2d origin() const;
+    de::Vec2d origin() const;
 
     /**
      * Returns the bounds of the blockmap in map space.
@@ -100,7 +100,7 @@ public:
     /**
      * Utility function which returns the dimensions of a cell in map space units.
      */
-    de::Vector2d cellDimensions() const { return de::Vector2d(cellSize(), cellSize()); }
+    de::Vec2d cellDimensions() const { return de::Vec2d(cellSize(), cellSize()); }
 
     /**
      * Utility function which returns the linear index of the specified cell.
@@ -115,7 +115,7 @@ public:
      * @param point    Map coordinate space point to be translated.
      * @param didClip  Set to @c true iff clamping was necessary.
      */
-    Cell toCell(de::Vector2d const &point, bool *didClip = 0) const;
+    Cell toCell(de::Vec2d const &point, bool *didClip = 0) const;
 
     /**
      * Given map space box XY coordinates @a box, output the blockmap cells[x, y]
@@ -167,7 +167,7 @@ public:
      * @param from  Map space point defining the origin of the line.
      * @param to    Map space point defining the destination of the line.
      */
-    de::LoopResult forAllInPath(de::Vector2d const &from, de::Vector2d const &to,
+    de::LoopResult forAllInPath(de::Vec2d const &from, de::Vec2d const &to,
                                 std::function<de::LoopResult (void *object)> func) const;
 
     /**

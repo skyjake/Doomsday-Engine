@@ -27,7 +27,7 @@ DENG_GUI_PIMPL(PanelButtonWidget)
     Impl(Public *i) : Base(i)
     {
         self().add(drawer = new PanelWidget);
-        drawer->set(Background(Vector4f(0, 0, 0, .15f)));
+        drawer->set(Background(Vec4f(0, 0, 0, .15f)));
         drawer->setEatMouseEvents(false);
     }
 };
@@ -64,10 +64,10 @@ void PanelButtonWidget::setSelected(bool selected)
 
     if (selected)
     {
-        d->drawer->set(Background(Vector4f(0, 0, 0, .4f)));
+        d->drawer->set(Background(Vec4f(0, 0, 0, .4f)));
     }
     else
     {
-        d->drawer->set(Background(Vector4f(0, 0, 0, .15f)));
+        d->drawer->set(Background(Vec4f(0, 0, 0, .15f)));
     }
 }

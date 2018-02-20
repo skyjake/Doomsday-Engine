@@ -33,7 +33,7 @@ static void MaxAmmoWidget_UpdateGeometry(guidata_maxammo_t *wi)
 static void MaxAmmoWidget_Draw(guidata_maxammo_t *wi, Point2Raw const *offset)
 {
     DENG2_ASSERT(wi);
-    wi->draw(offset? Vector2i(offset->xy) : Vector2i());
+    wi->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 guidata_maxammo_t::guidata_maxammo_t(dint player)
@@ -64,10 +64,10 @@ void guidata_maxammo_t::tick(timespan_t /*elapsed*/)
     _value = plr->ammo[_ammotype].max;
 }
 
-void guidata_maxammo_t::draw(Vector2i const &offset) const
+void guidata_maxammo_t::draw(Vec2i const &offset) const
 {
-    static Vector2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
-    static Vector2i const offsets[NUM_AMMO_TYPES] = {
+    static Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
+    static Vec2i const offsets[NUM_AMMO_TYPES] = {
         { 314, 5 + 6 * 0 }, { 314, 5 + 6 * 1 }, { 314, 5 + 6 * 3 }, { 314, 5 + 6 * 2 }
     };
 
@@ -80,7 +80,7 @@ void guidata_maxammo_t::draw(Vector2i const &offset) const
 
     if(_value == 1994) return;
 
-    Vector2i const pos     = origin + offsets[dint( _ammotype )];
+    Vec2i const pos     = origin + offsets[dint( _ammotype )];
     auto const valueAsText = String::number(_value);
 
     DGL_MatrixMode(DGL_MODELVIEW);

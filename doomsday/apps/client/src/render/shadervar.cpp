@@ -60,18 +60,18 @@ void ShaderVar::updateUniform()
         break;
 
     case 2:
-        *uniform = Vector2f(currentValue(0),
+        *uniform = Vec2f(currentValue(0),
                             currentValue(1));
         break;
 
     case 3:
-        *uniform = Vector3f(currentValue(0),
+        *uniform = Vec3f(currentValue(0),
                             currentValue(1),
                             currentValue(2));
         break;
 
     case 4:
-        *uniform = Vector4f(currentValue(0),
+        *uniform = Vec4f(currentValue(0),
                             currentValue(1),
                             currentValue(2),
                             currentValue(3));
@@ -120,17 +120,17 @@ void ShaderVars::initVariableFromDefinition(String const &variableName,
                                   .arg(array->size()));
 
         case 2:
-            var->init(vectorFromValue<Vector2f>(*array));
+            var->init(vectorFromValue<Vec2f>(*array));
             uniformType = GLUniform::Vec2;
             break;
 
         case 3:
-            var->init(vectorFromValue<Vector3f>(*array));
+            var->init(vectorFromValue<Vec3f>(*array));
             uniformType = GLUniform::Vec3;
             break;
 
         case 4:
-            var->init(vectorFromValue<Vector4f>(*array));
+            var->init(vectorFromValue<Vec4f>(*array));
             uniformType = GLUniform::Vec4;
             break;
         }

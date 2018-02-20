@@ -37,7 +37,7 @@
  *
  * @return  Non-zero iff the image is loaded successfully.
  */
-LIBDOOMSDAY_PUBLIC uint8_t *TGA_Load(de::FileHandle &file, de::Vector2ui &outSize, int &pixelSize);
+LIBDOOMSDAY_PUBLIC uint8_t *TGA_Load(de::FileHandle &file, de::Vec2ui &outSize, int &pixelSize);
 
 /**
  * @return  Textual message detailing the last error encountered else @c 0.
