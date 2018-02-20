@@ -1,6 +1,6 @@
 #ifndef GLOOM_GBUFFER_IN_H
 #define GLOOM_GBUFFER_IN_H
-#line 3
+
 layout (pixel_center_integer) in vec4 gl_FragCoord;
 
 uniform mat4 uInverseProjMatrix;

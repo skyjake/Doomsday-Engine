@@ -36,7 +36,7 @@ void main(void) {
 
     vec4 albedo = texelFetch(uGBufferAlbedo, ivec2(gl_FragCoord.xy), 0);
 
-    albedo = vec4(vec3(0.95), 1.0); // testing with white
+    //albedo = vec4(vec3(0.95), 1.0); // testing with white
 
     out_FragColor = vec4(vec3(1.0) - occlusion / SAMPLE_COUNT, 1.0) * albedo;
 }

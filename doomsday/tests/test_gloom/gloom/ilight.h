@@ -16,17 +16,25 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef ILIGHT_H
-#define ILIGHT_H
+#ifndef GLOOM_LIGHT_H
+#define GLOOM_LIGHT_H
 
 #include <de/Vector>
 
 namespace gloom {
 
-class ILight
+/**
+ * Light source.
+ */
+class Light
 {
 public:
-    virtual ~ILight() {}
+    enum Type { Omni, Linear, Spot };
+
+    Light();
+    virtual ~Light();
+
+    Type type() const;
 
     virtual de::Vector3f lightDirection() const = 0;
     virtual de::Vector3f lightColor() const = 0;
@@ -34,4 +42,4 @@ public:
 
 } // namespace gloom
 
-#endif // ILIGHT_H
+#endif // GLOOM_LIGHT_H

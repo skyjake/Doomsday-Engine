@@ -87,6 +87,11 @@ void GBuffer::resize(const Vector2ui &size)
     d->setSize(size);
 }
 
+Vector2ui GBuffer::size() const
+{
+    return d->frame.size();
+}
+
 void GBuffer::clear()
 {
     d->frame.clear(GLFramebuffer::ColorAny | GLFramebuffer::DepthStencil);

@@ -42,7 +42,7 @@ using namespace de;
 
 namespace gloom {
 
-DENG2_PIMPL(GloomWorld), public Asset, public ILight
+DENG2_PIMPL(GloomWorld), public Asset
 , DENG2_OBSERVES(User, Warp)
 {
     User *            localUser = nullptr;
@@ -60,17 +60,9 @@ DENG2_PIMPL(GloomWorld), public Asset, public ILight
 
     std::unique_ptr<AtlasTexture> atlas;
 
-//    GLUniform uModelProj { "uViewProjMatrix",   GLUniform::Mat4 };
-//    GLUniform uViewPos   { "uViewPos",          GLUniform::Vec3 };
-//    GLUniform uFog       { "uFog",              GLUniform::Vec4 };
-//    GLUniform uLightDir  { "uLightDir",         GLUniform::Vec3 };
-//    GLUniform uTex       { "uTex",              GLUniform::Sampler2D };
-
     Impl(Public *i)
         : Base(i)
         , visibleDistance(1.4f * 512 /*500*/) // 500+ meters in all directions
-//        , mapSize(1.4 * 2048, 1.4 * 2048)  // 2km x 2km map (1 pixel == 1 meter)
-//        , heightRange(100)     // 100m height differences
     {
         atlas.reset(AtlasTexture::newWithKdTreeAllocator(
                         Atlas::BackingStore | Atlas::WrapBordersInBackingStore,
@@ -83,12 +75,12 @@ DENG2_PIMPL(GloomWorld), public Asset, public ILight
         atlas->setFilter(gl::Linear, gl::Linear, gl::MipNearest);
 #endif
 
-        renderContext.images  = &GloomApp::images();
-        renderContext.shaders = &GloomApp::shaders(); // TODO: remove dependency on App
+        renderContext.images  = &GloomApp::images();  // TODO: remove dependency on App
+        renderContext.shaders = &GloomApp::shaders();
         renderContext.atlas   = atlas.get();
         renderContext.uAtlas  = renderContext.atlas;
-        renderContext.map     = &map;
         renderContext.gbuffer = &gbuffer;
+        renderContext.map     = &map;
 
         environ.setWorld(thisPublic);
     }

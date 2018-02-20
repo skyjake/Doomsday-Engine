@@ -32,12 +32,10 @@ vec4 fetchTexOffset(uint offsetIndex) {
 void main(void) {
     vFlags = floatBitsToUint(aFlags);
 
-    //float geoDeltaY;
     vec4 vertex = aVertex;
 
     /* Check for a plane offset. */ {
         float planeY = fetchPlaneY(floatBitsToUint(aIndex0.x));
-        //geoDeltaY = planeY - vertex.y;
         vertex.y = planeY;
     }
     gl_Position = uMvpMatrix * vertex;

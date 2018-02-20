@@ -31,12 +31,24 @@ static const dsize SAMPLE_COUNT = 64;
 
 DENG2_PIMPL(SSAO)
 {
-    ScreenQuad quad;
-    GLUniform uSamples{"uSamples", GLUniform::Vec3Array, SAMPLE_COUNT};
+    ScreenQuad           quad;
+    GLUniform            uSamples{"uSamples", GLUniform::Vec3Array, SAMPLE_COUNT};
     DataBuffer<Vector3f> noise{"uNoise", Image::RGB_16f};
+    GLFramebuffer        ssaoFrameBuf;
+    GLTexture            ssaoBuf;
 
     Impl(Public *i) : Base(i)
     {}
+
+    void updateBuffer()
+    {
+        const auto bufSize = self().context().gbuffer->size();
+        if (ssaoBuf.size() != bufSize)
+        {
+            ssaoBuf.setUndefinedImage(bufSize, Image::R_8);
+
+        }
+    }
 };
 
 SSAO::SSAO()
@@ -94,7 +106,10 @@ void SSAO::glDeinit()
 
 void SSAO::render()
 {
-    d->quad.state().setTarget(GLState::current().target()); // target is gbuffer
+    // Make sure the destination buffer is the correct size.
+    d->updateBuffer();
+
+    d->quad.state().setTarget(d->ssaoFrameBuf); // target is the ssaoBuf
     d->quad.render();
 }
 

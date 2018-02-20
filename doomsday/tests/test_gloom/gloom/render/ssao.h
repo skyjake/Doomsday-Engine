@@ -23,6 +23,10 @@
 
 namespace gloom {
 
+/**
+ * Renders a screen-space ambient occlusion texture that contains a per-pixel
+ * ambient occlusion factor for the G-buffer contents.
+ */
 class SSAO : public Render
 {
 public:

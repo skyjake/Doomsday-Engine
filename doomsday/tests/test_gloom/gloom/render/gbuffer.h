@@ -40,6 +40,7 @@ public:
 
     void clear();
     void resize(const de::Vector2ui &size);
+    de::Vector2ui size() const;
     void setDebugMode(int debugMode);
 
     de::GLFramebuffer &framebuf();
