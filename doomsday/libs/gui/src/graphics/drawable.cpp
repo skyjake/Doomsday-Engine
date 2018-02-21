@@ -389,6 +389,11 @@ void Drawable::setProgram(Id bufferId, GLProgram &program)
     d->configs[bufferId].program = &program;
 }
 
+void Drawable::setProgram(Id bufferId, Id programId)
+{
+    d->configs[bufferId].program = &program(programId);
+}
+
 void Drawable::setProgram(Id bufferId, Name const &programName)
 {
     setProgram(bufferId, program(programName));

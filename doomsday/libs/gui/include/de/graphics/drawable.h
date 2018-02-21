@@ -224,6 +224,7 @@ public:
      */
     void setProgram(Id bufferId, GLProgram &program);
 
+    void setProgram(Id bufferId, Id programId);
     void setProgram(Id bufferId, Name const &programName);
     void setProgram(Name const &bufferName, GLProgram &program);
     void setProgram(Name const &bufferName, Name const &programName);
