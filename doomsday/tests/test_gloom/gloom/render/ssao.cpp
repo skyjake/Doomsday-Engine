@@ -31,11 +31,19 @@ static const dsize SAMPLE_COUNT = 64;
 
 DENG2_PIMPL(SSAO)
 {
+    enum { Noisy, Blurred };
+
+    enum ProgramId {
+        NoisyOcclusionSampling  = 0,
+        DenoiseOcclusionSamples = 1,
+    };
+
     ScreenQuad        quad;
     GLUniform         uSamples{"uSamples", GLUniform::Vec3Array, SAMPLE_COUNT};
     DataBuffer<Vec3f> noise{"uNoise", Image::RGB_16f};
-    GLFramebuffer     ssaoFrameBuf;
-    GLTexture         ssaoBuf;
+    GLFramebuffer     ssaoFrameBuf[2];
+    GLTexture         ssaoBuf[2];
+    GLUniform         uNoisyFactors{"uNoisyFactors", GLUniform::Sampler2D};
 
     Impl(Public *i) : Base(i)
     {}
@@ -43,11 +51,70 @@ DENG2_PIMPL(SSAO)
     void updateBuffer()
     {
         const auto bufSize = self().context().gbuffer->size();
-        if (ssaoBuf.size() != bufSize)
+        if (ssaoBuf[Noisy].size() != bufSize)
         {
-            ssaoBuf.setUndefinedImage(bufSize, Image::RG_88);
-            ssaoFrameBuf.configure(GLFramebuffer::Color0, ssaoBuf); //, nullptr, GLFramebuffer::NoAttachments);
+            ssaoBuf[Noisy]  .setUndefinedImage(bufSize, Image::RG_88);  // factor, depth
+            ssaoBuf[Blurred].setUndefinedImage(bufSize, Image::R_8);    // denoised factor
+            for (int i = 0; i < 2; ++i)
+            {
+                ssaoFrameBuf[i].configure(GLFramebuffer::Color0, ssaoBuf[i]);
+            }
+            ssaoBuf[Noisy].setWrap(gl::ClampToEdge, gl::ClampToEdge);
+            uNoisyFactors = ssaoBuf[Noisy];
         }
+    }
+
+    void glInit(const Context &ctx)
+    {
+        quad.glInit(ctx);
+        ctx.shaders->build(quad.program(), "gloom.ssao")
+                << ctx.gbuffer->uGBufferAlbedo()
+                << ctx.gbuffer->uGBufferNormal()
+                << ctx.gbuffer->uGBufferDepth()
+                << ctx.view.uInverseProjMatrix
+                << ctx.view.uProjMatrix;
+
+        ctx.shaders->build(quad.addProgram(DenoiseOcclusionSamples), "gloom.ssao_denoise")
+                << uNoisyFactors;
+
+        // Generate sample kernel.
+        {
+            Vec3f samples[SAMPLE_COUNT];
+            for (auto &sample : samples)
+            {
+                // Normal-oriented hemisphere.
+                sample = Vec3f{Rangef(0, 2).random() - 1,
+                               Rangef(0, 2).random() - 1,
+                               Rangef(0, 1).random()};
+                sample = sample.normalize();
+                const float scale = Rangef(0, 1).random();
+                // Bias the samples closer to the center.
+                sample *= .1f + .9f * scale * scale;
+            }
+            uSamples.set(samples, SAMPLE_COUNT);
+            quad.program() << uSamples;
+        }
+
+        // Noise.
+        {
+            noise.init(16);
+            for (int i = 0; i < noise.elementCount; ++i)
+            {
+                noise.setData(i, Vec3f{Rangef(0, 2).random() - 1,
+                                       Rangef(0, 2).random() - 1,
+                                       0});
+            }
+            noise.update();
+            quad.program() << noise.var;
+        }
+    }
+
+    void glDeinit()
+    {
+        for (auto &fb : ssaoFrameBuf) fb.deinit();
+        for (auto &b  : ssaoBuf)      b.clear();
+        noise.clear();
+        quad.glDeinit();
     }
 };
 
@@ -58,49 +125,13 @@ SSAO::SSAO()
 void SSAO::glInit(const Context &context)
 {
     Render::glInit(context);
-    d->quad.glInit(context);
-    context.shaders->build(d->quad.program(), "gloom.ssao")
-            << context.gbuffer->uGBufferAlbedo()
-            << context.gbuffer->uGBufferNormal()
-            << context.gbuffer->uGBufferDepth()
-            << context.view.uInverseProjMatrix
-            << context.view.uProjMatrix;
 
-    // Generate sample kernel.
-    {
-        Vec3f samples[SAMPLE_COUNT];
-        for (auto &sample : samples)
-        {
-            // Normal-oriented hemisphere.
-            sample = Vec3f{Rangef(0, 2).random() - 1,
-                           Rangef(0, 2).random() - 1,
-                           Rangef(0, 1).random()};
-            sample = sample.normalize();
-            const float scale = Rangef(0, 1).random();
-            // Bias the samples closer to the center.
-            sample *= .1f + .9f * scale * scale;
-        }
-        d->uSamples.set(samples, SAMPLE_COUNT);
-        d->quad.program() << d->uSamples;
-    }
-
-    // Noise.
-    {
-        d->noise.init(16);
-        for (int i = 0; i < d->noise.elementCount; ++i)
-        {
-            d->noise.setData(i, Vec3f{Rangef(0, 2).random() - 1,
-                                      Rangef(0, 2).random() - 1,
-                                      0});
-        }
-        d->noise.update();
-        d->quad.program() << d->noise.var;
-    }
+    d->glInit(context);
 }
 
 void SSAO::glDeinit()
 {
-    d->quad.glDeinit();
+    d->glDeinit();
     Render::glDeinit();
 }
 
@@ -109,13 +140,18 @@ void SSAO::render()
     // Make sure the destination buffer is the correct size.
     d->updateBuffer();
 
-    d->quad.state().setTarget(d->ssaoFrameBuf); // target is the ssaoBuf
+    d->quad.drawable().setProgram(Impl::NoisyOcclusionSampling);
+    d->quad.state().setTarget(d->ssaoFrameBuf[Impl::Noisy]); // target is the ssaoBuf
+    d->quad.render();
+
+    d->quad.drawable().setProgram(Impl::DenoiseOcclusionSamples);
+    d->quad.state().setTarget(d->ssaoFrameBuf[Impl::Blurred]); // targeting final SSAO factors
     d->quad.render();
 }
 
-const GLTexture &SSAO::occlusionBuffer() const
+const GLTexture &SSAO::occlusionFactors() const
 {
-    return d->ssaoBuf;
+    return d->ssaoBuf[Impl::Blurred];
 }
 
 } // namespace gloom

@@ -10,8 +10,8 @@ uniform mat4      uProjMatrix;
 
 void main(void) {
     vec3 randomVec = texelFetch(uNoise, ivec2(gl_FragCoord.xy) % NOISE_SIZE, 0).rgb;
-    vec3 normal    = GBuffer_FragmentViewSpaceNormal();
-    vec3 fragPos   = GBuffer_FragmentViewSpacePos().xyz;
+    vec3 normal    = GBuffer_FragViewSpaceNormal();
+    vec3 fragPos   = GBuffer_FragViewSpacePos().xyz;
 
     vec3 tangent   = normalize(randomVec - normal * dot(randomVec, normal));
     vec3 bitangent = cross(normal, tangent);

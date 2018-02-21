@@ -36,7 +36,7 @@ public:
     void glDeinit() override;
     void render() override;
 
-    const de::GLTexture &occlusionBuffer() const;
+    const de::GLTexture &occlusionFactors() const;
 
 private:
     DENG2_PRIVATE(d)

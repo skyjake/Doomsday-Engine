@@ -101,7 +101,7 @@ void GBuffer::clear()
 
 void GBuffer::render()
 {
-    d->uSSAOBuf = context().ssao->occlusionBuffer();
+    d->uSSAOBuf = context().ssao->occlusionFactors();
 
     d->quad.state().setTarget(GLState::current().target());
     d->quad.render();

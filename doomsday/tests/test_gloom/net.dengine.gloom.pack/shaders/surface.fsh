@@ -27,5 +27,5 @@ void main(void) {
     }
 
     out_FragColor = color;
-    GBuffer_SetFragmentNormal(vNormal);
+    GBuffer_SetFragNormal(vNormal);
 }

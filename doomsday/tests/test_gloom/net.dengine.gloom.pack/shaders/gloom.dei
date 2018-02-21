@@ -4,6 +4,10 @@
 group gloom {
     shader surface { path = "surface" }
     shader ssao { path = "ssao" }
+    shader ssao_denoise {
+        path.vertex = "ssao.vsh"
+        path.fragment = "ssao_denoise.fsh"
+    }
     shader finalize {
         path.vertex = "common/mvp_vertex_uv.vsh"
         fragment = "
@@ -19,13 +23,10 @@ group gloom {
                     out_FragColor = texture(uGBufferNormal, vUV);
                 }
                 else if (uDebugMode == 2) {
-                    out_FragColor = GBuffer_FragmentViewSpacePos();
+                    out_FragColor = GBuffer_FragViewSpacePos();
                 }
                 else if (uDebugMode == 3) {
                     out_FragColor = vec4(vec3(texture(uSSAOBuf, vUV).r), 1.0);
-                }
-                else if (uDebugMode == 4) {
-                    out_FragColor = vec4(vec3(texture(uSSAOBuf, vUV).g), 1.0);
                 }
             }
         "

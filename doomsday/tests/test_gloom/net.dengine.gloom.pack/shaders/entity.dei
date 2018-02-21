@@ -58,6 +58,6 @@ shader gloom.entity {
 
             //gl_FragColor = mixFog(color, vFogColor) * vInstanceColor;
             out_FragColor = color * vInstanceColor;
-            GBuffer_SetFragmentNormal(vNormal);
+            GBuffer_SetFragNormal(vNormal);
         }"
 }

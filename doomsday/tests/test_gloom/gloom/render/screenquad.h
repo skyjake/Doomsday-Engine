@@ -34,6 +34,8 @@ public:
     void glDeinit() override;
     void render() override;
 
+    de::GLProgram &addProgram(de::Drawable::Id programId);
+
     de::Drawable & drawable();
     de::GLProgram &program();
     de::GLState &  state();

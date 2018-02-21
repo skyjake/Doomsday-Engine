@@ -5,7 +5,7 @@ layout (location = 1) out vec4 out_Normal;
 
 uniform mat3 uWorldToViewMatrix;
 
-void GBuffer_SetFragmentNormal(vec3 worldNormal) {
+void GBuffer_SetFragNormal(vec3 worldNormal) {
     out_Normal = vec4(normalize(uWorldToViewMatrix * worldNormal) * 0.5 + vec3(0.5), 1.0);
 }
 

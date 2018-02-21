@@ -23,14 +23,14 @@ vec4 GBuffer_ViewSpacePos(vec2 coord) {
     return GBuffer_ViewSpacePosFromDepth(coord, depth);
 }
 
-vec4 GBuffer_FragmentViewSpacePos(void) {
+vec4 GBuffer_FragViewSpacePos(void) {
     // Read the fragment depth from the Z buffer.
     float depth = texelFetch(uGBufferDepth, ivec2(gl_FragCoord.xy), 0).r;
     vec2 normCoord = gl_FragCoord.xy / vec2(textureSize(uGBufferDepth, 0));
     return GBuffer_ViewSpacePosFromDepth(normCoord, depth);
 }
 
-vec3 GBuffer_FragmentViewSpaceNormal(void) {
+vec3 GBuffer_FragViewSpaceNormal(void) {
     vec3 norm = texelFetch(uGBufferNormal, ivec2(gl_FragCoord.xy), 0).rgb;
     return norm * 2.0 - 1.0;
 }

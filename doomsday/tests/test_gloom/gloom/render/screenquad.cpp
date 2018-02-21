@@ -72,6 +72,12 @@ void ScreenQuad::render()
     d->drawable.draw();
 }
 
+GLProgram &ScreenQuad::addProgram(Drawable::Id programId)
+{
+    d->drawable.addProgram(programId) << d->uMvpMatrix;
+    return d->drawable.program(programId);
+}
+
 Drawable &ScreenQuad::drawable()
 {
     return d->drawable;
