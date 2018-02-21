@@ -5,18 +5,10 @@ group gloom {
     shader surface { path = "surface" }
     shader ssao { path = "ssao" }
     shader finalize {
-        vertex = "
-            uniform mat4 uMvpMatrix;
-            DENG_ATTRIB vec4 aVertex;
-            DENG_ATTRIB vec2 aUV;
-            DENG_VAR vec2 vUV;
-            void main(void) {
-                gl_Position = uMvpMatrix * aVertex;
-                vUV = aUV;
-            }
-        "
+        path.vertex = "common/mvp_vertex_uv.vsh"
         fragment = "
             #include 'common/gbuffer_in.glsl'
+            uniform sampler2D uSSAOBuf;
             uniform int uDebugMode;
             DENG_VAR vec2 vUV;
             void main(void) {
@@ -28,6 +20,12 @@ group gloom {
                 }
                 else if (uDebugMode == 2) {
                     out_FragColor = GBuffer_FragmentViewSpacePos();
+                }
+                else if (uDebugMode == 3) {
+                    out_FragColor = vec4(vec3(texture(uSSAOBuf, vUV).r), 1.0);
+                }
+                else if (uDebugMode == 4) {
+                    out_FragColor = vec4(vec3(texture(uSSAOBuf, vUV).g), 1.0);
                 }
             }
         "

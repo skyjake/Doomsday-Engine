@@ -79,6 +79,7 @@ DENG2_PIMPL(GloomWorld), public Asset
         renderContext.shaders = &GloomApp::shaders();
         renderContext.atlas   = atlas.get();
         renderContext.uAtlas  = renderContext.atlas;
+        renderContext.ssao    = &ssao;
         renderContext.gbuffer = &gbuffer;
         renderContext.map     = &map;
 

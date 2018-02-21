@@ -1,14 +1,15 @@
 #include "common/gbuffer_in.glsl"
 
-const int SAMPLE_COUNT = 64;
+const int   SAMPLE_COUNT = 64;
 const float RADIUS = 0.5;
+const int   NOISE_SIZE = 4;
 
-uniform vec3 uSamples[SAMPLE_COUNT];
+uniform vec3      uSamples[SAMPLE_COUNT];
 uniform sampler2D uNoise;
-uniform mat4 uProjMatrix;
+uniform mat4      uProjMatrix;
 
 void main(void) {
-    vec3 randomVec = texelFetch(uNoise, ivec2(gl_FragCoord.xy) % 8, 0).rgb;
+    vec3 randomVec = texelFetch(uNoise, ivec2(gl_FragCoord.xy) % NOISE_SIZE, 0).rgb;
     vec3 normal    = GBuffer_FragmentViewSpaceNormal();
     vec3 fragPos   = GBuffer_FragmentViewSpacePos().xyz;
 
@@ -34,9 +35,9 @@ void main(void) {
         occlusion += rangeCheck * (sampleDepth >= sample.z + bias? 1.0 : 0.0);
     }
 
-    vec4 albedo = texelFetch(uGBufferAlbedo, ivec2(gl_FragCoord.xy), 0);
-
-    //albedo = vec4(vec3(0.95), 1.0); // testing with white
-
-    out_FragColor = vec4(vec3(1.0) - occlusion / SAMPLE_COUNT, 1.0) * albedo;
+    // Output:
+    // - Red  : occlusion factor
+    // - Green: view space distance (for depth-aware blurring)
+    out_FragColor = vec4(1.0 - occlusion / SAMPLE_COUNT,
+                         1.0 / -fragPos.z, 0.0, 0.0);
 }

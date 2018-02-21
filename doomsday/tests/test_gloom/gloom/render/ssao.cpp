@@ -45,8 +45,8 @@ DENG2_PIMPL(SSAO)
         const auto bufSize = self().context().gbuffer->size();
         if (ssaoBuf.size() != bufSize)
         {
-            ssaoBuf.setUndefinedImage(bufSize, Image::R_8);
-
+            ssaoBuf.setUndefinedImage(bufSize, Image::RG_88);
+            ssaoFrameBuf.configure(GLFramebuffer::Color0, ssaoBuf); //, nullptr, GLFramebuffer::NoAttachments);
         }
     }
 };
@@ -73,8 +73,8 @@ void SSAO::glInit(const Context &context)
         {
             // Normal-oriented hemisphere.
             sample = Vec3f{Rangef(0, 2).random() - 1,
-                              Rangef(0, 2).random() - 1,
-                              Rangef(0, 1).random()};
+                           Rangef(0, 2).random() - 1,
+                           Rangef(0, 1).random()};
             sample = sample.normalize();
             const float scale = Rangef(0, 1).random();
             // Bias the samples closer to the center.
@@ -86,12 +86,12 @@ void SSAO::glInit(const Context &context)
 
     // Noise.
     {
-        d->noise.init(64);
+        d->noise.init(16);
         for (int i = 0; i < d->noise.elementCount; ++i)
         {
             d->noise.setData(i, Vec3f{Rangef(0, 2).random() - 1,
-                                         Rangef(0, 2).random() - 1,
-                                         0});
+                                      Rangef(0, 2).random() - 1,
+                                      0});
         }
         d->noise.update();
         d->quad.program() << d->noise.var;
@@ -111,6 +111,11 @@ void SSAO::render()
 
     d->quad.state().setTarget(d->ssaoFrameBuf); // target is the ssaoBuf
     d->quad.render();
+}
+
+const GLTexture &SSAO::occlusionBuffer() const
+{
+    return d->ssaoBuf;
 }
 
 } // namespace gloom

@@ -34,13 +34,13 @@ namespace gloom {
 
 DENG_GUI_PIMPL(GloomWidget)
 {
-    Mat4f         modelView;
+    Mat4f            modelView;
     SafePtr<World>   world;
     Time             previousUpdateAt;
     User             user;
     User::InputState inputs;
     bool             mouseLook = false;
-    Vec2i         lastMousePos;
+    Vec2i            lastMousePos;
 
     Impl(Public *i) : Base(i)
     {}
@@ -171,7 +171,7 @@ bool GloomWidget::handleEvent(Event const &event)
         // Check for some key commands.
         if (key.isKeyDown())
         {
-            if (key.ddKey() >= '1' && key.ddKey() <= '3')
+            if (key.ddKey() >= '1' && key.ddKey() <= '5')
             {
                 d->world->as<GloomWorld>().setDebugMode(key.ddKey() - '1');
                 return true;

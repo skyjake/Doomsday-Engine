@@ -30,6 +30,7 @@
 namespace gloom {
 
 class GBuffer;
+class SSAO;
 
 struct Context {
     const de::ImageBank *images;
@@ -37,6 +38,7 @@ struct Context {
     const Map *          map;
     de::AtlasTexture *   atlas;
     View                 view;
+    SSAO *               ssao;
     GBuffer *            gbuffer;
 
     de::GLUniform uAtlas        {"uTex",            de::GLUniform::Sampler2D};
