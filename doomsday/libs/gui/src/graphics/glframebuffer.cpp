@@ -553,12 +553,16 @@ void GLFramebuffer::configure(Vec2ui const &size, Flags flags, int sampleCount)
     LIBGUI_ASSERT_GL_OK();
 }
 
-void GLFramebuffer::configure(GLTexture *colorTex, GLTexture *depthStencilTex)
+void GLFramebuffer::configure(GLTexture *colorTex,
+                              GLTexture *depthStencilTex,
+                              Flags      missingRenderBuffers)
 {
-    configure(QList<GLTexture *>({colorTex}), depthStencilTex);
+    configure(QList<GLTexture *>({colorTex}), depthStencilTex, missingRenderBuffers);
 }
 
-void GLFramebuffer::configure(QList<GLTexture *> colorTextures, GLTexture *depthStencilTex)
+void GLFramebuffer::configure(QList<GLTexture *> colorTextures,
+                              GLTexture *        depthStencilTex,
+                              Flags              missingRenderBuffers)
 {
     LOG_AS("GLFramebuffer");
 
@@ -588,7 +592,7 @@ void GLFramebuffer::configure(QList<GLTexture *> colorTextures, GLTexture *depth
         DENG2_ASSERT(d->size == colorTex->size());
         d->attachTexture(*colorTex, GL_COLOR_ATTACHMENT0 + i);
     }
-    if (colorTextures.isEmpty())
+    if (colorTextures.isEmpty() && missingRenderBuffers.testFlag(Color0))
     {
         d->attachRenderbuffer(Impl::ColorBuffer0, GL_RGBA8, GL_COLOR_ATTACHMENT0);
     }
@@ -600,9 +604,10 @@ void GLFramebuffer::configure(QList<GLTexture *> colorTextures, GLTexture *depth
         DENG2_ASSERT(d->size == depthStencilTex->size());
         d->attachTexture(*depthStencilTex, GL_DEPTH_STENCIL_ATTACHMENT);
     }
-    else
+    else if (missingRenderBuffers.testFlag(DepthStencil))
     {
-        d->attachRenderbuffer(Impl::DepthStencilBuffer, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT);
+        d->attachRenderbuffer(
+            Impl::DepthStencilBuffer, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT);
     }
 
     LIBGUI_ASSERT_GL_OK();

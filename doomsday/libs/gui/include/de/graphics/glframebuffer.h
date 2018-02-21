@@ -141,22 +141,33 @@ public:
      * values and one for depth/stencil values.
      *
      * If @a colorTex or @a depthStencilTex is omitted, a renderbuffer will be
-     * created in its place.
+     * created in its place (depending on @a missingRenderBuffers).
      *
      * Any previous attachments are released.
      *
-     * @param colorTex         Texture for color values.
-     * @param depthStencilTex  Texture for depth/stencil values.
+     * @param colorTex              Texture for color values.
+     * @param depthStencilTex       Texture for depth/stencil values.
+     * @param missingRenderBuffers  Create renderbuffers for attachments where
+     *                              texture has not been specified.
      */
-    void configure(GLTexture *colorTex, GLTexture *depthStencilTex);
+    void configure(GLTexture *colorTex,
+                   GLTexture *depthStencilTex,
+                   Flags      missingRenderBuffers = ColorDepthStencil);
 
     /**
      * Reconfigures the framebuffer with multiple textures.
      *
-     * @param colorTextures    Textures for color attachments.
-     * @param depthStencilTex  Texture for depth/stencil values.
+     * If @a colorTex or @a depthStencilTex is omitted, a renderbuffer will be
+     * created in its place (depending on @a missingRenderBuffers).
+     *
+     * @param colorTextures         Textures for color attachments.
+     * @param depthStencilTex       Texture for depth/stencil values.
+     * @param missingRenderBuffers  Create renderbuffers for attachments where
+     *                              texture has not been specified.
      */
-    void configure(QList<GLTexture *> colorTextures, GLTexture *depthStencilTex);
+    void configure(QList<GLTexture *> colorTextures,
+                   GLTexture *        depthStencilTex,
+                   Flags              missingRenderBuffers = ColorDepthStencil);
 
     /**
      * Changes the configuration of the render target. Any previously allocated
