@@ -34,8 +34,8 @@ DENG2_PIMPL(SSAO)
     enum { Noisy, Blurred };
 
     enum ProgramId {
-        NoisyOcclusionSampling  = 0,
-        DenoiseOcclusionSamples = 1,
+        SampleRandom   = 0,
+        DenoiseFactors = 1,
     };
 
     ScreenQuad        quad;
@@ -74,7 +74,7 @@ DENG2_PIMPL(SSAO)
                 << ctx.view.uInverseProjMatrix
                 << ctx.view.uProjMatrix;
 
-        ctx.shaders->build(quad.addProgram(DenoiseOcclusionSamples), "gloom.ssao_denoise")
+        ctx.shaders->build(quad.addProgram(DenoiseFactors), "gloom.ssao_denoise")
                 << uNoisyFactors;
 
         // Generate sample kernel.
@@ -140,11 +140,11 @@ void SSAO::render()
     // Make sure the destination buffer is the correct size.
     d->updateBuffer();
 
-    d->quad.drawable().setProgram(Impl::NoisyOcclusionSampling);
+    d->quad.drawable().setProgram(Impl::SampleRandom);
     d->quad.state().setTarget(d->ssaoFrameBuf[Impl::Noisy]); // target is the ssaoBuf
     d->quad.render();
 
-    d->quad.drawable().setProgram(Impl::DenoiseOcclusionSamples);
+    d->quad.drawable().setProgram(Impl::DenoiseFactors);
     d->quad.state().setTarget(d->ssaoFrameBuf[Impl::Blurred]); // targeting final SSAO factors
     d->quad.render();
 }
