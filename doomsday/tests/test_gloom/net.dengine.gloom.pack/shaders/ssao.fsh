@@ -13,6 +13,12 @@ void main(void) {
     vec3 normal    = GBuffer_FragViewSpaceNormal();
     vec3 fragPos   = GBuffer_FragViewSpacePos().xyz;
 
+    if (normal == vec3(0.0)) {
+        // If there is no normal, we won't sample for AO.
+        out_FragColor = vec4(1.0, 0.0, 0.0, 0.0);
+        return;
+    }
+
     vec3 tangent   = normalize(randomVec - normal * dot(randomVec, normal));
     vec3 bitangent = cross(normal, tangent);
     mat3 tangentToView = mat3(tangent, bitangent, normal);

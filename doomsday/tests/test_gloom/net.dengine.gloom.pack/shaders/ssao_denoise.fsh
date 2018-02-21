@@ -4,6 +4,11 @@ void main() {
     ivec2 fragCoord = ivec2(gl_FragCoord.xy);
     // Depth reciprocals are available in the buffer.
     float mainDepth = 1.0 / texelFetch(uNoisyFactors, fragCoord, 0).g;
+    if (mainDepth > 100.0) {
+        // No need to filter.
+        out_FragColor = vec4(texelFetch(uNoisyFactors, fragCoord, 0).r);
+        return;
+    }
     vec2 result = vec2(0.0, 0.0);
     for (int x = -2; x < 2; ++x) {
         for (int y = -2; y < 2; ++y) {
