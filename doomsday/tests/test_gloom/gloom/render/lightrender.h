@@ -1,4 +1,4 @@
-/** @file entity.h
+/** @file lightrender.h
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,45 +16,26 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_ENTITY_H
-#define GLOOM_ENTITY_H
+#ifndef GLOOM_LIGHTRENDER_H
+#define GLOOM_LIGHTRENDER_H
 
-#include <de/Vector>
-#include "gloom/identity.h"
+#include "gloom/render/render.h"
 
 namespace gloom {
 
-class Entity
+/**
+ * Renders light source shadow maps and the deferred shading pass.
+ */
+class LightRender : public Render
 {
 public:
-    enum Type {
-        None = 0,
+    LightRender();
 
-        // Special entity types:
-        Light     = 1,
-        Spotlight = 2,
+    void glInit(const Context &) override;
+    void glDeinit() override;
+    void render() override;
 
-        // World entities:
-        Tree1 = 1000,
-        Tree2,
-        Tree3,
-    };
-
-public:
-    Entity();
-
-    void setId(ID id);
-    void setType(Type t);
-    void setPosition(de::Vec3d const &pos);
-    void setScale(float scale);
-    void setScale(de::Vec3f const &scale);
-    void setAngle(float yawDegrees);
-
-    ID        id() const;
-    Type      type() const;
-    de::Vec3d position() const;
-    de::Vec3f scale() const;
-    float     angle() const;
+    void createLights();
 
 private:
     DENG2_PRIVATE(d)
@@ -62,4 +43,4 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_ENTITY_H
+#endif // GLOOM_LIGHTRENDER_H

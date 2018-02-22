@@ -43,7 +43,10 @@ set (SOURCES
     gloom/render/gbuffer.cpp
     gloom/render/gbuffer.h
     gloom/render/icamera.h
+    gloom/render/light.cpp
     gloom/render/light.h
+    gloom/render/lightrender.cpp
+    gloom/render/lightrender.h
     gloom/render/mapbuild.cpp
     gloom/render/mapbuild.h
     gloom/render/maprender.cpp

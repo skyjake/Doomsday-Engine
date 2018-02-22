@@ -1,4 +1,4 @@
-/** @file entity.h
+/** @file light.cpp
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,50 +16,42 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_ENTITY_H
-#define GLOOM_ENTITY_H
+#include "gloom/render/light.h"
 
-#include <de/Vector>
-#include "gloom/identity.h"
+#include <de/GLFramebuffer>
+
+using namespace de;
 
 namespace gloom {
 
-class Entity
+DENG2_PIMPL(Light)
 {
-public:
-    enum Type {
-        None = 0,
+    Vec3d origin;
+    Vec3f dir;
+    Vec3f intensity;
+    GLTexture shadowMap;
+    GLFramebuffer framebuf;
 
-        // Special entity types:
-        Light     = 1,
-        Spotlight = 2,
+    Impl(Public *i) : Base(i)
+    {
+        shadowMap.setAutoGenMips(false);
+        shadowMap.setFilter(gl::Linear, gl::Linear, gl::MipNone);
+        shadowMap.setUndefinedContent(
+            GLTexture::Size(1024, 1024),
+            GLPixelFormat(GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT));
 
-        // World entities:
-        Tree1 = 1000,
-        Tree2,
-        Tree3,
-    };
-
-public:
-    Entity();
-
-    void setId(ID id);
-    void setType(Type t);
-    void setPosition(de::Vec3d const &pos);
-    void setScale(float scale);
-    void setScale(de::Vec3f const &scale);
-    void setAngle(float yawDegrees);
-
-    ID        id() const;
-    Type      type() const;
-    de::Vec3d position() const;
-    de::Vec3f scale() const;
-    float     angle() const;
-
-private:
-    DENG2_PRIVATE(d)
+        framebuf.configure(GLFramebuffer::Depth, shadowMap);
+    }
 };
 
-} // namespace gloom
+Light::Light()
+    : d(new Impl(this))
+{}
 
-#endif // GLOOM_ENTITY_H
+Mat4f Light::lightMatrix() const
+{
+    return Mat4f::ortho(-10, 10, -10, 10, 1, 10) *
+           Mat4f::lookAt(d->origin + d->dir, d->origin, Vec3f(0, 1, 0));
+}
+
+} // namespace gloom

@@ -22,12 +22,7 @@
 #include "gloom/world/entitymap.h"
 #include "gloom/render/render.h"
 
-#include <de/AtlasTexture>
-
 namespace gloom {
-
-class ICamera;
-class Map;
 
 class EntityRender : public Render
 {

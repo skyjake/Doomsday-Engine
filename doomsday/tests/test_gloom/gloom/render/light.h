@@ -19,7 +19,11 @@
 #ifndef GLOOM_RENDER_LIGHT_H
 #define GLOOM_RENDER_LIGHT_H
 
+#include <de/GLTexture>
+#include <de/Matrix>
 #include <de/Vector>
+
+#include "gloom/world/entity.h"
 
 namespace gloom {
 
@@ -32,12 +36,21 @@ public:
     enum Type { Omni, Linear, Spot };
 
     Light();
-    virtual ~Light();
 
-    Type type() const;
+    void setEntity(const Entity *entity);
+    void setType(Type type);
 
-    virtual de::Vec3f lightDirection() const = 0;
-    virtual de::Vec3f lightColor() const = 0;
+    const Entity *entity() const;
+
+    Type      type() const;
+    de::Vec3f origin() const; // from entity
+    de::Vec3f direction() const;
+    de::Vec3f intensity() const;
+    float     fovY() const;
+    float     aspectRatio() const;
+
+    de::GLTexture &shadowMap();
+    de::Mat4f      lightMatrix() const;
 
 private:
     DENG2_PRIVATE(d)

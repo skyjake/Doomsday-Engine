@@ -20,6 +20,7 @@
 #include "gloom/render/mapbuild.h"
 #include "gloom/render/databuffer.h"
 #include "gloom/render/entityrender.h"
+#include "gloom/render/lightrender.h"
 #include "gloom/render/icamera.h"
 
 #include <de/Drawable>
@@ -41,20 +42,20 @@ DENG2_PIMPL(MapRender)
         Vec4f uvRect;
         Vec4f texelSize;
     };
-    DataBuffer<Metrics> textureMetrics{"uTextureMetrics", Image::RGBA_32f, 2, 1};
-
-    DataBuffer<float> planes{"uPlanes", Image::R_32f};
-
     struct TexOffsetData {
         Vec2f offset;
         Vec2f speed;
     };
-    DataBuffer<TexOffsetData> texOffsets{"uTexOffsets", Image::RGBA_32f};
 
-    GLUniform uTexelsPerMeter   {"uTexelsPerMeter",     GLUniform::Float};
+    DataBuffer<Metrics>       textureMetrics{"uTextureMetrics", Image::RGBA_32f, 2, 1};
+    DataBuffer<float>         planes        {"uPlanes",         Image::R_32f};
+    DataBuffer<TexOffsetData> texOffsets    {"uTexOffsets",     Image::RGBA_32f};
+
+    GLUniform uTexelsPerMeter{"uTexelsPerMeter", GLUniform::Float};
     Drawable  drawable;
 
     EntityRender ents;
+    LightRender lights;
 
     Impl(Public *i) : Base(i)
     {}
@@ -125,7 +126,8 @@ DENG2_PIMPL(MapRender)
 
     void glInit()
     {
-        ents.glInit(self().context());
+        ents  .glInit(self().context());
+        lights.glInit(self().context());
 
         uTexelsPerMeter = 200;
 
@@ -139,11 +141,13 @@ DENG2_PIMPL(MapRender)
 
         buildMap();
         ents.createEntities();
+        lights.createLights();
     }
 
     void glDeinit()
     {
-        ents.glDeinit();
+        ents  .glDeinit();
+        lights.glDeinit();
 
         for (const Id &texId : loadedTextures)
         {
@@ -177,6 +181,7 @@ void MapRender::rebuild()
 {
     d->buildMap();
     d->ents.createEntities();
+    d->lights.createLights();
 }
 
 void MapRender::advanceTime(TimeSpan)

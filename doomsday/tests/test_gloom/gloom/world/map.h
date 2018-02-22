@@ -53,7 +53,7 @@ struct Plane
     de::Vec3d point;
     de::Vec3f normal;
 
-    bool isPointAbove(const de::Vec3d &pos) const;
+    bool      isPointAbove(const de::Vec3d &pos) const;
     de::Vec3d projectPoint(const Point &pos) const;
 };
 
@@ -68,7 +68,6 @@ struct Sector
     IDList walls;   // unordered
     IDList volumes; // must be ascending and share planes; bottom plane of first volume is the
                     // sector floor, top plane of last volume is the sector ceiling
-
     void replaceLine(ID oldId, ID newId);
 };
 

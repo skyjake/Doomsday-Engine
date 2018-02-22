@@ -1,4 +1,4 @@
-/** @file entity.h
+/** @file lightrender.cpp
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,50 +16,54 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_ENTITY_H
-#define GLOOM_ENTITY_H
-
-#include <de/Vector>
-#include "gloom/identity.h"
+#include "gloom/render/lightrender.h"
+#include "gloom/render/light.h"
 
 namespace gloom {
 
-class Entity
+DENG2_PIMPL(LightRender)
 {
-public:
-    enum Type {
-        None = 0,
+    std::unique_ptr<Light> skyLight;
+    QHash<ID, std::shared_ptr<Light>> lights;
 
-        // Special entity types:
-        Light     = 1,
-        Spotlight = 2,
+    Impl(Public *i) : Base(i)
+    {}
 
-        // World entities:
-        Tree1 = 1000,
-        Tree2,
-        Tree3,
-    };
+    void glInit()
+    {
+        skyLight.reset(new Light);
+    }
 
-public:
-    Entity();
-
-    void setId(ID id);
-    void setType(Type t);
-    void setPosition(de::Vec3d const &pos);
-    void setScale(float scale);
-    void setScale(de::Vec3f const &scale);
-    void setAngle(float yawDegrees);
-
-    ID        id() const;
-    Type      type() const;
-    de::Vec3d position() const;
-    de::Vec3f scale() const;
-    float     angle() const;
-
-private:
-    DENG2_PRIVATE(d)
+    void glDeinit()
+    {
+        skyLight.reset();
+    }
 };
 
-} // namespace gloom
+LightRender::LightRender()
+    : d(new Impl(this))
+{}
 
-#endif // GLOOM_ENTITY_H
+void LightRender::glInit(const Context &context)
+{
+    Render::glInit(context);
+    d->glInit();
+}
+
+void LightRender::glDeinit()
+{
+    d->glDeinit();
+    Render::glDeinit();
+}
+
+void LightRender::render()
+{
+
+}
+
+void LightRender::createLights()
+{
+
+}
+
+} // namespace gloom
