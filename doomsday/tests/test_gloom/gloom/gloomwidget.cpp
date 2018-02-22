@@ -137,13 +137,13 @@ void GloomWidget::update()
     const TimeSpan elapsed = d->previousUpdateAt.since();
     d->previousUpdateAt = Time();
 
-    d->user.setInputState(d->inputs);
-    d->user.update(elapsed);
-
     if (d->world)
     {
         d->world->update(elapsed);
     }
+    d->user.setInputState(d->inputs);
+    d->user.update(elapsed);
+
     d->updateModelView();
 }
 

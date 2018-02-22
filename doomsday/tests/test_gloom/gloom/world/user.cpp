@@ -163,10 +163,13 @@ DENG2_PIMPL(User)
             jumpPending = false;
         }
 
-        if (world)
+        // Gravity.
+        momentum.y -= elapsed * 9.81f;
+
+        /*if (world)
         {
             // Gravity.
-            if (!onGround)
+            //if (!onGround)
             {
                 momentum.y -= elapsed * 9.81f;
             }
@@ -174,29 +177,37 @@ DENG2_PIMPL(User)
         else
         {
             momentum.y = 0;
-        }
+        }*/
 
         pos += momentum * elapsed;
 
         if (world)
         {
             // Keep viewer on the ground.
-            float surface = world->groundSurfaceHeight(pos);
+            const float surface = world->groundSurfaceHeight(pos);
+
             if (onGround)
             {
-                if (pos.y <= surface - 10 * elapsed)
+                /*if (pos.y <= surface + 10 * elapsed)
                 {
                     double surfaceMomentum = (pos.y - surface) / elapsed;
-                    if (surfaceMomentum < 0 && surfaceMomentum > -5)
+                    if (surfaceMomentum < 0 && surfaceMomentum > 5)
                     {
                         // Stay on ground?
                         pos.y = surface;
+                        momentum.y = 0;
                     }
-                }
+                    else
+                    {
+                        onGround = false;
+                    }
+                }*/
             }
 
             if (pos.y <= surface + FLOAT_EPSILON)
             {
+                pos.y = surface;
+
                 if (!onGround)
                 {
                     playFallDownSound();
@@ -204,9 +215,9 @@ DENG2_PIMPL(User)
                     {
                         crouchMomentum = min(crouchMomentum, momentum.y + 8);
                     }
-                    momentum.y = 0;
+                    //momentum.y = 0;
                 }
-                else
+                /*else
                 {
                     double surfaceMomentum = (surface - pos.y) / elapsed;
                     if (surfaceMomentum > 0)
@@ -214,8 +225,9 @@ DENG2_PIMPL(User)
                         // Push upward.
                         momentum.y = surfaceMomentum/20;
                     }
-                }
-                pos.y = surface;
+                }*/
+                //pos.y = surface;
+                momentum.y = 0;
                 onGround = true;
             }
             else
