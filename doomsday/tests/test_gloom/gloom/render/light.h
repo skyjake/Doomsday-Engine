@@ -19,6 +19,7 @@
 #ifndef GLOOM_RENDER_LIGHT_H
 #define GLOOM_RENDER_LIGHT_H
 
+#include <de/GLFramebuffer>
 #include <de/GLTexture>
 #include <de/Matrix>
 #include <de/Vector>
@@ -49,8 +50,9 @@ public:
     float     fovY() const;
     float     aspectRatio() const;
 
-    de::GLTexture &shadowMap();
-    de::Mat4f      lightMatrix() const;
+    de::GLTexture &    shadowMap();
+    de::GLFramebuffer &framebuf();
+    de::Mat4f          lightMatrix() const;
 
 private:
     DENG2_PRIVATE(d)

@@ -3,6 +3,7 @@
 
 group gloom {
     shader surface { path = "surface" }
+    shader shadow { path = "shadow"}
     shader ssao { path = "ssao" }
     shader ssao_denoise {
         path.vertex = "ssao.vsh"

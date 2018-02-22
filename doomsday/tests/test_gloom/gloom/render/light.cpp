@@ -26,9 +26,9 @@ namespace gloom {
 
 DENG2_PIMPL(Light)
 {
-    Vec3d origin;
-    Vec3f dir;
-    Vec3f intensity;
+    Vec3d origin    { -100, 100, 30 };
+    Vec3f dir       { 100, -100, -30 };
+    Vec3f intensity { 10, 10, 10 };
     GLTexture shadowMap;
     GLFramebuffer framebuf;
 
@@ -48,9 +48,14 @@ Light::Light()
     : d(new Impl(this))
 {}
 
+GLFramebuffer &Light::framebuf()
+{
+    return d->framebuf;
+}
+
 Mat4f Light::lightMatrix() const
 {
-    return Mat4f::ortho(-10, 10, -10, 10, 1, 10) *
+    return Mat4f::ortho(-50, 50, -50, 50, 1, 200) *
            Mat4f::lookAt(d->origin + d->dir, d->origin, Vec3f(0, 1, 0));
 }
 

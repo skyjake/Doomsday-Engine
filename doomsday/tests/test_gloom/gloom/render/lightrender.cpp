@@ -19,19 +19,33 @@
 #include "gloom/render/lightrender.h"
 #include "gloom/render/light.h"
 
+using namespace de;
+
 namespace gloom {
 
 DENG2_PIMPL(LightRender)
 {
-    std::unique_ptr<Light> skyLight;
+    Drawable *                        shadowGeometry = nullptr;
+    GLState                           state;
+    GLProgram                         program;
+    std::unique_ptr<Light>            skyLight;
     QHash<ID, std::shared_ptr<Light>> lights;
+    GLUniform                         uLightMatrix{"uLightMatrix", GLUniform::Mat4};
 
     Impl(Public *i) : Base(i)
     {}
 
     void glInit()
     {
+        state.setBlend(false);
+        state.setDepthTest(true);
+        state.setDepthWrite(true);
+        state.setColorMask(gl::WriteNone);
+        state.setCull(gl::Front);
+
         skyLight.reset(new Light);
+
+        self().context().shaders->build(program, "gloom.shadow") << uLightMatrix;
     }
 
     void glDeinit()
@@ -58,7 +72,26 @@ void LightRender::glDeinit()
 
 void LightRender::render()
 {
+    auto &sg = *d->shadowGeometry;
 
+    sg.setProgram(d->program);
+    sg.setState(d->state);
+
+    for (auto *light : {d->skyLight.get()})
+    {
+        d->state.setTarget(light->framebuf())
+                .setViewport(Rectangleui::fromSize(light->framebuf().size()));
+        d->uLightMatrix = light->lightMatrix();
+        sg.draw();
+    }
+
+    sg.unsetState();
+    sg.setProgram(d->shadowGeometry->program());
+}
+
+void gloom::LightRender::setShadowGeometry(Drawable &sg)
+{
+    d->shadowGeometry = &sg;
 }
 
 void LightRender::createLights()

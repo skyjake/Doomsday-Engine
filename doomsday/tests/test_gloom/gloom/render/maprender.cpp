@@ -142,6 +142,7 @@ DENG2_PIMPL(MapRender)
         buildMap();
         ents.createEntities();
         lights.createLights();
+        lights.setShadowGeometry(drawable);
     }
 
     void glDeinit()
@@ -216,6 +217,9 @@ void MapRender::advanceTime(TimeSpan)
 
 void MapRender::render()
 {
+    d->lights.render();
+
+    //d->drawable.setState(d->state);
     d->drawable.draw();
     d->ents.render();
 }

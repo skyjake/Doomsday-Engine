@@ -21,6 +21,8 @@
 
 #include "gloom/render/render.h"
 
+#include <de/Drawable>
+
 namespace gloom {
 
 /**
@@ -35,6 +37,7 @@ public:
     void glDeinit() override;
     void render() override;
 
+    void setShadowGeometry(de::Drawable &);
     void createLights();
 
 private:
