@@ -144,7 +144,7 @@ DENG2_OBSERVES(Asset, Deletion)
 
     ~Impl()
     {
-        release();
+        dealloc();
     }
 
     bool isDefault() const
@@ -356,19 +356,19 @@ DENG2_OBSERVES(Asset, Deletion)
         }
     }
 
-    void releaseRenderBuffers()
+    void deallocRenderBuffers()
     {
         LIBGUI_GL.glDeleteRenderbuffers(MAX_ATTACHMENTS, renderBufs);
         zap(renderBufs);
         zap(bufTextures);
     }
 
-    void release()
+    void dealloc()
     {
         self().setState(NotReady);
         if (fbo)
         {
-            releaseRenderBuffers();
+            deallocRenderBuffers();
             LIBGUI_GL.glDeleteFramebuffers(1, &fbo);
             fbo = 0;
         }
@@ -377,16 +377,16 @@ DENG2_OBSERVES(Asset, Deletion)
         size = nullSize;
     }
 
-    void releaseAndReset()
+    void deallocAndReset()
     {
-        release();
+        dealloc();
 
         textureAttachment = NoAttachments;
         flags = NoAttachments;
         sampleCount = 0;
     }
 
-    void releaseRenderBuffer(AttachmentId id)
+    void deallocRenderBuffer(AttachmentId id)
     {
         if (renderBufs[id])
         {
@@ -399,7 +399,7 @@ DENG2_OBSERVES(Asset, Deletion)
     {
         size = newSize;
 
-        releaseRenderBuffers();
+        deallocRenderBuffers();
         allocRenderBuffers();
     }
 
@@ -446,6 +446,35 @@ DENG2_OBSERVES(Asset, Deletion)
         GLState::current().target().glBind();
     }
 
+    void glBind() const
+    {
+        DENG2_ASSERT(fbo);
+        auto &GL = LIBGUI_GL;
+
+        GL.glBindFramebuffer(GL_FRAMEBUFFER, fbo); LIBGUI_ASSERT_GL_OK();
+
+        int const count = colorAttachmentCount();
+
+        static const GLenum drawBufs[4] = {
+            GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3
+        };
+        GL.glDrawBuffers(count, drawBufs);                          LIBGUI_ASSERT_GL_OK();
+        GL.glReadBuffer(count > 0? GL_COLOR_ATTACHMENT0 : GL_NONE); LIBGUI_ASSERT_GL_OK();
+    }
+
+    void glRelease() const
+    {
+        LIBGUI_ASSERT_GL_OK();
+
+        auto &GL = LIBGUI_GL;
+
+        GL.glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebuffer); // both read and write FBOs
+        LIBGUI_ASSERT_GL_OK();
+
+        GL.glDrawBuffer(GL_BACK);   LIBGUI_ASSERT_GL_OK();
+        GL.glReadBuffer(GL_BACK);   LIBGUI_ASSERT_GL_OK();
+    }
+
     void validate()
     {
         if (isDefault())
@@ -456,11 +485,14 @@ DENG2_OBSERVES(Asset, Deletion)
 
         DENG2_ASSERT(fbo != 0);
 
-        LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        //LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+        glBind();
+
         GLenum status = LIBGUI_GL.glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if (status != GL_FRAMEBUFFER_COMPLETE)
         {
-            releaseAndReset();
+            deallocAndReset();
 
             throw ConfigError("GLFramebuffer::validate",
                 status == GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT? "Incomplete attachments" :
@@ -478,7 +510,7 @@ DENG2_OBSERVES(Asset, Deletion)
     {
         if (texture == &asset)
         {
-            release();
+            dealloc();
         }
     }
 };
@@ -528,7 +560,7 @@ void GLFramebuffer::configure()
 {
     LOG_AS("GLFramebuffer");
 
-    d->releaseAndReset();
+    d->deallocAndReset();
     setState(Ready);
 }
 
@@ -536,7 +568,7 @@ void GLFramebuffer::configure(Vec2ui const &size, Flags flags, int sampleCount)
 {
     LOG_AS("GLFramebuffer");
 
-    d->releaseAndReset();
+    d->deallocAndReset();
 
     d->flags = flags;
     d->size = size;
@@ -568,7 +600,7 @@ void GLFramebuffer::configure(QList<GLTexture *> colorTextures,
 
     DENG2_ASSERT(colorTextures.size() >= 1);
 
-    d->releaseAndReset();
+    d->deallocAndReset();
 
     // Set new configuration.
     for (int i = 0; i < colorTextures.size(); ++i)
@@ -619,13 +651,13 @@ void GLFramebuffer::configure(Flags attachment, GLTexture &texture, Flags otherA
 {
     LOG_AS("GLFramebuffer");
 
-    d->releaseAndReset();
+    d->deallocAndReset();
 
     // Set new configuration.
-    d->texture = &texture;
+    d->texture           = &texture;
     d->textureAttachment = attachment;
-    d->flags = attachment | otherAttachments;
-    d->size = texture.size();
+    d->flags             = attachment | otherAttachments;
+    d->size              = texture.size();
 
     d->alloc();
 }
@@ -633,7 +665,7 @@ void GLFramebuffer::configure(Flags attachment, GLTexture &texture, Flags otherA
 void GLFramebuffer::deinit()
 {
     LOG_AS("GLFramebuffer");
-    d->releaseAndReset();
+    d->deallocAndReset();
 }
 
 void GLFramebuffer::glBind() const
@@ -646,30 +678,36 @@ void GLFramebuffer::glBind() const
         return;
     }
 
-    GLuint const fbo = (d->fbo? d->fbo : defaultFramebuffer);
-
-    LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    LIBGUI_ASSERT_GL_OK();
-
     if (d->fbo)
     {
-        static const GLenum drawBufs[4] = {
-            GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3
-        };
-        glDrawBuffers(d->colorAttachmentCount(), drawBufs);
+        d->glBind();
     }
     else
     {
-        LIBGUI_GL.glDrawBuffer(GL_BACK);
+        d->glRelease();
     }
+
+//    GLuint const fbo = (d->fbo? d->fbo : defaultFramebuffer);
+
+//    LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+//    LIBGUI_ASSERT_GL_OK();
+
+//    if (d->fbo)
+//    {
+//        static const GLenum drawBufs[4] = {
+//            GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3
+//        };
+//        glDrawBuffers(d->colorAttachmentCount(), drawBufs);
+//    }
+//    else
+//    {
+//        LIBGUI_GL.glDrawBuffer(GL_BACK);
+//    }
 }
 
 void GLFramebuffer::glRelease() const
 {
-    LIBGUI_ASSERT_GL_OK();
-
-    LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebuffer); // both read and write FBOs
-    LIBGUI_ASSERT_GL_OK();
+    d->glRelease();
 }
 
 QImage GLFramebuffer::toImage() const
@@ -759,7 +797,7 @@ void GLFramebuffer::replaceWithNewRenderBuffer(Flags attachment)
 
 void GLFramebuffer::releaseAttachment(Flags attachment)
 {
-    d->releaseRenderBuffer(d->flagsToAttachmentId(attachment));
+    d->deallocRenderBuffer(d->flagsToAttachmentId(attachment));
 }
 
 void GLFramebuffer::blit(GLFramebuffer &dest, Flags attachments, gl::Filter filtering) const
