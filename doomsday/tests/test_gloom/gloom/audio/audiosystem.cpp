@@ -1,6 +1,6 @@
 #include "audiosystem.h"
 #include "../../src/gloomapp.h"
-#include "../icamera.h"
+#include "gloom/render/icamera.h"
 #include <de/Log>
 #include <de/Folder>
 #include <de/ByteArrayFile>

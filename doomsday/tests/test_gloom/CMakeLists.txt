@@ -26,9 +26,7 @@ deng_add_package (net.dengine.gloom)
 set (SOURCES
     gloom/audio/audiosystem.cpp
     gloom/audio/audiosystem.h
-    gloom/icamera.h
-    gloom/ilight.h
-    gloom/ident.h
+    gloom/identity.h
     gloom/geo/geomath.cpp
     gloom/geo/geomath.h
     gloom/geo/polygon.cpp
@@ -44,6 +42,8 @@ set (SOURCES
     gloom/render/entityrender.h
     gloom/render/gbuffer.cpp
     gloom/render/gbuffer.h
+    gloom/render/icamera.h
+    gloom/render/light.h
     gloom/render/mapbuild.cpp
     gloom/render/mapbuild.h
     gloom/render/maprender.cpp

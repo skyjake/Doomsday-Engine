@@ -20,7 +20,7 @@
 #define GLOOM_ENTITY_H
 
 #include <de/Vector>
-#include "gloom/ident.h"
+#include "gloom/identity.h"
 
 namespace gloom {
 
@@ -39,11 +39,11 @@ public:
     void setScale(de::Vec3f const &scale);
     void setAngle(float yawDegrees);
 
-    ID           id() const;
-    Type         type() const;
+    ID        id() const;
+    Type      type() const;
     de::Vec3d position() const;
     de::Vec3f scale() const;
-    float        angle() const;
+    float     angle() const;
 
 private:
     DENG2_PRIVATE(d)

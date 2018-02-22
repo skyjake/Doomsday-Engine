@@ -17,7 +17,7 @@
  */
 
 #include "gloom/gloomworld.h"
-#include "gloom/ilight.h"
+#include "gloom/render/light.h"
 #include "gloom/audio/audiosystem.h"
 #include "gloom/render/context.h"
 #include "gloom/render/gbuffer.h"

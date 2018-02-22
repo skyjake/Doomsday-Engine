@@ -1,4 +1,4 @@
-/** @file ilight.h
+/** @file light.h
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_LIGHT_H
-#define GLOOM_LIGHT_H
+#ifndef GLOOM_RENDER_LIGHT_H
+#define GLOOM_RENDER_LIGHT_H
 
 #include <de/Vector>
 
@@ -38,8 +38,11 @@ public:
 
     virtual de::Vec3f lightDirection() const = 0;
     virtual de::Vec3f lightColor() const = 0;
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 } // namespace gloom
 
-#endif // GLOOM_LIGHT_H
+#endif // GLOOM_RENDER_LIGHT_H

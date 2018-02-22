@@ -20,7 +20,7 @@
 #include "gloom/render/mapbuild.h"
 #include "gloom/render/databuffer.h"
 #include "gloom/render/entityrender.h"
-#include "gloom/icamera.h"
+#include "gloom/render/icamera.h"
 
 #include <de/Drawable>
 #include <de/GLUniform>

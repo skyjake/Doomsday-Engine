@@ -20,7 +20,7 @@
 #define GLOOM_VIEW_H
 
 #include <de/GLUniform>
-#include "gloom/icamera.h"
+#include "gloom/render/icamera.h"
 
 namespace gloom {
 

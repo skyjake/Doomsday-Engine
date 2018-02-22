@@ -19,7 +19,7 @@
 #ifndef GLOOMWORLD_H
 #define GLOOMWORLD_H
 
-#include "gloom/icamera.h"
+#include "gloom/render/icamera.h"
 #include "gloom/world/user.h"
 #include "gloom/world/world.h"
 

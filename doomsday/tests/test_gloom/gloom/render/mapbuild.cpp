@@ -93,12 +93,17 @@ DENG2_PIMPL_NOREF(MapBuild)
             const auto convexParts = map.sectorPolygon(sectorId).splitConvexParts();
 
             {
+                const bool buildFloor   = true;
+                const bool buildCeiling = false;
+
                 const auto &planeVerts = sectorPlaneVerts[sectorId];
                 const auto &floor      = planeVerts.front();
                 const auto &ceiling    = planeVerts.back();
 
                 // Build the floor and ceiling of this volume.
                 {
+                    // TODO: If only one plane is needed, no need to add vertices for both.
+
                     // Insert vertices of both planes to the buffer.
                     Buffer::Type f{}, c{};
                     QHash<ID, Buffer::Index> pointIndices;
@@ -133,19 +138,25 @@ DENG2_PIMPL_NOREF(MapBuild)
                         const ID baseID = convex.points[0].id;
 
                         // Floor.
-                        for (int i = 1; i < convex.size() - 1; ++i)
+                        if (buildFloor)
                         {
-                            indices << pointIndices[baseID]
-                                    << pointIndices[convex.points[i + 1].id]
-                                    << pointIndices[convex.points[i].id];
+                            for (int i = 1; i < convex.size() - 1; ++i)
+                            {
+                                indices << pointIndices[baseID]
+                                        << pointIndices[convex.points[i + 1].id]
+                                        << pointIndices[convex.points[i].id];
+                            }
                         }
 
                         // Ceiling.
-                        for (int i = 1; i < convex.size() - 1; ++i)
+                        if (buildCeiling)
                         {
-                            indices << pointIndices[baseID] + 1
-                                    << pointIndices[convex.points[i].id] + 1
-                                    << pointIndices[convex.points[i + 1].id] + 1;
+                            for (int i = 1; i < convex.size() - 1; ++i)
+                            {
+                                indices << pointIndices[baseID] + 1
+                                        << pointIndices[convex.points[i].id] + 1
+                                        << pointIndices[convex.points[i + 1].id] + 1;
+                            }
                         }
                     }
                 }

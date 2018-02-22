@@ -21,7 +21,7 @@
 
 #include <de/AtlasTexture>
 #include <de/Matrix>
-#include "gloom/icamera.h"
+#include "gloom/render/icamera.h"
 
 #include <QList>
 

@@ -18,7 +18,7 @@
 
 #include "entityrender.h"
 #include "gloom/world/map.h"
-#include "gloom/icamera.h"
+#include "gloom/render/icamera.h"
 #include "src/gloomapp.h"
 
 #include <de/PackageLoader>

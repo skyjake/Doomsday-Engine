@@ -24,9 +24,9 @@
 #include <QHash>
 #include <unordered_map>
 
+#include "gloom/identity.h"
 #include "gloom/geo/geomath.h"
 #include "gloom/geo/polygon.h"
-#include "gloom/ident.h"
 #include "gloom/world/entity.h"
 
 namespace gloom {
