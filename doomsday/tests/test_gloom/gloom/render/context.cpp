@@ -24,7 +24,7 @@ namespace gloom {
 
 void Context::bindTo(GLProgram &program) const
 {
-    program << uAtlas << uCurrentTime << view.uMvpMatrix << view.uWorldToViewMatrix;
+    program << uAtlas << uCurrentTime << view.uMvpMatrix << view.uWorldToViewMatrix3;
 }
 
 } // namespace gloom

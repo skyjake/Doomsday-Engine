@@ -41,6 +41,8 @@ DENG2_PIMPL(GBuffer)
     GLUniform uGBufferDepth     {"uGBufferDepth",      GLUniform::Sampler2D};
     GLUniform uSSAOBuf          {"uSSAOBuf",           GLUniform::Sampler2D};
     GLUniform uShadowMap        {"uShadowMap",         GLUniform::Sampler2D}; // <----TESTING-----
+    GLUniform uViewToLightMatrix{"uViewToLightMatrix", GLUniform::Mat4};
+    GLUniform uViewSpaceLightDir{"uViewSpaceLightDir", GLUniform::Vec3};
     GLUniform uDebugMode        {"uDebugMode",         GLUniform::Int};
 
     Impl(Public *i) : Base(i)
@@ -73,7 +75,8 @@ void GBuffer::glInit(Context &context)
     d->quad.glInit(context);
     context.shaders->build(d->quad.program(), "gloom.finalize")
         << context.view.uInverseProjMatrix << d->uGBufferAlbedo << d->uGBufferNormal
-        << d->uGBufferDepth << d->uSSAOBuf << d->uShadowMap << d->uDebugMode;
+        << d->uGBufferDepth << d->uSSAOBuf << d->uShadowMap << d->uDebugMode
+        << d->uViewToLightMatrix << d->uViewSpaceLightDir;
 
     d->frame.glInit();
     d->updateUniforms();
@@ -103,7 +106,12 @@ void GBuffer::clear()
 
 void GBuffer::render()
 {
-    d->uSSAOBuf = context().ssao->occlusionFactors();
+    d->uViewToLightMatrix = context().uLightMatrix.toMatrix4f() *
+                            context().view.camera->cameraModelView().inverse();
+    d->uViewSpaceLightDir =
+        context().view.uWorldToViewMatrix3.toMatrix3f() * context().lights->direction();
+
+    d->uSSAOBuf   = context().ssao->occlusionFactors();
     d->uShadowMap = context().lights->shadowMap();
 
     d->quad.state().setTarget(GLState::current().target());

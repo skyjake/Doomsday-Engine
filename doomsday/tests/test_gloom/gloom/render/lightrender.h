@@ -46,6 +46,7 @@ public:
     void createLights();
 
     de::GLTexture &shadowMap();
+    de::Vec3f direction() const;
     de::GLProgram &surfaceProgram();
     de::GLProgram &entityProgram();
     de::GLState &shadowState();

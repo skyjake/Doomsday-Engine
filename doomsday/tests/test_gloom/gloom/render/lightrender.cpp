@@ -41,7 +41,7 @@ DENG2_PIMPL(LightRender)
         state.setDepthTest(true);
         state.setDepthWrite(true);
         state.setColorMask(gl::WriteNone);
-        state.setCull(gl::Front);
+        state.setCull(gl::None);
 
         skyLight.reset(new Light);
 
@@ -114,6 +114,11 @@ void LightRender::createLights()
 GLTexture &LightRender::shadowMap()
 {
     return d->skyLight->shadowMap();
+}
+
+Vec3f LightRender::direction() const
+{
+    return d->skyLight->direction();
 }
 
 GLProgram &LightRender::surfaceProgram()

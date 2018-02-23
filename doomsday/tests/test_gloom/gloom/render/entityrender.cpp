@@ -91,7 +91,7 @@ DENG2_PIMPL(EntityRender)
 
         GloomApp::shaders().build(program, "gloom.entity")
             << context.view.uMvpMatrix
-            << context.view.uWorldToViewMatrix
+            << context.view.uWorldToViewMatrix3
             << context.uAtlas;
 
         GloomApp::shaders().build(shadowProgram, "gloom.shadow.entity")
