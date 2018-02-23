@@ -27,18 +27,21 @@
 namespace gloom {
 
 class ICamera;
+class LightRender;
 
 class MapRender : public Render
 {
 public:
     MapRender();
 
-    void glInit(const Context &) override;
+    void glInit(Context &) override;
     void glDeinit() override;
     void advanceTime(de::TimeSpan elapsed) override;
     void render() override;
 
     void rebuild();
+
+    LightRender &lights();
 
 private:
     DENG2_PRIVATE(d)

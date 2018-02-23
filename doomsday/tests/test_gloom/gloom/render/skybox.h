@@ -33,7 +33,7 @@ public:
 
     void setSize(float scale);
 
-    void glInit(const Context &) override;
+    void glInit(Context &) override;
     void glDeinit() override;
     void render() override;
 

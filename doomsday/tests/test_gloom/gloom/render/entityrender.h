@@ -32,9 +32,10 @@ public:
     EntityMap &entityMap();
     void createEntities();
 
-    void glInit(const Context &) override;
+    void glInit(Context &) override;
     void glDeinit() override;
     void render() override;
+    void renderShadow();
 
 private:
     DENG2_PRIVATE(d)

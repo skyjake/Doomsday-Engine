@@ -43,7 +43,7 @@ ScreenQuad::ScreenQuad()
     : d(new Impl)
 {}
 
-void ScreenQuad::glInit(const Context &context)
+void ScreenQuad::glInit(Context &context)
 {
     Render::glInit(context);
 

@@ -42,7 +42,7 @@ void SkyBox::setSize(float scale)
     d->scale = scale;
 }
 
-void SkyBox::glInit(const Context &context)
+void SkyBox::glInit(Context &context)
 {
     Render::glInit(context);
 

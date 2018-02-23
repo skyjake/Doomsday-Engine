@@ -22,7 +22,7 @@ using namespace de;
 
 namespace gloom {
 
-void Context::bind(GLProgram &program) const
+void Context::bindTo(GLProgram &program) const
 {
     program << uAtlas << uCurrentTime << view.uMvpMatrix << view.uWorldToViewMatrix;
 }

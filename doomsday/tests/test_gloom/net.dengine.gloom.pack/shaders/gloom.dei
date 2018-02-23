@@ -2,39 +2,15 @@
 @include <entity.dei>
 
 group gloom {
-    shader surface { path = "surface" }
-    shader shadow { path = "shadow"}
-    shader ssao { path = "ssao" }
-    shader ssao_denoise {
-        path.vertex = "ssao.vsh"
+    shader surface        { path = "surface" }
+    shader shadow.surface { path = "shadow" }
+    shader ssao.sample    { path = "ssao" }
+    shader ssao.denoise {
+        path.vertex   = "ssao.vsh"
         path.fragment = "ssao_denoise.fsh"
     }
     shader finalize {
-        path.vertex = "common/mvp_vertex_uv.vsh"
-        fragment = "
-            #include 'common/gbuffer_in.glsl'
-            uniform sampler2D uSSAOBuf;
-            uniform int uDebugMode;
-            DENG_VAR vec2 vUV;
-            void main(void) {
-                if (uDebugMode == 0) {
-                    out_FragColor =
-                        texture(uGBufferAlbedo, vUV) *
-                        texture(uSSAOBuf, vUV).r;
-                }
-                else if (uDebugMode == 1) {
-                    out_FragColor = texture(uGBufferAlbedo, vUV);
-                }
-                else if (uDebugMode == 2) {
-                    out_FragColor = texture(uGBufferNormal, vUV);
-                }
-                else if (uDebugMode == 3) {
-                    out_FragColor = GBuffer_FragViewSpacePos();
-                }
-                else if (uDebugMode == 4) {
-                    out_FragColor = vec4(vec3(texture(uSSAOBuf, vUV).r), 1.0);
-                }
-            }
-        "
+        path.vertex   = "common/mvp_vertex_uv.vsh"
+        path.fragment = "finalize.fsh"
     }
 }

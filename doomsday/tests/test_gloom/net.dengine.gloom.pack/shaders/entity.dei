@@ -1,10 +1,8 @@
 shader gloom.entity {
-    # include.vertex <includes/fog.glsl>
     vertex = "
+        #include 'common/bones.glsl'
+
         uniform mat4 uMvpMatrix;
-        uniform mat4 uBoneMatrices[64];
-        //uniform vec4 uFog; // RGB, max.distance
-        //uniform vec3 uViewPos; // eye in world
 
         DENG_ATTRIB mat4 aInstanceMatrix;
         DENG_ATTRIB vec4 aInstanceColor;
@@ -13,51 +11,49 @@ shader gloom.entity {
         DENG_ATTRIB vec3 aNormal;
         DENG_ATTRIB vec2 aUV;
         DENG_ATTRIB vec4 aBounds0;
-        DENG_ATTRIB vec4 aBoneIDs;
-        DENG_ATTRIB vec4 aBoneWeights;
 
         DENG_VAR vec2 vUV;
         DENG_VAR vec4 vInstanceColor;
-        //DENG_VAR vec4 vFogColor;
         DENG_VAR vec3 vNormal;
 
         void main(void) {
-            mat4 bone =
-                uBoneMatrices[int(aBoneIDs.x + 0.5)] * aBoneWeights.x +
-                uBoneMatrices[int(aBoneIDs.y + 0.5)] * aBoneWeights.y +
-                uBoneMatrices[int(aBoneIDs.z + 0.5)] * aBoneWeights.z +
-                uBoneMatrices[int(aBoneIDs.w + 0.5)] * aBoneWeights.w;
-            vec4 modelPos = bone * aVertex;
+            vNormal = aNormal;
+            vec4 modelPos = Gloom_BoneTransform(aVertex, vNormal);
             gl_Position = uMvpMatrix * (aInstanceMatrix * modelPos);
+            vNormal = (aInstanceMatrix * vec4(vNormal, 0.0)).xyz;
             vUV = aBounds0.xy + aUV * aBounds0.zw;
             vInstanceColor = aInstanceColor;
-            //vFogColor = fogColor((aInstanceMatrix * modelPos).xyz, uViewPos, uFog);
-            vNormal = (aInstanceMatrix * bone * vec4(aNormal, 0.0)).xyz;
         }"
-
-    #include.fragment <includes/fog.glsl,
-    #                  includes/lightmodel.glsl>
     fragment = "
         #include 'common/gbuffer_out.glsl'
 
         uniform sampler2D uTex;
-        //uniform vec4 uFog; // RGB, max.distance
-        //uniform vec3 uLightDir;
-        //uniform vec4 uColor;
 
         DENG_VAR vec2 vUV;
         DENG_VAR vec4 vInstanceColor;
-        //DENG_VAR vec4 vFogColor;
         DENG_VAR vec3 vNormal;
 
         void main(void) {
             vec4 color = texture(uTex, vUV);
             if (color.a < 0.5) discard;
-
-            //color.rgb *= sunLightFactor(normalize(vNormal), uLightDir, uFog);
-
-            //gl_FragColor = mixFog(color, vFogColor) * vInstanceColor;
             out_FragColor = color * vInstanceColor;
             GBuffer_SetFragNormal(vNormal);
         }"
+}
+
+shader gloom.shadow.entity {
+    vertex = "
+        #include 'common/bones.glsl'
+
+        uniform mat4 uLightMatrix;
+
+        DENG_ATTRIB mat4 aInstanceMatrix;
+        DENG_ATTRIB vec4 aInstanceColor;
+        DENG_ATTRIB vec4 aVertex;
+
+        void main(void) {
+            mat4 bone = Gloom_BoneMatrix();
+            gl_Position = uLightMatrix * (aInstanceMatrix * (bone * aVertex));
+        }"
+    path.fragment = "shadow.fsh"
 }

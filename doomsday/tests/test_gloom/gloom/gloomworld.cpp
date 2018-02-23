@@ -81,6 +81,7 @@ DENG2_PIMPL(GloomWorld), public Asset
         renderContext.uAtlas  = renderContext.atlas;
         renderContext.ssao    = &ssao;
         renderContext.gbuffer = &gbuffer;
+        renderContext.lights  = &mapRender.lights();
         renderContext.map     = &map;
 
         environ.setWorld(thisPublic);
@@ -221,6 +222,8 @@ void GloomWorld::update(TimeSpan const &elapsed)
 
 void GloomWorld::render(ICamera const &camera)
 {
+    if (!d->isReady()) return;
+
     d->gbuffer.resize(GLState::current().target().size());
     d->gbuffer.clear();
 

@@ -25,12 +25,12 @@ namespace gloom {
 
 DENG2_PIMPL(LightRender)
 {
-    Drawable *                        shadowGeometry = nullptr;
+    RenderFunc                        callback;
     GLState                           state;
-    GLProgram                         program;
     std::unique_ptr<Light>            skyLight;
     QHash<ID, std::shared_ptr<Light>> lights;
-    GLUniform                         uLightMatrix{"uLightMatrix", GLUniform::Mat4};
+    GLProgram                         surfaceProgram;
+    GLProgram                         entityProgram;
 
     Impl(Public *i) : Base(i)
     {}
@@ -45,7 +45,9 @@ DENG2_PIMPL(LightRender)
 
         skyLight.reset(new Light);
 
-        self().context().shaders->build(program, "gloom.shadow") << uLightMatrix;
+        auto &ctx = self().context();
+        ctx.shaders->build(surfaceProgram, "gloom.shadow.surface") << ctx.uLightMatrix;
+        ctx.shaders->build(entityProgram,  "gloom.shadow.entity")  << ctx.uLightMatrix;
     }
 
     void glDeinit()
@@ -58,7 +60,7 @@ LightRender::LightRender()
     : d(new Impl(this))
 {}
 
-void LightRender::glInit(const Context &context)
+void LightRender::glInit(Context &context)
 {
     Render::glInit(context);
     d->glInit();
@@ -72,31 +74,61 @@ void LightRender::glDeinit()
 
 void LightRender::render()
 {
-    auto &sg = *d->shadowGeometry;
+    //auto &sg = *d->shadowGeometry;
 
-    sg.setProgram(d->program);
-    sg.setState(d->state);
+    //sg.setProgram(d->program);
+    //sg.setState(d->state);
 
     for (auto *light : {d->skyLight.get()})
     {
+        light->framebuf().clear(GLFramebuffer::Depth);
+
         d->state.setTarget(light->framebuf())
                 .setViewport(Rectangleui::fromSize(light->framebuf().size()));
-        d->uLightMatrix = light->lightMatrix();
-        sg.draw();
+
+        context().uLightMatrix = light->lightMatrix();
+
+        d->callback(*light);
+//        sg.draw();
     }
 
-    sg.unsetState();
-    sg.setProgram(d->shadowGeometry->program());
+    //sg.unsetState();
+    //sg.setProgram(d->shadowGeometry->program());
 }
 
-void gloom::LightRender::setShadowGeometry(Drawable &sg)
+void LightRender::setShadowRenderCallback(RenderFunc callback)
 {
-    d->shadowGeometry = &sg;
+    d->callback = callback;
 }
+
+//void gloom::LightRender::setShadowGeometry(Drawable &sg)
+//{
+//    d->shadowGeometry = &sg;
+//}
 
 void LightRender::createLights()
 {
 
+}
+
+GLTexture &LightRender::shadowMap()
+{
+    return d->skyLight->shadowMap();
+}
+
+GLProgram &LightRender::surfaceProgram()
+{
+    return d->surfaceProgram;
+}
+
+GLProgram &LightRender::entityProgram()
+{
+    return d->entityProgram;
+}
+
+GLState &LightRender::shadowState()
+{
+    return d->state;
 }
 
 } // namespace gloom

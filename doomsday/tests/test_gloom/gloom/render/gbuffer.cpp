@@ -19,6 +19,7 @@
 #include "gloom/render/gbuffer.h"
 #include "gloom/render/screenquad.h"
 #include "gloom/render/ssao.h"
+#include "gloom/render/lightrender.h"
 
 #include <de/Drawable>
 #include <de/GLTextureFramebuffer>
@@ -39,6 +40,7 @@ DENG2_PIMPL(GBuffer)
     GLUniform uGBufferNormal    {"uGBufferNormal",     GLUniform::Sampler2D};
     GLUniform uGBufferDepth     {"uGBufferDepth",      GLUniform::Sampler2D};
     GLUniform uSSAOBuf          {"uSSAOBuf",           GLUniform::Sampler2D};
+    GLUniform uShadowMap        {"uShadowMap",         GLUniform::Sampler2D}; // <----TESTING-----
     GLUniform uDebugMode        {"uDebugMode",         GLUniform::Int};
 
     Impl(Public *i) : Base(i)
@@ -64,14 +66,14 @@ GBuffer::GBuffer()
     : d(new Impl(this))
 {}
 
-void GBuffer::glInit(const Context &context)
+void GBuffer::glInit(Context &context)
 {
     Render::glInit(context);
+
     d->quad.glInit(context);
     context.shaders->build(d->quad.program(), "gloom.finalize")
-        << context.view.uInverseProjMatrix
-        << d->uGBufferAlbedo << d->uGBufferNormal << d->uGBufferDepth << d->uSSAOBuf
-        << d->uDebugMode;
+        << context.view.uInverseProjMatrix << d->uGBufferAlbedo << d->uGBufferNormal
+        << d->uGBufferDepth << d->uSSAOBuf << d->uShadowMap << d->uDebugMode;
 
     d->frame.glInit();
     d->updateUniforms();
@@ -102,6 +104,7 @@ void GBuffer::clear()
 void GBuffer::render()
 {
     d->uSSAOBuf = context().ssao->occlusionFactors();
+    d->uShadowMap = context().lights->shadowMap();
 
     d->quad.state().setTarget(GLState::current().target());
     d->quad.render();

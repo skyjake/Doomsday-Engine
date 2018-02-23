@@ -64,17 +64,18 @@ DENG2_PIMPL(SSAO)
         }
     }
 
-    void glInit(const Context &ctx)
+    void glInit(Context &ctx)
     {
         quad.glInit(ctx);
-        ctx.shaders->build(quad.program(), "gloom.ssao")
+
+        ctx.shaders->build(quad.program(), "gloom.ssao.sample")
                 << ctx.gbuffer->uGBufferAlbedo()
                 << ctx.gbuffer->uGBufferNormal()
                 << ctx.gbuffer->uGBufferDepth()
                 << ctx.view.uInverseProjMatrix
                 << ctx.view.uProjMatrix;
 
-        ctx.shaders->build(quad.addProgram(DenoiseFactors), "gloom.ssao_denoise")
+        ctx.shaders->build(quad.addProgram(DenoiseFactors), "gloom.ssao.denoise")
                 << uNoisyFactors;
 
         // Generate sample kernel.
@@ -122,7 +123,7 @@ SSAO::SSAO()
     : d(new Impl(this))
 {}
 
-void SSAO::glInit(const Context &context)
+void SSAO::glInit(Context &context)
 {
     Render::glInit(context);
 

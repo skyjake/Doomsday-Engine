@@ -32,7 +32,7 @@ class SSAO : public Render
 public:
     SSAO();
 
-    void glInit(const Context &) override;
+    void glInit(Context &) override;
     void glDeinit() override;
     void render() override;
 

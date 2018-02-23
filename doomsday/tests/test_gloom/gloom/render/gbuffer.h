@@ -34,7 +34,7 @@ class GBuffer : public Render
 public:
     GBuffer();
 
-    void glInit(const Context &) override;
+    void glInit(Context &) override;
     void glDeinit() override;
     void render() override;
 

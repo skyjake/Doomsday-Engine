@@ -25,6 +25,8 @@
 
 namespace gloom {
 
+class Light;
+
 /**
  * Renders light source shadow maps and the deferred shading pass.
  */
@@ -33,12 +35,20 @@ class LightRender : public Render
 public:
     LightRender();
 
-    void glInit(const Context &) override;
+    void glInit(Context &) override;
     void glDeinit() override;
     void render() override;
 
-    void setShadowGeometry(de::Drawable &);
+    typedef std::function<void (const Light &)> RenderFunc;
+    void setShadowRenderCallback(RenderFunc callback);
+
+    //void setShadowGeometry(de::Drawable &);
     void createLights();
+
+    de::GLTexture &shadowMap();
+    de::GLProgram &surfaceProgram();
+    de::GLProgram &entityProgram();
+    de::GLState &shadowState();
 
 private:
     DENG2_PRIVATE(d)

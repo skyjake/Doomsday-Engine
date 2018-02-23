@@ -44,7 +44,8 @@ DENG2_PIMPL(EntityRender)
 {
     EntityMap     ents;
     ModelDrawable entityModels[3];
-    GLProgram     modelProgram;
+    GLProgram     program;
+    GLProgram     shadowProgram;
 
     Impl(Public *i)
         : Base(i)
@@ -83,14 +84,16 @@ DENG2_PIMPL(EntityRender)
         {
             model.load(pkg.root().locate<File>(filenames[idx]));
             model.setAtlas(*context.atlas);
-            model.setProgram(&modelProgram);
+            model.setProgram(&program);
             idx++;
         }
 
-        GloomApp::shaders().build(modelProgram, "gloom.entity")
+        GloomApp::shaders().build(program, "gloom.entity")
             << context.view.uMvpMatrix
             << context.view.uWorldToViewMatrix
             << context.uAtlas;
+
+        GloomApp::shaders().build(shadowProgram, "gloom.shadow.entity");
     }
 
     void create()
@@ -165,7 +168,7 @@ EntityRender::EntityRender()
     : d(new Impl(this))
 {}
 
-void EntityRender::glInit(const Context &context)
+void EntityRender::glInit(Context &context)
 {
     Render::glInit(context);
     d->init();
@@ -190,6 +193,11 @@ EntityMap &EntityRender::entityMap()
 void EntityRender::render()
 {
     d->render();
+}
+
+void EntityRender::renderShadow()
+{
+
 }
 
 } // namespace gloom

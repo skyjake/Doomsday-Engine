@@ -31,6 +31,7 @@ namespace gloom {
 
 class GBuffer;
 class SSAO;
+class LightRender;
 
 struct Context {
     const de::ImageBank *images;
@@ -40,11 +41,13 @@ struct Context {
     View                 view;
     SSAO *               ssao;
     GBuffer *            gbuffer;
+    LightRender *        lights;
 
     de::GLUniform uAtlas        {"uTex",            de::GLUniform::Sampler2D};
     de::GLUniform uCurrentTime  {"uCurrentTime",    de::GLUniform::Float};
+    de::GLUniform uLightMatrix  {"uLightMatrix",    de::GLUniform::Mat4};
 
-    void bind(de::GLProgram &) const;
+    void bindTo(de::GLProgram &) const;
 };
 
 } // namespace gloom

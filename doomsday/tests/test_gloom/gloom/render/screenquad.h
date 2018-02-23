@@ -30,7 +30,7 @@ class ScreenQuad : public Render
 public:
     ScreenQuad();
 
-    void glInit(const Context &) override;
+    void glInit(Context &) override;
     void glDeinit() override;
     void render() override;
 

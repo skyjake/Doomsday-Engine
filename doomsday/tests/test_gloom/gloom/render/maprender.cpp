@@ -52,7 +52,8 @@ DENG2_PIMPL(MapRender)
     DataBuffer<TexOffsetData> texOffsets    {"uTexOffsets",     Image::RGBA_32f};
 
     GLUniform uTexelsPerMeter{"uTexelsPerMeter", GLUniform::Float};
-    Drawable  drawable;
+    Drawable  surfaces;
+    GLProgram shadowProgram;
 
     EntityRender ents;
     LightRender lights;
@@ -62,7 +63,7 @@ DENG2_PIMPL(MapRender)
 
     void clear()
     {
-        drawable.clear();
+        surfaces.clear();
     }
 
     void loadTexture(const String &name)
@@ -94,7 +95,7 @@ DENG2_PIMPL(MapRender)
         const auto &context = self().context();
         const auto *map = context.map;
 
-        drawable.clear();
+        surfaces.clear();
 
         DENG2_ASSERT(map);
 
@@ -117,11 +118,15 @@ DENG2_PIMPL(MapRender)
             }
         }
 
-        drawable.addBuffer(buf);
+        surfaces.addBuffer(buf);
 
-        context.shaders->build(drawable.program(), "gloom.surface")
+        context.shaders->build(surfaces.program(), "gloom.surface")
             << uTexelsPerMeter << textureMetrics.var << planes.var << texOffsets.var;
-        context.bind(drawable.program());
+        context.shaders->build(shadowProgram, "gloom.shadow.surface")
+            << planes.var;
+
+        context.bindTo(surfaces.program());
+        context.bindTo(shadowProgram);
     }
 
     void glInit()
@@ -142,7 +147,6 @@ DENG2_PIMPL(MapRender)
         buildMap();
         ents.createEntities();
         lights.createLights();
-        lights.setShadowGeometry(drawable);
     }
 
     void glDeinit()
@@ -166,7 +170,7 @@ MapRender::MapRender()
     : d(new Impl(this))
 {}
 
-void MapRender::glInit(const Context &context)
+void MapRender::glInit(Context &context)
 {
     Render::glInit(context);
     d->glInit();
@@ -183,6 +187,11 @@ void MapRender::rebuild()
     d->buildMap();
     d->ents.createEntities();
     d->lights.createLights();
+}
+
+LightRender &MapRender::lights()
+{
+    return d->lights;
 }
 
 void MapRender::advanceTime(TimeSpan)
@@ -217,11 +226,18 @@ void MapRender::advanceTime(TimeSpan)
 
 void MapRender::render()
 {
-    d->lights.render();
-
-    //d->drawable.setState(d->state);
-    d->drawable.draw();
+    d->surfaces.draw();
     d->ents.render();
+
+    d->lights.setShadowRenderCallback([this](const Light &light) {
+        d->surfaces.setProgram(d->shadowProgram);
+        d->surfaces.setState(context().lights->shadowState());
+
+        d->surfaces.setProgram(d->surfaces.program());
+        d->surfaces.unsetState();
+    });
+
+    d->lights.render();
 }
 
 } // namespace gloom

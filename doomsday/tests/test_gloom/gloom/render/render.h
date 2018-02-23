@@ -34,8 +34,9 @@ public:
     virtual ~Render();
 
     const Context &context() const;
+    Context &context();
 
-    virtual void glInit(const Context &context);
+    virtual void glInit(Context &context);
     virtual void glDeinit();
 
     virtual void advanceTime(de::TimeSpan elapsed);

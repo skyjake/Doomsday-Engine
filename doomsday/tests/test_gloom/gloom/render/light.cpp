@@ -48,6 +48,11 @@ Light::Light()
     : d(new Impl(this))
 {}
 
+GLTexture &gloom::Light::shadowMap()
+{
+    return d->shadowMap;
+}
+
 GLFramebuffer &Light::framebuf()
 {
     return d->framebuf;
@@ -55,7 +60,7 @@ GLFramebuffer &Light::framebuf()
 
 Mat4f Light::lightMatrix() const
 {
-    return Mat4f::ortho(-50, 50, -50, 50, 1, 200) *
+    return Mat4f::ortho(-3.5, 5.5, -9.5, 5.5, 50, 150) *
            Mat4f::lookAt(d->origin + d->dir, d->origin, Vec3f(0, 1, 0));
 }
 

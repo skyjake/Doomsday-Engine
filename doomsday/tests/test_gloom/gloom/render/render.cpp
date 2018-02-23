@@ -22,7 +22,7 @@ namespace gloom {
 
 DENG2_PIMPL_NOREF(Render)
 {
-    const Context *context = nullptr;
+    Context *context = nullptr;
 };
 
 Render::Render()
@@ -40,7 +40,13 @@ const Context &Render::context() const
     return *d->context;
 }
 
-void Render::glInit(const Context &context)
+Context &Render::context()
+{
+    DENG2_ASSERT(d->context);
+    return *d->context;
+}
+
+void Render::glInit(Context &context)
 {
     DENG2_ASSERT(d->context == nullptr);
     d->context = &context;
