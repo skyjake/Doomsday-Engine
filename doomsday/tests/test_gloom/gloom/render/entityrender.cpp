@@ -19,6 +19,7 @@
 #include "entityrender.h"
 #include "gloom/world/map.h"
 #include "gloom/render/icamera.h"
+#include "gloom/render/lightrender.h"
 #include "src/gloomapp.h"
 
 #include <de/PackageLoader>
@@ -93,7 +94,9 @@ DENG2_PIMPL(EntityRender)
             << context.view.uWorldToViewMatrix
             << context.uAtlas;
 
-        GloomApp::shaders().build(shadowProgram, "gloom.shadow.entity");
+        GloomApp::shaders().build(shadowProgram, "gloom.shadow.entity")
+            << context.uLightMatrix
+            << context.uAtlas;
     }
 
     void create()
@@ -109,6 +112,14 @@ DENG2_PIMPL(EntityRender)
         for (auto i = map.entities().begin(), end = map.entities().end(); i != end; ++i)
         {
             ents.insert(*i.value());
+        }
+    }
+
+    void setProgram(GLProgram &prog)
+    {
+        for (auto &model : entityModels)
+        {
+            model.setProgram(&prog);
         }
     }
 
@@ -195,9 +206,13 @@ void EntityRender::render()
     d->render();
 }
 
-void EntityRender::renderShadow()
+void EntityRender::renderShadows(const Light &light)
 {
-
+    GLState::push() = context().lights->shadowState();
+    d->setProgram(d->shadowProgram);
+    d->render();
+    d->setProgram(d->program);
+    GLState::pop();
 }
 
 } // namespace gloom

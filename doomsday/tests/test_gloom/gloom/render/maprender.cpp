@@ -123,7 +123,7 @@ DENG2_PIMPL(MapRender)
         context.shaders->build(surfaces.program(), "gloom.surface")
             << uTexelsPerMeter << textureMetrics.var << planes.var << texOffsets.var;
         context.shaders->build(shadowProgram, "gloom.shadow.surface")
-            << planes.var;
+            << context.uLightMatrix << planes.var;
 
         context.bindTo(surfaces.program());
         context.bindTo(shadowProgram);
@@ -232,9 +232,11 @@ void MapRender::render()
     d->lights.setShadowRenderCallback([this](const Light &light) {
         d->surfaces.setProgram(d->shadowProgram);
         d->surfaces.setState(context().lights->shadowState());
-
+        d->surfaces.draw();
         d->surfaces.setProgram(d->surfaces.program());
         d->surfaces.unsetState();
+
+        d->ents.renderShadows(light);
     });
 
     d->lights.render();

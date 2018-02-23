@@ -24,6 +24,8 @@
 
 namespace gloom {
 
+class Light;
+
 class EntityRender : public Render
 {
 public:
@@ -35,7 +37,7 @@ public:
     void glInit(Context &) override;
     void glDeinit() override;
     void render() override;
-    void renderShadow();
+    void renderShadows(const Light &);
 
 private:
     DENG2_PRIVATE(d)
