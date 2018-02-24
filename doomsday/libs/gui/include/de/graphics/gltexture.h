@@ -33,17 +33,18 @@ namespace de {
 namespace gl {
     enum Filter {
         Nearest,
-        Linear
+        Linear,
     };
     enum MipFilter {
         MipNone,
         MipNearest,
-        MipLinear
+        MipLinear,
     };
     enum Wrapping {
         Repeat,
         RepeatMirrored,
-        ClampToEdge
+        ClampToEdge,
+        ClampToBorder,
     };
     enum CubeFace {
         PositiveX,
@@ -51,7 +52,7 @@ namespace gl {
         PositiveY,
         NegativeY,
         PositiveZ,
-        NegativeZ
+        NegativeZ,
     };
 }
 
@@ -114,6 +115,7 @@ public:
     }
     void setMaxAnisotropy(dfloat maxAnisotropy);
     void setMaxLevel(dfloat maxLevel);
+    void setBorderColor(const Vec4f &color);
 
     gl::Filter minFilter() const;
     gl::Filter magFilter() const;
@@ -123,6 +125,7 @@ public:
     Wraps wrap() const;
     dfloat maxAnisotropy() const;
     dfloat maxLevel() const;
+    de::Vec4f borderColor() const;
 
     bool isCubeMap() const;
 

@@ -570,6 +570,7 @@ GLenum GL_Wrap(gl::Wrapping w)
     case gl::Repeat:         return GL_REPEAT;
     case gl::RepeatMirrored: return GL_MIRRORED_REPEAT;
     case gl::ClampToEdge:    return GL_CLAMP_TO_EDGE;
+    case gl::ClampToBorder: return GL_CLAMP_TO_BORDER;
     }
     return GL_REPEAT;
 }

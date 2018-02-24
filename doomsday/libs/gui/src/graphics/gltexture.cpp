@@ -49,6 +49,7 @@ DENG2_PIMPL(GLTexture)
     Wraps         wrap;
     dfloat        maxAnisotropy;
     dfloat        maxLevel;
+    Vec4f         borderColor;
     TextureFlags  flags;
 
     Impl(Public *i)
@@ -106,6 +107,7 @@ DENG2_PIMPL(GLTexture)
         case Repeat:         return GL_REPEAT;
         case RepeatMirrored: return GL_MIRRORED_REPEAT;
         case ClampToEdge:    return GL_CLAMP_TO_EDGE;
+        case ClampToBorder:  return GL_CLAMP_TO_BORDER;
         }
         return GL_REPEAT;
     }
@@ -161,15 +163,18 @@ DENG2_PIMPL(GLTexture)
      */
     void glUpdateParamsOfBoundTexture()
     {
-        LIBGUI_GL.glTexParameteri(texTarget, GL_TEXTURE_WRAP_S,     glWrap(wrap.x));
-        LIBGUI_GL.glTexParameteri(texTarget, GL_TEXTURE_WRAP_T,     glWrap(wrap.y));
-        LIBGUI_GL.glTexParameteri(texTarget, GL_TEXTURE_MAG_FILTER, magFilter == Nearest? GL_NEAREST : GL_LINEAR);
-        LIBGUI_GL.glTexParameteri(texTarget, GL_TEXTURE_MIN_FILTER, glMinFilter(minFilter, mipFilter));
-        LIBGUI_GL.glTexParameterf(texTarget, GL_TEXTURE_MAX_LEVEL,  maxLevel);
+        auto &GL = LIBGUI_GL;
+
+        GL.glTexParameteri(texTarget, GL_TEXTURE_WRAP_S,     glWrap(wrap.x));
+        GL.glTexParameteri(texTarget, GL_TEXTURE_WRAP_T,     glWrap(wrap.y));
+        GL.glTexParameteri(texTarget, GL_TEXTURE_MAG_FILTER, magFilter == Nearest? GL_NEAREST : GL_LINEAR);
+        GL.glTexParameteri(texTarget, GL_TEXTURE_MIN_FILTER, glMinFilter(minFilter, mipFilter));
+        GL.glTexParameterf(texTarget, GL_TEXTURE_MAX_LEVEL,  maxLevel);
+        GL.glTexParameterfv(texTarget, GL_TEXTURE_BORDER_COLOR, &borderColor[0]);
 
         if (GLInfo::extensions().EXT_texture_filter_anisotropic)
         {
-            LIBGUI_GL.glTexParameterf(texTarget, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
+            GL.glTexParameterf(texTarget, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
         }
 
         LIBGUI_ASSERT_GL_OK();
@@ -284,6 +289,12 @@ void GLTexture::setMaxAnisotropy(dfloat maxAnisotropy)
 void GLTexture::setMaxLevel(dfloat maxLevel)
 {
     d->maxLevel = maxLevel;
+    d->flags |= ParamsChanged;
+}
+
+void GLTexture::setBorderColor(Vec4f const &color)
+{
+    d->borderColor = color;
     d->flags |= ParamsChanged;
 }
 
