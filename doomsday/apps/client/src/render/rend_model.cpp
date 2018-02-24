@@ -583,7 +583,7 @@ static void Mod_VertexColors(Vec4ub *out, dint count, Vec3f const *normCoords,
         // Check for ambient and convert to ubyte.
         Vec4f color(accum[0].max(ambient) + accum[1], ambient[3]);
 
-        *out = (color.min(saturated) * 255).toVector4ub();
+        *out = (color.min(saturated) * 255).toVec4ub();
     }
 }
 
@@ -878,7 +878,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
         // Lit uniformly.
         ambient = Vec4f(spr.light.ambientColor, alpha);
         Mod_FixedVertexColors(numVerts, modelColorCoords,
-                              (ambient * 255).toVector4ub());
+                              (ambient * 255).toVec4ub());
     }
     else
     {
@@ -1028,7 +1028,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
 
             // Shiny color.
             Mod_FixedVertexColors(numVerts, modelColorCoords,
-                                  (color * 255).toVector4ub());
+                                  (color * 255).toVec4ub());
 
             // We'll use multitexturing to clear out empty spots in
             // the primary texture.

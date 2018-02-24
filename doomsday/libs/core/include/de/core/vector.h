@@ -119,10 +119,10 @@ public:
     operator Vector2<ddouble> () const {
         return Vector2<ddouble>(ddouble(x), ddouble(y));
     }
-    Vector2<dint> toVector2i() const {
+    Vector2<dint> toVec2i() const {
         return Vector2<dint>(dint(x), dint(y));
     }
-    Vector2<duint> toVector2ui() const {
+    Vector2<duint> toVec2ui() const {
         return Vector2<duint>(duint(de::max(Type(0), x)), duint(de::max(Type(0), y)));
     }
     int size() const {
@@ -336,13 +336,13 @@ public:
     operator Vector3<ddouble> () const {
         return Vector3<ddouble>(Vector2<Type>::x, Vector2<Type>::y, z);
     }
-    Vector3<dbyte> toVector3ub() const {
+    Vector3<dbyte> toVec3ub() const {
         return Vector3<dbyte>(dbyte(Vector2<Type>::x), dbyte(Vector2<Type>::y), dbyte(z));
     }
-    Vector3<dfloat> toVector3f() const {
+    Vector3<dfloat> toVec3f() const {
         return Vector3<dfloat>(dfloat(Vector2<Type>::x), dfloat(Vector2<Type>::y), dfloat(z));
     }
-    Vector3<dint> toVector3i() const {
+    Vector3<dint> toVec3i() const {
         return Vector3<dint>(dint(Vector2<Type>::x), dint(Vector2<Type>::y), dint(z));
     }
     int size() const {
@@ -563,13 +563,13 @@ public:
     operator Vector4<ddouble> () const {
         return Vector4<ddouble>(Vector3<Type>::x, Vector3<Type>::y, Vector3<Type>::z, w);
     }
-    Vector4<dint> toVector4i() const {
+    Vector4<dint> toVec4i() const {
         return Vector4<dint>(dint(Vector3<Type>::x), dint(Vector3<Type>::y), dint(Vector3<Type>::z), dint(w));
     }
-    Vector4<dbyte> toVector4ub() const {
+    Vector4<dbyte> toVec4ub() const {
         return Vector4<dbyte>(dbyte(Vector3<Type>::x), dbyte(Vector3<Type>::y), dbyte(Vector3<Type>::z), dbyte(w));
     }
-    Vector4<dfloat> toVector4f() const {
+    Vector4<dfloat> toVec4f() const {
         return Vector4<dfloat>(dfloat(Vector3<Type>::x), dfloat(Vector3<Type>::y), dfloat(Vector3<Type>::z), dfloat(w));
     }
     int size() const {

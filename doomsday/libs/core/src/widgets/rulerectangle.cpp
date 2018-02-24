@@ -394,7 +394,7 @@ Vec2i RuleRectangle::sizei() const
 
 Vec2ui RuleRectangle::sizeui() const
 {
-    return sizei().toVector2ui();
+    return sizei().toVec2ui();
 }
 
 Rectanglei RuleRectangle::recti() const

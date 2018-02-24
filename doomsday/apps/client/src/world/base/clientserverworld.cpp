@@ -221,7 +221,7 @@ protected:
     /// Observes Map UnclosedSectorFound.
     void unclosedSectorFound(Sector &sector, Vec2d const &nearPoint)
     {
-        _unclosedSectors.insert(std::make_pair(sector.indexInArchive(), nearPoint.toVector2i()));
+        _unclosedSectors.insert(std::make_pair(sector.indexInArchive(), nearPoint.toVec2i()));
     }
 
     /// Observes Map OneWayWindowFound.

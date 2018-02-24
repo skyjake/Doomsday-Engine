@@ -163,7 +163,7 @@ void CompositeBitmapFont::glInit() const
             res::Texture &tex = res::Textures::get().textureScheme("Patches").findByUniqueId(patch).texture();
 
             ch->tex      = static_cast<ClientTexture &>(tex).prepareVariant(glyphTextureSpec());
-            ch->geometry = Rectanglei::fromSize(tex.origin(), tex.dimensions().toVector2ui());
+            ch->geometry = Rectanglei::fromSize(tex.origin(), tex.dimensions().toVec2ui());
 
             ch->border   = 0;
             if(ch->tex && ch->tex->source() == res::Original)

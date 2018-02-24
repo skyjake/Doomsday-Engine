@@ -425,7 +425,7 @@ public Font::RichFormat::IStyle
         delta -= combined.topLeft;
 
         layout.image.move(delta);
-        layout.text.move(delta.toVector2i());
+        layout.text.move(delta.toVec2i());
     }
 
     /**

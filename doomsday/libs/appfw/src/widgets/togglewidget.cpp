@@ -73,7 +73,7 @@ DENG2_OBSERVES(ButtonWidget, Press)
             float p = _pos;
 
             // Clamp the position to non-fractional coordinates.
-            Rectanglei const recti(rect.topLeft.toVector2i(), rect.bottomRight.toVector2i());
+            Rectanglei const recti(rect.topLeft.toVec2i(), rect.bottomRight.toVec2i());
 
             // Background.
             float c = (.3f + .33f * p);

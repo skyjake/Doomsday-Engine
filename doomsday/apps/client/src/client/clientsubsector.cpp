@@ -960,7 +960,7 @@ DENG2_PIMPL(ClientSubsector)
             Vec2i skip = Vec2i(decor.patternSkip().x + 1, decor.patternSkip().y + 1)
                 .max(Vec2i(1, 1));
 
-            Vec2f repeat = skip.toVector2ui() * matDimensions;
+            Vec2f repeat = skip.toVec2ui() * matDimensions;
             if (repeat == Vec2f(0, 0))
                 return LoopAbort;
 

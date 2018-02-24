@@ -1336,7 +1336,7 @@ DENG2_PIMPL(AudioSystem)
         {
             {
                 // Origin. At eye-level.
-                auto const origin = Vec4f(getSfxListenerOrigin().toVector3f(), 0);
+                auto const origin = Vec4f(getSfxListenerOrigin().toVec3f(), 0);
                 dfloat vec[4];
                 origin.decompose(vec);
                 self().sfx()->Listenerv(SFXLP_POSITION, vec);
@@ -1351,7 +1351,7 @@ DENG2_PIMPL(AudioSystem)
             }
             {
                 // Velocity. The unit is world distance units per second
-                auto const velocity = Vec4f(Vec3d(sfxListener->mom).toVector3f(), 0) * TICSPERSEC;
+                auto const velocity = Vec4f(Vec3d(sfxListener->mom).toVec3f(), 0) * TICSPERSEC;
                 dfloat vec[4];
                 velocity.decompose(vec);
                 self().sfx()->Listenerv(SFXLP_VELOCITY, vec);

@@ -893,7 +893,7 @@ static void setupViewMatrix()
     rend.uProjectionMatrix() = Rend_GetProjectionMatrix();
     rend.uViewMatrix()       = Rend_GetModelViewMatrix(DoomsdayApp::players().indexOf(viewPlayer));
 
-    frameViewerMatrix        = rend.uProjectionMatrix().toMatrix4f() * rend.uViewMatrix().toMatrix4f();
+    frameViewerMatrix        = rend.uProjectionMatrix().toMat4f() * rend.uViewMatrix().toMat4f();
 }
 
 Mat4f const &Viewer_Matrix()

@@ -64,6 +64,8 @@ public:
 
         SeparateDepthAndStencil = 0x2000, ///< Depth and stencil should use separate buffers.
 
+        FullClear = 0x4000, ///< clear() will erase complete buffer instead of the viewport
+
         NoAttachments = 0,
         DefaultFlags  = ColorDepth,
     };
@@ -216,7 +218,9 @@ public:
     /**
      * Clears the contents of the render target's attached buffers.
      *
-     * @param attachments  Which ones to clear.
+     * @param attachments  Which ones to clear. Include the FullClear flag to clear the complete
+     *                     buffer contents. The default behavior is to clear only the current
+     *                     viewport.
      */
     void clear(Flags attachments);
 

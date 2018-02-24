@@ -131,21 +131,21 @@ public:
     operator duint() const             { return toUInt(); }
     operator dfloat() const            { return toFloat(); }
     operator ddouble() const           { return ddouble(toFloat()); }
-    operator Vec2f() const          { return toVector2f(); }
-    operator Vec3f() const          { return toVector3f(); }
-    operator Vec4f() const          { return toVector4f(); }
-    operator Mat3f const &() const  { return toMatrix3f(); }
-    operator Mat4f const &() const  { return toMatrix4f(); }
+    operator Vec2f() const             { return toVec2f(); }
+    operator Vec3f() const             { return toVec3f(); }
+    operator Vec4f() const             { return toVec4f(); }
+    operator Mat3f const &() const     { return toMat3f(); }
+    operator Mat4f const &() const     { return toMat4f(); }
     operator GLTexture const *() const { return texture(); }
 
     dint toInt() const;
     duint toUInt() const;
     dfloat toFloat() const;
-    Vec2f const &toVector2f() const;
-    Vec3f const &toVector3f() const;
-    Vec4f const &toVector4f() const;
-    Mat3f const &toMatrix3f() const;
-    Mat4f const &toMatrix4f() const;
+    Vec2f const &toVec2f() const;
+    Vec3f const &toVec3f() const;
+    Vec4f const &toVec4f() const;
+    Mat3f const &toMat3f() const;
+    Mat4f const &toMat4f() const;
 
     GLTexture const *texture() const;
 

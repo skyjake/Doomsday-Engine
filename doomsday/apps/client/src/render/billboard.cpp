@@ -274,11 +274,11 @@ static void Spr_VertexColors(dint count, dgl_color_t *out, dgl_vertex_t *normals
                 return (maxLights && numProcessed == maxLights);
             });
 
-            colorClamped = ((accum[0].max(ambient) + accum[1]).min(saturated) * 255).toVector3ub();
+            colorClamped = ((accum[0].max(ambient) + accum[1]).min(saturated) * 255).toVec3ub();
         }
         else if(i == 0)
         {
-            colorClamped = (ambient.min(saturated) * 255).toVector3ub();
+            colorClamped = (ambient.min(saturated) * 255).toVec3ub();
         }
 
         out[i].rgba[0] = colorClamped.x;

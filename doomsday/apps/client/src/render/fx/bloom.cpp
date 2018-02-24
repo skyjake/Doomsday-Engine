@@ -108,7 +108,7 @@ DENG2_PIMPL(Bloom)
 
         // Determine the dimensions of the viewport and the target.
         //Rectanglef const rectf(0, 0, 1, 1); //= GLState::current().normalizedViewport();
-        Vec2ui const targetSize = colorTex->size(); // (rectf.size() * target.rectInUse().size()).toVector2ui();
+        Vec2ui const targetSize = colorTex->size(); // (rectf.size() * target.rectInUse().size()).toVec2ui();
 
         // Quarter resolution is used for better efficiency (without significant loss
         // of quality).

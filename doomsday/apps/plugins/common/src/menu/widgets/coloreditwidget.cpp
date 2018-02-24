@@ -261,7 +261,7 @@ void ColorEditWidget::updateGeometry()
 {
     patchinfo_t info;
 
-    geometry().setSize(d->dimensions.toVector2ui());
+    geometry().setSize(d->dimensions.toVec2ui());
 
     // Add bottom border?
     if(R_GetPatchInfo(borderPatches[2], &info))

@@ -1513,7 +1513,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                         {
                             indices[i] = base + i;
                             buffer.posCoords   [indices[i]] = verts.pos[numLeftVerts + i];
-                            buffer.colorCoords [indices[i]] = (verts.color[numLeftVerts + i] * 255).toVector4ub();
+                            buffer.colorCoords [indices[i]] = (verts.color[numLeftVerts + i] * 255).toVec4ub();
                             buffer.texCoords[0][indices[i]] = verts.tex[numLeftVerts + i];
                         }
                         lightList.write(buffer, indices.constData(), numRightVerts, gl::TriangleFan);
@@ -1525,7 +1525,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                         {
                             indices[i] = base + i;
                             buffer.posCoords   [indices[i]] = verts.pos[i];
-                            buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVector4ub();
+                            buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVec4ub();
                             buffer.texCoords[0][indices[i]] = verts.tex[i];
                         }
                         lightList.write(buffer, indices.constData(), numLeftVerts, gl::TriangleFan);
@@ -1540,7 +1540,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                     {
                         indices[i] = base + i;
                         buffer.posCoords   [indices[i]] = verts.pos[i];
-                        buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVector4ub();
+                        buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVec4ub();
                         buffer.texCoords[0][indices[i]] = verts.tex[i];
                     }
                     lightList.write(buffer, indices.constData(), numVertices, p.isWall? gl::TriangleStrip : gl::TriangleFan);
@@ -1607,7 +1607,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                     {
                         indices[i] = base + i;
                         buffer.posCoords   [indices[i]] = verts.pos[numLeftVerts + i];
-                        buffer.colorCoords [indices[i]] = (verts.color[numLeftVerts + i] * 255).toVector4ub();
+                        buffer.colorCoords [indices[i]] = (verts.color[numLeftVerts + i] * 255).toVec4ub();
                         buffer.texCoords[0][indices[i]] = verts.tex[numLeftVerts + i];
                     }
                     shadowList.write(buffer, indices.constData(), numRightVerts, gl::TriangleFan);
@@ -1619,7 +1619,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                     {
                         indices[i] = base + i;
                         buffer.posCoords   [indices[i]] = verts.pos[i];
-                        buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVector4ub();
+                        buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVec4ub();
                         buffer.texCoords[0][indices[i]] = verts.tex[i];
                     }
                     shadowList.write(buffer, indices.constData(), numLeftVerts, gl::TriangleFan);
@@ -1634,7 +1634,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                 {
                     indices[i] = base + i;
                     buffer.posCoords   [indices[i]] = verts.pos[i];
-                    buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVector4ub();
+                    buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVec4ub();
                     buffer.texCoords[0][indices[i]] = verts.tex[i];
                 }
                 shadowList.write(buffer, indices.constData(), numVerts, p.isWall ? gl::TriangleStrip : gl::TriangleFan);
@@ -1781,7 +1781,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                     buffer.posCoords[indices[i]] = verts.pos[numLeftVerts + i];
                     if (verts.color)
                     {
-                        buffer.colorCoords[indices[i]] = (verts.color[numLeftVerts + i] * 255).toVector4ub();
+                        buffer.colorCoords[indices[i]] = (verts.color[numLeftVerts + i] * 255).toVec4ub();
                     }
                     else
                     {
@@ -1820,7 +1820,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                     buffer.posCoords[indices[i]] = verts.pos[i];
                     if (verts.color)
                     {
-                        buffer.colorCoords[indices[i]] = (verts.color[i] * 255).toVector4ub();
+                        buffer.colorCoords[indices[i]] = (verts.color[i] * 255).toVec4ub();
                     }
                     else
                     {
@@ -1936,7 +1936,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                 buffer.posCoords[indices[i]] = verts.pos[i];
                 if (verts.color)
                 {
-                    buffer.colorCoords[indices[i]] = (verts.color[i] * 255).toVector4ub();
+                    buffer.colorCoords[indices[i]] = (verts.color[i] * 255).toVec4ub();
                 }
                 else
                 {
@@ -2046,7 +2046,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                 {
                     indices[i] = base + i;
                     buffer.posCoords   [indices[i]] = verts.pos[numLeftVerts + i];
-                    buffer.colorCoords [indices[i]] = (shineVerts.color[numLeftVerts + i] * 255).toVector4ub();
+                    buffer.colorCoords [indices[i]] = (shineVerts.color[numLeftVerts + i] * 255).toVec4ub();
                     buffer.texCoords[0][indices[i]] = shineVerts.tex[numLeftVerts + i];
                     if (shineMaskRTU)
                     {
@@ -2062,7 +2062,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                 {
                     indices[i] = base + i;
                     buffer.posCoords   [indices[i]] = verts.pos[i];
-                    buffer.colorCoords [indices[i]] = (shineVerts.color[i] * 255).toVector4ub();
+                    buffer.colorCoords [indices[i]] = (shineVerts.color[i] * 255).toVec4ub();
                     buffer.texCoords[0][indices[i]] = shineVerts.tex[i];
                     if (shineMaskRTU)
                     {
@@ -2081,7 +2081,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
             {
                 indices[i] = base + i;
                 buffer.posCoords   [indices[i]] = verts.pos[i];
-                buffer.colorCoords [indices[i]] = (shineVerts.color[i] * 255).toVector4ub();
+                buffer.colorCoords [indices[i]] = (shineVerts.color[i] * 255).toVec4ub();
                 buffer.texCoords[0][indices[i]] = shineVerts.tex[i];
                 if (shineMaskRTU)
                 {
@@ -2763,7 +2763,7 @@ static void writeWall(WallEdge const &leftEdge, WallEdge const &rightEdge,
     {
         // Undo temporary draw state changes.
         Vec4f const color = subsec.lightSourceColorfIntensity();
-        curSectorLightColor = color.toVector3f();
+        curSectorLightColor = color.toVec3f();
         curSectorLightLevel = color.w;
     }
 
@@ -2950,7 +2950,7 @@ static void writeSubspacePlane(Plane &plane)
     {
         // Undo temporary draw state changes.
         Vec4f const color = curSubspace->subsector().as<world::ClientSubsector>().lightSourceColorfIntensity();
-        curSectorLightColor = color.toVector3f();
+        curSectorLightColor = color.toVec3f();
         curSectorLightLevel = color.w;
     }
 
@@ -3758,7 +3758,7 @@ static void makeCurrent(ConvexSubspace &subspace)
     if (subsecChanged)
     {
         Vec4f const color = subspace.subsector().as<world::ClientSubsector>().lightSourceColorfIntensity();
-        ::curSectorLightColor = color.toVector3f();
+        ::curSectorLightColor = color.toVec3f();
         ::curSectorLightLevel = color.w;
     }
 }

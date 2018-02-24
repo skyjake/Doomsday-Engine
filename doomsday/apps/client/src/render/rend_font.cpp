@@ -837,7 +837,7 @@ static void drawChar(uchar ch, float x, float y, const AbstractFont &font, int a
         GL_BindTextureUnmanaged(bmapFont->textureGLName(), gl::ClampToEdge,
                                 gl::ClampToEdge, filterUI? gl::Linear : gl::Nearest);
 
-        geometry = geometry.expanded(bmapFont->textureMargin().toVector2i());
+        geometry = geometry.expanded(bmapFont->textureMargin().toVec2i());
     }
     else if (const CompositeBitmapFont *compFont = maybeAs<CompositeBitmapFont>(font))
     {

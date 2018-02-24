@@ -302,7 +302,7 @@ struct DGLDrawState
     static Vec4ub colorFromFloat(const Vec4f &color)
     {
         Vec4i rgba = (color * 255 + Vec4f(0.5f, 0.5f, 0.5f, 0.5f))
-                .toVector4i()
+                .toVec4i()
                 .max(Vec4i(0, 0, 0, 0))
                 .min(Vec4i(255, 255, 255, 255));
         return Vec4ub(dbyte(rgba.x), dbyte(rgba.y), dbyte(rgba.z), dbyte(rgba.w));
@@ -717,7 +717,7 @@ void DGL_CurrentColor(DGLubyte *rgba)
 
 void DGL_CurrentColor(float *rgba)
 {
-    Vec4f colorf = Vec4ub(dglDraw.currentVertex.color).toVector4f() / 255.0;
+    Vec4f colorf = Vec4ub(dglDraw.currentVertex.color).toVec4f() / 255.0;
     std::memcpy(rgba, colorf.constPtr(), sizeof(float) * 4);
 }
 

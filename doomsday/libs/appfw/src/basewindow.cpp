@@ -79,7 +79,7 @@ DENG2_PIMPL(BaseWindow)
             ev.type() == Event::MouseButton   ||
             ev.type() == Event::MouseWheel)
         {
-            ev.setPos(xf->windowToLogicalCoords(event.pos()).toVector2i());
+            ev.setPos(xf->windowToLogicalCoords(event.pos()).toVec2i());
         }
 
         if (!WindowSystem::get().processEvent(ev))
@@ -184,7 +184,7 @@ void BaseWindow::postDraw()
     DENG2_GUI_APP->loop().resume();
 #endif
 }
-    
+
 #if defined (DENG_MOBILE)
 
 String BaseWindow::configName(String const &key) const

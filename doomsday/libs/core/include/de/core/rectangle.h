@@ -117,7 +117,7 @@ public:
         return RectangleType(topLeft + tl, bottomRight + br);
     }
     Rectangle<Vec2i, Vec2ui> toRectanglei() const {
-        return Rectangle<Vec2i, Vec2ui>(topLeft.toVector2i(), bottomRight.toVector2i());
+        return Rectangle<Vec2i, Vec2ui>(topLeft.toVec2i(), bottomRight.toVec2i());
     }
     Rectangle<Vec2ui, Vec2ui> toRectangleui() const {
         Vec2ui tl(duint(de::max(Type(0), topLeft.x)),     duint(de::max(Type(0), topLeft.y)));

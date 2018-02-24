@@ -299,7 +299,7 @@ Vec3ub ColorPalette::color(int colorIndex) const
 
 Vec3f ColorPalette::colorf(int colorIdx) const
 {
-    return color(colorIdx).toVector3f() * reciprocal255;
+    return color(colorIdx).toVec3f() * reciprocal255;
 }
 
 int ColorPalette::nearestIndex(Vec3ub const &rgb) const

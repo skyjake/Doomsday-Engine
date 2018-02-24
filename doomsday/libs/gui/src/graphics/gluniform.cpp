@@ -546,31 +546,31 @@ dfloat GLUniform::toFloat() const
     }
 }
 
-Vec2f const &GLUniform::toVector2f() const
+Vec2f const &GLUniform::toVec2f() const
 {
     DENG2_ASSERT(d->type == Vec2 || d->type == Vec3 || d->type == Vec4);
     return *d->value.vector;
 }
 
-Vec3f const &GLUniform::toVector3f() const
+Vec3f const &GLUniform::toVec3f() const
 {
     DENG2_ASSERT(d->type == Vec2 || d->type == Vec3 || d->type == Vec4);
     return *d->value.vector;
 }
 
-Vec4f const &GLUniform::toVector4f() const
+Vec4f const &GLUniform::toVec4f() const
 {
     DENG2_ASSERT(d->type == Vec2 || d->type == Vec3 || d->type == Vec4);
     return *d->value.vector;
 }
 
-Mat3f const &GLUniform::toMatrix3f() const
+Mat3f const &GLUniform::toMat3f() const
 {
     DENG2_ASSERT(d->type == Mat3);
     return *d->value.mat3;
 }
 
-Mat4f const &GLUniform::toMatrix4f() const
+Mat4f const &GLUniform::toMat4f() const
 {
     DENG2_ASSERT(d->type == Mat4);
     return *d->value.mat4;

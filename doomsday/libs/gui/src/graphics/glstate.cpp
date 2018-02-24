@@ -548,7 +548,7 @@ GLState &GLState::setNormalizedScissor(Rectanglef const &normScissorRect)
                              normScissorRect.top()    * vp.height()),
                     Vec2i(std::ceil(normScissorRect.right()  * vp.width()),
                              std::ceil(normScissorRect.bottom() * vp.height())));
-    return setScissor(scis.moved(vp.topLeft.toVector2i()));
+    return setScissor(scis.moved(vp.topLeft.toVec2i()));
 }
 
 GLState &GLState::clearScissor()

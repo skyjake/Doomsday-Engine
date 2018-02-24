@@ -742,18 +742,42 @@ void GLFramebuffer::clear(Flags attachments)
 
     markAsChanged();
 
-    GLState::current().apply();
+    auto &GL = LIBGUI_GL;
+
+    // The entire framebuffer is being cleared.
+    GLint oldViewport[4], scissorEnabled = 0;
+    if (attachments & FullClear)
+    {
+        GL.glGetIntegerv(GL_SCISSOR_TEST, &scissorEnabled);
+        GL.glGetIntegerv(GL_VIEWPORT, oldViewport);
+        GL.glViewport(0, 0, d->size.x, d->size.y);
+        GL.glDisable(GL_SCISSOR_TEST);
+    }
+    else
+    {
+        GLState::current().apply();
+    }
+
     glBind();
 
     // Only clear what we have.
     Flags which = attachments & d->flags;
 
-    LIBGUI_GL.glClearColor(d->clearColor.x, d->clearColor.y, d->clearColor.z, d->clearColor.w);
-    LIBGUI_GL.glClear((which & (Color0 | Color1 | Color2 | Color3)?  GL_COLOR_BUFFER_BIT : 0) |
+    GL.glClearColor(d->clearColor.x, d->clearColor.y, d->clearColor.z, d->clearColor.w);
+    GL.glClear((which & (Color0 | Color1 | Color2 | Color3)?  GL_COLOR_BUFFER_BIT : 0) |
                       (which & Depth?   GL_DEPTH_BUFFER_BIT   : 0) |
                       (which & Stencil? GL_STENCIL_BUFFER_BIT : 0));
 
-    GLState::current().target().glBind();
+    // Restore previous state.
+    if (attachments & FullClear)
+    {
+        GL.glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
+        if (scissorEnabled) GL.glEnable(GL_SCISSOR_TEST);
+    }
+    else
+    {
+        GLState::current().target().glBind();
+    }
 }
 
 void GLFramebuffer::resize(Size const &size)

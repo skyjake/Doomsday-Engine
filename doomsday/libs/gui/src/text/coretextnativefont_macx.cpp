@@ -343,7 +343,7 @@ QImage CoreTextNativeFont::nativeFontRasterize(String const &text,
 #endif
 
     // Text color.
-    Vec4d const fg = foreground.zyxw().toVector4f() / 255.f;
+    Vec4d const fg = foreground.zyxw().toVec4f() / 255.f;
     CGFloat fgValues[4] = { fg.x, fg.y, fg.z, fg.w };
     CGColorRef fgColor = CGColorCreate(fontCache.colorspace(), fgValues);
 

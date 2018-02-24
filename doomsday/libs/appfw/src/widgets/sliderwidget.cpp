@@ -243,7 +243,7 @@ DENG_GUI_PIMPL(SliderWidget)
                 // Dim alt dots.
                 dotColor.w *= altAlpha;
             }
-            verts.makeQuad(Rectanglei::fromSize(dotPos - dotSize.toVector2i()/2, dotSize),
+            verts.makeQuad(Rectanglei::fromSize(dotPos - dotSize.toVec2i()/2, dotSize),
                            dotColor, atlas().imageRectf(root().tinyDot()));
         }
 

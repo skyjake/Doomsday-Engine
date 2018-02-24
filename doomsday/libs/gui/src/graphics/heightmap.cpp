@@ -108,7 +108,7 @@ float HeightMap::heightAtPosition(Vec2f const &worldPos) const
     QImage const &img = d->heightImage;
 
     Vec2f coord = d->pixelCoordf(worldPos);
-    Vec2i pixelCoord = coord.toVector2i();
+    Vec2i pixelCoord = coord.toVec2i();
 
     if (pixelCoord.x < 0 || pixelCoord.y < 0 ||
        pixelCoord.x >= img.width() - 1 || pixelCoord.y >= img.height() - 1) return 0;
@@ -127,7 +127,7 @@ float HeightMap::heightAtPosition(Vec2f const &worldPos) const
 
 Vec3f HeightMap::normalAtPosition(Vec2f const &worldPos) const
 {
-    Vec2i const pos = d->pixelCoordf(worldPos).toVector2i();
+    Vec2i const pos = d->pixelCoordf(worldPos).toVec2i();
     return d->normalAtCoord(pos); // * Vec3f(1, 1, NORMAL_Z)).normalize();
 }
 

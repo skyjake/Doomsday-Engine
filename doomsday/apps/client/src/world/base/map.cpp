@@ -4154,8 +4154,8 @@ void Map::initMapOutlinePacket(shell::MapOutlinePacket &packet)
 {
     forAllLines([&packet] (Line &line)
     {
-        packet.addLine(line.from().origin().toVector2i(),
-                       line.to  ().origin().toVector2i(),
+        packet.addLine(line.from().origin().toVec2i(),
+                       line.to  ().origin().toVec2i(),
                        (line.front().hasSector() && line.back().hasSector()) ?
                            shell::MapOutlinePacket::TwoSidedLine : shell::MapOutlinePacket::OneSidedLine);
         return LoopContinue;
