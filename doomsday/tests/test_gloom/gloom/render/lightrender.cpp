@@ -32,6 +32,9 @@ DENG2_PIMPL(LightRender)
     GLProgram                         surfaceProgram;
     GLProgram                         entityProgram;
 
+    GLUniform uLightDir         {"uLightDir",          GLUniform::Vec3};
+    GLUniform uViewSpaceLightDir{"uViewSpaceLightDir", GLUniform::Vec3};
+
     Impl(Public *i) : Base(i)
     {}
 
@@ -81,7 +84,11 @@ void LightRender::render()
 
     for (auto *light : {d->skyLight.get()})
     {
-        light->framebuf().clear(GLFramebuffer::Depth);
+        light->framebuf().clear(GLFramebuffer::Depth | GLFramebuffer::FullClear);
+
+        d->uLightDir = light->direction();
+        d->uViewSpaceLightDir =
+            context().view.uWorldToViewMatrix3.toMat3f() * light->direction();
 
         d->state.setTarget(light->framebuf())
                 .setViewport(Rectangleui::fromSize(light->framebuf().size()));
@@ -134,6 +141,16 @@ GLProgram &LightRender::entityProgram()
 GLState &LightRender::shadowState()
 {
     return d->state;
+}
+
+GLUniform &gloom::LightRender::uLightDir()
+{
+    return d->uLightDir;
+}
+
+GLUniform &LightRender::uViewSpaceLightDir()
+{
+    return d->uViewSpaceLightDir;
 }
 
 } // namespace gloom

@@ -67,6 +67,6 @@ shader gloom.shadow.entity {
 
         void main(void) {
             vec4 color = texture(uTex, vUV);
-            if (color.a < 0.5) discard;
+            if (color.a < 0.75) discard;
         }"
 }

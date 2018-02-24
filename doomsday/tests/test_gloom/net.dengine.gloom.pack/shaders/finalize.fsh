@@ -8,14 +8,44 @@ uniform int uDebugMode;
 
 DENG_VAR vec2 vUV;
 
-float Gloom_FetchShadow(vec4 lightSpacePos, vec3 normal) {
+/*float textureShadowMap(vec2 uv) {
+    vec2 fpos = uv * textureSize(uShadowMap, 0);
+    ivec2 pos = ivec2(fpos);
+    float values[4] = float[4] (
+        texelFetch(uShadowMap, pos, 0).r,
+        texelFetch(uShadowMap, pos + ivec2(1, 0), 0).r,
+        texelFetch(uShadowMap, pos + ivec2(0, 1), 0).r,
+        texelFetch(uShadowMap, pos + ivec2(1, 1), 0).r
+    );
+    vec2 inter = fract(fpos);
+    vec2 mixed = vec2(mix(values[0], values[1], inter.x),
+                      mix(values[2], values[3], inter.x));
+    return mix(mixed.s, mixed.t, inter.y);
+}*/
+
+const vec3 pcfWeights[9] = vec3[9] (
+    vec3( 0,  0, 2.4),
+    vec3(-1, -1, 1),
+    vec3( 0, -1, 1.4),
+    vec3( 1, -1, 1),
+    vec3(-1,  0, 1.4),
+    vec3( 1,  0, 1.4),
+    vec3(-1,  1, 1),
+    vec3( 0,  1, 1.4),
+    vec3( 1,  1, 1)
+);
+
+float Gloom_FetchShadow(vec4 lightSpacePos, float dp) {
     vec3 pos = (lightSpacePos.xyz / lightSpacePos.w) * 0.5 + 0.5;
-    float closestDepth = texture(uShadowMap, pos.xy).r;
     float pointDepth = pos.z;
-    //float bias = max(0.05 * (1.0 + dot(normal, uViewSpaceLightDir)), 0.005);
-    float bias = 0.005;
-    float shadow = (pointDepth - bias > closestDepth? 0.0 : 1.0);
-    return shadow;
+    float bias = max(0.004 * (dp + 1.0), 0.0005);
+    vec2 shadow = vec2(0.0);
+    vec2 texelSize = 1.0 / textureSize(uShadowMap, 0);
+    for (int i = 0; i < 9; ++i) {
+        float pcfDepth = texture(uShadowMap, pos.xy + pcfWeights[i].xy * texelSize).r;
+        shadow += vec2(pointDepth - bias > pcfDepth? 0.0 : pcfWeights[i].z, pcfWeights[i].z);
+    }
+    return shadow.x / shadow.y;
 }
 
 void main(void) {
@@ -29,7 +59,7 @@ void main(void) {
             if (dp < 0.0) {
                 // Surface faces the light.
                 vec4 lsPos = uViewToLightMatrix * GBuffer_FragViewSpacePos();
-                shadow *= Gloom_FetchShadow(lsPos, normal);
+                shadow *= Gloom_FetchShadow(lsPos, dp);
             }
             f = 0.3 + shadow * light;
         }

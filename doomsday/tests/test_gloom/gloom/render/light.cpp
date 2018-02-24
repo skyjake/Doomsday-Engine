@@ -26,19 +26,21 @@ namespace gloom {
 
 DENG2_PIMPL(Light)
 {
-    Vec3d origin    { -70, 100, 30 };
-    Vec3f dir       { 70, -100, -30 };
+    Vec3d origin;
+    Vec3f dir       { -.41f, -.51f, -.75f };
     Vec3f intensity { 10, 10, 10 };
     GLTexture shadowMap;
     GLFramebuffer framebuf;
 
     Impl(Public *i) : Base(i)
     {
+        origin = -dir * 50;
+
         shadowMap.setAutoGenMips(false);
-        shadowMap.setFilter(gl::Linear, gl::Linear, gl::MipNone);
+        shadowMap.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
         shadowMap.setUndefinedContent(
-            GLTexture::Size(1024, 1024),
-            GLPixelFormat(GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT));
+            GLTexture::Size(2048, 2048),
+            GLPixelFormat(GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT, GL_FLOAT));
 
         framebuf.configure(GLFramebuffer::Depth, shadowMap);
     }
@@ -65,7 +67,7 @@ GLFramebuffer &Light::framebuf()
 
 Mat4f Light::lightMatrix() const
 {
-    return Mat4f::ortho(-6, 8, -11, 7, 50, 150) *
+    return Mat4f::ortho(-25, 10, -5, 10, 15, 80) *
            Mat4f::lookAt(d->origin + d->dir, d->origin, Vec3f(0, 1, 0));
 }
 

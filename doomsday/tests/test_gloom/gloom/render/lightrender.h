@@ -50,6 +50,8 @@ public:
     de::GLProgram &surfaceProgram();
     de::GLProgram &entityProgram();
     de::GLState &shadowState();
+    de::GLUniform &uLightDir();
+    de::GLUniform &uViewSpaceLightDir();
 
 private:
     DENG2_PRIVATE(d)

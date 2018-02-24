@@ -24,7 +24,7 @@
 
 namespace gloom { namespace geo {
 
-inline de::Vec2d toVector2d(const QVector2D &vec)
+inline de::Vec2d toVec2d(const QVector2D &vec)
 {
     return de::Vec2d(vec.x(), vec.y());
 }

@@ -1,5 +1,5 @@
 #include "common/flags.glsl"
-#include "common/planes.glsl"
+#include "common/surface.glsl"
 
 uniform mat4        uMvpMatrix;
 uniform sampler2D   uTexOffsets;

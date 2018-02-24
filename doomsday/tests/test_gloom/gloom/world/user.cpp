@@ -32,12 +32,12 @@ DENG2_PIMPL(User)
     World const *world = nullptr;
 
     InputState input;
-    Vec3f   pos;                // Current position of the user (feet).
+    Vec3f      pos;                // Current position of the user (feet).
     float      height     = 1.8f;  // Height from feet to top of the head.
     float      viewHeight = 1.66f; // Eye height.
     float      yaw        = 0;
     float      pitch      = 0;
-    Vec3f   momentum;
+    Vec3f      momentum;
     float      angularMomentum = 0;
     bool       onGround        = false;
     bool       firstUpdate     = true;
@@ -47,7 +47,7 @@ DENG2_PIMPL(User)
 
     // For notification:
     Vec3f prevPosition;
-    float    prevYaw;
+    float prevYaw;
 
     // Audio:
     TimeSpan  stepElapsed;

@@ -103,7 +103,7 @@ DENG2_PIMPL(Editor)
         {
             QSettings st;
             viewScale  = st.value("viewScale", 10).toFloat();
-            viewOrigin = geo::toVector2d(st.value("viewOrigin").value<QVector2D>());
+            viewOrigin = geo::toVec2d(st.value("viewOrigin").value<QVector2D>());
         }
     }
 

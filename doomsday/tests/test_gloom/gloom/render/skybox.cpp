@@ -107,7 +107,7 @@ void SkyBox::render()
 
     DENG2_ASSERT(d->skyBox.program().isReady());
 
-    d->uMvpMatrix = context().view.uMvpMatrix.toMatrix4f() *
+    d->uMvpMatrix = context().view.uMvpMatrix.toMat4f() *
                     Mat4f::translate(context().view.camera->cameraPosition()) *
                     Mat4f::scale(d->scale);
     d->skyBox.draw();

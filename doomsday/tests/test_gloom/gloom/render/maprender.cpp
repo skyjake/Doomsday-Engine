@@ -121,9 +121,9 @@ DENG2_PIMPL(MapRender)
         surfaces.addBuffer(buf);
 
         context.shaders->build(surfaces.program(), "gloom.surface")
-            << uTexelsPerMeter << textureMetrics.var << planes.var << texOffsets.var;
+            << planes.var << uTexelsPerMeter << textureMetrics.var << texOffsets.var;
         context.shaders->build(shadowProgram, "gloom.shadow.surface")
-            << context.uLightMatrix << planes.var;
+            << planes.var << context.uLightMatrix << context.lights->uLightDir();
 
         context.bindTo(surfaces.program());
         context.bindTo(shadowProgram);
