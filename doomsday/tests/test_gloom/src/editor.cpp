@@ -25,6 +25,7 @@
 #include <QAction>
 #include <QCloseEvent>
 #include <QFile>
+#include <QMenu>
 #include <QPainter>
 #include <QSettings>
 
@@ -1196,6 +1197,40 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
 void Editor::mouseReleaseEvent(QMouseEvent *event)
 {
     event->accept();
+
+    if (d->mode == Impl::EditEntities && event->button() == Qt::RightButton)
+    {
+        d->hoverEntity = d->findEntityAt(d->viewToWorld(event->pos()));
+        if (d->hoverEntity)
+        {
+            QMenu *pop = new QMenu(this);
+            auto *header = pop->addAction(QString("Entity %1").arg(d->hoverEntity, 0, 16));
+            header->setDisabled(true);
+
+            QMenu *eType = pop->addMenu("Type");
+            struct EntityType {
+                Entity::Type type;
+                QString label;
+            };
+            const EntityType types[] = {
+                { Entity::Light, "Light" },
+                { Entity::Spotlight, "Spotlight" },
+                { Entity::Tree1, "Tree1" },
+                { Entity::Tree2, "Tree2" },
+                { Entity::Tree3, "Tree3" },
+            };
+            const ID entityId = d->hoverEntity;
+            for (const auto &et : types)
+            {
+                QAction *a = eType->addAction(et.label, [this, entityId, et] () {
+                    qDebug() << "Setting entity" << entityId << "to" << et.type << et.label;
+                    d->map.entity(entityId).setType(et.type);
+                });
+            }
+            pop->popup(mapToGlobal(event->pos()));
+            connect(pop, &QMenu::aboutToHide, [pop] () { pop->deleteLater(); });
+        }
+    }
 
     if (d->userAction != Impl::None && d->userAction != Impl::AddLines)
     {
