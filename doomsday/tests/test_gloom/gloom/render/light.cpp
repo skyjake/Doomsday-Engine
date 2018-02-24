@@ -38,6 +38,8 @@ DENG2_PIMPL(Light)
 
         shadowMap.setAutoGenMips(false);
         shadowMap.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
+        shadowMap.setWrap(gl::ClampToBorder, gl::ClampToBorder);
+        shadowMap.setBorderColor(Vec4f(1, 1, 1, 1));
         shadowMap.setUndefinedContent(
             GLTexture::Size(2048, 2048),
             GLPixelFormat(GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT, GL_FLOAT));
@@ -67,7 +69,7 @@ GLFramebuffer &Light::framebuf()
 
 Mat4f Light::lightMatrix() const
 {
-    return Mat4f::ortho(-25, 10, -5, 10, 15, 80) *
+    return Mat4f::ortho(-25, 20, -10, 10, 15, 80) *
            Mat4f::lookAt(d->origin + d->dir, d->origin, Vec3f(0, 1, 0));
 }
 
