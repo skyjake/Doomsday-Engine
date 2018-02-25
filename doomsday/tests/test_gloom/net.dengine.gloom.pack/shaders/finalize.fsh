@@ -52,7 +52,7 @@ void main(void) {
     if (uDebugMode == 0) {
         vec3 normal = GBuffer_FragViewSpaceNormal();
         float f = 1.0;
-        if (normal != vec3(0.0)) {
+        /* Check light. */ {
             float dp = dot(normal, uViewSpaceLightDir);
             float light = max(0.0, -dp);
             float shadow = step(0.0, -dp);
@@ -64,22 +64,25 @@ void main(void) {
             f = 0.3 + shadow * light;
         }
         out_FragColor = f *
-            texture(uGBufferAlbedo, vUV) *
-            texture(uSSAOBuf, vUV).r;
+            texture(uGBufferAlbedo, vUV) * texture(uSSAOBuf, vUV).r +
+            texture(uGBufferEmissive, vUV);
     }
     else if (uDebugMode == 1) {
         out_FragColor = texture(uGBufferAlbedo, vUV);
     }
     else if (uDebugMode == 2) {
-        out_FragColor = texture(uGBufferNormal, vUV);
+        out_FragColor = texture(uGBufferEmissive, vUV);
     }
     else if (uDebugMode == 3) {
-        out_FragColor = GBuffer_FragViewSpacePos();
+        out_FragColor = texture(uGBufferNormal, vUV);
     }
     else if (uDebugMode == 4) {
-        out_FragColor = vec4(vec3(texture(uSSAOBuf, vUV).r), 1.0);
+        out_FragColor = GBuffer_FragViewSpacePos();
     }
     else if (uDebugMode == 5) {
+        out_FragColor = vec4(vec3(texture(uSSAOBuf, vUV).r), 1.0);
+    }
+    else if (uDebugMode == 6) {
         out_FragColor = vec4(vec3(texture(uShadowMap, vUV).s), 1.0);
     }
 }

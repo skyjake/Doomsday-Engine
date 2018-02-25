@@ -24,10 +24,10 @@ namespace gloom {
 
 DENG2_PIMPL_NOREF(Entity)
 {
-    ID       id;
-    Type     type{Tree1};
+    ID    id;
+    Type  type{Tree1};
     Vec3d pos;
-    float    angle{0};
+    float angle{0};
     Vec3f scale{1, 1, 1};
 
     Impl()

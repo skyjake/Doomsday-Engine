@@ -59,6 +59,8 @@ set (SOURCES
     gloom/render/skybox.h
     gloom/render/ssao.cpp
     gloom/render/ssao.h
+    gloom/render/tonemap.cpp
+    gloom/render/tonemap.h
     gloom/render/view.cpp
     gloom/render/view.h
     gloom/world/entity.cpp

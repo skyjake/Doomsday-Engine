@@ -1223,7 +1223,6 @@ void Editor::mouseReleaseEvent(QMouseEvent *event)
             for (const auto &et : types)
             {
                 QAction *a = eType->addAction(et.label, [this, entityId, et] () {
-                    qDebug() << "Setting entity" << entityId << "to" << et.type << et.label;
                     d->map.entity(entityId).setType(et.type);
                 });
             }

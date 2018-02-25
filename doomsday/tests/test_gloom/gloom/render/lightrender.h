@@ -39,10 +39,11 @@ public:
     void glDeinit() override;
     void render() override;
 
+    void renderLighting();
+
     typedef std::function<void (const Light &)> RenderFunc;
     void setShadowRenderCallback(RenderFunc callback);
 
-    //void setShadowGeometry(de::Drawable &);
     void createLights();
 
     de::GLTexture &shadowMap();

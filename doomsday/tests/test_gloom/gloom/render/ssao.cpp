@@ -44,6 +44,7 @@ DENG2_PIMPL(SSAO)
     GLFramebuffer     ssaoFrameBuf[2];
     GLTexture         ssaoBuf[2];
     GLUniform         uNoisyFactors{"uNoisyFactors", GLUniform::Sampler2D};
+    GLUniform         uSSAOBuf{"uSSAOBuf", GLUniform::Sampler2D};
 
     Impl(Public *i) : Base(i)
     {}
@@ -62,6 +63,7 @@ DENG2_PIMPL(SSAO)
             ssaoBuf[Noisy].setWrap(gl::ClampToEdge, gl::ClampToEdge);
             uNoisyFactors = ssaoBuf[Noisy];
         }
+        uSSAOBuf = ssaoBuf[Blurred]; // final result
     }
 
     void glInit(Context &ctx)
@@ -153,6 +155,11 @@ void SSAO::render()
 const GLTexture &SSAO::occlusionFactors() const
 {
     return d->ssaoBuf[Impl::Blurred];
+}
+
+GLUniform &SSAO::uSSAOBuf()
+{
+    return d->uSSAOBuf;
 }
 
 } // namespace gloom

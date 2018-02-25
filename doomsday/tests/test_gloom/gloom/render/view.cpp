@@ -25,6 +25,7 @@ void View::setCamera(const ICamera &camera)
     this->camera = &camera;
 
     uMvpMatrix          = camera.cameraModelViewProjection();
+    uModelViewMatrix    = camera.cameraModelView();
     uWorldToViewMatrix3 = camera.cameraModelView().submatrix(0, 0);
     uProjMatrix         = camera.cameraProjection();
     uInverseProjMatrix  = camera.cameraProjection().inverse();

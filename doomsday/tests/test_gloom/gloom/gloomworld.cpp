@@ -22,8 +22,10 @@
 #include "gloom/render/context.h"
 #include "gloom/render/gbuffer.h"
 #include "gloom/render/maprender.h"
+#include "gloom/render/lightrender.h"
 #include "gloom/render/skybox.h"
 #include "gloom/render/ssao.h"
+#include "gloom/render/tonemap.h"
 #include "gloom/world/entitymap.h"
 #include "gloom/world/environment.h"
 #include "gloom/world/map.h"
@@ -48,12 +50,14 @@ DENG2_PIMPL(GloomWorld), public Asset
     User *            localUser = nullptr;
     Context           renderContext;
     Environment       environ;
+    GLTextureFramebuffer framebuf{Image::RGBA_16f};
     GBuffer           gbuffer;
     SkyBox            sky;
     Map               map;
     QHash<ID, double> initialPlaneY;
     MapRender         mapRender;
     SSAO              ssao;
+    Tonemap           tonemap;
 
     float  visibleDistance;
     double currentTime = 0.0;
@@ -75,14 +79,15 @@ DENG2_PIMPL(GloomWorld), public Asset
         atlas->setFilter(gl::Linear, gl::Linear, gl::MipNearest);
 #endif
 
-        renderContext.images  = &GloomApp::images();  // TODO: remove dependency on App
-        renderContext.shaders = &GloomApp::shaders();
-        renderContext.atlas   = atlas.get();
-        renderContext.uAtlas  = renderContext.atlas;
-        renderContext.ssao    = &ssao;
-        renderContext.gbuffer = &gbuffer;
-        renderContext.lights  = &mapRender.lights();
-        renderContext.map     = &map;
+        renderContext.images   = &GloomApp::images(); // TODO: remove dependency on App
+        renderContext.shaders  = &GloomApp::shaders();
+        renderContext.atlas    = atlas.get();
+        renderContext.uAtlas   = renderContext.atlas;
+        renderContext.ssao     = &ssao;
+        renderContext.gbuffer  = &gbuffer;
+        renderContext.framebuf = &framebuf;
+        renderContext.lights   = &mapRender.lights();
+        renderContext.map      = &map;
 
         environ.setWorld(thisPublic);
     }
@@ -97,10 +102,12 @@ DENG2_PIMPL(GloomWorld), public Asset
 
         sky.setSize(visibleDistance);
 
+        framebuf .glInit();
         gbuffer  .glInit(renderContext);
         sky      .glInit(renderContext);
         mapRender.glInit(renderContext);
         ssao     .glInit(renderContext);
+        tonemap  .glInit(renderContext);
 
 //        Vec3f const fogColor{.83f, .89f, 1.f};
 //        uFog = Vec4f(fogColor, visibleDistance);
@@ -113,10 +120,12 @@ DENG2_PIMPL(GloomWorld), public Asset
     {
         setState(NotReady);
 
+        tonemap  .glDeinit();
         ssao     .glDeinit();
         mapRender.glDeinit();
         sky      .glDeinit();
         gbuffer  .glDeinit();
+        framebuf .glDeinit();
 
         atlas->clear();
 
@@ -224,15 +233,21 @@ void GloomWorld::render(ICamera const &camera)
 {
     if (!d->isReady()) return;
 
-    d->gbuffer.resize(GLState::current().target().size());
+    const auto frameSize = GLState::current().target().size();
+
+    d->framebuf.resize(frameSize);
+    d->framebuf.clear(GLFramebuffer::Color0);
+
+    d->gbuffer.resize(frameSize);
     d->gbuffer.clear();
 
+    d->renderContext.view.setCamera(camera);
+
+    // Render the G-buffer contents: albedo, normals, depth.
     GLState::push()
             .setTarget(d->gbuffer.framebuf())
             .setCull(gl::Back)
             .setDepthTest(true);
-
-    d->renderContext.view.setCamera(camera);
 
     d->mapRender.render();
     d->ssao.render();
@@ -240,7 +255,12 @@ void GloomWorld::render(ICamera const &camera)
 
     GLState::pop();
 
-    d->gbuffer.render();
+    // Render the frame: deferred shading using the G-buffer.
+    GLState::push().setTarget(d->framebuf);
+    d->mapRender.lights().renderLighting();
+    GLState::pop();
+
+    d->tonemap.render();
 }
 
 User *GloomWorld::localUser() const

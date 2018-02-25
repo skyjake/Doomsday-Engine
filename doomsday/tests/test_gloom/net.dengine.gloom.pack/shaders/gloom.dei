@@ -9,6 +9,12 @@ group gloom {
         path.vertex   = "ssao.vsh"
         path.fragment = "ssao_denoise.fsh"
     }
+    shader lighting.global  { path = "gi" }
+    shader lighting.sources { path = "lighting" }
+    shader tonemap {
+        path.vertex = "common/mvp_vertex_uv.vsh"
+        path.fragment = "tonemap.fsh"
+    }
     shader finalize {
         path.vertex = "common/mvp_vertex_uv.vsh"
         path.fragment = "finalize.fsh"

@@ -40,15 +40,18 @@ public:
 
     void setEntity(const Entity *entity);
     void setType(Type type);
+    void setCastShadows(bool castShadows);
 
     const Entity *entity() const;
 
+    bool      castShadows() const;
     Type      type() const;
     de::Vec3f origin() const; // from entity
     de::Vec3f direction() const;
     de::Vec3f intensity() const;
     float     fovY() const;
     float     aspectRatio() const;
+    float     falloffDistance() const;
 
     de::GLTexture &    shadowMap();
     de::GLFramebuffer &framebuf();

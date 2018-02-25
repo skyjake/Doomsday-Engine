@@ -34,12 +34,13 @@ namespace gloom {
 DENG2_PIMPL(GBuffer)
 {
     ScreenQuad quad;
-    GLTextureFramebuffer frame{
-        QList<Image::Format>({Image::RGBA_16f /* albedo */, Image::RGBA_8888 /* normals */})};
+    GLTextureFramebuffer frame{GLTextureFramebuffer::Formats({Image::RGBA_8888,    // albedo
+                                                              Image::RGBA_8888,    // normals
+                                                              Image::RGBA_8888})}; // emissive
     GLUniform uGBufferAlbedo    {"uGBufferAlbedo",     GLUniform::Sampler2D};
+    GLUniform uGBufferEmissive  {"uGBufferEmissive",   GLUniform::Sampler2D};
     GLUniform uGBufferNormal    {"uGBufferNormal",     GLUniform::Sampler2D};
     GLUniform uGBufferDepth     {"uGBufferDepth",      GLUniform::Sampler2D};
-    GLUniform uSSAOBuf          {"uSSAOBuf",           GLUniform::Sampler2D};
     GLUniform uShadowMap        {"uShadowMap",         GLUniform::Sampler2D}; // <----TESTING-----
     GLUniform uViewToLightMatrix{"uViewToLightMatrix", GLUniform::Mat4};
     GLUniform uDebugMode        {"uDebugMode",         GLUniform::Int};
@@ -57,9 +58,10 @@ DENG2_PIMPL(GBuffer)
 
     void updateUniforms()
     {
-        uGBufferAlbedo = frame.attachedTexture(GLFramebuffer::Color0);
-        uGBufferNormal = frame.attachedTexture(GLFramebuffer::Color1);
-        uGBufferDepth  = frame.attachedTexture(GLFramebuffer::DepthStencil);
+        uGBufferAlbedo   = frame.attachedTexture(GLFramebuffer::Color0);
+        uGBufferNormal   = frame.attachedTexture(GLFramebuffer::Color1);
+        uGBufferEmissive = frame.attachedTexture(GLFramebuffer::Color2);
+        uGBufferDepth    = frame.attachedTexture(GLFramebuffer::DepthStencil);
     }
 };
 
@@ -73,9 +75,16 @@ void GBuffer::glInit(Context &context)
 
     d->quad.glInit(context);
     context.shaders->build(d->quad.program(), "gloom.finalize")
-        << context.view.uInverseProjMatrix << d->uGBufferAlbedo << d->uGBufferNormal
-        << d->uGBufferDepth << d->uSSAOBuf << d->uShadowMap << d->uDebugMode
-        << d->uViewToLightMatrix << context.lights->uViewSpaceLightDir();
+        << context.view.uInverseProjMatrix
+        << d->uGBufferAlbedo
+        << d->uGBufferEmissive
+        << d->uGBufferNormal
+        << d->uGBufferDepth
+        << context.ssao->uSSAOBuf()
+        << d->uShadowMap
+        << d->uDebugMode
+        << d->uViewToLightMatrix
+        << context.lights->uViewSpaceLightDir();
 
     d->frame.glInit();
     d->updateUniforms();
@@ -108,7 +117,6 @@ void GBuffer::render()
     d->uViewToLightMatrix = context().uLightMatrix.toMat4f() *
                             context().view.camera->cameraModelView().inverse();
 
-    d->uSSAOBuf   = context().ssao->occlusionFactors();
     d->uShadowMap = context().lights->shadowMap();
 
     d->quad.state().setTarget(GLState::current().target());
@@ -131,6 +139,11 @@ GLFramebuffer &GBuffer::framebuf()
 GLUniform &GBuffer::uGBufferAlbedo()
 {
     return d->uGBufferAlbedo;
+}
+
+GLUniform &GBuffer::uGBufferEmissive()
+{
+    return d->uGBufferEmissive;
 }
 
 GLUniform &GBuffer::uGBufferNormal()

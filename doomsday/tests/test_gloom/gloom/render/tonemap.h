@@ -1,4 +1,4 @@
-/** @file ssao.h
+/** @file tonemap.h
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,28 +16,21 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_SSAO_H
-#define GLOOM_SSAO_H
+#ifndef GLOOM_TONEMAP_H
+#define GLOOM_TONEMAP_H
 
 #include "gloom/render/render.h"
 
 namespace gloom {
 
-/**
- * Renders a screen-space ambient occlusion texture that contains a per-pixel
- * ambient occlusion factor for the G-buffer contents.
- */
-class SSAO : public Render
+class Tonemap : public Render
 {
 public:
-    SSAO();
+    Tonemap();
 
     void glInit(Context &) override;
     void glDeinit() override;
     void render() override;
-
-    const de::GLTexture &occlusionFactors() const;
-    de::GLUniform &uSSAOBuf();
 
 private:
     DENG2_PRIVATE(d)
@@ -45,4 +38,4 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_SSAO_H
+#endif // GLOOM_TONEMAP_H

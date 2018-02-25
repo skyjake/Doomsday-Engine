@@ -26,6 +26,7 @@
 #include <de/ImageBank>
 #include <de/GLProgram>
 #include <de/GLShaderBank>
+#include <de/GLTextureFramebuffer>
 
 namespace gloom {
 
@@ -34,14 +35,15 @@ class SSAO;
 class LightRender;
 
 struct Context {
-    const de::ImageBank *images;
-    de::GLShaderBank *   shaders;
-    const Map *          map;
-    de::AtlasTexture *   atlas;
-    View                 view;
-    SSAO *               ssao;
-    GBuffer *            gbuffer;
-    LightRender *        lights;
+    const de::ImageBank *     images;
+    de::GLShaderBank *        shaders;
+    const Map *               map;
+    de::AtlasTexture *        atlas;
+    View                      view;
+    SSAO *                    ssao;
+    GBuffer *                 gbuffer;
+    de::GLTextureFramebuffer *framebuf;
+    LightRender *             lights;
 
     de::GLUniform uAtlas        {"uTex",            de::GLUniform::Sampler2D};
     de::GLUniform uCurrentTime  {"uCurrentTime",    de::GLUniform::Float};

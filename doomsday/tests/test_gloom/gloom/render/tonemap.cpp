@@ -1,4 +1,4 @@
-/** @file ssao.h
+/** @file tonemap.cpp
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,33 +16,46 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_SSAO_H
-#define GLOOM_SSAO_H
+#include "gloom/render/tonemap.h"
+#include "gloom/render/screenquad.h"
 
-#include "gloom/render/render.h"
+using namespace de;
 
 namespace gloom {
 
-/**
- * Renders a screen-space ambient occlusion texture that contains a per-pixel
- * ambient occlusion factor for the G-buffer contents.
- */
-class SSAO : public Render
+DENG2_PIMPL(Tonemap)
 {
-public:
-    SSAO();
+    ScreenQuad quad;
+    GLUniform  uFramebuf{"uFramebuf", GLUniform::Sampler2D};
+    GLUniform  uExposure{"uExposure", GLUniform::Float};
 
-    void glInit(Context &) override;
-    void glDeinit() override;
-    void render() override;
-
-    const de::GLTexture &occlusionFactors() const;
-    de::GLUniform &uSSAOBuf();
-
-private:
-    DENG2_PRIVATE(d)
+    Impl(Public *i) : Base(i)
+    {
+        uExposure = 1.0f;
+    }
 };
 
-} // namespace gloom
+Tonemap::Tonemap()
+    : d(new Impl(this))
+{}
 
-#endif // GLOOM_SSAO_H
+void Tonemap::glInit(Context &context)
+{
+    Render::glInit(context);
+    d->quad.glInit(context);
+    context.shaders->build(d->quad.program(), "gloom.tonemap") << d->uFramebuf << d->uExposure;
+}
+
+void Tonemap::glDeinit()
+{
+    d->quad.glDeinit();
+    Render::glDeinit();
+}
+
+void Tonemap::render()
+{
+    d->uFramebuf = context().framebuf->attachedTexture(GLFramebuffer::Color0);
+    d->quad.render();
+}
+
+} // namespace gloom
