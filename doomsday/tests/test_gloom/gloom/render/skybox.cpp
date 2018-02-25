@@ -109,7 +109,7 @@ void SkyBox::render()
 
     DENG2_ASSERT(d->skyBox.program().isReady());
 
-    d->uIntensity = Vec3f(3, 3, 3);
+    d->uIntensity = Vec3f(5, 5, 5);
     d->uMvpMatrix = context().view.uMvpMatrix.toMat4f() *
                     Mat4f::translate(context().view.camera->cameraPosition()) *
                     Mat4f::scale(d->scale);

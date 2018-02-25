@@ -31,7 +31,7 @@ DENG2_PIMPL(Tonemap)
 
     Impl(Public *i) : Base(i)
     {
-        uExposure = 1.0f;
+        uExposure = 0.25f;
     }
 };
 
@@ -54,6 +54,8 @@ void Tonemap::glDeinit()
 
 void Tonemap::render()
 {
+
+
     d->uFramebuf = context().framebuf->attachedTexture(GLFramebuffer::Color0);
     d->quad.render();
 }

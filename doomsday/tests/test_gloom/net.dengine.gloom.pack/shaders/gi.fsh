@@ -58,7 +58,7 @@ void main(void) {
 
     vec3 outColor = ambient * albedo;
 
-    /* Directional world lights. */
+    // Directional world lights.
     {
         float dirLight = 1.0;
         float dp = dot(normal, uViewSpaceLightDir);
