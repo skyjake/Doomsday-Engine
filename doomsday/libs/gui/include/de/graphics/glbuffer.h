@@ -294,23 +294,23 @@ struct LIBGUI_PUBLIC Vertex3NormalTangentTex
     LIBGUI_DECLARE_VERTEX_FORMAT(5)
 };
 
-namespace gl
-{
-    enum Usage {
-        Static,
-        Dynamic,
-        Stream
-    };
-    enum Primitive {
-        Points,
-        LineStrip,
-        LineLoop,
-        Lines,
-        TriangleStrip,
-        TriangleFan,
-        Triangles
-    };
-}
+namespace gl {
+
+enum Usage {
+    Static,      ///< modified once and used many times
+    Dynamic,     ///< modified repeatedly and used many times
+    Stream,      ///< modified once and used at most a few times
+    StaticRead,  ///< read from GL, queried by app; modified once and used many times
+    DynamicRead, ///< read from GL, queried by app; modified repeatedly and used many times
+    StreamRead,  ///< read from GL, queried by app; modified once and used at most a few times
+    StaticCopy,  ///< read from GL, used by GL; modified once and used many times
+    DynamicCopy, ///< read from GL, used by GL; modified repeatedly and used many times
+    StreamCopy,  ///< read from GL, used by GL; modified once and used at most a few times
+};
+
+enum Primitive { Points, LineStrip, LineLoop, Lines, TriangleStrip, TriangleFan, Triangles };
+
+} // namespace gl
 
 /**
  * GL vertex buffer.

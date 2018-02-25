@@ -210,9 +210,15 @@ DENG2_PIMPL(GLBuffer)
     {
         switch (u)
         {
-        case Static:  return GL_STATIC_DRAW;
-        case Dynamic: return GL_DYNAMIC_DRAW;
-        case Stream:  return GL_STREAM_DRAW;
+        case Static:      return GL_STATIC_DRAW;
+        case StaticRead:  return GL_STATIC_READ;
+        case StaticCopy:  return GL_STATIC_COPY;
+        case Dynamic:     return GL_DYNAMIC_DRAW;
+        case DynamicRead: return GL_DYNAMIC_READ;
+        case DynamicCopy: return GL_DYNAMIC_COPY;
+        case Stream:      return GL_STREAM_DRAW;
+        case StreamRead:  return GL_STREAM_READ;
+        case StreamCopy:  return GL_STREAM_COPY;
         }
         DENG2_ASSERT(false);
         return GL_STATIC_DRAW;
