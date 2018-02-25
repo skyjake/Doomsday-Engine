@@ -30,6 +30,8 @@ group gloom.indirect {
                 #include 'common/gbuffer_out.glsl'
 
                 uniform sampler2D uTex;
+                uniform vec3 uEmissiveIntensity;
+
                 DENG_VAR vec2 vUV;
                 DENG_VAR vec2 vTexSize;
                 DENG_VAR vec4 vColor;
@@ -38,7 +40,7 @@ group gloom.indirect {
                 void main(void) {
                     vec2 uv = vBounds.xy + clamp(vUV, vec2(0.0, 0.0), vec2(1.0, 1.0)) * vBounds.zw;
                     vec4 color = vColor * textureLod(uTex, uv, mipLevel(vUV, vTexSize) - 0.5);
-                    GBuffer_SetFragEmissive(color.rgb * color.a);
+                    GBuffer_SetFragEmissive(uEmissiveIntensity * color.rgb * color.a);
                 }"
         }
 

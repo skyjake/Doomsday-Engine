@@ -34,15 +34,13 @@ namespace gloom {
 DENG2_PIMPL(GBuffer)
 {
     ScreenQuad quad;
-    GLTextureFramebuffer frame{GLTextureFramebuffer::Formats({Image::RGBA_8888,    // albedo
-                                                              Image::RGB_32f,      // normals
-                                                              Image::RGB_888})}; // emissive
+    GLTextureFramebuffer frame{GLTextureFramebuffer::Formats({Image::RGBA_8888,  // albedo
+                                                              Image::RGB_32f,    // normals
+                                                              Image::RGB_16f})}; // emissive
     GLUniform uGBufferAlbedo    {"uGBufferAlbedo",     GLUniform::Sampler2D};
     GLUniform uGBufferEmissive  {"uGBufferEmissive",   GLUniform::Sampler2D};
     GLUniform uGBufferNormal    {"uGBufferNormal",     GLUniform::Sampler2D};
     GLUniform uGBufferDepth     {"uGBufferDepth",      GLUniform::Sampler2D};
-    GLUniform uShadowMap        {"uShadowMap",         GLUniform::Sampler2D}; // <----TESTING-----
-    GLUniform uViewToLightMatrix{"uViewToLightMatrix", GLUniform::Mat4};
     GLUniform uDebugMode        {"uDebugMode",         GLUniform::Int};
 
     Impl(Public *i) : Base(i)
@@ -81,9 +79,9 @@ void GBuffer::glInit(Context &context)
         << d->uGBufferNormal
         << d->uGBufferDepth
         << context.ssao->uSSAOBuf()
-        << d->uShadowMap
+        //<< d->uShadowMap
         << d->uDebugMode
-        << d->uViewToLightMatrix
+        //<< d->uViewToLightMatrix
         << context.lights->uViewSpaceLightDir();
 
     d->frame.glInit();
@@ -114,11 +112,6 @@ void GBuffer::clear()
 
 void GBuffer::render()
 {
-    d->uViewToLightMatrix = context().uLightMatrix.toMat4f() *
-                            context().view.camera->cameraModelView().inverse();
-
-    d->uShadowMap = context().lights->shadowMap();
-
     d->quad.state().setTarget(GLState::current().target());
     d->quad.render();
 }

@@ -34,7 +34,7 @@ namespace gloom {
 class Light
 {
 public:
-    enum Type { Omni, Linear, Spot };
+    enum Type { Omni, Directional, Spot };
 
     Light();
 

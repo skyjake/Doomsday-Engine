@@ -60,8 +60,12 @@ DENG2_PIMPL(LightRender)
     VBuf                   sphere;
     ScreenQuad             giQuad;
 
-    GLUniform uLightDir         {"uLightDir",          GLUniform::Vec3};
-    GLUniform uViewSpaceLightDir{"uViewSpaceLightDir", GLUniform::Vec3};
+    GLUniform uLightDir            {"uLightDir",             GLUniform::Vec3};
+    GLUniform uLightIntensity      {"uLightIntensity",       GLUniform::Vec3};
+    GLUniform uViewSpaceLightOrigin{"uViewSpaceLightOrigin", GLUniform::Vec3};
+    GLUniform uViewSpaceLightDir   {"uViewSpaceLightDir",    GLUniform::Vec3};
+    GLUniform uViewToLightMatrix   {"uViewToLightMatrix",    GLUniform::Mat4};
+    GLUniform uShadowMap           {"uShadowMap",            GLUniform::Sampler2D}; // <----TESTING-----
 
     Impl(Public *i) : Base(i)
     {}
@@ -96,6 +100,7 @@ DENG2_PIMPL(LightRender)
             .setStencilFunc(gl::NotEqual, 0, 0xff);
 
         skyLight.reset(new Light);
+        skyLight->setType(Light::Directional);
         skyLight->setCastShadows(true);
 
         auto &ctx = self().context();
@@ -110,7 +115,6 @@ DENG2_PIMPL(LightRender)
                 << ctx.view.uModelViewMatrix
                 << ctx.view.uWorldToViewMatrix3
                 << ctx.view.uInverseProjMatrix
-                // TODO: skylight
                 << ctx.gbuffer->uGBufferAlbedo()
                 << ctx.gbuffer->uGBufferEmissive()
                 << ctx.gbuffer->uGBufferNormal()
@@ -119,11 +123,17 @@ DENG2_PIMPL(LightRender)
         giQuad.glInit(self().context());
         ctx.shaders->build(giQuad.program(), "gloom.lighting.global")
                 << ctx.view.uInverseProjMatrix
-                << ctx.ssao->uSSAOBuf()
                 << ctx.gbuffer->uGBufferAlbedo()
                 << ctx.gbuffer->uGBufferEmissive()
                 << ctx.gbuffer->uGBufferNormal()
-                << ctx.gbuffer->uGBufferDepth();
+                << ctx.gbuffer->uGBufferDepth()
+                << ctx.ssao->uSSAOBuf()
+                << uShadowMap
+                << uViewSpaceLightOrigin
+                << uViewSpaceLightDir
+                << uLightIntensity
+                << uViewToLightMatrix
+                << ctx.uLightMatrix;
 
         // Generate a sphere for light bounds.
         {
@@ -148,8 +158,6 @@ DENG2_PIMPL(LightRender)
                     const float z = sin(hAngle) * sin(vAngle);
 
                     verts << Vert{{x, y, z}};
-
-                    qDebug() << i << j << verts.back().pos.asText();
 
                     if (j == 0) // top row
                     {
@@ -229,8 +237,21 @@ void LightRender::render()
 
 void LightRender::renderLighting()
 {
+    auto &     ctx    = context();
     auto &     target = GLState::current().target();
     const auto vp     = GLState::current().viewport();
+
+    // Directional lights.
+    {
+        const auto &lightMatrix = d->skyLight->lightMatrix();
+
+        ctx.uLightMatrix      = lightMatrix;
+        d->uLightIntensity    = d->skyLight->intensity();
+        d->uViewSpaceLightDir = ctx.view.uWorldToViewMatrix3.toMat3f() * d->skyLight->direction();
+        d->uViewSpaceLightOrigin = ctx.view.camera->cameraModelView() * d->skyLight->origin();
+        d->uViewToLightMatrix    = lightMatrix * ctx.view.camera->cameraModelView().inverse();
+        d->uShadowMap            = d->skyLight->shadowMap();
+    }
 
     // Global illumination.
     d->giQuad.state()

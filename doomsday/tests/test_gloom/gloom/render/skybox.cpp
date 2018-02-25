@@ -30,7 +30,8 @@ DENG2_PIMPL_NOREF(SkyBox)
 
     Id            skyTex;
     Drawable      skyBox;
-    GLUniform     uMvpMatrix{"uMvpMatrix", GLUniform::Mat4};
+    GLUniform     uMvpMatrix{"uMvpMatrix",         GLUniform::Mat4};
+    GLUniform     uIntensity{"uEmissiveIntensity", GLUniform::Vec3};
     float         scale = 1.f;
 };
 
@@ -92,6 +93,7 @@ void SkyBox::glInit(Context &context)
 
     context.shaders->build(d->skyBox.program(), "gloom.indirect.textured.emissive")
             << d->uMvpMatrix
+            << d->uIntensity
             << context.uAtlas;
 }
 
@@ -107,6 +109,7 @@ void SkyBox::render()
 
     DENG2_ASSERT(d->skyBox.program().isReady());
 
+    d->uIntensity = Vec3f(3, 3, 3);
     d->uMvpMatrix = context().view.uMvpMatrix.toMat4f() *
                     Mat4f::translate(context().view.camera->cameraPosition()) *
                     Mat4f::scale(d->scale);
