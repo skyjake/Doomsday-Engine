@@ -166,7 +166,7 @@ DENG2_PIMPL(EntityRender)
 
             if (!data.isEmpty())
             {
-                ibuf.setVertices(data, gl::Dynamic);
+                ibuf.setVertices(data, gl::Stream);
                 model.drawInstanced(ibuf);
             }
 

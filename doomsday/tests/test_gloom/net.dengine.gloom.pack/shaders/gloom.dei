@@ -10,6 +10,10 @@ group gloom {
         path.fragment = "ssao_denoise.fsh"
     }
     shader lighting.global  { path = "gi" }
+    shader lighting.stencil {
+        path.vertex = "lighting.vsh"
+        fragment = "void main(void) {}"
+    }
     shader lighting.sources { path = "lighting" }
     shader tonemap {
         path.vertex = "common/mvp_vertex_uv.vsh"

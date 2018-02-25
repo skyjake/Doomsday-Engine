@@ -46,18 +46,19 @@ LIBGUI_VERTEX_FORMAT_SPEC(LightData, 10 * 4)
 DENG2_PIMPL(LightRender)
 {
     using VBuf = GLBufferT<Vertex3>;
+    using Lights = QHash<ID, std::shared_ptr<Light>>;
 
-    RenderFunc                        callback;
-    GLState                           state;
-    std::unique_ptr<Light>            skyLight;
-    QHash<ID, std::shared_ptr<Light>> lights;
-    QSet<Light *>                     activeLights;
-    GLProgram                         surfaceProgram;
-    GLProgram                         entityProgram;
-    GLProgram                         shadingProgram;
-    GLState                           shadingState;
-    VBuf                              sphere;
-    ScreenQuad                        giQuad;
+    std::unique_ptr<Light> skyLight;
+    Lights                 lights;
+    QSet<Light *>          activeLights;
+    RenderFunc             callback;
+    GLState                shadowState;
+    GLProgram              shadingProgram;
+    GLState                shadingState;
+    GLProgram              stencilPassProgram;
+    GLState                stencilPassState;
+    VBuf                   sphere;
+    ScreenQuad             giQuad;
 
     GLUniform uLightDir         {"uLightDir",          GLUniform::Vec3};
     GLUniform uViewSpaceLightDir{"uViewSpaceLightDir", GLUniform::Vec3};
@@ -67,24 +68,43 @@ DENG2_PIMPL(LightRender)
 
     void glInit()
     {
-        state.setBlend(false);
-        state.setDepthTest(true);
-        state.setDepthWrite(true);
-        state.setColorMask(gl::WriteNone);
-        state.setCull(gl::None);
+        shadowState
+            .setBlend(false)
+            .setDepthTest(true)
+            .setDepthWrite(true)
+            .setColorMask(gl::WriteNone)
+            .setCull(gl::None);
 
-        shadingState.setBlend(true);
-        shadingState.setBlendFunc(gl::One, gl::One);
-        shadingState.setDepthTest(true);
-        shadingState.setDepthWrite(false);
-        shadingState.setCull(gl::Back);
+        stencilPassState
+            .setColorMask(gl::WriteNone)
+            .setBlend(false)
+            .setDepthTest(true)
+            .setDepthWrite(false)
+            .setCull(gl::None)
+            .setStencilTest(true)
+            .setStencilFunc(gl::Always, 0, 0)
+            .setStencilOp(gl::StencilOp::Keep, gl::StencilOp::IncrementWrap, gl::StencilOp::Keep, gl::Front)
+            .setStencilOp(gl::StencilOp::Keep, gl::StencilOp::DecrementWrap, gl::StencilOp::Keep, gl::Back);
+
+        shadingState
+            .setBlend(true)
+            .setBlendFunc(gl::One, gl::One)
+            .setDepthTest(false)
+            .setDepthWrite(false)
+            .setCull(gl::Front)
+            .setStencilTest(true)
+            .setStencilFunc(gl::NotEqual, 0, 0xff);
 
         skyLight.reset(new Light);
         skyLight->setCastShadows(true);
 
         auto &ctx = self().context();
-        ctx.shaders->build(surfaceProgram, "gloom.shadow.surface") << ctx.uLightMatrix;
-        ctx.shaders->build(entityProgram,  "gloom.shadow.entity")  << ctx.uLightMatrix;
+
+        ctx.shaders->build(stencilPassProgram, "gloom.lighting.stencil")
+                << ctx.view.uMvpMatrix
+                << ctx.view.uModelViewMatrix
+                << ctx.view.uWorldToViewMatrix3;
+
         ctx.shaders->build(shadingProgram, "gloom.lighting.sources")
                 << ctx.view.uMvpMatrix
                 << ctx.view.uModelViewMatrix
@@ -129,26 +149,29 @@ DENG2_PIMPL(LightRender)
 
                     verts << Vert{{x, y, z}};
 
+                    qDebug() << i << j << verts.back().pos.asText();
+
                     if (j == 0) // top row
                     {
                         inds << 0
                              << 2 + i
                              << 2 + (i + hFaces - 1)%hFaces;
                     }
-                    else if (j == vFaces - 2) // bottom row
+                    else
+                    {
+                        inds << 2 + (j - 1)*hFaces + i
+                             << 2 + (j - 1)*hFaces + (i + 1)%hFaces
+                             << 2 + (j + 0)*hFaces + i
+
+                             << 2 + (j - 1)*hFaces + (i + 1)%hFaces
+                             << 2 + (j + 0)*hFaces + (i + 1)%hFaces
+                             << 2 + (j + 0)*hFaces + i;
+                    }
+                    if (j == vFaces - 2) // bottom row
                     {
                         inds << 1
                              << 2 + j*hFaces + i
                              << 2 + j*hFaces + (i + 1)%hFaces;
-                    }
-                    else
-                    {
-                        inds << 2 + j*hFaces + i
-                             << 2 + j*hFaces + (i + 1)%hFaces
-                             << 2 + (j + 1)*hFaces + i
-                             << 2 + j*hFaces + (i + 1)%hFaces
-                             << 2 + (j + 1)*hFaces + (i + 1)%hFaces
-                             << 2 + (j + 1)*hFaces + i;
                     }
                 }
             }
@@ -194,7 +217,7 @@ void LightRender::render()
             d->uViewSpaceLightDir =
                 context().view.uWorldToViewMatrix3.toMat3f() * light->direction();
 
-            d->state.setTarget(light->framebuf())
+            d->shadowState.setTarget(light->framebuf())
                     .setViewport(Rectangleui::fromSize(light->framebuf().size()));
 
             context().uLightMatrix = light->lightMatrix();
@@ -206,16 +229,20 @@ void LightRender::render()
 
 void LightRender::renderLighting()
 {
+    auto &     target = GLState::current().target();
+    const auto vp     = GLState::current().viewport();
+
     // Global illumination.
     d->giQuad.state()
             .setBlend(false)
             .setDepthWrite(false)
             .setDepthTest(false)
-            .setTarget(GLState::current().target());
+            .setTarget(target);
     d->giQuad.render();
 
-    // Individual light sources.
     typedef GLBufferT<LightData> LightBuf;
+
+    // Individual light sources.
     LightBuf::Vertices lightData;
     for (const auto *light : d->activeLights)
     {
@@ -225,21 +252,32 @@ void LightRender::renderLighting()
                            light->falloffDistance()};
         lightData << instance;
     }
+
+    // The G-buffer depths are used as-is.
+    context().gbuffer->framebuf().blit(target, GLFramebuffer::Depth);
+
     if (!lightData.isEmpty())
     {
-        // The G-buffer depths are used as-is.
-        context().gbuffer->framebuf().blit(GLState::current().target(), GLFramebuffer::Depth);
-
-        d->shadingState.setTarget  (GLState::current().target())
-                       .setViewport(GLState::current().viewport());
-        d->shadingState.apply();
-
         LightBuf ibuf;
-        ibuf.setVertices(lightData, gl::Dynamic);
+        ibuf.setVertices(lightData, gl::Stream);
 
-        d->shadingProgram.beginUse();
-        d->sphere.drawInstanced(ibuf);
-        d->shadingProgram.endUse();
+        // Stencil pass: find out where light volumes intersect surfaces.
+        {
+            LIBGUI_GL.glClearStencil(0);
+            target.clear(GLFramebuffer::Stencil);
+            d->stencilPassState.setTarget(target).setViewport(vp).apply();
+            d->stencilPassProgram.beginUse();
+            d->sphere.drawInstanced(ibuf);
+            d->stencilPassProgram.endUse();
+        }
+
+        // Shading pass: shade fragments within the light volumes.
+        {
+            d->shadingState.setTarget(target).setViewport(vp).apply();
+            d->shadingProgram.beginUse();
+            d->sphere.drawInstanced(ibuf);
+            d->shadingProgram.endUse();
+        }
 
         GLState::current().apply();
     }
@@ -283,19 +321,19 @@ Vec3f LightRender::direction() const
     return d->skyLight->direction();
 }
 
-GLProgram &LightRender::surfaceProgram()
-{
-    return d->surfaceProgram;
-}
+//GLProgram &LightRender::surfaceProgram()
+//{
+//    return d->surfaceProgram;
+//}
 
-GLProgram &LightRender::entityProgram()
-{
-    return d->entityProgram;
-}
+//GLProgram &LightRender::entityProgram()
+//{
+//    return d->entityProgram;
+//}
 
 GLState &LightRender::shadowState()
 {
-    return d->state;
+    return d->shadowState;
 }
 
 GLUniform &gloom::LightRender::uLightDir()

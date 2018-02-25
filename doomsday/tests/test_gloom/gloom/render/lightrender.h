@@ -48,8 +48,8 @@ public:
 
     de::GLTexture &shadowMap();
     de::Vec3f direction() const;
-    de::GLProgram &surfaceProgram();
-    de::GLProgram &entityProgram();
+//    de::GLProgram &surfaceProgram();
+//    de::GLProgram &entityProgram();
     de::GLState &shadowState();
     de::GLUniform &uLightDir();
     de::GLUniform &uViewSpaceLightDir();

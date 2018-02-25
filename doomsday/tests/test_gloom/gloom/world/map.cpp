@@ -811,13 +811,17 @@ void Map::deserialize(const Block &data)
         {
             const auto ent = i.value().toHash();
             const auto pos = ent["pos"].toList();
-            const auto sc = ent["scale"].toList();
+            const auto sc  = ent["scale"].toList();
+            const ID   id  = getId(i.key());
+
             std::shared_ptr<Entity> entity(new Entity);
+            entity->setId(id);
             entity->setType(Entity::Type(ent["type"].toInt()));
             entity->setPosition(Vec3d{pos[0].toDouble(), pos[1].toDouble(), pos[2].toDouble()});
             entity->setAngle(ent["angle"].toFloat());
             entity->setScale(Vec3f{sc[0].toFloat(), sc[1].toFloat(), sc[2].toFloat()});
-            d->entities.insert(getId(i.key()), entity);
+
+            d->entities.insert(id, entity);
         }
     }
 

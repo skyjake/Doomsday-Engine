@@ -30,7 +30,7 @@ DENG2_PIMPL(Light)
     Type          type   = Omni;
     Vec3d         origin;
     Vec3f         dir{-.41f, -.51f, -.75f};
-    Vec3f         intensity{10, 10, 10};
+    Vec3f         intensity{5, 5, 5};
 
     struct Shadow {
         GLTexture map;

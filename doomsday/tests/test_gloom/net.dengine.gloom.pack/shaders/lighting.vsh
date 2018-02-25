@@ -23,5 +23,5 @@ void main(void) {
     vOrigin    = origin.xyz / origin.w;
     vDirection = uWorldToViewMatrix * aDirection;
     vIntensity = aIntensity;
-    vRadius   *= 0.95;
+    vRadius   *= 0.95; // volume is not a perfect sphere; avoid reaching edges
 }

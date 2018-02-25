@@ -35,8 +35,8 @@ DENG2_PIMPL(GBuffer)
 {
     ScreenQuad quad;
     GLTextureFramebuffer frame{GLTextureFramebuffer::Formats({Image::RGBA_8888,    // albedo
-                                                              Image::RGBA_8888,    // normals
-                                                              Image::RGBA_8888})}; // emissive
+                                                              Image::RGB_32f,      // normals
+                                                              Image::RGB_888})}; // emissive
     GLUniform uGBufferAlbedo    {"uGBufferAlbedo",     GLUniform::Sampler2D};
     GLUniform uGBufferEmissive  {"uGBufferEmissive",   GLUniform::Sampler2D};
     GLUniform uGBufferNormal    {"uGBufferNormal",     GLUniform::Sampler2D};
