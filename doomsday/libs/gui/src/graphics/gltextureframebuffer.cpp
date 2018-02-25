@@ -35,10 +35,8 @@ DENG2_PIMPL(GLTextureFramebuffer)
         Image::Format format;
         std::shared_ptr<GLTexture> texture;
     };
-    //QList<Image::Format> colorFormats; //
     Size          size;
     int           _samples{0}; ///< don't touch directly (0 == default)
-    //QList<GLTexture     color;
     QList<ColorAttachment> color;
     GLTexture     depthStencil;
     GLFramebuffer resolvedFbo;
@@ -202,7 +200,7 @@ GLTextureFramebuffer::GLTextureFramebuffer(Image::Format colorFormat,
     d->_samples = sampleCount;
 }
 
-GLTextureFramebuffer::GLTextureFramebuffer(QList<Image::Format> colorFormats)
+GLTextureFramebuffer::GLTextureFramebuffer(Formats colorFormats)
     : d(new Impl(this))
 {
     for (auto format : colorFormats)

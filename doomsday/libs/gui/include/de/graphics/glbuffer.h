@@ -53,6 +53,9 @@ namespace internal
             Normal,
             Tangent,
             Bitangent,
+            Intensity,
+            Direction,
+            Origin,
             BoneIDs,
             BoneWeights,
             InstanceMatrix, // x4
@@ -94,6 +97,9 @@ namespace internal
                 case Normal:         return "aNormal";
                 case Tangent:        return "aTangent";
                 case Bitangent:      return "aBitangent";
+                case Intensity:      return "aIntensity";
+                case Direction:      return "aDirection";
+                case Origin:         return "aOrigin";
                 case BoneIDs:        return "aBoneIDs";
                 case BoneWeights:    return "aBoneWeights";
                 case InstanceMatrix: return "aInstanceMatrix"; // x4

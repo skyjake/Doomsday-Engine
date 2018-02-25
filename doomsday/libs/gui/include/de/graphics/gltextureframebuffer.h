@@ -54,7 +54,9 @@ public:
                          Size const &  initialSize = Size(),
                          int           sampleCount = 0 /*default*/);
 
-    GLTextureFramebuffer(QList<Image::Format> colorFormats);
+    using Formats = QList<Image::Format>;
+
+    GLTextureFramebuffer(Formats colorFormats);
 
     bool areTexturesReady() const;
 
