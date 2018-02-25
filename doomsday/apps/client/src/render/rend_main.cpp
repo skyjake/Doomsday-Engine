@@ -4360,46 +4360,46 @@ static void drawSky()
         return;
     }
 
+    auto &GL = LIBGUI_GL;
+
     // We do not want to update color and/or depth.
-    DGL_PushState();
+    DGL_PushState();        
     DGL_Disable(DGL_DEPTH_TEST);
     DGL_Disable(DGL_DEPTH_WRITE);
-
-    GLState::current().setColorMask(gl::WriteNone);
-
+    GLState::current().setColorMask(gl::WriteNone)
+            .setStencilOp(gl::StencilOp::Replace, gl::StencilOp::Replace, gl::StencilOp::Replace)
+            .setStencilFunc(gl::Always, 1, 0xff)
+            .setStencilTest(true);
+    
     // Mask out stencil buffer, setting the drawn areas to 1.
-    LIBGUI_GL.glEnable(GL_STENCIL_TEST);
-    LIBGUI_GL.glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
-    LIBGUI_GL.glStencilFunc(GL_ALWAYS, 1, 0xffffffff);
-
     if (!devRendSkyAlways)
     {
         drawLists(lists, DM_SKYMASK);
     }
     else
     {
-        LIBGUI_GL.glClearStencil(1);
-        LIBGUI_GL.glClear(GL_STENCIL_BUFFER_BIT);
+        GL.glClearStencil(1);
+        GL.glClear(GL_STENCIL_BUFFER_BIT);
     }
 
     // Restore previous GL state.
     DGL_PopState();
-    LIBGUI_GL.glDisable(GL_STENCIL_TEST);
-
+    
     // Now, only render where the stencil is set to 1.
-    LIBGUI_GL.glEnable(GL_STENCIL_TEST);
-    LIBGUI_GL.glStencilFunc(GL_EQUAL, 1, 0xffffffff);
-    LIBGUI_GL.glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-
+    GLState::push()
+            .setStencilTest(true)
+            .setStencilFunc(gl::Equal, 1, 0xff)
+            .setStencilOp(gl::StencilOp::Keep, gl::StencilOp::Keep, gl::StencilOp::Keep);
+    
     ClientApp::renderSystem().sky().draw(&ClientApp::world().map().skyAnimator());
 
     if (!devRendSkyAlways)
     {
-        LIBGUI_GL.glClearStencil(0);
+        GL.glClearStencil(0);
     }
 
     // Return GL state to normal.
-    LIBGUI_GL.glDisable(GL_STENCIL_TEST);
+    DGL_PopState();
 }
 
 static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = false)

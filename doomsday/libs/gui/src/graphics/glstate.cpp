@@ -37,7 +37,7 @@ extern int GLDrawQueue_queuedElems;
 namespace internal
 {
     enum Property {
-        CullMode,
+        CullFace,
         DepthTest,
         DepthFunc,
         DepthWrite,
@@ -48,6 +48,13 @@ namespace internal
         BlendFuncDest,
         BlendOp,
         ColorMask,
+        StencilTest,
+        StencilFrontMask,
+        StencilFrontOp,
+        StencilFrontFunc,
+        StencilBackMask,
+        StencilBackOp,
+        StencilBackFunc,
         Scissor,
         ScissorX,
         ScissorY,
@@ -61,32 +68,40 @@ namespace internal
     };
 
     static BitField::Spec const propSpecs[MAX_PROPERTIES] = {
-        { CullMode,       2  },
-        { DepthTest,      1  },
-        { DepthFunc,      3  },
-        { DepthWrite,     1  },
-        { AlphaTest,      1  },
-        { AlphaLimit,     8  },
-        { Blend,          1  },
-        { BlendFuncSrc,   4  },
-        { BlendFuncDest,  4  },
-        { BlendOp,        2  },
-        { ColorMask,      4  },
-        { Scissor,        1  },
-        { ScissorX,       13 }, // 13 bits == 8192 max
-        { ScissorY,       13 },
-        { ScissorWidth,   13 },
-        { ScissorHeight,  13 },
-        { ViewportX,      13 },
-        { ViewportY,      13 },
-        { ViewportWidth,  13 },
-        { ViewportHeight, 13 }
+        { CullFace,             2  },
+        { DepthTest,            1  },
+        { DepthFunc,            3  },
+        { DepthWrite,           1  },
+        { AlphaTest,            1  },
+        { AlphaLimit,           8  },
+        { Blend,                1  },
+        { BlendFuncSrc,         4  },
+        { BlendFuncDest,        4  },
+        { BlendOp,              2  },
+        { ColorMask,            4  },
+        { StencilTest,          1  },
+        { StencilFrontMask,     8  },
+        { StencilBackMask,      8  },
+        { StencilFrontOp,       9  },
+        { StencilBackOp,        9  },
+        { StencilFrontFunc,     19 },
+        { StencilBackFunc,      19 },
+        { Scissor,              1  },
+        { ScissorX,             13 }, // 13 bits == 8192 max
+        { ScissorY,             13 },
+        { ScissorWidth,         13 },
+        { ScissorHeight,        13 },
+        { ViewportX,            13 },
+        { ViewportY,            13 },
+        { ViewportWidth,        13 },
+        { ViewportHeight,       13 }
     };
     static BitField::Elements const glStateProperties(propSpecs, MAX_PROPERTIES);
 
     /// The GL state stack.
     struct GLStateStack : public QList<GLState *> {
-        GLStateStack() {
+        GLStateStack()
+        {
             // Initialize with a default state.
             append(new GLState);
         }
@@ -99,42 +114,45 @@ namespace internal
 
     /// Observes the current target and clears the pointer if it happens to get
     /// deleted.
-    class CurrentTarget : DENG2_OBSERVES(Asset, Deletion) {
+    class CurrentTarget : DENG2_OBSERVES(Asset, Deletion)
+    {
         GLFramebuffer *_target;
-        void assetBeingDeleted(Asset &asset) {
-            if (&asset == _target) {
+
+        void assetBeingDeleted(Asset &asset)
+        {
+            if (&asset == _target)
+            {
                 LOG_AS("GLState");
                 LOGDEV_GL_NOTE("Current target destroyed, clearing pointer");
                 _target = 0;
             }
         }
+
     public:
-        CurrentTarget() : _target(0) {}
-        ~CurrentTarget() {
-            set(0);
-        }
-        void set(GLFramebuffer *trg) {
-            if (_target) {
+        CurrentTarget()
+            : _target(0)
+        {}
+        ~CurrentTarget() { set(0); }
+        void set(GLFramebuffer *trg)
+        {
+            if (_target)
+            {
                 _target->audienceForDeletion() -= this;
             }
             _target = trg;
-            if (_target) {
+            if (_target)
+            {
                 _target->audienceForDeletion() += this;
             }
         }
-        CurrentTarget &operator = (GLFramebuffer *trg) {
+        GLFramebuffer *get() const { return _target; }
+        CurrentTarget &operator=(GLFramebuffer *trg)
+        {
             set(trg);
             return *this;
         }
-        bool operator != (GLFramebuffer *trg) const {
-            return _target != trg;
-        }
-        GLFramebuffer *get() const {
-            return _target;
-        }
-        operator GLFramebuffer *() const {
-            return _target;
-        }
+        bool operator!=(GLFramebuffer *trg) const { return _target != trg; }
+        operator GLFramebuffer *() const { return _target; }
     };
     static CurrentTarget currentTarget;
 }
@@ -156,6 +174,18 @@ DENG2_PIMPL(GLState)
         , target(other.target)
     {}
 
+    static GLenum glFace(gl::Face face)
+    {
+        switch (face)
+        {
+        case gl::None:         return GL_NONE;
+        case gl::Front:        return GL_FRONT;
+        case gl::Back:         return GL_BACK;
+        case gl::FrontAndBack: return GL_FRONT_AND_BACK;
+        }
+        return GL_NONE;
+    }
+
     static GLenum glComp(gl::Comparison comp)
     {
         switch (comp)
@@ -170,6 +200,22 @@ DENG2_PIMPL(GLState)
         case gl::GreaterOrEqual: return GL_GEQUAL;
         }
         return GL_NEVER;
+    }
+
+    static GLenum glStencilOp(gl::StencilOp op)
+    {
+        switch (op)
+        {
+        case gl::StencilOp::Keep:          return GL_KEEP;
+        case gl::StencilOp::Zero:          return GL_ZERO;
+        case gl::StencilOp::Replace:       return GL_REPLACE;
+        case gl::StencilOp::Increment:     return GL_INCR;
+        case gl::StencilOp::IncrementWrap: return GL_INCR_WRAP;
+        case gl::StencilOp::Decrement:     return GL_DECR;
+        case gl::StencilOp::DecrementWrap: return GL_DECR_WRAP;
+        case gl::StencilOp::Invert:        return GL_INVERT;
+        }
+        return GL_KEEP;
     }
 
     static GLenum glBFunc(gl::Blend f)
@@ -210,41 +256,40 @@ DENG2_PIMPL(GLState)
 
     void glApply(internal::Property prop)
     {
+        auto &GL = LIBGUI_GL;
         switch (prop)
         {
-        case internal::CullMode:
+        case internal::CullFace:
             switch (self().cull())
             {
             case gl::None:
-                LIBGUI_GL.glDisable(GL_CULL_FACE);
+                GL.glDisable(GL_CULL_FACE);
                 break;
             case gl::Front:
-                LIBGUI_GL.glEnable(GL_CULL_FACE);
-                LIBGUI_GL.glCullFace(GL_FRONT);
-                break;
             case gl::Back:
-                LIBGUI_GL.glEnable(GL_CULL_FACE);
-                LIBGUI_GL.glCullFace(GL_BACK);
+            case gl::FrontAndBack:
+                GL.glEnable(GL_CULL_FACE);
+                GL.glCullFace(glFace(self().cull()));
                 break;
             }
             break;
 
         case internal::DepthTest:
             if (self().depthTest())
-                LIBGUI_GL.glEnable(GL_DEPTH_TEST);
+                GL.glEnable(GL_DEPTH_TEST);
             else
-                LIBGUI_GL.glDisable(GL_DEPTH_TEST);
+                GL.glDisable(GL_DEPTH_TEST);
             break;
 
         case internal::DepthFunc:
-            LIBGUI_GL.glDepthFunc(glComp(self().depthFunc()));
+            GL.glDepthFunc(glComp(self().depthFunc()));
             break;
 
         case internal::DepthWrite:
             if (self().depthWrite())
-                LIBGUI_GL.glDepthMask(GL_TRUE);
+                GL.glDepthMask(GL_TRUE);
             else
-                LIBGUI_GL.glDepthMask(GL_FALSE);
+                GL.glDepthMask(GL_FALSE);
             break;
 
         case internal::AlphaTest:
@@ -267,29 +312,28 @@ DENG2_PIMPL(GLState)
 
         case internal::Blend:
             if (self().blend())
-                LIBGUI_GL.glEnable(GL_BLEND);
+                GL.glEnable(GL_BLEND);
             else
-                LIBGUI_GL.glDisable(GL_BLEND);
+                GL.glDisable(GL_BLEND);
             break;
 
         case internal::BlendFuncSrc:
         case internal::BlendFuncDest:
-            //glBlendFunc(glBFunc(self().srcBlendFunc()), glBFunc(self().destBlendFunc()));
-            LIBGUI_GL.glBlendFuncSeparate(glBFunc(self().srcBlendFunc()), glBFunc(self().destBlendFunc()),
-                                          GL_ONE, GL_ONE);
+            GL.glBlendFuncSeparate(
+                glBFunc(self().srcBlendFunc()), glBFunc(self().destBlendFunc()), GL_ONE, GL_ONE);
             break;
 
         case internal::BlendOp:
             switch (self().blendOp())
             {
             case gl::Add:
-                LIBGUI_GL.glBlendEquation(GL_FUNC_ADD);
+                GL.glBlendEquation(GL_FUNC_ADD);
                 break;
             case gl::Subtract:
-                LIBGUI_GL.glBlendEquation(GL_FUNC_SUBTRACT);
+                GL.glBlendEquation(GL_FUNC_SUBTRACT);
                 break;
             case gl::ReverseSubtract:
-                LIBGUI_GL.glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
+                GL.glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
                 break;
             }
             break;
@@ -297,10 +341,46 @@ DENG2_PIMPL(GLState)
         case internal::ColorMask:
         {
             gl::ColorMask const mask = self().colorMask();
-            LIBGUI_GL.glColorMask((mask & gl::WriteRed)   != 0,
+            GL.glColorMask((mask & gl::WriteRed) != 0,
                                   (mask & gl::WriteGreen) != 0,
-                                  (mask & gl::WriteBlue)  != 0,
+                           (mask & gl::WriteBlue) != 0,
                                   (mask & gl::WriteAlpha) != 0);
+            break;
+        }
+
+        case internal::StencilTest:
+            if (self().stencilTest())
+                GL.glEnable(GL_STENCIL_TEST);
+            else
+                GL.glDisable(GL_STENCIL_TEST);
+            break;
+
+        case internal::StencilFrontMask:
+        case internal::StencilBackMask:
+        {
+            const gl::Face face = (prop == internal::StencilFrontMask? gl::Front : gl::Back);
+            GL.glStencilMaskSeparate(glFace(face), self().stencilMask(face));
+            break;
+        }
+
+        case internal::StencilFrontFunc:
+        case internal::StencilBackFunc:
+        {
+            const gl::Face face = (prop == internal::StencilFrontFunc? gl::Front : gl::Back);
+            const auto stf = self().stencilFunc(face);
+            GL.glStencilFuncSeparate(glFace(face), glComp(stf.func), stf.ref, stf.mask);
+            break;
+        }
+
+        case internal::StencilFrontOp:
+        case internal::StencilBackOp:
+        {
+            const gl::Face face = (prop == internal::StencilFrontOp? gl::Front : gl::Back);
+            const auto sop = self().stencilOp(face);
+            GL.glStencilOpSeparate(glFace(face),
+                                   glStencilOp(sop.stencilFail),
+                                   glStencilOp(sop.depthFail),
+                                   glStencilOp(sop.depthPass));
             break;
         }
 
@@ -312,7 +392,7 @@ DENG2_PIMPL(GLState)
         {
             if (self().scissor() || self().target().hasActiveRect())
             {
-                LIBGUI_GL.glEnable(GL_SCISSOR_TEST);
+                GL.glEnable(GL_SCISSOR_TEST);
 
                 Rectangleui origScr;
                 if (self().scissor())
@@ -325,12 +405,12 @@ DENG2_PIMPL(GLState)
                 }
 
                 Rectangleui const scr = self().target().scaleToActiveRect(origScr);
-                LIBGUI_GL.glScissor(scr.left(), self().target().size().y - scr.bottom(),
+                GL.glScissor(scr.left(), self().target().size().y - scr.bottom(),
                                     scr.width(), scr.height());
             }
             else
             {
-                LIBGUI_GL.glDisable(GL_SCISSOR_TEST);
+                GL.glDisable(GL_SCISSOR_TEST);
             }
             break;
         }
@@ -341,9 +421,7 @@ DENG2_PIMPL(GLState)
         case internal::ViewportHeight:
         {
             Rectangleui const vp = self().target().scaleToActiveRect(self().viewport());
-            //qDebug() << "glViewport" << vp.asText();
-
-            LIBGUI_GL.glViewport(vp.left(), self().target().size().y - vp.bottom(),
+            GL.glViewport(vp.left(), self().target().size().y - vp.bottom(),
                                  vp.width(), vp.height());
             break;
         }
@@ -384,16 +462,20 @@ DENG2_PIMPL(GLState)
 
 GLState::GLState() : d(new Impl(this))
 {
-    setCull      (gl::None);
-    setDepthTest (false);
-    setDepthFunc (gl::Less);
-    setDepthWrite(true);
-    setAlphaTest (true);
-    setAlphaLimit(0);
-    setBlend     (true);
-    setBlendFunc (gl::One, gl::Zero);
-    setBlendOp   (gl::Add);
-    setColorMask (gl::WriteAll);
+    setCull       (gl::None);
+    setDepthTest  (false);
+    setDepthFunc  (gl::Less);
+    setDepthWrite (true);
+    setAlphaTest  (true);
+    setAlphaLimit (0);
+    setBlend      (true);
+    setBlendFunc  (gl::One, gl::Zero);
+    setBlendOp    (gl::Add);
+    setColorMask  (gl::WriteAll);
+    setStencilTest(false);
+    setStencilMask(255);
+    setStencilOp  (gl::StencilOp::Keep, gl::StencilOp::Keep, gl::StencilOp::Keep);
+    setStencilFunc(gl::Always, 0, 255);
 
     setDefaultTarget();
 }
@@ -412,9 +494,9 @@ bool GLState::operator==(const GLState &other)
     return d->target == other.d->target && d->props == other.d->props;
 }
 
-GLState &GLState::setCull(gl::Cull mode)
+GLState &GLState::setCull(gl::Face mode)
 {
-    d->props.set(internal::CullMode, duint(mode));
+    d->props.set(internal::CullFace, duint(mode));
     return *this;
 }
 
@@ -477,6 +559,58 @@ GLState &GLState::setBlendOp(gl::BlendOp op)
 GLState &GLState::setColorMask(gl::ColorMask mask)
 {
     d->props.set(internal::ColorMask, duint(mask));
+    return *this;
+}
+
+GLState &de::GLState::setStencilTest(bool enable)
+{
+    d->props.set(internal::StencilTest, enable);
+    return *this;
+}
+
+GLState &GLState::setStencilFunc(gl::Comparison func, dint ref, duint mask, gl::Face face)
+{
+    const duint packed = duint(func) | ((duint(ref) & 255) << 3) | ((mask & 255) << 11);
+
+    if (face == gl::Front || face == gl::FrontAndBack)
+    {
+        d->props.set(internal::StencilFrontFunc, packed);
+    }
+    if (face == gl::Back || face == gl::FrontAndBack)
+    {
+        d->props.set(internal::StencilBackFunc, packed);
+    }
+    return *this;
+}
+
+GLState &GLState::setStencilOp(gl::StencilOp stencilFail,
+                               gl::StencilOp depthFail,
+                               gl::StencilOp depthPass,
+                               gl::Face      face)
+{
+    const duint packed = duint(stencilFail) | (duint(depthFail) << 3) | (duint(depthPass) << 6);
+
+    if (face == gl::Front || face == gl::FrontAndBack)
+    {
+        d->props.set(internal::StencilFrontOp, packed);
+    }
+    if (face == gl::Back || face == gl::FrontAndBack)
+    {
+        d->props.set(internal::StencilBackOp, packed);
+    }
+    return *this;
+}
+
+GLState &GLState::setStencilMask(duint mask, gl::Face face)
+{
+    if (face == gl::Front || face == gl::FrontAndBack)
+    {
+        d->props.set(internal::StencilFrontMask, mask);
+    }
+    if (face == gl::Back || face == gl::FrontAndBack)
+    {
+        d->props.set(internal::StencilBackMask, mask);
+    }
     return *this;
 }
 
@@ -561,9 +695,9 @@ GLState &GLState::clearScissor()
     return *this;
 }
 
-gl::Cull GLState::cull() const
+gl::Face GLState::cull() const
 {
-    return d->props.valueAs<gl::Cull>(internal::CullMode);
+    return d->props.valueAs<gl::Face>(internal::CullFace);
 }
 
 bool GLState::depthTest() const
@@ -619,6 +753,38 @@ gl::BlendOp GLState::blendOp() const
 gl::ColorMask GLState::colorMask() const
 {
     return d->props.valueAs<gl::ColorMask>(internal::ColorMask);
+}
+
+bool GLState::stencilTest() const
+{
+    return d->props.asBool(internal::StencilTest);
+}
+
+duint GLState::stencilMask(gl::Face face) const
+{
+    return d->props.asUInt(face == gl::Back? internal::StencilBackMask : internal::StencilFrontMask);
+}
+
+gl::StencilOps GLState::stencilOp(gl::Face face) const
+{
+    const duint packed =
+        d->props.asUInt(face == gl::Back ? internal::StencilBackOp : internal::StencilFrontOp);
+    return gl::StencilOps{
+        gl::StencilOp( packed       & 7),
+        gl::StencilOp((packed >> 3) & 7),
+        gl::StencilOp((packed >> 6) & 7)
+    };
+}
+
+gl::StencilFunc GLState::stencilFunc(gl::Face face) const
+{
+    const duint packed =
+        d->props.asUInt(face == gl::Back ? internal::StencilBackFunc : internal::StencilFrontFunc);
+    return gl::StencilFunc{
+        gl::Comparison(packed        & 7),
+        dint         ((packed >> 3)  & 255),
+        duint        ((packed >> 11) & 255)
+    };
 }
 
 GLFramebuffer &GLState::target() const

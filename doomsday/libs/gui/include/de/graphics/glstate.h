@@ -46,6 +46,12 @@ namespace gl /// OpenGL constants, flags, and other definitions.
     Q_DECLARE_FLAGS(ColorMask, ColorMaskFlag)
     Q_DECLARE_OPERATORS_FOR_FLAGS(ColorMask)
 
+    enum Face {
+        None,
+        Front,
+        Back,
+        FrontAndBack,
+    };
     enum Comparison {
         Never,
         Always,
@@ -54,7 +60,7 @@ namespace gl /// OpenGL constants, flags, and other definitions.
         Less,
         Greater,
         LessOrEqual,
-        GreaterOrEqual
+        GreaterOrEqual,
     };
     enum Blend {
         Zero,
@@ -66,18 +72,33 @@ namespace gl /// OpenGL constants, flags, and other definitions.
         DestColor,
         OneMinusDestColor,
         DestAlpha,
-        OneMinusDestAlpha
+        OneMinusDestAlpha,
     };
     typedef std::pair<Blend, Blend> BlendFunc;
     enum BlendOp {
         Add,
         Subtract,
-        ReverseSubtract
+        ReverseSubtract,
     };
-    enum Cull {
-        None,
-        Front,
-        Back
+    enum class StencilOp {
+        Keep,
+        Zero,
+        Replace,
+        Increment,
+        IncrementWrap,
+        Decrement,
+        DecrementWrap,
+        Invert,
+    };
+    struct StencilOps {
+        gl::StencilOp stencilFail;
+        gl::StencilOp depthFail;
+        gl::StencilOp depthPass;
+    };
+    struct StencilFunc {
+        gl::Comparison func;
+        dint ref;
+        duint mask;
     };
 } // namespace gl
 
@@ -111,7 +132,7 @@ public:
     GLState &operator=(GLState const &other);
     bool operator==(const GLState &);
 
-    GLState &setCull(gl::Cull mode);
+    GLState &setCull(gl::Face cullFace);
     GLState &setDepthTest(bool enable);
     GLState &setDepthFunc(gl::Comparison func);
     GLState &setDepthWrite(bool enable);
@@ -122,6 +143,16 @@ public:
     GLState &setBlendFunc(gl::BlendFunc func);
     GLState &setBlendOp(gl::BlendOp op);
     GLState &setColorMask(gl::ColorMask mask);
+    GLState &setStencilTest(bool enable);
+    GLState &setStencilFunc(gl::Comparison func,
+                            dint           ref,
+                            duint          mask,
+                            gl::Face       face = gl::FrontAndBack);
+    GLState &setStencilOp(gl::StencilOp stencilFail,
+                          gl::StencilOp depthFail,
+                          gl::StencilOp depthPass,
+                          gl::Face      face = gl::FrontAndBack);
+    GLState &setStencilMask(duint mask, gl::Face face = gl::FrontAndBack);
     GLState &setTarget(GLFramebuffer &target);
     GLState &setDefaultTarget();
     GLState &setViewport(Rectanglei  const &viewportRect);
@@ -149,23 +180,27 @@ public:
 
     GLState &clearScissor();
 
-    gl::Cull cull() const;
-    bool depthTest() const;
-    gl::Comparison depthFunc() const;
-    bool depthWrite() const;
-    bool alphaTest() const;
-    float alphaLimit() const;
-    bool blend() const;
-    gl::Blend srcBlendFunc() const;
-    gl::Blend destBlendFunc() const;
-    gl::BlendFunc blendFunc() const;
-    gl::BlendOp blendOp() const;
-    gl::ColorMask colorMask() const;
-    GLFramebuffer &target() const;
-    Rectangleui viewport() const;
-    Rectanglef normalizedViewport() const;
-    bool scissor() const;
-    Rectangleui scissorRect() const;
+    gl::Face        cull() const;
+    bool            depthTest() const;
+    gl::Comparison  depthFunc() const;
+    bool            depthWrite() const;
+    bool            alphaTest() const;
+    float           alphaLimit() const;
+    bool            blend() const;
+    gl::Blend       srcBlendFunc() const;
+    gl::Blend       destBlendFunc() const;
+    gl::BlendFunc   blendFunc() const;
+    gl::BlendOp     blendOp() const;
+    gl::ColorMask   colorMask() const;
+    bool            stencilTest() const;
+    duint           stencilMask(gl::Face face = gl::Front) const;
+    gl::StencilOps  stencilOp(gl::Face face = gl::Front) const;
+    gl::StencilFunc stencilFunc(gl::Face face = gl::Front) const;
+    GLFramebuffer & target() const;
+    Rectangleui     viewport() const;
+    Rectanglef      normalizedViewport() const;
+    bool            scissor() const;
+    Rectangleui     scissorRect() const;
 
     /**
      * Updates the OpenGL state to match this GLState. Until this is called no

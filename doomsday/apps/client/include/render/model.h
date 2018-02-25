@@ -91,7 +91,7 @@ struct Model : public de::ModelDrawable
 
     de::Vec3f offset;
 
-    de::gl::Cull cull = de::gl::Back;
+    de::gl::Face cull = de::gl::Back;
 
     QHash<de::String, de::duint> materialIndexForName;
 
