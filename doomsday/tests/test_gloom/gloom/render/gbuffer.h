@@ -41,7 +41,7 @@ public:
     void       clear();
     void       resize(const de::Vec2ui &size);
     de::Vec2ui size() const;
-    void       setDebugMode(int debugMode);
+//    void       setDebugMode(int debugMode);
 
     de::GLFramebuffer &framebuf();
     de::GLUniform &    uGBufferAlbedo();

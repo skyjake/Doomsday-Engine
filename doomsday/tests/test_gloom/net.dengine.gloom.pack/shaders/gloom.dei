@@ -4,23 +4,32 @@
 group gloom {
     shader surface        { path = "surface" }
     shader shadow.surface { path = "shadow" }
-    shader ssao.sample    { path = "ssao" }
-    shader ssao.denoise {
-        path.vertex   = "ssao.vsh"
-        path.fragment = "ssao_denoise.fsh"
+
+    group ssao {
+        shader sample { path = "ssao" }
+        shader denoise {
+            path.vertex   = "ssao.vsh"
+            path.fragment = "ssao_denoise.fsh"
+        }
     }
-    shader lighting.global  { path = "gi" }
-    shader lighting.stencil {
-        path.vertex = "lighting.vsh"
-        fragment = "void main(void) {}"
+
+    group lighting {
+        shader global { path = "gi" }
+        shader stencil {
+            path.vertex = "lighting.vsh"
+            fragment = "void main(void) {}"
+        }
+        shader sources { path = "lighting" }
     }
-    shader lighting.sources { path = "lighting" }
-    shader tonemap {
-        path.vertex = "common/mvp_vertex_uv.vsh"
-        path.fragment = "tonemap.fsh"
-    }
-    shader finalize {
-        path.vertex = "common/mvp_vertex_uv.vsh"
-        path.fragment = "finalize.fsh"
+
+    group tonemap {
+        shader exposure {
+            path.vertex = "common/mvp_vertex_uv.vsh"
+            path.fragment = "tonemap.fsh"
+        }
+        shader sample {
+            path.vertex = "common/mvp_vertex_uv.vsh"
+            path.fragment = "tonemap_sample.fsh"
+        }
     }
 }

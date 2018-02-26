@@ -48,6 +48,8 @@ struct Context {
     de::GLUniform uAtlas        {"uTex",            de::GLUniform::Sampler2D};
     de::GLUniform uCurrentTime  {"uCurrentTime",    de::GLUniform::Float};
     de::GLUniform uLightMatrix  {"uLightMatrix",    de::GLUniform::Mat4};
+    de::GLUniform uDebugTex     {"uDebugTex",       de::GLUniform::Sampler2D};
+    de::GLUniform uDebugMode    {"uDebugMode",      de::GLUniform::Int};
 
     void bindTo(de::GLProgram &) const;
 };

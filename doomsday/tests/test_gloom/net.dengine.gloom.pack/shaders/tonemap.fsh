@@ -1,9 +1,15 @@
 uniform sampler2D uFramebuf;
 uniform float     uExposure;
+uniform sampler2D uDebugTex;
+uniform int       uDebugMode;
 
 DENG_VAR vec2 vUV;
 
 void main(void) {
+    if (uDebugMode != 0) {
+        out_FragColor = texture(uDebugTex, vUV);
+        return;
+    }
     float gamma = 1.0; //1.4;
     //out_FragColor = uExposure * textureLod(uFramebuf, vUV, 0);
     vec3 hdr = textureLod(uFramebuf, vUV, 0).rgb;

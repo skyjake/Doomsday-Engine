@@ -50,7 +50,7 @@ DENG2_PIMPL(GloomWorld), public Asset
     User *            localUser = nullptr;
     Context           renderContext;
     Environment       environ;
-    GLTextureFramebuffer framebuf{Image::RGBA_16f};
+    GLTextureFramebuffer framebuf{Image::RGB_16f};
     GBuffer           gbuffer;
     SkyBox            sky;
     Map               map;
@@ -227,6 +227,7 @@ void GloomWorld::update(TimeSpan const &elapsed)
     d->update(elapsed);
     d->environ.advanceTime(elapsed);
     d->mapRender.advanceTime(elapsed);
+    d->tonemap.advanceTime(elapsed);
 }
 
 void GloomWorld::render(ICamera const &camera)
@@ -236,6 +237,8 @@ void GloomWorld::render(ICamera const &camera)
     const auto frameSize = GLState::current().target().size();
 
     d->framebuf.resize(frameSize);
+    d->framebuf.attachedTexture(GLFramebuffer::Color0)
+        ->setFilter(gl::Nearest, gl::Nearest, gl::MipNearest);
     d->framebuf.clear(GLFramebuffer::Color0);
 
     d->gbuffer.resize(frameSize);
@@ -259,6 +262,9 @@ void GloomWorld::render(ICamera const &camera)
     GLState::push().setTarget(d->framebuf);
     d->mapRender.lights().renderLighting();
     GLState::pop();
+
+    // Framebuffer contents are mipmapped for brightness analysis.
+    d->framebuf.attachedTexture(GLFramebuffer::Color0)->generateMipmap();
 
     d->tonemap.render();
 }
@@ -317,7 +323,19 @@ void GloomWorld::setMap(const Map &map)
 
 void GloomWorld::setDebugMode(int debugMode)
 {
-    d->gbuffer.setDebugMode(debugMode);
+    d->renderContext.uDebugMode = debugMode;
+    switch (debugMode)
+    {
+        case 1:
+            d->renderContext.uDebugTex = d->tonemap.brightnessSample(0);
+            break;
+        case 2:
+            d->renderContext.uDebugTex = d->tonemap.brightnessSample(1);
+            break;
+        case 3:
+            d->renderContext.uDebugTex = d->mapRender.lights().shadowMap();
+            break;
+    }
 }
 
 } // namespace gloom

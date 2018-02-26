@@ -31,6 +31,9 @@ public:
     void glInit(Context &) override;
     void glDeinit() override;
     void render() override;
+    void advanceTime(de::TimeSpan) override;
+
+    de::GLTexture &brightnessSample(int index) const;
 
 private:
     DENG2_PRIVATE(d)

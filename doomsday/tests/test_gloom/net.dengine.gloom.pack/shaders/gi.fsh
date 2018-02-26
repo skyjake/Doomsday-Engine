@@ -53,7 +53,7 @@ void main(void) {
     vec3 normal = GBuffer_FragViewSpaceNormal();
     float ambientOcclusion = texture(uSSAOBuf, vUV).r;
 
-    vec3 ambient = vec3(0.35, 0.4, 0.5);
+    vec3 ambient = vec3(0.75, 0.8, 1.25);
     ambient *= ambientOcclusion;
 
     vec3 outColor = ambient * albedo;

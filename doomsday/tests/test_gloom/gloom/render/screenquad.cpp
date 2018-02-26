@@ -51,12 +51,12 @@ void ScreenQuad::glInit(Context &context)
 
     auto *vbuf = new VBuf;
     vbuf->setVertices(gl::TriangleStrip,
-                      VBuf::Builder().makeQuad(Rectanglef(0, 0, 1, 1), Rectanglef(0, 1, 1, -1)),
+                      VBuf::Builder().makeQuad(Rectanglef(0, 0, 1, 1), Rectanglef(0, 0, 1, 1)),
                       gl::Static);
     d->drawable.addBuffer(BUF_ID, vbuf);
     d->drawable.setState(BUF_ID, d->state);
 
-    d->uMvpMatrix = Mat4f::ortho(0, 1, 0, 1);
+    d->uMvpMatrix = Mat4f::ortho(0, 1, 1, 0);
     d->drawable.program() << d->uMvpMatrix;
 }
 
