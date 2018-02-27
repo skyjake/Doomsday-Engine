@@ -2,6 +2,7 @@
 @include <entity.dei>
 
 group gloom {
+    shader sky            { path = "sky" }
     shader surface        { path = "surface" }
     shader shadow.surface { path = "shadow" }
 

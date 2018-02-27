@@ -37,6 +37,8 @@ public:
     void glDeinit() override;
     void render() override;
 
+    de::GLUniform &uEnvMap();
+
 private:
     DENG2_PRIVATE(d)
 };

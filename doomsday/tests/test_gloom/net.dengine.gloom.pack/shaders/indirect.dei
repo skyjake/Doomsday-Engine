@@ -23,27 +23,6 @@ group gloom.indirect {
                 }"
         }
 
-        shader emissive {
-            path.vertex = "common/indirect_textured.vsh"
-            fragment = "
-                #include 'common/miplevel.glsl'
-                #include 'common/gbuffer_out.glsl'
-
-                uniform sampler2D uTex;
-                uniform vec3 uEmissiveIntensity;
-
-                DENG_VAR vec2 vUV;
-                DENG_VAR vec2 vTexSize;
-                DENG_VAR vec4 vColor;
-                DENG_VAR vec4 vBounds;
-
-                void main(void) {
-                    vec2 uv = vBounds.xy + clamp(vUV, vec2(0.0, 0.0), vec2(1.0, 1.0)) * vBounds.zw;
-                    vec4 color = vColor * textureLod(uTex, uv, mipLevel(vUV, vTexSize) - 0.5);
-                    GBuffer_SetFragEmissive(uEmissiveIntensity * color.rgb * color.a);
-                }"
-        }
-
         shader color_repeat {
             path.vertex = "common/indirect_textured.vsh"
             fragment = "

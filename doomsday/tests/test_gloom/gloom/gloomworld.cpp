@@ -100,6 +100,9 @@ DENG2_PIMPL(GloomWorld), public Asset
 
         DENG2_ASSERT(localUser);
 
+        // Cube maps are used for 360-degree env maps, so prefer seamless edge filtering.
+        LIBGUI_GL.glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
         sky.setSize(visibleDistance);
 
         framebuf .glInit();
