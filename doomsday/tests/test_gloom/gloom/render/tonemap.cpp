@@ -116,7 +116,7 @@ void Tonemap::advanceTime(TimeSpan elapsed)
     auto &GL = LIBGUI_GL;
 
     const auto &bs = d->brightnessSamples[d->brightnessSampleIndex];
-    QVector<Vec3f> sample(bs.size().x * bs.size().y);
+    QVector<Vec3f> sample(bs.size().area());
 
     // Read the previous frame's brightness sample.
     {
@@ -127,13 +127,16 @@ void Tonemap::advanceTime(TimeSpan elapsed)
         GLState::current().target().glBind();
     }
 
+    // TODO: try using the median brightness instead of max
+
     float brightest = 0;
     for (const auto &s : sample)
     {
         brightest = de::max(s.max(), brightest);
     }
 
-    d->exposure.setValue(1.0f / brightest, 1.0);
+    // The adjustment is kept below 1.0 to avoid overbrightening dark scenes.
+    d->exposure.setValue(de::min(1.0f, 1.0f / brightest), 1.0);
 }
 
 GLTexture &Tonemap::brightnessSample(int index) const
