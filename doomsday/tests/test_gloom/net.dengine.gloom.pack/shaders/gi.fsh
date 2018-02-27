@@ -9,7 +9,7 @@ uniform vec3      uViewSpaceLightOrigin;
 uniform vec3      uViewSpaceLightDir;
 uniform mat4      uLightMatrix; // world -> light
 uniform mat4      uViewToLightMatrix;
-uniform sampler2D uShadowMap;
+uniform sampler2DShadow uShadowMap;
 
 DENG_VAR vec2 vUV;
 
@@ -36,13 +36,15 @@ const vec3 pcfWeights[9] = vec3[9] (
  */
 float Gloom_FetchShadow(vec4 lightSpacePos, float dp) {
     vec3 pos = (lightSpacePos.xyz / lightSpacePos.w) * 0.5 + 0.5;
-    float pointDepth = pos.z;
     float bias = max(0.004 * (dp + 1.0), 0.0005);
+    float pointDepth = pos.z - bias;
     vec2 shadow = vec2(0.0);
     vec2 texelSize = 1.0 / textureSize(uShadowMap, 0);
     for (int i = 0; i < 9; ++i) {
-        float pcfDepth = texture(uShadowMap, pos.xy + pcfWeights[i].xy * texelSize).r;
-        shadow += vec2(pointDepth - bias > pcfDepth? 0.0 : pcfWeights[i].z, pcfWeights[i].z);
+        shadow += vec2(
+            texture(uShadowMap, vec3(pos.xy + pcfWeights[i].xy * texelSize, pointDepth)),
+            pcfWeights[i].z
+        );
     }
     return shadow.x / shadow.y;
 }

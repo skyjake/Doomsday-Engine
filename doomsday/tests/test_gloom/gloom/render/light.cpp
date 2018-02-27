@@ -50,7 +50,8 @@ DENG2_PIMPL(Light)
             shadow.reset(new Shadow);
 
             shadow->map.setAutoGenMips(false);
-            shadow->map.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
+            shadow->map.setComparisonMode(gl::CompareRefToTexture, gl::LessOrEqual);
+            shadow->map.setFilter(gl::Linear, gl::Linear, gl::MipNone);
             shadow->map.setWrap(gl::ClampToBorder, gl::ClampToBorder);
             shadow->map.setBorderColor(Vec4f(1, 1, 1, 1));
             shadow->map.setUndefinedContent(

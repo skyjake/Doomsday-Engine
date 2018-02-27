@@ -117,6 +117,7 @@ void Tonemap::advanceTime(TimeSpan elapsed)
 
     const auto &bs = d->brightnessSamples[d->brightnessSampleIndex];
     QVector<Vec3f> sample(bs.size().area());
+    if (sample.isEmpty()) return;
 
     // Read the previous frame's brightness sample.
     {
