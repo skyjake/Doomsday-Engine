@@ -361,21 +361,22 @@ void GLProgram::clear()
 
 GLProgram &GLProgram::build(GLShader const *vertexShader, GLShader const *fragmentShader)
 {
-    DENG2_ASSERT(vertexShader != 0);
-    DENG2_ASSERT(vertexShader->isReady());
-    DENG2_ASSERT(vertexShader->type() == GLShader::Vertex);
-    DENG2_ASSERT(fragmentShader != 0);
-    DENG2_ASSERT(fragmentShader->isReady());
-    DENG2_ASSERT(fragmentShader->type() == GLShader::Fragment);
+    return build({vertexShader, fragmentShader});
+}
 
+GLProgram &GLProgram::build(QVector<GLShader const *> const &shaders)
+{
     d->releaseButRetainBindings();
-    d->attach(vertexShader);
-    d->attach(fragmentShader);
+    for (GLShader const *shd : shaders)
+    {
+        DENG2_ASSERT(shd != nullptr);
+        DENG2_ASSERT(shd->isReady());
+        d->attach(shd);
+    }
     d->bindVertexAttribs();
     d->markAllBoundUniformsChanged();
 
     setState(Ready);
-
     return *this;
 }
 

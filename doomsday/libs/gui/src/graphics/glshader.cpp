@@ -25,15 +25,13 @@
 
 namespace de {
 
-//int const GLShader::MAX_BATCH_UNIFORMS = 64;
-
 DENG2_PIMPL(GLShader)
 {
-    GLuint name;
-    Type   type;
-//    Block  compiledSource;
+    GLuint name = 0;
+    Type   type = Vertex;
+    //Block  compiledSource;
 
-    Impl(Public *i) : Base(i), name(0), type(Vertex)
+    Impl(Public *i) : Base(i)
     {}
 
     ~Impl()
@@ -45,7 +43,9 @@ DENG2_PIMPL(GLShader)
     {
         if (!name)
         {
-            name = LIBGUI_GL.glCreateShader(type == Vertex? GL_VERTEX_SHADER : GL_FRAGMENT_SHADER);
+            name = LIBGUI_GL.glCreateShader(type == Vertex ?   GL_VERTEX_SHADER
+                                          : type == Geometry ? GL_GEOMETRY_SHADER
+                                                             : GL_FRAGMENT_SHADER);
             LIBGUI_ASSERT_GL_OK();
             if (!name)
             {
@@ -117,7 +117,7 @@ Block GLShader::prefixToSource(Block const &source, Block const &prefix)
 void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
 {
 #if defined (DENG_OPENGL)
-    static const Block DEFAULT_VERSION("#version 330\n");
+    static const Block DEFAULT_VERSION("#version 330 core\n");
     // With non-ES OpenGL, ignore the precision attributes.
     static const Block PREFIX("#ifndef GL_ES\n"
                               "#  define lowp\n"
@@ -130,7 +130,7 @@ void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
     static Block const PREFIX("\n");
 #endif
 
-    DENG2_ASSERT(shaderType == Vertex || shaderType == Fragment);
+    DENG2_ASSERT(shaderType == Vertex || shaderType == Geometry || shaderType == Fragment);
 
     Block preamble;
     Block source = shaderSource;
@@ -161,6 +161,10 @@ void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
         preamble += "#define DENG_VAR varying\n"
                     "#define DENG_ATTRIB attribute\n";
 #endif
+    }
+    else if (shaderType == Geometry)
+    {
+        predefs = QByteArray("#define DENG_GEOMETRY_SHADER\n");
     }
     else
     {

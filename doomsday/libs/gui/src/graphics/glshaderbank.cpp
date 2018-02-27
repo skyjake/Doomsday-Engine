@@ -21,12 +21,10 @@
 #include "de/GLShader"
 #include "de/GLUniform"
 
-#include <de/App>
 #include <de/ArrayValue>
 #include <de/ByteArrayFile>
 #include <de/DictionaryValue>
 #include <de/FS>
-#include <de/Folder>
 #include <de/ScriptedInfo>
 #include <de/math.h>
 
@@ -44,7 +42,7 @@ static String processIncludes(String source, String const &sourceFolderPath)
         if (!found.hasMatch()) break; // No more includes.
 
         String incFilePath = sourceFolderPath / found.captured(1);
-        String incSource = String::fromUtf8(Block(App::rootFolder().locate<File const>(incFilePath)));
+        String incSource = String::fromUtf8(Block(FS::locate<File const>(incFilePath)));
         incSource = processIncludes(incSource, incFilePath.fileNamePath());
 
         Rangei const capRange(found.capturedStart(), found.capturedEnd());
@@ -62,37 +60,36 @@ DENG2_PIMPL(GLShaderBank)
         /// Information about a shader source.
         struct ShaderSource
         {
-            String source;
-            enum Type
-            {
-                FilePath,
-                ShaderSourceText
-            };
-            Type type;
+            enum Type { None, FilePath, ShaderSourceText };
 
-            ShaderSource(String const &str = "", Type t = ShaderSourceText)
-                : source(str), type(t) {}
+            Type type;
+            String source;
+
+            ShaderSource(String const &str = "", Type t = None)
+                : type(t), source(str) {}
 
             void convertToSourceText()
             {
                 if (type == FilePath)
                 {
-                    source = String::fromLatin1(Block(App::rootFolder().locate<File const>(source)));
+                    source = String::fromLatin1(Block(FS::locate<File const>(source)));
                     type = ShaderSourceText;
                 }
             }
 
             void insertFromFile(String const &path)
             {
+                if (type == None) return;
                 convertToSourceText();
                 source += "\n";
                 Block combo = GLShader::prefixToSource(source.toLatin1(),
-                        Block(App::rootFolder().locate<File const>(path)));
+                        Block(FS::locate<File const>(path)));
                 source = String::fromLatin1(combo);
             }
 
             void insertDefinition(String const &macroName, String const &content)
             {
+                if (type == None) return;
                 convertToSourceText();
                 Block combo = GLShader::prefixToSource(
                     source.toLatin1(),
@@ -102,6 +99,7 @@ DENG2_PIMPL(GLShaderBank)
 
             void insertIncludes(GLShaderBank const &bank, Record const &def)
             {
+                if (type == None) return;
                 convertToSourceText();
                 source = processIncludes(source, bank.absolutePathInContext(def, ".").fileNamePath());
             }
@@ -109,33 +107,41 @@ DENG2_PIMPL(GLShaderBank)
 
         GLShaderBank &bank;
         String id;
-        ShaderSource vertex;
-        ShaderSource fragment;
+        ShaderSource sources[3]; // GLShader::Type as index
 
-        Source(GLShaderBank &b, String const &id, ShaderSource const &vtx, ShaderSource const &frag)
-            : bank(b), id(id), vertex(vtx), fragment(frag)
+        Source(GLShaderBank &      b,
+               String const &      id,
+               ShaderSource const &vtx,
+               ShaderSource const &geo,
+               ShaderSource const &frag)
+            : bank(b)
+            , id(id)
+            , sources{vtx, geo, frag}
         {}
 
         Time sourceModifiedAt(ShaderSource const &src) const
         {
-            if (src.type == ShaderSource::FilePath && !src.source.isEmpty())
+            if (src.type == ShaderSource::FilePath && src.source)
             {
-                return App::rootFolder().locate<File const>(src.source).status().modifiedAt;
+                return FS::locate<File const>(src.source).status().modifiedAt;
             }
             return bank.sourceModifiedAt();
         }
 
         Time modifiedAt() const
         {
-            Time vtxTime  = sourceModifiedAt(vertex);
-            Time fragTime = sourceModifiedAt(fragment);
-            return de::max(vtxTime, fragTime);
+            return de::max(sourceModifiedAt(sources[GLShader::Vertex]),
+                           sourceModifiedAt(sources[GLShader::Geometry]),
+                           sourceModifiedAt(sources[GLShader::Fragment]));
         }
 
         GLShader *load(GLShader::Type type) const
         {
-            ShaderSource const &src = (type == GLShader::Vertex? vertex : fragment);
-
+            ShaderSource const &src = sources[type];
+            if (src.type == ShaderSource::None)
+        {
+                return nullptr;
+            }
             if (src.type == ShaderSource::FilePath)
             {
                 return bank.d->findShader(src.source, type);
@@ -148,20 +154,17 @@ DENG2_PIMPL(GLShaderBank)
 
     struct Data : public IData
     {
-        GLShader *vertex;
-        GLShader *fragment;
+        GLShader *shaders[3]; // GLShader::Type as index
         QSet<GLUniform *> defaultUniforms;
 
-        Data(GLShader *v, GLShader *f)
-            : vertex(holdRef(v))
-            , fragment(holdRef(f))
+        Data(GLShader *v, GLShader *g, GLShader *f)
+            : shaders{holdRef(v), g? holdRef(g) : nullptr, holdRef(f)}
         {}
 
         ~Data()
         {
             qDeleteAll(defaultUniforms);
-            releaseRef(vertex);
-            releaseRef(fragment);
+            for (auto &shd : shaders) releaseRef(shd);
         }
     };
 
@@ -216,9 +219,12 @@ DENG2_PIMPL(GLShaderBank)
             return shaders[path];
         }
 
+        const auto *sourceFile = FS::tryLocate<ByteArrayFile const>(path);
+
         // We don't have this one yet, load and compile it now.
         GLShader *shader =
             new GLShader(type, prependPredefines(FS::locate<const ByteArrayFile>(path)));
+        auto *shader = new GLShader(type, *sourceFile);
         shaders.insert(path, shader);
         return shader;
     }
@@ -243,21 +249,19 @@ void GLShaderBank::addFromInfo(File const &file)
 GLShader &GLShaderBank::shader(DotPath const &path, GLShader::Type type) const
 {
     Impl::Data &i = data(path).as<Impl::Data>();
-
-    if (type == GLShader::Vertex)
-    {
-        return *i.vertex;
+    return *i.shaders[type];
     }
-    else
-    {
-        return *i.fragment;
-    }
-}
 
 GLProgram &GLShaderBank::build(GLProgram &program, DotPath const &path) const
 {
     Impl::Data &i = data(path).as<Impl::Data>();
-    program.build(i.vertex, i.fragment);
+
+    QVector<GLShader const *> shaders;
+    for (auto *s : i.shaders)
+    {
+        if (s) shaders << s;
+    }
+    program.build(shaders);
 
     // Bind the default uniforms. These will be used if no overriding
     // uniforms are bound.
@@ -276,65 +280,54 @@ void GLShaderBank::setPreprocessorDefines(const DictionaryValue &preDefines)
 
 Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
 {
-    typedef Impl::Source Source;
-    typedef Impl::Source::ShaderSource ShaderSource;
+    using Source       = Impl::Source;
+    using ShaderSource = Impl::Source::ShaderSource;
 
     Record const &def = info()[id];
 
-    ShaderSource vtx;
-    ShaderSource frag;
+    ShaderSource sources[3];
 
-    // Vertex shader definition.
-    if (def.has("vertex"))
+    static String const typeTokens[3]    = {"vertex", "geometry", "fragment"};
+    static String const pathTokens[3]    = {"path.vertex", "path.geometry", "path.fragment"};
+    static String const includeTokens[3] = {"include.vertex", "include.geometry", "include.fragment"};
+    static String const fileExt[3]       = {".vsh", ".gsh", ".fsh"};
+
+    // Shader definition.
+    for (int i = 0; i < 3; ++i)
     {
-        vtx = ShaderSource(def["vertex"], ShaderSource::ShaderSourceText);
+        if (def.has(typeTokens[i]))
+    {
+            sources[i] = ShaderSource(def[typeTokens[i]], ShaderSource::ShaderSourceText);
     }
-    else if (def.has("path.vertex"))
+        else if (def.has(pathTokens[i]))
     {
-        vtx = ShaderSource(absolutePathInContext(def, def["path.vertex"]), ShaderSource::FilePath);
+            sources[i] = ShaderSource(absolutePathInContext(def, def[pathTokens[i]]),
+                                      ShaderSource::FilePath);
     }
     else if (def.has("path"))
     {
-        vtx = ShaderSource(absolutePathInContext(def, def.gets("path") + ".vsh"), ShaderSource::FilePath);
-    }
-
-    // Fragment shader definition.
-    if (def.has("fragment"))
+            String spath = absolutePathInContext(def, def.gets("path") + fileExt[i]);
+            if (i == GLShader::Geometry && !FS::tryLocate<File const>(spath))
     {
-        frag = ShaderSource(def["fragment"], ShaderSource::ShaderSourceText);
+                continue; // Geometry shader not provided.
     }
-    else if (def.has("path.fragment"))
-    {
-        frag = ShaderSource(absolutePathInContext(def, def["path.fragment"]), ShaderSource::FilePath);
-    }
-    else if (def.has("path"))
-    {
-        frag = ShaderSource(absolutePathInContext(def, def.gets("path") + ".fsh"), ShaderSource::FilePath);
+            sources[i] = ShaderSource(spath, ShaderSource::FilePath);
     }
 
     // Additional shaders to append to the main source.
-    if (def.has("include.vertex"))
+        if (def.has(includeTokens[i]))
     {
         // Including in reverse to retain order -- each one is prepended.
-        auto const &incs = def["include.vertex"].value<ArrayValue>().elements();
-        for (int i = incs.size() - 1; i >= 0; --i)
+            auto const &incs = def[includeTokens[i]].value<ArrayValue>().elements();
+            for (int j = incs.size() - 1; j >= 0; --j)
         {
-            vtx.insertFromFile(absolutePathInContext(def, incs.at(i)->asText()));
-        }
-    }
-    if (def.has("include.fragment"))
-    {
-        // Including in reverse to retain order -- each one is prepended.
-        auto const &incs = def["include.fragment"].value<ArrayValue>().elements();
-        for (int i = incs.size() - 1; i >= 0; --i)
-        {
-            frag.insertFromFile(absolutePathInContext(def, incs.at(i)->asText()));
+                sources[i].insertFromFile(absolutePathInContext(def, incs.at(j)->asText()));
         }
     }
 
     // Handle #include directives in the source.
-    vtx .insertIncludes(*this, def);
-    frag.insertIncludes(*this, def);
+        sources[i].insertIncludes(*this, def);
+    }
 
     // Preprocessor defines (built-in and from the Info).
     if (def.has("defines"))
@@ -344,19 +337,23 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
         {
             String const macroName = i.first.value->asText();
             String const content   = i.second->asText();
-            vtx .insertDefinition(macroName, content);
-            frag.insertDefinition(macroName, content);
+            for (auto &ss : sources)
+            {
+                ss.insertDefinition(macroName, content);
+            }
         }
     }
 
-    return new Source(*this, id, vtx, frag);
+    return new Source(*this, id, sources[0], sources[1], sources[2]);
 }
 
 Bank::IData *GLShaderBank::loadFromSource(ISource &source)
 {
     Impl::Source &src = source.as<Impl::Source>();
-    std::unique_ptr<Impl::Data> data(new Impl::Data(src.load(GLShader::Vertex),
-                                                            src.load(GLShader::Fragment)));
+
+    std::unique_ptr<Impl::Data> data(new Impl::Data(
+        src.load(GLShader::Vertex), src.load(GLShader::Geometry), src.load(GLShader::Fragment)));
+
     // Create default uniforms.
     Record const &def = info()[src.id];
     auto const vars = ScriptedInfo::subrecordsOfType(QStringLiteral("variable"), def);

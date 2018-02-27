@@ -42,7 +42,7 @@ namespace de {
 class LIBGUI_PUBLIC GLShader : public Counted, public Asset
 {
 public:
-    enum Type { Vertex, Fragment };
+    enum Type { Vertex, Geometry, Fragment };
 
     /// There was a failure related to OpenGL resource allocation. @ingroup errors
     DENG2_ERROR(AllocError);

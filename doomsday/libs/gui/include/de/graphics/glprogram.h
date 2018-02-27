@@ -77,6 +77,16 @@ public:
      */
     GLProgram &build(GLShader const *vertexShader, GLShader const *fragmentShader);
 
+    /**
+     * Builds a program out of a list of shaders. GLProgram retains a reference to
+     * all the shaders.
+     *
+     * @param shaders  One or more shaders.
+     *
+     * @return Reference to this program.
+     */
+    GLProgram &build(QVector<GLShader const *> const &shaders);
+
     GLProgram &build(IByteArray const &vertexShaderSource,
                      IByteArray const &fragmentShaderSource);
 
