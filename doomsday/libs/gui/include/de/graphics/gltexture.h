@@ -27,6 +27,7 @@
 #include "opengl.h"
 #include "../Image"
 #include "../GLPixelFormat"
+#include "../GLState"
 
 namespace de {
 
@@ -53,6 +54,10 @@ namespace gl {
         NegativeY,
         PositiveZ,
         NegativeZ,
+    };
+    enum ComparisonMode {
+        CompareNone,
+        CompareRefToTexture,
     };
 }
 
@@ -116,6 +121,7 @@ public:
     void setMaxAnisotropy(dfloat maxAnisotropy);
     void setMaxLevel(dfloat maxLevel);
     void setBorderColor(const Vec4f &color);
+    void setComparisonMode(gl::ComparisonMode mode, gl::Comparison func = gl::Always);
 
     gl::Filter minFilter() const;
     gl::Filter magFilter() const;

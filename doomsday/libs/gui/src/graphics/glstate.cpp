@@ -34,128 +34,145 @@ namespace de {
 extern int GLDrawQueue_queuedElems;
 #endif
 
-namespace internal
+namespace internal {
+
+GLenum glComp(gl::Comparison comp)
 {
-    enum Property {
-        CullFace,
-        DepthTest,
-        DepthFunc,
-        DepthWrite,
-        AlphaTest,
-        AlphaLimit,
-        Blend,
-        BlendFuncSrc,
-        BlendFuncDest,
-        BlendOp,
-        ColorMask,
-        StencilTest,
-        StencilFrontMask,
-        StencilFrontOp,
-        StencilFrontFunc,
-        StencilBackMask,
-        StencilBackOp,
-        StencilBackFunc,
-        Scissor,
-        ScissorX,
-        ScissorY,
-        ScissorWidth,
-        ScissorHeight,
-        ViewportX,
-        ViewportY,
-        ViewportWidth,
-        ViewportHeight,
-        MAX_PROPERTIES
-    };
-
-    static BitField::Spec const propSpecs[MAX_PROPERTIES] = {
-        { CullFace,             2  },
-        { DepthTest,            1  },
-        { DepthFunc,            3  },
-        { DepthWrite,           1  },
-        { AlphaTest,            1  },
-        { AlphaLimit,           8  },
-        { Blend,                1  },
-        { BlendFuncSrc,         4  },
-        { BlendFuncDest,        4  },
-        { BlendOp,              2  },
-        { ColorMask,            4  },
-        { StencilTest,          1  },
-        { StencilFrontMask,     8  },
-        { StencilBackMask,      8  },
-        { StencilFrontOp,       9  },
-        { StencilBackOp,        9  },
-        { StencilFrontFunc,     19 },
-        { StencilBackFunc,      19 },
-        { Scissor,              1  },
-        { ScissorX,             13 }, // 13 bits == 8192 max
-        { ScissorY,             13 },
-        { ScissorWidth,         13 },
-        { ScissorHeight,        13 },
-        { ViewportX,            13 },
-        { ViewportY,            13 },
-        { ViewportWidth,        13 },
-        { ViewportHeight,       13 }
-    };
-    static BitField::Elements const glStateProperties(propSpecs, MAX_PROPERTIES);
-
-    /// The GL state stack.
-    struct GLStateStack : public QList<GLState *> {
-        GLStateStack()
-        {
-            // Initialize with a default state.
-            append(new GLState);
-        }
-        ~GLStateStack() { qDeleteAll(*this); }
-    };
-    static GLStateStack stack;
-
-    /// Currently applied GL state properties.
-    static BitField currentProps;
-
-    /// Observes the current target and clears the pointer if it happens to get
-    /// deleted.
-    class CurrentTarget : DENG2_OBSERVES(Asset, Deletion)
+    switch (comp)
     {
-        GLFramebuffer *_target;
-
-        void assetBeingDeleted(Asset &asset)
-        {
-            if (&asset == _target)
-            {
-                LOG_AS("GLState");
-                LOGDEV_GL_NOTE("Current target destroyed, clearing pointer");
-                _target = 0;
-            }
-        }
-
-    public:
-        CurrentTarget()
-            : _target(0)
-        {}
-        ~CurrentTarget() { set(0); }
-        void set(GLFramebuffer *trg)
-        {
-            if (_target)
-            {
-                _target->audienceForDeletion() -= this;
-            }
-            _target = trg;
-            if (_target)
-            {
-                _target->audienceForDeletion() += this;
-            }
-        }
-        GLFramebuffer *get() const { return _target; }
-        CurrentTarget &operator=(GLFramebuffer *trg)
-        {
-            set(trg);
-            return *this;
-        }
-        bool operator!=(GLFramebuffer *trg) const { return _target != trg; }
-        operator GLFramebuffer *() const { return _target; }
-    };
-    static CurrentTarget currentTarget;
+    case gl::Never:          return GL_NEVER;
+    case gl::Always:         return GL_ALWAYS;
+    case gl::Equal:          return GL_EQUAL;
+    case gl::NotEqual:       return GL_NOTEQUAL;
+    case gl::Less:           return GL_LESS;
+    case gl::Greater:        return GL_GREATER;
+    case gl::LessOrEqual:    return GL_LEQUAL;
+    case gl::GreaterOrEqual: return GL_GEQUAL;
+    }
+    return GL_NEVER;
 }
+
+enum Property {
+    CullFace,
+    DepthTest,
+    DepthFunc,
+    DepthWrite,
+    AlphaTest,
+    AlphaLimit,
+    Blend,
+    BlendFuncSrc,
+    BlendFuncDest,
+    BlendOp,
+    ColorMask,
+    StencilTest,
+    StencilFrontMask,
+    StencilFrontOp,
+    StencilFrontFunc,
+    StencilBackMask,
+    StencilBackOp,
+    StencilBackFunc,
+    Scissor,
+    ScissorX,
+    ScissorY,
+    ScissorWidth,
+    ScissorHeight,
+    ViewportX,
+    ViewportY,
+    ViewportWidth,
+    ViewportHeight,
+    MAX_PROPERTIES
+};
+
+static BitField::Spec const propSpecs[MAX_PROPERTIES] = {
+    { CullFace,             2  },
+    { DepthTest,            1  },
+    { DepthFunc,            3  },
+    { DepthWrite,           1  },
+    { AlphaTest,            1  },
+    { AlphaLimit,           8  },
+    { Blend,                1  },
+    { BlendFuncSrc,         4  },
+    { BlendFuncDest,        4  },
+    { BlendOp,              2  },
+    { ColorMask,            4  },
+    { StencilTest,          1  },
+    { StencilFrontMask,     8  },
+    { StencilBackMask,      8  },
+    { StencilFrontOp,       9  },
+    { StencilBackOp,        9  },
+    { StencilFrontFunc,     19 },
+    { StencilBackFunc,      19 },
+    { Scissor,              1  },
+    { ScissorX,             13 }, // 13 bits == 8192 max
+    { ScissorY,             13 },
+    { ScissorWidth,         13 },
+    { ScissorHeight,        13 },
+    { ViewportX,            13 },
+    { ViewportY,            13 },
+    { ViewportWidth,        13 },
+    { ViewportHeight,       13 }
+};
+static BitField::Elements const glStateProperties(propSpecs, MAX_PROPERTIES);
+
+/// The GL state stack.
+struct GLStateStack : public QList<GLState *> {
+    GLStateStack()
+    {
+        // Initialize with a default state.
+        append(new GLState);
+    }
+    ~GLStateStack() { qDeleteAll(*this); }
+};
+static GLStateStack stack;
+
+/// Currently applied GL state properties.
+static BitField currentProps;
+
+/// Observes the current target and clears the pointer if it happens to get
+/// deleted.
+class CurrentTarget : DENG2_OBSERVES(Asset, Deletion)
+{
+    GLFramebuffer *_target;
+
+    void assetBeingDeleted(Asset &asset)
+    {
+        if (&asset == _target)
+        {
+            LOG_AS("GLState");
+            LOGDEV_GL_NOTE("Current target destroyed, clearing pointer");
+            _target = 0;
+        }
+    }
+
+public:
+    CurrentTarget()
+        : _target(0)
+    {}
+    ~CurrentTarget() { set(0); }
+    void set(GLFramebuffer *trg)
+    {
+        if (_target)
+        {
+            _target->audienceForDeletion() -= this;
+        }
+        _target = trg;
+        if (_target)
+        {
+            _target->audienceForDeletion() += this;
+        }
+    }
+    GLFramebuffer *get() const { return _target; }
+    CurrentTarget &operator=(GLFramebuffer *trg)
+    {
+        set(trg);
+        return *this;
+    }
+    bool operator!=(GLFramebuffer *trg) const { return _target != trg; }
+    operator GLFramebuffer *() const { return _target; }
+};
+static CurrentTarget currentTarget;
+
+} // namespace internal
 
 DENG2_PIMPL(GLState)
 {
@@ -184,22 +201,6 @@ DENG2_PIMPL(GLState)
         case gl::FrontAndBack: return GL_FRONT_AND_BACK;
         }
         return GL_NONE;
-    }
-
-    static GLenum glComp(gl::Comparison comp)
-    {
-        switch (comp)
-        {
-        case gl::Never:          return GL_NEVER;
-        case gl::Always:         return GL_ALWAYS;
-        case gl::Equal:          return GL_EQUAL;
-        case gl::NotEqual:       return GL_NOTEQUAL;
-        case gl::Less:           return GL_LESS;
-        case gl::Greater:        return GL_GREATER;
-        case gl::LessOrEqual:    return GL_LEQUAL;
-        case gl::GreaterOrEqual: return GL_GEQUAL;
-        }
-        return GL_NEVER;
     }
 
     static GLenum glStencilOp(gl::StencilOp op)
@@ -282,7 +283,7 @@ DENG2_PIMPL(GLState)
             break;
 
         case internal::DepthFunc:
-            GL.glDepthFunc(glComp(self().depthFunc()));
+            GL.glDepthFunc(internal::glComp(self().depthFunc()));
             break;
 
         case internal::DepthWrite:
@@ -368,7 +369,7 @@ DENG2_PIMPL(GLState)
         {
             const gl::Face face = (prop == internal::StencilFrontFunc? gl::Front : gl::Back);
             const auto stf = self().stencilFunc(face);
-            GL.glStencilFuncSeparate(glFace(face), glComp(stf.func), stf.ref, stf.mask);
+            GL.glStencilFuncSeparate(glFace(face), internal::glComp(stf.func), stf.ref, stf.mask);
             break;
         }
 

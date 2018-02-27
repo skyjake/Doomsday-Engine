@@ -22,15 +22,18 @@
 
 namespace de {
 
-namespace internal
-{
-    enum TextureFlag {
-        AutoMips        = 0x1,
-        MipmapAvailable = 0x2,
-        ParamsChanged   = 0x4
-    };
-    Q_DECLARE_FLAGS(TextureFlags, TextureFlag)
-}
+namespace internal {
+
+GLenum glComp(gl::Comparison comp); // glstate.cpp
+
+enum TextureFlag {
+    AutoMips        = 0x1,
+    MipmapAvailable = 0x2,
+    ParamsChanged   = 0x4
+};
+Q_DECLARE_FLAGS(TextureFlags, TextureFlag)
+
+} // namespace internal
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(internal::TextureFlags)
 
@@ -39,29 +42,22 @@ using namespace gl;
 
 DENG2_PIMPL(GLTexture)
 {
-    Size          size;
-    Image::Format format;
-    GLuint        name;
-    GLenum        texTarget;
-    Filter        minFilter;
-    Filter        magFilter;
-    MipFilter     mipFilter;
-    Wraps         wrap;
-    dfloat        maxAnisotropy;
-    dfloat        maxLevel;
-    Vec4f         borderColor;
-    TextureFlags  flags;
+    Size               size;
+    Image::Format      format    = Image::Unknown;
+    GLuint             name      = 0;
+    GLenum             texTarget = GL_TEXTURE_2D;
+    Filter             minFilter = Linear;
+    Filter             magFilter = Linear;
+    MipFilter          mipFilter = MipNone;
+    Wraps              wrap{Repeat, Repeat};
+    dfloat             maxAnisotropy = 1.0f;
+    dfloat             maxLevel      = 1000.f;
+    Vec4f              borderColor;
+    gl::ComparisonMode compareMode = gl::CompareNone;
+    gl::Comparison     compareFunc = gl::Always;
+    TextureFlags       flags       = ParamsChanged;
 
-    Impl(Public *i)
-        : Base(i)
-        , format(Image::Unknown)
-        , name(0)
-        , texTarget(GL_TEXTURE_2D)
-        , minFilter(Linear), magFilter(Linear), mipFilter(MipNone)
-        , wrap(Wraps(Repeat, Repeat))
-        , maxAnisotropy(1.0f)
-        , maxLevel(1000.f)
-        , flags(ParamsChanged)
+    Impl(Public *i) : Base(i)
     {}
 
     ~Impl()
@@ -98,6 +94,16 @@ DENG2_PIMPL(GLTexture)
     bool isCube() const
     {
         return texTarget == GL_TEXTURE_CUBE_MAP;
+    }
+
+    static GLenum glCompareMode(gl::ComparisonMode mode)
+    {
+       switch (mode)
+       {
+       case CompareNone: return GL_NONE;
+       case CompareRefToTexture: return GL_COMPARE_REF_TO_TEXTURE;
+       }
+       return GL_NONE;
     }
 
     static GLenum glWrap(gl::Wrapping w)
@@ -148,7 +154,6 @@ DENG2_PIMPL(GLTexture)
 
     void glBind() const
     {
-        //DENG2_ASSERT(name != 0);
         LIBGUI_GL.glBindTexture(texTarget, name); LIBGUI_ASSERT_GL_OK();
     }
 
@@ -165,12 +170,14 @@ DENG2_PIMPL(GLTexture)
     {
         auto &GL = LIBGUI_GL;
 
-        GL.glTexParameteri(texTarget, GL_TEXTURE_WRAP_S,     glWrap(wrap.x));
-        GL.glTexParameteri(texTarget, GL_TEXTURE_WRAP_T,     glWrap(wrap.y));
-        GL.glTexParameteri(texTarget, GL_TEXTURE_MAG_FILTER, magFilter == Nearest? GL_NEAREST : GL_LINEAR);
-        GL.glTexParameteri(texTarget, GL_TEXTURE_MIN_FILTER, glMinFilter(minFilter, mipFilter));
-        GL.glTexParameterf(texTarget, GL_TEXTURE_MAX_LEVEL,  maxLevel);
+        GL.glTexParameteri (texTarget, GL_TEXTURE_WRAP_S,       glWrap(wrap.x));
+        GL.glTexParameteri (texTarget, GL_TEXTURE_WRAP_T,       glWrap(wrap.y));
+        GL.glTexParameteri (texTarget, GL_TEXTURE_MAG_FILTER,   magFilter == Nearest? GL_NEAREST : GL_LINEAR);
+        GL.glTexParameteri (texTarget, GL_TEXTURE_MIN_FILTER,   glMinFilter(minFilter, mipFilter));
+        GL.glTexParameterf (texTarget, GL_TEXTURE_MAX_LEVEL,    maxLevel);
         GL.glTexParameterfv(texTarget, GL_TEXTURE_BORDER_COLOR, &borderColor[0]);
+        GL.glTexParameteri (texTarget, GL_TEXTURE_COMPARE_MODE, glCompareMode(compareMode));
+        GL.glTexParameteri (texTarget, GL_TEXTURE_COMPARE_FUNC, internal::glComp(compareFunc));
 
         if (GLInfo::extensions().EXT_texture_filter_anisotropic)
         {
@@ -296,6 +303,12 @@ void GLTexture::setBorderColor(Vec4f const &color)
 {
     d->borderColor = color;
     d->flags |= ParamsChanged;
+}
+
+void GLTexture::setComparisonMode(gl::ComparisonMode mode, gl::Comparison func)
+{
+    d->compareMode = mode;
+    d->compareFunc = func;
 }
 
 Filter GLTexture::minFilter() const
