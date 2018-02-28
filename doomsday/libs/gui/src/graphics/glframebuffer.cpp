@@ -229,12 +229,19 @@ DENG2_OBSERVES(Asset, Deletion)
 
     void attachTexture(GLTexture &tex, GLenum attachment, int level = 0)
     {
-        DENG2_ASSERT(tex.isReady());
-
         LOG_GL_XVERBOSE("FBO %i: glTex %i (level %i) => attachment %i",
                         fbo << tex.glName() << level << attachmentToId(attachment));
 
-        LIBGUI_GL.glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, tex.glName(), level);
+        DENG2_ASSERT(tex.isReady());
+        if (tex.isCubeMap())
+        {
+            LIBGUI_GL.glFramebufferTexture(GL_FRAMEBUFFER, attachment, tex.glName(), level);
+        }
+        else
+        {
+            LIBGUI_GL.glFramebufferTexture2D(
+                GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, tex.glName(), level);
+        }
         LIBGUI_ASSERT_GL_OK();
 
         bufTextures[attachmentToId(attachment)] = &tex;

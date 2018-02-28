@@ -576,6 +576,8 @@ void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint 
         return;
     }
 
+    LIBGUI_ASSERT_GL_OK();
+
     // Mark the current target changed.
     GLState::current().target().markAsChanged();
 
@@ -583,8 +585,12 @@ void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint 
 
     d->enableArrays(true);
 
+    LIBGUI_ASSERT_GL_OK();
+
     // Set up the instance data, using this buffer's VAO.
     instanceAttribs.d->enableArrays(true, 1 /* per instance */, d->vao);
+
+    LIBGUI_ASSERT_GL_OK();
 
     if (d->idxName)
     {
