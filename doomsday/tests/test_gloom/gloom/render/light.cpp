@@ -145,7 +145,7 @@ float Light::falloffDistance() const
     return maxInt;
 }
 
-GLTexture &gloom::Light::shadowMap()
+GLTexture &Light::shadowMap() const
 {
     DENG2_ASSERT(d->shadow);
     return d->shadow->map;
@@ -195,16 +195,16 @@ Mat4f Light::lightMatrix(gl::CubeFace face) const
     switch (face)
     {
     case gl::PositiveX:
-        return proj * Mat4f::lookAt(d->origin + Vec3f(1, 0, 0),  d->origin, Vec3f(0, 1, 0));
+        return proj * Mat4f::lookAt(d->origin + Vec3f(1, 0, 0),  d->origin, Vec3f(0, -1, 0));
 
     case gl::NegativeX:
-        return proj * Mat4f::lookAt(d->origin + Vec3f(-1, 0, 0), d->origin, Vec3f(0, 1, 0));
+        return proj * Mat4f::lookAt(d->origin + Vec3f(-1, 0, 0), d->origin, Vec3f(0, -1, 0));
 
     case gl::PositiveZ:
-        return proj * Mat4f::lookAt(d->origin + Vec3f(0, 0, 1),  d->origin, Vec3f(0, 1, 0));
+        return proj * Mat4f::lookAt(d->origin + Vec3f(0, 0, 1),  d->origin, Vec3f(0, -1, 0));
 
     case gl::NegativeZ:
-        return proj * Mat4f::lookAt(d->origin + Vec3f(0, 0, -1), d->origin, Vec3f(0, 1, 0));
+        return proj * Mat4f::lookAt(d->origin + Vec3f(0, 0, -1), d->origin, Vec3f(0, -1, 0));
 
     case gl::PositiveY:
         return proj * Mat4f::lookAt(d->origin + Vec3f(0, 1, 0),  d->origin, Vec3f(0, 0, 1));

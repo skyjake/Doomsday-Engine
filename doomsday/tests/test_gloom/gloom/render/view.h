@@ -31,6 +31,7 @@ struct View
     de::GLUniform uMvpMatrix            {"uMvpMatrix",          de::GLUniform::Mat4};
     de::GLUniform uModelViewMatrix      {"uModelViewMatrix",    de::GLUniform::Mat4};
     de::GLUniform uWorldToViewMatrix3   {"uWorldToViewMatrix",  de::GLUniform::Mat3};
+    de::GLUniform uViewToWorldRotate    {"uViewToWorldRotate",  de::GLUniform::Mat3};
     de::GLUniform uProjMatrix           {"uProjMatrix",         de::GLUniform::Mat4};
     de::GLUniform uInverseProjMatrix    {"uInverseProjMatrix",  de::GLUniform::Mat4};
 

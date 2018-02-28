@@ -32,18 +32,18 @@ struct LightData {
     Vec3f lightIntensity;
     Vec3f lightDir;
     float radius;
-    //int shadowMapIndex;
-    LIBGUI_DECLARE_VERTEX_FORMAT(4)
+    int shadowMapIndex;
+    LIBGUI_DECLARE_VERTEX_FORMAT(5)
 };
 
-internal::AttribSpec const LightData::_spec[4] = {
+internal::AttribSpec const LightData::_spec[5] = {
     { internal::AttribSpec::Origin,    3, GL_FLOAT, false, sizeof(LightData), 0 * 4 },
     { internal::AttribSpec::Intensity, 3, GL_FLOAT, false, sizeof(LightData), 3 * 4 },
     { internal::AttribSpec::Direction, 3, GL_FLOAT, false, sizeof(LightData), 6 * 4 },
     { internal::AttribSpec::TexCoord,  1, GL_FLOAT, false, sizeof(LightData), 9 * 4 },
-    //{ internal::AttribSpec::Index,     1, GL_FLOAT, false, sizeof(LightData), 10 * 4 },
+    { internal::AttribSpec::Index,     1, GL_FLOAT, false, sizeof(LightData), 10 * 4 },
 };
-LIBGUI_VERTEX_FORMAT_SPEC(LightData, 10 * 4)
+LIBGUI_VERTEX_FORMAT_SPEC(LightData, 11 * 4)
 
 DENG2_PIMPL(LightRender)
 {
@@ -69,7 +69,14 @@ DENG2_PIMPL(LightRender)
     GLUniform uViewToLightMatrix   {"uViewToLightMatrix",    GLUniform::Mat4};
     GLUniform uShadowMap           {"uShadowMap",            GLUniform::Sampler2D}; // <----TESTING-----
 
-    //GLUniform
+    GLUniform uShadowMaps[6] {
+        {"uShadowMaps[0]", GLUniform::SamplerCube},
+        {"uShadowMaps[1]", GLUniform::SamplerCube},
+        {"uShadowMaps[2]", GLUniform::SamplerCube},
+        {"uShadowMaps[3]", GLUniform::SamplerCube},
+        {"uShadowMaps[4]", GLUniform::SamplerCube},
+        {"uShadowMaps[5]", GLUniform::SamplerCube}
+    };
 
     Impl(Public *i) : Base(i)
     {}
@@ -122,7 +129,14 @@ DENG2_PIMPL(LightRender)
                 << ctx.gbuffer->uGBufferAlbedo()
                 << ctx.gbuffer->uGBufferEmissive()
                 << ctx.gbuffer->uGBufferNormal()
-                << ctx.gbuffer->uGBufferDepth();
+                << ctx.gbuffer->uGBufferDepth()
+                << uShadowMaps[0]
+                << uShadowMaps[1]
+                << uShadowMaps[2]
+                << uShadowMaps[3]
+                << uShadowMaps[4]
+                << uShadowMaps[5]
+                << ctx.view.uViewToWorldRotate;
 
         giQuad.glInit(self().context());
         ctx.shaders->build(giQuad.program(), "gloom.lighting.global")
@@ -282,14 +296,24 @@ void LightRender::renderLighting()
 
     // Individual light sources.
     LightBuf::Vertices lightData;
+    int counter = 0;
+
     for (const auto *light : d->activeLights)
     {
+        // Assign shadow maps.
+        int shadowIndex = -1;
+        if (light->type() == Light::Omni && light->castShadows())
+        {
+            shadowIndex = counter;
+            d->uShadowMaps[counter] = light->shadowMap();
+            counter++;
+        }
+
         LightData instance{light->origin(),
                            light->intensity(),
                            light->direction(),
                            light->falloffDistance(),
-                          // -1
-                          };
+                           shadowIndex};
         lightData << instance;
     }
 

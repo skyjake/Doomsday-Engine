@@ -54,7 +54,7 @@ public:
     float     aspectRatio() const;
     float     falloffDistance() const;
 
-    de::GLTexture &    shadowMap();
+    de::GLTexture &    shadowMap() const;
     de::GLFramebuffer &framebuf();
     de::Mat4f          lightMatrix() const;
     de::Mat4f          lightMatrix(de::gl::CubeFace) const;

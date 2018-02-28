@@ -62,6 +62,7 @@ void main(void) {
 
     vec3 outColor = ambient * albedo;
 
+#if 0
     // Directional world lights.
     {
         float dirLight = 1.0;
@@ -82,6 +83,7 @@ void main(void) {
             }
         }
     }
+#endif
 
     // Emissive component.
     outColor += texture(uGBufferEmissive, vUV).rgb;
