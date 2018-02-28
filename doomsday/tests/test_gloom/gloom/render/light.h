@@ -25,13 +25,14 @@
 #include <de/Vector>
 
 #include "gloom/world/entity.h"
+#include "gloom/render/icamera.h"
 
 namespace gloom {
 
 /**
  * Light source.
  */
-class Light
+class Light : public ICamera
 {
 public:
     enum Type { Omni, Directional, Spot };
@@ -56,6 +57,13 @@ public:
     de::GLTexture &    shadowMap();
     de::GLFramebuffer &framebuf();
     de::Mat4f          lightMatrix() const;
+    de::Mat4f          lightMatrix(de::gl::CubeFace) const;
+
+    de::Vec3f cameraPosition() const;
+    de::Vec3f cameraFront() const;
+    de::Vec3f cameraUp() const;
+    de::Mat4f cameraProjection() const;
+    de::Mat4f cameraModelView() const;
 
 private:
     DENG2_PRIVATE(d)

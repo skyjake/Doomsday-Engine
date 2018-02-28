@@ -54,6 +54,8 @@ public:
     de::GLUniform &uLightDir();
     de::GLUniform &uViewSpaceLightDir();
 
+    const ICamera *testCamera() const;
+
 private:
     DENG2_PRIVATE(d)
 };

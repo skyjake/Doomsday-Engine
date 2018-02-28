@@ -1,3 +1,5 @@
+#version 330 core
+
 #include "common/gbuffer_in.glsl"
 #include "common/lightmodel.glsl"
 

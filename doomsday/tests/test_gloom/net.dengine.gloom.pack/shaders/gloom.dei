@@ -1,10 +1,13 @@
-@include <indirect.dei>
-@include <entity.dei>
-
 group gloom {
     shader sky            { path = "sky" }
     shader surface        { path = "surface" }
     shader shadow.surface { path = "shadow" }
+
+    shader shadow_cube.surface {
+        path.vertex   = "shadow_cube.vsh"
+        path.geometry = "common/cube_faces.gsh"
+        path.fragment = "shadow_cube.fsh"
+    }
 
     group ssao {
         shader sample { path = "ssao" }
@@ -34,3 +37,5 @@ group gloom {
         }
     }
 }
+
+@include <entity.dei>

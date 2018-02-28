@@ -1,3 +1,5 @@
+#version 330 core
+
 uniform sampler2D uNoisyFactors;
 
 //#define DENG_SSAO_DISABLE_BLUR

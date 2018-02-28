@@ -1,3 +1,5 @@
+#version 330 core
+
 #include "common/gbuffer_in.glsl"
 
 const int   SAMPLE_COUNT = 64;

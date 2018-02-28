@@ -45,11 +45,14 @@ struct Context {
     de::GLTextureFramebuffer *framebuf;
     LightRender *             lights;
 
-    de::GLUniform uAtlas        {"uTex",            de::GLUniform::Sampler2D};
-    de::GLUniform uCurrentTime  {"uCurrentTime",    de::GLUniform::Float};
-    de::GLUniform uLightMatrix  {"uLightMatrix",    de::GLUniform::Mat4};
-    de::GLUniform uDebugTex     {"uDebugTex",       de::GLUniform::Sampler2D};
-    de::GLUniform uDebugMode    {"uDebugMode",      de::GLUniform::Int};
+    de::GLUniform uAtlas            {"uTex",              de::GLUniform::Sampler2D};
+    de::GLUniform uCurrentTime      {"uCurrentTime",      de::GLUniform::Float};
+    de::GLUniform uLightMatrix      {"uLightMatrix",      de::GLUniform::Mat4};
+    de::GLUniform uLightOrigin      {"uLightOrigin",      de::GLUniform::Vec3};
+    de::GLUniform uLightFarPlane    {"uFarPlane",         de::GLUniform::Float};
+    de::GLUniform uLightCubeMatrices{"uCubeFaceMatrices", de::GLUniform::Mat4Array, 6};
+    de::GLUniform uDebugTex         {"uDebugTex",         de::GLUniform::Sampler2D};
+    de::GLUniform uDebugMode        {"uDebugMode",        de::GLUniform::Int};
 
     void bindTo(de::GLProgram &) const;
 };

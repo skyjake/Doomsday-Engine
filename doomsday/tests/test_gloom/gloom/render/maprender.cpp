@@ -21,6 +21,7 @@
 #include "gloom/render/databuffer.h"
 #include "gloom/render/entityrender.h"
 #include "gloom/render/lightrender.h"
+#include "gloom/render/light.h"
 #include "gloom/render/icamera.h"
 
 #include <de/Drawable>
@@ -53,7 +54,8 @@ DENG2_PIMPL(MapRender)
 
     GLUniform uTexelsPerMeter{"uTexelsPerMeter", GLUniform::Float};
     Drawable  surfaces;
-    GLProgram shadowProgram;
+    GLProgram dirShadowProgram;
+    GLProgram omniShadowProgram;
 
     EntityRender ents;
     LightRender lights;
@@ -122,11 +124,15 @@ DENG2_PIMPL(MapRender)
 
         context.shaders->build(surfaces.program(), "gloom.surface")
             << planes.var << uTexelsPerMeter << textureMetrics.var << texOffsets.var;
-        context.shaders->build(shadowProgram, "gloom.shadow.surface")
+        context.shaders->build(dirShadowProgram, "gloom.shadow.surface")
             << planes.var << context.uLightMatrix << context.lights->uLightDir();
+        context.shaders->build(omniShadowProgram, "gloom.shadow_cube.surface")
+            << planes.var << context.uLightOrigin << context.uLightFarPlane
+            << context.uLightCubeMatrices << context.lights->uLightDir();
 
         context.bindTo(surfaces.program());
-        context.bindTo(shadowProgram);
+        context.bindTo(dirShadowProgram);
+        context.bindTo(omniShadowProgram);
     }
 
     void glInit()
@@ -230,13 +236,17 @@ void MapRender::render()
     d->ents.render();
 
     d->lights.setShadowRenderCallback([this](const Light &light) {
-        d->surfaces.setProgram(d->shadowProgram);
+        d->surfaces.setProgram(light.type() == Light::Directional? d->dirShadowProgram
+                                                                 : d->omniShadowProgram);
         d->surfaces.setState(context().lights->shadowState());
         d->surfaces.draw();
         d->surfaces.setProgram(d->surfaces.program());
         d->surfaces.unsetState();
 
-        d->ents.renderShadows(light);
+        if (light.type() == Light::Directional)
+        {
+            d->ents.renderShadows(light);
+        }
     });
 
     d->lights.render();

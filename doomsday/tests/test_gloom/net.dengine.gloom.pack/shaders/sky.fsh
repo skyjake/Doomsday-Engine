@@ -1,3 +1,5 @@
+#version 330 core
+
 #include "common/gbuffer_out.glsl"
 
 uniform samplerCube uEnvMap;

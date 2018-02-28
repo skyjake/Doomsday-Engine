@@ -233,7 +233,7 @@ void GloomWorld::update(TimeSpan const &elapsed)
     d->tonemap.advanceTime(elapsed);
 }
 
-void GloomWorld::render(ICamera const &camera)
+void GloomWorld::render(const ICamera &camera)
 {
     if (!d->isReady()) return;
 
@@ -247,7 +247,9 @@ void GloomWorld::render(ICamera const &camera)
     d->gbuffer.resize(frameSize);
     d->gbuffer.clear();
 
-    d->renderContext.view.setCamera(camera);
+    const ICamera *cam = nullptr; //d->mapRender.lights().testCamera();
+    if (!cam) cam = &camera;
+    d->renderContext.view.setCamera(*cam);
 
     // Render the G-buffer contents: albedo, normals, depth.
     GLState::push()

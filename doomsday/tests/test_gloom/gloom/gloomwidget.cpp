@@ -263,7 +263,7 @@ Vec3f GloomWidget::cameraUp() const
 Mat4f GloomWidget::cameraProjection() const
 {
     const auto size = rule().size();
-    return Mat4f::perspective(80, size.x / size.y, 0.1f, 2500.f);
+    return Mat4f::perspective(80, size.x / size.y, 0.1f, 1500.f);
 }
 
 Mat4f GloomWidget::cameraModelView() const

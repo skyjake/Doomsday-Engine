@@ -1,3 +1,5 @@
+#version 330 core
+
 #include "common/surface.glsl"
 
 uniform mat4 uLightMatrix;

@@ -1,3 +1,5 @@
+#version 330 core
+
 uniform sampler2D uFramebuf;
 uniform float     uExposure;
 uniform sampler2D uDebugTex;

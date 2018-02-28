@@ -1,3 +1,5 @@
+#version 330 core
+
 uniform sampler2D uFramebuf;
 
 DENG_VAR vec2 vUV;

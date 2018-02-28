@@ -32,6 +32,7 @@ struct LightData {
     Vec3f lightIntensity;
     Vec3f lightDir;
     float radius;
+    //int shadowMapIndex;
     LIBGUI_DECLARE_VERTEX_FORMAT(4)
 };
 
@@ -40,6 +41,7 @@ internal::AttribSpec const LightData::_spec[4] = {
     { internal::AttribSpec::Intensity, 3, GL_FLOAT, false, sizeof(LightData), 3 * 4 },
     { internal::AttribSpec::Direction, 3, GL_FLOAT, false, sizeof(LightData), 6 * 4 },
     { internal::AttribSpec::TexCoord,  1, GL_FLOAT, false, sizeof(LightData), 9 * 4 },
+    //{ internal::AttribSpec::Index,     1, GL_FLOAT, false, sizeof(LightData), 10 * 4 },
 };
 LIBGUI_VERTEX_FORMAT_SPEC(LightData, 10 * 4)
 
@@ -66,6 +68,8 @@ DENG2_PIMPL(LightRender)
     GLUniform uViewSpaceLightDir   {"uViewSpaceLightDir",    GLUniform::Vec3};
     GLUniform uViewToLightMatrix   {"uViewToLightMatrix",    GLUniform::Mat4};
     GLUniform uShadowMap           {"uShadowMap",            GLUniform::Sampler2D}; // <----TESTING-----
+
+    //GLUniform
 
     Impl(Public *i) : Base(i)
     {}
@@ -221,14 +225,27 @@ void LightRender::render()
         {
             light->framebuf().clear(GLFramebuffer::Depth | GLFramebuffer::FullClear);
 
-            d->uLightDir = light->direction();
+            d->uLightDir             = light->direction();
+            context().uLightOrigin   = light->origin();
+            context().uLightFarPlane = light->falloffDistance() * 5;
+
+            if (light->type() == Light::Omni)
+            {
+                for (int i = 0; i < 6; ++i)
+                {
+                    context().uLightCubeMatrices.set(i, light->lightMatrix(gl::CubeFace(i)));
+                }
+            }
+            else
+            {
+                context().uLightMatrix = light->lightMatrix();
+            }
             d->uViewSpaceLightDir =
                 context().view.uWorldToViewMatrix3.toMat3f() * light->direction();
 
-            d->shadowState.setTarget(light->framebuf())
+            d->shadowState
+                    .setTarget(light->framebuf())
                     .setViewport(Rectangleui::fromSize(light->framebuf().size()));
-
-            context().uLightMatrix = light->lightMatrix();
 
             d->callback(*light);
         }
@@ -270,7 +287,9 @@ void LightRender::renderLighting()
         LightData instance{light->origin(),
                            light->intensity(),
                            light->direction(),
-                           light->falloffDistance()};
+                           light->falloffDistance(),
+                          // -1
+                          };
         lightData << instance;
     }
 
@@ -313,7 +332,6 @@ void LightRender::createLights()
 {
     d->lights.clear();
     d->activeLights.clear();
-
     d->activeLights.insert(d->skyLight.get());
 
     const auto &map = *context().map;
@@ -324,8 +342,8 @@ void LightRender::createLights()
         {
             auto light = std::make_shared<Light>();
             light->setEntity(ent);
-            light->setCastShadows(false);
             light->setType(Light::Omni);
+            light->setCastShadows(true);
             d->lights.insert(ent->id(), light);
             d->activeLights.insert(light.get());
         }
@@ -342,16 +360,6 @@ Vec3f LightRender::direction() const
     return d->skyLight->direction();
 }
 
-//GLProgram &LightRender::surfaceProgram()
-//{
-//    return d->surfaceProgram;
-//}
-
-//GLProgram &LightRender::entityProgram()
-//{
-//    return d->entityProgram;
-//}
-
 GLState &LightRender::shadowState()
 {
     return d->shadowState;
@@ -365,6 +373,13 @@ GLUniform &gloom::LightRender::uLightDir()
 GLUniform &LightRender::uViewSpaceLightDir()
 {
     return d->uViewSpaceLightDir;
+}
+
+const ICamera *LightRender::testCamera() const
+{
+    if (d->lights.isEmpty()) return nullptr;
+    qDebug() << d->lights.begin().value()->entity()->id();
+    return d->lights.begin().value().get();
 }
 
 } // namespace gloom
