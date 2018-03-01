@@ -102,8 +102,8 @@ DENG2_PIMPL(LightRender)
             .setStencilOp(gl::StencilOp::Keep, gl::StencilOp::DecrementWrap, gl::StencilOp::Keep, gl::Back);
 
         shadingState
-            .setBlend(true)
-            .setBlendFunc(gl::One, gl::One)
+            //.setBlend(true)
+            //.setBlendFunc(gl::One, gl::One)
             .setDepthTest(false)
             .setDepthWrite(false)
             .setCull(gl::Front)
@@ -119,12 +119,12 @@ DENG2_PIMPL(LightRender)
         ctx.shaders->build(stencilPassProgram, "gloom.lighting.stencil")
                 << ctx.view.uMvpMatrix
                 << ctx.view.uModelViewMatrix
-                << ctx.view.uWorldToViewMatrix3;
+                << ctx.view.uWorldToViewRotate;
 
         ctx.shaders->build(shadingProgram, "gloom.lighting.sources")
                 << ctx.view.uMvpMatrix
                 << ctx.view.uModelViewMatrix
-                << ctx.view.uWorldToViewMatrix3
+                << ctx.view.uWorldToViewRotate
                 << ctx.view.uInverseProjMatrix
                 << ctx.gbuffer->uGBufferAlbedo()
                 << ctx.gbuffer->uGBufferEmissive()
@@ -241,7 +241,7 @@ void LightRender::render()
 
             d->uLightDir             = light->direction();
             context().uLightOrigin   = light->origin();
-            context().uLightFarPlane = light->falloffDistance() * 5;
+            context().uLightFarPlane = light->falloffDistance();
 
             if (light->type() == Light::Omni)
             {
@@ -255,7 +255,7 @@ void LightRender::render()
                 context().uLightMatrix = light->lightMatrix();
             }
             d->uViewSpaceLightDir =
-                context().view.uWorldToViewMatrix3.toMat3f() * light->direction();
+                context().view.uWorldToViewRotate.toMat3f() * light->direction();
 
             d->shadowState
                     .setTarget(light->framebuf())
@@ -278,7 +278,7 @@ void LightRender::renderLighting()
 
         ctx.uLightMatrix      = lightMatrix;
         d->uLightIntensity    = d->skyLight->intensity();
-        d->uViewSpaceLightDir = ctx.view.uWorldToViewMatrix3.toMat3f() * d->skyLight->direction();
+        d->uViewSpaceLightDir = ctx.view.uWorldToViewRotate.toMat3f() * d->skyLight->direction();
         d->uViewSpaceLightOrigin = ctx.view.camera->cameraModelView() * d->skyLight->origin();
         d->uViewToLightMatrix    = lightMatrix * ctx.view.camera->cameraModelView().inverse();
         d->uShadowMap            = d->skyLight->shadowMap();
@@ -304,9 +304,8 @@ void LightRender::renderLighting()
         int shadowIndex = -1;
         if (light->type() == Light::Omni && light->castShadows())
         {
-            shadowIndex = counter;
-            d->uShadowMaps[counter] = light->shadowMap();
-            counter++;
+            shadowIndex = counter++;
+            d->uShadowMaps[shadowIndex] = light->shadowMap();
         }
 
         LightData instance{light->origin(),

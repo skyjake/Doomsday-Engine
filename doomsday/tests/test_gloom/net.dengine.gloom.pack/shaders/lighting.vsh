@@ -2,7 +2,7 @@
 
 uniform mat4 uMvpMatrix;
 uniform mat4 uModelViewMatrix;
-uniform mat3 uWorldToViewMatrix;
+uniform mat3 uWorldToViewRotate;
 
 DENG_ATTRIB vec4  aVertex;
 DENG_ATTRIB float aUV;
@@ -26,7 +26,7 @@ void main(void) {
 
     vec4 origin = uModelViewMatrix * vec4(aOrigin, 1.0);
     vOrigin    = origin.xyz / origin.w;
-    vDirection = uWorldToViewMatrix * aDirection;
+    vDirection = uWorldToViewRotate * aDirection;
     vIntensity = aIntensity;
     vRadius   *= 0.95; // volume is not a perfect sphere; avoid reaching edges
 }

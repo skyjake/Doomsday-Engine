@@ -52,7 +52,7 @@ DENG2_PIMPL(Light)
 
             shadow.reset(new Shadow);
             shadow->map.setAutoGenMips(false);
-            shadow->map.setComparisonMode(gl::CompareRefToTexture, gl::LessOrEqual);
+            //shadow->map.setComparisonMode(gl::CompareRefToTexture, gl::LessOrEqual);
             shadow->map.setFilter(gl::Linear, gl::Linear, gl::MipNone);
 
             if (type == Directional)
@@ -190,27 +190,28 @@ Mat4f Light::cameraModelView() const
 
 Mat4f Light::lightMatrix(gl::CubeFace face) const
 {
-    const Mat4f proj = Mat4f::perspective(90.0f, 1.0f, .1f, falloffDistance());
+    const Mat4f proj = Mat4f::perspective(90.0f, 1.0f, .05f, falloffDistance());
+    const auto pos = origin();
 
     switch (face)
     {
     case gl::PositiveX:
-        return proj * Mat4f::lookAt(d->origin + Vec3f(1, 0, 0),  d->origin, Vec3f(0, -1, 0));
+        return proj * Mat4f::lookAt(pos + Vec3f(-1, 0, 0), pos, Vec3f(0, 1, 0));
 
     case gl::NegativeX:
-        return proj * Mat4f::lookAt(d->origin + Vec3f(-1, 0, 0), d->origin, Vec3f(0, -1, 0));
-
-    case gl::PositiveZ:
-        return proj * Mat4f::lookAt(d->origin + Vec3f(0, 0, 1),  d->origin, Vec3f(0, -1, 0));
-
-    case gl::NegativeZ:
-        return proj * Mat4f::lookAt(d->origin + Vec3f(0, 0, -1), d->origin, Vec3f(0, -1, 0));
+        return proj * Mat4f::lookAt(pos + Vec3f(1, 0, 0), pos, Vec3f(0, 1, 0));
 
     case gl::PositiveY:
-        return proj * Mat4f::lookAt(d->origin + Vec3f(0, 1, 0),  d->origin, Vec3f(0, 0, 1));
+        return proj * Mat4f::lookAt(pos + Vec3f(0, -1, 0), pos, Vec3f(0, 0, 1));
 
     case gl::NegativeY:
-        return proj * Mat4f::lookAt(d->origin + Vec3f(0, -1, 0), d->origin, Vec3f(0, 0, -1));
+        return proj * Mat4f::lookAt(pos + Vec3f(0, 1, 0), pos, Vec3f(0, 0, -1));
+
+    case gl::PositiveZ:
+        return proj * Mat4f::lookAt(pos + Vec3f(0, 0, 1),  pos, Vec3f(0, 1, 0));
+
+    case gl::NegativeZ:
+        return proj * Mat4f::lookAt(pos + Vec3f(0, 0, -1), pos, Vec3f(0, 1, 0));
     }
 }
 

@@ -94,7 +94,7 @@ DENG2_PIMPL_NOREF(MapBuild)
 
             {
                 const bool buildFloor   = true;
-                const bool buildCeiling = false;
+                const bool buildCeiling = true;
 
                 const auto &planeVerts = sectorPlaneVerts[sectorId];
                 const auto &floor      = planeVerts.front();

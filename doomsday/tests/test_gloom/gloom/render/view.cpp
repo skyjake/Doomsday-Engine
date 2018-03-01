@@ -24,12 +24,12 @@ void View::setCamera(const ICamera &camera)
 {
     this->camera = &camera;
 
-    uMvpMatrix          = camera.cameraModelViewProjection();
-    uModelViewMatrix    = camera.cameraModelView();
-    uWorldToViewMatrix3 = camera.cameraModelView().submatrix(0, 0);
-    uViewToWorldRotate  = uWorldToViewMatrix3.toMat3f().inverse();
-    uProjMatrix         = camera.cameraProjection();
-    uInverseProjMatrix  = camera.cameraProjection().inverse();
+    uMvpMatrix         = camera.cameraModelViewProjection();
+    uModelViewMatrix   = camera.cameraModelView();
+    uWorldToViewRotate = camera.cameraModelView().submatrix(0, 0);
+    uViewToWorldRotate = uWorldToViewRotate.toMat3f().inverse();
+    uProjMatrix        = camera.cameraProjection();
+    uInverseProjMatrix = camera.cameraProjection().inverse();
 }
 
 } // namespace gloom
