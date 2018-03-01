@@ -143,10 +143,10 @@ DENG2_PIMPL(GLTexture)
         switch (face)
         {
         case PositiveX: return GL_TEXTURE_CUBE_MAP_POSITIVE_X;
-        case PositiveY: return GL_TEXTURE_CUBE_MAP_POSITIVE_Y;
-        case PositiveZ: return GL_TEXTURE_CUBE_MAP_POSITIVE_Z;
         case NegativeX: return GL_TEXTURE_CUBE_MAP_NEGATIVE_X;
+        case PositiveY: return GL_TEXTURE_CUBE_MAP_POSITIVE_Y;
         case NegativeY: return GL_TEXTURE_CUBE_MAP_NEGATIVE_Y;
+        case PositiveZ: return GL_TEXTURE_CUBE_MAP_POSITIVE_Z;
         case NegativeZ: return GL_TEXTURE_CUBE_MAP_NEGATIVE_Z;
         }
         return GL_TEXTURE_CUBE_MAP_POSITIVE_X;
