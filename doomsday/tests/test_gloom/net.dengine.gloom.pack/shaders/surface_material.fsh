@@ -5,19 +5,20 @@
 
 uniform sampler2D uTex;
 uniform sampler2D uTextureMetrics;
-uniform float     uTexelsPerMeter;
 
      DENG_VAR vec2  vUV;
      DENG_VAR vec3  vNormal;
-flat DENG_VAR float vTexture;
+flat DENG_VAR float vMaterial;
 flat DENG_VAR uint  vFlags;
 
 void main(void) {
-    uint texIndex = uint(vTexture + 0.5);
+    uint matIndex = uint(vMaterial + 0.5);
 
-    vec4 uvRect    = texelFetch(uTextureMetrics, ivec2(0, texIndex), 0);
-    vec4 texelSize = texelFetch(uTextureMetrics, ivec2(1, texIndex), 0);
-    vec2 texScale  = vec2(uTexelsPerMeter) / texelSize.xy;
+    // Albedo color.
+    vec4 uvRect          = texelFetch(uTextureMetrics, ivec2(0, matIndex), 0);
+    vec3 texelSize       = texelFetch(uTextureMetrics, ivec2(1, matIndex), 0).xyz;
+    float texelsPerMeter = texelSize.z;
+    vec2 texScale        = vec2(texelsPerMeter) / texelSize.xy;
 
     vec2 normUV = vUV * texScale;
     vec2 uv = uvRect.xy + fract(normUV) * uvRect.zw;

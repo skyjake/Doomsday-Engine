@@ -1,19 +1,19 @@
 #version 330 core
 
-#include "common/flags.glsl"
+#include "common/defs.glsl"
 #include "common/surface.glsl"
 
 uniform mat4        uMvpMatrix;
 uniform sampler2D   uTexOffsets;
 uniform float       uCurrentTime;
 
-DENG_ATTRIB float   aTexture0; // front texture
-DENG_ATTRIB float   aTexture1; // back texture
+DENG_ATTRIB float   aTexture0; // front material
+DENG_ATTRIB float   aTexture1; // back material
 DENG_ATTRIB vec2    aIndex1; // tex offset (front, back)
 
      DENG_VAR vec2  vUV;
      DENG_VAR vec3  vNormal;
-flat DENG_VAR float vTexture;
+flat DENG_VAR float vMaterial;
 flat DENG_VAR uint  vFlags;
 
 vec4 fetchTexOffset(uint offsetIndex) {
@@ -28,15 +28,14 @@ void main(void) {
     vUV         = aUV.xy;
     vFlags      = surface.flags;
     vNormal     = surface.normal;
-    vTexture    = floatBitsToUint(surface.isFrontSide? aTexture0 : aTexture1);
+    vMaterial   = floatBitsToUint(surface.isFrontSide? aTexture0 : aTexture1);
 
-    // Texture coordinate mapping.
+    // Generate texture coordinates.
     if (testFlag(surface.flags, Surface_WorldSpaceYToTexCoord)) {
         vUV.t = surface.vertex.y -
             (surface.isFrontSide ^^ testFlag(surface.flags, Surface_AnchorTopPlane)?
             surface.botPlaneY : surface.topPlaneY);
     }
-
     if (testFlag(surface.flags, Surface_WorldSpaceXZToTexCoords)) {
         vUV += aVertex.xz;
     }

@@ -1,9 +1,22 @@
+# Gloom Renderer Shaders
+#
+# - sky
+# - surface
+# - entity
+# - light
+# - ssao
+# - tonemap
+
 group gloom {
-    shader sky            { path = "sky" }
+    shader sky { path = "sky" }
 
     group surface {
-        shader material { path = "surface_material" }
-        shader shadow.dir { path = "surface_shadow_dir" }
+        shader material {
+            path = "surface_material"
+        }
+        shader shadow.dir {
+            path = "surface_shadow_dir"
+        }
         shader shadow.omni {
             path.vertex   = "surface_shadow_omni.vsh"
             path.geometry = "common/cube_faces.gsh"
@@ -11,8 +24,24 @@ group gloom {
         }
     }
 
+    group entity {
+        shader material {
+            path = "entity_material"
+        }
+        shader shadow.dir {
+            path = "entity_shadow_dir"
+        }
+        shader shadow.omni {
+            path.vertex   = "entity_shadow_omni.vsh"
+            path.geometry = "common/cube_faces_uv.gsh"
+            path.fragment = "entity_shadow_omni.fsh"
+        }
+    }
+
     group light {
-        shader global { path = "light_gi" }
+        shader global {
+            path = "light_global"
+        }
         shader stencil {
             path.vertex = "light_sources.vsh"
             fragment = "void main(void) {}"
@@ -44,5 +73,3 @@ group gloom {
         }
     }
 }
-
-@include <entity.dei>

@@ -52,7 +52,7 @@ DENG2_PIMPL(MapRender)
     DataBuffer<float>         planes        {"uPlanes",         Image::R_32f};
     DataBuffer<TexOffsetData> texOffsets    {"uTexOffsets",     Image::RGBA_32f};
 
-    GLUniform uTexelsPerMeter{"uTexelsPerMeter", GLUniform::Float};
+    //GLUniform uTexelsPerMeter{"uTexelsPerMeter", GLUniform::Float};
     Drawable  surfaces;
     GLProgram dirShadowProgram;
     GLProgram omniShadowProgram;
@@ -79,13 +79,15 @@ DENG2_PIMPL(MapRender)
         textureMetrics.clear();
         textures.clear();
 
+        const float texelsPerMeter = 200.f;
+
         for (auto i = loadedTextures.begin(); i != loadedTextures.end(); ++i)
         {
             // Load up metrics in an array.
             const Rectanglei rect  = self().context().atlas->imageRect(i.value());
             const Rectanglef rectf = self().context().atlas->imageRectf(i.value());
             const uint32_t   texId = textureMetrics.append(
-                Metrics{{rectf.xywh()}, {Vec4f(rect.width(), rect.height())}});
+                Metrics{{rectf.xywh()}, {Vec4f(rect.width(), rect.height(), texelsPerMeter)}});
             textures.insert(i.key(), texId);
         }
 
@@ -124,7 +126,7 @@ DENG2_PIMPL(MapRender)
 
         context.shaders->build(surfaces.program(), "gloom.surface.material")
             << planes.var
-            << uTexelsPerMeter
+            //<< uTexelsPerMeter
             << textureMetrics.var
             << texOffsets.var;
 
@@ -149,7 +151,7 @@ DENG2_PIMPL(MapRender)
         ents  .glInit(self().context());
         lights.glInit(self().context());
 
-        uTexelsPerMeter = 200;
+//        uTexelsPerMeter = 200;
 
         // Load some textures.
         for (const char *name :

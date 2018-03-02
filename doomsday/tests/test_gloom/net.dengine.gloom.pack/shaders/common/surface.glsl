@@ -1,5 +1,5 @@
-#ifndef GLOOM_PLANES_H
-#define GLOOM_PLANES_H
+#ifndef GLOOM_SURFACE_H
+#define GLOOM_SURFACE_H
 
 uniform sampler2D uPlanes;
 
@@ -27,7 +27,7 @@ float Gloom_FetchPlaneY(uint planeIndex) {
 
 Surface Gloom_LoadVertexSurface(void) {
     Surface surface;
-    
+
     surface.flags = floatBitsToUint(aFlags);
     surface.vertex = aVertex;
 
@@ -46,4 +46,4 @@ Surface Gloom_LoadVertexSurface(void) {
     return surface;
 }
 
-#endif // GLOOM_PLANES_H
+#endif // GLOOM_SURFACE_H
