@@ -186,11 +186,11 @@ DENG2_PIMPL(GLProgram)
     {
         DENG2_ASSERT(name != 0);
 
-        LIBGUI_GL.glLinkProgram(name);
+        GL.glLinkProgram(name);
 
         // Was linking successful?
         GLint ok;
-        LIBGUI_GL.glGetProgramiv(name, GL_LINK_STATUS, &ok);
+        GL.glGetProgramiv(name, GL_LINK_STATUS, &ok);
         if (!ok)
         {
             throw LinkerError("GLProgram::link", "Linking failed:\n" + getInfoLog());

@@ -436,7 +436,7 @@ public:
         return m;
     }
     static Matrix4 lookAt(Vec3 const &target, Vec3 const &eyePos, Vec3 const &up) {
-        return frame(target - eyePos, up) * translate(-eyePos);
+        return frame(target - eyePos, up, true /* right-handed */) * translate(-eyePos);
     }
     static Matrix4 frame(Vec3 const &front, Vec3 const &up, bool mirrored = false) {
         return unnormalizedFrame(front.normalize(), up.normalize(), mirrored);

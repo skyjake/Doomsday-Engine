@@ -309,6 +309,7 @@ void GLTexture::setComparisonMode(gl::ComparisonMode mode, gl::Comparison func)
 {
     d->compareMode = mode;
     d->compareFunc = func;
+    d->flags |= ParamsChanged;
 }
 
 Filter GLTexture::minFilter() const
