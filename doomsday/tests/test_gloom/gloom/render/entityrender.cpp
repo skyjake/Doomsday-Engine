@@ -91,16 +91,16 @@ DENG2_PIMPL(EntityRender)
             idx++;
         }
 
-        GloomApp::shaders().build(program, "gloom.entity")
+        GloomApp::shaders().build(program, "gloom.entity.material")
             << context.view.uMvpMatrix
             << context.view.uWorldToViewRotate
             << context.uAtlas;
 
-        GloomApp::shaders().build(dirShadowProgram, "gloom.shadow.entity")
+        GloomApp::shaders().build(dirShadowProgram, "gloom.entity.shadow.dir")
             << context.uLightMatrix
             << context.uAtlas;
 
-        GloomApp::shaders().build(omniShadowProgram, "gloom.shadow_cube.entity")
+        GloomApp::shaders().build(omniShadowProgram, "gloom.entity.shadow.omni")
             << context.uLightOrigin
             << context.uLightFarPlane
             << context.uLightCubeMatrices

@@ -1,4 +1,4 @@
-shader gloom.entity {
+shader gloom.entity.material {
     vertex = "
         #include 'common/bones.glsl'
 
@@ -41,7 +41,7 @@ shader gloom.entity {
         }"
 }
 
-shader gloom.shadow.entity {
+shader gloom.entity.shadow.dir {
     vertex = "
         #include 'common/bones.glsl'
 
@@ -71,7 +71,7 @@ shader gloom.shadow.entity {
         }"
 }
 
-shader gloom.shadow_cube.entity {
+shader gloom.entity.shadow.omni {
     vertex = "
         #include 'common/bones.glsl'
 

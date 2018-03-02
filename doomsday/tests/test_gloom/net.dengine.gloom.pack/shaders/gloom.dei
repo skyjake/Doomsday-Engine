@@ -1,38 +1,45 @@
 group gloom {
     shader sky            { path = "sky" }
-    shader surface        { path = "surface" }
-    shader shadow.surface { path = "shadow" }
 
-    shader shadow_cube.surface {
-        path.vertex   = "shadow_cube.vsh"
-        path.geometry = "common/cube_faces.gsh"
-        path.fragment = "shadow_cube.fsh"
+    group surface {
+        shader material { path = "surface_material" }
+        shader shadow.dir { path = "surface_shadow_dir" }
+        shader shadow.omni {
+            path.vertex   = "surface_shadow_omni.vsh"
+            path.geometry = "common/cube_faces.gsh"
+            path.fragment = "surface_shadow_omni.fsh"
+        }
+    }
+
+    group light {
+        shader global { path = "light_gi" }
+        shader stencil {
+            path.vertex = "light_sources.vsh"
+            fragment = "void main(void) {}"
+        }
+        shader sources {
+            path.vertex = "light_sources.vsh"
+            path.fragment = "light_sources.fsh"
+        }
     }
 
     group ssao {
-        shader sample { path = "ssao" }
+        shader sample {
+            path.vertex = "ssao.vsh"
+            path.fragment = "ssao_sample.fsh"
+        }
         shader denoise {
             path.vertex   = "ssao.vsh"
             path.fragment = "ssao_denoise.fsh"
         }
     }
 
-    group lighting {
-        shader global { path = "gi" }
-        shader stencil {
-            path.vertex = "lighting.vsh"
-            fragment = "void main(void) {}"
-        }
-        shader sources { path = "lighting" }
-    }
-
     group tonemap {
         shader exposure {
             path.vertex = "common/mvp_vertex_uv.vsh"
-            path.fragment = "tonemap.fsh"
+            path.fragment = "tonemap_exposure.fsh"
         }
-        shader sample {
-            path.vertex = "common/mvp_vertex_uv.vsh"
+        shader sample inherits exposure {
             path.fragment = "tonemap_sample.fsh"
         }
     }

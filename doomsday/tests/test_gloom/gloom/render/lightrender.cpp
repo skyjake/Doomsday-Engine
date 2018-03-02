@@ -116,12 +116,12 @@ DENG2_PIMPL(LightRender)
 
         auto &ctx = self().context();
 
-        ctx.shaders->build(stencilPassProgram, "gloom.lighting.stencil")
+        ctx.shaders->build(stencilPassProgram, "gloom.light.stencil")
                 << ctx.view.uMvpMatrix
                 << ctx.view.uModelViewMatrix
                 << ctx.view.uWorldToViewRotate;
 
-        ctx.shaders->build(shadingProgram, "gloom.lighting.sources")
+        ctx.shaders->build(shadingProgram, "gloom.light.sources")
                 << ctx.view.uMvpMatrix
                 << ctx.view.uModelViewMatrix
                 << ctx.view.uWorldToViewRotate
@@ -139,7 +139,7 @@ DENG2_PIMPL(LightRender)
                 << ctx.view.uViewToWorldRotate;
 
         giQuad.glInit(self().context());
-        ctx.shaders->build(giQuad.program(), "gloom.lighting.global")
+        ctx.shaders->build(giQuad.program(), "gloom.light.global")
                 << ctx.view.uInverseProjMatrix
                 << ctx.gbuffer->uGBufferAlbedo()
                 << ctx.gbuffer->uGBufferEmissive()

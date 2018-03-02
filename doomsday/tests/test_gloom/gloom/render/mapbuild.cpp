@@ -163,13 +163,13 @@ DENG2_PIMPL_NOREF(MapBuild)
 
                 auto makeQuad = [this, &indices, &verts](const String &  frontTextureName,
                                                          const String &  backTextureName,
-                                                         const Vec3f &normal,
+                                                         const Vec3f &   normal,
                                                          const uint32_t *planeIndex,
                                                          uint32_t        flags,
-                                                         const Vec3f &p1,
-                                                         const Vec3f &p2,
-                                                         const Vec3f &p3,
-                                                         const Vec3f &p4,
+                                                         const Vec3f &   p1,
+                                                         const Vec3f &   p2,
+                                                         const Vec3f &   p3,
+                                                         const Vec3f &   p4,
                                                          float           length,
                                                          float           rotation) {
                     const Buffer::Index baseIndex = Buffer::Index(verts.size());
@@ -220,7 +220,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                     const int      dir    = line.sectors[0] == sectorId? 1 : 0;
                     const ID       start  = line.points[dir^1];
                     const ID       end    = line.points[dir];
-                    const Vec3f normal = worldNormalVector(line);
+                    const Vec3f    normal = worldNormalVector(line);
                     const float    length = float((floor[end] - floor[start]).length());
                     const uint32_t planeIndex[2] = {planeMapper[map.floorPlaneId(sectorId)],
                                                     planeMapper[map.ceilingPlaneId(sectorId)]};
