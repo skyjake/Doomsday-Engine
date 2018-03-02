@@ -94,7 +94,7 @@ DENG2_PIMPL_NOREF(MapBuild)
 
             {
                 const bool buildFloor   = true;
-                const bool buildCeiling = true;
+                const bool buildCeiling = false;
 
                 const auto &planeVerts = sectorPlaneVerts[sectorId];
                 const auto &floor      = planeVerts.front();
@@ -260,17 +260,21 @@ DENG2_PIMPL_NOREF(MapBuild)
                                  backPlaneVerts.front()[end],
                                  length,
                                  0);
-                        makeQuad("world.test",
-                                 "world.test2",
-                                 normal,
-                                 topIndex,
-                                 MapVertex::WorldSpaceYToTexCoord,
-                                 backPlaneVerts.back()[start],
-                                 backPlaneVerts.back()[end],
-                                 ceiling[start],
-                                 ceiling[end],
-                                 length,
-                                 0);
+
+                        if (false)
+                        {
+                            makeQuad("world.test",
+                                     "world.test2",
+                                     normal,
+                                     topIndex,
+                                     MapVertex::WorldSpaceYToTexCoord,
+                                     backPlaneVerts.back()[start],
+                                     backPlaneVerts.back()[end],
+                                     ceiling[start],
+                                     ceiling[end],
+                                     length,
+                                     0);
+                        }
                     }
                 }
             }

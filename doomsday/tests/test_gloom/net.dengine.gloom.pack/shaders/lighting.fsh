@@ -4,7 +4,8 @@
 #include "common/lightmodel.glsl"
 
 uniform mat3 uViewToWorldRotate;
-uniform samplerCube/*Shadow*/ uShadowMaps[6];
+uniform samplerCubeShadow uShadowMaps[6];
+// uniform samplerCube uShadowMaps[6];
 
 //uniform float uShadowFarPlanes[6]; // isn't vRadius enough?
 
@@ -17,7 +18,6 @@ flat DENG_VAR int   vShadowIndex;
 void main(void) {
     vec3 pos      = GBuffer_FragViewSpacePos().xyz;
     vec3 normal   = GBuffer_FragViewSpaceNormal();
-    vec3 lightVec = normalize(vOrigin - pos);
 
     out_FragColor = vec4(0.0); // By default no color is received.
 
@@ -31,12 +31,48 @@ void main(void) {
     if (vShadowIndex >= 0) {
         vec3 vsRay = vOrigin - pos;
         float len = length(vsRay);
+        //vec3 lightVec = vsRay / len;
         /*lit = texture(uShadowMaps[vShadowIndex], vec4(uViewToWorldRotate * vsRay, len/25.0));*/
-        vec3 wRay = uViewToWorldRotate * vsRay;
-        wRay.z = -wRay.z;
-        out_FragColor = vec4(2.0 * vec3(texture(uShadowMaps[vShadowIndex],
-            wRay).r/vRadius), 1.0);
-        return;
+        vec3 worldRay = uViewToWorldRotate * vsRay;
+        //float bias = 0.99 - max(0.05 * (dot(-normalize(vsRay), normal) + 1.0), 0.005);
+        //len -= bias;
+        //len *= 0.99;
+        len *= 0.98;
+        //len *= bias;
+        // lit = (vRadius * texture(uShadowMaps[vShadowIndex], worldRay).r)
+            // >= len? 1.0 : 0.0;
+
+#if 0
+        // Percentage-closer filtering.
+        {
+            //lit   1.0;
+            lit = 0.0;
+            float bias    = 0.95;
+            float samples = 4.0;
+            float offset  = 0.05;
+            for (float x = -offset; x < offset; x += offset / (samples * 0.5))
+            {
+                for (float y = -offset; y < offset; y += offset / (samples * 0.5))
+                {
+                    for (float z = -offset; z < offset; z += offset / (samples * 0.5))
+                    {
+                        vec3 vec = worldRay + vec3(x, y, z);
+                        float ref = (length(vec) * bias) / vRadius;
+                        lit += texture(uShadowMaps[vShadowIndex], vec4(vec, ref));
+                        //closestDepth *= far_plane;   // Undo mapping [0;1]
+                        //if(currentDepth - bias > closestDepth)
+                            //shadow += 1.0;
+                    }
+                }
+            }
+            lit /= (samples * samples * samples);
+        }
+#endif
+
+        float ref = len / vRadius;
+        lit = texture(uShadowMaps[vShadowIndex], vec4(worldRay, ref));
+        //out_FragColor = vec4(vec3(lit), 1.0);
+        //return;
     }
     if (lit <= 0.001) {
         return;
@@ -45,8 +81,10 @@ void main(void) {
     vec4 albedo = texelFetch(uGBufferAlbedo, ivec2(gl_FragCoord.xy), 0);
     vec4 specGloss = vec4(0.2);
 
-    Light light = Light(vOrigin, vDirection, vIntensity, vRadius, 1.0);
+    // Radius is scaled: volume is not a perfect sphere, avoid reaching edges.
+
+    Light light = Light(vOrigin, vDirection, vIntensity, vRadius * 0.95, 1.0);
     SurfacePoint surf = SurfacePoint(pos, normal, albedo.rgb, specGloss);
 
-    out_FragColor = vec4(vec3(lit) /* * Gloom_BlinnPhong(light, surf) */, 0.0);
+    out_FragColor = vec4(lit * Gloom_BlinnPhong(light, surf), 0.0);
 }

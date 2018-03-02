@@ -28,5 +28,4 @@ void main(void) {
     vOrigin    = origin.xyz / origin.w;
     vDirection = uWorldToViewRotate * aDirection;
     vIntensity = aIntensity;
-    vRadius   *= 0.95; // volume is not a perfect sphere; avoid reaching edges
 }

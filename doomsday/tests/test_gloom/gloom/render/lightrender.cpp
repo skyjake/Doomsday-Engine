@@ -102,8 +102,8 @@ DENG2_PIMPL(LightRender)
             .setStencilOp(gl::StencilOp::Keep, gl::StencilOp::DecrementWrap, gl::StencilOp::Keep, gl::Back);
 
         shadingState
-            //.setBlend(true)
-            //.setBlendFunc(gl::One, gl::One)
+            .setBlend(true)
+            .setBlendFunc(gl::One, gl::One)
             .setDepthTest(false)
             .setDepthWrite(false)
             .setCull(gl::Front)
@@ -245,6 +245,7 @@ void LightRender::render()
 
             if (light->type() == Light::Omni)
             {
+                d->shadowState.setCull(gl::Front);
                 for (int i = 0; i < 6; ++i)
                 {
                     context().uLightCubeMatrices.set(i, light->lightMatrix(gl::CubeFace(i)));
@@ -252,6 +253,7 @@ void LightRender::render()
             }
             else
             {
+                d->shadowState.setCull(gl::None);
                 context().uLightMatrix = light->lightMatrix();
             }
             d->uViewSpaceLightDir =
@@ -300,6 +302,12 @@ void LightRender::renderLighting()
 
     for (const auto *light : d->activeLights)
     {
+        if (light->type() == Light::Directional)
+        {
+            // Already shaded during GI pass.
+            continue;
+        }
+
         // Assign shadow maps.
         int shadowIndex = -1;
         if (light->type() == Light::Omni && light->castShadows())
@@ -388,7 +396,7 @@ GLState &LightRender::shadowState()
     return d->shadowState;
 }
 
-GLUniform &gloom::LightRender::uLightDir()
+GLUniform &LightRender::uLightDir()
 {
     return d->uLightDir;
 }

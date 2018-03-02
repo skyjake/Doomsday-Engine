@@ -20,6 +20,7 @@
 #include "gloom/world/map.h"
 #include "gloom/render/icamera.h"
 #include "gloom/render/lightrender.h"
+#include "gloom/render/light.h"
 #include "src/gloomapp.h"
 
 #include <de/PackageLoader>
@@ -46,7 +47,8 @@ DENG2_PIMPL(EntityRender)
     EntityMap     ents;
     ModelDrawable entityModels[3];
     GLProgram     program;
-    GLProgram     shadowProgram;
+    GLProgram     dirShadowProgram;
+    GLProgram     omniShadowProgram;
 
     Impl(Public *i)
         : Base(i)
@@ -94,8 +96,14 @@ DENG2_PIMPL(EntityRender)
             << context.view.uWorldToViewRotate
             << context.uAtlas;
 
-        GloomApp::shaders().build(shadowProgram, "gloom.shadow.entity")
+        GloomApp::shaders().build(dirShadowProgram, "gloom.shadow.entity")
             << context.uLightMatrix
+            << context.uAtlas;
+
+        GloomApp::shaders().build(omniShadowProgram, "gloom.shadow_cube.entity")
+            << context.uLightOrigin
+            << context.uLightFarPlane
+            << context.uLightCubeMatrices
             << context.uAtlas;
     }
 
@@ -132,7 +140,7 @@ DENG2_PIMPL(EntityRender)
         float fullDist = 500;
         const auto entities = ents.listRegionBackToFront(camera.cameraPosition(), fullDist);
 
-        InstanceBuf ibuf;
+        InstanceBuf ibuf; // TODO: it's enough to create this once per frame
 
         // Draw all model types.
         int entType = Entity::Tree1;
@@ -209,7 +217,8 @@ void EntityRender::render()
 void EntityRender::renderShadows(const Light &light)
 {
     GLState::push() = context().lights->shadowState();
-    d->setProgram(d->shadowProgram);
+    d->setProgram(light.type() == Light::Directional? d->dirShadowProgram
+                                                    : d->omniShadowProgram);
     d->render();
     d->setProgram(d->program);
     GLState::pop();

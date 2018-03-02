@@ -123,12 +123,21 @@ DENG2_PIMPL(MapRender)
         surfaces.addBuffer(buf);
 
         context.shaders->build(surfaces.program(), "gloom.surface")
-            << planes.var << uTexelsPerMeter << textureMetrics.var << texOffsets.var;
+            << planes.var
+            << uTexelsPerMeter
+            << textureMetrics.var
+            << texOffsets.var;
+
         context.shaders->build(dirShadowProgram, "gloom.shadow.surface")
-            << planes.var << context.uLightMatrix << context.lights->uLightDir();
+            << planes.var
+            << context.uLightMatrix
+            << context.lights->uLightDir();
+
         context.shaders->build(omniShadowProgram, "gloom.shadow_cube.surface")
-            << planes.var << context.uLightOrigin << context.uLightFarPlane
-            << context.uLightCubeMatrices << context.lights->uLightDir();
+            << planes.var
+            << context.uLightOrigin
+            << context.uLightFarPlane
+            << context.uLightCubeMatrices;
 
         context.bindTo(surfaces.program());
         context.bindTo(dirShadowProgram);
@@ -243,10 +252,7 @@ void MapRender::render()
         d->surfaces.setProgram(d->surfaces.program());
         d->surfaces.unsetState();
 
-        if (light.type() == Light::Directional)
-        {
-            d->ents.renderShadows(light);
-        }
+        d->ents.renderShadows(light);
     });
 
     d->lights.render();

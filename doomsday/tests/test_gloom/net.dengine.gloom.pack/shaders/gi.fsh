@@ -62,7 +62,7 @@ void main(void) {
 
     vec3 outColor = ambient * albedo;
 
-#if 0
+#if 1
     // Directional world lights.
     {
         float dirLight = 1.0;

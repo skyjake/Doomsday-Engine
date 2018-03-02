@@ -52,8 +52,8 @@ DENG2_PIMPL(Light)
 
             shadow.reset(new Shadow);
             shadow->map.setAutoGenMips(false);
-            //shadow->map.setComparisonMode(gl::CompareRefToTexture, gl::LessOrEqual);
             shadow->map.setFilter(gl::Linear, gl::Linear, gl::MipNone);
+            shadow->map.setComparisonMode(gl::CompareRefToTexture, gl::LessOrEqual);
 
             if (type == Directional)
             {
@@ -202,16 +202,16 @@ Mat4f Light::lightMatrix(gl::CubeFace face) const
         return proj * Mat4f::lookAt(pos + Vec3f(1, 0, 0), pos, Vec3f(0, 1, 0));
 
     case gl::PositiveY:
-        return proj * Mat4f::lookAt(pos + Vec3f(0, -1, 0), pos, Vec3f(0, 0, 1));
+        return proj * Mat4f::lookAt(pos + Vec3f(0, -1, 0), pos, Vec3f(0, 0, -1));
 
     case gl::NegativeY:
-        return proj * Mat4f::lookAt(pos + Vec3f(0, 1, 0), pos, Vec3f(0, 0, -1));
+        return proj * Mat4f::lookAt(pos + Vec3f(0, 1, 0), pos, Vec3f(0, 0, 1));
 
     case gl::PositiveZ:
-        return proj * Mat4f::lookAt(pos + Vec3f(0, 0, 1),  pos, Vec3f(0, 1, 0));
+        return proj * Mat4f::lookAt(pos + Vec3f(0, 0, -1),  pos, Vec3f(0, 1, 0));
 
     case gl::NegativeZ:
-        return proj * Mat4f::lookAt(pos + Vec3f(0, 0, -1), pos, Vec3f(0, 1, 0));
+        return proj * Mat4f::lookAt(pos + Vec3f(0, 0, 1), pos, Vec3f(0, 1, 0));
     }
 }
 
