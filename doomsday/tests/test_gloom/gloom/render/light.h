@@ -41,6 +41,7 @@ public:
 
     void setEntity(const Entity *entity);
     void setType(Type type);
+    void setIntensity(const de::Vec3f &intensity);
     void setCastShadows(bool castShadows);
 
     const Entity *entity() const;

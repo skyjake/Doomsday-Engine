@@ -98,6 +98,11 @@ void Light::setType(Type type)
     d->type = type;
 }
 
+void Light::setIntensity(const Vec3f &intensity)
+{
+    d->intensity = intensity;
+}
+
 void Light::setCastShadows(bool castShadows)
 {
     d->setCastShadows(castShadows);

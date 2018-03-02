@@ -375,6 +375,7 @@ void LightRender::createLights()
             light->setEntity(ent);
             light->setType(Light::Omni);
             light->setCastShadows(true);
+            light->setIntensity(Vec3f(15, 15, 15));
             d->lights.insert(ent->id(), light);
             d->activeLights.insert(light.get());
         }
