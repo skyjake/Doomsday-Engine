@@ -222,7 +222,8 @@ void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
         LIBGUI_GL.glGetShaderInfoLog(d->name, logSize, &count, reinterpret_cast<GLchar *>(log.data()));
 
         throw CompilerError("GLShader::compile",
-                            "Compilation of " + String(d->type == Fragment? "fragment" : "vertex") +
+                            "Compilation of " + String(d->type == Fragment? "fragment" :
+                                                       d->type == Geometry? "geometry" : "vertex") +
                             " shader failed:\n" + log);
     }
 

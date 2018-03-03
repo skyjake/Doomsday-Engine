@@ -221,15 +221,21 @@ DENG2_PIMPL(GLProgram)
 
         if (texturesChanged)
         {
+            auto &GL = LIBGUI_GL;
             // Update the sampler uniforms.
             for (int unit = 0; unit < textures.size(); ++unit)
             {
                 int loc = self().glUniformLocation(textures[unit]->name());
                 if (loc >= 0)
                 {
-                    LIBGUI_GL.glUniform1i(loc, unit);
+//                    qDebug() << "[GLProgram] texture" << textures[unit]->name() << loc << unit;
+                    GL.glUniform1i(loc, unit);
                     LIBGUI_ASSERT_GL_OK();
                 }
+//                else
+//                {
+//                    qDebug() << "[GLProgram] texture" << textures[unit]->name() << "no location!";
+//                }
             }
             texturesChanged = false;
         }
