@@ -32,6 +32,7 @@ namespace gloom {
 
 class GBuffer;
 class SSAO;
+class MapRender;
 class LightRender;
 
 struct Context {
@@ -43,6 +44,7 @@ struct Context {
     SSAO *                    ssao;
     GBuffer *                 gbuffer;
     de::GLTextureFramebuffer *framebuf;
+    MapRender *               mapRender;
     LightRender *             lights;
 
     de::GLUniform uCurrentTime      {"uCurrentTime",      de::GLUniform::Float};
@@ -51,6 +53,8 @@ struct Context {
     de::GLUniform uSpecGlossAtlas   {"uTextureAtlas[1]",  de::GLUniform::Sampler2D};
     de::GLUniform uEmissiveAtlas    {"uTextureAtlas[2]",  de::GLUniform::Sampler2D};
     de::GLUniform uNormalDisplAtlas {"uTextureAtlas[3]",  de::GLUniform::Sampler2D};
+    de::GLUniform uEnvMap           {"uEnvMap",           de::GLUniform::SamplerCube};
+    de::GLUniform uEnvIntensity     {"uEnvIntensity",     de::GLUniform::Vec3};
 
     de::GLUniform uLightMatrix      {"uLightMatrix",      de::GLUniform::Mat4};
     de::GLUniform uLightOrigin      {"uLightOrigin",      de::GLUniform::Vec3};

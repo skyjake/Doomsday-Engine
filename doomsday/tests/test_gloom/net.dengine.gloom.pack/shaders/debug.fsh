@@ -22,7 +22,7 @@ DENG_VAR vec2 vUV;
                       mix(values[2], values[3], inter.x));
     return mix(mixed.s, mixed.t, inter.y);
 }*/
-
+#if 0
 const vec3 pcfWeights[9] = vec3[9] (
     vec3( 0,  0, 2.4),
     vec3(-1, -1, 1),
@@ -47,8 +47,10 @@ float Gloom_FetchShadow(vec4 lightSpacePos, float dp) {
     }
     return shadow.x / shadow.y;
 }
+#endif
 
 void main(void) {
+    #if 0
     if (uDebugMode == 0) {
         vec3 normal = GBuffer_FragViewSpaceNormal();
         float f = 1.0;
@@ -67,11 +69,15 @@ void main(void) {
             texture(uGBufferAlbedo, vUV) * texture(uSSAOBuf, vUV).r +
             texture(uGBufferEmissive, vUV);
     }
-    else if (uDebugMode == 1) {
-        out_FragColor = texture(uGBufferAlbedo, vUV);
+    else
+    #endif
+    if (uDebugMode == 1) {
+        MaterialData matData = GBuffer_FragMaterialData();
+        out_FragColor = vec4(vec3(float(matData.matIndex)/6.0), 1.0);
     }
     else if (uDebugMode == 2) {
-        out_FragColor = texture(uGBufferEmissive, vUV);
+        MaterialData matData = GBuffer_FragMaterialData();
+        out_FragColor = vec4(10.0 + matData.uv.t, 10.0 + matData.uv.t, 0.0, 1.0) / 10.0;
     }
     else if (uDebugMode == 3) {
         out_FragColor = texture(uGBufferNormal, vUV);

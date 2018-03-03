@@ -18,6 +18,7 @@
 
 #include "gloom/render/lightrender.h"
 #include "gloom/render/light.h"
+#include "gloom/render/maprender.h"
 #include "gloom/render/gbuffer.h"
 #include "gloom/render/ssao.h"
 #include "gloom/render/screenquad.h"
@@ -126,10 +127,15 @@ DENG2_PIMPL(LightRender)
                 << ctx.view.uModelViewMatrix
                 << ctx.view.uWorldToViewRotate
                 << ctx.view.uInverseProjMatrix
-                << ctx.gbuffer->uGBufferAlbedo()
-                << ctx.gbuffer->uGBufferEmissive()
+                << ctx.gbuffer->uGBufferMaterial()
                 << ctx.gbuffer->uGBufferNormal()
                 << ctx.gbuffer->uGBufferDepth()
+                << ctx.uDiffuseAtlas
+                << ctx.uEmissiveAtlas
+                << ctx.uSpecGlossAtlas
+                << ctx.uNormalDisplAtlas
+                << ctx.mapRender->uTextureMetrics()
+                << ctx.uEnvMap
                 << uShadowMaps[0]
                 << uShadowMaps[1]
                 << uShadowMaps[2]
@@ -141,10 +147,17 @@ DENG2_PIMPL(LightRender)
         giQuad.glInit(self().context());
         ctx.shaders->build(giQuad.program(), "gloom.light.global")
                 << ctx.view.uInverseProjMatrix
-                << ctx.gbuffer->uGBufferAlbedo()
-                << ctx.gbuffer->uGBufferEmissive()
+                << ctx.view.uViewToWorldRotate
+                << ctx.gbuffer->uGBufferMaterial()
                 << ctx.gbuffer->uGBufferNormal()
                 << ctx.gbuffer->uGBufferDepth()
+                << ctx.uDiffuseAtlas
+                << ctx.uEmissiveAtlas
+                << ctx.uSpecGlossAtlas
+                << ctx.uNormalDisplAtlas
+                << ctx.mapRender->uTextureMetrics()
+                << ctx.uEnvMap
+                << ctx.uEnvIntensity
                 << ctx.ssao->uSSAOBuf()
                 << uShadowMap
                 << uViewSpaceLightOrigin

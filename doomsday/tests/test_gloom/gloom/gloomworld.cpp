@@ -26,6 +26,7 @@
 #include "gloom/render/skybox.h"
 #include "gloom/render/ssao.h"
 #include "gloom/render/tonemap.h"
+#include "gloom/render/screenquad.h"
 #include "gloom/world/entitymap.h"
 #include "gloom/world/environment.h"
 #include "gloom/world/map.h"
@@ -58,6 +59,7 @@ DENG2_PIMPL(GloomWorld), public Asset
     MapRender            mapRender;
     SSAO                 ssao;
     Tonemap              tonemap;
+    ScreenQuad           debugQuad;
 
     float  visibleDistance;
     double currentTime = 0.0;
@@ -85,13 +87,10 @@ DENG2_PIMPL(GloomWorld), public Asset
         renderContext.images            = &GloomApp::images(); // TODO: remove dependency on App
         renderContext.shaders           = &GloomApp::shaders();
         renderContext.atlas             = textureAtlas;
-        renderContext.uDiffuseAtlas     = textureAtlas[gloom::Diffuse];
-        renderContext.uEmissiveAtlas    = textureAtlas[gloom::Emissive];
-        renderContext.uSpecGlossAtlas   = textureAtlas[gloom::SpecularGloss];
-        renderContext.uNormalDisplAtlas = textureAtlas[gloom::NormalDisplacement];
         renderContext.ssao              = &ssao;
         renderContext.gbuffer           = &gbuffer;
         renderContext.framebuf          = &framebuf;
+        renderContext.mapRender         = &mapRender;
         renderContext.lights            = &mapRender.lights();
         renderContext.map               = &map;
 
@@ -122,6 +121,19 @@ DENG2_PIMPL(GloomWorld), public Asset
         mapRender.glInit(renderContext);
         ssao     .glInit(renderContext);
         tonemap  .glInit(renderContext);
+        debugQuad.glInit(renderContext);
+
+        // Debug view.
+        {
+            renderContext.shaders->build(debugQuad.program(), "gloom.debug")
+                    << gbuffer.uGBufferMaterial()
+                    << gbuffer.uGBufferDepth()
+                    << gbuffer.uGBufferNormal()
+                    << renderContext.uDebugMode
+                    << renderContext.uDebugTex
+                    << renderContext.lights->uViewSpaceLightDir()
+                    << ssao.uSSAOBuf();
+        }
 
 //        Vec3f const fogColor{.83f, .89f, 1.f};
 //        uFog = Vec4f(fogColor, visibleDistance);
@@ -134,6 +146,7 @@ DENG2_PIMPL(GloomWorld), public Asset
     {
         setState(NotReady);
 
+        debugQuad.glDeinit();
         tonemap  .glDeinit();
         ssao     .glDeinit();
         mapRender.glDeinit();
@@ -250,6 +263,11 @@ void GloomWorld::render(const ICamera &camera)
 
     const auto frameSize = GLState::current().target().size();
 
+    d->renderContext.uDiffuseAtlas     = d->textureAtlas[gloom::Diffuse];
+    d->renderContext.uEmissiveAtlas    = d->textureAtlas[gloom::Emissive];
+    d->renderContext.uSpecGlossAtlas   = d->textureAtlas[gloom::SpecularGloss];
+    d->renderContext.uNormalDisplAtlas = d->textureAtlas[gloom::NormalDisplacement];
+
     d->framebuf.resize(frameSize);
     d->framebuf.attachedTexture(GLFramebuffer::Color0)
         ->setFilter(gl::Nearest, gl::Nearest, gl::MipNearest);
@@ -262,27 +280,34 @@ void GloomWorld::render(const ICamera &camera)
     if (!cam) cam = &camera;
     d->renderContext.view.setCamera(*cam);
 
-    // Render the G-buffer contents: albedo, normals, depth.
+    // Render the G-buffer contents: material, UV, normals, depth.
     GLState::push()
             .setTarget(d->gbuffer.framebuf())
             .setCull(gl::Back)
-            .setDepthTest(true);
+            .setDepthTest(true)
+            .setBlend(false);
 
     d->mapRender.render();
     d->ssao.render();
-    d->sky.render();
 
     GLState::pop();
 
     // Render the frame: deferred shading using the G-buffer.
     GLState::push().setTarget(d->framebuf);
     d->mapRender.lights().renderLighting();
+    GLState::current().setDepthTest(true).setDepthWrite(false);
+    d->sky.render();
     GLState::pop();
 
     // Framebuffer contents are mipmapped for brightness analysis.
     d->framebuf.attachedTexture(GLFramebuffer::Color0)->generateMipmap();
 
     d->tonemap.render();
+
+    if (d->renderContext.uDebugMode.toInt() != 0)
+    {
+        d->debugQuad.render();
+    }
 }
 
 User *GloomWorld::localUser() const

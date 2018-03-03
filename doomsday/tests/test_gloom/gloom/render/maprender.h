@@ -44,6 +44,8 @@ public:
 
     LightRender &lights();
 
+    de::GLUniform &uTextureMetrics();
+
 private:
     DENG2_PRIVATE(d)
 };

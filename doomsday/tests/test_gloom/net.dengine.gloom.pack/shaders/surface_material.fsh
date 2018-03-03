@@ -11,12 +11,12 @@ flat DENG_VAR uint  vFlags;
 void main(void) {
     uint matIndex = uint(vMaterial + 0.5);
 
-    // Diffuse color.
-    vec4 color = Gloom_FetchTexture(matIndex, Texture_Diffuse, vUV);
-    if (color.a < 0.005) {
-        discard;
-    }
+    // Mask transparent texels.
+    // vec4 color = Gloom_FetchTexture(matIndex, Texture_Diffuse, vUV);
+    // if (color.a < 0.005) {
+    //     discard;
+    // }
 
-    out_FragColor = color;
+    GBuffer_SetFragMaterial(matIndex, vUV);
     GBuffer_SetFragNormal(vNormal);
 }

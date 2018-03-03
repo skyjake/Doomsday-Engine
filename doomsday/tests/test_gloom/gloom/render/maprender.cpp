@@ -101,7 +101,7 @@ DENG2_PIMPL(MapRender)
 
         for (auto i = loadedTextures.begin(); i != loadedTextures.end(); ++i)
         {
-            Metrics metrics;
+            Metrics metrics{};
 
             // Load up metrics in an array.
             for (int j = 0; j < 4; ++j)
@@ -249,6 +249,11 @@ void MapRender::rebuild()
 LightRender &MapRender::lights()
 {
     return d->lights;
+}
+
+GLUniform &MapRender::uTextureMetrics()
+{
+    return d->textureMetrics.var;
 }
 
 void MapRender::advanceTime(TimeSpan)

@@ -2,6 +2,7 @@
 
 #include "common/gbuffer_in.glsl"
 #include "common/lightmodel.glsl"
+#include "common/material.glsl"
 
 uniform mat3 uViewToWorldRotate;
 uniform samplerCubeShadow uShadowMaps[6];
@@ -78,13 +79,15 @@ void main(void) {
         return;
     }
 
-    vec4 albedo = texelFetch(uGBufferAlbedo, ivec2(gl_FragCoord.xy), 0);
-    vec4 specGloss = vec4(0.2);
+    MaterialData data = GBuffer_FragMaterialData();
+
+    vec4 diffuse   = Gloom_FetchTexture(data.matIndex, Texture_Diffuse, data.uv);
+    vec4 specGloss = Gloom_FetchTexture(data.matIndex, Texture_SpecularGloss, data.uv);
 
     // Radius is scaled: volume is not a perfect sphere, avoid reaching edges.
 
     Light light = Light(vOrigin, vDirection, vIntensity, vRadius * 0.95, 1.0);
-    SurfacePoint surf = SurfacePoint(pos, normal, albedo.rgb, specGloss);
+    SurfacePoint surf = SurfacePoint(pos, normal, diffuse.rgb, specGloss);
 
     out_FragColor = vec4(lit * Gloom_BlinnPhong(light, surf), 0.0);
 }

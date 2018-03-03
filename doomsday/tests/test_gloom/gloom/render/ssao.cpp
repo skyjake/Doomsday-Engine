@@ -71,7 +71,7 @@ DENG2_PIMPL(SSAO)
         quad.glInit(ctx);
 
         ctx.shaders->build(quad.program(), "gloom.ssao.sample")
-                << ctx.gbuffer->uGBufferAlbedo()
+                //<< ctx.gbuffer->uGBufferAlbedo()
                 << ctx.gbuffer->uGBufferNormal()
                 << ctx.gbuffer->uGBufferDepth()
                 << ctx.view.uInverseProjMatrix

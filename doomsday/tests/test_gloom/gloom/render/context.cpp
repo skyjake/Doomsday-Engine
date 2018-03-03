@@ -25,7 +25,8 @@ namespace gloom {
 void Context::bindTo(GLProgram &program) const
 {
     program << uCurrentTime << uDiffuseAtlas << uEmissiveAtlas << uSpecGlossAtlas
-            << uNormalDisplAtlas << view.uMvpMatrix << view.uWorldToViewRotate;
+            << uNormalDisplAtlas << uEnvMap << uEnvIntensity << view.uMvpMatrix
+            << view.uWorldToViewRotate;
 }
 
 } // namespace gloom

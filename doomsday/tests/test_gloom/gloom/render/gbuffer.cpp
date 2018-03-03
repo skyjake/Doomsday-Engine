@@ -34,11 +34,11 @@ namespace gloom {
 DENG2_PIMPL(GBuffer)
 {
     //ScreenQuad quad;
-    GLTextureFramebuffer frame{GLTextureFramebuffer::Formats({Image::RGBA_8888,  // albedo
-                                                              Image::RGB_32f,    // normals
-                                                              Image::RGB_16f})}; // emissive
-    GLUniform uGBufferAlbedo    {"uGBufferAlbedo",     GLUniform::Sampler2D};
-    GLUniform uGBufferEmissive  {"uGBufferEmissive",   GLUniform::Sampler2D};
+    GLTextureFramebuffer frame{GLTextureFramebuffer::Formats({Image::RGB_32f,   // UV, material
+                                                              Image::RGB_32f    // normals
+                                                              /*Image::RGB_16f*/})}; // emissive
+    GLUniform uGBufferMaterial  {"uGBufferMaterial",   GLUniform::Sampler2D};
+    //GLUniform uGBufferEmissive  {"uGBufferEmissive",   GLUniform::Sampler2D};
     GLUniform uGBufferNormal    {"uGBufferNormal",     GLUniform::Sampler2D};
     GLUniform uGBufferDepth     {"uGBufferDepth",      GLUniform::Sampler2D};
 //    GLUniform uDebugMode        {"uDebugMode",         GLUniform::Int};
@@ -54,9 +54,9 @@ DENG2_PIMPL(GBuffer)
 
     void updateUniforms()
     {
-        uGBufferAlbedo   = frame.attachedTexture(GLFramebuffer::Color0);
+        uGBufferMaterial = frame.attachedTexture(GLFramebuffer::Color0);
         uGBufferNormal   = frame.attachedTexture(GLFramebuffer::Color1);
-        uGBufferEmissive = frame.attachedTexture(GLFramebuffer::Color2);
+        //uGBufferEmissive = frame.attachedTexture(GLFramebuffer::Color2);
         uGBufferDepth    = frame.attachedTexture(GLFramebuffer::DepthStencil);
     }
 };
@@ -69,26 +69,12 @@ void GBuffer::glInit(Context &context)
 {
     Render::glInit(context);
 
-//    d->quad.glInit(context);
-//    context.shaders->build(d->quad.program(), "gloom.finalize")
-//        << context.view.uInverseProjMatrix
-//        << d->uGBufferAlbedo
-//        << d->uGBufferEmissive
-//        << d->uGBufferNormal
-//        << d->uGBufferDepth
-//        << context.ssao->uSSAOBuf()
-//        //<< d->uShadowMap
-//        << d->uDebugMode
-//        //<< d->uViewToLightMatrix
-//        << context.lights->uViewSpaceLightDir();
-
     d->frame.glInit();
     d->updateUniforms();
 }
 
 void GBuffer::glDeinit()
 {
-//    d->quad.glDeinit();
     d->frame.glDeinit();
     Render::glDeinit();
 }
@@ -109,33 +95,22 @@ void GBuffer::clear()
 }
 
 void GBuffer::render()
-{
-//    d->quad.state().setTarget(GLState::current().target());
-//    d->quad.render();
-}
-
-/*void gloom::GBuffer::setDebugMode(int debugMode)
-{
-    LOG_AS("GBuffer");
-    LOG_MSG("Changing debug mode: %i") << debugMode;
-
-    d->uDebugMode = debugMode;
-}*/
+{}
 
 GLFramebuffer &GBuffer::framebuf()
 {
     return d->frame;
 }
 
-GLUniform &GBuffer::uGBufferAlbedo()
+GLUniform &GBuffer::uGBufferMaterial()
 {
-    return d->uGBufferAlbedo;
+    return d->uGBufferMaterial;
 }
 
-GLUniform &GBuffer::uGBufferEmissive()
-{
-    return d->uGBufferEmissive;
-}
+//GLUniform &GBuffer::uGBufferEmissive()
+//{
+//    return d->uGBufferEmissive;
+//}
 
 GLUniform &GBuffer::uGBufferNormal()
 {
@@ -146,10 +121,5 @@ GLUniform &GBuffer::uGBufferDepth()
 {
     return d->uGBufferDepth;
 }
-
-//GLUniform &GBuffer::uDebugMode()
-//{
-//    return d->uDebugMode;
-//}
 
 } // namespace gloom

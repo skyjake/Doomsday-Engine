@@ -2,6 +2,7 @@
 
 #include "common/gbuffer_in.glsl"
 #include "common/lightmodel.glsl"
+#include "common/material.glsl"
 
 uniform sampler2D uSSAOBuf;
 
@@ -11,6 +12,7 @@ uniform vec3      uViewSpaceLightOrigin;
 uniform vec3      uViewSpaceLightDir;
 uniform mat4      uLightMatrix; // world -> light
 uniform mat4      uViewToLightMatrix;
+uniform mat3      uViewToWorldRotate;
 uniform sampler2DShadow uShadowMap;
 
 DENG_VAR vec2 vUV;
@@ -51,16 +53,34 @@ float Gloom_FetchShadow(vec4 lightSpacePos, float dp) {
     return shadow.x / shadow.y;
 }
 
+vec3 Gloom_FetchAmbient(vec3 viewSpaceNormal) {
+    /*vec3 ambient = vec3(0.0);
+    float scale = 3.0;
+    for (int x = -1; x <= 1; ++x) {
+        for (int y = -1; y <= 1; ++y) {
+            for (int z = -1; z <= 1; ++z) {
+                vec3 offset = vec3(x, y, z) * scale;
+                ambient += textureLod(uEnvMap, uViewToWorldRotate *
+                    (offset + viewSpaceNormal), 6).rgb;
+            }
+        }
+    }
+    return ambient / 9.0;*/
+
+    return uEnvIntensity * textureLod(uEnvMap, vec3(0, 1, 0), 8).rgb;
+}
+
 void main(void) {
-    vec3 albedo = texture(uGBufferAlbedo, vUV).rgb;
-    vec4 specGloss = vec4(0.2); // TODO: from material
+    MaterialData data = GBuffer_FragMaterialData();
+    vec3 diffuse = Gloom_FetchTexture(data.matIndex, Texture_Diffuse, data.uv).rgb;
+    vec4 specGloss = Gloom_FetchTexture(data.matIndex, Texture_SpecularGloss, data.uv);
     vec3 normal = GBuffer_FragViewSpaceNormal();
+
+    // Ambient light.
+    vec3 ambient = Gloom_FetchAmbient(normal);
     float ambientOcclusion = texture(uSSAOBuf, vUV).r;
 
-    vec3 ambient = vec3(0.75, 0.8, 1.25);
-    ambient *= ambientOcclusion;
-
-    vec3 outColor = ambient * albedo;
+    vec3 outColor = ambient * ambientOcclusion * diffuse;
 
 #if 1
     // Directional world lights.
@@ -78,15 +98,17 @@ void main(void) {
                     uLightIntensity,
                     -1.0, 0.0 // no falloff
                 );
-                SurfacePoint sp = SurfacePoint(lsPos.xyz/lsPos.w, normal, albedo, specGloss);
+                SurfacePoint sp = SurfacePoint(lsPos.xyz/lsPos.w, normal, diffuse, specGloss);
                 outColor += dirLight * Gloom_BlinnPhong(light, sp);
             }
         }
     }
 #endif
 
-    // Emissive component.
-    outColor += texture(uGBufferEmissive, vUV).rgb;
+#if 1
+    // Material emissive component.
+    outColor += Gloom_FetchTexture(data.matIndex, Texture_Emissive, data.uv).rgb;
+#endif
 
     // The final color.
     out_FragColor = vec4(outColor, 1.0);

@@ -1,6 +1,9 @@
 #ifndef GLOOM_LIGHTMODEL_H
 #define GLOOM_LIGHTMODEL_H
 
+uniform samplerCube uEnvMap;
+uniform vec3 uEnvIntensity;
+
 struct Light {
     vec3 origin;
     vec3 direction;
@@ -12,7 +15,7 @@ struct Light {
 struct SurfacePoint {
     vec3 pos;
     vec3 normal;
-    vec3 albedo;
+    vec3 diffuse;
     vec4 specGloss;
 };
 
@@ -33,29 +36,7 @@ vec3 Gloom_BlinnPhong(Light light, SurfacePoint surf) {
     vec3 specular = surf.specGloss.rgb * light.intensity * spec * edgeFalloff;
     float diffuse = max(0.0, dot(surf.normal, lightDir));
 
-    return (light.intensity * falloff * diffuse * surf.albedo.rgb) + specular;
+    return (light.intensity * falloff * diffuse * surf.diffuse) + specular;
 }
-
-#if 0
-float lightIntensity(vec3 normal, vec3 lightDir) {
-    return clamp(dot(normal, -lightDir) + 0.1, 0.0, 1.0);
-}
-
-/**
- * Light model with one Sun-like bright light source at an infinite distance.
- *
- * @param normal    Surface normal.
- * @param lightDir  Light direction vector.
- * @param fogSpec   Fog RGB, maxdistance.
- */
-vec3 sunLightFactor(vec3 normal, vec3 lightDir, vec4 fogSpec) {
-    // Ambient light.
-    vec3 ambientColor = fogSpec.rgb * 0.75;
-
-    float intensity = lightIntensity(normal, lightDir);
-
-    return (ambientColor + vec3(intensity)) * 0.6;
-}
-#endif
 
 #endif // GLOOM_LIGHTMODEL_H

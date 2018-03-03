@@ -11,11 +11,11 @@ DENG_ATTRIB vec3  aIntensity;
 DENG_ATTRIB vec3  aDirection;
 DENG_ATTRIB float aIndex;
 
-flat DENG_VAR vec3 vOrigin;     // view space
-flat DENG_VAR vec3 vDirection;  // view space
-flat DENG_VAR vec3 vIntensity;
+flat DENG_VAR vec3  vOrigin;     // view space
+flat DENG_VAR vec3  vDirection;  // view space
+flat DENG_VAR vec3  vIntensity;
 flat DENG_VAR float vRadius;
-flat DENG_VAR int vShadowIndex;
+flat DENG_VAR int   vShadowIndex;
 
 void main(void) {
     vRadius = aUV;
