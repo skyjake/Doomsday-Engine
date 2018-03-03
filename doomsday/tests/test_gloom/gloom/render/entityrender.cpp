@@ -18,6 +18,7 @@
 
 #include "entityrender.h"
 #include "gloom/world/map.h"
+#include "gloom/render/defs.h"
 #include "gloom/render/icamera.h"
 #include "gloom/render/lightrender.h"
 #include "gloom/render/light.h"
@@ -86,25 +87,26 @@ DENG2_PIMPL(EntityRender)
         for (auto &model : entityModels)
         {
             model.load(pkg.root().locate<File>(filenames[idx]));
-            model.setAtlas(*context.atlas);
+            model.setAtlas(ModelDrawable::Diffuse,  *context.atlas[Diffuse]);
+            model.setAtlas(ModelDrawable::Emissive, *context.atlas[Emissive]);
+            model.setAtlas(ModelDrawable::Normals,  *context.atlas[NormalDisplacement]);
+            model.setAtlas(ModelDrawable::Specular, *context.atlas[SpecularGloss]);
             model.setProgram(&program);
             idx++;
         }
 
-        GloomApp::shaders().build(program, "gloom.entity.material")
-            << context.view.uMvpMatrix
-            << context.view.uWorldToViewRotate
-            << context.uAtlas;
+        GloomApp::shaders().build(program, "gloom.entity.material");
+        context.bindTo(program);
 
         GloomApp::shaders().build(dirShadowProgram, "gloom.entity.shadow.dir")
             << context.uLightMatrix
-            << context.uAtlas;
+            << context.uDiffuseAtlas;
 
         GloomApp::shaders().build(omniShadowProgram, "gloom.entity.shadow.omni")
             << context.uLightOrigin
             << context.uLightFarPlane
             << context.uLightCubeMatrices
-            << context.uAtlas;
+            << context.uDiffuseAtlas;
     }
 
     void create()

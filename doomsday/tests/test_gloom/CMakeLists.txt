@@ -38,6 +38,7 @@ set (SOURCES
     gloom/render/context.cpp
     gloom/render/context.h
     gloom/render/databuffer.h
+    gloom/render/defs.h
     gloom/render/entityrender.cpp
     gloom/render/entityrender.h
     gloom/render/gbuffer.cpp

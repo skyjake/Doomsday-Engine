@@ -9,6 +9,11 @@ const uint Surface_FlipTexCoordY           = 0x04u;
 const uint Surface_AnchorTopPlane          = 0x08u;
 const uint Surface_TextureOffset           = 0x10u;
 
+const int Texture_Diffuse            = 0; // RGB: Diffuse  | A: Opacity
+const int Texture_SpecularGloss      = 1; // RGB: Specular | A: Gloss
+const int Texture_Emissive           = 2; // RGB: Emissive
+const int Texture_NormalDisplacement = 3; // RGB: Normal   | A: Displacement
+
 #define testFlag(flags, f) (((flags) & (f)) != 0u)
 
 #endif // GLOOM_FLAGS_H

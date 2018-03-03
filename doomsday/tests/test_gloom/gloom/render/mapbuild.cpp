@@ -41,14 +41,14 @@ LIBGUI_VERTEX_FORMAT_SPEC(MapVertex, 18 * 4)
 
 DENG2_PIMPL_NOREF(MapBuild)
 {
-    const Map &map;
-    TextureIds textures;
-    Mapper     planeMapper;
-    Mapper     texOffsetMapper;
+    const Map & map;
+    MaterialIds materials;
+    Mapper      planeMapper;
+    Mapper      texOffsetMapper;
 
-    Impl(const Map &map, const TextureIds &textures)
+    Impl(const Map &map, const MaterialIds &materials)
         : map(map)
-        , textures(textures)
+        , materials(materials)
     {}
 
     Vec3f worldNormalVector(const Line &line) const
@@ -108,14 +108,14 @@ DENG2_PIMPL_NOREF(MapBuild)
                     Buffer::Type f{}, c{};
                     QHash<ID, Buffer::Index> pointIndices;
 
-                    f.texture[0] = textures["world.test"]; // "world.grass"];
-                    f.normal     = map.floorPlane(sectorId).normal;
-                    f.flags      = MapVertex::WorldSpaceXZToTexCoords | MapVertex::FlipTexCoordY |
-                                   MapVertex::TextureOffset;
+                    f.material[0] = materials["world.test"]; // "world.grass"];
+                    f.normal      = map.floorPlane(sectorId).normal;
+                    f.flags       = MapVertex::WorldSpaceXZToTexCoords | MapVertex::FlipTexCoordY |
+                                    MapVertex::TextureOffset;
                     f.geoPlane     = planeMapper[map.floorPlaneId(sectorId)];
                     f.texOffset[0] = texOffsetMapper[map.floorPlaneId(sectorId)];
 
-                    c.texture[0]   = textures["world.test"]; //"world.dirt"];
+                    c.material[0]   = materials["world.test"]; //"world.dirt"];
                     c.normal       = map.ceilingPlane(sectorId).normal;
                     c.flags        = MapVertex::WorldSpaceXZToTexCoords | MapVertex::TextureOffset;
                     c.geoPlane     = planeMapper[map.ceilingPlaneId(sectorId)];
@@ -182,8 +182,8 @@ DENG2_PIMPL_NOREF(MapBuild)
 
                     Buffer::Type v{};
 
-                    v.texture[0]  = textures[frontTextureName];
-                    v.texture[1]  = textures[backTextureName];
+                    v.material[0] = materials[frontTextureName];
+                    v.material[1] = materials[backTextureName];
                     v.normal      = normal;
                     v.flags       = flags;
                     v.texPlane[0] = planeIndex[0];
@@ -291,8 +291,8 @@ DENG2_PIMPL_NOREF(MapBuild)
     }
 };
 
-MapBuild::MapBuild(const Map &map, const TextureIds &textures)
-    : d(new Impl(map, textures))
+MapBuild::MapBuild(const Map &map, const MaterialIds &materials)
+    : d(new Impl(map, materials))
 {}
 
 MapBuild::Buffer *MapBuild::build()

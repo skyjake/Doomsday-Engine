@@ -1,4 +1,4 @@
-/** @file maprender.h
+/** @file gloom/render/defs.h
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,38 +16,20 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_MAPRENDER_H
-#define GLOOM_MAPRENDER_H
-
-#include <de/AtlasTexture>
-
-#include "gloom/world/map.h"
-#include "gloom/render/render.h"
-#include "gloom/render/defs.h"
+#ifndef GLOOM_RENDER_DEFS_H
+#define GLOOM_RENDER_DEFS_H
 
 namespace gloom {
 
-class ICamera;
-class LightRender;
+enum Texture {
+    Diffuse            = 0, // RGB: Diffuse  | A: Opacity
+    SpecularGloss      = 1, // RGB: Specular | A: Gloss
+    Emissive           = 2, // RGB: Emissive
+    NormalDisplacement = 3, // RGB: Normal   | A: Displacement
 
-class MapRender : public Render
-{
-public:
-    MapRender();
-
-    void glInit(Context &) override;
-    void glDeinit() override;
-    void advanceTime(de::TimeSpan elapsed) override;
-    void render() override;
-
-    void rebuild();
-
-    LightRender &lights();
-
-private:
-    DENG2_PRIVATE(d)
+    TextureMapCount = 4,
 };
 
 } // namespace gloom
 
-#endif // GLOOM_MAPRENDER_H
+#endif // GLOOM_RENDER_DEFS_H

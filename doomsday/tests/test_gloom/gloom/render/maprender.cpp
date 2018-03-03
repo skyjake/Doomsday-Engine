@@ -27,38 +27,42 @@
 #include <de/Drawable>
 #include <de/GLUniform>
 
+#include <array>
+
 using namespace de;
 
 namespace gloom {
 
 DENG2_PIMPL(MapRender)
 {
-    MapBuild::TextureIds textures;
-    MapBuild::Mapper     planeMapper;
-    MapBuild::Mapper     texOffsetMapper;
+    MapBuild::MaterialIds materials;
+    MapBuild::Mapper      planeMapper;
+    MapBuild::Mapper      texOffsetMapper;
 
-    QHash<String, Id> loadedTextures; // name => atlas ID
+    using TexIds = std::array<Id, TextureMapCount>;
+    QHash<String, TexIds> loadedTextures; // name => atlas ID
 
     struct Metrics {
-        Vec4f uvRect;
-        Vec4f texelSize;
+        struct Texture {
+            Vec4f uvRect;
+            Vec4f texelSize;
+        } texture[TextureMapCount];
     };
     struct TexOffsetData {
         Vec2f offset;
         Vec2f speed;
     };
 
-    DataBuffer<Metrics>       textureMetrics{"uTextureMetrics", Image::RGBA_32f, 2, 1};
+    DataBuffer<Metrics>       textureMetrics{"uTextureMetrics", Image::RGBA_32f, 2 * TextureMapCount, 1};
     DataBuffer<float>         planes        {"uPlanes",         Image::R_32f};
     DataBuffer<TexOffsetData> texOffsets    {"uTexOffsets",     Image::RGBA_32f};
 
-    //GLUniform uTexelsPerMeter{"uTexelsPerMeter", GLUniform::Float};
     Drawable  surfaces;
     GLProgram dirShadowProgram;
     GLProgram omniShadowProgram;
 
     EntityRender ents;
-    LightRender lights;
+    LightRender  lights;
 
     Impl(Public *i) : Base(i)
     {}
@@ -68,27 +72,57 @@ DENG2_PIMPL(MapRender)
         surfaces.clear();
     }
 
-    void loadTexture(const String &name)
+    void loadMaterial(const String &name)
     {
-        const Id id = self().context().atlas->alloc(self().context().images->image(name));
-        loadedTextures.insert(name, id);
+        auto &ctx = self().context();
+
+        const char *suffix[TextureMapCount] = {
+            ".diffuse", ".emissive", ".normaldisp", ".specgloss"
+        };
+        TexIds ids {{Id::None, Id::None, Id::None, Id::None}};
+
+        for (int i = 0; i < TextureMapCount; ++i)
+        {
+            if (ctx.images->has(name + suffix[i]))
+            {
+                ids[i] = ctx.atlas[i]->alloc(ctx.images->image(name + suffix[i]));
+            }
+        }
+        loadedTextures.insert(name, ids);
     }
 
     void updateTextureMetrics()
     {
-        textureMetrics.clear();
-        textures.clear();
-
         const float texelsPerMeter = 200.f;
+        auto &ctx = self().context();
+
+        textureMetrics.clear();
+        materials.clear();
 
         for (auto i = loadedTextures.begin(); i != loadedTextures.end(); ++i)
         {
+            Metrics metrics;
+
             // Load up metrics in an array.
-            const Rectanglei rect  = self().context().atlas->imageRect(i.value());
-            const Rectanglef rectf = self().context().atlas->imageRectf(i.value());
-            const uint32_t   texId = textureMetrics.append(
-                Metrics{{rectf.xywh()}, {Vec4f(rect.width(), rect.height(), texelsPerMeter)}});
-            textures.insert(i.key(), texId);
+            for (int j = 0; j < 4; ++j)
+            {
+                const Id texId = i.value()[j];
+                Rectanglei rect;
+                Rectanglef rectf;
+                if (texId)
+                {
+                    rect  = ctx.atlas[j]->imageRect(texId);
+                    rectf = ctx.atlas[j]->imageRectf(texId);
+
+                    metrics.texture[j] = Metrics::Texture
+                    {
+                        {rectf.xywh()}, {Vec4f(rect.width(), rect.height(), texelsPerMeter)}
+                    };
+                }
+            }
+
+            const uint32_t matId = textureMetrics.append(metrics);
+            materials.insert(i.key(), matId);
         }
 
         textureMetrics.update();
@@ -103,7 +137,7 @@ DENG2_PIMPL(MapRender)
 
         DENG2_ASSERT(map);
 
-        MapBuild builder{*map, textures};
+        MapBuild builder{*map, materials};
         auto *buf = builder.build();
 
         planeMapper     = builder.planeMapper();
@@ -126,7 +160,6 @@ DENG2_PIMPL(MapRender)
 
         context.shaders->build(surfaces.program(), "gloom.surface.material")
             << planes.var
-            //<< uTexelsPerMeter
             << textureMetrics.var
             << texOffsets.var;
 
@@ -153,11 +186,11 @@ DENG2_PIMPL(MapRender)
 
 //        uTexelsPerMeter = 200;
 
-        // Load some textures.
+        // Load materials.
         for (const char *name :
              {"world.stone", "world.dirt", "world.grass", "world.test", "world.test2"})
         {
-            loadTexture(name);
+            loadMaterial(name);
         }
         updateTextureMetrics();
 
@@ -171,10 +204,17 @@ DENG2_PIMPL(MapRender)
         ents  .glDeinit();
         lights.glDeinit();
 
-        for (const Id &texId : loadedTextures)
+        for (const TexIds &texIds : loadedTextures)
         {
-            self().context().atlas->release(texId);
+            for (int t = 0; t < TextureMapCount; ++t)
+            {
+                if (texIds[t])
+                {
+                    self().context().atlas[t]->release(texIds[t]);
+                }
+            }
         }
+
         loadedTextures.clear();
         textureMetrics.clear();
         planes.clear();

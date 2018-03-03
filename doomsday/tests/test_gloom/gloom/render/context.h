@@ -38,19 +38,25 @@ struct Context {
     const de::ImageBank *     images;
     de::GLShaderBank *        shaders;
     const Map *               map;
-    de::AtlasTexture *        atlas;
+    de::AtlasTexture **       atlas;
     View                      view;
     SSAO *                    ssao;
     GBuffer *                 gbuffer;
     de::GLTextureFramebuffer *framebuf;
     LightRender *             lights;
 
-    de::GLUniform uAtlas            {"uTex",              de::GLUniform::Sampler2D};
     de::GLUniform uCurrentTime      {"uCurrentTime",      de::GLUniform::Float};
+
+    de::GLUniform uDiffuseAtlas     {"uDiffuseAtlas",     de::GLUniform::Sampler2D};
+    de::GLUniform uEmissiveAtlas    {"uEmissiveAtlas",    de::GLUniform::Sampler2D};
+    de::GLUniform uSpecGlossAtlas   {"uSpecGlossAtlas",   de::GLUniform::Sampler2D};
+    de::GLUniform uNormalDisplAtlas {"uNormalDisplAtlas", de::GLUniform::Sampler2D};
+
     de::GLUniform uLightMatrix      {"uLightMatrix",      de::GLUniform::Mat4};
     de::GLUniform uLightOrigin      {"uLightOrigin",      de::GLUniform::Vec3};
     de::GLUniform uLightFarPlane    {"uFarPlane",         de::GLUniform::Float};
     de::GLUniform uLightCubeMatrices{"uCubeFaceMatrices", de::GLUniform::Mat4Array, 6};
+
     de::GLUniform uDebugTex         {"uDebugTex",         de::GLUniform::Sampler2D};
     de::GLUniform uDebugMode        {"uDebugMode",        de::GLUniform::Int};
 

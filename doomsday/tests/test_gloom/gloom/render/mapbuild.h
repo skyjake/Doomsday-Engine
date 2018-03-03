@@ -35,7 +35,7 @@ struct MapVertex
     de::Vec3f pos;
     de::Vec3f normal;
     de::Vec4f texCoord;
-    uint32_t texture[2];
+    uint32_t material[2];
     uint32_t geoPlane; uint32_t texPlane[2]; // Index0: vec3
     uint32_t texOffset[2];                   // Index1: vec2
     uint32_t flags;
@@ -57,7 +57,7 @@ public:
     typedef de::GLBufferT<MapVertex> Buffer;
 
 public:
-    typedef QHash<de::String, uint32_t> TextureIds;
+    typedef QHash<de::String, uint32_t> MaterialIds;
 
     struct Mapper : public QHash<ID, uint32_t>
     {
@@ -74,7 +74,7 @@ public:
         }
     };
 
-    MapBuild(const Map &map, const TextureIds &textures);
+    MapBuild(const Map &map, const MaterialIds &materials);
     Buffer *build();
 
     const Mapper &planeMapper() const;

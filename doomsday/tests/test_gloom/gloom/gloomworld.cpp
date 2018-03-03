@@ -47,49 +47,60 @@ namespace gloom {
 DENG2_PIMPL(GloomWorld), public Asset
 , DENG2_OBSERVES(User, Warp)
 {
-    User *            localUser = nullptr;
-    Context           renderContext;
-    Environment       environ;
+    User *               localUser = nullptr;
+    Context              renderContext;
+    Environment          environ;
     GLTextureFramebuffer framebuf{Image::RGB_16f};
-    GBuffer           gbuffer;
-    SkyBox            sky;
-    Map               map;
-    QHash<ID, double> initialPlaneY;
-    MapRender         mapRender;
-    SSAO              ssao;
-    Tonemap           tonemap;
+    GBuffer              gbuffer;
+    SkyBox               sky;
+    Map                  map;
+    QHash<ID, double>    initialPlaneY;
+    MapRender            mapRender;
+    SSAO                 ssao;
+    Tonemap              tonemap;
 
     float  visibleDistance;
     double currentTime = 0.0;
 
-    std::unique_ptr<AtlasTexture> atlas;
+    AtlasTexture *textureAtlas[4];
 
     Impl(Public *i)
         : Base(i)
         , visibleDistance(1.4f * 512 /*500*/) // 500+ meters in all directions
     {
-        atlas.reset(AtlasTexture::newWithKdTreeAllocator(
-                        Atlas::BackingStore | Atlas::WrapBordersInBackingStore,
-                        Atlas::Size(4096 + 64, /*8192*/ 4096 + 64)));
-        atlas->setMarginSize(0);
+        for (auto &atlas : textureAtlas)
+        {
+            atlas = AtlasTexture::newWithKdTreeAllocator(
+                            Atlas::BackingStore | Atlas::WrapBordersInBackingStore,
+                            Atlas::Size(4096 + 64, /*8192*/ 2048 + 64));
+            atlas->setMarginSize(0);
 #if 1
-        atlas->setMaxLevel(4);
-        atlas->setBorderSize(16); // room for 4 miplevels
-        atlas->setAutoGenMips(true);
-        atlas->setFilter(gl::Linear, gl::Linear, gl::MipNearest);
+            atlas->setMaxLevel(4);
+            atlas->setBorderSize(16); // room for 4 miplevels
+            atlas->setAutoGenMips(true);
+            atlas->setFilter(gl::Linear, gl::Linear, gl::MipNearest);
 #endif
+        }
 
-        renderContext.images   = &GloomApp::images(); // TODO: remove dependency on App
-        renderContext.shaders  = &GloomApp::shaders();
-        renderContext.atlas    = atlas.get();
-        renderContext.uAtlas   = renderContext.atlas;
-        renderContext.ssao     = &ssao;
-        renderContext.gbuffer  = &gbuffer;
-        renderContext.framebuf = &framebuf;
-        renderContext.lights   = &mapRender.lights();
-        renderContext.map      = &map;
+        renderContext.images            = &GloomApp::images(); // TODO: remove dependency on App
+        renderContext.shaders           = &GloomApp::shaders();
+        renderContext.atlas             = textureAtlas;
+        renderContext.uDiffuseAtlas     = textureAtlas[gloom::Diffuse];
+        renderContext.uEmissiveAtlas    = textureAtlas[gloom::Emissive];
+        renderContext.uSpecGlossAtlas   = textureAtlas[gloom::SpecularGloss];
+        renderContext.uNormalDisplAtlas = textureAtlas[gloom::NormalDisplacement];
+        renderContext.ssao              = &ssao;
+        renderContext.gbuffer           = &gbuffer;
+        renderContext.framebuf          = &framebuf;
+        renderContext.lights            = &mapRender.lights();
+        renderContext.map               = &map;
 
         environ.setWorld(thisPublic);
+    }
+
+    ~Impl()
+    {
+        for (auto &a : textureAtlas) delete a;
     }
 
     bool glInit()
@@ -130,7 +141,7 @@ DENG2_PIMPL(GloomWorld), public Asset
         gbuffer  .glDeinit();
         framebuf .glDeinit();
 
-        atlas->clear();
+        for (auto *atl : textureAtlas) atl->clear();
 
         localUser->audienceForWarp -= this;
     }
