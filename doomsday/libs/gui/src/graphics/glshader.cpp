@@ -223,7 +223,8 @@ void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
 
         throw CompilerError("GLShader::compile",
                             "Compilation of " + String(d->type == Fragment? "fragment" :
-                                                       d->type == Geometry? "geometry" : "vertex") +
+                                                       d->type == Geometry? "geometry" :
+                                                                            "vertex") +
                             " shader failed:\n" + log);
     }
 
