@@ -2,7 +2,7 @@
 
 #include "common/bones.glsl"
 
-uniform mat4 uMvpMatrix;
+uniform mat4 uCameraMvpMatrix;
 
 DENG_ATTRIB mat4 aInstanceMatrix;
 DENG_ATTRIB vec4 aInstanceColor;
@@ -19,7 +19,7 @@ DENG_VAR vec3 vNormal;
 void main(void) {
     vNormal = aNormal;
     vec4 modelPos = Gloom_BoneTransform(aVertex, vNormal);
-    gl_Position = uMvpMatrix * (aInstanceMatrix * modelPos);
+    gl_Position = uCameraMvpMatrix * (aInstanceMatrix * modelPos);
     vNormal = (aInstanceMatrix * vec4(vNormal, 0.0)).xyz;
     vUV = aBounds0.xy + aUV * aBounds0.zw;
     vInstanceColor = aInstanceColor;

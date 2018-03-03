@@ -3,7 +3,7 @@
 #include "common/defs.glsl"
 #include "common/surface.glsl"
 
-uniform mat4        uMvpMatrix;
+uniform mat4        uCameraMvpMatrix;
 uniform sampler2D   uTexOffsets;
 uniform float       uCurrentTime;
 
@@ -24,7 +24,7 @@ vec4 fetchTexOffset(uint offsetIndex) {
 void main(void) {
     Surface surface = Gloom_LoadVertexSurface();
 
-    gl_Position = uMvpMatrix * surface.vertex;
+    gl_Position = uCameraMvpMatrix * surface.vertex;
     vUV         = aUV.xy;
     vFlags      = surface.flags;
     vNormal     = surface.normal;

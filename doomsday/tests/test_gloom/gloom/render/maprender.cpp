@@ -130,7 +130,7 @@ DENG2_PIMPL(MapRender)
 
     void buildMap()
     {
-        const auto &context = self().context();
+        auto &context = self().context();
         const auto *map = context.map;
 
         surfaces.clear();
@@ -174,9 +174,10 @@ DENG2_PIMPL(MapRender)
             << context.uLightFarPlane
             << context.uLightCubeMatrices;
 
-        context.bindTo(surfaces.program());
-        context.bindTo(dirShadowProgram);
-        context.bindTo(omniShadowProgram);
+        context.bindCamera(surfaces.program())
+               .bindMaterials(surfaces.program());
+        context.bindCamera(dirShadowProgram);
+        context.bindCamera(omniShadowProgram);
     }
 
     void glInit()

@@ -1,6 +1,6 @@
 #version 330 core
 
-uniform mat4 uMvpMatrix;
+uniform mat4 uCameraMvpMatrix;
 uniform mat4 uModelViewMatrix;
 uniform mat3 uWorldToViewRotate;
 
@@ -22,7 +22,7 @@ void main(void) {
     vShadowIndex = floatBitsToInt(aIndex);
 
     // Position each instance at its origin.
-    gl_Position = uMvpMatrix * vec4(aOrigin + vRadius * aVertex.xyz, 1.0);
+    gl_Position = uCameraMvpMatrix * vec4(aOrigin + vRadius * aVertex.xyz, 1.0);
 
     vec4 origin = uModelViewMatrix * vec4(aOrigin, 1.0);
     vOrigin    = origin.xyz / origin.w;

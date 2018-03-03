@@ -64,7 +64,9 @@ struct Context {
     de::GLUniform uDebugTex         {"uDebugTex",         de::GLUniform::Sampler2D};
     de::GLUniform uDebugMode        {"uDebugMode",        de::GLUniform::Int};
 
-    void bindTo(de::GLProgram &) const;
+    Context &bindCamera(de::GLProgram &);
+    Context &bindGBuffer(de::GLProgram &);
+    Context &bindMaterials(de::GLProgram &);
 };
 
 } // namespace gloom

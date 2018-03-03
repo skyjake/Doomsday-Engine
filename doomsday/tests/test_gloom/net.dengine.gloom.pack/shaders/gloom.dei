@@ -9,7 +9,7 @@
 
 group gloom {
     shader debug {
-        path.vertex = "common/mvp_vertex_uv.vsh"
+        path.vertex = "common/vertex_uv.vsh"
         path.fragment = "debug.fsh"
     }
 
@@ -70,7 +70,7 @@ group gloom {
 
     group tonemap {
         shader exposure {
-            path.vertex = "common/mvp_vertex_uv.vsh"
+            path.vertex = "common/vertex_uv.vsh"
             path.fragment = "tonemap_exposure.fsh"
         }
         shader sample inherits exposure {

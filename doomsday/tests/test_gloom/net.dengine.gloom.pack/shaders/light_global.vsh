@@ -1,3 +1,3 @@
 #version 330 core
 
-#include "common/mvp_vertex_uv.vsh"
+#include "common/vertex_uv.vsh"

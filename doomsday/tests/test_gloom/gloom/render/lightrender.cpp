@@ -118,12 +118,12 @@ DENG2_PIMPL(LightRender)
         auto &ctx = self().context();
 
         ctx.shaders->build(stencilPassProgram, "gloom.light.stencil")
-                << ctx.view.uMvpMatrix
+                << ctx.view.uCameraMvpMatrix
                 << ctx.view.uModelViewMatrix
                 << ctx.view.uWorldToViewRotate;
 
         ctx.shaders->build(shadingProgram, "gloom.light.sources")
-                << ctx.view.uMvpMatrix
+                << ctx.view.uCameraMvpMatrix
                 << ctx.view.uModelViewMatrix
                 << ctx.view.uWorldToViewRotate
                 << ctx.view.uInverseProjMatrix

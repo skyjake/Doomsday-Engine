@@ -17,16 +17,30 @@
  */
 
 #include "gloom/render/context.h"
+#include "gloom/render/gbuffer.h"
+#include "gloom/render/maprender.h"
 
 using namespace de;
 
 namespace gloom {
 
-void Context::bindTo(GLProgram &program) const
+Context &Context::bindCamera(GLProgram &program)
 {
-    program << uCurrentTime << uDiffuseAtlas << uEmissiveAtlas << uSpecGlossAtlas
-            << uNormalDisplAtlas << uEnvMap << uEnvIntensity << view.uMvpMatrix
-            << view.uWorldToViewRotate;
+    program << uCurrentTime << view.uCameraMvpMatrix << view.uWorldToViewRotate;
+    return *this;
+}
+
+Context &Context::bindGBuffer(GLProgram &program)
+{
+    program << gbuffer->uGBufferMaterial() << gbuffer->uGBufferNormal() << gbuffer->uGBufferDepth();
+    return *this;
+}
+
+Context &Context::bindMaterials(GLProgram &program)
+{
+    program << uDiffuseAtlas << uEmissiveAtlas << uSpecGlossAtlas << uNormalDisplAtlas << uEnvMap
+            << uEnvIntensity << mapRender->uTextureMetrics();
+    return *this;
 }
 
 } // namespace gloom

@@ -74,7 +74,7 @@ DENG2_PIMPL(EntityRender)
 
     void loadModels()
     {
-        const auto &context = self().context();
+        auto &context = self().context();
         auto const &pkg = PackageLoader::get().package("net.dengine.gloom");
 
         const char *filenames[] = {
@@ -96,7 +96,8 @@ DENG2_PIMPL(EntityRender)
         }
 
         GloomApp::shaders().build(program, "gloom.entity.material");
-        context.bindTo(program);
+        context.bindCamera(program)
+               .bindMaterials(program);
 
         GloomApp::shaders().build(dirShadowProgram, "gloom.entity.shadow.dir")
             << context.uLightMatrix
