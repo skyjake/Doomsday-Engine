@@ -191,6 +191,13 @@ static int const MAX_BONES = 64;
 static int const MAX_BONES_PER_VERTEX = 4;
 static int const MAX_TEXTURES = 4;
 
+static ModelDrawable::TextureMap const TEXTURE_MAP_TYPES[4]{
+    ModelDrawable::Diffuse,
+    ModelDrawable::Normals,
+    ModelDrawable::Specular,
+    ModelDrawable::Emissive,
+};
+
 struct ModelVertex
 {
     Vec3f pos;
@@ -229,7 +236,7 @@ static Mat4f convertMatrix(aiMatrix4x4 const &aiMat)
 
 static ddouble secondsToTicks(ddouble seconds, aiAnimation const &anim)
 {
-    ddouble const ticksPerSec = anim.mTicksPerSecond? anim.mTicksPerSecond : 25.0;
+    ddouble const ticksPerSec = anim.mTicksPerSecond != 0.f? anim.mTicksPerSecond : 25.0;
     return seconds * ticksPerSec;
 }
 
@@ -239,7 +246,7 @@ static ddouble ticksToSeconds(ddouble ticks, aiAnimation const &anim)
 }
 
 /// Bone used for vertices that have no bones.
-static String const DUMMY_BONE_NAME = "__deng_dummy-bone__";
+static String const DUMMY_BONE_NAME{"__deng_dummy-bone__"};
 
 DENG2_PIMPL(ModelDrawable)
 {
@@ -256,7 +263,7 @@ DENG2_PIMPL(ModelDrawable)
         case aiTextureType_SPECULAR: return Specular;
         case aiTextureType_EMISSIVE: return Emissive;
         default:
-            DENG2_ASSERT(!"Unsupported texture type");
+            DENG2_ASSERT_FAIL("Unsupported texture type");
             return Diffuse;
         }
     }
@@ -293,22 +300,22 @@ DENG2_PIMPL(ModelDrawable)
         Mat4f offset;
     };
 
-    Asset modelAsset;
-    String sourcePath;
-    ImpIOSystem *importerIoSystem; // not owned
+    Asset            modelAsset;
+    String           sourcePath;
+    ImpIOSystem *    importerIoSystem; // not owned
     Assimp::Importer importer;
-    aiScene const *scene { nullptr };
+    aiScene const *  scene{nullptr};
 
     Vec3f minPoint; ///< Bounds in default pose.
     Vec3f maxPoint;
     Mat4f globalInverse;
 
-    QVector<VertexBone> vertexBones; // indexed by vertex
-    QHash<String, duint16> boneNameToIndex;
+    QVector<VertexBone>           vertexBones; // indexed by vertex
+    QHash<String, duint16>        boneNameToIndex;
     QHash<String, aiNode const *> nodeNameToPtr;
-    QVector<BoneData> bones; // indexed by bone index
-    AnimLookup animNameToIndex;
-    QVector<Rangeui> meshIndexRanges;
+    QVector<BoneData>             bones; // indexed by bone index
+    AnimLookup                    animNameToIndex;
+    QVector<Rangeui>              meshIndexRanges;
 
     /**
      * Management of texture maps.
@@ -341,8 +348,8 @@ DENG2_PIMPL(ModelDrawable)
         {
             GLData *d;
 
-            TextureSource(String const &path, GLData *glData)
-                : ImageSource(Path(path))
+            TextureSource(TextureMap texMap, String const &path, GLData *glData)
+                : ImageSource(int(texMap == Height? Normals : texMap), Path(path))
                 , d(glData) {}
 
             Image load() const
@@ -351,16 +358,16 @@ DENG2_PIMPL(ModelDrawable)
             }
         };
 
-        Id::Type defaultTexIds[MAX_TEXTURES];  ///< Used if no other texture is provided.
-        TextureMap textureOrder[MAX_TEXTURES]; ///< Order of textures for vertex buffer texcoords.
-        IImageLoader *imageLoader { &defaultImageLoader };
+        Id::Type   defaultTexIds[MAX_TEXTURES]; ///< Used if no other texture is provided.
+        TextureMap textureOrder[MAX_TEXTURES];  ///< Order of textures for vertex buffer texcoords.
+        IImageLoader *imageLoader{&defaultImageLoader};
 
-        TextureBank textureBank;
+        TextureBank       textureBank;
         QList<Material *> materials; // owned
-        bool needMakeBuffer { false };
+        bool              needMakeBuffer{false};
 
-        String sourcePath; ///< Location of the model file (imported with Assimp).
-        aiScene const *scene { nullptr };
+        String         sourcePath; ///< Location of the model file (imported with Assimp).
+        aiScene const *scene{nullptr};
 
         GLData()
         {
@@ -508,15 +515,15 @@ DENG2_PIMPL(ModelDrawable)
             aiMaterial const &sceneMaterial = *scene->mMaterials[sceneMesh.mMaterialIndex];
 
             auto const &meshTextures = materials.at(mesh.material)->meshTextures[mesh.index];
-            TextureMap const map = textureMapType(type);
+            TextureMap const texMap = textureMapType(type);
 
             try
             {
                 // Custom override path?
-                if (meshTextures.customPaths.contains(map))
+                if (meshTextures.customPaths.contains(texMap))
                 {
-                    LOG_GL_VERBOSE("Loading custom path \"%s\"") << meshTextures.customPaths[map];
-                    return setTexture(mesh, map, meshTextures.customPaths[map]);
+                    LOG_GL_VERBOSE("Loading custom path \"%s\"") << meshTextures.customPaths[texMap];
+                    return setTexture(mesh, texMap, meshTextures.customPaths[texMap]);
                 }
             }
             catch (Error const &er)
@@ -536,7 +543,7 @@ DENG2_PIMPL(ModelDrawable)
                 {
                     if (sceneMaterial.GetTexture(type, s, &texPath) == AI_SUCCESS)
                     {
-                        setTexture(mesh, map, sourcePath.fileNamePath() / NativePath(texPath.C_Str()));
+                        setTexture(mesh, texMap, sourcePath.fileNamePath() / NativePath(texPath.C_Str()));
                         break;
                     }
                 }
@@ -550,10 +557,10 @@ DENG2_PIMPL(ModelDrawable)
             }
         }
 
-        void setTexture(MeshId const &mesh, TextureMap map, String contentPath)
+        void setTexture(MeshId const &mesh, TextureMap texMap, String contentPath)
         {
             if (!scene) return;
-            if (map == Unknown) return; // Ignore unmapped textures.
+            if (texMap == Unknown) return; // Ignore unmapped textures.
             if (mesh.material >= duint(materials.size())) return;
             if (mesh.index >= scene->mNumMeshes) return;
 
@@ -562,13 +569,13 @@ DENG2_PIMPL(ModelDrawable)
             Material &material = *materials[mesh.material];
             auto &meshTextures = material.meshTextures[mesh.index];
 
-            Id::Type &destId = (map == Height? meshTextures.texIds[Normals] :
-                                               meshTextures.texIds[map]);
+            Id::Type &destId = (texMap == Height? meshTextures.texIds[Normals] :
+                                                  meshTextures.texIds[texMap]);
 
             /// @todo Release a previously loaded texture, if it isn't used
             /// in any material. -jk
 
-            if (map == Height)
+            if (texMap == Height)
             {
                 // Convert the height map into a normal map.
                 contentPath = contentPath.concatenatePath("HeightMap.toNormals");
@@ -579,16 +586,16 @@ DENG2_PIMPL(ModelDrawable)
             // If this image is unknown, add it now to the bank.
             if (!textureBank.has(path))
             {
-                textureBank.add(path, new TextureSource(contentPath, this));
+                textureBank.add(path, new TextureSource(texMap, contentPath, this));
             }
 
             LOGDEV_GL_VERBOSE("material: %i mesh: %i file: \"%s\"")
                     << mesh.material
                     << mesh.index
-                    << textureMapToText(map)
+                    << textureMapToText(texMap)
                     << contentPath;
 
-            destId = textureBank.texture(path);
+            destId = textureBank.texture(path).id;
 
             // The buffer needs to be updated with the new texture bounds.
             needMakeBuffer = true;
@@ -613,19 +620,19 @@ DENG2_PIMPL(ModelDrawable)
          * @param tex    Texture map.
          * @param path   Image file path.
          */
-        void setCustomTexturePath(MeshId const &mesh, TextureMap map, String const &path)
+        void setCustomTexturePath(MeshId const &mesh, TextureMap texMap, String const &path)
         {
-            DENG2_ASSERT(!textureBank.atlas()); // in-use textures cannot be replaced on the fly
+            DENG2_ASSERT(!textureBank.atlas(texMap)); // in-use textures cannot be replaced on the fly
             DENG2_ASSERT(mesh.index < scene->mNumMeshes);
             DENG2_ASSERT(mesh.material < duint(materials.size()));
 
-            materials[mesh.material]->meshTextures[mesh.index].customPaths.insert(map, path);
+            materials[mesh.material]->meshTextures[mesh.index].customPaths.insert(texMap, path);
         }
     };
 
-    GLData glData;
-    Passes defaultPasses;
-    GLProgram *program { nullptr }; ///< Default program (overridden by pass shaders).
+    GLData     glData;
+    Passes     defaultPasses;
+    GLProgram *program{nullptr}; ///< Default program (overridden by pass shaders).
 
     mutable GLUniform uBoneMatrices { "uBoneMatrices", GLUniform::Mat4Array, MAX_BONES };
 
@@ -846,7 +853,7 @@ DENG2_PIMPL(ModelDrawable)
     {
         int idx = boneCount();
         bones << BoneData();
-        boneNameToIndex[name] = idx;
+        boneNameToIndex[name] = duint16(idx);
         return idx;
     }
 
@@ -884,7 +891,7 @@ DENG2_PIMPL(ModelDrawable)
         }
         LOG_GL_WARNING("\"%s\": too many weights for vertex %i (only 4 supported), bone index: %i")
             << sourcePath << vertexIndex << boneIndex;
-        DENG2_ASSERT(!"Too many bone weights for a vertex");
+        DENG2_ASSERT_FAIL("Too many bone weights for a vertex");
     }
 
     /**
@@ -911,7 +918,8 @@ DENG2_PIMPL(ModelDrawable)
                 for (duint w = 0; w < bone.mNumWeights; ++w)
                 {
                     addVertexWeight(vertexBase + bone.mWeights[w].mVertexId,
-                                    boneIndex, bone.mWeights[w].mWeight);
+                                    duint16(boneIndex),
+                                    bone.mWeights[w].mWeight);
                 }
             }
         }
@@ -924,7 +932,7 @@ DENG2_PIMPL(ModelDrawable)
             // All vertices fully affected by this bone.
             for (duint i = 0; i < mesh.mNumVertices; ++i)
             {
-                addVertexWeight(vertexBase + i, boneIndex, 1.f);
+                addVertexWeight(vertexBase + i, duint16(boneIndex), 1.f);
             }
         }
     }
@@ -1015,11 +1023,11 @@ DENG2_PIMPL(ModelDrawable)
 
                     if (meshTextures.texIds[map])
                     {
-                        v.texBounds[t] = glData.textureBank.atlas()->imageRectf(meshTextures.texIds[map]).xywh();
+                        v.texBounds[t] = glData.textureBank.atlas(map)->imageRectf(meshTextures.texIds[map]).xywh();
                     }
                     else if (glData.defaultTexIds[map])
                     {
-                        v.texBounds[t] = glData.textureBank.atlas()->imageRectf(glData.defaultTexIds[map]).xywh();
+                        v.texBounds[t] = glData.textureBank.atlas(map)->imageRectf(glData.defaultTexIds[map]).xywh();
                     }
                     else
                     {
@@ -1044,9 +1052,9 @@ DENG2_PIMPL(ModelDrawable)
             {
                 aiFace const &face = mesh.mFaces[i];
                 DENG2_ASSERT(face.mNumIndices == 3); // expecting triangles
-                indx << face.mIndices[0] + base
-                     << face.mIndices[1] + base
-                     << face.mIndices[2] + base;
+                indx << VBuf::Index(face.mIndices[0] + base)
+                     << VBuf::Index(face.mIndices[1] + base)
+                     << VBuf::Index(face.mIndices[2] + base);
             }
 
             meshIndexRanges[m] = Rangeui::fromSize(firstFace, mesh.mNumFaces * 3);
@@ -1169,7 +1177,7 @@ DENG2_PIMPL(ModelDrawable)
                 return i;
             }
         }
-        DENG2_ASSERT(!"Failed to find animation key (invalid time?)");
+        DENG2_ASSERT_FAIL("Failed to find animation key (invalid time?)");
         return 0;
     }
 
@@ -1189,11 +1197,14 @@ DENG2_PIMPL(ModelDrawable)
             return anim.mRotationKeys[0].mValue;
         }
 
-        aiQuatKey const *key = anim.mRotationKeys + findAnimKey(time, anim.mRotationKeys, anim.mNumRotationKeys);
+        aiQuatKey const *key =
+            anim.mRotationKeys + findAnimKey(time, anim.mRotationKeys, anim.mNumRotationKeys);
 
         aiQuaternion interp;
-        aiQuaternion::Interpolate(interp, key[0].mValue, key[1].mValue,
-                                  (time - key[0].mTime) / (key[1].mTime - key[0].mTime));
+        aiQuaternion::Interpolate(interp,
+                                  key[0].mValue,
+                                  key[1].mValue,
+                                  float((time - key[0].mTime) / (key[1].mTime - key[0].mTime)));
         interp.Normalize();
         return interp;
     }
@@ -1324,8 +1335,8 @@ DENG2_PIMPL(ModelDrawable)
 
     void draw(Appearance const *appearance, Animator const *animation)
     {
-        Passes const *passes = appearance && appearance->drawPasses?
-                    appearance->drawPasses : &defaultPasses;
+        Passes const *passes =
+            appearance && appearance->drawPasses ? appearance->drawPasses : &defaultPasses;
         preDraw(animation);
 
         try
@@ -1555,18 +1566,29 @@ bool ModelDrawable::nodeExists(String const &name) const
 
 void ModelDrawable::setAtlas(IAtlas &atlas)
 {
-    d->glData.textureBank.setAtlas(&atlas);
+    for (TextureMap tm : TEXTURE_MAP_TYPES)
+    {
+        setAtlas(tm, atlas); // same atlas for everything
+    }
+}
+
+void ModelDrawable::setAtlas(TextureMap textureMap, IAtlas &atlas)
+{
+    d->glData.textureBank.setAtlas(int(textureMap), &atlas);
 }
 
 void ModelDrawable::unsetAtlas()
 {
     d->glData.releaseTexturesFromAtlas();
-    d->glData.textureBank.setAtlas(nullptr);
+    for (TextureMap tm : TEXTURE_MAP_TYPES)
+    {
+        d->glData.textureBank.setAtlas(int(tm), nullptr);
+    }
 }
 
-IAtlas *ModelDrawable::atlas() const
+IAtlas *ModelDrawable::atlas(TextureMap textureMap) const
 {
-    return d->glData.textureBank.atlas();
+    return d->glData.textureBank.atlas(textureMap);
 }
 
 ModelDrawable::Mapping ModelDrawable::diffuseNormalsSpecularEmission() // static
@@ -1619,17 +1641,17 @@ int ModelDrawable::materialId(String const &name) const
     return d->findMaterial(name);
 }
 
-void ModelDrawable::setTexturePath(MeshId const &mesh, TextureMap tex, String const &path)
+void ModelDrawable::setTexturePath(MeshId const &mesh, TextureMap textureMap, String const &path)
 {
-    if (d->glData.textureBank.atlas())
+    if (d->glData.textureBank.atlas(textureMap))
     {
         // Load immediately.
-        d->glData.setTexture(mesh, tex, path);
+        d->glData.setTexture(mesh, textureMap, path);
     }
     else
     {
         // This will override what the model specifies.
-        d->glData.setCustomTexturePath(mesh, tex, path);
+        d->glData.setCustomTexturePath(mesh, textureMap, path);
     }
 }
 

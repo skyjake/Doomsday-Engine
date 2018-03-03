@@ -25,6 +25,7 @@ namespace de {
 DENG2_PIMPL_NOREF(TextureBank::ImageSource)
 {
     DotPath sourcePath;
+    int atlasId = 0;
 };
 
 TextureBank::ImageSource::ImageSource(DotPath const &sourcePath) : d(new Impl)
@@ -32,9 +33,20 @@ TextureBank::ImageSource::ImageSource(DotPath const &sourcePath) : d(new Impl)
     d->sourcePath = sourcePath;
 }
 
+TextureBank::ImageSource::ImageSource(int atlasId, DotPath const &sourcePath) : d(new Impl)
+{
+    d->sourcePath = sourcePath;
+    d->atlasId    = atlasId;
+}
+
 DotPath const &TextureBank::ImageSource::sourcePath() const
 {
     return d->sourcePath;
+}
+
+int TextureBank::ImageSource::atlasId() const
+{
+    return d->atlasId;
 }
 
 DENG2_PIMPL(TextureBank)
@@ -42,16 +54,17 @@ DENG2_PIMPL(TextureBank)
     struct TextureData : public IData
     {
         Impl *d;
+        AtlasId atlasId;
         Id _id { Id::None };
         std::unique_ptr<Image> pendingImage;
 
-        TextureData(Image const &image, Impl *owner) : d(owner)
+        TextureData(AtlasId atlasId, Image const &image, Impl *owner) : d(owner), atlasId(atlasId)
         {
             if (image)
             {
-                if (d->atlas)
+                if (d->atlases.contains(atlasId))
                 {
-                    _id = d->atlas->alloc(image);
+                    _id = d->atlases[atlasId]->alloc(image);
                 }
                 else
                 {
@@ -67,23 +80,23 @@ DENG2_PIMPL(TextureBank)
             if (_id)
             {
                 d->pathForAtlasId.remove(_id);
-                d->atlas->release(_id);
+                d->atlases[atlasId]->release(_id);
             }
         }
 
         Id const &id()
         {
-            if (pendingImage && d->atlas)
+            if (pendingImage && d->atlases.contains(atlasId))
             {
-                _id = d->atlas->alloc(*pendingImage);
+                _id = d->atlases[atlasId]->alloc(*pendingImage);
                 pendingImage.reset();
             }
             return _id;
         }
     };
 
-    IAtlas *atlas { nullptr };
-    QHash<Id::Type, String> pathForAtlasId; // reverse lookup
+    QHash<int, IAtlas *> atlases;
+    QHash<Id::Type, std::pair<AtlasId, String>> pathForAtlasId; // reverse lookup
 
     Impl(Public *i) : Base(i) {}
 
@@ -100,17 +113,24 @@ TextureBank::TextureBank(char const *nameForLog, Flags const &flags)
 
 void TextureBank::setAtlas(IAtlas *atlas)
 {
-    d->atlas = atlas;
+    setAtlas(0, atlas);
 }
 
-IAtlas *TextureBank::atlas()
+void TextureBank::setAtlas(AtlasId atlasId, IAtlas *atlas)
 {
-    return d->atlas;
+    d->atlases.insert(atlasId, atlas);
 }
 
-Id const &TextureBank::texture(DotPath const &id)
+IAtlas *TextureBank::atlas(AtlasId atlasId)
 {
-    return data(id).as<Impl::TextureData>().id();
+    auto found = d->atlases.constFind(atlasId);
+    return found != d->atlases.constEnd()? found.value() : nullptr;
+}
+
+TextureBank::Allocation TextureBank::texture(DotPath const &id)
+{
+    auto &item = data(id).as<Impl::TextureData>();
+    return Allocation{item.id(), item.atlasId};
 }
 
 Path TextureBank::sourcePathForAtlasId(Id const &id) const
@@ -118,17 +138,18 @@ Path TextureBank::sourcePathForAtlasId(Id const &id) const
     auto found = d->pathForAtlasId.constFind(id);
     if (found != d->pathForAtlasId.constEnd())
     {
-        return found.value();
+        return found.value().second;
     }
     return "";
 }
 
 Bank::IData *TextureBank::loadFromSource(ISource &source)
 {
-    auto *data = new Impl::TextureData(source.as<ImageSource>().load(), d);
+    auto &src = source.as<ImageSource>();
+    auto *data = new Impl::TextureData(src.atlasId(), src.load(), d);
     if (auto const &texId = data->id())
     {
-        d->pathForAtlasId.insert(texId, source.as<ImageSource>().sourcePath());
+        d->pathForAtlasId.insert(texId, std::make_pair(src.atlasId(), src.sourcePath()));
     }
     return data;
 }

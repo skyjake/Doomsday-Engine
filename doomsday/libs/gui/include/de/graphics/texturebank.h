@@ -25,7 +25,7 @@
 namespace de {
 
 /**
- * Bank that stores images on an atlas.
+ * Bank that stores images on one or more atlases.
  *
  * The data item sources in the bank must be derived from TextureBank::ImageSource.
  *
@@ -34,6 +34,8 @@ namespace de {
 class LIBGUI_PUBLIC TextureBank : public Bank
 {
 public:
+    using AtlasId = int;
+
     /**
      * Base classs for entries in the bank. When requested, provides the Image data
      * of the specified item.
@@ -42,12 +44,23 @@ public:
     {
     public:
         ImageSource(DotPath const &sourcePath = "");
+        ImageSource(AtlasId atlasId, DotPath const &sourcePath);
+
+        AtlasId atlasId() const;
         DotPath const &sourcePath() const;
 
         virtual Image load() const = 0;
 
     private:
         DENG2_PRIVATE(d)
+    };
+
+    struct LIBGUI_PUBLIC Allocation
+    {
+        Id id;
+        AtlasId atlas;
+
+        operator Id const &() const { return id; }
     };
 
 public:
@@ -61,9 +74,18 @@ public:
      */
     void setAtlas(IAtlas *atlas);
 
-    IAtlas *atlas();
+    /**
+     * Sets one of the atlases that will be used for allocating images.
+     *
+     * @param atlasId  Id of the atlas.
+     *
+     * @param atlas Texture atlas.
+     */
+    void setAtlas(AtlasId atlasId, IAtlas *atlas);
 
-    Id const &texture(DotPath const &id);
+    IAtlas *atlas(AtlasId atlasId = 0);
+
+    Allocation texture(DotPath const &id);
 
     /**
      * Returns the source path of an image that has been loaded into the atlas.

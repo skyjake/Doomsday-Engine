@@ -473,12 +473,22 @@ public:
     void setAtlas(IAtlas &atlas);
 
     /**
-     * Removes the model's atlas. All allocations this model has made from the atlas
+     * Sets the atlas to use for a specific type of textures. THis is needed for glInit(). Unlike
+     * setAtlas(atlas) that uses the same atlas for everything, this will associate a certain type
+     * of texture with a specific atlas.
+     *
+     * @param textureMap  Texture map. This
+     * @param atlas       Atlas for model textures of type @a textureMap.
+     */
+    void setAtlas(TextureMap textureMap, IAtlas &atlas);
+
+    /**
+     * Removes the model's atlases. All allocations this model has made from the atlas
      * are freed.
      */
     void unsetAtlas();
 
-    IAtlas *atlas() const;
+    IAtlas *atlas(TextureMap textureMap = Unknown) const;
 
     /**
      * Sets which textures are to be passed to the model shader via the GL buffer.
