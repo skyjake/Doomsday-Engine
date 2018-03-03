@@ -5,14 +5,17 @@ layout (pixel_center_integer) in vec4 gl_FragCoord;
 
 uniform mat4 uInverseProjMatrix;
 
-uniform sampler2D uGBufferMaterial;
+// uniform sampler2D uGBufferMaterial;
+uniform sampler2D uGBufferDiffuse;
+uniform sampler2D uGBufferEmissive;
+uniform sampler2D uGBufferSpecGloss;
 uniform sampler2D uGBufferNormal;
 uniform sampler2D uGBufferDepth;
 
-struct MaterialData {
-    uint matIndex;
-    vec2 uv;
-};
+// struct MaterialData {
+//     uint matIndex;
+//     vec2 uv;
+// };
 
 vec4 GBuffer_ViewSpacePosFromDepth(vec2 normCoord, float depth) {
     float z = depth * 2.0 - 1.0;
@@ -47,9 +50,21 @@ vec3 GBuffer_FragViewSpaceNormal(void) {
     return norm * 2.0 - 1.0;
 }
 
-MaterialData GBuffer_FragMaterialData(void) {
-    vec4 data = texelFetch(uGBufferMaterial, ivec2(gl_FragCoord.xy), 0);
-    return MaterialData(uint(data.b + 0.5), data.rg);
+// MaterialData GBuffer_FragMaterialData(void) {
+//     vec4 data = texelFetch(uGBufferMaterial, ivec2(gl_FragCoord.xy), 0);
+//     return MaterialData(uint(data.b + 0.5), data.rg);
+// }
+
+vec3 GBuffer_FragDiffuse(void) {
+    return texelFetch(uGBufferDiffuse, ivec2(gl_FragCoord.xy), 0).rgb;
+}
+
+vec3 GBuffer_FragEmissive(void) {
+    return texelFetch(uGBufferEmissive, ivec2(gl_FragCoord.xy), 0).rgb;
+}
+
+vec4 GBuffer_FragSpecGloss(void) {
+    return texelFetch(uGBufferSpecGloss, ivec2(gl_FragCoord.xy), 0);
 }
 
 #endif // GLOOM_GBUFFER_IN_H

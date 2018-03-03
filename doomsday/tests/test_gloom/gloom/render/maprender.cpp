@@ -185,8 +185,6 @@ DENG2_PIMPL(MapRender)
         ents  .glInit(self().context());
         lights.glInit(self().context());
 
-//        uTexelsPerMeter = 200;
-
         // Load materials.
         for (const char *name :
              {"world.stone", "world.dirt", "world.grass", "world.test", "world.test2"})

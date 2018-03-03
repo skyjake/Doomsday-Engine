@@ -127,14 +127,14 @@ DENG2_PIMPL(LightRender)
                 << ctx.view.uModelViewMatrix
                 << ctx.view.uWorldToViewRotate
                 << ctx.view.uInverseProjMatrix
-                << ctx.gbuffer->uGBufferMaterial()
-                << ctx.gbuffer->uGBufferNormal()
-                << ctx.gbuffer->uGBufferDepth()
-                << ctx.uDiffuseAtlas
-                << ctx.uEmissiveAtlas
-                << ctx.uSpecGlossAtlas
-                << ctx.uNormalDisplAtlas
-                << ctx.mapRender->uTextureMetrics()
+//                << ctx.gbuffer->uGBufferMaterial()
+//                << ctx.gbuffer->uGBufferNormal()
+//                << ctx.gbuffer->uGBufferDepth()
+//                << ctx.uDiffuseAtlas
+//                << ctx.uEmissiveAtlas
+//                << ctx.uSpecGlossAtlas
+//                << ctx.uNormalDisplAtlas
+//                << ctx.mapRender->uTextureMetrics()
                 << ctx.uEnvMap
                 << uShadowMaps[0]
                 << uShadowMaps[1]
@@ -143,19 +143,20 @@ DENG2_PIMPL(LightRender)
                 << uShadowMaps[4]
                 << uShadowMaps[5]
                 << ctx.view.uViewToWorldRotate;
+        ctx.bindGBuffer(shadingProgram);
 
         giQuad.glInit(self().context());
         ctx.shaders->build(giQuad.program(), "gloom.light.global")
                 << ctx.view.uInverseProjMatrix
                 << ctx.view.uViewToWorldRotate
-                << ctx.gbuffer->uGBufferMaterial()
-                << ctx.gbuffer->uGBufferNormal()
-                << ctx.gbuffer->uGBufferDepth()
-                << ctx.uDiffuseAtlas
-                << ctx.uEmissiveAtlas
-                << ctx.uSpecGlossAtlas
-                << ctx.uNormalDisplAtlas
-                << ctx.mapRender->uTextureMetrics()
+//                << ctx.gbuffer->uGBufferMaterial()
+//                << ctx.gbuffer->uGBufferNormal()
+//                << ctx.gbuffer->uGBufferDepth()
+//                << ctx.uDiffuseAtlas
+//                << ctx.uEmissiveAtlas
+//                << ctx.uSpecGlossAtlas
+//                << ctx.uNormalDisplAtlas
+//                << ctx.mapRender->uTextureMetrics()
                 << ctx.uEnvMap
                 << ctx.uEnvIntensity
                 << ctx.ssao->uSSAOBuf()
@@ -165,6 +166,7 @@ DENG2_PIMPL(LightRender)
                 << uLightIntensity
                 << uViewToLightMatrix
                 << ctx.uLightMatrix;
+        ctx.bindGBuffer(giQuad.program());
 
         // Generate a sphere for light bounds.
         {

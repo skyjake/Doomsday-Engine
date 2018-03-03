@@ -11,12 +11,12 @@ flat DENG_VAR uint  vFlags;
 void main(void) {
     uint matIndex = uint(vMaterial + 0.5);
 
-    // Mask transparent texels.
-    // vec4 color = Gloom_FetchTexture(matIndex, Texture_Diffuse, vUV);
-    // if (color.a < 0.005) {
-    //     discard;
-    // }
+    // GBuffer_SetFragMaterial(matIndex, vUV);
+    GBuffer_SetFragDiffuse(Gloom_FetchTexture(matIndex, Texture_Diffuse, vUV));
+    GBuffer_SetFragEmissive(Gloom_FetchTexture(matIndex, Texture_Emissive, vUV).rgb);
+    GBuffer_SetFragSpecGloss(Gloom_FetchTexture(matIndex, Texture_SpecularGloss, vUV));
 
-    GBuffer_SetFragMaterial(matIndex, vUV);
+    // TODO: normal/parallax mapping
+
     GBuffer_SetFragNormal(vNormal);
 }

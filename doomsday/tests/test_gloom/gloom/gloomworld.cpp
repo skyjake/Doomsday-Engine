@@ -126,13 +126,14 @@ DENG2_PIMPL(GloomWorld), public Asset
         // Debug view.
         {
             renderContext.shaders->build(debugQuad.program(), "gloom.debug")
-                    << gbuffer.uGBufferMaterial()
-                    << gbuffer.uGBufferDepth()
-                    << gbuffer.uGBufferNormal()
+//                    << gbuffer.uGBufferMaterial()
+//                    << gbuffer.uGBufferDepth()
+//                    << gbuffer.uGBufferNormal()
                     << renderContext.uDebugMode
                     << renderContext.uDebugTex
                     << renderContext.lights->uViewSpaceLightDir()
                     << ssao.uSSAOBuf();
+            renderContext.bindGBuffer(debugQuad.program());
         }
 
 //        Vec3f const fogColor{.83f, .89f, 1.f};
@@ -288,6 +289,7 @@ void GloomWorld::render(const ICamera &camera)
             .setBlend(false);
 
     d->mapRender.render();
+    d->sky.render();
     d->ssao.render();
 
     GLState::pop();
@@ -296,7 +298,6 @@ void GloomWorld::render(const ICamera &camera)
     GLState::push().setTarget(d->framebuf);
     d->mapRender.lights().renderLighting();
     GLState::current().setDepthTest(true).setDepthWrite(false);
-    d->sky.render();
     GLState::pop();
 
     // Framebuffer contents are mipmapped for brightness analysis.

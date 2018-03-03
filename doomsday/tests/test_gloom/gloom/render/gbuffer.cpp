@@ -33,15 +33,16 @@ namespace gloom {
 
 DENG2_PIMPL(GBuffer)
 {
-    //ScreenQuad quad;
-    GLTextureFramebuffer frame{GLTextureFramebuffer::Formats({Image::RGB_32f,   // UV, material
-                                                              Image::RGB_32f    // normals
-                                                              /*Image::RGB_16f*/})}; // emissive
-    GLUniform uGBufferMaterial  {"uGBufferMaterial",   GLUniform::Sampler2D};
-    //GLUniform uGBufferEmissive  {"uGBufferEmissive",   GLUniform::Sampler2D};
+    GLTextureFramebuffer frame{GLTextureFramebuffer::Formats({Image::RGB_888,   // diffuse
+                                                              Image::RGB_32f,   // normals (viewspace)
+                                                              Image::RGB_16f,   // emissive
+                                                              Image::RGBA_8888 })}; // specular/gloss
+    //GLUniform uGBufferMaterial  {"uGBufferMaterial",   GLUniform::Sampler2D};
+    GLUniform uGBufferDiffuse   {"uGBufferDiffuse",    GLUniform::Sampler2D};
     GLUniform uGBufferNormal    {"uGBufferNormal",     GLUniform::Sampler2D};
+    GLUniform uGBufferEmissive  {"uGBufferEmissive",   GLUniform::Sampler2D};
+    GLUniform uGBufferSpecGloss {"uGBufferSpecGloss",  GLUniform::Sampler2D};
     GLUniform uGBufferDepth     {"uGBufferDepth",      GLUniform::Sampler2D};
-//    GLUniform uDebugMode        {"uDebugMode",         GLUniform::Int};
 
     Impl(Public *i) : Base(i)
     {}
@@ -54,10 +55,12 @@ DENG2_PIMPL(GBuffer)
 
     void updateUniforms()
     {
-        uGBufferMaterial = frame.attachedTexture(GLFramebuffer::Color0);
-        uGBufferNormal   = frame.attachedTexture(GLFramebuffer::Color1);
-        //uGBufferEmissive = frame.attachedTexture(GLFramebuffer::Color2);
-        uGBufferDepth    = frame.attachedTexture(GLFramebuffer::DepthStencil);
+//        uGBufferMaterial = frame.attachedTexture(GLFramebuffer::Color0);
+        uGBufferDiffuse   = frame.attachedTexture(GLFramebuffer::Color0);
+        uGBufferNormal    = frame.attachedTexture(GLFramebuffer::Color1);
+        uGBufferEmissive  = frame.attachedTexture(GLFramebuffer::Color2);
+        uGBufferSpecGloss = frame.attachedTexture(GLFramebuffer::Color3);
+        uGBufferDepth     = frame.attachedTexture(GLFramebuffer::DepthStencil);
     }
 };
 
@@ -102,15 +105,25 @@ GLFramebuffer &GBuffer::framebuf()
     return d->frame;
 }
 
-GLUniform &GBuffer::uGBufferMaterial()
+//GLUniform &GBuffer::uGBufferMaterial()
+//{
+//    return d->uGBufferMaterial;
+//}
+
+GLUniform &GBuffer::uGBufferDiffuse()
 {
-    return d->uGBufferMaterial;
+    return d->uGBufferDiffuse;
 }
 
-//GLUniform &GBuffer::uGBufferEmissive()
-//{
-//    return d->uGBufferEmissive;
-//}
+GLUniform &GBuffer::uGBufferEmissive()
+{
+    return d->uGBufferEmissive;
+}
+
+GLUniform &GBuffer::uGBufferSpecGloss()
+{
+    return d->uGBufferSpecGloss;
+}
 
 GLUniform &GBuffer::uGBufferNormal()
 {

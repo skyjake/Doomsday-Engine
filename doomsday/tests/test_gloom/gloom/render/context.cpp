@@ -32,7 +32,8 @@ Context &Context::bindCamera(GLProgram &program)
 
 Context &Context::bindGBuffer(GLProgram &program)
 {
-    program << gbuffer->uGBufferMaterial() << gbuffer->uGBufferNormal() << gbuffer->uGBufferDepth();
+    program << gbuffer->uGBufferDiffuse() << gbuffer->uGBufferNormal() << gbuffer->uGBufferDepth()
+            << gbuffer->uGBufferSpecGloss() << gbuffer->uGBufferEmissive();
     return *this;
 }
 

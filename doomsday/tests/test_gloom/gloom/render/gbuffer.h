@@ -44,8 +44,10 @@ public:
 //    void       setDebugMode(int debugMode);
 
     de::GLFramebuffer &framebuf();
-    de::GLUniform &    uGBufferMaterial();
-    //de::GLUniform &    uGBufferEmissive();
+
+    de::GLUniform &    uGBufferDiffuse();
+    de::GLUniform &    uGBufferEmissive();
+    de::GLUniform &    uGBufferSpecGloss();
     de::GLUniform &    uGBufferNormal();
     de::GLUniform &    uGBufferDepth();
 

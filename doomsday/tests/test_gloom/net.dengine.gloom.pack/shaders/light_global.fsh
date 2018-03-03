@@ -2,7 +2,6 @@
 
 #include "common/gbuffer_in.glsl"
 #include "common/lightmodel.glsl"
-#include "common/material.glsl"
 
 uniform sampler2D uSSAOBuf;
 
@@ -71,10 +70,12 @@ vec3 Gloom_FetchAmbient(vec3 viewSpaceNormal) {
 }
 
 void main(void) {
-    MaterialData data = GBuffer_FragMaterialData();
-    vec3 diffuse = Gloom_FetchTexture(data.matIndex, Texture_Diffuse, data.uv).rgb;
-    vec4 specGloss = Gloom_FetchTexture(data.matIndex, Texture_SpecularGloss, data.uv);
-    vec3 normal = GBuffer_FragViewSpaceNormal();
+    // MaterialData data = GBuffer_FragMaterialData();
+    // vec3 diffuse = Gloom_FetchTexture(data.matIndex, Texture_Diffuse, data.uv).rgb;
+    // vec4 specGloss = Gloom_FetchTexture(data.matIndex, Texture_SpecularGloss, data.uv);
+    vec3 diffuse   = GBuffer_FragDiffuse();
+    vec4 specGloss = GBuffer_FragSpecGloss();
+    vec3 normal    = GBuffer_FragViewSpaceNormal();
 
     // Ambient light.
     vec3 ambient = Gloom_FetchAmbient(normal);
@@ -82,9 +83,7 @@ void main(void) {
 
     vec3 outColor = ambient * ambientOcclusion * diffuse;
 
-#if 1
-    // Directional world lights.
-    {
+    /* Directional world lights. */ {
         float dirLight = 1.0;
         float dp = dot(normal, uViewSpaceLightDir);
         if (dp < 0.0) {
@@ -103,12 +102,9 @@ void main(void) {
             }
         }
     }
-#endif
 
-#if 1
     // Material emissive component.
-    outColor += Gloom_FetchTexture(data.matIndex, Texture_Emissive, data.uv).rgb;
-#endif
+    outColor += GBuffer_FragEmissive();
 
     // The final color.
     out_FragColor = vec4(outColor, 1.0);

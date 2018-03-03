@@ -50,45 +50,25 @@ float Gloom_FetchShadow(vec4 lightSpacePos, float dp) {
 #endif
 
 void main(void) {
-    #if 0
-    if (uDebugMode == 0) {
-        vec3 normal = GBuffer_FragViewSpaceNormal();
-        float f = 1.0;
-        /* Check light. */ {
-            float dp = dot(normal, uViewSpaceLightDir);
-            float light = max(0.0, -dp);
-            float shadow = step(0.0, -dp);
-            if (dp < 0.0) {
-                // Surface faces the light.
-                vec4 lsPos = uViewToLightMatrix * GBuffer_FragViewSpacePos();
-                shadow *= Gloom_FetchShadow(lsPos, dp);
-            }
-            f = 0.3 + shadow * light;
-        }
-        out_FragColor = f *
-            texture(uGBufferAlbedo, vUV) * texture(uSSAOBuf, vUV).r +
-            texture(uGBufferEmissive, vUV);
-    }
-    else
-    #endif
     if (uDebugMode == 1) {
-        MaterialData matData = GBuffer_FragMaterialData();
-        out_FragColor = vec4(vec3(float(matData.matIndex)/6.0), 1.0);
+        out_FragColor = vec4(GBuffer_FragDiffuse(), 1.0);
     }
     else if (uDebugMode == 2) {
-        MaterialData matData = GBuffer_FragMaterialData();
-        out_FragColor = vec4(10.0 + matData.uv.t, 10.0 + matData.uv.t, 0.0, 1.0) / 10.0;
+        out_FragColor = vec4(GBuffer_FragEmissive(), 1.0);
     }
     else if (uDebugMode == 3) {
-        out_FragColor = texture(uGBufferNormal, vUV);
+        out_FragColor = GBuffer_FragSpecGloss();
     }
     else if (uDebugMode == 4) {
-        out_FragColor = GBuffer_FragViewSpacePos();
+        out_FragColor = texture(uGBufferNormal, vUV);
     }
     else if (uDebugMode == 5) {
-        out_FragColor = vec4(vec3(texture(uSSAOBuf, vUV).r), 1.0);
+        out_FragColor = GBuffer_FragViewSpacePos();
     }
     else if (uDebugMode == 6) {
+        out_FragColor = vec4(vec3(texture(uSSAOBuf, vUV).r), 1.0);
+    }
+    else if (uDebugMode == 7) {
         out_FragColor = vec4(vec3(texture(uShadowMap, vUV).s), 1.0);
     }
 }

@@ -9,5 +9,5 @@ DENG_VAR vec3 vModelPos;
 
 void main(void) {
     vec4 color = textureLod(uEnvMap, vModelPos, 0);
-    out_FragColor = vec4(uEnvIntensity * color.rgb * color.a, 1.0);
+    GBuffer_SetFragEmissive(uEnvIntensity * color.rgb * color.a);
 }
