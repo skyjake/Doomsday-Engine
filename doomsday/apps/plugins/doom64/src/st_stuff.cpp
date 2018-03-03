@@ -1029,7 +1029,7 @@ void ST_HUDUnHide(int player, hueevent_t ev)
 
     if(ev < HUE_FORCE || ev > NUMHUDUNHIDEEVENTS)
     {
-        DENG_ASSERT(!"ST_HUDUnHide: Invalid event type");
+        DENG2_ASSERT_FAIL("ST_HUDUnHide: Invalid event type");
         return;
     }
 

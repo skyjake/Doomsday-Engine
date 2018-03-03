@@ -429,7 +429,7 @@ static GLint ChooseTextureFormat(dgltexformat_t format, dd_bool allowCompression
         return GL_RGBA8;
 
     default:
-        DENG2_ASSERT(!"ChooseTextureFormat: Invalid texture source format");
+        DENG2_ASSERT_FAIL("ChooseTextureFormat: Invalid texture source format");
         return 0;
     }
 
@@ -466,7 +466,7 @@ static GLint ChooseTextureFormat(dgltexformat_t format, dd_bool allowCompression
         return !compress ? GL_LUMINANCE_ALPHA : GL_COMPRESSED_LUMINANCE_ALPHA;*/
 
     default:
-        DENG2_ASSERT(!"ChooseTextureFormat: Invalid texture source format");
+        DENG2_ASSERT_FAIL("ChooseTextureFormat: Invalid texture source format");
         return 0; // Unreachable.
     }
     

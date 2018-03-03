@@ -41,7 +41,7 @@ DataFolder::DataFolder(Format format, File &sourceFile)
     }
     else
     {
-        DENG2_ASSERT(!"DataFolder doesn't know how to access the source file");
+        DENG2_ASSERT_FAIL("DataFolder doesn't know how to access the source file");
     }*/
 }
 

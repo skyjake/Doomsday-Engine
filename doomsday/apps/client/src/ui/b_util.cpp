@@ -481,7 +481,7 @@ bool B_CheckCondition(Binding::CompiledConditionRecord const *condRec, int local
         }
         break;
 
-    default: DENG2_ASSERT(!"B_CheckCondition: Unknown cond.type"); break;
+    default: DENG2_ASSERT_FAIL("B_CheckCondition: Unknown cond.type"); break;
     }
 
     return !fulfilled;
@@ -537,7 +537,7 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
         case IBD_TOGGLE: ctrl = &device->button(bind.controlId); break;
         case IBD_ANGLE:  ctrl = &device->hat   (bind.controlId); break;
 
-        default: DENG2_ASSERT(!"B_EvaluateImpulseBindings: Invalid bind.type"); break;
+        default: DENG2_ASSERT_FAIL("B_EvaluateImpulseBindings: Invalid bind.type"); break;
         }
 
         float devicePos = 0;
@@ -698,7 +698,7 @@ String B_ControlDescToString(int deviceId, ddeventtype_t type, int id)
     case E_ANGLE:    str += "hat" + String::number(id + 1); break;
     case E_SYMBOLIC: str += "sym";                          break;
 
-    default: DENG2_ASSERT(!"B_ControlDescToString: Invalid event type"); break;
+    default: DENG2_ASSERT_FAIL("B_ControlDescToString: Invalid event type"); break;
     }
 
     return str;
@@ -715,7 +715,7 @@ String B_ButtonStateToString(Binding::ControlTest test)
     case Binding::ButtonStateUp:           return "-up";
 
     default:
-        DENG2_ASSERT(!"B_ButtonStateToString: Unknown test");
+        DENG2_ASSERT_FAIL("B_ButtonStateToString: Unknown test");
         return "";
     }
 }
@@ -730,7 +730,7 @@ String B_AxisPositionToString(Binding::ControlTest test, float pos)
     case Binding::AxisPositionBeyondNegative: return String("-neg%1").arg(-pos);
 
     default:
-        DENG2_ASSERT(!"B_AxisPositionToString: Unknown test");
+        DENG2_ASSERT_FAIL("B_AxisPositionToString: Unknown test");
         return "";
     }
 }

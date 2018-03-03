@@ -960,7 +960,7 @@ void IN_Ticker()
     case ILS_NONE:          tickNoState();   break;
 
     default:
-        DENG2_ASSERT(!"IN_Ticker: Unknown intermission state");
+        DENG2_ASSERT_FAIL("IN_Ticker: Unknown intermission state");
         break;
     }
 }
@@ -1100,7 +1100,7 @@ void IN_SetState(interludestate_t st)
     case ILS_NONE:          initNoState();   break;
 
     default:
-        DENG2_ASSERT(!"IN_SetState: Unknown intermission state");
+        DENG2_ASSERT_FAIL("IN_SetState: Unknown intermission state");
         break;
     }
 }

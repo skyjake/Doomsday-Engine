@@ -865,7 +865,9 @@ int DGL_Enable(int cap)
             // TODO: Not needed?
             break;
 
-        default: DENG_ASSERT(!"DGL_Enable: Invalid cap"); return 0;
+        default: 
+            DENG_ASSERT_FAIL("DGL_Enable: Invalid cap");
+            return 0;
     }
 
     LIBGUI_ASSERT_GL_OK();
@@ -945,7 +947,9 @@ void DGL_Disable(int cap)
 #endif
             break;
 
-        default: DENG_ASSERT(!"DGL_Disable: Invalid cap"); break;
+        default: 
+            DENG2_ASSERT_FAIL("DGL_Disable: Invalid cap");
+            break;
     }
 
     LIBGUI_ASSERT_GL_OK();
@@ -1022,7 +1026,7 @@ static gl::Wrapping DGL_ToGLWrapCap(DGLint cap)
         return gl::Repeat;
 
     default:
-        DENG2_ASSERT(!"DGL_ToGLWrapCap: Unknown cap value");
+        DENG2_ASSERT_FAIL("DGL_ToGLWrapCap: Unknown cap value");
         break;
     }
     return gl::ClampToEdge;

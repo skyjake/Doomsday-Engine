@@ -1937,7 +1937,7 @@ dint Def_Set(dint type, dint index, dint value, void const *ptr)
     case DD_DEF_SOUND:
         if (index < 0 || index >= ::runtimeDefs.sounds.size())
         {
-            DENG2_ASSERT(!"Sound index is invalid");
+            DENG2_ASSERT_FAIL("Sound index is invalid");
             return false;
         }
 

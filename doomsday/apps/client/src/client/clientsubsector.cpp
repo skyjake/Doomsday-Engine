@@ -1460,7 +1460,7 @@ String ClientSubsector::edgeLoopIdAsText(dint loopId) // static
     case InnerLoop: return "inner";
 
     default:
-        DENG2_ASSERT(!"ClientSubsector::edgeLoopIdAsText: Invalid loopId");
+        DENG2_ASSERT_FAIL("ClientSubsector::edgeLoopIdAsText: Invalid loopId");
         throw Error("ClientSubsector::edgeLoopIdAsText", "Unknown loop ID " + QString::number(loopId));
     }
 }

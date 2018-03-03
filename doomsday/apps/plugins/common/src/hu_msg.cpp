@@ -141,7 +141,7 @@ static void drawMessage()
     case MSG_ANYKEY: questionString = PRESSKEY;     break;
     case MSG_YESNO:  questionString = yesNoMessage; break;
 
-    default: DENG2_ASSERT(!"drawMessage: Internal error, unknown message type.");
+    default: DENG2_ASSERT_FAIL("drawMessage: Internal error, unknown message type.");
     }
 
     DGL_Enable(DGL_TEXTURE_2D);

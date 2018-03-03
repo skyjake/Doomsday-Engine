@@ -480,7 +480,7 @@ void ST_HUDUnHide(int localPlayer, hueevent_t ev)
 
     if(ev < HUE_FORCE || ev > NUMHUDUNHIDEEVENTS)
     {
-        DENG_ASSERT(!"ST_HUDUnHide: Invalid event type");
+        DENG2_ASSERT_FAIL("ST_HUDUnHide: Invalid event type");
         return;
     }
 
@@ -816,7 +816,7 @@ struct uiwidgetdef_t
         case GUI_FLIGHT:        wi = new guidata_flight_t(localPlayer); break;
         //case GUI_AUTOMAP:       wi = new AutomapWidget(def.updateGeometry, def.drawer, localPlayer); break;
 
-        default: DENG2_ASSERT(!"Unknown widget type"); break;
+        default: DENG2_ASSERT_FAIL("Unknown widget type"); break;
         }
 
         wi->setAlignment(def.alignFlags)

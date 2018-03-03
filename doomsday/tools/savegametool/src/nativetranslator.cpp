@@ -167,7 +167,7 @@ DENG2_PIMPL(NativeTranslator)
         case Heretic: return 0x7D9A12C5;
         case Hexen:   return 0x1B17CC00;
         }
-        DENG2_ASSERT(!"NativeTranslator::magic: Invalid format id");
+        DENG2_ASSERT_FAIL("NativeTranslator::magic: Invalid format id");
         return 0;
     }
 
@@ -587,7 +587,7 @@ String NativeTranslator::formatName() const
     case Heretic:   return "Heretic";
     case Hexen:     return "Hexen";
     }
-    DENG2_ASSERT(!"NativeTranslator::formatName: Invalid format id");
+    DENG2_ASSERT_FAIL("NativeTranslator::formatName: Invalid format id");
     return "";
 }
 

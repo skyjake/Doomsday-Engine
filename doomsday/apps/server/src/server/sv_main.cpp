@@ -511,7 +511,7 @@ void Sv_ExecuteCommand(void)
         break;
 
     default:
-        DENG_ASSERT(!"Sv_ExecuteCommand: Not a command packet!");
+        DENG2_ASSERT_FAIL("Sv_ExecuteCommand: Not a command packet!");
         return;
     }
 

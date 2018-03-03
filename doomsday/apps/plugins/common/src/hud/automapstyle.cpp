@@ -310,7 +310,7 @@ void AutomapStyle::objectColor(automapcfg_objectname_t name, float *r, float *g,
     case AMO_FLOORCHANGELINE:   info = &d->mapObjectInfo[MOL_LINEDEF_FLOOR   ]; break;
     case AMO_CEILINGCHANGELINE: info = &d->mapObjectInfo[MOL_LINEDEF_CEILING ]; break;
 
-    default: DENG2_ASSERT(!"Object has no color property");
+    default: DENG2_ASSERT_FAIL("Object has no color property");
     }
 
     if(r) *r = info->rgba[0];
@@ -336,7 +336,7 @@ void AutomapStyle::setObjectColor(automapcfg_objectname_t name, float r, float g
     case AMO_FLOORCHANGELINE:   info = &d->mapObjectInfo[MOL_LINEDEF_FLOOR   ]; break;
     case AMO_CEILINGCHANGELINE: info = &d->mapObjectInfo[MOL_LINEDEF_CEILING ]; break;
 
-    default: DENG2_ASSERT(!"Object has no color property");
+    default: DENG2_ASSERT_FAIL("Object has no color property");
     }
 
     info->rgba[0] = de::clamp(0.f, r, 1.f);
@@ -359,7 +359,7 @@ void AutomapStyle::setObjectColorAndOpacity(automapcfg_objectname_t name, float 
     case AMO_FLOORCHANGELINE:   info = &d->mapObjectInfo[MOL_LINEDEF_FLOOR   ]; break;
     case AMO_CEILINGCHANGELINE: info = &d->mapObjectInfo[MOL_LINEDEF_CEILING ]; break;
 
-    default: DENG2_ASSERT(!"Object has no color property");
+    default: DENG2_ASSERT_FAIL("Object has no color property");
     }
 
     info->rgba[0] = de::clamp(0.f, r, 1.f);
@@ -383,7 +383,7 @@ void AutomapStyle::setObjectGlow(automapcfg_objectname_t name, glowtype_t type, 
     case AMO_FLOORCHANGELINE:   info = &d->mapObjectInfo[MOL_LINEDEF_FLOOR   ]; break;
     case AMO_CEILINGCHANGELINE: info = &d->mapObjectInfo[MOL_LINEDEF_CEILING ]; break;
 
-    default: DENG2_ASSERT(!"Object has no glow property");
+    default: DENG2_ASSERT_FAIL("Object has no glow property");
     }
 
     info->glow          = type;
@@ -402,7 +402,7 @@ svgid_t AutomapStyle::objectSvg(automapcfg_objectname_t name) const
     case AMO_THING:       return d->thingSvg;
     case AMO_THINGPLAYER: return d->playerSvg;
 
-    default: DENG2_ASSERT(!"Object has no SVG property");
+    default: DENG2_ASSERT_FAIL("Object has no SVG property");
     }
 
     return 0;  // None.
@@ -418,7 +418,7 @@ void AutomapStyle::setObjectSvg(automapcfg_objectname_t name, svgid_t svg)
     case AMO_THING:         d->thingSvg  = svg; break;
     case AMO_THINGPLAYER:   d->playerSvg = svg; break;
 
-    default: DENG2_ASSERT(!"Object has no SVG property");
+    default: DENG2_ASSERT_FAIL("Object has no SVG property");
     }
 }
 

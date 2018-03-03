@@ -216,7 +216,7 @@ dd_bool P_ActivateLine(Line *ld, mobj_t *mo, int side, int actType)
         return true;
 
     default:
-        DENG2_ASSERT(!"P_ActivateLine: Unknown activation type");
+        DENG2_ASSERT_FAIL("P_ActivateLine: Unknown activation type");
         break;
     }
 

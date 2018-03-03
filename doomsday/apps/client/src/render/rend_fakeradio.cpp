@@ -207,7 +207,7 @@ static bool wallReceivesShadow(WallEdge const &leftEdge, WallEdge const &rightEd
                && wallSideOpenness(leftEdge, rightEdge, true/*right side*/) > 0
                && leftEdge.lineSideOffset() + wallWidth(leftEdge, rightEdge) > side.line().length() - shadowSize;
     }
-    DENG2_ASSERT(!"Unknown WallShadow");
+    DENG2_ASSERT_FAIL("Unknown WallShadow");
     return false;
 }
 
@@ -737,7 +737,7 @@ static bool projectWallShadow(WallEdge const &leftEdge, WallEdge const &rightEdg
                       projected.texOrigin, projected.texDimensions, true/*horizontal*/);
         return true;
     }
-    DENG2_ASSERT(!"Unknown WallShadow");
+    DENG2_ASSERT_FAIL("Unknown WallShadow");
     return false;
 }
 

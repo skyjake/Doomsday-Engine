@@ -203,7 +203,7 @@ void N_NETicker(timespan_t time)
             N_MARemove();
             break; }
 
-        default: DENG2_ASSERT(!"N_NETicker: Invalid value for 'act'"); break;
+        default: DENG2_ASSERT_FAIL("N_NETicker: Invalid value for 'act'"); break;
         }
     }
 }
@@ -237,7 +237,7 @@ void N_Update()
             ::masterHeartbeat = MASTER_UPDATETIME;
             break;
 
-        default: DENG2_ASSERT(!"N_Update: Invalid value"); break;
+        default: DENG2_ASSERT_FAIL("N_Update: Invalid value"); break;
         }
     }
 #endif  // __SERVER__

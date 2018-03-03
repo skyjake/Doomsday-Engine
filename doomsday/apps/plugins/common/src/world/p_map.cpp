@@ -3326,7 +3326,7 @@ static int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
         // Stop searching.
         return true; }
 
-    default: DENG2_ASSERT(!"Unknown intercept type");
+    default: DENG2_ASSERT_FAIL("Unknown intercept type");
         return false;
     }
 }

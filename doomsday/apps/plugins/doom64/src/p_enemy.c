@@ -598,7 +598,7 @@ void C_DECL A_RectSpecial(mobj_t* actor)
     {
         P_MobjChangeState(actor, P_GetState(actor->type, SN_DEATH) + 2);
     }
-    
+
     if(countMobjsWithType(actor->type) > 0)
     {   // No Bitches left alive.
         Line*               dummyLine = P_AllocDummyLine();
@@ -614,7 +614,7 @@ void C_DECL A_RectSpecial(mobj_t* actor)
 void C_DECL A_TrooSpecial(mobj_t* mo)
 {
     A_Fall(mo);
-    
+
     if(countMobjsWithType(mo->type) > 0)
     {
         Line*               dummyLine = P_AllocDummyLine();
@@ -1226,7 +1226,7 @@ void C_DECL A_TroopAttack(mobj_t *actor)
 
 /**
  * Formerly A_TroopAttack? - DJS
- * 
+ *
  * Correctly assumed, noticed this while doing side-by-side for upgrade - RH
  */
 void C_DECL A_TroopClaw(mobj_t *actor)
@@ -1419,7 +1419,7 @@ typedef enum {
     ST_LEAVEMAP
 } BossTriggerType;
 
-/* 
+/*
  * Used by A_CyberDeath
  *
  * @TODO Should be defined in MapInfo
@@ -1539,7 +1539,7 @@ void C_DECL A_CyberDeath(mobj_t *mo)
             G_SetGameActionMapCompletedAndSetNextMap();
             break;
 
-        default: DENG_ASSERT(!"A_CyberDeath: Unknown trigger special type");
+        default: DENG_ASSERT_FAIL("A_CyberDeath: Unknown trigger special type");
         }
     }
 }
@@ -2070,7 +2070,7 @@ void C_DECL A_Fall(mobj_t *actor)
 // ==============================================================================================================
 
 /*
- * Emit smoke when firing the laser 
+ * Emit smoke when firing the laser
  */
 void C_DECL A_Lasersmoke(mobj_t *mo)
 {
@@ -2174,7 +2174,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
         if(players[i].plr->inGame && players[i].health > 0)
             break;
     }
-    
+
     if(i == MAXPLAYERS) return;
 
     // Other boss not dead?

@@ -1023,7 +1023,7 @@ void G_ChangeGameState(gamestate_t state)
 
     if (state < 0 || state >= NUM_GAME_STATES)
     {
-        DENG2_ASSERT(!"G_ChangeGameState: Invalid state");
+        DENG2_ASSERT_FAIL("G_ChangeGameState: Invalid state");
         return;
     }
 

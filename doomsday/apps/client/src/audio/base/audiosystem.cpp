@@ -1847,7 +1847,7 @@ dint AudioSystem::playMusic(Record const &definition, bool looped)
             break;
         }
 
-        default: DENG2_ASSERT(!"Mus_Start: Invalid value for order[i]"); break;
+        default: DENG2_ASSERT_FAIL("Mus_Start: Invalid value for order[i]"); break;
         }
     }
 

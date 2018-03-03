@@ -707,7 +707,7 @@ void Page::setFocus(Widget *newFocus)
     int index = indexOf(newFocus);
     if(index < 0)
     {
-        DENG2_ASSERT(!"Page::Focus: Failed to determine index-in-page for widget.");
+        DENG2_ASSERT_FAIL("Page::Focus: Failed to determine index-in-page for widget.");
         return;
     }
     d->giveChildFocus(d->children[index]);

@@ -922,7 +922,7 @@ struct uiwidgetdef_t
         case GUI_CHAIN:         wi = new guidata_chain_t(localPlayer); break;
         case GUI_READYITEM:     wi = new guidata_readyitem_t(def.updateGeometry, def.drawer, localPlayer); break;
         case GUI_FLIGHT:        wi = new guidata_flight_t(localPlayer); break;
-        default: DENG2_ASSERT(!"Unknown widget type"); break;
+        default: DENG2_ASSERT_FAIL("Unknown widget type"); break;
         }
 
         wi->setAlignment(def.alignFlags)

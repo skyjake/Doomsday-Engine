@@ -117,7 +117,7 @@ struct CoreTextFontCache : public Lockable
         {
             if (i.value() == font) return i.key().size;
         }
-        DENG2_ASSERT(!"Font not in cache");
+        DENG2_ASSERT_FAIL("Font not in cache");
         return 0;
     }
 
@@ -132,7 +132,7 @@ struct CoreTextFontCache : public Lockable
                 return 50;
             }
         }
-        DENG2_ASSERT(!"Font not in cache");
+        DENG2_ASSERT_FAIL("Font not in cache");
         return 0;
     }
 #endif

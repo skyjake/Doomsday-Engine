@@ -106,7 +106,7 @@ int DM_CDAudio_Get(int prop, void* ptr)
         return DMFmod_Music_Get(MUSIP_PLAYING, ptr);
 
     default:
-        DENG2_ASSERT(!"CDAudio_Get: Unknown property id");
+        DENG2_ASSERT_FAIL("CDAudio_Get: Unknown property id");
         return false;
     }
 

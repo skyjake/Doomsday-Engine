@@ -115,6 +115,8 @@
 #  define DENG_DEBUG_ONLY(x)
 #endif
 
+#define DENG_ASSERT_FAIL(msgCStr)  DENG_ASSERT(msgCStr == NULL)
+
 /**
  * Macro for hiding the warning about an unused parameter.
  */

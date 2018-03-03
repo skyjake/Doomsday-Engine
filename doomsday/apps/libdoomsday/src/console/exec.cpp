@@ -1241,7 +1241,7 @@ D_CMD(If)
         }
         break;
     default:
-        DENG_ASSERT(!"CCmdIf: Invalid cvar type");
+        DENG2_ASSERT_FAIL("CCmdIf: Invalid cvar type");
         return false;
     }
 

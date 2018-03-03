@@ -184,7 +184,7 @@ String AudioDriver::statusAsText() const
     case Initialized: return "Initialized";
 
     default:
-        DENG2_ASSERT(!"AudioDriver::statusAsText: Unknown status");
+        DENG2_ASSERT_FAIL("AudioDriver::statusAsText: Unknown status");
         return "Unknown";
     }
 }
@@ -368,6 +368,6 @@ String AudioDriver_GetName(audiodriverid_t id)
     if(VALID_AUDIODRIVER_IDENTIFIER(id))
         return audioDriverNames[id];
 
-    DENG2_ASSERT(!"S_GetDriverName: Unknown driver id");
+    DENG2_ASSERT_FAIL("S_GetDriverName: Unknown driver id");
     return "";
 }

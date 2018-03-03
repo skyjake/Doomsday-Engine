@@ -64,7 +64,7 @@ static bool compareKnownWordByName(knownword_t const &a, knownword_t const &b)
     case WT_GAME:     textA = AutoStr_FromTextStd(reinterpret_cast<Game const *>(wA->data)->id().toUtf8().constData()); break;
 
     default:
-        DENG_ASSERT(!"compareKnownWordByName: Invalid type for word A");
+        DENG2_ASSERT_FAIL("compareKnownWordByName: Invalid type for word A");
         return false;
     }
 
@@ -76,7 +76,7 @@ static bool compareKnownWordByName(knownword_t const &a, knownword_t const &b)
     case WT_GAME:     textB = AutoStr_FromTextStd(reinterpret_cast<Game const *>(wB->data)->id().toUtf8().constData()); break;
 
     default:
-        DENG_ASSERT(!"compareKnownWordByName: Invalid type for word B");
+        DENG2_ASSERT_FAIL("compareKnownWordByName: Invalid type for word B");
         return false;
     }
 
@@ -98,7 +98,7 @@ static AutoStr *textForKnownWord(knownword_t const *word)
     case WT_GAME:     text = AutoStr_FromTextStd(reinterpret_cast<Game const *>(word->data)->id().toUtf8().constData()); break;
 
     default:
-        DENG_ASSERT(!"textForKnownWord: Invalid type for word");
+        DENG2_ASSERT_FAIL("textForKnownWord: Invalid type for word");
         text = AutoStr_FromTextStd("");
     }
 

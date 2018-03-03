@@ -505,7 +505,7 @@ DENG2_PIMPL(AutomapWidget)
                 break; }
 
             default:
-                DENG2_ASSERT(!"Unknown glowtype");
+                DENG2_ASSERT_FAIL("Unknown glowtype");
                 break;
             }
 

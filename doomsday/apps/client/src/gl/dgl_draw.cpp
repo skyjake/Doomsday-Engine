@@ -598,8 +598,7 @@ struct DGLDrawState
         case DGL_TRIANGLE_FAN:      return GL_TRIANGLE_STRIP;
         case DGL_TRIANGLE_STRIP:    return GL_TRIANGLE_STRIP;
         case DGL_QUADS:             return GL_TRIANGLES;
-
-        case DGL_NO_PRIMITIVE:      /*DENG2_ASSERT(!"No primitive type specified");*/ break;
+        case DGL_NO_PRIMITIVE:      break;
         }
         return GL_NONE;
     }

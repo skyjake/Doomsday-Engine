@@ -65,7 +65,7 @@ bool GLFramebuffer::AlternativeBuffer::init()
 {
     if (d->attachment != GLFramebuffer::DepthStencil)
     {
-        DENG2_ASSERT(!"GLFramebuffer::AlternativeBuffer only supports DepthStencil attachments");
+        DENG2_ASSERT_FAIL("GLFramebuffer::AlternativeBuffer only supports DepthStencil attachments");
         return false;
     }
 

@@ -64,7 +64,7 @@ DENG2_PIMPL(Id1Translator)
         case DoomV9:     return 0x1DEAD600;
         case HereticV13: return 0x7D9A1200;
         }
-        DENG2_ASSERT(!"Id1Translator::magic: Invalid format id");
+        DENG2_ASSERT_FAIL("Id1Translator::magic: Invalid format id");
         return 0;
     }
 
@@ -75,7 +75,7 @@ DENG2_PIMPL(Id1Translator)
         case DoomV9:     return verId == 90;
         case HereticV13: return verId == 130;
         }
-        DENG2_ASSERT(!"Id1Translator::knownFormatVersion: Invalid format id");
+        DENG2_ASSERT_FAIL("Id1Translator::knownFormatVersion: Invalid format id");
         return false;
     }
 
@@ -202,7 +202,7 @@ String Id1Translator::formatName() const
     case DoomV9:      return "Doom (id Tech 1)";
     case HereticV13:  return "Heretic (id Tech 1)";
     }
-    DENG2_ASSERT(!"Id1Translator::formatName: Invalid format id");
+    DENG2_ASSERT_FAIL("Id1Translator::formatName: Invalid format id");
     return "";
 }
 

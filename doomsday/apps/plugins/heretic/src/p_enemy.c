@@ -2218,7 +2218,7 @@ void C_DECL A_BossDeath(mobj_t *actor)
             G_SetGameActionMapCompletedAndSetNextMap();
             break;
 
-        default: DENG_ASSERT(!"A_BossDeath: Unknown trigger special type");
+        default: DENG_ASSERT_FAIL("A_BossDeath: Unknown trigger special type");
         }
     }
 }

@@ -1012,7 +1012,7 @@ void IN_Drawer()
         break;
 
     default:
-        DENG2_ASSERT(!"IN_Drawer: Unknown intermission state");
+        DENG2_ASSERT_FAIL("IN_Drawer: Unknown intermission state");
         break;
     }
 

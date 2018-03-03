@@ -308,7 +308,7 @@ static void* packImage(int components, const float* tempOut, GLint typeOut,
         break;
       }
     default:
-        DENG_ASSERT(!"packImage: Unknown output type");
+        DENG2_ASSERT_FAIL("packImage: Unknown output type");
         return 0;
     }
 
@@ -670,7 +670,7 @@ void GL_DownMipmap32(uint8_t* in, int width, int height, int comps)
 
     if(width == 1 && height == 1)
     {
-        DENG_ASSERT(!"GL_DownMipmap32: Can't be called for a 1x1 image.");
+        DENG2_ASSERT_FAIL("GL_DownMipmap32: Can't be called for a 1x1 image.");
         return;
     }
 
@@ -708,7 +708,7 @@ void GL_DownMipmap8(uint8_t* in, uint8_t* fadedOut, int width, int height, float
 
     if(width == 1 && height == 1)
     {
-        DENG_ASSERT(!"GL_DownMipmap8: Can't be called for a 1x1 image.");
+        DENG2_ASSERT_FAIL("GL_DownMipmap8: Can't be called for a 1x1 image.");
         return;
     }
 
@@ -870,7 +870,7 @@ void FindAverageLineColorIdx(uint8_t const *data, int w, int h, int line,
     if(line >= h)
     {
         App_Log(DE2_DEV_GL_ERROR, "FindAverageLineColorIdx: height=%i, line=%i.", h, line);
-        DENG_ASSERT(!"FindAverageLineColorIdx: Attempted to average outside valid area.");
+        DENG2_ASSERT_FAIL("FindAverageLineColorIdx: Attempted to average outside valid area.");
         V3f_Set(color->rgb, 0, 0, 0);
         return;
     }
@@ -916,7 +916,7 @@ void FindAverageLineColor(const uint8_t* pixels, int width, int height,
     if(line >= height)
     {
         App_Log(DE2_DEV_GL_ERROR, "EnhanceContrast: height=%i, line=%i.", height, line);
-        DENG_ASSERT(!"FindAverageLineColor: Attempted to average outside valid area.");
+        DENG2_ASSERT_FAIL("FindAverageLineColor: Attempted to average outside valid area.");
 
         V3f_Set(color->rgb, 0, 0, 0);
         return;
@@ -1027,7 +1027,7 @@ void FindAverageAlpha(const uint8_t* pixels, int width, int height,
     if(pixelSize != 3 && pixelSize != 4)
     {
         App_Log(DE2_DEV_GL_ERROR, "FindAverageAlpha: pixelSize=%i", pixelSize);
-        DENG_ASSERT(!"FindAverageAlpha: Attempted on non-rgb(a) image.");
+        DENG2_ASSERT_FAIL("FindAverageAlpha: Attempted on non-rgb(a) image.");
 
         // Assume opaque.
         *alpha = 1;
@@ -1102,7 +1102,7 @@ void FindClipRegionNonAlpha(const uint8_t* buffer, int width, int height,
 
     if(width <= 0 || height <= 0)
     {
-        DENG_ASSERT(!"FindClipRegionNonAlpha: Attempt to find region on zero-sized image.");
+        DENG2_ASSERT_FAIL("FindClipRegionNonAlpha: Attempt to find region on zero-sized image.");
 
         retRegion[0] = retRegion[1] = retRegion[2] = retRegion[3] = 0;
         return;
@@ -1413,7 +1413,7 @@ void EnhanceContrast(uint8_t* pixels, int width, int height, int comps)
     if(comps != 3 && comps != 4)
     {
         App_Log(DE2_DEV_GL_ERROR, "EnhanceContrast: comps=%i", comps);
-        DENG_ASSERT(!"EnhanceContrast: Attempted on non-rgb(a) image.");
+        DENG2_ASSERT_FAIL("EnhanceContrast: Attempted on non-rgb(a) image.");
         return;
     }
 
@@ -1453,7 +1453,7 @@ void SharpenPixels(uint8_t* pixels, int width, int height, int comps)
     if(comps != 3 && comps != 4)
     {
         App_Log(DE2_DEV_GL_ERROR, "SharpenPixels: comps=%i", comps);
-        DENG_ASSERT(!"SharpenPixels: Attempted on non-rgb(a) image.");
+        DENG2_ASSERT_FAIL("SharpenPixels: Attempted on non-rgb(a) image.");
         return;
     }
 

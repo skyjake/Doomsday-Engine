@@ -178,7 +178,7 @@ String CVar_TypeAsText(cvar_t const *var)
     case CVT_URIPTR:
         return "uri";
     default:
-        DENG_ASSERT(!"Con_VarTypeAsText: Unknown variable type");
+        DENG2_ASSERT_FAIL("Con_VarTypeAsText: Unknown variable type");
         break;
     }
     return "";
@@ -625,7 +625,7 @@ void Con_SetVariable(Path const &varPath, int value, int svFlags)
     }
     else
     {
-        DENG2_ASSERT(!"Con_SetVariable: Invalid console variable path");
+        DENG2_ASSERT_FAIL("Con_SetVariable: Invalid console variable path");
     }
 }
 

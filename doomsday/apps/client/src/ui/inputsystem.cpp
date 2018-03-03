@@ -841,7 +841,7 @@ DENG2_PIMPL(InputSystem)
                 case E_SYMBOLIC: break;
 
                 default:
-                    DENG2_ASSERT(!"InputSystem::updateAllDeviceStateAssociations: Invalid bind.type");
+                    DENG2_ASSERT_FAIL("InputSystem::updateAllDeviceStateAssociations: Invalid bind.type");
                     break;
                 }
 
@@ -868,7 +868,7 @@ DENG2_PIMPL(InputSystem)
                 case IBD_ANGLE:  ctrl = &dev.hat   (bind.controlId); break;
 
                 default:
-                    DENG2_ASSERT(!"InputSystem::updateAllDeviceStateAssociations: Invalid bind.type");
+                    DENG2_ASSERT_FAIL("InputSystem::updateAllDeviceStateAssociations: Invalid bind.type");
                     break;
                 }
 
@@ -1312,7 +1312,7 @@ bool InputSystem::convertEvent(ddevent_t const &from, event_t &to) // static
             return false;
 
         default:
-            DENG2_ASSERT(!"InputSystem::convertEvent: Unknown device ID in ddevent_t");
+            DENG2_ASSERT_FAIL("InputSystem::convertEvent: Unknown device ID in ddevent_t");
             return false;
         }
     }

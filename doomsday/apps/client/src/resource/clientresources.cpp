@@ -1547,7 +1547,7 @@ FontManifest &ClientResources::toFontManifest(fontid_t id) const
         {
             return *d->fontManifestIdMap[idx];
         }
-        DENG2_ASSERT(!"Bookkeeping error");
+        DENG2_ASSERT_FAIL("Bookkeeping error");
     }
 
     /// @throw UnknownIdError The specified manifest id is invalid.

@@ -63,7 +63,7 @@ String CommandBinding::composeDescriptor()
     case E_ANGLE:       str += B_HatAngleToString(getf("pos")); break;
     case E_SYMBOLIC:    str += "-" + gets("symbolicName"); break;
 
-    default: DENG2_ASSERT(!"CommandBinding::composeDescriptor: Unknown bind.type"); break;
+    default: DENG2_ASSERT_FAIL("CommandBinding::composeDescriptor: Unknown bind.type"); break;
     }
 
     // Append any state conditions.
@@ -150,7 +150,7 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
             bind.def().set("pos", pos);
             break; }
 
-        default: DENG2_ASSERT(!"InputSystem::configure: Invalid bind.type"); break;
+        default: DENG2_ASSERT_FAIL("InputSystem::configure: Invalid bind.type"); break;
         }
     }
     else if (!Str_CompareIgnoreCase(str, "joy") ||
@@ -198,7 +198,7 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
             bind.def().set("pos", pos);
             break; }
 
-        default: DENG2_ASSERT(!"InputSystem::configure: Invalid bind.type") break;
+        default: DENG2_ASSERT_FAIL("InputSystem::configure: Invalid bind.type") break;
         }
     }
     else if (!Str_CompareIgnoreCase(str, "sym"))

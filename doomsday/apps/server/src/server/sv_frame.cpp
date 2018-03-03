@@ -658,7 +658,7 @@ void Sv_WriteDeltaHeader(byte type, delta_t const *delta)
 
     if (delta->state == DELTA_UNACKED)
     {
-        DENG2_ASSERT(!"Unacked");
+        DENG2_ASSERT_FAIL("Unacked");
         // Flag this as Resent.
         type |= DT_RESENT;
     }

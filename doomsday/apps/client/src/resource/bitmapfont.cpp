@@ -312,7 +312,7 @@ void BitmapFont::glInit() const
         case 2: pixels = d->readFormat2(hndl); break;
 
         default:
-            DENG2_ASSERT(!"BitmapFont: Format not implemented");
+            DENG2_ASSERT_FAIL("BitmapFont: Format not implemented");
         }
         if(!pixels)
         {

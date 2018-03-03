@@ -925,7 +925,7 @@ void AngleClipper::addViewRelOcclusion(Vec2d const &from, Vec2d const &to,
         LOGDEV_GL_WARNING("Wrong side v1:%s v2:%s eyeOrigin:%s!")
                 << from.asText() << to.asText()
                 << Vec2d(eyeOrigin).asText();
-        DENG2_ASSERT(!"Failed AngleClipper::addViewRelOcclusion: Side test");
+        DENG2_ASSERT_FAIL("Failed AngleClipper::addViewRelOcclusion: Side test");
     }
 #endif
 

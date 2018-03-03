@@ -269,7 +269,7 @@ void ImpulseAccumulator::clearAll()
         takeBinary();
         break;
 
-    default: DENG2_ASSERT(!"ImpulseAccumulator::clearAll: Unknown type");
+    default: DENG2_ASSERT_FAIL("ImpulseAccumulator::clearAll: Unknown type");
     }
 
     // Also clear the double click state.

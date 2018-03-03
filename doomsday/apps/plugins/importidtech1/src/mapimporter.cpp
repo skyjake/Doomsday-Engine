@@ -98,7 +98,7 @@ struct SideDef : public Id1MapElement
             break;
 
         default:
-            DENG2_ASSERT(!"idtech1::SideDef::read: unknown map format!");
+            DENG2_ASSERT_FAIL("idtech1::SideDef::read: unknown map format!");
             break;
         };
 
@@ -206,7 +206,7 @@ struct LineDef : public Id1MapElement
             break;
 
         default:
-            DENG2_ASSERT(!"idtech1::LineDef::read: unknown map format!");
+            DENG2_ASSERT_FAIL("idtech1::LineDef::read: unknown map format!");
             break;
         };
 
@@ -334,7 +334,7 @@ struct SectorDef : public Id1MapElement
             break; }
 
         default:
-            DENG2_ASSERT(!"idtech1::SectorDef::read: unknown map format!");
+            DENG2_ASSERT_FAIL("idtech1::SectorDef::read: unknown map format!");
             break;
         };
 
@@ -564,7 +564,7 @@ struct Thing : public Id1MapElement
             break; }
 
         default:
-            DENG2_ASSERT(!"idtech1::Thing::read: unknown map format!");
+            DENG2_ASSERT_FAIL("idtech1::Thing::read: unknown map format!");
             break;
         };
     }

@@ -3255,7 +3255,7 @@ void Hu_MenuUpdateColorWidgetColor(Widget &wi, Widget::Action action)
     case CB: cboxMix.setBlue (value); break;
     case CA: cboxMix.setAlpha(value); break;
 
-    default: DENG2_ASSERT(!"Hu_MenuUpdateColorWidgetColor: Invalid value for data2.");
+    default: DENG2_ASSERT_FAIL("Hu_MenuUpdateColorWidgetColor: Invalid value for data2.");
     }
 }
 
