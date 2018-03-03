@@ -47,10 +47,10 @@ struct Context {
 
     de::GLUniform uCurrentTime      {"uCurrentTime",      de::GLUniform::Float};
 
-    de::GLUniform uDiffuseAtlas     {"uDiffuseAtlas",     de::GLUniform::Sampler2D};
-    de::GLUniform uEmissiveAtlas    {"uEmissiveAtlas",    de::GLUniform::Sampler2D};
-    de::GLUniform uSpecGlossAtlas   {"uSpecGlossAtlas",   de::GLUniform::Sampler2D};
-    de::GLUniform uNormalDisplAtlas {"uNormalDisplAtlas", de::GLUniform::Sampler2D};
+    de::GLUniform uDiffuseAtlas     {"uTextureAtlas[0]",  de::GLUniform::Sampler2D};
+    de::GLUniform uSpecGlossAtlas   {"uTextureAtlas[1]",  de::GLUniform::Sampler2D};
+    de::GLUniform uEmissiveAtlas    {"uTextureAtlas[2]",  de::GLUniform::Sampler2D};
+    de::GLUniform uNormalDisplAtlas {"uTextureAtlas[3]",  de::GLUniform::Sampler2D};
 
     de::GLUniform uLightMatrix      {"uLightMatrix",      de::GLUniform::Mat4};
     de::GLUniform uLightOrigin      {"uLightOrigin",      de::GLUniform::Vec3};
