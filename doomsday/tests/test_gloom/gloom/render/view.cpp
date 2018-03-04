@@ -18,13 +18,16 @@
 
 #include "gloom/render/view.h"
 
+using namespace de;
+
 namespace gloom {
 
 void View::setCamera(const ICamera &camera)
 {
     this->camera = &camera;
 
-    uCameraMvpMatrix         = camera.cameraModelViewProjection();
+    uCameraPos         = Vec4f(camera.cameraPosition(), 1.0f);
+    uCameraMvpMatrix   = camera.cameraModelViewProjection();
     uModelViewMatrix   = camera.cameraModelView();
     uWorldToViewRotate = camera.cameraModelView().submatrix(0, 0);
     uViewToWorldRotate = uWorldToViewRotate.toMat3f().inverse();

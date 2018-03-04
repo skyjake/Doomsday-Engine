@@ -39,15 +39,20 @@ Metrics Gloom_TextureMetrics(uint matIndex, int texture) {
     return metrics;
 }
 
-vec4 Gloom_FetchTexture(uint matIndex, int texture, vec2 uv) {
+vec4 Gloom_TryFetchTexture(uint matIndex, int texture, vec2 uv, vec4 fallback) {
     Metrics metrics = Gloom_TextureMetrics(matIndex, texture);
     if (!metrics.isValid) {
-        return Material_DefaultTextureValue[texture];
+        return fallback;
     }
     vec2 normUV  = uv * metrics.scale;
     vec2 atlasUV = metrics.uvRect.xy + fract(normUV) * metrics.uvRect.zw;
     return textureLod(uTextureAtlas[texture], atlasUV,
                       mipLevel(normUV, metrics.sizeInTexels.xy) - 0.5);
+}
+
+vec4 Gloom_FetchTexture(uint matIndex, int texture, vec2 uv) {
+    return Gloom_TryFetchTexture(matIndex, texture, uv,
+        Material_DefaultTextureValue[texture]);
 }
 
 #endif // GLOOM_MATERIAL_H

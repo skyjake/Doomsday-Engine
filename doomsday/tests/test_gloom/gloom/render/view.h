@@ -28,8 +28,10 @@ struct View
 {
     const ICamera *camera;
 
+    de::GLUniform uCameraPos            {"uCameraPos",          de::GLUniform::Vec4};
     de::GLUniform uCameraMvpMatrix      {"uCameraMvpMatrix",    de::GLUniform::Mat4};
     de::GLUniform uModelViewMatrix      {"uModelViewMatrix",    de::GLUniform::Mat4};
+    de::GLUniform uViewToWorldMatrix    {"uViewToWorldMatrix",  de::GLUniform::Mat4};
     de::GLUniform uProjMatrix           {"uProjMatrix",         de::GLUniform::Mat4};
     de::GLUniform uInverseProjMatrix    {"uInverseProjMatrix",  de::GLUniform::Mat4};
     de::GLUniform uWorldToViewRotate    {"uWorldToViewRotate",  de::GLUniform::Mat3};

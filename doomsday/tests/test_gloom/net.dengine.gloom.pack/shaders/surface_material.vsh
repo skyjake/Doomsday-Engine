@@ -12,7 +12,10 @@ DENG_ATTRIB float   aTexture1; // back material
 DENG_ATTRIB vec2    aIndex1; // tex offset (front, back)
 
      DENG_VAR vec2  vUV;
-     DENG_VAR vec3  vNormal;
+     DENG_VAR vec3  vWSPos;
+     DENG_VAR vec3  vWSTangent;
+     DENG_VAR vec3  vWSBitangent;
+     DENG_VAR vec3  vWSNormal;
 flat DENG_VAR float vMaterial;
 flat DENG_VAR uint  vFlags;
 
@@ -24,11 +27,14 @@ vec4 fetchTexOffset(uint offsetIndex) {
 void main(void) {
     Surface surface = Gloom_LoadVertexSurface();
 
-    gl_Position = uCameraMvpMatrix * surface.vertex;
-    vUV         = aUV.xy;
-    vFlags      = surface.flags;
-    vNormal     = surface.normal;
-    vMaterial   = floatBitsToUint(surface.isFrontSide? aTexture0 : aTexture1);
+    gl_Position  = uCameraMvpMatrix * surface.vertex;
+    vUV          = aUV.xy;
+    vFlags       = surface.flags;
+    vWSPos       = surface.vertex.xyz;
+    vWSTangent   = surface.tangent;
+    vWSBitangent = surface.bitangent;
+    vWSNormal    = surface.normal;
+    vMaterial    = floatBitsToUint(surface.isFrontSide? aTexture0 : aTexture1);
 
     // Generate texture coordinates.
     if (testFlag(surface.flags, Surface_WorldSpaceYToTexCoord)) {

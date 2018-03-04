@@ -77,7 +77,7 @@ DENG2_PIMPL(MapRender)
         auto &ctx = self().context();
 
         const char *suffix[TextureMapCount] = {
-            ".diffuse", ".emissive", ".normaldisp", ".specgloss"
+            ".diffuse", ".specgloss", ".emissive", ".normaldisp"
         };
         TexIds ids {{Id::None, Id::None, Id::None, Id::None}};
 
