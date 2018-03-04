@@ -90,6 +90,11 @@ DENG2_PIMPL(EntityRender)
         {
             model.load(pkg.root().locate<File>(filenames[idx]));
             model.setTextureMapping(ModelDrawable::diffuseNormalsSpecularEmission());
+            if (String(filenames[idx]).contains("sphere"))
+            {
+                model.setTexturePath(0, ModelDrawable::Height,
+                                     "/packs/net.dengine.gloom/models/sphere/heights.png");
+            }
 //            model.setTexturePath(0, ModelDrawable::Specular,
 //                                 "/packs/net.dengine.gloom/models/sphere/specGloss.tga");
             model.setAtlas(ModelDrawable::Diffuse,  *context.atlas[Diffuse]);
