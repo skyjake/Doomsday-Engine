@@ -55,6 +55,7 @@ struct Plane
 
     bool      isPointAbove(const de::Vec3d &pos) const;
     de::Vec3d projectPoint(const Point &pos) const;
+    de::Vec3f tangent() const;
 };
 
 struct Volume

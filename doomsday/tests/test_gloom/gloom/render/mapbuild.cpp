@@ -26,18 +26,19 @@ using namespace de;
 
 namespace gloom {
 
-internal::AttribSpec const MapVertex::_spec[8] =
+internal::AttribSpec const MapVertex::_spec[9] =
 {
     { internal::AttribSpec::Position, 3, GL_FLOAT, false, sizeof(MapVertex),  0     },
     { internal::AttribSpec::Normal,   3, GL_FLOAT, false, sizeof(MapVertex),  3 * 4 },
-    { internal::AttribSpec::TexCoord, 4, GL_FLOAT, false, sizeof(MapVertex),  6 * 4 },
-    { internal::AttribSpec::Texture0, 1, GL_FLOAT, false, sizeof(MapVertex), 10 * 4 },
-    { internal::AttribSpec::Texture1, 1, GL_FLOAT, false, sizeof(MapVertex), 11 * 4 },
-    { internal::AttribSpec::Index0,   3, GL_FLOAT, false, sizeof(MapVertex), 12 * 4 },
-    { internal::AttribSpec::Index1,   2, GL_FLOAT, false, sizeof(MapVertex), 15 * 4 },
-    { internal::AttribSpec::Flags,    1, GL_FLOAT, false, sizeof(MapVertex), 17 * 4 },
+    { internal::AttribSpec::Tangent,  3, GL_FLOAT, false, sizeof(MapVertex),  6 * 4 },
+    { internal::AttribSpec::TexCoord, 4, GL_FLOAT, false, sizeof(MapVertex),  9 * 4 },
+    { internal::AttribSpec::Texture0, 1, GL_FLOAT, false, sizeof(MapVertex), 13 * 4 },
+    { internal::AttribSpec::Texture1, 1, GL_FLOAT, false, sizeof(MapVertex), 14 * 4 },
+    { internal::AttribSpec::Index0,   3, GL_FLOAT, false, sizeof(MapVertex), 15 * 4 },
+    { internal::AttribSpec::Index1,   2, GL_FLOAT, false, sizeof(MapVertex), 18 * 4 },
+    { internal::AttribSpec::Flags,    1, GL_FLOAT, false, sizeof(MapVertex), 20 * 4 },
 };
-LIBGUI_VERTEX_FORMAT_SPEC(MapVertex, 18 * 4)
+LIBGUI_VERTEX_FORMAT_SPEC(MapVertex, 21 * 4)
 
 DENG2_PIMPL_NOREF(MapBuild)
 {
@@ -110,13 +111,15 @@ DENG2_PIMPL_NOREF(MapBuild)
 
                     f.material[0] = materials["world.test"]; // "world.grass"];
                     f.normal      = map.floorPlane(sectorId).normal;
+                    f.tangent     = map.floorPlane(sectorId).tangent();
                     f.flags       = MapVertex::WorldSpaceXZToTexCoords | MapVertex::FlipTexCoordY |
                                     MapVertex::TextureOffset;
                     f.geoPlane     = planeMapper[map.floorPlaneId(sectorId)];
                     f.texOffset[0] = texOffsetMapper[map.floorPlaneId(sectorId)];
 
-                    c.material[0]   = materials["world.test"]; //"world.dirt"];
+                    c.material[0]  = materials["world.test"]; //"world.dirt"];
                     c.normal       = map.ceilingPlane(sectorId).normal;
+                    c.tangent      = map.ceilingPlane(sectorId).tangent();
                     c.flags        = MapVertex::WorldSpaceXZToTexCoords | MapVertex::TextureOffset;
                     c.geoPlane     = planeMapper[map.ceilingPlaneId(sectorId)];
                     c.texOffset[0] = texOffsetMapper[map.ceilingPlaneId(sectorId)];
@@ -186,6 +189,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                     v.material[1] = materials[backTextureName];
                     v.normal      = normal;
                     v.flags       = flags;
+                    v.tangent     = (p2 - p1).normalize();
                     v.texPlane[0] = planeIndex[0];
                     v.texPlane[1] = planeIndex[1];
 

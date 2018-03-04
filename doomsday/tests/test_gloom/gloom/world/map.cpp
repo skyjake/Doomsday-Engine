@@ -841,6 +841,13 @@ Vec3d Plane::projectPoint(const Point &pos) const
     return Vec3d(pos.x, z, pos.y);
 }
 
+Vec3f Plane::tangent() const
+{
+    Vec3f vec = normal.cross(Vec3f(0, 0, 1)).normalize();
+    //return normal.cross(vec);
+    return vec;
+}
+
 void Sector::replaceLine(ID oldId, ID newId)
 {
     for (int i = 0; i < walls.size(); ++i)

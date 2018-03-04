@@ -137,7 +137,7 @@ void Tonemap::advanceTime(TimeSpan elapsed)
     }
 
     // The adjustment is kept below 1.0 to avoid overbrightening dark scenes.
-    d->exposure.setValue(de::min(1.0f, 1.0f / brightest), 1.0);
+    d->exposure.setValue(de::min(1.0f, 0.8f / brightest), 1.0);
 }
 
 GLTexture &Tonemap::brightnessSample(int index) const

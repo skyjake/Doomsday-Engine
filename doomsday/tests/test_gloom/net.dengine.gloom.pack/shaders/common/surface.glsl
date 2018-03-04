@@ -6,12 +6,15 @@ uniform sampler2D uPlanes;
 DENG_ATTRIB vec4  aVertex;
 DENG_ATTRIB vec4  aUV; // s, t, wallLength, rotation angle
 DENG_ATTRIB vec3  aNormal;
+DENG_ATTRIB vec3  aTangent;
 DENG_ATTRIB vec3  aIndex0; // planes: geo, tex bottom, tex top
 DENG_ATTRIB float aFlags;
 
 struct Surface {
     uint  flags;
     vec4  vertex;
+    vec3  tangent;
+    vec3  bitangent;
     vec3  normal;
     float wallLength;
     float botPlaneY;
@@ -40,7 +43,9 @@ Surface Gloom_LoadVertexSurface(void) {
     surface.side = (surface.botPlaneY <= surface.topPlaneY)? 0 : 1;
     surface.isFrontSide = (surface.side == 0);
 
-    surface.normal = (surface.isFrontSide? aNormal : -aNormal);
+    surface.normal     = (surface.isFrontSide? aNormal  : -aNormal);
+    surface.tangent    = (surface.isFrontSide? aTangent : -aTangent);
+    surface.bitangent  = cross(surface.tangent, surface.normal);
     surface.wallLength = aUV.z;
 
     return surface;
