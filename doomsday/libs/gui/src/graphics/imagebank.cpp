@@ -21,6 +21,8 @@
 #include "de/FileSystem"
 #include "de/ImageFile"
 
+#include <de/Folder>
+#include <de/FileSystem>
 #include <de/ScriptedInfo>
 
 namespace de {
@@ -39,7 +41,7 @@ DENG2_PIMPL_NOREF(ImageBank)
 
         Time modifiedAt() const
         {
-            return App::rootFolder().locate<File>(filePath).status().modifiedAt;
+            return FS::locate<File const>(filePath).status().modifiedAt;
         }
 
         Image load() const

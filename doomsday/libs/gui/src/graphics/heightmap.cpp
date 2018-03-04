@@ -20,20 +20,19 @@
 
 namespace de {
 
-static float const NORMAL_Z = .2f;
+static float const NORMAL_Z = .15f ;//.2f;
 
 DENG2_PIMPL_NOREF(HeightMap)
 {
-    QImage   heightImage;
-    QImage   normalImage;
-    Vec2f mapSize;
-    float    heightRange = 1.f;
+    QImage heightImage;
+    QImage normalImage;
+    Vec2f  mapSize;
+    float  heightRange = 1.f;
 
     Vec2f pixelCoordf(Vec2f const &worldPos) const
     {
         Vec2f normPos = worldPos / mapSize + Vec2f(.5f, .5f);
-        return normPos * Vec2f(heightImage.width(), heightImage.height())
-                - Vec2f(.5f, .5f);
+        return normPos * Vec2f(heightImage.width(), heightImage.height()) - Vec2f(.5f, .5f);
     }
 
     Vec3f normalAtCoord(Vec2i const &pos) const
@@ -89,12 +88,12 @@ Image HeightMap::makeNormalMap() const
     {
         for (int x = 0; x < w; x++)
         {
-            Vec3f norm = d->normalAtCoord(Vec2i(x, y));
+            Vec3f norm = d->normalAtCoord(Vec2i(x, y)) * 0.5f + Vec3f(.5f, .5f, .5f);
 
-            img.setPixel(x, y, qRgba(clamp(0.f, (norm.x + 1) * 128.f, 255.f),
-                                     clamp(0.f, (norm.y + 1) * 128.f, 255.f),
-                                     clamp(0.f, (norm.z + 1) * 128.f, 255.f),
-                                     255));
+            img.setPixel(x, y, qRgba(int(clamp(0.f, norm.x * 256.f, 255.f)),
+                                     int(clamp(0.f, norm.y * 256.f, 255.f)),
+                                     int(clamp(0.f, norm.z * 256.f, 255.f)),
+                                     max(1, qRed(heightMap.pixel(x, y)))));
         }
     }
 
