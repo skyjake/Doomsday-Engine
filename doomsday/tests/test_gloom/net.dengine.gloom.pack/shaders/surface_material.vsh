@@ -2,8 +2,10 @@
 
 #include "common/defs.glsl"
 #include "common/surface.glsl"
+#include "common/tangentspace.glsl"
 
 uniform mat4        uCameraMvpMatrix;
+uniform vec4        uCameraPos; // world space
 uniform sampler2D   uTexOffsets;
 uniform float       uCurrentTime;
 
@@ -12,7 +14,8 @@ DENG_ATTRIB float   aTexture1; // back material
 DENG_ATTRIB vec2    aIndex1; // tex offset (front, back)
 
      DENG_VAR vec2  vUV;
-     DENG_VAR vec3  vWSPos;
+     DENG_VAR vec3  vTSViewPos;
+     DENG_VAR vec3  vTSFragPos;
      DENG_VAR vec3  vWSTangent;
      DENG_VAR vec3  vWSBitangent;
      DENG_VAR vec3  vWSNormal;
@@ -30,11 +33,19 @@ void main(void) {
     gl_Position  = uCameraMvpMatrix * surface.vertex;
     vUV          = aUV.xy;
     vFlags       = surface.flags;
-    vWSPos       = surface.vertex.xyz;
     vWSTangent   = surface.tangent;
     vWSBitangent = surface.bitangent;
     vWSNormal    = surface.normal;
     vMaterial    = floatBitsToUint(surface.isFrontSide? aTexture0 : aTexture1);
+
+    // Tangent space.
+    {
+        mat3 tbn = transpose(Gloom_TangentMatrix(
+            TangentSpace(vWSTangent, vWSBitangent, vWSNormal)
+        ));
+        vTSViewPos = tbn * uCameraPos.xyz;
+        vTSFragPos = tbn * surface.vertex.xyz;
+    }
 
     // Generate texture coordinates.
     if (testFlag(surface.flags, Surface_WorldSpaceYToTexCoord)) {

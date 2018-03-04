@@ -133,11 +133,11 @@ void Tonemap::advanceTime(TimeSpan elapsed)
     float brightest = 0;
     for (const auto &s : sample)
     {
-        brightest = de::max(s.max(), brightest);
+        brightest = de::max(de::max(s.x * 0.666f, s.y, s.z * 0.334f), brightest);
     }
 
     // The adjustment is kept below 1.0 to avoid overbrightening dark scenes.
-    d->exposure.setValue(de::min(1.0f, 0.8f / brightest), 1.0);
+    d->exposure.setValue(de::min(1.0f, 2.25f / brightest), 1.0);
 }
 
 GLTexture &Tonemap::brightnessSample(int index) const

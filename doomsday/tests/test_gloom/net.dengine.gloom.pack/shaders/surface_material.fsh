@@ -4,10 +4,9 @@
 #include "common/material.glsl"
 #include "common/tangentspace.glsl"
 
-uniform vec4        uCameraPos; // world space
-
      DENG_VAR vec2  vUV;
-     DENG_VAR vec3  vWSPos;
+     DENG_VAR vec3  vTSViewPos;
+     DENG_VAR vec3  vTSFragPos;
      DENG_VAR vec3  vWSTangent;
      DENG_VAR vec3  vWSBitangent;
      DENG_VAR vec3  vWSNormal;
@@ -15,10 +14,43 @@ flat DENG_VAR float vMaterial;
 flat DENG_VAR uint  vFlags;
 
 vec2 Gloom_Parallax(uint matIndex, vec2 texCoords, vec3 viewDir) {
-    float heightScale = 0.1;
+    MaterialSampler matSamp = Gloom_Sampler(matIndex, Texture_NormalDisplacement);
+    if (!matSamp.metrics.isValid) return texCoords;
+
+    const float heightScale = 0.25;
+
+#if 0
+    // Basic Parallax Mapping
     float height = 1.0 - Gloom_FetchTexture(matIndex, Texture_NormalDisplacement, texCoords).a;
     vec2 p = viewDir.xy / viewDir.z * (height * heightScale);
     return texCoords - p;
+#endif
+
+    const float minLayers = 8.0;
+    const float maxLayers = 32.0;
+    float numLayers = mix(maxLayers, minLayers, abs(dot(vec3(0.0, 0.0, 1.0), viewDir)));
+
+    float layerDepth = 1.0 / numLayers;
+    float curLayerDepth = 0.0;
+    vec2 P = viewDir.xy * heightScale;
+    vec2 deltaTexCoords = P / numLayers;
+
+    vec2 curTexCoords = texCoords;
+    float curDepthMapValue = 1.0 - Gloom_SampleMaterial(matSamp, curTexCoords).a;
+
+    while (curLayerDepth < curDepthMapValue) {
+        curTexCoords -= deltaTexCoords;
+        curDepthMapValue = 1.0 - Gloom_SampleMaterial(matSamp, curTexCoords).a;
+        curLayerDepth += layerDepth;
+    }
+
+    // Interpolate for more accurate collision point.
+    vec2 prevTexCoords = curTexCoords + deltaTexCoords;
+    float afterDepth = curDepthMapValue - curLayerDepth;
+    float beforeDepth = (1.0 - Gloom_SampleMaterial(matSamp, prevTexCoords).a) -
+        curLayerDepth + layerDepth;
+    float weight = afterDepth / (afterDepth - beforeDepth);
+    return mix(curTexCoords, prevTexCoords, weight);
 }
 
 void main(void) {
@@ -29,29 +61,16 @@ void main(void) {
                                    normalize(vWSBitangent),
                                    normalize(vWSNormal));
 
-    // vec4 normalDisp = Gloom_FetchTexture(matIndex, Texture_NormalDisplacement, vUV);
-    // vec3 normal = Gloom_TangentMatrix(ts) * GBuffer_UnpackNormal(normalDisp);
-
-    // float displacement = normalDisp.w; // 0 = back, 1 = front
-
-    // GBuffer_SetFragDiffuse(vec4(vec3(displacement), 1.0));
-
     // Parallax mapping.
-
-    // TODO : calculate these in the vertex shader
-    mat3 TBN = transpose(Gloom_TangentMatrix(ts)); // world to tangent
-    vec3 tsViewPos = TBN * uCameraPos.xyz;
-    vec3 tsFragPos = TBN * vWSPos;
-
-    vec3 viewDir  = normalize(tsViewPos - tsFragPos);
+    vec3 viewDir  = normalize(vTSViewPos - vTSFragPos);
     vec2 texCoord = Gloom_Parallax(matIndex, vUV, viewDir);
 
-    GBuffer_SetFragNormal(
-        Gloom_TangentMatrix(ts) *
-        GBuffer_UnpackNormal(Gloom_FetchTexture(matIndex, Texture_NormalDisplacement, texCoord)));
+    vec3 normal = GBuffer_UnpackNormal(Gloom_FetchTexture(matIndex,
+        Texture_NormalDisplacement, texCoord));
+    GBuffer_SetFragNormal(Gloom_TangentMatrix(ts) * normal);
     GBuffer_SetFragDiffuse(Gloom_FetchTexture(matIndex, Texture_Diffuse, texCoord));
     GBuffer_SetFragEmissive(Gloom_FetchTexture(matIndex, Texture_Emissive, texCoord).rgb);
     GBuffer_SetFragSpecGloss(Gloom_FetchTexture(matIndex, Texture_SpecularGloss, texCoord));
 
-    GBuffer_SetFragDiffuse(vec4(1.0)); // testing
+    // GBuffer_SetFragDiffuse(vec4(1.0)); // testing
 }

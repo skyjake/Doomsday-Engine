@@ -20,7 +20,7 @@
 
 namespace de {
 
-static float const NORMAL_Z = .15f ;//.2f;
+static float const NORMAL_Z = .2f;
 
 DENG2_PIMPL_NOREF(HeightMap)
 {

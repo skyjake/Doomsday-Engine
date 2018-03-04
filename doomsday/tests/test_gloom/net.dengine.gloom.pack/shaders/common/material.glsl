@@ -39,15 +39,33 @@ Metrics Gloom_TextureMetrics(uint matIndex, int texture) {
     return metrics;
 }
 
+struct MaterialSampler {
+    uint matIndex;
+    int texture;
+    Metrics metrics;
+};
+
+MaterialSampler Gloom_Sampler(uint matIndex, int texture) {
+    return MaterialSampler(
+        matIndex,
+        texture,
+        Gloom_TextureMetrics(matIndex, texture)
+    );
+}
+
+vec4 Gloom_SampleMaterial(const MaterialSampler sampler, vec2 uv) {
+    vec2 normUV  = uv * sampler.metrics.scale;
+    vec2 atlasUV = sampler.metrics.uvRect.xy + fract(normUV) * sampler.metrics.uvRect.zw;
+    return textureLod(uTextureAtlas[sampler.texture], atlasUV,
+                      mipLevel(normUV, sampler.metrics.sizeInTexels.xy) - 0.5);
+}
+
 vec4 Gloom_TryFetchTexture(uint matIndex, int texture, vec2 uv, vec4 fallback) {
-    Metrics metrics = Gloom_TextureMetrics(matIndex, texture);
-    if (!metrics.isValid) {
+    MaterialSampler ms = Gloom_Sampler(matIndex, texture);
+    if (!ms.metrics.isValid) {
         return fallback;
     }
-    vec2 normUV  = uv * metrics.scale;
-    vec2 atlasUV = metrics.uvRect.xy + fract(normUV) * metrics.uvRect.zw;
-    return textureLod(uTextureAtlas[texture], atlasUV,
-                      mipLevel(normUV, metrics.sizeInTexels.xy) - 0.5);
+    return Gloom_SampleMaterial(ms, uv);
 }
 
 vec4 Gloom_FetchTexture(uint matIndex, int texture, vec2 uv) {

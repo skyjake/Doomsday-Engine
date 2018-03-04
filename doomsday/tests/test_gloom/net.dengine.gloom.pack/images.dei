@@ -5,7 +5,7 @@ group world {
     image grass.diffuse { path = "images/mat-grass.jpg" }
     image dirt.diffuse  { path = "images/mat-dirt.jpg" }
     group test {
-        image diffuse    { path = "images/mat-test.png" }
+        image diffuse    { path = "images/mat-stone2.png" }
         image normaldisp { path = "images/heights2.png/HeightMap.toNormals" }
     }
     image test2.diffuse { path = "images/mat-test2.png" }
