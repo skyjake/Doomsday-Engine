@@ -43,7 +43,7 @@ DENG2_PIMPL(GLShader)
     {
         if (!name)
         {
-            name = LIBGUI_GL.glCreateShader(type == Vertex ?   GL_VERTEX_SHADER
+            name = LIBGUI_GL.glCreateShader(type == Vertex   ? GL_VERTEX_SHADER
                                           : type == Geometry ? GL_GEOMETRY_SHADER
                                                              : GL_FRAGMENT_SHADER);
             LIBGUI_ASSERT_GL_OK();
@@ -220,6 +220,17 @@ void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
 
         Block log{Block::Size(logSize)};
         LIBGUI_GL.glGetShaderInfoLog(d->name, logSize, &count, reinterpret_cast<GLchar *>(log.data()));
+
+#if defined (DENG2_DEBUG)
+        {
+            QTextStream ins(src);
+            int lineNum = 1;
+            while (!ins.atEnd())
+            {
+                qDebug("%4i: %s", lineNum++, ins.readLine().toLatin1().constData());
+            }
+        }
+#endif
 
         throw CompilerError("GLShader::compile",
                             "Compilation of " + String(d->type == Fragment? "fragment" :

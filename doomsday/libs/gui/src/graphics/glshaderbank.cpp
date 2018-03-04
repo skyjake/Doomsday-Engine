@@ -33,6 +33,11 @@
 
 namespace de {
 
+//static int countLines(String const &text)
+//{
+//    return text.count(QChar('\n'));
+//}
+
 static String processIncludes(String source, String const &sourceFolderPath)
 {
     QRegularExpression const re("#include\\s+['\"]([^\"']+)['\"]");
@@ -46,7 +51,8 @@ static String processIncludes(String source, String const &sourceFolderPath)
         incSource = processIncludes(incSource, incFilePath.fileNamePath());
 
         Rangei const capRange(found.capturedStart(), found.capturedEnd());
-        source = source.substr(0, capRange.start)
+        String const prefix = source.substr(0, capRange.start);
+        source = prefix //+ String::format("#line %i\n", countLines(prefix))
                + incSource
                + source.substr(capRange.end);
     }

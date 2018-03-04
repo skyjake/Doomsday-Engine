@@ -1685,6 +1685,15 @@ void ModelDrawable::drawInstanced(GLBuffer const &instanceAttribs,
     {
         d->drawInstanced(instanceAttribs, animation);
     }
+#if defined (DENG2_DEBUG)
+    else
+    {
+        qDebug() << "[ModelDrawable] drawInstanced isReady:"
+                 << isReady()
+                 << "program:" << d->program
+                 << "atlas:" << d->glData.textureBank.atlas();
+    }
+#endif
 }
 
 ModelDrawable::Pass const *ModelDrawable::currentPass() const
