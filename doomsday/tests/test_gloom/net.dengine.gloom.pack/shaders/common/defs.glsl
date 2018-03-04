@@ -14,6 +14,9 @@ const int Texture_SpecularGloss      = 1; // RGB: Specular | A: Gloss
 const int Texture_Emissive           = 2; // RGB: Emissive
 const int Texture_NormalDisplacement = 3; // RGB: Normal   | A: Displacement
 
+const float Material_MaxReflectionBias = 5.0;
+const float Material_MaxReflectionBlur = 10.0;
+
 #define testFlag(flags, f) (((flags) & (f)) != 0u)
 
 #endif // GLOOM_FLAGS_H

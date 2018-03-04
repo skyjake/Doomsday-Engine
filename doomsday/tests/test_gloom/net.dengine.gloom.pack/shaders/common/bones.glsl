@@ -1,6 +1,8 @@
 #ifndef GLOOM_BONES_H
 #define GLOOM_BONES_H
 
+#include "tangentspace.glsl"
+
 uniform mat4 uBoneMatrices[64];
 
 DENG_ATTRIB vec4 aBoneIDs;
@@ -13,9 +15,12 @@ mat4 Gloom_BoneMatrix(void) {
            uBoneMatrices[int(aBoneIDs.w + 0.5)] * aBoneWeights.w;
 }
 
-vec4 Gloom_BoneTransform(vec4 vertex, inout vec3 normal) {
+vec4 Gloom_BoneTransform(vec4 vertex, inout TangentSpace ts) {
     mat4 bone = Gloom_BoneMatrix();
-    normal = (bone * vec4(normal, 0.0)).xyz;
+    mat3 bone3 = mat3(bone);
+    ts.normal    = bone3 * ts.normal;
+    ts.tangent   = bone3 * ts.tangent;
+    ts.bitangent = bone3 * ts.bitangent;
     return bone * vertex;
 }
 

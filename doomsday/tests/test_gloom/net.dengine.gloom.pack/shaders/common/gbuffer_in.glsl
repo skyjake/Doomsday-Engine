@@ -1,6 +1,8 @@
 #ifndef GLOOM_GBUFFER_IN_H
 #define GLOOM_GBUFFER_IN_H
 
+#include "gbuffer.glsl"
+
 layout (pixel_center_integer) in vec4 gl_FragCoord;
 
 uniform mat4 uInverseProjMatrix;
@@ -45,9 +47,9 @@ vec4 GBuffer_FragViewSpacePos(void) {
 }
 
 vec3 GBuffer_FragViewSpaceNormal(void) {
-    vec3 norm = texelFetch(uGBufferNormal, ivec2(gl_FragCoord.xy), 0).rgb;
-    if (norm == vec3(0.0)) return norm;
-    return norm * 2.0 - 1.0;
+    vec4 packed = texelFetch(uGBufferNormal, ivec2(gl_FragCoord.xy), 0);
+    if (packed.xyz == vec3(0.0)) return vec3(0.0);
+    return GBuffer_UnpackNormal(packed);
 }
 
 // MaterialData GBuffer_FragMaterialData(void) {

@@ -26,7 +26,8 @@ namespace gloom {
 
 Context &Context::bindCamera(GLProgram &program)
 {
-    program << uCurrentTime << view.uCameraMvpMatrix << view.uWorldToViewRotate;
+    program << uCurrentTime << view.uCameraMvpMatrix << view.uWorldToViewRotate
+            << view.uViewToWorldRotate;
     return *this;
 }
 

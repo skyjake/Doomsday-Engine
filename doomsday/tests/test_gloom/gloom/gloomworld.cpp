@@ -366,6 +366,7 @@ void GloomWorld::setMap(const Map &map)
 void GloomWorld::setDebugMode(int debugMode)
 {
     d->renderContext.uDebugMode = debugMode;
+    /*
     switch (debugMode)
     {
         case 1:
@@ -377,7 +378,7 @@ void GloomWorld::setDebugMode(int debugMode)
         case 3:
             d->renderContext.uDebugTex = d->mapRender.lights().shadowMap();
             break;
-    }
+    }*/
 }
 
 } // namespace gloom

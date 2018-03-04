@@ -15,8 +15,8 @@ struct Metrics {
     vec2  scale;
 };
 
-const vec4 defaultTextureValue[4] = vec4[4] (
-    vec4(0.0), // diffuse
+const vec4 Material_DefaultTextureValue[4] = vec4[4] (
+    vec4(1.0), // diffuse
     vec4(0.0), // specular/gloss
     vec4(0.0), // emissive
     vec4(0.5, 0.5, 0.5, 1.0) // normal/displacement
@@ -42,7 +42,7 @@ Metrics Gloom_TextureMetrics(uint matIndex, int texture) {
 vec4 Gloom_FetchTexture(uint matIndex, int texture, vec2 uv) {
     Metrics metrics = Gloom_TextureMetrics(matIndex, texture);
     if (!metrics.isValid) {
-        return defaultTextureValue[texture];
+        return Material_DefaultTextureValue[texture];
     }
     vec2 normUV  = uv * metrics.scale;
     vec2 atlasUV = metrics.uvRect.xy + fract(normUV) * metrics.uvRect.zw;

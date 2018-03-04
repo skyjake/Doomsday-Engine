@@ -1,7 +1,9 @@
 #version 330 core
 
+#include "common/defs.glsl"
 #include "common/gbuffer_in.glsl"
 #include "common/lightmodel.glsl"
+#include "common/camera.glsl"
 
 uniform sampler2D uSSAOBuf;
 
@@ -11,7 +13,6 @@ uniform vec3      uViewSpaceLightOrigin;
 uniform vec3      uViewSpaceLightDir;
 uniform mat4      uLightMatrix; // world -> light
 uniform mat4      uViewToLightMatrix;
-uniform mat3      uViewToWorldRotate;
 uniform sampler2DShadow uShadowMap;
 
 DENG_VAR vec2 vUV;
@@ -70,9 +71,7 @@ vec3 Gloom_FetchAmbient(vec3 viewSpaceNormal) {
 }
 
 void main(void) {
-    // MaterialData data = GBuffer_FragMaterialData();
-    // vec3 diffuse = Gloom_FetchTexture(data.matIndex, Texture_Diffuse, data.uv).rgb;
-    // vec4 specGloss = Gloom_FetchTexture(data.matIndex, Texture_SpecularGloss, data.uv);
+    vec4 vsPos     = GBuffer_FragViewSpacePos();
     vec3 diffuse   = GBuffer_FragDiffuse();
     vec4 specGloss = GBuffer_FragSpecGloss();
     vec3 normal    = GBuffer_FragViewSpaceNormal();
@@ -88,7 +87,7 @@ void main(void) {
         float dp = dot(normal, uViewSpaceLightDir);
         if (dp < 0.0) {
             // Surface faces the light.
-            vec4 lsPos = uViewToLightMatrix * GBuffer_FragViewSpacePos();
+            vec4 lsPos = uViewToLightMatrix * vsPos;
             dirLight *= Gloom_FetchShadow(lsPos, dp);
             if (dirLight > 0.0) {
                 Light light = Light(
@@ -101,6 +100,15 @@ void main(void) {
                 outColor += dirLight * Gloom_BlinnPhong(light, sp);
             }
         }
+    }
+
+    // Reflection component.
+    {
+        float mipBias = Material_MaxReflectionBlur * (1.0 - specGloss.a);
+        vec3 reflectedDir = reflect(normalize(vsPos.xyz), normal);
+        outColor += specGloss.rgb * uEnvIntensity * 
+            texture(uEnvMap, uViewToWorldRotate * reflectedDir,
+                min(mipBias, Material_MaxReflectionBias)).rgb;
     }
 
     // Material emissive component.

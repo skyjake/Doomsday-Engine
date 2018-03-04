@@ -1,0 +1,92 @@
+MD5Version 10
+commandline "anim models/md5/vehicles/buggy/buggy.mb -dest models/md5/vehicles/buggy/buggy.md5anim -game Doom -rotate 90 -prefix BUG_ -keep buggy_eye"
+
+numFrames 2
+numJoints 34
+frameRate 24
+numAnimatedComponents 0
+
+hierarchy {
+	"origin"	-1 0 0	//
+	"buggy_main"	0 0 0	// origin
+	"buggy_eye"	1 0 0	// buggy_main
+	"buggy_front_left_shassis"	1 0 0	// buggy_main
+	"buggy_front_left_shock"	3 0 0	// buggy_front_left_shassis
+	"buggy_front_left_shock_clip"	4 0 0	// buggy_front_left_shock
+	"buggy_front_left_suspension"	3 0 0	// buggy_front_left_shassis
+	"buggy_front_left_stearing_clip"	6 0 0	// buggy_front_left_suspension
+	"buggy_front_left_steering"	7 0 0	// buggy_front_left_stearing_clip
+	"buggy_front_left_wheel"	8 0 0	// buggy_front_left_steering
+	"buggy_front_right_shassis"	1 0 0	// buggy_main
+	"buggy_front_right_shock"	10 0 0	// buggy_front_right_shassis
+	"buggy_front_right_shock_clip"	11 0 0	// buggy_front_right_shock
+	"buggy_front_right_suspension"	10 0 0	// buggy_front_right_shassis
+	"buggy_front_right_stearing_clip"	13 0 0	// buggy_front_right_suspension
+	"buggy_front_right_steering"	14 0 0	// buggy_front_right_stearing_clip
+	"buggy_front_right_wheel"	15 0 0	// buggy_front_right_steering
+	"buggy_rear_left_shassis"	1 0 0	// buggy_main
+	"buggy_rear_left_shock"	17 0 0	// buggy_rear_left_shassis
+	"buggy_rear_left_shock_clip"	18 0 0	// buggy_rear_left_shock
+	"buggy_rear_left_suspension"	17 0 0	// buggy_rear_left_shassis
+	"buggy_rear_left_stearing_clip"	20 0 0	// buggy_rear_left_suspension
+	"buggy_rear_left_steering"	21 0 0	// buggy_rear_left_stearing_clip
+	"buggy_rear_left_wheel"	22 0 0	// buggy_rear_left_steering
+	"buggy_rear_right_shassis"	1 0 0	// buggy_main
+	"buggy_rear_right_shock"	24 0 0	// buggy_rear_right_shassis
+	"buggy_rear_right_shock_clip"	25 0 0	// buggy_rear_right_shock
+	"buggy_rear_right_suspension"	24 0 0	// buggy_rear_right_shassis
+	"buggy_rear_right_stearing_clip"	27 0 0	// buggy_rear_right_suspension
+	"buggy_rear_right_steering"	28 0 0	// buggy_rear_right_stearing_clip
+	"buggy_rear_right_wheel"	29 0 0	// buggy_rear_right_steering
+	"turret_turn"	1 0 0	// buggy_main
+	"turret_aim"	31 0 0	// turret_turn
+	"gun_rotate"	32 0 0	// turret_aim
+}
+
+bounds {
+	( -107.8160095215 -57.7589416504 0.0140209198 ) ( 84.0450057983 57.7588500977 89.0918045044 )
+	( -107.8160095215 -57.7589416504 0.0140209198 ) ( 84.0450057983 57.7588500977 89.0918045044 )
+}
+
+baseframe {
+	( 0 0 0 ) ( 0 0 0 )
+	( -20 -0.0000031094 28.3333339691 ) ( 0.7071067691 0.000000055 -0.000000055 )
+	( -3.4561872482 -34.5445327759 -18.0209960938 ) ( -0.7071067691 0 -0.7071067691 )
+	( 70 0 -0 ) ( -0.5 0.5 -0.5 )
+	( 20 0.0000007053 11.6666660309 ) ( 0.6343718767 -0.3123656809 -0.3123656809 )
+	( 24.9981403351 0.3048551083 -0.0000023321 ) ( 0.8971373439 -0.4417517781 0 )
+	( 16.6666660309 0.0000012235 -0 ) ( 0.6950830221 -0.1265076548 -0.1267032474 )
+	( 20.5771770477 2.6601364613 0.0004828089 ) ( -0.9839535356 0.1784248054 0 )
+	( 3.3333346844 0.0000002212 -0.0000013925 ) ( 0 0 0 )
+	( 14.9999990463 -0.0235271491 0.000003469 ) ( 0 0 0 )
+	( 70 0.0000324249 -0 ) ( 0.5 0.5 0.5 )
+	( -20 0.0000007053 -11.6666984558 ) ( 0.6343718767 -0.3123656809 -0.3123656809 )
+	( -24.9981403351 -0.3048551083 -0.0000023321 ) ( -0.8971373439 0.4417517781 0 )
+	( -16.6667003632 0.0000012235 -0 ) ( 0.6957602501 -0.12616539 -0.12616539 )
+	( -20.5774822235 -2.6600224972 -0.0000028503 ) ( -0.9839535356 0.1784248054 0 )
+	( -3.3333015442 0 -0.0000032965 ) ( 0 0 0 )
+	( -15 0.0235004425 0.0000023321 ) ( 0 0 0 )
+	( -46.3690872192 0.0000324249 -0 ) ( 0.5001078248 -0.4993446767 -0.500850141 )
+	( -24.1497440338 -0.0000065796 -11.6666994095 ) ( 0.6343718767 -0.3123656511 -0.3123656809 )
+	( -24.9981422424 -0.3048534691 0.0000016711 ) ( -0.8971373439 0.4417517781 0.0000000033 )
+	( -20.816444397 -0.0000016763 -0.0000009261 ) ( 0.6957602501 -0.12616539 -0.12616539 )
+	( -20.5598087311 -2.6118497849 0.0006493826 ) ( -0.9839535356 0.1784248203 0.0000000019 )
+	( -3.3333001137 -0.000000204 -0.0000010826 ) ( 0 0 0 )
+	( -15 0.0235006791 0.0000057872 ) ( 0 0 0 )
+	( -46.3690948486 0.0000324249 0 ) ( -0.5 -0.5 0.5 )
+	( 24.1497001648 -0.0000037546 11.6666984558 ) ( 0.6343718767 -0.3123656809 -0.3123656809 )
+	( 24.9981422424 0.3048535883 0.0000052973 ) ( -0.8971373439 0.4417517781 0.0000000057 )
+	( 20.816400528 -0.0000032363 0 ) ( 0.6957602501 -0.12616539 -0.12616539 )
+	( 20.5594654083 2.6119756699 0.0000047791 ) ( -0.9839535356 0.1784248054 0.0000000023 )
+	( 3.3333015442 -0 0.0000005182 ) ( -0.0000000167 0 -0 )
+	( 15 -0.0235004425 0.0000023322 ) ( -0.0000000197 0 -0 )
+	( -45.5778121948 2.8616390228 0 ) ( 0 -0 0.6785939932 )
+	( 56.0192565918 -4.4405508041 0 ) ( 0.5193795562 0.4798384309 0.5193795562 )
+	( -0 0 8.9111480713 ) ( -0.7071067691 0 -0.7071067691 )
+}
+
+frame 0 {
+}
+
+frame 1 {
+}

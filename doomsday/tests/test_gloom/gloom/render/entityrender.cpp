@@ -46,7 +46,7 @@ LIBGUI_VERTEX_FORMAT_SPEC(InstanceData, 20 * sizeof(float))
 DENG2_PIMPL(EntityRender)
 {
     EntityMap     ents;
-    ModelDrawable entityModels[3];
+    ModelDrawable entityModels[5];
     GLProgram     program;
     GLProgram     dirShadowProgram;
     GLProgram     omniShadowProgram;
@@ -81,12 +81,17 @@ DENG2_PIMPL(EntityRender)
             "models/tree1/t2.3ds",
             "models/tree2/t3.3ds",
             "models/tree3/t4.3ds",
+            "models/sphere/sphere_shd.obj",
+            "models/buggy/buggy.md5mesh",
         };
 
         int idx = 0;
         for (auto &model : entityModels)
         {
             model.load(pkg.root().locate<File>(filenames[idx]));
+            model.setTextureMapping(ModelDrawable::diffuseNormalsSpecularEmission());
+//            model.setTexturePath(0, ModelDrawable::Specular,
+//                                 "/packs/net.dengine.gloom/models/sphere/specGloss.tga");
             model.setAtlas(ModelDrawable::Diffuse,  *context.atlas[Diffuse]);
             model.setAtlas(ModelDrawable::Emissive, *context.atlas[Emissive]);
             model.setAtlas(ModelDrawable::Normals,  *context.atlas[NormalDisplacement]);
@@ -168,7 +173,7 @@ DENG2_PIMPL(EntityRender)
                         Mat4f::translate(e->position()) *
                             Mat4f::rotate(e->angle(), Vec3f(0, -1, 0)) *
                             Mat4f::rotate(-90, Vec3f(1, 0, 0)) *
-                            Mat4f::scale(e->scale() * 0.1f),
+                            Mat4f::scale(e->scale() * (entType == Entity::Buggy? 0.03f : 0.1f)),
                         Vec4f(1, 1, 1,
                                  clamp(0.f, 1.f - (distance - maxDist + fadeItv) / fadeItv, 1.f))};
                     data << inst;

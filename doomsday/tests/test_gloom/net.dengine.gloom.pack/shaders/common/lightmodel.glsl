@@ -1,6 +1,8 @@
 #ifndef GLOOM_LIGHTMODEL_H
 #define GLOOM_LIGHTMODEL_H
 
+#include "camera.glsl"
+
 uniform samplerCube uEnvMap;
 uniform vec3 uEnvIntensity;
 
@@ -26,16 +28,20 @@ vec3 Gloom_BlinnPhong(Light light, SurfacePoint surf) {
         edgeFalloff  = clamp(2.0 - 2.0 * linear / light.falloffRadius, 0.0, 1.0);
         falloff      = clamp(1.0 / pow(linear, 2.0) * edgeFalloff, 0.0, 1.0);
     }
-    vec3 lightDir     = normalize(light.origin - surf.pos);
-    vec3 viewDir      = normalize(-surf.pos);
-    vec3 halfwayDir   = normalize(lightDir + viewDir);
 
-    // Blinn-Phong
-    float shininess = 1024.0; // TODO: <= specGloss.a
-    float spec = abs(pow(max(dot(surf.normal, halfwayDir), 0.0), shininess));
-    vec3 specular = surf.specGloss.rgb * light.intensity * spec * edgeFalloff;
+    vec3 lightDir   = normalize(light.origin - surf.pos);
+    vec3 viewDir    = normalize(-surf.pos);
+    vec3 halfwayDir = normalize(lightDir + viewDir);
+
     float diffuse = max(0.0, dot(surf.normal, lightDir));
 
+    vec3 specular = vec3(0.0);
+    if (surf.specGloss.rgb != vec3(0.0)) {
+        float shininess = 1024.0; // TODO: <= specGloss.a
+        // Blinn-Phong.
+        float spec = abs(pow(max(dot(surf.normal, halfwayDir), 0.0), shininess));
+        specular = surf.specGloss.rgb * light.intensity * spec * edgeFalloff;
+    }
     return (light.intensity * falloff * diffuse * surf.diffuse) + specular;
 }
 

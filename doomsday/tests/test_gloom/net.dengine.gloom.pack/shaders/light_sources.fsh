@@ -1,9 +1,9 @@
 #version 330 core
 
 #include "common/gbuffer_in.glsl"
+#include "common/camera.glsl"
 #include "common/lightmodel.glsl"
 
-uniform mat3 uViewToWorldRotate;
 uniform samplerCubeShadow uShadowMaps[6];
 // uniform samplerCube uShadowMaps[6];
 
@@ -77,10 +77,6 @@ void main(void) {
     if (lit <= 0.001) {
         return;
     }
-
-    // MaterialData data = GBuffer_FragMaterialData();
-    // vec4 diffuse   = Gloom_FetchTexture(data.matIndex, Texture_Diffuse, data.uv);
-    // vec4 specGloss = Gloom_FetchTexture(data.matIndex, Texture_SpecularGloss, data.uv);
 
     vec3 diffuse   = GBuffer_FragDiffuse();
     vec4 specGloss = GBuffer_FragSpecGloss();

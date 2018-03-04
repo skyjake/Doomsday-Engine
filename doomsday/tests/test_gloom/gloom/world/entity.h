@@ -38,6 +38,8 @@ public:
         Tree1 = 1000,
         Tree2,
         Tree3,
+        TestSphere,
+        Buggy,
     };
 
 public:

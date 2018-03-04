@@ -1218,6 +1218,8 @@ void Editor::mouseReleaseEvent(QMouseEvent *event)
                 { Entity::Tree1, "Tree1" },
                 { Entity::Tree2, "Tree2" },
                 { Entity::Tree3, "Tree3" },
+                { Entity::TestSphere, "Test Sphere" },
+                { Entity::Buggy, "Buggy" },
             };
             const ID entityId = d->hoverEntity;
             for (const auto &et : types)

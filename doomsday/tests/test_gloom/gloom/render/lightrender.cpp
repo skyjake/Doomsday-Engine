@@ -127,14 +127,6 @@ DENG2_PIMPL(LightRender)
                 << ctx.view.uModelViewMatrix
                 << ctx.view.uWorldToViewRotate
                 << ctx.view.uInverseProjMatrix
-//                << ctx.gbuffer->uGBufferMaterial()
-//                << ctx.gbuffer->uGBufferNormal()
-//                << ctx.gbuffer->uGBufferDepth()
-//                << ctx.uDiffuseAtlas
-//                << ctx.uEmissiveAtlas
-//                << ctx.uSpecGlossAtlas
-//                << ctx.uNormalDisplAtlas
-//                << ctx.mapRender->uTextureMetrics()
                 << ctx.uEnvMap
                 << uShadowMaps[0]
                 << uShadowMaps[1]
@@ -149,14 +141,6 @@ DENG2_PIMPL(LightRender)
         ctx.shaders->build(giQuad.program(), "gloom.light.global")
                 << ctx.view.uInverseProjMatrix
                 << ctx.view.uViewToWorldRotate
-//                << ctx.gbuffer->uGBufferMaterial()
-//                << ctx.gbuffer->uGBufferNormal()
-//                << ctx.gbuffer->uGBufferDepth()
-//                << ctx.uDiffuseAtlas
-//                << ctx.uEmissiveAtlas
-//                << ctx.uSpecGlossAtlas
-//                << ctx.uNormalDisplAtlas
-//                << ctx.mapRender->uTextureMetrics()
                 << ctx.uEnvMap
                 << ctx.uEnvIntensity
                 << ctx.ssao->uSSAOBuf()
