@@ -36,11 +36,11 @@ public:
     SidebarWidget(de::String const &title, de::String const &name = de::String());
 
     de::SequentialLayout &layout();
-    de::LabelWidget &title();
+    de::LabelWidget &     title();
     de::ScrollAreaWidget &containerWidget();
-    de::ButtonWidget &closeButton();
-    de::IndirectRule &firstColumnWidth();
-    de::Rule const &maximumOfAllGroupFirstColumns() const;
+    de::ButtonWidget &    closeButton();
+    de::IndirectRule &    firstColumnWidth();
+    de::Rule const &      maximumOfAllGroupFirstColumns() const;
 
 protected:
     /**
