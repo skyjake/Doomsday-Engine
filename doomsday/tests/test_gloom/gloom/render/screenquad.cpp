@@ -24,6 +24,9 @@ namespace gloom {
 
 static const int BUF_ID = 1;
 
+using VBuf = GLBufferT<Vertex2Tex>;
+static std::shared_ptr<VBuf> s_vertexBuffer; // shared between all ScreenQuad instances
+
 DENG2_PIMPL_NOREF(ScreenQuad)
 {
     Drawable drawable;
@@ -46,13 +49,15 @@ void ScreenQuad::glInit(Context &context)
 {
     Render::glInit(context);
 
-    using VBuf = GLBufferT<Vertex2Tex>;
-
-    auto *vbuf = new VBuf;
-    vbuf->setVertices(gl::TriangleStrip,
-                      VBuf::Builder().makeQuad(Rectanglef(-1, -1, 2, 2), Rectanglef(0, 0, 1, 1)),
-                      gl::Static);
-    d->drawable.addBuffer(BUF_ID, vbuf);
+    if (!s_vertexBuffer)
+    {
+        s_vertexBuffer.reset(new VBuf);
+        s_vertexBuffer->setVertices(
+            gl::TriangleStrip,
+            VBuf::Builder().makeQuad(Rectanglef(-1, -1, 2, 2), Rectanglef(0, 0, 1, 1)),
+            gl::Static);
+    }
+    d->drawable.addBuffer(BUF_ID, s_vertexBuffer);
     d->drawable.setState(BUF_ID, d->state);
 }
 
