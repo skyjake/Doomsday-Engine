@@ -159,6 +159,15 @@ public:
      */
     void addBuffer(Id id, GLBuffer *buffer);
 
+    /**
+     * Adds a new buffer or replaces an existing one. The buffer will use the
+     * default program.
+     *
+     * @param id      Identifier of the buffer.
+     * @param buffer  GL buffer.
+     */
+    void addBuffer(Id id, std::shared_ptr<GLBuffer> buffer);
+
     Id addBuffer(Name const &bufferName, GLBuffer *buffer);
 
     /**

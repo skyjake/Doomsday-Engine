@@ -24,7 +24,7 @@ namespace de {
 
 DENG2_PIMPL(Drawable)
 {
-    typedef QMap<Id, GLBuffer *>  Buffers;
+    typedef QMap<Id, std::shared_ptr<GLBuffer>> Buffers;
     typedef QMap<Id, GLProgram *> Programs;
     typedef QMap<Id, GLState *>   States;
     typedef QMap<String, Id>      Names;
@@ -59,7 +59,6 @@ DENG2_PIMPL(Drawable)
 
     void clear()
     {
-        qDeleteAll(buffers.values());
         qDeleteAll(programs.values());
         qDeleteAll(states.values());
 
@@ -243,6 +242,11 @@ Drawable::Id Drawable::stateId(Name const &stateName) const
 
 void Drawable::addBuffer(Id id, GLBuffer *buffer)
 {
+    addBuffer(id, std::shared_ptr<GLBuffer>(buffer));
+}
+
+void Drawable::addBuffer(Id id, std::shared_ptr<GLBuffer> buffer)
+{
     removeBuffer(id);
 
     d->buffers[id] = buffer;
@@ -337,7 +341,7 @@ void Drawable::removeBuffer(Id id)
     if (d->buffers.contains(id))
     {
         remove(*d->buffers[id]);
-        delete d->buffers.take(id);
+        d->buffers.remove(id);
     }
     d->configs.remove(id);
 }
