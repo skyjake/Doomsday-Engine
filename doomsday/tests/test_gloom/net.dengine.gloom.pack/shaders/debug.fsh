@@ -2,6 +2,7 @@
 
 uniform sampler2D uSSAOBuf;
 uniform sampler2D uShadowMap;
+uniform sampler2D uBloomFramebuf;
 uniform mat4 uViewToLightMatrix;
 uniform vec3 uViewSpaceLightDir;
 uniform int uDebugMode;
@@ -70,5 +71,8 @@ void main(void) {
     }
     else if (uDebugMode == 7) {
         out_FragColor = vec4(vec3(texture(uShadowMap, vUV).s), 1.0);
+    }
+    else if (uDebugMode == 8) {
+        out_FragColor = texture(uBloomFramebuf, vUV);
     }
 }

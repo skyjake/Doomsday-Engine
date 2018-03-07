@@ -1,4 +1,4 @@
-/** @file gloom/render/defs.h
+/** @file bloom.h
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,25 +16,28 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_RENDER_DEFS_H
-#define GLOOM_RENDER_DEFS_H
+#ifndef GLOOM_BLOOM_H
+#define GLOOM_BLOOM_H
+
+#include "gloom/render/render.h"
 
 namespace gloom {
 
-enum Texture {
-    Diffuse            = 0, // RGB: Diffuse  | A: Opacity
-    SpecularGloss      = 1, // RGB: Specular | A: Gloss
-    Emissive           = 2, // RGB: Emissive
-    NormalDisplacement = 3, // RGB: Normal   | A: Displacement
+class Bloom : public Render
+{
+public:
+    Bloom();
 
-    TextureMapCount = 4,
-};
+    void glInit(Context &) override;
+    void glDeinit() override;
+    void render() override;
 
-enum BloomMode {
-    BloomHorizontal = 0,
-    BloomVertical   = 1,
+    de::GLUniform &uBloomFramebuf();
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 } // namespace gloom
 
-#endif // GLOOM_RENDER_DEFS_H
+#endif // GLOOM_BLOOM_H

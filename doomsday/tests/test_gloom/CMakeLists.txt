@@ -35,6 +35,8 @@ set (SOURCES
     gloom/gloomwidget.h
     gloom/gloomworld.cpp
     gloom/gloomworld.h
+    gloom/render/bloom.cpp
+    gloom/render/bloom.h
     gloom/render/context.cpp
     gloom/render/context.h
     gloom/render/databuffer.h

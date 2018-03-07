@@ -68,6 +68,13 @@ group gloom {
         }
     }
 
+    group bloom {
+        shader blur_partial {
+            path.vertex = "common/vertex_uv.vsh"
+            path.fragment = "bloom_blur_partial.fsh"
+        }
+    }
+
     group tonemap {
         shader exposure {
             path.vertex = "common/vertex_uv.vsh"

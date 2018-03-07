@@ -34,6 +34,7 @@ public:
     void advanceTime(de::TimeSpan) override;
 
     de::GLTexture &brightnessSample(int index) const;
+    de::GLUniform &uExposure() const;
 
 private:
     DENG2_PRIVATE(d)

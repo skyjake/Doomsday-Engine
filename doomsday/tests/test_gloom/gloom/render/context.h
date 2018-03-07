@@ -32,8 +32,10 @@ namespace gloom {
 
 class GBuffer;
 class SSAO;
+class Bloom;
 class MapRender;
 class LightRender;
+class Tonemap;
 
 struct Context {
     const de::ImageBank *     images;
@@ -43,9 +45,11 @@ struct Context {
     View                      view;
     SSAO *                    ssao;
     GBuffer *                 gbuffer;
+    Bloom *                   bloom;
     de::GLTextureFramebuffer *framebuf;
     MapRender *               mapRender;
     LightRender *             lights;
+    Tonemap *                 tonemap;
 
     de::GLUniform uCurrentTime      {"uCurrentTime",      de::GLUniform::Float};
 

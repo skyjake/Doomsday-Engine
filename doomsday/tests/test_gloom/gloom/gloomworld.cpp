@@ -26,6 +26,7 @@
 #include "gloom/render/skybox.h"
 #include "gloom/render/ssao.h"
 #include "gloom/render/tonemap.h"
+#include "gloom/render/bloom.h"
 #include "gloom/render/screenquad.h"
 #include "gloom/world/entitymap.h"
 #include "gloom/world/environment.h"
@@ -58,6 +59,7 @@ DENG2_PIMPL(GloomWorld), public Asset
     QHash<ID, double>    initialPlaneY;
     MapRender            mapRender;
     SSAO                 ssao;
+    Bloom                bloom;
     Tonemap              tonemap;
     ScreenQuad           debugQuad;
 
@@ -84,15 +86,17 @@ DENG2_PIMPL(GloomWorld), public Asset
 #endif
         }
 
-        renderContext.images            = &GloomApp::images(); // TODO: remove dependency on App
-        renderContext.shaders           = &GloomApp::shaders();
-        renderContext.atlas             = textureAtlas;
-        renderContext.ssao              = &ssao;
-        renderContext.gbuffer           = &gbuffer;
-        renderContext.framebuf          = &framebuf;
-        renderContext.mapRender         = &mapRender;
-        renderContext.lights            = &mapRender.lights();
-        renderContext.map               = &map;
+        renderContext.images    = &GloomApp::images(); // TODO: remove dependency on App
+        renderContext.shaders   = &GloomApp::shaders();
+        renderContext.atlas     = textureAtlas;
+        renderContext.ssao      = &ssao;
+        renderContext.gbuffer   = &gbuffer;
+        renderContext.framebuf  = &framebuf;
+        renderContext.bloom     = &bloom;
+        renderContext.mapRender = &mapRender;
+        renderContext.lights    = &mapRender.lights();
+        renderContext.map       = &map;
+        renderContext.tonemap   = &tonemap;
 
         environ.setWorld(thisPublic);
     }
@@ -120,19 +124,18 @@ DENG2_PIMPL(GloomWorld), public Asset
         sky      .glInit(renderContext);
         mapRender.glInit(renderContext);
         ssao     .glInit(renderContext);
+        bloom    .glInit(renderContext);
         tonemap  .glInit(renderContext);
         debugQuad.glInit(renderContext);
 
         // Debug view.
         {
             renderContext.shaders->build(debugQuad.program(), "gloom.debug")
-//                    << gbuffer.uGBufferMaterial()
-//                    << gbuffer.uGBufferDepth()
-//                    << gbuffer.uGBufferNormal()
                     << renderContext.uDebugMode
                     << renderContext.uDebugTex
                     << renderContext.lights->uViewSpaceLightDir()
-                    << ssao.uSSAOBuf();
+                    << ssao.uSSAOBuf()
+                    << bloom.uBloomFramebuf();
             renderContext.bindGBuffer(debugQuad.program());
         }
 
@@ -149,6 +152,7 @@ DENG2_PIMPL(GloomWorld), public Asset
 
         debugQuad.glDeinit();
         tonemap  .glDeinit();
+        bloom    .glDeinit();
         ssao     .glDeinit();
         mapRender.glDeinit();
         sky      .glDeinit();
@@ -300,9 +304,10 @@ void GloomWorld::render(const ICamera &camera)
     GLState::current().setDepthTest(true).setDepthWrite(false);
     GLState::pop();
 
-    // Framebuffer contents are mipmapped for brightness analysis.
+    // Framebuffer contents are mipmapped for bloom and brightness analysis.
     d->framebuf.attachedTexture(GLFramebuffer::Color0)->generateMipmap();
 
+    d->bloom.render();
     d->tonemap.render();
 
     if (d->renderContext.uDebugMode.toInt() != 0)

@@ -19,6 +19,7 @@
 #include "gloom/render/tonemap.h"
 #include "gloom/render/screenquad.h"
 #include "gloom/render/gbuffer.h"
+#include "gloom/render/bloom.h"
 
 #include <de/Animation>
 #include <de/GLFramebuffer>
@@ -54,6 +55,7 @@ void Tonemap::glInit(Context &context)
     d->quad.glInit(context);
     context.shaders->build(d->quad.program(), "gloom.tonemap.exposure")
             << d->uFramebuf
+            << context.bloom->uBloomFramebuf()
             << d->uExposure
             << context.uDebugMode
             << context.uDebugTex;
@@ -71,7 +73,8 @@ void Tonemap::glInit(Context &context)
             d->brightnessFramebuf[i].configure(GLFramebuffer::Color0, bs);
         }
         d->brightnessQuad.glInit(context);
-        context.shaders->build(d->brightnessQuad.program(), "gloom.tonemap.sample") << d->uFramebuf;
+        context.shaders->build(d->brightnessQuad.program(), "gloom.tonemap.sample")
+            << d->uFramebuf;
     }
 }
 
@@ -130,21 +133,28 @@ void Tonemap::advanceTime(TimeSpan elapsed)
 
     // TODO: try using the median brightness instead of max
 
+    const Vec3f grayscale{0.2126f, 0.7152f, 0.0722f};
+
     float brightest = 0;
     for (const auto &s : sample)
     {
-        //brightest = de::max(de::max(s.x * 0.666f, s.y, s.z * 0.334f), brightest);
-        brightest = de::max(s.max(), brightest);
+        brightest = de::max(float(s.dot(grayscale)), brightest);
+//        brightest = de::max(s.max(), brightest);
     }
 
     // The adjustment is kept below 1.0 to avoid overbrightening dark scenes.
-//    d->exposure.setValue(de::min(1.0f, 2.25f / brightest), 1.0);
-    d->exposure.setValue(de::min(1.0f, 0.8f / brightest), 1.0);
+    d->exposure.setValue(de::min(1.0f, 1.75f / brightest), 1.0);
+//    d->exposure.setValue(de::min(1.0f, 1.0f / brightest), 1.0);
 }
 
 GLTexture &Tonemap::brightnessSample(int index) const
 {
     return d->brightnessSamples[index];
+}
+
+GLUniform &Tonemap::uExposure() const
+{
+    return d->uExposure;
 }
 
 } // namespace gloom
