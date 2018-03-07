@@ -64,6 +64,10 @@ void ScreenQuad::glInit(Context &context)
 void ScreenQuad::glDeinit()
 {
     d->drawable.clear();
+    if (s_vertexBuffer.use_count() == 1)
+    {
+        s_vertexBuffer.reset();
+    }
     Render::glDeinit();
 }
 
