@@ -133,7 +133,8 @@ void Tonemap::advanceTime(TimeSpan elapsed)
 
     // TODO: try using the median brightness instead of max
 
-    const Vec3f grayscale{0.2126f, 0.7152f, 0.0722f};
+    //const Vec3f grayscale{0.2126f, 0.7152f, 0.0722f};
+    const Vec3f grayscale{.333f, .333f, .333f};
 
     float brightest = 0;
     for (const auto &s : sample)

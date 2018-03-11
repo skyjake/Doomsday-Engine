@@ -25,7 +25,10 @@
 #include <QAction>
 #include <QCloseEvent>
 #include <QFile>
+#include <QFileDialog>
 #include <QMenu>
+#include <QMenuBar>
+#include <QMessageBox>
 #include <QPainter>
 #include <QSettings>
 
@@ -62,7 +65,9 @@ DENG2_PIMPL(Editor)
         AddSector,
     };
 
-    Map map;
+    Map        map;
+    String     filePath;
+    bool       isModified = false;
     QList<Map> undoStack;
 
     Mode       mode       = EditPoints;
@@ -77,9 +82,9 @@ DENG2_PIMPL(Editor)
     ID         hoverSector = 0;
     ID         hoverEntity = 0;
 
-    float    viewScale = 10;
+    float viewScale = 10;
     Vec2f viewOrigin;
-    Plane    viewPlane;
+    Plane viewPlane;
     Mat4f viewTransform;
     Mat4f inverseViewTransform;
 
@@ -91,13 +96,9 @@ DENG2_PIMPL(Editor)
     Impl(Public *i) : Base(i)
     {
         // Load the last map.
+        if (persistentMapPath())
         {
-            QFile f(persistentMapPath());
-            if (f.exists() && f.open(QFile::ReadOnly))
-            {
-                const Block data = f.readAll();
-                map.deserialize(data);
-            }
+            loadMap(persistentMapPath());
         }
 
         // Check for previous state.
@@ -113,24 +114,26 @@ DENG2_PIMPL(Editor)
         // Save the editor state.
         {
             QSettings st;
+            st.setValue("filePath", filePath);
             st.setValue("viewScale", viewScale);
             st.setValue("viewOrigin", geo::toQVector2D(viewOrigin));
         }
 
         // Save the map for later.
-        {
+/*        {
             QFile f(persistentMapPath());
             if (f.open(QFile::WriteOnly))
             {
                 const Block data = map.serialize();
                 f.write(data.constData(), data.size());
             }
-        }
+        }*/
     }
 
     String persistentMapPath() const
     {
-        return GloomApp::app().userDir().filePath("persist.gloommap");
+        //return GloomApp::app().userDir().filePath("persist.gloommap");
+        return QSettings().value("filePath", "").toString();
     }
 
     String modeText() const
@@ -331,6 +334,7 @@ DENG2_PIMPL(Editor)
 
     void pushUndo()
     {
+        isModified = true;
         undoStack.append(map);
         if (undoStack.size() > UNDO_MAX)
         {
@@ -782,6 +786,88 @@ DENG2_PIMPL(Editor)
     {
         emit self().buildMapRequested();
     }
+
+    bool askSaveFile()
+    {
+        if (isModified)
+        {
+            const auto answer =
+                QMessageBox::question(thisPublic,
+                                      "Save file?",
+                                      "The map has been modified. Do you want to save the changes?",
+                                      QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+            if (answer == QMessageBox::Cancel)
+            {
+                return false;
+            }
+            if (answer == QMessageBox::Yes)
+            {
+                saveFile();
+            }
+        }
+        return true;
+    }
+
+    void newFile()
+    {
+        if (!askSaveFile()) return;
+
+        map = Map();
+        isModified = false;
+        filePath.clear();
+        undoStack.clear();
+
+        self().update();
+    }
+
+    void openFile()
+    {
+        if (!askSaveFile()) return;
+
+        if (String openPath = QFileDialog::getOpenFileName(thisPublic, "Open File", filePath.fileNamePath(),
+                                                           "Gloom Map (*.gloommap)"))
+        {
+            loadMap(openPath);
+            self().update();
+        }
+    }
+
+    void loadMap(const String &path)
+    {
+        filePath = path;
+
+        QFile f(path);
+        DENG2_ASSERT(f.exists());
+        f.open(QFile::ReadOnly);
+        map.deserialize(f.readAll());
+        undoStack.clear();
+        isModified = false;
+        self().setWindowTitle(filePath.fileName());
+    }
+
+    void saveAsFile()
+    {
+        if (String newPath = QFileDialog::getSaveFileName(
+                thisPublic, "Save As", filePath.fileNamePath(), "Gloom Map (*.gloommap)"))
+        {
+            filePath = newPath;
+            self().setWindowTitle(filePath.fileName());
+            saveFile();
+        }
+    }
+
+    void saveFile()
+    {
+        if (!filePath)
+        {
+            saveAsFile();
+            return;
+        }
+        QFile f(filePath);
+        f.open(QFile::WriteOnly);
+        f.write(map.serialize());
+        isModified = false;
+    }
 };
 
 Editor::Editor()
@@ -820,6 +906,15 @@ Editor::Editor()
     addKeyAction("S",               [this]() { d->userScale(); });
     addKeyAction("Ctrl+Z",          [this]() { d->popUndo(); });
     addKeyAction("Return",          [this]() { d->build(); });
+
+    // Menu items.
+    QMenuBar *menuBar = new QMenuBar;
+    QMenu *fileMenu = menuBar->addMenu(tr("&File"));
+    fileMenu->addAction("&New",        [this]() { d->newFile(); });
+    fileMenu->addAction("&Open...",    [this]() { d->openFile(); }, QKeySequence("Ctrl+O"));
+    fileMenu->addSeparator();
+    fileMenu->addAction("Save &as...", [this]() { d->saveAsFile(); });
+    fileMenu->addAction("&Save",       [this]() { d->saveFile(); }, QKeySequence("Ctrl+S"));
 }
 
 Map &Editor::map()
@@ -829,6 +924,11 @@ Map &Editor::map()
 
 void Editor::closeEvent(QCloseEvent *event)
 {
+    if (!d->askSaveFile())
+    {
+        event->ignore();
+        return;
+    }
     QSettings().setValue("editorGeometry", saveGeometry());
     QWidget::closeEvent(event);
 }
