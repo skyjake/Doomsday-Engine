@@ -782,6 +782,13 @@ DENG2_PIMPL(Editor)
         }
     }
 
+    void splitLine(ID line, const Vec2d &where)
+    {
+        pushUndo();
+        map.splitLine(line, map.geoLine(line).nearestPoint(where));
+        self().update();
+    }
+
     void build()
     {
         emit self().buildMapRequested();
@@ -824,8 +831,8 @@ DENG2_PIMPL(Editor)
     {
         if (!askSaveFile()) return;
 
-        if (String openPath = QFileDialog::getOpenFileName(thisPublic, "Open File", filePath.fileNamePath(),
-                                                           "Gloom Map (*.gloommap)"))
+        if (String openPath = QFileDialog::getOpenFileName(
+                thisPublic, "Open File", filePath.fileNamePath(), "Gloom Map (*.gloommap)"))
         {
             loadMap(openPath);
             self().update();
@@ -929,6 +936,7 @@ void Editor::closeEvent(QCloseEvent *event)
         event->ignore();
         return;
     }
+    d->isModified = false;
     QSettings().setValue("editorGeometry", saveGeometry());
     QWidget::closeEvent(event);
 }
@@ -1182,9 +1190,9 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
     // Check what the mouse is hovering on.
     {
         const auto pos = d->viewToWorld(event->pos());
-        d->hoverPoint = d->findPointAt(pos);
-        d->hoverLine  = d->findLineAt(pos);
-        d->hoverSector = (d->mode == Impl::EditSectors? d->findSectorAt(pos) : 0);
+        d->hoverPoint  = d->findPointAt(pos);
+        d->hoverLine   = d->findLineAt(pos);
+        d->hoverSector = (d->mode == Impl::EditSectors ? d->findSectorAt(pos) : 0);
         d->hoverEntity = d->findEntityAt(pos);
     }
 
@@ -1348,8 +1356,13 @@ void Editor::mouseReleaseEvent(QMouseEvent *event)
     }
 }
 
-void Editor::mouseDoubleClickEvent(QMouseEvent *)
+void Editor::mouseDoubleClickEvent(QMouseEvent *event)
 {
+    event->accept();
+    if (d->hoverLine && d->mode == Impl::EditLines)
+    {
+        d->splitLine(d->hoverLine, d->viewToWorld(event->pos()));
+    }
 }
 
 void Editor::wheelEvent(QWheelEvent *event)

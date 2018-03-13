@@ -32,6 +32,7 @@
 namespace gloom {
 
 typedef de::Vec2d Point;
+class Map;
 
 struct Line
 {
@@ -46,6 +47,7 @@ struct Line
     bool isSelfRef() const { return sectors[Front] == sectors[Back]; }
     bool isOneSided() const { return !sectors[Front] || !sectors[Back]; }
     bool isTwoSided() const { return sectors[Front] && sectors[Back]; }
+    Side sectorSide(ID sector) const { return sectors[Front] == sector? Front : Back; }
 };
 
 struct Plane
@@ -70,6 +72,7 @@ struct Sector
     IDList volumes; // must be ascending and share planes; bottom plane of first volume is the
                     // sector floor, top plane of last volume is the sector ceiling
     void replaceLine(ID oldId, ID newId);
+    ID   splitLine(ID lineId, Map &map);
 };
 
 struct Edge
@@ -168,6 +171,7 @@ public:
                      IDList &     sectorPoints,
                      IDList &     sectorWalls,
                      QList<Edge> &sectorEdges);
+    ID splitLine(ID lineId, const Point &splitPoint);
 
     de::Block serialize() const;
     void      deserialize(const de::Block &data);

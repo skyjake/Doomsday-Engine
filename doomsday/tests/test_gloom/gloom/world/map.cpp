@@ -576,6 +576,43 @@ bool Map::buildSector(Edge         startSide,
     return true;
 }
 
+ID Map::splitLine(ID lineId, const Point &splitPoint)
+{
+    const ID newPoint = append(points(), splitPoint);
+    const ID newLine  = append(lines(), line(lineId));
+
+    for (auto s = d->sectors.begin(), end = d->sectors.end(); s != end; ++s)
+    {
+        Sector &sector = s.value();
+
+        for (int i = 0; i < sector.walls.size(); ++i)
+        {
+            if (sector.walls[i] == lineId)
+            {
+                sector.walls.insert(i + 1, newLine);
+
+                const int side = line(lineId).sectorSide(s.key());
+
+                // Find the corresponding corner points.
+                for (int j = 0; j < sector.points.size(); ++j)
+                {
+                    if (line(lineId).points[side] == sector.points[j])
+                    {
+                        sector.points.insert(j + 1, newPoint);
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    line(lineId) .points[1] = newPoint;
+    line(newLine).points[0] = newPoint;
+
+    return newPoint;
+}
+
 std::pair<ID, ID> Map::findSectorAndVolumeAt(const de::Vec3d &pos) const
 {
     for (ID sectorId : d->sectors.keys())

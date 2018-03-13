@@ -138,6 +138,11 @@ struct Line
         if (n.dot(d2) > 0) deg = 360 - deg;
         return deg;
     }
+
+    T nearestPoint(const T &p) const
+    {
+        return start + dir() * dir().dot(p - start);
+    }
 };
 
 using Line2d = Line<de::Vec2d>;
