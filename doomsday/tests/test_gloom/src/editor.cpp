@@ -823,6 +823,7 @@ DENG2_PIMPL(Editor)
         isModified = false;
         filePath.clear();
         undoStack.clear();
+        self().setWindowTitle("(unnamed)");
 
         self().update();
     }
@@ -1359,7 +1360,8 @@ void Editor::mouseReleaseEvent(QMouseEvent *event)
 void Editor::mouseDoubleClickEvent(QMouseEvent *event)
 {
     event->accept();
-    if (d->hoverLine && d->mode == Impl::EditLines)
+
+    if (d->hoverLine && (d->mode == Impl::EditLines || d->mode == Impl::EditPoints))
     {
         d->splitLine(d->hoverLine, d->viewToWorld(event->pos()));
     }
