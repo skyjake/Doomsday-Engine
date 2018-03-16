@@ -16,7 +16,9 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #----------------------------------------------------------------------------
-# Utility routines for manipulating Records
+# RECORD UTILITIES 
+#
+# Utility routines for manipulating Records.
 
 def copyMissingMembers(src, dest)
     # Checks through 'src' to see if there are any variables or

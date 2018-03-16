@@ -16,7 +16,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #----------------------------------------------------------------------------
-# LOGGING
+# LOG MESSAGES
 #
 # This module provides Log related functionality.
 

@@ -1,6 +1,6 @@
-# The Doomsday Engine Project
+# The Doomsday Engine Project -- libgui
 #
-# Copyright (c) 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2013-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as published by
@@ -16,7 +16,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #----------------------------------------------------------------------------
-# Graphical user interface
+# GRAPHICAL USER INTERFACE
 
 import Version
 
@@ -42,10 +42,10 @@ def setDefaults(d)
 
             # Configure the main window.
             record main()
-                showFps = False
-                center  = True
-                fsaa    = False
-                vsync   = True
+                showFps     = False
+                center      = True
+                fsaa        = False
+                vsync       = True
                 refreshRate = 0.0    # match desktop rate
             end
         end

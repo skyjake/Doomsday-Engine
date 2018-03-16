@@ -16,7 +16,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #----------------------------------------------------------------------------
-# MAIN CONFIGURATION FOR LIBDENG2
+# MAIN CONFIGURATION FOR LIBCORE
 #
 # This module is the special Config namespace, reserved for the engine's
 # configuration variables and routines. The namespace is stored persistently
@@ -92,10 +92,11 @@ end
 
 updateWithDefaults()
 
-#
-# -=- UPGRADING -=-
+#----------------------------------------------------------------------------
+# VERSION UPGRADES
 #
 # Check the previous version and decide what to do.
+
 if '__oldversion__' in locals()
     # Check for a new build.    
     if __version__[3] > __oldversion__[3]
