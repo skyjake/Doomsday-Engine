@@ -321,18 +321,16 @@ void GloomWorld::render(const ICamera &camera)
             .setDepthTest(true)
             .setBlend(false);
 
-    auto &perfTimer = GLWindow::main().timer();
-
     {
-        GLScopedTimer timer{d->timerId[MapRenderTimer]};
+        GLScopedTimer _{d->timerId[MapRenderTimer]};
         d->mapRender.render();
     }
     {
-        GLScopedTimer timer{d->timerId[SkyTimer]};
+        GLScopedTimer _{d->timerId[SkyTimer]};
         d->sky.render();
     }
     {
-        GLScopedTimer timer{d->timerId[SSAOTimer]};
+        GLScopedTimer _{d->timerId[SSAOTimer]};
         d->ssao.render();
     }
 
@@ -341,7 +339,7 @@ void GloomWorld::render(const ICamera &camera)
     // Render the frame: deferred shading using the G-buffer.
     GLState::push().setTarget(d->framebuf);
     {
-        GLScopedTimer timer{d->timerId[MapRenderLightsTimer]};
+        GLScopedTimer _{d->timerId[MapRenderLightsTimer]};
         d->mapRender.lights().renderLighting();
     }
     GLState::current().setDepthTest(true).setDepthWrite(false);
@@ -351,11 +349,11 @@ void GloomWorld::render(const ICamera &camera)
     d->framebuf.attachedTexture(GLFramebuffer::Color0)->generateMipmap();
 
     {
-        GLScopedTimer timer{d->timerId[BloomTimer]};
+        GLScopedTimer _{d->timerId[BloomTimer]};
         d->bloom.render();
     }
     {
-        GLScopedTimer timer{d->timerId[TonemapTimer]};
+        GLScopedTimer _{d->timerId[TonemapTimer]};
         d->tonemap.render();
     }
 
@@ -364,9 +362,12 @@ void GloomWorld::render(const ICamera &camera)
         d->debugQuad.render();
     }
 
-    for (int i = 0; i < PerfTimerCount; ++i)
     {
-        qDebug("Timer %i: %8llu µs", i, perfTimer.elapsedTime(d->timerId[i]).asMicroSeconds());
+        auto &perfTimer = GLWindow::main().timer();
+        for (int i = 0; i < PerfTimerCount; ++i)
+        {
+            qDebug("Timer %i: %8llu µs", i, perfTimer.elapsedTime(d->timerId[i]).asMicroSeconds());
+        }
     }
 }
 
