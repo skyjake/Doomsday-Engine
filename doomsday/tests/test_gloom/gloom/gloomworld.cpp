@@ -39,12 +39,39 @@
 #include <de/Folder>
 #include <de/PackageLoader>
 #include <de/GLState>
+#include <de/GLTimer>
 #include <de/ModelDrawable>
 #include <de/TextureBank>
 
 using namespace de;
 
 namespace gloom {
+
+struct GLScopedTimer
+{
+    Id _id;
+
+    GLScopedTimer(const Id &id) : _id(id)
+    {
+        GLWindow::main().timer().beginTimer(_id);
+    }
+
+    ~GLScopedTimer()
+    {
+        GLWindow::main().timer().endTimer(_id);
+    }
+};
+
+enum {
+    MapRenderTimer,
+    SkyTimer,
+    SSAOTimer,
+    MapRenderLightsTimer,
+    BloomTimer,
+    TonemapTimer,
+
+    PerfTimerCount
+};
 
 DENG2_PIMPL(GloomWorld), public Asset
 , DENG2_OBSERVES(User, Warp)
@@ -62,6 +89,8 @@ DENG2_PIMPL(GloomWorld), public Asset
     Bloom                bloom;
     Tonemap              tonemap;
     ScreenQuad           debugQuad;
+
+    Id timerId[PerfTimerCount];
 
     float  visibleDistance;
     double currentTime = 0.0;
@@ -292,27 +321,52 @@ void GloomWorld::render(const ICamera &camera)
             .setDepthTest(true)
             .setBlend(false);
 
-    d->mapRender.render();
-    d->sky.render();
-    d->ssao.render();
+    auto &perfTimer = GLWindow::main().timer();
+
+    {
+        GLScopedTimer timer{d->timerId[MapRenderTimer]};
+        d->mapRender.render();
+    }
+    {
+        GLScopedTimer timer{d->timerId[SkyTimer]};
+        d->sky.render();
+    }
+    {
+        GLScopedTimer timer{d->timerId[SSAOTimer]};
+        d->ssao.render();
+    }
 
     GLState::pop();
 
     // Render the frame: deferred shading using the G-buffer.
     GLState::push().setTarget(d->framebuf);
-    d->mapRender.lights().renderLighting();
+    {
+        GLScopedTimer timer{d->timerId[MapRenderLightsTimer]};
+        d->mapRender.lights().renderLighting();
+    }
     GLState::current().setDepthTest(true).setDepthWrite(false);
     GLState::pop();
 
     // Framebuffer contents are mipmapped for bloom and brightness analysis.
     d->framebuf.attachedTexture(GLFramebuffer::Color0)->generateMipmap();
 
-    d->bloom.render();
-    d->tonemap.render();
+    {
+        GLScopedTimer timer{d->timerId[BloomTimer]};
+        d->bloom.render();
+    }
+    {
+        GLScopedTimer timer{d->timerId[TonemapTimer]};
+        d->tonemap.render();
+    }
 
     if (d->renderContext.uDebugMode.toInt() != 0)
     {
         d->debugQuad.render();
+    }
+
+    for (int i = 0; i < PerfTimerCount; ++i)
+    {
+        qDebug("Timer %i: %8llu µs", i, perfTimer.elapsedTime(d->timerId[i]).asMicroSeconds());
     }
 }
 
