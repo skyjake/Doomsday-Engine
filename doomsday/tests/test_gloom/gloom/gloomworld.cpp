@@ -348,10 +348,13 @@ void GloomWorld::render(const ICamera &camera)
     // Framebuffer contents are mipmapped for bloom and brightness analysis.
     d->framebuf.attachedTexture(GLFramebuffer::Color0)->generateMipmap();
 
+    // Bloom.
     {
         GLScopedTimer _{d->timerId[BloomTimer]};
         d->bloom.render();
     }
+
+    // Tone mapping.
     {
         GLScopedTimer _{d->timerId[TonemapTimer]};
         d->tonemap.render();
