@@ -22,6 +22,7 @@
 #include "gloom/render/gbuffer.h"
 #include "gloom/render/ssao.h"
 #include "gloom/render/screenquad.h"
+#include "gloom/render/shadow.h"
 #include "gloom/world/map.h"
 
 using namespace de;
@@ -45,6 +46,8 @@ internal::AttribSpec const LightData::_spec[5] = {
     { internal::AttribSpec::Index,     1, GL_FLOAT, false, sizeof(LightData), 10 * 4 },
 };
 LIBGUI_VERTEX_FORMAT_SPEC(LightData, 11 * 4)
+
+static constexpr int MAX_SHADOWS = 6;
 
 DENG2_PIMPL(LightRender)
 {
@@ -70,7 +73,7 @@ DENG2_PIMPL(LightRender)
     GLUniform uViewToLightMatrix   {"uViewToLightMatrix",    GLUniform::Mat4};
     GLUniform uShadowMap           {"uShadowMap",            GLUniform::Sampler2D}; // <----TESTING-----
 
-    GLUniform uShadowMaps[6] {
+    GLUniform uShadowMaps[MAX_SHADOWS] {
         {"uShadowMaps[0]", GLUniform::SamplerCube},
         {"uShadowMaps[1]", GLUniform::SamplerCube},
         {"uShadowMaps[2]", GLUniform::SamplerCube},
@@ -78,6 +81,9 @@ DENG2_PIMPL(LightRender)
         {"uShadowMaps[4]", GLUniform::SamplerCube},
         {"uShadowMaps[5]", GLUniform::SamplerCube}
     };
+    std::unique_ptr<Shadow> dirShadow;
+    std::unique_ptr<Shadow> omniShadows[MAX_SHADOWS];
+    QHash<const Light *, const Shadow *> activeShadows;
 
     Impl(Public *i) : Base(i)
     {}
@@ -114,6 +120,15 @@ DENG2_PIMPL(LightRender)
         skyLight.reset(new Light);
         skyLight->setType(Light::Directional);
         skyLight->setCastShadows(true);
+
+        // Create shadow maps. These will be assigned to lights as needed.
+        {
+            dirShadow.reset(new Shadow(Light::Directional));
+            for (int i = 0; i < MAX_SHADOWS; ++i)
+            {
+                omniShadows[i].reset(new Shadow(Light::Omni));
+            }
+        }
 
         auto &ctx = self().context();
 
@@ -231,12 +246,28 @@ void LightRender::glDeinit()
 
 void LightRender::render()
 {
+    int shadowIndex = 0;
+    d->activeShadows.clear();
+
     // Update shadow maps.
     for (auto *light : d->activeLights)
     {
         if (light->castShadows())
         {
-            light->framebuf().clear(GLFramebuffer::Depth | GLFramebuffer::FullClear);
+            Shadow *shadow = nullptr;
+            if (light->type() == Light::Directional)
+            {
+                shadow = d->dirShadow.get();
+            }
+            else
+            {
+                if (shadowIndex == MAX_SHADOWS) continue;
+                shadow = d->omniShadows[shadowIndex++].get();
+            }
+
+            d->activeShadows.insert(light, shadow);
+
+            shadow->framebuf().clear(GLFramebuffer::Depth | GLFramebuffer::FullClear);
 
             d->uLightDir             = light->direction();
             context().uLightOrigin   = light->origin();
@@ -259,8 +290,8 @@ void LightRender::render()
                 context().view.uWorldToViewRotate.toMat3f() * light->direction();
 
             d->shadowState
-                    .setTarget(light->framebuf())
-                    .setViewport(Rectangleui::fromSize(light->framebuf().size()));
+                    .setTarget(shadow->framebuf())
+                    .setViewport(Rectangleui::fromSize(shadow->framebuf().size()));
 
             d->callback(*light);
         }
@@ -282,7 +313,7 @@ void LightRender::renderLighting()
         d->uViewSpaceLightDir = ctx.view.uWorldToViewRotate.toMat3f() * d->skyLight->direction();
         d->uViewSpaceLightOrigin = ctx.view.camera->cameraModelView() * d->skyLight->origin();
         d->uViewToLightMatrix    = lightMatrix * ctx.view.camera->cameraModelView().inverse();
-        d->uShadowMap            = d->skyLight->shadowMap();
+        d->uShadowMap            = d->activeShadows[d->skyLight.get()]->shadowMap();
     }
 
     // Global illumination.
@@ -309,10 +340,11 @@ void LightRender::renderLighting()
 
         // Assign shadow maps.
         int shadowIndex = -1;
-        if (light->type() == Light::Omni && light->castShadows())
+        //if (light->type() == Light::Omni && light->castShadows())
+        if (d->activeShadows.contains(light))
         {
             shadowIndex = counter++;
-            d->uShadowMaps[shadowIndex] = light->shadowMap();
+            d->uShadowMaps[shadowIndex] = d->activeShadows[light]->shadowMap();
         }
 
         LightData instance{light->origin(),
@@ -381,15 +413,10 @@ void LightRender::createLights()
     }
 }
 
-GLTexture &LightRender::shadowMap()
-{
-    return d->skyLight->shadowMap();
-}
-
-Vec3f LightRender::direction() const
-{
-    return d->skyLight->direction();
-}
+//Vec3f LightRender::direction() const
+//{
+//    return d->skyLight->direction();
+//}
 
 GLState &LightRender::shadowState()
 {

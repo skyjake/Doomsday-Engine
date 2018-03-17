@@ -1,4 +1,4 @@
-/** @file lightrender.h
+/** @file shadow.h  Shadow map.
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,45 +16,26 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_LIGHTRENDER_H
-#define GLOOM_LIGHTRENDER_H
+#ifndef GLOOM_RENDER_SHADOW_H
+#define GLOOM_RENDER_SHADOW_H
 
-#include "gloom/render/render.h"
+#include "gloom/render/light.h"
 
-#include <de/Drawable>
+#include <de/GLFramebuffer>
+#include <de/GLTexture>
 
 namespace gloom {
 
-class Light;
-
-/**
- * Renders light source shadow maps and the deferred shading pass.
- */
-class LightRender : public Render
+class Shadow
 {
 public:
-    LightRender();
+    Shadow(Light::Type lightType);
 
-    void glInit(Context &) override;
-    void glDeinit() override;
-    void render() override;
+    void setLightType(Light::Type lightType);
 
-    void renderLighting();
-
-    typedef std::function<void (const Light &)> RenderFunc;
-    void setShadowRenderCallback(RenderFunc callback);
-
-    void createLights();
-
-//    de::GLTexture &shadowMap();
-//    de::Vec3f direction() const;
-//    de::GLProgram &surfaceProgram();
-//    de::GLProgram &entityProgram();
-    de::GLState &shadowState();
-    de::GLUniform &uLightDir();
-    de::GLUniform &uViewSpaceLightDir();
-
-    const ICamera *testCamera() const;
+    Light::Type        lightType() const;
+    de::GLTexture &    shadowMap() const;
+    de::GLFramebuffer &framebuf();
 
 private:
     DENG2_PRIVATE(d)
@@ -62,4 +43,4 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_LIGHTRENDER_H
+#endif // GLOOM_RENDER_SHADOW_H

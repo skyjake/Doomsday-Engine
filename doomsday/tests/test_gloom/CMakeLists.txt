@@ -58,6 +58,8 @@ set (SOURCES
     gloom/render/render.h
     gloom/render/screenquad.cpp
     gloom/render/screenquad.h
+    gloom/render/shadow.cpp
+    gloom/render/shadow.h
     gloom/render/skybox.cpp
     gloom/render/skybox.h
     gloom/render/ssao.cpp

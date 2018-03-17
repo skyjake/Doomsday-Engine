@@ -18,8 +18,6 @@
 
 #include "gloom/render/light.h"
 
-#include <de/GLFramebuffer>
-
 using namespace de;
 
 namespace gloom {
@@ -31,55 +29,11 @@ DENG2_PIMPL(Light)
     Vec3d         origin;
     Vec3f         dir{-.41f, -.51f, -.75f};
     Vec3f         intensity{5, 5, 5};
-
-    struct Shadow {
-        GLTexture map;
-        GLFramebuffer framebuf;
-    };
-    std::unique_ptr<Shadow> shadow;
+    bool          castShadows = false;
 
     Impl(Public *i) : Base(i)
     {
         origin = -dir * 50;
-    }
-
-    void setCastShadows(bool yes)
-    {
-        if (yes && !shadow)
-        {
-            // TODO: Shadow maps should be owned by LightRender and assigned dynamically
-            // to visible lights as needed.
-
-            shadow.reset(new Shadow);
-            shadow->map.setAutoGenMips(false);
-            shadow->map.setFilter(gl::Linear, gl::Linear, gl::MipNone);
-            shadow->map.setComparisonMode(gl::CompareRefToTexture, gl::LessOrEqual);
-
-            if (type == Directional)
-            {
-                shadow->map.setWrap(gl::ClampToBorder, gl::ClampToBorder);
-                shadow->map.setBorderColor(Vec4f(1, 1, 1, 1));
-                shadow->map.setUndefinedContent(
-                    GLTexture::Size(2048, 2048),
-                    GLPixelFormat(GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT, GL_FLOAT));
-            }
-            else if (type == Omni)
-            {
-                shadow->map.setWrap(gl::ClampToEdge, gl::ClampToEdge);
-                for (int i = 0; i < 6; ++i)
-                {
-                    shadow->map.setUndefinedContent(gl::CubeFace(i), GLTexture::Size(512, 512),
-                                                    GLPixelFormat(GL_DEPTH_COMPONENT16,
-                                                                  GL_DEPTH_COMPONENT, GL_FLOAT));
-                }
-            }
-
-            shadow->framebuf.configure(GLFramebuffer::Depth, shadow->map);
-        }
-        else if (!yes && shadow)
-        {
-            shadow.reset();
-        }
     }
 };
 
@@ -105,7 +59,7 @@ void Light::setIntensity(const Vec3f &intensity)
 
 void Light::setCastShadows(bool castShadows)
 {
-    d->setCastShadows(castShadows);
+    d->castShadows = castShadows;
 }
 
 const Entity *Light::entity() const
@@ -115,7 +69,7 @@ const Entity *Light::entity() const
 
 bool Light::castShadows() const
 {
-    return bool(d->shadow);
+    return d->castShadows;
 }
 
 Light::Type Light::type() const
@@ -148,18 +102,6 @@ float Light::falloffDistance() const
 {
     float maxInt = d->intensity.max();
     return maxInt;
-}
-
-GLTexture &Light::shadowMap() const
-{
-    DENG2_ASSERT(d->shadow);
-    return d->shadow->map;
-}
-
-GLFramebuffer &Light::framebuf()
-{
-    DENG2_ASSERT(d->shadow);
-    return d->shadow->framebuf;
 }
 
 Mat4f Light::lightMatrix() const
