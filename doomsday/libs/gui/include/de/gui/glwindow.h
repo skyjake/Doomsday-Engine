@@ -40,6 +40,8 @@
 
 namespace de {
 
+class GLTimer;
+
 /**
  * Top-level window that contains an OpenGL drawing surface. @ingroup gui
  *
@@ -113,6 +115,11 @@ public:
      * @return GL render target.
      */
     GLFramebuffer &framebuffer() const;
+
+    /**
+     * Provides access to the GL profiling timers.
+     */
+    GLTimer &timer() const;
 
     WindowEventHandler &eventHandler() const;
 

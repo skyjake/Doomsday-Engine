@@ -20,6 +20,7 @@
 
 #include "de/GLWindow"
 #include "de/GuiApp"
+#include "de/GLTimer"
 
 #include <QElapsedTimer>
 #include <QImage>
@@ -31,6 +32,7 @@
 #include <de/GLBuffer>
 #include <de/GLState>
 #include <de/GLFramebuffer>
+#include <de/Id>
 #include <de/Log>
 #include <de/c_wrapper.h>
 
@@ -51,12 +53,14 @@ DENG2_PIMPL(GLWindow)
     uint  frameCount = 0;
     float fps        = 0;
 
-#if defined(DENG_HAVE_TIMER_QUERY)
-    bool               timerQueryPending = false;
-    QOpenGLTimerQuery *timerQuery        = nullptr;
-    QElapsedTimer      gpuTimeRecordingStartedAt;
-    QVector<TimeSpan>  recordedGpuTimes;
-#endif
+//#if defined(DENG_HAVE_TIMER_QUERY)
+//    bool               timerQueryPending = false;
+//    QOpenGLTimerQuery *timerQuery        = nullptr;
+//    QElapsedTimer      gpuTimeRecordingStartedAt;
+//    QVector<TimeSpan>  recordedGpuTimes;
+//#endif
+    std::unique_ptr<GLTimer> timer;
+    Id totalFrameTimeQueryId;
 
     Impl(Public *i) : Base(i) {}
 
@@ -76,6 +80,7 @@ DENG2_PIMPL(GLWindow)
     void glInit()
     {
         GLInfo::glInit();
+        timer.reset(new GLTimer);
         self().setState(Ready);
     }
 
@@ -84,15 +89,16 @@ DENG2_PIMPL(GLWindow)
         self().setState(NotReady);
         readyNotified = false;
         readyPending = false;
-#if defined (DENG_HAVE_TIMER_QUERY)
-        if (timerQuery)
-        {
-            if (timerQueryPending) timerQuery->waitForResult();
-            delete timerQuery;
-            timerQuery = nullptr;
-            timerQueryPending = false;
-        }
-#endif
+//#if defined (DENG_HAVE_TIMER_QUERY)
+//        if (timerQuery)
+//        {
+//            if (timerQueryPending) timerQuery->waitForResult();
+//            delete timerQuery;
+//            timerQuery = nullptr;
+//            timerQueryPending = false;
+//        }
+//#endif
+        timer.reset();
         GLInfo::glDeinit();
     }
 
@@ -132,6 +138,7 @@ DENG2_PIMPL(GLWindow)
         mainCall.enqueue([this] () { self().update(); });
     }
 
+#if 0
 #if defined (DENG_HAVE_TIMER_QUERY)
     bool timerQueryReady() const
     {
@@ -171,6 +178,7 @@ DENG2_PIMPL(GLWindow)
         }
     }
 #endif
+#endif // 0
 
     void updateFrameRateStatistics()
     {
@@ -309,6 +317,11 @@ bool GLWindow::isHidden() const
 GLFramebuffer &GLWindow::framebuffer() const
 {
     return d->backing;
+}
+
+GLTimer &GLWindow::timer() const
+{
+    return *d->timer;
 }
 
 float GLWindow::frameRate() const
@@ -504,26 +517,29 @@ void GLWindow::paintGL()
 
     DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
 
-    //if (GLInfo::extensions().EXT_timer_query)
-#if defined (DENG_HAVE_TIMER_QUERY)
-    {
-        d->checkTimerQueryResult();
+    //qDebug() << "Frame time:" << d->timer->elapsedTime(d->totalFrameTimeQueryId);
 
-        if (!d->timerQuery)
-        {
-            d->timerQuery = new QOpenGLTimerQuery();
-            if (!d->timerQuery->create())
-            {
-                LOG_GL_ERROR("Failed to create timer query object");
-            }
-        }
+//#if defined (DENG_HAVE_TIMER_QUERY)
+//    {
+//        d->checkTimerQueryResult();
 
-        if (d->timerQueryReady())
-        {
-            d->timerQuery->begin();
-        }
-    }
-#endif
+//        if (!d->timerQuery)
+//        {
+//            d->timerQuery = new QOpenGLTimerQuery();
+//            if (!d->timerQuery->create())
+//            {
+//                LOG_GL_ERROR("Failed to create timer query object");
+//            }
+//        }
+
+//        if (d->timerQueryReady())
+//        {
+//            d->timerQuery->begin();
+//        }
+//    }
+//#endif
+
+    //d->timer->beginTimer(d->totalFrameTimeQueryId);
 
     GLBuffer::resetDrawCount();
 
@@ -536,13 +552,15 @@ void GLWindow::paintGL()
 
     LIBGUI_ASSERT_GL_OK();
 
-#if defined (DENG_HAVE_TIMER_QUERY)
-    if (d->timerQueryReady())
-    {
-        d->timerQuery->end();
-        d->timerQueryPending = true;
-    }
-#endif
+    //d->timer->endTimer(d->totalFrameTimeQueryId);
+
+//#if defined (DENG_HAVE_TIMER_QUERY)
+//    if (d->timerQueryReady())
+//    {
+//        d->timerQuery->end();
+//        d->timerQueryPending = true;
+//    }
+//#endif
 }
 
 void GLWindow::windowAboutToClose()
