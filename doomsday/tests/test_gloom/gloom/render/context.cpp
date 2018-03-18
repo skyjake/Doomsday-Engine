@@ -19,6 +19,7 @@
 #include "gloom/render/context.h"
 #include "gloom/render/gbuffer.h"
 #include "gloom/render/maprender.h"
+#include "gloom/render/materiallib.h"
 
 using namespace de;
 
@@ -41,7 +42,7 @@ Context &Context::bindGBuffer(GLProgram &program)
 Context &Context::bindMaterials(GLProgram &program)
 {
     program << uDiffuseAtlas << uEmissiveAtlas << uSpecGlossAtlas << uNormalDisplAtlas << uEnvMap
-            << uEnvIntensity << mapRender->uTextureMetrics();
+            << uEnvIntensity << mapRender->materialLibrary().uTextureMetrics();
     return *this;
 }
 

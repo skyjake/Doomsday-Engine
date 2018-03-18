@@ -54,6 +54,8 @@ set (SOURCES
     gloom/render/mapbuild.h
     gloom/render/maprender.cpp
     gloom/render/maprender.h
+    gloom/render/materiallib.cpp
+    gloom/render/materiallib.h
     gloom/render/render.cpp
     gloom/render/render.h
     gloom/render/screenquad.cpp

@@ -42,12 +42,12 @@ LIBGUI_VERTEX_FORMAT_SPEC(MapVertex, 21 * 4)
 
 DENG2_PIMPL_NOREF(MapBuild)
 {
-    const Map & map;
-    MaterialIds materials;
-    Mapper      planeMapper;
-    Mapper      texOffsetMapper;
+    const Map &      map;
+    MaterialLib::Ids materials; // currently loaded materials
+    Mapper           planeMapper;
+    Mapper           texOffsetMapper;
 
-    Impl(const Map &map, const MaterialIds &materials)
+    Impl(const Map &map, const MaterialLib::Ids &materials)
         : map(map)
         , materials(materials)
     {}
@@ -295,7 +295,7 @@ DENG2_PIMPL_NOREF(MapBuild)
     }
 };
 
-MapBuild::MapBuild(const Map &map, const MaterialIds &materials)
+MapBuild::MapBuild(const Map &map, const MaterialLib::Ids &materials)
     : d(new Impl(map, materials))
 {}
 

@@ -1,4 +1,4 @@
-/** @file maprender.h
+/** @file materiallib.h  Material library.
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,35 +16,30 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_MAPRENDER_H
-#define GLOOM_MAPRENDER_H
+#ifndef GLOOM_RENDER_MATERIALLIB_H
+#define GLOOM_RENDER_MATERIALLIB_H
 
-#include <de/AtlasTexture>
+#include <de/GLUniform>
 
-#include "gloom/world/map.h"
 #include "gloom/render/render.h"
-#include "gloom/render/defs.h"
 
 namespace gloom {
 
-class ICamera;
-class LightRender;
-class MaterialLib;
-
-class MapRender : public Render
+class MaterialLib : public Render
 {
 public:
-    MapRender();
+    typedef QHash<de::String, uint32_t> Ids;
+
+public:
+    MaterialLib();
 
     void glInit(Context &) override;
     void glDeinit() override;
-    void advanceTime(de::TimeSpan elapsed) override;
     void render() override;
 
-    void rebuild();
+    const Ids &materials() const;
 
-    LightRender &lights();
-    MaterialLib &materialLibrary();
+    de::GLUniform &uTextureMetrics();
 
 private:
     DENG2_PRIVATE(d)
@@ -52,4 +47,4 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_MAPRENDER_H
+#endif // GLOOM_RENDER_MATERIALLIB_H

@@ -20,6 +20,7 @@
 #define GLOOM_MAPBUILD_H
 
 #include "gloom/world/map.h"
+#include "gloom/render/materiallib.h"
 
 #include <de/GLBuffer>
 #include <de/Id>
@@ -58,8 +59,6 @@ public:
     typedef de::GLBufferT<MapVertex> Buffer;
 
 public:
-    typedef QHash<de::String, uint32_t> MaterialIds;
-
     struct Mapper : public QHash<ID, uint32_t>
     {
         uint32_t insert(ID id)
@@ -75,7 +74,7 @@ public:
         }
     };
 
-    MapBuild(const Map &map, const MaterialIds &materials);
+    MapBuild(const Map &map, const MaterialLib::Ids &materials);
     Buffer *build();
 
     const Mapper &planeMapper() const;
