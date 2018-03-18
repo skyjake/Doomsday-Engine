@@ -155,6 +155,7 @@ DENG2_PIMPL(GLUniform)
 
         case Sampler2D:
         case SamplerCube:
+        case SamplerBuffer:
             //if (value.tex) value.tex->audienceForDeletion() -= this;
             break;
 
@@ -169,7 +170,7 @@ DENG2_PIMPL(GLUniform)
     template <typename Type>
     bool set(Type numValue)
     {
-        DENG2_ASSERT(type == Int || type == UInt || type == Float);
+        DENG2_ASSERT(type == Int || type == UInt || type == Float || type == SamplerBuffer);
 
         switch (type)
         {
@@ -182,6 +183,7 @@ DENG2_PIMPL(GLUniform)
             break;
 
         case UInt:
+        case SamplerBuffer:
             if (value.uint32 != duint(numValue))
             {
                 value.uint32 = duint(numValue);
@@ -253,7 +255,24 @@ GLUniform::Type GLUniform::type() const
 
 bool GLUniform::isSampler() const
 {
-    return d->type == Sampler2D || d->type == SamplerCube;
+    return d->type == Sampler2D || d->type == SamplerCube || d->type == SamplerBuffer;
+}
+
+void GLUniform::bindSamplerTexture(dint unit) const
+{
+    if (d->type == SamplerBuffer)
+    {
+        // Buffer textures are not represented by GLTexture.
+        LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + unit);
+        LIBGUI_GL.glBindTexture(GL_TEXTURE_BUFFER, d->value.uint32);
+    }
+    else
+    {
+        if (GLTexture const *tex = texture())
+        {
+            tex->glBindToUnit(unit);
+        }
+    }
 }
 
 GLUniform &GLUniform::operator = (dint value)
@@ -506,9 +525,9 @@ dint GLUniform::toInt() const
     }
 }
 
-duint de::GLUniform::toUInt() const
+duint GLUniform::toUInt() const
 {
-    DENG2_ASSERT(d->type == Int || d->type == UInt || d->type == Float);
+    DENG2_ASSERT(d->type == Int || d->type == UInt || d->type == Float || d->type == SamplerBuffer);
 
     switch (d->type)
     {
@@ -516,6 +535,7 @@ duint de::GLUniform::toUInt() const
         return duint(d->value.int32);
 
     case UInt:
+    case SamplerBuffer:
         return d->value.uint32;
 
     case Float:
@@ -579,6 +599,7 @@ Mat4f const &GLUniform::toMat4f() const
 GLTexture const *GLUniform::texture() const
 {
     DENG2_ASSERT(isSampler());
+    DENG2_ASSERT(d->type != SamplerBuffer); // GLTexture not used
     return d->value.tex;
 }
 

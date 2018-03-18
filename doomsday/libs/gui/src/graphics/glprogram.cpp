@@ -53,8 +53,8 @@ DENG2_PIMPL(GLProgram)
     Uniforms    allBound;
     Uniforms    active; ///< Currently active bindings.
     Uniforms    changed;
-    UniformList textures;
-    bool        texturesChanged;
+    UniformList samplers;
+    bool        samplersChanged;
     int         attribLocation[AttribSpec::MaxSemantics]; ///< Where each attribute is bound.
 
     GLuint  name;
@@ -64,7 +64,7 @@ DENG2_PIMPL(GLProgram)
 
     Impl(Public *i)
         : Base(i)
-        , texturesChanged(false)
+        , samplersChanged(false)
         , name(0)
         , inUse(false)
         , needRebuild(false)
@@ -143,8 +143,8 @@ DENG2_PIMPL(GLProgram)
         stacks.clear();
         active.clear();
         changed.clear();
-        textures.clear();
-        texturesChanged = false;
+        samplers.clear();
+        samplersChanged = false;
     }
 
     /**
@@ -219,40 +219,31 @@ DENG2_PIMPL(GLProgram)
             }
         }
 
-        if (texturesChanged)
+        if (samplersChanged)
         {
             auto &GL = LIBGUI_GL;
-            // Update the sampler uniforms.
-            for (int unit = 0; unit < textures.size(); ++unit)
+            // Update the sampler uniforms with the assigned texture image unit values.
+            for (int unit = 0; unit < samplers.size(); ++unit)
             {
-                int loc = self().glUniformLocation(textures[unit]->name());
+                int loc = self().glUniformLocation(samplers[unit]->name());
                 if (loc >= 0)
                 {
-//                    qDebug() << "[GLProgram] texture" << textures[unit]->name() << loc << unit;
                     GL.glUniform1i(loc, unit);
                     LIBGUI_ASSERT_GL_OK();
                 }
-//                else
-//                {
-//                    qDebug() << "[GLProgram] texture" << textures[unit]->name() << "no location!";
-//                }
             }
-            texturesChanged = false;
+            samplersChanged = false;
         }
 
         changed.clear();
     }
 
-    void bindTextures()
+    void bindSamplers()
     {
-        // Update the sampler uniforms.
-        for (int unit = textures.size() - 1; unit >= 0; --unit)
+        // Bind textures to the assigned texture image units.
+        for (int unit = samplers.size() - 1; unit >= 0; --unit)
         {
-            GLTexture const *tex = *textures[unit];
-            if (tex)
-            {
-                tex->glBindToUnit(unit);
-            }
+            samplers[unit]->bindSamplerTexture(unit);
         }
     }
 
@@ -309,8 +300,8 @@ DENG2_PIMPL(GLProgram)
 
         if (uniform->isSampler())
         {
-            textures << uniform;
-            texturesChanged = true;
+            samplers << uniform;
+            samplersChanged = true;
         }
     }
 
@@ -351,8 +342,8 @@ DENG2_PIMPL(GLProgram)
 
         if (uniform->isSampler())
         {
-            textures.removeAll(uniform);
-            texturesChanged = true;
+            samplers.removeAll(uniform);
+            samplersChanged = true;
         }
     }
 };
@@ -456,7 +447,7 @@ void GLProgram::beginUse() const
     LIBGUI_ASSERT_GL_OK();
 
     d->updateUniforms();
-    d->bindTextures();
+    d->bindSamplers();
 
     LIBGUI_ASSERT_GL_OK();
 }

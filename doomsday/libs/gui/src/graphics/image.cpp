@@ -776,7 +776,7 @@ void Image::operator << (Reader &from)
     }
 }
 
-GLPixelFormat Image::glFormat(Format imageFormat)
+GLPixelFormat Image::glFormat(Format imageFormat) // static
 {
     DENG2_ASSERT(imageFormat >= Luminance_8 && imageFormat <= RGBA_32ui);
 

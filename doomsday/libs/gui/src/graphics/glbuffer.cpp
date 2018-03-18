@@ -127,6 +127,7 @@ static duint drawCounter = 0;
 
 DENG2_PIMPL(GLBuffer)
 {
+    GLuint           bufferType      = GL_ARRAY_BUFFER;
     GLuint           vao             = 0;
     GLProgram const *vaoBoundProgram = nullptr;
     GLuint           name            = 0;
@@ -137,7 +138,9 @@ DENG2_PIMPL(GLBuffer)
     Primitive        prim  = Points;
     AttribSpecs      specs{nullptr, 0};
 
-    Impl(Public *i) : Base(i)
+    Impl(Public *i, Type type)
+        : Base(i)
+        , bufferType(type == Texture? GL_TEXTURE_BUFFER : GL_ARRAY_BUFFER)
     {}
 
     ~Impl()
@@ -149,6 +152,7 @@ DENG2_PIMPL(GLBuffer)
 
     void allocArray()
     {
+        if (bufferType != GL_ARRAY_BUFFER) return;
 #if defined (DENG_HAVE_VAOS)
         if (!vao)
         {
@@ -179,6 +183,7 @@ DENG2_PIMPL(GLBuffer)
 
     void allocIndices()
     {
+        if (bufferType != GL_ARRAY_BUFFER) return;
         if (!idxName)
         {
             LIBGUI_GL.glGenBuffers(1, &idxName);
@@ -356,7 +361,7 @@ DENG2_PIMPL(GLBuffer)
     }
 };
 
-GLBuffer::GLBuffer() : d(new Impl(this))
+GLBuffer::GLBuffer(Type bufferType) : d(new Impl(this, bufferType))
 {}
 
 void GLBuffer::clear()
@@ -374,6 +379,8 @@ void GLBuffer::setVertices(dsize count, void const *data, dsize dataSize, Usage 
 
 void GLBuffer::setVertices(Primitive primitive, dsize count, void const *data, dsize dataSize, Usage usage)
 {
+    DENG2_ASSERT(d->bufferType == GL_ARRAY_BUFFER);
+
     d->prim  = primitive;
     d->count = count;
 
@@ -388,9 +395,9 @@ void GLBuffer::setVertices(Primitive primitive, dsize count, void const *data, d
         if (dataSize && count)
         {
             auto &GL = LIBGUI_GL;
-            GL.glBindBuffer(GL_ARRAY_BUFFER, d->name);
-            GL.glBufferData(GL_ARRAY_BUFFER, dataSize, data, Impl::glUsage(usage));
-            GL.glBindBuffer(GL_ARRAY_BUFFER, 0);
+            GL.glBindBuffer(d->bufferType, d->name);
+            GL.glBufferData(d->bufferType, dataSize, data, Impl::glUsage(usage));
+            GL.glBindBuffer(d->bufferType, 0);
         }
 
         setState(Ready);
@@ -440,9 +447,9 @@ void GLBuffer::setData(void const *data, dsize dataSize, gl::Usage usage)
         d->alloc();
 
         auto &GL = LIBGUI_GL;
-        GL.glBindBuffer(GL_ARRAY_BUFFER, d->name);
-        GL.glBufferData(GL_ARRAY_BUFFER, GLsizeiptr(dataSize), data, Impl::glUsage(usage));
-        GL.glBindBuffer(GL_ARRAY_BUFFER, 0);
+        GL.glBindBuffer(d->bufferType, d->name);
+        GL.glBufferData(d->bufferType, GLsizeiptr(dataSize), data, Impl::glUsage(usage));
+        GL.glBindBuffer(d->bufferType, 0);
     }
     else
     {
@@ -457,9 +464,9 @@ void GLBuffer::setData(dsize startOffset, void const *data, dsize dataSize)
     if (data && dataSize)
     {
         auto &GL = LIBGUI_GL;
-        GL.glBindBuffer   (GL_ARRAY_BUFFER, d->name);
-        GL.glBufferSubData(GL_ARRAY_BUFFER, GLintptr(startOffset), GLsizeiptr(dataSize), data);
-        GL.glBindBuffer   (GL_ARRAY_BUFFER, 0);
+        GL.glBindBuffer   (d->bufferType, d->name);
+        GL.glBufferSubData(d->bufferType, GLintptr(startOffset), GLsizeiptr(dataSize), data);
+        GL.glBindBuffer   (d->bufferType, 0);
     }
 }
 
@@ -471,9 +478,9 @@ void GLBuffer::setUninitializedData(dsize dataSize, gl::Usage usage)
     d->allocArray();
     d->alloc();
 
-    LIBGUI_GL.glBindBuffer(GL_ARRAY_BUFFER, d->name);
-    LIBGUI_GL.glBufferData(GL_ARRAY_BUFFER, GLsizeiptr(dataSize), nullptr, Impl::glUsage(usage));
-    LIBGUI_GL.glBindBuffer(GL_ARRAY_BUFFER, 0);
+    LIBGUI_GL.glBindBuffer(d->bufferType, d->name);
+    LIBGUI_GL.glBufferData(d->bufferType, GLsizeiptr(dataSize), nullptr, Impl::glUsage(usage));
+    LIBGUI_GL.glBindBuffer(d->bufferType, 0);
 
     setState(Ready);
 }
@@ -481,6 +488,8 @@ void GLBuffer::setUninitializedData(dsize dataSize, gl::Usage usage)
 void GLBuffer::draw(DrawRanges const *ranges) const
 {
     if (!isReady() || !GLProgram::programInUse()) return;
+
+    DENG2_ASSERT(d->bufferType == GL_ARRAY_BUFFER);
 
     // Mark the current target changed.
     GLState::current().target().markAsChanged();

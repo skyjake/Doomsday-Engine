@@ -63,6 +63,7 @@ public:
         Mat4,
         Sampler2D,
         SamplerCube,
+        SamplerBuffer,
         IntArray,
         FloatArray,
         Vec2Array,
@@ -97,6 +98,7 @@ public:
     Type type() const;
 
     bool isSampler() const;
+    void bindSamplerTexture(dint unit) const;
 
     GLUniform &operator = (dint value);
     GLUniform &operator = (duint value);

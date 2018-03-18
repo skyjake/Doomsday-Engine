@@ -333,8 +333,13 @@ public:
     typedef QVector<Index> Indices;
     typedef QVector<Rangeui> DrawRanges;
 
+    enum Type {
+        VertexArray, // array buffer, or an array buffer with element array buffer
+        Texture,     // texture buffer
+    };
+
 public:
-    GLBuffer();
+    GLBuffer(Type bufferType = VertexArray);
 
     void clear();
 
