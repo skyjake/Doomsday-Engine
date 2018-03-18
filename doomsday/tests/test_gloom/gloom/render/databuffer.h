@@ -19,6 +19,7 @@
 #ifndef GLOOM_DATABUFFER_H
 #define GLOOM_DATABUFFER_H
 
+#include <de/GLBuffer>
 #include <de/GLTexture>
 #include <de/GLUniform>
 #include <de/Image>
@@ -26,63 +27,56 @@
 
 namespace gloom {
 
+using namespace de;
+
 template <typename Type>
 struct DataBuffer
 {
-    int elementCount = 0;
-    de::GLUniform var;
-    de::GLTexture buf;
-    de::Vec2ui size;
+    GLUniform var;
+    GLBuffer buf;
+    GLuint bufTex{0};
     QVector<Type> data;
-    de::Image::Format format;
-    uint texelsPerElement; // number of pixels needed to represent one element
-    uint maxWidth;
+    Image::Format format;
+    gl::Usage usage;
 
-    DataBuffer(const char *      uName,
-               de::Image::Format format,
-               uint              texelsPerElement = 1,
-               uint              maxWidth         = 0)
-        : var{uName, de::GLUniform::Sampler2D}
+    DataBuffer(const char *  uName,
+               Image::Format format,
+               gl::Usage     usage            = gl::Stream)
+        : var{uName, GLUniform::SamplerBuffer}
+        , buf{GLBuffer::Texture}
         , format(format)
-        , texelsPerElement(texelsPerElement)
-        , maxWidth(maxWidth)
-    {
-        buf.setAutoGenMips(false);
-        buf.setFilter(de::gl::Nearest, de::gl::Nearest, de::gl::MipNone);
-        var = buf;
-    }
+        , usage(usage)
+    {}
 
     void init(int count)
     {
-        elementCount = count;
-        size.x = de::max(4u, uint(std::sqrt(count) + 0.5));
-        if (maxWidth) size.x = de::min(maxWidth, size.x);
-        size.y = de::max(4u, uint((count + size.x - 1) / size.x));
-        data.resize(size.area());
+        data.resize(count);
         data.fill(Type{});
     }
 
     void clear()
     {
-        elementCount = 0;
+        if (bufTex)
+        {
+            LIBGUI_GL.glDeleteTextures(1, &bufTex);
+            bufTex = 0;
+        }
         buf.clear();
         data.clear();
-        size = de::Vec2ui();
+    }
+
+    int size() const
+    {
+        return data.size();
     }
 
     void setData(uint index, const Type &value)
     {
-        const int x = index % size.x;
-        const int y = index / size.x;
-        data[x + y*size.x] = value;
+        data[index] = value;
     }
 
     uint32_t append(const Type &value)
     {
-        DENG2_ASSERT(maxWidth > 0);
-        size.x = maxWidth;
-        size.y++;
-        elementCount++;
         const uint32_t oldSize = data.size();
         data << value;
         return oldSize;
@@ -90,9 +84,18 @@ struct DataBuffer
 
     void update()
     {
-        buf.setImage(de::Image{de::Image::Size(size.x * texelsPerElement, size.y),
-                               format,
-                               de::ByteRefArray(data.constData(), sizeof(data[0]) * size.area())});
+        buf.setData(data.constData(), data.size() * sizeof(data[0]), usage);
+
+        auto &GL = LIBGUI_GL;
+        if (!bufTex)
+        {
+            GL.glGenTextures(1, &bufTex);
+            var = bufTex;
+        }
+        GL.glBindTexture(GL_TEXTURE_BUFFER, bufTex);
+        GL.glTexBuffer(GL_TEXTURE_BUFFER, Image::glFormat(format).internalFormat, buf.glName());
+        LIBGUI_ASSERT_GL_OK();
+        GL.glBindTexture(GL_TEXTURE_BUFFER, 0);
     }
 };
 

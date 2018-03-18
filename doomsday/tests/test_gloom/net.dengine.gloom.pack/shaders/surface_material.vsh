@@ -4,10 +4,10 @@
 #include "common/surface.glsl"
 #include "common/tangentspace.glsl"
 
-uniform mat4        uCameraMvpMatrix;
-uniform vec4        uCameraPos; // world space
-uniform sampler2D   uTexOffsets;
-uniform float       uCurrentTime;
+uniform mat4          uCameraMvpMatrix;
+uniform vec4          uCameraPos; // world space
+uniform samplerBuffer uTexOffsets;
+uniform float         uCurrentTime;
 
 DENG_ATTRIB float   aTexture0; // front material
 DENG_ATTRIB float   aTexture1; // back material
@@ -23,8 +23,8 @@ flat DENG_VAR float vMaterial;
 flat DENG_VAR uint  vFlags;
 
 vec4 fetchTexOffset(uint offsetIndex) {
-    uint dw = uint(textureSize(uTexOffsets, 0).x);
-    return texelFetch(uTexOffsets, ivec2(offsetIndex % dw, offsetIndex / dw), 0);
+    // uint dw = uint(textureSize(uTexOffsets, 0).x);
+    return texelFetch(uTexOffsets, int(offsetIndex));
 }
 
 void main(void) {

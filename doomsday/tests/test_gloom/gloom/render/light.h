@@ -57,8 +57,8 @@ public:
     float     aspectRatio() const;
     float     falloffDistance() const;
 
-    de::Mat4f          lightMatrix() const;
-    de::Mat4f          lightMatrix(de::gl::CubeFace) const;
+    de::Mat4f lightMatrix() const;
+    de::Mat4f lightMatrix(de::gl::CubeFace) const;
 
     de::Vec3f cameraPosition() const;
     de::Vec3f cameraFront() const;

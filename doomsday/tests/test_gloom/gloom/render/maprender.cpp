@@ -53,7 +53,7 @@ DENG2_PIMPL(MapRender)
         Vec2f speed;
     };
 
-    DataBuffer<Metrics>       textureMetrics{"uTextureMetrics", Image::RGBA_32f, 2 * TextureMapCount, 1};
+    DataBuffer<Metrics>       textureMetrics{"uTextureMetrics", Image::RGBA_32f, gl::Static}; //2 * TextureMapCount, 1};
     DataBuffer<float>         planes        {"uPlanes",         Image::R_32f};
     DataBuffer<TexOffsetData> texOffsets    {"uTexOffsets",     Image::RGBA_32f};
 

@@ -51,7 +51,7 @@ static constexpr int MAX_SHADOWS = 6;
 
 DENG2_PIMPL(LightRender)
 {
-    using VBuf = GLBufferT<Vertex3>;
+    using VBuf   = GLBufferT<Vertex3>;
     using Lights = QHash<ID, std::shared_ptr<Light>>;
 
     std::unique_ptr<Light> skyLight;

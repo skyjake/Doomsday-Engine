@@ -40,7 +40,7 @@ DENG2_PIMPL(SSAO)
 
     ScreenQuad        quad;
     GLUniform         uSamples{"uSamples", GLUniform::Vec3Array, SAMPLE_COUNT};
-    DataBuffer<Vec3f> noise{"uNoise", Image::RGB_16f};
+    DataBuffer<Vec2f> noise{"uNoise", Image::RG_32f, gl::Static};
     GLFramebuffer     ssaoFrameBuf[2];
     GLTexture         ssaoBuf[2];
     GLUniform         uNoisyFactors{"uNoisyFactors", GLUniform::Sampler2D};
@@ -101,11 +101,10 @@ DENG2_PIMPL(SSAO)
         // Noise.
         {
             noise.init(16);
-            for (int i = 0; i < noise.elementCount; ++i)
+            for (int i = 0; i < noise.size(); ++i)
             {
-                noise.setData(i, Vec3f{Rangef(0, 2).random() - 1,
-                                       Rangef(0, 2).random() - 1,
-                                       0});
+                noise.setData(i, Vec2f{Rangef(0, 2).random() - 1,
+                                       Rangef(0, 2).random() - 1});
             }
             noise.update();
             quad.program() << noise.var;

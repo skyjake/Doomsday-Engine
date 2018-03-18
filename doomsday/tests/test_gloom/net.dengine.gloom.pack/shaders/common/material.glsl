@@ -4,8 +4,8 @@
 #include "defs.glsl"
 #include "miplevel.glsl"
 
-uniform sampler2D uTextureAtlas[4];
-uniform sampler2D uTextureMetrics;
+uniform sampler2D     uTextureAtlas[4];
+uniform samplerBuffer uTextureMetrics;
 
 struct Metrics {
     bool  isValid;
@@ -22,17 +22,22 @@ const vec4 Material_DefaultTextureValue[4] = vec4[4] (
     vec4(0.5, 0.5, 0.5, 1.0) // normal/displacement
 );
 
+const int Material_TextureMetricsTexelsPerTexture = 2;
+const int Material_TextureMetricsTexelsPerElement =
+    Material_TextureMetricsTexelsPerTexture * 4;
+
 Metrics Gloom_TextureMetrics(uint matIndex, int texture) {
     Metrics metrics;
-    int x = texture * 2;
-    vec3 texelSize = texelFetch(uTextureMetrics, ivec2(x + 1, matIndex), 0).xyz;
+    int bufPos = int(matIndex) * Material_TextureMetricsTexelsPerElement +
+                 texture       * Material_TextureMetricsTexelsPerTexture;
+    vec3 texelSize = texelFetch(uTextureMetrics, bufPos + 1).xyz;
     metrics.sizeInTexels = texelSize.xy;
     // Not all textures are defined/present.
     if (metrics.sizeInTexels == vec2(0.0)) {
         metrics.isValid = false;
         return metrics;
     }
-    metrics.uvRect = texelFetch(uTextureMetrics, ivec2(x, matIndex), 0);
+    metrics.uvRect = texelFetch(uTextureMetrics, bufPos);
     metrics.texelsPerMeter = texelSize.z;
     metrics.scale          = vec2(metrics.texelsPerMeter) / metrics.sizeInTexels;
     metrics.isValid = true;

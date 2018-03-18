@@ -1,7 +1,7 @@
 #ifndef GLOOM_SURFACE_H
 #define GLOOM_SURFACE_H
 
-uniform sampler2D uPlanes;
+uniform samplerBuffer uPlanes;
 
 DENG_ATTRIB vec4  aVertex;
 DENG_ATTRIB vec4  aUV; // s, t, wallLength, rotation angle
@@ -24,8 +24,8 @@ struct Surface {
 };
 
 float Gloom_FetchPlaneY(uint planeIndex) {
-    uint dw = uint(textureSize(uPlanes, 0).x);
-    return texelFetch(uPlanes, ivec2(planeIndex % dw, planeIndex / dw), 0).r;
+    // int dw = textureSize(uPlanes, 0).x);
+    return texelFetch(uPlanes, int(planeIndex)).r;
 }
 
 Surface Gloom_LoadVertexSurface(void) {

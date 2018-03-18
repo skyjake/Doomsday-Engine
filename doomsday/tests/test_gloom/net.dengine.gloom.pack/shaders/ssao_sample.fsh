@@ -5,13 +5,19 @@
 const int   SAMPLE_COUNT = 64;
 const float RADIUS = 0.5;
 const int   NOISE_SIZE = 4;
+const int   NOISE_MASK = 3;
 
-uniform vec3      uSamples[SAMPLE_COUNT];
-uniform sampler2D uNoise;
-uniform mat4      uProjMatrix;
+uniform vec3          uSamples[SAMPLE_COUNT];
+uniform samplerBuffer uNoise;
+uniform mat4          uProjMatrix;
+
+int noiseIndex(ivec2 pos) {
+    pos &= NOISE_MASK;
+    return pos.y * NOISE_SIZE + pos.x;
+}
 
 void main(void) {
-    vec3 randomVec = texelFetch(uNoise, ivec2(gl_FragCoord.xy) % NOISE_SIZE, 0).rgb;
+    vec3 randomVec = texelFetch(uNoise, noiseIndex(ivec2(gl_FragCoord.xy))).rgb;
     vec3 normal    = GBuffer_FragViewSpaceNormal();
     vec3 fragPos   = GBuffer_FragViewSpacePos().xyz;
 
