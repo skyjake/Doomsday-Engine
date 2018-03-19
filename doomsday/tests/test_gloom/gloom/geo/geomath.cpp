@@ -27,10 +27,15 @@ bool Plane::isPointAbove(const Vec3d &pos) const
     return (pos - point).dot(normal) >= 0;
 }
 
-double Plane::project(const Vec2d &pos) const
+double Plane::project2D(const Vec2d &posXZ) const
 {
     const double d = -normal.x * point.x - normal.y * point.y - normal.z * point.z;
-    return (-normal.x * pos.x - normal.z * pos.y - d) / normal.y;
+    return (-normal.x * posXZ.x - normal.z * posXZ.y - d) / normal.y;
+}
+
+Vec3d Plane::project(const Vec3d &pos) const
+{
+    return pos - normal * normal.dot(pos - point);
 }
 
 }} // namespace gloom::geo

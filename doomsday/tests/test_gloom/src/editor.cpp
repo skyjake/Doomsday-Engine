@@ -83,8 +83,11 @@ DENG2_PIMPL(Editor)
     ID         hoverEntity = 0;
 
     float viewScale = 10;
+    float viewYawAngle = 0;
+    float viewPitchAngle = 0;
     Vec2f viewOrigin;
     Plane viewPlane;
+    Vec3f worldFront;
     Mat4f viewTransform;
     Mat4f inverseViewTransform;
 
@@ -275,6 +278,9 @@ DENG2_PIMPL(Editor)
                     }
                 }
                 break;
+
+            case EditEntities:
+                break;
             }
             break;
 
@@ -295,16 +301,23 @@ DENG2_PIMPL(Editor)
         return true;
     }
 
-    QPointF worldToView(const Vec2d &pos, const Plane *plane = nullptr) const
+    QPointF worldToView(const Vec3d &worldPos) const
+    {
+        const auto p = viewTransform * worldPos;
+        return QPointF(p.x, p.y);
+    }
+
+    QPointF worldToView(const Point &point, const Plane *plane = nullptr) const
     {
         if (!plane) plane = &viewPlane;
-        const auto p = viewTransform * plane->projectPoint(pos);
-        return QPointF(p.x, p.y);
+        return worldToView(plane->projectPoint(point));
     }
 
     Vec2d viewToWorld(const QPointF &pos) const
     {
-        const auto p = inverseViewTransform * Vec3f(float(pos.x()), float(pos.y()));
+        Vec3d p = inverseViewTransform * Vec3f(float(pos.x()), float(pos.y()));
+        //p = viewPlane.toGeoPlane().intersectRay(p, worldFront);
+        //qDebug() << p.asText();
         return Vec2d(p.x, p.z);
     }
 
@@ -312,10 +325,19 @@ DENG2_PIMPL(Editor)
     {
         const QSize viewSize = self().rect().size();
 
+        Mat4f mapRot = Mat4f::rotate(viewPitchAngle, Vec3f(1, 0, 0)) *
+                       Mat4f::rotate(viewYawAngle,   Vec3f(0, 1, 0));
+
+        worldFront = Mat4f::rotate(viewYawAngle, Vec3f(0, 1, 0)) *
+                     Mat4f::rotate(viewPitchAngle, Vec3f(1, 0, 0)) *
+                     Vec3f{0, -1, 0};
+
         viewPlane     = Plane{{viewOrigin.x, 0, viewOrigin.y}, {0, 1, 0}};
         viewTransform = Mat4f::translate(Vec3f(viewSize.width() / 2, viewSize.height() / 2)) *
                         Mat4f::rotate(-90, Vec3f(1, 0, 0)) *
-                        Mat4f::scale(viewScale) * Mat4f::translate(-viewPlane.point);
+                        mapRot *
+                        Mat4f::scale(viewScale) *
+                        Mat4f::translate(-viewPlane.point);
         inverseViewTransform = viewTransform.inverse();
     }
 
@@ -399,7 +421,7 @@ DENG2_PIMPL(Editor)
         {
         case EditPoints:
             pushUndo();
-            map.append(map.points(), worldMousePos());
+            map.append(map.points(), Point{worldMousePos()});
             break;
 
         case EditLines:
@@ -664,7 +686,7 @@ DENG2_PIMPL(Editor)
         double dist = maxDistance;
         for (auto i = map.points().begin(); i != map.points().end(); ++i)
         {
-            double d = (i.value() - pos).length();
+            double d = (i.value().coord - pos).length();
             if (d < dist)
             {
                 id = i.key();
@@ -683,7 +705,7 @@ DENG2_PIMPL(Editor)
         for (auto i = map.lines().begin(); i != map.lines().end(); ++i)
         {
             const auto &line = i.value();
-            const geo::Line<Vec2d> mapLine(map.point(line.points[0]), map.point(line.points[1]));
+            const auto mapLine = map.geoLine(i.key()); //geo::Line<Vec2d> mapLine(map.point(line.points[0]), map.point(line.points[1]));
             double d = mapLine.distanceTo(pos);
             if (d < dist)
             {
@@ -785,7 +807,7 @@ DENG2_PIMPL(Editor)
     void splitLine(ID line, const Vec2d &where)
     {
         pushUndo();
-        map.splitLine(line, map.geoLine(line).nearestPoint(where));
+        map.splitLine(line, Point{map.geoLine(line).nearestPoint(where)});
         self().update();
     }
 
@@ -974,6 +996,7 @@ void Editor::paintEvent(QPaintEvent *)
     const QColor textColor = (d->mode == Impl::EditSectors? QColor(0, 0, 0) : QColor(255, 255, 255));
     const QColor pointColor(170, 0, 0, 255);
     const QColor lineColor(64, 64, 64);
+    const QColor verticalLineColor(128, 128, 128);
     const QColor sectorColor(128, 92, 0, 96);
 
     // Grid.
@@ -991,11 +1014,20 @@ void Editor::paintEvent(QPaintEvent *)
 
             const auto geoPoly = d->map.sectorPolygon(secId);
 
-            QPolygonF poly;
-            for (const auto &pp : geoPoly.points)
+            // Determine corners.
             {
-                poly.append(d->worldToView(pp.pos));
+                QVector<QLineF> cornerLines;
+                const Plane &ceiling = d->map.ceilingPlane(secId);
+                const Plane &floor   = d->map.floorPlane(secId);
+                for (int i = 0; i < geoPoly.size(); ++i)
+                {
+                    cornerLines << QLineF(d->worldToView(Point{geoPoly.at(i)}, &floor),
+                                          d->worldToView(Point{geoPoly.at(i)}, &ceiling));
+                }
+                ptr.setPen(QPen(verticalLineColor));
+                ptr.drawLines(cornerLines.constData(), cornerLines.size());
             }
+
             if (d->selection.contains(secId))
             {
                 ptr.setPen(QPen(selectColor, 4));
@@ -1005,7 +1037,26 @@ void Editor::paintEvent(QPaintEvent *)
                 ptr.setPen(Qt::NoPen);
             }
             ptr.setBrush(d->hoverSector == secId? panelBg : sectorColor);
-            ptr.drawPolygon(poly);
+
+            QPolygonF poly;
+
+            for (int vol = 0; vol < sector.volumes.size(); ++vol)
+            {
+                for (int planeIndex = 0; planeIndex < 2; ++planeIndex)
+                {
+                    if (vol < sector.volumes.size() - 1 && planeIndex > 0) continue;
+
+                    const Plane &secPlane =
+                        d->map.plane(d->map.volume(sector.volumes.at(vol)).planes[planeIndex]);
+
+                    poly.clear();
+                    for (const auto &pp : geoPoly.points)
+                    {
+                        poly.append(d->worldToView(Point{pp.pos}, &secPlane));
+                    }
+                    ptr.drawPolygon(poly);
+                }
+            }
             if (d->selection.contains(secId))
             {
                 d->drawMetaLabel(ptr, poly.boundingRect().center(), String::format("%X", secId));
@@ -1122,12 +1173,15 @@ void Editor::paintEvent(QPaintEvent *)
         for (auto i = mapEnts.begin(), end = mapEnts.end(); i != end; ++i)
         {
             const auto &  ent = i.value();
-            const QPointF pos = d->worldToView(ent->position().xz());
+            const QPointF pos = d->worldToView(ent->position());
 
             float radius = 0.5f * d->viewScale;
             ptr.setBrush(d->selection.contains(i.key())? selectColor : QColor(Qt::white));
             ptr.drawEllipse(pos, radius, radius);
         }
+
+        const Vec2d mousePos = d->worldMousePos();
+        ptr.drawEllipse(d->worldToView(mousePos), 5, 5);
     }
 
     // Status bar.
@@ -1253,7 +1307,7 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
             {
                 if (d->mode == Impl::EditPoints && d->map.points().contains(id))
                 {
-                    d->map.point(id) += worldDelta;
+                    d->map.point(id).coord += worldDelta;
                 }
                 else if (d->mode == Impl::EditEntities && d->map.entities().contains(id))
                 {
@@ -1291,7 +1345,7 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
         {
             if (d->map.points().contains(id))
             {
-                d->map.point(id) = xf * Vec3d(d->map.point(id));
+                d->map.point(id).coord = xf * Vec3d(d->map.point(id).coord);
             }
         }
         break;
@@ -1370,7 +1424,12 @@ void Editor::mouseDoubleClickEvent(QMouseEvent *event)
 void Editor::wheelEvent(QWheelEvent *event)
 {
     const QPoint delta = event->pixelDelta();
-    if (event->modifiers() & Qt::ShiftModifier)
+    if (event->modifiers() & Qt::ControlModifier)
+    {
+        d->viewYawAngle   += delta.x() * .25f;
+        d->viewPitchAngle += delta.y() * .25f;
+    }
+    else if (event->modifiers() & Qt::ShiftModifier)
     {
         d->viewScale *= de::clamp(.1f, 1.f - delta.y()/1000.f, 10.f);
     }

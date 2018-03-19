@@ -365,6 +365,7 @@ void GloomWorld::render(const ICamera &camera)
         d->debugQuad.render();
     }
 
+#if 0
     {
         auto &perfTimer = GLWindow::main().timer();
         for (int i = 0; i < PerfTimerCount; ++i)
@@ -372,6 +373,7 @@ void GloomWorld::render(const ICamera &camera)
             qDebug("Timer %i: %8llu µs", i, perfTimer.elapsedTime(d->timerId[i]).asMicroSeconds());
         }
     }
+#endif
 }
 
 User *GloomWorld::localUser() const
@@ -395,7 +397,7 @@ float GloomWorld::groundSurfaceHeight(Vec3f const &pos) const
     if (sec_vol.first)
     {
         const Volume &vol = d->map.volume(sec_vol.second);
-        return float(d->map.plane(vol.planes[0]).projectPoint(pos.xz()).y);
+        return float(d->map.plane(vol.planes[0]).projectPoint(Point{pos.xz()}).y);
     }
     return 0;
 }

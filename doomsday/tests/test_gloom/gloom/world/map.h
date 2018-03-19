@@ -31,8 +31,14 @@
 
 namespace gloom {
 
-typedef de::Vec2d Point;
+using namespace de;
+
 class Map;
+
+struct Point
+{
+    Vec2d coord; // X and Z world coordinates
+};
 
 struct Line
 {
@@ -52,12 +58,16 @@ struct Line
 
 struct Plane
 {
-    de::Vec3d point;
-    de::Vec3f normal;
+    Vec3d point;
+    Vec3f normal;
 
-    bool      isPointAbove(const de::Vec3d &pos) const;
-    de::Vec3d projectPoint(const Point &pos) const;
-    de::Vec3f tangent() const;
+    geo::Plane toGeoPlane() const { return geo::Plane{point, normal}; }
+
+    bool  isPointAbove(const Vec3d &pos) const;
+    Vec3f tangent() const;
+
+    /// Converts a 2D map point to a 3D world point.
+    Vec3d projectPoint(const Point &pos) const;
 };
 
 struct Volume
@@ -145,22 +155,22 @@ public:
     const Volume &volume(ID id) const;
     const Entity &entity(ID id) const;
 
-    de::Rectangled bounds() const;
-    bool           isLine(ID id) const;
-    void           forLinesAscendingDistance(const Point &pos, std::function<bool(ID)>) const;
-    IDList         findLines(ID pointId) const;
-    IDList         findLinesStartingFrom(ID pointId, Line::Side side) const;
-    std::pair<ID, ID> findSectorAndVolumeAt(const de::Vec3d &pos) const;
-    geo::Line2d    geoLine(ID lineId) const;
-    geo::Line2d    geoLine(Edge ef) const;
-    geo::Polygon   sectorPolygon(ID sectorId) const;
-    geo::Polygon   sectorPolygon(const Sector &sector) const;
-    ID             floorPlaneId(ID sectorId) const;
-    ID             ceilingPlaneId(ID sectorId) const;
-    const Plane &  floorPlane(ID sectorId) const;
-    const Plane &  ceilingPlane(ID sectorId) const;
+    Rectangled        bounds() const;
+    bool              isLine(ID id) const;
+    void              forLinesAscendingDistance(const Point &pos, std::function<bool(ID)>) const;
+    IDList            findLines(ID pointId) const;
+    IDList            findLinesStartingFrom(ID pointId, Line::Side side) const;
+    std::pair<ID, ID> findSectorAndVolumeAt(const Vec3d &pos) const;
+    geo::Line2d       geoLine(ID lineId) const;
+    geo::Line2d       geoLine(Edge ef) const;
+    geo::Polygon      sectorPolygon(ID sectorId) const;
+    geo::Polygon      sectorPolygon(const Sector &sector) const;
+    ID                floorPlaneId(ID sectorId) const;
+    ID                ceilingPlaneId(ID sectorId) const;
+    const Plane &     floorPlane(ID sectorId) const;
+    const Plane &     ceilingPlane(ID sectorId) const;
 
-    using WorldVerts      = QHash<ID, de::Vec3f>;
+    using WorldVerts      = QHash<ID, Vec3f>;
     using WorldPlaneVerts = QList<WorldVerts>; // one set per plane
 
     WorldVerts      worldPlaneVerts(const Sector &sector, const Plane &plane) const;
@@ -173,8 +183,8 @@ public:
                      QList<Edge> &sectorEdges);
     ID splitLine(ID lineId, const Point &splitPoint);
 
-    de::Block serialize() const;
-    void      deserialize(const de::Block &data);
+    Block serialize() const;
+    void  deserialize(const Block &data);
 
 private:
     DENG2_PRIVATE(d)

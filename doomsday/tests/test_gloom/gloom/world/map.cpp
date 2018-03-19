@@ -311,10 +311,10 @@ Rectangled Map::bounds() const
     Rectangled rect;
     if (!d->points.isEmpty())
     {
-        rect = Rectangled(*d->points.values().begin(), *d->points.values().begin());
+        rect = Rectangled(d->points.values().begin()->coord, d->points.values().begin()->coord);
         for (const auto &p : d->points.values())
         {
-            rect.include(p);
+            rect.include(p.coord);
         }
     }
     return rect;
@@ -332,7 +332,7 @@ void Map::forLinesAscendingDistance(const Point &pos, std::function<bool (ID)> f
 
     for (auto i = d->lines.begin(); i != d->lines.end(); ++i)
     {
-        distLines << DistLine{i.key(), geoLine(i.key()).distanceTo(pos)};
+        distLines << DistLine{i.key(), geoLine(i.key()).distanceTo(pos.coord)};
     }
 
     qSort(distLines.begin(), distLines.end(), [](const DistLine &a, const DistLine &b) {
@@ -374,13 +374,13 @@ IDList Map::findLinesStartingFrom(ID pointId, Line::Side side) const
 geo::Line2d Map::geoLine(ID lineId) const
 {
     const auto &line = d->lines[lineId];
-    return geo::Line2d{point(line.points[0]), point(line.points[1])};
+    return geo::Line2d{point(line.points[0]).coord, point(line.points[1]).coord};
 }
 
 geo::Line2d Map::geoLine(Edge ref) const
 {
     const Line &line = Map::line(ref.line);
-    return geo::Line2d{point(line.startPoint(ref.side)), point(line.endPoint(ref.side))};
+    return geo::Line2d{point(line.startPoint(ref.side)).coord, point(line.endPoint(ref.side)).coord};
 }
 
 geo::Polygon Map::sectorPolygon(ID sectorId) const
@@ -394,7 +394,7 @@ geo::Polygon Map::sectorPolygon(const Sector &sector) const
     geo::Polygon poly;
     for (ID pid : sector.points)
     {
-        poly.points << geo::Polygon::Point{point(pid), pid};
+        poly.points << geo::Polygon::Point{point(pid).coord, pid};
     }
     poly.updateBounds();
     return poly;
@@ -676,7 +676,7 @@ Block Map::serialize() const
         QJsonObject points;
         for (auto i = _d->points.begin(); i != _d->points.end(); ++i)
         {
-            points.insert(idStr(i.key()), QJsonArray{{i.value().x, i.value().y}});
+            points.insert(idStr(i.key()), QJsonArray{{i.value().coord.x, i.value().coord.y}});
         }
         obj.insert("points", points);
     }
@@ -783,7 +783,7 @@ void Map::deserialize(const Block &data)
         for (auto i = points.begin(); i != points.end(); ++i)
         {
             const auto pos = i.value().toList();
-            Point point(pos[0].toDouble(), pos[1].toDouble());
+            Point point{Vec2d{pos[0].toDouble(), pos[1].toDouble()}};
             d->points.insert(getId(i.key()), point);
         }
     }
@@ -874,8 +874,8 @@ bool Plane::isPointAbove(const Vec3d &pos) const
 
 Vec3d Plane::projectPoint(const Point &pos) const
 {
-    const double z = geo::Plane{point, normal}.project(pos);
-    return Vec3d(pos.x, z, pos.y);
+    const double y = geo::Plane{point, normal}.project2D(pos.coord);
+    return Vec3d(pos.coord.x, y, pos.coord.y);
 }
 
 Vec3f Plane::tangent() const

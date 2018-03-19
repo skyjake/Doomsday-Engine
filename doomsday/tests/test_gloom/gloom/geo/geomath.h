@@ -24,12 +24,14 @@
 
 namespace gloom { namespace geo {
 
-inline de::Vec2d toVec2d(const QVector2D &vec)
+using namespace de;
+
+inline Vec2d toVec2d(const QVector2D &vec)
 {
-    return de::Vec2d(vec.x(), vec.y());
+    return Vec2d(vec.x(), vec.y());
 }
 
-inline QVector2D toQVector2D(const de::Vec2d &vec)
+inline QVector2D toQVector2D(const Vec2d &vec)
 {
     return QVector2D(float(vec.x), float(vec.y));
 }
@@ -104,7 +106,7 @@ struct Line
         const auto  s = span();
 
         const double r_s = r.cross(s);
-        if (de::abs(r_s) < de::EPSILON)
+        if (abs(r_s) < EPSILON)
         {
             return false;
         }
@@ -118,12 +120,12 @@ struct Line
     double distanceTo(const T &p) const
     {
         const T delta = p - start;
-        double dist = de::min(delta.length(), (p - end).length());
-        double n = de::abs(normal().dot(delta));
+        double dist = min(delta.length(), (p - end).length());
+        double n = abs(normal().dot(delta));
         double t = dir().dot(delta);
         if (t >= 0 && t <= length())
         {
-            return de::min(n, dist);
+            return min(n, dist);
         }
         return dist;
     }
@@ -134,7 +136,7 @@ struct Line
         const T d1 = dir();
         const T n = normal();
         const T d2 = other.dir();
-        double deg = 180 + de::radianToDegree(std::acos(d1.dot(d2)));
+        double deg = 180 + radianToDegree(std::acos(d1.dot(d2)));
         if (n.dot(d2) > 0) deg = 360 - deg;
         return deg;
     }
@@ -145,15 +147,16 @@ struct Line
     }
 };
 
-using Line2d = Line<de::Vec2d>;
+using Line2d = Line<Vec2d>;
 
 struct Plane
 {
-    de::Vec3d point;
-    de::Vec3f normal;
+    Vec3d point;
+    Vec3f normal;
 
-    bool isPointAbove(const de::Vec3d &pos) const;
-    double project(const de::Vec2d &pos) const;
+    bool   isPointAbove(const Vec3d &pos) const;
+    double project2D(const Vec2d &posXZ) const;
+    Vec3d  project(const Vec3d &pos) const;
 };
 
 }} // namespace gloom::geo

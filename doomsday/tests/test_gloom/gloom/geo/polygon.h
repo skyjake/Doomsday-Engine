@@ -29,7 +29,7 @@ namespace gloom { namespace geo {
 struct Polygon
 {
     struct Point {
-        de::Vec2d pos;
+        de::Vec2d pos; // world X, Z
         uint32_t id;
     };
     using Points = QVector<Point>;

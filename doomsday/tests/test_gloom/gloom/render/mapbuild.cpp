@@ -54,7 +54,8 @@ DENG2_PIMPL_NOREF(MapBuild)
 
     Vec3f worldNormalVector(const Line &line) const
     {
-        Vec2d norm = geo::Line2d(map.point(line.points[0]), map.point(line.points[1])).normal();
+        const Vec2d norm =
+            geo::Line2d(map.point(line.points[0]).coord, map.point(line.points[1]).coord).normal();
         return Vec3d(norm.x, 0.0, norm.y);
     }
 
