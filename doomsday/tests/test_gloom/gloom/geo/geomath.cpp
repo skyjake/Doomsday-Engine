@@ -38,5 +38,17 @@ Vec3d Plane::project(const Vec3d &pos) const
     return pos - normal * normal.dot(pos - point);
 }
 
+Vec3d Plane::intersectRay(const Vec3d &pos, const Vec3f &rayDir) const
+{
+    const double denom = normal.dot(rayDir);
+    if (abs(denom) > .0000001)
+    {
+        const double t = (point - pos).dot(normal) / denom;
+        //if (t >= 0) return true; // you might want to allow an epsilon here too
+        return pos + rayDir * t;
+    }
+    return pos;
+}
+
 }} // namespace gloom::geo
 

@@ -313,12 +313,16 @@ DENG2_PIMPL(Editor)
         return worldToView(plane->projectPoint(point));
     }
 
-    Vec2d viewToWorld(const QPointF &pos) const
+    Vec3d viewToWorldCoord(const QPointF &pos) const
     {
-        Vec3d p = inverseViewTransform * Vec3f(float(pos.x()), float(pos.y()));
-        //p = viewPlane.toGeoPlane().intersectRay(p, worldFront);
-        //qDebug() << p.asText();
-        return Vec2d(p.x, p.z);
+        return inverseViewTransform * Vec3f(float(pos.x()), float(pos.y()));
+    }
+
+    Point viewToWorldPoint(const QPointF &pos) const
+    {
+        Vec3d p = viewToWorldCoord(pos);
+        p = viewPlane.toGeoPlane().intersectRay(p, worldFront);
+        return Point{Vec2d(p.x, p.z)};
     }
 
     void updateView()
@@ -328,9 +332,7 @@ DENG2_PIMPL(Editor)
         Mat4f mapRot = Mat4f::rotate(viewPitchAngle, Vec3f(1, 0, 0)) *
                        Mat4f::rotate(viewYawAngle,   Vec3f(0, 1, 0));
 
-        worldFront = Mat4f::rotate(viewYawAngle, Vec3f(0, 1, 0)) *
-                     Mat4f::rotate(viewPitchAngle, Vec3f(1, 0, 0)) *
-                     Vec3f{0, -1, 0};
+        worldFront = mapRot.inverse() * Vec3f{0, -1, 0};
 
         viewPlane     = Plane{{viewOrigin.x, 0, viewOrigin.y}, {0, 1, 0}};
         viewTransform = Mat4f::translate(Vec3f(viewSize.width() / 2, viewSize.height() / 2)) *
@@ -350,9 +352,13 @@ DENG2_PIMPL(Editor)
         return QLineF(start, end);
     }
 
-    Vec2d worldMousePos() const { return viewToWorld(viewMousePos()); }
+    Vec3d worldMouseCoord() const { return viewToWorldCoord(viewMousePos()); }
 
-    Vec2d worldActionPos() const { return viewToWorld(actionPos); }
+    Point worldMousePoint() const { return viewToWorldPoint(viewMousePos()); }
+
+    Vec3d worldActionCoord() const { return viewToWorldCoord(actionPos); }
+
+    Point worldActionPoint() const { return viewToWorldPoint(actionPos); }
 
     void pushUndo()
     {
@@ -421,7 +427,7 @@ DENG2_PIMPL(Editor)
         {
         case EditPoints:
             pushUndo();
-            map.append(map.points(), Point{worldMousePos()});
+            map.append(map.points(), worldMousePoint());
             break;
 
         case EditLines:
@@ -458,8 +464,7 @@ DENG2_PIMPL(Editor)
         case EditEntities:
             pushUndo();
             std::shared_ptr<Entity> ent(new Entity);
-            Vec3d pos = worldMousePos();
-            ent->setPosition(Vec3d(pos.x, 0, pos.y));
+            ent->setPosition(worldMouseCoord());
             ent->setId(map.append(map.entities(), ent));
             break;
         }
@@ -553,8 +558,10 @@ DENG2_PIMPL(Editor)
             }
 
             // Select a group of lines that might form a new sector.
-            const auto clickPos = worldMousePos();
-            Edge startRef{hoverLine, map.geoLine(hoverLine).isFrontSide(clickPos)? Line::Front : Line::Back};
+            const auto clickPos = worldMousePoint();
+            Edge       startRef{hoverLine,
+                          map.geoLine(hoverLine).isFrontSide(clickPos.coord) ? Line::Front
+                                                                             : Line::Back};
 
             if (map.line(hoverLine).sectors[startRef.side] == 0)
             {
@@ -658,9 +665,9 @@ DENG2_PIMPL(Editor)
         ptr.setBrush(lightStyle? metaBg : metaBg2);
         ptr.setPen(Qt::NoPen);
 
-        QFontMetrics metrics(metaFont);
-        const QSize dims(metrics.width(text), metrics.height());
-        const QPointF off(-dims.width()/2, dims.height()/2);
+        QFontMetrics  metrics(metaFont);
+        const QSize   dims(metrics.width(text), metrics.height());
+        const QPointF off(-dims.width() / 2, dims.height() / 2);
         const QPointF gap(-3, 3);
 
         ptr.drawRect(QRectF(pos - off - gap, pos + off + gap));
@@ -675,7 +682,7 @@ DENG2_PIMPL(Editor)
         return 20 / viewScale;
     }
 
-    ID findPointAt(const Vec2d &pos, double maxDistance = -1) const
+    ID findPointAt(const Point &pos, double maxDistance = -1) const
     {
         if (maxDistance < 0)
         {
@@ -686,7 +693,7 @@ DENG2_PIMPL(Editor)
         double dist = maxDistance;
         for (auto i = map.points().begin(); i != map.points().end(); ++i)
         {
-            double d = (i.value().coord - pos).length();
+            double d = (i.value().coord - pos.coord).length();
             if (d < dist)
             {
                 id = i.key();
@@ -696,17 +703,17 @@ DENG2_PIMPL(Editor)
         return id;
     }
 
-    ID findLineAt(const Vec2d &pos, double maxDistance = -1) const
+    ID findLineAt(const Point &pos, double maxDistance = -1) const
     {
         if (maxDistance < 0) maxDistance = defaultClickDistance();
 
         ID id = 0;
         double dist = maxDistance;
-        for (auto i = map.lines().begin(); i != map.lines().end(); ++i)
+        for (auto i = map.lines().begin(), end = map.lines().end(); i != end; ++i)
         {
-            const auto &line = i.value();
-            const auto mapLine = map.geoLine(i.key()); //geo::Line<Vec2d> mapLine(map.point(line.points[0]), map.point(line.points[1]));
-            double d = mapLine.distanceTo(pos);
+            const auto &line    = i.value();
+            const auto  mapLine = map.geoLine(i.key());
+            double      d       = mapLine.distanceTo(pos.coord);
             if (d < dist)
             {
                 id = i.key();
@@ -716,11 +723,11 @@ DENG2_PIMPL(Editor)
         return id;
     }
 
-    ID findSectorAt(const Vec2d &pos) const
+    ID findSectorAt(const Point &pos) const
     {
         for (ID id : map.sectors().keys())
         {
-            if (map.sectorPolygon(id).isPointInside(pos))
+            if (map.sectorPolygon(id).isPointInside(pos.coord))
             {
                 return id;
             }
@@ -728,7 +735,7 @@ DENG2_PIMPL(Editor)
         return 0;
     }
 
-    ID findEntityAt(const Vec2d &pos, double maxDistance = -1) const
+    ID findEntityAt(const Vec3d &pos, double maxDistance = -1) const
     {
         if (maxDistance < 0) maxDistance = defaultClickDistance();
 
@@ -737,7 +744,7 @@ DENG2_PIMPL(Editor)
         for (auto i = map.entities().begin(), end = map.entities().end(); i != end; ++i)
         {
             const auto &ent = i.value();
-            double d = (ent->position().xz() - pos).length();
+            double d = (ent->position() - pos).length();
             if (d < dist)
             {
                 id = i.key();
@@ -761,7 +768,7 @@ DENG2_PIMPL(Editor)
 
     void selectClickedObject(Qt::KeyboardModifiers modifiers)
     {
-        const auto pos = worldActionPos();
+        const auto pos = worldActionPoint();
         switch (mode)
         {
         case EditPoints:
@@ -997,11 +1004,11 @@ void Editor::paintEvent(QPaintEvent *)
     const QColor pointColor(170, 0, 0, 255);
     const QColor lineColor(64, 64, 64);
     const QColor verticalLineColor(128, 128, 128);
-    const QColor sectorColor(128, 92, 0, 96);
+    const QColor sectorColor(128, 92, 0, 64);
 
     // Grid.
     {
-        d->drawGridLine(ptr, d->worldMousePos(), gridMinor);
+        d->drawGridLine(ptr, d->worldMousePoint().coord, gridMinor);
         d->drawGridLine(ptr, Vec2d(), gridMajor);
     }
 
@@ -1039,7 +1046,6 @@ void Editor::paintEvent(QPaintEvent *)
             ptr.setBrush(d->hoverSector == secId? panelBg : sectorColor);
 
             QPolygonF poly;
-
             for (int vol = 0; vol < sector.volumes.size(); ++vol)
             {
                 for (int planeIndex = 0; planeIndex < 2; ++planeIndex)
@@ -1180,7 +1186,8 @@ void Editor::paintEvent(QPaintEvent *)
             ptr.drawEllipse(pos, radius, radius);
         }
 
-        const Vec2d mousePos = d->worldMousePos();
+        ptr.setBrush(Qt::NoBrush);
+        const Point mousePos = d->worldMousePoint();
         ptr.drawEllipse(d->worldToView(mousePos), 5, 5);
     }
 
@@ -1199,10 +1206,10 @@ void Editor::paintEvent(QPaintEvent *)
         const int y = content.center().y() + fontMetrics.ascent()/2;
         ptr.drawText(content.left(), y, d->statusText());
 
-        const auto mouse = d->worldMousePos();
+        const auto mouse = d->worldMousePoint();
         const String viewText = String("[%1 %2] (%3 %4) z:%5")
-                .arg(mouse.x,         0, 'f', 1)
-                .arg(mouse.y,         0, 'f', 1)
+                .arg(mouse.coord.x,   0, 'f', 1)
+                .arg(mouse.coord.y,   0, 'f', 1)
                 .arg(d->viewOrigin.x, 0, 'f', 1)
                 .arg(d->viewOrigin.y, 0, 'f', 1)
                 .arg(d->viewScale,    0, 'f', 2);
@@ -1244,11 +1251,11 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
 {
     // Check what the mouse is hovering on.
     {
-        const auto pos = d->viewToWorld(event->pos());
+        const auto pos = d->viewToWorldPoint(event->pos());
         d->hoverPoint  = d->findPointAt(pos);
         d->hoverLine   = d->findLineAt(pos);
         d->hoverSector = (d->mode == Impl::EditSectors ? d->findSectorAt(pos) : 0);
-        d->hoverEntity = d->findEntityAt(pos);
+        d->hoverEntity = d->findEntityAt(d->viewToWorldCoord(event->pos()));
     }
 
     // Begin a drag action.
@@ -1329,13 +1336,13 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
         if (d->userAction == Impl::Rotate)
         {
             float      angle = delta.y() / 2.f;
-            const auto pivot = d->viewToWorld(d->pivotPos);
+            const auto pivot = d->viewToWorldPoint(d->pivotPos);
             xf               = Mat4f::rotateAround(
-                Vec3f(float(pivot.x), float(pivot.y)), angle, Vec3f(0, 0, 1));
+                Vec3f(float(pivot.coord.x), float(pivot.coord.y)), angle, Vec3f(0, 0, 1));
         }
         else
         {
-            const Vec3d pivot = d->viewToWorld(d->pivotPos);
+            const Vec3d pivot = d->viewToWorldPoint(d->pivotPos).coord;
             Vec3f scaler(1 + delta.x()/100.f, 1 + delta.y()/100.f);
             if (!(event->modifiers() & Qt::AltModifier)) scaler.y = scaler.x;
             xf = Mat4f::translate(pivot) * Mat4f::scale(scaler) * Mat4f::translate(-pivot);
@@ -1363,7 +1370,7 @@ void Editor::mouseReleaseEvent(QMouseEvent *event)
 
     if (d->mode == Impl::EditEntities && event->button() == Qt::RightButton)
     {
-        d->hoverEntity = d->findEntityAt(d->viewToWorld(event->pos()));
+        d->hoverEntity = d->findEntityAt(d->viewToWorldCoord(event->pos()));
         if (d->hoverEntity)
         {
             QMenu *pop = new QMenu(this);
@@ -1417,7 +1424,7 @@ void Editor::mouseDoubleClickEvent(QMouseEvent *event)
 
     if (d->hoverLine && (d->mode == Impl::EditLines || d->mode == Impl::EditPoints))
     {
-        d->splitLine(d->hoverLine, d->viewToWorld(event->pos()));
+        d->splitLine(d->hoverLine, d->viewToWorldPoint(event->pos()).coord);
     }
 }
 

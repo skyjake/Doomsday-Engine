@@ -373,6 +373,7 @@ IDList Map::findLinesStartingFrom(ID pointId, Line::Side side) const
 
 geo::Line2d Map::geoLine(ID lineId) const
 {
+    DENG2_ASSERT(d->lines.contains(lineId));
     const auto &line = d->lines[lineId];
     return geo::Line2d{point(line.points[0]).coord, point(line.points[1]).coord};
 }

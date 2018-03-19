@@ -157,6 +157,7 @@ struct Plane
     bool   isPointAbove(const Vec3d &pos) const;
     double project2D(const Vec2d &posXZ) const;
     Vec3d  project(const Vec3d &pos) const;
+    Vec3d  intersectRay(const Vec3d &pos, const Vec3f &rayDir) const;
 };
 
 }} // namespace gloom::geo
