@@ -23,7 +23,6 @@ flat DENG_VAR float vMaterial;
 flat DENG_VAR uint  vFlags;
 
 vec4 fetchTexOffset(uint offsetIndex) {
-    // uint dw = uint(textureSize(uTexOffsets, 0).x);
     return texelFetch(uTexOffsets, int(offsetIndex));
 }
 

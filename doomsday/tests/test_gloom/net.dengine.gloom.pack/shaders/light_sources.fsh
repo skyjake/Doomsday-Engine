@@ -70,7 +70,27 @@ void main(void) {
 #endif
 
         float ref = len / vRadius;
-        lit = texture(uShadowMaps[vShadowIndex], vec4(worldRay, ref));
+        vec4 shadowUV = vec4(worldRay, ref);
+        switch (vShadowIndex) {
+        case 0:
+            lit = texture(uShadowMaps[0], shadowUV);
+            break;
+        case 1:
+            lit = texture(uShadowMaps[1], shadowUV);
+            break;
+        case 2:
+            lit = texture(uShadowMaps[2], shadowUV);
+            break;
+        case 3:
+            lit = texture(uShadowMaps[3], shadowUV);
+            break;
+        case 4:
+            lit = texture(uShadowMaps[4], shadowUV);
+            break;
+        case 5:
+            lit = texture(uShadowMaps[5], shadowUV);
+            break;
+        }
         //out_FragColor = vec4(vec3(lit), 1.0);
         //return;
     }

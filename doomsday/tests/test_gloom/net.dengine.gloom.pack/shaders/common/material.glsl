@@ -61,8 +61,19 @@ MaterialSampler Gloom_Sampler(uint matIndex, int texture) {
 vec4 Gloom_SampleMaterial(const MaterialSampler sampler, vec2 uv) {
     vec2 normUV  = uv * sampler.metrics.scale;
     vec2 atlasUV = sampler.metrics.uvRect.xy + fract(normUV) * sampler.metrics.uvRect.zw;
-    return textureLod(uTextureAtlas[sampler.texture], atlasUV,
-                      mipLevel(normUV, sampler.metrics.sizeInTexels.xy) - 0.5);
+    float mip = mipLevel(normUV, sampler.metrics.sizeInTexels.xy) - 0.5;
+    switch (sampler.texture)
+    {
+    case Texture_Diffuse:
+        return textureLod(uTextureAtlas[Texture_Diffuse], atlasUV, mip);
+    case Texture_Emissive:
+        return textureLod(uTextureAtlas[Texture_Emissive], atlasUV, mip);
+    case Texture_SpecularGloss:
+        return textureLod(uTextureAtlas[Texture_SpecularGloss], atlasUV, mip);
+    case Texture_NormalDisplacement:
+        return textureLod(uTextureAtlas[Texture_NormalDisplacement], atlasUV, mip);
+    }
+    return vec4(0.0);
 }
 
 vec4 Gloom_TryFetchTexture(uint matIndex, int texture, vec2 uv, vec4 fallback) {

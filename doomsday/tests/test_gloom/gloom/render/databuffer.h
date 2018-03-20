@@ -84,7 +84,7 @@ struct DataBuffer
 
     void update()
     {
-        buf.setData(data.constData(), data.size() * sizeof(data[0]), usage);
+        buf.setData(data.constData(), data.size() * sizeof(Type), usage);
 
         auto &GL = LIBGUI_GL;
         if (!bufTex)
