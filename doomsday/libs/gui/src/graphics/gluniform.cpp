@@ -31,17 +31,17 @@ DENG2_PIMPL(GLUniform)
 {
     Block name;
     Type type;
-    union Value {
-        dint     int32;
-        duint    uint32;
-        dfloat   float32;
+    union Value{
+        dint    int32;
+        duint   uint32;
+        dfloat  float32;
         dint     *ints;
-        dfloat   *floats;
+        dfloat *floats;
         Vector2f *vec2array;
-        Vec3f *vec3array;
-        Vec4f *vector;
-        Mat3f *mat3;
-        Mat4f *mat4;
+        Vec3f * vec3array;
+        Vec4f * vector;
+        Mat3f * mat3;
+        Mat4f * mat4;
         GLTexture const *tex;
     } value;
     duint16 usedElemCount;

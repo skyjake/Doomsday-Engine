@@ -498,6 +498,29 @@ void GLBuffer::draw(DrawRanges const *ranges) const
 
     d->bindArray(true);
 
+#if defined (DENG2_DEBUG)
+    {
+        const GLuint progName = GLProgram::programInUse()->glName();
+        GLint isValid;
+        LIBGUI_GL.glValidateProgram(progName);
+        LIBGUI_GL.glGetProgramiv(progName, GL_VALIDATE_STATUS, &isValid);
+        DENG2_ASSERT(isValid);
+        if (!isValid)
+        {
+            qDebug() << "[GLProgram] Program" << progName << "status invalid";
+
+            dint32 logSize;
+            dint32 count;
+            GL.glGetProgramiv(progName, GL_INFO_LOG_LENGTH, &logSize);
+
+            Block log(logSize);
+            GL.glGetProgramInfoLog(progName, logSize, &count, reinterpret_cast<GLchar *>(log.data()));
+
+            qDebug() << "Program info log:" << log;
+        }
+    }
+#endif
+
     if (d->idxName)
     {
         GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
