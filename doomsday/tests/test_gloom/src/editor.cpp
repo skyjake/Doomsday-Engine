@@ -52,7 +52,11 @@ DENG2_PIMPL(Editor)
         EditPoints,
         EditLines,
         EditSectors,
+        EditPlanes,
+        EditVolumes,
         EditEntities,
+
+        ModeCount,
     };
     enum UserAction {
         None,
@@ -121,30 +125,21 @@ DENG2_PIMPL(Editor)
             st.setValue("viewScale", viewScale);
             st.setValue("viewOrigin", geo::toQVector2D(viewOrigin));
         }
-
-        // Save the map for later.
-/*        {
-            QFile f(persistentMapPath());
-            if (f.open(QFile::WriteOnly))
-            {
-                const Block data = map.serialize();
-                f.write(data.constData(), data.size());
-            }
-        }*/
     }
 
     String persistentMapPath() const
     {
-        //return GloomApp::app().userDir().filePath("persist.gloommap");
         return QSettings().value("filePath", "").toString();
     }
 
     String modeText() const
     {
-        const char *modeStr[4] = {
+        const char *modeStr[ModeCount] = {
             "Points",
             "Lines",
             "Sectors",
+            "Planes",
+            "Volumes",
             "Entities",
         };
         return modeStr[mode];
@@ -179,6 +174,8 @@ DENG2_PIMPL(Editor)
                    : mode == EditLines    ? map.lines()   .size()
                    : mode == EditSectors  ? map.sectors() .size()
                    : mode == EditEntities ? map.entities().size()
+                   : mode == EditPlanes   ? map.planes()  .size()
+                   : mode == EditVolumes  ? map.volumes() .size()
                    : 0)
                 .arg(selText)
                 .arg(actionText());
@@ -934,7 +931,9 @@ Editor::Editor()
     addKeyAction("Ctrl+1",          [this]() { d->setMode(Impl::EditPoints); });
     addKeyAction("Ctrl+2",          [this]() { d->setMode(Impl::EditLines); });
     addKeyAction("Ctrl+3",          [this]() { d->setMode(Impl::EditSectors); });
-    addKeyAction("Ctrl+4",          [this]() { d->setMode(Impl::EditEntities); });
+    addKeyAction("Ctrl+4",          [this]() { d->setMode(Impl::EditPlanes); });
+    addKeyAction("Ctrl+5",          [this]() { d->setMode(Impl::EditVolumes); });
+    addKeyAction("Ctrl+6",          [this]() { d->setMode(Impl::EditEntities); });
     addKeyAction("Ctrl+A",          [this]() { d->userSelectAll(); });
     addKeyAction("Ctrl+Shift+A",    [this]() { d->userSelectNone(); });
     addKeyAction("Ctrl+D",          [this]() { d->userAdd(); });
@@ -992,15 +991,21 @@ void Editor::paintEvent(QPaintEvent *)
     const int lineHgt = fontMetrics.height();
     const int gap     = 6;
 
-    const QColor panelBg = (d->mode == Impl::EditPoints?   QColor(0, 0, 0, 128)
-                          : d->mode == Impl::EditLines?    QColor(0, 20, 90, 160)
-                          : d->mode == Impl::EditEntities? QColor(140, 10, 0, 160)
-                          : QColor(255, 160, 0, 192));
+    static const QColor panelBgs[Impl::ModeCount] = {
+        {  0,   0,   0, 128},   // Points
+        {  0,  20,  90, 160},   // Lines
+        {255, 160,   0, 192},   // Sectors
+        {  0, 128, 255, 128},   // Planes
+        {225,  50, 225, 128},   // Volumes
+        {140,  10,   0, 160},   // Entities
+    };
+
+    const QColor panelBg = panelBgs[d->mode];
     const QColor selectColor(64, 92, 255);
     const QColor selectColorAlpha(selectColor.red(), selectColor.green(), selectColor.blue(), 150);
     const QColor gridMajor{180, 180, 180, 255};
     const QColor gridMinor{220, 220, 220, 255};
-    const QColor textColor = (d->mode == Impl::EditSectors? QColor(0, 0, 0) : QColor(255, 255, 255));
+    const QColor textColor = (panelBg.lightnessF() > 0.45 ? Qt::black : Qt::white);
     const QColor pointColor(170, 0, 0, 255);
     const QColor lineColor(64, 64, 64);
     const QColor verticalLineColor(128, 128, 128);
