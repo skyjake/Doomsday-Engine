@@ -227,12 +227,14 @@ DENG2_PIMPL(GloomWorld), public Asset
 
         renderContext.uCurrentTime = float(currentTime);
 
+        /*
         for (auto i = map.planes().begin(), end = map.planes().end(); i != end; ++i)
         {
             const float planeY = float(initialPlaneY[i.key()]) +
                                  std::sin(i.key() + float(currentTime) * .1f);
             i.value().point.y = planeY;
         }
+        */
 
         updateEntities(elapsed);
     }

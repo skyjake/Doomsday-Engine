@@ -85,6 +85,7 @@ DENG2_PIMPL(Editor)
     ID         hoverLine   = 0;
     ID         hoverSector = 0;
     ID         hoverEntity = 0;
+    ID         hoverPlane  = 0;
 
     float viewScale = 10;
     float viewYawAngle = 0;
@@ -190,6 +191,14 @@ DENG2_PIMPL(Editor)
         if (hoverEntity)
         {
             text += String(" [Entity:%1]").arg(hoverEntity, 0, 16);
+        }
+        if (hoverSector)
+        {
+            text += String(" [Sector:%1]").arg(hoverSector, 0, 16);
+        }
+        if (hoverPlane)
+        {
+            text += String(" [Plane:%1]").arg(hoverPlane, 0, 16);
         }
         return text;
     }
@@ -322,12 +331,17 @@ DENG2_PIMPL(Editor)
         return Point{Vec2d(p.x, p.z)};
     }
 
+    Mat4f viewOrientation() const
+    {
+        return Mat4f::rotate(viewPitchAngle, Vec3f(1, 0, 0)) *
+               Mat4f::rotate(viewYawAngle,   Vec3f(0, 1, 0));
+    }
+
     void updateView()
     {
         const QSize viewSize = self().rect().size();
 
-        Mat4f mapRot = Mat4f::rotate(viewPitchAngle, Vec3f(1, 0, 0)) *
-                       Mat4f::rotate(viewYawAngle,   Vec3f(0, 1, 0));
+        Mat4f mapRot = viewOrientation();
 
         worldFront = mapRot.inverse() * Vec3f{0, -1, 0};
 
@@ -732,6 +746,31 @@ DENG2_PIMPL(Editor)
         return 0;
     }
 
+    ID findPlaneAtViewPos(const QPoint &pos) const
+    {
+        for (ID secId : map.sectors().keys())
+        {
+            const Sector &sector = map.sector(secId);
+            const auto secPoly = map.sectorPolygon(secId);
+            for (ID volId : sector.volumes)
+            {
+                for (ID plnId : map.volume(volId).planes)
+                {
+                    QPolygonF poly;
+                    for (auto pp : secPoly.points)
+                    {
+                        poly << worldToView(Point{pp.pos}, &map.plane(plnId));
+                    }
+                    if (poly.containsPoint(pos, Qt::OddEvenFill))
+                    {
+                        return plnId;
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+
     ID findEntityAt(const Vec3d &pos, double maxDistance = -1) const
     {
         if (maxDistance < 0) maxDistance = defaultClickDistance();
@@ -796,6 +835,13 @@ DENG2_PIMPL(Editor)
             if (hoverSector)
             {
                 selectOrUnselect(hoverSector);
+            }
+            break;
+
+        case EditPlanes:
+            if (hoverPlane)
+            {
+                selectOrUnselect(hoverPlane);
             }
             break;
 
@@ -1017,7 +1063,7 @@ void Editor::paintEvent(QPaintEvent *)
         d->drawGridLine(ptr, Vec2d(), gridMajor);
     }
 
-    // Sectors.
+    // Sectors and planes.
     {
         for (auto i = mapSectors.begin(), end = mapSectors.end(); i != end; ++i)
         {
@@ -1048,7 +1094,6 @@ void Editor::paintEvent(QPaintEvent *)
             {
                 ptr.setPen(Qt::NoPen);
             }
-            ptr.setBrush(d->hoverSector == secId? panelBg : sectorColor);
 
             QPolygonF poly;
             for (int vol = 0; vol < sector.volumes.size(); ++vol)
@@ -1057,14 +1102,33 @@ void Editor::paintEvent(QPaintEvent *)
                 {
                     if (vol < sector.volumes.size() - 1 && planeIndex > 0) continue;
 
-                    const Plane &secPlane =
-                        d->map.plane(d->map.volume(sector.volumes.at(vol)).planes[planeIndex]);
+                    const ID     planeId = d->map.volume(sector.volumes.at(vol)).planes[planeIndex];
+                    const Plane &secPlane = d->map.plane(planeId);
 
                     poly.clear();
                     for (const auto &pp : geoPoly.points)
                     {
                         poly.append(d->worldToView(Point{pp.pos}, &secPlane));
                     }
+
+                    ptr.setBrush(d->hoverSector == secId ? panelBg : sectorColor);
+
+                    if (d->mode == Impl::EditPlanes)
+                    {
+                        if (d->selection.contains(planeId))
+                        {
+                            ptr.setBrush(selectColor);
+                        }
+                        else if (d->hoverPlane == planeId)
+                        {
+                            ptr.setBrush(panelBg);
+                        }
+                        else
+                        {
+                            ptr.setBrush(sectorColor);
+                        }
+                    }
+
                     ptr.drawPolygon(poly);
                 }
             }
@@ -1113,7 +1177,9 @@ void Editor::paintEvent(QPaintEvent *)
             // Show ID numbers.
             for (int i = 0; i < selected.size(); ++i)
             {
-                d->drawMetaLabel(ptr, selected[i].center() - QPointF(0, 2*gap), String::format("%X", selectedIds[i]));
+                d->drawMetaLabel(ptr,
+                                 selected[i].center() - QPointF(0, 2 * gap),
+                                 String::format("%X", selectedIds[i]));
             }
         }
     }
@@ -1260,6 +1326,7 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
         d->hoverPoint  = d->findPointAt(pos);
         d->hoverLine   = d->findLineAt(pos);
         d->hoverSector = (d->mode == Impl::EditSectors ? d->findSectorAt(pos) : 0);
+        d->hoverPlane  = (d->mode == Impl::EditPlanes  ? d->findPlaneAtViewPos(event->pos()) : 0);
         d->hoverEntity = d->findEntityAt(d->viewToWorldCoord(event->pos()));
     }
 
@@ -1310,10 +1377,12 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
         break;
 
     case Impl::Move: {
-        if (d->mode == Impl::EditPoints || d->mode == Impl::EditEntities)
+        if (d->mode == Impl::EditPoints || d->mode == Impl::EditEntities ||
+            d->mode == Impl::EditPlanes)
         {
             QPoint delta = event->pos() - d->actionPos;
             d->actionPos = event->pos();
+
             const Vec2d worldDelta = Vec2d(delta.x(), delta.y()) / d->viewScale;
             for (auto id : d->selection)
             {
@@ -1325,6 +1394,10 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
                 {
                     auto &ent = d->map.entity(id);
                     ent.setPosition(ent.position() + Vec3d(worldDelta.x, 0, worldDelta.y));
+                }
+                else if (d->mode == Impl::EditPlanes && d->map.planes().contains(id))
+                {
+                    d->map.plane(id).point.y -= worldDelta.y;
                 }
             }
         }
@@ -1340,9 +1413,10 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
 
         if (d->userAction == Impl::Rotate)
         {
-            float      angle = delta.y() / 2.f;
-            const auto pivot = d->viewToWorldPoint(d->pivotPos);
-            xf               = Mat4f::rotateAround(
+            const auto  pivot = d->viewToWorldPoint(d->pivotPos);
+            const float angle = delta.y() / 2.f;
+
+            xf = Mat4f::rotateAround(
                 Vec3f(float(pivot.coord.x), float(pivot.coord.y)), angle, Vec3f(0, 0, 1));
         }
         else
@@ -1447,7 +1521,8 @@ void Editor::wheelEvent(QWheelEvent *event)
     }
     else
     {
-        d->viewOrigin -= Vec2f(delta.x(), delta.y()) / d->viewScale;
+        d->viewOrigin -= Mat4f::rotate(d->viewYawAngle, Vec3f(0, 0, 1)) *
+                         Vec2f(delta.x(), delta.y()) / d->viewScale;
     }
     d->updateView();
     update();
