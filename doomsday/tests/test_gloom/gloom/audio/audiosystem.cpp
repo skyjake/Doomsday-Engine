@@ -22,8 +22,10 @@ struct FileAdapter
 
     FileAdapter(ByteArrayFile const &f) : file(&f), pos(0) {}
 
-    static FMOD_RESULT F_CALLBACK open(const char *name, unsigned int *filesize, void **handle,
-                                       void */*userdata*/)
+    static FMOD_RESULT F_CALLBACK open(const char *  name,
+                                       unsigned int *filesize,
+                                       void **       handle,
+                                       void *)
     {
         try
         {
@@ -47,8 +49,8 @@ struct FileAdapter
         return FMOD_OK;
     }
 
-    static FMOD_RESULT F_CALLBACK read(void *handle, void *buffer, unsigned int sizebytes,
-                                       unsigned int *bytesread, void *)
+    static FMOD_RESULT F_CALLBACK
+                       read(void *handle, void *buffer, unsigned int sizebytes, unsigned int *bytesread, void *)
     {
         FMOD_RESULT result = FMOD_OK;
         try

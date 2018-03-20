@@ -43,6 +43,8 @@
 #include <de/ModelDrawable>
 #include <de/TextureBank>
 
+#undef environ
+
 using namespace de;
 
 namespace gloom {

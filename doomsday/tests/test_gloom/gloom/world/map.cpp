@@ -875,7 +875,8 @@ bool Plane::isPointAbove(const Vec3d &pos) const
 
 Vec3d Plane::projectPoint(const Point &pos) const
 {
-    const double y = geo::Plane{point, normal}.project2D(pos.coord);
+    const auto geo = geo::Plane{point, normal};
+    const double y = geo.project2D(pos.coord);
     return Vec3d(pos.coord.x, y, pos.coord.y);
 }
 

@@ -47,9 +47,9 @@ vec4 GBuffer_FragViewSpacePos(void) {
 }
 
 vec3 GBuffer_FragViewSpaceNormal(void) {
-    vec4 packed = texelFetch(uGBufferNormal, ivec2(gl_FragCoord.xy), 0);
-    if (packed.xyz == vec3(0.0)) return vec3(0.0);
-    return GBuffer_UnpackNormal(packed);
+    vec4 packedNormal = texelFetch(uGBufferNormal, ivec2(gl_FragCoord.xy), 0);
+    if (packedNormal.xyz == vec3(0.0)) return vec3(0.0);
+    return GBuffer_UnpackNormal(packedNormal);
 }
 
 // MaterialData GBuffer_FragMaterialData(void) {

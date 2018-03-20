@@ -15,6 +15,8 @@ endif ()
 # Note: Additionally CMAKE_INSTALL_PREFIX must point to the SDK install dir.
 # This is used for finding the .pack files.
 
+find_package (PythonInterp REQUIRED)
+include (../../cmake/Arch.cmake)
 include (../../cmake/Macros.cmake)
 
 find_package (Qt5 COMPONENTS Gui Widgets Network OpenGL OpenGLExtensions)
