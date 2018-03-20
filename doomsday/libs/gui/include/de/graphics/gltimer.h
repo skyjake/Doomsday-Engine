@@ -20,6 +20,7 @@
 #define LIBGUI_GLTIMER_H
 
 #include <de/Id>
+#include "de/gui/libgui.h"
 
 namespace de {
 
@@ -34,7 +35,7 @@ namespace de {
  *
  * The timer results from the previous frame are available for reading.
  */
-class GLTimer
+class LIBGUI_PUBLIC GLTimer
 {
 public:
     GLTimer();

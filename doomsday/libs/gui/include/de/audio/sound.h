@@ -23,6 +23,8 @@
 #include <de/Observers>
 #include <de/Vector>
 
+#include "de/gui/libgui.h"
+
 namespace de {
 
 /**
@@ -37,7 +39,7 @@ namespace de {
  *
  * @ingroup audio
  */
-class Sound
+class LIBGUI_PUBLIC Sound
 {
 public:
     Sound();
