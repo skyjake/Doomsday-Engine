@@ -359,10 +359,7 @@ bool GLTexture::isCubeMap() const
 
 void GLTexture::setAutoGenMips(bool genMips)
 {
-    if (genMips)
-        d->flags |= AutoMips;
-    else
-        d->flags &= ~AutoMips;
+    applyFlagOperation(d->flags, AutoMips, genMips);
 }
 
 bool GLTexture::autoGenMips() const
