@@ -22,7 +22,7 @@
 #include <de/Rectangle>
 #include <de/Vector>
 #include <QHash>
-#include <unordered_map>
+#include <array>
 
 #include "gloom/identity.h"
 #include "gloom/geo/geomath.h"
@@ -43,23 +43,29 @@ struct Point
 struct Line
 {
     enum Side { Front = 0, Back = 1 };
+    enum Section { Bottom = 0, Middle = 1, Top = 2 };
 
     ID points[2];
-    ID sectors[2]; // front and back
+    struct Surface {
+        ID     sector;
+        String material[3]; // Bottom, Middle, Top
+    } surfaces[2]; // front and back
 
     ID startPoint(Side side) const { return points[side == Front ? 0 : 1]; }
     ID endPoint(Side side) const { return points[side == Front ? 1 : 0]; }
+    std::array<ID, 2> sectors() const { return std::array<ID, 2>{{surfaces[0].sector, surfaces[1].sector}}; }
 
-    bool isSelfRef() const { return sectors[Front] == sectors[Back]; }
-    bool isOneSided() const { return !sectors[Front] || !sectors[Back]; }
-    bool isTwoSided() const { return sectors[Front] && sectors[Back]; }
-    Side sectorSide(ID sector) const { return sectors[Front] == sector? Front : Back; }
+    bool isSelfRef() const { return surfaces[Front].sector == surfaces[Back].sector; }
+    bool isOneSided() const { return !surfaces[Front].sector || !surfaces[Back].sector; }
+    bool isTwoSided() const { return surfaces[Front].sector && surfaces[Back].sector; }
+    Side sectorSide(ID sector) const { return surfaces[Front].sector == sector? Front : Back; }
 };
 
 struct Plane
 {
     Vec3d point;
     Vec3f normal;
+    String material[2]; // front and back
 
     geo::Plane toGeoPlane() const { return geo::Plane{point, normal}; }
 

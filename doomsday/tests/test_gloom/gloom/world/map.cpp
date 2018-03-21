@@ -87,7 +87,7 @@ void Map::removeInvalid()
         {
             auto &line = iter.next().value();
             // Invalid sector references.
-            for (auto &secId : line.sectors)
+            for (auto secId : line.sectors())
             {
                 if (!d->sectors.contains(secId))
                 {
@@ -113,7 +113,7 @@ void Map::removeInvalid()
                 if (line.isOneSided() && other.isOneSided() && other.points[1] == line.points[0] &&
                     other.points[0] == line.points[1])
                 {
-                    other.sectors[1] = line.sectors[0];
+                    other.surfaces[1].sector = line.surfaces[0].sector;
                     // Sectors referencing the line must be updated.
                     for (Sector &sec : d->sectors)
                     {
@@ -154,7 +154,7 @@ void Map::removeInvalid()
                 {
                     // Missing references?
                     const Line &line = Map::line(i.value());
-                    if (line.sectors[0] != secId && line.sectors[1] != secId)
+                    if (line.surfaces[0].sector != secId && line.surfaces[1].sector != secId)
                     {
                         i.remove();
                     }
@@ -517,8 +517,8 @@ bool Map::buildSector(Edge         startSide,
 
             if (connectedLineId == at.line) continue;
 
-            if ((conPoint == conLine.points[at.side]     && conLine.sectors[at.side] == 0) ||
-                (conPoint == conLine.points[at.side ^ 1] && conLine.sectors[at.side ^ 1] == 0))
+            if ((conPoint == conLine.points[at.side]     && conLine.surfaces[at.side].sector == 0) ||
+                (conPoint == conLine.points[at.side ^ 1] && conLine.surfaces[at.side ^ 1].sector == 0))
             {
                 Edge conSide{
                     connectedLineId,
@@ -532,7 +532,8 @@ bool Map::buildSector(Edge         startSide,
             }
         }
 
-        if (atLine.sectors[0] == 0 && atLine.sectors[1] == 0 && candidates.isEmpty())
+        if (atLine.surfaces[0].sector == 0 && atLine.surfaces[1].sector == 0 &&
+            candidates.isEmpty())
         {
             // We may be switch to the other side of the line.
             Edge otherSide = at.flipped();
@@ -691,7 +692,16 @@ Block Map::serialize() const
             lineObj.insert("pt",
                            QJsonArray({idStr(i.value().points[0]), idStr(i.value().points[1])}));
             lineObj.insert("sec",
-                           QJsonArray({idStr(i.value().sectors[0]), idStr(i.value().sectors[1])}));
+                           QJsonArray({idStr(i.value().surfaces[0].sector),
+                                       idStr(i.value().surfaces[1].sector)}));
+            lineObj.insert("mtl",
+                           QJsonArray({
+                               i.value().surfaces[0].material[0],
+                               i.value().surfaces[0].material[1],
+                               i.value().surfaces[0].material[2],
+                               i.value().surfaces[1].material[0],
+                               i.value().surfaces[1].material[1],
+                               i.value().surfaces[1].material[2]}));
             lines.insert(idStr(i.key()), lineObj);
         }
         obj.insert("lines", lines);
@@ -709,7 +719,9 @@ Block Map::serialize() const
                                       plane.point.z,
                                       plane.normal.x,
                                       plane.normal.y,
-                                      plane.normal.z}));
+                                      plane.normal.z,
+                                      plane.material[0],
+                                      plane.material[1]}));
         }
         obj.insert("planes", planes);
     }
@@ -794,12 +806,27 @@ void Map::deserialize(const Block &data)
         const auto lines = map["lines"].toHash();
         for (auto i = lines.begin(); i != lines.end(); ++i)
         {
-            const auto obj     = i.value().toHash();
-            const auto points  = obj["pt"].toList();
-            const auto sectors = obj["sec"].toList();
-            d->lines.insert(getId(i.key()),
-                            Line{{idNum(points[0]), idNum(points[1])},
-                                 {idNum(sectors[0]), idNum(sectors[1])}});
+            const auto   obj       = i.value().toHash();
+            const auto   points    = obj["pt"].toList();
+            const auto   sectors   = obj["sec"].toList();
+            QVariantList materials = obj["mtl"].toList();
+
+            if (materials.isEmpty())
+            {
+                materials = QVariantList({"", "", "", "", "", ""});
+            }
+
+            Line::Surface frontSurface{idNum(sectors[0]),
+                                       {materials.at(0).toString(),
+                                        materials.at(1).toString(),
+                                        materials.at(2).toString()}};
+            Line::Surface backSurface{idNum(sectors[1]),
+                                      {materials.at(3).toString(),
+                                       materials.at(4).toString(),
+                                       materials.at(5).toString()}};
+            d->lines.insert(
+                getId(i.key()),
+                Line{{idNum(points[0]), idNum(points[1])}, {frontSurface, backSurface}});
         }
     }
 
@@ -811,7 +838,13 @@ void Map::deserialize(const Block &data)
             const auto obj = i.value().toList();
             Vec3d point{obj[0].toDouble(), obj[1].toDouble(), obj[2].toDouble()};
             Vec3f normal{obj[3].toFloat(), obj[4].toFloat(), obj[5].toFloat()};
-            d->planes.insert(getId(i.key()), Plane{point, normal});
+            String material[2];
+            if (obj.size() >= 8)
+            {
+                material[0] = obj[6].toString();
+                material[1] = obj[7].toString();
+            }
+            d->planes.insert(getId(i.key()), Plane{point, normal, {material[0], material[1]}});
         }
     }
 

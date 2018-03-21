@@ -345,7 +345,7 @@ DENG2_PIMPL(Editor)
 
         worldFront = mapRot.inverse() * Vec3f{0, -1, 0};
 
-        viewPlane     = Plane{{viewOrigin.x, 0, viewOrigin.y}, {0, 1, 0}};
+        viewPlane     = Plane{{viewOrigin.x, 0, viewOrigin.y}, {0, 1, 0}, {"", ""}};
         viewTransform = Mat4f::translate(Vec3f(viewSize.width() / 2, viewSize.height() / 2)) *
                         Mat4f::rotate(-90, Vec3f(1, 0, 0)) *
                         mapRot *
@@ -542,9 +542,9 @@ DENG2_PIMPL(Editor)
             {
                 // Connect to this point.
                 Line newLine;
-                newLine.points[0]  = prevPoint;
-                newLine.points[1]  = *selection.begin();
-                newLine.sectors[0] = newLine.sectors[1] = 0;
+                newLine.points[0]          = prevPoint;
+                newLine.points[1]          = *selection.begin();
+                newLine.surfaces[0].sector = newLine.surfaces[1].sector = 0;
                 if (newLine.points[0] != newLine.points[1])
                 {
                     map.append(map.lines(), newLine);
@@ -574,7 +574,7 @@ DENG2_PIMPL(Editor)
                           map.geoLine(hoverLine).isFrontSide(clickPos.coord) ? Line::Front
                                                                              : Line::Back};
 
-            if (map.line(hoverLine).sectors[startRef.side] == 0)
+            if (map.line(hoverLine).surfaces[startRef.side].sector == 0)
             {
                 IDList      secPoints;
                 IDList      secWalls;
@@ -584,8 +584,8 @@ DENG2_PIMPL(Editor)
                 {
                     pushUndo();
 
-                    const ID floor = map.append(map.planes(), Plane{{Vec3d()}, {Vec3f(0, 1, 0)}});
-                    const ID ceil  = map.append(map.planes(), Plane{{Vec3d(0, 3, 0)}, {Vec3f(0, -1, 0)}});
+                    const ID floor = map.append(map.planes(), Plane{{Vec3d()}, {Vec3f(0, 1, 0)}, {"", ""}});
+                    const ID ceil  = map.append(map.planes(), Plane{{Vec3d(0, 3, 0)}, {Vec3f(0, -1, 0)}, {"", ""}});
                     const ID vol   = map.append(map.volumes(), Volume{{floor, ceil}});
 
                     Sector newSector{secPoints, secWalls, {vol}};
@@ -593,7 +593,7 @@ DENG2_PIMPL(Editor)
 
                     for (Edge edge : secEdges)
                     {
-                        map.line(edge.line).sectors[edge.side] = secId;
+                        map.line(edge.line).surfaces[edge.side].sector = secId;
                     }
                     selection.clear();
                     selection.insert(secId);
@@ -1103,7 +1103,7 @@ void Editor::paintEvent(QPaintEvent *)
                     if (vol < sector.volumes.size() - 1 && planeIndex > 0) continue;
 
                     const ID     planeId = d->map.volume(sector.volumes.at(vol)).planes[planeIndex];
-                    const Plane &secPlane = d->map.plane(planeId);
+                    const Plane &secPlane = mapPlanes[planeId];
 
                     poly.clear();
                     for (const auto &pp : geoPoly.points)
@@ -1233,11 +1233,11 @@ void Editor::paintEvent(QPaintEvent *)
                     //if (line.sectors[0])
                         d->drawMetaLabel(ptr,
                                          selected[i].center() + delta * -20,
-                                         String::format("%X", line.sectors[0]), false);
-                    if (line.sectors[1])
+                                         String::format("%X", line.surfaces[0].sector), false);
+                    if (line.surfaces[1].sector)
                         d->drawMetaLabel(ptr,
                                          selected[i].center() + delta * 20,
-                                         String::format("%X", line.sectors[1]), false);
+                                         String::format("%X", line.surfaces[1].sector), false);
                 }
             }
         }
@@ -1473,7 +1473,7 @@ void Editor::mouseReleaseEvent(QMouseEvent *event)
             const ID entityId = d->hoverEntity;
             for (const auto &et : types)
             {
-                QAction *a = eType->addAction(et.label, [this, entityId, et] () {
+                /*QAction *a = */ eType->addAction(et.label, [this, entityId, et] () {
                     d->map.entity(entityId).setType(et.type);
                 });
             }

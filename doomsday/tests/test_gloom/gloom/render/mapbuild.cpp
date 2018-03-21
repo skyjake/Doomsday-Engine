@@ -71,7 +71,7 @@ DENG2_PIMPL_NOREF(MapBuild)
         Buffer::Vertices verts;
         Buffer::Indices indices;
 
-        // Project each sector's points to their floor and ceiling planes.
+        // Project each sector's points to all their planes.
         const auto sectorPlaneVerts = map.worldSectorPlaneVerts();
 
         // Assign indices to planes.
@@ -94,6 +94,7 @@ DENG2_PIMPL_NOREF(MapBuild)
             // Split the polygon to convex parts (for triangulation).
             const auto convexParts = map.sectorPolygon(sectorId).splitConvexParts();
 
+            // Sector planes.
             {
                 const bool buildFloor   = true;
                 const bool buildCeiling = false;
@@ -102,7 +103,6 @@ DENG2_PIMPL_NOREF(MapBuild)
                 const auto &floor      = planeVerts.front();
                 const auto &ceiling    = planeVerts.back();
 
-                // Build the floor and ceiling of this volume.
                 {
                     // TODO: If only one plane is needed, no need to add vertices for both.
 
@@ -222,7 +222,7 @@ DENG2_PIMPL_NOREF(MapBuild)
 
                     if (line.isSelfRef()) continue;
 
-                    const int      dir    = line.sectors[0] == sectorId? 1 : 0;
+                    const int      dir    = line.surfaces[0].sector == sectorId? 1 : 0;
                     const ID       start  = line.points[dir^1];
                     const ID       end    = line.points[dir];
                     const Vec3f    normal = worldNormalVector(line);
@@ -246,7 +246,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                     }
                     else if (dir)
                     {
-                        const ID    backSectorId   = line.sectors[dir];
+                        const ID    backSectorId   = line.sectors()[dir];
                         const auto &backPlaneVerts = sectorPlaneVerts[backSectorId];
 
                         const uint32_t botIndex[2] = {planeIndex[0],
