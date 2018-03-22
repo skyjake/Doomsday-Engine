@@ -25,10 +25,12 @@
 
 namespace gloom {
 
+using namespace de;
+
 class MaterialLib : public Render
 {
 public:
-    typedef QHash<de::String, uint32_t> Ids;
+    typedef QHash<String, uint32_t> Ids;
 
 public:
     MaterialLib();
@@ -39,7 +41,7 @@ public:
 
     const Ids &materials() const;
 
-    de::GLUniform &uTextureMetrics();
+    GLUniform &uTextureMetrics();
 
 private:
     DENG2_PRIVATE(d)

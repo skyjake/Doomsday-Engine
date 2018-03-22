@@ -23,6 +23,8 @@
 
 namespace gloom {
 
+using namespace de;
+
 class Tonemap : public Render
 {
 public:
@@ -31,10 +33,10 @@ public:
     void glInit(Context &) override;
     void glDeinit() override;
     void render() override;
-    void advanceTime(de::TimeSpan) override;
+    void advanceTime(TimeSpan) override;
 
-    de::GLTexture &brightnessSample(int index) const;
-    de::GLUniform &uExposure() const;
+    GLTexture &brightnessSample(int index) const;
+    GLUniform &uExposure() const;
 
 private:
     DENG2_PRIVATE(d)

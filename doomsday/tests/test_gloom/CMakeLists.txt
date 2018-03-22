@@ -94,6 +94,8 @@ set (SOURCES
     src/gloomapp.h
     src/editor.cpp
     src/editor.h
+    src/editorwindow.cpp
+    src/editorwindow.h
     src/main.cpp
     src/mainwindow.cpp
     src/mainwindow.h

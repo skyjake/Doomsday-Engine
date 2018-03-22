@@ -325,6 +325,11 @@ bool Map::isLine(ID id) const
     return d->lines.contains(id);
 }
 
+bool Map::isPlane(ID id) const
+{
+    return d->planes.contains(id);
+}
+
 void Map::forLinesAscendingDistance(const Point &pos, std::function<bool (ID)> func) const
 {
     using DistLine = std::pair<ID, double>;

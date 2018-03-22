@@ -19,6 +19,7 @@
 #include "gloom/render/mapbuild.h"
 #include "gloom/geo/polygon.h"
 #include "gloom/geo/geomath.h"
+#include "gloom/render/defs.h"
 
 #include <array>
 
@@ -96,12 +97,14 @@ DENG2_PIMPL_NOREF(MapBuild)
 
             // Sector planes.
             {
-                const bool buildFloor   = true;
-                const bool buildCeiling = false;
+                const auto &planeVerts   = sectorPlaneVerts[sectorId];
+                const auto &floor        = planeVerts.front();
+                const auto &ceiling      = planeVerts.back();
+                const auto &floorPlane   = map.floorPlane(sectorId);
+                const auto &ceilingPlane = map.ceilingPlane(sectorId);
 
-                const auto &planeVerts = sectorPlaneVerts[sectorId];
-                const auto &floor      = planeVerts.front();
-                const auto &ceiling    = planeVerts.back();
+                const bool buildFloor   = bool(floorPlane.material[0]);
+                const bool buildCeiling = bool(ceilingPlane.material[0]);
 
                 {
                     // TODO: If only one plane is needed, no need to add vertices for both.
@@ -110,17 +113,19 @@ DENG2_PIMPL_NOREF(MapBuild)
                     Buffer::Type f{}, c{};
                     QHash<ID, Buffer::Index> pointIndices;
 
-                    f.material[0] = materials["world.test"]; // "world.grass"];
-                    f.normal      = map.floorPlane(sectorId).normal;
-                    f.tangent     = map.floorPlane(sectorId).tangent();
+                    f.material[0] = materials[floorPlane.material[0]];
+                    f.material[1] = INVALID_INDEX;
+                    f.normal      = floorPlane.normal;
+                    f.tangent     = floorPlane.tangent();
                     f.flags       = MapVertex::WorldSpaceXZToTexCoords | MapVertex::FlipTexCoordY |
                                     MapVertex::TextureOffset;
                     f.geoPlane     = planeMapper[map.floorPlaneId(sectorId)];
                     f.texOffset[0] = texOffsetMapper[map.floorPlaneId(sectorId)];
 
-                    c.material[0]  = materials["world.test"]; //"world.dirt"];
-                    c.normal       = map.ceilingPlane(sectorId).normal;
-                    c.tangent      = map.ceilingPlane(sectorId).tangent();
+                    c.material[0]  = materials[ceilingPlane.material[0]];
+                    c.material[1]  = INVALID_INDEX;
+                    c.normal       = ceilingPlane.normal;
+                    c.tangent      = ceilingPlane.tangent();
                     c.flags        = MapVertex::WorldSpaceXZToTexCoords | MapVertex::TextureOffset;
                     c.geoPlane     = planeMapper[map.ceilingPlaneId(sectorId)];
                     c.texOffset[0] = texOffsetMapper[map.ceilingPlaneId(sectorId)];
@@ -165,8 +170,8 @@ DENG2_PIMPL_NOREF(MapBuild)
                     }
                 }
 
-                auto makeQuad = [this, &indices, &verts](const String &  frontTextureName,
-                                                         const String &  backTextureName,
+                auto makeQuad = [this, &indices, &verts](const String &  frontMaterial,
+                                                         const String &  backMaterial,
                                                          const Vec3f &   normal,
                                                          const uint32_t *planeIndex,
                                                          uint32_t        flags,
@@ -175,7 +180,10 @@ DENG2_PIMPL_NOREF(MapBuild)
                                                          const Vec3f &   p3,
                                                          const Vec3f &   p4,
                                                          float           length,
-                                                         float           rotation) {
+                                                         float           rotation)
+                {
+                    if (!frontMaterial && !backMaterial) return;
+
                     const Buffer::Index baseIndex = Buffer::Index(verts.size());
                     indices << baseIndex
                             << baseIndex + 3
@@ -186,8 +194,8 @@ DENG2_PIMPL_NOREF(MapBuild)
 
                     Buffer::Type v{};
 
-                    v.material[0] = materials[frontTextureName];
-                    v.material[1] = materials[backTextureName];
+                    v.material[0] = materials[frontMaterial];
+                    v.material[1] = materials[backMaterial];
                     v.normal      = normal;
                     v.flags       = flags;
                     v.tangent     = (p2 - p1).normalize();
@@ -232,8 +240,8 @@ DENG2_PIMPL_NOREF(MapBuild)
 
                     if (!line.isTwoSided())
                     {
-                        makeQuad("world.test",
-                                 "world.test",
+                        makeQuad(line.surfaces[Line::Front].material[Line::Middle],
+                                 line.surfaces[Line::Back ].material[Line::Middle],
                                  normal,
                                  planeIndex,
                                  MapVertex::WorldSpaceYToTexCoord,
@@ -254,8 +262,8 @@ DENG2_PIMPL_NOREF(MapBuild)
                         const uint32_t topIndex[2] = {planeMapper[map.ceilingPlaneId(backSectorId)],
                                                       planeIndex[1]};
 
-                        makeQuad("world.test",
-                                 "world.test2",
+                        makeQuad(line.surfaces[Line::Front].material[Line::Bottom],
+                                 line.surfaces[Line::Back ].material[Line::Bottom],
                                  normal,
                                  botIndex,
                                  MapVertex::WorldSpaceYToTexCoord | MapVertex::AnchorTopPlane,
@@ -266,20 +274,17 @@ DENG2_PIMPL_NOREF(MapBuild)
                                  length,
                                  0);
 
-                        if (false)
-                        {
-                            makeQuad("world.test",
-                                     "world.test2",
-                                     normal,
-                                     topIndex,
-                                     MapVertex::WorldSpaceYToTexCoord,
-                                     backPlaneVerts.back()[start],
-                                     backPlaneVerts.back()[end],
-                                     ceiling[start],
-                                     ceiling[end],
-                                     length,
-                                     0);
-                        }
+                        makeQuad(line.surfaces[Line::Front].material[Line::Top],
+                                 line.surfaces[Line::Back ].material[Line::Top],
+                                 normal,
+                                 topIndex,
+                                 MapVertex::WorldSpaceYToTexCoord,
+                                 backPlaneVerts.back()[start],
+                                 backPlaneVerts.back()[end],
+                                 ceiling[start],
+                                 ceiling[end],
+                                 length,
+                                 0);
                     }
                 }
             }

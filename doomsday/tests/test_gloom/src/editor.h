@@ -31,7 +31,10 @@ public:
 
     gloom::Map &map();
 
-    void closeEvent(QCloseEvent *) override;
+    bool maybeClose();
+    QSet<gloom::ID> selection() const;
+    void markAsChanged();
+
     void paintEvent(QPaintEvent *) override;
     void mousePressEvent(QMouseEvent *) override;
     void mouseReleaseEvent(QMouseEvent *) override;
@@ -40,6 +43,8 @@ public:
     void wheelEvent(QWheelEvent *) override;
 
 signals:
+    void lineSelectionChanged();
+    void planeSelectionChanged();
     void buildMapRequested();
 
 private:

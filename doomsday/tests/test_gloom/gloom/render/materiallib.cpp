@@ -98,6 +98,7 @@ DENG2_PIMPL(MaterialLib)
 
         textureMetrics.clear();
         materials.clear();
+        materials.insert(String(), INVALID_INDEX);
 
         for (auto i = loadedTextures.begin(); i != loadedTextures.end(); ++i)
         {

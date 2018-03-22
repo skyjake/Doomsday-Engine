@@ -17,7 +17,7 @@
  */
 
 #include "gloomapp.h"
-#include "editor.h"
+#include "editorwindow.h"
 #include "appwindowsystem.h"
 #include "../gloom/gloomworld.h"
 #include "../gloom/gloomwidget.h"
@@ -34,7 +34,7 @@ using namespace gloom;
 DENG2_PIMPL(GloomApp)
 {
     ImageBank                        images;
-    std::unique_ptr<Editor>          editor;
+    std::unique_ptr<EditorWindow>    editWin;
     std::unique_ptr<AppWindowSystem> winSys;
     std::unique_ptr<AudioSystem>     audioSys;
     std::unique_ptr<GloomWorld>      world;
@@ -78,13 +78,13 @@ void GloomApp::initialize()
 
     // Set up the editor.
     {
-        d->editor.reset(new Editor());
-        d->editor->show();
-        d->editor->raise();
+        d->editWin.reset(new EditorWindow);
+        d->editWin->show();
+        d->editWin->raise();
 
-        connect(d->editor.get(), &Editor::buildMapRequested, [this]() {
+        connect(&d->editWin->editor(), &Editor::buildMapRequested, [this]() {
             AppWindowSystem::main().glActivate();
-            d->world->setMap(d->editor->map());
+            d->world->setMap(d->editWin->editor().map());
         });
     }
 

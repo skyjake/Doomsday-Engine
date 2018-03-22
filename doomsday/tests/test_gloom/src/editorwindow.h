@@ -1,4 +1,4 @@
-/** @file gloom/render/defs.h
+/** @file editorwindow.h
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,29 +16,25 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_RENDER_DEFS_H
-#define GLOOM_RENDER_DEFS_H
+#ifndef EDITORWINDOW_H
+#define EDITORWINDOW_H
 
-#include <cstdint>
+#include <QMainWindow>
+#include "editor.h"
 
-namespace gloom {
+class EditorWindow : public QMainWindow
+{
+    Q_OBJECT
 
-static const uint32_t INVALID_INDEX = 0xffffffff;
+public:
+    EditorWindow();
 
-enum Texture {
-    Diffuse            = 0, // RGB: Diffuse  | A: Opacity
-    SpecularGloss      = 1, // RGB: Specular | A: Gloss
-    Emissive           = 2, // RGB: Emissive
-    NormalDisplacement = 3, // RGB: Normal   | A: Displacement
+    Editor &editor();
 
-    TextureMapCount = 4,
+    void closeEvent(QCloseEvent *event) override;
+
+private:
+    DENG2_PRIVATE(d)
 };
 
-enum BloomMode {
-    BloomHorizontal = 0,
-    BloomVertical   = 1,
-};
-
-} // namespace gloom
-
-#endif // GLOOM_RENDER_DEFS_H
+#endif // EDITORWINDOW_H

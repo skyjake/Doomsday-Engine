@@ -27,20 +27,22 @@
 
 namespace gloom {
 
+using namespace de;
+
 /**
  * Vertex format with 3D coordinates, normal vector, one set of texture
  * coordinates, and an RGBA color.
  */
 struct MapVertex
 {
-    de::Vec3f pos;
-    de::Vec3f normal;
-    de::Vec3f tangent;
-    de::Vec4f texCoord;
+    Vec3f    pos;
+    Vec3f    normal;
+    Vec3f    tangent;
+    Vec4f    texCoord;
     uint32_t material[2];
     uint32_t geoPlane;
-    uint32_t texPlane[2];   // Index0: vec3
-    uint32_t texOffset[2];  // Index1: vec2
+    uint32_t texPlane[2];  // Index0: vec3
+    uint32_t texOffset[2]; // Index1: vec2
     uint32_t flags;
 
     LIBGUI_DECLARE_VERTEX_FORMAT(9)
@@ -57,9 +59,13 @@ struct MapVertex
 class MapBuild
 {
 public:
-    typedef de::GLBufferT<MapVertex> Buffer;
+    typedef GLBufferT<MapVertex> Buffer;
 
 public:
+    MapBuild(const Map &map, const MaterialLib::Ids &materials);
+    Buffer *build();
+
+    /// Helper for mapping IDs to elements of a data buffer.
     struct Mapper : public QHash<ID, uint32_t>
     {
         uint32_t insert(ID id)
@@ -74,9 +80,6 @@ public:
             return found.value();
         }
     };
-
-    MapBuild(const Map &map, const MaterialLib::Ids &materials);
-    Buffer *build();
 
     const Mapper &planeMapper() const;
     const Mapper &texOffsetMapper() const;

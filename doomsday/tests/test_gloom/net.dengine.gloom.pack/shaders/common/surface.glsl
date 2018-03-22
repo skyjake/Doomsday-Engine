@@ -24,7 +24,6 @@ struct Surface {
 };
 
 float Gloom_FetchPlaneY(uint planeIndex) {
-    // int dw = textureSize(uPlanes, 0).x);
     return texelFetch(uPlanes, int(planeIndex)).r;
 }
 

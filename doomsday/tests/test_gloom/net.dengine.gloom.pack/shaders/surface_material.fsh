@@ -10,7 +10,7 @@
      DENG_VAR vec3  vWSTangent;
      DENG_VAR vec3  vWSBitangent;
      DENG_VAR vec3  vWSNormal;
-flat DENG_VAR float vMaterial;
+flat DENG_VAR uint  vMaterial;
 flat DENG_VAR uint  vFlags;
 
 vec2 Gloom_Parallax(uint matIndex, vec2 texCoords, vec3 viewDir) {
@@ -54,7 +54,10 @@ vec2 Gloom_Parallax(uint matIndex, vec2 texCoords, vec3 viewDir) {
 }
 
 void main(void) {
-    uint matIndex = uint(vMaterial + 0.5);
+    uint matIndex = vMaterial; //uint(vMaterial + 0.5);
+
+    // One-sided surfaces may lack one of the materials.
+    if (matIndex == InvalidIndex) discard;
 
     // Normal mapping.
     TangentSpace ts = TangentSpace(normalize(vWSTangent),

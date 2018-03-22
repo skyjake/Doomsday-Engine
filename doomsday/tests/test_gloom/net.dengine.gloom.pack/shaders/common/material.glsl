@@ -19,7 +19,7 @@ const vec4 Material_DefaultTextureValue[4] = vec4[4] (
     vec4(1.0), // diffuse
     vec4(0.0), // specular/gloss
     vec4(0.0), // emissive
-    vec4(0.5, 0.5, 0.5, 1.0) // normal/displacement
+    vec4(0.5, 0.5, 1.0, 1.0) // normal/displacement
 );
 
 const int Material_TextureMetricsTexelsPerTexture = 2;

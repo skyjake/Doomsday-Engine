@@ -29,6 +29,8 @@
 
 namespace gloom {
 
+using namespace de;
+
 class Shadow;
 
 /**
@@ -43,28 +45,28 @@ public:
 
     void setEntity(const Entity *entity);
     void setType(Type type);
-    void setIntensity(const de::Vec3f &intensity);
+    void setIntensity(const Vec3f &intensity);
     void setCastShadows(bool castShadows);
 
     const Entity *entity() const;
 
-    bool      castShadows() const;
-    Type      type() const;
-    de::Vec3f origin() const; // from entity
-    de::Vec3f direction() const;
-    de::Vec3f intensity() const;
-    float     fovY() const;
-    float     aspectRatio() const;
-    float     falloffDistance() const;
+    bool  castShadows() const;
+    Type  type() const;
+    Vec3f origin() const; // from entity
+    Vec3f direction() const;
+    Vec3f intensity() const;
+    float fovY() const;
+    float aspectRatio() const;
+    float falloffDistance() const;
 
-    de::Mat4f lightMatrix() const;
-    de::Mat4f lightMatrix(de::gl::CubeFace) const;
+    Mat4f lightMatrix() const;
+    Mat4f lightMatrix(gl::CubeFace) const;
 
-    de::Vec3f cameraPosition() const;
-    de::Vec3f cameraFront() const;
-    de::Vec3f cameraUp() const;
-    de::Mat4f cameraProjection() const;
-    de::Mat4f cameraModelView() const;
+    Vec3f cameraPosition() const;
+    Vec3f cameraFront() const;
+    Vec3f cameraUp() const;
+    Mat4f cameraProjection() const;
+    Mat4f cameraModelView() const;
 
 private:
     DENG2_PRIVATE(d)

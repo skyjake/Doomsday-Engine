@@ -163,6 +163,7 @@ public:
 
     Rectangled        bounds() const;
     bool              isLine(ID id) const;
+    bool              isPlane(ID id) const;
     void              forLinesAscendingDistance(const Point &pos, std::function<bool(ID)>) const;
     IDList            findLines(ID pointId) const;
     IDList            findLinesStartingFrom(ID pointId, Line::Side side) const;

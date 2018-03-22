@@ -283,6 +283,7 @@ DENG2_PIMPL(Editor)
                         selection.insert(i.key());
                     }
                 }
+                if (mode == EditLines) emit self().lineSelectionChanged();
                 break;
 
             case EditEntities:
@@ -407,6 +408,7 @@ DENG2_PIMPL(Editor)
             {
                 selection.insert(id);
             }
+            emit self().lineSelectionChanged();
             break;
 
         case EditSectors:
@@ -422,6 +424,10 @@ DENG2_PIMPL(Editor)
                 selection.insert(id);
             }
             break;
+
+        case EditPlanes:
+            emit self().planeSelectionChanged();
+            break;
         }
         self().update();
     }
@@ -429,6 +435,8 @@ DENG2_PIMPL(Editor)
     void userSelectNone()
     {
         selection.clear();
+        emit self().lineSelectionChanged();
+        emit self().planeSelectionChanged();
         self().update();
     }
 
@@ -829,6 +837,7 @@ DENG2_PIMPL(Editor)
                     selectOrUnselect(id);
                 }
             }
+            emit self().lineSelectionChanged();
             break;
 
         case EditSectors:
@@ -843,6 +852,7 @@ DENG2_PIMPL(Editor)
             {
                 selectOrUnselect(hoverPlane);
             }
+            emit self().planeSelectionChanged();
             break;
 
         case EditEntities:
@@ -956,12 +966,6 @@ Editor::Editor()
     setMouseTracking(true);
     setCursor(Qt::CrossCursor);
 
-    QSettings st;
-    if (st.contains("editorGeometry"))
-    {
-        restoreGeometry(st.value("editorGeometry").toByteArray());
-    }
-
     auto addKeyAction = [this] (QString shortcut, std::function<void()> func)
     {
         QAction *add = new QAction;
@@ -1004,16 +1008,24 @@ Map &Editor::map()
     return d->map;
 }
 
-void Editor::closeEvent(QCloseEvent *event)
+bool Editor::maybeClose()
 {
     if (!d->askSaveFile())
     {
-        event->ignore();
-        return;
+        return false;
     }
     d->isModified = false;
-    QSettings().setValue("editorGeometry", saveGeometry());
-    QWidget::closeEvent(event);
+    return true;
+}
+
+QSet<ID> Editor::selection() const
+{
+    return d->selection;
+}
+
+void Editor::markAsChanged()
+{
+    d->isModified = true;
 }
 
 void Editor::paintEvent(QPaintEvent *)

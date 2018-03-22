@@ -3,6 +3,8 @@
 
 const float Pi = 3.141592653589793;
 
+const uint InvalidIndex = 0xffffffffu;
+
 const uint Surface_WorldSpaceXZToTexCoords = 0x01u;
 const uint Surface_WorldSpaceYToTexCoord   = 0x02u;
 const uint Surface_FlipTexCoordY           = 0x04u;

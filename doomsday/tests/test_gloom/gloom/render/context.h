@@ -30,6 +30,8 @@
 
 namespace gloom {
 
+using namespace de;
+
 class GBuffer;
 class SSAO;
 class Bloom;
@@ -38,39 +40,39 @@ class LightRender;
 class Tonemap;
 
 struct Context {
-    const de::ImageBank *     images;
-    de::GLShaderBank *        shaders;
-    const Map *               map;
-    de::AtlasTexture **       atlas;
-    View                      view;
-    SSAO *                    ssao;
-    GBuffer *                 gbuffer;
-    Bloom *                   bloom;
-    de::GLTextureFramebuffer *framebuf;
-    MapRender *               mapRender;
-    LightRender *             lights;
-    Tonemap *                 tonemap;
+    const ImageBank *     images;
+    GLShaderBank *        shaders;
+    const Map *           map;
+    AtlasTexture **       atlas;
+    View                  view;
+    SSAO *                ssao;
+    GBuffer *             gbuffer;
+    Bloom *               bloom;
+    GLTextureFramebuffer *framebuf;
+    MapRender *           mapRender;
+    LightRender *         lights;
+    Tonemap *             tonemap;
 
-    de::GLUniform uCurrentTime      {"uCurrentTime",      de::GLUniform::Float};
+    GLUniform uCurrentTime      {"uCurrentTime",      GLUniform::Float};
 
-    de::GLUniform uDiffuseAtlas     {"uTextureAtlas[0]",  de::GLUniform::Sampler2D};
-    de::GLUniform uSpecGlossAtlas   {"uTextureAtlas[1]",  de::GLUniform::Sampler2D};
-    de::GLUniform uEmissiveAtlas    {"uTextureAtlas[2]",  de::GLUniform::Sampler2D};
-    de::GLUniform uNormalDisplAtlas {"uTextureAtlas[3]",  de::GLUniform::Sampler2D};
-    de::GLUniform uEnvMap           {"uEnvMap",           de::GLUniform::SamplerCube};
-    de::GLUniform uEnvIntensity     {"uEnvIntensity",     de::GLUniform::Vec3};
+    GLUniform uDiffuseAtlas     {"uTextureAtlas[0]",  GLUniform::Sampler2D};
+    GLUniform uSpecGlossAtlas   {"uTextureAtlas[1]",  GLUniform::Sampler2D};
+    GLUniform uEmissiveAtlas    {"uTextureAtlas[2]",  GLUniform::Sampler2D};
+    GLUniform uNormalDisplAtlas {"uTextureAtlas[3]",  GLUniform::Sampler2D};
+    GLUniform uEnvMap           {"uEnvMap",           GLUniform::SamplerCube};
+    GLUniform uEnvIntensity     {"uEnvIntensity",     GLUniform::Vec3};
 
-    de::GLUniform uLightMatrix      {"uLightMatrix",      de::GLUniform::Mat4};
-    de::GLUniform uLightOrigin      {"uLightOrigin",      de::GLUniform::Vec3};
-    de::GLUniform uLightFarPlane    {"uFarPlane",         de::GLUniform::Float};
-    de::GLUniform uLightCubeMatrices{"uCubeFaceMatrices", de::GLUniform::Mat4Array, 6};
+    GLUniform uLightMatrix      {"uLightMatrix",      GLUniform::Mat4};
+    GLUniform uLightOrigin      {"uLightOrigin",      GLUniform::Vec3};
+    GLUniform uLightFarPlane    {"uFarPlane",         GLUniform::Float};
+    GLUniform uLightCubeMatrices{"uCubeFaceMatrices", GLUniform::Mat4Array, 6};
 
-    de::GLUniform uDebugTex         {"uDebugTex",         de::GLUniform::Sampler2D};
-    de::GLUniform uDebugMode        {"uDebugMode",        de::GLUniform::Int};
+    GLUniform uDebugTex         {"uDebugTex",         GLUniform::Sampler2D};
+    GLUniform uDebugMode        {"uDebugMode",        GLUniform::Int};
 
-    Context &bindCamera(de::GLProgram &);
-    Context &bindGBuffer(de::GLProgram &);
-    Context &bindMaterials(de::GLProgram &);
+    Context &bindCamera(GLProgram &);
+    Context &bindGBuffer(GLProgram &);
+    Context &bindMaterials(GLProgram &);
 };
 
 } // namespace gloom

@@ -26,6 +26,8 @@
 
 namespace gloom {
 
+using namespace de;
+
 /**
  * G-buffer used for rendering.
  */
@@ -38,18 +40,17 @@ public:
     void glDeinit() override;
     void render() override;
 
-    void       clear();
-    void       resize(const de::Vec2ui &size);
-    de::Vec2ui size() const;
-//    void       setDebugMode(int debugMode);
+    void   clear();
+    void   resize(const Vec2ui &size);
+    Vec2ui size() const;
 
-    de::GLFramebuffer &framebuf();
+    GLFramebuffer &framebuf();
 
-    de::GLUniform &    uGBufferDiffuse();
-    de::GLUniform &    uGBufferEmissive();
-    de::GLUniform &    uGBufferSpecGloss();
-    de::GLUniform &    uGBufferNormal();
-    de::GLUniform &    uGBufferDepth();
+    GLUniform &uGBufferDiffuse();
+    GLUniform &uGBufferEmissive();
+    GLUniform &uGBufferSpecGloss();
+    GLUniform &uGBufferNormal();
+    GLUniform &uGBufferDepth();
 
 private:
     DENG2_PRIVATE(d)

@@ -19,7 +19,7 @@ DENG_ATTRIB vec2    aIndex1; // tex offset (front, back)
      DENG_VAR vec3  vWSTangent;
      DENG_VAR vec3  vWSBitangent;
      DENG_VAR vec3  vWSNormal;
-flat DENG_VAR float vMaterial;
+flat DENG_VAR uint  vMaterial;
 flat DENG_VAR uint  vFlags;
 
 vec4 fetchTexOffset(uint offsetIndex) {

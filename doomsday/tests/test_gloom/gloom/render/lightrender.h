@@ -50,7 +50,7 @@ public:
 //    de::Vec3f direction() const;
 //    de::GLProgram &surfaceProgram();
 //    de::GLProgram &entityProgram();
-    de::GLState &shadowState();
+    de::GLState &  shadowState();
     de::GLUniform &uLightDir();
     de::GLUniform &uViewSpaceLightDir();
 
