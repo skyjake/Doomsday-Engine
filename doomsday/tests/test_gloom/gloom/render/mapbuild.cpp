@@ -125,7 +125,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                     c.material[0]  = materials[ceilingPlane.material[0]];
                     c.material[1]  = INVALID_INDEX;
                     c.normal       = ceilingPlane.normal;
-                    c.tangent      = ceilingPlane.tangent();
+                    c.tangent      = -ceilingPlane.tangent();
                     c.flags        = MapVertex::WorldSpaceXZToTexCoords | MapVertex::TextureOffset;
                     c.geoPlane     = planeMapper[map.ceilingPlaneId(sectorId)];
                     c.texOffset[0] = texOffsetMapper[map.ceilingPlaneId(sectorId)];
