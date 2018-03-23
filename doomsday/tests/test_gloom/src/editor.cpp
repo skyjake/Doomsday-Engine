@@ -779,19 +779,20 @@ DENG2_PIMPL(Editor)
         return 0;
     }
 
-    ID findEntityAt(const Vec3d &pos, double maxDistance = -1) const
+    ID findEntityAt(const QPoint &viewPos, double maxDistance = -1) const
     {
-        if (maxDistance < 0) maxDistance = defaultClickDistance();
+        if (maxDistance < 0) maxDistance = defaultClickDistance() * viewScale;
 
         ID id = 0;
         double dist = maxDistance;
         for (auto i = map.entities().begin(), end = map.entities().end(); i != end; ++i)
         {
             const auto &ent = i.value();
-            double d = (ent->position() - pos).length();
+            const QPoint delta = worldToView(ent->position()).toPoint() - viewPos;
+            double d = Vec2f(delta.x(), delta.y()).length();
             if (d < dist)
             {
-                id = i.key();
+                id   = i.key();
                 dist = d;
             }
         }
@@ -1339,7 +1340,7 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
         d->hoverLine   = d->findLineAt(pos);
         d->hoverSector = (d->mode == Impl::EditSectors ? d->findSectorAt(pos) : 0);
         d->hoverPlane  = (d->mode == Impl::EditPlanes  ? d->findPlaneAtViewPos(event->pos()) : 0);
-        d->hoverEntity = d->findEntityAt(d->viewToWorldCoord(event->pos()));
+        d->hoverEntity = d->findEntityAt(event->pos());
     }
 
     // Begin a drag action.
@@ -1461,7 +1462,8 @@ void Editor::mouseReleaseEvent(QMouseEvent *event)
 
     if (d->mode == Impl::EditEntities && event->button() == Qt::RightButton)
     {
-        d->hoverEntity = d->findEntityAt(d->viewToWorldCoord(event->pos()));
+        d->hoverEntity = d->findEntityAt(event->pos());
+
         if (d->hoverEntity)
         {
             QMenu *pop = new QMenu(this);
