@@ -95,51 +95,76 @@ DENG2_PIMPL_NOREF(MapBuild)
             // Split the polygon to convex parts (for triangulation).
             const auto convexParts = map.sectorPolygon(sectorId).splitConvexParts();
 
-            // Sector planes.
+            // -------- Planes --------
+
+            const auto &planeVerts        = sectorPlaneVerts[sectorId];
+            const auto &floor             = planeVerts.front();
+            const auto &ceiling           = planeVerts.back();
+            auto        currentPlaneVerts = planeVerts.begin();
+
+            for (int v = 0; v < sector.volumes.size(); ++v)
             {
-                const auto &planeVerts   = sectorPlaneVerts[sectorId];
-                const auto &floor        = planeVerts.front();
-                const auto &ceiling      = planeVerts.back();
-                const auto &floorPlane   = map.floorPlane(sectorId);
-                const auto &ceilingPlane = map.ceilingPlane(sectorId);
+                const ID      volumeId = sector.volumes[v];
+                const Volume &volume   = map.volume(volumeId);
 
-                const bool buildFloor   = bool(floorPlane.material[0]);
-                const bool buildCeiling = bool(ceilingPlane.material[0]);
-
+                for (int i = 0; i < 2; ++i)
                 {
+                    if (i == 1 && v < sector.volumes.size() - 1) break;
+
+//                    const auto &floor        = planeVerts.front();
+                    //const auto &ceiling      = planeVerts.back();
+                    const auto &currentVerts = *currentPlaneVerts++;
+                    //const auto &floorPlane   = map.floorPlane(sectorId);
+                    const auto &plane = map.plane(volume.planes[i]);
+
+                    if (!plane.material[0] && !plane.material[1]) continue;
+
+                    const bool isFacingUp = plane.normal.y > 0;
+
+                    //const bool buildFloor   = bool(floorPlane.material[0]);
+                    //const bool buildCeiling = bool(ceilingPlane.material[0]);
+
                     // TODO: If only one plane is needed, no need to add vertices for both.
 
                     // Insert vertices of both planes to the buffer.
-                    Buffer::Type f{}, c{};
+                    Buffer::Type f{}; //, c{};
                     QHash<ID, Buffer::Index> pointIndices;
 
-                    f.material[0] = materials[floorPlane.material[0]];
-                    f.material[1] = INVALID_INDEX;
-                    f.normal      = floorPlane.normal;
-                    f.tangent     = floorPlane.tangent();
-                    f.flags       = MapVertex::WorldSpaceXZToTexCoords | MapVertex::FlipTexCoordY |
-                                    MapVertex::TextureOffset;
-                    f.geoPlane     = planeMapper[map.floorPlaneId(sectorId)];
-                    f.texOffset[0] = texOffsetMapper[map.floorPlaneId(sectorId)];
+                    f.material[0]  = materials[plane.material[0]];
+                    f.material[1]  = materials[plane.material[1]];
+                    f.normal       = plane.normal;
+                    f.tangent      = plane.tangent();
+                    f.flags        = MapVertex::WorldSpaceXZToTexCoords | MapVertex::TextureOffset;
+                    f.geoPlane     = planeMapper[volume.planes[i]];
+                    f.texOffset[0] = texOffsetMapper[volume.planes[i]];
 
-                    c.material[0]  = materials[ceilingPlane.material[0]];
-                    c.material[1]  = INVALID_INDEX;
-                    c.normal       = ceilingPlane.normal;
-                    c.tangent      = -ceilingPlane.tangent();
-                    c.flags        = MapVertex::WorldSpaceXZToTexCoords | MapVertex::TextureOffset;
-                    c.geoPlane     = planeMapper[map.ceilingPlaneId(sectorId)];
-                    c.texOffset[0] = texOffsetMapper[map.ceilingPlaneId(sectorId)];
-
-                    for (const ID pointID : floor.keys())
+                    if (isFacingUp)
                     {
-                        f.pos = floor[pointID];
-                        c.pos = ceiling[pointID];
+                        f.flags |= MapVertex::FlipTexCoordY;
+                    }
+                    else
+                    {
+                        f.tangent = -f.tangent;
+                    }
+
+//                    c.material[0]  = materials[ceilingPlane.material[0]];
+//                    c.material[1]  = INVALID_INDEX;
+//                    c.normal       = ceilingPlane.normal;
+//                    c.tangent      = -ceilingPlane.tangent();
+//                    c.flags        = MapVertex::WorldSpaceXZToTexCoords | MapVertex::TextureOffset;
+//                    c.geoPlane     = planeMapper[map.ceilingPlaneId(sectorId)];
+//                    c.texOffset[0] = texOffsetMapper[map.ceilingPlaneId(sectorId)];
+
+                    for (const ID pointID : currentVerts.keys())
+                    {
+                        f.pos = currentVerts[pointID];
+                        //c.pos = ceiling[pointID];
 
                         f.texCoord = Vec4f(0, 0, 0, 0); // fixed offset
-                        c.texCoord = Vec4f(0, 0, 0, 0); // fixed offset
+                        //c.texCoord = Vec4f(0, 0, 0, 0); // fixed offset
 
                         pointIndices.insert(pointID, Buffer::Index(verts.size()));
-                        verts << f << c;
+                        verts << f;// << c;
                     }
 
                     for (const auto &convex : convexParts)
@@ -147,7 +172,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                         const ID baseID = convex.points[0].id;
 
                         // Floor.
-                        if (buildFloor)
+                        if (isFacingUp)
                         {
                             for (int i = 1; i < convex.size() - 1; ++i)
                             {
@@ -156,139 +181,141 @@ DENG2_PIMPL_NOREF(MapBuild)
                                         << pointIndices[convex.points[i].id];
                             }
                         }
-
+                        else
                         // Ceiling.
-                        if (buildCeiling)
+//                        if (buildCeiling)
                         {
                             for (int i = 1; i < convex.size() - 1; ++i)
                             {
-                                indices << pointIndices[baseID] + 1
-                                        << pointIndices[convex.points[i].id] + 1
-                                        << pointIndices[convex.points[i + 1].id] + 1;
+                                indices << pointIndices[baseID]
+                                        << pointIndices[convex.points[i].id]
+                                        << pointIndices[convex.points[i + 1].id];
                             }
                         }
                     }
                 }
+            }
 
-                auto makeQuad = [this, &indices, &verts](const String &  frontMaterial,
-                                                         const String &  backMaterial,
-                                                         const Vec3f &   normal,
-                                                         const uint32_t *planeIndex,
-                                                         uint32_t        flags,
-                                                         const Vec3f &   p1,
-                                                         const Vec3f &   p2,
-                                                         const Vec3f &   p3,
-                                                         const Vec3f &   p4,
-                                                         float           length,
-                                                         float           rotation)
+            // -------- Walls --------
+
+            auto makeQuad = [this, &indices, &verts](const String &  frontMaterial,
+                                                     const String &  backMaterial,
+                                                     const Vec3f &   normal,
+                                                     const uint32_t *planeIndex,
+                                                     uint32_t        flags,
+                                                     const Vec3f &   p1,
+                                                     const Vec3f &   p2,
+                                                     const Vec3f &   p3,
+                                                     const Vec3f &   p4,
+                                                     float           length,
+                                                     float           rotation)
+            {
+                if (!frontMaterial && !backMaterial) return;
+
+                const Buffer::Index baseIndex = Buffer::Index(verts.size());
+                indices << baseIndex
+                        << baseIndex + 3
+                        << baseIndex + 2
+                        << baseIndex
+                        << baseIndex + 1
+                        << baseIndex + 3;
+
+                Buffer::Type v{};
+
+                v.material[0] = materials[frontMaterial];
+                v.material[1] = materials[backMaterial];
+                v.normal      = normal;
+                v.flags       = flags;
+                v.tangent     = (p2 - p1).normalize();
+                v.texPlane[0] = planeIndex[0];
+                v.texPlane[1] = planeIndex[1];
+
+                v.pos      = p1;
+                v.texCoord = Vec4f(0, 0, length, rotation);
+                v.geoPlane = planeIndex[0];
+                verts << v;
+
+                v.pos      = p2;
+                v.texCoord = Vec4f(length, 0, length, rotation);
+                v.geoPlane = planeIndex[0];
+                verts << v;
+
+                v.pos      = p3;
+                v.texCoord = Vec4f(0, 0, length, rotation);
+                v.geoPlane = planeIndex[1];
+                verts << v;
+
+                v.pos      = p4;
+                v.texCoord = Vec4f(length, 0, length, rotation);
+                v.geoPlane = planeIndex[1];
+                verts << v;
+            };
+
+            for (const ID lineId : sector.walls)
+            {
+                const Line &line = map.line(lineId);
+
+                if (line.isSelfRef()) continue;
+
+                const int      dir    = line.surfaces[0].sector == sectorId? 1 : 0;
+                const ID       start  = line.points[dir^1];
+                const ID       end    = line.points[dir];
+                const Vec3f    normal = worldNormalVector(line);
+                const float    length = float((floor[end] - floor[start]).length());
+                const uint32_t planeIndex[2] = {planeMapper[map.floorPlaneId(sectorId)],
+                                                planeMapper[map.ceilingPlaneId(sectorId)]};
+
+                if (!line.isTwoSided())
                 {
-                    if (!frontMaterial && !backMaterial) return;
-
-                    const Buffer::Index baseIndex = Buffer::Index(verts.size());
-                    indices << baseIndex
-                            << baseIndex + 3
-                            << baseIndex + 2
-                            << baseIndex
-                            << baseIndex + 1
-                            << baseIndex + 3;
-
-                    Buffer::Type v{};
-
-                    v.material[0] = materials[frontMaterial];
-                    v.material[1] = materials[backMaterial];
-                    v.normal      = normal;
-                    v.flags       = flags;
-                    v.tangent     = (p2 - p1).normalize();
-                    v.texPlane[0] = planeIndex[0];
-                    v.texPlane[1] = planeIndex[1];
-
-                    v.pos      = p1;
-                    v.texCoord = Vec4f(0, 0, length, rotation);
-                    v.geoPlane = planeIndex[0];
-                    verts << v;
-
-                    v.pos      = p2;
-                    v.texCoord = Vec4f(length, 0, length, rotation);
-                    v.geoPlane = planeIndex[0];
-                    verts << v;
-
-                    v.pos      = p3;
-                    v.texCoord = Vec4f(0, 0, length, rotation);
-                    v.geoPlane = planeIndex[1];
-                    verts << v;
-
-                    v.pos      = p4;
-                    v.texCoord = Vec4f(length, 0, length, rotation);
-                    v.geoPlane = planeIndex[1];
-                    verts << v;
-                };
-
-                // Build the walls.
-                for (const ID lineId : sector.walls)
+                    makeQuad(line.surfaces[Line::Front].material[Line::Middle],
+                             line.surfaces[Line::Back ].material[Line::Middle],
+                             normal,
+                             planeIndex,
+                             MapVertex::WorldSpaceYToTexCoord,
+                             floor[start],
+                             floor[end],
+                             ceiling[start],
+                             ceiling[end],
+                             length,
+                             0);
+                }
+                else if (dir)
                 {
-                    const Line &line = map.line(lineId);
+                    const ID    backSectorId   = line.sectors()[dir];
+                    const auto &backPlaneVerts = sectorPlaneVerts[backSectorId];
 
-                    if (line.isSelfRef()) continue;
+                    const uint32_t botIndex[2] = {planeIndex[0],
+                                                  planeMapper[map.floorPlaneId(backSectorId)]};
+                    const uint32_t topIndex[2] = {planeMapper[map.ceilingPlaneId(backSectorId)],
+                                                  planeIndex[1]};
 
-                    const int      dir    = line.surfaces[0].sector == sectorId? 1 : 0;
-                    const ID       start  = line.points[dir^1];
-                    const ID       end    = line.points[dir];
-                    const Vec3f    normal = worldNormalVector(line);
-                    const float    length = float((floor[end] - floor[start]).length());
-                    const uint32_t planeIndex[2] = {planeMapper[map.floorPlaneId(sectorId)],
-                                                    planeMapper[map.ceilingPlaneId(sectorId)]};
+                    makeQuad(line.surfaces[Line::Front].material[Line::Bottom],
+                             line.surfaces[Line::Back ].material[Line::Bottom],
+                             normal,
+                             botIndex,
+                             MapVertex::WorldSpaceYToTexCoord | MapVertex::AnchorTopPlane,
+                             floor[start],
+                             floor[end],
+                             backPlaneVerts.front()[start],
+                             backPlaneVerts.front()[end],
+                             length,
+                             0);
 
-                    if (!line.isTwoSided())
-                    {
-                        makeQuad(line.surfaces[Line::Front].material[Line::Middle],
-                                 line.surfaces[Line::Back ].material[Line::Middle],
-                                 normal,
-                                 planeIndex,
-                                 MapVertex::WorldSpaceYToTexCoord,
-                                 floor[start],
-                                 floor[end],
-                                 ceiling[start],
-                                 ceiling[end],
-                                 length,
-                                 0);
-                    }
-                    else if (dir)
-                    {
-                        const ID    backSectorId   = line.sectors()[dir];
-                        const auto &backPlaneVerts = sectorPlaneVerts[backSectorId];
-
-                        const uint32_t botIndex[2] = {planeIndex[0],
-                                                      planeMapper[map.floorPlaneId(backSectorId)]};
-                        const uint32_t topIndex[2] = {planeMapper[map.ceilingPlaneId(backSectorId)],
-                                                      planeIndex[1]};
-
-                        makeQuad(line.surfaces[Line::Front].material[Line::Bottom],
-                                 line.surfaces[Line::Back ].material[Line::Bottom],
-                                 normal,
-                                 botIndex,
-                                 MapVertex::WorldSpaceYToTexCoord | MapVertex::AnchorTopPlane,
-                                 floor[start],
-                                 floor[end],
-                                 backPlaneVerts.front()[start],
-                                 backPlaneVerts.front()[end],
-                                 length,
-                                 0);
-
-                        makeQuad(line.surfaces[Line::Front].material[Line::Top],
-                                 line.surfaces[Line::Back ].material[Line::Top],
-                                 normal,
-                                 topIndex,
-                                 MapVertex::WorldSpaceYToTexCoord,
-                                 backPlaneVerts.back()[start],
-                                 backPlaneVerts.back()[end],
-                                 ceiling[start],
-                                 ceiling[end],
-                                 length,
-                                 0);
-                    }
+                    makeQuad(line.surfaces[Line::Front].material[Line::Top],
+                             line.surfaces[Line::Back ].material[Line::Top],
+                             normal,
+                             topIndex,
+                             MapVertex::WorldSpaceYToTexCoord,
+                             backPlaneVerts.back()[start],
+                             backPlaneVerts.back()[end],
+                             ceiling[start],
+                             ceiling[end],
+                             length,
+                             0);
                 }
             }
         }
+
 
         buf->setVertices(verts, gl::Static);
         buf->setIndices(gl::Triangles, indices, gl::Static);

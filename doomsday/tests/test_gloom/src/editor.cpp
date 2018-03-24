@@ -480,6 +480,30 @@ DENG2_PIMPL(Editor)
             }*/
             break;
 
+        case EditVolumes:
+            if (hoverSector)
+            {
+                pushUndo();
+
+                Sector &sec = map.sector(hoverSector);
+                ID oldCeiling = map.ceilingPlaneId(hoverSector);
+                Plane &ceil = map.plane(oldCeiling);
+                Plane newCeil = ceil;
+
+                // Make a new plane 2 meters above the old ceiling.
+                newCeil.point.y += 2;
+                ceil.normal = -ceil.normal;
+                ceil.material[1] = ceil.material[0];
+                ID newCeiling = map.append(map.planes(), newCeil);
+                Volume vol{{oldCeiling, newCeiling}};
+
+                // The new volume becomes to topmost volume in the sector.
+                ID newVolume = map.append(map.volumes(), vol);
+                sec.volumes.append(newVolume);
+                self().update();
+            }
+            break;
+
         case EditEntities:
             pushUndo();
             std::shared_ptr<Entity> ent(new Entity);
@@ -1338,7 +1362,7 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
         const auto pos = d->viewToWorldPoint(event->pos());
         d->hoverPoint  = d->findPointAt(pos);
         d->hoverLine   = d->findLineAt(pos);
-        d->hoverSector = (d->mode == Impl::EditSectors ? d->findSectorAt(pos) : 0);
+        d->hoverSector = (d->mode == Impl::EditSectors || d->mode == Impl::EditVolumes ? d->findSectorAt(pos) : 0);
         d->hoverPlane  = (d->mode == Impl::EditPlanes  ? d->findPlaneAtViewPos(event->pos()) : 0);
         d->hoverEntity = d->findEntityAt(event->pos());
     }
