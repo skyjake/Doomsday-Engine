@@ -9,18 +9,18 @@ uniform vec4          uCameraPos; // world space
 uniform samplerBuffer uTexOffsets;
 uniform float         uCurrentTime;
 
-DENG_ATTRIB float   aTexture0; // front material
-DENG_ATTRIB float   aTexture1; // back material
-DENG_ATTRIB vec2    aIndex1; // tex offset (front, back)
+in float aTexture0; // front material
+in float aTexture1; // back material
+in vec2  aIndex1; // tex offset (front, back)
 
-     DENG_VAR vec2  vUV;
-     DENG_VAR vec3  vTSViewPos;
-     DENG_VAR vec3  vTSFragPos;
-     DENG_VAR vec3  vWSTangent;
-     DENG_VAR vec3  vWSBitangent;
-     DENG_VAR vec3  vWSNormal;
-flat DENG_VAR uint  vMaterial;
-flat DENG_VAR uint  vFlags;
+     out vec2  vUV;
+     out vec3  vTSViewPos;
+     out vec3  vTSFragPos;
+     out vec3  vWSTangent;
+     out vec3  vWSBitangent;
+     out vec3  vWSNormal;
+flat out uint  vMaterial;
+flat out uint  vFlags;
 
 vec4 fetchTexOffset(uint offsetIndex) {
     return texelFetch(uTexOffsets, int(offsetIndex));

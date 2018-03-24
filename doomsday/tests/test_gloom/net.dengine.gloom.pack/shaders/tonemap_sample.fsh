@@ -2,7 +2,7 @@
 
 uniform sampler2D uFramebuf;
 
-DENG_VAR vec2 vUV;
+in vec2 vUV;
 
 void main(void) {
     // Gather highly averaged colors for brightness analysis.

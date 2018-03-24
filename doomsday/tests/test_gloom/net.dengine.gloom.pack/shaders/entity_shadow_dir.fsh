@@ -2,7 +2,7 @@
 
 #include "common/material.glsl"
 
-DENG_VAR vec2 vUV;
+in vec2 vUV;
 
 void main(void) {
     float alpha = texture(uTextureAtlas[Texture_Diffuse], vUV).a;

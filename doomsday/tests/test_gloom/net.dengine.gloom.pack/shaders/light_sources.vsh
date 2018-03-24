@@ -4,18 +4,18 @@ uniform mat4 uCameraMvpMatrix;
 uniform mat4 uModelViewMatrix;
 uniform mat3 uWorldToViewRotate;
 
-DENG_ATTRIB vec4  aVertex;
-DENG_ATTRIB float aUV;
-DENG_ATTRIB vec3  aOrigin;
-DENG_ATTRIB vec3  aIntensity;
-DENG_ATTRIB vec3  aDirection;
-DENG_ATTRIB float aIndex;
+in vec4  aVertex;
+in float aUV;
+in vec3  aOrigin;
+in vec3  aIntensity;
+in vec3  aDirection;
+in float aIndex;
 
-flat DENG_VAR vec3  vOrigin;     // view space
-flat DENG_VAR vec3  vDirection;  // view space
-flat DENG_VAR vec3  vIntensity;
-flat DENG_VAR float vRadius;
-flat DENG_VAR int   vShadowIndex;
+flat out vec3  vOrigin;     // view space
+flat out vec3  vDirection;  // view space
+flat out vec3  vIntensity;
+flat out float vRadius;
+flat out int   vShadowIndex;
 
 void main(void) {
     vRadius = aUV;

@@ -5,7 +5,7 @@ layout (triangle_strip, max_vertices=18) out;
 
 uniform mat4 uCubeFaceMatrices[6];
 
-in vec2 vUV[];
+in  vec2 vUV[];
 out vec4 vWorldPos;
 out vec2 vFaceUV;
 

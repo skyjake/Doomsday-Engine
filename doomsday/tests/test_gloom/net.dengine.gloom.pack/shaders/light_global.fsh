@@ -15,7 +15,7 @@ uniform mat4      uLightMatrix; // world -> light
 uniform mat4      uViewToLightMatrix;
 uniform sampler2DShadow uShadowMap;
 
-DENG_VAR vec2 vUV;
+in vec2 vUV;
 
 const vec3 pcfWeights[9] = vec3[9] (
     vec3( 0,  0, 2.4),
@@ -106,7 +106,7 @@ void main(void) {
     {
         float mipBias = Material_MaxReflectionBlur * (1.0 - specGloss.a);
         vec3 reflectedDir = reflect(normalize(vsPos.xyz), normal);
-        outColor += specGloss.rgb * uEnvIntensity * 
+        outColor += specGloss.rgb * uEnvIntensity *
             texture(uEnvMap, uViewToWorldRotate * reflectedDir,
                 min(mipBias, Material_MaxReflectionBias)).rgb;
     }

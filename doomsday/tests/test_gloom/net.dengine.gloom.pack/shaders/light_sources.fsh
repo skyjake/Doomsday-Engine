@@ -9,11 +9,11 @@ uniform samplerCubeShadow uShadowMaps[6];
 
 //uniform float uShadowFarPlanes[6]; // isn't vRadius enough?
 
-flat DENG_VAR vec3  vOrigin;     // view space
-flat DENG_VAR vec3  vDirection;  // view space
-flat DENG_VAR vec3  vIntensity;
-flat DENG_VAR float vRadius;
-flat DENG_VAR int   vShadowIndex;
+flat in vec3  vOrigin;     // view space
+flat in vec3  vDirection;  // view space
+flat in vec3  vIntensity;
+flat in float vRadius;
+flat in int   vShadowIndex;
 
 void main(void) {
     vec3 pos      = GBuffer_FragViewSpacePos().xyz;

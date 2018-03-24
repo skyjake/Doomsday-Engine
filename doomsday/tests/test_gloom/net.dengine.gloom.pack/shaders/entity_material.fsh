@@ -4,13 +4,13 @@
 #include "common/gbuffer_out.glsl"
 #include "common/material.glsl"
 
-DENG_VAR vec3 vWSNormal;
-DENG_VAR vec3 vWSTangent;
-DENG_VAR vec3 vWSBitangent;
-DENG_VAR vec2 vUV;
-flat DENG_VAR ivec4 vGotTexture;
-flat DENG_VAR vec4 vInstanceColor;
-flat DENG_VAR vec4 vTexBounds[4];
+in vec3 vWSNormal;
+in vec3 vWSTangent;
+in vec3 vWSBitangent;
+in vec2 vUV;
+flat in ivec4 vGotTexture;
+flat in vec4 vInstanceColor;
+flat in vec4 vTexBounds[4];
 
 #define hasDiffuseTex()     (vGotTexture.x != 0)
 #define hasNormalTex()      (vGotTexture.y != 0)

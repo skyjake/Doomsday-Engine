@@ -4,13 +4,13 @@
 
 uniform mat4 uLightMatrix;
 
-DENG_ATTRIB mat4 aInstanceMatrix;
-DENG_ATTRIB vec4 aInstanceColor;
-DENG_ATTRIB vec4 aVertex;
-DENG_ATTRIB vec2 aUV;
-DENG_ATTRIB vec4 aBounds0;
+in mat4 aInstanceMatrix;
+in vec4 aInstanceColor;
+in vec4 aVertex;
+in vec2 aUV;
+in vec4 aBounds0;
 
-DENG_VAR vec2 vUV;
+out vec2 vUV;
 
 void main(void) {
     mat4 bone = Gloom_BoneMatrix();

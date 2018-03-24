@@ -7,7 +7,7 @@ uniform mat4 uViewToLightMatrix;
 uniform vec3 uViewSpaceLightDir;
 uniform int uDebugMode;
 
-DENG_VAR vec2 vUV;
+in vec2 vUV;
 
 /*float textureShadowMap(vec2 uv) {
     vec2 fpos = uv * textureSize(uShadowMap, 0);

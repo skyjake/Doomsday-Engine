@@ -4,14 +4,14 @@
 #include "common/material.glsl"
 #include "common/tangentspace.glsl"
 
-     DENG_VAR vec2  vUV;
-     DENG_VAR vec3  vTSViewPos;
-     DENG_VAR vec3  vTSFragPos;
-     DENG_VAR vec3  vWSTangent;
-     DENG_VAR vec3  vWSBitangent;
-     DENG_VAR vec3  vWSNormal;
-flat DENG_VAR uint  vMaterial;
-flat DENG_VAR uint  vFlags;
+     in vec2  vUV;
+     in vec3  vTSViewPos;
+     in vec3  vTSFragPos;
+     in vec3  vWSTangent;
+     in vec3  vWSBitangent;
+     in vec3  vWSNormal;
+flat in uint  vMaterial;
+flat in uint  vFlags;
 
 vec2 Gloom_Parallax(uint matIndex, vec2 texCoords, vec3 viewDir) {
     MaterialSampler matSamp = Gloom_Sampler(matIndex, Texture_NormalDisplacement);

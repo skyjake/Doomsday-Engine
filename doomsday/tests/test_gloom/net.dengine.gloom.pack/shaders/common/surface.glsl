@@ -3,12 +3,12 @@
 
 uniform samplerBuffer uPlanes;
 
-DENG_ATTRIB vec4  aVertex;
-DENG_ATTRIB vec4  aUV; // s, t, wallLength, rotation angle
-DENG_ATTRIB vec3  aNormal;
-DENG_ATTRIB vec3  aTangent;
-DENG_ATTRIB vec3  aIndex0; // planes: geo, tex bottom, tex top
-DENG_ATTRIB float aFlags;
+in vec4  aVertex;
+in vec4  aUV; // s, t, wallLength, rotation angle
+in vec3  aNormal;
+in vec3  aTangent;
+in vec3  aIndex0; // planes: geo, tex bottom, tex top
+in float aFlags;
 
 struct Surface {
     uint  flags;

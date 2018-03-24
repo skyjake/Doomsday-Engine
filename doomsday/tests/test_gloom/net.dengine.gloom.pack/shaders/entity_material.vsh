@@ -5,26 +5,26 @@
 
 uniform mat4 uCameraMvpMatrix;
 
-DENG_ATTRIB mat4 aInstanceMatrix; // model to world
-DENG_ATTRIB vec4 aInstanceColor;
+in mat4 aInstanceMatrix; // model to world
+in vec4 aInstanceColor;
 
-DENG_ATTRIB vec4 aVertex;
-DENG_ATTRIB vec3 aNormal;
-DENG_ATTRIB vec3 aTangent;
-DENG_ATTRIB vec3 aBitangent;
-DENG_ATTRIB vec2 aUV;
-DENG_ATTRIB vec4 aBounds0; // diffuse
-DENG_ATTRIB vec4 aBounds1; // normals
-DENG_ATTRIB vec4 aBounds2; // specular
-DENG_ATTRIB vec4 aBounds3; // emissive
+in vec4 aVertex;
+in vec3 aNormal;
+in vec3 aTangent;
+in vec3 aBitangent;
+in vec2 aUV;
+in vec4 aBounds0; // diffuse
+in vec4 aBounds1; // normals
+in vec4 aBounds2; // specular
+in vec4 aBounds3; // emissive
 
-DENG_VAR vec3 vWSNormal;
-DENG_VAR vec3 vWSTangent;
-DENG_VAR vec3 vWSBitangent;
-DENG_VAR vec2 vUV;
-flat DENG_VAR ivec4 vGotTexture;
-flat DENG_VAR vec4 vInstanceColor;
-flat DENG_VAR vec4 vTexBounds[4];
+out vec3 vWSNormal;
+out vec3 vWSTangent;
+out vec3 vWSBitangent;
+out vec2 vUV;
+flat out ivec4 vGotTexture;
+flat out vec4 vInstanceColor;
+flat out vec4 vTexBounds[4];
 
 void main(void) {
     TangentSpace ts = TangentSpace(aTangent, aBitangent, aNormal);

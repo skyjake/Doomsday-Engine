@@ -24,7 +24,7 @@ const float weights[KERNEL_SIZE] = float[KERNEL_SIZE](
     0.00702021448612
 );
 
-DENG_VAR vec2 vUV;
+in vec2 vUV;
 
 float brightness(vec3 color) {
     return dot(color, vec3(0.2126, 0.7152, 0.0722));

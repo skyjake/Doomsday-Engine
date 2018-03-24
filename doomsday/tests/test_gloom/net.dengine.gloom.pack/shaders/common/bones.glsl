@@ -5,8 +5,8 @@
 
 uniform mat4 uBoneMatrices[64];
 
-DENG_ATTRIB vec4 aBoneIDs;
-DENG_ATTRIB vec4 aBoneWeights;
+in vec4 aBoneIDs;
+in vec4 aBoneWeights;
 
 mat4 Gloom_BoneMatrix(void) {
     return uBoneMatrices[int(aBoneIDs.x + 0.5)] * aBoneWeights.x +
