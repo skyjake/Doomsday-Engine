@@ -48,16 +48,6 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(Directions)
 
 DENG2_PIMPL(Editor)
 {
-    enum Mode {
-        EditPoints,
-        EditLines,
-        EditSectors,
-        EditPlanes,
-        EditVolumes,
-        EditEntities,
-
-        ModeCount,
-    };
     enum UserAction {
         None,
         TranslateView,
@@ -95,6 +85,8 @@ DENG2_PIMPL(Editor)
     Vec3f worldFront;
     Mat4f viewTransform;
     Mat4f inverseViewTransform;
+
+    QHash<ID, Vec3d> floorPoints;
 
     const QColor metaBg{255, 255, 255, 192};
     const QColor metaColor{0, 0, 0, 128};
@@ -182,23 +174,23 @@ DENG2_PIMPL(Editor)
                 .arg(actionText());
         if (hoverPoint)
         {
-            text += String(" [Point:%1]").arg(hoverPoint, 0, 16);
+            text += String(" \u25aa%1").arg(hoverPoint, 0, 16);
         }
         if (hoverLine)
         {
-            text += String(" [Line:%1]").arg(hoverLine, 0, 16);
+            text += String(" \u2215%1").arg(hoverLine, 0, 16);
         }
         if (hoverEntity)
         {
-            text += String(" [Entity:%1]").arg(hoverEntity, 0, 16);
+            text += String(" \u25c9%1").arg(hoverEntity, 0, 16);
         }
         if (hoverSector)
         {
-            text += String(" [Sector:%1]").arg(hoverSector, 0, 16);
+            text += String(" \u25b3%1").arg(hoverSector, 0, 16);
         }
         if (hoverPlane)
         {
-            text += String(" [Plane:%1]").arg(hoverPlane, 0, 16);
+            text += String(" \u25b1%1").arg(hoverPlane, 0, 16);
         }
         return text;
     }
@@ -207,6 +199,7 @@ DENG2_PIMPL(Editor)
     {
         finishAction();
         mode = newMode;
+        emit self().modeChanged(mode);
         self().update();
     }
 
@@ -263,7 +256,7 @@ DENG2_PIMPL(Editor)
             case EditPoints:
                 for (auto i = map.points().begin(); i != map.points().end(); ++i)
                 {
-                    const QPointF viewPos = worldToView(i.value());
+                    const QPointF viewPos = viewPoint(i.key());
                     if (selectRect.contains(viewPos))
                     {
                         selection.insert(i.key());
@@ -357,10 +350,27 @@ DENG2_PIMPL(Editor)
 
     QPoint viewMousePos() const { return self().mapFromGlobal(QCursor().pos()); }
 
+    QPointF viewPoint(ID pointId, ID heightReferencePointId = 0) const
+    {
+        auto found = floorPoints.find(pointId);
+        if (found != floorPoints.end())
+        {
+            Vec3d coord = found.value();
+            // Check the reference.
+            if (heightReferencePointId)
+            {
+                auto ref = floorPoints.find(heightReferencePointId);
+                coord.y = std::max(coord.y, ref.value().y);
+            }
+            return worldToView(coord);
+        }
+        return worldToView(map.point(pointId));
+    }
+
     QLineF viewLine(const Line &line) const
     {
-        const QPointF start = worldToView(map.point(line.points[0]));
-        const QPointF end   = worldToView(map.point(line.points[1]));
+        const QPointF start = viewPoint(line.points[0], line.points[1]);
+        const QPointF end   = viewPoint(line.points[1], line.points[0]);
         return QLineF(start, end);
     }
 
@@ -725,18 +735,18 @@ DENG2_PIMPL(Editor)
         return 20 / viewScale;
     }
 
-    ID findPointAt(const Point &pos, double maxDistance = -1) const
+    ID findPointAt(const QPoint &viewPos, double maxDistance = -1) const
     {
         if (maxDistance < 0)
         {
-            maxDistance = defaultClickDistance();
+            maxDistance = defaultClickDistance() * viewScale;
         }
 
         ID id = 0;
         double dist = maxDistance;
         for (auto i = map.points().begin(); i != map.points().end(); ++i)
         {
-            double d = (i.value().coord - pos.coord).length();
+            double d = (QVector2D(viewPoint(i.key())) - QVector2D(viewPos)).length();
             if (d < dist)
             {
                 id = i.key();
@@ -841,7 +851,7 @@ DENG2_PIMPL(Editor)
         switch (mode)
         {
         case EditPoints:
-            if (auto id = findPointAt(pos))
+            if (auto id = findPointAt(actionPos))
             {
                 selectOrUnselect(id);
             }
@@ -857,7 +867,7 @@ DENG2_PIMPL(Editor)
             }
             else
             {
-                if (auto id = findPointAt(pos))
+                if (auto id = findPointAt(actionPos))
                 {
                     selectOrUnselect(id);
                 }
@@ -1003,12 +1013,12 @@ Editor::Editor()
     d->metaFont.setPointSizeF(d->metaFont.pointSizeF() * .75);
 
     // Actions.
-    addKeyAction("Ctrl+1",          [this]() { d->setMode(Impl::EditPoints); });
-    addKeyAction("Ctrl+2",          [this]() { d->setMode(Impl::EditLines); });
-    addKeyAction("Ctrl+3",          [this]() { d->setMode(Impl::EditSectors); });
-    addKeyAction("Ctrl+4",          [this]() { d->setMode(Impl::EditPlanes); });
-    addKeyAction("Ctrl+5",          [this]() { d->setMode(Impl::EditVolumes); });
-    addKeyAction("Ctrl+6",          [this]() { d->setMode(Impl::EditEntities); });
+    addKeyAction("Ctrl+1",          [this]() { d->setMode(EditPoints); });
+    addKeyAction("Ctrl+2",          [this]() { d->setMode(EditLines); });
+    addKeyAction("Ctrl+3",          [this]() { d->setMode(EditSectors); });
+    addKeyAction("Ctrl+4",          [this]() { d->setMode(EditPlanes); });
+    addKeyAction("Ctrl+5",          [this]() { d->setMode(EditVolumes); });
+    addKeyAction("Ctrl+6",          [this]() { d->setMode(EditEntities); });
     addKeyAction("Ctrl+A",          [this]() { d->userSelectAll(); });
     addKeyAction("Ctrl+Shift+A",    [this]() { d->userSelectNone(); });
     addKeyAction("Ctrl+D",          [this]() { d->userAdd(); });
@@ -1074,7 +1084,7 @@ void Editor::paintEvent(QPaintEvent *)
     const int lineHgt = fontMetrics.height();
     const int gap     = 6;
 
-    static const QColor panelBgs[Impl::ModeCount] = {
+    static const QColor panelBgs[ModeCount] = {
         {  0,   0,   0, 128},   // Points
         {  0,  20,  90, 160},   // Lines
         {255, 160,   0, 192},   // Sectors
@@ -1100,6 +1110,9 @@ void Editor::paintEvent(QPaintEvent *)
         d->drawGridLine(ptr, Vec2d(), gridMajor);
     }
 
+    // Bottom-most position where points are being used in sectors.
+    d->floorPoints.clear();
+
     // Sectors and planes.
     {
         for (auto i = mapSectors.begin(), end = mapSectors.end(); i != end; ++i)
@@ -1116,6 +1129,22 @@ void Editor::paintEvent(QPaintEvent *)
                 const Plane &floor   = d->map.floorPlane(secId);
                 for (int i = 0; i < geoPoly.size(); ++i)
                 {
+                    // Check the bottom-most floor positions.
+                    {
+                        const Vec3d fpos  = floor.projectPoint(Point{geoPoly.at(i)});
+                        const ID    pid   = geoPoly.points[i].id;
+
+                        auto found = d->floorPoints.find(pid);
+                        if (found == d->floorPoints.end())
+                        {
+                            d->floorPoints.insert(pid, fpos);
+                        }
+                        else
+                        {
+                            found.value().y = std::min(found.value().y, fpos.y);
+                        }
+                    }
+
                     cornerLines << QLineF(d->worldToView(Point{geoPoly.at(i)}, &floor),
                                           d->worldToView(Point{geoPoly.at(i)}, &ceiling));
                 }
@@ -1150,7 +1179,7 @@ void Editor::paintEvent(QPaintEvent *)
 
                     ptr.setBrush(d->hoverSector == secId ? panelBg : sectorColor);
 
-                    if (d->mode == Impl::EditPlanes)
+                    if (d->mode == EditPlanes)
                     {
                         if (d->selection.contains(planeId))
                         {
@@ -1189,7 +1218,7 @@ void Editor::paintEvent(QPaintEvent *)
         for (auto i = mapPoints.begin(); i != mapPoints.end(); ++i)
         {
             const ID      id  = i.key();
-            const QPointF pos = d->worldToView(i.value());
+            const QPointF pos = d->viewPoint(id);
 
             points << pos;
 
@@ -1243,7 +1272,7 @@ void Editor::paintEvent(QPaintEvent *)
         }
         ptr.drawLines(&lines[0], lines.size());
 
-        if ((d->mode == Impl::EditLines || d->mode == Impl::EditSectors) && d->hoverLine)
+        if ((d->mode == EditLines || d->mode == EditSectors) && d->hoverLine)
         {
             const QLineF vl = d->viewLine(mapLines[d->hoverLine]);
             ptr.setPen(QPen(lineColor, 2));
@@ -1360,10 +1389,10 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
     // Check what the mouse is hovering on.
     {
         const auto pos = d->viewToWorldPoint(event->pos());
-        d->hoverPoint  = d->findPointAt(pos);
+        d->hoverPoint  = d->findPointAt(event->pos());
         d->hoverLine   = d->findLineAt(pos);
-        d->hoverSector = (d->mode == Impl::EditSectors || d->mode == Impl::EditVolumes ? d->findSectorAt(pos) : 0);
-        d->hoverPlane  = (d->mode == Impl::EditPlanes  ? d->findPlaneAtViewPos(event->pos()) : 0);
+        d->hoverSector = (d->mode == EditSectors || d->mode == EditVolumes ? d->findSectorAt(pos) : 0);
+        d->hoverPlane  = (d->mode == EditPlanes  ? d->findPlaneAtViewPos(event->pos()) : 0);
         d->hoverEntity = d->findEntityAt(event->pos());
     }
 
@@ -1414,8 +1443,8 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
         break;
 
     case Impl::Move: {
-        if (d->mode == Impl::EditPoints || d->mode == Impl::EditEntities ||
-            d->mode == Impl::EditPlanes)
+        if (d->mode == EditPoints || d->mode == EditEntities ||
+            d->mode == EditPlanes)
         {
             QPoint delta = event->pos() - d->actionPos;
             d->actionPos = event->pos();
@@ -1423,16 +1452,16 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
             const Vec2d worldDelta = Vec2d(delta.x(), delta.y()) / d->viewScale;
             for (auto id : d->selection)
             {
-                if (d->mode == Impl::EditPoints && d->map.points().contains(id))
+                if (d->mode == EditPoints && d->map.points().contains(id))
                 {
                     d->map.point(id).coord += worldDelta;
                 }
-                else if (d->mode == Impl::EditEntities && d->map.entities().contains(id))
+                else if (d->mode == EditEntities && d->map.entities().contains(id))
                 {
                     auto &ent = d->map.entity(id);
                     ent.setPosition(ent.position() + Vec3d(worldDelta.x, 0, worldDelta.y));
                 }
-                else if (d->mode == Impl::EditPlanes && d->map.planes().contains(id))
+                else if (d->mode == EditPlanes && d->map.planes().contains(id))
                 {
                     d->map.plane(id).point.y -= worldDelta.y;
                 }
@@ -1484,7 +1513,7 @@ void Editor::mouseReleaseEvent(QMouseEvent *event)
 {
     event->accept();
 
-    if (d->mode == Impl::EditEntities && event->button() == Qt::RightButton)
+    if (d->mode == EditEntities && event->button() == Qt::RightButton)
     {
         d->hoverEntity = d->findEntityAt(event->pos());
 
@@ -1539,7 +1568,7 @@ void Editor::mouseDoubleClickEvent(QMouseEvent *event)
 {
     event->accept();
 
-    if (d->hoverLine && (d->mode == Impl::EditLines || d->mode == Impl::EditPoints))
+    if (d->hoverLine && (d->mode == EditLines || d->mode == EditPoints))
     {
         d->splitLine(d->hoverLine, d->viewToWorldPoint(event->pos()).coord);
     }

@@ -27,6 +27,17 @@ class Editor : public QWidget
     Q_OBJECT
 
 public:
+    enum Mode {
+        EditPoints,
+        EditLines,
+        EditSectors,
+        EditPlanes,
+        EditVolumes,
+        EditEntities,
+
+        ModeCount,
+    };
+
     Editor();
 
     gloom::Map &map();
@@ -43,6 +54,7 @@ public:
     void wheelEvent(QWheelEvent *) override;
 
 signals:
+    void modeChanged(int mode);
     void lineSelectionChanged();
     void planeSelectionChanged();
     void buildMapRequested();

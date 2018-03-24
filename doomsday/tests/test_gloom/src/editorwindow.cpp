@@ -50,6 +50,10 @@ EditorWindow::EditorWindow()
         QToolBar *matr = new QToolBar(tr("Line Material"));
         addToolBar(Qt::BottomToolBarArea, matr);
 
+        connect(d->editor, &Editor::modeChanged, [matr] (int mode) {
+            matr->setVisible(mode == Editor::EditLines);
+        });
+
         matr->addWidget(new QLabel(tr("Line")));
 
         QComboBox *sideBox = new QComboBox;
@@ -127,6 +131,10 @@ EditorWindow::EditorWindow()
     {
         QToolBar *matr = new QToolBar(tr("Plane Material"));
         addToolBar(Qt::BottomToolBarArea, matr);
+
+        connect(d->editor, &Editor::modeChanged, [matr] (int mode) {
+            matr->setVisible(mode == Editor::EditPlanes);
+        });
 
         matr->addWidget(new QLabel(tr("Plane")));
         matr->setDisabled(true);
