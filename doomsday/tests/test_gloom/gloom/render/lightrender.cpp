@@ -71,6 +71,7 @@ DENG2_PIMPL(LightRender)
     GLUniform uViewSpaceLightOrigin{"uViewSpaceLightOrigin", GLUniform::Vec3};
     GLUniform uViewSpaceLightDir   {"uViewSpaceLightDir",    GLUniform::Vec3};
     GLUniform uViewToLightMatrix   {"uViewToLightMatrix",    GLUniform::Mat4};
+    GLUniform uShadowSize          {"uShadowSize",           GLUniform::Vec2};
     GLUniform uShadowMap           {"uShadowMap",            GLUniform::Sampler2D}; // <----TESTING-----
 
     GLUniform uShadowMaps[MAX_SHADOWS] {
@@ -166,6 +167,7 @@ DENG2_PIMPL(LightRender)
                 << uViewToLightMatrix
                 << ctx.uLightMatrix;
         ctx.bindGBuffer(giQuad.program());
+//        ctx.bindMaterials(giQuad.program());
 
         // Generate a sphere for light bounds.
         {
@@ -270,7 +272,7 @@ void LightRender::render()
             shadow->framebuf().clear(GLFramebuffer::Depth | GLFramebuffer::FullClear);
 
             d->uLightDir             = light->direction();
-            context().uLightOrigin   = light->origin();
+            context().uLightOrigin   = light->origin().toVec3f();
             context().uLightFarPlane = light->falloffDistance();
 
             if (light->type() == Light::Omni)
@@ -284,7 +286,10 @@ void LightRender::render()
             else
             {
                 d->shadowState.setCull(gl::None);
-                context().uLightMatrix = light->lightMatrix();
+                context().uLightMatrix        = light->lightMatrix();
+                context().uInverseLightMatrix = light->lightMatrix().inverse();
+
+                d->uShadowSize = d->dirShadow->shadowMap().size();
             }
             d->uViewSpaceLightDir =
                 context().view.uWorldToViewRotate.toMat3f() * light->direction();
@@ -295,6 +300,17 @@ void LightRender::render()
 
             d->callback(*light);
         }
+    }
+}
+
+void LightRender::advanceTime(TimeSpan elapsed)
+{
+    // Testing.
+    {
+        Vec3d rotPos =
+            Mat4f::rotate(float(elapsed), Vec3f(0, 1, 0)) * d->skyLight->origin();
+        d->skyLight->setOrigin(rotPos);
+        d->skyLight->setDirection(-rotPos);
     }
 }
 
@@ -411,6 +427,16 @@ void LightRender::createLights()
             d->activeLights.insert(light.get());
         }
     }
+}
+
+GLUniform &LightRender::uShadowMap()
+{
+    return d->uShadowMap;
+}
+
+GLUniform &LightRender::uShadowSize()
+{
+    return d->uShadowSize;
 }
 
 //Vec3f LightRender::direction() const

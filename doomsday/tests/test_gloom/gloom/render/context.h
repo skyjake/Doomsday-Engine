@@ -63,6 +63,7 @@ struct Context {
     GLUniform uEnvIntensity     {"uEnvIntensity",     GLUniform::Vec3};
 
     GLUniform uLightMatrix      {"uLightMatrix",      GLUniform::Mat4};
+    GLUniform uInverseLightMatrix {"uInverseLightMatrix", GLUniform::Mat4};
     GLUniform uLightOrigin      {"uLightOrigin",      GLUniform::Vec3};
     GLUniform uLightFarPlane    {"uFarPlane",         GLUniform::Float};
     GLUniform uLightCubeMatrices{"uCubeFaceMatrices", GLUniform::Mat4Array, 6};

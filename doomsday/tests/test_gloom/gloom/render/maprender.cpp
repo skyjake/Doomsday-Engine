@@ -24,6 +24,7 @@
 #include "gloom/render/lightrender.h"
 #include "gloom/render/light.h"
 #include "gloom/render/icamera.h"
+#include "gloom/render/gbuffer.h"
 
 #include <de/Drawable>
 #include <de/GLUniform>
@@ -95,13 +96,16 @@ DENG2_PIMPL(MapRender)
 
         context.shaders->build(surfaces.program(), "gloom.surface.material")
             << planes.var
-            << matLib.uTextureMetrics()
-            << texOffsets.var;
+            << texOffsets.var
+            << matLib.uTextureMetrics();
 
         context.shaders->build(dirShadowProgram, "gloom.surface.shadow.dir")
             << planes.var
+            << texOffsets.var
             << context.uLightMatrix
-            << context.lights->uLightDir();
+            << context.uInverseLightMatrix
+            << context.lights->uLightDir()
+            << context.lights->uShadowSize();
 
         context.shaders->build(omniShadowProgram, "gloom.surface.shadow.omni")
             << planes.var
@@ -109,10 +113,11 @@ DENG2_PIMPL(MapRender)
             << context.uLightFarPlane
             << context.uLightCubeMatrices;
 
-        context.bindCamera(surfaces.program())
+        context.bindCamera   (surfaces.program())
                .bindMaterials(surfaces.program());
-        context.bindCamera(dirShadowProgram);
-        context.bindCamera(omniShadowProgram);
+        context.bindCamera   (dirShadowProgram)
+               .bindMaterials(dirShadowProgram);
+        context.bindCamera   (omniShadowProgram);
     }
 
     void glInit()
@@ -171,8 +176,10 @@ MaterialLib &MapRender::materialLibrary()
     return d->matLib;
 }
 
-void MapRender::advanceTime(TimeSpan)
+void MapRender::advanceTime(TimeSpan elapsed)
 {
+    d->lights.advanceTime(elapsed);
+
     // Update plane heights.
     {
         for (auto i = d->planeMapper.begin(), end = d->planeMapper.end(); i != end; ++i)

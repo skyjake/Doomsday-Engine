@@ -25,6 +25,8 @@
 
 namespace gloom {
 
+using namespace de;
+
 class Light;
 
 /**
@@ -38,6 +40,7 @@ public:
     void glInit(Context &) override;
     void glDeinit() override;
     void render() override;
+    void advanceTime(TimeSpan) override;
 
     void renderLighting();
 
@@ -46,13 +49,11 @@ public:
 
     void createLights();
 
-//    de::GLTexture &shadowMap();
-//    de::Vec3f direction() const;
-//    de::GLProgram &surfaceProgram();
-//    de::GLProgram &entityProgram();
-    de::GLState &  shadowState();
-    de::GLUniform &uLightDir();
-    de::GLUniform &uViewSpaceLightDir();
+    GLUniform &uShadowMap();
+    GLUniform &uShadowSize();
+    GLState &  shadowState();
+    GLUniform &uLightDir();
+    GLUniform &uViewSpaceLightDir();
 
     const ICamera *testCamera() const;
 

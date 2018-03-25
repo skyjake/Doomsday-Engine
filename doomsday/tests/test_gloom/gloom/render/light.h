@@ -44,6 +44,8 @@ public:
     Light();
 
     void setEntity(const Entity *entity);
+    void setOrigin(const Vec3d &);
+    void setDirection(const Vec3f &);
     void setType(Type type);
     void setIntensity(const Vec3f &intensity);
     void setCastShadows(bool castShadows);
@@ -52,7 +54,7 @@ public:
 
     bool  castShadows() const;
     Type  type() const;
-    Vec3f origin() const; // from entity
+    Vec3d origin() const; // from entity
     Vec3f direction() const;
     Vec3f intensity() const;
     float fovY() const;

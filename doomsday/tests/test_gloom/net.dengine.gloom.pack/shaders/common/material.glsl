@@ -98,7 +98,7 @@ vec2 Gloom_Parallax(uint matIndex, vec2 texCoords, vec3 tsViewDir,
         return texCoords;
     }
 
-    const float heightScale = 0.2; // TODO: Fetch from metrics.
+    const float heightScale = 0.15; // TODO: Fetch from metrics.
 
 #if 0
     // Basic Parallax Mapping

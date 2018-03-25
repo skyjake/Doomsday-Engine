@@ -47,6 +47,16 @@ void Light::setEntity(const Entity *entity)
     d->origin = entity->position();
 }
 
+void Light::setOrigin(const Vec3d &pos)
+{
+    d->origin = pos;
+}
+
+void Light::setDirection(const Vec3f &dir)
+{
+    d->dir = dir.normalize();
+}
+
 void Light::setType(Type type)
 {
     d->type = type;
@@ -77,12 +87,12 @@ Light::Type Light::type() const
     return d->type;
 }
 
-Vec3f Light::origin() const
+Vec3d Light::origin() const
 {
     if (d->entity)
     {
         const auto p = d->entity->position();
-        return p + Vec3f(0, 2, 0); // <---TESTING---
+        return p + Vec3d(0, 2, 0); // <---TESTING---
     }
     return d->origin;
 }

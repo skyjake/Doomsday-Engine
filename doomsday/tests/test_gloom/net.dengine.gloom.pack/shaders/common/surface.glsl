@@ -66,10 +66,12 @@ Surface Gloom_LoadVertexSurface(void) {
     return surface;
 }
 
+TangentSpace Gloom_SurfaceTangentSpace(const Surface surface) {
+    return TangentSpace(surface.tangent, surface.bitangent, surface.normal);
+}
+
 void Gloom_TangentSpaceFragment(Surface surface, out vec3 tsViewPos, out vec3 tsFragPos) {
-    mat3 tbn = transpose(Gloom_TangentMatrix(
-        TangentSpace(surface.tangent, surface.bitangent, surface.normal)
-    ));
+    mat3 tbn = transpose(Gloom_TangentMatrix(Gloom_SurfaceTangentSpace(surface)));
     tsViewPos = tbn * uCameraPos.xyz;
     tsFragPos = tbn * surface.vertex.xyz;
 }
