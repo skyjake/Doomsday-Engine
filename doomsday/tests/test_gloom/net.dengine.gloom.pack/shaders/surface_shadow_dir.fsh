@@ -20,13 +20,15 @@ void main(void) {
 
     // Write a displaced depth.
     if (displacementDepth > 0.0) {
+        // TODO: This is an ortho projection, so the displacement could
+        // be scaled to the projected depth range without having to
+        // transform back and forth between the coordinate systems.
         float z = gl_FragCoord.z * 2.0 - 1.0;
-        vec4 clipSpacePos = vec4(gl_FragCoord.xy / uShadowSize * 2.0 - 1.0, z, 1.0);
-        vec4 worldSpacePos = uInverseLightMatrix * clipSpacePos;
-        vec3 pos = worldSpacePos.xyz / worldSpacePos.w;
+        vec3 clipSpacePos = vec3(gl_FragCoord.xy / uShadowSize * 2.0 - 1.0, z);
+        vec3 pos = mat3(uInverseLightMatrix) * clipSpacePos;
         pos += uLightDir * displacementDepth / abs(dot(Axis_Z, lightDir));
-        vec4 adjPos = uLightMatrix * vec4(pos, 1.0);
-        gl_FragDepth = 0.5 * adjPos.z / adjPos.w + 0.5;
+        vec3 adjPos = mat3(uLightMatrix) * pos;
+        gl_FragDepth = 0.5 * adjPos.z + 0.5;
     }
     else {
         gl_FragDepth = gl_FragCoord.z;
