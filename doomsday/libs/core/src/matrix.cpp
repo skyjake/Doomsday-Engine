@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Matrix"
@@ -110,7 +110,7 @@ bool Matrix4_InverseT(Type *out16, Type const *in16)
 {
     Type det = Matrix4_DeterminantT(in16);
 
-    if (de::abs(det) < .0005f)
+    if (de::abs(det) < .000001f) // .0005f)
     {
         Matrix4<Type> identity;
         identity.data().get(0, reinterpret_cast<IByteArray::Byte *>(out16),
