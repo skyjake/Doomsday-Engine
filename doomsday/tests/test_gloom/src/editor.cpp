@@ -756,17 +756,17 @@ DENG2_PIMPL(Editor)
         return id;
     }
 
-    ID findLineAt(const Point &pos, double maxDistance = -1) const
+    ID findLineAt(const QPoint &pos, double maxDistance = -1) const
     {
-        if (maxDistance < 0) maxDistance = defaultClickDistance();
+        if (maxDistance < 0) maxDistance = defaultClickDistance() * viewScale;
 
         ID id = 0;
         double dist = maxDistance;
         for (auto i = map.lines().begin(), end = map.lines().end(); i != end; ++i)
         {
-            const auto &line    = i.value();
-            const auto  mapLine = map.geoLine(i.key());
-            double      d       = mapLine.distanceTo(pos.coord);
+            const auto        line = viewLine(i.value());
+            const geo::Line2d gLine{Vec2d(line.x1(), line.y1()), Vec2d(line.x2(), line.y2())};
+            double            d = gLine.distanceTo(Vec2d(pos.x(), pos.y()));
             if (d < dist)
             {
                 id = i.key();
@@ -1389,8 +1389,9 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
     // Check what the mouse is hovering on.
     {
         const auto pos = d->viewToWorldPoint(event->pos());
+
         d->hoverPoint  = d->findPointAt(event->pos());
-        d->hoverLine   = d->findLineAt(pos);
+        d->hoverLine   = d->findLineAt(event->pos());
         d->hoverSector = (d->mode == EditSectors || d->mode == EditVolumes ? d->findSectorAt(pos) : 0);
         d->hoverPlane  = (d->mode == EditPlanes  ? d->findPlaneAtViewPos(event->pos()) : 0);
         d->hoverEntity = d->findEntityAt(event->pos());
