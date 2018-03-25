@@ -89,4 +89,60 @@ vec4 Gloom_FetchTexture(uint matIndex, int texture, vec2 uv) {
         Material_DefaultTextureValue[texture]);
 }
 
+vec2 Gloom_Parallax(uint matIndex, vec2 texCoords, vec3 tsViewDir,
+                    out float displacementDepth) {
+    MaterialSampler matSamp = Gloom_Sampler(matIndex, Texture_NormalDisplacement);
+    if (!matSamp.metrics.isValid) {
+        // Parallax does not have effect.
+        displacementDepth = 0.0;
+        return texCoords;
+    }
+
+    const float heightScale = 0.2; // TODO: Fetch from metrics.
+
+#if 0
+    // Basic Parallax Mapping
+    float height = 1.0 - Gloom_FetchTexture(matIndex, Texture_NormalDisplacement, texCoords).a;
+    vec2 p = tsViewDir.xy / tsViewDir.z * (height * heightScale);
+    return texCoords - p;
+#endif
+
+    vec2 curTexCoords = texCoords;
+    float curDepthMapValue = 1.0 - Gloom_SampleMaterial(matSamp, curTexCoords).a;
+
+    if (curDepthMapValue == 0.0) {
+        displacementDepth = 0.0;
+        return texCoords;
+    }
+
+    float vdp = abs(dot(Axis_Z, tsViewDir));
+
+    const float minLayers = 8.0;
+    const float maxLayers = 32.0;
+    float numLayers = mix(maxLayers, minLayers, vdp);
+
+    float layerDepth = 1.0 / numLayers;
+    float curLayerDepth = 0.0;
+    vec2 P = tsViewDir.xy * heightScale / vdp;
+    vec2 deltaTexCoords = P / numLayers;
+
+    while (curLayerDepth < curDepthMapValue) {
+        curTexCoords -= deltaTexCoords;
+        curDepthMapValue = 1.0 - Gloom_SampleMaterial(matSamp, curTexCoords).a;
+        curLayerDepth += layerDepth;
+    }
+
+    // Interpolate for more accurate collision point.
+    vec2 prevTexCoords = curTexCoords + deltaTexCoords;
+    float d1 = curDepthMapValue;
+    float d2 = 1.0 - Gloom_SampleMaterial(matSamp, prevTexCoords).a;
+    float afterDepth = d1 - curLayerDepth;
+    float beforeDepth = d2 - curLayerDepth + layerDepth;
+    float weight = afterDepth / (afterDepth - beforeDepth);
+
+    displacementDepth = mix(d1, d2, weight) * heightScale;
+
+    return mix(curTexCoords, prevTexCoords, weight);
+}
+
 #endif // GLOOM_MATERIAL_H
