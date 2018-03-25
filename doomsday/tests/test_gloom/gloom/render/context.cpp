@@ -28,14 +28,15 @@ namespace gloom {
 Context &Context::bindCamera(GLProgram &program)
 {
     program << uCurrentTime << view.uCameraPos << view.uCameraMvpMatrix << view.uWorldToViewRotate
-            << view.uViewToWorldRotate;
+            << view.uViewToWorldRotate << view.uModelViewMatrix << view.uProjMatrix;
     return *this;
 }
 
 Context &Context::bindGBuffer(GLProgram &program)
 {
     program << gbuffer->uGBufferDiffuse() << gbuffer->uGBufferNormal() << gbuffer->uGBufferDepth()
-            << gbuffer->uGBufferSpecGloss() << gbuffer->uGBufferEmissive();
+            << gbuffer->uGBufferSpecGloss() << gbuffer->uGBufferEmissive()
+            << gbuffer->uViewportSize();
     return *this;
 }
 

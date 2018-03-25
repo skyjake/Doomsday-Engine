@@ -64,7 +64,11 @@ void main(void) {
         out_FragColor = texture(uGBufferNormal, vUV);
     }
     else if (uDebugMode == 5) {
-        out_FragColor = GBuffer_FragViewSpacePos();
+        //out_FragColor = GBuffer_FragViewSpacePos();
+        float depth = abs(GBuffer_FragViewSpacePos().z);
+        //float depth = texelFetch(uGBufferDepth, ivec2(gl_FragCoord.xy), 0).r * 0.5 + 0.5;
+        out_FragColor = vec4(vec3(depth * 0.3), 1.0);
+        //out_FragColor = vec4(GBuffer_NormalizedFragCoord(), 0.0, 1.0);*/
     }
     else if (uDebugMode == 6) {
         out_FragColor = vec4(vec3(texture(uSSAOBuf, vUV).r), 1.0);

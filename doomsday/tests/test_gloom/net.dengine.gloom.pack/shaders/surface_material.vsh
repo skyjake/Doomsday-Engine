@@ -5,6 +5,7 @@
 #include "common/tangentspace.glsl"
 
 uniform mat4          uCameraMvpMatrix;
+uniform mat4          uModelViewMatrix;
 uniform vec4          uCameraPos; // world space
 uniform samplerBuffer uTexOffsets;
 uniform float         uCurrentTime;
@@ -14,6 +15,7 @@ in float aTexture1; // back material
 in vec2  aIndex1; // tex offset (front, back)
 
      out vec2  vUV;
+     out vec4  vVSPos;
      out vec3  vTSViewPos;
      out vec3  vTSFragPos;
      out vec3  vWSTangent;
@@ -30,6 +32,7 @@ void main(void) {
     Surface surface = Gloom_LoadVertexSurface();
 
     gl_Position  = uCameraMvpMatrix * surface.vertex;
+    vVSPos       = uModelViewMatrix * surface.vertex;
     vUV          = aUV.xy;
     vFlags       = surface.flags;
     vWSTangent   = surface.tangent;

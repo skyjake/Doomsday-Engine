@@ -51,6 +51,7 @@ public:
     GLUniform &uGBufferSpecGloss();
     GLUniform &uGBufferNormal();
     GLUniform &uGBufferDepth();
+    GLUniform &uViewportSize();
 
 private:
     DENG2_PRIVATE(d)

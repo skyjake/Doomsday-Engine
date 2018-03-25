@@ -44,6 +44,8 @@ DENG2_PIMPL(GBuffer)
     GLUniform uGBufferSpecGloss {"uGBufferSpecGloss",  GLUniform::Sampler2D};
     GLUniform uGBufferDepth     {"uGBufferDepth",      GLUniform::Sampler2D};
 
+    GLUniform uViewportSize     {"uViewportSize",      GLUniform::Vec2};
+
     Impl(Public *i) : Base(i)
     {}
 
@@ -55,12 +57,13 @@ DENG2_PIMPL(GBuffer)
 
     void updateUniforms()
     {
-//        uGBufferMaterial = frame.attachedTexture(GLFramebuffer::Color0);
         uGBufferDiffuse   = frame.attachedTexture(GLFramebuffer::Color0);
         uGBufferNormal    = frame.attachedTexture(GLFramebuffer::Color1);
         uGBufferEmissive  = frame.attachedTexture(GLFramebuffer::Color2);
         uGBufferSpecGloss = frame.attachedTexture(GLFramebuffer::Color3);
         uGBufferDepth     = frame.attachedTexture(GLFramebuffer::DepthStencil);
+
+        uViewportSize = frame.size();
     }
 };
 
@@ -133,6 +136,11 @@ GLUniform &GBuffer::uGBufferNormal()
 GLUniform &GBuffer::uGBufferDepth()
 {
     return d->uGBufferDepth;
+}
+
+GLUniform &GBuffer::uViewportSize()
+{
+    return d->uViewportSize;
 }
 
 } // namespace gloom

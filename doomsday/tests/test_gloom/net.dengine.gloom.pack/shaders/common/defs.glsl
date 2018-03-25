@@ -3,6 +3,10 @@
 
 const float Pi = 3.141592653589793;
 
+const vec3 Axis_X = vec3(1.0, 0.0, 0.0);
+const vec3 Axis_Y = vec3(0.0, 1.0, 0.0);
+const vec3 Axis_Z = vec3(0.0, 0.0, 1.0);
+
 const uint InvalidIndex = 0xffffffffu;
 
 const uint Surface_WorldSpaceXZToTexCoords = 0x01u;

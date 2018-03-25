@@ -165,6 +165,7 @@ DENG2_PIMPL(GloomWorld), public Asset
                     << renderContext.uDebugMode
                     << renderContext.uDebugTex
                     << renderContext.lights->uViewSpaceLightDir()
+                    << renderContext.view.uInverseProjMatrix
                     << ssao.uSSAOBuf()
                     << bloom.uBloomFramebuf();
             renderContext.bindGBuffer(debugQuad.program());
