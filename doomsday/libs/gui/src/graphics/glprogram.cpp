@@ -203,6 +203,7 @@ DENG2_PIMPL(GLProgram)
         {
             changed.insert(u);
         }
+        samplersChanged = true;
     }
 
     void updateUniforms()
@@ -229,6 +230,11 @@ DENG2_PIMPL(GLProgram)
                 if (loc >= 0)
                 {
                     GL.glUniform1i(loc, unit);
+//                    qDebug("P%i Sampler %s loc:%i unit:%i",
+//                           name,
+//                           samplers[unit]->name().constData(),
+//                           loc,
+//                           unit);
                     LIBGUI_ASSERT_GL_OK();
                 }
             }
@@ -272,6 +278,10 @@ DENG2_PIMPL(GLProgram)
         if (active.contains(&uniform))
         {
             changed.insert(&uniform);
+            if (uniform.isSampler())
+            {
+                samplersChanged = true;
+            }
         }
     }
 

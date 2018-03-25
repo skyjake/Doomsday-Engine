@@ -504,7 +504,6 @@ void GLBuffer::draw(DrawRanges const *ranges) const
         GLint isValid;
         LIBGUI_GL.glValidateProgram(progName);
         LIBGUI_GL.glGetProgramiv(progName, GL_VALIDATE_STATUS, &isValid);
-        DENG2_ASSERT(isValid);
         if (!isValid)
         {
             qDebug() << "[GLProgram] Program" << progName << "status invalid";
@@ -516,7 +515,8 @@ void GLBuffer::draw(DrawRanges const *ranges) const
             Block log(logSize);
             GL.glGetProgramInfoLog(progName, logSize, &count, reinterpret_cast<GLchar *>(log.data()));
 
-            qDebug() << "Program info log:" << log;
+            qDebug() << "Program info log:" << log.constData();
+            //DENG2_ASSERT(isValid);
         }
     }
 #endif
