@@ -1215,7 +1215,7 @@ void Editor::paintEvent(QPaintEvent *)
         QVector<QRectF>  selected;
         QVector<ID>      selectedIds;
 
-        for (auto i = mapPoints.begin(); i != mapPoints.end(); ++i)
+        for (auto i = mapPoints.begin(), end = mapPoints.end(); i != end; ++i)
         {
             const ID      id  = i.key();
             const QPointF pos = d->viewPoint(id);
