@@ -14,9 +14,15 @@ flat in uint vMaterial;
 void main(void) {
     if (vMaterial == InvalidIndex) discard;
 
-    float displacementDepth;
+    // From the back side, don't displace to avoid leaks along edges.
     vec3 lightDir = normalize(vTSLightDir);
-    vec2 texCoord = Gloom_Parallax(vMaterial, vUV, lightDir, displacementDepth);
+    // if (lightDir.z >= 0.0) {
+    //     gl_FragDepth = gl_FragCoord.z;
+    //     return;
+    // }
+
+    float displacementDepth;
+    Gloom_Parallax(vMaterial, vUV, lightDir, displacementDepth);
 
     // Write a displaced depth.
     if (displacementDepth > 0.0) {

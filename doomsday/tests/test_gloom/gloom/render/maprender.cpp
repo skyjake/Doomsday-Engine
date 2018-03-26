@@ -109,6 +109,7 @@ DENG2_PIMPL(MapRender)
 
         context.shaders->build(omniShadowProgram, "gloom.surface.shadow.omni")
             << planes.var
+            << texOffsets.var
             << context.uLightOrigin
             << context.uLightFarPlane
             << context.uLightCubeMatrices;
@@ -117,7 +118,8 @@ DENG2_PIMPL(MapRender)
                .bindMaterials(surfaces.program());
         context.bindCamera   (dirShadowProgram)
                .bindMaterials(dirShadowProgram);
-        context.bindCamera   (omniShadowProgram);
+        context.bindCamera   (omniShadowProgram)
+               .bindMaterials(omniShadowProgram);
     }
 
     void glInit()
