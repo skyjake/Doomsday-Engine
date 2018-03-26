@@ -24,7 +24,7 @@ group gloom {
         }
         shader shadow.omni {
             path.vertex   = "surface_shadow_omni.vsh"
-            path.geometry = "common/cube_faces.gsh"
+            path.geometry = "surface_shadow_omni.gsh"
             path.fragment = "surface_shadow_omni.fsh"
         }
     }

@@ -1,7 +1,5 @@
 #version 330 core
 
-// NOTE: Rename this shader to surface_shadow_omni.gsh
-
 layout (triangles) in;
 layout (triangle_strip, max_vertices=18) out;
 
