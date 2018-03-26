@@ -29,6 +29,7 @@ namespace de {
 static String const MULTIPLY            ("Multiply:");
 static String const HEIGHTMAP_TO_NORMALS("HeightMap.toNormals");
 static String const COLOR_DESATURATE    ("Color.desaturate");
+static String const COLOR_SOLID         ("Color.solid:");
 
 DENG2_PIMPL(ImageFile)
 {
@@ -77,6 +78,9 @@ DENG2_PIMPL(ImageFile)
 
         case ColorDesaturate:
             return COLOR_DESATURATE;
+
+        case ColorSolid:
+            return COLOR_SOLID;
 
         default:
             break;
@@ -127,6 +131,10 @@ String ImageFile::describe() const
         desc += " (filter: desaturate)";
         break;
 
+    case ColorSolid:
+        desc += " (filter: solid color " + d->filterParameter + ")";
+        break;
+
     default:
         break;
     }
@@ -165,6 +173,16 @@ Image ImageFile::image() const
         {
             img = img.colorized(Image::Color(255, 255, 255, 255));
         }
+        else if (d->filter == ColorSolid)
+        {
+            const auto components = d->filterParameter.split(',');
+            duint8 colorValues[4] {0, 0, 0, 255};
+            for (int i = 0; i < 4; ++i)
+            {
+                if (i < components.size()) colorValues[i] = duint8(components[i].toUInt());
+            }
+            img.fill(Image::Color(colorValues[0], colorValues[1], colorValues[2], colorValues[3]));
+        }
         return img;
     }
     else
@@ -191,7 +209,7 @@ filesys::Node const *ImageFile::tryGetChild(String const &name) const
     {
         return d->makeOrGetFiltered(HeightMapToNormals);
     }
-    else if (name.startsWith(MULTIPLY, Qt::CaseInsensitive))
+    else if (name.beginsWith(MULTIPLY, String::CaseInsensitive))
     {
         /// @bug Different filter parameters should be saved as unique ImageFiles,
         /// or otherwise the latest accessed parameter is in effect for all multiplied
@@ -203,6 +221,12 @@ filesys::Node const *ImageFile::tryGetChild(String const &name) const
     else if (!name.compareWithoutCase(COLOR_DESATURATE))
     {
         return d->makeOrGetFiltered(ColorDesaturate);
+    }
+    else if (name.beginsWith(COLOR_SOLID, String::CaseInsensitive))
+    {
+        ImageFile *filtered = d->makeOrGetFiltered(ColorSolid);
+        filtered->d->filterParameter = name.substr(COLOR_SOLID.size());
+        return filtered;
     }
     else if (d->filter == Multiply)
     {

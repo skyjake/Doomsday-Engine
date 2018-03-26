@@ -49,6 +49,7 @@ public:
         Multiply,
         HeightMapToNormals,
         ColorDesaturate,
+        ColorSolid,
     };
 
     DENG2_ERROR(FilterError);
