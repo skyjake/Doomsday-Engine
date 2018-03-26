@@ -38,6 +38,20 @@ using namespace gloom;
 static const int DRAG_MIN_DIST = 2;
 static const int UNDO_MAX = 50;
 
+struct EntityType {
+    Entity::Type type;
+    QString label;
+};
+static const QHash<Entity::Type, String> entityMetadata {
+    std::make_pair(Entity::Light,        String("Light")),
+    std::make_pair(Entity::Spotlight,    String("Spotlight")),
+    std::make_pair(Entity::Tree1,        String("Tree1")),
+    std::make_pair(Entity::Tree2,        String("Tree2")),
+    std::make_pair(Entity::Tree3,        String("Tree3")),
+    std::make_pair(Entity::TestSphere,   String("Test Sphere")),
+    std::make_pair(Entity::Buggy,        String("Buggy"))
+};
+
 enum Direction {
     Horizontal = 0x1,
     Vertical   = 0x2,
@@ -833,6 +847,11 @@ DENG2_PIMPL(Editor)
         return id;
     }
 
+    String entityLabel(const Entity &ent) const
+    {
+        return entityMetadata[ent.type()];
+    }
+
     void selectOrUnselect(ID id)
     {
         if (!selection.contains(id))
@@ -1311,7 +1330,9 @@ void Editor::paintEvent(QPaintEvent *)
 
     // Entities.
     {
+        const QFontMetrics metrics(d->metaFont);
         ptr.setPen(Qt::black);
+        ptr.setFont(d->metaFont);
 
         for (auto i = mapEnts.begin(), end = mapEnts.end(); i != end; ++i)
         {
@@ -1321,11 +1342,15 @@ void Editor::paintEvent(QPaintEvent *)
             float radius = 0.5f * d->viewScale;
             ptr.setBrush(d->selection.contains(i.key())? selectColor : QColor(Qt::white));
             ptr.drawEllipse(pos, radius, radius);
+
+            ptr.drawText(pos + QPointF(radius + 5, metrics.ascent() / 2), d->entityLabel(*ent));
         }
 
         ptr.setBrush(Qt::NoBrush);
         const Point mousePos = d->worldMousePoint();
         ptr.drawEllipse(d->worldToView(mousePos), 5, 5);
+
+        ptr.setFont(font());
     }
 
     // Status bar.
@@ -1525,24 +1550,11 @@ void Editor::mouseReleaseEvent(QMouseEvent *event)
             header->setDisabled(true);
 
             QMenu *eType = pop->addMenu("Type");
-            struct EntityType {
-                Entity::Type type;
-                QString label;
-            };
-            const EntityType types[] = {
-                { Entity::Light, "Light" },
-                { Entity::Spotlight, "Spotlight" },
-                { Entity::Tree1, "Tree1" },
-                { Entity::Tree2, "Tree2" },
-                { Entity::Tree3, "Tree3" },
-                { Entity::TestSphere, "Test Sphere" },
-                { Entity::Buggy, "Buggy" },
-            };
             const ID entityId = d->hoverEntity;
-            for (const auto &et : types)
+            for (auto i = entityMetadata.begin(), end = entityMetadata.end(); i != end; ++i)
             {
-                /*QAction *a = */ eType->addAction(et.label, [this, entityId, et] () {
-                    d->map.entity(entityId).setType(et.type);
+                /*QAction *a = */ eType->addAction(i.value(), [this, entityId, i] () {
+                    d->map.entity(entityId).setType(i.key());
                 });
             }
             pop->popup(mapToGlobal(event->pos()));
