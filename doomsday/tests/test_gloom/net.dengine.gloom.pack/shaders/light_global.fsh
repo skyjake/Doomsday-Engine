@@ -67,7 +67,7 @@ vec3 Gloom_FetchAmbient(vec3 viewSpaceNormal) {
     }
     return ambient / 9.0;*/
 
-    return uEnvIntensity * textureLod(uEnvMap, vec3(0, 1, 0), 8).rgb;
+    return 0.75 * uEnvIntensity * textureLod(uEnvMap, vec3(0, 1, 0), 8).rgb;
 }
 
 void main(void) {
