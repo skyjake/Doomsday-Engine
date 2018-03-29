@@ -57,6 +57,7 @@ DENG2_PIMPL(LightRender)
     std::unique_ptr<Light> skyLight;
     Lights                 lights;
     QSet<Light *>          activeLights;
+    QSet<Light *>          shadowCasters; // up to MAX_SHADOWS
     RenderFunc             callback;
     GLState                shadowState;
     GLProgram              shadingProgram;
@@ -228,6 +229,49 @@ DENG2_PIMPL(LightRender)
         skyLight.reset();
         giQuad.glDeinit();
     }
+
+    void selectShadowCasters()
+    {
+        shadowCasters.clear();
+
+        auto &ctx = self().context();
+        if (ctx.view.camera)
+        {
+            shadowCasters << skyLight.get();
+
+            using ProxEntry = std::pair<double, Light *>;
+            QVector<ProxEntry> proxLights;
+            proxLights.reserve(activeLights.size());
+
+            const Vec3d camPos = ctx.view.camera->cameraPosition();
+
+            // The remaining shadows will be assigned based on proximity.
+            for (Light *light : activeLights)
+            {
+                if (light->castShadows())
+                {
+                    proxLights << std::make_pair((camPos - light->origin()).length(), light);
+                }
+            }
+
+            std::sort(proxLights.begin(), proxLights.end(), [](const ProxEntry &a, const ProxEntry &b) {
+                return a.first < b.first;
+            });
+
+            for (const ProxEntry &proxEntry : proxLights)
+            {
+                // TODO: Is the light falloff volume fully or partially inside the view frustum?
+                // (Check a sphere against the 5 frustum planes.)
+
+                shadowCasters << proxEntry.second;
+
+                if (shadowCasters.size() == MAX_SHADOWS + 1)
+                {
+                    break; // skyLight has a separate shadow map
+                }
+            }
+        }
+    }
 };
 
 LightRender::LightRender()
@@ -252,9 +296,9 @@ void LightRender::render()
     d->activeShadows.clear();
 
     // Update shadow maps.
-    for (auto *light : d->activeLights)
+    for (auto *light : d->shadowCasters)
     {
-        if (light->castShadows())
+        DENG2_ASSERT(light->castShadows());
         {
             Shadow *shadow = nullptr;
             if (light->type() == Light::Directional)
@@ -305,6 +349,9 @@ void LightRender::render()
 
 void LightRender::advanceTime(TimeSpan elapsed)
 {
+    // Pick the shadow casters.
+    d->selectShadowCasters();
+
     // Testing.
     {
         Vec3d rotPos =
@@ -329,7 +376,10 @@ void LightRender::renderLighting()
         d->uViewSpaceLightDir = ctx.view.uWorldToViewRotate.toMat3f() * d->skyLight->direction();
         d->uViewSpaceLightOrigin = ctx.view.camera->cameraModelView() * d->skyLight->origin();
         d->uViewToLightMatrix    = lightMatrix * ctx.view.camera->cameraModelView().inverse();
-        d->uShadowMap            = d->activeShadows[d->skyLight.get()]->shadowMap();
+        if (d->activeShadows.contains(d->skyLight.get()))
+        {
+            d->uShadowMap = d->activeShadows[d->skyLight.get()]->shadowMap();
+        }
     }
 
     // Global illumination.
