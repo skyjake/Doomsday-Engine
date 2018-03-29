@@ -50,6 +50,7 @@ public:
         HeightMapToNormals,
         ColorDesaturate,
         ColorSolid,
+        ColorMultiply,
     };
 
     DENG2_ERROR(FilterError);

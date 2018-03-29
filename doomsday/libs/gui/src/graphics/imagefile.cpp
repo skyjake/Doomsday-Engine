@@ -30,6 +30,7 @@ static String const MULTIPLY            ("Multiply:");
 static String const HEIGHTMAP_TO_NORMALS("HeightMap.toNormals");
 static String const COLOR_DESATURATE    ("Color.desaturate");
 static String const COLOR_SOLID         ("Color.solid:");
+static String const COLOR_MULTIPLY      ("Color.multiply:");
 
 DENG2_PIMPL(ImageFile)
 {
@@ -81,6 +82,9 @@ DENG2_PIMPL(ImageFile)
 
         case ColorSolid:
             return COLOR_SOLID;
+
+        case ColorMultiply:
+            return COLOR_MULTIPLY;
 
         default:
             break;
@@ -135,6 +139,10 @@ String ImageFile::describe() const
         desc += " (filter: solid color " + d->filterParameter + ")";
         break;
 
+    case ColorMultiply:
+        desc += " (filter: multiply with color " + d->filterParameter + ")";
+        break;
+
     default:
         break;
     }
@@ -173,15 +181,28 @@ Image ImageFile::image() const
         {
             img = img.colorized(Image::Color(255, 255, 255, 255));
         }
-        else if (d->filter == ColorSolid)
+        else if (d->filter == ColorSolid ||
+                 d->filter == ColorMultiply)
         {
+            // Parse the parameters.
             const auto components = d->filterParameter.split(',');
             duint8 colorValues[4] {0, 0, 0, 255};
             for (int i = 0; i < 4; ++i)
             {
                 if (i < components.size()) colorValues[i] = duint8(components[i].toUInt());
             }
-            img.fill(Image::Color(colorValues[0], colorValues[1], colorValues[2], colorValues[3]));
+
+            const Image::Color paramColor{
+                colorValues[0], colorValues[1], colorValues[2], colorValues[3]};
+
+            if (d->filter == ColorSolid)
+            {
+                img.fill(paramColor);
+            }
+            else
+            {
+                img = img.multiplied(paramColor);
+            }
         }
         return img;
     }
@@ -226,6 +247,12 @@ filesys::Node const *ImageFile::tryGetChild(String const &name) const
     {
         ImageFile *filtered = d->makeOrGetFiltered(ColorSolid);
         filtered->d->filterParameter = name.substr(COLOR_SOLID.size());
+        return filtered;
+    }
+    else if (name.beginsWith(COLOR_MULTIPLY, String::CaseInsensitive))
+    {
+        ImageFile *filtered = d->makeOrGetFiltered(ColorMultiply);
+        filtered->d->filterParameter = name.substr(COLOR_MULTIPLY.size());
         return filtered;
     }
     else if (d->filter == Multiply)
