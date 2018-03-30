@@ -331,7 +331,26 @@ class LIBGUI_PUBLIC GLBuffer : public Asset
 public:
     typedef duint16 Index;
     typedef QVector<Index> Indices;
-    typedef QVector<Rangeui> DrawRanges;
+
+    struct LIBGUI_PUBLIC DrawRanges {
+        QVector<GLint>   first;
+        QVector<GLsizei> count;
+
+        inline void clear() {
+            first.clear();
+            count.clear();
+        }
+
+        inline void append(const Rangeui &range) {
+            first << range.start;
+            count << range.size();
+        }
+
+        inline int size() const {
+            DENG2_ASSERT(first.size() == count.size());
+            return first.size();
+        }
+    };
 
     enum Type {
         VertexArray, // array buffer, or an array buffer with element array buffer
