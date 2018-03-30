@@ -203,7 +203,7 @@ void WebHostedLink::transmit(Query const &query)
     {
         d->receiveFileContents(id, reply);
     });
-    QObject::connect(reply, &QNetworkReply::finished, [this, id, reply] ()
+    QObject::connect(reply, &QNetworkReply::finished, [this, reply] ()
     {
         d->pendingRequests.remove(reply);
         reply->deleteLater();

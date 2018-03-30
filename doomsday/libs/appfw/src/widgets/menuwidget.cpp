@@ -641,7 +641,7 @@ void MenuWidget::setVariantItemsEnabled(bool variantsEnabled)
     {
         d->variantsEnabled = variantsEnabled;
 
-        items().forAll([this] (ui::Item const &item)
+        items().forAll([] (ui::Item const &item)
         {
             if (is<ui::VariantActionItem>(item))
             {

@@ -192,7 +192,7 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
         {
             auto *toggle = new ToggleWidget(ToggleWidget::WithoutIndicator);
             QObject::connect(toggle, &ToggleWidget::stateChanged,
-                             [toggle, &item] (ToggleWidget::ToggleState state)
+                             [toggle] (ToggleWidget::ToggleState state)
             {
                 toggle->setColorTheme(state == ToggleWidget::Active? Inverted : Normal);
             });

@@ -523,12 +523,12 @@ DENG_GUI_PIMPL(ModelAssetEditor)
                      instChoice->selectedItem().data().toInt() : 0);
 
         // Update the distances.
-        instChoice->items().forAll([this] (Item &a)
+        instChoice->items().forAll([] (Item &a)
         {
             a.as<ChoiceItem>().setLabel(mobjItemLabel(a.data().toInt()));
             return LoopContinue;
         });
-        instChoice->items().sort([this] (Item const &a, Item const &b)
+        instChoice->items().sort([] (Item const &a, Item const &b)
         {
             return distanceToMobj(a.data().toInt()) < distanceToMobj(b.data().toInt());
         });

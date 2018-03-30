@@ -728,7 +728,7 @@ void ClientApp::checkPackageCompatibility(StringList const &packageIds,
         {
             // Run the dialog's event loop in a separate timer callback so it doesn't
             // interfere with the app's event loop.
-            Loop::timer(.01, [this, dlg] ()
+            Loop::timer(.01, [dlg] ()
             {
                 dlg->setDeleteAfterDismissed(true);
                 dlg->exec(ClientWindow::main().root());

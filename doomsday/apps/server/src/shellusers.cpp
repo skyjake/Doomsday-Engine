@@ -41,7 +41,7 @@ ShellUsers::ShellUsers() : d(new Impl)
     // Player information is sent periodically to all shell users.
     QObject::connect(&d->infoTimer, &QTimer::timeout, [this] ()
     {
-        forUsers([this] (User &user)
+        forUsers([] (User &user)
         {
             user.as<ShellUser>().sendPlayerInfo();
             return LoopContinue;
@@ -61,7 +61,7 @@ void ShellUsers::add(User *user)
 
 void ShellUsers::worldMapChanged()
 {
-    forUsers([this] (User &user)
+    forUsers([] (User &user)
     {
         ShellUser &shellUser = user.as<ShellUser>();
         shellUser.sendGameState();

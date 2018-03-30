@@ -727,6 +727,8 @@ DENG_GUI_PIMPL(PackagesWidget)
 
     void updateItems()
     {
+        filteredPackages.forAll([] (ui::Item &item)
+    {
         filteredPackages.forAll([](ui::Item &item) {
             item.as<PackageItem>().notifyChange();
             return LoopContinue;

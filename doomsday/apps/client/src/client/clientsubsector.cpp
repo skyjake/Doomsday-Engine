@@ -949,7 +949,7 @@ DENG2_PIMPL(ClientSubsector)
         dint decorIndex = 0;
 
         material.forAllDecorations([this, &suf, &matAnimator, &materialOrigin
-                                   , &topLeft, &bottomRight
+                                   , &topLeft
                                    , &delta, &axis, &sufDimensions, &decorIndex]
                                    (MaterialDecoration &decor)
         {
@@ -1066,7 +1066,7 @@ DENG2_PIMPL(ClientSubsector)
                                        : nullptr)))
                     {
                         LineSide &side = it->mapElementAs<LineSideSegment>().lineSide();
-                        side.forAllSurfaces([this, &yes] (Surface &surface)
+                        side.forAllSurfaces([&yes] (Surface &surface)
                         {
                             LOGDEV_MAP_XVERBOSE_DEBUGONLY("  ", composeSurfacePath(surface));
                             if (auto *decor = surface.decorationState())
@@ -1100,7 +1100,7 @@ DENG2_PIMPL(ClientSubsector)
         );
 
         // Surfaces of the edge loops.
-        self().forAllEdgeLoops([this, &material, &yes] (ClEdgeLoop const &loop)
+        self().forAllEdgeLoops([&material, &yes] (ClEdgeLoop const &loop)
         {
             SubsectorCirculator it(&loop.first());
             do
@@ -1108,7 +1108,7 @@ DENG2_PIMPL(ClientSubsector)
                 if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
                 {
                     LineSide &side = it->mapElementAs<LineSideSegment>().lineSide();
-                    side.forAllSurfaces([this, &material, &yes] (Surface &surface)
+                    side.forAllSurfaces([&material, &yes] (Surface &surface)
                     {
                         if (surface.materialPtr() == &material)
                         {
@@ -1847,6 +1847,7 @@ duint ClientSubsector::biasLastChangeOnFrame() const
 void ClientSubsector::decorate()
 {
     LOG_AS("ClientSubsector::decorate");
+    /*auto decorateFunc = [this] (Surface &surface)
 
     if (!hasDecorations()) return;
 
@@ -1857,7 +1858,7 @@ void ClientSubsector::decorate()
 //    };
 
     // Surfaces of the edge loops.
-    forAllEdgeLoops([this/*, &decorateFunc*/] (ClEdgeLoop const &loop)
+    forAllEdgeLoops([this](ClEdgeLoop const &loop)
     {
         SubsectorCirculator it(&loop.first());
         do

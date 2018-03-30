@@ -219,7 +219,7 @@ static bool writeBindingsState(Path const &filePath)
         // Start with a clean slate when restoring the bindings.
         out.writeText("clearbindings\n\n");
 
-        isys.forAllContexts([&isys, &out] (BindContext &context)
+        isys.forAllContexts([&out] (BindContext &context)
         {
             // Commands.
             context.forAllCommandBindings([&out, &context] (Record &rec)
@@ -233,7 +233,7 @@ static bool writeBindingsState(Path const &filePath)
             });
 
             // Impulses.
-            context.forAllImpulseBindings([&out, &context] (CompiledImpulseBindingRecord &rec)
+            context.forAllImpulseBindings([&out] (CompiledImpulseBindingRecord &rec)
             {
                 ImpulseBinding bind(rec);
                 PlayerImpulse const *impulse = P_PlayerImpulsePtr(rec.compiled().impulseId);

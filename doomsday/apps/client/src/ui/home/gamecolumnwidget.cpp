@@ -190,7 +190,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
     int userProfileCount() const
     {
         int count = 0;
-        menu->items().forAll([this, &count] (ui::Item const &item)
+        menu->items().forAll([&count] (ui::Item const &item)
         {
             if (!item.semantics().testFlag(ui::Item::Separator))
             {

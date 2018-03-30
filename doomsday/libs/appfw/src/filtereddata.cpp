@@ -236,7 +236,7 @@ Data::Pos FilteredData::findData(QVariant const &data) const
 
 void FilteredData::sort(LessThanFunc lessThan)
 {
-    qSort(d->items.begin(), d->items.end(), [this, &lessThan] (Item const *a, Item const *b) {
+    qSort(d->items.begin(), d->items.end(), [&lessThan] (Item const *a, Item const *b) {
         return lessThan(*a, *b);
     });
     d->updateReverseMapping();
@@ -246,7 +246,7 @@ void FilteredData::sort(LessThanFunc lessThan)
 
 void FilteredData::stableSort(LessThanFunc lessThan)
 {
-    qStableSort(d->items.begin(), d->items.end(), [this, &lessThan] (Item const *a, Item const *b) {
+    qStableSort(d->items.begin(), d->items.end(), [&lessThan] (Item const *a, Item const *b) {
         return lessThan(*a, *b);
     });
     d->updateReverseMapping();

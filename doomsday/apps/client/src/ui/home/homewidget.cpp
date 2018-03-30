@@ -130,7 +130,7 @@ DENG_GUI_PIMPL(HomeWidget)
         taskBarHintButton->rule()
                 .setInput(Rule::Right,  self().rule().right()  - rule("dialog.gap"))
                 .setInput(Rule::Bottom, self().rule().bottom() - rule("dialog.gap") + *dismissOffset);
-        taskBarHintButton->setActionFn([this] () {
+        taskBarHintButton->setActionFn([] () {
             ClientWindow::main().taskBar().open();
         });
 

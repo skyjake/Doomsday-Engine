@@ -114,7 +114,7 @@ DENG2_PIMPL(GameWidget)
     void drawComposited()
     {
         int numLocal = 0;
-        ClientApp::forLocalPlayers([this, &numLocal] (ClientPlayer &player)
+        ClientApp::forLocalPlayers([&numLocal] (ClientPlayer &player)
         {
             player.viewCompositor().drawCompositedLayers();
             ++numLocal;

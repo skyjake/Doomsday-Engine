@@ -142,10 +142,10 @@ static int drawCellLines(Blockmap const &bmap, BlockmapCell const &cell, void *)
     return false; // Continue iteration.
 }
 
-static int drawCellPolyobjs(Blockmap const &bmap, BlockmapCell const &cell, void *context)
+static int drawCellPolyobjs(Blockmap const &bmap, BlockmapCell const &cell, void * /*context*/)
 {
     DGL_Begin(DGL_LINES);
-        bmap.forAllInCell(cell, [&context] (void *object)
+        bmap.forAllInCell(cell, [] (void *object)
         {
             Polyobj &pob = *(Polyobj *)object;
             for (Line *line : pob.lines())

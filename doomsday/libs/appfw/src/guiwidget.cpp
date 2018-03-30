@@ -387,7 +387,7 @@ DENG2_PIMPL(GuiWidget)
         PopupWidget *parentPopup = self().findParentPopup();
         Rectanglei const viewRect = self().root().viewRule().recti();
         bool escaped = false;
-        auto *widget = self().walkInOrder(dir, [this, &viewRect, parentPopup, &escaped] (Widget &widget)
+        auto *widget = self().walkInOrder(dir, [&viewRect, parentPopup, &escaped] (Widget &widget)
         {
             if (parentPopup && !widget.hasAncestor(*parentPopup))
             {
