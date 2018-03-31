@@ -16,16 +16,6 @@ uniform mat4    uLightMatrix; // world -> light
 uniform mat4    uViewToLightMatrix;
 uniform sampler2DShadow uShadowMap;
 
-// Omni lights:
-struct OmniLight {
-    vec3  origin; // view space
-    vec3  intensity;
-    float falloffRadius;
-    int   shadowIndex;
-};
-uniform int       uOmniLightCount;
-uniform OmniLight uOmniLights[Gloom_MaxOmniLights];
-
 in vec2 vUV;
 
 const vec3 pcfWeights[9] = vec3[9] (
@@ -111,18 +101,7 @@ void main(void) {
 
     /* Omni lights (that were determined to affect most pixels in the frame). */ {
         SurfacePoint sp = SurfacePoint(vsPos.xyz, normal, diffuse, specGloss);
-        for (int i = 0; i < uOmniLightCount; ++i) {
-            Light light = Light(
-                uOmniLights[i].origin,
-                vec3(0.0),
-                uOmniLights[i].intensity,
-                uOmniLights[i].falloffRadius,
-                1.0);
-            float lit = Gloom_OmniShadow(vsPos.xyz, light, uOmniLights[i].shadowIndex);
-            if (lit > 0.0) {
-                outColor += lit * Gloom_BlinnPhong(light, sp);
-            }
-        }
+        outColor += Gloom_OmniLighting(sp);
     }
 
     // Material emissive component.

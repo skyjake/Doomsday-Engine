@@ -3,7 +3,7 @@
 #include "common/gbuffer_in.glsl"
 #include "common/camera.glsl"
 #include "common/lightmodel.glsl"
-#include "common/omni_lights.glsl"
+#include "common/omni_shadows.glsl"
 
 flat in vec3  vOrigin;     // view space
 flat in vec3  vDirection;  // view space

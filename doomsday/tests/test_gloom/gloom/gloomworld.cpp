@@ -354,7 +354,7 @@ void GloomWorld::render(const ICamera &camera)
         d->debugQuad.render();
     }
 
-#if 1
+#if 0
     {
         auto &perfTimer = GLWindow::main().timer();
         for (int i = 0; i < PerfTimerCount; ++i)
