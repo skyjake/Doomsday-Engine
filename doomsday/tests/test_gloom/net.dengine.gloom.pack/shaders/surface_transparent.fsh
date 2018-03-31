@@ -4,7 +4,8 @@
 #include "common/material.glsl"
 #include "common/tangentspace.glsl"
 
-uniform mat4 uProjMatrix;
+uniform mat4  uProjMatrix;
+uniform float uCurrentTime;
 
      in vec2  vUV;
      in vec4  vVSPos;
@@ -26,14 +27,29 @@ void main(void) {
                                    normalize(vWSBitangent),
                                    normalize(vWSNormal));
 
+    // Water offsets.
+    vec2 waterOff[2] = vec2[2](
+        vec2(0.182, -0.3195)  * uCurrentTime,
+        vec2(-0.203, 0.01423) * uCurrentTime
+    );
+
     // Parallax mapping.
-    float displacementDepth;
+    float displacementDepths[2];
     vec3 viewDir  = normalize(vTSViewDir);
-    vec2 texCoord = Gloom_Parallax(matIndex, vUV, viewDir, displacementDepth);
+    vec2 texCoord = Gloom_Parallax(matIndex, vUV + waterOff[0], viewDir, displacementDepths[0]);
+    vec2 texCoord2 = Gloom_Parallax(matIndex, vUV + waterOff[1], viewDir, displacementDepths[1]);
 
     vec3 normal = GBuffer_UnpackNormal(
         Gloom_FetchTexture(matIndex, Texture_NormalDisplacement, texCoord));
-    vec3 vsNormal = Gloom_TangentMatrix(ts) * normal;
+    vec3 normal2 = GBuffer_UnpackNormal(
+        Gloom_FetchTexture(matIndex, Texture_NormalDisplacement, texCoord2));
+    // vec3 vsNormal = Gloom_TangentMatrix(ts) * normal;
+    // vec3 vsNormal2 = Gloom_TangentMatrix(ts) * normal2;
+
+    float displacementDepth = (displacementDepths[0] + displacementDepths[1]) / 2.0;
+
+    normal = normalize(normal + normal2);
+    //vsNormal = normalize(vsNormal + vsNormal2);
 
     vec4 diffuse = Gloom_FetchTexture(matIndex, Texture_Diffuse, texCoord);
     vec3 emissive = Gloom_FetchTexture(matIndex, Texture_Emissive, texCoord).rgb;

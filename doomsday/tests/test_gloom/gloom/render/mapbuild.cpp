@@ -190,7 +190,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                         bufs.transparencies << Buffers::Transparency{{
                             plane.projectPoint(Point{sectorPolygon.center()}), plane.normal}};
                         bufs.transparentRanges.append(
-                            Rangez(firstIndex, indices[geomBuf].size() - firstIndex));
+                            Rangez(firstIndex, indices[geomBuf].size()));
                     }
                 }
             }
@@ -256,7 +256,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                 {
                     bufs.transparencies << Buffers::Transparency{geo::Plane{p1, normal}};
                     bufs.transparentRanges.append(
-                        Rangez(firstIndex, indices[geomBuf].size() - firstIndex));
+                        Rangez(firstIndex, indices[geomBuf].size()));
                 }
             };
 

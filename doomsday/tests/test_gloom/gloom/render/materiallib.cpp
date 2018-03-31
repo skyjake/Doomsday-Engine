@@ -32,6 +32,7 @@ DENG2_PIMPL(MaterialLib)
     struct Properties
     {
         Flags flags;
+        float texelsPerMeter;
     };
     QHash<String, Properties> materials;
 
@@ -51,12 +52,12 @@ DENG2_PIMPL(MaterialLib)
     Impl(Public *i) : Base(i)
     {
         // All known materials.
-        materials["world.stone"] = Properties{Opaque};
-        materials["world.dirt"]  = Properties{Opaque};
-        materials["world.grass"] = Properties{Opaque};
-        materials["world.test"]  = Properties{Opaque};
-        materials["world.test2"] = Properties{Opaque};
-        materials["world.water"] = Properties{Transparent};
+        materials["world.stone"] = Properties{Opaque, 200.f};
+        materials["world.dirt"]  = Properties{Opaque, 200.f};
+        materials["world.grass"] = Properties{Opaque, 200.f};
+        materials["world.test"]  = Properties{Opaque, 200.f};
+        materials["world.test2"] = Properties{Opaque, 200.f};
+        materials["world.water"] = Properties{Transparent, 100.f};
     }
 
     void init(Context &)
@@ -107,7 +108,7 @@ DENG2_PIMPL(MaterialLib)
 
     void updateTextureMetrics()
     {
-        const float texelsPerMeter = 200.f;
+        //const float texelsPerMeter = 200.f;
         auto &ctx = self().context();
 
         textureMetrics.clear();
@@ -129,10 +130,9 @@ DENG2_PIMPL(MaterialLib)
                     rect  = ctx.atlas[j]->imageRect(texId);
                     rectf = ctx.atlas[j]->imageRectf(texId);
 
-                    metrics.texture[j] = Metrics::Texture
-                    {
-                        {rectf.xywh()}, {Vec4f(rect.width(), rect.height(), texelsPerMeter)}
-                    };
+                    metrics.texture[j] = Metrics::Texture{
+                        {rectf.xywh()},
+                        {Vec4f(rect.width(), rect.height(), materials[i.key()].texelsPerMeter)}};
                 }
             }
 
