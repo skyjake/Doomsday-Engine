@@ -134,8 +134,8 @@ DENG2_PIMPL(GLBuffer)
     GLuint           idxName         = 0;
     dsize            count           = 0;
     dsize            idxCount        = 0;
-    DrawRanges       defaultRange; ///< All vertices.
-    GLenum           prim = GL_POINTS;
+    GLenum           prim            = GL_POINTS;
+    DrawRanges       defaultRange; ///< The default is all vertices.
     AttribSpecs      specs{nullptr, 0};
 
     Impl(Public *i, Type type)
@@ -312,7 +312,9 @@ DENG2_PIMPL(GLBuffer)
                 for (int part = 0; part < 4; ++part)
                 {
                     if (enable)
+                    {
                         setAttribPointer(index, spec, divisor, part);
+                    }
                     else
                     {
                         GL.glDisableVertexAttribArray(index + part);
@@ -323,7 +325,9 @@ DENG2_PIMPL(GLBuffer)
             else
             {
                 if (enable)
+                {
                     setAttribPointer(index, spec, divisor);
+                }
                 else
                 {
                     GL.glDisableVertexAttribArray(index);
