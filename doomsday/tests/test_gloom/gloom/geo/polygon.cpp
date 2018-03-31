@@ -43,6 +43,20 @@ void Polygon::updateBounds()
     }
 }
 
+Vec2d Polygon::center() const
+{
+    Vec2d c;
+    if (points.size())
+    {
+        for (const auto &p : points)
+        {
+            c += p.pos;
+        }
+        c /= points.size();
+    }
+    return c;
+}
+
 const Vec2d &Polygon::at(int pos) const
 {
     return points[mod(pos, size())].pos;

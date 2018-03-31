@@ -42,7 +42,7 @@ struct EntityType {
     Entity::Type type;
     QString label;
 };
-static const QHash<Entity::Type, String> entityMetadata {
+static const QMap<Entity::Type, String> entityMetadata {
     std::make_pair(Entity::Light,        String("Light")),
     std::make_pair(Entity::Spotlight,    String("Spotlight")),
     std::make_pair(Entity::Tree1,        String("Tree1")),

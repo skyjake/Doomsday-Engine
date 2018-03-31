@@ -37,9 +37,10 @@ namespace gloom {
 
 DENG2_PIMPL(MapRender)
 {
-    MaterialLib      matLib;
-    MapBuild::Mapper planeMapper;
-    MapBuild::Mapper texOffsetMapper;
+    MaterialLib       matLib;
+    MapBuild::Buffers builtMap;
+    MapBuild::Mapper  planeMapper;
+    MapBuild::Mapper  texOffsetMapper;
 
     struct TexOffsetData {
         Vec2f offset;
@@ -52,6 +53,10 @@ DENG2_PIMPL(MapRender)
     Drawable  surfaces;
     GLProgram dirShadowProgram;
     GLProgram omniShadowProgram;
+
+    GLProgram            transparentProgram;
+    GLState              transparentState;
+    GLBuffer::DrawRanges visibleTransparents;
 
     EntityRender ents;
     LightRender  lights;
@@ -73,8 +78,8 @@ DENG2_PIMPL(MapRender)
 
         DENG2_ASSERT(map);
 
-        MapBuild builder{*map, matLib.materials()};
-        auto *buf = builder.build();
+        MapBuild builder{*map, matLib};
+        builtMap = builder.build();
 
         planeMapper     = builder.planeMapper();
         texOffsetMapper = builder.texOffsetMapper();
@@ -92,7 +97,7 @@ DENG2_PIMPL(MapRender)
             }
         }
 
-        surfaces.addBuffer(buf);
+        surfaces.addBuffer(builtMap.geom[MapBuild::OpaqueGeometry]);
 
         context.shaders->build(surfaces.program(), "gloom.surface.material")
             << planes.var
@@ -114,12 +119,16 @@ DENG2_PIMPL(MapRender)
             << context.uLightFarPlane
             << context.uLightCubeMatrices;
 
-        context.bindCamera   (surfaces.program())
-               .bindMaterials(surfaces.program());
-        context.bindCamera   (dirShadowProgram)
-               .bindMaterials(dirShadowProgram);
-        context.bindCamera   (omniShadowProgram)
-               .bindMaterials(omniShadowProgram);
+        context.shaders->build(transparentProgram, "gloom.surface.transparent")
+            << planes.var
+            << texOffsets.var
+            << matLib.uTextureMetrics();
+
+        for (auto *prog :
+             {&surfaces.program(), &dirShadowProgram, &omniShadowProgram, &transparentProgram})
+        {
+            context.bindCamera(*prog).bindMaterials(*prog);
+        }
     }
 
     void glInit()
@@ -206,6 +215,16 @@ void MapRender::advanceTime(TimeSpan elapsed)
     }
 #endif
 
+    // Sort transparencies back-to-front. (TODO: PVS?)
+    if (context().view.camera)
+    {
+        d->visibleTransparents.clear();
+
+        const Vec3d eye = context().view.camera->cameraPosition();
+
+        d->visibleTransparents = d->builtMap.transparentRanges;
+    }
+
     d->texOffsets.update();
     d->planes.update();
 }
@@ -215,7 +234,8 @@ void MapRender::render()
     d->surfaces.draw();
     d->ents.render();
 
-    d->lights.setShadowRenderCallback([this](const Light &light) {
+    d->lights.setShadowRenderCallback([this](const Light &light)
+    {
         d->surfaces.setProgram(light.type() == Light::Directional? d->dirShadowProgram
                                                                  : d->omniShadowProgram);
         d->surfaces.setState(context().lights->shadowState());
@@ -227,6 +247,19 @@ void MapRender::render()
     });
 
     d->lights.render();
+}
+
+void MapRender::renderTransparent()
+{
+    auto &ctx = context();
+
+    d->transparentState.setTarget(*ctx.framebuf).setViewport(ctx.framebuf->size());
+    d->transparentState.apply();
+
+    d->transparentProgram.beginUse();
+    d->builtMap.geom[MapBuild::TransparentGeometry]->draw(&d->visibleTransparents);
+    d->transparentProgram.endUse();
+    GLState::current().apply();
 }
 
 } // namespace gloom

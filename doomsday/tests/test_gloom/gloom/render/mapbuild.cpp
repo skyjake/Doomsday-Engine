@@ -43,14 +43,14 @@ LIBGUI_VERTEX_FORMAT_SPEC(MapVertex, 21 * 4)
 
 DENG2_PIMPL_NOREF(MapBuild)
 {
-    const Map &      map;
-    MaterialLib::Ids materials; // currently loaded materials
-    Mapper           planeMapper;
-    Mapper           texOffsetMapper;
+    const Map &        map;
+    const MaterialLib &matLib;
+    Mapper             planeMapper;
+    Mapper             texOffsetMapper;
 
-    Impl(const Map &map, const MaterialLib::Ids &materials)
+    Impl(const Map &map, const MaterialLib &materials)
         : map(map)
-        , materials(materials)
+        , matLib(materials)
     {}
 
     Vec3f worldNormalVector(const Line &line) const
@@ -63,14 +63,20 @@ DENG2_PIMPL_NOREF(MapBuild)
     /**
      * Builds a mesh with triangles for all planes and walls.
      */
-    Buffer *build()
+    Buffers build()
     {
+        Buffers bufs;
+
         planeMapper.clear();
         texOffsetMapper.clear();
 
-        Buffer *buf = new Buffer;
-        Buffer::Vertices verts;
-        Buffer::Indices indices;
+        for (auto &buf : bufs.geom)
+        {
+            buf.reset(new Buffer);
+        }
+
+        Buffer::Vertices verts[2];
+        Buffer::Indices indices[2];
 
         // Project each sector's points to all their planes.
         const auto sectorPlaneVerts = map.worldSectorPlaneVerts();
@@ -93,7 +99,8 @@ DENG2_PIMPL_NOREF(MapBuild)
             const Sector &sector = map.sector(sectorId);
 
             // Split the polygon to convex parts (for triangulation).
-            const auto convexParts = map.sectorPolygon(sectorId).splitConvexParts();
+            const auto sectorPolygon = map.sectorPolygon(sectorId);
+            const auto convexParts = sectorPolygon.splitConvexParts();
 
             // -------- Planes --------
 
@@ -111,27 +118,24 @@ DENG2_PIMPL_NOREF(MapBuild)
                 {
                     if (i == 1 && v < sector.volumes.size() - 1) break;
 
-//                    const auto &floor        = planeVerts.front();
-                    //const auto &ceiling      = planeVerts.back();
                     const auto &currentVerts = *currentPlaneVerts++;
-                    //const auto &floorPlane   = map.floorPlane(sectorId);
-                    const auto &plane = map.plane(volume.planes[i]);
+                    const auto &plane        = map.plane(volume.planes[i]);
 
-                    if (!plane.material[0] && !plane.material[1]) continue;
+                    if (!plane.material[0] && !plane.material[1])
+                    {
+                        continue;
+                    }
 
-                    const bool isFacingUp = plane.normal.y > 0;
-
-                    //const bool buildFloor   = bool(floorPlane.material[0]);
-                    //const bool buildCeiling = bool(ceilingPlane.material[0]);
-
-                    // TODO: If only one plane is needed, no need to add vertices for both.
+                    const bool  isFacingUp = plane.normal.y > 0;
+                    const int   geomBuf    = matLib.isTransparent(plane.material[0]);
+                    const dsize firstIndex = indices[geomBuf].size();
 
                     // Insert vertices of both planes to the buffer.
-                    Buffer::Type f{}; //, c{};
+                    Buffer::Type f{};
                     QHash<ID, Buffer::Index> pointIndices;
 
-                    f.material[0]  = materials[plane.material[0]];
-                    f.material[1]  = materials[plane.material[1]];
+                    f.material[0]  = matLib.materials()[plane.material[0]];
+                    f.material[1]  = matLib.materials()[plane.material[1]];
                     f.normal       = plane.normal;
                     f.tangent      = plane.tangent();
                     f.flags        = MapVertex::WorldSpaceXZToTexCoords | MapVertex::TextureOffset;
@@ -147,24 +151,13 @@ DENG2_PIMPL_NOREF(MapBuild)
                         f.tangent = -f.tangent;
                     }
 
-//                    c.material[0]  = materials[ceilingPlane.material[0]];
-//                    c.material[1]  = INVALID_INDEX;
-//                    c.normal       = ceilingPlane.normal;
-//                    c.tangent      = -ceilingPlane.tangent();
-//                    c.flags        = MapVertex::WorldSpaceXZToTexCoords | MapVertex::TextureOffset;
-//                    c.geoPlane     = planeMapper[map.ceilingPlaneId(sectorId)];
-//                    c.texOffset[0] = texOffsetMapper[map.ceilingPlaneId(sectorId)];
-
                     for (const ID pointID : currentVerts.keys())
                     {
-                        f.pos = currentVerts[pointID];
-                        //c.pos = ceiling[pointID];
-
+                        f.pos      = currentVerts[pointID];
                         f.texCoord = Vec4f(0, 0, 0, 0); // fixed offset
-                        //c.texCoord = Vec4f(0, 0, 0, 0); // fixed offset
 
-                        pointIndices.insert(pointID, Buffer::Index(verts.size()));
-                        verts << f;// << c;
+                        pointIndices.insert(pointID, Buffer::Index(verts[geomBuf].size()));
+                        verts[geomBuf] << f; // << c;
                     }
 
                     for (const auto &convex : convexParts)
@@ -176,54 +169,63 @@ DENG2_PIMPL_NOREF(MapBuild)
                         {
                             for (int i = 1; i < convex.size() - 1; ++i)
                             {
-                                indices << pointIndices[baseID]
-                                        << pointIndices[convex.points[i + 1].id]
-                                        << pointIndices[convex.points[i].id];
+                                indices[geomBuf] << pointIndices[baseID]
+                                                 << pointIndices[convex.points[i + 1].id]
+                                                 << pointIndices[convex.points[i].id];
                             }
                         }
                         else
-                        // Ceiling.
-//                        if (buildCeiling)
                         {
                             for (int i = 1; i < convex.size() - 1; ++i)
                             {
-                                indices << pointIndices[baseID]
-                                        << pointIndices[convex.points[i].id]
-                                        << pointIndices[convex.points[i + 1].id];
+                                indices[geomBuf] << pointIndices[baseID]
+                                                 << pointIndices[convex.points[i].id]
+                                                 << pointIndices[convex.points[i + 1].id];
                             }
                         }
+                    }
+
+                    if (geomBuf == TransparentGeometry)
+                    {
+                        bufs.transparencies << Buffers::Transparency{{
+                            plane.projectPoint(Point{sectorPolygon.center()}), plane.normal}};
+                        bufs.transparentRanges.append(
+                            Rangez(firstIndex, indices[geomBuf].size() - firstIndex));
                     }
                 }
             }
 
             // -------- Walls --------
 
-            auto makeQuad = [this, &indices, &verts](const String &  frontMaterial,
-                                                     const String &  backMaterial,
-                                                     const Vec3f &   normal,
-                                                     const uint32_t *planeIndex,
-                                                     uint32_t        flags,
-                                                     const Vec3f &   p1,
-                                                     const Vec3f &   p2,
-                                                     const Vec3f &   p3,
-                                                     const Vec3f &   p4,
-                                                     float           length,
-                                                     float           rotation)
+            auto makeQuad = [this, &bufs, &indices, &verts](const String &  frontMaterial,
+                                                            const String &  backMaterial,
+                                                            const Vec3f &   normal,
+                                                            const uint32_t *planeIndex,
+                                                            uint32_t        flags,
+                                                            const Vec3f &   p1,
+                                                            const Vec3f &   p2,
+                                                            const Vec3f &   p3,
+                                                            const Vec3f &   p4,
+                                                            float           length,
+                                                            float           rotation)
             {
                 if (!frontMaterial && !backMaterial) return;
 
-                const Buffer::Index baseIndex = Buffer::Index(verts.size());
-                indices << baseIndex
-                        << baseIndex + 3
-                        << baseIndex + 2
-                        << baseIndex
-                        << baseIndex + 1
-                        << baseIndex + 3;
+                const int geomBuf = matLib.isTransparent(frontMaterial);
+
+                const dsize firstIndex = indices[geomBuf].size();
+                const Buffer::Index baseIndex = Buffer::Index(verts[geomBuf].size());
+                indices[geomBuf] << baseIndex
+                                 << baseIndex + 3
+                                 << baseIndex + 2
+                                 << baseIndex
+                                 << baseIndex + 1
+                                 << baseIndex + 3;
 
                 Buffer::Type v{};
 
-                v.material[0] = materials[frontMaterial];
-                v.material[1] = materials[backMaterial];
+                v.material[0] = matLib.materials()[frontMaterial];
+                v.material[1] = matLib.materials()[backMaterial];
                 v.normal      = normal;
                 v.flags       = flags;
                 v.tangent     = (p2 - p1).normalize();
@@ -233,22 +235,29 @@ DENG2_PIMPL_NOREF(MapBuild)
                 v.pos      = p1;
                 v.texCoord = Vec4f(0, 0, length, rotation);
                 v.geoPlane = planeIndex[0];
-                verts << v;
+                verts[geomBuf] << v;
 
                 v.pos      = p2;
                 v.texCoord = Vec4f(length, 0, length, rotation);
                 v.geoPlane = planeIndex[0];
-                verts << v;
+                verts[geomBuf] << v;
 
                 v.pos      = p3;
                 v.texCoord = Vec4f(0, 0, length, rotation);
                 v.geoPlane = planeIndex[1];
-                verts << v;
+                verts[geomBuf] << v;
 
                 v.pos      = p4;
                 v.texCoord = Vec4f(length, 0, length, rotation);
                 v.geoPlane = planeIndex[1];
-                verts << v;
+                verts[geomBuf] << v;
+
+                if (geomBuf == TransparentGeometry)
+                {
+                    bufs.transparencies << Buffers::Transparency{geo::Plane{p1, normal}};
+                    bufs.transparentRanges.append(
+                        Rangez(firstIndex, indices[geomBuf].size() - firstIndex));
+                }
             };
 
             for (const ID lineId : sector.walls)
@@ -316,23 +325,28 @@ DENG2_PIMPL_NOREF(MapBuild)
             }
         }
 
+        for (int i = 0; i < BufferCount; ++i)
+        {
+            bufs.geom[i]->setVertices(verts[i], gl::Static);
+            bufs.geom[i]->setIndices(gl::Triangles, indices[i], gl::Static);
+        }
 
-        buf->setVertices(verts, gl::Static);
-        buf->setIndices(gl::Triangles, indices, gl::Static);
+        DENG2_ASSERT(indices[0].size() % 3 == 0);
+        DENG2_ASSERT(indices[1].size() % 3 == 0);
 
-        DENG2_ASSERT(indices.size() % 3 == 0);
+        LOG_MSG("Built %i vertices and %i indices for opaque geometry; %i vertices and %i indices "
+                "for transparent geometry")
+            << verts[0].size() << indices[0].size() << verts[1].size() << indices[1].size();
 
-        qDebug() << "Built" << verts.size() << "vertices and" << indices.size() << "indices";
-
-        return buf;
+        return bufs;
     }
 };
 
-MapBuild::MapBuild(const Map &map, const MaterialLib::Ids &materials)
+MapBuild::MapBuild(const Map &map, const MaterialLib &materials)
     : d(new Impl(map, materials))
 {}
 
-MapBuild::Buffer *MapBuild::build()
+MapBuild::Buffers MapBuild::build()
 {
     return d->build();
 }

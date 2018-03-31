@@ -19,9 +19,10 @@
 #ifndef GLOOM_RENDER_MATERIALLIB_H
 #define GLOOM_RENDER_MATERIALLIB_H
 
-#include <de/GLUniform>
-
 #include "gloom/render/render.h"
+
+#include <de/GLUniform>
+#include <QFlags>
 
 namespace gloom {
 
@@ -32,6 +33,13 @@ class MaterialLib : public Render
 public:
     typedef QHash<String, uint32_t> Ids;
 
+    enum Flag {
+        Opaque      = 0x0,
+        Transparent = 0x1, // refracts
+        Reflective  = 0x2,
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
 public:
     MaterialLib();
 
@@ -41,11 +49,15 @@ public:
 
     const Ids &materials() const;
 
+    bool isTransparent(const String &matId) const;
+
     GLUniform &uTextureMetrics();
 
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(MaterialLib::Flags)
 
 } // namespace gloom
 

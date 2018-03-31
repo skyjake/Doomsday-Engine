@@ -29,10 +29,16 @@ namespace gloom {
 
 DENG2_PIMPL(MaterialLib)
 {
+    struct Properties
+    {
+        Flags flags;
+    };
+    QHash<String, Properties> materials;
+
     using TexIds = std::array<Id, TextureMapCount>;
 
     QHash<String, TexIds> loadedTextures; // name => atlas ID
-    Ids                   materials;
+    Ids                   materialIds;
 
     struct Metrics {
         struct Texture {
@@ -43,13 +49,20 @@ DENG2_PIMPL(MaterialLib)
     DataBuffer<Metrics> textureMetrics{"uTextureMetrics", Image::RGBA_32f, gl::Static};
 
     Impl(Public *i) : Base(i)
-    {}
+    {
+        // All known materials.
+        materials["world.stone"] = Properties{Opaque};
+        materials["world.dirt"]  = Properties{Opaque};
+        materials["world.grass"] = Properties{Opaque};
+        materials["world.test"]  = Properties{Opaque};
+        materials["world.test2"] = Properties{Opaque};
+        materials["world.water"] = Properties{Transparent};
+    }
 
     void init(Context &)
     {
         // Load materials.
-        for (const char *name :
-             {"world.stone", "world.dirt", "world.grass", "world.test", "world.test2"})
+        for (String name : materials.keys())
         {
             loadMaterial(name);
         }
@@ -85,6 +98,7 @@ DENG2_PIMPL(MaterialLib)
         {
             if (ctx.images->has(name + suffix[i]))
             {
+                LOG_RES_MSG("Loading texture \"%s\"") << name + suffix[i];
                 ids[i] = ctx.atlas[i]->alloc(ctx.images->image(name + suffix[i]));
             }
         }
@@ -97,8 +111,8 @@ DENG2_PIMPL(MaterialLib)
         auto &ctx = self().context();
 
         textureMetrics.clear();
-        materials.clear();
-        materials.insert(String(), INVALID_INDEX);
+        materialIds.clear();
+        materialIds.insert(String(), INVALID_INDEX);
 
         for (auto i = loadedTextures.begin(); i != loadedTextures.end(); ++i)
         {
@@ -123,7 +137,7 @@ DENG2_PIMPL(MaterialLib)
             }
 
             const uint32_t matId = textureMetrics.append(metrics);
-            materials.insert(i.key(), matId);
+            materialIds.insert(i.key(), matId);
         }
 
         textureMetrics.update();
@@ -151,7 +165,17 @@ void MaterialLib::render()
 
 const MaterialLib::Ids &MaterialLib::materials() const
 {
-    return d->materials;
+    return d->materialIds;
+}
+
+bool MaterialLib::isTransparent(const String &matId) const
+{
+    auto found = d->materials.constFind(matId);
+    if (found != d->materials.constEnd())
+    {
+        return (found.value().flags & Transparent) != 0;
+    }
+    return false;
 }
 
 GLUniform &MaterialLib::uTextureMetrics()

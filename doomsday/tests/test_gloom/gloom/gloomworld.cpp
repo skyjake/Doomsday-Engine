@@ -351,6 +351,16 @@ void GloomWorld::render(const ICamera &camera)
     GLState::current().setDepthTest(true).setDepthWrite(false);
     GLState::pop();
 
+    // Forward pass: blended effects.
+    {
+
+    }
+
+    // Forward pass: refraction + blend in reflections.
+    {
+        d->mapRender.renderTransparent();
+    }
+
     // Framebuffer contents are mipmapped for bloom and brightness analysis.
     d->framebuf.attachedTexture(GLFramebuffer::Color0)->generateMipmap();
 

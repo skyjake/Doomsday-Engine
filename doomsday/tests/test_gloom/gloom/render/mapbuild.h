@@ -61,9 +61,26 @@ class MapBuild
 public:
     typedef GLBufferT<MapVertex> Buffer;
 
+    enum BufferType {
+        OpaqueGeometry,
+        TransparentGeometry,
+
+        BufferCount,
+    };
+
+    struct Buffers {
+        std::shared_ptr<Buffer> geom[2]; // all opaque/transparent surfaces
+        struct Transparency {
+            geo::Plane plane;
+        };
+        QVector<Transparency> transparencies;
+        GLBuffer::DrawRanges transparentRanges; // for sorting
+    };
+
 public:
-    MapBuild(const Map &map, const MaterialLib::Ids &materials);
-    Buffer *build();
+    MapBuild(const Map &map, const MaterialLib &materials);
+
+    Buffers build();
 
     /// Helper for mapping IDs to elements of a data buffer.
     struct Mapper : public QHash<ID, uint32_t>

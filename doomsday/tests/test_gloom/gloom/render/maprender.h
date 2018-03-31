@@ -40,6 +40,7 @@ public:
     void glDeinit() override;
     void advanceTime(de::TimeSpan elapsed) override;
     void render() override;
+    void renderTransparent();
 
     void rebuild();
 

@@ -27,6 +27,10 @@ group gloom {
             path.geometry = "surface_shadow_omni.gsh"
             path.fragment = "surface_shadow_omni.fsh"
         }
+        shader transparent {
+            path.vertex   = "surface_material.vsh"
+            path.fragment = "surface_transparent.fsh"
+        }
     }
 
     group entity {

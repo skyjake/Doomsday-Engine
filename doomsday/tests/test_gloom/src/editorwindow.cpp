@@ -43,7 +43,7 @@ EditorWindow::EditorWindow()
     setCentralWidget(d->editor);
 
     const QStringList allMaterials(
-        {"", "world.stone", "world.dirt", "world.grass", "world.test", "world.test2"});
+        {"", "world.stone", "world.dirt", "world.grass", "world.test", "world.test2", "world.water"});
 
     // Line properties.
     {

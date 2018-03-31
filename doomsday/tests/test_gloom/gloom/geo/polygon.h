@@ -26,32 +26,35 @@
 
 namespace gloom { namespace geo {
 
+using namespace de;
+
 struct Polygon
 {
     struct Point {
-        de::Vec2d pos; // world X, Z
+        Vec2d pos; // world X, Z
         uint32_t id;
     };
     using Points = QVector<Point>;
-    using Line   = geo::Line<de::Vec2d>;
+    using Line   = geo::Line<Vec2d>;
 
     Points points; // clockwise winding
-    de::Rectangled bounds;
+    Rectangled bounds;
 
     Polygon(const Points &points = Points());
     Polygon(const Polygon &) = default;
 
     int size() const { return points.size(); }
-    const de::Vec2d &at(int pos) const;
+    const Vec2d &at(int pos) const;
     const Line lineAt(int pos) const;
     bool isConvex() const;
     QList<Polygon> splitConvexParts() const;
     QVector<int> concavePoints() const;
-    bool isPointInside(const de::Vec2d &point) const;
+    bool isPointInside(const Vec2d &point) const;
     bool isLineInside(int start, int end) const;
     int intersect(const Line &line) const;
     bool split(int a, int b, Polygon halves[2]) const;
     void updateBounds();
+    Vec2d center() const;
 };
 
 }} // namespace gloom::geo
