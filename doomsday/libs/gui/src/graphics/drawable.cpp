@@ -264,6 +264,11 @@ Drawable::Id Drawable::addBuffer(Name const &bufferName, GLBuffer *buffer)
 
 Drawable::Id Drawable::addBuffer(GLBuffer *buffer)
 {
+    return addBuffer(std::shared_ptr<GLBuffer>(buffer));
+}
+
+Drawable::Id Drawable::addBuffer(std::shared_ptr<GLBuffer> buffer)
+{
     Id const id = d->nextBufferId();
     addBuffer(id, buffer);
     return id;

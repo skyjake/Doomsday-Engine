@@ -346,6 +346,11 @@ public:
             count << range.size();
         }
 
+        inline void append(const Rangez &range) {
+            first << GLint(range.start);
+            count << GLsizei(range.size());
+        }
+
         inline int size() const {
             DENG2_ASSERT(first.size() == count.size());
             return first.size();

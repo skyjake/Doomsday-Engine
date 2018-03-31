@@ -181,6 +181,8 @@ public:
      */
     Id addBuffer(GLBuffer *buffer);
 
+    Id addBuffer(std::shared_ptr<GLBuffer> buffer);
+
     /**
      * Adds a new buffer, reserving an unused identifier for it. The chosen
      * identifier is larger than any of the buffer identifiers currently in
