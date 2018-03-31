@@ -226,17 +226,7 @@ DENG2_PIMPL(GloomWorld), public Asset
     void update(const TimeSpan &elapsed)
     {
         currentTime += elapsed;
-
         renderContext.uCurrentTime = float(currentTime);
-
-        /*
-        for (auto i = map.planes().begin(), end = map.planes().end(); i != end; ++i)
-        {
-            const float planeY = float(initialPlaneY[i.key()]) +
-                                 std::sin(i.key() + float(currentTime) * .1f);
-            i.value().point.y = planeY;
-        }
-        */
 
         updateEntities(elapsed);
     }
@@ -251,23 +241,6 @@ DENG2_PIMPL(GloomWorld), public Asset
             ent.setPosition(pos);
         }
     }
-
-//    void positionOnGround(Entity &ent, Vec2f const &surfacePos)
-//    {
-//        ent.setPosition(Vec3f(surfacePos.x,
-//                                 height.heightAtPosition(surfacePos) + .05f,
-//                                 surfacePos.y));
-//    }
-
-//    bool isFlatSurface(Vec2f const &pos) const
-//    {
-//        return (height.normalAtPosition(pos).y < -.9 &&
-//                height.normalAtPosition(pos + Vec2f(-1, -1)).y < -.9 &&
-//                height.normalAtPosition(pos + Vec2f(1, -1)).y < -.9 &&
-//                height.normalAtPosition(pos + Vec2f(-1, 1)).y < -.9 &&
-//                height.normalAtPosition(pos + Vec2f(1, 1)).y < -.9);
-//    }
-
 };
 
 GloomWorld::GloomWorld() : d(new Impl(this))
@@ -381,7 +354,7 @@ void GloomWorld::render(const ICamera &camera)
         d->debugQuad.render();
     }
 
-#if 0
+#if 1
     {
         auto &perfTimer = GLWindow::main().timer();
         for (int i = 0; i < PerfTimerCount; ++i)

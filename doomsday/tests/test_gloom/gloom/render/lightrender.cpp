@@ -47,7 +47,8 @@ internal::AttribSpec const LightData::_spec[5] = {
 };
 LIBGUI_VERTEX_FORMAT_SPEC(LightData, 11 * 4)
 
-static constexpr int MAX_SHADOWS = 6;
+static constexpr int MAX_OMNI_LIGHTS = 6;
+static constexpr int MAX_OMNI_SHADOWS = 6;
 
 DENG2_PIMPL(LightRender)
 {
@@ -57,7 +58,7 @@ DENG2_PIMPL(LightRender)
     std::unique_ptr<Light> skyLight;
     Lights                 lights;
     QSet<Light *>          activeLights;
-    QSet<Light *>          shadowCasters; // up to MAX_SHADOWS
+    QSet<Light *>          shadowCasters; // up to MAX_OMNI_SHADOWS
     RenderFunc             callback;
     GLState                shadowState;
     GLProgram              shadingProgram;
@@ -75,7 +76,7 @@ DENG2_PIMPL(LightRender)
     GLUniform uShadowSize          {"uShadowSize",           GLUniform::Vec2};
     GLUniform uShadowMap           {"uShadowMap",            GLUniform::Sampler2D}; // <----TESTING-----
 
-    GLUniform uShadowMaps[MAX_SHADOWS] {
+    GLUniform uShadowMaps[MAX_OMNI_SHADOWS] {
         {"uShadowMaps[0]", GLUniform::SamplerCube},
         {"uShadowMaps[1]", GLUniform::SamplerCube},
         {"uShadowMaps[2]", GLUniform::SamplerCube},
@@ -83,8 +84,29 @@ DENG2_PIMPL(LightRender)
         {"uShadowMaps[4]", GLUniform::SamplerCube},
         {"uShadowMaps[5]", GLUniform::SamplerCube}
     };
+    GLUniform uOmniLightCount{"uOmniLightCount", GLUniform::Int};
+    struct OmniLight {
+        GLUniform origin;
+        GLUniform intensity;
+        GLUniform falloffRadius;
+        GLUniform shadowIndex;
+    };
+    OmniLight uOmniLights[MAX_OMNI_LIGHTS] { // TODO: Shader storage buffer would be nice (GLSL 4)
+#define OMNI_LIGHT_MEMBERS(idx) { \
+            {"uOmniLights["#idx"].origin",        GLUniform::Vec3}, \
+            {"uOmniLights["#idx"].intensity",     GLUniform::Vec3}, \
+            {"uOmniLights["#idx"].falloffRadius", GLUniform::Float}, \
+            {"uOmniLights["#idx"].shadowIndex",   GLUniform::Int} }
+        OMNI_LIGHT_MEMBERS(0),
+        OMNI_LIGHT_MEMBERS(1),
+        OMNI_LIGHT_MEMBERS(2),
+        OMNI_LIGHT_MEMBERS(3),
+        OMNI_LIGHT_MEMBERS(4),
+        OMNI_LIGHT_MEMBERS(5)
+#undef OMNI_LIGHT_MEMBERS
+    };
     std::unique_ptr<Shadow> dirShadow;
-    std::unique_ptr<Shadow> omniShadows[MAX_SHADOWS];
+    std::unique_ptr<Shadow> omniShadows[MAX_OMNI_SHADOWS];
     QHash<const Light *, const Shadow *> activeShadows;
 
     Impl(Public *i) : Base(i)
@@ -126,7 +148,7 @@ DENG2_PIMPL(LightRender)
         // Create shadow maps. These will be assigned to lights as needed.
         {
             dirShadow.reset(new Shadow(Light::Directional));
-            for (int i = 0; i < MAX_SHADOWS; ++i)
+            for (int i = 0; i < MAX_OMNI_SHADOWS; ++i)
             {
                 omniShadows[i].reset(new Shadow(Light::Omni));
             }
@@ -166,9 +188,24 @@ DENG2_PIMPL(LightRender)
                 << uViewSpaceLightDir
                 << uLightIntensity
                 << uViewToLightMatrix
-                << ctx.uLightMatrix;
+                << ctx.uLightMatrix
+                << uOmniLightCount
+                << uShadowMaps[0]
+                << uShadowMaps[1]
+                << uShadowMaps[2]
+                << uShadowMaps[3]
+                << uShadowMaps[4]
+                << uShadowMaps[5];
         ctx.bindGBuffer(giQuad.program());
-//        ctx.bindMaterials(giQuad.program());
+
+        for (int i = 0; i < MAX_OMNI_LIGHTS; ++i)
+        {
+            giQuad.program() << uOmniLightCount
+                             << uOmniLights[i].origin
+                             << uOmniLights[i].intensity
+                             << uOmniLights[i].falloffRadius
+                             << uOmniLights[i].shadowIndex;
+        }
 
         // Generate a sphere for light bounds.
         {
@@ -237,13 +274,13 @@ DENG2_PIMPL(LightRender)
         auto &ctx = self().context();
         if (ctx.view.camera)
         {
+            using ProxEntry = std::pair<double, Light *>;
+            const Vec3d camPos = ctx.view.camera->cameraPosition(); // TODO: Get complete frustum.
+
             shadowCasters << skyLight.get();
 
-            using ProxEntry = std::pair<double, Light *>;
             QVector<ProxEntry> proxLights;
             proxLights.reserve(activeLights.size());
-
-            const Vec3d camPos = ctx.view.camera->cameraPosition();
 
             // The remaining shadows will be assigned based on proximity.
             for (Light *light : activeLights)
@@ -254,9 +291,9 @@ DENG2_PIMPL(LightRender)
                 }
             }
 
-            std::sort(proxLights.begin(), proxLights.end(), [](const ProxEntry &a, const ProxEntry &b) {
-                return a.first < b.first;
-            });
+            std::sort(proxLights.begin(),
+                      proxLights.end(),
+                      [](const ProxEntry &a, const ProxEntry &b) { return a.first < b.first; });
 
             for (const ProxEntry &proxEntry : proxLights)
             {
@@ -265,12 +302,36 @@ DENG2_PIMPL(LightRender)
 
                 shadowCasters << proxEntry.second;
 
-                if (shadowCasters.size() == MAX_SHADOWS + 1)
+                if (shadowCasters.size() == MAX_OMNI_SHADOWS + 1)
                 {
                     break; // skyLight has a separate shadow map
                 }
             }
         }
+    }
+
+    int assignOmniLights(std::function<bool (const Light *, int)> assignLight)
+    {
+        int totalOmnis = 0;
+        int counter = 0;
+        for (const auto *light : activeLights)
+        {
+            if (light->type() == Light::Omni)
+            {
+                totalOmnis++;
+
+                // Assign shadow maps.
+                int shadowIndex = -1;
+                if (activeShadows.contains(light) && counter < MAX_OMNI_SHADOWS)
+                {
+                    shadowIndex = counter++;
+                    uShadowMaps[shadowIndex] = activeShadows[light]->shadowMap();
+                }
+
+                if (!assignLight(light, shadowIndex)) break;
+            }
+        }
+        return totalOmnis;
     }
 };
 
@@ -307,7 +368,7 @@ void LightRender::render()
             }
             else
             {
-                if (shadowIndex == MAX_SHADOWS) continue;
+                if (shadowIndex == MAX_OMNI_SHADOWS) continue;
                 shadow = d->omniShadows[shadowIndex++].get();
             }
 
@@ -354,8 +415,7 @@ void LightRender::advanceTime(TimeSpan elapsed)
 
     // Testing.
     {
-        Vec3d rotPos =
-            Mat4f::rotate(float(elapsed), Vec3f(0, 1, 0)) * d->skyLight->origin();
+        Vec3d rotPos = Mat4f::rotate(float(elapsed), Vec3f(0, 1, 0)) * d->skyLight->origin();
         d->skyLight->setOrigin(rotPos);
         d->skyLight->setDirection(-rotPos);
     }
@@ -376,10 +436,36 @@ void LightRender::renderLighting()
         d->uViewSpaceLightDir = ctx.view.uWorldToViewRotate.toMat3f() * d->skyLight->direction();
         d->uViewSpaceLightOrigin = ctx.view.camera->cameraModelView() * d->skyLight->origin();
         d->uViewToLightMatrix    = lightMatrix * ctx.view.camera->cameraModelView().inverse();
+
         if (d->activeShadows.contains(d->skyLight.get()))
         {
             d->uShadowMap = d->activeShadows[d->skyLight.get()]->shadowMap();
         }
+    }
+
+    // Select omni lights for global pass.
+    QSet<const Light *> promoted;
+    {
+        d->assignOmniLights([this, &ctx, &promoted](const Light *light, int shadowIndex)
+        {
+            // Only promote lights if the camera is well within the falloff volume.
+            const Vec3d camPos = ctx.view.camera->cameraPosition();
+            if ((light->origin() - camPos).length() < double(light->falloffDistance()))
+            {
+                if (promoted.size() == MAX_OMNI_LIGHTS) return false;
+
+                const int promIdx  = promoted.size();
+                auto &    omni     = d->uOmniLights[promIdx];
+                omni.origin        = ctx.view.camera->cameraModelView() * light->origin();
+                omni.intensity     = light->intensity();
+                omni.falloffRadius = light->falloffDistance();
+                omni.shadowIndex   = shadowIndex;
+
+                promoted.insert(light);
+            }
+            return true;
+        });
+        d->uOmniLightCount = promoted.size();
     }
 
     // Global illumination.
@@ -392,34 +478,23 @@ void LightRender::renderLighting()
 
     typedef GLBufferT<LightData> LightBuf;
 
-    // Individual light sources.
+    // Individual unlimited light sources.
     LightBuf::Vertices lightData;
-    int counter = 0;
 
-    for (const auto *light : d->activeLights)
+    d->assignOmniLights([&lightData, &promoted](const Light *light, int shadowIndex)
     {
-        if (light->type() == Light::Directional)
+        if (!promoted.contains(light))
         {
-            // Already shaded during GI pass.
-            continue;
+            LightData instance{light->origin(),
+                               light->intensity(),
+                               light->direction(),
+                               light->falloffDistance(),
+                               shadowIndex};
+            lightData << instance;
         }
-
-        // Assign shadow maps.
-        int shadowIndex = -1;
-        //if (light->type() == Light::Omni && light->castShadows())
-        if (d->activeShadows.contains(light))
-        {
-            shadowIndex = counter++;
-            d->uShadowMaps[shadowIndex] = d->activeShadows[light]->shadowMap();
-        }
-
-        LightData instance{light->origin(),
-                           light->intensity(),
-                           light->direction(),
-                           light->falloffDistance(),
-                           shadowIndex};
-        lightData << instance;
-    }
+        // Keep going through all the lights.
+        return true;
+    });
 
     // The G-buffer depths are used as-is.
     context().gbuffer->framebuf().blit(target, GLFramebuffer::Depth);

@@ -37,9 +37,9 @@ vec3 Gloom_BlinnPhong(Light light, SurfacePoint surf) {
 
     vec3 specular = vec3(0.0);
     if (surf.specGloss.rgb != vec3(0.0)) {
-        float shininess = 1024.0; // TODO: <= specGloss.a
+        float gloss = max(1.0, 1024.0 * surf.specGloss.a);
         // Blinn-Phong.
-        float spec = abs(pow(max(dot(surf.normal, halfwayDir), 0.0), shininess));
+        float spec = abs(pow(max(dot(surf.normal, halfwayDir), 0.0), gloss));
         specular = surf.specGloss.rgb * light.intensity * spec * edgeFalloff;
     }
     return (light.intensity * falloff * diffuse * surf.diffuse) + specular;
