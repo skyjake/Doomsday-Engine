@@ -157,6 +157,7 @@ public:
     GLState &setDefaultTarget();
     GLState &setViewport(Rectanglei  const &viewportRect);
     GLState &setViewport(Rectangleui const &viewportRect);
+    inline GLState &setViewport(Vec2ui const &size) { return setViewport(Rectangleui::fromSize(size)); }
 
     /**
      * Sets a viewport using coordinates that have been normalized within the
