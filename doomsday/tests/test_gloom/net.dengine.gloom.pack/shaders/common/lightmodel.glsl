@@ -2,6 +2,7 @@
 #define GLOOM_LIGHTMODEL_H
 
 #include "camera.glsl"
+#include "defs.glsl"
 
 uniform samplerCube uEnvMap;
 uniform vec3 uEnvIntensity;
@@ -43,6 +44,14 @@ vec3 Gloom_BlinnPhong(Light light, SurfacePoint surf) {
         specular = surf.specGloss.rgb * light.intensity * spec * edgeFalloff;
     }
     return (light.intensity * falloff * diffuse * surf.diffuse) + specular;
+}
+
+vec3 Gloom_CubeReflection(samplerCube cube, SurfacePoint sp) {
+    float mipBias = Material_MaxReflectionBlur * (1.0 - sp.specGloss.a);
+    vec3 reflectedDir = reflect(normalize(sp.pos), sp.normal);
+    return sp.specGloss.rgb * uEnvIntensity *
+        texture(cube, uViewToWorldRotate * reflectedDir,
+            min(mipBias, Material_MaxReflectionBias)).rgb;
 }
 
 #endif // GLOOM_LIGHTMODEL_H
