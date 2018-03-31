@@ -124,6 +124,12 @@ DENG2_PIMPL(MapRender)
             << texOffsets.var
             << matLib.uTextureMetrics();
 
+        transparentState
+                .setBlend(true)
+                .setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha)
+                .setDepthTest(true)
+                .setDepthWrite(true);
+
         for (auto *prog :
              {&surfaces.program(), &dirShadowProgram, &omniShadowProgram, &transparentProgram})
         {

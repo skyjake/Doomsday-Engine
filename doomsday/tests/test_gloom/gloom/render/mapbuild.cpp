@@ -274,7 +274,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                 const uint32_t planeIndex[2] = {planeMapper[map.floorPlaneId(sectorId)],
                                                 planeMapper[map.ceilingPlaneId(sectorId)]};
 
-                if (!line.isTwoSided())
+                //if (!line.isTwoSided())
                 {
                     makeQuad(line.surfaces[Line::Front].material[Line::Middle],
                              line.surfaces[Line::Back ].material[Line::Middle],
@@ -288,7 +288,8 @@ DENG2_PIMPL_NOREF(MapBuild)
                              length,
                              0);
                 }
-                else if (dir)
+
+                if (line.isTwoSided() && dir)
                 {
                     const ID    backSectorId   = line.sectors()[dir];
                     const auto &backPlaneVerts = sectorPlaneVerts[backSectorId];

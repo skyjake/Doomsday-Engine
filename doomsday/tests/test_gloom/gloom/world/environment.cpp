@@ -73,19 +73,20 @@ DENG2_PIMPL(Environment)
         Vec3f pos = cam->cameraPosition() + Mat4f::rotate(qrand() % 360, Vec3f(0, 1, 0)) *
                                                    Vec3f(sounds.isEmpty() ? 5 : 30, 0, 0);
 
-        pos.y = world->groundSurfaceHeight(pos) - 3;
+        pos.y = world->groundSurfaceHeight(pos) + 3;
 
         String name;
         float  vol = 1;
-        if (pos.y < -5)
+        /*
+        if (pos.y > 10)
         {
             name = "mountain.wind";
             vol  = .3f;
         }
-        else if (pos.y > 5)
+        else if (pos.y < 5)
         {
             name = (qrand() % 2 ? "field.birds" : "field.crickets");
-        }
+        }*/
 
         if (name.isEmpty()) return;
 

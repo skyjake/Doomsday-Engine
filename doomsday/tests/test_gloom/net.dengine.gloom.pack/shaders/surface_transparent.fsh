@@ -1,5 +1,6 @@
 #version 330 core
 
+#include "common/gbuffer.glsl"
 #include "common/material.glsl"
 #include "common/tangentspace.glsl"
 
@@ -33,12 +34,14 @@ void main(void) {
     vec3 normal = GBuffer_UnpackNormal(
         Gloom_FetchTexture(matIndex, Texture_NormalDisplacement, texCoord));
     vec3 vsNormal = Gloom_TangentMatrix(ts) * normal;
-    GBuffer_SetFragNormal(vsNormal);
-    GBuffer_SetFragDiffuse(Gloom_FetchTexture(matIndex, Texture_Diffuse, texCoord));
-    GBuffer_SetFragEmissive(Gloom_FetchTexture(matIndex, Texture_Emissive, texCoord).rgb);
-    GBuffer_SetFragSpecGloss(Gloom_FetchTexture(matIndex, Texture_SpecularGloss, texCoord));
 
-    // Write a displaced depth.
+    vec4 diffuse = Gloom_FetchTexture(matIndex, Texture_Diffuse, texCoord);
+    vec3 emissive = Gloom_FetchTexture(matIndex, Texture_Emissive, texCoord).rgb;
+    vec4 specGloss = Gloom_FetchTexture(matIndex, Texture_SpecularGloss, texCoord);
+
+    out_FragColor = vec4(normal, 0.5);
+
+    // Write a displaced depth.  // TODO: Add a routine for doing this.
     if (displacementDepth > 0.0) {
         vec3 vsPos = vVSPos.xyz / vVSPos.w;
         vsPos += normalize(vsPos) * displacementDepth / abs(dot(Axis_Z, viewDir));
