@@ -180,7 +180,6 @@ DENG2_PIMPL(LightRender)
         ctx.shaders->build(giQuad.program(), "gloom.light.global");
         ctx.bindCamera(giQuad.program());
         ctx.bindGBuffer(giQuad.program());
-
         bindLighting(giQuad.program());
 
         // Generate a sphere for light bounds.

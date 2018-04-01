@@ -29,5 +29,5 @@ void main(void) {
     // Radius is scaled: volume is not a perfect sphere, avoid reaching edges.
     // light.falloffRadius *= 0.95;
 
-    out_FragColor = vec4(lit * Gloom_BlinnPhong(light, sp), 0.0);
+    out_FragColor = vec4(lit * Gloom_BlinnPhong(light, sp), 0.0); // blend: add
 }

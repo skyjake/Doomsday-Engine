@@ -13,8 +13,9 @@ group world {
     }
     image test2.diffuse { path = "images/mat-test2.png" }
     group water {
+        image diffuse    { path = "images/softnoise.png/Color.solid:32,32,32" }
         image normaldisp { path = "images/softnoise.png/HeightMap.toNormals" }
-        image specgloss { path = "images/softnoise.png/Color.solid:255,255,255,255"}
+        image specgloss  { path = "images/softnoise.png/Color.solid:255,255,255,255"}
     }
 }
 

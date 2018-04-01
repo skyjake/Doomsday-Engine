@@ -46,10 +46,10 @@ vec3 Gloom_BlinnPhong(Light light, SurfacePoint surf) {
     return (light.intensity * falloff * diffuse * surf.diffuse) + specular;
 }
 
-vec3 Gloom_CubeReflection(samplerCube cube, SurfacePoint sp) {
-    float mipBias = Material_MaxReflectionBlur * (1.0 - sp.specGloss.a);
-    vec3 reflectedDir = reflect(normalize(sp.pos), sp.normal);
-    return sp.specGloss.rgb * uEnvIntensity *
+vec3 Gloom_CubeReflection(samplerCube cube, SurfacePoint surf) {
+    float mipBias = Material_MaxReflectionBlur * (1.0 - surf.specGloss.a);
+    vec3 reflectedDir = reflect(normalize(surf.pos), surf.normal);
+    return surf.specGloss.rgb * uEnvIntensity *
         texture(cube, uViewToWorldRotate * reflectedDir,
             min(mipBias, Material_MaxReflectionBias)).rgb;
 }

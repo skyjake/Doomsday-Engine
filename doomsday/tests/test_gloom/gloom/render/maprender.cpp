@@ -57,6 +57,9 @@ DENG2_PIMPL(MapRender)
     GLProgram            transparentProgram;
     GLState              transparentState;
     GLBuffer::DrawRanges visibleTransparents;
+    GLFramebuffer        opaqueFrame;
+    GLTexture            opaqueFrameTex;
+    GLUniform            uRefractedFrame{"uRefractedFrame", GLUniform::Sampler2D};
 
     EntityRender ents;
     LightRender  lights;
@@ -122,11 +125,14 @@ DENG2_PIMPL(MapRender)
         context.shaders->build(transparentProgram, "gloom.surface.transparent")
             << planes.var
             << texOffsets.var
-            << matLib.uTextureMetrics();
+            << matLib.uTextureMetrics()
+            << uRefractedFrame
+            << context.gbuffer->uViewportSize()
+            << context.gbuffer->uGBufferDepth();
+        context.lights->bindLighting(transparentProgram);
 
         transparentState
-                .setBlend(true)
-                .setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha)
+                .setBlend(false)
                 .setDepthTest(true)
                 .setDepthWrite(true);
 
@@ -146,10 +152,19 @@ DENG2_PIMPL(MapRender)
         buildMap();
         ents.createEntities();
         lights.createLights();
+
+        opaqueFrameTex.setAutoGenMips(false);
+        opaqueFrameTex.setFilter(gl::Linear, gl::Linear, gl::MipNone);
+        opaqueFrameTex.setWrap(gl::RepeatMirrored, gl::RepeatMirrored);
+        opaqueFrameTex.setUndefinedImage(GLTexture::Size(128, 128), Image::RGB_16f);
+        opaqueFrame.configure(GLFramebuffer::Color0, opaqueFrameTex);
+        uRefractedFrame = opaqueFrameTex;
     }
 
     void glDeinit()
     {
+        opaqueFrame.configure();
+
         ents  .glDeinit();
         lights.glDeinit();
         matLib.glDeinit();
@@ -258,13 +273,25 @@ void MapRender::render()
 void MapRender::renderTransparent()
 {
     auto &ctx = context();
+    const Vec2ui frameSize = ctx.framebuf->size();
 
-    d->transparentState.setTarget(*ctx.framebuf).setViewport(ctx.framebuf->size());
+    // Make a copy of the frame containing all the opaque surfaces, to be used for refracted
+    // light.
+    {
+        if (d->opaqueFrameTex.size() != frameSize)
+        {
+            d->opaqueFrameTex.setUndefinedImage(frameSize, Image::RGB_16f);
+        }
+        ctx.framebuf->blit(d->opaqueFrame, GLFramebuffer::Color0, gl::Nearest);
+    }
+
+    d->transparentState.setTarget(*ctx.framebuf).setViewport(frameSize);
     d->transparentState.apply();
 
     d->transparentProgram.beginUse();
     d->builtMap.geom[MapBuild::TransparentGeometry]->draw(&d->visibleTransparents);
     d->transparentProgram.endUse();
+
     GLState::current().apply();
 }
 
