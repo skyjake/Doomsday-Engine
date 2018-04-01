@@ -27,23 +27,38 @@ namespace gloom {
 
 Context &Context::bindCamera(GLProgram &program)
 {
-    program << uCurrentTime << view.uCameraPos << view.uCameraMvpMatrix << view.uWorldToViewRotate
-            << view.uViewToWorldRotate << view.uModelViewMatrix << view.uProjMatrix;
+    program << uCurrentTime
+            << view.uCameraPos
+            << view.uCameraMvpMatrix
+            << view.uModelViewMatrix
+            << view.uViewToWorldMatrix
+            << view.uProjMatrix
+            << view.uInverseProjMatrix
+            << view.uViewToWorldRotate
+            << view.uWorldToViewRotate;
     return *this;
 }
 
 Context &Context::bindGBuffer(GLProgram &program)
 {
-    program << gbuffer->uGBufferDiffuse() << gbuffer->uGBufferNormal() << gbuffer->uGBufferDepth()
-            << gbuffer->uGBufferSpecGloss() << gbuffer->uGBufferEmissive()
+    program << gbuffer->uGBufferDiffuse()
+            << gbuffer->uGBufferNormal()
+            << gbuffer->uGBufferDepth()
+            << gbuffer->uGBufferSpecGloss()
+            << gbuffer->uGBufferEmissive()
             << gbuffer->uViewportSize();
     return *this;
 }
 
 Context &Context::bindMaterials(GLProgram &program)
 {
-    program << uDiffuseAtlas << uEmissiveAtlas << uSpecGlossAtlas << uNormalDisplAtlas << uEnvMap
-            << uEnvIntensity << mapRender->materialLibrary().uTextureMetrics();
+    program << uDiffuseAtlas
+            << uEmissiveAtlas
+            << uSpecGlossAtlas
+            << uNormalDisplAtlas
+            << uEnvMap
+            << uEnvIntensity
+            << mapRender->materialLibrary().uTextureMetrics();
     return *this;
 }
 

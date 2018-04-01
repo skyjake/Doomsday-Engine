@@ -3,6 +3,7 @@
 #include "common/gbuffer.glsl"
 #include "common/material.glsl"
 #include "common/tangentspace.glsl"
+#include "common/lightmodel.glsl"
 
 uniform mat4  uProjMatrix;
 uniform float uCurrentTime;
@@ -34,6 +35,7 @@ void main(void) {
     );
 
     // Parallax mapping.
+    // TODO: Better to sample from two textures at the lower level, not here...
     float displacementDepths[2];
     vec3 viewDir  = normalize(vTSViewDir);
     vec2 texCoord = Gloom_Parallax(matIndex, vUV + waterOff[0], viewDir, displacementDepths[0]);
@@ -43,23 +45,21 @@ void main(void) {
         Gloom_FetchTexture(matIndex, Texture_NormalDisplacement, texCoord));
     vec3 normal2 = GBuffer_UnpackNormal(
         Gloom_FetchTexture(matIndex, Texture_NormalDisplacement, texCoord2));
-    // vec3 vsNormal = Gloom_TangentMatrix(ts) * normal;
-    // vec3 vsNormal2 = Gloom_TangentMatrix(ts) * normal2;
 
     float displacementDepth = (displacementDepths[0] + displacementDepths[1]) / 2.0;
 
     normal = normalize(normal + normal2);
-    //vsNormal = normalize(vsNormal + vsNormal2);
 
-    vec4 diffuse = Gloom_FetchTexture(matIndex, Texture_Diffuse, texCoord);
-    vec3 emissive = Gloom_FetchTexture(matIndex, Texture_Emissive, texCoord).rgb;
+    vec4 diffuse   = Gloom_FetchTexture(matIndex, Texture_Diffuse, texCoord);
+    vec3 emissive  = Gloom_FetchTexture(matIndex, Texture_Emissive, texCoord).rgb;
     vec4 specGloss = Gloom_FetchTexture(matIndex, Texture_SpecularGloss, texCoord);
 
     out_FragColor = vec4(normal, 0.5);
 
+    vec3 vsPos = vVSPos.xyz / vVSPos.w;
+
     // Write a displaced depth.  // TODO: Add a routine for doing this.
     if (displacementDepth > 0.0) {
-        vec3 vsPos = vVSPos.xyz / vVSPos.w;
         vsPos += normalize(vsPos) * displacementDepth / abs(dot(Axis_Z, viewDir));
         vec4 dispPos = uProjMatrix * vec4(vsPos, 1.0);
         float ndc = dispPos.z / dispPos.w;
@@ -68,4 +68,9 @@ void main(void) {
     else {
         gl_FragDepth = gl_FragCoord.z;
     }
+
+    // Now we can apply lighting to the surface.
+    SurfacePoint sp = SurfacePoint(vsPos, normal, diffuse.rgb, specGloss);
+
+
 }

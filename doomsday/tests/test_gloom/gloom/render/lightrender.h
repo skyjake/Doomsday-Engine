@@ -42,6 +42,7 @@ public:
     void render() override;
     void advanceTime(TimeSpan) override;
 
+    void bindLighting(GLProgram &);
     void renderLighting();
 
     typedef std::function<void (const Light &)> RenderFunc;

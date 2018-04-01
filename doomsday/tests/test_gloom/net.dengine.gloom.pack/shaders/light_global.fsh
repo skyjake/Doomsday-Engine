@@ -11,12 +11,12 @@
 in vec2 vUV;
 
 void main(void) {
-    vec4 vsPos     = GBuffer_FragViewSpacePos();
+    vec3 vsPos     = GBuffer_FragViewSpacePos().xyz;
     vec3 normal    = GBuffer_FragViewSpaceNormal();
     vec3 diffuse   = GBuffer_FragDiffuse();
     vec4 specGloss = GBuffer_FragSpecGloss();
 
-    SurfacePoint sp = SurfacePoint(vsPos.xyz, normal, diffuse, specGloss);
+    SurfacePoint sp = SurfacePoint(vsPos, normal, diffuse, specGloss);
 
     // Ambient light.
     vec3 outColor = Gloom_AmbientLight(sp, vUV);

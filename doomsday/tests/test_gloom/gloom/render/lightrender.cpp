@@ -177,35 +177,11 @@ DENG2_PIMPL(LightRender)
         ctx.bindGBuffer(shadingProgram);
 
         giQuad.glInit(self().context());
-        ctx.shaders->build(giQuad.program(), "gloom.light.global")
-                << ctx.view.uInverseProjMatrix
-                << ctx.view.uViewToWorldRotate
-                << ctx.uEnvMap
-                << ctx.uEnvIntensity
-                << ctx.ssao->uSSAOBuf()
-                << uShadowMap
-                << uViewSpaceLightOrigin
-                << uViewSpaceLightDir
-                << uLightIntensity
-                << uViewToLightMatrix
-                << ctx.uLightMatrix
-                << uOmniLightCount
-                << uShadowMaps[0]
-                << uShadowMaps[1]
-                << uShadowMaps[2]
-                << uShadowMaps[3]
-                << uShadowMaps[4]
-                << uShadowMaps[5];
+        ctx.shaders->build(giQuad.program(), "gloom.light.global");
+        ctx.bindCamera(giQuad.program());
         ctx.bindGBuffer(giQuad.program());
 
-        for (int i = 0; i < MAX_OMNI_LIGHTS; ++i)
-        {
-            giQuad.program() << uOmniLightCount
-                             << uOmniLights[i].origin
-                             << uOmniLights[i].intensity
-                             << uOmniLights[i].falloffRadius
-                             << uOmniLights[i].shadowIndex;
-        }
+        bindLighting(giQuad.program());
 
         // Generate a sphere for light bounds.
         {
@@ -265,6 +241,39 @@ DENG2_PIMPL(LightRender)
     {
         skyLight.reset();
         giQuad.glDeinit();
+    }
+
+    void bindLighting(GLProgram &program)
+    {
+        auto &ctx = self().context();
+
+        program
+            // Ambient:
+                << ctx.uEnvMap
+                << ctx.uEnvIntensity
+                << ctx.ssao->uSSAOBuf()
+            // Directional:
+                << uShadowMap
+                << uViewSpaceLightOrigin
+                << uViewSpaceLightDir
+                << uLightIntensity
+                << uViewToLightMatrix
+                << ctx.uLightMatrix
+            // Omni:
+                << uOmniLightCount;
+
+        for (auto &u : uShadowMaps)
+        {
+            program << u;
+        }
+
+        for (int i = 0; i < MAX_OMNI_LIGHTS; ++i)
+        {
+            program << uOmniLights[i].origin
+                    << uOmniLights[i].intensity
+                    << uOmniLights[i].falloffRadius
+                    << uOmniLights[i].shadowIndex;
+        }
     }
 
     void selectShadowCasters()
@@ -419,6 +428,11 @@ void LightRender::advanceTime(TimeSpan elapsed)
         d->skyLight->setOrigin(rotPos);
         d->skyLight->setDirection(-rotPos);
     }
+}
+
+void LightRender::bindLighting(GLProgram &program)
+{
+    d->bindLighting(program);
 }
 
 void LightRender::renderLighting()
