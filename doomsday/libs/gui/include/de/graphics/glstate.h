@@ -224,6 +224,8 @@ public:
      */
     static void considerNativeStateUndefined();
 
+    static GLFramebuffer *currentTarget();
+
     /**
      * Returns the current (i.e., topmost) state on the GL state stack.
      */

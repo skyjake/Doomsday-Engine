@@ -939,6 +939,11 @@ void GLState::considerNativeStateUndefined()
     internal::currentTarget = 0;
 }
 
+GLFramebuffer *GLState::currentTarget()
+{
+    return internal::currentTarget;
+}
+
 GLState &GLState::current()
 {
     DENG2_ASSERT(!internal::stack.isEmpty());

@@ -458,15 +458,16 @@ DENG2_OBSERVES(Asset, Deletion)
         DENG2_ASSERT(fbo);
         auto &GL = LIBGUI_GL;
 
-        GL.glBindFramebuffer(GL_FRAMEBUFFER, fbo); LIBGUI_ASSERT_GL_OK();
+        GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo); LIBGUI_ASSERT_GL_OK();
+//        GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo); LIBGUI_ASSERT_GL_OK();
 
         int const count = colorAttachmentCount();
 
         static const GLenum drawBufs[4] = {
             GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3
         };
-        GL.glDrawBuffers(count, drawBufs);                          LIBGUI_ASSERT_GL_OK();
-        GL.glReadBuffer(count > 0? GL_COLOR_ATTACHMENT0 : GL_NONE); LIBGUI_ASSERT_GL_OK();
+        GL.glDrawBuffers(count, drawBufs); LIBGUI_ASSERT_GL_OK();
+//        GL.glReadBuffer(count > 0? GL_COLOR_ATTACHMENT0 : GL_NONE); LIBGUI_ASSERT_GL_OK();
     }
 
     void glRelease() const
@@ -475,11 +476,12 @@ DENG2_OBSERVES(Asset, Deletion)
 
         auto &GL = LIBGUI_GL;
 
-        GL.glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebuffer); // both read and write FBOs
+        GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defaultFramebuffer); // both read and write FBOs
+//        GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, defaultFramebuffer); // both read and write FBOs
         LIBGUI_ASSERT_GL_OK();
 
         GL.glDrawBuffer(GL_BACK);   LIBGUI_ASSERT_GL_OK();
-        GL.glReadBuffer(GL_BACK);   LIBGUI_ASSERT_GL_OK();
+//        GL.glReadBuffer(GL_BACK);   LIBGUI_ASSERT_GL_OK();
     }
 
     void validate()
@@ -725,14 +727,16 @@ QImage GLFramebuffer::toImage() const
     }
     else if (d->flags & Color0)
     {
+        auto &GL = LIBGUI_GL;
         // Read the contents of the color attachment.
         Size imgSize = size();
         QImage img(QSize(imgSize.x, imgSize.y), QImage::Format_ARGB32);
-        LIBGUI_GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, d->fbo);
-        LIBGUI_GL.glPixelStorei(GL_PACK_ALIGNMENT, 4);
-        LIBGUI_GL.glReadPixels(0, 0, imgSize.x, imgSize.y, GL_BGRA, GL_UNSIGNED_BYTE, img.bits());
+        GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, d->fbo);
+        GL.glPixelStorei(GL_PACK_ALIGNMENT, 4);
+        GL.glReadPixels(0, 0, imgSize.x, imgSize.y, GL_BGRA, GL_UNSIGNED_BYTE, img.bits());
+        GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
         // Restore the stack's target.
-        GLState::current().target().glBind();
+//        GLState::current().target().glBind();
         return img.mirrored(false, true);
     }
     return QImage();
@@ -792,7 +796,7 @@ void GLFramebuffer::resize(Size const &size)
     // The default target resizes itself automatically with the canvas.
     if (d->size == size || d->isDefault()) return;
 
-    LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, d->fbo);
+    d->glBind();
     if (d->texture)
     {
         d->texture->setUndefinedImage(size, d->texture->imageFormat());
@@ -836,7 +840,18 @@ void GLFramebuffer::blit(GLFramebuffer &dest, Flags attachments, gl::Filter filt
     LIBGUI_ASSERT_GL_OK();
     auto &GL = LIBGUI_GL;
 
-    GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dest.glName());
+    // We will modify GL state directly, so let's save the current state.
+//    GLint oldDrawFbo;
+//    GLint oldReadFbo;
+//    GLint oldReadBuffer;
+//    GL.glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &oldDrawFbo);
+//    GL.glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &oldReadFbo);
+//    GL.glGetIntegerv(GL_READ_BUFFER, &oldReadBuffer);
+
+    GLFramebuffer *oldTarget = GLState::currentTarget();
+
+    //GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dest.glName());
+    dest.glBind();
     LIBGUI_ASSERT_GL_OK();
 
 #if defined (DENG_HAVE_BLIT_FRAMEBUFFER)
@@ -864,6 +879,8 @@ void GLFramebuffer::blit(GLFramebuffer &dest, Flags attachments, gl::Filter filt
                 filtering == gl::Nearest? GL_NEAREST : GL_LINEAR);
     LIBGUI_ASSERT_GL_OK();
 
+    GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+
     //GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, 0);
     //LIBGUI_ASSERT_GL_OK();
 
@@ -877,27 +894,33 @@ void GLFramebuffer::blit(GLFramebuffer &dest, Flags attachments, gl::Filter filt
 
     dest.markAsChanged();
 
-    GLState::current().target().glBind();
+    if (oldTarget) oldTarget->glBind();
 }
 
 void GLFramebuffer::blit(gl::Filter filtering) const
 {
     LIBGUI_ASSERT_GL_OK();
 
+    auto &GL = LIBGUI_GL;
+
     //qDebug() << "Blitting from" << glName() << "to" << defaultFramebuffer << size().asText();
+
+    GLFramebuffer *oldTarget = GLState::currentTarget();
 
 #if defined (DENG_HAVE_BLIT_FRAMEBUFFER)
 
-    LIBGUI_GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, glName());
-    LIBGUI_GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defaultFramebuffer);
+    GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, glName());
+    GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defaultFramebuffer);
 
-    LIBGUI_GL.glBlitFramebuffer(
+    GL.glBlitFramebuffer(
                 0, 0, size().x, size().y,
                 0, 0, size().x, size().y,
                 GL_COLOR_BUFFER_BIT,
                 filtering == gl::Nearest? GL_NEAREST : GL_LINEAR);
 
     LIBGUI_ASSERT_GL_OK();
+
+    GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
 #else
 
@@ -906,7 +929,7 @@ void GLFramebuffer::blit(gl::Filter filtering) const
 
 #endif
 
-    GLState::current().target().glBind();
+    if (oldTarget) oldTarget->glBind();
 }
 
 GLuint GLFramebuffer::glName() const
