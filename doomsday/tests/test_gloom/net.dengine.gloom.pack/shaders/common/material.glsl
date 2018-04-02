@@ -14,6 +14,7 @@ struct Metrics {
     vec2  sizeInTexels;
     float texelsPerMeter;
     vec2  scale;
+    uint  flags;
 };
 
 const vec4 Material_DefaultTextureValue[4] = vec4[4] (
@@ -31,17 +32,18 @@ Metrics Gloom_TextureMetrics(uint matIndex, int texture) {
     Metrics metrics;
     int bufPos = int(matIndex) * Material_TextureMetricsTexelsPerElement +
                  texture       * Material_TextureMetricsTexelsPerTexture;
-    vec3 texelSize = texelFetch(uTextureMetrics, bufPos + 1).xyz;
+    vec4 texelSize = texelFetch(uTextureMetrics, bufPos + 1);
     metrics.sizeInTexels = texelSize.xy;
     // Not all textures are defined/present.
     if (metrics.sizeInTexels == vec2(0.0)) {
         metrics.isValid = false;
         return metrics;
     }
-    metrics.uvRect = texelFetch(uTextureMetrics, bufPos);
+    metrics.uvRect         = texelFetch(uTextureMetrics, bufPos);
     metrics.texelsPerMeter = texelSize.z;
     metrics.scale          = vec2(metrics.texelsPerMeter) / metrics.sizeInTexels;
-    metrics.isValid = true;
+    metrics.flags          = floatBitsToUint(texelSize.w);
+    metrics.isValid        = true;
     return metrics;
 }
 
@@ -49,15 +51,13 @@ struct MaterialSampler {
     uint matIndex;
     int texture;
     Metrics metrics;
-    int animation;
 };
 
 MaterialSampler Gloom_Sampler(uint matIndex, int texture) {
     return MaterialSampler(
         matIndex,
         texture,
-        Gloom_TextureMetrics(matIndex, texture),
-        0
+        Gloom_TextureMetrics(matIndex, texture)
     );
 }
 
@@ -80,10 +80,11 @@ vec4 Gloom_MaterialTexel(const MaterialSampler sampler, vec2 uv) {
 }
 
 vec4 Gloom_SampleMaterial(const MaterialSampler sampler, vec2 uv) {
-    if (sampler.animation == 0) {
+    uint animation = (sampler.metrics.flags & 1u); // TODO: Bigger mask.
+    if (animation == 0u) {
         return Gloom_MaterialTexel(sampler, uv);
     }
-    else if (sampler.animation == 1) {
+    else if (animation == 1u) {
         // Water offsets.
         vec2 waterOff1 = vec2( 0.182, -0.3195) * uCurrentTime;
         vec2 waterOff2 = vec2(-0.203, 0.01423) * uCurrentTime;

@@ -35,7 +35,6 @@ void main(void) {
     vec3 backPos;
 
     MaterialSampler matSamp = Gloom_Sampler(matIndex, Texture_NormalDisplacement);
-    matSamp.animation = 1;
 
     // Parallax mapping.
     float displacementDepth;
@@ -47,7 +46,7 @@ void main(void) {
     vec3 vsNormal = tsToViewRotate * normal;
     
     vec4 diffuse   = Gloom_FetchTexture(matIndex, Texture_Diffuse, texCoord);
-    float density = diffuse.a;
+    float density  = diffuse.a;
     vec3 emissive  = Gloom_FetchTexture(matIndex, Texture_Emissive, texCoord).rgb;
     vec4 specGloss = Gloom_FetchTexture(matIndex, Texture_SpecularGloss, texCoord);
     vec3 vsViewDir = -normalize(vVSPos.xyz);
@@ -65,23 +64,30 @@ void main(void) {
         gl_FragDepth = gl_FragCoord.z;
     }
     
+    float viewDistance = length(vsPos);
+    
     // Refraction. This is calculated in view space so the offset will be view-dependent.
     vec4  refractedColor;
     float reflectRatio;
     vec3  refracted = refract(vsViewDir, vsNormal, 1.05);
     if (refracted != vec3(0.0)) {
-        vec2 fragPos = (gl_FragCoord.xy + refracted.xy * uViewportSize.y * 0.05) / uViewportSize;
         reflectRatio = max(0.0, dot(refracted, vsViewDir));
-        refractedColor = texture(uRefractedFrame, fragPos) * (1.0 - reflectRatio);       
-        backPos = GBuffer_ViewSpacePos(fragPos).xyz;
+        float refrFactor = 0.05 / max(1.0, viewDistance);
+            vec2 fragPos = (gl_FragCoord.xy + refracted.xy * uViewportSize.y * refrFactor) / uViewportSize;
+            refractedColor = texture(uRefractedFrame, fragPos) * (1.0 - reflectRatio);       
+            backPos = GBuffer_ViewSpacePos(fragPos).xyz;
         
-        // How far does light travel through the volume?
-        float volumetric = distance(backPos, vsPos);
-
-        if (density > 0.0) {
-            refractedColor = mix(refractedColor, diffuse, 
-                min(volumetric * density + pow(density, 2.0), 1.0));
-        }
+            // How far does light travel through the volume?
+            // if (backPos.z < vsPos.z) {
+                float volumetric = pow(density, 2.0) * 5.0 * log(distance(backPos, vsPos) + 1.0);
+                if (density > 0.0) {
+                    refractedColor = mix(refractedColor, diffuse, 
+                        min(volumetric /* * density + pow(density, 2.0)*/, 1.0));
+                }
+            // }
+            // else {
+            //     refractedColor = vec4(0.0);
+            // }
     }
     else {
         refractedColor = vec4(0.0);

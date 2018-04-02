@@ -33,6 +33,7 @@ DENG2_PIMPL(MaterialLib)
     {
         Flags flags;
         float texelsPerMeter;
+        duint32 metricsFlags; // copied to shader in texture metrics
     };
     QHash<String, Properties> materials;
 
@@ -52,12 +53,12 @@ DENG2_PIMPL(MaterialLib)
     Impl(Public *i) : Base(i)
     {
         // All known materials.
-        materials["world.stone"] = Properties{Opaque, 200.f};
-        materials["world.dirt"]  = Properties{Opaque, 200.f};
-        materials["world.grass"] = Properties{Opaque, 200.f};
-        materials["world.test"]  = Properties{Opaque, 200.f};
-        materials["world.test2"] = Properties{Opaque, 200.f};
-        materials["world.water"] = Properties{Transparent, 100.f};
+        materials["world.stone"] = Properties{Opaque, 200.f, 0};
+        materials["world.dirt"]  = Properties{Opaque, 200.f, 0};
+        materials["world.grass"] = Properties{Opaque, 200.f, 0};
+        materials["world.test"]  = Properties{Opaque, 200.f, 0};
+        materials["world.test2"] = Properties{Opaque, 200.f, 0};
+        materials["world.water"] = Properties{Transparent, 100.f, 1};
     }
 
     void init(Context &)
@@ -122,7 +123,8 @@ DENG2_PIMPL(MaterialLib)
             // Load up metrics in an array.
             for (int j = 0; j < 4; ++j)
             {
-                const Id texId = i.value()[j];
+                const auto &props = materials[i.key()];
+                const Id    texId = i.value()[j];
                 Rectanglei rect;
                 Rectanglef rectf;
                 if (texId)
@@ -130,9 +132,14 @@ DENG2_PIMPL(MaterialLib)
                     rect  = ctx.atlas[j]->imageRect(texId);
                     rectf = ctx.atlas[j]->imageRectf(texId);
 
-                    metrics.texture[j] = Metrics::Texture{
-                        {rectf.xywh()},
-                        {Vec4f(rect.width(), rect.height(), materials[i.key()].texelsPerMeter)}};
+                    float tmFlags;
+                    std::memcpy(&tmFlags, &props.metricsFlags, sizeof(tmFlags));
+
+                    metrics.texture[j] = Metrics::Texture{{rectf.xywh()},
+                                                          {Vec4f(rect.width(),
+                                                                 rect.height(),
+                                                                 props.texelsPerMeter,
+                                                                 tmFlags)}};
                 }
             }
 
