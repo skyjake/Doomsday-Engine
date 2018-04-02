@@ -3,10 +3,10 @@
 
 #include "defs.glsl"
 #include "tangentspace.glsl"
+#include "time.glsl"
 
 uniform samplerBuffer uPlanes;
 uniform samplerBuffer uTexOffsets;
-uniform float         uCurrentTime;
 uniform vec4          uCameraPos; // world space
 
 in vec4  aVertex;

@@ -6,9 +6,9 @@
 #include "common/ambient.glsl"
 #include "common/dir_lights.glsl"
 #include "common/omni_lights.glsl"
+#include "common/time.glsl"
 
 uniform mat4      uProjMatrix;
-uniform float     uCurrentTime;
 uniform sampler2D uRefractedFrame;
 uniform mat3      uWorldToViewRotate;
 
@@ -31,46 +31,27 @@ void main(void) {
                                    normalize(vWSBitangent),
                                    normalize(vWSNormal));
 
-    // Water offsets.
-    vec2 waterOff[2] = vec2[2](
-        vec2( 0.182, -0.3195) * uCurrentTime,
-        vec2(-0.203, 0.01423) * uCurrentTime
-    );
+    // Depth at fragment.
+    vec3 backPos;
+
+    MaterialSampler matSamp = Gloom_Sampler(matIndex, Texture_NormalDisplacement);
+    matSamp.animation = 1;
 
     // Parallax mapping.
-    // TODO: Better to sample from two textures at the lower level, not here...
-    float displacementDepths[2];
+    float displacementDepth;
     vec3 viewDir  = normalize(vTSViewDir);
-    vec2 texCoord = Gloom_Parallax(matIndex, vUV + waterOff[0], viewDir, displacementDepths[0]);
-    vec2 texCoord2 = Gloom_Parallax(matIndex, vUV + waterOff[1], viewDir, displacementDepths[1]);
+    vec2 texCoord = Gloom_SamplerParallax(matSamp, vUV, viewDir, displacementDepth);
+    vec3 normal   = normalize(GBuffer_UnpackNormal(Gloom_SampleMaterial(matSamp, texCoord)));
 
-    vec3 normal = GBuffer_UnpackNormal(
-        Gloom_FetchTexture(matIndex, Texture_NormalDisplacement, texCoord));
-    vec3 normal2 = GBuffer_UnpackNormal(
-        Gloom_FetchTexture(matIndex, Texture_NormalDisplacement, texCoord2));
-
-    float displacementDepth = (displacementDepths[0] + displacementDepths[1]) / 2.0;
-
-    normal = normalize(normal + normal2);
-    vec3 vsNormal = uWorldToViewRotate * (Gloom_TangentMatrix(ts) * normal);
+    mat3 tsToViewRotate = uWorldToViewRotate * Gloom_TangentMatrix(ts);
+    vec3 vsNormal = tsToViewRotate * normal;
+    
     vec4 diffuse   = Gloom_FetchTexture(matIndex, Texture_Diffuse, texCoord);
+    float density = diffuse.a;
     vec3 emissive  = Gloom_FetchTexture(matIndex, Texture_Emissive, texCoord).rgb;
     vec4 specGloss = Gloom_FetchTexture(matIndex, Texture_SpecularGloss, texCoord);
-        
-    // Refraction.
-    float reflectRatio;
-    vec3 refracted = refract(viewDir, normal, 1.1);    
-    if (refracted != vec3(0.0)) {
-        // TODO: Offset must be determined from viewDir.
-        vec2 fragPos = (gl_FragCoord.xy + refracted.xy * uViewportSize.y * 0.05) / uViewportSize;
-        reflectRatio = max(0.0, dot(refracted, viewDir));
-        out_FragColor = (1.0 - reflectRatio) * texture(uRefractedFrame, fragPos);       
-    }
-    else {
-        out_FragColor = vec4(vec3(0.0), 1.0);        
-        reflectRatio = 1.0;
-    }
-
+    vec3 vsViewDir = -normalize(vVSPos.xyz);
+            
     vec3 vsPos = vVSPos.xyz / vVSPos.w;
 
     // Write a displaced depth.  // TODO: Add a routine for doing this.
@@ -83,10 +64,36 @@ void main(void) {
     else {
         gl_FragDepth = gl_FragCoord.z;
     }
+    
+    // Refraction. This is calculated in view space so the offset will be view-dependent.
+    vec4  refractedColor;
+    float reflectRatio;
+    vec3  refracted = refract(vsViewDir, vsNormal, 1.05);
+    if (refracted != vec3(0.0)) {
+        vec2 fragPos = (gl_FragCoord.xy + refracted.xy * uViewportSize.y * 0.05) / uViewportSize;
+        reflectRatio = max(0.0, dot(refracted, vsViewDir));
+        refractedColor = texture(uRefractedFrame, fragPos) * (1.0 - reflectRatio);       
+        backPos = GBuffer_ViewSpacePos(fragPos).xyz;
+        
+        // How far does light travel through the volume?
+        float volumetric = distance(backPos, vsPos);
 
+        if (density > 0.0) {
+            refractedColor = mix(refractedColor, diffuse, 
+                min(volumetric * density + pow(density, 2.0), 1.0));
+        }
+    }
+    else {
+        refractedColor = vec4(0.0);
+        reflectRatio = 1.0;
+    }
+    
     // Now we can apply lighting to the surface.
-    SurfacePoint sp = SurfacePoint(vsPos, vsNormal, diffuse.rgb, specGloss);
+    SurfacePoint sp = SurfacePoint(vsPos, vsNormal, diffuse.rgb * diffuse.a, specGloss);
 
-    out_FragColor.rgb += Gloom_DirectionalLighting(sp) + Gloom_OmniLighting(sp) + 
+    out_FragColor = vec4(emissive, 0.0) + refractedColor;
+    out_FragColor.rgb += 
+        Gloom_DirectionalLighting(sp) + 
+        Gloom_OmniLighting(sp) +
         reflectRatio * Gloom_CubeReflection(uEnvMap, sp);
 }
