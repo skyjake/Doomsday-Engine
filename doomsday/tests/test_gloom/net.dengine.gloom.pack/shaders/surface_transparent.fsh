@@ -72,7 +72,7 @@ void main(void) {
     vec3  refracted = refract(vsViewDir, vsNormal, 1.05);
     if (refracted != vec3(0.0)) {
         reflectRatio = max(0.0, dot(refracted, vsViewDir));
-        float refrFactor = 0.05 / max(1.0, viewDistance);
+        float refrFactor = 0.05 / max(1.0, viewDistance * 0.5);
             vec2 fragPos = (gl_FragCoord.xy + refracted.xy * uViewportSize.y * refrFactor) / uViewportSize;
             refractedColor = texture(uRefractedFrame, fragPos) * (1.0 - reflectRatio);       
             backPos = GBuffer_ViewSpacePos(fragPos).xyz;
