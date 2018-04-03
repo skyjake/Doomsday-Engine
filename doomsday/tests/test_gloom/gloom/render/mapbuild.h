@@ -53,6 +53,8 @@ struct MapVertex
         FlipTexCoordY           = 0x4,
         AnchorTopPlane          = 0x8,
         TextureOffset           = 0x10,
+        LeftEdge                = 0x20,
+        RightEdge               = 0x40,
     };
 };
 

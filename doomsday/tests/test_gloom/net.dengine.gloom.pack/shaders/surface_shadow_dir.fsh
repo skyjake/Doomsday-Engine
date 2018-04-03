@@ -16,10 +16,10 @@ void main(void) {
 
     // From the back side, don't displace to avoid leaks along edges.
     vec3 lightDir = normalize(vTSLightDir);
-    // if (lightDir.z >= 0.0) {
-    //     gl_FragDepth = gl_FragCoord.z;
-    //     return;
-    // }
+    if (lightDir.z < 0.0) {
+        gl_FragDepth = gl_FragCoord.z;
+        return;
+    }
 
     float displacementDepth;
     Gloom_Parallax(vMaterial, vUV, lightDir, displacementDepth);

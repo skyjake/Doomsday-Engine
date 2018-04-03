@@ -227,7 +227,6 @@ DENG2_PIMPL_NOREF(MapBuild)
                 v.material[0] = matLib.materials()[frontMaterial];
                 v.material[1] = matLib.materials()[backMaterial];
                 v.normal      = normal;
-                v.flags       = flags;
                 v.tangent     = (p2 - p1).normalize();
                 v.texPlane[0] = planeIndex[0];
                 v.texPlane[1] = planeIndex[1];
@@ -235,21 +234,25 @@ DENG2_PIMPL_NOREF(MapBuild)
                 v.pos      = p1;
                 v.texCoord = Vec4f(0, 0, length, rotation);
                 v.geoPlane = planeIndex[0];
+                v.flags    = flags | MapVertex::LeftEdge;
                 verts[geomBuf] << v;
 
                 v.pos      = p2;
                 v.texCoord = Vec4f(length, 0, length, rotation);
                 v.geoPlane = planeIndex[0];
+                v.flags    = flags | MapVertex::RightEdge;
                 verts[geomBuf] << v;
 
                 v.pos      = p3;
                 v.texCoord = Vec4f(0, 0, length, rotation);
                 v.geoPlane = planeIndex[1];
+                v.flags    = flags | MapVertex::LeftEdge;
                 verts[geomBuf] << v;
 
                 v.pos      = p4;
                 v.texCoord = Vec4f(length, 0, length, rotation);
                 v.geoPlane = planeIndex[1];
+                v.flags    = flags | MapVertex::RightEdge;
                 verts[geomBuf] << v;
 
                 if (geomBuf == TransparentGeometry)

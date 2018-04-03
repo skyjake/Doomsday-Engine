@@ -14,6 +14,8 @@ const uint Surface_WorldSpaceYToTexCoord   = 0x02u;
 const uint Surface_FlipTexCoordY           = 0x04u;
 const uint Surface_AnchorTopPlane          = 0x08u;
 const uint Surface_TextureOffset           = 0x10u;
+const uint Surface_LeftEdge                = 0x20u;
+const uint Surface_RightEdge               = 0x40u;
 
 const int Texture_Diffuse            = 0; // RGB: Diffuse  | A: Opacity
 const int Texture_SpecularGloss      = 1; // RGB: Specular | A: Gloss
