@@ -58,6 +58,7 @@ DENG2_PIMPL(MaterialLib)
         materials["world.grass"] = Properties{Opaque, 200.f, 0};
         materials["world.test"]  = Properties{Opaque, 200.f, 0};
         materials["world.test2"] = Properties{Opaque, 200.f, 0};
+        materials["world.metal"] = Properties{Opaque, 200.f, 0};
         materials["world.water"] = Properties{Transparent, 100.f, 1};
     }
 
@@ -95,6 +96,27 @@ DENG2_PIMPL(MaterialLib)
 
         auto &ctx = self().context();
         TexIds ids {{Id::None, Id::None, Id::None, Id::None}};
+
+        if (ctx.images->has(name + ".metallic"))
+        {
+            // Convert to specular/gloss.
+            Image baseColor    = ctx.images->image(name + ".basecolor");
+            Image invMetallic  = ctx.images->image(name + ".metallic").invertedColor(); // grayscale
+
+            Image normal       = ctx.images->image(name + ".normal");
+            Image gloss        = ctx.images->image(name + ".roughness").invertedColor(); // grayscale
+            Image diffuse      = baseColor.multiplied(invMetallic);
+
+            QImage defaultSpecular(QSize(invMetallic.width(), invMetallic.height()),
+                                   QImage::Format_ARGB32);
+            defaultSpecular.fill(QColor(56, 56, 56, 255));
+
+            Image specGloss = invMetallic.mixed(baseColor, defaultSpecular).withAlpha(gloss);
+
+            ids[Diffuse]            = ctx.atlas[Diffuse]->alloc(diffuse);
+            ids[SpecularGloss]      = ctx.atlas[SpecularGloss]->alloc(specGloss);
+            ids[NormalDisplacement] = ctx.atlas[NormalDisplacement]->alloc(normal);
+        }
 
         for (int i = 0; i < TextureMapCount; ++i)
         {
