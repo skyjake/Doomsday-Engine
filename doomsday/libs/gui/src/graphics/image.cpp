@@ -346,7 +346,7 @@ DENG2_PIMPL(Image)
         size = Size(img.width(), img.height());
     }
 
-    Impl(Public * i, Impl const &other)
+    Impl(Public *i, Impl const &other)
         : Base(i)
         , format(other.format)
         , size(other.size)
@@ -355,6 +355,12 @@ DENG2_PIMPL(Image)
         , refPixels(other.refPixels)
         , pointRatio(other.pointRatio)
     {}
+
+    Impl(Public *i, Size const &imgSize, Format imgFormat)
+        : Base(i), format(imgFormat), size(imgSize)
+    {
+        pixels.resize(i->stride() * imgSize.y);
+    }
 
     Impl(Public *i, Size const &imgSize, Format imgFormat, IByteArray const &imgPixels)
         : Base(i), format(imgFormat), size(imgSize), pixels(imgPixels)
@@ -373,6 +379,10 @@ Image::Image(Image const &other)
 {}
 
 Image::Image(QImage const &image) : d(new Impl(this, image))
+{}
+
+Image::Image(Size const &size, Format format)
+    : d(new Impl(this, size, format))
 {}
 
 Image::Image(Size const &size, Format format, IByteArray const &pixels)
@@ -732,6 +742,65 @@ Image Image::colorized(Color const &color) const
         }
     }
     return copy;
+}
+
+Image Image::invertedColor() const
+{
+    QImage img = toQImage().convertToFormat(QImage::Format_ARGB32);
+    img.invertPixels();
+    return img;
+}
+
+Image Image::mixed(Image const &low, Image const &high) const
+{
+    DENG2_ASSERT(size() == low.size());
+    DENG2_ASSERT(size() == high.size());
+
+    const QImage lowImg  = low.toQImage();
+    const QImage highImg = high.toQImage();
+
+    QImage mix = toQImage().convertToFormat(QImage::Format_ARGB32);
+    for (duint y = 0; y < height(); ++y)
+    {
+        duint32 *ptr = reinterpret_cast<duint32 *>(mix.bits() + y * mix.bytesPerLine());
+        for (duint x = 0; x < width(); ++x)
+        {
+            duint mb =  *ptr & 0xff;
+            duint mg = (*ptr & 0xff00) >> 8;
+            duint mr = (*ptr & 0xff0000) >> 16;
+            duint ma = (*ptr & 0xff000000) >> 24;
+
+            const QRgb lowColor  = lowImg .pixel(x, y);
+            const QRgb highColor = highImg.pixel(x, y);
+
+            int red   = (qRed(highColor)   * mr + qRed(lowColor)   * (255 - mr)) / 255;
+            int green = (qGreen(highColor) * mg + qGreen(lowColor) * (255 - mg)) / 255;
+            int blue  = (qBlue(highColor)  * mb + qBlue(lowColor)  * (255 - mb)) / 255;
+            int alpha = (qAlpha(highColor) * ma + qAlpha(lowColor) * (255 - ma)) / 255;
+
+            *ptr = blue | (green << 8) | (red << 16) | (alpha << 24);
+
+            ptr++;
+        }
+    }
+    return mix;
+}
+
+Image Image::withAlpha(Image const &grayscale) const
+{
+    DENG2_ASSERT(size() == grayscale.size());
+    const QImage alpha = grayscale.toQImage();
+    QImage img = toQImage().convertToFormat(QImage::Format_ARGB32);
+    for (duint y = 0; y < height(); ++y)
+    {
+        duint32 *ptr = reinterpret_cast<duint32 *>(img.bits() + y * img.bytesPerLine());
+        for (duint x = 0; x < width(); ++x)
+        {
+            *ptr &= 0x00ffffff;
+            *ptr++ |= qRed(alpha.pixel(x, y)) << 24;
+        }
+    }
+    return img;
 }
 
 void Image::operator >> (Writer &to) const

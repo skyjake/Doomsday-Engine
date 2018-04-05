@@ -94,6 +94,14 @@ public:
     Image(QImage const &image);
 
     /**
+     * Constructs an image with uninitialized contents.
+     *
+     * @param size    Size of the image.
+     * @param format  Data format.
+     */
+    Image(Size const &size, Format format);
+
+    /**
      * Constructs an image, taking a copy of the pixel data.
      *
      * @param size    Size of the image.
@@ -180,6 +188,9 @@ public:
     Image multiplied(Image const &factorImage) const;
     Image multiplied(Color const &color) const;
     Image colorized(Color const &color) const;
+    Image invertedColor() const;
+    Image mixed(Image const &low, Image const &high) const;
+    Image withAlpha(Image const &grayscale) const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;
