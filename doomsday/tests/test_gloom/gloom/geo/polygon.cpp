@@ -57,6 +57,18 @@ Vec2d Polygon::center() const
     return c;
 }
 
+QHash<ID, Vec2d> Polygon::expanders() const
+{
+    QHash<ID, Vec2d> exp;
+    for (int i = 0; i < points.size(); ++i)
+    {
+        const Line a(at(i - 1), at(i));
+        const Line b(at(i),     at(i + 1));
+        exp.insert(points[i].id, (-a.normal() - b.normal()).normalize());
+    }
+    return exp;
+}
+
 const Vec2d &Polygon::at(int pos) const
 {
     return points[mod(pos, size())].pos;

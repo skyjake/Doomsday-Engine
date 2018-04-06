@@ -27,19 +27,20 @@ using namespace de;
 
 namespace gloom {
 
-internal::AttribSpec const MapVertex::_spec[9] =
+internal::AttribSpec const MapVertex::_spec[10] =
 {
-    { internal::AttribSpec::Position, 3, GL_FLOAT, false, sizeof(MapVertex),  0     },
-    { internal::AttribSpec::Normal,   3, GL_FLOAT, false, sizeof(MapVertex),  3 * 4 },
-    { internal::AttribSpec::Tangent,  3, GL_FLOAT, false, sizeof(MapVertex),  6 * 4 },
-    { internal::AttribSpec::TexCoord, 4, GL_FLOAT, false, sizeof(MapVertex),  9 * 4 },
-    { internal::AttribSpec::Texture0, 1, GL_FLOAT, false, sizeof(MapVertex), 13 * 4 },
-    { internal::AttribSpec::Texture1, 1, GL_FLOAT, false, sizeof(MapVertex), 14 * 4 },
-    { internal::AttribSpec::Index0,   3, GL_FLOAT, false, sizeof(MapVertex), 15 * 4 },
-    { internal::AttribSpec::Index1,   2, GL_FLOAT, false, sizeof(MapVertex), 18 * 4 },
-    { internal::AttribSpec::Flags,    1, GL_FLOAT, false, sizeof(MapVertex), 20 * 4 },
+    { internal::AttribSpec::Position,  3, GL_FLOAT, false, sizeof(MapVertex),  0     },
+    { internal::AttribSpec::Normal,    3, GL_FLOAT, false, sizeof(MapVertex),  3 * 4 },
+    { internal::AttribSpec::Tangent,   3, GL_FLOAT, false, sizeof(MapVertex),  6 * 4 },
+    { internal::AttribSpec::TexCoord,  4, GL_FLOAT, false, sizeof(MapVertex),  9 * 4 },
+    { internal::AttribSpec::Direction, 2, GL_FLOAT, false, sizeof(MapVertex), 13 * 4 },
+    { internal::AttribSpec::Texture0,  1, GL_FLOAT, false, sizeof(MapVertex), 15 * 4 },
+    { internal::AttribSpec::Texture1,  1, GL_FLOAT, false, sizeof(MapVertex), 16 * 4 },
+    { internal::AttribSpec::Index0,    3, GL_FLOAT, false, sizeof(MapVertex), 17 * 4 },
+    { internal::AttribSpec::Index1,    2, GL_FLOAT, false, sizeof(MapVertex), 20 * 4 },
+    { internal::AttribSpec::Flags,     1, GL_FLOAT, false, sizeof(MapVertex), 22 * 4 },
 };
-LIBGUI_VERTEX_FORMAT_SPEC(MapVertex, 21 * 4)
+LIBGUI_VERTEX_FORMAT_SPEC(MapVertex, 23 * 4)
 
 DENG2_PIMPL_NOREF(MapBuild)
 {
@@ -100,7 +101,8 @@ DENG2_PIMPL_NOREF(MapBuild)
 
             // Split the polygon to convex parts (for triangulation).
             const auto sectorPolygon = map.sectorPolygon(sectorId);
-            const auto convexParts = sectorPolygon.splitConvexParts();
+            const auto expanders     = sectorPolygon.expanders();
+            const auto convexParts   = sectorPolygon.splitConvexParts();
 
             // -------- Planes --------
 
@@ -155,9 +157,10 @@ DENG2_PIMPL_NOREF(MapBuild)
                     {
                         f.pos      = currentVerts[pointID];
                         f.texCoord = Vec4f(0, 0, 0, 0); // fixed offset
+                        f.expander = expanders[pointID];
 
                         pointIndices.insert(pointID, Buffer::Index(verts[geomBuf].size()));
-                        verts[geomBuf] << f; // << c;
+                        verts[geomBuf] << f;
                     }
 
                     for (const auto &convex : convexParts)
@@ -200,6 +203,8 @@ DENG2_PIMPL_NOREF(MapBuild)
             auto makeQuad = [this, &bufs, &indices, &verts](const String &  frontMaterial,
                                                             const String &  backMaterial,
                                                             const Vec3f &   normal,
+                                                            const Vec2f &   expander1,
+                                                            const Vec2f &   expander2,
                                                             const uint32_t *planeIndex,
                                                             uint32_t        flags,
                                                             const Vec3f &   p1,
@@ -207,8 +212,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                                                             const Vec3f &   p3,
                                                             const Vec3f &   p4,
                                                             float           length,
-                                                            float           rotation)
-            {
+                                                            float           rotation) {
                 if (!frontMaterial && !backMaterial) return;
 
                 const int geomBuf = matLib.isTransparent(frontMaterial);
@@ -234,24 +238,28 @@ DENG2_PIMPL_NOREF(MapBuild)
                 v.pos      = p1;
                 v.texCoord = Vec4f(0, 0, length, rotation);
                 v.geoPlane = planeIndex[0];
+                v.expander = expander1;
                 v.flags    = flags | MapVertex::LeftEdge;
                 verts[geomBuf] << v;
 
                 v.pos      = p2;
                 v.texCoord = Vec4f(length, 0, length, rotation);
                 v.geoPlane = planeIndex[0];
+                v.expander = expander2;
                 v.flags    = flags | MapVertex::RightEdge;
                 verts[geomBuf] << v;
 
                 v.pos      = p3;
                 v.texCoord = Vec4f(0, 0, length, rotation);
                 v.geoPlane = planeIndex[1];
+                v.expander = expander1;
                 v.flags    = flags | MapVertex::LeftEdge;
                 verts[geomBuf] << v;
 
                 v.pos      = p4;
                 v.texCoord = Vec4f(length, 0, length, rotation);
                 v.geoPlane = planeIndex[1];
+                v.expander = expander2;
                 v.flags    = flags | MapVertex::RightEdge;
                 verts[geomBuf] << v;
 
@@ -282,6 +290,8 @@ DENG2_PIMPL_NOREF(MapBuild)
                     makeQuad(line.surfaces[Line::Front].material[Line::Middle],
                              line.surfaces[Line::Back ].material[Line::Middle],
                              normal,
+                             expanders[start],
+                             expanders[end],
                              planeIndex,
                              MapVertex::WorldSpaceYToTexCoord,
                              floor[start],
@@ -305,6 +315,8 @@ DENG2_PIMPL_NOREF(MapBuild)
                     makeQuad(line.surfaces[Line::Front].material[Line::Bottom],
                              line.surfaces[Line::Back ].material[Line::Bottom],
                              normal,
+                             expanders[start],
+                             expanders[end],
                              botIndex,
                              MapVertex::WorldSpaceYToTexCoord | MapVertex::AnchorTopPlane,
                              floor[start],
@@ -317,6 +329,8 @@ DENG2_PIMPL_NOREF(MapBuild)
                     makeQuad(line.surfaces[Line::Front].material[Line::Top],
                              line.surfaces[Line::Back ].material[Line::Top],
                              normal,
+                             expanders[start],
+                             expanders[end],
                              topIndex,
                              MapVertex::WorldSpaceYToTexCoord,
                              backPlaneVerts.back()[start],

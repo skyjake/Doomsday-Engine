@@ -19,10 +19,13 @@
 #ifndef GLOOM_POLYGON_H
 #define GLOOM_POLYGON_H
 
-#include <QVector>
 #include <de/Vector>
 #include <de/Rectangle>
 #include "gloom/geo/geomath.h"
+#include "gloom/identity.h"
+
+#include <QVector>
+#include <QList>
 
 namespace gloom { namespace geo {
 
@@ -32,29 +35,30 @@ struct Polygon
 {
     struct Point {
         Vec2d pos; // world X, Z
-        uint32_t id;
+        ID id;
     };
     using Points = QVector<Point>;
     using Line   = geo::Line<Vec2d>;
 
-    Points points; // clockwise winding
+    Points     points; // clockwise winding
     Rectangled bounds;
 
     Polygon(const Points &points = Points());
     Polygon(const Polygon &) = default;
 
-    int size() const { return points.size(); }
-    const Vec2d &at(int pos) const;
-    const Line lineAt(int pos) const;
-    bool isConvex() const;
-    QList<Polygon> splitConvexParts() const;
-    QVector<int> concavePoints() const;
-    bool isPointInside(const Vec2d &point) const;
-    bool isLineInside(int start, int end) const;
-    int intersect(const Line &line) const;
-    bool split(int a, int b, Polygon halves[2]) const;
-    void updateBounds();
-    Vec2d center() const;
+    int              size() const { return points.size(); }
+    const Vec2d &    at(int pos) const;
+    const Line       lineAt(int pos) const;
+    bool             isConvex() const;
+    QList<Polygon>   splitConvexParts() const;
+    QVector<int>     concavePoints() const;
+    bool             isPointInside(const Vec2d &point) const;
+    bool             isLineInside(int start, int end) const;
+    int              intersect(const Line &line) const;
+    bool             split(int a, int b, Polygon halves[2]) const;
+    void             updateBounds();
+    Vec2d            center() const;
+    QHash<ID, Vec2d> expanders() const;
 };
 
 }} // namespace gloom::geo

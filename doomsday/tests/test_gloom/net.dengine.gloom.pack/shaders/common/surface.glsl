@@ -11,6 +11,7 @@ uniform vec4          uCameraPos; // world space
 
 in vec4  aVertex;
 in vec4  aUV; // s, t, wallLength, rotation angle
+in vec2  aDirection; // expander
 in vec3  aNormal;
 in vec3  aTangent;
 in vec3  aIndex0; // planes: geo, tex bottom, tex top
@@ -25,6 +26,7 @@ struct Surface {
     vec3  tangent;
     vec3  bitangent;
     vec3  normal;
+    vec2  expander;
     float wallLength;
     float botPlaneY;
     float topPlaneY;
@@ -55,6 +57,8 @@ Surface Gloom_LoadVertexSurface(void) {
     surface.topPlaneY = Gloom_FetchPlaneY(floatBitsToUint(aIndex0.z));
     surface.side = (surface.botPlaneY <= surface.topPlaneY)? 0 : 1;
     surface.isFrontSide = (surface.side == 0);
+
+    surface.expander = aDirection; //(surface.isFrontSide? aDirection : -aDirection);
 
     surface.normal     = (surface.isFrontSide? aNormal  : -aNormal);
     surface.tangent    = (surface.isFrontSide? aTangent : -aTangent);
