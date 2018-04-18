@@ -95,7 +95,7 @@ DENG2_PIMPL_NOREF(MapBuild)
             }
         }
 
-        for (const ID sectorId : map.sectors().keys())
+        foreach (const ID sectorId, map.sectors().keys())
         {
             const Sector &sector = map.sector(sectorId);
 
@@ -110,6 +110,8 @@ DENG2_PIMPL_NOREF(MapBuild)
             const auto &floor             = planeVerts.front();
             const auto &ceiling           = planeVerts.back();
             auto        currentPlaneVerts = planeVerts.begin();
+            const auto  floorId           = map.floorPlaneId(sectorId);
+            const auto  ceilingId         = map.ceilingPlaneId(sectorId);
 
             for (int v = 0; v < sector.volumes.size(); ++v)
             {
@@ -142,6 +144,8 @@ DENG2_PIMPL_NOREF(MapBuild)
                     f.tangent      = plane.tangent();
                     f.flags        = MapVertex::WorldSpaceXZToTexCoords | MapVertex::TextureOffset;
                     f.geoPlane     = planeMapper[volume.planes[i]];
+                    f.texPlane[0]  = planeMapper[floorId];
+                    f.texPlane[1]  = planeMapper[ceilingId];
                     f.texOffset[0] = texOffsetMapper[volume.planes[i]];
 
                     if (isFacingUp)
@@ -153,7 +157,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                         f.tangent = -f.tangent;
                     }
 
-                    for (const ID pointID : currentVerts.keys())
+                    foreach (const ID pointID, currentVerts.keys())
                     {
                         f.pos      = currentVerts[pointID];
                         f.texCoord = Vec4f(0, 0, 0, 0); // fixed offset

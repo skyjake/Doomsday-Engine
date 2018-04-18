@@ -423,7 +423,7 @@ void LightRender::advanceTime(TimeSpan elapsed)
 
     // Testing.
     {
-        Vec3d rotPos = Mat4f::rotate(2 * float(elapsed), Vec3f(0, 1, 0)) * d->skyLight->origin();
+        Vec3d rotPos = Mat4f::rotate(4 * float(elapsed), Vec3f(0, 1, 0)) * d->skyLight->origin();
         d->skyLight->setOrigin(rotPos);
         d->skyLight->setDirection(-rotPos);
     }

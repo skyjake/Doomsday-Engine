@@ -52,7 +52,7 @@ void SkyBox::glInit(Context &context)
 
     // Load the cube map.
     {
-        const Image img = context.images->image("sky.day");
+        const Image img = context.images->image("sky.morning");
         const Image::Size size{img.width() / 6, img.height()};
 
         d->envTex.setFilter(gl::Linear, gl::Linear, gl::MipLinear);
