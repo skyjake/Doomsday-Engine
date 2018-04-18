@@ -291,7 +291,7 @@ DENG2_PIMPL(LightRender)
             proxLights.reserve(activeLights.size());
 
             // The remaining shadows will be assigned based on proximity.
-            for (Light *light : activeLights)
+            foreach (Light *light, activeLights)
             {
                 if (light->castShadows())
                 {
@@ -303,7 +303,7 @@ DENG2_PIMPL(LightRender)
                       proxLights.end(),
                       [](const ProxEntry &a, const ProxEntry &b) { return a.first < b.first; });
 
-            for (const ProxEntry &proxEntry : proxLights)
+            foreach (const ProxEntry &proxEntry, proxLights)
             {
                 // TODO: Is the light falloff volume fully or partially inside the view frustum?
                 // (Check a sphere against the 5 frustum planes.)
@@ -318,11 +318,11 @@ DENG2_PIMPL(LightRender)
         }
     }
 
-    int assignOmniLights(std::function<bool (const Light *, int)> assignLight)
+    int assignOmniLights(const std::function<bool (const Light *, int)> &assignLight)
     {
         int totalOmnis = 0;
         int counter = 0;
-        for (const auto *light : activeLights)
+        foreach (const auto *light, activeLights)
         {
             if (light->type() == Light::Omni)
             {
@@ -365,7 +365,7 @@ void LightRender::render()
     d->activeShadows.clear();
 
     // Update shadow maps.
-    for (auto *light : d->shadowCasters)
+    foreach (auto *light, d->shadowCasters)
     {
         DENG2_ASSERT(light->castShadows());
         {
@@ -541,7 +541,7 @@ void LightRender::renderLighting()
 
 void LightRender::setShadowRenderCallback(RenderFunc callback)
 {
-    d->callback = callback;
+    d->callback = std::move(callback);
 }
 
 void LightRender::createLights()
