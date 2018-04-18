@@ -17,6 +17,12 @@ group world {
         image normaldisp { path = "images/softnoise.png/HeightMap.toNormals" }
         image specgloss  { path = "images/softnoise.png/Color.solid:255,255,255,255"}
     }
+    group metal {
+        image basecolor { path = "images/rustediron-streaks_basecolor.png" }
+        image metallic  { path = "images/rustediron-streaks_metallic.png" }
+        image normal    { path = "images/rustediron-streaks_normal.png" }
+        image roughness { path = "images/rustediron-streaks_roughness.png" }
+    }
 }
 
 image noise { path = "images/softnoise.png" }
