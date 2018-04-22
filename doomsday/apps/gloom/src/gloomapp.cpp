@@ -27,6 +27,7 @@
 #include <de/FileSystem>
 #include <de/PackageLoader>
 #include <de/ScriptSystem>
+#include <doomsday/DataBundle>
 
 using namespace de;
 using namespace gloom;
@@ -39,7 +40,12 @@ DENG2_PIMPL(GloomApp)
     std::unique_ptr<AudioSystem>     audioSys;
     std::unique_ptr<GloomWorld>      world;
 
-    Impl(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i)
+    {
+        // We will be accessing data bundles (WADs).
+        static DataBundle::Interpreter intrpDataBundle;
+        FileSystem::get().addInterpreter(intrpDataBundle);
+    }
 
     ~Impl()
     {

@@ -19,7 +19,10 @@
 #ifndef GLOOM_MAPIMPORT_H
 #define GLOOM_MAPIMPORT_H
 
-#include <de/LumpCatalog>
+#include "gloom/world/map.h"
+
+#include <de/String>
+#include <doomsday/LumpCatalog>
 
 namespace gloom {
 
@@ -31,7 +34,11 @@ using namespace de;
 class MapImport
 {
 public:
-    MapImport(const LumpCatalog &lumps, const String &mapId);
+    MapImport(const res::LumpCatalog &lumps);
+
+    bool importMap(const String &mapId);
+
+    Map &map();
 
 private:
     DENG2_PRIVATE(d)

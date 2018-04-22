@@ -82,7 +82,8 @@ DENG2_PIMPL(EntityRender)
             "models/tree2/t3.3ds",
             "models/tree3/t4.3ds",
             "models/sphere/sphere_shd.obj",
-            "models/buggy/buggy.md5mesh",
+            "models/sphere/sphere_shd.obj",
+//            "models/buggy/buggy.md5mesh",
         };
 
         int idx = 0;

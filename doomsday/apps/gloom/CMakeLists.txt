@@ -83,6 +83,7 @@ set (SOURCES
     gloom/world/environment.h
     gloom/world/map.cpp
     gloom/world/map.h
+    gloom/world/mapimport.cpp
     gloom/world/mapimport.h
     gloom/world/user.cpp
     gloom/world/user.h

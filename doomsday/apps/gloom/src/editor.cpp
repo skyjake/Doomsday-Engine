@@ -19,8 +19,12 @@
 #include "editor.h"
 #include "../src/gloomapp.h"
 #include "gloom/geo/geomath.h"
+#include "gloom/world/mapimport.h"
 
+#include <de/FS>
 #include <de/Matrix>
+#include <doomsday/DataBundle>
+#include <doomsday/LumpCatalog>
 
 #include <QAction>
 #include <QCloseEvent>
@@ -1012,6 +1016,33 @@ DENG2_PIMPL(Editor)
         f.write(map.serialize());
         isModified = false;
     }
+
+    void importWADLevel()
+    {
+        askSaveFile();
+
+        if (String openPath = QFileDialog::getOpenFileName(
+                thisPublic, "Import from WAD File", filePath.fileNamePath(), "WAD File (*.wad)"))
+        {
+            String path = FS::accessNativeLocation(openPath);
+            if (const DataBundle *bundle = FS::tryLocate<const DataBundle>(path))
+            {
+                if (bundle->readLumpDirectory())
+                {
+                    const auto *lumpDir = bundle->lumpDirectory();
+                    StringList maps = lumpDir->findMapLumpNames();
+                    if (maps.isEmpty()) return; // No maps found.
+
+                    res::LumpCatalog catalog;
+                    catalog.setBundles({bundle});
+
+                    MapImport importer(catalog);
+                    importer.importMap(maps.front());
+                }
+            }
+            //newFile();
+        }
+    }
 };
 
 Editor::Editor()
@@ -1052,6 +1083,8 @@ Editor::Editor()
     QMenu *fileMenu = menuBar->addMenu(tr("&File"));
     fileMenu->addAction("&New",        [this]() { d->newFile(); });
     fileMenu->addAction("&Open...",    [this]() { d->openFile(); }, QKeySequence("Ctrl+O"));
+    fileMenu->addSeparator();
+    fileMenu->addAction("Import from WAD...", [this]() { d->importWADLevel(); }, QKeySequence("Ctrl+Shift+I"));
     fileMenu->addSeparator();
     fileMenu->addAction("Save &as...", [this]() { d->saveAsFile(); });
     fileMenu->addAction("&Save",       [this]() { d->saveFile(); }, QKeySequence("Ctrl+S"));
