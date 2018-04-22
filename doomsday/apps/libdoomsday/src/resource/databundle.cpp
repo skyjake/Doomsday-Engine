@@ -98,6 +98,33 @@ DENG2_PIMPL(DataBundle), public Lockable
         return App::rootFolder().locate<Folder>(QStringLiteral("/sys/bundles"));
     }
 
+    bool readLumpDirectory()
+    {
+        if (format == Wad || format == Pwad || format == Iwad)
+        {
+            // The lump directory needs to be loaded before matching against known
+            // bundles because it can be used for identification.
+            lumpDir.reset(new res::LumpDirectory(source->as<ByteArrayFile>()));
+            if (!lumpDir->isValid())
+            {
+                throw FormatError("DataBundle::identify",
+                                  dynamic_cast<File *>(thisPublic)->description() +
+                                  ": file contents may be corrupted " DENG2_CHAR_MDASH
+                                  " WAD lump directory was not found");
+            }
+
+            /*
+            qDebug() << self().description()
+                     << "format:" << (lumpDir->type()==res::LumpDirectory::Pwad? "PWAD" : "IWAD")
+                     << "\nfileName:" << source->name()
+                     << "\nfileSize:" << source->size()
+                     << "\nlumpDirCRC32:" << QString::number(lumpDir->crc32(), 16).toLatin1();
+            */
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Identifies the data bundle and sets up a package link under "/sys/bundles" with
      * the appropriate metadata.
@@ -115,19 +142,8 @@ DENG2_PIMPL(DataBundle), public Lockable
         if (ignored || !packageId.isEmpty()) return false;
 
         // Load the lump directory of WAD files.
-        if (format == Wad || format == Pwad || format == Iwad)
+        if (readLumpDirectory())
         {
-            // The lump directory needs to be loaded before matching against known
-            // bundles because it can be used for identification.
-            lumpDir.reset(new res::LumpDirectory(source->as<ByteArrayFile>()));
-            if (!lumpDir->isValid())
-            {
-                throw FormatError("DataBundle::identify",
-                                  dynamic_cast<File *>(thisPublic)->description() +
-                                  ": file contents may be corrupted " DENG2_CHAR_MDASH
-                                  " WAD lump directory was not found");
-            }
-
             // Determine the WAD type, if unspecified.
             format = (lumpDir->type() == res::LumpDirectory::Pwad? Pwad : Iwad);
 
@@ -1273,6 +1289,11 @@ String DataBundle::containerPackageId() const
     DENG2_ASSERT(file != nullptr);
 
     return Package::identifierForContainerOfFile(*file);
+}
+
+bool DataBundle::readLumpDirectory() const
+{
+    return d->readLumpDirectory();
 }
 
 res::LumpDirectory const *DataBundle::lumpDirectory() const

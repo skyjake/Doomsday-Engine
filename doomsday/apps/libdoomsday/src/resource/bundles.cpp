@@ -44,13 +44,16 @@ DENG2_PIMPL(Bundles)
 , DENG2_OBSERVES(FileIndex, Removal)
 , public Lockable
 {
+    String defPath;
     de::Info identityRegistry;
     QSet<DataBundle const *> bundlesToIdentify; // lock for access
     LoopCallback mainCall;
     QHash<DataBundle::Format, BlockElements> formatEntries;
     TaskPool tasks;
 
-    Impl(Public *i) : Base(i)
+    Impl(Public * i, String const &bundleDefPath)
+        : Base(i)
+        , defPath(bundleDefPath)
     {
         // Observe new data files.
         App::fileSystem().indexFor(DENG2_TYPE_NAME(DataFile))  .audienceForAddition() += this;
@@ -134,8 +137,6 @@ DENG2_PIMPL(Bundles)
 
         if (!identityRegistry.isEmpty()) return;
 
-        String const defPath = "/packs/net.dengine.base/databundles.dei";
-
         formatEntries.clear();
         identityRegistry.parse(App::rootFolder().locate<File const>(defPath));
 
@@ -190,8 +191,8 @@ DENG2_PIMPL(Bundles)
 
 DENG2_AUDIENCE_METHOD(Bundles, Identify)
 
-Bundles::Bundles()
-    : d(new Impl(this))
+Bundles::Bundles(const String &bundleDefPath)
+    : d(new Impl(this, bundleDefPath))
 {}
 
 de::Info const &Bundles::identityRegistry() const

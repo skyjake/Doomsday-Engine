@@ -120,6 +120,16 @@ public:
     de::String containerPackageId() const;
 
     /**
+     * Reads the lump directory, if one is present in the data bundle.
+     * Normally this happens automatically during bundle identification.
+     *
+     * @return @c true, if the lump directory was successfully read; otherwise @c false.
+     *
+     * @throws FormatError  Lump directory contents are invalid/corrupted.
+     */
+    bool readLumpDirectory() const;
+
+    /**
      * Returns the WAD file lump directory.
      * @return LumpDirectory for WADs; @c nullptr for non-WAD formats.
      */

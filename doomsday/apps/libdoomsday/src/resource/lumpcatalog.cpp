@@ -31,10 +31,8 @@ namespace res {
 
 DENG2_PIMPL(LumpCatalog)
 {
-    using Found = std::pair<DataBundle const *, LumpDirectory::Pos>;
-
     StringList packageIds;
-    QList<const DataBundle *> bundles;
+    QList<const DataBundle *> bundles; /// @todo Should observe for deletion. -jk
 
     Impl(Public *i)
         : Base(i)
@@ -56,7 +54,7 @@ DENG2_PIMPL(LumpCatalog)
     {
         bundles.clear();
 
-        for (auto const &pkg : packageIds)
+        foreach (const auto &pkg, packageIds)
         {
             // The package must be available as a file.
             if (File const *file = App::packageLoader().select(pkg))
@@ -70,10 +68,10 @@ DENG2_PIMPL(LumpCatalog)
         }
     }
 
-    Found findLump(String const &name) const
+    LumpPos findLump(const String &name) const
     {
         Block const lumpName = name.toLatin1();
-        Found found { nullptr, LumpDirectory::InvalidPos };
+        LumpPos found { nullptr, LumpDirectory::InvalidPos };
 
         // The last bundle is checked first.
         for (int i = bundles.size() - 1; i >= 0; --i)
@@ -83,7 +81,7 @@ DENG2_PIMPL(LumpCatalog)
                 auto const pos = bundle->lumpDirectory()->find(lumpName);
                 if (pos != LumpDirectory::InvalidPos)
                 {
-                    found = Found(bundle, pos);
+                    found = LumpPos(bundle, pos);
                     break;
                 }
             }
@@ -109,7 +107,7 @@ void LumpCatalog::clear()
     d->clear();
 }
 
-bool LumpCatalog::setPackages(StringList packageIds)
+bool LumpCatalog::setPackages(const StringList &packageIds)
 {
     if (packageIds != d->packageIds)
     {
@@ -120,19 +118,30 @@ bool LumpCatalog::setPackages(StringList packageIds)
     return false;
 }
 
+void LumpCatalog::setBundles(const QList<const DataBundle *> &bundles)
+{
+    d->packageIds.clear();
+    d->bundles = bundles;
+}
+
+LumpCatalog::LumpPos LumpCatalog::find(const String &lumpName) const
+{
+    return d->findLump(lumpName);
+}
+
 StringList LumpCatalog::packages() const
 {
     return d->packageIds;
 }
     
-Block LumpCatalog::read(String const &lumpName) const
+Block LumpCatalog::read(const LumpPos &lump, int lumpIndexOffset) const
 {
     Block data;
-    Impl::Found found = d->findLump(lumpName);
-    if (found.first)
+    if (lump.first)
     {
-        auto const &entry = found.first->lumpDirectory()->entry(found.second);
-        data.copyFrom(*found.first, entry.offset, entry.size);
+        DENG2_ASSERT(lump.first->lumpDirectory());
+        auto const &entry = lump.first->lumpDirectory()->entry(lump.second + lumpIndexOffset);
+        data.copyFrom(*lump.first, entry.offset, entry.size);
     }
     return data;
 }

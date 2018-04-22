@@ -56,7 +56,7 @@ public:
     };
 
 public:
-    Bundles();
+    Bundles(const de::String &bundleDefPath = "/packs/net.dengine.base/databundles.dei");
 
     /**
      * Returns the collection of information for identifying known data files.

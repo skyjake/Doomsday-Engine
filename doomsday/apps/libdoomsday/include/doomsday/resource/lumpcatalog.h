@@ -20,10 +20,16 @@
 #define LIBDOOMSDAY_LUMPCATALOG_H
 
 #include "../libdoomsday.h"
+#include "doomsday/resource/databundle.h"
+
 #include <de/String>
 #include <de/Block>
 
+#include <QList>
+
 namespace res {
+
+using namespace de;
 
 /**
  * Catalog of lumps from multiple bundles.
@@ -34,6 +40,9 @@ namespace res {
  */
 class LIBDOOMSDAY_PUBLIC LumpCatalog
 {
+public:
+    using LumpPos = std::pair<const DataBundle *, LumpDirectory::Pos>;
+
 public:
     LumpCatalog();
     
@@ -50,11 +59,30 @@ public:
      *
      * @return @c true, if the list of packages is different than the one set previously.
      */
-    bool setPackages(de::StringList packageIds);
-    
-    de::StringList packages() const;
+    bool setPackages(const StringList &packageIds);
 
-    de::Block read(de::String const &lumpName) const;
+    void setBundles(const QList<const DataBundle *> &bundles);
+
+    inline void setBundles(std::initializer_list<const DataBundle *> bundles)
+    {
+        setBundles(QList<const DataBundle *>(bundles));
+    }
+
+    LumpPos find(const String &lumpName) const;
+    
+    /**
+     * Reads the contents of a lump.
+     *
+     * @param lumpName          Name of a lump.
+     * @param lumpIndexOffset   Offset to apply to the lump index (e.g., for reading data
+     *                          in relation to a start marker).
+     * @return  Lump data.
+     */
+    Block read(const String &lumpName, int lumpIndexOffset = 0) const;
+    
+    Block read(const LumpPos &lump, int lumpIndexOffset = 0) const;
+
+    de::StringList packages() const;
 
 private:
     DENG2_PRIVATE(d)
