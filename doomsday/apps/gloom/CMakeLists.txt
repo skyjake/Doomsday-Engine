@@ -1,27 +1,30 @@
 cmake_minimum_required (VERSION 3.1)
 project (GLOOM)
 
-set (DENG_OPENGL_API 3.3)
-set (CMAKE_AUTOMOC ON)
-set (CMAKE_AUTORCC ON)
-set (DENG_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/../..)
-set (DENG_INSTALL_LIB_DIR lib)
-if (WIN32)
-    set (DENG_INSTALL_DATA_DIR data)
-else ()
-    set (DENG_INSTALL_DATA_DIR share/doomsday)
-endif ()
+# set (DENG_OPENGL_API 3.3)
+# set (CMAKE_AUTOMOC ON)
+# set (CMAKE_AUTORCC ON)
+# set (DENG_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/../..)
+# set (DENG_INSTALL_LIB_DIR lib)
+# if (WIN32)
+#     set (DENG_INSTALL_DATA_DIR data)
+# else ()
+#     set (DENG_INSTALL_DATA_DIR share/doomsday)
+# endif ()
 
 # Note: Additionally CMAKE_INSTALL_PREFIX must point to the SDK install dir.
 # This is used for finding the .pack files.
 
-find_package (PythonInterp REQUIRED)
-include (../../cmake/Arch.cmake)
-include (../../cmake/Macros.cmake)
+# find_package (PythonInterp REQUIRED)
+# include (../../cmake/Arch.cmake)
+# include (../../cmake/Macros.cmake)
+
+include (../../cmake/Config.cmake)
 
 find_package (Qt5 COMPONENTS Gui Widgets Network OpenGL OpenGLExtensions)
 find_package (DengAppfw)
-include (${DENG_SOURCE_DIR}/cmake/FindFMOD.cmake)
+find_package (DengDoomsday)
+find_package (FMOD)
 
 deng_add_package (net.dengine.gloom)
 
@@ -80,6 +83,7 @@ set (SOURCES
     gloom/world/environment.h
     gloom/world/map.cpp
     gloom/world/map.h
+    gloom/world/mapimport.h
     gloom/world/user.cpp
     gloom/world/user.h
     gloom/world/world.cpp
@@ -101,18 +105,24 @@ set (SOURCES
     src/mainwindow.h
 )
 
-deng_add_application (test_gloom ${SOURCES} ${HEADERS})
+# Deploy the FMOD library.
+if (APPLE)
+    get_property (fmodLibPath TARGET fmodex PROPERTY INTERFACE_LINK_LIBRARIES)
+    deng_find_resources (${fmodLibPath},Frameworks)
+endif ()
 
-target_include_directories (test_gloom PRIVATE ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries (test_gloom Deng::libappfw fmodex)
+deng_add_application (gloom ${SOURCES} ${HEADERS})
+
+target_include_directories (gloom PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+target_link_libraries (gloom Deng::libappfw Deng::libdoomsday fmodex)
 
 if (APPLE)
-    set_target_properties (test_gloom PROPERTIES
-        OUTPUT_NAME test_gloom
+    set_target_properties (gloom PROPERTIES
+        OUTPUT_NAME gloom
         MACOSX_BUNDLE_INFO_PLIST ${DENG_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in
      )
-    deng_install_bundle_deps (test_gloom
-        Deng::libcore Deng::libgui Deng::libappfw Deng::libshell
+    deng_install_bundle_deps (gloom
+        Deng::libcore Deng::libgui Deng::libappfw Deng::libshell Deng::libdoomsday
     )
-    deng_install_deployqt (test_gloom)
+    deng_install_deployqt (gloom)
 endif ()
