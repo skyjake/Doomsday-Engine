@@ -17,10 +17,31 @@
  */
 
 #include "gloom/world/mapimport.h"
+#include <de/ByteOrder>
 
 #include <QDebug>
 
+using namespace de;
+
 namespace gloom {
+
+static inline int16_t le16(int16_t leValue)
+{
+#ifdef __BIG_ENDIAN__
+    return int16_t(swap16(leValue));
+#else
+    return leValue;
+#endif
+}
+
+static inline uint16_t le16u(int16_t leValue)
+{
+#ifdef __BIG_ENDIAN__
+    return swap16(uint16_t(leValue));
+#else
+    return uint16_t(leValue);
+#endif
+}
 
 #if !defined (_MSC_VER)
 #  define PACKED_STRUCT __attribute__((packed))
@@ -56,7 +77,7 @@ DENG2_PIMPL_NOREF(MapImport)
         dint16 endVertex;
         dint16 flags;
         dint16 special;
-        dint16 sector;
+        dint16 tag;
         dint16 frontSidedef;
         dint16 backSidedef;
     };
@@ -121,6 +142,9 @@ DENG2_PIMPL_NOREF(MapImport)
     {
         map.clear();
 
+        // Conversion from map units to meters.
+        const double MapUnit = 1.74 / 41.0; // Based on Doom Guy vs. average male eye height.
+
         const auto headerPos = lumps.find(mapId);
 
         const DataArray<DoomVertex>  vertices(lumps.read(headerPos, 4));
@@ -128,10 +152,108 @@ DENG2_PIMPL_NOREF(MapImport)
         const DataArray<DoomSidedef> sidedefs(lumps.read(headerPos, 3));
         const DataArray<DoomSector>  sectors (lumps.read(headerPos, 8));
 
-        qDebug("%i vertices", vertices.size());
+        /*qDebug("%i vertices", vertices.size());
         for (int i = 0; i < vertices.size(); ++i)
         {
             qDebug("%i: x=%i, y=%i", i, vertices[i].x, vertices[i].y);
+        }*/
+
+        QVector<ID> mappedVertex(vertices.size());
+
+        const uint16_t NoSector = 0xffff;
+
+        struct MappedSector {
+            ID sector = 0;
+            ID floor = 0;
+            ID liquid = 0;
+            ID ceiling = 0;
+            QSet<ID> points;
+        };
+        QVector<MappedSector> mappedSectors(sectors.size());
+
+        QVector<ID> mappedLines(linedefs.size());
+
+        // Create planes for all sectors: each gets a separate floor and ceiling.
+        for (int i = 0; i < sectors.size(); ++i)
+        {
+            const auto &sec = sectors[i];
+
+            mappedSectors[i].floor = map.append(map.planes(),
+                                                  Plane{Vec3d(0, le16(sec.floorHeight) * MapUnit, 0),
+                                                        Vec3f(0, 1, 0),
+                                                        {"world.stone", "world.stone"}});
+            mappedSectors[i].ceiling = map.append(map.planes(),
+                                                  Plane{Vec3d(0, le16(sec.ceilingHeight) * MapUnit, 0),
+                                                        Vec3f(0, -1, 0),
+                                                        {"world.stone", "world.stone"}});
+
+            Sector sector;
+            Volume volume{{mappedSectors[i].floor, mappedSectors[i].ceiling}};
+
+            ID vol = map.append(map.volumes(), volume);
+            sector.volumes << vol;
+
+            mappedSectors[i].sector = map.append(map.sectors(), sector);
+        }
+
+        // Create lines with one or two sides.
+        for (int i = 0; i < linedefs.size(); ++i)
+        {
+            const auto &   ldef = linedefs[i];
+            const uint16_t idx[2]{le16u(ldef.startVertex), le16u(ldef.endVertex)};
+
+            Line line;
+
+            for (int p = 0; p < 2; ++p)
+            {
+                if (!mappedVertex[idx[p]])
+                {
+                    mappedVertex[idx[p]] = map.append(
+                        map.points(),
+                        Point{Vec2d(le16(vertices[idx[p]].x), -le16(vertices[idx[p]].y)) * MapUnit});
+                }
+                line.points[p] = mappedVertex[idx[p]];
+            }
+
+            const uint16_t sides[2]{le16u(ldef.frontSidedef), le16u(ldef.backSidedef)};
+            uint16_t sectorIdx[2]{NoSector, NoSector};
+
+            for (int s = 0; s < 2; ++s)
+            {
+                const uint16_t sec = (sides[s] != NoSector? le16u(sidedefs[sides[s]].sector) : NoSector);
+//            const uint16_t backSec  = (sides[1] != NoSector? le16u(sidedefs[sides[1]].sector) : NoSector);
+                sectorIdx[s] = sec;
+                line.surfaces[s].sector = (sec != NoSector? mappedSectors[sec].sector : 0);
+//            line.surfaces[Line::Back ].sector = (backSec  != NoSector? mappedSectors[backSec ].sector : 0);
+            }
+
+            const ID lineId = map.append(map.lines(), line);
+            mappedLines[i] = lineId;
+
+            for (int s = 0; s < 2; ++s)
+            {
+                if (line.surfaces[s].sector)
+                {
+                    auto &sec = map.sector(line.surfaces[s].sector);
+                    sec.walls << lineId;
+
+                    auto &sPoints = mappedSectors[sectorIdx[s]].points;
+                    sPoints.insert(line.points[0]);
+                    sPoints.insert(line.points[1]);
+                }
+            }
+        }
+
+        for (int i = 0; i < mappedSectors.size(); ++i)
+        {
+            const auto &ms = mappedSectors[i];
+            foreach (const ID pid, ms.points)
+            {
+                map.sector(ms.sector).points << pid;
+            }
+
+            // The points must be polygonized (traverse edges clockwise).
+
         }
 
         return true;

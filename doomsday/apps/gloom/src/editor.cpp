@@ -1037,7 +1037,17 @@ DENG2_PIMPL(Editor)
                     catalog.setBundles({bundle});
 
                     MapImport importer(catalog);
-                    importer.importMap(maps.front());
+                    const String mapId = maps.front();
+                    if (importer.importMap(mapId))
+                    {
+                        // Update the editor's map.
+                        map = importer.map();
+                        undoStack.clear();
+                        isModified = false;
+                        filePath.clear();
+                        self().setWindowTitle(mapId);
+                        self().update();
+                    }
                 }
             }
             //newFile();
