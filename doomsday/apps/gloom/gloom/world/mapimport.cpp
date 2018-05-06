@@ -130,6 +130,13 @@ static bool intersectsAnyLine(const geo::Line2d &line, const QVector<Contour> &c
     return false;
 }
 
+static String fixedString(const char *name, dsize maxLen = 8)
+{
+    dsize len = 0;
+    while (len < maxLen && name[len]) len++;
+    return String(name, len);
+}
+
 DENG2_PIMPL_NOREF(MapImport)
 {
     const res::LumpCatalog &lumps;
@@ -219,6 +226,11 @@ DENG2_PIMPL_NOREF(MapImport)
     Impl(const res::LumpCatalog &lc) : lumps(lc)
     {}
 
+    bool isSky(const char *texture) const
+    {
+        return fixedString(texture).startsWith("F_SKY");
+    }
+
     bool import(const String &mapId)
     {
         map.clear();
@@ -260,14 +272,26 @@ DENG2_PIMPL_NOREF(MapImport)
         {
             const auto &sec = sectors[i];
 
+            // Plane materials.
+            String floorTexture   = "world.dirt";
+            String ceilingTexture = "world.stone";
+            if (isSky(sec.floorTexture))
+            {
+                floorTexture = "";
+            }
+            if (isSky(sec.ceilingTexture))
+            {
+                ceilingTexture = "";
+            }
+
             mappedSectors[i].floor = map.append(map.planes(),
                                                   Plane{Vec3d(0, le16(sec.floorHeight) * MapUnit, 0),
                                                         Vec3f(0, 1, 0),
-                                                        {"world.dirt", ""}});
+                                                        {floorTexture, ""}});
             mappedSectors[i].ceiling = map.append(map.planes(),
                                                   Plane{Vec3d(0, le16(sec.ceilingHeight) * MapUnit, 0),
                                                         Vec3f(0, -1, 0),
-                                                        {"world.stone", ""}});
+                                                        {ceilingTexture, ""}});
 
             Sector sector;
             Volume volume{{mappedSectors[i].floor, mappedSectors[i].ceiling}};
@@ -318,6 +342,12 @@ DENG2_PIMPL_NOREF(MapImport)
                 {
                     line.surfaces[s].material[Line::Top] =
                             line.surfaces[s].material[Line::Bottom] = "world.stone";
+
+                    if (isSky(sectors[sectorIdx[s    ]].ceilingTexture) &&
+                        isSky(sectors[sectorIdx[s ^ 1]].ceilingTexture))
+                    {
+                        line.surfaces[s].material[Line::Top].clear();
+                    }
                 }
             }
 
