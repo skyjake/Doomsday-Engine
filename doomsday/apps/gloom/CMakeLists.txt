@@ -104,6 +104,9 @@ set (SOURCES
     src/main.cpp
     src/mainwindow.cpp
     src/mainwindow.h
+    # Polygon clipper
+    #${DENG_EXTERNAL_SOURCE_DIR}/gpc/gpc.c
+    #${DENG_EXTERNAL_SOURCE_DIR}/gpc/gpc.h
 )
 
 # Deploy the FMOD library.
@@ -114,7 +117,7 @@ endif ()
 
 deng_add_application (gloom ${SOURCES} ${HEADERS})
 
-target_include_directories (gloom PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories (gloom PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${DENG_EXTERNAL_SOURCE_DIR}/gpc)
 target_link_libraries (gloom Deng::libappfw Deng::libdoomsday fmodex)
 
 if (APPLE)

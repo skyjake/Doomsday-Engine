@@ -87,11 +87,11 @@ void Map::removeInvalid()
         {
             auto &line = iter.next().value();
             // Invalid sector references.
-            for (auto secId : line.sectors())
+            for (auto &surface : line.surfaces)
             {
-                if (!d->sectors.contains(secId))
+                if (!d->sectors.contains(surface.sector))
                 {
-                    secId = 0;
+                    surface.sector = 0;
                 }
             }
             // References to invalid points.
@@ -107,8 +107,10 @@ void Map::removeInvalid()
                 continue;
             }
             // Merge lines that share endpoints.
-            for (ID id : d->lines.keys())
+            for (auto lineIter = d->lines.begin(), lineEnd = d->lines.end(); lineIter != lineEnd;
+                 ++lineIter)
             {
+                const ID id = lineIter.key();
                 Line &other = Map::line(id);
                 if (line.isOneSided() && other.isOneSided() && other.points[1] == line.points[0] &&
                     other.points[0] == line.points[1])
@@ -137,7 +139,7 @@ void Map::removeInvalid()
             for (QMutableListIterator<ID> i(sector.points); i.hasNext(); )
             {
                 i.next();
-                if (!d->points.contains(i.value()))
+                if (i.value() && !d->points.contains(i.value())) // zero is a separator
                 {
                     i.remove();
                 }
@@ -389,21 +391,33 @@ geo::Line2d Map::geoLine(Edge ref) const
     return geo::Line2d{point(line.startPoint(ref.side)).coord, point(line.endPoint(ref.side)).coord};
 }
 
-geo::Polygon Map::sectorPolygon(ID sectorId) const
+Polygons Map::sectorPolygons(ID sectorId) const
 {
-    return sectorPolygon(sector(sectorId));
+    return sectorPolygons(sector(sectorId));
 }
 
-geo::Polygon Map::sectorPolygon(const Sector &sector) const
+Polygons Map::sectorPolygons(const Sector &sector) const
 {
-    // TODO: Store geo::Polygon in Sector; no need to rebuild it all the time.
+    Polygons polys;
     geo::Polygon poly;
     for (ID pid : sector.points)
     {
-        poly.points << geo::Polygon::Point{point(pid).coord, pid};
+        if (pid)
+        {
+            poly.points << geo::Polygon::Point{point(pid).coord, pid};
+        }
+        else
+        {
+            polys << poly;
+            poly.clear();
+        }
     }
-    poly.updateBounds();
-    return poly;
+    if (poly.size())
+    {
+        polys << poly;
+    }
+    for (auto &p : polys) p.updateBounds();
+    return polys;
 }
 
 ID Map::floorPlaneId(ID sectorId) const
@@ -429,12 +443,14 @@ const Plane &Map::ceilingPlane(ID sectorId) const
 Map::WorldVerts Map::worldPlaneVerts(const Sector &sector, const Plane &plane) const
 {
     WorldVerts verts;
-    const auto poly = sectorPolygon(sector);
-    for (const auto &pp : poly.points)
+    foreach (const auto &poly, sectorPolygons(sector))
     {
-        if (!verts.contains(pp.id))
+        for (const auto &pp : poly.points)
         {
-            verts.insert(pp.id, plane.projectPoint(d->points[pp.id]));
+            if (!verts.contains(pp.id))
+            {
+                verts.insert(pp.id, plane.projectPoint(d->points[pp.id]));
+            }
         }
     }
     return verts;
@@ -622,22 +638,26 @@ ID Map::splitLine(ID lineId, const Point &splitPoint)
 
 std::pair<ID, ID> Map::findSectorAndVolumeAt(const de::Vec3d &pos) const
 {
-    for (ID sectorId : d->sectors.keys())
+    for (auto i = d->sectors.constBegin(), end = d->sectors.constEnd(); i != end; ++i)
     {
-        if (sectorPolygon(sectorId).isPointInside(pos.xz()))
+        const ID sectorId = i.key();
+        foreach (const auto &poly, sectorPolygons(sectorId))
         {
-            // Which volume?
-            const Sector &sector = d->sectors[sectorId];
-            for (ID volumeId : sector.volumes)
+            if (poly.isPointInside(pos.xz()))
             {
-                const Plane &floor   = d->planes[d->volumes[volumeId].planes[0]];
-                const Plane &ceiling = d->planes[d->volumes[volumeId].planes[1]];
-                if (floor.isPointAbove(pos) && ceiling.isPointAbove(pos))
+                // Which volume?
+                const Sector &sector = i.value();
+                for (ID volumeId : sector.volumes)
                 {
-                    return std::make_pair(sectorId, volumeId);
+                    const Plane &floor   = d->planes[d->volumes[volumeId].planes[0]];
+                    const Plane &ceiling = d->planes[d->volumes[volumeId].planes[1]];
+                    if (floor.isPointAbove(pos) && ceiling.isPointAbove(pos))
+                    {
+                        return std::make_pair(sectorId, volumeId);
+                    }
                 }
+                return std::make_pair(sectorId, sector.volumes[0]);
             }
-            return std::make_pair(sectorId, sector.volumes[0]);
         }
     }
     return std::make_pair(ID{0}, ID{0});

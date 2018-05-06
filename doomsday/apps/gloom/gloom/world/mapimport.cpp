@@ -49,6 +49,87 @@ static inline uint16_t le16u(int16_t leValue)
 #  define PACKED_STRUCT
 #endif
 
+struct Contour
+{
+    QVector<ID> lines;
+    bool hole = false;
+    geo::Polygon polygon;
+    int parent = -1;
+
+    Contour(ID line = 0)
+    {
+        if (line) lines << line;
+    }
+
+    bool isClosed(const Map &map, ID currentSector) const
+    {
+        if (lines.size() < 2) return false;
+
+        const auto &first = map.line(lines.front());
+        const auto &last  = map.line(lines.back());
+
+        return last.endPointForSector(currentSector) ==
+               first.startPointForSector(currentSector);
+    }
+
+    bool tryExtend(ID newLine, const Map &map, ID currentSector)
+    {
+        if (isClosed(map, currentSector)) return false;
+
+        // Try the end.
+        if (map.line(lines.back()).endPointForSector(currentSector) ==
+            map.line(newLine).startPointForSector(currentSector))
+        {
+            lines << newLine;
+            return true;
+        }
+        // What about the beginning?
+        if (map.line(lines.front()).startPointForSector(currentSector) ==
+            map.line(newLine).endPointForSector(currentSector))
+        {
+            lines.prepend(newLine);
+            return true;
+        }
+        return false;
+    }
+
+    void makePolygon(const Map &map, ID currentSector)
+    {
+        polygon.clear();
+        foreach (ID id, lines)
+        {
+            const auto &line    = map.line(id);
+            const ID    pointId = line.startPointForSector(currentSector);
+            polygon.points << geo::Polygon::Point{map.point(pointId).coord, pointId};
+        }
+        polygon.updateBounds();
+    }
+
+    bool isInside(const Contour &other) const
+    {
+        return polygon.isInsideOf(other.polygon);
+    }
+};
+
+static bool intersectsAnyLine(const geo::Line2d &line, const QVector<Contour> &contours)
+{
+    for (const Contour &cont : contours)
+    {
+        for (int i = 0; i < cont.polygon.size(); ++i)
+        {
+            double t;
+            if (line.intersect(cont.polygon.lineAt(i), t))
+            {
+                if (t > 0.0 && t < 1.0)
+                {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
 DENG2_PIMPL_NOREF(MapImport)
 {
     const res::LumpCatalog &lumps;
@@ -163,11 +244,12 @@ DENG2_PIMPL_NOREF(MapImport)
         const uint16_t NoSector = 0xffff;
 
         struct MappedSector {
-            ID sector = 0;
-            ID floor = 0;
-            ID liquid = 0;
-            ID ceiling = 0;
+            ID       sector  = 0;
+            ID       floor   = 0;
+            ID       liquid  = 0;
+            ID       ceiling = 0;
             QSet<ID> points;
+            QVector<ID> boundaryLines;
         };
         QVector<MappedSector> mappedSectors(sectors.size());
 
@@ -181,11 +263,11 @@ DENG2_PIMPL_NOREF(MapImport)
             mappedSectors[i].floor = map.append(map.planes(),
                                                   Plane{Vec3d(0, le16(sec.floorHeight) * MapUnit, 0),
                                                         Vec3f(0, 1, 0),
-                                                        {"world.stone", "world.stone"}});
+                                                        {"world.dirt", ""}});
             mappedSectors[i].ceiling = map.append(map.planes(),
                                                   Plane{Vec3d(0, le16(sec.ceilingHeight) * MapUnit, 0),
                                                         Vec3f(0, -1, 0),
-                                                        {"world.stone", "world.stone"}});
+                                                        {"world.stone", ""}});
 
             Sector sector;
             Volume volume{{mappedSectors[i].floor, mappedSectors[i].ceiling}};
@@ -216,15 +298,27 @@ DENG2_PIMPL_NOREF(MapImport)
             }
 
             const uint16_t sides[2]{le16u(ldef.frontSidedef), le16u(ldef.backSidedef)};
-            uint16_t sectorIdx[2]{NoSector, NoSector};
+            uint16_t       sectorIdx[2]{NoSector, NoSector};
 
             for (int s = 0; s < 2; ++s)
             {
                 const uint16_t sec = (sides[s] != NoSector? le16u(sidedefs[sides[s]].sector) : NoSector);
-//            const uint16_t backSec  = (sides[1] != NoSector? le16u(sidedefs[sides[1]].sector) : NoSector);
-                sectorIdx[s] = sec;
                 line.surfaces[s].sector = (sec != NoSector? mappedSectors[sec].sector : 0);
-//            line.surfaces[Line::Back ].sector = (backSec  != NoSector? mappedSectors[backSec ].sector : 0);
+                sectorIdx[s] = sec;
+            }
+
+            if (line.isOneSided())
+            {
+                line.surfaces[line.surfaces[Line::Front].sector? 0 : 1].material[Line::Middle]
+                        = "world.stone";
+            }
+            else
+            {
+                for (int s = 0; s < 2; ++s)
+                {
+                    line.surfaces[s].material[Line::Top] =
+                            line.surfaces[s].material[Line::Bottom] = "world.stone";
+                }
             }
 
             const ID lineId = map.append(map.lines(), line);
@@ -237,9 +331,15 @@ DENG2_PIMPL_NOREF(MapImport)
                     auto &sec = map.sector(line.surfaces[s].sector);
                     sec.walls << lineId;
 
-                    auto &sPoints = mappedSectors[sectorIdx[s]].points;
-                    sPoints.insert(line.points[0]);
-                    sPoints.insert(line.points[1]);
+                    // An internal line won't influence the plane points.
+                    if (line.surfaces[s].sector != line.surfaces[s ^ 1].sector)
+                    {
+                        auto &sPoints = mappedSectors[sectorIdx[s]].points;
+                        sPoints.insert(line.points[0]);
+                        sPoints.insert(line.points[1]);
+
+                        mappedSectors[sectorIdx[s]].boundaryLines << lineId;
+                    }
                 }
             }
         }
@@ -247,13 +347,199 @@ DENG2_PIMPL_NOREF(MapImport)
         for (int i = 0; i < mappedSectors.size(); ++i)
         {
             const auto &ms = mappedSectors[i];
-            foreach (const ID pid, ms.points)
+
+            const ID currentSector = ms.sector;
+
+            qDebug("Sector %i: boundary lines %i, points %i",
+                   i,
+                   ms.boundaryLines.size(),
+                   ms.points.size());
+
+            // TODO: Add a Contours class that manages multilpe Countour objects.
+
+            QVector<Contour> contours;
+            QVector<ID>      remainingLines = ms.boundaryLines;
+
+            // Initialize with one contour.
+            contours << Contour{remainingLines.takeLast()};
+
+            // Each line belongs to exactly one contour.
+            while (!remainingLines.isEmpty())
             {
-                map.sector(ms.sector).points << pid;
+                const int oldSize = remainingLines.size();
+
+                // Let's see if any of the lines fits on the existing contours.
+                QMutableVectorIterator<ID> iter(remainingLines);
+                while (iter.hasNext())
+                {
+                    iter.next();
+                    for (Contour &cont : contours)
+                    {
+                        if (cont.tryExtend(iter.value(), map, currentSector))
+                        {
+                            iter.remove();
+                            break;
+                        }
+                    }
+                }
+
+                if (oldSize == remainingLines.size())
+                {
+                    // None of the existing contours could be extended.
+                    contours << Contour{remainingLines.takeLast()};
+                }
             }
 
-            // The points must be polygonized (traverse edges clockwise).
+            for (int i = 0; i < contours.size(); ++i)
+            {
+                contours[i].makePolygon(map, currentSector);
+            }
 
+            // Determine the containment hierarchy.
+            for (int i = 0; i < contours.size(); ++i)
+            {
+                int parent = -1;
+                for (int j = 0; j < contours.size(); ++j)
+                {
+                    if (i == j) continue;
+                    if (contours[i].isInside(contours[j]))
+                    {
+                        if (parent == -1)
+                        {
+                            parent = j;
+                        }
+                        else
+                        {
+                            // This new parent may be a better fit.
+                            if (contours[j].isInside(contours[parent]))
+                            {
+                                parent = j;
+                            }
+                        }
+                    }
+                }
+                contours[i].parent = parent;
+            }
+
+            for (int i = 0; i < contours.size(); ++i)
+            {
+                qDebug() << "- contour" << i << ":" << contours[i].lines
+                         << contours[i].isClosed(map, currentSector)
+                         << "parent:" << contours[i].parent;
+            }
+
+            // Determines how deeply a contour is nested.
+            auto contourDepth = [&contours](const Contour &cont) -> int {
+                int depth = 0;
+                for (const Contour *i = &cont; i->parent != -1; depth++)
+                {
+                    i = &contours[i->parent];
+                }
+                return depth;
+            };
+
+            // Promote nested outer contours to the top level.
+            for (Contour &cont : contours)
+            {
+                const int depth = contourDepth(cont);
+                if (depth % 2 == 0)
+                {
+                    cont.parent = -1;
+                }
+            }
+
+            // Join outer and inner contours.
+            for (int outerIndex = 0; outerIndex < contours.size(); ++outerIndex)
+            {
+                Contour &outer = contours[outerIndex];
+
+                const QVector<Contour> holes = filter(
+                    contours, [outerIndex](const Contour &c) { return c.parent == outerIndex; });
+
+                for (int innerIndex = 0; innerIndex < contours.size(); ++innerIndex)
+                {
+                    Contour &inner = contours[innerIndex];
+                    if (inner.parent == outerIndex && inner.polygon.size() > 0)
+                    {
+                        // Choose a pair of vertices: one from the outer contour and one from
+                        // the inner. The line connecting these must not cross any lines in
+                        // the outer contour or any of its inner contours.
+
+                        struct ConnectorCandidate {
+                            int inner, outer;
+                            double len;
+                        };
+                        QVector<ConnectorCandidate> candidates;
+
+                        for (int k = 0; k < inner.polygon.size(); ++k)
+                        {
+                            for (int j = 0; j < outer.polygon.size(); ++j)
+                            {
+                                const geo::Line2d connector{outer.polygon.at(j),
+                                                            inner.polygon.at(k)};
+
+                                if (!intersectsAnyLine(connector, holes + QVector<Contour>({outer})))
+                                {
+                                    // This connector could work.
+                                    candidates << ConnectorCandidate{k, j, connector.length()};
+                                }
+                            }
+                        }
+
+                        std::sort(candidates.begin(),
+                                  candidates.end(),
+                                  [](const ConnectorCandidate &a, const ConnectorCandidate &b) {
+                                      return a.len < b.len;
+                                  });
+
+                        if (candidates.size() > 0)
+                        {
+                            const auto connector = candidates.front();
+
+                            geo::Polygon::Points joined =
+                                    outer.polygon.points.mid(0, connector.outer + 1);
+                            for (int i = 0; i < inner.polygon.size() + 1; ++i)
+                            {
+                                joined.push_back(inner.polygon.pointAt(connector.inner + i));
+                            }
+                            joined += outer.polygon.points.mid(connector.outer);
+
+                            outer.polygon.points = joined;
+                            inner.polygon.clear();
+                        }
+                        else
+                        {
+                            // Failure!
+                            qDebug("Failed to join inner contour %i to its parent %i",
+                                   innerIndex, outerIndex);
+                        }
+                    }
+                }
+            }
+
+            for (int i = 0; i < contours.size(); ++i)
+            {
+                qDebug() << "- contour" << i << ":" << contours[i].polygon.size();
+                foreach (const auto &pp, contours[i].polygon.points)
+                    qDebug("    %f, %f : %i", pp.pos.x, pp.pos.y, pp.id);
+            }
+
+            // The remaining contours are now disjoint and can be used for plane triangulation.
+
+            IDList &points = map.sector(currentSector).points;
+
+            foreach (const auto &cont, contours)
+            {
+                if (cont.polygon.size())
+                {
+                    if (!points.isEmpty()) points << 0; // Separator.
+
+                    for (const auto &pp : cont.polygon.points)
+                    {
+                        points << pp.id;
+                    }
+                }
+            }
         }
 
         return true;

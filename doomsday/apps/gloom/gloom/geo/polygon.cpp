@@ -39,8 +39,18 @@ void Polygon::updateBounds()
     bounds = Rectangled(at(0), at(0));
     for (int i = 1; i < size(); ++i)
     {
+        // Polygon points must be unique.
+        DENG2_ASSERT(points[i].id  != points[i - 1].id);
+        DENG2_ASSERT(points[i].pos != points[i - 1].pos);
+
         bounds.include(points[i].pos);
     }
+}
+
+void Polygon::clear()
+{
+    bounds = Rectangled();
+    points.clear();
 }
 
 Vec2d Polygon::center() const
@@ -57,21 +67,41 @@ Vec2d Polygon::center() const
     return c;
 }
 
+Vec2d Polygon::expander(int pos) const
+{
+    return (-lineAt(pos - 1).normal() - lineAt(pos).normal()).normalize();
+}
+
 QHash<ID, Vec2d> Polygon::expanders() const
 {
     QHash<ID, Vec2d> exp;
     for (int i = 0; i < points.size(); ++i)
     {
-        const Line a(at(i - 1), at(i));
-        const Line b(at(i),     at(i + 1));
-        exp.insert(points[i].id, (-a.normal() - b.normal()).normalize());
+        exp.insert(points[i].id, expander(i));
     }
     return exp;
 }
 
+String Polygon::asText() const
+{
+    String str;
+    QTextStream os(&str);
+    os << "Polygon: [" << points.size() << "]";
+    for (int i = 0; i < points.size(); ++i)
+    {
+        os << String::format(" %x", points[i].id);
+    }
+    return str;
+}
+
 const Vec2d &Polygon::at(int pos) const
 {
-    return points[mod(pos, size())].pos;
+    return pointAt(pos).pos;
+}
+
+const Polygon::Point &Polygon::pointAt(int pos) const
+{
+    return points[mod(pos, size())];
 }
 
 const Polygon::Line Polygon::lineAt(int pos) const
@@ -87,7 +117,7 @@ bool Polygon::isConvex() const
     }
     for (int i = 0; i < points.size(); ++i)
     {
-        if (lineAt(i).normal().dot(lineAt(i + 1).span()) < 0)
+        if (lineAt(i).normal().dot(lineAt(i + 1).dir()) < 0)
         {
             return false;
         }
@@ -98,10 +128,10 @@ bool Polygon::isConvex() const
 QVector<int> Polygon::concavePoints() const
 {
     QVector<int> concave;
-    if (points.size() <= 3) return concave;
+    if (points.size() <= 3) return concave; // must be convex
     for (int i = 0; i < points.size(); ++i)
     {
-        if (lineAt(i - 1).normal().dot(lineAt(i).span()) < 0)
+        if (lineAt(i - 1).normal().dot(lineAt(i).dir()) < 0)
         {
             concave << i;
         }
@@ -109,16 +139,70 @@ QVector<int> Polygon::concavePoints() const
     return concave;
 }
 
-bool Polygon::isLineInside(int start, int end) const
+bool Polygon::isUnique(int pos) const
 {
-    const auto &a = points[start].pos;
-    const auto &b = points[end  ].pos;
-    const Line line(a, b);
+    const ID pointId = pointAt(pos).id;
+    int count = 0;
+    for (int i = 0; i < points.size(); ++i)
+    {
+        if (points[i].id == pointId) ++count;
+    }
+    return count == 1;
+}
 
-    // Does the line a--b intersect the polygon?
+bool Polygon::isEdgeLine(int start, int end) const
+{
+    if (points[start].id == points[end].id) return true; // Edge point, to be accurate.
+
     for (int i = 0; i < size(); ++i)
     {
         const int j = mod(i + 1, size());
+        if ((points[i].id == points[start].id && points[j].id == points[end].id) ||
+            (points[i].id == points[end].id   && points[j].id == points[start].id))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Polygon::isLineInside(int start, int end) const
+{
+    const auto   exp1  = expander(start); // points outward
+    const auto   exp2  = expander(end);
+    const double THICK = 0.001;
+    const auto   a     = points[start].pos - exp1 * THICK;
+    const auto   b     = points[end].pos   - exp2 * THICK;
+
+    Line check(a, b);
+
+    // Both endpoints must be inside.
+    if (!isPointInside(check.start))
+    {
+        qDebug("start %i outside", start);
+        return false;
+    }
+    if (!isPointInside(check.end))
+    {
+        qDebug("end %i outside", end);
+        return false;
+    }
+
+    // It can't intersect any of the lines.
+    const int isc = intersect(check);
+    if (isc) qDebug("%i-%i isc=%i", start, end, isc);
+    return isc == 0;
+
+/*    // Does the line a--b intersect the polygon?
+    for (int i = 0; i < size(); ++i)
+    {
+        const int j = mod(i + 1, size());
+        if ((points[i].id == points[start].id && points[j].id == points[end].id) ||
+            (points[i].id == points[end].id   && points[j].id == points[start].id))
+        {
+            // This is one of the polygon lines!
+            return false;
+        }
         if (i == start || i == end || j == start || j == end)
         {
             // Ignore other lines connecting to the specified points.
@@ -127,16 +211,31 @@ bool Polygon::isLineInside(int start, int end) const
         double t;
         if (line.intersect(lineAt(i), t))
         {
-            if (t >= 0.0 && t <= 1.0) return false;
+            if (t > 0.0 && t < 1.0) return false;
         }
     }
 
     // Is the mid point inside the polygon?
-    return isPointInside((a + b) / 2);
+    return isPointInside((a + b) / 2);*/
+}
+
+bool Polygon::isInsideOf(const Polygon &largerPoly) const
+{
+    if (!largerPoly.bounds.overlaps(bounds)) return false;
+
+    // Check point-by-point.
+    for (const auto &pp : points)
+    {
+        if (!largerPoly.isPointInside(pp.pos)) return false;
+    }
+
+    return true;
 }
 
 bool Polygon::isPointInside(const Vec2d &point) const
 {
+    if (points.size() < 3) return false;
+
     DENG2_ASSERT(!bounds.isNull());
     if (bounds.contains(point))
     {
@@ -156,6 +255,16 @@ int Polygon::intersect(const Line &line) const
         {
             if (t >= 0.0 && t < 1.0)
             {
+//                qDebug("  %f,%f -> %f,%f intersects %f,%f -> %f,%f",
+//                       lineAt(i).start.x,
+//                       lineAt(i).start.y,
+//                       lineAt(i).end.x,
+//                       lineAt(i).end.y,
+//                       line.start.x,
+//                       line.start.y,
+//                       line.end.x,
+//                       line.end.y);
+
                 count++;
             }
         }
@@ -165,21 +274,40 @@ int Polygon::intersect(const Line &line) const
 
 bool Polygon::split(int a, int b, Polygon halves[2]) const
 {
-    for (int pos = a; pos != b; pos = mod(pos + 1, size()))
+    int half = 0;
+    for (int i = 0; i < size(); ++i)
     {
-        halves[0].points << points[pos];
+        halves[half].points << points[i];
+        if (i == a || i == b)
+        {
+            half ^= 1;
+            halves[half].points << points[i];
+        }
     }
-    halves[0].points << points[b];
-
-    for (int pos = b; pos != a; pos = mod(pos + 1, size()))
-    {
-        halves[1].points << points[pos];
-    }
-    halves[1].points << points[a];
 
     for (int i = 0; i < 2; ++i)
     {
         halves[i].updateBounds();
+
+        const double EPSILON = 0.0001;
+
+        // None of the points can be exactly on the resulting edge lines.
+        // This would result in degenerate triangles.
+        for (int p = 0; p < halves[i].points.size(); ++p)
+        {
+            const Vec2d check = halves[i].points[p].pos;
+
+            for (int j = 0; j < halves[i].size(); ++j)
+            {
+                double t, dist = halves[i].lineAt(j).normalDistance(check, t);
+                if (dist < EPSILON && t > EPSILON && t < 1.0 - EPSILON)
+                {
+                    // Not acceptable; the point falls too close to another line
+                    // on the polygon.
+                    return false;
+                }
+            }
+        }
     }
 
     // Each half must at least be a triangle.
@@ -206,24 +334,66 @@ QList<Polygon> Polygon::splitConvexParts() const
         const auto insets = poly.concavePoints();
         if (insets.size() > 0)
         {
-            const int j = insets.first();
-            for (int k = mod(j + 2, poly.size()); k != j; k = mod(k + 1, poly.size()))
+            qDebug() << "Splitting concave" << poly.asText() << "this is part:" << i;
+            qDebug("- found %i concave inset points", insets.size());
+
+            for (int j : insets) qDebug("   %i : %x", j, poly.pointAt(j).id);
+
+            bool wasSplit = false;
+            for (const int j : insets)
             {
-                if (poly.isLineInside(j, k))
+                DENG2_ASSERT(poly.size() >= 4);
+
+                qDebug("   trying with %i", j);
+                for (int k = mod(j + 2, poly.size()); k != j; k = mod(k + 1, poly.size()))
                 {
-                    Polygon halves[2];
-                    if (poly.split(j, k, halves))
+                    if (!poly.isEdgeLine(j, k) && poly.isLineInside(j, k))
                     {
-                        parts.removeAt(i);
-                        parts.append(halves[0]);
-                        parts.append(halves[1]);
-                        --i;
-                        break;
+                        Polygon halves[2];
+                        if (poly.split(j, k, halves))
+                        {
+                            qDebug("     SUCCESS: split with line %x...%x : %i/%i (edge:%s, inside:%s)",
+                                   poly.pointAt(j).id,
+                                   poly.pointAt(k).id,
+                                   halves[0].size(),
+                                   halves[1].size(),
+                                   poly.isEdgeLine(j, k)?"true":"false",
+                                   poly.isLineInside(j, k)?"true":"false");
+
+                            parts.removeAt(i);
+                            parts.append(halves[0]);
+                            parts.append(halves[1]);
+                            qDebug() << "       Half 1:" << halves[0].asText();
+                            qDebug() << "       Half 2:" << halves[1].asText();
+                            --i;
+                            wasSplit = true;
+                            break;
+                        }
+                        else
+                        {
+                            qDebug("     line %x...%x does not split to triangles", poly.pointAt(j).id, poly.pointAt(k).id);
+                        }
+                    }
+                    else
+                    {
+                        qDebug("     line %x...%x not fully inside (u:%i,%i)",
+                               poly.pointAt(j).id, poly.pointAt(k).id,
+                               poly.isUnique(j), poly.isUnique(k));
                     }
                 }
+                if (wasSplit) break;
             }
+            if (!wasSplit)
+            {
+                qDebug("have %i insets, couldn't find a split", insets.size());
+            }
+            DENG2_ASSERT(wasSplit);
         }
     }
+
+    qDebug("Polygon with %i points split to %i convex parts",
+           size(),
+           parts.size());
 
     DENG2_ASSERT(areAllConvex(parts));
     return parts;

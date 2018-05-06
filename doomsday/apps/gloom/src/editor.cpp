@@ -550,7 +550,7 @@ DENG2_PIMPL(Editor)
             if (selection.size())
             {
                 pushUndo();
-                for (auto id : selection)
+                foreach (auto id, selection)
                 {
                     map.points().remove(id);
                 }
@@ -651,7 +651,7 @@ DENG2_PIMPL(Editor)
                     Sector newSector{secPoints, secWalls, {vol}};
                     ID secId = map.append(map.sectors(), newSector);
 
-                    for (Edge edge : secEdges)
+                    foreach (const Edge &edge, secEdges)
                     {
                         map.line(edge.line).surfaces[edge.side].sector = secId;
                     }
@@ -728,7 +728,7 @@ DENG2_PIMPL(Editor)
         }
     }
 
-    void drawMetaLabel(QPainter &ptr, QPointF pos, QString text, bool lightStyle = true)
+    void drawMetaLabel(QPainter &ptr, QPointF pos, const QString &text, bool lightStyle = true)
     {
         ptr.save();
 
@@ -798,9 +798,12 @@ DENG2_PIMPL(Editor)
     {
         for (ID id : map.sectors().keys())
         {
-            if (map.sectorPolygon(id).isPointInside(pos.coord))
+            foreach (const auto &poly, map.sectorPolygons(id))
             {
-                return id;
+                if (poly.isPointInside(pos.coord))
+                {
+                    return id;
+                }
             }
         }
         return 0;
@@ -811,19 +814,22 @@ DENG2_PIMPL(Editor)
         for (ID secId : map.sectors().keys())
         {
             const Sector &sector = map.sector(secId);
-            const auto secPoly = map.sectorPolygon(secId);
+            const auto secPolys = map.sectorPolygons(secId);
             for (ID volId : sector.volumes)
             {
                 for (ID plnId : map.volume(volId).planes)
                 {
-                    QPolygonF poly;
-                    for (auto pp : secPoly.points)
+                    foreach (const auto &secPoly, secPolys)
                     {
-                        poly << worldToView(Point{pp.pos}, &map.plane(plnId));
-                    }
-                    if (poly.containsPoint(pos, Qt::OddEvenFill))
-                    {
-                        return plnId;
+                        QPolygonF poly;
+                        for (auto pp : secPoly.points)
+                        {
+                            poly << worldToView(Point{pp.pos}, &map.plane(plnId));
+                        }
+                        if (poly.containsPoint(pos, Qt::OddEvenFill))
+                        {
+                            return plnId;
+                        }
                     }
                 }
             }
@@ -1134,7 +1140,7 @@ void Editor::paintEvent(QPaintEvent *)
 
     QRect        winRect = rect();
     QFontMetrics fontMetrics(font());
-    QFontMetrics metaMetrics(d->metaFont);
+//    QFontMetrics metaMetrics(d->metaFont);
 
     const Points &  mapPoints  = d->map.points();
     const Planes &  mapPlanes  = d->map.planes();
@@ -1182,13 +1188,16 @@ void Editor::paintEvent(QPaintEvent *)
             const ID    secId  = i.key();
             const auto &sector = i.value();
 
-            const auto geoPoly = d->map.sectorPolygon(secId);
+            const auto geoPolys = d->map.sectorPolygons(secId);
 
             // Determine corners.
+            foreach (const auto &geoPoly, geoPolys)
             {
                 QVector<QLineF> cornerLines;
                 const Plane &ceiling = d->map.ceilingPlane(secId);
                 const Plane &floor   = d->map.floorPlane(secId);
+//                const auto insets = geoPoly.concavePoints();
+//                ptr.setPen(Qt::blue);
                 for (int i = 0; i < geoPoly.size(); ++i)
                 {
                     // Check the bottom-most floor positions.
@@ -1207,6 +1216,13 @@ void Editor::paintEvent(QPaintEvent *)
                         }
                     }
 
+//                    if (insets.contains(i))
+//                    {
+//                        ptr.drawEllipse(d->worldToView(Point{geoPoly.at(i)}), 25, 25);
+//                    }
+//                    ptr.drawLine(QLineF(d->worldToView(Point{geoPoly.at(i)}),
+//                                        d->worldToView(Point{geoPoly.at(i + 1)})));
+
                     cornerLines << QLineF(d->worldToView(Point{geoPoly.at(i)}, &floor),
                                           d->worldToView(Point{geoPoly.at(i)}, &ceiling));
                 }
@@ -1223,46 +1239,52 @@ void Editor::paintEvent(QPaintEvent *)
                 ptr.setPen(Qt::NoPen);
             }
 
-            QPolygonF poly;
-            for (int vol = 0; vol < sector.volumes.size(); ++vol)
+            foreach (const auto &geoPoly, geoPolys)
             {
-                for (int planeIndex = 0; planeIndex < 2; ++planeIndex)
+                QPolygonF poly;
+                for (int vol = 0; vol < sector.volumes.size(); ++vol)
                 {
-                    if (vol < sector.volumes.size() - 1 && planeIndex > 0) continue;
-
-                    const ID     planeId = d->map.volume(sector.volumes.at(vol)).planes[planeIndex];
-                    const Plane &secPlane = mapPlanes[planeId];
-
-                    poly.clear();
-                    for (const auto &pp : geoPoly.points)
+                    for (int planeIndex = 0; planeIndex < 2; ++planeIndex)
                     {
-                        poly.append(d->worldToView(Point{pp.pos}, &secPlane));
+                        if (vol < sector.volumes.size() - 1 && planeIndex > 0)
+                        {
+                            continue;
+                        }
+
+                        const ID     planeId = d->map.volume(sector.volumes.at(vol)).planes[planeIndex];
+                        const Plane &secPlane = mapPlanes[planeId];
+
+                        poly.clear();
+                        for (const auto &pp : geoPoly.points)
+                        {
+                            poly.append(d->worldToView(Point{pp.pos}, &secPlane));
+                        }
+
+                        ptr.setBrush(d->hoverSector == secId ? panelBg : sectorColor);
+
+                        if (d->mode == EditPlanes)
+                        {
+                            if (d->selection.contains(planeId))
+                            {
+                                ptr.setBrush(selectColor);
+                            }
+                            else if (d->hoverPlane == planeId)
+                            {
+                                ptr.setBrush(panelBg);
+                            }
+                            else
+                            {
+                                ptr.setBrush(sectorColor);
+                            }
+                        }
+
+                        ptr.drawPolygon(poly);
                     }
-
-                    ptr.setBrush(d->hoverSector == secId ? panelBg : sectorColor);
-
-                    if (d->mode == EditPlanes)
-                    {
-                        if (d->selection.contains(planeId))
-                        {
-                            ptr.setBrush(selectColor);
-                        }
-                        else if (d->hoverPlane == planeId)
-                        {
-                            ptr.setBrush(panelBg);
-                        }
-                        else
-                        {
-                            ptr.setBrush(sectorColor);
-                        }
-                    }
-
-                    ptr.drawPolygon(poly);
                 }
-            }
-            if (d->selection.contains(secId))
-            {
-                d->drawMetaLabel(ptr, poly.boundingRect().center(), String::format("%X", secId));
+                if (d->selection.contains(secId))
+                {
+                    d->drawMetaLabel(ptr, poly.boundingRect().center(), String::format("%X", secId));
+                }
             }
         }
     }
@@ -1519,7 +1541,7 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
             d->actionPos = event->pos();
 
             const Vec2d worldDelta = Vec2d(delta.x(), delta.y()) / d->viewScale;
-            for (auto id : d->selection)
+            foreach (auto id, d->selection)
             {
                 if (d->mode == EditPoints && d->map.points().contains(id))
                 {
@@ -1562,7 +1584,7 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
             xf = Mat4f::translate(pivot) * Mat4f::scale(scaler) * Mat4f::translate(-pivot);
         }
 
-        for (auto id : d->selection)
+        foreach (auto id, d->selection)
         {
             if (d->map.points().contains(id))
             {

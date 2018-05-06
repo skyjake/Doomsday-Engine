@@ -48,17 +48,24 @@ struct Polygon
 
     int              size() const { return points.size(); }
     const Vec2d &    at(int pos) const;
+    const Point &    pointAt(int pos) const;
     const Line       lineAt(int pos) const;
     bool             isConvex() const;
     QList<Polygon>   splitConvexParts() const;
     QVector<int>     concavePoints() const;
+    bool             isUnique(int pos) const;
+    bool             isEdgeLine(int start, int end) const;
     bool             isPointInside(const Vec2d &point) const;
     bool             isLineInside(int start, int end) const;
+    bool             isInsideOf(const Polygon &largerPoly) const;
     int              intersect(const Line &line) const;
     bool             split(int a, int b, Polygon halves[2]) const;
     void             updateBounds();
+    void             clear();
     Vec2d            center() const;
+    Vec2d            expander(int pos) const;
     QHash<ID, Vec2d> expanders() const;
+    String           asText() const;
 };
 
 }} // namespace gloom::geo

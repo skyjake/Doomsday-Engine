@@ -59,6 +59,9 @@ struct Line
     bool isOneSided() const { return !surfaces[Front].sector || !surfaces[Back].sector; }
     bool isTwoSided() const { return surfaces[Front].sector && surfaces[Back].sector; }
     Side sectorSide(ID sector) const { return surfaces[Front].sector == sector? Front : Back; }
+
+    ID startPointForSector(ID sector) const { return startPoint(sectorSide(sector)); }
+    ID endPointForSector(ID sector) const { return endPoint(sectorSide(sector)); }
 };
 
 struct Plane
@@ -83,7 +86,7 @@ struct Volume
 
 struct Sector
 {
-    IDList points;  // polygon, clockwise winding
+    IDList points;  // polygon, clockwise winding (zero ID used to separate disjoint polygons)
     IDList walls;   // unordered
     IDList volumes; // must be ascending and share planes; bottom plane of first volume is the
                     // sector floor, top plane of last volume is the sector ceiling
@@ -109,6 +112,8 @@ typedef QHash<ID, Plane>  Planes;
 typedef QHash<ID, Sector> Sectors;
 typedef QHash<ID, Volume> Volumes;
 typedef QHash<ID, std::shared_ptr<Entity>> Entities;
+
+typedef QVector<geo::Polygon> Polygons;
 
 /**
  * Describes a map of polygon-based sectors.
@@ -170,8 +175,8 @@ public:
     std::pair<ID, ID> findSectorAndVolumeAt(const Vec3d &pos) const;
     geo::Line2d       geoLine(ID lineId) const;
     geo::Line2d       geoLine(Edge ef) const;
-    geo::Polygon      sectorPolygon(ID sectorId) const;
-    geo::Polygon      sectorPolygon(const Sector &sector) const;
+    Polygons          sectorPolygons(ID sectorId) const;
+    Polygons          sectorPolygons(const Sector &sector) const;
     ID                floorPlaneId(ID sectorId) const;
     ID                ceilingPlaneId(ID sectorId) const;
     const Plane &     floorPlane(ID sectorId) const;

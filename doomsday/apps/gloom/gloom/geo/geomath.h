@@ -114,9 +114,31 @@ struct Line
 
         // It has to hit somewhere on `other`.
         const double u = (q - p).cross(s) / r_s;
-        return u >= 0 && u <= 1;
+        return u >= 0 && u < 1;
     }
 
+    /**
+     * Determines the distance to the point @a p along the normal of the line.
+     *
+     * @param p  Any point.
+     * @param t  Normalized distance along the line to the point nearest to @a p.
+     *
+     * @return  Distance along the line normal to the point.
+     */
+    double normalDistance(const T &p, double &t) const
+    {
+        const T delta = p - start;
+        t = dir().dot(delta) / length();
+        return abs(normal().dot(delta));
+    }
+
+    /**
+     * Shortest distance from the line to the point @a p.
+     *
+     * @param p  Any point.
+     * @param t
+     * @return
+     */
     double distanceTo(const T &p) const
     {
         const T delta = p - start;

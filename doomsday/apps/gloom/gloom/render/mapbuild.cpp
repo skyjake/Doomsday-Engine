@@ -99,10 +99,23 @@ DENG2_PIMPL_NOREF(MapBuild)
         {
             const Sector &sector = map.sector(sectorId);
 
+            const auto sectorPolygons = map.sectorPolygons(sectorId);
+
             // Split the polygon to convex parts (for triangulation).
-            const auto sectorPolygon = map.sectorPolygon(sectorId);
-            const auto expanders     = sectorPolygon.expanders();
-            const auto convexParts   = sectorPolygon.splitConvexParts();
+            QHash<ID, Vec2d> expanders;
+            QList<geo::Polygon> convexParts;
+            foreach (const auto &sectorPolygon, sectorPolygons)
+            {
+                for (QHashIterator<ID, Vec2d> iter(sectorPolygon.expanders()); iter.hasNext(); )
+                {
+                    iter.next();
+                    expanders.insert(iter.key(), iter.value());
+                }
+                foreach (const auto &part, sectorPolygon.splitConvexParts())
+                {
+                    convexParts << part;
+                }
+            }
 
             // -------- Planes --------
 
@@ -195,7 +208,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                     if (geomBuf == TransparentGeometry)
                     {
                         bufs.transparencies << Buffers::Transparency{{
-                            plane.projectPoint(Point{sectorPolygon.center()}), plane.normal}};
+                            plane.projectPoint(Point{sectorPolygons.front().center()}), plane.normal}};
                         bufs.transparentRanges.append(
                             Rangez(firstIndex, indices[geomBuf].size()));
                     }
