@@ -28,13 +28,18 @@
 
 #include <QAction>
 #include <QCloseEvent>
+#include <QDialog>
+#include <QDialogButtonBox>
 #include <QFile>
 #include <QFileDialog>
+#include <QListWidget>
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QPainter>
+#include <QPushButton>
 #include <QSettings>
+#include <QVBoxLayout>
 
 using namespace de;
 using namespace gloom;
@@ -1039,20 +1044,49 @@ DENG2_PIMPL(Editor)
                     StringList maps = lumpDir->findMapLumpNames();
                     if (maps.isEmpty()) return; // No maps found.
 
-                    res::LumpCatalog catalog;
-                    catalog.setBundles({bundle});
+                    String mapId;
 
-                    MapImport importer(catalog);
-                    const String mapId = maps.front();
-                    if (importer.importMap(mapId))
+                    // Ask the user to select which map to import.
                     {
-                        // Update the editor's map.
-                        map = importer.map();
-                        undoStack.clear();
-                        isModified = false;
-                        filePath.clear();
-                        self().setWindowTitle(mapId);
-                        self().update();
+                        QDialog dlg;
+                        dlg.setWindowTitle(tr("Import Map"));
+                        QVBoxLayout *layout = new QVBoxLayout;
+                        QListWidget *list = new QListWidget;
+                        list->addItems(compose<QStringList>(maps.begin(), maps.end()));
+                        layout->addWidget(list, 1);
+                        QDialogButtonBox *box = new QDialogButtonBox;
+                        auto *ok = box->addButton("OK", QDialogButtonBox::AcceptRole);
+                        auto *cancel = box->addButton("Cancel", QDialogButtonBox::RejectRole);
+                        connect(ok, SIGNAL(clicked()), &dlg, SLOT(accept()));
+                        connect(cancel, SIGNAL(clicked()), &dlg, SLOT(reject()));
+                        layout->addWidget(box, 0);
+                        dlg.setLayout(layout);
+                        dlg.setModal(true);
+                        if (dlg.exec())
+                        {
+                            if (list->selectedItems().size())
+                            {
+                                mapId = list->selectedItems().front()->text();
+                            }
+                        }
+                    }
+
+                    if (mapId)
+                    {
+                        res::LumpCatalog catalog;
+                        catalog.setBundles({bundle});
+
+                        MapImport importer(catalog);
+                        if (importer.importMap(mapId))
+                        {
+                            // Update the editor's map.
+                            map = importer.map();
+                            undoStack.clear();
+                            isModified = false;
+                            filePath.clear();
+                            self().setWindowTitle(mapId);
+                            self().update();
+                        }
                     }
                 }
             }
