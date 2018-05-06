@@ -660,6 +660,15 @@ inline ContainerType filter(ContainerType const &c,
     return out;
 }
 
+template <typename Container, typename Iterator>
+inline Container compose(Iterator start, Iterator end) {
+    Container c;
+    for (Iterator i = start; i != end; ++i) {
+        c.push_back(*i);
+    }
+    return c;
+}
+
 } // namespace de
 #endif // __cplusplus
 
