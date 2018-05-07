@@ -770,7 +770,7 @@ gl::StencilOps GLState::stencilOp(gl::Face face) const
 {
     const duint packed =
         d->props.asUInt(face == gl::Back ? internal::StencilBackOp : internal::StencilFrontOp);
-    return gl::StencilOps{
+    return {
         gl::StencilOp( packed       & 7),
         gl::StencilOp((packed >> 3) & 7),
         gl::StencilOp((packed >> 6) & 7)
@@ -781,7 +781,7 @@ gl::StencilFunc GLState::stencilFunc(gl::Face face) const
 {
     const duint packed =
         d->props.asUInt(face == gl::Back ? internal::StencilBackFunc : internal::StencilFrontFunc);
-    return gl::StencilFunc{
+    return {
         gl::Comparison(packed        & 7),
         dint         ((packed >> 3)  & 255),
         duint        ((packed >> 11) & 255)
@@ -799,20 +799,20 @@ GLFramebuffer &GLState::target() const
 
 Rectangleui GLState::viewport() const
 {
-    return Rectangleui(d->props[internal::ViewportX],
-                       d->props[internal::ViewportY],
-                       d->props[internal::ViewportWidth],
-                       d->props[internal::ViewportHeight]);
+    return {d->props[internal::ViewportX],
+            d->props[internal::ViewportY],
+            d->props[internal::ViewportWidth],
+            d->props[internal::ViewportHeight]};
 }
 
 Rectanglef GLState::normalizedViewport() const
 {
     GLFramebuffer::Size const size = target().size();
     Rectangleui const vp = viewport();
-    return Rectanglef(float(vp.left())   / float(size.x),
-                      float(vp.top())    / float(size.y),
-                      float(vp.width())  / float(size.x),
-                      float(vp.height()) / float(size.y));
+    return {float(vp.left())   / float(size.x),
+            float(vp.top())    / float(size.y),
+            float(vp.width())  / float(size.x),
+            float(vp.height()) / float(size.y)};
 }
 
 bool GLState::scissor() const
@@ -822,10 +822,10 @@ bool GLState::scissor() const
 
 Rectangleui GLState::scissorRect() const
 {
-    return Rectangleui(d->props[internal::ScissorX],
-                       d->props[internal::ScissorY],
-                       d->props[internal::ScissorWidth],
-                       d->props[internal::ScissorHeight]);
+    return {d->props[internal::ScissorX],
+            d->props[internal::ScissorY],
+            d->props[internal::ScissorWidth],
+            d->props[internal::ScissorHeight]};
 }
 
 void GLState::apply() const
