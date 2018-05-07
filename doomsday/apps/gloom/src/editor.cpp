@@ -32,6 +32,7 @@
 #include <QDialogButtonBox>
 #include <QFile>
 #include <QFileDialog>
+#include <QInputDialog>
 #include <QListWidget>
 #include <QMenu>
 #include <QMenuBar>
@@ -103,7 +104,7 @@ DENG2_PIMPL(Editor)
     float viewScale = 10;
     float viewYawAngle = 0;
     float viewPitchAngle = 0;
-    Vec2f viewOrigin;
+    Vec2d viewOrigin;
     Plane viewPlane;
     Vec3f worldFront;
     Mat4f viewTransform;
@@ -421,6 +422,24 @@ DENG2_PIMPL(Editor)
         {
             map = undoStack.takeLast();
             self().update();
+        }
+    }
+
+    void userFind()
+    {
+        if (mode == EditPoints)
+        {
+            const String pid = QInputDialog::getText(thisPublic, tr("Find Point"), tr("Point ID:"));
+            if (pid)
+            {
+                const ID number = pid.toUInt(nullptr, 16);
+                if (map.isPoint(number))
+                {
+                    const auto point = map.point(number);
+                    viewOrigin = point.coord;
+                    self().update();
+                }
+            }
         }
     }
 
@@ -1119,6 +1138,7 @@ Editor::Editor()
     addKeyAction("Ctrl+4",          [this]() { d->setMode(EditPlanes); });
     addKeyAction("Ctrl+5",          [this]() { d->setMode(EditVolumes); });
     addKeyAction("Ctrl+6",          [this]() { d->setMode(EditEntities); });
+    addKeyAction("Ctrl+F",          [this]() { d->userFind(); });
     addKeyAction("Ctrl+A",          [this]() { d->userSelectAll(); });
     addKeyAction("Ctrl+Shift+A",    [this]() { d->userSelectNone(); });
     addKeyAction("Ctrl+D",          [this]() { d->userAdd(); });
@@ -1349,7 +1369,7 @@ void Editor::paintEvent(QPaintEvent *)
         }
         ptr.setFont(font());
 
-        ptr.setPen(QPen(pointColor, 4));
+        ptr.setPen(QPen(pointColor, d->mode == EditPoints? 4 : 2));
         ptr.drawPoints(&points[0], points.size());
 
         if (selected.size())
@@ -1559,7 +1579,7 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
     case Impl::TranslateView: {
         QPoint delta = event->pos() - d->actionPos;
         d->actionPos = event->pos();
-        d->viewOrigin -= Vec2f(delta.x(), delta.y()) / d->viewScale;
+        d->viewOrigin -= Vec2d(delta.x(), delta.y()) / d->viewScale;
         d->updateView();
         break;
     }
@@ -1620,7 +1640,7 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
 
         foreach (auto id, d->selection)
         {
-            if (d->map.points().contains(id))
+            if (d->map.isPoint(id))
             {
                 d->map.point(id).coord = xf * Vec3d(d->map.point(id).coord);
             }
@@ -1644,7 +1664,7 @@ void Editor::mouseReleaseEvent(QMouseEvent *event)
 
         if (d->hoverEntity)
         {
-            QMenu *pop = new QMenu(this);
+            auto *pop = new QMenu(this);
             auto *header = pop->addAction(QString("Entity %1").arg(d->hoverEntity, 0, 16));
             header->setDisabled(true);
 

@@ -924,6 +924,11 @@ void Map::deserialize(const Block &data)
     removeInvalid();
 }
 
+bool Map::isPoint(ID id) const
+{
+    return d->points.contains(id);
+}
+
 //-------------------------------------------------------------------------------------------------
 
 bool Plane::isPointAbove(const Vec3d &pos) const

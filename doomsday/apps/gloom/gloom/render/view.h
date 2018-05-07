@@ -26,7 +26,7 @@ namespace gloom {
 
 struct View
 {
-    const ICamera *camera;
+    const ICamera *camera = nullptr;
 
     de::GLUniform uCameraPos            {"uCameraPos",          de::GLUniform::Vec4};
     de::GLUniform uCameraMvpMatrix      {"uCameraMvpMatrix",    de::GLUniform::Mat4};
