@@ -374,18 +374,18 @@ DENG2_PIMPL_NOREF(MapImport)
             }
         }
 
-        for (int i = 0; i < mappedSectors.size(); ++i)
+        for (int secIndex = 0; secIndex < mappedSectors.size(); ++secIndex)
         {
-            const auto &ms = mappedSectors[i];
+            const auto &ms = mappedSectors[secIndex];
 
             const ID currentSector = ms.sector;
 
             qDebug("Sector %i: boundary lines %i, points %i",
-                   i,
+                   secIndex,
                    ms.boundaryLines.size(),
                    ms.points.size());
 
-            // TODO: Add a Contours class that manages multilpe Countour objects.
+            // TODO: Add a Contours class that manages multiple Contour objects.
 
             QVector<Contour> contours;
             QVector<ID>      remainingLines = ms.boundaryLines;
@@ -420,9 +420,9 @@ DENG2_PIMPL_NOREF(MapImport)
                 }
             }
 
-            for (int i = 0; i < contours.size(); ++i)
+            for (auto &cont : contours)
             {
-                contours[i].makePolygon(map, currentSector);
+                cont.makePolygon(map, currentSector);
             }
 
             // Determine the containment hierarchy.

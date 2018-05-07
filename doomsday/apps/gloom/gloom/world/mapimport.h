@@ -34,7 +34,7 @@ using namespace de;
 class MapImport
 {
 public:
-    MapImport(const res::LumpCatalog &lumps);
+    explicit MapImport(const res::LumpCatalog &lumps);
 
     bool importMap(const String &mapId);
 
