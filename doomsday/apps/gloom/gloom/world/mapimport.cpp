@@ -197,8 +197,8 @@ DENG2_PIMPL_NOREF(MapImport)
     template <typename T>
     struct DataArray
     {
-        DataArray(const Block &data)
-            : _data(data)
+        explicit DataArray(Block data)
+            : _data(std::move(data))
             , _entries(reinterpret_cast<const T *>(_data.constData()))
             , _size(int(_data.size() / sizeof(T)))
         {}

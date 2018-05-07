@@ -110,6 +110,9 @@ set (SOURCES
 )
 
 # Deploy the FMOD library.
+if (NOT TARGET fmodex)
+    message (FATAL_ERROR "FMOD is required to build Gloom - Set the FMOD_DIR variable")
+endif ()
 if (APPLE)
     get_property (fmodLibPath TARGET fmodex PROPERTY INTERFACE_LINK_LIBRARIES)
     deng_find_resources (${fmodLibPath},Frameworks)
