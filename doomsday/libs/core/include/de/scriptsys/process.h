@@ -187,7 +187,7 @@ public:
      *                                 The process does not get ownership of the
      *                                 external global namespace.
      */
-    Process(Record *externalGlobalNamespace = 0);
+    Process(Record *externalGlobalNamespace = nullptr);
 
     /**
      * Constructs a new process. The process is initialized to RUNNING state.
@@ -246,7 +246,7 @@ public:
      * @param returnValue  Value to use as the return value from the
      *                     context. Takes ownership of the value.
      */
-    void finish(Value *returnValue = 0);
+    void finish(Value *returnValue = nullptr);
 
     /**
      * Changes the working path of the process. File system access within the
