@@ -43,7 +43,7 @@ struct Polygon
     Points     points; // clockwise winding
     Rectangled bounds;
 
-    Polygon(const Points &points = Points());
+    explicit Polygon(const Points &points = Points());
     Polygon(const Polygon &) = default;
 
     int              size() const { return points.size(); }
@@ -53,6 +53,7 @@ struct Polygon
     bool             isConvex() const;
     QList<Polygon>   splitConvexParts() const;
     QVector<int>     concavePoints() const;
+    Rangei           findLoop() const;
     bool             isUnique(int pos) const;
     bool             isEdgeLine(int start, int end) const;
     bool             isPointInside(const Vec2d &point) const;
@@ -60,6 +61,7 @@ struct Polygon
     bool             isInsideOf(const Polygon &largerPoly) const;
     int              intersect(const Line &line) const;
     bool             split(int a, int b, Polygon halves[2]) const;
+    void             split(const Rangei &range, Polygon halves[2]) const;
     void             updateBounds();
     void             clear();
     Vec2d            center() const;
