@@ -242,33 +242,74 @@ bool Polygon::isPointInside(const Vec2d &point) const
     if (points.size() < 3) return false;
 
     DENG2_ASSERT(!bounds.isNull());
+
     if (bounds.contains(point))
     {
-        const Vec2d offset{bounds.width() + 1, 0};
-        return intersect(Line(point, point + offset)) % 2 == 1;
+        const double checkLen = max(bounds.width(), bounds.height()) + 1;
+
+        // Find a line that doesn't hit exactly on any points.
+        Line check{point, point + Vec2d(checkLen, 1)};
+        /*
+        bool pointOverlap = true;
+        while (pointOverlap)
+        {
+            const double randomAngle = frand() * 2 * PI;
+            check = Line{point, point + Vec2d(std::cos(randomAngle),
+                                              std::sin(randomAngle)) * checkLen};
+            pointOverlap = false;
+            for (int i = 0; i < size(); ++i)
+            {
+                double t;
+                if (check.normalDistance(points[i].pos, t) < EPSILON)
+                {
+                    if (t > 0)
+                    {
+                        pointOverlap = true;
+                        break;
+                    }
+                }
+            }
+        }*/
+        return intersect(check) % 2 == 1;
     }
     return false;
 }
 
-int Polygon::intersect(const Line &line) const
+int Polygon::intersect(const Line &check) const
 {
     int count = 0;
+    const auto checkDir = check.dir();
     for (int i = 0; i < points.size(); ++i)
     {
         double t;
-        if (line.intersect(lineAt(i), t))
+//        if (check.normalDistance(pointAt(i).pos, t) < 0.0001)
+//        {
+//            if (t >= 0.0 && t <= 1.0)
+//            {
+//                // The checked line is over the point, which means
+//                // we can safely skip both adjacent lines.
+//                count++;
+//                continue;
+//            }
+//        }
+
+        if (lineAt(i).intersect(check, t))
         {
-            if (t >= 0.0 && t < 1.0)
+            const bool isEndPeak = sign(checkDir.dot(lineAt(i    ).normal())) !=
+                                   sign(checkDir.dot(lineAt(i + 1).normal()));
+
+            if (t >= 0.0 && ((!isEndPeak && t < 1.0) || (isEndPeak && t <= 1.0)))
             {
-//                qDebug("  %f,%f -> %f,%f intersects %f,%f -> %f,%f",
+//                qDebug("  %f,%f -> %f,%f intersects %f,%f -> %f,%f [t:%f]",
 //                       lineAt(i).start.x,
 //                       lineAt(i).start.y,
 //                       lineAt(i).end.x,
 //                       lineAt(i).end.y,
-//                       line.start.x,
-//                       line.start.y,
-//                       line.end.x,
-//                       line.end.y);
+//                       check.start.x,
+//                       check.start.y,
+//                       check.end.x,
+//                       check.end.y,
+//                       t);
 
                 count++;
             }
@@ -317,10 +358,14 @@ Rangei Polygon::findLoop() const
     for (int i = 0; i < points.size(); ++i)
     {
         const ID startPoint = points[i].id;
-        const ID endPoint   = pointAt(i + 3).id;
-        if (startPoint == endPoint) // && pointAt(i - 1).id != pointAt(i + 4).id)
+
+        for (int j = 3; j < points.size() - 2; ++j)
         {
-            return Rangei(i, i + 3);
+            const ID endPoint = pointAt(i + j).id;
+            if (startPoint == endPoint)
+            {
+                return Rangei(i, i + j);
+            }
         }
     }
     return Rangei();
@@ -362,6 +407,8 @@ bool Polygon::hasDegenerateEdges() const
 
 bool Polygon::isClockwiseWinding() const
 {
+    if (size() < 3) return true;
+
     double angles = 0.0;
 
     // Calculate sum of all line angles.
@@ -370,9 +417,9 @@ bool Polygon::isClockwiseWinding() const
         angles += lineAt(i).angle(lineAt(i + 1)) - 180.0;
     }
 
-    qDebug() << "Winding is" << angles << "for" << asText().toLatin1().constData();
+//    qDebug() << "Winding is" << angles << "for" << asText().toLatin1().constData();
 
-    return angles < 0;
+    return angles < -180; // should be around -360
 }
 
 bool Polygon::split(const Rangei &range, Polygon halves[2]) const

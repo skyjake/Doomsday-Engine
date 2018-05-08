@@ -51,14 +51,20 @@ static inline uint16_t le16u(int16_t leValue)
 
 struct Contour
 {
-    QVector<ID> lines;
-    bool hole = false;
+    QVector<ID>  lines;
+//    bool         hole = false;
+    QSet<ID>     hasPoints;
     geo::Polygon polygon;
-    int parent = -1;
+    int          parent = -1;
 
     Contour(ID line = 0)
     {
         if (line) lines << line;
+    }
+
+    int size() const
+    {
+        return polygon.size();
     }
 
     bool isClosed(const Map &map, ID currentSector) const
@@ -102,12 +108,52 @@ struct Contour
             const ID    pointId = line.startPointForSector(currentSector);
             polygon.points << geo::Polygon::Point{map.point(pointId).coord, pointId};
         }
-        polygon.updateBounds();
+        update();
     }
 
     bool isInside(const Contour &other) const
     {
         return polygon.isInsideOf(other.polygon);
+    }
+
+    int findSharedPoint(const Contour &other) const
+    {
+        for (int i = 0; i < polygon.points.size(); ++i)
+        {
+            if (other.hasPoints.contains(polygon.points.at(i).id))
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    int findPoint(ID id) const
+    {
+        for (int i = 0; i < polygon.points.size(); ++i)
+        {
+            if (polygon.points.at(i).id == id)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    void clear()
+    {
+        polygon.clear();
+        hasPoints.clear();
+    }
+
+    void update()
+    {
+        hasPoints.clear();
+        for (const auto &pp : polygon.points)
+        {
+            hasPoints.insert(pp.id);
+        }
+        polygon.updateBounds();
     }
 };
 
@@ -331,10 +377,12 @@ DENG2_PIMPL_NOREF(MapImport)
                 sectorIdx[s] = sec;
             }
 
+            //qDebug("Line %i: side %i/%i sector %i/%i", i, sides[0], sides[1], sectorIdx[0], sectorIdx[1]);
+
             if (line.isOneSided())
             {
-                line.surfaces[line.surfaces[Line::Front].sector? 0 : 1].material[Line::Middle]
-                        = "world.stone";
+                line.surfaces[line.surfaces[Line::Front].sector ? 0 : 1].material[Line::Middle] =
+                    "world.stone";
             }
             else
             {
@@ -419,10 +467,45 @@ DENG2_PIMPL_NOREF(MapImport)
                     contours << Contour{remainingLines.takeLast()};
                 }
             }
-
             for (auto &cont : contours)
             {
                 cont.makePolygon(map, currentSector);
+            }
+
+            // Some contours may share points with other contours. Let's see if can get them
+            // merged together.
+            for (int i = 0; i < contours.size(); ++i)
+            {
+                for (int j = 0; j < contours.size(); ++j)
+                {
+                    if (i == j) continue;
+
+                    Contour &host  = contours[i];
+                    Contour &graft = contours[j];
+
+                    int hostIdx = host.findSharedPoint(graft);
+                    if (hostIdx >= 0)
+                    {
+                        int graftIdx = graft.findPoint(host.polygon.points.at(hostIdx).id);
+
+                        geo::Polygon::Points joined = host.polygon.points.mid(0, hostIdx);
+                        for (int k = 0; k < graft.size(); ++k)
+                        {
+                            joined << graft.polygon.pointAt(graftIdx + k);
+                        }
+                        joined += host.polygon.points.mid(hostIdx);
+
+                        qDebug("Contours %i and %i have a shared point %i/%i", i, j, hostIdx, graftIdx);
+                        qDebug() << "   Host:" << host.polygon.asText();
+                        qDebug() << "   Graft:" << graft.polygon.asText();
+
+                        host.polygon.points = joined;
+                        host.update();
+                        graft.clear();
+
+                        qDebug() << "   Result:" << host.polygon.asText();
+                    }
+                }
             }
 
             // Determine the containment hierarchy.
@@ -453,9 +536,18 @@ DENG2_PIMPL_NOREF(MapImport)
 
             for (int i = 0; i < contours.size(); ++i)
             {
-                qDebug() << "- contour" << i << ":" << contours[i].lines
+                qDebug() << "- contour" << i << ":" << contours[i].polygon.asText()
                          << contours[i].isClosed(map, currentSector)
                          << "parent:" << contours[i].parent;
+            }
+
+            for (int i = 0; i < contours.size(); ++i)
+            {
+                if (contours[i].parent == -1 && !contours[i].polygon.isClockwiseWinding())
+                {
+                    qDebug("Contour %i has the wrong winding; needs a parent!", i);
+                    DENG2_ASSERT_FAIL("contour missing a parent");
+                }
             }
 
             // Determines how deeply a contour is nested.
@@ -534,8 +626,18 @@ DENG2_PIMPL_NOREF(MapImport)
                             }
                             joined += outer.polygon.points.mid(connector.outer);
 
+                            // Remove any duplicates.
+//                            for (int i = 1; i < joined.size(); ++i)
+//                            {
+//                                if (joined[i].id == joined[i - 1].id)
+//                                {
+//                                    joined.removeAt(i--);
+//                                }
+//                            }
+
                             outer.polygon.points = joined;
-                            inner.polygon.clear();
+                            outer.update();
+                            inner.clear();
                         }
                         else
                         {
@@ -566,6 +668,7 @@ DENG2_PIMPL_NOREF(MapImport)
 
                     for (const auto &pp : cont.polygon.points)
                     {
+                        DENG2_ASSERT(points.isEmpty() || points.back() != pp.id);
                         points << pp.id;
                     }
                 }

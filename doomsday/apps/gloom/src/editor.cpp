@@ -990,12 +990,9 @@ DENG2_PIMPL(Editor)
         if (!askSaveFile()) return;
 
         map = Map();
-        isModified = false;
         filePath.clear();
-        undoStack.clear();
-        self().setWindowTitle("(unnamed)");
-
-        self().update();
+        setWindowTitle("(unnamed)");
+        resetState();
     }
 
     void openFile()
@@ -1018,9 +1015,8 @@ DENG2_PIMPL(Editor)
         DENG2_ASSERT(f.exists());
         f.open(QFile::ReadOnly);
         map.deserialize(f.readAll());
-        undoStack.clear();
-        isModified = false;
-        self().setWindowTitle(filePath.fileName());
+        resetState();
+        setWindowTitle(filePath.fileName());
     }
 
     void saveAsFile()
@@ -1029,7 +1025,7 @@ DENG2_PIMPL(Editor)
                 thisPublic, "Save As", filePath.fileNamePath(), "Gloom Map (*.gloommap)"))
         {
             filePath = newPath;
-            self().setWindowTitle(filePath.fileName());
+            setWindowTitle(filePath.fileName());
             saveFile();
         }
     }
@@ -1100,17 +1096,34 @@ DENG2_PIMPL(Editor)
                         {
                             // Update the editor's map.
                             map = importer.map();
-                            undoStack.clear();
-                            isModified = false;
                             filePath.clear();
-                            self().setWindowTitle(mapId);
-                            self().update();
+                            resetState();
+                            setWindowTitle(mapId);
                         }
                     }
                 }
             }
             //newFile();
         }
+    }
+
+    void setWindowTitle(const String &text)
+    {
+        self().parentWidget()->setWindowTitle(text);
+    }
+
+    void resetState()
+    {
+        undoStack.clear();
+        isModified = false;
+        floorPoints.clear();
+        selection.clear();
+        hoverPoint  = 0;
+        hoverLine   = 0;
+        hoverSector = 0;
+        hoverEntity = 0;
+        hoverPlane  = 0;
+        self().update();
     }
 };
 

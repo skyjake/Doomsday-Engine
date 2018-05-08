@@ -97,6 +97,15 @@ struct Line
         return isFrontSide(pos)? 0 : 1;
     }
 
+    /**
+     * Determines if this line intersects the line @a other.
+     * The end point of @a other is excluded from the intersection.
+     *
+     * @param other  Other line.
+     * @param t      Normalized intersection position on @em this line.
+     *
+     * @return @c true, if the lines intersect; otherwise @c false.
+     */
     bool intersect(const Line &other, double &t) const
     {
         const auto &p = other.start;
@@ -158,7 +167,7 @@ struct Line
         const T d1 = dir();
         const T n = normal();
         const T d2 = other.dir();
-        double deg = 180 + radianToDegree(std::acos(d1.dot(d2)));
+        double deg = 180 + radianToDegree(std::acos(clamp(-1.0, d1.dot(d2), 1.0)));
         if (n.dot(d2) > 0) deg = 360 - deg;
         return deg;
     }

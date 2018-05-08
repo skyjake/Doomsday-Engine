@@ -86,7 +86,7 @@ DENG2_PIMPL(User)
 
         // Apply friction to angular momentum.
         {
-            float fric = -sign(angularMomentum) * turnFriction;
+            float fric = sign(-angularMomentum) * turnFriction;
             if (abs(fric * elapsed) > abs(angularMomentum))
             {
                 angularMomentum = 0;

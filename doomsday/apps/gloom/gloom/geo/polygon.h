@@ -47,6 +47,7 @@ struct Polygon
     Polygon(const Polygon &) = default;
 
     int              size() const { return points.size(); }
+    inline bool      isEmpty() const { return size() == 0; }
     const Vec2d &    at(int pos) const;
     const Point &    pointAt(int pos) const;
     const Line       lineAt(int pos) const;
