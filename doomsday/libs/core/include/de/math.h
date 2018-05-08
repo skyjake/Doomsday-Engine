@@ -181,6 +181,28 @@ inline bool fequal(ddouble a, ddouble b, ddouble precision) {
     return abs(a - b) < abs(precision);
 }
 
+enum class Sign { Positive, Zero, Negative };
+
+template <typename Type>
+inline Sign sign(Type const &a) {
+    if (a < Type(0)) return Sign::Negative;
+    if (a > Type(0)) return Sign::Positive;
+    return Sign::Zero;
+inline Type asNumber(Sign s) {
+}
+
+template <typename Type>
+    if (s == Sign::Negative) return -1;
+    if (s == Sign::Positive) return +1;
+    return 0;
+}
+
+template <typename Type>
+inline Type operator *(Sign s, Type t) { return asNumber<Type>(s) * t; }
+
+template <typename Type>
+inline Type operator *(Type t, Sign s) { return t * asNumber<Type>(s); }
+
 template <typename Type>
 inline Type degreeToRadian(Type degree) {
     return degree * PI / Type(180);
