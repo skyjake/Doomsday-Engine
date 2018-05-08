@@ -176,6 +176,11 @@ bool Polygon::isLineInside(int start, int end) const
 
     Line check(a, b);
 
+//    Line check(points[start].pos, points[end].pos);
+//    const auto dir = check.dir();
+//    check.start += dir * THICK;
+//    check.end   -= dir * THICK;
+
     // Both endpoints must be inside.
     if (!isPointInside(check.start))
     {
@@ -190,7 +195,7 @@ bool Polygon::isLineInside(int start, int end) const
 
     // It can't intersect any of the lines.
     const int isc = intersect(check);
-    if (isc) qDebug("%i-%i isc=%i", start, end, isc);
+//    if (isc) qDebug("%i-%i isc=%i", start, end, isc);
     return isc == 0;
 
 /*    // Does the line a--b intersect the polygon?
@@ -288,44 +293,11 @@ bool Polygon::split(int a, int b, Polygon halves[2]) const
     for (int i = 0; i < 2; ++i)
     {
         halves[i].updateBounds();
-
-        const double EPSILON = 0.0001;
-
-        // None of the points can be exactly on the resulting edge lines.
-        // This would result in degenerate triangles.
-        for (int p = 0; p < halves[i].points.size(); ++p)
-        {
-            const Vec2d check = halves[i].points[p].pos;
-
-            for (int j = 0; j < halves[i].size(); ++j)
-            {
-                double t, dist = halves[i].lineAt(j).normalDistance(check, t);
-                if (dist < EPSILON && t > EPSILON && t < 1.0 - EPSILON)
-                {
-                    // Not acceptable; the point falls too close to another line
-                    // on the polygon.
-                    return false;
-                }
-            }
-        }
+        if (!halves[i].isClockwiseWinding()) return false;
     }
 
     // Each half must at least be a triangle.
-    return halves[0].size() >= 3 && halves[1].size() >= 3;
-}
-
-void Polygon::split(const Rangei &range, Polygon halves[2]) const
-{
-    for (int i = 0; i < range.size(); ++i)
-    {
-        halves[0].points << pointAt(range.start + i);
-    }
-    for (int i = 0; i < size() - range.size(); ++i)
-    {
-        halves[1].points << pointAt(range.end + i);
-    }
-    halves[0].updateBounds();
-    halves[1].updateBounds();
+    return !halves[0].hasDegenerateEdges() && !halves[1].hasDegenerateEdges();
 }
 
 static bool areAllConvex(const QList<Polygon> &polygon)
@@ -339,20 +311,104 @@ static bool areAllConvex(const QList<Polygon> &polygon)
 
 Rangei Polygon::findLoop() const
 {
+    // Having a loop means there's at least two triangles.
+    if (points.size() < 6) return Rangei();
+
     for (int i = 0; i < points.size(); ++i)
     {
-        const ID endPoint = points[i].id;
-        for (int j = 3; j < points.size() - 2; ++j)
+        const ID startPoint = points[i].id;
+        const ID endPoint   = pointAt(i + 3).id;
+        if (startPoint == endPoint) // && pointAt(i - 1).id != pointAt(i + 4).id)
         {
-            const ID startPoint = pointAt(i - j).id;
-            if (endPoint == startPoint)
-            {
-                int startIdx = mod(i - j, size());
-                return Rangei(startIdx, startIdx + j);
-            }
+            return Rangei(i, i + 3);
         }
     }
     return Rangei();
+}
+
+bool Polygon::hasDegenerateEdges() const
+{
+    if (points.isEmpty()) return false;
+    if (size() < 3) return true;
+
+    // None of the points can be exactly on the resulting edge lines.
+    // This would result in degenerate triangles.
+
+    const double EPSILON = 0.0001;
+
+    for (int p = 0; p < size(); ++p)
+    {
+        if (points[p].id == pointAt(p + 2).id)
+        {
+            // This edge forms a zero-area line.
+            return true;
+        }
+
+        const Vec2d check = points[p].pos;
+
+        for (int j = 0; j < size(); ++j)
+        {
+            double t, dist = lineAt(j).normalDistance(check, t);
+            if (dist < EPSILON && t > EPSILON && t < 1.0 - EPSILON)
+            {
+                // Not acceptable; the point falls too close to another line
+                // on the polygon.
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool Polygon::isClockwiseWinding() const
+{
+    double angles = 0.0;
+
+    // Calculate sum of all line angles.
+    for (int i = 0; i < size(); ++i)
+    {
+        angles += lineAt(i).angle(lineAt(i + 1)) - 180.0;
+    }
+
+    qDebug() << "Winding is" << angles << "for" << asText().toLatin1().constData();
+
+    return angles < 0;
+}
+
+bool Polygon::split(const Rangei &range, Polygon halves[2]) const
+{
+    // Points in the loop.
+    for (int i = range.start; i < range.end; ++i)
+    {
+        halves[0].points << pointAt(i);
+    }
+
+    // Points outside the loop.
+    for (int i = 0; i < size(); ++i)
+    {
+        if (range.end <= size())
+        {
+            if (!range.contains(i))
+            {
+                halves[1].points << points[i];
+            }
+        }
+        else
+        {
+            if (i >= mod(range.end, size()) && i < range.start)
+            {
+                halves[1].points << points[i];
+            }
+        }
+    }
+
+    halves[0].updateBounds();
+    halves[1].updateBounds();
+
+    if (!halves[0].isClockwiseWinding() ||
+        !halves[1].isClockwiseWinding()) return false;
+
+    return !halves[0].hasDegenerateEdges() && !halves[1].hasDegenerateEdges();
 }
 
 QList<Polygon> Polygon::splitConvexParts() const
@@ -365,14 +421,17 @@ QList<Polygon> Polygon::splitConvexParts() const
         // Loops should be always split to separate polygons.
         while (Rangei loop = parts[i].findLoop())
         {
+            qDebug() << "Found a loop in" << parts[i].asText() << "indices:" << loop.asText();
             Polygon halves[2];
-            parts[i].split(loop, halves);
-            qDebug() << "Found a loop in" << parts[i].asText();
-            qDebug() << "  Splitting to:\n    " << halves[0].asText();
-            qDebug() << "    " << halves[1].asText();
-            parts.removeAt(i);
-            parts.insert(i, halves[0]);
-            parts.insert(i, halves[1]);
+            if (parts[i].split(loop, halves))
+            {
+                qDebug() << "  Splitting to:\n    " << halves[0].asText();
+                qDebug() << "    " << halves[1].asText();
+                parts.removeAt(i);
+                parts.insert(i, halves[0]);
+                parts.insert(i, halves[1]);
+            }
+            else break;
         }
 
         Polygon &poly = parts[i];
