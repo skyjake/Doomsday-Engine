@@ -999,9 +999,14 @@ DENG2_PIMPL(Editor)
     {
         if (!askSaveFile()) return;
 
-        if (String openPath = QFileDialog::getOpenFileName(
-                thisPublic, "Open File", filePath.fileNamePath(), "Gloom Map (*.gloommap)"))
+        QSettings st;
+        if (String openPath =
+                QFileDialog::getOpenFileName(thisPublic,
+                                             "Open File",
+                                             st.value("lastOpenPath", QDir::homePath()).toString(),
+                                             "Gloom Map (*.gloommap)"))
         {
+            st.setValue("lastOpenPath", openPath.fileNamePath());
             loadMap(openPath);
             self().update();
         }
@@ -1047,9 +1052,15 @@ DENG2_PIMPL(Editor)
     {
         askSaveFile();
 
+        QSettings st;
         if (String openPath = QFileDialog::getOpenFileName(
-                thisPublic, "Import from WAD File", filePath.fileNamePath(), "WAD File (*.wad)"))
+                thisPublic,
+                "Import from WAD File",
+                st.value("lastImportPath", QDir::homePath()).toString(),
+                "WAD File (*.wad)"))
         {
+            st.setValue("lastImportPath", openPath.fileNamePath());
+
             String path = FS::accessNativeLocation(openPath);
             if (const DataBundle *bundle = FS::tryLocate<const DataBundle>(path))
             {
@@ -1109,7 +1120,10 @@ DENG2_PIMPL(Editor)
 
     void setWindowTitle(const String &text)
     {
-        self().parentWidget()->setWindowTitle(text);
+        if (self().parentWidget())
+        {
+            self().parentWidget()->setWindowTitle(text);
+        }
     }
 
     void resetState()

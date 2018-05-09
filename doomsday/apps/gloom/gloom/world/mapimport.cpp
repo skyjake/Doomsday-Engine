@@ -279,6 +279,8 @@ DENG2_PIMPL_NOREF(MapImport)
 
     bool import(const String &mapId)
     {
+        qDebug() << "Importing map:" << mapId;
+
         map.clear();
 
         // Conversion from map units to meters.
@@ -614,10 +616,9 @@ DENG2_PIMPL_NOREF(MapImport)
                                       return a.len < b.len;
                                   });
 
-                        if (candidates.size() > 0)
+                        bool success = false;
+                        foreach (const auto &connector, candidates)
                         {
-                            const auto connector = candidates.front();
-
                             geo::Polygon::Points joined =
                                     outer.polygon.points.mid(0, connector.outer + 1);
                             for (int i = 0; i < inner.polygon.size() + 1; ++i)
@@ -626,20 +627,18 @@ DENG2_PIMPL_NOREF(MapImport)
                             }
                             joined += outer.polygon.points.mid(connector.outer);
 
-                            // Remove any duplicates.
-//                            for (int i = 1; i < joined.size(); ++i)
-//                            {
-//                                if (joined[i].id == joined[i - 1].id)
-//                                {
-//                                    joined.removeAt(i--);
-//                                }
-//                            }
-
-                            outer.polygon.points = joined;
-                            outer.update();
-                            inner.clear();
+                            // The outer contour must retain a clockwise winding.
+                            const geo::Polygon joinedPoly{joined};
+                            if (joinedPoly.isClockwiseWinding())
+                            {
+                                outer.polygon = joinedPoly;
+                                outer.update();
+                                inner.clear();
+                                success = true;
+                                break;
+                            }
                         }
-                        else
+                        if (!success)
                         {
                             // Failure!
                             qDebug("Failed to join inner contour %i to its parent %i",

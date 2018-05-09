@@ -54,7 +54,7 @@ struct Polygon
     bool             isConvex() const;
     QList<Polygon>   splitConvexParts() const;
     QVector<int>     concavePoints() const;
-    Rangei           findLoop() const;
+    Rangei           findLoop(int findStartPos = 0) const;
     bool             hasDegenerateEdges() const;
     bool             isClockwiseWinding() const;
     bool             isUnique(int pos) const;

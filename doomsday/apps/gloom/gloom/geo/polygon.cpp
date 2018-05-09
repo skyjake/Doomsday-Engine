@@ -184,12 +184,12 @@ bool Polygon::isLineInside(int start, int end) const
     // Both endpoints must be inside.
     if (!isPointInside(check.start))
     {
-        qDebug("start %i outside", start);
+        qDebug("start %i (%x) outside", start, points[start].id);
         return false;
     }
     if (!isPointInside(check.end))
     {
-        qDebug("end %i outside", end);
+        qDebug("end %i (%x) outside", end, points[end].id);
         return false;
     }
 
@@ -320,6 +320,11 @@ int Polygon::intersect(const Line &check) const
 
 bool Polygon::split(int a, int b, Polygon halves[2]) const
 {
+    for (int i = 0; i < 2; ++i)
+    {
+        halves[i].clear();
+    }
+
     int half = 0;
     for (int i = 0; i < size(); ++i)
     {
@@ -334,11 +339,19 @@ bool Polygon::split(int a, int b, Polygon halves[2]) const
     for (int i = 0; i < 2; ++i)
     {
         halves[i].updateBounds();
-        if (!halves[i].isClockwiseWinding()) return false;
+        if (!halves[i].isClockwiseWinding())
+        {
+            qDebug("\thalf %i has the wrong winding", i);
+            return false;
+        }
+        // Each half must at least be a triangle.
+        if (halves[i].hasDegenerateEdges())
+        {
+            qDebug("\thalf %i has degenerate edges", i);
+            return false;
+        }
     }
-
-    // Each half must at least be a triangle.
-    return !halves[0].hasDegenerateEdges() && !halves[1].hasDegenerateEdges();
+    return true;
 }
 
 static bool areAllConvex(const QList<Polygon> &polygon)
@@ -350,12 +363,12 @@ static bool areAllConvex(const QList<Polygon> &polygon)
     return true;
 }
 
-Rangei Polygon::findLoop() const
+Rangei Polygon::findLoop(int findStartPos) const
 {
     // Having a loop means there's at least two triangles.
     if (points.size() < 6) return Rangei();
 
-    for (int i = 0; i < points.size(); ++i)
+    for (int i = findStartPos; i < points.size(); ++i)
     {
         const ID startPoint = points[i].id;
 
@@ -386,6 +399,7 @@ bool Polygon::hasDegenerateEdges() const
         if (points[p].id == pointAt(p + 2).id)
         {
             // This edge forms a zero-area line.
+            qDebug("\tpoint %i +2 is an empty area", points[p].id);
             return true;
         }
 
@@ -398,6 +412,12 @@ bool Polygon::hasDegenerateEdges() const
             {
                 // Not acceptable; the point falls too close to another line
                 // on the polygon.
+                qDebug("\tpoint %i (%x) is on the edge line %i (%x...%x)",
+                       p,
+                       points[p].id,
+                       j,
+                       points[j].id,
+                       pointAt(j + 1).id);
                 return true;
             }
         }
@@ -417,7 +437,7 @@ bool Polygon::isClockwiseWinding() const
         angles += lineAt(i).angle(lineAt(i + 1)) - 180.0;
     }
 
-//    qDebug() << "Winding is" << angles << "for" << asText().toLatin1().constData();
+    qDebug() << "\tWinding is" << angles << "for" << asText().toLatin1().constData();
 
     return angles < -180; // should be around -360
 }
@@ -466,7 +486,8 @@ QList<Polygon> Polygon::splitConvexParts() const
     for (int i = 0; i < parts.size(); ++i)
     {
         // Loops should be always split to separate polygons.
-        while (Rangei loop = parts[i].findLoop())
+        int findBegin = 0;
+        while (Rangei loop = parts[i].findLoop(findBegin))
         {
             qDebug() << "Found a loop in" << parts[i].asText() << "indices:" << loop.asText();
             Polygon halves[2];
@@ -476,9 +497,13 @@ QList<Polygon> Polygon::splitConvexParts() const
                 qDebug() << "    " << halves[1].asText();
                 parts.removeAt(i);
                 parts.insert(i, halves[0]);
-                parts.insert(i, halves[1]);
+                parts.insert(i, halves[1]); // part with the loop removed ends up at `i` again
+                findBegin = 0;
             }
-            else break;
+            else
+            {
+                findBegin = loop.end;
+            }
         }
 
         Polygon &poly = parts[i];
@@ -510,25 +535,28 @@ QList<Polygon> Polygon::splitConvexParts() const
                     if (!poly.isEdgeLine(j, k) && poly.isLineInside(j, k))
                     {
                         Polygon halves[2];
-                        if (poly.split(j, k, halves))
+
+                        int splitStart = j;
+                        int splitEnd   = k;
+
+                        bool ok = poly.split(splitStart, splitEnd, halves);
+                        if (!ok)
+                        {
+                            std::swap(splitStart, splitEnd);
+                            ok = poly.split(splitStart, splitEnd, halves);
+                        }
+
+                        if (ok)
                         {
                             qDebug("     possible split with line %x...%x : %i/%i (cvx:%i/%i, edge:%s, inside:%s)",
-                                   poly.pointAt(j).id,
-                                   poly.pointAt(k).id,
+                                   poly.pointAt(splitStart).id,
+                                   poly.pointAt(splitEnd).id,
                                    halves[0].size(),
                                    halves[1].size(),
                                    int(halves[0].isConvex()),
                                    int(halves[1].isConvex()),
-                                   poly.isEdgeLine(j, k)?"true":"false",
-                                   poly.isLineInside(j, k)?"true":"false");
-
-//                            parts.removeAt(i);
-//                            parts.append(halves[0]);
-//                            parts.append(halves[1]);
-//                            qDebug() << "       Half 1:" << halves[0].asText();
-//                            qDebug() << "       Half 2:" << halves[1].asText();
-//                            --i;
-//                            wasSplit = true;
+                                   poly.isEdgeLine(splitStart, splitEnd)?"true":"false",
+                                   poly.isLineInside(splitStart, splitEnd)?"true":"false");
 
                             int score = de::min(halves[0].size(), halves[1].size());
                             if (halves[0].isConvex())
@@ -540,11 +568,10 @@ QList<Polygon> Polygon::splitConvexParts() const
                                 score *= 4;
                             }
                             availableSplits << CandidateSplit{{halves[0], halves[1]}, score};
-//                            break;
                         }
                         else
                         {
-                            qDebug("     line %x...%x does not split to triangles",
+                            qDebug("     line %x...%x fails to split",
                                    poly.pointAt(j).id,
                                    poly.pointAt(k).id);
                         }
@@ -556,8 +583,10 @@ QList<Polygon> Polygon::splitConvexParts() const
                                poly.isUnique(j), poly.isUnique(k));
                     }
                 }
-                if (availableSplits.size() >= maxAvailable) break; // That should be enough.
-//                if (wasSplit) break;
+                if (availableSplits.size() >= maxAvailable)
+                {
+                    break; // That should be enough.
+                }
             }
             if (availableSplits.isEmpty())
             {

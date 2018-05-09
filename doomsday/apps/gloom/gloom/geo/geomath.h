@@ -167,14 +167,17 @@ struct Line
         const T d1 = dir();
         const T n = normal();
         const T d2 = other.dir();
-        double deg = 180 + radianToDegree(std::acos(clamp(-1.0, d1.dot(d2), 1.0)));
-        if (n.dot(d2) > 0) deg = 360 - deg;
-        return deg;
+        return 180.0 - radianToDegree(std::atan2(n.dot(d2), d1.dot(d2)));
     }
 
     T nearestPoint(const T &p) const
     {
         return start + dir() * dir().dot(p - start);
+    }
+
+    String asText() const
+    {
+        return "Line " + start.asText() + " -> " + end.asText();
     }
 };
 
