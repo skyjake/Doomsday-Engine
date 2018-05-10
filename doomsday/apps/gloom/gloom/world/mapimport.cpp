@@ -188,6 +188,11 @@ DENG2_PIMPL_NOREF(MapImport)
     const res::LumpCatalog &lumps;
     Map map;
 
+    Vec3d worldScale;
+
+    enum LevelFormat { UnknownFormat, DoomFormat, HexenFormat };
+    LevelFormat levelFormat = UnknownFormat;
+
 #if defined (_MSC_VER)
 #  pragma pack(push, 1)
 #endif
@@ -279,25 +284,30 @@ DENG2_PIMPL_NOREF(MapImport)
 
     bool import(const String &mapId)
     {
-        qDebug() << "Importing map:" << mapId;
-
         map.clear();
-
-        // Conversion from map units to meters.
-        const double MapUnit = 1.74 / 41.0; // Based on Doom Guy vs. average male eye height.
 
         const auto headerPos = lumps.find(mapId);
 
-        const DataArray<DoomVertex>  vertices(lumps.read(headerPos, 4));
-        const DataArray<DoomLinedef> linedefs(lumps.read(headerPos, 2));
-        const DataArray<DoomSidedef> sidedefs(lumps.read(headerPos, 3));
-        const DataArray<DoomSector>  sectors (lumps.read(headerPos, 8));
+        levelFormat = (lumps.lumpName(headerPos + 11) == "BEHAVIOR" ? HexenFormat : DoomFormat);
 
-        /*qDebug("%i vertices", vertices.size());
-        for (int i = 0; i < vertices.size(); ++i)
-        {
-            qDebug("%i: x=%i, y=%i", i, vertices[i].x, vertices[i].y);
-        }*/
+        qDebug() << "Importing map:" << mapId
+                 << (levelFormat == DoomFormat ? "(Doom)" : "(Hexen)");
+
+        // Conversion from map units to meters.
+        // (Based on Doom Guy vs. average male eye height.)
+        const double MapUnit = 1.74 / (levelFormat == DoomFormat ? 41.0 : 48.0);
+
+        worldScale = {MapUnit, MapUnit * 1.2, MapUnit}; // VGA aspect ratio for vertical
+
+        const auto linedefData = lumps.read(headerPos + 2);
+
+        const DataArray<DoomVertex>   vertices(lumps.read(headerPos + 4));
+        const DataArray<DoomLinedef>  doomLinedefs(linedefData);
+        const DataArray<HexenLinedef> hexenLinedefs(linedefData);
+        const DataArray<DoomSidedef>  sidedefs(lumps.read(headerPos + 3));
+        const DataArray<DoomSector>   sectors(lumps.read(headerPos + 8));
+
+        const int linedefsCount = (levelFormat == DoomFormat ? doomLinedefs.size() : hexenLinedefs.size());
 
         QVector<ID> mappedVertex(vertices.size());
 
@@ -313,7 +323,7 @@ DENG2_PIMPL_NOREF(MapImport)
         };
         QVector<MappedSector> mappedSectors(sectors.size());
 
-        QVector<ID> mappedLines(linedefs.size());
+        QVector<ID> mappedLines(linedefsCount);
 
         // Create planes for all sectors: each gets a separate floor and ceiling.
         for (int i = 0; i < sectors.size(); ++i)
@@ -333,11 +343,11 @@ DENG2_PIMPL_NOREF(MapImport)
             }
 
             mappedSectors[i].floor = map.append(map.planes(),
-                                                  Plane{Vec3d(0, le16(sec.floorHeight) * MapUnit, 0),
+                                                  Plane{Vec3d(0, le16(sec.floorHeight) * worldScale.y, 0),
                                                         Vec3f(0, 1, 0),
                                                         {floorTexture, ""}});
             mappedSectors[i].ceiling = map.append(map.planes(),
-                                                  Plane{Vec3d(0, le16(sec.ceilingHeight) * MapUnit, 0),
+                                                  Plane{Vec3d(0, le16(sec.ceilingHeight) * worldScale.y, 0),
                                                         Vec3f(0, -1, 0),
                                                         {ceilingTexture, ""}});
 
@@ -351,10 +361,29 @@ DENG2_PIMPL_NOREF(MapImport)
         }
 
         // Create lines with one or two sides.
-        for (int i = 0; i < linedefs.size(); ++i)
+        for (int i = 0; i < linedefsCount; ++i)
         {
-            const auto &   ldef = linedefs[i];
-            const uint16_t idx[2]{le16u(ldef.startVertex), le16u(ldef.endVertex)};
+            uint16_t idx[2];
+            uint16_t sides[2];
+
+            if (levelFormat == DoomFormat)
+            {
+                const auto &ldef = doomLinedefs[i];
+
+                idx[0]   = le16u(ldef.startVertex);
+                idx[1]   = le16u(ldef.endVertex);
+                sides[0] = le16u(ldef.frontSidedef);
+                sides[1] = le16u(ldef.backSidedef);
+            }
+            else
+            {
+                const auto &ldef = hexenLinedefs[i];
+
+                idx[0]   = le16u(ldef.startVertex);
+                idx[1]   = le16u(ldef.endVertex);
+                sides[0] = le16u(ldef.frontSidedef);
+                sides[1] = le16u(ldef.backSidedef);
+            }
 
             Line line;
 
@@ -364,13 +393,12 @@ DENG2_PIMPL_NOREF(MapImport)
                 {
                     mappedVertex[idx[p]] = map.append(
                         map.points(),
-                        Point{Vec2d(le16(vertices[idx[p]].x), -le16(vertices[idx[p]].y)) * MapUnit});
+                        Point{Vec2d(le16(vertices[idx[p]].x), -le16(vertices[idx[p]].y)) * worldScale.xz()});
                 }
                 line.points[p] = mappedVertex[idx[p]];
             }
 
-            const uint16_t sides[2]{le16u(ldef.frontSidedef), le16u(ldef.backSidedef)};
-            uint16_t       sectorIdx[2]{NoSector, NoSector};
+            uint16_t sectorIdx[2]{NoSector, NoSector};
 
             for (int s = 0; s < 2; ++s)
             {
@@ -471,7 +499,18 @@ DENG2_PIMPL_NOREF(MapImport)
             }
             for (auto &cont : contours)
             {
-                cont.makePolygon(map, currentSector);
+                if (cont.lines.size() >= 3) // && cont.isClosed(map, currentSector))
+                {
+                    cont.makePolygon(map, currentSector);
+                }
+                else
+                {
+                    qDebug("Ignoring contour %li (size: %i, closed: %i)",
+                           &cont - &contours.at(0),
+                           cont.lines.size(),
+                           cont.isClosed(map, currentSector));
+                    cont.clear();
+                }
             }
 
             // Some contours may share points with other contours. Let's see if can get them
@@ -484,6 +523,8 @@ DENG2_PIMPL_NOREF(MapImport)
 
                     Contour &host  = contours[i];
                     Contour &graft = contours[j];
+
+                    if (host.size() < 3 || graft.size() < 3) continue;
 
                     int hostIdx = host.findSharedPoint(graft);
                     if (hostIdx >= 0)
@@ -539,7 +580,7 @@ DENG2_PIMPL_NOREF(MapImport)
             for (int i = 0; i < contours.size(); ++i)
             {
                 qDebug() << "- contour" << i << ":" << contours[i].polygon.asText()
-                         << contours[i].isClosed(map, currentSector)
+                         << "closed:" << contours[i].isClosed(map, currentSector)
                          << "parent:" << contours[i].parent;
             }
 
@@ -547,8 +588,8 @@ DENG2_PIMPL_NOREF(MapImport)
             {
                 if (contours[i].parent == -1 && !contours[i].polygon.isClockwiseWinding())
                 {
-                    qDebug("Contour %i has the wrong winding; needs a parent!", i);
-                    DENG2_ASSERT_FAIL("contour missing a parent");
+                    qDebug("Ignoring top-level contour %i due to the wrong winding", i);
+                    contours[i].clear();
                 }
             }
 
