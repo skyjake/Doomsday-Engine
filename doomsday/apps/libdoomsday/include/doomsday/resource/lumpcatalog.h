@@ -78,9 +78,11 @@ public:
      *                          in relation to a start marker).
      * @return  Lump data.
      */
-    Block read(const String &lumpName, int lumpIndexOffset = 0) const;
+    Block read(const String &lumpName) const;
     
-    Block read(const LumpPos &lump, int lumpIndexOffset = 0) const;
+    Block read(const LumpPos &lump) const;
+
+    String lumpName(const LumpPos &lump) const;
 
     de::StringList packages() const;
 
@@ -89,5 +91,10 @@ private:
 };
 
 } // namespace res
+
+inline res::LumpCatalog::LumpPos operator+(const res::LumpCatalog::LumpPos &pos, int offset)
+{
+    return res::LumpCatalog::LumpPos{pos.first, pos.second + offset};
+}
 
 #endif // LIBDOOMSDAY_LUMPCATALOG_H

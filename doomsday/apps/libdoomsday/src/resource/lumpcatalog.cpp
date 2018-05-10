@@ -131,19 +131,34 @@ LumpCatalog::LumpPos LumpCatalog::find(const String &lumpName) const
 
 StringList LumpCatalog::packages() const
 {
-    return d->packageIds;
+   return d->packageIds;
+}
+
+Block LumpCatalog::read(const String &lumpName) const
+{
+    return read(d->findLump(lumpName));
 }
     
-Block LumpCatalog::read(const LumpPos &lump, int lumpIndexOffset) const
+Block LumpCatalog::read(const LumpPos &lump) const
 {
     Block data;
     if (lump.first)
     {
         DENG2_ASSERT(lump.first->lumpDirectory());
-        auto const &entry = lump.first->lumpDirectory()->entry(lump.second + lumpIndexOffset);
+        auto const &entry = lump.first->lumpDirectory()->entry(lump.second);
         data.copyFrom(*lump.first, entry.offset, entry.size);
     }
     return data;
+}
+
+String LumpCatalog::lumpName(const LumpPos &lump) const
+{
+    if (lump.first)
+    {
+        DENG2_ASSERT(lump.first->lumpDirectory());
+        return String::fromLatin1(lump.first->lumpDirectory()->entry(lump.second).name);
+    }
+    return {};
 }
 
 } // namespace res
