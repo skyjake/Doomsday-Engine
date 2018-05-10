@@ -210,7 +210,7 @@ def build_source_package():
     # Check distribution.
     system_command("lsb_release -a | perl -n -e 'm/Codename:\s(.+)/ && print $1' > /tmp/distroname")
     hostDistro = file('/tmp/distroname', 'rt').read()
-    distros = ['xenial', 'artful']
+    distros = ['xenial', 'artful', 'bionic']
 
     for distro in distros:
         os.chdir(os.path.join(builder.config.DISTRIB_DIR))
