@@ -97,9 +97,8 @@ DENG2_PIMPL_NOREF(MapBuild)
 
         foreach (const ID sectorId, map.sectors().keys())
         {
-            const Sector &sector = map.sector(sectorId);
-
-            const auto sectorPolygons = map.sectorPolygons(sectorId);
+            const Sector &sector         = map.sector(sectorId);
+            const auto    sectorPolygons = map.sectorPolygons(sectorId);
 
             // Split the polygon to convex parts (for triangulation).
             QHash<ID, Vec2d> expanders;
@@ -170,37 +169,49 @@ DENG2_PIMPL_NOREF(MapBuild)
                         f.tangent = -f.tangent;
                     }
 
-                    foreach (const ID pointID, currentVerts.keys())
+                    for (auto cv = currentVerts.constBegin(); cv != currentVerts.constEnd(); ++cv)
                     {
-                        f.pos      = currentVerts[pointID];
+                        const ID pointID = cv.key();
+
+                        f.pos      = cv.value();
                         f.texCoord = Vec4f(0, 0, 0, 0); // fixed offset
                         f.expander = expanders[pointID];
+
+                        DENG2_ASSERT(!pointIndices.contains(pointID));
 
                         pointIndices.insert(pointID, Buffer::Index(verts[geomBuf].size()));
                         verts[geomBuf] << f;
                     }
 
-                    for (const auto &convex : convexParts)
+                    foreach (const auto &convex, convexParts)
                     {
                         const ID baseID = convex.points[0].id;
 
                         // Floor.
                         if (isFacingUp)
                         {
-                            for (int i = 1; i < convex.size() - 1; ++i)
+                            for (int j = 1; j < convex.size() - 1; ++j)
                             {
+                                DENG2_ASSERT(pointIndices.contains(baseID));
+                                DENG2_ASSERT(pointIndices.contains(convex.points[j + 1].id));
+                                DENG2_ASSERT(pointIndices.contains(convex.points[j].id));
+
                                 indices[geomBuf] << pointIndices[baseID]
-                                                 << pointIndices[convex.points[i + 1].id]
-                                                 << pointIndices[convex.points[i].id];
+                                                 << pointIndices[convex.points[j + 1].id]
+                                                 << pointIndices[convex.points[j].id];
                             }
                         }
                         else
                         {
-                            for (int i = 1; i < convex.size() - 1; ++i)
+                            for (int j = 1; j < convex.size() - 1; ++j)
                             {
+                                DENG2_ASSERT(pointIndices.contains(baseID));
+                                DENG2_ASSERT(pointIndices.contains(convex.points[j + 1].id));
+                                DENG2_ASSERT(pointIndices.contains(convex.points[j].id));
+
                                 indices[geomBuf] << pointIndices[baseID]
-                                                 << pointIndices[convex.points[i].id]
-                                                 << pointIndices[convex.points[i + 1].id];
+                                                 << pointIndices[convex.points[j].id]
+                                                 << pointIndices[convex.points[j + 1].id];
                             }
                         }
                     }

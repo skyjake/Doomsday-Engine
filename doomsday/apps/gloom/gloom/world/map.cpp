@@ -239,30 +239,35 @@ const Entities &Map::entities() const
 
 Point &Map::point(ID id)
 {
+    DENG2_ASSERT(id != 0);
     DENG2_ASSERT(d->points.contains(id));
     return d->points[id];
 }
 
 Line &Map::line(ID id)
 {
+    DENG2_ASSERT(id != 0);
     DENG2_ASSERT(d->lines.contains(id));
     return d->lines[id];
 }
 
 Plane &Map::plane(ID id)
 {
+    DENG2_ASSERT(id != 0);
     DENG2_ASSERT(d->planes.contains(id));
     return d->planes[id];
 }
 
 Sector &Map::sector(ID id)
 {
+    DENG2_ASSERT(id != 0);
     DENG2_ASSERT(d->sectors.contains(id));
     return d->sectors[id];
 }
 
 Volume &Map::volume(ID id)
 {
+    DENG2_ASSERT(id != 0);
     DENG2_ASSERT(d->volumes.contains(id));
     return d->volumes[id];
 }
@@ -274,36 +279,42 @@ Entity &Map::entity(ID id)
 
 const Point &Map::point(ID id) const
 {
+    DENG2_ASSERT(id != 0);
     DENG2_ASSERT(d->points.contains(id));
     return d->points[id];
 }
 
 const Line &Map::line(ID id) const
 {
+    DENG2_ASSERT(id != 0);
     DENG2_ASSERT(d->lines.contains(id));
     return d->lines[id];
 }
 
 const Plane &Map::plane(ID id) const
 {
+    DENG2_ASSERT(id != 0);
     DENG2_ASSERT(d->planes.contains(id));
     return d->planes[id];
 }
 
 const Sector &Map::sector(ID id) const
 {
+    DENG2_ASSERT(id != 0);
     DENG2_ASSERT(d->sectors.contains(id));
     return d->sectors[id];
 }
 
 const Volume &Map::volume(ID id) const
 {
+    DENG2_ASSERT(id != 0);
     DENG2_ASSERT(d->volumes.contains(id));
     return d->volumes[id];
 }
 
 const Entity &Map::entity(ID id) const
 {
+    DENG2_ASSERT(id != 0);
     DENG2_ASSERT(d->entities.contains(id));
     return *d->entities[id];
 }
@@ -388,7 +399,8 @@ geo::Line2d Map::geoLine(ID lineId) const
 geo::Line2d Map::geoLine(Edge ref) const
 {
     const Line &line = Map::line(ref.line);
-    return geo::Line2d{point(line.startPoint(ref.side)).coord, point(line.endPoint(ref.side)).coord};
+    return geo::Line2d{point(line.startPoint(ref.side)).coord,
+                       point(line.endPoint(ref.side)).coord};
 }
 
 Polygons Map::sectorPolygons(ID sectorId) const
@@ -449,7 +461,7 @@ Map::WorldVerts Map::worldPlaneVerts(const Sector &sector, const Plane &plane) c
         {
             if (!verts.contains(pp.id))
             {
-                verts.insert(pp.id, plane.projectPoint(d->points[pp.id]));
+                verts.insert(pp.id, plane.projectPoint(point(pp.id)));
             }
         }
     }

@@ -1080,6 +1080,7 @@ DENG2_PIMPL(Editor)
                         QListWidget *list = new QListWidget;
                         list->addItems(compose<QStringList>(maps.begin(), maps.end()));
                         layout->addWidget(list, 1);
+                        connect(list, SIGNAL(itemDoubleClicked(QListWidgetItem*)), &dlg, SLOT(accept()));
                         QDialogButtonBox *box = new QDialogButtonBox;
                         auto *ok = box->addButton("OK", QDialogButtonBox::AcceptRole);
                         auto *cancel = box->addButton("Cancel", QDialogButtonBox::RejectRole);

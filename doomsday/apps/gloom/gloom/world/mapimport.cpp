@@ -478,9 +478,9 @@ DENG2_PIMPL_NOREF(MapImport)
 
         for (int secIndex = 0; secIndex < mappedSectors.size(); ++secIndex)
         {
-            const auto &ms = mappedSectors[secIndex];
-
-            const ID currentSector = ms.sector;
+            const auto &ms            = mappedSectors[secIndex];
+            const ID    currentSector = ms.sector;
+            Sector     &sector        = map.sector(ms.sector);
 
             qDebug("Sector %i: boundary lines %i, points %i",
                    secIndex,
@@ -801,6 +801,7 @@ DENG2_PIMPL_NOREF(MapImport)
                 // Look for two-point zero-area loops.
                 {
                     auto &poly = cont.polygon;
+                    bool modified = false;
                     for (int i = 0; i < poly.size(); ++i)
                     {
                         if (poly.points[i].id == poly.pointAt(i + 2).id)
@@ -809,9 +810,33 @@ DENG2_PIMPL_NOREF(MapImport)
                                    poly.points[i].id,
                                    poly.pointAt(i + 1).id);
                             poly.points.remove(i, 2);
+                            modified = true;
                             i = -1; // restart
                         }
                     }
+                    if (modified) cont.update();
+                }
+            }
+
+            // Remove walls outside the sector polygon.
+            for (int i = 0; i < sector.walls.size(); ++i)
+            {
+                const auto mapLine = map.line(sector.walls[i]);
+                bool       inPoly  = false;
+                foreach (const Contour &cont, contours)
+                {
+                     if (cont.hasPoints.contains(mapLine.points[0]) &&
+                         cont.hasPoints.contains(mapLine.points[1]))
+                     {
+                         inPoly = true;
+                     }
+                }
+                if (!inPoly)
+                {
+                    qDebug("  Sector line %x is not inside the contours", sector.walls[i]);
+                    auto &line = map.line(sector.walls[i]);
+                    line.surfaces[line.sectorSide(currentSector)].sector = 0;
+                    sector.walls.removeAt(i--);
                 }
             }
 
@@ -837,9 +862,47 @@ DENG2_PIMPL_NOREF(MapImport)
                         DENG2_ASSERT(points.isEmpty() || points.back() != pp.id);
                         points << pp.id;
                     }
+
+                    for (int i = 0; i < cont.size(); ++i)
+                    {
+                        DENG2_ASSERT(cont.polygon.lineAt(i).length() < 80);
+                    }
                 }
             }
         }
+
+        // Check that polygons from one sector aren't crossing others.
+#if 0
+        {
+            for (auto i = map.sectors().begin(); i != map.sectors().end(); ++i)
+            {
+                //const auto &sec = i.value();
+                const auto secPolys = map.sectorPolygons(i.key());
+                for (auto j = map.sectors().begin(); j != map.sectors().end(); ++j)
+                {
+                    if (i.key() == j.key()) continue;
+                    const auto otherPolys = map.sectorPolygons(j.key());
+
+                    for (const auto &poly : secPolys)
+                    {
+                        for (const auto &otherPoly : otherPolys)
+                        {
+                            for (int p = 0; p < poly.size(); ++p)
+                            {
+                                if (otherPoly.intersect(poly.lineAt(p)) > 0)
+                                {
+                                    qDebug("Sector %x intersects sector %x: %s",
+                                           i.key(),
+                                           j.key(),
+                                           poly.lineAt(p).asText().toLatin1().constData());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+#endif
 
         return true;
     }
