@@ -193,9 +193,9 @@ DENG2_PIMPL(GLWindow)
         TimeSpan elapsed = nowTime - lastFpsTime;
         if (elapsed > 2.5)
         {
-            fps = float(frameCount / elapsed);
+            fps         = float(frameCount / elapsed);
             lastFpsTime = nowTime;
-            frameCount = 0;
+            frameCount  = 0;
         }
     }
 
@@ -372,7 +372,7 @@ int GLWindow::pixelHeight() const
 
 WindowEventHandler &GLWindow::eventHandler() const
 {
-    DENG2_ASSERT(d->handler != 0);
+    DENG2_ASSERT(d->handler != nullptr);
     return *d->handler;
 }
 
@@ -581,12 +581,12 @@ void GLWindow::frameWasSwapped()
 
 bool GLWindow::mainExists() // static
 {
-    return mainWindow != 0;
+    return mainWindow != nullptr;
 }
 
 GLWindow &GLWindow::main() // static
 {
-    DENG2_ASSERT(mainWindow != 0);
+    DENG2_ASSERT(mainWindow != nullptr);
     return *mainWindow;
 }
 

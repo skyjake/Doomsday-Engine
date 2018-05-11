@@ -72,7 +72,7 @@ template <typename VecType>
 VecType vectorFromValue(Value const &value) {
     VecType converted;
     for (int i = 0; i < converted.size(); ++i) {
-        converted[i] = typename VecType::ValueType(value.element(i).asNumber());
+        converted[i] = typename VecType::value_type(value.element(i).asNumber());
     }
     return converted;
 }
@@ -104,11 +104,12 @@ class Vector2
 {
 public:
     typedef Type ValueType;
+    typedef Type value_type;
 
 public:
     Vector2(Type a = Type(0), Type b = Type(0)) : x(a), y(b) {}
     Vector2(Type const *ab) : x(ab[0]), y(ab[1]) {}
-    Vector2(Value const &value) { *this = vectorFromValue< Vector2<Type> >(value); }
+    Vector2(Value const &value) { *this = vectorFromValue<Vector2<Type>>(value); }
     Vector2(Vector2 const &other) : x(other.x), y(other.y) {}
 
     /// Implicit conversion operator to a float vector.
@@ -129,12 +130,12 @@ public:
         return 2;
     }
     ByteRefArray const data() const {
-        return ByteRefArray(&x, size() * sizeof(ValueType));
+        return ByteRefArray(&x, size() * sizeof(value_type));
     }
     ByteRefArray data() {
-        return ByteRefArray(&x, size() * sizeof(ValueType));
+        return ByteRefArray(&x, size() * sizeof(value_type));
     }
-    ValueType const *constPtr() const {
+    value_type const *constPtr() const {
         return &x;
     }
     Type &operator [] (int index) {
@@ -147,6 +148,11 @@ public:
     }
     Type const &operator [] (int index) const {
         return const_cast<Vector2<Type> &>(*this)[index];
+    }
+    Vector2 &operator = (Vector2 const &other) {
+        x = other.x;
+        y = other.y;
+        return *this;
     }
     Vector2 operator + (Vector2 const &other) const {
         return Vector2(x + other.x, y + other.y);
@@ -327,6 +333,7 @@ public:
     Vector3(Vector2<Type> const &v2, Type c = 0) : Vector2<Type>(v2), z(c) {}
     Vector3(Type const *abc) : Vector2<Type>(abc), z(abc[2]) {}
     Vector3(Value const &value) { *this = vectorFromValue< Vector3<Type> >(value); }
+    Vector3(Vector3 const &other) : Vector2<Type>(other), z(other.z) {}
 
     /// Implicit conversion operator to a float vector.
     operator Vector3<dfloat> () const {
@@ -364,6 +371,12 @@ public:
     }
     Type const &operator [] (int index) const {
         return const_cast<Vector3<Type> &>(*this)[index];
+    }
+    Vector3 &operator = (Vector3 const &other) {
+        Vector2<Type>::x = other.x;
+        Vector2<Type>::y = other.y;
+        z                = other.z;
+        return *this;
     }
     Vector3 operator + (Vector3 const &other) const {
         return Vector3(Vector2<Type>::x + other.x, Vector2<Type>::y + other.y, z + other.z);
@@ -554,6 +567,7 @@ public:
     Vector4(Vector2<Type> const &a, Vector2<Type> const &b) : Vector3<Type>(a, b.x), w(b.y) {}
     Vector4(Type const *abcd) : Vector3<Type>(abcd), w(abcd[3]) {}
     Vector4(Value const &value) { *this = vectorFromValue< Vector4<Type> >(value); }
+    Vector4(Vector4 const &other) : Vector3<Type>(other), w(other.w) {}
 
     /// Implicit conversion operator to a float vector.
     operator Vector4<dfloat> () const {
@@ -591,6 +605,13 @@ public:
     }
     Type const &operator [] (int index) const {
         return const_cast<Vector4<Type> &>(*this)[index];
+    }
+    Vector4 &operator = (Vector4 const &other) {
+        Vector2<Type>::x = other.x;
+        Vector2<Type>::y = other.y;
+        Vector3<Type>::z = other.z;
+        w                = other.w;
+        return *this;
     }
     Vector4 operator + (Vector4 const &other) const {
         return Vector4(Vector3<Type>::x + other.x, Vector3<Type>::y + other.y,
@@ -744,30 +765,28 @@ public:
 
 // Swizzling.
 template <typename Type>
-typename Type::ValueType swizzledComponent(Type const &vec, SwizzleAxis axis) {
+typename Type::value_type swizzledComponent(Type const &vec, SwizzleAxis axis) {
     if (axis >= 0) return vec[axis];
     return -vec[-axis - 1];
 }
 
 template <typename Type>
-Vector2<typename Type::ValueType> swizzle(Type const &vec, SwizzleAxis a, SwizzleAxis b) {
-    return Vector2<typename Type::ValueType>(swizzledComponent(vec, a),
-                                             swizzledComponent(vec, b));
+Vector2<typename Type::value_type> swizzle(Type const &vec, SwizzleAxis a, SwizzleAxis b) {
+    return Vector2<typename Type::value_type>(swizzledComponent(vec, a), swizzledComponent(vec, b));
 }
 
 template <typename Type>
-Vector3<typename Type::ValueType> swizzle(Type const &vec, SwizzleAxis a, SwizzleAxis b, SwizzleAxis c) {
-    return Vector3<typename Type::ValueType>(swizzledComponent(vec, a),
-                                             swizzledComponent(vec, b),
-                                             swizzledComponent(vec, c));
+Vector3<typename Type::value_type> swizzle(Type const &vec, SwizzleAxis a, SwizzleAxis b, SwizzleAxis c) {
+    return Vector3<typename Type::value_type>(
+        swizzledComponent(vec, a), swizzledComponent(vec, b), swizzledComponent(vec, c));
 }
 
 template <typename Type>
-Vector4<typename Type::ValueType> swizzle(Type const &vec, SwizzleAxis a, SwizzleAxis b, SwizzleAxis c, SwizzleAxis d) {
-    return Vector4<typename Type::ValueType>(swizzledComponent(vec, a),
-                                             swizzledComponent(vec, b),
-                                             swizzledComponent(vec, c),
-                                             swizzledComponent(vec, d));
+Vector4<typename Type::value_type> swizzle(Type const &vec, SwizzleAxis a, SwizzleAxis b, SwizzleAxis c, SwizzleAxis d) {
+    return Vector4<typename Type::value_type>(swizzledComponent(vec, a),
+                                              swizzledComponent(vec, b),
+                                              swizzledComponent(vec, c),
+                                              swizzledComponent(vec, d));
 }
 
 // Serialization of Vector4.
