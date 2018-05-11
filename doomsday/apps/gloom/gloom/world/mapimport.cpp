@@ -52,7 +52,6 @@ static inline uint16_t le16u(int16_t leValue)
 struct Contour
 {
     QVector<ID>  lines;
-//    bool         hole = false;
     QSet<ID>     hasPoints;
     geo::Polygon polygon;
     int          parent = -1;
@@ -140,6 +139,20 @@ struct Contour
         return -1;
     }
 
+    bool hasLineWithPoints(const Map &map, ID a, ID b) const
+    {
+        for (ID lineId : lines)
+        {
+            const auto &line = map.line(lineId);
+            if ((line.points[0] == a && line.points[1] == b) ||
+                (line.points[0] == b && line.points[1] == a))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     void clear()
     {
         polygon.clear();
@@ -154,6 +167,14 @@ struct Contour
             hasPoints.insert(pp.id);
         }
         polygon.updateBounds();
+    }
+
+    String asText() const
+    {
+        return polygon.asText() + " Lines: (" +
+               String::join(map<StringList>(lines, [](ID id) { return String::number(id, 16); }),
+                            " ") +
+               ")";
     }
 };
 
@@ -342,14 +363,16 @@ DENG2_PIMPL_NOREF(MapImport)
                 ceilingTexture = "";
             }
 
-            mappedSectors[i].floor = map.append(map.planes(),
-                                                  Plane{Vec3d(0, le16(sec.floorHeight) * worldScale.y, 0),
-                                                        Vec3f(0, 1, 0),
-                                                        {floorTexture, ""}});
-            mappedSectors[i].ceiling = map.append(map.planes(),
-                                                  Plane{Vec3d(0, le16(sec.ceilingHeight) * worldScale.y, 0),
-                                                        Vec3f(0, -1, 0),
-                                                        {ceilingTexture, ""}});
+            mappedSectors[i].floor =
+                map.append(map.planes(),
+                           Plane{Vec3d(0, le16(sec.floorHeight) * worldScale.y, 0),
+                                 Vec3f(0, 1, 0),
+                                 {floorTexture, ""}});
+            mappedSectors[i].ceiling =
+                map.append(map.planes(),
+                           Plane{Vec3d(0, le16(sec.ceilingHeight) * worldScale.y, 0),
+                                 Vec3f(0, -1, 0),
+                                 {ceilingTexture, ""}});
 
             Sector sector;
             Volume volume{{mappedSectors[i].floor, mappedSectors[i].ceiling}};
@@ -393,7 +416,8 @@ DENG2_PIMPL_NOREF(MapImport)
                 {
                     mappedVertex[idx[p]] = map.append(
                         map.points(),
-                        Point{Vec2d(le16(vertices[idx[p]].x), -le16(vertices[idx[p]].y)) * worldScale.xz()});
+                        Point{Vec2d(le16(vertices[idx[p]].x), -le16(vertices[idx[p]].y)) *
+                              worldScale.xz()});
                 }
                 line.points[p] = mappedVertex[idx[p]];
             }
@@ -603,6 +627,23 @@ DENG2_PIMPL_NOREF(MapImport)
                 return depth;
             };
 
+            auto countLinesContactingPoint = [this, &contours](ID pointId) -> int {
+                int count = 0;
+                for (const Contour &cont : contours)
+                {
+                    for (ID lineId : cont.lines)
+                    {
+                        const auto &line = map.line(lineId);
+                        if (line.points[0] == pointId || line.points[1] == pointId)
+                        {
+                            qDebug("\tline %x contacting point %x", lineId, pointId);
+                            count++;
+                        }
+                    }
+                }
+                return count;
+            };
+
             // Promote nested outer contours to the top level.
             for (Contour &cont : contours)
             {
@@ -684,6 +725,91 @@ DENG2_PIMPL_NOREF(MapImport)
                             // Failure!
                             qDebug("Failed to join inner contour %i to its parent %i",
                                    innerIndex, outerIndex);
+                        }
+                    }
+                }
+            }
+
+            // Clean up split contours. For example, in Hexen MAP02, there are some partial
+            // contours inside walls that should be ignored.
+            for (Contour &cont : contours)
+            {
+                if (cont.size() < 3) continue;
+
+                // Find the gap.
+                while (!cont.isClosed(map, currentSector))
+                {
+                    qDebug("Countour %li is not closed, finding the gap...", &cont - &contours[0]);
+                    qDebug() << "   " << cont.asText();
+
+                    bool modified = false;
+                    for (int i = 0; i < cont.polygon.size(); ++i)
+                    {
+                        const ID startPoint = cont.polygon.pointAt(i).id;
+                        const ID endPoint   = cont.polygon.pointAt(i + 1).id;
+
+                        if (!cont.hasLineWithPoints(map, startPoint, endPoint))
+                        {
+                            qDebug("  Line %i-%i (%x...%x) has no corresponding line",
+                                   i,
+                                   mod(i + 1, cont.polygon.size()),
+                                   startPoint,
+                                   endPoint);
+
+                            for (int j = 0; j < cont.size(); ++j)
+                            {
+                                qDebug("    point %i (%x) has %i contacts in sector %i",
+                                       j,
+                                       cont.polygon.points[j].id,
+                                       countLinesContactingPoint(cont.polygon.points[j].id),
+                                       currentSector);
+                            }
+
+                            // This line does not actually exist, so let's get rid of it.
+                            if (countLinesContactingPoint(startPoint) < 3)
+                            {
+                                cont.polygon.points.removeAt(i);
+                                modified = true;
+                            }
+                            else if (countLinesContactingPoint(endPoint) < 3)
+                            {
+                                cont.polygon.points.removeAt(mod(i + 1, cont.polygon.size()));
+                                modified = true;
+                            }
+
+                            if (modified)
+                            {
+                                cont.update();
+                                qDebug() << "  Removed fringe point:" << cont.polygon.asText();
+                            }
+                            break;
+                        }
+                    }
+                    if (!modified && cont.polygon.size() > 0)
+                    {
+                        qDebug("  Contour could not be closed!");
+                        break; // Hmm.
+                    }
+                }
+
+                if (cont.size() < 3)
+                {
+                    qDebug("  Removing contour with %i points", cont.size());
+                    cont.clear();
+                }
+
+                // Look for two-point zero-area loops.
+                {
+                    auto &poly = cont.polygon;
+                    for (int i = 0; i < poly.size(); ++i)
+                    {
+                        if (poly.points[i].id == poly.pointAt(i + 2).id)
+                        {
+                            qDebug("  Removing zero-area loop %x..%x",
+                                   poly.points[i].id,
+                                   poly.pointAt(i + 1).id);
+                            poly.points.remove(i, 2);
+                            i = -1; // restart
                         }
                     }
                 }

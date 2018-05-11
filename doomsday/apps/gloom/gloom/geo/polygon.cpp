@@ -591,7 +591,8 @@ QList<Polygon> Polygon::splitConvexParts() const
             }
             if (availableSplits.isEmpty())
             {
-//                qDebug("have %i insets, couldn't find a split", insets.size());
+                qDebug("have %i insets, couldn't find a split", insets.size());
+                qDebug() << poly.asText();
                 DENG2_ASSERT(!availableSplits.isEmpty());
             }
             else
