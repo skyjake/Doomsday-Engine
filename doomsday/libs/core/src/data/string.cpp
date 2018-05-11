@@ -609,9 +609,9 @@ void String::advanceFormat(String::const_iterator &i, String::const_iterator con
     }
 }
 
-String String::join(QList<String> const &stringList, String const &sep)
+String String::join(StringList const &stringList, String const &sep)
 {
-    if (stringList.isEmpty()) return "";
+    if (stringList.isEmpty()) return {};
 
     String joined;
     QTextStream os(&joined);

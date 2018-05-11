@@ -650,6 +650,17 @@ inline OutContainer map(const InContainer &input, Func func) {
     return out;
 }
 
+template <typename OutContainer, typename InContainer>
+inline OutContainer map(const InContainer &input,
+                         std::function<typename OutContainer::value_type (
+                             typename InContainer::value_type const &)> func) {
+    OutContainer out;
+    for (auto i = input.begin(); i != input.end(); ++i) {
+        out.push_back(func(*i));
+    }
+    return out;
+}
+
 template <typename ContainerType>
 inline ContainerType filter(ContainerType const &c,
                             std::function<bool (typename ContainerType::value_type const &)> func) {
