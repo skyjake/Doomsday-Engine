@@ -850,7 +850,6 @@ DENG2_PIMPL_NOREF(MapImport)
             // The remaining contours are now disjoint and can be used for plane triangulation.
 
             IDList &points = map.sector(currentSector).points;
-
             foreach (const auto &cont, contours)
             {
                 if (cont.polygon.size())
@@ -870,39 +869,6 @@ DENG2_PIMPL_NOREF(MapImport)
                 }
             }
         }
-
-        // Check that polygons from one sector aren't crossing others.
-#if 0
-        {
-            for (auto i = map.sectors().begin(); i != map.sectors().end(); ++i)
-            {
-                //const auto &sec = i.value();
-                const auto secPolys = map.sectorPolygons(i.key());
-                for (auto j = map.sectors().begin(); j != map.sectors().end(); ++j)
-                {
-                    if (i.key() == j.key()) continue;
-                    const auto otherPolys = map.sectorPolygons(j.key());
-
-                    for (const auto &poly : secPolys)
-                    {
-                        for (const auto &otherPoly : otherPolys)
-                        {
-                            for (int p = 0; p < poly.size(); ++p)
-                            {
-                                if (otherPoly.intersect(poly.lineAt(p)) > 0)
-                                {
-                                    qDebug("Sector %x intersects sector %x: %s",
-                                           i.key(),
-                                           j.key(),
-                                           poly.lineAt(p).asText().toLatin1().constData());
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-#endif
 
         return true;
     }
