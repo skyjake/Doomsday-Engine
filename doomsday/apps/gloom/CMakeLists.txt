@@ -85,6 +85,8 @@ set (SOURCES
     gloom/world/map.h
     gloom/world/mapimport.cpp
     gloom/world/mapimport.h
+    gloom/world/sectorpolygonizer.cpp
+    gloom/world/sectorpolygonizer.h
     gloom/world/user.cpp
     gloom/world/user.h
     gloom/world/world.cpp
