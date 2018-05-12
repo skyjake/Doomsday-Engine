@@ -863,7 +863,7 @@ void Map::deserialize(const Block &data)
                                        materials.at(5).toString()}};
             d->lines.insert(
                 getId(i.key()),
-                Line{{idNum(points[0]), idNum(points[1])}, {frontSurface, backSurface}});
+                Line{{{idNum(points[0]), idNum(points[1])}}, {{frontSurface, backSurface}}});
         }
     }
 

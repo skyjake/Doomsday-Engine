@@ -51,6 +51,13 @@ struct Line
         String material[3]; // Bottom, Middle, Top
     } surfaces[2]; // front and back
 
+    Line(const std::array<ID, 2> &     points   = {{0, 0}},
+         const std::array<Surface, 2> &surfaces = {
+             {Surface{0, {"", "", ""}}, Surface{0, {"", "", ""}}}})
+        : points{points[0], points[1]}
+        , surfaces{surfaces[0], surfaces[1]}
+    {}
+
     ID startPoint(Side side) const { return points[side == Front ? 0 : 1]; }
     ID endPoint(Side side) const { return points[side == Front ? 1 : 0]; }
     std::array<ID, 2> sectors() const { return std::array<ID, 2>{{surfaces[0].sector, surfaces[1].sector}}; }

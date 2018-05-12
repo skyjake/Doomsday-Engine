@@ -60,10 +60,11 @@ static String fixedString(const char *name, dsize maxLen = 8)
 DENG2_PIMPL_NOREF(MapImport)
 {
     const res::LumpCatalog &lumps;
-    Map map;
+    Map                     map;
+    QSet<String>            textures;
 
     String scope;
-    Vec3d worldScale;
+    Vec3d  worldScale;
 
     enum LevelFormat { UnknownFormat, DoomFormat, HexenFormat };
     LevelFormat levelFormat = UnknownFormat;
@@ -159,9 +160,10 @@ DENG2_PIMPL_NOREF(MapImport)
 
     bool import(const String &mapId)
     {
-        static const uint16_t NO_SECTOR = 0xffff;
+        static const uint16_t INVALID_INDEX = 0xffff;
 
         map.clear();
+        textures.clear();
 
         const auto headerPos = lumps.find(mapId);
 
@@ -180,16 +182,16 @@ DENG2_PIMPL_NOREF(MapImport)
 
         const auto linedefData = lumps.read(headerPos + 2);
 
-        const DataArray<DoomVertex>   vertices(lumps.read(headerPos + 4));
+        const DataArray<DoomVertex>   idVertices(lumps.read(headerPos + 4));
         const DataArray<DoomLinedef>  doomLinedefs(linedefData);
         const DataArray<HexenLinedef> hexenLinedefs(linedefData);
-        const DataArray<DoomSidedef>  sidedefs(lumps.read(headerPos + 3));
-        const DataArray<DoomSector>   sectors(lumps.read(headerPos + 8));
+        const DataArray<DoomSidedef>  idSidedefs(lumps.read(headerPos + 3));
+        const DataArray<DoomSector>   idSectors(lumps.read(headerPos + 8));
 
         const int linedefsCount =
             (levelFormat == DoomFormat ? doomLinedefs.size() : hexenLinedefs.size());
 
-        QVector<ID> mappedVertex(vertices.size());
+        QVector<ID> mappedVertex(idVertices.size());
 
         struct MappedSector {
             ID          sector  = 0;
@@ -199,15 +201,16 @@ DENG2_PIMPL_NOREF(MapImport)
             QSet<ID>    points;
             QVector<ID> boundaryLines;
         };
-        QVector<MappedSector> mappedSectors(sectors.size());
+        QVector<MappedSector> mappedSectors(idSectors.size());
 
         QVector<ID> mappedLines(linedefsCount);
         QSet<String> textures;
 
-        // Create planes for all sectors: each gets a separate floor and ceiling.
-        for (int i = 0; i < sectors.size(); ++i)
+        // -------- Create planes for all sectors: each gets a separate floor and ceiling --------
+
+        for (int i = 0; i < idSectors.size(); ++i)
         {
-            const auto &sec = sectors[i];
+            const auto &sec = idSectors[i];
 
             // Plane materials.
             String floorTexture   = scope + ".flat." + fixedString(sec.floorTexture).toLower();
@@ -245,11 +248,17 @@ DENG2_PIMPL_NOREF(MapImport)
             mappedSectors[i].sector = map.append(map.sectors(), sector);
         }
 
-        // Create lines with one or two sides.
+        // -------- Create lines with one or two sides --------
+
         for (int i = 0; i < linedefsCount; ++i)
         {
             uint16_t idx[2];
             uint16_t sides[2];
+            uint16_t sectors[2]{INVALID_INDEX, INVALID_INDEX};
+            String   middleTexture[2];
+            String   upperTexture[2];
+            String   lowerTexture[2];
+            Line     line;
 
             if (levelFormat == DoomFormat)
             {
@@ -270,47 +279,68 @@ DENG2_PIMPL_NOREF(MapImport)
                 sides[1] = le16u(ldef.backSidedef);
             }
 
-            Line line;
-
             for (int p = 0; p < 2; ++p)
             {
+                // Line points.
                 if (!mappedVertex[idx[p]])
                 {
                     mappedVertex[idx[p]] = map.append(
                         map.points(),
-                        Point{Vec2d(le16(vertices[idx[p]].x), -le16(vertices[idx[p]].y)) *
+                        Point{Vec2d(le16(idVertices[idx[p]].x), -le16(idVertices[idx[p]].y)) *
                               worldScale.xz()});
                 }
                 line.points[p] = mappedVertex[idx[p]];
-            }
 
-            uint16_t sectorIdx[2]{NO_SECTOR, NO_SECTOR};
+                // Sides.
+                if (sides[p] != INVALID_INDEX)
+                {
+                    const auto &sdef = idSidedefs[sides[p]];
 
-            for (int s = 0; s < 2; ++s)
-            {
-                const uint16_t sec = (sides[s] != NO_SECTOR? le16u(sidedefs[sides[s]].sector) : NO_SECTOR);
-                line.surfaces[s].sector = (sec != NO_SECTOR? mappedSectors[sec].sector : 0);
-                sectorIdx[s] = sec;
+                    sectors[p]              = le16u(sdef.sector);
+                    line.surfaces[p].sector = (sectors[p] != INVALID_INDEX? mappedSectors[sectors[p]].sector : 0);
+
+                    const auto midTex = fixedString(sdef.middleTexture);
+                    const auto upTex  = fixedString(sdef.upperTexture);
+                    const auto lowTex = fixedString(sdef.lowerTexture);
+
+                    if (midTex != "-")
+                    {
+                        middleTexture[p] = scope + ".texture." + midTex.toLower();
+                    }
+                    if (upTex != "-")
+                    {
+                        upperTexture[p]  = scope + ".texture." + upTex.toLower();
+                    }
+                    if (lowTex != "-")
+                    {
+                        lowerTexture[p]  = scope + ".texture." + lowTex.toLower();
+                    }
+
+                    textures.insert(middleTexture[p]);
+                    textures.insert(upperTexture[p]);
+                    textures.insert(lowerTexture[p]);
+                }
             }
 
             //qDebug("Line %i: side %i/%i sector %i/%i", i, sides[0], sides[1], sectorIdx[0], sectorIdx[1]);
 
             if (line.isOneSided())
             {
-                line.surfaces[line.surfaces[Line::Front].sector ? 0 : 1].material[Line::Middle] =
-                    "world.stone";
+                const int side = line.surfaces[Line::Front].sector ? 0 : 1;
+                line.surfaces[side].material[Line::Middle] = middleTexture[side];
             }
             else
             {
                 for (int s = 0; s < 2; ++s)
                 {
-                    line.surfaces[s].material[Line::Top] =
-                            line.surfaces[s].material[Line::Bottom] = "world.stone";
+                    line.surfaces[s].material[Line::Top]    = upperTexture[s];
+                    line.surfaces[s].material[Line::Bottom] = lowerTexture[s];
 
-                    if (isSky(sectors[sectorIdx[s    ]].ceilingTexture) &&
-                        isSky(sectors[sectorIdx[s ^ 1]].ceilingTexture))
+                    if (isSky(idSectors[sectors[s    ]].ceilingTexture) &&
+                        isSky(idSectors[sectors[s ^ 1]].ceilingTexture))
                     {
                         line.surfaces[s].material[Line::Top].clear();
+                        // TODO: Flag for sky stenciling.
                     }
                 }
             }
@@ -328,11 +358,11 @@ DENG2_PIMPL_NOREF(MapImport)
                     // An internal line won't influence the plane points.
                     if (line.surfaces[s].sector != line.surfaces[s ^ 1].sector)
                     {
-                        auto &sPoints = mappedSectors[sectorIdx[s]].points;
+                        auto &sPoints = mappedSectors[sectors[s]].points;
                         sPoints.insert(line.points[0]);
                         sPoints.insert(line.points[1]);
 
-                        mappedSectors[sectorIdx[s]].boundaryLines << lineId;
+                        mappedSectors[sectors[s]].boundaryLines << lineId;
                     }
                 }
             }
@@ -369,6 +399,11 @@ bool MapImport::importMap(const String &mapId)
 Map &MapImport::map()
 {
     return d->map;
+}
+
+StringList MapImport::textures() const
+{
+    return compose<StringList>(d->textures.constBegin(), d->textures.constEnd());
 }
 
 } // namespace gloom

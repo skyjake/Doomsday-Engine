@@ -38,7 +38,8 @@ public:
 
     bool importMap(const String &mapId);
 
-    Map &map();
+    Map &      map();
+    StringList textures() const;
 
 private:
     DENG2_PRIVATE(d)
