@@ -215,7 +215,10 @@ public:
     /// @copydoc fromData()
     static Image fromData(Block const &data, String const &formatHint = "");
 
-    static Image fromIndexedData(Image::Size const &size, IByteArray const &image,
+    static Image fromRgbaData(Size const &size, IByteArray const &rgba);
+
+    static Image fromIndexedData(Size const &      size,
+                                 IByteArray const &image,
                                  IByteArray const &palette);
 
     /**

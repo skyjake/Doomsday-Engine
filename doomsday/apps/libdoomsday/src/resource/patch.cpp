@@ -322,7 +322,7 @@ Patch::Metadata Patch::loadMetadata(IByteArray const &data)
     return prepareMetadata(hdr, calcRealHeight(columns));
 }
 
-Block Patch::load(IByteArray const &data, ColorPaletteTranslation const &xlatTable, Patch::Flags flags)
+Block Patch::load(IByteArray const &data, ColorPaletteTranslation const &xlatTable, Flags flags)
 {
     LOG_AS("Patch::load");
     Reader reader = Reader(data);
@@ -334,7 +334,7 @@ Block Patch::load(IByteArray const &data, ColorPaletteTranslation const &xlatTab
     return compositeImage(reader, &xlatTable, columns, meta, flags);
 }
 
-Block Patch::load(IByteArray const &data, Patch::Flags flags)
+Block Patch::load(IByteArray const &data, Metadata *loadedMetadata, Flags flags)
 {
     LOG_AS("Patch::load");
     Reader reader = Reader(data);
@@ -343,7 +343,11 @@ Block Patch::load(IByteArray const &data, Patch::Flags flags)
     Columns columns = readColumns(hdr.dimensions[0], reader);
 
     Metadata meta = prepareMetadata(hdr, calcRealHeight(columns));
-    return compositeImage(reader, 0/* no translation */, columns, meta, flags);
+    if (loadedMetadata)
+    {
+        *loadedMetadata = meta;
+    }
+    return compositeImage(reader, nullptr /* no translation */, columns, meta, flags);
 }
 
 bool Patch::recognize(IByteArray const &data)
@@ -359,9 +363,9 @@ bool Patch::recognize(IByteArray const &data)
 
         for (int col = 0; col < hdr.dimensions[0]; ++col)
         {
-            dint32 offset;
+            duint32 offset;
             from >> offset;
-            if (offset < 0 || (unsigned) offset >= from.source()->size()) return false;
+            if (offset >= from.source()->size()) return false;
         }
 
         // Validated.

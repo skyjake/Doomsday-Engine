@@ -18,10 +18,10 @@
 
 #include "ui/home/multiplayerpanelbuttonwidget.h"
 #include "ui/dialogs/serverinfodialog.h"
+#include "ui/clientstyle.h"
 #include "ui/clientwindow.h"
 #include "network/net_main.h"
 #include "network/serverlink.h"
-#include "resource/idtech1image.h"
 #include "clientapp.h"
 #include "dd_main.h"
 
@@ -185,7 +185,7 @@ void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
         if (d->catalog.setPackages(game.requiredPackages()))
         {
             res::LumpCatalog catalog{d->catalog};
-            *d += async([&game, catalog]() { return IdTech1Image::makeGameLogo(game, catalog); },
+            *d += async([&game, catalog]() { return ClientStyle::makeGameLogo(game, catalog); },
                         [this](const Image &logo) { icon().setImage(logo); });
         }
     }

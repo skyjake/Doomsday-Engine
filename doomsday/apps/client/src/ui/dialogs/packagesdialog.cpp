@@ -21,8 +21,6 @@
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/widgets/homemenuwidget.h"
 #include "ui/dialogs/packageinfodialog.h"
-#include "ui/dialogs/datafilesettingsdialog.h"
-#include "resource/idtech1image.h"
 #include "ui/clientwindow.h"
 #include "ui/clientstyle.h"
 #include "clientapp.h"
@@ -301,9 +299,9 @@ DENG_GUI_PIMPL(PackagesDialog)
     {
         if (gameProfile && catalog.setPackages(gameProfile->allRequiredPackages() + selectedPackages))
         {
-            gameTitle->setImage(IdTech1Image::makeGameLogo(gameProfile->game(), catalog,
-                                                           IdTech1Image::UnmodifiedAppearance |
-                                                           IdTech1Image::AlwaysTryLoad));
+            gameTitle->setImage(ClientStyle::makeGameLogo(gameProfile->game(), catalog,
+                                                           ClientStyle::UnmodifiedAppearance |
+                                                           ClientStyle::AlwaysTryLoad));
             // List of the native required files.
             StringList dataFiles;
 //            if (gameProfile->customDataFile())

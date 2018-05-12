@@ -1,6 +1,6 @@
 /** @file patch.h  Patch Image Format.
  *
- * @authors Copyright © 1999-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 1999-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -31,6 +31,8 @@
 
 namespace res {
 
+using namespace de;
+
 /**
  * @em Patch is a raster image in the id Tech 1 picture format (Doom).
  * @ingroup resource
@@ -52,14 +54,14 @@ public:
     struct Metadata
     {
         /// Dimensions of the patch in pixels.
-        de::Vec2ui dimensions;
+        Vec2ui dimensions;
 
         /// Logical dimensions of the patch in pixels (@see Patch notes).
-        de::Vec2ui logicalDimensions;
+        Vec2ui logicalDimensions;
 
         /// Origin offset (top left) in world coordinate space units.
         /// Used for various purposes depending on context.
-        de::Vec2i origin;
+        Vec2i origin;
     };
 
     /**
@@ -67,6 +69,8 @@ public:
      */
     enum Flag
     {
+        DefaultFlags            = 0,
+
         /// If the color of a pixel uses index #0 write the default color
         /// (black) as the color value and set the alpha to zero.
         MaskZero                = 0x1,
@@ -82,22 +86,25 @@ public:
      * Attempt to read metadata from @a data.
      * @param data      Data to read metadata from.
      */
-    static Metadata loadMetadata(de::IByteArray const &data);
+    static Metadata loadMetadata(IByteArray const &data);
 
     /**
      * Attempt to interpret @a data as a Patch.
      * @param data      Data to interpret as a Patch.
      * @param flags     Flags determining how the data should be interpreted.
      */
-    static de::Block load(de::IByteArray const &data, Flags = 0);
+    static Block load(IByteArray const &data,
+                      Metadata *        loadedMetadata = nullptr,
+                      Flags             flags          = DefaultFlags);
 
     /**
-     * @copydoc load()
+     * Attempt to interpret @a data as a Patch.
      * @param xlatTable  If not @c NULL, use this translation table when
      *                   compositing final color palette indices.
      */
-    static de::Block load(de::IByteArray const &data, ColorPaletteTranslation const &xlatTable,
-                          Flags = 0);
+    static Block load(IByteArray const &             data,
+                      ColorPaletteTranslation const &xlatTable,
+                      Flags                          flags = DefaultFlags);
 
     /**
      * Determines whether @a data looks like it can be interpreted as a Patch.
@@ -106,7 +113,7 @@ public:
      *
      * @return  @c true if the data looks like a patch; otherwise @c false.
      */
-    static bool recognize(de::IByteArray const &data);
+    static bool recognize(IByteArray const &data);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Patch::Flags)

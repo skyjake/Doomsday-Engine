@@ -570,7 +570,7 @@ static Block loadAndTranslatePatch(IByteArray const &data, colorpaletteid_t palI
     }
     else
     {
-        return res::Patch::load(data, res::Patch::ClipToLogicalDimensions);
+        return res::Patch::load(data, nullptr, res::Patch::ClipToLogicalDimensions);
     }
 }
 
@@ -653,8 +653,8 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
                 Patch::Flags loadFlags;
                 if (maskZero) loadFlags |= Patch::MaskZero;
 
-                Block patchImg     = Patch::load(fileData, loadFlags);
-                PatchMetadata info = Patch::loadMetadata(fileData);
+                PatchMetadata info;
+                Block patchImg = Patch::load(fileData, &info, loadFlags);
 
                 Vec2i origin = i->origin();
                 if (useZeroOriginIfOneComponent && texDef.componentCount() == 1)

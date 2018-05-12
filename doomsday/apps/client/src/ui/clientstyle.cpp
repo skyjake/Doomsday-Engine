@@ -19,6 +19,7 @@
 #include "ui/clientstyle.h"
 #include "ui/clientwindow.h"
 
+#include <doomsday/res/IdTech1Image>
 #include <de/Async>
 
 using namespace de;
@@ -49,6 +50,56 @@ GuiWidget *ClientStyle::sharedBlurWidget() const
 ui::Stylist &ClientStyle::emptyMenuLabelStylist() const
 {
     return d->emptyMenuLabelStylist;
+}
+
+Image ClientStyle::makeGameLogo(Game const &game, res::LumpCatalog const &catalog, LogoFlags flags)
+{
+    try
+    {
+        if (game.isPlayableWithDefaultPackages())
+        {
+            Block const playPal  = catalog.read("PLAYPAL");
+            Block const title    = catalog.read("TITLE");
+            Block const titlePic = catalog.read("TITLEPIC");
+            Block const interPic = catalog.read("INTERPIC");
+
+            res::IdTech1Image img(title? title : (titlePic? titlePic : interPic), playPal);
+
+            int const sizeDiv = flags.testFlag(Downscale50Percent)? 2 : 1;
+            Image::Size const finalSize(    img.pixelSize().x        / sizeDiv,
+                                        int(img.pixelSize().y * 1.2f / sizeDiv)); // VGA aspect
+
+            Image logoImage(
+                Image::fromRgbaData(img.pixelSize(), img.pixels())
+                    .toQImage()
+                    .scaled(
+                        finalSize.x, finalSize.y, Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
+
+            if (flags & ColorizedByFamily)
+            {
+                String const colorId = "home.icon." +
+                        (game.family().isEmpty()? "other" : game.family());
+                return logoImage.colorized(Style::get().colors().color(colorId));
+            }
+            return logoImage;
+        }
+}
+    catch (Error const &er)
+    {
+        if (flags & NullImageIfFails) return Image();
+
+        LOG_RES_WARNING("Failed to load title picture for game \"%s\": %s")
+                << game.title()
+                << er.asText();
+    }
+    if (flags & NullImageIfFails)
+    {
+        return Image();
+    }
+    // Use a generic logo, some files are missing.
+    QImage img(64, 64, QImage::Format_ARGB32);
+    img.fill(Qt::black);
+    return img;
 }
 
 void ClientStyle::performUpdate()

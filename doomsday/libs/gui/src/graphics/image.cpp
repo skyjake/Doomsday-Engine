@@ -1012,60 +1012,28 @@ Image Image::fromData(Block const &data, String const &formatHint)
     return QImage::fromData(data).convertToFormat(QImage::Format_ARGB32);
 }
 
-Image Image::fromIndexedData(Size const &size, IByteArray const &image, IByteArray const &palette)
+Image Image::fromRgbaData(const Size &size, const IByteArray &rgba)
 {
-    QImage rgba(size.x, size.y, QImage::Format_ARGB32);
-
-    // Process the source data by row.
-    Block color(size.x);
+    QImage img(size.x, size.y, QImage::Format_ARGB32);
     for (duint y = 0; y < size.y; ++y)
     {
-        duint32 *dest = reinterpret_cast<duint32 *>(rgba.bits() + y * rgba.bytesPerLine());
-
-        image.get(size.x * y, color.data(), color.size());
-        auto const *srcColor = color.dataConst();
-
-        for (duint x = 0; x < size.x; ++x)
-        {
-            duint8 paletteColor[3];
-            palette.get(*srcColor++ * 3, paletteColor, 3);
-            *dest++ = qRgba(paletteColor[0], paletteColor[1], paletteColor[2], 255);
-        }
+        rgba.get(size.x * y * 4, img.scanLine(y), size.x * 4);
     }
+    return img;
+}
 
-    return rgba;
+Image Image::fromIndexedData(Size const &size, IByteArray const &image, IByteArray const &palette)
+{
+    return fromRgbaData(size, Block(image).mapAsIndices(3, palette, {{0, 0, 0, 255}}));
 }
 
 Image Image::fromMaskedIndexedData(Size const &size, IByteArray const &imageAndMask,
                                    IByteArray const &palette)
 {
-    duint const layerSize = size.x * size.y;
-
-    QImage rgba(size.x, size.y, QImage::Format_ARGB32);
-
-    // Process the source data by row.
-    Block color(size.x);
-    Block alpha(size.x);
-
-    for (duint y = 0; y < size.y; ++y)
-    {
-        duint32 *dest = reinterpret_cast<duint32 *>(rgba.bits() + y * rgba.bytesPerLine());
-
-        imageAndMask.get(size.x * y,             color.data(), color.size());
-        imageAndMask.get(size.x * y + layerSize, alpha.data(), alpha.size());
-
-        auto const *srcColor = color.dataConst();
-        auto const *srcAlpha = alpha.dataConst();
-
-        for (duint x = 0; x < size.x; ++x)
-        {
-            duint8 paletteColor[3];
-            palette.get(*srcColor++ * 3, paletteColor, 3);
-            *dest++ = qRgba(paletteColor[0], paletteColor[1], paletteColor[2], *srcAlpha++);
-        }
-    }
-
-    return rgba;
+    const auto layerSize = imageAndMask.size() / 2;
+    Block pixels = Block(imageAndMask, 0, layerSize)
+            .mapAsIndices(3, palette, Block(imageAndMask, layerSize, layerSize));
+    return fromRgbaData(size, pixels);
 }
 
 bool Image::recognize(File const &file)

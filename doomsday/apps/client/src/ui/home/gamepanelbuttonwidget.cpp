@@ -17,13 +17,13 @@
  */
 
 #include "ui/home/gamepanelbuttonwidget.h"
-#include "ui/widgets/homemenuwidget.h"
+#include "ui/clientstyle.h"
+#include "ui/dialogs/packagesdialog.h"
 #include "ui/home/savelistwidget.h"
 #include "ui/home/gamecolumnwidget.h"
 #include "ui/savelistdata.h"
-#include "ui/dialogs/packagesdialog.h"
+#include "ui/widgets/homemenuwidget.h"
 #include "ui/widgets/packagesbuttonwidget.h"
-#include "resource/idtech1image.h"
 #include "dd_main.h"
 
 #include <doomsday/console/exec.h>
@@ -264,7 +264,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 
     void updateGameTitleImage()
     {
-        *this += async([this]() { return IdTech1Image::makeGameLogo(game(), catalog); },
+        *this += async([this]() { return ClientStyle::makeGameLogo(game(), catalog); },
                        [this](const Image &gameLogo) { self().icon().setImage(gameLogo); });
     }
 

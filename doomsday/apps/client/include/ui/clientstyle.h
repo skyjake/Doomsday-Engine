@@ -19,12 +19,27 @@
 #ifndef DENG_CLIENT_UI_CLIENTSTYLE_H
 #define DENG_CLIENT_UI_CLIENTSTYLE_H
 
+#include <de/Image>
 #include <de/Style>
 #include <de/GuiWidget>
 #include <de/ui/Stylist>
+#include <doomsday/Game>
+#include <doomsday/LumpCatalog>
 
 class ClientStyle : public de::Style
 {
+public:
+    enum LogoFlag
+{
+        UnmodifiedAppearance = 0,
+        ColorizedByFamily    = 0x1,
+        Downscale50Percent   = 0x2,
+        NullImageIfFails     = 0x4, // by default returns a small fallback image
+
+        DefaultLogoFlags     = ColorizedByFamily | Downscale50Percent,
+    };
+    Q_DECLARE_FLAGS(LogoFlags, LogoFlag)
+
 public:
     ClientStyle();
 
@@ -33,8 +48,23 @@ public:
 
     void performUpdate() override;
 
+    /**
+     * Prepares a game logo image to be used in items. The image is based on the
+     * game's title screen image in its WAD file(s).
+     *
+     * @param game     Game.
+     * @param catalog  Catalog of selected lumps.
+     *
+     * @return Lgoo image.
+     */
+    static de::Image makeGameLogo(Game const &            game,
+                                  res::LumpCatalog const &catalog,
+                                  LogoFlags               flags = DefaultLogoFlags);
+
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(ClientStyle::LogoFlags)
 
 #endif // DENG_CLIENT_UI_CLIENTSTYLE_H

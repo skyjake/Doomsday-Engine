@@ -19,7 +19,6 @@
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/widgets/homemenuwidget.h"
 #include "ui/home/columnwidget.h"
-#include "resource/idtech1image.h"
 
 #include <doomsday/LumpCatalog>
 #include <doomsday/Game>

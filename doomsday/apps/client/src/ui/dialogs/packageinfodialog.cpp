@@ -18,7 +18,7 @@
 
 #include "ui/dialogs/packageinfodialog.h"
 #include "ui/widgets/packagecontentoptionswidget.h"
-#include "resource/idtech1image.h"
+#include "ui/clientstyle.h"
 #include "dd_main.h"
 
 #include <doomsday/DataBundle>
@@ -178,8 +178,8 @@ DENG_GUI_PIMPL(PackageInfoDialog)
 
         res::LumpCatalog catalog;
         catalog.setPackages(game.requiredPackages() + StringList({packageId}));
-        Image img = IdTech1Image::makeGameLogo(
-            game, catalog, IdTech1Image::NullImageIfFails | IdTech1Image::UnmodifiedAppearance);
+        Image img = ClientStyle::makeGameLogo(
+            game, catalog, ClientStyle::NullImageIfFails | ClientStyle::UnmodifiedAppearance);
         if (!img.isNull())
         {
             setPackageIcon(img);
