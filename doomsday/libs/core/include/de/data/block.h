@@ -26,6 +26,7 @@
 #include "../Writer"
 
 #include <QByteArray>
+#include <array>
 
 namespace de {
 
@@ -108,6 +109,50 @@ public:
     Block decompressed() const;
     Block md5Hash() const;
     String asHexadecimalText() const;
+
+    /**
+     * Uses each byte in the block as an index to @a values and composes a new
+     * block by copying sets of values by indices.
+     *
+     * In the resulting block, each byte of this block is represented by four bytes.
+     * If @a valuesPerIndex is less than four, the missing values are taken from
+     * @a defaultValues.
+     *
+     * In each quartet of output values, the bytes are packed in little-endian order.
+     *
+     * @param valuesPerIndex  Number of values per index stored in @a values.
+     * @param values          Value array.
+     * @param defaultValues   Output to use for missing values.
+     *
+     * @return New block whose size is four times larger than this block.
+     */
+    Block mapAsIndices(int                        valuesPerIndex,
+                       const IByteArray &         values,
+                       const std::array<Byte, 4> &defaultValues) const;
+
+    /**
+     * Uses each byte in the block as an index to @a values and composes a new
+     * block by copying sets of values by indices.
+     *
+     * In the resulting block, each byte of this block is represented by four bytes.
+     * If @a valuesPerIndex is less than four, the missing values are taken from
+     * the @a defaultValues array.
+     *
+     * In each quartet of output values, the bytes are packed in little-endian order.
+     *
+     * @param valuesPerIndex  Number of values per index stored in @a values.
+     * @param values          Value array.
+     * @param defaultValues   Output to use for missing values. The size must match
+     *                        this block's size. Treated as a separate layer whose
+     *                        dimensions match this block. Each missing value in the
+     *                        output gets the same byte from @a defaultValues, whose
+     *                        position matches the position of the source byte.
+     *
+     * @return New block whose size is four times larger than this block.
+     */
+    Block mapAsIndices(int               valuesPerIndex,
+                       const IByteArray &values,
+                       const IByteArray &defaultValues) const;
 
     // Implements IByteArray.
     Size size() const;

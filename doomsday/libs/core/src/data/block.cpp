@@ -229,6 +229,95 @@ String Block::asHexadecimalText() const
     return hex;
 }
 
+Block Block::mapAsIndices(int                        valuesPerIndex,
+                          const IByteArray &         values,
+                          const std::array<Byte, 4> &defaultValues) const
+{
+    DENG2_ASSERT(valuesPerIndex >= 1);
+    DENG2_ASSERT(valuesPerIndex <= 4);
+
+    Block mapped(4 * size()); // output is always packed as uint32
+
+    const Byte *in  = dataConst();
+    const Byte *end = dataConst() + size();
+    uint32_t *  out = reinterpret_cast<uint32_t *>(mapped.data());
+
+    Byte entry[4]{defaultValues[0], defaultValues[1], defaultValues[2], defaultValues[3]};
+
+    for (; in != end; ++in)
+    {
+        values.get(valuesPerIndex * (*in), entry, valuesPerIndex);
+        *out++ = entry[0] | (entry[1] << 8) | (entry[2] << 16) | (entry[3] << 24);
+    }
+
+    return mapped;
+}
+
+Block Block::mapAsIndices(int               valuesPerIndex,
+                          const IByteArray &values,
+                          const IByteArray &defaultValues) const
+{
+    DENG2_ASSERT(valuesPerIndex >= 1);
+    DENG2_ASSERT(valuesPerIndex <= 4);
+    DENG2_ASSERT(defaultValues.size() == size());
+
+    Block mapped(4 * size()); // output is always packed as uint32
+
+    const Byte *begin = dataConst();
+    const Byte *in    = begin;
+    const Byte *end   = begin + size();
+    uint32_t *  out   = reinterpret_cast<uint32_t *>(mapped.data());
+
+    Byte entry[4];
+    Byte missing;
+
+    for (; in != end; ++in)
+    {
+        defaultValues.get(in - begin, &missing, 1);
+        for (int i = valuesPerIndex; i < 4; ++i)
+        {
+            entry[i] = missing;
+        }
+        values.get(valuesPerIndex * (*in), entry, valuesPerIndex);
+        *out++ = entry[0] | (entry[1] << 8) | (entry[2] << 16) | (entry[3] << 24);
+    }
+
+    return mapped;
+}
+
+/*
+    Image Image::fromMaskedIndexedData(Size const &size, IByteArray const &imageAndMask,
+                                       IByteArray const &palette)
+    {
+        duint const layerSize = size.x * size.y;
+
+        QImage rgba(size.x, size.y, QImage::Format_ARGB32);
+
+        // Process the source data by row.
+        Block color(size.x);
+        Block alpha(size.x);
+
+        for (duint y = 0; y < size.y; ++y)
+        {
+            duint32 *dest = reinterpret_cast<duint32 *>(rgba.bits() + y * rgba.bytesPerLine());
+
+            imageAndMask.get(size.x * y,             color.data(), color.size());
+            imageAndMask.get(size.x * y + layerSize, alpha.data(), alpha.size());
+
+            auto const *srcColor = color.dataConst();
+            auto const *srcAlpha = alpha.dataConst();
+
+            for (duint x = 0; x < size.x; ++x)
+            {
+                duint8 paletteColor[3];
+                palette.get(*srcColor++ * 3, paletteColor, 3);
+                *dest++ = qRgba(paletteColor[0], paletteColor[1], paletteColor[2], *srcAlpha++);
+            }
+        }
+
+        return rgba;
+    }    */
+
 Block Block::join(QList<Block> const &blocks, Block const &sep) // static
 {
     if (blocks.isEmpty()) return Block();
