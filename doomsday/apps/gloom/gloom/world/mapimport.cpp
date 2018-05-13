@@ -18,6 +18,7 @@
 
 #include "gloom/world/mapimport.h"
 #include "gloom/world/sectorpolygonizer.h"
+#include <doomsday/resource/idtech1flatlib.h>
 #include <doomsday/resource/idtech1texturelib.h>
 #include <de/ByteOrder>
 #include <de/DataArray>
@@ -54,6 +55,7 @@ static String fixedString(const char *name, dsize maxLen = 8)
 DENG2_PIMPL_NOREF(MapImport)
 {
     const res::LumpCatalog &lumps;
+    res::IdTech1FlatLib     flatLib;
     res::IdTech1TextureLib  textureLib;
     Map                     map;
     QSet<String>            textures;
@@ -116,7 +118,10 @@ DENG2_PIMPL_NOREF(MapImport)
 #  pragma pack(pop)
 #endif
 
-    Impl(const res::LumpCatalog &lc) : lumps(lc), textureLib(lc)
+    Impl(const res::LumpCatalog &lc)
+        : lumps(lc)
+        , flatLib(lc)
+        , textureLib(lc)
     {}
 
     bool isSky(const char *texture) const
@@ -337,8 +342,7 @@ DENG2_PIMPL_NOREF(MapImport)
 
         for (int secIndex = 0; secIndex < mappedSectors.size(); ++secIndex)
         {
-            const auto &ms            = mappedSectors[secIndex];
-            const ID    currentSector = ms.sector;
+            const auto &ms = mappedSectors[secIndex];
 
             qDebug("Sector %i: boundary lines %i, points %i",
                    secIndex,
@@ -378,9 +382,16 @@ Image MapImport::textureImage(const String &name) const
     const DotPath path(name);
     if (path.segmentCount() < 3) return {};
 
-    if (path.segment(1) == QStringLiteral("texture"))
+    const auto &category = path.segment(1);
+
+    if (category == QStringLiteral("texture"))
     {
         const auto img = d->textureLib.textureImage(path.segment(2));
+        return Image::fromRgbaData(img.pixelSize(), img.pixels());
+    }
+    else if (category == QStringLiteral("flat"))
+    {
+        const auto img = d->flatLib.flatImage(path.segment(2));
         return Image::fromRgbaData(img.pixelSize(), img.pixels());
     }
 
