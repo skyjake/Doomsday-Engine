@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/ByteRefArray"
@@ -22,17 +22,20 @@
 
 namespace de {
 
-ByteRefArray::ByteRefArray() : _writeBase(0), _readBase(0), _size(0)
+ByteRefArray::ByteRefArray()
+    : _writeBase(nullptr)
+    , _readBase(nullptr)
+    , _size(0)
 {}
 
 ByteRefArray::ByteRefArray(void *base, Size size)
-    : _writeBase(reinterpret_cast<Byte *>(base)),
-      _readBase(reinterpret_cast<Byte const *>(base)),
-      _size(size)
+    : _writeBase(reinterpret_cast<Byte *>(base))
+    , _readBase(reinterpret_cast<Byte const *>(base))
+    , _size(size)
 {}
 
 ByteRefArray::ByteRefArray(void const *base, Size size)
-    : _writeBase(0),
+    : _writeBase(nullptr),
       _readBase(reinterpret_cast<Byte const *>(base)),
       _size(size)
 {}
@@ -74,8 +77,8 @@ ByteRefArray::Size ByteRefArray::size() const
 
 void ByteRefArray::get(Offset at, Byte *values, Size count) const
 {
-    DENG2_ASSERT(_readBase != 0);
-    if (at + count > size())
+    DENG2_ASSERT(_readBase != nullptr);
+    if (at + count > _size)
     {
         /// @throw OffsetError  The accessed region was out of range.
         throw OffsetError("ByteRefArray::get", "Out of range");
@@ -91,7 +94,7 @@ void ByteRefArray::set(Offset at, Byte const *values, Size count)
         throw NonModifiableError("ByteRefArray::set", "Array is read-only");
     }
 
-    if (at + count > size())
+    if (at + count > _size)
     {
         /// @throw OffsetError  The accessed region was out of range.
         throw OffsetError("ByteRefArray::set", "Out of range");

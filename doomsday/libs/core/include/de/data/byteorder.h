@@ -154,18 +154,52 @@ public:
 };
 
 // Swaps the bytes of a 16-bit unsigned integer.
-inline duint16 swap16(duint16 n) {
+inline duint16 swapBytes(duint16 n) {
     return duint16((n & 0xff) << 8) | duint16((n & 0xff00) >> 8);
 }
 
+inline dint16 swapBytes(dint16 n) {
+    return dint16(swapBytes(duint16(n)));
+}
+
 /// Swaps the bytes of a 32-bit unsigned integer.
-inline duint32 swap32(duint32 n) {
+inline duint32 swapBytes(duint32 n) {
     return ( ((n & 0xff)     << 24) | ((n & 0xff00)     << 8)
            | ((n & 0xff0000) >> 8)  | ((n & 0xff000000) >> 24));
 }
 
+inline dint32 swapBytes(dint32 n) {
+    return dint32(swapBytes(duint32(n)));
+}
+
 /// Swaps the bytes in a 64-bit unsigned integer.
-duint64 swap64(duint64 n);
+DENG2_PUBLIC duint64 swap64(duint64 n);
+
+inline dint64 swapBytes(dint64 n) {
+    return swap64(n);
+}
+
+inline duint64 swapBytes(duint64 n) {
+    return swap64(n);
+}
+
+template <typename T>
+inline T fromLittleEndian(T n) {
+#ifdef __BIG_ENDIAN__
+    return swapBytes(n);
+#else
+    return n;
+#endif
+}
+
+template <typename T>
+inline T fromBigEndian(T n) {
+#ifdef __BIG_ENDIAN__
+    return n;
+#else
+    return swapBytes(n);
+#endif
+}
 
 /// Globally available big-endian byte order converter.
 DENG2_PUBLIC extern BigEndianByteOrder bigEndianByteOrder;

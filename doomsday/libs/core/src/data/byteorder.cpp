@@ -95,7 +95,7 @@ void BigEndianByteOrder::networkToHost(duint16 networkValue, duint16 &hostValue)
 #ifdef __BIG_ENDIAN__
     hostValue = networkValue;
 #else
-    hostValue = swap16(networkValue);
+    hostValue = swapBytes(networkValue);
 #endif
 }
 
@@ -104,7 +104,7 @@ void BigEndianByteOrder::networkToHost(duint32 networkValue, duint32 &hostValue)
 #ifdef __BIG_ENDIAN__
     hostValue = networkValue;
 #else
-    hostValue = swap32(networkValue);
+    hostValue = swapBytes(networkValue);
 #endif
 }
 
@@ -113,7 +113,7 @@ void BigEndianByteOrder::networkToHost(duint64 networkValue, duint64 &hostValue)
 #ifdef __BIG_ENDIAN__
     hostValue = networkValue;
 #else
-    hostValue = swap64(networkValue);
+    hostValue = swapBytes(networkValue);
 #endif
 }
 
@@ -122,7 +122,7 @@ void BigEndianByteOrder::hostToNetwork(duint16 hostValue, duint16 &networkValue)
 #ifdef __BIG_ENDIAN__
     networkValue = hostValue;
 #else
-    networkValue = swap16(hostValue);
+    networkValue = swapBytes(hostValue);
 #endif
 }
 
@@ -131,7 +131,7 @@ void BigEndianByteOrder::hostToNetwork(duint32 hostValue, duint32 &networkValue)
 #ifdef __BIG_ENDIAN__
     networkValue = hostValue;
 #else
-    networkValue = swap32(hostValue);
+    networkValue = swapBytes(hostValue);
 #endif
 }
 
@@ -140,7 +140,7 @@ void BigEndianByteOrder::hostToNetwork(duint64 hostValue, duint64 &networkValue)
 #ifdef __BIG_ENDIAN__
     networkValue = hostValue;
 #else
-    networkValue = swap64(hostValue);
+    networkValue = swapBytes(hostValue);
 #endif
 }
 
@@ -149,7 +149,7 @@ void LittleEndianByteOrder::networkToHost(duint16 networkValue, duint16 &hostVal
 #ifndef __BIG_ENDIAN__
     hostValue = networkValue;
 #else
-    hostValue = swap16(networkValue);
+    hostValue = swapBytes(networkValue);
 #endif
 }
 
@@ -158,7 +158,7 @@ void LittleEndianByteOrder::networkToHost(duint32 networkValue, duint32 &hostVal
 #ifndef __BIG_ENDIAN__
     hostValue = networkValue;
 #else
-    hostValue = swap32(networkValue);
+    hostValue = swapBytes(networkValue);
 #endif
 }
 
@@ -167,7 +167,7 @@ void LittleEndianByteOrder::networkToHost(duint64 networkValue, duint64 &hostVal
 #ifndef __BIG_ENDIAN__
     hostValue = networkValue;
 #else
-    hostValue = swap64(networkValue);
+    hostValue = swapBytes(networkValue);
 #endif
 }
 
@@ -176,7 +176,7 @@ void LittleEndianByteOrder::hostToNetwork(duint16 hostValue, duint16 &networkVal
 #ifndef __BIG_ENDIAN__
     networkValue = hostValue;
 #else
-    networkValue = swap16(hostValue);
+    networkValue = swapBytes(hostValue);
 #endif
 }
 
@@ -185,7 +185,7 @@ void LittleEndianByteOrder::hostToNetwork(duint32 hostValue, duint32 &networkVal
 #ifndef __BIG_ENDIAN__
     networkValue = hostValue;
 #else
-    networkValue = swap32(hostValue);
+    networkValue = swapBytes(hostValue);
 #endif
 }
 
@@ -194,7 +194,7 @@ void LittleEndianByteOrder::hostToNetwork(duint64 hostValue, duint64 &networkVal
 #ifndef __BIG_ENDIAN__
     networkValue = hostValue;
 #else
-    networkValue = swap64(hostValue);
+    networkValue = swapBytes(hostValue);
 #endif
 }
 
