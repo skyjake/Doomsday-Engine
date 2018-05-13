@@ -32,6 +32,22 @@ DENG2_PIMPL_NOREF(IdTech1Image)
     Vec2i origin;
 };
 
+IdTech1Image::IdTech1Image()
+    : d(new Impl)
+{}
+
+IdTech1Image::IdTech1Image(const Size &size, const Block &palettePixels, const IByteArray &palette)
+    : d(new Impl)
+{
+    const auto layerSize = size.x * size.y;
+
+    d->pixels = Block(palettePixels, 0, layerSize)
+                    .mapAsIndices(3, palette, Block(palettePixels, layerSize, layerSize));
+
+    d->pixelSize   = size;
+    d->nominalSize = size;
+}
+
 IdTech1Image::IdTech1Image(const IByteArray &data, const IByteArray &palette, Format format)
     : d(new Impl)
 {
@@ -40,7 +56,7 @@ IdTech1Image::IdTech1Image(const IByteArray &data, const IByteArray &palette, Fo
     if (format == Automatic)
     {
         // Try to guess which format the data uses.
-        if (data.size() == rawSize.x * rawSize.y)
+        if (int(data.size()) == rawSize.x * rawSize.y)
         {
             format = RawVGAScreen;
         }
@@ -71,6 +87,31 @@ IdTech1Image::IdTech1Image(const IByteArray &data, const IByteArray &palette, Fo
     }
 }
 
+IdTech1Image::IdTech1Image(const IdTech1Image &other)
+    : d(new Impl(*other.d))
+{}
+
+IdTech1Image::IdTech1Image(IdTech1Image &&moved)
+    : d(std::move(moved.d))
+{}
+
+IdTech1Image &IdTech1Image::operator=(const IdTech1Image &other)
+{
+    *d = *other.d;
+    return *this;
+}
+
+IdTech1Image &IdTech1Image::operator=(IdTech1Image &&moved)
+{
+    std::swap(d, moved.d);
+    return *this;
+}
+
+Block &IdTech1Image::pixels()
+{
+    return d->pixels;
+}
+
 IdTech1Image::Size IdTech1Image::pixelSize() const
 {
     return d->pixelSize;
@@ -84,6 +125,11 @@ IdTech1Image::Size IdTech1Image::nominalSize() const
 Vec2i IdTech1Image::origin() const
 {
     return d->origin;
+}
+
+void IdTech1Image::setOrigin(const Vec2i &origin)
+{
+    d->origin = origin;
 }
 
 Block IdTech1Image::pixels() const

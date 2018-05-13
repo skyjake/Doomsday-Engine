@@ -24,6 +24,8 @@
 
 namespace res {
 
+using namespace de;
+
 /**
  * Directory of WAD lumps.
  *
@@ -36,19 +38,19 @@ public:
     enum Type { Invalid, Iwad, Pwad };
     enum MapType { None, ExMy, MAPxx };
 
-    struct LIBDOOMSDAY_PUBLIC Entry : public de::ISerializable
+    struct LIBDOOMSDAY_PUBLIC Entry : public ISerializable
     {
-        de::Block name;     ///< Name of the lump.
-        de::duint32 offset; ///< Position in the file, in bytes.
-        de::duint32 size;   ///< Size of the lump.
+        Block name;     ///< Name of the lump.
+        duint32 offset; ///< Position in the file, in bytes.
+        duint32 size;   ///< Size of the lump.
 
         // Implements ISerializable.
-        void operator >> (de::Writer &to) const override;
-        void operator << (de::Reader &from) override;
+        void operator >> (Writer &to) const override;
+        void operator << (Reader &from) override;
     };
 
-    typedef de::dsize Pos;
-    static de::dsize const InvalidPos;
+    typedef dsize Pos;
+    static dsize const InvalidPos;
 
     DENG2_ERROR(OffsetError);
 
@@ -59,7 +61,7 @@ public:
      * @param wadData  Data of a WAD file. No reference to the data is kept
      *                 afterwards.
      */
-    LumpDirectory(de::IByteArray const &wadData);
+    LumpDirectory(IByteArray const &wadData);
 
     bool isValid() const;
 
@@ -78,7 +80,7 @@ public:
      * Returns the CRC32 of the directory entries. This is not influenced by
      * the contents of the lumps.
      */
-    de::duint32 crc32() const;
+    duint32 crc32() const;
 
     /**
      * Checks if the lump directory has a specific lump. Performance is O(1) (hashed).
@@ -87,7 +89,9 @@ public:
      *
      * @return @c true, if the lump is in the directory.
      */
-    bool has(de::Block const &lumpName) const;
+    bool has(Block const &lumpName) const;
+
+    duint32 lumpSize(Block const &lumpName) const;
 
     /**
      * Finds the entry of a lump in the directory. If there are multiple lumps with
@@ -98,19 +102,19 @@ public:
      *
      * @return Lump entry information.
      */
-    LumpDirectory::Pos find(de::Block const &lumpName) const;
+    LumpDirectory::Pos find(Block const &lumpName) const;
 
-    de::duint32 lumpSize(de::Block const &lumpName) const;
+    QList<LumpDirectory::Pos> findAll(const Block &lumpName) const;
 
     QList<LumpDirectory::Pos> findMaps() const;
 
-    de::StringList findMapLumpNames() const;
+    StringList findMapLumpNames() const;
 
     /**
      * Lists all the maps, combining individual maps into contiguous ranges.
      * @return Lists of map ranges.
      */
-    de::StringList mapsInContiguousRangesAsText() const;
+    StringList mapsInContiguousRangesAsText() const;
 
 private:
     DENG2_PRIVATE(d)

@@ -305,9 +305,9 @@ static Block compositeImage(Reader &reader, ColorPaletteTranslation const *xlatT
 static Patch::Metadata prepareMetadata(Header const &hdr, int realHeight)
 {
     Patch::Metadata meta;
-    meta.dimensions         = Vec2ui(hdr.dimensions[0], realHeight);
-    meta.logicalDimensions  = Vec2ui(hdr.dimensions[0], hdr.dimensions[1]);
-    meta.origin             = Vec2i (hdr.origin[0], hdr.origin[1]);
+    meta.dimensions        = Vec2ui(hdr.dimensions[0], realHeight);
+    meta.logicalDimensions = Vec2ui(hdr.dimensions[0], hdr.dimensions[1]);
+    meta.origin            = Vec2i (hdr.origin[0], hdr.origin[1]);
     return meta;
 }
 

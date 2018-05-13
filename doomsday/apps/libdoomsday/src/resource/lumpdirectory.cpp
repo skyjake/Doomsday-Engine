@@ -37,10 +37,10 @@ static QRegularExpression const regMAPxx("^MAP[0-9][0-9]$");
 
 DENG2_PIMPL_NOREF(LumpDirectory), public ISerializable
 {
-    Type type = Invalid;
-    MapType mapType = None;
-    duint32 crc = 0;
-    QList<Entry> entries;
+    Type                   type    = Invalid;
+    MapType                mapType = None;
+    duint32                crc     = 0;
+    QList<Entry>           entries;
     QHash<QByteArray, int> index; // points to entries
 
     void read(IByteArray const &source)
@@ -220,6 +220,19 @@ LumpDirectory::Pos LumpDirectory::find(Block const &lumpName) const
         return Pos(found.value());
     }
     return InvalidPos;
+}
+
+QList<LumpDirectory::Pos> LumpDirectory::findAll(const Block &lumpName) const
+{
+    QList<LumpDirectory::Pos> found;
+    for (int i = d->entries.size() - 1; i >= 0; --i)
+    {
+        if (d->entries.at(i).name == lumpName)
+        {
+            found.push_back(i);
+        }
+    }
+    return found;
 }
 
 QList<LumpDirectory::Pos> res::LumpDirectory::findMaps() const

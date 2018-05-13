@@ -246,7 +246,7 @@ Composite *Composite::constructFrom(de::Reader &reader,
                 }
 
                 // If this is a Patch - unite the geometry of the component.
-                ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
+                ByteRefArray fileData{file.cache(), file.size()};
                 if (res::Patch::recognize(fileData))
                 {
                     try

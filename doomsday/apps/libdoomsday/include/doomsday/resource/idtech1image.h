@@ -37,6 +37,10 @@ public:
     typedef Vec2ui Size;
 
 public:
+    IdTech1Image();
+
+    IdTech1Image(const Size &size, const Block &palettePixels, const IByteArray &palette);
+
     /**
      * Constructs a new Id Tech 1 image. The Image object gets initialized with the
      * RGBA_8888 contents of the image.
@@ -47,6 +51,14 @@ public:
      *                 image data.
      */
     IdTech1Image(const IByteArray &data, const IByteArray &palette, Format format = Automatic);
+
+    IdTech1Image(const IdTech1Image &);
+    IdTech1Image(IdTech1Image &&);
+
+    IdTech1Image &operator=(const IdTech1Image &);
+    IdTech1Image &operator=(IdTech1Image &&);
+
+    Block &pixels();
 
     /**
      * Returns the image pixels as RGBA_8888.
@@ -63,6 +75,8 @@ public:
     Size nominalSize() const;
 
     Vec2i origin() const;
+
+    void setOrigin(const Vec2i &origin);
 
 private:
     DENG2_PRIVATE(d)

@@ -69,6 +69,8 @@ public:
     }
 
     LumpPos find(const String &lumpName) const;
+
+    QList<LumpPos> findAll(const String &lumpName) const;
     
     /**
      * Reads the contents of a lump.
