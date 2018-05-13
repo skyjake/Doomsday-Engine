@@ -17,9 +17,9 @@
  */
 
 #include "doomsday/resource/idtech1texturelib.h"
+#include "doomsday/resource/idtech1util.h"
 #include "doomsday/resource/patch.h"
 
-#include <de/DataArray>
 #include <de/ByteOrder>
 #include <de/ByteSubArray>
 
@@ -40,7 +40,7 @@ struct Patch {
     dint16  colormap;
 };
 
-struct TexturesHeader {
+struct TextureIndex {
     duint count;
     int   offset[1]; // location of Texture
 };
@@ -60,111 +60,18 @@ struct PatchIndex {
     Name  list[1];
 };
 
-static String fixedString(const char *name, dsize maxLen = 8)
-{
-    dsize len = 0;
-    while (len < maxLen && name[len]) len++;
-    return String(name, len).toUpper();
-}
-
 } // namespace wad
-
-struct Image8
-{
-    Vec2i size;
-    Block pixels;
-
-    Image8(const Vec2i &size)
-        : size(size)
-        , pixels(size.x * size.y * 2)
-    {
-        pixels.fill(0);
-    }
-
-    Image8(const Vec2i &size, const Block &px)
-        : size(size)
-        , pixels(px)
-    {}
-
-    inline int layerSize() const
-    {
-        return size.x * size.y;
-    }
-
-    inline const duint8 *row(int y) const
-    {
-        return pixels.data() + size.x * y;
-    }
-
-    inline duint8 *row(int y)
-    {
-        return pixels.data() + size.x * y;
-    }
-
-    void blit(const Vec2i &pos, const Image8 &img)
-    {
-        // Determine which part of each row will be blitted.
-        int start = 0;
-        int len   = img.size.x;
-
-        int dx1 = pos.x;
-        int dx2 = pos.x + len;
-
-        // Clip the beginning and the end.
-        if (dx1 < 0)
-        {
-            start = -dx1;
-            len -= start;
-            dx1 = 0;
-        }
-        if (dx2 > size.x)
-        {
-            len -= dx2 - size.x;
-            dx2 = size.x;
-        }
-        if (len <= 0) return;
-
-        const int srcLayerSize  = img.layerSize();
-        const int destLayerSize = layerSize();
-
-        for (int sy = 0; sy < img.size.y; ++sy)
-        {
-            const int dy = pos.y + sy;
-
-            if (dy < 0 || dy >= size.y) continue;
-
-            const duint8 *src    = img.row(sy) + start;
-            const duint8 *srcEnd = src + len;
-            duint8 *      dest   = row(dy) + dx1;
-
-            for (; src < srcEnd; ++src, ++dest)
-            {
-                if (src[srcLayerSize])
-                {
-                    *dest = *src;
-                    dest[destLayerSize] = 255;
-                }
-            }
-        }
-    }
-};
 
 DENG2_PIMPL(IdTech1TextureLib)
 {
     struct Patch {
         Vec2i                origin;
         LumpCatalog::LumpPos patchLump;
-        //dint16               stepdir;
-        //ByteRefArray         palette;
 
         Patch(const Vec2i &               origin    = {},
-              const LumpCatalog::LumpPos &patchLump = {}/*,
-              dint16                      stepdir   = 0,
-              const ByteRefArray &        palette   = {}*/)
+              const LumpCatalog::LumpPos &patchLump = {nullptr, 0})
             : origin(origin)
             , patchLump(patchLump)
-            //, stepdir(stepdir)
-//            , palette(palette)
         {}
     };
 
@@ -184,18 +91,11 @@ DENG2_PIMPL(IdTech1TextureLib)
         init();
     }
 
-    DataArray<wad::Name> patchIndex() const
-    {
-        return {ByteSubArray(pnames, 4, pnames.size() - 4)};
-    }
-
     /**
      * Read all the texture patch data and look up the patches in the lump catalog.
      */
     void init()
     {
-        //const int COLORMAP_SIZE = 3 * 256;
-
         palette = catalog.read("PLAYPAL");
         pnames  = catalog.read("PNAMES");
 
@@ -211,35 +111,38 @@ DENG2_PIMPL(IdTech1TextureLib)
         foreach (const auto &pos, texturesPos)
         {
             const Block lumpData = catalog.read(pos);
-            const auto *header   = reinterpret_cast<const wad::TexturesHeader *>(lumpData.data());
+            const auto *header   = reinterpret_cast<const wad::TextureIndex *>(lumpData.data());
 
             for (duint i = 0; i < fromLittleEndian(header->count); ++i)
             {
                 const auto *texture = reinterpret_cast<const wad::Texture *>(
                     lumpData.data() + fromLittleEndian(header->offset[i]));
 
-                Texture tex;
-                tex.size   = {fromLittleEndian(texture->width), fromLittleEndian(texture->height)};
-                tex.masked = fromLittleEndian(texture->masked) != 0;
-                for (duint16 p = 0; p < fromLittleEndian(texture->patchCount); ++p)
+                const String textureName{wad::fixedString(texture->name.name)};
+
+                if (!textures.contains(textureName))
                 {
-                    const auto *patch = &texture->patches[p];
-                    qDebug() << "Looking for"
-                             << wad::fixedString(patchNames->list[fromLittleEndian(patch->patch)].name);
-                    tex.patches.emplace_back(
-                        Vec2i{fromLittleEndian(patch->originX), fromLittleEndian(patch->originY)},
-                        catalog.find(wad::fixedString(patchNames->list[fromLittleEndian(patch->patch)].name))
-                        /*fromLittleEndian(patch->stepdir),
-                        ByteRefArray(palette.data() + COLORMAP_SIZE * fromLittleEndian(patch->colormap),
-                                     COLORMAP_SIZE)*/);
-                    DENG2_ASSERT(tex.patches[p].patchLump.first);
+                    Texture tex;
+                    tex.size   = {fromLittleEndian(texture->width), fromLittleEndian(texture->height)};
+                    tex.masked = fromLittleEndian(texture->masked) != 0;
+                    for (duint16 p = 0; p < fromLittleEndian(texture->patchCount); ++p)
+                    {
+                        const auto *patch = &texture->patches[p];
+                        tex.patches.emplace_back(
+                            Vec2i{fromLittleEndian(patch->originX), fromLittleEndian(patch->originY)},
+                            catalog.find(wad::fixedString(patchNames->list[fromLittleEndian(patch->patch)].name))
+                            /*fromLittleEndian(patch->stepdir),
+                            ByteRefArray(palette.data() + COLORMAP_SIZE * fromLittleEndian(patch->colormap),
+                                         COLORMAP_SIZE)*/);
+                        DENG2_ASSERT(tex.patches[p].patchLump.first);
+                    }
+                    textures.insert(textureName, tex);
                 }
-                textures.insert(wad::fixedString(texture->name.name), tex);
             }
         }
     }
 
-    IdTech1Image compose(const String &textureName) const
+    IdTech1Image composeTexture(const String &textureName) const
     {
         const auto found = textures.constFind(textureName);
         if (found == textures.constEnd())
@@ -256,8 +159,6 @@ DENG2_PIMPL(IdTech1TextureLib)
             const auto patchImage = res::Patch::load(catalog.read(p.patchLump), &meta);
             const Vec2i patchSize = meta.dimensions.toVec2i();
 
-            // TODO: patch origin should be taken into account?
-
             image.blit(p.origin, Image8{patchSize, patchImage});
         }
         return IdTech1Image(image.size.toVec2ui(), image.pixels, palette);
@@ -270,7 +171,7 @@ IdTech1TextureLib::IdTech1TextureLib(const LumpCatalog &catalog)
 
 IdTech1Image IdTech1TextureLib::textureImage(const String &name) const
 {
-    return d->compose(name);
+    return d->composeTexture(name);
 }
 
 } // namespace res

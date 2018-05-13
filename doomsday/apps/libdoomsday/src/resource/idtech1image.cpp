@@ -36,13 +36,20 @@ IdTech1Image::IdTech1Image()
     : d(new Impl)
 {}
 
-IdTech1Image::IdTech1Image(const Size &size, const Block &palettePixels, const IByteArray &palette)
+IdTech1Image::IdTech1Image(const Size &size, const Block &imagePixels, const IByteArray &palette)
     : d(new Impl)
 {
     const auto layerSize = size.x * size.y;
 
-    d->pixels = Block(palettePixels, 0, layerSize)
-                    .mapAsIndices(3, palette, Block(palettePixels, layerSize, layerSize));
+    if (imagePixels.size() >= 2 * layerSize)
+    {
+        d->pixels = Block(imagePixels, 0, layerSize)
+                        .mapAsIndices(3, palette, Block(imagePixels, layerSize, layerSize));
+    }
+    else
+    {
+        d->pixels = imagePixels.mapAsIndices(3, palette, {{0, 0, 0, 255}});
+    }
 
     d->pixelSize   = size;
     d->nominalSize = size;
@@ -56,7 +63,7 @@ IdTech1Image::IdTech1Image(const IByteArray &data, const IByteArray &palette, Fo
     if (format == Automatic)
     {
         // Try to guess which format the data uses.
-        if (int(data.size()) == rawSize.x * rawSize.y)
+        if (data.size() == rawSize.x * rawSize.y)
         {
             format = RawVGAScreen;
         }

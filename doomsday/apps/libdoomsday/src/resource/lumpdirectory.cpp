@@ -28,12 +28,13 @@ using namespace de;
 
 namespace res {
 
-dsize const LumpDirectory::InvalidPos = dsize(-1);
+const dsize LumpDirectory::InvalidPos = dsize(-1);
 
-static String const CACHE_CATEGORY = "LumpDirectory";
+static const String CACHE_CATEGORY = "LumpDirectory";
 
-static QRegularExpression const regExMy ("^E[1-9]M[1-9]$");
-static QRegularExpression const regMAPxx("^MAP[0-9][0-9]$");
+static const QRegularExpression regExMy ("^E[1-9]M[1-9]$");
+static const QRegularExpression regMAPxx("^MAP[0-9][0-9]$");
+static const Block              flatMarkers[4] = {"FF_START", "FF_END", "F_START", "F_END"};
 
 DENG2_PIMPL_NOREF(LumpDirectory), public ISerializable
 {
@@ -233,6 +234,28 @@ QList<LumpDirectory::Pos> LumpDirectory::findAll(const Block &lumpName) const
         }
     }
     return found;
+}
+
+QList<LumpDirectory::Range> LumpDirectory::findRanges(RangeType rangeType) const
+{
+    QList<Range> ranges;
+    if (rangeType == Flats)
+    {
+        auto start = find(flatMarkers[0]);
+        auto end   = find(flatMarkers[1]);
+        if (start != InvalidPos && end != InvalidPos)
+        {
+            ranges << Range{start + 1, end};
+        }
+
+        start = find(flatMarkers[2]);
+        end   = find(flatMarkers[3]);
+        if (start != InvalidPos && end != InvalidPos)
+        {
+            ranges << Range{start + 1, end};
+        }
+    }
+    return ranges;
 }
 
 QList<LumpDirectory::Pos> res::LumpDirectory::findMaps() const

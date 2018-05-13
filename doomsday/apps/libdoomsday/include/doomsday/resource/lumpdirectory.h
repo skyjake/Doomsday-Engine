@@ -21,6 +21,7 @@
 
 #include "../libdoomsday.h"
 #include <de/File>
+#include <de/Range>
 
 namespace res {
 
@@ -37,6 +38,7 @@ class LIBDOOMSDAY_PUBLIC LumpDirectory
 public:
     enum Type { Invalid, Iwad, Pwad };
     enum MapType { None, ExMy, MAPxx };
+    enum RangeType { Flats };
 
     struct LIBDOOMSDAY_PUBLIC Entry : public ISerializable
     {
@@ -50,6 +52,7 @@ public:
     };
 
     typedef dsize Pos;
+    typedef Rangez Range;
     static dsize const InvalidPos;
 
     DENG2_ERROR(OffsetError);
@@ -102,11 +105,13 @@ public:
      *
      * @return Lump entry information.
      */
-    LumpDirectory::Pos find(Block const &lumpName) const;
+    Pos find(const Block &lumpName) const;
 
-    QList<LumpDirectory::Pos> findAll(const Block &lumpName) const;
+    QList<Pos> findAll(const Block &lumpName) const;
 
-    QList<LumpDirectory::Pos> findMaps() const;
+    QList<Range> findRanges(RangeType rangeType) const;
+
+    QList<Pos> findMaps() const;
 
     StringList findMapLumpNames() const;
 

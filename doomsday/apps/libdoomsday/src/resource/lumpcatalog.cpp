@@ -57,7 +57,7 @@ DENG2_PIMPL(LumpCatalog)
         foreach (const auto &pkg, packageIds)
         {
             // The package must be available as a file.
-            if (File const *file = App::packageLoader().select(pkg))
+            if (const File *file = App::packageLoader().select(pkg))
             {
                 auto const *bundle = maybeAs<DataBundle>(file->target());
                 if (bundle && bundle->lumpDirectory())
@@ -71,40 +71,45 @@ DENG2_PIMPL(LumpCatalog)
     LumpPos findLump(const String &name) const
     {
         Block const lumpName = name.toLatin1();
-        LumpPos found { nullptr, LumpDirectory::InvalidPos };
+        LumpPos found{nullptr, LumpDirectory::InvalidPos};
 
         // The last bundle is checked first.
-        for (int i = bundles.size() - 1; i >= 0; --i)
+        for (auto i = bundles.rbegin(); i != bundles.rend(); ++i)
         {
-            if (const auto *bundle = maybeAs<DataBundle>(bundles.at(i)))
+            auto const pos = (*i)->lumpDirectory()->find(lumpName);
+            if (pos != LumpDirectory::InvalidPos)
             {
-                auto const pos = bundle->lumpDirectory()->find(lumpName);
-                if (pos != LumpDirectory::InvalidPos)
-                {
-                    found = {bundle, pos};
-                    break;
-                }
-            }
-            else
-            {
-                qDebug() << "LumpCatalog is outdated: a bundle has been deleted";
-            }
+                found = {*i, pos};
+                break;
+            }    
         }
+        return found;
     }
 
     QList<LumpPos> findAllLumps(const String &name) const
     {
         QList<LumpPos> found;
         const Block lumpName = name.toLatin1();
-        for (int i = bundles.size() - 1; i >= 0; --i)
+        for (auto i = bundles.rbegin(); i != bundles.rend(); ++i)
         {
-            const auto *bundle = bundles.at(i);
+            const auto *bundle = *i;
             found += map<QList<LumpPos>>(bundle->lumpDirectory()->findAll(lumpName),
                                          [bundle](dsize pos) -> LumpPos {
                                              return {bundle, pos};
                                          });
         }
         return found;
+    }
+
+    QList<LumpRange> flatRanges() const
+    {
+        QList<LumpRange> ranges;
+        for (auto i = bundles.rbegin(); i != bundles.rend(); ++i)
+        {
+            const auto flats = (*i)->lumpDirectory()->findRanges(LumpDirectory::Flats);
+            for (const auto &r : flats) ranges.push_back({*i, r});
+    }
+        return ranges;
     }
 };
 
@@ -151,6 +156,11 @@ LumpCatalog::LumpPos LumpCatalog::find(const String &lumpName) const
 QList<LumpCatalog::LumpPos> LumpCatalog::findAll(const String &lumpName) const
 {
     return d->findAllLumps(lumpName);
+}
+
+QList<LumpCatalog::LumpRange> LumpCatalog::flatRanges() const
+{
+    return d->flatRanges();
 }
 
 Block LumpCatalog::read(const String &lumpName) const

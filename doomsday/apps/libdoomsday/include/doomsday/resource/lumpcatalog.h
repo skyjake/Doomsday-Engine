@@ -41,7 +41,8 @@ using namespace de;
 class LIBDOOMSDAY_PUBLIC LumpCatalog
 {
 public:
-    using LumpPos = std::pair<const DataBundle *, LumpDirectory::Pos>;
+    using LumpPos   = std::pair<const DataBundle *, LumpDirectory::Pos>;
+    using LumpRange = std::pair<const DataBundle *, LumpDirectory::Range>;
 
 public:
     LumpCatalog();
@@ -72,6 +73,8 @@ public:
 
     QList<LumpPos> findAll(const String &lumpName) const;
     
+    QList<LumpRange> flatRanges() const;
+
     /**
      * Reads the contents of a lump.
      *

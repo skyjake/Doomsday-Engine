@@ -39,7 +39,7 @@ public:
 public:
     IdTech1Image();
 
-    IdTech1Image(const Size &size, const Block &palettePixels, const IByteArray &palette);
+    IdTech1Image(const Size &size, const Block &imagePixels, const IByteArray &palette);
 
     /**
      * Constructs a new Id Tech 1 image. The Image object gets initialized with the

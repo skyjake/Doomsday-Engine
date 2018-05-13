@@ -1,4 +1,4 @@
-/** @file idtech1texturelib.h  Collection of textures.
+/** @file idtech1flatlib.h  Collection of flat images (plane textures).
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,29 +16,22 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCE_IDTECH1TEXTURELIB_H
-#define LIBDOOMSDAY_RESOURCE_IDTECH1TEXTURELIB_H
+#ifndef LIBDOOMSDAY_RESOURCE_IDTECH1FLATLIB_H
+#define LIBDOOMSDAY_RESOURCE_IDTECH1FLATLIB_H
 
-#include "lumpcatalog.h"
-#include "idtech1image.h"
+#include "../LumpCatalog"
+#include "../res/IdTech1Image"
 
 namespace res {
 
 using namespace de;
 
-/**
- * Collection of textures.
- *
- * id Tech 1 textures are composited from multiple patches.
- *
- * @ingroup resource
- */
-class LIBDOOMSDAY_PUBLIC IdTech1TextureLib
+class IdTech1FlatLib
 {
 public:
-    IdTech1TextureLib(const LumpCatalog &catalog);
+    IdTech1FlatLib(const LumpCatalog &catalog);
 
-    IdTech1Image textureImage(const String &name) const;
+    IdTech1Image flatImage(const String &name) const;
 
 private:
     DENG2_PRIVATE(d)
@@ -46,4 +39,4 @@ private:
 
 } // namespace res
 
-#endif // LIBDOOMSDAY_RESOURCE_IDTECH1TEXTURELIB_H
+#endif // LIBDOOMSDAY_RESOURCE_IDTECH1FLATLIB_H

@@ -1,4 +1,4 @@
-/** @file idtech1texturelib.h  Collection of textures.
+/** @file idtech1util.h
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,34 +16,49 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCE_IDTECH1TEXTURELIB_H
-#define LIBDOOMSDAY_RESOURCE_IDTECH1TEXTURELIB_H
+#ifndef IDTECH1UTIL_H
+#define IDTECH1UTIL_H
 
-#include "lumpcatalog.h"
-#include "idtech1image.h"
+#include "../libdoomsday.h"
+#include <de/String>
+#include <de/Vector>
 
 namespace res {
 
 using namespace de;
 
-/**
- * Collection of textures.
- *
- * id Tech 1 textures are composited from multiple patches.
- *
- * @ingroup resource
- */
-class LIBDOOMSDAY_PUBLIC IdTech1TextureLib
+namespace wad {
+
+LIBDOOMSDAY_PUBLIC String fixedString(const char *name, dsize maxLen = 8);
+
+} // namespace wad
+
+struct Image8
 {
-public:
-    IdTech1TextureLib(const LumpCatalog &catalog);
+    Vec2i size;
+    Block pixels;
 
-    IdTech1Image textureImage(const String &name) const;
+    Image8(const Vec2i &size);
+    Image8(const Vec2i &size, const Block &px);
 
-private:
-    DENG2_PRIVATE(d)
+    inline int layerSize() const
+    {
+        return size.x * size.y;
+    }
+
+    inline const duint8 *row(int y) const
+    {
+        return pixels.data() + size.x * y;
+    }
+
+    inline duint8 *row(int y)
+    {
+        return pixels.data() + size.x * y;
+    }
+
+    void blit(const Vec2i &pos, const Image8 &img);
 };
 
 } // namespace res
 
-#endif // LIBDOOMSDAY_RESOURCE_IDTECH1TEXTURELIB_H
+#endif // IDTECH1UTIL_H
