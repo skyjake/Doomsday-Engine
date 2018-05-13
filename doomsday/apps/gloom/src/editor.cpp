@@ -1106,6 +1106,16 @@ DENG2_PIMPL(Editor)
                         MapImport importer(catalog);
                         if (importer.importMap(mapId))
                         {
+                            // Build a texture atlas.
+                            {
+                                foreach (String n, importer.textures())
+                                {
+                                    Image img = importer.textureImage(n);
+                                    qDebug() << "Texture:" << n << img.size().asText();
+                                    img.toQImage().save(n + ".png");
+                                }
+                            }
+
                             // Update the editor's map.
                             map = importer.map();
                             filePath.clear();

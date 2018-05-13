@@ -21,6 +21,7 @@
 
 #include "gloom/world/map.h"
 
+#include <de/Image>
 #include <de/String>
 #include <doomsday/LumpCatalog>
 
@@ -40,6 +41,8 @@ public:
 
     Map &      map();
     StringList textures() const;
+
+    Image textureImage(const String &name) const;
 
 private:
     DENG2_PRIVATE(d)

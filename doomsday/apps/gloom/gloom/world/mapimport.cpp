@@ -18,7 +18,9 @@
 
 #include "gloom/world/mapimport.h"
 #include "gloom/world/sectorpolygonizer.h"
+#include <doomsday/resource/idtech1texturelib.h>
 #include <de/ByteOrder>
+#include <de/DataArray>
 
 #include <QDebug>
 
@@ -28,20 +30,12 @@ namespace gloom {
 
 static inline int16_t le16(int16_t leValue)
 {
-#ifdef __BIG_ENDIAN__
-    return int16_t(swap16(leValue));
-#else
-    return leValue;
-#endif
+    return fromLittleEndian(leValue);
 }
 
-static inline uint16_t le16u(int16_t leValue)
+static inline uint16_t le16u(uint16_t leValue)
 {
-#ifdef __BIG_ENDIAN__
-    return swap16(uint16_t(leValue));
-#else
-    return uint16_t(leValue);
-#endif
+    return fromLittleEndian(leValue);
 }
 
 #if !defined (_MSC_VER)
@@ -60,6 +54,7 @@ static String fixedString(const char *name, dsize maxLen = 8)
 DENG2_PIMPL_NOREF(MapImport)
 {
     const res::LumpCatalog &lumps;
+    res::IdTech1TextureLib  textureLib;
     Map                     map;
     QSet<String>            textures;
 
@@ -121,36 +116,7 @@ DENG2_PIMPL_NOREF(MapImport)
 #  pragma pack(pop)
 #endif
 
-    template <typename T>
-    struct DataArray
-    {
-        explicit DataArray(Block data)
-            : _data(std::move(data))
-            , _entries(reinterpret_cast<const T *>(_data.constData()))
-            , _size(int(_data.size() / sizeof(T)))
-        {}
-        int size() const
-        {
-            return _size;
-        }
-        const T &at(int pos) const
-        {
-            DENG2_ASSERT(pos >= 0);
-            DENG2_ASSERT(pos < _size);
-            return _entries[pos];
-        }
-        const T &operator[](int pos) const
-        {
-            return at(pos);
-        }
-
-    private:
-        Block    _data;
-        const T *_entries;
-        int      _size;
-    };
-
-    Impl(const res::LumpCatalog &lc) : lumps(lc)
+    Impl(const res::LumpCatalog &lc) : lumps(lc), textureLib(lc)
     {}
 
     bool isSky(const char *texture) const
@@ -204,7 +170,6 @@ DENG2_PIMPL_NOREF(MapImport)
         QVector<MappedSector> mappedSectors(idSectors.size());
 
         QVector<ID> mappedLines(linedefsCount);
-        QSet<String> textures;
 
         // -------- Create planes for all sectors: each gets a separate floor and ceiling --------
 
@@ -213,8 +178,8 @@ DENG2_PIMPL_NOREF(MapImport)
             const auto &sec = idSectors[i];
 
             // Plane materials.
-            String floorTexture   = scope + ".flat." + fixedString(sec.floorTexture).toLower();
-            String ceilingTexture = scope + ".flat." + fixedString(sec.ceilingTexture).toLower();
+            String floorTexture   = scope + ".flat." + fixedString(sec.floorTexture);
+            String ceilingTexture = scope + ".flat." + fixedString(sec.ceilingTexture);
 
             if (isSky(sec.floorTexture))
             {
@@ -305,15 +270,15 @@ DENG2_PIMPL_NOREF(MapImport)
 
                     if (midTex != "-")
                     {
-                        middleTexture[p] = scope + ".texture." + midTex.toLower();
+                        middleTexture[p] = scope + ".texture." + midTex;
                     }
                     if (upTex != "-")
                     {
-                        upperTexture[p]  = scope + ".texture." + upTex.toLower();
+                        upperTexture[p]  = scope + ".texture." + upTex;
                     }
                     if (lowTex != "-")
                     {
-                        lowerTexture[p]  = scope + ".texture." + lowTex.toLower();
+                        lowerTexture[p]  = scope + ".texture." + lowTex;
                     }
 
                     textures.insert(middleTexture[p]);
@@ -404,6 +369,22 @@ Map &MapImport::map()
 StringList MapImport::textures() const
 {
     return compose<StringList>(d->textures.constBegin(), d->textures.constEnd());
+}
+
+Image MapImport::textureImage(const String &name) const
+{
+    if (!name) return {};
+
+    const DotPath path(name);
+    if (path.segmentCount() < 3) return {};
+
+    if (path.segment(1) == QStringLiteral("texture"))
+    {
+        const auto img = d->textureLib.textureImage(path.segment(2));
+        return Image::fromRgbaData(img.pixelSize(), img.pixels());
+    }
+
+    return {};
 }
 
 } // namespace gloom
