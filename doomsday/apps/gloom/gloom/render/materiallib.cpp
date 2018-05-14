@@ -65,16 +65,16 @@ DENG2_PIMPL(MaterialLib)
     void init(Context &)
     {
         // Load materials.
-        for (String name : materials.keys())
+        for (auto i = materials.constBegin(); i != materials.constEnd(); ++i)
         {
-            loadMaterial(name);
+            loadMaterial(i.key());
         }
         updateTextureMetrics();
     }
 
     void deinit()
     {
-        for (const TexIds &texIds : loadedTextures)
+        foreach (const TexIds &texIds, loadedTextures)
         {
             for (int t = 0; t < TextureMapCount; ++t)
             {

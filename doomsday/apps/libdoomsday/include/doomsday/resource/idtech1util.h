@@ -29,11 +29,11 @@ using namespace de;
 
 namespace wad {
 
-LIBDOOMSDAY_PUBLIC String fixedString(const char *name, dsize maxLen = 8);
+LIBDOOMSDAY_PUBLIC String nameString(const char *name, dsize maxLen = 8);
 
 } // namespace wad
 
-struct Image8
+struct LIBDOOMSDAY_PUBLIC Image8
 {
     Vec2i size;
     Block pixels;

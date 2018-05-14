@@ -20,6 +20,7 @@
 #include "gloom/world/sectorpolygonizer.h"
 #include <doomsday/resource/idtech1flatlib.h>
 #include <doomsday/resource/idtech1texturelib.h>
+#include <doomsday/resource/idtech1util.h>
 #include <de/ByteOrder>
 #include <de/DataArray>
 
@@ -44,13 +45,6 @@ static inline uint16_t le16u(uint16_t leValue)
 #else
 #  define PACKED_STRUCT
 #endif
-
-static String fixedString(const char *name, dsize maxLen = 8)
-{
-    dsize len = 0;
-    while (len < maxLen && name[len]) len++;
-    return String(name, len);
-}
 
 DENG2_PIMPL_NOREF(MapImport)
 {
@@ -126,7 +120,7 @@ DENG2_PIMPL_NOREF(MapImport)
 
     bool isSky(const char *texture) const
     {
-        return fixedString(texture).startsWith("F_SKY");
+        return res::wad::nameString(texture).startsWith("F_SKY");
     }
 
     bool import(const String &mapId)
@@ -183,8 +177,8 @@ DENG2_PIMPL_NOREF(MapImport)
             const auto &sec = idSectors[i];
 
             // Plane materials.
-            String floorTexture   = scope + ".flat." + fixedString(sec.floorTexture);
-            String ceilingTexture = scope + ".flat." + fixedString(sec.ceilingTexture);
+            String floorTexture   = scope + ".flat." + res::wad::nameString(sec.floorTexture);
+            String ceilingTexture = scope + ".flat." + res::wad::nameString(sec.ceilingTexture);
 
             if (isSky(sec.floorTexture))
             {
@@ -269,9 +263,9 @@ DENG2_PIMPL_NOREF(MapImport)
                     sectors[p]              = le16u(sdef.sector);
                     line.surfaces[p].sector = (sectors[p] != INVALID_INDEX? mappedSectors[sectors[p]].sector : 0);
 
-                    const auto midTex = fixedString(sdef.middleTexture);
-                    const auto upTex  = fixedString(sdef.upperTexture);
-                    const auto lowTex = fixedString(sdef.lowerTexture);
+                    const auto midTex = res::wad::nameString(sdef.middleTexture);
+                    const auto upTex  = res::wad::nameString(sdef.upperTexture);
+                    const auto lowTex = res::wad::nameString(sdef.lowerTexture);
 
                     if (midTex != "-")
                     {

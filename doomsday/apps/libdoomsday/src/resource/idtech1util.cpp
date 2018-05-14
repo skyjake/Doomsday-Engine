@@ -81,7 +81,7 @@ void Image8::blit(const Vec2i &pos, const Image8 &img)
     }
 }
 
-String wad::fixedString(const char *name, dsize maxLen)
+String wad::nameString(const char *name, dsize maxLen)
 {
     dsize len = 0;
     while (len < maxLen && name[len]) len++;

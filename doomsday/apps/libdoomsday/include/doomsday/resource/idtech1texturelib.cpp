@@ -118,7 +118,7 @@ DENG2_PIMPL(IdTech1TextureLib)
                 const auto *texture = reinterpret_cast<const wad::Texture *>(
                     lumpData.data() + fromLittleEndian(header->offset[i]));
 
-                const String textureName{wad::fixedString(texture->name.name)};
+                const String textureName{wad::nameString(texture->name.name)};
 
                 if (!textures.contains(textureName))
                 {
@@ -130,7 +130,7 @@ DENG2_PIMPL(IdTech1TextureLib)
                         const auto *patch = &texture->patches[p];
                         tex.patches.emplace_back(
                             Vec2i{fromLittleEndian(patch->originX), fromLittleEndian(patch->originY)},
-                            catalog.find(wad::fixedString(patchNames->list[fromLittleEndian(patch->patch)].name))
+                            catalog.find(wad::nameString(patchNames->list[fromLittleEndian(patch->patch)].name))
                             /*fromLittleEndian(patch->stepdir),
                             ByteRefArray(palette.data() + COLORMAP_SIZE * fromLittleEndian(patch->colormap),
                                          COLORMAP_SIZE)*/);
