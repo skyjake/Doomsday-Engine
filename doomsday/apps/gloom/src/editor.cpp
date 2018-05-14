@@ -1108,12 +1108,13 @@ DENG2_PIMPL(Editor)
                         {
                             // Build a texture atlas.
                             {
-                                foreach (String n, importer.textures())
+                                /*foreach (String n, importer.materials())
                                 {
                                     Image img = importer.textureImage(n);
                                     qDebug() << "Texture:" << n << img.size().asText();
                                     img.toQImage().save(n + ".png");
-                                }
+                                }*/
+                                importer.exportPackage("/home/exportedmap.pack");
                             }
 
                             // Update the editor's map.

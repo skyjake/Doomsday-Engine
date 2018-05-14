@@ -21,10 +21,14 @@
 #include <doomsday/resource/idtech1flatlib.h>
 #include <doomsday/resource/idtech1texturelib.h>
 #include <doomsday/resource/idtech1util.h>
+
 #include <de/ByteOrder>
 #include <de/DataArray>
+#include <de/FileSystem>
+#include <de/Folder>
 
 #include <QDebug>
+#include <QBuffer>
 
 using namespace de;
 
@@ -51,11 +55,10 @@ DENG2_PIMPL_NOREF(MapImport)
     const res::LumpCatalog &lumps;
     res::IdTech1FlatLib     flatLib;
     res::IdTech1TextureLib  textureLib;
+    String                  mapId;
     Map                     map;
     QSet<String>            textures;
-
-    String scope;
-    Vec3d  worldScale;
+    Vec3d                   worldScale;
 
     enum LevelFormat { UnknownFormat, DoomFormat, HexenFormat };
     LevelFormat levelFormat = UnknownFormat;
@@ -133,11 +136,11 @@ DENG2_PIMPL_NOREF(MapImport)
         const auto headerPos = lumps.find(mapId);
 
         levelFormat = (lumps.lumpName(headerPos + 11) == "BEHAVIOR" ? HexenFormat : DoomFormat);
-        scope = (levelFormat == DoomFormat ? "doom" : "hexen"); // TODO: use the package ID
 
         qDebug() << "Importing map:" << mapId
-                 << (levelFormat == DoomFormat ? "(Doom)" : "(Hexen)")
-                 << "in scope:" << scope;
+                 << (levelFormat == DoomFormat ? "(Doom)" : "(Hexen)");
+
+        this->mapId = mapId.toLower();
 
         // Conversion from map units to meters.
         // (Based on Doom Guy vs. average male eye height.)
@@ -177,8 +180,8 @@ DENG2_PIMPL_NOREF(MapImport)
             const auto &sec = idSectors[i];
 
             // Plane materials.
-            String floorTexture   = scope + ".flat." + res::wad::nameString(sec.floorTexture);
-            String ceilingTexture = scope + ".flat." + res::wad::nameString(sec.ceilingTexture);
+            String floorTexture   = "flat." + res::wad::nameString(sec.floorTexture);
+            String ceilingTexture = "flat." + res::wad::nameString(sec.ceilingTexture);
 
             if (isSky(sec.floorTexture))
             {
@@ -269,15 +272,15 @@ DENG2_PIMPL_NOREF(MapImport)
 
                     if (midTex != "-")
                     {
-                        middleTexture[p] = scope + ".texture." + midTex;
+                        middleTexture[p] = "texture." + midTex;
                     }
                     if (upTex != "-")
                     {
-                        upperTexture[p]  = scope + ".texture." + upTex;
+                        upperTexture[p]  = "texture." + upTex;
                     }
                     if (lowTex != "-")
                     {
-                        lowerTexture[p]  = scope + ".texture." + lowTex;
+                        lowerTexture[p]  = "texture." + lowTex;
                     }
 
                     textures.insert(middleTexture[p]);
@@ -346,6 +349,8 @@ DENG2_PIMPL_NOREF(MapImport)
             builder.polygonize(ms.sector, ms.boundaryLines);
         }
 
+        textures.remove("");
+
         return true;
     }
 };
@@ -364,32 +369,120 @@ Map &MapImport::map()
     return d->map;
 }
 
-StringList MapImport::textures() const
+StringList MapImport::materials() const
 {
     return compose<StringList>(d->textures.constBegin(), d->textures.constEnd());
 }
 
-Image MapImport::textureImage(const String &name) const
+Image MapImport::materialImage(const String &name) const
 {
     if (!name) return {};
 
     const DotPath path(name);
-    if (path.segmentCount() < 3) return {};
+    if (path.segmentCount() < 2) return {};
 
-    const auto &category = path.segment(1);
+    const auto &category = path.segment(0);
 
     if (category == QStringLiteral("texture"))
     {
-        const auto img = d->textureLib.textureImage(path.segment(2));
+        const auto img = d->textureLib.textureImage(path.segment(1));
         return Image::fromRgbaData(img.pixelSize(), img.pixels());
     }
     else if (category == QStringLiteral("flat"))
     {
-        const auto img = d->flatLib.flatImage(path.segment(2));
+        const auto img = d->flatLib.flatImage(path.segment(1));
         return Image::fromRgbaData(img.pixelSize(), img.pixels());
     }
 
     return {};
+}
+
+void MapImport::exportPackage(const String &packageRootPath) const
+{
+    Folder &root = FS::get().makeFolder(packageRootPath); // or use existing folder...
+
+    qDebug() << root.correspondingNativePath();
+
+    // Organize using subfolders.
+    Folder &textures = FS::get().makeFolder(packageRootPath / "textures");
+    Folder &flats    = FS::get().makeFolder(packageRootPath / "flats");
+    Folder &maps     = FS::get().makeFolder(packageRootPath / "maps");
+
+    // Package info (with required metadata).
+    {
+        File & f   = root.replaceFile("info.dei");
+        String dei = "title: " + d->mapId +
+                     "\nversion: 1.0"
+                     "\ntags: map"
+                     "\nlicense: unknown\n";
+        // TODO: Include all information known about the map based on the WAD file, etc.
+        f << dei.toUtf8();
+        f.flush();
+    }
+
+    // Maps included in the pacakge.
+    {
+        File & f   = root.replaceFile("maps.dei");
+        String dei = "map \"" + d->mapId + "\" {\n"
+                     "    path = \"maps/" + d->mapId + ".gloommap\"\n"
+                     "}\n";
+        f << dei.toUtf8();
+        f.flush();
+    }
+
+    // The map itself.
+    {
+        File &f = maps.replaceFile(d->mapId + ".gloommap");
+        f << d->map.serialize();
+        f.flush();
+    }
+
+    // Materials used in the map.
+    {
+        Block dei;
+        QTextStream os(&dei);
+        os.setCodec("UTF-8");
+
+        foreach (String name, materials())
+        {
+            qDebug() << "Exporting:" << name;
+
+            const DotPath path{name};
+            const String  category  = path.segment(0);
+            const String  subfolder = (category == "texture" ? "textures" : "flats");
+            const String  imgPath   = subfolder / path.segment(1) + "_diffuse.png";
+
+            os << "material \"" << name << "\" {\n"
+               << "    diffuse: " << imgPath << "\n"
+               << "}\n\n";
+
+            const auto image = materialImage(name);
+            qDebug() << "Got image" << image.size().asText();
+
+            Block imgData;
+            {
+                QBuffer outBuf(&imgData);
+                outBuf.open(QIODevice::WriteOnly);
+                image.toQImage().save(&outBuf, "PNG", 1);
+                qDebug() << "Got" << imgData.size() << "bytes";
+            }
+
+            File &f = root.replaceFile(imgPath);
+            f << imgData;
+            f.flush();
+
+            // ".diffuse", ".specgloss", ".emissive", ".normaldisp"
+            // OR: .basecolor .metallic .normal .roughness
+            // - ppm (pixels per meter)
+            // - opaque/transparent
+        }
+
+        os.flush();
+
+        File &f = root.replaceFile("materials.dei");
+        f << dei;
+        f.flush();
+    }
 }
 
 } // namespace gloom

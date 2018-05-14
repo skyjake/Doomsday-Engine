@@ -28,6 +28,9 @@ namespace gloom {
 
 using namespace de;
 
+/**
+ * Material library.
+ */
 class MaterialLib : public Render
 {
 public:

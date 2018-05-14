@@ -40,9 +40,14 @@ public:
     bool importMap(const String &mapId);
 
     Map &      map();
-    StringList textures() const;
+    StringList materials() const;
+    Image      materialImage(const String &name) const;
 
-    Image textureImage(const String &name) const;
+    /**
+     * Exports the map and its associated resources (textures) as a .pack.
+     * @param packageRootPath
+     */
+    void exportPackage(const String &packageRootPath) const;
 
 private:
     DENG2_PRIVATE(d)
