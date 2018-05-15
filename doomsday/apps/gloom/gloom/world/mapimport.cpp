@@ -143,8 +143,8 @@ DENG2_PIMPL_NOREF(MapImport)
         this->mapId = mapId.toLower();
 
         // Conversion from map units to meters.
-        // (Based on Doom Guy vs. average male eye height.)
-        const double MapUnit = 1.74 / (levelFormat == DoomFormat ? 41.0 : 48.0);
+        // (Approximate typical human eye height slightly adjusted for a short reciprocal.)
+        const double MapUnit = (levelFormat == DoomFormat ? (1.7589 / 41.0) : (1.752 / 48.0));
 
         worldScale = {MapUnit, MapUnit * 1.2, MapUnit}; // VGA aspect ratio for vertical
 
@@ -404,9 +404,9 @@ void MapImport::exportPackage(const String &packageRootPath) const
     qDebug() << root.correspondingNativePath();
 
     // Organize using subfolders.
-    Folder &textures = FS::get().makeFolder(packageRootPath / "textures");
-    Folder &flats    = FS::get().makeFolder(packageRootPath / "flats");
-    Folder &maps     = FS::get().makeFolder(packageRootPath / "maps");
+    /*Folder &textures =*/ FS::get().makeFolder(packageRootPath / "textures");
+    /*Folder &flats    =*/ FS::get().makeFolder(packageRootPath / "flats");
+    Folder &maps       =   FS::get().makeFolder(packageRootPath / "maps");
 
     // Package info (with required metadata).
     {
@@ -443,6 +443,8 @@ void MapImport::exportPackage(const String &packageRootPath) const
         QTextStream os(&dei);
         os.setCodec("UTF-8");
 
+        const double ppm = 1.0 / d->worldScale.x;
+
         foreach (String name, materials())
         {
             qDebug() << "Exporting:" << name;
@@ -452,19 +454,19 @@ void MapImport::exportPackage(const String &packageRootPath) const
             const String  subfolder = (category == "texture" ? "textures" : "flats");
             const String  imgPath   = subfolder / path.segment(1) + "_diffuse.png";
 
-            os << "material \"" << name << "\" {\n"
+            os.setRealNumberPrecision(12);
+            os << "material \"" << name << "\" ppm " << ppm << " {\n"
                << "    diffuse: " << imgPath << "\n"
                << "}\n\n";
 
             const auto image = materialImage(name);
-            qDebug() << "Got image" << image.size().asText();
+            DENG2_ASSERT(!image.isNull());
 
             Block imgData;
             {
                 QBuffer outBuf(&imgData);
                 outBuf.open(QIODevice::WriteOnly);
                 image.toQImage().save(&outBuf, "PNG", 1);
-                qDebug() << "Got" << imgData.size() << "bytes";
             }
 
             File &f = root.replaceFile(imgPath);
