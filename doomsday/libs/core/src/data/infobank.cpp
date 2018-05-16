@@ -24,15 +24,16 @@
 
 namespace de {
 
-static String const VAR_NOT_IN_BANK("__notInBank__");
-
 DENG2_PIMPL(InfoBank)
 , DENG2_OBSERVES(ScriptedInfo, NamedBlock)
 {
-    Record names; ///< All parsed sources will be stored here.
-    ScriptedInfo info { &names };
-    Time modTime;
-    String relativeToPath;
+    Record       names; ///< All parsed sources will be stored here.
+    ScriptedInfo info{&names};
+    Time         modTime;
+    String       relativeToPath;
+    String       containerPackage;
+
+    static const String VAR_NOT_IN_BANK;
 
     Impl(Public *i) : Base(i)
     {
@@ -41,7 +42,7 @@ DENG2_PIMPL(InfoBank)
 
     void parsedNamedBlock(String const &, Record &block)
     {
-        if (block.gets("__type__") != ScriptedInfo::BLOCK_GROUP)
+        if (block.gets(ScriptedInfo::VAR_BLOCK_TYPE) != ScriptedInfo::BLOCK_GROUP)
         {
             block.addBoolean(VAR_NOT_IN_BANK, true);
         }
@@ -54,10 +55,9 @@ DENG2_PIMPL(InfoBank)
      */
     void removeFromGroup(Record &group,
                          std::function<bool (String const &, Record const &)> shouldRemove,
-                         String identifierBase = "")
+                         String identifierBase = {})
     {
-        group.forSubrecords([this, &group, &shouldRemove, &identifierBase]
-                            (String const &name, Record &sub)
+        group.forSubrecords([&, this](String const &name, Record &sub)
         {
             String fullIdentifier = identifierBase.concatenateMember(name);
             if (ScriptedInfo::blockType(sub) == ScriptedInfo::BLOCK_GROUP)
@@ -78,7 +78,11 @@ DENG2_PIMPL(InfoBank)
     }
 };
 
-InfoBank::InfoBank(char const *nameForLog, Bank::Flags const &flags, String const &hotStorageLocation)
+const String InfoBank::Impl::VAR_NOT_IN_BANK{"__notInBank__"};
+
+InfoBank::InfoBank(char const *       nameForLog,
+                   Bank::Flags const &flags,
+                   String const &     hotStorageLocation)
     : Bank(nameForLog, flags, hotStorageLocation)
     , d(new Impl(this))
 {}
@@ -136,13 +140,13 @@ void InfoBank::addFromInfoBlocks(String const &blockType)
     foreach (String id, d->info.allBlocksOfType(blockType))
     {
         Record &rec = d->names[id];
-        if (!rec.has(VAR_NOT_IN_BANK))
+        if (!rec.has(Impl::VAR_NOT_IN_BANK))
         {
             // Already added, from the looks of it.
             continue;
         }
         add(id, newSourceFromInfo(id));
-        delete &rec[VAR_NOT_IN_BANK];
+        delete &rec[Impl::VAR_NOT_IN_BANK];
     }
 }
 

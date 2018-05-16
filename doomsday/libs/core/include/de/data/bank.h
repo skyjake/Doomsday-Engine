@@ -300,7 +300,7 @@ public:
      *
      * @param func  Function that gets called with the path of each item.
      */
-    void iterate(std::function<void (DotPath const &)> func) const;
+    void iterate(const std::function<void (DotPath const &)> &func) const;
 
     /**
      * Collects a list of the paths of all items in the bank.

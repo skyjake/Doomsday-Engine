@@ -67,7 +67,7 @@ public:
      */
     void parse(File const &infoFile);
 
-    ScriptedInfo &info();
+    ScriptedInfo &      info();
     ScriptedInfo const &info() const;
 
     void addFromInfoBlocks(String const &blockType);
@@ -88,7 +88,7 @@ public:
      */
     void removeAllFromPackage(String const &packageId);
 
-    Time sourceModifiedAt() const;
+    Time   sourceModifiedAt() const;
     String bankRootPath() const;
 
     /**
@@ -107,7 +107,7 @@ public:
     String absolutePathInContext(Record const &context, String const &relativePath) const;
 
     // Implements IObject.
-    Record &objectNamespace();
+    Record &      objectNamespace();
     Record const &objectNamespace() const;
 
 protected:

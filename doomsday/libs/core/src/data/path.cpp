@@ -342,6 +342,16 @@ Path Path::subPath(Rangei const &range) const
     return sub;
 }
 
+Path Path::beginningOmitted(int omittedSegmentCount) const
+{
+    return subPath({omittedSegmentCount, segmentCount()});
+}
+
+Path Path::endOmitted(int omittedSegmentCount) const
+{
+    return subPath({0, segmentCount() - omittedSegmentCount});
+}
+
 bool Path::operator == (Path const &other) const
 {
     if (this == &other) return true;

@@ -865,7 +865,7 @@ dint Bank::allItems(Names &names) const
     return dint(names.size());
 }
 
-void Bank::iterate(std::function<void (DotPath const &)> func) const
+void Bank::iterate(const std::function<void (DotPath const &)> &func) const
 {
     PathTree::FoundPaths paths;
     d->items.findAllPaths(paths, PathTree::NoBranch, d->sepChar);

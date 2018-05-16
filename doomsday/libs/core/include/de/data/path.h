@@ -399,6 +399,10 @@ public:
 
     Path subPath(Rangei const &range) const;
 
+    Path beginningOmitted(int omittedSegmentCount = 1) const;
+
+    Path endOmitted(int omittedSegmentCount = 1) const;
+
     /**
      * @return  Total number of segments in the segment map. There is always
      * at least one segment.
