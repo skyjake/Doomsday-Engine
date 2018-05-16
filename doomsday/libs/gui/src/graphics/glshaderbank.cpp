@@ -47,8 +47,8 @@ static String processIncludes(String source, String const &sourceFolderPath)
         if (!found.hasMatch()) break; // No more includes.
 
         String incFilePath = sourceFolderPath / found.captured(1);
-        String incSource = String::fromUtf8(Block(FS::locate<File const>(incFilePath)));
-        incSource = processIncludes(incSource, incFilePath.fileNamePath());
+        String incSource   = String::fromUtf8(FS::locate<File const>(incFilePath));
+        incSource          = processIncludes(incSource, incFilePath.fileNamePath());
 
         Rangei const capRange(found.capturedStart(), found.capturedEnd());
         String const prefix = source.substr(0, capRange.start);
@@ -189,7 +189,7 @@ DENG2_PIMPL(GLShaderBank)
     void clearShaders()
     {
         // Release all of our references to the shaders.
-        foreach (GLShader *shader, shaders.values())
+        foreach (GLShader *shader, shaders)
         {
             shader->release();
         }
@@ -271,7 +271,7 @@ GLProgram &GLShaderBank::build(GLProgram &program, DotPath const &path) const
 
     // Bind the default uniforms. These will be used if no overriding
     // uniforms are bound.
-    for (GLUniform *uniform : i.defaultUniforms)
+    foreach (GLUniform *uniform, i.defaultUniforms)
     {
         program << *uniform;
     }
@@ -339,7 +339,7 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
     if (def.has("defines"))
     {
         const DictionaryValue &dict = def.getdt("defines");
-        for (auto i : dict.elements())
+        for (const auto &i : dict.elements())
         {
             String const macroName = i.first.value->asText();
             String const content   = i.second->asText();

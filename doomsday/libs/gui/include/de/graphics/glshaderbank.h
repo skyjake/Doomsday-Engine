@@ -71,7 +71,7 @@ public:
 
 protected:
     ISource *newSourceFromInfo(String const &id);
-    IData *loadFromSource(ISource &source);
+    IData *  loadFromSource(ISource &source);
 
 private:
     DENG2_PRIVATE(d)
