@@ -171,7 +171,7 @@ IdTech1TextureLib::IdTech1TextureLib(const LumpCatalog &catalog)
 
 IdTech1Image IdTech1TextureLib::textureImage(const String &name) const
 {
-    return d->composeTexture(name);
+    return d->composeTexture(name.toUpper());
 }
 
 } // namespace res

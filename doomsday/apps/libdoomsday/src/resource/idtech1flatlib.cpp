@@ -64,7 +64,7 @@ IdTech1Image IdTech1FlatLib::flatImage(const String &name) const
 
     const auto *_d = d.get();
 
-    auto found = _d->flats.find(name);
+    auto found = _d->flats.find(name.toUpper());
     if (found != _d->flats.end())
     {
         return IdTech1Image(flatSize, _d->catalog.read(found.value()), _d->palette);
