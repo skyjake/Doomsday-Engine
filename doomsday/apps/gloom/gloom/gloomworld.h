@@ -25,12 +25,23 @@
 
 namespace gloom {
 
+using namespace de;
+
 class Map;
 
 class GloomWorld : public World
 {
 public:
     GloomWorld();
+
+    /**
+     * Loads a map.
+     *
+     * The map must be defined in the "maps.dei" file of one of the loaded packages.
+     *
+     * @param mapId
+     */
+    void loadMap(const String &mapId);
 
     void setLocalUser(User *user);
     void setMap(const Map &map);

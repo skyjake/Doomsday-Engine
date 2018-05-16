@@ -26,6 +26,7 @@
 #include <de/DataArray>
 #include <de/FileSystem>
 #include <de/Folder>
+#include <de/Version>
 
 #include <QDebug>
 #include <QBuffer>
@@ -59,6 +60,7 @@ DENG2_PIMPL_NOREF(MapImport)
     Map                     map;
     QSet<String>            textures;
     Vec3d                   worldScale;
+    double                  worldAspectRatio = 1.2;
 
     enum LevelFormat { UnknownFormat, DoomFormat, HexenFormat };
     LevelFormat levelFormat = UnknownFormat;
@@ -128,7 +130,7 @@ DENG2_PIMPL_NOREF(MapImport)
 
     bool import(const String &mapId)
     {
-        static const uint16_t INVALID_INDEX = 0xffff;
+        static const uint16_t invalidIndex = 0xffff;
 
         map.clear();
         textures.clear();
@@ -142,11 +144,12 @@ DENG2_PIMPL_NOREF(MapImport)
 
         this->mapId = mapId.toLower();
 
-        // Conversion from map units to meters.
+        // Conversion from Doom map units (Doom texels) to meters.
         // (Approximate typical human eye height slightly adjusted for a short reciprocal.)
-        const double MapUnit = (levelFormat == DoomFormat ? (1.7589 / 41.0) : (1.752 / 48.0));
+        const double humanEyeHeight = 1.74;
+        const double mapUnit = humanEyeHeight / (levelFormat == DoomFormat ? 41.0 : 48.0);
 
-        worldScale = {MapUnit, MapUnit * 1.2, MapUnit}; // VGA aspect ratio for vertical
+        worldScale = {mapUnit, mapUnit * 1.2, mapUnit}; // VGA aspect ratio for vertical
 
         const auto linedefData = lumps.read(headerPos + 2);
 
@@ -180,8 +183,8 @@ DENG2_PIMPL_NOREF(MapImport)
             const auto &sec = idSectors[i];
 
             // Plane materials.
-            String floorTexture   = "flat." + res::wad::nameString(sec.floorTexture);
-            String ceilingTexture = "flat." + res::wad::nameString(sec.ceilingTexture);
+            String floorTexture   = "flat." + res::wad::nameString(sec.floorTexture).toLower();
+            String ceilingTexture = "flat." + res::wad::nameString(sec.ceilingTexture).toLower();
 
             if (isSky(sec.floorTexture))
             {
@@ -197,12 +200,12 @@ DENG2_PIMPL_NOREF(MapImport)
 
             mappedSectors[i].floor =
                 map.append(map.planes(),
-                           Plane{Vec3d(0, le16(sec.floorHeight) * worldScale.y, 0),
+                           Plane{Vec3d(0, le16(sec.floorHeight), 0),
                                  Vec3f(0, 1, 0),
                                  {floorTexture, ""}});
             mappedSectors[i].ceiling =
                 map.append(map.planes(),
-                           Plane{Vec3d(0, le16(sec.ceilingHeight) * worldScale.y, 0),
+                           Plane{Vec3d(0, le16(sec.ceilingHeight), 0),
                                  Vec3f(0, -1, 0),
                                  {ceilingTexture, ""}});
 
@@ -221,7 +224,7 @@ DENG2_PIMPL_NOREF(MapImport)
         {
             uint16_t idx[2];
             uint16_t sides[2];
-            uint16_t sectors[2]{INVALID_INDEX, INVALID_INDEX};
+            uint16_t sectors[2]{invalidIndex, invalidIndex};
             String   middleTexture[2];
             String   upperTexture[2];
             String   lowerTexture[2];
@@ -253,22 +256,21 @@ DENG2_PIMPL_NOREF(MapImport)
                 {
                     mappedVertex[idx[p]] = map.append(
                         map.points(),
-                        Point{Vec2d(le16(idVertices[idx[p]].x), -le16(idVertices[idx[p]].y)) *
-                              worldScale.xz()});
+                        Point{Vec2d(le16(idVertices[idx[p]].x), -le16(idVertices[idx[p]].y))});
                 }
                 line.points[p] = mappedVertex[idx[p]];
 
                 // Sides.
-                if (sides[p] != INVALID_INDEX)
+                if (sides[p] != invalidIndex)
                 {
                     const auto &sdef = idSidedefs[sides[p]];
 
                     sectors[p]              = le16u(sdef.sector);
-                    line.surfaces[p].sector = (sectors[p] != INVALID_INDEX? mappedSectors[sectors[p]].sector : 0);
+                    line.surfaces[p].sector = (sectors[p] != invalidIndex? mappedSectors[sectors[p]].sector : 0);
 
-                    const auto midTex = res::wad::nameString(sdef.middleTexture);
-                    const auto upTex  = res::wad::nameString(sdef.upperTexture);
-                    const auto lowTex = res::wad::nameString(sdef.lowerTexture);
+                    const auto midTex = res::wad::nameString(sdef.middleTexture).toLower();
+                    const auto upTex  = res::wad::nameString(sdef.upperTexture).toLower();
+                    const auto lowTex = res::wad::nameString(sdef.lowerTexture).toLower();
 
                     if (midTex != "-")
                     {
@@ -411,10 +413,13 @@ void MapImport::exportPackage(const String &packageRootPath) const
     // Package info (with required metadata).
     {
         File & f   = root.replaceFile("info.dei");
-        String dei = "title: " + d->mapId +
+        String dei = "title: " + d->mapId.toUpper() +
                      "\nversion: 1.0"
                      "\ntags: map"
-                     "\nlicense: unknown\n";
+                     "\nlicense: unknown"
+                     "\ngenerator: Doomsday " + Version::currentBuild().fullNumber() +
+                     "\n\n@include <materials.dei>\n"
+                     "@include <maps.dei>\n";
         // TODO: Include all information known about the map based on the WAD file, etc.
         f << dei.toUtf8();
         f.flush();
@@ -423,9 +428,12 @@ void MapImport::exportPackage(const String &packageRootPath) const
     // Maps included in the pacakge.
     {
         File & f   = root.replaceFile("maps.dei");
-        String dei = "map \"" + d->mapId + "\" {\n"
+        String dei = "asset map." + d->mapId + " {\n"
                      "    path = \"maps/" + d->mapId + ".gloommap\"\n"
-                     "}\n";
+                     "    metersPerUnit " +
+                     String::format(
+                         "<%.16f, %.16f, %.16f>", d->worldScale.x, d->worldScale.y, d->worldScale.z) +
+                     "\n}\n";
         f << dei.toUtf8();
         f.flush();
     }
@@ -443,7 +451,7 @@ void MapImport::exportPackage(const String &packageRootPath) const
         QTextStream os(&dei);
         os.setCodec("UTF-8");
 
-        const double ppm = 1.0 / d->worldScale.x;
+        //const double ppm = 1.0 / d->worldScale.x;
 
         foreach (String name, materials())
         {
@@ -454,9 +462,13 @@ void MapImport::exportPackage(const String &packageRootPath) const
             const String  subfolder = (category == "texture" ? "textures" : "flats");
             const String  imgPath   = subfolder / path.segment(1) + "_diffuse.png";
 
-            os.setRealNumberPrecision(12);
-            os << "material \"" << name << "\" ppm " << ppm << " {\n"
-               << "    diffuse: " << imgPath << "\n"
+            os.setRealNumberPrecision(16);
+            os << "asset material." << name << " {\n    ppm = " << 1.0 / d->worldScale.x << "\n";
+            if (category == "texture")
+            {
+                os << "    aspectRatio = " << d->worldAspectRatio << "\n";
+            }
+            os << "    diffuse: " << imgPath << "\n"
                << "}\n\n";
 
             const auto image = materialImage(name);

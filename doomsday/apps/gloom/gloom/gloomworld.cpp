@@ -49,19 +49,16 @@ using namespace de;
 
 namespace gloom {
 
-struct GLScopedTimer
-{
+struct GLScopedTimer {
     Id _id;
 
-    GLScopedTimer(const Id &id) : _id(id)
+    GLScopedTimer(const Id &id)
+        : _id(id)
     {
         GLWindow::main().timer().beginTimer(_id);
     }
 
-    ~GLScopedTimer()
-    {
-        GLWindow::main().timer().endTimer(_id);
-    }
+    ~GLScopedTimer() { GLWindow::main().timer().endTimer(_id); }
 };
 
 enum {

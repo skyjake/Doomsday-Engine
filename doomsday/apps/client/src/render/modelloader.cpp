@@ -73,9 +73,9 @@ DENG2_PIMPL(ModelLoader)
 , DENG2_OBSERVES(BusyRunner, DeferredGLTask)
 , public MultiAtlas::IAtlasFactory
 {
-    MultiAtlas atlasPool { *this };
+    MultiAtlas atlasPool{*this};
 
-    filesys::AssetObserver observer { "model\\..*" };
+    filesys::AssetObserver observer{"model\\..*"};
     ModelBank bank {
         // Using render::Model instances.
         [] () -> ModelDrawable * { return new render::Model; }
@@ -165,7 +165,6 @@ DENG2_PIMPL(ModelLoader)
                 << identifier
                 << (event == filesys::AssetObserver::Added? "available" :
                                                             "unavailable");
-
         if (event == filesys::AssetObserver::Added)
         {
             bank.add(identifier, App::asset(identifier).absolutePath("path"));

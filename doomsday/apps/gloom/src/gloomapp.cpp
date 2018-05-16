@@ -116,6 +116,8 @@ void GloomApp::initialize()
         waveforms().addFromInfo(base.root().locate<File>("audio.dei"));
     }
 
+    App::packageLoader().load("user.exportedmap");
+
     // Create the window.
     MainWindow *win = d->winSys->newWindow<MainWindow>("main");
 

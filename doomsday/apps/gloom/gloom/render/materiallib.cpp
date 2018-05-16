@@ -21,6 +21,7 @@
 #include "gloom/render/defs.h"
 #include "gloom/render/databuffer.h"
 
+#include <de/filesys/AssetObserver>
 #include <array>
 
 using namespace de;
@@ -28,47 +29,65 @@ using namespace de;
 namespace gloom {
 
 DENG2_PIMPL(MaterialLib)
+, DENG2_OBSERVES(filesys::AssetObserver, Availability)
 {
-    struct Properties
-    {
-        Flags flags;
-        float texelsPerMeter;
+    struct Properties {
+        Flags   flags;
+        float   texelsPerMeter;
         duint32 metricsFlags; // copied to shader in texture metrics
     };
-    QHash<String, Properties> materials;
-
-    using TexIds = std::array<Id, TextureMapCount>;
-
-    QHash<String, TexIds> loadedTextures; // name => atlas ID
-    Ids                   materialIds;
-
     struct Metrics {
         struct Texture {
             Vec4f uvRect;
             Vec4f texelSize;
         } texture[TextureMapCount];
     };
-    DataBuffer<Metrics> textureMetrics{"uTextureMetrics", Image::RGBA_32f, gl::Static};
+    using TexIds = std::array<Id, TextureMapCount>;
+
+    filesys::AssetObserver    observer{"material\\..*"};
+    QHash<String, Properties> materials;
+    QHash<String, TexIds>     loadedTextures; // name => atlas ID
+    Ids                       materialIds;
+    DataBuffer<Metrics>       textureMetrics{"uTextureMetrics", Image::RGBA_32f, gl::Static};
 
     Impl(Public *i) : Base(i)
     {
-        // All known materials.
+        observer.audienceForAvailability() += this;
+
+/*        // All known materials.
         materials["world.stone"] = Properties{Opaque, 200.f, 0};
         materials["world.dirt"]  = Properties{Opaque, 200.f, 0};
         materials["world.grass"] = Properties{Opaque, 200.f, 0};
         materials["world.test"]  = Properties{Opaque, 200.f, 0};
         materials["world.test2"] = Properties{Opaque, 200.f, 0};
         materials["world.metal"] = Properties{Opaque, 200.f, 0};
-        materials["world.water"] = Properties{Transparent, 100.f, 1};
+        materials["world.water"] = Properties{Transparent, 100.f, 1};*/
+    }
+
+    void assetAvailabilityChanged(const String &identifier, filesys::AssetObserver::Event event) override
+    {
+        LOG_RES_MSG("Material asset \"%s\" is now %s")
+                << identifier
+                << (event == filesys::AssetObserver::Added? "available" :
+                                                            "unavailable");
+        if (event == filesys::AssetObserver::Added)
+        {
+            const auto &asset = App::asset(identifier);
+            loadMaterial(DotPath(identifier).beginningOmitted(), asset);
+        }
+        else
+        {
+
+        }
     }
 
     void init(Context &)
     {
         // Load materials.
-        for (auto i = materials.constBegin(); i != materials.constEnd(); ++i)
+        /*for (auto i = materials.constBegin(); i != materials.constEnd(); ++i)
         {
             loadMaterial(i.key());
-        }
+        }*/
         updateTextureMetrics();
     }
 
@@ -88,8 +107,13 @@ DENG2_PIMPL(MaterialLib)
         textureMetrics.clear();
     }
 
-    void loadMaterial(const String &name)
+    //void loadMaterial(const String &name)
+    void loadMaterial(const DotPath &name, const Package::Asset &asset)
     {
+        qDebug() << "Loading material:" << name;
+        qDebug() << asset.accessedRecord().asText().toLatin1().constData();
+
+        /*
         static const char *suffix[TextureMapCount] = {
             ".diffuse", ".specgloss", ".emissive", ".normaldisp"
         };
@@ -127,16 +151,16 @@ DENG2_PIMPL(MaterialLib)
             }
         }
         loadedTextures.insert(name, ids);
+        */
     }
 
     void updateTextureMetrics()
     {
-        //const float texelsPerMeter = 200.f;
         auto &ctx = self().context();
 
         textureMetrics.clear();
         materialIds.clear();
-        materialIds.insert(String(), INVALID_INDEX);
+        materialIds.insert(String(), InvalidIndex);
 
         for (auto i = loadedTextures.begin(); i != loadedTextures.end(); ++i)
         {

@@ -23,7 +23,7 @@
 
 namespace gloom {
 
-static const uint32_t INVALID_INDEX = 0xffffffff;
+static const uint32_t InvalidIndex = 0xffffffff;
 
 enum Texture {
     Diffuse            = 0, // RGB: Diffuse  | A: Opacity

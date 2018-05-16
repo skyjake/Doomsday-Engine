@@ -1114,7 +1114,7 @@ DENG2_PIMPL(Editor)
                                     qDebug() << "Texture:" << n << img.size().asText();
                                     img.toQImage().save(n + ".png");
                                 }*/
-                                importer.exportPackage("/home/exportedmap.pack");
+                                importer.exportPackage("/home/user.exportedmap.pack");
                             }
 
                             // Update the editor's map.
