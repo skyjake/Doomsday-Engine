@@ -50,6 +50,16 @@ public:
     void glDeinit() override;
     void render() override;
 
+    /**
+     * Loads a set of materials, and unloads any previously loaded materials that are not
+     * on the provided list. In practice, the texture images of the materials and the texture
+     * metrics are copied to GPU textures/buffers. Only loaded materials can be used for
+     * rendering.
+     *
+     * @param materials  List of materials to load.
+     */
+    void loadMaterials(const StringList &materials);
+
     const Ids &materials() const;
 
     bool isTransparent(const String &matId) const;

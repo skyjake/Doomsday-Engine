@@ -21,6 +21,8 @@
 #include "gloom/render/defs.h"
 #include "gloom/render/databuffer.h"
 
+#include <de/FileSystem>
+#include <de/ImageFile>
 #include <de/filesys/AssetObserver>
 #include <array>
 
@@ -32,9 +34,10 @@ DENG2_PIMPL(MaterialLib)
 , DENG2_OBSERVES(filesys::AssetObserver, Availability)
 {
     struct Properties {
-        Flags   flags;
-        float   texelsPerMeter;
-        duint32 metricsFlags; // copied to shader in texture metrics
+        Flags   flags{Opaque};
+        float   texelsPerMeter{100.f};
+        float   aspectRatio{1.f};
+        duint32 metricsFlags{0}; // copied to shader in texture metrics
     };
     struct Metrics {
         struct Texture {
@@ -70,14 +73,17 @@ DENG2_PIMPL(MaterialLib)
                 << identifier
                 << (event == filesys::AssetObserver::Added? "available" :
                                                             "unavailable");
+
+        const DotPath materialId = DotPath(identifier).beginningOmitted();
+
         if (event == filesys::AssetObserver::Added)
         {
             const auto &asset = App::asset(identifier);
-            loadMaterial(DotPath(identifier).beginningOmitted(), asset);
+            addMaterial(materialId, asset);
         }
         else
         {
-
+            removeMaterial(materialId);
         }
     }
 
@@ -93,25 +99,23 @@ DENG2_PIMPL(MaterialLib)
 
     void deinit()
     {
-        foreach (const TexIds &texIds, loadedTextures)
+        while (!loadedTextures.isEmpty())
         {
-            for (int t = 0; t < TextureMapCount; ++t)
-            {
-                if (texIds[t])
-                {
-                    self().context().atlas[t]->release(texIds[t]);
-                }
-            }
+            unloadTextures(loadedTextures.begin().key());
         }
-        loadedTextures.clear();
         textureMetrics.clear();
     }
 
-    //void loadMaterial(const String &name)
-    void loadMaterial(const DotPath &name, const Package::Asset &asset)
+    void addMaterial(const DotPath &name, const Package::Asset &asset)
     {
-        qDebug() << "Loading material:" << name;
-        qDebug() << asset.accessedRecord().asText().toLatin1().constData();
+//        qDebug() << "Adding material:" << name;
+//        qDebug() << asset.accessedRecord().asText().toLatin1().constData();
+
+        Properties props;
+        props.aspectRatio    = asset.getf("aspectRatio", 1.f);
+        props.texelsPerMeter = asset.getf("ppm", 100.f);
+
+        materials[name] = props;
 
         /*
         static const char *suffix[TextureMapCount] = {
@@ -152,6 +156,80 @@ DENG2_PIMPL(MaterialLib)
         }
         loadedTextures.insert(name, ids);
         */
+    }
+
+    void removeMaterial(const DotPath &materialId)
+    {
+        unloadTextures(materialId);
+        materials.remove(materialId);
+    }
+
+    const Image getImage(const Package::Asset &asset, const String &key)
+    {
+        return FS::locate<const ImageFile>(asset.absolutePath(key)).image();
+    }
+
+    void loadTextures(const String &materialId)
+    {
+        static const char *texName[TextureMapCount] = {
+            "diffuse", "specgloss", "emissive", "normal"
+        };
+
+        auto &      ctx   = self().context();
+        const auto &asset = App::asset("material." + materialId);
+
+        TexIds ids{{Id::None, Id::None, Id::None, Id::None}};
+
+        if (asset.has("metallic"))
+        {
+            LOG_RES_MSG("Loading metallic/roughness textures of \"%s\"") << materialId;
+
+            // Convert to specular/gloss.
+            Image baseColor    = getImage(asset, "basecolor");
+            Image invMetallic  = getImage(asset, "metallic").invertedColor(); // grayscale
+
+            Image normal       = getImage(asset, "normal");
+            Image gloss        = getImage(asset, "roughness").invertedColor(); // grayscale
+            Image diffuse      = baseColor.multiplied(invMetallic);
+
+            QImage defaultSpecular(QSize(invMetallic.width(), invMetallic.height()),
+                                   QImage::Format_ARGB32);
+            defaultSpecular.fill(QColor(56, 56, 56, 255));
+
+            Image specGloss = invMetallic.mixed(baseColor, defaultSpecular).withAlpha(gloss);
+
+            ids[Diffuse]            = ctx.atlas[Diffuse]->alloc(diffuse);
+            ids[SpecularGloss]      = ctx.atlas[SpecularGloss]->alloc(specGloss);
+            ids[NormalDisplacement] = ctx.atlas[NormalDisplacement]->alloc(normal);
+        }
+
+        for (int i = 0; i < TextureMapCount; ++i)
+        {
+            if (asset.has(texName[i]))
+            {
+                LOG_RES_MSG("Loading texture \"%s\"") << materialId.concatenateMember(texName[i]);
+                ids[i] = ctx.atlas[i]->alloc(getImage(asset, texName[i]));
+            }
+        }
+
+        loadedTextures.insert(materialId, ids);
+    }
+
+    void unloadTextures(const String &materialId)
+    {
+        auto loaded = loadedTextures.find(materialId);
+        if (loaded != loadedTextures.end())
+        {
+            const auto &texIds = loaded.value();
+            for (int i = 0; i < TextureMapCount; ++i)
+            {
+                if (texIds[i])
+                {
+                    self().context().atlas[i]->release(texIds[i]);
+                }
+            }
+            loadedTextures.erase(loaded);
+        }
     }
 
     void updateTextureMetrics()
@@ -215,6 +293,33 @@ void MaterialLib::glDeinit()
 
 void MaterialLib::render()
 {}
+
+void MaterialLib::loadMaterials(const StringList &materials)
+{
+    // Unload unnecessary materials.
+    {
+        QMutableHashIterator<String, Impl::TexIds> iter(d->loadedTextures);
+        while (iter.hasNext())
+        {
+            iter.next();
+            if (!materials.contains(iter.key()))
+            {
+                d->unloadTextures(iter.key());
+            }
+        }
+    }
+
+    // Load the requested new materials.
+    for (const String &materialId : materials)
+    {
+        if (!d->loadedTextures.contains(materialId))
+        {
+            d->loadTextures(materialId);
+        }
+    }
+
+    d->updateTextureMetrics();
+}
 
 const MaterialLib::Ids &MaterialLib::materials() const
 {
