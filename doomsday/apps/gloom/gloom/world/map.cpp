@@ -321,16 +321,41 @@ const Entity &Map::entity(ID id) const
 
 Rectangled Map::bounds() const
 {
+    const auto *_d = d.getConst();
     Rectangled rect;
-    if (!d->points.isEmpty())
+    if (!_d->points.isEmpty())
     {
-        rect = Rectangled(d->points.values().begin()->coord, d->points.values().begin()->coord);
-        for (const auto &p : d->points.values())
+        rect = Rectangled(_d->points.begin().value().coord, _d->points.begin().value().coord);
+        for (const auto &p : _d->points)
         {
             rect.include(p.coord);
         }
     }
     return rect;
+}
+
+StringList Map::materials() const
+{
+    const auto *_d = d.getConst();
+    QSet<String> mats;
+    for (const auto &line : _d->lines)
+    {
+        for (const auto &surf : line.surfaces)
+        {
+            for (const auto &name : surf.material)
+            {
+                if (name) mats.insert(name);
+            }
+        }
+    }
+    for (const auto &plane : _d->planes)
+    {
+        for (const auto &name : plane.material)
+        {
+            if (name) mats.insert(name);
+        }
+    }
+    return compose<StringList>(mats.begin(), mats.end());
 }
 
 bool Map::isLine(ID id) const
@@ -343,7 +368,7 @@ bool Map::isPlane(ID id) const
     return d->planes.contains(id);
 }
 
-void Map::forLinesAscendingDistance(const Point &pos, std::function<bool (ID)> func) const
+void Map::forLinesAscendingDistance(const Point &pos, const std::function<bool (ID)> &func) const
 {
     using DistLine = std::pair<ID, double>;
     QVector<DistLine> distLines;
@@ -682,9 +707,9 @@ static QString idStr(ID id)
     return String::number(id, 16);
 }
 
-static ID idNum(QVariant str)
+static ID idNum(const QVariant &str)
 {
-    return str.toString().toUInt(0, 16);
+    return str.toString().toUInt(nullptr, 16);
 }
 
 static QJsonArray idListToJsonArray(const IDList &list)

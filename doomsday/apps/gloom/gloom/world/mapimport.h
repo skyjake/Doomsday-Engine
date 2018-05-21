@@ -40,6 +40,7 @@ public:
     bool importMap(const String &mapId);
 
     Map &      map();
+    String     mapId() const;
     StringList materials() const;
     Image      materialImage(const String &name) const;
 

@@ -40,6 +40,7 @@ public:
 
     Editor();
 
+    de::String mapId() const;
     gloom::Map &map();
 
     bool maybeClose();

@@ -174,10 +174,11 @@ public:
     const Entity &entity(ID id) const;
 
     Rectangled        bounds() const;
+    StringList        materials() const;
     bool              isPoint(ID id) const;
     bool              isLine(ID id) const;
     bool              isPlane(ID id) const;
-    void              forLinesAscendingDistance(const Point &pos, std::function<bool(ID)>) const;
+    void              forLinesAscendingDistance(const Point &pos, const std::function<bool(ID)> &) const;
     IDList            findLines(ID pointId) const;
     IDList            findLinesStartingFrom(ID pointId, Line::Side side) const;
     std::pair<ID, ID> findSectorAndVolumeAt(const Vec3d &pos) const;

@@ -47,11 +47,11 @@ DENG2_PIMPL(MaterialLib)
     };
     using TexIds = std::array<Id, TextureMapCount>;
 
-    filesys::AssetObserver    observer{"material\\..*"};
-    QHash<String, Properties> materials;
-    QHash<String, TexIds>     loadedTextures; // name => atlas ID
-    Ids                       materialIds;
-    DataBuffer<Metrics>       textureMetrics{"uTextureMetrics", Image::RGBA_32f, gl::Static};
+    filesys::AssetObserver        observer{"material\\..*"};
+    QHash<String, Properties>     materials;
+    mutable QHash<String, TexIds> loadedTextures; // name => atlas ID
+    Ids                           materialIds;
+    DataBuffer<Metrics>           textureMetrics{"uTextureMetrics", Image::RGBA_32f, gl::Static};
 
     Impl(Public *i) : Base(i)
     {
@@ -164,12 +164,12 @@ DENG2_PIMPL(MaterialLib)
         materials.remove(materialId);
     }
 
-    const Image getImage(const Package::Asset &asset, const String &key)
+    const Image getImage(const Package::Asset &asset, const String &key) const
     {
         return FS::locate<const ImageFile>(asset.absolutePath(key)).image();
     }
 
-    void loadTextures(const String &materialId)
+    void loadTextures(const String &materialId) const
     {
         static const char *texName[TextureMapCount] = {
             "diffuse", "specgloss", "emissive", "normal"
@@ -215,7 +215,7 @@ DENG2_PIMPL(MaterialLib)
         loadedTextures.insert(materialId, ids);
     }
 
-    void unloadTextures(const String &materialId)
+    void unloadTextures(const String &materialId) const
     {
         auto loaded = loadedTextures.find(materialId);
         if (loaded != loadedTextures.end())
@@ -294,7 +294,7 @@ void MaterialLib::glDeinit()
 void MaterialLib::render()
 {}
 
-void MaterialLib::loadMaterials(const StringList &materials)
+void MaterialLib::loadMaterials(const StringList &materials) const
 {
     // Unload unnecessary materials.
     {

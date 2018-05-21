@@ -84,6 +84,7 @@ DENG2_PIMPL(Editor)
     };
 
     Map        map;
+    String     mapId;
     String     filePath;
     bool       isModified = false;
     QList<Map> undoStack;
@@ -138,6 +139,7 @@ DENG2_PIMPL(Editor)
         // Save the editor state.
         {
             QSettings st;
+            st.setValue("mapId", mapId);
             st.setValue("filePath", filePath);
             st.setValue("viewScale", viewScale);
             st.setValue("viewOrigin", geo::toQVector2D(viewOrigin));
@@ -990,6 +992,7 @@ DENG2_PIMPL(Editor)
         if (!askSaveFile()) return;
 
         map = Map();
+        mapId.clear();
         filePath.clear();
         setWindowTitle("(unnamed)");
         resetState();
@@ -1015,6 +1018,7 @@ DENG2_PIMPL(Editor)
     void loadMap(const String &path)
     {
         filePath = path;
+        mapId.clear();
 
         QFile f(path);
         DENG2_ASSERT(f.exists());
@@ -1070,7 +1074,7 @@ DENG2_PIMPL(Editor)
                     StringList maps = lumpDir->findMapLumpNames();
                     if (maps.isEmpty()) return; // No maps found.
 
-                    String mapId;
+                    String importMapId;
 
                     // Ask the user to select which map to import.
                     {
@@ -1093,18 +1097,18 @@ DENG2_PIMPL(Editor)
                         {
                             if (list->selectedItems().size())
                             {
-                                mapId = list->selectedItems().front()->text();
+                                importMapId = list->selectedItems().front()->text();
                             }
                         }
                     }
 
-                    if (mapId)
+                    if (importMapId)
                     {
                         res::LumpCatalog catalog;
                         catalog.setBundles({bundle});
 
                         MapImport importer(catalog);
-                        if (importer.importMap(mapId))
+                        if (importer.importMap(importMapId))
                         {
                             // Build a texture atlas.
                             {
@@ -1114,11 +1118,12 @@ DENG2_PIMPL(Editor)
                                     qDebug() << "Texture:" << n << img.size().asText();
                                     img.toQImage().save(n + ".png");
                                 }*/
-                                importer.exportPackage("/home/user.exportedmap.pack");
+                                importer.exportPackage("/home/user.editorproject.pack");
                             }
 
                             // Update the editor's map.
-                            map = importer.map();
+                            map   = importer.map();
+                            mapId = importer.mapId();
                             filePath.clear();
                             resetState();
                             setWindowTitle(mapId);
@@ -1134,7 +1139,8 @@ DENG2_PIMPL(Editor)
     {
         if (self().parentWidget())
         {
-            self().parentWidget()->setWindowTitle(text);
+            self().parentWidget()->setWindowTitle(
+                text + String::format(" (%s)", mapId.toLatin1().constData()));
         }
     }
 
@@ -1197,6 +1203,11 @@ Editor::Editor()
     fileMenu->addSeparator();
     fileMenu->addAction("Save &as...", [this]() { d->saveAsFile(); });
     fileMenu->addAction("&Save",       [this]() { d->saveFile(); }, QKeySequence("Ctrl+S"));
+}
+
+String Editor::mapId() const
+{
+    return d->mapId;
 }
 
 Map &Editor::map()

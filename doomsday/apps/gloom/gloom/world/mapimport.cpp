@@ -371,6 +371,11 @@ Map &MapImport::map()
     return d->map;
 }
 
+String MapImport::mapId() const
+{
+    return "map." + d->mapId;
+}
+
 StringList MapImport::materials() const
 {
     return compose<StringList>(d->textures.constBegin(), d->textures.constEnd());
@@ -428,7 +433,7 @@ void MapImport::exportPackage(const String &packageRootPath) const
     // Maps included in the pacakge.
     {
         File & f   = root.replaceFile("maps.dei");
-        String dei = "asset map." + d->mapId + " {\n"
+        String dei = "asset " + mapId() + " {\n"
                      "    path = \"maps/" + d->mapId + ".gloommap\"\n"
                      "    metersPerUnit " +
                      String::format(
@@ -483,7 +488,7 @@ void MapImport::exportPackage(const String &packageRootPath) const
 
             File &f = root.replaceFile(imgPath);
             f << imgData;
-            f.flush();
+            f.reinterpret();
 
             // ".diffuse", ".specgloss", ".emissive", ".normaldisp"
             // OR: .basecolor .metallic .normal .roughness

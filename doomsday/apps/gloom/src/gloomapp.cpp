@@ -89,8 +89,36 @@ void GloomApp::initialize()
         d->editWin->raise();
 
         connect(&d->editWin->editor(), &Editor::buildMapRequested, [this]() {
-            AppWindowSystem::main().glActivate();
-            d->world->setMap(d->editWin->editor().map());
+            try
+            {
+                auto &fs  = FS::get();
+                auto &pld = PackageLoader::get();
+
+                AppWindowSystem::main().glActivate();
+
+                // Unload the previous map pacakge. This will make the assets in the package
+                // unavailable.
+                pld.unload("user.editorproject");
+
+                // TODO: (Re)export the map package. Requires that the user has chosen
+                // the project package, which may contain multiple maps.
+
+                // Load the exported package and the contained assets.
+                pld.load("user.editorproject");
+
+                // Load the map.
+                Map loadedMap;
+                {
+                    const auto &asset = App::asset(d->editWin->editor().mapId());
+                    loadedMap.deserialize(FS::locate<const File>(asset.absolutePath("path")));
+                }
+
+                d->world->setMap(loadedMap);
+            }
+            catch (const Error &er)
+            {
+                qWarning() << "Map build error:" << er.asText();
+            }
         });
     }
 
@@ -115,8 +143,6 @@ void GloomApp::initialize()
         d->images  .addFromInfo(base.root().locate<File>("images.dei"));
         waveforms().addFromInfo(base.root().locate<File>("audio.dei"));
     }
-
-    App::packageLoader().load("user.exportedmap");
 
     // Create the window.
     MainWindow *win = d->winSys->newWindow<MainWindow>("main");

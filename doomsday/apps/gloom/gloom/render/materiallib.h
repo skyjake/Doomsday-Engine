@@ -58,7 +58,7 @@ public:
      *
      * @param materials  List of materials to load.
      */
-    void loadMaterials(const StringList &materials);
+    void loadMaterials(const StringList &materials) const;
 
     const Ids &materials() const;
 

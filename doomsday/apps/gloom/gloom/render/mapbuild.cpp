@@ -66,18 +66,17 @@ DENG2_PIMPL_NOREF(MapBuild)
      */
     Buffers build()
     {
-        Buffers bufs;
+        // Make sure the right materials are loaded.
+        matLib.loadMaterials(map.materials());
 
         planeMapper.clear();
         texOffsetMapper.clear();
 
+        Buffers bufs;
         for (auto &buf : bufs.geom)
         {
             buf.reset(new Buffer);
         }
-
-        Buffer::Vertices verts[2];
-        Buffer::Indices indices[2];
 
         // Project each sector's points to all their planes.
         const auto sectorPlaneVerts = map.worldSectorPlaneVerts();
@@ -95,9 +94,15 @@ DENG2_PIMPL_NOREF(MapBuild)
             }
         }
 
-        foreach (const ID sectorId, map.sectors().keys())
+        Buffer::Vertices verts[2];
+        Buffer::Indices indices[2];
+
+        for (auto mapIter = map.sectors().constBegin(), iterEnd = map.sectors().constEnd();
+             mapIter != iterEnd;
+             ++mapIter)
         {
-            const Sector &sector         = map.sector(sectorId);
+            const ID      sectorId       = mapIter.key();
+            const Sector &sector         = mapIter.value();
             const auto    sectorPolygons = map.sectorPolygons(sectorId);
 
             // Split the polygon to convex parts (for triangulation).
