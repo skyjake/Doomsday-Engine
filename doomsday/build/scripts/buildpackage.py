@@ -59,7 +59,7 @@ class Package:
             sys.exit(1)
 
         # Write entries in alphabetical order.
-        date_time = time.localtime(int(os.environ.get('SOURCE_DATE_EPOCH', time.time())))
+        date_time = time.gmtime(int(os.environ.get('SOURCE_DATE_EPOCH', time.time())))
         for full, internal in sorted(contents):
             info = zipfile.ZipInfo(internal, date_time)
             info.external_attr = 0o644 << 16
