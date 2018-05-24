@@ -32,6 +32,7 @@ namespace gloom {
 DENG2_PIMPL(Map)
 {
     ID       idGen{0};
+    Vec3d    metersPerUnit{1.0, 1.0, 1.0};
     Points   points;
     Lines    lines;
     Planes   planes;
@@ -45,6 +46,7 @@ DENG2_PIMPL(Map)
     Impl(Public *i, const Impl &other)
         : Base(i)
         , idGen(other.idGen)
+        , metersPerUnit(other.metersPerUnit)
         , points(other.points)
         , lines(other.lines)
         , planes(other.planes)
@@ -175,6 +177,16 @@ void Map::removeInvalid()
 gloom::ID Map::newID()
 {
     return ++d->idGen;
+}
+
+void Map::setMetersPerUnit(const Vec3d &metersPerUnit)
+{
+    d->metersPerUnit = metersPerUnit;
+}
+
+Vec3d Map::metersPerUnit() const
+{
+    return d->metersPerUnit;
 }
 
 Points &Map::points()
@@ -735,6 +747,12 @@ Block Map::serialize() const
     const Impl *_d = d;
     QJsonObject obj;
 
+    // Metadata.
+    {
+        obj.insert("metersPerUnit",
+                   QJsonArray({_d->metersPerUnit.x, _d->metersPerUnit.y, _d->metersPerUnit.z}));
+    }
+
     // Points.
     {
         QJsonObject points;
@@ -851,6 +869,15 @@ void Map::deserialize(const Block &data)
         d->idGen = de::max(d->idGen, id);
         return id;
     };
+
+    // Metadata.
+    {
+        if (map.contains("metersPerUnit"))
+        {
+            const auto mpu = map["metersPerUnit"].toList();
+            d->metersPerUnit = {mpu[0].toDouble(), mpu[1].toDouble(), mpu[2].toDouble()};
+        }
+    }
 
     // Points.
     {

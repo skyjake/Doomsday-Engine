@@ -178,7 +178,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                     {
                         const ID pointID = cv.key();
 
-                        f.pos      = cv.value();
+                        f.pos      = cv.value() * map.metersPerUnit();
                         f.texCoord = Vec4f(0, 0, 0, 0); // fixed offset
                         f.expander = expanders[pointID];
 
@@ -327,10 +327,10 @@ DENG2_PIMPL_NOREF(MapBuild)
                              expanders[end],
                              planeIndex,
                              MapVertex::WorldSpaceYToTexCoord,
-                             floor[start],
-                             floor[end],
-                             ceiling[start],
-                             ceiling[end],
+                             floor[start]   * map.metersPerUnit(),
+                             floor[end]     * map.metersPerUnit(),
+                             ceiling[start] * map.metersPerUnit(),
+                             ceiling[end]   * map.metersPerUnit(),
                              length,
                              0);
                 }
@@ -352,10 +352,10 @@ DENG2_PIMPL_NOREF(MapBuild)
                              expanders[end],
                              botIndex,
                              MapVertex::WorldSpaceYToTexCoord | MapVertex::AnchorTopPlane,
-                             floor[start],
-                             floor[end],
-                             backPlaneVerts.front()[start],
-                             backPlaneVerts.front()[end],
+                             floor[start] * map.metersPerUnit(),
+                             floor[end]   * map.metersPerUnit(),
+                             backPlaneVerts.front()[start] * map.metersPerUnit(),
+                             backPlaneVerts.front()[end]   * map.metersPerUnit(),
                              length,
                              0);
 
@@ -366,10 +366,10 @@ DENG2_PIMPL_NOREF(MapBuild)
                              expanders[end],
                              topIndex,
                              MapVertex::WorldSpaceYToTexCoord,
-                             backPlaneVerts.back()[start],
-                             backPlaneVerts.back()[end],
-                             ceiling[start],
-                             ceiling[end],
+                             backPlaneVerts.back()[start] * map.metersPerUnit(),
+                             backPlaneVerts.back()[end]   * map.metersPerUnit(),
+                             ceiling[start] * map.metersPerUnit(),
+                             ceiling[end]   * map.metersPerUnit(),
                              length,
                              0);
                 }

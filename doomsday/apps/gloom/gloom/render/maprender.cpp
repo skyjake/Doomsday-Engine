@@ -214,12 +214,14 @@ void MapRender::advanceTime(TimeSpan elapsed)
 
     // Update plane heights.
     {
+        const Vec3d metersPerUnit = context().map->metersPerUnit();
+
         for (auto i = d->planeMapper.begin(), end = d->planeMapper.end(); i != end; ++i)
         {
-            const float planeY = float(context().map->plane(i.key()).point.y); // +
+            const double planeY = context().map->plane(i.key()).point.y; // +
                                  //std::sin(i.value() + now * .1f);
 
-            d->planes.setData(i.value(), planeY);
+            d->planes.setData(i.value(), float(planeY * metersPerUnit.y));
         }
     }
 

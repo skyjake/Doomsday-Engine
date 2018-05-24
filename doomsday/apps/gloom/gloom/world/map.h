@@ -137,6 +137,9 @@ public:
     void removeInvalid();
     ID   newID();
 
+    void  setMetersPerUnit(const Vec3d &metersPerUnit);
+    Vec3d metersPerUnit() const;
+
     template <typename H, typename T>
     ID append(H &hash, const T& value)
     {

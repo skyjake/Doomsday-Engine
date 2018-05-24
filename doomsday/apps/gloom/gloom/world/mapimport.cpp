@@ -150,6 +150,7 @@ DENG2_PIMPL_NOREF(MapImport)
         const double mapUnit = humanEyeHeight / (levelFormat == DoomFormat ? 41.0 : 48.0);
 
         worldScale = {mapUnit, mapUnit * 1.2, mapUnit}; // VGA aspect ratio for vertical
+        map.setMetersPerUnit(worldScale);
 
         const auto linedefData = lumps.read(headerPos + 2);
 

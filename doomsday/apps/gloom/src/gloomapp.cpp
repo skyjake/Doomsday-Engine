@@ -111,6 +111,7 @@ void GloomApp::initialize()
                 {
                     const auto &asset = App::asset(d->editWin->editor().mapId());
                     loadedMap.deserialize(FS::locate<const File>(asset.absolutePath("path")));
+                    //loadedMap.setMetersPerUnit(vectorFromValue<Vec3d>(asset.get("metersPerUnit"));
                 }
 
                 d->world->setMap(loadedMap);
