@@ -62,7 +62,10 @@ MaterialSampler Gloom_Sampler(uint matIndex, int texture) {
 }
 
 vec4 Gloom_MaterialTexel(const MaterialSampler sampler, vec2 uv) {
-    vec2 normUV  = uv * sampler.metrics.scale;
+    vec2 normUV = uv * sampler.metrics.scale;
+    if (testFlag(sampler.metrics.flags, Metrics_VerticalAspect)) {
+        normUV.y /= 1.2;
+    }
     vec2 atlasUV = sampler.metrics.uvRect.xy + fract(normUV) * sampler.metrics.uvRect.zw;
     float mip = mipLevel(normUV, sampler.metrics.sizeInTexels.xy) - 0.5;
     switch (sampler.texture)
@@ -80,7 +83,7 @@ vec4 Gloom_MaterialTexel(const MaterialSampler sampler, vec2 uv) {
 }
 
 vec4 Gloom_SampleMaterial(const MaterialSampler sampler, vec2 uv) {
-    uint animation = (sampler.metrics.flags & 1u); // TODO: Bigger mask.
+    uint animation = (sampler.metrics.flags & Metrics_AnimationMask);
     if (animation == 0u) {
         return Gloom_MaterialTexel(sampler, uv);
     }
@@ -108,7 +111,7 @@ vec4 Gloom_FetchTexture(uint matIndex, int texture, vec2 uv) {
         Material_DefaultTextureValue[texture]);
 }
 
-vec2 Gloom_SamplerParallax(MaterialSampler matSamp, vec2 texCoords, vec3 tsViewDir, 
+vec2 Gloom_SamplerParallax(MaterialSampler matSamp, vec2 texCoords, vec3 tsViewDir,
                            out float displacementDepth) {
     if (!matSamp.metrics.isValid) {
         // Parallax does not have effect.
@@ -160,13 +163,13 @@ vec2 Gloom_SamplerParallax(MaterialSampler matSamp, vec2 texCoords, vec3 tsViewD
 
     displacementDepth = mix(d1, d2, weight) * heightScale;
 
-    return mix(curTexCoords, prevTexCoords, weight);        
+    return mix(curTexCoords, prevTexCoords, weight);
 }
 
 vec2 Gloom_Parallax(uint matIndex, vec2 texCoords, vec3 tsViewDir,
                     out float displacementDepth) {
     return Gloom_SamplerParallax(
-        Gloom_Sampler(matIndex, Texture_NormalDisplacement), 
+        Gloom_Sampler(matIndex, Texture_NormalDisplacement),
         texCoords, tsViewDir, displacementDepth);
 }
 

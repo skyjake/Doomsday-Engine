@@ -25,6 +25,9 @@ const int Texture_NormalDisplacement = 3; // RGB: Normal   | A: Displacement
 const float Material_MaxReflectionBias = 5.0;
 const float Material_MaxReflectionBlur = 10.0;
 
+const uint Metrics_AnimationMask  = 1u;
+const uint Metrics_VerticalAspect = 2u;
+
 const int Bloom_Horizontal = 0;
 const int Bloom_Vertical   = 1;
 

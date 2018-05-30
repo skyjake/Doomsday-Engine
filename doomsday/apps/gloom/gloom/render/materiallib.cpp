@@ -23,6 +23,7 @@
 
 #include <de/FileSystem>
 #include <de/ImageFile>
+#include <de/ScriptedInfo>
 #include <de/filesys/AssetObserver>
 #include <array>
 
@@ -34,10 +35,10 @@ DENG2_PIMPL(MaterialLib)
 , DENG2_OBSERVES(filesys::AssetObserver, Availability)
 {
     struct Properties {
-        Flags   flags{Opaque};
-        float   texelsPerMeter{100.f};
-        float   aspectRatio{1.f};
-        duint32 metricsFlags{0}; // copied to shader in texture metrics
+        MaterialFlags flags{Opaque};
+        float         texelsPerMeter{100.f};
+        //float         aspectRatio{1.f};
+        MetricsFlags  metricsFlags; // copied to shader via texture metrics
     };
     struct Metrics {
         struct Texture {
@@ -111,10 +112,11 @@ DENG2_PIMPL(MaterialLib)
         qDebug() << "Adding material:" << name;
         qDebug() << asset.accessedRecord().asText().toLatin1().constData();
 
-        Properties props;
-        props.aspectRatio    = asset.getf("aspectRatio", 1.f);
-        props.texelsPerMeter = asset.getf("ppm", 100.f);
+        const bool verticalAspect = ScriptedInfo::isTrue(asset, "verticalAspect", false);
 
+        Properties props;
+        props.texelsPerMeter = asset.getf("ppm", 100.f);
+        applyFlagOperation(props.metricsFlags, Metrics_VerticalAspect, verticalAspect);
         materials.insert(name, props);
 
         /*
@@ -260,9 +262,6 @@ DENG2_PIMPL(MaterialLib)
 
                     float tmFlags;
                     std::memcpy(&tmFlags, &props.metricsFlags, sizeof(tmFlags));
-
-                    qDebug() << i.key() << texId.asText()
-                             << Vec3f(rect.width(), rect.height(), props.texelsPerMeter).asText();
 
                     metrics.texture[j] = Metrics::Texture{{rectf.xywh()},
                                                           {Vec4f(rect.width(),

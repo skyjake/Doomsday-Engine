@@ -36,12 +36,18 @@ class MaterialLib : public Render
 public:
     typedef QHash<String, uint32_t> Ids;
 
-    enum Flag {
+    enum MaterialFlag {
         Opaque      = 0x0,
         Transparent = 0x1, // refracts
         Reflective  = 0x2,
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
+    Q_DECLARE_FLAGS(MaterialFlags, MaterialFlag)
+
+    enum MetricsFlag {
+        Metrics_AnimationMask  = 1,
+        Metrics_VerticalAspect = 2,
+    };
+    Q_DECLARE_FLAGS(MetricsFlags, MetricsFlag)
 
 public:
     MaterialLib();
@@ -70,7 +76,8 @@ private:
     DENG2_PRIVATE(d)
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(MaterialLib::Flags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(MaterialLib::MaterialFlags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(MaterialLib::MetricsFlags)
 
 } // namespace gloom
 

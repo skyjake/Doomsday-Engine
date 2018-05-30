@@ -470,10 +470,7 @@ void MapImport::exportPackage(const String &packageRootPath) const
 
             os.setRealNumberPrecision(16);
             os << "asset material." << name << " {\n    ppm = " << ppm << "\n";
-            if (category == "texture")
-            {
-                os << "    aspectRatio = " << d->worldAspectRatio << "\n";
-            }
+            os << "    verticalAspect = " << (category == "texture"? "True" : "False") << "\n";
             os << "    diffuse: " << imgPath << "\n}\n\n";
 
             const auto image = materialImage(name);
