@@ -512,6 +512,12 @@ void PackageLoader::unloadAll()
     }
 }
 
+void PackageLoader::refresh()
+{
+    LOG_AS("PackageLoader");
+    FS::locate<Folder>("/packs").populate(Folder::PopulateOnlyThisFolder);
+}
+
 bool PackageLoader::isLoaded(String const &packageId) const
 {
     // Split ID, check version too if specified.

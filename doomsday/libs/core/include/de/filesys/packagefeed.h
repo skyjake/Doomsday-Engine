@@ -41,7 +41,7 @@ public:
 public:
     PackageFeed(PackageLoader &loader, LinkMode linkMode = LinkIdentifier);
 
-    void setFilter(Filter filter);
+    void setFilter(const Filter &filter);
 
     PackageLoader &loader();
 

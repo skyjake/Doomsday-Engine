@@ -33,7 +33,6 @@ DENG2_PIMPL(AssetObserver)
 , DENG2_OBSERVES(FileIndex, Removal)
 {
     const std::regex pattern;
-    LoopCallback mainCall;
 
     static FileIndex const &linkIndex() {
         return App::fileSystem().indexFor(DENG2_TYPE_NAME(LinkFile));
@@ -58,8 +57,8 @@ DENG2_PIMPL(AssetObserver)
         // Only matching assets cause notifications.
         if (!std::regex_match(link.name().toStdString(), pattern)) return;
 
-        String const ident = assetIdentifier(link);
-        mainCall.enqueue([this, ident] ()
+        const String ident = assetIdentifier(link);
+        Loop::mainCall([this, ident]()
         {
             DENG2_FOR_PUBLIC_AUDIENCE2(Availability, i)
             {
@@ -73,10 +72,14 @@ DENG2_PIMPL(AssetObserver)
         // Only matching assets cause notifications.
         if (!std::regex_match(link.name().toStdString(), pattern)) return;
 
+        const String ident = assetIdentifier(link);
+        Loop::mainCall([this, ident]()
+        {
         DENG2_FOR_PUBLIC_AUDIENCE2(Availability, i)
         {
-            i->assetAvailabilityChanged(assetIdentifier(link), Removed);
+                i->assetAvailabilityChanged(ident, Removed);
         }
+        });
     }
 
     DENG2_PIMPL_AUDIENCE(Availability)

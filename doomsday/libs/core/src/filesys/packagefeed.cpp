@@ -95,7 +95,7 @@ PackageFeed::PackageFeed(PackageLoader &loader, LinkMode linkMode)
     : d(new Impl(this, loader, linkMode))
 {}
 
-void PackageFeed::setFilter(Filter filter)
+void PackageFeed::setFilter(const Filter &filter)
 {
     d->filter = filter;
 }

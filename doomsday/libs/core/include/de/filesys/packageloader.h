@@ -106,6 +106,14 @@ public:
 
     void unloadAll();
 
+    /**
+     * Repopulate the /packs folder synchronously. The loaded packages are present as links
+     * under /packs, as are all the assets provided by the loaded packages.
+     *
+     * The /packs folder is not automatically refreshed after packages are loaded/unloaded.
+     */
+    void refresh();
+
     bool isLoaded(String const &packageId) const;
 
     bool isLoaded(File const &file) const;
