@@ -391,11 +391,14 @@ public:
         return Vector3(Type(Vector2<Type>::x * scalar), Type(Vector2<Type>::y * scalar),
             Type(z * scalar));
     }
+    Vector3 operator * (Vector3 const &other) const {
+        return Vector3(Vector2<Type>::x * other.x, Vector2<Type>::y * other.y, z * other.z);
+    }
     Vector3 operator / (ddouble scalar) const {
         return *this * (1.0 / scalar);
     }
-    Vector3 operator * (Vector3 const &other) const {
-        return Vector3(Vector2<Type>::x * other.x, Vector2<Type>::y * other.y, z * other.z);
+    Vector3 operator / (Vector3 const &other) const {
+        return Vector3(Vector2<Type>::x / other.x, Vector2<Type>::y / other.y, z / other.z);
     }
     Vector3 &operator += (Vector3 const &other) {
         Vector2<Type>::x += other.x;
