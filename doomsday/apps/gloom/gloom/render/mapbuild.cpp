@@ -314,7 +314,8 @@ DENG2_PIMPL_NOREF(MapBuild)
                 const ID       start  = line.points[dir^1];
                 const ID       end    = line.points[dir];
                 const Vec3f    normal = worldNormalVector(line);
-                const float    length = float((floor[end] - floor[start]).length());
+                const float    length = float((floor[end]   * map.metersPerUnit() -
+                                               floor[start] * map.metersPerUnit()).length());
                 const uint32_t planeIndex[2] = {planeMapper[map.floorPlaneId(sectorId)],
                                                 planeMapper[map.ceilingPlaneId(sectorId)]};
 

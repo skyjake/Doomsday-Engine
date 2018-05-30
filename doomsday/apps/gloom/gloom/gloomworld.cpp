@@ -374,23 +374,23 @@ World::POI GloomWorld::initialViewPosition() const
 
 QList<World::POI> GloomWorld::pointsOfInterest() const
 {
-    return QList<POI>({ POI(initialViewPosition()) });
+    return {POI(initialViewPosition())};
 }
 
-float GloomWorld::groundSurfaceHeight(Vec3f const &pos) const
+double GloomWorld::groundSurfaceHeight(const Vec3d &posMeters) const
 {
-    const auto sec_vol = d->map.findSectorAndVolumeAt(pos);
+    const auto sec_vol = d->map.findSectorAndVolumeAt(posMeters / d->map.metersPerUnit());
     if (sec_vol.first)
     {
         const Volume &vol = d->map.volume(sec_vol.second);
-        return float(d->map.plane(vol.planes[0]).projectPoint(Point{pos.xz()}).y);
+        return d->map.plane(vol.planes[0]).projectPoint(Point{posMeters.xz()}).y *
+               d->map.metersPerUnit().y;
     }
     return 0;
 }
 
-float GloomWorld::ceilingHeight(Vec3f const &) const
+double GloomWorld::ceilingHeight(const Vec3d &) const
 {
-    //return -d->heightRange * 2;
     return 1000;
 }
 

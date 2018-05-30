@@ -49,8 +49,8 @@ public:
 
     void glInit();
     void glDeinit();
-    void update(de::TimeSpan const &elapsed);
-    void render(ICamera const &camera);
+    void update(const TimeSpan &elapsed);
+    void render(const ICamera &camera);
 
     User *     localUser() const;
     POI        initialViewPosition() const;
@@ -59,9 +59,9 @@ public:
     /**
      * Determines the height of the ground at a given world coordinates.
      */
-    float groundSurfaceHeight(de::Vec3f const &pos) const;
+    double groundSurfaceHeight(const Vec3d &posMeters) const;
 
-    float ceilingHeight(de::Vec3f const &pos) const;
+    double ceilingHeight(const Vec3d &posMeters) const;
 
 private:
     DENG2_PRIVATE(d)

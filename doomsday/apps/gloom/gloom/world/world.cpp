@@ -50,14 +50,14 @@ QList<World::POI> World::pointsOfInterest() const
     return QList<POI>();
 }
 
-float World::groundSurfaceHeight(Vec3f const &) const
+double World::groundSurfaceHeight(const Vec3d &) const
 {
-    return 0;
+    return 0.0;
 }
 
-float World::ceilingHeight(Vec3f const &) const
+double World::ceilingHeight(const Vec3d &) const
 {
-    return -1000;
+    return 1000.0;
 }
 
 } // namespace gloom

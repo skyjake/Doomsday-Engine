@@ -91,29 +91,28 @@ void GloomApp::initialize()
         connect(&d->editWin->editor(), &Editor::buildMapRequested, [this]() {
             try
             {
-                auto &fs  = FS::get();
-                auto &pld = PackageLoader::get();
-
                 AppWindowSystem::main().glActivate();
+
+                auto &pld = PackageLoader::get();
 
                 // Unload the previous map pacakge. This will make the assets in the package
                 // unavailable.
                 pld.unload("user.editorproject");
+                pld.refresh();
 
                 // TODO: (Re)export the map package. Requires that the user has chosen
                 // the project package, which may contain multiple maps.
 
                 // Load the exported package and the contained assets.
                 pld.load("user.editorproject");
+                pld.refresh();
 
                 // Load the map.
                 Map loadedMap;
                 {
                     const auto &asset = App::asset(d->editWin->editor().mapId());
                     loadedMap.deserialize(FS::locate<const File>(asset.absolutePath("path")));
-                    //loadedMap.setMetersPerUnit(vectorFromValue<Vec3d>(asset.get("metersPerUnit"));
                 }
-
                 d->world->setMap(loadedMap);
             }
             catch (const Error &er)

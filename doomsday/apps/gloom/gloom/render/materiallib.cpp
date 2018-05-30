@@ -108,14 +108,14 @@ DENG2_PIMPL(MaterialLib)
 
     void addMaterial(const DotPath &name, const Package::Asset &asset)
     {
-//        qDebug() << "Adding material:" << name;
-//        qDebug() << asset.accessedRecord().asText().toLatin1().constData();
+        qDebug() << "Adding material:" << name;
+        qDebug() << asset.accessedRecord().asText().toLatin1().constData();
 
         Properties props;
         props.aspectRatio    = asset.getf("aspectRatio", 1.f);
         props.texelsPerMeter = asset.getf("ppm", 100.f);
 
-        materials[name] = props;
+        materials.insert(name, props);
 
         /*
         static const char *suffix[TextureMapCount] = {
@@ -247,6 +247,8 @@ DENG2_PIMPL(MaterialLib)
             // Load up metrics in an array.
             for (int j = 0; j < 4; ++j)
             {
+                DENG2_ASSERT(materials.contains(i.key()));
+
                 const auto &props = materials[i.key()];
                 const Id    texId = i.value()[j];
                 Rectanglei rect;
@@ -258,6 +260,9 @@ DENG2_PIMPL(MaterialLib)
 
                     float tmFlags;
                     std::memcpy(&tmFlags, &props.metricsFlags, sizeof(tmFlags));
+
+                    qDebug() << i.key() << texId.asText()
+                             << Vec3f(rect.width(), rect.height(), props.texelsPerMeter).asText();
 
                     metrics.texture[j] = Metrics::Texture{{rectf.xywh()},
                                                           {Vec4f(rect.width(),

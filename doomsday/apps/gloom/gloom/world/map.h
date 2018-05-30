@@ -124,6 +124,9 @@ typedef QVector<geo::Polygon> Polygons;
 
 /**
  * Describes a map of polygon-based sectors.
+ *
+ * Map coordinates use units that are converted to meters using the `metersPerUnit` factor.
+ * The default is one meter per unit.
  */
 class Map
 {

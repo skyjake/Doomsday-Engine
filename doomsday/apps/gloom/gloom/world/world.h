@@ -27,6 +27,8 @@
 
 namespace gloom {
 
+using namespace de;
+
 class User;
 
 class World : public de::Deletable
@@ -39,14 +41,14 @@ public:
 
     virtual void glInit();
     virtual void glDeinit();
-    virtual void update(de::TimeSpan const &elapsed);
-    virtual void render(ICamera const &camera);
+    virtual void update(const TimeSpan &elapsed);
+    virtual void render(const ICamera &camera);
 
     struct POI {
-        de::Vec3f position;
-        float        yaw;
+        Vec3f position;
+        float yaw;
 
-        POI(de::Vec3f const &pos, float yawAngle = 0)
+        POI(const Vec3f &pos, float yawAngle = 0)
             : position(pos)
             , yaw(yawAngle)
         {}
@@ -56,8 +58,8 @@ public:
     virtual POI        initialViewPosition() const;
     virtual QList<POI> pointsOfInterest() const;
 
-    virtual float groundSurfaceHeight(de::Vec3f const &pos) const;
-    virtual float ceilingHeight(de::Vec3f const &pos) const;
+    virtual double groundSurfaceHeight(const Vec3d &posMeters) const;
+    virtual double ceilingHeight(const Vec3d &posMeters) const;
 
     DENG2_CAST_METHODS()
 

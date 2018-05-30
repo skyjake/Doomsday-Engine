@@ -59,7 +59,7 @@ DENG2_PIMPL_NOREF(MapImport)
     String                  mapId;
     Map                     map;
     QSet<String>            textures;
-    Vec3d                   worldScale;
+    Vec3d                   metersPerUnit;
     double                  worldAspectRatio = 1.2;
 
     enum LevelFormat { UnknownFormat, DoomFormat, HexenFormat };
@@ -147,10 +147,10 @@ DENG2_PIMPL_NOREF(MapImport)
         // Conversion from Doom map units (Doom texels) to meters.
         // (Approximate typical human eye height slightly adjusted for a short reciprocal.)
         const double humanEyeHeight = 1.74;
-        const double mapUnit = humanEyeHeight / (levelFormat == DoomFormat ? 41.0 : 48.0);
+        const double mpu = humanEyeHeight / (levelFormat == DoomFormat ? 41.0 : 48.0);
 
-        worldScale = {mapUnit, mapUnit * 1.2, mapUnit}; // VGA aspect ratio for vertical
-        map.setMetersPerUnit(worldScale);
+        metersPerUnit = {mpu, mpu * 1.2, mpu}; // VGA aspect ratio for vertical
+        map.setMetersPerUnit(metersPerUnit);
 
         const auto linedefData = lumps.read(headerPos + 2);
 
@@ -438,7 +438,7 @@ void MapImport::exportPackage(const String &packageRootPath) const
                      "    path = \"maps/" + d->mapId + ".gloommap\"\n"
                      "    metersPerUnit " +
                      String::format(
-                         "<%.16f, %.16f, %.16f>", d->worldScale.x, d->worldScale.y, d->worldScale.z) +
+                         "<%.16f, %.16f, %.16f>", d->metersPerUnit.x, d->metersPerUnit.y, d->metersPerUnit.z) +
                      "\n}\n";
         f << dei.toUtf8();
         f.flush();
@@ -457,8 +457,6 @@ void MapImport::exportPackage(const String &packageRootPath) const
         QTextStream os(&dei);
         os.setCodec("UTF-8");
 
-        //const double ppm = 1.0 / d->worldScale.x;
-
         foreach (String name, materials())
         {
             qDebug() << "Exporting:" << name;
@@ -468,14 +466,15 @@ void MapImport::exportPackage(const String &packageRootPath) const
             const String  subfolder = (category == "texture" ? "textures" : "flats");
             const String  imgPath   = subfolder / path.segment(1) + "_diffuse.png";
 
+            const double ppm = 1.0 / d->metersPerUnit.x;
+
             os.setRealNumberPrecision(16);
-            os << "asset material." << name << " {\n    ppm = " << 1.0 / d->worldScale.x << "\n";
+            os << "asset material." << name << " {\n    ppm = " << ppm << "\n";
             if (category == "texture")
             {
                 os << "    aspectRatio = " << d->worldAspectRatio << "\n";
             }
-            os << "    diffuse: " << imgPath << "\n"
-               << "}\n\n";
+            os << "    diffuse: " << imgPath << "\n}\n\n";
 
             const auto image = materialImage(name);
             DENG2_ASSERT(!image.isNull());
@@ -484,7 +483,7 @@ void MapImport::exportPackage(const String &packageRootPath) const
             {
                 QBuffer outBuf(&imgData);
                 outBuf.open(QIODevice::WriteOnly);
-                image.toQImage().save(&outBuf, "PNG", 1);
+                image.toQImage().rgbSwapped().save(&outBuf, "PNG", 1);
             }
 
             File &f = root.replaceFile(imgPath);
