@@ -48,7 +48,7 @@ float Gloom_OmniShadow(vec3 viewSpaceSurfacePos, Light light, int shadowIndex) {
         vec4 shadowUV = vec4(worldRay, ref);
 
         switch (shadowIndex) {
-            /* NOTE: OpenGL 4 required for non-constant indexing. */
+            /* NOTE: OpenGL 4 is required for variable-value indexing. */
         case 0:
             lit = texture(uShadowMaps[0], shadowUV);
             break;

@@ -68,8 +68,7 @@ vec4 Gloom_MaterialTexel(const MaterialSampler sampler, vec2 uv) {
     }
     vec2 atlasUV = sampler.metrics.uvRect.xy + fract(normUV) * sampler.metrics.uvRect.zw;
     float mip = mipLevel(normUV, sampler.metrics.sizeInTexels.xy) - 0.5;
-    switch (sampler.texture)
-    {
+    switch (sampler.texture) {
     case Texture_Diffuse:
         return textureLod(uTextureAtlas[Texture_Diffuse], atlasUV, mip);
     case Texture_Emissive:
