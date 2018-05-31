@@ -73,8 +73,8 @@ struct Line
 
 struct Plane
 {
-    Vec3d point;
-    Vec3f normal;
+    Vec3d  point;
+    Vec3f  normal;
     String material[2]; // front and back
 
     geo::Plane toGeoPlane() const { return geo::Plane{point, normal}; }

@@ -69,6 +69,9 @@ DENG2_PIMPL_NOREF(MapImport)
 #  pragma pack(push, 1)
 #endif
 
+    static const dint16 LineFlag_UpperTextureUnpegged = 0x0008;
+    static const dint16 LineFlag_LowerTextureUnpegged = 0x0010;
+
     struct DoomVertex {
         dint16 x;
         dint16 y;
@@ -77,9 +80,9 @@ DENG2_PIMPL_NOREF(MapImport)
     struct DoomSidedef {
         dint16 xOffset;
         dint16 yOffset;
-        char upperTexture[8];
-        char lowerTexture[8];
-        char middleTexture[8];
+        char   upperTexture[8];
+        char   lowerTexture[8];
+        char   middleTexture[8];
         dint16 sector;
     };
 
@@ -104,10 +107,10 @@ DENG2_PIMPL_NOREF(MapImport)
     } PACKED_STRUCT;
 
     struct DoomSector {
-        dint16 floorHeight;
-        dint16 ceilingHeight;
-        char floorTexture[8];
-        char ceilingTexture[8];
+        dint16  floorHeight;
+        dint16  ceilingHeight;
+        char    floorTexture[8];
+        char    ceilingTexture[8];
         duint16 lightLevel;
         duint16 type;
         duint16 tag;
