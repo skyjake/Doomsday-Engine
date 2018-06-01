@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_RECORDACCESSOR_H
-#define LIBDENG2_RECORDACCESSOR_H
+#ifndef LIBCORE_RECORDACCESSOR_H
+#define LIBCORE_RECORDACCESSOR_H
 
 #include "../ArrayValue"
 
@@ -37,12 +37,12 @@ class DictionaryValue;
  *
  * @ingroup data
  */
-class DENG2_PUBLIC RecordAccessor
+class DE_PUBLIC RecordAccessor
 {
 public:
     /// Attempted to get the value of a variable while expecting the wrong type.
     /// @ingroup errors
-    DENG2_ERROR(ValueTypeError);
+    DE_ERROR(ValueTypeError);
 
 public:
     RecordAccessor(Record const *rec);
@@ -77,7 +77,7 @@ public:
         ValueType const *v = maybeAs<ValueType>(get(name));
         if (!v) {
             throw ValueTypeError("RecordAccessor::getAs", String("Cannot cast to expected type (") +
-                                 DENG2_TYPE_NAME(ValueType) + " const)");
+                                 DE_TYPE_NAME(ValueType) + " const)");
         }
         return *v;
     }
@@ -92,4 +92,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_RECORDACCESSOR_H
+#endif // LIBCORE_RECORDACCESSOR_H

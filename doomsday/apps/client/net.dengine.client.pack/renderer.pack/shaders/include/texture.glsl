@@ -18,7 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_HAVE_UTEX
+#define DE_HAVE_UTEX
 
 uniform sampler2D uTex; // texture atlas
 

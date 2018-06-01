@@ -24,7 +24,7 @@ namespace de {
 
 static TimeSpan FLASH_SPAN = .5;
 
-DENG2_PIMPL(FocusWidget)
+DE_PIMPL(FocusWidget)
 {
     QTimer flashing;
     SafeWidgetPtr<GuiWidget const> reference;

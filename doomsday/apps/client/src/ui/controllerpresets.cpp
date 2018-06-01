@@ -36,8 +36,8 @@ using namespace de;
 
 static String VAR_CONTROLLER_PRESETS("controllerPresets");
 
-DENG2_PIMPL_NOREF(ControllerPresets)
-, DENG2_OBSERVES(DoomsdayApp, GameChange)
+DE_PIMPL_NOREF(ControllerPresets)
+, DE_OBSERVES(DoomsdayApp, GameChange)
 {
     Record &inputModule;
     char const *presetCVarPath = nullptr;
@@ -120,7 +120,7 @@ DENG2_PIMPL_NOREF(ControllerPresets)
 
     void currentGameChanged(Game const &newGame)
     {
-        DENG2_ASSERT(deviceId == IDEV_JOY1); /// @todo Expand for other devices as needed. -jk
+        DE_ASSERT(deviceId == IDEV_JOY1); /// @todo Expand for other devices as needed. -jk
 
         // When loading a game, automatically apply the control scheme matching
         // the connected game controller (unless a specific scheme is already set).

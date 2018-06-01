@@ -46,14 +46,14 @@ class LIBDOOMSDAY_PUBLIC TextureManifest : public de::PathTree::Node
 {
 public:
     /// Required texture instance is missing. @ingroup errors
-    DENG2_ERROR(MissingTextureError);
+    DE_ERROR(MissingTextureError);
 
     /// Required resource URI is not defined. @ingroup errors
-    DENG2_ERROR(MissingResourceUriError);
+    DE_ERROR(MissingResourceUriError);
 
-    DENG2_DEFINE_AUDIENCE(Deletion,       void textureManifestBeingDeleted   (TextureManifest const &manifest))
-    DENG2_DEFINE_AUDIENCE(UniqueIdChange, void textureManifestUniqueIdChanged(TextureManifest &manifest))
-    DENG2_DEFINE_AUDIENCE(TextureDerived, void textureManifestTextureDerived (TextureManifest &manifest, Texture &texture))
+    DE_DEFINE_AUDIENCE(Deletion,       void textureManifestBeingDeleted   (TextureManifest const &manifest))
+    DE_DEFINE_AUDIENCE(UniqueIdChange, void textureManifestUniqueIdChanged(TextureManifest &manifest))
+    DE_DEFINE_AUDIENCE(TextureDerived, void textureManifestTextureDerived (TextureManifest &manifest, Texture &texture))
 
     typedef std::function<Texture * (TextureManifest &)> TextureConstructor;
 
@@ -228,7 +228,7 @@ public:
     inline void clearTexture() { setTexture(nullptr); }
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace res

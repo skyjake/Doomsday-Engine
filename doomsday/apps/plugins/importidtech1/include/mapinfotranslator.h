@@ -48,7 +48,7 @@ public:
     void translate(de::String &translated, de::String &translatedCustom);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace idtech1

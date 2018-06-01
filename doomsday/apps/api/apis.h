@@ -180,23 +180,23 @@ typedef struct de_api_s {
     int id;  ///< API identification (including version) number.
 } de_api_t;
 
-#define DENG_API_TYPEDEF(Name)  typedef struct de_api_##Name##_s
-#define DENG_API_T(Name)        de_api_##Name##_t
-#define DENG_DECLARE_API(Name)  DENG_API_T(Name) _api_##Name
-#define DENG_USING_API(Name)    DENG_EXTERN_C DENG_DECLARE_API(Name)
+#define DE_API_TYPEDEF(Name)  typedef struct de_api_##Name##_s
+#define DE_API_T(Name)        de_api_##Name##_t
+#define DE_DECLARE_API(Name)  DE_API_T(Name) _api_##Name
+#define DE_USING_API(Name)    DE_EXTERN_C DE_DECLARE_API(Name)
 
-#define DENG_API_EXCHANGE(APIs) \
-    DENG_EXTERN_C void deng_API(int id, void *api) { \
+#define DE_API_EXCHANGE(APIs) \
+    DE_EXTERN_C void deng_API(int id, void *api) { \
         switch(id) { APIs \
         default: break; } }
-#define DENG_GET_API(Ident, Name) \
+#define DE_GET_API(Ident, Name) \
     case Ident: \
         memcpy(&_api_##Name, api, sizeof(_api_##Name)); \
-        DENG_ASSERT(_api_##Name.api.id == Ident); \
+        DE_ASSERT(_api_##Name.api.id == Ident); \
         break;
 
-#if defined (DENG_STATIC_LINK)
-#define DENG_SYMBOL_PTR(var, symbolName) \
+#if defined (DE_STATIC_LINK)
+#define DE_SYMBOL_PTR(var, symbolName) \
     if (!qstrcmp(var, #symbolName)) { \
         return reinterpret_cast<void *>(symbolName); \
     }

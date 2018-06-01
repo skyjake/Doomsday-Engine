@@ -22,8 +22,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_ANIMATOR_H
-#define LIBDENG_ANIMATOR_H
+#ifndef DE_ANIMATOR_H
+#define DE_ANIMATOR_H
 
 #include "liblegacy.h"
 
@@ -43,36 +43,36 @@ typedef struct {
     int             steps;
 } animator_t;
 
-DENG_PUBLIC void Animator_Init(animator_t *v, float val);
-DENG_PUBLIC void Animator_Set(animator_t *v, float val, int steps);
-DENG_PUBLIC void Animator_Think(animator_t *v);
+DE_PUBLIC void Animator_Init(animator_t *v, float val);
+DE_PUBLIC void Animator_Set(animator_t *v, float val, int steps);
+DE_PUBLIC void Animator_Think(animator_t *v);
 
 /**
  * 2D vector animator.
  */
 typedef animator_t animatorvector2_t[2];
 
-DENG_PUBLIC void AnimatorVector2_Init(animatorvector2_t v, float x, float y);
-DENG_PUBLIC void AnimatorVector2_Set(animatorvector2_t v, float x, float y, int steps);
-DENG_PUBLIC void AnimatorVector2_Think(animatorvector2_t v);
+DE_PUBLIC void AnimatorVector2_Init(animatorvector2_t v, float x, float y);
+DE_PUBLIC void AnimatorVector2_Set(animatorvector2_t v, float x, float y, int steps);
+DE_PUBLIC void AnimatorVector2_Think(animatorvector2_t v);
 
 /**
  * 3D vector animator.
  */
 typedef animator_t animatorvector3_t[3];
 
-DENG_PUBLIC void AnimatorVector3_Init(animatorvector3_t v, float x, float y, float z);
-DENG_PUBLIC void AnimatorVector3_Set(animatorvector3_t v, float x, float y, float z, int steps);
-DENG_PUBLIC void AnimatorVector3_Think(animatorvector3_t v);
+DE_PUBLIC void AnimatorVector3_Init(animatorvector3_t v, float x, float y, float z);
+DE_PUBLIC void AnimatorVector3_Set(animatorvector3_t v, float x, float y, float z, int steps);
+DE_PUBLIC void AnimatorVector3_Think(animatorvector3_t v);
 
 /**
  * 4D vector animator.
  */
 typedef animator_t animatorvector4_t[4];
 
-DENG_PUBLIC void AnimatorVector4_Init(animatorvector4_t v, float x, float y, float z, float w);
-DENG_PUBLIC void AnimatorVector4_Set(animatorvector4_t v, float x, float y, float z, float w, int steps);
-DENG_PUBLIC void AnimatorVector4_Think(animatorvector4_t v);
+DE_PUBLIC void AnimatorVector4_Init(animatorvector4_t v, float x, float y, float z, float w);
+DE_PUBLIC void AnimatorVector4_Set(animatorvector4_t v, float x, float y, float z, float w, int steps);
+DE_PUBLIC void AnimatorVector4_Think(animatorvector4_t v);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -80,4 +80,4 @@ DENG_PUBLIC void AnimatorVector4_Think(animatorvector4_t v);
 
 /// @}
 
-#endif /* LIBDENG_ANIMATOR_H */
+#endif /* DE_ANIMATOR_H */

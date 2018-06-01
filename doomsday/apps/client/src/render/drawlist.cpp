@@ -84,7 +84,7 @@ DrawList::PrimitiveParams::PrimitiveParams(de::gl::Primitive type,
     , modColor       (modColor)
 {}
 
-DENG2_PIMPL(DrawList)
+DE_PIMPL(DrawList)
 {
     /**
      * Each Element begins a block of GL commands/geometry to apply/transfer.
@@ -116,7 +116,7 @@ DENG2_PIMPL(DrawList)
              */
             void draw(DrawConditions const &conditions, TexUnitMap const &texUnitMap)
             {
-                DENG2_ASSERT(buffer);
+                DE_ASSERT(buffer);
 
                 if (conditions & SetLightEnv)
                 {
@@ -271,7 +271,7 @@ DENG2_PIMPL(DrawList)
         {
             // All the list data will be destroyed.
             Z_Free(data); data = nullptr;
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
             Z_CheckHeap();
 #endif
         }
@@ -358,13 +358,13 @@ DENG2_PIMPL(DrawList)
         switch (mode)
         {
         case DM_SKYMASK:
-            DENG2_ASSERT(spec.group == SkyMaskGeom);
+            DE_ASSERT(spec.group == SkyMaskGeom);
 
             // Render all primitives on the list without discrimination.
             return NoColor;
 
         case DM_ALL:  // All surfaces.
-            DENG2_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
+            DE_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
 
             // Should we do blending?
             if (spec.unit(TU_INTER).hasTexture())
@@ -399,27 +399,27 @@ DENG2_PIMPL(DrawList)
             return SetMatrixTexture0;
 
         case DM_LIGHT_MOD_TEXTURE:
-            DENG2_ASSERT(spec.group == LitGeom);
+            DE_ASSERT(spec.group == LitGeom);
 
             // Modulate sector light, dynamic light and regular texture.
             GL_BindTo(spec.unit(TU_PRIMARY), 1);
             return SetMatrixTexture1 | SetLightEnv0 | JustOneLight | NoBlend;
 
         case DM_TEXTURE_PLUS_LIGHT:
-            DENG2_ASSERT(spec.group == LitGeom);
+            DE_ASSERT(spec.group == LitGeom);
 
             GL_BindTo(spec.unit(TU_PRIMARY), 0);
             return SetMatrixTexture0 | SetLightEnv1 | NoBlend;
 
         case DM_FIRST_LIGHT:
-            DENG2_ASSERT(spec.group == LitGeom);
+            DE_ASSERT(spec.group == LitGeom);
 
             // Draw all primitives with more than one light
             // and all primitives which will have a blended texture.
             return SetLightEnv0 | ManyLights | Blend;
 
         case DM_BLENDED: {
-            DENG2_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
+            DE_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
 
             // Only render the blended surfaces.
             if (!spec.unit(TU_INTER).hasTexture())
@@ -437,7 +437,7 @@ DENG2_PIMPL(DrawList)
             return SetMatrixTexture0 | SetMatrixTexture1; }
 
         case DM_BLENDED_FIRST_LIGHT:
-            DENG2_ASSERT(spec.group == LitGeom);
+            DE_ASSERT(spec.group == LitGeom);
 
             // Only blended surfaces.
             if (!spec.unit(TU_INTER).hasTexture())
@@ -447,20 +447,20 @@ DENG2_PIMPL(DrawList)
             return SetMatrixTexture1 | SetLightEnv0;
 
         case DM_WITHOUT_TEXTURE:
-            DENG2_ASSERT(spec.group == LitGeom);
+            DE_ASSERT(spec.group == LitGeom);
 
             // Only render geometries affected by dynlights.
             return 0;
 
         case DM_LIGHTS:
-            DENG2_ASSERT(spec.group == LightGeom);
+            DE_ASSERT(spec.group == LightGeom);
 
             // These lists only contain light geometries.
             GL_Bind(spec.unit(TU_PRIMARY));
             return 0;
 
         case DM_BLENDED_MOD_TEXTURE:
-            DENG2_ASSERT(spec.group == LitGeom);
+            DE_ASSERT(spec.group == LitGeom);
 
             // Blending required.
             if (!spec.unit(TU_INTER).hasTexture())
@@ -472,7 +472,7 @@ DENG2_PIMPL(DrawList)
 
         case DM_MOD_TEXTURE:
         case DM_MOD_TEXTURE_MANY_LIGHTS:
-            DENG2_ASSERT(spec.group == LitGeom);
+            DE_ASSERT(spec.group == LitGeom);
 
             // Texture for surfaces with (many) dynamic lights.
             // Should we do blending?
@@ -501,7 +501,7 @@ DENG2_PIMPL(DrawList)
             return SetMatrixTexture0;
 
         case DM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
-            DENG2_ASSERT(spec.group == LitGeom);
+            DE_ASSERT(spec.group == LitGeom);
 
             // Blending is not done now.
             if (spec.unit(TU_INTER).hasTexture())
@@ -527,7 +527,7 @@ DENG2_PIMPL(DrawList)
             break;
 
         case DM_ALL_DETAILS:
-            DENG2_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
+            DE_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
 
             if (spec.unit(TU_PRIMARY_DETAIL).hasTexture())
             {
@@ -537,7 +537,7 @@ DENG2_PIMPL(DrawList)
             break;
 
         case DM_UNBLENDED_TEXTURE_AND_DETAIL:
-            DENG2_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
+            DE_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
 
             // Only unblended. Details are optional.
             if (spec.unit(TU_INTER).hasTexture())
@@ -564,7 +564,7 @@ DENG2_PIMPL(DrawList)
             break;
 
         case DM_BLENDED_DETAILS: {
-            DENG2_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
+            DE_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
 
             // We'll only render blended primitives.
             if (!spec.unit(TU_INTER).hasTexture())
@@ -586,7 +586,7 @@ DENG2_PIMPL(DrawList)
             return SetMatrixDTexture0 | SetMatrixDTexture1; }
 
         case DM_SHADOW:
-            DENG2_ASSERT(spec.group == ShadowGeom);
+            DE_ASSERT(spec.group == ShadowGeom);
 
             if (spec.unit(TU_PRIMARY).hasTexture())
             {
@@ -611,7 +611,7 @@ DENG2_PIMPL(DrawList)
             return 0;
 
         case DM_MASKED_SHINY:
-            DENG2_ASSERT(spec.group == ShineGeom);
+            DE_ASSERT(spec.group == ShineGeom);
 
             if (spec.unit(TU_INTER).hasTexture())
             {
@@ -626,7 +626,7 @@ DENG2_PIMPL(DrawList)
 
         case DM_ALL_SHINY:
         case DM_SHINY:
-            DENG2_ASSERT(spec.group == ShineGeom);
+            DE_ASSERT(spec.group == ShineGeom);
 
             GL_BindTo(spec.unit(TU_PRIMARY), 0);
             if (!spec.unit(TU_INTER).hasTexture())
@@ -769,16 +769,16 @@ DrawList &DrawList::write(Store const &buffer, duint const *indices, int indexCo
 DrawList &DrawList::write(Store const &buffer, duint const *indices, int indexCount,
                           PrimitiveParams const &params)
 {
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     using Parm = PrimitiveParams;
 
     // Sanity check usage.
-    DENG2_ASSERT(!(spec().group == LightGeom  && ((params.flags_blendMode & Parm::OneLight) ||
+    DE_ASSERT(!(spec().group == LightGeom  && ((params.flags_blendMode & Parm::OneLight) ||
                                                   (params.flags_blendMode & Parm::ManyLights) ||
                                                   params.modTexture)));
-    DENG2_ASSERT(!(spec().group == LitGeom    && !Rend_IsMTexLights() && ((params.flags_blendMode & Parm::OneLight) ||
+    DE_ASSERT(!(spec().group == LitGeom    && !Rend_IsMTexLights() && ((params.flags_blendMode & Parm::OneLight) ||
                                                                           params.modTexture)));
-    DENG2_ASSERT(!(spec().group == ShadowGeom && ((params.flags_blendMode & Parm::OneLight) ||
+    DE_ASSERT(!(spec().group == ShadowGeom && ((params.flags_blendMode & Parm::OneLight) ||
                                                   (params.flags_blendMode & Parm::ManyLights) ||
                                                   params.modTexture)));
 #endif
@@ -795,7 +795,7 @@ DrawList &DrawList::write(Store const &buffer, duint const *indices, int indexCo
 
     d->last->data.numIndices = indexCount;
     auto *lti = (duint *) d->allocateData(sizeof(duint) * d->last->data.numIndices);
-    DENG_ASSERT(d->last != nullptr);
+    DE_ASSERT(d->last != nullptr);
     d->last->data.indices = lti;
     for (duint i = 0; i < d->last->data.numIndices; ++i)
     {
@@ -815,8 +815,8 @@ void DrawList::draw(DrawMode mode, TexUnitMap const &texUnitMap) const
 {
     using Parm = PrimitiveParams;
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Setup GL state for this list.
     DrawConditions const conditions = d->pushGLState(mode);
@@ -876,7 +876,7 @@ void DrawList::draw(DrawMode mode, TexUnitMap const &texUnitMap) const
         {
             elem->data.draw(conditions, texUnitMap);
 
-            DENG2_ASSERT(!Sys_GLCheckError());
+            DE_ASSERT(!Sys_GLCheckError());
         }
     }
 

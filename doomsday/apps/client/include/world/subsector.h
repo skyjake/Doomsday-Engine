@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_SUBSECTOR_H
-#define DENG_WORLD_SUBSECTOR_H
+#ifndef DE_WORLD_SUBSECTOR_H
+#define DE_WORLD_SUBSECTOR_H
 
 #include <functional>
 #include <QList>
@@ -47,7 +47,7 @@ class Subsector
 {
 public:
     /// Notified when the subsector is about to be deleted.
-    DENG2_DEFINE_AUDIENCE(Deletion, void subsectorBeingDeleted(Subsector const &subsector))
+    DE_DEFINE_AUDIENCE(Deletion, void subsectorBeingDeleted(Subsector const &subsector))
 
     /**
      * Construct a new subsector comprised of the specified set of map subspace regions.
@@ -60,7 +60,7 @@ public:
 
     virtual ~Subsector();
 
-    DENG2_CAST_METHODS()
+    DE_CAST_METHODS()
 
     /**
      * Returns a humman-friendly, textual description of the subsector.
@@ -134,7 +134,7 @@ public:
     QList<de::HEdge *> listUniqueBoundaryEdges() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 /**
@@ -154,7 +154,7 @@ class SubsectorCirculator
 {
 public:
     /// Attempt to dereference a NULL circulator. @ingroup errors
-    DENG2_ERROR(NullError);
+    DE_ERROR(NullError);
 
 public:
     /**
@@ -251,4 +251,4 @@ private:
 
 }  // namespace world
 
-#endif  // DENG_WORLD_SUBSECTOR_H
+#endif  // DE_WORLD_SUBSECTOR_H

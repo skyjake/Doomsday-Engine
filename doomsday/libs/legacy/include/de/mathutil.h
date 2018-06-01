@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_MATHUTIL_H
-#define LIBDENG_MATHUTIL_H
+#ifndef DE_MATHUTIL_H
+#define DE_MATHUTIL_H
 
 #include "liblegacy.h"
 
@@ -39,21 +39,21 @@ extern "C" {
 /**
  * Calculate CRC-32 for an arbitrary data buffer. @ingroup math
  */
-DENG_PUBLIC uint M_CRC32(byte const *data, uint length);
+DE_PUBLIC uint M_CRC32(byte const *data, uint length);
 
 /**
  * Gives an estimation of distance (not exact).
  */
-DENG_PUBLIC double M_ApproxDistance(double dx, double dy);
+DE_PUBLIC double M_ApproxDistance(double dx, double dy);
 
-DENG_PUBLIC float M_ApproxDistancef(float dx, float dy);
+DE_PUBLIC float M_ApproxDistancef(float dx, float dy);
 
 /**
  * Gives an estimation of 3D distance (not exact).
  */
-DENG_PUBLIC double M_ApproxDistance3(double dx, double dy, double dz);
+DE_PUBLIC double M_ApproxDistance3(double dx, double dy, double dz);
 
-DENG_PUBLIC float M_ApproxDistance3f(float dx, float dy, float dz);
+DE_PUBLIC float M_ApproxDistance3f(float dx, float dy, float dz);
 
 /**
  * To get a global angle from Cartesian coordinates, the coordinates are
@@ -67,59 +67,59 @@ DENG_PUBLIC float M_ApproxDistance3f(float dx, float dy, float dz);
  *
  * @return  Angle between the test point and [0, 0].
  */
-DENG_PUBLIC angle_t M_PointXYToAngle(double x, double y);
+DE_PUBLIC angle_t M_PointXYToAngle(double x, double y);
 
-DENG_PUBLIC angle_t M_PointToAngle(double const point[2]);
+DE_PUBLIC angle_t M_PointToAngle(double const point[2]);
 
 /**
  * Translate a direction into an angle value (degrees).
  */
-DENG_PUBLIC double M_DirectionToAngle(double const direction[2]);
+DE_PUBLIC double M_DirectionToAngle(double const direction[2]);
 
-DENG_PUBLIC double M_DirectionToAngleXY(double directionX, double directionY);
+DE_PUBLIC double M_DirectionToAngleXY(double directionX, double directionY);
 
-DENG_PUBLIC angle_t M_PointToAngle2(double const a[], double const b[]);
+DE_PUBLIC angle_t M_PointToAngle2(double const a[], double const b[]);
 
-DENG_PUBLIC angle_t M_PointXYToAngle2(double aX, double aY, double bX, double bY);
+DE_PUBLIC angle_t M_PointXYToAngle2(double aX, double aY, double bX, double bY);
 
-DENG_PUBLIC double M_PointDistance(double const a[2], double const b[2]);
+DE_PUBLIC double M_PointDistance(double const a[2], double const b[2]);
 
-DENG_PUBLIC double M_PointXYDistance(double aX, double aY, double bX, double bY);
+DE_PUBLIC double M_PointXYDistance(double aX, double aY, double bX, double bY);
 
 /**
  * Area of a triangle.
  */
-DENG_PUBLIC double M_TriangleArea(double const v1[2], double const v2[2], double const v3[2]);
+DE_PUBLIC double M_TriangleArea(double const v1[2], double const v2[2], double const v3[2]);
 
-DENG_PUBLIC void M_RotateVector(float vec[3], float degYaw, float degPitch);
+DE_PUBLIC void M_RotateVector(float vec[3], float degYaw, float degPitch);
 
 /**
  * Finds the power of 2 that is equal to or greater than the specified
  * number.
  */
-DENG_PUBLIC int M_CeilPow2(int num);
+DE_PUBLIC int M_CeilPow2(int num);
 
 /**
  * Finds the power of 2 that is less than or equal to the specified number.
  */
-DENG_PUBLIC int M_FloorPow2(int num);
+DE_PUBLIC int M_FloorPow2(int num);
 
 /**
  * Finds the power of 2 that is nearest the specified number. In ambiguous
  * cases, the smaller number is returned.
  */
-DENG_PUBLIC int M_RoundPow2(int num);
+DE_PUBLIC int M_RoundPow2(int num);
 
 /**
  * Weighted rounding. Weight determines the point where the number is still
  * rounded down (0..1).
  */
-DENG_PUBLIC int M_WeightPow2(int num, float weight);
+DE_PUBLIC int M_WeightPow2(int num, float weight);
 
 /**
  * @return Value mod length (length > 0).
  */
-DENG_PUBLIC float M_CycleIntoRange(float value, float length);
+DE_PUBLIC float M_CycleIntoRange(float value, float length);
 
 /**
  * Using Euclid's Algorithm reduce the given numerator and denominator by
@@ -128,35 +128,35 @@ DENG_PUBLIC float M_CycleIntoRange(float value, float length);
  * @param denominator  Input and output denominator.
  * @return  Greatest common divisor.
  */
-DENG_PUBLIC int M_RatioReduce(int* numerator, int* denominator);
+DE_PUBLIC int M_RatioReduce(int* numerator, int* denominator);
 
-DENG_PUBLIC slopetype_t M_SlopeType(double const direction[2]);
+DE_PUBLIC slopetype_t M_SlopeType(double const direction[2]);
 
-DENG_PUBLIC slopetype_t M_SlopeTypeXY(double directionX, double directionY);
+DE_PUBLIC slopetype_t M_SlopeTypeXY(double directionX, double directionY);
 
-DENG_PUBLIC slopetype_t M_SlopeTypeXY_FixedPrecision(fixed_t dx, fixed_t dy);
+DE_PUBLIC slopetype_t M_SlopeTypeXY_FixedPrecision(fixed_t dx, fixed_t dy);
 
-DENG_PUBLIC int M_NumDigits(int num);
+DE_PUBLIC int M_NumDigits(int num);
 
 /// @param angle  Normalised angle in the range [0..360].
-DENG_PUBLIC double M_InverseAngle(double angle);
+DE_PUBLIC double M_InverseAngle(double angle);
 
 /**
  * Conversion from HSV to RGB.  All components are [0,1].
  */
-DENG_PUBLIC void M_HSVToRGB(float* rgb, float h, float s, float v);
+DE_PUBLIC void M_HSVToRGB(float* rgb, float h, float s, float v);
 
 // Bounding boxes:
-DENG_PUBLIC void M_ClearBox(fixed_t* box);
-DENG_PUBLIC void M_CopyBox(fixed_t dest[4], const fixed_t src[4]);
-DENG_PUBLIC void M_AddToBox(fixed_t* box, fixed_t x, fixed_t y);
-DENG_PUBLIC float M_BoundingBoxDiff(const float in[4], const float out[4]);
-DENG_PUBLIC void M_JoinBoxes(float box[4], const float other[4]);
+DE_PUBLIC void M_ClearBox(fixed_t* box);
+DE_PUBLIC void M_CopyBox(fixed_t dest[4], const fixed_t src[4]);
+DE_PUBLIC void M_AddToBox(fixed_t* box, fixed_t x, fixed_t y);
+DE_PUBLIC float M_BoundingBoxDiff(const float in[4], const float out[4]);
+DE_PUBLIC void M_JoinBoxes(float box[4], const float other[4]);
 
 // Random numbers:
-DENG_PUBLIC byte RNG_RandByte(void);
-DENG_PUBLIC float RNG_RandFloat(void);
-DENG_PUBLIC void RNG_Reset(void);
+DE_PUBLIC byte RNG_RandByte(void);
+DE_PUBLIC float RNG_RandFloat(void);
+DE_PUBLIC void RNG_Reset(void);
 
 /// @}
 
@@ -164,4 +164,4 @@ DENG_PUBLIC void RNG_Reset(void);
 } // extern "C"
 #endif
 
-#endif // LIBDENG_MATHUTIL_H
+#endif // DE_MATHUTIL_H

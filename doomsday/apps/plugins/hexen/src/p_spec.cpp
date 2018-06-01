@@ -92,7 +92,7 @@ dd_bool EV_SectorSoundChange(byte *args)
 
 static dd_bool CheckedLockedDoor(mobj_t *mo, byte lock)
 {
-    DENG2_ASSERT(mo != 0);
+    DE_ASSERT(mo != 0);
 
     if(!mo->player) return false;
     if(!lock) return true;
@@ -620,7 +620,7 @@ dd_bool P_ActivateLine(Line *line, mobj_t *mo, int side, int activationType)
  */
 void P_PlayerInSpecialSector(player_t *player)
 {
-    DENG2_ASSERT(player);
+    DE_ASSERT(player);
     static coord_t const pushTab[3] = {
         1.0 / 32 * 5,
         1.0 / 32 * 10,
@@ -724,10 +724,10 @@ void P_PlayerInSpecialSector(player_t *player)
 
 void P_PlayerOnSpecialFloor(player_t *player)
 {
-    DENG2_ASSERT(player);
+    DE_ASSERT(player);
     mobj_t *plrMo           = player->plr->mo;
     terraintype_t const *tt = P_MobjFloorTerrain(plrMo);
-    DENG2_ASSERT(tt);
+    DE_ASSERT(tt);
 
     if(!(tt->flags & TTF_DAMAGING))
         return;

@@ -174,7 +174,7 @@ LumpCache &LumpCache::clear()
 {
     if (_dataCache)
     {
-        DENG2_FOR_EACH(DataCache, i, *_dataCache)
+        DE_FOR_EACH(DataCache, i, *_dataCache)
         {
             i->clearData();
         }

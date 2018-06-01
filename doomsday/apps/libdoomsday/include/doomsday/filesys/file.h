@@ -23,8 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_FILESYS_FILE_H
-#define LIBDENG_FILESYS_FILE_H
+#ifndef DE_FILESYS_FILE_H
+#define DE_FILESYS_FILE_H
 
 #include "../libdoomsday.h"
 #include "filehandle.h"
@@ -64,7 +64,7 @@ public:
     Q_DECLARE_FLAGS(Flags, Flag)
 
     /// This file is not contained. @ingroup errors
-    DENG2_ERROR(NotContainedError);
+    DE_ERROR(NotContainedError);
 
 private:
     File1();
@@ -83,7 +83,7 @@ public:
      */
     virtual ~File1();
 
-    DENG2_CAST_METHODS()
+    DE_CAST_METHODS()
 
     /// @return  Name of this file.
     virtual String const &name() const;
@@ -274,4 +274,4 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(File1::Flags)
 
 } // namespace de
 
-#endif /* LIBDENG_FILESYS_FILE_H */
+#endif /* DE_FILESYS_FILE_H */

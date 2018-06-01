@@ -19,7 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#define DENG_NO_API_MACROS_DEFINITIONS
+#define DE_NO_API_MACROS_DEFINITIONS
 
 #include "def_main.h"
 
@@ -111,21 +111,21 @@ void Def_Init()
     App::app().scriptSystem().addNativeModule("Defs", defs.names);
 
     // Constants for definitions.
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_SPAWN);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_SEE);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_PAIN);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_MELEE);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_MISSILE);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_CRASH);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_DEATH);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_XDEATH);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_RAISE);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SN_SPAWN);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SN_SEE);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SN_PAIN);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SN_MELEE);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SN_MISSILE);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SN_CRASH);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SN_DEATH);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SN_XDEATH);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SN_RAISE);
 
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SDN_ACTIVE);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SDN_ATTACK);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SDN_DEATH);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SDN_PAIN);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SDN_SEE);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SDN_ACTIVE);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SDN_ATTACK);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SDN_DEATH);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SDN_PAIN);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SDN_SEE);
 }
 
 void Def_Destroy()
@@ -172,7 +172,7 @@ sfxinfo_t *Def_GetSoundInfo(dint soundId, dfloat *freq, dfloat *volume)
        ++i)
     {}
 
-    DENG2_ASSERT(soundId < DED_Definitions()->sounds.size());
+    DE_ASSERT(soundId < DED_Definitions()->sounds.size());
 
     return info;
 }
@@ -314,7 +314,7 @@ ded_ptcgen_t *Def_GetDamageGenerator(int mobjType)
  */
 static void Def_InitTextDef(ddtext_t *txt, char const *str)
 {
-    DENG2_ASSERT(txt);
+    DE_ASSERT(txt);
 
     // Handle null pointers with "".
     if (!str) str = "";
@@ -370,7 +370,7 @@ static void Def_ReadLumpDefs()
     LumpIndex const &lumpIndex = fileSys().nameIndex();
     LumpIndex::FoundIndices foundDefns;
     lumpIndex.findAll("DD_DEFNS.lmp", foundDefns);
-    DENG2_FOR_EACH_CONST(LumpIndex::FoundIndices, i, foundDefns)
+    DE_FOR_EACH_CONST(LumpIndex::FoundIndices, i, foundDefns)
     {
         if (!DED_ReadLump(DED_Definitions(), *i))
         {
@@ -430,7 +430,7 @@ static void readDefinitionFile(String path)
  */
 static void prependWorkPath(ddstring_t *dst, ddstring_t const *src)
 {
-    DENG2_ASSERT(dst && src);
+    DE_ASSERT(dst && src);
 
     if (!F_IsAbsolute(src))
     {
@@ -856,7 +856,7 @@ static void redecorateMaterial(ClientMaterial &material, Record const &def)
             for (dint k = 0; k < mainDef.lightCount(); ++k)
             {
                 defn::MaterialDecoration decorDef(mainDef.light(k));
-                DENG2_ASSERT(decorDef.stageCount() == 1); // sanity check.
+                DE_ASSERT(decorDef.stageCount() == 1); // sanity check.
 
                 std::unique_ptr<LightMaterialDecoration> decor(
                         new LightMaterialDecoration(Vec2i(decorDef.geta("patternSkip")),
@@ -1705,7 +1705,7 @@ String Def_GetStateName(state_t const *state)
 {
     if (!state) return "(nullptr)";
     dint const idx = ::runtimeDefs.states.indexOf(state);
-    DENG2_ASSERT(idx >= 0);
+    DE_ASSERT(idx >= 0);
     return DED_Definitions()->states[idx].gets("id");
 }
 
@@ -1720,7 +1720,7 @@ static inline dint Friendly(dint num)
  */
 void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
 {
-    DENG2_ASSERT(l && def);
+    DE_ASSERT(l && def);
 
     l->id               = def->id;
     l->flags            = def->flags[0];
@@ -1841,7 +1841,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
  */
 void Def_CopySectorType(sectortype_t *s, ded_sectortype_t *def)
 {
-    DENG2_ASSERT(s && def);
+    DE_ASSERT(s && def);
     dint i, k;
 
     s->id           = def->id;
@@ -1937,7 +1937,7 @@ dint Def_Set(dint type, dint index, dint value, void const *ptr)
     case DD_DEF_SOUND:
         if (index < 0 || index >= ::runtimeDefs.sounds.size())
         {
-            DENG2_ASSERT_FAIL("Sound index is invalid");
+            DE_ASSERT_FAIL("Sound index is invalid");
             return false;
         }
 
@@ -1977,7 +1977,7 @@ dint Def_Set(dint type, dint index, dint value, void const *ptr)
  */
 D_CMD(ListMobjs)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     if (DED_Definitions()->things.size() <= 0)
     {
@@ -2003,7 +2003,7 @@ void Def_ConsoleRegister()
     C_CMD("listmobjtypes", "", ListMobjs);
 }
 
-DENG_DECLARE_API(Def) =
+DE_DECLARE_API(Def) =
 {
     { DE_API_DEFINITIONS },
 

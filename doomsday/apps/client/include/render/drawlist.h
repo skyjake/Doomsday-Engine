@@ -112,12 +112,12 @@ public:
         {}
 
         inline de::GLTextureUnit &unit(int index) {
-            DENG2_ASSERT(index >= 0 && index < NUM_TEXTURE_UNITS);
+            DE_ASSERT(index >= 0 && index < NUM_TEXTURE_UNITS);
             return texunits[index];
         }
 
         inline de::GLTextureUnit const &unit(int index) const {
-            DENG2_ASSERT(index >= 0 && index < NUM_TEXTURE_UNITS);
+            DE_ASSERT(index >= 0 && index < NUM_TEXTURE_UNITS);
             return texunits[index];
         }
     };
@@ -226,7 +226,7 @@ public:
     static void reserveSpace(Indices &idx, uint count);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef DrawList::Spec DrawListSpec;

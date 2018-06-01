@@ -46,7 +46,7 @@ namespace de {
 class LIBGUI_PUBLIC MultiAtlas
 {
 public:
-    DENG2_ERROR(InvalidError);
+    DE_ERROR(InvalidError);
 
     /**
      * Group of allocations.
@@ -97,7 +97,7 @@ public:
         MultiAtlas &multiAtlas();
 
     private:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
     /// Interface for Atlas factories.
@@ -127,7 +127,7 @@ public:
     void clear();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

@@ -51,7 +51,7 @@ class MapImporter
 {
 public:
     /// Base class for load-related errors. @ingroup errors
-    DENG2_ERROR(LoadError);
+    DE_ERROR(LoadError);
 
 public:
     /**
@@ -76,7 +76,7 @@ public:
     MaterialId toMaterialId(de::dint number, MaterialGroup group);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace idtech1

@@ -31,8 +31,8 @@
 
 using namespace de;
 
-DENG2_PIMPL(IdgamesPackageInfoFile)
-, DENG2_OBSERVES(Asset, StateChange)
+DE_PIMPL(IdgamesPackageInfoFile)
+, DE_OBSERVES(Asset, StateChange)
 {
     Asset packageAsset;
     AssetGroup assets;
@@ -58,8 +58,8 @@ DENG2_PIMPL(IdgamesPackageInfoFile)
             // Looks like we can process the file contents.
             qDebug() << "[IdgamesPackageInfoFile] Time to unzip and analyze!";
 
-            DENG2_ASSERT(dataFile->isReady());
-            DENG2_ASSERT(descriptionFile->isReady());
+            DE_ASSERT(dataFile->isReady());
+            DE_ASSERT(descriptionFile->isReady());
 
             // We need to extract data files (WAD, DEH) so that they can be loaded.
             /// @todo No need for this after FS2 used for loading everything.
@@ -194,7 +194,7 @@ DENG2_PIMPL(IdgamesPackageInfoFile)
             }
 
             // Everythis is complete.
-            DENG2_FOR_PUBLIC_AUDIENCE(Download, i)
+            DE_FOR_PUBLIC_AUDIENCE(Download, i)
             {
                 i->downloadProgress(self(), 0);
             }

@@ -42,7 +42,7 @@
 using namespace de;
 using namespace de::ui;
 
-DENG_GUI_PIMPL(AudioSettingsDialog)
+DE_GUI_PIMPL(AudioSettingsDialog)
 {
     CVarSliderWidget *sfxVolume;
     CVarSliderWidget *musicVolume;
@@ -155,7 +155,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
 
         soundPlugin->items()
                 << new ChoiceItem(tr("FMOD"), "fmod")
-           #if !defined (DENG_DISABLE_SDLMIXER)
+           #if !defined (DE_DISABLE_SDLMIXER)
                 << new ChoiceItem(tr("SDL_mixer"), "sdlmixer")
            #endif
                 << new ChoiceItem(tr("OpenAL"), "openal")
@@ -167,7 +167,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
         musicPlugin->items()
                 << new ChoiceItem(tr("Fluidsynth"), "fluidsynth")
                 << new ChoiceItem(tr("FMOD"), "fmod")
-           #if !defined (DENG_DISABLE_SDLMIXER)
+           #if !defined (DE_DISABLE_SDLMIXER)
                 << new ChoiceItem(tr("SDL_mixer"), "sdlmixer")
            #endif
            #if defined (WIN32)

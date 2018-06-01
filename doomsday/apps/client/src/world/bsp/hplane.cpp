@@ -54,7 +54,7 @@ HPlane::Intercept::Intercept(ddouble distance, LineSegmentSide &lineSeg, dint ed
 
 LineSegmentSide &HPlane::Intercept::lineSegment() const
 {
-    DENG2_ASSERT(_lineSeg);
+    DE_ASSERT(_lineSeg);
     return *_lineSeg;
 }
 
@@ -83,7 +83,7 @@ LineSegmentSide *HPlane::Intercept::afterLineSegment() const
     return _after;
 }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
 void HPlane::Intercept::debugPrint() const
 {
     LOGDEV_MAP_MSG("Vertex #%i %s beforeSector: #%d afterSector: #%d %s")
@@ -94,7 +94,7 @@ void HPlane::Intercept::debugPrint() const
 }
 #endif
 
-DENG2_PIMPL(HPlane)
+DE_PIMPL(HPlane)
 {
     Partition partition;          ///< The partition line.
     ddouble length;               ///< Direction vector length.
@@ -183,7 +183,7 @@ void HPlane::clearIntercepts()
 void HPlane::configure(LineSegmentSide const &newBaseSeg)
 {
     // Only map line segments are suitable.
-    DENG2_ASSERT(newBaseSeg.hasMapSide());
+    DE_ASSERT(newBaseSeg.hasMapSide());
 
     LOG_AS("HPlane::configure");
 
@@ -398,7 +398,7 @@ HPlane::Intercepts const &HPlane::intercepts() const
     return d->intercepts;
 }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
 void HPlane::printIntercepts() const
 {
     uint index = 0;

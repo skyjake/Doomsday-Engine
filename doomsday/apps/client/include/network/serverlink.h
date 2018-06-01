@@ -38,12 +38,12 @@ class ServerLink : public de::shell::AbstractLink
     Q_OBJECT
 
 public:
-    DENG2_DEFINE_AUDIENCE2(DiscoveryUpdate, void linkDiscoveryUpdate(ServerLink const &link))
-    DENG2_DEFINE_AUDIENCE2(PingResponse,    void pingResponse(de::Address const &, de::TimeSpan))
-    DENG2_DEFINE_AUDIENCE2(MapOutline,      void mapOutlineReceived(de::Address const &, de::shell::MapOutlinePacket const &))
+    DE_DEFINE_AUDIENCE2(DiscoveryUpdate, void linkDiscoveryUpdate(ServerLink const &link))
+    DE_DEFINE_AUDIENCE2(PingResponse,    void pingResponse(de::Address const &, de::TimeSpan))
+    DE_DEFINE_AUDIENCE2(MapOutline,      void mapOutlineReceived(de::Address const &, de::shell::MapOutlinePacket const &))
 
-    DENG2_DEFINE_AUDIENCE2(Join,  void networkGameJoined())
-    DENG2_DEFINE_AUDIENCE2(Leave, void networkGameLeft())
+    DE_DEFINE_AUDIENCE2(Join,  void networkGameJoined())
+    DE_DEFINE_AUDIENCE2(Leave, void networkGameLeft())
 
     enum Flag
     {
@@ -169,7 +169,7 @@ protected:
     void initiateCommunications() override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(ServerLink::FoundMask)

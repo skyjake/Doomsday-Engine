@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_SHARED_GAME_DEFINITIONS_H
-#define LIBDENG_SHARED_GAME_DEFINITIONS_H
+#ifndef DE_SHARED_GAME_DEFINITIONS_H
+#define DE_SHARED_GAME_DEFINITIONS_H
 
 #include "dd_types.h"
 #include <doomsday/world/actions.h>
@@ -190,4 +190,4 @@ typedef struct {
 } // extern "C"
 #endif
 
-#endif // LIBDENG_SHARED_GAME_DEFINITIONS_H
+#endif // DE_SHARED_GAME_DEFINITIONS_H

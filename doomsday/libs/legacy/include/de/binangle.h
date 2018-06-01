@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BAMS_MATH_H
-#define LIBDENG_BAMS_MATH_H
+#ifndef DE_BAMS_MATH_H
+#define DE_BAMS_MATH_H
 
 #include <de/liblegacy.h>
 #include <de/types.h>
@@ -107,7 +107,7 @@ typedef unsigned char binangle_t;
 
 void bamsInit(void);
 
-DENG_PUBLIC binangle_t bamsAtan2(int y, int x);
+DE_PUBLIC binangle_t bamsAtan2(int y, int x);
 
 /// @}
 

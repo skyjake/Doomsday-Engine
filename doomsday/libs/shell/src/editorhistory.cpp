@@ -21,7 +21,7 @@
 
 namespace de { namespace shell {
 
-DENG2_PIMPL(EditorHistory)
+DE_PIMPL(EditorHistory)
 {
     ITextEditor *editor;
 
@@ -69,19 +69,19 @@ DENG2_PIMPL(EditorHistory)
 
     Command &command()
     {
-        DENG2_ASSERT(historyPos >= 0 && historyPos < history.size());
+        DE_ASSERT(historyPos >= 0 && historyPos < history.size());
         return history[historyPos];
     }
 
     Command const &command() const
     {
-        DENG2_ASSERT(historyPos >= 0 && historyPos < history.size());
+        DE_ASSERT(historyPos >= 0 && historyPos < history.size());
         return history[historyPos];
     }
 
     void updateCommandFromEditor()
     {
-        DENG2_ASSERT(editor != 0);
+        DE_ASSERT(editor != 0);
 
         command().text = editor->text();
         command().cursor = editor->cursor();
@@ -89,7 +89,7 @@ DENG2_PIMPL(EditorHistory)
 
     void updateEditor()
     {
-        DENG2_ASSERT(editor != 0);
+        DE_ASSERT(editor != 0);
 
         editor->setText(command().text);
         editor->setCursor(command().cursor);
@@ -135,7 +135,7 @@ void EditorHistory::setEditor(ITextEditor &editor)
 
 ITextEditor &EditorHistory::editor()
 {
-    DENG2_ASSERT(d->editor != 0);
+    DE_ASSERT(d->editor != 0);
     return *d->editor;
 }
 

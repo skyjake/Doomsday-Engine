@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MEMORY_BLOCKSET_H
-#define LIBDENG_MEMORY_BLOCKSET_H
+#ifndef DE_MEMORY_BLOCKSET_H
+#define DE_MEMORY_BLOCKSET_H
 
 #include "liblegacy.h"
 
@@ -74,7 +74,7 @@ typedef struct blockset_s {
  *
  * @return  Ptr to the newly created blockset.
  */
-DENG_PUBLIC blockset_t *BlockSet_New(size_t sizeOfElement, size_t batchSize);
+DE_PUBLIC blockset_t *BlockSet_New(size_t sizeOfElement, size_t batchSize);
 
 /**
  * Free an entire blockset. All memory allocated is released for all elements
@@ -82,7 +82,7 @@ DENG_PUBLIC blockset_t *BlockSet_New(size_t sizeOfElement, size_t batchSize);
  *
  * @param set  The blockset to be freed.
  */
-DENG_PUBLIC void BlockSet_Delete(blockset_t *set);
+DE_PUBLIC void BlockSet_Delete(blockset_t *set);
 
 /**
  * Return a ptr to the next unused element in the blockset.
@@ -91,10 +91,10 @@ DENG_PUBLIC void BlockSet_Delete(blockset_t *set);
  *
  * @return  Ptr to the next unused element in the blockset.
  */
-DENG_PUBLIC void *BlockSet_Allocate(blockset_t *set);
+DE_PUBLIC void *BlockSet_Allocate(blockset_t *set);
 
 /// @return  Total number of elements from the set that are currently in use.
-DENG_PUBLIC size_t BlockSet_Count(blockset_t *set);
+DE_PUBLIC size_t BlockSet_Count(blockset_t *set);
 
 /// @}
 
@@ -102,4 +102,4 @@ DENG_PUBLIC size_t BlockSet_Count(blockset_t *set);
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_BLOCKSET_H */
+#endif /* DE_BLOCKSET_H */

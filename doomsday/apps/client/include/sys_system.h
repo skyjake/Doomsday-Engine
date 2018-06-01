@@ -18,8 +18,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CORE_SYSTEM_H
-#define DENG_CORE_SYSTEM_H
+#ifndef DE_CORE_SYSTEM_H
+#define DE_CORE_SYSTEM_H
 
 #include <de/libcore.h>
 #include <de/NativePath>
@@ -36,7 +36,7 @@ void Sys_Shutdown();
 bool Sys_IsShuttingDown();
 
 #undef Sys_Quit
-DENG_EXTERN_C void Sys_Quit();
+DE_EXTERN_C void Sys_Quit();
 
 void Sys_HideMouseCursor();
 
@@ -55,4 +55,4 @@ void Sys_BlockUntilRealTime(de::duint realTimeMs);
 de::dint Sys_CriticalMessage(char const *msg);
 de::dint Sys_CriticalMessagef(char const *format, ...) PRINTF_F(1,2);
 
-#endif  // DENG_CORE_SYSTEM_H
+#endif  // DE_CORE_SYSTEM_H

@@ -56,7 +56,7 @@ int ListWidget::Item::userValue() const
     return _userValue;
 }
 
-DENG2_PIMPL_NOREF(ListWidget)
+DE_PIMPL_NOREF(ListWidget)
 {
     Items items;
     int   selection      = 0; ///< Selected item (-1 if none).

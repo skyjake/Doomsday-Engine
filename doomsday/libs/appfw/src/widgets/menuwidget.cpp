@@ -34,15 +34,15 @@ namespace de {
 
 using namespace ui;
 
-DENG2_PIMPL(MenuWidget)
-, DENG2_OBSERVES(Data, Addition)        // for layout update
-, DENG2_OBSERVES(Data, Removal)         // for layout update
-, DENG2_OBSERVES(Data, OrderChange)     // for layout update
-, DENG2_OBSERVES(Widget, ChildAddition) // for layout update
-, DENG2_OBSERVES(Widget, ChildRemoval)  // for layout update
-, DENG2_OBSERVES(PopupWidget, Close)
-, DENG2_OBSERVES(Widget, Deletion)
-, DENG2_OBSERVES(ButtonWidget, Press) // child button triggers
+DE_PIMPL(MenuWidget)
+, DE_OBSERVES(Data, Addition)        // for layout update
+, DE_OBSERVES(Data, Removal)         // for layout update
+, DE_OBSERVES(Data, OrderChange)     // for layout update
+, DE_OBSERVES(Widget, ChildAddition) // for layout update
+, DE_OBSERVES(Widget, ChildRemoval)  // for layout update
+, DE_OBSERVES(PopupWidget, Close)
+, DE_OBSERVES(Widget, Deletion)
+, DE_OBSERVES(ButtonWidget, Press) // child button triggers
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     /**
@@ -75,14 +75,14 @@ DENG2_PIMPL(MenuWidget)
         GuiWidget &parent() const
         {
             auto *p = d->organizer.itemWidget(_parentItem);
-            DENG2_ASSERT(p != 0);
+            DE_ASSERT(p != 0);
             return *p;
         }
 
         void trigger()
         {
-            DENG2_ASSERT(bool(_widget));
-            DENG2_ASSERT(d->self().hasRoot());
+            DE_ASSERT(bool(_widget));
+            DE_ASSERT(d->self().hasRoot());
 
             if (_widget->isOpeningOrClosing()) return;
 
@@ -413,7 +413,7 @@ DENG2_PIMPL(MenuWidget)
 
     void keepTrackOfSubWidget(PanelWidget *w)
     {
-        DENG2_ASSERT(is<PanelWidget>(w));
+        DE_ASSERT(is<PanelWidget>(w));
 
         openSubs.insert(w);
 
@@ -479,7 +479,7 @@ DENG2_PIMPL(MenuWidget)
 
     void buttonPressed(ButtonWidget &button)
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(ItemTriggered, i)
+        DE_FOR_PUBLIC_AUDIENCE2(ItemTriggered, i)
         {
             if (auto *item = organizer.findItemForWidget(button))
             {
@@ -488,10 +488,10 @@ DENG2_PIMPL(MenuWidget)
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(ItemTriggered)
+    DE_PIMPL_AUDIENCE(ItemTriggered)
 };
 
-DENG2_AUDIENCE_METHOD(MenuWidget, ItemTriggered)
+DE_AUDIENCE_METHOD(MenuWidget, ItemTriggered)
 
 MenuWidget::MenuWidget(String const &name)
     : ScrollAreaWidget(name), d(new Impl(this))
@@ -517,14 +517,14 @@ void MenuWidget::setGridSize(int columns, ui::SizePolicy columnPolicy,
 
     if (d->colPolicy == ui::Filled)
     {
-        DENG2_ASSERT(columns > 0);
+        DE_ASSERT(columns > 0);
         d->layout.setOverrideWidth((rule().width() - margins().width() -
                                     (columns - 1) * d->layout.columnPadding()) / float(columns));
     }
 
     if (d->rowPolicy == ui::Filled)
     {
-        DENG2_ASSERT(rows > 0);
+        DE_ASSERT(rows > 0);
         d->layout.setOverrideHeight((rule().height() - margins().height() -
                                      (rows - 1) * d->layout.rowPadding()) / float(rows));
     }

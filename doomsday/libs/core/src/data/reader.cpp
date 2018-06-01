@@ -31,7 +31,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(Reader)
+DE_PIMPL_NOREF(Reader)
 {
     ByteOrder const &convert;
     duint version;
@@ -50,13 +50,13 @@ DENG2_PIMPL_NOREF(Reader)
     Block markedData;   ///< All read data since the mark was set.
 
     Impl(ByteOrder const &order, IByteArray const *src, IByteArray::Offset off)
-        : convert(order), version(DENG2_PROTOCOL_LATEST),
+        : convert(order), version(DE_PROTOCOL_LATEST),
           source(src), offset(off), markOffset(off),
           stream(0), constStream(0), numReceivedBytes(0), marking(false)
     {}
 
     Impl(ByteOrder const &order, IIStream *str)
-        : convert(order), version(DENG2_PROTOCOL_LATEST),
+        : convert(order), version(DE_PROTOCOL_LATEST),
           source(0), offset(0), markOffset(0),
           stream(str), constStream(0), numReceivedBytes(0), marking(false)
     {
@@ -64,7 +64,7 @@ DENG2_PIMPL_NOREF(Reader)
     }
 
     Impl(ByteOrder const &order, IIStream const *str)
-        : convert(order), version(DENG2_PROTOCOL_LATEST),
+        : convert(order), version(DE_PROTOCOL_LATEST),
           source(0), offset(0), markOffset(0),
           stream(0), constStream(str), numReceivedBytes(0), marking(false)
     {
@@ -224,7 +224,7 @@ Reader &Reader::withHeader()
     d->version = header;
 
     // We can't read future (or invalid) versions.
-    if (d->version > DENG2_PROTOCOL_LATEST)
+    if (d->version > DE_PROTOCOL_LATEST)
     {
         throw VersionError("Reader::withHeader",
                            QString("Version %1 is unknown").arg(d->version));

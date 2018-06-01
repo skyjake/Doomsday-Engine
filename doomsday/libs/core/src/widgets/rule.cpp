@@ -25,7 +25,7 @@ namespace de {
 
 bool Rule::_invalidRulesExist = false;
 
-DENG2_PIMPL_NOREF(Rule)
+DE_PIMPL_NOREF(Rule)
 {
     typedef PointerSetT<Rule> Dependencies;
     Dependencies dependencies; // ref'd
@@ -44,7 +44,7 @@ DENG2_PIMPL_NOREF(Rule)
 
     ~Impl()
     {
-        DENG2_ASSERT(dependencies.isEmpty());
+        DE_ASSERT(dependencies.isEmpty());
     }
 };
 
@@ -66,7 +66,7 @@ float Rule::value() const
     }
 
     // It must be valid now, after the update.
-    DENG2_ASSERT(d->isValid);
+    DE_ASSERT(d->isValid);
 
     return d->value;
 }
@@ -116,7 +116,7 @@ void Rule::setValue(float v)
 
 void Rule::dependsOn(Rule const &dependency)
 {
-    DENG2_ASSERT(!d->dependencies.contains(&dependency));
+    DE_ASSERT(!d->dependencies.contains(&dependency));
     d->dependencies.insert(de::holdRef(&dependency));
 
     dependency.audienceForRuleInvalidation += this;
@@ -131,7 +131,7 @@ void Rule::independentOf(Rule const &dependency)
 {
     dependency.audienceForRuleInvalidation -= this;
 
-    DENG2_ASSERT(d->dependencies.contains(&dependency));
+    DE_ASSERT(d->dependencies.contains(&dependency));
     d->dependencies.remove(&dependency);
     dependency.release();
 }
@@ -150,7 +150,7 @@ void Rule::invalidate()
         // Also set the global flag.
         Rule::_invalidRulesExist = true;
 
-        DENG2_FOR_AUDIENCE(RuleInvalidation, i) i->ruleInvalidated();
+        DE_FOR_AUDIENCE(RuleInvalidation, i) i->ruleInvalidated();
     }
 }
 

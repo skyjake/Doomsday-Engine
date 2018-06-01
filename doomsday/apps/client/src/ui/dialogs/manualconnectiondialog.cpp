@@ -29,9 +29,9 @@
 
 using namespace de;
 
-DENG2_PIMPL(ManualConnectionDialog)
-, DENG2_OBSERVES(ServerLink, DiscoveryUpdate)
-, DENG2_OBSERVES(MultiplayerServerMenuWidget, AboutToJoin)
+DE_PIMPL(ManualConnectionDialog)
+, DE_OBSERVES(ServerLink, DiscoveryUpdate)
+, DE_OBSERVES(MultiplayerServerMenuWidget, AboutToJoin)
 {
     String usedAddress;
     FoldPanelWidget *fold;

@@ -69,7 +69,7 @@ private:
     LineEditWidget *_edit;
 };
 
-DENG_GUI_PIMPL(SliderWidget)
+DE_GUI_PIMPL(SliderWidget)
 {
     ddouble value;
     Ranged range;
@@ -402,7 +402,7 @@ DENG_GUI_PIMPL(SliderWidget)
 
     void updateGrab(MouseEvent const &ev)
     {
-        DENG2_ASSERT(state == Grabbed);
+        DE_ASSERT(state == Grabbed);
 
         //qDebug() << "delta" << (ev.pos() - grabFrom).asText();
 

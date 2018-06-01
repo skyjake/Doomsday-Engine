@@ -7,7 +7,7 @@
  * the buffer boundaries; reading too much data from the buffer results in an
  * error.
  *
- * If @c DENG_WRITER_TYPECHECK is defined, the type check codes preceding
+ * If @c DE_WRITER_TYPECHECK is defined, the type check codes preceding
  * the data values are checked for validity. The assumption is that the source
  * data buffer has been created using a Writer1.
  *
@@ -32,8 +32,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_READER_H
-#define LIBDENG_READER_H
+#ifndef DE_READER_H
+#define DE_READER_H
 
 #include "liblegacy.h"
 #include "types.h"
@@ -67,13 +67,13 @@ typedef void  (*Reader_Callback_ReadData) (Reader1 *, char *data, int len);
  * @param buffer  Buffer to use for reading.
  * @param len     Length of the buffer.
  */
-DENG_PUBLIC Reader1 *Reader_NewWithBuffer(byte const *buffer, size_t len);
+DE_PUBLIC Reader1 *Reader_NewWithBuffer(byte const *buffer, size_t len);
 
 /**
  * Constructs a new reader that has no memory buffer of its own. Instead, all the
  * read operations will get routed to user-provided callbacks.
  */
-DENG_PUBLIC Reader1 *Reader_NewWithCallbacks(Reader_Callback_ReadInt8  readInt8,
+DE_PUBLIC Reader1 *Reader_NewWithCallbacks(Reader_Callback_ReadInt8  readInt8,
                                              Reader_Callback_ReadInt16 readInt16,
                                              Reader_Callback_ReadInt32 readInt32,
                                              Reader_Callback_ReadFloat readFloat,
@@ -82,23 +82,23 @@ DENG_PUBLIC Reader1 *Reader_NewWithCallbacks(Reader_Callback_ReadInt8  readInt8,
 /**
  * Destroys the reader.
  */
-DENG_PUBLIC void Reader_Delete(Reader1 *reader);
+DE_PUBLIC void Reader_Delete(Reader1 *reader);
 
 /**
  * Returns the current position of the reader.
  */
-DENG_PUBLIC size_t Reader_Pos(Reader1 const *reader);
+DE_PUBLIC size_t Reader_Pos(Reader1 const *reader);
 
 /**
  * Returns the size of the reading buffer.
  */
-DENG_PUBLIC size_t Reader_Size(Reader1 const *reader);
+DE_PUBLIC size_t Reader_Size(Reader1 const *reader);
 
 /**
  * Determines whether the reader is in the end of buffer, i.e., there is nothing
  * more to read.
  */
-DENG_PUBLIC dd_bool Reader_AtEnd(Reader1 const *reader);
+DE_PUBLIC dd_bool Reader_AtEnd(Reader1 const *reader);
 
 /**
  * Sets the position of the reading cursor in the buffer.
@@ -106,33 +106,33 @@ DENG_PUBLIC dd_bool Reader_AtEnd(Reader1 const *reader);
  * @param reader  Reader1.
  * @param newPos  New position.
  */
-DENG_PUBLIC void Reader_SetPos(Reader1 *reader, size_t newPos);
+DE_PUBLIC void Reader_SetPos(Reader1 *reader, size_t newPos);
 
 /**
  * Reads a value from the source buffer.
  */
 ///@{
-DENG_PUBLIC int8_t      Reader_ReadChar   (Reader1 *reader);
-DENG_PUBLIC byte        Reader_ReadByte   (Reader1 *reader);
-DENG_PUBLIC int16_t     Reader_ReadInt16  (Reader1 *reader);
-DENG_PUBLIC uint16_t    Reader_ReadUInt16 (Reader1 *reader);
-DENG_PUBLIC int32_t     Reader_ReadInt32  (Reader1 *reader);
-DENG_PUBLIC uint32_t    Reader_ReadUInt32 (Reader1 *reader);
-DENG_PUBLIC float       Reader_ReadFloat  (Reader1 *reader);
+DE_PUBLIC int8_t      Reader_ReadChar   (Reader1 *reader);
+DE_PUBLIC byte        Reader_ReadByte   (Reader1 *reader);
+DE_PUBLIC int16_t     Reader_ReadInt16  (Reader1 *reader);
+DE_PUBLIC uint16_t    Reader_ReadUInt16 (Reader1 *reader);
+DE_PUBLIC int32_t     Reader_ReadInt32  (Reader1 *reader);
+DE_PUBLIC uint32_t    Reader_ReadUInt32 (Reader1 *reader);
+DE_PUBLIC float       Reader_ReadFloat  (Reader1 *reader);
 ///@}
 
 /**
  * Reads @a len bytes into @a buffer.
  */
-DENG_PUBLIC void Reader_Read(Reader1 *reader, void *buffer, size_t len);
+DE_PUBLIC void Reader_Read(Reader1 *reader, void *buffer, size_t len);
 
 /**
  * Only 15 bits can be used for the number because the high bit of the
  * lower byte is used to determine whether the upper byte follows or not.
  */
-DENG_PUBLIC uint16_t Reader_ReadPackedUInt16(Reader1 *reader);
+DE_PUBLIC uint16_t Reader_ReadPackedUInt16(Reader1 *reader);
 
-DENG_PUBLIC uint32_t Reader_ReadPackedUInt32(Reader1 *reader);
+DE_PUBLIC uint32_t Reader_ReadPackedUInt32(Reader1 *reader);
 
 /// @}
 
@@ -147,10 +147,10 @@ DENG_PUBLIC uint32_t Reader_ReadPackedUInt32(Reader1 *reader);
  * @param cb       Current byte. Used for tracking the current byte being read.
  * @param out      Read bits are ouput here.
  */
-DENG_PUBLIC void M_ReadBits(uint numBits, const uint8_t** src, uint8_t* cb, uint8_t* out);
+DE_PUBLIC void M_ReadBits(uint numBits, const uint8_t** src, uint8_t* cb, uint8_t* out);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif // LIBDENG_READER_H
+#endif // DE_READER_H

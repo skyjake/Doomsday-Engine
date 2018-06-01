@@ -25,7 +25,7 @@
 using namespace de;
 using namespace de::ui;
 
-DENG_GUI_PIMPL(ColorAdjustmentDialog)
+DE_GUI_PIMPL(ColorAdjustmentDialog)
 {
     CVarSliderWidget *gamma;
     CVarSliderWidget *contrast;

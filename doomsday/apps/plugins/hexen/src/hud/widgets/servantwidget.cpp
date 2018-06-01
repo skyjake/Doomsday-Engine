@@ -31,13 +31,13 @@ static patchid_t pServantIcon[FRAME_COUNT];
 
 static void ServantWidget_Draw(guidata_servant_t *svnt, Point2Raw const *offset)
 {
-    DENG2_ASSERT(svnt);
+    DE_ASSERT(svnt);
     svnt->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void ServantWidget_UpdateGeometry(guidata_servant_t *svnt)
 {
-    DENG2_ASSERT(svnt);
+    DE_ASSERT(svnt);
     svnt->updateGeometry();
 }
 

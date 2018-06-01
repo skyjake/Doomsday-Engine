@@ -55,7 +55,7 @@ public:
     typedef Rangez Range;
     static dsize const InvalidPos;
 
-    DENG2_ERROR(OffsetError);
+    DE_ERROR(OffsetError);
 
 public:
     /**
@@ -122,7 +122,7 @@ public:
     StringList mapsInContiguousRangesAsText() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace res

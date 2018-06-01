@@ -3,7 +3,7 @@
 # License: GPL 2.0+
 
 cmake_minimum_required (VERSION 3.1)
-project (DENG_WADTOOL)
+project (DE_WADTOOL)
 include (../../cmake/Config.cmake)
 
 find_package (DengLegacy)

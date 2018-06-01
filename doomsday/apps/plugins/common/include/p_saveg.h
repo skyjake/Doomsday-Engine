@@ -27,7 +27,7 @@
 class MapStateWriter;
 class MapStateReader;
 
-DENG_EXTERN_C int saveToRealPlayerNum[MAXPLAYERS];
+DE_EXTERN_C int saveToRealPlayerNum[MAXPLAYERS];
 
 #if __JHEXEN__
 typedef struct targetplraddress_s {
@@ -35,7 +35,7 @@ typedef struct targetplraddress_s {
     struct targetplraddress_s *next;
 } targetplraddress_t;
 
-DENG_EXTERN_C targetplraddress_t *targetPlayerAddrs;
+DE_EXTERN_C targetplraddress_t *targetPlayerAddrs;
 
 void SV_InitTargetPlayers();
 void SV_ClearTargetPlayers();

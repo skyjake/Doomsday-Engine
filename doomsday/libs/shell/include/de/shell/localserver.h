@@ -19,7 +19,7 @@
 #ifndef LIBSHELL_LOCALSERVER_H
 #define LIBSHELL_LOCALSERVER_H
 
-#if !defined(DENG_MOBILE)
+#if !defined(DE_MOBILE)
 
 #    include "Link"
 #    include <de/Error>
@@ -37,7 +37,7 @@ class LIBSHELL_PUBLIC LocalServer
 {
 public:
     /// Failed to locate the server executable. @ingroup errors
-    DENG2_ERROR(NotFoundError);
+    DE_ERROR(NotFoundError);
 
 public:
     LocalServer();
@@ -77,11 +77,11 @@ public:
     NativePath errorLogPath() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 }} // namespace de::shell
 
-#    endif // !DENG_MOBILE
+#    endif // !DE_MOBILE
 
 #endif // LIBSHELL_LOCALSERVER_H

@@ -31,7 +31,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(Writer)
+DE_PIMPL_NOREF(Writer)
 {
     ByteOrder const &convert;
     IByteArray *destination;
@@ -110,7 +110,7 @@ Writer &Writer::withHeader()
 
 duint Writer::version() const
 {
-    return DENG2_PROTOCOL_LATEST;
+    return DE_PROTOCOL_LATEST;
 }
 
 Writer &Writer::operator << (char const &byte)

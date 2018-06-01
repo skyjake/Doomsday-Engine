@@ -26,7 +26,7 @@
 
 #include "x_player.h"
 
-DENG_EXTERN_C int TextKeyMessages[];
+DE_EXTERN_C int TextKeyMessages[];
 
 #ifdef __cplusplus
 extern "C" {

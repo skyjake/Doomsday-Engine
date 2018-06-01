@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_LOGSINK_H
-#define LIBDENG2_LOGSINK_H
+#ifndef LIBCORE_LOGSINK_H
+#define LIBCORE_LOGSINK_H
 
 #include "../String"
 #include "../Log"
@@ -31,7 +31,7 @@ namespace de {
  *
  * LogSinks are flushed only from one thread at a time.
  */
-class DENG2_PUBLIC LogSink
+class DE_PUBLIC LogSink
 {
 public:
     enum Mode {
@@ -47,7 +47,7 @@ public:
      * human-presentable, print-ready format suitable for the sink. It may,
      * for instance, apply indenting and omit repeating parts.
      */
-    class DENG2_PUBLIC IFormatter
+    class DE_PUBLIC IFormatter
     {
     public:
         typedef QList<String> Lines;
@@ -114,4 +114,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_LOGSINK_H
+#endif // LIBCORE_LOGSINK_H

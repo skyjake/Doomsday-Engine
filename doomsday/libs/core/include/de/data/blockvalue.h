@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_BLOCKVALUE_H
-#define LIBDENG2_BLOCKVALUE_H
+#ifndef LIBCORE_BLOCKVALUE_H
+#define LIBCORE_BLOCKVALUE_H
 
 #include "../Value"
 #include "../Block"
@@ -30,7 +30,7 @@ namespace de {
  *
  * @ingroup data
  */
-class DENG2_PUBLIC BlockValue : public Value
+class DE_PUBLIC BlockValue : public Value
 {
 public:
     BlockValue();
@@ -67,4 +67,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_BLOCKVALUE_H */
+#endif /* LIBCORE_BLOCKVALUE_H */

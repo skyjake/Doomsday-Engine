@@ -21,8 +21,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_SYSTEM_CONCURRENCY_H
-#define LIBDENG_SYSTEM_CONCURRENCY_H
+#ifndef DE_SYSTEM_CONCURRENCY_H
+#define DE_SYSTEM_CONCURRENCY_H
 
 #include <de/liblegacy.h>
 
@@ -34,9 +34,9 @@ typedef void *mutex_t;
 typedef void *sem_t;
 
 typedef enum systhreadexitstatus_e {
-    DENG_THREAD_STOPPED_NORMALLY,
-    DENG_THREAD_STOPPED_WITH_FORCE, // terminated
-    DENG_THREAD_STOPPED_WITH_EXCEPTION
+    DE_THREAD_STOPPED_NORMALLY,
+    DE_THREAD_STOPPED_WITH_FORCE, // terminated
+    DE_THREAD_STOPPED_WITH_EXCEPTION
 } systhreadexitstatus_t;
 
 #ifdef __cplusplus
@@ -44,7 +44,7 @@ typedef enum systhreadexitstatus_e {
 #include <functional>
 typedef std::function<int (void *)> systhreadfunc_t;
 
-#ifdef __DENG__ // libdeng internal
+#ifdef __DE__ // libdeng internal
 #include <QThread>
 /**
  * Thread that runs a user-specified callback function. Exceptions from the callback
@@ -74,7 +74,7 @@ private:
     void (*_terminationFunc)(systhreadexitstatus_t);
 };
 
-#endif // __DENG__
+#endif // __DE__
 
 /**
  * Starts a new thread.
@@ -87,19 +87,13 @@ private:
  *                         of the thread as a parameter.
  * @return Thread handle.
  */
-DENG_PUBLIC thread_t Sys_StartThread(systhreadfunc_t startpos, void *parm,
+DE_PUBLIC thread_t Sys_StartThread(systhreadfunc_t startpos, void *parm,
                                      void (*terminationFunc)(systhreadexitstatus_t));
 
 extern "C" {
 #endif // __cplusplus
 
 /**
- * @def DENG_ASSERT_IN_MAIN_THREAD
- * In a debug build, this asserts that the current code is executing in the main thread.
- */
-#define DENG_ASSERT_IN_MAIN_THREAD()   DENG2_ASSERT_IN_MAIN_THREAD()
-
-/**
  * Starts a new thread.
  *
  * @param startpos  Executes while the thread is running. When the function exists,
@@ -110,12 +104,12 @@ extern "C" {
  *                         of the thread as a parameter.
  * @return Thread handle.
  */
-DENG_PUBLIC thread_t Sys_StartThread(int (*startpos)(void *), void *parm,
+DE_PUBLIC thread_t Sys_StartThread(int (*startpos)(void *), void *parm,
                                      void (*terminationFunc)(systhreadexitstatus_t));
 
-DENG_PUBLIC void Thread_Sleep(int milliseconds);
+DE_PUBLIC void Thread_Sleep(int milliseconds);
 
-DENG_PUBLIC void Thread_KillAbnormally(thread_t handle);
+DE_PUBLIC void Thread_KillAbnormally(thread_t handle);
 
 /**
  * Wait for a thread to stop. If the thread does not stop after @a timeoutMs,
@@ -128,34 +122,26 @@ DENG_PUBLIC void Thread_KillAbnormally(thread_t handle);
  *
  * @return  Return value of the thread.
  */
-DENG_PUBLIC int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t *exitStatus);
+DE_PUBLIC int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t *exitStatus);
 
 /**
  * @param handle  Handle to the thread to return the id of.
  *                Can be @c NULL in which case the current thread is assumed.
  * @return  Identifier of the thread.
  */
-DENG_PUBLIC uint32_t Sys_ThreadId(thread_t handle);
+DE_PUBLIC uint32_t Sys_ThreadId(thread_t handle);
 
-DENG_PUBLIC uint32_t Sys_CurrentThreadId(void);
+DE_PUBLIC uint32_t Sys_CurrentThreadId(void);
 
-DENG_PUBLIC dd_bool Sys_InMainThread(void);
+DE_PUBLIC dd_bool Sys_InMainThread(void);
 
-DENG_PUBLIC mutex_t Sys_CreateMutex(char const *name);
+DE_PUBLIC mutex_t Sys_CreateMutex(char const *name);
 
-DENG_PUBLIC void Sys_DestroyMutex(mutex_t mutexHandle);
+DE_PUBLIC void Sys_DestroyMutex(mutex_t mutexHandle);
 
-DENG_PUBLIC void Sys_Lock(mutex_t mutexHandle);
+DE_PUBLIC void Sys_Lock(mutex_t mutexHandle);
 
-DENG_PUBLIC void Sys_Unlock(mutex_t mutexHandle);
-
-#if 0
-/// @todo update these if/when needed
-sem_t Sem_Create(uint32_t initialValue);
-void Sem_Destroy(sem_t semaphore);
-void Sem_P(sem_t semaphore);
-void Sem_V(sem_t semaphore);
-#endif
+DE_PUBLIC void Sys_Unlock(mutex_t mutexHandle);
 
 /// @}
 
@@ -163,4 +149,4 @@ void Sem_V(sem_t semaphore);
 } // extern "C"
 #endif
 
-#endif // LIBDENG_SYSTEM_CONCURRENCY_H
+#endif // DE_SYSTEM_CONCURRENCY_H

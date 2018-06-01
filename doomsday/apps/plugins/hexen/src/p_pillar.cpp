@@ -28,7 +28,7 @@
 
 void T_BuildPillar(pillar_t *pillar)
 {
-    DENG2_ASSERT(pillar);
+    DE_ASSERT(pillar);
 
     // First, raise the floor
     result_e res1 = T_MovePlane(pillar->sector, pillar->floorSpeed, pillar->floorDest, pillar->crush, 0, pillar->direction); // floorOrCeiling, direction
@@ -74,7 +74,7 @@ int pillar_s::read(MapStateReader *msr)
 
         // Start of used data members.
         sector          = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
-        DENG_ASSERT(sector != 0);
+        DE_ASSERT(sector != 0);
 
         ceilingSpeed    = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
         floorSpeed      = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
@@ -93,7 +93,7 @@ int pillar_s::read(MapStateReader *msr)
         // Start of used data members.
         // A 32bit pointer to sector, serialized.
         sector          = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
-        DENG_ASSERT(sector != 0);
+        DE_ASSERT(sector != 0);
 
         ceilingSpeed    = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
         floorSpeed      = FIX2FLT((fixed_t) Reader_ReadInt32(reader));

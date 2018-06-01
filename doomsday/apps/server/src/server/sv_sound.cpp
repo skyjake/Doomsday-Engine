@@ -50,7 +50,7 @@ static void identifySoundEmitter(mobj_t const **base, Sector **sector, Polyobj *
     App_World().map().identifySoundEmitter(*reinterpret_cast<SoundEmitter const *>(*base),
                                            sector, poly, plane, surface);
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     if (!*sector && !*poly && !*plane && !*surface)
     {
         throw Error("Sv_IdentifySoundBase", "Bad sound base");

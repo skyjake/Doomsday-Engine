@@ -126,7 +126,7 @@ public:
     bool handleEvent(Event const &event);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 }} // namespace de::shell

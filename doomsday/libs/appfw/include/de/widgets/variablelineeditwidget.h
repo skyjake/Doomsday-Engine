@@ -36,7 +36,7 @@ class LIBAPPFW_PUBLIC VariableLineEditWidget : public LineEditWidget
 
 public:
     /// Thrown when the variable is gone and someone tries to access it. @ingroup errors
-    DENG2_ERROR(VariableMissingError);
+    DE_ERROR(VariableMissingError);
 
 public:
     VariableLineEditWidget(Variable &variable, String const &name = String());
@@ -50,7 +50,7 @@ protected slots:
     void setVariableFromWidget();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

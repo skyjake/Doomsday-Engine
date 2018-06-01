@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_IBLOCK_H
-#define LIBDENG2_IBLOCK_H
+#ifndef LIBCORE_IBLOCK_H
+#define LIBCORE_IBLOCK_H
 
 #include "../IByteArray"
 
@@ -65,4 +65,4 @@ public:
 
 } // namespace de
 
-#endif // LIBDENG2_IBLOCK_H
+#endif // LIBCORE_IBLOCK_H

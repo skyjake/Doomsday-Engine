@@ -54,7 +54,7 @@ public:
     de::Mat4f cameraModelView() const;
     de::Mat4f cameraProjection() const;
 
-    DENG2_DEFINE_AUDIENCE(Change, void currentWorldChanged(const World *old, World *current))
+    DE_DEFINE_AUDIENCE(Change, void currentWorldChanged(const World *old, World *current))
 
 public slots:
     void setWorld(World *world);
@@ -64,7 +64,7 @@ protected:
     void glDeinit();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace gloom

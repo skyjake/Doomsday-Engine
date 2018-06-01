@@ -43,7 +43,7 @@ internal::AttribSpec const InstanceData::_spec[2] = {
 };
 LIBGUI_VERTEX_FORMAT_SPEC(InstanceData, 20 * sizeof(float))
 
-DENG2_PIMPL(EntityRender)
+DE_PIMPL(EntityRender)
 {
     EntityMap     ents;
     ModelDrawable entityModels[5];
@@ -123,7 +123,7 @@ DENG2_PIMPL(EntityRender)
 
     void create()
     {
-        DENG2_ASSERT(self().context().map);
+        DE_ASSERT(self().context().map);
 
         const auto &map = *self().context().map;
 

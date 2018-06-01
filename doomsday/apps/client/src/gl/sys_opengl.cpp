@@ -32,7 +32,7 @@
 
 #ifdef WIN32
 #   define GETPROC(Type, x)   x = de::function_cast<Type>(wglGetProcAddress(#x))
-#elif defined (DENG_X11)
+#elif defined (DE_X11)
 #   include <GL/glx.h>
 #   undef None
 #   define GETPROC(Type, x)   x = de::function_cast<Type>(glXGetProcAddress((GLubyte const *)#x))
@@ -76,8 +76,8 @@ static void initialize(void)
 
 de::String Sys_GLDescription()
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     de::String str;
     QTextStream os(&str);
@@ -158,14 +158,14 @@ dd_bool Sys_GLInitialize(void)
 
     assert(doneEarlyInit);
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     assert(!Sys_GLCheckError());
 
     if(firstTimeInit)
     {
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
         const GLubyte* versionStr = LIBGUI_GL.glGetString(GL_VERSION);
         double version = (versionStr? strtod((const char*) versionStr, NULL) : 0);
         if(version == 0)
@@ -237,8 +237,8 @@ void Sys_GLConfigureDefaultState(void)
      */
     assert(doneEarlyInit);
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     LIBGUI_GL.glFrontFace(GL_CW);
     LIBGUI_ASSERT_GL_OK();
@@ -249,7 +249,7 @@ void Sys_GLConfigureDefaultState(void)
 
     DGL_Disable(DGL_TEXTURE_2D);
 
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     LIBGUI_GL.glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
     LIBGUI_ASSERT_GL_OK();
 #endif
@@ -268,7 +268,7 @@ void Sys_GLConfigureDefaultState(void)
 
 //    de::GLInfo::setLineWidth(GL_state.currentLineWidth);
 
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     // Setup for antialiased lines/points.
     LIBGUI_GL.glEnable(GL_LINE_SMOOTH);
     LIBGUI_ASSERT_GL_OK();
@@ -374,7 +374,7 @@ void Sys_GLPrintExtensions(void)
 dd_bool Sys_GLCheckErrorArgs(char const *file, int line)
 {
     if (novideo) return false;
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
     de::GLInfo::checkError(file, line);
 #endif
     return false;

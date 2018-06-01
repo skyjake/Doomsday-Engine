@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_SCRIPT_H
-#define LIBDENG2_SCRIPT_H
+#ifndef LIBCORE_SCRIPT_H
+#define LIBCORE_SCRIPT_H
 
 /**
  * @defgroup script Script Runtime
@@ -44,7 +44,7 @@ class File;
  *
  * @ingroup script
  */
-class DENG2_PUBLIC Script
+class DE_PUBLIC Script
 {
 public:
     /// Constructs an empty script with no statements.
@@ -93,7 +93,7 @@ public:
     Compound &compound();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

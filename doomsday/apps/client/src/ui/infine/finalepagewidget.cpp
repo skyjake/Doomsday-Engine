@@ -35,8 +35,8 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(FinalePageWidget)
-, DENG2_OBSERVES(FinaleWidget, Deletion)
+DE_PIMPL_NOREF(FinalePageWidget)
+, DE_OBSERVES(FinaleWidget, Deletion)
 {
     struct Flags {
         char hidden:1;         ///< Not drawn.
@@ -79,12 +79,12 @@ DENG2_PIMPL_NOREF(FinalePageWidget)
     ~Impl()
     {
         qDeleteAll(children);
-        DENG2_ASSERT(children.isEmpty());
+        DE_ASSERT(children.isEmpty());
     }
 
     void finaleWidgetBeingDeleted(FinaleWidget const &widget)
     {
-        DENG2_ASSERT(children.contains(&const_cast<FinaleWidget &>(widget)));
+        DE_ASSERT(children.contains(&const_cast<FinaleWidget &>(widget)));
         children.removeOne(&const_cast<FinaleWidget &>(widget));
     }
 };
@@ -157,7 +157,7 @@ void FinalePageWidget::draw() const
     // Clear Z buffer (prevent the objects being clipped by nearby polygons).
     LIBGUI_GL.glClear(GL_DEPTH_BUFFER_BIT);
 
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     if (renderWireframe > 1)
     {
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -179,7 +179,7 @@ void FinalePageWidget::draw() const
     // Restore original matrices and state: back to normal 2D.
     DGL_PopState();
 
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     // Back from wireframe mode?
     if (renderWireframe > 1)
     {

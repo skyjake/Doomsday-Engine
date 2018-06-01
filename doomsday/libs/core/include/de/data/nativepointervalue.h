@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_NATIVEPOINTERVALUE_H
-#define LIBDENG2_NATIVEPOINTERVALUE_H
+#ifndef LIBCORE_NATIVEPOINTERVALUE_H
+#define LIBCORE_NATIVEPOINTERVALUE_H
 
 #include "../Value"
 #include "../Record"
@@ -36,7 +36,7 @@ namespace de {
  *
  * @ingroup data
  */
-class DENG2_PUBLIC NativePointerValue : public Value
+class DE_PUBLIC NativePointerValue : public Value
 {
 public:
     typedef Deletable Object;
@@ -66,10 +66,10 @@ public:
     void operator << (Reader &from);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_NATIVEPOINTERVALUE_H
+#endif // LIBCORE_NATIVEPOINTERVALUE_H
 

@@ -154,7 +154,7 @@ public:  /// @todo make private:
     void setState(State newState);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace acs

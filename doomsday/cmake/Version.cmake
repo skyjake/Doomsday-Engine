@@ -1,31 +1,31 @@
-set (DENG_VERSION_MAJOR 2)
-set (DENG_VERSION_MINOR 2)
-set (DENG_VERSION_PATCH 0)
+set (DE_VERSION_MAJOR 2)
+set (DE_VERSION_MINOR 2)
+set (DE_VERSION_PATCH 0)
 
-set (DENG_VERSION ${DENG_VERSION_MAJOR}.${DENG_VERSION_MINOR}.${DENG_VERSION_PATCH})
+set (DE_VERSION ${DE_VERSION_MAJOR}.${DE_VERSION_MINOR}.${DE_VERSION_PATCH})
 
 # Binary compatibility version for shared libraries / APIs.
-set (DENG_COMPAT_VERSION 2.2)
+set (DE_COMPAT_VERSION 2.2)
 
-string (REPLACE . , DENG_VERSION_WINDOWS "${DENG_VERSION}.${DENG_BUILD}")
-if (NOT DEFINED DENG_BUILD)
-    set (DENG_VERSION_WINDOWS "${DENG_VERSION_WINDOWS}0")
+string (REPLACE . , DE_VERSION_WINDOWS "${DE_VERSION}.${DE_BUILD}")
+if (NOT DEFINED DE_BUILD)
+    set (DE_VERSION_WINDOWS "${DE_VERSION_WINDOWS}0")
 endif ()
 
-set (DENG_RELEASE_TYPE
+set (DE_RELEASE_TYPE
     Unstable
     #Candidate
     #Stable
 )
 
-set (DENG_TEAM_COPYRIGHT "Copyright (c) 2003-2019 Deng Team")
+set (DE_TEAM_COPYRIGHT "Copyright (c) 2003-2019 Deng Team")
 
 # Build Configuration --------------------------------------------------------
 
-if (DENG_RELEASE_TYPE STREQUAL "Stable")
-    add_definitions (-DDENG_STABLE=1)
-    set (DENG_STABLE 1)
+if (DE_RELEASE_TYPE STREQUAL "Stable")
+    add_definitions (-DDE_STABLE=1)
+    set (DE_STABLE 1)
 endif ()
-if (DEFINED DENG_BUILD)
-    add_definitions (-DDOOMSDAY_BUILD_TEXT="${DENG_BUILD}")
+if (DEFINED DE_BUILD)
+    add_definitions (-DDOOMSDAY_BUILD_TEXT="${DE_BUILD}")
 endif ()

@@ -26,7 +26,7 @@
 #include <QSurfaceFormat>
 #include <QThread>
 
-#ifdef DENG2_QT_5_0_OR_NEWER
+#ifdef DE_QT_5_0_OR_NEWER
 #  include <QStandardPaths>
 #else
 #  include <QDesktopServices>
@@ -34,7 +34,7 @@
 
 namespace de {
 
-DENG2_PIMPL(GuiApp)
+DE_PIMPL(GuiApp)
 {
     GuiLoop loop;
     QThread *renderThread;
@@ -52,9 +52,9 @@ DENG2_PIMPL(GuiApp)
 void GuiApp::setDefaultOpenGLFormat() // static
 {
     QSurfaceFormat fmt;
-#if defined (DENG_OPENGL_ES)
+#if defined (DE_OPENGL_ES)
     fmt.setRenderableType(QSurfaceFormat::OpenGLES);
-    fmt.setVersion(DENG_OPENGL_ES / 10, DENG_OPENGL_ES % 10);
+    fmt.setVersion(DE_OPENGL_ES / 10, DE_OPENGL_ES % 10);
 #else
     fmt.setRenderableType(QSurfaceFormat::OpenGL);
     fmt.setProfile(QSurfaceFormat::CoreProfile);
@@ -63,7 +63,7 @@ void GuiApp::setDefaultOpenGLFormat() // static
     fmt.setDepthBufferSize(24);
     fmt.setStencilBufferSize(8);
     fmt.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
-#if defined (DENG2_DEBUG)
+#if defined (DE_DEBUG)
     fmt.setOption(QSurfaceFormat::DebugContext, true);
 #endif
     QSurfaceFormat::setDefaultFormat(fmt);
@@ -145,12 +145,12 @@ bool GuiApp::inRenderThread()
     {
         return false;
     }
-    return DENG2_GUI_APP->d->renderThread == QThread::currentThread();
+    return DE_GUI_APP->d->renderThread == QThread::currentThread();
 }
 
 void GuiApp::setRenderThread(QThread *thread)
 {
-    DENG2_GUI_APP->d->renderThread = thread;
+    DE_GUI_APP->d->renderThread = thread;
 }
 
 void GuiApp::loopIteration()
@@ -163,7 +163,7 @@ void GuiApp::loopIteration()
 
 NativePath GuiApp::appDataPath() const
 {
-#ifdef DENG2_QT_5_0_OR_NEWER
+#ifdef DE_QT_5_0_OR_NEWER
     return QStandardPaths::writableLocation(QStandardPaths::DataLocation);
 #else
     return QDesktopServices::storageLocation(QDesktopServices::DataLocation);

@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_EVENT_H
-#define LIBDENG2_EVENT_H
+#ifndef LIBCORE_EVENT_H
+#define LIBCORE_EVENT_H
 
 #include "../libcore.h"
 
@@ -35,7 +35,7 @@ namespace de {
  *
  * @ingroup core
  */
-class DENG2_PUBLIC Event
+class DE_PUBLIC Event
 {
 public:
     /// Event type codes.
@@ -65,7 +65,7 @@ public:
     bool isMouse() const { return _type == MouseButton || _type == MouseMotion ||
                 _type == MousePosition || _type == MouseWheel; }
 
-    DENG2_CAST_METHODS()
+    DE_CAST_METHODS()
 
 private:
     int _type;
@@ -73,4 +73,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_EVENT_H
+#endif // LIBCORE_EVENT_H

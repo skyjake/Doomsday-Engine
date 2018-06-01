@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_UI_INFINE_FINALEPAGEWIDGET_H
-#define DENG_UI_INFINE_FINALEPAGEWIDGET_H
+#ifndef DE_UI_INFINE_FINALEPAGEWIDGET_H
+#define DE_UI_INFINE_FINALEPAGEWIDGET_H
 
 #include <QList>
 #include <de/Error>
@@ -36,10 +36,10 @@ class FinalePageWidget
 {
 public:
     /// An invalid color index was specified. @ingroup errors
-    DENG2_ERROR(InvalidColorError);
+    DE_ERROR(InvalidColorError);
 
     /// An invalid font index was specified. @ingroup errors
-    DENG2_ERROR(InvalidFontError);
+    DE_ERROR(InvalidFontError);
 
     typedef QList<FinaleWidget *> Children;
 
@@ -124,7 +124,7 @@ public:
     FinalePageWidget &setPredefinedFont(uint idx, fontid_t font);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_UI_INFINE_FINALEPAGEWIDGET_H
+#endif // DE_UI_INFINE_FINALEPAGEWIDGET_H

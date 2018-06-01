@@ -238,9 +238,9 @@ bool G_SetGameActionLoadSession(String slotId)
 void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoint, bool secretExit)
 {
 #if __JHEXEN__
-    DENG2_UNUSED(secretExit);
+    DE_UNUSED(secretExit);
 #else
-    DENG2_UNUSED(nextMapEntryPoint);
+    DE_UNUSED(nextMapEntryPoint);
 #endif
 
     if (IS_CLIENT) return;
@@ -392,8 +392,8 @@ void R_GetTranslation(int plrClass, int plrColor, int *tclass, int *tmap)
             /* Cleric */  { 1, 0, 2, 3 },
             /* Mage */    { 1, 0, 2, 3 }
         };
-        DENG2_ASSERT(plrClass >= 0 && plrClass < 3);
-        DENG2_ASSERT(plrColor >= 0 && plrColor < 4);
+        DE_ASSERT(plrClass >= 0 && plrClass < 3);
+        DE_ASSERT(plrColor >= 0 && plrColor < 4);
         mapped = mapping[plrClass][plrColor];
     }
     else
@@ -403,8 +403,8 @@ void R_GetTranslation(int plrClass, int plrColor, int *tclass, int *tmap)
             /* Cleric */  { 1, 0, 2, 3, 4, 5, 6, 7 },
             /* Mage */    { 1, 0, 2, 3, 4, 5, 6, 7 }
         };
-        DENG2_ASSERT(plrClass >= 0 && plrClass < 3);
-        DENG2_ASSERT(plrColor >= 0 && plrColor < 8);
+        DE_ASSERT(plrClass >= 0 && plrClass < 3);
+        DE_ASSERT(plrColor >= 0 && plrColor < 8);
         mapped = mapping[plrClass][plrColor];
     }
 
@@ -414,7 +414,7 @@ void R_GetTranslation(int plrClass, int plrColor, int *tclass, int *tmap)
 
 void Mobj_UpdateTranslationClassAndMap(mobj_t *mo)
 {
-    DENG2_ASSERT(mo);
+    DE_ASSERT(mo);
     if (mo->player)
     {
         int plrColor = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
@@ -771,7 +771,7 @@ void R_InitHud()
 
 SaveSlots &G_SaveSlots()
 {
-    DENG2_ASSERT(sslots != 0);
+    DE_ASSERT(sslots != 0);
     return *sslots;
 }
 
@@ -829,7 +829,7 @@ void G_CommonPostInit()
 
 void G_AutoStartOrBeginTitleLoop()
 {
-    CommandLine &cmdLine = DENG2_APP->commandLine();
+    CommandLine &cmdLine = DE_APP->commandLine();
 
     String startEpisodeId;
     de::Uri startMapUri;
@@ -1023,7 +1023,7 @@ void G_ChangeGameState(gamestate_t state)
 
     if (state < 0 || state >= NUM_GAME_STATES)
     {
-        DENG2_ASSERT_FAIL("G_ChangeGameState: Invalid state");
+        DE_ASSERT_FAIL("G_ChangeGameState: Invalid state");
         return;
     }
 
@@ -1127,7 +1127,7 @@ void G_BeginMap()
 
 int G_Responder(event_t *ev)
 {
-    DENG2_ASSERT(ev);
+    DE_ASSERT(ev);
 
     // Eat all events once shutdown has begun.
     if (G_QuitInProgress()) return true;
@@ -1152,7 +1152,7 @@ int G_Responder(event_t *ev)
 
 int G_PrivilegedResponder(event_t *ev)
 {
-    DENG2_ASSERT(ev);
+    DE_ASSERT(ev);
 
     // Ignore all events once shutdown has begun.
     if (G_QuitInProgress()) return false;
@@ -1734,7 +1734,7 @@ void G_Ticker(timespan_t ticLength)
  */
 static void clearPlayer(player_t *p)
 {
-    DENG2_ASSERT(p);
+    DE_ASSERT(p);
 
     player_t playerCopy;
     ddplayer_t ddPlayerCopy;
@@ -1790,7 +1790,7 @@ void G_PlayerReborn(int player)
     player_t *p = &players[player];
 
     int frags[MAXPLAYERS];
-    DENG2_ASSERT(sizeof(p->frags) == sizeof(frags));
+    DE_ASSERT(sizeof(p->frags) == sizeof(frags));
     std::memcpy(frags, p->frags, sizeof(frags));
 
     int killcount    = p->killCount;
@@ -1862,7 +1862,7 @@ void G_PlayerReborn(int player)
         p->didSecret = true;
     }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     for (int i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
         LOGDEV_MAP_MSG("Player %i owns wpn %i: %i") << player << i << p->weapons[i].owned;
@@ -2074,7 +2074,7 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
     String mapId;
 #if __JDOOM64__
     mapId = String("map%1").arg(map+1, 2, 10, QChar('0'));
-    DENG2_UNUSED(episode);
+    DE_UNUSED(episode);
 #elif __JDOOM__
     if (gameModeBits & GM_ANY_DOOM2)
         mapId = String("map%1").arg(map+1, 2, 10, QChar('0'));
@@ -2084,7 +2084,7 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
     mapId = String("e%1m%2").arg(episode+1).arg(map+1);
 #else
     mapId = String("map%1").arg(map+1, 2, 10, QChar('0'));
-    DENG2_UNUSED(episode);
+    DE_UNUSED(episode);
 #endif
     return de::Uri("Maps", mapId);
 }
@@ -2286,7 +2286,7 @@ void G_QuitGame()
 
 D_CMD(OpenLoadMenu)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     if (!gfw_Session()->isLoadingPossible()) return false;
     DD_Execute(true, "menu loadgame");
@@ -2295,7 +2295,7 @@ D_CMD(OpenLoadMenu)
 
 D_CMD(OpenSaveMenu)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     if (!gfw_Session()->isSavingPossible()) return false;
     DD_Execute(true, "menu savegame");
@@ -2313,7 +2313,7 @@ static int endSessionConfirmed(msgresponse_t response, int /*userValue*/, void *
 
 D_CMD(EndSession)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     if (G_QuitInProgress()) return true;
 
@@ -2360,7 +2360,7 @@ D_CMD(EndSession)
 static int loadSessionConfirmed(msgresponse_t response, int /*userValue*/, void *context)
 {
     String *slotId = static_cast<String *>(context);
-    DENG2_ASSERT(slotId != 0);
+    DE_ASSERT(slotId != 0);
     if (response == MSG_YES)
     {
         DD_Executef(true, "loadgame %s confirm", slotId->toUtf8().constData());
@@ -2371,7 +2371,7 @@ static int loadSessionConfirmed(msgresponse_t response, int /*userValue*/, void 
 
 D_CMD(LoadSession)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     bool const confirmed = (argc == 3 && !qstricmp(argv[2], "confirm"));
 
@@ -2443,7 +2443,7 @@ D_CMD(LoadSession)
 
 D_CMD(QuickLoadSession)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
     return DD_Execute(true, "loadgame quick");
 }
 
@@ -2456,7 +2456,7 @@ struct savesessionconfirmed_params_t
 static int saveSessionConfirmed(msgresponse_t response, int /*userValue*/, void *context)
 {
     savesessionconfirmed_params_t *p = static_cast<savesessionconfirmed_params_t *>(context);
-    DENG2_ASSERT(p != 0);
+    DE_ASSERT(p != 0);
     if (response == MSG_YES)
     {
         DD_Executef(true, "savegame %s \"%s\" confirm", p->slotId.toUtf8().constData(), p->userDescription.toUtf8().constData());
@@ -2467,7 +2467,7 @@ static int saveSessionConfirmed(msgresponse_t response, int /*userValue*/, void 
 
 D_CMD(SaveSession)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     bool const confirmed = (argc >= 3 && !qstricmp(argv[argc-1], "confirm"));
 
@@ -2553,14 +2553,14 @@ D_CMD(SaveSession)
 
 D_CMD(QuickSaveSession)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
     return DD_Execute(true, "savegame quick");
 }
 
 static int deleteGameStateFolderConfirmed(msgresponse_t response, int /*userValue*/, void *context)
 {
     String const *saveName = static_cast<de::String const *>(context);
-    DENG2_ASSERT(saveName != 0);
+    DE_ASSERT(saveName != 0);
     if (response == MSG_YES)
     {
         DD_Executef(true, "deletegamesave %s confirm", saveName->toUtf8().constData());
@@ -2571,7 +2571,7 @@ static int deleteGameStateFolderConfirmed(msgresponse_t response, int /*userValu
 
 D_CMD(DeleteSaveGame)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if (G_QuitInProgress()) return false;
 
@@ -2616,21 +2616,21 @@ D_CMD(DeleteSaveGame)
 
 D_CMD(HelpScreen)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
     G_StartHelp();
     return true;
 }
 
 D_CMD(CycleTextureGamma)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
     R_CycleGammaLevel();
     return true;
 }
 
 D_CMD(LeaveMap)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     String exitName(argc > 1? argv[1] : "next");
 
@@ -2655,7 +2655,7 @@ D_CMD(LeaveMap)
 
 D_CMD(SetDefaultSkill)
 {
-    DENG_UNUSED(src);
+    DE_UNUSED(src);
 
     if (argc != 2)
     {

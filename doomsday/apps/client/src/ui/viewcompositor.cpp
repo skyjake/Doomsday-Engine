@@ -45,8 +45,8 @@ using namespace de;
 
 static Ranged const FACTOR_RANGE(1.0 / 16.0, 1.0);
 
-DENG2_PIMPL(ViewCompositor)
-, DENG2_OBSERVES(Variable, Change)
+DE_PIMPL(ViewCompositor)
+, DE_OBSERVES(Variable, Change)
 {
     mutable Variable const *pixelDensity = nullptr;
     mutable Variable const *resizeFactor = nullptr;
@@ -294,7 +294,7 @@ void ViewCompositor::drawCompositedLayers()
             GL_ConfigureBorderedProjection(&bp, BPF_OVERDRAW_CLIP |
                                            (!App_World().hasMap()? BPF_OVERDRAW_MASK : 0),
                                            SCREENWIDTH, SCREENHEIGHT,
-                                           DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT,
+                                           DE_GAMEVIEW_WIDTH, DE_GAMEVIEW_HEIGHT,
                                            scalemode_t(Con_GetByte("rend-finale-stretch")));
             GL_BeginBorderedProjection(&bp);
             for (Finale *finale : App_InFineSystem().finales())

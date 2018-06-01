@@ -137,7 +137,7 @@ private:
 
     void maybeSpreadOverEdge(HEdge *hedge)
     {
-        DENG2_ASSERT(_spread.contact != 0);
+        DE_ASSERT(_spread.contact != 0);
 
         if (!hedge) return;
 

@@ -122,7 +122,7 @@ public:
      */
     template <typename WidgetType>
     inline WidgetType &addWidget(WidgetType *widget) {
-        DENG2_ASSERT(widget != 0);
+        DE_ASSERT(widget != 0);
         addWidget(static_cast<Widget *>(widget));
         return *widget;
     }
@@ -225,7 +225,7 @@ public:
     QVariant const &userValue() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Page::Flags)

@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_INDIRECTRULE_H
-#define LIBDENG2_INDIRECTRULE_H
+#ifndef LIBCORE_INDIRECTRULE_H
+#define LIBCORE_INDIRECTRULE_H
 
 #include "../Rule"
 
@@ -34,7 +34,7 @@ namespace de {
  *
  * @ingroup widgets
  */
-class DENG2_PUBLIC IndirectRule : public Rule
+class DE_PUBLIC IndirectRule : public Rule
 {
 public:
     IndirectRule();
@@ -62,4 +62,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_INDIRECTRULE_H
+#endif // LIBCORE_INDIRECTRULE_H

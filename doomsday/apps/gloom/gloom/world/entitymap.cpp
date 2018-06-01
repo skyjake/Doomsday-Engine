@@ -22,7 +22,7 @@ using namespace de;
 
 namespace gloom {
 
-DENG2_PIMPL(EntityMap)
+DE_PIMPL(EntityMap)
 {
     struct Block {
         QList<const Entity *> entities; // owned

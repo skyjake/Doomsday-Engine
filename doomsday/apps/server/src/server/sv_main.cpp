@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_NO_API_MACROS_SERVER
+#define DE_NO_API_MACROS_SERVER
 
 #include "de_base.h"
 #include "server/sv_def.h"
@@ -95,7 +95,7 @@ static String composeFilePathString(FS1::FileList &files, dint flags = DEFAULT_P
     String const &delimiter = ";")
 {
     String result;
-    DENG2_FOR_EACH_CONST(FS1::FileList, i, files)
+    DE_FOR_EACH_CONST(FS1::FileList, i, files)
     {
         File1 &file = (*i)->file();
 
@@ -156,7 +156,7 @@ static void composePWADFileList(char *outBuf, dsize outBufSize, char const *deli
 
 /*Record *Sv_InfoToRecord(serverinfo_t *info)
 {
-    DENG2_ASSERT(info);
+    DE_ASSERT(info);
 
     auto *rec = new Record;
 
@@ -190,7 +190,7 @@ static void composePWADFileList(char *outBuf, dsize outBufSize, char const *deli
  */
 /*dsize Sv_InfoToString(serverinfo_t *info, ddstring_t *msg)
 {
-    DENG2_ASSERT(info && msg);
+    DE_ASSERT(info && msg);
 
     Str_Appendf(msg, "port:%i\n",  info->port);
     Str_Appendf(msg, "name:%s\n",  info->name);
@@ -248,7 +248,7 @@ void Sv_FixLocalAngles(bool clearFixAnglesFlag)
             }
             else
             {
-                DENG2_ASSERT(pl.mo);
+                DE_ASSERT(pl.mo);
                 pl.clAngle   = pl.mo->angle;
                 pl.clLookDir = pl.lookDir;
             }
@@ -259,10 +259,10 @@ void Sv_FixLocalAngles(bool clearFixAnglesFlag)
 
 void Sv_HandlePlayerInfoFromClient(ServerPlayer *sender)
 {
-    DENG2_ASSERT(sender);
+    DE_ASSERT(sender);
 
     LOG_AS("Sv_HandlePlayerInfoFromClient");
-    DENG2_ASSERT(::netBuffer.player == DoomsdayApp::players().indexOf(sender));
+    DE_ASSERT(::netBuffer.player == DoomsdayApp::players().indexOf(sender));
 
     dint console = Reader_ReadByte(::msgReader); // ignored
     LOG_NET_VERBOSE("from=%i, console=%i") << ::netBuffer.player << console;
@@ -290,7 +290,7 @@ void Sv_HandlePacket()
     LOG_AS("Sv_HandlePacket");
 
     dint const from  = ::netBuffer.player;
-    DENG2_ASSERT(from >= 0 && from < DDMAXPLAYERS);
+    DE_ASSERT(from >= 0 && from < DDMAXPLAYERS);
     player_t *sender = DD_Player(from);
     ddplayer_t *ddpl = &sender->publicData();
 
@@ -506,12 +506,12 @@ void Sv_ExecuteCommand(void)
         // New format includes flags and command source.
         // Flags are currently unused but added for future expansion.
         flags = Reader_ReadUInt16(msgReader);
-        DENG_UNUSED(flags);
+        DE_UNUSED(flags);
         cmdSource = Reader_ReadByte(msgReader);
         break;
 
     default:
-        DENG2_ASSERT_FAIL("Sv_ExecuteCommand: Not a command packet!");
+        DE_ASSERT_FAIL("Sv_ExecuteCommand: Not a command packet!");
         return;
     }
 
@@ -874,7 +874,7 @@ void Sv_StopNetGame(void)
 
 unsigned int Sv_IdForMaterial(world::Material *mat)
 {
-    DENG_ASSERT(materialDict);
+    DE_ASSERT(materialDict);
     return materialDict->findUniqueSerialId(mat);
 }
 
@@ -989,7 +989,7 @@ void Sv_Ticker(timespan_t ticLength)
 {
     int i;
 
-    DENG_ASSERT(isDedicated);
+    DE_ASSERT(isDedicated);
     //if (!isDedicated) return;
 
     // Note last angles for all players.
@@ -1192,7 +1192,7 @@ dd_bool Sv_CanTrustClientPos(int plrNum)
  */
 D_CMD(Logout)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     // Only servers can execute this command.
     if (!netRemoteUser || !isServer)
@@ -1209,7 +1209,7 @@ D_CMD(Logout)
     return true;
 }
 
-DENG_DECLARE_API(Server) =
+DE_DECLARE_API(Server) =
 {
     { DE_API_SERVER },
     Sv_CanTrustClientPos

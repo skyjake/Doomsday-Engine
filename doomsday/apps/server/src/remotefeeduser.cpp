@@ -26,7 +26,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(RemoteFeedUser)
+DE_PIMPL(RemoteFeedUser)
 {
     using QueryId = RemoteFeedQueryPacket::Id;
 
@@ -55,7 +55,7 @@ DENG2_PIMPL(RemoteFeedUser)
         QObject::connect(s, &Socket::allSent, [this] () { continueFileTransfers(); });
         QObject::connect(s, &Socket::disconnected, [this] ()
         {
-            DENG2_FOR_PUBLIC_AUDIENCE(Disconnect, i)
+            DE_FOR_PUBLIC_AUDIENCE(Disconnect, i)
             {
                 i->userDisconnected(self());
             }
@@ -67,7 +67,7 @@ DENG2_PIMPL(RemoteFeedUser)
 
     void receiveMessages()
     {
-        DENG2_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT_IN_MAIN_THREAD();
 
         LOG_AS("RemoteFeedUser");
         while (socket->hasIncoming())
@@ -107,7 +107,7 @@ DENG2_PIMPL(RemoteFeedUser)
 
     void continueFileTransfers()
     {
-        DENG2_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT_IN_MAIN_THREAD();
         try
         {
             if (socket->bytesBuffered() > 0) return; // Too soon.
@@ -116,7 +116,7 @@ DENG2_PIMPL(RemoteFeedUser)
 
             // Send the next block of the first file in the transfer queue.
             {
-                DENG2_GUARD(transfers);
+                DE_GUARD(transfers);
 
                 if (transfers.value.isEmpty()) return;
 
@@ -190,7 +190,7 @@ DENG2_PIMPL(RemoteFeedUser)
                 LOG_NET_MSG("New file transfer: %s size:%i")
                         << query.path()
                         << xfer.data.size();
-                DENG2_GUARD(transfers);
+                DE_GUARD(transfers);
                 transfers.value.push_back(xfer);
                 break; }
             }
@@ -210,6 +210,6 @@ RemoteFeedUser::RemoteFeedUser(Socket *socket)
 
 Address RemoteFeedUser::address() const
 {
-    DENG2_ASSERT(d->socket);
+    DE_ASSERT(d->socket);
     return d->socket->peerAddress();
 }

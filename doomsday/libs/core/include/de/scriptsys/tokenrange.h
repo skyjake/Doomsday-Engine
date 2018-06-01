@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_TOKENRANGE_H
-#define LIBDENG2_TOKENRANGE_H
+#ifndef LIBCORE_TOKENRANGE_H
+#define LIBCORE_TOKENRANGE_H
 
 #include "../String"
 #include "../TokenBuffer"
@@ -35,17 +35,17 @@ namespace de {
  *
  * @ingroup script
  */
-class DENG2_PUBLIC TokenRange
+class DE_PUBLIC TokenRange
 {
 public:
     /// The token range is unexpectedly empty. @ingroup errors
-    DENG2_ERROR(EmptyRangeError);
+    DE_ERROR(EmptyRangeError);
 
     /// A position outside the range is accessed. @ingroup errors
-    DENG2_ERROR(OutOfBoundsError);
+    DE_ERROR(OutOfBoundsError);
 
     /// A matching bracket cannot be located within the range. @ingroup errors
-    DENG2_ERROR(MismatchedBracketError);
+    DE_ERROR(MismatchedBracketError);
 
 public:
     TokenRange();
@@ -220,4 +220,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_TOKENRANGE_H */
+#endif /* LIBCORE_TOKENRANGE_H */

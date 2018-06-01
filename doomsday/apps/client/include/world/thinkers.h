@@ -120,7 +120,7 @@ public:
     de::dint count(de::dint *numInStasis = nullptr) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 }  // namespace world
@@ -141,4 +141,4 @@ world::Map &Thinker_Map(thinker_t const &th);
  */
 void Thinker_InitPrivateData(thinker_t *th, de::Id::Type knownId = 0);
 
-#endif  // DENG_WORLD_THINKERS_H
+#endif  // DE_WORLD_THINKERS_H

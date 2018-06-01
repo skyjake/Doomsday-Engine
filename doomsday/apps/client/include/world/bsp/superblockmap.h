@@ -23,8 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_BSP_LINESEGMENTBLOCK_H
-#define DENG_WORLD_BSP_LINESEGMENTBLOCK_H
+#ifndef DE_WORLD_BSP_LINESEGMENTBLOCK_H
+#define DE_WORLD_BSP_LINESEGMENTBLOCK_H
 
 #include <QList>
 #include <de/aabox.h>
@@ -83,7 +83,7 @@ public:
     All const &all() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 struct LineSegmentBlockTreeNode : public de::BinaryTree<LineSegmentBlock *>
@@ -101,4 +101,4 @@ struct LineSegmentBlockTreeNode : public de::BinaryTree<LineSegmentBlock *>
 }  // namespace bsp
 }  // namespace world
 
-#endif  // DENG_WORLD_BSP_LINESEGMENTBLOCK_H
+#endif  // DE_WORLD_BSP_LINESEGMENTBLOCK_H

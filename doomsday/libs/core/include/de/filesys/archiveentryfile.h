@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_ARCHIVEENTRYFILE_H
-#define LIBDENG2_ARCHIVEENTRYFILE_H
+#ifndef LIBCORE_ARCHIVEENTRYFILE_H
+#define LIBCORE_ARCHIVEENTRYFILE_H
 
 #include "../ByteArrayFile"
 
@@ -91,9 +91,9 @@ public:
     void set(Offset at, Byte const *values, Size count) override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif /* LIBDENG2_ARCHIVEENTRYFILE_H */
+#endif /* LIBCORE_ARCHIVEENTRYFILE_H */

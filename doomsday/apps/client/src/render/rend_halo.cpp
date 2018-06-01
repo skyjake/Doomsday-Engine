@@ -95,8 +95,8 @@ TextureVariantSpec const &Rend_HaloTextureSpec()
 
 void H_SetupState(bool dosetup)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(dosetup)
     {
@@ -204,8 +204,8 @@ bool H_RenderHalo(Vec3d const &origin, float size, DGLuint tex,
     if(doPrimary)
         H_SetupState(true);
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Prepare the texture rotation matrix.
     DGL_MatrixMode(DGL_TEXTURE);
@@ -360,7 +360,7 @@ bool H_RenderHalo(Vec3d const &origin, float size, DGLuint tex,
  */
 D_CMD(FlareConfig)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     int             i;
     float           val;

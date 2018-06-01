@@ -26,7 +26,7 @@
 
 void T_Scroll(scroll_t *s)
 {
-    DENG_ASSERT(s != 0);
+    DE_ASSERT(s != 0);
 
     if(IS_ZERO(s->offset[0]) && IS_ZERO(s->offset[1])) return;
 
@@ -104,12 +104,12 @@ int scroll_s::read(MapStateReader *msr)
             dmuObject = msr->side(sideIndex);
         }
 
-        DENG_ASSERT(dmuObject != 0);
+        DE_ASSERT(dmuObject != 0);
     }
     else // Sector plane-surface.
     {
         dmuObject = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
-        DENG_ASSERT(dmuObject != 0);
+        DE_ASSERT(dmuObject != 0);
     }
 
     elementBits = Reader_ReadInt32(reader);
@@ -363,7 +363,7 @@ scroll_t *P_SpawnSectorMaterialOriginScroller(Sector *sector, uint planeId, shor
     elementBits = 1 << planeId;
     return spawnMaterialOriginScroller(sector, elementBits, offset);
 #else // !(__JHERETIC__ || __JHEXEN__)
-    DENG_UNUSED(special);
+    DE_UNUSED(special);
 #endif
 
     return 0;

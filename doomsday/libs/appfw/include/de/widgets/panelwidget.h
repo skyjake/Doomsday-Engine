@@ -42,12 +42,12 @@ class LIBAPPFW_PUBLIC PanelWidget : public GuiWidget
     Q_OBJECT
 
 public:
-    DENG2_DEFINE_AUDIENCE2(AboutToOpen, void panelAboutToOpen(PanelWidget &))
+    DE_DEFINE_AUDIENCE2(AboutToOpen, void panelAboutToOpen(PanelWidget &))
 
     /**
      * Audience to be notified when the panel is closing.
      */
-    DENG2_DEFINE_AUDIENCE2(Close, void panelBeingClosed(PanelWidget &))
+    DE_DEFINE_AUDIENCE2(Close, void panelBeingClosed(PanelWidget &))
 
     enum AnimationStyle { Bouncy, EasedOut, Smooth };
 
@@ -148,7 +148,7 @@ protected:
     virtual void panelDismissed();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

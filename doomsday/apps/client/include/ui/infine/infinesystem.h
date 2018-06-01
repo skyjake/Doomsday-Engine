@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_UI_INFINESYSTEM_H
-#define DENG_UI_INFINESYSTEM_H
+#ifndef DE_UI_INFINESYSTEM_H
+#define DE_UI_INFINESYSTEM_H
 
 #include <QList>
 #include <de/Error>
@@ -34,7 +34,7 @@ class InFineSystem
 {
 public:
     /// The referenced Finale could not be found. @ingroup errors
-    DENG2_ERROR(MissingFinaleError);
+    DE_ERROR(MissingFinaleError);
 
     typedef QList<Finale *> Finales;
 
@@ -90,7 +90,7 @@ public:
     static void consoleRegister();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_UI_INFINESYSTEM_H
+#endif // DE_UI_INFINESYSTEM_H

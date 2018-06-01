@@ -28,7 +28,7 @@ using namespace de;
 
 namespace gloom {
 
-DENG2_PIMPL(Tonemap)
+DE_PIMPL(Tonemap)
 {
     ScreenQuad    quad;
     GLUniform     uFramebuf{"uFramebuf", GLUniform::Sampler2D};

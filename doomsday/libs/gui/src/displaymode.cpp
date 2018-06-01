@@ -218,7 +218,7 @@ int DisplayMode_Init(void)
     }
 
     // Script bindings.
-    binder.initNew() << DENG2_FUNC_NOARG(DisplayMode_OriginalMode, "originalMode");
+    binder.initNew() << DE_FUNC_NOARG(DisplayMode_OriginalMode, "originalMode");
     de::App::scriptSystem().addNativeModule("DisplayMode", binder.module());
     binder.module().addNumber("PIXEL_RATIO", 1.0);
 
@@ -272,8 +272,8 @@ int DisplayMode_Count(void)
 
 DisplayMode const *DisplayMode_ByIndex(int index)
 {
-    DENG2_ASSERT(index >= 0);
-    DENG2_ASSERT(index < (int) modes.size());
+    DE_ASSERT(index >= 0);
+    DE_ASSERT(index < (int) modes.size());
 
     int pos = 0;
     for (Modes::iterator i = modes.begin(); i != modes.end(); ++i, ++pos)
@@ -284,7 +284,7 @@ DisplayMode const *DisplayMode_ByIndex(int index)
         }
     }
 
-    DENG2_ASSERT(false);
+    DE_ASSERT(false);
     return 0; // unreachable
 }
 

@@ -27,7 +27,7 @@
 #include <de/Rectangle>
 #include <de/NativePath>
 
-#if defined (DENG_MOBILE)
+#if defined (DE_MOBILE)
 #  error "glwindow.h is for desktop platforms (use glwindow_qml.h instead)"
 #endif
 
@@ -60,12 +60,12 @@ public:
      * called immediately before drawing the contents of the WindowEventHandler for the
      * first time (during a paint event).
      */
-    DENG2_DEFINE_AUDIENCE2(Init, void windowInit(GLWindow &))
+    DE_DEFINE_AUDIENCE2(Init, void windowInit(GLWindow &))
 
     /**
      * Notified when a window size has changed.
      */
-    DENG2_DEFINE_AUDIENCE2(Resize, void windowResized(GLWindow &))
+    DE_DEFINE_AUDIENCE2(Resize, void windowResized(GLWindow &))
 
     /**
      * Notified when the window pixel ratio has changed.
@@ -76,9 +76,9 @@ public:
      * Notified when the contents of the window have been swapped to the window front
      * buffer and are thus visible to the user.
      */
-    DENG2_DEFINE_AUDIENCE2(Swap, void windowSwapped(GLWindow &))
+    DE_DEFINE_AUDIENCE2(Swap, void windowSwapped(GLWindow &))
 
-    DENG2_CAST_METHODS()
+    DE_CAST_METHODS()
 
 public:
     GLWindow();
@@ -220,7 +220,7 @@ protected slots:
     void frameWasSwapped();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

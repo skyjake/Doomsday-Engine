@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_ARCHIVEFEED_H
-#define LIBDENG2_ARCHIVEFEED_H
+#ifndef LIBCORE_ARCHIVEFEED_H
+#define LIBCORE_ARCHIVEFEED_H
 
 #include "../Feed"
 #include "../ByteArrayFile"
@@ -38,11 +38,11 @@ class Archive;
  *
  * @ingroup fs
  */
-class DENG2_PUBLIC ArchiveFeed : public Feed
+class DE_PUBLIC ArchiveFeed : public Feed
 {
 public:
     /// Provided source file cannot be used as a feed source. @ingroup errors
-    DENG2_ERROR(InvalidSourceError);
+    DE_ERROR(InvalidSourceError);
 
 public:
     /**
@@ -108,9 +108,9 @@ public:
     static void uncacheAllEntries(StringList folderTypes);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif /* LIBDENG2_ARCHIVEFEED_H */
+#endif /* LIBCORE_ARCHIVEFEED_H */

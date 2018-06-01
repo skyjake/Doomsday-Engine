@@ -31,8 +31,8 @@ using namespace de;
 
 namespace gloom {
 
-DENG2_PIMPL(MaterialLib)
-, DENG2_OBSERVES(filesys::AssetObserver, Availability)
+DE_PIMPL(MaterialLib)
+, DE_OBSERVES(filesys::AssetObserver, Availability)
 {
     struct Properties {
         MaterialFlags flags{Opaque};
@@ -249,7 +249,7 @@ DENG2_PIMPL(MaterialLib)
             // Load up metrics in an array.
             for (int j = 0; j < 4; ++j)
             {
-                DENG2_ASSERT(materials.contains(i.key()));
+                DE_ASSERT(materials.contains(i.key()));
 
                 const auto &props = materials[i.key()];
                 const Id    texId = i.value()[j];

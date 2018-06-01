@@ -20,7 +20,7 @@
 
 namespace de {
 
-DENG2_PIMPL(Untrapper)
+DE_PIMPL(Untrapper)
 {
     GLWindow &window;
     bool wasTrapped;

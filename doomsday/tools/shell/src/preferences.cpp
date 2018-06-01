@@ -15,7 +15,7 @@
 #  define PREFS_APPLY_IMMEDIATELY
 #endif
 
-DENG2_PIMPL(Preferences)
+DE_PIMPL(Preferences)
 {
     FolderSelection *appFolder;
     QCheckBox *useCustomIwad;

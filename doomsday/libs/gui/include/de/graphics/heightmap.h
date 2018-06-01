@@ -51,7 +51,7 @@ public:
     Vec3f normalAtPosition(Vec2f const &worldPos) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

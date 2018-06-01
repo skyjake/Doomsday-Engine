@@ -81,7 +81,7 @@ static void Mouse_Init(void)
 
     LOG_AS("Mouse_Init");
 
-    DENG_ASSERT(iMouse);
+    DE_ASSERT(iMouse);
     iMouse->init();
 
     // Init was successful.

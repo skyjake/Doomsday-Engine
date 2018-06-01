@@ -336,7 +336,7 @@ void Cl_GetPackets()
         case PKT_CHAT: {
             int msgfrom = Reader_ReadByte(msgReader);
             int mask = Reader_ReadUInt32(msgReader);
-            DENG2_UNUSED(mask);
+            DE_UNUSED(mask);
             size_t len = Reader_ReadUInt16(msgReader);
             char *msg = (char *) M_Malloc(len + 1);
             Reader_Read(msgReader, msg, len);
@@ -357,7 +357,7 @@ void Cl_GetPackets()
             char *text = (char *) M_Malloc(textLen + 1);
             Reader_Read(msgReader, text, textLen);
             text[textLen] = 0;
-            DENG_UNUSED(conFlags);
+            DE_UNUSED(conFlags);
             LOG_NOTE("%s") << text;
             M_Free(text);
             break; }
@@ -393,7 +393,7 @@ void Cl_GetPackets()
     }
 }
 
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
 
 /**
  * Check the state of the client on engineside. A debugging utility.
@@ -435,7 +435,7 @@ static void assertPlayerIsValid(int plrNum)
     }
 }
 
-#endif // DENG_DEBUG
+#endif // DE_DEBUG
 
 void Cl_Ticker(timespan_t ticLength)
 {
@@ -471,7 +471,7 @@ void Cl_Ticker(timespan_t ticLength)
         ClPlayer_ApplyPendingFixes(i);
         ClPlayer_UpdateOrigin(i);
 
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
         assertPlayerIsValid(i);
 #endif
     }
@@ -487,7 +487,7 @@ void Cl_Ticker(timespan_t ticLength)
  */
 D_CMD(Login)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     // Only clients can log in.
     if (!isClient)

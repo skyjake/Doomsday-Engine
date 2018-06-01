@@ -135,10 +135,10 @@ static void resizeViewWindow(int player, const RectRaw* newGeometry,
 {
     RectRaw window;
 
-    DENG_ASSERT(newGeometry);
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
+    DE_ASSERT(newGeometry);
+    DE_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    DENG_UNUSED(oldGeometry);
+    DE_UNUSED(oldGeometry);
 
     // Calculate fixed 320x200 scale factors.
     viewScale.width  = (float)newGeometry->size.width  / SCREENWIDTH;

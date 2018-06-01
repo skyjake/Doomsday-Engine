@@ -42,12 +42,12 @@ using namespace internal;
 
 static DefaultWidgetFactory defaultWidgetFactory;
 
-DENG2_PIMPL(ChildWidgetOrganizer)
-    , DENG2_OBSERVES(Widget,   Deletion   )
-    , DENG2_OBSERVES(ui::Data, Addition   )
-    , DENG2_OBSERVES(ui::Data, Removal    )
-    , DENG2_OBSERVES(ui::Data, OrderChange)
-    , DENG2_OBSERVES(ui::Item, Change     )
+DE_PIMPL(ChildWidgetOrganizer)
+    , DE_OBSERVES(Widget,   Deletion   )
+    , DE_OBSERVES(ui::Data, Addition   )
+    , DE_OBSERVES(ui::Data, Removal    )
+    , DE_OBSERVES(ui::Data, OrderChange)
+    , DE_OBSERVES(ui::Item, Change     )
 {
     typedef Rangei PvsRange;
 
@@ -127,8 +127,8 @@ DENG2_PIMPL(ChildWidgetOrganizer)
 
     GuiWidget *addItemWidget(ui::Data::Pos pos, AddBehaviors behavior = DefaultBehavior)
     {
-        DENG2_ASSERT_IN_MAIN_THREAD(); // widgets should only be manipulated in UI thread
-        DENG2_ASSERT(factory != 0);
+        DE_ASSERT_IN_MAIN_THREAD(); // widgets should only be manipulated in UI thread
+        DE_ASSERT(factory != 0);
 
         if (!itemRange().contains(pos))
         {
@@ -172,7 +172,7 @@ DENG2_PIMPL(ChildWidgetOrganizer)
         }
 
         // Others may alter the widget in some way.
-        DENG2_FOR_PUBLIC_AUDIENCE2(WidgetCreation, i)
+        DE_FOR_PUBLIC_AUDIENCE2(WidgetCreation, i)
         {
             i->widgetCreatedForItem(*w, item);
         }
@@ -217,8 +217,8 @@ DENG2_PIMPL(ChildWidgetOrganizer)
 
     void makeWidgets()
     {
-        DENG2_ASSERT(dataItems != 0);
-        DENG2_ASSERT(container != 0);
+        DE_ASSERT(dataItems != 0);
+        DE_ASSERT(container != 0);
 
         for (ui::Data::Pos i = 0; i < dataItems->size(); ++i)
         {
@@ -244,7 +244,7 @@ DENG2_PIMPL(ChildWidgetOrganizer)
 
     void clearWidgets()
     {
-        DENG2_FOR_EACH_CONST(Mapping, i, mapping)
+        DE_FOR_EACH_CONST(Mapping, i, mapping)
         {
             i.key()->audienceForChange() -= this;
             deleteWidget(i.value());
@@ -310,7 +310,7 @@ DENG2_PIMPL(ChildWidgetOrganizer)
     void dataItemOrderChanged()
     {
         // Remove all widgets and put them back in the correct order.
-        DENG2_FOR_EACH_CONST(Mapping, i, mapping)
+        DE_FOR_EACH_CONST(Mapping, i, mapping)
         {
             container->remove(*i.value());
         }
@@ -335,7 +335,7 @@ DENG2_PIMPL(ChildWidgetOrganizer)
         factory->updateItemWidget(w, item);
 
         // Notify.
-        DENG2_FOR_PUBLIC_AUDIENCE2(WidgetUpdate, i)
+        DE_FOR_PUBLIC_AUDIENCE2(WidgetUpdate, i)
         {
             i->widgetUpdatedForItem(w, item);
         }
@@ -350,7 +350,7 @@ DENG2_PIMPL(ChildWidgetOrganizer)
 
     GuiWidget *findByLabel(String const &label) const
     {
-        DENG2_FOR_EACH_CONST(Mapping, i, mapping)
+        DE_FOR_EACH_CONST(Mapping, i, mapping)
         {
             if (i.key()->label() == label)
             {
@@ -362,7 +362,7 @@ DENG2_PIMPL(ChildWidgetOrganizer)
 
     ui::Item const *findByWidget(GuiWidget const &widget) const
     {
-        DENG2_FOR_EACH_CONST(Mapping, i, mapping)
+        DE_FOR_EACH_CONST(Mapping, i, mapping)
         {
             if (i.value() == &widget)
             {
@@ -459,7 +459,7 @@ DENG2_PIMPL(ChildWidgetOrganizer)
             {
                 addItemWidget(pos, AlwaysAppend);
             }
-            DENG2_ASSERT(virtualPvs.size() == int(container->childCount()));
+            DE_ASSERT(virtualPvs.size() == int(container->childCount()));
         }
         else if (estimated.end > oldPvs.end) // Extend downward.
         {
@@ -468,7 +468,7 @@ DENG2_PIMPL(ChildWidgetOrganizer)
             {
                 addItemWidget(pos, AlwaysAppend);
             }
-            DENG2_ASSERT(virtualPvs.size() == int(container->childCount()));
+            DE_ASSERT(virtualPvs.size() == int(container->childCount()));
         }
         else if (estimated.start < oldPvs.start) // Extend upward.
         {
@@ -478,13 +478,13 @@ DENG2_PIMPL(ChildWidgetOrganizer)
                  --pos)
             {
                 GuiWidget *w = addItemWidget(pos, AlwaysPrepend);
-                DENG2_ASSERT(w != nullptr);
+                DE_ASSERT(w != nullptr);
 
                 float height = bestEstimateOfWidgetHeight(*w);
                 // Reduce strut length to make room for new items.
                 virtualStrut->set(de::max(0.f, virtualStrut->value() - height));
             }
-            DENG2_ASSERT(virtualPvs.size() == int(container->childCount()));
+            DE_ASSERT(virtualPvs.size() == int(container->childCount()));
         }
 
         if (container->childCount() > 0)
@@ -496,17 +496,17 @@ DENG2_PIMPL(ChildWidgetOrganizer)
                 removeItemWidget(virtualPvs.start++);
                 virtualStrut->set(virtualStrut->value() + height);
             }
-            DENG2_ASSERT(virtualPvs.size() == int(container->childCount()));
+            DE_ASSERT(virtualPvs.size() == int(container->childCount()));
 
             // Remove excess widgets from the bottom.
             while (virtualPvs.end > estimated.end)
             {
                 removeItemWidget(--virtualPvs.end);
             }
-            DENG2_ASSERT(virtualPvs.size() == int(container->childCount()));
+            DE_ASSERT(virtualPvs.size() == int(container->childCount()));
         }
 
-        DENG2_ASSERT(virtualPvs.size() == int(container->childCount()));
+        DE_ASSERT(virtualPvs.size() == int(container->childCount()));
 
         // Take note of how big a difference there is between the ideal distance and
         // the virtual top of the list.
@@ -531,12 +531,12 @@ DENG2_PIMPL(ChildWidgetOrganizer)
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(WidgetCreation)
-    DENG2_PIMPL_AUDIENCE(WidgetUpdate)
+    DE_PIMPL_AUDIENCE(WidgetCreation)
+    DE_PIMPL_AUDIENCE(WidgetUpdate)
 };
 
-DENG2_AUDIENCE_METHOD(ChildWidgetOrganizer, WidgetCreation)
-DENG2_AUDIENCE_METHOD(ChildWidgetOrganizer, WidgetUpdate)
+DE_AUDIENCE_METHOD(ChildWidgetOrganizer, WidgetCreation)
+DE_AUDIENCE_METHOD(ChildWidgetOrganizer, WidgetUpdate)
 
 ChildWidgetOrganizer::ChildWidgetOrganizer(GuiWidget &container)
     : d(new Impl(this, &container))
@@ -554,7 +554,7 @@ void ChildWidgetOrganizer::unsetContext()
 
 ui::Data const &ChildWidgetOrganizer::context() const
 {
-    DENG2_ASSERT(d->dataItems != 0);
+    DE_ASSERT(d->dataItems != 0);
     return *d->dataItems;
 }
 
@@ -570,7 +570,7 @@ void ChildWidgetOrganizer::setWidgetFactory(IWidgetFactory &factory)
 
 ChildWidgetOrganizer::IWidgetFactory &ChildWidgetOrganizer::widgetFactory() const
 {
-    DENG2_ASSERT(d->factory != 0);
+    DE_ASSERT(d->factory != 0);
     return *d->factory;
 }
 
@@ -629,7 +629,7 @@ bool ChildWidgetOrganizer::virtualizationEnabled() const
 
 Rule const &ChildWidgetOrganizer::virtualStrut() const
 {
-    DENG2_ASSERT(d->virtualEnabled);
+    DE_ASSERT(d->virtualEnabled);
     return *d->virtualStrut;
 }
 

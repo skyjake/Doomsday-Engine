@@ -217,17 +217,17 @@ RemoteFeedProtocol::PacketType RemoteFeedProtocol::recognize(Packet const &packe
 {
     if (packet.type() == QUERY_PACKET_TYPE)
     {
-        DENG2_ASSERT(is<RemoteFeedQueryPacket>(&packet));
+        DE_ASSERT(is<RemoteFeedQueryPacket>(&packet));
         return Query;
     }
     if (packet.type() == METADATA_PACKET_TYPE)
     {
-        DENG2_ASSERT(is<RemoteFeedMetadataPacket>(&packet));
+        DE_ASSERT(is<RemoteFeedMetadataPacket>(&packet));
         return Metadata;
     }
     if (packet.type() == FILE_CONTENTS_PACKET_TYPE)
     {
-        DENG2_ASSERT(is<RemoteFeedFileContentsPacket>(&packet));
+        DE_ASSERT(is<RemoteFeedFileContentsPacket>(&packet));
         return FileContents;
     }
     return Unknown;

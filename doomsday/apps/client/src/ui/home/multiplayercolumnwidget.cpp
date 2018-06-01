@@ -33,9 +33,9 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(MultiplayerColumnWidget)
-, DENG2_OBSERVES(ui::Data, Addition)
-, DENG2_OBSERVES(ui::Data, Removal)
+DE_GUI_PIMPL(MultiplayerColumnWidget)
+, DE_OBSERVES(ui::Data, Addition)
+, DE_OBSERVES(ui::Data, Removal)
 {
     MultiplayerServerMenuWidget *menu;
     LabelWidget *noServers;

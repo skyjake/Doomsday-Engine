@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_SKYDRAWABLE_H
-#define DENG_CLIENT_RENDER_SKYDRAWABLE_H
+#ifndef DE_CLIENT_RENDER_SKYDRAWABLE_H
+#define DE_CLIENT_RENDER_SKYDRAWABLE_H
 
 #include <de/libcore.h>
 #include <de/Error>
@@ -47,10 +47,10 @@ public:
     {
     public:
         /// Required layer state is missing. @ingroup errors
-        DENG2_ERROR(MissingLayerStateError);
+        DE_ERROR(MissingLayerStateError);
 
         /// Required model state is missing. @ingroup errors
-        DENG2_ERROR(MissingModelStateError);
+        DE_ERROR(MissingModelStateError);
 
         struct LayerState
         {
@@ -107,7 +107,7 @@ public:
         void advanceTime(timespan_t elapsed);
 
     public:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
 public:
@@ -154,7 +154,7 @@ public:
     static void consoleRegister();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif  // DENG_CLIENT_RENDER_SKYDRAWABLE_H
+#endif  // DE_CLIENT_RENDER_SKYDRAWABLE_H

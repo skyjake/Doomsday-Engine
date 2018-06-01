@@ -35,7 +35,7 @@ String const GameRules::VAR_noMonsters      = "noMonsters";
 String const GameRules::VAR_respawnMonsters = "respawnMonsters";
 String const GameRules::VAR_randomClasses   = "randomClasses";
 
-DENG2_PIMPL_NOREF(GameRules)
+DE_PIMPL_NOREF(GameRules)
 {
     Record rules {
         Record::withMembers(GameRules::VAR_skill,           2, // medium
@@ -168,7 +168,7 @@ String GameRules::description() const
 #if 0
 void GameRules::write(writer_s *writer) const
 {
-    DENG2_ASSERT(writer != 0);
+    DE_ASSERT(writer != 0);
 
     Writer_WriteByte(writer, skill);
     Writer_WriteByte(writer, deathmatch);
@@ -185,7 +185,7 @@ void GameRules::write(writer_s *writer) const
 
 void GameRules::read(reader_s *reader)
 {
-    DENG2_ASSERT(reader != 0);
+    DE_ASSERT(reader != 0);
 
     skill           = Reader_ReadByte(reader);
     // Interpret skill modes outside the normal range as "spawn no things".
@@ -238,7 +238,7 @@ void GameRules::update()
 #endif
 }
 
-DENG_EXTERN_C int gfw_SessionRule(gfw_gamerule_t rule)
+DE_EXTERN_C int gfw_SessionRule(gfw_gamerule_t rule)
 {
     switch (rule)
     {

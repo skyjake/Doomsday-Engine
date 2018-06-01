@@ -29,13 +29,13 @@ using namespace de;
 
 static void ChainWidget_Draw(guidata_chain_t *chain, Point2Raw const *offset)
 {
-    DENG2_ASSERT(chain);
+    DE_ASSERT(chain);
     chain->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void ChainWidget_UpdateGeometry(guidata_chain_t *chain)
 {
-    DENG2_ASSERT(chain);
+    DE_ASSERT(chain);
     chain->updateGeometry();
 }
 
@@ -378,7 +378,7 @@ void guidata_chain_t::draw(Vec2i const &offset) const
 #undef ORIGINY
 
 #else
-    DENG2_UNUSED(offset);
+    DE_UNUSED(offset);
 #endif
 }
 

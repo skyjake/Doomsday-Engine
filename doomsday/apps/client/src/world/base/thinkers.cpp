@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_NO_API_MACROS_THINKER
+#define DE_NO_API_MACROS_THINKER
 
 #include "de_base.h"
 #include "world/thinkers.h"
@@ -99,9 +99,9 @@ struct ThinkerList
         thinker_t *th = sentinel.next;
         while (th != &sentinel.base() && th)
         {
-#ifdef LIBDENG_FAKE_MEMORY_ZONE
-            DENG2_ASSERT(th->next);
-            DENG2_ASSERT(th->prev);
+#ifdef DE_FAKE_MEMORY_ZONE
+            DE_ASSERT(th->next);
+            DE_ASSERT(th->prev);
 #endif
             num += 1;
             if (numInStasis && Thinker_InStasis(th))
@@ -122,7 +122,7 @@ struct ThinkerList
     }
 };
 
-DENG2_PIMPL(Thinkers)
+DE_PIMPL(Thinkers)
 {
     dint idtable[2048];     ///< 65536 bits telling which IDs are in use.
     dushort iddealer = 0;
@@ -342,9 +342,9 @@ LoopResult Thinkers::forAll(dbyte flags, std::function<LoopResult (thinker_t *)>
         thinker_t *th = list->sentinel.next;
         while (th != &list->sentinel.base() && th)
         {
-#ifdef LIBDENG_FAKE_MEMORY_ZONE
-            DENG2_ASSERT(th->next);
-            DENG2_ASSERT(th->prev);
+#ifdef DE_FAKE_MEMORY_ZONE
+            DE_ASSERT(th->next);
+            DE_ASSERT(th->prev);
 #endif
             thinker_t *next = th->next;
 
@@ -374,9 +374,9 @@ LoopResult Thinkers::forAll(thinkfunc_t thinkFunc, dbyte flags, std::function<Lo
             thinker_t *th = list->sentinel.next;
             while (th != &list->sentinel.base() && th)
             {
-#ifdef LIBDENG_FAKE_MEMORY_ZONE
-                DENG2_ASSERT(th->next);
-                DENG2_ASSERT(th->prev);
+#ifdef DE_FAKE_MEMORY_ZONE
+                DE_ASSERT(th->next);
+                DE_ASSERT(th->prev);
 #endif
                 thinker_t *next = th->next;
 
@@ -394,9 +394,9 @@ LoopResult Thinkers::forAll(thinkfunc_t thinkFunc, dbyte flags, std::function<Lo
             thinker_t *th = list->sentinel.next;
             while (th != &list->sentinel.base() && th)
             {
-#ifdef LIBDENG_FAKE_MEMORY_ZONE
-                DENG2_ASSERT(th->next);
-                DENG2_ASSERT(th->prev);
+#ifdef DE_FAKE_MEMORY_ZONE
+                DE_ASSERT(th->next);
+                DE_ASSERT(th->prev);
 #endif
                 thinker_t *next = th->next;
 
@@ -436,7 +436,7 @@ using namespace world;
 
 void Thinker_InitPrivateData(thinker_t *th, Id::Type knownId)
 {
-    //DENG2_ASSERT(th->d == nullptr);
+    //DE_ASSERT(th->d == nullptr);
 
     /// @todo The game should be asked to create its own private data. -jk
 
@@ -464,7 +464,7 @@ void Thinker_InitPrivateData(thinker_t *th, Id::Type knownId)
     }
     else
     {
-        DENG2_ASSERT(knownId != 0);
+        DE_ASSERT(knownId != 0);
 
         // Change the private identifier of the existing thinker data.
         THINKER_DATA(*th, ThinkerData).setId(knownId);
@@ -475,7 +475,7 @@ void Thinker_InitPrivateData(thinker_t *th, Id::Type knownId)
  * Locates a mobj by it's unique identifier in the CURRENT map.
  */
 #undef Mobj_ById
-DENG_EXTERN_C struct mobj_s *Mobj_ById(dint id)
+DE_EXTERN_C struct mobj_s *Mobj_ById(dint id)
 {
     /// @todo fixme: Do not assume the current map.
     if (!App_World().hasMap()) return nullptr;
@@ -563,7 +563,7 @@ dint Thinker_Iterate(thinkfunc_t func, dint (*callback) (thinker_t *, void *), v
     });
 }
 
-DENG_DECLARE_API(Thinker) =
+DE_DECLARE_API(Thinker) =
 {
     { DE_API_THINKER },
     Thinker_Init,

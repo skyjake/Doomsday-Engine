@@ -229,7 +229,7 @@ public:
     patchid_t declarePatch(de::String const &encodedName);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace res

@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_CONTEXT_H
-#define LIBDENG2_CONTEXT_H
+#ifndef LIBCORE_CONTEXT_H
+#define LIBCORE_CONTEXT_H
 
 #include "../Evaluator"
 #include "../Record"
@@ -33,14 +33,14 @@ class Process;
  *
  * @ingroup script
  */
-class DENG2_PUBLIC Context
+class DE_PUBLIC Context
 {
 public:
     /// Attempting a jump when there is no suitable target (continue or break). @ingroup errors
-    DENG2_ERROR(JumpError);
+    DE_ERROR(JumpError);
 
     /// There is no instance scope defined for the context. @ingroup errors
-    DENG2_ERROR(UndefinedScopeError);
+    DE_ERROR(UndefinedScopeError);
 
     enum Type {
         BaseProcess,
@@ -170,9 +170,9 @@ public:
     Variable &throwaway();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif /* LIBDENG2_CONTEXT_H */
+#endif /* LIBCORE_CONTEXT_H */

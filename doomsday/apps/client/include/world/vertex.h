@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_VERTEX_H
-#define DENG_WORLD_VERTEX_H
+#ifndef DE_WORLD_VERTEX_H
+#define DE_WORLD_VERTEX_H
 
 #include <de/Observers>
 #include <de/Vector>
@@ -39,12 +39,12 @@ class LineOwner;
  */
 class Vertex : public world::MapElement, public de::MeshElement
 {
-    DENG2_NO_COPY  (Vertex)
-    DENG2_NO_ASSIGN(Vertex)
+    DE_NO_COPY  (Vertex)
+    DE_NO_ASSIGN(Vertex)
 
 public:
     /// Notified whenever the origin changes.
-    DENG2_DEFINE_AUDIENCE(OriginChange, void vertexOriginChanged(Vertex &vertex))
+    DE_DEFINE_AUDIENCE(OriginChange, void vertexOriginChanged(Vertex &vertex))
 
 public: /// @todo Move to the map loader:
     /// Head of the LineOwner rings (an array of [numLineOwners] size). The
@@ -141,4 +141,4 @@ private:
     de::Vec2d _origin;  ///< Map-space coordinates.
 };
 
-#endif  // DENG_WORLD_VERTEX_H
+#endif  // DE_WORLD_VERTEX_H

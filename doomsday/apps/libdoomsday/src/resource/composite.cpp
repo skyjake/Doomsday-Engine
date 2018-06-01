@@ -87,7 +87,7 @@ void Composite::Component::setLumpNum(lumpnum_t num)
     _lumpNum = num;
 }
 
-DENG2_PIMPL_NOREF(Composite)
+DE_PIMPL_NOREF(Composite)
 {
     String name;                 ///< Symbolic, percent encoded.
     Flags flags;                 ///< Usage traits.

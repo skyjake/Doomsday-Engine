@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_SCRIPTSYSTEM_H
-#define LIBDENG2_SCRIPTSYSTEM_H
+#ifndef LIBCORE_SCRIPTSYSTEM_H
+#define LIBCORE_SCRIPTSYSTEM_H
 
 #include "../Error"
 #include "../System"
@@ -33,11 +33,11 @@ namespace de {
  *
  * @ingroup script
  */
-class DENG2_PUBLIC ScriptSystem : public System
+class DE_PUBLIC ScriptSystem : public System
 {
 public:
     /// The module or script that was being looked for was not found. @ingroup errors
-    DENG2_ERROR(NotFoundError);
+    DE_ERROR(NotFoundError);
 
 public:
     ScriptSystem();
@@ -140,9 +140,9 @@ public:
     static ScriptSystem &get();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_SCRIPTSYSTEM_H
+#endif // LIBCORE_SCRIPTSYSTEM_H

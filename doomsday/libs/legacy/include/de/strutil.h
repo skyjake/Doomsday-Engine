@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_STRING_UTIL_H
-#define LIBDENG_STRING_UTIL_H
+#ifndef DE_STRING_UTIL_H
+#define DE_STRING_UTIL_H
 
 #include "types.h"
 #include <stdarg.h>
@@ -43,7 +43,7 @@ extern "C" {
  * @return  Number of characters written to the output buffer if lower than or
  * equal to @c size, else @c -1.
  */
-DENG_PUBLIC int dd_vsnprintf(char *str, size_t size, char const *format, va_list ap);
+DE_PUBLIC int dd_vsnprintf(char *str, size_t size, char const *format, va_list ap);
 
 /**
  * Prints a formatted string into a fixed-size buffer. At most @c size
@@ -57,64 +57,64 @@ DENG_PUBLIC int dd_vsnprintf(char *str, size_t size, char const *format, va_list
  * @return        Number of characters written to the output buffer
  *                if lower than or equal to @c size, else @c -1.
  */
-DENG_PUBLIC int dd_snprintf(char *str, size_t size, char const *format, ...);
+DE_PUBLIC int dd_snprintf(char *str, size_t size, char const *format, ...);
 
 #ifdef WIN32
 /**
  * Windows implementation for the Unix strcasestr() function.
  */
-DENG_PUBLIC char const *strcasestr(char const *text, char const *sub);
+DE_PUBLIC char const *strcasestr(char const *text, char const *sub);
 #endif
 
 #ifdef UNIX
 // Some routines not available on the *nix platform.
-DENG_PUBLIC char *strupr(char *string);
-DENG_PUBLIC char *strlwr(char *string);
+DE_PUBLIC char *strupr(char *string);
+DE_PUBLIC char *strlwr(char *string);
 #endif // UNIX
 
 // String Utilities
 
-DENG_PUBLIC char *M_SkipWhite(const char *str);
+DE_PUBLIC char *M_SkipWhite(const char *str);
 
-DENG_PUBLIC char *M_FindWhite(const char *str);
+DE_PUBLIC char *M_FindWhite(const char *str);
 
-DENG_PUBLIC void M_StripLeft(char* str);
+DE_PUBLIC void M_StripLeft(char* str);
 
-DENG_PUBLIC void M_StripRight(char* str, size_t len);
+DE_PUBLIC void M_StripRight(char* str, size_t len);
 
-DENG_PUBLIC void M_Strip(char* str, size_t len);
+DE_PUBLIC void M_Strip(char* str, size_t len);
 
-DENG_PUBLIC char* M_SkipLine(char* str);
+DE_PUBLIC char* M_SkipLine(char* str);
 
-DENG_PUBLIC char* M_StrCat(char* buf, const char* str, size_t bufSize);
+DE_PUBLIC char* M_StrCat(char* buf, const char* str, size_t bufSize);
 
-DENG_PUBLIC char* M_StrnCat(char* buf, const char* str, size_t nChars, size_t bufSize);
+DE_PUBLIC char* M_StrnCat(char* buf, const char* str, size_t nChars, size_t bufSize);
 
 /**
  * Concatenates src to dest as a quoted string. " is escaped to \".
  * Returns dest.
  */
-DENG_PUBLIC char* M_StrCatQuoted(char* dest, const char* src, size_t len);
+DE_PUBLIC char* M_StrCatQuoted(char* dest, const char* src, size_t len);
 
-DENG_PUBLIC char* M_LimitedStrCat(char* buf, const char* str, size_t maxWidth, char separator, size_t bufLength);
+DE_PUBLIC char* M_LimitedStrCat(char* buf, const char* str, size_t maxWidth, char separator, size_t bufLength);
 
 /**
  * Somewhat similar to strtok().
  */
-DENG_PUBLIC char* M_StrTok(char** cursor, const char *delimiters);
+DE_PUBLIC char* M_StrTok(char** cursor, const char *delimiters);
 
-DENG_PUBLIC char* M_TrimmedFloat(float val);
+DE_PUBLIC char* M_TrimmedFloat(float val);
 
-DENG_PUBLIC void M_ForceUppercase(char *text);
+DE_PUBLIC void M_ForceUppercase(char *text);
 
 /// @return  @c true if @a string can be interpreted as a valid integer.
-DENG_PUBLIC dd_bool M_IsStringValidInt(const char* str);
+DE_PUBLIC dd_bool M_IsStringValidInt(const char* str);
 
 /// @return  @c true if @a string can be interpreted as a valid byte.
-DENG_PUBLIC dd_bool M_IsStringValidByte(const char* str);
+DE_PUBLIC dd_bool M_IsStringValidByte(const char* str);
 
 /// @return  @c true if @a string can be interpreted as a valid floating-point value.
-DENG_PUBLIC dd_bool M_IsStringValidFloat(const char* str);
+DE_PUBLIC dd_bool M_IsStringValidFloat(const char* str);
 
 /// @}
 
@@ -122,4 +122,4 @@ DENG_PUBLIC dd_bool M_IsStringValidFloat(const char* str);
 } // extern "C"
 #endif
 
-#endif // LIBDENG_STRING_UTIL_H
+#endif // DE_STRING_UTIL_H

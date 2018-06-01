@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_LOOP_H
-#define LIBDENG2_LOOP_H
+#ifndef LIBCORE_LOOP_H
+#define LIBCORE_LOOP_H
 
 #include <QObject>
 #include <QList>
@@ -34,7 +34,7 @@ namespace de {
  *
  * @ingroup core
  */
-class DENG2_PUBLIC Loop : public QObject
+class DE_PUBLIC Loop : public QObject
 {
     Q_OBJECT
 
@@ -42,7 +42,7 @@ public:
     /**
      * Audience to be notified each time the loop iterates.
      */
-    DENG2_DEFINE_AUDIENCE2(Iteration, void loopIteration())
+    DE_DEFINE_AUDIENCE2(Iteration, void loopIteration())
 
 public:
     /**
@@ -96,13 +96,13 @@ public slots:
     virtual void nextLoopIteration();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 /**
  * Utility for deferring callbacks via the Loop.
  */
-class DENG2_PUBLIC LoopCallback : public Lockable, DENG2_OBSERVES(Loop, Iteration)
+class DE_PUBLIC LoopCallback : public Lockable, DE_OBSERVES(Loop, Iteration)
 {
 public:
     typedef std::function<void ()> Callback;
@@ -122,4 +122,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_LOOP_H
+#endif // LIBCORE_LOOP_H

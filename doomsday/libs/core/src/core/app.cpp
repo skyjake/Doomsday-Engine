@@ -94,8 +94,8 @@ static Value *Function_App_Locate(Context &, Function::ArgumentValues const &arg
     return result.release();
 }
 
-DENG2_PIMPL(App)
-, DENG2_OBSERVES(PackageLoader, Activity)
+DE_PIMPL(App)
+, DE_OBSERVES(PackageLoader, Activity)
 {
     QThread *mainThread = nullptr;
 
@@ -194,7 +194,7 @@ DENG2_PIMPL(App)
         {
             scriptSys.addNativeModule("App", appModule);
             binder.init(appModule)
-                    << DENG2_FUNC(App_Locate, "locate", "packageId");
+                    << DE_FUNC(App_Locate, "locate", "packageId");
         }
     }
 
@@ -288,7 +288,7 @@ DENG2_PIMPL(App)
 
         if (allowPlugins)
         {
-#if !defined (DENG_STATIC_LINK)
+#if !defined (DE_STATIC_LINK)
             binFolder.attach(new DirectoryFeed(self().nativePluginBinaryPath()));
 #else
             binFolder.attach(new StaticLibraryFeed);
@@ -402,10 +402,10 @@ DENG2_PIMPL(App)
         return nullptr;
     }
 
-    DENG2_PIMPL_AUDIENCE(StartupComplete)
+    DE_PIMPL_AUDIENCE(StartupComplete)
 };
 
-DENG2_AUDIENCE_METHOD(App, StartupComplete)
+DE_AUDIENCE_METHOD(App, StartupComplete)
 
 App::App(NativePath const &appFilePath, QStringList args)
     : d(new Impl(this, args))
@@ -542,10 +542,10 @@ bool App::inMainThread()
         // No app even created yet, must be main thread.
         return true;
     }
-    return DENG2_APP->d->mainThread == QThread::currentThread();
+    return DE_APP->d->mainThread == QThread::currentThread();
 }
 
-#if !defined (DENG_STATIC_LINK)
+#if !defined (DE_STATIC_LINK)
 NativePath App::nativePluginBinaryPath()
 {
     if (!d->cachedPluginBinaryPath.isEmpty()) return d->cachedPluginBinaryPath;
@@ -571,7 +571,7 @@ NativePath App::nativePluginBinaryPath()
         }
         #else
         {
-            path = d->appPath.fileNamePath() / DENG_LIBRARY_DIR;
+            path = d->appPath.fileNamePath() / DE_LIBRARY_DIR;
             if (!path.exists())
             {
                 // Try a fallback relative to the executable.
@@ -600,7 +600,7 @@ NativePath App::nativeHomePath()
 
     NativePath nativeHome;
 
-    #if defined (DENG_IOS)
+    #if defined (DE_IOS)
     {
         nativeHome = QDir::homePath();
         nativeHome = nativeHome / "Documents/runtime";
@@ -627,7 +627,7 @@ NativePath App::nativeHomePath()
 
 Archive const &App::persistentData()
 {
-    Archive const *persist = DENG2_APP->d->persistentData;
+    Archive const *persist = DE_APP->d->persistentData;
     if (!persist)
     {
         throw PersistentDataNotAvailable("App::persistentData", "Persistent data is disabled");
@@ -637,7 +637,7 @@ Archive const &App::persistentData()
 
 Archive &App::mutablePersistentData()
 {
-    Archive *persist = DENG2_APP->d->persistentData;
+    Archive *persist = DE_APP->d->persistentData;
     if (!persist)
     {
         throw PersistentDataNotAvailable("App::mutablePersistentData", "Persistent data is disabled");
@@ -647,12 +647,12 @@ Archive &App::mutablePersistentData()
 
 bool App::hasPersistentData()
 {
-    return DENG2_APP->d->persistentData != 0;
+    return DE_APP->d->persistentData != 0;
 }
 
 ArchiveFolder &App::persistPackFolder()
 {
-    return DENG2_APP->d->persistPackFolder();
+    return DE_APP->d->persistPackFolder();
 }
 
 NativePath App::currentWorkPath()
@@ -689,12 +689,12 @@ NativePath App::nativeBasePath()
             if (!path.exists())
             {
                 // Try the built-in base directory (unbundled apps).
-                path = d->appPath.fileNamePath() / DENG_BASE_DIR;
+                path = d->appPath.fileNamePath() / DE_BASE_DIR;
             }
         }
         #else
         {
-            path = d->appPath.fileNamePath() / DENG_BASE_DIR;
+            path = d->appPath.fileNamePath() / DE_BASE_DIR;
         }
         #endif
 
@@ -841,7 +841,7 @@ void App::removeSystem(System &system)
 
 void App::notifyStartupComplete()
 {
-    DENG2_FOR_AUDIENCE2(StartupComplete, i)
+    DE_FOR_AUDIENCE2(StartupComplete, i)
     {
         i->appStartupCompleted();
     }
@@ -854,46 +854,46 @@ bool App::appExists()
 
 App &App::app()
 {
-    DENG2_ASSERT(appExists());
+    DE_ASSERT(appExists());
     return *singletonApp;
 }
 
 LogFilter &App::logFilter()
 {
-    return DENG2_APP->d->logFilter;
+    return DE_APP->d->logFilter;
 }
 
 CommandLine &App::commandLine()
 {
-    return DENG2_APP->d->cmdLine;
+    return DE_APP->d->cmdLine;
 }
 
 NativePath App::executablePath()
 {
-    return DENG2_APP->d->appPath;
+    return DE_APP->d->appPath;
 }
 
 #ifdef MACOSX
 NativePath App::nativeAppContentsPath()
 {
-    return DENG2_APP->d->appPath/"../..";
+    return DE_APP->d->appPath/"../..";
 }
 #endif
 
 FileSystem &App::fileSystem()
 {
-    return DENG2_APP->d->fs;
+    return DE_APP->d->fs;
 }
 
 MetadataBank &App::metadataBank()
 {
-    DENG2_ASSERT(DENG2_APP->d->metaBank);
-    return *DENG2_APP->d->metaBank;
+    DE_ASSERT(DE_APP->d->metaBank);
+    return *DE_APP->d->metaBank;
 }
 
 PackageLoader &App::packageLoader()
 {
-    return DENG2_APP->d->packageLoader;
+    return DE_APP->d->packageLoader;
 }
 
 int App::findInPackages(String const &partialPath, FS::FoundFiles &files)
@@ -903,12 +903,12 @@ int App::findInPackages(String const &partialPath, FS::FoundFiles &files)
 
 bool App::assetExists(String const &identifier)
 {
-    return DENG2_APP->d->findAsset(identifier) != 0;
+    return DE_APP->d->findAsset(identifier) != 0;
 }
 
 Package::Asset App::asset(String const &identifier)
 {
-    Record const *info = DENG2_APP->d->findAsset(identifier);
+    Record const *info = DE_APP->d->findAsset(identifier);
     if (!info)
     {
         throw AssetNotFoundError("App::asset", "Asset \"" + identifier +
@@ -919,12 +919,12 @@ Package::Asset App::asset(String const &identifier)
 
 ScriptSystem &App::scriptSystem()
 {
-    return DENG2_APP->d->scriptSys;
+    return DE_APP->d->scriptSys;
 }
 
 bool App::configExists()
 {
-    return DENG2_APP->d->config != nullptr;
+    return DE_APP->d->config != nullptr;
 }
 
 Folder &App::rootFolder()
@@ -939,13 +939,13 @@ Folder &App::homeFolder()
 
 filesys::RemoteFeedRelay &App::remoteFeedRelay()
 {
-    return DENG2_APP->d->remoteFeedRelay;
+    return DE_APP->d->remoteFeedRelay;
 }
 
 Config &App::config()
 {
-    DENG2_ASSERT(DENG2_APP->d->config != 0);
-    return *DENG2_APP->d->config;
+    DE_ASSERT(DE_APP->d->config != 0);
+    return *DE_APP->d->config;
 }
 
 Variable &App::config(String const &name)
@@ -963,7 +963,7 @@ String App::apiUrl() // static
 
 UnixInfo &App::unixInfo()
 {
-    return *DENG2_APP->d->unixInfo;
+    return *DE_APP->d->unixInfo;
 }
 
 } // namespace de

@@ -47,7 +47,7 @@ struct Array : public std::vector<PODType>
         std::vector<PODType>::clear();
     }
     PODType *append(int count = 1) {
-        DENG2_ASSERT(count >= 0);
+        DE_ASSERT(count >= 0);
         for(int i = 0; i < count; ++i) {
             std::vector<PODType>::push_back(PODType());
         }

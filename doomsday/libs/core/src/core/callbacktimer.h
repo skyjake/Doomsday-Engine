@@ -18,8 +18,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_CALLBACKTIMER_H
-#define LIBDENG2_CALLBACKTIMER_H
+#ifndef LIBCORE_CALLBACKTIMER_H
+#define LIBCORE_CALLBACKTIMER_H
 
 #include <QTimer>
 #include <functional>
@@ -47,4 +47,4 @@ private:
 } // namespace internal
 } // namespace de
 
-#endif // LIBDENG2_CALLBACKTIMER_H
+#endif // LIBCORE_CALLBACKTIMER_H

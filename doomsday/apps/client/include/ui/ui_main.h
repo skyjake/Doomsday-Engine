@@ -19,8 +19,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_UI_MAIN_H
-#define LIBDENG_UI_MAIN_H
+#ifndef DE_UI_MAIN_H
+#define DE_UI_MAIN_H
 
 #include <de/rect.h>
 #include "ddevent.h"
@@ -69,7 +69,7 @@ typedef struct {
     float red, green, blue;
 } ui_color_t;
 
-DENG_EXTERN_C fontid_t fontFixed; //, fontVariable[FONTSTYLE_COUNT];
+DE_EXTERN_C fontid_t fontFixed; //, fontVariable[FONTSTYLE_COUNT];
 
 //void UI_Register(void);
 

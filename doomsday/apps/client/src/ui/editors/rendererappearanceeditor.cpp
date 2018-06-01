@@ -37,8 +37,8 @@
 using namespace de;
 using namespace de::ui;
 
-DENG_GUI_PIMPL(RendererAppearanceEditor),
-DENG2_OBSERVES(ConfigProfiles, ProfileChange),
+DE_GUI_PIMPL(RendererAppearanceEditor),
+DE_OBSERVES(ConfigProfiles, ProfileChange),
 public VariableGroupEditor::IOwner
 {
     using Group = VariableGroupEditor;

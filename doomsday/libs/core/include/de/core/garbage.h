@@ -21,8 +21,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_GARBAGE_COLLECTOR_H
-#define LIBDENG2_GARBAGE_COLLECTOR_H
+#ifndef LIBCORE_GARBAGE_COLLECTOR_H
+#define LIBCORE_GARBAGE_COLLECTOR_H
 
 #include "../libcore.h"
 
@@ -37,7 +37,7 @@ extern "C" {
  *
  * @param ptr  Pointer to memory allocated with malloc().
  */
-DENG2_PUBLIC void Garbage_TrashMalloc(void *ptr);
+DE_PUBLIC void Garbage_TrashMalloc(void *ptr);
 
 /**
  * Pointer to an instance destructor;
@@ -51,7 +51,7 @@ typedef void (*GarbageDestructor)(void *);
  * @param ptr  Pointer to the object.
  * @param destructor  Function that destroys the object.
  */
-DENG2_PUBLIC void Garbage_TrashInstance(void *ptr, GarbageDestructor destructor);
+DE_PUBLIC void Garbage_TrashInstance(void *ptr, GarbageDestructor destructor);
 
 /**
  * Determines whether a memory pointer has been trashed. Only the current
@@ -61,7 +61,7 @@ DENG2_PUBLIC void Garbage_TrashInstance(void *ptr, GarbageDestructor destructor)
  *
  * @return @c true if the pointer is in the trash.
  */
-DENG2_PUBLIC int Garbage_IsTrashed(void const *ptr);
+DE_PUBLIC int Garbage_IsTrashed(void const *ptr);
 
 /**
  * Removes a region from the current thread's collector, if it is still there.
@@ -70,7 +70,7 @@ DENG2_PUBLIC int Garbage_IsTrashed(void const *ptr);
  *
  * @param ptr  Pointer to memory previously put in the trash.
  */
-DENG2_PUBLIC void Garbage_Untrash(void *ptr);
+DE_PUBLIC void Garbage_Untrash(void *ptr);
 
 /**
  * Removes a pointer from the garbage. This needs to be called if the
@@ -78,21 +78,21 @@ DENG2_PUBLIC void Garbage_Untrash(void *ptr);
  *
  * @param ptr  Pointer to memory.
  */
-DENG2_PUBLIC void Garbage_RemoveIfTrashed(void *ptr);
+DE_PUBLIC void Garbage_RemoveIfTrashed(void *ptr);
 
 /**
  * Frees all pointers given over to the current thread's garbage collector.
  * Every thread that uses garbage collection must call this periodically
  * or the trashed memory will not be freed.
  */
-DENG2_PUBLIC void Garbage_Recycle(void);
+DE_PUBLIC void Garbage_Recycle(void);
 
 /**
  * Clears the garbage contents without actually freeing any memory. This
  * should only be called under exceptional circumstances to quickly dismiss
  * all recycled memory. Everything in the trash will leak!
  */
-DENG2_PUBLIC void Garbage_ForgetAndLeak(void);
+DE_PUBLIC void Garbage_ForgetAndLeak(void);
 
 /**
  * Frees all pointers in every thread's garbage if they are using a specific
@@ -100,7 +100,7 @@ DENG2_PUBLIC void Garbage_ForgetAndLeak(void);
  *
  * @param destructor  Destructor function.
  */
-DENG2_PUBLIC void Garbage_RecycleAllWithDestructor(GarbageDestructor destructor);
+DE_PUBLIC void Garbage_RecycleAllWithDestructor(GarbageDestructor destructor);
 
 /**
  * Recycles all garbage of the current thread and deletes the thread's garbage
@@ -110,7 +110,7 @@ DENG2_PUBLIC void Garbage_RecycleAllWithDestructor(GarbageDestructor destructor)
  * resources are freed, not just the thread's trashed memory. The thread can
  * safely end after this.
  */
-DENG2_PUBLIC void Garbage_ClearForThread(void);
+DE_PUBLIC void Garbage_ClearForThread(void);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -134,4 +134,4 @@ void trash(Type *ptr) {
 
 #endif // __cplusplus
 
-#endif // LIBDENG2_GARBAGE_COLLECTOR_H
+#endif // LIBCORE_GARBAGE_COLLECTOR_H

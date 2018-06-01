@@ -6,4 +6,4 @@ if (NOT TARGET Deng::libcore)
     include ("${DENG_SDK_DIR}/lib/cmake/DengCore/DengCore.cmake")
 endif ()
 
-list (APPEND DENG_REQUIRED_PACKAGES net.dengine.stdlib)
+list (APPEND DE_REQUIRED_PACKAGES net.dengine.stdlib)

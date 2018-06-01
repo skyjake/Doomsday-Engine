@@ -47,25 +47,25 @@ Size2 *Size2_NewWithDimensions(int width, int height)
 
 Size2 *Size2_NewFromRaw(Size2Raw const *rawSize)
 {
-    DENG_ASSERT(rawSize);
+    DE_ASSERT(rawSize);
     return Size2_NewWithDimensions(rawSize->width, rawSize->height);
 }
 
 void Size2_Delete(Size2 *s)
 {
-    DENG_ASSERT(s);
+    DE_ASSERT(s);
     M_Free(s);
 }
 
 dd_bool Size2_IsNull(Size2 const *s)
 {
-    DENG_ASSERT(s);
+    DE_ASSERT(s);
     return s->raw.width == 0 && s->raw.height == 0;
 }
 
 Size2Raw *Size2_Raw(Size2 const *s, Size2Raw *rawSize)
 {
-    DENG_ASSERT(s);
+    DE_ASSERT(s);
     if (!rawSize) return NULL;
     memcpy(rawSize, &s->raw, sizeof(*rawSize));
     return rawSize;
@@ -73,51 +73,51 @@ Size2Raw *Size2_Raw(Size2 const *s, Size2Raw *rawSize)
 
 int Size2_Width(Size2 const *s)
 {
-    DENG_ASSERT(s);
+    DE_ASSERT(s);
     return s->raw.width;
 }
 
 int Size2_Height(Size2 const *s)
 {
-    DENG_ASSERT(s);
+    DE_ASSERT(s);
     return s->raw.height;
 }
 
 void Size2_SetWidth(Size2 *s, int width)
 {
-    DENG_ASSERT(s);
+    DE_ASSERT(s);
     s->raw.width = width;
 }
 
 void Size2_SetHeight(Size2 *s, int height)
 {
-    DENG_ASSERT(s);
+    DE_ASSERT(s);
     s->raw.height = height;
 }
 
 int const *Size2_WidthHeight(Size2 const *s)
 {
-    DENG_ASSERT(s);
+    DE_ASSERT(s);
     return s->raw.widthHeight;
 }
 
 void Size2_SetWidthHeight(Size2 *s, int width, int height)
 {
-    DENG_ASSERT(s);
+    DE_ASSERT(s);
     s->raw.width = width;
     s->raw.height = height;
 }
 
 void Size2_Sum(Size2 *s, Size2 const *other)
 {
-    DENG_ASSERT(s && other);
+    DE_ASSERT(s && other);
     s->raw.width  += Size2_Width(other);
     s->raw.height += Size2_Height(other);
 }
 
 dd_bool Size2_Equality(Size2 const *s, Size2 const *other)
 {
-    DENG_ASSERT(s && other);
+    DE_ASSERT(s && other);
     return s == other || (s->raw.width  == Size2_Width(other) &&
                           s->raw.height == Size2_Height(other));
 }
@@ -137,25 +137,25 @@ Size2f *Size2f_NewWithDimensions(double width, double height)
 
 Size2f *Size2f_NewFromRaw(Size2Rawf const *rawSize)
 {
-    DENG_ASSERT(rawSize);
+    DE_ASSERT(rawSize);
     return Size2f_NewWithDimensions(rawSize->width, rawSize->height);
 }
 
 void Size2f_Delete(Size2f *s)
 {
-    DENG_ASSERT(s);
+    DE_ASSERT(s);
     M_Free(s);
 }
 
 dd_bool Size2f_IsNull(Size2f const *s)
 {
-    DENG_ASSERT(s);
+    DE_ASSERT(s);
     return s->raw.width == 0 && s->raw.height == 0;
 }
 
 Size2Rawf *Size2f_Raw(Size2f const *s, Size2Rawf *rawSize)
 {
-    DENG_ASSERT(s);
+    DE_ASSERT(s);
     if (!rawSize) return NULL;
     memcpy(rawSize, &s->raw, sizeof(*rawSize));
     return rawSize;
@@ -163,51 +163,51 @@ Size2Rawf *Size2f_Raw(Size2f const *s, Size2Rawf *rawSize)
 
 double Size2f_Width(Size2f const *s)
 {
-    DENG_ASSERT(s);
+    DE_ASSERT(s);
     return s->raw.width;
 }
 
 double Size2f_Height(Size2f const *s)
 {
-    DENG_ASSERT(s);
+    DE_ASSERT(s);
     return s->raw.height;
 }
 
 void Size2f_SetWidth(Size2f *s, double width)
 {
-    DENG_ASSERT(s);
+    DE_ASSERT(s);
     s->raw.width = width;
 }
 
 void Size2f_SetHeight(Size2f *s, double height)
 {
-    DENG_ASSERT(s);
+    DE_ASSERT(s);
     s->raw.height = height;
 }
 
 double const *Size2f_WidthHeight(Size2f const *s)
 {
-    DENG_ASSERT(s);
+    DE_ASSERT(s);
     return s->raw.widthHeight;
 }
 
 void Size2f_SetWidthHeight(Size2f *s, double width, double height)
 {
-    DENG_ASSERT(s);
+    DE_ASSERT(s);
     s->raw.width  = width;
     s->raw.height = height;
 }
 
 void Size2f_Sum(Size2f *s, Size2f const *other)
 {
-    DENG_ASSERT(s && other);
+    DE_ASSERT(s && other);
     s->raw.width  += Size2f_Width(other);
     s->raw.height += Size2f_Height(other);
 }
 
 dd_bool Size2f_Equality(Size2f const *s, Size2f const *other)
 {
-    DENG_ASSERT(s && other);
+    DE_ASSERT(s && other);
     return s == other || (s->raw.width  == Size2f_Width(other) &&
                           s->raw.height == Size2f_Height(other));
 }

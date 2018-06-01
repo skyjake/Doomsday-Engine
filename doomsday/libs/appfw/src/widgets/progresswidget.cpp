@@ -24,7 +24,7 @@
 
 namespace de {
 
-DENG_GUI_PIMPL(ProgressWidget), public Lockable
+DE_GUI_PIMPL(ProgressWidget), public Lockable
 {
     Mode mode             = Indefinite;
     Rangei range;
@@ -204,19 +204,19 @@ void ProgressWidget::setRotationSpeed(float anglesPerSecond)
 
 ProgressWidget::Mode ProgressWidget::mode() const
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     return d->mode;
 }
 
 Rangei ProgressWidget::range() const
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     return d->range;
 }
 
 bool ProgressWidget::isAnimating() const
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     return d->framesWhileAnimDone < 2;
 }
 
@@ -234,13 +234,13 @@ void ProgressWidget::setShadowColor(DotPath const &styleId)
 
 void ProgressWidget::setText(String const &text)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     LabelWidget::setText(text);
 }
 
 void ProgressWidget::setMode(Mode progressMode)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     d->mode = progressMode;
     if (d->mode == Dots)
     {
@@ -250,7 +250,7 @@ void ProgressWidget::setMode(Mode progressMode)
 
 void ProgressWidget::setRange(Rangei const &range, Rangef const &visualRange)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     d->range = range;
     d->visualRange = visualRange;
     setMode(Ranged);
@@ -258,7 +258,7 @@ void ProgressWidget::setRange(Rangei const &range, Rangef const &visualRange)
 
 void ProgressWidget::setProgress(int currentProgress, TimeSpan const &transitionSpan)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     d->framesWhileAnimDone = 0;
     d->pos.setValue(float(currentProgress - d->range.start) / float(d->range.size()),
@@ -268,7 +268,7 @@ void ProgressWidget::setProgress(int currentProgress, TimeSpan const &transition
 
 void ProgressWidget::update()
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     LabelWidget::update();
 
@@ -304,21 +304,21 @@ void ProgressWidget::update()
 
 void ProgressWidget::glInit()
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     LabelWidget::glInit();
     d->glInit();
 }
 
 void ProgressWidget::glDeinit()
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     d->glDeinit();
     LabelWidget::glDeinit();
 }
 
 void ProgressWidget::glMakeGeometry(GuiVertexBuilder &verts)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     switch (d->mode)
     {

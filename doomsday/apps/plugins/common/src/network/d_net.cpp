@@ -72,7 +72,7 @@ de::Uri D_NetDefaultMap()
     if(!episodeId.isEmpty())
     {
         map = de::makeUri(Defs().episodes.find("id", episodeId).gets("startMap"));
-        DENG2_ASSERT(!map.isEmpty());
+        DE_ASSERT(!map.isEmpty());
     }
     return map;
 }
@@ -744,7 +744,7 @@ dd_bool D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, int d
  */
 D_CMD(SetColor)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     cfg.common.netColor = atoi(argv[1]);
     if(IS_SERVER) // A local player?
@@ -785,7 +785,7 @@ D_CMD(SetColor)
 #if __JHEXEN__
 D_CMD(SetClass)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     playerclass_t newClass = playerclass_t(atoi(argv[1]));
 
@@ -821,7 +821,7 @@ D_CMD(SetClass)
  */
 D_CMD(LocalMessage)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
     D_NetMessageNoSound(CONSOLEPLAYER, argv[1]);
     return true;
 }

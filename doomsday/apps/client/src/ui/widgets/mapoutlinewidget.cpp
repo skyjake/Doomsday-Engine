@@ -23,7 +23,7 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(MapOutlineWidget)
+DE_GUI_PIMPL(MapOutlineWidget)
 {
     ProgressWidget *progress; // shown initially, before outline received
 
@@ -112,7 +112,7 @@ DENG_GUI_PIMPL(MapOutlineWidget)
 
     Mat4f modelMatrix() const
     {
-        DENG2_ASSERT(vbuf);
+        DE_ASSERT(vbuf);
 
         if (mapBounds.isNull()) return Mat4f();
 

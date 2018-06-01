@@ -37,7 +37,7 @@ protected slots:
     void refresh();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // CURSESAPP_H

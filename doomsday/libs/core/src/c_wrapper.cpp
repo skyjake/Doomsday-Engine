@@ -33,7 +33,7 @@
 #include <cstring>
 #include <stdarg.h>
 
-#define DENG2_COMMANDLINE()     DENG2_APP->commandLine()
+#define DE_COMMANDLINE()     DE_APP->commandLine()
 
 static bool checkLogEntryMetadata(unsigned int &metadata)
 {
@@ -78,7 +78,7 @@ void App_Log(unsigned int metadata, char const *format, ...)
     va_start(args, format);
     size_t nc = vsprintf(buffer, format, args); /// @todo unsafe
     va_end(args);
-    DENG2_ASSERT(nc < sizeof(buffer) - 2);
+    DE_ASSERT(nc < sizeof(buffer) - 2);
     if (!nc) return;
 
     LOG().enter(metadata, buffer);
@@ -107,7 +107,7 @@ void App_FatalError(char const *msgFormat, ...)
     qvsnprintf(buffer, sizeof(buffer) - 1, msgFormat, args);
     va_end(args);
 
-    DENG2_APP->handleUncaughtException(buffer);
+    DE_APP->handleUncaughtException(buffer);
 
     // Let's make sure this is the end.
     exit(-1);
@@ -115,24 +115,24 @@ void App_FatalError(char const *msgFormat, ...)
 
 void CommandLine_Alias(char const *longname, char const *shortname)
 {
-    DENG2_COMMANDLINE().alias(longname, shortname);
+    DE_COMMANDLINE().alias(longname, shortname);
 }
 
 int CommandLine_Count(void)
 {
-    return DENG2_COMMANDLINE().count();
+    return DE_COMMANDLINE().count();
 }
 
 char const *CommandLine_At(int i)
 {
-    DENG2_ASSERT(i >= 0);
-    DENG2_ASSERT(i < DENG2_COMMANDLINE().count());
-    return *(DENG2_COMMANDLINE().argv() + i);
+    DE_ASSERT(i >= 0);
+    DE_ASSERT(i < DE_COMMANDLINE().count());
+    return *(DE_COMMANDLINE().argv() + i);
 }
 
 char const *CommandLine_PathAt(int i)
 {
-    DENG2_COMMANDLINE().makeAbsolutePath(i);
+    DE_COMMANDLINE().makeAbsolutePath(i);
     return CommandLine_At(i);
 }
 
@@ -155,33 +155,33 @@ char const *CommandLine_NextAsPath(void)
         // No more arguments following the last match.
         return 0;
     }
-    DENG2_COMMANDLINE().makeAbsolutePath(argLastMatch + 1);
+    DE_COMMANDLINE().makeAbsolutePath(argLastMatch + 1);
     return CommandLine_Next();
 }
 
 int CommandLine_Check(char const *check)
 {
-    return argLastMatch = DENG2_COMMANDLINE().check(check);
+    return argLastMatch = DE_COMMANDLINE().check(check);
 }
 
 int CommandLine_CheckWith(char const *check, int num)
 {
-    return argLastMatch = DENG2_COMMANDLINE().check(check, num);
+    return argLastMatch = DE_COMMANDLINE().check(check, num);
 }
 
 int CommandLine_Exists(char const *check)
 {
-    return DENG2_COMMANDLINE().has(check);
+    return DE_COMMANDLINE().has(check);
 }
 
 int CommandLine_IsOption(int i)
 {
-    return DENG2_COMMANDLINE().isOption(i);
+    return DE_COMMANDLINE().isOption(i);
 }
 
 int CommandLine_IsMatchingAlias(char const *original, char const *originalOrAlias)
 {
-    return DENG2_COMMANDLINE().matches(original, originalOrAlias);
+    return DE_COMMANDLINE().matches(original, originalOrAlias);
 }
 
 void LogBuffer_Flush(void)
@@ -211,8 +211,8 @@ void LogBuffer_Printf(unsigned int metadata, char const *format, ...)
     va_start(args, format);
     size_t nc = vsprintf(buffer, format, args); /// @todo unsafe
     va_end(args);
-    DENG2_ASSERT(nc < sizeof(buffer) - 1);
-    DENG2_UNUSED(nc);
+    DE_ASSERT(nc < sizeof(buffer) - 1);
+    DE_UNUSED(nc);
 
     logFragmentPrinter(metadata, buffer);
 }
@@ -249,7 +249,7 @@ void Info_Delete(de_Info *info)
 {
     if (info)
     {
-        DENG2_SELF(Info, info);
+        DE_SELF(Info, info);
         delete self;
     }
 }
@@ -258,7 +258,7 @@ int Info_FindValue(de_Info *info, char const *path, char *buffer, size_t bufSize
 {
     if (!info) return false;
 
-    DENG2_SELF(Info, info);
+    DE_SELF(Info, info);
     de::Info::Element const *element = self->findByPath(path);
     if (!element || !element->isKey()) return false;
     QString value = static_cast<de::Info::KeyElement const *>(element)->value();
@@ -300,96 +300,96 @@ char *UnixInfo_GetConfigValue(char const *configFile, char const *key)
 
 dint16 LittleEndianByteOrder_ToForeignInt16(dint16 value)
 {
-    DENG2_ASSERT(sizeof(dint16) == sizeof(de::dint16));
+    DE_ASSERT(sizeof(dint16) == sizeof(de::dint16));
     return de::littleEndianByteOrder.toNetwork(de::dint16(value));
 }
 
 dint32 LittleEndianByteOrder_ToForeignInt32(dint32 value)
 {
-    DENG2_ASSERT(sizeof(dint32) == sizeof(de::dint32));
+    DE_ASSERT(sizeof(dint32) == sizeof(de::dint32));
     return de::littleEndianByteOrder.toNetwork(de::dint32(value));
 }
 
 dint64 LittleEndianByteOrder_ToForeignInt64(dint64 value)
 {
-    DENG2_ASSERT(sizeof(dint64) == sizeof(de::dint64));
+    DE_ASSERT(sizeof(dint64) == sizeof(de::dint64));
     return de::littleEndianByteOrder.toNetwork(de::dint64(value));
 }
 
 duint16 LittleEndianByteOrder_ToForeignUInt16(duint16 value)
 {
-    DENG2_ASSERT(sizeof(duint16) == sizeof(de::duint16));
+    DE_ASSERT(sizeof(duint16) == sizeof(de::duint16));
     return de::littleEndianByteOrder.toNetwork(de::duint16(value));
 }
 
 duint32 LittleEndianByteOrder_ToForeignUInt32(duint32 value)
 {
-    DENG2_ASSERT(sizeof(duint32) == sizeof(de::duint32));
+    DE_ASSERT(sizeof(duint32) == sizeof(de::duint32));
     return de::littleEndianByteOrder.toNetwork(de::duint32(value));
 }
 
 duint64 LittleEndianByteOrder_ToForeignUInt64(duint64 value)
 {
-    DENG2_ASSERT(sizeof(duint64) == sizeof(de::duint64));
+    DE_ASSERT(sizeof(duint64) == sizeof(de::duint64));
     return de::littleEndianByteOrder.toNetwork(de::duint64(value));
 }
 
 dfloat LittleEndianByteOrder_ToForeignFloat(dfloat value)
 {
-    DENG2_ASSERT(sizeof(dfloat) == sizeof(de::dfloat));
+    DE_ASSERT(sizeof(dfloat) == sizeof(de::dfloat));
     return de::littleEndianByteOrder.toNetwork(de::dfloat(value));
 }
 
 ddouble LittleEndianByteOrder_ToForeignDouble(ddouble value)
 {
-    DENG2_ASSERT(sizeof(ddouble) == sizeof(de::ddouble));
+    DE_ASSERT(sizeof(ddouble) == sizeof(de::ddouble));
     return de::littleEndianByteOrder.toNetwork(de::ddouble(value));
 }
 
 dint16 LittleEndianByteOrder_ToNativeInt16(dint16 value)
 {
-    DENG2_ASSERT(sizeof(dint16) == sizeof(de::dint16));
+    DE_ASSERT(sizeof(dint16) == sizeof(de::dint16));
     return de::littleEndianByteOrder.toHost(de::dint16(value));
 }
 
 dint32 LittleEndianByteOrder_ToNativeInt32(dint32 value)
 {
-    DENG2_ASSERT(sizeof(dint32) == sizeof(de::dint32));
+    DE_ASSERT(sizeof(dint32) == sizeof(de::dint32));
     return de::littleEndianByteOrder.toHost(de::dint32(value));
 }
 
 dint64 LittleEndianByteOrder_ToNativeInt64(dint64 value)
 {
-    DENG2_ASSERT(sizeof(dint64) == sizeof(de::dint64));
+    DE_ASSERT(sizeof(dint64) == sizeof(de::dint64));
     return de::littleEndianByteOrder.toHost(de::dint64(value));
 }
 
 duint16 LittleEndianByteOrder_ToNativeUInt16(duint16 value)
 {
-    DENG2_ASSERT(sizeof(duint16) == sizeof(de::duint16));
+    DE_ASSERT(sizeof(duint16) == sizeof(de::duint16));
     return de::littleEndianByteOrder.toHost(de::duint16(value));
 }
 
 duint32 LittleEndianByteOrder_ToNativeUInt32(duint32 value)
 {
-    DENG2_ASSERT(sizeof(duint32) == sizeof(de::duint32));
+    DE_ASSERT(sizeof(duint32) == sizeof(de::duint32));
     return de::littleEndianByteOrder.toHost(de::duint32(value));
 }
 
 duint64 LittleEndianByteOrder_ToNativeUInt64(duint64 value)
 {
-    DENG2_ASSERT(sizeof(duint64) == sizeof(de::duint64));
+    DE_ASSERT(sizeof(duint64) == sizeof(de::duint64));
     return de::littleEndianByteOrder.toHost(de::duint64(value));
 }
 
 dfloat LittleEndianByteOrder_ToNativeFloat(dfloat value)
 {
-    DENG2_ASSERT(sizeof(dfloat) == sizeof(de::dfloat));
+    DE_ASSERT(sizeof(dfloat) == sizeof(de::dfloat));
     return de::littleEndianByteOrder.toHost(de::dfloat(value));
 }
 
 ddouble LittleEndianByteOrder_ToNativeDouble(ddouble value)
 {
-    DENG2_ASSERT(sizeof(ddouble) == sizeof(de::ddouble));
+    DE_ASSERT(sizeof(ddouble) == sizeof(de::ddouble));
     return de::littleEndianByteOrder.toHost(de::ddouble(value));
 }

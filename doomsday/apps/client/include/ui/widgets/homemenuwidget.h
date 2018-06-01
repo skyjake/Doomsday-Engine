@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_HOME_HOMEMENUWIDGET_H
-#define DENG_CLIENT_UI_HOME_HOMEMENUWIDGET_H
+#ifndef DE_CLIENT_UI_HOME_HOMEMENUWIDGET_H
+#define DE_CLIENT_UI_HOME_HOMEMENUWIDGET_H
 
 #include <de/MenuWidget>
 
@@ -70,7 +70,7 @@ protected slots:
     void itemSelectionChanged();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_HOME_HOMEMENUWIDGET_H
+#endif // DE_CLIENT_UI_HOME_HOMEMENUWIDGET_H

@@ -67,7 +67,7 @@ void HealthWidget_Draw(guidata_health_t *hlth, Point2Raw const *offset)
 #  define SUFFIX                ( "" )
 #endif
 
-    DENG2_ASSERT(hlth);
+    DE_ASSERT(hlth);
     dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
 
     if(hlth->_value == 1994) return;
@@ -127,7 +127,7 @@ void SBarHealthWidget_Draw(guidata_health_t *hlth, Point2Raw const *offset)
 #else
 #  define TRACKING              ( 0 )
 #endif
-    DENG2_ASSERT(hlth);
+    DE_ASSERT(hlth);
 
     Vec2i const origin((-ST_WIDTH / 2 ) + X_OFFSET, (-ST_HEIGHT ) + Y_OFFSET );
 
@@ -196,7 +196,7 @@ void HealthWidget_UpdateGeometry(guidata_health_t *hlth)
 #  define SUFFIX                ( "" )
 #endif
 
-    DENG2_ASSERT(hlth);
+    DE_ASSERT(hlth);
     Rect_SetWidthHeight(&hlth->geometry(), 0, 0);
 
     if(hlth->_value == 1994) return;
@@ -226,7 +226,7 @@ void SBarHealthWidget_UpdateGeometry(guidata_health_t *hlth)
 #  define TRACKING              ( 0 )
 #endif
 
-    DENG2_ASSERT(hlth);
+    DE_ASSERT(hlth);
     Rect_SetWidthHeight(&hlth->geometry(), 0, 0);
 
     if(hlth->_value == 1994) return;

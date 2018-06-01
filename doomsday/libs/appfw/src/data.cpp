@@ -27,16 +27,16 @@ namespace ui {
 
 dsize const Data::InvalidPos = dsize(-1);
 
-DENG2_PIMPL_NOREF(Data)
+DE_PIMPL_NOREF(Data)
 {
-    DENG2_PIMPL_AUDIENCE(Addition)
-    DENG2_PIMPL_AUDIENCE(Removal)
-    DENG2_PIMPL_AUDIENCE(OrderChange)
+    DE_PIMPL_AUDIENCE(Addition)
+    DE_PIMPL_AUDIENCE(Removal)
+    DE_PIMPL_AUDIENCE(OrderChange)
 };
 
-DENG2_AUDIENCE_METHOD(Data, Addition)
-DENG2_AUDIENCE_METHOD(Data, Removal)
-DENG2_AUDIENCE_METHOD(Data, OrderChange)
+DE_AUDIENCE_METHOD(Data, Addition)
+DE_AUDIENCE_METHOD(Data, Removal)
+DE_AUDIENCE_METHOD(Data, OrderChange)
 
 Data::Data() : d(new Impl)
 {}

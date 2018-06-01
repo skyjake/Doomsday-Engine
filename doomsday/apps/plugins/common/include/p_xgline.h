@@ -361,10 +361,10 @@ typedef struct {
 } xgline_t;
 
 // The XG line Classes
-DENG_EXTERN_C struct xgclass_s xgClasses[];
+DE_EXTERN_C struct xgclass_s xgClasses[];
 
 // Used as the activator if there is no real activator.
-DENG_EXTERN_C struct mobj_s *XG_DummyThing();
+DE_EXTERN_C struct mobj_s *XG_DummyThing();
 
 #ifdef __cplusplus
 extern "C" {

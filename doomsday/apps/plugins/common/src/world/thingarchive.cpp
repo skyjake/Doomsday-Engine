@@ -30,7 +30,7 @@
 static ThingArchive::SerialId const TargetPlayerId = -2;
 #endif
 
-DENG2_PIMPL(ThingArchive)
+DE_PIMPL(ThingArchive)
 {
     int version;
     uint size;
@@ -114,7 +114,7 @@ void ThingArchive::initForSave(bool excludePlayers)
 
 void ThingArchive::insert(mobj_t const *mo, SerialId serialId)
 {
-    DENG_ASSERT(mo != 0);
+    DE_ASSERT(mo != 0);
 
 #if __JHEXEN__
     if (d->version >= 1)
@@ -125,18 +125,18 @@ void ThingArchive::insert(mobj_t const *mo, SerialId serialId)
 
 #if __JHEXEN__
     // Only signed in Hexen.
-    DENG2_ASSERT(serialId >= 0);
+    DE_ASSERT(serialId >= 0);
     if (serialId < 0) return; // Does this ever occur?
 #endif
 
-    DENG_ASSERT(d->things != 0);
-    DENG_ASSERT((unsigned)serialId < d->size);
+    DE_ASSERT(d->things != 0);
+    DE_ASSERT((unsigned)serialId < d->size);
     d->things[serialId] = const_cast<mobj_t *>(mo);
 }
 
 ThingArchive::SerialId ThingArchive::serialIdFor(mobj_t const *mo)
 {
-    DENG_ASSERT(d->things != 0);
+    DE_ASSERT(d->things != 0);
 
     if (!mo) return 0;
 
@@ -184,7 +184,7 @@ ThingArchive::SerialId ThingArchive::serialIdFor(mobj_t const *mo)
 mobj_t *ThingArchive::mobj(SerialId serialId, void *address)
 {
 #if !__JHEXEN__
-    DENG_UNUSED(address);
+    DE_UNUSED(address);
 #endif
 
 #if __JHEXEN__
@@ -201,7 +201,7 @@ mobj_t *ThingArchive::mobj(SerialId serialId, void *address)
     }
 #endif
 
-    DENG_ASSERT(d->things != 0);
+    DE_ASSERT(d->things != 0);
 
 #if __JHEXEN__
     if (d->version < 1)

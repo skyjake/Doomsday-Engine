@@ -26,7 +26,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(DialogContentStylist)
+DE_PIMPL_NOREF(DialogContentStylist)
 {
     QList<GuiWidget *> containers;
     bool useInfoStyle;

@@ -153,14 +153,14 @@ bool TextureVariantSpec::operator == (TextureVariantSpec const &other) const
     case TST_GENERAL: return variant       == other.variant;
     case TST_DETAIL:  return detailVariant == other.detailVariant;
     }
-    DENG2_ASSERT(false);
+    DE_ASSERT(false);
     return false;
 }
 
 static String nameForGLTextureWrapMode(int mode)
 {
     if(mode == GL_REPEAT) return "repeat";
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     if(mode == GL_CLAMP) return "clamp";
 #endif
     if(mode == GL_CLAMP_TO_EDGE) return "clamp_edge";
@@ -205,7 +205,7 @@ String TextureVariantSpec::asText() const
     case TST_GENERAL: {
         variantspecification_t const &spec = variant;
         texturevariantusagecontext_t tc = spec.context;
-        DENG2_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
+        DE_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
 
         int glMinFilterNameIdx;
         if(spec.minFilter >= 0) // Constant logical value.
@@ -263,7 +263,7 @@ String TextureVariantSpec::asText() const
     return text;
 }
 
-DENG2_PIMPL(ClientTexture::Variant)
+DE_PIMPL(ClientTexture::Variant)
 {
     ClientTexture &texture; /// The base for which "this" is a context derivative.
     TextureVariantSpec spec; /// Usage context specification.

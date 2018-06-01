@@ -19,7 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#define DENG_NO_API_MACROS_URI // functions defined here
+#define DE_NO_API_MACROS_URI // functions defined here
 #include "api_uri.h"
 
 #include <doomsday/uri.h>
@@ -31,11 +31,11 @@
 #define TOINTERNAL_CONST(inst)  reinterpret_cast<de::Uri const*>(inst)
 
 #define SELF(inst) \
-    DENG2_ASSERT(inst); \
+    DE_ASSERT(inst); \
     de::Uri* self = TOINTERNAL(inst)
 
 #define SELF_CONST(inst) \
-    DENG2_ASSERT(inst); \
+    DE_ASSERT(inst); \
     de::Uri const* self = TOINTERNAL_CONST(inst)
 
 static void readUri(Uri *uri, Reader1 *reader, de::String defaultScheme = "")
@@ -100,14 +100,14 @@ Uri* Uri_New(void)
 #undef Uri_Dup
 Uri* Uri_Dup(Uri const* other)
 {
-    DENG_ASSERT(other);
+    DE_ASSERT(other);
     return reinterpret_cast<Uri*>( new de::Uri(*(TOINTERNAL_CONST(other))) );
 }
 
 #undef Uri_FromReader
 Uri* Uri_FromReader(Reader1 *reader)
 {
-    DENG_ASSERT(reader);
+    DE_ASSERT(reader);
 
     de::Uri* self = new de::Uri;
     Uri* uri = reinterpret_cast<Uri*>(self);
@@ -131,7 +131,7 @@ void Uri_Delete(Uri* uri)
 Uri* Uri_Copy(Uri* uri, Uri const* other)
 {
     SELF(uri);
-    DENG_ASSERT(other);
+    DE_ASSERT(other);
     *self = *(TOINTERNAL_CONST(other));
     return reinterpret_cast<Uri*>(self);
 }
@@ -140,7 +140,7 @@ Uri* Uri_Copy(Uri* uri, Uri const* other)
 dd_bool Uri_Equality(Uri const* uri, Uri const* other)
 {
     SELF_CONST(uri);
-    DENG_ASSERT(other);
+    DE_ASSERT(other);
     return *self == (*(TOINTERNAL_CONST(other)));
 }
 
@@ -234,24 +234,24 @@ AutoStr* Uri_ToString(Uri const* uri)
 #undef Uri_Write2
 void Uri_Write2(Uri const* uri, struct writer_s* writer, int omitComponents)
 {
-    DENG_ASSERT(uri);
-    DENG_ASSERT(writer);
+    DE_ASSERT(uri);
+    DE_ASSERT(writer);
     writeUri(uri, writer, omitComponents);
 }
 
 #undef Uri_Write
 void Uri_Write(Uri const* uri, struct writer_s* writer)
 {
-    DENG_ASSERT(uri);
-    DENG_ASSERT(writer);
+    DE_ASSERT(uri);
+    DE_ASSERT(writer);
     writeUri(uri, writer);
 }
 
 #undef Uri_Read
 Uri* Uri_Read(Uri* uri, struct reader_s* reader)
 {
-    DENG_ASSERT(uri);
-    DENG_ASSERT(reader);
+    DE_ASSERT(uri);
+    DE_ASSERT(reader);
     readUri(uri, reader);
     return uri;
 }
@@ -259,12 +259,12 @@ Uri* Uri_Read(Uri* uri, struct reader_s* reader)
 #undef Uri_ReadWithDefaultScheme
 void Uri_ReadWithDefaultScheme(Uri* uri, struct reader_s* reader, char const* defaultScheme)
 {
-    DENG_ASSERT(uri);
-    DENG_ASSERT(reader);
+    DE_ASSERT(uri);
+    DE_ASSERT(reader);
     readUri(uri, reader, defaultScheme);
 }
 
-DENG_DECLARE_API(Uri) =
+DE_DECLARE_API(Uri) =
 {
     { DE_API_URI },
     Uri_New,

@@ -299,7 +299,7 @@ public:
     static void setLocalMultiplayerPackages(de::String const &gameId, de::StringList packages);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef Game::Manifests GameManifests;
@@ -312,7 +312,7 @@ class LIBDOOMSDAY_PUBLIC NullGame : public Game
 {
 public:
     /// General exception for invalid action on a NULL object. @ingroup errors
-    DENG2_ERROR(NullObjectError);
+    DE_ERROR(NullObjectError);
 
 public:
     NullGame();

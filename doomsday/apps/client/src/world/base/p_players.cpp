@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_NO_API_MACROS_PLAYER
+#define DE_NO_API_MACROS_PLAYER
 
 #include "world/p_players.h"
 
@@ -237,7 +237,7 @@ PlayerImpulse *P_PlayerImpulseByName(String const &name)
 
 D_CMD(ListImpulses)
 {
-    DENG2_UNUSED3(argv, argc, src);
+    DE_UNUSED(argv, argc, src);
 
     // Group the defined impulses by binding context.
     typedef QList<PlayerImpulse *> ImpulseList;
@@ -276,7 +276,7 @@ D_CMD(ListImpulses)
 
 D_CMD(Impulse)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(argc < 2 || argc > 3)
     {
@@ -300,7 +300,7 @@ D_CMD(Impulse)
 #ifdef __CLIENT__
 D_CMD(ClearImpulseAccumulation)
 {
-    DENG2_UNUSED3(argv, argc, src);
+    DE_UNUSED(argv, argc, src);
 
     ClientApp::inputSystem().forAllDevices([] (InputDevice &device)
     {
@@ -332,7 +332,7 @@ void P_ConsoleRegister()
 }
 
 #undef DD_GetPlayer
-DENG_EXTERN_C ddplayer_t *DD_GetPlayer(int number)
+DE_EXTERN_C ddplayer_t *DD_GetPlayer(int number)
 {
     return &DD_Player(number)->publicData();
 }
@@ -341,15 +341,15 @@ DENG_EXTERN_C ddplayer_t *DD_GetPlayer(int number)
 #undef Net_GetPlayerName
 #undef Net_GetPlayerID
 #undef Net_PlayerSmoother
-DENG_EXTERN_C char const *Net_GetPlayerName(int player);
-DENG_EXTERN_C ident_t Net_GetPlayerID(int player);
-DENG_EXTERN_C Smoother *Net_PlayerSmoother(int player);
+DE_EXTERN_C char const *Net_GetPlayerName(int player);
+DE_EXTERN_C ident_t Net_GetPlayerID(int player);
+DE_EXTERN_C Smoother *Net_PlayerSmoother(int player);
 
 #undef P_NewPlayerControl
-DENG_EXTERN_C void P_NewPlayerControl(int id, impulsetype_t type, char const *name,
+DE_EXTERN_C void P_NewPlayerControl(int id, impulsetype_t type, char const *name,
     char const *bindContextName)
 {
-    DENG2_ASSERT(name && bindContextName);
+    DE_ASSERT(name && bindContextName);
     LOG_AS("P_NewPlayerControl");
 
     // Ensure the given id is unique.
@@ -371,7 +371,7 @@ DENG_EXTERN_C void P_NewPlayerControl(int id, impulsetype_t type, char const *na
 }
 
 #undef P_IsControlBound
-DENG_EXTERN_C int P_IsControlBound(int playerNum, int impulseId)
+DE_EXTERN_C int P_IsControlBound(int playerNum, int impulseId)
 {
 #ifdef __CLIENT__
     LOG_AS("P_IsControlBound");
@@ -414,13 +414,13 @@ DENG_EXTERN_C int P_IsControlBound(int playerNum, int impulseId)
     return false;
 
 #else
-    DENG2_UNUSED2(playerNum, impulseId);
+    DE_UNUSED(playerNum, impulseId);
     return 0;
 #endif
 }
 
 #undef P_GetControlState
-DENG_EXTERN_C void P_GetControlState(int playerNum, int impulseId, float *pos,
+DE_EXTERN_C void P_GetControlState(int playerNum, int impulseId, float *pos,
     float *relativeOffset)
 {
 #ifdef __CLIENT__
@@ -437,12 +437,12 @@ DENG_EXTERN_C void P_GetControlState(int playerNum, int impulseId, float *pos,
         accum->takeAnalog(pos, relativeOffset);
     }
 #else
-    DENG2_UNUSED4(playerNum, impulseId, pos, relativeOffset);
+    DE_UNUSED(playerNum, impulseId, pos, relativeOffset);
 #endif
 }
 
 #undef P_GetImpulseControlState
-DENG_EXTERN_C int P_GetImpulseControlState(int playerNum, int impulseId)
+DE_EXTERN_C int P_GetImpulseControlState(int playerNum, int impulseId)
 {
     LOG_AS("P_GetImpulseControlState");
 
@@ -460,7 +460,7 @@ DENG_EXTERN_C int P_GetImpulseControlState(int playerNum, int impulseId)
 }
 
 #undef P_Impulse
-DENG_EXTERN_C void P_Impulse(int playerNum, int impulseId)
+DE_EXTERN_C void P_Impulse(int playerNum, int impulseId)
 {
     LOG_AS("P_Impulse");
 
@@ -477,7 +477,7 @@ DENG_EXTERN_C void P_Impulse(int playerNum, int impulseId)
     accum->receiveBinary();
 }
 
-DENG_DECLARE_API(Player) =
+DE_DECLARE_API(Player) =
 {
     { DE_API_PLAYER },
     Net_GetPlayerName,

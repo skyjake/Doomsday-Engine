@@ -179,7 +179,7 @@ static bool wallReceivesShadow(WallEdge const &leftEdge, WallEdge const &rightEd
     if(shadowSize <= 0) return false;
 
     LineSide const &side = leftEdge.lineSide();
-    DENG2_ASSERT(side.leftHEdge());
+    DE_ASSERT(side.leftHEdge());
 
     auto const &subsec      = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().subsector().as<world::ClientSubsector>();
     Plane const &visFloor   = subsec.visFloor  ();
@@ -207,7 +207,7 @@ static bool wallReceivesShadow(WallEdge const &leftEdge, WallEdge const &rightEd
                && wallSideOpenness(leftEdge, rightEdge, true/*right side*/) > 0
                && leftEdge.lineSideOffset() + wallWidth(leftEdge, rightEdge) > side.line().length() - shadowSize;
     }
-    DENG2_ASSERT_FAIL("Unknown WallShadow");
+    DE_ASSERT_FAIL("Unknown WallShadow");
     return false;
 }
 
@@ -247,7 +247,7 @@ static void setTopShadowParams(WallEdge const &leftEdge, WallEdge const &rightEd
     ProjectedShadowData &projected)
 {
     LineSide /*const*/ &side = leftEdge.lineSide();
-    DENG2_ASSERT(side.leftHEdge());
+    DE_ASSERT(side.leftHEdge());
     auto const &space       = side.leftHEdge()->face().mapElementAs<ConvexSubspace>();
     auto const &subsec      = space.subsector().as<world::ClientSubsector>();
     Plane const &visFloor   = subsec.visFloor  ();
@@ -405,7 +405,7 @@ static void setBottomShadowParams(WallEdge const &leftEdge, WallEdge const &righ
     ProjectedShadowData &projected)
 {
     LineSide /*const*/ &side = leftEdge.lineSide();
-    DENG2_ASSERT(side.leftHEdge());
+    DE_ASSERT(side.leftHEdge());
     auto const &subsec      = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().subsector().as<world::ClientSubsector>();
     Plane const &visFloor   = subsec.visFloor  ();
     Plane const &visCeiling = subsec.visCeiling();
@@ -562,11 +562,11 @@ static void setSideShadowParams(WallEdge const &leftEdge, WallEdge const &rightE
 {
     LineSide /*const*/ &side = leftEdge.lineSide();
     HEdge const *hedge = side.leftHEdge();
-    DENG2_ASSERT(hedge);
+    DE_ASSERT(hedge);
     auto const &subsec      = hedge->face().mapElementAs<ConvexSubspace>().subsector().as<world::ClientSubsector>();
     Plane const &visFloor   = subsec.visFloor  ();
     Plane const &visCeiling = subsec.visCeiling();
-    DENG2_ASSERT(visFloor.castsShadow() || visCeiling.castsShadow());  // sanity check.
+    DE_ASSERT(visFloor.castsShadow() || visCeiling.castsShadow());  // sanity check.
 
     projected = {};
     projected.texOrigin     = Vec2f(0, leftEdge.bottom().z() - visFloor.heightSmoothed());
@@ -688,7 +688,7 @@ static void setSideShadowParams(WallEdge const &leftEdge, WallEdge const &rightE
 static void quadTexCoords(Vec2f *tc, WallEdge const &leftEdge, WallEdge const &rightEdge,
     Vec2f const &texOrigin, Vec2f const &texDimensions, bool horizontal)
 {
-    DENG2_ASSERT(tc);
+    DE_ASSERT(tc);
     if(horizontal)
     {
         tc[0] = (texOrigin / texDimensions).yx();
@@ -737,14 +737,14 @@ static bool projectWallShadow(WallEdge const &leftEdge, WallEdge const &rightEdg
                       projected.texOrigin, projected.texDimensions, true/*horizontal*/);
         return true;
     }
-    DENG2_ASSERT_FAIL("Unknown WallShadow");
+    DE_ASSERT_FAIL("Unknown WallShadow");
     return false;
 }
 
 static void drawWallShadow(Vec3f const *posCoords, WallEdge const &leftEdge, WallEdge const &rightEdge,
     dfloat shadowDark, ProjectedShadowData const &tp)
 {
-    DENG2_ASSERT(posCoords);
+    DE_ASSERT(posCoords);
 
     // Uniform color - shadows are black.
     Vec4ub const shadowColor(0, 0, 0, 255 * de::clamp(0.f, shadowDark, 1.0f));
@@ -938,7 +938,7 @@ void Rend_DrawWallRadio(WallEdge const &leftEdge, WallEdge const &rightEdge, dfl
 static bool prepareFlatShadowEdges(ShadowEdge edges[2], HEdge const *hEdges[2], dint sectorPlaneIndex,
     dfloat shadowDark)
 {
-    DENG2_ASSERT(edges && hEdges && hEdges[0] && hEdges[1]);
+    DE_ASSERT(edges && hEdges && hEdges[0] && hEdges[1]);
 
     // If the sector containing the shadowing line section is fully closed (i.e., volume is
     // not positive) then skip shadow drawing entirely.
@@ -988,7 +988,7 @@ static uint makeFlatShadowGeometry(DrawList::Indices &indices, Store &verts, gl:
     verts.posCoords[indices[order[2]]] = edges[1].inner();
     verts.posCoords[indices[order[3]]] = edges[0].inner();
     // Set uniform color.
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     Vec4ub const &uniformColor = (::renderWireframe? white : black);  // White to assist visual debugging.
 #else
     Vec4ub const &uniformColor = black;
@@ -1029,7 +1029,7 @@ void Rend_DrawFlatRadio(ConvexSubspace const &subspace)
 
     // All shadow geometry uses the same texture (i.e., none) - use the same list.
     DrawList &shadowList = ClientApp::renderSystem().drawLists().find(
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
         DrawListSpec(renderWireframe? UnlitGeom : ShadowGeom)
 #else
         DrawListSpec(ShadowGeom)
@@ -1039,7 +1039,7 @@ void Rend_DrawFlatRadio(ConvexSubspace const &subspace)
     // Process all LineSides linked to this subspace as potential shadow casters.
     subspace.forAllShadowLines([&subsec, &shadowDark, &eyeToSubspace, &shadowList] (LineSide &side)
     {
-        DENG2_ASSERT(side.hasSections() && !side.line().definesPolyobj() && side.leftHEdge());
+        DE_ASSERT(side.hasSections() && !side.line().definesPolyobj() && side.leftHEdge());
 
         // Process each only once per frame (we only want to draw a shadow set once).
         if(side.shadowVisCount() != R_FrameCount())

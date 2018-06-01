@@ -40,10 +40,10 @@ class InputDevice
 {
 public:
     /// Referenced control is missing. @ingroup errors
-    DENG2_ERROR(MissingControlError);
+    DE_ERROR(MissingControlError);
 
     /// Notified when the active state of the device changes.
-    DENG2_DEFINE_AUDIENCE2(ActiveChange, void inputDeviceActiveChanged(InputDevice &device))
+    DE_DEFINE_AUDIENCE2(ActiveChange, void inputDeviceActiveChanged(InputDevice &device))
 
     /**
      * Base class for all controls.
@@ -53,7 +53,7 @@ public:
     {
     public:
         /// No InputDevice is associated with the control. @ingroup errors
-        DENG2_ERROR(MissingDeviceError);
+        DE_ERROR(MissingDeviceError);
 
         /**
          * How the control state relates to binding contexts.
@@ -76,7 +76,7 @@ public:
         explicit Control(InputDevice *device = nullptr);
         virtual ~Control();
 
-        DENG2_CAST_METHODS()
+        DE_CAST_METHODS()
 
         /**
          * Returns @c true if the control is presently in its default state.
@@ -186,7 +186,7 @@ public:
         virtual void consoleRegister() {}
 
     private:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
 public:
@@ -345,7 +345,7 @@ public:
     void consoleRegister();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(InputDevice::Control::BindContextAssociation)

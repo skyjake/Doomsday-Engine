@@ -33,8 +33,8 @@
 
 namespace de {
 
-DENG2_PIMPL(ScriptCommandWidget)
-, DENG2_OBSERVES(App, StartupComplete)
+DE_PIMPL(ScriptCommandWidget)
+, DE_OBSERVES(App, StartupComplete)
 {
     Script script;
     Process process;
@@ -67,7 +67,7 @@ DENG2_PIMPL(ScriptCommandWidget)
 
         // Add the variables in the global scope.
         /// @todo Should be determined dynamically based on the scope at the cursor position.
-        DENG2_FOR_EACH_CONST(Record::Members, i, process.globals().members())
+        DE_FOR_EACH_CONST(Record::Members, i, process.globals().members())
         {
             lexi.addTerm(i.key());
         }
@@ -159,7 +159,7 @@ void ScriptCommandWidget::executeCommand(String const &text)
         Value const &result = d->process.context().evaluator().result();
         if (!is<NoneValue>(result))
         {
-            String msg = DENG2_CHAR_RIGHT_DOUBLEARROW " " _E(>)_E(m) + result.asText();
+            String msg = DE_CHAR_RIGHT_DOUBLEARROW " " _E(>)_E(m) + result.asText();
             LOG_SCR_MSG(msg);
         }
     }

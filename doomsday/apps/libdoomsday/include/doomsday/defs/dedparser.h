@@ -40,7 +40,7 @@ public:
     int parse(char const *buffer, de::String sourceFile, bool sourceIsCustom);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // LIBDOOMSDAY_DED_V1_PARSER_H

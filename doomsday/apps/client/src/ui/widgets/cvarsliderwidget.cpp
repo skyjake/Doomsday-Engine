@@ -22,14 +22,14 @@
 using namespace de;
 using namespace de::ui;
 
-DENG2_PIMPL_NOREF(CVarSliderWidget)
+DE_PIMPL_NOREF(CVarSliderWidget)
 {
     char const *cvar;
 
     cvar_t *var() const
     {
         cvar_t *cv = Con_FindVariable(cvar);
-        DENG2_ASSERT(cv != 0);
+        DE_ASSERT(cv != 0);
         return cv;
     }
 };

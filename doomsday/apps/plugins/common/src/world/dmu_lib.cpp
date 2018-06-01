@@ -635,8 +635,8 @@ terraintype_t const *P_PlaneMaterialTerrainType(Sector *sec, int plane)
 
 void P_TranslateSideMaterialOrigin(Side *side, SideSection section, float deltaXY[2])
 {
-    DENG_ASSERT(side);
-    DENG_ASSERT(VALID_SIDESECTION(section));
+    DE_ASSERT(side);
+    DE_ASSERT(VALID_SIDESECTION(section));
 
     uint const dmuSurfaceOriginFlags = DMU_OFFSET_XY | DMU_FLAG_FOR_SIDESECTION(section);
     float origin[2];
@@ -668,7 +668,7 @@ void P_TranslatePlaneMaterialOrigin(Plane *plane, float deltaXY[2])
 {
     float origin[2];
 
-    DENG_ASSERT(plane);
+    DE_ASSERT(plane);
 
     if(IS_ZERO(deltaXY[0]) && IS_ZERO(deltaXY[1])) return;
 

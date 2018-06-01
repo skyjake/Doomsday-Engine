@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_METADATABANK_H
-#define LIBDENG2_METADATABANK_H
+#ifndef LIBCORE_METADATABANK_H
+#define LIBCORE_METADATABANK_H
 
 #include <de/Bank>
 
@@ -28,7 +28,7 @@ namespace de {
  *
  * @ingroup fs
  */
-class DENG2_PUBLIC MetadataBank : protected Bank
+class DE_PUBLIC MetadataBank : protected Bank
 {
 public:
     MetadataBank();
@@ -63,9 +63,9 @@ protected:
     IData *newData() override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_METADATABANK_H
+#endif // LIBCORE_METADATABANK_H

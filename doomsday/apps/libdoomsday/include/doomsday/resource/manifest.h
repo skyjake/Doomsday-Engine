@@ -94,7 +94,7 @@ public:
     de::String const &resolvedPath(bool tryLocate = true);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // LIBDOOMSDAY_RESOURCE_MANIFEST_H

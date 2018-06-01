@@ -5,7 +5,7 @@
 
 struct mobj_s;
 
-DENG_API_TYPEDEF(Client)
+DE_API_TYPEDEF(Client)
 {
     de_api_t api;
 
@@ -51,9 +51,9 @@ DENG_API_TYPEDEF(Client)
      */
     struct mobj_s* (*Mobj_PlayerMobj)(int plrNum);
 }
-DENG_API_T(Client);
+DE_API_T(Client);
 
-#ifndef DENG_NO_API_MACROS_CLIENT
+#ifndef DE_NO_API_MACROS_CLIENT
 #define ClMobj_Find                 _api_Client.Mobj_Find
 #define ClMobj_EnableLocalActions   _api_Client.Mobj_EnableLocalActions
 #define ClMobj_LocalActionsEnabled  _api_Client.Mobj_LocalActionsEnabled
@@ -62,7 +62,7 @@ DENG_API_T(Client);
 #endif
 
 #ifdef __DOOMSDAY__
-DENG_USING_API(Client);
+DE_USING_API(Client);
 #endif
 
 #endif // DOOMSDAY_API_CLIENT_H

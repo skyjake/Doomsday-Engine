@@ -73,7 +73,7 @@ public:
 public: // Input devices -----------------------------------------------------
 
     /// Required/referenced input device is missing. @ingroup errors
-    DENG2_ERROR(MissingDeviceError);
+    DE_ERROR(MissingDeviceError);
 
     /*
      * Lookup an InputDevice by it's unique @a id.
@@ -173,7 +173,7 @@ public:
 public: // Binding (context) management --------------------------------------
 
     /// Required/referenced binding context is missing. @ingroup errors
-    DENG2_ERROR(MissingContextError);
+    DE_ERROR(MissingContextError);
 
     void bindDefaults();
 
@@ -285,7 +285,7 @@ public:
     static void consoleRegister();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // CLIENT_INPUTSYSTEM_H

@@ -27,15 +27,15 @@
 
 #include "h2def.h"
 
-DENG_EXTERN_C gamemode_t gameMode;
-DENG_EXTERN_C int gameModeBits;
+DE_EXTERN_C gamemode_t gameMode;
+DE_EXTERN_C int gameModeBits;
 
-DENG_EXTERN_C char const *borderGraphics[];
+DE_EXTERN_C char const *borderGraphics[];
 
 // Default font colors.
-DENG_EXTERN_C float const defFontRGB[];
-DENG_EXTERN_C float const defFontRGB2[];
-DENG_EXTERN_C float const defFontRGB3[];
+DE_EXTERN_C float const defFontRGB[];
+DE_EXTERN_C float const defFontRGB2[];
+DE_EXTERN_C float const defFontRGB3[];
 
 #ifdef __cplusplus
 extern "C" {

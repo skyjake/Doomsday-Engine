@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_SCRIPTLEX_H
-#define LIBDENG2_SCRIPTLEX_H
+#ifndef LIBCORE_SCRIPTLEX_H
+#define LIBCORE_SCRIPTLEX_H
 
 #include "../Lex"
 #include "../TokenBuffer"
@@ -37,22 +37,22 @@ namespace de {
  *
  * @ingroup script
  */
-class DENG2_PUBLIC ScriptLex : public Lex
+class DE_PUBLIC ScriptLex : public Lex
 {
 public:
     /// Base error for syntax errors at the level of lexical analysis (e.g.,
     /// a non-terminated string constant). @ingroup errors
-    DENG2_ERROR(SyntaxError);
+    DE_ERROR(SyntaxError);
 
     /// A unexpected character is encountered. @ingroup errors
-    DENG2_SUB_ERROR(SyntaxError, UnexpectedCharacterError);
+    DE_SUB_ERROR(SyntaxError, UnexpectedCharacterError);
 
     /// An unterminated string token is encountered. @ingroup errors
-    DENG2_SUB_ERROR(SyntaxError, UnterminatedStringError);
+    DE_SUB_ERROR(SyntaxError, UnterminatedStringError);
 
     /// The bracket level goes below zero, i.e., when more brackets are closed
     /// than opened, or when the input ends before all brackets are closed. @ingroup errors
-    DENG2_SUB_ERROR(SyntaxError, MismatchedBracketError);
+    DE_SUB_ERROR(SyntaxError, MismatchedBracketError);
 
     // Keywords.
     static String const AND;
@@ -141,4 +141,4 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(ScriptLex::Behaviors)
 
 } // namespace de
 
-#endif /* LIBDENG2_SCRIPTLEX_H */
+#endif /* LIBCORE_SCRIPTLEX_H */

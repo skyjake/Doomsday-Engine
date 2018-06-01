@@ -204,7 +204,7 @@ void Z_Shutdown(void)
         numVolumes++;
         totalMemory += vol->size;
 
-#ifdef LIBDENG_FAKE_MEMORY_ZONE
+#ifdef DE_FAKE_MEMORY_ZONE
         Z_FreeTags(0, DDMAXINT);
 #endif
 
@@ -219,7 +219,7 @@ void Z_Shutdown(void)
     zoneMutex = 0;
 }
 
-#ifdef LIBDENG_FAKE_MEMORY_ZONE
+#ifdef DE_FAKE_MEMORY_ZONE
 memblock_t *Z_GetBlock(void *ptr)
 {
     memvolume_t    *volume;
@@ -237,7 +237,7 @@ memblock_t *Z_GetBlock(void *ptr)
             }
         }
     }
-    DENG_ASSERT(false); // There is no memory block for this.
+    DE_ASSERT(false); // There is no memory block for this.
     return NULL;
 }
 #endif
@@ -259,10 +259,10 @@ static void freeBlock(void *ptr, memblock_t **tracked)
     lockZone();
 
     block = Z_GetBlock(ptr);
-    if (block->id != LIBDENG_ZONEID)
+    if (block->id != DE_ZONEID)
     {
         unlockZone();
-        DENG_ASSERT(block->id == LIBDENG_ZONEID);
+        DE_ASSERT(block->id == DE_ZONEID);
         App_Log(DE2_LOG_WARNING,
                 "Attempted to free pointer without ZONEID.");
         return;
@@ -278,7 +278,7 @@ static void freeBlock(void *ptr, memblock_t **tracked)
     block->volume = NULL;
     block->id = 0;
 
-#ifdef LIBDENG_FAKE_MEMORY_ZONE
+#ifdef DE_FAKE_MEMORY_ZONE
     M_Free(block->area);
     block->area = NULL;
     block->areaSize = 0;
@@ -434,7 +434,7 @@ static void splitFreeBlock(memblock_t *block, size_t size)
     newBlock->next = block->next;
     newBlock->next->prev = newBlock;
     newBlock->seqFirst = newBlock->seqLast = NULL;
-#ifdef LIBDENG_FAKE_MEMORY_ZONE
+#ifdef DE_FAKE_MEMORY_ZONE
     newBlock->area = 0;
     newBlock->areaSize = 0;
 #endif
@@ -491,7 +491,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
             continue;
         }
 
-        DENG_ASSERT(volume->zone);
+        DE_ASSERT(volume->zone);
 
         // Scan through the block list looking for the first free block of
         // sufficient size, throwing out any purgable blocks along the
@@ -533,7 +533,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
                 {
                     memblock_t *old = iter;
                     iter = iter->prev; // Step back.
-#ifdef LIBDENG_FAKE_MEMORY_ZONE
+#ifdef DE_FAKE_MEMORY_ZONE
                     freeBlock(old->area, &start);
 #else
                     freeBlock((byte *) old + sizeof(memblock_t), &start);
@@ -579,7 +579,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
             splitFreeBlock(iter, size);
         }
 
-#ifdef LIBDENG_FAKE_MEMORY_ZONE
+#ifdef DE_FAKE_MEMORY_ZONE
         iter->areaSize = size - sizeof(memblock_t);
         iter->area = M_Malloc(iter->areaSize);
 #endif
@@ -587,7 +587,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
         if (user)
         {
             iter->user = user;      // mark as an in use block
-#ifdef LIBDENG_FAKE_MEMORY_ZONE
+#ifdef DE_FAKE_MEMORY_ZONE
             *(void **) user = iter->area;
 #else
             *(void **) user = (void *) ((byte *) iter + sizeof(memblock_t));
@@ -596,7 +596,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
         else
         {
             // An owner is required for purgable blocks.
-            DENG_ASSERT(tag < PU_PURGELEVEL);
+            DE_ASSERT(tag < PU_PURGELEVEL);
 
             iter->user = MEMBLOCK_USER_ANONYMOUS; // mark as in use, but unowned
         }
@@ -634,11 +634,11 @@ void *Z_Malloc(size_t size, int tag, void *user)
         volume->allocatedBytes += iter->size;
 
         iter->volume = volume;
-        iter->id = LIBDENG_ZONEID;
+        iter->id = DE_ZONEID;
 
         unlockZone();
 
-#ifdef LIBDENG_FAKE_MEMORY_ZONE
+#ifdef DE_FAKE_MEMORY_ZONE
         return iter->area;
 #else
         return (void *) ((byte *) iter + sizeof(memblock_t));
@@ -662,7 +662,7 @@ void *Z_Realloc(void *ptr, size_t n, int mallocTag)
 
         // Has old data; copy it.
         memblock_t *block = Z_GetBlock(ptr);
-#ifdef LIBDENG_FAKE_MEMORY_ZONE
+#ifdef DE_FAKE_MEMORY_ZONE
         bsize = block->areaSize;
 #else
         bsize = block->size - sizeof(memblock_t);
@@ -695,7 +695,7 @@ void Z_FreeTags(int lowTag, int highTag)
             if (block->user) // An allocated block?
             {
                 if (block->tag >= lowTag && block->tag <= highTag)
-#ifdef LIBDENG_FAKE_MEMORY_ZONE
+#ifdef DE_FAKE_MEMORY_ZONE
                     Z_Free(block->area);
 #else
                     Z_Free((byte *) block + sizeof(memblock_t));
@@ -776,7 +776,7 @@ void Z_CheckHeap(void)
                     App_FatalError("Z_CheckHeap: two consecutive free blocks");
                 if (block->user == (void **) -1)
                 {
-                    DENG_ASSERT(block->user != (void **) -1);
+                    DE_ASSERT(block->user != (void **) -1);
                     App_FatalError("Z_CheckHeap: bad user pointer");
                 }
 
@@ -820,7 +820,7 @@ void Z_ChangeTag2(void *ptr, int tag)
     {
         memblock_t *block = Z_GetBlock(ptr);
 
-        DENG_ASSERT(block->id == LIBDENG_ZONEID);
+        DE_ASSERT(block->id == DE_ZONEID);
 
         if (tag >= PU_PURGELEVEL && PTR2INT(block->user) < 0x100)
         {
@@ -840,7 +840,7 @@ void Z_ChangeUser(void *ptr, void *newUser)
     lockZone();
     {
         memblock_t *block = Z_GetBlock(ptr);
-        DENG_ASSERT(block->id == LIBDENG_ZONEID);
+        DE_ASSERT(block->id == DE_ZONEID);
         block->user = newUser;
     }
     unlockZone();
@@ -855,7 +855,7 @@ void *Z_GetUser(void *ptr)
 {
     memblock_t *block = Z_GetBlock(ptr);
 
-    DENG_ASSERT(block->id == LIBDENG_ZONEID);
+    DE_ASSERT(block->id == DE_ZONEID);
     return block->user;
 }
 
@@ -866,7 +866,7 @@ int Z_GetTag(void *ptr)
 {
     memblock_t *block = Z_GetBlock(ptr);
 
-    DENG_ASSERT(block->id == LIBDENG_ZONEID);
+    DE_ASSERT(block->id == DE_ZONEID);
     return block->tag;
 }
 
@@ -874,8 +874,8 @@ dd_bool Z_Contains(void *ptr)
 {
     memvolume_t *volume;
     memblock_t *block = Z_GetBlock(ptr);
-    DENG_ASSERT(Z_IsInited());
-    if (block->id != LIBDENG_ZONEID)
+    DE_ASSERT(Z_IsInited());
+    if (block->id != DE_ZONEID)
     {
         // Could be in the zone, but does not look like an allocated block.
         return false;
@@ -914,7 +914,7 @@ void *Z_Recalloc(void *ptr, size_t n, int callocTag)
     {
         p = Z_Malloc(n, Z_GetTag(ptr), NULL);
         block = Z_GetBlock(ptr);
-#ifdef LIBDENG_FAKE_MEMORY_ZONE
+#ifdef DE_FAKE_MEMORY_ZONE
         bsize = block->areaSize;
 #else
         bsize = block->size - sizeof(memblock_t);
@@ -1119,8 +1119,8 @@ zblockset_t *ZBlockSet_New(size_t sizeOfElement, uint32_t batchSize, int tag)
 {
     zblockset_t *set;
 
-    DENG_ASSERT(sizeOfElement > 0);
-    DENG_ASSERT(batchSize > 0);
+    DE_ASSERT(sizeOfElement > 0);
+    DE_ASSERT(batchSize > 0);
 
     // Allocate the blockset.
     set = Z_Calloc(sizeof(*set), tag, NULL);
@@ -1150,7 +1150,7 @@ void ZBlockSet_Delete(zblockset_t *set)
     unlockZone();
 }
 
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
 void Z_GetPrivateData(MemoryZonePrivateData *pd)
 {
     pd->volumeCount     = Z_VolumeCount();

@@ -23,7 +23,7 @@
 
 namespace de {
 
-DENG2_PIMPL(GridLayout)
+DE_PIMPL(GridLayout)
 {
     typedef QMap<Vec2i, ui::Alignment> CellAlignments;
 
@@ -198,7 +198,7 @@ DENG2_PIMPL(GridLayout)
         // Check if there is a fixed width defined for this column.
         if (&list == &cols && fixedColWidths.contains(pos))
         {
-            DENG2_ASSERT(fixedColWidths[pos] != 0);
+            DE_ASSERT(fixedColWidths[pos] != 0);
             m->fixedLength = holdRef(*fixedColWidths[pos]);
         }
 
@@ -218,9 +218,9 @@ DENG2_PIMPL(GridLayout)
             // The list may expand.
             addMetric(list);
         }
-        DENG2_ASSERT(index < list.size());
+        DE_ASSERT(index < list.size());
 
-        DENG2_ASSERT(list[index] != nullptr);
+        DE_ASSERT(list[index] != nullptr);
         if (!list[index]) return;
 
         Metric &metric = *list[index];
@@ -316,7 +316,7 @@ DENG2_PIMPL(GridLayout)
      */
     void end(int cellSpan)
     {
-        DENG2_ASSERT(current != 0);
+        DE_ASSERT(current != 0);
 
         // Advance to next cell.
         if (mode == ColumnFirst)
@@ -362,8 +362,8 @@ DENG2_PIMPL(GridLayout)
      */
     void append(GuiWidget *widget, Rule const *space, int cellSpan = 1, Rule const *layoutWidth = 0)
     {
-        DENG2_ASSERT(!(widget && space));
-        DENG2_ASSERT(widget || space);
+        DE_ASSERT(!(widget && space));
+        DE_ASSERT(widget || space);
 
         begin();
 
@@ -462,14 +462,14 @@ DENG2_PIMPL(GridLayout)
         // Sum up the column widths.
         for (int i = 0; i < size.x; ++i)
         {
-            DENG2_ASSERT(cols.at(i));
+            DE_ASSERT(cols.at(i));
             sumInto(totalWidth, *cols.at(i)->final);
         }
 
         // Sum up the row heights.
         for (int i = 0; i < size.y; ++i)
         {
-            DENG2_ASSERT(rows.at(i));
+            DE_ASSERT(rows.at(i));
             sumInto(totalHeight, *rows.at(i)->final);
         }
 
@@ -498,7 +498,7 @@ void GridLayout::clear()
 
 void GridLayout::setMode(GridLayout::Mode mode)
 {
-    DENG2_ASSERT(isEmpty());
+    DE_ASSERT(isEmpty());
 
     d->mode = mode;
     d->setup(d->maxCols, d->maxRows);
@@ -506,7 +506,7 @@ void GridLayout::setMode(GridLayout::Mode mode)
 
 void GridLayout::setLeftTop(Rule const &left, Rule const &top)
 {
-    DENG2_ASSERT(isEmpty());
+    DE_ASSERT(isEmpty());
 
     changeRef(d->initialX, left);
     changeRef(d->initialY, top);
@@ -517,16 +517,16 @@ void GridLayout::setLeftTop(Rule const &left, Rule const &top)
 
 void GridLayout::setGridSize(int numCols, int numRows)
 {
-    DENG2_ASSERT(numCols >= 0 && numRows >= 0);
-    DENG2_ASSERT(numCols > 0 || numRows > 0);
-    DENG2_ASSERT(isEmpty());
+    DE_ASSERT(numCols >= 0 && numRows >= 0);
+    DE_ASSERT(numCols > 0 || numRows > 0);
+    DE_ASSERT(isEmpty());
 
     d->setup(numCols, numRows);
 }
 
 void GridLayout::setModeAndGridSize(GridLayout::Mode mode, int numCols, int numRows)
 {
-    DENG2_ASSERT(isEmpty());
+    DE_ASSERT(isEmpty());
 
     d->mode = mode;
     setGridSize(numCols, numRows);
@@ -534,13 +534,13 @@ void GridLayout::setModeAndGridSize(GridLayout::Mode mode, int numCols, int numR
 
 void GridLayout::setColumnAlignment(int column, ui::Alignment cellAlign)
 {
-    DENG2_ASSERT(column >= 0 && column < d->cols.size());
+    DE_ASSERT(column >= 0 && column < d->cols.size());
     d->cols[column]->cellAlign = cellAlign;
 }
 
 void GridLayout::setColumnFixedWidth(int column, Rule const &fixedWidth)
 {
-    DENG2_ASSERT(isEmpty());
+    DE_ASSERT(isEmpty());
 
     if (d->fixedColWidths.contains(column))
     {
@@ -565,13 +565,13 @@ void GridLayout::setOverrideHeight(Rule const &height)
 
 void GridLayout::setColumnPadding(Rule const &gap)
 {
-    DENG2_ASSERT(isEmpty());
+    DE_ASSERT(isEmpty());
     changeRef(d->colPad, gap);
 }
 
 void GridLayout::setRowPadding(Rule const &gap)
 {
-    DENG2_ASSERT(isEmpty());
+    DE_ASSERT(isEmpty());
     changeRef(d->rowPad, gap);
 }
 
@@ -717,37 +717,37 @@ Rule const &GridLayout::height() const
 
 Rule const &GridLayout::columnLeft(int col) const
 {
-    DENG2_ASSERT(col >= 0 && col < d->cols.size());
+    DE_ASSERT(col >= 0 && col < d->cols.size());
     return d->columnLeftX(col);
 }
 
 Rule const &GridLayout::columnRight(int col) const
 {
-    DENG2_ASSERT(col >= 0 && col < d->cols.size());
+    DE_ASSERT(col >= 0 && col < d->cols.size());
     return d->columnRightX(col);
 }
 
 Rule const &GridLayout::columnWidth(int col) const
 {
-    DENG2_ASSERT(col >= 0 && col < d->cols.size());
+    DE_ASSERT(col >= 0 && col < d->cols.size());
     return *d->cols.at(col)->final;
 }
 
 Rule const &GridLayout::rowHeight(int row) const
 {
-    DENG2_ASSERT(row >= 0 && row < d->rows.size());
+    DE_ASSERT(row >= 0 && row < d->rows.size());
     return *d->rows.at(row)->final;
 }
 
 Rule const &GridLayout::overrideWidth() const
 {
-    DENG2_ASSERT(d->fixedCellWidth != 0);
+    DE_ASSERT(d->fixedCellWidth != 0);
     return *d->fixedCellWidth;
 }
 
 Rule const &GridLayout::overrideHeight() const
 {
-    DENG2_ASSERT(d->fixedCellHeight != 0);
+    DE_ASSERT(d->fixedCellHeight != 0);
     return *d->fixedCellHeight;
 }
 

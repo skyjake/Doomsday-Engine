@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_CONSOLE_PROGRESSBAR_H
-#define LIBDENG_CONSOLE_PROGRESSBAR_H
+#ifndef DE_CONSOLE_PROGRESSBAR_H
+#define DE_CONSOLE_PROGRESSBAR_H
 
 #include "dd_types.h"
 
@@ -50,4 +50,4 @@ dd_bool Con_IsProgressAnimationCompleted(void);
 } // extern "C"
 #endif
 
-#endif // LIBDENG_CONSOLE_PROGRESSBAR_H
+#endif // DE_CONSOLE_PROGRESSBAR_H

@@ -28,8 +28,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MEMORY_ZONE_PRIVATE_H
-#define LIBDENG_MEMORY_ZONE_PRIVATE_H
+#ifndef DE_MEMORY_ZONE_PRIVATE_H
+#define DE_MEMORY_ZONE_PRIVATE_H
 
 #include <de/liblegacy.h>
 #include <de/memoryzone.h> // public API
@@ -54,11 +54,11 @@ typedef struct memblock_s {
     size_t          size; // Including header and possibly tiny fragments.
     void **         user; // NULL if a free block.
     int             tag; // Purge level.
-    int             id; // Should be LIBDENG_ZONEID.
+    int             id; // Should be DE_ZONEID.
     struct memvolume_s *volume; // Volume this block belongs to.
     struct memblock_s *next, *prev;
     struct memblock_s *seqLast, *seqFirst;
-#ifdef LIBDENG_FAKE_MEMORY_ZONE
+#ifdef DE_FAKE_MEMORY_ZONE
     void *          area; // The real memory area.
     size_t          areaSize; // Size of the allocated memory area.
 #endif
@@ -105,14 +105,14 @@ struct zblockset_s {
     struct zblockset_block_s *_blocks;
 };
 
-#ifdef LIBDENG_FAKE_MEMORY_ZONE
+#ifdef DE_FAKE_MEMORY_ZONE
 memblock_t *Z_GetBlock(void *ptr);
 #else
 // Real memory zone allocates memory from a custom heap.
 #define Z_GetBlock(ptr) ((memblock_t *) ((byte *)(ptr) - sizeof(memblock_t)))
 #endif
 
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
 /**
  * Provides access to the internal data of the memory zone module.
  * This is only needed for debugging purposes.
@@ -124,10 +124,10 @@ struct memzone_private_s {
     int volumeCount;
     memvolume_t *volumeRoot;
 };
-#endif // DENG_DEBUG
+#endif // DE_DEBUG
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_MEMORY_ZONE_PRIVATE_H */
+#endif /* DE_MEMORY_ZONE_PRIVATE_H */

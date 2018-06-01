@@ -138,7 +138,7 @@ namespace internal
 
 #define LIBGUI_VERTEX_FORMAT_SPEC(TypeName, ExpectedSize) \
     de::internal::AttribSpecs TypeName::formatSpec() { \
-        DENG2_ASSERT(sizeof(TypeName) == ExpectedSize); /* sanity check */ \
+        DE_ASSERT(sizeof(TypeName) == ExpectedSize); /* sanity check */ \
         return de::internal::AttribSpecs(_spec, sizeof(_spec)/sizeof(_spec[0])); \
     }
 
@@ -352,7 +352,7 @@ public:
         }
 
         inline int size() const {
-            DENG2_ASSERT(first.size() == count.size());
+            DE_ASSERT(first.size() == count.size());
             return first.size();
         }
     };
@@ -420,7 +420,7 @@ public:
     static void resetDrawCount();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 /**

@@ -31,7 +31,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(BusyMode)
+DE_PIMPL(BusyMode)
 , public Lockable
 {
     ITaskRunner *runner = nullptr;
@@ -47,10 +47,10 @@ DENG2_PIMPL(BusyMode)
 
     int performTask(BusyTask *task)
     {
-        DENG2_ASSERT(task);
+        DE_ASSERT(task);
         if (!task) return 0;
 
-        DENG2_ASSERT(!busyInited);
+        DE_ASSERT(!busyInited);
 
         busyTask = task;
         busyTaskEndedWithError = false;
@@ -86,18 +86,18 @@ DENG2_PIMPL(BusyMode)
         return result.returnValue;
     }
 
-    DENG2_PIMPL_AUDIENCE(Beginning)
-    DENG2_PIMPL_AUDIENCE(End)
-    DENG2_PIMPL_AUDIENCE(Abort)
-    DENG2_PIMPL_AUDIENCE(TaskWillStart)
-    DENG2_PIMPL_AUDIENCE(TaskComplete)
+    DE_PIMPL_AUDIENCE(Beginning)
+    DE_PIMPL_AUDIENCE(End)
+    DE_PIMPL_AUDIENCE(Abort)
+    DE_PIMPL_AUDIENCE(TaskWillStart)
+    DE_PIMPL_AUDIENCE(TaskComplete)
 };
 
-DENG2_AUDIENCE_METHOD(BusyMode, Beginning)
-DENG2_AUDIENCE_METHOD(BusyMode, End)
-DENG2_AUDIENCE_METHOD(BusyMode, Abort)
-DENG2_AUDIENCE_METHOD(BusyMode, TaskWillStart)
-DENG2_AUDIENCE_METHOD(BusyMode, TaskComplete)
+DE_AUDIENCE_METHOD(BusyMode, Beginning)
+DE_AUDIENCE_METHOD(BusyMode, End)
+DE_AUDIENCE_METHOD(BusyMode, Abort)
+DE_AUDIENCE_METHOD(BusyMode, TaskWillStart)
+DE_AUDIENCE_METHOD(BusyMode, TaskComplete)
 
 BusyMode::BusyMode() : d(new Impl(this))
 {}
@@ -124,7 +124,7 @@ bool BusyMode::endedWithError() const
 
 BusyTask *BusyMode::currentTask() const
 {
-    DENG2_GUARD(d)
+    DE_GUARD(d)
 
     if (!isActive()) return nullptr;
     return d->busyTask;
@@ -132,12 +132,12 @@ BusyTask *BusyMode::currentTask() const
 
 void BusyMode::abort(String const &message)
 {
-    DENG2_GUARD(d)
+    DE_GUARD(d)
 
     d->busyTaskEndedWithError = true;
     d->busyError = message;
 
-    DENG2_FOR_AUDIENCE2(Abort, i)
+    DE_FOR_AUDIENCE2(Abort, i)
     {
         i->busyModeAborted(message);
     }
@@ -171,7 +171,7 @@ static BusyTask *newTask(int mode, std::function<int (void *)> worker, void* wor
 
 static void deleteTask(BusyTask *task)
 {
-    DENG_ASSERT(task);
+    DE_ASSERT(task);
     if (task->name) M_Free((void *)task->name);
     delete task;
 }
@@ -211,14 +211,14 @@ int BusyMode::runTasks(BusyTask *tasks, int numTasks)
     int result = 0;
     Time startedAt;
 
-    DENG2_ASSERT(!isActive());
+    DE_ASSERT(!isActive());
 
     if (!tasks || numTasks <= 0) return result; // Hmm, no work?
 
     // Pick the first task.
     task = tasks;
 
-    DENG2_FOR_AUDIENCE2(Beginning, i)
+    DE_FOR_AUDIENCE2(Beginning, i)
     {
         i->busyModeWillBegin(*task);
     }
@@ -250,7 +250,7 @@ int BusyMode::runTasks(BusyTask *tasks, int numTasks)
         /**
          * Process the work.
          */
-        DENG2_FOR_AUDIENCE2(TaskWillStart, i)
+        DE_FOR_AUDIENCE2(TaskWillStart, i)
         {
             i->busyTaskWillStart(*task);
         }
@@ -263,7 +263,7 @@ int BusyMode::runTasks(BusyTask *tasks, int numTasks)
         deleteTask(tmp);
         tmp = nullptr;
 
-        DENG2_FOR_AUDIENCE2(TaskComplete, i)
+        DE_FOR_AUDIENCE2(TaskComplete, i)
         {
             i->busyTaskCompleted(*task);
         }
@@ -271,7 +271,7 @@ int BusyMode::runTasks(BusyTask *tasks, int numTasks)
         if (result) break;
     }
 
-    DENG2_FOR_AUDIENCE2(End, i)
+    DE_FOR_AUDIENCE2(End, i)
     {
         i->busyModeEnded();
     }

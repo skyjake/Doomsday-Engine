@@ -164,7 +164,7 @@ static void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
     for (i = 0; i < len; ++i)
     {
         // Whitespaces are separators.
-        if (DENG_ISSPACE(cargs->cmdLine[i]))
+        if (DE_ISSPACE(cargs->cmdLine[i]))
             cargs->cmdLine[i] = 0;
 
         if (cargs->cmdLine[i] == '\\' && IS_ESC_CHAR(cargs->cmdLine[i + 1]))
@@ -285,7 +285,7 @@ dd_bool Con_Init(void)
     /// DS records.
     consoleBinder.initNew();
     initVariableBindings(consoleBinder);
-    consoleBinder << DENG2_FUNC(Console_ListVars, "listVars", "pattern");
+    consoleBinder << DE_FUNC(Console_ListVars, "listVars", "pattern");
     App::scriptSystem().addNativeModule("Console", consoleBinder.module());
 
     exBuff = NULL;
@@ -950,7 +950,7 @@ static void makeAlias(char *aName, char *command)
 
 D_CMD(Alias)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if (argc != 3 && argc != 2)
     {
@@ -970,7 +970,7 @@ D_CMD(Alias)
 
 D_CMD(Parse)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     int     i;
 
@@ -994,7 +994,7 @@ D_CMD(Parse)
 
 D_CMD(Wait)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     timespan_t offset;
 
@@ -1007,7 +1007,7 @@ D_CMD(Wait)
 
 D_CMD(Repeat)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     int     count;
     timespan_t interval, offset;
@@ -1025,7 +1025,7 @@ D_CMD(Repeat)
 
 D_CMD(Echo)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     int     i;
 
@@ -1071,7 +1071,7 @@ static dd_bool cvarAddSub(const char* name, float delta, dd_bool force)
  */
 D_CMD(AddSub)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     dd_bool             force = false;
     float               delta = 0;
@@ -1099,7 +1099,7 @@ D_CMD(AddSub)
  */
 D_CMD(IncDec)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     dd_bool force = false;
     cvar_t* cvar;
@@ -1145,7 +1145,7 @@ D_CMD(IncDec)
  */
 D_CMD(Toggle)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     cvar_t *cvar = Con_FindVariable(argv[1]);
     if (!cvar) return false;
@@ -1241,7 +1241,7 @@ D_CMD(If)
         }
         break;
     default:
-        DENG2_ASSERT_FAIL("CCmdIf: Invalid cvar type");
+        DE_ASSERT_FAIL("CCmdIf: Invalid cvar type");
         return false;
     }
 
@@ -1259,7 +1259,7 @@ D_CMD(If)
 
 D_CMD(DebugCrash)
 {
-    DENG2_UNUSED3(src, argv, argc);
+    DE_UNUSED(src, argv, argc);
 
     int* ptr = (int*) 0x123;
 
@@ -1288,7 +1288,7 @@ void Con_DataRegister()
     C_CMD("listaliases",    NULL,   ListAliases);
     C_CMD("listcmds",       NULL,   ListCmds);
     C_CMD("listvars",       NULL,   ListVars);
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
     C_CMD("varstats",       NULL,   PrintVarStats);
 #endif
 }
@@ -1326,13 +1326,13 @@ void Con_ShutdownDatabases(void)
 
 String Con_GameAsStyledText(Game const *game)
 {
-    DENG2_ASSERT(game != 0);
+    DE_ASSERT(game != 0);
     return String(_E(1)) + game->id() + _E(.);
 }
 
 static int printKnownWordWorker(knownword_t const *word, void *parameters)
 {
-    DENG_ASSERT(word);
+    DE_ASSERT(word);
     uint *numPrinted = (uint *) parameters;
 
     switch (word->type)
@@ -1364,7 +1364,7 @@ static int printKnownWordWorker(knownword_t const *word, void *parameters)
         break;
 
     default:
-        DENG_ASSERT(false);
+        DE_ASSERT(false);
         break;
     }
 
@@ -1374,7 +1374,7 @@ static int printKnownWordWorker(knownword_t const *word, void *parameters)
 
 D_CMD(ListVars)
 {
-    DENG_UNUSED(src);
+    DE_UNUSED(src);
 
     uint numPrinted = 0;
     LOG_SCR_MSG(_E(b) "Console variables:");
@@ -1385,7 +1385,7 @@ D_CMD(ListVars)
 
 D_CMD(ListCmds)
 {
-    DENG_UNUSED(src);
+    DE_UNUSED(src);
 
     LOG_SCR_MSG(_E(b) "Console commands:");
     uint numPrinted = 0;
@@ -1396,7 +1396,7 @@ D_CMD(ListCmds)
 
 D_CMD(ListAliases)
 {
-    DENG_UNUSED(src);
+    DE_UNUSED(src);
 
     LOG_SCR_MSG(_E(b) "Aliases:");
     uint numPrinted = 0;
@@ -1407,8 +1407,8 @@ D_CMD(ListAliases)
 
 D_CMD(DoomsdayScript)
 {
-    DENG_UNUSED(src);
-    DENG_UNUSED(argc);
+    DE_UNUSED(src);
+    DE_UNUSED(argc);
     String source;
     for (int i = 1; i < argc; ++i)
     {

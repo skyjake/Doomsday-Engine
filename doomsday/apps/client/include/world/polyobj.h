@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_POLYOBJ_H
-#define DENG_WORLD_POLYOBJ_H
+#ifndef DE_WORLD_POLYOBJ_H
+#define DE_WORLD_POLYOBJ_H
 
 #include "dd_share.h"  // SoundEmitter
 
@@ -48,7 +48,7 @@ typedef struct polyobj_s
 {
 public:
     /// The polyobj is not presently linked in the BSP. @ingroup errors
-    DENG2_ERROR(NotLinkedError);
+    DE_ERROR(NotLinkedError);
 
     static void setCollisionCallback(void (*func) (struct mobj_s *mobj, void *line, void *polyobj));
 
@@ -256,4 +256,4 @@ private:
     
 } Polyobj;
 
-#endif  // DENG_WORLD_POLYOBJ_H
+#endif  // DE_WORLD_POLYOBJ_H

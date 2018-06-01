@@ -36,7 +36,7 @@ namespace ui {
 class LIBAPPFW_PUBLIC Margins
 {
 public:
-    DENG2_DEFINE_AUDIENCE2(Change, void marginsChanged())
+    DE_DEFINE_AUDIENCE2(Change, void marginsChanged())
 
 public:
     Margins(String const &defaultMargin = "gap");
@@ -85,7 +85,7 @@ public:
     Vec4i toVector() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace ui

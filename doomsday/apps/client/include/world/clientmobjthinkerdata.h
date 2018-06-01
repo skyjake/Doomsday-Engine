@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_WORLD_CLIENTMOBJTHINKERDATA_H
-#define DENG_WORLD_CLIENTMOBJTHINKERDATA_H
+#ifndef DE_WORLD_CLIENTMOBJTHINKERDATA_H
+#define DE_WORLD_CLIENTMOBJTHINKERDATA_H
 
 #include <doomsday/world/mobjthinkerdata.h>
 #include <de/timer.h>
@@ -115,7 +115,7 @@ public:
     void operator >> (de::Writer &to) const override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_WORLD_CLIENTMOBJTHINKERDATA_H
+#endif // DE_WORLD_CLIENTMOBJTHINKERDATA_H

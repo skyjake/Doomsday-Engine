@@ -24,7 +24,7 @@
 
 namespace de {
 
-DENG2_PIMPL(FileIndex), public ReadWriteLockable
+DE_PIMPL(FileIndex), public ReadWriteLockable
 {
     IPredicate const *predicate;
     Index index;
@@ -53,14 +53,14 @@ DENG2_PIMPL(FileIndex), public ReadWriteLockable
 
     void add(File const &file)
     {
-        DENG2_GUARD_WRITE(this);
+        DE_GUARD_WRITE(this);
 
         index.insert(std::pair<String, File *>(indexedName(file), const_cast<File *>(&file)));
     }
 
     void remove(File const &file)
     {
-        DENG2_GUARD_WRITE(this);
+        DE_GUARD_WRITE(this);
 
         if (index.empty())
         {
@@ -92,7 +92,7 @@ DENG2_PIMPL(FileIndex), public ReadWriteLockable
             dir = "/" + dir;
         }
 
-        DENG2_GUARD_READ(this);
+        DE_GUARD_READ(this);
 
         ConstIndexRange range = index.equal_range(baseName);
         for (Index::const_iterator i = range.first; i != range.second; ++i)
@@ -105,12 +105,12 @@ DENG2_PIMPL(FileIndex), public ReadWriteLockable
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(Addition)
-    DENG2_PIMPL_AUDIENCE(Removal)
+    DE_PIMPL_AUDIENCE(Addition)
+    DE_PIMPL_AUDIENCE(Removal)
 };
 
-DENG2_AUDIENCE_METHOD(FileIndex, Addition)
-DENG2_AUDIENCE_METHOD(FileIndex, Removal)
+DE_AUDIENCE_METHOD(FileIndex, Addition)
+DE_AUDIENCE_METHOD(FileIndex, Removal)
 
 FileIndex::FileIndex() : d(new Impl(this))
 {}
@@ -130,7 +130,7 @@ bool FileIndex::maybeAdd(File const &file)
     d->add(file);
 
     // Notify audience.
-    DENG2_FOR_AUDIENCE2(Addition, i)
+    DE_FOR_AUDIENCE2(Addition, i)
     {
         i->fileAdded(file, *this);
     }
@@ -143,7 +143,7 @@ void FileIndex::remove(File const &file)
     d->remove(file);
 
     // Notify audience.
-    DENG2_FOR_AUDIENCE2(Removal, i)
+    DE_FOR_AUDIENCE2(Removal, i)
     {
         i->fileRemoved(file, *this);
     }
@@ -151,7 +151,7 @@ void FileIndex::remove(File const &file)
 
 int FileIndex::size() const
 {
-    DENG2_GUARD_READ(d);
+    DE_GUARD_READ(d);
     return int(d->index.size());
 }
 
@@ -217,7 +217,7 @@ FileIndex::Index::const_iterator FileIndex::end() const
 
 void FileIndex::print() const
 {
-    DENG2_GUARD_READ(d);
+    DE_GUARD_READ(d);
     for (auto i = begin(); i != end(); ++i)
     {
         LOG_TRACE("\"%s\": ", i->first << i->second->description());
@@ -226,7 +226,7 @@ void FileIndex::print() const
 
 QList<File *> FileIndex::files() const
 {
-    DENG2_GUARD_READ(d);
+    DE_GUARD_READ(d);
     QList<File *> list;
     for (auto i = begin(); i != end(); ++i)
     {

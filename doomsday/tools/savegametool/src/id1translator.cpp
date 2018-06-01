@@ -36,7 +36,7 @@ extern de::Folder &outputFolder();
 
 using namespace de;
 
-DENG2_PIMPL(Id1Translator)
+DE_PIMPL(Id1Translator)
 {
     FormatId id;
     File const *saveFilePtr;
@@ -64,7 +64,7 @@ DENG2_PIMPL(Id1Translator)
         case DoomV9:     return 0x1DEAD600;
         case HereticV13: return 0x7D9A1200;
         }
-        DENG2_ASSERT_FAIL("Id1Translator::magic: Invalid format id");
+        DE_ASSERT_FAIL("Id1Translator::magic: Invalid format id");
         return 0;
     }
 
@@ -75,23 +75,23 @@ DENG2_PIMPL(Id1Translator)
         case DoomV9:     return verId == 90;
         case HereticV13: return verId == 130;
         }
-        DENG2_ASSERT_FAIL("Id1Translator::knownFormatVersion: Invalid format id");
+        DE_ASSERT_FAIL("Id1Translator::knownFormatVersion: Invalid format id");
         return false;
     }
 
     File const *saveFile() const
     {
-        DENG2_ASSERT(saveFilePtr != 0);
+        DE_ASSERT(saveFilePtr != 0);
         return saveFilePtr;
     }
 
     void openFile(Path path)
     {
         LOG_TRACE("openFile: Opening \"%s\"", path);
-        DENG2_ASSERT(saveFilePtr == 0);
+        DE_ASSERT(saveFilePtr == 0);
         try
         {
-            saveFilePtr = &DENG2_TEXT_APP->fileSystem().find<File const>(path);
+            saveFilePtr = &DE_TEXT_APP->fileSystem().find<File const>(path);
             return;
         }
         catch (...)
@@ -128,7 +128,7 @@ DENG2_PIMPL(Id1Translator)
         Block vcheck;
         from.readBytes(16, vcheck);
         saveVersion = String(vcheck.constData() + 8).toInt(0, 10, String::AllowSuffix);
-        DENG2_ASSERT(knownFormatVersion(saveVersion));
+        DE_ASSERT(knownFormatVersion(saveVersion));
 
         // Id Tech 1 formats omitted the majority of the game rules...
         QScopedPointer<Record> rules(new Record);
@@ -145,7 +145,7 @@ DENG2_PIMPL(Id1Translator)
         uint episode, map;
         from.readAs<dchar>(episode);
         from.readAs<dchar>(map);
-        DENG2_ASSERT(map > 0);
+        DE_ASSERT(map > 0);
         metadata.set("mapUri", composeMapUriPath(episode, map - 1).asText());
 
         ArrayValue *array = new ArrayValue;
@@ -202,7 +202,7 @@ String Id1Translator::formatName() const
     case DoomV9:      return "Doom (id Tech 1)";
     case HereticV13:  return "Heretic (id Tech 1)";
     }
-    DENG2_ASSERT_FAIL("Id1Translator::formatName: Invalid format id");
+    DE_ASSERT_FAIL("Id1Translator::formatName: Invalid format id");
     return "";
 }
 

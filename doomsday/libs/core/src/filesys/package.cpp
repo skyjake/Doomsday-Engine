@@ -69,7 +69,7 @@ String Package::Asset::absolutePath(String const &name) const
     return ScriptedInfo::absolutePathInContext(*context, gets(name));
 }
 
-DENG2_PIMPL(Package)
+DE_PIMPL(Package)
 {
     SafePtr<const File> file;
     Version version; // version of the loaded package
@@ -103,7 +103,7 @@ DENG2_PIMPL(Package)
         if (self().objectNamespace().has(PACKAGE_IMPORT_PATH))
         {
             ArrayValue const &imp = self().objectNamespace().geta(PACKAGE_IMPORT_PATH);
-            DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, imp.elements())
+            DE_FOR_EACH_CONST(ArrayValue::Elements, i, imp.elements())
             {
                 Path importPath = (*i)->asText();
                 if (!importPath.isAbsolute())

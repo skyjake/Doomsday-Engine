@@ -18,8 +18,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_LOCKABLE_H
-#define LIBDENG2_LOCKABLE_H
+#ifndef LIBCORE_LOCKABLE_H
+#define LIBCORE_LOCKABLE_H
 
 #include "../libcore.h"
 
@@ -35,7 +35,7 @@ namespace de {
  *
  * @ingroup concurrency
  */
-class DENG2_PUBLIC Lockable
+class DE_PUBLIC Lockable
 {
 public:
     /// Acquire the lock.  Blocks until the operation succeeds.
@@ -67,4 +67,4 @@ struct LockableT : public Lockable
 
 } // namespace de
 
-#endif // LIBDENG2_LOCKABLE_H
+#endif // LIBCORE_LOCKABLE_H

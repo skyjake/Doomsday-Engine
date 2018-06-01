@@ -55,7 +55,7 @@ public:
     void glDeinit() const override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // CLIENT_RESOURCE_BITMAPFONT_H

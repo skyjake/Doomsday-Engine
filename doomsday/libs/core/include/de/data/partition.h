@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_PARTITION_H
-#define LIBDENG2_PARTITION_H
+#ifndef LIBCORE_PARTITION_H
+#define LIBCORE_PARTITION_H
 
 #include "../math.h"
 #include "../String"
@@ -121,4 +121,4 @@ public:
 
 }  // namespace de
 
-#endif  // LIBDENG2_PARTITION_H
+#endif  // LIBCORE_PARTITION_H

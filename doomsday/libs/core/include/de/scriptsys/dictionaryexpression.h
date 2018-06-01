@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_DICTIONARYEXPRESSION_H
-#define LIBDENG2_DICTIONARYEXPRESSION_H
+#ifndef LIBCORE_DICTIONARYEXPRESSION_H
+#define LIBCORE_DICTIONARYEXPRESSION_H
 
 #include "../Expression"
 
@@ -72,4 +72,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_DICTIONARYEXPRESSION_H */
+#endif /* LIBCORE_DICTIONARYEXPRESSION_H */

@@ -76,7 +76,7 @@ public:
     void clearAllChildren();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif  // LIBCOMMON_UI_GROUPWIDGET_H

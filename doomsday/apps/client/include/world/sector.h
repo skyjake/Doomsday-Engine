@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_SECTOR_H
-#define DENG_WORLD_SECTOR_H
+#ifndef DE_WORLD_SECTOR_H
+#define DE_WORLD_SECTOR_H
 
 #include <functional>
 #include <QList>
@@ -49,8 +49,8 @@ struct mobj_s;
  */
 class Sector : public world::MapElement
 {
-    DENG2_NO_COPY  (Sector)
-    DENG2_NO_ASSIGN(Sector)
+    DE_NO_COPY  (Sector)
+    DE_NO_ASSIGN(Sector)
 
 public:
     // Plane identifiers:
@@ -70,10 +70,10 @@ public:
 //- Lighting ----------------------------------------------------------------------------
 
     /// Notified whenever a light level change occurs.
-    DENG2_DEFINE_AUDIENCE2(LightLevelChange, void sectorLightLevelChanged(Sector &sector))
+    DE_DEFINE_AUDIENCE2(LightLevelChange, void sectorLightLevelChanged(Sector &sector))
 
     /// Notified whenever a light color change occurs.
-    DENG2_DEFINE_AUDIENCE2(LightColorChange, void sectorLightColorChanged(Sector &sector))
+    DE_DEFINE_AUDIENCE2(LightColorChange, void sectorLightColorChanged(Sector &sector))
 
     /**
      * Returns the ambient light level in the sector. The LightLevelChange audience is
@@ -138,7 +138,7 @@ public:
 //- Planes ------------------------------------------------------------------------------
 
     /// Required/referenced plane is missing. @ingroup errors
-    DENG2_ERROR(MissingPlaneError);
+    DE_ERROR(MissingPlaneError);
 
     /**
      * Returns @c true if at least one Plane in the sector is sky-masked.
@@ -157,13 +157,13 @@ public:
      */
     inline Plane &plane(de::dint planeIndex)
     {
-        DENG2_ASSERT(planeIndex >= 0 && planeIndex < planeCount());
+        DE_ASSERT(planeIndex >= 0 && planeIndex < planeCount());
         return *_lookupPlanes[planeIndex];
     }
     
     inline Plane const &plane(de::dint planeIndex) const
     {
-        DENG2_ASSERT(planeIndex >= 0 && planeIndex < planeCount());
+        DE_ASSERT(planeIndex >= 0 && planeIndex < planeCount());
         return *_lookupPlanes[planeIndex];
     }
 
@@ -316,9 +316,9 @@ protected:
     de::dint setProperty(world::DmuArgs const &args);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 
     Plane **_lookupPlanes; // heavily used; visible for inline access
 };
 
-#endif  // DENG_WORLD_SECTOR_H
+#endif  // DE_WORLD_SECTOR_H

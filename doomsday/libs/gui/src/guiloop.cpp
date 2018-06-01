@@ -21,7 +21,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(GuiLoop)
+DE_PIMPL_NOREF(GuiLoop)
 {
     GLWindow *window = nullptr;
 };

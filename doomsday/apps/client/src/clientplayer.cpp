@@ -26,8 +26,8 @@
 
 using namespace de;
 
-DENG2_PIMPL(ClientPlayer)
-, DENG2_OBSERVES(World, MapChange)
+DE_PIMPL(ClientPlayer)
+, DE_OBSERVES(World, MapChange)
 {
     ViewCompositor     viewCompositor;
     viewdata_t         viewport;

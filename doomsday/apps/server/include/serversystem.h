@@ -50,7 +50,7 @@ class ServerSystem : public QObject, public de::System
 
 public:
     /// An error related to identifiers (e.g., invalid ID specified). @ingroup errors
-    DENG2_ERROR(IdError);
+    DE_ERROR(IdError);
 
 public:
     ServerSystem();
@@ -101,7 +101,7 @@ protected slots:
     void userDestroyed();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 ServerSystem &App_ServerSystem();

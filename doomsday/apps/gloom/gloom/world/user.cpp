@@ -27,7 +27,7 @@ using namespace de;
 
 namespace gloom {
 
-DENG2_PIMPL(User)
+DE_PIMPL(User)
 {
     World const *world = nullptr;
 
@@ -65,7 +65,7 @@ DENG2_PIMPL(User)
 
     ~Impl()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->userBeingDeleted(self());
+        DE_FOR_PUBLIC_AUDIENCE(Deletion, i) i->userBeingDeleted(self());
     }
 
     Vec3f frontVector() const
@@ -264,17 +264,17 @@ DENG2_PIMPL(User)
         }
 
         // Notifications.
-        DENG2_FOR_PUBLIC_AUDIENCE(PainLevel, i) { i->userPainLevel(self(), crouch / maxCrouch); }
+        DE_FOR_PUBLIC_AUDIENCE(PainLevel, i) { i->userPainLevel(self(), crouch / maxCrouch); }
 
         if (prevPosition != self().position())
         {
-            DENG2_FOR_PUBLIC_AUDIENCE(Move, i) { i->userMoved(self(), self().position()); }
+            DE_FOR_PUBLIC_AUDIENCE(Move, i) { i->userMoved(self(), self().position()); }
             prevPosition = self().position();
         }
 
         if (!fequal(prevYaw, yaw))
         {
-            DENG2_FOR_PUBLIC_AUDIENCE(Turn, i) { i->userTurned(self(), yaw); }
+            DE_FOR_PUBLIC_AUDIENCE(Turn, i) { i->userTurned(self(), yaw); }
             prevYaw = yaw;
         }
 
@@ -381,7 +381,7 @@ void User::setPosition(Vec3f const &pos)
 
     if ((oldPos - pos).length() > 15)
     {
-        DENG2_FOR_AUDIENCE(Warp, i) i->userWarped(*this);
+        DE_FOR_AUDIENCE(Warp, i) i->userWarped(*this);
     }
 }
 
@@ -393,7 +393,7 @@ void User::setYaw(float yaw)
 
 void User::setPain(float pain)
 {
-    DENG2_FOR_AUDIENCE(PainLevel, i) { i->userPainLevel(*this, pain); }
+    DE_FOR_AUDIENCE(PainLevel, i) { i->userPainLevel(*this, pain); }
 }
 
 void User::setInputState(InputState const &state)

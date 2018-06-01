@@ -94,7 +94,7 @@ struct Continuity
      */
     void addOneSegment(OrderedSegment const &oseg)
     {
-        DENG2_ASSERT(oseg.segment->sectorPtr() == sector);
+        DE_ASSERT(oseg.segment->sectorPtr() == sector);
 
         // Separate the discordant duplicates.
         OrderedSegmentList *list = &orderedSegs;
@@ -153,7 +153,7 @@ struct Continuity
         }
     }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     void debugPrint() const
     {
         LOGDEV_MAP_MSG("Continuity %p (sector:%i, coverage:%f, discord:%i)")
@@ -174,7 +174,7 @@ struct Continuity
 #endif
 };
 
-DENG2_PIMPL_NOREF(ConvexSubspaceProxy)
+DE_PIMPL_NOREF(ConvexSubspaceProxy)
 {
     typedef QSet<LineSegmentSide *> Segments;
 
@@ -330,7 +330,7 @@ void ConvexSubspaceProxy::addSegments(QList<LineSegmentSide *> const &newSegment
         d->needRebuildOrderedSegments = true;
     }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     int numSegmentsAdded = d->segments.size() - sizeBefore;
     if(numSegmentsAdded < newSegments.size())
     {
@@ -431,7 +431,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
                 seg->setLineSideOffset(Vec2d(mapSide->from().origin() - lineSeg->from().origin()).length());
                 seg->setLength(Vec2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
 #else
-                DENG2_UNUSED(seg);
+                DE_UNUSED(seg);
 #endif
 
                 // Link the new half-edge for this line segment to the head of
@@ -491,7 +491,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
     qSort(continuities.begin(), continuities.end());
     leaf.setSector(continuities.first().sector);
 
-/*#ifdef DENG_DEBUG
+/*#ifdef DE_DEBUG
     LOG_INFO("ConvexSubspace %s BSP sector:%i (%i continuities)")
             << d->findCenter().asText()
             << (leaf.sectorPtr()? leaf.sectorPtr()->indexInArchive() : -1)
@@ -527,7 +527,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
                 seg->setLineSideOffset(Vec2d(mapSide->from().origin() - lineSeg->from().origin()).length());
                 seg->setLength(Vec2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
 #else
-                DENG2_UNUSED(seg);
+                DE_UNUSED(seg);
 #endif
             }
 

@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_SERVER_SOUND_H
-#define LIBDENG_SERVER_SOUND_H
+#ifndef DE_SERVER_SOUND_H
+#define DE_SERVER_SOUND_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,4 +58,4 @@ void Sv_StopSound(int soundId, struct mobj_s const *origin);
 } // extern "C"
 #endif
 
-#endif // LIBDENG_SERVER_SOUND_H
+#endif // DE_SERVER_SOUND_H

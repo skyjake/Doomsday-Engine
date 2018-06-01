@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_BASE_H
-#define LIBDENG_BASE_H
+#ifndef DE_BASE_H
+#define DE_BASE_H
 
 // System headers needed everywhere.
 #include <assert.h>
@@ -54,4 +54,4 @@
 #  include "server_dummies.h"
 #endif
 
-#endif // LIBDENG_BASE_H
+#endif // DE_BASE_H

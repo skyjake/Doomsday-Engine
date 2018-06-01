@@ -74,7 +74,7 @@ dd_bool N_MAGet(masteraction_t *act)
     if(::mqHead == ::mqTail)
         return false;
 
-    DENG2_ASSERT(act);
+    DE_ASSERT(act);
     *act = ::masterQueue[mqTail];
     return true;
 }
@@ -111,7 +111,7 @@ dd_bool N_MADone()
  */
 void N_NEPost(netevent_t *nev)
 {
-    DENG2_ASSERT(nev);
+    DE_ASSERT(nev);
     ::netEventQueue[::neqHead] = *nev;
     ::neqHead = (::neqHead + 1) % NETEVENT_QUEUE_LEN;
 }
@@ -139,7 +139,7 @@ dd_bool N_NEGet(netevent_t *nev)
     if(!N_NEPending())
         return false;
 
-    DENG2_ASSERT(nev);
+    DE_ASSERT(nev);
     *nev = ::netEventQueue[::neqTail];
     ::neqTail = (::neqTail + 1) % NETEVENT_QUEUE_LEN;
     return true;
@@ -151,7 +151,7 @@ dd_bool N_NEGet(netevent_t *nev)
 void N_NETicker(timespan_t time)
 {
 #if !defined(__SERVER__)
-    DENG2_UNUSED(time);
+    DE_UNUSED(time);
 #endif
 
 #ifdef __SERVER__
@@ -203,7 +203,7 @@ void N_NETicker(timespan_t time)
             N_MARemove();
             break; }
 
-        default: DENG2_ASSERT_FAIL("N_NETicker: Invalid value for 'act'"); break;
+        default: DE_ASSERT_FAIL("N_NETicker: Invalid value for 'act'"); break;
         }
     }
 }
@@ -237,7 +237,7 @@ void N_Update()
             ::masterHeartbeat = MASTER_UPDATETIME;
             break;
 
-        default: DENG2_ASSERT_FAIL("N_Update: Invalid value"); break;
+        default: DE_ASSERT_FAIL("N_Update: Invalid value"); break;
         }
     }
 #endif  // __SERVER__
@@ -250,7 +250,7 @@ void N_Update()
 void N_TerminateClient(dint console)
 {
 #ifdef __SERVER__
-    DENG2_ASSERT(console >= 0 && console < DDMAXPLAYERS);
+    DE_ASSERT(console >= 0 && console < DDMAXPLAYERS);
     if(!DD_Player(console)->isConnected())
         return;
 
@@ -262,6 +262,6 @@ void N_TerminateClient(dint console)
     // Update the master.
     ::masterHeartbeat = MASTER_UPDATETIME;
 #else
-    DENG2_UNUSED(console);
+    DE_UNUSED(console);
 #endif
 }

@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_SURFACE_H
-#define DENG_WORLD_SURFACE_H
+#ifndef DE_WORLD_SURFACE_H
+#define DE_WORLD_SURFACE_H
 
 #include <functional>
 #include <de/Id>
@@ -41,8 +41,8 @@ class MaterialAnimator;
  */
 class Surface : public world::MapElement
 {
-    DENG2_NO_COPY  (Surface)
-    DENG2_NO_ASSIGN(Surface)
+    DE_NO_COPY  (Surface)
+    DE_NO_ASSIGN(Surface)
 
 public:
     /// Interface for surface decoration state.
@@ -53,16 +53,16 @@ public:
     };
 
     /// Notified whenever the tint color changes.
-    DENG2_DEFINE_AUDIENCE2(ColorChange,   void surfaceColorChanged(Surface &sector))
+    DE_DEFINE_AUDIENCE2(ColorChange,   void surfaceColorChanged(Surface &sector))
 
     /// Notified whenever the normal vector changes.
-    DENG2_DEFINE_AUDIENCE2(NormalChange,  void surfaceNormalChanged(Surface &surface))
+    DE_DEFINE_AUDIENCE2(NormalChange,  void surfaceNormalChanged(Surface &surface))
 
     /// Notified whenever the opacity changes.
-    DENG2_DEFINE_AUDIENCE2(OpacityChange, void surfaceOpacityChanged(Surface &surface))
+    DE_DEFINE_AUDIENCE2(OpacityChange, void surfaceOpacityChanged(Surface &surface))
 
     /// Notified whenever the @em sharp origin changes.
-    DENG2_DEFINE_AUDIENCE2(OriginChange,  void surfaceOriginChanged(Surface &surface))
+    DE_DEFINE_AUDIENCE2(OriginChange,  void surfaceOriginChanged(Surface &surface))
 
     /**
      * Construct a new surface.
@@ -132,10 +132,10 @@ public:
 //- Material ----------------------------------------------------------------------------
 
     /// Thrown when a required material is missing. @ingroup errors
-    DENG2_ERROR(MissingMaterialError);
+    DE_ERROR(MissingMaterialError);
 
     /// Notified when the material changes.
-    DENG2_DEFINE_AUDIENCE2(MaterialChange, void surfaceMaterialChanged(Surface &surface))
+    DE_DEFINE_AUDIENCE2(MaterialChange, void surfaceMaterialChanged(Surface &surface))
 
     /**
      * Returns @c true iff a material is bound to the surface.
@@ -230,7 +230,7 @@ public:
 //- Origin smoothing --------------------------------------------------------------------
 
     /// Notified when the @em sharp material origin changes.
-    DENG2_DEFINE_AUDIENCE2(OriginSmoothedChange, void surfaceOriginSmoothedChanged(Surface &surface))
+    DE_DEFINE_AUDIENCE2(OriginSmoothedChange, void surfaceOriginSmoothedChanged(Surface &surface))
 
     /// Maximum speed for a smoothed material offset.
     static de::dint const MAX_SMOOTH_MATERIAL_MOVE = 8;
@@ -291,7 +291,7 @@ protected:
 private:
     std::unique_ptr<IDecorationState> _decorationState;
 
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif  // DENG_WORLD_SURFACE_H
+#endif  // DE_WORLD_SURFACE_H

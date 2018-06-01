@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_TEXTVALUE_H
-#define LIBDENG2_TEXTVALUE_H
+#ifndef LIBCORE_TEXTVALUE_H
+#define LIBCORE_TEXTVALUE_H
 
 #include "../Value"
 #include "../String"
@@ -32,11 +32,11 @@ namespace de {
  *
  * @ingroup data
  */
-class DENG2_PUBLIC TextValue : public Value
+class DE_PUBLIC TextValue : public Value
 {
 public:
     /// An error occurs in string pattern replacements. @ingroup errors
-    DENG2_ERROR(IllegalPatternError);
+    DE_ERROR(IllegalPatternError);
 
 public:
     TextValue(String const &initialValue = "");
@@ -74,4 +74,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_TEXTVALUE_H */
+#endif /* LIBCORE_TEXTVALUE_H */

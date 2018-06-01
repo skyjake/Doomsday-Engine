@@ -33,12 +33,12 @@ namespace de {
 
 static String const VAR_SHOW_ANNOTATIONS("ui.showAnnotations");
 
-DENG_GUI_PIMPL(PopupMenuWidget)
-, DENG2_OBSERVES(ButtonWidget, StateChange)
-, DENG2_OBSERVES(ButtonWidget, Triggered)
-, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
-, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
-, DENG2_OBSERVES(Variable, Change)
+DE_GUI_PIMPL(PopupMenuWidget)
+, DE_OBSERVES(ButtonWidget, StateChange)
+, DE_OBSERVES(ButtonWidget, Triggered)
+, DE_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
+, DE_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
+, DE_OBSERVES(Variable, Change)
 {
     class HeadingOverlayImage : public ProceduralImage
     {
@@ -232,7 +232,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
             if (self().menu().isWidgetPartOfMenu(*widget))
             {
                 Vec2i cell = layout.widgetPos(*widget);
-                DENG2_ASSERT(cell.x >= 0 && cell.y >= 0);
+                DE_ASSERT(cell.x >= 0 && cell.y >= 0);
 
                 // We want items to be hittable throughout the width of the menu, however
                 // restrict this to the item's column if there are multiple columns.

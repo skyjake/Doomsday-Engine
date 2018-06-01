@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_SCOPESTATEMENT_H
-#define LIBDENG2_SCOPESTATEMENT_H
+#ifndef LIBCORE_SCOPESTATEMENT_H
+#define LIBCORE_SCOPESTATEMENT_H
 
 #include "../Statement"
 #include "../Expression"
@@ -48,9 +48,9 @@ public:
     void operator << (Reader &from);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_SCOPESTATEMENT_H
+#endif // LIBCORE_SCOPESTATEMENT_H

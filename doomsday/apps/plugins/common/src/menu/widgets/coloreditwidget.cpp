@@ -30,7 +30,7 @@ using namespace de;
 namespace common {
 namespace menu {
 
-DENG2_PIMPL(ColorEditWidget)
+DE_PIMPL(ColorEditWidget)
 {
     bool rgbaMode       = false;
     Vec4f color      = Vec4f(0, 0, 0, 1.f);

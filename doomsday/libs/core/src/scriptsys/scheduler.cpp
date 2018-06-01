@@ -22,7 +22,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(Scheduler)
+DE_PIMPL_NOREF(Scheduler)
 {
     struct RunningTimeline
     {

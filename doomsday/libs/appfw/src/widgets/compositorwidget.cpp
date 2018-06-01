@@ -22,7 +22,7 @@
 
 namespace de {
 
-DENG_GUI_PIMPL(CompositorWidget)
+DE_GUI_PIMPL(CompositorWidget)
 {
     Drawable drawable;
     struct Buffer {
@@ -115,7 +115,7 @@ CompositorWidget::CompositorWidget(String const &name)
 
 GLTexture &CompositorWidget::composite() const
 {
-    DENG2_ASSERT(!d->buffers.isEmpty());
+    DE_ASSERT(!d->buffers.isEmpty());
     return d->buffers.first()->texture;
 }
 
@@ -144,7 +144,7 @@ void CompositorWidget::preDrawChildren()
         //qDebug() << "entering compositor" << d->nextBufIndex;
 
         Impl::Buffer *buf = d->beginBufferUse();
-        DENG2_ASSERT(!buf->offscreen.isNull());
+        DE_ASSERT(!buf->offscreen.isNull());
 
         GLState::push()
                 .setTarget(*buf->offscreen)
@@ -184,7 +184,7 @@ void CompositorWidget::drawComposite()
 {
     if (!d->shouldBeDrawn()) return;
 
-    DENG2_ASSERT(d->nextBufIndex > 0);
+    DE_ASSERT(d->nextBufIndex > 0);
 
     Impl::Buffer *buf = d->buffers[d->nextBufIndex - 1];
 

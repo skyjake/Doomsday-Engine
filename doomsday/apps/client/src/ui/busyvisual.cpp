@@ -154,15 +154,15 @@ void Con_DrawTransition(void)
     if (isDedicated) return;
     if (!Con_TransitionInProgress()) return;
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
     DGL_LoadIdentity();
     DGL_Ortho(0, 0, SCREENWIDTH, SCREENHEIGHT, -1, 1);
 
-    DENG2_ASSERT(ClientWindow::main().busy().transitionFrame() != 0);
+    DE_ASSERT(ClientWindow::main().busy().transitionFrame() != 0);
 
     GLuint const texScreenshot = ClientWindow::main().busy().transitionFrame()->glName();
 

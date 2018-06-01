@@ -68,7 +68,7 @@ MapManifest &MapManifest::setRecognizer(Id1MapRecognizer *newRecognizer)
 
 Id1MapRecognizer const &MapManifest::recognizer() const
 {
-    DENG2_ASSERT(bool(_recognized));
+    DE_ASSERT(bool(_recognized));
     return *_recognized;
 }
 

@@ -84,7 +84,7 @@ public:
     }
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // LIBDOOMSDAY_WORLD_ENTITYDATABASE_H

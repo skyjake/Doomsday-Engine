@@ -102,7 +102,7 @@ public:
     void consoleRegister();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // CLIENT_UI_AXISINPUTCONTROL_H

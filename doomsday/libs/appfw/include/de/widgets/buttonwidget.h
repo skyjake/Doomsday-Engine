@@ -46,20 +46,20 @@ public:
     /**
      * Notified when the state of the button changes.
      */
-    DENG2_DEFINE_AUDIENCE2(StateChange, void buttonStateChanged(ButtonWidget &button, State state))
+    DE_DEFINE_AUDIENCE2(StateChange, void buttonStateChanged(ButtonWidget &button, State state))
 
     /**
      * Notified immediately before the button's action is to be triggered. Will
      * occur regardless of whether an action has been set.
      */
-    DENG2_DEFINE_AUDIENCE2(Press, void buttonPressed(ButtonWidget &button))
+    DE_DEFINE_AUDIENCE2(Press, void buttonPressed(ButtonWidget &button))
 
     /**
      * Notified when the button's action is triggered (could be before or after
      * the action). Will not occur if no action has been defined for the
      * button.
      */
-    DENG2_DEFINE_AUDIENCE2(Triggered, void buttonActionTriggered(ButtonWidget &button))
+    DE_DEFINE_AUDIENCE2(Triggered, void buttonActionTriggered(ButtonWidget &button))
 
 public:
     ButtonWidget(String const &name = String());
@@ -137,7 +137,7 @@ protected:
     void updateStyle() override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

@@ -27,7 +27,7 @@ MemoryLogSink::MemoryLogSink(LogEntry::Level minimumLevel)
 
 MemoryLogSink::~MemoryLogSink()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     qDeleteAll(_entries);
 }
@@ -39,7 +39,7 @@ void MemoryLogSink::setPrivileged(bool onlyPrivileged)
 
 void MemoryLogSink::clear()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     qDeleteAll(_entries);
     _entries.clear();
@@ -56,7 +56,7 @@ LogSink &MemoryLogSink::operator << (LogEntry const &entry)
 
     if (entry.level() >= _minLevel)
     {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         _entries.append(new LogEntry(entry));
         addedNewEntry(*_entries.back());
     }
@@ -71,23 +71,23 @@ LogSink &MemoryLogSink::operator << (String const &)
 
 int MemoryLogSink::entryCount() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     return _entries.size();
 }
 
 LogEntry const &MemoryLogSink::entry(int index) const
 {
-    DENG2_GUARD(this);
-    DENG2_ASSERT(index >= 0);
-    DENG2_ASSERT(index < _entries.size());
+    DE_GUARD(this);
+    DE_ASSERT(index >= 0);
+    DE_ASSERT(index < _entries.size());
 
     return *_entries.at(index);
 }
 
 void MemoryLogSink::remove(int pos, int n)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     while (n-- > 0)
     {

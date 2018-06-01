@@ -58,7 +58,7 @@
  */
 static void stopPlat(plat_t *plat)
 {
-    DENG2_ASSERT(plat);
+    DE_ASSERT(plat);
     P_ToXSector(plat->sector)->specialData = nullptr;
     P_NotifySectorFinished(P_ToXSector(plat->sector)->tag);
     Thinker_Remove(&plat->thinker);
@@ -248,7 +248,7 @@ int plat_t::read(MapStateReader *msr)
 
         type      = plattype_e(Reader_ReadByte(reader));
         sector    = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
-        DENG_ASSERT(sector != 0);
+        DE_ASSERT(sector != 0);
         speed     = FIX2FLT(Reader_ReadInt32(reader));
         low       = (float) Reader_ReadInt16(reader);
         high      = (float) Reader_ReadInt16(reader);
@@ -269,7 +269,7 @@ int plat_t::read(MapStateReader *msr)
         // Start of used data members.
         // A 32bit pointer to sector, serialized.
         sector    = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
-        DENG_ASSERT(sector != 0);
+        DE_ASSERT(sector != 0);
 
         speed     = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
         low       = FIX2FLT((fixed_t) Reader_ReadInt32(reader));

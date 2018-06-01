@@ -79,7 +79,7 @@ public:
     //de::Id thinkerIdFromMappedNumber(int mappedNumber) const override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // LIBCOMMON_MAPSTATEWRITER_H

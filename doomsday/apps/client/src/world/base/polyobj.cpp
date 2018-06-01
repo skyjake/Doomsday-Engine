@@ -76,7 +76,7 @@ static void notifyGeometryChanged(Polyobj &pob)
         }
     }
 #else // !__CLIENT__
-    DENG2_UNUSED(pob);
+    DE_UNUSED(pob);
 #endif
 }
 #endif

@@ -26,7 +26,7 @@ using namespace de;
 
 namespace gloom {
 
-DENG2_PIMPL_NOREF(SkyBox)
+DE_PIMPL_NOREF(SkyBox)
 {
     typedef GLBufferT<Vertex3> VBuf;
 
@@ -110,7 +110,7 @@ void SkyBox::render()
 {
     GLState::push().setDepthWrite(false);
 
-    DENG2_ASSERT(d->skyBox.program().isReady());
+    DE_ASSERT(d->skyBox.program().isReady());
 
     d->uSkyMvpMatrix = context().view.uCameraMvpMatrix.toMat4f() *
                     Mat4f::translate(context().view.camera->cameraPosition()) *

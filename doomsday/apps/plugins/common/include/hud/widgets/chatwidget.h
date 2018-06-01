@@ -42,7 +42,7 @@ class ChatWidget : public HudWidget
 {
 public:
     /// An invalid/unknown destination was referenced. @ingroup errors
-    DENG2_ERROR(DestinationError);
+    DE_ERROR(DestinationError);
 
 public:
     ChatWidget(de::dint player);
@@ -146,7 +146,7 @@ public:
     static void consoleRegister();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif  // LIBCOMMON_UI_CHATWIDGET_H

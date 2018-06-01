@@ -58,7 +58,7 @@ protected:
     IData *newData();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

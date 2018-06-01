@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_NODEPILE_H
-#define LIBDENG_NODEPILE_H
+#ifndef DE_NODEPILE_H
+#define DE_NODEPILE_H
 
 #define NP_ROOT_NODE ((void*) -1)
 
@@ -51,10 +51,10 @@ typedef struct nodepile_s {
 extern "C" {
 #endif
 
-DENG_PUBLIC void        NP_Init(nodepile_t *pile, int initial);
-DENG_PUBLIC nodeindex_t NP_New(nodepile_t *pile, void *ptr);
-DENG_PUBLIC void        NP_Link(nodepile_t *pile, nodeindex_t node, nodeindex_t root);
-DENG_PUBLIC void        NP_Unlink(nodepile_t *pile, nodeindex_t node);
+DE_PUBLIC void        NP_Init(nodepile_t *pile, int initial);
+DE_PUBLIC nodeindex_t NP_New(nodepile_t *pile, void *ptr);
+DE_PUBLIC void        NP_Link(nodepile_t *pile, nodeindex_t node, nodeindex_t root);
+DE_PUBLIC void        NP_Unlink(nodepile_t *pile, nodeindex_t node);
 
 #define NP_Dismiss(pile, node) (pile->nodes[node].ptr = 0)
 
@@ -62,4 +62,4 @@ DENG_PUBLIC void        NP_Unlink(nodepile_t *pile, nodeindex_t node);
 } // extern "C"
 #endif
 
-#endif // LIBDENG_NODEPILE_H
+#endif // DE_NODEPILE_H

@@ -50,14 +50,14 @@ static ui_color_t ui_colors[NUM_UI_COLORS] = {
 
 char const *UI_ChooseFixedFont()
 {
-    if (DENG_GAMEVIEW_WIDTH < 300) return "console11";
-    if (DENG_GAMEVIEW_WIDTH > 768) return "console18";
+    if (DE_GAMEVIEW_WIDTH < 300) return "console11";
+    if (DE_GAMEVIEW_WIDTH > 768) return "console18";
     return "console14";
 }
 
 static AbstractFont *loadSystemFont(char const *name)
 {
-    DENG2_ASSERT(name != 0 && name[0]);
+    DE_ASSERT(name != 0 && name[0]);
 
     // Compose the resource name.
     de::Uri uri = de::makeUri("System:").setPath(name);

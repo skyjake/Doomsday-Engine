@@ -1,5 +1,5 @@
-#ifndef DENG_SDLNET_DUMMY_H
-#define DENG_SDLNET_DUMMY_H
+#ifndef DE_SDLNET_DUMMY_H
+#define DE_SDLNET_DUMMY_H
 
 typedef void* TCPsocket;
 typedef struct {

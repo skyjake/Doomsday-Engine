@@ -37,8 +37,8 @@ static Value *Function_Math_RandInt(Context &, Function::ArgumentValues const &a
 void initMathModule(Binder &binder, Record &mathModule)
 {
     binder.init(mathModule)
-            << DENG2_FUNC_NOARG(Math_Random, "random")
-            << DENG2_FUNC      (Math_RandInt, "randInt", "low" << "high");
+            << DE_FUNC_NOARG(Math_Random, "random")
+            << DE_FUNC      (Math_RandInt, "randInt", "low" << "high");
 }
 
 } // namespace de

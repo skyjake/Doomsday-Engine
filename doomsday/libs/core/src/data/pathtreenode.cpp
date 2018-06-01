@@ -22,7 +22,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(PathTree::Node)
+DE_PIMPL_NOREF(PathTree::Node)
 {
     /// PathTree which owns this node.
     PathTree &tree;
@@ -85,19 +85,19 @@ PathTree::Node &PathTree::Node::parent() const
 
 const PathTree::Node::Children &PathTree::Node::children() const
 {
-    DENG2_ASSERT(d->children != 0);
+    DE_ASSERT(d->children != 0);
     return *d->children;
 }
 
 PathTree::Nodes const &PathTree::Node::childNodes(PathTree::NodeType type) const
 {
-    DENG2_ASSERT(d->children != 0);
+    DE_ASSERT(d->children != 0);
     return (type == PathTree::Leaf? d->children->leaves : d->children->branches);
 }
 
 PathTree::Nodes &PathTree::Node::childNodes(PathTree::NodeType type)
 {
-    DENG2_ASSERT(d->children != 0);
+    DE_ASSERT(d->children != 0);
     return (type == PathTree::Leaf? d->children->leaves : d->children->branches);
 }
 
@@ -113,14 +113,14 @@ PathTree::SegmentId PathTree::Node::segmentId() const
 
 void PathTree::Node::addChild(PathTree::Node &node)
 {
-    DENG2_ASSERT(d->children != 0);
+    DE_ASSERT(d->children != 0);
 
     childNodes(node.type()).insert(node.hash(), &node);
 }
 
 void PathTree::Node::removeChild(PathTree::Node &node)
 {
-    DENG2_ASSERT(d->children != 0);
+    DE_ASSERT(d->children != 0);
 
     childNodes(node.type()).remove(node.hash(), &node);
 }
@@ -240,7 +240,7 @@ int PathTree::Node::comparePath(de::Path const &searchPattern, ComparisonFlags f
     return 1;
 }
 
-#ifdef LIBDENG_STACK_MONITOR
+#ifdef DE_STACK_MONITOR
 static void *stackStart;
 static size_t maxStackDepth;
 #endif
@@ -266,7 +266,7 @@ static void pathConstructor(internal::PathConstructorArgs &args, PathTree::Node 
 {
     String const &segment = trav.name();
 
-#ifdef LIBDENG_STACK_MONITOR
+#ifdef DE_STACK_MONITOR
     maxStackDepth = MAX_OF(maxStackDepth, stackStart - (void *)&fragment);
 #endif
 
@@ -320,7 +320,7 @@ static void pathConstructor(internal::PathConstructorArgs &args, PathTree::Node 
 Path PathTree::Node::path(QChar sep) const
 {
     internal::PathConstructorArgs args(sep);
-#ifdef LIBDENG_STACK_MONITOR
+#ifdef DE_STACK_MONITOR
     stackStart = &parm;
 #endif
 
@@ -339,9 +339,9 @@ Path PathTree::Node::path(QChar sep) const
         args.composedPath += sep;
     }
 
-    DENG2_ASSERT(args.composedPath.length() == (int)args.length);
+    DE_ASSERT(args.composedPath.length() == (int)args.length);
 
-#ifdef LIBDENG_STACK_MONITOR
+#ifdef DE_STACK_MONITOR
     LOG_AS("pathConstructor");
     LOG_DEV_NOTE("Max stack depth: %1 bytes") << maxStackDepth;
 #endif

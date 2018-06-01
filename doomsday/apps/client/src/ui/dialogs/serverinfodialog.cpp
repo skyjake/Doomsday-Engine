@@ -44,9 +44,9 @@ static DialogWidget::RoleFlags const ID_SV_PACKAGES = DialogWidget::Id1;
 static DialogWidget::RoleFlags const ID_JOIN        = DialogWidget::Id2;
 static DialogWidget::RoleFlags const ID_PING        = DialogWidget::Id3;
 
-DENG_GUI_PIMPL(ServerInfoDialog)
-, DENG2_OBSERVES(ServerLink, MapOutline)
-, DENG2_OBSERVES(ServerLink, PingResponse)
+DE_GUI_PIMPL(ServerInfoDialog)
+, DE_OBSERVES(ServerLink, MapOutline)
+, DE_OBSERVES(ServerLink, PingResponse)
 , public PackagesWidget::IPackageStatus
 {
     // Server info & status.
@@ -266,11 +266,11 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             String plrDesc;
             if (players.isEmpty())
             {
-                plrDesc = DENG2_CHAR_MDASH;
+                plrDesc = DE_CHAR_MDASH;
             }
             else
             {
-                plrDesc = String("%1 " DENG2_CHAR_MDASH " %2")
+                plrDesc = String("%1 " DE_CHAR_MDASH " %2")
                         .arg(players.count())
                         .arg(String::join(players, ", "));
             }
@@ -281,7 +281,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
                     .arg(tr("Rules"))  .arg(serverInfo.gameConfig())
                     .arg(tr("Players")).arg(plrDesc)
                     .arg(tr("Version")).arg(serverInfo.version().asHumanReadableText())
-                    .arg(tr("Ping"))   .arg(ping < 0.0? String(DENG2_CHAR_MDASH)
+                    .arg(tr("Ping"))   .arg(ping < 0.0? String(DE_CHAR_MDASH)
                                                       : String("%1 ms").arg(ping.asMilliSeconds()));
             description->setText(msg);
         }
@@ -295,7 +295,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
 
         // Game state.
         {
-            String msg = String(_E(b) "%1" _E(.)_E(s) "\n%2 " DENG2_CHAR_MDASH " %3")
+            String msg = String(_E(b) "%1" _E(.)_E(s) "\n%2 " DE_CHAR_MDASH " %3")
                         .arg(serverInfo.map())
                         .arg(serverInfo.gameConfig().containsWord("coop")? tr("Co-op")
                                                                          : tr("Deathmatch"))

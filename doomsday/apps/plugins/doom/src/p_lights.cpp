@@ -75,7 +75,7 @@ int fireflicker_s::read(MapStateReader *msr)
 
     // Note: the thinker class byte has already been read.
     sector         = (Sector*)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
-    DENG_ASSERT(sector != 0);
+    DE_ASSERT(sector != 0);
 
     maxLight       = (float) Reader_ReadInt32(reader) / 255.0f;
     minLight       = (float) Reader_ReadInt32(reader) / 255.0f;
@@ -163,7 +163,7 @@ int lightflash_s::read(MapStateReader *msr)
 
         // Start of used data members.
         sector       = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
-        DENG_ASSERT(sector != 0);
+        DE_ASSERT(sector != 0);
 
         count        = Reader_ReadInt32(reader);
         maxLight     = (float) Reader_ReadInt32(reader) / 255.0f;
@@ -181,7 +181,7 @@ int lightflash_s::read(MapStateReader *msr)
         // Start of used data members.
         // A 32bit pointer to sector, serialized.
         sector       = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
-        DENG_ASSERT(sector != 0);
+        DE_ASSERT(sector != 0);
 
         count        = Reader_ReadInt32(reader);
         maxLight     = (float) Reader_ReadInt32(reader) / 255.0f;
@@ -277,7 +277,7 @@ int strobe_s::read(MapStateReader *msr)
         /*int ver =*/ Reader_ReadByte(reader); // version byte.
 
         sector      = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
-        DENG_ASSERT(sector != 0);
+        DE_ASSERT(sector != 0);
 
         count       = Reader_ReadInt32(reader);
         maxLight    = (float) Reader_ReadInt32(reader) / 255.0f;
@@ -295,7 +295,7 @@ int strobe_s::read(MapStateReader *msr)
         // Start of used data members.
         // A 32bit pointer to sector, serialized.
         sector      = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
-        DENG_ASSERT(sector != 0);
+        DE_ASSERT(sector != 0);
 
         count       = Reader_ReadInt32(reader);
         minLight    = (float) Reader_ReadInt32(reader) / 255.0f;
@@ -481,7 +481,7 @@ int glow_s::read(MapStateReader *msr)
         /*int ver =*/ Reader_ReadByte(reader); // version byte.
 
         sector        = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
-        DENG_ASSERT(sector != 0);
+        DE_ASSERT(sector != 0);
 
         maxLight      = (float) Reader_ReadInt32(reader) / 255.0f;
         minLight      = (float) Reader_ReadInt32(reader) / 255.0f;
@@ -497,7 +497,7 @@ int glow_s::read(MapStateReader *msr)
         // Start of used data members.
         // A 32bit pointer to sector, serialized.
         sector        = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
-        DENG_ASSERT(sector != 0);
+        DE_ASSERT(sector != 0);
 
         minLight      = (float) Reader_ReadInt32(reader) / 255.0f;
         maxLight      = (float) Reader_ReadInt32(reader) / 255.0f;

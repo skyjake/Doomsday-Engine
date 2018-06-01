@@ -288,7 +288,7 @@ public:
     static Size levelSize(Size const &size0, int level);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

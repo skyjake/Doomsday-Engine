@@ -36,7 +36,7 @@ static const QRegularExpression regExMy ("^E[1-9]M[1-9]$");
 static const QRegularExpression regMAPxx("^MAP[0-9][0-9]$");
 static const Block              flatMarkers[4] = {"FF_START", "FF_END", "F_START", "F_END"};
 
-DENG2_PIMPL_NOREF(LumpDirectory), public ISerializable
+DE_PIMPL_NOREF(LumpDirectory), public ISerializable
 {
     Type                   type    = Invalid;
     MapType                mapType = None;

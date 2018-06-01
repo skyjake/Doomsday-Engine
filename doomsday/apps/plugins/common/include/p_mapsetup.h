@@ -29,7 +29,7 @@
 #include "api_map.h"
 
 // If true we are in the process of setting up a map.
-DENG_EXTERN_C dd_bool mapSetup;
+DE_EXTERN_C dd_bool mapSetup;
 
 #ifdef __cplusplus
 

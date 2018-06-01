@@ -97,7 +97,7 @@ void G_RegisterCheats()
 
 CHEAT_FUNC(Init)
 {
-    DENG2_UNUSED2(args, numArgs);
+    DE_UNUSED(args, numArgs);
 
     player_t *plr = &players[player];
 
@@ -115,7 +115,7 @@ CHEAT_FUNC(Init)
 
 CHEAT_FUNC(IDKFA)
 {
-    DENG2_UNUSED2(args, numArgs);
+    DE_UNUSED(args, numArgs);
 
     player_t *plr = &players[player];
 
@@ -138,7 +138,7 @@ CHEAT_FUNC(IDKFA)
 
 CHEAT_FUNC(Quicken)
 {
-    DENG2_UNUSED2(args, numArgs);
+    DE_UNUSED(args, numArgs);
 
     P_SetMessageWithFlags(&players[player], "Trying to cheat? That's one...", LMF_NO_HIDE);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
@@ -148,7 +148,7 @@ CHEAT_FUNC(Quicken)
 
 CHEAT_FUNC(Quicken2)
 {
-    DENG2_UNUSED2(args, numArgs);
+    DE_UNUSED(args, numArgs);
 
     P_SetMessageWithFlags(&players[player], "That's two...", LMF_NO_HIDE);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
@@ -158,7 +158,7 @@ CHEAT_FUNC(Quicken2)
 
 CHEAT_FUNC(Quicken3)
 {
-    DENG2_UNUSED2(args, numArgs);
+    DE_UNUSED(args, numArgs);
 
     player_t *plr = &players[player];
 
@@ -175,7 +175,7 @@ CHEAT_FUNC(Quicken3)
 
 CHEAT_FUNC(Class)
 {
-    DENG2_UNUSED2(args, numArgs);
+    DE_UNUSED(args, numArgs);
 
     P_SetMessageWithFlags(&players[player], "Enter new player class number", LMF_NO_HIDE);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
@@ -185,7 +185,7 @@ CHEAT_FUNC(Class)
 
 CHEAT_FUNC(Script)
 {
-    DENG2_UNUSED2(args, numArgs);
+    DE_UNUSED(args, numArgs);
 
     P_SetMessageWithFlags(&players[player], "Run which script (01-99)?", LMF_NO_HIDE);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
@@ -195,7 +195,7 @@ CHEAT_FUNC(Script)
 
 CHEAT_FUNC(Script2)
 {
-    DENG2_UNUSED2(args, numArgs);
+    DE_UNUSED(args, numArgs);
 
     P_SetMessageWithFlags(&players[player], "Run which script (01-99)?", LMF_NO_HIDE);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
@@ -205,7 +205,7 @@ CHEAT_FUNC(Script2)
 
 CHEAT_FUNC(Reveal)
 {
-    DENG2_UNUSED2(args, numArgs);
+    DE_UNUSED(args, numArgs);
 
     player_t *plr = &players[player];
 
@@ -228,7 +228,7 @@ CHEAT_FUNC(Reveal)
  */
 D_CMD(Cheat)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     // Give each of the characters in argument two to the SB event handler.
     int const len = (int) strlen(argv[1]);
@@ -246,7 +246,7 @@ D_CMD(Cheat)
 
 D_CMD(CheatGod)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(G_GameState() == GS_MAP)
     {
@@ -285,7 +285,7 @@ D_CMD(CheatGod)
 
 D_CMD(CheatNoClip)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(G_GameState() == GS_MAP)
     {
@@ -341,7 +341,7 @@ static int suicideResponse(msgresponse_t response, int /*userValue*/, void * /*u
 
 D_CMD(CheatSuicide)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(G_GameState() == GS_MAP)
     {
@@ -382,7 +382,7 @@ D_CMD(CheatSuicide)
 
 D_CMD(CheatReveal)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     // Server operator can always reveal.
     if(IS_NETGAME && !IS_NETWORK_SERVER)
@@ -417,7 +417,7 @@ static void giveAllWeaponsAndPieces(player_t *plr)
 
 D_CMD(CheatGive)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(G_GameState() != GS_MAP)
     {
@@ -630,7 +630,7 @@ D_CMD(CheatGive)
 
 D_CMD(CheatMassacre)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     if(G_GameState() == GS_MAP)
     {
@@ -655,7 +655,7 @@ D_CMD(CheatMassacre)
 
 D_CMD(CheatWhere)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     if(G_GameState() != GS_MAP)
         return true;
@@ -693,7 +693,7 @@ D_CMD(CheatWhere)
 
 D_CMD(CheatMorph)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(G_GameState() == GS_MAP)
     {
@@ -738,7 +738,7 @@ D_CMD(CheatMorph)
 
 D_CMD(CheatShadowcaster)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(G_GameState() == GS_MAP)
     {
@@ -777,7 +777,7 @@ D_CMD(CheatShadowcaster)
 
 D_CMD(CheatRunScript)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(G_GameState() == GS_MAP)
     {

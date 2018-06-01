@@ -27,7 +27,7 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(PackagesSidebarWidget)
+DE_GUI_PIMPL(PackagesSidebarWidget)
 {
     PackagesWidget *browser;
 

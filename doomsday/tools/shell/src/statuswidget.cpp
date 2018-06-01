@@ -26,7 +26,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(StatusWidget)
+DE_PIMPL(StatusWidget)
 {
     QFont smallFont;
     QFont largeFont;
@@ -89,7 +89,7 @@ void StatusWidget::setMapOutline(shell::MapOutlinePacket const &outline)
     {
         shell::MapOutlinePacket::Line const &ln = outline.line(i);
         QPen pen(ln.type == shell::MapOutlinePacket::OneSidedLine? Qt::black : Qt::gray);
-#ifdef DENG2_QT_5_0_OR_NEWER
+#ifdef DE_QT_5_0_OR_NEWER
         pen.setCosmetic(true); // transformation will not affect line width
 #endif
         painter.setPen(pen);

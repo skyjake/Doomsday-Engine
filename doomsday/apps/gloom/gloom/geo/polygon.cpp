@@ -40,8 +40,8 @@ void Polygon::updateBounds()
     for (int i = 1; i < size(); ++i)
     {
         // Polygon points must be unique.
-        DENG2_ASSERT(points[i].id  != points[i - 1].id);
-        DENG2_ASSERT(points[i].pos != points[i - 1].pos);
+        DE_ASSERT(points[i].id  != points[i - 1].id);
+        DE_ASSERT(points[i].pos != points[i - 1].pos);
 
         bounds.include(points[i].pos);
     }
@@ -241,7 +241,7 @@ bool Polygon::isPointInside(const Vec2d &point) const
 {
     if (points.size() < 3) return false;
 
-    DENG2_ASSERT(!bounds.isNull());
+    DE_ASSERT(!bounds.isNull());
 
     if (bounds.contains(point))
     {
@@ -526,7 +526,7 @@ QList<Polygon> Polygon::splitConvexParts() const
 
             for (const int j : insets)
             {
-                DENG2_ASSERT(poly.size() >= 4);
+                DE_ASSERT(poly.size() >= 4);
 
 //                qDebug("   trying with %i", j);
                 for (int k = mod(j + 2, poly.size()); k != j; k = mod(k + 1, poly.size()))
@@ -593,7 +593,7 @@ QList<Polygon> Polygon::splitConvexParts() const
             {
                 qDebug("have %i insets, couldn't find a split", insets.size());
                 qDebug() << poly.asText();
-                DENG2_ASSERT(!availableSplits.isEmpty());
+                DE_ASSERT(!availableSplits.isEmpty());
             }
             else
             {
@@ -622,7 +622,7 @@ QList<Polygon> Polygon::splitConvexParts() const
 //               parts.size());
 //    }
 
-    DENG2_ASSERT(areAllConvex(parts));
+    DE_ASSERT(areAllConvex(parts));
     return parts;
 }
 

@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_INFOBANK_H
-#define LIBDENG2_INFOBANK_H
+#ifndef LIBCORE_INFOBANK_H
+#define LIBCORE_INFOBANK_H
 
 #include "../String"
 #include "../Time"
@@ -42,7 +42,7 @@ class File;
  *
  * @ingroup data
  */
-class DENG2_PUBLIC InfoBank : public Bank, public IObject
+class DE_PUBLIC InfoBank : public Bank, public IObject
 {
 public:
     InfoBank(char const *nameForLog           = "InfoBank",
@@ -114,9 +114,9 @@ protected:
     virtual ISource *newSourceFromInfo(String const &id) = 0;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_INFOBANK_H
+#endif // LIBCORE_INFOBANK_H

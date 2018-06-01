@@ -42,7 +42,7 @@ internal::AttribSpec const MapVertex::_spec[10] =
 };
 LIBGUI_VERTEX_FORMAT_SPEC(MapVertex, 23 * 4)
 
-DENG2_PIMPL_NOREF(MapBuild)
+DE_PIMPL_NOREF(MapBuild)
 {
     const Map &        map;
     const MaterialLib &matLib;
@@ -182,7 +182,7 @@ DENG2_PIMPL_NOREF(MapBuild)
                         f.texCoord = Vec4f(0, 0, 0, 0); // fixed offset
                         f.expander = expanders[pointID];
 
-                        DENG2_ASSERT(!pointIndices.contains(pointID));
+                        DE_ASSERT(!pointIndices.contains(pointID));
 
                         pointIndices.insert(pointID, Buffer::Index(verts[geomBuf].size()));
                         verts[geomBuf] << f;
@@ -197,9 +197,9 @@ DENG2_PIMPL_NOREF(MapBuild)
                         {
                             for (int j = 1; j < convex.size() - 1; ++j)
                             {
-                                DENG2_ASSERT(pointIndices.contains(baseID));
-                                DENG2_ASSERT(pointIndices.contains(convex.points[j + 1].id));
-                                DENG2_ASSERT(pointIndices.contains(convex.points[j].id));
+                                DE_ASSERT(pointIndices.contains(baseID));
+                                DE_ASSERT(pointIndices.contains(convex.points[j + 1].id));
+                                DE_ASSERT(pointIndices.contains(convex.points[j].id));
 
                                 indices[geomBuf] << pointIndices[baseID]
                                                  << pointIndices[convex.points[j + 1].id]
@@ -210,9 +210,9 @@ DENG2_PIMPL_NOREF(MapBuild)
                         {
                             for (int j = 1; j < convex.size() - 1; ++j)
                             {
-                                DENG2_ASSERT(pointIndices.contains(baseID));
-                                DENG2_ASSERT(pointIndices.contains(convex.points[j + 1].id));
-                                DENG2_ASSERT(pointIndices.contains(convex.points[j].id));
+                                DE_ASSERT(pointIndices.contains(baseID));
+                                DE_ASSERT(pointIndices.contains(convex.points[j + 1].id));
+                                DE_ASSERT(pointIndices.contains(convex.points[j].id));
 
                                 indices[geomBuf] << pointIndices[baseID]
                                                  << pointIndices[convex.points[j].id]
@@ -383,8 +383,8 @@ DENG2_PIMPL_NOREF(MapBuild)
             bufs.geom[i]->setIndices(gl::Triangles, indices[i], gl::Static);
         }
 
-        DENG2_ASSERT(indices[0].size() % 3 == 0);
-        DENG2_ASSERT(indices[1].size() % 3 == 0);
+        DE_ASSERT(indices[0].size() % 3 == 0);
+        DE_ASSERT(indices[1].size() % 3 == 0);
 
         LOG_MSG("Built %i vertices and %i indices for opaque geometry; %i vertices and %i indices "
                 "for transparent geometry")

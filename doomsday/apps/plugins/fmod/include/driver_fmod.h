@@ -79,6 +79,6 @@ extern FMOD::System *fmodSystem;
 #include "fmod_cd.h"
 #include "fmod_util.h"
 
-DENG_USING_API(Con);
+DE_USING_API(Con);
 
 #endif /* end of include guard: __DSFMOD_DRIVER_H__ */

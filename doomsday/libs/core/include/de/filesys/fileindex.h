@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_FILEINDEX_H
-#define LIBDENG2_FILEINDEX_H
+#ifndef LIBCORE_FILEINDEX_H
+#define LIBCORE_FILEINDEX_H
 
 #include "../File"
 
@@ -36,7 +36,7 @@ class Package;
  *
  * @ingroup fs
  */
-class DENG2_PUBLIC FileIndex
+class DE_PUBLIC FileIndex
 {
 public:
     typedef std::multimap<String, File *> Index;
@@ -44,7 +44,7 @@ public:
     typedef std::pair<Index::const_iterator, Index::const_iterator> ConstIndexRange;
     typedef std::list<File *> FoundFiles;
 
-    class DENG2_PUBLIC IPredicate
+    class DE_PUBLIC IPredicate
     {
     public:
         virtual ~IPredicate() {}
@@ -58,8 +58,8 @@ public:
         virtual bool shouldIncludeInIndex(File const &file) const = 0;
     };
 
-    DENG2_DEFINE_AUDIENCE2(Addition, void fileAdded  (File const &, FileIndex const &))
-    DENG2_DEFINE_AUDIENCE2(Removal,  void fileRemoved(File const &, FileIndex const &))
+    DE_DEFINE_AUDIENCE2(Addition, void fileAdded  (File const &, FileIndex const &))
+    DE_DEFINE_AUDIENCE2(Removal,  void fileRemoved(File const &, FileIndex const &))
 
 public:
     FileIndex();
@@ -150,9 +150,9 @@ protected:
     Index::const_iterator end() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_FILEINDEX_H
+#endif // LIBCORE_FILEINDEX_H

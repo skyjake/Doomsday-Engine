@@ -22,7 +22,7 @@
 
 #include "dd_main.h"
 #include "audio/sys_audiod_dummy.h"
-#ifndef DENG_DISABLE_SDLMIXER
+#ifndef DE_DISABLE_SDLMIXER
 #  include "audio/sys_audiod_sdlmixer.h"
 #endif
 
@@ -32,7 +32,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(AudioDriver)
+DE_PIMPL(AudioDriver)
 {
     bool initialized   = false;
     ::Library *library = nullptr;
@@ -71,7 +71,7 @@ DENG2_PIMPL(AudioDriver)
 
     void getDummyInterfaces()
     {
-        DENG2_ASSERT(!initialized);
+        DE_ASSERT(!initialized);
 
         library = nullptr;
         std::memcpy(&iBase,  &audiod_dummy,       sizeof(iBase));
@@ -80,10 +80,10 @@ DENG2_PIMPL(AudioDriver)
         std::memcpy(&iCd,    &audiod_dummy_cd,    sizeof(iCd));
     }
 
-#ifndef DENG_DISABLE_SDLMIXER
+#ifndef DE_DISABLE_SDLMIXER
     void getSdlMixerInterfaces()
     {
-        DENG2_ASSERT(!initialized);
+        DE_ASSERT(!initialized);
 
         library = nullptr;
         std::memcpy(&iBase,  &audiod_sdlmixer,       sizeof(iBase));
@@ -95,7 +95,7 @@ DENG2_PIMPL(AudioDriver)
 
     void importInterfaces(LibraryFile &libFile)
     {
-        DENG2_ASSERT(!initialized);
+        DE_ASSERT(!initialized);
 
         zap(iBase);
         zap(iSfx);
@@ -184,7 +184,7 @@ String AudioDriver::statusAsText() const
     case Initialized: return "Initialized";
 
     default:
-        DENG2_ASSERT_FAIL("AudioDriver::statusAsText: Unknown status");
+        DE_ASSERT_FAIL("AudioDriver::statusAsText: Unknown status");
         return "Unknown";
     }
 }
@@ -205,7 +205,7 @@ void AudioDriver::load(String const &identifier)
         d->getDummyInterfaces();
         return;
     }
-#ifndef DENG_DISABLE_SDLMIXER
+#ifndef DE_DISABLE_SDLMIXER
     if(!identifier.compareWithoutCase("sdlmixer"))
     {
         d->getSdlMixerInterfaces();
@@ -260,7 +260,7 @@ void AudioDriver::initialize()
     // Already been here?
     if(d->initialized) return;
 
-    DENG2_ASSERT(d->iBase.Init != nullptr);
+    DE_ASSERT(d->iBase.Init != nullptr);
     d->initialized = d->iBase.Init();
 }
 
@@ -286,7 +286,7 @@ void AudioDriver::deinitialize()
 bool AudioDriver::isAvailable(String const &identifier)
 {
     if (identifier == "dummy") return true;
-#ifndef DENG_DISABLE_SDLMIXER
+#ifndef DE_DISABLE_SDLMIXER
     if (identifier == "sdlmixer") return true;
 #else
     if (identifier == "sdlmixer") return false;
@@ -368,6 +368,6 @@ String AudioDriver_GetName(audiodriverid_t id)
     if(VALID_AUDIODRIVER_IDENTIFIER(id))
         return audioDriverNames[id];
 
-    DENG2_ASSERT_FAIL("S_GetDriverName: Unknown driver id");
+    DE_ASSERT_FAIL("S_GetDriverName: Unknown driver id");
     return "";
 }

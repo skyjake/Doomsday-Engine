@@ -40,7 +40,7 @@ public slots:
     void loadMD5Model();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // GLSANDBOX_TESTWINDOW_H

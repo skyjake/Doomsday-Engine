@@ -26,9 +26,9 @@
 
 using namespace de;
 
-DENG2_PIMPL(SaveListData)
-, DENG2_OBSERVES(FileIndex, Addition)
-, DENG2_OBSERVES(FileIndex, Removal)
+DE_PIMPL(SaveListData)
+, DE_OBSERVES(FileIndex, Addition)
+, DE_OBSERVES(FileIndex, Removal)
 {
     LoopCallback mainCall;
 

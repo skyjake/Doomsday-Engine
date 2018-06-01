@@ -69,7 +69,7 @@ LogSink::IFormatter *LogSink::formatter()
 
 LogSink &LogSink::operator << (LogEntry const &entry)
 {
-    DENG2_ASSERT(formatter());
+    DE_ASSERT(formatter());
 
     foreach (String line, formatter()->logEntryToTextLines(entry))
     {

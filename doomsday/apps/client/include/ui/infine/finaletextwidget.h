@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_UI_INFINE_FINALETEXTWIDGET_H
-#define DENG_UI_INFINE_FINALETEXTWIDGET_H
+#ifndef DE_UI_INFINE_FINALETEXTWIDGET_H
+#define DE_UI_INFINE_FINALETEXTWIDGET_H
 
 #include <de/String>
 #include <de/Vector>
@@ -81,7 +81,7 @@ protected:
     void runTicks();
 
 public:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_UI_INFINE_FINALETEXTWIDGET_H
+#endif // DE_UI_INFINE_FINALETEXTWIDGET_H

@@ -49,13 +49,13 @@ class BindContext
 {
 public:
     /// Notified when the active state of the context changes.
-    DENG2_DEFINE_AUDIENCE2(ActiveChange, void bindContextActiveChanged(BindContext &context))
+    DE_DEFINE_AUDIENCE2(ActiveChange, void bindContextActiveChanged(BindContext &context))
 
     /// Notified when the list of devices to acquire changes.
-    DENG2_DEFINE_AUDIENCE2(AcquireDeviceChange, void bindContextAcquireDeviceChanged(BindContext &context))
+    DE_DEFINE_AUDIENCE2(AcquireDeviceChange, void bindContextAcquireDeviceChanged(BindContext &context))
 
     /// Notified whenever a new binding is made in this context.
-    DENG2_DEFINE_AUDIENCE2(BindingAddition, void bindContextBindingAdded(BindContext &context, de::Record &binding, bool isCommand))
+    DE_DEFINE_AUDIENCE2(BindingAddition, void bindContextBindingAdded(BindContext &context, de::Record &binding, bool isCommand))
 
 public:
     /**
@@ -190,7 +190,7 @@ public: // Triggering: ---------------------------------------------------------
     void setDDFallbackResponder(DDFallbackResponderFunc newResponderFunc);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // CLIENT_INPUTSYSTEM_BINDCONTEXT_H

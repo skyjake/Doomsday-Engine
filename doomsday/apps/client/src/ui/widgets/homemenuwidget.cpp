@@ -24,9 +24,9 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(HomeMenuWidget)
-, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
-, DENG2_OBSERVES(Asset, StateChange)
+DE_GUI_PIMPL(HomeMenuWidget)
+, DE_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
+, DE_OBSERVES(Asset, StateChange)
 {
     ui::DataPos selectedIndex = ui::Data::InvalidPos;
     ui::DataPos previousSelectedIndex = 0;
@@ -124,7 +124,7 @@ const ui::Item *HomeMenuWidget::selectedItem() const
 
 void HomeMenuWidget::setSelectedIndex(ui::DataPos index)
 {
-    DENG2_ASSERT(hasRoot());
+    DE_ASSERT(hasRoot());
 
     if (auto *widget = itemWidget<HomeItemWidget>(index))
     {

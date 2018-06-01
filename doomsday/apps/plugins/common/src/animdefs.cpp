@@ -122,7 +122,7 @@ static TextureAnimDef animsShared[] = {
 
 static void loadAnimDefs(TextureAnimDef const *defs, bool customDefs)
 {
-    DENG2_ASSERT(defs != 0);
+    DE_ASSERT(defs != 0);
 
     LOG_AS("loadAnimDefs");
 

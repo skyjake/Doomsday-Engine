@@ -83,7 +83,7 @@ static void Monitor_Print(void)
 
 D_CMD(NetFreqs)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(argc == 1) // No args?
     {

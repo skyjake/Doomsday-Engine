@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_BSPLEAF_H
-#define DENG_WORLD_BSPLEAF_H
+#ifndef DE_WORLD_BSPLEAF_H
+#define DE_WORLD_BSPLEAF_H
 
 #include <de/Error>
 #include <doomsday/BspNode>
@@ -46,7 +46,7 @@ class BspLeaf : public BspElement
 {
 public:
     /// Required subspace is missing. @ingroup errors
-    DENG2_ERROR(MissingSubspaceError);
+    DE_ERROR(MissingSubspaceError);
 
 public:
     /**
@@ -102,4 +102,4 @@ private:
 
 }  // namespace world
 
-#endif  // DENG_WORLD_BSPLEAF_H
+#endif  // DE_WORLD_BSPLEAF_H

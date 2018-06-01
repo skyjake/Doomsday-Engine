@@ -6,7 +6,7 @@
 # http://www.gnu.org/licenses/gpl.html for details.
 
 cmake_minimum_required (VERSION 3.1)
-project (DENG_SHELL)
+project (DE_SHELL)
 include (../../cmake/Config.cmake)
 
 # Dependencies.
@@ -14,7 +14,7 @@ find_package (DengCore)
 find_package (DengShell)
 
 add_definitions (
-    -DSHELL_VERSION="${DENG_VERSION}"
+    -DSHELL_VERSION="${DE_VERSION}"
 )
 
 file (GLOB SOURCES src/*.cpp src/*.h res/shell.qrc)
@@ -52,7 +52,7 @@ if (UNIX AND NOT APPLE)
     install (PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/net.dengine.Shell.desktop
         DESTINATION share/applications)
     install (FILES res/linux/deng-shell-logo-256.png
-        DESTINATION ${DENG_INSTALL_DATA_DIR})
+        DESTINATION ${DE_INSTALL_DATA_DIR})
 endif ()
 
 if (WIN32)

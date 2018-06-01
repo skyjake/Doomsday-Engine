@@ -51,7 +51,7 @@ public:
     void exportPackage(const String &packageRootPath) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace gloom

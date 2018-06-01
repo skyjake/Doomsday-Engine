@@ -26,13 +26,13 @@ using namespace de;
 
 static void AmmoWidget_UpdateGeometry(guidata_ammo_t *ammo)
 {
-    DENG2_ASSERT(ammo);
+    DE_ASSERT(ammo);
     ammo->updateGeometry();
 }
 
 static void AmmoWidget_Draw(guidata_ammo_t *wi, Point2Raw const *offset)
 {
-    DENG2_ASSERT(wi);
+    DE_ASSERT(wi);
     wi->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 

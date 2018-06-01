@@ -36,7 +36,7 @@ static String const CATEGORY_MUSIC ("music");
 static String const CATEGORY_SOUNDS("sounds");
 static String const CATEGORY_THEMES("themes");
 
-DENG2_PIMPL(IdgamesLink)
+DE_PIMPL(IdgamesLink)
 {
     struct PackageIndexEntry : public PathTree::Node
     {
@@ -276,12 +276,12 @@ filesys::Link *IdgamesLink::construct(String const &address)
 File *IdgamesLink::populateRemotePath(String const &packageId,
                                       filesys::RepositoryPath const &path) const
 {
-    DENG2_ASSERT(path.link == this);
+    DE_ASSERT(path.link == this);
 
     auto *pkgEntry = d->findPackage(packageId);
     if (!pkgEntry)
     {
-        DENG2_ASSERT(pkgEntry);
+        DE_ASSERT(pkgEntry);
         return nullptr;
     }
 

@@ -23,7 +23,7 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(FinaleWidget)
+DE_PIMPL_NOREF(FinaleWidget)
 {
     Id id;
     String name;
@@ -47,7 +47,7 @@ FinaleWidget::FinaleWidget(de::String const &name) : d(new Impl)
 
 FinaleWidget::~FinaleWidget()
 {
-    DENG2_FOR_AUDIENCE(Deletion, i) i->finaleWidgetBeingDeleted(*this);
+    DE_FOR_AUDIENCE(Deletion, i) i->finaleWidgetBeingDeleted(*this);
 }
 
 Id FinaleWidget::id() const

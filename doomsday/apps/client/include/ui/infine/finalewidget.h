@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_UI_INFINE_FINALEWIDGET_H
-#define DENG_UI_INFINE_FINALEWIDGET_H
+#ifndef DE_UI_INFINE_FINALEWIDGET_H
+#define DE_UI_INFINE_FINALEWIDGET_H
 
 #include <de/animator.h>
 #include <de/Id>
@@ -38,13 +38,13 @@ class FinaleWidget
 {
 public:
     /// Notified when the InFine object is about to be deleted.
-    DENG2_DEFINE_AUDIENCE(Deletion, void finaleWidgetBeingDeleted(FinaleWidget const &widget))
+    DE_DEFINE_AUDIENCE(Deletion, void finaleWidgetBeingDeleted(FinaleWidget const &widget))
 
 public:
     explicit FinaleWidget(de::String const &name = de::String());
     virtual ~FinaleWidget();
 
-    DENG2_CAST_METHODS()
+    DE_CAST_METHODS()
 
 #ifdef __CLIENT__
     virtual void draw(de::Vec3f const &offset) = 0;
@@ -91,7 +91,7 @@ public:
     FinaleWidget &setPage(FinalePageWidget *newPage);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_UI_INFINE_FINALEWIDGET_H
+#endif // DE_UI_INFINE_FINALEWIDGET_H

@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_REMOTEFEED_H
-#define LIBDENG2_REMOTEFEED_H
+#ifndef LIBCORE_REMOTEFEED_H
+#define LIBCORE_REMOTEFEED_H
 
 #include "../../Feed"
 #include "../../Address"
@@ -28,7 +28,7 @@ namespace de {
  * Feed that communicates with a remote backend and populates local placeholders for
  * remote file data.
  */
-class DENG2_PUBLIC RemoteFeed : public Feed
+class DE_PUBLIC RemoteFeed : public Feed
 {
 public:
     RemoteFeed(String const &repository, String const &remotePath = String("/"));
@@ -43,9 +43,9 @@ protected:
     RemoteFeed(RemoteFeed const &parentFeed, String const &remotePath);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_REMOTEFEED_H
+#endif // LIBCORE_REMOTEFEED_H

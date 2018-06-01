@@ -104,7 +104,7 @@ Value *OperatorExpression::newBooleanValue(bool isTrue)
 
 void OperatorExpression::verifyAssignable(Value *value)
 {
-    DENG2_ASSERT(value != 0);
+    DE_ASSERT(value != 0);
     if (!dynamic_cast<RefValue *>(value))
     {
         throw NotAssignableError("OperatorExpression::verifyAssignable",
@@ -124,7 +124,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
 
     QScopedPointer<Value> leftScope(leftScopePtr); // will be deleted if not needed
 
-    DENG2_ASSERT(_op == MEMBER || _op == AND || _op == OR ||
+    DE_ASSERT(_op == MEMBER || _op == AND || _op == OR ||
                  (!isUnary(_op) && leftValue && rightValue) ||
                  ( isUnary(_op) && rightValue));
 
@@ -266,7 +266,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
         {
             /*
             LOG_DEV_TRACE_DEBUGONLY("INDEX: types %s [ %s ] byref:%b",
-                          DENG2_TYPE_NAME(*leftValue) << DENG2_TYPE_NAME(*rightValue)
+                          DE_TYPE_NAME(*leftValue) << DE_TYPE_NAME(*rightValue)
                           << flags().testFlag(ByReference));
                           */
 
@@ -295,7 +295,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
             {
                 throw ScopeError("OperatorExpression::evaluate",
                     "Left side of " + operatorToText(_op) + " does not have members [" +
-                                 DENG2_TYPE_NAME(*leftValue) + "]");
+                                 DE_TYPE_NAME(*leftValue) + "]");
             }
 
             // Now that we know what the scope is, push the rest of the expression
@@ -304,7 +304,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
 
             // Cleanup.
             //delete leftValue;
-            DENG2_ASSERT(rightValue == NULL);
+            DE_ASSERT(rightValue == NULL);
 
             // The MEMBER operator does not evaluate to any result.
             // Whatever is on the right side will be the result.
@@ -417,10 +417,10 @@ Value *OperatorExpression::performSlice(Value &leftValue, Value &rightValue) con
     using internal::TextSliceTarget;
     using internal::ArraySliceTarget;
 
-    DENG2_ASSERT(rightValue.size() >= 2);
+    DE_ASSERT(rightValue.size() >= 2);
 
     ArrayValue const *args = dynamic_cast<ArrayValue *>(&rightValue);
-    DENG2_ASSERT(args != NULL); // Parser makes sure.
+    DE_ASSERT(args != NULL); // Parser makes sure.
 
     // The resulting slice of leftValue's elements.
     std::unique_ptr<SliceTarget> slice;

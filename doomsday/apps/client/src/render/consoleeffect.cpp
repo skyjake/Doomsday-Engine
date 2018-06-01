@@ -24,7 +24,7 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(ConsoleEffect)
+DE_PIMPL_NOREF(ConsoleEffect)
 {
     int console;
     bool inited;

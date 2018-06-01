@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_DATE_H
-#define LIBDENG2_DATE_H
+#ifndef LIBCORE_DATE_H
+#define LIBCORE_DATE_H
 
 #include "../Time"
 #include "../Log"
@@ -32,7 +32,7 @@ namespace de {
  *
  * @ingroup types
  */
-class DENG2_PUBLIC Date : public Time, public LogEntry::Arg::Base
+class DE_PUBLIC Date : public Time, public LogEntry::Arg::Base
 {
 public:
     /**
@@ -70,8 +70,8 @@ public:
     static Date fromText(String const &text);
 };
 
-DENG2_PUBLIC QTextStream &operator << (QTextStream &os, Date const &date);
+DE_PUBLIC QTextStream &operator << (QTextStream &os, Date const &date);
 
 }
 
-#endif /* LIBDENG2_DATE_H */
+#endif /* LIBCORE_DATE_H */

@@ -153,7 +153,7 @@ void UDMFParser::parseAssignment(Block &block)
         break;
 
     default:
-        DENG2_ASSERT_FAIL("[UMDFParser::parseAssignment] Invalid token type");
+        DE_ASSERT_FAIL("[UMDFParser::parseAssignment] Invalid token type");
         break;
     }
 

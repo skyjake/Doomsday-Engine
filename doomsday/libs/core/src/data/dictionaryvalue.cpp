@@ -106,7 +106,7 @@ ArrayValue *DictionaryValue::contentsAsArray(ContentSelection selection) const
 {
     QScopedPointer<ArrayValue> array(new ArrayValue);
 
-    DENG2_FOR_EACH_CONST(Elements, i, elements())
+    DE_FOR_EACH_CONST(Elements, i, elements())
     {
         if (selection == Keys)
         {

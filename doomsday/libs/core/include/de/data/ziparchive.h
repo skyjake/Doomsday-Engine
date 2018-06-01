@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_ZIPARCHIVE_H
-#define LIBDENG2_ZIPARCHIVE_H
+#ifndef LIBCORE_ZIPARCHIVE_H
+#define LIBCORE_ZIPARCHIVE_H
 
 #include "../Archive"
 #include "../NativePath"
@@ -36,28 +36,28 @@ namespace de {
  *
  * @see http://en.wikipedia.org/wiki/Zip_(file_format)
  */
-class DENG2_PUBLIC ZipArchive : public Archive
+class DE_PUBLIC ZipArchive : public Archive
 {
 public:
     /// The central directory of the ZIP archive cannot be located. Maybe it's not
     /// a ZIP archive after all? @ingroup errors
-    DENG2_SUB_ERROR(FormatError, MissingCentralDirectoryError);
+    DE_SUB_ERROR(FormatError, MissingCentralDirectoryError);
 
     /// The source archive belongs to a multipart archive. @ingroup errors
-    DENG2_SUB_ERROR(FormatError, MultiPartError);
+    DE_SUB_ERROR(FormatError, MultiPartError);
 
     /// An entry in the archive uses a compression algorithm not supported by the
     /// implementation. @ingroup errors
-    DENG2_SUB_ERROR(FormatError, UnknownCompressionError);
+    DE_SUB_ERROR(FormatError, UnknownCompressionError);
 
     /// An entry is encrypted. Decrypting is not supported. @ingroup errors
-    DENG2_SUB_ERROR(FormatError, EncryptionError);
+    DE_SUB_ERROR(FormatError, EncryptionError);
 
     /// There is an error during decompression. @ingroup errors
-    DENG2_SUB_ERROR(ContentError, InflateError);
+    DE_SUB_ERROR(ContentError, InflateError);
 
     /// There is an error during compression. @ingroup errors
-    DENG2_SUB_ERROR(ContentError, DeflateError);
+    DE_SUB_ERROR(ContentError, DeflateError);
 
 public:
     /**
@@ -98,7 +98,7 @@ public:
      */
     static bool recognize(NativePath const &path);
 
-    struct DENG2_PUBLIC Interpreter : public filesys::IInterpreter {
+    struct DE_PUBLIC Interpreter : public filesys::IInterpreter {
         File *interpretFile(File *sourceData) const override;
     };
 
@@ -123,9 +123,9 @@ protected:
     Index const &index() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_ZIPARCHIVE_H
+#endif // LIBCORE_ZIPARCHIVE_H

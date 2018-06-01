@@ -45,7 +45,7 @@ public:
     virtual ~Id1MapElement() {}
 
     MapImporter &map() const {
-        DENG2_ASSERT(_map != 0);
+        DE_ASSERT(_map != 0);
         return *_map;
     }
 
@@ -98,7 +98,7 @@ struct SideDef : public Id1MapElement
             break;
 
         default:
-            DENG2_ASSERT_FAIL("idtech1::SideDef::read: unknown map format!");
+            DE_ASSERT_FAIL("idtech1::SideDef::read: unknown map format!");
             break;
         };
 
@@ -156,7 +156,7 @@ struct LineDef : public Id1MapElement
 
     int sideIndex(Side which) const
     {
-        DENG2_ASSERT(which == Front || which == Back);
+        DE_ASSERT(which == Front || which == Back);
         return sides[which];
     }
 
@@ -206,7 +206,7 @@ struct LineDef : public Id1MapElement
             break;
 
         default:
-            DENG2_ASSERT_FAIL("idtech1::LineDef::read: unknown map format!");
+            DE_ASSERT_FAIL("idtech1::LineDef::read: unknown map format!");
             break;
         };
 
@@ -334,7 +334,7 @@ struct SectorDef : public Id1MapElement
             break; }
 
         default:
-            DENG2_ASSERT_FAIL("idtech1::SectorDef::read: unknown map format!");
+            DE_ASSERT_FAIL("idtech1::SectorDef::read: unknown map format!");
             break;
         };
 
@@ -564,7 +564,7 @@ struct Thing : public Id1MapElement
             break; }
 
         default:
-            DENG2_ASSERT_FAIL("idtech1::Thing::read: unknown map format!");
+            DE_ASSERT_FAIL("idtech1::Thing::read: unknown map format!");
             break;
         };
     }
@@ -609,7 +609,7 @@ using namespace internal;
 
 static uint validCount = 0; ///< Used with Polyobj LineDef collection.
 
-DENG2_PIMPL(MapImporter)
+DE_PIMPL(MapImporter)
 {
     Id1MapRecognizer::Format format;
 
@@ -833,7 +833,7 @@ DENG2_PIMPL(MapImporter)
         Polyobj::LineIndices polyLines;
 
         // First look for a PO_LINE_START linedef set with this tag.
-        DENG2_FOR_EACH(Lines, i, lines)
+        DE_FOR_EACH(Lines, i, lines)
         {
             // Already belongs to another polyobj?
             if(i->aFlags & LAF_POLYOBJ) continue;
@@ -857,7 +857,7 @@ DENG2_PIMPL(MapImporter)
         {
             bool foundAnotherLine = false;
 
-            DENG2_FOR_EACH(Lines, i, lines)
+            DE_FOR_EACH(Lines, i, lines)
             {
                 // Already belongs to another polyobj?
                 if(i->aFlags & LAF_POLYOBJ) continue;
@@ -888,7 +888,7 @@ DENG2_PIMPL(MapImporter)
                 // Check if an explicit line order has been skipped.
                 // A line has been skipped if there are any more explicit lines with
                 // the current tag value.
-                DENG2_FOR_EACH(Lines, i, lines)
+                DE_FOR_EACH(Lines, i, lines)
                 {
                     if(i->xType == PO_LINE_EXPLICIT && i->xArgs[0] == tag)
                     {
@@ -927,7 +927,7 @@ DENG2_PIMPL(MapImporter)
         if(format == Id1MapRecognizer::HexenFormat)
         {
             LOGDEV_MAP_XVERBOSE("Locating polyobjs...", "");
-            DENG2_FOR_EACH(Things, i, things)
+            DE_FOR_EACH(Things, i, things)
             {
                 // A polyobj anchor?
                 if(i->doomEdNum == PO_ANCHOR_DOOMEDNUM)
@@ -958,7 +958,7 @@ DENG2_PIMPL(MapImporter)
     {
         LOGDEV_MAP_XVERBOSE("Transfering sectors...", "");
 
-        DENG2_FOR_EACH(Sectors, i, sectors)
+        DE_FOR_EACH(Sectors, i, sectors)
         {
             dint idx = MPE_SectorCreate(dfloat(i->lightLevel) / 255.0f, 1, 1, 1, i->index);
 
@@ -985,7 +985,7 @@ DENG2_PIMPL(MapImporter)
     void transferLinesAndSides()
     {
         LOGDEV_MAP_XVERBOSE("Transfering lines and sides...", "");
-        DENG2_FOR_EACH(Lines, i, lines)
+        DE_FOR_EACH(Lines, i, lines)
         {
             SideDef *front = (i->hasFront()? &sides[i->front()] : 0);
             SideDef *back  = (i->hasBack() ? &sides[i->back() ] : 0);
@@ -1057,7 +1057,7 @@ DENG2_PIMPL(MapImporter)
         if(surfaceTints.empty()) return;
 
         LOGDEV_MAP_XVERBOSE("Transfering surface tints...", "");
-        DENG2_FOR_EACH(SurfaceTints, i, surfaceTints)
+        DE_FOR_EACH(SurfaceTints, i, surfaceTints)
         {
             dint idx = i - surfaceTints.begin();
 
@@ -1075,7 +1075,7 @@ DENG2_PIMPL(MapImporter)
         if(polyobjs.empty()) return;
 
         LOGDEV_MAP_XVERBOSE("Transfering polyobjs...", "");
-        DENG2_FOR_EACH(Polyobjs, i, polyobjs)
+        DE_FOR_EACH(Polyobjs, i, polyobjs)
         {
             MPE_PolyobjCreate(i->lineIndices.constData(), i->lineIndices.count(),
                               i->tag, i->seqType,
@@ -1089,7 +1089,7 @@ DENG2_PIMPL(MapImporter)
         if(things.empty()) return;
 
         LOGDEV_MAP_XVERBOSE("Transfering things...", "");
-        DENG2_FOR_EACH(Things, i, things)
+        DE_FOR_EACH(Things, i, things)
         {
             dint idx = i - things.begin();
 
@@ -1124,7 +1124,7 @@ DENG2_PIMPL(MapImporter)
      */
     void collectPolyobjLinesWorker(Polyobj::LineIndices &lineList, Vec2d const &point)
     {
-        DENG2_FOR_EACH(Lines, i, lines)
+        DE_FOR_EACH(Lines, i, lines)
         {
             // Already belongs to another polyobj?
             if(i->aFlags & LAF_POLYOBJ) continue;
@@ -1172,7 +1172,7 @@ MapImporter::MapImporter(Id1MapRecognizer const &recognized)
                       / Id1MapRecognizer::elementSizeForDataType(d->format, Id1MapRecognizer::VertexData);
     d->vertCoords.resize(vertexCount * 2);
 
-    DENG2_FOR_EACH_CONST(Id1MapRecognizer::Lumps, i, recognized.lumps())
+    DE_FOR_EACH_CONST(Id1MapRecognizer::Lumps, i, recognized.lumps())
     {
         Id1MapRecognizer::DataType dataType = i.key();
         File1 *lump = i.value();

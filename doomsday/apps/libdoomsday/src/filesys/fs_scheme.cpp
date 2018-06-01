@@ -262,7 +262,7 @@ struct FS1::Scheme::Impl
         // Process this search.
         FS1::PathList found;
         App_FileSystem().findAllPaths(searchPattern, flags, found);
-        DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
+        DE_FOR_EACH_CONST(FS1::PathList, i, found)
         {
             addDirectoryPathAndMaybeDescendBranch(!(flags & SearchPath::NoDescend),
                                                   i->path, !!(i->attrib & A_SUBDIR),
@@ -292,7 +292,7 @@ struct FS1::Scheme::Impl
                 if (node->userValue())
                 {
                     // Process it again?
-                    DENG2_FOR_EACH_CONST(PathTree::Nodes, i, directory.leafNodes())
+                    DE_FOR_EACH_CONST(PathTree::Nodes, i, directory.leafNodes())
                     {
                         PathTree::Node &sibling = **i;
                         if (&sibling.parent() == node)
@@ -424,7 +424,7 @@ static String const &nameForPathGroup(FS1::PathGroup group)
         "Default",
         "Fallback"
     };
-    DENG_ASSERT(int(group) >= FS1::OverridePaths && int(group) <= FS1::FallbackPaths);
+    DE_ASSERT(int(group) >= FS1::OverridePaths && int(group) <= FS1::FallbackPaths);
     return names[int(group)];
 }
 
@@ -442,7 +442,7 @@ bool FS1::Scheme::addSearchPath(SearchPath const &search, FS1::PathGroup group)
     d->nameHashIsDirty = true;
 
     // Have we seen this path already (we don't want duplicates)?
-    DENG2_FOR_EACH(SearchPaths, i, d->searchPaths)
+    DE_FOR_EACH(SearchPaths, i, d->searchPaths)
     {
         // Compare using the unresolved textual representations.
         if (!i->asText().compareWithoutCase(search.asText()))
@@ -526,7 +526,7 @@ bool FS1::Scheme::mapPath(String &path) const
     return true;
 }
 
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
 void FS1::Scheme::debugPrint() const
 {
     LOG_AS("Scheme::debugPrint");

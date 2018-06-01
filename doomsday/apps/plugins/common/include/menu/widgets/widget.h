@@ -43,7 +43,7 @@ class Widget
 {
 public:
     /// Required Page is presently missing. @ingroup errors
-    DENG2_ERROR(MissingPageError);
+    DE_ERROR(MissingPageError);
 
     enum Flag
     {
@@ -98,7 +98,7 @@ public:
     Widget();
     virtual ~Widget();
 
-    DENG2_CAST_METHODS()
+    DE_CAST_METHODS()
 
     virtual void draw() const {}
 
@@ -240,7 +240,7 @@ public:
     static de::String labelText(const de::String &text, const de::String &context = "Menu Label");
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Widget::Flags)

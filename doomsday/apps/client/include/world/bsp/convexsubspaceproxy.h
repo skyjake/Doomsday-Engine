@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_BSP_CONVEXSUBSPACEPROXY_H
-#define DENG_WORLD_BSP_CONVEXSUBSPACEPROXY_H
+#ifndef DE_WORLD_BSP_CONVEXSUBSPACEPROXY_H
+#define DE_WORLD_BSP_CONVEXSUBSPACEPROXY_H
 
 #include <QList>
 #include <de/Error>
@@ -47,7 +47,7 @@ struct OrderedSegment
                && de::fequal(toAngle  , other.toAngle);
     }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     void debugPrint() const
     {
         LOGDEV_MAP_MSG("%p Angle: %1.6f %s -> Angle: %1.6f %s")
@@ -196,10 +196,10 @@ public:
     OrderedSegments const &segments() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 }  // namespace bsp
 }  // namespace world
 
-#endif  // DENG_WORLD_BSP_CONVEXSUBSPACEPROXY_H
+#endif  // DE_WORLD_BSP_CONVEXSUBSPACEPROXY_H

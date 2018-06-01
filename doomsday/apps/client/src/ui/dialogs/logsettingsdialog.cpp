@@ -46,8 +46,8 @@ static DomainText const domainText[] = {
 
 #define NUM_DOMAINS (sizeof(domainText)/sizeof(domainText[0]))
 
-DENG2_PIMPL(LogSettingsDialog)
-, DENG2_OBSERVES(ToggleWidget, Toggle)
+DE_PIMPL(LogSettingsDialog)
+, DE_OBSERVES(ToggleWidget, Toggle)
 {
     ui::ListData levels;
     VariableToggleWidget *separately;

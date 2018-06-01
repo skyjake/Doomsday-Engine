@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_ASSET_H
-#define LIBDENG2_ASSET_H
+#ifndef LIBCORE_ASSET_H
+#define LIBCORE_ASSET_H
 
 #include "../libcore.h"
 #include "../Observers"
@@ -38,7 +38,7 @@ namespace de {
  *
  * @ingroup core
  */
-class DENG2_PUBLIC Asset
+class DE_PUBLIC Asset
 {
 public:
     enum State {
@@ -51,12 +51,12 @@ public:
     /**
      * Notified whenever the state of the asset changes.
      */
-    DENG2_DEFINE_AUDIENCE2(StateChange, void assetStateChanged(Asset &))
+    DE_DEFINE_AUDIENCE2(StateChange, void assetStateChanged(Asset &))
 
     /**
      * Notified when the asset is being destroyed.
      */
-    DENG2_DEFINE_AUDIENCE2(Deletion, void assetBeingDeleted(Asset &))
+    DE_DEFINE_AUDIENCE2(Deletion, void assetBeingDeleted(Asset &))
 
 public:
     Asset(State initialState = NotReady);
@@ -75,7 +75,7 @@ public:
     void waitForState(State s) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 /**
@@ -90,12 +90,12 @@ private:
  *
  * @todo Any better name for this class?
  */
-class DENG2_PUBLIC AssetGroup : public Asset,
-                                DENG2_OBSERVES(Asset, Deletion),
-                                DENG2_OBSERVES(Asset, StateChange)
+class DE_PUBLIC AssetGroup : public Asset,
+                                DE_OBSERVES(Asset, Deletion),
+                                DE_OBSERVES(Asset, StateChange)
 {
-    DENG2_NO_COPY  (AssetGroup)
-    DENG2_NO_ASSIGN(AssetGroup)
+    DE_NO_COPY  (AssetGroup)
+    DE_NO_ASSIGN(AssetGroup)
 
 public:
     enum Policy {
@@ -140,13 +140,13 @@ public:
     void assetStateChanged(Asset &);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 /**
  * Interface for objects that have an asset group.
  */
-class DENG2_PUBLIC IAssetGroup
+class DE_PUBLIC IAssetGroup
 {
 public:
     virtual ~IAssetGroup();
@@ -160,4 +160,4 @@ public:
 
 } // namespace de
 
-#endif // LIBDENG2_ASSET_H
+#endif // LIBCORE_ASSET_H

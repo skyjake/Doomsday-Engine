@@ -52,7 +52,7 @@
 using namespace de;
 
 // Development utility: on sharp tics, print player 0 movement state.
-//#define LIBDENG_PLAYER0_MOVEMENT_ANALYSIS
+//#define DE_PLAYER0_MOVEMENT_ANALYSIS
 
 /**
  * There needs to be at least this many tics per second. A smaller value
@@ -119,7 +119,7 @@ dfloat DD_GetFrameRate()
 }
 
 #undef DD_IsSharpTick
-DENG_EXTERN_C dd_bool DD_IsSharpTick()
+DE_EXTERN_C dd_bool DD_IsSharpTick()
 {
     return ::tickIsSharp;
 }
@@ -203,7 +203,7 @@ static void baseTicker(timespan_t time)
             R_NewSharpWorld();
 #endif
 
-#ifdef LIBDENG_PLAYER0_MOVEMENT_ANALYSIS
+#ifdef DE_PLAYER0_MOVEMENT_ANALYSIS
             if(DD_Player(0)->publicData().inGame && DD_Player(0)->publicData().mo)
             {
                 static coord_t prevPos[3] = { 0, 0, 0 };

@@ -252,7 +252,7 @@ typedef struct {
     float scaleFactor;
 } dgl_borderedprojectionstate_t;
 
-DENG_API_TYPEDEF(GL)
+DE_API_TYPEDEF(GL)
 {
     de_api_t api;
 
@@ -375,9 +375,9 @@ DENG_API_TYPEDEF(GL)
      */
     void (*ResetViewEffects)();
 }
-DENG_API_T(GL);
+DE_API_T(GL);
 
-#ifndef DENG_NO_API_MACROS_GL
+#ifndef DE_NO_API_MACROS_GL
 #define DGL_Enable          _api_GL.Enable
 #define DGL_Disable         _api_GL.Disable
 #define DGL_PushState       _api_GL.PushState
@@ -455,7 +455,7 @@ DENG_API_T(GL);
 #endif
 
 #if defined __DOOMSDAY__ && defined __CLIENT__
-DENG_USING_API(GL);
+DE_USING_API(GL);
 #endif
 
 ///@}

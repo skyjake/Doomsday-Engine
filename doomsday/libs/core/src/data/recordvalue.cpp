@@ -33,8 +33,8 @@
 
 namespace de {
 
-DENG2_PIMPL(RecordValue)
-, DENG2_OBSERVES(Record, Deletion)
+DE_PIMPL(RecordValue)
+, DE_OBSERVES(Record, Deletion)
 {
     Record *record = nullptr;
     OwnershipFlags ownership;
@@ -43,12 +43,12 @@ DENG2_PIMPL(RecordValue)
     Impl(Public *i) : Base(i) {}
 
     // Observes Record deletion.
-    void recordBeingDeleted(Record &DENG2_DEBUG_ONLY(deleted))
+    void recordBeingDeleted(Record &DE_DEBUG_ONLY(deleted))
     {
         if (!record) return; // Not associated with a record any more.
 
-        DENG2_ASSERT(record == &deleted);
-        DENG2_ASSERT(!ownership.testFlag(OwnsRecord));
+        DE_ASSERT(record == &deleted);
+        DE_ASSERT(!ownership.testFlag(OwnsRecord));
         record = nullptr;
         self().setAccessedRecord(nullptr);
     }
@@ -62,7 +62,7 @@ RecordValue::RecordValue(Record *record, OwnershipFlags o)
     d->ownership = o;
     d->oldOwnership = o;
 
-    DENG2_ASSERT(d->record != nullptr);
+    DE_ASSERT(d->record != nullptr);
 
     if (!d->ownership.testFlag(OwnsRecord) &&
         !d->record->flags().testFlag(Record::WontBeDeleted))
@@ -152,7 +152,7 @@ Record *RecordValue::takeRecord()
         throw OwnershipError("RecordValue::takeRecord", "Value does not own the record");
     }
     Record *rec = d->record;
-    DENG2_ASSERT(!d->record->audienceForDeletion().contains(d));
+    DE_ASSERT(!d->record->audienceForDeletion().contains(d));
     d->record = nullptr;
     d->ownership = RecordNotOwned;
     setAccessedRecord(nullptr);

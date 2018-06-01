@@ -27,13 +27,13 @@ using namespace de;
 
 static void HealthIconWidget_Draw(guidata_healthicon_t *icon, Point2Raw const *offset)
 {
-    DENG2_ASSERT(icon);
+    DE_ASSERT(icon);
     icon->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void HealthIconWidget_UpdateGeometry(guidata_healthicon_t *icon)
 {
-    DENG2_ASSERT(icon);
+    DE_ASSERT(icon);
     icon->updateGeometry();
 }
 

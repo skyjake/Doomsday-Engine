@@ -215,7 +215,7 @@ typedef struct classinfo_s
     char const *fourthWeaponCompletePatchName;
 } classinfo_t;
 
-DENG_EXTERN_C classinfo_t classInfo[NUM_PLAYER_CLASSES];
+DE_EXTERN_C classinfo_t classInfo[NUM_PLAYER_CLASSES];
 
 /**
  * Game state (hi-level).
@@ -344,7 +344,7 @@ typedef enum {
 #define TIMEBOMB_STARTDATE  (268) // initial date (9/26)
 #define TIMEBOMB_ENDDATE    (301) // end date (10/29)
 
-DENG_EXTERN_C int maulatorSeconds;
+DE_EXTERN_C int maulatorSeconds;
 
 #define MAULATORTICS        ((unsigned int) maulatorSeconds * TICSPERSEC)
 
@@ -357,15 +357,15 @@ DENG_EXTERN_C int maulatorSeconds;
 
 #define DEFAULT_PLAYER_VIEWHEIGHT (48)
 
-DENG_EXTERN_C fixed_t finesine[5 * FINEANGLES / 4];
-DENG_EXTERN_C fixed_t *finecosine;
+DE_EXTERN_C fixed_t finesine[5 * FINEANGLES / 4];
+DE_EXTERN_C fixed_t *finecosine;
 
 // Set if homebrew PWAD stuff has been added.
-DENG_EXTERN_C dd_bool  modifiedgame;
+DE_EXTERN_C dd_bool  modifiedgame;
 
 #define MAX_PLAYER_STARTS   (8)
 
-DENG_EXTERN_C int localQuakeHappening[MAXPLAYERS];
+DE_EXTERN_C int localQuakeHappening[MAXPLAYERS];
 
 #ifdef __cplusplus
 extern "C" {

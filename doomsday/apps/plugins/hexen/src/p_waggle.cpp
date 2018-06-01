@@ -29,7 +29,7 @@
 
 void T_FloorWaggle(waggle_t *waggle)
 {
-    DENG_ASSERT(waggle != 0);
+    DE_ASSERT(waggle != 0);
 
     switch(waggle->state)
     {
@@ -107,7 +107,7 @@ int waggle_s::read(MapStateReader *msr)
 
         // Start of used data members.
         sector          = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
-        DENG_ASSERT(sector != 0);
+        DE_ASSERT(sector != 0);
 
         originalHeight  = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
         accumulator     = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
@@ -128,7 +128,7 @@ int waggle_s::read(MapStateReader *msr)
         // Start of used data members.
         // A 32bit pointer to sector, serialized.
         sector          = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
-        DENG_ASSERT(sector != 0);
+        DE_ASSERT(sector != 0);
 
         originalHeight  = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
         accumulator     = FIX2FLT((fixed_t) Reader_ReadInt32(reader));

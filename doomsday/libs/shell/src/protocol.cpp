@@ -109,7 +109,7 @@ Packet *LogEntryPacket::fromBlock(Block const &block)
 
 static Packet::Type const PLAYER_INFO_PACKET_TYPE = Packet::typeFromString("PlrI");
 
-DENG2_PIMPL_NOREF(PlayerInfoPacket)
+DE_PIMPL_NOREF(PlayerInfoPacket)
 {
     Players players;
 };
@@ -130,7 +130,7 @@ int PlayerInfoPacket::count() const
 
 PlayerInfoPacket::Player const &PlayerInfoPacket::player(int number) const
 {
-    DENG2_ASSERT(d->players.contains(number));
+    DE_ASSERT(d->players.contains(number));
     return d->players[number];
 }
 
@@ -175,7 +175,7 @@ Packet *PlayerInfoPacket::fromBlock(Block const &block)
 
 static Packet::Type const MAP_OUTLINE_PACKET_TYPE = Packet::typeFromString("MpOL");
 
-DENG2_PIMPL_NOREF(MapOutlinePacket)
+DE_PIMPL_NOREF(MapOutlinePacket)
 {
     QList<Line> lines;
 };
@@ -205,7 +205,7 @@ int MapOutlinePacket::lineCount() const
 
 MapOutlinePacket::Line const &MapOutlinePacket::line(int index) const
 {
-    DENG2_ASSERT(index >= 0 && index < d->lines.size());
+    DE_ASSERT(index >= 0 && index < d->lines.size());
     return d->lines[index];
 }
 
@@ -256,25 +256,25 @@ Protocol::PacketType Protocol::recognize(Packet const *packet)
 {
     if (packet->type() == CHALLENGE_PACKET_TYPE)
     {
-        DENG2_ASSERT(is<ChallengePacket>(packet));
+        DE_ASSERT(is<ChallengePacket>(packet));
         return PasswordChallenge;
     }
 
     if (packet->type() == LOG_ENTRY_PACKET_TYPE)
     {
-        DENG2_ASSERT(is<LogEntryPacket>(packet));
+        DE_ASSERT(is<LogEntryPacket>(packet));
         return LogEntries;
     }
 
     if (packet->type() == MAP_OUTLINE_PACKET_TYPE)
     {
-        DENG2_ASSERT(is<MapOutlinePacket>(packet));
+        DE_ASSERT(is<MapOutlinePacket>(packet));
         return MapOutline;
     }
 
     if (packet->type() == PLAYER_INFO_PACKET_TYPE)
     {
-        DENG2_ASSERT(is<PlayerInfoPacket>(packet));
+        DE_ASSERT(is<PlayerInfoPacket>(packet));
         return PlayerInfo;
     }
 
@@ -316,9 +316,9 @@ RecordPacket *Protocol::newCommand(String const &command)
 static RecordPacket const &asRecordPacket(Packet const &packet, Protocol::PacketType type)
 {
     RecordPacket const *rec = dynamic_cast<RecordPacket const *>(&packet);
-    DENG2_ASSERT(rec != 0);
-    DENG2_ASSERT(Protocol::recognize(&packet) == type);
-    DENG2_UNUSED(type);
+    DE_ASSERT(rec != 0);
+    DE_ASSERT(Protocol::recognize(&packet) == type);
+    DE_UNUSED(type);
     return *rec;
 }
 
@@ -344,7 +344,7 @@ Lexicon Protocol::lexicon(Packet const &consoleLexiconPacket)
 {
     RecordPacket const &rec = asRecordPacket(consoleLexiconPacket, ConsoleLexicon);
     Lexicon lexicon;
-    DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, rec["terms"].array().elements())
+    DE_FOR_EACH_CONST(ArrayValue::Elements, i, rec["terms"].array().elements())
     {
         lexicon.addTerm((*i)->asText());
     }

@@ -28,7 +28,7 @@ using namespace de;
 namespace common {
 namespace menu {
 
-DENG2_PIMPL_NOREF(RectWidget)
+DE_PIMPL_NOREF(RectWidget)
 {
     Vec2ui dimensions;  ///< Dimensions of the rectangle.
     patchid_t patch = 0;   ///< Background patch.

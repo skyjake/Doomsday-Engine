@@ -21,8 +21,8 @@
  * Font Renderer
  */
 
-#ifndef LIBDENG_FONT_RENDERER
-#define LIBDENG_FONT_RENDERER
+#ifndef DE_FONT_RENDERER
+#define DE_FONT_RENDERER
 
 #ifdef __cplusplus
 extern "C" {
@@ -68,4 +68,4 @@ int FR_GlyphTopToAscent(const char* text);
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_FONT_RENDERER */
+#endif /* DE_FONT_RENDERER */

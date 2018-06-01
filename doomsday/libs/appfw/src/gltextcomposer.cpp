@@ -26,7 +26,7 @@ using namespace ui;
 
 static Rangei const MAX_VISIBLE_RANGE(0, 0x7fffffff);
 
-DENG2_PIMPL(GLTextComposer)
+DE_PIMPL(GLTextComposer)
 {
     Font const *font = nullptr;
     Atlas *atlas = nullptr;
@@ -179,8 +179,8 @@ DENG2_PIMPL(GLTextComposer)
                 lines << Line();
             }
 
-            DENG2_ASSERT(i < lines.size());
-            DENG2_ASSERT(lines[i].segs.isEmpty());
+            DE_ASSERT(i < lines.size());
+            DE_ASSERT(lines[i].segs.isEmpty());
 
             Line &line = lines[i];
             for (int k = 0; k < info.segs.size(); ++k)
@@ -206,7 +206,7 @@ DENG2_PIMPL(GLTextComposer)
                 line.segs << seg;
             }
 
-            DENG2_ASSERT(line.segs.size() == info.segs.size());
+            DE_ASSERT(line.segs.size() == info.segs.size());
         }
 
         // Remove the excess lines.
@@ -219,7 +219,7 @@ DENG2_PIMPL(GLTextComposer)
 
         wraps->clearRasterizedLines();
 
-        DENG2_ASSERT(wraps->height() == lines.size());
+        DE_ASSERT(wraps->height() == lines.size());
 
         return changed;
     }
@@ -289,7 +289,7 @@ DENG2_PIMPL(GLTextComposer)
             }
         }
 
-        DENG2_ASSERT(rangeEnd > lineRange.start);
+        DE_ASSERT(rangeEnd > lineRange.start);
 
         // Set segment X coordinates by stacking them left-to-right on each line.
         for (int i = lineRange.start; i < rangeEnd; ++i)
@@ -318,7 +318,7 @@ DENG2_PIMPL(GLTextComposer)
 
                 FontLineWrapping::LineInfo const &info = wraps->lineInfo(i);
 
-                DENG2_ASSERT(info.segs.size() == lines[i].segs.size());
+                DE_ASSERT(info.segs.size() == lines[i].segs.size());
                 for (int k = 0; k < info.segs.size(); ++k)
                 {
                     Impl::Line::Segment &seg = lines[i].segs[k];
@@ -419,7 +419,7 @@ Rangei GLTextComposer::range() const
 
 bool GLTextComposer::update()
 {
-    DENG2_ASSERT(d->wraps);
+    DE_ASSERT(d->wraps);
 
     bool changed = false;
 
@@ -469,15 +469,15 @@ void GLTextComposer::makeVertices(GuiVertexBuilder &triStrip,
 {
     if (!isReady()) return;
 
-    DENG2_ASSERT(d->wraps != 0);
-    DENG2_ASSERT(d->font != 0);
+    DE_ASSERT(d->wraps != 0);
+    DE_ASSERT(d->font != 0);
 
     Vec2i const contentSize(d->wraps->width(), d->wraps->totalHeightInPixels());
 
     // Apply alignment within the provided rectangle.
     Vec2f p = applyAlignment(alignInRect, contentSize, rect);
 
-    DENG2_ASSERT(d->wraps->height() == d->lines.size());
+    DE_ASSERT(d->wraps->height() == d->lines.size());
 
     // Align segments based on tab stops.
     d->updateLineLayout(Rangei(0, d->lines.size()));

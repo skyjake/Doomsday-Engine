@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_DRAWLISTS_H
-#define DENG_CLIENT_RENDER_DRAWLISTS_H
+#ifndef DE_CLIENT_RENDER_DRAWLISTS_H
+#define DE_CLIENT_RENDER_DRAWLISTS_H
 
 #include "DrawList"
 #include <de/Vector>
@@ -64,7 +64,7 @@ public:
     void clear();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_RENDER_DRAWLISTS_H
+#endif // DE_CLIENT_RENDER_DRAWLISTS_H

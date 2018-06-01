@@ -29,7 +29,7 @@ struct stringarray_s {
     typedef std::vector<de::Str *> Strings;
     Strings array;
 
-    inline void assertValidIndex(int DENG_DEBUG_ONLY(i)) const {
+    inline void assertValidIndex(int DE_DEBUG_ONLY(i)) const {
         assert(i >= 0);
         assert(i < int(array.size()));
     }

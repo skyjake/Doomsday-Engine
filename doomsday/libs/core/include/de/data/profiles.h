@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG2_PROFILES_H
-#define DENG2_PROFILES_H
+#ifndef DE_PROFILES_H
+#define DE_PROFILES_H
 
 #include <de/String>
 #include <de/Info>
@@ -36,14 +36,14 @@ namespace de {
  *
  * @ingroup data
  */
-class DENG2_PUBLIC Profiles
+class DE_PUBLIC Profiles
 {
 public:
     /**
      * Base class for profiles. The derived class implements this with the
      * appropriate contents and serialization. @ingroup data
      */
-    class DENG2_PUBLIC AbstractProfile : public Deletable
+    class DE_PUBLIC AbstractProfile : public Deletable
     {
     public:
         AbstractProfile();
@@ -101,19 +101,19 @@ public:
          */
         virtual String toInfoSource() const = 0;
 
-        DENG2_CAST_METHODS()
+        DE_CAST_METHODS()
 
     public:
-        DENG2_DEFINE_AUDIENCE2(Change, void profileChanged(AbstractProfile &))
+        DE_DEFINE_AUDIENCE2(Change, void profileChanged(AbstractProfile &))
 
     private:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
-    DENG2_ERROR(NotFoundError);
+    DE_ERROR(NotFoundError);
 
-    DENG2_DEFINE_AUDIENCE2(Addition, void profileAdded  (AbstractProfile &prof))
-    DENG2_DEFINE_AUDIENCE2(Removal,  void profileRemoved(AbstractProfile &prof))
+    DE_DEFINE_AUDIENCE2(Addition, void profileAdded  (AbstractProfile &prof))
+    DE_DEFINE_AUDIENCE2(Removal,  void profileRemoved(AbstractProfile &prof))
 
 public:
     Profiles();
@@ -205,9 +205,9 @@ protected:
             de::Info::BlockElement const &block) = 0;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // DENG2_PROFILES_H
+#endif // DE_PROFILES_H

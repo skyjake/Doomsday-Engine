@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_REFRESH_UTIL_H
-#define DENG_REFRESH_UTIL_H
+#ifndef DE_REFRESH_UTIL_H
+#define DE_REFRESH_UTIL_H
 
 #include <de/Matrix>
 #include <de/String>
@@ -127,4 +127,4 @@ bool R_GenerateTexCoords(de::Vec2f &s, de::Vec2f &t, de::Vec3d const &point,
 
 char const *R_NameForBlendMode(blendmode_t mode);
 
-#endif // DENG_REFRESH_UTIL_H
+#endif // DE_REFRESH_UTIL_H

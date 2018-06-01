@@ -33,7 +33,7 @@
 #include <QTimer>
 #include <QThread>
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
 #  error "glwindow_qml.cpp is only for mobile platforms"
 #endif
 
@@ -85,7 +85,7 @@ DENG2_PIMPL(GLWindow)
         // Print some information.
         QSurfaceFormat const fmt = qtWindow->format();
 
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
         LOG_GL_NOTE("OpenGL %i.%i supported%s")
                 << fmt.majorVersion()
                 << fmt.minorVersion()

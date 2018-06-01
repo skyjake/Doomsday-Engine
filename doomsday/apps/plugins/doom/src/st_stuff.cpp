@@ -367,7 +367,7 @@ void SBarBackground_Drawer(HudWidget *wi, Point2Raw const *offset)
 
 void SBarBackground_UpdateGeometry(HudWidget *wi)
 {
-    DENG2_ASSERT(wi);
+    DE_ASSERT(wi);
 
     Rect_SetWidthHeight(&wi->geometry(), 0, 0);
 
@@ -390,7 +390,7 @@ void ST_HUDUnHide(int localPlayer, hueevent_t ev)
 
     if(ev < HUE_FORCE || ev > NUMHUDUNHIDEEVENTS)
     {
-        DENG2_ASSERT_FAIL("ST_HUDUnHide: Invalid event type");
+        DE_ASSERT_FAIL("ST_HUDUnHide: Invalid event type");
         return;
     }
 
@@ -498,7 +498,7 @@ void ST_Ticker(timespan_t ticLength)
 
 static void drawUIWidgetsForPlayer(player_t *plr)
 {
-    DENG2_ASSERT(plr);
+    DE_ASSERT(plr);
 
 #define DISPLAY_BORDER      (2) /// Units in fixed 320x200 screen space.
 
@@ -616,7 +616,7 @@ void ST_Drawer(int localPlayer)
 
 dd_bool ST_StatusBarIsActive(int localPlayer)
 {
-    DENG2_ASSERT(localPlayer >= 0 && localPlayer < MAXPLAYERS);
+    DE_ASSERT(localPlayer >= 0 && localPlayer < MAXPLAYERS);
 
     if(!players[localPlayer].plr->inGame) return false;
 
@@ -625,7 +625,7 @@ dd_bool ST_StatusBarIsActive(int localPlayer)
 
 float ST_StatusBarShown(int localPlayer)
 {
-    DENG2_ASSERT(localPlayer >= 0 && localPlayer < MAXPLAYERS);
+    DE_ASSERT(localPlayer >= 0 && localPlayer < MAXPLAYERS);
     return hudStates[localPlayer].showBar;
 }
 
@@ -653,7 +653,7 @@ void ST_loadData()
 
 static void initData(hudstate_t *hud)
 {
-    DENG2_ASSERT(hud);
+    DE_ASSERT(hud);
 
     hud->statusbarActive = true;
     hud->stopped = true;
@@ -947,7 +947,7 @@ struct uiwidgetdef_t
         case GUI_ITEMS:         wi = new guidata_items_t(localPlayer); break;
         case GUI_KILLS:         wi = new guidata_kills_t(localPlayer); break;
 
-        default: DENG2_ASSERT_FAIL("Unknown widget type"); break;
+        default: DE_ASSERT_FAIL("Unknown widget type"); break;
         }
 
         wi->setAlignment(def.alignFlags)
@@ -1322,7 +1322,7 @@ static int parseTeamNumber(String const &str)
 
 D_CMD(ChatOpen)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(G_QuitInProgress()) return false;
 
@@ -1346,7 +1346,7 @@ D_CMD(ChatOpen)
 
 D_CMD(ChatAction)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     if(G_QuitInProgress()) return false;
 
@@ -1371,7 +1371,7 @@ D_CMD(ChatAction)
 
 D_CMD(ChatSendMacro)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(G_QuitInProgress()) return false;
 

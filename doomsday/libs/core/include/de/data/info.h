@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_INFO_H
-#define LIBDENG2_INFO_H
+#ifndef LIBCORE_INFO_H
+#define LIBCORE_INFO_H
 
 #include "../NativePath"
 #include "../Record"
@@ -46,7 +46,7 @@ class File;
  *
  * @todo Should use de::Lex internally.
  */
-class DENG2_PUBLIC Info
+class DE_PUBLIC Info
 {
 public:
     class BlockElement;
@@ -54,7 +54,7 @@ public:
     /**
      * Base class for all elements.
      */
-    class DENG2_PUBLIC Element {
+    class DE_PUBLIC Element {
     public:
         enum Type {
             None,
@@ -111,16 +111,16 @@ public:
 
         virtual ValueList values() const = 0;
 
-        DENG2_CAST_METHODS()
+        DE_CAST_METHODS()
 
     private:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
     /**
      * Element that contains a single string value.
      */
-    class DENG2_PUBLIC KeyElement : public Element {
+    class DE_PUBLIC KeyElement : public Element {
     public:
         enum Flag {
             Attribute = 0x1,
@@ -149,7 +149,7 @@ public:
     /**
      * Element that contains a list of string values.
      */
-    class DENG2_PUBLIC ListElement : public Element {
+    class DE_PUBLIC ListElement : public Element {
     public:
         ListElement(String const &name) : Element(List, name) {}
         void add(Value const &v) { _values << v; }
@@ -164,9 +164,9 @@ public:
      * each block may have a "block type", which is a lower case identifier (always
      * forced to lower case).
      */
-    class DENG2_PUBLIC BlockElement : public Element {
+    class DE_PUBLIC BlockElement : public Element {
     public:
-        DENG2_ERROR(ValuesError);
+        DE_ERROR(ValuesError);
 
         typedef QHash<String, Element *> Contents;
         typedef QList<Element *> ContentsInOrder;
@@ -263,7 +263,7 @@ public:
     /**
      * Interface for objects that provide included document content. @ingroup data
      */
-    class DENG2_PUBLIC IIncludeFinder
+    class DE_PUBLIC IIncludeFinder
     {
     public:
         virtual ~IIncludeFinder() {}
@@ -284,12 +284,12 @@ public:
                                               String *sourcePath) const = 0;
 
         /// The included document could not be found. @ingroup errors
-        DENG2_ERROR(NotFoundError);
+        DE_ERROR(NotFoundError);
     };
 
 public:
     /// The parser encountered a syntax error in the source file. @ingroup errors
-    DENG2_ERROR(SyntaxError);
+    DE_ERROR(SyntaxError);
 
 public:
     Info();
@@ -412,7 +412,7 @@ public:
     static SourceLineTable const &sourceLineTable();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Info::Element::Value::Flags)
@@ -420,4 +420,4 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(Info::KeyElement::Flags)
 
 } // namespace de
 
-#endif // LIBDENG2_INFO_H
+#endif // LIBCORE_INFO_H

@@ -90,8 +90,8 @@ static dd_bool fuzzySpawnPosition(coord_t *x, coord_t *y, coord_t *z, angle_t *a
 #define XOFFSET         (33) // Player radius = 16
 #define YOFFSET         (33) // Player radius = 16
 
-    DENG2_UNUSED3(z, angle, spawnFlags);
-    DENG_ASSERT(x != 0 && y != 0);
+    DE_UNUSED(z, angle, spawnFlags);
+    DE_ASSERT(x != 0 && y != 0);
 
     // Try some spots in the vicinity.
     for(int i = 0; i < 9; ++i)
@@ -134,7 +134,7 @@ void P_SetPlayerRespawnClass(int plrNum, playerclass_t pc)
 {
 #ifndef __JHEXEN__
     // There's only one player class.
-    DENG_ASSERT(pc == PCLASS_PLAYER);
+    DE_ASSERT(pc == PCLASS_PLAYER);
 #endif
     playerRespawnAsClass[plrNum] = pc;
 }
@@ -339,7 +339,7 @@ void P_DestroyPlayerStarts()
 
 playerstart_t const *P_GetPlayerStart(uint entryPoint, int pnum, dd_bool deathmatch)
 {
-    DENG2_UNUSED(entryPoint);
+    DE_UNUSED(entryPoint);
 
     if((deathmatch && !numPlayerDMStarts) || !numPlayerStarts)
         return 0;
@@ -500,7 +500,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
     p->plr->lookDir = 0; /* $unifiedangles */
     p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM;
     p->plr->flags &= ~DDPF_UNDEFINED_ORIGIN;
-    DENG_ASSERT(mo->angle == angle);
+    DE_ASSERT(mo->angle == angle);
     p->jumpTics = 0;
     p->airCounter = 0;
     mo->player = p;
@@ -865,7 +865,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
     spawnPlayer(plrNum, pClass, pos[VX], pos[VY], pos[VZ], angle,
                 spawnFlags, makeCamera, true, true);
 
-    DENG_ASSERT(!IS_CLIENT);
+    DE_ASSERT(!IS_CLIENT);
 
     // Restore player state?
 #if __JHEXEN__
@@ -912,7 +912,7 @@ dd_bool P_CheckSpot(coord_t x, coord_t y)
     // Create a dummy to test with.
     coord_t const pos[3] = { x, y, 0 };
     mobj_t *dummy = P_SpawnMobj(DUMMY_TYPE, pos, 0, MSF_Z_FLOOR);
-    DENG_ASSERT(dummy);
+    DE_ASSERT(dummy);
     if (!dummy) return false; //Con_Error("P_CheckSpot: Failed creating dummy mobj.");
 
     dummy->flags &= ~MF_PICKUP;

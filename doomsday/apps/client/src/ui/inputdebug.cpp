@@ -20,7 +20,7 @@
 #include "de_platform.h" // strdup macro
 #include "ui/inputdebug.h"
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
 
 #include <de/concurrency.h>
 #include <de/ddstring.h>
@@ -128,7 +128,7 @@ static uchar modKey(int ddkey)
 
     if (shiftDown)
     {
-        DENG2_ASSERT(ddkey >= 0 && ddkey < MAX_KEYMAPPINGS);
+        DE_ASSERT(ddkey >= 0 && ddkey < MAX_KEYMAPPINGS);
         ddkey = shiftKeyMappings[ddkey];
     }
 
@@ -397,8 +397,8 @@ void Rend_RenderInputDeviceStateVisual(InputDevice &device, inputdev_layout_t co
 {
 #define SPACING  2
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     if (retVisualDimensions)
     {
@@ -764,8 +764,8 @@ void I_DebugDrawer()
 
     if (novideo || isDedicated) return; // Not for us.
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Disabled?
     if (!devRendKeyState && !devRendMouseState && !devRendJoyState) return;
@@ -773,7 +773,7 @@ void I_DebugDrawer()
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
     DGL_LoadIdentity();
-    DGL_Ortho(0, 0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, -1, 1);
+    DGL_Ortho(0, 0, DE_GAMEVIEW_WIDTH, DE_GAMEVIEW_HEIGHT, -1, 1);
 
     if (devRendKeyState)
     {
@@ -806,4 +806,4 @@ void I_DebugDrawerConsoleRegister()
     C_VAR_BYTE("rend-dev-input-mouse-state", &devRendMouseState, CVF_NO_ARCHIVE, 0, 1);
 }
 
-#endif // DENG2_DEBUG
+#endif // DE_DEBUG

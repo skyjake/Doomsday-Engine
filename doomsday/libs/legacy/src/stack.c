@@ -70,7 +70,7 @@ void *Stack_Pop(ddstack_t *s)
 
     if (!s) return NULL;
 
-    DENG_ASSERT(s->height > 0);
+    DE_ASSERT(s->height > 0);
 
     if (!s->height)
     {

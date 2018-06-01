@@ -1,26 +1,26 @@
-ui {       
+ui {
     # Shader for UI widgets.
     shader guiwidget.batch {
         vertex = "
-            uniform highp mat4  uMvpMatrix;            
-            uniform highp vec4  uColor[DENG_MAX_BATCH_UNIFORMS];
-            uniform highp float uSaturation[DENG_MAX_BATCH_UNIFORMS];
-            uniform highp vec4  uScissorRect[DENG_MAX_BATCH_UNIFORMS];
-            
-            DENG_ATTRIB highp vec4 aVertex;
-            DENG_ATTRIB highp vec2 aUV;
-            DENG_ATTRIB highp vec4 aColor;
-            DENG_ATTRIB highp float aIndex; // uColor 
-            
-            DENG_VAR highp vec2 vUV;
-            DENG_VAR highp vec4 vColor;
-            DENG_VAR highp vec4 vScissor;
-            DENG_VAR highp float vSaturation;
-        
+            uniform highp mat4  uMvpMatrix;
+            uniform highp vec4  uColor[DE_MAX_BATCH_UNIFORMS];
+            uniform highp float uSaturation[DE_MAX_BATCH_UNIFORMS];
+            uniform highp vec4  uScissorRect[DE_MAX_BATCH_UNIFORMS];
+
+            DE_ATTRIB highp vec4 aVertex;
+            DE_ATTRIB highp vec2 aUV;
+            DE_ATTRIB highp vec4 aColor;
+            DE_ATTRIB highp float aIndex; // uColor
+
+            DE_VAR highp vec2 vUV;
+            DE_VAR highp vec4 vColor;
+            DE_VAR highp vec4 vScissor;
+            DE_VAR highp float vSaturation;
+
             void main(void) {
                 gl_Position = uMvpMatrix * aVertex;
                 vUV = aUV;
-                
+
                 int index = int(aIndex);
                 vColor = aColor * uColor[index];
                 vScissor = uScissorRect[index];
@@ -30,10 +30,10 @@ ui {
         fragment = "
             uniform sampler2D uTex;
 
-            DENG_VAR highp vec2 vUV;
-            DENG_VAR highp vec4 vColor;
-            DENG_VAR highp vec4 vScissor;
-            DENG_VAR highp float vSaturation;
+            DE_VAR highp vec2 vUV;
+            DE_VAR highp vec4 vColor;
+            DE_VAR highp vec4 vScissor;
+            DE_VAR highp float vSaturation;
 
             void main(void) {
                 // Check the scissor first.
@@ -49,7 +49,7 @@ ui {
                     hsv.y *= vSaturation;
                     out_FragColor = hsvToRgb(hsv);
                 }
-                
+
                 // Final vertex color.
                 out_FragColor *= vColor;
             }"

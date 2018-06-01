@@ -48,7 +48,7 @@ float quitDarkenOpacity = 0;
  */
 void G_RendSpecialFilter(int player, RectRaw const *region)
 {
-    DENG2_ASSERT(region != 0);
+    DE_ASSERT(region != 0);
 
     player_t *plr = players + player;
     int const filter = plr->powers[PT_INVULNERABILITY];
@@ -250,7 +250,7 @@ void D_EndFrame()
  */
 void Mobj_UpdateColorMap(mobj_t *mo)
 {
-    DENG2_ASSERT(mo != 0);
+    DE_ASSERT(mo != 0);
 
     if(mo->flags & MF_TRANSLATION)
     {
@@ -267,7 +267,7 @@ void Mobj_UpdateColorMap(mobj_t *mo)
  */
 void P_SetDoomsdayFlags(mobj_t *mo)
 {
-    DENG2_ASSERT(mo != 0);
+    DE_ASSERT(mo != 0);
 
     // Client mobjs can't be set here.
     if(IS_CLIENT && mo->ddFlags & DDMF_REMOTE)

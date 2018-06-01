@@ -25,7 +25,7 @@ using namespace de;
 
 namespace gloom {
 
-DENG2_PIMPL_NOREF(Shadow)
+DE_PIMPL_NOREF(Shadow)
 {
     Light::Type   lightType;
     GLTexture     map;

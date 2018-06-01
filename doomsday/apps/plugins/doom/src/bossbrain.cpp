@@ -28,7 +28,7 @@
 
 BossBrain *theBossBrain; // The One boss brain.
 
-DENG2_PIMPL_NOREF(BossBrain)
+DE_PIMPL_NOREF(BossBrain)
 {
     int easy;
     int targetOn;
@@ -122,7 +122,7 @@ void BossBrain::read(MapStateReader *msr)
 
 void BossBrain::addTarget(mobj_t *mo)
 {
-    DENG_ASSERT(mo != 0);
+    DE_ASSERT(mo != 0);
 
     if(d->numTargets >= d->maxTargets)
     {
@@ -161,24 +161,24 @@ mobj_t *BossBrain::nextTarget()
 
 void BossBrain_ClearTargets(BossBrain *bb)
 {
-    DENG_ASSERT(bb != 0);
+    DE_ASSERT(bb != 0);
     return bb->clearTargets();
 }
 
 int BossBrain_TargetCount(BossBrain const *bb)
 {
-    DENG_ASSERT(bb != 0);
+    DE_ASSERT(bb != 0);
     return bb->targetCount();
 }
 
 void BossBrain_AddTarget(BossBrain *bb, mobj_t *mo)
 {
-    DENG_ASSERT(bb != 0);
+    DE_ASSERT(bb != 0);
     return bb->addTarget(mo);
 }
 
 mobj_t *BossBrain_NextTarget(BossBrain *bb)
 {
-    DENG_ASSERT(bb != 0);
+    DE_ASSERT(bb != 0);
     return bb->nextTarget();
 }

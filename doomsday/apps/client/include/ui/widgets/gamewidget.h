@@ -51,7 +51,7 @@ protected:
     void glDeinit() override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // CLIENT_GAMEWIDGET_H

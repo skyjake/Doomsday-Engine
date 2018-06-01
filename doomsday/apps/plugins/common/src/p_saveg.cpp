@@ -59,8 +59,8 @@ void SV_TranslateLegacyMobjFlags(mobj_t *mo, int ver)
 {
 #if __JDOOM64__
     // Nothing to do.
-    DENG2_UNUSED(mo);
-    DENG2_UNUSED(ver);
+    DE_UNUSED(mo);
+    DE_UNUSED(ver);
     return;
 #endif
 
@@ -160,7 +160,7 @@ void playerheader_s::read(Reader1 *reader, int saveVersion)
     {
         int ver = Reader_ReadByte(reader);
 #if !__JHERETIC__
-        DENG2_UNUSED(ver);
+        DE_UNUSED(ver);
 #endif
 
         numPowers      = Reader_ReadInt32(reader);
@@ -569,7 +569,7 @@ void SV_ReadLine(Line *li, MapStateReader *msr)
         xgDataFollows = Reader_ReadByte(reader) == 1;
     }
 #ifdef __JHEXEN__
-    DENG2_UNUSED(xgDataFollows);
+    DE_UNUSED(xgDataFollows);
 #endif
 
     // A version byte?
@@ -829,7 +829,7 @@ void SV_SaveGameClient(uint /*sessionId*/)
     Writer_Delete(writer);
     delete session;
 #else
-    DENG2_UNUSED(sessionId);
+    DE_UNUSED(sessionId);
 #endif
 #endif
 }
@@ -924,7 +924,7 @@ void SV_LoadGameClient(uint /*sessionId*/)
     Reader_Delete(reader);
     delete session;
 #else
-    DENG2_UNUSED(sessionId);
+    DE_UNUSED(sessionId);
 #endif
 #endif
 }

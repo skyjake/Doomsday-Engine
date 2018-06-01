@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_PROPERTY_H
-#define LIBDENG2_PROPERTY_H
+#ifndef LIBCORE_PROPERTY_H
+#define LIBCORE_PROPERTY_H
 
 #include "../Observers"
 
@@ -59,7 +59,7 @@ protected:
  *
  * @ingroup data
  */
-#define DENG2_DEFINE_PROPERTY(PropName, ValueType) \
+#define DE_DEFINE_PROPERTY(PropName, ValueType) \
     class PropName : public de::BaseProperty<ValueType> { \
     public: \
         typedef de::BaseProperty<ValueType> Base; \
@@ -69,22 +69,22 @@ protected:
         void setValue(ValueType const &v) { \
             if (_value == v) return; \
             _value = v; \
-            DENG2_FOR_AUDIENCE2(Change, i) i->valueOf ## PropName ## Changed(); \
+            DE_FOR_AUDIENCE2(Change, i) i->valueOf ## PropName ## Changed(); \
         } \
         PropName &operator = (ValueType const &v) { setValue(v); return *this; } \
         PropName &operator += (ValueType const &v) { setValue(_value + v); return *this; } \
         PropName &operator -= (ValueType const &v) { setValue(_value - v); return *this; } \
-        DENG2_DEFINE_AUDIENCE_INLINE(Change, void valueOf ## PropName ## Changed()) \
+        DE_DEFINE_AUDIENCE_INLINE(Change, void valueOf ## PropName ## Changed()) \
     };
 
-#define DENG2_PROPERTY(PropName, ValueType) \
-    DENG2_DEFINE_PROPERTY(PropName, ValueType) \
+#define DE_PROPERTY(PropName, ValueType) \
+    DE_DEFINE_PROPERTY(PropName, ValueType) \
     PropName p ## PropName;
 
-#define DENG2_STATIC_PROPERTY(PropName, ValueType) \
-    DENG2_DEFINE_PROPERTY(PropName, ValueType) \
+#define DE_STATIC_PROPERTY(PropName, ValueType) \
+    DE_DEFINE_PROPERTY(PropName, ValueType) \
     static PropName p ## PropName;
 
 } // namespace de
 
-#endif // LIBDENG2_PROPERTY_H
+#endif // LIBCORE_PROPERTY_H

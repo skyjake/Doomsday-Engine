@@ -48,13 +48,13 @@ using namespace de;
 static TimeSpan const SCROLL_SPAN = .5;
 static TimeSpan const DISMISS_SPAN = 1.5;
 
-DENG_GUI_PIMPL(HomeWidget)
-, DENG2_OBSERVES(App,          StartupComplete)
-, DENG2_OBSERVES(Games,        Readiness)
-, DENG2_OBSERVES(DoomsdayApp,  GameLoad)
-, DENG2_OBSERVES(DoomsdayApp,  GameChange)
-, DENG2_OBSERVES(Variable,     Change)
-, DENG2_OBSERVES(ButtonWidget, StateChange)
+DE_GUI_PIMPL(HomeWidget)
+, DE_OBSERVES(App,          StartupComplete)
+, DE_OBSERVES(Games,        Readiness)
+, DE_OBSERVES(DoomsdayApp,  GameLoad)
+, DE_OBSERVES(DoomsdayApp,  GameChange)
+, DE_OBSERVES(Variable,     Change)
+, DE_OBSERVES(ButtonWidget, StateChange)
 {
     struct Column {
         ColumnWidget *widget;

@@ -361,7 +361,7 @@ int materialchanger_s::read(MapStateReader *msr)
         // Side index is actually a DMU_ARCHIVE_INDEX.
         side = msr->side(sideIndex);
     }
-    DENG_ASSERT(side != 0);
+    DE_ASSERT(side != 0);
 
     section = (SideSection) Reader_ReadByte(reader);
     material = (world_Material *) msr->material(Reader_ReadInt16(reader), 0);
@@ -426,7 +426,7 @@ static int chooseDefaultSound(switchlist_t const *info)
     return SFX_SWTCHN;
 # endif
 
-    DENG_UNUSED(info);
+    DE_UNUSED(info);
 #endif
 }
 

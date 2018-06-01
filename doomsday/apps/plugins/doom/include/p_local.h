@@ -77,8 +77,8 @@
 
 #define sentient(mobj)      ((mobj)->health > 0 && P_GetState((mobj)->type, SN_SEE))
 
-DENG_EXTERN_C int maxAmmo[NUM_AMMO_TYPES];
-DENG_EXTERN_C int clipAmmo[NUM_AMMO_TYPES];
+DE_EXTERN_C int maxAmmo[NUM_AMMO_TYPES];
+DE_EXTERN_C int clipAmmo[NUM_AMMO_TYPES];
 
 #ifdef __cplusplus
 extern "C" {

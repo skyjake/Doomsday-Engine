@@ -30,13 +30,13 @@ static patchid_t pGreenBackground[2];  ///< [ dim, bright ]
 
 static void GreenManaVialWidget_Draw(guidata_greenmanavial_t *vial, Point2Raw const *offset)
 {
-    DENG2_ASSERT(vial);
+    DE_ASSERT(vial);
     vial->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void GreenManaVial_UpdateGeometry(guidata_greenmanavial_t *vial)
 {
-    DENG2_ASSERT(vial);
+    DE_ASSERT(vial);
     vial->updateGeometry();
 }
 

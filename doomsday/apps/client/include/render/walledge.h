@@ -46,12 +46,12 @@ namespace de { class HEdge; }
  */
 class WallEdge : public WorldEdge
 {
-    DENG2_NO_COPY  (WallEdge)
-    DENG2_NO_ASSIGN(WallEdge)
+    DE_NO_COPY  (WallEdge)
+    DE_NO_ASSIGN(WallEdge)
 
 public:
     /// Invalid range geometry was found during prepare() @ingroup errors
-    DENG2_ERROR(InvalidError);
+    DE_ERROR(InvalidError);
 
     class Event : public WorldEdge::Event, public de::IHPlane::IIntercept
     {

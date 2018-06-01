@@ -75,12 +75,12 @@ void Con_AddKnownWordsForCommands()
 void Con_AddCommand(ccmdtemplate_t const* ccmd)
 {
     int minArgs, maxArgs;
-    cvartype_t args[DENG_MAX_ARGS];
+    cvartype_t args[DE_MAX_ARGS];
     ccmd_t* newCCmd, *overloaded = 0;
 
     if (!ccmd) return;
 
-    DENG_ASSERT(ccmd->name != 0);
+    DE_ASSERT(ccmd->name != 0);
 
     // Decode the usage string if present.
     if (ccmd->argTemplate != 0)
@@ -125,9 +125,9 @@ void Con_AddCommand(ccmdtemplate_t const* ccmd)
 
             if (type != CVT_NULL)
             {
-                if (minArgs >= DENG_MAX_ARGS)
+                if (minArgs >= DE_MAX_ARGS)
                     App_FatalError("Con_AddCommand: CCmd '%s': Too many arguments. "
-                                   "Limit is %i.", ccmd->name, DENG_MAX_ARGS);
+                                   "Limit is %i.", ccmd->name, DE_MAX_ARGS);
 
                 args[minArgs++] = type;
             }
@@ -365,7 +365,7 @@ dd_bool Con_IsValidCommand(char const* name)
 
 String Con_CmdUsageAsStyledText(ccmd_t const *ccmd)
 {
-    DENG2_ASSERT(ccmd != 0);
+    DE_ASSERT(ccmd != 0);
 
     if (ccmd->minArgs == -1 && ccmd->maxArgs == -1)
         return String();
@@ -407,11 +407,11 @@ String Con_CmdAsStyledText(ccmd_t *cmd)
 
 D_CMD(MappedConfigVariable)
 {
-    DENG_UNUSED(src);
+    DE_UNUSED(src);
 
     // Look up the variable.
     auto const found = mappedConfigVariables.constFind(argv[0]);
-    DENG2_ASSERT(found != mappedConfigVariables.constEnd()); // mapping must be defined
+    DE_ASSERT(found != mappedConfigVariables.constEnd()); // mapping must be defined
 
     Variable &var = Config::get(found.value());
 
@@ -440,7 +440,7 @@ D_CMD(MappedConfigVariable)
 
 void Con_AddMappedConfigVariable(char const *consoleName, char const *opts, String const &configVariable)
 {
-    DENG2_ASSERT(!mappedConfigVariables.contains(consoleName)); // redefining not handled
+    DE_ASSERT(!mappedConfigVariables.contains(consoleName)); // redefining not handled
 
     mappedConfigVariables.insert(consoleName, configVariable);
 

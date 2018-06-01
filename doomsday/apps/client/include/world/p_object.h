@@ -61,7 +61,7 @@ public:
 
 #define IS_BLOCK_LINKED(mo)     ((mo)->bNext != 0)
 
-DENG_EXTERN_C de::dint useSRVO, useSRVOAngle;
+DE_EXTERN_C de::dint useSRVO, useSRVOAngle;
 
 void P_InitUnusedMobjList();
 

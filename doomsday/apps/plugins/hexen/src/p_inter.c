@@ -282,8 +282,8 @@ static dd_bool giveOneAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
 {
     int oldAmmo;
 
-    DENG_ASSERT(plr != 0);
-    DENG_ASSERT(ammoType >= AT_FIRST && ammoType < NUM_AMMO_TYPES);
+    DE_ASSERT(plr != 0);
+    DE_ASSERT(ammoType >= AT_FIRST && ammoType < NUM_AMMO_TYPES);
 
     // Giving the special 'unlimited ammo' type always succeeds.
     if(ammoType == AT_NOAMMO)
@@ -361,8 +361,8 @@ static dd_bool giveOneWeapon(player_t *plr, weapontype_t weaponType,
     ammotype_t ammoType = (weaponType == WT_SECOND)? AT_BLUEMANA : AT_GREENMANA;
     dd_bool gaveWeapon = false, gaveAmmo = false;
 
-    DENG_ASSERT(plr != 0);
-    DENG_ASSERT(weaponType >= WT_FIRST && weaponType < NUM_WEAPON_TYPES);
+    DE_ASSERT(plr != 0);
+    DE_ASSERT(weaponType >= WT_FIRST && weaponType < NUM_WEAPON_TYPES);
 
     if(plr->class_ != matchClass)
     {
@@ -424,7 +424,7 @@ dd_bool P_GiveWeapon2(player_t *plr, weapontype_t weaponType, playerclass_t matc
 
 dd_bool P_GiveWeapon(player_t *plr, weapontype_t weaponType)
 {
-    DENG_ASSERT(plr != 0);
+    DE_ASSERT(plr != 0);
     return P_GiveWeapon2(plr, weaponType, plr->class_);
 }
 
@@ -505,7 +505,7 @@ dd_bool P_GiveWeaponPiece2(player_t *plr, int piece, playerclass_t matchClass)
 
 dd_bool P_GiveWeaponPiece(player_t *plr, int pieceValue)
 {
-    DENG_ASSERT(plr != 0);
+    DE_ASSERT(plr != 0);
     return P_GiveWeaponPiece2(plr, pieceValue, plr->class_);
 }
 
@@ -542,8 +542,8 @@ static dd_bool giveOneArmor(player_t *plr, armortype_t armorType)
 {
     int points;
 
-    DENG_ASSERT(plr != 0);
-    DENG_ASSERT(armorType >= ARMOR_FIRST && armorType < NUMARMOR);
+    DE_ASSERT(plr != 0);
+    DE_ASSERT(armorType >= ARMOR_FIRST && armorType < NUMARMOR);
 
     points = PCLASS_INFO(plr->class_)->armorIncrement[armorType];
     if(plr->armorPoints[armorType] >= points)
@@ -607,8 +607,8 @@ dd_bool P_GiveArmorAlt(player_t *plr, armortype_t armorType, int amount)
 
 static dd_bool giveOneKey(player_t *plr, keytype_t keyType)
 {
-    DENG_ASSERT(plr != 0);
-    DENG_ASSERT(keyType >= KT_FIRST && keyType < NUM_KEY_TYPES);
+    DE_ASSERT(plr != 0);
+    DE_ASSERT(keyType >= KT_FIRST && keyType < NUM_KEY_TYPES);
 
     // Already owned?
     if(plr->keys & (1 << keyType)) return false;
@@ -1129,8 +1129,8 @@ static dd_bool pickupCombinedMana(player_t *plr)
 static dd_bool pickupWeapon(player_t *plr, weapontype_t weaponType,
                             playerclass_t matchClass)
 {
-    DENG_ASSERT(plr != 0);
-    DENG_ASSERT(weaponType >= WT_FIRST && weaponType < NUM_WEAPON_TYPES);
+    DE_ASSERT(plr != 0);
+    DE_ASSERT(weaponType >= WT_FIRST && weaponType < NUM_WEAPON_TYPES);
 
     // Depending on the game rules the player should ignore the weapon.
     if(plr->class_ != matchClass)

@@ -1,12 +1,12 @@
 cmake_minimum_required (VERSION 3.1)
-project (DENG_DIRECTSOUND)
+project (DE_DIRECTSOUND)
 include (../PluginConfig.cmake)
 
 find_package (DirectX)
 find_package (EAX)
 
 if (TARGET EAX2)
-    add_definitions (-DDENG_HAVE_EAX2)
+    add_definitions (-DDE_HAVE_EAX2)
 else ()
     message (STATUS "audio_directsound will be built *without* EAX2 support")
 endif ()

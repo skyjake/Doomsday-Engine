@@ -43,7 +43,7 @@ typedef struct gameinfo_s {
 /// @}
 
 // The Base API.
-DENG_API_TYPEDEF(Base)
+DE_API_TYPEDEF(Base)
 {
     de_api_t api;
 
@@ -127,9 +127,9 @@ DENG_API_TYPEDEF(Base)
      */
     void (*SetupMap)(int mode, int flags);
 }
-DENG_API_T(Base);
+DE_API_T(Base);
 
-#ifndef DENG_NO_API_MACROS_BASE
+#ifndef DE_NO_API_MACROS_BASE
 #define Sys_Quit                  _api_Base.Quit
 #define DD_GetInteger             _api_Base.GetInteger
 #define DD_SetInteger             _api_Base.SetInteger
@@ -145,7 +145,7 @@ DENG_API_T(Base);
 #endif
 
 #ifdef __DOOMSDAY__
-DENG_USING_API(Base);
+DE_USING_API(Base);
 #endif
 
 #endif // DOOMSDAY_API_BASE_H

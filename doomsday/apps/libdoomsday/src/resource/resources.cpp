@@ -80,9 +80,9 @@ static String resolveUriSymbol(String const &symbol)
     }
 }
 
-DENG2_PIMPL(Resources)
-, DENG2_OBSERVES(PackageLoader, Load)
-, DENG2_OBSERVES(PackageLoader, Unload)
+DE_PIMPL(Resources)
+, DE_OBSERVES(PackageLoader, Load)
+, DE_OBSERVES(PackageLoader, Unload)
 {
     typedef QList<ResourceClass *> ResourceClasses;
 
@@ -230,7 +230,7 @@ void Resources::reloadAllResources()
 
 Resources &Resources::get()
 {
-    DENG2_ASSERT(theResources);
+    DE_ASSERT(theResources);
     return *theResources;
 }
 
@@ -600,7 +600,7 @@ static bool isKnownTextureSchemeCallback(String name)
  */
 D_CMD(ListMaps)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1);
     if (search.scheme().isEmpty()) search.setScheme("Maps");
@@ -617,7 +617,7 @@ D_CMD(ListMaps)
 
 D_CMD(ListMaterials)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownMaterialSchemeCallback);
 
@@ -634,7 +634,7 @@ D_CMD(ListMaterials)
 
 D_CMD(ListTextures)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownTextureSchemeCallback);
 
@@ -649,10 +649,10 @@ D_CMD(ListTextures)
     return true;
 }
 
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
 D_CMD(PrintMaterialStats)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     LOG_MSG(_E(b) "Material Statistics:");
     world::Materials::get().forAllMaterialSchemes([] (world::MaterialScheme &scheme)
@@ -671,7 +671,7 @@ D_CMD(PrintMaterialStats)
 
 D_CMD(PrintTextureStats)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     LOG_MSG(_E(b) "Texture Statistics:");
     foreach (res::TextureScheme *scheme, res::Textures::get().allTextureSchemes())
@@ -686,7 +686,7 @@ D_CMD(PrintTextureStats)
     }
     return true;
 }
-#endif // DENG_DEBUG
+#endif // DE_DEBUG
 
 void Resources::consoleRegister()
 {
@@ -701,7 +701,7 @@ void Resources::consoleRegister()
     C_CMD("listmaps",       "s",    ListMaps)
     C_CMD("listmaps",       "",     ListMaps)
 
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
     C_CMD("texturestats",   NULL,   PrintTextureStats)
     C_CMD("materialstats",  NULL,   PrintMaterialStats)
 #endif

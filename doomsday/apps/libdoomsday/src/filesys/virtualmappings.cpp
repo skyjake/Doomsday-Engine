@@ -62,7 +62,7 @@ void FS_InitVirtualPathMappings()
 /// Skip all whitespace except newlines.
 static inline char const *skipSpace(char const *ptr)
 {
-    DENG2_ASSERT(ptr != 0);
+    DE_ASSERT(ptr != 0);
     while (*ptr && *ptr != '\n' && isspace(*ptr))
     { ptr++; }
     return ptr;
@@ -70,7 +70,7 @@ static inline char const *skipSpace(char const *ptr)
 
 static bool parsePathLumpMapping(char lumpName[9/*LUMPNAME_T_MAXLEN*/], ddstring_t *path, char const *buffer)
 {
-    DENG2_ASSERT(lumpName != 0 && path != 0);
+    DE_ASSERT(lumpName != 0 && path != 0);
 
     // Find the start of the lump name.
     char const *ptr = skipSpace(buffer);
@@ -109,7 +109,7 @@ static bool parsePathLumpMapping(char lumpName[9/*LUMPNAME_T_MAXLEN*/], ddstring
  */
 static bool parsePathLumpMappings(char const *buffer)
 {
-    DENG2_ASSERT(buffer != 0);
+    DE_ASSERT(buffer != 0);
 
     bool successful = false;
     ddstring_t path; Str_Init(&path);
@@ -157,7 +157,7 @@ void FS_InitPathLumpMappings()
     LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
     LumpIndex::FoundIndices foundDirecs;
     lumpIndex.findAll("DD_DIREC.lmp", foundDirecs);
-    DENG2_FOR_EACH_CONST(LumpIndex::FoundIndices, i, foundDirecs) // in load order
+    DE_FOR_EACH_CONST(LumpIndex::FoundIndices, i, foundDirecs) // in load order
     {
         File1 &lump = lumpIndex[*i];
         FileInfo const &lumpInfo = lump.info();

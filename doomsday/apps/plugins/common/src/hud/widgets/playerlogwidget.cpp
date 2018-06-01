@@ -31,17 +31,17 @@ using namespace de;
 
 static void PlayerLogWidget_UpdateGeometry(PlayerLogWidget *log)
 {
-    DENG2_ASSERT(log);
+    DE_ASSERT(log);
     log->updateGeometry();
 }
 
 static void PlayerLogWidget_Draw(PlayerLogWidget *log, Point2Raw const *offset)
 {
-    DENG2_ASSERT(log);
+    DE_ASSERT(log);
     log->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
-DENG2_PIMPL(PlayerLogWidget)
+DE_PIMPL(PlayerLogWidget)
 {
     LogEntry entries[LOG_MAX_ENTRIES];
 
@@ -98,7 +98,7 @@ DENG2_PIMPL(PlayerLogWidget)
      */
     LogEntry *pushEntry(String const &message, dint tics, bool dontHide)
     {
-        DENG2_ASSERT(!message.isEmpty());
+        DE_ASSERT(!message.isEmpty());
 
         LogEntry *entry = &entries[nextUsedEntry];
         nextUsedEntry = nextEntryIdx(nextUsedEntry);
@@ -255,7 +255,7 @@ void PlayerLogWidget::draw(Vec2i const &offset)
         // ================================================================================================
         {
             dint firstEntryVisibleToPlayer  = firstEntry;
-            DENG_UNUSED(firstEntryVisibleToPlayer);
+            DE_UNUSED(firstEntryVisibleToPlayer);
             
             dint lastEntry = firstEntry + pvisEntryCount - 1;
             if(lastEntry > LOG_MAX_ENTRIES - 1)

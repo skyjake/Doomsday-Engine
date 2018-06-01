@@ -77,7 +77,7 @@ ByteRefArray::Size ByteRefArray::size() const
 
 void ByteRefArray::get(Offset at, Byte *values, Size count) const
 {
-    DENG2_ASSERT(_readBase != nullptr);
+    DE_ASSERT(_readBase != nullptr);
     if (at + count > _size)
     {
         /// @throw OffsetError  The accessed region was out of range.

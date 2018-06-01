@@ -291,7 +291,7 @@ dd_bool P_PlayerInWalkState(player_t *pl)
 
 void P_ShotAmmo(player_t *player)
 {
-    DENG_ASSERT(player != 0);
+    DE_ASSERT(player != 0);
 
     weaponinfo_t *wInfo = &weaponInfo[player->readyWeapon][player->class_];
 
@@ -511,7 +511,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon, ammotype
 
 dd_bool P_CheckAmmo(player_t *plr)
 {
-    DENG_ASSERT(plr != 0);
+    DE_ASSERT(plr != 0);
 
     weaponinfo_t *wInfo = &weaponInfo[plr->readyWeapon][plr->class_];
 
@@ -566,7 +566,7 @@ dd_bool P_CheckAmmo(player_t *plr)
 
 weapontype_t P_PlayerFindWeapon(player_t *player, dd_bool prev)
 {
-    DENG_ASSERT(player != 0);
+    DE_ASSERT(player != 0);
 
 #if __JDOOM__
     static weapontype_t wp_list[] = {
@@ -659,7 +659,7 @@ weapontype_t P_PlayerFindWeapon(player_t *player, dd_bool prev)
 #if __JHEXEN__
 void P_PlayerChangeClass(player_t *player, playerclass_t newClass)
 {
-    DENG_ASSERT(player != 0);
+    DE_ASSERT(player != 0);
 
     if(newClass < PCLASS_FIRST || newClass >= NUM_PLAYER_CLASSES)
         return;
@@ -696,7 +696,7 @@ void P_PlayerChangeClass(player_t *player, playerclass_t newClass)
 
 void P_SetMessageWithFlags(const player_t *pl, char const *msg, int flags)
 {
-    DENG2_ASSERT(pl);
+    DE_ASSERT(pl);
 
     if(!msg || !msg[0]) return;
 
@@ -849,7 +849,7 @@ int P_CameraZMovement(mobj_t *mo)
 
 void P_PlayerThinkCamera(player_t *player)
 {
-    DENG_ASSERT(player != 0);
+    DE_ASSERT(player != 0);
 
     mobj_t *mo = player->plr->mo;
     if(!mo) return;
@@ -911,7 +911,7 @@ void P_PlayerThinkCamera(player_t *player)
 
 D_CMD(SetCamera)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc);
+    DE_UNUSED(src); DE_UNUSED(argc);
 
     int p = atoi(argv[1]);
     if(p < 0 || p >= MAXPLAYERS)
@@ -998,7 +998,7 @@ void P_PlayerSetArmorType(player_t *plr, int type)
 
 D_CMD(SetViewMode)
 {
-    DENG_UNUSED(src);
+    DE_UNUSED(src);
 
     if(argc > 2) return false;
 
@@ -1024,7 +1024,7 @@ D_CMD(SetViewMode)
 
 D_CMD(SetViewLock)
 {
-    DENG_UNUSED(src);
+    DE_UNUSED(src);
 
     int pl = CONSOLEPLAYER, lock;
 
@@ -1062,7 +1062,7 @@ D_CMD(SetViewLock)
 
 D_CMD(MakeLocal)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc);
+    DE_UNUSED(src); DE_UNUSED(argc);
 
     if(G_GameState() != GS_MAP)
     {
@@ -1098,7 +1098,7 @@ D_CMD(MakeLocal)
 
 D_CMD(PrintPlayerCoords)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DE_UNUSED(src); DE_UNUSED(argc); DE_UNUSED(argv);
 
     mobj_t *mo;
 
@@ -1116,7 +1116,7 @@ D_CMD(PrintPlayerCoords)
 
 D_CMD(CycleSpy)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DE_UNUSED(src); DE_UNUSED(argc); DE_UNUSED(argv);
 
     //// @todo The engine should do this.
     App_Log(DE2_LOG_MAP | DE2_LOG_ERROR, "Spying not allowed.");
@@ -1140,7 +1140,7 @@ D_CMD(CycleSpy)
 
 D_CMD(SpawnMobj)
 {
-    DENG_UNUSED(src);
+    DE_UNUSED(src);
 
     if(argc != 5 && argc != 6)
     {
@@ -1216,7 +1216,7 @@ D_CMD(SpawnMobj)
         }
     // << d64tc
 #else
-        DENG_UNUSED(mo);
+        DE_UNUSED(mo);
 #endif
     }
 
@@ -1225,10 +1225,10 @@ D_CMD(SpawnMobj)
 
 void Player_LeaveMap(player_t *player, dd_bool newHub)
 {
-    DENG2_ASSERT(player);
+    DE_ASSERT(player);
     int const plrNum = player - players;
 #if !__JHEXEN__
-    DENG2_UNUSED(newHub);
+    DE_UNUSED(newHub);
 #endif
 
     if(!player->plr->inGame) return;
@@ -1334,7 +1334,7 @@ void Player_LeaveMap(player_t *player, dd_bool newHub)
 
 dd_bool Player_WaitingForReborn(player_t const *plr)
 {
-    DENG2_ASSERT(plr != 0);
+    DE_ASSERT(plr != 0);
     return (plr->plr->inGame && plr->playerState == PST_REBORN && !P_MobjIsCamera(plr->plr->mo));
 }
 
@@ -1863,7 +1863,7 @@ void Player_NotifyPSpriteChange(player_t *player, int position)
  */
 void Player_UpdateStatusCVars(player_t const *player)
 {
-    DENG2_ASSERT(player);
+    DE_ASSERT(player);
 
     QChar const CVAR_DELIM('-');
 

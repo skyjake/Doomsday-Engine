@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_LUMOBJ_H
-#define DENG_CLIENT_RENDER_LUMOBJ_H
+#ifndef DE_CLIENT_RENDER_LUMOBJ_H
+#define DE_CLIENT_RENDER_LUMOBJ_H
 
 #include <de/aabox.h>
 
@@ -248,7 +248,7 @@ public:
     void generateFlare(de::Vec3d const &eye, double distFromEye);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_RENDER_LUMOBJ_H
+#endif // DE_CLIENT_RENDER_LUMOBJ_H

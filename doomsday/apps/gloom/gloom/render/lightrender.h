@@ -59,7 +59,7 @@ public:
     const ICamera *testCamera() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace gloom

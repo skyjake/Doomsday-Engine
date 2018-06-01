@@ -3,7 +3,7 @@
 # Copyright (c) 2012-2015 Daniel Swanson <danij@dengine.net>
 
 cmake_minimum_required (VERSION 3.1)
-project (DENG_SERVER)
+project (DE_SERVER)
 include (../../cmake/Config.cmake)
 
 # Dependencies.
@@ -13,7 +13,7 @@ find_package (DengShell)
 find_package (DengDoomsday)
 find_package (Amethyst QUIET)
 
-include_directories (include ../client/include ${DENG_API_DIR})
+include_directories (include ../client/include ${DE_API_DIR})
 
 add_definitions (-D__DOOMSDAY__=1 -D__SERVER__=1)
 
@@ -125,7 +125,7 @@ if (UNIX)
     if (AMETHYST_FOUND)
         set (MAN_PAGE ${CMAKE_CURRENT_BINARY_DIR}/doomsday-server.6)
         list (APPEND SOURCES ${MAN_PAGE})
-        deng_add_amedoc (MAN ${MAN_PAGE} ${DENG_SOURCE_DIR}/doc/server server.ame)
+        deng_add_amedoc (MAN ${MAN_PAGE} ${DE_SOURCE_DIR}/doc/server server.ame)
     endif ()
 endif ()
 

@@ -47,7 +47,7 @@ public:
     explicit LZReader(LZFILE *file = 0)
         : _file(const_cast<LZFILE *>(file))
     {
-        DENG2_ASSERT(_file != 0);
+        DE_ASSERT(_file != 0);
     }
 
     void seek(uint offset)
@@ -111,7 +111,7 @@ public:
 private:
     LZFILE &file() const
     {
-        DENG2_ASSERT(_file != 0);
+        DE_ASSERT(_file != 0);
         return *_file;
     }
 };
@@ -121,7 +121,7 @@ private:
 using namespace internal;
 using namespace de;
 
-DENG2_PIMPL(NativeTranslator)
+DE_PIMPL(NativeTranslator)
 {
     typedef enum savestatesegment_e {
         ASEG_MAP_HEADER = 102,  // Hexen only
@@ -167,19 +167,19 @@ DENG2_PIMPL(NativeTranslator)
         case Heretic: return 0x7D9A12C5;
         case Hexen:   return 0x1B17CC00;
         }
-        DENG2_ASSERT_FAIL("NativeTranslator::magic: Invalid format id");
+        DE_ASSERT_FAIL("NativeTranslator::magic: Invalid format id");
         return 0;
     }
 
     LZFILE *saveFile()
     {
-        DENG2_ASSERT(saveFilePtr != 0);
+        DE_ASSERT(saveFilePtr != 0);
         return saveFilePtr;
     }
 
     LZFILE const *saveFile() const
     {
-        DENG2_ASSERT(saveFilePtr != 0);
+        DE_ASSERT(saveFilePtr != 0);
         return saveFilePtr;
     }
 
@@ -217,7 +217,7 @@ DENG2_PIMPL(NativeTranslator)
                 /*doom2*/               4,
                 /*doom_ultimate*/       2
             };
-            DENG2_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(oldGamemodes) / sizeof(oldGamemodes[0]));
+            DE_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(oldGamemodes) / sizeof(oldGamemodes[0]));
             gamemode = oldGamemodes[gamemode];
 
             // Older versions did not differentiate between versions of Doom2, meaning we cannot
@@ -239,35 +239,35 @@ DENG2_PIMPL(NativeTranslator)
                 /*heretic*/             1,
                 /*heretic_extended*/    2
             };
-            DENG2_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(oldGamemodes) / sizeof(oldGamemodes[0]));
+            DE_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(oldGamemodes) / sizeof(oldGamemodes[0]));
             gamemode = oldGamemodes[gamemode];
         }
 
         switch (id)
         {
         case Doom:
-            DENG2_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(doomGameIdentityKeys)    / sizeof(doomGameIdentityKeys[0]));
+            DE_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(doomGameIdentityKeys)    / sizeof(doomGameIdentityKeys[0]));
             return doomGameIdentityKeys[gamemode];
 
         case Heretic:
-            DENG2_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(hereticGameIdentityKeys) / sizeof(hereticGameIdentityKeys[0]));
+            DE_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(hereticGameIdentityKeys) / sizeof(hereticGameIdentityKeys[0]));
             return hereticGameIdentityKeys[gamemode];
 
         case Hexen:
-            DENG2_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(hexenGameIdentityKeys)   / sizeof(hexenGameIdentityKeys[0]));
+            DE_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(hexenGameIdentityKeys)   / sizeof(hexenGameIdentityKeys[0]));
             return hexenGameIdentityKeys[gamemode];
         }
-        DENG2_ASSERT(false);
+        DE_ASSERT(false);
         return "";
     }
 
     void openFile(Path path)
     {
         LOG_TRACE("openFile: Opening \"%s\"", path);
-        DENG2_ASSERT(saveFilePtr == 0);
+        DE_ASSERT(saveFilePtr == 0);
         try
         {
-            NativeFile const &nativeFile = DENG2_TEXT_APP->fileSystem().find<NativeFile const>(path);
+            NativeFile const &nativeFile = DE_TEXT_APP->fileSystem().find<NativeFile const>(path);
             NativePath const nativeFilePath = nativeFile.nativePath();
             saveFilePtr = lzOpen(nativeFilePath.toUtf8().constData(), "rp");
             return;
@@ -346,7 +346,7 @@ DENG2_PIMPL(NativeTranslator)
             from >> len;
         }
         dint8 *descBuf = (dint8 *)malloc(len + 1);
-        DENG2_ASSERT(descBuf != 0);
+        DE_ASSERT(descBuf != 0);
         from.read(descBuf, len);
         metadata.set("userDescription", String((char *)descBuf, len));
         free(descBuf); descBuf = 0;
@@ -478,7 +478,7 @@ DENG2_PIMPL(NativeTranslator)
 
         void operator >> (Writer &to) const
         {
-            DENG2_ASSERT(mapNumber);
+            DE_ASSERT(mapNumber);
 
             to << composeMapUriPath(0, mapNumber).asText()
                << scriptNumber;
@@ -587,7 +587,7 @@ String NativeTranslator::formatName() const
     case Heretic:   return "Heretic";
     case Hexen:     return "Hexen";
     }
-    DENG2_ASSERT_FAIL("NativeTranslator::formatName: Invalid format id");
+    DE_ASSERT_FAIL("NativeTranslator::formatName: Invalid format id");
     return "";
 }
 
@@ -634,7 +634,7 @@ void NativeTranslator::convert(Path path)
     String saveName = path.lastSegment().toString();
 
     d->openFile(path);
-    String const nativeFilePath = DENG2_TEXT_APP->fileSystem().find<NativeFile const>(path).nativePath();
+    String const nativeFilePath = DE_TEXT_APP->fileSystem().find<NativeFile const>(path).nativePath();
     LZReader from(d->saveFile());
 
     ZipArchive arch;
@@ -652,7 +652,7 @@ void NativeTranslator::convert(Path path)
     if (d->id == Hexen)
     {
         QScopedPointer<Block> xlatedPlayerData(d->bufferFile());
-        DENG2_ASSERT(!xlatedPlayerData.isNull());
+        DE_ASSERT(!xlatedPlayerData.isNull());
         d->closeFile();
 
         // Update the metadata with the present player info (this is not needed by Hexen
@@ -690,7 +690,7 @@ void NativeTranslator::convert(Path path)
 
                     // Concatenate the translated data to form the serialized map state file.
                     QScopedPointer<Block> mapStateData(composeMapStateHeader(d->magic(), d->saveVersion));
-                    DENG2_ASSERT(!mapStateData.isNull());
+                    DE_ASSERT(!mapStateData.isNull());
                     *mapStateData += *xlatedPlayerData;
                     *mapStateData += *xlatedData;
 
@@ -713,7 +713,7 @@ void NativeTranslator::convert(Path path)
             // Append the remaining translated data to header, forming the new serialized
             // map state data file.
             QScopedPointer<Block> mapStateData(composeMapStateHeader(d->magic(), d->saveVersion));
-            DENG2_ASSERT(!mapStateData.isNull());
+            DE_ASSERT(!mapStateData.isNull());
             *mapStateData += *xlatedData;
 
             arch.add(Path("maps") / metadata.gets("mapUri") + "State", *mapStateData);

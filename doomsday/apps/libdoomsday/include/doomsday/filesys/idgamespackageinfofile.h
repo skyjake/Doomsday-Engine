@@ -45,7 +45,7 @@ public:
     IIStream const &operator >> (de::IByteArray &bytes) const override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // LIBDOOMSDAY_IDGAMESPACKAGEINFOFILE_H

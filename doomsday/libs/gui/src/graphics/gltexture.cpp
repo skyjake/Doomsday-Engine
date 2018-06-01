@@ -40,7 +40,7 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(internal::TextureFlags)
 using namespace internal;
 using namespace gl;
 
-DENG2_PIMPL(GLTexture)
+DE_PIMPL(GLTexture)
 {
     Size               size;
     Image::Format      format    = Image::Unknown;

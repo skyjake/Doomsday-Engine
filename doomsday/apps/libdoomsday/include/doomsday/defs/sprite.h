@@ -72,7 +72,7 @@ class LIBDOOMSDAY_PUBLIC Sprite : public Definition
 {
 public:
     /// Required view is missing. @ingroup errors
-    DENG2_ERROR(MissingViewError);
+    DE_ERROR(MissingViewError);
 
     struct LIBDOOMSDAY_PUBLIC View
     {

@@ -24,7 +24,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(GLFramebuffer::AlternativeBuffer)
+DE_PIMPL_NOREF(GLFramebuffer::AlternativeBuffer)
 {
     GLFramebuffer *target;
     GLTexture *texture;
@@ -65,7 +65,7 @@ bool GLFramebuffer::AlternativeBuffer::init()
 {
     if (d->attachment != GLFramebuffer::DepthStencil)
     {
-        DENG2_ASSERT_FAIL("GLFramebuffer::AlternativeBuffer only supports DepthStencil attachments");
+        DE_ASSERT_FAIL("GLFramebuffer::AlternativeBuffer only supports DepthStencil attachments");
         return false;
     }
 
@@ -79,7 +79,7 @@ bool GLFramebuffer::AlternativeBuffer::init()
     {
         // Remember the original attachment.
         d->original = d->target->attachedTexture(d->attachment);
-        DENG2_ASSERT(d->original != 0);
+        DE_ASSERT(d->original != 0);
 
         // Resize the alternative buffer to match current target size.
         if (d->texture->size() != d->target->size())

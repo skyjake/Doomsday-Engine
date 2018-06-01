@@ -279,64 +279,64 @@ void initCoreModule(Binder &binder, Record &coreModule)
         Record &dict = coreModule.addSubrecord("Dictionary")
                 .setFlags(Record::WontBeDeleted); // optimize: nobody needs to observe deletion
         binder.init(dict)
-                << DENG2_FUNC_NOARG(Dictionary_Keys, "keys")
-                << DENG2_FUNC_NOARG(Dictionary_Values, "values");
+                << DE_FUNC_NOARG(Dictionary_Keys, "keys")
+                << DE_FUNC_NOARG(Dictionary_Values, "values");
     }
 
     // String
     {
         Record &str = coreModule.addSubrecord("String").setFlags(Record::WontBeDeleted);
         binder.init(str)
-                << DENG2_FUNC_NOARG(String_Upper, "upper")
-                << DENG2_FUNC_NOARG(String_Lower, "lower")
-                << DENG2_FUNC      (String_BeginsWith, "beginsWith", "text")
-                << DENG2_FUNC      (String_EndsWith, "endsWith", "text")
-                << DENG2_FUNC_NOARG(String_FileNamePath, "fileNamePath")
-                << DENG2_FUNC_NOARG(String_FileNameExtension, "fileNameExtension")
-                << DENG2_FUNC_NOARG(String_FileNameWithoutExtension, "fileNameWithoutExtension")
-                << DENG2_FUNC_NOARG(String_FileNameAndPathWithoutExtension, "fileNameAndPathWithoutExtension");
+                << DE_FUNC_NOARG(String_Upper, "upper")
+                << DE_FUNC_NOARG(String_Lower, "lower")
+                << DE_FUNC      (String_BeginsWith, "beginsWith", "text")
+                << DE_FUNC      (String_EndsWith, "endsWith", "text")
+                << DE_FUNC_NOARG(String_FileNamePath, "fileNamePath")
+                << DE_FUNC_NOARG(String_FileNameExtension, "fileNameExtension")
+                << DE_FUNC_NOARG(String_FileNameWithoutExtension, "fileNameWithoutExtension")
+                << DE_FUNC_NOARG(String_FileNameAndPathWithoutExtension, "fileNameAndPathWithoutExtension");
     }
 
     // Path
     {
         Record &path = coreModule.addSubrecord("Path").setFlags(Record::WontBeDeleted);
         binder.init(path)
-                << DENG2_FUNC(Path_WithoutFileName, "withoutFileName", "path");
+                << DE_FUNC(Path_WithoutFileName, "withoutFileName", "path");
     }
 
     // File
     {
         Record &file = coreModule.addSubrecord("File").setFlags(Record::WontBeDeleted);
         binder.init(file)
-                << DENG2_FUNC_NOARG(File_Name, "name")
-                << DENG2_FUNC_NOARG(File_Path, "path")
-                << DENG2_FUNC_NOARG(File_Type, "type")
-                << DENG2_FUNC_NOARG(File_Size, "size")
-                << DENG2_FUNC_NOARG(File_MetaId, "metaId")
-                << DENG2_FUNC_NOARG(File_ModifiedAt, "modifiedAt")
-                << DENG2_FUNC_NOARG(File_Description, "description")
-                << DENG2_FUNC      (File_Locate, "locate", "relativePath")
-                << DENG2_FUNC_NOARG(File_Read, "read")
-                << DENG2_FUNC_NOARG(File_ReadUtf8, "readUtf8")
-                << DENG2_FUNC      (File_Replace, "replace", "relativePath")
-                << DENG2_FUNC      (File_Write, "write", "data")
-                << DENG2_FUNC_NOARG(File_Flush, "flush");
+                << DE_FUNC_NOARG(File_Name, "name")
+                << DE_FUNC_NOARG(File_Path, "path")
+                << DE_FUNC_NOARG(File_Type, "type")
+                << DE_FUNC_NOARG(File_Size, "size")
+                << DE_FUNC_NOARG(File_MetaId, "metaId")
+                << DE_FUNC_NOARG(File_ModifiedAt, "modifiedAt")
+                << DE_FUNC_NOARG(File_Description, "description")
+                << DE_FUNC      (File_Locate, "locate", "relativePath")
+                << DE_FUNC_NOARG(File_Read, "read")
+                << DE_FUNC_NOARG(File_ReadUtf8, "readUtf8")
+                << DE_FUNC      (File_Replace, "replace", "relativePath")
+                << DE_FUNC      (File_Write, "write", "data")
+                << DE_FUNC_NOARG(File_Flush, "flush");
     }
 
     // Folder
     {
         Record &folder = coreModule.addSubrecord("Folder").setFlags(Record::WontBeDeleted);
         binder.init(folder)
-                << DENG2_FUNC_NOARG(Folder_List, "list")
-                << DENG2_FUNC_NOARG(Folder_Contents, "contents")
-                << DENG2_FUNC_NOARG(Folder_ContentSize, "contentSize");
+                << DE_FUNC_NOARG(Folder_List, "list")
+                << DE_FUNC_NOARG(Folder_Contents, "contents")
+                << DE_FUNC_NOARG(Folder_ContentSize, "contentSize");
     }
 
     // RemoteFile
     {
         Record &remoteFile = coreModule.addSubrecord("RemoteFile").setFlags(Record::WontBeDeleted);
         binder.init(remoteFile)
-                << DENG2_FUNC_NOARG(RemoteFile_Download, "download");
+                << DE_FUNC_NOARG(RemoteFile_Download, "download");
     }
 
     // Animation
@@ -350,11 +350,11 @@ void initCoreModule(Binder &binder, Record &coreModule)
 
         Record &anim = coreModule.addSubrecord("Animation").setFlags(Record::WontBeDeleted);
         binder.init(anim)
-                << DENG2_FUNC_NOARG(Animation_Value, "value")
-                << DENG2_FUNC_NOARG(Animation_Target, "target")
-                << DENG2_FUNC_DEFS (Animation_SetValue, "setValue",
+                << DE_FUNC_NOARG(Animation_Value, "value")
+                << DE_FUNC_NOARG(Animation_Target, "target")
+                << DE_FUNC_DEFS (Animation_SetValue, "setValue",
                                     "value" << "span" << "delay", setValueArgs)
-                << DENG2_FUNC_DEFS (Animation_SetValueFrom, "setValueFrom",
+                << DE_FUNC_DEFS (Animation_SetValueFrom, "setValueFrom",
                                     "fromValue" << "toValue" << "span" << "delay", setValueFromArgs);
     }
 

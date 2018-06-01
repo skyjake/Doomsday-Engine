@@ -28,7 +28,7 @@
 using namespace de;
 using namespace de::ui;
 
-DENG_GUI_PIMPL(KeyGrabberWidget)
+DE_GUI_PIMPL(KeyGrabberWidget)
 {
     Impl(Public *i) : Base(i)
     {}

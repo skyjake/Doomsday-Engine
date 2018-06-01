@@ -29,8 +29,8 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(SaveListWidget)
-, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
+DE_GUI_PIMPL(SaveListWidget)
+, DE_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 {
     /**
      * Handles mouse button doubleclicks on the save items.

@@ -24,7 +24,7 @@ using namespace de;
 
 namespace res {
 
-DENG2_PIMPL_NOREF(IdTech1Image)
+DE_PIMPL_NOREF(IdTech1Image)
 {
     Block pixels; // RGBA_8888
     Size  pixelSize;

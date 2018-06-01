@@ -79,7 +79,7 @@ public:
     uint glyphTextureBorder(uchar ch) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // CLIENT_RESOURCE_COMPOSITEBITMAPFONT_H

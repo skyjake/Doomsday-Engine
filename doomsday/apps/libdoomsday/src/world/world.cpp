@@ -31,7 +31,7 @@ using namespace world;
 
 static World *theWorld = nullptr;
 
-DENG2_PIMPL(World)
+DE_PIMPL(World)
 {
     BaseMap *map = nullptr;
     world::Materials materials;
@@ -46,10 +46,10 @@ DENG2_PIMPL(World)
         theWorld = nullptr;
     }
 
-    DENG2_PIMPL_AUDIENCE(MapChange)
+    DE_PIMPL_AUDIENCE(MapChange)
 };
 
-DENG2_AUDIENCE_METHOD(World, MapChange)
+DE_AUDIENCE_METHOD(World, MapChange)
 
 World::World() : d(new Impl(this))
 {
@@ -101,7 +101,7 @@ bool World::hasMap() const
 
 BaseMap &World::map() const
 {
-    DENG2_ASSERT(hasMap());
+    DE_ASSERT(hasMap());
     return *d->map;
 }
 
@@ -117,11 +117,11 @@ Materials const &World::materials() const
 
 World &World::get()
 {
-    DENG2_ASSERT(theWorld);
+    DE_ASSERT(theWorld);
     return *theWorld;
 }
 
 void World::notifyMapChange()
 {
-    DENG2_FOR_AUDIENCE2(MapChange, i) i->worldMapChanged();
+    DE_FOR_AUDIENCE2(MapChange, i) i->worldMapChanged();
 }

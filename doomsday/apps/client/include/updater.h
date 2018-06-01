@@ -24,8 +24,8 @@
  * @defgroup updater Automatic Updater
  */
 
-#ifndef LIBDENG_UPDATER_H
-#define LIBDENG_UPDATER_H
+#ifndef DE_UPDATER_H
+#define DE_UPDATER_H
 
 #ifndef __CLIENT__
 #  error "updater.h is only for the client"
@@ -101,7 +101,7 @@ protected slots:
     void downloadDialogClosed();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // LIBDENG_UPDATER_H
+#endif // DE_UPDATER_H

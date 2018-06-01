@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_CLIENTSTYLE_H
-#define DENG_CLIENT_UI_CLIENTSTYLE_H
+#ifndef DE_CLIENT_UI_CLIENTSTYLE_H
+#define DE_CLIENT_UI_CLIENTSTYLE_H
 
 #include <de/Image>
 #include <de/Style>
@@ -62,9 +62,9 @@ public:
                                   LogoFlags               flags = DefaultLogoFlags);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(ClientStyle::LogoFlags)
 
-#endif // DENG_CLIENT_UI_CLIENTSTYLE_H
+#endif // DE_CLIENT_UI_CLIENTSTYLE_H

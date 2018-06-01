@@ -21,7 +21,7 @@
  */
 
 #include <stdlib.h>
-#ifndef DENG_NO_SDL
+#ifndef DE_NO_SDL
 #  include <SDL.h>
 #endif
 
@@ -39,19 +39,19 @@ static dd_bool joyInited;
 static byte joyAvailable; // Input enabled from a source?
 static dd_bool joyButtonWasDown[IJOY_MAXBUTTONS];
 
-#ifndef DENG_NO_SDL
+#ifndef DE_NO_SDL
 static SDL_Joystick *joy;
 #endif
 
 void Joystick_Register(void)
 {
-#ifndef DENG_NO_SDL
+#ifndef DE_NO_SDL
     C_VAR_INT("input-joy-device", &joydevice, CVF_NO_MAX | CVF_PROTECTED, 0, 0);
     C_VAR_BYTE("input-joy", &useJoystickCvar, 0, 0, 1);
 #endif
 }
 
-#ifndef DENG_NO_SDL
+#ifndef DE_NO_SDL
 static void initialize(void)
 {
     int joycount;
@@ -109,7 +109,7 @@ static void initialize(void)
 
 bool Joystick_Init(void)
 {
-#ifndef DENG_NO_SDL
+#ifndef DE_NO_SDL
     if (joyInited) return true; // Already initialized.
 
     LOG_AS("Joystick_Init");
@@ -122,7 +122,7 @@ bool Joystick_Init(void)
 
 void Joystick_Shutdown(void)
 {
-#ifndef DENG_NO_SDL
+#ifndef DE_NO_SDL
     if (!joyInited) return; // Not initialized.
 
     if (joy)
@@ -142,7 +142,7 @@ bool Joystick_IsPresent(void)
 
 void Joystick_GetState(joystate_t *state)
 {
-#ifndef DENG_NO_SDL
+#ifndef DE_NO_SDL
     int         i, pov;
 
     memset(state, 0, sizeof(*state));
@@ -232,7 +232,7 @@ void Joystick_GetState(joystate_t *state)
 
 de::String Joystick_Name()
 {
-#ifndef DENG_NO_SDL
+#ifndef DE_NO_SDL
     return SDL_JoystickName(joy);
 #else
     return "";

@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_CHARSYMBOLS_H
-#define LIBDENG2_CHARSYMBOLS_H
+#ifndef LIBCORE_CHARSYMBOLS_H
+#define LIBCORE_CHARSYMBOLS_H
 
 #include "libcore.h"
 
@@ -27,34 +27,34 @@
  * @{
  */
 #ifdef MACOSX
-#  define DENG2_CHAR_MAC_COMMAND_KEY     "\u2318"
-#  define DENG2_CHAR_MAC_CONTROL_KEY     "\u2303"
-#  define DENG2_CHAR_CONTROL_KEY         DENG2_CHAR_MAC_COMMAND_KEY
-#  define DENG2_CHAR_SHIFT_KEY           "\u21e7"
-#  define DENG2_CHAR_ALT_KEY             "\u2325"
-#  define DENG2_CHAR_UP_ARROW            "\u2191"
-#  define DENG2_CHAR_DOWN_ARROW          "\u2193"
-#  define DENG2_CHAR_UP_DOWN_ARROW       DENG2_CHAR_UP_ARROW " / " DENG2_CHAR_DOWN_ARROW
-#  define DENG2_CHAR_RIGHT_DOUBLEARROW   "\u21d2"
-#  define DENG2_CHAR_MDASH               "\u2014"
+#  define DE_CHAR_MAC_COMMAND_KEY     "\u2318"
+#  define DE_CHAR_MAC_CONTROL_KEY     "\u2303"
+#  define DE_CHAR_CONTROL_KEY         DE_CHAR_MAC_COMMAND_KEY
+#  define DE_CHAR_SHIFT_KEY           "\u21e7"
+#  define DE_CHAR_ALT_KEY             "\u2325"
+#  define DE_CHAR_UP_ARROW            "\u2191"
+#  define DE_CHAR_DOWN_ARROW          "\u2193"
+#  define DE_CHAR_UP_DOWN_ARROW       DE_CHAR_UP_ARROW " / " DE_CHAR_DOWN_ARROW
+#  define DE_CHAR_RIGHT_DOUBLEARROW   "\u21d2"
+#  define DE_CHAR_MDASH               "\u2014"
 #elif UNIX
-#  define DENG2_CHAR_CONTROL_KEY         "Ctrl-"
-#  define DENG2_CHAR_SHIFT_KEY           "\u21e7"
-#  define DENG2_CHAR_ALT_KEY             "Alt-"
-#  define DENG2_CHAR_UP_ARROW            "\u2191"
-#  define DENG2_CHAR_DOWN_ARROW          "\u2193"
-#  define DENG2_CHAR_UP_DOWN_ARROW       DENG2_CHAR_UP_ARROW " / " DENG2_CHAR_DOWN_ARROW
-#  define DENG2_CHAR_RIGHT_DOUBLEARROW   "\u21d2"
-#  define DENG2_CHAR_MDASH               "\u2014"
+#  define DE_CHAR_CONTROL_KEY         "Ctrl-"
+#  define DE_CHAR_SHIFT_KEY           "\u21e7"
+#  define DE_CHAR_ALT_KEY             "Alt-"
+#  define DE_CHAR_UP_ARROW            "\u2191"
+#  define DE_CHAR_DOWN_ARROW          "\u2193"
+#  define DE_CHAR_UP_DOWN_ARROW       DE_CHAR_UP_ARROW " / " DE_CHAR_DOWN_ARROW
+#  define DE_CHAR_RIGHT_DOUBLEARROW   "\u21d2"
+#  define DE_CHAR_MDASH               "\u2014"
 #else
-#  define DENG2_CHAR_CONTROL_KEY         "Ctrl-"
-#  define DENG2_CHAR_SHIFT_KEY           "Shift-"
-#  define DENG2_CHAR_ALT_KEY             "Alt-"
-#  define DENG2_CHAR_UP_ARROW            "Up Arrow"
-#  define DENG2_CHAR_DOWN_ARROW          "Down Arrow"
-#  define DENG2_CHAR_UP_DOWN_ARROW       "Up/Down Arrow"
-#  define DENG2_CHAR_RIGHT_DOUBLEARROW   "=>"
-#  define DENG2_CHAR_MDASH               "-"
+#  define DE_CHAR_CONTROL_KEY         "Ctrl-"
+#  define DE_CHAR_SHIFT_KEY           "Shift-"
+#  define DE_CHAR_ALT_KEY             "Alt-"
+#  define DE_CHAR_UP_ARROW            "Up Arrow"
+#  define DE_CHAR_DOWN_ARROW          "Down Arrow"
+#  define DE_CHAR_UP_DOWN_ARROW       "Up/Down Arrow"
+#  define DE_CHAR_RIGHT_DOUBLEARROW   "=>"
+#  define DE_CHAR_MDASH               "-"
 #endif
 /** @} */
 
@@ -68,8 +68,8 @@ namespace de {
  *
  * @return Unicode character.
  */
-DENG2_PUBLIC duint codePage437ToUnicode(dbyte code);
+DE_PUBLIC duint codePage437ToUnicode(dbyte code);
 
 } // namespace de
 
-#endif // LIBDENG2_CHARSYMBOLS_H
+#endif // LIBCORE_CHARSYMBOLS_H

@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_POINTERSET_H
-#define LIBDENG2_POINTERSET_H
+#ifndef LIBCORE_POINTERSET_H
+#define LIBCORE_POINTERSET_H
 
 #include "../libcore.h"
 #include "../Range"
@@ -33,7 +33,7 @@ namespace de {
  * O(log n) binary search. Insertions start at the middle to allow expansion to both
  * directions. Removing individual pointers is allowed at any time.
  */
-class DENG2_PUBLIC PointerSet
+class DE_PUBLIC PointerSet
 {
 public:
     typedef void * Pointer;
@@ -43,9 +43,9 @@ public:
     static Flag const AllowInsertionDuringIteration;
 
     /// Addition was not possible because the set is being iterated.
-    DENG2_ERROR(AdditionForbiddenError);
+    DE_ERROR(AdditionForbiddenError);
 
-    class DENG2_PUBLIC IIterationObserver
+    class DE_PUBLIC IIterationObserver
     {
     public:
         virtual ~IIterationObserver() {}
@@ -150,4 +150,4 @@ public:
 
 } // namespace de
 
-#endif // LIBDENG2_POINTERSET_H
+#endif // LIBCORE_POINTERSET_H

@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_IMAGE_H
-#define DENG_RESOURCE_IMAGE_H
+#ifndef DE_RESOURCE_IMAGE_H
+#define DE_RESOURCE_IMAGE_H
 
 #ifndef __CLIENT__
 #  error "resource/image.h is for the client only"
@@ -148,4 +148,4 @@ res::Source GL_LoadExtImage(image_t &image, char const *searchPath, gfxmode_t mo
 res::Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
                                TextureVariantSpec const &spec);
 
-#endif // DENG_RESOURCE_IMAGE_H
+#endif // DE_RESOURCE_IMAGE_H

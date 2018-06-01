@@ -22,7 +22,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(AppWindowSystem)
+DE_PIMPL(AppWindowSystem)
 {
     Impl(Public *i) : Base(i)
     {

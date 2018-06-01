@@ -53,7 +53,7 @@ public:
         ColorMultiply,
     };
 
-    DENG2_ERROR(FilterError);
+    DE_ERROR(FilterError);
 
 public:
     /**
@@ -87,7 +87,7 @@ protected:
     ImageFile(BuiltInFilter filterType, ImageFile &filterSource);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

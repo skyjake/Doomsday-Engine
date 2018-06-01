@@ -60,7 +60,7 @@ struct LIBDOOMSDAY_PUBLIC DEDArray
     PODType *elements;
     ded_count_t count;
 
-    DENG2_NO_COPY (DEDArray)
+    DE_NO_COPY (DEDArray)
 
 public:
     DEDArray() : elements(0) {}
@@ -68,7 +68,7 @@ public:
     ~DEDArray()
     {
         // This should have been cleared by now.
-        DENG_ASSERT(elements == 0);
+        DE_ASSERT(elements == 0);
     }
 
     /// @note Previous elements are not released -- they must be cleared manually.
@@ -116,15 +116,15 @@ public:
 
     PODType const &at(int index) const
     {
-        DENG2_ASSERT(index >= 0);
-        DENG2_ASSERT(index < size());
+        DE_ASSERT(index >= 0);
+        DE_ASSERT(index < size());
         return elements[index];
     }
 
     PODType &operator [] (int index) const
     {
-        DENG2_ASSERT(index >= 0);
-        DENG2_ASSERT(index < size());
+        DE_ASSERT(index >= 0);
+        DE_ASSERT(index < size());
         return elements[index];
     }
 
@@ -147,7 +147,7 @@ public:
      */
     PODType *append(int addedCount = 1)
     {
-        DENG2_ASSERT(addedCount >= 0);
+        DE_ASSERT(addedCount >= 0);
 
         int const first = count.num;
 
@@ -166,8 +166,8 @@ public:
 
     void removeAt(int index)
     {
-        DENG2_ASSERT(index >= 0);
-        DENG2_ASSERT(index < size());
+        DE_ASSERT(index >= 0);
+        DE_ASSERT(index < size());
 
         if (index < 0 || index >= size()) return;
 
@@ -186,8 +186,8 @@ public:
 
     void copyTo(int destIndex, int srcIndex)
     {
-        DENG2_ASSERT(destIndex >= 0 && destIndex < size());
-        DENG2_ASSERT(srcIndex >= 0 && srcIndex < size());
+        DE_ASSERT(destIndex >= 0 && destIndex < size());
+        DE_ASSERT(srcIndex >= 0 && srcIndex < size());
 
         // Free all existing allocations.
         elements[destIndex].release();

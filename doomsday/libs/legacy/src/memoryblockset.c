@@ -37,7 +37,7 @@ static void addBlockToSet(blockset_t *set)
 {
     blockset_block_t *block = 0;
 
-    DENG_ASSERT(set);
+    DE_ASSERT(set);
 
     // Get a new block by resizing the blocks array. This is done relatively
     // seldom, since there is a large number of elements per each block.
@@ -51,7 +51,7 @@ static void addBlockToSet(blockset_t *set)
 
 void *BlockSet_Allocate(blockset_t *set)
 {
-    DENG_ASSERT(set);
+    DE_ASSERT(set);
     {
     blockset_block_t *block = &set->_blocks[set->_blockCount - 1];
 
@@ -83,8 +83,8 @@ blockset_t *BlockSet_New(size_t sizeOfElement, size_t batchSize)
 {
     blockset_t *set;
 
-    DENG_ASSERT(sizeOfElement > 0);
-    DENG_ASSERT(batchSize > 0);
+    DE_ASSERT(sizeOfElement > 0);
+    DE_ASSERT(batchSize > 0);
 
     // Allocate the blockset.
     set = M_Calloc(sizeof(*set));
@@ -100,7 +100,7 @@ blockset_t *BlockSet_New(size_t sizeOfElement, size_t batchSize)
 
 size_t BlockSet_Count(blockset_t *set)
 {
-    DENG_ASSERT(set);
+    DE_ASSERT(set);
 
     return set->_elementsInUse;
 }
@@ -109,7 +109,7 @@ void BlockSet_Delete(blockset_t *set)
 {
     size_t i;
 
-    DENG_ASSERT(set);
+    DE_ASSERT(set);
 
     // Free the elements from each block.
     for (i = 0; i < set->_blockCount; ++i)

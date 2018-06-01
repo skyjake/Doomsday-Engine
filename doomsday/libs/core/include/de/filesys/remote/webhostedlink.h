@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG2_FILESYS_WEBHOSTEDLINK_H
-#define DENG2_FILESYS_WEBHOSTEDLINK_H
+#ifndef DE_FILESYS_WEBHOSTEDLINK_H
+#define DE_FILESYS_WEBHOSTEDLINK_H
 
 #include "../Link"
 #include "../../PathTree"
@@ -29,10 +29,10 @@ namespace filesys {
  * Repository of files hosted on a web server as a file tree. Assumed to come
  * with a Unix-style "ls-laR.gz" directory tree index (e.g., an idgames mirror).
  */
-class DENG2_PUBLIC WebHostedLink : public Link
+class DE_PUBLIC WebHostedLink : public Link
 {
 public:
-    struct DENG2_PUBLIC FileEntry : public PathTree::Node
+    struct DE_PUBLIC FileEntry : public PathTree::Node
     {
         duint64 size = 0;
         Time modTime;
@@ -64,10 +64,10 @@ protected:
     void transmit(Query const &query) override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace filesys
 } // namespace de
 
-#endif // DENG2_FILESYS_WEBHOSTEDLINK_H
+#endif // DE_FILESYS_WEBHOSTEDLINK_H

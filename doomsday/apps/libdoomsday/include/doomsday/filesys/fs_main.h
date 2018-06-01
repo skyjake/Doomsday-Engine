@@ -29,8 +29,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_FILESYS_MAIN_H
-#define LIBDENG_FILESYS_MAIN_H
+#ifndef DE_FILESYS_MAIN_H
+#define DE_FILESYS_MAIN_H
 
 #include "file.h"
 #include "filehandle.h"
@@ -40,13 +40,13 @@
 #endif
 
 #ifdef WIN32
-#  define DENG_DIR_SEP_CHAR       '\\'
-#  define DENG_DIR_SEP_STR        "\\"
-#  define DENG_DIR_WRONG_SEP_CHAR '/'
+#  define DE_DIR_SEP_CHAR       '\\'
+#  define DE_DIR_SEP_STR        "\\"
+#  define DE_DIR_WRONG_SEP_CHAR '/'
 #else
-#  define DENG_DIR_SEP_CHAR        '/'
-#  define DENG_DIR_SEP_STR         "/"
-#  define DENG_DIR_WRONG_SEP_CHAR  '\\'
+#  define DE_DIR_SEP_CHAR        '/'
+#  define DE_DIR_SEP_STR         "/"
+#  define DE_DIR_WRONG_SEP_CHAR  '\\'
 #endif
 
 #ifdef __cplusplus
@@ -97,10 +97,10 @@ class LIBDOOMSDAY_PUBLIC FS1
 {
 public:
     /// No files found. @ingroup errors
-    DENG2_ERROR(NotFoundError);
+    DE_ERROR(NotFoundError);
 
     /// An unknown scheme was referenced. @ingroup errors
-    DENG2_ERROR(UnknownSchemeError);
+    DE_ERROR(UnknownSchemeError);
 
     /**
      * (Search) path groupings in descending priority.
@@ -250,7 +250,7 @@ public:
          */
         bool mapPath(String &path) const;
 
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
         void debugPrint() const;
 #endif
 
@@ -331,7 +331,7 @@ public:
      */
     inline void resetAllSchemes() {
         Schemes schemes = allSchemes();
-        DENG2_FOR_EACH(Schemes, i, schemes){ (*i)->reset(); }
+        DE_FOR_EACH(Schemes, i, schemes){ (*i)->reset(); }
     }
 
     /**
@@ -575,7 +575,7 @@ public:
     int unloadAllNonStartupFiles();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(FS1::Scheme::Flags)
@@ -599,4 +599,4 @@ LIBDOOMSDAY_PUBLIC void F_Shutdown();
 LIBDOOMSDAY_PUBLIC void const *F_LumpIndex();
 
 #endif // __cplusplus
-#endif /* LIBDENG_FILESYS_MAIN_H */
+#endif /* DE_FILESYS_MAIN_H */

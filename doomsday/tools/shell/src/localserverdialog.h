@@ -42,7 +42,7 @@ protected slots:
     void validate();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // LOCALSERVERGUIDIALOG_H

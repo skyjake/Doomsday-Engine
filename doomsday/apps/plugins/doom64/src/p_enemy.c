@@ -400,7 +400,7 @@ static dd_bool shouldAvoidDropoff(mobj_t *mobj, pvec2d_t chaseDir)
 {
     pit_avoiddropoff_params_t parm;
 
-    DENG_ASSERT(mobj != 0);
+    DE_ASSERT(mobj != 0);
 
     // Disabled? (inverted var name!)
     if(cfg.avoidDropoffs) return false;
@@ -432,7 +432,7 @@ static void newChaseDir(mobj_t *mobj)
     vec2d_t chaseDir;
     dd_bool avoiding;
 
-    DENG_ASSERT(mobj != 0);
+    DE_ASSERT(mobj != 0);
 
     // Nothing to chase?
     if(!mobj->target) return;
@@ -514,7 +514,7 @@ static int countMobjWorker(thinker_t* th, void* parms)
 
 static int countMobjs(countmobjworker_params_t* parm)
 {
-    DENG_ASSERT(parm != 0);
+    DE_ASSERT(parm != 0);
     parm->count = 0;
     Thinker_Iterate(P_MobjThinker, countMobjWorker, parm);
     return parm->count;
@@ -1443,7 +1443,7 @@ static void cyberKaboom(mobj_t *actor)
     coord_t pos[3];
     mobj_t *mo;
 
-    DENG_ASSERT(actor != 0);
+    DE_ASSERT(actor != 0);
 
     memcpy(pos, actor->origin, sizeof(pos));
     pos[VX] += FIX2FLT((P_Random() - 128) << 11);
@@ -1539,7 +1539,7 @@ void C_DECL A_CyberDeath(mobj_t *mo)
             G_SetGameActionMapCompletedAndSetNextMap();
             break;
 
-        default: DENG_ASSERT_FAIL("A_CyberDeath: Unknown trigger special type");
+        default: DE_ASSERT_FAIL("A_CyberDeath: Unknown trigger special type");
         }
     }
 }

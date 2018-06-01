@@ -23,9 +23,9 @@
 
 namespace de {
 
-DENG2_PIMPL(VariableChoiceWidget),
-DENG2_OBSERVES(Variable, Deletion),
-DENG2_OBSERVES(Variable, Change  )
+DE_PIMPL(VariableChoiceWidget),
+DE_OBSERVES(Variable, Deletion),
+DE_OBSERVES(Variable, Change  )
 {
     Variable *var;
     VariableType variableType;

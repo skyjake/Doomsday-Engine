@@ -29,8 +29,8 @@
 
 using namespace de;
 
-DENG2_PIMPL(NativeMenu)
-, DENG2_OBSERVES(Games, Readiness)
+DE_PIMPL(NativeMenu)
+, DE_OBSERVES(Games, Readiness)
 {
     QMenuBar *menuBar = nullptr;
     QMenu *helpMenu = nullptr;

@@ -45,10 +45,10 @@ public:
     enum Type { Vertex, Geometry, Fragment };
 
     /// There was a failure related to OpenGL resource allocation. @ingroup errors
-    DENG2_ERROR(AllocError);
+    DE_ERROR(AllocError);
 
     /// Shader source could not be compiled. @ingroup errors
-    DENG2_ERROR(CompilerError);
+    DE_ERROR(CompilerError);
 
 public:
     GLShader();
@@ -80,7 +80,7 @@ public:
     static int constexpr MAX_BATCH_UNIFORMS = 64;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

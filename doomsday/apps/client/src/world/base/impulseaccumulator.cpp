@@ -47,7 +47,7 @@ static inline InputSystem &inputSys()
 static int pimpDoubleClickThreshold = 300; ///< Milliseconds, cvar
 #endif
 
-DENG2_PIMPL_NOREF(ImpulseAccumulator)
+DE_PIMPL_NOREF(ImpulseAccumulator)
 {
     int impulseId = 0;
     int playerNum = 0;
@@ -59,7 +59,7 @@ DENG2_PIMPL_NOREF(ImpulseAccumulator)
     inline PlayerImpulse &getImpulse() const
     {
         auto *impulse = P_PlayerImpulsePtr(impulseId);
-        DENG2_ASSERT(impulse);
+        DE_ASSERT(impulse);
         return *impulse;
     }
 
@@ -145,7 +145,7 @@ DENG2_PIMPL_NOREF(ImpulseAccumulator)
             symbolicName += impulse.name;
 
             int const localPlayer = P_ConsoleToLocal(playerNum);
-            DENG2_ASSERT(localPlayer >= 0);
+            DE_ASSERT(localPlayer >= 0);
             LOG_INPUT_XVERBOSE("Triggered " _E(b) "'%s'" _E(.) " for player%i state: %i threshold: %i\n  %s",
                                impulse.name << (localPlayer + 1) << newState
                                << (nowTime - db.previousClickTime) << symbolicName);
@@ -203,7 +203,7 @@ bool ImpulseAccumulator::expireBeforeSharpTick() const
 void ImpulseAccumulator::receiveBinary()
 {
     // Ensure this is really a binary accumulator.
-    DENG2_ASSERT(d->type == Binary);
+    DE_ASSERT(d->type == Binary);
     LOG_AS("ImpulseAccumulator");
 
     d->binaryAccum++;
@@ -218,7 +218,7 @@ void ImpulseAccumulator::receiveBinary()
 int ImpulseAccumulator::takeBinary()
 {
     // Ensure this is really a binary accumulator.
-    DENG2_ASSERT(d->type == Binary);
+    DE_ASSERT(d->type == Binary);
     LOG_AS("ImpulseAccumulator");
     short *counter = &d->binaryAccum;
     int count = *counter;
@@ -231,7 +231,7 @@ int ImpulseAccumulator::takeBinary()
 void ImpulseAccumulator::takeAnalog(float *pos, float *relOffset)
 {
     // Ensure this is really an analog accumulator.
-    DENG2_ASSERT(d->type == Analog);
+    DE_ASSERT(d->type == Analog);
     LOG_AS("ImpulseAccumulator");
 
     if(pos) *pos = 0;
@@ -269,7 +269,7 @@ void ImpulseAccumulator::clearAll()
         takeBinary();
         break;
 
-    default: DENG2_ASSERT_FAIL("ImpulseAccumulator::clearAll: Unknown type");
+    default: DE_ASSERT_FAIL("ImpulseAccumulator::clearAll: Unknown type");
     }
 
     // Also clear the double click state.

@@ -24,7 +24,7 @@ using namespace de;
 
 namespace res {
 
-DENG2_PIMPL_NOREF(MapManifests)
+DE_PIMPL_NOREF(MapManifests)
 {
     Tree manifests;
 

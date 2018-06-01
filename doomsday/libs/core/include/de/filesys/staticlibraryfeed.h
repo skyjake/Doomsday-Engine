@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG2_STATICLIBRARYFEED_H
-#define DENG2_STATICLIBRARYFEED_H
+#ifndef DE_STATICLIBRARYFEED_H
+#define DE_STATICLIBRARYFEED_H
 
 #include "../Feed"
 
@@ -38,4 +38,4 @@ public:
 
 } // namespace de
 
-#endif // DENG2_STATICLIBRARYFEED_H
+#endif // DE_STATICLIBRARYFEED_H

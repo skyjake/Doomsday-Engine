@@ -57,21 +57,21 @@ static void printUsage()
              "\n--help, -h, -?  Show usage information."
              "\n-idKey   Fallback game ID. Used to resolve ambigous savegame formats."
              "\n-output  Redirect .save output to this directory (default is the working directory).")
-            << DENG2_TEXT_APP->commandLine().at(0);
+            << DE_TEXT_APP->commandLine().at(0);
 }
 
 static void printDescription()
 {
     LOG_VERBOSE("%s is a utility for converting legacy Doomsday Engine, Doom and Heretic savegame"
                 " files into a format recognized by Doomsday Engine version 1.14 (or newer).")
-            << DENG2_TEXT_APP->applicationName();
+            << DE_TEXT_APP->applicationName();
 }
 
 String versionText()
 {
     return String("%1 version %2 (%3)")
-               .arg(DENG2_TEXT_APP->applicationName())
-               .arg(DENG2_TEXT_APP->applicationVersion())
+               .arg(DE_TEXT_APP->applicationName())
+               .arg(DE_TEXT_APP->applicationVersion())
                .arg(Time::fromText(__DATE__ " " __TIME__, Time::CompilerDateTime)
                     .asDateTime().toString(Qt::SystemLocaleShortDate));
 }
@@ -87,7 +87,7 @@ Path composeMapUriPath(duint32 episode, duint32 map)
 
 Folder &outputFolder()
 {
-    return DENG2_TEXT_APP->rootFolder().locate<Folder>("output");
+    return DE_TEXT_APP->rootFolder().locate<Folder>("output");
 }
 
 static PackageFormatter *saveFormatForGameId(String const &idKey)

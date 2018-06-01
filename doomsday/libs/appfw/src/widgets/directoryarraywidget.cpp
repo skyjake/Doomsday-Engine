@@ -31,7 +31,7 @@ namespace de {
 
 static String const CFG_LAST_FOLDER("resource.latestDirectory");
 
-DENG2_PIMPL_NOREF(DirectoryArrayWidget)
+DE_PIMPL_NOREF(DirectoryArrayWidget)
 {};
 
 DirectoryArrayWidget::DirectoryArrayWidget(Variable &variable, String const &name)
@@ -42,7 +42,7 @@ DirectoryArrayWidget::DirectoryArrayWidget(Variable &variable, String const &nam
     addButton().setActionFn([this] ()
     {
         // Use a native dialog to select the IWAD folder.
-        DENG2_BASE_GUI_APP->beginNativeUIMode();
+        DE_BASE_GUI_APP->beginNativeUIMode();
 
         QFileDialog dlg(nullptr, tr("Select Folder"),
                         Config::get().gets(CFG_LAST_FOLDER, "."), "");
@@ -58,7 +58,7 @@ DirectoryArrayWidget::DirectoryArrayWidget(Variable &variable, String const &nam
             setVariableFromWidget();
         }
 
-        DENG2_BASE_GUI_APP->endNativeUIMode();
+        DE_BASE_GUI_APP->endNativeUIMode();
     });
 
     updateFromVariable();

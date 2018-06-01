@@ -110,7 +110,7 @@ Generator::Id Generator::id() const
 
 void Generator::setId(Id newId)
 {
-    DENG2_ASSERT(newId >= 1 && newId <= Map::MAX_GENERATORS); // 1-based
+    DE_ASSERT(newId >= 1 && newId <= Map::MAX_GENERATORS); // 1-based
     _id = newId;
 }
 
@@ -139,7 +139,7 @@ void Generator::clearParticles()
 
 void Generator::configureFromDef(ded_ptcgen_t const *newDef)
 {
-    DENG2_ASSERT(newDef);
+    DE_ASSERT(newDef);
 
     if(count <= 0)
         count = 1;
@@ -243,7 +243,7 @@ ParticleInfo const *Generator::particleInfo() const
 
 static void setParticleAngles(ParticleInfo *pinfo, dint flags)
 {
-    DENG2_ASSERT(pinfo);
+    DE_ASSERT(pinfo);
 
     if(flags & Generator::ParticleStage::ZeroYaw)
         pinfo->yaw = 0;
@@ -257,7 +257,7 @@ static void setParticleAngles(ParticleInfo *pinfo, dint flags)
 
 static void particleSound(fixed_t pos[3], ded_embsound_t *sound)
 {
-    DENG2_ASSERT(pos && sound);
+    DE_ASSERT(pos && sound);
 
     // Is there any sound to play?
     if(!sound->id || sound->volume <= 0) return;
@@ -625,7 +625,7 @@ void Generator::spinParticle(ParticleInfo &pinfo)
     ded_ptcstage_t const *stDef = &def->stages[pinfo.stage];
     duint const spinIndex        = uint(&pinfo - &_pinfo[id() / 8]) % 4;
 
-    DENG2_ASSERT(spinIndex < 4);
+    DE_ASSERT(spinIndex < 4);
 
     dint const yawSign   =   yawSigns[spinIndex];
     dint const pitchSign = pitchSigns[spinIndex];
@@ -645,7 +645,7 @@ void Generator::spinParticle(ParticleInfo &pinfo)
 
 void Generator::moveParticle(dint index)
 {
-    DENG2_ASSERT(index >= 0 && index < count);
+    DE_ASSERT(index >= 0 && index < count);
 
     ParticleInfo *pinfo   = &_pinfo[index];
     ParticleStage *st     = &stages[pinfo->stage];
@@ -897,7 +897,7 @@ void Generator::moveParticle(dint index)
     // Iterate the lines in the contacted blocks.
 
     validCount++;
-    DENG2_ASSERT(!clParm.ptcHitLine);
+    DE_ASSERT(!clParm.ptcHitLine);
     map().forAllLinesInBox(clParm.box, [&clParm] (Line &line)
     {
         // Does the bounding box miss the line completely?
@@ -1031,7 +1031,7 @@ void Generator::runTick()
     }
 
     // Time to die?
-    DENG2_ASSERT(def);
+    DE_ASSERT(def);
     if(++_age > def->maxAge && def->maxAge >= 0)
     {
         Generator_Delete(this);
@@ -1139,7 +1139,7 @@ void Generator_Delete(Generator *gen)
 
 void Generator_Thinker(Generator *gen)
 {
-    DENG2_ASSERT(gen != 0);
+    DE_ASSERT(gen != 0);
     gen->runTick();
 }
 

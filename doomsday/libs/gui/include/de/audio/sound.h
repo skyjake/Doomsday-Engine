@@ -107,26 +107,26 @@ public:
     virtual dfloat minDistance() const;
     virtual dfloat spatialSpread() const;
 
-    DENG2_CAST_METHODS()
+    DE_CAST_METHODS()
 
     /// Audience that is notified when the sound is played.
-    DENG2_DEFINE_AUDIENCE2(Play, void soundPlayed(Sound const &))
+    DE_DEFINE_AUDIENCE2(Play, void soundPlayed(Sound const &))
 
     /// Audience that is notified when the properties of the sound change.
-    DENG2_DEFINE_AUDIENCE2(Change, void soundPropertyChanged(Sound const &))
+    DE_DEFINE_AUDIENCE2(Change, void soundPropertyChanged(Sound const &))
 
     /// Audience that is notified when the sound stops.
-    DENG2_DEFINE_AUDIENCE2(Stop, void soundStopped(Sound &))
+    DE_DEFINE_AUDIENCE2(Stop, void soundStopped(Sound &))
 
     /// Audience that is notified when the sound instance is deleted.
-    DENG2_DEFINE_AUDIENCE2(Deletion, void soundBeingDeleted(Sound &))
+    DE_DEFINE_AUDIENCE2(Deletion, void soundBeingDeleted(Sound &))
 
 protected:
     /// Called after a property value has been changed.
     virtual void update() = 0;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

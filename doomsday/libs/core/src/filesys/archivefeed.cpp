@@ -29,8 +29,8 @@
 
 namespace de {
 
-DENG2_PIMPL(ArchiveFeed)
-, DENG2_OBSERVES(File, Deletion)
+DE_PIMPL(ArchiveFeed)
+, DE_OBSERVES(File, Deletion)
 {
     /// File where the archive is stored (in a serialized format).
     File *file;
@@ -150,7 +150,7 @@ DENG2_PIMPL(ArchiveFeed)
         else
         {
             auto &table = entryTable();
-            DENG2_GUARD(table);
+            DE_GUARD(table);
             table.value.remove(&deleted.as<ArchiveEntryFile>());
         }
     }
@@ -172,7 +172,7 @@ DENG2_PIMPL(ArchiveFeed)
     void addToEntryTable(ArchiveEntryFile *file)
     {
         auto &table = entryTable();
-        DENG2_GUARD(table);
+        DE_GUARD(table);
         table.value.insert(file);
         file->audienceForDeletion() += this;
     }
@@ -185,7 +185,7 @@ DENG2_PIMPL(ArchiveFeed)
         Archive::Names names;
         archive().listFiles(names, basePath);
 
-        DENG2_FOR_EACH(Archive::Names, i, names)
+        DE_FOR_EACH(Archive::Names, i, names)
         {
             if (folder.has(*i))
             {
@@ -331,12 +331,12 @@ void ArchiveFeed::rewriteFile()
 {
     if (d->parentFeed)
     {
-        DENG2_ASSERT(!d->arch);
+        DE_ASSERT(!d->arch);
         d->parentFeed->rewriteFile();
     }
     else
     {
-        DENG2_ASSERT(d->arch != 0);
+        DE_ASSERT(d->arch != 0);
         d->writeIfModified();
     }
 }
@@ -344,7 +344,7 @@ void ArchiveFeed::rewriteFile()
 void ArchiveFeed::uncache()
 {
     auto &table = d->entryTable();
-    DENG2_GUARD(table);
+    DE_GUARD(table);
     for (auto *entry : table.value)
     {
         entry->uncache();

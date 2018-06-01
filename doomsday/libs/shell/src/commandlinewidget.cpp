@@ -26,7 +26,7 @@
 
 namespace de { namespace shell {
 
-DENG2_PIMPL(CommandLineWidget)
+DE_PIMPL(CommandLineWidget)
 {
     EditorHistory history;
 
@@ -42,7 +42,7 @@ CommandLineWidget::CommandLineWidget(String const &name)
 bool CommandLineWidget::handleEvent(Event const &event)
 {
     // There are only key press events.
-    DENG2_ASSERT(event.type() == Event::KeyPress);
+    DE_ASSERT(event.type() == Event::KeyPress);
     KeyEvent const &ev = event.as<KeyEvent>();
 
     // Override the editor's normal Enter handling.

@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_ANIMATIONVECTOR_H
-#define LIBDENG2_ANIMATIONVECTOR_H
+#ifndef LIBCORE_ANIMATIONVECTOR_H
+#define LIBCORE_ANIMATIONVECTOR_H
 
 #include "../Animation"
 #include "../Vector"
@@ -28,7 +28,7 @@ namespace de {
  * Animated 2D vector.
  * @ingroup math
  */
-class DENG2_PUBLIC AnimationVector2
+class DE_PUBLIC AnimationVector2
 {
 public:
     AnimationVector2(Animation::Style style = Animation::EaseOut)
@@ -88,7 +88,7 @@ public:
  * Animated 3D vector.
  * @ingroup math
  */
-class DENG2_PUBLIC AnimationVector3
+class DE_PUBLIC AnimationVector3
 {
 public:
     AnimationVector3(Animation::Style style = Animation::EaseOut)
@@ -137,4 +137,4 @@ public:
 
 } // namespace de
 
-#endif // LIBDENG2_ANIMATIONVECTOR_H
+#endif // LIBCORE_ANIMATIONVECTOR_H

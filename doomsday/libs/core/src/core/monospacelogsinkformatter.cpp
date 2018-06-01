@@ -30,8 +30,8 @@ namespace de {
  * input text are handled, however they must be separated by newline characters.
  */
 struct TabFiller
-        : DENG2_OBSERVES(EscapeParser, PlainText)
-        , DENG2_OBSERVES(EscapeParser, EscapeSequence)
+        : DE_OBSERVES(EscapeParser, PlainText)
+        , DE_OBSERVES(EscapeParser, EscapeSequence)
 {
     EscapeParser esc;
     QStringList lines;
@@ -214,9 +214,9 @@ nextStop:;
         while (!fillTabs(fills, maxStop, minIndent)) {}
 
 #if 0
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
         // No tabs should remain.
-        foreach (QString ln, fills) DENG2_ASSERT(!ln.contains('\t'));
+        foreach (QString ln, fills) DE_ASSERT(!ln.contains('\t'));
 #endif
 #endif
 
@@ -227,7 +227,7 @@ nextStop:;
 MonospaceLogSinkFormatter::MonospaceLogSinkFormatter()
     : _maxLength(100), _minimumIndent(0), _sectionDepthOfPreviousLine(0)
 {
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     // Debug builds include a timestamp and msg type indicator.
     _maxLength = 125;
     _minimumIndent = 15;
@@ -242,7 +242,7 @@ QList<String> MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &ent
 
     int cutSection = 0;
 
-#ifndef DENG2_DEBUG
+#ifndef DE_DEBUG
     // In a release build we can dispense with the metadata.
     LogEntry::Flags entryFlags = LogEntry::Simple;
 #else
@@ -382,7 +382,7 @@ QList<String> MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &ent
         //if (firstNonSpace < 0) firstNonSpace = _minimumIndent;
 
         // Check for formatting symbols.
-        lineText.replace(DENG2_ESC("R"), String(maxLen - _minimumIndent, '-'));
+        lineText.replace(DE_ESC("R"), String(maxLen - _minimumIndent, '-'));
 
         resultLines.append(lineText);
 

@@ -210,7 +210,7 @@ static void Mouse_Win32_GetState(mousestate_t* state)
 static void Mouse_Win32_Trap(dd_bool enabled)
 {
     LOG_AS("Mouse_Win32");
-    DENG_ASSERT(didMouse);
+    DE_ASSERT(didMouse);
 
     mouseTrapped = (enabled != 0);
     if(enabled)

@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_TRANSMITTER_H
-#define LIBDENG2_TRANSMITTER_H
+#ifndef LIBCORE_TRANSMITTER_H
+#define LIBCORE_TRANSMITTER_H
 
 #include "../libcore.h"
 #include "../IOStream"
@@ -33,7 +33,7 @@ class Packet;
  *
  * @ingroup net
  */
-class DENG2_PUBLIC Transmitter : public IOStream
+class DE_PUBLIC Transmitter : public IOStream
 {
 public:
     virtual ~Transmitter();
@@ -70,4 +70,4 @@ public:
 
 } // namespace de
 
-#endif // LIBDENG2_TRANSMITTER_H
+#endif // LIBCORE_TRANSMITTER_H

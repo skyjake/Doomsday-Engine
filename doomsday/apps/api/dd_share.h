@@ -22,8 +22,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_SHARED_H
-#define LIBDENG_SHARED_H
+#ifndef DE_SHARED_H
+#define DE_SHARED_H
 
 #ifndef C_DECL
 #  if defined(WIN32)
@@ -857,4 +857,4 @@ enum {
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_SHARED_H */
+#endif /* DE_SHARED_H */

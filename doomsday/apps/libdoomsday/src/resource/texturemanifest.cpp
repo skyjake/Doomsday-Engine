@@ -27,8 +27,8 @@ namespace res {
 
 static TextureManifest::TextureConstructor textureConstructor;
 
-DENG2_PIMPL(TextureManifest)
-, DENG2_OBSERVES(Texture, Deletion)
+DE_PIMPL(TextureManifest)
+, DE_OBSERVES(Texture, Deletion)
 {
     int uniqueId;                    ///< Scheme-unique identifier (user defined).
     de::Uri resourceUri;             ///< Image resource path, to be loaded.
@@ -46,7 +46,7 @@ DENG2_PIMPL(TextureManifest)
     ~Impl()
     {
         if (texture) texture->audienceForDeletion -= this;
-        DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->textureManifestBeingDeleted(self());
+        DE_FOR_PUBLIC_AUDIENCE(Deletion, i) i->textureManifestBeingDeleted(self());
     }
 
     // Observes Texture Deletion.
@@ -66,13 +66,13 @@ Texture *TextureManifest::derive()
     LOG_AS("TextureManifest::derive");
     if (!hasTexture())
     {
-        DENG2_ASSERT(textureConstructor != nullptr);
+        DE_ASSERT(textureConstructor != nullptr);
 
         // Instantiate and associate the new texture with this.
         setTexture(textureConstructor(*this));
 
         // Notify interested parties that a new texture was derived from the manifest.
-        DENG2_FOR_AUDIENCE(TextureDerived, i) i->textureManifestTextureDerived(*this, texture());
+        DE_FOR_AUDIENCE(TextureDerived, i) i->textureManifestTextureDerived(*this, texture());
     }
     else
     {
@@ -161,7 +161,7 @@ bool TextureManifest::setUniqueId(int newUniqueId)
     d->uniqueId = newUniqueId;
 
     // Notify interested parties that the uniqueId has changed.
-    DENG2_FOR_AUDIENCE(UniqueIdChange, i) i->textureManifestUniqueIdChanged(*this);
+    DE_FOR_AUDIENCE(UniqueIdChange, i) i->textureManifestUniqueIdChanged(*this);
 
     return true;
 }

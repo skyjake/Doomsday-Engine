@@ -56,7 +56,7 @@ typedef QList<LineSegmentSide *>   LineSegmentSides;
 typedef QList<ConvexSubspaceProxy> SubspaceProxys;
 typedef QHash<Vertex *, EdgeTips>  EdgeTipSetMap;
 
-DENG2_PIMPL(Partitioner)
+DE_PIMPL(Partitioner)
 {
     int splitCostFactor = 7;     ///< Cost of splitting a line segment.
 
@@ -307,7 +307,7 @@ DENG2_PIMPL(Partitioner)
     LineSegmentSide &splitLineSegment(LineSegmentSide &frontLeft,
         Vec2d const &point, bool updateEdgeTips = true)
     {
-        DENG2_ASSERT(point != frontLeft.from().origin() &&
+        DE_ASSERT(point != frontLeft.from().origin() &&
                      point != frontLeft.to().origin());
 
         //LOG_DEBUG("Splitting line segment %p at %s")
@@ -512,8 +512,8 @@ DENG2_PIMPL(Partitioner)
          * during the partitioning process.
          */
         int const totalSegs = node.userData()->totalCount();
-        DENG2_ASSERT(totalSegs != 0);
-        DENG2_UNUSED(totalSegs);
+        DE_ASSERT(totalSegs != 0);
+        DE_UNUSED(totalSegs);
 
         // Iterative pre-order traversal of SuperBlock.
         LineSegmentBlockTreeNode *cur  = &node;
@@ -562,9 +562,9 @@ DENG2_PIMPL(Partitioner)
         }
 
         // Sanity checks...
-        DENG2_ASSERT(rights.userData()->totalCount());
-        DENG2_ASSERT(lefts.userData ()->totalCount());
-        DENG2_ASSERT((  rights.userData()->totalCount()
+        DE_ASSERT(rights.userData()->totalCount());
+        DE_ASSERT(lefts.userData ()->totalCount());
+        DE_ASSERT((  rights.userData()->totalCount()
                       + lefts.userData ()->totalCount()) >= totalSegs);
     }
 
@@ -669,7 +669,7 @@ DENG2_PIMPL(Partitioner)
                 }
             }
 
-            DENG2_ASSERT(sector);
+            DE_ASSERT(sector);
 
             LineSegment &newSeg = *makeLineSegment(fromVertex, toVertex,
                                                    sector, sector, nullptr /*no map line*/,
@@ -698,7 +698,7 @@ DENG2_PIMPL(Partitioner)
     {
         LineSegmentSides allSegs;
 
-#ifdef DENG2_QT_4_7_OR_NEWER
+#ifdef DE_QT_4_7_OR_NEWER
         allSegs.reserve(node.userData()->totalCount());
 #endif
 
@@ -1057,7 +1057,7 @@ DENG2_PIMPL(Partitioner)
             if(seg->hasHEdge() && !seg->back().hasHEdge())
             {
                 HEdge *hedge = &seg->hedge();
-                DENG2_ASSERT(!hedge->hasTwin());
+                DE_ASSERT(!hedge->hasTwin());
 
                 // Allocate the twin from the same mesh.
                 hedge->setTwin(hedge->mesh().newHEdge(seg->back().from()));
@@ -1074,13 +1074,13 @@ DENG2_PIMPL(Partitioner)
      */
     void notifyUnclosedSectorFound(Sector &sector, Vec2d const &nearPoint)
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(UnclosedSectorFound, i)
+        DE_FOR_PUBLIC_AUDIENCE(UnclosedSectorFound, i)
         {
             i->unclosedSectorFound(sector, nearPoint);
         }
     }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     void printSegments(LineSegmentSides const &allSegs)
     {
         for(LineSegmentSide const *seg : allSegs)

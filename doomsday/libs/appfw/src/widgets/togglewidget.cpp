@@ -27,8 +27,8 @@ namespace de {
 
 static TimeSpan const SWITCH_ANIM_SPAN = 0.3;
 
-DENG2_PIMPL(ToggleWidget),
-DENG2_OBSERVES(ButtonWidget, Press)
+DE_PIMPL(ToggleWidget),
+DE_OBSERVES(ButtonWidget, Press)
 {
     /// Draws the animated I/O toggle indicator.
     class ToggleProceduralImage : public ProceduralImage
@@ -132,10 +132,10 @@ DENG2_OBSERVES(ButtonWidget, Press)
         emit self().stateChangedByUser(self().toggleState());
     }
 
-    DENG2_PIMPL_AUDIENCE(Toggle)
+    DE_PIMPL_AUDIENCE(Toggle)
 };
 
-DENG2_AUDIENCE_METHOD(ToggleWidget, Toggle)
+DE_AUDIENCE_METHOD(ToggleWidget, Toggle)
 
 ToggleWidget::ToggleWidget(Flags const &flags, String const &name)
     : ButtonWidget(name)
@@ -157,7 +157,7 @@ void ToggleWidget::setToggleState(ToggleState state, bool notify)
 
         if (notify)
         {
-            DENG2_FOR_AUDIENCE2(Toggle, i) i->toggleStateChanged(*this);
+            DE_FOR_AUDIENCE2(Toggle, i) i->toggleStateChanged(*this);
         }
         emit stateChanged(state);
     }

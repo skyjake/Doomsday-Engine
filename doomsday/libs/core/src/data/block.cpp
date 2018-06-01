@@ -233,8 +233,8 @@ Block Block::mapAsIndices(int                        valuesPerIndex,
                           const IByteArray &         values,
                           const std::array<Byte, 4> &defaultValues) const
 {
-    DENG2_ASSERT(valuesPerIndex >= 1);
-    DENG2_ASSERT(valuesPerIndex <= 4);
+    DE_ASSERT(valuesPerIndex >= 1);
+    DE_ASSERT(valuesPerIndex <= 4);
 
     Block mapped(4 * size()); // output is always packed as uint32
 
@@ -257,9 +257,9 @@ Block Block::mapAsIndices(int               valuesPerIndex,
                           const IByteArray &values,
                           const IByteArray &defaultValues) const
 {
-    DENG2_ASSERT(valuesPerIndex >= 1);
-    DENG2_ASSERT(valuesPerIndex <= 4);
-    DENG2_ASSERT(defaultValues.size() == size());
+    DE_ASSERT(valuesPerIndex >= 1);
+    DE_ASSERT(valuesPerIndex <= 4);
+    DE_ASSERT(defaultValues.size() == size());
 
     Block mapped(4 * size()); // output is always packed as uint32
 

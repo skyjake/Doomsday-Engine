@@ -174,8 +174,8 @@ struct automapcfg_lineinfo_t
  */
 class AutomapStyle
 {
-    DENG2_NO_ASSIGN(AutomapStyle)
-    DENG2_NO_COPY(AutomapStyle)
+    DE_NO_ASSIGN(AutomapStyle)
+    DE_NO_COPY(AutomapStyle)
 
 public:
     AutomapStyle();
@@ -198,7 +198,7 @@ public:
     void setObjectSvg(automapcfg_objectname_t name, svgid_t svg);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 void ST_InitAutomapStyle();

@@ -22,7 +22,7 @@
 
 namespace de {
 
-DENG2_PIMPL(Drawable)
+DE_PIMPL(Drawable)
 {
     typedef QMap<Id, std::shared_ptr<GLBuffer>> Buffers;
     typedef QMap<Id, GLProgram *> Programs;
@@ -100,7 +100,7 @@ DENG2_PIMPL(Drawable)
 
     void replaceProgram(GLProgram const *src, GLProgram const *dest)
     {
-        DENG2_FOR_EACH(BufferConfigs, i, configs)
+        DE_FOR_EACH(BufferConfigs, i, configs)
         {
             if (i.value().program == src)
             {
@@ -111,7 +111,7 @@ DENG2_PIMPL(Drawable)
 
     void replaceState(GLState const *src, GLState const *dest)
     {
-        DENG2_FOR_EACH(BufferConfigs, i, configs)
+        DE_FOR_EACH(BufferConfigs, i, configs)
         {
             if (i.value().state == src)
             {
@@ -167,7 +167,7 @@ bool Drawable::hasBuffer(Id id) const
 
 GLBuffer &Drawable::buffer(Id id) const
 {
-    DENG2_ASSERT(d->buffers.contains(id));
+    DE_ASSERT(d->buffers.contains(id));
     return *d->buffers[id];
 }
 
@@ -178,14 +178,14 @@ GLBuffer &Drawable::buffer(Name const &bufferName) const
 
 Drawable::Id Drawable::bufferId(Name const &bufferName) const
 {
-    DENG2_ASSERT(d->bufferNames.contains(bufferName));
+    DE_ASSERT(d->bufferNames.contains(bufferName));
     return d->bufferNames[bufferName];
 }
 
 GLProgram &Drawable::program(Id id) const
 {
     if (!id) return d->defaultProgram;
-    DENG2_ASSERT(d->programs.contains(id));
+    DE_ASSERT(d->programs.contains(id));
     return *d->programs[id];
 }
 
@@ -197,14 +197,14 @@ GLProgram &Drawable::program(Name const &programName) const
 Drawable::Id Drawable::programId(Name const &programName) const
 {
     if (programName.isEmpty()) return 0; // Default program.
-    DENG2_ASSERT(d->programNames.contains(programName));
+    DE_ASSERT(d->programNames.contains(programName));
     return d->programNames[programName];
 }
 
 GLProgram const &Drawable::programForBuffer(Id bufferId) const
 {
-    DENG2_ASSERT(d->configs.contains(bufferId));
-    DENG2_ASSERT(d->configs[bufferId].program != 0);
+    DE_ASSERT(d->configs.contains(bufferId));
+    DE_ASSERT(d->configs[bufferId].program != 0);
     return *d->configs[bufferId].program;
 }
 
@@ -225,7 +225,7 @@ GLState const *Drawable::stateForBuffer(Name const &bufferName) const
 
 GLState &Drawable::state(Id id) const
 {
-    DENG2_ASSERT(d->states.contains(id));
+    DE_ASSERT(d->states.contains(id));
     return *d->states[id];
 }
 
@@ -236,7 +236,7 @@ GLState &Drawable::state(Name const &stateName) const
 
 Drawable::Id Drawable::stateId(Name const &stateName) const
 {
-    DENG2_ASSERT(d->stateNames.contains(stateName));
+    DE_ASSERT(d->stateNames.contains(stateName));
     return d->stateNames[stateName];
 }
 
@@ -304,7 +304,7 @@ Drawable::Id Drawable::addBufferWithNewProgram(Name const &bufferName, GLBuffer 
 GLProgram &Drawable::addProgram(Id id)
 {
     // Program 0 is the default program.
-    DENG2_ASSERT(id != 0);
+    DE_ASSERT(id != 0);
 
     removeProgram(id);
 
@@ -498,7 +498,7 @@ void Drawable::draw() const
     // Make sure the GL state on the top of the stack is in effect.
     GLState::current().apply();
 
-    DENG2_FOR_EACH_CONST(Impl::Buffers, i, d->buffers)
+    DE_FOR_EACH_CONST(Impl::Buffers, i, d->buffers)
     {
         Id const id = i.key();
 

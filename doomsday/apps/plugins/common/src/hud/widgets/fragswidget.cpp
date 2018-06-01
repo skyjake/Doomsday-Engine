@@ -69,7 +69,7 @@ void FragsWidget_Draw(guidata_frags_t *frags, Point2Raw const *offset)
 #  define TRACKING              ( 1 )
 #endif
 
-    DENG2_ASSERT(frags);
+    DE_ASSERT(frags);
     dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
 
 #if __JDOOM__ || __JDOOM64__
@@ -111,7 +111,7 @@ void FragsWidget_UpdateGeometry(guidata_frags_t *frags)
 #  define TRACKING              ( 1 )
 #endif
 
-    DENG2_ASSERT(frags);
+    DE_ASSERT(frags);
     Rect_SetWidthHeight(&frags->geometry(), 0, 0);
 
 #if __JDOOM__ || __JDOOM64__
@@ -159,7 +159,7 @@ void SBarFragsWidget_Draw(guidata_frags_t *frags, Point2Raw const *offset)
 #  define TRACKING              ( 0 )
 #endif
 
-    DENG2_ASSERT(frags);
+    DE_ASSERT(frags);
 
     dint const activeHud     = ST_ActiveHud(frags->player());
     dint const yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(frags->player()));
@@ -223,7 +223,7 @@ void SBarFragsWidget_UpdateGeometry(guidata_frags_t *frags)
 #  define TRACKING                ( 0 )
 #endif
 
-    DENG2_ASSERT(frags);
+    DE_ASSERT(frags);
 
     Rect_SetWidthHeight(&frags->geometry(), 0, 0);
 

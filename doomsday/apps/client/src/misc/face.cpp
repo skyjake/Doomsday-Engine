@@ -24,7 +24,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(Face)
+DE_PIMPL_NOREF(Face)
 {
     HEdge *hedge = nullptr;  ///< First half-edge in the face geometry.
     AABoxd bounds;           ///< Vertex bounding box.

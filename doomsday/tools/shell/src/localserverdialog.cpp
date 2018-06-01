@@ -40,7 +40,7 @@
 using namespace de;
 using namespace de::shell;
 
-DENG2_PIMPL(LocalServerDialog)
+DE_PIMPL(LocalServerDialog)
 {
     QPushButton *yes;
     QLineEdit *name;

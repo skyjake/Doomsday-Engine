@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_FILESYS_NODE_H
-#define LIBDENG2_FILESYS_NODE_H
+#ifndef LIBCORE_FILESYS_NODE_H
+#define LIBCORE_FILESYS_NODE_H
 
 #include "../String"
 #include "../Path"
@@ -38,7 +38,7 @@ namespace filesys {
  * operations like writing and reading; nodes will lock themselves as appropriate. A user
  * may lock the node manually if long-term exclusive access is required.
  */
-class DENG2_PUBLIC Node : public Lockable, public Deletable
+class DE_PUBLIC Node : public Lockable, public Deletable
 {
 public:
     virtual ~Node();
@@ -94,7 +94,7 @@ public:
      */
     virtual Node const *tryGetChild(String const &name) const;
 
-    DENG2_CAST_METHODS()
+    DE_CAST_METHODS()
 
 protected:
     /**
@@ -105,10 +105,10 @@ protected:
     explicit Node(String const &name = String());
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace filesys
 } // namespace de
 
-#endif // LIBDENG2_FILESYS_NODE_H
+#endif // LIBCORE_FILESYS_NODE_H

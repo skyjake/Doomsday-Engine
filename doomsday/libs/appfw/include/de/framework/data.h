@@ -53,16 +53,16 @@ public:
     /**
      * Notified when a new item is added to the data context.
      */
-    DENG2_DEFINE_AUDIENCE2(Addition, void dataItemAdded(Pos id, Item const &item))
+    DE_DEFINE_AUDIENCE2(Addition, void dataItemAdded(Pos id, Item const &item))
 
     /**
      * Notified when an item has been removed from the data context. When this
      * is called @a item is no longer in the context and can be modified at
      * will.
      */
-    DENG2_DEFINE_AUDIENCE2(Removal, void dataItemRemoved(Pos oldId, Item &item))
+    DE_DEFINE_AUDIENCE2(Removal, void dataItemRemoved(Pos oldId, Item &item))
 
-    DENG2_DEFINE_AUDIENCE2(OrderChange, void dataItemOrderChanged())
+    DE_DEFINE_AUDIENCE2(OrderChange, void dataItemOrderChanged())
 
 public:
     Data();
@@ -135,7 +135,7 @@ public:
     LoopResult forAll(std::function<LoopResult (Item const &)> func) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef Data::Pos DataPos;

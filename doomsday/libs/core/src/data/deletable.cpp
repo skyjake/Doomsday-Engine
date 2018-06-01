@@ -22,7 +22,7 @@ namespace de {
 
 Deletable::~Deletable()
 {
-    DENG2_FOR_AUDIENCE(Deletion, i)
+    DE_FOR_AUDIENCE(Deletion, i)
     {
         i->objectWasDeleted(this);
     }

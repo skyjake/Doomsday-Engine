@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_NO_API_MACROS_URI
+#define DE_NO_API_MACROS_URI
 #include "doomsday/console/var.h"
 #include "doomsday/console/exec.h"
 #include "doomsday/console/knownword.h"
@@ -57,7 +57,7 @@ void Con_DeinitVariableDirectory()
 
 static int markVariableUserDataFreed(CVarDirectory::Node &node, void *context)
 {
-    DENG_ASSERT(context);
+    DE_ASSERT(context);
 
     cvar_t *var = reinterpret_cast<cvar_t *>(node.userPointer());
     void **ptr = (void **) context;
@@ -138,7 +138,7 @@ static cvar_t* addVariable(cvartemplate_t const& tpl)
     CVarDirectory::Node* node = &cvarDirectory->insert(path);
     cvar_t* newVar;
 
-    DENG_ASSERT(!node->userPointer());
+    DE_ASSERT(!node->userPointer());
     if (node->userPointer())
     {
         throw Error("Con_AddVariable", "A variable with path '" + String(tpl.path) + "' is already known!");
@@ -162,7 +162,7 @@ static cvar_t* addVariable(cvartemplate_t const& tpl)
 String CVar_TypeAsText(cvar_t const *var)
 {
     // Human-readable type name.
-    DENG_ASSERT(var);
+    DE_ASSERT(var);
     switch (var->type)
     {
     case CVT_BYTE:
@@ -178,7 +178,7 @@ String CVar_TypeAsText(cvar_t const *var)
     case CVT_URIPTR:
         return "uri";
     default:
-        DENG2_ASSERT_FAIL("Con_VarTypeAsText: Unknown variable type");
+        DE_ASSERT_FAIL("Con_VarTypeAsText: Unknown variable type");
         break;
     }
     return "";
@@ -215,20 +215,20 @@ ddstring_t const* CVar_TypeName(cvartype_t type)
 
 cvartype_t CVar_Type(cvar_t const* var)
 {
-    DENG_ASSERT(var);
+    DE_ASSERT(var);
     return var->type;
 }
 
 
 int CVar_Flags(const cvar_t* var)
 {
-    DENG_ASSERT(var);
+    DE_ASSERT(var);
     return var->flags;
 }
 
 AutoStr *CVar_ComposePath(cvar_t const *var)
 {
-    DENG_ASSERT(var != 0);
+    DE_ASSERT(var != 0);
     CVarDirectory::Node &node = *reinterpret_cast<CVarDirectory::Node *>(var->directoryNode);
     QByteArray path = node.path(CVARDIRECTORY_DELIMITER).toUtf8();
     return AutoStr_FromTextStd(path.constData());
@@ -236,7 +236,7 @@ AutoStr *CVar_ComposePath(cvar_t const *var)
 
 void CVar_SetUri2(cvar_t *var, de::Uri const &uri, int svFlags)
 {
-    DENG_ASSERT(var);
+    DE_ASSERT(var);
 
     de::Uri *newUri;
     bool changed = false;
@@ -291,7 +291,7 @@ void CVar_SetUri(cvar_t *var, de::Uri const &uri)
 
 void CVar_SetString2(cvar_t *var, char const *text, int svFlags)
 {
-    DENG_ASSERT(var != 0);
+    DE_ASSERT(var != 0);
 
     bool changed = false;
     size_t oldLen, newLen;
@@ -338,7 +338,7 @@ void CVar_SetString(cvar_t* var, char const* text)
 
 void CVar_SetInteger2(cvar_t* var, int value, int svFlags)
 {
-    DENG_ASSERT(var);
+    DE_ASSERT(var);
 
     bool changed = false;
 
@@ -383,7 +383,7 @@ void CVar_SetInteger(cvar_t* var, int value)
 
 void CVar_SetFloat2(cvar_t* var, float value, int svFlags)
 {
-    DENG_ASSERT(var);
+    DE_ASSERT(var);
 
     bool changed = false;
 
@@ -437,7 +437,7 @@ static void printConversionWarning(cvar_t const *var)
 
 int CVar_Integer(cvar_t const* var)
 {
-    DENG_ASSERT(var);
+    DE_ASSERT(var);
     switch (var->type)
     {
     case CVT_BYTE:      return CV_BYTE(var);
@@ -453,7 +453,7 @@ int CVar_Integer(cvar_t const* var)
 
 float CVar_Float(cvar_t const* var)
 {
-    DENG_ASSERT(var);
+    DE_ASSERT(var);
     switch (var->type)
     {
     case CVT_BYTE:      return CV_BYTE(var);
@@ -469,7 +469,7 @@ float CVar_Float(cvar_t const* var)
 
 byte CVar_Byte(cvar_t const* var)
 {
-    DENG_ASSERT(var);
+    DE_ASSERT(var);
     switch (var->type)
     {
     case CVT_BYTE:      return CV_BYTE(var);
@@ -485,7 +485,7 @@ byte CVar_Byte(cvar_t const* var)
 
 char const* CVar_String(cvar_t const* var)
 {
-    DENG_ASSERT(var);
+    DE_ASSERT(var);
     /// @todo Why not implement in-place value to string conversion?
     switch (var->type)
     {
@@ -584,7 +584,7 @@ String Con_VarAsStyledText(cvar_t *var, char const *prefix)
         os << "\"" << (CV_URIPTR(var)? CV_URIPTR(var)->asText() : "") << "\"";
         break; }
     default:
-        DENG_ASSERT(false);
+        DE_ASSERT(false);
         break;
     }
     os << _E(<);
@@ -598,7 +598,7 @@ void Con_PrintCVar(cvar_t* var, char const *prefix)
 
 static int addVariableToKnownWords(CVarDirectory::Node& node, void* /*parameters*/)
 {
-    //DENG_ASSERT(parameters);
+    //DE_ASSERT(parameters);
 
     cvar_t* var = reinterpret_cast<cvar_t*>( node.userPointer() );
     //uint* index = (uint*) parameters;
@@ -625,7 +625,7 @@ void Con_SetVariable(Path const &varPath, int value, int svFlags)
     }
     else
     {
-        DENG2_ASSERT_FAIL("Con_SetVariable: Invalid console variable path");
+        DE_ASSERT_FAIL("Con_SetVariable: Invalid console variable path");
     }
 }
 
@@ -710,11 +710,11 @@ static Value *Function_Console_Set(Context &, Function::ArgumentValues const &ar
 void initVariableBindings(Binder &binder)
 {
     binder
-        << DENG2_FUNC(Console_Get, "get", "name")
-        << DENG2_FUNC(Console_Set, "set", "name" << "value");
+        << DE_FUNC(Console_Get, "get", "name")
+        << DE_FUNC(Console_Set, "set", "name" << "value");
 }
 
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
 typedef struct {
     uint count;
     cvartype_t type;
@@ -724,7 +724,7 @@ typedef struct {
 
 static int countVariable(CVarDirectory::Node& node, void* parameters)
 {
-    DENG_ASSERT(parameters);
+    DE_ASSERT(parameters);
 
     countvariableparams_t* p = (countvariableparams_t*) parameters;
     cvar_t* var = reinterpret_cast<cvar_t*>( node.userPointer() );
@@ -747,7 +747,7 @@ static int countVariable(CVarDirectory::Node& node, void* parameters)
 
 D_CMD(PrintVarStats)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     uint numCVars = 0, numCVarsHidden = 0;
 

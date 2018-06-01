@@ -54,12 +54,12 @@ public:
      */
     class Element
     {
-        DENG2_NO_COPY  (Element)
-        DENG2_NO_ASSIGN(Element)
+        DE_NO_COPY  (Element)
+        DE_NO_ASSIGN(Element)
 
     public:
         /// Required map element is missing. @ingroup errors
-        DENG2_ERROR(MissingMapElementError);
+        DE_ERROR(MissingMapElementError);
 
     public:
         explicit Element(Mesh &mesh);
@@ -197,7 +197,7 @@ public:
     HEdges const &hedges() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef Mesh::Element MeshElement;

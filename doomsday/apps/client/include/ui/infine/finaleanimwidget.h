@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_UI_INFINE_FINALEANIMWIDGET_H
-#define DENG_UI_INFINE_FINALEANIMWIDGET_H
+#ifndef DE_UI_INFINE_FINALEANIMWIDGET_H
+#define DE_UI_INFINE_FINALEANIMWIDGET_H
 
 #include <QList>
 #include <doomsday/world/Material>
@@ -109,9 +109,9 @@ protected:
     void runTicks(/*timespan_t timeDelta*/);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef FinaleAnimWidget::Frame FinaleAnimWidgetFrame;
 
-#endif // DENG_UI_INFINE_FINALEANIMWIDGET_H
+#endif // DE_UI_INFINE_FINALEANIMWIDGET_H

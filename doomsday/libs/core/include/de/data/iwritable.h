@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
  
-#ifndef LIBDENG2_IWRITABLE_H
-#define LIBDENG2_IWRITABLE_H
+#ifndef LIBCORE_IWRITABLE_H
+#define LIBCORE_IWRITABLE_H
 
 #include "../libcore.h"
 
@@ -35,7 +35,7 @@ class Writer;
  *
  * @ingroup data
  */
-class DENG2_PUBLIC IWritable
+class DE_PUBLIC IWritable
 {
 public:
     virtual ~IWritable() {}
@@ -50,4 +50,4 @@ public:
 
 } // namespace de
 
-#endif /* LIBDENG2_IWRITABLE_H */
+#endif /* LIBCORE_IWRITABLE_H */

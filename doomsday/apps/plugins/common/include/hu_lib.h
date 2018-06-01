@@ -114,6 +114,6 @@ struct ui_rendstate_t
     float pageAlpha;
 };
 
-DENG_EXTERN_C ui_rendstate_t const *uiRendState;
+DE_EXTERN_C ui_rendstate_t const *uiRendState;
 
 #endif  // LIBCOMMON_UI_LIBRARY_H

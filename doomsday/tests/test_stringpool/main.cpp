@@ -35,52 +35,52 @@ int main(int, char **)
         StringPool p;
 
         String s = String("Hello");
-        DENG2_ASSERT(!p.isInterned(s));
-        DENG2_ASSERT(p.empty());
+        DE_ASSERT(!p.isInterned(s));
+        DE_ASSERT(p.empty());
 
         // First string.
         p.intern(s);
-        DENG2_ASSERT(p.isInterned(s) == 1);
+        DE_ASSERT(p.isInterned(s) == 1);
 
         // Re-insertion.
-        DENG2_ASSERT(p.intern(s) == 1);
+        DE_ASSERT(p.intern(s) == 1);
 
         // Case insensitivity.
         s = String("heLLO");
-        DENG2_ASSERT(p.intern(s) == 1);
+        DE_ASSERT(p.intern(s) == 1);
 
         // Another string.
         s = String("abc");
         String const &is = p.internAndRetrieve(s);
-        DENG2_ASSERT(!is.compare(s));
-        DENG2_UNUSED(is);
+        DE_ASSERT(!is.compare(s));
+        DE_UNUSED(is);
 
         String s2 = String("ABC");
         String const &is2 = p.internAndRetrieve(s2);
-        DENG2_ASSERT(!is2.compare(s));
-        DENG2_UNUSED(is2);
+        DE_ASSERT(!is2.compare(s));
+        DE_UNUSED(is2);
 
-        DENG2_ASSERT(p.intern(is2) == 2);
+        DE_ASSERT(p.intern(is2) == 2);
 
-        DENG2_ASSERT(p.size() == 2);
+        DE_ASSERT(p.size() == 2);
         //p.print();
 
-        DENG2_ASSERT(!p.empty());
+        DE_ASSERT(!p.empty());
 
         p.setUserValue(1, 1234);
-        DENG2_ASSERT(p.userValue(1) == 1234);
+        DE_ASSERT(p.userValue(1) == 1234);
 
-        DENG2_ASSERT(p.userValue(2) == 0);
+        DE_ASSERT(p.userValue(2) == 0);
 
         s = String("HELLO");
         p.remove(s);
-        DENG2_ASSERT(!p.isInterned(s));
-        DENG2_ASSERT(p.size() == 1);
-        DENG2_ASSERT(!p.string(2).compare("abc"));
+        DE_ASSERT(!p.isInterned(s));
+        DE_ASSERT(p.size() == 1);
+        DE_ASSERT(!p.string(2).compare("abc"));
 
         s = String("Third!");
-        DENG2_ASSERT(p.intern(s) == 1);
-        DENG2_ASSERT(p.size() == 2);
+        DE_ASSERT(p.intern(s) == 1);
+        DE_ASSERT(p.size() == 2);
 
         s = String("FOUR");
         p.intern(s);
@@ -95,14 +95,14 @@ int main(int, char **)
         StringPool p2;
         Reader(b) >> p2;
         //p2.print();
-        DENG2_ASSERT(p2.size() == 2);
-        DENG2_ASSERT(!p2.string(2).compare("abc"));
-        DENG2_ASSERT(!p2.string(3).compare("FOUR"));
+        DE_ASSERT(p2.size() == 2);
+        DE_ASSERT(!p2.string(2).compare("abc"));
+        DE_ASSERT(!p2.string(3).compare("FOUR"));
         s = String("hello again");
-        DENG2_ASSERT(p2.intern(s) == 1);
+        DE_ASSERT(p2.intern(s) == 1);
 
         p.clear();
-        DENG2_ASSERT(p.empty());
+        DE_ASSERT(p.empty());
     }
     catch (Error const &err)
     {

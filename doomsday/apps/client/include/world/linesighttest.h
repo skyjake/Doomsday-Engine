@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_LINESIGHTTEST_H
-#define DENG_WORLD_LINESIGHTTEST_H
+#ifndef DE_WORLD_LINESIGHTTEST_H
+#define DE_WORLD_LINESIGHTTEST_H
 
 #include <de/libcore.h>
 #include <de/Vector>
@@ -66,9 +66,9 @@ public:
     bool trace(BspTree const &bspRoot);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 }  // namespace world
 
-#endif  // DENG_WORLD_LINESIGHTTEST_H
+#endif  // DE_WORLD_LINESIGHTTEST_H

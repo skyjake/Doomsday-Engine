@@ -54,11 +54,11 @@ static const String VAR_SORT_BY("home.sortBy");
 static const String VAR_SORT_ASCENDING("home.sortAscending");
 static const String VAR_SORT_CUSTOM_SEPARATELY("home.sortCustomSeparately");
 
-DENG_GUI_PIMPL(GameColumnWidget)
-, DENG2_OBSERVES(Games, Readiness)
-, DENG2_OBSERVES(Profiles, Addition)
-, DENG2_OBSERVES(Variable, Change)
-, DENG2_OBSERVES(ButtonWidget, StateChange)
+DE_GUI_PIMPL(GameColumnWidget)
+, DE_OBSERVES(Games, Readiness)
+, DE_OBSERVES(Profiles, Addition)
+, DE_OBSERVES(Variable, Change)
+, DE_OBSERVES(ButtonWidget, StateChange)
 , DENG2_OBSERVES(Profiles::AbstractProfile, Change)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
@@ -67,7 +67,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
      */
     struct ProfileItem
             : public ui::Item
-            , DENG2_OBSERVES(Deletable, Deletion) // profile deletion
+            , DE_OBSERVES(Deletable, Deletion) // profile deletion
     {
         GameColumnWidget::Impl *d;
         GameProfile *profile;
@@ -82,7 +82,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
         Game const &game() const
         {
-            DENG2_ASSERT(profile != nullptr);
+            DE_ASSERT(profile != nullptr);
             return profile->game();
         }
 
@@ -92,8 +92,8 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
         void objectWasDeleted(Deletable *obj)
         {
-            DENG2_ASSERT(static_cast<GameProfile *>(obj) == profile);
-            DENG2_UNUSED(obj);
+            DE_ASSERT(static_cast<GameProfile *>(obj) == profile);
+            DE_UNUSED(obj);
 
             profile = nullptr;
             d->addOrRemoveSubheading();
@@ -102,7 +102,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
             items.remove(items.find(*this)); // item deleted
         }
 
-        DENG2_CAST_METHODS()
+        DE_CAST_METHODS()
     };
 
     LoopCallback mainCall;
@@ -183,7 +183,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     GamePanelButtonWidget &widgetForItem(ui::Item const &item) const
     {
-        DENG2_ASSERT(menu->items().find(item) != ui::Data::InvalidPos);
+        DE_ASSERT(menu->items().find(item) != ui::Data::InvalidPos);
         return menu->itemWidget<GamePanelButtonWidget>(item);
     }
 
@@ -209,7 +209,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
         {
             if (profile.game().family() == gameFamily)
             {
-                DENG2_ASSERT(!findProfileItem(profile));
+                DE_ASSERT(!findProfileItem(profile));
                 menu->items() << new ProfileItem(this, profile);
                 addOrRemoveSubheading();
                 profile.audienceForChange() += this;
@@ -230,7 +230,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
                 // Highlight the newly added item.
                 auto const *newItem = findProfileItem(prof.as<GameProfile>());
-                DENG2_ASSERT(newItem);
+                DE_ASSERT(newItem);
                 menu->setSelectedIndex(menu->items().find(*newItem));
             }
         });
@@ -502,6 +502,10 @@ DENG_GUI_PIMPL(GameColumnWidget)
                             profileItem->update();
                         }
                     }));
+            }
+            else
+            {
+                popup->items() << new ui::ActionItem(tr("Mods..."), new SignalAction(button, SLOT(selectPackages())));
             }
 
             // Items suitable for all types of profiles.

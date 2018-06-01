@@ -164,7 +164,7 @@ static void drawUIWidgetsForPlayer(player_t* plr)
     // Magic (not really -- standard 1.2:1 anamporphic) aspect ratio used to adjust render height
     static const float  ASPECT_TRIM = 1.2F;
 
-    DENG2_ASSERT(plr);
+    DE_ASSERT(plr);
 
     int const playerId    = (plr - players);
     int const hudMode     = ST_ActiveHud(playerId);
@@ -273,7 +273,7 @@ static void drawUIWidgetsForPlayer(player_t* plr)
  */
 static void initData(hudstate_t* hud)
 {
-    DENG2_ASSERT(hud);
+    DE_ASSERT(hud);
 
     hud->stopped         = true;
 
@@ -450,7 +450,7 @@ static void ST_BuildWidgets(int player)
             .addChild(&GUI_FindWidgetById(hud->groupIds[UWG_BOTTOMLEFT2]));
     }
 
-    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
+    DE_ASSERT(player >= 0 && player < MAXPLAYERS);
 
     // Create a table of needed widgets and initialize them
     {
@@ -588,7 +588,7 @@ static int parseMacroId(String const &str) // static
 
 D_CMD(ChatOpen)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if (G_QuitInProgress())
     {
@@ -626,7 +626,7 @@ D_CMD(ChatOpen)
 
 D_CMD(ChatAction)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     if (G_QuitInProgress())
     {
@@ -665,7 +665,7 @@ D_CMD(ChatAction)
 
 D_CMD(ChatSendMacro)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if (G_QuitInProgress())
     {
@@ -1029,7 +1029,7 @@ void ST_HUDUnHide(int player, hueevent_t ev)
 
     if(ev < HUE_FORCE || ev > NUMHUDUNHIDEEVENTS)
     {
-        DENG2_ASSERT_FAIL("ST_HUDUnHide: Invalid event type");
+        DE_ASSERT_FAIL("ST_HUDUnHide: Invalid event type");
         return;
     }
 

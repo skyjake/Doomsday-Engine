@@ -22,9 +22,9 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(Font::RichFormat),
-DENG2_OBSERVES(EscapeParser, PlainText),
-DENG2_OBSERVES(EscapeParser, EscapeSequence)
+DE_PIMPL_NOREF(Font::RichFormat),
+DE_OBSERVES(EscapeParser, PlainText),
+DE_OBSERVES(EscapeParser, EscapeSequence)
 {
     IStyle const *style;
 
@@ -300,7 +300,7 @@ int Font::RichFormat::tabStopXWidth(int stop) const
 {
     if (stop < 0 || d->tabs.isEmpty()) return 0;
 
-    DENG2_ASSERT(stop < 50);
+    DE_ASSERT(stop < 50);
 
     int x = 0;
     for (int i = 0; i <= stop; ++i)
@@ -363,9 +363,9 @@ Rangei Font::RichFormat::Ref::range(int index) const
         r.end = de::min(r.end, _span.end);
     }
 
-    DENG2_ASSERT(r.start >= _span.start);
-    DENG2_ASSERT(r.end <= _span.end);
-    DENG2_ASSERT(r.start <= r.end);
+    DE_ASSERT(r.start >= _span.start);
+    DE_ASSERT(r.end <= _span.end);
+    DE_ASSERT(r.start <= r.end);
 
     // Make sure it's relative to the start of the subspan.
     return r - _span.start;
@@ -402,7 +402,7 @@ void Font::RichFormat::Ref::updateIndices()
             break;
     }
 
-    DENG2_ASSERT(_indices.start <= _indices.end);
+    DE_ASSERT(_indices.start <= _indices.end);
 }
 
 Font::RichFormat::Iterator::Iterator(Ref const &f) : format(f), index(-1) {}
@@ -420,7 +420,7 @@ bool Font::RichFormat::Iterator::hasNext() const
 void Font::RichFormat::Iterator::next()
 {
     index++;
-    DENG2_ASSERT(index < size());
+    DE_ASSERT(index < size());
 }
 
 bool Font::RichFormat::Iterator::isDefault() const

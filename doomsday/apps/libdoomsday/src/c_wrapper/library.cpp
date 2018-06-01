@@ -68,7 +68,7 @@ void Library_ReleaseGames()
             LOGDEV_RES_VERBOSE("Closing '%s'") << Str_Text(lib->path);
 
             // Close the Library.
-            DENG2_ASSERT(lib->file);
+            DE_ASSERT(lib->file);
             lib->file->clear();
         }
     }
@@ -78,7 +78,7 @@ void Library_ReleaseGames()
 #ifdef UNIX
 static void reopenLibraryIfNeeded(Library *lib)
 {
-    DENG2_ASSERT(lib);
+    DE_ASSERT(lib);
 
     if (!lib->file->loaded())
     {
@@ -87,7 +87,7 @@ static void reopenLibraryIfNeeded(Library *lib)
         // Make sure the Library gets opened again now.
         lib->file->library();
 
-        DENG2_ASSERT(lib->file->loaded());
+        DE_ASSERT(lib->file->loaded());
 
         DoomsdayApp::plugins().publishAPIs(lib);
     }
@@ -149,13 +149,13 @@ void Library_Delete(Library *lib)
 
 char const *Library_Type(Library const *lib)
 {
-    DENG2_ASSERT(lib);
+    DE_ASSERT(lib);
     return &lib->typeId[0];
 }
 
 de::LibraryFile &Library_File(Library *lib)
 {
-    DENG2_ASSERT(lib);
+    DE_ASSERT(lib);
     return *lib->file;
 }
 
@@ -164,7 +164,7 @@ void *Library_Symbol(Library *lib, char const *symbolName)
     try
     {
         LOG_AS("Library_Symbol");
-        DENG2_ASSERT(lib);
+        DE_ASSERT(lib);
 #ifdef UNIX
         reopenLibraryIfNeeded(lib);
 #endif
@@ -184,7 +184,7 @@ char const *Library_LastError()
 
 de::LoopResult Library_ForAll(std::function<de::LoopResult (de::LibraryFile &)> func)
 {
-    auto const &libs = de::App::fileSystem().indexFor(DENG2_TYPE_NAME(de::LibraryFile));
+    auto const &libs = de::App::fileSystem().indexFor(DE_TYPE_NAME(de::LibraryFile));
     foreach (de::File *file, libs.files())
     {
         if (file->path().beginsWith("/bin/"))

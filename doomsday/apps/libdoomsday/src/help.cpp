@@ -178,7 +178,7 @@ void DD_ShutdownHelp()
 
 D_CMD(LoadHelp)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     DD_ShutdownHelp();
     DD_InitHelp();

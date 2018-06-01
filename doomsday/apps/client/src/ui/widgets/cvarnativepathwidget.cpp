@@ -27,7 +27,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(CVarNativePathWidget)
+DE_PIMPL(CVarNativePathWidget)
 , DENG2_OBSERVES(NativePathWidget, UserChange)
 {
     char const *cvar;
@@ -38,7 +38,7 @@ DENG2_PIMPL(CVarNativePathWidget)
     cvar_t *var() const
     {
         cvar_t *cv = Con_FindVariable(cvar);
-        DENG2_ASSERT(cv != 0);
+        DE_ASSERT(cv != 0);
         return cv;
     }
 

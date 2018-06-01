@@ -27,7 +27,7 @@
 
 namespace de {
 
-DENG2_PIMPL(Atlas)
+DE_PIMPL(Atlas)
 {
     Flags flags;
     Size totalSize;
@@ -245,7 +245,7 @@ DENG2_PIMPL(Atlas)
      */
     void defragment()
     {
-        DENG2_ASSERT(hasBacking());
+        DE_ASSERT(hasBacking());
 
         IAllocator::Allocations const oldLayout = allocator->allocs();
         if (!allocator->optimize())
@@ -260,7 +260,7 @@ DENG2_PIMPL(Atlas)
 
         // Copy all the images to their optimal places.
         IAllocator::Allocations optimal = allocator->allocs();
-        DENG2_FOR_EACH(IAllocator::Allocations, i, optimal)
+        DE_FOR_EACH(IAllocator::Allocations, i, optimal)
         {
             defragged.draw(backing.subImage(oldLayout[i.key()]),
                            i.value().topLeft);
@@ -271,7 +271,7 @@ DENG2_PIMPL(Atlas)
         markFullyChanged();
         mayDefrag = false;
 
-        DENG2_FOR_PUBLIC_AUDIENCE2(Reposition, i)
+        DE_FOR_PUBLIC_AUDIENCE2(Reposition, i)
         {
             i->atlasContentRepositioned(self());
         }
@@ -289,12 +289,12 @@ DENG2_PIMPL(Atlas)
         return rect.shrunk(border);
     }
 
-    DENG2_PIMPL_AUDIENCE(Reposition)
-    DENG2_PIMPL_AUDIENCE(OutOfSpace)
+    DE_PIMPL_AUDIENCE(Reposition)
+    DE_PIMPL_AUDIENCE(OutOfSpace)
 };
 
-DENG2_AUDIENCE_METHOD(Atlas, Reposition)
-DENG2_AUDIENCE_METHOD(Atlas, OutOfSpace)
+DE_AUDIENCE_METHOD(Atlas, Reposition)
+DE_AUDIENCE_METHOD(Atlas, OutOfSpace)
 
 Atlas::Atlas(Flags const &flags, Size const &totalSize)
     : d(new Impl(this, flags, totalSize))
@@ -307,7 +307,7 @@ Atlas::Flags Atlas::flags() const
 
 void Atlas::setAllocator(IAllocator *allocator)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     clear();
     d->allocator.reset(allocator);
@@ -340,7 +340,7 @@ void Atlas::setBorderSize(dint borderPixels)
 
 void Atlas::clear()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     if (d->allocator)
     {
@@ -356,7 +356,7 @@ void Atlas::clear()
 
 void Atlas::setTotalSize(Size const &totalSize)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     d->totalSize = totalSize;
 
@@ -375,7 +375,7 @@ void Atlas::setTotalSize(Size const &totalSize)
 
 Atlas::Size Atlas::totalSize() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     return d->totalSize;
 }
@@ -389,8 +389,8 @@ Id Atlas::alloc(Image const &image, Id const &chosenId)
         return Id::None;
     }
 
-    DENG2_GUARD(this);
-    DENG2_ASSERT(d->allocator.get());
+    DE_GUARD(this);
+    DE_ASSERT(d->allocator.get());
 
     Rectanglei rect;
     Id id = d->allocator->allocate(d->sizeWithBorders(image.size()), rect, chosenId);
@@ -430,7 +430,7 @@ Id Atlas::alloc(Image const &image, Id const &chosenId)
             d->fullReportedAt = Time::currentHighPerformanceTime();
         }
 
-        DENG2_FOR_AUDIENCE2(OutOfSpace, i)
+        DE_FOR_AUDIENCE2(OutOfSpace, i)
         {
             i->atlasOutOfSpace(*this);
         }
@@ -442,8 +442,8 @@ void Atlas::release(Id const &id)
 {
     if (id.isNone()) return;
 
-    DENG2_GUARD(this);
-    DENG2_ASSERT(d->allocator.get());
+    DE_GUARD(this);
+    DE_ASSERT(d->allocator.get());
 
     d->allocator->release(id);
 
@@ -453,7 +453,7 @@ void Atlas::release(Id const &id)
 
 bool Atlas::contains(Id const &id) const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     if (d->allocator.get())
     {
@@ -464,31 +464,31 @@ bool Atlas::contains(Id const &id) const
 
 int Atlas::imageCount() const
 {
-    DENG2_GUARD(this);
-    DENG2_ASSERT(d->allocator.get());
+    DE_GUARD(this);
+    DE_ASSERT(d->allocator.get());
 
     return d->allocator->count();
 }
 
 Atlas::Ids Atlas::allImages() const
 {
-    DENG2_GUARD(this);
-    DENG2_ASSERT(d->allocator.get());
+    DE_GUARD(this);
+    DE_ASSERT(d->allocator.get());
 
     return d->allocator->ids();
 }
 
 Rectanglei Atlas::imageRect(Id const &id) const
 {
-    DENG2_GUARD(this);
-    DENG2_ASSERT(d->allocator.get());
+    DE_GUARD(this);
+    DE_ASSERT(d->allocator.get());
     return d->rectWithoutBorder(id);
 }
 
 Rectanglef Atlas::imageRectf(Id const &id) const
 {
-    DENG2_GUARD(this);
-    DENG2_ASSERT(d->allocator.get());
+    DE_GUARD(this);
+    DE_ASSERT(d->allocator.get());
 
     Rectanglei const rect = d->rectWithoutBorder(id);
 
@@ -501,7 +501,7 @@ Rectanglef Atlas::imageRectf(Id const &id) const
 
 Image Atlas::image(Id const &id) const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     if (d->deferred.contains(id))
     {
         return *d->deferred[id];
@@ -515,7 +515,7 @@ Image Atlas::image(Id const &id) const
 
 void Atlas::commit() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     LOG_AS("Atlas");
     d->submitDeferred();
@@ -524,7 +524,7 @@ void Atlas::commit() const
 
     if (d->mustCommitFull())
     {
-        DENG2_ASSERT(d->backing.size() == d->totalSize);
+        DE_ASSERT(d->backing.size() == d->totalSize);
         //qDebug() << "Full commit:" << d->backing.size().asText();
         commitFull(d->backing);
     }

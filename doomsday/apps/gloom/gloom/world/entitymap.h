@@ -44,7 +44,7 @@ public:
                        std::function<void(const Entity &)> callback) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace gloom

@@ -20,7 +20,7 @@
 
 namespace de { namespace shell {
 
-DENG2_PIMPL_NOREF(Lexicon)
+DE_PIMPL_NOREF(Lexicon)
 {
     Terms  terms;
     String extraChars;

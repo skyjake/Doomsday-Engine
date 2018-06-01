@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_DATA_COLOR_H
-#define LIBDENG_DATA_COLOR_H
+#ifndef DE_DATA_COLOR_H
+#define DE_DATA_COLOR_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,4 +62,4 @@ float ColorRawf_AverageColorMulAlpha(ColorRawf* color);
 } // extern "C"
 #endif
 
-#endif // LIBDENG_DATA_COLOR_H
+#endif // DE_DATA_COLOR_H

@@ -25,7 +25,7 @@
 
 // Define this to use the lookup table implementation
 // (can be slower than atan2f).
-#ifdef DENG_BAMS_TABLE_ATAN2
+#ifdef DE_BAMS_TABLE_ATAN2
 
 #define BAMS_TABLE_ACCURACY_SHIFT   13
 #define BAMS_TABLE_ACCURACY         (1 << BAMS_TABLE_ACCURACY_SHIFT)

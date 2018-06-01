@@ -35,7 +35,7 @@ namespace de {
 typedef QMap<String, Function::NativeEntryPoint> RegisteredEntryPoints;
 static RegisteredEntryPoints entryPoints;
 
-DENG2_PIMPL_NOREF(Function)
+DE_PIMPL_NOREF(Function)
 {
     /// Argument names.
     Function::Arguments arguments;
@@ -90,7 +90,7 @@ Function::Function(String const &nativeName, Arguments const &args, Defaults con
 Function::~Function()
 {
     // Delete the default argument values.
-    DENG2_FOR_EACH(Defaults, i, d->defaults)
+    DE_FOR_EACH(Defaults, i, d->defaults)
     {
         delete i.value();
     }
@@ -101,7 +101,7 @@ String Function::asText() const
     String result;
     QTextStream os(&result);
     os << "(Function " << this << " (";
-    DENG2_FOR_EACH_CONST(Arguments, i, d->arguments)
+    DE_FOR_EACH_CONST(Arguments, i, d->arguments)
     {
         if (i != d->arguments.begin())
         {
@@ -150,12 +150,12 @@ Function::Defaults const &Function::defaults() const
 
 void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values) const
 {
-    DENG2_ASSERT(args.size() > 0);
+    DE_ASSERT(args.size() > 0);
 
     DictionaryValue const *labeledArgs = dynamic_cast<DictionaryValue const *>(
         args.elements().front());
 
-    DENG2_ASSERT(labeledArgs != NULL);
+    DE_ASSERT(labeledArgs != NULL);
 
     // First use all the unlabeled arguments.
     Arguments::const_iterator k = d->arguments.begin();
@@ -222,7 +222,7 @@ void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values)
 void Function::setGlobals(Record *globals)
 {
     LOG_AS("Function::setGlobals");
-    DENG2_ASSERT(globals != 0);
+    DE_ASSERT(globals != 0);
 
     if (!d->globals)
     {
@@ -250,8 +250,8 @@ bool Function::isNative() const
 
 Value *Function::callNative(Context &context, ArgumentValues const &args) const
 {
-    DENG2_ASSERT(isNative());
-    DENG2_ASSERT(args.size() == d->arguments.size()); // all arguments provided
+    DE_ASSERT(isNative());
+    DE_ASSERT(args.size() == d->arguments.size()); // all arguments provided
 
     Value *result = (d->nativeEntryPoint)(context, args);
 
@@ -269,7 +269,7 @@ void Function::operator >> (Writer &to) const
     to << duint16(d->arguments.size());
 
     // Argument names.
-    DENG2_FOR_EACH_CONST(Arguments, i, d->arguments)
+    DE_FOR_EACH_CONST(Arguments, i, d->arguments)
     {
         to << *i;
     }
@@ -278,7 +278,7 @@ void Function::operator >> (Writer &to) const
     to << duint16(d->defaults.size());
 
     // Default values.
-    DENG2_FOR_EACH_CONST(Defaults, i, d->defaults)
+    DE_FOR_EACH_CONST(Defaults, i, d->defaults)
     {
         to << i.key() << *i.value();
     }
@@ -326,10 +326,10 @@ void Function::operator << (Reader &from)
     }
 }
 
-void Function::recordBeingDeleted(Record &DENG2_DEBUG_ONLY(record))
+void Function::recordBeingDeleted(Record &DE_DEBUG_ONLY(record))
 {
     // The namespace of the record is being deleted.
-    DENG2_ASSERT(d->globals == &record);
+    DE_ASSERT(d->globals == &record);
 
     d->globals = 0;
 }
@@ -382,7 +382,7 @@ Binder &Binder::init(Record &module)
 
 Binder &Binder::initNew()
 {
-    DENG2_ASSERT(!_isOwned);
+    DE_ASSERT(!_isOwned);
     _isOwned = true;
     _module = new Record;
     return *this;
@@ -413,7 +413,7 @@ void Binder::deinit()
 
 Record &Binder::module() const
 {
-    DENG2_ASSERT(_module != 0);
+    DE_ASSERT(_module != 0);
     return *_module;
 }
 

@@ -23,8 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_SMOOTHER_H
-#define LIBDENG_SMOOTHER_H
+#ifndef DE_SMOOTHER_H
+#define DE_SMOOTHER_H
 
 #include <de/liblegacy.h>
 
@@ -49,7 +49,7 @@ typedef struct smoother_s Smoother;
  *
  * @return  Smoother instance.
  */
-DENG_PUBLIC Smoother *Smoother_New();
+DE_PUBLIC Smoother *Smoother_New();
 
 /**
  * Destructs a smoother. This must be called when the smoother is no longer
@@ -57,7 +57,7 @@ DENG_PUBLIC Smoother *Smoother_New();
  *
  * @param sm  Smoother instance.
  */
-DENG_PUBLIC void Smoother_Delete(Smoother *sm);
+DE_PUBLIC void Smoother_Delete(Smoother *sm);
 
 /**
  * If the difference between the smoother's past and now times is larger than
@@ -65,7 +65,7 @@ DENG_PUBLIC void Smoother_Delete(Smoother *sm);
  * occur if the smoother keeps being advanced but no new values are inserted.
  * The assumption is that new values are being inserted at a semi-regular rate.
  */
-DENG_PUBLIC void Smoother_SetMaximumPastNowDelta(Smoother *sm, float delta);
+DE_PUBLIC void Smoother_SetMaximumPastNowDelta(Smoother *sm, float delta);
 
 /**
  * Resets the smoother instance. More than one discrete input point is needed before
@@ -74,7 +74,7 @@ DENG_PUBLIC void Smoother_SetMaximumPastNowDelta(Smoother *sm, float delta);
  *
  * @param sm  Smoother instance.
  */
-DENG_PUBLIC void Smoother_Clear(Smoother *sm);
+DE_PUBLIC void Smoother_Clear(Smoother *sm);
 
 /**
  * Defines a new input point in the future of the smoother.
@@ -86,7 +86,7 @@ DENG_PUBLIC void Smoother_Clear(Smoother *sm);
  * @param z     Cooordinate.
  * @param onFloor  @c true if the z coordinate should be on the floor plane.
  */
-DENG_PUBLIC void Smoother_AddPos(Smoother *sm, float time, coord_t x, coord_t y, coord_t z, dd_bool onFloor);
+DE_PUBLIC void Smoother_AddPos(Smoother *sm, float time, coord_t x, coord_t y, coord_t z, dd_bool onFloor);
 
 /**
  * Defines a new XY input point in the future of the smoother.
@@ -96,7 +96,7 @@ DENG_PUBLIC void Smoother_AddPos(Smoother *sm, float time, coord_t x, coord_t y,
  * @param x     Cooordinate.
  * @param y     Cooordinate.
  */
-DENG_PUBLIC void Smoother_AddPosXY(Smoother *sm, float time, coord_t x, coord_t y);
+DE_PUBLIC void Smoother_AddPosXY(Smoother *sm, float time, coord_t x, coord_t y);
 
 /**
  * Calculates the coordinates for the current point in time.
@@ -109,7 +109,7 @@ DENG_PUBLIC void Smoother_AddPosXY(Smoother *sm, float time, coord_t x, coord_t 
  *
  * @see Smoother_Advance()
  */
-DENG_PUBLIC dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz);
+DE_PUBLIC dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz);
 
 /**
  * Calculates a coordinate for the current point in time.
@@ -123,26 +123,26 @@ DENG_PUBLIC dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz);
  *
  * @see Smoother_Advance()
  */
-DENG_PUBLIC dd_bool Smoother_EvaluateComponent(Smoother const *sm, int component, coord_t *v);
+DE_PUBLIC dd_bool Smoother_EvaluateComponent(Smoother const *sm, int component, coord_t *v);
 
 /**
  * Determines whether the smoother's Z coordinate is currently on the floor plane.
  * @param sm    Smoother instance.
  */
-DENG_PUBLIC dd_bool Smoother_IsOnFloor(Smoother const *sm);
+DE_PUBLIC dd_bool Smoother_IsOnFloor(Smoother const *sm);
 
 /**
  * Determines whether the smoother is currently undergoing movement.
  * @param sm    Smoother instance.
  */
-DENG_PUBLIC dd_bool Smoother_IsMoving(Smoother const *sm);
+DE_PUBLIC dd_bool Smoother_IsMoving(Smoother const *sm);
 
 /**
  * Advances the smoother @a sm by @a period amount of time.
  * @param sm    Smoother instance.
  * @param period  Amount of time to advance the Smoother's current time.
  */
-DENG_PUBLIC void Smoother_Advance(Smoother *sm, float period);
+DE_PUBLIC void Smoother_Advance(Smoother *sm, float period);
 
 void Smoother_Debug(Smoother const *sm);
 
@@ -152,4 +152,4 @@ void Smoother_Debug(Smoother const *sm);
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_SMOOTHER_H */
+#endif /* DE_SMOOTHER_H */

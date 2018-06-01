@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_LINE_H
-#define DENG_WORLD_LINE_H
+#ifndef DE_WORLD_LINE_H
+#define DE_WORLD_LINE_H
 
 #include <functional>
 #include <QFlags>
@@ -63,18 +63,18 @@ struct shadowcorner_t;
  */
 class Line : public world::MapElement
 {
-    DENG2_NO_COPY  (Line)
-    DENG2_NO_ASSIGN(Line)
+    DE_NO_COPY  (Line)
+    DE_NO_ASSIGN(Line)
 
 public:
     /// The given side section identifier is invalid. @ingroup errors
-    DENG2_ERROR(InvalidSectionIdError);
+    DE_ERROR(InvalidSectionIdError);
 
     /// Required polyobj attribution is missing. @ingroup errors
-    DENG2_ERROR(MissingPolyobjError);
+    DE_ERROR(MissingPolyobjError);
 
     /// Notified whenever the flags change.
-    DENG2_DEFINE_AUDIENCE(FlagsChange, void lineFlagsChanged(Line &line, de::dint oldFlags))
+    DE_DEFINE_AUDIENCE(FlagsChange, void lineFlagsChanged(Line &line, de::dint oldFlags))
 
     // Logical edge identifiers:
     enum { From, To };
@@ -93,12 +93,12 @@ public:
      */
     class Side : public world::MapElement
     {
-        DENG2_NO_COPY  (Side)
-        DENG2_NO_ASSIGN(Side)
+        DE_NO_COPY  (Side)
+        DE_NO_ASSIGN(Side)
 
     public:
         /// Required sector attribution is missing. @ingroup errors
-        //DENG2_ERROR(MissingSectorError);
+        //DE_ERROR(MissingSectorError);
 
         // Section identifiers:
         enum {
@@ -126,8 +126,8 @@ public:
          */
         class Segment : public world::MapElement
         {
-            DENG2_NO_COPY  (Segment)
-            DENG2_NO_ASSIGN(Segment)
+            DE_NO_COPY  (Segment)
+            DE_NO_ASSIGN(Segment)
 
         public:
             /**
@@ -195,7 +195,7 @@ public:
 #endif  // __CLIENT__
 
         private:
-            DENG2_PRIVATE(d)
+            DE_PRIVATE(d)
         };
 
     public:
@@ -282,7 +282,7 @@ public:
          * @see hasSector(), sectorPtr()
          */
         inline Sector &sector() const {
-            DENG2_ASSERT(_sector != nullptr);
+            DE_ASSERT(_sector != nullptr);
             return *_sector;
         }
 
@@ -521,7 +521,7 @@ public:
         de::dint setProperty(world::DmuArgs const &args);
 
     private:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
 
         // Heavily used; visible for inline access:
         Sector *_sector;
@@ -828,7 +828,7 @@ public:
     static void consoleRegister();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef Line::Side LineSide;
@@ -836,4 +836,4 @@ typedef Line::Side::Segment LineSideSegment;
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Line::Side::SectionFlags)
 
-#endif  // DENG_WORLD_LINE_H
+#endif  // DE_WORLD_LINE_H

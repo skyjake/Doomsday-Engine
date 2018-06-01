@@ -90,7 +90,7 @@ public:
                 else
                 {
                     int arg = ch[1] - '0' - 1;
-                    DENG_ASSERT(arg >= 0 && arg < 9);
+                    DE_ASSERT(arg >= 0 && arg < 9);
                     Str_AppendChar(cmd, char(args[arg]));
                 }
                 ch += 2;
@@ -175,14 +175,14 @@ public:
     /// @return  @c true= @a the sequence was completed.
     bool complete(event_t* ev, int player, bool* eat)
     {
-        DENG_ASSERT(ev && ev->type == EV_KEY && ev->state == EVS_DOWN);
+        DE_ASSERT(ev && ev->type == EV_KEY && ev->state == EVS_DOWN);
         const int key = ev->data1;
 
         if(Str_At(&sequence, pos  ) == '%' && pos+1 < Str_Length(&sequence) &&
            Str_At(&sequence, pos+1) >= '0' && Str_At(&sequence, pos+1) <= '9')
         {
             const int arg = Str_At(&sequence, pos+1) - '0' - 1;
-            DENG_ASSERT(arg >= 0 && arg < numArgs);
+            DE_ASSERT(arg >= 0 && arg < numArgs);
             EventSequenceArg& currentArg = args[arg];
 
             currentArg = key;
@@ -252,7 +252,7 @@ void G_ShutdownEventSequences(void)
 
 int G_EventSequenceResponder(event_t* ev)
 {
-    DENG_ASSERT(inited);
+    DE_ASSERT(inited);
 
     if(!inited) return false;
 

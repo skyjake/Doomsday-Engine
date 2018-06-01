@@ -43,7 +43,7 @@ protected:
     void setFileTree(FileTree *tree) override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // LIBDOOMSDAY_FILESYS_IDGAMESLINK_H

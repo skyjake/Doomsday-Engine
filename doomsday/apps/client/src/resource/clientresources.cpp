@@ -109,12 +109,12 @@ ClientResources &ClientResources::get() // static
     return static_cast<ClientResources &>(Resources::get());
 }
 
-DENG2_PIMPL(ClientResources)
-, DENG2_OBSERVES(FontScheme,         ManifestDefined)
-, DENG2_OBSERVES(FontManifest,       Deletion)
-, DENG2_OBSERVES(AbstractFont,       Deletion)
-, DENG2_OBSERVES(res::ColorPalettes, Addition)
-, DENG2_OBSERVES(res::ColorPalette,  ColorTableChange)
+DE_PIMPL(ClientResources)
+, DE_OBSERVES(FontScheme,         ManifestDefined)
+, DE_OBSERVES(FontManifest,       Deletion)
+, DE_OBSERVES(AbstractFont,       Deletion)
+, DE_OBSERVES(res::ColorPalettes, Addition)
+, DE_OBSERVES(res::ColorPalette,  ColorTableChange)
 {
     typedef QHash<lumpnum_t, rawtex_t *> RawTextureHash;
     RawTextureHash rawTexHash;
@@ -229,7 +229,7 @@ DENG2_PIMPL(ClientResources)
 
     void createFontScheme(String name)
     {
-        DENG2_ASSERT(name.length() >= FontScheme::min_name_length);
+        DE_ASSERT(name.length() >= FontScheme::min_name_length);
 
         // Create a new scheme.
         FontScheme *newScheme = new FontScheme(name);
@@ -291,7 +291,7 @@ DENG2_PIMPL(ClientResources)
         case PSpriteContext:    primaryContext = TC_PSPRITE_DIFFUSE;    break;
         case SkySphereContext:  primaryContext = TC_SKYSPHERE_DIFFUSE;  break;
 
-        default: DENG2_ASSERT(false);
+        default: DE_ASSERT(false);
         }
 
         TextureVariantSpec const &primarySpec =
@@ -317,7 +317,7 @@ DENG2_PIMPL(ClientResources)
         int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
         dd_bool mipmapped, dd_bool gammaCorrection, dd_bool noStretch, dd_bool toAlpha)
     {
-        DENG2_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
+        DE_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
 
         flags &= ~TSF_INTERNAL_MASK;
 
@@ -355,7 +355,7 @@ DENG2_PIMPL(ClientResources)
 
     TextureVariantSpec &linkTextureSpec(TextureVariantSpec *spec)
     {
-        DENG2_ASSERT(spec != 0);
+        DE_ASSERT(spec != 0);
 
         switch (spec->type)
         {
@@ -617,7 +617,7 @@ DENG2_PIMPL(ClientResources)
 
     FrameModel *modelForId(modelid_t id)
     {
-        DENG2_ASSERT(modelRepository);
+        DE_ASSERT(modelRepository);
         return reinterpret_cast<FrameModel *>(modelRepository->userPointer(id));
     }
 
@@ -680,7 +680,7 @@ DENG2_PIMPL(ClientResources)
 
     String findSkinPath(Path const &skinPath, Path const &modelFilePath)
     {
-        //DENG2_ASSERT(!skinPath.isEmpty());
+        //DE_ASSERT(!skinPath.isEmpty());
 
         // Try the "first choice" directory first.
         if (!modelFilePath.isEmpty())
@@ -775,7 +775,7 @@ DENG2_PIMPL(ClientResources)
                 << NativePath(modelFilePath).pretty();
         }
 
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
         LOGDEV_RES_XVERBOSE("Model \"%s\" skins:", NativePath(modelFilePath).pretty());
         dint skinIdx = 0;
         for (FrameModelSkin const &skin : mdl.skins())
@@ -1272,8 +1272,8 @@ void ClientResources::initSystemTextures()
 
 void ClientResources::reloadAllResources()
 {
-    DENG2_ASSERT_IN_MAIN_THREAD();
-    DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT(QOpenGLContext::currentContext() != nullptr);
 
     Resources::reloadAllResources();
     DD_UpdateEngineState();
@@ -1426,12 +1426,12 @@ TextureVariantSpec const &ClientResources::textureSpec(texturevariantusagecontex
                        magFilter, anisoFilter, mipmapped, gammaCorrection,
                        noStretch, toAlpha);
 
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
     if (tClass || tMap)
     {
-        DENG2_ASSERT(tvs->variant.flags & TSF_HAS_COLORPALETTE_XLAT);
-        DENG2_ASSERT(tvs->variant.tClass == tClass);
-        DENG2_ASSERT(tvs->variant.tMap == tMap);
+        DE_ASSERT(tvs->variant.flags & TSF_HAS_COLORPALETTE_XLAT);
+        DE_ASSERT(tvs->variant.tClass == tClass);
+        DE_ASSERT(tvs->variant.tMap == tMap);
     }
 #endif
 
@@ -1547,7 +1547,7 @@ FontManifest &ClientResources::toFontManifest(fontid_t id) const
         {
             return *d->fontManifestIdMap[idx];
         }
-        DENG2_ASSERT_FAIL("Bookkeeping error");
+        DE_ASSERT_FAIL("Bookkeeping error");
     }
 
     /// @throw UnknownIdError The specified manifest id is invalid.
@@ -1742,8 +1742,8 @@ FrameModelDef *ClientResources::modelDefForState(dint stateIndex, dint select)
     if (d->stateModefs[stateIndex] < 0)
         return nullptr;
 
-    DENG2_ASSERT(d->stateModefs[stateIndex] >= 0);
-    DENG2_ASSERT(d->stateModefs[stateIndex] < d->modefs.count());
+    DE_ASSERT(d->stateModefs[stateIndex] >= 0);
+    DE_ASSERT(d->stateModefs[stateIndex] < d->modefs.count());
 
     FrameModelDef *def = &d->modefs[d->stateModefs[stateIndex]];
     if (select)
@@ -2132,7 +2132,7 @@ static bool isKnownFontSchemeCallback(String name)
 
 D_CMD(ListFonts)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownFontSchemeCallback);
     if (!search.scheme().isEmpty() &&
@@ -2146,10 +2146,10 @@ D_CMD(ListFonts)
     return true;
 }
 
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
 D_CMD(PrintFontStats)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     LOG_MSG(_E(b) "Font Statistics:");
     foreach (FontScheme *scheme, App_Resources().allFontSchemes())
@@ -2164,7 +2164,7 @@ D_CMD(PrintFontStats)
     }
     return true;
 }
-#endif // DENG_DEBUG
+#endif // DE_DEBUG
 
 void ClientResources::consoleRegister() // static
 {
@@ -2173,7 +2173,7 @@ void ClientResources::consoleRegister() // static
     C_CMD("listfonts",      "ss",   ListFonts)
     C_CMD("listfonts",      "s",    ListFonts)
     C_CMD("listfonts",      "",     ListFonts)
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
     C_CMD("fontstats",      NULL,   PrintFontStats)
 #endif
 }

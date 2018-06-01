@@ -40,7 +40,7 @@ namespace de {
 
 static ddouble skyFixFloorZ(Plane const *frontFloor, Plane const *backFloor)
 {
-    DENG_UNUSED(backFloor);
+    DE_UNUSED(backFloor);
     if(devRendSkyMode || P_IsInVoid(viewPlayer))
         return frontFloor->heightSmoothed();
     return frontFloor->map().skyFloor().height();
@@ -48,13 +48,13 @@ static ddouble skyFixFloorZ(Plane const *frontFloor, Plane const *backFloor)
 
 static ddouble skyFixCeilZ(Plane const *frontCeil, Plane const *backCeil)
 {
-    DENG_UNUSED(backCeil);
+    DE_UNUSED(backCeil);
     if(devRendSkyMode || P_IsInVoid(viewPlayer))
         return frontCeil->heightSmoothed();
     return frontCeil->map().skyCeiling().height();
 }
 
-DENG2_PIMPL_NOREF(SkyFixEdge::Event)
+DE_PIMPL_NOREF(SkyFixEdge::Event)
 {
     SkyFixEdge &owner;
     ddouble distance;
@@ -83,7 +83,7 @@ Vec3d SkyFixEdge::Event::origin() const
     return d->owner.pOrigin() + d->owner.pDirection() * distance();
 }
 
-DENG2_PIMPL(SkyFixEdge)
+DE_PIMPL(SkyFixEdge)
 {
     HEdge *hedge;
     FixType fixType;
@@ -117,7 +117,7 @@ DENG2_PIMPL(SkyFixEdge)
      */
     bool wallSectionNeedsSkyFix() const
     {
-        DENG_ASSERT(hedge->hasFace());
+        DE_ASSERT(hedge->hasFace());
 
         bool const lower = fixType == SkyFixEdge::Lower;
 

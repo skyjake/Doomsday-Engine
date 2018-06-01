@@ -42,7 +42,7 @@ class LIBAPPFW_PUBLIC FilteredData : public Data
 {
 public:
     /// FilteredData is meant for immutable access only. @ingroup errors
-    DENG2_ERROR(ImmutableError);
+    DE_ERROR(ImmutableError);
 
     typedef std::function<bool (Item const &item)> FilterFunc;
 
@@ -88,7 +88,7 @@ public:
     dsize size() const override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 /**

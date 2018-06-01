@@ -19,13 +19,13 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RENDER_RENDPOLY_H
-#define DENG_RENDER_RENDPOLY_H
+#ifndef DE_RENDER_RENDPOLY_H
+#define DE_RENDER_RENDPOLY_H
 
 #include <de/liblegacy.h>
 #include <de/Vector>
 
-DENG_EXTERN_C byte rendInfoRPolys;
+DE_EXTERN_C byte rendInfoRPolys;
 
 void R_PrintRendPoolInfo();
 
@@ -79,4 +79,4 @@ void R_FreeRendColors(de::Vec4f *colorCoords);
  */
 void R_FreeRendTexCoords(de::Vec2f *texCoords);
 
-#endif // DENG_RENDER_RENDPOLY_H
+#endif // DE_RENDER_RENDPOLY_H

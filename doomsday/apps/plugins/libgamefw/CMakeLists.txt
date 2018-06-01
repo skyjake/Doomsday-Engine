@@ -1,7 +1,7 @@
 # Doomsday Engine -- libgamefw: Game base framework and common routines
 
 cmake_minimum_required (VERSION 3.1)
-project (DENG_LIBGAMEFW)
+project (DE_LIBGAMEFW)
 include (../../../cmake/Config.cmake)
 
 # Dependencies.
@@ -14,7 +14,7 @@ find_package (DengLegacy)
 )
 
 # Set up the API.
-include_directories (${DENG_API_DIR})
+include_directories (${DE_API_DIR})
 
 # Source and header files.
 file (GLOB_RECURSE HEADERS include/gamefw/*)
@@ -26,7 +26,7 @@ target_link_libraries (libgamefw
     PUBLIC Deng::libcore Deng::liblegacy 
 )
 
-if (DENG_ENABLE_SDK)
+if (DE_ENABLE_SDK)
     install (DIRECTORY include/gamefw
         DESTINATION include
         COMPONENT sdk

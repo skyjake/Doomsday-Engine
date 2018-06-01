@@ -27,7 +27,7 @@
 
 struct font_s;
 
-//#define DENG_INTERNAL_DATA_ACCESS
+//#define DE_INTERNAL_DATA_ACCESS
 #include <doomsday.h>
 
 #include <de/libcore.h>
@@ -41,9 +41,9 @@ int const NUMSTATES  = 968;
 extern ded_sprid_t  origSpriteNames[NUMSPRITES];
 extern de::String origActionNames[NUMSTATES];
 
-DENG_USING_API(Base);
-DENG_USING_API(Con);
-DENG_USING_API(Def);
-DENG_USING_API(F);
+DE_USING_API(Base);
+DE_USING_API(Con);
+DE_USING_API(Def);
+DE_USING_API(F);
 
 #endif // LIBDEHREAD_DEHREAD_H

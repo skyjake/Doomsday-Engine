@@ -64,7 +64,7 @@ Block gDecompress(Block const &gzData)
         }
     }
     while (res != Z_STREAM_END);
-    DENG2_ASSERT(stream.avail_in == 0);
+    DE_ASSERT(stream.avail_in == 0);
 
     // Truncate the extra space.
     result.resize(result.size() - stream.avail_out);

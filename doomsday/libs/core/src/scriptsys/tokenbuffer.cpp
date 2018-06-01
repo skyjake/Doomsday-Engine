@@ -70,7 +70,7 @@ String Token::str() const
 
 String Token::unescapeStringLiteral() const
 {
-    DENG2_ASSERT(_type == LITERAL_STRING_APOSTROPHE ||
+    DE_ASSERT(_type == LITERAL_STRING_APOSTROPHE ||
                  _type == LITERAL_STRING_QUOTED ||
                  _type == LITERAL_STRING_LONG);
 
@@ -84,7 +84,7 @@ String Token::unescapeStringLiteral() const
     // A long string?
     if (_type == LITERAL_STRING_LONG)
     {
-        DENG2_ASSERT(size() >= 6);
+        DE_ASSERT(size() >= 6);
         begin += 3;
         end -= 3;
     }
@@ -166,7 +166,7 @@ String Token::unescapeStringLiteral() const
             os << *ptr;
         }
     }
-    DENG2_ASSERT(!escaped);
+    DE_ASSERT(!escaped);
 
     return result;
 }
@@ -289,7 +289,7 @@ void TokenBuffer::newToken(duint line)
 
 void TokenBuffer::appendChar(QChar c)
 {
-    DENG2_ASSERT(_forming != 0);
+    DE_ASSERT(_forming != 0);
 
     // There is at least one character available in the pool.
     _forming->appendChar(c);
@@ -310,7 +310,7 @@ void TokenBuffer::appendChar(QChar c)
 
 void TokenBuffer::setType(Token::Type type)
 {
-    DENG2_ASSERT(_forming != 0);
+    DE_ASSERT(_forming != 0);
     _forming->setType(type);
 }
 

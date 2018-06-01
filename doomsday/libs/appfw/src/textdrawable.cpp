@@ -23,9 +23,9 @@
 
 namespace de {
 
-DENG2_PIMPL(TextDrawable)
+DE_PIMPL(TextDrawable)
 {
-    DENG2_DEFINE_AUDIENCE(Deletion, void ownerDeleted())
+    DE_DEFINE_AUDIENCE(Deletion, void ownerDeleted())
 
     template <typename Type>
     class LockablePointer : public Lockable
@@ -35,20 +35,20 @@ DENG2_PIMPL(TextDrawable)
 
         LockablePointer &operator = (Type *p)
         {
-            DENG2_GUARD(this);
+            DE_GUARD(this);
             _ptr = p;
             return *this;
         }
 
         explicit operator bool () const
         {
-            DENG2_GUARD(this);
+            DE_GUARD(this);
             return _ptr != nullptr;
         }
 
         operator Type * ()
         {
-            DENG2_GUARD(this);
+            DE_GUARD(this);
             return _ptr;
         }
 
@@ -64,19 +64,19 @@ DENG2_PIMPL(TextDrawable)
     public:
         void reset(Type *p)
         {
-            DENG2_GUARD(this);
+            DE_GUARD(this);
             _ptr.reset(p);
         }
 
         Type *take()
         {
-            DENG2_GUARD(this);
+            DE_GUARD(this);
             return _ptr.release();
         }
 
         explicit operator bool () const
         {
-            DENG2_GUARD(this);
+            DE_GUARD(this);
             return bool(_ptr);
         }
 
@@ -90,19 +90,19 @@ DENG2_PIMPL(TextDrawable)
     public:
         operator duint32 () const
         {
-            DENG2_GUARD(this);
+            DE_GUARD(this);
             return _id;
         }
 
         void invalidate()
         {
-            DENG2_GUARD(this);
+            DE_GUARD(this);
             _id++;
         }
 
         bool isValid(duint32 value) const
         {
-            DENG2_GUARD(this);
+            DE_GUARD(this);
             return value == _id;
         }
 
@@ -153,7 +153,7 @@ DENG2_PIMPL(TextDrawable)
         {
             // Check that it's okay if we start the operation now.
             {
-                DENG2_GUARD(d);
+                DE_GUARD(d);
                 if (!d) return; // Owner has been deleted.
                 if (!d->sync.isValid(_valid))
                 {
@@ -183,7 +183,7 @@ DENG2_PIMPL(TextDrawable)
 
             // Pass the finished wrapping to the owner.
             {
-                DENG2_GUARD(d);
+                DE_GUARD(d);
                 if (d) d->audienceForDeletion -= this;
                 if (d && d->sync.isValid(_valid))
                 {
@@ -232,7 +232,7 @@ DENG2_PIMPL(TextDrawable)
         sync.invalidate();
 
         // Let the background tasks know that we are gone.
-        DENG2_FOR_AUDIENCE(Deletion, i) i->ownerDeleted();
+        DE_FOR_AUDIENCE(Deletion, i) i->ownerDeleted();
         audienceForDeletion.clear();
 
         tasks.waitForDone();
@@ -275,7 +275,7 @@ DENG2_PIMPL(TextDrawable)
         delete visibleWrap;
         visibleWrap = incoming.take();
 
-        DENG2_ASSERT(visibleWrap != nullptr);
+        DE_ASSERT(visibleWrap != nullptr);
 
         self().setWrapping(*visibleWrap);
         self().GLTextComposer::setText(visibleWrap->plainText, visibleWrap->format);
@@ -388,7 +388,7 @@ bool TextDrawable::isBeingWrapped() const
 
 Font const &TextDrawable::font() const
 {
-    DENG2_ASSERT(d->font != nullptr);
+    DE_ASSERT(d->font != nullptr);
     return *d->font;
 }
 

@@ -26,8 +26,8 @@
 
 namespace de {
 
-DENG2_PIMPL(GLUniform)
-, DENG2_OBSERVES(Asset, Deletion)
+DE_PIMPL(GLUniform)
+, DE_OBSERVES(Asset, Deletion)
 {
     Block name;
     Type type;
@@ -56,12 +56,12 @@ DENG2_PIMPL(GLUniform)
     {
         name.append('\0');
 
-        DENG2_ASSERT(elemCount == 1 || (elemCount > 1 && (type == IntArray   ||
-                                                          type == FloatArray ||
-                                                          type == Mat4Array  ||
-                                                          type == Vec4Array  ||
-                                                          type == Vec3Array  ||
-                                                          type == Vec2Array)));
+        DE_ASSERT(elemCount == 1 || (elemCount > 1 && (type == IntArray   ||
+                                                       type == FloatArray ||
+                                                       type == Mat4Array  ||
+                                                       type == Vec4Array  ||
+                                                       type == Vec3Array  ||
+                                                       type == Vec2Array)));
         // Allocate the value type.
         zap(value);
         switch (type)
@@ -111,7 +111,7 @@ DENG2_PIMPL(GLUniform)
 
     ~Impl()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->uniformDeleted(self());
+        DE_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->uniformDeleted(self());
 
         switch (type)
         {
@@ -170,7 +170,7 @@ DENG2_PIMPL(GLUniform)
     template <typename Type>
     bool set(Type numValue)
     {
-        DENG2_ASSERT(type == Int || type == UInt || type == Float || type == SamplerBuffer);
+        DE_ASSERT(type == Int || type == UInt || type == Float || type == SamplerBuffer);
 
         switch (type)
         {
@@ -208,7 +208,7 @@ DENG2_PIMPL(GLUniform)
 
     void markAsChanged()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(ValueChange, i)
+        DE_FOR_PUBLIC_AUDIENCE2(ValueChange, i)
         {
             i->uniformValueChanged(self());
         }
@@ -226,12 +226,12 @@ DENG2_PIMPL(GLUniform)
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(Deletion)
-    DENG2_PIMPL_AUDIENCE(ValueChange)
+    DE_PIMPL_AUDIENCE(Deletion)
+    DE_PIMPL_AUDIENCE(ValueChange)
 };
 
-DENG2_AUDIENCE_METHOD(GLUniform, Deletion)
-DENG2_AUDIENCE_METHOD(GLUniform, ValueChange)
+DE_AUDIENCE_METHOD(GLUniform, Deletion)
+DE_AUDIENCE_METHOD(GLUniform, ValueChange)
 
 GLUniform::GLUniform(char const *nameInShader, Type uniformType, duint elements)
     : d(new Impl(this, QLatin1String(nameInShader), uniformType, elements))
@@ -309,7 +309,7 @@ GLUniform &GLUniform::operator = (ddouble value)
 
 GLUniform &GLUniform::operator = (Vec2f const &vec)
 {
-    DENG2_ASSERT(d->type == Vec2);
+    DE_ASSERT(d->type == Vec2);
 
     if (Vec2f(*d->value.vector) != vec)
     {
@@ -321,7 +321,7 @@ GLUniform &GLUniform::operator = (Vec2f const &vec)
 
 GLUniform &GLUniform::operator = (Vec3f const &vec)
 {
-    DENG2_ASSERT(d->type == Vec3);
+    DE_ASSERT(d->type == Vec3);
 
     if (Vec3f(*d->value.vector) != vec)
     {
@@ -333,7 +333,7 @@ GLUniform &GLUniform::operator = (Vec3f const &vec)
 
 GLUniform &GLUniform::operator = (Vec4f const &vec)
 {
-    DENG2_ASSERT(d->type == Vec4);
+    DE_ASSERT(d->type == Vec4);
 
     if (*d->value.vector != vec)
     {
@@ -345,7 +345,7 @@ GLUniform &GLUniform::operator = (Vec4f const &vec)
 
 GLUniform &GLUniform::operator = (Mat3f const &mat)
 {
-    DENG2_ASSERT(d->type == Mat3);
+    DE_ASSERT(d->type == Mat3);
 
     *d->value.mat3 = mat;
     d->markAsChanged();
@@ -355,7 +355,7 @@ GLUniform &GLUniform::operator = (Mat3f const &mat)
 
 GLUniform &GLUniform::operator = (Mat4f const &mat)
 {
-    DENG2_ASSERT(d->type == Mat4);
+    DE_ASSERT(d->type == Mat4);
 
     *d->value.mat4 = mat;
     d->markAsChanged();
@@ -372,8 +372,8 @@ GLUniform &GLUniform::operator = (GLTexture const *texture)
 {
     if (texture && texture->isReady())
     {
-        DENG2_ASSERT(d->type != Sampler2D   || !texture->isCubeMap());
-        DENG2_ASSERT(d->type != SamplerCube ||  texture->isCubeMap());
+        DE_ASSERT(d->type != Sampler2D   || !texture->isCubeMap());
+        DE_ASSERT(d->type != SamplerCube ||  texture->isCubeMap());
     }
 
     if (d->value.tex != texture)
@@ -391,8 +391,8 @@ GLUniform &GLUniform::operator = (GLTexture const *texture)
 
 GLUniform &GLUniform::set(duint elementIndex, dfloat value)
 {
-    DENG2_ASSERT(d->type == FloatArray);
-    DENG2_ASSERT(elementIndex < d->elemCount);
+    DE_ASSERT(d->type == FloatArray);
+    DE_ASSERT(elementIndex < d->elemCount);
 
     if (!fequal(d->value.floats[elementIndex], value))
     {
@@ -404,8 +404,8 @@ GLUniform &GLUniform::set(duint elementIndex, dfloat value)
 
 GLUniform &GLUniform::set(duint elementIndex, Vec3f const &vec)
 {
-    DENG2_ASSERT(d->type == Vec3Array);
-    DENG2_ASSERT(elementIndex < d->elemCount);
+    DE_ASSERT(d->type == Vec3Array);
+    DE_ASSERT(elementIndex < d->elemCount);
 
     if (d->value.vec3array[elementIndex] != vec)
     {
@@ -418,8 +418,8 @@ GLUniform &GLUniform::set(duint elementIndex, Vec3f const &vec)
 
 GLUniform &GLUniform::set(duint elementIndex, Vec4f const &vec)
 {
-    DENG2_ASSERT(d->type == Vec4Array);
-    DENG2_ASSERT(elementIndex < d->elemCount);
+    DE_ASSERT(d->type == Vec4Array);
+    DE_ASSERT(elementIndex < d->elemCount);
 
     if (d->value.vector[elementIndex] != vec)
     {
@@ -432,8 +432,8 @@ GLUniform &GLUniform::set(duint elementIndex, Vec4f const &vec)
 
 GLUniform &GLUniform::set(duint elementIndex, Mat4f const &mat)
 {
-    DENG2_ASSERT(d->type == Mat4Array);
-    DENG2_ASSERT(elementIndex < d->elemCount);
+    DE_ASSERT(d->type == Mat4Array);
+    DE_ASSERT(elementIndex < d->elemCount);
 
     d->value.mat4[elementIndex] = mat;
     d->usedElemCount = d->elemCount;
@@ -455,8 +455,8 @@ GLUniform &GLUniform::set(const int *intArray, dsize count)
 
 GLUniform &GLUniform::set(float const *floatArray, dsize count)
 {
-    DENG2_ASSERT(d->type == FloatArray);
-    DENG2_ASSERT(count <= d->elemCount);
+    DE_ASSERT(d->type == FloatArray);
+    DE_ASSERT(count <= d->elemCount);
 
     memcpy(d->value.floats, floatArray, sizeof(float) * count);
     d->usedElemCount = duint16(count);
@@ -466,8 +466,8 @@ GLUniform &GLUniform::set(float const *floatArray, dsize count)
 
 GLUniform &GLUniform::set(const Vec3f *vectorArray, dsize count)
 {
-    DENG2_ASSERT(d->type == Vec3Array);
-    DENG2_ASSERT(count <= d->elemCount);
+    DE_ASSERT(d->type == Vec3Array);
+    DE_ASSERT(count <= d->elemCount);
 
     memcpy(d->value.vector, vectorArray, sizeof(Vec3f) * count);
     d->usedElemCount = duint16(count);
@@ -477,8 +477,8 @@ GLUniform &GLUniform::set(const Vec3f *vectorArray, dsize count)
 
 GLUniform &GLUniform::set(Vec4f const *vectorArray, dsize count)
 {
-    DENG2_ASSERT(d->type == Vec4Array);
-    DENG2_ASSERT(count <= d->elemCount);
+    DE_ASSERT(d->type == Vec4Array);
+    DE_ASSERT(count <= d->elemCount);
 
     memcpy(d->value.vector, vectorArray, sizeof(Vec4f) * count);
     d->usedElemCount = duint16(count);
@@ -499,7 +499,7 @@ GLUniform &GLUniform::set(const Matrix4f *mat4Array, dsize count)
 
 GLUniform &GLUniform::setUsedElementCount(duint elementCount)
 {
-    DENG2_ASSERT(elementCount <= d->elemCount);
+    DE_ASSERT(elementCount <= d->elemCount);
     d->usedElemCount = elementCount;
     d->markAsChanged();
     return *this;
@@ -507,7 +507,7 @@ GLUniform &GLUniform::setUsedElementCount(duint elementCount)
 
 dint GLUniform::toInt() const
 {
-    DENG2_ASSERT(d->type == Int || d->type == UInt || d->type == Float);
+    DE_ASSERT(d->type == Int || d->type == UInt || d->type == Float);
 
     switch (d->type)
     {
@@ -527,7 +527,7 @@ dint GLUniform::toInt() const
 
 duint GLUniform::toUInt() const
 {
-    DENG2_ASSERT(d->type == Int || d->type == UInt || d->type == Float || d->type == SamplerBuffer);
+    DE_ASSERT(d->type == Int || d->type == UInt || d->type == Float || d->type == SamplerBuffer);
 
     switch (d->type)
     {
@@ -548,7 +548,7 @@ duint GLUniform::toUInt() const
 
 dfloat GLUniform::toFloat() const
 {
-    DENG2_ASSERT(d->type == Int || d->type == UInt || d->type == Float);
+    DE_ASSERT(d->type == Int || d->type == UInt || d->type == Float);
 
     switch (d->type)
     {
@@ -568,38 +568,38 @@ dfloat GLUniform::toFloat() const
 
 Vec2f const &GLUniform::toVec2f() const
 {
-    DENG2_ASSERT(d->type == Vec2 || d->type == Vec3 || d->type == Vec4);
+    DE_ASSERT(d->type == Vec2 || d->type == Vec3 || d->type == Vec4);
     return *d->value.vector;
 }
 
 Vec3f const &GLUniform::toVec3f() const
 {
-    DENG2_ASSERT(d->type == Vec2 || d->type == Vec3 || d->type == Vec4);
+    DE_ASSERT(d->type == Vec2 || d->type == Vec3 || d->type == Vec4);
     return *d->value.vector;
 }
 
 Vec4f const &GLUniform::toVec4f() const
 {
-    DENG2_ASSERT(d->type == Vec2 || d->type == Vec3 || d->type == Vec4);
+    DE_ASSERT(d->type == Vec2 || d->type == Vec3 || d->type == Vec4);
     return *d->value.vector;
 }
 
 Mat3f const &GLUniform::toMat3f() const
 {
-    DENG2_ASSERT(d->type == Mat3);
+    DE_ASSERT(d->type == Mat3);
     return *d->value.mat3;
 }
 
 Mat4f const &GLUniform::toMat4f() const
 {
-    DENG2_ASSERT(d->type == Mat4);
+    DE_ASSERT(d->type == Mat4);
     return *d->value.mat4;
 }
 
 GLTexture const *GLUniform::texture() const
 {
-    DENG2_ASSERT(isSampler());
-    DENG2_ASSERT(d->type != SamplerBuffer); // GLTexture not used
+    DE_ASSERT(isSampler());
+    DE_ASSERT(d->type != SamplerBuffer); // GLTexture not used
     return d->value.tex;
 }
 
@@ -613,7 +613,7 @@ void GLUniform::applyInProgram(GLProgram &program) const
         // Uniform not in the program.
         LOG_AS("applyInProgram");
         LOGDEV_GL_WARNING("'%s' not in the program") << d->name.constData();
-        DENG2_ASSERT_FAIL("[GLUniform] Attempted to apply a uniform that is not in the shader program");
+        DE_ASSERT_FAIL("[GLUniform] Attempted to apply a uniform that is not in the shader program");
         return;
     }
 
@@ -675,7 +675,7 @@ void GLUniform::applyInProgram(GLProgram &program) const
         break;
     }
 
-#if defined (DENG2_DEBUG)
+#if defined (DE_DEBUG)
     {
         GLenum err = LIBGUI_GL.glGetError();
         if (err != GL_NO_ERROR)

@@ -22,7 +22,7 @@
 
 namespace de { namespace shell {
 
-DENG2_PIMPL(ChoiceWidget)
+DE_PIMPL(ChoiceWidget)
 {
     Items       items;
     int         selection;
@@ -143,7 +143,7 @@ bool ChoiceWidget::handleEvent(Event const &ev)
         KeyEvent const &event = ev.as<KeyEvent>();
         if (!event.text().isEmpty() || event.key() == Qt::Key_Enter)
         {
-            DENG2_ASSERT(!isOpen());
+            DE_ASSERT(!isOpen());
 
             if (event.text().isEmpty() || event.text() == " ")
             {
@@ -175,7 +175,7 @@ bool ChoiceWidget::handleEvent(Event const &ev)
 
 void ChoiceWidget::updateSelectionFromMenu()
 {
-    DENG2_ASSERT(isOpen());
+    DE_ASSERT(isOpen());
     d->selection = d->menu->cursor();
     d->updateLabel();
 }

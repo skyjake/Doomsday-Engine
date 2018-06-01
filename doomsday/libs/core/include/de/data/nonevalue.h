@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_NONEVALUE_H
-#define LIBDENG2_NONEVALUE_H
+#ifndef LIBCORE_NONEVALUE_H
+#define LIBCORE_NONEVALUE_H
 
 #include "../Value"
 
@@ -29,7 +29,7 @@ namespace de {
  *
  * @ingroup data
  */
-class DENG2_PUBLIC NoneValue : public Value
+class DE_PUBLIC NoneValue : public Value
 {
 public:
     NoneValue();
@@ -50,4 +50,4 @@ public:
 
 } // namespace de
 
-#endif /* LIBDENG2_NONEVALUE_H */
+#endif /* LIBCORE_NONEVALUE_H */

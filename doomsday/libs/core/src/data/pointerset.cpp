@@ -60,7 +60,7 @@ PointerSet::~PointerSet()
     // PointerSet must not be deleted while someone is iterating it. If this happens,
     // you need to use Garbage instead of deleting the object immediately (e.g.,
     // deleting in response to a audience notification).
-    DENG2_ASSERT(!isBeingIterated());
+    DE_ASSERT(!isBeingIterated());
 
     free(_pointers);
 }
@@ -89,7 +89,7 @@ void PointerSet::insert(Pointer ptr)
 
         if (isBeingIterated())
         {
-            DENG2_ASSERT(_flags & AllowInsertionDuringIteration);
+            DE_ASSERT(_flags & AllowInsertionDuringIteration);
 
             if (!(_flags & AllowInsertionDuringIteration))
             {
@@ -101,13 +101,13 @@ void PointerSet::insert(Pointer ptr)
             }
 
             // User must be aware that the allocation may change.
-            DENG2_ASSERT(_iterationObserver != nullptr);
+            DE_ASSERT(_iterationObserver != nullptr);
         }
 
         // Expand the array when the used range covers the entire array.
         if (_range.size() == _size)
         {
-            DENG2_ASSERT(_size < POINTERSET_MAX_SIZE);
+            DE_ASSERT(_size < POINTERSET_MAX_SIZE);
             if (_size == POINTERSET_MAX_SIZE) return; // Can't do it.
 
             Pointer *oldBase = _pointers;
@@ -144,7 +144,7 @@ void PointerSet::insert(Pointer ptr)
                 _range.start == 0)
             {
                 // Move the second half of the range forward, extending it by one.
-                DENG2_ASSERT(_range.end < _size);
+                DE_ASSERT(_range.end < _size);
                 std::memmove(_pointers + pos + 1,
                              _pointers + pos,
                              sizeof(Pointer) * (_range.end - pos));
@@ -154,7 +154,7 @@ void PointerSet::insert(Pointer ptr)
             else
             {
                 // Have to move the first half of the range backward.
-                DENG2_ASSERT(_range.start > 0);
+                DE_ASSERT(_range.start > 0);
                 std::memmove(_pointers + _range.start - 1,
                              _pointers + _range.start,
                              sizeof(Pointer) * (pos < _range.end? (pos - _range.start + 1) :
@@ -172,7 +172,7 @@ void PointerSet::remove(Pointer ptr)
 
     if (!loc.isEmpty())
     {
-        DENG2_ASSERT(!_range.isEmpty());
+        DE_ASSERT(!_range.isEmpty());
 
         // Removing the first or last item needs just a range adjustment.
         if (loc.start == _range.start)
@@ -192,7 +192,7 @@ void PointerSet::remove(Pointer ptr)
             _pointers[_range.start++] = nullptr;
         }
 
-        DENG2_ASSERT(_range.start <= _range.end);
+        DE_ASSERT(_range.start <= _range.end);
     }
 }
 
@@ -246,12 +246,12 @@ void PointerSet::setBeingIterated(bool yes) const
     _flags ^= count;
     if (yes)
     {
-        DENG2_ASSERT(count != POINTERSET_ITERATION_MASK);
+        DE_ASSERT(count != POINTERSET_ITERATION_MASK);
         ++count;
     }
     else
     {
-        DENG2_ASSERT(count != 0);
+        DE_ASSERT(count != 0);
         --count;
     }
     _flags |= count & POINTERSET_ITERATION_MASK;

@@ -47,7 +47,7 @@ class AbstractFont
 {
 public:
     /// Notified when the resource is about to be deleted.
-    DENG2_DEFINE_AUDIENCE(Deletion, void fontBeingDeleted(AbstractFont const &font))
+    DE_DEFINE_AUDIENCE(Deletion, void fontBeingDeleted(AbstractFont const &font))
 
     enum Flag {
         Colorize  = 0x1, ///< Can be colored.
@@ -66,7 +66,7 @@ public:
     AbstractFont(de::FontManifest &manifest);
     virtual ~AbstractFont();
 
-    DENG2_CAST_METHODS()
+    DE_CAST_METHODS()
 
     /**
      * Returns the resource manifest for the font.

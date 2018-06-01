@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_PACKET_H
-#define LIBDENG2_PACKET_H
+#ifndef LIBCORE_PACKET_H
+#define LIBCORE_PACKET_H
 
 #include "../ISerializable"
 #include "../Address"
@@ -37,13 +37,13 @@ class String;
  *
  * @ingroup protocol
  */
-class DENG2_PUBLIC Packet : public ISerializable
+class DE_PUBLIC Packet : public ISerializable
 {
 public:
-    DENG2_CAST_METHODS()
+    DE_CAST_METHODS()
 
     /// While deserializing, an invalid type identifier was encountered. @ingroup errors
-    DENG2_SUB_ERROR(DeserializationError, InvalidTypeError);
+    DE_SUB_ERROR(DeserializationError, InvalidTypeError);
 
     typedef std::array<char, 4> Type;
 
@@ -131,4 +131,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_PACKET_H */
+#endif /* LIBCORE_PACKET_H */

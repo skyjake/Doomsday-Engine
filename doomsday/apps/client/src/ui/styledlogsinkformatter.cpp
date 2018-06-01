@@ -26,8 +26,8 @@ using namespace de;
 
 static char const *VAR_METADATA = "log.showMetadata";
 
-DENG2_PIMPL(StyledLogSinkFormatter)
-, DENG2_OBSERVES(Variable, Change)
+DE_PIMPL(StyledLogSinkFormatter)
+, DE_OBSERVES(Variable, Change)
 {
     LogEntry::Flags format;
     bool observe;

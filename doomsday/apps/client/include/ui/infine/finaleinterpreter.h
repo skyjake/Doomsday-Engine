@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_UI_INFINE_FINALEINTERPRETER_H
-#define DENG_UI_INFINE_FINALEINTERPRETER_H
+#ifndef DE_UI_INFINE_FINALEINTERPRETER_H
+#define DE_UI_INFINE_FINALEINTERPRETER_H
 
 #include <de/Error>
 #include <de/String>
@@ -59,10 +59,10 @@ class FinaleInterpreter
 {
 public:
     /// An unknown widget was referenced. @ingroup errors
-    DENG2_ERROR(MissingWidgetError);
+    DE_ERROR(MissingWidgetError);
 
     /// An unknown page was referenced. @ingroup errors
-    DENG2_ERROR(MissingPageError);
+    DE_ERROR(MissingPageError);
 
     enum PageIndex
     {
@@ -140,7 +140,7 @@ public: /// Script-level flow/state control (@todo make private): --------------
     void setWaitText(FinaleTextWidget *newWaitText);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_UI_INFINE_FINALEINTERPRETER_H
+#endif // DE_UI_INFINE_FINALEINTERPRETER_H

@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_NUMBERVALUE_H
-#define LIBDENG2_NUMBERVALUE_H
+#ifndef LIBCORE_NUMBERVALUE_H
+#define LIBCORE_NUMBERVALUE_H
 
 #include "../Value"
 
@@ -43,7 +43,7 @@ namespace de {
  *
  * @ingroup data
  */
-class DENG2_PUBLIC NumberValue : public Value
+class DE_PUBLIC NumberValue : public Value
 {
 public:
     /// Truth values for logical operations. They are treated as
@@ -106,4 +106,4 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(NumberValue::SemanticHints)
 
 } // namespace de
 
-#endif /* LIBDENG2_NUMBERVALUE_H */
+#endif /* LIBCORE_NUMBERVALUE_H */

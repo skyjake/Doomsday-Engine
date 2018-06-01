@@ -23,8 +23,8 @@
 
 namespace de {
 
-DENG2_PIMPL(ConditionalTrigger)
-, DENG2_OBSERVES(Variable, Change)
+DE_PIMPL(ConditionalTrigger)
+, DE_OBSERVES(Variable, Change)
 {
     SafePtr<Variable const> condition;
     QSet<QString> activeTriggers;

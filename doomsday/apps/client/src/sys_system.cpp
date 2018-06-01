@@ -54,12 +54,12 @@
 #include "api_base.h"
 
 #if defined(WIN32) && !defined(_DEBUG)
-#  define DENG_CATCH_SIGNALS
+#  define DE_CATCH_SIGNALS
 #endif
 
 int novideo;                // if true, stay in text mode for debugging
 
-#ifdef DENG_CATCH_SIGNALS
+#ifdef DE_CATCH_SIGNALS
 /**
  * Borrowed from Lee Killough.
  */
@@ -89,7 +89,7 @@ void Sys_Init()
 
     App_AudioSystem().initPlayback();
 
-#ifdef DENG_CATCH_SIGNALS
+#ifdef DE_CATCH_SIGNALS
     // Register handler for abnormal situations (in release build).
     signal(SIGSEGV, handler);
     signal(SIGTERM, handler);
@@ -239,7 +239,7 @@ void Sys_HideMouseCursor()
  * Called when Doomsday should quit (will be deferred until convenient).
  */
 #undef Sys_Quit
-DENG_EXTERN_C void Sys_Quit(void)
+DE_EXTERN_C void Sys_Quit(void)
 {
     auto &app = DoomsdayApp::app();
 
@@ -267,12 +267,12 @@ DENG_EXTERN_C void Sys_Quit(void)
     if (ClientWindow::mainExists())
     {
         ClientWindow::main().fadeContent(ClientWindow::FadeToBlack, 0.1);
-        de::Loop::get().timer(0.1, [] () { DENG2_APP->stopLoop(DD_GameLoopExitCode()); });
+        de::Loop::get().timer(0.1, [] () { DE_APP->stopLoop(DD_GameLoopExitCode()); });
     }
     else
 #endif
     {
         // It's time to stop the main loop.
-        DENG2_APP->stopLoop(DD_GameLoopExitCode());
+        DE_APP->stopLoop(DD_GameLoopExitCode());
     }
 }

@@ -42,7 +42,7 @@ class LIBDOOMSDAY_PUBLIC GameStateFolder : public de::ArchiveFolder
 {
 public:
     /// Notified whenever the cached metadata of the saved session changes.
-    DENG2_DEFINE_AUDIENCE2(MetadataChange, void gameStateFolderMetadataChanged(GameStateFolder &session))
+    DE_DEFINE_AUDIENCE2(MetadataChange, void gameStateFolderMetadataChanged(GameStateFolder &session))
 
     /**
      * Session metadata.
@@ -74,7 +74,7 @@ public:
     {
     public:
         /// Base class for read errors. @ingroup errors
-        DENG2_ERROR(ReadError);
+        DE_ERROR(ReadError);
 
     public:
         /**
@@ -103,7 +103,7 @@ public:
         virtual void read(de::String const &mapUriStr) = 0;
 
     private:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
     /**
@@ -216,7 +216,7 @@ public:
     };
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef GameStateFolder::Metadata GameStateMetadata;

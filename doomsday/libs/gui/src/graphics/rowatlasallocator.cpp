@@ -58,7 +58,7 @@ void unlink(Type *object)
 /// The allocations are only optimized if less than 70% of the area is being utilized.
 static float const OPTIMIZATION_USAGE_THRESHOLD = .7f;
 
-DENG2_PIMPL(RowAtlasAllocator)
+DE_PIMPL(RowAtlasAllocator)
 {
     struct Rows
     {
@@ -96,8 +96,8 @@ DENG2_PIMPL(RowAtlasAllocator)
              */
             Slot *allocateAndSplit(Id const &allocId, duint widthWithMargin)
             {
-                DENG2_ASSERT(isEmpty());
-                DENG2_ASSERT(width >= widthWithMargin);
+                DE_ASSERT(isEmpty());
+                DE_ASSERT(width >= widthWithMargin);
 
                 int const remainder = width - widthWithMargin;
 
@@ -117,7 +117,7 @@ DENG2_PIMPL(RowAtlasAllocator)
 
             Slot *mergeWithNext()
             {
-                DENG2_ASSERT(isEmpty());
+                DE_ASSERT(isEmpty());
                 if (!next || !next->isEmpty()) return nullptr;
 
                 Slot *merged = next;
@@ -128,7 +128,7 @@ DENG2_PIMPL(RowAtlasAllocator)
 
             Slot *mergeWithPrevious()
             {
-                DENG2_ASSERT(isEmpty());
+                DE_ASSERT(isEmpty());
                 if (!prev || !prev->isEmpty()) return nullptr;
 
                 Slot *merged = prev;
@@ -191,8 +191,8 @@ DENG2_PIMPL(RowAtlasAllocator)
 
             Row *split(duint newHeight)
             {
-                DENG2_ASSERT(isEmpty());
-                DENG2_ASSERT(newHeight <= height);
+                DE_ASSERT(isEmpty());
+                DE_ASSERT(newHeight <= height);
 
                 duint const remainder = height - newHeight;
                 height = newHeight;
@@ -209,9 +209,9 @@ DENG2_PIMPL(RowAtlasAllocator)
 
             void grow(duint newHeight)
             {
-                DENG2_ASSERT(newHeight > height);
-                DENG2_ASSERT(next);
-                DENG2_ASSERT(next->isEmpty());
+                DE_ASSERT(newHeight > height);
+                DE_ASSERT(next);
+                DE_ASSERT(next->isEmpty());
 
                 duint delta = newHeight - height;
                 height += delta;
@@ -258,16 +258,16 @@ DENG2_PIMPL(RowAtlasAllocator)
 
         void addVacant(Slot *slot)
         {
-            DENG2_ASSERT(slot->isEmpty());
+            DE_ASSERT(slot->isEmpty());
             vacant.insert(slot);
-            DENG2_ASSERT(*vacant.find(slot) == slot);
+            DE_ASSERT(*vacant.find(slot) == slot);
         }
 
         void removeVacant(Slot *slot)
         {
-            DENG2_ASSERT(vacant.find(slot) != vacant.end());
+            DE_ASSERT(vacant.find(slot) != vacant.end());
             vacant.erase(slot);
-            DENG2_ASSERT(vacant.find(slot) == vacant.end());
+            DE_ASSERT(vacant.find(slot) == vacant.end());
         }
 
         Slot *findBestVacancy(Atlas::Size const &size) const
@@ -310,7 +310,7 @@ DENG2_PIMPL(RowAtlasAllocator)
             Slot *slot = findBestVacancy(size);
             if (!slot) return nullptr;
 
-            DENG2_ASSERT(slot->isEmpty());
+            DE_ASSERT(slot->isEmpty());
 
             // This slot will be taken into use.
             removeVacant(slot);
@@ -347,9 +347,9 @@ DENG2_PIMPL(RowAtlasAllocator)
             slot->usedArea = size.x * size.y;
             usedArea += slot->usedArea;
 
-            DENG2_ASSERT(usedArea <= d->size.x * d->size.y);
-            DENG2_ASSERT(vacant.find(slot) == vacant.end());
-            DENG2_ASSERT(!slot->isEmpty());
+            DE_ASSERT(usedArea <= d->size.x * d->size.y);
+            DE_ASSERT(vacant.find(slot) == vacant.end());
+            DE_ASSERT(!slot->isEmpty());
 
             return slot;
         }
@@ -374,7 +374,7 @@ DENG2_PIMPL(RowAtlasAllocator)
 
         void mergeAbove(Row *row)
         {
-            DENG2_ASSERT(row->isEmpty());
+            DE_ASSERT(row->isEmpty());
             if (row->prev && row->prev->isEmpty())
             {
                 Row *merged = row->prev;
@@ -393,7 +393,7 @@ DENG2_PIMPL(RowAtlasAllocator)
 
         void mergeBelow(Row *row)
         {
-            DENG2_ASSERT(row->isEmpty());
+            DE_ASSERT(row->isEmpty());
             if (row->next && row->next->isEmpty())
             {
                 Row *merged = row->next;
@@ -407,14 +407,14 @@ DENG2_PIMPL(RowAtlasAllocator)
 
         void release(Id const &id)
         {
-            DENG2_ASSERT(slotsById.contains(id));
+            DE_ASSERT(slotsById.contains(id));
 
             // Make the slot vacant again.
             Slot *slot = slotsById.take(id);
             slot->id = Id::None;
 
-            DENG2_ASSERT(slot->usedArea > 0);
-            DENG2_ASSERT(usedArea >= slot->usedArea);
+            DE_ASSERT(slot->usedArea > 0);
+            DE_ASSERT(usedArea >= slot->usedArea);
 
             usedArea -= slot->usedArea;
 
@@ -460,7 +460,7 @@ DENG2_PIMPL(RowAtlasAllocator)
     {
         // Set up a LUT based on descending allocation width.
         QList<ContentSize> descending;
-        DENG2_FOR_EACH(Allocations, i, allocs)
+        DE_FOR_EACH(Allocations, i, allocs)
         {
             descending.append(ContentSize(i.key(), i.value().size()));
         }
@@ -498,7 +498,7 @@ void RowAtlasAllocator::setMetrics(Atlas::Size const &totalSize, int margin)
     d->size   = totalSize;
     d->margin = margin;
 
-    DENG2_ASSERT(d->allocs.isEmpty());
+    DE_ASSERT(d->allocs.isEmpty());
     d->rows.reset(new Impl::Rows(d));
 }
 
@@ -523,7 +523,7 @@ Id RowAtlasAllocator::allocate(Atlas::Size const &size, Rectanglei &rect,
 
 void RowAtlasAllocator::release(Id const &id)
 {
-    DENG2_ASSERT(d->allocs.contains(id));
+    DE_ASSERT(d->allocs.contains(id));
 
     d->rows->release(id);
     d->allocs.remove(id);
@@ -546,7 +546,7 @@ Atlas::Ids RowAtlasAllocator::ids() const
 
 void RowAtlasAllocator::rect(Id const &id, Rectanglei &rect) const
 {
-    DENG2_ASSERT(d->allocs.contains(id));
+    DE_ASSERT(d->allocs.contains(id));
     rect = d->allocs[id];
 }
 

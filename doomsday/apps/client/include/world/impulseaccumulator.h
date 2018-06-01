@@ -83,7 +83,7 @@ public:
 #endif
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // CLIENT_PLAY_IMPULSEACCUMULATOR_H

@@ -18,7 +18,7 @@
 
 #include "cursestextcanvas.h"
 
-DENG2_PIMPL_NOREF(CursesTextCanvas)
+DE_PIMPL_NOREF(CursesTextCanvas)
 {
     WINDOW *window;
     Coord origin;

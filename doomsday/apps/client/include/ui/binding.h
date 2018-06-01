@@ -32,7 +32,7 @@ class Binding : public de::RecordAccessor
 {
 public:
     /// Base class for binding configuration errors. @ingroup errors
-    DENG2_ERROR(ConfigureError);
+    DE_ERROR(ConfigureError);
 
     enum ConditionType
     {

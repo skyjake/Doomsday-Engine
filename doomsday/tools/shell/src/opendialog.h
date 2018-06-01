@@ -24,7 +24,7 @@ protected slots:
     void textEdited(QString);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // OPENDIALOG_H

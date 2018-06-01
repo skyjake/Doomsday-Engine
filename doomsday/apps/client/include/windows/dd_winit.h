@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_WINIT_H
-#define LIBDENG_WINIT_H
+#ifndef DE_WINIT_H
+#define DE_WINIT_H
 
 #define WIN32_LEAN_AND_MEAN
 
@@ -38,4 +38,4 @@ char const *DD_Win32_GetLastErrorMessage(void);
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_WINIT_H */
+#endif /* DE_WINIT_H */

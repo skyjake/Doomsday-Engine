@@ -27,7 +27,7 @@ namespace de {
  * Interface for downloadable objects.
  * @ingroup fs
  */
-class DENG2_PUBLIC IDownloadable
+class DE_PUBLIC IDownloadable
 {
 public:
     virtual ~IDownloadable() {}
@@ -42,7 +42,7 @@ public:
 
     virtual void cancelDownload() = 0;
 
-    DENG2_DEFINE_AUDIENCE(Download, void downloadProgress(IDownloadable &, dsize remainingBytes))
+    DE_DEFINE_AUDIENCE(Download, void downloadProgress(IDownloadable &, dsize remainingBytes))
 };
 
 } // namespace de

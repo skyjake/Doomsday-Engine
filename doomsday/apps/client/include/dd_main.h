@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_MAIN_H
-#define DENG_MAIN_H
+#ifndef DE_MAIN_H
+#define DE_MAIN_H
 
 #include <QList>
 #include <QMap>
@@ -52,9 +52,9 @@ void DD_ConsoleRegister();
 /**
  * Print an error message and quit.
  */
-DENG2_NORETURN void App_Error(char const *error, ...);
+DE_NORETURN void App_Error(char const *error, ...);
 
-DENG2_NORETURN void App_AbnormalShutdown(char const *error);
+DE_NORETURN void App_AbnormalShutdown(char const *error);
 
 /// Returns the application's global audio subsystem.
 AudioSystem &App_AudioSystem();
@@ -124,4 +124,4 @@ de::String DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);
 fontschemeid_t DD_ParseFontSchemeName(char const *str);
 #endif
 
-#endif  // DENG_MAIN_H
+#endif  // DE_MAIN_H

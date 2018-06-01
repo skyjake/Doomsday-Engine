@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_FILESYS_LUMPINDEX_H
-#define LIBDENG_FILESYS_LUMPINDEX_H
+#ifndef DE_FILESYS_LUMPINDEX_H
+#define DE_FILESYS_LUMPINDEX_H
 
 #ifdef __cplusplus
 
@@ -45,7 +45,7 @@ class LIBDOOMSDAY_PUBLIC LumpIndex
 {
 public:
     /// No file(s) found. @ingroup errors
-    DENG2_ERROR(NotFoundError);
+    DE_ERROR(NotFoundError);
 
     typedef QList<File1 *> Lumps;
     typedef std::list<lumpnum_t> FoundIndices;
@@ -149,7 +149,7 @@ public:
         static dsize elementSizeForDataType(Format mapFormat, DataType dataType);
 
     private:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
 public:
@@ -295,7 +295,7 @@ public:
     static de::Uri composeResourceUrn(lumpnum_t lumpNum);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef LumpIndex::Id1MapRecognizer Id1MapRecognizer;
@@ -303,4 +303,4 @@ typedef LumpIndex::Id1MapRecognizer Id1MapRecognizer;
 } // namespace de
 
 #endif // __cplusplus
-#endif // LIBDENG_FILESYS_LUMPINDEX_H
+#endif // DE_FILESYS_LUMPINDEX_H

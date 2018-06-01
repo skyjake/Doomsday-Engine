@@ -31,14 +31,14 @@ using namespace de;
 
 #ifdef MACOSX
 #  define CONTROL_MOD   KeyEvent::Meta
-#  define CONTROL_CHAR  DENG2_CHAR_MAC_CONTROL_KEY
+#  define CONTROL_CHAR  DE_CHAR_MAC_CONTROL_KEY
 #else
 #  define CONTROL_MOD   KeyEvent::Control
-#  define CONTROL_CHAR  DENG2_CHAR_CONTROL_KEY
+#  define CONTROL_CHAR  DE_CHAR_CONTROL_KEY
 #endif
 
-DENG_GUI_PIMPL(InputBindingWidget)
-, DENG2_OBSERVES(ButtonWidget, Press)
+DE_GUI_PIMPL(InputBindingWidget)
+, DE_OBSERVES(ButtonWidget, Press)
 {
     String defaultEvent;
     String command;
@@ -74,7 +74,7 @@ DENG_GUI_PIMPL(InputBindingWidget)
             String const conds = eventDesc.mid(idx + 1);
             if (conds.contains("key-alt-down"))
             {
-                name = String(DENG2_CHAR_ALT_KEY) + name;
+                name = String(DE_CHAR_ALT_KEY) + name;
             }
             if (conds.contains("key-ctrl-down") || conds.contains("key-control-down"))
             {
@@ -82,7 +82,7 @@ DENG_GUI_PIMPL(InputBindingWidget)
             }
             if (conds.contains("key-shift-down"))
             {
-                name = String(DENG2_CHAR_SHIFT_KEY) + name;
+                name = String(DE_CHAR_SHIFT_KEY) + name;
             }
         }
         return name;

@@ -46,7 +46,7 @@
 using namespace de;
 using namespace world;
 
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
 static inline bool Surface_isSideMiddle(Surface const &suf)
 {
     return suf.parent().type() == DMU_SIDE
@@ -61,7 +61,7 @@ static inline bool Surface_isSectorExtraPlane(Surface const &suf)
 }
 #endif
 
-DENG2_PIMPL(Surface)
+DE_PIMPL(Surface)
 {
     dint flags = 0;                             ///< @ref sufFlags
 
@@ -96,7 +96,7 @@ DENG2_PIMPL(Surface)
 
     inline MapElement &owner() const { return self().parent(); }
 
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
     bool isSideMiddle() const
     {
         return owner().type() == DMU_SIDE
@@ -126,27 +126,27 @@ DENG2_PIMPL(Surface)
 #ifdef __CLIENT__
     void notifyOriginSmoothedChanged()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(OriginSmoothedChange, i) i->surfaceOriginSmoothedChanged(self());
+        DE_FOR_PUBLIC_AUDIENCE2(OriginSmoothedChange, i) i->surfaceOriginSmoothedChanged(self());
     }
 #endif
 
-    DENG2_PIMPL_AUDIENCE(ColorChange)
-    DENG2_PIMPL_AUDIENCE(MaterialChange)
-    DENG2_PIMPL_AUDIENCE(NormalChange)
-    DENG2_PIMPL_AUDIENCE(OpacityChange)
-    DENG2_PIMPL_AUDIENCE(OriginChange)
+    DE_PIMPL_AUDIENCE(ColorChange)
+    DE_PIMPL_AUDIENCE(MaterialChange)
+    DE_PIMPL_AUDIENCE(NormalChange)
+    DE_PIMPL_AUDIENCE(OpacityChange)
+    DE_PIMPL_AUDIENCE(OriginChange)
 #ifdef __CLIENT__
-    DENG2_PIMPL_AUDIENCE(OriginSmoothedChange)
+    DE_PIMPL_AUDIENCE(OriginSmoothedChange)
 #endif
 };
 
-DENG2_AUDIENCE_METHOD(Surface, ColorChange)
-DENG2_AUDIENCE_METHOD(Surface, MaterialChange)
-DENG2_AUDIENCE_METHOD(Surface, NormalChange)
-DENG2_AUDIENCE_METHOD(Surface, OpacityChange)
-DENG2_AUDIENCE_METHOD(Surface, OriginChange)
+DE_AUDIENCE_METHOD(Surface, ColorChange)
+DE_AUDIENCE_METHOD(Surface, MaterialChange)
+DE_AUDIENCE_METHOD(Surface, NormalChange)
+DE_AUDIENCE_METHOD(Surface, OpacityChange)
+DE_AUDIENCE_METHOD(Surface, OriginChange)
 #ifdef __CLIENT__
-DENG2_AUDIENCE_METHOD(Surface, OriginSmoothedChange)
+DE_AUDIENCE_METHOD(Surface, OriginSmoothedChange)
 #endif
 
 Surface::Surface(MapElement &owner, dfloat opacity, Vec3f const &color)
@@ -172,7 +172,7 @@ String Surface::description() const
                   .arg(String(R_NameForBlendMode(blendMode())))
                   .arg(color().asText());
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     desc.prepend(String(_E(b) "Surface " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
 #endif
     return desc;
@@ -201,7 +201,7 @@ Surface &Surface::setNormal(Vec3f const &newNormal)
 
         // We'll need to recalculate the tangents when next referenced.
         d->needUpdateTangentMatrix = true;
-        DENG2_FOR_AUDIENCE2(NormalChange, i) i->surfaceNormalChanged(*this);
+        DE_FOR_AUDIENCE2(NormalChange, i) i->surfaceNormalChanged(*this);
     }
     return *this;
 }
@@ -231,7 +231,7 @@ Material *Surface::materialPtr() const
 Surface &Surface::setMaterial(Material *newMaterial, bool isMissingFix)
 {
     // Sides of selfreferencing map lines should never receive fix materials.
-    DENG2_ASSERT(!(isMissingFix && (parent().type() == DMU_SIDE && parent().as<LineSide>().line().isSelfReferencing())));
+    DE_ASSERT(!(isMissingFix && (parent().type() == DMU_SIDE && parent().as<LineSide>().line().isSelfReferencing())));
 
     if (d->material == newMaterial)
         return *this;
@@ -267,7 +267,7 @@ Surface &Surface::setMaterial(Material *newMaterial, bool isMissingFix)
 #endif
 
     // Notify interested parties.
-    DENG2_FOR_AUDIENCE2(MaterialChange, i) i->surfaceMaterialChanged(*this);
+    DE_FOR_AUDIENCE2(MaterialChange, i) i->surfaceMaterialChanged(*this);
 
     return *this;
 }
@@ -293,7 +293,7 @@ Surface &Surface::setOrigin(Vec2f const &newOrigin)
         }
 #endif
 
-        DENG2_FOR_AUDIENCE2(OriginChange, i) i->surfaceOriginChanged(*this);
+        DE_FOR_AUDIENCE2(OriginChange, i) i->surfaceOriginChanged(*this);
 
 #ifdef __CLIENT__
         if (!::ddMapSetup)
@@ -338,13 +338,13 @@ dfloat Surface::opacity() const
 
 Surface &Surface::setOpacity(dfloat newOpacity)
 {
-    DENG2_ASSERT(Surface_isSideMiddle(*this) || Surface_isSectorExtraPlane(*this));  // sanity check
+    DE_ASSERT(Surface_isSideMiddle(*this) || Surface_isSectorExtraPlane(*this));  // sanity check
 
     newOpacity = de::clamp(0.f, newOpacity, 1.f);
     if (!de::fequal(d->opacity, newOpacity))
     {
         d->opacity = newOpacity;
-        DENG2_FOR_AUDIENCE2(OpacityChange, i) i->surfaceOpacityChanged(*this);
+        DE_FOR_AUDIENCE2(OpacityChange, i) i->surfaceOpacityChanged(*this);
     }
     return *this;
 }
@@ -363,7 +363,7 @@ Surface &Surface::setColor(Vec3f const &newColor)
     if (d->color != newColorClamped)
     {
         d->color = newColorClamped;
-        DENG2_FOR_AUDIENCE2(ColorChange, i) i->surfaceColorChanged(*this);
+        DE_FOR_AUDIENCE2(ColorChange, i) i->surfaceColorChanged(*this);
     }
     return *this;
 }

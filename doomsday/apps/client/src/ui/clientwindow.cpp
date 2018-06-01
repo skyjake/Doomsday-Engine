@@ -72,18 +72,18 @@
 
 using namespace de;
 
-DENG2_PIMPL(ClientWindow)
-, DENG2_OBSERVES(App, StartupComplete)
-, DENG2_OBSERVES(DoomsdayApp, GameChange)
-, DENG2_OBSERVES(MouseEventSource, MouseStateChange)
-, DENG2_OBSERVES(WindowEventHandler, FocusChange)
-, DENG2_OBSERVES(GLWindow, Init)
-, DENG2_OBSERVES(GLWindow, Resize)
-, DENG2_OBSERVES(GLWindow, Swap)
-, DENG2_OBSERVES(Variable, Change)
+DE_PIMPL(ClientWindow)
+, DE_OBSERVES(App, StartupComplete)
+, DE_OBSERVES(DoomsdayApp, GameChange)
+, DE_OBSERVES(MouseEventSource, MouseStateChange)
+, DE_OBSERVES(WindowEventHandler, FocusChange)
+, DE_OBSERVES(GLWindow, Init)
+, DE_OBSERVES(GLWindow, Resize)
+, DE_OBSERVES(GLWindow, Swap)
+, DE_OBSERVES(Variable, Change)
 , DENG2_OBSERVES(FileSystem, Busy)
-#if !defined (DENG_MOBILE)
-, DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
+#if !defined (DE_MOBILE)
+, DE_OBSERVES(PersistentGLWindow, AttributeChange)
 #endif
 {
     bool needMainInit            = true;
@@ -166,7 +166,7 @@ DENG2_PIMPL(ClientWindow)
 
     StringList configVariableNames() const
     {
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
         return StringList()
                 << self().configName("fsaa")
                 << self().configName("vsync");
@@ -251,7 +251,7 @@ DENG2_PIMPL(ClientWindow)
                     .setInput(Rule::Bottom, root.viewBottom() + *homeDelta);
         root.add(home);
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
         // Busy progress should be visible over the Home.
         busy->progress().orphan();
         busy->progress().rule().setRect(game->rule());
@@ -344,7 +344,7 @@ DENG2_PIMPL(ClientWindow)
         root.add(cursor);
 
         /*
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
         auto debugPrint = [] (Widget &w)
         {
             int depth = 0;
@@ -370,7 +370,7 @@ DENG2_PIMPL(ClientWindow)
 #endif
         */
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
         self().audienceForAttributeChange() += this;
 #endif
     }
@@ -462,7 +462,7 @@ DENG2_PIMPL(ClientWindow)
             break;
 
         case Normal:
-#if defined (DENG_HAVE_BUSYRUNNER)
+#if defined (DE_HAVE_BUSYRUNNER)
             // The busy widget will hide itself after a possible transition has finished.
             busy->disable();
 #else
@@ -504,7 +504,7 @@ DENG2_PIMPL(ClientWindow)
         {
             needMainInit = false;
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
             self().raise();
             self().requestActivate();
 #endif
@@ -543,7 +543,7 @@ DENG2_PIMPL(ClientWindow)
         completeFade();
     }
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
     void windowAttributesChanged(PersistentGLWindow &) override
     {
         showOrHideQuitButton();
@@ -671,7 +671,7 @@ DENG2_PIMPL(ClientWindow)
         {
 /*#ifdef WIN32
             self().updateCanvasFormat();
-            DENG2_UNUSED(newValue);
+            DE_UNUSED(newValue);
 #else*/
             GL_SetVSync(newValue.isTrue());
 //#endif
@@ -690,7 +690,7 @@ DENG2_PIMPL(ClientWindow)
         // Maximize game to hide the "Now playing" controls.
         home->moveOffscreen(1.0);
 
-        DENG2_ASSERT(sidebar == NULL);
+        DE_ASSERT(sidebar == NULL);
 
         // Attach the widget.
         switch (location)
@@ -715,7 +715,7 @@ DENG2_PIMPL(ClientWindow)
 
     void uninstallSidebar(SidebarLocation location)
     {
-        DENG2_ASSERT(sidebar != NULL);
+        DE_ASSERT(sidebar != NULL);
 
         switch (location)
         {
@@ -732,7 +732,7 @@ DENG2_PIMPL(ClientWindow)
 
     void updateRootSize()
     {
-        DENG_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT_IN_MAIN_THREAD();
 
         needRootSizeUpdate = false;
 
@@ -769,7 +769,7 @@ DENG2_PIMPL(ClientWindow)
 
     void updateMouseCursor()
     {
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
         // The cursor is only needed if the content is warped.
         cursor->show(!self().eventHandler().isMouseTrapped() && VRConfig::modeAppliesDisplacement(vrCfg().mode()));
 
@@ -830,7 +830,7 @@ ClientWindow::ClientWindow(String const &id)
     : BaseWindow(id)
     , d(new Impl(this))
 {
-#if defined (DENG_MOBILE)
+#if defined (DE_MOBILE)
     setMain(this);
     WindowSystem::get().addWindow("main", this);
 #endif
@@ -846,7 +846,7 @@ ClientWindow::ClientWindow(String const &id)
 
     d->setupUI();
 
-#if defined (DENG_MOBILE)
+#if defined (DE_MOBILE)
     // Stay out from under the virtual keyboard.
     connect(this, &GLWindow::rootDimensionsChanged, [this] (QRect rect)
     {
@@ -941,7 +941,7 @@ void ClientWindow::preDraw()
 
     ClientApp::app().preFrame(); /// @todo what about multiwindow?
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
     LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Cursor position (if cursor is visible).
@@ -962,13 +962,13 @@ Vec2f ClientWindow::windowContentSize() const
 
 void ClientWindow::drawWindowContent()
 {
-#if defined (DENG_MOBILE)
+#if defined (DE_MOBILE)
     {
 
     }
 #endif
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
     root().draw();
     LIBGUI_ASSERT_GL_OK();
 }
@@ -976,7 +976,7 @@ void ClientWindow::drawWindowContent()
 void ClientWindow::postDraw()
 {
     /// @note This method is called during the GLWindow paintGL event.
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     BaseWindow::postDraw();
 
@@ -1022,7 +1022,7 @@ bool ClientWindow::setDefaultGLFormat() // static
 
 void ClientWindow::grab(image_t &img, bool halfSized) const
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_IN_MAIN_THREAD();
 
     QSize outputSize = (halfSized? QSize(pixelWidth()/2, pixelHeight()/2) : QSize());
     QImage grabbed = grabImage(outputSize);
@@ -1038,7 +1038,7 @@ void ClientWindow::grab(image_t &img, bool halfSized) const
             << grabbed.width() << grabbed.height()
             << grabbed.byteCount() << grabbed.depth() << grabbed.format();
 
-    DENG_ASSERT(img.pixelSize != 0);
+    DE_ASSERT(img.pixelSize != 0);
 }
 
 void ClientWindow::fadeInTaskBarBlur(TimeSpan span)
@@ -1103,24 +1103,24 @@ void ClientWindow::addOnTop(GuiWidget *widget)
 
 void ClientWindow::setSidebar(SidebarLocation location, GuiWidget *sidebar)
 {
-    DENG2_ASSERT(location == RightEdge);
+    DE_ASSERT(location == RightEdge);
 
     d->installSidebar(location, sidebar);
 }
 
 bool ClientWindow::hasSidebar(SidebarLocation location) const
 {
-    DENG2_ASSERT(location == RightEdge);
-    DENG2_UNUSED(location);
+    DE_ASSERT(location == RightEdge);
+    DE_UNUSED(location);
 
     return d->sidebar != 0;
 }
 
 GuiWidget &ClientWindow::sidebar(SidebarLocation location) const
 {
-    DENG2_ASSERT(location == RightEdge);
-    DENG2_UNUSED(location);
-    DENG2_ASSERT(d->sidebar != nullptr);
+    DE_ASSERT(location == RightEdge);
+    DE_UNUSED(location);
+    DE_ASSERT(d->sidebar != nullptr);
 
     return *d->sidebar;
 }
@@ -1141,7 +1141,7 @@ FadeToBlackWidget *ClientWindow::contentFade()
 }
 
 #undef M_ScreenShot
-DENG_EXTERN_C int M_ScreenShot(char const *name, int flags)
+DE_EXTERN_C int M_ScreenShot(char const *name, int flags)
 {
     de::String fullName(name);
     if(fullName.fileNameExtension().isEmpty())

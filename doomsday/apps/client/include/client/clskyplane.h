@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_WORLD_CLSKYPLANE_H
-#define DENG_CLIENT_WORLD_CLSKYPLANE_H
+#ifndef DE_CLIENT_WORLD_CLSKYPLANE_H
+#define DE_CLIENT_WORLD_CLSKYPLANE_H
 
 #include <de/Observers>
 
@@ -32,7 +32,7 @@ class ClSkyPlane
 {
 public:
     /// Notified whenever a @em height change occurs.
-    DENG2_DEFINE_AUDIENCE2(HeightChange, void clSkyPlaneHeightChanged(ClSkyPlane &skyPlane))
+    DE_DEFINE_AUDIENCE2(HeightChange, void clSkyPlaneHeightChanged(ClSkyPlane &skyPlane))
 
     ClSkyPlane(bool isCeiling = false, de::ddouble defaultHeight = 0);
 
@@ -66,9 +66,9 @@ public:
     void setHeight(de::ddouble newHeight);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace world
 
-#endif // DENG_CLIENT_WORLD_CLSKYPLANE_H
+#endif // DE_CLIENT_WORLD_CLSKYPLANE_H

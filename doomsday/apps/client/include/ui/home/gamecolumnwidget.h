@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_HOME_GAMECOLUMNWIDGET_H
-#define DENG_CLIENT_UI_HOME_GAMECOLUMNWIDGET_H
+#ifndef DE_CLIENT_UI_HOME_GAMECOLUMNWIDGET_H
+#define DE_CLIENT_UI_HOME_GAMECOLUMNWIDGET_H
 
 #include "columnwidget.h"
 
@@ -50,7 +50,7 @@ public:
     static const de::String SORT_TITLE;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_HOME_GAMECOLUMNWIDGET_H
+#endif // DE_CLIENT_UI_HOME_GAMECOLUMNWIDGET_H

@@ -39,10 +39,10 @@ class LIBDOOMSDAY_PUBLIC BaseMap
 {
 public:
     /// No resource manifest is associated with the map. @ingroup errors
-    DENG2_ERROR(MissingResourceManifestError);
+    DE_ERROR(MissingResourceManifestError);
 
     /// Required map object is missing. @ingroup errors
-    DENG2_ERROR(MissingObjectError);
+    DE_ERROR(MissingObjectError);
 
 public:
     /**
@@ -83,14 +83,14 @@ public:
 
     virtual void deserializeInternalState(de::Reader &from, IThinkerMapping const &);
 
-    DENG2_CAST_METHODS()
+    DE_CAST_METHODS()
 
 public:
     /// Notified when the map is about to be deleted.
-    DENG2_DEFINE_AUDIENCE2(Deletion, void mapBeingDeleted(BaseMap const &map))
+    DE_DEFINE_AUDIENCE2(Deletion, void mapBeingDeleted(BaseMap const &map))
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef de::duint16 InternalSerialId;

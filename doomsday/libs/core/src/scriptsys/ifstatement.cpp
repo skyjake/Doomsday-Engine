@@ -86,7 +86,7 @@ void IfStatement::operator >> (Writer &to) const
     to << duint16(_branches.size());
     for (Branches::const_iterator i = _branches.begin(); i != _branches.end(); ++i)
     {
-        DENG2_ASSERT(i->condition != NULL);
+        DE_ASSERT(i->condition != NULL);
         to << *i->condition << *i->compound;
     }
 

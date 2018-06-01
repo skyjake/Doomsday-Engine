@@ -37,7 +37,7 @@ using namespace de;
 
 namespace world {
 
-DENG2_PIMPL_NOREF(Subsector)
+DE_PIMPL_NOREF(Subsector)
 {
     QVector<ConvexSubspace *> subspaces;
     std::unique_ptr<AABoxd> bounds;
@@ -80,7 +80,7 @@ Subsector::Subsector(QVector<ConvexSubspace *> const &subspaces) : d(new Impl)
 
 Subsector::~Subsector()
 {
-    DENG2_FOR_AUDIENCE(Deletion, i) i->subsectorBeingDeleted(*this);
+    DE_FOR_AUDIENCE(Deletion, i) i->subsectorBeingDeleted(*this);
 }
 
 String Subsector::description() const
@@ -92,7 +92,7 @@ String Subsector::description() const
                     .arg(sector().indexInMap())
                     .arg(Rectangled(bounds().min, bounds().max).asText());
 
-    DENG2_DEBUG_ONLY(
+    DE_DEBUG_ONLY(
         desc.prepend(String(_E(b) "Subsector " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
     )
     return desc;
@@ -108,7 +108,7 @@ Sector &Subsector::sector()
     if (!d->sector)
     {
         d->sector = firstSubspace().bspLeaf().sectorPtr();
-        DENG2_ASSERT(d->sector);
+        DE_ASSERT(d->sector);
     }
     return *d->sector;
 }
@@ -118,7 +118,7 @@ Sector const &Subsector::sector() const
     if (!d->sector)
     {
         d->sector = firstSubspace().bspLeaf().sectorPtr();
-        DENG2_ASSERT(d->sector);
+        DE_ASSERT(d->sector);
     }
     return *d->sector;
 }
@@ -130,7 +130,7 @@ dint Subsector::subspaceCount() const
 
 ConvexSubspace &Subsector::firstSubspace() const
 {
-    DENG2_ASSERT(!d->subspaces.isEmpty());
+    DE_ASSERT(!d->subspaces.isEmpty());
     return *d.getConst()->subspaces.first();
 }
 

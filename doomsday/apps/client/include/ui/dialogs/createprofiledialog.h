@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_CREATEPROFILEDIALOG_H
-#define DENG_CLIENT_UI_CREATEPROFILEDIALOG_H
+#ifndef DE_CLIENT_UI_CREATEPROFILEDIALOG_H
+#define DE_CLIENT_UI_CREATEPROFILEDIALOG_H
 
 #include <doomsday/GameProfiles>
 #include <de/InputDialog>
@@ -54,7 +54,7 @@ public:
                                             GameProfile &profile);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_CREATEPROFILEDIALOG_H
+#endif // DE_CLIENT_UI_CREATEPROFILEDIALOG_H

@@ -3,8 +3,8 @@
 # Copyright (c) 2012-2014 Daniel Swanson <danij@dengine.net>
 
 cmake_minimum_required (VERSION 3.1)
-project (DENG_CLIENT)
-set (DENG_ENABLE_PK3S ON)
+project (DE_CLIENT)
+set (DE_ENABLE_PK3S ON)
 include (../../cmake/Config.cmake)
 
 # Dependencies --------------------------------------------------------------------------
@@ -19,7 +19,7 @@ endif ()
 
 # Sources and includes ------------------------------------------------------------------
 
-include_directories (include ${DENG_API_DIR})
+include_directories (include ${DE_API_DIR})
 
 add_definitions (-D__DOOMSDAY__=1 -D__CLIENT__=1)
 
@@ -44,7 +44,7 @@ deng_merge_sources (ui_home       src/ui/home/*.cpp)
 deng_merge_sources (ui_infine     src/ui/infine/*.cpp)
 deng_merge_sources (ui_widgets    src/ui/widgets/*.cpp)
 if (NOT IOS)
-    add_definitions (-DDENG_HAVE_UPDATER)
+    add_definitions (-DDE_HAVE_UPDATER)
     deng_merge_sources (updater   src/updater/*.cpp)
 endif ()
 deng_merge_sources (world         src/world/*.cpp)
@@ -71,16 +71,16 @@ endif ()
 if (AMETHYST_FOUND)
     if (APPLE)
         set (readme "${CMAKE_CURRENT_BINARY_DIR}/Read Me.html")
-        deng_add_amedoc (HTML "${readme}" ${DENG_SOURCE_DIR}/doc/readme readme.ame)
+        deng_add_amedoc (HTML "${readme}" ${DE_SOURCE_DIR}/doc/readme readme.ame)
         install (FILES ${readme} DESTINATION .)
         list (APPEND SOURCES ${readme})
     else ()
         set (readme "${CMAKE_CURRENT_BINARY_DIR}/readme.html")
-        deng_add_amedoc (HTML ${readme} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
+        deng_add_amedoc (HTML ${readme} ${DE_SOURCE_DIR}/doc/readme readme.ame)
         list (APPEND SOURCES ${readme})
         if (WIN32)
             # WIX generator requires setting this manually.
-            set_property (INSTALL "${DENG_INSTALL_DOC_DIR}/readme.html"
+            set_property (INSTALL "${DE_INSTALL_DOC_DIR}/readme.html"
                 PROPERTY CPACK_START_MENU_SHORTCUTS "Read Me"
             )
         endif ()
@@ -88,7 +88,7 @@ if (AMETHYST_FOUND)
     # Manual page.
     if (UNIX)
         set (MAN_PAGE ${CMAKE_CURRENT_BINARY_DIR}/doomsday.6)
-        deng_add_amedoc (MAN ${MAN_PAGE} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
+        deng_add_amedoc (MAN ${MAN_PAGE} ${DE_SOURCE_DIR}/doc/readme readme.ame)
         list (APPEND SOURCES ${MAN_PAGE})
     endif ()
 endif ()
@@ -191,7 +191,7 @@ if (IOS)
     )
 elseif (APPLE)
     link_framework (client PUBLIC Cocoa)
-    if (DENG_HAVE_QTKIT)
+    if (DE_HAVE_QTKIT)
         link_framework (client PUBLIC QTKit) # MusicPlayer
     endif ()
 endif ()
@@ -229,7 +229,7 @@ if (UNIX_LINUX)
     install (PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/net.dengine.Doomsday.desktop
         DESTINATION share/applications)
     install (FILES res/linux/deng-logo-256.png
-        DESTINATION ${DENG_INSTALL_DATA_DIR})
+        DESTINATION ${DE_INSTALL_DATA_DIR})
 endif ()
 
 if (WIN32)
@@ -241,10 +241,10 @@ if (WIN32)
     if (OPENSSL_DIR)
         find_file (OPENSSL_LIBEAY libeay32.dll
             PATHS ${OPENSSL_DIR}
-            PATH_SUFFIXES ${DENG_ARCH})
+            PATH_SUFFIXES ${DE_ARCH})
         find_file (OPENSSL_SSLEAY ssleay32.dll
             PATHS ${OPENSSL_DIR}
-            PATH_SUFFIXES ${DENG_ARCH})
+            PATH_SUFFIXES ${DE_ARCH})
         if (NOT OPENSSL_LIBEAY OR NOT OPENSSL_SSLEAY)
             message (FATAL_ERROR "Could not find OpenSSL libraries (libeay32.dll, ssleay32.dll)")
         endif ()
@@ -274,7 +274,7 @@ if (APPLE AND NOT IOS)
     # installed app before the plugins are there so it won't do unnecessary
     # work on them -- plugins are already self-contained.
     get_property (outName TARGET client PROPERTY OUTPUT_NAME)
-    set (stageDir "${DENG_BUILD_STAGING_DIR}/DengPlugins")
+    set (stageDir "${DE_BUILD_STAGING_DIR}/DengPlugins")
     if (IOS)
         set (destDir "${outName}.app/PlugIns")
     else ()
@@ -291,7 +291,7 @@ endif ()
 
 if (VC_REDIST_LIBS_DEBUG)
     install (PROGRAMS ${VC_REDIST_LIBS_DEBUG}
-        DESTINATION ${DENG_INSTALL_LIB_DIR}
+        DESTINATION ${DE_INSTALL_LIB_DIR}
         CONFIGURATIONS Debug
         COMPONENT libs
     )
@@ -299,7 +299,7 @@ endif ()
 
 if (VC_REDIST_LIBS)
     install (PROGRAMS ${VC_REDIST_LIBS}
-        DESTINATION ${DENG_INSTALL_LIB_DIR}
+        DESTINATION ${DE_INSTALL_LIB_DIR}
         CONFIGURATIONS Release
         COMPONENT libs
     )
@@ -315,7 +315,7 @@ if (MSVC)
     set (fn ${CMAKE_BINARY_DIR}/deployqt.bat)
     file (WRITE ${fn}
         "set PATH=\"${qtBins}\";%PATH%
-        \"${winDepCmd}\" -opengl --no-compiler-runtime --no-translations \"${DENG_VS_STAGING_DIR}/%1/bin/doomsday.exe\""
+        \"${winDepCmd}\" -opengl --no-compiler-runtime --no-translations \"${DE_VS_STAGING_DIR}/%1/bin/doomsday.exe\""
     )
     set (_intDir ${CMAKE_CFG_INTDIR})
     if (_intDir STREQUAL ".")

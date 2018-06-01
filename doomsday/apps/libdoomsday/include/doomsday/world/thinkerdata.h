@@ -39,7 +39,7 @@ class LIBDOOMSDAY_PUBLIC ThinkerData
         , public de::Deletable
 {
 public:
-    DENG2_DEFINE_AUDIENCE2(Deletion, void thinkerBeingDeleted(thinker_s &))
+    DE_DEFINE_AUDIENCE2(Deletion, void thinkerBeingDeleted(thinker_s &))
 
 public:
     ThinkerData(de::Id const &id = de::Id::none());
@@ -93,9 +93,9 @@ public:
     static ThinkerData *find(de::Id const &id);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
 public:
     struct DebugCounter {
         de::Id id;
@@ -107,18 +107,18 @@ public:
     DebugCounter _debugCounter;
 
     struct DebugValidator {
-        DebugValidator()  { DENG2_ASSERT(DebugCounter::total == 0); }
-        ~DebugValidator() { DENG2_ASSERT(DebugCounter::total == 0); }
+        DebugValidator()  { DE_ASSERT(DebugCounter::total == 0); }
+        ~DebugValidator() { DE_ASSERT(DebugCounter::total == 0); }
     };
 #endif
 };
 
-DENG2_SCRIPT_ARGUMENT_TYPE(ThinkerData *,
+DE_SCRIPT_ARGUMENT_TYPE(ThinkerData *,
     if (!arg) return ScriptLex::NONE;
     return scriptArgumentAsText(arg->objectNamespace());
 )
 
-DENG2_SCRIPT_ARGUMENT_TYPE(ThinkerData const *,
+DE_SCRIPT_ARGUMENT_TYPE(ThinkerData const *,
     if (!arg) return ScriptLex::NONE;
     return scriptArgumentAsText(arg->objectNamespace());
 )

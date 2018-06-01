@@ -42,9 +42,9 @@
 using namespace de;
 using namespace world;
 
-DENG2_PIMPL(Plane)
+DE_PIMPL(Plane)
 #ifdef __CLIENT__
-, DENG2_OBSERVES(Surface, MaterialChange)
+, DE_OBSERVES(Surface, MaterialChange)
 #endif
 {
     Surface surface;
@@ -74,7 +74,7 @@ DENG2_PIMPL(Plane)
 
     ~Impl()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->planeBeingDeleted(self());
+        DE_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->planeBeingDeleted(self());
 
 #ifdef __CLIENT__
         // Stop movement tracking of this plane.
@@ -139,19 +139,19 @@ DENG2_PIMPL(Plane)
 
     void notifyHeightChanged()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(HeightChange, i) i->planeHeightChanged(self());
+        DE_FOR_PUBLIC_AUDIENCE2(HeightChange, i) i->planeHeightChanged(self());
     }
 
 #ifdef __CLIENT__
     void notifySmoothedHeightChanged()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(HeightSmoothedChange, i) i->planeHeightSmoothedChanged(self());
+        DE_FOR_PUBLIC_AUDIENCE2(HeightSmoothedChange, i) i->planeHeightSmoothedChanged(self());
     }
 
     void surfaceMaterialChanged(Surface &suf)
     {
-        DENG2_ASSERT(&suf == &surface);
-        DENG2_UNUSED(suf);
+        DE_ASSERT(&suf == &surface);
+        DE_UNUSED(suf);
         if (!::ddMapSetup && surface.hasMaterial())
         {
             de::Uri uri = surface.material().manifest().composeUri();
@@ -160,17 +160,17 @@ DENG2_PIMPL(Plane)
     }
 #endif
 
-    DENG2_PIMPL_AUDIENCE(Deletion)
-    DENG2_PIMPL_AUDIENCE(HeightChange)
+    DE_PIMPL_AUDIENCE(Deletion)
+    DE_PIMPL_AUDIENCE(HeightChange)
 #ifdef __CLIENT__
-    DENG2_PIMPL_AUDIENCE(HeightSmoothedChange)
+    DE_PIMPL_AUDIENCE(HeightSmoothedChange)
 #endif
 };
 
-DENG2_AUDIENCE_METHOD(Plane, Deletion)
-DENG2_AUDIENCE_METHOD(Plane, HeightChange)
+DE_AUDIENCE_METHOD(Plane, Deletion)
+DE_AUDIENCE_METHOD(Plane, HeightChange)
 #ifdef __CLIENT__
-DENG2_AUDIENCE_METHOD(Plane, HeightSmoothedChange)
+DE_AUDIENCE_METHOD(Plane, HeightSmoothedChange)
 #endif
 
 Plane::Plane(Sector &sector, Vec3f const &normal, ddouble height)
@@ -192,7 +192,7 @@ String Plane::description() const
                   .arg(heightTarget())
                   .arg(speed());
 
-    DENG2_DEBUG_ONLY(
+    DE_DEBUG_ONLY(
         desc.prepend(String(_E(b) "Plane " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
     )
     return desc + "\n" + surface().description();
@@ -407,7 +407,7 @@ void Plane::addMover(ClPlaneMover &mover)
 
         map().thinkers().remove(d->mover->thinker());
 
-        DENG2_ASSERT(!d->mover);
+        DE_ASSERT(!d->mover);
     }
 
     d->mover = &mover;

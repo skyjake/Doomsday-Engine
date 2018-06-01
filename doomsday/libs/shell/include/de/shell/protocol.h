@@ -120,7 +120,7 @@ public:
     static Packet *fromBlock(Block const &block);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 /**
@@ -168,7 +168,7 @@ public:
     static Packet *fromBlock(Block const &block);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 /**
@@ -178,7 +178,7 @@ class LIBSHELL_PUBLIC Protocol : public de::Protocol
 {
 public:
     /// Type of provided packet is incorrect. @ingroup errors
-    DENG2_ERROR(TypeError);
+    DE_ERROR(TypeError);
 
     enum PacketType {
         Unknown,

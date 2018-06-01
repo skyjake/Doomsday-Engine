@@ -20,7 +20,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(GLSubBuffer)
+DE_PIMPL_NOREF(GLSubBuffer)
 {
     GLBuffer *            host = nullptr;
     Rangeui16             hostRange;
@@ -48,7 +48,7 @@ void GLSubBuffer::clear()
 
 void GLSubBuffer::setVertices(dsize count, void const *data)
 {
-    DENG2_ASSERT(count <= d->hostRange.size());
+    DE_ASSERT(count <= d->hostRange.size());
 
     dsize const elementSize = d->format.first->stride;
     d->host->setData(elementSize * d->hostRange.start, data,
@@ -58,7 +58,7 @@ void GLSubBuffer::setVertices(dsize count, void const *data)
 
 void GLSubBuffer::setBatchVertices(int batchIndex, dsize elementCount, void *data)
 {
-    DENG2_ASSERT(d->batchIndexOffset >= 0);
+    DE_ASSERT(d->batchIndexOffset >= 0);
 
     dsize const elementSize = d->format.first->stride;
     duint8 *elems = reinterpret_cast<duint8 *>(data);

@@ -28,18 +28,18 @@ namespace filesys {
         
 static const std::string PREFIX = "asset";
 
-DENG2_PIMPL(AssetObserver)
-, DENG2_OBSERVES(FileIndex, Addition)
-, DENG2_OBSERVES(FileIndex, Removal)
+DE_PIMPL(AssetObserver)
+, DE_OBSERVES(FileIndex, Addition)
+, DE_OBSERVES(FileIndex, Removal)
 {
     const std::regex pattern;
 
     static FileIndex const &linkIndex() {
-        return App::fileSystem().indexFor(DENG2_TYPE_NAME(LinkFile));
+        return App::fileSystem().indexFor(DE_TYPE_NAME(LinkFile));
     }
 
     static String assetIdentifier(File const &link) {
-        DENG2_ASSERT(link.name().beginsWith(String::fromStdString(PREFIX + ".")));
+        DE_ASSERT(link.name().beginsWith(String::fromStdString(PREFIX + ".")));
         return link.name().mid(6);
     }
 
@@ -60,7 +60,7 @@ DENG2_PIMPL(AssetObserver)
         const String ident = assetIdentifier(link);
         Loop::mainCall([this, ident]()
         {
-            DENG2_FOR_PUBLIC_AUDIENCE2(Availability, i)
+            DE_FOR_PUBLIC_AUDIENCE2(Availability, i)
             {
                 i->assetAvailabilityChanged(ident, Added);
             }
@@ -75,17 +75,17 @@ DENG2_PIMPL(AssetObserver)
         const String ident = assetIdentifier(link);
         Loop::mainCall([this, ident]()
         {
-        DENG2_FOR_PUBLIC_AUDIENCE2(Availability, i)
+            DE_FOR_PUBLIC_AUDIENCE2(Availability, i)
         {
                 i->assetAvailabilityChanged(ident, Removed);
         }
         });
     }
 
-    DENG2_PIMPL_AUDIENCE(Availability)
+    DE_PIMPL_AUDIENCE(Availability)
 };
 
-DENG2_AUDIENCE_METHOD(AssetObserver, Availability)
+DE_AUDIENCE_METHOD(AssetObserver, Availability)
 
 AssetObserver::AssetObserver(String const &regexPattern)
     : d(new Impl(this, regexPattern))

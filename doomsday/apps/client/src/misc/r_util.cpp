@@ -217,7 +217,7 @@ char const *R_NameForBlendMode(blendmode_t mode)
 }
 
 #undef R_ChooseAlignModeAndScaleFactor
-DENG_EXTERN_C dd_bool R_ChooseAlignModeAndScaleFactor(float *scale, int width, int height,
+DE_EXTERN_C dd_bool R_ChooseAlignModeAndScaleFactor(float *scale, int width, int height,
     int availWidth, int availHeight, scalemode_t scaleMode)
 {
     if(scaleMode == SCALEMODE_STRETCH)
@@ -245,7 +245,7 @@ DENG_EXTERN_C dd_bool R_ChooseAlignModeAndScaleFactor(float *scale, int width, i
 }
 
 #undef R_ChooseScaleMode2
-DENG_EXTERN_C scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight,
+DE_EXTERN_C scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight,
     scalemode_t overrideMode, float stretchEpsilon)
 {
     float const availRatio = float(availWidth) / availHeight;
@@ -263,7 +263,7 @@ DENG_EXTERN_C scalemode_t R_ChooseScaleMode2(int width, int height, int availWid
 }
 
 #undef R_ChooseScaleMode
-DENG_EXTERN_C scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight,
+DE_EXTERN_C scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight,
     scalemode_t overrideMode)
 {
     return R_ChooseScaleMode2(availWidth, availHeight, width, height, overrideMode,

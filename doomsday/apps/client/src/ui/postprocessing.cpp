@@ -34,7 +34,7 @@ using namespace de;
 
 D_CMD(PostFx);
 
-DENG2_PIMPL(PostProcessing)
+DE_PIMPL(PostProcessing)
 {
     enum { PassThroughProgram = 0, ActiveProgram = 1 };
 
@@ -64,7 +64,7 @@ DENG2_PIMPL(PostProcessing)
 
     ~Impl()
     {
-        DENG2_ASSERT(!frame.isReady()); // deinited earlier
+        DE_ASSERT(!frame.isReady()); // deinited earlier
     }
 
     void attachUniforms(GLProgram &program)
@@ -220,7 +220,7 @@ void PostProcessing::consoleRegister() // static
 
 D_CMD(PostFx)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     int console = String(argv[1]).toInt();
     String const shader = argv[2];

@@ -24,8 +24,8 @@
 
 namespace de {
 
-DENG2_PIMPL(TextApp)
-, DENG2_OBSERVES(Loop, Iteration)
+DE_PIMPL(TextApp)
+, DE_OBSERVES(Loop, Iteration)
 {
     Loop loop;
 

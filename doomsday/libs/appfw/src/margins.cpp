@@ -38,7 +38,7 @@ enum Side
     MAX_SIDES
 };
 
-DENG2_PIMPL(Margins)
+DE_PIMPL(Margins)
 {
     Rule const *inputs[4];
     IndirectRule *outputs[MAX_SIDES];
@@ -77,11 +77,11 @@ DENG2_PIMPL(Margins)
 
     void setInput(int side, Rule const &rule)
     {
-        DENG2_ASSERT(side >= 0 && side < 4);
+        DE_ASSERT(side >= 0 && side < 4);
         changeRef(inputs[side], rule);
         updateOutput(side);
 
-        DENG2_FOR_AUDIENCE(Change, i)
+        DE_FOR_AUDIENCE(Change, i)
         {
             i->marginsChanged();
         }
@@ -121,10 +121,10 @@ DENG2_PIMPL(Margins)
         return *outputs[side];
     }
 
-    DENG2_PIMPL_AUDIENCE(Change)
+    DE_PIMPL_AUDIENCE(Change)
 };
 
-DENG2_AUDIENCE_METHOD(Margins, Change)
+DE_AUDIENCE_METHOD(Margins, Change)
 
 Margins::Margins(String const &defaultMargin) : d(new Impl(this, defaultMargin))
 {}

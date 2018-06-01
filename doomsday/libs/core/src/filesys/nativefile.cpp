@@ -24,7 +24,7 @@
 
 namespace de {
 
-DENG2_PIMPL(NativeFile)
+DE_PIMPL(NativeFile)
 {
     /// Path of the native file in the OS file system.
     NativePath nativePath;
@@ -48,8 +48,8 @@ DENG2_PIMPL(NativeFile)
 
     ~Impl()
     {
-        DENG2_ASSERT(!in);
-        DENG2_ASSERT(!out);
+        DE_ASSERT(!in);
+        DE_ASSERT(!out);
     }
 
     QFile &getInput()
@@ -132,9 +132,9 @@ NativeFile::NativeFile(String const &name, NativePath const &nativePath)
 
 NativeFile::~NativeFile()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
-    DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
+    DE_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion().clear();
 
     close();
@@ -143,7 +143,7 @@ NativeFile::~NativeFile()
 
 String NativeFile::describe() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     return String("\"%1\"").arg(d->nativePath.pretty());
 }
@@ -161,32 +161,32 @@ Block NativeFile::metaId() const
 
 void NativeFile::close()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     flush();
-    DENG2_ASSERT(!d->out);
+    DE_ASSERT(!d->out);
 
     d->closeInput();
 }
 
 void NativeFile::flush()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     d->closeOutput();
-    DENG2_ASSERT(!d->out);
+    DE_ASSERT(!d->out);
 }
 
 NativePath const &NativeFile::nativePath() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     return d->nativePath;
 }
 
 void NativeFile::clear()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     File::clear();
 
@@ -198,14 +198,14 @@ void NativeFile::clear()
 
 NativeFile::Size NativeFile::size() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     return status().size;
 }
 
 void NativeFile::get(Offset at, Byte *values, Size count) const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     if (at + count > size())
     {
@@ -228,7 +228,7 @@ void NativeFile::get(Offset at, Byte *values, Size count) const
 
 void NativeFile::set(Offset at, Byte const *values, Size count)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     QFile &out = output();
     if (at > size())
@@ -265,7 +265,7 @@ NativeFile *NativeFile::newStandalone(NativePath const &nativePath)
 
 void NativeFile::setMode(Flags const &newMode)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     close();
     File::setMode(newMode);
@@ -278,14 +278,14 @@ void NativeFile::setMode(Flags const &newMode)
 
 QFile &NativeFile::input() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     return d->getInput();
 }
 
 QFile &NativeFile::output()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     return d->getOutput();
 }

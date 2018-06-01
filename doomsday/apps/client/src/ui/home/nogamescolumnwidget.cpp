@@ -64,7 +64,7 @@ void NoGamesColumnWidget::browseForDataFiles()
 {
     bool reload = false;
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
     // Use a native dialog to select the IWAD folder.
     ClientApp::app().beginNativeUIMode();
 

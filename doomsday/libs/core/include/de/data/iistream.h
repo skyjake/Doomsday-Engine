@@ -18,8 +18,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_IISTREAM_H
-#define LIBDENG2_IISTREAM_H
+#ifndef LIBCORE_IISTREAM_H
+#define LIBCORE_IISTREAM_H
 
 #include "../IByteArray"
 
@@ -40,7 +40,7 @@ class IIStream
 {
 public:
     /// Input from the stream failed. @ingroup errors
-    DENG2_ERROR(InputError);
+    DE_ERROR(InputError);
 
 public:
     virtual ~IIStream() {}
@@ -76,4 +76,4 @@ public:
 
 } // namespace de
 
-#endif // LIBDENG2_IISTREAM_H
+#endif // LIBCORE_IISTREAM_H

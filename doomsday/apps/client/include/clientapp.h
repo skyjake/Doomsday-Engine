@@ -36,8 +36,8 @@ class RenderSystem;
 class ServerLink;
 class Updater;
 
-#if !defined (DENG_MOBILE)
-#  define DENG_HAVE_BUSYRUNNER 1
+#if !defined (DE_MOBILE)
+#  define DE_HAVE_BUSYRUNNER 1
 class BusyRunner;
 #endif
 
@@ -95,7 +95,7 @@ public:
     static ClientResources &    resources();
     static ClientServerWorld &  world();
 
-#if defined (DENG_HAVE_BUSYRUNNER)
+#if defined (DE_HAVE_BUSYRUNNER)
     static BusyRunner &         busyRunner();
 #endif
 
@@ -103,7 +103,7 @@ public:
     static bool hasRenderSystem();
     static bool hasAudioSystem();
 
-#if defined (DENG_HAVE_UPDATER)
+#if defined (DE_HAVE_UPDATER)
     static Updater &updater();
 #endif
 
@@ -117,7 +117,7 @@ protected:
     void reset() override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif  // CLIENTAPP_H

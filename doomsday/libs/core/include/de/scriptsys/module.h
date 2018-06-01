@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
  
-#ifndef LIBDENG2_MODULE_H
-#define LIBDENG2_MODULE_H
+#ifndef LIBCORE_MODULE_H
+#define LIBCORE_MODULE_H
 
 #include "../String"
 
@@ -82,4 +82,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_MODULE_H */
+#endif /* LIBCORE_MODULE_H */

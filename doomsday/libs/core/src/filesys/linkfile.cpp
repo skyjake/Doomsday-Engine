@@ -21,7 +21,7 @@
 
 namespace de {
 
-DENG2_PIMPL(LinkFile)
+DE_PIMPL(LinkFile)
 {
     SafePtr<File const> target;
 
@@ -37,9 +37,9 @@ LinkFile::LinkFile(String const &name)
 
 LinkFile::~LinkFile()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
-    DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
+    DE_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion().clear();
 
     deindex();
@@ -47,7 +47,7 @@ LinkFile::~LinkFile()
 
 File const &LinkFile::target() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     if (d->target)
     {
@@ -58,7 +58,7 @@ File const &LinkFile::target() const
 
 File &LinkFile::target()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     if (d->target)
     {
@@ -79,14 +79,14 @@ Folder *LinkFile::targetFolder()
 
 void LinkFile::setTarget(File const &file)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     d->target.reset(&file);
 }
 
 void LinkFile::setTarget(File const *fileOrNull)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     d->target.reset(fileOrNull);
 }
@@ -98,11 +98,11 @@ bool LinkFile::isBroken() const
 
 String LinkFile::describe() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     if (!isBroken())
     {
-        DENG2_GUARD_FOR(target(), G);
+        DE_GUARD_FOR(target(), G);
         return "link to " + target().description();
     }
     return "broken link";

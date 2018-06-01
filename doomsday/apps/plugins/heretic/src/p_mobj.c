@@ -1296,7 +1296,7 @@ void P_RepositionMace(mobj_t *mo)
         return;
     }
 
-    DENG_ASSERT(mo && mo->type == MT_WMACE);
+    DE_ASSERT(mo && mo->type == MT_WMACE);
     App_Log(DE2_DEV_MAP_MSG, "P_RepositionMace: Repositioning mobj [%p], thinkerId:%i", mo, mo->thinker.id);
 
     mapSpot = P_ChooseRandomMaceSpot();

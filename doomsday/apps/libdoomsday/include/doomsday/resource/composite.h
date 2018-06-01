@@ -187,7 +187,7 @@ public:
     void setFlags(Flags flagsToChange, de::FlagOp operation = de::SetFlags);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Composite::Flags)

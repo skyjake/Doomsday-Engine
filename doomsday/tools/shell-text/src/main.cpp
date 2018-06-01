@@ -27,8 +27,8 @@ int main(int argc, char *argv[])
         ShellApp a(argc, argv);
         result = a.exec();
     }
-#ifdef DENG2_DEBUG
-    DENG2_ASSERT(de::Counted::totalCount == 0);
+#ifdef DE_DEBUG
+    DE_ASSERT(de::Counted::totalCount == 0);
 #endif
     return result;
 }

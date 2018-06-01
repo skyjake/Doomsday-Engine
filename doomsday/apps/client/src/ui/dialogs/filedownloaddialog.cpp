@@ -23,8 +23,8 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(FileDownloadDialog)
-, DENG2_OBSERVES(shell::PackageDownloader, Status)
+DE_GUI_PIMPL(FileDownloadDialog)
+, DE_OBSERVES(shell::PackageDownloader, Status)
 {
     shell::PackageDownloader &downloader;
     String message = tr("Downloading data files...");
@@ -36,8 +36,8 @@ DENG_GUI_PIMPL(FileDownloadDialog)
         downloader.audienceForStatus() += this;
 
         self().progressIndicator().setText(tr("%1\n" _E(l)_E(F) "%2"
-                                              DENG2_CHAR_MDASH " files / "
-                                              DENG2_CHAR_MDASH " MB")
+                                              DE_CHAR_MDASH " files / "
+                                              DE_CHAR_MDASH " MB")
                                            .arg(message)
                                            .arg(_E(l)));
     }
@@ -52,7 +52,7 @@ DENG_GUI_PIMPL(FileDownloadDialog)
         indicator.setText(tr("%1\n" _E(l)_E(F) "%2 file%3 / %4 MB")
                           .arg(message)
                           .arg(files.start)
-                          .arg(DENG2_PLURAL_S(files.start))
+                          .arg(DE_PLURAL_S(files.start))
                           .arg(bytes.start/1.0e6, 0, 'f', 1));
     }
 };

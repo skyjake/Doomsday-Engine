@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_SKY_H
-#define DENG_WORLD_SKY_H
+#ifndef DE_WORLD_SKY_H
+#define DE_WORLD_SKY_H
 
 #include <functional>
 #include <de/libcore.h>
@@ -43,13 +43,13 @@ class Sky : public MapElement
 {
 public:
     /// Notified when the sky is about to be deleted.
-    DENG2_DEFINE_AUDIENCE2(Deletion,            void skyBeingDeleted(Sky const &sky))
+    DE_DEFINE_AUDIENCE2(Deletion,            void skyBeingDeleted(Sky const &sky))
 
     /// Notified whenever the height changes.
-    DENG2_DEFINE_AUDIENCE2(HeightChange,        void skyHeightChanged(Sky &sky))
+    DE_DEFINE_AUDIENCE2(HeightChange,        void skyHeightChanged(Sky &sky))
 
     /// Notified whenever the horizon offset changes.
-    DENG2_DEFINE_AUDIENCE2(HorizonOffsetChange, void skyHorizonOffsetChanged(Sky &sky))
+    DE_DEFINE_AUDIENCE2(HorizonOffsetChange, void skyHorizonOffsetChanged(Sky &sky))
 
     explicit Sky(defn::Sky const *definition = nullptr);
 
@@ -108,7 +108,7 @@ public:
 //- Layers ------------------------------------------------------------------------------
 
     /// Thrown when the required/referenced layer is missing. @ingroup errors
-    DENG2_ERROR(MissingLayerError);
+    DE_ERROR(MissingLayerError);
 
     /**
      * Multiple layers can be used for parallax effects.
@@ -117,13 +117,13 @@ public:
     {
     public:
         /// Notified whenever the active-state changes.
-        DENG2_DEFINE_AUDIENCE2(ActiveChange,   void skyLayerActiveChanged(Layer &layer))
+        DE_DEFINE_AUDIENCE2(ActiveChange,   void skyLayerActiveChanged(Layer &layer))
 
         /// Notified whenever the masked-state changes.
-        DENG2_DEFINE_AUDIENCE2(MaskedChange,   void skyLayerMaskedChanged(Layer &layer))
+        DE_DEFINE_AUDIENCE2(MaskedChange,   void skyLayerMaskedChanged(Layer &layer))
 
         /// Notified whenever the layer material changes.
-        DENG2_DEFINE_AUDIENCE2(MaterialChange, void skyLayerMaterialChanged(Layer &layer))
+        DE_DEFINE_AUDIENCE2(MaterialChange, void skyLayerMaterialChanged(Layer &layer))
 
     public:
         /**
@@ -205,7 +205,7 @@ public:
         void setFadeoutLimit(de::dfloat newLimit);
 
     private:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
     /**
@@ -264,11 +264,11 @@ protected:
     de::dint setProperty(world::DmuArgs const &args);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef Sky::Layer SkyLayer;
 
 } // namespace world
 
-#endif // DENG_WORLD_SKY_H
+#endif // DE_WORLD_SKY_H

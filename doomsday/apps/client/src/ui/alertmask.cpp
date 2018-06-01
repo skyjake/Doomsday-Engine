@@ -23,8 +23,8 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(AlertMask)
-, DENG2_OBSERVES(Variable, Change)
+DE_PIMPL_NOREF(AlertMask)
+, DE_OBSERVES(Variable, Change)
 {
     duint32 mask[LogEntry::HighestLogLevel + 1];
 

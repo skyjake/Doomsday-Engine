@@ -168,7 +168,7 @@ dfloat fieldOfView = 95.0f;
 dbyte smoothTexAnim = true;
 
 dint renderTextures = true;
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
 dint renderWireframe;
 #endif
 
@@ -551,8 +551,8 @@ Mat4f Rend_GetModelViewMatrix(dint consoleNum, bool inWorldSpace)
 
 void Rend_ModelViewMatrix(bool inWorldSpace)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_LoadMatrix(
@@ -857,7 +857,7 @@ void Rend_AddMaskedPoly(Vec3f const *rvertices, Vec4f const *rcolors,
 
 static void quadTexCoords(Vec2f *tc, Vec3f const *rverts, coord_t wallLength, Vec3d const &topLeft)
 {
-    DENG2_ASSERT(tc && rverts);
+    DE_ASSERT(tc && rverts);
     tc[0].x = tc[1].x = rverts[0].x - topLeft.x;
     tc[3].y = tc[1].y = rverts[0].y - topLeft.y;
     tc[3].x = tc[2].x = tc[0].x + wallLength;
@@ -992,7 +992,7 @@ static void lightWallOrFlatGeometry(Geometry &verts, duint numVertices, Vec3f co
     }
 
     // Apply torch light?
-    DENG2_ASSERT(::viewPlayer);
+    DE_ASSERT(::viewPlayer);
     if (::viewPlayer->publicData().fixedColorMap)
     {
         for (duint i = 0; i < numVertices; ++i)
@@ -1007,7 +1007,7 @@ static void makeFlatGeometry(Geometry &verts, duint numVertices, Vec3f const *po
     Mat3f const &surfaceTangents, dfloat uniformOpacity, Vec3f const &color, Vec3f const *color2,
     dfloat glowing, dfloat const luminosityDeltas[2], bool useVertexLighting = true)
 {
-    DENG2_ASSERT(posCoords);
+    DE_ASSERT(posCoords);
 
     for (duint i = 0; i < numVertices; ++i)
     {
@@ -1044,7 +1044,7 @@ static void makeWallGeometry(Geometry &verts, duint numVertices, Vec3f const *po
     Vec3f const &color, Vec3f const *color2, dfloat glowing, dfloat const luminosityDeltas[2],
     bool useVertexLighting = true)
 {
-    DENG2_ASSERT(posCoords);
+    DE_ASSERT(posCoords);
 
     for (duint i = 0; i < numVertices; ++i)
     {
@@ -1081,7 +1081,7 @@ static inline dfloat shineVertical(dfloat dy, dfloat dx)
 static void makeFlatShineGeometry(Geometry &verts, duint numVertices, Vec3f const *posCoords,
     Geometry const &mainVerts, Vec3f const &shineColor, dfloat shineOpacity)
 {
-    DENG2_ASSERT(posCoords);
+    DE_ASSERT(posCoords);
 
     for (duint i = 0; i < numVertices; ++i)
     {
@@ -1109,7 +1109,7 @@ static void makeFlatShineGeometry(Geometry &verts, duint numVertices, Vec3f cons
 static void makeWallShineGeometry(Geometry &verts, duint numVertices, Vec3f const *posCoords,
     Geometry const &mainVerts, coord_t sectionWidth, Vec3f const &shineColor, dfloat shineOpactiy)
 {
-    DENG2_ASSERT(posCoords);
+    DE_ASSERT(posCoords);
 
     Vec3f const &topLeft     = posCoords[1];
     Vec3f const &bottomRight = posCoords[2];
@@ -1169,7 +1169,7 @@ static void makeFlatShadowGeometry(Geometry &verts, Vec3d const &topLeft, Vec3d 
     duint numVertices, Vec3f const *posCoords,
     ProjectedTextureData const &tp)
 {
-    DENG2_ASSERT(posCoords);
+    DE_ASSERT(posCoords);
 
     Vec4f const colorClamped = tp.color.min(Vec4f(1, 1, 1, 1)).max(Vec4f(0, 0, 0, 0));
     for (duint i = 0; i < numVertices; ++i)
@@ -1196,7 +1196,7 @@ static void makeWallShadowGeometry(Geometry &verts, Vec3d const &/*topLeft*/, Ve
     duint numVertices, Vec3f const *posCoords, WallEdge const &leftEdge, WallEdge const &rightEdge,
     ProjectedTextureData const &tp)
 {
-    DENG2_ASSERT(posCoords);
+    DE_ASSERT(posCoords);
 
     Vec4f const colorClamped = tp.color.min(Vec4f(1, 1, 1, 1)).max(Vec4f(0, 0, 0, 0));
     for (duint i = 0; i < numVertices; ++i)
@@ -1233,7 +1233,7 @@ static void makeFlatLightGeometry(Geometry &verts, Vec3d const &topLeft, Vec3d c
     duint numVertices, Vec3f const *posCoords,
     ProjectedTextureData const &tp)
 {
-    DENG2_ASSERT(posCoords);
+    DE_ASSERT(posCoords);
 
     Vec4f const colorClamped = tp.color.min(Vec4f(1, 1, 1, 1)).max(Vec4f(0, 0, 0, 0));
     for (duint i = 0; i < numVertices; ++i)
@@ -1259,7 +1259,7 @@ static void makeWallLightGeometry(Geometry &verts, Vec3d const &/*topLeft*/, Vec
     duint numVertices, Vec3f const *posCoords, WallEdge const &leftEdge, WallEdge const &rightEdge,
     ProjectedTextureData const &tp)
 {
-    DENG2_ASSERT(posCoords);
+    DE_ASSERT(posCoords);
 
     Vec4f const colorClamped = tp.color.min(Vec4f(1, 1, 1, 1)).max(Vec4f(0, 0, 0, 0));
     for (duint i = 0; i < numVertices; ++i)
@@ -1294,7 +1294,7 @@ static void makeWallLightGeometry(Geometry &verts, Vec3d const &/*topLeft*/, Vec
 
 static dfloat averageLuminosity(Vec4f const *rgbaValues, duint count)
 {
-    DENG2_ASSERT(rgbaValues);
+    DE_ASSERT(rgbaValues);
     dfloat avg = 0;
     for (duint i = 0; i < count; ++i)
     {
@@ -1339,7 +1339,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
 {
     using Parm = DrawList::PrimitiveParams;
 
-    DENG2_ASSERT(rvertices);
+    DE_ASSERT(rvertices);
 
     static DrawList::Indices indices;
 
@@ -1389,7 +1389,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
 
     if (drawAsVisSprite)
     {
-        DENG2_ASSERT(p.isWall);
+        DE_ASSERT(p.isWall);
 
         // This is needed because all masked polys must be sorted (sprites are masked polys).
         // Otherwise there will be artifacts.
@@ -1501,7 +1501,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                 // Walls with edge divisions mean two trifans.
                 if (mustSubdivide)
                 {
-                    DENG2_ASSERT(p.isWall);
+                    DE_ASSERT(p.isWall);
                     duint const numLeftVerts  = 3 + p.wall.leftEdge ->divisionCount();
                     duint const numRightVerts = 3 + p.wall.rightEdge->divisionCount();
 
@@ -1595,7 +1595,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
             // Walls with edge divisions mean two trifans.
             if (mustSubdivide)
             {
-                DENG2_ASSERT(p.isWall);
+                DE_ASSERT(p.isWall);
                 duint const numLeftVerts  = 3 + p.wall.leftEdge ->divisionCount();
                 duint const numRightVerts = 3 + p.wall.rightEdge->divisionCount();
 
@@ -1653,7 +1653,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
     // Walls with edge divisions mean two trifans.
     if (mustSubdivide)
     {
-        DENG2_ASSERT(p.isWall);
+        DE_ASSERT(p.isWall);
         duint const numLeftVerts  = 3 + p.wall.leftEdge ->divisionCount();
         duint const numRightVerts = 3 + p.wall.rightEdge->divisionCount();
 
@@ -1797,7 +1797,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                     }
                     if ((primFlags & (Parm::OneLight | Parm::ManyLights)) && Rend_IsMTexLights())
                     {
-                        DENG2_ASSERT(modTexCoords);
+                        DE_ASSERT(modTexCoords);
                         buffer.modCoords[indices[i]] = modTexCoords[numLeftVerts + i];
                     }
                 }
@@ -1836,7 +1836,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                     }
                     if ((primFlags & (Parm::OneLight | Parm::ManyLights)) && Rend_IsMTexLights())
                     {
-                        DENG2_ASSERT(modTexCoords);
+                        DE_ASSERT(modTexCoords);
                         buffer.modCoords[indices[i]] = modTexCoords[i];
                     }
                 }
@@ -1952,7 +1952,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                 }
                 if ((primFlags & (Parm::OneLight | Parm::ManyLights)) && Rend_IsMTexLights())
                 {
-                    DENG2_ASSERT(modTexCoords);
+                    DE_ASSERT(modTexCoords);
                     buffer.modCoords[indices[i]] = modTexCoords[i];
                 }
             }
@@ -2025,7 +2025,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
         // Walls with edge divisions mean two trifans.
         if (mustSubdivide)
         {
-            DENG2_ASSERT(p.isWall);
+            DE_ASSERT(p.isWall);
             duint const numLeftVerts  = 3 + p.wall.leftEdge ->divisionCount();
             duint const numRightVerts = 3 + p.wall.rightEdge->divisionCount();
 
@@ -2326,7 +2326,7 @@ static void projectDynamics(Surface const &surface, dfloat glowStrength,
     bool noLights, bool noShadows, bool sortLights,
     duint &lightListIdx, duint &shadowListIdx)
 {
-    DENG2_ASSERT(curSubspace);
+    DE_ASSERT(curSubspace);
 
     if (levelFullBright) return;
     if (glowStrength >= 1) return;
@@ -2640,7 +2640,7 @@ static void wallLuminosityDeltas(WallEdge const &leftEdge, WallEdge const &right
 static void writeWall(WallEdge const &leftEdge, WallEdge const &rightEdge,
     bool *retWroteOpaque = nullptr, coord_t *retBottomZ = nullptr, coord_t *retTopZ = nullptr)
 {
-    DENG2_ASSERT(leftEdge.lineSideSegment().isFrontFacing() && leftEdge.lineSide().hasSections());
+    DE_ASSERT(leftEdge.lineSideSegment().isFrontFacing() && leftEdge.lineSide().hasSections());
 
     if (retWroteOpaque) *retWroteOpaque = false;
     if (retBottomZ)     *retBottomZ     = 0;
@@ -2788,7 +2788,7 @@ static void writeWall(WallEdge const &leftEdge, WallEdge const &rightEdge,
 static duint buildSubspacePlaneGeometry(ClockDirection direction, coord_t height,
     Vec3f **verts)
 {
-    DENG2_ASSERT(verts);
+    DE_ASSERT(verts);
 
     Face const &poly       = curSubspace->poly();
     HEdge *fanBase         = curSubspace->fanBase();
@@ -2960,7 +2960,7 @@ static void writeSubspacePlane(Plane &plane)
 static void writeSkyMaskStrip(dint vertCount, Vec3f const *posCoords, Vec2f const *texCoords,
     Material *material)
 {
-    DENG2_ASSERT(posCoords);
+    DE_ASSERT(posCoords);
 
     static DrawList::Indices indices;
 
@@ -2979,13 +2979,13 @@ static void writeSkyMaskStrip(dint vertCount, Vec3f const *posCoords, Vec2f cons
     }
     else
     {
-        DENG2_ASSERT(texCoords);
+        DE_ASSERT(texCoords);
 
         DrawListSpec listSpec;
         listSpec.group = UnlitGeom;
         if (renderTextures != 2)
         {
-            DENG2_ASSERT(material);
+            DE_ASSERT(material);
             MaterialAnimator &matAnimator = material->as<ClientMaterial>().getAnimator(Rend_MapSurfaceMaterialSpec());
 
             // Ensure we've up to date info about the material.
@@ -3197,7 +3197,7 @@ static uint makeFlatSkyMaskGeometry(DrawList::Indices &indices, Store &verts, gl
 /// @param skyCap  @ref skyCapFlags
 static void writeSubspaceSkyMask(dint skyCap = SKYCAP_LOWER | SKYCAP_UPPER)
 {
-    DENG2_ASSERT(::curSubspace);
+    DE_ASSERT(::curSubspace);
 
     // No work to do?
     if (!skyCap) return;
@@ -3385,9 +3385,9 @@ static void writeAllWalls(HEdge &hedge)
 
 static void writeSubspaceWalls()
 {
-    DENG2_ASSERT(::curSubspace);
+    DE_ASSERT(::curSubspace);
     HEdge *base  = ::curSubspace->poly().hedge();
-    DENG2_ASSERT(base);
+    DE_ASSERT(base);
     HEdge *hedge = base;
     do
     {
@@ -3415,7 +3415,7 @@ static void writeSubspaceWalls()
 
 static void writeSubspaceFlats()
 {
-    DENG2_ASSERT(::curSubspace);
+    DE_ASSERT(::curSubspace);
     auto &subsec = ::curSubspace->subsector().as<world::ClientSubsector>();
     for (dint i = 0; i < subsec.visPlaneCount(); ++i)
     {
@@ -3439,10 +3439,10 @@ static void markFrontFacingWalls(HEdge &hedge)
 
 static void markSubspaceFrontFacingWalls()
 {
-    DENG2_ASSERT(::curSubspace);
+    DE_ASSERT(::curSubspace);
 
     HEdge *base  = ::curSubspace->poly().hedge();
-    DENG2_ASSERT(base);
+    DE_ASSERT(base);
     HEdge *hedge = base;
     do
     {
@@ -3487,7 +3487,7 @@ static void occludeSubspace(bool frontFacing)
 
     auto const &subsec = ::curSubspace->subsector().as<world::ClientSubsector>();
     HEdge const *base  = ::curSubspace->poly().hedge();
-    DENG2_ASSERT(base);
+    DE_ASSERT(base);
     HEdge const *hedge = base;
     do
     {
@@ -3558,7 +3558,7 @@ static void occludeSubspace(bool frontFacing)
 
 static void clipSubspaceLumobjs()
 {
-    DENG2_ASSERT(::curSubspace);
+    DE_ASSERT(::curSubspace);
     ::curSubspace->forAllLumobjs([] (Lumobj &lob)
     {
         R_ViewerClipLumobj(&lob);
@@ -3573,7 +3573,7 @@ static void clipSubspaceLumobjs()
  */
 static void clipSubspaceLumobjsBySight()
 {
-    DENG2_ASSERT(::curSubspace);
+    DE_ASSERT(::curSubspace);
 
     // Any work to do?
     if (!::curSubspace->polyobjCount())
@@ -3604,10 +3604,10 @@ static void clipFrontFacingWalls(HEdge &hedge)
 
 static void clipSubspaceFrontFacingWalls()
 {
-    DENG2_ASSERT(::curSubspace);
+    DE_ASSERT(::curSubspace);
 
     HEdge *base  = ::curSubspace->poly().hedge();
-    DENG2_ASSERT(base);
+    DE_ASSERT(base);
     HEdge *hedge = base;
     do
     {
@@ -3635,7 +3635,7 @@ static void clipSubspaceFrontFacingWalls()
 
 static void projectSubspaceSprites()
 {
-    DENG2_ASSERT(::curSubspace);
+    DE_ASSERT(::curSubspace);
 
     // Do not use validCount because other parts of the renderer may change it.
     if (::curSubspace->lastSpriteProjectFrame() == R_FrameCount())
@@ -3692,7 +3692,7 @@ static void projectSubspaceSprites()
  */
 static void drawCurrentSubspace()
 {
-    DENG2_ASSERT(curSubspace);
+    DE_ASSERT(curSubspace);
 
     Sector &sector = ::curSubspace->sector();
 
@@ -3765,7 +3765,7 @@ static void makeCurrent(ConvexSubspace &subspace)
 
 static void traverseBspTreeAndDrawSubspaces(BspTree const *bspTree)
 {
-    DENG2_ASSERT(bspTree);
+    DE_ASSERT(bspTree);
     AngleClipper const &clipper = ClientApp::renderSystem().angleClipper();
 
     while (!bspTree->isLeaf())
@@ -3792,7 +3792,7 @@ static void traverseBspTreeAndDrawSubspaces(BspTree const *bspTree)
     // Only leafs with a convex subspace geometry contain surfaces to draw.
     if (ConvexSubspace *subspace = bspTree->userData()->as<BspLeaf>().subspacePtr())
     {
-        DENG2_ASSERT(subspace->hasSubsector());
+        DE_ASSERT(subspace->hasSubsector());
 
         // Skip zero-volume subspaces.
         // (Neighbors handle the angle clipper ranges.)
@@ -4404,7 +4404,7 @@ static void drawSky()
 
 static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = false)
 {
-    DENG2_ASSERT(spr);
+    DE_ASSERT(spr);
 
     if (primary && (spr->data.flare.flags & RFF_NO_PRIMARY))
     {
@@ -4516,9 +4516,9 @@ static void drawMasked()
  */
 static void drawAllLists(Map &map)
 {
-    DENG2_ASSERT(!Sys_GLCheckError());
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT(!Sys_GLCheckError());
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     drawSky();
 
@@ -4714,7 +4714,7 @@ static void drawAllLists(Map &map)
         DGL_Disable(DGL_FOG);
     }
 
-    DENG2_ASSERT(!Sys_GLCheckError());
+    DE_ASSERT(!Sys_GLCheckError());
 }
 
 void Rend_RenderMap(Map &map)
@@ -4835,7 +4835,7 @@ static void drawLabel(String const &label, Vec3d const &origin, ddouble maxDista
     ddouble const distToEye = (Rend_EyeOrigin().xzy() - origin).length();
     if (distToEye < maxDistance)
     {
-        drawLabel(label, origin, distToEye / (DENG_GAMEVIEW_WIDTH / 2), 1 - distToEye / maxDistance);
+        drawLabel(label, origin, distToEye / (DE_GAMEVIEW_WIDTH / 2), 1 - distToEye / maxDistance);
     }
 }
 
@@ -4911,7 +4911,7 @@ static void drawBiasEditingVisuals(Map &map)
         grabbedColor = Vec4f(.7f, .7f, .5f, .4f);
 
     BiasSource *nearSource = map.biasSourceNear(hand.origin());
-    DENG2_ASSERT(nearSource);
+    DE_ASSERT(nearSource);
 
     if ((hand.origin() - nearSource->origin()).length() > 2 * handDistance)
     {
@@ -5054,7 +5054,7 @@ void Rend_UpdateLightModMatrix()
         lightModRange[i] = lightlevel / 255.0f;
 
         // Ensure the resultant value never exceeds the expected [0..1] range.
-        DENG2_ASSERT(INRANGE_OF(i / 255.0f + lightModRange[i], 0.f, 1.f));
+        DE_ASSERT(INRANGE_OF(i / 255.0f + lightModRange[i], 0.f, 1.f));
     }
 }
 
@@ -5081,7 +5081,7 @@ void Rend_DrawLightModMatrix()
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
     DGL_LoadIdentity();
-    DGL_Ortho(0, 0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, -1, 1);
+    DGL_Ortho(0, 0, DE_GAMEVIEW_WIDTH, DE_GAMEVIEW_HEIGHT, -1, 1);
 
     DGL_Translatef(BORDER, BORDER, 0);
 
@@ -5266,7 +5266,7 @@ static void drawMobjBBox(mobj_t &mob)
         return;
 
     ddouble const distToEye = (eyeOrigin - Mobj_Origin(mob)).length();
-    dfloat alpha = 1 - ((distToEye / (DENG_GAMEVIEW_WIDTH/2)) / 4);
+    dfloat alpha = 1 - ((distToEye / (DE_GAMEVIEW_WIDTH/2)) / 4);
     if (alpha < .25f)
         alpha = .25f; // Don't make them totally invisible.
 
@@ -5343,7 +5343,7 @@ static void drawMobjBoundingBoxes(Map &map)
                          sec.floor().height());
 
             ddouble const distToEye = (eyeOrigin - pos).length();
-            dfloat alpha = 1 - ((distToEye / (DENG_GAMEVIEW_WIDTH/2)) / 4);
+            dfloat alpha = 1 - ((distToEye / (DE_GAMEVIEW_WIDTH/2)) / 4);
             if (alpha < .25f)
                 alpha = .25f; // Don't make them totally invisible.
 
@@ -5727,7 +5727,7 @@ static void drawGenerator(Generator const &gen)
         ddouble const distToEye = (eyeOrigin - origin).length();
         if (distToEye < MAX_GENERATOR_DIST)
         {
-            drawLabel(labelForGenerator(gen), origin, distToEye / (DENG_GAMEVIEW_WIDTH / 2)
+            drawLabel(labelForGenerator(gen), origin, distToEye / (DE_GAMEVIEW_WIDTH / 2)
                       , 1 - distToEye / MAX_GENERATOR_DIST);
         }
     }
@@ -5778,7 +5778,7 @@ static void drawBar(Vec3d const &origin, coord_t height, dfloat opacity)
 
 static String labelForVertex(Vertex const *vtx)
 {
-    DENG2_ASSERT(vtx);
+    DE_ASSERT(vtx);
     return String("%1").arg(vtx->indexInMap());
 }
 
@@ -5830,7 +5830,7 @@ static void drawVertexVisual(Vertex const &vertex, ddouble minHeight, ddouble ma
         DGL_Disable(DGL_DEPTH_TEST);
         DGL_Enable(DGL_TEXTURE_2D);
 
-        drawLabel(labelForVertex(&vertex), origin, distToEye / (DENG_GAMEVIEW_WIDTH / 2), opacity);
+        drawLabel(labelForVertex(&vertex), origin, distToEye / (DE_GAMEVIEW_WIDTH / 2), opacity);
 
         DGL_Enable(DGL_DEPTH_TEST);
         DGL_Disable(DGL_TEXTURE_2D);
@@ -5955,7 +5955,7 @@ static void drawVertexes(Map &map)
     {
         DGL_Disable(DGL_DEPTH_TEST);
 
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
         LIBGUI_GL.glEnable(GL_LINE_SMOOTH);
 #endif
         oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
@@ -5985,7 +5985,7 @@ static void drawVertexes(Map &map)
     // Draw the vertex origins.
     dfloat const oldPointSize = DGL_GetFloat(DGL_POINT_SIZE);
 
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     LIBGUI_GL.glEnable(GL_POINT_SMOOTH);
 #endif
     DGL_SetFloat(DGL_POINT_SIZE, 6);
@@ -6039,12 +6039,12 @@ static void drawVertexes(Map &map)
     if (devVertexBars)
     {
         DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
         LIBGUI_GL.glDisable(GL_LINE_SMOOTH);
 #endif
     }
     DGL_SetFloat(DGL_POINT_SIZE, oldPointSize);
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     LIBGUI_GL.glDisable(GL_POINT_SMOOTH);
 #endif
 
@@ -6082,7 +6082,7 @@ static void drawSectors(Map &map)
             ddouble const distToEye = (eyeOrigin - origin).length();
             if (distToEye < MAX_LABEL_DIST)
             {
-                drawLabel(labelForSubsector(subsec), origin, distToEye / (DENG_GAMEVIEW_WIDTH / 2)
+                drawLabel(labelForSubsector(subsec), origin, distToEye / (DE_GAMEVIEW_WIDTH / 2)
                           , 1 - distToEye / MAX_LABEL_DIST);
             }
             return LoopContinue;
@@ -6095,7 +6095,7 @@ static void drawSectors(Map &map)
 
 static String labelForThinker(thinker_t *thinker)
 {
-    DENG2_ASSERT(thinker);
+    DE_ASSERT(thinker);
     return String("%1").arg(thinker->id);
 }
 
@@ -6125,7 +6125,7 @@ static void drawThinkers(Map &map)
             ddouble const distToEye = (eyeOrigin - origin).length();
             if (distToEye < MAX_THINKER_DIST)
             {
-                drawLabel(labelForThinker(th), origin,  distToEye / (DENG_GAMEVIEW_WIDTH / 2)
+                drawLabel(labelForThinker(th), origin,  distToEye / (DE_GAMEVIEW_WIDTH / 2)
                           , 1 - distToEye / MAX_THINKER_DIST);
             }
         }
@@ -6145,8 +6145,8 @@ void Rend_LightGridVisual(LightGrid &lg)
     // Disabled?
     if (!devLightGrid) return;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Determine the grid reference of the view player.
     LightGrid::Index viewerGridIndex = 0;
@@ -6160,7 +6160,7 @@ void Rend_LightGridVisual(LightGrid &lg)
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
     DGL_LoadIdentity();
-    DGL_Ortho(0, 0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, -1, 1);
+    DGL_Ortho(0, 0, DE_GAMEVIEW_WIDTH, DE_GAMEVIEW_HEIGHT, -1, 1);
 
     for (dint y = 0; y < lg.dimensions().y; ++y)
     {
@@ -6234,7 +6234,7 @@ TextureVariantSpec const &Rend_MapSurfaceShinyMaskTextureSpec()
 
 D_CMD(OpenRendererAppearanceEditor)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     if (!App_GameLoaded())
     {
@@ -6254,7 +6254,7 @@ D_CMD(OpenRendererAppearanceEditor)
 
 D_CMD(OpenModelAssetEditor)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     if (!App_GameLoaded())
     {
@@ -6272,7 +6272,7 @@ D_CMD(OpenModelAssetEditor)
 
 D_CMD(LowRes)
 {
-    DENG2_UNUSED3(src, argv, argc);
+    DE_UNUSED(src, argv, argc);
 
     // Set everything as low as they go.
     filterSprites = 0;
@@ -6289,7 +6289,7 @@ D_CMD(LowRes)
 
 D_CMD(MipMap)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     dint newMipMode = String(argv[1]).toInt();
     if (newMipMode < 0 || newMipMode > 5)
@@ -6305,7 +6305,7 @@ D_CMD(MipMap)
 
 D_CMD(TexReset)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if (argc == 2 && !String(argv[1]).compareWithoutCase("raw"))
     {

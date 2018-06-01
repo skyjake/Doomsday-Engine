@@ -37,7 +37,7 @@ public:
     typedef std::function<void (de::String const &, QVariant const &)> AssignmentFunc;
     typedef std::function<void (de::String const &, Block const &)> BlockFunc;
 
-    DENG2_ERROR(SyntaxError);
+    DE_ERROR(SyntaxError);
 
 public:
     UDMFParser();

@@ -35,7 +35,7 @@ class DialogWidget;
  */
 class LIBAPPFW_PUBLIC DialogContentStylist
         : public ui::Stylist,
-          DENG2_OBSERVES(Widget, ChildAddition)
+          DE_OBSERVES(Widget, ChildAddition)
 {
 public:
     DialogContentStylist();
@@ -65,7 +65,7 @@ public:
     void widgetChildAdded(Widget &child);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

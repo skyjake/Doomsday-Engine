@@ -32,7 +32,7 @@
 using namespace de;
 using namespace gloom;
 
-DENG2_PIMPL(GloomApp)
+DE_PIMPL(GloomApp)
 {
     ImageBank                        images;
     std::unique_ptr<EditorWindow>    editWin;
@@ -63,7 +63,7 @@ DENG2_PIMPL(GloomApp)
         // Load all the shader program definitions.
         FS::FoundFiles found;
         self().findInPackages("shaders.dei", found);
-        DENG2_FOR_EACH(FS::FoundFiles, i, found)
+        DE_FOR_EACH(FS::FoundFiles, i, found)
         {
             LOG_MSG("Loading shader definitions from %s") << (*i)->description();
             self().shaders().addFromInfo(**i);
@@ -166,7 +166,7 @@ QDir GloomApp::userDir() const
 
 GloomApp &GloomApp::app()
 {
-    return *static_cast<GloomApp *>(DENG2_APP);
+    return *static_cast<GloomApp *>(DE_APP);
 }
 
 AppWindowSystem &GloomApp::windowSystem()

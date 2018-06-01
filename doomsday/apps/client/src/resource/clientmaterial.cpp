@@ -33,7 +33,7 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(ClientMaterial::Decoration)
+DE_PIMPL_NOREF(ClientMaterial::Decoration)
 {
     ClientMaterial *material = nullptr;  ///< Owning Material.
     Vec2i patternSkip;          ///< Pattern skip intervals.
@@ -54,13 +54,13 @@ ClientMaterial::Decoration::~Decoration()
 
 ClientMaterial &ClientMaterial::Decoration::material()
 {
-    DENG2_ASSERT(d->material);
+    DE_ASSERT(d->material);
     return *d->material;
 }
 
 ClientMaterial const &ClientMaterial::Decoration::material() const
 {
-    DENG2_ASSERT(d->material);
+    DE_ASSERT(d->material);
     return *d->material;
 }
 
@@ -102,7 +102,7 @@ String ClientMaterial::Decoration::describe() const
 String ClientMaterial::Decoration::description() const
 {
     int const numStages = stageCount();
-    String str = _E(b) + describe() + _E(.) + " (" + String::number(numStages) + " stage" + DENG2_PLURAL_S(numStages) + "):";
+    String str = _E(b) + describe() + _E(.) + " (" + String::number(numStages) + " stage" + DE_PLURAL_S(numStages) + "):";
     for (int i = 0; i < numStages; ++i)
     {
         str += String("\n  [%1] ").arg(i, 2) + _E(>) + stage(i).description() + _E(<);
@@ -110,7 +110,7 @@ String ClientMaterial::Decoration::description() const
     return str;
 }
 
-DENG2_PIMPL(ClientMaterial)
+DE_PIMPL(ClientMaterial)
 {
     AudioEnvironmentId audioEnvironment { AE_NONE };
 

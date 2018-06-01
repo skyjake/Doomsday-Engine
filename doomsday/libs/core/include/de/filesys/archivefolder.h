@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_ARCHIVEFOLDER_H
-#define LIBDENG2_ARCHIVEFOLDER_H
+#ifndef LIBCORE_ARCHIVEFOLDER_H
+#define LIBCORE_ARCHIVEFOLDER_H
 
 #include "../Folder"
 #include "../Archive"
@@ -34,7 +34,7 @@ namespace de {
  *
  * @see ArchiveFeed
  */
-class DENG2_PUBLIC ArchiveFolder : public Folder
+class DE_PUBLIC ArchiveFolder : public Folder
 {
 public:
     /**
@@ -66,4 +66,4 @@ public:
 
 } // namespace de
 
-#endif // LIBDENG2_ARCHIVEFOLDER_H
+#endif // LIBCORE_ARCHIVEFOLDER_H

@@ -73,7 +73,7 @@ bool Lex::atCommentStart() const
 
 QChar Lex::peekComment() const
 {
-    DENG2_ASSERT(atCommentStart());
+    DE_ASSERT(atCommentStart());
 
     duint const inputSize = duint(_input->size());
 

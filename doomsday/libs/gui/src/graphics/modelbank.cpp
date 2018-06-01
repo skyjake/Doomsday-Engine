@@ -22,7 +22,7 @@
 
 namespace de {
 
-DENG2_PIMPL(ModelBank)
+DE_PIMPL(ModelBank)
 {
     Constructor modelConstructor;
 

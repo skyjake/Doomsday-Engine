@@ -105,7 +105,7 @@ public:
     static void setResourceClassCallback(ResourceClass &(*callback)(resourceclassid_t));
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 /**

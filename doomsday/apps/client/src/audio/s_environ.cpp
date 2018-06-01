@@ -37,13 +37,13 @@ static AudioEnvironment envInfo[1 + NUM_AUDIO_ENVIRONMENTS] = {
 
 char const *S_AudioEnvironmentName(AudioEnvironmentId id)
 {
-    DENG2_ASSERT(id >= AE_NONE && id < NUM_AUDIO_ENVIRONMENTS);
+    DE_ASSERT(id >= AE_NONE && id < NUM_AUDIO_ENVIRONMENTS);
     return ::envInfo[1 + dint( id )].name;
 }
 
 AudioEnvironment const &S_AudioEnvironment(AudioEnvironmentId id)
 {
-    DENG2_ASSERT(id >= AE_NONE && id < NUM_AUDIO_ENVIRONMENTS);
+    DE_ASSERT(id >= AE_NONE && id < NUM_AUDIO_ENVIRONMENTS);
     return ::envInfo[1 + dint( id )];
 }
 

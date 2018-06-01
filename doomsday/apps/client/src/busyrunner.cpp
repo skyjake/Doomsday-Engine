@@ -58,11 +58,11 @@ static BusyMode &busy()
     return DoomsdayApp::app().busyMode();
 }
 
-DENG2_PIMPL_NOREF(BusyRunner)
-, DENG2_OBSERVES(BusyMode, Beginning)
-, DENG2_OBSERVES(BusyMode, End)
-, DENG2_OBSERVES(BusyMode, TaskWillStart)
-, DENG2_OBSERVES(BusyMode, Abort)
+DE_PIMPL_NOREF(BusyRunner)
+, DE_OBSERVES(BusyMode, Beginning)
+, DE_OBSERVES(BusyMode, End)
+, DE_OBSERVES(BusyMode, TaskWillStart)
+, DE_OBSERVES(BusyMode, Abort)
 {
     QEventLoop *eventLoop = nullptr;
 
@@ -149,8 +149,8 @@ DENG2_PIMPL_NOREF(BusyRunner)
      */
     void exitEventLoop()
     {
-        DENG_ASSERT_IN_MAIN_THREAD();
-        DENG_ASSERT(eventLoop);
+        DE_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT(eventLoop);
 
         busyDone = true;
 
@@ -166,10 +166,10 @@ DENG2_PIMPL_NOREF(BusyRunner)
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(DeferredGLTask)
+    DE_PIMPL_AUDIENCE(DeferredGLTask)
 };
 
-DENG2_AUDIENCE_METHOD(BusyRunner, DeferredGLTask)
+DE_AUDIENCE_METHOD(BusyRunner, DeferredGLTask)
 
 static BusyRunner &busyRunner()
 {
@@ -188,9 +188,9 @@ BusyRunner::BusyRunner() : d(new Impl)
  */
 static void busyWorkerTerminated(systhreadexitstatus_t status)
 {
-    DENG_ASSERT(busy().isActive());
+    DE_ASSERT(busy().isActive());
 
-    if (status == DENG_THREAD_STOPPED_WITH_EXCEPTION)
+    if (status == DE_THREAD_STOPPED_WITH_EXCEPTION)
     {
         busy().abort("Uncaught exception from busy thread");
     }
@@ -214,7 +214,7 @@ BusyRunner::Result BusyRunner::runTask(BusyTask *task)
     // background while we keep the user occupied with nice animations.
     d->busyThread = Sys_StartThread(task->worker, task->workerData, busyWorkerTerminated);
 
-    DENG_ASSERT(!d->eventLoop);
+    DE_ASSERT(!d->eventLoop);
 
     // Run a local event loop since the primary event loop is blocked while
     // we're busy. This event loop is able to handle window and input events
@@ -289,7 +289,7 @@ void BusyRunner::loop()
     bool pendingRemain = false;
     if (ClientWindow::main().home().isHidden())
     {
-        DENG2_FOR_AUDIENCE2(DeferredGLTask, i)
+        DE_FOR_AUDIENCE2(DeferredGLTask, i)
         {
             if (i->performDeferredGLTask() == TasksPending)
             {
@@ -347,13 +347,13 @@ void BusyMode_FreezeGameForBusyMode(void)
         DoomsdayApp::app().busyMode().taskRunner() &&
         App::inMainThread())
     {
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
         ClientWindow::main().busy().renderTransitionFrame();
 #endif
     }
 }
 
-DENG_DECLARE_API(Busy) =
+DE_DECLARE_API(Busy) =
 {
     { DE_API_BUSY },
     BusyMode_FreezeGameForBusyMode

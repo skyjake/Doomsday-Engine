@@ -72,8 +72,8 @@ struct FlareData
     {
         try
         {
-            DENG2_ASSERT_IN_RENDER_THREAD();
-            DENG_ASSERT_GL_CONTEXT_ACTIVE();
+            DE_ASSERT_IN_RENDER_THREAD();
+            DE_ASSERT_GL_CONTEXT_ACTIVE();
 
             images.addFromInfo(App::rootFolder().locate<File>("/packs/feature.lensflares/images.dei"));
 
@@ -95,8 +95,8 @@ struct FlareData
 
     ~FlareData()
     {
-        DENG_ASSERT_IN_MAIN_THREAD();
-        DENG_ASSERT_GL_CONTEXT_ACTIVE();
+        DE_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT_GL_CONTEXT_ACTIVE();
 
         LOGDEV_GL_XVERBOSE("Releasing shared data", "");
     }
@@ -218,7 +218,7 @@ static float linearRangeFactor(float value, Rangef const &low, Rangef const &hig
     return 1;
 }
 
-DENG2_PIMPL(LensFlares)
+DE_PIMPL(LensFlares)
 {
     typedef Shared<FlareData> SharedFlareData;
     SharedFlareData *res;
@@ -264,7 +264,7 @@ DENG2_PIMPL(LensFlares)
 
     ~Impl()
     {
-        DENG2_ASSERT(res == 0); // should have been deinited
+        DE_ASSERT(res == 0); // should have been deinited
         releaseRef(res);
         clearPvs();
     }
@@ -519,8 +519,8 @@ void LensFlares::draw()
     d->uPixelAsUv = Vec2f(1.f / window.pixelWidth(), 1.f / window.pixelHeight());
     d->uMvpMatrix = Viewer_Matrix(); //Rend_GetProjectionMatrix() * Rend_GetModelViewMatrix(console());
 
-    DENG2_ASSERT(console() == displayPlayer);
-    //DENG2_ASSERT(viewPlayer - ddPlayers == displayPlayer);
+    DE_ASSERT(console() == displayPlayer);
+    //DE_ASSERT(viewPlayer - ddPlayers == displayPlayer);
     if (DoomsdayApp::players().indexOf(viewPlayer) != displayPlayer)
     {
         qDebug() << "LensFrames::draw: viewPlayer != displayPlayer";
@@ -562,4 +562,4 @@ void LensFlares::consoleRegister()
 
 } // namespace fx
 
-DENG2_SHARED_INSTANCE(fx::FlareData)
+DE_SHARED_INSTANCE(fx::FlareData)

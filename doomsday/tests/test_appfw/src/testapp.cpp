@@ -25,7 +25,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(TestApp)
+DE_PIMPL(TestApp)
 {
     QScopedPointer<AppWindowSystem> winSys;
     ImageBank images;
@@ -43,7 +43,7 @@ DENG2_PIMPL(TestApp)
         // Load all the shader program definitions.
         FS::FoundFiles found;
         self().findInPackages("shaders.dei", found);
-        DENG2_FOR_EACH(FS::FoundFiles, i, found)
+        DE_FOR_EACH(FS::FoundFiles, i, found)
         {
             LOG_MSG("Loading shader definitions from %s") << (*i)->description();
             self().shaders().addFromInfo(**i);
@@ -83,7 +83,7 @@ void TestApp::initialize()
 
 TestApp &TestApp::app()
 {
-    return *static_cast<TestApp *>(DENG2_APP);
+    return *static_cast<TestApp *>(DE_APP);
 }
 
 AppWindowSystem &TestApp::windowSystem()

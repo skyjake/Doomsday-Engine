@@ -249,10 +249,10 @@ struct GameExports
 class LIBDOOMSDAY_PUBLIC Plugins
 {
 public:
-    DENG2_DEFINE_AUDIENCE2(PublishAPI,   void publishAPIToPlugin(Library *))
-    DENG2_DEFINE_AUDIENCE2(Notification, void pluginSentNotification(int id, void *data))
+    DE_DEFINE_AUDIENCE2(PublishAPI,   void publishAPIToPlugin(Library *))
+    DE_DEFINE_AUDIENCE2(Notification, void pluginSentNotification(int id, void *data))
 
-    DENG2_ERROR(EntryPointError);
+    DE_ERROR(EntryPointError);
 
 public:
     Plugins();
@@ -382,7 +382,7 @@ public:  // Function hooks: ----------------------------------------------------
     int callAllHooks(HookType type, int parm = 0, void *data = nullptr);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif  // __cplusplus

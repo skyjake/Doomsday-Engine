@@ -43,7 +43,7 @@ protected:
     void autoCompletionBegan(String const &wordBase);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 }} // namespace de::shell

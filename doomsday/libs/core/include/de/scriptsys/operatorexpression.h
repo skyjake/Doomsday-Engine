@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_OPERATOREXPRESSION_H
-#define LIBDENG2_OPERATOREXPRESSION_H
+#ifndef LIBCORE_OPERATOREXPRESSION_H
+#define LIBCORE_OPERATOREXPRESSION_H
 
 #include "../libcore.h"
 #include "../Operator"
@@ -41,20 +41,20 @@ class OperatorExpression : public Expression
 public:
     /// A unary operation is attempted even though the selected operation cannot
     /// be unary. @ingroup errors
-    DENG2_ERROR(NonUnaryError);
+    DE_ERROR(NonUnaryError);
 
     /// A binary operation is attempted even though the selected operation cannot be binary.
     /// @ingroup errors
-    DENG2_ERROR(NonBinaryError);
+    DE_ERROR(NonBinaryError);
 
     /// Attempt to assign to a value that cannot be assigned to. @ingroup errors
-    DENG2_ERROR(NotAssignableError);
+    DE_ERROR(NotAssignableError);
 
     /// The MEMBER operator receives a non-Record scope on the left side. @ingroup errors
-    DENG2_ERROR(ScopeError);
+    DE_ERROR(ScopeError);
 
     /// The SLICE operator has invalid arguments. @ingroup errors
-    DENG2_ERROR(SliceError);
+    DE_ERROR(SliceError);
 
 public:
     OperatorExpression();
@@ -107,4 +107,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_OPERATOREXPRESSION_H */
+#endif /* LIBCORE_OPERATOREXPRESSION_H */

@@ -30,8 +30,8 @@
 using namespace de;
 using namespace de::ui;
 
-DENG_GUI_PIMPL(SidebarWidget)
-, DENG2_OBSERVES(DoomsdayApp, GameChange)
+DE_GUI_PIMPL(SidebarWidget)
+, DE_OBSERVES(DoomsdayApp, GameChange)
 {
     DialogContentStylist stylist;
     GuiWidget *container;

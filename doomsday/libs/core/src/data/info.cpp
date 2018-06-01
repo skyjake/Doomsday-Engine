@@ -40,10 +40,10 @@ static String const GROUP_TOKEN = "group";
 
 static SourceLineTable sourceLineTable;
 
-DENG2_PIMPL(Info)
+DE_PIMPL(Info)
 {
-    DENG2_ERROR(OutOfElements);
-    DENG2_ERROR(EndOfFile);
+    DE_ERROR(OutOfElements);
+    DE_ERROR(EndOfFile);
 
     struct DefaultIncludeFinder : public IIncludeFinder
     {
@@ -283,7 +283,7 @@ DENG2_PIMPL(Info)
             result = parseBlockElement(key);
         }
 
-        DENG2_ASSERT(result != 0);
+        DE_ASSERT(result != 0);
 
         result->setSourceLocation(sourcePath, elementLine);
         return result;
@@ -519,8 +519,8 @@ DENG2_PIMPL(Info)
      */
     BlockElement *parseBlockElement(String blockType)
     {
-        DENG2_ASSERT(blockType != "}");
-        DENG2_ASSERT(blockType != ")");
+        DE_ASSERT(blockType != "}");
+        DE_ASSERT(blockType != ")");
 
         String blockName;
         String endToken;
@@ -595,7 +595,7 @@ DENG2_PIMPL(Info)
                 }
             }
 
-            DENG2_ASSERT(peekToken() == endToken);
+            DE_ASSERT(peekToken() == endToken);
 
             // Move past the closing parentheses.
             nextToken();
@@ -614,7 +614,7 @@ DENG2_PIMPL(Info)
     {
         try
         {
-            DENG2_ASSERT(finder != 0);
+            DE_ASSERT(finder != 0);
 
             String includePath;
             String content = finder->findIncludedInfoSource(includeName, self(), &includePath);
@@ -670,7 +670,7 @@ DENG2_PIMPL(Info)
 
 //---------------------------------------------------------------------------------------
 
-DENG2_PIMPL_NOREF(Info::Element)
+DE_PIMPL_NOREF(Info::Element)
 {
     Type type;
     String name;
@@ -745,7 +745,7 @@ void Info::BlockElement::clear()
 
 void Info::BlockElement::add(Info::Element *elem)
 {
-    DENG2_ASSERT(elem != 0);
+    DE_ASSERT(elem != 0);
 
     elem->setParent(this);
     _contentsInOrder.append(elem); // owned

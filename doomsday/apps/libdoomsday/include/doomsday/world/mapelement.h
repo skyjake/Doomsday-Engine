@@ -40,21 +40,21 @@ class Map;
  */
 class LIBDOOMSDAY_PUBLIC MapElement
 {
-    DENG2_NO_COPY  (MapElement)
-    DENG2_NO_ASSIGN(MapElement)
+    DE_NO_COPY  (MapElement)
+    DE_NO_ASSIGN(MapElement)
 
 public:
     /// Attempted to configure an invalid parent element. @ingroup errors
-    DENG2_ERROR(InvalidParentError);
+    DE_ERROR(InvalidParentError);
 
     /// No map is attributed. @ingroup errors
-    DENG2_ERROR(MissingMapError);
+    DE_ERROR(MissingMapError);
 
     /// The referenced property does not exist. @ingroup errors
-    DENG2_ERROR(UnknownPropertyError);
+    DE_ERROR(UnknownPropertyError);
 
     /// The referenced property is not writeable. @ingroup errors
-    DENG2_ERROR(WritePropertyError);
+    DE_ERROR(WritePropertyError);
 
     /// Special identifier used to mark an invalid index.
     enum { NoIndex = -1 };
@@ -75,7 +75,7 @@ public:
      */
     de::dint type() const;
 
-    DENG2_CAST_METHODS()
+    DE_CAST_METHODS()
 
     /**
      * Returns @c true iff a parent is attributed to the map element.
@@ -90,12 +90,12 @@ public:
      * @see hasParent(), setParent()
      */
     inline MapElement &parent() {
-        DENG2_ASSERT(_parent);
+        DE_ASSERT(_parent);
         return *_parent;
     }
 
     inline MapElement const &parent() const {
-        DENG2_ASSERT(_parent);
+        DE_ASSERT(_parent);
         return *_parent;
     }
 
@@ -200,7 +200,7 @@ public:
     virtual de::dint setProperty(world::DmuArgs const &args);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 
     MapElement *_parent = nullptr;
 };

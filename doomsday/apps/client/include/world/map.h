@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_MAP_H
-#define DENG_WORLD_MAP_H
+#ifndef DE_WORLD_MAP_H
+#define DE_WORLD_MAP_H
 
 #include <functional>
 #include <QHash>
@@ -86,41 +86,44 @@ class ClSkyPlane;
  */
 class Map : public world::BaseMap
 #ifdef __CLIENT__
-, DENG2_OBSERVES(ClientServerWorld, FrameBegin)
+, DE_OBSERVES(ClientServerWorld, FrameBegin)
 #endif
 {
-    DENG2_NO_COPY  (Map)
-    DENG2_NO_ASSIGN(Map)
+    DE_NO_COPY  (Map)
+    DE_NO_ASSIGN(Map)
 
 public:
     /// Base error for runtime map editing errors. @ingroup errors
-    DENG2_ERROR(EditError);
+    DE_ERROR(EditError);
 
     /// Required map element is missing. @ingroup errors
-    DENG2_ERROR(MissingElementError);
+    DE_ERROR(MissingElementError);
+
+    /// Required map object is missing. @ingroup errors
+    DE_ERROR(MissingObjectError);
 
     /// Required blockmap is missing. @ingroup errors
-    DENG2_ERROR(MissingBlockmapError);
+    DE_ERROR(MissingBlockmapError);
 
     /// Required BSP data is missing. @ingroup errors
-    DENG2_ERROR(MissingBspTreeError);
+    DE_ERROR(MissingBspTreeError);
 
     /// Required thinker lists are missing. @ingroup errors
-    DENG2_ERROR(MissingThinkersError);
+    DE_ERROR(MissingThinkersError);
 
 #ifdef __CLIENT__
     /// Required light grid is missing. @ingroup errors
-    DENG2_ERROR(MissingLightGridError);
+    DE_ERROR(MissingLightGridError);
 
     /// Attempted to add a new element/object when full. @ingroup errors
-    DENG2_ERROR(FullError);
+    DE_ERROR(FullError);
 #endif
 
     /// Notified when a one-way window construct is first found.
-    DENG2_DEFINE_AUDIENCE(OneWayWindowFound, void oneWayWindowFound(Line &line, Sector &backFacingSector))
+    DE_DEFINE_AUDIENCE(OneWayWindowFound, void oneWayWindowFound(Line &line, Sector &backFacingSector))
 
     /// Notified when an unclosed sector is first found.
-    DENG2_DEFINE_AUDIENCE(UnclosedSectorFound, void unclosedSectorFound(Sector &sector, de::Vec2d const &nearPoint))
+    DE_DEFINE_AUDIENCE(UnclosedSectorFound, void unclosedSectorFound(Sector &sector, de::Vec2d const &nearPoint))
 
     /*
      * Constants:
@@ -540,7 +543,7 @@ public:  //- Polyobjects -------------------------------------------------------
     de::LoopResult forAllSectorsTouchingMobj(struct mobj_s &mob, std::function<de::LoopResult (Sector &)> callback) const;
 
     /// Thrown when the referenced subsector is missing/unknown.
-    DENG2_ERROR(MissingSubsectorError);
+    DE_ERROR(MissingSubsectorError);
 
     /**
      * Lookup a Subsector in the map by it's unique identifier @a id.
@@ -970,9 +973,9 @@ public:  //- Editing -----------------------------------------------------------
     void initMapOutlinePacket(de::shell::MapOutlinePacket &packet);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 }  // namespace world
 
-#endif  // DENG_WORLD_MAP_H
+#endif  // DE_WORLD_MAP_H

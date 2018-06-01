@@ -34,13 +34,13 @@ using namespace de;
 
 static void KeysWidget_UpdateGeometry(guidata_keys_t *keys)
 {
-    DENG2_ASSERT(keys);
+    DE_ASSERT(keys);
     keys->updateGeometry();
 }
 
 static void KeysWidget_Draw(guidata_keys_t *keys, Point2Raw const *offset)
 {
-    DENG2_ASSERT(keys);
+    DE_ASSERT(keys);
     keys->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
@@ -222,7 +222,7 @@ void guidata_keys_t::draw(Vec2i const &offset) const
 #undef ORIGINX
 
 #else  // __JHEXEN__
-    DENG2_UNUSED(offset);
+    DE_UNUSED(offset);
 #endif
 }
 

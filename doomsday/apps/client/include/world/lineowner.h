@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_LINEOWNER_H
-#define DENG_WORLD_LINEOWNER_H
+#ifndef DE_WORLD_LINEOWNER_H
+#define DE_WORLD_LINEOWNER_H
 
 #include <de/binangle.h>
 
@@ -126,4 +126,4 @@ public:
     de::Vec2d const &extendedShadowOffset() const { return _shadowOffsets.extended; }
 };
 
-#endif // DENG_WORLD_LINEOWNER_H
+#endif // DE_WORLD_LINEOWNER_H

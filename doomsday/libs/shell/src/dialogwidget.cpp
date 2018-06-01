@@ -23,7 +23,7 @@
 
 namespace de { namespace shell {
 
-DENG2_PIMPL_NOREF(DialogWidget)
+DE_PIMPL_NOREF(DialogWidget)
 {
     QEventLoop subloop;
 };
@@ -51,7 +51,7 @@ void DialogWidget::finish(int /*result*/)
 int DialogWidget::exec(TextRootWidget &root)
 {
     // The widget is added to the root temporarily (as top child).
-    DENG2_ASSERT(!hasRoot());
+    DE_ASSERT(!hasRoot());
     root.add(this);
 
     // Center the dialog.

@@ -27,18 +27,20 @@
 
 #define PLAYER_REBORN_TICS (1 * TICSPERSEC)
 
-DENG_EXTERN_C dd_bool onground;
-DENG_EXTERN_C float   turboMul; // Multiplier for running speed.
-DENG_EXTERN_C int     maxHealth;
+DE_EXTERN_C dd_bool onground;
+
+DE_EXTERN_C dd_bool onground;
+DE_EXTERN_C float   turboMul; // Multiplier for running speed.
+DE_EXTERN_C int     maxHealth;
 
 #if __JDOOM__ || __JDOOM64__
-DENG_EXTERN_C int healthLimit;
-DENG_EXTERN_C int godModeHealth;
-DENG_EXTERN_C int soulSphereLimit;
-DENG_EXTERN_C int megaSphereHealth;
-DENG_EXTERN_C int soulSphereHealth;
-DENG_EXTERN_C int armorPoints[4];
-DENG_EXTERN_C int armorClass[4];
+DE_EXTERN_C int healthLimit;
+DE_EXTERN_C int godModeHealth;
+DE_EXTERN_C int soulSphereLimit;
+DE_EXTERN_C int megaSphereHealth;
+DE_EXTERN_C int soulSphereHealth;
+DE_EXTERN_C int armorPoints[4];
+DE_EXTERN_C int armorClass[4];
 #endif
 
 #ifdef __cplusplus

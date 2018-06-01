@@ -24,9 +24,9 @@
 #include <string.h>
 #include <de/c_wrapper.h>
 
-#ifdef DENG_WRITER_TYPECHECK
+#ifdef DE_WRITER_TYPECHECK
 #  include "de/writer.h"
-#  define Reader_TypeCheck(r, code)   if (r->data[r->pos++] != code) DENG_ASSERT(!code);
+#  define Reader_TypeCheck(r, code)   if (r->data[r->pos++] != code) DE_ASSERT(!code);
 #else
 #  define Reader_TypeCheck(r, code)
 #endif
@@ -60,13 +60,13 @@ static uint32_t Reader_8(Reader1 *reader, int shift)
 
 static dd_bool Reader_Check(Reader1 const *reader, size_t len)
 {
-#ifdef DENG_WRITER_TYPECHECK
+#ifdef DE_WRITER_TYPECHECK
     // One byte for the code.
     if (len) len++;
 #endif
 
-    DENG_ASSERT(reader);
-    DENG_ASSERT(reader->data || reader->useCustomFuncs);
+    DE_ASSERT(reader);
+    DE_ASSERT(reader->data || reader->useCustomFuncs);
 
     if (!reader || (!reader->data && !reader->useCustomFuncs))
         return false;
@@ -331,7 +331,7 @@ void M_ReadBits(uint numBits, const uint8_t** src, uint8_t* cb, uint8_t* out)
 {
     int offset = 0, unread = numBits;
 
-    DENG_ASSERT(src && cb && out);
+    DE_ASSERT(src && cb && out);
 
     // Read full bytes.
     if (unread >= 8)

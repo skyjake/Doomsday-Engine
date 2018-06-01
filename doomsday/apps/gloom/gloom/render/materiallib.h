@@ -73,7 +73,7 @@ public:
     GLUniform &uTextureMetrics();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(MaterialLib::MaterialFlags)

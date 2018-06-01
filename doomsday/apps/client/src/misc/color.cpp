@@ -22,12 +22,12 @@
 
 float ColorRawf_AverageColor(ColorRawf* c)
 {
-    DENG_ASSERT(c);
+    DE_ASSERT(c);
     return (c->red + c->green + c->blue) / 3;
 }
 
 float ColorRawf_AverageColorMulAlpha(ColorRawf* c)
 {
-    DENG_ASSERT(c);
+    DE_ASSERT(c);
     return (c->red + c->green + c->blue) / 3 * c->alpha;
 }

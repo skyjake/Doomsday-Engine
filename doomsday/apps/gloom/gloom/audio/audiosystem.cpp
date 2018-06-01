@@ -86,7 +86,7 @@ struct FileAdapter
 
 static AudioSystem *theAudioSystem = {nullptr};
 
-DENG2_PIMPL(AudioSystem)
+DE_PIMPL(AudioSystem)
 {
     struct AudibleSound;
 
@@ -164,7 +164,7 @@ DENG2_PIMPL(AudioSystem)
             else
             {
                 // Instruct FMOD to load it from the source file.
-                DENG2_ASSERT(wf.sourceFile() != 0);
+                DE_ASSERT(wf.sourceFile() != 0);
 
                 info.fileuseropen  = FileAdapter::open;
                 info.fileuserclose = FileAdapter::close;
@@ -254,14 +254,14 @@ DENG2_PIMPL(AudioSystem)
 
             stop();
 
-            DENG2_FOR_AUDIENCE2(Deletion, i) i->soundBeingDeleted(*this);
+            DE_FOR_AUDIENCE2(Deletion, i) i->soundBeingDeleted(*this);
             cached.sounds.remove(this);
         }
 
         /// Start the sound on a new channel but leave it paused.
         void alloc()
         {
-            DENG2_ASSERT(!channel);
+            DE_ASSERT(!channel);
 
             int flags = 0;
             if (_mode == Looping) flags |= CachedWaveform::Loop;
@@ -303,7 +303,7 @@ DENG2_PIMPL(AudioSystem)
 
         void notifyStop()
         {
-            DENG2_FOR_AUDIENCE2(Stop, i) i->soundStopped(*this);
+            DE_FOR_AUDIENCE2(Stop, i) i->soundStopped(*this);
         }
 
         void play(PlayingMode playMode)
@@ -315,7 +315,7 @@ DENG2_PIMPL(AudioSystem)
             update();
             channel->setPaused(false);
 
-            DENG2_FOR_AUDIENCE2(Play, i) { i->soundPlayed(*this); }
+            DE_FOR_AUDIENCE2(Play, i) { i->soundPlayed(*this); }
         }
 
         void stop()
@@ -481,7 +481,7 @@ DENG2_PIMPL(AudioSystem)
 
     Sound &load(Waveform const &waveform)
     {
-        DENG2_ASSERT(system != 0);
+        DE_ASSERT(system != 0);
 
         Cache::iterator found  = cache.find(&waveform);
         CachedWaveform *cached = 0;
@@ -515,7 +515,7 @@ Sound &AudioSystem::newSound(Waveform const &waveform)
 Sound &AudioSystem::newSound(DotPath const &appWaveform)
 {
     Sound &sound = newSound(GloomApp::waveforms().waveform(appWaveform));
-    DENG2_FOR_AUDIENCE(NewSound, i)
+    DE_FOR_AUDIENCE(NewSound, i)
     {
         i->newSoundCreated(sound, appWaveform);
     }

@@ -146,7 +146,7 @@ int light_s::read(MapStateReader *msr)
         type        = (lighttype_t) Reader_ReadByte(reader);
 
         sector      = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
-        DENG_ASSERT(sector != 0);
+        DE_ASSERT(sector != 0);
 
         value1      = (float) Reader_ReadInt32(reader) / 255.0f;
         value2      = (float) Reader_ReadInt32(reader) / 255.0f;
@@ -164,7 +164,7 @@ int light_s::read(MapStateReader *msr)
         // Start of used data members.
         // A 32bit pointer to sector, serialized.
         sector      = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
-        DENG_ASSERT(sector != 0);
+        DE_ASSERT(sector != 0);
 
         type        = lighttype_t(Reader_ReadInt32(reader));
         value1      = (float) Reader_ReadInt32(reader) / 255.0f;
@@ -326,7 +326,7 @@ int phase_s::read(MapStateReader *msr)
         /*int ver =*/ Reader_ReadByte(reader); // version byte.
 
         sector      = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
-        DENG_ASSERT(sector != 0);
+        DE_ASSERT(sector != 0);
 
         index       = Reader_ReadInt32(reader);
         baseValue   = (float) Reader_ReadInt32(reader) / 255.0f;
@@ -341,7 +341,7 @@ int phase_s::read(MapStateReader *msr)
         // Start of used data members.
         // A 32bit pointer to sector, serialized.
         sector      = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
-        DENG_ASSERT(sector != 0);
+        DE_ASSERT(sector != 0);
 
         index       = Reader_ReadInt32(reader);
         baseValue   = (float) Reader_ReadInt32(reader) / 255.0f;

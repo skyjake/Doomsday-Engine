@@ -110,7 +110,7 @@ void TimeSpan::operator << (Reader &from)
     from >> _seconds;
 }
 
-DENG2_PIMPL_NOREF(Time)
+DE_PIMPL_NOREF(Time)
 {
     enum Flag {
         DateTime        = 0x1,
@@ -168,7 +168,7 @@ DENG2_PIMPL_NOREF(Time)
          * @todo Implement needed conversion to compare DateTime with high
          * performance delta time.
          */
-        DENG2_ASSERT(false);
+        DE_ASSERT(false);
         return false;
     }
 
@@ -223,7 +223,7 @@ DENG2_PIMPL_NOREF(Time)
          * @todo Implement needed conversion to compare DateTime with high
          * performance delta time.
          */
-        DENG2_ASSERT(false);
+        DE_ASSERT(false);
         return 0;
     }
 
@@ -402,7 +402,7 @@ static int parseMonth(String const &shortName)
 
 Time Time::fromText(String const &text, Time::Format format)
 {
-    DENG2_ASSERT(format == ISOFormat ||
+    DE_ASSERT(format == ISOFormat ||
                  format == ISODateOnly ||
                  format == FriendlyFormat ||
                  format == CompilerDateTime ||
@@ -513,7 +513,7 @@ Time Time::fromText(String const &text, Time::Format format)
 
 QDateTime &de::Time::asDateTime()
 {
-    DENG2_ASSERT(d->hasDateTime());
+    DE_ASSERT(d->hasDateTime());
     return d->dateTime;
 }
 
@@ -529,7 +529,7 @@ QDateTime const &de::Time::asDateTime() const
 
 Date Time::asDate() const
 {
-    DENG2_ASSERT(d->hasDateTime());
+    DE_ASSERT(d->hasDateTime());
     return Date(*this);
 }
 
@@ -560,7 +560,7 @@ void Time::operator >> (Writer &to) const
 
 void Time::operator << (Reader &from)
 {
-    if (from.version() >= DENG2_PROTOCOL_1_11_0_Time_high_performance)
+    if (from.version() >= DE_PROTOCOL_1_11_0_Time_high_performance)
     {
         /*
          * Starting from build 926, Time can optionally contain a high-performance delta
@@ -620,7 +620,7 @@ void Time::operator << (Reader &from)
 
 TimeSpan Time::highPerformanceTime() const
 {
-    DENG2_ASSERT(d->flags & Impl::HighPerformance);
+    DE_ASSERT(d->flags & Impl::HighPerformance);
     return d->highPerfElapsed;
 }
 

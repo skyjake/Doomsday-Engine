@@ -31,13 +31,13 @@ static patchid_t pBootsIcon[FRAME_COUNT];
 
 static void BootsWidget_Draw(guidata_boots_t *boots, Point2Raw const *offset)
 {
-    DENG2_ASSERT(boots);
+    DE_ASSERT(boots);
     boots->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void BootsWidget_UpdateGeometry(guidata_boots_t *boots)
 {
-    DENG2_ASSERT(boots);
+    DE_ASSERT(boots);
     boots->updateGeometry();
 }
 

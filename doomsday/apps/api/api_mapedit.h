@@ -30,7 +30,7 @@
 /// @ingroup world
 ///@{
 
-DENG_API_TYPEDEF(MPE)
+DE_API_TYPEDEF(MPE)
 {
     de_api_t api;
 
@@ -105,9 +105,9 @@ DENG_API_TYPEDEF(MPE)
     int             (*PolyobjCreate)(int const *lines, int linecount, int tag, int sequenceType, coord_t originX, coord_t originY, int archiveIndex);
     dd_bool         (*GameObjProperty)(char const *objName, int idx, char const *propName, valuetype_t type, void *data);
 }
-DENG_API_T(MPE);
+DE_API_T(MPE);
 
-#ifndef DENG_NO_API_MACROS_MAP_EDIT
+#ifndef DE_NO_API_MACROS_MAP_EDIT
 //#define P_RegisterMapObj    _api_MPE.RegisterMapObj
 //#define P_RegisterMapObjProperty _api_MPE.RegisterMapObjProperty
 #define MPE_Begin           _api_MPE.Begin
@@ -123,7 +123,7 @@ DENG_API_T(MPE);
 #endif
 
 #ifdef __DOOMSDAY__
-DENG_USING_API(MPE);
+DE_USING_API(MPE);
 #endif
 
 ///@}

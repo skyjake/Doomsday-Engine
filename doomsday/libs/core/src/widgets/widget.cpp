@@ -26,7 +26,7 @@
 
 namespace de {
 
-DENG2_PIMPL(Widget)
+DE_PIMPL(Widget)
 {
     Id id;
     String name;
@@ -88,8 +88,8 @@ DENG2_PIMPL(Widget)
 
     void add(Widget *child, AddBehavior behavior, Widget const *ref = nullptr)
     {
-        DENG2_ASSERT(child != 0);
-        DENG2_ASSERT(child->d->parent == 0);
+        DE_ASSERT(child != 0);
+        DE_ASSERT(child->d->parent == 0);
 
 #ifdef _DEBUG
         // Can't have double ownership.
@@ -97,16 +97,16 @@ DENG2_PIMPL(Widget)
         {
             if (self().parent()->hasRoot())
             {
-                DENG2_ASSERT(!self().parent()->root().isInTree(*child));
+                DE_ASSERT(!self().parent()->root().isInTree(*child));
             }
             else
             {
-                DENG2_ASSERT(!self().parent()->isInTree(*child));
+                DE_ASSERT(!self().parent()->isInTree(*child));
             }
         }
         else
         {
-            DENG2_ASSERT(!self().isInTree(*child));
+            DE_ASSERT(!self().isInTree(*child));
         }
 #endif
 
@@ -134,11 +134,11 @@ DENG2_PIMPL(Widget)
         }
 
         // Notify.
-        DENG2_FOR_PUBLIC_AUDIENCE2(ChildAddition, i)
+        DE_FOR_PUBLIC_AUDIENCE2(ChildAddition, i)
         {
             i->widgetChildAdded(*child);
         }
-        DENG2_FOR_EACH_OBSERVER(ParentChangeAudience, i, child->audienceForParentChange())
+        DE_FOR_EACH_OBSERVER(ParentChangeAudience, i, child->audienceForParentChange())
         {
             i->widgetParentChanged(*child, 0, thisPublic);
         }
@@ -214,16 +214,16 @@ DENG2_PIMPL(Widget)
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(Deletion)
-    DENG2_PIMPL_AUDIENCE(ParentChange)
-    DENG2_PIMPL_AUDIENCE(ChildAddition)
-    DENG2_PIMPL_AUDIENCE(ChildRemoval)
+    DE_PIMPL_AUDIENCE(Deletion)
+    DE_PIMPL_AUDIENCE(ParentChange)
+    DE_PIMPL_AUDIENCE(ChildAddition)
+    DE_PIMPL_AUDIENCE(ChildRemoval)
 };
 
-DENG2_AUDIENCE_METHOD(Widget, Deletion)
-DENG2_AUDIENCE_METHOD(Widget, ParentChange)
-DENG2_AUDIENCE_METHOD(Widget, ChildAddition)
-DENG2_AUDIENCE_METHOD(Widget, ChildRemoval)
+DE_AUDIENCE_METHOD(Widget, Deletion)
+DE_AUDIENCE_METHOD(Widget, ParentChange)
+DE_AUDIENCE_METHOD(Widget, ChildAddition)
+DE_AUDIENCE_METHOD(Widget, ChildRemoval)
 
 Widget::Widget(String const &name) : d(new Impl(this, name))
 {}
@@ -244,7 +244,7 @@ Widget::~Widget()
     }
 
     // Notify everyone else.
-    DENG2_FOR_AUDIENCE2(Deletion, i)
+    DE_FOR_AUDIENCE2(Deletion, i)
     {
         i->widgetBeingDeleted(*this);
     }
@@ -429,8 +429,8 @@ Widget &Widget::addFirst(Widget *child)
 
 Widget &Widget::insertBefore(Widget *child, Widget const &otherChild)
 {
-    DENG2_ASSERT(child != &otherChild);
-    DENG2_ASSERT(otherChild.parent() == this);
+    DE_ASSERT(child != &otherChild);
+    DE_ASSERT(otherChild.parent() == this);
 
     d->add(child, Impl::InsertBefore, &otherChild);
     return *child;
@@ -438,13 +438,13 @@ Widget &Widget::insertBefore(Widget *child, Widget const &otherChild)
 
 Widget *Widget::remove(Widget &child)
 {
-    DENG2_ASSERT(child.d->parent == this);
-    DENG2_ASSERT(d->children.contains(&child));
+    DE_ASSERT(child.d->parent == this);
+    DE_ASSERT(d->children.contains(&child));
 
     child.d->parent = 0;
     d->children.removeOne(&child);
 
-    DENG2_ASSERT(!d->children.contains(&child));
+    DE_ASSERT(!d->children.contains(&child));
 
     if (!child.name().isEmpty())
     {
@@ -452,11 +452,11 @@ Widget *Widget::remove(Widget &child)
     }
 
     // Notify.
-    DENG2_FOR_AUDIENCE2(ChildRemoval, i)
+    DE_FOR_AUDIENCE2(ChildRemoval, i)
     {
         i->widgetChildRemoved(child);
     }
-    DENG2_FOR_EACH_OBSERVER(ParentChangeAudience, i, child.audienceForParentChange())
+    DE_FOR_EACH_OBSERVER(ParentChangeAudience, i, child.audienceForParentChange())
     {
         i->widgetParentChanged(child, this, 0);
     }
@@ -470,7 +470,7 @@ void Widget::orphan()
     {
         d->parent->remove(*this);
     }
-    DENG2_ASSERT(d->parent == nullptr);
+    DE_ASSERT(d->parent == nullptr);
 }
 
 Widget *Widget::find(String const &name)
@@ -484,7 +484,7 @@ Widget *Widget::find(String const &name)
     }
 
     // Descend recursively to child widgets.
-    DENG2_FOR_EACH_CONST(Impl::Children, i, d->children)
+    DE_FOR_EACH_CONST(Impl::Children, i, d->children)
     {
         Widget *w = (*i)->find(name);
         if (w) return w;
@@ -497,7 +497,7 @@ bool Widget::isInTree(Widget const &child) const
 {
     if (this == &child) return true;
 
-    DENG2_FOR_EACH_CONST(Impl::Children, i, d->children)
+    DE_FOR_EACH_CONST(Impl::Children, i, d->children)
     {
         if ((*i)->isInTree(child))
         {
@@ -541,8 +541,8 @@ void Widget::moveChildBefore(Widget *child, Widget const &otherChild)
         }
     }
 
-    DENG2_ASSERT(from != -1);
-    DENG2_ASSERT(to != -1);
+    DE_ASSERT(from != -1);
+    DE_ASSERT(to != -1);
 
     d->children.removeAt(from);
     if (to > from) to--;
@@ -552,7 +552,7 @@ void Widget::moveChildBefore(Widget *child, Widget const &otherChild)
 
 void Widget::moveChildToLast(Widget &child)
 {
-    DENG2_ASSERT(child.parent() == this);
+    DE_ASSERT(child.parent() == this);
     if (!child.isLastChild())
     {
         remove(child);

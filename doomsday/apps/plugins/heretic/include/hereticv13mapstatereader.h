@@ -44,7 +44,7 @@ public:
     thinker_t *thinkerForPrivateId(de::Id::Type id) const override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // LIBHERETIC_HERETICV13_MAPSTATEREADER

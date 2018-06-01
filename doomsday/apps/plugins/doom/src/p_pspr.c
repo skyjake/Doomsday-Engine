@@ -407,7 +407,7 @@ void C_DECL A_Saw(player_t *player, pspdef_t *psp)
     int damage;
     float slope;
 
-    DENG_UNUSED(psp);
+    DE_UNUSED(psp);
 
     P_ShotAmmo(player);
     player->update |= PSF_AMMO;

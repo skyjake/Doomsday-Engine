@@ -94,7 +94,7 @@ private:
         for(int i = 0; i < numElements; ++i)
         {
             MapElementPtr element = P_ToPtr(ElementType, i);
-            DENG_ASSERT(DMU_GetType(element) == ElementType);
+            DE_ASSERT(DMU_GetType(element) == ElementType);
             int index = P_GetIntp(element, DMU_ARCHIVE_INDEX);
 
             // Not indexed?
@@ -113,7 +113,7 @@ private:
         // Not indexed?
         if(index < 0) return;
 
-        DENG_ASSERT(indexInLutRange(index));
+        DE_ASSERT(indexInLutRange(index));
         (*_lut)[index - _indexBase] = element;
     }
 

@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_BYTEORDER_H
-#define LIBDENG2_BYTEORDER_H
+#ifndef LIBCORE_BYTEORDER_H
+#define LIBCORE_BYTEORDER_H
 
 #include "../libcore.h"
 
@@ -29,7 +29,7 @@ namespace de {
  *
  * @ingroup data
  */
-class DENG2_PUBLIC ByteOrder
+class DE_PUBLIC ByteOrder
 {
 public:
     virtual ~ByteOrder() {}
@@ -117,7 +117,7 @@ public:
  *
  * @ingroup data
  */
-class DENG2_PUBLIC BigEndianByteOrder : public ByteOrder
+class DE_PUBLIC BigEndianByteOrder : public ByteOrder
 {
 public:
     using ByteOrder::networkToHost;
@@ -139,7 +139,7 @@ typedef BigEndianByteOrder NetworkByteOrder;
  *
  * @ingroup data
  */
-class DENG2_PUBLIC LittleEndianByteOrder : public ByteOrder
+class DE_PUBLIC LittleEndianByteOrder : public ByteOrder
 {
 public:
     using ByteOrder::networkToHost;
@@ -173,7 +173,7 @@ inline dint32 swapBytes(dint32 n) {
 }
 
 /// Swaps the bytes in a 64-bit unsigned integer.
-DENG2_PUBLIC duint64 swap64(duint64 n);
+DE_PUBLIC duint64 swap64(duint64 n);
 
 inline dint64 swapBytes(dint64 n) {
     return swap64(n);
@@ -202,11 +202,11 @@ inline T fromBigEndian(T n) {
 }
 
 /// Globally available big-endian byte order converter.
-DENG2_PUBLIC extern BigEndianByteOrder bigEndianByteOrder;
+DE_PUBLIC extern BigEndianByteOrder bigEndianByteOrder;
 
 /// Globally available little-endian byte order converter.
-DENG2_PUBLIC extern LittleEndianByteOrder littleEndianByteOrder;
+DE_PUBLIC extern LittleEndianByteOrder littleEndianByteOrder;
 
 }
 
-#endif /* LIBDENG2_BYTEORDER_H */
+#endif /* LIBCORE_BYTEORDER_H */

@@ -33,7 +33,7 @@ String const NativeLink::URL_SCHEME("doomsday:");
 
 static String const PATH_SERVER_REPOSITORY_ROOT("/sys/server/public"); // serverside folder
 
-DENG2_PIMPL(NativeLink)
+DE_PIMPL(NativeLink)
 {
     RemoteFeedProtocol protocol;
     Socket socket;
@@ -46,7 +46,7 @@ DENG2_PIMPL(NativeLink)
         {
             try
             {
-                DENG2_ASSERT_IN_MAIN_THREAD();
+                DE_ASSERT_IN_MAIN_THREAD();
 
                 std::unique_ptr<Message> response(socket.receive());
                 std::unique_ptr<Packet>  packet  (protocol.interpret(*response));
@@ -83,7 +83,7 @@ NativeLink::NativeLink(String const &address)
     : Link(address)
     , d(new Impl(this))
 {
-    DENG2_ASSERT(address.startsWith(URL_SCHEME));
+    DE_ASSERT(address.startsWith(URL_SCHEME));
 
     QObject::connect(&d->socket, &Socket::connected,     [this] () { wasConnected(); });
     QObject::connect(&d->socket, &Socket::disconnected,  [this] () { wasDisconnected(); });
@@ -148,7 +148,7 @@ void NativeLink::wasConnected()
 
 void NativeLink::transmit(Query const &query)
 {
-    DENG2_ASSERT(query.isValid());
+    DE_ASSERT(query.isValid());
 
     RemoteFeedQueryPacket packet;
     packet.setId(query.id);

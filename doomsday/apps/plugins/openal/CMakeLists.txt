@@ -2,7 +2,7 @@
 # Copyright (c) 2015-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 cmake_minimum_required (VERSION 3.1)
-project (DENG_OPENAL)
+project (DE_OPENAL)
 include (CheckIncludeFile)
 include (../PluginConfig.cmake)
 
@@ -16,7 +16,7 @@ if (OPENAL_FOUND)
         add_definitions (-DHAVE_AL_H=1)
     endif ()
 
-    append (CMAKE_CXX_FLAGS_DEBUG "-DDENG_DSOPENAL_DEBUG")
+    append (CMAKE_CXX_FLAGS_DEBUG "-DDE_DSOPENAL_DEBUG")
 
     include_directories (include)
     include_directories (SYSTEM ${OPENAL_INCLUDE_DIR})

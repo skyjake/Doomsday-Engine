@@ -16,16 +16,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG2_GZIP_H
-#define DENG2_GZIP_H
+#ifndef DE_GZIP_H
+#define DE_GZIP_H
 
 #include "../libcore.h"
 #include "../Block"
 
 namespace de {
 
-DENG2_PUBLIC Block gDecompress(Block const &gzData);
+DE_PUBLIC Block gDecompress(Block const &gzData);
 
 } // namespace de
 
-#endif // DENG2_GZIP_H
+#endif // DE_GZIP_H

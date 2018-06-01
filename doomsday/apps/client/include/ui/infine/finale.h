@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_UI_INFINE_FINALE_H
-#define DENG_UI_INFINE_FINALE_H
+#ifndef DE_UI_INFINE_FINALE_H
+#define DE_UI_INFINE_FINALE_H
 
 #include <de/Observers>
 #include <de/String>
@@ -43,7 +43,7 @@ class Finale
 {
 public:
     /// Notified when the finale is about to be deleted.
-    DENG2_DEFINE_AUDIENCE2(Deletion, void finaleBeingDeleted(Finale const &finale))
+    DE_DEFINE_AUDIENCE2(Deletion, void finaleBeingDeleted(Finale const &finale))
 
 public:
     /**
@@ -78,7 +78,7 @@ public:
     FinaleInterpreter const &interpreter() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_UI_INFINE_FINALE_H
+#endif // DE_UI_INFINE_FINALE_H

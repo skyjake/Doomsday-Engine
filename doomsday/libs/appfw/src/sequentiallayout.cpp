@@ -20,7 +20,7 @@
 
 namespace de {
 
-DENG2_PIMPL(SequentialLayout)
+DE_PIMPL(SequentialLayout)
 {
     GuiWidgetList widgets;
     ui::Direction dir;
@@ -189,7 +189,7 @@ void SequentialLayout::setStartY(Rule const &startY)
 
 void SequentialLayout::setDirection(ui::Direction direction)
 {
-    DENG2_ASSERT(isEmpty());
+    DE_ASSERT(isEmpty());
 
     d->dir = direction;
 }
@@ -201,7 +201,7 @@ ui::Direction SequentialLayout::direction() const
 
 void SequentialLayout::setOverrideWidth(Rule const &width)
 {
-    DENG2_ASSERT(isEmpty());
+    DE_ASSERT(isEmpty());
 
     changeRef(d->fixedWidth, width);
     changeRef(d->totalWidth, width);
@@ -209,7 +209,7 @@ void SequentialLayout::setOverrideWidth(Rule const &width)
 
 void SequentialLayout::setOverrideHeight(Rule const &height)
 {
-    DENG2_ASSERT(isEmpty());
+    DE_ASSERT(isEmpty());
 
     changeRef(d->fixedHeight, height);
     changeRef(d->totalHeight, height);

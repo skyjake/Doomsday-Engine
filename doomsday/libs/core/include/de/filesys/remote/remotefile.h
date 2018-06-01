@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_REMOTEFILE_H
-#define LIBDENG2_REMOTEFILE_H
+#ifndef LIBCORE_REMOTEFILE_H
+#define LIBCORE_REMOTEFILE_H
 
 #include "../../Asset"
 #include "../../LinkFile"
@@ -31,11 +31,11 @@ namespace de {
  *
  * RemoteFile provides status information as an Asset.
  */
-class DENG2_PUBLIC RemoteFile : public LinkFile, public Asset, public IDownloadable
+class DE_PUBLIC RemoteFile : public LinkFile, public Asset, public IDownloadable
 {
 public:
     /// Data of the file has not yet been fetched. @ingroup errors
-    DENG2_ERROR(UnfetchedError);
+    DE_ERROR(UnfetchedError);
 
     static String const CACHE_PATH;
 
@@ -65,9 +65,9 @@ public:
     IIStream const &operator >> (IByteArray &bytes) const override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_REMOTEFILE_H
+#endif // LIBCORE_REMOTEFILE_H

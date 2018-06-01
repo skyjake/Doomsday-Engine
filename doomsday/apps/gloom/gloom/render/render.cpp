@@ -20,7 +20,7 @@
 
 namespace gloom {
 
-DENG2_PIMPL_NOREF(Render)
+DE_PIMPL_NOREF(Render)
 {
     Context *context = nullptr;
 };
@@ -31,30 +31,30 @@ Render::Render()
 
 Render::~Render()
 {
-    DENG2_ASSERT(d->context == nullptr);
+    DE_ASSERT(d->context == nullptr);
 }
 
 const Context &Render::context() const
 {
-    DENG2_ASSERT(d->context);
+    DE_ASSERT(d->context);
     return *d->context;
 }
 
 Context &Render::context()
 {
-    DENG2_ASSERT(d->context);
+    DE_ASSERT(d->context);
     return *d->context;
 }
 
 void Render::glInit(Context &context)
 {
-    DENG2_ASSERT(d->context == nullptr);
+    DE_ASSERT(d->context == nullptr);
     d->context = &context;
 }
 
 void Render::glDeinit()
 {
-    DENG2_ASSERT(d->context != nullptr);
+    DE_ASSERT(d->context != nullptr);
     d->context = nullptr;
 }
 

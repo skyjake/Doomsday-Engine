@@ -32,7 +32,7 @@ static String const COLOR_DESATURATE    ("Color.desaturate");
 static String const COLOR_SOLID         ("Color.solid:");
 static String const COLOR_MULTIPLY      ("Color.multiply:");
 
-DENG2_PIMPL(ImageFile)
+DE_PIMPL(ImageFile)
 {
     BuiltInFilter filter = NoFilter;
     QHash<BuiltInFilter, ImageFile *> filtered; // owned
@@ -110,9 +110,9 @@ ImageFile::ImageFile(BuiltInFilter filterType, ImageFile &filterSource)
 
 ImageFile::~ImageFile()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
-    DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
+    DE_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion().clear();
     deindex();
 }

@@ -65,7 +65,7 @@ String Material::Layer::describe() const
 String Material::Layer::description() const
 {
     int const numStages = stageCount();
-    String str = _E(b) + describe() + _E(.) + " (" + String::number(numStages) + " stage" + DENG2_PLURAL_S(numStages) + "):";
+    String str = _E(b) + describe() + _E(.) + " (" + String::number(numStages) + " stage" + DE_PLURAL_S(numStages) + "):";
     for (int i = 0; i < numStages; ++i)
     {
         str += String("\n  [%1] ").arg(i, 2) + _E(>) + stage(i).description() + _E(<);
@@ -75,9 +75,9 @@ String Material::Layer::description() const
 
 // ------------------------------------------------------------------------------------
 
-DENG2_PIMPL(Material)
-, DENG2_OBSERVES(res::Texture, Deletion)
-, DENG2_OBSERVES(res::Texture, DimensionsChange)
+DE_PIMPL(Material)
+, DE_OBSERVES(res::Texture, Deletion)
+, DE_OBSERVES(res::Texture, DimensionsChange)
 {
     MaterialManifest *manifest = nullptr;  ///< Source manifest (always valid, not owned).
     Vec2ui dimensions;                  ///< World dimensions in map coordinate space units.
@@ -152,7 +152,7 @@ DENG2_PIMPL(Material)
     // Observes Texture DimensionsChange.
     void textureDimensionsChanged(res::Texture const &texture)
     {
-        DENG2_ASSERT(!haveValidDimensions()); // Sanity check.
+        DE_ASSERT(!haveValidDimensions()); // Sanity check.
         self().setDimensions(texture.dimensions());
     }
 
@@ -162,23 +162,23 @@ DENG2_PIMPL(Material)
         // If here it means the texture we were planning to inherit dimensions from is
         // being deleted and therefore we won't be able to.
 
-        DENG2_ASSERT(!haveValidDimensions()); // Sanity check.
-        DENG2_ASSERT(inheritDimensionsTexture() == &texture); // Sanity check.
+        DE_ASSERT(!haveValidDimensions()); // Sanity check.
+        DE_ASSERT(inheritDimensionsTexture() == &texture); // Sanity check.
 
         /// @todo kludge: Clear the association so we don't try to cancel notifications later.
         firstTextureLayer()->stage(0).texture = de::Uri();
 
-#if !defined(DENG2_DEBUG)
-        DENG2_UNUSED(texture);
+#if !defined(DE_DEBUG)
+        DE_UNUSED(texture);
 #endif
     }
 
-    DENG2_PIMPL_AUDIENCE(Deletion)
-    DENG2_PIMPL_AUDIENCE(DimensionsChange)
+    DE_PIMPL_AUDIENCE(Deletion)
+    DE_PIMPL_AUDIENCE(DimensionsChange)
 };
 
-DENG2_AUDIENCE_METHOD(Material, Deletion)
-DENG2_AUDIENCE_METHOD(Material, DimensionsChange)
+DE_AUDIENCE_METHOD(Material, Deletion)
+DE_AUDIENCE_METHOD(Material, DimensionsChange)
 
 Material::Material(MaterialManifest &manifest)
     : MapElement(DMU_MATERIAL)
@@ -191,12 +191,12 @@ Material::~Material()
 {
     d->maybeCancelTextureDimensionsChangeNotification();
 
-    DENG2_FOR_AUDIENCE2(Deletion, i) i->materialBeingDeleted(*this);
+    DE_FOR_AUDIENCE2(Deletion, i) i->materialBeingDeleted(*this);
 }
 
 MaterialManifest &Material::manifest() const
 {
-    DENG2_ASSERT(d->manifest);
+    DE_ASSERT(d->manifest);
     return *d->manifest;
 }
 
@@ -213,7 +213,7 @@ void Material::setDimensions(Vec2ui const &newDimensions)
         d->maybeCancelTextureDimensionsChangeNotification();
 
         // Notify interested parties.
-        DENG2_FOR_AUDIENCE2(DimensionsChange, i) i->materialDimensionsChanged(*this);
+        DE_FOR_AUDIENCE2(DimensionsChange, i) i->materialDimensionsChanged(*this);
     }
 }
 
@@ -305,8 +305,8 @@ String Material::description() const
 {
     String str = String(_E(l) "Dimensions: ") + _E(.) + (d->haveValidDimensions()? dimensions().asText() : "unknown (not yet prepared)")
                + _E(l) + " Source: "     + _E(.) + manifest().sourceDescription()
-               + _E(l) + "\nDrawable: "  + _E(.) + DENG2_BOOL_YESNO(isDrawable())
-               + _E(l) + " SkyMasked: "  + _E(.) + DENG2_BOOL_YESNO(isSkyMasked());
+               + _E(l) + "\nDrawable: "  + _E(.) + DE_BOOL_YESNO(isDrawable())
+               + _E(l) + " SkyMasked: "  + _E(.) + DE_BOOL_YESNO(isSkyMasked());
 
     // Add the layer config:
     for (Layer const *layer : _layers)
@@ -344,7 +344,7 @@ int Material::property(DmuArgs &args) const
 
 D_CMD(InspectMaterial)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1);
     if (!search.scheme().isEmpty() &&

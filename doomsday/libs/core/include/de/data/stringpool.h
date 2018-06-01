@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_STRINGPOOL_H
-#define LIBDENG2_STRINGPOOL_H
+#ifndef LIBCORE_STRINGPOOL_H
+#define LIBCORE_STRINGPOOL_H
 
 #include "../libcore.h"
 #include "../ISerializable"
@@ -53,14 +53,14 @@ namespace de {
  *
  * @ingroup data
  */
-class DENG2_PUBLIC StringPool : public ISerializable
+class DE_PUBLIC StringPool : public ISerializable
 {
 public:
     /// String identifier was invalid. @ingroup errors
-    DENG2_ERROR(InvalidIdError);
+    DE_ERROR(InvalidIdError);
 
     /// The pool does not have any available identifiers. @ingroup errors
-    DENG2_ERROR(FullError);
+    DE_ERROR(FullError);
 
     /// String identifier. Each string is assigned its own Id. Because this is
     /// 32-bit, there can be approximately 4.2 billion unique strings in the pool.
@@ -223,7 +223,7 @@ public:
     void operator >> (Writer &to) const;
     void operator << (Reader &from);
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     /**
      * Print contents of the pool (for debugging).
      */
@@ -231,9 +231,9 @@ public:
 #endif
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 }  // namespace de
 
-#endif  // LIBDENG2_STRINGPOOL_H
+#endif  // LIBCORE_STRINGPOOL_H

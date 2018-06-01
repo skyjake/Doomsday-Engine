@@ -1,64 +1,64 @@
-group generic 
+group generic
 {
     # Simple shader with untextured vertices. There is an additional constant
     # color applied to all vertices. Uses a combined model-view-projection
     # matrix.
-    shader color_ucolor 
+    shader color_ucolor
     {
         vertex = "
             uniform highp mat4 uMvpMatrix;
             uniform highp vec4 uColor;
-            DENG_ATTRIB highp vec4 aVertex;
-            DENG_ATTRIB highp vec4 aColor;
-            DENG_VAR highp vec4 vColor;
-            
+            DE_ATTRIB highp vec4 aVertex;
+            DE_ATTRIB highp vec4 aColor;
+            DE_VAR highp vec4 vColor;
+
             void main(void) {
                 gl_Position = uMvpMatrix * aVertex;
                 vColor = uColor * aColor;
             }"
         fragment = "
-            DENG_VAR highp vec4 vColor;
-            
+            DE_VAR highp vec4 vColor;
+
             void main(void) {
                 out_FragColor = vColor;
             }"
     }
-    
-    shader texture 
+
+    shader texture
     {
         vertex = "
             uniform highp mat4 uMvpMatrix;
-            DENG_ATTRIB highp vec4 aVertex;
-            DENG_ATTRIB highp vec2 aUV;
-            DENG_VAR highp vec2 vUV;
-        
+            DE_ATTRIB highp vec4 aVertex;
+            DE_ATTRIB highp vec2 aUV;
+            DE_VAR highp vec2 vUV;
+
             void main(void) {
                 gl_Position = uMvpMatrix * aVertex;
                 vUV = aUV;
             }"
         fragment = "
             uniform sampler2D uTex;
-            DENG_VAR highp vec2 vUV;
+            DE_VAR highp vec2 vUV;
 
             void main(void) {
                 out_FragColor = texture(uTex, vUV);
-            }"        
+            }"
     }
-    
-    group textured 
-    {    
+
+    group textured
+    {
         # Simple shader with one texture plus a color per vertex. Uses a
         # combined model-view-projection matrix.
-        shader color 
+        shader color
         {
             vertex = "
                 uniform highp mat4 uMvpMatrix;
-                DENG_ATTRIB highp vec4 aVertex;
-                DENG_ATTRIB highp vec2 aUV;
-                DENG_ATTRIB highp vec4 aColor;
-                DENG_VAR highp vec2 vUV;
-                DENG_VAR highp vec4 vColor;
-            
+                DE_ATTRIB highp vec4 aVertex;
+                DE_ATTRIB highp vec2 aUV;
+                DE_ATTRIB highp vec4 aColor;
+                DE_VAR highp vec2 vUV;
+                DE_VAR highp vec4 vColor;
+
                 void main(void) {
                     gl_Position = uMvpMatrix * aVertex;
                     vUV = aUV;
@@ -66,28 +66,28 @@ group generic
                 }"
             fragment = "
                 uniform sampler2D uTex;
-                DENG_VAR highp vec2 vUV;
-                DENG_VAR highp vec4 vColor;
+                DE_VAR highp vec2 vUV;
+                DE_VAR highp vec4 vColor;
 
                 void main(void) {
                     out_FragColor = vColor * texture(uTex, vUV);
                 }"
         }
-    
+
         # Simple shader with one texture plus a color per vertex. There is
         # an additional constant color applied to all vertices. Uses a
         # combined model-view-projection matrix.
-        shader color_ucolor 
+        shader color_ucolor
         {
             vertex = "
                 uniform highp mat4 uMvpMatrix;
                 uniform highp vec4 uColor;
-                DENG_ATTRIB highp vec4 aVertex;
-                DENG_ATTRIB highp vec2 aUV;
-                DENG_ATTRIB highp vec4 aColor;
-                DENG_VAR highp vec2 vUV;
-                DENG_VAR highp vec4 vColor;
-            
+                DE_ATTRIB highp vec4 aVertex;
+                DE_ATTRIB highp vec2 aUV;
+                DE_ATTRIB highp vec4 aColor;
+                DE_VAR highp vec2 vUV;
+                DE_VAR highp vec4 vColor;
+
                 void main(void) {
                     gl_Position = uMvpMatrix * aVertex;
                     vUV = aUV;
@@ -95,13 +95,13 @@ group generic
                 }"
             fragment = "
                 uniform sampler2D uTex;
-                DENG_VAR highp vec2 vUV;
-                DENG_VAR highp vec4 vColor;
+                DE_VAR highp vec2 vUV;
+                DE_VAR highp vec4 vColor;
 
                 void main(void) {
                     out_FragColor = vColor * texture(uTex, vUV);
                 }"
-        }       
+        }
     }
 }
 

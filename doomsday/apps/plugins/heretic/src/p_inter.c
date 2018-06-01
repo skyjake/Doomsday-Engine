@@ -52,8 +52,8 @@ int P_GetPlayerLaughSound(const player_t *plr)
 
 static dd_bool giveOneAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
 {
-    DENG_ASSERT(plr != 0);
-    DENG_ASSERT(((int)ammoType >= 0 && ammoType < NUM_AMMO_TYPES) || ammoType == AT_NOAMMO);
+    DE_ASSERT(plr != 0);
+    DE_ASSERT(((int)ammoType >= 0 && ammoType < NUM_AMMO_TYPES) || ammoType == AT_NOAMMO);
 
     // Giving the special 'unlimited ammo' type always succeeds.
     if(ammoType == AT_NOAMMO)
@@ -142,8 +142,8 @@ static dd_bool giveOneWeapon(player_t *plr, weapontype_t weaponType)
     weaponinfo_t const *wpnInfo;
     ammotype_t i;
 
-    DENG_ASSERT(plr != 0);
-    DENG_ASSERT(weaponType >= WT_FIRST && weaponType < NUM_WEAPON_TYPES);
+    DE_ASSERT(plr != 0);
+    DE_ASSERT(weaponType >= WT_FIRST && weaponType < NUM_WEAPON_TYPES);
 
     wpnInfo = &weaponInfo[weaponType][plr->class_];
 
@@ -266,7 +266,7 @@ dd_bool P_GiveHealth(player_t *player, int amount)
 
 dd_bool P_GiveArmor(player_t *player, int armorType, int armorPoints)
 {
-    DENG_ASSERT(player != 0);
+    DE_ASSERT(player != 0);
 
     if(player->armorPoints >= armorPoints)
         return false;
@@ -282,8 +282,8 @@ dd_bool P_GiveArmor(player_t *player, int armorType, int armorPoints)
 
 static dd_bool giveOneKey(player_t *plr, keytype_t keyType)
 {
-    DENG_ASSERT(plr != 0);
-    DENG_ASSERT(keyType >= KT_FIRST && keyType < NUM_KEY_TYPES);
+    DE_ASSERT(plr != 0);
+    DE_ASSERT(keyType >= KT_FIRST && keyType < NUM_KEY_TYPES);
 
     // Already owned?
     if(plr->keys[keyType]) return false;
@@ -347,8 +347,8 @@ dd_bool P_GivePower(player_t *player, powertype_t powerType)
 {
     dd_bool retval = false;
 
-    DENG_ASSERT(player != 0);
-    DENG_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
+    DE_ASSERT(player != 0);
+    DE_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
 
     player->update |= PSF_POWERS;
     switch(powerType)
@@ -425,8 +425,8 @@ dd_bool P_GivePower(player_t *player, powertype_t powerType)
 
 dd_bool P_TakePower(player_t *player, powertype_t powerType)
 {
-    DENG_ASSERT(player != 0);
-    DENG_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
+    DE_ASSERT(player != 0);
+    DE_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
 
     if(!player->powers[powerType])
         return false; // Dont got it.
@@ -460,8 +460,8 @@ dd_bool P_TakePower(player_t *player, powertype_t powerType)
 
 dd_bool P_TogglePower(player_t *player, powertype_t powerType)
 {
-    DENG_ASSERT(player != 0);
-    DENG_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
+    DE_ASSERT(player != 0);
+    DE_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
 
     if(!player->powers[powerType])
     {
@@ -599,8 +599,8 @@ static dd_bool pickupWeapon(player_t *plr, weapontype_t weaponType,
 {
     dd_bool pickedWeapon;
 
-    DENG_ASSERT(plr != 0);
-    DENG_ASSERT(weaponType >= WT_FIRST && weaponType < NUM_WEAPON_TYPES);
+    DE_ASSERT(plr != 0);
+    DE_ASSERT(weaponType >= WT_FIRST && weaponType < NUM_WEAPON_TYPES);
 
     // Depending on the game rules the player should ignore the weapon.
     if(plr->weapons[weaponType].owned)
@@ -954,8 +954,8 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     coord_t delta;
     itemtype_t item;
 
-    DENG_ASSERT(special != 0);
-    DENG_ASSERT(toucher != 0);
+    DE_ASSERT(special != 0);
+    DE_ASSERT(toucher != 0);
 
     delta = special->origin[VZ] - toucher->origin[VZ];
     if(delta > toucher->height || delta < -32)
@@ -1125,7 +1125,7 @@ dd_bool P_MorphPlayer(player_t *player)
     angle_t angle;
     int oldFlags2;
 
-    DENG_ASSERT(player != 0);
+    DE_ASSERT(player != 0);
 
     App_Log(DE2_DEV_MAP_MSG, "P_MorphPlayer: Player %i", (int)(player - players));
 
@@ -1188,7 +1188,7 @@ static dd_bool morphMonster(mobj_t *actor)
     angle_t    angle;
     int        ghost;
 
-    DENG_ASSERT(actor != 0);
+    DE_ASSERT(actor != 0);
 
     if (actor->player) return false;
 
@@ -1223,7 +1223,7 @@ static dd_bool autoUseChaosDevice(player_t *player)
 {
     int plrnum = player - players;
 
-    DENG_ASSERT(player != 0);
+    DE_ASSERT(player != 0);
 
     /// @todo Do this in the inventory code?
     if(P_InventoryCount(plrnum, IIT_TELEPORT))
@@ -1244,7 +1244,7 @@ static void autoUseHealth(player_t *player, int saveHealth)
     int normalCount = P_InventoryCount(plrnum, IIT_HEALTH);
     int superCount = P_InventoryCount(plrnum, IIT_SUPERHEALTH);
 
-    DENG_ASSERT(player != 0);
+    DE_ASSERT(player != 0);
 
     if(!player->plr->mo) return;
 

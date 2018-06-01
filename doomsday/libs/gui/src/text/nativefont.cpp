@@ -26,7 +26,7 @@ static Families families;
 static int const MAX_CACHE_STRING_LENGTH = 200;
 static int const MAX_CACHE_STRINGS = 500;
 
-DENG2_PIMPL(NativeFont)
+DE_PIMPL(NativeFont)
 {
     String family;
     dfloat size;

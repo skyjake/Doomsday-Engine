@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_ARCHIVE_H
-#define LIBDENG2_ARCHIVE_H
+#ifndef LIBCORE_ARCHIVE_H
+#define LIBCORE_ARCHIVE_H
 
 #include "../libcore.h"
 #include "../IByteArray"
@@ -68,20 +68,20 @@ class Block;
  *
  * @ingroup data
  */
-class DENG2_PUBLIC Archive : public IWritable
+class DE_PUBLIC Archive : public IWritable
 {
 public:
     /// Base class for format-related errors. @ingroup errors
-    DENG2_ERROR(FormatError);
+    DE_ERROR(FormatError);
 
     /// Provided path was not valid. @ingroup errors
-    DENG2_ERROR(InvalidPathError);
+    DE_ERROR(InvalidPathError);
 
     /// The requested entry does not exist in the archive. @ingroup errors
-    DENG2_ERROR(NotFoundError);
+    DE_ERROR(NotFoundError);
 
     /// There is an error related to content processing. @ingroup errors
-    DENG2_ERROR(ContentError);
+    DE_ERROR(ContentError);
 
     typedef std::set<String> Names; // alphabetical order
 
@@ -262,7 +262,7 @@ protected:
      * Interface for derived classes:
      */
     /// Base class for archive entries.
-    struct DENG2_PUBLIC Entry : public PathTree::Node
+    struct DE_PUBLIC Entry : public PathTree::Node
     {
         dsize offset;           ///< Offset from the start of the source array.
         dsize size;             ///< Deserialized size.
@@ -322,9 +322,9 @@ protected:
     PathTree const &index() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif /* LIBDENG2_ARCHIVE_H */
+#endif /* LIBCORE_ARCHIVE_H */

@@ -28,7 +28,7 @@
 #include "resource/resourceclass.h"
 
 /// Schemes must be at least this many characters.
-#define DENG2_URI_MIN_SCHEME_LENGTH     2
+#define DE_URI_MIN_SCHEME_LENGTH     2
 
 #include <de/Log>
 #include <de/Error>
@@ -54,13 +54,13 @@ class LIBDOOMSDAY_PUBLIC Uri : public ISerializable
 {
 public:
     /// Base class for resolve-related errors. @ingroup errors
-    DENG2_ERROR(ResolveError);
+    DE_ERROR(ResolveError);
 
     /// An unknown symbol was encountered in the embedded expression. @ingroup errors
-    DENG2_SUB_ERROR(ResolveError, UnknownSymbolError);
+    DE_SUB_ERROR(ResolveError, UnknownSymbolError);
 
     /// An unresolveable symbol was encountered in the embedded expression. @ingroup errors
-    DENG2_SUB_ERROR(ResolveError, ResolveSymbolError);
+    DE_SUB_ERROR(ResolveError, ResolveSymbolError);
 
     /**
      * Flags determining the composition of textual representation:
@@ -341,7 +341,7 @@ public:
     static void setResolverFunc(ResolverFunc resolver);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Uri::ComposeAsTextFlags)

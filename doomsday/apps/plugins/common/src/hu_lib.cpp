@@ -72,7 +72,7 @@ void GUI_Shutdown()
 
 HudWidget *GUI_AddWidget(HudWidget *wi)
 {
-    DENG2_ASSERT(inited);
+    DE_ASSERT(inited);
     if(wi)
     {
         wi->setId(nextUnusedId());
@@ -124,7 +124,7 @@ void GUI_UpdateWidgetGeometry(HudWidget *wi)
 #if defined(UI_DEBUG)
 static void drawWidgetGeometry(HudWidget *wi)
 {
-    DENG2_ASSERT(wi);
+    DE_ASSERT(wi);
 
     RectRaw geometry;
     Rect_Raw(&wi->geometry(), &geometry);
@@ -144,7 +144,7 @@ static void drawWidgetGeometry(HudWidget *wi)
 
 static void drawWidgetAvailableSpace(HudWidget *wi)
 {
-    DENG2_ASSERT(wi);
+    DE_ASSERT(wi);
     DGL_Color4f(0, .4f, 0, .1f);
     DGL_DrawRectf2(Rect_X(&wi->geometry()), Rect_Y(&wi->geometry()), wi->maximumSize().width, wi->maximumSize().height);
 }
@@ -152,7 +152,7 @@ static void drawWidgetAvailableSpace(HudWidget *wi)
 
 static void drawWidget2(HudWidget *wi, Point2Raw const *offset = nullptr)
 {
-    DENG2_ASSERT(wi);
+    DE_ASSERT(wi);
 
 #if defined(UI_DEBUG)
     drawWidgetAvailableSpace(wi);
@@ -187,7 +187,7 @@ static void drawWidget2(HudWidget *wi, Point2Raw const *offset = nullptr)
 
 static void drawWidget(HudWidget *wi, Point2Raw const *origin = nullptr)
 {
-    DENG2_ASSERT(wi);
+    DE_ASSERT(wi);
 
     if(origin)
     {

@@ -46,16 +46,16 @@ class LIBDOOMSDAY_PUBLIC Resources : public de::System
 {
 public:
     /// An unknown resource scheme was referenced. @ingroup errors
-    DENG2_ERROR(UnknownSchemeError);
+    DE_ERROR(UnknownSchemeError);
 
     /// The referenced resource was not found. @ingroup errors
-    DENG2_ERROR(MissingResourceError);
+    DE_ERROR(MissingResourceError);
 
     /// An unknown resource class identifier was specified. @ingroup errors
-    DENG2_ERROR(UnknownResourceClassError);
+    DE_ERROR(UnknownResourceClassError);
 
     /// The referenced manifest was not found. @ingroup errors
-    DENG2_ERROR(MissingResourceManifestError);
+    DE_ERROR(MissingResourceManifestError);
 
     static Resources &get();
 
@@ -128,7 +128,7 @@ public:
     static void consoleRegister();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 namespace res

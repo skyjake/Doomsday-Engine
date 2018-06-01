@@ -63,7 +63,7 @@ static void PCX_SetLastError(char const *msg)
 
 static bool load(FileHandle &file, int width, int height, uint8_t *dstBuf)
 {
-    DENG2_ASSERT(dstBuf != 0);
+    DE_ASSERT(dstBuf != 0);
 
     int x, y, dataByte, runLength;
     bool result = false;

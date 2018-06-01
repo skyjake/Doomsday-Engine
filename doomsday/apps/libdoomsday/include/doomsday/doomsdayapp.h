@@ -51,17 +51,19 @@ class LIBDOOMSDAY_PUBLIC DoomsdayApp
 {
 public:
     /// Notified before the current game is unloaded.
-    DENG2_DEFINE_AUDIENCE2(GameUnload, void aboutToUnloadGame(Game const &gameBeingUnloaded))
+    DE_DEFINE_AUDIENCE2(GameUnload, void aboutToUnloadGame(Game const &gameBeingUnloaded))
 
-    DENG2_DEFINE_AUDIENCE2(GameLoad, void aboutToLoadGame(Game const &gameBeingLoaded))
+    DE_DEFINE_AUDIENCE2(GameLoad, void aboutToLoadGame(Game const &gameBeingLoaded))
 
     /// Notified after the current game has been changed.
-    DENG2_DEFINE_AUDIENCE2(GameChange, void currentGameChanged(Game const &newGame))
+    DE_DEFINE_AUDIENCE2(GameChange, void currentGameChanged(Game const &newGame))
 
     /// Notified when console variables and commands should be registered.
-    DENG2_DEFINE_AUDIENCE2(ConsoleRegistration, void consoleRegistration())
+    DE_DEFINE_AUDIENCE2(ConsoleRegistration, void consoleRegistration())
 
-    DENG2_DEFINE_AUDIENCE2(PeriodicAutosave, void periodicAutosave())
+    DE_DEFINE_AUDIENCE2(FileRefresh, void aboutToRefreshFiles())
+
+    DE_DEFINE_AUDIENCE2(PeriodicAutosave, void periodicAutosave())
 
     struct GameChangeParameters
     {
@@ -246,7 +248,7 @@ protected:
     virtual void reset();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 /**

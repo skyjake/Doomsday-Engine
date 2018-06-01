@@ -50,8 +50,8 @@ class LIBDOOMSDAY_PUBLIC DataBundle : public de::IByteArray
 public:
     enum Format { Unknown, Pk3, Wad, Iwad, Pwad, Lump, Ded, Dehacked, Collection };
 
-    DENG2_ERROR(FormatError);
-    DENG2_ERROR(LinkError);
+    DE_ERROR(FormatError);
+    DE_ERROR(LinkError);
 
     struct LIBDOOMSDAY_PUBLIC Interpreter : public de::filesys::IInterpreter {
         de::File *interpretFile(de::File *sourceData) const override;
@@ -199,7 +199,7 @@ protected:
     void setFormat(Format format);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // LIBDOOMSDAY_DATABUNDLE_H

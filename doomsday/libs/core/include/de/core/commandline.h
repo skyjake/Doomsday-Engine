@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_COMMANDLINE_H
-#define LIBDENG2_COMMANDLINE_H
+#ifndef LIBCORE_COMMANDLINE_H
+#define LIBCORE_COMMANDLINE_H
 
 #include <string>
 #include <vector>
@@ -26,9 +26,9 @@
 
 #include <QStringList>
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
 #  include <QProcess>
-#  define DENG_HAVE_QPROCESS
+#  define DE_HAVE_QPROCESS
 #endif
 
 #include "../libcore.h"
@@ -43,16 +43,16 @@ namespace de {
  *
  * @ingroup core
  */
-class DENG2_PUBLIC CommandLine
+class DE_PUBLIC CommandLine
 {
 public:
     /// Tried to access an argument that does not exist. @ingroup errors
-    DENG2_ERROR(OutOfRangeError);
+    DE_ERROR(OutOfRangeError);
 
     /// Execution of the command line failed. @ingroup errors
-    DENG2_ERROR(ExecuteError);
+    DE_ERROR(ExecuteError);
 
-    struct DENG2_PUBLIC ArgWithParams {
+    struct DE_PUBLIC ArgWithParams {
         dint pos; ///< Position of the argument.
         String arg;
         StringList params;
@@ -228,7 +228,7 @@ public:
      */
     bool matches(String const &full, String const &fullOrAlias) const;
 
-#if defined (DENG_HAVE_QPROCESS)
+#if defined (DE_HAVE_QPROCESS)
 
     /**
      * Spawns a new process using the command line. The first argument
@@ -256,9 +256,9 @@ public:
     static CommandLine &get();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif /* LIBDENG2_COMMANDLINE_H */
+#endif /* LIBCORE_COMMANDLINE_H */

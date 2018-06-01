@@ -1,7 +1,7 @@
 # Doomsday Engine - Savegame Tool
 
 cmake_minimum_required (VERSION 3.1)
-project (DENG_SAVEGAMETOOL)
+project (DE_SAVEGAMETOOL)
 include (../../cmake/Config.cmake)
 
 # Dependencies.

@@ -23,7 +23,7 @@ namespace de { namespace shell {
 
 TextRootWidget::TextRootWidget(TextCanvas *cv) : RootWidget(), _canvas(cv), _drawRequest(false)
 {
-    DENG2_ASSERT(cv != 0);
+    DE_ASSERT(cv != 0);
     setViewSize(cv->size());
 }
 

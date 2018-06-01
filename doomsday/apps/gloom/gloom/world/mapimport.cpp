@@ -51,7 +51,7 @@ static inline uint16_t le16u(uint16_t leValue)
 #  define PACKED_STRUCT
 #endif
 
-DENG2_PIMPL_NOREF(MapImport)
+DE_PIMPL_NOREF(MapImport)
 {
     const res::LumpCatalog &lumps;
     res::IdTech1FlatLib     flatLib;
@@ -477,7 +477,7 @@ void MapImport::exportPackage(const String &packageRootPath) const
             os << "    diffuse: " << imgPath << "\n}\n\n";
 
             const auto image = materialImage(name);
-            DENG2_ASSERT(!image.isNull());
+            DE_ASSERT(!image.isNull());
 
             Block imgData;
             {

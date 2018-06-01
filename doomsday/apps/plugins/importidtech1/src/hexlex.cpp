@@ -28,7 +28,7 @@ using namespace de;
 
 namespace idtech1 {
 
-DENG2_PIMPL(HexLex)
+DE_PIMPL(HexLex)
 {
     String sourcePath;                   ///< Used to identify the source in error messages.
     ddstring_s const *script = nullptr;  ///< The start of the script being parsed.

@@ -245,7 +245,7 @@ static size_t FileReader(const char* name, char** buffer)
     }
 
     buf = (char *) Z_Malloc(length, PU_APPSTATIC, 0);
-    DENG_ASSERT(buf != 0);
+    DE_ASSERT(buf != 0);
 
     size_t bytesRead = read(handle, buf, length);
     close(handle);

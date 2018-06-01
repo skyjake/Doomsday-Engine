@@ -37,7 +37,7 @@ static duint16 const MAX_LISTEN_RANGE = 16;
 // 1.1: Advertised message is compressed with zlib (deflate).
 static char const *discoveryMessage = "Doomsday Beacon 1.1";
 
-DENG2_PIMPL_NOREF(Beacon)
+DE_PIMPL_NOREF(Beacon)
 {
     duint16 port;
     duint16 servicePort;
@@ -69,7 +69,7 @@ duint16 Beacon::port() const
 
 void Beacon::start(duint16 serviceListenPort)
 {
-    DENG2_ASSERT(!d->socket);
+    DE_ASSERT(!d->socket);
 
     d->servicePort = serviceListenPort;
 
@@ -111,7 +111,7 @@ void Beacon::discover(TimeSpan const &timeOut, TimeSpan const &interval)
 {
     if (d->timer) return; // Already discovering.
 
-    DENG2_ASSERT(!d->socket);
+    DE_ASSERT(!d->socket);
 
     d->socket = new QUdpSocket;
     connect(d->socket, SIGNAL(readyRead()), this, SLOT(readDiscoveryReply()));
@@ -224,8 +224,8 @@ void Beacon::readDiscoveryReply()
 
 void Beacon::continueDiscovery()
 {
-    DENG2_ASSERT(d->socket);
-    DENG2_ASSERT(d->timer);
+    DE_ASSERT(d->socket);
+    DE_ASSERT(d->timer);
 
     // Time to stop discovering?
     if (d->discoveryEndsAt.isValid() && Time() > d->discoveryEndsAt)

@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_TIMEVALUE_H
-#define LIBDENG2_TIMEVALUE_H
+#ifndef LIBCORE_TIMEVALUE_H
+#define LIBCORE_TIMEVALUE_H
 
 #include "../Value"
 #include "../Time"
@@ -28,7 +28,7 @@ namespace de {
  * Value that holds a Time.
  * @ingroup data
  */
-class DENG2_PUBLIC TimeValue : public Value
+class DE_PUBLIC TimeValue : public Value
 {
 public:
     TimeValue(Time const &time = Time());
@@ -54,4 +54,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_TIMEVALUE_H
+#endif // LIBCORE_TIMEVALUE_H

@@ -66,7 +66,7 @@ public:
     void pageActivated() override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 void CVarToggleWidget_UpdateCVar(Widget &wi, Widget::Action action);

@@ -48,7 +48,7 @@ void Vertex::setOrigin(Vec2d const &newOrigin)
     if(_origin != newOrigin)
     {
         _origin = newOrigin;
-        DENG2_FOR_AUDIENCE(OriginChange, i)
+        DE_FOR_AUDIENCE(OriginChange, i)
         {
             i->vertexOriginChanged(*this);
         }

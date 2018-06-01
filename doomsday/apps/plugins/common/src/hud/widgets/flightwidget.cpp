@@ -28,13 +28,13 @@ using namespace de;
 
 static void FlightWidget_UpdateGeometry(guidata_flight_t *flht)
 {
-    DENG2_ASSERT(flht);
+    DE_ASSERT(flht);
     flht->updateGeometry();
 }
 
 static void FlightWidget_Draw(guidata_flight_t *flht, Point2Raw const *offset)
 {
-    DENG2_ASSERT(flht);
+    DE_ASSERT(flht);
     flht->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
@@ -118,7 +118,7 @@ void guidata_flight_t::draw(Vec2i const &offset) const
         DGL_PopMatrix();
     }
 #else
-    DENG2_UNUSED(offset);
+    DE_UNUSED(offset);
 #endif
 }
 

@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_UPDATERSETTINGSDIALOG_H
-#define DENG_CLIENT_UPDATERSETTINGSDIALOG_H
+#ifndef DE_CLIENT_UPDATERSETTINGSDIALOG_H
+#define DE_CLIENT_UPDATERSETTINGSDIALOG_H
 
 #include <de/DialogWidget>
 
@@ -53,7 +53,7 @@ protected:
     void finish(int result);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UPDATERSETTINGSDIALOG_H
+#endif // DE_CLIENT_UPDATERSETTINGSDIALOG_H

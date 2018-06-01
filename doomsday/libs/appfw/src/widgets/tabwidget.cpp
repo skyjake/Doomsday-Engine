@@ -26,12 +26,12 @@ Q_DECLARE_METATYPE(de::ui::Item const *)
 
 namespace de {
 
-DENG_GUI_PIMPL(TabWidget)
-, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
-, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
-, DENG2_OBSERVES(ui::Data,             Addition)
-, DENG2_OBSERVES(ui::Data,             OrderChange)
-, DENG2_OBSERVES(ButtonWidget,         Press)
+DE_GUI_PIMPL(TabWidget)
+, DE_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
+, DE_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
+, DE_OBSERVES(ui::Data,             Addition)
+, DE_OBSERVES(ui::Data,             OrderChange)
+, DE_OBSERVES(ButtonWidget,         Press)
 {
     ui::Data::Pos current = 0;
     MenuWidget *buttons = nullptr;
@@ -206,7 +206,7 @@ ui::Data::Pos TabWidget::current() const
 
 TabItem &TabWidget::currentItem()
 {
-    DENG2_ASSERT(d->current < items().size());
+    DE_ASSERT(d->current < items().size());
     return items().at(d->current).as<TabItem>();
 }
 

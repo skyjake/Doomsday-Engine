@@ -31,7 +31,7 @@
 
 namespace de {
 
-DENG_GUI_PIMPL(PopupWidget)
+DE_GUI_PIMPL(PopupWidget)
 {
     ColorTheme colorTheme = Normal;
     bool flexibleDir = true;
@@ -594,7 +594,7 @@ void PopupWidget::preparePanelForOpening()
 
     // Reparent the popup into the root widget, on top of everything else.
     d->realParent.reset(Widget::parent());
-    DENG2_ASSERT(d->realParent);
+    DE_ASSERT(d->realParent);
     d->realParent->remove(*this);
     d->realParent->root().as<GuiRootWidget>().addOnTop(this);
 
@@ -620,7 +620,7 @@ void PopupWidget::panelDismissed()
     {
         // The real parent has been deleted.
         d->realParent.reset(&root());
-        DENG2_ASSERT(d->realParent);
+        DE_ASSERT(d->realParent);
     }
     parentWidget()->remove(*this);
 

@@ -30,8 +30,8 @@
 
 #define MO_TELEPORTMAN          14
 
-DENG_EXTERN_C mobj_t *P_LavaInflictor();
-DENG_EXTERN_C mobjtype_t TranslateThingType[];
+DE_EXTERN_C mobj_t *P_LavaInflictor();
+DE_EXTERN_C mobjtype_t TranslateThingType[];
 
 #ifdef __cplusplus
 extern "C" {

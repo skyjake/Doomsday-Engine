@@ -20,14 +20,14 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(MouseEventSource)
+DE_PIMPL_NOREF(MouseEventSource)
 {
-    DENG2_PIMPL_AUDIENCE(MouseStateChange)
-    DENG2_PIMPL_AUDIENCE(MouseEvent)
+    DE_PIMPL_AUDIENCE(MouseStateChange)
+    DE_PIMPL_AUDIENCE(MouseEvent)
 };
 
-DENG2_AUDIENCE_METHOD(MouseEventSource, MouseStateChange)
-DENG2_AUDIENCE_METHOD(MouseEventSource, MouseEvent)
+DE_AUDIENCE_METHOD(MouseEventSource, MouseStateChange)
+DE_AUDIENCE_METHOD(MouseEventSource, MouseEvent)
 
 MouseEventSource::MouseEventSource() : d(new Impl)
 {}

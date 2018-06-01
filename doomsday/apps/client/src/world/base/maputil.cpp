@@ -47,7 +47,7 @@ lineopening_s::lineopening_s(Line const &line)
 
     Sector const *frontSector = line.front().sectorPtr();
     Sector const *backSector  = line.back().sectorPtr();
-    DENG_ASSERT(frontSector != 0);
+    DE_ASSERT(frontSector != 0);
 
     if(backSector && backSector->ceiling().height() < frontSector->ceiling().height())
     {
@@ -218,7 +218,7 @@ Line *R_FindLineNeighbor(Line const &line, LineOwner const &own, ClockDirection 
     }
 
     // Not suitable, try the next.
-    DENG2_ASSERT(cown);
+    DE_ASSERT(cown);
     return R_FindLineNeighbor(line, *cown, direction, sector, diff);
 }
 
@@ -274,7 +274,7 @@ static bool middleMaterialCoversOpening(LineSide const &side)
 Line *R_FindSolidLineNeighbor(Line const &line, LineOwner const &own, ClockDirection direction,
     Sector const *sector, binangle_t *diff)
 {
-    DENG2_ASSERT(sector);
+    DE_ASSERT(sector);
 
     LineOwner const *cown = (direction == Anticlockwise ? own.prev() : own.next());
     Line *other = &cown->line();
@@ -309,7 +309,7 @@ Line *R_FindSolidLineNeighbor(Line const &line, LineOwner const &own, ClockDirec
     }
 
     // Not suitable, try the next.
-    DENG2_ASSERT(cown);
+    DE_ASSERT(cown);
     return R_FindSolidLineNeighbor(line, *cown, direction, sector, diff);
 }
 

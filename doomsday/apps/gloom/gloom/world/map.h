@@ -214,7 +214,7 @@ public:
     void  deserialize(const Block &data);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace gloom

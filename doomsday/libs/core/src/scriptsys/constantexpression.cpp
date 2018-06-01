@@ -39,7 +39,7 @@ ConstantExpression::~ConstantExpression()
 
 Value *ConstantExpression::evaluate(Evaluator &) const
 {
-    DENG2_ASSERT(_value != 0);
+    DE_ASSERT(_value != 0);
     return _value->duplicate();
 }
 

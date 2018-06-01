@@ -34,7 +34,7 @@
 using namespace de;
 using namespace de::ui;
 
-DENG_GUI_PIMPL(InputSettingsDialog)
+DE_GUI_PIMPL(InputSettingsDialog)
 {
     ChoiceWidget *gamepad;
     ButtonWidget *applyGamepad;

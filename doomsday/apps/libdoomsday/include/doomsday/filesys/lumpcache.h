@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_FILESYS_LUMPCACHE_H
-#define LIBDENG_FILESYS_LUMPCACHE_H
+#ifndef DE_FILESYS_LUMPCACHE_H
+#define DE_FILESYS_LUMPCACHE_H
 
 #include "../libdoomsday.h"
 #include "dd_types.h"
@@ -87,4 +87,4 @@ private:
     DataCache *_dataCache;  ///< The cached data.
 };
 
-#endif /* LIBDENG_FILESYS_LUMPCACHE_H */
+#endif /* DE_FILESYS_LUMPCACHE_H */

@@ -57,7 +57,7 @@ static Value *makeValueFromInfoValue(de::Info::Element::Value const &v)
     }
 }
 
-DENG2_PIMPL(GameStateFolder)
+DE_PIMPL(GameStateFolder)
 {
     Metadata metadata;  ///< Cached.
     bool needCacheMetadata;
@@ -98,10 +98,10 @@ DENG2_PIMPL(GameStateFolder)
         return 0;
     }
 
-    DENG2_PIMPL_AUDIENCE(MetadataChange)
+    DE_PIMPL_AUDIENCE(MetadataChange)
 };
 
-DENG2_AUDIENCE_METHOD(GameStateFolder, MetadataChange)
+DE_AUDIENCE_METHOD(GameStateFolder, MetadataChange)
 
 GameStateFolder::GameStateFolder(File &sourceArchiveFile, String const &name)
     : ArchiveFolder(sourceArchiveFile, name)
@@ -110,7 +110,7 @@ GameStateFolder::GameStateFolder(File &sourceArchiveFile, String const &name)
 
 GameStateFolder::~GameStateFolder()
 {
-    DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
+    DE_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion().clear();
     deindex();
     //Session::savedIndex().remove(path());
@@ -152,7 +152,7 @@ void GameStateFolder::cacheMetadata(Metadata const &copied)
 {
     d->metadata          = copied;
     d->needCacheMetadata = false;
-    DENG2_FOR_AUDIENCE2(MetadataChange, i)
+    DE_FOR_AUDIENCE2(MetadataChange, i)
     {
         i->gameStateFolderMetadataChanged(*this);
     }
@@ -226,7 +226,7 @@ File *GameStateFolder::Interpreter::interpretFile(File *sourceData) const
 
 //---------------------------------------------------------------------------------------
 
-DENG2_PIMPL_NOREF(GameStateFolder::MapStateReader)
+DE_PIMPL_NOREF(GameStateFolder::MapStateReader)
 {
     GameStateFolder const *session; ///< Saved session being read. Not owned.
 
@@ -431,7 +431,7 @@ String GameStateFolder::Metadata::asInfo() const
     {
         os << "\nplayers <";
         ArrayValue const &playersArray = geta("players");
-        DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, playersArray.elements())
+        DE_FOR_EACH_CONST(ArrayValue::Elements, i, playersArray.elements())
         {
             Value const *value = *i;
             if (i != playersArray.elements().begin()) os << ", ";
@@ -451,7 +451,7 @@ String GameStateFolder::Metadata::asInfo() const
         os << "\n" << BLOCK_GROUP << " ruleset {";
 
         Record const &rules = subrecord("gameRules");
-        DENG2_FOR_EACH_CONST(Record::Members, i, rules.members())
+        DE_FOR_EACH_CONST(Record::Members, i, rules.members())
         {
             Value const &value = i.value()->value();
             String valueAsText = value.asText();

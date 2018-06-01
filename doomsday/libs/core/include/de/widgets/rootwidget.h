@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_ROOTWIDGET_H
-#define LIBDENG2_ROOTWIDGET_H
+#ifndef LIBCORE_ROOTWIDGET_H
+#define LIBCORE_ROOTWIDGET_H
 
 #include "../Widget"
 #include "../Vector"
@@ -39,13 +39,13 @@ class RuleRectangle;
  *
  * @ingroup widgets
  */
-class DENG2_PUBLIC RootWidget : public Widget, public Lockable
+class DE_PUBLIC RootWidget : public Widget, public Lockable
 {
 public:
     typedef Vec2ui Size;
 
     /// Notified when the focused widget changes.
-    DENG2_DEFINE_AUDIENCE2(FocusChange, void focusedWidgetChanged(Widget *))
+    DE_DEFINE_AUDIENCE2(FocusChange, void focusedWidgetChanged(Widget *))
 
 public:
     RootWidget();
@@ -104,9 +104,9 @@ public:
     void draw();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_ROOTWIDGET_H
+#endif // LIBCORE_ROOTWIDGET_H

@@ -22,7 +22,7 @@
  * 02110-1301 USA</small>
  */
 
-#define DENG_NO_API_MACROS_BASE // functions defined here
+#define DE_NO_API_MACROS_BASE // functions defined here
 
 #include "de_platform.h"
 #include "dd_main.h"
@@ -514,7 +514,7 @@ void App_Error(char const *error, ...)
         dd_vsnprintf(buff, sizeof(buff), error, argptr);
         va_end(argptr);
 
-#if defined (__CLIENT__) && defined (DENG_HAVE_BUSYRUNNER)
+#if defined (__CLIENT__) && defined (DE_HAVE_BUSYRUNNER)
         if (!ClientApp::busyRunner().inWorkerThread())
         {
             Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, buff, 0);
@@ -546,7 +546,7 @@ void App_Error(char const *error, ...)
     {
         DoomsdayApp::app().busyMode().abort(buff);
 
-#if defined (__CLIENT__) && defined (DENG_HAVE_BUSYRUNNER)
+#if defined (__CLIENT__) && defined (DE_HAVE_BUSYRUNNER)
         if (ClientApp::busyRunner().inWorkerThread())
         {
             // We should not continue to execute the worker any more.
@@ -564,7 +564,7 @@ void App_Error(char const *error, ...)
 
 void App_AbnormalShutdown(char const *message)
 {
-    DENG2_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_IN_MAIN_THREAD();
 
 #ifdef __CLIENT__
     // This is a crash landing, better be safe than sorry.
@@ -575,7 +575,7 @@ void App_AbnormalShutdown(char const *message)
 
 #ifdef __CLIENT__
     DisplayMode_Shutdown();
-    DENG2_GUI_APP->loop().pause();
+    DE_GUI_APP->loop().pause();
 
     // This is an abnormal shutdown, we cannot continue drawing any of the
     // windows. (Alternatively could hide/disable drawing of the windows.) Note
@@ -673,7 +673,7 @@ void Con_Open(dint yes)
 #endif
 
 #ifdef __SERVER__
-    DENG2_UNUSED(yes);
+    DE_UNUSED(yes);
 #endif
 }
 
@@ -684,7 +684,7 @@ void Con_Open(dint yes)
  */
 D_CMD(OpenClose)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     if (!stricmp(argv[0], "conopen"))
     {
@@ -703,7 +703,7 @@ D_CMD(OpenClose)
 
 D_CMD(TaskBar)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     ClientWindow &win = ClientWindow::main();
     if (!win.taskBar().isOpen() || !win.console().commandLine().hasFocus())
@@ -720,7 +720,7 @@ D_CMD(TaskBar)
 
 D_CMD(PackagesSidebar)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     if (!DoomsdayApp::isGameLoaded()) return false;
 
@@ -738,7 +738,7 @@ D_CMD(PackagesSidebar)
 
 D_CMD(Tutorial)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
     ClientWindow::main().taskBar().showTutorial();
     return true;
 }
@@ -772,7 +772,7 @@ int DD_ActivateGameWorker(void *context)
 
         if (gx.PreInit)
         {
-            DENG2_ASSERT(App_CurrentGame().pluginId() != 0);
+            DE_ASSERT(App_CurrentGame().pluginId() != 0);
 
             plugins.setActivePluginId(App_CurrentGame().pluginId());
             gx.PreInit(App_CurrentGame().id().toUtf8());
@@ -1017,7 +1017,7 @@ dint DD_EarlyInit()
 }
 
 // Perform basic runtime type size checks.
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
 static void assertTypeSizes()
 {
     void *ptr = 0;
@@ -1025,10 +1025,10 @@ static void assertTypeSizes()
     int16_t int16 = 0;
     dfloat float32 = 0;
 
-    DENG2_UNUSED(ptr);
-    DENG2_UNUSED(int32);
-    DENG2_UNUSED(int16);
-    DENG2_UNUSED(float32);
+    DE_UNUSED(ptr);
+    DE_UNUSED(int32);
+    DE_UNUSED(int16);
+    DE_UNUSED(float32);
 
     ASSERT_32BIT(int32);
     ASSERT_16BIT(int16);
@@ -1048,7 +1048,7 @@ static void assertTypeSizes()
  */
 static void initializeWithWindowReady()
 {
-    DENG2_DEBUG_ONLY( assertTypeSizes(); )
+    DE_DEBUG_ONLY( assertTypeSizes(); )
 
     static char const *AUTOEXEC_NAME = "autoexec.cfg";
 
@@ -1366,8 +1366,8 @@ static dint DD_StartupWorker(void * /*context*/)
                                                  RLF_DEFAULT, App_ResourceClass(RC_PACKAGE));
     foundPath = App_BasePath() / foundPath;  // Ensure the path is absolute.
     File1 *loadedFile = File1::tryLoad(de::makeUri(foundPath));
-    DENG2_ASSERT(loadedFile);
-    DENG2_UNUSED(loadedFile);*/
+    DE_ASSERT(loadedFile);
+    DE_UNUSED(loadedFile);*/
 
     // It is assumed that doomsday.pk3 is currently stored in a native file.
     if (File const *basePack = App::packageLoader().select("net.dengine.legacy.base"))
@@ -1465,7 +1465,7 @@ void DD_CheckTimeDemo()
 
 static dint DD_UpdateEngineStateWorker(void *context)
 {
-    DENG2_ASSERT(context);
+    DE_ASSERT(context);
     auto const initiatedBusyMode = *static_cast<bool *>(context);
 
 #ifdef __CLIENT__
@@ -1513,7 +1513,7 @@ static dint DD_UpdateEngineStateWorker(void *context)
 
     /// @todo fixme: Update the game title and the status.
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     Z_CheckHeap();
 #endif
 
@@ -1658,10 +1658,10 @@ dint DD_GetInteger(dint ddvalue)
         return dint( ClientApp::inputSystem().shiftDown() );
 
     case DD_WINDOW_WIDTH:
-        return DENG_GAMEVIEW_WIDTH;
+        return DE_GAMEVIEW_WIDTH;
 
     case DD_WINDOW_HEIGHT:
-        return DENG_GAMEVIEW_HEIGHT;
+        return DE_GAMEVIEW_HEIGHT;
 
     case DD_CURRENT_CLIENT_FINALE_ID:
         return Cl_CurrentFinale();
@@ -1964,7 +1964,7 @@ AutoStr *DD_MaterialSchemeNameForTextureScheme(ddstring_t const *textureSchemeNa
 
 D_CMD(Load)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
     BusyMode_FreezeGameForBusyMode();
     auto &loader = PackageLoader::get();
 
@@ -2075,7 +2075,7 @@ D_CMD(Load)
 
 D_CMD(Unload)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
     BusyMode_FreezeGameForBusyMode();
 
     DoomsdayApp &app = DoomsdayApp::app();
@@ -2199,7 +2199,7 @@ D_CMD(Unload)
 
 D_CMD(Reset)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     DD_UpdateEngineState();
     return true;
@@ -2207,7 +2207,7 @@ D_CMD(Reset)
 
 D_CMD(ReloadGame)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     if (!DoomsdayApp::currentGameProfile())
     {
@@ -2220,11 +2220,11 @@ D_CMD(ReloadGame)
     return true;
 }
 
-#if defined (DENG_HAVE_UPDATER)
+#if defined (DE_HAVE_UPDATER)
 
 D_CMD(CheckForUpdates)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     LOG_MSG("Checking for available updates...");
     ClientApp::updater().checkNow(Updater::OnlyShowResultIfUpdateAvailable);
@@ -2233,7 +2233,7 @@ D_CMD(CheckForUpdates)
 
 D_CMD(CheckForUpdatesAndNotify)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     LOG_MSG("Checking for available updates...");
     ClientApp::updater().checkNow(Updater::AlwaysShowResult);
@@ -2242,7 +2242,7 @@ D_CMD(CheckForUpdatesAndNotify)
 
 D_CMD(LastUpdated)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     ClientApp::updater().printLastUpdated();
     return true;
@@ -2250,17 +2250,17 @@ D_CMD(LastUpdated)
 
 D_CMD(ShowUpdateSettings)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     ClientApp::updater().showSettings();
     return true;
 }
 
-#endif // DENG_HAVE_UPDATER
+#endif // DE_HAVE_UPDATER
 
 D_CMD(Version)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     LOG_SCR_NOTE(_E(D) DOOMSDAY_NICENAME " %s") << Version::currentBuild().asHumanReadableText();
     LOG_SCR_MSG(_E(l) "Homepage: " _E(.) _E(i) DOOMSDAY_HOMEURL _E(.)
@@ -2283,9 +2283,9 @@ D_CMD(Version)
 
 D_CMD(Quit)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
-#if defined (DENG_HAVE_UPDATER)
+#if defined (DE_HAVE_UPDATER)
     if (UpdateDownloadDialog::isDownloadInProgress())
     {
         LOG_WARNING("Cannot quit while downloading an update");
@@ -2316,7 +2316,7 @@ D_CMD(Quit)
 #ifdef _DEBUG
 D_CMD(DebugError)
 {
-    DENG2_UNUSED3(src, argv, argc);
+    DE_UNUSED(src, argv, argc);
 
     App_Error("Fatal error!\n");
     return true;
@@ -2325,7 +2325,7 @@ D_CMD(DebugError)
 
 D_CMD(Help)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     /*
 #ifdef __CLIENT__
@@ -2341,14 +2341,14 @@ D_CMD(Help)
 
 #ifdef __CLIENT__
     LOG_SCR_MSG(_E(D) "Keys:" _E(.))
-            << TABBED(DENG2_CHAR_SHIFT_KEY "Esc", "Open the taskbar and console")
+            << TABBED(DE_CHAR_SHIFT_KEY "Esc", "Open the taskbar and console")
             << TABBED("Tab", "Autocomplete the word at the cursor")
-            << TABBED(DENG2_CHAR_UP_DOWN_ARROW, "Move backwards/forwards through the input command history, or up/down one line inside a multi-line command")
+            << TABBED(DE_CHAR_UP_DOWN_ARROW, "Move backwards/forwards through the input command history, or up/down one line inside a multi-line command")
             << TABBED("PgUp/Dn", "Scroll up/down in the history, or expand the history to full height")
-            << TABBED(DENG2_CHAR_SHIFT_KEY "PgUp/Dn", "Jump to the top/bottom of the history")
+            << TABBED(DE_CHAR_SHIFT_KEY "PgUp/Dn", "Jump to the top/bottom of the history")
             << TABBED("Home", "Move the cursor to the start of the command line")
             << TABBED("End", "Move the cursor to the end of the command line")
-            << TABBED(DENG2_CHAR_CONTROL_KEY "K", "Clear everything on the line right of the cursor position")
+            << TABBED(DE_CHAR_CONTROL_KEY "K", "Clear everything on the line right of the cursor position")
             << TABBED("F5", "Clear the console message history");
 #endif
     LOG_SCR_MSG(_E(D) "Getting started:");
@@ -2427,7 +2427,7 @@ static void printHelpAbout(char const *query)
 
 D_CMD(HelpWhat)
 {
-    DENG2_UNUSED2(argc, src);
+    DE_UNUSED(argc, src);
 
     if (!String(argv[1]).compareWithoutCase("(what)"))
     {
@@ -2442,7 +2442,7 @@ D_CMD(HelpWhat)
 #ifdef __CLIENT__
 D_CMD(Clear)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     ClientWindow::main().console().clearLog();
     return true;
@@ -2464,7 +2464,7 @@ void DD_ConsoleRegister()
     C_CMD("unload",         "*",    Unload);
     C_CMD("write",          "s",    WriteConsole);
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     C_CMD("fatalerror",     nullptr,   DebugError);
 #endif
 
@@ -2479,7 +2479,7 @@ void DD_ConsoleRegister()
 #ifdef __CLIENT__
     C_CMD("clear",           "", Clear);
 
-#if defined (DENG_HAVE_UPDATER)
+#if defined (DE_HAVE_UPDATER)
     C_CMD("update",          "", CheckForUpdates);
     C_CMD("updateandnotify", "", CheckForUpdatesAndNotify);
     C_CMD("updatesettings",  "", ShowUpdateSettings);
@@ -2519,15 +2519,15 @@ void DD_ConsoleRegister()
 }
 
 // dd_loop.c
-DENG_EXTERN_C dd_bool DD_IsSharpTick(void);
+DE_EXTERN_C dd_bool DD_IsSharpTick(void);
 
 // net_main.c
-DENG_EXTERN_C void Net_SendPacket(dint to_player, dint type, const void* data, size_t length);
+DE_EXTERN_C void Net_SendPacket(dint to_player, dint type, const void* data, size_t length);
 
 #undef R_SetupMap
-DENG_EXTERN_C void R_SetupMap(dint mode, dint flags)
+DE_EXTERN_C void R_SetupMap(dint mode, dint flags)
 {
-    DENG2_UNUSED2(mode, flags);
+    DE_UNUSED(mode, flags);
 
     if (!App_World().hasMap()) return; // Huh?
 
@@ -2564,9 +2564,9 @@ DENG_EXTERN_C void R_SetupMap(dint mode, dint flags)
 }
 
 // sys_system.c
-DENG_EXTERN_C void Sys_Quit();
+DE_EXTERN_C void Sys_Quit();
 
-DENG_DECLARE_API(Base) =
+DE_DECLARE_API(Base) =
 {
     { DE_API_BASE },
 

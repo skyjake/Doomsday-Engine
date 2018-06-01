@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_DATA_MESH_FACE_H
-#define DENG_DATA_MESH_FACE_H
+#ifndef DE_DATA_MESH_FACE_H
+#define DE_DATA_MESH_FACE_H
 
 #include <de/aabox.h>
 
@@ -100,9 +100,9 @@ public:
     String description() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // DENG_DATA_MESH_FACE_H
+#endif // DE_DATA_MESH_FACE_H

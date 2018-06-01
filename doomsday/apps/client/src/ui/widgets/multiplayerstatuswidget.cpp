@@ -31,9 +31,9 @@ enum {
     POS_STATUS = 1
 };
 
-DENG_GUI_PIMPL(MultiplayerStatusWidget)
-, DENG2_OBSERVES(ServerLink, Join)
-, DENG2_OBSERVES(ServerLink, Leave)
+DE_GUI_PIMPL(MultiplayerStatusWidget)
+, DE_OBSERVES(ServerLink, Join)
+, DE_OBSERVES(ServerLink, Leave)
 {
     QTimer timer;
 

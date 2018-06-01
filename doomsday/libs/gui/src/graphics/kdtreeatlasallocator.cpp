@@ -23,7 +23,7 @@
 
 namespace de {
 
-DENG2_PIMPL(KdTreeAtlasAllocator)
+DE_PIMPL(KdTreeAtlasAllocator)
 {
     Atlas::Size size;
     int margin;
@@ -185,7 +185,7 @@ DENG2_PIMPL(KdTreeAtlasAllocator)
     {
         // Set up a LUT based on descending allocation width.
         QList<ContentSize> descending;
-        DENG2_FOR_EACH(Allocations, i, allocs)
+        DE_FOR_EACH(Allocations, i, allocs)
         {
             descending.append(ContentSize(i.key(), i.value().size()));
         }
@@ -224,7 +224,7 @@ KdTreeAtlasAllocator::KdTreeAtlasAllocator() : d(new Impl(this))
 
 void KdTreeAtlasAllocator::setMetrics(Atlas::Size const &totalSize, int margin)
 {
-    DENG2_ASSERT(d->allocs.isEmpty());
+    DE_ASSERT(d->allocs.isEmpty());
 
     d->size   = totalSize;
     d->margin = margin;
@@ -255,7 +255,7 @@ Id KdTreeAtlasAllocator::allocate(Atlas::Size const &size, Rectanglei &rect,
 
 void KdTreeAtlasAllocator::release(Id const &id)
 {
-    DENG2_ASSERT(d->allocs.contains(id));
+    DE_ASSERT(d->allocs.contains(id));
 
     d->releaseAlloc(id);
 }
@@ -277,7 +277,7 @@ Atlas::Ids KdTreeAtlasAllocator::ids() const
 
 void KdTreeAtlasAllocator::rect(Id const &id, Rectanglei &rect) const
 {
-    DENG2_ASSERT(d->allocs.contains(id));
+    DE_ASSERT(d->allocs.contains(id));
     rect = d->allocs[id];
 }
 

@@ -75,10 +75,10 @@ public:
      */
     virtual void drawTransformed();
 
-    DENG2_CAST_METHODS()
+    DE_CAST_METHODS()
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

@@ -36,13 +36,13 @@ static patchid_t pArms[6][2];
 
 static void WeaponSlotWidget_Draw(guidata_weaponslot_t *ws, Point2Raw const *offset)
 {
-    DENG2_ASSERT(ws);
+    DE_ASSERT(ws);
     ws->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void WeaponSlotWidget_UpdateGeometry(guidata_weaponslot_t *ws)
 {
-    DENG2_ASSERT(ws);
+    DE_ASSERT(ws);
     ws->updateGeometry();
 }
 

@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_GUARD_H
-#define LIBDENG2_GUARD_H
+#ifndef LIBCORE_GUARD_H
+#define LIBCORE_GUARD_H
 
 #include "../libcore.h"
 #include "../Lockable"
@@ -32,17 +32,17 @@ namespace de {
  * @param varName  Name of the variable to guard. Must be just a single
  *                 identifier with no operators or anything else.
  */
-#define DENG2_GUARD(varName) \
+#define DE_GUARD(varName) \
     de::Guard _guarding_##varName(varName); \
-    DENG2_UNUSED(_guarding_##varName);
+    DE_UNUSED(_guarding_##varName);
 
-#define DENG2_GUARD_READ(varName) \
+#define DE_GUARD_READ(varName) \
     de::Guard _guarding_##varName(varName, de::Guard::Reading); \
-    DENG2_UNUSED(_guarding_##varName);
+    DE_UNUSED(_guarding_##varName);
 
-#define DENG2_GUARD_WRITE(varName) \
+#define DE_GUARD_WRITE(varName) \
     de::Guard _guarding_##varName(varName, de::Guard::Writing); \
-    DENG2_UNUSED(_guarding_##varName);
+    DE_UNUSED(_guarding_##varName);
 
 /**
  * Locks the target @a targetName until the end of the current scope.
@@ -51,17 +51,17 @@ namespace de {
  * @param varName     Name of the variable to guard. Must be just a single
  *                    identifier with no operators or anything else.
  */
-#define DENG2_GUARD_FOR(targetName, varName) \
+#define DE_GUARD_FOR(targetName, varName) \
     de::Guard varName(targetName); \
-    DENG2_UNUSED(varName);
+    DE_UNUSED(varName);
 
-#define DENG2_GUARD_READ_FOR(targetName, varName) \
+#define DE_GUARD_READ_FOR(targetName, varName) \
     de::Guard varName(targetName, de::Guard::Reading); \
-    DENG2_UNUSED(varName);
+    DE_UNUSED(varName);
 
-#define DENG2_GUARD_WRITE_FOR(targetName, varName) \
+#define DE_GUARD_WRITE_FOR(targetName, varName) \
     de::Guard varName(targetName, de::Guard::Writing); \
-    DENG2_UNUSED(varName);
+    DE_UNUSED(varName);
 
 class Lockable;
 class ReadWriteLockable;
@@ -74,7 +74,7 @@ class ReadWriteLockable;
  *
  * @ingroup concurrency
  */
-class DENG2_PUBLIC Guard
+class DE_PUBLIC Guard
 {
 public:
     enum LockMode { Reading, Writing };
@@ -91,7 +91,7 @@ public:
      * The target object is locked.
      */
     inline Guard(Lockable const *target) : _target(target), _rwTarget(0) {
-        DENG2_ASSERT(target != 0);
+        DE_ASSERT(target != 0);
         _target->lock();
     }
 
@@ -105,7 +105,7 @@ public:
     }
 
     inline Guard(ReadWriteLockable const *target, LockMode mode) : _target(0), _rwTarget(target) {
-        DENG2_ASSERT(_rwTarget != 0);
+        DE_ASSERT(_rwTarget != 0);
         if (mode == Reading) {
             _rwTarget->lockForRead();
         }
@@ -129,4 +129,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_GUARD_H
+#endif // LIBCORE_GUARD_H

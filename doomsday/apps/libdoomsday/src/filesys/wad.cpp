@@ -35,7 +35,7 @@ namespace internal {
 
 struct FileHeader
 {
-    DENG2_ERROR(ReadError);
+    DE_ERROR(ReadError);
 
     Block identification; // 4 bytes
     dint32 lumpRecordsCount;
@@ -55,7 +55,7 @@ struct FileHeader
 
 struct IndexEntry
 {
-    DENG2_ERROR(ReadError);
+    DE_ERROR(ReadError);
 
     dint32 offset;
     dint32 size;
@@ -173,7 +173,7 @@ Wad &Wad::LumpFile::wad() const
     return container().as<Wad>();
 }
 
-DENG2_PIMPL_NOREF(Wad)
+DE_PIMPL_NOREF(Wad)
 {
     LumpTree entries;                     ///< Directory structure and entry records for all lumps.
     QScopedPointer<LumpCache> dataCache;  ///< Data payload cache.
@@ -389,7 +389,7 @@ Wad::LumpTree const &Wad::lumpTree() const
 
 Wad::LumpFile &Wad::Entry::file() const
 {
-    DENG2_ASSERT(!lumpFile.isNull());
+    DE_ASSERT(!lumpFile.isNull());
     return *lumpFile;
 }
 

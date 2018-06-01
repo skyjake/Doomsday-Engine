@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_WORLD_CLEDGELOOP_H
-#define DENG_CLIENT_WORLD_CLEDGELOOP_H
+#ifndef DE_CLIENT_WORLD_CLEDGELOOP_H
+#define DE_CLIENT_WORLD_CLEDGELOOP_H
 
 #include <de/String>
 #include "misc/hedge.h"
@@ -57,9 +57,9 @@ public:
     void fixSurfacesMissingMaterials();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace world
 
-#endif // DENG_CLIENT_WORLD_CLEDGELOOP_H
+#endif // DE_CLIENT_WORLD_CLEDGELOOP_H

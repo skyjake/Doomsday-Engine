@@ -40,7 +40,7 @@ class LIBSHELL_PUBLIC Link : public AbstractLink
     Q_OBJECT
 
 public:
-    DENG2_ERROR(ConnectError);
+    DE_ERROR(ConnectError);
 
     /**
      * Opens a connection to a server over the network.
@@ -80,7 +80,7 @@ protected:
     void    initiateCommunications();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 }} // namespace de::shell

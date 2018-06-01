@@ -29,8 +29,8 @@
 
 namespace de {
 
-DENG_GUI_PIMPL(NotificationAreaWidget)
-, DENG2_OBSERVES(Widget, Deletion)
+DE_GUI_PIMPL(NotificationAreaWidget)
+, DE_OBSERVES(Widget, Deletion)
 {
     static TimeSpan const ANIM_SPAN;
     AnimationRule *shift;
@@ -50,10 +50,10 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
 
     ~Impl()
     {
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
         foreach (GuiWidget *w, shown.keys())
         {
-            DENG2_ASSERT(w->audienceForDeletion().contains(this));
+            DE_ASSERT(w->audienceForDeletion().contains(this));
         }
 #endif
         releaseRef(shift);
@@ -70,7 +70,7 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
         foreach (GuiWidget *child, self().childWidgets())
         {
             GuiWidget *w = child->as<RelayWidget>().target();
-            DENG2_ASSERT(w != nullptr);
+            DE_ASSERT(w != nullptr);
             if (!first)
             {
                 layout << gap;
@@ -99,7 +99,7 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
 
     void removeChild(GuiWidget &notif)
     {
-        DENG2_ASSERT(shown.contains(&notif));
+        DE_ASSERT(shown.contains(&notif));
         auto *relay = shown.take(&notif);
         /*
          * Can't destroy the relay immediately because both the relay and we are
@@ -118,7 +118,7 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
 
     void dismissChild(GuiWidget &notif)
     {
-        DENG2_ASSERT(notif.audienceForDeletion().contains(this));
+        DE_ASSERT(notif.audienceForDeletion().contains(this));
         notif.audienceForDeletion() -= this;
 
         removeChild(notif);

@@ -45,7 +45,7 @@ String::String(String &&moved) : QString(std::move(moved))
 String::String(QString const &text) : QString(text)
 {}
 
-#ifdef DENG2_QT_4_7_OR_NEWER
+#ifdef DE_QT_4_7_OR_NEWER
 String::String(QChar const *nullTerminatedStr)
     : QString(nullTerminatedStr)
 {}
@@ -121,7 +121,7 @@ String String::operator % (PatternArgs args) const
 
     PatternArgs::const_iterator arg = args.begin();
 
-    DENG2_FOR_EACH_CONST(String, i, *this)
+    DE_FOR_EACH_CONST(String, i, *this)
     {
         if (*i == '%')
         {
@@ -637,7 +637,7 @@ String String::patternFormat(String::const_iterator &formatIter,
     dint maxWidth = 0;
     dint minWidth = 0;
 
-    DENG2_ASSERT(*formatIter != '%');
+    DE_ASSERT(*formatIter != '%');
 
     if (*formatIter == '-')
     {

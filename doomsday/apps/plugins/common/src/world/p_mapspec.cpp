@@ -45,7 +45,7 @@ static int spreadSoundToNeighbors(void *ptr, void *context)
     spreadsoundtoneighbors_params_t &parm = *(spreadsoundtoneighbors_params_t *) context;
 
     xline_t *xline = P_ToXLine(li);
-    DENG2_ASSERT(xline);
+    DE_ASSERT(xline);
 
     if(!(xline->flags & ML_TWOSIDED)) return false;
 
@@ -77,7 +77,7 @@ static int spreadSoundToNeighbors(void *ptr, void *context)
 void P_RecursiveSound(mobj_t *soundTarget, Sector *sec, int soundBlocks)
 {
     xsector_t *xsec = P_ToXSector(sec);
-    DENG2_ASSERT(xsec);
+    DE_ASSERT(xsec);
 
     if(P_GetIntp(sec, DMU_VALID_COUNT) == VALIDCOUNT)
     {
@@ -125,7 +125,7 @@ void P_NotifySectorFinished(int tag)
         return LoopContinue;
     });
 #else
-    DENG2_UNUSED(tag);
+    DE_UNUSED(tag);
 #endif
 }
 
@@ -138,6 +138,6 @@ void P_NotifyPolyobjFinished(int tag)
         return LoopContinue;
     });
 #else
-    DENG2_UNUSED(tag);
+    DE_UNUSED(tag);
 #endif
 }

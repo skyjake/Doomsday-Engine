@@ -65,7 +65,7 @@ void guidata_bluemanaicon_t::tick(timespan_t /*elapsed*/)
 
 void BlueManaIconWidget_Draw(guidata_bluemanaicon_t *icon, Point2Raw const *offset)
 {
-    DENG2_ASSERT(icon);
+    DE_ASSERT(icon);
     dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
 
     if(icon->_iconIdx < 0) return;
@@ -93,7 +93,7 @@ void SBarBlueManaIconWidget_Draw(guidata_bluemanaicon_t *icon, Point2Raw const *
 #define X_OFFSET                ( 77 )
 #define Y_OFFSET                (  2 )
 
-    DENG2_ASSERT(icon);
+    DE_ASSERT(icon);
     static Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
 
     dint const activeHud     = ST_ActiveHud(icon->player());
@@ -126,7 +126,7 @@ void SBarBlueManaIconWidget_Draw(guidata_bluemanaicon_t *icon, Point2Raw const *
 
 void BlueManaIconWidget_UpdateGeometry(guidata_bluemanaicon_t *icon)
 {
-    DENG2_ASSERT(icon);
+    DE_ASSERT(icon);
     Rect_SetWidthHeight(&icon->geometry(), 0, 0);
 
     if(icon->_iconIdx < 0) return;
@@ -145,7 +145,7 @@ void BlueManaIconWidget_UpdateGeometry(guidata_bluemanaicon_t *icon)
 
 void SBarBlueManaIconWidget_UpdateGeometry(guidata_bluemanaicon_t *icon)
 {
-    DENG2_ASSERT(icon);
+    DE_ASSERT(icon);
     Rect_SetWidthHeight(&icon->geometry(), 0, 0);
 
     if(icon->_iconIdx < 0) return;

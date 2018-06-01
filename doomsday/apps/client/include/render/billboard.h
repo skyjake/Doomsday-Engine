@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_BILLBOARD_H
-#define DENG_CLIENT_RENDER_BILLBOARD_H
+#ifndef DE_CLIENT_RENDER_BILLBOARD_H
+#define DE_CLIENT_RENDER_BILLBOARD_H
 
 #include "dd_types.h"
 #include "ClientMaterial"
@@ -122,14 +122,14 @@ struct drawflareparams_t
     de::dint lumIdx;
 };
 
-DENG_EXTERN_C de::dint alwaysAlign;
-DENG_EXTERN_C de::dint spriteLight;
-DENG_EXTERN_C de::dint useSpriteAlpha;
-DENG_EXTERN_C de::dint useSpriteBlend;
-DENG_EXTERN_C de::dint noSpriteZWrite;
-DENG_EXTERN_C de::dbyte noSpriteTrans;
-DENG_EXTERN_C de::dbyte devNoSprites;
+DE_EXTERN_C de::dint alwaysAlign;
+DE_EXTERN_C de::dint spriteLight;
+DE_EXTERN_C de::dint useSpriteAlpha;
+DE_EXTERN_C de::dint useSpriteBlend;
+DE_EXTERN_C de::dint noSpriteZWrite;
+DE_EXTERN_C de::dbyte noSpriteTrans;
+DE_EXTERN_C de::dbyte devNoSprites;
 
-DENG_EXTERN_C void Rend_SpriteRegister();
+DE_EXTERN_C void Rend_SpriteRegister();
 
 #endif  // CLIENT_RENDER_BILLBOARD_H

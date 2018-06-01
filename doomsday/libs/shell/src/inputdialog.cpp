@@ -24,7 +24,7 @@
 
 namespace de { namespace shell {
 
-DENG2_PIMPL_NOREF(InputDialog)
+DE_PIMPL_NOREF(InputDialog)
 {
     LabelWidget *   label;
     LineEditWidget *edit;

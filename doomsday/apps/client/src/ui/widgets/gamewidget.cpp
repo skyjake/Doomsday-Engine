@@ -67,7 +67,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(GameWidget)
+DE_PIMPL(GameWidget)
 {
     bool needFrames = true; // Rendering a new frame is necessary.
     VRConfig::Eye lastFrameEye = VRConfig::NeitherEye;
@@ -392,7 +392,7 @@ void GameWidget::glDeinit()
 
 D_CMD(CubeShot)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     int size = String(argv[1]).toInt();
     if (size < 8) return false;

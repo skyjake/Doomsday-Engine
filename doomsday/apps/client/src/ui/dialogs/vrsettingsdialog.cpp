@@ -33,7 +33,7 @@
 using namespace de;
 using namespace de::ui;
 
-DENG_GUI_PIMPL(VRSettingsDialog)
+DE_GUI_PIMPL(VRSettingsDialog)
 {
     CVarChoiceWidget *mode;
     CVarToggleWidget *swapEyes;
@@ -136,7 +136,7 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
            << *dominantLabel << *d->dominantEye
            << Const(0)       << *d->swapEyes;
 
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
     LabelWidget *ovrLabel    = LabelWidget::newWithText(_E(D) + tr("Oculus Rift"), &area());
     LabelWidget *sampleLabel = LabelWidget::newWithText(tr("Multisampling:"), &area());
     ovrLabel->setFont("separator.label");

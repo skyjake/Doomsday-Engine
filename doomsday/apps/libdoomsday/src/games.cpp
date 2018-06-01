@@ -38,8 +38,8 @@
 
 using namespace de;
 
-DENG2_PIMPL(Games)
-, DENG2_OBSERVES(res::Bundles, Identify)
+DE_PIMPL(Games)
+, DE_OBSERVES(res::Bundles, Identify)
 {
     /// The actual collection.
     All games;
@@ -55,7 +55,7 @@ DENG2_PIMPL(Games)
     /**
      * Delegates game addition notifications to scripts.
      */
-    class GameAdditionScriptAudience : DENG2_OBSERVES(Games, Addition)
+    class GameAdditionScriptAudience : DE_OBSERVES(Games, Addition)
     {
     public:
         void gameAdded(Game &game)
@@ -91,7 +91,7 @@ DENG2_PIMPL(Games)
 
     void clear()
     {
-        DENG2_ASSERT(nullGame != 0);
+        DE_ASSERT(nullGame != 0);
 
         qDeleteAll(games);
         games.clear();
@@ -100,14 +100,14 @@ DENG2_PIMPL(Games)
 
     void add(Game *game)
     {
-        DENG2_ASSERT(game != nullptr);
+        DE_ASSERT(game != nullptr);
 
         games.push_back(game);
         idLookup.insert(game->id().toLower(), game);
 
         DoomsdayApp::bundles().audienceForIdentify() += this;
 
-        DENG2_FOR_PUBLIC_AUDIENCE2(Addition, i)
+        DE_FOR_PUBLIC_AUDIENCE2(Addition, i)
         {
             i->gameAdded(*game);
         }
@@ -137,14 +137,14 @@ DENG2_PIMPL(Games)
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(Addition)
-    DENG2_PIMPL_AUDIENCE(Readiness)
-    DENG2_PIMPL_AUDIENCE(Progress)
+    DE_PIMPL_AUDIENCE(Addition)
+    DE_PIMPL_AUDIENCE(Readiness)
+    DE_PIMPL_AUDIENCE(Progress)
 };
 
-DENG2_AUDIENCE_METHOD(Games, Addition)
-DENG2_AUDIENCE_METHOD(Games, Readiness)
-DENG2_AUDIENCE_METHOD(Games, Progress)
+DE_AUDIENCE_METHOD(Games, Addition)
+DE_AUDIENCE_METHOD(Games, Readiness)
+DE_AUDIENCE_METHOD(Games, Progress)
 
 Games::Games() : d(new Impl(this))
 {}
@@ -324,7 +324,7 @@ void Games::checkReadiness()
             locateStartupResources(game);
 
             Games &self = *this; // MSVC 2013 cannot figure it out inside the lambda...
-            DENG2_FOR_EACH_OBSERVER(ProgressAudience, i, self().audienceForProgress())
+            DE_FOR_EACH_OBSERVER(ProgressAudience, i, self().audienceForProgress())
             {
                 i->gameWorkerProgress(n * 200 / count() - 1);
             }
@@ -333,7 +333,7 @@ void Games::checkReadiness()
             LOG_RES_VERBOSE(_E(l) "  IdentityKey: " _E(.)_E(>)) << game.id();
             Game::printFiles(game, FF_STARTUP);
 
-            LOG_RES_MSG(" " DENG2_CHAR_RIGHT_DOUBLEARROW " ") << game.statusAsText();
+            LOG_RES_MSG(" " DE_CHAR_RIGHT_DOUBLEARROW " ") << game.statusAsText();
             ++n;
 
             return 0;
@@ -351,7 +351,7 @@ void Games::checkReadiness()
     // Only notify when the set of playable games changes.
     if (playable != d->lastCheckedPlayable)
     {
-        DENG2_FOR_AUDIENCE2(Readiness, i)
+        DE_FOR_AUDIENCE2(Readiness, i)
         {
             i->gameReadinessUpdated();
         }
@@ -375,7 +375,7 @@ void Games::checkReadiness()
 
 D_CMD(ListGames)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     Games &games = DoomsdayApp::games();
     if (!games.count())
@@ -398,7 +398,7 @@ D_CMD(ListGames)
     String list;
 
     int numCompleteGames = 0;
-    DENG2_FOR_EACH_CONST(Games::GameList, i, found)
+    DE_FOR_EACH_CONST(Games::GameList, i, found)
     {
         Game *game = i->game;
         bool isCurrent = (&DoomsdayApp::game() == game);

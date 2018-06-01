@@ -37,7 +37,7 @@ signals:
 public slots:
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // OPTIONSPAGE_H

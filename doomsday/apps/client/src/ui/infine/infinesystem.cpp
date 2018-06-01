@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_NO_API_MACROS_INFINE
+#define DE_NO_API_MACROS_INFINE
 
 #include <QtAlgorithms>
 #include <de/Log>
@@ -36,8 +36,8 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(InFineSystem)
-, DENG2_OBSERVES(Finale, Deletion)
+DE_PIMPL_NOREF(InFineSystem)
+, DE_OBSERVES(Finale, Deletion)
 {
     Finales finales;
 
@@ -283,7 +283,7 @@ int FI_ScriptFlags(finaleid_t id)
 #undef FI_ScriptResponder
 int FI_ScriptResponder(finaleid_t id, void const *ev)
 {
-    DENG2_ASSERT(ev);
+    DE_ASSERT(ev);
     LOG_AS("InFine.ScriptResponder");
     if (App_InFineSystem().hasFinale(id))
     {
@@ -329,7 +329,7 @@ dd_bool FI_ScriptIsMenuTrigger(finaleid_t id)
     return false;
 }
 
-DENG_DECLARE_API(Infine) =
+DE_DECLARE_API(Infine) =
 {
     { DE_API_INFINE },
     FI_Execute2,

@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_DIRECTORYFEED_H
-#define LIBDENG2_DIRECTORYFEED_H
+#ifndef LIBCORE_DIRECTORYFEED_H
+#define LIBCORE_DIRECTORYFEED_H
 
 #include "../File"
 #include "../Feed"
@@ -32,17 +32,17 @@ namespace de {
  *
  * @ingroup fs
  */
-class DENG2_PUBLIC DirectoryFeed : public Feed
+class DE_PUBLIC DirectoryFeed : public Feed
 {
 public:
     /// The native directory was not found. @ingroup errors
-    DENG2_ERROR(NotFoundError);
+    DE_ERROR(NotFoundError);
 
     /// Failed attempt to find out the status of a file. @ingroup errors
-    DENG2_ERROR(StatusError);
+    DE_ERROR(StatusError);
 
     /// An error occurred changing the working directory. @ingroup errors
-    DENG2_ERROR(WorkingDirError);
+    DE_ERROR(WorkingDirError);
 
     enum Flag
     {
@@ -141,4 +141,4 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(DirectoryFeed::Flags)
 
 } // namespace de
 
-#endif /* LIBDENG2_DIRECTORYFEED_H */
+#endif /* LIBCORE_DIRECTORYFEED_H */

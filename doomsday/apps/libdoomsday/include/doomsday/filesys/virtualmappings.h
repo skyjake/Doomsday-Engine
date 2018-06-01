@@ -25,12 +25,12 @@
  * (Re-)Initialize the VFS path mappings. Checks the -vdmap command line
  * options.
  */
-DENG_EXTERN_C LIBDOOMSDAY_PUBLIC void FS_InitVirtualPathMappings();
+DE_EXTERN_C LIBDOOMSDAY_PUBLIC void FS_InitVirtualPathMappings();
 
 /**
  * (Re-)Initialize the virtual path => WAD lump mappings.
  * @note Should be called after WADs have been processed.
  */
-DENG_EXTERN_C LIBDOOMSDAY_PUBLIC void FS_InitPathLumpMappings();
+DE_EXTERN_C LIBDOOMSDAY_PUBLIC void FS_InitPathLumpMappings();
 
 #endif // LIBDOOMSDAY_FILESYS_VIRTUALMAPPINGS_H

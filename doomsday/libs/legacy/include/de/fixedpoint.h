@@ -1,7 +1,7 @@
 /** @file fixedpoint.h Fixed-point math.
  *
  * @par Build Options
- * Define DENG_NO_FIXED_ASM to disable the assembler fixed-point routines.
+ * Define DE_NO_FIXED_ASM to disable the assembler fixed-point routines.
  *
  * @author Copyright &copy; 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -20,8 +20,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_FIXED_POINT_MATH_H
-#define LIBDENG_FIXED_POINT_MATH_H
+#ifndef DE_FIXED_POINT_MATH_H
+#define DE_FIXED_POINT_MATH_H
 
 #include "liblegacy.h"
 
@@ -46,7 +46,7 @@
 extern "C" {
 #endif
 
-#if !defined( DENG_NO_FIXED_ASM ) && !defined( GNU_X86_FIXED_ASM )
+#if !defined( DE_NO_FIXED_ASM ) && !defined( GNU_X86_FIXED_ASM )
 
 __inline fixed_t FixedMul(fixed_t a, fixed_t b) {
     __asm {
@@ -77,12 +77,12 @@ __inline fixed_t FixedDiv2(fixed_t a, fixed_t b) {
 
 #else
 
-DENG_PUBLIC fixed_t FixedMul(fixed_t a, fixed_t b);
-DENG_PUBLIC fixed_t FixedDiv2(fixed_t a, fixed_t b);
+DE_PUBLIC fixed_t FixedMul(fixed_t a, fixed_t b);
+DE_PUBLIC fixed_t FixedDiv2(fixed_t a, fixed_t b);
 
-#endif // DENG_NO_FIXED_ASM
+#endif // DE_NO_FIXED_ASM
 
-DENG_PUBLIC fixed_t FixedDiv(fixed_t a, fixed_t b);
+DE_PUBLIC fixed_t FixedDiv(fixed_t a, fixed_t b);
 
 /// @}
 
@@ -90,4 +90,4 @@ DENG_PUBLIC fixed_t FixedDiv(fixed_t a, fixed_t b);
 } // extern "C"
 #endif
 
-#endif // LIBDENG_FIXED_POINT_MATH_H
+#endif // DE_FIXED_POINT_MATH_H

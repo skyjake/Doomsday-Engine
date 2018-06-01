@@ -40,7 +40,7 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(CreateProfileDialog)
+DE_GUI_PIMPL(CreateProfileDialog)
 , DENG2_OBSERVES(ToggleWidget, Toggle)
 , DENG2_OBSERVES(SliderWidget, Change)
 {

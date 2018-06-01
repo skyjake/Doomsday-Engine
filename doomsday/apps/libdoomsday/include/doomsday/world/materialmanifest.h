@@ -45,10 +45,10 @@ class LIBDOOMSDAY_PUBLIC MaterialManifest : public de::PathTree::Node
 {
 public:
     /// Required material instance is missing. @ingroup errors
-    DENG2_ERROR(MissingMaterialError);
+    DE_ERROR(MissingMaterialError);
 
-    DENG2_DEFINE_AUDIENCE(Deletion,        void materialManifestBeingDeleted   (MaterialManifest const &manifest))
-    DENG2_DEFINE_AUDIENCE(MaterialDerived, void materialManifestMaterialDerived(MaterialManifest &manifest, Material &material))
+    DE_DEFINE_AUDIENCE(Deletion,        void materialManifestBeingDeleted   (MaterialManifest const &manifest))
+    DE_DEFINE_AUDIENCE(MaterialDerived, void materialManifestMaterialDerived(MaterialManifest &manifest, Material &material))
 
     enum Flag
     {
@@ -167,7 +167,7 @@ public:
     static void setMaterialConstructor(MaterialConstructor func);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(MaterialManifest::Flags)

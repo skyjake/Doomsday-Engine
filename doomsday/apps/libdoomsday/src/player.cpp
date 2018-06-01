@@ -21,7 +21,7 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(Player)
+DE_PIMPL_NOREF(Player)
 {
     World *world = nullptr;
     ddplayer_t publicData;

@@ -32,7 +32,7 @@ class Style;
  * as the base class for private implementations if GL resources are being
  * used (i.e., glInit() and glDeinit() are being called).
  *
- * Use DENG_GUI_PIMPL() instead of the DENG2_PIMPL() macro.
+ * Use DE_GUI_PIMPL() instead of the DE_PIMPL() macro.
  *
  * Note that GuiWidgetPrivate automatically observes the root widget's atlas
  * content repositioning, so derived private implementations can just override
@@ -42,8 +42,8 @@ class Style;
  */
 template <typename PublicType>
 class GuiWidgetPrivate : public Private<PublicType>,
-                         DENG2_OBSERVES(Atlas, Reposition),
-                         DENG2_OBSERVES(Asset, Deletion)
+                         DE_OBSERVES(Atlas, Reposition),
+                         DE_OBSERVES(Asset, Deletion)
 {
 public:
     typedef GuiWidgetPrivate<PublicType> Base; // shadows Private<>::Base
@@ -65,7 +65,7 @@ public:
          *
          * @see GuiWidget::destroy()
          */
-        DENG2_ASSERT(!Base::self().isInitialized());
+        DE_ASSERT(!Base::self().isInitialized());
     }
 
     void forgetRootAtlas()
@@ -96,7 +96,7 @@ public:
 
     GuiRootWidget &root() const
     {
-        DENG2_ASSERT(hasRoot());
+        DE_ASSERT(hasRoot());
         return Base::self().root();
     }
 
@@ -148,7 +148,7 @@ private:
     mutable AtlasTexture *_observingAtlas = nullptr;
 };
 
-#define DENG_GUI_PIMPL(ClassName) \
+#define DE_GUI_PIMPL(ClassName) \
     struct ClassName::Impl : public de::GuiWidgetPrivate<ClassName>
 
 } // namespace de

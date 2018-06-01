@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_TEXGAMMA_H
-#define LIBDENG_TEXGAMMA_H
+#ifndef DE_TEXGAMMA_H
+#define DE_TEXGAMMA_H
 
 #include "liblegacy.h"
 #include <de/types.h>
@@ -26,12 +26,12 @@
 extern "C" {
 #endif
 
-DENG_PUBLIC void R_BuildTexGammaLut(float texGamma);
+DE_PUBLIC void R_BuildTexGammaLut(float texGamma);
 
-DENG_PUBLIC byte R_TexGammaLut(byte colorValue);
+DE_PUBLIC byte R_TexGammaLut(byte colorValue);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif // LIBDENG_TEXGAMMA_H
+#endif // DE_TEXGAMMA_H

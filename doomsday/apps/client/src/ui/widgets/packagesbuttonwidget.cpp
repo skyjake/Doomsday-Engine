@@ -23,7 +23,7 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(PackagesButtonWidget)
+DE_GUI_PIMPL(PackagesButtonWidget)
 {
     StringList packages;
     String dialogTitle;

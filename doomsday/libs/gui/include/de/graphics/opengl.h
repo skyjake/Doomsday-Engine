@@ -28,21 +28,21 @@
 /*
  * OpenGL API selection
  */
-#if (DENG_OPENGL == 330)
+#if (DE_OPENGL == 330)
 #  include <QOpenGLFunctions_3_3_Core>
 #  include <QOpenGLExtensions>
 #  define QOpenGLFunctions_Doomsday QOpenGLFunctions_3_3_Core
 #  ifndef GL_VERSION_3_3
 #    error "OpenGL 3.3 (or newer) headers not found"
 #  endif
-#  define DENG_HAVE_TIMER_QUERY
+#  define DE_HAVE_TIMER_QUERY
 
-#elif (DENG_OPENGL_ES == 30)
+#elif (DE_OPENGL_ES == 30)
 #  include <QOpenGLExtraFunctions>
 #  include <QOpenGLExtensions>
 #  define QOpenGLFunctions_Doomsday QOpenGLExtraFunctions
 
-#elif (DENG_OPENGL_ES == 20)
+#elif (DE_OPENGL_ES == 20)
 #  include <QOpenGLFunctions>
 #  include <QOpenGLExtensions>
 #  define QOpenGLFunctions_Doomsday QOpenGLFunctions
@@ -53,10 +53,10 @@
 #  define GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS 0x8CD9
 #endif
 
-#if !defined (DENG_OPENGL_ES) || DENG_OPENGL_ES > 20
-#  define DENG_HAVE_VAOS
-#  define DENG_HAVE_INSTANCES
-#  define DENG_HAVE_BLIT_FRAMEBUFFER
+#if !defined (DE_OPENGL_ES) || DE_OPENGL_ES > 20
+#  define DE_HAVE_VAOS
+#  define DE_HAVE_INSTANCES
+#  define DE_HAVE_BLIT_FRAMEBUFFER
 #endif
 
 #endif // LIBGUI_SYSTEM_OPENGL_H

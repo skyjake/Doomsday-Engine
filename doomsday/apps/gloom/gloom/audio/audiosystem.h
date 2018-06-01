@@ -16,7 +16,7 @@ public:
     /**
      * Native audio interface could not be accessed. @ingroup errors
      */
-    DENG2_ERROR(NativeError);
+    DE_ERROR(NativeError);
 
 public:
     AudioSystem();
@@ -50,10 +50,10 @@ public:
     const ICamera *listener() const;
 
 public:
-    DENG2_DEFINE_AUDIENCE(NewSound, void newSoundCreated(de::Sound &, de::DotPath const &name))
+    DE_DEFINE_AUDIENCE(NewSound, void newSoundCreated(de::Sound &, de::DotPath const &name))
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace gloom

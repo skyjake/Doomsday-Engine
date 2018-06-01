@@ -42,7 +42,7 @@ using namespace de;
 
 namespace audio {
 
-DENG2_PIMPL_NOREF(SfxChannel)
+DE_PIMPL_NOREF(SfxChannel)
 {
     dint flags = 0;                 ///< SFXCF_* flags.
     dfloat frequency = 0;           ///< Frequency adjustment: 1.0 is normal.
@@ -324,7 +324,7 @@ void SfxChannel::setStartTime(dint newStartTime)
     d->startTime = newStartTime;
 }
 
-DENG2_PIMPL(SfxChannels)
+DE_PIMPL(SfxChannels)
 {
     QList<SfxChannel *> all;
 
@@ -361,7 +361,7 @@ dint SfxChannels::count() const
 
 dint SfxChannels::countPlaying(dint id)
 {
-    DENG2_ASSERT( App_AudioSystem().sfxIsAvailable() );  // sanity check
+    DE_ASSERT( App_AudioSystem().sfxIsAvailable() );  // sanity check
 
     dint count = 0;
     forAll([&id, &count] (SfxChannel &ch)
@@ -446,14 +446,14 @@ void Sfx_ChannelDrawer()
 {
     if (!::showSoundInfo) return;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Go into screen projection mode.
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
     DGL_LoadIdentity();
-    DGL_Ortho(0, 0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, -1, 1);
+    DGL_Ortho(0, 0, DE_GAMEVIEW_WIDTH, DE_GAMEVIEW_HEIGHT, -1, 1);
 
     DGL_Enable(DGL_TEXTURE_2D);
 

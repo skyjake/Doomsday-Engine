@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_LINKFILE_H
-#define LIBDENG2_LINKFILE_H
+#ifndef LIBCORE_LINKFILE_H
+#define LIBCORE_LINKFILE_H
 
 #include "../File"
 
@@ -35,7 +35,7 @@ namespace de {
  *
  * @ingroup fs
  */
-class DENG2_PUBLIC LinkFile : public File
+class DE_PUBLIC LinkFile : public File
 {
 public:
     LinkFile(String const &name = String());
@@ -97,9 +97,9 @@ public:
     static LinkFile *newLinkToFile(File const &file, String linkName = "");
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_LINKFILE_H
+#endif // LIBCORE_LINKFILE_H

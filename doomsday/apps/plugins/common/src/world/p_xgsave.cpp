@@ -42,7 +42,7 @@ void SV_WriteXGLine(Line *li, MapStateWriter *msw)
      * DED file. During loading, XL_SetLineType is called with the id in the savegame.
      */
 
-    DENG_ASSERT(xline->xg != 0);
+    DE_ASSERT(xline->xg != 0);
     xgline_t *xg = xline->xg;
     linetype_t *info = &xg->info;
 
@@ -71,7 +71,7 @@ void SV_ReadXGLine(Line *li, MapStateReader *msr)
     // This'll set all the correct string pointers and other data.
     XL_SetLineType(li, Reader_ReadInt32(reader));
 
-    DENG_ASSERT(xline->xg != 0);
+    DE_ASSERT(xline->xg != 0);
     xgline_t *xg = xline->xg;
 
     xg->info.actCount = Reader_ReadInt32(reader);

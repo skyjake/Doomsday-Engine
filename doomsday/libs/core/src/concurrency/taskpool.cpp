@@ -40,7 +40,7 @@ namespace internal
     };
 }
 
-DENG2_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
+DE_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
 {
     /// Private instance will be deleted when pool is empty.
     bool deleteWhenDone = false;
@@ -58,12 +58,12 @@ DENG2_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
     {
         // The pool is always empty at this point because the destructor is not
         // called until all the tasks have been finished and removed.
-        DENG2_ASSERT(tasks.isEmpty());
+        DE_ASSERT(tasks.isEmpty());
     }
 
     void add(Task *t)
     {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         t->_pool = this;
         if (tasks.isEmpty())
         {
@@ -75,7 +75,7 @@ DENG2_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
     /// Returns @c true, if the pool became empty as result of the remove.
     bool remove(Task *t)
     {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         tasks.remove(t);
         if (tasks.isEmpty())
         {
@@ -88,14 +88,14 @@ DENG2_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
     void waitForEmpty() const
     {
         wait();
-        DENG2_GUARD(this);
-        DENG2_ASSERT(tasks.isEmpty());
+        DE_GUARD(this);
+        DE_ASSERT(tasks.isEmpty());
         post(); // When empty, the semaphore is available.
     }
 
     bool isEmpty() const
     {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         return tasks.isEmpty();
     }
 
@@ -118,7 +118,7 @@ DENG2_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
                 try
                 {
                     emit self().allTasksDone();
-                    DENG2_FOR_AUDIENCE(Done, i) i->taskPoolDone(self());
+                    DE_FOR_AUDIENCE(Done, i) i->taskPoolDone(self());
                 }
                 catch (Error const &er)
                 {
@@ -130,17 +130,17 @@ DENG2_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
         unlock();
     }
 
-    DENG2_PIMPL_AUDIENCE(Done)
+    DE_PIMPL_AUDIENCE(Done)
 };
 
-DENG2_AUDIENCE_METHOD(TaskPool, Done)
+DE_AUDIENCE_METHOD(TaskPool, Done)
 
 TaskPool::TaskPool() : d(new Impl(this))
 {}
 
 TaskPool::~TaskPool()
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     if (!d->isEmpty())
     {
         // Detach the private instance and make it auto-delete itself when done.

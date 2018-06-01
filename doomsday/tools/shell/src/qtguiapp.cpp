@@ -25,7 +25,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(QtGuiApp)
+DE_PIMPL(QtGuiApp)
 {
     LogBuffer logBuffer;
     Clock clock;

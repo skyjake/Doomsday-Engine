@@ -70,7 +70,7 @@ static DGLuint prepareFlaremap(ClientTexture *texture, int oldIdx)
     return 0; // Use the automatic selection logic.
 }
 
-DENG2_PIMPL_NOREF(MaterialAnimator::Decoration)
+DE_PIMPL_NOREF(MaterialAnimator::Decoration)
 {
     MaterialDecoration *matDecor = nullptr;
 
@@ -96,7 +96,7 @@ DENG2_PIMPL_NOREF(MaterialAnimator::Decoration)
 
     bool useInterpolation() const
     {
-        DENG2_ASSERT(matDecor);
+        DE_ASSERT(matDecor);
         if (auto const *light = maybeAs<LightMaterialDecoration>(matDecor))
         {
             return light->useInterpolation();
@@ -113,7 +113,7 @@ MaterialAnimator::Decoration::Decoration(MaterialDecoration &decor)
 
 MaterialDecoration &MaterialAnimator::Decoration::decor() const
 {
-    DENG2_ASSERT(d->matDecor);
+    DE_ASSERT(d->matDecor);
     return *d->matDecor;
 }
 
@@ -268,7 +268,7 @@ static ClientTexture *findTextureForAnimationStage(world::TextureMaterialLayer::
     return nullptr;
 }
 
-DENG2_PIMPL(MaterialAnimator)
+DE_PIMPL(MaterialAnimator)
 {
     ClientMaterial *material = nullptr;         ///< Material to animate (not owned).
     MaterialVariantSpec const *spec = nullptr;  ///< Variant specification.
@@ -645,13 +645,13 @@ MaterialAnimator::MaterialAnimator(ClientMaterial &material, MaterialVariantSpec
 
 ClientMaterial &MaterialAnimator::material() const
 {
-    DENG2_ASSERT(d->material);
+    DE_ASSERT(d->material);
     return *d->material;
 }
 
 MaterialVariantSpec const &MaterialAnimator::variantSpec() const
 {
-    DENG2_ASSERT(d->spec);
+    DE_ASSERT(d->spec);
     return *d->spec;
 }
 
@@ -702,7 +702,7 @@ void MaterialAnimator::animate(timespan_t /*ticLength*/)
     if (decorationStageChanged)
     {
         // Notify interested parties.
-        DENG2_FOR_AUDIENCE(DecorationStageChange, i) i->materialAnimatorDecorationStageChanged(*this);
+        DE_FOR_AUDIENCE(DecorationStageChange, i) i->materialAnimatorDecorationStageChanged(*this);
     }
 }
 

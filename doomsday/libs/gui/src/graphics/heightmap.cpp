@@ -22,7 +22,7 @@ namespace de {
 
 static float const NORMAL_Z = .2f;
 
-DENG2_PIMPL_NOREF(HeightMap)
+DE_PIMPL_NOREF(HeightMap)
 {
     QImage heightImage;
     QImage normalImage;

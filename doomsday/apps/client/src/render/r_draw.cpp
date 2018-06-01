@@ -80,14 +80,14 @@ static void loadViewBorderPatches()
 static ClientTexture &borderTexture(int borderComp)
 {
     res::TextureScheme &patches = res::Textures::get().textureScheme("Patches");
-    DENG2_ASSERT(borderComp >= 0 && borderComp < 9);
+    DE_ASSERT(borderComp >= 0 && borderComp < 9);
     return static_cast<ClientTexture &>(patches.findByUniqueId(borderPatches[borderComp]).texture());
 }
 
 #undef R_SetBorderGfx
-DENG_EXTERN_C void R_SetBorderGfx(struct uri_s const *const *paths)
+DE_EXTERN_C void R_SetBorderGfx(struct uri_s const *const *paths)
 {
-    DENG2_ASSERT(initedDraw);
+    DE_ASSERT(initedDraw);
     if(!paths) return;
 
     for(uint i = 0; i < 9; ++i)
@@ -211,11 +211,11 @@ static MaterialVariantSpec const &bgMaterialSpec()
 /// @todo Optimize: Do not search for resources (materials, textures) each frame.
 void R_DrawViewBorder()
 {
-    DENG2_ASSERT(initedDraw);
+    DE_ASSERT(initedDraw);
 
     viewport_t const *port = R_CurrentViewPort();
     viewdata_t const *vd = &DD_Player(displayPlayer)->viewport();
-    DENG2_ASSERT(port != 0 && vd != 0);
+    DE_ASSERT(port != 0 && vd != 0);
 
     if (!borderGraphicsNames[BG_BACKGROUND]) return;
     if (vd->window.isNull()) return;
@@ -223,8 +223,8 @@ void R_DrawViewBorder()
 
     Vec2i const origin = port->geometry.topLeft;
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_Enable(DGL_TEXTURE_2D);
 

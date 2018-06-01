@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_STRING_H
-#define LIBDENG2_STRING_H
+#ifndef LIBCORE_STRING_H
+#define LIBCORE_STRING_H
 
 #include <QString>
 #include <QList>
@@ -38,20 +38,20 @@ namespace de {
  *
  * @ingroup types
  */
-class DENG2_PUBLIC String : public QString
+class DE_PUBLIC String : public QString
 {
 public:
     /// Error related to String operations (note: shadows de::Error). @ingroup errors
-    DENG2_ERROR(Error);
+    DE_ERROR(Error);
 
     /// Encoding conversion failed. @ingroup errors
-    DENG2_SUB_ERROR(Error, ConversionError);
+    DE_SUB_ERROR(Error, ConversionError);
 
     /// An error was encountered in string pattern replacement. @ingroup errors
-    DENG2_SUB_ERROR(Error, IllegalPatternError);
+    DE_SUB_ERROR(Error, IllegalPatternError);
 
     /// Invalid record member name. @ingroup errors
-    DENG2_SUB_ERROR(Error, InvalidMemberError);
+    DE_SUB_ERROR(Error, InvalidMemberError);
 
     /**
      * Data argument for the pattern formatter.
@@ -61,7 +61,7 @@ public:
     {
     public:
         /// An incompatible type is requested in asText() or asNumber(). @ingroup errors
-        DENG2_ERROR(TypeError);
+        DE_ERROR(TypeError);
 
     public:
         virtual ~IPatternArg() {}
@@ -469,4 +469,4 @@ inline String operator / (QString const &qs, String const &str) {
 
 } // namespace de
 
-#endif // LIBDENG2_STRING_H
+#endif // LIBCORE_STRING_H

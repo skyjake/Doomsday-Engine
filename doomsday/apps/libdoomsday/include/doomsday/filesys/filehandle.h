@@ -23,8 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_FILESYS_FILEHANDLE_H
-#define LIBDENG_FILESYS_FILEHANDLE_H
+#ifndef DE_FILESYS_FILEHANDLE_H
+#define DE_FILESYS_FILEHANDLE_H
 
 #include "../libdoomsday.h"
 #include <de/libcore.h>
@@ -135,9 +135,9 @@ public:
 private:
     FileHandle();
 
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif /* LIBDENG_FILESYS_FILEHANDLE_H */
+#endif /* DE_FILESYS_FILEHANDLE_H */

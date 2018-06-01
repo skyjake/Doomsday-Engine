@@ -127,7 +127,7 @@ calias_t* Con_AddAlias(char const* name, char const* command)
 
 void Con_DeleteAlias(calias_t* cal)
 {
-    DENG_ASSERT(cal);
+    DE_ASSERT(cal);
 
     uint idx;
     for (idx = 0; idx < numCAliases; ++idx)

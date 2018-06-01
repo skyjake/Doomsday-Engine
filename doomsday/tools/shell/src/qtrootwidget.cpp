@@ -25,7 +25,7 @@
 #include <QKeyEvent>
 #include <QPainter>
 #include <QTimer>
-#ifdef DENG2_QT_5_0_OR_NEWER
+#ifdef DE_QT_5_0_OR_NEWER
 #  include <QGuiApplication>
 #endif
 
@@ -41,7 +41,7 @@ static int const BLINK_INTERVAL   = 500;       // ms
 #  define CONTROL_MOD   Qt::ControlModifier
 #endif
 
-DENG2_PIMPL(QtRootWidget)
+DE_PIMPL(QtRootWidget)
 {
     int margin;
     Vec2i charSize;
@@ -68,7 +68,7 @@ DENG2_PIMPL(QtRootWidget)
         , blinkVisible(true)
         , cursorVisible(true)
     {
-#ifdef DENG2_QT_5_1_OR_NEWER
+#ifdef DE_QT_5_1_OR_NEWER
         dpiFactor = qApp->devicePixelRatio();
 #endif
         canvas->setForegroundColor(Qt::black);

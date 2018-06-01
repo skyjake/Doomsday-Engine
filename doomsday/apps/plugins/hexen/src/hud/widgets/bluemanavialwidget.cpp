@@ -30,13 +30,13 @@ static patchid_t pBlueBackground[2];  ///< [ dim, bright ]
 
 static void BlueManaVialWidget_Draw(guidata_bluemanavial_t *vial, Point2Raw const *offset)
 {
-    DENG2_ASSERT(vial);
+    DE_ASSERT(vial);
     vial->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void BlueManaVialWidget_UpdateGeometry(guidata_bluemanavial_t *vial)
 {
-    DENG2_ASSERT(vial);
+    DE_ASSERT(vial);
     vial->updateGeometry();
 }
 

@@ -132,7 +132,7 @@ public:
     Frames const &allFrames() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef AnimGroup::Frame AnimGroupFrame;

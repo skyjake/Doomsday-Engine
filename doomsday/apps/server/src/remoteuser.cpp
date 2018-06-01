@@ -41,7 +41,7 @@ enum RemoteUserState {
     Joined
 };
 
-DENG2_PIMPL(RemoteUser)
+DE_PIMPL(RemoteUser)
 {
     Id id;
     Socket *socket;
@@ -56,7 +56,7 @@ DENG2_PIMPL(RemoteUser)
           socket(sock),
           state(Unjoined)
     {
-        DENG2_ASSERT(socket != 0);
+        DE_ASSERT(socket != 0);
 
         QObject::connect(socket, SIGNAL(disconnected()),  thisPublic, SLOT(socketDisconnected()));
         QObject::connect(socket, SIGNAL(messagesReady()), thisPublic, SLOT(handleIncomingPackets()));
@@ -86,7 +86,7 @@ DENG2_PIMPL(RemoteUser)
         if (state == Disconnected) return;
 
         LOG_NET_NOTE("Closing connection to remote user %s (from %s)") << id << address;
-        DENG2_ASSERT(socket->isOpen());
+        DE_ASSERT(socket->isOpen());
 
         if (state == Joined)
         {

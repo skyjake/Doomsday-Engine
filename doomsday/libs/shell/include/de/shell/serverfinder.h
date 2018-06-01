@@ -36,7 +36,7 @@ class LIBSHELL_PUBLIC ServerFinder : public QObject
 
 public:
     /// Specified server was not found. @ingroup errors
-    DENG2_ERROR(NotFoundError);
+    DE_ERROR(NotFoundError);
 
 public:
     ServerFinder();
@@ -70,7 +70,7 @@ signals:
     void updated();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 }} // namespace de::shell

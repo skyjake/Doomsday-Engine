@@ -45,10 +45,10 @@ void        DS_Dummy_SFX_Listener(int prop, float value);
 void        DS_Dummy_SFX_Listenerv(int prop, float* values);
 int         DS_Dummy_SFX_Getv(int prop, void* values);
 
-DENG_EXTERN_C audiodriver_t          audiod_dummy;
-DENG_EXTERN_C audiointerface_sfx_t   audiod_dummy_sfx;
-DENG_EXTERN_C audiointerface_music_t audiod_dummy_music;
-DENG_EXTERN_C audiointerface_cd_t    audiod_dummy_cd;
+DE_EXTERN_C audiodriver_t          audiod_dummy;
+DE_EXTERN_C audiointerface_sfx_t   audiod_dummy_sfx;
+DE_EXTERN_C audiointerface_music_t audiod_dummy_music;
+DE_EXTERN_C audiointerface_cd_t    audiod_dummy_cd;
 
 audiodriver_t audiod_dummy = {
     DS_DummyInit,

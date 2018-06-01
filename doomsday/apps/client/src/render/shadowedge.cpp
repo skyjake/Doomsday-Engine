@@ -38,7 +38,7 @@ using namespace world;
 
 namespace de {
 
-DENG2_PIMPL_NOREF(ShadowEdge)
+DE_PIMPL_NOREF(ShadowEdge)
 {
     HEdge const *leftMostHEdge = nullptr;
     dint edge = 0;

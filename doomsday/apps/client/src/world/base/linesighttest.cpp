@@ -40,7 +40,7 @@ using namespace de;
 
 namespace world {
 
-DENG2_PIMPL_NOREF(LineSightTest)
+DE_PIMPL_NOREF(LineSightTest)
 {
     dint flags = 0;      ///< LS_* flags @ref lineSightFlags
     Vec3d from;       ///< Ray origin.
@@ -279,11 +279,11 @@ DENG2_PIMPL_NOREF(LineSightTest)
      */
     bool crossBspNode(BspTree const *bspTree)
     {
-        DENG2_ASSERT(bspTree);
+        DE_ASSERT(bspTree);
 
         while (!bspTree->isLeaf())
         {
-            DENG2_ASSERT(bspTree->userData());
+            DE_ASSERT(bspTree->userData());
             auto const &bspNode = bspTree->userData()->as<BspNode>();
 
             // Does the ray intersect the partition?

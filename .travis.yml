@@ -20,7 +20,7 @@ before_script:
 
 script:
     - source /opt/qt55/bin/qt55-env.sh
-    - cd build-travis && cmake -DQMAKE=/opt/qt55/bin/qmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDENG_ENABLE_TESTS=ON ../doomsday && make -j4
+    - cd build-travis && cmake -DQMAKE=/opt/qt55/bin/qmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDE_ENABLE_TESTS=ON ../doomsday && make -j4
 
 notifications:
     slack: dengteam:A4Hl4awsyxNxQG61rrWgDuHo

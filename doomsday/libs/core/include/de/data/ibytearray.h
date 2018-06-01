@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_IBYTEARRAY_H
-#define LIBDENG2_IBYTEARRAY_H
+#ifndef LIBCORE_IBYTEARRAY_H
+#define LIBCORE_IBYTEARRAY_H
 
 #include "../libcore.h"
 
@@ -29,11 +29,11 @@ namespace de {
  *
  * @ingroup data
  */
-class DENG2_PUBLIC IByteArray
+class DE_PUBLIC IByteArray
 {
 public:
     /// Invalid offset was used in set() or get(). @ingroup errors
-    DENG2_ERROR(OffsetError);
+    DE_ERROR(OffsetError);
 
     /// Size of the array is indicated with this type.
     typedef dsize Size;
@@ -82,4 +82,4 @@ public:
 
 } // namespace de
 
-#endif /* LIBDENG2_IBYTEARRAY_H */
+#endif /* LIBCORE_IBYTEARRAY_H */

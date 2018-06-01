@@ -274,7 +274,7 @@ int ceiling_s::read(MapStateReader *msr)
         type         = (ceilingtype_e) Reader_ReadByte(reader);
 
         sector       = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
-        DENG_ASSERT(sector != 0);
+        DE_ASSERT(sector != 0);
 
         bottomHeight = (float) Reader_ReadInt16(reader);
         topHeight    = (float) Reader_ReadInt16(reader);
@@ -305,7 +305,7 @@ int ceiling_s::read(MapStateReader *msr)
 #if __JHEXEN__
         // A 32bit pointer to sector, serialized.
         sector       = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
-        DENG_ASSERT(sector != 0);
+        DE_ASSERT(sector != 0);
 
         type         = ceilingtype_e(Reader_ReadInt32(reader));
 #else
@@ -313,7 +313,7 @@ int ceiling_s::read(MapStateReader *msr)
 
         // A 32bit pointer to sector, serialized.
         sector       = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
-        DENG_ASSERT(sector != 0);
+        DE_ASSERT(sector != 0);
 #endif
 
         bottomHeight = FIX2FLT((fixed_t) Reader_ReadInt32(reader));

@@ -23,8 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_BSP_LINESEGMENT_H
-#define DENG_WORLD_BSP_LINESEGMENT_H
+#ifndef DE_WORLD_BSP_LINESEGMENT_H
+#define DE_WORLD_BSP_LINESEGMENT_H
 
 #include <de/Error>
 #include <de/Vector>
@@ -67,12 +67,12 @@ LineRelationship lineRelationship(coord_t fromDist, coord_t toDist);
  */
 class LineSegment
 {
-    DENG2_NO_COPY(LineSegment)
-    DENG2_NO_ASSIGN(LineSegment)
+    DE_NO_COPY(LineSegment)
+    DE_NO_ASSIGN(LineSegment)
 
 public:
     /// Required sector attribution is missing. @ingroup errors
-    DENG2_ERROR(MissingSectorError);
+    DE_ERROR(MissingSectorError);
 
     /// Logical side identifiers:
     enum { Front, Back };
@@ -88,18 +88,18 @@ public:
      */
     class Side
     {
-        DENG2_NO_COPY(Side)
-        DENG2_NO_ASSIGN(Side)
+        DE_NO_COPY(Side)
+        DE_NO_ASSIGN(Side)
 
     public:
         /// Required neighbor segment is missing. @ingroup errors
-        DENG2_ERROR(MissingNeighborError);
+        DE_ERROR(MissingNeighborError);
 
         /// Required map line side attribution is missing. @ingroup errors
-        DENG2_ERROR(MissingMapSideError);
+        DE_ERROR(MissingMapSideError);
 
         /// Required half-edge is missing. @ingroup errors
-        DENG2_ERROR(MissingHEdgeError);
+        DE_ERROR(MissingHEdgeError);
 
     public:
         Side(LineSegment &line);
@@ -464,7 +464,7 @@ public:
         void updateCache();
 
     private:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
 public:
@@ -553,7 +553,7 @@ public:
     inline void replaceTo  (Vertex &newVertex) { replaceVertex(To  , newVertex); }
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef LineSegment::Side LineSegmentSide;
@@ -561,4 +561,4 @@ typedef LineSegment::Side LineSegmentSide;
 }  // namespace bsp
 }  // namespace world
 
-#endif  // DENG_WORLD_BSP_LINESEGMENT_H
+#endif  // DE_WORLD_BSP_LINESEGMENT_H

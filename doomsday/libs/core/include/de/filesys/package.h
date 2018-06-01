@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_PACKAGE_H
-#define LIBDENG2_PACKAGE_H
+#ifndef LIBCORE_PACKAGE_H
+#define LIBCORE_PACKAGE_H
 
 #include "../String"
 #include "../File"
@@ -44,27 +44,27 @@ class Package;
  * Package only consists of state that is relevant while the package is loaded (i.e.,
  * in active use).
  */
-class DENG2_PUBLIC Package : public IObject
+class DE_PUBLIC Package : public IObject
 {
 public:
     /// Package's source is missing or inaccessible. @ingroup errors
-    DENG2_ERROR(SourceError);
+    DE_ERROR(SourceError);
 
     /// Package fails validation. @ingroup errors
-    DENG2_ERROR(ValidationError);
+    DE_ERROR(ValidationError);
 
     /// Checked metadata does not describe a package. @ingroup errors
-    DENG2_SUB_ERROR(ValidationError, NotPackageError);
+    DE_SUB_ERROR(ValidationError, NotPackageError);
 
     /// Package is missing some required metadata. @ingroup errors
-    DENG2_SUB_ERROR(ValidationError, IncompleteMetadataError);
+    DE_SUB_ERROR(ValidationError, IncompleteMetadataError);
 
     typedef QSet<String> Assets;
 
     /**
      * Utility for accessing asset metadata. @ingroup fs
      */
-    class DENG2_PUBLIC Asset : public RecordAccessor
+    class DE_PUBLIC Asset : public RecordAccessor
     {
     public:
         Asset(Record const &rec);
@@ -251,9 +251,9 @@ public:
     static String const VAR_VERSION;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_PACKAGE_H
+#endif // LIBCORE_PACKAGE_H

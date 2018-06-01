@@ -45,7 +45,7 @@ class AudioDriver
 {
 public:
     /// Base class for load related errors. @ingroup errors
-    DENG2_ERROR(LoadError);
+    DE_ERROR(LoadError);
 
     /**
      * Logical driver status.
@@ -153,7 +153,7 @@ public:  // Interfaces: --------------------------------------------------------
     de::String interfaceName(void *anyAudioInterface) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 de::String AudioDriver_GetName(audiodriverid_t id);

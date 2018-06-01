@@ -173,7 +173,7 @@ namespace internal
 
 using namespace internal;
 
-DENG2_PIMPL_NOREF(PartitionEvaluator)
+DE_PIMPL_NOREF(PartitionEvaluator)
 {
     int splitCostFactor = 7;
 
@@ -192,7 +192,7 @@ DENG2_PIMPL_NOREF(PartitionEvaluator)
 
     PartitionCandidate *nextCandidate()
     {
-        DENG2_ASSERT(costTaskPool.isDone());
+        DE_ASSERT(costTaskPool.isDone());
         if(candidates.isEmpty()) return nullptr;
         return candidates.takeFirst();
     }
@@ -385,7 +385,7 @@ DENG2_PIMPL_NOREF(PartitionEvaluator)
      */
     void beginPartitionCosting(LineSegmentSide *line)
     {
-        DENG2_ASSERT(line && line->hasMapSide());
+        DE_ASSERT(line && line->hasMapSide());
         // Run a new partition cost task.
         PartitionCandidate *newCandidate = new PartitionCandidate(*line);
         candidates << newCandidate;

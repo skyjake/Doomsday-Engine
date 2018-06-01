@@ -168,7 +168,7 @@ public:
      * Notified when the organizer creates a widget for a context item. Allows
      * third parties to customize the widget as needed.
      */
-    DENG2_DEFINE_AUDIENCE2(WidgetCreation,
+    DE_DEFINE_AUDIENCE2(WidgetCreation,
                            void widgetCreatedForItem(GuiWidget &widget,
                                                      ui::Item const &item))
 
@@ -176,12 +176,12 @@ public:
      * Notified when the organizer updates a widget for a changed context item.
      * Allows third parties to customize the widget as needed.
      */
-    DENG2_DEFINE_AUDIENCE2(WidgetUpdate,
+    DE_DEFINE_AUDIENCE2(WidgetUpdate,
                            void widgetUpdatedForItem(GuiWidget &widget,
                                                      ui::Item const &item))
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 /**

@@ -24,7 +24,7 @@ namespace gloom {
 
 using namespace geo;
 
-DENG2_PIMPL(SectorPolygonizer)
+DE_PIMPL(SectorPolygonizer)
 {
     struct Contour
     {
@@ -560,7 +560,7 @@ DENG2_PIMPL(SectorPolygonizer)
 
                 for (const auto &pp : cont.polygon.points)
                 {
-                    DENG2_ASSERT(points.isEmpty() || points.back() != pp.id);
+                    DE_ASSERT(points.isEmpty() || points.back() != pp.id);
                     points << pp.id;
                 }
             }

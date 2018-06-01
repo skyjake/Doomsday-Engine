@@ -40,7 +40,7 @@ namespace de {
 class LIBGUI_PUBLIC IAtlas
 {
 public:
-    DENG2_ERROR(OutOfSpaceError);
+    DE_ERROR(OutOfSpaceError);
 
     virtual ~IAtlas() {}
 
@@ -152,13 +152,13 @@ public:
      * repositioned for some reasons (e.g., defragmentation). Normally once
      * allocated, content will remain at its initial place.
      */
-    DENG2_DEFINE_AUDIENCE2(Reposition, void atlasContentRepositioned(Atlas &))
+    DE_DEFINE_AUDIENCE2(Reposition, void atlasContentRepositioned(Atlas &))
 
     /**
      * Audience that will be notified when an allocation fails due to the atlas
      * being so full that there is no room for the new image.
      */
-    DENG2_DEFINE_AUDIENCE2(OutOfSpace, void atlasOutOfSpace(Atlas &))
+    DE_DEFINE_AUDIENCE2(OutOfSpace, void atlasOutOfSpace(Atlas &))
 
 public:
     /**
@@ -307,7 +307,7 @@ protected:
     virtual void commit(Image const &fullImage, Rectanglei const &subregion) const = 0;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Atlas::Flags)

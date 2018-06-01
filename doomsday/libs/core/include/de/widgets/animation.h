@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_ANIMATION_H
-#define LIBDENG2_ANIMATION_H
+#ifndef LIBCORE_ANIMATION_H
+#define LIBCORE_ANIMATION_H
 
 #include "../String"
 #include "../Time"
@@ -36,7 +36,7 @@ namespace de {
  *
  * @ingroup math
  */
-class DENG2_PUBLIC Animation : public ISerializable, public Deletable
+class DE_PUBLIC Animation : public ISerializable, public Deletable
 {
 public:
     enum Style {
@@ -50,7 +50,7 @@ public:
     };
 
     /// Animation has no defined time source. @ingroup errors
-    DENG2_ERROR(ClockMissingError);
+    DE_ERROR(ClockMissingError);
 
 public:
     Animation(float value = 0, Style style = EaseOut);
@@ -181,11 +181,11 @@ public:
     static Animation range(Style style, float from, float to, TimeSpan span, TimeSpan delay = 0);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 
     static Clock const *_clock;
 };
 
 } // namespace de
 
-#endif // LIBDENG2_ANIMATION_H
+#endif // LIBCORE_ANIMATION_H

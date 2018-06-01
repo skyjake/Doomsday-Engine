@@ -20,7 +20,7 @@
 
 namespace de {
 
-DENG2_PIMPL(Sound)
+DE_PIMPL(Sound)
 {
     dfloat      volume;
     dfloat      pan;
@@ -43,23 +43,23 @@ DENG2_PIMPL(Sound)
 
     void update()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(Change, i)
+        DE_FOR_PUBLIC_AUDIENCE2(Change, i)
         {
             i->soundPropertyChanged(self());
         }
         self().update();
     }
 
-    DENG2_PIMPL_AUDIENCE(Play)
-    DENG2_PIMPL_AUDIENCE(Change)
-    DENG2_PIMPL_AUDIENCE(Stop)
-    DENG2_PIMPL_AUDIENCE(Deletion)
+    DE_PIMPL_AUDIENCE(Play)
+    DE_PIMPL_AUDIENCE(Change)
+    DE_PIMPL_AUDIENCE(Stop)
+    DE_PIMPL_AUDIENCE(Deletion)
 };
 
-DENG2_AUDIENCE_METHOD(Sound, Play)
-DENG2_AUDIENCE_METHOD(Sound, Change)
-DENG2_AUDIENCE_METHOD(Sound, Stop)
-DENG2_AUDIENCE_METHOD(Sound, Deletion)
+DE_AUDIENCE_METHOD(Sound, Play)
+DE_AUDIENCE_METHOD(Sound, Change)
+DE_AUDIENCE_METHOD(Sound, Stop)
+DE_AUDIENCE_METHOD(Sound, Deletion)
 
 Sound::Sound() : d(new Impl(this))
 {}

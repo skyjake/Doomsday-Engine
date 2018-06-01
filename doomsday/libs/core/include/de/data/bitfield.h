@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_BITFIELD_H
-#define LIBDENG2_BITFIELD_H
+#ifndef LIBCORE_BITFIELD_H
+#define LIBCORE_BITFIELD_H
 
 #include <de/Block>
 #include <de/Error>
@@ -44,7 +44,7 @@ namespace de {
  *
  * @ingroup data
  */
-class DENG2_PUBLIC BitField
+class DE_PUBLIC BitField
 {
 public:
     typedef dint Id;
@@ -57,7 +57,7 @@ public:
     /**
      * Metadata about the elements of a bit field.
      */
-    class DENG2_PUBLIC Elements
+    class DE_PUBLIC Elements
     {
     public:
         Elements();
@@ -110,11 +110,11 @@ public:
         Ids idsLaidOutOnByte(int index) const;
 
     private:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
     /// Failure to compare two fields with each other. @ingroup errors
-    DENG2_ERROR(ComparisonError);
+    DE_ERROR(ComparisonError);
 
 public:
     BitField();
@@ -203,9 +203,9 @@ public:
     String asText() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_BITFIELD_H
+#endif // LIBCORE_BITFIELD_H

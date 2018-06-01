@@ -41,9 +41,9 @@ using namespace de;
 
 static String const CUSTOM_PROFILE = "Custom";
 
-DENG2_PIMPL(ConfigProfiles)
-, DENG2_OBSERVES(DoomsdayApp, GameUnload)
-, DENG2_OBSERVES(DoomsdayApp, GameChange)
+DE_PIMPL(ConfigProfiles)
+, DE_OBSERVES(DoomsdayApp, GameUnload)
+, DE_OBSERVES(DoomsdayApp, GameChange)
 {
     struct Setting
     {
@@ -124,9 +124,9 @@ DENG2_PIMPL(ConfigProfiles)
             QTextStream os(&info);
             os.setCodec("UTF-8");
 
-            DENG2_FOR_EACH_CONST(Values, val, values)
+            DE_FOR_EACH_CONST(Values, val, values)
             {
-                DENG2_ASSERT(settings.contains(val.key()));
+                DE_ASSERT(settings.contains(val.key()));
 
                 Setting const &st = settings[val.key()];
 
@@ -218,7 +218,7 @@ DENG2_PIMPL(ConfigProfiles)
             Record const &confDefaults = *proc.context().evaluator().result()
                     .as<RecordValue>().record();
 
-            DENG2_ASSERT(confDefaults.has(name));
+            DE_ASSERT(confDefaults.has(name));
 
             Variable const &var = confDefaults[name];
             if (is<NumberValue>(var.value()))
@@ -232,7 +232,7 @@ DENG2_PIMPL(ConfigProfiles)
             else
             {
                 // Oops, we don't support this yet.
-                DENG2_ASSERT(false);
+                DE_ASSERT(false);
             }
         }
         catch (Error const &er)
@@ -309,7 +309,7 @@ DENG2_PIMPL(ConfigProfiles)
     void changeTo(String const &profileName)
     {
         LOG_AS("ConfigProfiles");
-        DENG2_ASSERT(tryFind(profileName));
+        DE_ASSERT(tryFind(profileName));
 
         if (current == profileName) return;
 
@@ -325,7 +325,7 @@ DENG2_PIMPL(ConfigProfiles)
         setCurrent(profileName);
         apply(current);
 
-        DENG2_FOR_PUBLIC_AUDIENCE(ProfileChange, i)
+        DE_FOR_PUBLIC_AUDIENCE(ProfileChange, i)
         {
             i->currentProfileChanged(profileName);
         }
@@ -341,8 +341,8 @@ DENG2_PIMPL(ConfigProfiles)
 
     void resetSetting(String const &settingName) const
     {
-        DENG2_ASSERT(settings.contains(settingName));
-        DENG2_ASSERT(defaults.values.contains(settingName));
+        DE_ASSERT(settings.contains(settingName));
+        DE_ASSERT(defaults.values.contains(settingName));
 
         settings[settingName].setValue(defaults.values[settingName]);
     }
@@ -359,7 +359,7 @@ DENG2_PIMPL(ConfigProfiles)
 
     QVariant textToSettingValue(String const &text, String const &settingName) const
     {
-        DENG2_ASSERT(settings.contains(settingName));
+        DE_ASSERT(settings.contains(settingName));
 
         Setting const &st = settings[settingName];
 
@@ -378,7 +378,7 @@ DENG2_PIMPL(ConfigProfiles)
             return text.toDouble();
         }
 
-        DENG2_ASSERT(false);
+        DE_ASSERT(false);
         return QVariant();
     }
 
@@ -512,7 +512,7 @@ void ConfigProfiles::resetToDefaults()
 {
     d->reset();
 
-    DENG2_FOR_AUDIENCE(ProfileChange, i)
+    DE_FOR_AUDIENCE(ProfileChange, i)
     {
         i->currentProfileChanged(d->current);
     }
@@ -529,7 +529,7 @@ bool ConfigProfiles::rename(String const &name)
     {
         d->setCurrent(name);
 
-        DENG2_FOR_AUDIENCE(ProfileChange, i)
+        DE_FOR_AUDIENCE(ProfileChange, i)
         {
             i->currentProfileChanged(name);
         }

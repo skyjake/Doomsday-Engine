@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_ISIZERULE_H
-#define LIBDENG2_ISIZERULE_H
+#ifndef LIBCORE_ISIZERULE_H
+#define LIBCORE_ISIZERULE_H
 
 #include "../Rule"
 
@@ -27,7 +27,7 @@ namespace de {
  * Interface for objects providing size rules.
  * @ingroup widgets
  */
-class DENG2_PUBLIC ISizeRule
+class DE_PUBLIC ISizeRule
 {
 public:
     virtual ~ISizeRule() {}
@@ -61,4 +61,4 @@ struct DENG2_PUBLIC RulePair
 
 } // namespace de
 
-#endif // LIBDENG2_ISIZERULE_H
+#endif // LIBCORE_ISIZERULE_H

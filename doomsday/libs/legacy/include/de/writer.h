@@ -7,7 +7,7 @@
  * against the buffer boundaries; writing too much data into the buffer results
  * in an error.
  *
- * If @c DENG_WRITER_TYPECHECK is defined, all written data is preceded by a type
+ * If @c DE_WRITER_TYPECHECK is defined, all written data is preceded by a type
  * check code, which is checked when the values are read by Reader1. This
  * guarantees that data is interpreted as written.
  *
@@ -32,8 +32,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_WRITER_H
-#define LIBDENG_WRITER_H
+#ifndef DE_WRITER_H
+#define DE_WRITER_H
 
 #include "types.h"
 
@@ -44,7 +44,7 @@ extern "C" {
 /// @addtogroup legacy
 /// @{
 
-#ifdef DENG_WRITER_TYPECHECK
+#ifdef DE_WRITER_TYPECHECK
 // Writer1 Type Check Codes.
 enum
 {
@@ -81,7 +81,7 @@ typedef void (*Writer_Callback_WriteData) (Writer1 *w, char const *data, int len
  * @param buffer  Buffer to use for reading.
  * @param maxLen  Maximum length of the buffer.
  */
-DENG_PUBLIC Writer1 *Writer_NewWithBuffer(byte *buffer, size_t maxLen);
+DE_PUBLIC Writer1 *Writer_NewWithBuffer(byte *buffer, size_t maxLen);
 
 /**
  * Constructs a new writer. The writer will allocate memory for the buffer
@@ -90,14 +90,14 @@ DENG_PUBLIC Writer1 *Writer_NewWithBuffer(byte *buffer, size_t maxLen);
  *
  * @param maxLen  Maximum size for the buffer. Use zero for unlimited size.
  */
-DENG_PUBLIC Writer1 *Writer_NewWithDynamicBuffer(size_t maxLen);
+DE_PUBLIC Writer1 *Writer_NewWithDynamicBuffer(size_t maxLen);
 
 /**
  * Constructs a new writer that has no memory buffer of its own. Instead, all
  * the write operations will get routed to user-provided callbacks. The writer
  * has to be destroyed with Writer_Delete() after it is not needed any more.
  */
-DENG_PUBLIC Writer1 *Writer_NewWithCallbacks(Writer_Callback_WriteInt8  writeInt8,
+DE_PUBLIC Writer1 *Writer_NewWithCallbacks(Writer_Callback_WriteInt8  writeInt8,
                                              Writer_Callback_WriteInt16 writeInt16,
                                              Writer_Callback_WriteInt32 writeInt32,
                                              Writer_Callback_WriteFloat writeFloat,
@@ -106,29 +106,29 @@ DENG_PUBLIC Writer1 *Writer_NewWithCallbacks(Writer_Callback_WriteInt8  writeInt
 /**
  * Destroys the writer.
  */
-DENG_PUBLIC void Writer_Delete(Writer1 *writer);
+DE_PUBLIC void Writer_Delete(Writer1 *writer);
 
 /**
  * Returns the current output size of the writer, i.e., how much has been written
  * so far.
  */
-DENG_PUBLIC size_t Writer_Size(Writer1 const *writer);
+DE_PUBLIC size_t Writer_Size(Writer1 const *writer);
 
 /**
  * Returns a pointer to the beginning of the written data.
  * @see Writer_Size()
  */
-DENG_PUBLIC byte const *Writer_Data(Writer1 const *writer);
+DE_PUBLIC byte const *Writer_Data(Writer1 const *writer);
 
 /**
  * Returns the maximum size of the writing buffer.
  */
-DENG_PUBLIC size_t Writer_TotalBufferSize(Writer1 const *writer);
+DE_PUBLIC size_t Writer_TotalBufferSize(Writer1 const *writer);
 
 /**
  * Returns the number of bytes left for writing.
  */
-DENG_PUBLIC size_t Writer_BytesLeft(Writer1 const *writer);
+DE_PUBLIC size_t Writer_BytesLeft(Writer1 const *writer);
 
 /**
  * Sets the position of the writing cursor in the buffer.
@@ -136,33 +136,33 @@ DENG_PUBLIC size_t Writer_BytesLeft(Writer1 const *writer);
  * @param writer  Writer1.
  * @param newPos  New position.
  */
-DENG_PUBLIC void Writer_SetPos(Writer1 *writer, size_t newPos);
+DE_PUBLIC void Writer_SetPos(Writer1 *writer, size_t newPos);
 
 /**
  * Writes value @a v to the destination buffer using little-endian byte order.
  */
 ///@{
-DENG_PUBLIC void Writer_WriteChar   (Writer1 *writer, char     v);
-DENG_PUBLIC void Writer_WriteByte   (Writer1 *writer, byte     v);
-DENG_PUBLIC void Writer_WriteInt16  (Writer1 *writer, int16_t  v);
-DENG_PUBLIC void Writer_WriteUInt16 (Writer1 *writer, uint16_t v);
-DENG_PUBLIC void Writer_WriteInt32  (Writer1 *writer, int32_t  v);
-DENG_PUBLIC void Writer_WriteUInt32 (Writer1 *writer, uint32_t v);
-DENG_PUBLIC void Writer_WriteFloat  (Writer1 *writer, float    v);
+DE_PUBLIC void Writer_WriteChar   (Writer1 *writer, char     v);
+DE_PUBLIC void Writer_WriteByte   (Writer1 *writer, byte     v);
+DE_PUBLIC void Writer_WriteInt16  (Writer1 *writer, int16_t  v);
+DE_PUBLIC void Writer_WriteUInt16 (Writer1 *writer, uint16_t v);
+DE_PUBLIC void Writer_WriteInt32  (Writer1 *writer, int32_t  v);
+DE_PUBLIC void Writer_WriteUInt32 (Writer1 *writer, uint32_t v);
+DE_PUBLIC void Writer_WriteFloat  (Writer1 *writer, float    v);
 ///@}
 
 /**
  * Writes @a len bytes from @a buffer.
  */
-DENG_PUBLIC void Writer_Write(Writer1 *writer, void const *buffer, size_t len);
+DE_PUBLIC void Writer_Write(Writer1 *writer, void const *buffer, size_t len);
 
 /**
  * Only 15 bits can be used for the number because the high bit of the
  * lower byte is used to determine whether the upper byte follows or not.
  */
-DENG_PUBLIC void Writer_WritePackedUInt16(Writer1 *writer, uint16_t v);
+DE_PUBLIC void Writer_WritePackedUInt16(Writer1 *writer, uint16_t v);
 
-DENG_PUBLIC void Writer_WritePackedUInt32(Writer1 *writer, uint32_t v);
+DE_PUBLIC void Writer_WritePackedUInt32(Writer1 *writer, uint32_t v);
 
 /// @}
 
@@ -170,4 +170,4 @@ DENG_PUBLIC void Writer_WritePackedUInt32(Writer1 *writer, uint32_t v);
 } // extern "C"
 #endif
 
-#endif // LIBDENG_WRITER_H
+#endif // DE_WRITER_H

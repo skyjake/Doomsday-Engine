@@ -31,8 +31,8 @@ static String nameToKey(String const &name)
     return name.toLower();
 }
 
-DENG2_PIMPL(Profiles)
-, DENG2_OBSERVES(Deletable, Deletion)
+DE_PIMPL(Profiles)
+, DE_OBSERVES(Deletable, Deletion)
 {
     typedef QMap<String, AbstractProfile *> Profiles;
     Profiles profiles;
@@ -57,7 +57,7 @@ DENG2_PIMPL(Profiles)
         profile->setOwner(thisPublic);
         profile->audienceForDeletion += this;
 
-        DENG2_FOR_PUBLIC_AUDIENCE2(Addition, i)
+        DE_FOR_PUBLIC_AUDIENCE2(Addition, i)
         {
             i->profileAdded(*profile);
         }
@@ -69,7 +69,7 @@ DENG2_PIMPL(Profiles)
         profile.setOwner(nullptr);
         profiles.remove(nameToKey(profile.name()));
 
-        DENG2_FOR_PUBLIC_AUDIENCE2(Removal, i)
+        DE_FOR_PUBLIC_AUDIENCE2(Removal, i)
         {
             i->profileRemoved(profile);
         }
@@ -156,12 +156,12 @@ DENG2_PIMPL(Profiles)
                     << file.description() << er.asText();
         }
     }
-    DENG2_PIMPL_AUDIENCE(Addition)
-    DENG2_PIMPL_AUDIENCE(Removal)
+    DE_PIMPL_AUDIENCE(Addition)
+    DE_PIMPL_AUDIENCE(Removal)
 };
 
-DENG2_AUDIENCE_METHOD(Profiles, Addition)
-DENG2_AUDIENCE_METHOD(Profiles, Removal)
+DE_AUDIENCE_METHOD(Profiles, Addition)
+DE_AUDIENCE_METHOD(Profiles, Removal)
 
 Profiles::Profiles()
     : d(new Impl(this))
@@ -240,7 +240,7 @@ void Profiles::add(AbstractProfile *profile)
 
 void Profiles::remove(AbstractProfile &profile)
 {
-    DENG2_ASSERT(&profile.owner() == this);
+    DE_ASSERT(&profile.owner() == this);
 
     d->remove(profile);
 }
@@ -304,7 +304,7 @@ void Profiles::deserialize()
     // Read all fixed profiles from */profiles/(persistentName)/
     FS::FoundFiles folders;
     App::fileSystem().findAll("profiles" / d->persistentName, folders);
-    DENG2_FOR_EACH(FS::FoundFiles, i, folders)
+    DE_FOR_EACH(FS::FoundFiles, i, folders)
     {
         if (auto const *folder = maybeAs<Folder>(*i))
         {
@@ -330,7 +330,7 @@ void Profiles::deserialize()
 
 // Profiles::AbstractProfile --------------------------------------------------
 
-DENG2_PIMPL(Profiles::AbstractProfile)
+DE_PIMPL(Profiles::AbstractProfile)
 {
     Profiles *owner = nullptr;
     String name;
@@ -346,10 +346,10 @@ DENG2_PIMPL(Profiles::AbstractProfile)
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(Change)
+    DE_PIMPL_AUDIENCE(Change)
 };
 
-DENG2_AUDIENCE_METHOD(Profiles::AbstractProfile, Change)
+DE_AUDIENCE_METHOD(Profiles::AbstractProfile, Change)
 
 Profiles::AbstractProfile::AbstractProfile()
     : d(new Impl(this))
@@ -375,19 +375,19 @@ Profiles::AbstractProfile &Profiles::AbstractProfile::operator = (AbstractProfil
 
 void Profiles::AbstractProfile::setOwner(Profiles *owner)
 {
-    DENG2_ASSERT(d->owner != owner);
+    DE_ASSERT(d->owner != owner);
     d->owner = owner;
 }
 
 Profiles &Profiles::AbstractProfile::owner()
 {
-    DENG2_ASSERT(d->owner);
+    DE_ASSERT(d->owner);
     return *d->owner;
 }
 
 Profiles const &Profiles::AbstractProfile::owner() const
 {
-    DENG2_ASSERT(d->owner);
+    DE_ASSERT(d->owner);
     return *d->owner;
 }
 
@@ -421,7 +421,7 @@ void Profiles::AbstractProfile::setReadOnly(bool readOnly)
 
 void Profiles::AbstractProfile::notifyChange()
 {
-    DENG2_FOR_AUDIENCE2(Change, i)
+    DE_FOR_AUDIENCE2(Change, i)
     {
         i->profileChanged(*this);
     }

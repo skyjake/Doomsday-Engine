@@ -82,7 +82,7 @@ void ClPlaneMover::think()
     // Can we think yet?
     if (!Cl_GameReady()) return;
 
-    DENG2_ASSERT(_plane != 0);
+    DE_ASSERT(_plane != 0);
 
     // The move is cancelled if the consolePlayer becomes obstructed.
     bool const freeMove = ClPlayer_IsFreeToMove(consolePlayer);

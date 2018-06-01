@@ -44,9 +44,9 @@ using namespace de::ui;
 #  define USE_COLOR_DEPTH_CHOICE
 #endif
 
-DENG2_PIMPL(VideoSettingsDialog)
-#if !defined (DENG_MOBILE)
-, DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
+DE_PIMPL(VideoSettingsDialog)
+#if !defined (DE_MOBILE)
+, DE_OBSERVES(PersistentGLWindow, AttributeChange)
 #endif
 {
     ClientWindow &win;
@@ -95,7 +95,7 @@ DENG2_PIMPL(VideoSettingsDialog)
 #ifdef USE_COLOR_DEPTH_CHOICE
         area.add(depths       = new ChoiceWidget("depths"));
 #endif
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
         win.audienceForAttributeChange() += this;
 #endif
 
@@ -152,7 +152,7 @@ DENG2_PIMPL(VideoSettingsDialog)
      */
     void fetch()
     {
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
         fullscreen->setActive(win.isFullScreen());
         maximized->setActive(win.isMaximized());
         centered->setActive(win.isCentered());
@@ -194,7 +194,7 @@ DENG2_PIMPL(VideoSettingsDialog)
         depths->setSelected(depths->items().findData(win.colorDepthBits()));
 #endif
 
-#endif // !DENG_MOBILE
+#endif // !DE_MOBILE
 
         // FPS limit.
         if (fpsMax)
@@ -212,7 +212,7 @@ DENG2_PIMPL(VideoSettingsDialog)
         }
     }
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
     void windowAttributesChanged(PersistentGLWindow &)
     {
         fetch();
@@ -430,7 +430,7 @@ void VideoSettingsDialog::resetToDefaults()
     d->fetch();
 }
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
 
 void VideoSettingsDialog::changeMode(uint selected)
 {
@@ -453,7 +453,7 @@ void VideoSettingsDialog::changeColorDepth(uint selected)
     Con_Executef(CMDS_DDAY, true, "setcolordepth %i",
                  d->depths->items().at(selected).data().toInt());
 #else
-    DENG2_UNUSED(selected);
+    DE_UNUSED(selected);
 #endif
 }
 
@@ -467,7 +467,7 @@ void VideoSettingsDialog::changeRefreshRate(uint selected)
     };
     d->win.changeAttributes(attribs);
 #else
-    DENG2_UNUSED(selected);
+    DE_UNUSED(selected);
 #endif
 }
 

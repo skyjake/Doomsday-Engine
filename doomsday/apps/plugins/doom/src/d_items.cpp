@@ -199,7 +199,7 @@ void P_InitWeaponInfo()
         auto const id = String::number(i);
 
         weaponmodeinfo_t *wminfo = WEAPON_INFO(i, PCLASS_PLAYER, 0);
-        DENG2_ASSERT(wminfo);
+        DE_ASSERT(wminfo);
 
         /// @todo Only allows for one type of ammo per weapon.
         if(ded_value_t const *ammo = Defs().getValueById("Weapon Info|" + id + "|Type"))
@@ -256,7 +256,7 @@ void P_InitWeaponInfo()
 
 void P_InitPlayerValues(player_t *plr)
 {
-    DENG2_ASSERT(plr);
+    DE_ASSERT(plr);
 
     if(ded_value_t const *health = Defs().getValueById("Player|Health"))
     {

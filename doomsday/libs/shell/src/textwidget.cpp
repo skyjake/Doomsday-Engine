@@ -23,7 +23,7 @@
 
 namespace de { namespace shell {
 
-DENG2_PIMPL_NOREF(TextWidget)
+DE_PIMPL_NOREF(TextWidget)
 {
     TextCanvas *    canvas;
     RuleRectangle * rule;
@@ -80,7 +80,7 @@ TextWidget::TextWidget(String const &name) : Widget(name), d(new Impl)
 TextRootWidget &TextWidget::root() const
 {
     TextRootWidget *r = dynamic_cast<TextRootWidget *>(&Widget::root());
-    DENG2_ASSERT(r != 0);
+    DE_ASSERT(r != 0);
     return *r;
 }
 
@@ -120,13 +120,13 @@ void TextWidget::drawAndShow()
 
 RuleRectangle &TextWidget::rule()
 {
-    DENG2_ASSERT(d->rule != 0);
+    DE_ASSERT(d->rule != 0);
     return *d->rule;
 }
 
 RuleRectangle const &TextWidget::rule() const
 {
-    DENG2_ASSERT(d->rule != 0);
+    DE_ASSERT(d->rule != 0);
     return *d->rule;
 }
 

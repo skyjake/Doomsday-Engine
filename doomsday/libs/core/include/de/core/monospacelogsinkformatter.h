@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_MONOSPACELOGSINKFORMATTER_H
-#define LIBDENG2_MONOSPACELOGSINKFORMATTER_H
+#ifndef LIBCORE_MONOSPACELOGSINKFORMATTER_H
+#define LIBCORE_MONOSPACELOGSINKFORMATTER_H
 
 #include "../LogSink"
 
@@ -28,7 +28,7 @@ namespace de {
  * fonts. This formatter is for plain text output.
  * @ingroup core
  */
-class DENG2_PUBLIC MonospaceLogSinkFormatter : public LogSink::IFormatter
+class DE_PUBLIC MonospaceLogSinkFormatter : public LogSink::IFormatter
 {
 public:
     MonospaceLogSinkFormatter();
@@ -54,4 +54,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_MONOSPACELOGSINKFORMATTER_H
+#endif // LIBCORE_MONOSPACELOGSINKFORMATTER_H

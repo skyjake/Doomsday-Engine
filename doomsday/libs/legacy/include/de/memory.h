@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_SYSTEM_MEMORY_H
-#define LIBDENG_SYSTEM_MEMORY_H
+#ifndef DE_SYSTEM_MEMORY_H
+#define DE_SYSTEM_MEMORY_H
 
 #include <de/liblegacy.h>
 #include <string.h> // memcpy
@@ -33,9 +33,9 @@ extern "C" {
 /// @addtogroup legacy
 /// @{
 
-DENG_PUBLIC void *M_Malloc(size_t size);
+DE_PUBLIC void *M_Malloc(size_t size);
 
-DENG_PUBLIC void *M_Calloc(size_t size);
+DE_PUBLIC void *M_Calloc(size_t size);
 
 /**
  * Changes the size of a previously allocated memory block, allocates new
@@ -55,13 +55,13 @@ DENG_PUBLIC void *M_Calloc(size_t size);
  *
  * @return Allocated memory, or NULL.
  */
-DENG_PUBLIC void *M_Realloc(void *ptr, size_t size);
+DE_PUBLIC void *M_Realloc(void *ptr, size_t size);
 
-DENG_PUBLIC void *M_MemDup(void const *ptr, size_t size);
+DE_PUBLIC void *M_MemDup(void const *ptr, size_t size);
 
-DENG_PUBLIC void M_Free(void *ptr);
+DE_PUBLIC void M_Free(void *ptr);
 
-DENG_PUBLIC char *M_StrDup(char const *str);
+DE_PUBLIC char *M_StrDup(char const *str);
 
 /// @}
 
@@ -69,4 +69,4 @@ DENG_PUBLIC char *M_StrDup(char const *str);
 } // extern "C"
 #endif
 
-#endif // LIBDENG_SYSTEM_MEMORY_H
+#endif // DE_SYSTEM_MEMORY_H

@@ -35,7 +35,7 @@ static fluid_audio_driver_t* fsDriver;
 
 fluid_synth_t* DMFluid_Synth()
 {
-    DENG_ASSERT(fsSynth != 0);
+    DE_ASSERT(fsSynth != 0);
     return fsSynth;
 }
 
@@ -46,7 +46,7 @@ fluid_audio_driver_t* DMFluid_Driver()
 
 audiointerface_sfx_generic_t* DMFluid_Sfx()
 {
-    DENG_ASSERT(fsSfx != 0);
+    DE_ASSERT(fsSfx != 0);
     return &fsSfx->gen;
 }
 
@@ -166,13 +166,13 @@ int DS_Set(int prop, const void* ptr)
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DENG_EXTERN_C const char* deng_LibraryType(void)
+DE_EXTERN_C const char* deng_LibraryType(void)
 {
     return "deng-plugin/audio";
 }
 
-DENG_DECLARE_API(Con);
+DE_DECLARE_API(Con);
 
-DENG_API_EXCHANGE(
-    DENG_GET_API(DE_API_CONSOLE, Con);
+DE_API_EXCHANGE(
+    DE_GET_API(DE_API_CONSOLE, Con);
 )

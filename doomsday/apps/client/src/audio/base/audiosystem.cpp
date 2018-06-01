@@ -18,7 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_NO_API_MACROS_SOUND
+#define DE_NO_API_MACROS_SOUND
 
 #include "audio/audiosystem.h"
 
@@ -82,7 +82,7 @@ dint sfxRate = 11025;
 #ifdef __CLIENT__
 #  if defined(MACOSX) && defined(MACOS_HAVE_QTKIT)
 /// Built-in QuickTime audio interface implemented by MusicPlayer.m
-DENG_EXTERN_C audiointerface_music_t audiodQuickTimeMusic;
+DE_EXTERN_C audiointerface_music_t audiodQuickTimeMusic;
 #  endif
 #endif
 
@@ -186,10 +186,10 @@ static bool recognizeMus(de::File1 &file)
 }
 #endif
 
-DENG2_PIMPL(AudioSystem)
-, DENG2_OBSERVES(DoomsdayApp, GameUnload)
+DE_PIMPL(AudioSystem)
+, DE_OBSERVES(DoomsdayApp, GameUnload)
 #ifdef __CLIENT__
-, DENG2_OBSERVES(audio::SfxSampleCache, SampleRemove)
+, DE_OBSERVES(audio::SfxSampleCache, SampleRemove)
 #endif
 {
     Record module;
@@ -199,7 +199,7 @@ DENG2_PIMPL(AudioSystem)
 
     AudioDriver &driverById(audiodriverid_t id)
     {
-        DENG2_ASSERT(VALID_AUDIODRIVER_IDENTIFIER(id));
+        DE_ASSERT(VALID_AUDIODRIVER_IDENTIFIER(id));
         return drivers[id];
     }
 
@@ -231,7 +231,7 @@ DENG2_PIMPL(AudioSystem)
             return AUDIOD_WINMM;
 #endif
 
-#ifndef DENG_DISABLE_SDLMIXER
+#ifndef DE_DISABLE_SDLMIXER
         if (cmdLine.has("-sdlmixer"))
             return AUDIOD_SDL_MIXER;
 
@@ -268,7 +268,7 @@ DENG2_PIMPL(AudioSystem)
             case AUDIOD_FLUIDSYNTH:
                 driver.load(idStr);
                 break;
-#ifndef DENG_DISABLE_SDLMIXER
+#ifndef DE_DISABLE_SDLMIXER
             case AUDIOD_SDL_MIXER:
                 driver.load(idStr);
                 break;
@@ -323,7 +323,7 @@ DENG2_PIMPL(AudioSystem)
         audiodriverid_t defaultDriverId = chooseAudioDriver();
         initDriver(defaultDriverId);
 
-/*#ifndef DENG_DISABLE_SDLMIXER
+/*#ifndef DE_DISABLE_SDLMIXER
         // Fallback option for the default driver.
         if (!ok)
         {
@@ -709,7 +709,7 @@ DENG2_PIMPL(AudioSystem)
 
     dint playMusicFile(String const &virtualOrNativePath, bool looped = false)
     {
-        DENG2_ASSERT(musAvail);
+        DE_ASSERT(musAvail);
 
         if (virtualOrNativePath.isEmpty())
             return 0;
@@ -766,7 +766,7 @@ DENG2_PIMPL(AudioSystem)
      */
     dint playMusicLump(lumpnum_t lumpNum, bool looped = false, bool canPlayMUS = true)
     {
-        DENG2_ASSERT(musAvail);
+        DE_ASSERT(musAvail);
 
         if (!App_FileSystem().nameIndex().hasLump(lumpNum))
             return 0;
@@ -1462,7 +1462,7 @@ AudioSystem::AudioSystem() : d(new Impl(this))
 
 AudioSystem &AudioSystem::get()
 {
-    DENG2_ASSERT(theAudioSystem);
+    DE_ASSERT(theAudioSystem);
     return *theAudioSystem;
 }
 
@@ -1847,7 +1847,7 @@ dint AudioSystem::playMusic(Record const &definition, bool looped)
             break;
         }
 
-        default: DENG2_ASSERT_FAIL("Mus_Start: Invalid value for order[i]"); break;
+        default: DE_ASSERT_FAIL("Mus_Start: Invalid value for order[i]"); break;
         }
     }
 
@@ -2100,7 +2100,7 @@ void AudioSystem::stopSound(dint soundId, mobj_t const *emitter, dint flags)
 dint AudioSystem::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mobj_t const *emitter,
     coord_t *fixedOrigin, dint flags)
 {
-    DENG2_ASSERT(sample);
+    DE_ASSERT(sample);
     if (!d->sfxAvail) return false;
 
     bool const play3D = sfx3D && (emitter || fixedOrigin);
@@ -2156,7 +2156,7 @@ dint AudioSystem::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mob
                     sfxbuffer_t &sbuf = ch.buffer();
                     if ((sbuf.flags & SFXBF_PLAYING))
                     {
-                        DENG2_ASSERT(sbuf.sample != nullptr);
+                        DE_ASSERT(sbuf.sample != nullptr);
 
                         if (sbuf.sample->id == sample->id &&
                            (myPrio >= chPriority && (!selCh || chPriority <= lowPrio)))
@@ -2274,7 +2274,7 @@ dint AudioSystem::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mob
         return false;
     }
 
-    DENG2_ASSERT(selCh->hasBuffer());
+    DE_ASSERT(selCh->hasBuffer());
     // The sample buffer may need to be reformatted.
 
     if (selCh->buffer().rate  != sample->rate ||
@@ -2432,7 +2432,7 @@ bool AudioSystem::hasSfxChannels()
 
 audio::SfxChannels &AudioSystem::sfxChannels() const
 {
-    DENG2_ASSERT(d->sfxChannels.get() != nullptr);
+    DE_ASSERT(d->sfxChannels.get() != nullptr);
     return *d->sfxChannels;
 }
 
@@ -2506,7 +2506,7 @@ void AudioSystem::worldMapChanged()
  */
 D_CMD(PlaySound)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if (argc < 2)
     {
@@ -2566,7 +2566,7 @@ D_CMD(PlaySound)
  */
 D_CMD(PlayMusic)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     LOG_AS("playmusic (Cmd)");
 
@@ -2621,7 +2621,7 @@ D_CMD(PlayMusic)
 
 D_CMD(StopMusic)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     App_AudioSystem().stopMusic();
     return true;
@@ -2629,7 +2629,7 @@ D_CMD(StopMusic)
 
 D_CMD(PauseMusic)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     App_AudioSystem().pauseMusic(!App_AudioSystem().musicIsPaused());
     return true;
@@ -2647,7 +2647,7 @@ static void musicMidiFontChanged()
 
 D_CMD(ReverbParameters)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     dfloat args[NUM_REVERB_DATA];
 
@@ -2728,7 +2728,7 @@ void S_PauseMusic(dd_bool paused)
 #ifdef __CLIENT__
     App_AudioSystem().pauseMusic(paused);
 #else
-    DENG2_UNUSED(paused);
+    DE_UNUSED(paused);
 #endif
 }
 
@@ -2737,7 +2737,7 @@ dint Mus_Start(Record const &definition, bool looped)
 #ifdef __CLIENT__
     return App_AudioSystem().playMusic(definition, looped);
 #else
-    DENG2_UNUSED2(definition, looped);
+    DE_UNUSED(definition, looped);
     return 0;
 #endif
 }
@@ -2747,7 +2747,7 @@ dint Mus_StartLump(lumpnum_t lumpNum, bool looped)
 #ifdef __CLIENT__
     return App_AudioSystem().playMusicLump(lumpNum, looped);
 #else
-    DENG2_UNUSED2(lumpNum, looped);
+    DE_UNUSED(lumpNum, looped);
     return 0;
 #endif
 }
@@ -2757,7 +2757,7 @@ dint Mus_StartFile(char const *filePath, bool looped)
 #ifdef __CLIENT__
     return App_AudioSystem().playMusicFile(filePath, looped);
 #else
-    DENG2_UNUSED2(filePath, looped);
+    DE_UNUSED(filePath, looped);
     return 0;
 #endif
 }
@@ -2767,7 +2767,7 @@ dint Mus_StartCDTrack(dint cdTrack, bool looped)
 #ifdef __CLIENT__
     return App_AudioSystem().playMusicCDTrack(cdTrack, looped);
 #else
-    DENG2_UNUSED2(cdTrack, looped);
+    DE_UNUSED(cdTrack, looped);
     return 0;
 #endif
 }
@@ -2785,7 +2785,7 @@ dint S_StartMusicNum(dint musicId, dd_bool looped)
     }
     return false;
 #else
-    DENG2_UNUSED2(musicId, looped);
+    DE_UNUSED(musicId, looped);
     return false;
 #endif
 }
@@ -2897,7 +2897,7 @@ dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t const *origin, coord_
     return App_AudioSystem().playSound(sample, volume, freq, origin, point, flags);
 
 #else
-    DENG2_UNUSED4(soundIdAndFlags, origin, point, volume);
+    DE_UNUSED(soundIdAndFlags, origin, point, volume);
     return false;
 #endif
 }
@@ -3004,7 +3004,7 @@ dint S_StopSoundWithLowerPriority(dint soundId, mobj_t *emitter, dint defPriorit
 
 #endif  // __CLIENT__
 
-DENG_DECLARE_API(S) =
+DE_DECLARE_API(S) =
 {
     { DE_API_SOUND },
     S_LocalSoundAtVolumeFrom,

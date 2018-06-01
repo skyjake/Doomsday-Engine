@@ -20,7 +20,7 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(PanelButtonWidget)
+DE_GUI_PIMPL(PanelButtonWidget)
 {
     PanelWidget *drawer;
 

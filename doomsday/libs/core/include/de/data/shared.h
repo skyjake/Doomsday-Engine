@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_SHARED_H
-#define LIBDENG2_SHARED_H
+#ifndef LIBCORE_SHARED_H
+#define LIBCORE_SHARED_H
 
 #include "../Counted"
 
@@ -28,7 +28,7 @@ namespace de {
  * calls hold(), and it gets automatically destroyed when all users release
  * their references.
  *
- * You must use the DENG2_SHARED_INSTANCE() macro to define where the static
+ * You must use the DE_SHARED_INSTANCE() macro to define where the static
  * instance pointer is located.
  *
  * @par Thread-safety
@@ -65,7 +65,7 @@ public:
  * Define the static instance pointer of a shared type.
  * @note This macro must be invoked from the global namespace.
  */
-#define DENG2_SHARED_INSTANCE(TypeName) \
+#define DE_SHARED_INSTANCE(TypeName) \
     namespace de { \
         template <> \
         Shared<TypeName> *Shared<TypeName>::instance = 0; \
@@ -73,4 +73,4 @@ public:
 
 } // namespace de
 
-#endif // LIBDENG2_SHARED_H
+#endif // LIBCORE_SHARED_H

@@ -1,5 +1,5 @@
-#ifndef LIBDENG_DIRECTINPUT_H
-#define LIBDENG_DIRECTINPUT_H
+#ifndef DE_DIRECTINPUT_H
+#define DE_DIRECTINPUT_H
 
 #ifdef __CLIENT__
 
@@ -128,4 +128,4 @@ private:
 
 #endif // __CLIENT__
 
-#endif // LIBDENG_DIRECTINPUT_H
+#endif // DE_DIRECTINPUT_H

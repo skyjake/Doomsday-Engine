@@ -23,9 +23,9 @@
 
 namespace de {
 
-DENG2_PIMPL(VariableSliderWidget)
-, DENG2_OBSERVES(Variable, Deletion)
-, DENG2_OBSERVES(Variable, Change  )
+DE_PIMPL(VariableSliderWidget)
+, DE_OBSERVES(Variable, Deletion)
+, DE_OBSERVES(Variable, Change  )
 {
     ValueType valueType = VariableSliderWidget::Number;
     Variable *var;

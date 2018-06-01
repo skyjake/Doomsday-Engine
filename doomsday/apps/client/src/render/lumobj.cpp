@@ -39,7 +39,7 @@ dfloat Lumobj::Source::occlusion(Vec3d const & /*eye*/) const
     return 1;  // Fully visible.
 }
 
-DENG2_PIMPL_NOREF(Lumobj)
+DE_PIMPL_NOREF(Lumobj)
 {
     Source const *source = nullptr;      ///< Source of the lumobj (if any, not owned).
     mobj_t const *sourceMobj = nullptr;  ///< Mobj associated with the lumobj (if any).
@@ -168,7 +168,7 @@ ClientTexture *Lumobj::lightmap(LightmapSemantic semantic) const
     case Down: return d->downTex;
     case Up:   return d->upTex;
     };
-    DENG2_ASSERT(false);
+    DE_ASSERT(false);
     return d->sideTex;
 }
 

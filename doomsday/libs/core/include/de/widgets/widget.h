@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_WIDGET_H
-#define LIBDENG2_WIDGET_H
+#ifndef LIBCORE_WIDGET_H
+#define LIBCORE_WIDGET_H
 
 /** @defgroup widgets  Widget Framework
  * @ingroup core */
@@ -44,11 +44,11 @@ typedef QList<Widget *> WidgetList;
  * Base class for widgets.
  * @ingroup widgets
  */
-class DENG2_PUBLIC Widget : public IObject
+class DE_PUBLIC Widget : public IObject
 {
 public:
     /// Widget that was expected to exist was not found. @ingroup errors
-    DENG2_ERROR(NotFoundError);
+    DE_ERROR(NotFoundError);
 
     enum Behavior
     {
@@ -94,28 +94,28 @@ public:
     /**
      * Notified when the widget is about to be deleted.
      */
-    DENG2_DEFINE_AUDIENCE2(Deletion, void widgetBeingDeleted(Widget &widget))
+    DE_DEFINE_AUDIENCE2(Deletion, void widgetBeingDeleted(Widget &widget))
 
     /**
      * Notified when the widget's parent changes.
      */
-    DENG2_DEFINE_AUDIENCE2(ParentChange, void widgetParentChanged(Widget &child, Widget *oldParent, Widget *newParent))
+    DE_DEFINE_AUDIENCE2(ParentChange, void widgetParentChanged(Widget &child, Widget *oldParent, Widget *newParent))
 
     /**
      * Notified when a child is added to the widget.
      */
-    DENG2_DEFINE_AUDIENCE2(ChildAddition, void widgetChildAdded(Widget &child))
+    DE_DEFINE_AUDIENCE2(ChildAddition, void widgetChildAdded(Widget &child))
 
     /**
      * Notified after a child has been removed from the widget.
      */
-    DENG2_DEFINE_AUDIENCE2(ChildRemoval, void widgetChildRemoved(Widget &child))
+    DE_DEFINE_AUDIENCE2(ChildRemoval, void widgetChildRemoved(Widget &child))
 
 public:
     Widget(String const &name = String());
     virtual ~Widget();
 
-    DENG2_CAST_METHODS()
+    DE_CAST_METHODS()
 
     /**
      * Returns the automatically generated, unique identifier of the widget.
@@ -348,7 +348,7 @@ public:
     static void setFocusCycle(WidgetList const &order);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Widget::Behaviors)
@@ -357,7 +357,7 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(Widget::Behaviors)
  * Auto-nulled pointer to a Widget. Does not own the target widget.
  */
 template <typename WidgetType>
-class SafeWidgetPtr : DENG2_OBSERVES(Widget, Deletion)
+class SafeWidgetPtr : DE_OBSERVES(Widget, Deletion)
 {
 public:
     SafeWidgetPtr(WidgetType *ptr = nullptr) {
@@ -398,4 +398,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_WIDGET_H
+#endif // LIBCORE_WIDGET_H

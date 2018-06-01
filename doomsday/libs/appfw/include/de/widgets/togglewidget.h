@@ -48,7 +48,7 @@ public:
     /**
      * Audience to be notified whenever the toggle is toggled.
      */
-    DENG2_DEFINE_AUDIENCE2(Toggle, void toggleStateChanged(ToggleWidget &toggle))
+    DE_DEFINE_AUDIENCE2(Toggle, void toggleStateChanged(ToggleWidget &toggle))
 
 public:
     ToggleWidget(Flags const &flags = DefaultFlags, String const &name = String());
@@ -76,7 +76,7 @@ signals:
     void stateChangedByUser(ToggleWidget::ToggleState active);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(ToggleWidget::Flags)

@@ -60,7 +60,7 @@ static String extractScheme(String &stringWithScheme)
     return scheme;
 }
 
-DENG2_PIMPL_NOREF(Uri)
+DE_PIMPL_NOREF(Uri)
 {
     Path path; ///< Path of the Uri.
 
@@ -377,7 +377,7 @@ String const &Uri::resolvedRef() const
 {
     void *currentGame = (void *) (!App::appExists() || DoomsdayApp::game().isNull()? 0 : &DoomsdayApp::game());
 
-#ifndef LIBDENG_DISABLE_URI_RESOLVE_CACHING
+#ifndef DE_DISABLE_URI_RESOLVE_CACHING
     if (d->resolvedForGame && d->resolvedForGame == currentGame)
     {
         // We can just return the previously prepared resolved URI.
@@ -390,7 +390,7 @@ String const &Uri::resolvedRef() const
     // Keep a copy of this, we'll likely need it many, many times.
     d->resolvedPath = d->resolve();
 
-    DENG2_ASSERT(d->resolvedPath.separator() == QChar('/'));
+    DE_ASSERT(d->resolvedPath.separator() == QChar('/'));
 
     d->resolvedForGame = currentGame;
 
@@ -514,24 +514,24 @@ void Uri::writeUri(writer_s *writer, int omitComponents) const
 }
 
 #ifdef _DEBUG
-#  if !defined (DENG_MOBILE)
+#  if !defined (DE_MOBILE)
 
-LIBDENG_DEFINE_UNITTEST(Uri)
+DE_DEFINE_UNITTEST(Uri)
 {
     try
     {
         // Test emptiness.
         {
             Uri u;
-            DENG_ASSERT(u.isEmpty());
-            DENG_ASSERT(u.path().segmentCount() == 1);
+            DE_ASSERT(u.isEmpty());
+            DE_ASSERT(u.path().segmentCount() == 1);
         }
 
         // Test a zero-length path.
         {
             Uri u("", RC_NULL);
-            DENG_ASSERT(u.isEmpty());
-            DENG_ASSERT(u.path().segmentCount() == 1);
+            DE_ASSERT(u.isEmpty());
+            DE_ASSERT(u.path().segmentCount() == 1);
         }
 
         // Equality and copying.
@@ -539,16 +539,16 @@ LIBDENG_DEFINE_UNITTEST(Uri)
             Uri a("some/thing", RC_NULL);
             Uri b("/other/thing", RC_NULL);
 
-            DENG_ASSERT(a != b);
+            DE_ASSERT(a != b);
 
             Uri c = a;
-            DENG_ASSERT(c == a);
-            DENG_ASSERT(c.path().reverseSegment(1).toString() == "some");
+            DE_ASSERT(c == a);
+            DE_ASSERT(c.path().reverseSegment(1).toString() == "some");
 
             b = a;
-            DENG_ASSERT(b == a);
+            DE_ASSERT(b == a);
             //qDebug() << b.reverseSegment(1);
-            DENG_ASSERT(b.path().reverseSegment(1).toString() == "some");
+            DE_ASSERT(b.path().reverseSegment(1).toString() == "some");
         }
 
         // Swapping.
@@ -556,54 +556,54 @@ LIBDENG_DEFINE_UNITTEST(Uri)
             Uri a("a/b/c", RC_NULL);
             Uri b("d/e", RC_NULL);
 
-            DENG_ASSERT(a.path().segmentCount() == 3);
-            DENG_ASSERT(a.path().reverseSegment(1).toString() == "b");
+            DE_ASSERT(a.path().segmentCount() == 3);
+            DE_ASSERT(a.path().reverseSegment(1).toString() == "b");
 
             std::swap(a, b);
 
-            DENG_ASSERT(a.path().segmentCount() == 2);
-            DENG_ASSERT(a.path().reverseSegment(1).toString() == "d");
-            DENG_ASSERT(b.path().segmentCount() == 3);
-            DENG_ASSERT(b.path().reverseSegment(1).toString() == "b");
+            DE_ASSERT(a.path().segmentCount() == 2);
+            DE_ASSERT(a.path().reverseSegment(1).toString() == "d");
+            DE_ASSERT(b.path().segmentCount() == 3);
+            DE_ASSERT(b.path().reverseSegment(1).toString() == "b");
         }
 
         // Test a Windows style path with a drive plus file path.
         {
             Uri u("c:/something.ext", RC_NULL);
-            DENG_ASSERT(u.path().segmentCount() == 2);
+            DE_ASSERT(u.path().segmentCount() == 2);
 
-            DENG_ASSERT(u.path().reverseSegment(0).length() == 13);
-            DENG_ASSERT(u.path().reverseSegment(0).toString() == "something.ext");
+            DE_ASSERT(u.path().reverseSegment(0).length() == 13);
+            DE_ASSERT(u.path().reverseSegment(0).toString() == "something.ext");
 
-            DENG_ASSERT(u.path().reverseSegment(1).length() == 2);
-            DENG_ASSERT(u.path().reverseSegment(1).toString() == "c:");
+            DE_ASSERT(u.path().reverseSegment(1).length() == 2);
+            DE_ASSERT(u.path().reverseSegment(1).toString() == "c:");
         }
 
         // Test a Unix style path with a zero-length root node name.
         {
             Uri u("/something.ext", RC_NULL);
-            DENG_ASSERT(u.path().segmentCount() == 2);
+            DE_ASSERT(u.path().segmentCount() == 2);
 
-            DENG_ASSERT(u.path().reverseSegment(0).length() == 13);
-            DENG_ASSERT(u.path().reverseSegment(0).toString() == "something.ext");
+            DE_ASSERT(u.path().reverseSegment(0).length() == 13);
+            DE_ASSERT(u.path().reverseSegment(0).toString() == "something.ext");
 
-            DENG_ASSERT(u.path().reverseSegment(1).length() == 0);
-            DENG_ASSERT(u.path().reverseSegment(1).toString() == "");
+            DE_ASSERT(u.path().reverseSegment(1).length() == 0);
+            DE_ASSERT(u.path().reverseSegment(1).toString() == "");
         }
 
         // Test a relative directory.
         {
             Uri u("some/dir/structure/", RC_NULL);
-            DENG_ASSERT(u.path().segmentCount() == 3);
+            DE_ASSERT(u.path().segmentCount() == 3);
 
-            DENG_ASSERT(u.path().reverseSegment(0).length() == 9);
-            DENG_ASSERT(u.path().reverseSegment(0).toString() == "structure");
+            DE_ASSERT(u.path().reverseSegment(0).length() == 9);
+            DE_ASSERT(u.path().reverseSegment(0).toString() == "structure");
 
-            DENG_ASSERT(u.path().reverseSegment(1).length() == 3);
-            DENG_ASSERT(u.path().reverseSegment(1).toString() == "dir");
+            DE_ASSERT(u.path().reverseSegment(1).length() == 3);
+            DE_ASSERT(u.path().reverseSegment(1).toString() == "dir");
 
-            DENG_ASSERT(u.path().reverseSegment(2).length() == 4);
-            DENG_ASSERT(u.path().reverseSegment(2).toString() == "some");
+            DE_ASSERT(u.path().reverseSegment(2).length() == 4);
+            DE_ASSERT(u.path().reverseSegment(2).toString() == "some");
         }
     }
     catch (Error const &er)
@@ -614,9 +614,9 @@ LIBDENG_DEFINE_UNITTEST(Uri)
     return true;
 }
 
-LIBDENG_RUN_UNITTEST(Uri)
+DE_RUN_UNITTEST(Uri)
 
-#  endif // DENG_MOBILE
+#  endif // DE_MOBILE
 #endif // _DEBUG
 
 } // namespace de

@@ -17,7 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#define DENG_NO_API_MACROS_MAP_EDIT
+#define DE_NO_API_MACROS_MAP_EDIT
 
 #include "de_platform.h"
 #include "api_mapedit.h"
@@ -339,7 +339,7 @@ int MPE_SectorCreate(float lightlevel, float red, float green, float blue,
 int MPE_PolyobjCreate(int const *lines, int lineCount, int tag, int sequenceType,
     coord_t originX, coord_t originY, int archiveIndex)
 {
-    DENG_UNUSED(archiveIndex); /// @todo Use this!
+    DE_UNUSED(archiveIndex); /// @todo Use this!
 
     ERROR_IF_NOT_INITIALIZED();
 
@@ -412,7 +412,7 @@ dd_bool MPE_GameObjProperty(char const *entityName, int elementIndex,
     return false;
 }
 
-DENG_DECLARE_API(MPE) =
+DE_DECLARE_API(MPE) =
 {
     { DE_API_MAP_EDIT },
 

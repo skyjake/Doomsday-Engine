@@ -34,7 +34,7 @@ public:
     void rootUpdate();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // APPWINDOWSYSTEM_H

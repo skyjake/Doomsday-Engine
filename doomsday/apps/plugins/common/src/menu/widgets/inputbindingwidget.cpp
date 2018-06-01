@@ -520,7 +520,7 @@ int InputBindingWidget::handleEvent_Privileged(event_t const &event)
 
 char const *InputBindingWidget::controlName() const
 {
-    DENG2_ASSERT(binds);
+    DE_ASSERT(binds);
     // Map to a text definition?
     if (PTR2INT(binds->text) > 0 && PTR2INT(binds->text) < NUMTEXT)
     {
@@ -531,7 +531,7 @@ char const *InputBindingWidget::controlName() const
 
 String InputBindingWidget::bindContext() const
 {
-    DENG2_ASSERT(binds);
+    DE_ASSERT(binds);
     return (binds->bindContext ? binds->bindContext : "game");
 }
 

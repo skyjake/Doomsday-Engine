@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_FILESYS_IINTERPRETER_H
-#define LIBDENG2_FILESYS_IINTERPRETER_H
+#ifndef LIBCORE_FILESYS_IINTERPRETER_H
+#define LIBCORE_FILESYS_IINTERPRETER_H
 
 namespace de {
 
@@ -55,5 +55,5 @@ public:
 } // namespace filesys
 } // namespace de
 
-#endif // LIBDENG2_FILESYS_IINTERPRETER_H
+#endif // LIBCORE_FILESYS_IINTERPRETER_H
 

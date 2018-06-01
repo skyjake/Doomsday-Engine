@@ -292,7 +292,7 @@ void Cl_Sound()
     else if (flags & SNDF_PLAYER)
     {
         dint const player = (flags & 0xf0) >> 4;
-        DENG2_ASSERT(player >= 0 && player < DDMAXPLAYERS);
+        DE_ASSERT(player >= 0 && player < DDMAXPLAYERS);
         S_LocalSoundAtVolume(sound, DD_Player(player)->publicData().mo, volume / 127.0f);
     }
     else

@@ -38,8 +38,8 @@ int DisplayMode_Native_Count(void)
 
 void DisplayMode_Native_GetMode(int index, DisplayMode *mode)
 {
-    DENG2_UNUSED(index);
-    DENG2_UNUSED(mode);
+    DE_UNUSED(index);
+    DE_UNUSED(mode);
 }
 
 void DisplayMode_Native_GetCurrentMode(DisplayMode *mode)
@@ -54,24 +54,24 @@ void DisplayMode_Native_GetCurrentMode(DisplayMode *mode)
 
 int DisplayMode_Native_Change(DisplayMode const *mode, int shouldCapture)
 {
-    DENG2_UNUSED(mode);
-    DENG2_UNUSED(shouldCapture);
+    DE_UNUSED(mode);
+    DE_UNUSED(shouldCapture);
     return true;
 }
 
 void DisplayMode_Native_GetColorTransfer(DisplayColorTransfer *colors)
 {
-    DENG2_UNUSED(colors);
+    DE_UNUSED(colors);
 }
 
 void DisplayMode_Native_SetColorTransfer(DisplayColorTransfer const *colors)
 {
-    DENG2_UNUSED(colors);
+    DE_UNUSED(colors);
 }
 
 #ifdef MACOSX
 void DisplayMode_Native_Raise(void* handle)
 {
-    DENG2_UNUSED(handle);
+    DE_UNUSED(handle);
 }
 #endif

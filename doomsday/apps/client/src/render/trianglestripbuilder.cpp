@@ -23,7 +23,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(TriangleStripBuilder)
+DE_PIMPL(TriangleStripBuilder)
 {
     ClockDirection direction;
     bool buildTexCoords;

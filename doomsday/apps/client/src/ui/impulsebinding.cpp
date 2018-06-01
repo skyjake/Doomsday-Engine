@@ -87,7 +87,7 @@ String ImpulseBinding::composeDescriptor()
 
     // Append any state conditions.
     ArrayValue const &conds = def().geta("condition");
-    DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
+    DE_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
     {
         str += " + " + B_ConditionToString(*(*i)->as<RecordValue>().record());
     }
@@ -97,7 +97,7 @@ String ImpulseBinding::composeDescriptor()
 
 static bool doConfigure(ImpulseBinding &bind, char const *ctrlDesc, int impulseId, int localPlayer)
 {
-    DENG2_ASSERT(ctrlDesc);
+    DE_ASSERT(ctrlDesc);
 
     bind.resetToDefaults();
     bind.def().set("impulseId", impulseId);
@@ -189,8 +189,8 @@ static bool doConfigure(ImpulseBinding &bind, char const *ctrlDesc, int impulseI
 
 void ImpulseBinding::configure(char const *ctrlDesc, int impulseId, int localPlayer, bool assignNewId)
 {
-    DENG2_ASSERT(ctrlDesc);
-    DENG2_ASSERT(localPlayer >= 0 && localPlayer < DDMAXPLAYERS);
+    DE_ASSERT(ctrlDesc);
+    DE_ASSERT(localPlayer >= 0 && localPlayer < DDMAXPLAYERS);
     LOG_AS("ImpulseBinding");
 
     // The first part specifies the device-control condition.

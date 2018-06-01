@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_RANGE_H
-#define LIBDENG2_RANGE_H
+#ifndef LIBCORE_RANGE_H
+#define LIBCORE_RANGE_H
 
 #include "../libcore.h"
 #include "../math.h"
@@ -163,4 +163,4 @@ typedef Range<ddouble> Ranged;
 
 } // namespace de
 
-#endif // LIBDENG2_RANGE_H
+#endif // LIBCORE_RANGE_H

@@ -23,7 +23,7 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(GlobalShortcuts)
+DE_PIMPL_NOREF(GlobalShortcuts)
 {};
 
 GlobalShortcuts::GlobalShortcuts()

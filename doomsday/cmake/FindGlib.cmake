@@ -21,23 +21,23 @@ if (APPLE AND GLIB_STATIC_DIR AND GETTEXT_STATIC_DIR)
 elseif (MINGW_GLIB_DIR)
     add_library (glib INTERFACE)
     target_link_libraries (glib INTERFACE
-        ${MINGW_GLIB_DIR}/${DENG_ARCH}/lib/libglib-2.0-0.lib
-        ${MINGW_GLIB_DIR}/${DENG_ARCH}/lib/libgthread-2.0-0.lib
+        ${MINGW_GLIB_DIR}/${DE_ARCH}/lib/libglib-2.0-0.lib
+        ${MINGW_GLIB_DIR}/${DE_ARCH}/lib/libgthread-2.0-0.lib
         ws2_32.lib
     )
     target_include_directories (glib INTERFACE
-        ${MINGW_GLIB_DIR}/${DENG_ARCH}/include/glib-2.0
-        ${MINGW_GLIB_DIR}/${DENG_ARCH}/lib/glib-2.0/include
+        ${MINGW_GLIB_DIR}/${DE_ARCH}/include/glib-2.0
+        ${MINGW_GLIB_DIR}/${DE_ARCH}/lib/glib-2.0/include
     )
     if (DENG_ARCH STREQUAL x86)
-        deng_install_library (${MINGW_GLIB_DIR}/${DENG_ARCH}/bin/libgcc_s_dw2-1.dll)    
+        deng_install_library (${MINGW_GLIB_DIR}/${DE_ARCH}/bin/libgcc_s_dw2-1.dll)    
     endif ()
-    deng_install_library (${MINGW_GLIB_DIR}/${DENG_ARCH}/bin/libglib-2.0-0.dll)
-    deng_install_library (${MINGW_GLIB_DIR}/${DENG_ARCH}/bin/libgthread-2.0-0.dll)
-    deng_install_library (${MINGW_GLIB_DIR}/${DENG_ARCH}/bin/libintl-8.dll)
-    deng_install_library (${MINGW_GLIB_DIR}/${DENG_ARCH}/bin/libiconv-2.dll)
-    deng_install_library (${MINGW_GLIB_DIR}/${DENG_ARCH}/bin/libpcre-1.dll)
-    deng_install_library (${MINGW_GLIB_DIR}/${DENG_ARCH}/bin/libwinpthread-1.dll)
+    deng_install_library (${MINGW_GLIB_DIR}/${DE_ARCH}/bin/libglib-2.0-0.dll)
+    deng_install_library (${MINGW_GLIB_DIR}/${DE_ARCH}/bin/libgthread-2.0-0.dll)
+    deng_install_library (${MINGW_GLIB_DIR}/${DE_ARCH}/bin/libintl-8.dll)
+    deng_install_library (${MINGW_GLIB_DIR}/${DE_ARCH}/bin/libiconv-2.dll)
+    deng_install_library (${MINGW_GLIB_DIR}/${DE_ARCH}/bin/libpcre-1.dll)
+    deng_install_library (${MINGW_GLIB_DIR}/${DE_ARCH}/bin/libwinpthread-1.dll)
 else ()
     # Find GLib via pkg-config.
     find_package (PkgConfig)

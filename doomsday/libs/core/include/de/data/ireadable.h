@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
  
-#ifndef LIBDENG2_IREADABLE_H
-#define LIBDENG2_IREADABLE_H
+#ifndef LIBCORE_IREADABLE_H
+#define LIBCORE_IREADABLE_H
 
 #include "../libcore.h"
 
@@ -34,7 +34,7 @@ class Reader;
  *
  * @ingroup data
  */
-class DENG2_PUBLIC IReadable
+class DE_PUBLIC IReadable
 {
 public:
     virtual ~IReadable() {}
@@ -49,4 +49,4 @@ public:
 
 } // namespace de
 
-#endif // LIBDENG2_IREADABLE_H
+#endif // LIBCORE_IREADABLE_H

@@ -41,8 +41,8 @@ namespace de {
 
 static ScriptSystem *_scriptSystem = 0;
 
-DENG2_PIMPL(ScriptSystem)
-, DENG2_OBSERVES(Record, Deletion)
+DE_PIMPL(ScriptSystem)
+, DE_OBSERVES(Record, Deletion)
 {
     Binder binder;
 
@@ -80,7 +80,7 @@ DENG2_PIMPL(ScriptSystem)
             mod.addNumber ("CPU_BITS", Version::cpuBits()        ).setReadOnly();
             mod.addBoolean("DEBUG",    Version::isDebugBuild()   ).setReadOnly();
             mod.addText   ("GIT",      ver.gitDescription        ).setReadOnly();
-#ifdef DENG_STABLE
+#ifdef DE_STABLE
             mod.addBoolean("STABLE",   true).setReadOnly();
 #else
             mod.addBoolean("STABLE",   false).setReadOnly();
@@ -96,7 +96,7 @@ DENG2_PIMPL(ScriptSystem)
 
     static Value *Function_ImportPath(Context &, Function::ArgumentValues const &)
     {
-        DENG2_ASSERT(_scriptSystem != nullptr);
+        DE_ASSERT(_scriptSystem != nullptr);
 
         StringList importPaths;
         _scriptSystem->d->listImportPaths(importPaths);
@@ -115,21 +115,21 @@ DENG2_PIMPL(ScriptSystem)
 
         // General functions.
         binder.init(coreModule)
-                << DENG2_FUNC_NOARG(ImportPath, "importPath");
+                << DE_FUNC_NOARG(ImportPath, "importPath");
 
         addNativeModule("Core", coreModule);
     }
 
     void addNativeModule(String const &name, Record &module)
     {
-        DENG2_GUARD(nativeModules);
+        DE_GUARD(nativeModules);
         nativeModules.value.insert(name, &module); // not owned
         module.audienceForDeletion() += this;
     }
 
     void removeNativeModule(String const &name)
     {
-        DENG2_GUARD(nativeModules);
+        DE_GUARD(nativeModules);
         if (!nativeModules.value.contains(name)) return;
 
         nativeModules.value[name]->audienceForDeletion() -= this;
@@ -138,7 +138,7 @@ DENG2_PIMPL(ScriptSystem)
 
     void recordBeingDeleted(Record &record)
     {
-        DENG2_GUARD(nativeModules);
+        DE_GUARD(nativeModules);
         QMutableHashIterator<String, Record *> iter(nativeModules);
         while (iter.hasNext())
         {
@@ -167,7 +167,7 @@ DENG2_PIMPL(ScriptSystem)
 
         // Compile a list of all possible import locations.
         importPaths.clear();
-        DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, importPath->elements())
+        DE_FOR_EACH_CONST(ArrayValue::Elements, i, importPath->elements())
         {
             importPaths << (*i)->asText();
         }
@@ -210,9 +210,9 @@ void ScriptSystem::removeNativeModule(String const &name)
 
 Record &ScriptSystem::nativeModule(String const &name)
 {
-    DENG2_GUARD_FOR(d->nativeModules, G);
+    DE_GUARD_FOR(d->nativeModules, G);
     Impl::NativeModules::const_iterator foundNative = d->nativeModules.value.constFind(name);
-    DENG2_ASSERT(foundNative != d->nativeModules.value.constEnd());
+    DE_ASSERT(foundNative != d->nativeModules.value.constEnd());
     return *foundNative.value();
 }
 
@@ -242,13 +242,13 @@ bool ScriptSystem::nativeModuleExists(const String &name) const
 
 StringList ScriptSystem::nativeModules() const
 {
-    DENG2_GUARD_FOR(d->nativeModules, G);
+    DE_GUARD_FOR(d->nativeModules, G);
     return d->nativeModules.value.keys();
 }
 
 namespace internal {
     static bool sortFilesByModifiedAt(File *a, File *b) {
-        DENG2_ASSERT(a != b);
+        DE_ASSERT(a != b);
         return de::cmp(a->status().modifiedAt, b->status().modifiedAt) < 0;
     }
 }
@@ -330,7 +330,7 @@ Record &ScriptSystem::builtInClass(String const &nativeModuleName, String const 
 
 ScriptSystem &ScriptSystem::get()
 {
-    DENG2_ASSERT(_scriptSystem);
+    DE_ASSERT(_scriptSystem);
     return *_scriptSystem;
 }
 
@@ -340,7 +340,7 @@ Record &ScriptSystem::importModule(String const &name, String const &importedFro
 
     // There are some special native modules.
     {
-        DENG2_GUARD_FOR(d->nativeModules, G);
+        DE_GUARD_FOR(d->nativeModules, G);
         Impl::NativeModules::const_iterator foundNative = d->nativeModules.value.constFind(name);
         if (foundNative != d->nativeModules.value.constEnd())
         {

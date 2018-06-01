@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RENDER_SKY_FIX_EDGE
-#define DENG_RENDER_SKY_FIX_EDGE
+#ifndef DE_RENDER_SKY_FIX_EDGE
+#define DE_RENDER_SKY_FIX_EDGE
 
 #include <de/Vector>
 
@@ -52,7 +52,7 @@ public:
         Vec3d origin() const;
 
     private:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
 public:
@@ -82,9 +82,9 @@ public:
     Event const &at(EventIndex index) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // DENG_RENDER_SKY_FIX_EDGE
+#endif // DE_RENDER_SKY_FIX_EDGE

@@ -86,7 +86,7 @@ public:
         return source[pos++];
     }
 
-    DENG2_NORETURN void error(QString const &message)
+    DE_NORETURN void error(QString const &message)
     {
         throw de::Error("JSONParser", de::String("Error at position %1 (%2^%3): %4")
                         .arg(pos).arg(source.mid(pos - 4, 4)).arg(source.mid(pos, 4)).arg(message));
@@ -123,7 +123,7 @@ public:
     {
         QVariantMap result;
         QChar c = next();
-        DENG2_ASSERT(c == '{');
+        DE_ASSERT(c == '{');
         forever
         {
             if (peek() == '}')
@@ -158,7 +158,7 @@ public:
     {
         QVariantList result;
         QChar c = next();
-        DENG2_ASSERT(c == '[');
+        DE_ASSERT(c == '[');
         if (peek() == ']')
         {
             // Empty list.
@@ -187,7 +187,7 @@ public:
     {
         QVarLengthArray<QChar, 1024> result;
         QChar c = next();
-        DENG2_ASSERT(c == '\"');
+        DE_ASSERT(c == '\"');
         forever
         {
             c = nextNoSkip();

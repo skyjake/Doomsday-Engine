@@ -27,8 +27,8 @@
 /// Indicates XG is available.
 #define LIBCOMMON_HAVE_XG 1
 
-DENG_EXTERN_C int xgDev;
-DENG_EXTERN_C dd_bool xgDataLumps;
+DE_EXTERN_C int xgDev;
+DE_EXTERN_C dd_bool xgDataLumps;
 
 #ifdef __cplusplus
 

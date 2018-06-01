@@ -22,7 +22,7 @@
 #include <stdlib.h> // abs
 #include <string.h> // memcpy
 
-#ifdef DENG_NO_FIXED_ASM
+#ifdef DE_NO_FIXED_ASM
 
 fixed_t FixedMul(fixed_t a, fixed_t b)
 {

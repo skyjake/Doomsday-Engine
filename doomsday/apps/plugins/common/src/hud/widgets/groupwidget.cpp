@@ -27,11 +27,11 @@ using namespace de;
 
 static void GroupWidget_UpdateGeometry(GroupWidget *group)
 {
-    DENG2_ASSERT(group);
+    DE_ASSERT(group);
     group->updateGeometry();
 }
 
-DENG2_PIMPL_NOREF(GroupWidget)
+DE_PIMPL_NOREF(GroupWidget)
 {
     order_t order = ORDER_NONE;  ///< Order of child objects.
     dint flags = 0;              ///< @ref groupWidgetFlags
@@ -121,7 +121,7 @@ void GroupWidget::tick(timespan_t elapsed)
 
 static void applyAlignmentOffset(HudWidget *wi, dint *x, dint *y)
 {
-    DENG2_ASSERT(wi);
+    DE_ASSERT(wi);
 
     if(x)
     {

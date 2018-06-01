@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_PARSER_H
-#define LIBDENG2_PARSER_H
+#ifndef LIBCORE_PARSER_H
+#define LIBCORE_PARSER_H
 
 #include "../libcore.h"
 #include "../IParser"
@@ -58,16 +58,16 @@ class Parser : public IParser
 public:
     /// A syntax error is detected during the parsing. Note that the Lex classes
     /// also define syntax errors. @ingroup errors
-    DENG2_ERROR(SyntaxError);
+    DE_ERROR(SyntaxError);
 
     /// A token is encountered where we don't know what to do with it. @ingroup errors
-    DENG2_SUB_ERROR(SyntaxError, UnexpectedTokenError);
+    DE_SUB_ERROR(SyntaxError, UnexpectedTokenError);
 
     /// A token is expected, but nothing was found. @ingroup errors
-    DENG2_SUB_ERROR(SyntaxError, MissingTokenError);
+    DE_SUB_ERROR(SyntaxError, MissingTokenError);
 
     /// A colon is expected but not found. @ingroup errors
-    DENG2_SUB_ERROR(SyntaxError, MissingColonError);
+    DE_SUB_ERROR(SyntaxError, MissingColonError);
 
     // Flags for parsing conditional compounds.
     enum CompoundFlag {
@@ -159,4 +159,4 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(de::Parser::CompoundFlags)
 
 } // namespace de
 
-#endif /* LIBDENG2_PARSER_H */
+#endif /* LIBCORE_PARSER_H */

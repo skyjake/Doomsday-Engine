@@ -41,7 +41,7 @@ static NativePath findSavegameTool()
 
 int SavegameConvertHook(int /*hook_type*/, int /*parm*/, void *data)
 {
-    DENG2_ASSERT(data != 0);
+    DE_ASSERT(data != 0);
     ddhook_savegame_convert_t const &parm = *static_cast<ddhook_savegame_convert_t *>(data);
 
     LOG_AS("importsave");
@@ -101,8 +101,8 @@ extern "C" char const *deng_LibraryType()
     return "deng-plugin/generic";
 }
 
-DENG_DECLARE_API(Base);
+DE_DECLARE_API(Base);
 
-DENG_API_EXCHANGE(
-    DENG_GET_API(DE_API_BASE, Base);
+DE_API_EXCHANGE(
+    DE_GET_API(DE_API_BASE, Base);
 )

@@ -75,7 +75,7 @@ public:
 
 using namespace internal;
 
-DENG2_PIMPL_NOREF(UnixInfo)
+DE_PIMPL_NOREF(UnixInfo)
 {
     Infos *paths;
     Infos *defaults;

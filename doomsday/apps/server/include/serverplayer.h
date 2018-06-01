@@ -63,7 +63,7 @@ public:
     pool_t &deltaPool();
     
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // SERVER_SERVERPLAYER_H

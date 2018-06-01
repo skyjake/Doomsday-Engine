@@ -27,7 +27,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(ImageBank)
+DE_PIMPL_NOREF(ImageBank)
 {
     struct ImageSource : public ISource
     {

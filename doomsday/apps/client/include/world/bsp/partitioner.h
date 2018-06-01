@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_BSP_PARTITIONER_H
-#define DENG_WORLD_BSP_PARTITIONER_H
+#ifndef DE_WORLD_BSP_PARTITIONER_H
+#define DE_WORLD_BSP_PARTITIONER_H
 
 #include <QSet>
 #include <de/Observers>
@@ -55,7 +55,7 @@ class Partitioner
 {
 public:
     /// Notified when an unclosed sector is first found.
-    DENG2_DEFINE_AUDIENCE(UnclosedSectorFound, void unclosedSectorFound(Sector &sector, de::Vec2d const &nearPoint))
+    DE_DEFINE_AUDIENCE(UnclosedSectorFound, void unclosedSectorFound(Sector &sector, de::Vec2d const &nearPoint))
 
 public:
     /**
@@ -103,10 +103,10 @@ public:
     de::dint vertexCount();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 }  // namespace bsp
 }  // namespace world
 
-#endif  // DENG_WORLD_BSP_PARTITIONER_H
+#endif  // DE_WORLD_BSP_PARTITIONER_H

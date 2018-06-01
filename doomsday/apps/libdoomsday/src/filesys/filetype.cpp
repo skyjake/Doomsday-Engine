@@ -44,7 +44,7 @@ FileType const &DD_GuessFileTypeFromFileName(String path)
 {
     if (!path.isEmpty())
     {
-        DENG2_FOR_EACH_CONST(FileTypes, i, fileTypeMap)
+        DE_FOR_EACH_CONST(FileTypes, i, fileTypeMap)
         {
             FileType const &ftype = **i;
             if (ftype.fileNameIsKnown(path))

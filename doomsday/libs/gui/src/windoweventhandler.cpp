@@ -28,7 +28,7 @@
 
 namespace de {
 
-DENG2_PIMPL(WindowEventHandler)
+DE_PIMPL(WindowEventHandler)
 {
     GLWindow *window;
     bool      mouseGrabbed = false;
@@ -57,7 +57,7 @@ DENG2_PIMPL(WindowEventHandler)
 
             mouseGrabbed = true;
 
-            DENG2_FOR_PUBLIC_AUDIENCE2(MouseStateChange, i)
+            DE_FOR_PUBLIC_AUDIENCE2(MouseStateChange, i)
             {
                 i->mouseStateChanged(Trapped);
             }
@@ -75,7 +75,7 @@ DENG2_PIMPL(WindowEventHandler)
             // Tell the mouse driver that the mouse is untrapped.
             mouseGrabbed = false;
 
-            DENG2_FOR_PUBLIC_AUDIENCE2(MouseStateChange, i)
+            DE_FOR_PUBLIC_AUDIENCE2(MouseStateChange, i)
             {
                 i->mouseStateChanged(Untrapped);
             }
@@ -127,7 +127,7 @@ DENG2_PIMPL(WindowEventHandler)
         }
 #endif
 
-        DENG2_FOR_PUBLIC_AUDIENCE2(KeyEvent, i)
+        DE_FOR_PUBLIC_AUDIENCE2(KeyEvent, i)
         {
             i->keyEvent(KeyEvent(ev->isAutoRepeat()?             KeyEvent::Repeat :
                                  ev->type() == QEvent::KeyPress? KeyEvent::Pressed :
@@ -149,10 +149,10 @@ DENG2_PIMPL(WindowEventHandler)
         return Vec2i(ev->pos().x(), ev->pos().y()) * window->devicePixelRatio();
     }
 
-    DENG2_PIMPL_AUDIENCE(FocusChange)
+    DE_PIMPL_AUDIENCE(FocusChange)
 };
 
-DENG2_AUDIENCE_METHOD(WindowEventHandler, FocusChange)
+DE_AUDIENCE_METHOD(WindowEventHandler, FocusChange)
 
 WindowEventHandler::WindowEventHandler(GLWindow *window)
     : QObject(window)
@@ -184,7 +184,7 @@ void WindowEventHandler::focusInEvent(QFocusEvent*)
     LOG_AS("Canvas");
     LOG_INPUT_VERBOSE("Gained focus");
 
-    DENG2_FOR_AUDIENCE2(FocusChange, i) i->windowFocusChanged(*d->window, true);
+    DE_FOR_AUDIENCE2(FocusChange, i) i->windowFocusChanged(*d->window, true);
 }
 
 void WindowEventHandler::focusOutEvent(QFocusEvent*)
@@ -195,7 +195,7 @@ void WindowEventHandler::focusOutEvent(QFocusEvent*)
     // Automatically ungrab the mouse if focus is lost.
     d->ungrabMouse();
 
-    DENG2_FOR_AUDIENCE2(FocusChange, i) i->windowFocusChanged(*d->window, false);
+    DE_FOR_AUDIENCE2(FocusChange, i) i->windowFocusChanged(*d->window, false);
 }
 
 void WindowEventHandler::keyPressEvent(QKeyEvent *ev)
@@ -223,7 +223,7 @@ void WindowEventHandler::mousePressEvent(QMouseEvent *ev)
 {
     ev->accept();
 
-    DENG2_FOR_AUDIENCE2(MouseEvent, i)
+    DE_FOR_AUDIENCE2(MouseEvent, i)
     {
         i->mouseEvent(MouseEvent(translateButton(ev->button()), MouseEvent::Pressed,
                                  d->translatePosition(ev)));
@@ -234,7 +234,7 @@ void WindowEventHandler::mouseReleaseEvent(QMouseEvent* ev)
 {
     ev->accept();
 
-    DENG2_FOR_AUDIENCE2(MouseEvent, i)
+    DE_FOR_AUDIENCE2(MouseEvent, i)
     {
         i->mouseEvent(MouseEvent(translateButton(ev->button()), MouseEvent::Released,
                                  d->translatePosition(ev)));
@@ -245,7 +245,7 @@ void WindowEventHandler::mouseDoubleClickEvent(QMouseEvent *ev)
 {
     ev->accept();
 
-    DENG2_FOR_AUDIENCE2(MouseEvent, i)
+    DE_FOR_AUDIENCE2(MouseEvent, i)
     {
         i->mouseEvent(MouseEvent(translateButton(ev->button()), MouseEvent::DoubleClick,
                                  d->translatePosition(ev)));
@@ -259,7 +259,7 @@ void WindowEventHandler::mouseMoveEvent(QMouseEvent *ev)
     // Absolute events are only emitted when the mouse is untrapped.
     if (!d->mouseGrabbed)
     {
-        DENG2_FOR_AUDIENCE2(MouseEvent, i)
+        DE_FOR_AUDIENCE2(MouseEvent, i)
         {
             i->mouseEvent(MouseEvent(MouseEvent::Absolute,
                                      d->translatePosition(ev)));
@@ -279,7 +279,7 @@ void WindowEventHandler::wheelEvent(QWheelEvent *ev)
 
     if (!numPixels.isNull())
     {
-        DENG2_FOR_AUDIENCE2(MouseEvent, i)
+        DE_FOR_AUDIENCE2(MouseEvent, i)
         {
             if (numPixels.x())
             {
@@ -297,7 +297,7 @@ void WindowEventHandler::wheelEvent(QWheelEvent *ev)
     QPoint const steps = d->wheelAngleAccum / 15;
     if (!steps.isNull())
     {
-        DENG2_FOR_AUDIENCE2(MouseEvent, i)
+        DE_FOR_AUDIENCE2(MouseEvent, i)
         {
             if (steps.x())
             {

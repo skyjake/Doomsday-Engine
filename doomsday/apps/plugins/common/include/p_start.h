@@ -125,14 +125,14 @@ typedef struct {
     mapspotid_t spot;
 } playerstart_t;
 
-DENG_EXTERN_C uint numMapSpots;
-DENG_EXTERN_C mapspot_t *mapSpots;
+DE_EXTERN_C uint numMapSpots;
+DE_EXTERN_C mapspot_t *mapSpots;
 
 #if __JHERETIC__
-DENG_EXTERN_C mapspotid_t *maceSpots;
-DENG_EXTERN_C uint maceSpotCount;
-DENG_EXTERN_C mapspotid_t* bossSpots;
-DENG_EXTERN_C uint bossSpotCount;
+DE_EXTERN_C mapspotid_t *maceSpots;
+DE_EXTERN_C uint maceSpotCount;
+DE_EXTERN_C mapspotid_t* bossSpots;
+DE_EXTERN_C uint bossSpotCount;
 #endif
 
 #ifdef __cplusplus

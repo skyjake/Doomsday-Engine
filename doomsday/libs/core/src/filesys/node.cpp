@@ -21,7 +21,7 @@
 namespace de {
 namespace filesys {
 
-DENG2_PIMPL_NOREF(Node)
+DE_PIMPL_NOREF(Node)
 {
     String name;
     Node *parent;

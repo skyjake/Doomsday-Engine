@@ -26,13 +26,13 @@ using namespace de;
 
 static void ArmorIcon_Draw(guidata_armoricon_t *icon, Point2Raw const *offset)
 {
-    DENG2_ASSERT(icon);
+    DE_ASSERT(icon);
     icon->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void ArmorIcon_UpdateGeometry(guidata_armoricon_t *icon)
 {
-    DENG2_ASSERT(icon);
+    DE_ASSERT(icon);
     icon->updateGeometry();
 }
 

@@ -134,7 +134,7 @@ void GL_SetGammaRamp(DisplayColorTransfer const *ramp)
  */
 void GL_MakeGammaRamp(ushort *ramp, dfloat gamma, dfloat contrast, dfloat bright)
 {
-    DENG2_ASSERT(ramp);
+    DE_ASSERT(ramp);
 
     ddouble ideal[256];  // After processing clamped to unsigned short.
 
@@ -199,7 +199,7 @@ void GL_FinishFrame()
 {
     if (ClientApp::vr().mode() == VRConfig::OculusRift) return;
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
     LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Check for color adjustment changes.
@@ -208,7 +208,7 @@ void GL_FinishFrame()
         GL_SetGamma();
     }
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
     // Wait until the right time to show the frame so that the realized
     // frame rate is exactly right.
     LIBGUI_GL.glFlush();
@@ -307,8 +307,8 @@ void GL_Shutdown()
     if(!initGLOk || !ClientWindow::mainExists())
         return; // Not yet initialized fully.
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     // We won't be drawing anything further but we don't want to shutdown
     // with the previous frame still visible as this can lead to unwanted
@@ -345,7 +345,7 @@ void GL_Init2DState()
     glNearClip = 5;
     glFarClip  = 16500;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_IN_MAIN_THREAD();
 
     //DGL_SetInteger(DGL_FLUSH_BACKTRACE, true);
 
@@ -385,8 +385,8 @@ Rangef GL_DepthClipRange()
 
 void GL_ProjectionMatrix(bool useFixedFov)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_LoadMatrix(Rend_GetProjectionMatrix(useFixedFov ? weaponFixedFOV : 0.f).values());
@@ -429,15 +429,15 @@ void GL_SetupFogFromMapInfo(Record const *mapInfo)
 }
 
 #undef GL_UseFog
-DENG_EXTERN_C void GL_UseFog(dint yes)
+DE_EXTERN_C void GL_UseFog(dint yes)
 {
     fogParams.usingFog = yes;
 }
 
 void GL_SelectTexUnits(dint count)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     for (dint i = MAX_TEX_UNITS - 1; i >= count; i--)
     {
@@ -489,15 +489,15 @@ void GL_TotalRestore()
     // Restore the fog settings.
     GL_SetupFogFromMapInfo(App_World().hasMap() ? &App_World().map().mapInfo() : nullptr);
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     Z_CheckHeap();
 #endif
 }
 
 void GL_BlendMode(blendmode_t mode)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(mode)
     {
@@ -590,7 +590,7 @@ dint GL_NumMipmapLevels(dint width, dint height)
 dd_bool GL_OptimalTextureSize(dint width, dint height, dd_bool noStretch, dd_bool isMipMapped,
     dint *optWidth, dint *optHeight)
 {
-    DENG2_ASSERT(optWidth && optHeight);
+    DE_ASSERT(optWidth && optHeight);
     if (!isMipMapped)
     {
         *optWidth  = width;
@@ -796,7 +796,7 @@ void GL_SetRawImage(lumpnum_t lumpNum, gl::Wrapping wrapS, gl::Wrapping wrapT)
 
 void GL_BindTexture(TextureVariant *vtexture)
 {
-#if defined (DENG_HAVE_BUSYRUNNER)
+#if defined (DE_HAVE_BUSYRUNNER)
     if (ClientApp::busyRunner().inWorkerThread()) return;
 #endif
 
@@ -808,8 +808,8 @@ void GL_BindTexture(TextureVariant *vtexture)
         return;
     }
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, glTexName);
     LIBGUI_ASSERT_GL_OK();
@@ -834,7 +834,7 @@ void GL_BindTexture(TextureVariant *vtexture)
 void GL_BindTextureUnmanaged(GLuint glName, gl::Wrapping wrapS, gl::Wrapping wrapT,
     gl::Filter filter)
 {
-#if defined (DENG_HAVE_BUSYRUNNER)
+#if defined (DE_HAVE_BUSYRUNNER)
     if (ClientApp::busyRunner().inWorkerThread()) return;
 #endif
 
@@ -846,8 +846,8 @@ void GL_BindTextureUnmanaged(GLuint glName, gl::Wrapping wrapS, gl::Wrapping wra
         return;
     }
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, glName);
     LIBGUI_ASSERT_GL_OK();
@@ -887,20 +887,20 @@ void GL_BindTo(GLTextureUnit const &glTU, dint unit)
 {
     if(!glTU.hasTexture()) return;
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
     DGL_SetInteger(DGL_ACTIVE_TEXTURE, unit);
     GL_Bind(glTU);
 }
 
 void GL_SetNoTexture()
 {
-#if defined (DENG_HAVE_BUSYRUNNER)
+#if defined (DE_HAVE_BUSYRUNNER)
     if(ClientApp::busyRunner().inWorkerThread()) return;
 #endif
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     /// @todo Don't actually change the current binding. Instead we should disable
     ///       all currently enabled texture types.
@@ -957,7 +957,7 @@ duint8 *GL_SmartFilter(dint method, duint8 const *src, dint width, dint height,
 duint8 *GL_ConvertBuffer(duint8 const *in, dint width, dint height, dint informat,
                          colorpaletteid_t paletteId, dint outformat)
 {
-    DENG2_ASSERT(in);
+    DE_ASSERT(in);
 
     if(informat == outformat)
     {
@@ -1012,7 +1012,7 @@ void GL_CalcLuminance(duint8 const *buffer, dint width, dint height, dint pixelS
     colorpaletteid_t paletteId, dfloat *retBrightX, dfloat *retBrightY,
     ColorRawf *retColor, dfloat *retLumSize)
 {
-    DENG2_ASSERT(buffer && retBrightX && retBrightY && retColor && retLumSize);
+    DE_ASSERT(buffer && retBrightX && retBrightY && retColor && retLumSize);
 
     static duint8 const sizeLimit = 192, brightLimit = 224, colLimit = 192;
 
@@ -1205,11 +1205,11 @@ void GL_CalcLuminance(duint8 const *buffer, dint width, dint height, dint pixelS
     */
 }
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
 
 D_CMD(SetRes)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     ClientWindow *win = ClientWindowSystem::mainPtr();
     if(!win) return false;
@@ -1226,7 +1226,7 @@ D_CMD(SetRes)
 
 D_CMD(SetFullRes)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     ClientWindow *win = ClientWindowSystem::mainPtr();
     if(!win) return false;
@@ -1242,7 +1242,7 @@ D_CMD(SetFullRes)
 
 D_CMD(SetWinRes)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     ClientWindow *win = ClientWindowSystem::mainPtr();
     if(!win) return false;
@@ -1259,7 +1259,7 @@ D_CMD(SetWinRes)
 
 D_CMD(ToggleFullscreen)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     ClientWindow *win = ClientWindowSystem::mainPtr();
     if(!win) return false;
@@ -1273,7 +1273,7 @@ D_CMD(ToggleFullscreen)
 
 D_CMD(ToggleMaximized)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     ClientWindow *win = ClientWindowSystem::mainPtr();
     if(!win) return false;
@@ -1287,7 +1287,7 @@ D_CMD(ToggleMaximized)
 
 D_CMD(ToggleCentered)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     ClientWindow *win = ClientWindowSystem::mainPtr();
     if(!win) return false;
@@ -1301,7 +1301,7 @@ D_CMD(ToggleCentered)
 
 D_CMD(CenterWindow)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     ClientWindow *win = ClientWindowSystem::mainPtr();
     if(!win) return false;
@@ -1315,7 +1315,7 @@ D_CMD(CenterWindow)
 
 D_CMD(SetBPP)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     ClientWindow *win = ClientWindowSystem::mainPtr();
     if(!win) return false;
@@ -1327,11 +1327,11 @@ D_CMD(SetBPP)
     return win->changeAttributes(attribs);
 }
 
-#endif // !DENG_MOBILE
+#endif // !DE_MOBILE
 
 D_CMD(DisplayModeInfo)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     ClientWindow *win = ClientWindowSystem::mainPtr();
     if(!win) return false;
@@ -1356,11 +1356,11 @@ D_CMD(DisplayModeInfo)
                .arg(win->windowRect().size().asText())
                .arg(win->fullscreenSize().asText());
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
     str += String("\n  fullscreen:%1 centered:%2 maximized:%3")
-               .arg(DENG2_BOOL_YESNO( win->isFullScreen() ))
-               .arg(DENG2_BOOL_YESNO( win->isCentered()   ))
-               .arg(DENG2_BOOL_YESNO( win->isMaximized()  ));
+               .arg(DE_BOOL_YESNO( win->isFullScreen() ))
+               .arg(DE_BOOL_YESNO( win->isCentered()   ))
+               .arg(DE_BOOL_YESNO( win->isMaximized()  ));
 #endif
 
     LOG_GL_MSG("%s") << str;
@@ -1369,7 +1369,7 @@ D_CMD(DisplayModeInfo)
 
 D_CMD(ListDisplayModes)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     LOG_GL_MSG("There are %i display modes available:") << DisplayMode_Count();
     for(dint i = 0; i < DisplayMode_Count(); ++i)
@@ -1393,7 +1393,7 @@ D_CMD(ListDisplayModes)
 
 D_CMD(UpdateGammaRamp)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     GL_SetGamma();
     LOG_GL_VERBOSE("Gamma ramp set");
@@ -1402,7 +1402,7 @@ D_CMD(UpdateGammaRamp)
 
 D_CMD(Fog)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(argc == 1)
     {
@@ -1487,7 +1487,7 @@ D_CMD(Fog)
 void GL_Register()
 {
     // Cvars
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     C_VAR_INT  ("rend-dev-wireframe",    &renderWireframe,  CVF_NO_ARCHIVE, 0, 2);
 #endif
     C_VAR_INT  ("rend-fog-default",      &fogModeDefault,   0, 0, 2);
@@ -1514,7 +1514,7 @@ void GL_Register()
     C_CMD_FLAGS("fog",              nullptr,   Fog,                CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
     C_CMD      ("displaymode",      "",     DisplayModeInfo);
     C_CMD      ("listdisplaymodes", "",     ListDisplayModes);
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
     C_CMD      ("setcolordepth",    "i",    SetBPP);
     C_CMD      ("setbpp",           "i",    SetBPP);
     C_CMD      ("setres",           "ii",   SetRes);

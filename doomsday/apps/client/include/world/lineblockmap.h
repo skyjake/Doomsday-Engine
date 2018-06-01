@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_LINEBLOCKMAP_H
-#define DENG_WORLD_LINEBLOCKMAP_H
+#ifndef DE_WORLD_LINEBLOCKMAP_H
+#define DE_WORLD_LINEBLOCKMAP_H
 
 #include "world/blockmap.h"
 #include "Line"
@@ -50,4 +50,4 @@ public:
 
 }  // namespace world
 
-#endif  // DENG_WORLD_LINEBLOCKMAP_H
+#endif  // DE_WORLD_LINEBLOCKMAP_H

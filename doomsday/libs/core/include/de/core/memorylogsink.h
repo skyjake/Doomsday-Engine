@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_MEMORYLOGSINK_H
-#define LIBDENG2_MEMORYLOGSINK_H
+#ifndef LIBCORE_MEMORYLOGSINK_H
+#define LIBCORE_MEMORYLOGSINK_H
 
 #include "../LogSink"
 #include "../Lockable"
@@ -30,7 +30,7 @@ namespace de {
  * Log sink that stores log entries in memory.
  * @ingroup core
  */
-class DENG2_PUBLIC MemoryLogSink : public LogSink, public Lockable
+class DE_PUBLIC MemoryLogSink : public LogSink, public Lockable
 {
 public:
     MemoryLogSink(LogEntry::Level minimumLevel = LogEntry::XVerbose);
@@ -64,4 +64,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_MEMORYLOGSINK_H
+#endif // LIBCORE_MEMORYLOGSINK_H

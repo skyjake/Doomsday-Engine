@@ -171,7 +171,7 @@ void Sv_ShutdownPools()
  */
 void Sv_InitPoolForClient(duint clientNumber)
 {
-    DENG2_ASSERT(clientNumber < DDMAXPLAYERS);
+    DE_ASSERT(clientNumber < DDMAXPLAYERS);
 
     // Free everything that might exist in the pool.
     Sv_DrainPool(clientNumber);
@@ -207,7 +207,7 @@ duint Sv_RegisterHashFunction(thid_t id)
  */
 reg_mobj_t *Sv_RegisterFindMobj(cregister_t *reg, thid_t id)
 {
-    DENG2_ASSERT(reg);
+    DE_ASSERT(reg);
 
     // See if there already is a register-mobj for this id.
     mobjhash_t const &hash = reg->mobjs[Sv_RegisterHashFunction(id)];
@@ -224,7 +224,7 @@ reg_mobj_t *Sv_RegisterFindMobj(cregister_t *reg, thid_t id)
  */
 reg_mobj_t *Sv_RegisterAddMobj(cregister_t *reg, thid_t id)
 {
-    DENG2_ASSERT(reg);
+    DE_ASSERT(reg);
     mobjhash_t &hash = reg->mobjs[Sv_RegisterHashFunction(id)];
 
     // Try to find an existing register-mobj.
@@ -255,7 +255,7 @@ reg_mobj_t *Sv_RegisterAddMobj(cregister_t *reg, thid_t id)
  */
 void Sv_RegisterRemoveMobj(cregister_t *reg, reg_mobj_t *regMo)
 {
-    DENG2_ASSERT(regMo);
+    DE_ASSERT(regMo);
     mobjhash_t &hash = reg->mobjs[Sv_RegisterHashFunction(regMo->mo.thinker.id)];
 
     // Update the first and last links.
@@ -307,7 +307,7 @@ dfloat Sv_GetMaxedMobjZ(mobj_t const *mob)
  */
 void Sv_RegisterMobj(dt_mobj_t *reg, mobj_t const *mob)
 {
-    DENG2_ASSERT(reg && mob);
+    DE_ASSERT(reg && mob);
     // Just copy the data we need.
     reg->thinker.id   = mob->thinker.id;
     reg->type         = mob->type;
@@ -342,7 +342,7 @@ void Sv_RegisterMobj(dt_mobj_t *reg, mobj_t const *mob)
  */
 void Sv_RegisterResetMobj(dt_mobj_t *reg)
 {
-    DENG2_ASSERT(reg);
+    DE_ASSERT(reg);
 
     reg->origin[0]    = DDMINFLOAT;
     reg->origin[1]    = DDMINFLOAT;
@@ -372,8 +372,8 @@ void Sv_RegisterPlayer(dt_player_t *reg, duint number)
 #define FMAKERGBA(r, g, b, a) \
     ( byte( 0xff * r ) + ( byte( 0xff * g ) << 8 ) + ( byte( 0xff * b ) << 16 ) + ( byte (0xff * a ) << 24 ) )
 
-    DENG2_ASSERT(reg);
-    DENG2_ASSERT(number < DDMAXPLAYERS);
+    DE_ASSERT(reg);
+    DE_ASSERT(number < DDMAXPLAYERS);
     player_t *plr    = DD_Player(number);
     ddplayer_t *ddpl = &plr->publicData();
 
@@ -412,7 +412,7 @@ void Sv_RegisterPlayer(dt_player_t *reg, duint number)
  */
 void Sv_RegisterSector(dt_sector_t *reg, dint number)
 {
-    DENG2_ASSERT(reg);
+    DE_ASSERT(reg);
     Sector &sector = worldSys().map().sector(number);
 
     reg->lightLevel = sector.lightLevel();
@@ -450,7 +450,7 @@ void Sv_RegisterSector(dt_sector_t *reg, dint number)
  */
 void Sv_RegisterSide(dt_side_t *reg, dint number)
 {
-    DENG2_ASSERT(reg);
+    DE_ASSERT(reg);
 
     LineSide *side = worldSys().map().sidePtr(number);
 
@@ -482,7 +482,7 @@ void Sv_RegisterSide(dt_side_t *reg, dint number)
  */
 void Sv_RegisterPoly(dt_poly_t *reg, duint number)
 {
-    DENG_ASSERT(reg);
+    DE_ASSERT(reg);
     Polyobj const &pob = worldSys().map().polyobj(number);
 
     reg->dest[0]    = pob.dest[0];
@@ -588,7 +588,7 @@ dd_bool Sv_RegisterCompareMobj(cregister_t *reg, mobj_t const *s, mobjdelta_t *d
  */
 dd_bool Sv_RegisterComparePlayer(cregister_t *reg, duint number, playerdelta_t *d)
 {
-    DENG2_ASSERT(number < DDMAXPLAYERS);
+    DE_ASSERT(number < DDMAXPLAYERS);
     dt_player_t const *r = &reg->ddPlayers[number];
     dt_player_t *s       = &d->player;
     dint df = 0;
@@ -622,7 +622,7 @@ dd_bool Sv_RegisterComparePlayer(cregister_t *reg, duint number, playerdelta_t *
  */
 dd_bool Sv_RegisterCompareSector(cregister_t *reg, dint number, sectordelta_t *d, byte doUpdate)
 {
-    DENG2_ASSERT(reg && d);
+    DE_ASSERT(reg && d);
     dt_sector_t *r  = &reg->sectors[number];
     Sector const &s = worldSys().map().sector(number);
     dint df = 0;
@@ -707,7 +707,7 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, dint number, sectordelta_t *d
         df |= SDF_CEILING_SPEED | SDF_CEILING_TARGET;
     }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     if (df & (SDF_CEILING_HEIGHT | SDF_CEILING_SPEED | SDF_CEILING_TARGET))
     {
         LOGDEV_NET_XVERBOSE("Sector %i: ceiling state change noted (target = %f)",
@@ -745,7 +745,7 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, dint number, sectordelta_t *d
  */
 dd_bool Sv_RegisterCompareSide(cregister_t *reg, duint number, sidedelta_t *d, byte doUpdate)
 {
-    DENG2_ASSERT(reg/* && d*/);
+    DE_ASSERT(reg/* && d*/);
     LineSide const *side = worldSys().map().sidePtr(number);
     dt_side_t *r         = &reg->sides[number];
 
@@ -886,7 +886,7 @@ dd_bool Sv_RegisterCompareSide(cregister_t *reg, duint number, sidedelta_t *d, b
  */
 dd_bool Sv_RegisterComparePoly(cregister_t *reg, dint number, polydelta_t *d)
 {
-    DENG2_ASSERT(reg/* && d*/);
+    DE_ASSERT(reg/* && d*/);
     dt_poly_t const *r = &reg->polyObjs[number];
     dt_poly_t *s       = &d->po;
     dint df = 0;
@@ -924,7 +924,7 @@ dd_bool Sv_IsMobjIgnored(mobj_t const &mob)
  */
 dd_bool Sv_IsPlayerIgnored(dint plrNum)
 {
-    DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
+    DE_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
     return !DD_Player(plrNum)->publicData().inGame;
 }
 
@@ -939,7 +939,7 @@ dd_bool Sv_IsPlayerIgnored(dint plrNum)
  */
 void Sv_RegisterWorld(cregister_t *reg, dd_bool isInitial)
 {
-    DENG2_ASSERT(reg);
+    DE_ASSERT(reg);
 
     world::Map &map = worldSys().map();
 
@@ -984,7 +984,7 @@ void Sv_RegisterWorld(cregister_t *reg, dd_bool isInitial)
  */
 void Sv_UpdateOwnerInfo(pool_t *pool)
 {
-    DENG2_ASSERT(pool);
+    DE_ASSERT(pool);
     player_t *plr     = DD_Player(pool->owner);
     ownerinfo_t *info = &pool->ownerInfo;
 
@@ -1525,7 +1525,7 @@ coord_t Sv_MobjDistance(mobj_t const *mo, ownerinfo_t const *info, dd_bool isRea
  */
 coord_t Sv_SectorDistance(int index, ownerinfo_t const *info)
 {
-    DENG2_ASSERT(info);
+    DE_ASSERT(info);
     Sector const &sector = worldSys().map().sector(index);
 
     return M_ApproxDistance3(info->origin[0] - sector.soundEmitter().origin[0],
@@ -1535,7 +1535,7 @@ coord_t Sv_SectorDistance(int index, ownerinfo_t const *info)
 
 coord_t Sv_SideDistance(int index, int deltaFlags, ownerinfo_t const *info)
 {
-    DENG2_ASSERT(info);
+    DE_ASSERT(info);
     LineSide const *side = worldSys().map().sidePtr(index);
 
     SoundEmitter const &emitter = (  deltaFlags & SNDDF_SIDE_MIDDLE? side->middleSoundEmitter()
@@ -2329,8 +2329,8 @@ void Sv_NewSoundDelta(int soundId, mobj_t const *emitter, Sector *sourceSector,
     }
     else if (sourceSurface)
     {
-        DENG_ASSERT(sourceSurface->parent().type() == DMU_SIDE);
-        DENG2_ASSERT(emitter == 0); // surface sound emitter rather than a real mobj
+        DE_ASSERT(sourceSurface->parent().type() == DMU_SIDE);
+        DE_ASSERT(emitter == 0); // surface sound emitter rather than a real mobj
 
         type = DT_SIDE_SOUND;
 
@@ -2383,7 +2383,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t const *emitter, Sector *sourceSector,
  */
 dd_bool Sv_IsFrameTarget(duint plrNum)
 {
-    DENG2_ASSERT(plrNum < DDMAXPLAYERS);
+    DE_ASSERT(plrNum < DDMAXPLAYERS);
 
     player_t const &plr = *DD_Player(plrNum);
 

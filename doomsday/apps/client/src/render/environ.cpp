@@ -36,9 +36,9 @@ static String const DEF_EXTERIOR_PATH("exterior.path");
 
 namespace render {
 
-DENG2_PIMPL(Environment)
-, DENG2_OBSERVES(filesys::AssetObserver, Availability)
-, DENG2_OBSERVES(World, MapChange)
+DE_PIMPL(Environment)
+, DE_OBSERVES(filesys::AssetObserver, Availability)
+, DE_OBSERVES(World, MapChange)
 {
     enum { Interior, Exterior };
 
@@ -155,7 +155,7 @@ DENG2_PIMPL(Environment)
 
     void loadTexturesForCurrentMap()
     {
-        DENG2_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT_IN_MAIN_THREAD();
 
         release();
 
@@ -180,7 +180,7 @@ DENG2_PIMPL(Environment)
 
     void loadEnvMaps(EnvMaps const &env)
     {
-        DENG2_ASSERT(!(env.interior.isEmpty() && env.exterior.isEmpty()));
+        DE_ASSERT(!(env.interior.isEmpty() && env.exterior.isEmpty()));
         if (!env.exterior.isEmpty())
         {
             loadCubeMap(reflectionTextures[Exterior], env.exterior);

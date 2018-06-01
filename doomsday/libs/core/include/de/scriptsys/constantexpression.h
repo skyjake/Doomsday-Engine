@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_CONSTANTEXPRESSION_H
-#define LIBDENG2_CONSTANTEXPRESSION_H
+#ifndef LIBCORE_CONSTANTEXPRESSION_H
+#define LIBCORE_CONSTANTEXPRESSION_H
 
 #include "../Expression"
 #include "../Value"
@@ -64,4 +64,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_CONSTANTEXPRESSION_H */
+#endif /* LIBCORE_CONSTANTEXPRESSION_H */

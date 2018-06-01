@@ -22,7 +22,7 @@
 #include "de/Log"
 #include "de/LogBuffer"
 
-#if !defined (DENG_STATIC_LINK)
+#if !defined (DE_STATIC_LINK)
 #  include <QLibrary>
 #endif
 
@@ -30,7 +30,7 @@
 
 namespace de {
 
-#if defined (DENG_STATIC_LINK)
+#if defined (DE_STATIC_LINK)
     
 struct ImportedStaticLibrary
 {
@@ -52,13 +52,13 @@ ImportedStaticLibrary const *findStaticLibrary(char const *name)
     return nullptr;
 }
     
-#endif // DENG_STATIC_LINK
+#endif // DE_STATIC_LINK
 
-#if defined (DENG_STATIC_LINK)
+#if defined (DE_STATIC_LINK)
 typedef ImportedStaticLibrary const *Handle;
 #else
-#  if defined(UNIX) && defined(DENG2_QT_4_7_OR_NEWER) && !defined(DENG2_QT_4_8_OR_NEWER)
-#    define DENG2_USE_DLOPEN
+#  if defined(UNIX) && defined(DE_QT_4_7_OR_NEWER) && !defined(DE_QT_4_8_OR_NEWER)
+#    define DE_USE_DLOPEN
 #    include <dlfcn.h>
 typedef void *Handle;
 #  else
@@ -68,7 +68,7 @@ typedef QLibrary *Handle;
     
 char const *Library::DEFAULT_TYPE = "library/generic";
 
-DENG2_PIMPL(Library)
+DE_PIMPL(Library)
 {
     /// Handle to the shared library.
     Handle library;
@@ -83,13 +83,13 @@ DENG2_PIMPL(Library)
     Impl(Public *i) : Base(i), library(0), type(DEFAULT_TYPE)
     {}
 
-#if defined (DENG_STATIC_LINK) || defined(DENG2_USE_DLOPEN)
+#if defined (DE_STATIC_LINK) || defined(DE_USE_DLOPEN)
     NativePath fileName;
     NativePath nativePath() { return fileName; }
     bool isLoaded() const { return library != 0; }
 #else
     NativePath nativePath() {
-        DENG2_ASSERT(library);
+        DE_ASSERT(library);
         return library->fileName();
     }
     bool isLoaded() const { return library->isLoaded(); }
@@ -101,10 +101,10 @@ Library::Library(NativePath const &nativePath) : d(new Impl(this))
     LOG_AS("Library");
     LOG_TRACE("Loading \"%s\"", nativePath.pretty());
 
-#if defined (DENG_STATIC_LINK)
+#if defined (DE_STATIC_LINK)
     d->fileName = nativePath;
     d->library = findStaticLibrary(nativePath.toUtf8().constData());
-#elif defined (DENG2_USE_DLOPEN)
+#elif defined (DE_USE_DLOPEN)
     d->fileName = nativePath;
     d->library = dlopen(nativePath.toUtf8().constData(), RTLD_NOW);
 #else
@@ -115,9 +115,9 @@ Library::Library(NativePath const &nativePath) : d(new Impl(this))
 
     if (!d->isLoaded())
     {
-#if defined (DENG_STATIC_LINK)
+#if defined (DE_STATIC_LINK)
         QString msg = "static library has not been imported";
-#elif defined (DENG2_USE_DLOPEN)
+#elif defined (DE_USE_DLOPEN)
         QString msg = dlerror();
 #else
         QString msg = d->library->errorString();
@@ -132,13 +132,13 @@ Library::Library(NativePath const &nativePath) : d(new Impl(this))
     if (hasSymbol("deng_LibraryType"))
     {
         // Query the type identifier.
-        d->type = DENG2_SYMBOL(deng_LibraryType)();
+        d->type = DE_SYMBOL(deng_LibraryType)();
     }
 
     // Automatically call the initialization function, if one exists.
     if (d->type.beginsWith("deng-plugin/") && hasSymbol("deng_InitializePlugin"))
     {
-        DENG2_SYMBOL(deng_InitializePlugin)();
+        DE_SYMBOL(deng_InitializePlugin)();
     }
 }
 
@@ -152,16 +152,16 @@ Library::~Library()
         // Automatically call the shutdown function, if one exists.
         if (d->type.beginsWith("deng-plugin/") && hasSymbol("deng_ShutdownPlugin"))
         {
-            DENG2_SYMBOL(deng_ShutdownPlugin)();
+            DE_SYMBOL(deng_ShutdownPlugin)();
         }
 
         // The log buffer may contain log entries built by the library; those
         // entries contain pointers to functions that are about to disappear.
         LogBuffer::get().clear();
 
-#if defined (DENG_STATIC_LINK)
+#if defined (DE_STATIC_LINK)
         d->library = nullptr;
-#elif defined (DENG2_USE_DLOPEN)
+#elif defined (DE_USE_DLOPEN)
         dlclose(d->library);
 #else
         d->library->unload();
@@ -190,10 +190,10 @@ void *Library::address(String const &name, SymbolLookupMode lookup)
         return found.value();
     }
 
-#if defined (DENG_STATIC_LINK)
+#if defined (DE_STATIC_LINK)
     void *ptr = d->library->symbolFunc(name.toLatin1().constData());
     qDebug() << d->fileName.toString() << name << ptr;
-#elif defined (DENG2_USE_DLOPEN)
+#elif defined (DE_USE_DLOPEN)
     void *ptr = dlsym(d->library, name.toLatin1().constData());
 #else
     void *ptr = de::function_cast<void *>(d->library->resolve(name.toLatin1().constData()));
@@ -218,16 +218,16 @@ bool Library::hasSymbol(String const &name) const
     // First check the symbols cache.
     if (d->symbols.find(name) != d->symbols.end()) return true;
 
-#if defined (DENG_STATIC_LINK)
+#if defined (DE_STATIC_LINK)
     return d->library->symbolFunc(name.toLatin1().constData()) != 0;
-#elif defined (DENG2_USE_DLOPEN)
+#elif defined (DE_USE_DLOPEN)
     return dlsym(d->library, name.toLatin1().constData()) != 0;
 #else
     return d->library->resolve(name.toLatin1().constData()) != 0;
 #endif
 }
 
-#if defined (DENG_STATIC_LINK)
+#if defined (DE_STATIC_LINK)
 void Library::importStaticLibrary(char const *name, StaticSymbolFunc symbolFunc) // static
 {
     for (uint i = 0; i < importedLibraries.size(); ++i)

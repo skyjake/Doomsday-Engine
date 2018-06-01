@@ -27,8 +27,8 @@
 
 namespace de {
 
-DENG2_PIMPL(Timeline)
-, DENG2_OBSERVES(Record, Deletion)
+DE_PIMPL(Timeline)
+, DE_OBSERVES(Record, Deletion)
 {
     Record *context = nullptr;
 
@@ -133,7 +133,7 @@ void Timeline::addFromInfo(Record const &timelineRecord)
 
 //----------------------------------------------------------------------------
 
-DENG2_PIMPL_NOREF(Timeline::Clock)
+DE_PIMPL_NOREF(Timeline::Clock)
 {
     typedef Timeline::Impl::Event  Event;
     typedef Timeline::Impl::Events Events; // Events not owned

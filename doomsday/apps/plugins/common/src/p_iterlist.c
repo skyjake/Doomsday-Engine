@@ -65,7 +65,7 @@ void IterList_Delete(iterlist_t* list)
 
 int IterList_Size(iterlist_t* list)
 {
-    DENG_ASSERT(list);
+    DE_ASSERT(list);
     return list->elementsCount;
 }
 
@@ -76,7 +76,7 @@ dd_bool IterList_Empty(iterlist_t* list)
 
 int IterList_PushBack(iterlist_t* list, void* data)
 {
-    DENG_ASSERT(list);
+    DE_ASSERT(list);
 
     if(++list->elementsCount > list->maxElements)
     {
@@ -99,7 +99,7 @@ int IterList_PushBack(iterlist_t* list, void* data)
 
 void* IterList_Pop(iterlist_t* list)
 {
-    DENG_ASSERT(list);
+    DE_ASSERT(list);
     if(list->elementsCount > 0)
         return list->elements[--list->elementsCount];
     return NULL;
@@ -107,13 +107,13 @@ void* IterList_Pop(iterlist_t* list)
 
 void IterList_Clear(iterlist_t* list)
 {
-    DENG_ASSERT(list);
+    DE_ASSERT(list);
     list->elementsCount = list->maxElements = list->iter = 0;
 }
 
 void* IterList_MoveIterator(iterlist_t* list)
 {
-    DENG_ASSERT(list);
+    DE_ASSERT(list);
 
     if(!list->elementsCount)
         return NULL;
@@ -132,7 +132,7 @@ void* IterList_MoveIterator(iterlist_t* list)
 
 void IterList_RewindIterator(iterlist_t* list)
 {
-    DENG_ASSERT(list);
+    DE_ASSERT(list);
     if(ITERLIST_FORWARD == list->direction)
     {
         list->iter = -1;
@@ -144,7 +144,7 @@ void IterList_RewindIterator(iterlist_t* list)
 
 void IterList_SetIteratorDirection(iterlist_t* list, iterlist_iterator_direction_t direction)
 {
-    DENG_ASSERT(list);
+    DE_ASSERT(list);
 
     list->direction = direction;
     if(0 == list->elementsCount)

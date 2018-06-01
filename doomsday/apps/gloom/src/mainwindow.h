@@ -43,7 +43,7 @@ protected:
     bool handleFallbackEvent(de::Event const &event) override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // MAINWINDOW_H

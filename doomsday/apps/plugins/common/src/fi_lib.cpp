@@ -170,7 +170,7 @@ static fi_state_t *stackPush(finaleid_t finaleId, finale_mode_t mode, gamestate_
 
 static void NetSv_SendFinaleState(fi_state_t *s)
 {
-    DENG2_ASSERT(s != 0);
+    DE_ASSERT(s != 0);
 
     writer_s *writer = D_NetWrite();
 
@@ -189,7 +189,7 @@ static void NetSv_SendFinaleState(fi_state_t *s)
 
 void NetCl_UpdateFinaleState(reader_s *msg)
 {
-    DENG2_ASSERT(msg != 0);
+    DE_ASSERT(msg != 0);
 
     fi_state_t *s = &remoteFinaleState;
 
@@ -246,7 +246,7 @@ void FI_StackExecute(char const *scriptSrc, int flags, finale_mode_t mode)
 
 void FI_StackExecuteWithId(char const *scriptSrc, int flags, finale_mode_t mode, char const *defId)
 {
-    DENG2_ASSERT(finaleStackInited);
+    DE_ASSERT(finaleStackInited);
 
     // Should we ignore this?
     if(defId && stackHasDefId(defId))
@@ -342,7 +342,7 @@ dd_bool FI_StackActive()
 
 static void stackClear(dd_bool ignoreSuspendedScripts)
 {
-    DENG2_ASSERT(finaleStackInited);
+    DE_ASSERT(finaleStackInited);
 
     if(fi_state_t *s = stackTop())
     {
@@ -598,7 +598,7 @@ dd_bool FI_RequestSkip()
 
 D_CMD(StartFinale)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     String scriptId = argv[1];
 
@@ -619,7 +619,7 @@ D_CMD(StartFinale)
 
 D_CMD(StopFinale)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     if(FI_StackActive())
     {

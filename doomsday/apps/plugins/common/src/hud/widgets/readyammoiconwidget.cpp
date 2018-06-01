@@ -97,7 +97,7 @@ void guidata_readyammoicon_t::tick(timespan_t /*elapsed*/)
 
 void ReadyAmmoIconWidget_Drawer(guidata_readyammoicon_t *icon, Point2Raw const *offset)
 {
-    DENG2_ASSERT(icon);
+    DE_ASSERT(icon);
 
     dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
 
@@ -147,7 +147,7 @@ void SBarReadyAmmoIconWidget_Drawer(guidata_readyammoicon_t *icon, Point2Raw con
 #define X                   ( ORIGINX + X_OFFSET )
 #define Y                   ( ORIGINY + Y_OFFSET )
 
-    DENG2_ASSERT(icon);
+    DE_ASSERT(icon);
 
     dint const activeHud     = ST_ActiveHud(icon->player());
     dint const yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(icon->player()));
@@ -184,7 +184,7 @@ void SBarReadyAmmoIconWidget_Drawer(guidata_readyammoicon_t *icon, Point2Raw con
 
 void ReadyAmmoIconWidget_UpdateGeometry(guidata_readyammoicon_t *icon)
 {
-    DENG2_ASSERT(icon);
+    DE_ASSERT(icon);
 
     Rect_SetWidthHeight(&icon->geometry(), 0, 0);
 
@@ -221,7 +221,7 @@ void ReadyAmmoIconWidget_UpdateGeometry(guidata_readyammoicon_t *icon)
 #if __JHERETIC__
 void SBarReadyAmmoIconWidget_UpdateGeometry(guidata_readyammoicon_t *icon)
 {
-    DENG2_ASSERT(icon);
+    DE_ASSERT(icon);
 
     Rect_SetWidthHeight(&icon->geometry(), 0, 0);
 

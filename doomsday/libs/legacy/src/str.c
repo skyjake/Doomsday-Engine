@@ -61,9 +61,9 @@ static void autoselectMemoryManagement(ddstring_t *str)
         str->memAlloc = M_Malloc;
         str->memCalloc = stdCalloc;
     }
-    DENG_ASSERT(str->memFree);
-    DENG_ASSERT(str->memAlloc);
-    DENG_ASSERT(str->memCalloc);
+    DE_ASSERT(str->memFree);
+    DE_ASSERT(str->memAlloc);
+    DE_ASSERT(str->memCalloc);
 }
 
 static void allocateString(ddstring_t *str, size_t forLength, int preserve)
@@ -86,20 +86,20 @@ static void allocateString(ddstring_t *str, size_t forLength, int preserve)
         str->size *= 2;
     }
 
-    DENG_ASSERT(str->memCalloc);
+    DE_ASSERT(str->memCalloc);
     buf = str->memCalloc(str->size);
 
     if (preserve && str->str && oldSize)
     {
         // Copy the old contents of the string.
-        DENG_ASSERT(oldSize <= str->size);
+        DE_ASSERT(oldSize <= str->size);
         memcpy(buf, str->str, oldSize);
     }
 
     // Replace the old string with the new buffer.
     if (oldSize)
     {
-        DENG_ASSERT(str->memFree);
+        DE_ASSERT(str->memFree);
         str->memFree(str->str);
     }
     str->str = buf;
@@ -112,7 +112,7 @@ static void allocateString(ddstring_t *str, size_t forLength, int preserve)
  */
 ddstring_t *Str_Init(ddstring_t *str)
 {
-    DENG_ASSERT(str);
+    DE_ASSERT(str);
     if (!str) return 0;
 
     if (!Z_IsInited())
@@ -154,7 +154,7 @@ ddstring_t *Str_InitStatic(ddstring_t *str, char const *staticConstStr)
 
 void Str_Free(ddstring_t *str)
 {
-    DENG_ASSERT(str);
+    DE_ASSERT(str);
     if (!str) return;
 
     autoselectMemoryManagement(str);
@@ -194,7 +194,7 @@ ddstring_t *Str_NewFromReader(Reader1 *reader)
 
 static void deleteString(Str *str)
 {
-    DENG_ASSERT(str);
+    DE_ASSERT(str);
     if (!str) return;
 
     Str_Free(str);
@@ -205,7 +205,7 @@ void Str_Delete(Str *str)
 {
     if (!str) return;
 
-    DENG_ASSERT(!Garbage_IsTrashed(str));
+    DE_ASSERT(!Garbage_IsTrashed(str));
 
 #if 0 // use this is release builds if encountering Str/AutoStr errors
     if (Garbage_IsTrashed(str))
@@ -224,7 +224,7 @@ ddstring_t *Str_Clear(ddstring_t *str)
 
 ddstring_t *Str_Reserve(ddstring_t *str, int length)
 {
-    DENG_ASSERT(str);
+    DE_ASSERT(str);
     if (!str) return 0;
 
     if (length > 0)
@@ -236,7 +236,7 @@ ddstring_t *Str_Reserve(ddstring_t *str, int length)
 
 ddstring_t *Str_ReserveNotPreserving(ddstring_t *str, int length)
 {
-    DENG_ASSERT(str);
+    DE_ASSERT(str);
     if (!str) return 0;
 
     if (length > 0)
@@ -248,7 +248,7 @@ ddstring_t *Str_ReserveNotPreserving(ddstring_t *str, int length)
 
 ddstring_t *Str_Set(ddstring_t *str, char const *text)
 {
-    DENG_ASSERT(str);
+    DE_ASSERT(str);
     if (!str) return 0;
 
     {
@@ -265,9 +265,9 @@ ddstring_t *Str_Set(ddstring_t *str, char const *text)
 
 ddstring_t *Str_AppendWithoutAllocs(ddstring_t *str, const ddstring_t *append)
 {
-    DENG_ASSERT(str);
-    DENG_ASSERT(append);
-    DENG_ASSERT(str->length + append->length + 1 <= str->size); // including the null
+    DE_ASSERT(str);
+    DE_ASSERT(append);
+    DE_ASSERT(str->length + append->length + 1 <= str->size); // including the null
 
     if (!str) return 0;
 
@@ -279,9 +279,9 @@ ddstring_t *Str_AppendWithoutAllocs(ddstring_t *str, const ddstring_t *append)
 
 ddstring_t *Str_AppendCharWithoutAllocs(ddstring_t *str, char ch)
 {
-    DENG_ASSERT(str);
-    DENG_ASSERT(ch); // null not accepted
-    DENG_ASSERT(str->length + 2 <= str->size); // including a terminating null
+    DE_ASSERT(str);
+    DE_ASSERT(ch); // null not accepted
+    DE_ASSERT(str->length + 2 <= str->size); // including a terminating null
 
     if (!str) return 0;
 
@@ -292,7 +292,7 @@ ddstring_t *Str_AppendCharWithoutAllocs(ddstring_t *str, char ch)
 
 ddstring_t *Str_Append(ddstring_t *str, char const *append)
 {
-    DENG_ASSERT(str);
+    DE_ASSERT(str);
     if (!str) return 0;
 
     if (append && append[0])
@@ -322,7 +322,7 @@ ddstring_t *Str_AppendChar(ddstring_t *str, char ch)
 
 ddstring_t *Str_Appendf(ddstring_t *str, char const *format, ...)
 {
-    DENG_ASSERT(str);
+    DE_ASSERT(str);
     if (!str) return 0;
 
     { char buf[4096];
@@ -342,8 +342,8 @@ ddstring_t *Str_PartAppend(ddstring_t *str, char const *append, int start, int c
     int partLen;
     char *copied;
 
-    DENG_ASSERT(str);
-    DENG_ASSERT(append);
+    DE_ASSERT(str);
+    DE_ASSERT(append);
 
     if (!str || !append) return str;
     if (start < 0 || count <= 0) return str;
@@ -370,8 +370,8 @@ ddstring_t *Str_Prepend(ddstring_t *str, char const *prepend)
     char *copied;
     size_t incoming;
 
-    DENG_ASSERT(str);
-    DENG_ASSERT(prepend);
+    DE_ASSERT(str);
+    DE_ASSERT(prepend);
 
     if (!str || !prepend) return str;
 
@@ -412,7 +412,7 @@ int Str_Length(const ddstring_t *str)
 
 size_t Str_Size(Str const *str)
 {
-    DENG_ASSERT(str);
+    DE_ASSERT(str);
 
     if (!str) return 0;
     if (str->length)
@@ -424,14 +424,14 @@ size_t Str_Size(Str const *str)
 
 dd_bool Str_IsEmpty(const ddstring_t *str)
 {
-    DENG_ASSERT(str);
+    DE_ASSERT(str);
     return Str_Length(str) == 0;
 }
 
 ddstring_t *Str_Copy(ddstring_t *str, const ddstring_t *other)
 {
-    DENG_ASSERT(str);
-    DENG_ASSERT(other);
+    DE_ASSERT(str);
+    DE_ASSERT(other);
     if (!str || !other) return str;
 
     Str_Free(str);
@@ -457,7 +457,7 @@ ddstring_t *Str_Copy(ddstring_t *str, const ddstring_t *other)
 
 ddstring_t *Str_CopyOrClear(ddstring_t *dest, const ddstring_t *src)
 {
-    DENG_ASSERT(dest);
+    DE_ASSERT(dest);
     if (!dest) return 0;
 
     if (src)
@@ -472,7 +472,7 @@ ddstring_t *Str_StripLeft2(ddstring_t *str, int *count)
     int i, num;
     dd_bool isDone;
 
-    DENG_ASSERT(str);
+    DE_ASSERT(str);
     if (!str) return 0;
 
     if (!str->length)
@@ -517,7 +517,7 @@ ddstring_t *Str_StripRight2(ddstring_t *str, int *count)
 {
     int i, num;
 
-    DENG_ASSERT(str);
+    DE_ASSERT(str);
     if (!str) return 0;
 
     if (str->length == 0)
@@ -562,7 +562,7 @@ ddstring_t *Str_Strip(ddstring_t *str)
 dd_bool Str_StartsWith(Str const *ds, char const *text)
 {
     size_t len = strlen(text);
-    DENG_ASSERT(ds);
+    DE_ASSERT(ds);
     if (!ds->str || !text || Str_Size(ds) < len) return false;
     return !strncmp(ds->str, text, len);
 }
@@ -570,7 +570,7 @@ dd_bool Str_StartsWith(Str const *ds, char const *text)
 dd_bool Str_EndsWith(Str const *ds, char const *text)
 {
     size_t len = strlen(text);
-    DENG_ASSERT(ds);
+    DE_ASSERT(ds);
     if (!ds->str || !text || Str_Size(ds) < len) return false;
     return !strcmp(ds->str + Str_Size(ds) - len, text);
 }
@@ -593,7 +593,7 @@ Str *Str_ReplaceAll(Str *ds, char from, char to)
 
 char const *Str_GetLine(ddstring_t *str, char const *src)
 {
-    DENG_ASSERT(str);
+    DE_ASSERT(str);
     if (!str) return 0;
 
     if (src != 0)
@@ -622,19 +622,19 @@ char const *Str_GetLine(ddstring_t *str, char const *src)
 
 int Str_Compare(const ddstring_t *str, char const *text)
 {
-    DENG_ASSERT(str);
+    DE_ASSERT(str);
     return strcmp(Str_Text(str), text);
 }
 
 int Str_CompareIgnoreCase(const ddstring_t *str, char const *text)
 {
-    DENG_ASSERT(str);
+    DE_ASSERT(str);
     return strcasecmp(Str_Text(str), text);
 }
 
 char const *Str_CopyDelim2(ddstring_t *str, char const *src, char delimiter, int cdflags)
 {
-    DENG_ASSERT(str);
+    DE_ASSERT(str);
     if (!str) return 0;
 
     Str_Clear(str);
@@ -671,7 +671,7 @@ char const *Str_CopyDelim(ddstring_t *dest, char const *src, char delimiter)
 
 char Str_At(const ddstring_t *str, int index)
 {
-    DENG_ASSERT(str);
+    DE_ASSERT(str);
     if (!str) return 0;
 
     if (index < 0 || index >= (int)str->length)
@@ -681,7 +681,7 @@ char Str_At(const ddstring_t *str, int index)
 
 char Str_RAt(const ddstring_t *str, int reverseIndex)
 {
-    DENG_ASSERT(str);
+    DE_ASSERT(str);
     if (!str) return 0;
 
     if (reverseIndex < 0 || reverseIndex >= (int)str->length)
@@ -691,7 +691,7 @@ char Str_RAt(const ddstring_t *str, int reverseIndex)
 
 void Str_Truncate(ddstring_t *str, int position)
 {
-    DENG_ASSERT(str);
+    DE_ASSERT(str);
     if (!str) return;
 
     if (position < 0)
@@ -709,7 +709,7 @@ ddstring_t *Str_PercentEncode2(ddstring_t *str, char const *excludeChars, char c
     int i, span, begin, len;
     ddstring_t buf;
 
-    DENG_ASSERT(str);
+    DE_ASSERT(str);
     if (!str) return 0;
 
     if (Str_IsEmpty(str)) return str;
@@ -781,7 +781,7 @@ ddstring_t *Str_PercentDecode(ddstring_t *str)
     char *data;
     char c;
 
-    DENG_ASSERT(str);
+    DE_ASSERT(str);
     if (!str) return 0;
 
     if (Str_IsEmpty(str)) return str;
@@ -830,7 +830,7 @@ void Str_Write(const ddstring_t *str, Writer1 *writer)
 {
     size_t len = Str_Length(str);
 
-    DENG_ASSERT(str);
+    DE_ASSERT(str);
 
     Writer_WriteUInt32(writer, len);
     Writer_Write(writer, Str_Text(str), len);
@@ -863,7 +863,7 @@ void AutoStr_Delete(AutoStr *as)
 
 AutoStr *AutoStr_FromStr(Str *str)
 {
-    DENG_ASSERT(str);
+    DE_ASSERT(str);
     Garbage_TrashInstance(str, (GarbageDestructor) AutoStr_Delete);
     return str;
 }
@@ -880,7 +880,7 @@ AutoStr *AutoStr_FromTextStd(const char *text)
 
 ddstring_t *Str_FromAutoStr(AutoStr *as)
 {
-    DENG_ASSERT(as);
+    DE_ASSERT(as);
     Garbage_Untrash(as);
     return as;
 }

@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_LOGBUFFER_H
-#define LIBDENG2_LOGBUFFER_H
+#ifndef LIBCORE_LOGBUFFER_H
+#define LIBCORE_LOGBUFFER_H
 
 #include "../Log"
 #include "../File"
@@ -42,7 +42,7 @@ class LogSink;
  *
  * @ingroup core
  */
-class DENG2_PUBLIC LogBuffer : public QObject, public Lockable
+class DE_PUBLIC LogBuffer : public QObject, public Lockable
 {
     Q_OBJECT
 
@@ -213,7 +213,7 @@ public slots:
     void flush();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 
     /// The globally available application buffer.
     static LogBuffer *_appBuffer;
@@ -221,4 +221,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_LOGBUFFER_H
+#endif // LIBCORE_LOGBUFFER_H

@@ -28,7 +28,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(HEdge)
+DE_PIMPL_NOREF(HEdge)
 {
     HEdge *twin = nullptr;     ///< Linked @em twin half-edge (that on the other side of "this" half-edge).
     HEdge *neighbors[2] { nullptr, nullptr }; ///< Previous (anticlockwise) and next half-edge (clockwise) around the @em face.

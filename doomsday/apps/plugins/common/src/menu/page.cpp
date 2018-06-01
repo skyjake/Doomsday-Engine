@@ -47,7 +47,7 @@ namespace menu {
 static mn_rendstate_t rs;
 mn_rendstate_t const *mnRendState = &rs;
 
-DENG2_PIMPL(Page)
+DE_PIMPL(Page)
 {
     String   name; ///< Symbolic name/identifier.
     Children children;
@@ -231,7 +231,7 @@ DENG2_PIMPL(Page)
     /// @pre @a wi is a child of this page.
     void giveChildFocus(Widget *newFocus, bool allowRefocus = false)
     {
-        DENG2_ASSERT(newFocus != 0);
+        DE_ASSERT(newFocus != 0);
 
         if(Widget *focused = self().focusWidget())
         {
@@ -390,7 +390,7 @@ Widget &Page::addWidget(Widget *widget)
 {
     LOG_AS("Page");
 
-    DENG2_ASSERT(widget);
+    DE_ASSERT(widget);
     d->children << widget;
     widget->setPage(this)
            .setFlags(Widget::Focused, UnsetFlags); // Not focused initially.
@@ -420,7 +420,7 @@ static void drawNavigation(Vec2i const origin)
     int const currentPage = 0;//(page->firstObject + page->numVisObjects/2) / page->numVisObjects + 1;
     int const totalPages  = 1;//(int)ceil((float)page->objectsCount/page->numVisObjects);
 #if __JDOOM__ || __JDOOM64__
-    DENG2_UNUSED(currentPage);
+    DE_UNUSED(currentPage);
 #endif
 
     if(totalPages <= 1) return;
@@ -707,7 +707,7 @@ void Page::setFocus(Widget *newFocus)
     int index = indexOf(newFocus);
     if(index < 0)
     {
-        DENG2_ASSERT_FAIL("Page::Focus: Failed to determine index-in-page for widget.");
+        DE_ASSERT_FAIL("Page::Focus: Failed to determine index-in-page for widget.");
         return;
     }
     d->giveChildFocus(d->children[index]);
@@ -753,19 +753,19 @@ void Page::tick()
 
 fontid_t Page::predefinedFont(mn_page_fontid_t id)
 {
-    DENG2_ASSERT(VALID_MNPAGE_FONTID(id));
+    DE_ASSERT(VALID_MNPAGE_FONTID(id));
     return d->fonts[id];
 }
 
 void Page::setPredefinedFont(mn_page_fontid_t id, fontid_t fontId)
 {
-    DENG2_ASSERT(VALID_MNPAGE_FONTID(id));
+    DE_ASSERT(VALID_MNPAGE_FONTID(id));
     d->fonts[id] = fontId;
 }
 
 Vec3f Page::predefinedColor(mn_page_colorid_t id)
 {
-    DENG2_ASSERT(VALID_MNPAGE_COLORID(id));
+    DE_ASSERT(VALID_MNPAGE_COLORID(id));
     uint const colorIndex = d->colors[id];
     return Vec3f(cfg.common.menuTextColors[colorIndex]);
 }

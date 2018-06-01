@@ -20,8 +20,8 @@
 
 namespace de {
 
-DENG2_PIMPL(RelayWidget)
-, DENG2_OBSERVES(Widget, Deletion)
+DE_PIMPL(RelayWidget)
+, DE_OBSERVES(Widget, Deletion)
 {
     GuiWidget *target = nullptr;
 
@@ -43,7 +43,7 @@ DENG2_PIMPL(RelayWidget)
     {
         if (target == &w)
         {
-            DENG2_FOR_PUBLIC_AUDIENCE2(Target, i)
+            DE_FOR_PUBLIC_AUDIENCE2(Target, i)
             {
                 i->relayTargetBeingDeleted(self());
             }
@@ -51,10 +51,10 @@ DENG2_PIMPL(RelayWidget)
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(Target)
+    DE_PIMPL_AUDIENCE(Target)
 };
 
-DENG2_AUDIENCE_METHOD(RelayWidget, Target)
+DE_AUDIENCE_METHOD(RelayWidget, Target)
 
 RelayWidget::RelayWidget(GuiWidget *target, String const &name)
     : GuiWidget(name), d(new Impl(this))

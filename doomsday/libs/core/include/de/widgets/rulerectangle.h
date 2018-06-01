@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_RECTANGLERULE_H
-#define LIBDENG2_RECTANGLERULE_H
+#ifndef LIBCORE_RECTANGLERULE_H
+#define LIBCORE_RECTANGLERULE_H
 
 #include "../AnimationVector"
 #include "../ISizeRule"
@@ -43,7 +43,7 @@ namespace de {
  *
  * @ingroup widgets
  */
-class DENG2_PUBLIC RuleRectangle : public ISizeRule
+class DE_PUBLIC RuleRectangle : public ISizeRule
 {
 public:
     RuleRectangle();
@@ -111,7 +111,7 @@ public:
     template <class RuleType>
     RuleType const &inputRuleAs(Rule::Semantic input) {
         RuleType const *r = dynamic_cast<RuleType const *>(&inputRule(input));
-        DENG2_ASSERT(r != 0);
+        DE_ASSERT(r != 0);
         return *r;
     }
 
@@ -155,9 +155,9 @@ public:
     String description() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_RECTANGLERULE_H
+#endif // LIBCORE_RECTANGLERULE_H

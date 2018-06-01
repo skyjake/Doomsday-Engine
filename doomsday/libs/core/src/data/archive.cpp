@@ -20,7 +20,7 @@
 
 namespace de {
 
-DENG2_PIMPL(Archive)
+DE_PIMPL(Archive)
 {
     /// Source data provided at construction.
     IByteArray const *source;
@@ -116,14 +116,14 @@ void Archive::cache(CacheOperation operation)
 
 bool Archive::hasEntry(Path const &path) const
 {
-    DENG2_ASSERT(d->index != 0);
+    DE_ASSERT(d->index != 0);
 
     return d->index->has(path, PathTree::MatchFull | PathTree::NoBranch);
 }
 
 dint Archive::listFiles(Archive::Names &names, Path const &folder) const
 {
-    DENG2_ASSERT(d->index != 0);
+    DE_ASSERT(d->index != 0);
 
     names.clear();
 
@@ -141,7 +141,7 @@ dint Archive::listFiles(Archive::Names &names, Path const &folder) const
 
 dint Archive::listFolders(Archive::Names &names, Path const &folder) const
 {
-    DENG2_ASSERT(d->index != 0);
+    DE_ASSERT(d->index != 0);
 
     names.clear();
 
@@ -159,7 +159,7 @@ dint Archive::listFolders(Archive::Names &names, Path const &folder) const
 
 File::Status Archive::entryStatus(Path const &path) const
 {
-    DENG2_ASSERT(d->index != 0);
+    DE_ASSERT(d->index != 0);
 
     Entry const &found = static_cast<Entry const &>(d->index->find(path, PathTree::MatchFull));
 
@@ -171,7 +171,7 @@ File::Status Archive::entryStatus(Path const &path) const
 
 Block const &Archive::entryBlock(Path const &path) const
 {
-    DENG2_ASSERT(d->index != 0);
+    DE_ASSERT(d->index != 0);
 
     // The entry contents will be cached in memory.
     if (Entry *entry = static_cast<Entry *>(d->index->tryFind(path, PathTree::MatchFull | PathTree::NoBranch)))
@@ -249,7 +249,7 @@ void Archive::add(Path const &path, IByteArray const &data)
     // Get rid of the earlier entry with this path.
     remove(path);
 
-    DENG2_ASSERT(d->index != 0);
+    DE_ASSERT(d->index != 0);
 
     Entry &entry = static_cast<Entry &>(d->index->insert(path));
     entry.data.reset(new Block(data));
@@ -263,7 +263,7 @@ void Archive::add(Path const &path, IByteArray const &data)
 
 void Archive::remove(Path const &path)
 {
-    DENG2_ASSERT(d->index != 0);
+    DE_ASSERT(d->index != 0);
 
     if (d->index->remove(path, PathTree::MatchFull | PathTree::NoBranch))
     {
@@ -273,7 +273,7 @@ void Archive::remove(Path const &path)
 
 void Archive::clear()
 {
-    DENG2_ASSERT(d->index != 0);
+    DE_ASSERT(d->index != 0);
 
     d->index->clear();
     d->modified = true;
@@ -292,7 +292,7 @@ void Archive::setIndex(PathTree *tree)
 Archive::Entry &Archive::insertEntry(Path const &path)
 {
     LOG_AS("Archive");
-    DENG2_ASSERT(d->index != 0);
+    DE_ASSERT(d->index != 0);
 
     // Remove any existing node at this path.
     d->index->remove(path, PathTree::MatchFull | PathTree::NoBranch);
@@ -302,7 +302,7 @@ Archive::Entry &Archive::insertEntry(Path const &path)
 
 PathTree const &Archive::index() const
 {
-    DENG2_ASSERT(d->index != 0);
+    DE_ASSERT(d->index != 0);
 
     return *d->index;
 }

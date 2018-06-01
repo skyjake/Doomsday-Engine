@@ -186,9 +186,9 @@ enum {
 #define CMDF_BTN_SUICIDE    0x10 // Now ignored in ticcmds
 
 // Console commands.
-DENG_EXTERN_C ccmdtemplate_t netCCmds[];
+DE_EXTERN_C ccmdtemplate_t netCCmds[];
 
-DENG_EXTERN_C float netJumpPower;
+DE_EXTERN_C float netJumpPower;
 
 #ifdef __cplusplus
 extern "C" {

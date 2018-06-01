@@ -26,7 +26,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(Address)
+DE_PIMPL_NOREF(Address)
 {
     std::shared_ptr<QHostAddress> host;
     duint16                       port = 0;

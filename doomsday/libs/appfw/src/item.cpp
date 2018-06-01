@@ -21,7 +21,7 @@
 namespace de {
 namespace ui {
 
-DENG2_PIMPL_NOREF(Item)
+DE_PIMPL_NOREF(Item)
 {
     Data *context;
     Semantics semantics;
@@ -34,10 +34,10 @@ DENG2_PIMPL_NOREF(Item)
         , label(text)
         , data(var) {}
 
-    DENG2_PIMPL_AUDIENCE(Change)
+    DE_PIMPL_AUDIENCE(Change)
 };
 
-DENG2_AUDIENCE_METHOD(Item, Change)
+DE_AUDIENCE_METHOD(Item, Change)
 
 Item::Item(Semantics semantics)
     : d(new Impl(semantics))
@@ -83,7 +83,7 @@ bool Item::hasDataContext() const
 
 Data &Item::dataContext() const
 {
-    DENG2_ASSERT(hasDataContext());
+    DE_ASSERT(hasDataContext());
     return *d->context;
 }
 
@@ -104,7 +104,7 @@ QVariant const &Item::data() const
 
 void Item::notifyChange() const
 {
-    DENG2_FOR_AUDIENCE2(Change, i)
+    DE_FOR_AUDIENCE2(Change, i)
     {
         i->itemChanged(*this);
     }

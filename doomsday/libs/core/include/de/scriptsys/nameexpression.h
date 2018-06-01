@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_NAMEEXPRESSION_H
-#define LIBDENG2_NAMEEXPRESSION_H
+#ifndef LIBCORE_NAMEEXPRESSION_H
+#define LIBCORE_NAMEEXPRESSION_H
 
 #include "../Expression"
 #include "../String"
@@ -37,13 +37,13 @@ class NameExpression : public Expression
 {
 public:
     /// Identifier is not text. @ingroup errors
-    DENG2_ERROR(IdentifierError);
+    DE_ERROR(IdentifierError);
 
     /// Variable already exists when it was required not to. @ingroup errors
-    DENG2_ERROR(AlreadyExistsError);
+    DE_ERROR(AlreadyExistsError);
 
     /// The identifier does not specify an existing variable. @ingroup errors
-    DENG2_ERROR(NotFoundError);
+    DE_ERROR(NotFoundError);
 
     /// Special scope that can be specified in the constructor to tell the
     /// expression to start looking in the context's local namespace.
@@ -64,9 +64,9 @@ public:
     void operator << (Reader &from);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif /* LIBDENG2_NAMEEXPRESSION_H */
+#endif /* LIBCORE_NAMEEXPRESSION_H */

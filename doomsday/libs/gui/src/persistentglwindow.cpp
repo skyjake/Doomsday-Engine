@@ -22,7 +22,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
 
 #include "de/PersistentGLWindow"
 #include "de/GuiApp"
@@ -54,7 +54,7 @@ static QRect desktopRect()
     //return QApplication::desktop()->screenGeometry();
 
     /// @todo Multimonitor? This checks the default screen.
-#if defined (DENG2_QT_5_6_OR_NEWER)
+#if defined (DE_QT_5_6_OR_NEWER)
     return QGuiApplication::primaryScreen()->geometry();
 #else
     return QGuiApplication::screens().at(0)->geometry();
@@ -87,10 +87,10 @@ static void notifyAboutModeChange()
     /// @todo This should be done using an observer.
 
     LOG_GL_NOTE("Display mode has changed");
-    DENG2_GUI_APP->notifyDisplayModeChanged();
+    DE_GUI_APP->notifyDisplayModeChanged();
 }
 
-DENG2_PIMPL(PersistentGLWindow)
+DE_PIMPL(PersistentGLWindow)
 {
     /**
      * State of a window.
@@ -312,7 +312,7 @@ DENG2_PIMPL(PersistentGLWindow)
 
                 case PersistentGLWindow::ColorDepthBits:
                     colorDepthBits = attribs[i];
-                    DENG2_ASSERT(colorDepthBits >= 8 && colorDepthBits <= 32);
+                    DE_ASSERT(colorDepthBits >= 8 && colorDepthBits <= 32);
                     break;
 
                 case PersistentGLWindow::RefreshRate:
@@ -329,7 +329,7 @@ DENG2_PIMPL(PersistentGLWindow)
 
                 default:
                     // Unknown attribute.
-                    DENG2_ASSERT(false);
+                    DE_ASSERT(false);
                 }
             }
         }
@@ -498,7 +498,7 @@ DENG2_PIMPL(PersistentGLWindow)
         // Keep a global pointer to the main window.
         if (id == MAIN_WINDOW_ID)
         {
-            DENG2_ASSERT(!mainExists());
+            DE_ASSERT(!mainExists());
             setMain(thisPublic);
         }
 
@@ -516,7 +516,7 @@ DENG2_PIMPL(PersistentGLWindow)
      */
     bool validateAttributes(int const *attribs)
     {
-        DENG2_ASSERT(attribs);
+        DE_ASSERT(attribs);
 
         for (int i = 0; attribs[i]; ++i)
         {
@@ -570,7 +570,7 @@ DENG2_PIMPL(PersistentGLWindow)
     {
         LOG_AS("applyAttributes");
 
-        DENG2_ASSERT(attribs);
+        DE_ASSERT(attribs);
 
         // Update the cached state from the authoritative source:
         // the widget itself.
@@ -780,7 +780,7 @@ DENG2_PIMPL(PersistentGLWindow)
         }
 
         // The queue is now empty; all modifications to state have been applied.
-        DENG2_FOR_PUBLIC_AUDIENCE2(AttributeChange, i)
+        DE_FOR_PUBLIC_AUDIENCE2(AttributeChange, i)
         {
             i->windowAttributesChanged(self());
         }
@@ -806,10 +806,10 @@ DENG2_PIMPL(PersistentGLWindow)
         return st;
     }
 
-    DENG2_PIMPL_AUDIENCE(AttributeChange)
+    DE_PIMPL_AUDIENCE(AttributeChange)
 };
 
-DENG2_AUDIENCE_METHOD(PersistentGLWindow, AttributeChange)
+DE_AUDIENCE_METHOD(PersistentGLWindow, AttributeChange)
 
 PersistentGLWindow::PersistentGLWindow(String const &id)
     : d(new Impl(this, id))
@@ -958,7 +958,7 @@ void PersistentGLWindow::windowVisibilityChanged()
         d->state = d->widgetState();
     }
 
-    DENG2_FOR_AUDIENCE2(AttributeChange, i)
+    DE_FOR_AUDIENCE2(AttributeChange, i)
     {
         i->windowAttributesChanged(*this);
     }
@@ -971,7 +971,7 @@ String PersistentGLWindow::configName(String const &key) const
 
 PersistentGLWindow &PersistentGLWindow::main()
 {
-    DENG2_ASSERT(mainExists());
+    DE_ASSERT(mainExists());
     if (!mainExists())
     {
         throw InvalidIdError("PersistentGLWindow::main",
@@ -991,7 +991,7 @@ void PersistentGLWindow::moveEvent(QMoveEvent *)
             d->state.setFlag(Impl::State::Centered, false);
 
             // Notify.
-            DENG2_FOR_AUDIENCE2(AttributeChange, i)
+            DE_FOR_AUDIENCE2(AttributeChange, i)
             {
                 i->windowAttributesChanged(*this);
             }

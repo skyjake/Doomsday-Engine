@@ -24,20 +24,20 @@
 
 #include "common.h"
 
-DENG_EXTERN_C dd_bool tmFloatOk; ///< @c true= move would be ok if within "tmFloorZ - tmCeilingZ".
-DENG_EXTERN_C coord_t tmFloorZ;
-DENG_EXTERN_C coord_t tmCeilingZ;
-DENG_EXTERN_C dd_bool tmFellDown;
-DENG_EXTERN_C Line *tmCeilingLine;
-DENG_EXTERN_C Line *tmFloorLine;
-DENG_EXTERN_C Line *tmBlockingLine;
+DE_EXTERN_C dd_bool tmFloatOk; ///< @c true= move would be ok if within "tmFloorZ - tmCeilingZ".
+DE_EXTERN_C coord_t tmFloorZ;
+DE_EXTERN_C coord_t tmCeilingZ;
+DE_EXTERN_C dd_bool tmFellDown;
+DE_EXTERN_C Line *tmCeilingLine;
+DE_EXTERN_C Line *tmFloorLine;
+DE_EXTERN_C Line *tmBlockingLine;
 #if __JHEXEN__
-DENG_EXTERN_C mobj_t *tmBlockingMobj;
+DE_EXTERN_C mobj_t *tmBlockingMobj;
 #endif
 
-DENG_EXTERN_C mobj_t *lineTarget; // Who got hit (or NULL).
+DE_EXTERN_C mobj_t *lineTarget; // Who got hit (or NULL).
 #if __JHEXEN__
-DENG_EXTERN_C mobj_t *PuffSpawned;
+DE_EXTERN_C mobj_t *PuffSpawned;
 #endif
 
 #ifdef __cplusplus

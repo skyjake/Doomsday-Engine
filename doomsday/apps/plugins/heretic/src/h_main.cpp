@@ -350,7 +350,7 @@ static void initAmmoInfo()
 
 void H_PostInit()
 {
-    CommandLine &cmdLine = DENG2_APP->commandLine();
+    CommandLine &cmdLine = DE_APP->commandLine();
 
     /// @todo Kludge: Shareware WAD has different border background.
     /// @todo Do this properly!

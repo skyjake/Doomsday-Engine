@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_LIBRARYFILE_H
-#define LIBDENG2_LIBRARYFILE_H
+#ifndef LIBCORE_LIBRARYFILE_H
+#define LIBCORE_LIBRARYFILE_H
 
 #include "../File"
 #include "IInterpreter"
@@ -37,16 +37,16 @@ class Library;
  *
  * @ingroup fs
  */
-class DENG2_PUBLIC LibraryFile : public File
+class DE_PUBLIC LibraryFile : public File
 {
 public:
     /// Attempted to load a shared library from a source file with unsupported type.
     /// @ingroup errors
-    DENG2_ERROR(UnsupportedSourceError);
+    DE_ERROR(UnsupportedSourceError);
 
     /// Attempted an operation that requires the library to be loaded (and it
     /// couldn't be loaded automatically). @ingroup errors
-    DENG2_ERROR(NotLoadedError);
+    DE_ERROR(NotLoadedError);
 
 public:
     /**
@@ -111,14 +111,14 @@ public:
      */
     static bool recognize(File const &file);
 
-    struct DENG2_PUBLIC Interpreter : public filesys::IInterpreter {
+    struct DE_PUBLIC Interpreter : public filesys::IInterpreter {
         File *interpretFile(File *sourceData) const override;
     };
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
     
 } // namespace de
 
-#endif /* LIBDENG2_LIBRARYFILE_H */
+#endif /* LIBCORE_LIBRARYFILE_H */

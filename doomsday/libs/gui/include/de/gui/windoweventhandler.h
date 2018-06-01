@@ -52,7 +52,7 @@ public:
     /**
      * Notified when the canvas gains or loses input focus.
      */
-    DENG2_DEFINE_AUDIENCE2(FocusChange, void windowFocusChanged(GLWindow &, bool hasFocus))
+    DE_DEFINE_AUDIENCE2(FocusChange, void windowFocusChanged(GLWindow &, bool hasFocus))
 
 public:
     explicit WindowEventHandler(GLWindow *parent);
@@ -84,7 +84,7 @@ public:
     void wheelEvent(QWheelEvent *ev);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

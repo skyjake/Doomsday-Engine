@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_LIBRARY_H
-#define LIBDENG2_LIBRARY_H
+#ifndef LIBCORE_LIBRARY_H
+#define LIBCORE_LIBRARY_H
 
 #include "../libcore.h"
 #include "../NativePath"
@@ -27,12 +27,12 @@
  * Convenience macro for accessing symbols that have a type defined in de::Library
  * with the type name matching the symbol name.
  */
-#define DENG2_SYMBOL(Name) symbol<de::Library::Name>(#Name)
+#define DE_SYMBOL(Name) symbol<de::Library::Name>(#Name)
 
-#if defined (DENG_STATIC_LINK)
+#if defined (DE_STATIC_LINK)
 typedef void *(*StaticSymbolFunc)(char const *name);
-#define DENG2_IMPORT_LIBRARY(name) \
-    DENG2_EXTERN_C void * staticlib_##name##_symbol(char const *); \
+#define DE_IMPORT_LIBRARY(name) \
+    DE_EXTERN_C void * staticlib_##name##_symbol(char const *); \
     struct Importer_##name { \
         Importer_##name() { \
             de::Library::importStaticLibrary(#name, staticlib_##name##_symbol); \
@@ -63,14 +63,14 @@ class WorldSystem;
  *
  * @ingroup core
  */
-class DENG2_PUBLIC Library
+class DE_PUBLIC Library
 {
 public:
     /// Loading the shared library failed. @ingroup errors
-    DENG2_ERROR(LoadError);
+    DE_ERROR(LoadError);
 
     /// A symbol was not found. @ingroup errors
-    DENG2_ERROR(SymbolMissingError);
+    DE_ERROR(SymbolMissingError);
 
     /// Default type identifier.
     static char const *DEFAULT_TYPE;
@@ -136,7 +136,7 @@ public:
     typedef void *(*deng_GetAddress)(dint id);
     typedef void (*deng_Ticker)(ddouble tickLength);
     
-#if defined (DENG_STATIC_LINK)
+#if defined (DE_STATIC_LINK)
     static void importStaticLibrary(char const *name, StaticSymbolFunc symbolFunc);
     static StringList staticLibraries();
 #endif
@@ -217,9 +217,9 @@ public:
     }
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif /* LIBDENG2_LIBRARY_H */
+#endif /* LIBCORE_LIBRARY_H */

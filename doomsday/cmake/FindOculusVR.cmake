@@ -5,7 +5,7 @@ endif ()
 # This is the version of LibOVR that is required.
 set (LIBOVR_REQUIRED_VERSION 0.5.0.1)
 
-option (DENG_ENABLE_OCULUS "Enable/disable Oculus Rift support (if LibOVR was found)" ON)
+option (DE_ENABLE_OCULUS "Enable/disable Oculus Rift support (if LibOVR was found)" ON)
 
 set (LIBOVR_DIR "" CACHE PATH "Location of the LibOVR library (in the Oculus SDK)")
 set (_oldPath ${LIBOVR_OVR_H})
@@ -46,13 +46,13 @@ if (NOT _oldPath STREQUAL LIBOVR_OVR_H)
     endif ()
 endif ()
 
-if (LIBOVR_OVR_H AND DENG_ENABLE_OCULUS)
+if (LIBOVR_OVR_H AND DE_ENABLE_OCULUS)
     if (NOT TARGET LibOVR)
         get_filename_component (ovrDir "${LIBOVR_OVR_H}" DIRECTORY)
         get_filename_component (ovrDir "${ovrDir}" DIRECTORY)
 
         add_library (LibOVR INTERFACE)
-        target_compile_definitions (LibOVR INTERFACE -DDENG_HAVE_OCULUS_API)
+        target_compile_definitions (LibOVR INTERFACE -DDE_HAVE_OCULUS_API)
         target_include_directories (LibOVR INTERFACE
             "${ovrDir}/Include"
             "${ovrDir}/../LibOVRKernel/Src"

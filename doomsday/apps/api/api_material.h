@@ -31,7 +31,7 @@
  */
 ///@{
 
-DENG_API_TYPEDEF(Material)
+DE_API_TYPEDEF(Material)
 {
     de_api_t api;
 
@@ -41,9 +41,9 @@ DENG_API_TYPEDEF(Material)
     materialid_t (*ResolveUriCString)(char const *path);
 
 }
-DENG_API_T(Material);
+DE_API_T(Material);
 
-#ifndef DENG_NO_API_MACROS_MATERIALS
+#ifndef DE_NO_API_MACROS_MATERIALS
 #define DD_MaterialForTextureUri    _api_Material.ForTextureUri
 #define Materials_ComposeUri        _api_Material.ComposeUri
 #define Materials_ResolveUri        _api_Material.ResolveUri
@@ -51,7 +51,7 @@ DENG_API_T(Material);
 #endif
 
 #ifdef __DOOMSDAY__
-DENG_USING_API(Material);
+DE_USING_API(Material);
 #endif
 
 ///@}

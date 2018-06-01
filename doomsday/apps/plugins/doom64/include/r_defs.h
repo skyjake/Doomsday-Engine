@@ -121,10 +121,10 @@ typedef struct xline_s {
 } xline_t;
 
 // Our private map data structures.
-DENG_EXTERN_C xsector_t* xsectors;
-DENG_EXTERN_C xline_t* xlines;
+DE_EXTERN_C xsector_t* xsectors;
+DE_EXTERN_C xline_t* xlines;
 
 // If true we are in the process of setting up a map.
-DENG_EXTERN_C dd_bool mapSetup;
+DE_EXTERN_C dd_bool mapSetup;
 
 #endif

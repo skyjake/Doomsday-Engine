@@ -32,7 +32,7 @@ using namespace de;
 
 namespace gloom {
 
-DENG_GUI_PIMPL(GloomWidget)
+DE_GUI_PIMPL(GloomWidget)
 {
     Mat4f            modelView;
     SafePtr<World>   world;
@@ -110,7 +110,7 @@ void GloomWidget::setWorld(World *world)
     }
 
     d->world = world;
-    DENG2_FOR_AUDIENCE(Change, i) { i->currentWorldChanged(oldWorld, world); }
+    DE_FOR_AUDIENCE(Change, i) { i->currentWorldChanged(oldWorld, world); }
 
     if (d->world)
     {

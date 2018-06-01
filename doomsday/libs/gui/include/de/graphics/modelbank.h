@@ -45,7 +45,7 @@ public:
     {
     public:
         virtual ~IUserData() {}
-        DENG2_CAST_METHODS()
+        DE_CAST_METHODS()
     };
 
     typedef std::function<ModelDrawable * ()> Constructor;
@@ -87,7 +87,7 @@ protected:
     IData *loadFromSource(ISource &source);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

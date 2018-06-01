@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_MODELRENDERER_H
-#define DENG_CLIENT_MODELRENDERER_H
+#ifndef DE_CLIENT_MODELRENDERER_H
+#define DE_CLIENT_MODELRENDERER_H
 
 #include <de/Function>
 #include <de/ModelDrawable>
@@ -97,7 +97,7 @@ public:
     static void initBindings(de::Binder &binder, de::Record &module);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_MODELRENDERER_H
+#endif // DE_CLIENT_MODELRENDERER_H

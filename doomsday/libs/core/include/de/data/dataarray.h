@@ -40,8 +40,8 @@ public:
 
     const T &at(int pos) const
     {
-        DENG2_ASSERT(pos >= 0);
-        DENG2_ASSERT(pos < _size);
+        DE_ASSERT(pos >= 0);
+        DE_ASSERT(pos < _size);
         return _entries[pos];
     }
 

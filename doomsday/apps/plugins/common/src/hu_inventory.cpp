@@ -100,7 +100,7 @@ static uint maxVisibleSlots()
  */
 static void rebuildInventory(hud_inventory_t *inv)
 {
-    DENG2_ASSERT(inv);
+    DE_ASSERT(inv);
     int const plrNum = inv - hudInventories;
     inventoryitemtype_t const selectedType = P_GetInvItem(inv->invSlots[inv->selected])->type;
 
@@ -455,7 +455,7 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
 
 static void inventoryMove(hud_inventory_t *inv, int dir, dd_bool canWrap)
 {
-    DENG2_ASSERT(inv);
+    DE_ASSERT(inv);
     uint const maxVisSlots = maxVisibleSlots();
 
     if(dir == 1)
@@ -565,7 +565,7 @@ void Hu_InventoryMarkDirty(int player)
 
 dd_bool Hu_InventorySelect(int player, inventoryitemtype_t type)
 {
-    DENG2_ASSERT(type == IIT_NONE || (type >= IIT_FIRST && type < NUM_INVENTORYITEM_TYPES));
+    DE_ASSERT(type == IIT_NONE || (type >= IIT_FIRST && type < NUM_INVENTORYITEM_TYPES));
 
     if(player >= 0 && player < MAXPLAYERS)
     {

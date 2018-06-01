@@ -164,7 +164,7 @@ void Cl_ReadSectorDelta(dint /*deltaType*/)
 
     // Sector index number.
     Sector *sec = map.sectorPtr(Reader_ReadUInt16(msgReader));
-    DENG2_ASSERT(sec);
+    DE_ASSERT(sec);
 
     // Flags.
     dint df = Reader_ReadPackedUInt32(msgReader);
@@ -266,7 +266,7 @@ void Cl_ReadSideDelta(dint /*deltaType*/)
     dint const df    = Reader_ReadPackedUInt32(msgReader); // Flags.
 
     LineSide *side = map.sidePtr(index);
-    DENG2_ASSERT(side != 0);
+    DE_ASSERT(side != 0);
 
     if (df & SIDF_TOP_MATERIAL)
     {

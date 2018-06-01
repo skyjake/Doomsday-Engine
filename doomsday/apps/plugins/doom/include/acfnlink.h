@@ -32,7 +32,7 @@
 
 #include "dd_share.h"
 
-DENG_EXTERN_C actionlink_t actionlinks[];
+DE_EXTERN_C actionlink_t actionlinks[];
 
 void C_DECL A_BabyMetal();
 void C_DECL A_BFGsound();

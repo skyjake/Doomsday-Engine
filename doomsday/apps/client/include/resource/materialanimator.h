@@ -48,13 +48,13 @@ class MaterialAnimator
 {
 public:
     /// The referenced (GL)texture unit does not exist. @ingroup errors
-    DENG2_ERROR(MissingTextureUnitError);
+    DE_ERROR(MissingTextureUnitError);
 
     /// The referenced decoration does not exist. @ingroup errors
-    DENG2_ERROR(MissingDecorationError);
+    DE_ERROR(MissingDecorationError);
 
     /// Notified whenever one or more decoration stage changes occur.
-    DENG2_DEFINE_AUDIENCE(DecorationStageChange, void materialAnimatorDecorationStageChanged(MaterialAnimator &animator))
+    DE_DEFINE_AUDIENCE(DecorationStageChange, void materialAnimatorDecorationStageChanged(MaterialAnimator &animator))
 
     /**
      * (GL)Texture unit identifier:
@@ -107,7 +107,7 @@ public:
         void reset();
 
     private:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
 public:
@@ -205,7 +205,7 @@ public:
     Decoration &decoration(int decorIndex) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif  // CLIENT_RESOURCE_MATERIALANIMATOR_H

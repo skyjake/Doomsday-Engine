@@ -34,7 +34,7 @@ class LIBAPPFW_PUBLIC VariableToggleWidget : public ToggleWidget
 {
 public:
     /// Thrown when the variable is gone and someone tries to access it. @ingroup errors
-    DENG2_ERROR(VariableMissingError);
+    DE_ERROR(VariableMissingError);
 
 public:
     VariableToggleWidget(Variable &variable, String const &name = String());
@@ -46,7 +46,7 @@ public:
     void setInactiveValue(double val);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

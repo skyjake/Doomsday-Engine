@@ -39,7 +39,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(ShellUser), public LogSink
+DE_PIMPL(ShellUser), public LogSink
 {
     /// Log entries to be sent are collected here.
     LockableT<shell::LogEntryPacket> logEntryPacket;
@@ -57,7 +57,7 @@ DENG2_PIMPL(ShellUser), public LogSink
 
     LogSink &operator << (LogEntry const &entry)
     {
-        DENG2_GUARD(logEntryPacket);
+        DE_GUARD(logEntryPacket);
         logEntryPacket.value.add(entry);
         return *this;
     }
@@ -75,7 +75,7 @@ DENG2_PIMPL(ShellUser), public LogSink
     {
         Loop::mainCall([this] ()
         {
-            DENG2_GUARD(logEntryPacket);
+            DE_GUARD(logEntryPacket);
             if (!logEntryPacket.value.isEmpty() && self().status() == shell::Link::Connected)
             {
                 self() << logEntryPacket.value;
@@ -89,7 +89,7 @@ ShellUser::ShellUser(Socket *socket) : shell::Link(socket), d(new Impl(*this))
 {
     connect(this, &Link::disconnected, [this] ()
     {
-        DENG2_FOR_AUDIENCE(Disconnect, i)
+        DE_FOR_AUDIENCE(Disconnect, i)
         {
             i->userDisconnected(*this);
         }

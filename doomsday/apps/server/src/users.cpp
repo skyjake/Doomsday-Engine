@@ -21,8 +21,8 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(Users)
-, DENG2_OBSERVES(User, Disconnect)
+DE_PIMPL_NOREF(Users)
+, DE_OBSERVES(User, Disconnect)
 {
     QSet<User *> users;
 
@@ -49,7 +49,7 @@ Users::~Users()
 
 void Users::add(User *user)
 {
-    DENG2_ASSERT(user);
+    DE_ASSERT(user);
     d->users.insert(user);
     user->audienceForDisconnect += d;
 }

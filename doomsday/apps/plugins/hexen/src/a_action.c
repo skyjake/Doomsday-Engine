@@ -595,7 +595,7 @@ dd_bool A_LocalQuake(byte* args, mobj_t* actor)
     int lastfound = 0;
     int success = false;
 
-    DENG_UNUSED(actor);
+    DE_UNUSED(actor);
 
     // Find all quake foci.
     do

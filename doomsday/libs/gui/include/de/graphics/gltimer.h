@@ -68,7 +68,7 @@ public:
     TimeSpan elapsedTime(const Id &id) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

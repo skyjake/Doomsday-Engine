@@ -30,7 +30,7 @@ using namespace de;
 namespace common {
 namespace menu {
 
-DENG2_PIMPL_NOREF(LabelWidget)
+DE_PIMPL_NOREF(LabelWidget)
 {
     String text;
     patchid_t *patch = nullptr;  ///< Used instead of text if Patch Replacement is in use.

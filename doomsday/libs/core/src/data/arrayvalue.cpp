@@ -323,13 +323,13 @@ ArrayValue &ArrayValue::operator << (Value const &value)
 
 Value *ArrayValue::popLast()
 {
-    DENG2_ASSERT(size() > 0);
+    DE_ASSERT(size() > 0);
     return _elements.takeLast();
 }
 
 Value *ArrayValue::popFirst()
 {
-    DENG2_ASSERT(size() > 0);
+    DE_ASSERT(size() > 0);
     return _elements.takeFirst();
 }
 

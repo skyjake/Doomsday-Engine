@@ -62,7 +62,7 @@ static QString statusText(QString txt)
 #endif
 }
 
-DENG2_PIMPL(LinkWindow)
+DE_PIMPL(LinkWindow)
 {
     LogBuffer logBuffer;
     Link *link;
@@ -340,7 +340,7 @@ LinkWindow::LinkWindow(QWidget *parent)
     connect(d->statusButton, SIGNAL(pressed()), this, SLOT(switchToStatus()));
     d->statusButton->setChecked(true);
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     QIcon icon(imageResourcePath(":/images/toolbar_placeholder.png"));
 
     QToolButton *btn = d->addToolButton(tr("Frags"), icon);
@@ -543,7 +543,7 @@ void LinkWindow::handleIncomingPackets()
 {
     forever
     {
-        DENG2_ASSERT(d->link != 0);
+        DE_ASSERT(d->link != 0);
 
         QScopedPointer<Packet> packet(d->link->nextPacket());
         if (packet.isNull()) break;

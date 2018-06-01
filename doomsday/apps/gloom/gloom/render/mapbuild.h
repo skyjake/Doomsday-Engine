@@ -105,7 +105,7 @@ public:
     const Mapper &texOffsetMapper() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace gloom

@@ -23,8 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_GL_DEFERRED_H
-#define DENG_CLIENT_GL_DEFERRED_H
+#ifndef DE_CLIENT_GL_DEFERRED_H
+#define DE_CLIENT_GL_DEFERRED_H
 
 #include "api_gl.h"
 #include "sys_opengl.h"
@@ -96,19 +96,19 @@ extern "C" {
 #endif
 
 // Deferring functions for various function signatures.
-#define LIBDENG_GL_DEFER1(form, x)          void GL_Defer_##form(void (GL_CALL *ptr)(x), x)
-#define LIBDENG_GL_DEFER2(form, x, y)       void GL_Defer_##form(void (GL_CALL* ptr)(x, y), x, y)
-#define LIBDENG_GL_DEFER3(form, x, y, z)    void GL_Defer_##form(void (GL_CALL* ptr)(x, y, z), x, y, z)
-#define LIBDENG_GL_DEFER4(form, x, y, z, w) void GL_Defer_##form(void (GL_CALL* ptr)(x, y, z, w), x, y, z, w)
+#define DE_GL_DEFER1(form, x)          void GL_Defer_##form(void (GL_CALL *ptr)(x), x)
+#define DE_GL_DEFER2(form, x, y)       void GL_Defer_##form(void (GL_CALL* ptr)(x, y), x, y)
+#define DE_GL_DEFER3(form, x, y, z)    void GL_Defer_##form(void (GL_CALL* ptr)(x, y, z), x, y, z)
+#define DE_GL_DEFER4(form, x, y, z, w) void GL_Defer_##form(void (GL_CALL* ptr)(x, y, z, w), x, y, z, w)
 
-LIBDENG_GL_DEFER1(e,         GLenum e);
-LIBDENG_GL_DEFER2(i,         GLenum e, GLint i);
-LIBDENG_GL_DEFER2(f,         GLenum e, GLfloat f);
-LIBDENG_GL_DEFER2(fv4,       GLenum e, const GLfloat* floatArrayFourValues);
-LIBDENG_GL_DEFER2(uintArray, GLsizei count, const GLuint* values);
+DE_GL_DEFER1(e,         GLenum e);
+DE_GL_DEFER2(i,         GLenum e, GLint i);
+DE_GL_DEFER2(f,         GLenum e, GLfloat f);
+DE_GL_DEFER2(fv4,       GLenum e, const GLfloat* floatArrayFourValues);
+DE_GL_DEFER2(uintArray, GLsizei count, const GLuint* values);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif // DENG_CLIENT_GL_DEFERRED_H
+#endif // DE_CLIENT_GL_DEFERRED_H

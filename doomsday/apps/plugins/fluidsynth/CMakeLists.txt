@@ -2,7 +2,7 @@
 # Copyright (c) 2011-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 cmake_minimum_required (VERSION 3.1)
-project (DENG_FLUIDSYNTH)
+project (DE_FLUIDSYNTH)
 include (../PluginConfig.cmake)
 
 set (tgt audio_fluidsynth)
@@ -18,11 +18,11 @@ if (WIN32 AND NOT MINGW_GLIB_DIR)
     return ()
 endif ()
 
-option (DENG_FLUIDSYNTH_EMBEDDED
+option (DE_FLUIDSYNTH_EMBEDDED
     "Compile FluidSynth as part of the ${tgt} plugin" ${embed}
 )
 
-if (DENG_FLUIDSYNTH_EMBEDDED)
+if (DE_FLUIDSYNTH_EMBEDDED)
     find_package (Glib)
 
     if (APPLE)
@@ -47,7 +47,7 @@ if (DENG_FLUIDSYNTH_EMBEDDED)
         )
     endif ()
 
-    set (FS_DIR ${DENG_EXTERNAL_SOURCE_DIR}/fluidsynth)
+    set (FS_DIR ${DE_EXTERNAL_SOURCE_DIR}/fluidsynth)
     include_directories (
         ${FS_DIR}/include
         ${FS_DIR}/src
@@ -101,14 +101,14 @@ else ()
     pkg_check_modules (FLUIDSYNTH fluidsynth)
     if (NOT FLUIDSYNTH_FOUND)
         message (STATUS "Not building ${tgt} because \"fluidsynth\" not found (using pkg-config).\n\
-   You could try an embedded build instead (DENG_FLUIDSYNTH_EMBEDDED).")
+   You could try an embedded build instead (DE_FLUIDSYNTH_EMBEDDED).")
         return ()
     endif ()
 
     add_definitions (-DFLUIDSYNTH_DEFAULT_DRIVER_NAME="pulseaudio")
 endif ()
 
-append (CMAKE_CXX_FLAGS_DEBUG "-DDENG_DSFLUIDSYNTH_DEBUG")
+append (CMAKE_CXX_FLAGS_DEBUG "-DDE_DSFLUIDSYNTH_DEBUG")
 
 include_directories (include)
 file (GLOB src src/*.cpp include/*.h)
@@ -116,7 +116,7 @@ file (GLOB src src/*.cpp include/*.h)
 deng_add_plugin (${tgt} ${src} ${SOURCES})
 
 # Additional compiler options.
-if (DENG_FLUIDSYNTH_EMBEDDED)
+if (DE_FLUIDSYNTH_EMBEDDED)
     target_link_libraries (${tgt} PRIVATE glib)
     if (CMAKE_C_COMPILER_ID MATCHES "GNU")
         target_compile_options (${tgt} PRIVATE

@@ -29,7 +29,7 @@ using namespace de;
 namespace common {
 namespace menu {
 
-DENG2_PIMPL_NOREF(MobjPreviewWidget)
+DE_PIMPL_NOREF(MobjPreviewWidget)
 {
     int mobjType    = 0;
     int playerClass = 0;
@@ -51,7 +51,7 @@ MobjPreviewWidget::~MobjPreviewWidget()
 
 static void findSpriteForMobjType(int mobjType, spritetype_e *sprite, int *frame)
 {
-    DENG2_ASSERT(mobjType >= MT_FIRST && mobjType < NUMMOBJTYPES && sprite && frame);
+    DE_ASSERT(mobjType >= MT_FIRST && mobjType < NUMMOBJTYPES && sprite && frame);
 
     mobjinfo_t *info = &MOBJINFO[mobjType];
     int stateNum = info->states[SN_SPAWN];

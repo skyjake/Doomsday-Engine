@@ -25,7 +25,7 @@
 #include "dd_share.h"
 
 /// Non-zero when the game is paused: game time is not advancing.
-DENG_EXTERN_C int paused;
+DE_EXTERN_C int paused;
 
 #ifdef __cplusplus
 extern "C" {

@@ -39,7 +39,7 @@ using namespace de;
 
 static TimeSpan const FLASH_SPAN = 0.6;
 
-DENG_GUI_PIMPL(TutorialWidget)
+DE_GUI_PIMPL(TutorialWidget)
 {
     enum Step {
         Welcome,

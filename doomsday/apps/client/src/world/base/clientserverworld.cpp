@@ -111,9 +111,9 @@ static inline RenderSystem &rendSys()
  * @todo Consolidate with the missing material reporting done elsewhere -ds
  */
 class MapConversionReporter
-: DENG2_OBSERVES(Map,     UnclosedSectorFound)
-, DENG2_OBSERVES(Map,     OneWayWindowFound)
-, DENG2_OBSERVES(BaseMap, Deletion)
+: DE_OBSERVES(Map,     UnclosedSectorFound)
+, DE_OBSERVES(Map,     OneWayWindowFound)
+, DE_OBSERVES(BaseMap, Deletion)
 {
     /// Record "unclosed sectors".
     /// Sector index => world point relatively near to the problem area.
@@ -233,8 +233,8 @@ protected:
     /// Observes Map Deletion.
     void mapBeingDeleted(BaseMap const &map)
     {
-        DENG2_ASSERT(&map == _map);  // sanity check.
-        DENG2_UNUSED(map);
+        DE_ASSERT(&map == _map);  // sanity check.
+        DE_UNUSED(map);
         _map = nullptr;
     }
 
@@ -244,7 +244,7 @@ private:
 
     static inline dint maxWarnings(dint issueCount)
     {
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
         return issueCount; // No limit.
 #else
         return de::min(issueCount, maxWarningsPerType);
@@ -286,7 +286,7 @@ static char const *mapCacheDir = "mapcache/";
 /// Determine the identity key for maps loaded from the specified @a sourcePath.
 static String cacheIdForMap(String const &sourcePath)
 {
-    DENG2_ASSERT(!sourcePath.isEmpty());
+    DE_ASSERT(!sourcePath.isEmpty());
 
     dushort id = 0;
     for (dint i = 0; i < sourcePath.size(); ++i)
@@ -297,7 +297,7 @@ static String cacheIdForMap(String const &sourcePath)
     return String("%1").arg(id, 4, 16);
 }
 
-DENG2_PIMPL(ClientServerWorld)
+DE_PIMPL(ClientServerWorld)
 {
     Binder binder;               ///< Doomsday Script bindings for the World.
     Record worldModule;
@@ -476,7 +476,7 @@ DENG2_PIMPL(ClientServerWorld)
         if (!map) return;
 
         // We cannot make an editable map current.
-        DENG2_ASSERT(!map->isEditable());
+        DE_ASSERT(!map->isEditable());
 
         // Should we cache this map?
         /*if (mapCache && !haveCachedMap(&map->def()))
@@ -774,21 +774,21 @@ DENG2_PIMPL(ClientServerWorld)
 #if 0
     void updateHandOrigin()
     {
-        DENG2_ASSERT(hand != nullptr && self().hasMap());
+        DE_ASSERT(hand != nullptr && self().hasMap());
 
         viewdata_t const *viewData = &::viewPlayer->viewport();
         hand->setOrigin(viewData->current.origin + viewData->frontVec.xzy() * handDistance);
     }
 #endif // 0
 
-    DENG2_PIMPL_AUDIENCE(FrameBegin)
-    DENG2_PIMPL_AUDIENCE(FrameEnd)
+    DE_PIMPL_AUDIENCE(FrameBegin)
+    DE_PIMPL_AUDIENCE(FrameEnd)
 #endif
 };
 
 #ifdef __CLIENT__
-DENG2_AUDIENCE_METHOD(ClientServerWorld, FrameBegin)
-DENG2_AUDIENCE_METHOD(ClientServerWorld, FrameEnd)
+DE_AUDIENCE_METHOD(ClientServerWorld, FrameBegin)
+DE_AUDIENCE_METHOD(ClientServerWorld, FrameEnd)
 #endif
 
 ClientServerWorld::ClientServerWorld()
@@ -921,7 +921,7 @@ void ClientServerWorld::tick(timespan_t elapsed)
         }
     }
 #else
-    DENG2_UNUSED(elapsed);
+    DE_UNUSED(elapsed);
 #endif
 }
 
@@ -950,7 +950,7 @@ Hand &ClientServerWorld::hand(ddouble *distance) const
 void ClientServerWorld::beginFrame(bool resetNextViewer)
 {
     // Notify interested parties that a new frame has begun.
-    DENG2_FOR_AUDIENCE2(FrameBegin, i) i->worldSystemFrameBegins(resetNextViewer);
+    DE_FOR_AUDIENCE2(FrameBegin, i) i->worldSystemFrameBegins(resetNextViewer);
 }
 
 void ClientServerWorld::endFrame()
@@ -970,7 +970,7 @@ void ClientServerWorld::endFrame()
 #endif
 
     // Notify interested parties that the current frame has ended.
-    DENG2_FOR_AUDIENCE2(FrameEnd, i) i->worldSystemFrameEnds();
+    DE_FOR_AUDIENCE2(FrameEnd, i) i->worldSystemFrameEnds();
 }
 
 #endif  // __CLIENT__

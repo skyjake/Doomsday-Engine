@@ -58,7 +58,7 @@ struct RightClickHandler : public GuiWidget::IEventHandler
     }
 };
 
-DENG2_PIMPL(VariableGroupEditor)
+DE_PIMPL(VariableGroupEditor)
 {
     IOwner *owner;
     bool resetable = false;

@@ -23,7 +23,7 @@
 
 namespace de { namespace shell {
 
-DENG2_PIMPL_NOREF(LabelWidget)
+DE_PIMPL_NOREF(LabelWidget)
 {
     TextCanvas::Char          background;
     String                    label;
@@ -120,7 +120,7 @@ void LabelWidget::draw()
     buf.clear(d->background);
 
     // Use the wrapped lines to determine width and height.
-    DENG2_ASSERT(!d->wraps.isEmpty());
+    DE_ASSERT(!d->wraps.isEmpty());
     Vec2i labelSize(d->wraps.width(), d->wraps.height());
 
     // Determine position of the label based on alignment.

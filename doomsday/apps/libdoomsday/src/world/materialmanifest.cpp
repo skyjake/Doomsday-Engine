@@ -27,8 +27,8 @@ namespace world {
 
 static MaterialManifest::MaterialConstructor materialConstructor;
 
-DENG2_PIMPL_NOREF(MaterialManifest)
-, DENG2_OBSERVES(Material, Deletion)
+DE_PIMPL_NOREF(MaterialManifest)
+, DE_OBSERVES(Material, Deletion)
 {
     MaterialScheme *ownerScheme = nullptr;
     Flags flags;                         ///< Classification flags.
@@ -48,20 +48,20 @@ MaterialManifest::MaterialManifest(PathTree::NodeArgs const &args)
 
 MaterialManifest::~MaterialManifest()
 {
-    DENG2_FOR_AUDIENCE(Deletion, i) i->materialManifestBeingDeleted(*this);
+    DE_FOR_AUDIENCE(Deletion, i) i->materialManifestBeingDeleted(*this);
 }
 
 Material *MaterialManifest::derive()
 {
     if (!hasMaterial())
     {
-        DENG_ASSERT(materialConstructor);
+        DE_ASSERT(materialConstructor);
 
         // Instantiate and associate the new material with this.
         setMaterial(materialConstructor(*this));
 
         // Notify interested parties that a new material was derived from the manifest.
-        DENG2_FOR_AUDIENCE(MaterialDerived, i) i->materialManifestMaterialDerived(*this, material());
+        DE_FOR_AUDIENCE(MaterialDerived, i) i->materialManifestMaterialDerived(*this, material());
     }
     return &material();
 }
@@ -83,7 +83,7 @@ void MaterialManifest::setId(materialid_t id)
 
 MaterialScheme &MaterialManifest::scheme() const
 {
-    DENG_ASSERT(d->ownerScheme);
+    DE_ASSERT(d->ownerScheme);
     return *d->ownerScheme;
 }
 

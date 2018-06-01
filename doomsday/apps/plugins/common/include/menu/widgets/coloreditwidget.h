@@ -98,7 +98,7 @@ public:
     ColorEditWidget &setAlpha(float newAlpha, int flags = MNCOLORBOX_SCF_NO_ACTION);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace menu

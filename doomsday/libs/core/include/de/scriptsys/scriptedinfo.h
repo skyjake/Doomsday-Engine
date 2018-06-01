@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_SCRIPTEDINFO_H
-#define LIBDENG2_SCRIPTEDINFO_H
+#ifndef LIBCORE_SCRIPTEDINFO_H
+#define LIBCORE_SCRIPTEDINFO_H
 
 #include "../Info"
 #include "../File"
@@ -121,12 +121,12 @@ namespace de {
  * }</pre>
  * Here B and C would both inherit from A.
  */
-class DENG2_PUBLIC ScriptedInfo : public IObject
+class DE_PUBLIC ScriptedInfo : public IObject
 {
 public:
     typedef QSet<String> Paths;
 
-    DENG2_DEFINE_AUDIENCE2(NamedBlock, void parsedNamedBlock(String const &name, Record &block))
+    DE_DEFINE_AUDIENCE2(NamedBlock, void parsedNamedBlock(String const &name, Record &block))
 
 public:
     /**
@@ -250,9 +250,9 @@ public:
     static String const VAR_INHERITED_SOURCES;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_SCRIPTEDINFO_H
+#endif // LIBCORE_SCRIPTEDINFO_H

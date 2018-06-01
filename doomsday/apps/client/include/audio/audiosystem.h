@@ -277,7 +277,7 @@ public:  /// @todo make private:
     void startLogical(int soundIdAndFlags, struct mobj_s const *emitter);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 // Music: ---------------------------------------------------------------------------

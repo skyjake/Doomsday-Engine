@@ -41,7 +41,7 @@ class LIBDOOMSDAY_PUBLIC AbstractSession
 {
 public:
     /// Current in-progress state does not match that expected. @ingroup errors
-    DENG2_ERROR(InProgressError);
+    DE_ERROR(InProgressError);
 
 public:
     AbstractSession();
@@ -138,7 +138,7 @@ protected:
     static void removeSaved(de::String const &path);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // LIBDOOMSDAY_SESSION_H

@@ -32,7 +32,7 @@ namespace de { namespace shell {
 
 static TimeSpan MSG_EXPIRATION_SECS = 4;
 
-DENG2_PIMPL_NOREF(ServerFinder)
+DE_PIMPL_NOREF(ServerFinder)
 {
     Beacon beacon;
     struct Found

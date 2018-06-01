@@ -28,7 +28,7 @@ namespace de {
 
 using namespace de::internal;
 
-DENG2_PIMPL(Painter), public Asset
+DE_PIMPL(Painter), public Asset
 {
     GLAtlasBuffer vertexBuf; ///< Per-frame allocations.
     GLDrawQueue   queue;
@@ -109,10 +109,10 @@ void Painter::setNormalizedScissor(Rectanglef const &normScissorRect)
 {
     d->normScissorRect = normScissorRect & Rectanglef(0, 0, 1, 1);
 
-    DENG2_ASSERT(d->normScissorRect.left()   >= 0);
-    DENG2_ASSERT(d->normScissorRect.right()  <= 1);
-    DENG2_ASSERT(d->normScissorRect.top()    >= 0);
-    DENG2_ASSERT(d->normScissorRect.bottom() <= 1);
+    DE_ASSERT(d->normScissorRect.left()   >= 0);
+    DE_ASSERT(d->normScissorRect.right()  <= 1);
+    DE_ASSERT(d->normScissorRect.top()    >= 0);
+    DE_ASSERT(d->normScissorRect.bottom() <= 1);
 
     Rectangleui const vp = GLState::current().viewport();
 
@@ -145,7 +145,7 @@ void Painter::setSaturation(float saturation)
 
 void Painter::drawTriangleStrip(QVector<GuiVertex> &vertices)
 {
-    DENG2_ASSERT(d->isReady());
+    DE_ASSERT(d->isReady());
     std::unique_ptr<GLSubBuffer> sub(d->vertexBuf.alloc(dsize(vertices.size())));
     d->queue.setBuffer(sub->hostBuffer()); // determines final batch index
     sub->setBatchVertices(d->queue.batchIndex(), dsize(vertices.size()), &vertices[0]);
@@ -154,7 +154,7 @@ void Painter::drawTriangleStrip(QVector<GuiVertex> &vertices)
 
 void Painter::flush()
 {
-    DENG2_ASSERT(d->isReady());
+    DE_ASSERT(d->isReady());
     d->queue.flush();
     d->vertexBuf.clear();
 }

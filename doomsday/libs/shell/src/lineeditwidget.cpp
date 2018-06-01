@@ -29,7 +29,7 @@
 
 namespace de { namespace shell {
 
-DENG2_PIMPL(LineEditWidget)
+DE_PIMPL(LineEditWidget)
 {
     bool signalOnEnter;
     ConstantRule *height; ///< As rows.
@@ -108,7 +108,7 @@ void LineEditWidget::draw()
 bool LineEditWidget::handleEvent(Event const &event)
 {
     // There are only key press events.
-    DENG2_ASSERT(event.type() == Event::KeyPress);
+    DE_ASSERT(event.type() == Event::KeyPress);
     KeyEvent const &ev = event.as<KeyEvent>();
 
     bool eaten = true;

@@ -34,7 +34,7 @@
 
 namespace de {
 
-#define IMAGE_ASSERT_EDITABLE(d) DENG2_ASSERT(d->format == UseQImageFormat)
+#define IMAGE_ASSERT_EDITABLE(d) DE_ASSERT(d->format == UseQImageFormat)
 
 namespace internal {
 
@@ -115,7 +115,7 @@ static QImage load(Block const &data)
     Image::Size const size(header.xMax + 1, header.yMax + 1);
 
     QImage image(size.x, size.y, QImage::Format_RGB888);
-    DENG2_ASSERT(image.depth() == 24);
+    DE_ASSERT(image.depth() == 24);
 
     dbyte const *palette = data.data() + data.size() - 768;
     dbyte const *pos = data.data() + HEADER_SIZE;
@@ -331,7 +331,7 @@ static QImage load(Block const &data)
 } // namespace internal
 using namespace internal;
 
-DENG2_PIMPL(Image)
+DE_PIMPL(Image)
 {
     Format       format;
     Size         size;
@@ -635,7 +635,7 @@ Image Image::subImage(Rectanglei const &subArea) const
 void Image::resize(Size const &size)
 {
     IMAGE_ASSERT_EDITABLE(d);
-    DENG2_ASSERT(d->image.format() != QImage::Format_Invalid);
+    DE_ASSERT(d->image.format() != QImage::Format_Invalid);
 
     QImage resized(QSize(size.x, size.y), d->image.format());
     resized.fill(0);
@@ -753,8 +753,8 @@ Image Image::invertedColor() const
 
 Image Image::mixed(Image const &low, Image const &high) const
 {
-    DENG2_ASSERT(size() == low.size());
-    DENG2_ASSERT(size() == high.size());
+    DE_ASSERT(size() == low.size());
+    DE_ASSERT(size() == high.size());
 
     const QImage lowImg  = low.toQImage();
     const QImage highImg = high.toQImage();
@@ -788,7 +788,7 @@ Image Image::mixed(Image const &low, Image const &high) const
 
 Image Image::withAlpha(Image const &grayscale) const
 {
-    DENG2_ASSERT(size() == grayscale.size());
+    DE_ASSERT(size() == grayscale.size());
     const QImage alpha = grayscale.toQImage();
     QImage img = toQImage().convertToFormat(QImage::Format_ARGB32);
     for (duint y = 0; y < height(); ++y)
@@ -847,7 +847,7 @@ void Image::operator << (Reader &from)
 
 GLPixelFormat Image::glFormat(Format imageFormat) // static
 {
-    DENG2_ASSERT(imageFormat >= Luminance_8 && imageFormat <= RGBA_32ui);
+    DE_ASSERT(imageFormat >= Luminance_8 && imageFormat <= RGBA_32ui);
 
     switch (imageFormat)
     {
@@ -964,7 +964,7 @@ GLPixelFormat Image::glFormat(QImage::Format format)
         return GLPixelFormat(GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, 1);
 
     case QImage::Format_RGB32:
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
         /// @todo Is GL_BGR in any GL standard spec? Check for EXT_bgra.
         return GLPixelFormat(GL_RGB8, GL_BGR, GL_UNSIGNED_BYTE, 4);
 #else

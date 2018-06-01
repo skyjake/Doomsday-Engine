@@ -27,7 +27,7 @@
 
 namespace de {
 
-DENG2_PIMPL(Evaluator)
+DE_PIMPL(Evaluator)
 {
     /// The context that owns this evaluator.
     Context &context;
@@ -76,7 +76,7 @@ DENG2_PIMPL(Evaluator)
 
     ~Impl()
     {
-        DENG2_ASSERT(expressions.isEmpty());
+        DE_ASSERT(expressions.isEmpty());
         clearNames();
         clearResults();
     }
@@ -123,7 +123,7 @@ DENG2_PIMPL(Evaluator)
         }
         else
         {
-            DENG2_ASSERT(scope == nullptr);
+            DE_ASSERT(scope == nullptr);
         }
     }
 
@@ -138,8 +138,8 @@ DENG2_PIMPL(Evaluator)
 
     Value &evaluate(Expression const *expression)
     {
-        DENG2_ASSERT(names == nullptr);
-        DENG2_ASSERT(expressions.empty());
+        DE_ASSERT(names == nullptr);
+        DE_ASSERT(expressions.empty());
 
         //qDebug() << "Evaluator: Starting evaluation of" << expression;
 
@@ -163,11 +163,11 @@ DENG2_PIMPL(Evaluator)
 
         // During function call evaluation the process's context changes. We should
         // now be back at the level we started from.
-        DENG2_ASSERT(&self().process().context() == &context);
+        DE_ASSERT(&self().process().context() == &context);
 
         // Exactly one value should remain in the result stack: the result of the
         // evaluated expression.
-        DENG2_ASSERT(self().hasResult());
+        DE_ASSERT(self().hasResult());
 
         clearNames();
         current = nullptr;
@@ -229,8 +229,8 @@ Record *Evaluator::localNamespace() const
 {
     Namespaces spaces;
     namespaces(spaces);
-    DENG2_ASSERT(!spaces.empty());
-    DENG2_ASSERT(spaces.front() != 0);
+    DE_ASSERT(!spaces.empty());
+    DE_ASSERT(spaces.front() != 0);
     return spaces.front();
 }
 
@@ -256,7 +256,7 @@ void Evaluator::pushResult(Value *value)
 
 Value *Evaluator::popResult(Value **evaluationScope)
 {
-    DENG2_ASSERT(d->results.size() > 0);
+    DE_ASSERT(d->results.size() > 0);
 
     Impl::ScopedResult result = d->results.takeLast();
     /*qDebug() << "Evaluator: Popping result" << result.result << result.result->asText()

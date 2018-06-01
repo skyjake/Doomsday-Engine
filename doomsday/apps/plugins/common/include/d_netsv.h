@@ -24,11 +24,11 @@
 #include <de/reader.h>
 #include "common.h"
 
-DENG_EXTERN_C char cyclingMaps, mapCycleNoExit;
-DENG_EXTERN_C int netSvAllowCheats;
-DENG_EXTERN_C int netSvAllowSendMsg;
-DENG_EXTERN_C char *mapCycle;
-DENG_EXTERN_C char gameConfigString[];
+DE_EXTERN_C char cyclingMaps, mapCycleNoExit;
+DE_EXTERN_C int netSvAllowCheats;
+DE_EXTERN_C int netSvAllowSendMsg;
+DE_EXTERN_C char *mapCycle;
+DE_EXTERN_C char gameConfigString[];
 
 #ifdef __cplusplus
 extern "C" {

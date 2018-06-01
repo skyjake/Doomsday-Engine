@@ -100,7 +100,7 @@ signals:
     void selectionChangedByUser(uint pos);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef ChoiceWidget::Item ChoiceItem;

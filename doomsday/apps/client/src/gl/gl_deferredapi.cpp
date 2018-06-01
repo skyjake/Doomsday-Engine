@@ -19,7 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#define LIBDENG_DISABLE_DEFERRED_GL_API // using regular GL API calls
+#define DE_DISABLE_DEFERRED_GL_API // using regular GL API calls
 
 #include "de_platform.h"
 
@@ -53,17 +53,17 @@ static void GL_CALL deng_glDeleteTextures(GLsizei num, GLuint const *names)
 #define GL_CALL2(form, func, x, y) \
     if(mustDefer()) GL_Defer_##form(func, x, y); else func(x, y);
 
-DENG_EXTERN_C void Deferred_glEnable(GLenum e)
+DE_EXTERN_C void Deferred_glEnable(GLenum e)
 {
     GL_CALL1(e, deng_glEnable, e);
 }
 
-DENG_EXTERN_C void Deferred_glDisable(GLenum e)
+DE_EXTERN_C void Deferred_glDisable(GLenum e)
 {
     GL_CALL1(e, deng_glDisable, e);
 }
 
-DENG_EXTERN_C void Deferred_glDeleteTextures(GLsizei num, GLuint const *names)
+DE_EXTERN_C void Deferred_glDeleteTextures(GLsizei num, GLuint const *names)
 {
     GL_CALL2(uintArray, deng_glDeleteTextures, num, names);
 }

@@ -75,7 +75,7 @@ void ReadyItem_Drawer(guidata_readyitem_t *item, Point2Raw const *offset)
 {
 #define TRACKING                ( 2 )
 
-    DENG2_ASSERT(item);
+    DE_ASSERT(item);
     dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
     dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
 
@@ -149,7 +149,7 @@ void SBarReadyItem_Drawer(guidata_readyitem_t *item, Point2Raw const *offset)
 #define COUNT_X_OFFSET          ( 208 )
 #define COUNT_Y_OFFSET          (  24 )
 
-    DENG2_ASSERT(item);
+    DE_ASSERT(item);
 
     dint const activeHud     = ST_ActiveHud(item->player());
     dfloat const textOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
@@ -213,7 +213,7 @@ void SBarReadyItem_Drawer(guidata_readyitem_t *item, Point2Raw const *offset)
 
 void ReadyItem_UpdateGeometry(guidata_readyitem_t *item)
 {
-    DENG2_ASSERT(item);
+    DE_ASSERT(item);
 
     Rect_SetWidthHeight(&item->geometry(), 0, 0);
 
@@ -231,7 +231,7 @@ void ReadyItem_UpdateGeometry(guidata_readyitem_t *item)
 
 void SBarReadyItem_UpdateGeometry(guidata_readyitem_t *item)
 {
-    DENG2_ASSERT(item);
+    DE_ASSERT(item);
 
     Rect_SetWidthHeight(&item->geometry(), 0, 0);
 
@@ -255,7 +255,7 @@ void SBarReadyItem_UpdateGeometry(guidata_readyitem_t *item)
 
 void ReadyItem_Drawer(guidata_readyitem_t *item, const Point2Raw* offset)
 {
-    DENG2_ASSERT(item);
+    DE_ASSERT(item);
     dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
     dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
 
@@ -324,7 +324,7 @@ void SBarReadyItem_Drawer(guidata_readyitem_t *item, Point2Raw const *offset)
 #define ST_INVITEMCX        ( 174 )
 #define ST_INVITEMCY        (  22 )
 
-    DENG2_ASSERT(item);
+    DE_ASSERT(item);
 
     dint const activeHud     = ST_ActiveHud(item->player());
     dint const yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(item->player()));
@@ -394,7 +394,7 @@ void SBarReadyItem_Drawer(guidata_readyitem_t *item, Point2Raw const *offset)
 
 void ReadyItem_UpdateGeometry(guidata_readyitem_t *item)
 {
-    DENG2_ASSERT(item);
+    DE_ASSERT(item);
 
     Rect_SetWidthHeight(&item->geometry(), 0, 0);
 
@@ -412,7 +412,7 @@ void ReadyItem_UpdateGeometry(guidata_readyitem_t *item)
 
 void SBarReadyItem_UpdateGeometry(guidata_readyitem_t *item)
 {
-    DENG2_ASSERT(item);
+    DE_ASSERT(item);
 
     Rect_SetWidthHeight(&item->geometry(), 0, 0);
 

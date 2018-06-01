@@ -29,7 +29,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(OptionsPage)
+DE_PIMPL(OptionsPage)
 {
     using GameOption = shell::DoomsdayInfo::GameOption;
 

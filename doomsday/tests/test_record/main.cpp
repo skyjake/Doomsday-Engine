@@ -69,11 +69,11 @@ int main(int argc, char **argv)
         Record before;
         before.addSubrecord("subrecord");
         before.subrecord("subrecord").set("value", true);
-        DENG2_ASSERT(before.hasSubrecord("subrecord"));
+        DE_ASSERT(before.hasSubrecord("subrecord"));
         LOG_MSG("Before copying:\n") << before;
 
         Record copied = before;
-        DENG2_ASSERT(copied.hasSubrecord("subrecord"));
+        DE_ASSERT(copied.hasSubrecord("subrecord"));
         LOG_MSG("Copied:\n") << copied;
 
         LOG_MSG("...and as JSON:\n") << composeJSON(copied).constData();

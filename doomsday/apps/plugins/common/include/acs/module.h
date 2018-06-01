@@ -35,18 +35,18 @@ namespace acs {
  */
 class Module
 {
-    DENG2_NO_COPY  (Module)
-    DENG2_NO_ASSIGN(Module)
+    DE_NO_COPY  (Module)
+    DE_NO_ASSIGN(Module)
 
 public:
     /// Base class for bytecode format errors. @ingroup errors
-    DENG2_ERROR(FormatError);
+    DE_ERROR(FormatError);
 
     /// Required/referenced constant (string-)value is missing. @ingroup errors
-    DENG2_ERROR(MissingConstantError);
+    DE_ERROR(MissingConstantError);
 
     /// Required/referenced (script) entry point data is missing. @ingroup errors
-    DENG2_ERROR(MissingEntryPointError);
+    DE_ERROR(MissingEntryPointError);
 
     /**
      * Stores information about an ACS script entry point.
@@ -110,7 +110,7 @@ public:
 private:
     Module();
 
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace acs

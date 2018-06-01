@@ -44,7 +44,7 @@ private:
     LogWidget &_widget;
 };
 
-DENG2_PIMPL(LogWidget)
+DE_PIMPL(LogWidget)
 {
     Sink sink;
     MonospaceLogSinkFormatter formatter;
@@ -214,7 +214,7 @@ void LogWidget::draw()
         }
     }
 
-    DENG2_ASSERT(d->cache.size() == d->sink.entryCount());
+    DE_ASSERT(d->cache.size() == d->sink.entryCount());
 
     d->clampVisibleOffset(buf.height());
 

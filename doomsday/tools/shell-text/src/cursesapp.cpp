@@ -73,7 +73,7 @@ static de::Vec2ui actualTerminalSize(de::Vec2ui const &oldSize)
     return size;
 }
 
-DENG2_PIMPL(CursesApp)
+DE_PIMPL(CursesApp)
 {
     de::LogBuffer logBuffer;
     de::Clock clock;

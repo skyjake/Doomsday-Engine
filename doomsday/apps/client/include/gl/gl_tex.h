@@ -22,8 +22,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_GL_IMAGE_MANIPULATION_H
-#define DENG_GL_IMAGE_MANIPULATION_H
+#ifndef DE_GL_IMAGE_MANIPULATION_H
+#define DE_GL_IMAGE_MANIPULATION_H
 
 #include "misc/color.h"
 
@@ -271,4 +271,4 @@ dd_bool GL_QuantizeImageToPalette(uint8_t *out, int outformat,
 void GL_DeSaturatePalettedImage(uint8_t *buffer, res::ColorPalette const &palette,
     int width, int height);
 
-#endif // DENG_GL_IMAGE_MANIPULATION_H
+#endif // DE_GL_IMAGE_MANIPULATION_H

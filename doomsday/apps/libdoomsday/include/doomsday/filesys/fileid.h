@@ -25,8 +25,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_FILEID_H
-#define LIBDENG_FILEID_H
+#ifndef DE_FILEID_H
+#define DE_FILEID_H
 
 #include "../libdoomsday.h"
 #include <QByteArray>
@@ -61,14 +61,14 @@ public:
 
     friend void swap(FileId& first, FileId& second) // nothrow
     {
-#ifdef DENG2_QT_4_8_OR_NEWER
+#ifdef DE_QT_4_8_OR_NEWER
         first.md5_.swap(second.md5_);
-#  ifdef DENG_DEBUG
+#  ifdef DE_DEBUG
         first.path_.swap(second.path_);
 #  endif
 #else
         std::swap(first.md5_, second.md5_);
-#  ifdef DENG_DEBUG
+#  ifdef DE_DEBUG
         std::swap(first.path_, second.path_);
 #  endif
 #endif
@@ -86,7 +86,7 @@ public:
     /// @return Md5hash for this FileId.
     Md5Hash const& md5() const { return md5_; }
 
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
     /// @return Path attributed to this FileId.
     String const& path() const { return path_; }
 
@@ -114,11 +114,11 @@ public:
 private:
     Md5Hash md5_;
 
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
     String path_;
 #endif
 };
 
 } // namespace de
 
-#endif /* LIBDENG_FILEID_H */
+#endif /* DE_FILEID_H */

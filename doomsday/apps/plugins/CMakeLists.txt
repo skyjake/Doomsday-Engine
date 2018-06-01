@@ -41,6 +41,6 @@ endif ()
 
 # Other ---------------------------------------------------------------------------------
 
-if (DENG_DEVELOPER AND NOT IOS)
+if (DE_DEVELOPER AND NOT IOS)
     add_subdirectory (example)
 endif ()

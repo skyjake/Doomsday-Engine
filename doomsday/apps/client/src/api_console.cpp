@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_NO_API_MACROS_CONSOLE
+#define DE_NO_API_MACROS_CONSOLE
 #include <doomsday/console/exec.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
@@ -147,7 +147,7 @@ int DD_Executef(int silent, const char *command, ...)
     return Con_Execute(CMDS_GAME, buffer, silent, false);
 }
 
-DENG_DECLARE_API(Con) =
+DE_DECLARE_API(Con) =
 {
     { DE_API_CONSOLE },
 

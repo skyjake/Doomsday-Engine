@@ -34,7 +34,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(AboutDialog)
+DE_PIMPL(AboutDialog)
 {
     DocumentPopupWidget *glPopup;
     DocumentPopupWidget *audioPopup;

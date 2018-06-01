@@ -80,8 +80,8 @@ void G_RegisterCheats(void)
 
 CHEAT_FUNC(InvItem)
 {
-    DENG2_UNUSED2(args, numArgs);
-    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
+    DE_UNUSED(args, numArgs);
+    DE_ASSERT(player >= 0 && player < MAXPLAYERS);
 
     P_SetMessageWithFlags(&players[player], TXT_CHEATINVITEMS1, LMF_NO_HIDE);
     S_LocalSound(SFX_DORCLS, NULL);
@@ -91,8 +91,8 @@ CHEAT_FUNC(InvItem)
 
 CHEAT_FUNC(InvItem2)
 {
-    DENG2_UNUSED2(args, numArgs);
-    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
+    DE_UNUSED(args, numArgs);
+    DE_ASSERT(player >= 0 && player < MAXPLAYERS);
 
     P_SetMessageWithFlags(&players[player], TXT_CHEATINVITEMS2, LMF_NO_HIDE);
     S_LocalSound(SFX_DORCLS, NULL);
@@ -102,8 +102,8 @@ CHEAT_FUNC(InvItem2)
 
 CHEAT_FUNC(InvItem3)
 {
-    DENG2_UNUSED(numArgs);
-    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
+    DE_UNUSED(numArgs);
+    DE_ASSERT(player >= 0 && player < MAXPLAYERS);
 
     player_t *plr = &players[player];
 
@@ -138,8 +138,8 @@ CHEAT_FUNC(IDKFA)
 {
     player_t *plr = &players[player];
 
-    DENG2_UNUSED2(args, numArgs);
-    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
+    DE_UNUSED(args, numArgs);
+    DE_ASSERT(player >= 0 && player < MAXPLAYERS);
 
     if(gfw_Rule(skill) == SM_NIGHTMARE) return false;
     // Dead players can't cheat.
@@ -165,8 +165,8 @@ CHEAT_FUNC(IDDQD)
 {
     player_t *plr = &players[player];
 
-    DENG2_UNUSED2(args, numArgs);
-    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
+    DE_UNUSED(args, numArgs);
+    DE_ASSERT(player >= 0 && player < MAXPLAYERS);
 
     if(gfw_Rule(skill) == SM_NIGHTMARE) return false;
     // Dead players can't cheat.
@@ -184,8 +184,8 @@ CHEAT_FUNC(Reveal)
 {
     player_t *plr = &players[player];
 
-    DENG2_UNUSED2(args, numArgs);
-    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
+    DE_UNUSED(args, numArgs);
+    DE_ASSERT(player >= 0 && player < MAXPLAYERS);
 
     if(IS_NETGAME && gfw_Rule(deathmatch)) return false;
     // Dead players can't cheat.
@@ -203,7 +203,7 @@ CHEAT_FUNC(Reveal)
  */
 D_CMD(Cheat)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     // Give each of the characters in argument two to the SB event handler.
     int const len = (int) strlen(argv[1]);
@@ -221,7 +221,7 @@ D_CMD(Cheat)
 
 D_CMD(CheatGod)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(G_GameState() == GS_MAP)
     {
@@ -262,7 +262,7 @@ D_CMD(CheatGod)
 
 D_CMD(CheatNoClip)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(G_GameState() == GS_MAP)
     {
@@ -320,7 +320,7 @@ static int suicideResponse(msgresponse_t response, int /*userValue*/, void * /*c
 
 D_CMD(CheatSuicide)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(G_GameState() == GS_MAP)
     {
@@ -361,7 +361,7 @@ D_CMD(CheatSuicide)
 
 D_CMD(CheatReveal)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     int option, i;
 
@@ -722,7 +722,7 @@ D_CMD(CheatGive)
 
 D_CMD(CheatMassacre)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     if(G_GameState() == GS_MAP)
     {
@@ -746,7 +746,7 @@ D_CMD(CheatMassacre)
 
 D_CMD(CheatWhere)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     player_t *plr = &players[CONSOLEPLAYER];
     char textBuffer[256];
@@ -788,7 +788,7 @@ D_CMD(CheatWhere)
 
 D_CMD(CheatMorph)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(G_GameState() == GS_MAP)
     {

@@ -21,7 +21,7 @@
 
 #include <de/libcore.h>
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
 
 /**
  * Render a visual representation of the current state of all input devices.
@@ -33,7 +33,7 @@ void I_DebugDrawer();
  */
 void I_DebugDrawerConsoleRegister();
 
-#endif // DENG2_DEBUG
+#endif // DE_DEBUG
 
 #endif // CLIENT_INPUTDEBUG_H
 

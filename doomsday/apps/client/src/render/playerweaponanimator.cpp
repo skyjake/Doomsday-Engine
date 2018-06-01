@@ -34,8 +34,8 @@ using namespace de;
 
 namespace render {
 
-DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
-, DENG2_OBSERVES(Asset, Deletion)
+DE_PIMPL_NOREF(PlayerWeaponAnimator)
+, DE_OBSERVES(Asset, Deletion)
 {
     ClientPlayer *player;
     String identifier;
@@ -107,13 +107,13 @@ void PlayerWeaponAnimator::stateChanged(state_s const *state)
 
 StateAnimator &PlayerWeaponAnimator::animator()
 {
-    DENG2_ASSERT(hasModel());
+    DE_ASSERT(hasModel());
     return *d->animator;
 }
 
 void PlayerWeaponAnimator::setupVisPSprite(vispsprite_t &spr) const
 {
-    DENG2_ASSERT(hasModel());
+    DE_ASSERT(hasModel());
 
     spr.type = VPSPR_MODEL2;
     spr.data.model2.model = model();

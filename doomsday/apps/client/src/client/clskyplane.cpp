@@ -23,7 +23,7 @@ using namespace de;
 
 namespace world {
 
-DENG2_PIMPL_NOREF(ClSkyPlane)
+DE_PIMPL_NOREF(ClSkyPlane)
 {
     bool isCeiling = false; ///< @c true if this is the ceiling; otherwise the floor.
     ddouble height = 0;
@@ -32,10 +32,10 @@ DENG2_PIMPL_NOREF(ClSkyPlane)
         : isCeiling(ceiling), height(defaultHeight)
     {}
 
-    DENG2_PIMPL_AUDIENCE(HeightChange)
+    DE_PIMPL_AUDIENCE(HeightChange)
 };
 
-DENG2_AUDIENCE_METHOD(ClSkyPlane, HeightChange)
+DE_AUDIENCE_METHOD(ClSkyPlane, HeightChange)
 
 ClSkyPlane::ClSkyPlane(bool isCeiling, ddouble defaultHeight)
     : d(new Impl(isCeiling, defaultHeight))
@@ -61,7 +61,7 @@ void ClSkyPlane::setHeight(ddouble newHeight)
     if (d->height != newHeight)
     {
         d->height = newHeight;
-        DENG2_FOR_AUDIENCE2(HeightChange, i) i->clSkyPlaneHeightChanged(*this);
+        DE_FOR_AUDIENCE2(HeightChange, i) i->clSkyPlaneHeightChanged(*this);
     }
 }
 

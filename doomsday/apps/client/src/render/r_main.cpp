@@ -73,9 +73,9 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
 
     dfloat const offScaleY = ::weaponOffsetScaleY / 1000.0f;
 
-    DENG2_ASSERT(vs.psp);
+    DE_ASSERT(vs.psp);
     ddpsprite_t const &psp = *vs.psp;
-    DENG2_ASSERT(psp.statePtr);
+    DE_ASSERT(psp.statePtr);
     state_t const &state = *psp.statePtr;
 
     defn::Sprite::View const spriteView = defn::Sprite(res::Sprites::get().sprite(state.sprite, state.frame)).view(0);
@@ -114,7 +114,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
     }
     else
     {
-        DENG2_ASSERT(vs.bspLeaf);
+        DE_ASSERT(vs.bspLeaf);
 #if 0
         world::Map const &map = ClientApp::world().map();
         if (useBias && map.hasLightGrid())

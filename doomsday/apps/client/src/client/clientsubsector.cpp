@@ -65,13 +65,13 @@ enum SubsectorFlag
 Q_DECLARE_FLAGS(SubsectorFlags, SubsectorFlag)
 Q_DECLARE_OPERATORS_FOR_FLAGS(SubsectorFlags)
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
 /**
  * Returns a textual, map-relative path for the given @a surface.
  */
 static DotPath composeSurfacePath(Surface const &surface)
 {
-    DENG2_ASSERT(surface.hasParent());
+    DE_ASSERT(surface.hasParent());
     MapElement const &owner = surface.parent();
 
     switch (owner.type())
@@ -92,29 +92,29 @@ static DotPath composeSurfacePath(Surface const &surface)
     default: return "";
     }
 }
-#endif // DENG2_DEBUG
+#endif // DE_DEBUG
 
 /**
  * @todo optimize: Translation of decorations on the world up axis would be a trivial
  * operation to perform, which, would not require plotting decorations again. This
  * frequent case should be designed for. -ds
  */
-DENG2_PIMPL(ClientSubsector)
-, DENG2_OBSERVES(Subsector, Deletion)
-, DENG2_OBSERVES(Plane,     Deletion)
+DE_PIMPL(ClientSubsector)
+, DE_OBSERVES(Subsector, Deletion)
+, DE_OBSERVES(Plane,     Deletion)
 
-//, DENG2_OBSERVES(Sector, LightColorChange)
-//, DENG2_OBSERVES(Sector, LightLevelChange)
+//, DE_OBSERVES(Sector, LightColorChange)
+//, DE_OBSERVES(Sector, LightLevelChange)
 
-, DENG2_OBSERVES(Line,    FlagsChange)
-, DENG2_OBSERVES(Plane,   HeightChange)
-, DENG2_OBSERVES(Plane,   HeightSmoothedChange)
-, DENG2_OBSERVES(Surface, MaterialChange)
-, DENG2_OBSERVES(Surface, OriginChange)
-, DENG2_OBSERVES(Surface, OriginSmoothedChange)
+, DE_OBSERVES(Line,    FlagsChange)
+, DE_OBSERVES(Plane,   HeightChange)
+, DE_OBSERVES(Plane,   HeightSmoothedChange)
+, DE_OBSERVES(Surface, MaterialChange)
+, DE_OBSERVES(Surface, OriginChange)
+, DE_OBSERVES(Surface, OriginSmoothedChange)
 
-, DENG2_OBSERVES(Material,         DimensionsChange)
-, DENG2_OBSERVES(MaterialAnimator, DecorationStageChange)
+, DE_OBSERVES(Material,         DimensionsChange)
+, DE_OBSERVES(MaterialAnimator, DecorationStageChange)
 {
     struct BoundaryData
     {
@@ -169,7 +169,7 @@ DENG2_PIMPL(ClientSubsector)
     typedef QMap<dint, GeometryData *> Shards;
     struct GeometryGroups : public QMap<MapElement *, Shards>
     {
-        ~GeometryGroups() { DENG2_FOR_EACH(GeometryGroups, g, *this) qDeleteAll(*g); }
+        ~GeometryGroups() { DE_FOR_EACH(GeometryGroups, g, *this) qDeleteAll(*g); }
     };
 
     struct DecoratedSurface : public Surface::IDecorationState
@@ -485,7 +485,7 @@ DENG2_PIMPL(ClientSubsector)
         else
         {
             // Multiple neighbors require testing of bounding boxes.
-            DENG2_ASSERT(!neighbors.isEmpty());
+            DE_ASSERT(!neighbors.isEmpty());
 
             QList<QRectF> boundaries;
             for (HEdge *base : neighbors)
@@ -599,7 +599,7 @@ DENG2_PIMPL(ClientSubsector)
 
         // Map "this" subsector to the first outer subsector found.
         initBoundaryDataIfNeeded();
-        DENG2_ASSERT(boundaryData->outerLoop);
+        DE_ASSERT(boundaryData->outerLoop);
         {
             ClEdgeLoop const &loop = *boundaryData->outerLoop;
             if (loop.hasBackSubsector())
@@ -1284,9 +1284,9 @@ DENG2_PIMPL(ClientSubsector)
 
 #if 0
     /// Observes Sector LightLevelChange.
-    void sectorLightLevelChanged(Sector &DENG2_DEBUG_ONLY(changed))
+    void sectorLightLevelChanged(Sector &DE_DEBUG_ONLY(changed))
     {
-        DENG2_ASSERT(&changed == &self().sector());
+        DE_ASSERT(&changed == &self().sector());
         LOG_AS("ClientSubsector");
         if (self().sector().map().hasLightGrid())
         {
@@ -1295,9 +1295,9 @@ DENG2_PIMPL(ClientSubsector)
     }
 
     /// Observes Sector LightColorChange.
-    void sectorLightColorChanged(Sector &DENG2_DEBUG_ONLY(changed))
+    void sectorLightColorChanged(Sector &DE_DEBUG_ONLY(changed))
     {
-        DENG2_ASSERT(&changed == &self().sector());
+        DE_ASSERT(&changed == &self().sector());
         LOG_AS("ClientSubsector");
         if (self().sector().map().hasLightGrid())
         {
@@ -1446,7 +1446,7 @@ String ClientSubsector::description() const
         }
     }
 
-    DENG2_DEBUG_ONLY(
+    DE_DEBUG_ONLY(
         desc.prepend(String(_E(b) "ClientSubsector " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
     )
     return Subsector::description() + "\n" + desc;
@@ -1460,7 +1460,7 @@ String ClientSubsector::edgeLoopIdAsText(dint loopId) // static
     case InnerLoop: return "inner";
 
     default:
-        DENG2_ASSERT_FAIL("ClientSubsector::edgeLoopIdAsText: Invalid loopId");
+        DE_ASSERT_FAIL("ClientSubsector::edgeLoopIdAsText: Invalid loopId");
         throw Error("ClientSubsector::edgeLoopIdAsText", "Unknown loop ID " + QString::number(loopId));
     }
 }
@@ -1474,7 +1474,7 @@ dint ClientSubsector::edgeLoopCount() const
 LoopResult ClientSubsector::forAllEdgeLoops(const std::function<LoopResult (ClEdgeLoop &)> &func)
 {
     d->initBoundaryDataIfNeeded();
-    DENG2_ASSERT(bool(d->boundaryData->outerLoop));
+    DE_ASSERT(bool(d->boundaryData->outerLoop));
     {
         if (auto result = func(*d->boundaryData->outerLoop))
             return result;
@@ -1490,7 +1490,7 @@ LoopResult ClientSubsector::forAllEdgeLoops(const std::function<LoopResult (ClEd
 LoopResult ClientSubsector::forAllEdgeLoops(const std::function<LoopResult (ClEdgeLoop const &)> &func) const
 {
     d->initBoundaryDataIfNeeded();
-    DENG2_ASSERT(bool(d->boundaryData->outerLoop));
+    DE_ASSERT(bool(d->boundaryData->outerLoop));
     {
         if (auto result = func(*d->boundaryData->outerLoop))
             return result;
@@ -1695,11 +1695,11 @@ dint ClientSubsector::blockLightSourceZBias()
 #if 0
 void ClientSubsector::applyBiasChanges(QBitArray &allChanges)
 {
-    DENG2_FOR_EACH(Impl::GeometryGroups, g, d->geomGroups)
+    DE_FOR_EACH(Impl::GeometryGroups, g, d->geomGroups)
     {
         for (Impl::GeometryData *gdata : g.value())
         {
-            DENG2_ASSERT(bool(gdata->shard));
+            DE_ASSERT(bool(gdata->shard));
             gdata->shard->biasTracker().applyChanges(allChanges);
         }
     }
@@ -1709,17 +1709,17 @@ void ClientSubsector::applyBiasChanges(QBitArray &allChanges)
 #if 0
 // Determine the number of bias illumination points needed for this geometry.
 // Presently we define a 1:1 mapping to geometry vertices.
-static dint countIlluminationPoints(MapElement &mapElement, dint DENG2_DEBUG_ONLY(group))
+static dint countIlluminationPoints(MapElement &mapElement, dint DE_DEBUG_ONLY(group))
 {
     switch (mapElement.type())
     {
     case DMU_SUBSPACE: {
         auto &space = mapElement.as<ConvexSubspace>();
-        DENG2_ASSERT(group >= 0 && group < space.subsector().sector().planeCount()); // sanity check
+        DE_ASSERT(group >= 0 && group < space.subsector().sector().planeCount()); // sanity check
         return space.fanVertexCount(); }
 
     case DMU_SEGMENT:
-        DENG2_ASSERT(group >= 0 && group <= LineSide::Top); // sanity check
+        DE_ASSERT(group >= 0 && group <= LineSide::Top); // sanity check
         return 4;
 
     default:

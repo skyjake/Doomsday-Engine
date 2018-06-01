@@ -23,7 +23,7 @@ using namespace de;
 
 static ResourceClass &(*classGetter)(resourceclassid_t) = 0;
 
-DENG2_PIMPL_NOREF(ResourceClass)
+DE_PIMPL_NOREF(ResourceClass)
 {
     /// Symbolic name for this class.
     String name;
@@ -81,7 +81,7 @@ bool ResourceClass::isNull() const
 
 ResourceClass &ResourceClass::classForId(resourceclassid_t id)
 {
-    DENG_ASSERT(classGetter != 0);
+    DE_ASSERT(classGetter != 0);
     return classGetter(id);
 }
 

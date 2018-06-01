@@ -106,7 +106,7 @@ int DM_CDAudio_Get(int prop, void* ptr)
         return DMFmod_Music_Get(MUSIP_PLAYING, ptr);
 
     default:
-        DENG2_ASSERT_FAIL("CDAudio_Get: Unknown property id");
+        DE_ASSERT_FAIL("CDAudio_Get: Unknown property id");
         return false;
     }
 
@@ -166,7 +166,7 @@ int DM_CDAudio_Play(int track, int looped)
         DSFMOD_ERRCHECK(result);
         if(result != FMOD_OK) return false;
     }
-    DENG2_ASSERT(cdSound);
+    DE_ASSERT(cdSound);
 
     int numTracks = 0;
     result = cdSound->getNumSubSounds(&numTracks);

@@ -25,7 +25,7 @@
 
 namespace res {
 
-DENG2_PIMPL_NOREF(AnimGroup)
+DE_PIMPL_NOREF(AnimGroup)
 {
     Frames frames;
     int uniqueId = 0;

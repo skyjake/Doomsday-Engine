@@ -30,13 +30,13 @@ static patchid_t pArmorIcon[NUMARMOR];
 
 static void ArmorIconsWidget_Draw(guidata_armoricons_t *icons, Point2Raw const *offset)
 {
-    DENG2_ASSERT(icons);
+    DE_ASSERT(icons);
     icons->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void ArmorIconsWidget_UpdateGeometry(guidata_armoricons_t *icons)
 {
-    DENG2_ASSERT(icons);
+    DE_ASSERT(icons);
     icons->updateGeometry();
 }
 

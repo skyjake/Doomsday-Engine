@@ -27,7 +27,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(ListenSocket)
+DE_PIMPL_NOREF(ListenSocket)
 {
     QTcpServer *socket;
     duint16 port;

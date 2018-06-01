@@ -47,7 +47,7 @@ protected:
 
 public:
     /// Base class for format-related errors. @ingroup errors
-    DENG2_ERROR(FormatError);
+    DE_ERROR(FormatError);
 
     /**
      * File system object for a lump in the ZIP.
@@ -294,7 +294,7 @@ protected:
     LumpTree const &lumpTree() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

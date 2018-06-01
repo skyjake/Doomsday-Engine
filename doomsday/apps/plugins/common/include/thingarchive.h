@@ -75,7 +75,7 @@ public:
     struct mobj_s *mobj(SerialId serialId, void *address);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // LIBCOMMON_P_ACTOR_H

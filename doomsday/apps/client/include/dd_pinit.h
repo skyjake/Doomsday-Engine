@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_PORTABLE_INIT_H
-#define LIBDENG_PORTABLE_INIT_H
+#ifndef DE_PORTABLE_INIT_H
+#define DE_PORTABLE_INIT_H
 
 #include "api_internaldata.h"
 #include <doomsday/gameapi.h>
@@ -71,4 +71,4 @@ void DD_InitCommandLine(void);
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_PORTABLE_INIT_H */
+#endif /* DE_PORTABLE_INIT_H */

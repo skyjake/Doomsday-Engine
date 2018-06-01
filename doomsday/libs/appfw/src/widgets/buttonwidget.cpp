@@ -26,8 +26,8 @@
 
 namespace de {
 
-DENG_GUI_PIMPL(ButtonWidget),
-DENG2_OBSERVES(Action, Triggered)
+DE_GUI_PIMPL(ButtonWidget),
+DE_OBSERVES(Action, Triggered)
 {
     State state                   { Up };
     DotPath bgColorId             { "background" };
@@ -105,7 +105,7 @@ DENG2_OBSERVES(Action, Triggered)
             break;
         }
 
-        DENG2_FOR_PUBLIC_AUDIENCE2(StateChange, i)
+        DE_FOR_PUBLIC_AUDIENCE2(StateChange, i)
         {
             i->buttonStateChanged(self(), state);
         }
@@ -169,7 +169,7 @@ DENG2_OBSERVES(Action, Triggered)
 
     void actionTriggered(Action &)
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(Triggered, i)
+        DE_FOR_PUBLIC_AUDIENCE2(Triggered, i)
         {
             i->buttonActionTriggered(self());
         }
@@ -182,14 +182,14 @@ DENG2_OBSERVES(Action, Triggered)
         originalTextColor = original;
     }
 
-    DENG2_PIMPL_AUDIENCE(StateChange)
-    DENG2_PIMPL_AUDIENCE(Press)
-    DENG2_PIMPL_AUDIENCE(Triggered)
+    DE_PIMPL_AUDIENCE(StateChange)
+    DE_PIMPL_AUDIENCE(Press)
+    DE_PIMPL_AUDIENCE(Triggered)
 };
 
-DENG2_AUDIENCE_METHOD(ButtonWidget, StateChange)
-DENG2_AUDIENCE_METHOD(ButtonWidget, Press)
-DENG2_AUDIENCE_METHOD(ButtonWidget, Triggered)
+DE_AUDIENCE_METHOD(ButtonWidget, StateChange)
+DE_AUDIENCE_METHOD(ButtonWidget, Press)
+DE_AUDIENCE_METHOD(ButtonWidget, Triggered)
 
 ButtonWidget::ButtonWidget(String const &name) : LabelWidget(name), d(new Impl(this))
 {
@@ -303,7 +303,7 @@ void ButtonWidget::trigger()
 
     // Notify.
     emit pressed();
-    DENG2_FOR_AUDIENCE2(Press, i) i->buttonPressed(*this);
+    DE_FOR_AUDIENCE2(Press, i) i->buttonPressed(*this);
 
     if (held)
     {

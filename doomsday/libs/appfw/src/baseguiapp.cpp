@@ -75,7 +75,7 @@ static Value *Function_App_AddFontMapping(Context &, Function::ArgumentValues co
     NativeFont::StyleMapping mapping;
 
     DictionaryValue const &dict = args.at(1)->as<DictionaryValue>();
-    DENG2_FOR_EACH_CONST(DictionaryValue::Elements, i, dict.elements())
+    DE_FOR_EACH_CONST(DictionaryValue::Elements, i, dict.elements())
     {
         NativeFont::Spec spec;
         ArrayValue const &key = i->first.value->as<ArrayValue>();
@@ -92,7 +92,7 @@ static Value *Function_App_AddFontMapping(Context &, Function::ArgumentValues co
     return 0;
 }
 
-DENG2_PIMPL(BaseGuiApp)
+DE_PIMPL(BaseGuiApp)
 , DENG2_OBSERVES(Variable, Change)
 {
     Binder binder;
@@ -136,8 +136,8 @@ BaseGuiApp::BaseGuiApp(int &argc, char **argv)
     : GuiApp(argc, argv), d(new Impl(this))
 {
     d->binder.init(scriptSystem()["App"])
-            << DENG2_FUNC (App_AddFontMapping, "addFontMapping", "family" << "mappings")
-            << DENG2_FUNC (App_LoadFont,       "loadFont", "fileName");
+            << DE_FUNC (App_AddFontMapping, "addFontMapping", "family" << "mappings")
+            << DE_FUNC (App_LoadFont,       "loadFont", "fileName");
 }
 
 void BaseGuiApp::glDeinit()
@@ -215,7 +215,7 @@ VRConfig &BaseGuiApp::vr()
 
 void BaseGuiApp::beginNativeUIMode()
 {
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
     // Switch temporarily to windowed mode. Not needed on macOS because the display mode
     // is never changed on that platform.
     #if !defined (MACOSX)
@@ -234,7 +234,7 @@ void BaseGuiApp::beginNativeUIMode()
 
 void BaseGuiApp::endNativeUIMode()
 {
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
 #   if !defined (MACOSX)
     {
         static_cast<BaseWindow &>(GLWindow::main()).restoreState();

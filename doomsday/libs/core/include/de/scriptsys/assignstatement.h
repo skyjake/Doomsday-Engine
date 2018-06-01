@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
  
-#ifndef LIBDENG2_ASSIGNSTATEMENT_H
-#define LIBDENG2_ASSIGNSTATEMENT_H
+#ifndef LIBCORE_ASSIGNSTATEMENT_H
+#define LIBCORE_ASSIGNSTATEMENT_H
 
 #include "../libcore.h"
 #include "../Statement"
@@ -37,7 +37,7 @@ class AssignStatement : public Statement
 {
 public:
     /// Trying to assign into something other than a reference (RefValue). @ingroup errors
-    DENG2_ERROR(LeftValueError);
+    DE_ERROR(LeftValueError);
 
     typedef std::vector<Expression *> Indices;
 
@@ -71,4 +71,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_ASSIGNSTATEMENT_H */
+#endif /* LIBCORE_ASSIGNSTATEMENT_H */

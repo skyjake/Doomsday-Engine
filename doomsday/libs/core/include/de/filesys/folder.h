@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_FOLDER_H
-#define LIBDENG2_FOLDER_H
+#ifndef LIBCORE_FOLDER_H
+#define LIBCORE_FOLDER_H
 
 #include "../libcore.h"
 #include "../File"
@@ -55,17 +55,17 @@ class Feed;
  *
  * @see Feed
  */
-class DENG2_PUBLIC Folder : public File
+class DE_PUBLIC Folder : public File
 {
 public:
     /// A folder cannot contain two or more files with the same name. @ingroup errors
-    DENG2_ERROR(DuplicateNameError);
+    DE_ERROR(DuplicateNameError);
 
     /// File path did not point to a file. @ingroup errors
-    DENG2_ERROR(NotFoundError);
+    DE_ERROR(NotFoundError);
 
     /// Creating a new file was unsuccessful. @ingroup errors
-    DENG2_ERROR(NewFileError);
+    DE_ERROR(NewFileError);
 
     typedef QList<Feed *> Feeds;
     typedef QMap<String, File *> Contents;
@@ -213,7 +213,7 @@ public:
      */
     template <typename Type>
     Type &add(Type *fileObject) {
-        DENG2_ASSERT(fileObject != 0);
+        DE_ASSERT(fileObject != 0);
         add(static_cast<File *>(fileObject));
         return *fileObject;
     }
@@ -240,7 +240,7 @@ public:
 
     template <typename Type>
     Type *remove(Type *fileObject) {
-        DENG2_ASSERT(fileObject != 0);
+        DE_ASSERT(fileObject != 0);
         remove(*static_cast<File *>(fileObject));
         return fileObject;
     }
@@ -301,7 +301,7 @@ public:
         throw NotFoundError("Folder::locate",
                             QString("%1 has incompatible type; wanted %2")
                                 .arg(found->description())
-                                .arg(DENG2_TYPE_NAME(Type)));
+                                .arg(DE_TYPE_NAME(Type)));
     }
 
     /**
@@ -387,14 +387,14 @@ public:
     static void checkDefaultSettings();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Folder::PopulationBehaviors)
 
-DENG2_DECLARE_AUDIENCE(FolderPopulation, void folderPopulationFinished())
-DENG2_EXTERN_AUDIENCE(FolderPopulation)
+DE_DECLARE_AUDIENCE(FolderPopulation, void folderPopulationFinished())
+DE_EXTERN_AUDIENCE(FolderPopulation)
 
 } // namespace de
 
-#endif /* LIBDENG2_FOLDER_H */
+#endif /* LIBCORE_FOLDER_H */

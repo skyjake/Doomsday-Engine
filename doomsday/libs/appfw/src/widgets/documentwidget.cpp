@@ -24,7 +24,7 @@
 
 namespace de {
 
-DENG_GUI_PIMPL(DocumentWidget),
+DE_GUI_PIMPL(DocumentWidget),
 public Font::RichFormat::IStyle
 {
     ProgressWidget *progress = nullptr;
@@ -203,7 +203,7 @@ public Font::RichFormat::IStyle
 
         if (!progress->isVisible())
         {
-            DENG2_ASSERT(glText.isReady());
+            DE_ASSERT(glText.isReady());
 
             // Determine visible range of lines.
             Font const &font     = self().font();
@@ -325,7 +325,7 @@ void DocumentWidget::setMaximumLineWidth(const Rule &maxWidth)
 
 void DocumentWidget::setStyleColor(Font::RichFormat::Color id, DotPath const &colorName)
 {
-    DENG2_ASSERT(id != Font::RichFormat::AltAccentColor); // FIXME: not implemented!
+    DE_ASSERT(id != Font::RichFormat::AltAccentColor); // FIXME: not implemented!
 
     if (id >= 0 && id < Font::RichFormat::MaxColors)
     {

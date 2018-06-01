@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_CONTROLLERPRESETS_H
-#define DENG_CLIENT_UI_CONTROLLERPRESETS_H
+#ifndef DE_CLIENT_UI_CONTROLLERPRESETS_H
+#define DE_CLIENT_UI_CONTROLLERPRESETS_H
 
 #include <de/String>
 #include <QStringList>
@@ -37,8 +37,8 @@ public:
     void applyPreset(de::String const &presetId);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_CONTROLLERPRESETS_H
+#endif // DE_CLIENT_UI_CONTROLLERPRESETS_H
 

@@ -41,9 +41,9 @@ public:
     typedef QList<de::Info::BlockElement const *> BlockElements;
 
     /// Notified when a data bundle refresh/identification has been completed.
-    DENG2_DEFINE_AUDIENCE2(Identify, void dataBundlesIdentified())
+    DE_DEFINE_AUDIENCE2(Identify, void dataBundlesIdentified())
 
-    DENG2_ERROR(InvalidError);
+    DE_ERROR(InvalidError);
 
     struct LIBDOOMSDAY_PUBLIC MatchResult
     {
@@ -104,7 +104,7 @@ public:
     MatchResult match(DataBundle const &bundle) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace res

@@ -106,7 +106,7 @@ public:
         const de::Record &objectNamespace() const override;
 
     private:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
 public:
@@ -143,7 +143,7 @@ protected:
     AbstractProfile *profileFromInfoBlock(de::Info::BlockElement const &block);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef GameProfiles::Profile GameProfile;

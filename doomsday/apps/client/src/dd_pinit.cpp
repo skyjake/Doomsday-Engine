@@ -72,7 +72,7 @@ using namespace de;
 /*
  * The game imports and exports.
  */
-DENG_DECLARE_API(InternalData) =
+DE_DECLARE_API(InternalData) =
 {
     { DE_API_INTERNAL_DATA },
     runtimeDefs.mobjInfo.elementsPtr(),
@@ -101,7 +101,7 @@ void DD_PublishAPIs(::Library *lib)
 
     if(library.hasSymbol("deng_API"))
     {
-        de::Library::deng_API setAPI = library.DENG2_SYMBOL(deng_API);
+        de::Library::deng_API setAPI = library.DE_SYMBOL(deng_API);
 
 #define PUBLISH(X) setAPI(X.api.id, &X)
 

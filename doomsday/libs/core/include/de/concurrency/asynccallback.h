@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_ASYNCCALLBACK_H
-#define LIBDENG2_ASYNCCALLBACK_H
+#ifndef LIBCORE_ASYNCCALLBACK_H
+#define LIBCORE_ASYNCCALLBACK_H
 
 #include <de/Waitable>
 
@@ -71,4 +71,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_ASYNCCALLBACK_H
+#endif // LIBCORE_ASYNCCALLBACK_H

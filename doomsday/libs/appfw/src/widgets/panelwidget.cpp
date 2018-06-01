@@ -34,8 +34,8 @@ constexpr double OPENING_ANIM_SPAN           = 0.3;
 constexpr double OPENING_ANIM_SPAN_EASED_OUT = 0.18;
 constexpr double CLOSING_ANIM_SPAN           = 0.22;
 
-DENG_GUI_PIMPL(PanelWidget)
-, DENG2_OBSERVES(Asset, StateChange)
+DE_GUI_PIMPL(PanelWidget)
+, DE_OBSERVES(Asset, StateChange)
 {
     bool waitForContentReady = true;
     bool eatMouseEvents = true;
@@ -151,7 +151,7 @@ DENG_GUI_PIMPL(PanelWidget)
 
         self().panelClosing();
 
-        DENG2_FOR_PUBLIC_AUDIENCE2(Close, i)
+        DE_FOR_PUBLIC_AUDIENCE2(Close, i)
         {
             i->panelBeingClosed(self());
         }
@@ -171,7 +171,7 @@ DENG_GUI_PIMPL(PanelWidget)
         pendingShow.reset(new AssetGroup);
 
         LOGDEV_XVERBOSE("Checking for assets that need waiting for...", "");
-        DENG2_ASSERT(content);
+        DE_ASSERT(content);
         content->collectNotReadyAssets(*pendingShow);
 
         if (pendingShow->isEmpty())
@@ -205,12 +205,12 @@ DENG_GUI_PIMPL(PanelWidget)
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(AboutToOpen)
-    DENG2_PIMPL_AUDIENCE(Close)
+    DE_PIMPL_AUDIENCE(AboutToOpen)
+    DE_PIMPL_AUDIENCE(Close)
 };
 
-DENG2_AUDIENCE_METHOD(PanelWidget, AboutToOpen)
-DENG2_AUDIENCE_METHOD(PanelWidget, Close)
+DE_AUDIENCE_METHOD(PanelWidget, AboutToOpen)
+DE_AUDIENCE_METHOD(PanelWidget, Close)
 
 PanelWidget::PanelWidget(String const &name) : GuiWidget(name), d(new Impl(this))
 {
@@ -253,7 +253,7 @@ void PanelWidget::setContent(GuiWidget *content)
 
 GuiWidget &PanelWidget::content() const
 {
-    DENG2_ASSERT(d->content != 0);
+    DE_ASSERT(d->content != 0);
     return *d->content;
 }
 
@@ -337,7 +337,7 @@ void PanelWidget::open()
 {
     if (d->opened) return;
 
-    DENG2_FOR_AUDIENCE2(AboutToOpen, i)
+    DE_FOR_AUDIENCE2(AboutToOpen, i)
     {
         i->panelAboutToOpen(*this);
     }

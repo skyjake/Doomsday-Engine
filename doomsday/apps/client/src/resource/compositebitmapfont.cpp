@@ -30,7 +30,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(CompositeBitmapFont)
+DE_PIMPL(CompositeBitmapFont)
 {
     ded_compositefont_t *def; /// Definition on which "this" font is derived (if any).
     bool needGLInit;

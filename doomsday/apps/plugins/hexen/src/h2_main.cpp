@@ -296,7 +296,7 @@ void X_PreInit()
 
 void X_PostInit()
 {
-    CommandLine &cmdLine = DENG2_APP->commandLine();
+    CommandLine &cmdLine = DE_APP->commandLine();
 
     // Do this early as other systems need to know.
     P_InitPlayerClassInfo();

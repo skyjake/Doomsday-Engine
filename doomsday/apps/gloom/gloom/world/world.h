@@ -61,10 +61,10 @@ public:
     virtual double groundSurfaceHeight(const Vec3d &posMeters) const;
     virtual double ceilingHeight(const Vec3d &posMeters) const;
 
-    DENG2_CAST_METHODS()
+    DE_CAST_METHODS()
 
 public:
-    DENG2_DEFINE_AUDIENCE(Ready, void worldReady(World &))
+    DE_DEFINE_AUDIENCE(Ready, void worldReady(World &))
 };
 
 } // namespace gloom

@@ -16,8 +16,8 @@
  * General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
  */
-#ifndef DENG_CLIENT_RENDER_STORE_H
-#define DENG_CLIENT_RENDER_STORE_H
+#ifndef DE_CLIENT_RENDER_STORE_H
+#define DE_CLIENT_RENDER_STORE_H
 
 #include <de/Vector>
 
@@ -46,4 +46,4 @@ private:
     de::duint _vertMax   = 0;
 };
 
-#endif // DENG_CLIENT_RENDER_STORE_H
+#endif // DE_CLIENT_RENDER_STORE_H

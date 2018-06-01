@@ -28,7 +28,7 @@
 
 namespace de {
 
-DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
+DE_GUI_PIMPL(ScrollAreaWidget), public Lockable
 {
     /**
      * Rectangle for all the content shown in the widget. The widget's
@@ -193,7 +193,7 @@ void ScrollAreaWidget::setScrollBarColor(DotPath const &colorId)
 
 void ScrollAreaWidget::setOrigin(Origin origin)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     d->origin = origin;
 
@@ -232,45 +232,45 @@ void ScrollAreaWidget::setIndicatorUv(Vec2f const &uvPoint)
 
 void ScrollAreaWidget::setContentWidth(int width)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     d->contentRule.setInput(Rule::Width, Const(width));
 }
 
 void ScrollAreaWidget::setContentWidth(Rule const &width)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     d->contentRule.setInput(Rule::Width, width);
 }
 
 void ScrollAreaWidget::setContentHeight(int height)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     d->contentRule.setInput(Rule::Height, Const(height));
 }
 
 void ScrollAreaWidget::setContentHeight(Rule const &height)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     d->contentRule.setInput(Rule::Height, height);
 }
 
 void ScrollAreaWidget::setContentSize(Rule const &width, Rule const &height)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     setContentWidth(width);
     setContentHeight(height);
 }
 
 void ScrollAreaWidget::setContentSize(ISizeRule const &dimensions)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     setContentWidth(dimensions.width());
     setContentHeight(dimensions.height());
 }
 
 void ScrollAreaWidget::setContentSize(Vec2i const &size)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     setContentWidth(size.x);
     setContentHeight(size.y);
 }
@@ -282,25 +282,25 @@ void ScrollAreaWidget::setContentSize(Vec2ui const &size)
 
 void ScrollAreaWidget::modifyContentWidth(int delta)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     setContentWidth(de::max(0, d->contentRule.width().valuei() + delta));
 }
 
 void ScrollAreaWidget::modifyContentHeight(int delta)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     setContentHeight(de::max(0, d->contentRule.height().valuei() + delta));
 }
 
 int ScrollAreaWidget::contentWidth() const
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     return d->contentRule.width().valuei();
 }
 
 int ScrollAreaWidget::contentHeight() const
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     return d->contentRule.height().valuei();
 }
 
@@ -367,7 +367,7 @@ Vec2i ScrollAreaWidget::viewportSize() const
 
 Vec2i ScrollAreaWidget::scrollPosition() const
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     return Vec2i(scrollPositionX().valuei(), scrollPositionY().valuei());
 }
 
@@ -378,7 +378,7 @@ Vec2i ScrollAreaWidget::scrollPageSize() const
 
 Vec2i ScrollAreaWidget::maximumScroll() const
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     return Vec2i(maximumScrollX().valuei(), maximumScrollY().valuei());
 }
 

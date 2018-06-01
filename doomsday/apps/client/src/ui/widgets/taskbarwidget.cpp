@@ -89,11 +89,11 @@ enum MenuItemPositions
     POS_UI_SETTINGS       = 9,
 };
 
-DENG_GUI_PIMPL(TaskBarWidget)
-, DENG2_OBSERVES(DoomsdayApp, GameChange)
-, DENG2_OBSERVES(ServerLink, Join)
-, DENG2_OBSERVES(ServerLink, Leave)
-, DENG2_OBSERVES(PanelWidget, AboutToOpen) // update menu
+DE_GUI_PIMPL(TaskBarWidget)
+, DE_OBSERVES(DoomsdayApp, GameChange)
+, DE_OBSERVES(ServerLink, Join)
+, DE_OBSERVES(ServerLink, Leave)
+, DE_OBSERVES(PanelWidget, AboutToOpen) // update menu
 {
     typedef DefaultVertexBuf VertexBuf;
 
@@ -348,7 +348,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
     }
 };
 
-#if defined (DENG_HAVE_UPDATER)
+#if defined (DE_HAVE_UPDATER)
 static PopupWidget *makeUpdaterSettings()
 {
     return new UpdaterSettingsDialog(UpdaterSettingsDialog::WithApplyAndCheckButton);
@@ -468,7 +468,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
             << new ui::Item(ui::Item::Separator)
             << new ui::SubwidgetItem(style().images().image("package.icon"), tr("Data Files"),     ui::Left, makePopup<DataFileSettingsDialog>)
             << new ui::SubwidgetItem(style().images().image("home.icon"), tr("User Interface"), ui::Left, makePopup<UISettingsDialog>);
-#if defined (DENG_HAVE_UPDATER)
+#if defined (DE_HAVE_UPDATER)
     d->configMenu->items()
             << new ui::SubwidgetItem(style().images().image("updater"),   tr("Updater"),        ui::Left, makeUpdaterSettings);
 #endif
@@ -495,12 +495,12 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
                             tr("Forces a refresh of resource file metadata."))
             << new ui::Item(ui::Item::Separator)
             << new ui::Item(ui::Item::Separator, tr("Doomsday"))
-#if defined (DENG_HAVE_UPDATER)
+#if defined (DE_HAVE_UPDATER)
             << new ui::ActionItem(tr("Check for Updates"), new CommandAction("updateandnotify"))
 #endif
             << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
             << helpMenu
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit!"))
 #endif
@@ -787,7 +787,7 @@ void TaskBarWidget::showAbout()
     root().window().glDone();
 }
 
-#if defined (DENG_HAVE_UPDATER)
+#if defined (DE_HAVE_UPDATER)
 void TaskBarWidget::showUpdaterSettings()
 {
     /// @todo This has actually little to do with the taskbar. -jk
@@ -800,7 +800,7 @@ void TaskBarWidget::showUpdaterSettings()
 
 void TaskBarWidget::showOrHideHome()
 {
-    DENG2_ASSERT(App_GameLoaded());
+    DE_ASSERT(App_GameLoaded());
 
     // Minimize the game, switch to MP column in Home.
     auto &win = ClientWindow::main();

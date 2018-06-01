@@ -64,8 +64,8 @@ static String const DEFAULT_MATERIAL  ("default");
 
 static int const ANIM_DEFAULT_PRIORITY = 1;
 
-DENG2_PIMPL(StateAnimator)
-, DENG2_OBSERVES(Variable, Change)
+DE_PIMPL(StateAnimator)
+, DE_OBSERVES(Variable, Change)
 {
     enum BindOperation { Bind, Unbind };
 
@@ -326,8 +326,8 @@ DENG2_PIMPL(StateAnimator)
             }
         }
 
-        DENG2_ASSERT(passIndex == passCount);
-        DENG2_ASSERT(indexForPassName.size() == passCount);
+        DE_ASSERT(passIndex == passCount);
+        DE_ASSERT(indexForPassName.size() == passCount);
 
         updatePassMask();
         updatePassMaterials();
@@ -451,7 +451,7 @@ DENG2_PIMPL(StateAnimator)
         }
         else
         {
-            DENG2_ASSERT(var.name() == VAR_ENABLED);
+            DE_ASSERT(var.name() == VAR_ENABLED);
 
             // This is called when one of the "(pass).enabled" variables is modified.
             updatePassMask();
@@ -488,7 +488,7 @@ DENG2_PIMPL(StateAnimator)
         appearance.passMask.fill(false);
         for (String name : enabledPasses.keys())
         {
-            DENG2_ASSERT(indexForPassName.contains(name));
+            DE_ASSERT(indexForPassName.contains(name));
             appearance.passMask.setBit(indexForPassName[name], true);
         }
     }

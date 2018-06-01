@@ -37,8 +37,8 @@
 
 #include "jdoom64.h"
 
-DENG_EXTERN_C int maxAmmo[];
-DENG_EXTERN_C int clipAmmo[];
+DE_EXTERN_C int maxAmmo[];
+DE_EXTERN_C int clipAmmo[];
 
 #ifdef __cplusplus
 extern "C" {

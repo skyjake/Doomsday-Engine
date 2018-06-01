@@ -41,7 +41,7 @@
 namespace de {
 namespace filesys {
 
-DENG2_PIMPL(RemoteFeedRelay)
+DE_PIMPL(RemoteFeedRelay)
 {
     std::unique_ptr<QNetworkAccessManager> network;
     QList<Link::Constructor> linkConstructors;
@@ -63,10 +63,10 @@ DENG2_PIMPL(RemoteFeedRelay)
         qDeleteAll(repositories.values());
     }
 
-    DENG2_PIMPL_AUDIENCE(Status)
+    DE_PIMPL_AUDIENCE(Status)
 };
 
-DENG2_AUDIENCE_METHOD(RemoteFeedRelay, Status)
+DE_AUDIENCE_METHOD(RemoteFeedRelay, Status)
 
 RemoteFeedRelay &RemoteFeedRelay::get()
 {
@@ -159,7 +159,7 @@ PackagePaths RemoteFeedRelay::locatePackages(StringList const &packageIds) const
 Request<FileMetadata>
 RemoteFeedRelay::fetchFileList(String const &repository, String folderPath, FileMetadata metadataReceived)
 {
-    DENG2_ASSERT(d->repositories.contains(repository));
+    DE_ASSERT(d->repositories.contains(repository));
 
     Waitable done;
     Request<FileMetadata> request;
@@ -178,7 +178,7 @@ RemoteFeedRelay::fetchFileList(String const &repository, String folderPath, File
 Request<FileContents>
 RemoteFeedRelay::fetchFileContents(String const &repository, String filePath, FileContents contentsReceived)
 {
-    DENG2_ASSERT(d->repositories.contains(repository));
+    DE_ASSERT(d->repositories.contains(repository));
 
     Waitable done;
     Request<FileContents> request;

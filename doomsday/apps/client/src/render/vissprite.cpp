@@ -77,7 +77,7 @@ void VisSprite_SetupSprite(vissprite_t *spr, VisEntityPose const &pose, VisEntit
     MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec(tClass, tMap);
     MaterialAnimator *matAnimator   = &material.getAnimator(spec);
 
-    DENG2_ASSERT((tClass == 0 && tMap == 0) ||
+    DE_ASSERT((tClass == 0 && tMap == 0) ||
                  (spec.primarySpec->variant.flags & TSF_HAS_COLORPALETTE_XLAT));
 
     spr->pose = pose;

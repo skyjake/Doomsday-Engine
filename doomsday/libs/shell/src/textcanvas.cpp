@@ -22,7 +22,7 @@
 
 namespace de { namespace shell {
 
-DENG2_PIMPL_NOREF(TextCanvas)
+DE_PIMPL_NOREF(TextCanvas)
 {
     Size          size;
     QList<Char *> lines;

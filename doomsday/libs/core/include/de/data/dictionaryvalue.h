@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_DICTIONARYVALUE_H
-#define LIBDENG2_DICTIONARYVALUE_H
+#ifndef LIBCORE_DICTIONARYVALUE_H
+#define LIBCORE_DICTIONARYVALUE_H
 
 #include "../Value"
 
@@ -33,11 +33,11 @@ class ArrayValue;
  *
  * @ingroup data
  */
-class DENG2_PUBLIC DictionaryValue : public Value
+class DE_PUBLIC DictionaryValue : public Value
 {
 public:
     /// An invalid key was used. @ingroup errors
-    DENG2_ERROR(KeyError);
+    DE_ERROR(KeyError);
 
     struct ValueRef {
         ValueRef(Value const *v) : value(v) {}
@@ -132,4 +132,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_DICTIONARYVALUE_H */
+#endif /* LIBCORE_DICTIONARYVALUE_H */

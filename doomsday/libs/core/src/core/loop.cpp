@@ -31,7 +31,7 @@ namespace de {
 
 static Loop *loopSingleton = 0;
 
-DENG2_PIMPL(Loop)
+DE_PIMPL(Loop)
 {
     TimeSpan interval;
     bool running;
@@ -40,7 +40,7 @@ DENG2_PIMPL(Loop)
 
     Impl(Public *i) : Base(i), interval(0), running(false)
     {
-        DENG2_ASSERT(!loopSingleton);
+        DE_ASSERT(!loopSingleton);
         loopSingleton = i;
 
         audienceForIteration.setAdditionAllowedDuringIteration(true);
@@ -54,10 +54,10 @@ DENG2_PIMPL(Loop)
         loopSingleton = 0;
     }
 
-    DENG2_PIMPL_AUDIENCE(Iteration)
+    DE_PIMPL_AUDIENCE(Iteration)
 };
 
-DENG2_AUDIENCE_METHOD(Loop, Iteration)
+DE_AUDIENCE_METHOD(Loop, Iteration)
 
 Loop::Loop() : d(new Impl(this))
 {}
@@ -120,7 +120,7 @@ void Loop::mainCall(std::function<void ()> func) // static
 
 Loop &Loop::get()
 {
-    DENG2_ASSERT(loopSingleton != 0);
+    DE_ASSERT(loopSingleton != 0);
     return *loopSingleton;
 }
 
@@ -130,7 +130,7 @@ void Loop::nextLoopIteration()
     {
         if (d->running)
         {
-            DENG2_FOR_AUDIENCE2(Iteration, i) i->loopIteration();
+            DE_FOR_AUDIENCE2(Iteration, i) i->loopIteration();
         }
     }
     catch (Error const &er)
@@ -153,14 +153,14 @@ LoopCallback::~LoopCallback()
 
 bool LoopCallback::isEmpty() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     return _funcs.isEmpty();
 }
 
 void LoopCallback::enqueue(Callback func)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     _funcs << func;
 
@@ -173,7 +173,7 @@ void LoopCallback::loopIteration()
 
     // Lock while modifying but not during the callbacks themselves.
     {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         Loop::get().audienceForIteration() -= this;
 
         // Make a copy of the list if new callbacks get enqueued in the callback.

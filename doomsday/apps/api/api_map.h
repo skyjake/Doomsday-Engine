@@ -92,10 +92,10 @@
  * For example, a game could use Sector to identify to sector to
  * change with the Map Update API.
  *
- * Define @c DENG_INTERNAL_DATA_ACCESS if access to the internal map data
+ * Define @c DE_INTERNAL_DATA_ACCESS if access to the internal map data
  * structures is needed.
  */
-#if !defined __DOOMSDAY__ && !defined DENG_INTERNAL_DATA_ACCESS
+#if !defined __DOOMSDAY__ && !defined DE_INTERNAL_DATA_ACCESS
 
 // Opaque types for public use.
 struct convexsubspace_s;
@@ -231,7 +231,7 @@ extern "C" {
 /// @addtogroup world
 ///@{
 
-DENG_API_TYPEDEF(Map)
+DE_API_TYPEDEF(Map)
 {
     de_api_t api;
 
@@ -676,9 +676,9 @@ DENG_API_TYPEDEF(Map)
     void            (*GetDoublepv)(MapElementPtr ptr, uint prop, double *params);
     void            (*GetPtrpv)(MapElementPtr ptr, uint prop, void *params);
 }
-DENG_API_T(Map);
+DE_API_T(Map);
 
-#ifndef DENG_NO_API_MACROS_MAP
+#ifndef DE_NO_API_MACROS_MAP
 #define P_MapExists                         _api_Map.Exists
 #define P_MapIsCustom                       _api_Map.IsCustom
 #define P_MapSourceFile                     _api_Map.SourceFile
@@ -810,7 +810,7 @@ DENG_API_T(Map);
 #endif
 
 #ifdef __DOOMSDAY__
-DENG_USING_API(Map);
+DE_USING_API(Map);
 #endif
 
 ///@}

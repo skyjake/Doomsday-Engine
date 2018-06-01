@@ -56,13 +56,13 @@ namespace internal
 
     ACS_COMMAND(NOP)
     {
-        DENG2_UNUSED(interp);
+        DE_UNUSED(interp);
         return Continue;
     }
 
     ACS_COMMAND(Terminate)
     {
-        DENG2_UNUSED(interp);
+        DE_UNUSED(interp);
         return Terminate;
     }
 
@@ -748,7 +748,7 @@ namespace internal
 
     ACS_COMMAND(BeginPrint)
     {
-        DENG2_UNUSED(interp);
+        DE_UNUSED(interp);
         printBuffer.clear();
         return Continue;
     }
@@ -776,7 +776,7 @@ namespace internal
 
     ACS_COMMAND(EndPrintBold)
     {
-        DENG2_UNUSED(interp);
+        DE_UNUSED(interp);
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
             if(players[i].plr->inGame)
@@ -1136,7 +1136,7 @@ System &Interpreter::scriptSys() const
 
 Script &Interpreter::script() const
 {
-    DENG2_ASSERT(_script);
+    DE_ASSERT(_script);
     return *_script;
 }
 
@@ -1219,7 +1219,7 @@ int Interpreter::read(MapStateReader *msr)
         if(lineIndex >= 0)
         {
             line = (Line *) P_ToPtr(DMU_LINE, lineIndex);
-            DENG2_ASSERT(line);
+            DE_ASSERT(line);
         }
         else
         {
@@ -1269,7 +1269,7 @@ int Interpreter::read(MapStateReader *msr)
         if(temp >= 0)
         {
             line = (Line *) P_ToPtr(DMU_LINE, temp);
-            DENG2_ASSERT(line);
+            DE_ASSERT(line);
         }
         else
         {
@@ -1304,6 +1304,6 @@ int Interpreter::read(MapStateReader *msr)
 
 void acs_Interpreter_Think(acs_Interpreter *interp)
 {
-    DENG2_ASSERT(interp);
+    DE_ASSERT(interp);
     reinterpret_cast<acs::Interpreter *>(interp)->think();
 }

@@ -25,7 +25,7 @@
 #include "api_uri.h"
 #include "dd_share.h"
 
-DENG_API_TYPEDEF(R)
+DE_API_TYPEDEF(R)
 {
     de_api_t api;
 
@@ -132,9 +132,9 @@ DENG_API_TYPEDEF(R)
     int (*TextureUniqueId)(Uri const *uri); /*quiet=false*/
     int (*TextureUniqueId2)(Uri const *uri, dd_bool quiet);
 }
-DENG_API_T(R);
+DE_API_T(R);
 
-#ifndef DENG_NO_API_MACROS_RESOURCE
+#ifndef DE_NO_API_MACROS_RESOURCE
 #define R_DeclarePatch                  _api_R.DeclarePatch
 #define R_GetPatchInfo                  _api_R.GetPatchInfo
 #define R_ComposePatchUri               _api_R.ComposePatchUri
@@ -152,7 +152,7 @@ DENG_API_T(R);
 #endif
 
 #ifdef __DOOMSDAY__
-DENG_USING_API(R);
+DE_USING_API(R);
 #endif
 
 #endif // DOOMSDAY_API_RESOURCE_H

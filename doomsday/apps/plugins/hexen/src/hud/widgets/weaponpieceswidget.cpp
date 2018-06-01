@@ -31,13 +31,13 @@ static patchid_t pComplete[NUM_PLAYER_CLASSES];
 
 static void WeaponPiecesWidget_Draw(guidata_weaponpieces_t *wp, Point2Raw const *offset)
 {
-    DENG2_ASSERT(wp);
+    DE_ASSERT(wp);
     wp->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void WeaponPiecesWidget_UpdateGeometry(guidata_weaponpieces_t *wp)
 {
-    DENG2_ASSERT(wp);
+    DE_ASSERT(wp);
     wp->updateGeometry();
 }
 

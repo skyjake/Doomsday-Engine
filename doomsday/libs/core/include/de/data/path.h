@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_PATH_H
-#define LIBDENG2_PATH_H
+#ifndef LIBCORE_PATH_H
+#define LIBCORE_PATH_H
 
 #include <algorithm> // std::swap
 
@@ -44,11 +44,11 @@ namespace de {
  * Internally, the class avoids duplicating the provided path String (i.e.,
  * string is not altered), instead relying on the implicit sharing of QString.
  */
-class DENG2_PUBLIC Path : public ISerializable, public LogEntry::Arg::Base
+class DE_PUBLIC Path : public ISerializable, public LogEntry::Arg::Base
 {
 public:
     /// Segment index was out of bounds. @ingroup errors
-    DENG2_ERROR(OutOfBoundsError);
+    DE_ERROR(OutOfBoundsError);
 
     /// Type used to represent a path segment hash key.
     typedef duint32 hash_type;
@@ -70,7 +70,7 @@ public:
      * @see URI paths are composed of "segments":
      * http://tools.ietf.org/html/rfc3986#section-3.3
      */
-    struct DENG2_PUBLIC Segment
+    struct DE_PUBLIC Segment
     {
         /**
          * Segments are implicitly converted to text strings.
@@ -460,7 +460,7 @@ public:
     static Path normalize(String const &text, QChar replaceWith = '/');
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Path::Segment::Flags)
@@ -469,7 +469,7 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(Path::Segment::Flags)
  * Utility class for specifying paths that use a dot (.) as the path separator.
  * @ingroup data
  */
-class DENG2_PUBLIC DotPath : public Path
+class DE_PUBLIC DotPath : public Path
 {
 public:
     DotPath(String const &path = "")        : Path(path, '.') {}
@@ -519,7 +519,7 @@ public:
  * Utility class for referring to a portion of an existing (immutable) path.
  * @ingroup data
  */
-class DENG2_PUBLIC PathRef
+class DE_PUBLIC PathRef
 {
 public:
     PathRef(Path const &path)
@@ -566,4 +566,4 @@ private:
     }
 }*/
 
-#endif // LIBDENG2_PATH_H
+#endif // LIBCORE_PATH_H

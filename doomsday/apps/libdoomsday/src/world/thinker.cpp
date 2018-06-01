@@ -25,7 +25,7 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(Thinker)
+DE_PIMPL_NOREF(Thinker)
 {
     dsize size;
     thinker_s *base;    // owned
@@ -140,7 +140,7 @@ Thinker::Thinker(thinker_s const &podThinker, dsize sizeInBytes, AllocMethod all
     : d(new Impl(alloc, sizeInBytes, 0))
     , STRUCT_MEMBER_ACCESSORS()
 {
-    DENG2_ASSERT(d->size == sizeInBytes);
+    DE_ASSERT(d->size == sizeInBytes);
     memcpy(d->base, &podThinker, sizeInBytes);
 
     // Retain the original allocation flag, though.
@@ -199,13 +199,13 @@ bool Thinker::hasData() const
 
 Thinker::IData &Thinker::data()
 {
-    DENG2_ASSERT(hasData());
+    DE_ASSERT(hasData());
     return *d->data;
 }
 
 Thinker::IData const &Thinker::data() const
 {
-    DENG2_ASSERT(hasData());
+    DE_ASSERT(hasData());
     return *d->data;
 }
 
@@ -216,7 +216,7 @@ dsize Thinker::sizeInBytes() const
 
 thinker_s *Thinker::take()
 {
-    DENG2_ASSERT(d->base->d == d->data);
+    DE_ASSERT(d->base->d == d->data);
 
     thinker_s *th = d->base;
     d->relinquish();
@@ -225,7 +225,7 @@ thinker_s *Thinker::take()
 
 void Thinker::destroy(thinker_s *thinkerBase)
 {
-    DENG2_ASSERT(thinkerBase != 0);
+    DE_ASSERT(thinkerBase != 0);
 
     release(*thinkerBase);
 

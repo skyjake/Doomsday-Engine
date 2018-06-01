@@ -52,7 +52,7 @@ struct Glyph
     Rectanglei texCoords;
 };
 
-DENG2_PIMPL(BitmapFont)
+DE_PIMPL(BitmapFont)
 {
     String filePath;        ///< The "archived" version of this font (if any).
     GLuint texGLName;       ///< GL-texture name.
@@ -115,7 +115,7 @@ DENG2_PIMPL(BitmapFont)
 
     uint8_t *readFormat0(FileHandle *file)
     {
-        DENG2_ASSERT(file != 0);
+        DE_ASSERT(file != 0);
 
         self()._flags |= AbstractFont::Colorize;
         self()._flags &= ~AbstractFont::Shadowed;
@@ -170,7 +170,7 @@ DENG2_PIMPL(BitmapFont)
 
     uint8_t *readFormat2(FileHandle *file)
     {
-        DENG2_ASSERT(file != 0);
+        DE_ASSERT(file != 0);
 
         self()._flags |= AbstractFont::Colorize | AbstractFont::Shadowed;
 
@@ -195,7 +195,7 @@ DENG2_PIMPL(BitmapFont)
         for(int i = 0; i < glyphCount; ++i)
         {
             ushort code = inShort(file);
-            DENG2_ASSERT(code < MAX_CHARS);
+            DE_ASSERT(code < MAX_CHARS);
             Glyph *ch = &glyphs[code];
 
             ushort x = inShort(file);
@@ -312,7 +312,7 @@ void BitmapFont::glInit() const
         case 2: pixels = d->readFormat2(hndl); break;
 
         default:
-            DENG2_ASSERT_FAIL("BitmapFont: Format not implemented");
+            DE_ASSERT_FAIL("BitmapFont: Format not implemented");
         }
         if(!pixels)
         {

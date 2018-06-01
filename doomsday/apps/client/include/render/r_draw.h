@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_MISC_H
-#define DENG_CLIENT_RENDER_MISC_H
+#ifndef DE_CLIENT_RENDER_MISC_H
+#define DE_CLIENT_RENDER_MISC_H
 
 #include "ClientTexture"
 #include "TextureVariantSpec"
@@ -44,4 +44,4 @@ void R_DrawPatch(ClientTexture &texture, int x, int y, int w, int h, bool useOff
 void R_DrawPatchTiled(ClientTexture &texture, int x, int y, int w, int h,
     de::gl::Wrapping wrapS, de::gl::Wrapping wrapT);
 
-#endif // DENG_CLIENT_RENDER_MISC_H
+#endif // DE_CLIENT_RENDER_MISC_H

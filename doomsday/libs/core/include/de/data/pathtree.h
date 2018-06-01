@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_PATHTREE_H
-#define LIBDENG2_PATHTREE_H
+#ifndef LIBCORE_PATHTREE_H
+#define LIBCORE_PATHTREE_H
 
 #include <de/Error>
 #include <de/Lockable>
@@ -61,7 +61,7 @@ namespace de {
  * the nodes is not automatically protected and is the responsibility of the
  * user.
  */
-class DENG2_PUBLIC PathTree : public Lockable
+class DE_PUBLIC PathTree : public Lockable
 {
     struct Impl; // needs to be friended by Node
 
@@ -75,7 +75,7 @@ public:
      * Leaves and branches are stored in separate hashes.
      * Note that one can always unite the hashes (see QMultiHash).
      */
-    struct DENG2_PUBLIC NodeHash {
+    struct DE_PUBLIC NodeHash {
         Nodes leaves;
         Nodes branches;
     };
@@ -125,7 +125,7 @@ public:
      */
     static Path::hash_type const no_hash;
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     void debugPrint(QChar separator = '/') const;
     void debugPrintHashDistribution() const;
 #endif
@@ -152,7 +152,7 @@ public:
     /**
      * Base class for all nodes of a PathTree. @ingroup data
      */
-    class DENG2_PUBLIC Node
+    class DE_PUBLIC Node
     {
     public:
         typedef PathTree::NodeHash Children;
@@ -235,7 +235,7 @@ public:
          */
         Path path(QChar sep = '/') const;
 
-        DENG2_CAST_METHODS()
+        DE_CAST_METHODS()
 
         friend class PathTree;
         friend struct PathTree::Impl;
@@ -247,12 +247,12 @@ public:
         Nodes &childNodes(NodeType type);
 
     private:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
 public:
     /// The requested entry could not be found in the hierarchy.
-    DENG2_ERROR(NotFoundError);
+    DE_ERROR(NotFoundError);
 
 public:
     explicit PathTree(Flags flags = 0);
@@ -483,12 +483,12 @@ public:
     }
 
     Path::hash_type key() const {
-        DENG2_ASSERT(_current != _nodes.end());
+        DE_ASSERT(_current != _nodes.end());
         return _current.key();
     }
 
     typename TreeType::Node &value() const {
-        DENG2_ASSERT(_current != _nodes.end());
+        DE_ASSERT(_current != _nodes.end());
         return *static_cast<typename TreeType::Node *>(_current.value());
     }
 
@@ -562,7 +562,7 @@ protected:
 /**
  * PathTree node with a custom integer value and a void pointer. @ingroup data
  */
-class DENG2_PUBLIC UserDataNode : public PathTree::Node
+class DE_PUBLIC UserDataNode : public PathTree::Node
 {
 public:
     UserDataNode(PathTree::NodeArgs const &args, void *userPointer = 0, int userValue = 0);
@@ -601,4 +601,4 @@ typedef PathTreeT<UserDataNode> UserDataPathTree;
 
 } // namespace de
 
-#endif /* LIBDENG2_PATHTREE_H */
+#endif /* LIBCORE_PATHTREE_H */

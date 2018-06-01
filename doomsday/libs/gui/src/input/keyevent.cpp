@@ -27,7 +27,7 @@
 #include <QKeyEvent>
 #include <de/Log>
 
-#if defined (DENG_X11)
+#if defined (DE_X11)
 #  include <QX11Info>
 #  include <X11/keysym.h>
 #  include <X11/Xlib.h>
@@ -207,7 +207,7 @@ int de::KeyEvent::ddKeyFromQt(int qtKey, int nativeVirtualKey, int nativeScanCod
     int mapped = x11ScancodeToDDKey(nativeScanCode);
     if (mapped) return mapped;
 #else
-    DENG2_UNUSED(nativeScanCode);
+    DE_UNUSED(nativeScanCode);
 #endif
 
     // Non-character-inserting keys.

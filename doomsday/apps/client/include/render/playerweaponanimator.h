@@ -57,7 +57,7 @@ public:
     void advanceTime(de::TimeSpan const &elapsed);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace render

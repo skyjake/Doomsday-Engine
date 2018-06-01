@@ -25,7 +25,7 @@ namespace de {
 
 static dsize const MIN_RANGE_SIZE = 16;
 
-DENG2_PIMPL_NOREF(GLAtlasBuffer)
+DE_PIMPL_NOREF(GLAtlasBuffer)
 {
     struct HostBuffer
     {
@@ -34,7 +34,7 @@ DENG2_PIMPL_NOREF(GLAtlasBuffer)
 
         void addAvailable(Rangeui16 const &range)
         {
-            DENG2_ASSERT(range.size() >= MIN_RANGE_SIZE);
+            DE_ASSERT(range.size() >= MIN_RANGE_SIZE);
             availableRanges.append(range);
             qSort(availableRanges.begin(), availableRanges.end(),
                   [] (Rangeui16 const &a, Rangeui16 const &b) { return a.size() < b.size(); });
@@ -72,8 +72,8 @@ DENG2_PIMPL_NOREF(GLAtlasBuffer)
 
     HostBuffer &allocNewHostBuffer()
     {
-        DENG2_ASSERT(maxElementCount > 0);
-        DENG2_ASSERT(elementSize > 0);
+        DE_ASSERT(maxElementCount > 0);
+        DE_ASSERT(elementSize > 0);
 
         auto *host = new HostBuffer;
         host->availableRanges << Rangeui16(0, maxElementCount);
@@ -123,7 +123,7 @@ DENG2_PIMPL_NOREF(GLAtlasBuffer)
     void releaseSubBuffer(GLSubBuffer &)
     {
         /// @todo Implement if needed.
-        DENG2_ASSERT(false);
+        DE_ASSERT(false);
     }
 };
 
@@ -136,7 +136,7 @@ GLAtlasBuffer::GLAtlasBuffer(internal::AttribSpecs const &vertexFormat)
 
 void GLAtlasBuffer::setMaxElementCount(dsize maxElementCount)
 {
-    DENG2_ASSERT(maxElementCount < 0x10000); // 16-bit indexing
+    DE_ASSERT(maxElementCount < 0x10000); // 16-bit indexing
     d->maxElementCount = duint16(maxElementCount);
 }
 
@@ -152,8 +152,8 @@ void GLAtlasBuffer::clear()
 
 GLSubBuffer *GLAtlasBuffer::alloc(dsize elementCount)
 {
-    DENG2_ASSERT(elementCount > 0);
-    DENG2_ASSERT(elementCount < 0x10000);
+    DE_ASSERT(elementCount > 0);
+    DE_ASSERT(elementCount < 0x10000);
     return d->allocSubBuffer(duint16(elementCount));
 }
 

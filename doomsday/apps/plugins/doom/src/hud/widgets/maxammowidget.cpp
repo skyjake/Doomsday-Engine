@@ -26,13 +26,13 @@ using namespace de;
 
 static void MaxAmmoWidget_UpdateGeometry(guidata_maxammo_t *wi)
 {
-    DENG2_ASSERT(wi);
+    DE_ASSERT(wi);
     wi->updateGeometry();
 }
 
 static void MaxAmmoWidget_Draw(guidata_maxammo_t *wi, Point2Raw const *offset)
 {
-    DENG2_ASSERT(wi);
+    DE_ASSERT(wi);
     wi->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 

@@ -30,7 +30,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(ClientTexture)
+DE_PIMPL(ClientTexture)
 {
     /// Set of (render-) context variants.
     Variants variants;
@@ -47,7 +47,7 @@ DENG2_PIMPL(ClientTexture)
         while (!variants.isEmpty())
         {
             ClientTexture::Variant *variant = variants.takeFirst();
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
             if (variant->glName())
             {
                 String textualVariantSpec = variant->spec().asText();
@@ -107,7 +107,7 @@ ClientTexture::Variant *ClientTexture::chooseVariant(ChooseVariantMethod method,
     }
 
     /*
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
     // 07/04/2011 dj: The "fuzzy selection" features are yet to be implemented.
     // As such, the following should NOT return a valid variant iff the rest of
     // this subsystem has been implemented correctly.
@@ -115,7 +115,7 @@ ClientTexture::Variant *ClientTexture::chooseVariant(ChooseVariantMethod method,
     // Presently this is used as a sanity check.
     if (method == MatchSpec)
     {
-        DENG_ASSERT(!chooseVariant(FuzzyMatchSpec, spec));
+        DE_ASSERT(!chooseVariant(FuzzyMatchSpec, spec));
     }
 #endif
      */
@@ -129,7 +129,7 @@ ClientTexture::Variant *ClientTexture::chooseVariant(ChooseVariantMethod method,
 ClientTexture::Variant *ClientTexture::prepareVariant(TextureVariantSpec const &spec)
 {
     Variant *variant = chooseVariant(MatchSpec, spec, true /*can create*/);
-    DENG2_ASSERT(variant);
+    DE_ASSERT(variant);
     variant->prepare();
     return variant;
 }

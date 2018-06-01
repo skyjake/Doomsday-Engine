@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_READWRITELOCKABLE_H
-#define LIBDENG2_READWRITELOCKABLE_H
+#ifndef LIBCORE_READWRITELOCKABLE_H
+#define LIBCORE_READWRITELOCKABLE_H
 
 #include "../libcore.h"
 
@@ -28,7 +28,7 @@ namespace de {
  *
  * @ingroup concurrency
  */
-class DENG2_PUBLIC ReadWriteLockable
+class DE_PUBLIC ReadWriteLockable
 {
 public:
     ReadWriteLockable();
@@ -44,9 +44,9 @@ public:
     void unlock() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_READWRITELOCKABLE_H
+#endif // LIBCORE_READWRITELOCKABLE_H

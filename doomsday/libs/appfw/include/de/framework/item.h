@@ -65,7 +65,7 @@ public:
     };
     Q_DECLARE_FLAGS(Semantics, SemanticFlag)
 
-    DENG2_DEFINE_AUDIENCE2(Change, void itemChanged(Item const &item))
+    DE_DEFINE_AUDIENCE2(Change, void itemChanged(Item const &item))
 
 public:
     Item(Semantics semantics = DefaultSemantics);
@@ -103,7 +103,7 @@ public:
 
     QVariant const &data() const;
 
-    DENG2_CAST_METHODS()
+    DE_CAST_METHODS()
 
     /**
      * Notifies the Change audience of a changed property.
@@ -111,7 +111,7 @@ public:
     void notifyChange() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Item::Semantics)

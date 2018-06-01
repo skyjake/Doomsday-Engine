@@ -36,7 +36,7 @@ class LIBAPPFW_PUBLIC VariableChoiceWidget : public ChoiceWidget
 
 public:
     /// Thrown when the variable is gone and someone tries to access it. @ingroup errors
-    DENG2_ERROR(VariableMissingError);
+    DE_ERROR(VariableMissingError);
 
     enum VariableType { Number, Text };
 
@@ -53,7 +53,7 @@ protected slots:
     void setVariableFromWidget();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

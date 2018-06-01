@@ -33,7 +33,7 @@ using namespace de;
 
 namespace acs {
 
-DENG2_PIMPL_NOREF(Module)
+DE_PIMPL_NOREF(Module)
 {
     Block pcode;
     QVector<EntryPoint> entryPoints;
@@ -69,7 +69,7 @@ bool Module::recognize(File1 const &file)  // static
 
 Module *Module::newFromBytecode(Block const &bytecode)  // static
 {
-    DENG2_ASSERT(!IS_CLIENT);
+    DE_ASSERT(!IS_CLIENT);
     LOG_AS("acs::Module");
 
     std::unique_ptr<Module> module(new Module);
@@ -145,7 +145,7 @@ Module *Module::newFromBytecode(Block const &bytecode)  // static
 
 Module *Module::newFromFile(File1 const &file)  // static
 {
-    DENG2_ASSERT(!IS_CLIENT);
+    DE_ASSERT(!IS_CLIENT);
     LOG_AS("acs::Module");
     LOG_SCR_VERBOSE("Loading from %s:%s...")
             << NativePath(file.container().composePath()).pretty()

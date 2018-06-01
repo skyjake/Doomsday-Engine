@@ -45,13 +45,13 @@ extern dd_bool  paused;            // Game Pause?
 
 // This one is related to the 3-screen display mode.
 // ANG90 = left side, ANG270 = right
-DENG_EXTERN_C int viewangleoffset;
+DE_EXTERN_C int viewangleoffset;
 
 // Timer, for scores.
-DENG_EXTERN_C int mapTime; // Tics in game play for par.
+DE_EXTERN_C int mapTime; // Tics in game play for par.
 
 // Quit after playing a demo from cmdline.
-DENG_EXTERN_C dd_bool singledemo;
+DE_EXTERN_C dd_bool singledemo;
 
 //-----------------------------
 // Internal parameters, fixed.

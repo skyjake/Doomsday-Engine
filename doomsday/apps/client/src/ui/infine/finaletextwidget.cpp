@@ -35,7 +35,7 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(FinaleTextWidget)
+DE_PIMPL_NOREF(FinaleTextWidget)
 {
     animatorvector4_t color;
     uint pageColor    = 0;                ///< 1-based page color index. @c 0= Use our own color.
@@ -145,8 +145,8 @@ void FinaleTextWidget::draw(Vec3f const &offset)
 {
     if (!d->text) return;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();

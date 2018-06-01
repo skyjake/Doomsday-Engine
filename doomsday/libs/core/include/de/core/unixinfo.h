@@ -19,8 +19,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_UNIXINFO_H
-#define LIBDENG2_UNIXINFO_H
+#ifndef LIBCORE_UNIXINFO_H
+#define LIBCORE_UNIXINFO_H
 
 #include "../String"
 #include "../NativePath"
@@ -74,9 +74,9 @@ public:
     bool defaults(String const &key, String &value) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_UNIXINFO_H
+#endif // LIBCORE_UNIXINFO_H

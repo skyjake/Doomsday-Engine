@@ -105,7 +105,7 @@ public:
     void weaponStateChanged(struct state_s const *state);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // CLIENT_CLIENTPLAYER_H

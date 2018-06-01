@@ -55,7 +55,7 @@ FinaleAnimWidget::Frame::~Frame()
 #endif
 }
 
-DENG2_PIMPL_NOREF(FinaleAnimWidget)
+DE_PIMPL_NOREF(FinaleAnimWidget)
 {
     bool animComplete = true;
     bool animLooping  = false;  ///< @c true= loop back to the start when the end is reached.

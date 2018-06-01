@@ -263,7 +263,7 @@ using namespace internal;
 
 static String ZIPARCHIVE_META_CATEGORY = "ZipArchive";
 
-DENG2_PIMPL(ZipArchive)
+DE_PIMPL(ZipArchive)
 {
     Block directoryCacheId;
     CentralEnd zipSummary;
@@ -564,7 +564,7 @@ void ZipArchive::readFromSource(Entry const &e, Path const &, IBlock &uncompress
         }
         else
         {
-            DENG2_ASSERT(source() != NULL);
+            DE_ASSERT(source() != NULL);
             uncompressedData.copyFrom(*source(), entry.offset, entry.size);
         }
     }
@@ -576,7 +576,7 @@ void ZipArchive::readFromSource(Entry const &e, Path const &, IBlock &uncompress
         // Take a copy of the compressed data for zlib.
         if (!entry.dataInArchive)
         {
-            DENG2_ASSERT(source() != NULL);
+            DE_ASSERT(source() != NULL);
             entry.dataInArchive.reset(new Block(*source(), entry.offset, entry.sizeInArchive));
         }
 
@@ -684,7 +684,7 @@ void ZipArchive::operator >> (Writer &to) const
         }
         else
         {
-            DENG2_ASSERT(entry.data != NULL);
+            DE_ASSERT(entry.data != NULL);
 
             // Let's try and compress.
             Block archived(Block::Size(REQUIRED_DEFLATE_PERCENTAGE * entry.data->size()));

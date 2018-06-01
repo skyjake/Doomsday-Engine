@@ -31,7 +31,7 @@ using namespace de;
 namespace common {
 namespace menu {
 
-DENG2_PIMPL_NOREF(Widget)
+DE_PIMPL_NOREF(Widget)
 {
     Flags flags;
     int group = 0;             ///< Object group identifier.

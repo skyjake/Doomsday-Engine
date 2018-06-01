@@ -38,7 +38,7 @@ namespace de {
 
 static String const VAR_PACKAGE_VERSION("package.version");
 
-DENG2_PIMPL(PackageLoader)
+DE_PIMPL(PackageLoader)
 , DENG2_OBSERVES(File, Deletion) // loaded package source file is deleted?
 {
     LoadedPackages loaded; ///< Identifiers are unversioned; only one version can be loaded at a time.
@@ -110,9 +110,9 @@ DENG2_PIMPL(PackageLoader)
 
             FS::FoundFiles files;
             App::fileSystem().findAllOfTypes(StringList()
-                                             << DENG2_TYPE_NAME(Folder)
-                                             << DENG2_TYPE_NAME(ArchiveFolder)
-                                             << DENG2_TYPE_NAME(LinkFile),
+                                             << DE_TYPE_NAME(Folder)
+                                             << DE_TYPE_NAME(ArchiveFolder)
+                                             << DE_TYPE_NAME(LinkFile),
                                              id + ".pack", files);
 
             files.remove_if([&packageId] (File *file) {
@@ -177,6 +177,7 @@ DENG2_PIMPL(PackageLoader)
         }
 
         // Each must have a version specified.
+        DE_FOR_EACH_CONST(FS::FoundFiles, i, found)
         {
             FS::FoundFiles checked;
             DENG2_FOR_EACH_CONST(FS::FoundFiles, i, found)
@@ -420,14 +421,14 @@ DENG2_PIMPL(PackageLoader)
         return pkgs;
     }
 
-    DENG2_PIMPL_AUDIENCE(Activity)
-    DENG2_PIMPL_AUDIENCE(Load)
-    DENG2_PIMPL_AUDIENCE(Unload)
+    DE_PIMPL_AUDIENCE(Activity)
+    DE_PIMPL_AUDIENCE(Load)
+    DE_PIMPL_AUDIENCE(Unload)
 };
 
-DENG2_AUDIENCE_METHOD(PackageLoader, Activity)
-DENG2_AUDIENCE_METHOD(PackageLoader, Load)
-DENG2_AUDIENCE_METHOD(PackageLoader, Unload)
+DE_AUDIENCE_METHOD(PackageLoader, Activity)
+DE_AUDIENCE_METHOD(PackageLoader, Load)
+DE_AUDIENCE_METHOD(PackageLoader, Unload)
 
 PackageLoader::PackageLoader() : d(new Impl(this))
 {}
@@ -460,11 +461,11 @@ Package const &PackageLoader::load(String const &packageId)
 
     try
     {
-        DENG2_FOR_AUDIENCE2(Load, i)
+        DE_FOR_AUDIENCE2(Load, i)
         {
             i->packageLoaded(id);
         }
-        DENG2_FOR_AUDIENCE2(Activity, i)
+        DE_FOR_AUDIENCE2(Activity, i)
         {
             i->setOfLoadedPackagesChanged();
         }
@@ -487,14 +488,14 @@ void PackageLoader::unload(String const &packageId)
 
     if (isLoaded(id))
     {
-        DENG2_FOR_AUDIENCE2(Unload, i)
+        DE_FOR_AUDIENCE2(Unload, i)
         {
             i->aboutToUnloadPackage(id);
         }
 
         d->unload(id);
 
-        DENG2_FOR_AUDIENCE2(Activity, i)
+        DE_FOR_AUDIENCE2(Activity, i)
         {
             i->setOfLoadedPackagesChanged();
         }
@@ -598,7 +599,7 @@ void PackageLoader::sortInPackageOrder(FS::FoundFiles &filesToSort) const
 
     // Find the packages for files.
     QList<FileAndOrder> all;
-    DENG2_FOR_EACH_CONST(FS::FoundFiles, i, filesToSort)
+    DE_FOR_EACH_CONST(FS::FoundFiles, i, filesToSort)
     {
         Package const *pkg = 0;
         String identifier = Package::identifierForContainerOfFile(**i);
@@ -646,9 +647,9 @@ StringList PackageLoader::loadedFromCommandLine() const
 StringList PackageLoader::findAllPackages() const
 {
     StringList all;
-    for (QString typeName : QStringList({ DENG2_TYPE_NAME(Folder),
-                                          DENG2_TYPE_NAME(ArchiveFolder),
-                                          DENG2_TYPE_NAME(LinkFile) }))
+    for (QString typeName : QStringList({ DE_TYPE_NAME(Folder),
+                                          DE_TYPE_NAME(ArchiveFolder),
+                                          DE_TYPE_NAME(LinkFile) }))
     {
         d->listPackagesInIndex(App::fileSystem().indexFor(typeName), all);
     }

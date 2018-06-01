@@ -29,7 +29,7 @@ namespace gloom {
 
 static const dsize SAMPLE_COUNT = 64;
 
-DENG2_PIMPL(SSAO)
+DE_PIMPL(SSAO)
 {
     enum { Noisy, Blurred };
 

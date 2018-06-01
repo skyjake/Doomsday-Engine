@@ -24,7 +24,7 @@ namespace de {
 
 using namespace ui;
 
-DENG_GUI_PIMPL(MessageDialog)
+DE_GUI_PIMPL(MessageDialog)
 {
     LabelWidget *        title;
     LabelWidget *        message;

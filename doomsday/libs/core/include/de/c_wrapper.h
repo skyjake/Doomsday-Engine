@@ -24,12 +24,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_C_WRAPPER_H
-#define LIBDENG2_C_WRAPPER_H
+#ifndef LIBCORE_C_WRAPPER_H
+#define LIBCORE_C_WRAPPER_H
 
 #include "libcore.h"
 
-#if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
+#if defined(__cplusplus) && !defined(DE_C_API_ONLY)
 using de::dint16;
 using de::dint32;
 using de::dint64;
@@ -47,24 +47,24 @@ extern "C" {
 /*
  * App
  */
-DENG2_PUBLIC void App_Log(unsigned int metadata, char const *format, ...);
-DENG2_PUBLIC void App_Timer(unsigned int milliseconds, void (*callback)(void));
-DENG2_PUBLIC DENG2_NORETURN void App_FatalError(char const *msgFormat, ...);
+DE_PUBLIC void App_Log(unsigned int metadata, char const *format, ...);
+DE_PUBLIC void App_Timer(unsigned int milliseconds, void (*callback)(void));
+DE_PUBLIC DE_NORETURN void App_FatalError(char const *msgFormat, ...);
 
 /*
  * CommandLine
  */
-DENG2_PUBLIC void CommandLine_Alias(char const *longname, char const *shortname);
-DENG2_PUBLIC int CommandLine_Count(void);
-DENG2_PUBLIC char const *CommandLine_At(int i);
-DENG2_PUBLIC char const *CommandLine_PathAt(int i);
-DENG2_PUBLIC char const *CommandLine_Next(void);
-DENG2_PUBLIC char const *CommandLine_NextAsPath(void);
-DENG2_PUBLIC int CommandLine_Check(char const *check);
-DENG2_PUBLIC int CommandLine_CheckWith(char const *check, int num);
-DENG2_PUBLIC int CommandLine_Exists(char const *check);
-DENG2_PUBLIC int CommandLine_IsOption(int i);
-DENG2_PUBLIC int CommandLine_IsMatchingAlias(char const *original, char const *originalOrAlias);
+DE_PUBLIC void CommandLine_Alias(char const *longname, char const *shortname);
+DE_PUBLIC int CommandLine_Count(void);
+DE_PUBLIC char const *CommandLine_At(int i);
+DE_PUBLIC char const *CommandLine_PathAt(int i);
+DE_PUBLIC char const *CommandLine_Next(void);
+DE_PUBLIC char const *CommandLine_NextAsPath(void);
+DE_PUBLIC int CommandLine_Check(char const *check);
+DE_PUBLIC int CommandLine_CheckWith(char const *check, int num);
+DE_PUBLIC int CommandLine_Exists(char const *check);
+DE_PUBLIC int CommandLine_IsOption(int i);
+DE_PUBLIC int CommandLine_IsMatchingAlias(char const *original, char const *originalOrAlias);
 
 /*
  * LogBuffer
@@ -224,48 +224,48 @@ logentry_metadata_t;
 #define DE2_LOG_DEBUG   (DE2_LOG_DEV | DE2_LOG_VERBOSE)
 #define DE2_LOG_TRACE   (DE2_LOG_DEV | DE2_LOG_XVERBOSE)
 
-DENG2_PUBLIC void LogBuffer_EnableStandardOutput(int enable);
-DENG2_PUBLIC void LogBuffer_Flush(void);
-DENG2_PUBLIC void LogBuffer_Clear(void);
-DENG2_PUBLIC void LogBuffer_Printf(unsigned int metadata, char const *format, ...); // note: manual newlines
+DE_PUBLIC void LogBuffer_EnableStandardOutput(int enable);
+DE_PUBLIC void LogBuffer_Flush(void);
+DE_PUBLIC void LogBuffer_Clear(void);
+DE_PUBLIC void LogBuffer_Printf(unsigned int metadata, char const *format, ...); // note: manual newlines
 
 /*
  * Info
  */
-DENG2_OPAQUE(de_Info)
+DE_OPAQUE(de_Info)
 
-DENG2_PUBLIC de_Info *Info_NewFromString(char const *utf8text);
-DENG2_PUBLIC de_Info *Info_NewFromFile(char const *nativePath);
-DENG2_PUBLIC void Info_Delete(de_Info *info);
-DENG2_PUBLIC int Info_FindValue(de_Info *info, char const *path, char *buffer, size_t bufSize);
+DE_PUBLIC de_Info *Info_NewFromString(char const *utf8text);
+DE_PUBLIC de_Info *Info_NewFromFile(char const *nativePath);
+DE_PUBLIC void Info_Delete(de_Info *info);
+DE_PUBLIC int Info_FindValue(de_Info *info, char const *path, char *buffer, size_t bufSize);
 
 /*
  * UnixInfo
  */
-DENG2_PUBLIC char *UnixInfo_GetConfigValue(char const *configFile, char const *key); // caller must free() returned
+DE_PUBLIC char *UnixInfo_GetConfigValue(char const *configFile, char const *key); // caller must free() returned
 
 /*
  * ByteOrder
  */
-DENG2_PUBLIC dint16  LittleEndianByteOrder_ToForeignInt16(dint16 value);
-DENG2_PUBLIC dint32  LittleEndianByteOrder_ToForeignInt32(dint32 value);
-DENG2_PUBLIC dint64  LittleEndianByteOrder_ToForeignInt64(dint64 value);
-DENG2_PUBLIC duint16 LittleEndianByteOrder_ToForeignUInt16(duint16 value);
-DENG2_PUBLIC duint32 LittleEndianByteOrder_ToForeignUInt32(duint32 value);
-DENG2_PUBLIC duint64 LittleEndianByteOrder_ToForeignUInt64(duint64 value);
-DENG2_PUBLIC dfloat  LittleEndianByteOrder_ToForeignFloat(dfloat value);
-DENG2_PUBLIC ddouble LittleEndianByteOrder_ToForeignDouble(ddouble value);
-DENG2_PUBLIC dint16  LittleEndianByteOrder_ToNativeInt16(dint16 value);
-DENG2_PUBLIC dint32  LittleEndianByteOrder_ToNativeInt32(dint32 value);
-DENG2_PUBLIC dint64  LittleEndianByteOrder_ToNativeInt64(dint64 value);
-DENG2_PUBLIC duint16 LittleEndianByteOrder_ToNativeUInt16(duint16 value);
-DENG2_PUBLIC duint32 LittleEndianByteOrder_ToNativeUInt32(duint32 value);
-DENG2_PUBLIC duint64 LittleEndianByteOrder_ToNativeUInt64(duint64 value);
-DENG2_PUBLIC dfloat  LittleEndianByteOrder_ToNativeFloat(dfloat value);
-DENG2_PUBLIC ddouble LittleEndianByteOrder_ToNativeDouble(ddouble value);
+DE_PUBLIC dint16  LittleEndianByteOrder_ToForeignInt16(dint16 value);
+DE_PUBLIC dint32  LittleEndianByteOrder_ToForeignInt32(dint32 value);
+DE_PUBLIC dint64  LittleEndianByteOrder_ToForeignInt64(dint64 value);
+DE_PUBLIC duint16 LittleEndianByteOrder_ToForeignUInt16(duint16 value);
+DE_PUBLIC duint32 LittleEndianByteOrder_ToForeignUInt32(duint32 value);
+DE_PUBLIC duint64 LittleEndianByteOrder_ToForeignUInt64(duint64 value);
+DE_PUBLIC dfloat  LittleEndianByteOrder_ToForeignFloat(dfloat value);
+DE_PUBLIC ddouble LittleEndianByteOrder_ToForeignDouble(ddouble value);
+DE_PUBLIC dint16  LittleEndianByteOrder_ToNativeInt16(dint16 value);
+DE_PUBLIC dint32  LittleEndianByteOrder_ToNativeInt32(dint32 value);
+DE_PUBLIC dint64  LittleEndianByteOrder_ToNativeInt64(dint64 value);
+DE_PUBLIC duint16 LittleEndianByteOrder_ToNativeUInt16(duint16 value);
+DE_PUBLIC duint32 LittleEndianByteOrder_ToNativeUInt32(duint32 value);
+DE_PUBLIC duint64 LittleEndianByteOrder_ToNativeUInt64(duint64 value);
+DE_PUBLIC dfloat  LittleEndianByteOrder_ToNativeFloat(dfloat value);
+DE_PUBLIC ddouble LittleEndianByteOrder_ToNativeDouble(ddouble value);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif // LIBDENG2_C_WRAPPER_H
+#endif // LIBCORE_C_WRAPPER_H

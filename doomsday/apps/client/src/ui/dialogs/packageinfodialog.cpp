@@ -49,7 +49,7 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(PackageInfoDialog)
+DE_GUI_PIMPL(PackageInfoDialog)
 {
     Mode                           mode;
     LabelWidget *                  title;
@@ -337,6 +337,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
                 int const mapCount = bundle->lumpDirectory()->findMaps().count();
                 moreMsg +=
                     QString("Contains %1 map%2: ").arg(mapCount).arg(DENG2_PLURAL_S(mapCount)) +
+                    .arg(DE_PLURAL_S(mapCount)) +
                     String::join(bundle->lumpDirectory()->mapsInContiguousRangesAsText(), ", ");
                 moreMsg += "\n";
             }

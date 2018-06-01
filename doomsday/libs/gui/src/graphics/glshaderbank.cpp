@@ -59,7 +59,7 @@ static String processIncludes(String source, String const &sourceFolderPath)
     return source;
 }
 
-DENG2_PIMPL(GLShaderBank)
+DE_PIMPL(GLShaderBank)
 {
     struct Source : public ISource
     {

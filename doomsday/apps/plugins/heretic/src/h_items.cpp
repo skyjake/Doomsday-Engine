@@ -485,7 +485,7 @@ void P_InitWeaponInfo()
             const String key = "Weapon Info|" + id + mode + "|";
 
             weaponmodeinfo_t *wminfo = WEAPON_INFO(i, PCLASS_PLAYER, k);
-            DENG2_ASSERT(wminfo);
+            DE_ASSERT(wminfo);
 
             // Per shot ammo.
             {

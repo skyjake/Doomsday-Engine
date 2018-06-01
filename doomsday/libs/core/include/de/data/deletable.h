@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_DELETABLE_H
-#define LIBDENG2_DELETABLE_H
+#ifndef LIBCORE_DELETABLE_H
+#define LIBCORE_DELETABLE_H
 
 #include "../Observers"
 
@@ -28,12 +28,12 @@ namespace de {
  *
  * @ingroup data
  */
-class DENG2_PUBLIC Deletable
+class DE_PUBLIC Deletable
 {
 public:
     virtual ~Deletable();
 
-    DENG2_DEFINE_AUDIENCE(Deletion, void objectWasDeleted(Deletable *))
+    DE_DEFINE_AUDIENCE(Deletion, void objectWasDeleted(Deletable *))
 };
 
 /**
@@ -41,7 +41,7 @@ public:
  * The pointer value is guarded by a mutex.
  */
 template <typename Type>
-class SafePtr : DENG2_OBSERVES(Deletable, Deletion)
+class SafePtr : DE_OBSERVES(Deletable, Deletion)
 {
 public:
     SafePtr(Type *ptr = nullptr) {
@@ -54,7 +54,7 @@ public:
         reset(nullptr);
     }
     void reset(Type *ptr = nullptr) {
-        DENG2_GUARD(_ptr)
+        DE_GUARD(_ptr)
         if (_ptr.value) _ptr.value->Deletable::audienceForDeletion -= this;
         _ptr.value = ptr;
         if (_ptr.value) _ptr.value->Deletable::audienceForDeletion += this;
@@ -64,28 +64,28 @@ public:
         return *this;
     }
     Type *operator -> () const {
-        DENG2_GUARD(_ptr);
+        DE_GUARD(_ptr);
         if (!_ptr) throw Error("SafePtr::operator ->", "Object has been deleted");
         return _ptr;
     }
     operator Type const * () const {
-        DENG2_GUARD(_ptr);
+        DE_GUARD(_ptr);
         return _ptr;
     }
     operator Type * () {
-        DENG2_GUARD(_ptr);
+        DE_GUARD(_ptr);
         return _ptr;
     }
     Type *get() const {
-        DENG2_GUARD(_ptr);
+        DE_GUARD(_ptr);
         return _ptr;
     }
     explicit operator bool() const {
-        DENG2_GUARD(_ptr);
+        DE_GUARD(_ptr);
         return _ptr.value != nullptr;
     }
     void objectWasDeleted(Deletable *obj) {
-        DENG2_GUARD(_ptr);
+        DE_GUARD(_ptr);
         if (obj == _ptr.value) {
             _ptr.value = nullptr;
         }
@@ -102,5 +102,5 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_DELETABLE_H
+#endif // LIBCORE_DELETABLE_H
 

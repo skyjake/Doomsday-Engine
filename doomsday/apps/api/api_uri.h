@@ -23,8 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_API_URI_H
-#define LIBDENG_API_URI_H
+#ifndef DE_API_URI_H
+#define DE_API_URI_H
 
 #include "api_base.h"
 #include <de/str.h>
@@ -74,7 +74,7 @@ struct uri_s; // The uri instance (opaque).
 typedef struct uri_s UriWrapper;
 typedef UriWrapper Uri;
 
-DENG_API_TYPEDEF(Uri) // v1
+DE_API_TYPEDEF(Uri) // v1
 {
     de_api_t api;
 
@@ -256,10 +256,10 @@ DENG_API_TYPEDEF(Uri) // v1
      */
     void (*ReadWithDefaultScheme)(UriWrapper* uri, Reader1* reader, char const* defaultScheme);
 
-} DENG_API_T(Uri);
+} DE_API_T(Uri);
 
 // Macros for accessing exported functions.
-#ifndef DENG_NO_API_MACROS_URI
+#ifndef DE_NO_API_MACROS_URI
 #define Uri_New                     _api_Uri.New
 #define Uri_NewWithPath3            _api_Uri.NewWithPath3
 #define Uri_NewWithPath2            _api_Uri.NewWithPath2
@@ -290,7 +290,7 @@ DENG_API_TYPEDEF(Uri) // v1
 
 // Internal access.
 #ifdef __DOOMSDAY__
-DENG_USING_API(Uri);
+DE_USING_API(Uri);
 #endif
 
-#endif /* LIBDENG_API_URI_H */
+#endif /* DE_API_URI_H */

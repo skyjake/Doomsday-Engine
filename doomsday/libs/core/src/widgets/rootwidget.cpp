@@ -24,7 +24,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(RootWidget)
+DE_PIMPL_NOREF(RootWidget)
 {
     RuleRectangle *viewRect;
     SafeWidgetPtr<Widget> focus;
@@ -47,10 +47,10 @@ DENG2_PIMPL_NOREF(RootWidget)
                     de::max(0, viewRect->height().valuei()));
     }
 
-    DENG2_PIMPL_AUDIENCE(FocusChange)
+    DE_PIMPL_AUDIENCE(FocusChange)
 };
 
-DENG2_AUDIENCE_METHOD(RootWidget, FocusChange)
+DE_AUDIENCE_METHOD(RootWidget, FocusChange)
 
 RootWidget::RootWidget() : Widget(), d(new Impl)
 {}
@@ -97,8 +97,8 @@ Rule const &RootWidget::viewHeight() const
 
 void RootWidget::setViewSize(Size const &size)
 {
-#if defined (DENG_MOBILE)
-    DENG2_GUARD(this);
+#if defined (DE_MOBILE)
+    DE_GUARD(this);
 #endif
 
     d->viewRect->setInput(Rule::Right,  Constu(size.x));
@@ -129,7 +129,7 @@ void RootWidget::setFocus(Widget *widget)
     if (d->focus != oldFocus)
     {
         //qDebug() << "focus changed to" << d->focus;
-        DENG2_FOR_AUDIENCE2(FocusChange, i)
+        DE_FOR_AUDIENCE2(FocusChange, i)
         {
             i->focusedWidgetChanged(widget);
         }
@@ -143,24 +143,24 @@ Widget *RootWidget::focus() const
 
 void RootWidget::initialize()
 {
-#if defined (DENG_MOBILE)
-    DENG2_GUARD(this);
+#if defined (DE_MOBILE)
+    DE_GUARD(this);
 #endif
     notifyTree(&Widget::initialize);
 }
 
 void RootWidget::update()
 {
-#if defined (DENG_MOBILE)
-    DENG2_GUARD(this);
+#if defined (DE_MOBILE)
+    DE_GUARD(this);
 #endif
     notifyTree(&Widget::update);
 }
 
 void RootWidget::draw()
 {
-#if defined (DENG_MOBILE)
-    DENG2_GUARD(this);
+#if defined (DE_MOBILE)
+    DE_GUARD(this);
 #endif
     notifyTree(notifyArgsForDraw());
     Rule::markRulesValid(); // All done for this frame.
@@ -168,8 +168,8 @@ void RootWidget::draw()
 
 bool RootWidget::processEvent(Event const &event)
 {
-#if defined (DENG_MOBILE)
-    DENG2_GUARD(this);
+#if defined (DE_MOBILE)
+    DE_GUARD(this);
 #endif
 
     // Focus is only for the keyboard.

@@ -127,7 +127,7 @@ static Path tryFindImage(String name)
 // Try to load the texture.
 static dbyte loadParticleTexture(duint particleTex)
 {
-    DENG2_ASSERT(particleTex < MAX_PTC_TEXTURES);
+    DE_ASSERT(particleTex < MAX_PTC_TEXTURES);
 
     image_t image;
 
@@ -203,7 +203,7 @@ void Rend_ParticleLoadSystemTextures()
                 ( TXCF_MIPMAP | TXCF_NO_COMPRESSION ),
                 0, glmode[mipmapping], GL_LINEAR, 0 /*no anisotropy*/, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
-            DENG2_ASSERT(pointTex != 0);
+            DE_ASSERT(pointTex != 0);
         }
         Image_ClearPixelData(image);
     }
@@ -520,8 +520,8 @@ static Vec2f lineUnitVector(Line const &line)
 
 static void drawParticles(dint rtype, bool withBlend)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     viewdata_t const *viewData = &viewPlayer->viewport();
     Vec3f const leftoff     = viewData->upVec + viewData->sideVec;
@@ -738,7 +738,7 @@ static void drawParticles(dint rtype, bool withBlend)
             // Flat against a wall, then?
             else if(flatOnWall)
             {
-                DENG2_ASSERT(pinfo.contact);
+                DE_ASSERT(pinfo.contact);
                 Line const &contact = *pinfo.contact;
 
                 // There will be a slight approximation on the XY plane since
@@ -836,7 +836,7 @@ static void drawParticles(dint rtype, bool withBlend)
 
 static void renderPass(bool useBlending)
 {
-    DENG2_ASSERT(!Sys_GLCheckError());
+    DE_ASSERT(!Sys_GLCheckError());
 
     // Set blending mode.
     if(useBlending)
@@ -873,7 +873,7 @@ static void renderPass(bool useBlending)
         GL_BlendMode(BM_NORMAL);
     }
 
-    DENG2_ASSERT(!Sys_GLCheckError());
+    DE_ASSERT(!Sys_GLCheckError());
 }
 
 void Rend_RenderParticles(world::Map &map)

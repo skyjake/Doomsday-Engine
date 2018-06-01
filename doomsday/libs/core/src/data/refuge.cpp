@@ -25,7 +25,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(Refuge)
+DE_PIMPL_NOREF(Refuge)
 {
     String persistentPath;
     Record names;

@@ -106,7 +106,7 @@ void Parser::parseCompound(Compound &compound)
 
 void Parser::parseStatement(Compound &compound)
 {
-    DENG2_ASSERT(!_statementRange.isEmpty());
+    DE_ASSERT(!_statementRange.isEmpty());
 
     Token const &firstToken = _statementRange.firstToken();
     const auto firstTokenLine = firstToken.line();

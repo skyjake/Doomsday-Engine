@@ -33,7 +33,7 @@
 using namespace de;
 using namespace de::ui;
 
-DENG_GUI_PIMPL(NetworkSettingsDialog)
+DE_GUI_PIMPL(NetworkSettingsDialog)
 {
     VariableToggleWidget *localPackages;
     VariableLineEditWidget *webApiUrl;

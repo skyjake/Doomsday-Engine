@@ -32,7 +32,7 @@
 namespace de {
 namespace filesys {
 
-DENG2_PIMPL(WebHostedLink), public Lockable
+DE_PIMPL(WebHostedLink), public Lockable
 {
     QSet<QNetworkReply *> pendingRequests;
     std::shared_ptr<FileTree> fileTree;
@@ -55,7 +55,7 @@ DENG2_PIMPL(WebHostedLink), public Lockable
         String const queryPath = query.path;
         self().scope() += async([this, queryPath] () -> std::shared_ptr<DictionaryValue>
         {
-            DENG2_GUARD(this);
+            DE_GUARD(this);
             if (auto const *dir = fileTree->tryFind
                     (queryPath, FileTree::MatchFull | FileTree::NoLeaf))
             {
@@ -149,7 +149,7 @@ WebHostedLink::WebHostedLink(String const &address, String const &indexPath)
 
 void WebHostedLink::setFileTree(FileTree *tree)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     d->fileTree.reset(tree);
 }
 
@@ -160,7 +160,7 @@ WebHostedLink::FileTree const &WebHostedLink::fileTree() const
 
 WebHostedLink::FileEntry const *WebHostedLink::findFile(Path const &path) const
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     return d->fileTree->tryFind(path, PathTree::MatchFull);
 }
 
@@ -188,7 +188,7 @@ void WebHostedLink::transmit(Query const &query)
         return;
     }
 
-    DENG2_ASSERT(query.fileContents);
+    DE_ASSERT(query.fileContents);
 
     String url = address();
     QNetworkRequest req(url.concatenateRelativePath(query.path));

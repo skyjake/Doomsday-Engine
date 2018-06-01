@@ -1776,7 +1776,7 @@ void C_DECL A_SpeedFade(mobj_t *actor)
     actor->flags &= ~MF_ALTSHADOW;
 
     // Target should have been set (or restored).
-    DENG_ASSERT(actor->target != NULL);
+    DE_ASSERT(actor->target != NULL);
 
     if (actor->target)
     {
@@ -4273,7 +4273,7 @@ void C_DECL A_KoraxStep2(mobj_t* actor)
 static void Korax_InitSpirit(mobj_t *spirit, mobj_t *korax)
 {
     mobj_t *tail;
-    DENG_ASSERT(spirit);
+    DE_ASSERT(spirit);
 
     spirit->health   = KORAX_SPIRIT_LIFETIME;
     spirit->tracer   = korax; // Swarm around korax.
@@ -4389,7 +4389,7 @@ static pvec3d_t Korax_MissileSpawnPoint(mobj_t const *mob, int arm, pvec3d_t off
 
     MissileSpawnPoint const *relSpawn = &relSpawnPointByArm[MAX_OF(arm, 0) % numSpawnPoints];
     uint an;
-    DENG_ASSERT(mob && offset);
+    DE_ASSERT(mob && offset);
 
     an = (mob->angle + relSpawn->angle) >> ANGLETOFINESHIFT;
     V3d_Set(offset, relSpawn->distance * FIX2FLT(finecosine[an]),

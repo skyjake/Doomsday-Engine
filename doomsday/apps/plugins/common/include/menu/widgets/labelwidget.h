@@ -52,7 +52,7 @@ public:
     LabelWidget &setText(de::String const &newText);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace menu

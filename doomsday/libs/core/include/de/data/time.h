@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_TIME_H
-#define LIBDENG2_TIME_H
+#ifndef LIBCORE_TIME_H
+#define LIBCORE_TIME_H
 
 #include "../libcore.h"
 #include "../math.h"
@@ -48,13 +48,13 @@ class String;
  *
  * @ingroup types
  */
-class DENG2_PUBLIC Time : public ISerializable
+class DE_PUBLIC Time : public ISerializable
 {
 public:
     /**
      * Difference between two points in time. @ingroup types
      */
-    class DENG2_PUBLIC Span : public ISerializable
+    class DE_PUBLIC Span : public ISerializable
     {
     public:
         /**
@@ -320,13 +320,13 @@ public:
     static void updateCurrentHighPerformanceTime();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-DENG2_PUBLIC QTextStream &operator << (QTextStream &os, Time const &t);
+DE_PUBLIC QTextStream &operator << (QTextStream &os, Time const &t);
 
 typedef Time::Span TimeSpan;
 
 } // namespace de
 
-#endif // LIBDENG2_TIME_H
+#endif // LIBCORE_TIME_H

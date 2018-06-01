@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_FUNCTION_H
-#define LIBDENG2_FUNCTION_H
+#ifndef LIBCORE_FUNCTION_H
+#define LIBCORE_FUNCTION_H
 
 #include "../ISerializable"
 #include "../Counted"
@@ -53,14 +53,14 @@ class ArrayValue;
  *
  * @ingroup script
  */
-class DENG2_PUBLIC Function : public Counted, public ISerializable, DENG2_OBSERVES(Record, Deletion)
+class DE_PUBLIC Function : public Counted, public ISerializable, DE_OBSERVES(Record, Deletion)
 {
 public:
     /// An incorrect number of arguments is given in a function call. @ingroup errors
-    DENG2_ERROR(WrongArgumentsError);
+    DE_ERROR(WrongArgumentsError);
 
     /// An unknown native entry point was specified. @ingroup errors
-    DENG2_ERROR(UnknownEntryPointError);
+    DE_ERROR(UnknownEntryPointError);
 
     typedef QList<String> Arguments;
     typedef QMap<String, Value *> Defaults;
@@ -209,7 +209,7 @@ protected:
     ~Function(); // Counted
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 /**
@@ -218,7 +218,7 @@ private:
  *
  * @ingroup script
  */
-class DENG2_PUBLIC NativeFunctionSpec
+class DE_PUBLIC NativeFunctionSpec
 {
 public:
     NativeFunctionSpec(Function::NativeEntryPoint entryPoint,
@@ -250,13 +250,13 @@ private:
     Function::Defaults _argDefaults;
 };
 
-#define DENG2_FUNC_NOARG(Name, ScriptMemberName) \
+#define DE_FUNC_NOARG(Name, ScriptMemberName) \
     de::NativeFunctionSpec(Function_ ## Name, # Name, ScriptMemberName)
 
-#define DENG2_FUNC(Name, ScriptMemberName, Args) \
+#define DE_FUNC(Name, ScriptMemberName, Args) \
     de::NativeFunctionSpec(Function_ ## Name, # Name, ScriptMemberName, de::Function::Arguments() << Args)
 
-#define DENG2_FUNC_DEFS(Name, ScriptMemberName, Args, Defaults) \
+#define DE_FUNC_DEFS(Name, ScriptMemberName, Args, Defaults) \
     de::NativeFunctionSpec(Function_ ## Name, # Name, ScriptMemberName, \
                            de::Function::Arguments() << Args, Defaults)
 
@@ -267,7 +267,7 @@ private:
  *
  * @ingroup script
  */
-class DENG2_PUBLIC Binder
+class DE_PUBLIC Binder
 {
 public:
     enum FunctionOwnership { FunctionsOwned, FunctionsNotOwned };
@@ -324,4 +324,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_FUNCTION_H */
+#endif /* LIBCORE_FUNCTION_H */

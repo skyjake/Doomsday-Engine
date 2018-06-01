@@ -28,7 +28,7 @@
 namespace de {
 namespace filesys {
 
-DENG2_PIMPL(Link), public AsyncScope
+DE_PIMPL(Link), public AsyncScope
 {
     String localRootPath;
     State state = Initializing;
@@ -110,7 +110,7 @@ DENG2_PIMPL(Link), public AsyncScope
     void notifyStatus(RemoteFeedRelay::Status status)
     {
         using Relay = RemoteFeedRelay;
-        DENG2_FOR_EACH_OBSERVER(Relay::StatusAudience, i,
+        DE_FOR_EACH_OBSERVER(Relay::StatusAudience, i,
                                 Relay::get().audienceForStatus())
         {
             i->remoteRepositoryStatusChanged(address, status);
@@ -167,7 +167,7 @@ StringList Link::categoryTags() const
 
 void Link::wasConnected()
 {
-    DENG2_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_IN_MAIN_THREAD();
     d->state = Ready;
     d->sendDeferredQueries();
     d->notifyStatus(RemoteFeedRelay::Connected);
@@ -175,7 +175,7 @@ void Link::wasConnected()
 
 void Link::wasDisconnected()
 {
-    DENG2_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_IN_MAIN_THREAD();
     d->state = Deinitialized;
     d->cancelAllQueries();
     d->cleanup();
@@ -190,7 +190,7 @@ void Link::wasDisconnected()
 
 void Link::handleError(QString errorMessage)
 {
-    LOG_NET_ERROR("Error accessing remote file repository \"%s\": %s " DENG2_CHAR_MDASH
+    LOG_NET_ERROR("Error accessing remote file repository \"%s\": %s " DE_CHAR_MDASH
                   " files from repository may not be available")
             << d->address
             << errorMessage;

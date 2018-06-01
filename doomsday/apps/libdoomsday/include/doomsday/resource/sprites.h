@@ -83,7 +83,7 @@ public:
     static bool isValidSpriteName(de::String name);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace res

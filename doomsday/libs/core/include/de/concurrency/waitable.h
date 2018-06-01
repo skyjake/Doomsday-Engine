@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_WAITABLE_H
-#define LIBDENG2_WAITABLE_H
+#ifndef LIBCORE_WAITABLE_H
+#define LIBCORE_WAITABLE_H
 
 #include "../libcore.h"
 #include "../Time"
@@ -32,14 +32,14 @@ namespace de {
  *
  * @ingroup concurrency
  */
-class DENG2_PUBLIC Waitable
+class DE_PUBLIC Waitable
 {
 public:
     /// wait() failed due to timing out before the resource is secured. @ingroup errors
-    DENG2_ERROR(TimeOutError);
+    DE_ERROR(TimeOutError);
 
     /// wait() or waitTime() failed to secure the resource. @ingroup errors
-    DENG2_ERROR(WaitError);
+    DE_ERROR(WaitError);
 
 public:
     Waitable(duint initialValue = 0);
@@ -70,4 +70,4 @@ private:
 
 }
 
-#endif /* LIBDENG2_WAITABLE_H */
+#endif /* LIBCORE_WAITABLE_H */

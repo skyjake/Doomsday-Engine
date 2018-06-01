@@ -26,10 +26,10 @@
 
 namespace de {
 
-DENG2_STATIC_PROPERTY(DefaultSampleCount, int)
+DE_STATIC_PROPERTY(DefaultSampleCount, int)
 
-DENG2_PIMPL(GLTextureFramebuffer)
-, DENG2_OBSERVES(DefaultSampleCount, Change)
+DE_PIMPL(GLTextureFramebuffer)
+, DE_OBSERVES(DefaultSampleCount, Change)
 {
     struct ColorAttachment {
         Image::Format format;
@@ -107,14 +107,14 @@ DENG2_PIMPL(GLTextureFramebuffer)
             colorBuf.texture->setWrap(gl::ClampToEdge, gl::ClampToEdge);
             colorBuf.texture->setFilter(gl::Nearest, gl::Linear, gl::MipNone);
 
-            DENG2_ASSERT(colorBuf.texture->isReady());
+            DE_ASSERT(colorBuf.texture->isReady());
         }
 
         depthStencil.setDepthStencilContent(size);
         depthStencil.setWrap(gl::ClampToEdge, gl::ClampToEdge);
         depthStencil.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
 
-        DENG2_ASSERT(depthStencil.isReady());
+        DE_ASSERT(depthStencil.isReady());
 
         // Configure the framebuffer(s) in the best way supported by hardware.
         // The fallbacks are for older HW/drivers only, reasonably modern ones should

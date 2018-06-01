@@ -22,7 +22,7 @@
  * 02110-1301 USA</small>
  */
 
-#define DENG_NO_API_MACROS_FILESYS
+#define DE_NO_API_MACROS_FILESYS
 
 #ifdef WIN32
 #  include <direct.h>
@@ -133,7 +133,7 @@ dd_bool F_MakePath(char const *path)
     Str_Init(&buf);
     do
     {
-        endptr = strchr(ptr, DENG_DIR_SEP_CHAR);
+        endptr = strchr(ptr, DE_DIR_SEP_CHAR);
         if (!endptr)
             Str_Append(&buf, ptr);
         else
@@ -147,7 +147,7 @@ dd_bool F_MakePath(char const *path)
             mkdir(Str_Text(&buf), 0775);
 #endif
         }
-        Str_AppendChar(&buf, DENG_DIR_SEP_CHAR);
+        Str_AppendChar(&buf, DE_DIR_SEP_CHAR);
         ptr = endptr + 1;
     } while (NULL != endptr);
 
@@ -238,7 +238,7 @@ dd_bool F_ToNativeSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
 
         for (i = 0; src[i]; ++i)
         {
-            if (src[i] != DENG_DIR_WRONG_SEP_CHAR)
+            if (src[i] != DE_DIR_WRONG_SEP_CHAR)
             {
                 if (dstStr != srcStr)
                     Str_AppendChar(dstStr, src[i]);
@@ -246,9 +246,9 @@ dd_bool F_ToNativeSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
             }
 
             if (dstStr != srcStr)
-                Str_AppendChar(dstStr, DENG_DIR_SEP_CHAR);
+                Str_AppendChar(dstStr, DE_DIR_SEP_CHAR);
             else
-                dst[i] = DENG_DIR_SEP_CHAR;
+                dst[i] = DE_DIR_SEP_CHAR;
             result = true;
         }
     }
@@ -260,7 +260,7 @@ dd_bool F_ToNativeSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
  */
 static bool F_IsRelativeToBase(char const *path, char const *base)
 {
-    DENG_ASSERT(path != 0 && base != 0);
+    DE_ASSERT(path != 0 && base != 0);
     return !qstrnicmp(path, base, strlen(base));
 }
 
@@ -274,7 +274,7 @@ static bool F_IsRelativeToBase(char const *path, char const *base)
  */
 static dd_bool F_RemoveBasePath(ddstring_t *dst, ddstring_t const *absPath)
 {
-    DENG_ASSERT(dst != 0 && absPath != 0);
+    DE_ASSERT(dst != 0 && absPath != 0);
 
     ddstring_t basePath;
     Str_InitStatic(&basePath, DoomsdayApp::app().doomsdayBasePath().c_str());
@@ -312,7 +312,7 @@ dd_bool F_IsAbsolute(const ddstring_t* str)
     if (!str)
         return false;
     /// @todo Should not handle both separators - refactor callers.
-    if (Str_At(str, 0) == DENG_DIR_SEP_CHAR || Str_At(str, 0) == DENG_DIR_WRONG_SEP_CHAR || Str_At(str, 1) == ':')
+    if (Str_At(str, 0) == DE_DIR_SEP_CHAR || Str_At(str, 0) == DE_DIR_WRONG_SEP_CHAR || Str_At(str, 1) == ':')
         return true;
 #ifdef UNIX
     if (Str_At(str, 0) == '~')
@@ -453,7 +453,7 @@ const char* F_PrettyPath(const char* path)
     }
 
     // Swap directory separators with their system-specific version.
-    if (strchr(path, DENG_DIR_WRONG_SEP_CHAR))
+    if (strchr(path, DE_DIR_WRONG_SEP_CHAR))
     {
         int i;
         if (!buf)
@@ -463,8 +463,8 @@ const char* F_PrettyPath(const char* path)
         }
         for (i = 0; i < len; ++i)
         {
-            if (buf->str[i] == DENG_DIR_WRONG_SEP_CHAR)
-               buf->str[i] = DENG_DIR_SEP_CHAR;
+            if (buf->str[i] == DE_DIR_WRONG_SEP_CHAR)
+               buf->str[i] = DE_DIR_SEP_CHAR;
         }
         path = Str_Text(buf);
     }
@@ -477,7 +477,7 @@ const char* F_PrettyPath(const char* path)
 /*
 dd_bool F_Dump(void const *data, size_t size, char const *path)
 {
-    DENG2_ASSERT(data != 0 && path != 0);
+    DE_ASSERT(data != 0 && path != 0);
 
     if (!size) return false;
 

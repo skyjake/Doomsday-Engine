@@ -52,7 +52,7 @@ typedef ident_t fi_objectid_t;
 #define FF_LOCAL            0x1 ///< Local scripts are executed client-side.
 ///@}
 
-DENG_API_TYPEDEF(Infine)
+DE_API_TYPEDEF(Infine)
 {
     de_api_t api;
 
@@ -120,9 +120,9 @@ DENG_API_TYPEDEF(Infine)
 
     int (*ScriptResponder)(finaleid_t id, const void* ev);
 }
-DENG_API_T(Infine);
+DE_API_T(Infine);
 
-#ifndef DENG_NO_API_MACROS_INFINE
+#ifndef DE_NO_API_MACROS_INFINE
 #define FI_Execute2             _api_Infine.Execute2
 #define FI_Execute              _api_Infine.Execute
 #define FI_ScriptActive         _api_Infine.ScriptActive
@@ -138,7 +138,7 @@ DENG_API_T(Infine);
 #endif
 
 #ifdef __DOOMSDAY__
-DENG_USING_API(Infine);
+DE_USING_API(Infine);
 #endif
 
 ///@}

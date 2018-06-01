@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_OBSERVERS_H
-#define LIBDENG2_OBSERVERS_H
+#ifndef LIBCORE_OBSERVERS_H
+#define LIBCORE_OBSERVERS_H
 
 #include "../libcore.h"
 #include "../Lockable"
@@ -30,7 +30,7 @@
 /**
  * Macro that forms the name of an observer interface.
  */
-#define DENG2_AUDIENCE_INTERFACE(Name) \
+#define DE_AUDIENCE_INTERFACE(Name) \
     I##Name##Observer
 
 /**
@@ -40,44 +40,44 @@
  * @param Method  The pure virtual method that the observer has to implement.
  *                The @c virtual keyword and <code>=0</code> are automatically included.
  */
-#define DENG2_DECLARE_AUDIENCE(Name, Method) \
-    class DENG2_AUDIENCE_INTERFACE(Name) : public de::ObserverBase { \
+#define DE_DECLARE_AUDIENCE(Name, Method) \
+    class DE_AUDIENCE_INTERFACE(Name) : public de::ObserverBase { \
     public: \
-        virtual ~DENG2_AUDIENCE_INTERFACE(Name)() {} \
+        virtual ~DE_AUDIENCE_INTERFACE(Name)() {} \
         virtual Method = 0; \
     };
 
 /**
  * Defines an audience. Typically used inside a class to define the observers
- * as a public member variable (used by DENG_DEFINE_AUDIENCE). Produces a
+ * as a public member variable (used by DE_DEFINE_AUDIENCE). Produces a
  * member variable called "audienceFor{Name}".
  *
  * @param Name  Name of the audience.
  */
-#define DENG2_AUDIENCE(Name) \
-    typedef de::Observers<DENG2_AUDIENCE_INTERFACE(Name)> Name##Audience; \
+#define DE_AUDIENCE(Name) \
+    typedef de::Observers<DE_AUDIENCE_INTERFACE(Name)> Name##Audience; \
     Name##Audience audienceFor##Name;
 
-#define DENG2_EXTERN_AUDIENCE(Name) \
-    typedef de::Observers<DENG2_AUDIENCE_INTERFACE(Name)> Name##Audience; \
-    DENG2_PUBLIC extern Name##Audience audienceFor##Name;
+#define DE_EXTERN_AUDIENCE(Name) \
+    typedef de::Observers<DE_AUDIENCE_INTERFACE(Name)> Name##Audience; \
+    DE_PUBLIC extern Name##Audience audienceFor##Name;
 
-#define DENG2_DECLARE_AUDIENCE_METHOD(Name) \
-    typedef de::Observers<DENG2_AUDIENCE_INTERFACE(Name)> Name##Audience; \
+#define DE_DECLARE_AUDIENCE_METHOD(Name) \
+    typedef de::Observers<DE_AUDIENCE_INTERFACE(Name)> Name##Audience; \
     Name##Audience &audienceFor##Name(); \
     Name##Audience const &audienceFor##Name() const;
 
-#define DENG2_AUDIENCE_METHOD(ClassName, Name) \
+#define DE_AUDIENCE_METHOD(ClassName, Name) \
     ClassName::Name##Audience &ClassName::audienceFor##Name() { return d->audienceFor##Name; } \
     ClassName::Name##Audience const &ClassName::audienceFor##Name() const { return d->audienceFor##Name; }
 
-#define DENG2_AUDIENCE_METHOD_INLINE(Name) \
-    typedef de::Observers<DENG2_AUDIENCE_INTERFACE(Name)> Name##Audience; \
+#define DE_AUDIENCE_METHOD_INLINE(Name) \
+    typedef de::Observers<DE_AUDIENCE_INTERFACE(Name)> Name##Audience; \
     Name##Audience _audienceFor##Name; \
     Name##Audience &audienceFor##Name() { return _audienceFor##Name; } \
     Name##Audience const &audienceFor##Name() const { return _audienceFor##Name; }
 
-#define DENG2_PIMPL_AUDIENCE(Name) \
+#define DE_PIMPL_AUDIENCE(Name) \
     Name##Audience audienceFor##Name;
 
 /**
@@ -88,17 +88,17 @@
  * @param Method  The pure virtual method that the observer has to implement.
  *                The @c virtual keyword and <code>=0</code> are automatically included.
  */
-#define DENG2_DEFINE_AUDIENCE(Name, Method) \
-    DENG2_DECLARE_AUDIENCE(Name, Method) \
-    DENG2_AUDIENCE(Name)
+#define DE_DEFINE_AUDIENCE(Name, Method) \
+    DE_DECLARE_AUDIENCE(Name, Method) \
+    DE_AUDIENCE(Name)
 
-#define DENG2_DEFINE_AUDIENCE2(Name, Method) \
-    DENG2_DECLARE_AUDIENCE(Name, Method) \
-    DENG2_DECLARE_AUDIENCE_METHOD(Name)
+#define DE_DEFINE_AUDIENCE2(Name, Method) \
+    DE_DECLARE_AUDIENCE(Name, Method) \
+    DE_DECLARE_AUDIENCE_METHOD(Name)
 
-#define DENG2_DEFINE_AUDIENCE_INLINE(Name, Method) \
-    DENG2_DECLARE_AUDIENCE(Name, Method) \
-    DENG2_AUDIENCE_METHOD_INLINE(Name)
+#define DE_DEFINE_AUDIENCE_INLINE(Name, Method) \
+    DE_DECLARE_AUDIENCE(Name, Method) \
+    DE_AUDIENCE_METHOD_INLINE(Name)
 
 /**
  * Macro that can be used in class declarations to specify which audiences the class
@@ -107,7 +107,7 @@
  * @param Type      Name of the type where the audience is defined.
  * @param Audience  Audience name.
  */
-#define DENG2_OBSERVES(Type, Audience) public Type::I##Audience##Observer
+#define DE_OBSERVES(Type, Audience) public Type::I##Audience##Observer
 
 /**
  * Macro for looping through all observers. @note The @a Audience type needs to be defined
@@ -117,7 +117,7 @@
  * @param Var      Variable used in the loop.
  * @param Name     Name of the observer set.
  */
-#define DENG2_FOR_EACH_OBSERVER(SetName, Var, Name) for (SetName::Loop Var(Name); !Var.done(); ++Var)
+#define DE_FOR_EACH_OBSERVER(SetName, Var, Name) for (SetName::Loop Var(Name); !Var.done(); ++Var)
 
 /**
  * Macro for looping through the audience members.
@@ -125,11 +125,11 @@
  * @param Name  Name of the audience.
  * @param Var   Variable used in the loop.
  */
-#define DENG2_FOR_AUDIENCE(Name, Var) \
-    DENG2_FOR_EACH_OBSERVER(Name##Audience, Var, audienceFor##Name)
+#define DE_FOR_AUDIENCE(Name, Var) \
+    DE_FOR_EACH_OBSERVER(Name##Audience, Var, audienceFor##Name)
 
-#define DENG2_FOR_AUDIENCE2(Name, Var) \
-    DENG2_FOR_EACH_OBSERVER(Name##Audience, Var, audienceFor##Name())
+#define DE_FOR_AUDIENCE2(Name, Var) \
+    DE_FOR_EACH_OBSERVER(Name##Audience, Var, audienceFor##Name())
 
 /**
  * Macro for looping through the public audience members from inside a private
@@ -138,11 +138,11 @@
  * @param Name  Name of the audience.
  * @param Var   Variable used in the loop.
  */
-#define DENG2_FOR_PUBLIC_AUDIENCE(Name, Var) \
-    DENG2_FOR_EACH_OBSERVER(Name##Audience, Var, self().audienceFor##Name)
+#define DE_FOR_PUBLIC_AUDIENCE(Name, Var) \
+    DE_FOR_EACH_OBSERVER(Name##Audience, Var, self().audienceFor##Name)
 
-#define DENG2_FOR_PUBLIC_AUDIENCE2(Name, Var) \
-    DENG2_FOR_EACH_OBSERVER(Name##Audience, Var, self().audienceFor##Name())
+#define DE_FOR_PUBLIC_AUDIENCE2(Name, Var) \
+    DE_FOR_EACH_OBSERVER(Name##Audience, Var, self().audienceFor##Name())
 
 namespace de {
 
@@ -151,7 +151,7 @@ class ObserverBase;
 /**
  * Interface for a group of observers.
  */
-class DENG2_PUBLIC IAudience
+class DE_PUBLIC IAudience
 {
 public:
     virtual ~IAudience();
@@ -159,7 +159,7 @@ public:
     virtual void removeMember(ObserverBase *member) = 0;
 };
 
-class DENG2_PUBLIC ObserverBase
+class DE_PUBLIC ObserverBase
 {
 public:
     ObserverBase();
@@ -185,7 +185,7 @@ private:
  * form "audience for (something)".
  *
  * In a class declaration, define the audience in the @c public section of the
- * class: <pre>DENG2_DEFINE_AUDIENCE(Deletion, ...interface-function...)</pre>
+ * class: <pre>DE_DEFINE_AUDIENCE(Deletion, ...interface-function...)</pre>
  *
  * This will generate a public member variable called @c audienceForDeletion
  * that can be directly manipulated by other objects.
@@ -202,19 +202,19 @@ private:
  * implementation of the class.
  *
  * First, define the audience in the @c public section of the class:
- * <pre>DENG2_DEFINE_AUDIENCE2(Deletion, ...interface-function...)</pre>
+ * <pre>DE_DEFINE_AUDIENCE2(Deletion, ...interface-function...)</pre>
  *
- * This works like DENG2_DEFINE_AUDIENCE, but without a public member variable.
+ * This works like DE_DEFINE_AUDIENCE, but without a public member variable.
  * Instead, accessor methods are declared for accessing the audience.
  *
  * Then, inside the private implementation (@c Instance struct), define the
- * audience: <pre>DENG2_PIMPL_AUDIENCE(Deletion)</pre>
+ * audience: <pre>DE_PIMPL_AUDIENCE(Deletion)</pre>
  *
  * Finally, define the accessor methods (for instance, just before the
  * constructor of the class):
- * <pre>DENG2_AUDIENCE_METHOD(ClassName, Deletion)</pre>
+ * <pre>DE_AUDIENCE_METHOD(ClassName, Deletion)</pre>
  *
- * It is recommended to keep the DENG2_PIMPL_AUDIENCE and DENG2_AUDIENCE_METHOD
+ * It is recommended to keep the DE_PIMPL_AUDIENCE and DE_AUDIENCE_METHOD
  * macros close together in the source file for easier maintenance. The former
  * could be at the end of the @c Instance struct while the latter is immediately
  * following the struct.
@@ -241,7 +241,7 @@ public:
     public:
         Loop(Observers const &observers) : _audience(&observers)
                                          , _prevObserver(nullptr) {
-            DENG2_GUARD(_audience);
+            DE_GUARD(_audience);
             if (members().flags() & PointerSet::AllowInsertionDuringIteration) {
                 _prevObserver = members().iterationObserver();
                 members().setIterationObserver(this);
@@ -251,7 +251,7 @@ public:
             next();
         }
         virtual ~Loop() {
-            DENG2_GUARD(_audience);
+            DE_GUARD(_audience);
             members().setBeingIterated(false);
             if (members().flags() & PointerSet::AllowInsertionDuringIteration) {
                 members().setIterationObserver(_prevObserver);
@@ -311,19 +311,19 @@ public:
 
     virtual ~Observers() {
         _disassociateAllMembers();
-        DENG2_GUARD(this);
+        DE_GUARD(this);
     }
 
     void clear() {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         _disassociateAllMembers();
         _members.clear();
     }
 
     Observers<Type> &operator = (Observers<Type> const &other) {
         if (this == &other) return *this;
-        DENG2_GUARD(other);
-        DENG2_GUARD(this);
+        DE_GUARD(other);
+        DE_GUARD(this);
         _members = other._members;
         for (Type *observer : _members) {
             observer->addMemberOf(*this);
@@ -384,7 +384,7 @@ public:
     }
 
     size_type size() const {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         return _members.size();
     }
 
@@ -393,12 +393,12 @@ public:
     }
 
     bool contains(Type const *observer) const {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         return _members.contains(const_cast<Type *>(observer));
     }
 
     bool contains(Type const &observer) const {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         return _members.contains(const_cast<Type *>(&observer));
     }
 
@@ -410,7 +410,7 @@ public:
      * @param yes  @c true to allow additions, @c false to deny.
      */
     void setAdditionAllowedDuringIteration(bool yes) {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         _members.setFlags(Members::AllowInsertionDuringIteration, yes);
     }
 
@@ -426,13 +426,13 @@ private:
     }
 
     void _add(Type *observer) {
-        DENG2_GUARD(this);
-        DENG2_ASSERT(observer != 0);
+        DE_GUARD(this);
+        DE_ASSERT(observer != 0);
         _members.insert(observer);
     }
 
     void _remove(Type *observer) {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         _members.remove(observer);
     }
 
@@ -441,4 +441,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_OBSERVERS_H */
+#endif /* LIBCORE_OBSERVERS_H */

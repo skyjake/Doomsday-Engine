@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_CONDITIONALTRIGGER_H
-#define LIBDENG2_CONDITIONALTRIGGER_H
+#ifndef LIBCORE_CONDITIONALTRIGGER_H
+#define LIBCORE_CONDITIONALTRIGGER_H
 
 #include "../Variable"
 
@@ -26,7 +26,7 @@ namespace de {
 /**
  * Conditional trigger that calls a method
  */
-class DENG2_PUBLIC ConditionalTrigger
+class DE_PUBLIC ConditionalTrigger
 {
 public:
     ConditionalTrigger();
@@ -62,9 +62,9 @@ public:
     virtual void handleTriggered(String const &trigger) = 0;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_CONDITIONALTRIGGER_H
+#endif // LIBCORE_CONDITIONALTRIGGER_H

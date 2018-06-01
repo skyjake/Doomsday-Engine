@@ -30,7 +30,7 @@
 
 namespace de {
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
 extern int GLDrawQueue_queuedElems;
 #endif
 
@@ -130,7 +130,7 @@ static BitField currentProps;
 
 /// Observes the current target and clears the pointer if it happens to get
 /// deleted.
-class CurrentTarget : DENG2_OBSERVES(Asset, Deletion)
+class CurrentTarget : DE_OBSERVES(Asset, Deletion)
 {
     GLFramebuffer *_target;
 
@@ -174,7 +174,7 @@ static CurrentTarget currentTarget;
 
 } // namespace internal
 
-DENG2_PIMPL(GLState)
+DE_PIMPL(GLState)
 {
     BitField       props;
     GLFramebuffer *target;
@@ -832,19 +832,19 @@ void GLState::apply() const
 {
     LIBGUI_ASSERT_GL_OK();
 
-#ifdef DENG2_DEBUG
-    DENG2_ASSERT(GLDrawQueue_queuedElems == 0);
+#ifdef DE_DEBUG
+    DE_ASSERT(GLDrawQueue_queuedElems == 0);
 #endif
 
     // Actual OpenGL state shouldn't be changed outside the render thread.
     // The main thread can still manipulate shared OpenGL objects, though.
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     bool forceViewportAndScissor = false;
 
     // Update the render target.
     GLFramebuffer *newTarget = &target();
-    DENG2_ASSERT(newTarget != 0);
+    DE_ASSERT(newTarget != 0);
 
     if (internal::currentTarget != newTarget)
     {
@@ -908,17 +908,17 @@ void GLState::apply() const
         {
         case internal::Blend:
             LIBGUI_GL.glGetIntegerv(GL_BLEND, &val);
-            DENG2_ASSERT(!val == !d->props.asBool(elem.id));
+            DE_ASSERT(!val == !d->props.asBool(elem.id));
             break;
 
         case internal::BlendFuncSrc:
             LIBGUI_GL.glGetIntegerv(GL_BLEND_SRC_RGB, &val);
-            DENG2_ASSERT(d->fromGlBFunc(val) == d->props.asUInt(elem.id));
+            DE_ASSERT(d->fromGlBFunc(val) == d->props.asUInt(elem.id));
             break;
 
         case internal::BlendFuncDest:
             LIBGUI_GL.glGetIntegerv(GL_BLEND_DST_RGB, &val);
-            DENG2_ASSERT(d->fromGlBFunc(val) == d->props.asUInt(elem.id));
+            DE_ASSERT(d->fromGlBFunc(val) == d->props.asUInt(elem.id));
             break;
 
         case internal::BlendOp:
@@ -926,7 +926,7 @@ void GLState::apply() const
             val = (val == GL_FUNC_ADD? gl::Add :
                    val == GL_FUNC_SUBTRACT? gl::Subtract :
                    val == GL_FUNC_REVERSE_SUBTRACT? gl::ReverseSubtract : 0);
-            DENG2_ASSERT(val == d->props.asUInt(elem.id));
+            DE_ASSERT(val == d->props.asUInt(elem.id));
             break;
         }
     }
@@ -946,7 +946,7 @@ GLFramebuffer *GLState::currentTarget()
 
 GLState &GLState::current()
 {
-    DENG2_ASSERT(!internal::stack.isEmpty());
+    DE_ASSERT(!internal::stack.isEmpty());
     return *internal::stack.last();
 }
 
@@ -970,7 +970,7 @@ void GLState::push(GLState *state)
 
 GLState *GLState::take()
 {
-    DENG2_ASSERT(internal::stack.size() > 1);
+    DE_ASSERT(internal::stack.size() > 1);
     return internal::stack.takeLast();
 }
 

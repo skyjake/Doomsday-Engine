@@ -34,7 +34,7 @@ static patchid_t pEditLeft;
 static patchid_t pEditRight;
 static patchid_t pEditMiddle;
 
-DENG2_PIMPL_NOREF(LineEditWidget)
+DE_PIMPL_NOREF(LineEditWidget)
 {
     String text;
     String oldText;    ///< For restoring a canceled edit.

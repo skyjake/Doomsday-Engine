@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_NO_API_MACROS_GL
+#define DE_NO_API_MACROS_GL
 
 #include "de_base.h"
 #include "gl/gl_main.h"
@@ -82,7 +82,7 @@ struct DGLState
 
         default: {
             int const index = int(id) - DGL_MODELVIEW;
-            DENG2_ASSERT(index >= 0 && index < 2);
+            DE_ASSERT(index >= 0 && index < 2);
             return index; }
         }
     }
@@ -96,21 +96,21 @@ struct DGLState
     void popMatrix()
     {
         auto &stack = matrixStacks[matrixMode];
-        DENG2_ASSERT(stack.size() > 1);
+        DE_ASSERT(stack.size() > 1);
         stack.pop_back();
     }
 
     void loadMatrix(Mat4f const &mat)
     {
         auto &stack = matrixStacks[matrixMode];
-        DENG2_ASSERT(!stack.isEmpty());
+        DE_ASSERT(!stack.isEmpty());
         stack.back() = mat;
     }
 
     void multMatrix(Mat4f const &mat)
     {
         auto &stack = matrixStacks[matrixMode];
-        DENG2_ASSERT(!stack.isEmpty());
+        DE_ASSERT(!stack.isEmpty());
         stack.back() = stack.back() * mat;
     }
 };
@@ -204,8 +204,8 @@ void DGL_CullFace(DGLenum cull)
  */
 static void envAddColoredAlpha(int activate, GLenum addFactor)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(activate)
     {
@@ -258,8 +258,8 @@ static void envAddColoredAlpha(int activate, GLenum addFactor)
  */
 static void envModMultiTex(int activate)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Setup TU 2: The modulated texture.
     LIBGUI_GL.glActiveTexture(GL_TEXTURE1);
@@ -306,8 +306,8 @@ void DGL_ModulateTexture(int mode)
     }
 
 #if 0
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(mode)
     {
@@ -497,8 +497,8 @@ void DGL_ModulateTexture(int mode)
     if(!GL_state.features.blendSubtract)
         return;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     LIBGUI_GL.glBlendEquationEXT(op);
 }*/
@@ -512,18 +512,18 @@ void GL_SetVSync(dd_bool on)
         return;
     }
 
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     GLInfo::setSwapInterval(on ? 1 : 0);
 }
 
 #undef DGL_SetScissor
-DENG_EXTERN_C void DGL_SetScissor(RectRaw const *rect)
+DE_EXTERN_C void DGL_SetScissor(RectRaw const *rect)
 {
     if(!rect) return;
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     GameWidget &game = ClientWindow::main().game();
 
@@ -541,7 +541,7 @@ DENG_EXTERN_C void DGL_SetScissor(RectRaw const *rect)
 }
 
 #undef DGL_SetScissor2
-DENG_EXTERN_C void DGL_SetScissor2(int x, int y, int width, int height)
+DE_EXTERN_C void DGL_SetScissor2(int x, int y, int width, int height)
 {
     RectRaw rect;
     rect.origin.x = x;
@@ -554,8 +554,8 @@ DENG_EXTERN_C void DGL_SetScissor2(int x, int y, int width, int height)
 #undef DGL_GetIntegerv
 dd_bool DGL_GetIntegerv(int name, int *v)
 {
-    //DENG_ASSERT_IN_MAIN_THREAD();
-    //DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    //DE_ASSERT_IN_MAIN_THREAD();
+    //DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     float color[4];
     switch(name)
@@ -650,9 +650,9 @@ dd_bool DGL_SetInteger(int name, int value)
     switch(name)
     {
     case DGL_ACTIVE_TEXTURE:
-        DENG_ASSERT_GL_CONTEXT_ACTIVE();
-        DENG2_ASSERT(value >= 0);
-        DENG2_ASSERT(value < MAX_TEX_UNITS);
+        DE_ASSERT_GL_CONTEXT_ACTIVE();
+        DE_ASSERT(value >= 0);
+        DE_ASSERT(value < MAX_TEX_UNITS);
         dgl.activeTexture = value;
         LIBGUI_GL.glActiveTexture(GLenum(GL_TEXTURE0 + value));
         break;
@@ -675,8 +675,8 @@ dd_bool DGL_SetInteger(int name, int value)
 #undef DGL_GetFloatv
 dd_bool DGL_GetFloatv(int name, float *v)
 {
-    //DENG_ASSERT_IN_MAIN_THREAD();
-    //DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    //DE_ASSERT_IN_MAIN_THREAD();
+    //DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     float color[4];
     switch (name)
@@ -762,7 +762,7 @@ dd_bool DGL_SetFloat(int name, float value)
 
     case DGL_POINT_SIZE:
         GL_state.currentPointSize = value;
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
         LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
         LIBGUI_GL.glPointSize(value);
 #endif
@@ -797,7 +797,8 @@ void DGL_PopState(void)
 #undef DGL_Enable
 int DGL_Enable(int cap)
 {
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    //DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch (cap)
     {
@@ -855,7 +856,7 @@ int DGL_Enable(int cap)
             break;
 
         case DGL_LINE_SMOOTH:
-#if defined(DENG_OPENGL)
+#if defined(DE_OPENGL)
             Deferred_glEnable(GL_LINE_SMOOTH);
 #endif
             break;
@@ -866,7 +867,7 @@ int DGL_Enable(int cap)
             break;
 
         default: 
-            DENG_ASSERT_FAIL("DGL_Enable: Invalid cap");
+            DE_ASSERT_FAIL("DGL_Enable: Invalid cap");
             return 0;
     }
 
@@ -877,7 +878,8 @@ int DGL_Enable(int cap)
 #undef DGL_Disable
 void DGL_Disable(int cap)
 {
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    //DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch (cap)
     {
@@ -936,19 +938,19 @@ void DGL_Disable(int cap)
             break;
 
         case DGL_LINE_SMOOTH:
-#if defined(DENG_OPENGL)
+#if defined(DE_OPENGL)
             Deferred_glDisable(GL_LINE_SMOOTH);
 #endif
             break;
 
         case DGL_POINT_SMOOTH:
-#if defined(DENG_OPENGL)
+#if defined(DE_OPENGL)
             Deferred_glDisable(GL_POINT_SMOOTH);
 #endif
             break;
 
         default: 
-            DENG2_ASSERT_FAIL("DGL_Disable: Invalid cap");
+        DE_ASSERT_FAIL("DGL_Disable: Invalid cap");
             break;
     }
 
@@ -971,8 +973,8 @@ void DGL_BlendOp(int op)
 #undef DGL_BlendFunc
 void DGL_BlendFunc(int param1, int param2)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     const auto src = param1 == DGL_ZERO ? gl::Zero :
                                           param1 == DGL_ONE                 ? gl::One  :
@@ -1026,7 +1028,7 @@ static gl::Wrapping DGL_ToGLWrapCap(DGLint cap)
         return gl::Repeat;
 
     default:
-        DENG2_ASSERT_FAIL("DGL_ToGLWrapCap: Unknown cap value");
+        DE_ASSERT_FAIL("DGL_ToGLWrapCap: Unknown cap value");
         break;
     }
     return gl::ClampToEdge;
@@ -1083,7 +1085,7 @@ void DGL_SetRawImage(lumpnum_t lumpNum, DGLint wrapS, DGLint wrapT)
 #undef DGL_MatrixMode
 void DGL_MatrixMode(DGLenum mode)
 {
-    //DENG2_ASSERT_IN_RENDER_THREAD();
+    //DE_ASSERT_IN_RENDER_THREAD();
 
     dgl.matrixMode = dgl.stackIndex(mode);
 }
@@ -1091,7 +1093,7 @@ void DGL_MatrixMode(DGLenum mode)
 #undef DGL_PushMatrix
 void DGL_PushMatrix(void)
 {
-    //DENG2_ASSERT_IN_RENDER_THREAD();
+    //DE_ASSERT_IN_RENDER_THREAD();
 
     dgl.pushMatrix();
 }
@@ -1099,7 +1101,7 @@ void DGL_PushMatrix(void)
 #undef DGL_PopMatrix
 void DGL_PopMatrix(void)
 {
-    //DENG2_ASSERT_IN_RENDER_THREAD();
+    //DE_ASSERT_IN_RENDER_THREAD();
 
     dgl.popMatrix();
 }
@@ -1107,7 +1109,7 @@ void DGL_PopMatrix(void)
 #undef DGL_LoadIdentity
 void DGL_LoadIdentity(void)
 {
-    //DENG2_ASSERT_IN_RENDER_THREAD();
+    //DE_ASSERT_IN_RENDER_THREAD();
 
     dgl.loadMatrix(Mat4f());
 }
@@ -1115,7 +1117,7 @@ void DGL_LoadIdentity(void)
 #undef DGL_LoadMatrix
 void DGL_LoadMatrix(float const *matrix4x4)
 {
-    //DENG2_ASSERT_IN_RENDER_THREAD();
+    //DE_ASSERT_IN_RENDER_THREAD();
 
     dgl.loadMatrix(Mat4f(matrix4x4));
 }
@@ -1123,7 +1125,7 @@ void DGL_LoadMatrix(float const *matrix4x4)
 #undef DGL_Translatef
 void DGL_Translatef(float x, float y, float z)
 {
-    //DENG2_ASSERT_IN_RENDER_THREAD();
+    //DE_ASSERT_IN_RENDER_THREAD();
 
     dgl.multMatrix(Mat4f::translate(Vec3f(x, y, z)));
 }
@@ -1131,7 +1133,7 @@ void DGL_Translatef(float x, float y, float z)
 #undef DGL_Rotatef
 void DGL_Rotatef(float angle, float x, float y, float z)
 {
-    //DENG2_ASSERT_IN_RENDER_THREAD();
+    //DE_ASSERT_IN_RENDER_THREAD();
 
     dgl.multMatrix(Mat4f::rotate(angle, Vec3f(x, y, z)));
 }
@@ -1139,7 +1141,7 @@ void DGL_Rotatef(float angle, float x, float y, float z)
 #undef DGL_Scalef
 void DGL_Scalef(float x, float y, float z)
 {
-    //DENG2_ASSERT_IN_RENDER_THREAD();
+    //DE_ASSERT_IN_RENDER_THREAD();
 
     dgl.multMatrix(Mat4f::scale(Vec3f(x, y, z)));
 }
@@ -1147,7 +1149,7 @@ void DGL_Scalef(float x, float y, float z)
 #undef DGL_Ortho
 void DGL_Ortho(float left, float top, float right, float bottom, float znear, float zfar)
 {
-    //DENG2_ASSERT_IN_RENDER_THREAD();
+    //DE_ASSERT_IN_RENDER_THREAD();
 
     dgl.multMatrix(Mat4f::ortho(left, right, top, bottom, znear, zfar));
 }
@@ -1204,7 +1206,7 @@ void DGL_DeleteTextures(int num, DGLuint const *names)
 int DGL_Bind(DGLuint texture)
 {
     GL_BindTextureUnmanaged(texture);
-    DENG_ASSERT(!Sys_GLCheckError());
+    DE_ASSERT(!Sys_GLCheckError());
     return 0;
 }
 
@@ -1213,7 +1215,7 @@ DGLuint DGL_NewTextureWithParams(dgltexformat_t format, int width, int height,
     uint8_t const *pixels, int flags, int minFilter, int magFilter,
     int anisoFilter, int wrapS, int wrapT)
 {
-#if defined (DENG_OPENGL_ES)
+#if defined (DE_OPENGL_ES)
 #  define GL_CLAMP GL_CLAMP_TO_EDGE
 #endif
     return GL_NewTextureWithParams(format, width, height, (uint8_t *)pixels, flags, 0,
@@ -1229,54 +1231,54 @@ DGLuint DGL_NewTextureWithParams(dgltexformat_t format, int width, int height,
                                      wrapS == DGL_CLAMP_TO_EDGE ? GL_CLAMP_TO_EDGE : GL_REPEAT),
                                     (wrapT == DGL_CLAMP         ? GL_CLAMP :
                                      wrapT == DGL_CLAMP_TO_EDGE ? GL_CLAMP_TO_EDGE : GL_REPEAT));
-#if defined (DENG_OPENGL_ES)
+#if defined (DE_OPENGL_ES)
 #  undef GL_CLAMP
 #endif
 }
 
 // dgl_draw.cpp
-DENG_EXTERN_C void DGL_Begin(dglprimtype_t mode);
-DENG_EXTERN_C void DGL_End(void);
-DENG_EXTERN_C void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b);
-DENG_EXTERN_C void DGL_Color3ubv(const DGLubyte* vec);
-DENG_EXTERN_C void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a);
-DENG_EXTERN_C void DGL_Color4ubv(const DGLubyte* vec);
-DENG_EXTERN_C void DGL_Color3f(float r, float g, float b);
-DENG_EXTERN_C void DGL_Color3fv(const float* vec);
-DENG_EXTERN_C void DGL_Color4f(float r, float g, float b, float a);
-DENG_EXTERN_C void DGL_Color4fv(const float* vec);
-DENG_EXTERN_C void DGL_TexCoord2f(byte target, float s, float t);
-DENG_EXTERN_C void DGL_TexCoord2fv(byte target, float const *vec);
-DENG_EXTERN_C void DGL_Vertex2f(float x, float y);
-DENG_EXTERN_C void DGL_Vertex2fv(const float* vec);
-DENG_EXTERN_C void DGL_Vertex3f(float x, float y, float z);
-DENG_EXTERN_C void DGL_Vertex3fv(const float* vec);
-DENG_EXTERN_C void DGL_Vertices2ftv(int num, const dgl_ft2vertex_t* vec);
-DENG_EXTERN_C void DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec);
-DENG_EXTERN_C void DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec);
-DENG_EXTERN_C void DGL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, float b, float a);
-DENG_EXTERN_C void DGL_DrawRect(const RectRaw* rect);
-DENG_EXTERN_C void DGL_DrawRect2(int x, int y, int w, int h);
-DENG_EXTERN_C void DGL_DrawRectf(const RectRawf* rect);
-DENG_EXTERN_C void DGL_DrawRectf2(double x, double y, double w, double h);
-DENG_EXTERN_C void DGL_DrawRectf2Color(double x, double y, double w, double h, float r, float g, float b, float a);
-DENG_EXTERN_C void DGL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th);
-DENG_EXTERN_C void DGL_DrawCutRectfTiled(const RectRawf* rect, int tw, int th, int txoff, int tyoff, const RectRawf* cutRect);
-DENG_EXTERN_C void DGL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int th, int txoff, int tyoff, double cx, double cy, double cw, double ch);
-DENG_EXTERN_C void DGL_DrawQuadOutline(const Point2Raw* tl, const Point2Raw* tr, const Point2Raw* br, const Point2Raw* bl, const float color[4]);
-DENG_EXTERN_C void DGL_DrawQuad2Outline(int tlX, int tlY, int trX, int trY, int brX, int brY, int blX, int blY, const float color[4]);
+DE_EXTERN_C void DGL_Begin(dglprimtype_t mode);
+DE_EXTERN_C void DGL_End(void);
+DE_EXTERN_C void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b);
+DE_EXTERN_C void DGL_Color3ubv(const DGLubyte* vec);
+DE_EXTERN_C void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a);
+DE_EXTERN_C void DGL_Color4ubv(const DGLubyte* vec);
+DE_EXTERN_C void DGL_Color3f(float r, float g, float b);
+DE_EXTERN_C void DGL_Color3fv(const float* vec);
+DE_EXTERN_C void DGL_Color4f(float r, float g, float b, float a);
+DE_EXTERN_C void DGL_Color4fv(const float* vec);
+DE_EXTERN_C void DGL_TexCoord2f(byte target, float s, float t);
+DE_EXTERN_C void DGL_TexCoord2fv(byte target, float const *vec);
+DE_EXTERN_C void DGL_Vertex2f(float x, float y);
+DE_EXTERN_C void DGL_Vertex2fv(const float* vec);
+DE_EXTERN_C void DGL_Vertex3f(float x, float y, float z);
+DE_EXTERN_C void DGL_Vertex3fv(const float* vec);
+DE_EXTERN_C void DGL_Vertices2ftv(int num, const dgl_ft2vertex_t* vec);
+DE_EXTERN_C void DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec);
+DE_EXTERN_C void DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec);
+DE_EXTERN_C void DGL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, float b, float a);
+DE_EXTERN_C void DGL_DrawRect(const RectRaw* rect);
+DE_EXTERN_C void DGL_DrawRect2(int x, int y, int w, int h);
+DE_EXTERN_C void DGL_DrawRectf(const RectRawf* rect);
+DE_EXTERN_C void DGL_DrawRectf2(double x, double y, double w, double h);
+DE_EXTERN_C void DGL_DrawRectf2Color(double x, double y, double w, double h, float r, float g, float b, float a);
+DE_EXTERN_C void DGL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th);
+DE_EXTERN_C void DGL_DrawCutRectfTiled(const RectRawf* rect, int tw, int th, int txoff, int tyoff, const RectRawf* cutRect);
+DE_EXTERN_C void DGL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int th, int txoff, int tyoff, double cx, double cy, double cw, double ch);
+DE_EXTERN_C void DGL_DrawQuadOutline(const Point2Raw* tl, const Point2Raw* tr, const Point2Raw* br, const Point2Raw* bl, const float color[4]);
+DE_EXTERN_C void DGL_DrawQuad2Outline(int tlX, int tlY, int trX, int trY, int brX, int brY, int blX, int blY, const float color[4]);
 
 // gl_draw.cpp
-DENG_EXTERN_C void GL_UseFog(int yes);
-DENG_EXTERN_C void GL_SetFilter(dd_bool enable);
-DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a);
-DENG_EXTERN_C void GL_ConfigureBorderedProjection2(dgl_borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);
-DENG_EXTERN_C void GL_ConfigureBorderedProjection(dgl_borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
-DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp);
-DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp);
-DENG_EXTERN_C void GL_ResetViewEffects();
+DE_EXTERN_C void GL_UseFog(int yes);
+DE_EXTERN_C void GL_SetFilter(dd_bool enable);
+DE_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a);
+DE_EXTERN_C void GL_ConfigureBorderedProjection2(dgl_borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);
+DE_EXTERN_C void GL_ConfigureBorderedProjection(dgl_borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
+DE_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp);
+DE_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp);
+DE_EXTERN_C void GL_ResetViewEffects();
 
-DENG_DECLARE_API(GL) =
+DE_DECLARE_API(GL) =
 {
     { DE_API_GL },
     DGL_Enable,

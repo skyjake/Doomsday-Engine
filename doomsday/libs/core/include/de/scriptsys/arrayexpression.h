@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_ARRAYEXPRESSION_H
-#define LIBDENG2_ARRAYEXPRESSION_H
+#ifndef LIBCORE_ARRAYEXPRESSION_H
+#define LIBCORE_ARRAYEXPRESSION_H
 
 #include "../Expression"
 
@@ -86,4 +86,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_ARRAYEXPRESSION_H */
+#endif /* LIBCORE_ARRAYEXPRESSION_H */

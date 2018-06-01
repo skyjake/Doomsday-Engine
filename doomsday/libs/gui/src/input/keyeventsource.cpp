@@ -20,12 +20,12 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(KeyEventSource)
+DE_PIMPL_NOREF(KeyEventSource)
 {
-    DENG2_PIMPL_AUDIENCE(KeyEvent)
+    DE_PIMPL_AUDIENCE(KeyEvent)
 };
 
-DENG2_AUDIENCE_METHOD(KeyEventSource, KeyEvent)
+DE_AUDIENCE_METHOD(KeyEventSource, KeyEvent)
 
 KeyEventSource::KeyEventSource() : d(new Impl)
 {}

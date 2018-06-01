@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_IDENTIFIEDPACKET_H
-#define LIBDENG2_IDENTIFIEDPACKET_H
+#ifndef LIBCORE_IDENTIFIEDPACKET_H
+#define LIBCORE_IDENTIFIEDPACKET_H
 
 #include "../libcore.h"
 #include "../Packet"
@@ -30,7 +30,7 @@ namespace de {
  *
  * @ingroup net
  */
-class DENG2_PUBLIC IdentifiedPacket : public Packet
+class DE_PUBLIC IdentifiedPacket : public Packet
 {
 public:
     typedef duint64 Id;
@@ -59,4 +59,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_IDENTIFIEDPACKET_H
+#endif // LIBCORE_IDENTIFIEDPACKET_H

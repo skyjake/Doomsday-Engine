@@ -33,7 +33,7 @@ using namespace de::filesys;
 
 String const RemoteFile::CACHE_PATH = "/home/cache/remote";
 
-DENG2_PIMPL(RemoteFile)
+DE_PIMPL(RemoteFile)
 {
     String remotePath;
     Block remoteMetaId;
@@ -111,7 +111,7 @@ DENG2_PIMPL(RemoteFile)
         {
             return repositoryAddress;
         }
-        DENG2_ASSERT(is<RemoteFeed>(self().originFeed()));
+        DE_ASSERT(is<RemoteFeed>(self().originFeed()));
         return self().originFeed()->as<RemoteFeed>().repository();
     }
 };
@@ -139,7 +139,7 @@ void RemoteFile::download()
 
     if (d->checkExistingCache())
     {
-        DENG2_FOR_AUDIENCE(Download, i)
+        DE_FOR_AUDIENCE(Download, i)
         {
             i->downloadProgress(*this, 0);
         }
@@ -154,8 +154,8 @@ void RemoteFile::download()
              d->remotePath,
              [this] (duint64 startOffset, Block const &chunk, duint64 remainingBytes)
     {
-        DENG2_ASSERT_IN_MAIN_THREAD();
-        DENG2_FOR_AUDIENCE(Download, i)
+        DE_ASSERT_IN_MAIN_THREAD();
+        DE_FOR_AUDIENCE(Download, i)
         {
             i->downloadProgress(*this, remainingBytes);
         }
@@ -231,7 +231,7 @@ IIStream const &RemoteFile::operator >> (IByteArray &bytes) const
         throw UnfetchedError("RemoteFile::operator >>",
                              description() + " not downloaded");
     }
-    DENG2_ASSERT(!isBroken());
+    DE_ASSERT(!isBroken());
     return LinkFile::operator >> (bytes);
 }
 

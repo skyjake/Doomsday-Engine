@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_BEACON_H
-#define LIBDENG2_BEACON_H
+#ifndef LIBCORE_BEACON_H
+#define LIBCORE_BEACON_H
 
 #include <QObject>
 #include "../Error"
@@ -30,13 +30,13 @@ namespace de {
  * UDP-based peer discovery mechanism.
  * @ingroup net
  */
-class DENG2_PUBLIC Beacon : public QObject
+class DE_PUBLIC Beacon : public QObject
 {
     Q_OBJECT
 
 public:
     /// The UDP port was unavailable. @ingroup errors
-    DENG2_ERROR(PortError);
+    DE_ERROR(PortError);
 
 public:
     Beacon(duint16 port);
@@ -90,9 +90,9 @@ signals:
     void finished();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_BEACON_H
+#endif // LIBCORE_BEACON_H

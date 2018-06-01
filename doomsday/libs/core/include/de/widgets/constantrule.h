@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_CONSTANTRULE_H
-#define LIBDENG2_CONSTANTRULE_H
+#ifndef LIBCORE_CONSTANTRULE_H
+#define LIBCORE_CONSTANTRULE_H
 
 #include "../Rule"
 
@@ -30,7 +30,7 @@ namespace de {
  *
  * @see AnimationRule
  */
-class DENG2_PUBLIC ConstantRule : public Rule
+class DE_PUBLIC ConstantRule : public Rule
 {
 public:
     /**
@@ -98,4 +98,4 @@ typedef ConstantRule::Builder<float> Constf;
 
 } // namespace de
 
-#endif // LIBDENG2_CONSTANTRULE_H
+#endif // LIBCORE_CONSTANTRULE_H

@@ -92,7 +92,7 @@ public:
     de::StringList packages() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace res

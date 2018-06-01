@@ -38,7 +38,7 @@ public:
     void handleEventAsFallback(de::Event const &event);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // APPROOTWIDGET_H

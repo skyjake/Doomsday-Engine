@@ -33,7 +33,7 @@ class LIBDOOMSDAY_PUBLIC BspElement
 {
 public:
     virtual ~BspElement() {}
-    DENG2_CAST_METHODS()
+    DE_CAST_METHODS()
 };
 
 /**

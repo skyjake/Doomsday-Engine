@@ -18,8 +18,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_IIOSTREAM_H
-#define LIBDENG2_IIOSTREAM_H
+#ifndef LIBCORE_IIOSTREAM_H
+#define LIBCORE_IIOSTREAM_H
 
 #include "../IIStream"
 #include "../IOStream"
@@ -34,9 +34,9 @@ class IIOStream : public IIStream, public IOStream
 {
 public:
     /// Only reading is allowed from the stream. @ingroup errors
-    DENG2_SUB_ERROR(OutputError, ReadOnlyError);
+    DE_SUB_ERROR(OutputError, ReadOnlyError);
 };
 
 } // namespace de
 
-#endif // LIBDENG2_IIOSTREAM_H
+#endif // LIBCORE_IIOSTREAM_H

@@ -79,10 +79,10 @@ class LIBGUI_PUBLIC ModelDrawable : public AssetGroup
 {
 public:
     /// An error occurred during the loading of the model data. @ingroup errors
-    DENG2_ERROR(LoadError);
+    DE_ERROR(LoadError);
 
     /// There was a shader program related problem. @ingroup errors
-    DENG2_ERROR(ProgramError);
+    DE_ERROR(ProgramError);
 
     enum TextureMap // note: enum values used as indices internally
     {
@@ -143,7 +143,7 @@ public:
              */
             virtual void initialize();
 
-            DENG2_CAST_METHODS()
+            DE_CAST_METHODS()
 
             /**
              * Determines if the sequence is at its duration or past it.
@@ -166,7 +166,7 @@ public:
         typedef std::function<OngoingSequence * ()> Constructor;
 
         /// Referenced node or animation was not found in the model. @ingroup errors
-        DENG2_ERROR(InvalidError);
+        DE_ERROR(InvalidError);
 
         enum Flag
         {
@@ -273,7 +273,7 @@ public:
         void operator << (Reader &from) override;
 
     private:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
     /**
@@ -393,7 +393,7 @@ public:
     typedef QList<TextureMap> Mapping;
 
     // Audiences:
-    DENG2_DEFINE_AUDIENCE2(AboutToGLInit, void modelAboutToGLInit(ModelDrawable &))
+    DE_DEFINE_AUDIENCE2(AboutToGLInit, void modelAboutToGLInit(ModelDrawable &))
 
 public:
     ModelDrawable();
@@ -593,7 +593,7 @@ public:
     Vec3f midPoint() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(ModelDrawable::Animator::Flags)

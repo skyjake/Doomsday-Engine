@@ -77,7 +77,7 @@ class AutomapWidget : public HudWidget
 {
 public:
     /// Required/referenced point of interest is missing. @ingroup errors
-    DENG2_ERROR(MissingPointError);
+    DE_ERROR(MissingPointError);
 
     /**
      * Models a marked point of interest (POI).
@@ -282,7 +282,7 @@ public:
     static void consoleRegister();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif  // LIBCOMMON_UI_AUTOMAPWIDGET_H

@@ -40,10 +40,10 @@ uint qHash(TextureSchemeHashKey const &key)
     return key.scheme.at(2).toLower().unicode();
 }
 
-DENG2_PIMPL(Textures)
-, DENG2_OBSERVES(TextureScheme,   ManifestDefined)
-, DENG2_OBSERVES(TextureManifest, TextureDerived)
-, DENG2_OBSERVES(Texture,         Deletion)
+DE_PIMPL(Textures)
+, DE_OBSERVES(TextureScheme,   ManifestDefined)
+, DE_OBSERVES(TextureManifest, TextureDerived)
+, DE_OBSERVES(Texture,         Deletion)
 {
     TextureSchemes textureSchemes;
     QVector<TextureScheme *> textureSchemeCreationOrder;
@@ -102,7 +102,7 @@ DENG2_PIMPL(Textures)
 
     void createTextureScheme(String const &name)
     {
-        DENG2_ASSERT(name.length() >= TextureScheme::min_name_length);
+        DE_ASSERT(name.length() >= TextureScheme::min_name_length);
 
         // Create a new scheme.
         TextureScheme *newScheme = new TextureScheme(name);
@@ -278,7 +278,7 @@ DENG2_PIMPL(Textures)
         }
 
         // Seek to each offset and deserialize the definition.
-        DENG2_FOR_EACH_CONST(Offsets, i, offsets)
+        DE_FOR_EACH_CONST(Offsets, i, offsets)
         {
             // Read the next definition.
             reader.setOffset(i.key());
@@ -289,7 +289,7 @@ DENG2_PIMPL(Textures)
 
             // If the composite contains at least one known component image it is
             // considered valid and we will therefore produce a Texture for it.
-            DENG2_FOR_EACH_CONST(Composite::Components, it, def->components())
+            DE_FOR_EACH_CONST(Composite::Components, it, def->components())
             {
                 if (it->lumpNum() >= 0)
                 {
@@ -351,7 +351,7 @@ DENG2_PIMPL(Textures)
 
         // Process each definition file.
         int origIndexBase = 0;
-        //DENG2_FOR_EACH_CONST(QList<File1 *>, i, defFiles)
+        //DE_FOR_EACH_CONST(QList<File1 *>, i, defFiles)
         foreach (auto *file, defFiles)
         {
             //File1 &file = **i;

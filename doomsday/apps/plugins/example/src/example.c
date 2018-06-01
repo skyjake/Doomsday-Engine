@@ -23,14 +23,14 @@
 
 /*
  * We are using the public Con API for accessing the Console and the Plug API
- * for registing a plugin hook. The DENG_USING_API() macro makes a public API
+ * for registing a plugin hook. The DE_USING_API() macro makes a public API
  * available to be called within this source file. Place it in a common header
  * file to allow many source files to access the API.
  *
  * In addition to invoking this macro, you must also perform the API exchange
  * (see the bottom of this source file).
  */
-DENG_USING_API(Con);
+DE_USING_API(Con);
 
 /**
  * This function will be called ASAP after Doomsday has completed startup.
@@ -41,9 +41,9 @@ DENG_USING_API(Con);
  */
 static int ExampleHook(int hookType, int parm, void *data)
 {
-    DENG_UNUSED(hookType);
-    DENG_UNUSED(parm);
-    DENG_UNUSED(data);
+    DE_UNUSED(hookType);
+    DE_UNUSED(parm);
+    DE_UNUSED(data);
 
     App_Log(DE2_LOG_DEV, "ExampleHook: Hook successful!");
     return true;
@@ -55,7 +55,7 @@ static int ExampleHook(int hookType, int parm, void *data)
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * during plugin loading, before DP_Initialize().
  */
-DENG_EXTERN_C DENG_VISIBLE_SYMBOL char const *deng_LibraryType(void)
+DE_EXTERN_C DE_VISIBLE_SYMBOL char const *deng_LibraryType(void)
 {
     return "deng-plugin/generic";
 }
@@ -64,20 +64,20 @@ DENG_EXTERN_C DENG_VISIBLE_SYMBOL char const *deng_LibraryType(void)
  * This function is called automatically when the plugin is loaded. We let the
  * engine know what we'd like to do.
  */
-DENG_EXTERN_C DENG_VISIBLE_SYMBOL void DP_Initialize(void)
+DE_EXTERN_C DE_VISIBLE_SYMBOL void DP_Initialize(void)
 {
     Plug_AddHook(HOOK_STARTUP, ExampleHook);
 }
 
 /*
  * Public APIs that are being used in this plugin. Each API that is used in the
- * plugin must be declared once; while you can invoke DENG_USING_API() many
- * times, DENG_DECLARE_API() can only be invoked once in the plugin.
+ * plugin must be declared once; while you can invoke DE_USING_API() many
+ * times, DE_DECLARE_API() can only be invoked once in the plugin.
  *
  * See engine/api/apis.h and the api_* headers for a list of all the available
  * public APIs.
  */
-DENG_DECLARE_API(Con);
+DE_DECLARE_API(Con);
 
 /*
  * The API exchange will guarantee that we get the correct version of each API.
@@ -87,6 +87,6 @@ DENG_DECLARE_API(Con);
  * The macro will define a function called "deng_API". It is exported so the
  * engine can call it during plugin loading (on Windows, see "example.def").
  */
-DENG_API_EXCHANGE(
-    DENG_GET_API(DE_API_CONSOLE, Con);
+DE_API_EXCHANGE(
+    DE_GET_API(DE_API_CONSOLE, Con);
 )

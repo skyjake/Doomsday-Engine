@@ -28,7 +28,7 @@ using namespace de;
 namespace common {
 namespace menu {
 
-DENG2_PIMPL_NOREF(CVarToggleWidget)
+DE_PIMPL_NOREF(CVarToggleWidget)
 {
     State       state         = Up;
     const char *cvarPath      = nullptr;

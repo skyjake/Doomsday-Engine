@@ -24,9 +24,9 @@
 #include "dd_types.h"
 #include "pause.h"
 
-DENG_EXTERN_C int mapTime;
-DENG_EXTERN_C int actualMapTime;
-DENG_EXTERN_C int timerGame;
+DE_EXTERN_C int mapTime;
+DE_EXTERN_C int actualMapTime;
+DE_EXTERN_C int timerGame;
 
 #ifdef __cplusplus
 extern "C" {

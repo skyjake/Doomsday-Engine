@@ -36,12 +36,12 @@
 
 namespace de {
 
-DENG2_PIMPL(GuiWidget)
-, DENG2_OBSERVES(Widget, ChildAddition)
-, DENG2_OBSERVES(ui::Margins, Change)
+DE_PIMPL(GuiWidget)
+, DE_OBSERVES(Widget, ChildAddition)
+, DE_OBSERVES(ui::Margins, Change)
 , DENG2_OBSERVES(Style, Change)
-#ifdef DENG2_DEBUG
-, DENG2_OBSERVES(Widget, ParentChange)
+#ifdef DE_DEBUG
+, DE_OBSERVES(Widget, ParentChange)
 #endif
 {
     enum
@@ -101,7 +101,7 @@ DENG2_PIMPL(GuiWidget)
 
         Style::get().audienceForChange() += this;
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
         self().audienceForParentChange() += this;
         rule.setDebugName(self().path());
 #endif
@@ -122,9 +122,9 @@ DENG2_PIMPL(GuiWidget)
          * are not leaked. Derived classes are responsible for deinitializing
          * first before beginning destruction.
          */
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
         if (flags & Inited) qDebug() << "GuiWidget" << thisPublic << self().name() << "is still inited!";
-        DENG2_ASSERT(!(flags & Inited));
+        DE_ASSERT(!(flags & Inited));
 #endif
     }
 
@@ -133,7 +133,7 @@ DENG2_PIMPL(GuiWidget)
         flags |= StyleChanged;
     }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     void widgetParentChanged(Widget &, Widget *, Widget *) override
     {
         rule.setDebugName(self().path());
@@ -261,7 +261,7 @@ DENG2_PIMPL(GuiWidget)
 
         auto const oldClip = painter.normalizedScissor();
 
-        DENG2_ASSERT(blur->fb[0]->isReady());
+        DE_ASSERT(blur->fb[0]->isReady());
 
         // Pass 1: render all the widgets behind this one onto the first blur
         // texture, downsampled.
@@ -297,7 +297,7 @@ DENG2_PIMPL(GuiWidget)
             background.type == Background::SharedBlurWithBorderGlow)
         {
             // Use another widget's blur.
-            DENG2_ASSERT(background.blur != 0);
+            DE_ASSERT(background.blur != 0);
             if (background.blur)
             {
                 self().root().painter().flush();
@@ -355,7 +355,7 @@ DENG2_PIMPL(GuiWidget)
         {
             if (IPersistent *po = maybeAs<IPersistent>(self()))
             {
-                DENG2_BASE_GUI_APP->persistentUIState() >> *po;
+                DE_BASE_GUI_APP->persistentUIState() >> *po;
             }
         }
         catch (Error const &er)
@@ -372,7 +372,7 @@ DENG2_PIMPL(GuiWidget)
         {
             if (IPersistent *po = maybeAs<IPersistent>(self()))
             {
-                DENG2_BASE_GUI_APP->persistentUIState() << *po;
+                DE_BASE_GUI_APP->persistentUIState() << *po;
             }
         }
         catch (Error const &er)
@@ -556,7 +556,7 @@ DENG2_PIMPL(GuiWidget)
 
     static inline float pointsToPixels(double points)
     {
-        return float(points) * DENG2_BASE_GUI_APP->pixelRatio().value();
+        return float(points) * DE_BASE_GUI_APP->pixelRatio().value();
     }
 
     static inline float pixelsToPoints(double pixels)
@@ -599,7 +599,7 @@ GuiWidget::Children GuiWidget::childWidgets() const
     children.reserve(childCount());
     foreach (Widget *c, Widget::children())
     {
-        DENG2_ASSERT(is<GuiWidget>(c));
+        DE_ASSERT(is<GuiWidget>(c));
         children.append(static_cast<GuiWidget *>(c));
     }
     return children;
@@ -932,7 +932,7 @@ void GuiWidget::draw()
 {
     if ((d->flags & Impl::Inited) && !isHidden() && visibleOpacity() > 0 && !d->isClipCulled())
     {
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
         // Detect mistakes in GLState stack usage.
         dsize const depthBeforeDrawingWidget = GLState::stackDepth();
 #endif
@@ -958,7 +958,7 @@ void GuiWidget::draw()
             painter.setSaturation(1.f);
         }
 
-        DENG2_ASSERT(GLState::stackDepth() == depthBeforeDrawingWidget);
+        DE_ASSERT(GLState::stackDepth() == depthBeforeDrawingWidget);
     }
 }
 
@@ -1130,7 +1130,7 @@ void GuiWidget::drawBlurredRect(Rectanglei const &rect, Vec4f const &color, floa
     auto *blur = d->blur.get();
     if (!blur) return;
 
-    DENG2_ASSERT(blur->fb[1]->isReady());
+    DE_ASSERT(blur->fb[1]->isReady());
 
     root().painter().flush();
 

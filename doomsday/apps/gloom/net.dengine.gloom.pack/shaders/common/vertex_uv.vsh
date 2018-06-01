@@ -1,5 +1,5 @@
-DENG_ATTRIB vec4 aVertex;
-DENG_ATTRIB vec2 aUV;
+DE_ATTRIB vec4 aVertex;
+DE_ATTRIB vec2 aUV;
 
 out vec2 vUV;
 

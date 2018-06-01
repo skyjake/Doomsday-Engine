@@ -86,7 +86,7 @@ protected slots:
     void socketDisconnected();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // REMOTEUSER_H

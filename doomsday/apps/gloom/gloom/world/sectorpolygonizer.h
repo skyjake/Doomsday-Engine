@@ -33,7 +33,7 @@ public:
     void polygonize(ID sector, const QVector<ID> &boundaryLines);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace gloom

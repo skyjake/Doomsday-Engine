@@ -27,7 +27,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(ScopeStatement)
+DE_PIMPL_NOREF(ScopeStatement)
 {
     QScopedPointer<Expression> identifier;
     QScopedPointer<Expression> superRecords;

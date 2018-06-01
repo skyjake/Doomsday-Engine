@@ -32,7 +32,7 @@ using namespace de;
 
 namespace acs {
 
-DENG2_PIMPL_NOREF(System)
+DE_PIMPL_NOREF(System)
 {
     std::unique_ptr<Module> currentModule;
     QList<Script *> scripts;  ///< Scripts for the current module (if any).
@@ -163,13 +163,13 @@ void System::loadModuleForMap(de::Uri const &mapUri)
                 << er.asText();
     }
 #else
-    DENG2_UNUSED(mapUri);
+    DE_UNUSED(mapUri);
 #endif
 }
 
 Module const &System::module() const
 {
-    DENG2_ASSERT(bool( d->currentModule ));
+    DE_ASSERT(bool( d->currentModule ));
     return *d->currentModule;
 }
 
@@ -215,8 +215,8 @@ LoopResult System::forAllScripts(std::function<LoopResult (Script &)> func) cons
 bool System::deferScriptStart(de::Uri const &mapUri, dint scriptNumber,
     Script::Args const &scriptArgs)
 {
-    DENG2_ASSERT(!IS_CLIENT);
-    DENG2_ASSERT(gfw_Session()->mapUri() != mapUri);
+    DE_ASSERT(!IS_CLIENT);
+    DE_ASSERT(gfw_Session()->mapUri() != mapUri);
     LOG_AS("acs::System");
 
     // Don't defer tasks in deathmatch.
@@ -326,15 +326,15 @@ void System::worldSystemMapChanged()
         {
             bool justStarted = script->start(Script::Args()/*default args*/,
                                              nullptr, nullptr, 0, TICSPERSEC);
-            DENG2_ASSERT(justStarted);
-            DENG2_UNUSED(justStarted);
+            DE_ASSERT(justStarted);
+            DE_UNUSED(justStarted);
         }
     }
 }
 
 D_CMD(InspectACScript)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
     System &scriptSys       = gfw_Session()->acsSystem();
     dint const scriptNumber = String(argv[1]).toInt();
 
@@ -358,7 +358,7 @@ D_CMD(InspectACScript)
 
 D_CMD(ListACScripts)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
     System &scriptSys = gfw_Session()->acsSystem();
 
     if(scriptSys.scriptCount())
@@ -370,7 +370,7 @@ D_CMD(ListACScripts)
             return LoopContinue;
         });
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
         LOG_SCR_MSG("World variables:");
         dint idx = 0;
         for(dint const &var : scriptSys.worldVars)

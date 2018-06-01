@@ -35,7 +35,7 @@ static patchid_t pSliderRight;
 static patchid_t pSliderMiddle;
 static patchid_t pSliderHandle;
 
-DENG2_PIMPL(SliderWidget)
+DE_PIMPL(SliderWidget)
 {
     float min      = 0.0f;
     float max      = 1.0f;

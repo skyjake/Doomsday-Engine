@@ -114,13 +114,13 @@ static void continueInitWithEventLoopRunning()
 {
     if (!ClientWindowSystem::mainExists()) return;
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
     // Show the main window. This causes initialization to finish (in busy mode)
     // as the canvas is visible and ready for initialization.
     ClientWindowSystem::main().show();
 #endif
 
-#if defined (DENG_HAVE_UPDATER)
+#if defined (DE_HAVE_UPDATER)
     ClientApp::updater().setupUI();
 #endif
 }
@@ -144,20 +144,20 @@ static Value *Function_App_Quit(Context &, Function::ArgumentValues const &)
     return 0;
 }
 
-DENG2_PIMPL(ClientApp)
-, DENG2_OBSERVES(Plugins, PublishAPI)
-, DENG2_OBSERVES(Plugins, Notification)
-, DENG2_OBSERVES(Games, Progress)
-, DENG2_OBSERVES(DoomsdayApp, GameChange)
-, DENG2_OBSERVES(DoomsdayApp, GameUnload)
-, DENG2_OBSERVES(DoomsdayApp, ConsoleRegistration)
-, DENG2_OBSERVES(DoomsdayApp, PeriodicAutosave)
+DE_PIMPL(ClientApp)
+, DE_OBSERVES(Plugins, PublishAPI)
+, DE_OBSERVES(Plugins, Notification)
+, DE_OBSERVES(Games, Progress)
+, DE_OBSERVES(DoomsdayApp, GameChange)
+, DE_OBSERVES(DoomsdayApp, GameUnload)
+, DE_OBSERVES(DoomsdayApp, ConsoleRegistration)
+, DE_OBSERVES(DoomsdayApp, PeriodicAutosave)
 {
     Binder binder;
-#if defined (DENG_HAVE_UPDATER)
+#if defined (DE_HAVE_UPDATER)
     QScopedPointer<Updater> updater;
 #endif
-#if defined (DENG_HAVE_BUSYRUNNER)
+#if defined (DE_HAVE_BUSYRUNNER)
     BusyRunner busyRunner;
 #endif
     ConfigProfiles audioSettings;
@@ -270,10 +270,10 @@ DENG2_PIMPL(ClientApp)
         catch (Error const &er)
         {
             qWarning() << "Exception during ~ClientApp:" << er.asText();
-            DENG2_ASSERT_FAIL("Unclean shutdown: exception in ~ClientApp");
+            DE_ASSERT_FAIL("Unclean shutdown: exception in ~ClientApp");
         }
 
-#if defined (DENG_HAVE_UPDATER)
+#if defined (DE_HAVE_UPDATER)
         updater.reset();
 #endif
         delete inputSys;
@@ -301,7 +301,7 @@ DENG2_PIMPL(ClientApp)
             // If an update has been downloaded and is ready to go, we should
             // re-show the dialog now that the user has saved the game as prompted.
             LOG_DEBUG("Game saved");
-#if defined (DENG_HAVE_UPDATER)
+#if defined (DE_HAVE_UPDATER)
             UpdateDownloadDialog::showCompletedDownload();
 #endif
             break;
@@ -339,7 +339,7 @@ DENG2_PIMPL(ClientApp)
 
     void aboutToUnloadGame(Game const &/*gameBeingUnloaded*/)
     {
-        DENG_ASSERT(ClientWindow::mainExists());
+        DE_ASSERT(ClientWindow::mainExists());
 
         // Quit netGame if one is in progress.
         if (netGame)
@@ -548,10 +548,10 @@ ClientApp::ClientApp(int &argc, char **argv)
     setGame(games().nullGame());
 
     d->binder.init(scriptSystem()["App"])
-            << DENG2_FUNC_NOARG (App_GamePlugin, "gamePlugin")
-            << DENG2_FUNC_NOARG (App_Quit,       "quit");
+            << DE_FUNC_NOARG (App_GamePlugin, "gamePlugin")
+            << DE_FUNC_NOARG (App_Quit,       "quit");
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
     /// @todo Remove the splash screen when file system indexing can be done as
     /// a background task and the main window can be opened instantly. -jk
     QPixmap const pixmap(doomsdaySplashXpm);
@@ -641,7 +641,7 @@ void ClientApp::initialize()
     WindowSystem::setAppWindowSystem(*d->winSys);
     addSystem(*d->winSys);
 
-#if defined (DENG_HAVE_UPDATER)
+#if defined (DE_HAVE_UPDATER)
     // Check for updates automatically.
     d->updater.reset(new Updater);
 #endif
@@ -653,7 +653,7 @@ void ClientApp::initialize()
     plugins().loadAll();
 
     // On mobile, the window is instantiated via QML.
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
     d->winSys->createWindow()->setTitle(DD_ComposeMainWindowTitle());
 #endif
 
@@ -781,7 +781,7 @@ void ClientApp::gameSessionWasLoaded(AbstractSession const &session,
     {
         if (File const *file = fromFolder.tryLocate<File const>(d->mapClientStatePath(mapId)))
         {
-            DENG2_ASSERT(session.thinkerMapping() != nullptr);
+            DE_ASSERT(session.thinkerMapping() != nullptr);
 
             Reader reader(*file);
             world().map().deserializeInternalState(reader.withHeader(),
@@ -852,19 +852,19 @@ void ClientApp::alert(String const &msg, LogEntry::Level level)
 
 ClientApp &ClientApp::app()
 {
-    DENG2_ASSERT(clientAppSingleton != 0);
+    DE_ASSERT(clientAppSingleton != 0);
     return *clientAppSingleton;
 }
 
-#if defined (DENG_HAVE_UPDATER)
+#if defined (DE_HAVE_UPDATER)
 Updater &ClientApp::updater()
 {
-    DENG2_ASSERT(!app().d->updater.isNull());
+    DE_ASSERT(!app().d->updater.isNull());
     return *app().d->updater;
 }
 #endif
 
-#if defined (DENG_HAVE_BUSYRUNNER)
+#if defined (DE_HAVE_BUSYRUNNER)
 BusyRunner &ClientApp::busyRunner()
 {
     return app().d->busyRunner;
@@ -894,21 +894,21 @@ ConfigProfiles &ClientApp::uiSettings()
 ServerLink &ClientApp::serverLink()
 {
     ClientApp &a = ClientApp::app();
-    DENG2_ASSERT(a.d->svLink != 0);
+    DE_ASSERT(a.d->svLink != 0);
     return *a.d->svLink;
 }
 
 InFineSystem &ClientApp::infineSystem()
 {
     ClientApp &a = ClientApp::app();
-    //DENG2_ASSERT(a.d->infineSys != 0);
+    //DE_ASSERT(a.d->infineSys != 0);
     return a.d->infineSys;
 }
 
 InputSystem &ClientApp::inputSystem()
 {
     ClientApp &a = ClientApp::app();
-    DENG2_ASSERT(a.d->inputSys != 0);
+    DE_ASSERT(a.d->inputSys != 0);
     return *a.d->inputSys;
 }
 
@@ -920,7 +920,7 @@ bool ClientApp::hasInputSystem()
 RenderSystem &ClientApp::renderSystem()
 {
     ClientApp &a = ClientApp::app();
-    DENG2_ASSERT(hasRenderSystem());
+    DE_ASSERT(hasRenderSystem());
     return *a.d->rendSys;
 }
 
@@ -932,7 +932,7 @@ bool ClientApp::hasRenderSystem()
 AudioSystem &ClientApp::audioSystem()
 {
     ClientApp &a = ClientApp::app();
-    DENG2_ASSERT(hasAudioSystem());
+    DE_ASSERT(hasAudioSystem());
     return *a.d->audioSys;
 }
 
@@ -944,21 +944,21 @@ bool ClientApp::hasAudioSystem()
 ClientResources &ClientApp::resources()
 {
     ClientApp &a = ClientApp::app();
-    DENG2_ASSERT(a.d->resources != 0);
+    DE_ASSERT(a.d->resources != 0);
     return *a.d->resources;
 }
 
 ClientWindowSystem &ClientApp::windowSystem()
 {
     ClientApp &a = ClientApp::app();
-    DENG2_ASSERT(a.d->winSys != 0);
+    DE_ASSERT(a.d->winSys != 0);
     return *a.d->winSys;
 }
 
 ClientServerWorld &ClientApp::world()
 {
     ClientApp &a = ClientApp::app();
-    DENG2_ASSERT(a.d->world != 0);
+    DE_ASSERT(a.d->world != 0);
     return *a.d->world;
 }
 
@@ -969,7 +969,7 @@ void ClientApp::openHomepageInBrowser()
 
 void ClientApp::openInBrowser(QUrl url)
 {
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
     // Get out of fullscreen mode.
     int windowed[] = {
         ClientWindow::Fullscreen, false,

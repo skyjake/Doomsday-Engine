@@ -23,7 +23,7 @@
 
 namespace de { namespace shell {
 
-DENG2_PIMPL(MenuWidget)
+DE_PIMPL(MenuWidget)
 {
     ConstantRule *            width;
     ConstantRule *            height;
@@ -282,7 +282,7 @@ Vec2i MenuWidget::cursorPosition() const
 
 void MenuWidget::open()
 {
-    DENG2_ASSERT(hasRoot());
+    DE_ASSERT(hasRoot());
 
     root().setFocus(this);
     show();
@@ -293,7 +293,7 @@ void MenuWidget::close()
 {
     if (d->closable)
     {
-        DENG2_ASSERT(hasRoot());
+        DE_ASSERT(hasRoot());
 
         root().setFocus(0);
         emit closed();

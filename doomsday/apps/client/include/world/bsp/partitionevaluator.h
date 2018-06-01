@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_BSP_PARTITIONEVALUATOR_H
-#define DENG_WORLD_BSP_PARTITIONEVALUATOR_H
+#ifndef DE_WORLD_BSP_PARTITIONEVALUATOR_H
+#define DE_WORLD_BSP_PARTITIONEVALUATOR_H
 
 #include "world/bsp/superblockmap.h"
 
@@ -48,10 +48,10 @@ public:
     LineSegmentSide *choose(LineSegmentBlockTreeNode &node);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 }  // namespace bsp
 }  // namespace world
 
-#endif  // DENG_WORLD_BSP_PARTITIONEVALUATOR_H
+#endif  // DE_WORLD_BSP_PARTITIONEVALUATOR_H

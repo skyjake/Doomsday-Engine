@@ -44,7 +44,7 @@ public:
     static void prepareAssets();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif  // LIBCOMMON_UI_KEYSLOTWIDGET_H

@@ -25,7 +25,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(ArchiveEntryFile)
+DE_PIMPL_NOREF(ArchiveEntryFile)
 {
     Archive *archive;
 
@@ -42,9 +42,9 @@ DENG2_PIMPL_NOREF(ArchiveEntryFile)
 #if 0
             {
                 static Lockable dbg;
-                DENG2_GUARD(dbg);
+                DE_GUARD(dbg);
                 qDebug() << "--------\nAEF being read" << entryPath;
-                DENG2_PRINT_BACKTRACE();
+                DE_PRINT_BACKTRACE();
             }
 #endif
             readBlock = &const_cast<Archive const *>(archive)->entryBlock(entryPath);
@@ -63,9 +63,9 @@ ArchiveEntryFile::ArchiveEntryFile(String const &name, Archive &archive, String 
 
 ArchiveEntryFile::~ArchiveEntryFile()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
-    DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
+    DE_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion().clear();
 
     deindex();
@@ -78,14 +78,14 @@ String ArchiveEntryFile::entryPath() const
 
 String ArchiveEntryFile::describe() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     return String("archive entry \"%1\"").arg(d->entryPath);
 }
 
 void ArchiveEntryFile::clear()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     verifyWriteAccess();
 
@@ -131,7 +131,7 @@ Archive const &ArchiveEntryFile::archive() const
 
 void ArchiveEntryFile::uncache() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     if (d->readBlock)
     {
@@ -142,21 +142,21 @@ void ArchiveEntryFile::uncache() const
 
 IByteArray::Size ArchiveEntryFile::size() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     return archive().entryStatus(d->entryPath).size;
 }
 
 void ArchiveEntryFile::get(Offset at, Byte *values, Size count) const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     d->entryData().get(at, values, count);
 }
 
 void ArchiveEntryFile::set(Offset at, Byte const *values, Size count)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     verifyWriteAccess();
 

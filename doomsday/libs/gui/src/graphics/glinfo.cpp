@@ -27,8 +27,8 @@
 #include <de/math.h>
 #include <de/c_wrapper.h>
 
-#ifdef DENG2_DEBUG
-#  define DENG_ENABLE_OPENGL_DEBUG_LOGGER
+#ifdef DE_DEBUG
+#  define DE_ENABLE_OPENGL_DEBUG_LOGGER
 #  include <QOpenGLDebugLogger>
 #endif
 
@@ -36,7 +36,7 @@
 #  include <OpenGL/OpenGL.h>
 #endif
 
-#if defined (DENG_X11)
+#if defined (DE_X11)
 #  include <QX11Info>
 #  include <GL/glx.h>
 #  include <GL/glxext.h>
@@ -49,7 +49,7 @@ namespace de {
 
 static GLInfo info;
 
-DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
+DE_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
 {
     bool inited = false;
     Extensions ext;
@@ -60,7 +60,7 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
     //std::unique_ptr<QOpenGLExtension_EXT_framebuffer_blit>        EXT_framebuffer_blit;
     //std::unique_ptr<QOpenGLExtension_EXT_framebuffer_multisample> EXT_framebuffer_multisample;
     //std::unique_ptr<QOpenGLExtension_EXT_framebuffer_object>      EXT_framebuffer_object;
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     std::unique_ptr<QOpenGLExtension_NV_framebuffer_multisample_coverage> NV_framebuffer_multisample_coverage;
 #endif
 
@@ -68,13 +68,13 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
     BOOL (APIENTRY *wglSwapIntervalEXT)(int interval) = nullptr;
 #endif
 
-#ifdef DENG_X11
+#ifdef DE_X11
     PFNGLXSWAPINTERVALEXTPROC  glXSwapIntervalEXT  = nullptr;
     PFNGLXSWAPINTERVALSGIPROC  glXSwapIntervalSGI  = nullptr;
     PFNGLXSWAPINTERVALMESAPROC glXSwapIntervalMESA = nullptr;
 #endif
 
-#ifdef DENG_ENABLE_OPENGL_DEBUG_LOGGER
+#ifdef DE_ENABLE_OPENGL_DEBUG_LOGGER
     QOpenGLDebugLogger *logger = nullptr;
 #endif
 
@@ -126,8 +126,8 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
 
     bool doQuery(char const *ext)
     {
-        DENG2_ASSERT(ext);
-        DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
+        DE_ASSERT(ext);
+        DE_ASSERT(QOpenGLContext::currentContext() != nullptr);
 
 #if 0
 #ifdef WIN32
@@ -138,7 +138,7 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
 #endif
 #endif
 
-#ifdef DENG_X11
+#ifdef DE_X11
         // Check GLX specific extensions.
         if (checkExtensionString(ext, glXQueryExtensionsString(QX11Info::display(),
                                                                QX11Info::appScreen())))
@@ -164,7 +164,7 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
 
         if (inited) return;
 
-        #if defined (DENG_OPENGL_ES)
+        #if defined (DE_OPENGL_ES)
         {
             initializeOpenGLFunctions();
 
@@ -236,7 +236,7 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
         }
         #endif
 
-        #ifdef DENG_X11
+        #ifdef DE_X11
         {
             ext.X11_EXT_swap_control           = query("GLX_EXT_swap_control");
             ext.X11_SGI_swap_control           = query("GLX_SGI_swap_control");
@@ -260,7 +260,7 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
         }
         #endif
 
-        #ifdef DENG_ENABLE_OPENGL_DEBUG_LOGGER
+        #ifdef DE_ENABLE_OPENGL_DEBUG_LOGGER
         {
             logger = new QOpenGLDebugLogger(&GLWindow::main());
             if (!ext.KHR_debug)
@@ -374,7 +374,7 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
             EXT_framebuffer_object->initializeOpenGLFunctions();
         }*/
 
-        #if defined (DENG_OPENGL)
+        #if defined (DE_OPENGL)
         {
             if (ext.NV_framebuffer_multisample_coverage)
             {
@@ -387,7 +387,7 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
         // Limits.
         glGetIntegerv(GL_MAX_TEXTURE_SIZE,              reinterpret_cast<GLint *>(&lim.maxTexSize));
         glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS,       reinterpret_cast<GLint *>(&lim.maxTexUnits)); // at least 16
-        #if defined (DENG_OPENGL)
+        #if defined (DE_OPENGL)
         {
             glGetFloatv(GL_SMOOTH_LINE_WIDTH_RANGE,       &lim.smoothLineWidth.start);
             glGetFloatv(GL_SMOOTH_LINE_WIDTH_GRANULARITY, &lim.smoothLineWidthGranularity);
@@ -439,7 +439,7 @@ void GLInfo::glInit()
 
 void GLInfo::glDeinit()
 {
-    #ifdef DENG_ENABLE_OPENGL_DEBUG_LOGGER
+    #ifdef DE_ENABLE_OPENGL_DEBUG_LOGGER
     {
         if (info.d->logger)
         {
@@ -452,54 +452,54 @@ void GLInfo::glDeinit()
 
 QOpenGLFunctions_Doomsday &GLInfo::api() // static
 {
-    DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
-    DENG2_ASSERT(info.d->inited);
+    DE_ASSERT(QOpenGLContext::currentContext() != nullptr);
+    DE_ASSERT(info.d->inited);
     return *info.d;
 }
 
 /*
 QOpenGLExtension_ARB_draw_instanced *GLInfo::ARB_draw_instanced()
 {
-    DENG2_ASSERT(info.d->inited);
+    DE_ASSERT(info.d->inited);
     return info.d->ARB_draw_instanced.get();
 }
 
 QOpenGLExtension_ARB_instanced_arrays *GLInfo::ARB_instanced_arrays()
 {
-    DENG2_ASSERT(info.d->inited);
+    DE_ASSERT(info.d->inited);
     return info.d->ARB_instanced_arrays.get();
 }
 
 QOpenGLExtension_EXT_framebuffer_blit *GLInfo::EXT_framebuffer_blit()
 {
-    DENG2_ASSERT(info.d->inited);
+    DE_ASSERT(info.d->inited);
     return info.d->EXT_framebuffer_blit.get();
 }
 
 QOpenGLExtension_EXT_framebuffer_multisample *GLInfo::EXT_framebuffer_multisample()
 {
-    DENG2_ASSERT(info.d->inited);
+    DE_ASSERT(info.d->inited);
     return info.d->EXT_framebuffer_multisample.get();
 }
 
 QOpenGLExtension_EXT_framebuffer_object *GLInfo::EXT_framebuffer_object()
 {
-    DENG2_ASSERT(info.d->inited);
+    DE_ASSERT(info.d->inited);
     return info.d->EXT_framebuffer_object.get();
 }
 */
 
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
 QOpenGLExtension_NV_framebuffer_multisample_coverage *GLInfo::NV_framebuffer_multisample_coverage()
 {
-    DENG2_ASSERT(info.d->inited);
+    DE_ASSERT(info.d->inited);
     return info.d->NV_framebuffer_multisample_coverage.get();
 }
 #endif
 
 void GLInfo::setSwapInterval(int interval)
 {
-    DENG2_ASSERT(info.d->inited);
+    DE_ASSERT(info.d->inited);
 
     #if defined (WIN32)
     {
@@ -511,14 +511,14 @@ void GLInfo::setSwapInterval(int interval)
     #elif defined (MACOSX)
     {
         CGLContextObj context = CGLGetCurrentContext();
-        DENG2_ASSERT(context != nullptr);
+        DE_ASSERT(context != nullptr);
         if (context)
         {
             GLint params[1] = { interval };
             CGLSetParameter(context, kCGLCPSwapInterval, params);
         }
     }
-    #elif defined (DENG_X11)
+    #elif defined (DE_X11)
     {
         if (extensions().X11_SGI_swap_control)
         {
@@ -541,16 +541,16 @@ void GLInfo::setSwapInterval(int interval)
 #if 0
 void GLInfo::setLineWidth(float lineWidth)
 {
-    #if defined (DENG_OPENGL)
+    #if defined (DE_OPENGL)
     {
         LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
-        DENG2_ASSERT(info.d->inited);
+        DE_ASSERT(info.d->inited);
         info.d->glLineWidth(info.d->lim.smoothLineWidth.clamp(lineWidth));
         LIBGUI_ASSERT_GL_OK();
     }
     #else
     {
-        DENG2_UNUSED(lineWidth);
+        DE_UNUSED(lineWidth);
     }
     #endif
 }
@@ -558,13 +558,13 @@ void GLInfo::setLineWidth(float lineWidth)
 
 GLInfo::Extensions const &GLInfo::extensions()
 {
-    DENG2_ASSERT(info.d->inited);
+    DE_ASSERT(info.d->inited);
     return info.d->ext;
 }
 
 GLInfo::Limits const &GLInfo::limits()
 {
-    DENG2_ASSERT(info.d->inited);
+    DE_ASSERT(info.d->inited);
     return info.d->lim;
 }
 
@@ -584,7 +584,7 @@ void GLInfo::checkError(char const *file, int line)
             LogBuffer_Flush();
             qWarning("%s:%i: OpenGL error: 0x%x (%s)", file, line, error,
                      LIBGUI_GL_ERROR_STR(error));
-            DENG2_ASSERT_FAIL("OpenGL operation failed");
+            DE_ASSERT_FAIL("OpenGL operation failed");
         }
     }
     while (error != GL_NO_ERROR);

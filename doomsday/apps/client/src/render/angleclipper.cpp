@@ -101,18 +101,18 @@ namespace internal
          */
         void release(Element *elem)
         {
-            DENG2_ASSERT(_last);
+            DE_ASSERT(_last);
 
             if(elem == _last)
             {
-                DENG2_ASSERT(!_rover);
+                DE_ASSERT(!_rover);
 
                 // We can only remove the last if all elements are already in use.
                 _rover = elem;
                 return;
             }
 
-            DENG2_ASSERT(elem->_next);
+            DE_ASSERT(elem->_next);
 
             // Unlink from the list entirely.
             elem->_next->_prev = elem->_prev;
@@ -148,7 +148,7 @@ namespace internal
 }  // namespace internal
 using namespace ::internal;
 
-DENG2_PIMPL_NOREF(AngleClipper)
+DE_PIMPL_NOREF(AngleClipper)
 {
     /// Specialized AngleRange for half-space clipping.
     struct Clipper : public ElementPool::Element, AngleRange
@@ -182,7 +182,7 @@ DENG2_PIMPL_NOREF(AngleClipper)
     template <typename NodeType>
     void clearRangeList(NodeType **head)
     {
-        DENG2_ASSERT(head);
+        DE_ASSERT(head);
         while(*head)
         {
             auto *next = static_cast<NodeType *>((*head)->next);
@@ -293,7 +293,7 @@ DENG2_PIMPL_NOREF(AngleClipper)
                 return;  // The new range already exists.
             }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
             if(i == i->next)
                 throw Error("AngleClipper::addRange", String("loop1 0x%1 linked to itself: %2 => %3")
                                                         .arg((quintptr)i, QT_POINTER_SIZE * 2, 16, QChar('0'))
@@ -546,18 +546,18 @@ DENG2_PIMPL_NOREF(AngleClipper)
             // The range has to be added in two parts.
             addOcclusionRange(startAngle, BANG_MAX, normal, tophalf);
 
-            DENG2_DEBUG_ONLY(occlusionRanger(3));
+            DE_DEBUG_ONLY(occlusionRanger(3));
 
             addOcclusionRange(0, endAngle, normal, tophalf);
 
-            DENG2_DEBUG_ONLY(occlusionRanger(4));
+            DE_DEBUG_ONLY(occlusionRanger(4));
         }
         else
         {
             // Add the range as usual.
             addOcclusionRange(startAngle, endAngle, normal, tophalf);
 
-            DENG2_DEBUG_ONLY(occlusionRanger(5));
+            DE_DEBUG_ONLY(occlusionRanger(5));
         }
     }
 
@@ -650,7 +650,7 @@ DENG2_PIMPL_NOREF(AngleClipper)
      */
     void cutOcclusionRange(binangle_t from, binangle_t to)
     {
-        DENG2_DEBUG_ONLY(occlusionRanger(1));
+        DE_DEBUG_ONLY(occlusionRanger(1));
 
         // Find the range after which it's OK to add oranges cut in half.
         // (Must preserve the ascending order of the start angles.) We want the
@@ -733,14 +733,14 @@ DENG2_PIMPL_NOREF(AngleClipper)
             orange = next;
         }
 
-        DENG2_DEBUG_ONLY(occlusionRanger(2));
+        DE_DEBUG_ONLY(occlusionRanger(2));
 
         mergeOccludes();
 
-        DENG2_DEBUG_ONLY(occlusionRanger(6));
+        DE_DEBUG_ONLY(occlusionRanger(6));
     }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     void occlusionLister()
     {
         for(Occluder *orange = occHead; orange; orange = orange->next)
@@ -748,7 +748,7 @@ DENG2_PIMPL_NOREF(AngleClipper)
             LOG_MSG(String("from: %1 to: %2 topHalf: %3")
                         .arg(orange->from, 0, 16)
                         .arg(orange->to,   0, 16)
-                        .arg(DENG2_BOOL_YESNO(orange->topHalf)));
+                        .arg(DE_BOOL_YESNO(orange->topHalf)));
         }
     }
 
@@ -818,7 +818,7 @@ dint AngleClipper::isPointVisible(Vec3d const &point) const
 
 dint AngleClipper::isPolyVisible(Face const &poly) const
 {
-    DENG2_ASSERT(poly.isConvex());
+    DE_ASSERT(poly.isConvex());
 
     if(::devNoCulling) return true;
 
@@ -918,14 +918,14 @@ void AngleClipper::addViewRelOcclusion(Vec2d const &from, Vec2d const &to,
     // The normal points to the half we want to occlude.
     Vec3f const normal = (topHalf? eyeToV2 : eyeToV1).cross(topHalf? eyeToV1 : eyeToV2);
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     if(Vec3f(0, 0, (topHalf ? 1000 : -1000)).dot(normal) < 0)
     {
         LOG_AS("AngleClipper::addViewRelOcclusion");
         LOGDEV_GL_WARNING("Wrong side v1:%s v2:%s eyeOrigin:%s!")
                 << from.asText() << to.asText()
                 << Vec2d(eyeOrigin).asText();
-        DENG2_ASSERT_FAIL("Failed AngleClipper::addViewRelOcclusion: Side test");
+        DE_ASSERT_FAIL("Failed AngleClipper::addViewRelOcclusion: Side test");
     }
 #endif
 
@@ -942,7 +942,7 @@ dint AngleClipper::checkRangeFromViewRelPoints(Vec2d const &from, Vec2d const &t
                              pointToAngle(from - eyeOrigin) + BANG_45/90);
 }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
 void AngleClipper::validate()
 {
     for(Impl::Clipper *i = d->clipHead; i; i = i->next)

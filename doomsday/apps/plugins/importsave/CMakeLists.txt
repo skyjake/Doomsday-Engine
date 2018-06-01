@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.1)
-project (DENG_IMPORTSAVE)
+project (DE_IMPORTSAVE)
 include (../PluginConfig.cmake)
 
 include_directories (include)

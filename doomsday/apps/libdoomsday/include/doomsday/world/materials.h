@@ -33,10 +33,10 @@ class LIBDOOMSDAY_PUBLIC Materials
 {
 public:
     /// An unknown material group was referenced. @ingroup errors
-    DENG2_ERROR(UnknownMaterialGroupError);
+    DE_ERROR(UnknownMaterialGroupError);
 
     /// The specified material id was invalid (out of range). @ingroup errors
-    DENG2_ERROR(UnknownMaterialIdError);
+    DE_ERROR(UnknownMaterialIdError);
 
     typedef QSet<MaterialManifest *>       MaterialManifestGroup;
     typedef QList<MaterialManifestGroup *> MaterialManifestGroups;
@@ -200,7 +200,7 @@ public:
     void updateLookup();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace world

@@ -42,16 +42,16 @@ static DotPath const ID_THIN_ROUND_CORNERS  = "GuiRootWidget.frame.thin";
 static DotPath const ID_BOLD_ROUND_CORNERS  = "GuiRootWidget.frame.bold";
 static DotPath const ID_DOT                 = "GuiRootWidget.dot";
 
-#ifdef DENG2_QT_5_0_OR_NEWER
-#  define DPI_SCALED(x)       ((x) * DENG2_BASE_GUI_APP->pixelRatio().value())
+#ifdef DE_QT_5_0_OR_NEWER
+#  define DPI_SCALED(x)       ((x) * DE_BASE_GUI_APP->pixelRatio().value())
 #else
 #  define DPI_SCALED(x)       (x)
 #endif
 #define DPI_SCALED_INT(x)     (int(DPI_SCALED(x)))
 
-DENG2_PIMPL(GuiRootWidget)
-, DENG2_OBSERVES(Widget, ChildAddition)
-, DENG2_OBSERVES(RootWidget, FocusChange)
+DE_PIMPL(GuiRootWidget)
+, DE_OBSERVES(Widget, ChildAddition)
+, DE_OBSERVES(RootWidget, FocusChange)
 {
     /*
      * Built-in runtime-generated images:
@@ -235,7 +235,7 @@ void GuiRootWidget::setWindow(GLWindow *window)
 
 GLWindow &GuiRootWidget::window()
 {
-    DENG2_ASSERT(d->window != 0);
+    DE_ASSERT(d->window != 0);
     return *d->window;
 }
 
@@ -438,11 +438,11 @@ void GuiRootWidget::update()
 
 void GuiRootWidget::draw()
 {
-#if defined (DENG_MOBILE)
-    DENG2_GUARD(this);
+#if defined (DE_MOBILE)
+    DE_GUARD(this);
 #endif
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     d->focusIndicator->initialize();
 
@@ -454,7 +454,7 @@ void GuiRootWidget::draw()
     // Clear the framebuffer for the frame.
     window().framebuffer().clear(GLFramebuffer::ColorDepthStencil);
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     // Detect mistakes in GLState stack usage.
     dsize const depthBeforeDrawing = GLState::stackDepth();
 #endif
@@ -468,16 +468,16 @@ void GuiRootWidget::draw()
 
     d->painter.flush();
 
-    DENG2_ASSERT(GLState::stackDepth() == depthBeforeDrawing);
+    DE_ASSERT(GLState::stackDepth() == depthBeforeDrawing);
 }
 
 void GuiRootWidget::drawUntil(Widget &until)
 {
-#if defined (DENG_MOBILE)
-    DENG2_GUARD(this);
+#if defined (DE_MOBILE)
+    DE_GUARD(this);
 #endif
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     d->painter.setNormalizedScissor();
 

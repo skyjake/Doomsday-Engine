@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_SYSTEM_H
-#define LIBDENG2_SYSTEM_H
+#ifndef LIBCORE_SYSTEM_H
+#define LIBCORE_SYSTEM_H
 
 #include "../Clock"
 #include "../Event"
@@ -34,7 +34,7 @@ namespace de {
  *
  * @ingroup core
  */
-class DENG2_PUBLIC System : DENG2_OBSERVES(Clock, TimeChange)
+class DE_PUBLIC System : DE_OBSERVES(Clock, TimeChange)
 {
 public:
     /// Behavior of the system.
@@ -69,11 +69,11 @@ public:
     virtual void timeChanged(Clock const &);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(System::Flags)
 
 } // namespace de
 
-#endif // LIBDENG2_SYSTEM_H
+#endif // LIBCORE_SYSTEM_H

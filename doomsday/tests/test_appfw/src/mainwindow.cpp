@@ -32,9 +32,9 @@
 
 using namespace de;
 
-DENG2_PIMPL(MainWindow)
-, DENG2_OBSERVES(GLWindow, Init)
-, DENG2_OBSERVES(GLWindow, Resize)
+DE_PIMPL(MainWindow)
+, DE_OBSERVES(GLWindow, Init)
+, DE_OBSERVES(GLWindow, Resize)
 {
     AppRootWidget root;
     bool needRootSizeUpdate;
@@ -150,7 +150,7 @@ DENG2_PIMPL(MainWindow)
 
     void updateRootSize()
     {
-        DENG2_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT_IN_MAIN_THREAD();
 
         needRootSizeUpdate = false;
 
@@ -162,7 +162,7 @@ DENG2_PIMPL(MainWindow)
 
     void updateCompositor()
     {
-        DENG2_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT_IN_MAIN_THREAD();
         if (!compositor) return;
 
         VRConfig &vr = TestApp::vr();
@@ -242,7 +242,7 @@ void MainWindow::preDraw()
     // NOTE: This occurs during the Canvas paintGL event.
     BaseWindow::preDraw();
 
-    DENG2_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_IN_MAIN_THREAD();
 
     d->updateMouseCursor();
     if (d->needRootSizeUpdate)

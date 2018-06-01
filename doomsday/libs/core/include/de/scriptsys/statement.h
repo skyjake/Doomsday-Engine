@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_STATEMENT_H
-#define LIBDENG2_STATEMENT_H
+#ifndef LIBCORE_STATEMENT_H
+#define LIBCORE_STATEMENT_H
 
 #include "../ISerializable"
 
@@ -35,7 +35,7 @@ class Statement : public ISerializable
 {
 public:
     /// Deserialization of a statement failed. @ingroup errors
-    DENG2_ERROR(DeserializationError);
+    DE_ERROR(DeserializationError);
 
 public:
     Statement();
@@ -89,4 +89,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_STATEMENT_H */
+#endif /* LIBCORE_STATEMENT_H */

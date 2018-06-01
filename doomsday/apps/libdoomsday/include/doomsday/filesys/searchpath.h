@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_FILESYS_SEARCHPATH_H
-#define LIBDENG_FILESYS_SEARCHPATH_H
+#ifndef DE_FILESYS_SEARCHPATH_H
+#define DE_FILESYS_SEARCHPATH_H
 
 #ifdef __cplusplus
 
@@ -115,4 +115,4 @@ namespace std {
 
 #endif // __cplusplus
 
-#endif /* LIBDENG_FILESYS_SEARCHPATH_H */
+#endif /* DE_FILESYS_SEARCHPATH_H */

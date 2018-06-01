@@ -86,9 +86,9 @@ int main(int argc, char **argv)
         LOGDEV_MSG ("Developer description: %s") << zip2.description();
 
         // Manual reinterpretation can be requested.
-        DENG2_ASSERT(zip2.parent() != 0);
+        DE_ASSERT(zip2.parent() != 0);
         Folder &updated = zip2.reinterpret()->as<Folder>();
-        DENG2_ASSERT(!zip2.parent()); // became a source
+        DE_ASSERT(!zip2.parent()); // became a source
 
         // This should now be a package folder so let's fill it with the archive
         // contents.

@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG2_FILESYS_LINK_H
-#define DENG2_FILESYS_LINK_H
+#ifndef DE_FILESYS_LINK_H
+#define DE_FILESYS_LINK_H
 
 #include "../../DictionaryValue"
 #include "../../IdentifiedPacket"
@@ -39,7 +39,7 @@ namespace filesys {
  *
  * @ingroup fs
  */
-class DENG2_PUBLIC Link
+class DE_PUBLIC Link
 {
 public:
     enum State
@@ -115,10 +115,10 @@ protected:
     virtual void transmit(Query const &query) = 0;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace filesys
 } // namespace de
 
-#endif // DENG2_FILESYS_LINK_H
+#endif // DE_FILESYS_LINK_H

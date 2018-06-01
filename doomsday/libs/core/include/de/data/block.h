@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_BLOCK_H
-#define LIBDENG2_BLOCK_H
+#ifndef LIBCORE_BLOCK_H
+#define LIBCORE_BLOCK_H
 
 #include "../IByteArray"
 #include "../IBlock"
@@ -43,7 +43,7 @@ class IIStream;
  *
  * @ingroup data
  */
-class DENG2_PUBLIC Block : public QByteArray, public IByteArray, public IBlock,
+class DE_PUBLIC Block : public QByteArray, public IByteArray, public IBlock,
                            public ISerializable
 {
 public:
@@ -193,4 +193,4 @@ Block md5Hash(Args... args) {
 
 } // namespace de
 
-#endif // LIBDENG2_BLOCK_H
+#endif // LIBCORE_BLOCK_H

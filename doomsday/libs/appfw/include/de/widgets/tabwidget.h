@@ -94,7 +94,7 @@ signals:
     void currentTabChanged();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef TabWidget::TabItem TabItem;

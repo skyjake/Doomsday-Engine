@@ -42,8 +42,8 @@
  * @ingroup legacy
  */
 
-#if defined(__cplusplus) && !defined(DENG_NO_QT)
-#  define DENG_USE_QT
+#if defined(__cplusplus) && !defined(DE_NO_QT)
+#  define DE_USE_QT
 #endif
 
 #if defined(__x86_64__) || defined(__x86_64) || defined(_LP64)
@@ -52,7 +52,7 @@
 #  endif
 #endif
 
-#ifdef DENG2_USE_QT
+#ifdef DE_USE_QT
 #  include <QtCore/qglobal.h>
 #endif
 
@@ -60,67 +60,75 @@
 #include <stddef.h>
 
 /*
- * The DENG_PUBLIC macro is used for declaring exported symbols. It must be
+ * The DE_PUBLIC macro is used for declaring exported symbols. It must be
  * applied in all exported classes and functions. DEF files are not used for
  * exporting symbols out of liblegacy.
  */
 #if defined(_WIN32) && defined(_MSC_VER)
-#  ifdef __DENG__
+#  ifdef __DE__
 // This is defined when compiling the library.
-#    define DENG_PUBLIC __declspec(dllexport)
+#    define DE_PUBLIC __declspec(dllexport)
 #  else
-#    define DENG_PUBLIC __declspec(dllimport)
+#    define DE_PUBLIC __declspec(dllimport)
 #  endif
-#  define DENG_NORETURN __declspec(noreturn)
+#  define DE_NORETURN __declspec(noreturn)
 #else
-#  define DENG_PUBLIC
-#  define DENG_NORETURN __attribute__((__noreturn__))
+#  define DE_PUBLIC
+#  define DE_NORETURN __attribute__((__noreturn__))
 #endif
 
-#if defined (DENG_IOS)
-#  define DENG_VISIBLE_SYMBOL __attribute__((visibility("default")))
+#if defined (DE_IOS)
+#  define DE_VISIBLE_SYMBOL __attribute__((visibility("default")))
 #else
-#  define DENG_VISIBLE_SYMBOL
+#  define DE_VISIBLE_SYMBOL
 #endif
 
-#if defined (DENG_STATIC_LINK)
-#  define DENG_ENTRYPOINT static
+#if defined (DE_STATIC_LINK)
+#  define DE_ENTRYPOINT static
 #else
-#  define DENG_ENTRYPOINT DENG_EXTERN_C
+#  define DE_ENTRYPOINT DE_EXTERN_C
 #endif
 
 #if !defined(_MSC_VER)
 #endif
 
 #ifdef __cplusplus
-#  define DENG_EXTERN_C extern "C"
+#  define DE_EXTERN_C extern "C"
 #else
-#  define DENG_EXTERN_C extern
+#  define DE_EXTERN_C extern
 #endif
 
 #ifndef NDEBUG
-#  ifndef _DEBUG
+#  if !defined (_DEBUG)
 #    define _DEBUG 1
 #  endif
-#  define DENG_DEBUG
-#  ifdef DENG_USE_QT
-#    define DENG_ASSERT(x) Q_ASSERT(x)
-#  else
-#    define DENG_ASSERT(x) assert(x)
+#  define DE_DEBUG
+#  if !defined (DE_ASSERT)
+#    ifdef DE_USE_QT
+#      define DE_ASSERT(x) Q_ASSERT(x)
+#    else
+#      define DE_ASSERT(x) assert(x)
+#    endif
 #  endif
-#  define DENG_DEBUG_ONLY(x) x
+#  define DE_DEBUG_ONLY(x) x
 #else
-#  define DENG_NO_DEBUG
-#  define DENG_ASSERT(x)
-#  define DENG_DEBUG_ONLY(x)
+#  define DE_NO_DEBUG
+#  if !defined (DE_ASSERT)
+#    define DE_ASSERT(x)
+#    define DE_DEBUG_ONLY(x)
+#  endif
 #endif
 
-#define DENG_ASSERT_FAIL(msgCStr)  DENG_ASSERT(msgCStr == NULL)
+#if !defined (DE_ASSERT_FAIL)
+#  define DE_ASSERT_FAIL(msgCStr)  DE_ASSERT(msgCStr == NULL)
+#endif
 
 /**
  * Macro for hiding the warning about an unused parameter.
  */
-#define DENG_UNUSED(x)      (void)x
+#if !defined (DE_UNUSED)
+#  define DE_UNUSED(x)      (void)x
+#endif
 
 /*
  * Utility macros.
@@ -170,7 +178,7 @@
 /// Ceiling of integer quotient of @a a divided by @a b.
 #define CEILING(a, b)       ((a) % (b) == 0 ? (a)/(b) : (a)/(b)+1)
 
-#define DENG_ISSPACE(c)     ((c) == 0 || (c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r')
+#define DE_ISSPACE(c)     ((c) == 0 || (c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r')
 
 // Automatically define the basic types for convenience.
 #include <de/types.h>
@@ -187,19 +195,19 @@ extern "C" {
  * Initializes the library. This must be the first function called before any other
  * functions in the library.
  */
-DENG_PUBLIC void Libdeng_Init(void);
+DE_PUBLIC void Libdeng_Init(void);
 
 /**
  * Shuts down the library. Frees any internal resources allocated by the library's
  * subsystems. Must be called when the library is no longer needed.
  */
-DENG_PUBLIC void Libdeng_Shutdown(void);
+DE_PUBLIC void Libdeng_Shutdown(void);
 
 /**
  * Terminates the process immediately. Call this when a malloc fails to handle
  * terminating gracefully instead of crashing with null pointer access.
  */
-DENG_PUBLIC DENG_NORETURN void Libdeng_BadAlloc(void);
+DE_PUBLIC DE_NORETURN void Libdeng_BadAlloc(void);
 
 #ifdef __cplusplus
 } // extern "C"

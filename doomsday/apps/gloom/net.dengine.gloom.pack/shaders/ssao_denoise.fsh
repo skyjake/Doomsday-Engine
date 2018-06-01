@@ -2,11 +2,11 @@
 
 uniform sampler2D uNoisyFactors;
 
-//#define DENG_SSAO_DISABLE_BLUR
+//#define DE_SSAO_DISABLE_BLUR
 
 void main() {
     ivec2 fragCoord = ivec2(gl_FragCoord.xy);
-#if defined (DENG_SSAO_DISABLE_BLUR)
+#if defined (DE_SSAO_DISABLE_BLUR)
     // Pass through the noisy factor values.
     out_FragColor = vec4(texelFetch(uNoisyFactors, fragCoord, 0).r);
 #else

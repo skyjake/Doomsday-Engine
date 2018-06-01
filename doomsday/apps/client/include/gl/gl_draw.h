@@ -22,8 +22,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_GRAPHICS_DRAW_H
-#define LIBDENG_GRAPHICS_DRAW_H
+#ifndef DE_GRAPHICS_DRAW_H
+#define DE_GRAPHICS_DRAW_H
 
 #include <de/Rectangle>
 #include <de/Vector>
@@ -66,4 +66,4 @@ void GL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int t
 } // extern "C"
 #endif
 
-#endif // LIBDENG_GRAPHICS_DRAW_H
+#endif // DE_GRAPHICS_DRAW_H

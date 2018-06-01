@@ -27,7 +27,7 @@ static const int BUF_ID = 1;
 using VBuf = GLBufferT<Vertex2Tex>;
 static std::shared_ptr<VBuf> s_vertexBuffer; // shared between all ScreenQuad instances
 
-DENG2_PIMPL_NOREF(ScreenQuad)
+DE_PIMPL_NOREF(ScreenQuad)
 {
     Drawable drawable;
     GLState state;

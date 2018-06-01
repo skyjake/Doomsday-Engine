@@ -103,12 +103,12 @@ static bool readNextPost(Post &post, Reader &reader)
 static Columns readPosts(ColumnOffsets const &offsets, Reader &reader)
 {
     Columns columns;
-#ifdef DENG2_QT_4_7_OR_NEWER
+#ifdef DE_QT_4_7_OR_NEWER
     columns.reserve(offsets.size());
 #endif
 
     Post post;
-    DENG2_FOR_EACH_CONST(ColumnOffsets, i, offsets)
+    DE_FOR_EACH_CONST(ColumnOffsets, i, offsets)
     {
         reader.setOffset(*i);
 
@@ -135,7 +135,7 @@ static Columns readPosts(ColumnOffsets const &offsets, Reader &reader)
 static ColumnOffsets readColumnOffsets(int width, Reader &reader)
 {
     ColumnOffsets offsets;
-#ifdef DENG2_QT_4_7_OR_NEWER
+#ifdef DE_QT_4_7_OR_NEWER
     offsets.reserve(width);
 #endif
 
@@ -159,11 +159,11 @@ static int calcRealHeight(Columns const &columns)
 {
     QRect geom(QPoint(0, 0), QSize(1, 0));
 
-    DENG2_FOR_EACH_CONST(Columns, colIt, columns)
+    DE_FOR_EACH_CONST(Columns, colIt, columns)
     {
         int tallTop = -1; // Keep track of pos (clipping).
 
-        DENG2_FOR_EACH_CONST(Posts, postIt, *colIt)
+        DE_FOR_EACH_CONST(Posts, postIt, *colIt)
         {
             Post const &post = *postIt;
 
@@ -191,13 +191,13 @@ static Block compositeImage(Reader &reader, ColorPaletteTranslation const *xlatT
     bool const maskZero                = flags.testFlag(Patch::MaskZero);
     bool const clipToLogicalDimensions = flags.testFlag(Patch::ClipToLogicalDimensions);
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     // Is the "logical" height of the image equal to the actual height of the
     // composited pixel posts?
     if (meta.logicalDimensions.y != meta.dimensions.y)
     {
         int postCount = 0;
-        DENG2_FOR_EACH_CONST(Columns, i, columns)
+        DE_FOR_EACH_CONST(Columns, i, columns)
         {
             postCount += i->count();
         }
@@ -222,11 +222,11 @@ static Block compositeImage(Reader &reader, ColorPaletteTranslation const *xlatT
     dbyte *topAlpha = output.data() + pels;
 
     // Composite the patch into the output buffer.
-    DENG2_FOR_EACH_CONST(Columns, colIt, columns)
+    DE_FOR_EACH_CONST(Columns, colIt, columns)
     {
         int tallTop = -1; // Keep track of pos (clipping).
 
-        DENG2_FOR_EACH_CONST(Posts, postIt, *colIt)
+        DE_FOR_EACH_CONST(Posts, postIt, *colIt)
         {
             Post const &post = *postIt;
 

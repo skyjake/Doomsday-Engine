@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_BLOCKMAP_H
-#define DENG_WORLD_BLOCKMAP_H
+#ifndef DE_WORLD_BLOCKMAP_H
+#define DE_WORLD_BLOCKMAP_H
 
 #include <functional>
 #include <de/aabox.h>
@@ -185,7 +185,7 @@ public:
     void drawDebugVisual() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef Blockmap::Cell BlockmapCell;
@@ -193,4 +193,4 @@ typedef Blockmap::CellBlock BlockmapCellBlock;
 
 }  // namespace world
 
-#endif  // DENG_WORLD_BLOCKMAP_H
+#endif  // DE_WORLD_BLOCKMAP_H

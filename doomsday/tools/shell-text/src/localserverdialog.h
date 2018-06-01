@@ -36,7 +36,7 @@ protected:
     void finish(int result);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // LOCALSERVERDIALOG_H

@@ -44,10 +44,10 @@ class LIBGUI_PUBLIC Waveform
 {
 public:
     /// Failed to load audio data from source. @ingroup errors
-    DENG2_ERROR(LoadError);
+    DE_ERROR(LoadError);
 
     /// Format of the source data is not supported. @ingroup errors
-    DENG2_SUB_ERROR(LoadError, UnsupportedFormatError);
+    DE_SUB_ERROR(LoadError, UnsupportedFormatError);
 
 public:
     Waveform();
@@ -99,7 +99,7 @@ public:
     TimeSpan duration() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

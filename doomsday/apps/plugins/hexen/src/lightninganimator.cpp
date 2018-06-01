@@ -50,7 +50,7 @@ static bool isLightningSector(Sector *sec)
     return false;
 }
 
-DENG2_PIMPL_NOREF(LightningAnimator)
+DE_PIMPL_NOREF(LightningAnimator)
 {
     int flash = 0;
     int nextFlash = 0;

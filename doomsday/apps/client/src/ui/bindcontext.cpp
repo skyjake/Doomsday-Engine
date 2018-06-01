@@ -41,7 +41,7 @@ static String const VAR_TEST      ("test");
 static String const VAR_DEVICE_ID ("deviceId");
 static String const VAR_CONTROL_ID("controlId");
 
-DENG2_PIMPL(BindContext)
+DE_PIMPL(BindContext)
 {
     bool active  = false;  ///< @c true= Bindings are active.
     bool protect = false;  ///< @c true= Prevent explicit end user (de)activation.
@@ -77,7 +77,7 @@ DENG2_PIMPL(BindContext)
     bool findMatchingBinding(Record const *matchCmdRec, Record const *matchImpRec,
         Record **cmdResult, Record **impResult) const
     {
-        DENG2_ASSERT(cmdResult && impResult);
+        DE_ASSERT(cmdResult && impResult);
 
         *cmdResult = nullptr;
         *impResult = nullptr;
@@ -178,14 +178,14 @@ DENG2_PIMPL(BindContext)
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(ActiveChange)
-    DENG2_PIMPL_AUDIENCE(AcquireDeviceChange)
-    DENG2_PIMPL_AUDIENCE(BindingAddition)
+    DE_PIMPL_AUDIENCE(ActiveChange)
+    DE_PIMPL_AUDIENCE(AcquireDeviceChange)
+    DE_PIMPL_AUDIENCE(BindingAddition)
 };
 
-DENG2_AUDIENCE_METHOD(BindContext, ActiveChange)
-DENG2_AUDIENCE_METHOD(BindContext, AcquireDeviceChange)
-DENG2_AUDIENCE_METHOD(BindContext, BindingAddition)
+DE_AUDIENCE_METHOD(BindContext, ActiveChange)
+DE_AUDIENCE_METHOD(BindContext, AcquireDeviceChange)
+DE_AUDIENCE_METHOD(BindContext, BindingAddition)
 
 BindContext::BindContext(String const &name) : d(new Impl(this))
 {
@@ -231,12 +231,12 @@ void BindContext::activate(bool yes)
     d->active = yes;
 
     // Notify interested parties.
-    DENG2_FOR_AUDIENCE2(ActiveChange, i) i->bindContextActiveChanged(*this);
+    DE_FOR_AUDIENCE2(ActiveChange, i) i->bindContextActiveChanged(*this);
 }
 
 void BindContext::acquire(int deviceId, bool yes)
 {
-    DENG2_ASSERT(deviceId >= 0 && deviceId < NUM_INPUT_DEVICES);
+    DE_ASSERT(deviceId >= 0 && deviceId < NUM_INPUT_DEVICES);
     int const countBefore = d->acquireDevices.count();
 
     if (yes) d->acquireDevices.insert(deviceId);
@@ -245,7 +245,7 @@ void BindContext::acquire(int deviceId, bool yes)
     if (countBefore != d->acquireDevices.count())
     {
         // Notify interested parties.
-        DENG2_FOR_AUDIENCE2(AcquireDeviceChange, i) i->bindContextAcquireDeviceChanged(*this);
+        DE_FOR_AUDIENCE2(AcquireDeviceChange, i) i->bindContextAcquireDeviceChanged(*this);
     }
 }
 
@@ -256,7 +256,7 @@ void BindContext::acquireAll(bool yes)
         d->acquireAllDevices = yes;
 
         // Notify interested parties.
-        DENG2_FOR_AUDIENCE2(AcquireDeviceChange, i) i->bindContextAcquireDeviceChanged(*this);
+        DE_FOR_AUDIENCE2(AcquireDeviceChange, i) i->bindContextAcquireDeviceChanged(*this);
     }
 }
 
@@ -322,7 +322,7 @@ void BindContext::clearBindingsForDevice(int deviceId)
 
 Record *BindContext::bindCommand(char const *eventDesc, char const *command)
 {
-    DENG2_ASSERT(eventDesc && command && command[0]);
+    DE_ASSERT(eventDesc && command && command[0]);
     LOG_AS("BindContext");
     try
     {
@@ -341,7 +341,7 @@ Record *BindContext::bindCommand(char const *eventDesc, char const *command)
         d->deleteMatching(&bind.def(), nullptr);
 
         // Notify interested parties.
-        DENG2_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, bind.def(), true/*is-command*/);
+        DE_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, bind.def(), true/*is-command*/);
 
         Con_MarkAsChanged(true);
 
@@ -354,8 +354,8 @@ Record *BindContext::bindCommand(char const *eventDesc, char const *command)
 
 Record *BindContext::bindImpulse(char const *ctrlDesc, PlayerImpulse const &impulse, int localPlayer)
 {
-    DENG2_ASSERT(ctrlDesc);
-    DENG2_ASSERT(localPlayer >= 0 && localPlayer < DDMAXPLAYERS);
+    DE_ASSERT(ctrlDesc);
+    DE_ASSERT(localPlayer >= 0 && localPlayer < DDMAXPLAYERS);
     LOG_AS("BindContext");
     try
     {
@@ -375,7 +375,7 @@ Record *BindContext::bindImpulse(char const *ctrlDesc, PlayerImpulse const &impu
         d->deleteMatching(nullptr, &bind.def());
 
         // Notify interested parties.
-        DENG2_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, bind.def(), false/*is-impulse*/);
+        DE_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, bind.def(), false/*is-impulse*/);
 
         Con_MarkAsChanged(true);
 

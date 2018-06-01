@@ -22,9 +22,9 @@
 
 namespace de {
 
-DENG2_PIMPL(VariableLineEditWidget),
-DENG2_OBSERVES(Variable, Deletion),
-DENG2_OBSERVES(Variable, Change  )
+DE_PIMPL(VariableLineEditWidget),
+DE_OBSERVES(Variable, Deletion),
+DE_OBSERVES(Variable, Change  )
 {
     Variable *var;
 

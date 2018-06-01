@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_CLIENTTEXTURE_H
-#define DENG_RESOURCE_CLIENTTEXTURE_H
+#ifndef DE_RESOURCE_CLIENTTEXTURE_H
+#define DE_RESOURCE_CLIENTTEXTURE_H
 
 #include "resource/image.h" // res::Source
 #include "TextureVariantSpec"
@@ -136,7 +136,7 @@ public:
         void glCoords(float *s, float *t) const;
 
     private:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
     /// A list of variants.
@@ -210,11 +210,11 @@ public:
     uint variantCount() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(ClientTexture::Flags)
 
 typedef ClientTexture::Variant TextureVariant;
 
-#endif // DENG_RESOURCE_CLIENTTEXTURE_H
+#endif // DE_RESOURCE_CLIENTTEXTURE_H

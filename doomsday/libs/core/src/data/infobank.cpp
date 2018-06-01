@@ -24,8 +24,8 @@
 
 namespace de {
 
-DENG2_PIMPL(InfoBank)
-, DENG2_OBSERVES(ScriptedInfo, NamedBlock)
+DE_PIMPL(InfoBank)
+, DE_OBSERVES(ScriptedInfo, NamedBlock)
 {
     Record       names; ///< All parsed sources will be stored here.
     ScriptedInfo info{&names};

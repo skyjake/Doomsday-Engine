@@ -32,7 +32,7 @@ public:
     void show();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // CURSESTEXTCANVAS_H

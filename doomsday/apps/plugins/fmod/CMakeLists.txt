@@ -2,12 +2,12 @@
 # Copyright (c) 2015-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 cmake_minimum_required (VERSION 3.1)
-project (DENG_FMOD)
+project (DE_FMOD)
 include (../PluginConfig.cmake)
 
-option (DENG_ENABLE_FMOD "Enable/disable the FMOD Ex audio plugin" ON)
+option (DE_ENABLE_FMOD "Enable/disable the FMOD Ex audio plugin" ON)
 
-if (NOT DENG_ENABLE_FMOD)
+if (NOT DE_ENABLE_FMOD)
     return ()
 endif ()
 
@@ -22,7 +22,7 @@ if (TARGET fmodex)
         deng_find_resources (${libPath},Frameworks)
     endif ()
     
-    append (CMAKE_CXX_FLAGS_DEBUG "-DDENG_DSFMOD_DEBUG")    
+    append (CMAKE_CXX_FLAGS_DEBUG "-DDE_DSFMOD_DEBUG")    
     
     include_directories (include)
     file (GLOB SOURCES src/*.cpp include/*.h)

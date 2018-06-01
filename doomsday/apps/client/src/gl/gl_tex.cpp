@@ -308,7 +308,7 @@ static void* packImage(int components, const float* tempOut, GLint typeOut,
         break;
       }
     default:
-        DENG2_ASSERT_FAIL("packImage: Unknown output type");
+        DE_ASSERT_FAIL("packImage: Unknown output type");
         return 0;
     }
 
@@ -670,7 +670,7 @@ void GL_DownMipmap32(uint8_t* in, int width, int height, int comps)
 
     if(width == 1 && height == 1)
     {
-        DENG2_ASSERT_FAIL("GL_DownMipmap32: Can't be called for a 1x1 image.");
+        DE_ASSERT_FAIL("GL_DownMipmap32: Can't be called for a 1x1 image.");
         return;
     }
 
@@ -708,7 +708,7 @@ void GL_DownMipmap8(uint8_t* in, uint8_t* fadedOut, int width, int height, float
 
     if(width == 1 && height == 1)
     {
-        DENG2_ASSERT_FAIL("GL_DownMipmap8: Can't be called for a 1x1 image.");
+        DE_ASSERT_FAIL("GL_DownMipmap8: Can't be called for a 1x1 image.");
         return;
     }
 
@@ -738,7 +738,7 @@ void GL_DownMipmap8(uint8_t* in, uint8_t* fadedOut, int width, int height, float
 dd_bool GL_PalettizeImage(uint8_t *out, int outformat, res::ColorPalette const *palette,
     dd_bool applyTexGamma, uint8_t const *in, int informat, int width, int height)
 {
-    DENG2_ASSERT(in && out && palette);
+    DE_ASSERT(in && out && palette);
 
     if(width <= 0 || height <= 0)
         return false;
@@ -783,7 +783,7 @@ dd_bool GL_PalettizeImage(uint8_t *out, int outformat, res::ColorPalette const *
 dd_bool GL_QuantizeImageToPalette(uint8_t *out, int outformat, res::ColorPalette const *palette,
     uint8_t const *in, int informat, int width, int height)
 {
-    DENG2_ASSERT(out != 0 && in != 0 && palette != 0);
+    DE_ASSERT(out != 0 && in != 0 && palette != 0);
 
     if(informat >= 3 && outformat <= 2 && width > 0 && height > 0)
     {
@@ -813,7 +813,7 @@ dd_bool GL_QuantizeImageToPalette(uint8_t *out, int outformat, res::ColorPalette
 void GL_DeSaturatePalettedImage(uint8_t *pixels, res::ColorPalette const &palette,
     int width, int height)
 {
-    DENG2_ASSERT(pixels != 0);
+    DE_ASSERT(pixels != 0);
 
     if(!width || !height)  return;
 
@@ -856,7 +856,7 @@ void GL_DeSaturatePalettedImage(uint8_t *pixels, res::ColorPalette const &palett
 void FindAverageLineColorIdx(uint8_t const *data, int w, int h, int line,
     res::ColorPalette const &palette, dd_bool hasAlpha, ColorRawf *color)
 {
-    DENG2_ASSERT(data != 0 && color != 0);
+    DE_ASSERT(data != 0 && color != 0);
 
     long i, count, numpels, avg[3] = { 0, 0, 0 };
     uint8_t const *start, *alphaStart;
@@ -870,7 +870,7 @@ void FindAverageLineColorIdx(uint8_t const *data, int w, int h, int line,
     if(line >= h)
     {
         App_Log(DE2_DEV_GL_ERROR, "FindAverageLineColorIdx: height=%i, line=%i.", h, line);
-        DENG2_ASSERT_FAIL("FindAverageLineColorIdx: Attempted to average outside valid area.");
+        DE_ASSERT_FAIL("FindAverageLineColorIdx: Attempted to average outside valid area.");
         V3f_Set(color->rgb, 0, 0, 0);
         return;
     }
@@ -916,7 +916,7 @@ void FindAverageLineColor(const uint8_t* pixels, int width, int height,
     if(line >= height)
     {
         App_Log(DE2_DEV_GL_ERROR, "EnhanceContrast: height=%i, line=%i.", height, line);
-        DENG2_ASSERT_FAIL("FindAverageLineColor: Attempted to average outside valid area.");
+        DE_ASSERT_FAIL("FindAverageLineColor: Attempted to average outside valid area.");
 
         V3f_Set(color->rgb, 0, 0, 0);
         return;
@@ -951,7 +951,7 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
     if(pixelSize != 3 && pixelSize != 4)
     {
         App_Log(DE2_DEV_GL_ERROR, "FindAverageColor: pixelSize=%i", pixelSize);
-        DENG_ASSERT("FindAverageColor: Attempted on non-rgb(a) image.");
+        DE_ASSERT("FindAverageColor: Attempted on non-rgb(a) image.");
 
         V3f_Set(color->rgb, 0, 0, 0);
         return;
@@ -974,7 +974,7 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
 void FindAverageColorIdx(uint8_t const *data, int w, int h, res::ColorPalette const &palette,
     dd_bool hasAlpha, ColorRawf *color)
 {
-    DENG2_ASSERT(data != 0 && color != 0);
+    DE_ASSERT(data != 0 && color != 0);
 
     long i, numpels, count, avg[3] = { 0, 0, 0 };
     uint8_t const *alphaStart;
@@ -1027,7 +1027,7 @@ void FindAverageAlpha(const uint8_t* pixels, int width, int height,
     if(pixelSize != 3 && pixelSize != 4)
     {
         App_Log(DE2_DEV_GL_ERROR, "FindAverageAlpha: pixelSize=%i", pixelSize);
-        DENG2_ASSERT_FAIL("FindAverageAlpha: Attempted on non-rgb(a) image.");
+        DE_ASSERT_FAIL("FindAverageAlpha: Attempted on non-rgb(a) image.");
 
         // Assume opaque.
         *alpha = 1;
@@ -1102,7 +1102,7 @@ void FindClipRegionNonAlpha(const uint8_t* buffer, int width, int height,
 
     if(width <= 0 || height <= 0)
     {
-        DENG2_ASSERT_FAIL("FindClipRegionNonAlpha: Attempt to find region on zero-sized image.");
+        DE_ASSERT_FAIL("FindClipRegionNonAlpha: Attempt to find region on zero-sized image.");
 
         retRegion[0] = retRegion[1] = retRegion[2] = retRegion[3] = 0;
         return;
@@ -1211,7 +1211,7 @@ void BlackOutlines(uint8_t* pixels, int width, int height)
 
 void ColorOutlinesIdx(uint8_t* buffer, int width, int height)
 {
-    DENG_ASSERT(buffer);
+    DE_ASSERT(buffer);
 
     const int numpels = width * height;
     uint8_t* w[5];
@@ -1413,7 +1413,7 @@ void EnhanceContrast(uint8_t* pixels, int width, int height, int comps)
     if(comps != 3 && comps != 4)
     {
         App_Log(DE2_DEV_GL_ERROR, "EnhanceContrast: comps=%i", comps);
-        DENG2_ASSERT_FAIL("EnhanceContrast: Attempted on non-rgb(a) image.");
+        DE_ASSERT_FAIL("EnhanceContrast: Attempted on non-rgb(a) image.");
         return;
     }
 
@@ -1453,7 +1453,7 @@ void SharpenPixels(uint8_t* pixels, int width, int height, int comps)
     if(comps != 3 && comps != 4)
     {
         App_Log(DE2_DEV_GL_ERROR, "SharpenPixels: comps=%i", comps);
-        DENG2_ASSERT_FAIL("SharpenPixels: Attempted on non-rgb(a) image.");
+        DE_ASSERT_FAIL("SharpenPixels: Attempted on non-rgb(a) image.");
         return;
     }
 
@@ -1491,7 +1491,7 @@ void SharpenPixels(uint8_t* pixels, int width, int height, int comps)
  */
 static inline bool isKeyedColor(uint8_t *color)
 {
-    DENG2_ASSERT(color);
+    DE_ASSERT(color);
     return color[2] == 0xff && ((color[0] == 0xff && color[1] == 0) ||
                                  (color[0] == 0 && color[1] == 0xff));
 }
@@ -1501,7 +1501,7 @@ static inline bool isKeyedColor(uint8_t *color)
  */
 static void doColorKeying(uint8_t *rgbaBuf, int width)
 {
-    DENG2_ASSERT(rgbaBuf);
+    DE_ASSERT(rgbaBuf);
 
     for(int i = 0; i < width; ++i, rgbaBuf += 4)
     {
@@ -1513,7 +1513,7 @@ static void doColorKeying(uint8_t *rgbaBuf, int width)
 
 uint8_t *ApplyColorKeying(uint8_t *buf, int width, int height, int pixelSize)
 {
-    DENG2_ASSERT(buf);
+    DE_ASSERT(buf);
 
     if(width <= 0 || height <= 0)
         return buf;

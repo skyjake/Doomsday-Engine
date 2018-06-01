@@ -37,12 +37,12 @@
 #include "intermission.h"
 #include "x_player.h"
 
-DENG_EXTERN_C player_t players[MAXPLAYERS];
+DE_EXTERN_C player_t players[MAXPLAYERS];
 
-DENG_EXTERN_C dd_bool paused;
-DENG_EXTERN_C dd_bool precache;
-DENG_EXTERN_C dd_bool customPal;
-DENG_EXTERN_C dd_bool briefDisabled;
+DE_EXTERN_C dd_bool paused;
+DE_EXTERN_C dd_bool precache;
+DE_EXTERN_C dd_bool customPal;
+DE_EXTERN_C dd_bool briefDisabled;
 
 #ifdef __cplusplus
 

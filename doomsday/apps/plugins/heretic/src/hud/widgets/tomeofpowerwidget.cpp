@@ -30,19 +30,19 @@ using namespace de;
 
 static void TomeWidget_Draw(guidata_tomeofpower_t *tome, Point2Raw const *offset)
 {
-    DENG2_ASSERT(tome);
+    DE_ASSERT(tome);
     tome->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void TomeWidget_UpdateGeometry(guidata_tomeofpower_t *tome)
 {
-    DENG2_ASSERT(tome);
+    DE_ASSERT(tome);
     tome->updateGeometry();
 }
 
 static patchid_t pIcons[FRAME_COUNT];
 
-DENG2_PIMPL_NOREF(guidata_tomeofpower_t)
+DE_PIMPL_NOREF(guidata_tomeofpower_t)
 {
     patchid_t patchId = 0;
     dint countdownSeconds = 0;  ///< Number of seconds remaining or zero if disabled.

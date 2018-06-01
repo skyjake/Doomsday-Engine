@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_FILESYSTEM_H
-#define LIBDENG2_FILESYSTEM_H
+#ifndef LIBCORE_FILESYSTEM_H
+#define LIBCORE_FILESYSTEM_H
 
 #include "../libcore.h"
 #include "../Folder"
@@ -103,18 +103,18 @@ namespace internal {
  *
  * @ingroup fs
  */
-class DENG2_PUBLIC FileSystem : public System
+class DE_PUBLIC FileSystem : public System
 {
 public:
     /// No index is found for the specified type. @ingroup errors
-    DENG2_ERROR(UnknownTypeError);
+    DE_ERROR(UnknownTypeError);
 
     /// No files found. @ingroup errors
-    DENG2_ERROR(NotFoundError);
+    DE_ERROR(NotFoundError);
 
     /// More than one file found and there is not enough information to choose
     /// between them. @ingroup errors
-    DENG2_ERROR(AmbiguousError);
+    DE_ERROR(AmbiguousError);
 
     typedef FileIndex Index;
     typedef FileIndex::FoundFiles FoundFiles;
@@ -306,14 +306,14 @@ public:
     /**
      * Retrieves the index of files of a particular type.
      *
-     * @param typeIdentifier  Type identifier to look for. Use the DENG2_TYPE_NAME() macro.
+     * @param typeIdentifier  Type identifier to look for. Use the DE_TYPE_NAME() macro.
      *
      * @return A subset of the main index containing only the entries of
      * the given type.
      *
      * For example, to look up the index for NativeFile instances:
      * @code
-     * FileIndex const &nativeFileIndex = App::fileSystem().indexFor(DENG2_TYPE_NAME(NativeFile));
+     * FileIndex const &nativeFileIndex = App::fileSystem().indexFor(DE_TYPE_NAME(NativeFile));
      * @endcode
      */
     FileIndex const &indexFor(String const &typeIdentifier) const;
@@ -394,7 +394,7 @@ public:
                                        File::Flags flags = File::ReadOnly);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(FileSystem::FolderCreationBehaviors)
@@ -405,4 +405,4 @@ typedef FileSystem FS;
 
 } // namespace de
 
-#endif // LIBDENG2_FILESYSTEM_H
+#endif // LIBCORE_FILESYSTEM_H

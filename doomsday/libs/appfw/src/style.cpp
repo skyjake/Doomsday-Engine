@@ -31,7 +31,7 @@
 
 namespace de {
 
-DENG2_PIMPL(Style)
+DE_PIMPL(Style)
 , DENG2_OBSERVES(Variable, Change)
 {
     Record    module;
@@ -265,7 +265,7 @@ static Style *theAppStyle = nullptr;
 
 Style &Style::get()
 {
-    DENG2_ASSERT(theAppStyle != 0);
+    DE_ASSERT(theAppStyle != 0);
     return *theAppStyle;
 }
 

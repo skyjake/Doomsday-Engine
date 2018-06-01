@@ -74,7 +74,7 @@
 void T_Door(void *doorThinkerPtr)
 {
     door_t *door = (door_t *)doorThinkerPtr;
-    DENG_ASSERT(door != 0);
+    DE_ASSERT(door != 0);
 
     xsector_t *xsec = P_ToXSector(door->sector);
 
@@ -317,7 +317,7 @@ int door_s::read(MapStateReader *msr)
 
         type          = doortype_e(Reader_ReadByte(reader));
         sector        = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
-        DENG_ASSERT(sector != 0);
+        DE_ASSERT(sector != 0);
 
         topHeight     = (float) Reader_ReadInt16(reader);
         speed         = FIX2FLT((fixed_t) Reader_ReadInt32(reader));

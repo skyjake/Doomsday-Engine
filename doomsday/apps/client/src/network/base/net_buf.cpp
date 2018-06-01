@@ -104,7 +104,7 @@ static dd_bool N_LockQueue(dd_bool doAcquire)
 
 void N_PostMessage(netmessage_t *msg)
 {
-    DENG2_ASSERT(msg);
+    DE_ASSERT(msg);
 
     N_LockQueue(true);
 
@@ -188,7 +188,7 @@ static netmessage_t *N_GetMessage()
 
 static void N_ReleaseMessage(netmessage_t *msg)
 {
-    DENG2_ASSERT(msg);
+    DE_ASSERT(msg);
     if(msg->handle)
     {
         delete [] reinterpret_cast<byte *>(msg->handle);
@@ -224,7 +224,7 @@ void N_SendPacket(dint flags)
 #ifdef __SERVER__
     duint dest = 0;
 #else
-    DENG2_UNUSED(flags);
+    DE_UNUSED(flags);
 #endif
 
     // Is the network available?
@@ -293,7 +293,7 @@ dint N_IdentifyPlayer(nodeid_t id)
     }
     return -1;
 #else
-    DENG2_UNUSED(id);
+    DE_UNUSED(id);
 #endif
 
     // Clients receive messages only from the server.

@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_TOKENBUFFER_H
-#define LIBDENG2_TOKENBUFFER_H
+#ifndef LIBCORE_TOKENBUFFER_H
+#define LIBCORE_TOKENBUFFER_H
 
 #include "../libcore.h"
 
@@ -31,7 +31,7 @@ class String;
 /**
  * Character sequence allocated out of the token buffer.
  */
-class DENG2_PUBLIC Token
+class DE_PUBLIC Token
 {
 public:
     /// Types for tokens. This much can be analyzed without knowing
@@ -171,14 +171,14 @@ private:
  *
  * @ingroup script
  */
-class DENG2_PUBLIC TokenBuffer
+class DE_PUBLIC TokenBuffer
 {
 public:
     /// Attempt to append characters while no token is being formed. @ingroup errors
-    DENG2_ERROR(TokenNotStartedError);
+    DE_ERROR(TokenNotStartedError);
 
     /// Parameter was out of range. @ingroup errors
-    DENG2_ERROR(OutOfRangeError);
+    DE_ERROR(OutOfRangeError);
 
 public:
     TokenBuffer();
@@ -243,4 +243,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_TOKENBUFFER_H */
+#endif /* LIBCORE_TOKENBUFFER_H */

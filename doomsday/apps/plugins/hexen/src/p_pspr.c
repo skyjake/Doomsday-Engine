@@ -642,7 +642,7 @@ void C_DECL A_SnoutAttack(player_t *plr, pspdef_t *psp)
     int damage;
     float slope;
 
-    DENG_ASSERT(plr != 0 && psp != 0);
+    DE_ASSERT(plr != 0 && psp != 0);
 
     damage = 3 + (P_Random() & 3);
     angle = plr->plr->mo->angle;

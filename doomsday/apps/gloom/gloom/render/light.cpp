@@ -22,7 +22,7 @@ using namespace de;
 
 namespace gloom {
 
-DENG2_PIMPL(Light)
+DE_PIMPL(Light)
 {
     const Entity *entity = nullptr;
     Type          type   = Omni;

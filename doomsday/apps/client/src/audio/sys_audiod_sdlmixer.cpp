@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_DISABLE_SDLMIXER
+#ifndef DE_DISABLE_SDLMIXER
 
 #include "de_base.h"
 #include "audio/sys_audiod_sdlmixer.h"
@@ -554,4 +554,4 @@ int DS_SDLMixer_Music_PlayFile(const char* filename, int looped)
     return result;
 }
 
-#endif // DENG_DISABLE_SDLMIXER
+#endif // DE_DISABLE_SDLMIXER

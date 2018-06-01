@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_EXPRESSIONSTATEMENT_H
-#define LIBDENG2_EXPRESSIONSTATEMENT_H
+#ifndef LIBCORE_EXPRESSIONSTATEMENT_H
+#define LIBCORE_EXPRESSIONSTATEMENT_H
 
 #include "../Statement"
 
@@ -56,4 +56,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_EXPRESSIONSTATEMENT_H */
+#endif /* LIBCORE_EXPRESSIONSTATEMENT_H */

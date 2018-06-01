@@ -37,7 +37,7 @@ using namespace de;
 namespace world {
 namespace bsp {
 
-DENG2_PIMPL_NOREF(LineSegment::Side)
+DE_PIMPL_NOREF(LineSegment::Side)
 {
     /// Owning line segment.
     LineSegment *line = nullptr;
@@ -92,7 +92,7 @@ void LineSegment::Side::updateCache()
 {
     d->direction  = to().origin() - from().origin();
     d->pLength    = d->direction.length();
-    DENG2_ASSERT(d->pLength > 0);
+    DE_ASSERT(d->pLength > 0);
     d->pAngle     = M_DirectionToAngleXY(d->direction.x, d->direction.y);
     d->pSlopeType = M_SlopeTypeXY(d->direction.x, d->direction.y);
     d->pPerp      =  from().origin().y * d->direction.x - from().origin().x * d->direction.y;
@@ -328,8 +328,8 @@ int LineSegment::Side::boxOnSide(AABoxd const &box) const
                             LINESEGMENT_INCIDENT_DISTANCE_EPSILON);
 }
 
-DENG2_PIMPL(LineSegment)
-, DENG2_OBSERVES(Vertex, OriginChange)
+DE_PIMPL(LineSegment)
+, DE_OBSERVES(Vertex, OriginChange)
 {
     /// Vertexes of the line segment (not owned).
     Vertex *from;
@@ -399,7 +399,7 @@ LineSegment::Side const &LineSegment::side(int back) const
 
 Vertex &LineSegment::vertex(int to) const
 {
-    DENG2_ASSERT((to? d->to : d->from) != nullptr);
+    DE_ASSERT((to? d->to : d->from) != nullptr);
     return to? *d->to : *d->from;
 }
 

@@ -20,10 +20,10 @@
 
 namespace de {
 
-DENG2_PIMPL(PopupButtonWidget)
-, DENG2_OBSERVES(ButtonWidget, StateChange)
-, DENG2_OBSERVES(ButtonWidget, Press)
-, DENG2_OBSERVES(PanelWidget,  Close)
+DE_PIMPL(PopupButtonWidget)
+, DE_OBSERVES(ButtonWidget, StateChange)
+, DE_OBSERVES(ButtonWidget, Press)
+, DE_OBSERVES(PanelWidget,  Close)
 {
     SafeWidgetPtr<PopupWidget> pop;
     Constructor constructor;

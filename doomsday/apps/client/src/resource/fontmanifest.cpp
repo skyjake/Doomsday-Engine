@@ -27,8 +27,8 @@
 
 using namespace de;
 
-DENG2_PIMPL(FontManifest),
-DENG2_OBSERVES(AbstractFont, Deletion)
+DE_PIMPL(FontManifest),
+DE_OBSERVES(AbstractFont, Deletion)
 {
     int uniqueId;
     QScopedPointer<AbstractFont>(resource); ///< Associated resource (if any).
@@ -40,7 +40,7 @@ DENG2_OBSERVES(AbstractFont, Deletion)
 
     ~Impl()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->fontManifestBeingDeleted(self());
+        DE_FOR_PUBLIC_AUDIENCE(Deletion, i) i->fontManifestBeingDeleted(self());
     }
 
     // Observes AbstractFont::Deletion.
@@ -91,7 +91,7 @@ bool FontManifest::setUniqueId(int newUniqueId)
     d->uniqueId = newUniqueId;
 
     // Notify interested parties that the uniqueId has changed.
-    DENG2_FOR_AUDIENCE(UniqueIdChange, i) i->fontManifestUniqueIdChanged(*this);
+    DE_FOR_AUDIENCE(UniqueIdChange, i) i->fontManifestUniqueIdChanged(*this);
 
     return true;
 }

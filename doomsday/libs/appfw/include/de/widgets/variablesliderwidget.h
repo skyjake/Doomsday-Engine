@@ -36,7 +36,7 @@ class LIBAPPFW_PUBLIC VariableSliderWidget : public SliderWidget
 
 public:
     /// Thrown when the variable is gone and someone tries to access it. @ingroup errors
-    DENG2_ERROR(VariableMissingError);
+    DE_ERROR(VariableMissingError);
 
     enum ValueType
     {
@@ -61,7 +61,7 @@ protected slots:
     void setVariableFromWidget();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

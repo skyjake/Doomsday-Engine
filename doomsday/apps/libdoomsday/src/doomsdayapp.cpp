@@ -78,7 +78,7 @@ static String const PATH_LOCAL_PACKS("/local/packs");
 
 static DoomsdayApp *theDoomsdayApp = nullptr;
 
-DENG2_PIMPL(DoomsdayApp)
+DE_PIMPL(DoomsdayApp)
 , public IFolderPopulationObserver
 {
     std::string ddBasePath; // Doomsday root directory is at...?
@@ -109,7 +109,7 @@ DENG2_PIMPL(DoomsdayApp)
     /**
      * Delegates game change notifications to scripts.
      */
-    class GameChangeScriptAudience : DENG2_OBSERVES(DoomsdayApp, GameChange)
+    class GameChangeScriptAudience : DE_OBSERVES(DoomsdayApp, GameChange)
     {
     public:
         void currentGameChanged(Game const &newGame)
@@ -148,7 +148,7 @@ DENG2_PIMPL(DoomsdayApp)
         configSaveTimer.setSingleShot(false);
         QObject::connect(&configSaveTimer, &QTimer::timeout, [this] ()
         {
-            DENG2_FOR_PUBLIC_AUDIENCE2(PeriodicAutosave, i)
+            DE_FOR_PUBLIC_AUDIENCE2(PeriodicAutosave, i)
             {
                 if (!this->busyMode.isActive())
                 {
@@ -480,7 +480,7 @@ DENG2_PIMPL(DoomsdayApp)
         App::setCurrentWorkPath(App::app().nativeHomePath());
 
         // libcore has determined the native base path, so let FS1 know about it.
-        self().setDoomsdayBasePath(DENG2_APP->nativeBasePath());
+        self().setDoomsdayBasePath(DE_APP->nativeBasePath());
     }
 #endif // UNIX
 
@@ -502,23 +502,23 @@ DENG2_PIMPL(DoomsdayApp)
     }
 #endif // WIN32
 
-    DENG2_PIMPL_AUDIENCE(GameLoad)
-    DENG2_PIMPL_AUDIENCE(GameUnload)
-    DENG2_PIMPL_AUDIENCE(GameChange)
-    DENG2_PIMPL_AUDIENCE(ConsoleRegistration)
-    DENG2_PIMPL_AUDIENCE(PeriodicAutosave)
+    DE_PIMPL_AUDIENCE(GameLoad)
+    DE_PIMPL_AUDIENCE(GameUnload)
+    DE_PIMPL_AUDIENCE(GameChange)
+    DE_PIMPL_AUDIENCE(ConsoleRegistration)
+    DE_PIMPL_AUDIENCE(PeriodicAutosave)
 };
 
-DENG2_AUDIENCE_METHOD(DoomsdayApp, GameLoad)
-DENG2_AUDIENCE_METHOD(DoomsdayApp, GameUnload)
-DENG2_AUDIENCE_METHOD(DoomsdayApp, GameChange)
-DENG2_AUDIENCE_METHOD(DoomsdayApp, ConsoleRegistration)
-DENG2_AUDIENCE_METHOD(DoomsdayApp, PeriodicAutosave)
+DE_AUDIENCE_METHOD(DoomsdayApp, GameLoad)
+DE_AUDIENCE_METHOD(DoomsdayApp, GameUnload)
+DE_AUDIENCE_METHOD(DoomsdayApp, GameChange)
+DE_AUDIENCE_METHOD(DoomsdayApp, ConsoleRegistration)
+DE_AUDIENCE_METHOD(DoomsdayApp, PeriodicAutosave)
 
 DoomsdayApp::DoomsdayApp(Players::Constructor playerConstructor)
     : d(new Impl(this, playerConstructor))
 {
-    DENG2_ASSERT(!theDoomsdayApp);
+    DE_ASSERT(!theDoomsdayApp);
     theDoomsdayApp = this;
 
     App::app().addInitPackage("net.dengine.base");
@@ -611,7 +611,7 @@ void DoomsdayApp::determineGlobalPaths()
 
 DoomsdayApp &DoomsdayApp::app()
 {
-    DENG2_ASSERT(theDoomsdayApp);
+    DE_ASSERT(theDoomsdayApp);
     return *theDoomsdayApp;
 }
 
@@ -749,7 +749,7 @@ void *DoomsdayApp::moduleHandle() const
 
 Game const &DoomsdayApp::game()
 {
-    DENG2_ASSERT(app().d->currentGame != 0);
+    DE_ASSERT(app().d->currentGame != 0);
     return *app().d->currentGame;
 }
 
@@ -839,10 +839,10 @@ void DoomsdayApp::unloadGame(GameProfile const &/*upcomingGame*/)
 
 void DoomsdayApp::uncacheFilesFromMemory()
 {
-    ArchiveFeed::uncacheAllEntries(StringList({ DENG2_TYPE_NAME(Folder),
-                                                DENG2_TYPE_NAME(ArchiveFolder),
-                                                DENG2_TYPE_NAME(DataFolder),
-                                                DENG2_TYPE_NAME(GameStateFolder) }));
+    ArchiveFeed::uncacheAllEntries(StringList({ DE_TYPE_NAME(Folder),
+                                                DE_TYPE_NAME(ArchiveFolder),
+                                                DE_TYPE_NAME(DataFolder),
+                                                DE_TYPE_NAME(GameStateFolder) }));
 }
 
 void DoomsdayApp::clearCache()
@@ -864,7 +864,7 @@ void DoomsdayApp::reset()
     // Reinitialize the console.
     Con_ClearDatabases();
     Con_InitDatabases();
-    DENG2_FOR_AUDIENCE2(ConsoleRegistration, i)
+    DE_FOR_AUDIENCE2(ConsoleRegistration, i)
     {
         i->consoleRegistration();
     }
@@ -968,11 +968,11 @@ bool DoomsdayApp::changeGame(GameProfile const &profile,
     d->gameBeingChanged = true;
 
     // The current game will now be unloaded.
-    DENG2_FOR_AUDIENCE2(GameUnload, i) i->aboutToUnloadGame(game());
+    DE_FOR_AUDIENCE2(GameUnload, i) i->aboutToUnloadGame(game());
     unloadGame(profile);
 
     // Do the switch.
-    DENG2_FOR_AUDIENCE2(GameLoad, i) i->aboutToLoadGame(newGame);
+    DE_FOR_AUDIENCE2(GameLoad, i) i->aboutToLoadGame(newGame);
     makeGameCurrent(profile);
 
     /*
@@ -1033,12 +1033,12 @@ bool DoomsdayApp::changeGame(GameProfile const &profile,
         }
     }
 
-    DENG_ASSERT(plugins().activePluginId() == 0);
+    DE_ASSERT(plugins().activePluginId() == 0);
 
     d->gameBeingChanged = false;
 
     // Game change is complete.
-    DENG2_FOR_AUDIENCE2(GameChange, i)
+    DE_FOR_AUDIENCE2(GameChange, i)
     {
         i->currentGameChanged(game());
     }

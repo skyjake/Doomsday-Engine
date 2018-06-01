@@ -38,13 +38,13 @@ dsize ListData::size() const
 
 Item &ListData::at(Data::Pos pos)
 {
-    DENG2_ASSERT(pos < size());
+    DE_ASSERT(pos < size());
     return *_items[pos];
 }
 
 Item const &ListData::at(Pos pos) const
 {
-    DENG2_ASSERT(pos < size());
+    DE_ASSERT(pos < size());
     return *_items.at(pos);
 }
 
@@ -90,7 +90,7 @@ Data &ListData::insert(Pos pos, Item *item)
     item->setDataContext(*this);
 
     // Notify.
-    DENG2_FOR_AUDIENCE2(Addition, i)
+    DE_FOR_AUDIENCE2(Addition, i)
     {
         i->dataItemAdded(pos, *item);
     }
@@ -105,12 +105,12 @@ void ListData::remove(Pos pos)
 
 Item *ListData::take(Data::Pos pos)
 {
-    DENG2_ASSERT(pos < size());
+    DE_ASSERT(pos < size());
 
     Item *taken = _items.takeAt(pos);
 
     // Notify.
-    DENG2_FOR_AUDIENCE2(Removal, i)
+    DE_FOR_AUDIENCE2(Removal, i)
     {
         i->dataItemRemoved(pos, *taken);
     }
@@ -124,7 +124,7 @@ void ListData::sort(LessThanFunc lessThan)
         return lessThan(*a, *b);
     });
 
-    DENG2_FOR_AUDIENCE2(OrderChange, i) i->dataItemOrderChanged();
+    DE_FOR_AUDIENCE2(OrderChange, i) i->dataItemOrderChanged();
 }
 
 void ListData::stableSort(LessThanFunc lessThan)
@@ -133,7 +133,7 @@ void ListData::stableSort(LessThanFunc lessThan)
         return lessThan(*a, *b);
     });
 
-    DENG2_FOR_AUDIENCE2(OrderChange, i) i->dataItemOrderChanged();
+    DE_FOR_AUDIENCE2(OrderChange, i) i->dataItemOrderChanged();
 }
 
 } // namespace de

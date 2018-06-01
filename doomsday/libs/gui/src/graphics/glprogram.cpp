@@ -38,9 +38,9 @@ static GLProgram const *currentProgram = 0;
 
 using namespace internal;
 
-DENG2_PIMPL(GLProgram)
-, DENG2_OBSERVES(GLUniform, ValueChange)
-, DENG2_OBSERVES(GLUniform, Deletion)
+DE_PIMPL(GLProgram)
+, DE_OBSERVES(GLUniform, ValueChange)
+, DE_OBSERVES(GLUniform, Deletion)
 {
     typedef QSet<GLUniform const *>  Uniforms;
     typedef QList<GLUniform const *> UniformList;
@@ -106,7 +106,7 @@ DENG2_PIMPL(GLProgram)
 
     void attach(GLShader const *shader)
     {
-        DENG2_ASSERT(shader->isReady());
+        DE_ASSERT(shader->isReady());
         alloc();
         LIBGUI_GL.glAttachShader(name, shader->glName());
         LIBGUI_ASSERT_GL_OK();
@@ -184,7 +184,7 @@ DENG2_PIMPL(GLProgram)
 
     void link()
     {
-        DENG2_ASSERT(name != 0);
+        DE_ASSERT(name != 0);
 
         GL.glLinkProgram(name);
 
@@ -213,7 +213,7 @@ DENG2_PIMPL(GLProgram)
         // Apply the uniform values in this program.
         foreach (GLUniform const *u, changed)
         {
-            DENG2_ASSERT(active.contains(changed));
+            DE_ASSERT(active.contains(changed));
             if (!u->isSampler())
             {
                 u->applyInProgram(self());
@@ -376,8 +376,8 @@ GLProgram &GLProgram::build(QVector<GLShader const *> const &shaders)
     d->releaseButRetainBindings();
     for (GLShader const *shd : shaders)
     {
-        DENG2_ASSERT(shd != nullptr);
-        DENG2_ASSERT(shd->isReady());
+        DE_ASSERT(shd != nullptr);
+        DE_ASSERT(shd->isReady());
         d->attach(shd);
     }
     d->bindVertexAttribs();
@@ -435,9 +435,9 @@ GLProgram &GLProgram::unbind(GLUniform const &uniform)
 void GLProgram::beginUse() const
 {
     LIBGUI_ASSERT_GL_OK();
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG2_ASSERT(isReady());
-    DENG2_ASSERT(!d->inUse);
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT(isReady());
+    DE_ASSERT(!d->inUse);
     LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
 
     if (d->needRebuild)
@@ -446,7 +446,7 @@ void GLProgram::beginUse() const
         const_cast<GLProgram *>(this)->rebuild();
     }
 
-    DENG2_ASSERT(LIBGUI_GL.glIsProgram(d->name));
+    DE_ASSERT(LIBGUI_GL.glIsProgram(d->name));
 
     d->inUse = true;
     currentProgram = this;
@@ -464,8 +464,8 @@ void GLProgram::beginUse() const
 
 void GLProgram::endUse() const
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG2_ASSERT(d->inUse);
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT(d->inUse);
 
     d->inUse = false;
     currentProgram = 0;
@@ -494,8 +494,8 @@ bool GLProgram::glHasUniform(char const *uniformName) const
 
 int GLProgram::attributeLocation(AttribSpec::Semantic semantic) const
 {
-    DENG2_ASSERT(semantic >= 0);
-    DENG2_ASSERT(semantic < AttribSpec::MaxSemantics);
+    DE_ASSERT(semantic >= 0);
+    DE_ASSERT(semantic < AttribSpec::MaxSemantics);
 
     return d->attribLocation[semantic];
 }

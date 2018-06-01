@@ -63,7 +63,7 @@ clplayerstate_t *ClPlayer_State(int plrNum)
 }
 
 #undef ClPlayer_ClMobj
-DENG_EXTERN_C struct mobj_s *ClPlayer_ClMobj(int plrNum)
+DE_EXTERN_C struct mobj_s *ClPlayer_ClMobj(int plrNum)
 {
     if (plrNum < 0 || plrNum >= DDMAXPLAYERS) return 0;
     return ClMobj_Find(ClPlayer_State(plrNum)->clMobjId);
@@ -71,7 +71,7 @@ DENG_EXTERN_C struct mobj_s *ClPlayer_ClMobj(int plrNum)
 
 void ClPlayer_UpdateOrigin(int plrNum)
 {
-    DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
+    DE_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
 
     player_t *plr = DD_Player(plrNum);
     clplayerstate_t *s = ClPlayer_State(plrNum);
@@ -115,7 +115,7 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
     if (clmo->thinker.id != state->pendingFixTargetClMobjId)
         return;
 
-    DENG_ASSERT(clmo->thinker.id == state->clMobjId);
+    DE_ASSERT(clmo->thinker.id == state->clMobjId);
 
     if (state->pendingFixes & DDPF_FIXANGLES)
     {
@@ -381,7 +381,7 @@ void ClPlayer_ReadDelta()
     if (df & PDF_ANGLE)
     {
         //s->angle = Reader_ReadByte(msgReader) << 24;
-        DENG_UNUSED(Reader_ReadByte(msgReader));
+        DE_UNUSED(Reader_ReadByte(msgReader));
     }
 
     if (df & PDF_TURNDELTA)

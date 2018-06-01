@@ -116,7 +116,7 @@ static Material *findRecordMaterial(Records &records, SerialId id)
     return reinterpret_cast<Material *>(records.userPointer(id));
 }
 
-DENG2_PIMPL(MaterialArchive)
+DE_PIMPL(MaterialArchive)
 {
     int version = MATERIALARCHIVE_VERSION;
 
@@ -165,7 +165,7 @@ DENG2_PIMPL(MaterialArchive)
 
     void readGroup(reader_s &reader)
     {
-        DENG_ASSERT(version >= 1);
+        DE_ASSERT(version >= 1);
 
         // Read the group header.
         int num = Reader_ReadUInt16(&reader);
@@ -329,7 +329,7 @@ void MaterialArchive::read(reader_s &reader, int forcedVersion)
  * C Wrapper API:
  */
 
-#define DENG_NO_API_MACROS_MATERIAL_ARCHIVE
+#define DE_NO_API_MACROS_MATERIAL_ARCHIVE
 
 #include "api_materialarchive.h"
 
@@ -340,11 +340,11 @@ void MaterialArchive::read(reader_s &reader, int forcedVersion)
     reinterpret_cast<de::MaterialArchive const*>(inst)
 
 #define SELF(inst) \
-    DENG2_ASSERT(inst); \
+    DE_ASSERT(inst); \
     de::MaterialArchive *self = TOINTERNAL(inst)
 
 #define SELF_CONST(inst) \
-    DENG2_ASSERT(inst); \
+    DE_ASSERT(inst); \
     de::MaterialArchive const *self = TOINTERNAL_CONST(inst)
 
 #undef MaterialArchive_New

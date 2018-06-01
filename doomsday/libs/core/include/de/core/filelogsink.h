@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_FILELOGSINK_H
-#define LIBDENG2_FILELOGSINK_H
+#ifndef LIBCORE_FILELOGSINK_H
+#define LIBCORE_FILELOGSINK_H
 
 #include "../LogSink"
 #include "../File"
@@ -45,4 +45,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_FILELOGSINK_H
+#endif // LIBCORE_FILELOGSINK_H

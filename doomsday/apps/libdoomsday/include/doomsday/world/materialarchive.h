@@ -42,7 +42,7 @@ class LIBDOOMSDAY_PUBLIC MaterialArchive
 {
 public:
     /// Base class for all deserialization errors. @ingroup errors
-    DENG2_ERROR(ReadError);
+    DE_ERROR(ReadError);
 
 public:
     /**
@@ -108,7 +108,7 @@ public:
     void read(reader_s &reader, int forcedVersion = -1);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace world

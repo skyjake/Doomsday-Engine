@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_BINARYTREE_H
-#define LIBDENG2_BINARYTREE_H
+#ifndef LIBCORE_BINARYTREE_H
+#define LIBCORE_BINARYTREE_H
 
 #include "../libcore.h"
 #include "../Error"
@@ -40,10 +40,10 @@ class BinaryTree
 {
 public:
     /// The referenced parent is not present. @ingroup errors
-    DENG2_ERROR(MissingParentError);
+    DE_ERROR(MissingParentError);
 
     /// The referenced child is not present. @ingroup errors
-    DENG2_ERROR(MissingChildError);
+    DE_ERROR(MissingChildError);
 
     /**
      * Child node identifiers.
@@ -54,9 +54,9 @@ public:
     };
 
 private:
-    static inline void assertValidChildId(ChildId DENG2_DEBUG_ONLY(child))
+    static inline void assertValidChildId(ChildId DE_DEBUG_ONLY(child))
     {
-        DENG2_ASSERT(child == Right || child == Left);
+        DE_ASSERT(child == Right || child == Left);
     }
 
 public:
@@ -549,4 +549,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_BINARYTREE_H
+#endif // LIBCORE_BINARYTREE_H

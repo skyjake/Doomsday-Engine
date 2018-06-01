@@ -27,7 +27,7 @@
 using namespace de;
 using namespace gloom;
 
-DENG2_PIMPL(EditorWindow)
+DE_PIMPL(EditorWindow)
 {
     Editor *editor;
     bool stateBeingUpdated = false;

@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_BYTEARRAYFILE_H
-#define LIBDENG2_BYTEARRAYFILE_H
+#ifndef LIBCORE_BYTEARRAYFILE_H
+#define LIBCORE_BYTEARRAYFILE_H
 
 #include "../libcore.h"
 #include "../File"
@@ -39,7 +39,7 @@ namespace de {
  *
  * @ingroup fs
  */
-class DENG2_PUBLIC ByteArrayFile : public File, public IByteArray
+class DE_PUBLIC ByteArrayFile : public File, public IByteArray
 {
 protected:
     ByteArrayFile(String const &name = String()) : File(name) {}
@@ -55,4 +55,4 @@ public:
 
 } // namespace de
 
-#endif // LIBDENG2_BYTEARRAYFILE_H
+#endif // LIBCORE_BYTEARRAYFILE_H

@@ -40,7 +40,7 @@ public:
     void renderShadows(const Light &);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace gloom

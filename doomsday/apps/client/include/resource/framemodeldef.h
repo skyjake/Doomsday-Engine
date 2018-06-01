@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_FRAMEMODELDEF_H
-#define DENG_RESOURCE_FRAMEMODELDEF_H
+#ifndef DE_RESOURCE_FRAMEMODELDEF_H
+#define DE_RESOURCE_FRAMEMODELDEF_H
 
 #include <vector>
 #include <de/Vector>
@@ -186,13 +186,13 @@ struct FrameModelDef
 
     SubmodelDef &subModelDef(unsigned int subnum)
     {
-        DENG2_ASSERT(hasSub(subnum));
+        DE_ASSERT(hasSub(subnum));
         return _sub[subnum];
     }
 
     SubmodelDef const &subModelDef(unsigned int subnum) const
     {
-        DENG2_ASSERT(hasSub(subnum));
+        DE_ASSERT(hasSub(subnum));
         return _sub[subnum];
     }
 
@@ -205,7 +205,7 @@ struct FrameModelDef
     {
         if(hasSub(subnum))
         {
-            DENG2_ASSERT(subnum < _ptcOffset.size());
+            DE_ASSERT(subnum < _ptcOffset.size());
             return _ptcOffset[subnum];
         }
         return de::Vec3f();
@@ -213,9 +213,9 @@ struct FrameModelDef
 
     void setParticleOffset(unsigned int subnum, de::Vec3f const &off)
     {
-        DENG2_ASSERT(hasSub(subnum));
+        DE_ASSERT(hasSub(subnum));
         _ptcOffset[subnum] = off;
     }
 };
 
-#endif // DENG_RESOURCE_FRAMEMODELDEF_H
+#endif // DE_RESOURCE_FRAMEMODELDEF_H

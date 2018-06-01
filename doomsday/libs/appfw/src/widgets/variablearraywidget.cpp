@@ -21,11 +21,11 @@
 
 namespace de {
 
-DENG_GUI_PIMPL(VariableArrayWidget)
-, DENG2_OBSERVES(Variable, Deletion)
-, DENG2_OBSERVES(Variable, Change  )
-, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
-, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
+DE_GUI_PIMPL(VariableArrayWidget)
+, DE_OBSERVES(Variable, Deletion)
+, DE_OBSERVES(Variable, Change  )
+, DE_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
+, DE_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 {
     Variable *    var = nullptr;
     IndirectRule *maxWidth;

@@ -73,7 +73,7 @@ public:
     int indexOf(ddplayer_s const *publicData) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // __cplusplus

@@ -28,7 +28,7 @@
 #include <de/App>
 #include <de/Log>
 
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
 #  include <OVR.h>
 #  include <OVR_CAPI_GL.h>
 using namespace OVR;
@@ -36,7 +36,7 @@ using namespace OVR;
 
 namespace de {
 
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
 Vec3f quaternionToPRYAngles(Quatf const &q)
 {
     Vec3f pry;
@@ -45,14 +45,14 @@ Vec3f quaternionToPRYAngles(Quatf const &q)
 }
 #endif
 
-DENG2_PIMPL(OculusRift)
-, DENG2_OBSERVES(KeyEventSource, KeyEvent)
-#ifdef DENG_HAVE_OCULUS_API
-, DENG2_OBSERVES(Variable, Change)
+DE_PIMPL(OculusRift)
+, DE_OBSERVES(KeyEventSource, KeyEvent)
+#ifdef DE_HAVE_OCULUS_API
+, DE_OBSERVES(Variable, Change)
 #endif
 , public Lockable
 {
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
     ovrHmd hmd;
     ovrEyeType currentEye;
     ovrPosef headPose[2];
@@ -95,7 +95,7 @@ DENG2_PIMPL(OculusRift)
         //,ipd(.064f)
         , yawOffset(0)
     {
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
         hmd = 0;
         /*
         ovr_Initialize();
@@ -119,10 +119,10 @@ DENG2_PIMPL(OculusRift)
 
     ~Impl()
     {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         deinit();
 
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
         /*
         if (hmd)
         {
@@ -132,12 +132,12 @@ DENG2_PIMPL(OculusRift)
 #endif
     }
 
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
     /// Returns the offscreen framebuffer where the Oculus Rift raw frame is drawn.
     /// This is passed to LibOVR as a texture.
     GLTextureFramebuffer &framebuffer()
     {
-        DENG2_ASSERT(window);
+        DE_ASSERT(window);
         return window->transform().as<VRWindowTransform>().unwarpedFramebuffer();
     }
 
@@ -207,7 +207,7 @@ DENG2_PIMPL(OculusRift)
         if (inited) return;
         inited = true;
 
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
         //ovr_Initialize();
         hmd = ovrHmd_Create(0);
 
@@ -229,7 +229,7 @@ DENG2_PIMPL(OculusRift)
 
         App::config("vr.oculusRift.pixelDensity").audienceForChange() += this;
 
-        DENG2_GUARD(this);
+        DE_GUARD(this);
 
         // Configure for orientation and position tracking.
         ovrHmd_ConfigureTracking(hmd, ovrTrackingCap_Orientation |
@@ -240,9 +240,9 @@ DENG2_PIMPL(OculusRift)
 
         // We will be rendering into the main window.
         window = &GLWindow::main().as<BaseWindow>();
-        DENG2_ASSERT(window->isVisible());
+        DE_ASSERT(window->isVisible());
 
-        DENG2_ASSERT(QGLContext::currentContext() != 0);
+        DE_ASSERT(QGLContext::currentContext() != 0);
 
         // Observe key events for dismissing the Health and Safety warning.
         window->canvas().audienceForKeyEvent() += this;
@@ -321,7 +321,7 @@ DENG2_PIMPL(OculusRift)
 #endif
     }
 
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
     QRect screenGeometry(Screen which) const
     {
         foreach (QScreen *scr, qApp->screens())
@@ -338,8 +338,8 @@ DENG2_PIMPL(OculusRift)
                 return scr->geometry();
             }
 #else
-            DENG2_UNUSED(scr);
-            DENG2_UNUSED(which);
+            DE_UNUSED(scr);
+            DE_UNUSED(which);
 #endif
         }
         // Fall back the first screen.
@@ -353,8 +353,8 @@ DENG2_PIMPL(OculusRift)
         inited = false;
         frameOngoing = false;
 
-#ifdef DENG_HAVE_OCULUS_API
-        DENG2_GUARD(this);
+#ifdef DE_HAVE_OCULUS_API
+        DE_GUARD(this);
 
         LOG_GL_MSG("Stopping Oculus Rift rendering");
 
@@ -374,7 +374,7 @@ DENG2_PIMPL(OculusRift)
 #endif
     }
 
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
     bool isWindowOnHMD() const
     {
         if (!window) return false;
@@ -421,7 +421,7 @@ DENG2_PIMPL(OculusRift)
     {
         if (!window || ev.type() == Event::KeyRelease) return;
 
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
         if (isHealthAndSafetyWarningDisplayed())
         {
             if (dismissHealthAndSafetyWarning())
@@ -432,7 +432,7 @@ DENG2_PIMPL(OculusRift)
 #endif
     }
 
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
     bool isReady() const
     {
         return hmd != 0;
@@ -512,8 +512,8 @@ DENG2_PIMPL(OculusRift)
 
     void beginFrame()
     {
-        DENG2_ASSERT(isReady());
-        DENG2_ASSERT(!frameOngoing);
+        DE_ASSERT(isReady());
+        DE_ASSERT(!frameOngoing);
 
         if (densityChanged)
         {
@@ -528,7 +528,7 @@ DENG2_PIMPL(OculusRift)
 
     void endFrame()
     {
-        DENG2_ASSERT(frameOngoing);
+        DE_ASSERT(frameOngoing);
 
         ovrHmd_EndFrame(hmd, headPose, textures);
 
@@ -543,7 +543,7 @@ OculusRift::OculusRift() : d(new Impl(this))
 
 bool OculusRift::isEnabled() const
 {
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
     return true;
 #else
     return false;
@@ -552,7 +552,7 @@ bool OculusRift::isEnabled() const
 
 void OculusRift::glPreInit()
 {
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
     LOG_AS("OculusRift");
     LOG_VERBOSE("Initializing LibOVR");
     ovr_Initialize();
@@ -561,7 +561,7 @@ void OculusRift::glPreInit()
 
 bool OculusRift::isHMDConnected() const
 {
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
     if (d->isReady()) return true;
     return ovrHmd_Detect() > 0;
 #endif
@@ -582,7 +582,7 @@ void OculusRift::deinit()
 
 void OculusRift::beginFrame()
 {
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
     if (!isReady() || !d->inited || d->frameOngoing) return;
 
     // Begin the frame and acquire timing information.
@@ -592,7 +592,7 @@ void OculusRift::beginFrame()
 
 void OculusRift::endFrame()
 {
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
     if (!isReady() || !d->frameOngoing) return;
 
     // End the frame and let the Oculus SDK handle displaying it with the
@@ -603,19 +603,19 @@ void OculusRift::endFrame()
 
 void OculusRift::setCurrentEye(int index)
 {
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
     if (d->hmd)
     {
         d->currentEye = d->hmd->EyeRenderOrder[index];
     }
 #else
-    DENG2_UNUSED(index);
+    DE_UNUSED(index);
 #endif
 }
 
 OculusRift::Eye OculusRift::currentEye() const
 {
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
     return (d->currentEye == ovrEye_Left? LeftEye : RightEye);
 #else
     return LeftEye;
@@ -624,7 +624,7 @@ OculusRift::Eye OculusRift::currentEye() const
 
 Vec2ui OculusRift::resolution() const
 {
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
     if (!d->hmd) return Vec2ui();
     return Vec2ui(d->hmd->Resolution.w, d->hmd->Resolution.h);
 #else
@@ -639,7 +639,7 @@ void OculusRift::setYawOffset(float yawRadians)
 
 void OculusRift::resetTracking()
 {
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
     if (d->isReady())
     {
         ovrHmd_RecenterPose(d->hmd);
@@ -652,8 +652,8 @@ void OculusRift::resetYaw()
     d->yawOffset = -d->pitchRollYaw.z;
 
     /*
-#ifdef DENG_HAVE_OCULUS_API
-    DENG2_GUARD(d);
+#ifdef DE_HAVE_OCULUS_API
+    DE_GUARD(d);
     if (isReady())
     {
         d->yawOffset = -d->oculusDevice->yaw;
@@ -665,7 +665,7 @@ void OculusRift::resetYaw()
 // True if Oculus Rift is enabled and can report head orientation.
 bool OculusRift::isReady() const
 {
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
     return d->isReady();
 #else
     return false;
@@ -674,7 +674,7 @@ bool OculusRift::isReady() const
 
 Vec3f OculusRift::headOrientation() const
 {
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
     if (d->needPoseUpdate) d->updateEyePoses();
 #endif
     Vec3f pry = d->pitchRollYaw;
@@ -684,7 +684,7 @@ Vec3f OculusRift::headOrientation() const
 
 Mat4f OculusRift::eyePose() const
 {
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
     if (!isReady()) return Mat4f();
     if (d->needPoseUpdate) d->updateEyePoses();
     return d->eyeMatrix[d->currentEye];
@@ -695,7 +695,7 @@ Mat4f OculusRift::eyePose() const
 
 Vec3f OculusRift::headPosition() const
 {
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
     if (d->needPoseUpdate) d->updateEyePoses();
 #endif
     return d->headPosition;
@@ -703,7 +703,7 @@ Vec3f OculusRift::headPosition() const
 
 Vec3f OculusRift::eyeOffset() const
 {
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
     return d->eyeOffset[d->currentEye];
 #else
     return Vec3f();
@@ -712,12 +712,12 @@ Vec3f OculusRift::eyeOffset() const
 
 Mat4f OculusRift::projection(float nearDist, float farDist) const
 {
-#ifdef DENG_HAVE_OCULUS_API
-    DENG2_ASSERT(isReady());
+#ifdef DE_HAVE_OCULUS_API
+    DE_ASSERT(isReady());
     return Mat4f(ovrMatrix4f_Projection(d->fov[d->currentEye], nearDist, farDist,
                     true /* right-handed */).M[0]).transpose();
 #else
-    DENG2_UNUSED2(nearDist, farDist);
+    DE_UNUSED(nearDist, farDist);
     return Mat4f();
 #endif
 }
@@ -734,7 +734,7 @@ float OculusRift::aspect() const
 
 float OculusRift::fovX() const
 {
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
     return d->fovXDegrees;
 #endif
     return 0;
@@ -742,10 +742,10 @@ float OculusRift::fovX() const
 
 void OculusRift::moveWindowToScreen(Screen screen)
 {
-#ifdef DENG_HAVE_OCULUS_API
+#ifdef DE_HAVE_OCULUS_API
     d->moveWindow(screen);
 #else
-    DENG2_UNUSED(screen);
+    DE_UNUSED(screen);
 #endif
 }
 

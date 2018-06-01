@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#if !defined (DENG_IOS)
+#if !defined (DE_IOS)
 
 #include <AppKit/AppKit.h>
 

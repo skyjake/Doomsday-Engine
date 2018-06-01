@@ -343,8 +343,8 @@ dd_bool P_TakePower(player_t* player, int power)
 
 dd_bool P_TogglePower(player_t *player, powertype_t powerType)
 {
-    DENG_ASSERT(player != 0);
-    DENG_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
+    DE_ASSERT(player != 0);
+    DE_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
 
     if (!player->powers[powerType])
     {

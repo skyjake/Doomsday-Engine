@@ -50,7 +50,7 @@
 #include <QTranslator>
 #include <de/EscapeParser>
 
-#if defined (DENG_STATIC_LINK)
+#if defined (DE_STATIC_LINK)
 
 #include <QtPlugin>
 #include <de/Library>
@@ -65,18 +65,18 @@ Q_IMPORT_PLUGIN(QtQuickLayoutsPlugin)
 Q_IMPORT_PLUGIN(QtQuickTemplates2Plugin)
 Q_IMPORT_PLUGIN(QtQuick2WindowPlugin)
 
-DENG2_IMPORT_LIBRARY(importidtech1)
-DENG2_IMPORT_LIBRARY(importudmf)
-DENG2_IMPORT_LIBRARY(importdeh)
-DENG2_IMPORT_LIBRARY(audio_fmod)
-DENG2_IMPORT_LIBRARY(doom)
-//DENG2_IMPORT_LIBRARY(heretic)
-//DENG2_IMPORT_LIBRARY(hexen)
-//DENG2_IMPORT_LIBRARY(doom64)
+DE_IMPORT_LIBRARY(importidtech1)
+DE_IMPORT_LIBRARY(importudmf)
+DE_IMPORT_LIBRARY(importdeh)
+DE_IMPORT_LIBRARY(audio_fmod)
+DE_IMPORT_LIBRARY(doom)
+//DE_IMPORT_LIBRARY(heretic)
+//DE_IMPORT_LIBRARY(hexen)
+//DE_IMPORT_LIBRARY(doom64)
 
 #endif
 
-#if defined (DENG_MOBILE)
+#if defined (DE_MOBILE)
 #  include <QQuickView>
 #  include "ui/clientwindow.h"
 #endif
@@ -108,7 +108,7 @@ int main(int argc, char **argv)
         {
             clientApp.initialize();
             
-#if defined (DENG_MOBILE)
+#if defined (DE_MOBILE)
             // On mobile, Qt Quick is actually in charge of drawing the screen.
             // GLWindow is just an item that draws the UI background.
             qmlRegisterType<de::GLQuickItemT<ClientWindow>>("Doomsday", 1, 0, "ClientWindow");
@@ -131,9 +131,9 @@ int main(int argc, char **argv)
     }
 
     // Check that all reference-counted objects have been deleted.
-    #if defined (DENG2_DEBUG)
+    #if defined (DE_DEBUG)
     {
-        #if defined (DENG_USE_COUNTED_TRACING)
+        #if defined (DE_USE_COUNTED_TRACING)
         {
             if(de::Counted::totalCount > 0)
             {
@@ -142,7 +142,7 @@ int main(int argc, char **argv)
         }
         #else
         {
-            DENG2_ASSERT(de::Counted::totalCount == 0);
+            DE_ASSERT(de::Counted::totalCount == 0);
         }
         #endif
     }

@@ -33,7 +33,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(PackageCompatibilityDialog)
+DE_PIMPL(PackageCompatibilityDialog)
 {
     String          message;
     StringList      wanted;
@@ -352,7 +352,7 @@ void PackageCompatibilityDialog::setMessage(String const &msg)
 
 void PackageCompatibilityDialog::setWantedPackages(StringList packages)
 {
-    DENG2_ASSERT(!packages.isEmpty());
+    DE_ASSERT(!packages.isEmpty());
 
     d->wanted = packages;
     d->update();

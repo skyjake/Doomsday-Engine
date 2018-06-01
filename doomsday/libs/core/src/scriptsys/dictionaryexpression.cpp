@@ -47,8 +47,8 @@ void DictionaryExpression::clear()
 
 void DictionaryExpression::add(Expression *key, Expression *value)
 {
-    DENG2_ASSERT(key != NULL);
-    DENG2_ASSERT(value != NULL);
+    DE_ASSERT(key != NULL);
+    DE_ASSERT(value != NULL);
     _arguments.push_back(ExpressionPair(key, value));
 }
 

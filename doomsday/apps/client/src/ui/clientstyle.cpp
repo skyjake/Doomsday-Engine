@@ -24,7 +24,7 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(ClientStyle)
+DE_PIMPL_NOREF(ClientStyle)
 {
     struct EmptyMenuLabelStylist : public ui::Stylist
     {

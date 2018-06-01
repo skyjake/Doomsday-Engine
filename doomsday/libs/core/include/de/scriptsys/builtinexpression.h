@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_BUILTINEXPRESSION_H
-#define LIBDENG2_BUILTINEXPRESSION_H
+#ifndef LIBCORE_BUILTINEXPRESSION_H
+#define LIBCORE_BUILTINEXPRESSION_H
 
 #include "../libcore.h"
 #include "../Expression"
@@ -31,11 +31,11 @@ namespace de {
  *
  * @ingroup script
  */
-class DENG2_PUBLIC BuiltInExpression : public Expression
+class DE_PUBLIC BuiltInExpression : public Expression
 {
 public:
     /// A wrong number of arguments is given to one of the built-in methods. @ingroup errors
-    DENG2_ERROR(WrongArgumentsError);
+    DE_ERROR(WrongArgumentsError);
 
     /// Type of the built-in expression.
     /// @note  These are serialied as is, so do not change the existing values.
@@ -95,4 +95,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_BUILTINEXPRESSION_H */
+#endif /* LIBCORE_BUILTINEXPRESSION_H */

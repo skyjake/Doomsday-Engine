@@ -46,10 +46,10 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(PackagesDialog)
+DE_GUI_PIMPL(PackagesDialog)
 , public ChildWidgetOrganizer::IWidgetFactory
 , public PackagesWidget::IPackageStatus
-, DENG2_OBSERVES(Widget, ChildAddition)
+, DE_OBSERVES(Widget, ChildAddition)
 {
     StringList selectedPackages;
     LabelWidget *nothingSelected;
@@ -359,7 +359,7 @@ DENG_GUI_PIMPL(PackagesDialog)
     {
         selectedPackages.removeOne(packageId);
         auto pos = menu->items().findData(packageId);
-        DENG2_ASSERT(pos != ui::Data::InvalidPos);
+        DE_ASSERT(pos != ui::Data::InvalidPos);
         menu->items().remove(pos);
         updateNothingIndicator();
         updateGameTitle();

@@ -46,7 +46,7 @@ class SfxChannel
 {
 public:
     /// No sound buffer is assigned to the channel. @ingroup errors
-    DENG2_ERROR(MissingBufferError);
+    DE_ERROR(MissingBufferError);
 
 public:
     SfxChannel();
@@ -116,7 +116,7 @@ public:
     void setStartTime(int newStartTime);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 /**
@@ -167,7 +167,7 @@ public:
     de::LoopResult forAll(std::function<de::LoopResult (SfxChannel &)> func) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 }  // namespace audio

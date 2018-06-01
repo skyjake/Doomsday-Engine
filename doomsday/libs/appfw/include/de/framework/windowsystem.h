@@ -47,7 +47,7 @@ class LIBAPPFW_PUBLIC WindowSystem : public System
 {
 public:
     /// Required/referenced Window instance is missing. @ingroup errors
-    DENG2_ERROR(MissingWindowError);
+    DE_ERROR(MissingWindowError);
 
 public:
     WindowSystem();
@@ -61,7 +61,7 @@ public:
 
     template <typename WindowType>
     WindowType *newWindow(String const &id) {
-        DENG2_ASSERT(!find(id));
+        DE_ASSERT(!find(id));
         WindowType *win = new WindowType(id);
         addWindow(id, win);
         return win;
@@ -130,7 +130,7 @@ protected:
     virtual void rootUpdate() = 0;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

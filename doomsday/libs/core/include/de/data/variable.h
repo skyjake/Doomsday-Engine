@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_VARIABLE_H
-#define LIBDENG2_VARIABLE_H
+#ifndef LIBCORE_VARIABLE_H
+#define LIBCORE_VARIABLE_H
 
 #include "../ISerializable"
 #include "../String"
@@ -39,21 +39,21 @@ class Record;
  *
  * @ingroup data
  */
-class DENG2_PUBLIC Variable : public Deletable, public ISerializable
+class DE_PUBLIC Variable : public Deletable, public ISerializable
 {
 public:
     /// There was an attempt to change the value of a read-only variable. @ingroup errors
-    DENG2_ERROR(ReadOnlyError);
+    DE_ERROR(ReadOnlyError);
 
     /// An invalid value type was used. The mode flags denied using a value of the
     /// given type with the variable. @ingroup errors
-    DENG2_ERROR(InvalidError);
+    DE_ERROR(InvalidError);
 
     /// Variable name contains invalid characters. @ingroup errors
-    DENG2_ERROR(NameError);
+    DE_ERROR(NameError);
 
     /// Value could not be converted to the attempted type. @ingroup errors
-    DENG2_ERROR(TypeError);
+    DE_ERROR(TypeError);
 
     /** @name Mode Flags */
     //@{
@@ -290,7 +290,7 @@ public:
      *
      * @param variable  Variable.
      */
-    DENG2_DEFINE_AUDIENCE2(Deletion, void variableBeingDeleted(Variable &variable))
+    DE_DEFINE_AUDIENCE2(Deletion, void variableBeingDeleted(Variable &variable))
 
     /**
      * The value of the variable has changed.
@@ -298,17 +298,17 @@ public:
      * @param variable  Variable.
      * @param newValue  New value of the variable.
      */
-    DENG2_DEFINE_AUDIENCE2(Change, void variableValueChanged(Variable &variable, Value const &newValue))
+    DE_DEFINE_AUDIENCE2(Change, void variableValueChanged(Variable &variable, Value const &newValue))
 
-    DENG2_DEFINE_AUDIENCE2(ChangeFrom, void variableValueChangedFrom(Variable &variable, Value const &oldValue,
+    DE_DEFINE_AUDIENCE2(ChangeFrom, void variableValueChangedFrom(Variable &variable, Value const &oldValue,
                                                                      Value const &newValue))
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Variable::Flags)
 
 } // namespace de
 
-#endif /* LIBDENG2_VARIABLE_H */
+#endif /* LIBCORE_VARIABLE_H */

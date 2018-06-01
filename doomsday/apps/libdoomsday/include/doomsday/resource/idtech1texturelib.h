@@ -41,7 +41,7 @@ public:
     IdTech1Image textureImage(const String &name) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace res

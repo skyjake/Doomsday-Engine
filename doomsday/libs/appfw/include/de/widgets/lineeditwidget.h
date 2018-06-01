@@ -78,7 +78,7 @@ public:
 public:
     static KeyModifiers modifiersFromKeyEvent(KeyEvent::Modifiers const &keyMods);
 
-#if defined (DENG_MOBILE)
+#if defined (DE_MOBILE)
 protected slots:
     void userEnteredText(QString);
     void userFinishedTextEntry();
@@ -101,7 +101,7 @@ protected:
     void autoCompletionEnded(bool accepted) override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

@@ -43,7 +43,7 @@ public:
                        de::dint player = 0, uiwidgetid_t id = 0);
     virtual ~HudWidget();
 
-    DENG2_CAST_METHODS()
+    DE_CAST_METHODS()
 
     uiwidgetid_t id() const;
     void setId(uiwidgetid_t newId);
@@ -76,7 +76,7 @@ public:
     virtual void tick(timespan_t /*elapsed*/) {}
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef void (*UpdateGeometryFunc)(HudWidget *);

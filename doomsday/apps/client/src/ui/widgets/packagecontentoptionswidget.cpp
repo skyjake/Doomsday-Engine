@@ -31,7 +31,7 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(PackageContentOptionsWidget)
+DE_GUI_PIMPL(PackageContentOptionsWidget)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     /**
@@ -230,7 +230,7 @@ DENG_GUI_PIMPL(PackageContentOptionsWidget)
 
         summary->setText(tr("%1 package%2 (%3 optional)")
                          .arg(totalCount)
-                         .arg(DENG2_PLURAL_S(totalCount))
+                         .arg(DE_PLURAL_S(totalCount))
                          .arg(optionalCount));
 
         makeItems(recommends, true);

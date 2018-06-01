@@ -74,7 +74,7 @@ namespace internal
     };
 }
 
-DENG2_PIMPL(DataBundle), public Lockable
+DE_PIMPL(DataBundle), public Lockable
 {
     bool ignored = false;
     SafePtr<File> source;
@@ -89,7 +89,7 @@ DENG2_PIMPL(DataBundle), public Lockable
 
     ~Impl()
     {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         delete pkgLink.get();
     }
 
@@ -109,7 +109,7 @@ DENG2_PIMPL(DataBundle), public Lockable
             {
                 throw FormatError("DataBundle::identify",
                                   dynamic_cast<File *>(thisPublic)->description() +
-                                  ": file contents may be corrupted " DENG2_CHAR_MDASH
+                                  ": file contents may be corrupted " DE_CHAR_MDASH
                                   " WAD lump directory was not found");
             }
 
@@ -136,7 +136,7 @@ DENG2_PIMPL(DataBundle), public Lockable
      */
     bool identify()
     {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
 
         // It is sufficient to identify each bundle only once.
         if (ignored || !packageId.isEmpty()) return false;
@@ -974,7 +974,7 @@ DENG2_PIMPL(DataBundle), public Lockable
 
             if (!version.isEmpty())
             {
-                DENG2_ASSERT(Version(version).isValid());
+                DE_ASSERT(Version(version).isValid());
                 linkPath += QString("_%1.pack").arg(version);
             }
             else
@@ -1178,13 +1178,13 @@ void DataBundle::set(Offset, Byte const *, Size)
 
 Record &DataBundle::objectNamespace()
 {
-    DENG2_ASSERT(dynamic_cast<File *>(this) != nullptr);
+    DE_ASSERT(dynamic_cast<File *>(this) != nullptr);
     return asFile().objectNamespace().subrecord(QStringLiteral("package"));
 }
 
 Record const &DataBundle::objectNamespace() const
 {
-    DENG2_ASSERT(dynamic_cast<File const *>(this) != nullptr);
+    DE_ASSERT(dynamic_cast<File const *>(this) != nullptr);
     return asFile().objectNamespace().subrecord(QStringLiteral("package"));
 }
 
@@ -1271,7 +1271,7 @@ bool DataBundle::isNested() const
 DataBundle *DataBundle::containerBundle() const
 {
     auto const *file = dynamic_cast<File const *>(this);
-    DENG2_ASSERT(file != nullptr);
+    DE_ASSERT(file != nullptr);
 
     for (Folder *folder = file->parent(); folder; folder = folder->parent())
     {
@@ -1286,7 +1286,7 @@ DataBundle *DataBundle::containerBundle() const
 String DataBundle::containerPackageId() const
 {
     auto const *file = dynamic_cast<File const *>(this);
-    DENG2_ASSERT(file != nullptr);
+    DE_ASSERT(file != nullptr);
 
     return Package::identifierForContainerOfFile(*file);
 }
@@ -1364,7 +1364,7 @@ QList<DataBundle const *> DataBundle::loadedBundles() // static
         {
             // Packages may declare a list of data files to load.
             Package const *pkg = PackageLoader::get().tryFindLoaded(*f);
-            DENG2_ASSERT(pkg);
+            DE_ASSERT(pkg);
 
             auto const &meta = Package::metadata(*f);
             if (meta.has(VAR_DATA_FILES))
@@ -1406,13 +1406,13 @@ QList<DataBundle const *> DataBundle::findAllNative(String const &fileNameOrPart
     NativePath const searchPath = NativePath(fileNameOrPartialNativePath).expand();
 
     FS::FoundFiles found;
-    FS::get().findAllOfTypes(StringList({ DENG2_TYPE_NAME(DataFile),
-                                          DENG2_TYPE_NAME(DataFolder) }),
+    FS::get().findAllOfTypes(StringList({ DE_TYPE_NAME(DataFile),
+                                          DE_TYPE_NAME(DataFolder) }),
                              searchPath.fileName().toLower(), found);
     QList<DataBundle const *> bundles;
     for (auto const *f : found)
     {
-        DENG2_ASSERT(dynamic_cast<DataBundle const *>(f));
+        DE_ASSERT(dynamic_cast<DataBundle const *>(f));
         bundles << dynamic_cast<DataBundle const *>(f);
     }
 

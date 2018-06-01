@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_NATIVEPATH_H
-#define LIBDENG2_NATIVEPATH_H
+#ifndef LIBCORE_NATIVEPATH_H
+#define LIBCORE_NATIVEPATH_H
 
 #include "../Path"
 
@@ -36,14 +36,14 @@ namespace de {
  *
  * @ingroup fs
  */
-class DENG2_PUBLIC NativePath : public Path
+class DE_PUBLIC NativePath : public Path
 {
 public:
     /// An unknown user name was encounterd in the string. @ingroup errors
-    DENG2_ERROR(UnknownUserError);
+    DE_ERROR(UnknownUserError);
 
     /// Creating a directory failed. @ingroup errors
-    DENG2_ERROR(CreateDirError);
+    DE_ERROR(CreateDirError);
 
 public:
     /**
@@ -200,4 +200,4 @@ public:
 
 } // namespace de
 
-#endif // LIBDENG2_NATIVEPATH_H
+#endif // LIBCORE_NATIVEPATH_H

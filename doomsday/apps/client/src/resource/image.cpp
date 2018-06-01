@@ -41,7 +41,7 @@
 
 #include "render/rend_main.h" // misc global vars awaiting new home
 
-#ifndef DENG2_QT_4_7_OR_NEWER // older than 4.7?
+#ifndef DE_QT_4_7_OR_NEWER // older than 4.7?
 #  define constBits bits
 #endif
 
@@ -351,8 +351,8 @@ bool Image_LoadFromFileWithFormat(image_t &img, char const *format, FileHandle &
     if (image.colorCount())
     {
         image = image.convertToFormat(QImage::Format_ARGB32);
-        DENG_ASSERT(!image.colorCount());
-        DENG_ASSERT(image.depth() == 32);
+        DE_ASSERT(!image.colorCount());
+        DE_ASSERT(image.depth() == 32);
     }
 
     // Swap the red and blue channels for GL.
@@ -417,7 +417,7 @@ uint8_t *GL_LoadImage(image_t &image, String nativePath)
 
 Source GL_LoadExtImage(image_t &image, char const *_searchPath, gfxmode_t mode)
 {
-    DENG_ASSERT(_searchPath);
+    DE_ASSERT(_searchPath);
 
     try
     {
@@ -449,7 +449,7 @@ Source GL_LoadExtImage(image_t &image, char const *_searchPath, gfxmode_t mode)
 
 static dd_bool palettedIsMasked(uint8_t const *pixels, int width, int height)
 {
-    DENG2_ASSERT(pixels != 0);
+    DE_ASSERT(pixels != 0);
     // Jump to the start of the alpha data.
     pixels += width * height;
     for (int i = 0; i < width * height; ++i)
@@ -640,7 +640,7 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
     image.pixels = (uint8_t *) M_Calloc(2 * image.size.x * image.size.y);
 
     res::Composite const &texDef = *reinterpret_cast<res::Composite *>(tex.userDataPointer());
-    DENG2_FOR_EACH_CONST(res::Composite::Components, i, texDef.components())
+    DE_FOR_EACH_CONST(res::Composite::Components, i, texDef.components())
     {
         File1 &file           = App_FileSystem().lump(i->lumpNum());
         ByteRefArray fileData = ByteRefArray(file.cache(), file.size());

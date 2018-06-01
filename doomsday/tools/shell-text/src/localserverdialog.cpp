@@ -28,7 +28,7 @@
 using namespace de;
 using namespace de::shell;
 
-DENG2_PIMPL_NOREF(LocalServerDialog)
+DE_PIMPL_NOREF(LocalServerDialog)
 {
     ChoiceWidget *choice;
     LineEditWidget *port;

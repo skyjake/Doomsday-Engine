@@ -27,7 +27,7 @@ namespace de {
 
 static const String BLOCK_FONT = "font";
 
-DENG2_PIMPL(FontBank)
+DE_PIMPL(FontBank)
 {
     struct FontSource : public ISource
     {

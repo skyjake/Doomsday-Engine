@@ -75,7 +75,7 @@ void guidata_readyammo_t::tick(timespan_t /*elapsed*/)
 
 void ReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
 {
-    DENG2_ASSERT(ammo);
+    DE_ASSERT(ammo);
     dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
 
     if(ammo->_value == 1994) return;
@@ -110,7 +110,7 @@ void SBarReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
     static const int X             = ORIGINX + ST_READYAMMOX;
     static const int Y             = ORIGINY + ST_READYAMMOY;
 
-    DENG2_ASSERT(ammo);
+    DE_ASSERT(ammo);
     if(ammo->_value == 1994) return;
 
     dint const activeHud     = ST_ActiveHud(ammo->player());
@@ -155,7 +155,7 @@ void SBarReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
 
 void ReadyAmmo_UpdateGeometry(guidata_readyammo_t *ammo)
 {
-    DENG2_ASSERT(ammo);
+    DE_ASSERT(ammo);
     Rect_SetWidthHeight(&ammo->geometry(), 0, 0);
 
     if(ammo->_value == 1994) return;
@@ -175,7 +175,7 @@ void ReadyAmmo_UpdateGeometry(guidata_readyammo_t *ammo)
 
 void SBarReadyAmmo_UpdateGeometry(guidata_readyammo_t *ammo)
 {
-    DENG2_ASSERT(ammo);
+    DE_ASSERT(ammo);
     Rect_SetWidthHeight(&ammo->geometry(), 0, 0);
 
     if(ammo->_value == 1994) return;
@@ -200,7 +200,7 @@ void ReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
 {
     static const int TRACKING = 1;
 
-    DENG2_ASSERT(ammo);
+    DE_ASSERT(ammo);
     if(ammo->_value == 1994) return;
 
     dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
@@ -240,7 +240,7 @@ void SBarReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
 #define MAXDIGITS               ( ST_AMMOWIDTH )
 #define TRACKING                ( 1 )
 
-    DENG2_ASSERT(ammo);
+    DE_ASSERT(ammo);
     if(ammo->_value == 1994) return;
 
     dint const activeHud     = ST_ActiveHud(ammo->player());
@@ -284,7 +284,7 @@ void ReadyAmmo_UpdateGeometry(guidata_readyammo_t *ammo)
 {
     static const int TRACKING = 1;
 
-    DENG2_ASSERT(ammo);
+    DE_ASSERT(ammo);
     Rect_SetWidthHeight(&ammo->geometry(), 0, 0);
 
     if(ammo->_value == 1994) return;
@@ -310,7 +310,7 @@ void SBarReadyAmmo_UpdateGeometry(guidata_readyammo_t *ammo)
 {
     static const int TRACKING = 1;
 
-    DENG2_ASSERT(ammo);
+    DE_ASSERT(ammo);
     Rect_SetWidthHeight(&ammo->geometry(), 0, 0);
 
     if(ammo->_value == 1994) return;

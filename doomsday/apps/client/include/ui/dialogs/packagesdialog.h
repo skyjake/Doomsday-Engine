@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_PACKAGESDIALOG_H
-#define DENG_CLIENT_PACKAGESDIALOG_H
+#ifndef DE_CLIENT_PACKAGESDIALOG_H
+#define DE_CLIENT_PACKAGESDIALOG_H
 
 #include <de/DialogWidget>
 #include <doomsday/GameProfiles>
@@ -41,8 +41,8 @@ protected:
     void preparePanelForOpening() override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_PACKAGESDIALOG_H
+#endif // DE_CLIENT_PACKAGESDIALOG_H
 

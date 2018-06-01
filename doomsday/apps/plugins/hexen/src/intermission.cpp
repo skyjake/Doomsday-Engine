@@ -132,7 +132,7 @@ void WI_initVariables(/*wbstartstruct_t *wbstartstruct */)
 
 void IN_Begin(wbstartstruct_t const & /*wbstartstruct*/)
 {
-    DENG2_ASSERT(gfw_Rule(deathmatch));
+    DE_ASSERT(gfw_Rule(deathmatch));
 
     WI_initVariables();
     loadPics();

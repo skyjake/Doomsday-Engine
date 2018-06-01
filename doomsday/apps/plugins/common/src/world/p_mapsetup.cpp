@@ -525,7 +525,7 @@ mapspot_t const *P_ChooseRandomMaceSpot()
     for(uint i = 0; i < maceSpotCount; ++i)
     {
         mapspotid_t mapSpotId = maceSpots[i];
-        DENG_ASSERT(mapSpots != 0 && mapSpotId < numMapSpots);
+        DE_ASSERT(mapSpots != 0 && mapSpotId < numMapSpots);
         mapspot_t const *mapSpot = &mapSpots[mapSpotId];
 
         // Does this spot qualify given the current game configuration?
@@ -560,7 +560,7 @@ mapspot_t const *P_ChooseRandomMaceSpot()
     }
 
     // Unreachable.
-    DENG_ASSERT(false);
+    DE_ASSERT(false);
     return 0;
 }
 #endif // __JHERETIC__
@@ -900,7 +900,7 @@ void P_FinalizeMapChange(uri_s const *mapUri_)
 {
     de::Uri const &mapUri = *reinterpret_cast<de::Uri const *>(mapUri_);
 #if !__JHEXEN__
-    DENG2_UNUSED(mapUri);
+    DE_UNUSED(mapUri);
 #endif
 
     initXLines();

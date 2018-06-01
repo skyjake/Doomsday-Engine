@@ -36,7 +36,7 @@
 namespace de {
 
     //struct FileHandle::Impl
-DENG2_PIMPL_NOREF(FileHandle)
+DE_PIMPL_NOREF(FileHandle)
 {
     /// The referenced file (if any).
     File1 *file;
@@ -68,7 +68,7 @@ DENG2_PIMPL_NOREF(FileHandle)
 
 static void errorIfNotValid(FileHandle const &file, char const * /*callerName*/)
 {
-    DENG2_ASSERT(file.isValid());
+    DE_ASSERT(file.isValid());
     if (!file.isValid()) exit(1);
 }
 

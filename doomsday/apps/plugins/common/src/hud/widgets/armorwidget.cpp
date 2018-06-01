@@ -76,7 +76,7 @@ void ArmorWidget_Draw(guidata_armor_t *armor, Point2Raw const *offset)
 #  define TRACKING              ( 0 )
 #endif
 
-    DENG2_ASSERT(armor);
+    DE_ASSERT(armor);
     dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
 
     if(armor->_value == 1994) return;
@@ -196,7 +196,7 @@ void Armor_UpdateGeometry(guidata_armor_t *armor)
 #  define TRACKING              ( 0 )
 #endif
 
-    DENG2_ASSERT(armor);
+    DE_ASSERT(armor);
     Rect_SetWidthHeight(&armor->geometry(), 0, 0);
 
     if(armor->_value == 1994) return;
@@ -227,7 +227,7 @@ void SBarArmor_UpdateGeometry(guidata_armor_t *armor)
 #  define TRACKING              ( 0 )
 #endif
 
-    DENG2_ASSERT(armor);
+    DE_ASSERT(armor);
     Rect_SetWidthHeight(&armor->geometry(), 0, 0);
 
     if(armor->_value == 1994) return;

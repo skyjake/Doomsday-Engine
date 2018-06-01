@@ -34,7 +34,7 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(BusyWidget)
+DE_GUI_PIMPL(BusyWidget)
 {
     typedef DefaultVertexBuf VertexBuf;
 
@@ -178,9 +178,9 @@ void BusyWidget::renderTransitionFrame()
     // We'll have an up-to-date frame after this.
     d->frameDrawnAt = Time();
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-    DENG2_ASSERT(d->gameWidget);
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT(d->gameWidget);
 
     Rectanglei grabRect = Rectanglei::fromSize(rule().recti().size());
 

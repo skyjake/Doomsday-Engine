@@ -53,7 +53,7 @@ ConstantRule const &ConstantRule::zero()
     if (!zeroRule)
     {
         zeroRule = new ConstantRule(0); // won't be deleted ever
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
         Counted::totalCount--;
 #endif
     }

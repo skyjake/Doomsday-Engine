@@ -23,7 +23,7 @@
 
 namespace de {
 
-DENG2_PIMPL(MetadataBank), public Lockable
+DE_PIMPL(MetadataBank), public Lockable
 {
     struct Source : public ISource
     {
@@ -52,7 +52,7 @@ DENG2_PIMPL(MetadataBank), public Lockable
 
     static DotPath pathFromId(String const &category, Block const &id)
     {
-        DENG2_ASSERT(!id.isEmpty());
+        DE_ASSERT(!id.isEmpty());
         String const hex = id.asHexadecimalText();
         return String("%1.%2.%3").arg(category).arg(hex.last()).arg(hex);
     }
@@ -75,7 +75,7 @@ MetadataBank &MetadataBank::get() // static
 
 Block MetadataBank::check(String const &category, Block const &id)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     DotPath const path = Impl::pathFromId(category, id);
     if (!has(path))
     {
@@ -86,7 +86,7 @@ Block MetadataBank::check(String const &category, Block const &id)
 
 void MetadataBank::setMetadata(String const &category, Block const &id, Block const &metadata)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     DotPath const path = Impl::pathFromId(category, id);
     if (!has(path))
     {
@@ -99,13 +99,13 @@ void MetadataBank::setMetadata(String const &category, Block const &id, Block co
 
 Block MetadataBank::metadata(String const &category, Block const &id) const
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     return data(Impl::pathFromId(category, id)).as<Impl::Data>().metadata;
 }
 
 void MetadataBank::clear()
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     Bank::clear();
     clearHotStorage();
 }

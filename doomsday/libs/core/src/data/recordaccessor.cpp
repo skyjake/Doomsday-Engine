@@ -30,7 +30,7 @@ RecordAccessor::RecordAccessor(Record const &rec) : _rec(&rec)
 
 Record const &RecordAccessor::accessedRecord() const
 {
-    DENG2_ASSERT(_rec != 0);
+    DE_ASSERT(_rec != 0);
     return *_rec;
 }
 

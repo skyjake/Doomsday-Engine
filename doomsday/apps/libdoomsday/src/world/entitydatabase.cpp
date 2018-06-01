@@ -36,7 +36,7 @@ typedef std::map<int, Entity> Entities;
 // Entities are grouped in sets by their unique identifier.
 typedef std::map<int, Entities> EntitySet;
 
-DENG2_PIMPL(EntityDatabase)
+DE_PIMPL(EntityDatabase)
 {
     EntitySet entitySets;
 
@@ -45,9 +45,9 @@ DENG2_PIMPL(EntityDatabase)
 
     ~Impl()
     {
-        DENG2_FOR_EACH(EntitySet, setIt, entitySets)
-        DENG2_FOR_EACH(Entities, entityIt, setIt->second)
-        DENG2_FOR_EACH(Entity, propIt, entityIt->second)
+        DE_FOR_EACH(EntitySet, setIt, entitySets)
+        DE_FOR_EACH(Entities, entityIt, setIt->second)
+        DE_FOR_EACH(Entity, propIt, entityIt->second)
         {
             delete propIt->second;
         }
@@ -106,14 +106,14 @@ EntityDatabase::EntityDatabase() : d(new Impl(this))
 
 uint EntityDatabase::entityCount(MapEntityDef const *entityDef) const
 {
-    DENG2_ASSERT(entityDef);
+    DE_ASSERT(entityDef);
     Entities *set = d->entities(entityDef->id);
     return set->size();
 }
 
 bool EntityDatabase::hasEntity(MapEntityDef const *entityDef, int elementIndex) const
 {
-    DENG2_ASSERT(entityDef);
+    DE_ASSERT(entityDef);
     Entities *set = d->entities(entityDef->id);
     return d->entityByElementIndex(*set, elementIndex, false /*do not create*/) != 0;
 }
@@ -121,7 +121,7 @@ bool EntityDatabase::hasEntity(MapEntityDef const *entityDef, int elementIndex) 
 PropertyValue const &EntityDatabase::property(MapEntityPropertyDef const *def,
                                               int elementIndex) const
 {
-    DENG2_ASSERT(def);
+    DE_ASSERT(def);
     if (auto const *propValue = d->tryFindPropertyValue(*def, elementIndex))
     {
         return *propValue;
@@ -135,14 +135,14 @@ PropertyValue const &EntityDatabase::property(MapEntityPropertyDef const *def,
 
 bool EntityDatabase::hasPropertyValue(MapEntityPropertyDef const *def, int elementIndex) const
 {
-    DENG2_ASSERT(def);
+    DE_ASSERT(def);
     return d->tryFindPropertyValue(*def, elementIndex) != nullptr;
 }
 
 void EntityDatabase::setProperty(MapEntityPropertyDef const *def, int elementIndex,
     PropertyValue *value)
 {
-    DENG2_ASSERT(def);
+    DE_ASSERT(def);
     Entities *set = d->entities(def->entity->id);
     Entity *entity = d->entityByElementIndex(*set, elementIndex, true);
     if (!entity)

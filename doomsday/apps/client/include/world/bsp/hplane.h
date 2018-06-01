@@ -23,8 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_BSP_HPLANE_H
-#define DENG_WORLD_BSP_HPLANE_H
+#ifndef DE_WORLD_BSP_HPLANE_H
+#define DE_WORLD_BSP_HPLANE_H
 
 #include <QList>
 #include <de/Partition>
@@ -113,7 +113,7 @@ public:
         LineSegmentSide *beforeLineSegment() const;
         LineSegmentSide *afterLineSegment () const;
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
         void debugPrint() const;
 #endif
 
@@ -205,7 +205,7 @@ public:
      */
     void clearIntercepts();
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     void printIntercepts() const;
 #endif
 
@@ -294,7 +294,7 @@ public:
     inline de::dint interceptCount() const { return intercepts().count(); }
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef HPlane::Intercept HPlaneIntercept;
@@ -302,4 +302,4 @@ typedef HPlane::Intercept HPlaneIntercept;
 }  // namespace bsp
 }  // namespace world
 
-#endif  // DENG_WORLD_BSP_HPLANE_H
+#endif  // DE_WORLD_BSP_HPLANE_H

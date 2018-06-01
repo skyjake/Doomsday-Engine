@@ -29,11 +29,11 @@
 #include "doomsday.h"
 #include "mapimporter.h"
 
-DENG_USING_API(Base);
-DENG_USING_API(F);
-DENG_USING_API(Map);
-DENG_USING_API(Material);
-DENG_USING_API(MPE);
-DENG_USING_API(Uri);
+DE_USING_API(Base);
+DE_USING_API(F);
+DE_USING_API(Map);
+DE_USING_API(Material);
+DE_USING_API(MPE);
+DE_USING_API(Uri);
 
 #endif // IMPORTIDTECH1_H

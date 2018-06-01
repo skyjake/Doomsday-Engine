@@ -60,7 +60,7 @@ static de::duint16 Server_ListenPort()
     return (!nptIPPort ? DEFAULT_TCP_PORT : nptIPPort);
 }
 
-DENG2_PIMPL(ServerSystem)
+DE_PIMPL(ServerSystem)
 {
     bool inited = false;
 
@@ -91,7 +91,7 @@ DENG2_PIMPL(ServerSystem)
         deinit();
 
         // Open a listening TCP socket. It will accept client connections.
-        DENG2_ASSERT(!serverSock);
+        DE_ASSERT(!serverSock);
         if (!(serverSock = new ListenSocket(port)))
             return false;
 
@@ -113,7 +113,7 @@ DENG2_PIMPL(ServerSystem)
         {
             delete u;
         }
-        DENG2_ASSERT(users.isEmpty());
+        DE_ASSERT(users.isEmpty());
     }
 
     void deinit()
@@ -137,7 +137,7 @@ DENG2_PIMPL(ServerSystem)
 
     RemoteUser &findUser(Id const &id) const
     {
-        DENG2_ASSERT(users.contains(id));
+        DE_ASSERT(users.contains(id));
         return *users[id];
     }
 
@@ -165,11 +165,11 @@ DENG2_PIMPL(ServerSystem)
     {
         if (id)
         {
-            DENG2_ASSERT(users.contains(id));
+            DE_ASSERT(users.contains(id));
 
             delete users[id];
 
-            DENG2_ASSERT(!users.contains(id));
+            DE_ASSERT(!users.contains(id));
         }
     }
 
@@ -190,7 +190,7 @@ DENG2_PIMPL(ServerSystem)
             player_t *plr = DD_Player(i);
             if (plr->remoteUserId)
             {
-                DENG2_ASSERT(users.contains(plr->remoteUserId));
+                DE_ASSERT(users.contains(plr->remoteUserId));
 
                 RemoteUser *user = users[plr->remoteUserId];
                 if (first)
@@ -217,14 +217,14 @@ DENG2_PIMPL(ServerSystem)
         {
             LOG_MSG("%i shell user%s")
                     << shellUsers.count()
-                    << DENG2_PLURAL_S(shellUsers.count());
+                    << DE_PLURAL_S(shellUsers.count());
         }
 
         if (remoteFeedUsers.count())
         {
             LOG_MSG("%i remote file system user%s")
                     << remoteFeedUsers.count()
-                    << DENG2_PLURAL_S(remoteFeedUsers.count());
+                    << DE_PLURAL_S(remoteFeedUsers.count());
         }
 
         N_PrintBufferInfo();
@@ -276,7 +276,7 @@ bool ServerSystem::isUserAllowedToJoin(RemoteUser &/*user*/) const
 
 void ServerSystem::convertToShellUser(RemoteUser *user)
 {
-    DENG2_ASSERT(user);
+    DE_ASSERT(user);
     LOG_AS("convertToShellUser");
 
     Socket *socket = user->takeSocket();
@@ -289,7 +289,7 @@ void ServerSystem::convertToShellUser(RemoteUser *user)
 
 void ServerSystem::convertToRemoteFeedUser(RemoteUser *user)
 {
-    DENG2_ASSERT(user);
+    DE_ASSERT(user);
 
     Socket *socket = user->takeSocket();
     LOGDEV_NET_VERBOSE("Remote user %s converted to remote file system user") << user->id();
@@ -313,7 +313,7 @@ void ServerSystem::timeChanged(Clock const &clock)
     Garbage_Recycle();
 
     // Adjust loop rate depending on whether users are connected.
-    DENG2_TEXT_APP->loop().setRate(userCount()? 35 : 3);
+    DE_TEXT_APP->loop().setRate(userCount()? 35 : 3);
 
     Loop_RunTics();
 

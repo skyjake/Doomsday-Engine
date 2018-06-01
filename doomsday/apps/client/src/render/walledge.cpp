@@ -52,7 +52,7 @@ using namespace world;
  */
 static bool shouldSmoothNormals(Surface &sufA, Surface &sufB, binangle_t angleDiff)
 {
-    DENG2_UNUSED2(sufA, sufB);
+    DE_UNUSED(sufA, sufB);
     return INRANGE_OF(angleDiff, BANG_180, BANG_45);
 }
 
@@ -512,7 +512,7 @@ struct WallEdge::Impl : public IHPlane
         return events.size;
     }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     void printIntercepts() const
     {
         EventIndex index = 0;
@@ -528,13 +528,13 @@ struct WallEdge::Impl : public IHPlane
      */
     void assertInterceptsInRange(ddouble low, ddouble hi) const
     {
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
         foreach (Event const &icpt, events)
         {
-            DENG2_ASSERT(icpt.distance() >= low && icpt.distance() <= hi);
+            DE_ASSERT(icpt.distance() >= low && icpt.distance() <= hi);
         }
 #else
-        DENG2_UNUSED2(low, hi);
+        DE_UNUSED(low, hi);
 #endif
     }
 
@@ -629,7 +629,7 @@ struct WallEdge::Impl : public IHPlane
 
     void prepareEvents()
     {
-        DENG2_ASSERT(self->isValid());
+        DE_ASSERT(self->isValid());
 
         needSortEvents = false;
 
@@ -651,7 +651,7 @@ struct WallEdge::Impl : public IHPlane
             sortAndMergeIntercepts();
         }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
         // Sanity check.
         assertInterceptsInRange(0, 1);
 #endif

@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_FIXEDBYTEARRAY_H
-#define LIBDENG2_FIXEDBYTEARRAY_H
+#ifndef LIBCORE_FIXEDBYTEARRAY_H
+#define LIBCORE_FIXEDBYTEARRAY_H
 
 #include "../ByteSubArray"
 
@@ -30,7 +30,7 @@ namespace de {
  *
  * @ingroup data
  */
-class DENG2_PUBLIC FixedByteArray : public ByteSubArray
+class DE_PUBLIC FixedByteArray : public ByteSubArray
 {
 public:
     /**
@@ -74,4 +74,4 @@ public:
 
 } // namespace de
 
-#endif /* LIBDENG2_FIXEDBYTEARRAY_H */
+#endif /* LIBCORE_FIXEDBYTEARRAY_H */

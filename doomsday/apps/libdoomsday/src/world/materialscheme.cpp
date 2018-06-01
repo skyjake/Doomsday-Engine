@@ -24,7 +24,7 @@ using namespace de;
 
 namespace world {
 
-DENG2_PIMPL(MaterialScheme)
+DE_PIMPL(MaterialScheme)
 {
     /// Symbolic name of the scheme.
     String name;
@@ -38,7 +38,7 @@ DENG2_PIMPL(MaterialScheme)
     ~Impl()
     {
         self().clear();
-        DENG2_ASSERT(index.isEmpty());
+        DE_ASSERT(index.isEmpty());
     }
 };
 
@@ -68,14 +68,14 @@ MaterialManifest &MaterialScheme::declare(Path const &path)
 
     int const sizeBefore = d->index.size();
     Manifest *newManifest = &d->index.insert(path);
-    DENG2_ASSERT(newManifest);
+    DE_ASSERT(newManifest);
 
     newManifest->setScheme(*this);
 
     if (d->index.size() != sizeBefore)
     {
         // Notify interested parties that a new manifest was defined in the scheme.
-        DENG2_FOR_AUDIENCE(ManifestDefined, i) i->materialSchemeManifestDefined(*this, *newManifest);
+        DE_FOR_AUDIENCE(ManifestDefined, i) i->materialSchemeManifestDefined(*this, *newManifest);
     }
 
     return *newManifest;

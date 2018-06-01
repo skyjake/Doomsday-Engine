@@ -1,9 +1,9 @@
 # Required variables:
-# - DENG_SOURCE_DIR
+# - DE_SOURCE_DIR
 # - CMAKE_INSTALL_NAME_TOOL
 # - BINARY_FILE
 
-include (${DENG_SOURCE_DIR}/cmake/Macros.cmake)
+include (${DE_SOURCE_DIR}/cmake/Macros.cmake)
 
 fix_bundled_install_names ("${BINARY_FILE}"
     QtCore.framework/Versions/5/QtCore

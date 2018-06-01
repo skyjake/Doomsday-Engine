@@ -80,7 +80,7 @@ DmuArgs::DmuArgs(int type, uint prop)
     , angleValues   (0)
     , ptrValues     (0)
 {
-    DENG_ASSERT(VALID_DMU_ELEMENT_TYPE_ID(type));
+    DE_ASSERT(VALID_DMU_ELEMENT_TYPE_ID(type));
 }
 
 void DmuArgs::value(valuetype_t dstValueType, void *dst, uint index) const
@@ -543,7 +543,7 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
         case DDVT_INT:
             // Attempt automatic conversion using P_ToIndex(). Naturally only
             // works with map elements. Failure leads into a fatal error.
-            DENG_ASSERT(ptrToIndexFunc);
+            DE_ASSERT(ptrToIndexFunc);
             intValues[index] = ptrToIndexFunc(*s);
             break;
         case DDVT_PTR:

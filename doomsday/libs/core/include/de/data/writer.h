@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_WRITER_H
-#define LIBDENG2_WRITER_H
+#ifndef LIBCORE_WRITER_H
+#define LIBCORE_WRITER_H
 
 #include "../libcore.h"
 #include "../IByteArray"
@@ -45,11 +45,11 @@ class IOStream;
  *
  * @ingroup data
  */
-class DENG2_PUBLIC Writer
+class DE_PUBLIC Writer
 {
 public:
     /// Seeking is not possible, e.g., when writing to a stream. @ingroup errors
-    DENG2_ERROR(SeekError);
+    DE_ERROR(SeekError);
 
     enum InlineOperation {
         BeginSpan,
@@ -228,7 +228,7 @@ public:
     template <typename ListType>
     Writer &writeObjects(ListType const &list) {
         *this << duint32(list.size());
-        DENG2_FOR_EACH_CONST(typename ListType, i, list) *this << **i;
+        DE_FOR_EACH_CONST(typename ListType, i, list) *this << **i;
         return *this;
     }
 
@@ -310,9 +310,9 @@ public:
     }
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif /* LIBDENG2_WRITER_H */
+#endif /* LIBCORE_WRITER_H */

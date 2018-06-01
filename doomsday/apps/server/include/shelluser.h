@@ -63,7 +63,7 @@ protected slots:
     void handleIncomingPackets();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // SERVER_SHELLUSER_H

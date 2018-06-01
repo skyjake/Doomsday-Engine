@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_EVALUATOR_H
-#define LIBDENG2_EVALUATOR_H
+#ifndef LIBCORE_EVALUATOR_H
+#define LIBCORE_EVALUATOR_H
 
 #include "../libcore.h"
 #include "../NoneValue"
@@ -39,11 +39,11 @@ class Record;
  *
  * @ingroup script
  */
-class DENG2_PUBLIC Evaluator
+class DE_PUBLIC Evaluator
 {
 public:
     /// Result is of wrong type. @ingroup errors
-    DENG2_ERROR(ResultTypeError);
+    DE_ERROR(ResultTypeError);
 
     typedef std::list<Record *> Namespaces;
 
@@ -168,9 +168,9 @@ public:
     Value &result();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif /* LIBDENG2_EVALUATOR_H */
+#endif /* LIBCORE_EVALUATOR_H */

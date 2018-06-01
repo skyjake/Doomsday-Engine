@@ -74,8 +74,8 @@ namespace de {
  */
 class LIBGUI_PUBLIC Drawable : public AssetGroup
 {
-    DENG2_NO_COPY  (Drawable)
-    DENG2_NO_ASSIGN(Drawable)
+    DE_NO_COPY  (Drawable)
+    DE_NO_ASSIGN(Drawable)
 
 public:
     /// User-provided (nonzero) identifier. Buffer identifiers define the
@@ -112,7 +112,7 @@ public:
 
     template <typename VBType>
     VBType &buffer(Id id = 1) const {
-        DENG2_ASSERT(dynamic_cast<VBType *>(&buffer(id)) != 0);
+        DE_ASSERT(dynamic_cast<VBType *>(&buffer(id)) != 0);
         return static_cast<VBType &>(buffer(id));
     }
 
@@ -298,7 +298,7 @@ public:
     virtual void draw() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

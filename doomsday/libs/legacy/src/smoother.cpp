@@ -72,26 +72,26 @@ Smoother *Smoother_New()
 
 void Smoother_SetMaximumPastNowDelta(Smoother *sm, float delta)
 {
-    DENG_ASSERT(sm);
+    DE_ASSERT(sm);
     sm->maxDeltaBetweenPastAndNow = delta;
 }
 
 void Smoother_Delete(Smoother *sm)
 {
-    DENG_ASSERT(sm);
+    DE_ASSERT(sm);
     free(sm);
 }
 
 void Smoother_Debug(Smoother const *sm)
 {
-    DENG_ASSERT(sm);
+    DE_ASSERT(sm);
     LOG_DEBUG("Smoother_Debug: [past=%3.3f / now=%3.3f / future=%3.3f] at=%3.3f")
             << sm->past.time << sm->now.time << sm->points[0].time << sm->at;
 }
 
 static dd_bool Smoother_IsValid(Smoother const *sm)
 {
-    DENG_ASSERT(sm);
+    DE_ASSERT(sm);
     if (sm->past.time == 0 || sm->now.time == 0)
     {
         // We don't have valid data.
@@ -117,7 +117,7 @@ void Smoother_AddPosXY(Smoother *sm, float time, coord_t x, coord_t y)
 void Smoother_AddPos(Smoother *sm, float time, coord_t x, coord_t y, coord_t z, dd_bool onFloor)
 {
     pos_t *last;
-    DENG_ASSERT(sm);
+    DE_ASSERT(sm);
 
     // Is it the same point?
     last = &sm->points[SM_NUM_POINTS - 1];
@@ -185,8 +185,8 @@ dd_bool Smoother_EvaluateComponent(Smoother const *sm, int component, coord_t *v
 {
     coord_t xyz[3];
 
-    DENG_ASSERT(component >= 0 && component < 3);
-    DENG_ASSERT(v != 0);
+    DE_ASSERT(component >= 0 && component < 3);
+    DE_ASSERT(v != 0);
 
     if (!Smoother_Evaluate(sm, xyz)) return false;
 
@@ -196,7 +196,7 @@ dd_bool Smoother_EvaluateComponent(Smoother const *sm, int component, coord_t *v
 
 dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
 {
-    DENG2_ASSERT(sm);
+    DE_ASSERT(sm);
     pos_t const *past = &sm->past;
     pos_t const *now = &sm->now;
 
@@ -212,7 +212,7 @@ dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
         //LOGDEV_XVERBOSE("Smoother %p falling behind") << sm;
         return true;
     }
-    //DENG_ASSERT(sm->at <= now->time);
+    //DE_ASSERT(sm->at <= now->time);
     if (now->time <= past->time)
     {
         // Too far in the ever-shifting future.
@@ -251,7 +251,7 @@ dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
 
 dd_bool Smoother_IsOnFloor(Smoother const *sm)
 {
-    DENG_ASSERT(sm);
+    DE_ASSERT(sm);
 
     const pos_t *past = &sm->past;
     const pos_t *now = &sm->now;
@@ -262,7 +262,7 @@ dd_bool Smoother_IsOnFloor(Smoother const *sm)
 
 dd_bool Smoother_IsMoving(Smoother const *sm)
 {
-    DENG_ASSERT(sm);
+    DE_ASSERT(sm);
 
     const pos_t *past = &sm->past;
     const pos_t *now = &sm->now;
@@ -279,7 +279,7 @@ void Smoother_Advance(Smoother *sm, float period)
 {
     int i;
 
-    DENG_ASSERT(sm);
+    DE_ASSERT(sm);
 
     if (period <= 0) return;
 

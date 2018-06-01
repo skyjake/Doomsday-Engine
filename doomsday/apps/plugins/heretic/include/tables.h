@@ -52,17 +52,17 @@
 #define DBITS                   (FRACBITS-SLOPEBITS)
 
 // Effective size is 10240.
-DENG_EXTERN_C fixed_t finesine[5 * FINEANGLES / 4];
+DE_EXTERN_C fixed_t finesine[5 * FINEANGLES / 4];
 
 // Re-use data, is just PI/2 pahse shift.
-DENG_EXTERN_C fixed_t *finecosine;
+DE_EXTERN_C fixed_t *finecosine;
 
 // Effective size is 4096.
-DENG_EXTERN_C fixed_t finetangent[FINEANGLES / 2];
+DE_EXTERN_C fixed_t finetangent[FINEANGLES / 2];
 
 // Effective size is 2049;
 // The +1 size is to handle the case when x==y without additional checking.
-DENG_EXTERN_C angle_t tantoangle[SLOPERANGE + 1];
+DE_EXTERN_C angle_t tantoangle[SLOPERANGE + 1];
 
 #ifdef __cplusplus
 extern "C" {

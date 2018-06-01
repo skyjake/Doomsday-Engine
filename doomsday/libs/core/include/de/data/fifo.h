@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_FIFO_H
-#define LIBDENG2_FIFO_H
+#ifndef LIBCORE_FIFO_H
+#define LIBCORE_FIFO_H
 
 #include "../Lockable"
 #include "../Guard"
@@ -47,7 +47,7 @@ public:
     FIFO() : Lockable() {}
 
     virtual ~FIFO() {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         for (typename Objects::iterator i = _objects.begin(); i != _objects.end(); ++i) {
             delete *i;
         }
@@ -63,7 +63,7 @@ public:
      *    next one to come out.
      */
     void put(Type *object, PutMode mode = PutHead) {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         if (mode == PutHead) {
             _objects.push_front(object);
         }
@@ -79,7 +79,7 @@ public:
      * Caller gets ownership of the returned object.
      */
     Type *take() {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         if (_objects.empty()) return nullptr;
         Type *last = _objects.back();
         _objects.pop_back();
@@ -93,7 +93,7 @@ public:
      * The object is not removed from the buffer.
      */
     Type* tail() const {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         if (_objects.empty()) return nullptr;
         return _objects.back();
     }
@@ -102,12 +102,12 @@ public:
      * Determines whether the buffer is empty.
      */
     bool isEmpty() const {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         return _objects.empty();
     }
 
     void clear() {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         while (!isEmpty()) delete take();
     }
 
@@ -118,4 +118,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_FIFO_H
+#endif // LIBCORE_FIFO_H

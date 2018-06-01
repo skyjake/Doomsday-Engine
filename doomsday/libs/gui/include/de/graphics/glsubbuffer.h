@@ -66,7 +66,7 @@ public:
     void setFormat(internal::AttribSpecs const &format);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 /**

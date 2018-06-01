@@ -21,7 +21,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(DocumentPopupWidget)
+DE_PIMPL_NOREF(DocumentPopupWidget)
 {
     DocumentWidget *doc;
     ButtonWidget *button = nullptr;
@@ -37,7 +37,7 @@ DocumentPopupWidget::DocumentPopupWidget(String const &name)
 DocumentPopupWidget::DocumentPopupWidget(ButtonWidget *actionButton, String const &name)
     : PopupWidget(name), d(new Impl)
 {
-    DENG2_ASSERT(actionButton);
+    DE_ASSERT(actionButton);
 
     useInfoStyle();
     actionButton->useInfoStyle();

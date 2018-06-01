@@ -42,9 +42,9 @@ int main(int argc, char **argv)
         return -1;
     }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     // Check that all reference-counted objects have been deleted.
-    DENG2_ASSERT(Counted::totalCount == 0);
+    DE_ASSERT(Counted::totalCount == 0);
 #endif
     return 0;
 }

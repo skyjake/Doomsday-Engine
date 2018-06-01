@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_HIGHPERFORMANCETIMER_H
-#define LIBDENG2_HIGHPERFORMANCETIMER_H
+#ifndef LIBCORE_HIGHPERFORMANCETIMER_H
+#define LIBCORE_HIGHPERFORMANCETIMER_H
 
 #include "../Time"
 
@@ -27,7 +27,7 @@ namespace de {
  * Timer for high-performance use.
  * @ingroup core
  */
-class DENG2_PUBLIC HighPerformanceTimer
+class DE_PUBLIC HighPerformanceTimer
 {
 public:
     HighPerformanceTimer();
@@ -43,9 +43,9 @@ public:
     Time startedAt() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_HIGHPERFORMANCETIMER_H
+#endif // LIBCORE_HIGHPERFORMANCETIMER_H

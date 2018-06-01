@@ -19,8 +19,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_JSON_H
-#define LIBDENG2_JSON_H
+#ifndef LIBCORE_JSON_H
+#define LIBCORE_JSON_H
 
 #include <QVariant>
 #include <de/String>
@@ -37,7 +37,7 @@ class Record;
  *
  * @return Parsed data, or an invalid variant if an error occurred.
  */
-DENG2_PUBLIC QVariant parseJSON(String const &jsonText);
+DE_PUBLIC QVariant parseJSON(String const &jsonText);
 
 /**
  * Composes a JSON representation of a Record.
@@ -46,8 +46,8 @@ DENG2_PUBLIC QVariant parseJSON(String const &jsonText);
  *
  * @return JSON in UTF-8 encoding.
  */
-DENG2_PUBLIC Block composeJSON(Record const &rec);
+DE_PUBLIC Block composeJSON(Record const &rec);
 
 } // namespace de
 
-#endif // LIBDENG2_JSON_H
+#endif // LIBCORE_JSON_H

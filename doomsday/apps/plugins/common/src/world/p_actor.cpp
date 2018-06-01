@@ -71,7 +71,7 @@ void P_SpawnTelefog(mobj_t *mo, void * /*context*/)
 void P_MobjRemove(mobj_t *mo, dd_bool noRespawn)
 {
 #if !defined(__JDOOM__) && !defined(__JDOOM64__)
-    DENG_UNUSED(noRespawn);
+    DE_UNUSED(noRespawn);
 #endif
 
     if (mo->ddFlags & DDMF_REMOTE)
@@ -116,7 +116,7 @@ justDoIt:
 
 void P_MobjLink(struct mobj_s *mobj)
 {
-    DENG_ASSERT(mobj != 0);
+    DE_ASSERT(mobj != 0);
     Mobj_Link(mobj, MLF_BLOCKMAP | (!(mobj->flags & MF_NOSECTOR)? MLF_SECTOR : 0));
 }
 
@@ -127,14 +127,14 @@ void P_MobjUnlink(struct mobj_s *mobj)
 
 void P_MobjSetSRVO(mobj_t *mo, coord_t stepx, coord_t stepy)
 {
-    DENG_ASSERT(mo != 0);
+    DE_ASSERT(mo != 0);
     mo->srvo[VX] = -stepx;
     mo->srvo[VY] = -stepy;
 }
 
 void P_MobjSetSRVOZ(mobj_t *mo, coord_t stepz)
 {
-    DENG_ASSERT(mo != 0);
+    DE_ASSERT(mo != 0);
     mo->srvo[VZ] = -stepz;
 }
 
@@ -143,7 +143,7 @@ void P_MobjAngleSRVOTicker(mobj_t *mo)
 #define MIN_STEP (10 * ANGLE_1) >> 16 ///< Degrees per tic
 #define MAX_STEP ANG90 >> 16
 
-    DENG_ASSERT(mo != 0);
+    DE_ASSERT(mo != 0);
 
     // Check requirements.
     if(mo->flags & MF_MISSILE || !(mo->flags & MF_COUNTKILL))
@@ -190,7 +190,7 @@ void P_MobjAngleSRVOTicker(mobj_t *mo)
 
 void P_MobjClearSRVO(mobj_t *mo)
 {
-    DENG_ASSERT(mo != 0);
+    DE_ASSERT(mo != 0);
     std::memset(mo->srvo, 0, sizeof(mo->srvo));
 }
 
@@ -203,7 +203,7 @@ dd_bool P_MobjIsCamera(mobj_t const *mo)
 
 dd_bool Mobj_IsCrunchable(mobj_t *mobj)
 {
-    DENG_ASSERT(mobj != 0);
+    DE_ASSERT(mobj != 0);
 
 #if __JDOOM__ || __JDOOM64__
     return mobj->health <= 0 && (cfg.gibCrushedNonBleeders || !(mobj->flags & MF_NOBLOOD));
@@ -216,7 +216,7 @@ dd_bool Mobj_IsCrunchable(mobj_t *mobj)
 
 dd_bool Mobj_IsDroppedItem(mobj_t *mobj)
 {
-    DENG_ASSERT(mobj != 0);
+    DE_ASSERT(mobj != 0);
 #if __JHEXEN__
     return (mobj->flags2 & MF2_DROPPED) != 0;
 #else
@@ -254,7 +254,7 @@ statenum_t P_GetState(mobjtype_t type, statename_t name)
 
 void P_RipperBlood(mobj_t *actor)
 {
-    DENG_ASSERT(actor != 0);
+    DE_ASSERT(actor != 0);
 
     coord_t pos[3];
     pos[VX] = actor->origin[VX];
@@ -460,7 +460,7 @@ static mobj_t *processOneSpawnTask()
     if(spawnQueueHead && mapTime - spawnQueueHead->startTime >= spawnQueueHead->minTics)
     {
         spawnqueuenode_t *spawn = dequeueSpawn();
-        DENG_ASSERT(spawn != 0);
+        DE_ASSERT(spawn != 0);
 
         // Spawn it.
         if((mo = P_SpawnMobj(spawn->type, spawn->pos, spawn->angle, spawn->spawnFlags)))
@@ -526,7 +526,7 @@ void P_CreateTIDList()
 
 void P_MobjInsertIntoTIDList(mobj_t *mo, int tid)
 {
-    DENG_ASSERT(mo != 0);
+    DE_ASSERT(mo != 0);
 
     int index = -1;
     int i = 0;
@@ -577,7 +577,7 @@ void P_MobjRemoveFromTIDList(mobj_t *mo)
 
 mobj_t *P_FindMobjFromTID(int tid, int *searchPosition)
 {
-    DENG_ASSERT(searchPosition != 0);
+    DE_ASSERT(searchPosition != 0);
 
     for(int i = *searchPosition + 1; TIDList[i] != 0; ++i)
     {

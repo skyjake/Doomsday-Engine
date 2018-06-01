@@ -31,7 +31,7 @@ class Record;
  * Bank of Rules where each is identified by a Path.
  * @ingroup widgets
  */
-class DENG2_PUBLIC RuleBank : public InfoBank
+class DE_PUBLIC RuleBank : public InfoBank
 {
 public:
     RuleBank(const Rule &dpiRule);
@@ -62,7 +62,7 @@ protected:
     virtual IData *loadFromSource(ISource &source);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

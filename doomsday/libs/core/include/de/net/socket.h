@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_SOCKET_H
-#define LIBDENG2_SOCKET_H
+#ifndef LIBCORE_SOCKET_H
+#define LIBCORE_SOCKET_H
 
 #include "../libcore.h"
 #include "../IByteArray"
@@ -31,7 +31,7 @@
 #include <QFlags>
 
 /// Largest message sendable using the protocol.
-#define DENG2_SOCKET_MAX_PAYLOAD_SIZE (1 << 22) // 4 MB
+#define DE_SOCKET_MAX_PAYLOAD_SIZE (1 << 22) // 4 MB
 
 namespace de {
 
@@ -48,25 +48,25 @@ class Message;
  *
  * @ingroup net
  */
-class DENG2_PUBLIC Socket : public QObject, public Transmitter
+class DE_PUBLIC Socket : public QObject, public Transmitter
 {
     Q_OBJECT
 
 public:
     /// Creating the TCP/IP connection failed. @ingroup errors
-    DENG2_ERROR(ConnectionError);
+    DE_ERROR(ConnectionError);
 
     /// Error subclass for all situations where the socket is left unusable. @ingroup errors
-    DENG2_ERROR(BrokenError);
+    DE_ERROR(BrokenError);
 
     /// The TCP/IP connection was disconnected. @ingroup errors
-    DENG2_SUB_ERROR(BrokenError, DisconnectedError);
+    DE_SUB_ERROR(BrokenError, DisconnectedError);
 
     /// Encountered a problem related to the messaging protocol. @ingroup errors
-    DENG2_SUB_ERROR(BrokenError, ProtocolError);
+    DE_SUB_ERROR(BrokenError, ProtocolError);
 
     /// There is no peer connected. @ingroup errors
-    DENG2_SUB_ERROR(BrokenError, PeerError);
+    DE_SUB_ERROR(BrokenError, PeerError);
 
     /// These flags are written to the sent headers.
     enum HeaderFlag {
@@ -259,7 +259,7 @@ protected:
     void send(IByteArray const &packet, duint channel);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 
     /**
      * ListenSocket creates instances of Socket so it needs to use
@@ -273,4 +273,4 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(Socket::HeaderFlags)
 
 } // namespace de
 
-#endif // LIBDENG2_SOCKET_H
+#endif // LIBCORE_SOCKET_H

@@ -68,7 +68,7 @@ enum LinkState
 
 static int const NUM_PINGS = 5;
 
-DENG2_PIMPL(ServerLink)
+DE_PIMPL(ServerLink)
 {
     std::unique_ptr<shell::ServerFinder> finder; ///< Finding local servers.
     LinkState state;
@@ -98,13 +98,13 @@ DENG2_PIMPL(ServerLink)
 
     void notifyDiscoveryUpdate()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(DiscoveryUpdate, i) i->linkDiscoveryUpdate(self());
+        DE_FOR_PUBLIC_AUDIENCE2(DiscoveryUpdate, i) i->linkDiscoveryUpdate(self());
         emit self().serversDiscovered();
     }
 
     bool handleInfoResponse(Block const &reply)
     {
-        DENG2_ASSERT(state == WaitingForInfoResponse);
+        DE_ASSERT(state == WaitingForInfoResponse);
 
         // Address of the server where the info was received.
         Address svAddress = self().address();
@@ -183,7 +183,7 @@ DENG2_PIMPL(ServerLink)
                     Reader src(data);
                     src.withHeader() >> outline;
                 }
-                DENG2_FOR_PUBLIC_AUDIENCE2(MapOutline, i)
+                DE_FOR_PUBLIC_AUDIENCE2(MapOutline, i)
                 {
                     i->mapOutlineReceived(svAddress, outline);
                 }
@@ -228,7 +228,7 @@ DENG2_PIMPL(ServerLink)
         // Call game's NetConnect.
         gx.NetConnect(false);
 
-        DENG2_FOR_PUBLIC_AUDIENCE2(Join, i) i->networkGameJoined();
+        DE_FOR_PUBLIC_AUDIENCE2(Join, i) i->networkGameJoined();
 
         // G'day mate!  The client is responsible for beginning the handshake.
         Cl_SendHello();
@@ -248,7 +248,7 @@ DENG2_PIMPL(ServerLink)
 
     void checkMasterReply()
     {
-        DENG2_ASSERT(fetching);
+        DE_ASSERT(fetching);
 
         if (N_MADone())
         {
@@ -337,18 +337,18 @@ DENG2_PIMPL(ServerLink)
         dlg->open(MessageDialog::Modal);
     }
 
-    DENG2_PIMPL_AUDIENCE(DiscoveryUpdate)
-    DENG2_PIMPL_AUDIENCE(PingResponse)
-    DENG2_PIMPL_AUDIENCE(MapOutline)
-    DENG2_PIMPL_AUDIENCE(Join)
-    DENG2_PIMPL_AUDIENCE(Leave)
+    DE_PIMPL_AUDIENCE(DiscoveryUpdate)
+    DE_PIMPL_AUDIENCE(PingResponse)
+    DE_PIMPL_AUDIENCE(MapOutline)
+    DE_PIMPL_AUDIENCE(Join)
+    DE_PIMPL_AUDIENCE(Leave)
 };
 
-DENG2_AUDIENCE_METHOD(ServerLink, DiscoveryUpdate)
-DENG2_AUDIENCE_METHOD(ServerLink, PingResponse)
-DENG2_AUDIENCE_METHOD(ServerLink, MapOutline)
-DENG2_AUDIENCE_METHOD(ServerLink, Join)
-DENG2_AUDIENCE_METHOD(ServerLink, Leave)
+DE_AUDIENCE_METHOD(ServerLink, DiscoveryUpdate)
+DE_AUDIENCE_METHOD(ServerLink, PingResponse)
+DE_AUDIENCE_METHOD(ServerLink, MapOutline)
+DE_AUDIENCE_METHOD(ServerLink, Join)
+DE_AUDIENCE_METHOD(ServerLink, Leave)
 
 ServerLink::ServerLink(Flags flags) : d(new Impl(this, flags))
 {
@@ -499,7 +499,7 @@ void ServerLink::acquireServerProfileAsync(Address const &address,
         // We already know everything that is needed for the profile.
         d->deferred.enqueue([this, resultHandler] ()
         {
-            DENG2_ASSERT(d->serverProfile.get() != nullptr);
+            DE_ASSERT(d->serverProfile.get() != nullptr);
             resultHandler(d->serverProfile.get());
         });
     }
@@ -579,7 +579,7 @@ void ServerLink::disconnect()
         if (gx.NetDisconnect)
             gx.NetDisconnect(true);
 
-        DENG2_FOR_AUDIENCE2(Leave, i) i->networkGameLeft();
+        DE_FOR_AUDIENCE2(Leave, i) i->networkGameLeft();
 
         LOG_NET_NOTE("Link to server %s disconnected") << address();
         d->downloader.unmountServerRepository();
@@ -714,7 +714,7 @@ void ServerLink::initiateCommunications()
         break; }
 
     default:
-        DENG2_ASSERT(false);
+        DE_ASSERT(false);
         break;
     }
 }
@@ -769,7 +769,7 @@ void ServerLink::handleIncomingPackets()
                     for (TimeSpan i : d->pings) average += i;
                     average /= d->pings.count();
 
-                    DENG2_FOR_AUDIENCE2(PingResponse, i)
+                    DE_FOR_AUDIENCE2(PingResponse, i)
                     {
                         i->pingResponse(svAddress, average);
                     }

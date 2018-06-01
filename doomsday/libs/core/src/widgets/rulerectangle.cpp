@@ -23,7 +23,7 @@
 
 namespace de {
 
-DENG2_PIMPL(RuleRectangle)
+DE_PIMPL(RuleRectangle)
 {
     String debugName;
 
@@ -84,8 +84,8 @@ DENG2_PIMPL(RuleRectangle)
 
     Rule const *&ruleRef(Rule::Semantic rule)
     {
-        DENG2_ASSERT(rule >= Rule::Left);
-        DENG2_ASSERT(rule < Rule::MAX_SEMANTICS);
+        DE_ASSERT(rule >= Rule::Left);
+        DE_ASSERT(rule < Rule::MAX_SEMANTICS);
 
         return inputRules[rule];
     }
@@ -122,7 +122,7 @@ DENG2_PIMPL(RuleRectangle)
         }
         else
         {
-            DENG2_ASSERT(anchorInput == Rule::AnchorY);
+            DE_ASSERT(anchorInput == Rule::AnchorY);
             return *normalizedAnchorY();
         }
     }
@@ -366,7 +366,7 @@ RuleRectangle &RuleRectangle::clearInput(Rule::Semantic inputRule)
 
 Rule const &RuleRectangle::inputRule(Rule::Semantic inputRule)
 {
-    DENG2_ASSERT(d->ruleRef(inputRule) != 0);
+    DE_ASSERT(d->ruleRef(inputRule) != 0);
     return *d->ruleRef(inputRule);
 }
 

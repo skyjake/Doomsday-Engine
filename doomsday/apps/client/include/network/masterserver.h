@@ -21,8 +21,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MASTER_SERVER_H
-#define LIBDENG_MASTER_SERVER_H
+#ifndef DE_MASTER_SERVER_H
+#define DE_MASTER_SERVER_H
 
 #include "dd_share.h"
 
@@ -66,7 +66,7 @@ public slots:
     void requestFinished(QNetworkReply *reply);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 /**
@@ -104,4 +104,4 @@ void N_MasterRequestList(void);
  */
 int N_MasterGet(int index, de::shell::ServerInfo *info);
 
-#endif // LIBDENG_MASTER_SERVER_H
+#endif // DE_MASTER_SERVER_H

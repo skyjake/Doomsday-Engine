@@ -19,7 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#define DENG_NO_API_MACROS_CLIENT
+#define DE_NO_API_MACROS_CLIENT
 
 #include "de_base.h"
 #include "client/cl_mobj.h"
@@ -62,8 +62,8 @@ ClMobjInfo::ClMobjInfo()
 
 mobj_t *ClMobjInfo::mobj()
 {
-    DENG2_ASSERT(startMagic == CLM_MAGIC1);
-    DENG2_ASSERT(endMagic == CLM_MAGIC2);
+    DE_ASSERT(startMagic == CLM_MAGIC1);
+    DE_ASSERT(endMagic == CLM_MAGIC2);
 
     return reinterpret_cast<mobj_t *>((char *)this + sizeof(ClMobjInfo));
 }
@@ -213,7 +213,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
 
 dd_bool Cl_IsClientMobj(mobj_t const *mob)
 {
-    DENG2_ASSERT(mob);
+    DE_ASSERT(mob);
     if (ClientMobjThinkerData *data = THINKER_DATA_MAYBE(mob->thinker, ClientMobjThinkerData))
     {
         return data->hasRemoteSync();
@@ -628,9 +628,9 @@ mobj_t *ClMobj_Find(thid_t id)
 
 // cl_player.c
 #undef ClPlayer_ClMobj
-DENG_EXTERN_C mobj_t *ClPlayer_ClMobj(int plrNum);
+DE_EXTERN_C mobj_t *ClPlayer_ClMobj(int plrNum);
 
-DENG_DECLARE_API(Client) =
+DE_DECLARE_API(Client) =
 {
     { DE_API_CLIENT },
     ClMobj_Find,

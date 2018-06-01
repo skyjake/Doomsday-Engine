@@ -68,7 +68,7 @@ Q_DECLARE_FLAGS(AnimationFlags, AnimationFlag)
 Q_DECLARE_OPERATORS_FOR_FLAGS(AnimationFlags)
 
 /// Thread-safe current time for animations.
-struct AnimationTime : DENG2_OBSERVES(Clock, TimeChange) {
+struct AnimationTime : DE_OBSERVES(Clock, TimeChange) {
     double now;
     void timeChanged(Clock const &clock) override {
         now = clock.time().highPerformanceTime();
@@ -82,7 +82,7 @@ using namespace internal;
 /// Global animation time source.
 Clock const *Animation::_clock = 0;
 
-DENG2_PIMPL_NOREF(Animation)
+DE_PIMPL_NOREF(Animation)
 {
     float value;
     float target;
@@ -350,7 +350,7 @@ String Animation::asText() const
 
 Clock const &Animation::clock()
 {
-    DENG2_ASSERT(_clock != 0);
+    DE_ASSERT(_clock != 0);
     if (!_clock)
     {
         throw ClockMissingError("Animation::clock", "Animation has no clock");
@@ -400,7 +400,7 @@ void Animation::setClock(Clock const *clock)
    
 TimeSpan Animation::currentTime() // static
 {
-    DENG2_ASSERT(_clock != 0);
+    DE_ASSERT(_clock != 0);
     if (!_clock)
     {
         throw ClockMissingError("Animation::clock", "Animation has no clock");

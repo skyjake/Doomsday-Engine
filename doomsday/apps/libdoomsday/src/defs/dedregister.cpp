@@ -30,11 +30,11 @@ using namespace de;
 
 static String const VAR_ORDER = "order";
 
-DENG2_PIMPL(DEDRegister)
-, DENG2_OBSERVES(Record, Deletion)
-, DENG2_OBSERVES(Record, Addition)
-, DENG2_OBSERVES(Record, Removal)
-, DENG2_OBSERVES(Variable, ChangeFrom)
+DE_PIMPL(DEDRegister)
+, DE_OBSERVES(Record, Deletion)
+, DE_OBSERVES(Record, Addition)
+, DE_OBSERVES(Record, Removal)
+, DE_OBSERVES(Variable, ChangeFrom)
 {
     Record *names;
     ArrayValue *orderArray;
@@ -54,9 +54,9 @@ DENG2_PIMPL(DEDRegister)
         orderArray = &names->addArray(VAR_ORDER).array();
     }
 
-    void recordBeingDeleted(Record &DENG2_DEBUG_ONLY(record))
+    void recordBeingDeleted(Record &DE_DEBUG_ONLY(record))
     {
-        DENG2_ASSERT(names == &record);
+        DE_ASSERT(names == &record);
         names = nullptr;
         orderArray = nullptr;
     }
@@ -67,11 +67,11 @@ DENG2_PIMPL(DEDRegister)
         // each definition record are deleted.
         order().clear();
 
-#ifdef DENG2_DEBUG
-        DENG2_ASSERT(parents.isEmpty());
+#ifdef DE_DEBUG
+        DE_ASSERT(parents.isEmpty());
         foreach (String const &key, keys.keys())
         {
-            DENG2_ASSERT(lookup(key).size() == 0);
+            DE_ASSERT(lookup(key).size() == 0);
         }
 #endif
     }
@@ -84,13 +84,13 @@ DENG2_PIMPL(DEDRegister)
 
     ArrayValue &order()
     {
-        DENG2_ASSERT(orderArray != nullptr);
+        DE_ASSERT(orderArray != nullptr);
         return *orderArray;
     }
 
     ArrayValue const &order() const
     {
-        DENG2_ASSERT(orderArray != nullptr);
+        DE_ASSERT(orderArray != nullptr);
         return *orderArray;
     }
 
@@ -173,8 +173,8 @@ DENG2_PIMPL(DEDRegister)
             return false;
 
         String valText = value.asText();
-        DENG2_ASSERT(!valText.isEmpty());
-        DENG2_ASSERT(keys.contains(key));
+        DE_ASSERT(!valText.isEmpty());
+        DE_ASSERT(keys.contains(key));
 
         if (!keys[key].flags.testFlag(CaseSensitive))
         {
@@ -202,8 +202,8 @@ DENG2_PIMPL(DEDRegister)
             return false;
 
         String valText = value.asText();
-        DENG2_ASSERT(!valText.isEmpty());
-        DENG2_ASSERT(keys.contains(key));
+        DE_ASSERT(!valText.isEmpty());
+        DE_ASSERT(keys.contains(key));
 
         if (!keys[key].flags.testFlag(CaseSensitive))
         {
@@ -265,7 +265,7 @@ DENG2_PIMPL(DEDRegister)
         //qDebug() << "changed" << key.name() << "from" << oldValue.asText() << "to"
         //         << newValue.asText();
 
-        DENG2_ASSERT(parents.contains(&key));
+        DE_ASSERT(parents.contains(&key));
 
         // The value of a key has changed, so it needs to be reindexed.
         removeFromLookup(key.name(), oldValue, *parents[&key]);
@@ -303,7 +303,7 @@ Record &DEDRegister::copy(int fromIndex, Record &to)
 
     // By default lookup keys are not copied, as they are used as identifiers and
     // therefore duplicates should not occur.
-    DENG2_FOR_EACH_CONST(Impl::Keys, i, d->keys)
+    DE_FOR_EACH_CONST(Impl::Keys, i, d->keys)
     {
         if (i.value().flags.testFlag(AllowCopy)) continue;
         omitted << i.key();

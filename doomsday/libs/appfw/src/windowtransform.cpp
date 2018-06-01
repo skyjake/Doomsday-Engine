@@ -21,7 +21,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(WindowTransform)
+DE_PIMPL_NOREF(WindowTransform)
 {
     BaseWindow *win;
 };
@@ -34,7 +34,7 @@ WindowTransform::WindowTransform(BaseWindow &window)
 
 BaseWindow &WindowTransform::window() const
 {
-    DENG2_ASSERT(d->win != 0);
+    DE_ASSERT(d->win != 0);
     return *d->win;
 }
 

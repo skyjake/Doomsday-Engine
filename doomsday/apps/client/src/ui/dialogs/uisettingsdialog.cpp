@@ -28,7 +28,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(UISettingsDialog)
+DE_PIMPL(UISettingsDialog)
 {
     VariableChoiceWidget *uiScale;
     VariableToggleWidget *uiTranslucency;

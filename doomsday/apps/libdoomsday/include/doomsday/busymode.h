@@ -147,14 +147,14 @@ public:
     void abort(de::String const &message);
 
 public:
-    DENG2_DEFINE_AUDIENCE2(Beginning, void busyModeWillBegin(BusyTask &firstTask))
-    DENG2_DEFINE_AUDIENCE2(End,       void busyModeEnded())
-    DENG2_DEFINE_AUDIENCE2(Abort,     void busyModeAborted(de::String const &message))
-    DENG2_DEFINE_AUDIENCE2(TaskWillStart, void busyTaskWillStart(BusyTask &task))
-    DENG2_DEFINE_AUDIENCE2(TaskComplete, void busyTaskCompleted(BusyTask &task))
+    DE_DEFINE_AUDIENCE2(Beginning, void busyModeWillBegin(BusyTask &firstTask))
+    DE_DEFINE_AUDIENCE2(End,       void busyModeEnded())
+    DE_DEFINE_AUDIENCE2(Abort,     void busyModeAborted(de::String const &message))
+    DE_DEFINE_AUDIENCE2(TaskWillStart, void busyTaskWillStart(BusyTask &task))
+    DE_DEFINE_AUDIENCE2(TaskComplete, void busyTaskCompleted(BusyTask &task))
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 LIBDOOMSDAY_EXTERN_C LIBDOOMSDAY_PUBLIC bool BusyMode_Active();

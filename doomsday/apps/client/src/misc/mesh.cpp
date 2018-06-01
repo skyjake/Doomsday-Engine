@@ -33,7 +33,7 @@ Mesh::Element::Element(Mesh &owner)
 
 Mesh &Mesh::Element::mesh() const
 {
-    DENG2_ASSERT(_owner != nullptr);
+    DE_ASSERT(_owner != nullptr);
     return *_owner;
 }
 
@@ -59,7 +59,7 @@ void Mesh::Element::setMapElement(world::MapElement *newMapElement)
     _mapElement = newMapElement;
 }
 
-DENG2_PIMPL_NOREF(Mesh)
+DE_PIMPL_NOREF(Mesh)
 {
     Vertexs vertexs;  ///< All vertexs in the mesh.
     HEdges hedges;    ///< All half-edges in the mesh.

@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_DATA_SIZE_H
-#define LIBDENG_DATA_SIZE_H
+#ifndef DE_DATA_SIZE_H
+#define DE_DATA_SIZE_H
 
 #include "liblegacy.h"
 
@@ -51,27 +51,27 @@ typedef struct Size2Raw_s {
 struct size2_s; // The Size2 instance (opaque).
 typedef struct size2_s Size2;
 
-DENG_PUBLIC Size2 *Size2_New(void);
-DENG_PUBLIC Size2 *Size2_NewWithDimensions(int width, int height);
-DENG_PUBLIC Size2 *Size2_NewFromRaw(Size2Raw const *rawSize);
-DENG_PUBLIC void Size2_Delete(Size2 *size);
+DE_PUBLIC Size2 *Size2_New(void);
+DE_PUBLIC Size2 *Size2_NewWithDimensions(int width, int height);
+DE_PUBLIC Size2 *Size2_NewFromRaw(Size2Raw const *rawSize);
+DE_PUBLIC void Size2_Delete(Size2 *size);
 
-DENG_PUBLIC Size2Raw *Size2_Raw(Size2 const *size, Size2Raw *rawSize);
+DE_PUBLIC Size2Raw *Size2_Raw(Size2 const *size, Size2Raw *rawSize);
 
-DENG_PUBLIC dd_bool Size2_IsNull(Size2 const *size);
+DE_PUBLIC dd_bool Size2_IsNull(Size2 const *size);
 
-DENG_PUBLIC int Size2_Width(Size2 const *size);
-DENG_PUBLIC int Size2_Height(Size2 const *size);
+DE_PUBLIC int Size2_Width(Size2 const *size);
+DE_PUBLIC int Size2_Height(Size2 const *size);
 
-DENG_PUBLIC void Size2_SetWidth(Size2 *size, int width);
-DENG_PUBLIC void Size2_SetHeight(Size2 *size, int height);
+DE_PUBLIC void Size2_SetWidth(Size2 *size, int width);
+DE_PUBLIC void Size2_SetHeight(Size2 *size, int height);
 
-DENG_PUBLIC int const *Size2_WidthHeight(Size2 const *size);
-DENG_PUBLIC void Size2_SetWidthHeight(Size2 *size, int width, int height);
+DE_PUBLIC int const *Size2_WidthHeight(Size2 const *size);
+DE_PUBLIC void Size2_SetWidthHeight(Size2 *size, int width, int height);
 
-DENG_PUBLIC void Size2_Sum(Size2 *size, Size2 const *other);
+DE_PUBLIC void Size2_Sum(Size2 *size, Size2 const *other);
 
-DENG_PUBLIC dd_bool Size2_Equality(Size2 const *point, Size2 const *other);
+DE_PUBLIC dd_bool Size2_Equality(Size2 const *point, Size2 const *other);
 
 /**
  * Floating-point width and height. Intended as a handy POD structure for easy
@@ -93,27 +93,27 @@ typedef struct Size2Rawf_s {
 struct size2f_s; // The Size2f instance (opaque).
 typedef struct size2f_s Size2f;
 
-DENG_PUBLIC Size2f *Size2f_New(void);
-DENG_PUBLIC Size2f *Size2f_NewWithDimensions(double width, double height);
-DENG_PUBLIC Size2f *Size2f_NewFromRaw(Size2Rawf const *rawSize);
-DENG_PUBLIC void Size2f_Delete(Size2f *size);
+DE_PUBLIC Size2f *Size2f_New(void);
+DE_PUBLIC Size2f *Size2f_NewWithDimensions(double width, double height);
+DE_PUBLIC Size2f *Size2f_NewFromRaw(Size2Rawf const *rawSize);
+DE_PUBLIC void Size2f_Delete(Size2f *size);
 
-DENG_PUBLIC Size2Rawf *Size2f_Raw(Size2f const *size, Size2Rawf *rawSize);
+DE_PUBLIC Size2Rawf *Size2f_Raw(Size2f const *size, Size2Rawf *rawSize);
 
-DENG_PUBLIC dd_bool Size2f_IsNull(Size2f const *size);
+DE_PUBLIC dd_bool Size2f_IsNull(Size2f const *size);
 
-DENG_PUBLIC double Size2f_Width(Size2f const *size);
-DENG_PUBLIC double Size2f_Height(Size2f const *size);
+DE_PUBLIC double Size2f_Width(Size2f const *size);
+DE_PUBLIC double Size2f_Height(Size2f const *size);
 
-DENG_PUBLIC void Size2f_SetWidth(Size2f *size, double width);
-DENG_PUBLIC void Size2f_SetHeight(Size2f *size, double height);
+DE_PUBLIC void Size2f_SetWidth(Size2f *size, double width);
+DE_PUBLIC void Size2f_SetHeight(Size2f *size, double height);
 
-DENG_PUBLIC double const *Size2f_WidthHeight(Size2f const *size);
-DENG_PUBLIC void Size2f_SetWidthHeight(Size2f *size, double width, double height);
+DE_PUBLIC double const *Size2f_WidthHeight(Size2f const *size);
+DE_PUBLIC void Size2f_SetWidthHeight(Size2f *size, double width, double height);
 
-DENG_PUBLIC void Size2f_Sum(Size2f *size, Size2f const *other);
+DE_PUBLIC void Size2f_Sum(Size2f *size, Size2f const *other);
 
-DENG_PUBLIC dd_bool Size2f_Equality(Size2f const *size, Size2f const *other);
+DE_PUBLIC dd_bool Size2f_Equality(Size2f const *size, Size2f const *other);
 
 /// @}
 
@@ -121,4 +121,4 @@ DENG_PUBLIC dd_bool Size2f_Equality(Size2f const *size, Size2f const *other);
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_DATA_SIZE_H */
+#endif /* DE_DATA_SIZE_H */

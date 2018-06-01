@@ -212,8 +212,8 @@ public:
 protected:
     void release();
 
-    DENG2_NO_ASSIGN(ded_s)
-    DENG2_NO_COPY  (ded_s)
+    DE_NO_ASSIGN(ded_s)
+    DE_NO_COPY  (ded_s)
 };
 
 typedef ded_s ded_t;

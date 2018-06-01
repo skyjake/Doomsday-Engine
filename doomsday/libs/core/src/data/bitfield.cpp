@@ -22,7 +22,7 @@
 
 namespace de {
 
-DENG2_PIMPL(BitField)
+DE_PIMPL(BitField)
 {
     Elements const *elements;
     Block packed;
@@ -48,7 +48,7 @@ DENG2_PIMPL(BitField)
 
     void set(Id id, duint value)
     {
-        DENG2_ASSERT(elements != 0);
+        DE_ASSERT(elements != 0);
 
         int eFirstBit = 0;
         int eNumBits = 0;
@@ -74,11 +74,11 @@ DENG2_PIMPL(BitField)
 
     duint get(Id id) const
     {
-        DENG2_ASSERT(elements != 0);
+        DE_ASSERT(elements != 0);
 
         duint value = 0;
 
-        //DENG2_ASSERT(elements.contains(id));
+        //DE_ASSERT(elements.contains(id));
         //Element const &f = elements.constFind(id).value();
 
         int eFirstBit = 0;
@@ -105,8 +105,8 @@ DENG2_PIMPL(BitField)
 
     Ids delta(Impl const &other) const
     {
-        DENG2_ASSERT(elements != 0);
-        DENG2_ASSERT(other.elements != 0);
+        DE_ASSERT(elements != 0);
+        DE_ASSERT(other.elements != 0);
 
         if (elements->size() != other.elements->size())
         {
@@ -127,7 +127,7 @@ DENG2_PIMPL(BitField)
 
             // The elements on this byte are different; which are they?
             Ids const lookup = elements->idsLaidOutOnByte(pos);
-            DENG2_FOR_EACH_CONST(Ids, i, lookup)
+            DE_FOR_EACH_CONST(Ids, i, lookup)
             {
                 Id const &id = *i;
 

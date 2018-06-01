@@ -28,7 +28,7 @@ class LIBDOOMSDAY_PUBLIC ColorPalettes
 {
 public:
     /// Notified when a new palette is added to the collection.
-    DENG2_DEFINE_AUDIENCE2(Addition, void colorPaletteAdded(ColorPalette &))
+    DE_DEFINE_AUDIENCE2(Addition, void colorPaletteAdded(ColorPalette &))
 
 public:
     ColorPalettes();
@@ -86,7 +86,7 @@ public:
     void setDefaultColorPalette(ColorPalette *newDefaultPalette);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace res

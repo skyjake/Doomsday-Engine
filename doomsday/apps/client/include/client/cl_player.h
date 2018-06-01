@@ -17,14 +17,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_PLAYER_H
-#define DENG_CLIENT_PLAYER_H
+#ifndef DE_CLIENT_PLAYER_H
+#define DE_CLIENT_PLAYER_H
 
 #include "cl_mobj.h"
 #include "clientplayer.h"
 
-DENG_EXTERN_C float pspMoveSpeed;
-DENG_EXTERN_C float cplrThrustMul;
+DE_EXTERN_C float pspMoveSpeed;
+DE_EXTERN_C float cplrThrustMul;
 
 /**
  * Clears the player state table.
@@ -72,4 +72,4 @@ mobj_t *ClPlayer_LocalGameMobj(int plrNum);
  */
 bool ClPlayer_IsFreeToMove(int plrnum);
 
-#endif // DENG_CLIENT_PLAYER_H
+#endif // DE_CLIENT_PLAYER_H

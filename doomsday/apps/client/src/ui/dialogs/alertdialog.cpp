@@ -39,10 +39,10 @@ using namespace de;
 
 static String const VAR_AUTOHIDE = "alert.autoHide";
 
-DENG_GUI_PIMPL(AlertDialog)
-, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
-, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
-, DENG2_OBSERVES(Variable, Change)
+DE_GUI_PIMPL(AlertDialog)
+, DE_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
+, DE_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
+, DE_OBSERVES(Variable, Change)
 {
     /// Data model item representing an alert in the list.
     class AlertItem : public ui::ActionItem
@@ -180,7 +180,7 @@ DENG_GUI_PIMPL(AlertDialog)
 
     void add(AlertItem *alert)
     {
-        DENG2_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT_IN_MAIN_THREAD();
 
         // If we already have this, don't re-add.
         for (ui::Data::Pos i = 0; i < alerts->items().size(); ++i)
@@ -236,8 +236,8 @@ DENG_GUI_PIMPL(AlertDialog)
 
     void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item)
     {
-        DENG2_UNUSED(widget);
-        DENG2_UNUSED(item);
+        DE_UNUSED(widget);
+        DE_UNUSED(item);
     }
 
     void showNotification()

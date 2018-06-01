@@ -37,7 +37,7 @@ Q_DECLARE_METATYPE(de::Address)
 using namespace de;
 using namespace de::shell;
 
-DENG2_PIMPL_NOREF(GuiShellApp)
+DE_PIMPL_NOREF(GuiShellApp)
 {
     ServerFinder finder;
 

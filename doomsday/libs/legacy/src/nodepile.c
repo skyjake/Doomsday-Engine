@@ -92,7 +92,7 @@ nodeindex_t NP_New(nodepile_t *pile, void *ptr)
     if(!found)
     {
         // Damned, we ran out of nodes. Let's allocate more.
-        DENG_ASSERT(pile->count < NP_MAX_NODES);
+        DE_ASSERT(pile->count < NP_MAX_NODES);
 
         // Double the number of nodes, but add at most 1024.
         if(pile->count >= 1024)

@@ -27,7 +27,7 @@ using namespace de;
 
 namespace gloom {
 
-DENG2_PIMPL(Bloom)
+DE_PIMPL(Bloom)
 {
     ScreenQuad quad;
     struct WorkBuf {

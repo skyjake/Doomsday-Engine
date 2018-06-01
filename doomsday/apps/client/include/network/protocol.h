@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_NETWORK_PROTOCOL_H
-#define LIBDENG_NETWORK_PROTOCOL_H
+#ifndef DE_NETWORK_PROTOCOL_H
+#define DE_NETWORK_PROTOCOL_H
 
 /**
  * Server protocol version number.
@@ -196,4 +196,4 @@ extern "C" {
 } // extern "C"
 #endif
 
-#endif // LIBDENG_NETWORK_PROTOCOL_H
+#endif // DE_NETWORK_PROTOCOL_H

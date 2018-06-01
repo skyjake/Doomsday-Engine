@@ -36,15 +36,15 @@
 
 namespace de {
 
-char const *TEXT_STYLE_NORMAL        = DENG2_ESC("0"); // normal
-char const *TEXT_STYLE_MESSAGE       = DENG2_ESC("0"); // normal
-char const *TEXT_STYLE_MAJOR_MESSAGE = DENG2_ESC("1"); // major
-char const *TEXT_STYLE_MINOR_MESSAGE = DENG2_ESC("2"); // minor
-char const *TEXT_STYLE_SECTION       = DENG2_ESC("3"); // meta
-char const *TEXT_STYLE_MAJOR_SECTION = DENG2_ESC("4"); // major meta
-char const *TEXT_STYLE_MINOR_SECTION = DENG2_ESC("5"); // minor meta
-char const *TEXT_STYLE_LOG_TIME      = DENG2_ESC("6"); // aux meta
-char const *TEXT_MARK_INDENT         = DENG2_ESC(">");
+char const *TEXT_STYLE_NORMAL        = DE_ESC("0"); // normal
+char const *TEXT_STYLE_MESSAGE       = DE_ESC("0"); // normal
+char const *TEXT_STYLE_MAJOR_MESSAGE = DE_ESC("1"); // major
+char const *TEXT_STYLE_MINOR_MESSAGE = DE_ESC("2"); // minor
+char const *TEXT_STYLE_SECTION       = DE_ESC("3"); // meta
+char const *TEXT_STYLE_MAJOR_SECTION = DE_ESC("4"); // major meta
+char const *TEXT_STYLE_MINOR_SECTION = DE_ESC("5"); // minor meta
+char const *TEXT_STYLE_LOG_TIME      = DE_ESC("6"); // aux meta
+char const *TEXT_MARK_INDENT         = DE_ESC(">");
 
 char const *MAIN_SECTION = "";
 
@@ -65,7 +65,7 @@ class Logs : public Lockable, public QHash<QThread *, Log *>
 public:
     Logs() {}
     ~Logs() {
-        DENG2_GUARD_PTR(this);
+        DE_GUARD_PTR(this);
         // The logs are owned by the logs table.
         for (Log *log : *this) delete log;
     }
@@ -324,7 +324,7 @@ LogEntry::LogEntry(LogEntry const &other, Flags extraFlags)
     , _defaultFlags(other._defaultFlags | extraFlags)
     , _disabled(other._disabled)
 {
-    DENG2_FOR_EACH_CONST(Args, i, other._args)
+    DE_FOR_EACH_CONST(Args, i, other._args)
     {
         Arg *a = Arg::newFromPool();
         *a = **i;
@@ -334,7 +334,7 @@ LogEntry::LogEntry(LogEntry const &other, Flags extraFlags)
 
 LogEntry::~LogEntry()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     // Put the arguments back to the shared pool.
     for (Args::iterator i = _args.begin(); i != _args.end(); ++i)
@@ -350,7 +350,7 @@ LogEntry::Flags LogEntry::flags() const
 
 String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     /// @todo This functionality belongs in an entry formatter class.
 
@@ -531,7 +531,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
     else
     {
         String::PatternArgs patArgs;
-        DENG2_FOR_EACH_CONST(Args, i, _args) patArgs << *i;
+        DE_FOR_EACH_CONST(Args, i, _args) patArgs << *i;
         output << _format % patArgs;
     }
 
@@ -559,7 +559,7 @@ void LogEntry::operator << (Reader &from)
          >> _section
          >> _format;
 
-    if (from.version() >= DENG2_PROTOCOL_1_14_0_LogEntry_metadata)
+    if (from.version() >= DE_PROTOCOL_1_14_0_LogEntry_metadata)
     {
         // This version adds context information to the entry.
         from.readAs<duint32>(_metadata);
@@ -605,7 +605,7 @@ Log::Section::~Section()
     _log.endSection(_name);
 }
 
-DENG2_PIMPL_NOREF(Log)
+DE_PIMPL_NOREF(Log)
 {
     typedef QVector<char const *> SectionStack;
     SectionStack sectionStack;
@@ -652,9 +652,9 @@ void Log::beginSection(char const *name)
     d->sectionStack.push_back(name);
 }
 
-void Log::endSection(char const *DENG2_DEBUG_ONLY(name))
+void Log::endSection(char const *DE_DEBUG_ONLY(name))
 {
-    DENG2_ASSERT(d->sectionStack.back() == name);
+    DE_ASSERT(d->sectionStack.back() == name);
     d->sectionStack.pop_back();
 }
 
@@ -666,7 +666,7 @@ void Log::beginInteractive()
 void Log::endInteractive()
 {
     d->interactive--;
-    DENG2_ASSERT(d->interactive >= 0);
+    DE_ASSERT(d->interactive >= 0);
 }
 
 bool Log::isInteractive() const
@@ -692,7 +692,7 @@ LogEntry &Log::enter(duint32 metadata, String const &format, LogEntry::Args argu
 
     if (!LogBuffer::get().isEnabled(metadata))
     {
-        DENG2_ASSERT(arguments.isEmpty());
+        DE_ASSERT(arguments.isEmpty());
 
         // If the level is disabled, no messages are entered into it.
         return *d->throwawayEntry;
@@ -731,7 +731,7 @@ LogEntry &Log::enter(duint32 metadata, String const &format, LogEntry::Args argu
 {
     if (logsPtr.get()) return *logsPtr;
     static Lockable lock;
-    DENG2_GUARD(lock);
+    DE_GUARD(lock);
     if (!logsPtr.get()) logsPtr.reset(new internal::Logs);
     return *logsPtr;
 }*/
@@ -749,7 +749,7 @@ Log &Log::threadLog()
     {
         theLogs.setLocalData(<#de::Log t#>)
     internal::Logs &logs = theLogs();
-    DENG2_GUARD(logs);
+    DE_GUARD(logs);
 
     auto found = logs.constFind(thread);
     if (found == logs.constEnd())
@@ -768,7 +768,7 @@ Log &Log::threadLog()
 void Log::disposeThreadLog()
 {
     /*internal::Logs &logs = theLogs();
-    DENG2_GUARD(logs);
+    DE_GUARD(logs);
 
     QThread *thread = QThread::currentThread();
     auto found = logs.find(thread);

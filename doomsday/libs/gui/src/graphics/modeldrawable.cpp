@@ -175,7 +175,7 @@ struct DefaultImageLoader : public ModelDrawable::IImageLoader
         if (img.depth() == 24)
         {
             // Model texture atlases need to have an alpha channel.
-            DENG2_ASSERT(img.canConvertToQImage());
+            DE_ASSERT(img.canConvertToQImage());
             return Image(img.toQImage().convertToFormat(QImage::Format_ARGB32));
         }
         return img;
@@ -248,7 +248,7 @@ static ddouble ticksToSeconds(ddouble ticks, aiAnimation const &anim)
 /// Bone used for vertices that have no bones.
 static String const DUMMY_BONE_NAME{"__deng_dummy-bone__"};
 
-DENG2_PIMPL(ModelDrawable)
+DE_PIMPL(ModelDrawable)
 {
     typedef GLBufferT<ModelVertex> VBuf;
     typedef QHash<String, int> AnimLookup;
@@ -263,7 +263,7 @@ DENG2_PIMPL(ModelDrawable)
         case aiTextureType_SPECULAR: return Specular;
         case aiTextureType_EMISSIVE: return Emissive;
         default:
-            DENG2_ASSERT_FAIL("Unsupported texture type");
+            DE_ASSERT_FAIL("Unsupported texture type");
             return Diffuse;
         }
     }
@@ -398,7 +398,7 @@ DENG2_PIMPL(ModelDrawable)
 
         duint addMaterial()
         {
-            DENG2_ASSERT(scene != nullptr);
+            DE_ASSERT(scene != nullptr);
 
             // Each material has its own GLBuffer.
             needMakeBuffer = true;
@@ -432,7 +432,7 @@ DENG2_PIMPL(ModelDrawable)
             if (!id) return; // We don't own this, don't release.
 
             Path texPath = textureBank.sourcePathForAtlasId(id);
-            DENG2_ASSERT(!texPath.isEmpty());
+            DE_ASSERT(!texPath.isEmpty());
 
             LOGDEV_GL_VERBOSE("Releasing model texture '%s' path: \"%s\"")
                     << id.asText() << texPath;
@@ -509,7 +509,7 @@ DENG2_PIMPL(ModelDrawable)
          */
         void loadTextureImage(MeshId const &mesh, aiTextureType type)
         {
-            DENG2_ASSERT(imageLoader != 0);
+            DE_ASSERT(imageLoader != 0);
 
             aiMesh     const &sceneMesh     = *scene->mMeshes[mesh.index];
             aiMaterial const &sceneMaterial = *scene->mMaterials[sceneMesh.mMaterialIndex];
@@ -564,7 +564,7 @@ DENG2_PIMPL(ModelDrawable)
             if (mesh.material >= duint(materials.size())) return;
             if (mesh.index >= scene->mNumMeshes) return;
 
-            DENG2_ASSERT(textureBank.atlas());
+            DE_ASSERT(textureBank.atlas());
 
             Material &material = *materials[mesh.material];
             auto &meshTextures = material.meshTextures[mesh.index];
@@ -622,9 +622,9 @@ DENG2_PIMPL(ModelDrawable)
          */
         void setCustomTexturePath(MeshId const &mesh, TextureMap texMap, String const &path)
         {
-            DENG2_ASSERT(!textureBank.atlas(texMap)); // in-use textures cannot be replaced on the fly
-            DENG2_ASSERT(mesh.index < scene->mNumMeshes);
-            DENG2_ASSERT(mesh.material < duint(materials.size()));
+            DE_ASSERT(!textureBank.atlas(texMap)); // in-use textures cannot be replaced on the fly
+            DE_ASSERT(mesh.index < scene->mNumMeshes);
+            DE_ASSERT(mesh.material < duint(materials.size()));
 
             materials[mesh.material]->meshTextures[mesh.index].customPaths.insert(texMap, path);
         }
@@ -654,7 +654,7 @@ DENG2_PIMPL(ModelDrawable)
     {
         LOG_GL_MSG("Loading model from %s") << file.description();
 
-#if defined (DENG_HAVE_CUSTOMIZED_ASSIMP)
+#if defined (DE_HAVE_CUSTOMIZED_ASSIMP)
         {
         /*
          * MD5: Multiple animation sequences are supported via multiple .md5anim files.
@@ -753,7 +753,7 @@ DENG2_PIMPL(ModelDrawable)
     void buildNodeLookup(aiNode const &node)
     {
         String const name = node.mName.C_Str();
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
         qDebug() << "Node:" << name;
 #endif
         if (!name.isEmpty())
@@ -780,7 +780,7 @@ DENG2_PIMPL(ModelDrawable)
 
     void glInit()
     {
-        DENG2_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT_IN_MAIN_THREAD();
 
         // Has a scene been imported successfully?
         if (!scene) return;
@@ -792,7 +792,7 @@ DENG2_PIMPL(ModelDrawable)
         }
 
         // Last minute notification in case some additional setup is needed.
-        DENG2_FOR_PUBLIC_AUDIENCE2(AboutToGLInit, i)
+        DE_FOR_PUBLIC_AUDIENCE2(AboutToGLInit, i)
         {
             i->modelAboutToGLInit(self());
         }
@@ -891,7 +891,7 @@ DENG2_PIMPL(ModelDrawable)
         }
         LOG_GL_WARNING("\"%s\": too many weights for vertex %i (only 4 supported), bone index: %i")
             << sourcePath << vertexIndex << boneIndex;
-        DENG2_ASSERT_FAIL("Too many bone weights for a vertex");
+        DE_ASSERT_FAIL("Too many bone weights for a vertex");
     }
 
     /**
@@ -1051,7 +1051,7 @@ DENG2_PIMPL(ModelDrawable)
             for (duint i = 0; i < mesh.mNumFaces; ++i)
             {
                 aiFace const &face = mesh.mFaces[i];
-                DENG2_ASSERT(face.mNumIndices == 3); // expecting triangles
+                DE_ASSERT(face.mNumIndices == 3); // expecting triangles
                 indx << VBuf::Index(face.mIndices[0] + base)
                      << VBuf::Index(face.mIndices[1] + base)
                      << VBuf::Index(face.mIndices[2] + base);
@@ -1169,7 +1169,7 @@ DENG2_PIMPL(ModelDrawable)
     template <typename Type>
     static duint findAnimKey(ddouble time, Type const *keys, duint count)
     {
-        DENG2_ASSERT(count > 0);
+        DE_ASSERT(count > 0);
         for (duint i = 0; i < count - 1; ++i)
         {
             if (time < keys[i + 1].mTime)
@@ -1177,7 +1177,7 @@ DENG2_PIMPL(ModelDrawable)
                 return i;
             }
         }
-        DENG2_ASSERT_FAIL("Failed to find animation key (invalid time?)");
+        DE_ASSERT_FAIL("Failed to find animation key (invalid time?)");
         return 0;
     }
 
@@ -1253,8 +1253,8 @@ DENG2_PIMPL(ModelDrawable)
             auto const &animSeq = animator->at(i);
 
             // The animation has been validated earlier.
-            DENG2_ASSERT(duint(animSeq.animId) < scene->mNumAnimations);
-            DENG2_ASSERT(nodeNameToPtr.contains(animSeq.node));
+            DE_ASSERT(duint(animSeq.animId) < scene->mNumAnimations);
+            DE_ASSERT(nodeNameToPtr.contains(animSeq.node));
 
             accumulateAnimationTransforms(*animator,
                                           animator->currentTime(i),
@@ -1272,7 +1272,7 @@ DENG2_PIMPL(ModelDrawable)
     {
         if (glData.needMakeBuffer) makeBuffer();
 
-        DENG2_ASSERT(drawProgram == nullptr);
+        DE_ASSERT(drawProgram == nullptr);
 
         // Draw the meshes in this node.
         updateMatricesFromAnimation(animation);
@@ -1424,10 +1424,10 @@ DENG2_PIMPL(ModelDrawable)
         drawPass = nullptr;
     }
 
-    DENG2_PIMPL_AUDIENCE(AboutToGLInit)
+    DE_PIMPL_AUDIENCE(AboutToGLInit)
 };
 
-DENG2_AUDIENCE_METHOD(ModelDrawable, AboutToGLInit)
+DE_AUDIENCE_METHOD(ModelDrawable, AboutToGLInit)
 
 namespace internal {
 
@@ -1599,7 +1599,7 @@ ModelDrawable::Mapping ModelDrawable::diffuseNormalsSpecularEmission() // static
 duint ModelDrawable::addMaterial()
 {
     // This should only be done when the asset is not in use.
-    DENG2_ASSERT(!d->modelAsset.isReady());
+    DE_ASSERT(!d->modelAsset.isReady());
 
     return d->glData.addMaterial();
 }
@@ -1607,7 +1607,7 @@ duint ModelDrawable::addMaterial()
 void ModelDrawable::resetMaterials()
 {
     // This should only be done when the asset is not in use.
-    DENG2_ASSERT(!d->modelAsset.isReady());
+    DE_ASSERT(!d->modelAsset.isReady());
 
     d->glData.deinitMaterials();
     d->glData.initMaterials();
@@ -1620,7 +1620,7 @@ void ModelDrawable::setTextureMapping(Mapping mapsToUse)
 
 void ModelDrawable::setDefaultTexture(TextureMap textureType, Id const &atlasId)
 {
-    DENG2_ASSERT(textureType >= 0 && textureType < MAX_TEXTURES);
+    DE_ASSERT(textureType >= 0 && textureType < MAX_TEXTURES);
     if (textureType < 0 || textureType >= MAX_TEXTURES) return;
 
     d->glData.defaultTexIds[textureType] = atlasId;
@@ -1685,7 +1685,7 @@ void ModelDrawable::drawInstanced(GLBuffer const &instanceAttribs,
     {
         d->drawInstanced(instanceAttribs, animation);
     }
-#if defined (DENG2_DEBUG)
+#if defined (DE_DEBUG)
     else
     {
         qDebug() << "[ModelDrawable] drawInstanced isReady:"
@@ -1732,8 +1732,8 @@ int ModelDrawable::Passes::findName(String const &name) const
 
 namespace de {
 
-DENG2_PIMPL_NOREF(ModelDrawable::Animator)
-, DENG2_OBSERVES(Asset, Deletion)
+DE_PIMPL_NOREF(ModelDrawable::Animator)
+, DE_OBSERVES(Asset, Deletion)
 {
     Constructor constructor;
     ModelDrawable const *model = nullptr;
@@ -1766,8 +1766,8 @@ DENG2_PIMPL_NOREF(ModelDrawable::Animator)
 
     OngoingSequence &add(OngoingSequence *seq)
     {
-        DENG2_ASSERT(seq != nullptr);
-        DENG2_ASSERT(model != nullptr);
+        DE_ASSERT(seq != nullptr);
+        DE_ASSERT(model != nullptr);
 
         // Verify first.
         if (seq->animId < 0 || seq->animId >= model->animationCount())
@@ -1850,7 +1850,7 @@ ModelDrawable::Animator::Flags ModelDrawable::Animator::flags() const
 
 ModelDrawable const &ModelDrawable::Animator::model() const
 {
-    DENG2_ASSERT(d->model != 0);
+    DE_ASSERT(d->model != 0);
     return *d->model;
 }
 

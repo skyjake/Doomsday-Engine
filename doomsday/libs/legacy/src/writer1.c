@@ -24,7 +24,7 @@
 #include <string.h>
 #include <de/c_wrapper.h>
 
-#ifdef DENG_WRITER_TYPECHECK
+#ifdef DE_WRITER_TYPECHECK
 #  define Writer_TypeCheck(w, code)  w->data[w->pos++] = code;
 #else
 #  define Writer_TypeCheck(w, code)
@@ -52,13 +52,13 @@ struct writer_s
 
 static dd_bool Writer_Check(Writer1 const *writer, size_t len)
 {
-#ifdef DENG_WRITER_TYPECHECK
+#ifdef DE_WRITER_TYPECHECK
     // One extra byte for the check code.
     if (len) len++;
 #endif
 
-    DENG_ASSERT(writer);
-    DENG_ASSERT(writer->data || writer->useCustomFuncs);
+    DE_ASSERT(writer);
+    DE_ASSERT(writer->data || writer->useCustomFuncs);
 
     if (!writer || (!writer->data && !writer->useCustomFuncs))
         return false;
@@ -324,7 +324,7 @@ void Writer_Write(Writer1 *writer, void const *buffer, size_t len)
 
 void Writer_WritePackedUInt16(Writer1 *writer, uint16_t v)
 {
-    DENG_ASSERT(!(v & 0x8000));
+    DE_ASSERT(!(v & 0x8000));
     if (v & 0x8000)
     {
         App_Log(DE2_LOG_ERROR,

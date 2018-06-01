@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_LOG_H
-#define LIBDENG2_LOG_H
+#ifndef LIBCORE_LOG_H
+#define LIBCORE_LOG_H
 
 #include "../Time"
 #include "../String"
@@ -227,7 +227,7 @@
 #define LOGDEV_NET_ERROR(str)           LOGDEV_NET_AT_LEVEL(de::LogEntry::Error,    str)
 #define LOGDEV_NET_CRITICAL(str)        LOGDEV_NET_AT_LEVEL(de::LogEntry::Critical, str)
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
 /**
  * Makes a developer-only extra verbose level log entry. Only enabled in debug builds; use this
  * for internal messages that might have a significant processing overhead. (Note that parameters
@@ -266,7 +266,7 @@ class LogBuffer;
  *
  * @ingroup core
  */
-class DENG2_PUBLIC LogEntry : public Lockable, public ISerializable
+class DE_PUBLIC LogEntry : public Lockable, public ISerializable
 {
 public:
     /**
@@ -432,11 +432,11 @@ public:
      *
      * @ingroup core
      */
-    class DENG2_PUBLIC Arg : public String::IPatternArg, public ISerializable
+    class DE_PUBLIC Arg : public String::IPatternArg, public ISerializable
     {
     public:
         /// The wrong type is used in accessing the value. @ingroup errors
-        DENG2_ERROR(TypeError);
+        DE_ERROR(TypeError);
 
         enum Type {
             IntegerArgument,
@@ -453,7 +453,7 @@ public:
         class Base {
         public:
             /// Attempted conversion from unsupported type.
-            DENG2_ERROR(TypeError);
+            DE_ERROR(TypeError);
 
         public:
             virtual ~Base() {}
@@ -496,15 +496,15 @@ public:
 
         inline Type type() const { return _type; }
         inline dint64 intValue() const {
-            DENG2_ASSERT(_type == IntegerArgument);
+            DE_ASSERT(_type == IntegerArgument);
             return _data.intValue;
         }
         inline ddouble floatValue() const {
-            DENG2_ASSERT(_type == FloatingPointArgument);
+            DE_ASSERT(_type == FloatingPointArgument);
             return _data.floatValue;
         }
         inline QString stringValue() const {
-            DENG2_ASSERT(_type == StringArgument);
+            DE_ASSERT(_type == StringArgument);
             return *_data.stringValue;
         }
 
@@ -650,10 +650,10 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(LogEntry::Flags)
  *
  * @ingroup core
  */
-class DENG2_PUBLIC Log
+class DE_PUBLIC Log
 {
 public:
-    class DENG2_PUBLIC Section
+    class DE_PUBLIC Section
     {
     public:
         /**
@@ -759,7 +759,7 @@ public:
     static void disposeThreadLog();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 /**
@@ -768,7 +768,7 @@ private:
  *
  * You should use the @c LOG_* macros instead of using LogEntryStager directly.
  */
-class DENG2_PUBLIC LogEntryStager
+class DE_PUBLIC LogEntryStager
 {
 public:
     LogEntryStager(duint32 metadata, String const &format);
@@ -794,4 +794,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_LOG_H */
+#endif /* LIBCORE_LOG_H */

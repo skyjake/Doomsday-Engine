@@ -33,8 +33,8 @@ namespace de {
 static Vec2ui const nullSize;
 static GLuint defaultFramebuffer = 0;
 
-DENG2_PIMPL(GLFramebuffer),
-DENG2_OBSERVES(Asset, Deletion)
+DE_PIMPL(GLFramebuffer),
+DE_OBSERVES(Asset, Deletion)
 {
     enum AttachmentId {
         ColorBuffer0,
@@ -73,7 +73,7 @@ DENG2_OBSERVES(Asset, Deletion)
             return DepthStencilBuffer;
 
         default:
-            DENG2_ASSERT(false);
+            DE_ASSERT(false);
             break;
         }
         return ColorBuffer0; // should not be reached
@@ -81,8 +81,8 @@ DENG2_OBSERVES(Asset, Deletion)
 
     static GLenum flagsToGLAttachment(Flags flags)
     {
-        DENG2_ASSERT(!flags.testFlag(ColorDepth));
-        DENG2_ASSERT(!flags.testFlag(ColorDepthStencil));
+        DE_ASSERT(!flags.testFlag(ColorDepth));
+        DE_ASSERT(!flags.testFlag(ColorDepthStencil));
 
         return flags == Color0?  GL_COLOR_ATTACHMENT0  :
                flags == Color1?  GL_COLOR_ATTACHMENT1  :
@@ -182,7 +182,7 @@ DENG2_OBSERVES(Asset, Deletion)
         {
             return StencilBuffer;
         }
-        DENG2_ASSERT_FAIL("Invalid attachment flags");
+        DE_ASSERT_FAIL("Invalid attachment flags");
         return MAX_ATTACHMENTS;
     }
 
@@ -232,7 +232,7 @@ DENG2_OBSERVES(Asset, Deletion)
         LOG_GL_XVERBOSE("FBO %i: glTex %i (level %i) => attachment %i",
                         fbo << tex.glName() << level << attachmentToId(attachment));
 
-        DENG2_ASSERT(tex.isReady());
+        DE_ASSERT(tex.isReady());
         if (tex.isCubeMap())
         {
             LIBGUI_GL.glFramebufferTexture(GL_FRAMEBUFFER, attachment, tex.glName(), level);
@@ -249,13 +249,13 @@ DENG2_OBSERVES(Asset, Deletion)
 
     void attachRenderbuffer(AttachmentId id, GLenum type, GLenum attachment)
     {
-        DENG2_ASSERT(size != Vec2ui(0, 0));
+        DE_ASSERT(size != Vec2ui(0, 0));
 
         LIBGUI_GL.glGenRenderbuffers(1, &renderBufs[id]);
         LIBGUI_GL.glBindRenderbuffer(GL_RENDERBUFFER, renderBufs[id]);
         LIBGUI_ASSERT_GL_OK();
 
-#if !defined(DENG_OPENGL_ES)
+#if !defined(DE_OPENGL_ES)
         if (sampleCount > 1)
         {
             if (GLInfo::extensions().NV_framebuffer_multisample_coverage)
@@ -274,7 +274,7 @@ DENG2_OBSERVES(Asset, Deletion)
                         << fbo << size.x << size.y << sampleCount
                         << attachmentToId(attachment);
 
-                //DENG2_ASSERT(GLInfo::extensions().EXT_framebuffer_multisample);
+                //DE_ASSERT(GLInfo::extensions().EXT_framebuffer_multisample);
                 LIBGUI_GL.glRenderbufferStorageMultisample(
                         GL_RENDERBUFFER, sampleCount, type, size.x, size.y);
                 LIBGUI_ASSERT_GL_OK();
@@ -299,7 +299,7 @@ DENG2_OBSERVES(Asset, Deletion)
         if (texture)
         {
             // The texture's attachment point must be unambiguously defined.
-            DENG2_ASSERT(textureAttachment == Color0  ||
+            DE_ASSERT(textureAttachment == Color0  ||
                          textureAttachment == Depth   ||
                          textureAttachment == Stencil ||
                          textureAttachment == DepthStencil);
@@ -321,7 +321,7 @@ DENG2_OBSERVES(Asset, Deletion)
 
     void allocRenderBuffers()
     {
-        DENG2_ASSERT(size != nullSize);
+        DE_ASSERT(size != nullSize);
 
         // Fill in all the other requested attachments.
         if (flags.testFlag(Color0) && !textureAttachment.testFlag(Color0))
@@ -353,7 +353,7 @@ DENG2_OBSERVES(Asset, Deletion)
                 LOG_GL_VERBOSE("FBO %i: depth renderbuffer %s") << fbo << size.asText();
                 attachRenderbuffer(DepthBuffer, GL_DEPTH_COMPONENT, GL_DEPTH_ATTACHMENT);
             }
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
             if (flags.testFlag(Stencil) && !textureAttachment.testFlag(Stencil))
             {
                 LOG_GL_VERBOSE("FBO %i: stencil renderbuffer %s") << fbo << size.asText();
@@ -412,8 +412,8 @@ DENG2_OBSERVES(Asset, Deletion)
 
     void replace(GLenum attachment, GLTexture &newTexture)
     {
-        DENG2_ASSERT(self().isReady()); // must already be inited
-        DENG2_ASSERT(bufTextures[attachmentToId(attachment)] != 0); // must have an attachment already
+        DE_ASSERT(self().isReady()); // must already be inited
+        DE_ASSERT(bufTextures[attachmentToId(attachment)] != 0); // must have an attachment already
 
         LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
         attachTexture(newTexture, attachment);
@@ -423,7 +423,7 @@ DENG2_OBSERVES(Asset, Deletion)
 
     void replaceWithNewRenderBuffer(Flags attachment)
     {
-        DENG2_ASSERT(self().isReady()); // must already be inited
+        DE_ASSERT(self().isReady()); // must already be inited
         if (attachment == DepthStencil) // this supported only
         {
             LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -436,7 +436,7 @@ DENG2_OBSERVES(Asset, Deletion)
 
     void replaceWithExistingRenderBuffer(Flags attachment, GLuint renderBufId)
     {
-        DENG2_ASSERT(self().isReady());       // must already be inited
+        DE_ASSERT(self().isReady());       // must already be inited
 
         auto id = flagsToAttachmentId(attachment);
 
@@ -455,7 +455,7 @@ DENG2_OBSERVES(Asset, Deletion)
 
     void glBind() const
     {
-        DENG2_ASSERT(fbo);
+        DE_ASSERT(fbo);
         auto &GL = LIBGUI_GL;
 
         GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo); LIBGUI_ASSERT_GL_OK();
@@ -492,7 +492,7 @@ DENG2_OBSERVES(Asset, Deletion)
             return;
         }
 
-        DENG2_ASSERT(fbo != 0);
+        DE_ASSERT(fbo != 0);
 
         //LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
@@ -581,8 +581,8 @@ void GLFramebuffer::configure(Vec2ui const &size, Flags flags, int sampleCount)
 
     d->flags = flags;
     d->size = size;
-#if defined (DENG_OPENGL_ES)
-    DENG2_UNUSED(sampleCount);
+#if defined (DE_OPENGL_ES)
+    DE_UNUSED(sampleCount);
 #else
     d->sampleCount = (sampleCount > 1? sampleCount : 0);
 #endif
@@ -607,7 +607,7 @@ void GLFramebuffer::configure(QList<GLTexture *> colorTextures,
 {
     LOG_AS("GLFramebuffer");
 
-    DENG2_ASSERT(colorTextures.size() >= 1);
+    DE_ASSERT(colorTextures.size() >= 1);
 
     d->deallocAndReset();
 
@@ -629,8 +629,8 @@ void GLFramebuffer::configure(QList<GLTexture *> colorTextures,
     for (int i = 0; i < colorTextures.size(); ++i)
     {
         auto *colorTex = colorTextures[i];
-        DENG2_ASSERT(colorTex->isReady());
-        DENG2_ASSERT(d->size == colorTex->size());
+        DE_ASSERT(colorTex->isReady());
+        DE_ASSERT(d->size == colorTex->size());
         d->attachTexture(*colorTex, GL_COLOR_ATTACHMENT0 + i);
     }
     if (colorTextures.isEmpty() && missingRenderBuffers.testFlag(Color0))
@@ -641,8 +641,8 @@ void GLFramebuffer::configure(QList<GLTexture *> colorTextures,
     // The depth attachment.
     if (depthStencilTex)
     {
-        DENG2_ASSERT(depthStencilTex->isReady());
-        DENG2_ASSERT(d->size == depthStencilTex->size());
+        DE_ASSERT(depthStencilTex->isReady());
+        DE_ASSERT(d->size == depthStencilTex->size());
         d->attachTexture(*depthStencilTex, GL_DEPTH_STENCIL_ATTACHMENT);
     }
     else if (missingRenderBuffers.testFlag(DepthStencil))
@@ -680,7 +680,7 @@ void GLFramebuffer::deinit()
 void GLFramebuffer::glBind() const
 {
     LIBGUI_ASSERT_GL_OK();
-    DENG2_ASSERT(isReady());
+    DE_ASSERT(isReady());
     if (!isReady())
     {
         //qWarning() << "GLFramebuffer: Trying to bind a not-ready FBO";
@@ -749,7 +749,7 @@ void GLFramebuffer::setClearColor(Vec4f const &color)
 
 void GLFramebuffer::clear(Flags attachments)
 {
-    DENG2_ASSERT(isReady());
+    DE_ASSERT(isReady());
 
     markAsChanged();
 
@@ -854,7 +854,7 @@ void GLFramebuffer::blit(GLFramebuffer &dest, Flags attachments, gl::Filter filt
     dest.glBind();
     LIBGUI_ASSERT_GL_OK();
 
-#if defined (DENG_HAVE_BLIT_FRAMEBUFFER)
+#if defined (DE_HAVE_BLIT_FRAMEBUFFER)
 
     GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, glName());
     LIBGUI_ASSERT_GL_OK();
@@ -907,7 +907,7 @@ void GLFramebuffer::blit(gl::Filter filtering) const
 
     GLFramebuffer *oldTarget = GLState::currentTarget();
 
-#if defined (DENG_HAVE_BLIT_FRAMEBUFFER)
+#if defined (DE_HAVE_BLIT_FRAMEBUFFER)
 
     GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, glName());
     GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defaultFramebuffer);

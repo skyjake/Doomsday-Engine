@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RENDER_TRIANGLE_STRIP_BUILDER
-#define DENG_RENDER_TRIANGLE_STRIP_BUILDER
+#ifndef DE_RENDER_TRIANGLE_STRIP_BUILDER
+#define DE_RENDER_TRIANGLE_STRIP_BUILDER
 
 #include <QVarLengthArray> /// @todo Remove me
 
@@ -213,7 +213,7 @@ public:
     int take(PositionBuffer **positions, TexCoordBuffer **texcoords = 0);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_RENDER_TRIANGLE_STRIP_BUILDER
+#endif // DE_RENDER_TRIANGLE_STRIP_BUILDER

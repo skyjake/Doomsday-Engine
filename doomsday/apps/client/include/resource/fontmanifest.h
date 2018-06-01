@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_FONTMANIFEST_H
-#define DENG_RESOURCE_FONTMANIFEST_H
+#ifndef DE_RESOURCE_FONTMANIFEST_H
+#define DE_RESOURCE_FONTMANIFEST_H
 
 #include "AbstractFont"
 #include <doomsday/uri.h>
@@ -45,13 +45,13 @@ class FontManifest : public PathTree::Node
 {
 public:
     /// Required Font instance is missing. @ingroup errors
-    DENG2_ERROR(MissingFontError);
+    DE_ERROR(MissingFontError);
 
     /// Notified when the manifest is about to be deleted.
-    DENG2_DEFINE_AUDIENCE(Deletion, void fontManifestBeingDeleted(FontManifest const &manifest))
+    DE_DEFINE_AUDIENCE(Deletion, void fontManifestBeingDeleted(FontManifest const &manifest))
 
     /// Notified whenever the unique identifier changes.
-    DENG2_DEFINE_AUDIENCE(UniqueIdChange, void fontManifestUniqueIdChanged(FontManifest &manifest))
+    DE_DEFINE_AUDIENCE(UniqueIdChange, void fontManifestUniqueIdChanged(FontManifest &manifest))
 
 public:
     FontManifest(PathTree::NodeArgs const &args);
@@ -141,9 +141,9 @@ public:
     inline void clearResource() { setResource(0); }
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // DENG_RESOURCE_FONTMANIFEST_H
+#endif // DE_RESOURCE_FONTMANIFEST_H

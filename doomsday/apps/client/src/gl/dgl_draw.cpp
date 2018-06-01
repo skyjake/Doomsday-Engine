@@ -118,7 +118,7 @@ struct DGLDrawState
 
             void release()
             {
-#if defined (DENG_HAVE_VAOS)
+#if defined (DE_HAVE_VAOS)
                 LIBGUI_GL.glDeleteVertexArrays(1, &vertexArray);
 #endif
                 arrayData.clear();
@@ -312,7 +312,7 @@ struct DGLDrawState
     {
         glInit();
 
-        DENG2_ASSERT(primType == DGL_NO_PRIMITIVE);
+        DE_ASSERT(primType == DGL_NO_PRIMITIVE);
 
         if (batchPrimType != DGL_NO_PRIMITIVE && !isCompatible(batchPrimType, primitive))
         {
@@ -444,7 +444,7 @@ struct DGLDrawState
 
     void glInit()
     {
-        DENG_ASSERT_GL_CONTEXT_ACTIVE();
+        DE_ASSERT_GL_CONTEXT_ACTIVE();
 
         if (!gl)
         {
@@ -507,7 +507,7 @@ struct DGLDrawState
             auto *dbuf = new GLData::DrawBuffer;
 
             // Vertex array object.
-#if defined (DENG_HAVE_VAOS)
+#if defined (DE_HAVE_VAOS)
             {
                 auto &GL = LIBGUI_GL;
                 GL.glGenVertexArrays(1, &dbuf->vertexArray);
@@ -534,7 +534,7 @@ struct DGLDrawState
         GLData::DrawBuffer &buf = nextBuffer();
         buf.arrayData.setData(&vertices[0], sizeof(Vertex) * vertices.size(), gl::Dynamic);
 
-#if defined (DENG_HAVE_VAOS)
+#if defined (DE_HAVE_VAOS)
         GL.glBindVertexArray(buf.vertexArray);
 #else
         for (uint i = 0; i < NUM_VERTEX_ATTRIB_ARRAYS; ++i)
@@ -563,7 +563,7 @@ struct DGLDrawState
     {
         auto &GL = LIBGUI_GL;
 
-#if defined (DENG_HAVE_VAOS)
+#if defined (DE_HAVE_VAOS)
         GL.glBindVertexArray(0);
 #else
         for (uint i = 0; i < NUM_VERTEX_ATTRIB_ARRAYS; ++i)
@@ -721,9 +721,9 @@ void DGL_CurrentColor(float *rgba)
 }
 
 #undef DGL_Color3ub
-DENG_EXTERN_C void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
+DE_EXTERN_C void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     dglDraw.currentVertex.color[0] = r;
     dglDraw.currentVertex.color[1] = g;
@@ -732,9 +732,9 @@ DENG_EXTERN_C void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
 }
 
 #undef DGL_Color3ubv
-DENG_EXTERN_C void DGL_Color3ubv(DGLubyte const *vec)
+DE_EXTERN_C void DGL_Color3ubv(DGLubyte const *vec)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     dglDraw.currentVertex.color[0] = vec[0];
     dglDraw.currentVertex.color[1] = vec[1];
@@ -743,9 +743,9 @@ DENG_EXTERN_C void DGL_Color3ubv(DGLubyte const *vec)
 }
 
 #undef DGL_Color4ub
-DENG_EXTERN_C void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
+DE_EXTERN_C void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     dglDraw.currentVertex.color[0] = r;
     dglDraw.currentVertex.color[1] = g;
@@ -754,9 +754,9 @@ DENG_EXTERN_C void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
 }
 
 #undef DGL_Color4ubv
-DENG_EXTERN_C void DGL_Color4ubv(DGLubyte const *vec)
+DE_EXTERN_C void DGL_Color4ubv(DGLubyte const *vec)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     dglDraw.currentVertex.color[0] = vec[0];
     dglDraw.currentVertex.color[1] = vec[1];
@@ -765,9 +765,9 @@ DENG_EXTERN_C void DGL_Color4ubv(DGLubyte const *vec)
 }
 
 #undef DGL_Color3f
-DENG_EXTERN_C void DGL_Color3f(float r, float g, float b)
+DE_EXTERN_C void DGL_Color3f(float r, float g, float b)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     const auto color = DGLDrawState::colorFromFloat({r, g, b, 1.f});
     dglDraw.currentVertex.color[0] = color.x;
@@ -777,9 +777,9 @@ DENG_EXTERN_C void DGL_Color3f(float r, float g, float b)
 }
 
 #undef DGL_Color3fv
-DENG_EXTERN_C void DGL_Color3fv(float const *vec)
+DE_EXTERN_C void DGL_Color3fv(float const *vec)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     const auto color = DGLDrawState::colorFromFloat({Vec3f(vec), 1.f});
     dglDraw.currentVertex.color[0] = color.x;
@@ -789,9 +789,9 @@ DENG_EXTERN_C void DGL_Color3fv(float const *vec)
 }
 
 #undef DGL_Color4f
-DENG_EXTERN_C void DGL_Color4f(float r, float g, float b, float a)
+DE_EXTERN_C void DGL_Color4f(float r, float g, float b, float a)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     const auto color = DGLDrawState::colorFromFloat({r, g, b, a});
     dglDraw.currentVertex.color[0] = color.x;
@@ -801,9 +801,9 @@ DENG_EXTERN_C void DGL_Color4f(float r, float g, float b, float a)
 }
 
 #undef DGL_Color4fv
-DENG_EXTERN_C void DGL_Color4fv(float const *vec)
+DE_EXTERN_C void DGL_Color4fv(float const *vec)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     const auto color = DGLDrawState::colorFromFloat(vec);
     dglDraw.currentVertex.color[0] = color.x;
@@ -813,10 +813,10 @@ DENG_EXTERN_C void DGL_Color4fv(float const *vec)
 }
 
 #undef DGL_TexCoord2f
-DENG_EXTERN_C void DGL_TexCoord2f(byte target, float s, float t)
+DE_EXTERN_C void DGL_TexCoord2f(byte target, float s, float t)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG2_ASSERT(target < MAX_TEX_COORDS);
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT(target < MAX_TEX_COORDS);
 
     if (target < MAX_TEX_COORDS)
     {
@@ -826,10 +826,10 @@ DENG_EXTERN_C void DGL_TexCoord2f(byte target, float s, float t)
 }
 
 #undef DGL_TexCoord2fv
-DENG_EXTERN_C void DGL_TexCoord2fv(byte target, float const *vec)
+DE_EXTERN_C void DGL_TexCoord2fv(byte target, float const *vec)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG2_ASSERT(target < MAX_TEX_COORDS);
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT(target < MAX_TEX_COORDS);
 
     if (target < MAX_TEX_COORDS)
     {
@@ -839,9 +839,9 @@ DENG_EXTERN_C void DGL_TexCoord2fv(byte target, float const *vec)
 }
 
 #undef DGL_Vertex2f
-DENG_EXTERN_C void DGL_Vertex2f(float x, float y)
+DE_EXTERN_C void DGL_Vertex2f(float x, float y)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     dglDraw.currentVertex.vertex[0] = x;
     dglDraw.currentVertex.vertex[1] = y;
@@ -850,9 +850,9 @@ DENG_EXTERN_C void DGL_Vertex2f(float x, float y)
 }
 
 #undef DGL_Vertex2fv
-DENG_EXTERN_C void DGL_Vertex2fv(const float* vec)
+DE_EXTERN_C void DGL_Vertex2fv(const float* vec)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     if (vec)
     {
@@ -864,9 +864,9 @@ DENG_EXTERN_C void DGL_Vertex2fv(const float* vec)
 }
 
 #undef DGL_Vertex3f
-DENG_EXTERN_C void DGL_Vertex3f(float x, float y, float z)
+DE_EXTERN_C void DGL_Vertex3f(float x, float y, float z)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     dglDraw.currentVertex.vertex[0] = x;
     dglDraw.currentVertex.vertex[1] = y;
@@ -876,9 +876,9 @@ DENG_EXTERN_C void DGL_Vertex3f(float x, float y, float z)
 }
 
 #undef DGL_Vertex3fv
-DENG_EXTERN_C void DGL_Vertex3fv(const float* vec)
+DE_EXTERN_C void DGL_Vertex3fv(const float* vec)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     if (vec)
     {
@@ -890,9 +890,9 @@ DENG_EXTERN_C void DGL_Vertex3fv(const float* vec)
 }
 
 #undef DGL_Vertices2ftv
-DENG_EXTERN_C void DGL_Vertices2ftv(int num, const dgl_ft2vertex_t* vec)
+DE_EXTERN_C void DGL_Vertices2ftv(int num, const dgl_ft2vertex_t* vec)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     for(; num > 0; num--, vec++)
     {
@@ -902,10 +902,10 @@ DENG_EXTERN_C void DGL_Vertices2ftv(int num, const dgl_ft2vertex_t* vec)
 }
 
 #undef DGL_Vertices3ftv
-DENG_EXTERN_C void DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec)
+DE_EXTERN_C void DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     for(; num > 0; num--, vec++)
     {
@@ -915,10 +915,10 @@ DENG_EXTERN_C void DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec)
 }
 
 #undef DGL_Vertices3fctv
-DENG_EXTERN_C void DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec)
+DE_EXTERN_C void DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     for(; num > 0; num--, vec++)
     {
@@ -929,41 +929,41 @@ DENG_EXTERN_C void DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec)
 }
 
 #undef DGL_Begin
-DENG_EXTERN_C void DGL_Begin(dglprimtype_t mode)
+DE_EXTERN_C void DGL_Begin(dglprimtype_t mode)
 {
     if (novideo) return;
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     dglDraw.beginPrimitive(mode);
 }
 
 void DGL_AssertNotInPrimitive(void)
 {
-    DENG_ASSERT(dglDraw.primType == DGL_NO_PRIMITIVE);
+    DE_ASSERT(dglDraw.primType == DGL_NO_PRIMITIVE);
 }
 
 #undef DGL_End
-DENG_EXTERN_C void DGL_End(void)
+DE_EXTERN_C void DGL_End(void)
 {
     if (novideo) return;
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     dglDraw.endPrimitive();
 }
 
 #undef DGL_DrawLine
-DENG_EXTERN_C void DGL_DrawLine(float x1, float y1, float x2, float y2, float r,
+DE_EXTERN_C void DGL_DrawLine(float x1, float y1, float x2, float y2, float r,
     float g, float b, float a)
 {
     GL_DrawLine(x1, y1, x2, y2, r, g, b, a);
 }
 
 #undef DGL_DrawRect
-DENG_EXTERN_C void DGL_DrawRect(RectRaw const *rect)
+DE_EXTERN_C void DGL_DrawRect(RectRaw const *rect)
 {
     if (!rect) return;
     GL_DrawRect(Rectanglei::fromSize(Vec2i(rect->origin.xy),
@@ -971,59 +971,59 @@ DENG_EXTERN_C void DGL_DrawRect(RectRaw const *rect)
 }
 
 #undef DGL_DrawRect2
-DENG_EXTERN_C void DGL_DrawRect2(int x, int y, int w, int h)
+DE_EXTERN_C void DGL_DrawRect2(int x, int y, int w, int h)
 {
     GL_DrawRect2(x, y, w, h);
 }
 
 #undef DGL_DrawRectf
-DENG_EXTERN_C void DGL_DrawRectf(RectRawf const *rect)
+DE_EXTERN_C void DGL_DrawRectf(RectRawf const *rect)
 {
     GL_DrawRectf(rect);
 }
 
 #undef DGL_DrawRectf2
-DENG_EXTERN_C void DGL_DrawRectf2(double x, double y, double w, double h)
+DE_EXTERN_C void DGL_DrawRectf2(double x, double y, double w, double h)
 {
     GL_DrawRectf2(x, y, w, h);
 }
 
 #undef DGL_DrawRectf2Color
-DENG_EXTERN_C void DGL_DrawRectf2Color(double x, double y, double w, double h, float r, float g, float b, float a)
+DE_EXTERN_C void DGL_DrawRectf2Color(double x, double y, double w, double h, float r, float g, float b, float a)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_IN_MAIN_THREAD();
 
     DGL_Color4f(r, g, b, a);
     GL_DrawRectf2(x, y, w, h);
 }
 
 #undef DGL_DrawRectf2Tiled
-DENG_EXTERN_C void DGL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th)
+DE_EXTERN_C void DGL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th)
 {
     GL_DrawRectf2Tiled(x, y, w, h, tw, th);
 }
 
 #undef DGL_DrawCutRectfTiled
-DENG_EXTERN_C void DGL_DrawCutRectfTiled(RectRawf const *rect, int tw, int th, int txoff, int tyoff,
+DE_EXTERN_C void DGL_DrawCutRectfTiled(RectRawf const *rect, int tw, int th, int txoff, int tyoff,
     RectRawf const *cutRect)
 {
     GL_DrawCutRectfTiled(rect, tw, th, txoff, tyoff, cutRect);
 }
 
 #undef DGL_DrawCutRectf2Tiled
-DENG_EXTERN_C void DGL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int th,
+DE_EXTERN_C void DGL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int th,
     int txoff, int tyoff, double cx, double cy, double cw, double ch)
 {
     GL_DrawCutRectf2Tiled(x, y, w, h, tw, th, txoff, tyoff, cx, cy, cw, ch);
 }
 
 #undef DGL_DrawQuadOutline
-DENG_EXTERN_C void DGL_DrawQuadOutline(Point2Raw const *tl, Point2Raw const *tr,
+DE_EXTERN_C void DGL_DrawQuadOutline(Point2Raw const *tl, Point2Raw const *tr,
     Point2Raw const *br, Point2Raw const *bl, float const color[4])
 {
     if(!tl || !tr || !br || !bl || (color && !(color[CA] > 0))) return;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_IN_MAIN_THREAD();
 
     if(color) DGL_Color4fv(color);
     DGL_Begin(DGL_LINE_STRIP);
@@ -1036,7 +1036,7 @@ DENG_EXTERN_C void DGL_DrawQuadOutline(Point2Raw const *tl, Point2Raw const *tr,
 }
 
 #undef DGL_DrawQuad2Outline
-DENG_EXTERN_C void DGL_DrawQuad2Outline(int tlX, int tlY, int trX, int trY,
+DE_EXTERN_C void DGL_DrawQuad2Outline(int tlX, int tlY, int trX, int trY,
     int brX, int brY, int blX, int blY, const float color[4])
 {
     Point2Raw tl, tr, bl, br;

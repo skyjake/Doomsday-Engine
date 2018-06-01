@@ -157,7 +157,7 @@ ColorTable ColorTableReader::read(String format, int colorCount,
     return colors;
 }
 
-DENG2_PIMPL(ColorPalette)
+DE_PIMPL(ColorPalette)
 {
     typedef Vec3ub Color;
     typedef QVector<Color> ColorTable;
@@ -190,7 +190,7 @@ DENG2_PIMPL(ColorPalette)
 
     void notifyColorTableChanged()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(ColorTableChange, i)
+        DE_FOR_PUBLIC_AUDIENCE(ColorTableChange, i)
         {
             i->colorPaletteColorTableChanged(self());
         }
@@ -339,7 +339,7 @@ void ColorPalette::newTranslation(String xlatId, Translation const &mappings)
         return;
     }
 
-    DENG2_ASSERT(mappings.count() == colorCount()); // sanity check
+    DE_ASSERT(mappings.count() == colorCount()); // sanity check
 
     if (!xlatId.isEmpty())
     {

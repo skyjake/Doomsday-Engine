@@ -21,14 +21,14 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_FILETYPE_H
-#define LIBDENG_FILETYPE_H
+#ifndef DE_FILETYPE_H
+#define DE_FILETYPE_H
 
 #include "../libdoomsday.h"
 #include "../resource/resourceclass.h"
 
 #ifdef __cplusplus
-#ifndef DENG2_C_API_ONLY
+#ifndef DE_C_API_ONLY
 
 #include <QStringList>
 #include <QMap>
@@ -190,7 +190,7 @@ LIBDOOMSDAY_PUBLIC de::FileType const &DD_GuessFileTypeFromFileName(de::String n
 /// Returns the registered file types for efficient traversal.
 LIBDOOMSDAY_PUBLIC de::FileTypes &DD_FileTypes();
 
-#endif // DENG2_C_API_ONLY
+#endif // DE_C_API_ONLY
 #endif // __cplusplus
 
-#endif /* LIBDENG_FILETYPE_H */
+#endif /* DE_FILETYPE_H */

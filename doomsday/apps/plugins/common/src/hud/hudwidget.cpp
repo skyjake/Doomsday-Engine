@@ -27,7 +27,7 @@
 using namespace de;
 using namespace common;
 
-DENG2_PIMPL_NOREF(HudWidget)
+DE_PIMPL_NOREF(HudWidget)
 {
     uiwidgetid_t id = 0;              ///< Unique identifier associated with this widget.
     dint alignFlags = ALIGN_TOPLEFT;  ///< @ref alignmentFlags
@@ -76,7 +76,7 @@ void HudWidget::setPlayer(int newPlayer)
 
 Rect &HudWidget::geometry() const
 {
-    DENG2_ASSERT(d->geometry);
+    DE_ASSERT(d->geometry);
     return *d->geometry;
 }
 

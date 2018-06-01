@@ -66,7 +66,7 @@ using namespace de;
 
 D_CMD(CheatGod)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(G_GameState() == GS_MAP)
     {
@@ -116,7 +116,7 @@ D_CMD(CheatGod)
 
 D_CMD(CheatNoClip)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(G_GameState() == GS_MAP)
     {
@@ -173,7 +173,7 @@ static int suicideResponse(msgresponse_t response, int /*userValue*/, void * /*u
 
 D_CMD(CheatSuicide)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(G_GameState() == GS_MAP)
     {
@@ -210,7 +210,7 @@ D_CMD(CheatSuicide)
 
 D_CMD(CheatReveal)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     if(IS_NETGAME && !IS_NETWORK_SERVER)
         return false;
@@ -263,7 +263,7 @@ static void togglePower(player_t* player, powertype_t powerType)
 
 D_CMD(CheatGive)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(G_GameState() != GS_MAP)
     {
@@ -466,7 +466,7 @@ D_CMD(CheatGive)
 
 D_CMD(CheatMassacre)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
     App_Log(DE2_LOG_MAP, "%i monsters killed", P_Massacre());
     return true;
 }
@@ -476,7 +476,7 @@ D_CMD(CheatMassacre)
 
 static void printDebugInfo(player_t *plr)
 {
-    DENG2_ASSERT(plr != 0);
+    DE_ASSERT(plr != 0);
 
     if(G_GameState() != GS_MAP)
         return;
@@ -517,7 +517,7 @@ static void printDebugInfo(player_t *plr)
 
 D_CMD(CheatWhere)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
     printDebugInfo(&players[CONSOLEPLAYER]);
     return true;
 }

@@ -34,7 +34,7 @@ class SaveSlots
 {
 public:
     /// A missing/unknown slot was referenced. @ingroup errors
-    DENG2_ERROR(MissingSlotError);
+    DE_ERROR(MissingSlotError);
 
     /**
      * Logical save slot.
@@ -100,7 +100,7 @@ public:
         friend class SaveSlots;
         void setGameStateFolder(GameStateFolder *newSession);
 
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
 public:
@@ -189,7 +189,7 @@ public:
     static void consoleRegister();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef SaveSlots::Slot SaveSlot;

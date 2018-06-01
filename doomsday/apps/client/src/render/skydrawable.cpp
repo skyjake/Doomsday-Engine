@@ -187,7 +187,7 @@ struct Hemisphere
     void draw(SphereComponent hemisphere, Sky const &sky, dint firstActiveLayer,
               LayerData const *layerData) const
     {
-        DENG2_ASSERT(layerData);
+        DE_ASSERT(layerData);
 
         if (verts.isEmpty()) return;
         if (firstActiveLayer < 0) return;
@@ -309,7 +309,7 @@ struct Hemisphere
      */
     void makeVertices(float height, float horizonOffset)
     {
-        DENG2_ASSERT(height > 0);
+        DE_ASSERT(height > 0);
 
         rows    = de::max(sphereRows,   1);
         columns = de::max(sphereDetail, 1) * 4;
@@ -341,10 +341,10 @@ static Hemisphere hemisphere;
 } // namespace internal
 using namespace ::internal;
 
-DENG2_PIMPL(SkyDrawable)
-, DENG2_OBSERVES(Sky, Deletion)
-, DENG2_OBSERVES(Sky, HeightChange)
-, DENG2_OBSERVES(Sky, HorizonOffsetChange)
+DE_PIMPL(SkyDrawable)
+, DE_OBSERVES(Sky, Deletion)
+, DE_OBSERVES(Sky, HeightChange)
+, DE_OBSERVES(Sky, HorizonOffsetChange)
 {
     Sky const *sky = nullptr;
 
@@ -662,10 +662,10 @@ FrameModelDef *SkyDrawable::modelDef(int modelIndex) const
 
 void SkyDrawable::draw(Animator const *animator) const
 {
-    DENG2_ASSERT(animator);
-    DENG2_ASSERT(&animator->sky() == this && d->sky == animator->sky().sky());
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT(animator);
+    DE_ASSERT(&animator->sky() == this && d->sky == animator->sky().sky());
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     d->prepare(animator);
 
@@ -702,7 +702,7 @@ void SkyDrawable::consoleRegister() // static
 
 //---------------------------------------------------------------------------------------
 
-DENG2_PIMPL_NOREF(SkyDrawable::Animator)
+DE_PIMPL_NOREF(SkyDrawable::Animator)
 {
     SkyDrawable *sky = nullptr;
 
@@ -756,7 +756,7 @@ void SkyDrawable::Animator::setSky(SkyDrawable *sky)
 
 SkyDrawable &SkyDrawable::Animator::sky() const
 {
-    DENG2_ASSERT(d->sky);
+    DE_ASSERT(d->sky);
     return *d->sky;
 }
 

@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_COMPILEDRECORD_H
-#define LIBDENG2_COMPILEDRECORD_H
+#ifndef LIBCORE_COMPILEDRECORD_H
+#define LIBCORE_COMPILEDRECORD_H
 
 #include <de/Record>
 
@@ -30,7 +30,7 @@ namespace de {
  * but modified seldom. This is typically the case when Records are being created
  * by native code for specific purposes (as opposed to Records created within scripts).
  */
-class DENG2_PUBLIC CompiledRecord : public Record
+class DE_PUBLIC CompiledRecord : public Record
 {
 public:
     virtual ~CompiledRecord();
@@ -73,4 +73,4 @@ protected:
 
 } // namespace de
 
-#endif // LIBDENG2_COMPILEDRECORD_H
+#endif // LIBCORE_COMPILEDRECORD_H

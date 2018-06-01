@@ -33,7 +33,7 @@
 #  define LIBGUI_ASSERT_GL_OK()
 #endif
 
-#define LIBGUI_ASSERT_GL_CONTEXT_ACTIVE()  DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr)
+#define LIBGUI_ASSERT_GL_CONTEXT_ACTIVE()  DE_ASSERT(QOpenGLContext::currentContext() != nullptr)
 
 namespace de {
 
@@ -45,7 +45,7 @@ namespace de {
 class LIBGUI_PUBLIC GLInfo
 {
 public:
-    DENG2_ERROR(InitError);
+    DE_ERROR(InitError);
 
     /// Extension availability bits.
     struct Extensions
@@ -77,7 +77,7 @@ public:
         duint32 Windows_EXT_swap_control : 1;
 #endif
 
-#ifdef DENG_X11
+#ifdef DE_X11
         duint32 X11_EXT_swap_control : 1;
         duint32 X11_SGI_swap_control : 1;
         duint32 X11_MESA_swap_control : 1;
@@ -117,7 +117,7 @@ public:
     //static QOpenGLExtension_EXT_framebuffer_blit        *EXT_framebuffer_blit();
     //static QOpenGLExtension_EXT_framebuffer_multisample *EXT_framebuffer_multisample();
     //static QOpenGLExtension_EXT_framebuffer_object      *EXT_framebuffer_object();
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     static QOpenGLExtension_NV_framebuffer_multisample_coverage
                                                         *NV_framebuffer_multisample_coverage();
 #endif
@@ -128,7 +128,7 @@ public:
     static void checkError(char const *file, int line);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

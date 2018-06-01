@@ -32,7 +32,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(ResourceManifest)
+DE_PIMPL(ResourceManifest)
 {
     resourceclassid_t classId;
 
@@ -103,8 +103,8 @@ enum lumpsizecondition_t
  */
 static void checkSizeConditionInIdentityKey(String &idKey, lumpsizecondition_t *pCond, size_t *pSize)
 {
-    DENG_ASSERT(pCond != 0);
-    DENG_ASSERT(pSize != 0);
+    DE_ASSERT(pCond != 0);
+    DE_ASSERT(pSize != 0);
 
     *pCond = LSCOND_NONE;
     *pSize = 0;
@@ -207,7 +207,7 @@ static bool validateWad(String const &filePath, QStringList const &identityKeys)
                     }
 
                     // Check each lump.
-                    DENG2_FOR_EACH_CONST(QStringList, i, identityKeys)
+                    DE_FOR_EACH_CONST(QStringList, i, identityKeys)
                     {
                         if (lumpNumForIdentityKey(lumpIndex, *i) < 0)
                         {

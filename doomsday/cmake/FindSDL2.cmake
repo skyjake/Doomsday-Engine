@@ -10,7 +10,7 @@ elseif (WIN32)
     find_library (SDL2_LIBRARY SDL2
         PATHS ${SDL2_DIR}
         HINTS ${_hints} ENV DENG_DEPEND_PATH
-        PATH_SUFFIXES lib/${DENG_ARCH} lib
+        PATH_SUFFIXES lib/${DE_ARCH} lib
     )
     mark_as_advanced (SDL2_LIBRARY)
     if (NOT SDL2_LIBRARY)
@@ -39,7 +39,7 @@ elseif (WIN32)
     find_library (SDL2_MIXER_LIBRARY SDL2_mixer
         PATHS ${SDL2_DIR} ${SDL2_MIXER_DIR}
         HINTS ${_hints} ENV DENG_DEPEND_PATH
-        PATH_SUFFIXES lib/${DENG_ARCH} lib
+        PATH_SUFFIXES lib/${DE_ARCH} lib
     )
     mark_as_advanced (SDL2_MIXER_LIBRARY)
     if (NOT _oldPath STREQUAL SDL2_MIXER_LIBRARY)
@@ -64,10 +64,10 @@ elseif (WIN32)
 endif ()
 
 if (NOT TARGET SDL2)
-    add_definitions (-DDENG_NO_SDL=1)
+    add_definitions (-DDE_NO_SDL=1)
     message (STATUS "SDL2 disabled (not found).")
 endif ()
 if (NOT TARGET SDL2_mixer)
-    add_definitions (-DDENG_DISABLE_SDLMIXER=1)
+    add_definitions (-DDE_DISABLE_SDLMIXER=1)
     message (STATUS "SDL2_mixer disabled (not found).")
 endif ()

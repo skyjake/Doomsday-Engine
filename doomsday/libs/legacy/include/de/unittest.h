@@ -20,20 +20,20 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_UNIT_TEST_H
-#define LIBDENG_UNIT_TEST_H
+#ifndef DE_UNIT_TEST_H
+#define DE_UNIT_TEST_H
 
 /// @addtogroup legacy
 /// @{
 
 #ifdef _DEBUG
-#  define LIBDENG_RUN_UNITTEST(Name)    int testResult_##Name = UNITTEST_##Name();
+#  define DE_RUN_UNITTEST(Name)    int testResult_##Name = UNITTEST_##Name();
 #else
-#  define LIBDENG_RUN_UNITTEST(Name)
+#  define DE_RUN_UNITTEST(Name)
 #endif
 
-#define LIBDENG_DEFINE_UNITTEST(Name)   static int UNITTEST_##Name(void)
+#define DE_DEFINE_UNITTEST(Name)   static int UNITTEST_##Name(void)
 
 /// @}
 
-#endif // LIBDENG_UNIT_TEST_H
+#endif // DE_UNIT_TEST_H

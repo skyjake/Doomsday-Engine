@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_NO_API_MACROS_FONT_RENDER
+#define DE_NO_API_MACROS_FONT_RENDER
 
 #include "de_base.h"
 #include "render/rend_font.h"
@@ -515,6 +515,10 @@ struct TextFragment
             }
 
             if (length > 0)
+{
+    DE_ASSERT(fragment != 0);
+
+    if (fr.fontNum == 0)
             {
                 width += currentAttribs()->tracking * (length - 1);
             }
@@ -558,6 +562,9 @@ struct TextFragment
 
 static void drawTextFragment(const TextFragment &fragment)
 {
+    DE_ASSERT(fragment != 0 && fragment[0]);
+
+    AbstractFont *font = &App_Resources().font(fr.fontNum);
     fr_state_attributes_t* sat = currentAttribs();
     bool noTypein = (fragment.textFlags & DTF_NO_TYPEIN) != 0;
 
@@ -1314,8 +1321,8 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, ui
         FR_TextSize(&textSize, text);
     }
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     // We need to change the current color, so remember for restore.
     DGL_CurrentColor(origColor);
@@ -1621,7 +1628,7 @@ void FR_Init(void)
 }
 
 #undef Fonts_ResolveUri
-DENG_EXTERN_C fontid_t Fonts_ResolveUri(uri_s const *uri)
+DE_EXTERN_C fontid_t Fonts_ResolveUri(uri_s const *uri)
 {
     if (!uri) return NOFONTID;
     try
@@ -1633,7 +1640,7 @@ DENG_EXTERN_C fontid_t Fonts_ResolveUri(uri_s const *uri)
     return NOFONTID;
 }
 
-DENG_DECLARE_API(FR) =
+DE_DECLARE_API(FR) =
 {
     { DE_API_FONT_RENDER },
     Fonts_ResolveUri,

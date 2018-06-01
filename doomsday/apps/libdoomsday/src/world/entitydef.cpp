@@ -47,7 +47,7 @@ static void clearEntityDefs()
     ::entityDefs->forAll([] (StringPool::Id id)
     {
         auto *def = static_cast<MapEntityDef *>( ::entityDefs->userPointer(id) );
-        DENG2_ASSERT(def);
+        DE_ASSERT(def);
         for (duint i = 0; i < def->numProps; ++i)
         {
             M_Free(def->props[i].name);
@@ -104,7 +104,7 @@ AutoStr *P_NameForMapEntityDef(MapEntityDef const *def)
 int MapEntityDef_Property(MapEntityDef *def, int propertyId,
                           MapEntityPropertyDef **retDef = 0)
 {
-    DENG2_ASSERT(def);
+    DE_ASSERT(def);
     MapEntityPropertyDef *found = 0;
     for (uint i = 0; i < def->numProps; ++i)
     {
@@ -122,7 +122,7 @@ int MapEntityDef_Property(MapEntityDef *def, int propertyId,
 int MapEntityDef_PropertyByName(MapEntityDef *def, char const *propertyName,
                                 MapEntityPropertyDef **retDef)
 {
-    DENG2_ASSERT(def);
+    DE_ASSERT(def);
     MapEntityPropertyDef *found = 0;
     if (propertyName && propertyName[0])
     {
@@ -143,7 +143,7 @@ int MapEntityDef_PropertyByName(MapEntityDef *def, char const *propertyName,
 void MapEntityDef_AddProperty(MapEntityDef* def, int propertyId, const char* propertyName,
                               valuetype_t type)
 {
-    DENG2_ASSERT(def);
+    DE_ASSERT(def);
 
     if (propertyId == 0) // Not a valid identifier.
         throw Error("MapEntityDef_AddProperty", "0 is not a valid propertyId");
@@ -246,12 +246,12 @@ static MapEntityDef *findMapEntityDef(int identifier, char const *entityName,
     return def;
 }
 
-DENG_EXTERN_C dd_bool P_RegisterMapObj(int identifier, char const *name)
+DE_EXTERN_C dd_bool P_RegisterMapObj(int identifier, char const *name)
 {
     return findMapEntityDef(identifier, name, true /*do create*/) != 0;
 }
 
-DENG_EXTERN_C dd_bool P_RegisterMapObjProperty(int entityId, int propertyId,
+DE_EXTERN_C dd_bool P_RegisterMapObjProperty(int entityId, int propertyId,
                                                char const *propertyName, valuetype_t type)
 {
     try
@@ -343,37 +343,37 @@ Type getEntityValue(int entityId, int elementIndex, int propertyId)
     }
 }
 
-DENG_EXTERN_C byte P_GetGMOByte(int entityId, int elementIndex, int propertyId)
+DE_EXTERN_C byte P_GetGMOByte(int entityId, int elementIndex, int propertyId)
 {
     return getEntityValue<byte, DDVT_BYTE>(entityId, elementIndex, propertyId);
 }
 
-DENG_EXTERN_C short P_GetGMOShort(int entityId, int elementIndex, int propertyId)
+DE_EXTERN_C short P_GetGMOShort(int entityId, int elementIndex, int propertyId)
 {
     return getEntityValue<short, DDVT_SHORT>(entityId, elementIndex, propertyId);
 }
 
-DENG_EXTERN_C int P_GetGMOInt(int entityId, int elementIndex, int propertyId)
+DE_EXTERN_C int P_GetGMOInt(int entityId, int elementIndex, int propertyId)
 {
     return getEntityValue<int, DDVT_INT>(entityId, elementIndex, propertyId);
 }
 
-DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, int elementIndex, int propertyId)
+DE_EXTERN_C fixed_t P_GetGMOFixed(int entityId, int elementIndex, int propertyId)
 {
     return getEntityValue<fixed_t, DDVT_FIXED>(entityId, elementIndex, propertyId);
 }
 
-DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, int elementIndex, int propertyId)
+DE_EXTERN_C angle_t P_GetGMOAngle(int entityId, int elementIndex, int propertyId)
 {
     return getEntityValue<angle_t, DDVT_ANGLE>(entityId, elementIndex, propertyId);
 }
 
-DENG_EXTERN_C float P_GetGMOFloat(int entityId, int elementIndex, int propertyId)
+DE_EXTERN_C float P_GetGMOFloat(int entityId, int elementIndex, int propertyId)
 {
     return getEntityValue<float, DDVT_FLOAT>(entityId, elementIndex, propertyId);
 }
 
-DENG_EXTERN_C double P_GetGMODouble(int entityId, int elementIndex, int propertyId)
+DE_EXTERN_C double P_GetGMODouble(int entityId, int elementIndex, int propertyId)
 {
     return getEntityValue<double, DDVT_DOUBLE>(entityId, elementIndex, propertyId);
 }

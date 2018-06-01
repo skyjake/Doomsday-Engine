@@ -67,12 +67,12 @@ static void handleAppTerminate(char const *msg)
     qFatal("Application terminated due to exception:\n%s\n", msg);
 }
 
-DENG2_PIMPL(ServerApp)
-, DENG2_OBSERVES(Plugins, PublishAPI)
-, DENG2_OBSERVES(DoomsdayApp, GameUnload)
-, DENG2_OBSERVES(DoomsdayApp, ConsoleRegistration)
-, DENG2_OBSERVES(DoomsdayApp, PeriodicAutosave)
-, DENG2_OBSERVES(PackageLoader, Activity)
+DE_PIMPL(ServerApp)
+, DE_OBSERVES(Plugins, PublishAPI)
+, DE_OBSERVES(DoomsdayApp, GameUnload)
+, DE_OBSERVES(DoomsdayApp, ConsoleRegistration)
+, DE_OBSERVES(DoomsdayApp, PeriodicAutosave)
+, DE_OBSERVES(PackageLoader, Activity)
 {
     QScopedPointer<ServerSystem> serverSystem;
     QScopedPointer<Resources> resources;
@@ -378,7 +378,7 @@ void ServerApp::unloadGame(GameProfile const &upcomingGame)
 
 ServerApp &ServerApp::app()
 {
-    DENG2_ASSERT(serverAppSingleton != 0);
+    DE_ASSERT(serverAppSingleton != 0);
     return *serverAppSingleton;
 }
 

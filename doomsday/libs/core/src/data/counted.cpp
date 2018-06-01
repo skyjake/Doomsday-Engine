@@ -21,9 +21,9 @@
 
 namespace de {
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
 std::atomic_int Counted::totalCount { 0 }; ///< Should return back to zero when program ends.
-# ifdef DENG_USE_COUNTED_TRACING
+# ifdef DE_USE_COUNTED_TRACING
 static QHash<void *, QByteArray> countedAllocs;
 void Counted::printAllocs()
 {
@@ -39,11 +39,11 @@ void Counted::printAllocs()
 
 Counted::Counted() : _refCount(1)
 {
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     totalCount++;
-# ifdef DENG_USE_COUNTED_TRACING
+# ifdef DE_USE_COUNTED_TRACING
     QString trace;
-    DENG2_BACKTRACE(32, trace);
+    DE_BACKTRACE(32, trace);
     countedAllocs[this] = trace.toLatin1();
 # endif
 #endif
@@ -51,21 +51,21 @@ Counted::Counted() : _refCount(1)
 
 Counted::~Counted()
 {
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     totalCount--;
-# ifdef DENG_USE_COUNTED_TRACING
+# ifdef DE_USE_COUNTED_TRACING
     countedAllocs.remove(this);
 # endif
 #endif
 
-    DENG2_ASSERT(_refCount == 0);
+    DE_ASSERT(_refCount == 0);
 }
 
 void Counted::release() const
 {
     //qDebug() << "Counted" << c << typeid(*c).name() << "ref dec'd to" << c->_refCount - 1;
 
-    DENG2_ASSERT(_refCount > 0);
+    DE_ASSERT(_refCount > 0);
     if (!--_refCount)
     {
         delete this;
@@ -74,7 +74,7 @@ void Counted::release() const
 
 void Counted::addRef(dint count) const
 {
-    DENG2_ASSERT(_refCount >= 0);
+    DE_ASSERT(_refCount >= 0);
     _refCount += count;
 }
 

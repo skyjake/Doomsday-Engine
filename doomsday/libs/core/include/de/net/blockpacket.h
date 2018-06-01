@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_BLOCKPACKET_H
-#define LIBDENG2_BLOCKPACKET_H
+#ifndef LIBCORE_BLOCKPACKET_H
+#define LIBCORE_BLOCKPACKET_H
 
 #include "../Packet"
 #include "../Block"
@@ -29,7 +29,7 @@ namespace de {
  *
  * @ingroup protocol
  */
-class DENG2_PUBLIC BlockPacket : public Packet, private Block
+class DE_PUBLIC BlockPacket : public Packet, private Block
 {
 public:
     BlockPacket();
@@ -50,4 +50,4 @@ public:
 
 } // namespace de
 
-#endif // LIBDENG2_BLOCKPACKET_H
+#endif // LIBCORE_BLOCKPACKET_H

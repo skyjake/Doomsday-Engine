@@ -22,7 +22,7 @@
 
 namespace de {
 
-DENG2_PIMPL(VRConfig)
+DE_PIMPL(VRConfig)
 {
     StereoMode mode;
     Eye currentEye = NeitherEye;

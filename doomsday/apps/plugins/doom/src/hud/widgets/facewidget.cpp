@@ -52,7 +52,7 @@ using namespace de;
 static patchid_t pFaces[FACE_COUNT];
 static patchid_t pBackground[NUMTEAMS];
 
-DENG2_PIMPL_NOREF(guidata_face_t)
+DE_PIMPL_NOREF(guidata_face_t)
 {
     dint faceTicks = 0;  ///< Count until face changes.
     dint faceIndex = 0;  ///< Current face index, used by wFaces.
@@ -444,5 +444,5 @@ void guidata_face_t::prepareAssets()  // static
     ::pFaces[idx++] = R_DeclarePatch("STFGOD0");
     ::pFaces[idx++] = R_DeclarePatch("STFDEAD0");
 
-    DENG_ASSERT(idx == FACE_COUNT);
+    DE_ASSERT(idx == FACE_COUNT);
 }

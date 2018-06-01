@@ -25,9 +25,9 @@
 
 using namespace de;
 
-DENG2_PIMPL(FontScheme),
-DENG2_OBSERVES(FontManifest, UniqueIdChange),
-DENG2_OBSERVES(FontManifest, Deletion)
+DE_PIMPL(FontScheme),
+DE_OBSERVES(FontManifest, UniqueIdChange),
+DE_OBSERVES(FontManifest, Deletion)
 {
     String name; ///< Symbolic.
     Index index; ///< Mappings from paths to manifests.
@@ -45,7 +45,7 @@ DENG2_OBSERVES(FontManifest, Deletion)
     ~Impl()
     {
         self().clear();
-        DENG2_ASSERT(index.isEmpty()); // sanity check.
+        DE_ASSERT(index.isEmpty()); // sanity check.
     }
 
     bool inline uniqueIdInLutRange(int uniqueId) const
@@ -82,12 +82,12 @@ DENG2_OBSERVES(FontManifest, Deletion)
     /// @pre uniqueIdMap is large enough if initialized!
     void unlinkInUniqueIdLut(Manifest const &manifest)
     {
-        DENG2_ASSERT(&manifest.scheme() == thisPublic); // sanity check.
+        DE_ASSERT(&manifest.scheme() == thisPublic); // sanity check.
         // If the lut is already considered 'dirty' do not unlink.
         if(!uniqueIdLutDirty)
         {
             int uniqueId = manifest.uniqueId();
-            DENG2_ASSERT(uniqueIdInLutRange(uniqueId));
+            DE_ASSERT(uniqueIdInLutRange(uniqueId));
             uniqueIdLut[uniqueId - uniqueIdBase] = 0;
         }
     }
@@ -95,9 +95,9 @@ DENG2_OBSERVES(FontManifest, Deletion)
     /// @pre uniqueIdLut has been initialized and is large enough!
     void linkInUniqueIdLut(Manifest &manifest)
     {
-        DENG2_ASSERT(&manifest.scheme() == thisPublic); // sanity check.
+        DE_ASSERT(&manifest.scheme() == thisPublic); // sanity check.
         int uniqueId = manifest.uniqueId();
-        DENG_ASSERT(uniqueIdInLutRange(uniqueId));
+        DE_ASSERT(uniqueIdInLutRange(uniqueId));
         uniqueIdLut[uniqueId - uniqueIdBase] = &manifest;
     }
 
@@ -122,7 +122,7 @@ DENG2_OBSERVES(FontManifest, Deletion)
         }
 
         // Fill the LUT with initial values.
-#ifdef DENG2_QT_4_7_OR_NEWER
+#ifdef DE_QT_4_7_OR_NEWER
         uniqueIdLut.reserve(lutSize);
 #endif
         int i = 0;
@@ -195,7 +195,7 @@ FontScheme::Manifest &FontScheme::declare(Path const &path)
 
     int const sizeBefore = d->index.size();
     Manifest *newManifest = &d->index.insert(path);
-    DENG2_ASSERT(newManifest != 0);
+    DE_ASSERT(newManifest != 0);
 
     if(d->index.size() != sizeBefore)
     {
@@ -206,7 +206,7 @@ FontScheme::Manifest &FontScheme::declare(Path const &path)
         newManifest->audienceForDeletion += d;
 
         // Notify interested parties that a new manifest was defined in the scheme.
-        DENG2_FOR_AUDIENCE(ManifestDefined, i) i->fontSchemeManifestDefined(*this, *newManifest);
+        DE_FOR_AUDIENCE(ManifestDefined, i) i->fontSchemeManifestDefined(*this, *newManifest);
     }
 
     return *newManifest;

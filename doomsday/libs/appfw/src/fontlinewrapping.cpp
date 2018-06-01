@@ -33,7 +33,7 @@ using namespace shell;
 
 static QChar const NEWLINE('\n');
 
-DENG2_PIMPL_NOREF(FontLineWrapping)
+DE_PIMPL_NOREF(FontLineWrapping)
 {
     Font const *font;
 
@@ -78,7 +78,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     int tabStop;
     std::atomic_bool cancelled { false };
 
-    DENG2_ERROR(CancelError);
+    DE_ERROR(CancelError);
 
     Impl() : font(0), maxWidth(0), indent(0), tabStop(0) {}
 
@@ -316,7 +316,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     Lines wrapRange(Rangei const &rangeToWrap, int maxWidth, int subsequentMaxWidth = 0,
                     int initialIndent = 0)
     {
-        int const MIN_LINE_WIDTH = roundi(150.f * DENG2_BASE_GUI_APP->pixelRatio().value());
+        int const MIN_LINE_WIDTH = roundi(150.f * DE_BASE_GUI_APP->pixelRatio().value());
         bool const isTabbed = (subsequentMaxWidth > 0);
 
         indent    = initialIndent;
@@ -399,7 +399,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
                     }
                 }
 
-                DENG2_ASSERT(end > begin);
+                DE_ASSERT(end > begin);
 
                 // If there is only whitespace remaining on the line,
                 // just use the max wrap -- blank lines are not pretty.
@@ -524,16 +524,16 @@ FontLineWrapping::FontLineWrapping() : d(new Impl)
 
 void FontLineWrapping::setFont(Font const &font)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     d->font = &font;
 }
 
 Font const &FontLineWrapping::font() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
-    DENG2_ASSERT(hasFont());
+    DE_ASSERT(hasFont());
     return *d->font;
 }
 
@@ -544,14 +544,14 @@ bool FontLineWrapping::hasFont() const
 
 bool FontLineWrapping::isEmpty() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     return d->lines.isEmpty();
 }
 
 void FontLineWrapping::clear()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     reset();
     d->text.clear();
@@ -559,7 +559,7 @@ void FontLineWrapping::clear()
 
 void FontLineWrapping::reset()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     d->clearLines();
     d->indent = 0;
@@ -575,7 +575,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
 
 void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat const &format, int maxWidth)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     String newText = text;
 
@@ -653,22 +653,22 @@ void FontLineWrapping::cancel()
 
 String const &FontLineWrapping::text() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     return d->text;
 }
 
 WrappedLine FontLineWrapping::line(int index) const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
-    DENG2_ASSERT(index >= 0 && index < height());
+    DE_ASSERT(index >= 0 && index < height());
     return d->lines[index]->line;
 }
 
 int FontLineWrapping::width() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     int w = 0;
     for (int i = 0; i < d->lines.size(); ++i)
@@ -680,21 +680,21 @@ int FontLineWrapping::width() const
 
 int FontLineWrapping::height() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     return d->lines.size();
 }
 
 int FontLineWrapping::rangeWidth(Rangei const &range) const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     return d->rangeAdvanceWidth(range);
 }
 
 int FontLineWrapping::indexAtWidth(Rangei const &range, int width) const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     int prevWidth = 0;
 
@@ -717,7 +717,7 @@ int FontLineWrapping::indexAtWidth(Rangei const &range, int width) const
 
 int FontLineWrapping::totalHeightInPixels() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     if (!d->font) return 0;
 
@@ -739,14 +739,14 @@ int FontLineWrapping::totalHeightInPixels() const
 
 int FontLineWrapping::maximumWidth() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     return d->maxWidth;
 }
 
 Vec2i FontLineWrapping::charTopLeftInPixels(int line, int charIndex)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     if (line >= height()) return Vec2i();
 
@@ -763,14 +763,14 @@ Vec2i FontLineWrapping::charTopLeftInPixels(int line, int charIndex)
 
 FontLineWrapping::LineInfo const &FontLineWrapping::lineInfo(int index) const
 {
-    DENG2_GUARD(this);
-    DENG2_ASSERT(index >= 0 && index < d->lines.size());
+    DE_GUARD(this);
+    DE_ASSERT(index >= 0 && index < d->lines.size());
     return d->lines[index]->info;
 }
 
 void FontLineWrapping::rasterizeLines(Rangei const &lineRange)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     d->rasterized.clear();
 
@@ -791,7 +791,7 @@ void FontLineWrapping::rasterizeLines(Rangei const &lineRange)
 
 void FontLineWrapping::clearRasterizedLines() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     d->rasterized.clear();
 }
 
@@ -799,14 +799,14 @@ Image FontLineWrapping::rasterizedSegment(int line, int segment) const
 {
     // Check the cached images.
     {
-        DENG2_GUARD(this);
-        DENG2_ASSERT(line >= 0);
+        DE_GUARD(this);
+        DE_ASSERT(line >= 0);
         if (line >= 0 && line < d->rasterized.size())
         {
             auto const &rasterLine = d->rasterized.at(line);
             if (!rasterLine.segmentImages.isEmpty())
             {
-                DENG2_ASSERT(segment >= 0 && segment < rasterLine.segmentImages.size());
+                DE_ASSERT(segment >= 0 && segment < rasterLine.segmentImages.size());
                 return rasterLine.segmentImages.at(segment);
             }
         }

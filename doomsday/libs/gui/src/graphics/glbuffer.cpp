@@ -24,7 +24,7 @@
 
 namespace de {
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
 extern int GLDrawQueue_queuedElems;
 #endif
 
@@ -125,7 +125,7 @@ LIBGUI_VERTEX_FORMAT_SPEC(Vertex3NormalTangentTex, 14 * sizeof(float))
 
 static duint drawCounter = 0;
 
-DENG2_PIMPL(GLBuffer)
+DE_PIMPL(GLBuffer)
 {
     GLuint           bufferType      = GL_ARRAY_BUFFER;
     GLuint           vao             = 0;
@@ -153,7 +153,7 @@ DENG2_PIMPL(GLBuffer)
     void allocArray()
     {
         if (bufferType != GL_ARRAY_BUFFER) return;
-#if defined (DENG_HAVE_VAOS)
+#if defined (DE_HAVE_VAOS)
         if (!vao)
         {
             LIBGUI_GL.glGenVertexArrays(1, &vao);
@@ -163,7 +163,7 @@ DENG2_PIMPL(GLBuffer)
 
     void releaseArray()
     {
-#if defined (DENG_HAVE_VAOS)
+#if defined (DE_HAVE_VAOS)
         if (vao)
         {
             LIBGUI_GL.glDeleteVertexArrays(1, &vao);
@@ -225,7 +225,7 @@ DENG2_PIMPL(GLBuffer)
         case StreamRead:  return GL_STREAM_READ;
         case StreamCopy:  return GL_STREAM_COPY;
         }
-        DENG2_ASSERT(false);
+        DE_ASSERT(false);
         return GL_STATIC_DRAW;
     }
 
@@ -241,13 +241,13 @@ DENG2_PIMPL(GLBuffer)
         case TriangleFan:   return GL_TRIANGLE_FAN;
         case Triangles:     return GL_TRIANGLES;
         }
-        DENG2_ASSERT(false);
+        DE_ASSERT(false);
         return GL_TRIANGLES;
     }
 
     void setAttribPointer(GLuint index, AttribSpec const &spec, int divisor, int part = 0) const
     {
-        DENG2_ASSERT(!part || spec.type == GL_FLOAT);
+        DE_ASSERT(!part || spec.type == GL_FLOAT);
 
         auto &GL = LIBGUI_GL;
 
@@ -263,11 +263,11 @@ DENG2_PIMPL(GLBuffer)
             reinterpret_cast<void const *>(dintptr(spec.startOffset + part * 4 * sizeof(float))));
         LIBGUI_ASSERT_GL_OK();
 
-#if defined (DENG_HAVE_INSTANCES)
+#if defined (DE_HAVE_INSTANCES)
         GL.glVertexAttribDivisor(index + part, divisor);
         LIBGUI_ASSERT_GL_OK();
 #else
-        DENG2_UNUSED(divisor);
+        DE_UNUSED(divisor);
 #endif
     }
 
@@ -277,21 +277,21 @@ DENG2_PIMPL(GLBuffer)
 
         if (!enable)
         {
-#if defined (DENG_HAVE_VAOS)
+#if defined (DE_HAVE_VAOS)
             GL.glBindVertexArray(0);
 #endif
             return;
         }
 
-        DENG2_ASSERT(GLProgram::programInUse());
-        DENG2_ASSERT(specs.first != 0); // must have a spec
-#if defined (DENG_HAVE_VAOS)
-        DENG2_ASSERT(vaoName || vao);
+        DE_ASSERT(GLProgram::programInUse());
+        DE_ASSERT(specs.first != 0); // must have a spec
+#if defined (DE_HAVE_VAOS)
+        DE_ASSERT(vaoName || vao);
 #else
-        DENG2_UNUSED(vaoName);
+        DE_UNUSED(vaoName);
 #endif
 
-#if defined (DENG_HAVE_VAOS)
+#if defined (DE_HAVE_VAOS)
         GL.glBindVertexArray(vaoName? vaoName : vao);
 #endif
         GL.glBindBuffer(GL_ARRAY_BUFFER, name);
@@ -341,11 +341,11 @@ DENG2_PIMPL(GLBuffer)
 
     void bindArray(bool doBind)
     {
-#if defined (DENG_HAVE_VAOS)
+#if defined (DE_HAVE_VAOS)
         if (doBind)
         {
-            DENG2_ASSERT(vao != 0);
-            DENG2_ASSERT(GLProgram::programInUse());
+            DE_ASSERT(vao != 0);
+            DE_ASSERT(GLProgram::programInUse());
             if (vaoBoundProgram != GLProgram::programInUse())
             {
                 enableArrays(true);
@@ -384,7 +384,7 @@ void GLBuffer::setVertices(dsize count, void const *data, dsize dataSize, Usage 
 
 void GLBuffer::setVertices(Primitive primitive, dsize count, void const *data, dsize dataSize, Usage usage)
 {
-    DENG2_ASSERT(d->bufferType == GL_ARRAY_BUFFER);
+    DE_ASSERT(d->bufferType == GL_ARRAY_BUFFER);
 
     d->prim         = Impl::glPrimitive(primitive);
     d->count        = count;
@@ -460,7 +460,7 @@ void GLBuffer::setData(void const *data, dsize dataSize, gl::Usage usage)
 
 void GLBuffer::setData(dsize startOffset, void const *data, dsize dataSize)
 {
-    DENG2_ASSERT(isReady());
+    DE_ASSERT(isReady());
 
     if (data && dataSize)
     {
@@ -490,7 +490,7 @@ void GLBuffer::draw(DrawRanges const *ranges) const
 {
     if (!isReady() || !GLProgram::programInUse()) return;
 
-    DENG2_ASSERT(d->bufferType == GL_ARRAY_BUFFER);
+    DE_ASSERT(d->bufferType == GL_ARRAY_BUFFER);
 
     // Mark the current target changed.
     GLState::current().target().markAsChanged();
@@ -499,7 +499,7 @@ void GLBuffer::draw(DrawRanges const *ranges) const
 
     d->bindArray(true);
 
-#if defined (DENG2_DEBUG)
+#if defined (DE_DEBUG)
     // Check that the shader program is ready to be used.
     {
         const GLuint progName = GLProgram::programInUse()->glName();
@@ -575,8 +575,8 @@ void GLBuffer::draw(DrawRanges const *ranges) const
     }
     ++drawCounter;
 
-#ifdef DENG2_DEBUG
-    DENG2_ASSERT(GLDrawQueue_queuedElems == 0);
+#ifdef DE_DEBUG
+    DE_ASSERT(GLDrawQueue_queuedElems == 0);
 #endif
 
     d->bindArray(false);
@@ -626,11 +626,11 @@ void GLBuffer::drawWithIndices(gl::Primitive primitive, Index const *indices, ds
 
 void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint count) const
 {
-#if defined (DENG_HAVE_INSTANCES)
+#if defined (DE_HAVE_INSTANCES)
 
     if (!isReady() || !instanceAttribs.isReady() || !GLProgram::programInUse())
     {
-#if defined (DENG2_DEBUG)
+#if defined (DE_DEBUG)
         qDebug() << "[GLBuffer] isReady:" << isReady()
                  << "instAttr isReady:" << instanceAttribs.isReady()
                  << "progInUse:" << GLProgram::programInUse();
@@ -659,7 +659,7 @@ void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint 
         if (count < 0) count = d->idxCount;
         if (first + count > d->idxCount) count = d->idxCount - first;
 
-        DENG2_ASSERT(count >= 0);
+        DE_ASSERT(count >= 0);
 
         GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
         DENG2_ASSERT(GLProgram::programInUse()->validate());
@@ -674,7 +674,7 @@ void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint 
         if (count < 0) count = d->count;
         if (first + count > d->count) count = d->count - first;
 
-        DENG2_ASSERT(count >= 0);
+        DE_ASSERT(count >= 0);
         DENG2_ASSERT(GLProgram::programInUse()->validate());
 
         GL.glDrawArraysInstanced(d->prim, first, count,
@@ -688,9 +688,9 @@ void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint 
 #else
 
     // Instanced drawing is not available.
-    DENG2_UNUSED(instanceAttribs);
-    DENG2_UNUSED(first);
-    DENG2_UNUSED(count);
+    DE_UNUSED(instanceAttribs);
+    DE_UNUSED(first);
+    DE_UNUSED(count);
 
 #endif
 }

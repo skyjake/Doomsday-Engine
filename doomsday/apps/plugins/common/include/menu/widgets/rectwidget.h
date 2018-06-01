@@ -49,7 +49,7 @@ public:
     void setBackgroundPatch(patchid_t newBackgroundPatch);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace menu

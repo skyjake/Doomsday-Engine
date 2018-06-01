@@ -60,7 +60,7 @@ String const Game::DEF_LEGACYSAVEGAME_SUBFOLDER("legacySavegame.subfolder");
 String const Game::DEF_MAPINFO_PATH("mapInfoPath");
 String const Game::DEF_OPTIONS("options");
 
-DENG2_PIMPL(Game), public Lockable
+DE_PIMPL(Game), public Lockable
 {
     pluginid_t pluginId = 0; ///< Unique identifier of the registering plugin.
     Record params;
@@ -484,7 +484,7 @@ void Game::addResource(resourceclassid_t classId, dint rflags,
 GameProfile &Game::profile() const
 {
     DENG2_GUARD(d);
-    DENG2_ASSERT(d->profile()); // all games have a matching built-in profile
+    DE_ASSERT(d->profile()); // all games have a matching built-in profile
     return *d->profile();
 }
 
@@ -561,7 +561,7 @@ void Game::printFiles(Game const &game, int rflags, bool printStatus)
 
 D_CMD(InspectGame)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     Game const *game = 0;
     if (argc < 2)
@@ -588,7 +588,7 @@ D_CMD(InspectGame)
         }
     }
 
-    DENG2_ASSERT(!game->isNull());
+    DE_ASSERT(!game->isNull());
 
     LOG_MSG("") << game->description();
 

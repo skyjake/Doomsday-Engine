@@ -20,7 +20,7 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(ServerPlayer)
+DE_PIMPL_NOREF(ServerPlayer)
 {
     /// Each client has their own pool for deltas.
     pool_t deltaPool;

@@ -27,7 +27,7 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(LibraryFile)
+DE_PIMPL_NOREF(LibraryFile)
 {
     Library *library = nullptr;
     NativePath nativePath;
@@ -37,7 +37,7 @@ LibraryFile::LibraryFile(File *source)
     : File(source->name())
     , d(new Impl)
 {
-    DENG2_ASSERT(source != 0);
+    DE_ASSERT(source != 0);
     setSource(source); // takes ownership
 }
 
@@ -50,7 +50,7 @@ LibraryFile::LibraryFile(NativePath const &nativePath)
 
 LibraryFile::~LibraryFile()
 {
-    DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
+    DE_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion().clear();
 
     deindex();
@@ -122,7 +122,7 @@ bool LibraryFile::hasUnderscoreName(String const &nameAfterUnderscore) const
 
 bool LibraryFile::recognize(File const &file)
 {
-    #if defined (DENG_APPLE)
+    #if defined (DE_APPLE)
     {
         // On macOS/iOS, plugins are in the .bundle format. The LibraryFile will point
         // to the actual binary inside the bundle. Libraries must be loaded from

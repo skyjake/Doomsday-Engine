@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_SAVELISTDATA_H
-#define DENG_CLIENT_UI_SAVELISTDATA_H
+#ifndef DE_CLIENT_UI_SAVELISTDATA_H
+#define DE_CLIENT_UI_SAVELISTDATA_H
 
 #include <de/ui/ListData>
 #include <de/ui/ImageItem>
@@ -30,7 +30,7 @@ class SaveListData : public de::ui::ListData
 {
 public:
     struct SaveItem : public de::ui::ImageItem,
-                      DENG2_OBSERVES(de::File, Deletion)
+                      DE_OBSERVES(de::File, Deletion)
     {
         GameStateFolder const *saveFolder;
 
@@ -54,7 +54,7 @@ public:
     SaveItem const &at(Pos pos) const override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_SAVELISTDATA_H
+#endif // DE_CLIENT_UI_SAVELISTDATA_H

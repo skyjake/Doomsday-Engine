@@ -653,7 +653,7 @@ void NetSv_SendTotalCounts(int to)
     // Send the packet.
     Net_SendPacket(to, GPT_TOTAL_COUNTS, Writer_Data(writer), Writer_Size(writer));
 #else
-    DENG2_UNUSED(to);
+    DE_UNUSED(to);
 #endif
 }
 
@@ -1114,7 +1114,7 @@ void NetSv_ChangePlayerInfo(int from, reader_s *msg)
 
 void NetSv_FragsForAll(player_t *player)
 {
-    DENG2_ASSERT(player != 0);
+    DE_ASSERT(player != 0);
     NetSv_SendPlayerState(player - players, DDSP_ALL_PLAYERS, PSF_FRAGS, true);
 }
 
@@ -1179,7 +1179,7 @@ void NetSv_KillMessage(player_t *killer, player_t *fragged, dd_bool stomping)
     // Send the message to everybody.
     NetSv_SendMessage(DDSP_ALL_PLAYERS, buf);
 #else
-    DENG2_UNUSED3(killer, fragged, stomping);
+    DE_UNUSED(killer, fragged, stomping);
 #endif
 }
 
@@ -1422,7 +1422,7 @@ void NetSv_SaveGame(uint sessionId)
     Net_SendPacket(DDSP_ALL_PLAYERS, GPT_SAVE, Writer_Data(writer), Writer_Size(writer));
 
 #else
-    DENG2_UNUSED(sessionId);
+    DE_UNUSED(sessionId);
 #endif
 }
 
@@ -1438,7 +1438,7 @@ void NetSv_LoadGame(uint sessionId)
     Net_SendPacket(DDSP_ALL_PLAYERS, GPT_LOAD, Writer_Data(writer), Writer_Size(writer));
 
 #else
-    DENG2_UNUSED(sessionId);
+    DE_UNUSED(sessionId);
 #endif
 }
 
@@ -1499,7 +1499,7 @@ void NetSv_MaybeChangeWeapon(int plrNum, int weapon, int ammo, int force)
 
 void NetSv_SendLocalMobjState(mobj_t *mobj, char const *stateName)
 {
-    DENG2_ASSERT(mobj != 0);
+    DE_ASSERT(mobj != 0);
 
     ddstring_t name;
     Str_InitStatic(&name, stateName);
@@ -1523,7 +1523,7 @@ void NetSv_SendLocalMobjState(mobj_t *mobj, char const *stateName)
  */
 D_CMD(MapCycle)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     if(!IS_SERVER)
     {

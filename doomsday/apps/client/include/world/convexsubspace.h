@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_CONVEXSUBSPACE_H
-#define DENG_WORLD_CONVEXSUBSPACE_H
+#ifndef DE_WORLD_CONVEXSUBSPACE_H
+#define DE_WORLD_CONVEXSUBSPACE_H
 
 #include <functional>
 #include <de/Error>
@@ -51,13 +51,13 @@ class ConvexSubspace : public MapElement
 {
 public:
     /// An invalid polygon was specified. @ingroup errors
-    DENG2_ERROR(InvalidPolyError);
+    DE_ERROR(InvalidPolyError);
 
     /// Required BspLeaf attribution is missing. @ingroup errors
-    //DENG2_ERROR(MissingBspLeafError);
+    //DE_ERROR(MissingBspLeafError);
 
     /// Required subsector attribution is missing. @ingroup errors
-    DENG2_ERROR(MissingSubsectorError);
+    DE_ERROR(MissingSubsectorError);
 
 public:
 
@@ -116,7 +116,7 @@ public:
      * @see hasSubsector()
      */
     inline Subsector &subsector() const { 
-        DENG2_ASSERT(_subsector != nullptr); 
+        DE_ASSERT(_subsector != nullptr); 
         return *_subsector; 
     }
 
@@ -145,7 +145,7 @@ public:
      * Returns the BspLeaf to which the subspace is assigned.
      */
     inline BspLeaf &bspLeaf() const {
-        DENG2_ASSERT(_bspLeaf != nullptr);
+        DE_ASSERT(_bspLeaf != nullptr);
         return *_bspLeaf;
         // @throw MissingBspLeafError  Attempted with no BspLeaf attributed.
         //throw MissingBspLeafError("ConvexSubspace::bspLeaf", "No BSP leaf is attributed");
@@ -302,7 +302,7 @@ public:
 private:
     ConvexSubspace(de::Face &convexPolygon, BspLeaf *bspLeaf = nullptr);
 
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 
     // Heavily used; visible for inline access:
     Subsector *_subsector = nullptr;        ///< Attributed subsector (if any, not owned).
@@ -311,4 +311,4 @@ private:
 
 }  // namespace world
 
-#endif  // DENG_WORLD_CONVEXSUBSPACE_H
+#endif  // DE_WORLD_CONVEXSUBSPACE_H

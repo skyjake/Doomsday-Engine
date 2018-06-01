@@ -23,7 +23,7 @@
 #include <QFileDialog>
 #include <QLabel>
 
-DENG2_PIMPL(FolderSelection)
+DE_PIMPL(FolderSelection)
 {
     QString prompt;
     QLineEdit *edit;

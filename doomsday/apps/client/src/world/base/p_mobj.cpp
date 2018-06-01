@@ -101,7 +101,7 @@ mobj_t *P_MobjCreate(thinkfunc_t function, Vec3d const &origin, angle_t angle,
     if (!function)
         App_Error("P_MobjCreate: Think function invalid, cannot create mobj.");
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     if (::isClient)
     {
         LOG_VERBOSE("P_MobjCreate: Client creating mobj at %s")
@@ -142,7 +142,7 @@ mobj_t *P_MobjCreate(thinkfunc_t function, Vec3d const &origin, angle_t angle,
  * awaiting removal (which occurs when its turn for thinking comes around).
  */
 #undef Mobj_Destroy
-DENG_EXTERN_C void Mobj_Destroy(mobj_t *mo)
+DE_EXTERN_C void Mobj_Destroy(mobj_t *mo)
 {
 #ifdef _DEBUG
     if (mo->ddFlags & DDMF_MISSILE)
@@ -180,13 +180,13 @@ bool Mobj_IsSectorLinked(mobj_t const &mob)
 }
 
 #undef Mobj_SetState
-DENG_EXTERN_C void Mobj_SetState(mobj_t *mob, int statenum)
+DE_EXTERN_C void Mobj_SetState(mobj_t *mob, int statenum)
 {
     if (!mob) return;
 
     state_t const *oldState = mob->state;
 
-    DENG2_ASSERT(statenum >= 0 && statenum < DED_Definitions()->states.size());
+    DE_ASSERT(statenum >= 0 && statenum < DED_Definitions()->states.size());
 
     mob->state  = &runtimeDefs.states[statenum];
     mob->tics   = mob->state->tics;
@@ -233,7 +233,7 @@ dd_bool Mobj_SetOrigin(struct mobj_s *mob, coord_t x, coord_t y, coord_t z)
 }
 
 #undef Mobj_OriginSmoothed
-DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mob, coord_t origin[3])
+DE_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mob, coord_t origin[3])
 {
     if (!origin) return;
 
@@ -311,7 +311,7 @@ Subsector *Mobj_SubsectorPtr(mobj_t const &mob)
 }
 
 #undef Mobj_Sector
-DENG_EXTERN_C Sector *Mobj_Sector(mobj_t const *mob)
+DE_EXTERN_C Sector *Mobj_Sector(mobj_t const *mob)
 {
     if (!mob || !Mobj_IsLinked(*mob)) return nullptr;
     return Mobj_BspLeafAtOrigin(*mob).sectorPtr();
@@ -320,7 +320,7 @@ DENG_EXTERN_C Sector *Mobj_Sector(mobj_t const *mob)
 void Mobj_SpawnParticleGen(mobj_t *mob, ded_ptcgen_t const *def)
 {
 #ifdef __CLIENT__
-    DENG2_ASSERT(mob && def);
+    DE_ASSERT(mob && def);
 
     //if (!useParticles) return;
 
@@ -350,12 +350,12 @@ void Mobj_SpawnParticleGen(mobj_t *mob, ded_ptcgen_t const *def)
     // Is there a need to pre-simulate?
     gen->presimulate(def->preSim);
 #else
-    DENG2_UNUSED2(mob, def);
+    DE_UNUSED(mob, def);
 #endif
 }
 
 #undef Mobj_SpawnDamageParticleGen
-DENG_EXTERN_C void Mobj_SpawnDamageParticleGen(mobj_t const *mob, mobj_t const *inflictor, int amount)
+DE_EXTERN_C void Mobj_SpawnDamageParticleGen(mobj_t const *mob, mobj_t const *inflictor, int amount)
 {
 #ifdef __CLIENT__
     if (!mob || !inflictor || amount <= 0) return;
@@ -399,7 +399,7 @@ DENG_EXTERN_C void Mobj_SpawnDamageParticleGen(mobj_t const *mob, mobj_t const *
         gen->presimulate(def->preSim);
     }
 #else
-    DENG2_UNUSED3(mob, inflictor, amount);
+    DE_UNUSED(mob, inflictor, amount);
 #endif
 }
 
@@ -632,7 +632,7 @@ dfloat Mobj_ShadowStrength(mobj_t const &mob)
             if (TextureVariant const *texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture)
             {
                 auto const *aa = (averagealpha_analysis_t const *)texture->base().analysisDataPointer(res::Texture::AverageAlphaAnalysis);
-                DENG2_ASSERT(aa);
+                DE_ASSERT(aa);
 
                 // We use an average which factors in the coverage ratio of
                 // alpha:non-alpha pixels.
@@ -808,7 +808,7 @@ FrameModelDef *Mobj_ModelDef(mobj_t const &mo, FrameModelDef **retNextModef, flo
 #endif // __CLIENT__
 
 #undef Mobj_AngleSmoothed
-DENG_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t *mob)
+DE_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t *mob)
 {
     if (!mob) return 0;
 
@@ -931,7 +931,7 @@ AABoxd Mobj_Bounds(mobj_t const &mobj)
 
 D_CMD(InspectMobj)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if (argc != 2)
     {

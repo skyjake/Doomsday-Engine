@@ -33,7 +33,7 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(AutomapStyle)
+DE_PIMPL_NOREF(AutomapStyle)
 {
     automapcfg_lineinfo_t lineInfo[AUTOMAPCFG_MAX_LINEINFO];
     uint lineInfoCount = 0;
@@ -77,8 +77,8 @@ DENG2_PIMPL_NOREF(AutomapStyle)
         float r, float g, float b, float a, blendmode_t /*blendmode*/, glowtype_t glowType,
         float glowStrength, float glowSize, dd_bool scaleGlowWithView)
     {
-        DENG2_ASSERT(reqSpecial >= 0)
-        DENG2_ASSERT(reqSided >= 0 && reqSided <= 2);
+        DE_ASSERT(reqSpecial >= 0)
+        DE_ASSERT(reqSided >= 0 && reqSided <= 2);
 
         // Later re-registrations override earlier ones.
         automapcfg_lineinfo_t *info = findLineInfo(reqAutomapFlags, reqSpecial, reqSided, reqNotFlagged);
@@ -116,7 +116,7 @@ AutomapStyle::~AutomapStyle()
 
 automapcfg_lineinfo_t const &AutomapStyle::lineInfo(int lineType)
 {
-    DENG2_ASSERT(lineType >= 0 && lineType < NUM_MAP_OBJECTLISTS);
+    DE_ASSERT(lineType >= 0 && lineType < NUM_MAP_OBJECTLISTS);
     return d->mapObjectInfo[lineType];
 }
 
@@ -310,7 +310,7 @@ void AutomapStyle::objectColor(automapcfg_objectname_t name, float *r, float *g,
     case AMO_FLOORCHANGELINE:   info = &d->mapObjectInfo[MOL_LINEDEF_FLOOR   ]; break;
     case AMO_CEILINGCHANGELINE: info = &d->mapObjectInfo[MOL_LINEDEF_CEILING ]; break;
 
-    default: DENG2_ASSERT_FAIL("Object has no color property");
+    default: DE_ASSERT_FAIL("Object has no color property");
     }
 
     if(r) *r = info->rgba[0];
@@ -336,7 +336,7 @@ void AutomapStyle::setObjectColor(automapcfg_objectname_t name, float r, float g
     case AMO_FLOORCHANGELINE:   info = &d->mapObjectInfo[MOL_LINEDEF_FLOOR   ]; break;
     case AMO_CEILINGCHANGELINE: info = &d->mapObjectInfo[MOL_LINEDEF_CEILING ]; break;
 
-    default: DENG2_ASSERT_FAIL("Object has no color property");
+    default: DE_ASSERT_FAIL("Object has no color property");
     }
 
     info->rgba[0] = de::clamp(0.f, r, 1.f);
@@ -359,7 +359,7 @@ void AutomapStyle::setObjectColorAndOpacity(automapcfg_objectname_t name, float 
     case AMO_FLOORCHANGELINE:   info = &d->mapObjectInfo[MOL_LINEDEF_FLOOR   ]; break;
     case AMO_CEILINGCHANGELINE: info = &d->mapObjectInfo[MOL_LINEDEF_CEILING ]; break;
 
-    default: DENG2_ASSERT_FAIL("Object has no color property");
+    default: DE_ASSERT_FAIL("Object has no color property");
     }
 
     info->rgba[0] = de::clamp(0.f, r, 1.f);
@@ -383,7 +383,7 @@ void AutomapStyle::setObjectGlow(automapcfg_objectname_t name, glowtype_t type, 
     case AMO_FLOORCHANGELINE:   info = &d->mapObjectInfo[MOL_LINEDEF_FLOOR   ]; break;
     case AMO_CEILINGCHANGELINE: info = &d->mapObjectInfo[MOL_LINEDEF_CEILING ]; break;
 
-    default: DENG2_ASSERT_FAIL("Object has no glow property");
+    default: DE_ASSERT_FAIL("Object has no glow property");
     }
 
     info->glow          = type;
@@ -402,7 +402,7 @@ svgid_t AutomapStyle::objectSvg(automapcfg_objectname_t name) const
     case AMO_THING:       return d->thingSvg;
     case AMO_THINGPLAYER: return d->playerSvg;
 
-    default: DENG2_ASSERT_FAIL("Object has no SVG property");
+    default: DE_ASSERT_FAIL("Object has no SVG property");
     }
 
     return 0;  // None.
@@ -418,7 +418,7 @@ void AutomapStyle::setObjectSvg(automapcfg_objectname_t name, svgid_t svg)
     case AMO_THING:         d->thingSvg  = svg; break;
     case AMO_THINGPLAYER:   d->playerSvg = svg; break;
 
-    default: DENG2_ASSERT_FAIL("Object has no SVG property");
+    default: DE_ASSERT_FAIL("Object has no SVG property");
     }
 }
 

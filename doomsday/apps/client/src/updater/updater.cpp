@@ -74,7 +74,7 @@ using namespace de;
 #  define INSTALL_SCRIPT_NAME "deng-upgrade.scpt"
 #endif
 
-#define PLATFORM_ID     DENG_PLATFORM_ID
+#define PLATFORM_ID     DE_PLATFORM_ID
 
 static CommandLine* installerCommand;
 
@@ -83,7 +83,7 @@ static CommandLine* installerCommand;
  */
 static void runInstallerCommand(void)
 {
-    DENG_ASSERT(installerCommand != 0);
+    DE_ASSERT(installerCommand != 0);
 
     installerCommand->execute();
     delete installerCommand;
@@ -140,8 +140,8 @@ private:
     PopupButtonWidget *_clickable;
 };
 
-DENG2_PIMPL(Updater)
-, DENG2_OBSERVES(App, StartupComplete)
+DE_PIMPL(Updater)
+, DE_OBSERVES(App, StartupComplete)
 {
     QNetworkAccessManager *network = nullptr;
     UpdateDownloadDialog *download = nullptr; // not owned (in the widget tree, if exists)
@@ -187,7 +187,7 @@ DENG2_PIMPL(Updater)
         UpdaterSettings st;
         String uri = String("%1builds?latest_for=%2&type=%3")
                 .arg(App::apiUrl())
-                .arg(DENG_PLATFORM_ID)
+                .arg(DE_PLATFORM_ID)
                 .arg(st.channel() == UpdaterSettings::Stable? "stable" :
                      st.channel() == UpdaterSettings::Unstable? "unstable" : "candidate");
         LOG_XVERBOSE("URI: ", uri);
@@ -292,7 +292,7 @@ DENG2_PIMPL(Updater)
     {
         reply->deleteLater(); // make sure it gets deleted
 
-        DENG2_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT_IN_MAIN_THREAD();
         showNotification(false);
 
         if (reply->error() != QNetworkReply::NoError)
@@ -382,7 +382,7 @@ DENG2_PIMPL(Updater)
 
     void execAvailableDialog()
     {
-        DENG2_ASSERT(availableDlg != 0);
+        DE_ASSERT(availableDlg != 0);
 
         availableDlg->setDeleteAfterDismissed(true);
         QObject::connect(availableDlg, SIGNAL(checkAgain()), thisPublic, SLOT(recheck()));
@@ -397,7 +397,7 @@ DENG2_PIMPL(Updater)
 
     void startDownload()
     {
-        DENG2_ASSERT(!download);
+        DE_ASSERT(!download);
 
         // The notification provides access to the download dialog.
         showDownloadNotification();
@@ -425,7 +425,7 @@ DENG2_PIMPL(Updater)
 #ifdef MACOSX
         de::String volName = "Doomsday Engine " + latestVersion.compactNumber();
 
-#ifdef DENG2_QT_5_0_OR_NEWER
+#ifdef DE_QT_5_0_OR_NEWER
         QString scriptPath = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
 #else
         QString scriptPath = QDesktopServices::storageLocation(QDesktopServices::CacheLocation);

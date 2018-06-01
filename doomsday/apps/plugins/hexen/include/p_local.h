@@ -85,9 +85,9 @@
 // Time interval for item respawning.
 #define SPAWNQUEUE_MAX         128
 
-DENG_EXTERN_C coord_t *FloatBobOffset;
+DE_EXTERN_C coord_t *FloatBobOffset;
 
-DENG_EXTERN_C int clipmana[NUM_AMMO_TYPES];
+DE_EXTERN_C int clipmana[NUM_AMMO_TYPES];
 
 #ifdef __cplusplus
 extern "C" {

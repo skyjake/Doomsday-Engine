@@ -56,7 +56,7 @@ public:
     bool initForMap();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // LIBHEXEN_PLAY_LIGHTNINGANIMATOR_H

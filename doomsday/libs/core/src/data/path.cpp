@@ -94,7 +94,7 @@ String Path::Segment::toString() const
 
 //---------------------------------------------------------------------------------------
 
-DENG2_PIMPL_NOREF(Path)
+DE_PIMPL_NOREF(Path)
 {
     String path;
 
@@ -199,7 +199,7 @@ DENG2_PIMPL_NOREF(Path)
             // There always has to be at least one segment.
             allocSegment(&emptyPath);
 
-            DENG2_ASSERT(segmentCount > 0);
+            DE_ASSERT(segmentCount > 0);
             return;
         }
 
@@ -239,7 +239,7 @@ DENG2_PIMPL_NOREF(Path)
             allocSegment(&emptyPath);
         }
 
-        DENG2_ASSERT(segmentCount > 0);
+        DE_ASSERT(segmentCount > 0);
     }
 };
 
@@ -587,9 +587,9 @@ static int Path_UnitTest()
         // Test emptiness.
         {
             Path p;
-            DENG2_ASSERT(p == Path(""));
-            DENG2_ASSERT(p.isEmpty());
-            DENG2_ASSERT(p.segmentCount() == 1);
+            DE_ASSERT(p == Path(""));
+            DE_ASSERT(p.isEmpty());
+            DE_ASSERT(p.segmentCount() == 1);
         }
 
         // Equality and copying.
@@ -597,17 +597,17 @@ static int Path_UnitTest()
             Path a("some/thing");
             Path b("/other/thing");
 
-            DENG2_ASSERT(a != b);
+            DE_ASSERT(a != b);
 
             Path c = a;
-            DENG2_ASSERT(c == a);
-            DENG2_ASSERT(c.segment(1).toString() == "thing");
-            DENG2_ASSERT(c.reverseSegment(1).toString() == "some");
+            DE_ASSERT(c == a);
+            DE_ASSERT(c.segment(1).toString() == "thing");
+            DE_ASSERT(c.reverseSegment(1).toString() == "some");
 
             b = a;
-            DENG2_ASSERT(b == a);
-            DENG2_ASSERT(b.segment(1).toString() == "thing");
-            DENG2_ASSERT(b.reverseSegment(1).toString() == "some");
+            DE_ASSERT(b == a);
+            DE_ASSERT(b.segment(1).toString() == "thing");
+            DE_ASSERT(b.reverseSegment(1).toString() == "some");
         }
 
         // Swapping.
@@ -615,65 +615,65 @@ static int Path_UnitTest()
             Path a("a/b/c");
             Path b("d/e");
 
-            DENG2_ASSERT(a.segmentCount() == 3);
-            DENG2_ASSERT(a.reverseSegment(1).toString() == "b");
+            DE_ASSERT(a.segmentCount() == 3);
+            DE_ASSERT(a.reverseSegment(1).toString() == "b");
 
             std::swap(a, b);
 
-            DENG2_ASSERT(a.segmentCount() == 2);
-            DENG2_ASSERT(a.reverseSegment(1).toString() == "d");
-            DENG2_ASSERT(b.segmentCount() == 3);
-            DENG2_ASSERT(b.reverseSegment(1).toString() == "b");
+            DE_ASSERT(a.segmentCount() == 2);
+            DE_ASSERT(a.reverseSegment(1).toString() == "d");
+            DE_ASSERT(b.segmentCount() == 3);
+            DE_ASSERT(b.reverseSegment(1).toString() == "b");
         }
 
         // Test a Windows style path with a drive plus file path.
         {
             Path p("c:/something.ext");
-            DENG2_ASSERT(p.segmentCount() == 2);
+            DE_ASSERT(p.segmentCount() == 2);
 
-            DENG2_ASSERT(p.reverseSegment(0).length() == 13);
-            DENG2_ASSERT(p.reverseSegment(0).toString() == "something.ext");
+            DE_ASSERT(p.reverseSegment(0).length() == 13);
+            DE_ASSERT(p.reverseSegment(0).toString() == "something.ext");
 
-            DENG2_ASSERT(p.reverseSegment(1).length() == 2);
-            DENG2_ASSERT(p.reverseSegment(1).toString() == "c:");
+            DE_ASSERT(p.reverseSegment(1).length() == 2);
+            DE_ASSERT(p.reverseSegment(1).toString() == "c:");
         }
 
         // Test a Unix style path with a zero-length root node name.
         {
             Path p("/something.ext");
-            DENG2_ASSERT(p.segmentCount() == 2);
+            DE_ASSERT(p.segmentCount() == 2);
 
-            DENG2_ASSERT(p.reverseSegment(0).length() == 13);
-            DENG2_ASSERT(p.reverseSegment(0).toString() == "something.ext");
+            DE_ASSERT(p.reverseSegment(0).length() == 13);
+            DE_ASSERT(p.reverseSegment(0).toString() == "something.ext");
 
-            DENG2_ASSERT(p.reverseSegment(1).length() == 0);
-            DENG2_ASSERT(p.reverseSegment(1).toString() == "");
+            DE_ASSERT(p.reverseSegment(1).length() == 0);
+            DE_ASSERT(p.reverseSegment(1).toString() == "");
         }
 
         // Test a relative directory.
         {
             Path p("some/dir/structure/");
-            DENG2_ASSERT(p.segmentCount() == 3);
+            DE_ASSERT(p.segmentCount() == 3);
 
-            DENG2_ASSERT(p.reverseSegment(0).length() == 9);
-            DENG2_ASSERT(p.reverseSegment(0).toString() == "structure");
+            DE_ASSERT(p.reverseSegment(0).length() == 9);
+            DE_ASSERT(p.reverseSegment(0).toString() == "structure");
 
-            DENG2_ASSERT(p.reverseSegment(1).length() == 3);
-            DENG2_ASSERT(p.reverseSegment(1).toString() == "dir");
+            DE_ASSERT(p.reverseSegment(1).length() == 3);
+            DE_ASSERT(p.reverseSegment(1).toString() == "dir");
 
-            DENG2_ASSERT(p.reverseSegment(2).length() == 4);
-            DENG2_ASSERT(p.reverseSegment(2).toString() == "some");
+            DE_ASSERT(p.reverseSegment(2).length() == 4);
+            DE_ASSERT(p.reverseSegment(2).toString() == "some");
         }
 
         // Test the extra segments.
         {
             Path p("/30/29/28/27/26/25/24/23/22/21/20/19/18/17/16/15/14/13/12/11/10/9/8/7/6/5/4/3/2/1/0");
-            DENG2_ASSERT(p.segmentCount() == 32);
+            DE_ASSERT(p.segmentCount() == 32);
 
-            DENG2_ASSERT(p.reverseSegment(0).toString()  == "0");
-            DENG2_ASSERT(p.reverseSegment(23).toString() == "23");
-            DENG2_ASSERT(p.reverseSegment(24).toString() == "24");
-            DENG2_ASSERT(p.reverseSegment(30).toString() == "30");
+            DE_ASSERT(p.reverseSegment(0).toString()  == "0");
+            DE_ASSERT(p.reverseSegment(23).toString() == "23");
+            DE_ASSERT(p.reverseSegment(24).toString() == "24");
+            DE_ASSERT(p.reverseSegment(30).toString() == "30");
         }
 
         // Test separators.
@@ -681,12 +681,12 @@ static int Path_UnitTest()
             Path a("a.b.c.d", '.');
             Path b("con-variable", '-');
 
-            DENG2_ASSERT(a.segmentCount() == 4);
-            DENG2_ASSERT(a.segment(1).toString() == "b");
+            DE_ASSERT(a.segmentCount() == 4);
+            DE_ASSERT(a.segment(1).toString() == "b");
 
-            DENG2_ASSERT(b.segmentCount() == 2);
-            DENG2_ASSERT(b.segment(0).toString() == "con");
-            DENG2_ASSERT(b.segment(1).toString() == "variable");
+            DE_ASSERT(b.segmentCount() == 2);
+            DE_ASSERT(b.segment(0).toString() == "con");
+            DE_ASSERT(b.segment(1).toString() == "variable");
         }
 
         // Test fileName().
@@ -705,11 +705,11 @@ static int Path_UnitTest()
             qDebug() << d << "=>" << d.fileName();
             */
 
-            DENG2_ASSERT(p.fileName() == String(p).fileName());
-            DENG2_ASSERT(a.fileName() == String(a).fileName());
-            DENG2_ASSERT(b.fileName() == String(b).fileName());
-            DENG2_ASSERT(c.fileName() == String(c).fileName());
-            DENG2_ASSERT(d.fileName() == String(d).fileName());
+            DE_ASSERT(p.fileName() == String(p).fileName());
+            DE_ASSERT(a.fileName() == String(a).fileName());
+            DE_ASSERT(b.fileName() == String(b).fileName());
+            DE_ASSERT(c.fileName() == String(c).fileName());
+            DE_ASSERT(d.fileName() == String(d).fileName());
         }
     }
     catch (Error const &er)

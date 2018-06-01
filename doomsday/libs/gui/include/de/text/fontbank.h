@@ -65,7 +65,7 @@ protected:
     virtual IData *loadFromSource(ISource &source);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

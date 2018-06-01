@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_MESSAGE_H
-#define LIBDENG2_MESSAGE_H
+#ifndef LIBCORE_MESSAGE_H
+#define LIBCORE_MESSAGE_H
 
 #include "../Block"
 #include "../Address"
@@ -30,7 +30,7 @@ namespace de {
  *
  * @ingroup net
  */
-class DENG2_PUBLIC Message : public Block
+class DE_PUBLIC Message : public Block
 {
 public:
     typedef duint Channel;
@@ -67,4 +67,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_MESSAGE_H
+#endif // LIBCORE_MESSAGE_H

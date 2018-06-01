@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_REMOTEFEEDRELAY_H
-#define LIBDENG2_REMOTEFEEDRELAY_H
+#ifndef LIBCORE_REMOTEFEEDRELAY_H
+#define LIBCORE_REMOTEFEEDRELAY_H
 
 #include "../../RemoteFeed"
 #include "../../Record"
@@ -36,14 +36,14 @@ namespace filesys {
  * Connects to one or more remote file repositories and provides metadata and file
  * contents over a network connection.
  */
-class DENG2_PUBLIC RemoteFeedRelay
+class DE_PUBLIC RemoteFeedRelay
 {
 public:
     static RemoteFeedRelay &get();
 
     enum Status { Disconnected, Connected };
 
-    DENG2_DEFINE_AUDIENCE2(Status, void remoteRepositoryStatusChanged(String const &address, Status))
+    DE_DEFINE_AUDIENCE2(Status, void remoteRepositoryStatusChanged(String const &address, Status))
 
 public:
     RemoteFeedRelay();
@@ -88,10 +88,10 @@ public:
     QNetworkAccessManager &network();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace filesys
 } // namespace de
 
-#endif // LIBDENG2_REMOTEFEEDRELAY_H
+#endif // LIBCORE_REMOTEFEEDRELAY_H

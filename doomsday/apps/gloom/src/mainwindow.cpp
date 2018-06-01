@@ -31,10 +31,10 @@
 using namespace de;
 using namespace gloom;
 
-DENG2_PIMPL(MainWindow)
-, DENG2_OBSERVES(GLWindow, Init)
-, DENG2_OBSERVES(GLWindow, Resize)
-, DENG2_OBSERVES(WindowEventHandler, FocusChange)
+DE_PIMPL(MainWindow)
+, DE_OBSERVES(GLWindow, Init)
+, DE_OBSERVES(GLWindow, Resize)
+, DE_OBSERVES(WindowEventHandler, FocusChange)
 {
     AppRootWidget    root;
     bool             needRootSizeUpdate{false};
@@ -110,7 +110,7 @@ DENG2_PIMPL(MainWindow)
 
     void updateRootSize()
     {
-        DENG2_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT_IN_MAIN_THREAD();
 
         needRootSizeUpdate = false;
 
@@ -167,7 +167,7 @@ void MainWindow::preDraw()
     // NOTE: This occurs during the Canvas paintGL event.
     BaseWindow::preDraw();
 
-    DENG2_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_IN_MAIN_THREAD();
     if (d->needRootSizeUpdate)
     {
         d->updateRootSize();

@@ -94,7 +94,7 @@ static int BytesPerPixel(GLint format)
 
 void GL_InitTextureContent(texturecontent_t *content)
 {
-    DENG_ASSERT(content);
+    DE_ASSERT(content);
     content->format = dgltexformat_t(0);
     content->name = 0;
     content->pixels = 0;
@@ -112,7 +112,7 @@ void GL_InitTextureContent(texturecontent_t *content)
 
 texturecontent_t *GL_ConstructTextureContentCopy(texturecontent_t const *other)
 {
-    DENG_ASSERT(other);
+    DE_ASSERT(other);
 
     texturecontent_t *c = (texturecontent_t*) M_Malloc(sizeof(*c));
 
@@ -129,7 +129,7 @@ texturecontent_t *GL_ConstructTextureContentCopy(texturecontent_t const *other)
 
 void GL_DestroyTextureContent(texturecontent_t *content)
 {
-    DENG_ASSERT(content);
+    DE_ASSERT(content);
     if (content->pixels) M_Free((uint8_t *)content->pixels);
     M_Free(content);
 }
@@ -147,7 +147,7 @@ void GL_DestroyTextureContent(texturecontent_t *content)
 static dgltexformat_t prepareImageAsTexture(image_t &image,
     variantspecification_t const &spec)
 {
-    DENG_ASSERT(image.pixels);
+    DE_ASSERT(image.pixels);
 
     bool const monochrome = (spec.flags & TSF_MONOCHROME) != 0;
     bool const scaleSharp = (spec.flags & TSF_UPSCALE_AND_SHARPEN) != 0;
@@ -298,7 +298,7 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
 static dgltexformat_t prepareImageAsDetailTexture(image_t &image,
     detailvariantspecification_t const &spec, float *baMul, float *hiMul, float *loMul)
 {
-    DENG_UNUSED(spec);
+    DE_UNUSED(spec);
 
     // We want a luminance map.
     if (image.pixelSize > 2)
@@ -318,8 +318,8 @@ void GL_PrepareTextureContent(texturecontent_t &c,
                               TextureVariantSpec const &spec,
                               res::TextureManifest const &textureManifest)
 {
-    DENG_ASSERT(glTexName != 0);
-    DENG_ASSERT(image.pixels != 0);
+    DE_ASSERT(glTexName != 0);
+    DE_ASSERT(image.pixels != 0);
 
     // Initialize and assign a GL name to the content.
     GL_InitTextureContent(&c);
@@ -403,7 +403,7 @@ void GL_PrepareTextureContent(texturecontent_t &c,
 
     default:
         // Invalid spec type.
-        DENG_ASSERT(false);
+        DE_ASSERT(false);
     }
 }
 
@@ -416,7 +416,7 @@ void GL_PrepareTextureContent(texturecontent_t &c,
  */
 static GLint ChooseTextureFormat(dgltexformat_t format, dd_bool allowCompression)
 {
-#if defined (DENG_OPENGL_ES)
+#if defined (DE_OPENGL_ES)
     
     switch (format)
     {
@@ -429,7 +429,7 @@ static GLint ChooseTextureFormat(dgltexformat_t format, dd_bool allowCompression
         return GL_RGBA8;
 
     default:
-        DENG2_ASSERT_FAIL("ChooseTextureFormat: Invalid texture source format");
+        DE_ASSERT_FAIL("ChooseTextureFormat: Invalid texture source format");
         return 0;
     }
 
@@ -466,7 +466,7 @@ static GLint ChooseTextureFormat(dgltexformat_t format, dd_bool allowCompression
         return !compress ? GL_LUMINANCE_ALPHA : GL_COMPRESSED_LUMINANCE_ALPHA;*/
 
     default:
-        DENG2_ASSERT_FAIL("ChooseTextureFormat: Invalid texture source format");
+        DE_ASSERT_FAIL("ChooseTextureFormat: Invalid texture source format");
         return 0; // Unreachable.
     }
     
@@ -502,7 +502,7 @@ static dd_bool uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels
     const int packRowLength = 0, packAlignment = 1, packSkipRows = 0, packSkipPixels = 0;
     const int unpackRowLength = 0, unpackAlignment = 1, unpackSkipRows = 0, unpackSkipPixels = 0;
     int mipLevel = 0;
-    DENG_ASSERT(pixels);
+    DE_ASSERT(pixels);
 
     if (!(GL_LUMINANCE_ALPHA == loadFormat || GL_LUMINANCE == loadFormat ||
          GL_RGB == loadFormat || GL_RGBA == loadFormat))
@@ -525,8 +525,8 @@ static dd_bool uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels
         genMipmaps = 0;
     }
 
-    //DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    //DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     auto &GL = LIBGUI_GL;
 
@@ -640,7 +640,7 @@ static dd_bool uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels
         LIBGUI_ASSERT_GL_OK();
     }
 
-    DENG_ASSERT(!Sys_GLCheckError());
+    DE_ASSERT(!Sys_GLCheckError());
 
     return true;
 }
@@ -662,7 +662,7 @@ static dd_bool uploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8
     uint8_t* image, *faded, *out;
     const uint8_t* in;
     float invFactor;
-    DENG_ASSERT(pixels);
+    DE_ASSERT(pixels);
 
     if (!(GL_RGB == loadFormat || GL_LUMINANCE == loadFormat))
     {
@@ -721,7 +721,7 @@ static dd_bool uploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8
     M_Free(faded);
     M_Free(image);
 
-    DENG_ASSERT(!Sys_GLCheckError());
+    DE_ASSERT(!Sys_GLCheckError());
     return true;
 }
 
@@ -947,8 +947,8 @@ void GL_UploadTextureContent(texturecontent_t const &content, gl::UploadMethod m
         }
     }
 
-    //DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    //DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, content.name);
     LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, content.minFilter);
@@ -958,7 +958,7 @@ void GL_UploadTextureContent(texturecontent_t const &content, gl::UploadMethod m
     if (GL_state.features.texFilterAniso)
         LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(content.anisoFilter));
 
-    DENG2_ASSERT(dglFormat == DGL_RGB || dglFormat == DGL_RGBA);
+    DE_ASSERT(dglFormat == DGL_RGB || dglFormat == DGL_RGBA);
 
     if (!(content.flags & TXCF_GRAY_MIPMAP))
     {

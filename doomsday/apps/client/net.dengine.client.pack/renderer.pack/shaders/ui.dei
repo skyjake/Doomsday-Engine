@@ -3,9 +3,9 @@ ui {
     shader guiwidget.batch {
         vertex = "
             uniform mat4  uMvpMatrix;            
-            uniform vec4  uColor[DENG_MAX_BATCH_UNIFORMS];
-            uniform float uSaturation[DENG_MAX_BATCH_UNIFORMS];
-            uniform vec4  uScissorRect[DENG_MAX_BATCH_UNIFORMS];
+            uniform vec4  uColor[DE_MAX_BATCH_UNIFORMS];
+            uniform float uSaturation[DE_MAX_BATCH_UNIFORMS];
+            uniform vec4  uScissorRect[DE_MAX_BATCH_UNIFORMS];
             
             in vec4 aVertex;
             in vec2 aUV;

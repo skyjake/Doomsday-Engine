@@ -163,7 +163,7 @@ static bool matchFileName(String const &string, String const &pattern)
     return st->isNull();
 }
 
-DENG2_PIMPL(FS1)
+DE_PIMPL(FS1)
 {
     bool loadingForStartup;     ///< @c true= Flag newly opened files as "startup".
 
@@ -203,7 +203,7 @@ DENG2_PIMPL(FS1)
 
     void clearAllSchemes()
     {
-        DENG2_FOR_EACH(Schemes, i, schemes)
+        DE_FOR_EACH(Schemes, i, schemes)
         {
             delete *i;
         }
@@ -273,7 +273,7 @@ DENG2_PIMPL(FS1)
             if (scheme.findAll(name, foundNodes))
             {
                 // At least one node name was matched (perhaps partially).
-                DENG2_FOR_EACH_CONST(Scheme::FoundNodes, i, foundNodes)
+                DE_FOR_EACH_CONST(Scheme::FoundNodes, i, foundNodes)
                 {
                     PathTree::Node &node = **i;
                     if (!node.comparePath(search.path(), PathTree::NoBranch))
@@ -320,7 +320,7 @@ DENG2_PIMPL(FS1)
         // Nope. Any applicable dir/WAD redirects?
         if (!lumpMappings.empty())
         {
-            DENG2_FOR_EACH_CONST(LumpMappings, i, lumpMappings)
+            DE_FOR_EACH_CONST(LumpMappings, i, lumpMappings)
             {
                 LumpMapping const &mapping = *i;
                 if (mapping.first.compare(path)) continue;
@@ -337,7 +337,7 @@ DENG2_PIMPL(FS1)
 
     FILE *findAndOpenNativeFile(String path, String const &mymode, String &foundPath)
     {
-        DENG2_ASSERT(!path.isEmpty());
+        DE_ASSERT(!path.isEmpty());
 
         // We must have an absolute path - prepend the CWD if necessary.
         path = NativePath::workPath().withSeparators('/') / path;
@@ -363,7 +363,7 @@ DENG2_PIMPL(FS1)
         {
             QByteArray pathUtf8 = path.toUtf8();
             AutoStr *mapped = AutoStr_NewStd();
-            DENG2_FOR_EACH_CONST(PathMappings, i, pathMappings)
+            DE_FOR_EACH_CONST(PathMappings, i, pathMappings)
             {
                 Str_Set(mapped, pathUtf8.constData());
                 if (!applyPathMapping(mapped, *i)) continue;
@@ -461,7 +461,7 @@ FS1::FS1() : d(new Impl(this))
 
 FS1::Scheme &FS1::createScheme(String name, Scheme::Flags flags)
 {
-    DENG2_ASSERT(name.length() >= Scheme::min_name_length);
+    DE_ASSERT(name.length() >= Scheme::min_name_length);
 
     // Ensure this is a unique name.
     if (knownScheme(name)) return scheme(name);
@@ -474,7 +474,7 @@ FS1::Scheme &FS1::createScheme(String name, Scheme::Flags flags)
 
 void FS1::index(File1 &file)
 {
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
     // Ensure this hasn't yet been indexed.
     FileList::const_iterator found = findListFile(d->loadedFiles, file);
     if (found != d->loadedFiles.end())
@@ -552,7 +552,7 @@ File1 &FS1::find(de::Uri const &search)
             FileList::iterator found = findListFileByPath(d->loadedFiles, searchPath);
             if (found != d->loadedFiles.end())
             {
-                DENG_ASSERT((*found)->hasFile());
+                DE_ASSERT((*found)->hasFile());
                 return (*found)->file();
             }
         }
@@ -594,9 +594,9 @@ String FS1::findPath(de::Uri const &search, int flags, ResourceClass &rclass)
              */
             String searchPathWithoutFileNameExtension = searchPath.fileNamePath() / searchPath.fileNameWithoutExtension();
 
-            DENG2_FOR_EACH_CONST(ResourceClass::FileTypes, typeIt, rclass.fileTypes())
+            DE_FOR_EACH_CONST(ResourceClass::FileTypes, typeIt, rclass.fileTypes())
             {
-                DENG2_FOR_EACH_CONST(QStringList, i, (*typeIt)->knownFileNameExtensions())
+                DE_FOR_EACH_CONST(QStringList, i, (*typeIt)->knownFileNameExtensions())
                 {
                     String const &ext = *i;
                     String found = d->findPath(de::Uri(search.scheme(), searchPathWithoutFileNameExtension + ext));
@@ -620,11 +620,11 @@ String FS1::findPath(de::Uri const &search, int flags)
     return findPath(search, flags, ResourceClass::classForId(RC_NULL));
 }
 
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
 static void printFileIds(FileIds const &fileIds)
 {
     uint idx = 0;
-    DENG2_FOR_EACH_CONST(FileIds, i, fileIds)
+    DE_FOR_EACH_CONST(FileIds, i, fileIds)
     {
         LOGDEV_RES_MSG("  %u - %s : \"%s\"") << idx << *i << i->path();
         ++idx;
@@ -632,11 +632,11 @@ static void printFileIds(FileIds const &fileIds)
 }
 #endif
 
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
 static void printFileList(FS1::FileList &list)
 {
     uint idx = 0;
-    DENG2_FOR_EACH_CONST(FS1::FileList, i, list)
+    DE_FOR_EACH_CONST(FS1::FileList, i, list)
     {
         FileHandle &hndl = **i;
         File1 &file   = hndl.file();
@@ -652,7 +652,7 @@ static void printFileList(FS1::FileList &list)
 
 int FS1::unloadAllNonStartupFiles()
 {
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
     // List all open files with their identifiers.
     if (LogBuffer::get().isEnabled(LogEntry::Generic | LogEntry::Verbose))
     {
@@ -674,7 +674,7 @@ int FS1::unloadAllNonStartupFiles()
         numUnloadedFiles += 1;
     }
 
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
     // Sanity check: look for orphaned identifiers.
     if (!d->fileIds.empty())
     {
@@ -748,7 +748,7 @@ void FS1::releaseFile(File1 &file)
 static Wad *findFirstWadFile(FS1::FileList &list, bool custom)
 {
     if (list.empty()) return 0;
-    DENG2_FOR_EACH(FS1::FileList, i, list)
+    DE_FOR_EACH(FS1::FileList, i, list)
     {
         File1 &file = (*i)->file();
         if (custom != file.hasCustom()) continue;
@@ -786,7 +786,7 @@ int FS1::findAll(bool (*predicate)(File1 &file, void *parameters), void *paramet
     FS1::FileList &found) const
 {
     int numFound = 0;
-    DENG2_FOR_EACH_CONST(FS1::FileList, i, d->loadedFiles)
+    DE_FOR_EACH_CONST(FS1::FileList, i, d->loadedFiles)
     {
         // Interested in this file?
         if (predicate && !predicate((*i)->file(), parameters)) continue; // Nope.
@@ -810,7 +810,7 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList &found)
     /*
      * Check the Zip directory.
      */
-    DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, d->zipFileIndex.allLumps())
+    DE_FOR_EACH_CONST(LumpIndex::Lumps, i, d->zipFileIndex.allLumps())
     {
         File1 const &lump = **i;
         PathTree::Node const &node = lump.directoryNode();
@@ -843,7 +843,7 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList &found)
      */
     if (!d->lumpMappings.empty())
     {
-        DENG2_FOR_EACH_CONST(LumpMappings, i, d->lumpMappings)
+        DE_FOR_EACH_CONST(LumpMappings, i, d->lumpMappings)
         {
             if (!matchFileName(i->first, searchPattern)) continue;
 
@@ -907,7 +907,7 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList &found)
 
 File1 &FS1::interpret(FileHandle &hndl, String filePath, FileInfo const &info)
 {
-    DENG2_ASSERT(!filePath.isEmpty());
+    DE_ASSERT(!filePath.isEmpty());
 
     File1 *interpretedFile = 0;
 
@@ -922,7 +922,7 @@ File1 &FS1::interpret(FileHandle &hndl, String filePath, FileInfo const &info)
     if (!interpretedFile)
     {
         FileTypes const &fileTypes = DD_FileTypes();
-        DENG2_FOR_EACH_CONST(FileTypes, i, fileTypes)
+        DE_FOR_EACH_CONST(FileTypes, i, fileTypes)
         {
             if (NativeFileType const *fileType = dynamic_cast<NativeFileType const *>(*i))
             {
@@ -943,13 +943,13 @@ File1 &FS1::interpret(FileHandle &hndl, String filePath, FileInfo const &info)
         interpretedFile = new File1(&hndl, filePath, info, container);
     }
 
-    DENG2_ASSERT(interpretedFile);
+    DE_ASSERT(interpretedFile);
     return *interpretedFile;
 }
 
 FileHandle &FS1::openFile(String const &path, String const &mode, size_t baseOffset, bool allowDuplicate)
 {
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
     for (int i = 0; i < mode.length(); ++i)
     {
         if (mode[i] != 'r' && mode[i] != 't' && mode[i] != 'b' && mode[i] != 'f')
@@ -996,7 +996,7 @@ void FS1::addPathLumpMapping(String lumpName, String destination)
     // We require an absolute path - prepend the CWD if necessary.
     if (QDir::isRelativePath(destination))
     {
-        String workPath = DENG2_APP->currentWorkPath().withSeparators('/');
+        String workPath = DE_APP->currentWorkPath().withSeparators('/');
         destination = workPath / destination;
     }
 
@@ -1095,7 +1095,7 @@ void FS1::printDirectory(Path path)
     {
         qSort(found.begin(), found.end());
 
-        DENG2_FOR_EACH_CONST(PathList, i, found)
+        DE_FOR_EACH_CONST(PathList, i, found)
         {
             LOG_RES_MSG("  %s") << NativePath(i->path).pretty();
         }
@@ -1131,7 +1131,7 @@ FS1::Schemes const &FS1::allSchemes()
 /// Print contents of directories as Doomsday sees them.
 D_CMD(Dir)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
     if (argc > 1)
     {
         for (int i = 1; i < argc; ++i)
@@ -1150,7 +1150,7 @@ D_CMD(Dir)
 /// Dump a copy of a virtual file to the runtime directory.
 D_CMD(DumpLump)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     if (fileSystem)
     {
@@ -1168,7 +1168,7 @@ D_CMD(DumpLump)
 /// List virtual files inside containers.
 D_CMD(ListLumps)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     if (!fileSystem) return false;
 
@@ -1179,7 +1179,7 @@ D_CMD(ListLumps)
     LOG_RES_MSG("LumpIndex %p (%i records):") << &lumpIndex << numRecords;
 
     int idx = 0;
-    DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, lumpIndex.allLumps())
+    DE_FOR_EACH_CONST(LumpIndex::Lumps, i, lumpIndex.allLumps())
     {
         File1 const &lump = **i;
         String containerPath  = NativePath(lump.container().composePath()).pretty();
@@ -1200,7 +1200,7 @@ D_CMD(ListLumps)
 /// List presently loaded files in original load order.
 D_CMD(ListFiles)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     LOG_RES_MSG(_E(b) "Loaded Files " _E(l) "(in load order)" _E(w) ":");
 
@@ -1209,7 +1209,7 @@ D_CMD(ListFiles)
     if (fileSystem)
     {
         FS1::FileList const &allLoadedFiles = App_FileSystem().loadedFiles();
-        DENG2_FOR_EACH_CONST(FS1::FileList, i, allLoadedFiles)
+        DE_FOR_EACH_CONST(FS1::FileList, i, allLoadedFiles)
         {
             File1 &file = (*i)->file();
             uint crc = 0;
@@ -1272,7 +1272,7 @@ String App_BasePath()
 
 void F_Init()
 {
-    DENG2_ASSERT(!fileSystem);
+    DE_ASSERT(!fileSystem);
     fileSystem = new FS1();
 }
 

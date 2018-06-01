@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_GL_MAIN_H
-#define DENG_GL_MAIN_H
+#ifndef DE_GL_MAIN_H
+#define DE_GL_MAIN_H
 
 #ifndef __CLIENT__
 #  error "gl only exists in the Client"
@@ -49,26 +49,26 @@ namespace world { class Material; }
 #define MINTEXWIDTH             8
 #define MINTEXHEIGHT            8
 
-DENG_EXTERN_C float vid_gamma, vid_bright, vid_contrast;
-DENG_EXTERN_C int r_detail;
+DE_EXTERN_C float vid_gamma, vid_bright, vid_contrast;
+DE_EXTERN_C int r_detail;
 
 #ifdef _DEBUG
-#  define DENG_ASSERT_GL_CONTEXT_ACTIVE()  {DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);}
+#  define DE_ASSERT_GL_CONTEXT_ACTIVE()  {DE_ASSERT(QOpenGLContext::currentContext() != nullptr);}
 #else
-#  define DENG_ASSERT_GL_CONTEXT_ACTIVE()
+#  define DE_ASSERT_GL_CONTEXT_ACTIVE()
 #endif
 
 #define Sys_GLCheckError()  Sys_GLCheckErrorArgs(__FILE__, __LINE__)
 
 #ifdef _DEBUG
-#  define LIBDENG_ASSERT_GL_TEXTURE_ISBOUND(tex) { \
+#  define DE_ASSERT_GL_TEXTURE_ISBOUND(tex) { \
     GLint p; \
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &p); \
     Sys_GLCheckError(); \
     assert(p == (GLint)tex); \
 }
 #else
-#  define LIBDENG_ASSERT_GL_TEXTURE_ISBOUND(tex)
+#  define DE_ASSERT_GL_TEXTURE_ISBOUND(tex)
 #endif
 
 void GL_AssertContextActive();
@@ -322,4 +322,4 @@ void            DGL_CullFace(DGLenum cull);
 
 D_CMD(UpdateGammaRamp);
 
-#endif // DENG_GL_MAIN_H
+#endif // DE_GL_MAIN_H

@@ -26,7 +26,7 @@
 
 namespace de { namespace shell {
 
-DENG2_PIMPL(AbstractLineEditor)
+DE_PIMPL(AbstractLineEditor)
 {
     String   prompt;
     String   text;
@@ -67,7 +67,7 @@ DENG2_PIMPL(AbstractLineEditor)
 
     WrappedLine lineSpan(int line) const
     {
-        DENG2_ASSERT(line < wraps->height());
+        DE_ASSERT(line < wraps->height());
         return wraps->line(line);
     }
 
@@ -133,7 +133,7 @@ DENG2_PIMPL(AbstractLineEditor)
     {
         acceptCompletion();
 
-        DENG2_ASSERT(lineOff == 1 || lineOff == -1);
+        DE_ASSERT(lineOff == 1 || lineOff == -1);
 
         Vec2i const linePos = lineCursorPos();
         int const destWidth = wraps->rangeWidth(Rangei(lineSpan(linePos.y).range.start, cursor));

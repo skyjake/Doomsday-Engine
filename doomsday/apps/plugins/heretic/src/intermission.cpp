@@ -219,10 +219,10 @@ static common::GameSession::VisitedMaps visitedMaps()
         // version of this information, using the original map progression assumptions.
         bool isNumber;
         int oldEpisodeNum = gfw_Session()->episodeId().toInt(&isNumber) - 1; // 1-based
-        DENG2_ASSERT(isNumber);
-        DENG2_UNUSED(isNumber);
+        DE_ASSERT(isNumber);
+        DE_UNUSED(isNumber);
 
-        DENG2_ASSERT(wbs);
+        DE_ASSERT(wbs);
         int lastMapNum = G_MapNumberFor(::wbs->currentMap);
         if(lastMapNum == 8) lastMapNum = G_MapNumberFor(::wbs->nextMap) - 1; // 1-based
 
@@ -272,7 +272,7 @@ static void drawFinishedTitle()
 {
     if(!haveLocationMap) return;
 
-    DENG2_ASSERT(!wbs->currentMap.isEmpty());
+    DE_ASSERT(!wbs->currentMap.isEmpty());
 
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -1012,7 +1012,7 @@ void IN_Drawer()
         break;
 
     default:
-        DENG2_ASSERT_FAIL("IN_Drawer: Unknown intermission state");
+        DE_ASSERT_FAIL("IN_Drawer: Unknown intermission state");
         break;
     }
 

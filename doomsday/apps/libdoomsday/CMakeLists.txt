@@ -1,7 +1,7 @@
 # Doomsday Engine -- libdoomsday
 
 cmake_minimum_required (VERSION 3.1)
-project (DENG_LIBDOOMSDAY)
+project (DE_LIBDOOMSDAY)
 include (../../cmake/Config.cmake)
 
 # Dependencies.
@@ -13,15 +13,15 @@ include (ZLIB)
 
 # Definitions.
 add_definitions (
-    -D__DENG__=1
+    -D__DE__=1
     -D__LIBDOOMSDAY__=1
 )
 
 # Set up the API.
-include_directories (${DENG_API_DIR})
+include_directories (${DE_API_DIR})
 configure_file (
-    ${DENG_API_DIR}/dd_version.h.in
-    ${DENG_API_DIR}/dd_version.h
+    ${DE_API_DIR}/dd_version.h.in
+    ${DE_API_DIR}/dd_version.h
 )
 
 # Source and header files.
@@ -45,7 +45,7 @@ target_link_libraries (libdoomsday
 )
 target_include_directories (libdoomsday PRIVATE ${ZLIB_INCLUDE_DIR})
 
-if (DENG_ENABLE_SDK)
+if (DE_ENABLE_SDK)
     install (DIRECTORY include/doomsday
         DESTINATION include
         COMPONENT sdk

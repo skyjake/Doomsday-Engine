@@ -24,7 +24,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(GLTimer)
+DE_PIMPL_NOREF(GLTimer)
 {
     static const int BUF_COUNT = 2;
 
@@ -79,7 +79,7 @@ GLTimer::GLTimer()
 
 void GLTimer::beginTimer(const Id &id)
 {
-    DENG2_ASSERT(!d->measuring);
+    DE_ASSERT(!d->measuring);
     if (d->measuring) return;
 
     auto &GL = LIBGUI_GL;

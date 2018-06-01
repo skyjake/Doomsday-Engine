@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_PARTICLE_H
-#define DENG_CLIENT_RENDER_PARTICLE_H
+#ifndef DE_CLIENT_RENDER_PARTICLE_H
+#define DE_CLIENT_RENDER_PARTICLE_H
 
 namespace world { class Map; }
 
@@ -41,7 +41,7 @@ enum ParticleType
     PTC_MODEL = 1000
 };
 
-DENG_EXTERN_C de::dbyte useParticles;
+DE_EXTERN_C de::dbyte useParticles;
 
 void Rend_ParticleRegister();
 
@@ -68,4 +68,4 @@ void Rend_ParticleReleaseExtraTextures();
  */
 void Rend_RenderParticles(world::Map &map);
 
-#endif  // DENG_CLIENT_RENDER_PARTICLE_H
+#endif  // DE_CLIENT_RENDER_PARTICLE_H

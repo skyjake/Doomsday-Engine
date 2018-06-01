@@ -44,11 +44,11 @@ uint qHash(SchemeHashKey const &key)
     return key.scheme.at(1).toLower().unicode();
 }
 
-DENG2_PIMPL(Materials)
-, DENG2_OBSERVES(MaterialScheme,   ManifestDefined)
-, DENG2_OBSERVES(MaterialManifest, MaterialDerived)
-, DENG2_OBSERVES(MaterialManifest, Deletion)
-, DENG2_OBSERVES(Material,         Deletion)
+DE_PIMPL(Materials)
+, DE_OBSERVES(MaterialScheme,   ManifestDefined)
+, DE_OBSERVES(MaterialManifest, MaterialDerived)
+, DE_OBSERVES(MaterialManifest, Deletion)
+, DE_OBSERVES(Material,         Deletion)
 {
     /// System subspace schemes containing the manifests/resources.
     QHash<SchemeHashKey, MaterialScheme *> materialSchemes;
@@ -98,7 +98,7 @@ DENG2_PIMPL(Materials)
 
     void createMaterialScheme(String name)
     {
-        DENG2_ASSERT(name.length() >= MaterialScheme::min_name_length);
+        DE_ASSERT(name.length() >= MaterialScheme::min_name_length);
 
         // Create a new scheme.
         MaterialScheme *newScheme = new MaterialScheme(name);
@@ -216,7 +216,7 @@ MaterialManifest &Materials::toMaterialManifest(materialid_t id) const
             return *d->materialManifestIdMap[idx];
         }
         // Internal bookeeping error.
-        DENG2_ASSERT(false);
+        DE_ASSERT(false);
     }
     /// @throw InvalidMaterialIdError The specified material id is invalid.
     throw UnknownMaterialIdError("Materials::toMaterialManifest",
@@ -347,7 +347,7 @@ void Materials::clearAllMaterialSchemes()
         scheme.clear();
         return LoopContinue;
     });
-    DENG2_ASSERT(materialCount() == 0); // sanity check
+    DE_ASSERT(materialCount() == 0); // sanity check
 }
 
 Materials &Materials::get() // static

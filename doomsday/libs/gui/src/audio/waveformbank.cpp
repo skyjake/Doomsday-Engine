@@ -24,7 +24,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(WaveformBank)
+DE_PIMPL_NOREF(WaveformBank)
 {
     struct Source : public ISource
     {

@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CONFIGPROFILES_H
-#define DENG_CONFIGPROFILES_H
+#ifndef DE_CONFIGPROFILES_H
+#define DE_CONFIGPROFILES_H
 
 #include <de/String>
 #include <de/Observers>
@@ -55,7 +55,7 @@ public:
     };
 
     /// Notified when the current profile has changed.
-    DENG2_DEFINE_AUDIENCE(ProfileChange, void currentProfileChanged(de::String const &name))
+    DE_DEFINE_AUDIENCE(ProfileChange, void currentProfileChanged(de::String const &name))
 
 public:
     ConfigProfiles();
@@ -130,7 +130,7 @@ protected:
             de::Info::BlockElement const &block) override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CONFIGPROFILES_H
+#endif // DE_CONFIGPROFILES_H

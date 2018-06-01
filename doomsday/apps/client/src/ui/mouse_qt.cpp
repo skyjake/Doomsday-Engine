@@ -68,7 +68,7 @@ static void Mouse_Qt_Poll()
 {
     if (!mouseTrapped) return;
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
     ClientWindow *win = ClientWindowSystem::mainPtr();
     if (!win) return; // Hmm?
 
@@ -147,7 +147,7 @@ static void Mouse_Qt_ShowCursor(bool yes)
 
 static void Mouse_Qt_InitTrap()
 {
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
     auto &window = ClientWindowSystem::main();
 
     QCursor::setPos(window.mapToGlobal(window.geometry().center()));
@@ -160,7 +160,7 @@ static void Mouse_Qt_InitTrap()
 
 static void Mouse_Qt_DeinitTrap()
 {
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
     auto &window = ClientWindowSystem::main();
     window.setMouseGrabEnabled(false);
     window.setKeyboardGrabEnabled(false);

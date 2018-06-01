@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_RESOURCE_FRAMEMODEL_H
-#define DENG_RESOURCE_FRAMEMODEL_H
+#ifndef DE_RESOURCE_FRAMEMODEL_H
+#define DE_RESOURCE_FRAMEMODEL_H
 
 #include <doomsday/filesys/filehandle.h>
 #ifdef __CLIENT__
@@ -46,13 +46,13 @@ class FrameModel
 {
 public:
     /// Referenced frame is missing. @ingroup errors
-    DENG2_ERROR(MissingFrameError);
+    DE_ERROR(MissingFrameError);
 
     /// Referenced skin is missing. @ingroup errors
-    DENG2_ERROR(MissingSkinError);
+    DE_ERROR(MissingSkinError);
 
     /// Referenced detail level is missing. @ingroup errors
-    DENG2_ERROR(MissingDetailLevelError);
+    DE_ERROR(MissingDetailLevelError);
 
     /**
      * Classification/processing flags.
@@ -305,7 +305,7 @@ public:
     QBitArray const &lodVertexUsage() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(FrameModel::Flags)
@@ -314,4 +314,4 @@ typedef FrameModel::DetailLevel FrameModelLOD;
 typedef FrameModel::Frame FrameModelFrame;
 typedef FrameModel::Skin FrameModelSkin;
 
-#endif // DENG_RESOURCE_FRAMEMODEL_H
+#endif // DE_RESOURCE_FRAMEMODEL_H

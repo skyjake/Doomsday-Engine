@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_ANIMATIONVALUE_H
-#define LIBDENG2_ANIMATIONVALUE_H
+#ifndef LIBCORE_ANIMATIONVALUE_H
+#define LIBCORE_ANIMATIONVALUE_H
 
 #include "../Animation"
 #include "../Counted"
@@ -29,7 +29,7 @@ namespace de {
  * Value that holds an Animation.
  * @ingroup data
  */
-class DENG2_PUBLIC AnimationValue : public Value
+class DE_PUBLIC AnimationValue : public Value
 {
 public:
     AnimationValue(Animation const &animation = Animation());
@@ -56,7 +56,7 @@ public:
     void operator << (Reader &from) override;
 
 private:
-    struct DENG2_PUBLIC CountedAnimation : public Animation, public Counted {
+    struct DE_PUBLIC CountedAnimation : public Animation, public Counted {
         CountedAnimation(Animation const &anim);
     };
 
@@ -67,4 +67,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_ANIMATIONVALUE_H
+#endif // LIBCORE_ANIMATIONVALUE_H

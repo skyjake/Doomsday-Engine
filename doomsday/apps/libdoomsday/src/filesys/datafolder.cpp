@@ -41,13 +41,13 @@ DataFolder::DataFolder(Format format, File &sourceFile)
     }
     else
     {
-        DENG2_ASSERT_FAIL("DataFolder doesn't know how to access the source file");
+        DE_ASSERT_FAIL("DataFolder doesn't know how to access the source file");
     }*/
 }
 
 DataFolder::~DataFolder()
 {
-    DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
+    DE_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion().clear();
     deindex();
 }

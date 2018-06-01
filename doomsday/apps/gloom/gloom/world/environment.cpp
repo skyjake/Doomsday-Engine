@@ -24,7 +24,7 @@ using namespace de;
 
 namespace gloom {
 
-DENG2_PIMPL(Environment)
+DE_PIMPL(Environment)
 {
     World *       world;
     QSet<Sound *> sounds;

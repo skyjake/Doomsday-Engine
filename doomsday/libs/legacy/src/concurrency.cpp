@@ -33,7 +33,7 @@
 
 CallbackThread::CallbackThread(systhreadfunc_t func, void *param)
     : _callback(func), _parm(param), _returnValue(0),
-      _exitStatus(DENG_THREAD_STOPPED_NORMALLY),
+      _exitStatus(DE_THREAD_STOPPED_NORMALLY),
       _terminationFunc(0)
 {
     //qDebug() << "CallbackThread:" << this << "created.";
@@ -66,7 +66,7 @@ void CallbackThread::deleteNow()
 
 void CallbackThread::run()
 {
-    _exitStatus = DENG_THREAD_STOPPED_WITH_FORCE;
+    _exitStatus = DE_THREAD_STOPPED_WITH_FORCE;
 
     try
     {
@@ -74,14 +74,14 @@ void CallbackThread::run()
         {
             _returnValue = _callback(_parm);
         }
-        _exitStatus = DENG_THREAD_STOPPED_NORMALLY;
+        _exitStatus = DE_THREAD_STOPPED_NORMALLY;
     }
     catch (std::exception const &error)
     {
         LOG_AS("CallbackThread");
         LOG_ERROR(QString("Uncaught exception: ") + error.what());
         _returnValue = -1;
-        _exitStatus = DENG_THREAD_STOPPED_WITH_EXCEPTION;
+        _exitStatus = DE_THREAD_STOPPED_WITH_EXCEPTION;
     }
 
     if (_terminationFunc)
@@ -153,7 +153,7 @@ void Thread_KillAbnormally(thread_t handle)
 void Thread_SetCallback(thread_t thread, void (*terminationFunc)(systhreadexitstatus_t))
 {
     CallbackThread *t = reinterpret_cast<CallbackThread *>(thread);
-    DENG_ASSERT(t);
+    DE_ASSERT(t);
     if (!t) return;
 
     t->setTerminationFunc(terminationFunc);
@@ -163,7 +163,7 @@ int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t *exitSt
 {
     if (!handle)
     {
-        if (exitStatus) *exitStatus = DENG_THREAD_STOPPED_NORMALLY;
+        if (exitStatus) *exitStatus = DE_THREAD_STOPPED_NORMALLY;
         return 0;
     }
 
@@ -173,7 +173,7 @@ int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t *exitSt
     if (!t->isFinished())
     {
         LOG_WARNING("Thread did not stop in time, forcibly killing it.");
-        if (exitStatus) *exitStatus = DENG_THREAD_STOPPED_WITH_FORCE;
+        if (exitStatus) *exitStatus = DE_THREAD_STOPPED_WITH_FORCE;
     }
     else
     {

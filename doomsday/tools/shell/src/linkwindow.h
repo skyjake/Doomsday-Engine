@@ -70,7 +70,7 @@ protected slots:
     void localServerStopped(int port);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // LINKWINDOW_H

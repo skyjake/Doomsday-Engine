@@ -20,17 +20,17 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(EscapeParser)
+DE_PIMPL_NOREF(EscapeParser)
 {
     String original;
     String plain;
 
-    DENG2_PIMPL_AUDIENCE(PlainText)
-    DENG2_PIMPL_AUDIENCE(EscapeSequence)
+    DE_PIMPL_AUDIENCE(PlainText)
+    DE_PIMPL_AUDIENCE(EscapeSequence)
 };
 
-DENG2_AUDIENCE_METHOD(EscapeParser, PlainText)
-DENG2_AUDIENCE_METHOD(EscapeParser, EscapeSequence)
+DE_AUDIENCE_METHOD(EscapeParser, PlainText)
+DE_AUDIENCE_METHOD(EscapeParser, EscapeSequence)
 
 EscapeParser::EscapeParser() : d(new Impl)
 {}
@@ -50,7 +50,7 @@ void EscapeParser::parse(String const &textWithEscapes)
             // Empty ranges are ignored.
             if (range.size() > 0)
             {
-                DENG2_FOR_AUDIENCE2(PlainText, i)
+                DE_FOR_AUDIENCE2(PlainText, i)
                 {
                     i->handlePlainText(range);
                 }
@@ -81,7 +81,7 @@ void EscapeParser::parse(String const &textWithEscapes)
                 break;
             }
 
-            DENG2_FOR_AUDIENCE2(EscapeSequence, i)
+            DE_FOR_AUDIENCE2(EscapeSequence, i)
             {
                 i->handleEscapeSequence(Rangei(range.end + 1, range.end + escLen));
             }
@@ -95,7 +95,7 @@ void EscapeParser::parse(String const &textWithEscapes)
             range.end = d->original.size();
             if (range.size() > 0)
             {
-                DENG2_FOR_AUDIENCE2(PlainText, i)
+                DE_FOR_AUDIENCE2(PlainText, i)
                 {
                     i->handlePlainText(range);
                 }

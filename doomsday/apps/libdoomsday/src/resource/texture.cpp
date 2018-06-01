@@ -36,7 +36,7 @@ namespace res {
 
 typedef QHash<Texture::AnalysisId, void *> Analyses;
 
-DENG2_PIMPL(Texture)
+DE_PIMPL(Texture)
 {
     TextureManifest &manifest;
     Flags flags;
@@ -67,7 +67,7 @@ DENG2_PIMPL(Texture)
     /// Notify iterested parties of a change in world dimensions.
     void notifyDimensionsChanged()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(DimensionsChange, i) i->textureDimensionsChanged(self());
+        DE_FOR_PUBLIC_AUDIENCE(DimensionsChange, i) i->textureDimensionsChanged(self());
     }
 };
 
@@ -80,7 +80,7 @@ Texture::Texture(TextureManifest &manifest) : d(new Impl(this, manifest))
 
 Texture::~Texture()
 {
-    DENG2_FOR_AUDIENCE(Deletion, i) i->textureBeingDeleted(*this);
+    DE_FOR_AUDIENCE(Deletion, i) i->textureBeingDeleted(*this);
 
     if (!manifest().schemeName().compareWithoutCase("Textures"))
     {
@@ -184,7 +184,7 @@ void Texture::setAnalysisDataPointer(AnalysisId analysisId, void *newData)
     void *existingData = analysisDataPointer(analysisId);
     if (existingData)
     {
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
         if (newData)
         {
             LOGDEV_RES_VERBOSE("Image analysis (id:%i) already present for \"%s\", will be replaed")
@@ -209,7 +209,7 @@ void Texture::setFlags(Texture::Flags flagsToChange, FlagOp operation)
 String Texture::description() const
 {
     String str = String("Texture " _E(b) "%1" _E(.)).arg(manifest().composeUri().asText());
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
     str += String(" [addr:0x%1]").arg(de::dintptr(this), 0, 16);
 #endif
     str += _E(l) " Dimensions:" _E(.)
@@ -221,7 +221,7 @@ String Texture::description() const
 
 D_CMD(InspectTexture)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1);
 

@@ -75,7 +75,7 @@ public:
     void setFullHistory(StringList history);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 }} // namespace de::shell

@@ -40,7 +40,7 @@
 #ifdef HAVE_AL_H
 #  include <al.h>
 #  include <alc.h>
-#elif defined (DENG_IOS)
+#elif defined (DE_IOS)
 #  include <OpenAL/al.h>
 #  include <OpenAL/alc.h>
 #else
@@ -59,7 +59,7 @@
 
 #include <de/c_wrapper.h>
 
-DENG_DECLARE_API(Con);
+DE_DECLARE_API(Con);
 
 #define SRC(buf) ( (ALuint) PTR2INT(buf->ptr3D) )
 #define BUF(buf) ( (ALuint) PTR2INT(buf->ptr) )
@@ -112,7 +112,7 @@ static float headYaw, headPitch; // In radians.
 static ALCdevice* device = 0;
 static ALCcontext* context = 0;
 
-#ifdef DENG_DSOPENAL_DEBUG
+#ifdef DE_DSOPENAL_DEBUG
 #  define DSOPENAL_TRACE(args)  std::cerr << "[dsOpenAL] " << args << std::endl;
 #else
 #  define DSOPENAL_TRACE(args)
@@ -508,11 +508,11 @@ int DS_SFX_Getv(int /*prop*/, void* /*values*/)
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DENG_EXTERN_C DENG_VISIBLE_SYMBOL const char* deng_LibraryType(void)
+DE_EXTERN_C DE_VISIBLE_SYMBOL const char* deng_LibraryType(void)
 {
     return "deng-plugin/audio";
 }
 
-DENG_API_EXCHANGE(
-        DENG_GET_API(DE_API_CONSOLE, Con);
+DE_API_EXCHANGE(
+        DE_GET_API(DE_API_CONSOLE, Con);
 )

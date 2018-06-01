@@ -407,7 +407,7 @@ static dd_bool shouldAvoidDropoff(mobj_t *mobj, pvec2d_t chaseDir)
 {
     pit_avoiddropoff_params_t parm;
 
-    DENG_ASSERT(mobj != 0);
+    DE_ASSERT(mobj != 0);
 
     // Disabled? (inverted var name!)
     if(cfg.avoidDropoffs) return false;
@@ -439,7 +439,7 @@ static void newChaseDir(mobj_t *mobj)
     vec2d_t chaseDir;
     dd_bool avoiding;
 
-    DENG_ASSERT(mobj != 0);
+    DE_ASSERT(mobj != 0);
 
     // Nothing to chase?
     if(!mobj->target) return;
@@ -2218,7 +2218,7 @@ void C_DECL A_BossDeath(mobj_t *actor)
             G_SetGameActionMapCompletedAndSetNextMap();
             break;
 
-        default: DENG_ASSERT_FAIL("A_BossDeath: Unknown trigger special type");
+        default: DE_ASSERT_FAIL("A_BossDeath: Unknown trigger special type");
         }
     }
 }

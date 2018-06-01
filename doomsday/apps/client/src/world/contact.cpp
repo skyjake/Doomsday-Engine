@@ -50,7 +50,7 @@ Vec3d Contact::objectOrigin() const
 
     default: break;
     }
-    DENG2_ASSERT(false);
+    DE_ASSERT(false);
     return Vec3d();
 }
 
@@ -63,7 +63,7 @@ ddouble Contact::objectRadius() const
 
     default: break;
     }
-    DENG2_ASSERT(false);
+    DE_ASSERT(false);
     return 0;
 }
 
@@ -76,7 +76,7 @@ AABoxd Contact::objectBounds() const
 
     default: break;
     }
-    DENG2_ASSERT(false);
+    DE_ASSERT(false);
     return AABoxd();
 }
 
@@ -128,7 +128,7 @@ ContactList::Node *ContactList::begin() const
 
 ContactList::Node *ContactList::newNode(void *object) // static
 {
-    DENG2_ASSERT(object);
+    DE_ASSERT(object);
 
     Node *node;
     if(!cursor)
@@ -164,7 +164,7 @@ static Contact *contactFirst, *contactCursor;
 
 static Contact *newContact(void *object, ContactType type)
 {
-    DENG2_ASSERT(object);
+    DE_ASSERT(object);
 
     Contact *contact;
     if(!contactCursor)

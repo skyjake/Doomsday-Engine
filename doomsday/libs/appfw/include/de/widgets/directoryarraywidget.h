@@ -38,7 +38,7 @@ protected:
     void elementCreated(LabelWidget &, const ui::Item &) override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

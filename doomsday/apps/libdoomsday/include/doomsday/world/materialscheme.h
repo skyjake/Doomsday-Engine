@@ -40,15 +40,15 @@ class LIBDOOMSDAY_PUBLIC MaterialScheme
 
 public:
     /// The requested manifest could not be found in the index. @ingroup errors
-    DENG2_ERROR(NotFoundError);
+    DE_ERROR(NotFoundError);
 
     /// The specified path was not valid. @ingroup errors
-    DENG2_ERROR(InvalidPathError);
+    DE_ERROR(InvalidPathError);
 
-    DENG2_DEFINE_AUDIENCE(ManifestDefined, void materialSchemeManifestDefined(MaterialScheme &scheme, Manifest &manifest))
+    DE_DEFINE_AUDIENCE(ManifestDefined, void materialSchemeManifestDefined(MaterialScheme &scheme, Manifest &manifest))
 
     /// Minimum length of a symbolic name.
-    static int const min_name_length = DENG2_URI_MIN_SCHEME_LENGTH;
+    static int const min_name_length = DE_URI_MIN_SCHEME_LENGTH;
 
     /// Manifests in the scheme are placed into a tree.
     typedef de::PathTreeT<Manifest> Index;
@@ -110,7 +110,7 @@ public:
     Index const &index() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace world

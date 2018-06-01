@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_STACK_H
-#define LIBDENG_STACK_H
+#ifndef DE_STACK_H
+#define DE_STACK_H
 
 #include <de/liblegacy.h>
 
@@ -32,15 +32,15 @@ struct ddstack_s; // opaque
 
 typedef struct ddstack_s ddstack_t;
 
-DENG_PUBLIC ddstack_t *Stack_New(void);
+DE_PUBLIC ddstack_t *Stack_New(void);
 
-DENG_PUBLIC void Stack_Delete(ddstack_t *stack);
+DE_PUBLIC void Stack_Delete(ddstack_t *stack);
 
-DENG_PUBLIC size_t Stack_Height(ddstack_t *stack);
+DE_PUBLIC size_t Stack_Height(ddstack_t *stack);
 
-DENG_PUBLIC void Stack_Push(ddstack_t *stack, void *data);
+DE_PUBLIC void Stack_Push(ddstack_t *stack, void *data);
 
-DENG_PUBLIC void *Stack_Pop(ddstack_t *stack);
+DE_PUBLIC void *Stack_Pop(ddstack_t *stack);
 
 /// @}
 
@@ -48,4 +48,4 @@ DENG_PUBLIC void *Stack_Pop(ddstack_t *stack);
 } // extern "C"
 #endif
 
-#endif // LIBDENG_STACK_H
+#endif // DE_STACK_H

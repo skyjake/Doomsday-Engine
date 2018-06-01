@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_CLIENTMATERIAL_H
-#define DENG_RESOURCE_CLIENTMATERIAL_H
+#ifndef DE_RESOURCE_CLIENTMATERIAL_H
+#define DE_RESOURCE_CLIENTMATERIAL_H
 
 #include <doomsday/world/Material>
 #include "audio/s_environ.h"
@@ -67,7 +67,7 @@ public:
 //- Decorations -------------------------------------------------------------------------
 
     /// The referenced decoration does not exist. @ingroup errors
-    DENG2_ERROR(MissingDecorationError);
+    DE_ERROR(MissingDecorationError);
 
     /**
      * Base class for modelling a logical "decoration".
@@ -89,7 +89,7 @@ public:
     {
     public:
         /// The referenced stage does not exist. @ingroup errors
-        DENG2_ERROR(MissingStageError);
+        DE_ERROR(MissingStageError);
 
         /**
          * Base class for a logical decoration animation stage.
@@ -103,7 +103,7 @@ public:
             Stage(Stage const &other) : tics(other.tics), variance(other.variance) {}
             virtual ~Stage() {}
 
-            DENG2_CAST_METHODS()
+            DE_CAST_METHODS()
 
             /**
              * Returns a human-friendly, textual description of the animation stage
@@ -120,7 +120,7 @@ public:
                    de::Vec2i const &patternOffset = de::Vec2i());
         virtual ~Decoration();
 
-        DENG2_CAST_METHODS()
+        DE_CAST_METHODS()
 
         /**
          * Returns a human-friendly, textual name for the type of material decoration.
@@ -184,7 +184,7 @@ public:
         Stages _stages;
 
     private:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
     /**
@@ -254,9 +254,9 @@ public:
     static ClientMaterial &find(de::Uri const &uri);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef ClientMaterial::Decoration MaterialDecoration;
 
-#endif  // DENG_RESOURCE_CLIENTMATERIAL_H
+#endif  // DE_RESOURCE_CLIENTMATERIAL_H

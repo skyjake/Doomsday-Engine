@@ -42,7 +42,7 @@ using namespace de;
 
 namespace world {
 
-DENG2_PIMPL_NOREF(Sky::Layer)
+DE_PIMPL_NOREF(Sky::Layer)
 {
     bool active         = false;
     bool masked         = false;
@@ -53,14 +53,14 @@ DENG2_PIMPL_NOREF(Sky::Layer)
     Sky &sky;
     Impl(Sky &sky) : sky(sky) {}
 
-    DENG2_PIMPL_AUDIENCE(ActiveChange)
-    DENG2_PIMPL_AUDIENCE(MaskedChange)
-    DENG2_PIMPL_AUDIENCE(MaterialChange)
+    DE_PIMPL_AUDIENCE(ActiveChange)
+    DE_PIMPL_AUDIENCE(MaskedChange)
+    DE_PIMPL_AUDIENCE(MaterialChange)
 };
 
-DENG2_AUDIENCE_METHOD(Sky::Layer, ActiveChange)
-DENG2_AUDIENCE_METHOD(Sky::Layer, MaskedChange)
-DENG2_AUDIENCE_METHOD(Sky::Layer, MaterialChange)
+DE_AUDIENCE_METHOD(Sky::Layer, ActiveChange)
+DE_AUDIENCE_METHOD(Sky::Layer, MaskedChange)
+DE_AUDIENCE_METHOD(Sky::Layer, MaterialChange)
 
 Sky::Layer::Layer(Sky &sky, Material *material) : d(new Impl(sky))
 {
@@ -82,7 +82,7 @@ void Sky::Layer::setActive(bool yes)
     if(d->active != yes)
     {
         d->active = yes;
-        DENG2_FOR_AUDIENCE2(ActiveChange, i) i->skyLayerActiveChanged(*this);
+        DE_FOR_AUDIENCE2(ActiveChange, i) i->skyLayerActiveChanged(*this);
     }
 }
 
@@ -96,7 +96,7 @@ void Sky::Layer::setMasked(bool yes)
     if(d->masked != yes)
     {
         d->masked = yes;
-        DENG2_FOR_AUDIENCE2(MaskedChange, i) i->skyLayerMaskedChanged(*this);
+        DE_FOR_AUDIENCE2(MaskedChange, i) i->skyLayerMaskedChanged(*this);
     }
 }
 
@@ -110,7 +110,7 @@ void Sky::Layer::setMaterial(Material *newMaterial)
     if(d->material != newMaterial)
     {
         d->material = newMaterial;
-        DENG2_FOR_AUDIENCE2(MaterialChange, i) i->skyLayerMaterialChanged(*this);
+        DE_FOR_AUDIENCE2(MaterialChange, i) i->skyLayerMaterialChanged(*this);
     }
 }
 
@@ -138,11 +138,11 @@ void Sky::Layer::setFadeoutLimit(dfloat newLimit)
 static Vec3f const AmbientLightColorDefault(1, 1, 1); // Pure white.
 #endif
 
-DENG2_PIMPL(Sky)
+DE_PIMPL(Sky)
 #ifdef __CLIENT__
-, DENG2_OBSERVES(Layer, ActiveChange)
-, DENG2_OBSERVES(Layer, MaterialChange)
-, DENG2_OBSERVES(Layer, MaskedChange)
+, DE_OBSERVES(Layer, ActiveChange)
+, DE_OBSERVES(Layer, MaterialChange)
+, DE_OBSERVES(Layer, MaskedChange)
 #endif
 {
     struct Layers : public QList<Layer *>
@@ -172,7 +172,7 @@ DENG2_PIMPL(Sky)
 
     ~Impl()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->skyBeingDeleted(self());
+        DE_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->skyBeingDeleted(self());
     }
 
 #ifdef __CLIENT__
@@ -308,14 +308,14 @@ DENG2_PIMPL(Sky)
 
 #endif  // __CLIENT__
 
-    DENG2_PIMPL_AUDIENCE(Deletion)
-    DENG2_PIMPL_AUDIENCE(HeightChange)
-    DENG2_PIMPL_AUDIENCE(HorizonOffsetChange)
+    DE_PIMPL_AUDIENCE(Deletion)
+    DE_PIMPL_AUDIENCE(HeightChange)
+    DE_PIMPL_AUDIENCE(HorizonOffsetChange)
 };
 
-DENG2_AUDIENCE_METHOD(Sky, Deletion)
-DENG2_AUDIENCE_METHOD(Sky, HeightChange)
-DENG2_AUDIENCE_METHOD(Sky, HorizonOffsetChange)
+DE_AUDIENCE_METHOD(Sky, Deletion)
+DE_AUDIENCE_METHOD(Sky, HeightChange)
+DE_AUDIENCE_METHOD(Sky, HorizonOffsetChange)
 
 Sky::Sky(defn::Sky const *definition)
     : MapElement(DMU_SKY)
@@ -443,7 +443,7 @@ void Sky::setHeight(dfloat newHeight)
     if(!de::fequal(d->height, newHeight))
     {
         d->height = newHeight;
-        DENG2_FOR_AUDIENCE2(HeightChange, i) i->skyHeightChanged(*this);
+        DE_FOR_AUDIENCE2(HeightChange, i) i->skyHeightChanged(*this);
     }
 }
 
@@ -457,7 +457,7 @@ void Sky::setHorizonOffset(dfloat newOffset)
     if(!de::fequal(d->horizonOffset, newOffset))
     {
         d->horizonOffset = newOffset;
-        DENG2_FOR_AUDIENCE2(HorizonOffsetChange, i) i->skyHorizonOffsetChanged(*this);
+        DE_FOR_AUDIENCE2(HorizonOffsetChange, i) i->skyHorizonOffsetChanged(*this);
     }
 }
 

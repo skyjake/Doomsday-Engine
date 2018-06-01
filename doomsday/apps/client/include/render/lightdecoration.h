@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_LIGHTDECORATION_H
-#define DENG_CLIENT_RENDER_LIGHTDECORATION_H
+#ifndef DE_CLIENT_RENDER_LIGHTDECORATION_H
+#define DE_CLIENT_RENDER_LIGHTDECORATION_H
 
 #include "Decoration"
 #include "Lumobj"
@@ -77,4 +77,4 @@ public:
     Lumobj *generateLumobj() const;
 };
 
-#endif  // DENG_CLIENT_RENDER_LIGHTDECORATION_H
+#endif  // DE_CLIENT_RENDER_LIGHTDECORATION_H

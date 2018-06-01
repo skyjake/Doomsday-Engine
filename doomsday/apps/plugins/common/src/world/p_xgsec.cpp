@@ -229,8 +229,8 @@ void XF_Init(Sector *sec, function_t *fn, char *func, int min, int max,
 int C_DECL XLTrav_LineAngle(Line* line, dd_bool dummy, void* context,
     void* context2, mobj_t* activator)
 {
-    DENG_UNUSED(dummy);
-    DENG_UNUSED(activator);
+    DE_UNUSED(dummy);
+    DE_UNUSED(activator);
 
     Sector* sec = (Sector *) context;
     coord_t d1[2];
@@ -248,7 +248,7 @@ int C_DECL XLTrav_LineAngle(Line* line, dd_bool dummy, void* context,
 int findXSThinker(thinker_t *th, void *context)
 {
     xsthinker_t *xs = (xsthinker_t *) th;
-    DENG2_ASSERT(xs);
+    DE_ASSERT(xs);
 
     if(xs->sector == (Sector *) context)
     {
@@ -261,7 +261,7 @@ int findXSThinker(thinker_t *th, void *context)
 int destroyXSThinker(thinker_t *th, void *context)
 {
     xsthinker_t *xs = (xsthinker_t *) th;
-    DENG2_ASSERT(xs);
+    DE_ASSERT(xs);
 
     if(xs->sector == (Sector *) context)
     {
@@ -416,7 +416,7 @@ void XS_PlaneSound(Plane *pln, int soundId)
 
 void XS_MoverStopped(xgplanemover_t *mover, dd_bool done)
 {
-    DENG2_ASSERT(mover);
+    DE_ASSERT(mover);
     LOG_AS("XS_MoverStopped");
     xline_t *origin = P_ToXLine(mover->origin);
 
@@ -468,7 +468,7 @@ void XS_MoverStopped(xgplanemover_t *mover, dd_bool done)
  */
 void XS_PlaneMover(xgplanemover_t *mover)
 {
-    DENG2_ASSERT(mover && mover->sector);
+    DE_ASSERT(mover && mover->sector);
     coord_t ceil    = P_GetDoublep(mover->sector, DMU_CEILING_HEIGHT);
     coord_t floor   = P_GetDoublep(mover->sector, DMU_FLOOR_HEIGHT);
     xsector_t *xsec = P_ToXSector(mover->sector);
@@ -1333,9 +1333,9 @@ int C_DECL XSTrav_HighestSectorType(Sector *sec, dd_bool ceiling,
                                     void *context, void *context2,
                                     mobj_t *activator)
 {
-    DENG_UNUSED(ceiling);
-    DENG_UNUSED(context);
-    DENG_UNUSED(activator);
+    DE_UNUSED(ceiling);
+    DE_UNUSED(context);
+    DE_UNUSED(activator);
 
     int        *type = (int *) context2;
     xsector_t  *xsec = P_ToXSector(sec);
@@ -1359,11 +1359,11 @@ int C_DECL XSTrav_MovePlane(Sector *sector, dd_bool ceiling, void *context,
                             void *context2, mobj_t * /*activator*/)
 {
     LOG_AS("XSTrav_MovePlane");
-    DENG2_ASSERT(sector);
+    DE_ASSERT(sector);
     Line *line        = (Line *) context;
-    DENG2_ASSERT(line);
+    DE_ASSERT(line);
     linetype_t *info  = (linetype_t *) context2;
-    DENG2_ASSERT(info);
+    DE_ASSERT(info);
     xline_t *xline    = P_ToXLine(line);
     dd_bool playsound = xline->xg->idata;
 
@@ -1825,7 +1825,7 @@ int C_DECL XSTrav_BuildStairs(Sector *sector, dd_bool ceiling, void *context,
     dd_bool spread   = info->iparm[3] != 0;
     world_Material *myMat;
 
-    DENG_UNUSED(activator);
+    DE_UNUSED(activator);
 
     LOG_MAP_MSG_XGDEVONLY2("Sector %i, %s", P_ToIndex(sector) << (ceiling? "ceiling" : "floor"));
 
@@ -1881,9 +1881,9 @@ int C_DECL XSTrav_BuildStairs(Sector *sector, dd_bool ceiling, void *context,
 int C_DECL XSTrav_SectorSound(Sector* sec, dd_bool ceiling, void* context,
                               void* context2, mobj_t* activator)
 {
-    DENG_UNUSED(activator);
-    DENG_UNUSED(context);
-    DENG_UNUSED(ceiling);
+    DE_UNUSED(activator);
+    DE_UNUSED(context);
+    DE_UNUSED(ceiling);
 
     linetype_t* info = (linetype_t *) context2;
 
@@ -1913,11 +1913,11 @@ int C_DECL XSTrav_PlaneMaterial(Sector *sec, dd_bool ceiling, void *context,
                                 void *context2, mobj_t * /*activator*/)
 {
     LOG_AS("XSTrav_PlaneMaterial");
-    DENG2_ASSERT(sec);
+    DE_ASSERT(sec);
     Line *line       = (Line *) context;
-    DENG2_ASSERT(line);
+    DE_ASSERT(line);
     linetype_t *info = (linetype_t *) context2;
-    DENG2_ASSERT(info);
+    DE_ASSERT(info);
 
     world_Material *mat;
     if(info->iparm[2] == SPREF_NONE)
@@ -2393,7 +2393,7 @@ int XF_FindNextPos(function_t *fn, int pos, dd_bool poke, Sector *sec)
     if(fn->func[pos] == '/' || fn->func[pos] == '%')
     {
         double dvalue = strtod(fn->func + pos + 1, &ptr);
-        DENG_UNUSED(dvalue);
+        DE_UNUSED(dvalue);
         pos = ptr - fn->func; // Go to the end.
     }
     else
@@ -3062,7 +3062,7 @@ void XS_Update(void)
  */
 D_CMD(MovePlane)
 {
-    DENG_UNUSED(src);
+    DE_UNUSED(src);
 
     dd_bool isCeiling = !stricmp(argv[0], "moveceil");
     dd_bool isBoth = !stricmp(argv[0], "movesec");

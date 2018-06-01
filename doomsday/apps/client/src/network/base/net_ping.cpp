@@ -30,7 +30,7 @@ using namespace de;
 
 void Net_ShowPingSummary(dint player)
 {
-    DENG2_ASSERT(player >= 0 && player < DDMAXPLAYERS);
+    DE_ASSERT(player >= 0 && player < DDMAXPLAYERS);
     auto const &cl = *DD_Player(player);
     Pinger const &ping = cl.pinger();
 
@@ -55,7 +55,7 @@ void Net_ShowPingSummary(dint player)
 
 void Net_SendPing(dint player, dint count)
 {
-    DENG2_ASSERT(player >= 0 && player < DDMAXPLAYERS);
+    DE_ASSERT(player >= 0 && player < DDMAXPLAYERS);
     Pinger &ping = DD_Player(player)->pinger();
 
     // Valid destination?
@@ -99,7 +99,7 @@ void Net_SendPing(dint player, dint count)
 void Net_PingResponse()
 {
     dint const player = ::netBuffer.player;
-    DENG2_ASSERT(player >= 0 && player < DDMAXPLAYERS);
+    DE_ASSERT(player >= 0 && player < DDMAXPLAYERS);
     Pinger &ping = DD_Player(player)->pinger();
 
     // Is this a response to our ping?
@@ -120,7 +120,7 @@ void Net_PingResponse()
 
 D_CMD(Ping)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(!::netGame)
     {

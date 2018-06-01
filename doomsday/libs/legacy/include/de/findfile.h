@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_FILESYS_FILEFINDER_H
-#define LIBDENG_FILESYS_FILEFINDER_H
+#ifndef DE_FILESYS_FILEFINDER_H
+#define DE_FILESYS_FILEFINDER_H
 
 #include "types.h"
 #include "str.h"
@@ -62,7 +62,7 @@ typedef struct finddata_s {
  * @return  @c 0, if successful. If non-zero is returned, there were no
  * matching files.
  */
-DENG_PUBLIC int FindFile_FindFirst(FindData *findData, char const *pattern);
+DE_PUBLIC int FindFile_FindFirst(FindData *findData, char const *pattern);
 
 /**
  * Finds the next matching file. Directory names end in a directory
@@ -73,7 +73,7 @@ DENG_PUBLIC int FindFile_FindFirst(FindData *findData, char const *pattern);
  * @return  @c 0, if successful. If non-zero is returned, there were no
  * matching files.
  */
-DENG_PUBLIC int FindFile_FindNext(FindData *findData);
+DE_PUBLIC int FindFile_FindNext(FindData *findData);
 
 /**
  * This must be called after the file finding operation has been concluded.
@@ -81,7 +81,7 @@ DENG_PUBLIC int FindFile_FindNext(FindData *findData);
  *
  * @param findData  File finder to release.
  */
-DENG_PUBLIC void FindFile_Finish(FindData *findData);
+DE_PUBLIC void FindFile_Finish(FindData *findData);
 
 #ifdef UNIX
 
@@ -94,7 +94,7 @@ DENG_PUBLIC void FindFile_Finish(FindData *findData);
  * @param original  Path to convert.
  * @param len       Length of the @a full buffer.
  */
-DENG_PUBLIC char* _fullpath(char* full, const char* original, int len);
+DE_PUBLIC char* _fullpath(char* full, const char* original, int len);
 
 /**
  * Split a path into components. This behaves like the Win32 @c _splitpath
@@ -107,7 +107,7 @@ DENG_PUBLIC char* _fullpath(char* full, const char* original, int len);
  * @param name   File name.
  * @param ext    File extension.
  */
-DENG_PUBLIC void _splitpath(const char* path, char* drive, char* dir, char* name, char* ext);
+DE_PUBLIC void _splitpath(const char* path, char* drive, char* dir, char* name, char* ext);
 
 #endif // UNIX
 
@@ -117,4 +117,4 @@ DENG_PUBLIC void _splitpath(const char* path, char* drive, char* dir, char* name
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_FILESYS_FILEFINDER_H */
+#endif /* DE_FILESYS_FILEFINDER_H */

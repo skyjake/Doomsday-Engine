@@ -44,7 +44,7 @@ static String const KEY_INHERITS    = "inherits";
 static String const KEY_CONDITION   = "condition";
 static String const VAR_SCRIPT      = "__script%1__";
 
-DENG2_PIMPL(ScriptedInfo)
+DE_PIMPL(ScriptedInfo)
 {
     typedef Info::Element::Value InfoValue;
 
@@ -167,8 +167,8 @@ DENG2_PIMPL(ScriptedInfo)
             LOGDEV_SCR_XVERBOSE_DEBUGONLY("setting __inherit__ of %s %s (%p) to %s",
                                          block.blockType() << varName << &block << targetName);
 
-            DENG2_ASSERT(!varName.isEmpty());
-            DENG2_ASSERT(!targetName.isEmpty());
+            DE_ASSERT(!varName.isEmpty());
+            DE_ASSERT(!targetName.isEmpty());
 
             // Copy all present members of the target record.
             Record const &src = ns[targetName].value<RecordValue>().dereference();
@@ -287,7 +287,7 @@ DENG2_PIMPL(ScriptedInfo)
         // blocks that have only a single "script" key in them.
         if (isUnqualifiedScriptBlock(block))
         {
-            DENG2_ASSERT(process.state() == Process::Stopped);
+            DE_ASSERT(process.state() == Process::Stopped);
 
             script.reset(new Script(block.keyValue(KEY_SCRIPT)));
             script->setPath(info.sourcePath()); // where the source comes from
@@ -346,7 +346,7 @@ DENG2_PIMPL(ScriptedInfo)
 
                 if (!isScriptBlock)
                 {
-                    DENG2_FOR_PUBLIC_AUDIENCE2(NamedBlock, i)
+                    DE_FOR_PUBLIC_AUDIENCE2(NamedBlock, i)
                     {
                         i->parsedNamedBlock(varName, blockRecord);
                     }
@@ -512,16 +512,16 @@ DENG2_PIMPL(ScriptedInfo)
         }
 
         Record::Subrecords const subs = rec.subrecords();
-        DENG2_FOR_EACH_CONST(Record::Subrecords, i, subs)
+        DE_FOR_EACH_CONST(Record::Subrecords, i, subs)
         {
             findBlocks(blockType, paths, *i.value(), prefix.concatenateMember(i.key()));
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(NamedBlock)
+    DE_PIMPL_AUDIENCE(NamedBlock)
 };
 
-DENG2_AUDIENCE_METHOD(ScriptedInfo, NamedBlock)
+DE_AUDIENCE_METHOD(ScriptedInfo, NamedBlock)
 
 ScriptedInfo::ScriptedInfo(Record *globalNamespace)
     : d(new Impl(this, globalNamespace))

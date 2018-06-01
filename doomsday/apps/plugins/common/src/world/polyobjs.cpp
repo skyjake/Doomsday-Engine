@@ -46,7 +46,7 @@ static int findMirrorPolyobj(int tag)
         }
     }
 #else
-    DENG_UNUSED(tag);
+    DE_UNUSED(tag);
 #endif
     return 0;
 }
@@ -59,7 +59,7 @@ static void startSoundSequence(Polyobj *poEmitter)
         SN_StartSequence((mobj_t *)poEmitter, SEQ_DOOR_STONE + poEmitter->seqType);
     }
 #else
-    DENG_UNUSED(poEmitter);
+    DE_UNUSED(poEmitter);
 #endif
 }
 
@@ -68,14 +68,14 @@ static void stopSoundSequence(Polyobj *poEmitter)
 #if __JHEXEN__
     SN_StopSequence((mobj_t *)poEmitter);
 #else
-    DENG_UNUSED(poEmitter);
+    DE_UNUSED(poEmitter);
 #endif
 }
 
 static void PO_SetDestination(Polyobj *po, coord_t dist, uint fineAngle, float speed)
 {
-    DENG_ASSERT(po != 0);
-    DENG_ASSERT(fineAngle < FINEANGLES);
+    DE_ASSERT(po != 0);
+    DE_ASSERT(fineAngle < FINEANGLES);
     po->dest[VX] = po->origin[VX] + dist * FIX2FLT(finecosine[fineAngle]);
     po->dest[VY] = po->origin[VY] + dist * FIX2FLT(finesine[fineAngle]);
     po->speed    = speed;
@@ -83,7 +83,7 @@ static void PO_SetDestination(Polyobj *po, coord_t dist, uint fineAngle, float s
 
 static void PODoor_UpdateDestination(polydoor_t *pd)
 {
-    DENG2_ASSERT(pd != 0);
+    DE_ASSERT(pd != 0);
     Polyobj *po = Polyobj_ByTag(pd->polyobj);
 
     // Only sliding doors need the destination info. (Right? -jk)
@@ -95,7 +95,7 @@ static void PODoor_UpdateDestination(polydoor_t *pd)
 
 void T_RotatePoly(void *polyThinker)
 {
-    DENG_ASSERT(polyThinker != 0);
+    DE_ASSERT(polyThinker != 0);
 
     polyevent_t *pe = (polyevent_t *)polyThinker;
     uint absSpeed;
@@ -133,8 +133,8 @@ void T_RotatePoly(void *polyThinker)
 
 dd_bool EV_RotatePoly(Line *line, byte *args, int direction, dd_bool overRide)
 {
-    DENG_UNUSED(line);
-    DENG_ASSERT(args != 0);
+    DE_UNUSED(line);
+    DE_ASSERT(args != 0);
 
     int tag = args[0];
     Polyobj *po = Polyobj_ByTag(tag);
@@ -237,7 +237,7 @@ dd_bool EV_RotatePoly(Line *line, byte *args, int direction, dd_bool overRide)
 
 void T_MovePoly(void *polyThinker)
 {
-    DENG_ASSERT(polyThinker != 0);
+    DE_ASSERT(polyThinker != 0);
 
     polyevent_t *pe = (polyevent_t *)polyThinker;
     Polyobj *po = Polyobj_ByTag(pe->polyobj);
@@ -382,12 +382,12 @@ int SV_ReadMovePoly(polyevent_t *th, MapStateReader *msr)
 
 dd_bool EV_MovePoly(Line *line, byte *args, dd_bool timesEight, dd_bool override)
 {
-    DENG_UNUSED(line);
-    DENG_ASSERT(args != 0);
+    DE_UNUSED(line);
+    DE_ASSERT(args != 0);
 
     int tag = args[0];
     Polyobj *po = Polyobj_ByTag(tag);
-    DENG_ASSERT(po != 0);
+    DE_ASSERT(po != 0);
 
     // Already moving?
     if(po->specialData && !override)
@@ -456,7 +456,7 @@ dd_bool EV_MovePoly(Line *line, byte *args, dd_bool timesEight, dd_bool override
 
 void T_PolyDoor(void *polyDoorThinker)
 {
-    DENG_ASSERT(polyDoorThinker != 0);
+    DE_ASSERT(polyDoorThinker != 0);
 
     polydoor_t *pd = (polydoor_t *)polyDoorThinker;
     Polyobj *po = Polyobj_ByTag(pd->polyobj);
@@ -652,8 +652,8 @@ int polydoor_s::read(MapStateReader *msr)
 
 dd_bool EV_OpenPolyDoor(Line *line, byte *args, podoortype_t type)
 {
-    DENG_UNUSED(line);
-    DENG_ASSERT(args != 0);
+    DE_UNUSED(line);
+    DE_ASSERT(args != 0);
 
     int tag = args[0];
     Polyobj *po = Polyobj_ByTag(tag);

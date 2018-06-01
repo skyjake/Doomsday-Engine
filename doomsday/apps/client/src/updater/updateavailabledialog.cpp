@@ -36,8 +36,8 @@ using namespace de;
 
 static TimeSpan const SHOW_ANIM_SPAN = 0.3;
 
-DENG_GUI_PIMPL(UpdateAvailableDialog),
-DENG2_OBSERVES(ToggleWidget, Toggle)
+DE_GUI_PIMPL(UpdateAvailableDialog),
+DE_OBSERVES(ToggleWidget, Toggle)
 {
     ProgressWidget *checking;
     ToggleWidget *autoCheck;

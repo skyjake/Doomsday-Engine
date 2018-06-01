@@ -51,7 +51,7 @@ typedef eventsequencehandler_t cheatfunc_t;
 
 CHEAT_FUNC(Music)
 {
-    DENG2_UNUSED(numArgs);
+    DE_UNUSED(numArgs);
 
     if(player < 0 || player >= MAXPLAYERS)
         return false;
@@ -92,7 +92,7 @@ CHEAT_FUNC(Music)
 
 CHEAT_FUNC(Reveal)
 {
-    DENG2_UNUSED2(args, numArgs);
+    DE_UNUSED(args, numArgs);
 
     if(IS_NETGAME && gfw_Rule(deathmatch))
         return false;
@@ -114,7 +114,7 @@ CHEAT_FUNC(Reveal)
 
 CHEAT_FUNC(Powerup)
 {
-    DENG2_UNUSED2(args, numArgs);
+    DE_UNUSED(args, numArgs);
     if(player < 0 || player >= MAXPLAYERS)
         return false;
 
@@ -124,7 +124,7 @@ CHEAT_FUNC(Powerup)
 
 CHEAT_FUNC(Powerup2)
 {
-    DENG2_UNUSED(numArgs);
+    DE_UNUSED(numArgs);
     if(player < 0 || player >= MAXPLAYERS)
         return false;
 
@@ -155,7 +155,7 @@ CHEAT_FUNC(Powerup2)
 
 CHEAT_FUNC(MyPos)
 {
-    DENG2_UNUSED2(args, numArgs);
+    DE_UNUSED(args, numArgs);
     if(player < 0 || player >= MAXPLAYERS)
         return false;
 
@@ -172,7 +172,7 @@ CHEAT_FUNC(MyPos)
  */
 D_CMD(Cheat)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     // Give each of the characters in argument two to the ST event handler.
     int const len = qstrlen(argv[1]);
@@ -190,7 +190,7 @@ D_CMD(Cheat)
 
 D_CMD(CheatGod)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(G_GameState() == GS_MAP)
     {
@@ -237,7 +237,7 @@ D_CMD(CheatGod)
 
 D_CMD(CheatNoClip)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(G_GameState() == GS_MAP)
     {
@@ -292,7 +292,7 @@ static int suicideResponse(msgresponse_t response, int /*userValue*/, void * /*c
 
 D_CMD(CheatSuicide)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(G_GameState() == GS_MAP)
     {
@@ -324,7 +324,7 @@ D_CMD(CheatSuicide)
 
 D_CMD(CheatReveal)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
     // Server operator can always reveal.
     if(IS_NETGAME && !IS_NETWORK_SERVER)
         return false;
@@ -366,7 +366,7 @@ static void togglePower(player_t *player, powertype_t powerType)
 
 D_CMD(CheatGive)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(G_GameState() != GS_MAP)
     {
@@ -545,7 +545,7 @@ D_CMD(CheatGive)
 
 D_CMD(CheatMassacre)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     if(G_GameState() == GS_MAP)
     {
@@ -569,7 +569,7 @@ D_CMD(CheatMassacre)
 
 D_CMD(CheatWhere)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     if(G_GameState() != GS_MAP)
         return true;

@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_RULE_H
-#define LIBDENG2_RULE_H
+#ifndef LIBCORE_RULE_H
+#define LIBCORE_RULE_H
 
 #include "../libcore.h"
 #include "../Counted"
@@ -28,7 +28,7 @@
 namespace de {
 
 // Declared outside Rule because Rule itself implements the interface.
-DENG2_DECLARE_AUDIENCE(RuleInvalidation, void ruleInvalidated())
+DE_DECLARE_AUDIENCE(RuleInvalidation, void ruleInvalidated())
 
 /**
  * Rules are used together to evaluate formulas dependent on other rules.
@@ -42,10 +42,10 @@ DENG2_DECLARE_AUDIENCE(RuleInvalidation, void ruleInvalidated())
  *
  * @ingroup widgets
  */
-class DENG2_PUBLIC Rule : public Counted, public DENG2_AUDIENCE_INTERFACE(RuleInvalidation)
+class DE_PUBLIC Rule : public Counted, public DE_AUDIENCE_INTERFACE(RuleInvalidation)
 {
 public:
-    DENG2_AUDIENCE(RuleInvalidation)
+    DE_AUDIENCE(RuleInvalidation)
 
     /// Semantic identifiers (e.g., for RuleRectangle).
     enum Semantic {
@@ -148,11 +148,11 @@ protected:
     void ruleInvalidated();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 
     static bool _invalidRulesExist;
 };
 
 } // namespace de
 
-#endif // LIBDENG2_RULE_H
+#endif // LIBCORE_RULE_H

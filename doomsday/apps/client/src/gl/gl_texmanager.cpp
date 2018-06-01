@@ -38,7 +38,7 @@
 
 #include "sys_system.h"
 
-#include "gl/gl_main.h"  // DENG_ASSERT_GL_CONTEXT_ACTIVE
+#include "gl/gl_main.h"  // DE_ASSERT_GL_CONTEXT_ACTIVE
 #include "gl/texturecontent.h"
 
 //#include "render/r_main.h"
@@ -198,7 +198,7 @@ GLuint GL_PrepareLSTexture(lightingtexid_t which)
         Image_ClearPixelData(image);
     }
 
-    DENG2_ASSERT(lightingTextures[which] != 0);
+    DE_ASSERT(lightingTextures[which] != 0);
     return lightingTextures[which];
 }
 
@@ -260,7 +260,7 @@ GLuint GL_PrepareSysFlaremap(flaretexid_t which)
         Image_ClearPixelData(image);
     }
 
-    DENG2_ASSERT(sysFlareTextures[which] != 0);
+    DE_ASSERT(sysFlareTextures[which] != 0);
     return sysFlareTextures[which];
 }
 
@@ -391,8 +391,8 @@ void GL_SetRawTexturesMinFilter(int newMinFilter)
     {
         if (raw->tex) // Is the texture loaded?
         {
-            DENG_ASSERT_IN_MAIN_THREAD();
-            DENG_ASSERT_GL_CONTEXT_ACTIVE();
+            DE_ASSERT_IN_MAIN_THREAD();
+            DE_ASSERT_GL_CONTEXT_ACTIVE();
 
             LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, raw->tex);
             LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, newMinFilter);

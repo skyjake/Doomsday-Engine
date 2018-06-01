@@ -1,9 +1,9 @@
 # Doomsday Engine -- libgui
 
 cmake_minimum_required (VERSION 3.1)
-project (DENG_LIBGUI)
+project (DE_LIBGUI)
 
-option (DENG_ASSIMP_EMBEDDED "Use the Assimp from 'external/assimp' instead of system libraries" YES)
+option (DE_ASSIMP_EMBEDDED "Use the Assimp from 'external/assimp' instead of system libraries" YES)
 
 set (CMAKE_INSTALL_DEFAULT_COMPONENT_NAME)
 
@@ -11,17 +11,17 @@ set (CMAKE_INSTALL_DEFAULT_COMPONENT_NAME)
 # Configure Assimp first as a static library. Doomsday's Config is not
 # included yet so that Assimp's build products are not included in
 # the client component.
-if (DENG_ASSIMP_EMBEDDED)
+if (DE_ASSIMP_EMBEDDED)
     set (ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "Assimp: Build tools" FORCE)
     set (ASSIMP_BUILD_TESTS OFF CACHE BOOL "Assimp: Build tests" FORCE)
     set (BUILD_SHARED_LIBS OFF CACHE BOOL "Assimp: Shared library" FORCE)
     set (ASSIMP_INSTALL_PDB OFF CACHE BOOL "Assimp: Install PDB file (MSVC)" FORCE)
     if (APPLE OR WIN32)
-        set (ASSIMP_LIB_INSTALL_DIR ${DENG_INSTALL_LIB_DIR}
+        set (ASSIMP_LIB_INSTALL_DIR ${DE_INSTALL_LIB_DIR}
             CACHE PATH "libassimp install directory" FORCE
         )
     else ()
-        set (ASSIMP_LIB_INSTALL_DIR ${DENG_INSTALL_PLUGIN_DIR}
+        set (ASSIMP_LIB_INSTALL_DIR ${DE_INSTALL_PLUGIN_DIR}
             CACHE PATH "libassimp install directory" FORCE
         )
     endif ()
@@ -53,7 +53,7 @@ if (DENG_ASSIMP_EMBEDDED)
     add_subdirectory (../../external/assimp assimp)
     set_property (TARGET assimp PROPERTY FOLDER Libraries)
     set (CMAKE_C_FLAGS ${oldCFlags})
-    add_definitions (-DDENG_HAVE_CUSTOMIZED_ASSIMP=1)
+    add_definitions (-DDE_HAVE_CUSTOMIZED_ASSIMP=1)
 endif ()
 #----------------------------------------------------------------------------------------
 
@@ -63,31 +63,31 @@ include (../../cmake/Config.cmake)
 # libgui uses Qt 5.4 OpenGL APIs.
 qmake_query (QT_VERSION "QT_VERSION")
 if (QT_VERSION VERSION_LESS 5.4)
-    message (FATAL_ERROR "libgui requires Qt 5.4 or newer! You can disable all GUI features with DENG_ENABLE_GUI=OFF.")
+    message (FATAL_ERROR "libgui requires Qt 5.4 or newer! You can disable all GUI features with DE_ENABLE_GUI=OFF.")
 endif ()
 
 if (APPLE)
     # Don't change display modes on macOS/iOS. We'll instead resize the
     # frame buffer and scale up.
-    set (DENG_ENABLE_DISPLAYMODE_DEFAULT OFF)
+    set (DE_ENABLE_DISPLAYMODE_DEFAULT OFF)
 else ()
-    set (DENG_ENABLE_DISPLAYMODE_DEFAULT ON)
+    set (DE_ENABLE_DISPLAYMODE_DEFAULT ON)
 endif ()
-option (DENG_ENABLE_DISPLAYMODE "Enable/disable changing the display mode"
-    ${DENG_ENABLE_DISPLAYMODE_DEFAULT}
+option (DE_ENABLE_DISPLAYMODE "Enable/disable changing the display mode"
+    ${DE_ENABLE_DISPLAYMODE_DEFAULT}
 )
 
 # OpenGL API selection.
-set (DENG_OPENGL_API "3.3" CACHE STRING "OpenGL API selection (3.3, GLES3, GLES2)")
+set (DE_OPENGL_API "3.3" CACHE STRING "OpenGL API selection (3.3, GLES3, GLES2)")
 
 if (IOS)
-    set (DENG_OPENGL_API "GLES3" CACHE STRING "OpenGL API selection" FORCE)
+    set (DE_OPENGL_API "GLES3" CACHE STRING "OpenGL API selection" FORCE)
 endif ()
 
 # Dependencies.
 find_package (DengCore)
 find_package (Assimp REQUIRED)
-if (DENG_X11)
+if (DE_X11)
     find_package (X11 REQUIRED)
 endif ()
 
@@ -95,17 +95,17 @@ deng_add_package (net.dengine.stdlib.gui)
 
 # Definitions.
 add_definitions (-D__LIBGUI__=1)
-if (DENG_OPENGL_API STREQUAL "3.3")
-    add_definitions (-DDENG_OPENGL=330)
+if (DE_OPENGL_API STREQUAL "3.3")
+    add_definitions (-DDE_OPENGL=330)
     message (STATUS "Using OpenGL 3.3")
-elseif (DENG_OPENGL_API STREQUAL "GLES3")
-    add_definitions (-DDENG_OPENGL_ES=30)
+elseif (DE_OPENGL_API STREQUAL "GLES3")
+    add_definitions (-DDE_OPENGL_ES=30)
     message (STATUS "Using OpenGL ES 3.0")
-elseif (DENG_OPENGL_API STREQUAL "GLES2")
-    add_definitions (-DDENG_OPENGL_ES=20)
+elseif (DE_OPENGL_API STREQUAL "GLES2")
+    add_definitions (-DDE_OPENGL_ES=20)
     message (STATUS "Using OpenGL ES 2.0")
 else ()
-    message (FATAL_ERROR "Invalid value for OpenGL API: ${DENG_OPENGL_API}")
+    message (FATAL_ERROR "Invalid value for OpenGL API: ${DE_OPENGL_API}")
 endif ()
 
 # Source and header files.
@@ -119,10 +119,10 @@ deng_merge_sources (text     src/text/*.cpp)
 
 # Choose which DisplayMode sources to use.
 list_remove_matches (SOURCES ".*/displaymode_.*")
-if (NOT DENG_ENABLE_DISPLAYMODE)
+if (NOT DE_ENABLE_DISPLAYMODE)
     list (APPEND SOURCES src/displaymode_dummy.cpp)
 else ()
-    list (APPEND SOURCES src/displaymode_${DENG_PLATFORM_SUFFIX})
+    list (APPEND SOURCES src/displaymode_${DE_PLATFORM_SUFFIX})
 endif ()
 
 # Ignore mobile-only sources.
@@ -152,16 +152,16 @@ elseif (APPLE)
     link_framework (libgui PRIVATE OpenGL)
 endif ()
 
-if (DENG_X11)
+if (DE_X11)
     target_include_directories (libgui PRIVATE ${X11_INCLUDE_DIR})
     target_link_libraries (libgui PRIVATE ${X11_LIBRARIES})
     deng_target_link_qt (libgui PRIVATE X11Extras)
-    if (DENG_ENABLE_DISPLAYMODE)
+    if (DE_ENABLE_DISPLAYMODE)
         if (NOT X11_Xrandr_FOUND)
-            message (FATAL_ERROR "DisplayMode requires X11 Xrandr extension (enable/disable with DENG_ENABLE_DISPLAYMODE)")
+            message (FATAL_ERROR "DisplayMode requires X11 Xrandr extension (enable/disable with DE_ENABLE_DISPLAYMODE)")
         endif ()
         if (NOT X11_xf86vmode_FOUND)
-            message (FATAL_ERROR "DisplayMode requires X11 xf86vmode extension (enable/disable with DENG_ENABLE_DISPLAYMODE)")
+            message (FATAL_ERROR "DisplayMode requires X11 xf86vmode extension (enable/disable with DE_ENABLE_DISPLAYMODE)")
         endif ()
         target_include_directories (libgui PRIVATE
             ${X11_Xrandr_INCLUDE_PATH}

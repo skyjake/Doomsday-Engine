@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_NO_API_MACROS_MATERIALS
+#define DE_NO_API_MACROS_MATERIALS
 
 #include "de_base.h"
 #include "api_material.h"
@@ -29,7 +29,7 @@
 using namespace de;
 
 #undef DD_MaterialForTextureUri
-DENG_EXTERN_C world_Material *DD_MaterialForTextureUri(uri_s const *textureUri)
+DE_EXTERN_C world_Material *DD_MaterialForTextureUri(uri_s const *textureUri)
 {
     if (!textureUri) return nullptr;  // Not found.
 
@@ -56,14 +56,14 @@ DENG_EXTERN_C world_Material *DD_MaterialForTextureUri(uri_s const *textureUri)
 }
 
 #undef Materials_ComposeUri
-DENG_EXTERN_C struct uri_s *Materials_ComposeUri(materialid_t materialId)
+DE_EXTERN_C struct uri_s *Materials_ComposeUri(materialid_t materialId)
 {
     world::MaterialManifest &manifest = world::Materials::get().toMaterialManifest(materialId);
     return reinterpret_cast<uri_s *>(new de::Uri(manifest.composeUri()));
 }
 
 #undef Materials_ResolveUri
-DENG_EXTERN_C materialid_t Materials_ResolveUri(struct uri_s const *uri)
+DE_EXTERN_C materialid_t Materials_ResolveUri(struct uri_s const *uri)
 {
     try
     {
@@ -75,7 +75,7 @@ DENG_EXTERN_C materialid_t Materials_ResolveUri(struct uri_s const *uri)
 }
 
 #undef Materials_ResolveUriCString
-DENG_EXTERN_C materialid_t Materials_ResolveUriCString(char const *uriCString)
+DE_EXTERN_C materialid_t Materials_ResolveUriCString(char const *uriCString)
 {
     if (uriCString && uriCString[0])
     {
@@ -89,7 +89,7 @@ DENG_EXTERN_C materialid_t Materials_ResolveUriCString(char const *uriCString)
     return NOMATERIALID;
 }
 
-DENG_DECLARE_API(Material) =
+DE_DECLARE_API(Material) =
 {
     { DE_API_MATERIALS },
     DD_MaterialForTextureUri,

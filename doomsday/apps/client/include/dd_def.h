@@ -48,7 +48,7 @@ extern "C" {
 
 // if rangecheck is undefined, most parameter validation debugging code
 // will not be compiled
-#ifndef DENG_NO_RANGECHECKING
+#ifndef DE_NO_RANGECHECKING
 #   define RANGECHECK
 #endif
 
@@ -70,7 +70,7 @@ extern "C" {
 #   define DOOMSDAY_VER_ID_64BIT " 32-bit"
 #endif
 
-#if defined(DENG_STABLE) && defined(DOOMSDAY_BUILD_TEXT)
+#if defined(DE_STABLE) && defined(DOOMSDAY_BUILD_TEXT)
 #  define DOOMSDAY_VER_ID_BUILD " #" DOOMSDAY_BUILD_TEXT
 #else
 #  define DOOMSDAY_VER_ID_BUILD ""

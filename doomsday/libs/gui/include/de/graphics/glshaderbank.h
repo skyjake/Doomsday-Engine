@@ -40,7 +40,7 @@ class GLProgram;
 class LIBGUI_PUBLIC GLShaderBank : public InfoBank
 {
 public:
-    DENG2_ERROR(DefinitionError);
+    DE_ERROR(DefinitionError);
 
 public:
     GLShaderBank();
@@ -74,7 +74,7 @@ protected:
     IData *  loadFromSource(ISource &source);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

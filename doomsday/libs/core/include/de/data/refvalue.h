@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_REFVALUE_H
-#define LIBDENG2_REFVALUE_H
+#ifndef LIBCORE_REFVALUE_H
+#define LIBCORE_REFVALUE_H
 
 #include "../Value"
 #include "../Variable"
@@ -31,12 +31,12 @@ namespace de {
  *
  * @ingroup data
  */
-class DENG2_PUBLIC RefValue : public Value,
-                              DENG2_OBSERVES(Variable, Deletion)
+class DE_PUBLIC RefValue : public Value,
+                              DE_OBSERVES(Variable, Deletion)
 {
 public:
     /// Attempt to dereference a NULL variable. @ingroup errors
-    DENG2_ERROR(NullError);
+    DE_ERROR(NullError);
 
 public:
     /**
@@ -96,4 +96,4 @@ public:
 
 } // namespace de
 
-#endif /* LIBDENG2_REFVALUE_H */
+#endif /* LIBCORE_REFVALUE_H */

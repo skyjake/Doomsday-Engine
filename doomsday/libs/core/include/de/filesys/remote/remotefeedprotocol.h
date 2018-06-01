@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_REMOTEFEEDPROTOCOL_H
-#define LIBDENG2_REMOTEFEEDPROTOCOL_H
+#ifndef LIBCORE_REMOTEFEEDPROTOCOL_H
+#define LIBCORE_REMOTEFEEDPROTOCOL_H
 
 #include "../../DictionaryValue"
 #include "../../File"
@@ -29,7 +29,7 @@ namespace de {
 /**
  * Packet for requesting information about remote files. @ingroup fs
  */
-class DENG2_PUBLIC RemoteFeedQueryPacket : public IdentifiedPacket
+class DE_PUBLIC RemoteFeedQueryPacket : public IdentifiedPacket
 {
 public:
     enum Query { ListFiles, FileContents };
@@ -58,7 +58,7 @@ private:
  * Packet that contains information about a set of files. Used as a response
  * to the ListFiles query. @ingroup fs
  */
-class DENG2_PUBLIC RemoteFeedMetadataPacket : public IdentifiedPacket
+class DE_PUBLIC RemoteFeedMetadataPacket : public IdentifiedPacket
 {
 public:
     RemoteFeedMetadataPacket();
@@ -84,7 +84,7 @@ private:
  * Packet that contains a portion of a file. Used as a response to the FileContents
  * query. @ingroup fs
  */
-class DENG2_PUBLIC RemoteFeedFileContentsPacket : public IdentifiedPacket
+class DE_PUBLIC RemoteFeedFileContentsPacket : public IdentifiedPacket
 {
 public:
     RemoteFeedFileContentsPacket();
@@ -112,10 +112,10 @@ private:
 /**
  * Network message protocol for remote feeds.
  */
-class DENG2_PUBLIC RemoteFeedProtocol : public Protocol
+class DE_PUBLIC RemoteFeedProtocol : public Protocol
 {
 public:
-    DENG2_ERROR(TypeError);
+    DE_ERROR(TypeError);
 
     enum PacketType
     {
@@ -133,4 +133,4 @@ public:
 
 } // namespace de
 
-#endif // LIBDENG2_REMOTEFEEDPROTOCOL_H
+#endif // LIBCORE_REMOTEFEEDPROTOCOL_H

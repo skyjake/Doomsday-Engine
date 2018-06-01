@@ -42,11 +42,11 @@ class LIBDOOMSDAY_PUBLIC DEDRegister
 {
 public:
     /// The specified index or key value was not found from the register. @ingroup errors
-    DENG2_ERROR(NotFoundError);
+    DE_ERROR(NotFoundError);
 
     /// Attempted to use a key for looking up that hasn't been previously registered.
     /// @ingroup errors
-    DENG2_ERROR(UndefinedKeyError);
+    DE_ERROR(UndefinedKeyError);
 
     enum LookupFlag
     {
@@ -115,7 +115,7 @@ public:
     de::DictionaryValue const &lookup(de::String const &key) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // LIBDOOMSDAY_DEDREGISTER_H

@@ -21,8 +21,8 @@
 
 namespace de {
 
-DENG2_PUBLIC BigEndianByteOrder    bigEndianByteOrder;
-DENG2_PUBLIC LittleEndianByteOrder littleEndianByteOrder;
+DE_PUBLIC BigEndianByteOrder    bigEndianByteOrder;
+DE_PUBLIC LittleEndianByteOrder littleEndianByteOrder;
 
 void ByteOrder::hostToNetwork(dint16 hostValue, dint16 &networkValue) const
 {
@@ -56,7 +56,7 @@ void ByteOrder::networkToHost(dint64 networkValue, dint64 &hostValue) const
 
 void ByteOrder::hostToNetwork(dfloat hostValue, dfloat &networkValue) const
 {
-    DENG2_ASSERT(sizeof(dfloat) == sizeof(duint32));
+    DE_ASSERT(sizeof(dfloat) == sizeof(duint32));
     duint32 hv, net;
     std::memcpy(&hv, &hostValue, 4);
     hostToNetwork(hv, net);
@@ -65,7 +65,7 @@ void ByteOrder::hostToNetwork(dfloat hostValue, dfloat &networkValue) const
 
 void ByteOrder::hostToNetwork(ddouble hostValue, ddouble &networkValue) const
 {
-    DENG2_ASSERT(sizeof(ddouble) == sizeof(duint64));
+    DE_ASSERT(sizeof(ddouble) == sizeof(duint64));
     duint64 hv, net;
     std::memcpy(&hv, &hostValue, 8);
     hostToNetwork(hv, net);
@@ -74,7 +74,7 @@ void ByteOrder::hostToNetwork(ddouble hostValue, ddouble &networkValue) const
 
 void ByteOrder::networkToHost(dfloat networkValue, dfloat &hostValue) const
 {
-    DENG2_ASSERT(sizeof(dfloat) == sizeof(duint32));
+    DE_ASSERT(sizeof(dfloat) == sizeof(duint32));
     duint32 net, hv;
     std::memcpy(&net, &networkValue, 4);
     networkToHost(net, hv);
@@ -83,7 +83,7 @@ void ByteOrder::networkToHost(dfloat networkValue, dfloat &hostValue) const
 
 void ByteOrder::networkToHost(ddouble networkValue, ddouble &hostValue) const
 {
-    DENG2_ASSERT(sizeof(ddouble) == sizeof(duint64));
+    DE_ASSERT(sizeof(ddouble) == sizeof(duint64));
     duint64 net, hv;
     std::memcpy(&net, &networkValue, 8);
     networkToHost(net, hv);

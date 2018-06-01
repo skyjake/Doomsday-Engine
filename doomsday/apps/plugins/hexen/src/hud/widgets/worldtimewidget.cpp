@@ -26,17 +26,17 @@ using namespace de;
 
 static void WorldTimeWidget_Draw(guidata_worldtime_t *time, Point2Raw const *offset)
 {
-    DENG2_ASSERT(time);
+    DE_ASSERT(time);
     time->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void WorldTimeWidget_UpdateGeometry(guidata_worldtime_t *time)
 {
-    DENG2_ASSERT(time);
+    DE_ASSERT(time);
     time->updateGeometry();
 }
 
-DENG2_PIMPL_NOREF(guidata_worldtime_t)
+DE_PIMPL_NOREF(guidata_worldtime_t)
 {
     dint days    = 0;
     dint hours   = 0;
@@ -119,7 +119,7 @@ void guidata_worldtime_t::draw(Vec2i const &offset) const
 
     if(d->days)
     {
-        auto const daysAsText = String("%1").arg(d->days, 2, 10, QChar('0')) + " day" + DENG2_PLURAL_S(d->days);
+        auto const daysAsText = String("%1").arg(d->days, 2, 10, QChar('0')) + " day" + DE_PLURAL_S(d->days);
 
         y += lineHeight * LEADING;  // Extra padding.
 

@@ -70,13 +70,13 @@ struct Dummy : public T {
 class DehReader
 {
     /// The parser encountered a syntax error in the source file. @ingroup errors
-    DENG2_ERROR(SyntaxError);
+    DE_ERROR(SyntaxError);
 
     /// The parser encountered an unknown section in the source file. @ingroup errors
-    DENG2_ERROR(UnknownSection);
+    DE_ERROR(UnknownSection);
 
     /// The parser reached the end of the source file. @ingroup errors
-    DENG2_ERROR(EndOfFile);
+    DE_ERROR(EndOfFile);
 
 public:
     Block const &patch;
@@ -743,7 +743,7 @@ public:
      */
     int parseMobjTypeFlags(QString const &arg, int flagGroups[NUM_MOBJ_FLAGS])
     {
-        DENG2_ASSERT(flagGroups);
+        DE_ASSERT(flagGroups);
 
         if(arg.isEmpty()) return 0; // Erm? No change...
         int changedGroups = 0;
@@ -751,7 +751,7 @@ public:
         // Split the argument into discreet tokens and process each individually.
         /// @todo Re-implement with a left-to-right algorithm.
         QStringList tokens = arg.split(QRegExp("[,+| ]|\t|\f|\r"), QString::SkipEmptyParts);
-        DENG2_FOR_EACH_CONST(QStringList, i, tokens)
+        DE_FOR_EACH_CONST(QStringList, i, tokens)
         {
             String const &token = *i;
             bool tokenIsNumber;
@@ -779,7 +779,7 @@ public:
                 value |= 1 << (flag->bit & 0xff);
 
                 // Apply the new value.
-                DENG2_ASSERT(flag->group >= 0 && flag->group < NUM_MOBJ_FLAGS);
+                DE_ASSERT(flag->group >= 0 && flag->group < NUM_MOBJ_FLAGS);
                 flagGroups[flag->group] |= value;
 
                 changedGroups |= 1 << flag->group;
@@ -829,7 +829,7 @@ public:
                             int const stateIdx = value;
                             Record const &state = ded->states[stateIdx];
 
-                            DENG2_ASSERT(mapping->id >= 0 && mapping->id < STATENAMES_COUNT);
+                            DE_ASSERT(mapping->id >= 0 && mapping->id < STATENAMES_COUNT);
                             /*qstrncpy(mobj->states[mapping->id], state.gets("id").toLatin1(),
                                      DED_STRINGID_LEN + 1);*/
                             mobj.def()["states"].array().setElement(mapping->id, state.gets("id"));
@@ -1172,7 +1172,7 @@ public:
                     if(value > 0)
                     {
                         // From DeHackEd source.
-                        DENG2_ASSERT(doomVersion >= 0 && doomVersion < 5);
+                        DE_ASSERT(doomVersion >= 0 && doomVersion < 5);
                         static int const spriteNameTableOffset[] = { 129044, 129044, 129044, 129284, 129380 };
                         offset = (value - spriteNameTableOffset[doomVersion] - 22044) / 8;
                     }
@@ -1349,7 +1349,7 @@ public:
                         }
                         else
                         {
-                            DENG2_ASSERT(weapon->id >= 0 && weapon->id < ded->states.size());
+                            DE_ASSERT(weapon->id >= 0 && weapon->id < ded->states.size());
 
                             Record const &state = ded->states[value];
                             createValueDef(String("Weapon Info|%1|%2").arg(weapNum).arg(weapon->name),
@@ -1795,7 +1795,7 @@ public:
         if(spriteIdx < 0) return false;
 
         /// @todo Presently disabled because the engine can't handle remapping.
-        DENG2_UNUSED(newName);
+        DE_UNUSED(newName);
         LOG_WARNING("DeHackEd sprite name table remapping is not supported");
         return true; // Pretend success.
 

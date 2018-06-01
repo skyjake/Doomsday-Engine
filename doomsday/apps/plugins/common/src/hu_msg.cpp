@@ -141,7 +141,7 @@ static void drawMessage()
     case MSG_ANYKEY: questionString = PRESSKEY;     break;
     case MSG_YESNO:  questionString = yesNoMessage; break;
 
-    default: DENG2_ASSERT_FAIL("drawMessage: Internal error, unknown message type.");
+    default: DE_ASSERT_FAIL("drawMessage: Internal error, unknown message type.");
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
@@ -231,8 +231,8 @@ dd_bool Hu_IsMessageActiveWithCallback(msgfunc_t callback)
 void Hu_MsgStart(msgtype_t type, char const *msg, msgfunc_t callback,
     int userValue, void *userPointer)
 {
-    DENG2_ASSERT(msg != 0);
-    DENG2_ASSERT(!awaitingResponse);
+    DE_ASSERT(msg != 0);
+    DE_ASSERT(!awaitingResponse);
 
     awaitingResponse = true;
     messageResponse  = msgresponse_t(0);
@@ -269,7 +269,7 @@ void Hu_MsgStart(msgtype_t type, char const *msg, msgfunc_t callback,
  */
 D_CMD(MsgResponse)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     if(messageToPrint)
     {

@@ -29,10 +29,10 @@
 
 namespace de {
 
-DENG2_PIMPL(BaseWindow)
-, DENG2_OBSERVES(GLWindow,         Init)
-, DENG2_OBSERVES(KeyEventSource,   KeyEvent)
-, DENG2_OBSERVES(MouseEventSource, MouseEvent)
+DE_PIMPL(BaseWindow)
+, DE_OBSERVES(GLWindow,         Init)
+, DE_OBSERVES(KeyEventSource,   KeyEvent)
+, DE_OBSERVES(MouseEventSource, MouseEvent)
 {
     WindowTransform defaultXf; ///< Used by default (doesn't apply any transformation).
     WindowTransform *xf;
@@ -91,7 +91,7 @@ DENG2_PIMPL(BaseWindow)
 };
 
 BaseWindow::BaseWindow(String const &id)
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
     : LIBAPPFW_BASEWINDOW_SUPER(id)
     , d(new Impl(this))
 #else
@@ -111,7 +111,7 @@ void BaseWindow::useDefaultTransform()
 
 WindowTransform &BaseWindow::transform()
 {
-    DENG2_ASSERT(d->xf != 0);
+    DE_ASSERT(d->xf != 0);
     return *d->xf;
 }
 
@@ -119,9 +119,9 @@ bool BaseWindow::prepareForDraw()
 {
     if (isGLReady())
     {
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
         // Don't run the main loop until after the paint event has been dealt with.
-        DENG2_GUI_APP->loop().pause();
+        DE_GUI_APP->loop().pause();
 #endif
         return true; // Go ahead.
     }
@@ -139,7 +139,7 @@ void BaseWindow::requestDraw()
     }
 
     // Initialize Oculus Rift if needed.
-    auto &vr = DENG2_BASE_GUI_APP->vr();
+    auto &vr = DE_BASE_GUI_APP->vr();
     if (vr.mode() == VRConfig::OculusRift)
     {
         if (isGLReady())
@@ -164,7 +164,7 @@ void BaseWindow::draw()
 
 void BaseWindow::preDraw()
 {
-    auto &vr = DENG2_BASE_GUI_APP->vr();
+    auto &vr = DE_BASE_GUI_APP->vr();
     if (vr.mode() == VRConfig::OculusRift)
     {
         vr.oculusRift().beginFrame();
@@ -173,19 +173,19 @@ void BaseWindow::preDraw()
 
 void BaseWindow::postDraw()
 {
-    auto &vr = DENG2_BASE_GUI_APP->vr();
+    auto &vr = DE_BASE_GUI_APP->vr();
     if (vr.mode() == VRConfig::OculusRift)
     {
         vr.oculusRift().endFrame();
     }
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
     // The timer loop was paused when the frame was requested to be drawn.
-    DENG2_GUI_APP->loop().resume();
+    DE_GUI_APP->loop().resume();
 #endif
 }
 
-#if defined (DENG_MOBILE)
+#if defined (DE_MOBILE)
 
 String BaseWindow::configName(String const &key) const
 {

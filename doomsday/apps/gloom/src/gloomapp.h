@@ -42,7 +42,7 @@ public:
     static de::ImageBank &     images();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // GLOOM_TEST_APP_H

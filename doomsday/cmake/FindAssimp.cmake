@@ -14,7 +14,7 @@ if (NOT TARGET libassimp)
     if (TARGET assimp)
         # Assimp is built as a subdir.
         # Use the built target location from the "assimp" target.
-        set (ASSIMP_INCLUDE_DIRS ${DENG_EXTERNAL_SOURCE_DIR}/assimp/include)
+        set (ASSIMP_INCLUDE_DIRS ${DE_EXTERNAL_SOURCE_DIR}/assimp/include)
         set (LIBASSIMP $<TARGET_LINKER_FILE:assimp>)
         if (APPLE)
             # The assimp library will be bundled into Doomsday.app. This will
@@ -44,7 +44,7 @@ if (NOT TARGET libassimp)
             # Try to find assimp manually.
             find_library (LIBASSIMP NAMES assimp assimpd
                 PATHS
-                    ${DENG_EXTERNAL_SOURCE_DIR}/assimp
+                    ${DE_EXTERNAL_SOURCE_DIR}/assimp
                     ${ASSIMP_DIR}
                 PATH_SUFFIXES lib/Release lib/Debug lib
                 NO_DEFAULT_PATH
@@ -54,7 +54,7 @@ if (NOT TARGET libassimp)
     mark_as_advanced (LIBASSIMP)
 
     if (NOT LIBASSIMP)
-        message (FATAL_ERROR "Open Asset Import Library not found. Go to ${DENG_EXTERNAL_SOURCE_DIR}/assimp and compile. If you install it somewhere, set the ASSIMP_DIR variable to specify the location. If pkg-config is available, it is used to find libassimp.")
+        message (FATAL_ERROR "Open Asset Import Library not found. Go to ${DE_EXTERNAL_SOURCE_DIR}/assimp and compile. If you install it somewhere, set the ASSIMP_DIR variable to specify the location. If pkg-config is available, it is used to find libassimp.")
     endif ()
 
     if (ASSIMP_INCLUDE_DIRS)

@@ -353,10 +353,10 @@ static common::GameSession::VisitedMaps visitedMaps()
         {
             bool isNumber;
             int oldEpisodeNum = gfw_Session()->episodeId().toInt(&isNumber) - 1; // 1-based
-            DENG2_ASSERT(isNumber);
-            DENG2_UNUSED(isNumber);
+            DE_ASSERT(isNumber);
+            DE_UNUSED(isNumber);
 
-            DENG2_ASSERT(wbs);
+            DE_ASSERT(wbs);
             int lastMapNum = G_MapNumberFor(::wbs->currentMap);
             if(lastMapNum == 8) lastMapNum = G_MapNumberFor(::wbs->nextMap) - 1; // 1-based
 
@@ -405,7 +405,7 @@ static void drawBackground()
 
 static void drawFinishedTitle(Vec2i origin = Vec2i(SCREENWIDTH / 2, WI_TITLEY))
 {
-    DENG2_ASSERT(!wbs->currentMap.isEmpty());
+    DE_ASSERT(!wbs->currentMap.isEmpty());
 
     patchid_t titlePatchId = 0;
 
@@ -1373,7 +1373,7 @@ void IN_Ticker()
     case ILS_NONE:          tickNoState();     break;
 
     default:
-        DENG2_ASSERT_FAIL("IN_Ticker: Unknown intermission state");
+        DE_ASSERT_FAIL("IN_Ticker: Unknown intermission state");
         break;
     }
 }
@@ -1545,7 +1545,7 @@ void IN_SetState(interludestate_t st)
     case ILS_NONE:          initNoState();     break;
 
     default:
-        DENG2_ASSERT_FAIL("IN_SetState: Unknown intermission state");
+        DE_ASSERT_FAIL("IN_SetState: Unknown intermission state");
         break;
     }
 }

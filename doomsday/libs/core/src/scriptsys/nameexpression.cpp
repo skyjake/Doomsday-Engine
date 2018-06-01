@@ -35,7 +35,7 @@ namespace de {
 
 String const NameExpression::LOCAL_SCOPE = "-";
 
-DENG2_PIMPL_NOREF(NameExpression)
+DE_PIMPL_NOREF(NameExpression)
 {
     String identifier;
     String scopeIdentifier;
@@ -82,7 +82,7 @@ DENG2_PIMPL_NOREF(NameExpression)
                                Record *&      foundInNamespace,
                                Record **      higherNamespace = 0)
     {
-        DENG2_FOR_EACH_CONST(Evaluator::Namespaces, i, spaces)
+        DE_FOR_EACH_CONST(Evaluator::Namespaces, i, spaces)
         {
             Record &ns = **i;
             if (Variable *variable =
@@ -216,7 +216,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
     // Export variable into a higher namespace?
     if (flags().testFlag(Export))
     {
-        DENG2_ASSERT(!flags().testFlag(ThrowawayIfInScope));
+        DE_ASSERT(!flags().testFlag(ThrowawayIfInScope));
 
         if (!variable)
         {
@@ -303,7 +303,7 @@ void NameExpression::operator << (Reader &from)
 
     from >> d->identifier;
 
-    if (from.version() >= DENG2_PROTOCOL_1_15_0_NameExpression_with_scope_identifier)
+    if (from.version() >= DE_PROTOCOL_1_15_0_NameExpression_with_scope_identifier)
     {
         from >> d->scopeIdentifier;
     }

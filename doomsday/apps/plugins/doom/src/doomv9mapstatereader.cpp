@@ -87,7 +87,7 @@ static reader_s *SV_NewReader_Dm_v19()
 
 static uri_s *readTextureUrn(reader_s *reader, char const *schemeName)
 {
-    DENG_ASSERT(reader != 0 && schemeName != 0);
+    DE_ASSERT(reader != 0 && schemeName != 0);
     return Uri_NewWithPath2(Str_Text(Str_Appendf(AutoStr_NewStd(), "urn:%s:%i", schemeName, Reader_ReadInt16(reader))), RC_NULL);
 }
 
@@ -381,7 +381,7 @@ typedef struct {
 
     // A 32bit pointer to sector, serialized.
     ceiling->sector       = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
-    DENG_ASSERT(ceiling->sector != 0);
+    DE_ASSERT(ceiling->sector != 0);
 
     ceiling->bottomHeight = FIX2FLT(Reader_ReadInt32(reader));
     ceiling->topHeight    = FIX2FLT(Reader_ReadInt32(reader));
@@ -423,7 +423,7 @@ typedef struct {
 
     // A 32bit pointer to sector, serialized.
     door->sector       = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
-    DENG_ASSERT(door->sector != 0);
+    DE_ASSERT(door->sector != 0);
 
     door->topHeight    = FIX2FLT(Reader_ReadInt32(reader));
     door->speed        = FIX2FLT(Reader_ReadInt32(reader));
@@ -462,7 +462,7 @@ typedef struct {
 
     // A 32bit pointer to sector, serialized.
     floor->sector          = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
-    DENG_ASSERT(floor->sector != 0);
+    DE_ASSERT(floor->sector != 0);
 
     floor->state           = floorstate_e(Reader_ReadInt32(reader));
     floor->newSpecial      = Reader_ReadInt32(reader);
@@ -506,7 +506,7 @@ typedef struct {
     // Start of used data members.
     // A 32bit pointer to sector, serialized.
     plat->sector   = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
-    DENG_ASSERT(plat->sector != 0);
+    DE_ASSERT(plat->sector != 0);
 
     plat->speed    = FIX2FLT(Reader_ReadInt32(reader));
     plat->low      = FIX2FLT(Reader_ReadInt32(reader));
@@ -548,7 +548,7 @@ typedef struct {
     // Start of used data members.
     // A 32bit pointer to sector, serialized.
     flash->sector   = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
-    DENG_ASSERT(flash->sector != 0);
+    DE_ASSERT(flash->sector != 0);
 
     flash->count    = Reader_ReadInt32(reader);
     flash->maxLight = (float) Reader_ReadInt32(reader) / 255.0f;
@@ -579,7 +579,7 @@ typedef struct {
     // Start of used data members.
     // A 32bit pointer to sector, serialized.
     strobe->sector     = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
-    DENG_ASSERT(strobe->sector != 0);
+    DE_ASSERT(strobe->sector != 0);
 
     strobe->count      = Reader_ReadInt32(reader);
     strobe->minLight   = (float) Reader_ReadInt32(reader) / 255.0f;
@@ -608,7 +608,7 @@ typedef struct {
     // Start of used data members.
     // A 32bit pointer to sector, serialized.
     glow->sector    = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
-    DENG_ASSERT(glow->sector != 0);
+    DE_ASSERT(glow->sector != 0);
 
     glow->minLight  = (float) Reader_ReadInt32(reader) / 255.0f;
     glow->maxLight  = (float) Reader_ReadInt32(reader) / 255.0f;
@@ -621,7 +621,7 @@ typedef struct {
 #if 0
 static bool SV_OpenFile_Dm_v19(Path path)
 {
-    DENG_ASSERT(saveBuffer == 0);
+    DE_ASSERT(saveBuffer == 0);
     if(!M_ReadFile(NativePath(path).expand().toUtf8().constData(), (char **)&saveBuffer))
     {
         return false;
@@ -638,7 +638,7 @@ static void SV_CloseFile_Dm_v19()
 }
 #endif
 
-DENG2_PIMPL(DoomV9MapStateReader)
+DE_PIMPL(DoomV9MapStateReader)
 {
     reader_s *reader;
 

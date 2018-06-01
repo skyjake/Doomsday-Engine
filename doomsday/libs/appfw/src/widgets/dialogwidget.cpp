@@ -77,11 +77,11 @@ static bool dialogButtonOrder(ui::Item const &a, ui::Item const &b)
     return false;
 }
 
-DENG_GUI_PIMPL(DialogWidget)
-, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
-, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
-, DENG2_OBSERVES(ui::Data, Addition)
-, DENG2_OBSERVES(ui::Data, Removal)
+DE_GUI_PIMPL(DialogWidget)
+, DE_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
+, DE_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
+, DE_OBSERVES(ui::Data, Addition)
+, DE_OBSERVES(ui::Data, Removal)
 {
     Modality modality;
     Flags flags;
@@ -476,7 +476,7 @@ DialogWidget::Modality DialogWidget::modality() const
 
 LabelWidget &DialogWidget::heading()
 {
-    DENG2_ASSERT(d->heading != 0);
+    DE_ASSERT(d->heading != 0);
     return *d->heading;
 }
 
@@ -589,7 +589,7 @@ int DialogWidget::exec(GuiRootWidget &root)
     d->modality = Modal;
 
     // The widget is added to the root temporarily (as top child).
-    DENG2_ASSERT(!hasRoot());
+    DE_ASSERT(!hasRoot());
     root.add(this);
 
     prepare();
@@ -597,20 +597,20 @@ int DialogWidget::exec(GuiRootWidget &root)
     int result = 0;
     try
     {
-#if defined (DENG_MOBILE)
+#if defined (DE_MOBILE)
         // The subloop will likely access the root independently.
         root.unlock();
 #endif
 
         result = d->subloop.exec();
 
-#if defined (DENG_MOBILE)
+#if defined (DE_MOBILE)
         root.lock();
 #endif
     }
     catch (...)
     {
-#if defined (DENG_MOBILE)
+#if defined (DE_MOBILE)
         // The lock needs to be reacquired in any case.
         root.lock();
 #endif
@@ -630,7 +630,7 @@ void DialogWidget::open(Modality modality)
 {
     d->modality = modality;
 
-    DENG2_ASSERT(hasRoot());
+    DE_ASSERT(hasRoot());
     prepare(); // calls base class's open()
 }
 
@@ -716,7 +716,7 @@ void DialogWidget::accept(int result)
 {
     if (d->subloop.isRunning())
     {
-        DENG2_ASSERT(d->modality == Modal);
+        DE_ASSERT(d->modality == Modal);
         d->subloop.exit(result);
         emit accepted(result);
     }
@@ -731,7 +731,7 @@ void DialogWidget::reject(int result)
 {
     if (d->subloop.isRunning())
     {
-        DENG2_ASSERT(d->modality == Modal);
+        DE_ASSERT(d->modality == Modal);
         d->subloop.exit(result);
         emit rejected(result);
     }

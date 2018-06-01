@@ -28,7 +28,7 @@ ObserverBase::ObserverBase()
 
 ObserverBase::~ObserverBase()
 {
-    DENG2_GUARD(_memberOf);
+    DE_GUARD(_memberOf);
     for (IAudience *observers : _memberOf.value)
     {
         observers->removeMember(this);
@@ -37,13 +37,13 @@ ObserverBase::~ObserverBase()
 
 void ObserverBase::addMemberOf(IAudience &observers)
 {
-    DENG2_GUARD(_memberOf);
+    DE_GUARD(_memberOf);
     _memberOf.value.insert(&observers);
 }
 
 void ObserverBase::removeMemberOf(IAudience &observers)
 {
-    DENG2_GUARD(_memberOf);
+    DE_GUARD(_memberOf);
     _memberOf.value.remove(&observers);
 }
 

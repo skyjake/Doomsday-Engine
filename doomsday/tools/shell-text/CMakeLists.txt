@@ -6,7 +6,7 @@
 # http://www.gnu.org/licenses/gpl.html for details.
 
 cmake_minimum_required (VERSION 3.1)
-project (DENG_SHELLTEXT)
+project (DE_SHELLTEXT)
 include (../../cmake/Config.cmake)
 
 set (CURSES_NEED_NCURSES TRUE)
@@ -20,7 +20,7 @@ find_package (Amethyst QUIET)
 
 include_directories (${CURSES_INCLUDE_DIRS})
 add_definitions (
-    -DSHELL_VERSION="${DENG_VERSION}"
+    -DSHELL_VERSION="${DE_VERSION}"
 )
 
 file (GLOB SOURCES src/*.cpp src/*.h)
@@ -29,7 +29,7 @@ if (AMETHYST_FOUND)
     if (UNIX)
         set (MAN_PAGE ${CMAKE_CURRENT_BINARY_DIR}/doomsday-shell-text.6)
         list (APPEND SOURCES ${MAN_PAGE})
-        deng_add_amedoc (MAN ${MAN_PAGE} ${DENG_SOURCE_DIR}/doc/shell-text shell-text.ame)
+        deng_add_amedoc (MAN ${MAN_PAGE} ${DE_SOURCE_DIR}/doc/shell-text shell-text.ame)
     endif ()
 endif ()
 

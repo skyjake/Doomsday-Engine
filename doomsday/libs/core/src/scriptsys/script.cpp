@@ -23,7 +23,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(Script)
+DE_PIMPL_NOREF(Script)
 {
     Compound compound;
 

@@ -21,19 +21,19 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(Asset)
+DE_PIMPL_NOREF(Asset)
 {
     State state;
 
     Impl(State s) : state(s) {}
     Impl(Impl const &other) : de::IPrivate(), state(other.state) {}
 
-    DENG2_PIMPL_AUDIENCE(StateChange)
-    DENG2_PIMPL_AUDIENCE(Deletion)
+    DE_PIMPL_AUDIENCE(StateChange)
+    DE_PIMPL_AUDIENCE(Deletion)
 };
 
-DENG2_AUDIENCE_METHOD(Asset, StateChange)
-DENG2_AUDIENCE_METHOD(Asset, Deletion)
+DE_AUDIENCE_METHOD(Asset, StateChange)
+DE_AUDIENCE_METHOD(Asset, Deletion)
 
 Asset::Asset(State initialState) : d(new Impl(initialState))
 {}
@@ -43,7 +43,7 @@ Asset::Asset(Asset const &other) : d(new Impl(*other.d))
 
 Asset::~Asset()
 {
-    DENG2_FOR_AUDIENCE2(Deletion, i) i->assetBeingDeleted(*this);
+    DE_FOR_AUDIENCE2(Deletion, i) i->assetBeingDeleted(*this);
 }
 
 void Asset::setState(State s)
@@ -52,7 +52,7 @@ void Asset::setState(State s)
     d->state = s;
     if (old != d->state)
     {
-        DENG2_FOR_AUDIENCE2(StateChange, i) i->assetStateChanged(*this);
+        DE_FOR_AUDIENCE2(StateChange, i) i->assetStateChanged(*this);
     }
 }
 
@@ -99,7 +99,7 @@ void Asset::waitForState(State s) const
 
 //----------------------------------------------------------------------------
 
-DENG2_PIMPL_NOREF(AssetGroup)
+DE_PIMPL_NOREF(AssetGroup)
 {
     Members deps;
 
@@ -108,7 +108,7 @@ DENG2_PIMPL_NOREF(AssetGroup)
      */
     bool allReady() const
     {
-        DENG2_FOR_EACH_CONST(Members, i, deps)
+        DE_FOR_EACH_CONST(Members, i, deps)
         {
             switch (i->second)
             {
@@ -153,7 +153,7 @@ dint AssetGroup::size() const
 
 void AssetGroup::clear()
 {
-    DENG2_FOR_EACH(Members, i, d->deps)
+    DE_FOR_EACH(Members, i, d->deps)
     {
         i->first->audienceForDeletion() -= this;
         i->first->audienceForStateChange() -= this;
@@ -187,7 +187,7 @@ bool AssetGroup::has(Asset const &asset) const
 void AssetGroup::setPolicy(Asset const &asset, Policy policy)
 {
     auto found = d->deps.find(&asset);
-    DENG2_ASSERT(found != d->deps.end());
+    DE_ASSERT(found != d->deps.end());
     if (found->second != policy)
     {
         found->second = policy;
@@ -210,7 +210,7 @@ void AssetGroup::assetBeingDeleted(Asset &asset)
 
 void AssetGroup::assetStateChanged(Asset &)
 {
-    DENG2_ASSERT(!d.isNull());
+    DE_ASSERT(!d.isNull());
     d->update(*this);
 }
 

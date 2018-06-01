@@ -34,7 +34,7 @@ using namespace de;
 
 namespace world {
 
-DENG2_PIMPL(ClEdgeLoop)
+DE_PIMPL(ClEdgeLoop)
 {
     ClientSubsector &owner;
     HEdge *firstHEdge = nullptr;
@@ -201,7 +201,7 @@ String ClEdgeLoop::description() const
                        " " _E(l) "Half-edge: "  _E(.)_E(i) "%2" _E(.))
                   .arg(ClientSubsector::edgeLoopIdAsText(loopId()).upperFirstChar())
                   .arg(String("[0x%1]").arg(de::dintptr(d->firstHEdge), 0, 16));
-    DENG2_DEBUG_ONLY(
+    DE_DEBUG_ONLY(
         desc.prepend(String(_E(b) "ClEdgeLoop " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
     )
     return desc;
@@ -224,19 +224,19 @@ bool ClEdgeLoop::isOuter() const
 
 HEdge &ClEdgeLoop::first() const
 {
-    DENG2_ASSERT(d->firstHEdge);
+    DE_ASSERT(d->firstHEdge);
     return *d->firstHEdge;
 }
 
 bool ClEdgeLoop::isSelfReferencing() const
 {
-    DENG2_ASSERT(d->firstHEdge);
+    DE_ASSERT(d->firstHEdge);
     return d->firstHEdge->mapElementAs<LineSideSegment>().line().isSelfReferencing();
 }
 
 bool ClEdgeLoop::hasBackSubsector() const
 {
-    DENG2_ASSERT(d->firstHEdge);
+    DE_ASSERT(d->firstHEdge);
     return d->firstHEdge->hasTwin()
         && d->firstHEdge->twin().hasFace()
         && d->firstHEdge->twin().face().mapElementAs<ConvexSubspace>().hasSubsector();
@@ -244,13 +244,13 @@ bool ClEdgeLoop::hasBackSubsector() const
 
 ClientSubsector &ClEdgeLoop::backSubsector() const
 {
-    DENG2_ASSERT(d->firstHEdge);
+    DE_ASSERT(d->firstHEdge);
     return d->firstHEdge->twin().face().mapElementAs<ConvexSubspace>().subsector().as<ClientSubsector>();
 }
 
 void ClEdgeLoop::fixSurfacesMissingMaterials()
 {
-    DENG2_ASSERT(d->firstHEdge);
+    DE_ASSERT(d->firstHEdge);
     SubsectorCirculator it(d->firstHEdge);
     do
     {

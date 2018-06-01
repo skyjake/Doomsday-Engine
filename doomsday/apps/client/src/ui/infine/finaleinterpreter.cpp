@@ -368,7 +368,7 @@ static command_t const *findCommand(char const *name)
     return nullptr; // Not found.
 }
 
-DENG2_PIMPL(FinaleInterpreter)
+DE_PIMPL(FinaleInterpreter)
 {
     struct Flags
     {
@@ -492,7 +492,7 @@ DENG2_PIMPL(FinaleInterpreter)
 
     bool atEnd() const
     {
-        DENG2_ASSERT(script);
+        DE_ASSERT(script);
         return (cp - Str_Text(script)) >= Str_Length(script);
     }
 
@@ -561,7 +561,7 @@ DENG2_PIMPL(FinaleInterpreter)
         char const *defaultValueEnd;
         for (defaultValueEnd = str; defaultValueEnd && *defaultValueEnd != ')'; defaultValueEnd++)
         {}
-        DENG2_ASSERT(defaultValueEnd < str + qstrlen(str));
+        DE_ASSERT(defaultValueEnd < str + qstrlen(str));
         return defaultValueEnd;
     }
 
@@ -602,7 +602,7 @@ DENG2_PIMPL(FinaleInterpreter)
      */
     fi_operand_t *prepareCommandOperands(command_t const *cmd, int *count)
     {
-        DENG2_ASSERT(cmd);
+        DE_ASSERT(cmd);
 
         char const *origCursorPos = cp;
         int const operandCount    = countCommandOperands(cmd->operands);
@@ -697,7 +697,7 @@ DENG2_PIMPL(FinaleInterpreter)
 
     bool skippingCommand(command_t const *cmd)
     {
-        DENG2_ASSERT(cmd);
+        DE_ASSERT(cmd);
         if ((skipNext && !cmd->flags.when_condition_skipping) ||
            ((skipping || gotoSkip) && !cmd->flags.when_skipping))
         {
@@ -718,7 +718,7 @@ DENG2_PIMPL(FinaleInterpreter)
      */
     bool executeCommand(char const *commandString, int directive)
     {
-        DENG2_ASSERT(commandString);
+        DE_ASSERT(commandString);
         bool didSkip = false;
 
         // Semicolon terminates DO-blocks.
@@ -885,7 +885,7 @@ finaleid_t FinaleInterpreter::id() const
 
 void FinaleInterpreter::loadScript(char const *script)
 {
-    DENG2_ASSERT(script && script[0]);
+    DE_ASSERT(script && script[0]);
 
     d->pages[Anims].reset(new FinalePageWidget);
     d->pages[Texts].reset(new FinalePageWidget);
@@ -1205,7 +1205,7 @@ FinalePageWidget &FinaleInterpreter::page(PageIndex index)
 {
     if (index >= Anims && index <= Texts)
     {
-        DENG2_ASSERT(d->pages[index]);
+        DE_ASSERT(d->pages[index]);
         return *d->pages[index];
     }
     throw MissingPageError("FinaleInterpreter::page", "Unknown page #" + String::number(int(index)));
@@ -1242,8 +1242,8 @@ FinaleWidget &FinaleInterpreter::findWidget(fi_obtype_e type, String const &name
 
 FinaleWidget &FinaleInterpreter::findOrCreateWidget(fi_obtype_e type, String const &name)
 {
-    DENG2_ASSERT(type >= FI_ANIM && type <= FI_TEXT);
-    DENG2_ASSERT(!name.isEmpty());
+    DE_ASSERT(type >= FI_ANIM && type <= FI_TEXT);
+    DE_ASSERT(!name.isEmpty());
     if (FinaleWidget *foundWidget = d->locateWidget(type, name))
     {
         return *foundWidget;
@@ -1338,13 +1338,13 @@ void FinaleInterpreter::setWaitText(FinaleTextWidget *newWaitText)
 /// @note This command is called even when condition-skipping.
 DEFFC(Do)
 {
-    DENG2_UNUSED2(cmd, ops);
+    DE_UNUSED(cmd, ops);
     fi.beginDoSkipMode();
 }
 
 DEFFC(End)
 {
-    DENG2_UNUSED2(cmd, ops);
+    DE_UNUSED(cmd, ops);
     fi.gotoEnd();
 }
 
@@ -1361,7 +1361,7 @@ static void changePageBackground(FinalePageWidget &page, world::Material *newMat
 
 DEFFC(BGMaterial)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
 
     // First attempt to resolve as a Values URI (which defines the material URI).
     world::Material *material = nullptr;
@@ -1386,43 +1386,43 @@ DEFFC(BGMaterial)
 
 DEFFC(NoBGMaterial)
 {
-    DENG2_UNUSED2(cmd, ops);
+    DE_UNUSED(cmd, ops);
     changePageBackground(fi.page(FinaleInterpreter::Anims), 0);
 }
 
 DEFFC(InTime)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     fi.setInTime(FRACSECS_TO_TICKS(OP_FLOAT(0)));
 }
 
 DEFFC(Tic)
 {
-    DENG2_UNUSED2(cmd, ops);
+    DE_UNUSED(cmd, ops);
     fi.wait();
 }
 
 DEFFC(Wait)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     fi.wait(FRACSECS_TO_TICKS(OP_FLOAT(0)));
 }
 
 DEFFC(WaitText)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     fi.setWaitText(&fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>());
 }
 
 DEFFC(WaitAnim)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     fi.setWaitAnim(&fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>());
 }
 
 DEFFC(Color)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     fi.page(FinaleInterpreter::Anims)
             .setBackgroundTopColor   (Vec3f(OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2)), fi.inTime())
             .setBackgroundBottomColor(Vec3f(OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2)), fi.inTime());
@@ -1430,7 +1430,7 @@ DEFFC(Color)
 
 DEFFC(ColorAlpha)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     fi.page(FinaleInterpreter::Anims)
             .setBackgroundTopColorAndAlpha   (Vec4f(OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3)), fi.inTime())
             .setBackgroundBottomColorAndAlpha(Vec4f(OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3)), fi.inTime());
@@ -1438,44 +1438,44 @@ DEFFC(ColorAlpha)
 
 DEFFC(Pause)
 {
-    DENG2_UNUSED2(cmd, ops);
+    DE_UNUSED(cmd, ops);
     fi.pause();
 }
 
 DEFFC(CanSkip)
 {
-    DENG2_UNUSED2(cmd, ops);
+    DE_UNUSED(cmd, ops);
     fi.setSkip(true);
 }
 
 DEFFC(NoSkip)
 {
-    DENG2_UNUSED2(cmd, ops);
+    DE_UNUSED(cmd, ops);
     fi.setSkip(false);
 }
 
 DEFFC(SkipHere)
 {
-    DENG2_UNUSED2(cmd, ops);
+    DE_UNUSED(cmd, ops);
     fi.foundSkipHere();
 }
 
 DEFFC(Events)
 {
-    DENG2_UNUSED2(cmd, ops);
+    DE_UNUSED(cmd, ops);
     fi.setHandleEvents();
 }
 
 DEFFC(NoEvents)
 {
-    DENG2_UNUSED2(cmd, ops);
+    DE_UNUSED(cmd, ops);
     fi.setHandleEvents(false);
 }
 
 DEFFC(OnKey)
 {
 #ifdef __CLIENT__
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
 
     // Construct a template event for this handler.
     ddevent_t ev; de::zap(ev);
@@ -1486,14 +1486,14 @@ DEFFC(OnKey)
 
     fi.addEventHandler(ev, OP_CSTRING(1));
 #else
-    DENG2_UNUSED3(cmd, ops, fi);
+    DE_UNUSED(cmd, ops, fi);
 #endif
 }
 
 DEFFC(UnsetKey)
 {
 #ifdef __CLIENT__
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
 
     // Construct a template event for what we want to "unset".
     ddevent_t ev; de::zap(ev);
@@ -1504,13 +1504,13 @@ DEFFC(UnsetKey)
 
     fi.removeEventHandler(ev);
 #else
-    DENG2_UNUSED3(cmd, ops, fi);
+    DE_UNUSED(cmd, ops, fi);
 #endif
 }
 
 DEFFC(If)
 {
-    DENG2_UNUSED2(cmd, ops);
+    DE_UNUSED(cmd, ops);
     LOG_AS("FIC_If");
 
     char const *token = OP_CSTRING(0);
@@ -1562,31 +1562,31 @@ DEFFC(IfNot)
 /// @note The only time the ELSE condition does not skip is immediately after a skip.
 DEFFC(Else)
 {
-    DENG2_UNUSED2(cmd, ops);
+    DE_UNUSED(cmd, ops);
     fi.setSkipNext(!fi.lastSkipped());
 }
 
 DEFFC(GoTo)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     fi.skipToMarker(OP_CSTRING(0));
 }
 
 DEFFC(Marker)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     fi.foundSkipMarker(OP_CSTRING(0));
 }
 
 DEFFC(Delete)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     delete fi.tryFindWidget(OP_CSTRING(0));
 }
 
 DEFFC(Image)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     LOG_AS("FIC_Image");
 
     FinaleAnimWidget &anim = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
@@ -1608,7 +1608,7 @@ DEFFC(Image)
 
 DEFFC(ImageAt)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     LOG_AS("FIC_ImageAt");
 
     FinaleAnimWidget &anim = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
@@ -1660,7 +1660,7 @@ static DGLuint loadAndPrepareExtTexture(char const *fileName)
 
 DEFFC(XImage)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
 
     LOG_AS("FIC_XImage");
 
@@ -1686,7 +1686,7 @@ DEFFC(XImage)
 
 DEFFC(Patch)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     LOG_AS("FIC_Patch");
 
     FinaleAnimWidget &anim  = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
@@ -1708,7 +1708,7 @@ DEFFC(Patch)
 
 DEFFC(SetPatch)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     LOG_AS("FIC_SetPatch");
 
     FinaleAnimWidget &anim  = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
@@ -1737,7 +1737,7 @@ DEFFC(SetPatch)
 
 DEFFC(ClearAnim)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         if (FinaleAnimWidget *anim = maybeAs<FinaleAnimWidget>(wi))
@@ -1749,7 +1749,7 @@ DEFFC(ClearAnim)
 
 DEFFC(Anim)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     LOG_AS("FIC_Anim");
 
     FinaleAnimWidget &anim  = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
@@ -1768,7 +1768,7 @@ DEFFC(Anim)
 
 DEFFC(AnimImage)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     LOG_AS("FIC_AnimImage");
 
     FinaleAnimWidget &anim  = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
@@ -1784,23 +1784,23 @@ DEFFC(AnimImage)
     }
     LOG_SCR_WARNING("Lump '%s' not found") << encodedName;
 #else
-    DENG2_UNUSED(anim);
+    DE_UNUSED(anim);
 #endif
 }
 
 DEFFC(Repeat)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleAnimWidget &anim = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
     anim.setLooping();
 }
 
 DEFFC(StateAnim)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleAnimWidget &anim = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
 #if !defined(__CLIENT__)
-    DENG2_UNUSED(anim);
+    DE_UNUSED(anim);
 #endif
 
     // Animate N states starting from the given one.
@@ -1821,7 +1821,7 @@ DEFFC(StateAnim)
 
 DEFFC(PicSound)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleAnimWidget &anim = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
     int const sound        = DED_Definitions()->getSoundNum(OP_CSTRING(1));
 
@@ -1836,7 +1836,7 @@ DEFFC(PicSound)
 
 DEFFC(ObjectOffX)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         wi->setOriginX(OP_FLOAT(1), fi.inTime());
@@ -1845,7 +1845,7 @@ DEFFC(ObjectOffX)
 
 DEFFC(ObjectOffY)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         wi->setOriginY(OP_FLOAT(1), fi.inTime());
@@ -1854,7 +1854,7 @@ DEFFC(ObjectOffY)
 
 DEFFC(ObjectOffZ)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         wi->setOriginZ(OP_FLOAT(1), fi.inTime());
@@ -1863,7 +1863,7 @@ DEFFC(ObjectOffZ)
 
 DEFFC(ObjectRGB)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         Vec3f const color(OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3));
@@ -1884,7 +1884,7 @@ DEFFC(ObjectRGB)
 
 DEFFC(ObjectAlpha)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         float const alpha = OP_FLOAT(1);
@@ -1902,7 +1902,7 @@ DEFFC(ObjectAlpha)
 
 DEFFC(ObjectScaleX)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         wi->setScaleX(OP_FLOAT(1), fi.inTime());
@@ -1911,7 +1911,7 @@ DEFFC(ObjectScaleX)
 
 DEFFC(ObjectScaleY)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         wi->setScaleY(OP_FLOAT(1), fi.inTime());
@@ -1920,7 +1920,7 @@ DEFFC(ObjectScaleY)
 
 DEFFC(ObjectScaleZ)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         wi->setScaleZ(OP_FLOAT(1), fi.inTime());
@@ -1929,7 +1929,7 @@ DEFFC(ObjectScaleZ)
 
 DEFFC(ObjectScale)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         wi->setScaleX(OP_FLOAT(1), fi.inTime())
@@ -1939,7 +1939,7 @@ DEFFC(ObjectScale)
 
 DEFFC(ObjectScaleXY)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         wi->setScaleX(OP_FLOAT(1), fi.inTime())
@@ -1949,7 +1949,7 @@ DEFFC(ObjectScaleXY)
 
 DEFFC(ObjectScaleXYZ)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         wi->setScale(Vec3f(OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3)), fi.inTime());
@@ -1958,7 +1958,7 @@ DEFFC(ObjectScaleXYZ)
 
 DEFFC(ObjectAngle)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
         wi->setAngle(OP_FLOAT(1), fi.inTime());
@@ -1967,7 +1967,7 @@ DEFFC(ObjectAngle)
 
 DEFFC(Rect)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleAnimWidget &anim = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
 
     /// @note We may be converting an existing Pic to a Rect, so re-init the expected
@@ -1982,7 +1982,7 @@ DEFFC(Rect)
 
 DEFFC(FillColor)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0));
     if (!wi || !is<FinaleAnimWidget>(wi)) return;
     FinaleAnimWidget &anim = wi->as<FinaleAnimWidget>();
@@ -2007,7 +2007,7 @@ DEFFC(FillColor)
 
 DEFFC(EdgeColor)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0));
     if (!wi || !is<FinaleAnimWidget>(wi)) return;
     FinaleAnimWidget &anim = wi->as<FinaleAnimWidget>();
@@ -2032,25 +2032,25 @@ DEFFC(EdgeColor)
 
 DEFFC(OffsetX)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     fi.page(FinaleInterpreter::Anims).setOffsetX(OP_FLOAT(0), fi.inTime());
 }
 
 DEFFC(OffsetY)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     fi.page(FinaleInterpreter::Anims).setOffsetY(OP_FLOAT(0), fi.inTime());
 }
 
 DEFFC(Sound)
 {
-    DENG2_UNUSED2(cmd, fi);
+    DE_UNUSED(cmd, fi);
     S_LocalSound(DED_Definitions()->getSoundNum(OP_CSTRING(0)), nullptr);
 }
 
 DEFFC(SoundAt)
 {
-    DENG2_UNUSED2(cmd, fi);
+    DE_UNUSED(cmd, fi);
     dint const soundId = DED_Definitions()->getSoundNum(OP_CSTRING(0));
     dfloat const vol   = de::min(OP_FLOAT(1), 1.f);
     S_LocalSoundAtVolume(soundId, nullptr, vol);
@@ -2058,7 +2058,7 @@ DEFFC(SoundAt)
 
 DEFFC(SeeSound)
 {
-    DENG2_UNUSED2(cmd, fi);
+    DE_UNUSED(cmd, fi);
     dint num = DED_Definitions()->getMobjNum(OP_CSTRING(0));
     if (num >= 0 && ::runtimeDefs.mobjInfo[num].seeSound > 0)
     {
@@ -2068,7 +2068,7 @@ DEFFC(SeeSound)
 
 DEFFC(DieSound)
 {
-    DENG2_UNUSED2(cmd, fi);
+    DE_UNUSED(cmd, fi);
     dint num = DED_Definitions()->getMobjNum(OP_CSTRING(0));
     if (num >= 0 && ::runtimeDefs.mobjInfo[num].deathSound > 0)
     {
@@ -2078,25 +2078,25 @@ DEFFC(DieSound)
 
 DEFFC(Music)
 {
-    DENG2_UNUSED3(cmd, ops, fi);
+    DE_UNUSED(cmd, ops, fi);
     S_StartMusic(OP_CSTRING(0), true);
 }
 
 DEFFC(MusicOnce)
 {
-    DENG2_UNUSED3(cmd, ops, fi);
+    DE_UNUSED(cmd, ops, fi);
     S_StartMusic(OP_CSTRING(0), false);
 }
 
 DEFFC(Filter)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     fi.page(FinaleInterpreter::Texts).setFilterColorAndAlpha(Vec4f(OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3)), fi.inTime());
 }
 
 DEFFC(Text)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
 
     text.setText(OP_CSTRING(3))
@@ -2106,7 +2106,7 @@ DEFFC(Text)
 
 DEFFC(TextFromDef)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
     int textIdx          = DED_Definitions()->getTextNum((char *)OP_CSTRING(3));
 
@@ -2117,7 +2117,7 @@ DEFFC(TextFromDef)
 
 DEFFC(TextFromLump)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
 
     text.setOrigin(Vec3f(OP_FLOAT(1), OP_FLOAT(2), 0));
@@ -2159,14 +2159,14 @@ DEFFC(TextFromLump)
 
 DEFFC(SetText)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
     text.setText(OP_CSTRING(1));
 }
 
 DEFFC(SetTextDef)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
     int textIdx            = DED_Definitions()->getTextNum((char *)OP_CSTRING(1));
 
@@ -2175,13 +2175,13 @@ DEFFC(SetTextDef)
 
 DEFFC(DeleteText)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     delete fi.tryFindWidget(OP_CSTRING(0));
 }
 
 DEFFC(PredefinedColor)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     fi.page(FinaleInterpreter::Texts)
             .setPredefinedColor(de::clamp(1, OP_INT(0), FIPAGE_NUM_PREDEFINED_COLORS) - 1,
                                 Vec3f(OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3)), fi.inTime());
@@ -2193,7 +2193,7 @@ DEFFC(PredefinedColor)
 DEFFC(PredefinedFont)
 {
 #ifdef __CLIENT__
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     LOG_AS("FIC_PredefinedFont");
 
     fontid_t const fontNum = Fonts_ResolveUri(OP_URI(1));
@@ -2208,76 +2208,76 @@ DEFFC(PredefinedFont)
     AutoStr *fontPath = Uri_ToString(OP_URI(1));
     LOG_SCR_WARNING("Unknown font '%s'") << Str_Text(fontPath);
 #else
-    DENG2_UNUSED3(cmd, ops, fi);
+    DE_UNUSED(cmd, ops, fi);
 #endif
 }
 
 DEFFC(TextRGB)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
     text.setColor(Vec3f(OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3)), fi.inTime());
 }
 
 DEFFC(TextAlpha)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
     text.setAlpha(OP_FLOAT(1), fi.inTime());
 }
 
 DEFFC(TextOffX)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleWidget &wi = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0));
     wi.setOriginX(OP_FLOAT(1), fi.inTime());
 }
 
 DEFFC(TextOffY)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleWidget &wi = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0));
     wi.setOriginY(OP_FLOAT(1), fi.inTime());
 }
 
 DEFFC(TextCenter)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
     text.setAlignment(text.alignment() & ~(ALIGN_LEFT | ALIGN_RIGHT));
 }
 
 DEFFC(TextNoCenter)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
     text.setAlignment(text.alignment() | ALIGN_LEFT);
 }
 
 DEFFC(TextScroll)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
     text.setScrollRate(OP_INT(1));
 }
 
 DEFFC(TextPos)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
     text.setCursorPos(OP_INT(1));
 }
 
 DEFFC(TextRate)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
     text.setTypeInRate(OP_INT(1));
 }
 
 DEFFC(TextLineHeight)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
     text.setLineHeight(OP_FLOAT(1));
 }
@@ -2285,7 +2285,7 @@ DEFFC(TextLineHeight)
 DEFFC(Font)
 {
 #ifdef __CLIENT__
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     LOG_AS("FIC_Font");
 
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
@@ -2299,47 +2299,47 @@ DEFFC(Font)
     AutoStr *fontPath = Uri_ToString(OP_URI(1));
     LOG_SCR_WARNING("Unknown font '%s'") << Str_Text(fontPath);
 #else
-    DENG2_UNUSED3(cmd, ops, fi);
+    DE_UNUSED(cmd, ops, fi);
 #endif
 }
 
 DEFFC(FontA)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
     text.setFont(fi.page(FinaleInterpreter::Texts).predefinedFont(0));
 }
 
 DEFFC(FontB)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
     text.setFont(fi.page(FinaleInterpreter::Texts).predefinedFont(1));
 }
 
 DEFFC(NoMusic)
 {
-    DENG2_UNUSED3(cmd, ops, fi);
+    DE_UNUSED(cmd, ops, fi);
     S_StopMusic();
 }
 
 DEFFC(TextScaleX)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleWidget &wi = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0));
     wi.setScaleX(OP_FLOAT(1), fi.inTime());
 }
 
 DEFFC(TextScaleY)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleWidget &wi = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0));
     wi.setScaleY(OP_FLOAT(1), fi.inTime());
 }
 
 DEFFC(TextScale)
 {
-    DENG2_UNUSED(cmd);
+    DE_UNUSED(cmd);
     FinaleWidget &wi = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0));
     wi.setScaleX(OP_FLOAT(1), fi.inTime())
       .setScaleY(OP_FLOAT(2), fi.inTime());
@@ -2359,24 +2359,24 @@ DEFFC(PlayDemo)
         fi.resume();
     }
 #else
-    DENG2_UNUSED3(cmd, ops, fi);
+    DE_UNUSED(cmd, ops, fi);
 #endif
 }
 
 DEFFC(Command)
 {
-    DENG2_UNUSED2(cmd, fi);
+    DE_UNUSED(cmd, fi);
     Con_Executef(CMDS_SCRIPT, false, "%s", OP_CSTRING(0));
 }
 
 DEFFC(ShowMenu)
 {
-    DENG2_UNUSED2(cmd, ops);
+    DE_UNUSED(cmd, ops);
     fi.setShowMenu();
 }
 
 DEFFC(NoShowMenu)
 {
-    DENG2_UNUSED2(cmd, ops);
+    DE_UNUSED(cmd, ops);
     fi.setShowMenu(false);
 }

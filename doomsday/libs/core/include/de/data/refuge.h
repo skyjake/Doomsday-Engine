@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_REFUGE_H
-#define LIBDENG2_REFUGE_H
+#ifndef LIBCORE_REFUGE_H
+#define LIBCORE_REFUGE_H
 
 #include "../Record"
 #include "../IObject"
@@ -31,7 +31,7 @@ namespace de {
  *
  * @ingroup data
  */
-class DENG2_PUBLIC Refuge : public IObject
+class DE_PUBLIC Refuge : public IObject
 {
 public:
     /**
@@ -72,9 +72,9 @@ public:
     Record const &objectNamespace() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_REFUGE_H
+#endif // LIBCORE_REFUGE_H

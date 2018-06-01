@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_MATRIX_H
-#define LIBDENG2_MATRIX_H
+#ifndef LIBCORE_MATRIX_H
+#define LIBCORE_MATRIX_H
 
 #include "../libcore.h"
 #include "../math.h"
@@ -32,12 +32,12 @@
 namespace de {
 
 // Utilities.
-DENG2_PUBLIC dfloat  Matrix3_Determinant(dfloat  const *values9);
-DENG2_PUBLIC ddouble Matrix3_Determinant(ddouble const *values9);
-DENG2_PUBLIC bool    Matrix3_Inverse(dfloat  *out9,  dfloat const  *in9);
-DENG2_PUBLIC bool    Matrix3_Inverse(ddouble *out9,  ddouble const *in9);
-DENG2_PUBLIC bool    Matrix4_Inverse(dfloat  *out16, dfloat const  *in16);
-DENG2_PUBLIC bool    Matrix4_Inverse(ddouble *out16, ddouble const *in16);
+DE_PUBLIC dfloat  Matrix3_Determinant(dfloat  const *values9);
+DE_PUBLIC ddouble Matrix3_Determinant(ddouble const *values9);
+DE_PUBLIC bool    Matrix3_Inverse(dfloat  *out9,  dfloat const  *in9);
+DE_PUBLIC bool    Matrix3_Inverse(ddouble *out9,  ddouble const *in9);
+DE_PUBLIC bool    Matrix4_Inverse(dfloat  *out16, dfloat const  *in16);
+DE_PUBLIC bool    Matrix4_Inverse(ddouble *out16, ddouble const *in16);
 
 /**
  * 3x3 matrix. @ingroup math
@@ -74,19 +74,19 @@ public:
         data().set(0, reinterpret_cast<IByteArray::Byte const *>(values9), sizeof(_values));
     }
     Matrix3(ByteRefArray const &otherData) {
-        DENG2_ASSERT(otherData.size() == sizeof(_values));
+        DE_ASSERT(otherData.size() == sizeof(_values));
         otherData.get(0, _values, sizeof(_values));
     }
 
     // Accessors.
     inline Type &at(int row, int col) {
-        DENG2_ASSERT(row >= 0 && row < 3);
-        DENG2_ASSERT(col >= 0 && col < 3);
+        DE_ASSERT(row >= 0 && row < 3);
+        DE_ASSERT(col >= 0 && col < 3);
         return _values[col*3 + row];
     }
     inline Type at(int row, int col) const {
-        DENG2_ASSERT(row >= 0 && row < 3);
-        DENG2_ASSERT(col >= 0 && col < 3);
+        DE_ASSERT(row >= 0 && row < 3);
+        DE_ASSERT(col >= 0 && col < 3);
         return _values[col*3 + row];
     }
     Vec3 row(int row) const {
@@ -96,11 +96,11 @@ public:
         return Vec3(at(0, col), at(1, col), at(2, col));
     }
     inline Type &operator [] (int index) {
-        DENG2_ASSERT(index >= 0 && index < 9);
+        DE_ASSERT(index >= 0 && index < 9);
         return _values[index];
     }
     inline Type operator [] (int index) const {
-        DENG2_ASSERT(index >= 0 && index < 9);
+        DE_ASSERT(index >= 0 && index < 9);
         return _values[index];
     }
     ByteRefArray const data() const {
@@ -231,19 +231,19 @@ public:
         data().set(0, reinterpret_cast<IByteArray::Byte const *>(values16), sizeof(_values));
     }
     Matrix4(ByteRefArray const &otherData) {
-        DENG2_ASSERT(otherData.size() == sizeof(_values));
+        DE_ASSERT(otherData.size() == sizeof(_values));
         otherData.get(0, _values, sizeof(_values));
     }
 
     // Accessors.
     inline Type &at(int row, int col) {
-        DENG2_ASSERT(row >= 0 && row < 4);
-        DENG2_ASSERT(col >= 0 && col < 4);
+        DE_ASSERT(row >= 0 && row < 4);
+        DE_ASSERT(col >= 0 && col < 4);
         return _values[col*4 + row];
     }
     inline Type at(int row, int col) const {
-        DENG2_ASSERT(row >= 0 && row < 4);
-        DENG2_ASSERT(col >= 0 && col < 4);
+        DE_ASSERT(row >= 0 && row < 4);
+        DE_ASSERT(col >= 0 && col < 4);
         return _values[col*4 + row];
     }
     Vec4 row(int row) const {
@@ -253,11 +253,11 @@ public:
         return Vec4(at(0, col), at(1, col), at(2, col), at(3, col));
     }
     inline Type &operator [] (int index) {
-        DENG2_ASSERT(index >= 0 && index < 16);
+        DE_ASSERT(index >= 0 && index < 16);
         return _values[index];
     }
     inline Type operator [] (int index) const {
-        DENG2_ASSERT(index >= 0 && index < 16);
+        DE_ASSERT(index >= 0 && index < 16);
         return _values[index];
     }
     ByteRefArray const data() const {
@@ -505,4 +505,4 @@ typedef Matrix4<ddouble> Mat4d;
 
 } // namespace de
 
-#endif // LIBDENG2_MATRIX_H
+#endif // LIBCORE_MATRIX_H

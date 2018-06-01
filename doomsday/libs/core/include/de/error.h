@@ -17,9 +17,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_ERROR_H
-#define LIBDENG2_ERROR_H
+#ifndef LIBCORE_ERROR_H
+#define LIBCORE_ERROR_H
 
 #include "libcore.h"
 
-#endif // LIBDENG2_ERROR_H
+#endif // LIBCORE_ERROR_H

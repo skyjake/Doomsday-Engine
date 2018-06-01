@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_IPARSER_H
-#define LIBDENG2_IPARSER_H
+#ifndef LIBCORE_IPARSER_H
+#define LIBCORE_IPARSER_H
 
 #include "../String"
 
@@ -54,4 +54,4 @@ public:
 
 } // namespace de
 
-#endif /* LIBDENG2_IPARSER_H */
+#endif /* LIBCORE_IPARSER_H */

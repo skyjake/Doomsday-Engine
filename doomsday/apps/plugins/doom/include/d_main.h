@@ -27,16 +27,16 @@
 
 #include "doomdef.h"
 
-DENG_EXTERN_C gamemode_t gameMode;
-DENG_EXTERN_C int gameModeBits;
+DE_EXTERN_C gamemode_t gameMode;
+DE_EXTERN_C int gameModeBits;
 
-DENG_EXTERN_C char const *borderGraphics[];
+DE_EXTERN_C char const *borderGraphics[];
 
-DENG_EXTERN_C float defFontRGB[];
-DENG_EXTERN_C float defFontRGB2[];
-DENG_EXTERN_C float defFontRGB3[];
+DE_EXTERN_C float defFontRGB[];
+DE_EXTERN_C float defFontRGB2[];
+DE_EXTERN_C float defFontRGB3[];
 
-DENG_EXTERN_C dd_bool monsterInfight;
+DE_EXTERN_C dd_bool monsterInfight;
 
 #ifdef __cplusplus
 extern "C" {

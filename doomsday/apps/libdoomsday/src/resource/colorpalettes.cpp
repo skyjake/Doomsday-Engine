@@ -26,7 +26,7 @@ using namespace de;
 
 namespace res {
 
-DENG2_PIMPL_NOREF(ColorPalettes)
+DE_PIMPL_NOREF(ColorPalettes)
 {
     typedef QMap<Id::Type, ColorPalette *> ColorPalettes;
     ColorPalettes colorPalettes; // owned
@@ -50,10 +50,10 @@ DENG2_PIMPL_NOREF(ColorPalettes)
         defaultColorPalette = 0;
     }
 
-    DENG2_PIMPL_AUDIENCE(Addition)
+    DE_PIMPL_AUDIENCE(Addition)
 };
 
-DENG2_AUDIENCE_METHOD(ColorPalettes, Addition)
+DE_AUDIENCE_METHOD(ColorPalettes, Addition)
 
 ColorPalettes::ColorPalettes()
     : d(new Impl)
@@ -120,7 +120,7 @@ void ColorPalettes::addColorPalette(ColorPalette &newPalette, String const &name
         d->defaultColorPalette = newPalette.id();
     }
 
-    DENG2_FOR_AUDIENCE2(Addition, i) i->colorPaletteAdded(newPalette);
+    DE_FOR_AUDIENCE2(Addition, i) i->colorPaletteAdded(newPalette);
 }
 
 Id ColorPalettes::defaultColorPalette() const

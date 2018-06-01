@@ -23,7 +23,7 @@
 
 namespace de {
 
-DENG2_PIMPL(BitField::Elements)
+DE_PIMPL(BitField::Elements)
 {
     struct Element
     {
@@ -56,7 +56,7 @@ DENG2_PIMPL(BitField::Elements)
 
     Element const &element(Id id) const
     {
-        DENG2_ASSERT(elements.contains(id));
+        DE_ASSERT(elements.contains(id));
         return elements.constFind(id).value();
     }
 };
@@ -79,7 +79,7 @@ void BitField::Elements::clear()
 
 BitField::Elements &BitField::Elements::add(Id id, dsize numBits)
 {
-    DENG2_ASSERT(numBits >= 1);
+    DE_ASSERT(numBits >= 1);
 
     Impl::Element elem;
     elem.numBits  = numBits;
@@ -126,8 +126,8 @@ int BitField::Elements::size() const
 
 BitField::Spec BitField::Elements::at(int index) const
 {
-    DENG2_ASSERT(index >= 0);
-    DENG2_ASSERT(index < size());
+    DE_ASSERT(index >= 0);
+    DE_ASSERT(index < size());
 
     Impl::Element elem = d->elements.values()[index];
     Spec spec;

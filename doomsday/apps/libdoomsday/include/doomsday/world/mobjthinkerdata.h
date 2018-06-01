@@ -62,7 +62,7 @@ public:
     void operator << (de::Reader &from) override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // LIBDOOMSDAY_MOBJTHINKERDATA_H

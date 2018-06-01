@@ -41,7 +41,7 @@ public slots:
     void selectFont();
     
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // PREFERENCES_H

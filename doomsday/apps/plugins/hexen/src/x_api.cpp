@@ -169,7 +169,7 @@ static int G_RegisterGames(int, int, void *)
 /**
  * Called right after the game plugin is selected into use.
  */
-DENG_ENTRYPOINT void DP_Load(void)
+DE_ENTRYPOINT void DP_Load(void)
 {
     Plug_AddHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
     gfw_SetCurrentGame(GFW_HEXEN);
@@ -179,7 +179,7 @@ DENG_ENTRYPOINT void DP_Load(void)
 /**
  * Called when the game plugin is freed from memory.
  */
-DENG_ENTRYPOINT void DP_Unload(void)
+DE_ENTRYPOINT void DP_Unload(void)
 {
     Common_Unload();
     Plug_RemoveHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
@@ -212,7 +212,7 @@ dd_bool G_TryShutdown(void)
     return true;
 }
 
-DENG_ENTRYPOINT void *GetGameAPI(char const *name)
+DE_ENTRYPOINT void *GetGameAPI(char const *name)
 {
     if (auto *ptr = Common_GetGameAPI(name))
     {
@@ -242,7 +242,7 @@ DENG_ENTRYPOINT void *GetGameAPI(char const *name)
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
-DENG_ENTRYPOINT void DP_Initialize(void)
+DE_ENTRYPOINT void DP_Initialize(void)
 {
     Plug_AddHook(HOOK_STARTUP, G_RegisterGames);
 }
@@ -251,72 +251,72 @@ DENG_ENTRYPOINT void DP_Initialize(void)
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DENG_ENTRYPOINT char const *deng_LibraryType(void)
+DE_ENTRYPOINT char const *deng_LibraryType(void)
 {
     return "deng-plugin/game";
 }
 
-#if defined (DENG_STATIC_LINK)
+#if defined (DE_STATIC_LINK)
 
-DENG_EXTERN_C void *staticlib_hexen_symbol(char const *name)
+DE_EXTERN_C void *staticlib_hexen_symbol(char const *name)
 {
-    DENG_SYMBOL_PTR(name, deng_LibraryType)
-    DENG_SYMBOL_PTR(name, DP_Initialize);
-    DENG_SYMBOL_PTR(name, DP_Load);
-    DENG_SYMBOL_PTR(name, DP_Unload);
-    DENG_SYMBOL_PTR(name, GetGameAPI);
+    DE_SYMBOL_PTR(name, deng_LibraryType)
+    DE_SYMBOL_PTR(name, DP_Initialize);
+    DE_SYMBOL_PTR(name, DP_Load);
+    DE_SYMBOL_PTR(name, DP_Unload);
+    DE_SYMBOL_PTR(name, GetGameAPI);
     qWarning() << name << "not found in hexen";
     return nullptr;
 }
 
 #else
 
-DENG_DECLARE_API(Base);
-DENG_DECLARE_API(B);
-DENG_DECLARE_API(Busy);
-DENG_DECLARE_API(Client);
-DENG_DECLARE_API(Con);
-DENG_DECLARE_API(Def);
-DENG_DECLARE_API(F);
-DENG_DECLARE_API(FR);
-DENG_DECLARE_API(GL);
-DENG_DECLARE_API(Infine);
-DENG_DECLARE_API(InternalData);
-DENG_DECLARE_API(Material);
-DENG_DECLARE_API(Map);
-DENG_DECLARE_API(MPE);
-DENG_DECLARE_API(Player);
-DENG_DECLARE_API(R);
-DENG_DECLARE_API(Rend);
-DENG_DECLARE_API(S);
-DENG_DECLARE_API(Server);
-DENG_DECLARE_API(Svg);
-DENG_DECLARE_API(Thinker);
-DENG_DECLARE_API(Uri);
+DE_DECLARE_API(Base);
+DE_DECLARE_API(B);
+DE_DECLARE_API(Busy);
+DE_DECLARE_API(Client);
+DE_DECLARE_API(Con);
+DE_DECLARE_API(Def);
+DE_DECLARE_API(F);
+DE_DECLARE_API(FR);
+DE_DECLARE_API(GL);
+DE_DECLARE_API(Infine);
+DE_DECLARE_API(InternalData);
+DE_DECLARE_API(Material);
+DE_DECLARE_API(Map);
+DE_DECLARE_API(MPE);
+DE_DECLARE_API(Player);
+DE_DECLARE_API(R);
+DE_DECLARE_API(Rend);
+DE_DECLARE_API(S);
+DE_DECLARE_API(Server);
+DE_DECLARE_API(Svg);
+DE_DECLARE_API(Thinker);
+DE_DECLARE_API(Uri);
 
-DENG_API_EXCHANGE(
-    DENG_GET_API(DE_API_BASE, Base);
-    DENG_GET_API(DE_API_BINDING, B);
-    DENG_GET_API(DE_API_BUSY, Busy);
-    DENG_GET_API(DE_API_CLIENT, Client);
-    DENG_GET_API(DE_API_CONSOLE, Con);
-    DENG_GET_API(DE_API_DEFINITIONS, Def);
-    DENG_GET_API(DE_API_FILE_SYSTEM, F);
-    DENG_GET_API(DE_API_FONT_RENDER, FR);
-    DENG_GET_API(DE_API_GL, GL);
-    DENG_GET_API(DE_API_INFINE, Infine);
-    DENG_GET_API(DE_API_INTERNAL_DATA, InternalData);
-    DENG_GET_API(DE_API_MATERIALS, Material);
-    DENG_GET_API(DE_API_MAP, Map);
-    DENG_GET_API(DE_API_MAP_EDIT, MPE);
-    DENG_GET_API(DE_API_PLAYER, Player);
-    DENG_GET_API(DE_API_RESOURCE, R);
-    DENG_GET_API(DE_API_RENDER, Rend);
-    DENG_GET_API(DE_API_SOUND, S);
-    DENG_GET_API(DE_API_SERVER, Server);
-    DENG_GET_API(DE_API_SVG, Svg);
-    DENG_GET_API(DE_API_THINKER, Thinker);
-    DENG_GET_API(DE_API_URI, Uri);
+DE_API_EXCHANGE(
+    DE_GET_API(DE_API_BASE, Base);
+    DE_GET_API(DE_API_BINDING, B);
+    DE_GET_API(DE_API_BUSY, Busy);
+    DE_GET_API(DE_API_CLIENT, Client);
+    DE_GET_API(DE_API_CONSOLE, Con);
+    DE_GET_API(DE_API_DEFINITIONS, Def);
+    DE_GET_API(DE_API_FILE_SYSTEM, F);
+    DE_GET_API(DE_API_FONT_RENDER, FR);
+    DE_GET_API(DE_API_GL, GL);
+    DE_GET_API(DE_API_INFINE, Infine);
+    DE_GET_API(DE_API_INTERNAL_DATA, InternalData);
+    DE_GET_API(DE_API_MATERIALS, Material);
+    DE_GET_API(DE_API_MAP, Map);
+    DE_GET_API(DE_API_MAP_EDIT, MPE);
+    DE_GET_API(DE_API_PLAYER, Player);
+    DE_GET_API(DE_API_RESOURCE, R);
+    DE_GET_API(DE_API_RENDER, Rend);
+    DE_GET_API(DE_API_SOUND, S);
+    DE_GET_API(DE_API_SERVER, Server);
+    DE_GET_API(DE_API_SVG, Svg);
+    DE_GET_API(DE_API_THINKER, Thinker);
+    DE_GET_API(DE_API_URI, Uri);
 )
 
 #endif

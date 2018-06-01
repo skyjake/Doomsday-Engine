@@ -26,7 +26,7 @@ namespace res {
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(AnimGroups)
+DE_PIMPL_NOREF(AnimGroups)
 {
     QList<res::AnimGroup *> animGroups;
 

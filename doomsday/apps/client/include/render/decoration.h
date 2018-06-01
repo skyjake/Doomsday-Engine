@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_DECORATION_H
-#define DENG_CLIENT_RENDER_DECORATION_H
+#ifndef DE_CLIENT_RENDER_DECORATION_H
+#define DE_CLIENT_RENDER_DECORATION_H
 
 #include <de/Error>
 #include <de/Vector>
@@ -40,7 +40,7 @@ class Decoration : public world::MapObject
 {
 public:
     /// Required surface is missing. @ingroup errors
-    DENG2_ERROR(MissingSurfaceError);
+    DE_ERROR(MissingSurfaceError);
 
 public:
     /**
@@ -83,7 +83,7 @@ public:
     void setSurface(Surface *newSurface);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif  // DENG_CLIENT_RENDER_DECORATION_H
+#endif  // DE_CLIENT_RENDER_DECORATION_H

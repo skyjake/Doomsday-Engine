@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_RECORD_H
-#define LIBDENG2_RECORD_H
+#ifndef LIBCORE_RECORD_H
+#define LIBCORE_RECORD_H
 
 #include "../ISerializable"
 #include "../String"
@@ -39,7 +39,7 @@ class ArrayValue;
 class Function;
 class NativeFunctionSpec;
 
-#define DENG2_ADD_NUMBER_CONSTANT(record, constant) \
+#define DE_ADD_NUMBER_CONSTANT(record, constant) \
     (record).addNumber(#constant, constant).setReadOnly()
 
 /**
@@ -59,17 +59,17 @@ class NativeFunctionSpec;
  *
  * @ingroup data
  */
-class DENG2_PUBLIC Record
+class DE_PUBLIC Record
         : public RecordAccessor
         , public ISerializable
         , public LogEntry::Arg::Base
 {
 public:
     /// Unknown variable name was given. @ingroup errors
-    DENG2_ERROR(NotFoundError);
+    DE_ERROR(NotFoundError);
 
     /// All variables and subrecords in the record must have a name. @ingroup errors
-    DENG2_ERROR(UnnamedError);
+    DE_ERROR(UnnamedError);
 
     /// Name of the special variable that specifies super records.
     static String const VAR_SUPER;
@@ -101,11 +101,11 @@ public:
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
-    DENG2_DEFINE_AUDIENCE2(Addition, void recordMemberAdded(Record &record, Variable &member))
+    DE_DEFINE_AUDIENCE2(Addition, void recordMemberAdded(Record &record, Variable &member))
 
-    DENG2_DEFINE_AUDIENCE2(Removal, void recordMemberRemoved(Record &record, Variable &member))
+    DE_DEFINE_AUDIENCE2(Removal, void recordMemberRemoved(Record &record, Variable &member))
 
-    DENG2_DEFINE_AUDIENCE2(Deletion, void recordBeingDeleted(Record &record))
+    DE_DEFINE_AUDIENCE2(Deletion, void recordBeingDeleted(Record &record))
 
 public:
     Record();
@@ -653,14 +653,14 @@ public:
     }
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Record::Flags)
 
 /// Converts the record into a human-readable text representation.
-DENG2_PUBLIC QTextStream &operator << (QTextStream &os, Record const &record);
+DE_PUBLIC QTextStream &operator << (QTextStream &os, Record const &record);
 
 } // namespace de
 
-#endif /* LIBDENG2_RECORD_H */
+#endif /* LIBCORE_RECORD_H */

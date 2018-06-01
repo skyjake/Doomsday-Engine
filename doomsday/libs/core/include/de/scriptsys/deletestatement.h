@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
  
-#ifndef LIBDENG2_DELETESTATEMENT_H
-#define LIBDENG2_DELETESTATEMENT_H
+#ifndef LIBCORE_DELETESTATEMENT_H
+#define LIBCORE_DELETESTATEMENT_H
 
 #include "../libcore.h"
 #include "../Statement"
@@ -37,7 +37,7 @@ class DeleteStatement : public Statement
 {
 public:
     /// Trying to delete something other than a reference (RefValue). @ingroup errors
-    DENG2_ERROR(LeftValueError);
+    DE_ERROR(LeftValueError);
 
 public:
     DeleteStatement();
@@ -64,4 +64,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_DELETESTATEMENT_H */
+#endif /* LIBCORE_DELETESTATEMENT_H */

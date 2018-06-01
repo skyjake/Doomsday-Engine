@@ -26,7 +26,7 @@
 namespace de {
 namespace internal {
 
-DENG2_PIMPL(NetworkInterfaces), public Lockable
+DE_PIMPL(NetworkInterfaces), public Lockable
 {
     struct AddressQueryTask : public Task
     {
@@ -44,7 +44,7 @@ DENG2_PIMPL(NetworkInterfaces), public Lockable
 
             // Submit the updated information.
             {
-                DENG2_GUARD(d);
+                DE_GUARD(d);
                 d->addresses = ipv6;
                 d->gotAddresses = true;
             }
@@ -83,7 +83,7 @@ QList<QHostAddress> NetworkInterfaces::allAddresses() const
         d->tasks.waitForDone();
     }
 
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     return d->addresses;
 }
 

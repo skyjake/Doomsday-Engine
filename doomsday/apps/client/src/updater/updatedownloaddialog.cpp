@@ -44,7 +44,7 @@ using namespace de;
 
 static UpdateDownloadDialog *downloadInProgress;
 
-DENG_GUI_PIMPL(UpdateDownloadDialog)
+DE_GUI_PIMPL(UpdateDownloadDialog)
 {
     enum State {
         Connecting,
@@ -329,7 +329,7 @@ bool UpdateDownloadDialog::isDownloadInProgress()
 
 UpdateDownloadDialog &UpdateDownloadDialog::currentDownload()
 {
-    DENG2_ASSERT(isDownloadInProgress());
+    DE_ASSERT(isDownloadInProgress());
     return *downloadInProgress;
 }
 

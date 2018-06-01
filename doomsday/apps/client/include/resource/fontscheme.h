@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_FONTSCHEME_H
-#define DENG_RESOURCE_FONTSCHEME_H
+#ifndef DE_RESOURCE_FONTSCHEME_H
+#define DE_RESOURCE_FONTSCHEME_H
 
 #include "FontManifest"
 #include <doomsday/uri.h>
@@ -42,16 +42,16 @@ class FontScheme
 
 public:
     /// The requested manifests could not be found in the index.
-    DENG2_ERROR(NotFoundError);
+    DE_ERROR(NotFoundError);
 
     /// The specified path was not valid. @ingroup errors
-    DENG2_ERROR(InvalidPathError);
+    DE_ERROR(InvalidPathError);
 
     /// Notified whenever a new manifest is defined in the scheme.
-    DENG2_DEFINE_AUDIENCE(ManifestDefined, void fontSchemeManifestDefined(FontScheme &scheme, Manifest &manifest))
+    DE_DEFINE_AUDIENCE(ManifestDefined, void fontSchemeManifestDefined(FontScheme &scheme, Manifest &manifest))
 
     /// Minimum length of a symbolic name.
-    static int const min_name_length = DENG2_URI_MIN_SCHEME_LENGTH;
+    static int const min_name_length = DE_URI_MIN_SCHEME_LENGTH;
 
     /// Manifests in the scheme are placed into a tree.
     typedef PathTreeT<Manifest> Index;
@@ -123,9 +123,9 @@ public:
     Index const &index() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // DENG_RESOURCE_FONTSCHEME_H
+#endif // DE_RESOURCE_FONTSCHEME_H

@@ -55,7 +55,7 @@ static void setdata(FindData *dta)
 
 int FindFile_FindFirst(FindData *dta, char const *filenameUtf8)
 {
-    DENG_ASSERT(filenameUtf8 && dta);
+    DE_ASSERT(filenameUtf8 && dta);
 
     // Allocate a new private finddata struct.
     winfinddata_t *fd = reinterpret_cast<winfinddata_t *>(M_Calloc(sizeof(*fd)));
@@ -87,7 +87,7 @@ int FindFile_FindNext(FindData *dta)
 
 void FindFile_Finish(FindData *dta)
 {
-    DENG_ASSERT(dta);
+    DE_ASSERT(dta);
 
     _findclose(((winfinddata_t*) dta->finddata)->handle);
     M_Free(dta->finddata);

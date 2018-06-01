@@ -29,7 +29,7 @@ using namespace de;
 
 namespace gloom {
 
-DENG2_PIMPL(Map)
+DE_PIMPL(Map)
 {
     ID       idGen{0};
     Vec3d    metersPerUnit{1.0, 1.0, 1.0};
@@ -76,12 +76,12 @@ void Map::clear()
 
 void Map::removeInvalid()
 {
-    DENG2_ASSERT(!d->points.contains(0));
-    DENG2_ASSERT(!d->planes.contains(0));
-    DENG2_ASSERT(!d->lines.contains(0));
-    DENG2_ASSERT(!d->sectors.contains(0));
-    DENG2_ASSERT(!d->volumes.contains(0));
-    DENG2_ASSERT(!d->entities.contains(0));
+    DE_ASSERT(!d->points.contains(0));
+    DE_ASSERT(!d->planes.contains(0));
+    DE_ASSERT(!d->lines.contains(0));
+    DE_ASSERT(!d->sectors.contains(0));
+    DE_ASSERT(!d->volumes.contains(0));
+    DE_ASSERT(!d->entities.contains(0));
 
     // Lines.
     {
@@ -251,36 +251,36 @@ const Entities &Map::entities() const
 
 Point &Map::point(ID id)
 {
-    DENG2_ASSERT(id != 0);
-    DENG2_ASSERT(d->points.contains(id));
+    DE_ASSERT(id != 0);
+    DE_ASSERT(d->points.contains(id));
     return d->points[id];
 }
 
 Line &Map::line(ID id)
 {
-    DENG2_ASSERT(id != 0);
-    DENG2_ASSERT(d->lines.contains(id));
+    DE_ASSERT(id != 0);
+    DE_ASSERT(d->lines.contains(id));
     return d->lines[id];
 }
 
 Plane &Map::plane(ID id)
 {
-    DENG2_ASSERT(id != 0);
-    DENG2_ASSERT(d->planes.contains(id));
+    DE_ASSERT(id != 0);
+    DE_ASSERT(d->planes.contains(id));
     return d->planes[id];
 }
 
 Sector &Map::sector(ID id)
 {
-    DENG2_ASSERT(id != 0);
-    DENG2_ASSERT(d->sectors.contains(id));
+    DE_ASSERT(id != 0);
+    DE_ASSERT(d->sectors.contains(id));
     return d->sectors[id];
 }
 
 Volume &Map::volume(ID id)
 {
-    DENG2_ASSERT(id != 0);
-    DENG2_ASSERT(d->volumes.contains(id));
+    DE_ASSERT(id != 0);
+    DE_ASSERT(d->volumes.contains(id));
     return d->volumes[id];
 }
 
@@ -291,43 +291,43 @@ Entity &Map::entity(ID id)
 
 const Point &Map::point(ID id) const
 {
-    DENG2_ASSERT(id != 0);
-    DENG2_ASSERT(d->points.contains(id));
+    DE_ASSERT(id != 0);
+    DE_ASSERT(d->points.contains(id));
     return d->points[id];
 }
 
 const Line &Map::line(ID id) const
 {
-    DENG2_ASSERT(id != 0);
-    DENG2_ASSERT(d->lines.contains(id));
+    DE_ASSERT(id != 0);
+    DE_ASSERT(d->lines.contains(id));
     return d->lines[id];
 }
 
 const Plane &Map::plane(ID id) const
 {
-    DENG2_ASSERT(id != 0);
-    DENG2_ASSERT(d->planes.contains(id));
+    DE_ASSERT(id != 0);
+    DE_ASSERT(d->planes.contains(id));
     return d->planes[id];
 }
 
 const Sector &Map::sector(ID id) const
 {
-    DENG2_ASSERT(id != 0);
-    DENG2_ASSERT(d->sectors.contains(id));
+    DE_ASSERT(id != 0);
+    DE_ASSERT(d->sectors.contains(id));
     return d->sectors[id];
 }
 
 const Volume &Map::volume(ID id) const
 {
-    DENG2_ASSERT(id != 0);
-    DENG2_ASSERT(d->volumes.contains(id));
+    DE_ASSERT(id != 0);
+    DE_ASSERT(d->volumes.contains(id));
     return d->volumes[id];
 }
 
 const Entity &Map::entity(ID id) const
 {
-    DENG2_ASSERT(id != 0);
-    DENG2_ASSERT(d->entities.contains(id));
+    DE_ASSERT(id != 0);
+    DE_ASSERT(d->entities.contains(id));
     return *d->entities[id];
 }
 
@@ -428,7 +428,7 @@ IDList Map::findLinesStartingFrom(ID pointId, Line::Side side) const
 
 geo::Line2d Map::geoLine(ID lineId) const
 {
-    DENG2_ASSERT(d->lines.contains(lineId));
+    DE_ASSERT(d->lines.contains(lineId));
     const auto &line = d->lines[lineId];
     return geo::Line2d{point(line.points[0]).coord, point(line.points[1]).coord};
 }
@@ -541,7 +541,7 @@ bool Map::buildSector(Edge         startSide,
 
     sectorPoints.clear();
 
-    //DENG2_ASSERT(sourceLines.contains(startSide.line));
+    //DE_ASSERT(sourceLines.contains(startSide.line));
 
     Edge at = startSide;
     for (;;)

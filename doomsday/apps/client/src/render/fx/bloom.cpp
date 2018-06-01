@@ -35,7 +35,7 @@ static float bloomThreshold  = .35f;
 static float bloomDispersion = 1;
 static int   bloomComplexity = 1;
 
-DENG2_PIMPL(Bloom)
+DE_PIMPL(Bloom)
 {
     typedef GLBufferT<Vertex2Tex> VBuf;
 

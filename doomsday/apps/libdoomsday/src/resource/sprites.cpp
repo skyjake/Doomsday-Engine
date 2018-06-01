@@ -31,7 +31,7 @@ namespace res {
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(Sprites)
+DE_PIMPL_NOREF(Sprites)
 {
     QHash<spritenum_t, SpriteSet> sprites;
 
@@ -61,7 +61,7 @@ DENG2_PIMPL_NOREF(Sprites)
 
     SpriteSet &addSpriteSet(spritenum_t id, SpriteSet const &frames)
     {
-        DENG2_ASSERT(!tryFindSpriteSet(id));  // sanity check.
+        DE_ASSERT(!tryFindSpriteSet(id));  // sanity check.
         return sprites.insert(id, frames).value();
     }
 };
@@ -203,7 +203,7 @@ static SpriteDefs buildSpriteFramesFromTextures(res::TextureScheme::Index const 
             }
 
             // (Re)Configure the frame.
-            DENG2_ASSERT(frame);
+            DE_ASSERT(frame);
             frame->material = material;
             frame->angle    = angleNumber;
             frame->mirrored = i == 1;

@@ -43,7 +43,7 @@ static char *duplicateStringAsUtf8(QString const &s)
     return copy;
 }
 
-DENG2_PIMPL(CommandLine)
+DE_PIMPL(CommandLine)
 {
     QDir initialDir;
 
@@ -70,7 +70,7 @@ DENG2_PIMPL(CommandLine)
     void clear()
     {
         arguments.clear();
-        DENG2_FOR_EACH(ArgumentPointers, i, pointers) free(*i);
+        DE_FOR_EACH(ArgumentPointers, i, pointers) free(*i);
         pointers.clear();
         pointers.push_back(0);
     }
@@ -89,7 +89,7 @@ DENG2_PIMPL(CommandLine)
             // Insert before the NULL.
             pointers.insert(pointers.end() - 1, duplicateStringAsUtf8(arg));
         }
-        DENG2_ASSERT(pointers.back() == 0);
+        DE_ASSERT(pointers.back() == 0);
     }
 
     void insert(duint pos, String const &arg)
@@ -103,7 +103,7 @@ DENG2_PIMPL(CommandLine)
         arguments.insert(pos, arg);
 
         pointers.insert(pointers.begin() + pos, duplicateStringAsUtf8(arg));
-        DENG2_ASSERT(pointers.back() == 0);
+        DE_ASSERT(pointers.back() == 0);
     }
 
     void remove(duint pos)
@@ -118,7 +118,7 @@ DENG2_PIMPL(CommandLine)
 
         free(pointers[pos]);
         pointers.erase(pointers.begin() + pos);
-        DENG2_ASSERT(pointers.back() == 0);
+        DE_ASSERT(pointers.back() == 0);
     }
 };
 
@@ -143,7 +143,7 @@ CommandLine::CommandLine(QStringList args) : d(new Impl(*this))
 
 CommandLine::CommandLine(CommandLine const &other) : d(new Impl(*this))
 {
-    DENG2_FOR_EACH_CONST(Impl::Arguments, i, other.d->arguments)
+    DE_FOR_EACH_CONST(Impl::Arguments, i, other.d->arguments)
     {
         d->appendArg(*i);
     }
@@ -253,7 +253,7 @@ dint CommandLine::has(String const &arg) const
 {
     dint howMany = 0;
 
-    DENG2_FOR_EACH_CONST(Impl::Arguments, i, d->arguments)
+    DE_FOR_EACH_CONST(Impl::Arguments, i, d->arguments)
     {
         if (matches(arg, *i))
         {
@@ -270,7 +270,7 @@ bool CommandLine::isOption(duint pos) const
         /// @throw OutOfRangeError @a pos is out of range.
         throw OutOfRangeError("CommandLine::isOption", "Index out of range");
     }
-    DENG2_ASSERT(!d->arguments[pos].isEmpty());
+    DE_ASSERT(!d->arguments[pos].isEmpty());
     return isOption(d->arguments[pos]);
 }
 
@@ -286,7 +286,7 @@ String CommandLine::at(duint pos) const
 
 char const *const *CommandLine::argv() const
 {
-    DENG2_ASSERT(*d->pointers.rbegin() == 0); // the list itself must be null-terminated
+    DE_ASSERT(*d->pointers.rbegin() == 0); // the list itself must be null-terminated
     return &d->pointers[0];
 }
 
@@ -446,7 +446,7 @@ bool CommandLine::matches(String const &full, String const &fullOrAlias) const
     Impl::Aliases::const_iterator found = d->aliases.find(full.toStdString());
     if (found != d->aliases.end())
     {
-        DENG2_FOR_EACH_CONST(Impl::ArgumentStrings, i, found->second)
+        DE_FOR_EACH_CONST(Impl::ArgumentStrings, i, found->second)
         {
             if (!i->compareWithoutCase(fullOrAlias))
             {
@@ -458,7 +458,7 @@ bool CommandLine::matches(String const &full, String const &fullOrAlias) const
     return false;
 }
     
-#if defined (DENG_HAVE_QPROCESS)
+#if defined (DE_HAVE_QPROCESS)
 
 bool CommandLine::execute() const
 {
@@ -515,7 +515,7 @@ QProcess *CommandLine::executeProcess() const
     return proc;
 }
     
-#endif // DENG_HAVE_QPROCESS
+#endif // DE_HAVE_QPROCESS
 
 CommandLine &CommandLine::get()
 {

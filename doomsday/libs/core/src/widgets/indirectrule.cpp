@@ -54,7 +54,7 @@ void IndirectRule::update()
 
 Rule const &IndirectRule::source() const
 {
-    DENG2_ASSERT(_source);
+    DE_ASSERT(_source);
     return *_source;
 }
 

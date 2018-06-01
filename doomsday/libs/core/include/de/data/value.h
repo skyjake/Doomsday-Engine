@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_VALUE_H
-#define LIBDENG2_VALUE_H
+#ifndef LIBCORE_VALUE_H
+#define LIBCORE_VALUE_H
 
 #include "../libcore.h"
 #include "../Deletable"
@@ -37,21 +37,21 @@ class Record;
  *
  * @ingroup data
  */
-class DENG2_PUBLIC Value : public Deletable, public String::IPatternArg, public ISerializable
+class DE_PUBLIC Value : public Deletable, public String::IPatternArg, public ISerializable
 {
 public:
     /// An illegal operation (i.e., one that is not defined by the Value) was attempted.
     /// @ingroup errors
-    DENG2_ERROR(IllegalError);
+    DE_ERROR(IllegalError);
 
     /// An illegal conversion was attempted. @ingroup errors
-    DENG2_SUB_ERROR(IllegalError, ConversionError);
+    DE_SUB_ERROR(IllegalError, ConversionError);
 
     /// An illegal arithmetic operation is attempted (e.g., division by text). @ingroup errors
-    DENG2_SUB_ERROR(IllegalError, ArithmeticError);
+    DE_SUB_ERROR(IllegalError, ArithmeticError);
 
     /// Value cannot be serialized. @ingroup errors
-    DENG2_SUB_ERROR(IllegalError, CannotSerializeError);
+    DE_SUB_ERROR(IllegalError, CannotSerializeError);
 
     // Types used by all values:
     typedef ddouble Number;     /**< Numbers are in double-precision. */
@@ -352,4 +352,4 @@ RangeType rangeFromValue(Value const &value) {
 
 } // namespace de
 
-#endif /* LIBDENG2_VALUE_H */
+#endif /* LIBCORE_VALUE_H */

@@ -312,7 +312,7 @@ void D_PreInit()
 
 void D_PostInit()
 {
-    CommandLine &cmdLine = DENG2_APP->commandLine();
+    CommandLine &cmdLine = DE_APP->commandLine();
 
     // Common post init routine.
     G_CommonPostInit();

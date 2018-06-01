@@ -18,8 +18,8 @@
  */
  
  
-#ifndef LIBDENG2_COMPOUND_H
-#define LIBDENG2_COMPOUND_H
+#ifndef LIBCORE_COMPOUND_H
+#define LIBCORE_COMPOUND_H
 
 #include "../libcore.h"
 #include "../ISerializable"
@@ -77,5 +77,5 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_COMPOUND_H */
+#endif /* LIBCORE_COMPOUND_H */
  

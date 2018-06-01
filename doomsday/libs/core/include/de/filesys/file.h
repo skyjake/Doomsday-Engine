@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_FILE_H
-#define LIBDENG2_FILE_H
+#ifndef LIBCORE_FILE_H
+#define LIBCORE_FILE_H
 
 #include "../Audience"
 #include "../IIOStream"
@@ -78,7 +78,7 @@ class Feed;
  * lock themselves as appropriate. A user may lock the file manually if long-term
  * exclusive access is required.
  */
-class DENG2_PUBLIC File : public filesys::Node, public IIOStream, public IObject
+class DE_PUBLIC File : public filesys::Node, public IIOStream, public IObject
 {
 public:
     // Mode flags.
@@ -104,7 +104,7 @@ public:
      *
      * @param file  The file object being deleted.
      */
-    DENG2_DEFINE_AUDIENCE2(Deletion, void fileBeingDeleted(File const &file))
+    DE_DEFINE_AUDIENCE2(Deletion, void fileBeingDeleted(File const &file))
 
     /**
      * Stores the status of a file (size, time of last modification).
@@ -339,7 +339,7 @@ public:
     Record const &objectNamespace() const;
 
     // Standard casting methods.
-    DENG2_CAST_METHODS()
+    DE_CAST_METHODS()
 
 public:
     /**
@@ -361,11 +361,11 @@ protected:
     explicit File(String const &name = String());
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(File::Flags)
 
 } // namespace de
 
-#endif /* LIBDENG2_FILE_H */
+#endif /* LIBCORE_FILE_H */

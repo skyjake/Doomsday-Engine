@@ -24,7 +24,7 @@
 
 #include "de_base.h"
 
-#if defined (DENG_DEBUG) && defined (DENG_OPENGL)
+#if defined (DE_DEBUG) && defined (DE_OPENGL)
 
 #include <cmath>
 #include <de/GLState>
@@ -46,7 +46,7 @@ using namespace de;
 static void drawRegion(memvolume_t &volume, Rectanglei const &rect, size_t start,
     size_t size, float const color[4])
 {
-    DENG2_ASSERT(start + size <= volume.size);
+    DE_ASSERT(start + size <= volume.size);
 
     int const bytesPerRow = (volume.size - sizeof(memzone_t)) / rect.height();
     float const toPixelScale = (float)rect.width() / (float)bytesPerRow;
@@ -141,8 +141,8 @@ void Z_DebugDrawer(void)
 
     if (!CommandLine_Exists("-zonedebug")) return;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     //glDisable(GL_CULL_FACE);
     //glDisable(GL_DEPTH_TEST);
@@ -154,7 +154,7 @@ void Z_DebugDrawer(void)
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
     DGL_LoadIdentity();
-    DGL_Ortho(0, 0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, -1, 1);
+    DGL_Ortho(0, 0, DE_GAMEVIEW_WIDTH, DE_GAMEVIEW_HEIGHT, -1, 1);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -168,18 +168,18 @@ void Z_DebugDrawer(void)
     // Make sure all the volumes fit vertically.
     volCount = pd.volumeCount;
     h = 200;
-    if (h * volCount + 10*(volCount - 1) > DENG_GAMEVIEW_HEIGHT)
+    if (h * volCount + 10*(volCount - 1) > DE_GAMEVIEW_HEIGHT)
     {
-        h = (DENG_GAMEVIEW_HEIGHT - 10*(volCount - 1))/volCount;
+        h = (DE_GAMEVIEW_HEIGHT - 10*(volCount - 1))/volCount;
     }
 
     i = 0;
     for (volume = pd.volumeRoot; volume; volume = volume->next, ++i)
     {
-        int size = de::min(400, DENG_GAMEVIEW_WIDTH);
+        int size = de::min(400, DE_GAMEVIEW_WIDTH);
         Z_DebugDrawVolume(&pd, volume,
-                          Rectanglei::fromSize(Vec2i(DENG_GAMEVIEW_WIDTH - size - 1,
-                                                        DENG_GAMEVIEW_HEIGHT - size * (i+1) - 10*i - 1),
+                          Rectanglei::fromSize(Vec2i(DE_GAMEVIEW_WIDTH - size - 1,
+                                                        DE_GAMEVIEW_HEIGHT - size * (i+1) - 10*i - 1),
                                                Vec2ui(size, size)));
     }
 

@@ -26,7 +26,7 @@ namespace de {
 
 typedef QHash<Id::Type, Image *> PendingImages;
 
-DENG2_PIMPL(MultiAtlas)
+DE_PIMPL(MultiAtlas)
 , public Deletable
 {
     IAtlasFactory &factory;
@@ -60,14 +60,14 @@ DENG2_PIMPL(MultiAtlas)
         }
         // Make a new atlas.
         Atlas *blank = factory.makeAtlas(self());
-        DENG2_ASSERT(blank->flags().testFlag(Atlas::DeferredAllocations));
+        DE_ASSERT(blank->flags().testFlag(Atlas::DeferredAllocations));
         atlases.prepend(blank);
         return blank;
     }
 
     bool tryAllocatePending(Atlas &atlas, PendingImages const &pending)
     {
-        DENG2_ASSERT(atlas.flags().testFlag(Atlas::DeferredAllocations));
+        DE_ASSERT(atlas.flags().testFlag(Atlas::DeferredAllocations));
 
         for (auto i = pending.begin(); i != pending.end(); ++i)
         {
@@ -127,8 +127,8 @@ void MultiAtlas::clear()
 
 namespace de {
 
-DENG2_PIMPL_NOREF(MultiAtlas::AllocGroup)
-, DENG2_OBSERVES(Deletable, Deletion)
+DE_PIMPL_NOREF(MultiAtlas::AllocGroup)
+, DE_OBSERVES(Deletable, Deletion)
 {
     AllocGroup *self;
     MultiAtlas *owner;
@@ -164,7 +164,7 @@ DENG2_PIMPL_NOREF(MultiAtlas::AllocGroup)
         else
         {
             // Just the atlas.
-            DENG2_ASSERT(deleted == atlas);
+            DE_ASSERT(deleted == atlas);
             atlas = nullptr;
         }
         allocated.clear();
@@ -277,7 +277,7 @@ Atlas const *MultiAtlas::AllocGroup::atlas() const
 
 MultiAtlas &MultiAtlas::AllocGroup::multiAtlas()
 {
-    DENG2_ASSERT(d->owner != nullptr);
+    DE_ASSERT(d->owner != nullptr);
     return *d->owner;
 }
 

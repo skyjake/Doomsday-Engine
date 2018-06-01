@@ -29,9 +29,9 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(ConsoleCommandWidget),
-DENG2_OBSERVES(App, StartupComplete),
-DENG2_OBSERVES(DoomsdayApp, GameChange)
+DE_GUI_PIMPL(ConsoleCommandWidget),
+DE_OBSERVES(App, StartupComplete),
+DE_OBSERVES(DoomsdayApp, GameChange)
 {
     Impl(Public *i) : Base(i)
     {

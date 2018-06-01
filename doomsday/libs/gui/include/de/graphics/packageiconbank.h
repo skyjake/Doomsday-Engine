@@ -61,7 +61,7 @@ public:
     Id packageIcon(const File &packageFile);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

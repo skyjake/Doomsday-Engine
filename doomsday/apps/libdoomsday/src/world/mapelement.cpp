@@ -25,7 +25,7 @@ using namespace de;
 
 namespace world {
 
-DENG2_PIMPL_NOREF(MapElement)
+DE_PIMPL_NOREF(MapElement)
 {
     dint type;
     Map *map            = nullptr;

@@ -29,7 +29,7 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(ColumnWidget)
+DE_GUI_PIMPL(ColumnWidget)
 {
     /**
      * Procedural image for drawing the background of a column.

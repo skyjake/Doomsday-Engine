@@ -45,13 +45,13 @@ using namespace de;
 
 static void AutomapWidget_UpdateGeometry(AutomapWidget *amap)
 {
-    DENG2_ASSERT(amap);
+    DE_ASSERT(amap);
     amap->updateGeometry();
 }
 
 static void AutomapWidget_Draw(AutomapWidget *amap, Point2Raw const *offset)
 {
-    DENG2_ASSERT(amap);
+    DE_ASSERT(amap);
     amap->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
@@ -87,14 +87,14 @@ namespace internal
 
     static void initAABB(coord_t aabb[4], Vec2d const &point)
     {
-        DENG2_ASSERT(aabb);
+        DE_ASSERT(aabb);
         aabb[BOXLEFT] = aabb[BOXRIGHT ] = point.x;
         aabb[BOXTOP ] = aabb[BOXBOTTOM] = point.y;
     }
 
     static void addToAABB(coord_t aabb[4], Vec2d const &point)
     {
-        DENG2_ASSERT(aabb);
+        DE_ASSERT(aabb);
         if     (point.x < aabb[BOXLEFT  ]) aabb[BOXLEFT  ] = point.x;
         else if (point.x > aabb[BOXRIGHT ]) aabb[BOXRIGHT ] = point.x;
 
@@ -184,7 +184,7 @@ namespace internal
 
     static void drawPlayerMarker(dint consoleNum, AutomapStyle *style)
     {
-        DENG2_ASSERT(consoleNum >= 0 && consoleNum < MAXPLAYERS);
+        DE_ASSERT(consoleNum >= 0 && consoleNum < MAXPLAYERS);
         player_t *player = &players[consoleNum];
         if (!player->plr->inGame) return;
 
@@ -209,7 +209,7 @@ namespace internal
 }  // namespace internal
 using namespace ::internal;
 
-DENG2_PIMPL(AutomapWidget)
+DE_PIMPL(AutomapWidget)
 {
     AutomapStyle *style = nullptr;
 
@@ -357,7 +357,7 @@ DENG2_PIMPL(AutomapWidget)
             else
                 thickness = glowSize;
 
-            DENG_ASSERT(rs.primType == DGL_QUADS);
+            DE_ASSERT(rs.primType == DGL_QUADS);
 
             // Draw a "cap" at the start of the line?
             if (caps)
@@ -505,7 +505,7 @@ DENG2_PIMPL(AutomapWidget)
                 break; }
 
             default:
-                DENG2_ASSERT_FAIL("Unknown glowtype");
+                DE_ASSERT_FAIL("Unknown glowtype");
                 break;
             }
 
@@ -548,7 +548,7 @@ DENG2_PIMPL(AutomapWidget)
         }
         else if (!glowOnly)
         {
-            DENG_ASSERT(rs.primType == DGL_LINES);
+            DE_ASSERT(rs.primType == DGL_LINES);
             //if (!addToLists)
             {
                 DGL_Color4f(color.x, color.y, color.z, opacity);
@@ -597,7 +597,7 @@ DENG2_PIMPL(AutomapWidget)
 
     void drawLine(Line *line) const
     {
-        DENG2_ASSERT(line);
+        DE_ASSERT(line);
 
         xline_t *xline = P_ToXLine(line);
 
@@ -760,7 +760,7 @@ DENG2_PIMPL(AutomapWidget)
             //DGL_BlendMode(blendMode);
             DGL_Color4f(color.x, color.y, color.z, opacity);
 
-            DENG_ASSERT(rs.primType == DGL_LINES);
+            DE_ASSERT(rs.primType == DGL_LINES);
 
             //DGL_Begin(DGL_LINES);
             DGL_TexCoord2f(0, v1[0], v1[1]);
@@ -805,7 +805,7 @@ DENG2_PIMPL(AutomapWidget)
     static int drawLine_polyob(Line *line, void *context)
     {
         auto const *inst = static_cast<Impl *>(context);
-        DENG2_ASSERT(inst);
+        DE_ASSERT(inst);
 
         dfloat const opacity = uiRendState->pageAlpha;
 
@@ -867,7 +867,7 @@ DENG2_PIMPL(AutomapWidget)
     static int drawLine_xg(Line *line, void *context)
     {
         auto const *inst = static_cast<Impl *>(context);
-        DENG2_ASSERT(line && inst);
+        DE_ASSERT(line && inst);
 
         xline_t *xline = P_ToXLine(line);
         if (!xline) return false;
@@ -938,7 +938,7 @@ DENG2_PIMPL(AutomapWidget)
     static dint thingColorForMobjType(mobjtype_t type)
     {
 #if __JHEXEN__
-        DENG2_UNUSED(type);
+        DE_UNUSED(type);
         return -1;
 #else
         struct ThingData { mobjtype_t type; dint palColor; } static const thingData[] = {
@@ -1911,7 +1911,7 @@ void AutomapWidget::setCameraZoomMode(bool yes)
     setScale((d->forceMaxScale ? 0 : d->priorToMaxScale));
     if (oldZoomMax != d->forceMaxScale)
     {
-        LOGDEV_XVERBOSE("Maximum zoom: ", DENG2_BOOL_YESNO(cameraZoomMode()));
+        LOGDEV_XVERBOSE("Maximum zoom: ", DE_BOOL_YESNO(cameraZoomMode()));
     }
 }
 

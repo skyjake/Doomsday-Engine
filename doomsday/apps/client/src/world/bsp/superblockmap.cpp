@@ -29,7 +29,7 @@ using namespace de;
 namespace world {
 namespace bsp {
 
-DENG2_PIMPL_NOREF(LineSegmentBlock)
+DE_PIMPL_NOREF(LineSegmentBlock)
 {
     AABox bounds;       ///< Block bounds at the node.
     All segments;       ///< Line segments contained by the node (not owned).

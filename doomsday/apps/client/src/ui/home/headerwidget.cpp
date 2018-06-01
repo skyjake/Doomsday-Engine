@@ -26,8 +26,8 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(HeaderWidget)
-, DENG2_OBSERVES(Variable, Change)
+DE_GUI_PIMPL(HeaderWidget)
+, DE_OBSERVES(Variable, Change)
 {
     LabelWidget *logo;
     LabelWidget *logoBg; /// @todo Backgrounds should support ProceduralImages. -jk

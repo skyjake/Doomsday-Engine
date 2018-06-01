@@ -70,7 +70,7 @@ typedef struct event_s {
 /// @addtogroup bindings
 ///@{
 
-DENG_API_TYPEDEF(B)
+DE_API_TYPEDEF(B)
 {
     de_api_t api;
 
@@ -110,9 +110,9 @@ DENG_API_TYPEDEF(B)
      */
     int  (*GetKeyCode)(const char* name);
 }
-DENG_API_T(B);
+DE_API_T(B);
 
-#ifndef DENG_NO_API_MACROS_BINDING
+#ifndef DE_NO_API_MACROS_BINDING
 #define B_SetContextFallback    _api_B.SetContextFallback
 #define B_BindingsForCommand    _api_B.BindingsForCommand
 #define B_BindingsForControl    _api_B.BindingsForControl
@@ -120,7 +120,7 @@ DENG_API_T(B);
 #endif
 
 #ifdef __DOOMSDAY__
-DENG_USING_API(B);
+DE_USING_API(B);
 #endif
 
 ///@}

@@ -24,8 +24,8 @@ using namespace de;
 
 namespace world {
 
-DENG2_PIMPL(BaseMap)
-, DENG2_OBSERVES(Record, Deletion)
+DE_PIMPL(BaseMap)
+, DE_OBSERVES(Record, Deletion)
 {
     EntityDatabase entityDatabase;
     res::MapManifest *manifest = nullptr;  ///< Not owned, may be @c nullptr.
@@ -35,7 +35,7 @@ DENG2_PIMPL(BaseMap)
 
     ~Impl()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->mapBeingDeleted(self());
+        DE_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->mapBeingDeleted(self());
     }
 
     void recordBeingDeleted(Record &record)
@@ -47,10 +47,10 @@ DENG2_PIMPL(BaseMap)
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(Deletion)
+    DE_PIMPL_AUDIENCE(Deletion)
 };
 
-DENG2_AUDIENCE_METHOD(BaseMap, Deletion)
+DE_AUDIENCE_METHOD(BaseMap, Deletion)
 
 BaseMap::BaseMap(res::MapManifest *manifest) : d(new Impl(this))
 {
@@ -75,7 +75,7 @@ res::MapManifest &BaseMap::manifest() const
 {
     if (hasManifest())
     {
-        DENG2_ASSERT(d->manifest != nullptr);
+        DE_ASSERT(d->manifest != nullptr);
         return *d->manifest;
     }
     /// @throw MissingResourceManifestError  No associated resource manifest.

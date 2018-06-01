@@ -21,8 +21,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_HUFFMAN_H
-#define LIBDENG2_HUFFMAN_H
+#ifndef LIBCORE_HUFFMAN_H
+#define LIBCORE_HUFFMAN_H
 
 #include "../libcore.h"
 #include "../Block"
@@ -49,4 +49,4 @@ Block huffmanDecode(Block const &codedData);
 } // namespace codec
 } // namespace de
 
-#endif // LIBDENG2_HUFFMAN_H
+#endif // LIBCORE_HUFFMAN_H

@@ -40,7 +40,7 @@ public:
     de::GLUniform &uSSAOBuf();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace gloom

@@ -69,7 +69,7 @@
 #  include "ui/ui_main.h"
 #  include "ui/inputdebug.h"
 #  include "ui/widgets/taskbarwidget.h"
-#  ifdef DENG2_DEBUG
+#  ifdef DE_DEBUG
 #    include "ui/zonedebug.h"
 #  endif
 #endif
@@ -133,20 +133,20 @@ void Net_Shutdown()
 }
 
 #undef Net_GetPlayerName
-DENG_EXTERN_C char const *Net_GetPlayerName(dint player)
+DE_EXTERN_C char const *Net_GetPlayerName(dint player)
 {
     return DD_Player(player)->name;
 }
 
 #undef Net_GetPlayerID
-DENG_EXTERN_C ident_t Net_GetPlayerID(dint player)
+DE_EXTERN_C ident_t Net_GetPlayerID(dint player)
 {
 #ifdef __SERVER__
     auto &cl = *DD_Player(player);
     if(cl.isConnected())
         return cl.id;
 #else
-    DENG_UNUSED(player);
+    DE_UNUSED(player);
 #endif
     return 0;
 }
@@ -216,7 +216,7 @@ dd_bool Net_GetPacket()
 
 #ifdef __CLIENT__
     // Are we recording a demo?
-    DENG2_ASSERT(consolePlayer >= 0 && consolePlayer < DDMAXPLAYERS);
+    DE_ASSERT(consolePlayer >= 0 && consolePlayer < DDMAXPLAYERS);
     if(::isClient && DD_Player(::consolePlayer)->recording)
     {
         Demo_WritePacket(::consolePlayer);
@@ -227,7 +227,7 @@ dd_bool Net_GetPacket()
 }
 
 #undef Net_PlayerSmoother
-DENG_EXTERN_C Smoother* Net_PlayerSmoother(dint player)
+DE_EXTERN_C Smoother* Net_PlayerSmoother(dint player)
 {
     if(player < 0 || player >= DDMAXPLAYERS)
         return 0;
@@ -237,7 +237,7 @@ DENG_EXTERN_C Smoother* Net_PlayerSmoother(dint player)
 
 void Net_SendPlayerInfo(dint srcPlrNum, dint destPlrNum)
 {
-    DENG2_ASSERT(srcPlrNum >= 0 && srcPlrNum < DDMAXPLAYERS);
+    DE_ASSERT(srcPlrNum >= 0 && srcPlrNum < DDMAXPLAYERS);
     dsize const nameLen = strlen(DD_Player(srcPlrNum)->name);
 
     LOG_AS("Net_SendPlayerInfo");
@@ -256,16 +256,16 @@ void Net_SendPlayerInfo(dint srcPlrNum, dint destPlrNum)
  * This is the public interface of the message sender.
  */
 #undef Net_SendPacket
-DENG_EXTERN_C void Net_SendPacket(dint to_player, dint type, void const *data, dsize length)
+DE_EXTERN_C void Net_SendPacket(dint to_player, dint type, void const *data, dsize length)
 {
     duint flags = 0;
 
-#ifndef DENG_WRITER_TYPECHECK
+#ifndef DE_WRITER_TYPECHECK
     Msg_Begin(type);
     if(data) Writer_Write(::msgWriter, data, length);
     Msg_End();
 #else
-    DENG2_ASSERT(length <= NETBUFFER_MAXSIZE);
+    DE_ASSERT(length <= NETBUFFER_MAXSIZE);
     ::netBuffer.msg.type = type;
     ::netBuffer.length = length;
     if(data) std::memcpy(::netBuffer.msg.data, data, length);
@@ -290,7 +290,7 @@ DENG_EXTERN_C void Net_SendPacket(dint to_player, dint type, void const *data, d
  */
 void Net_ShowChatMessage(dint plrNum, char const *message)
 {
-    DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
+    DE_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
     char const *fromName = (plrNum > 0 ? DD_Player(plrNum)->name : "[sysop]");
     char const *sep      = (plrNum > 0 ? ":"                    : "");
     LOG_NOTE("%s%s%s %s")
@@ -317,7 +317,7 @@ void Net_ResetTimer()
  */
 dd_bool Net_IsLocalPlayer(dint plrNum)
 {
-    DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
+    DE_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
     auto const &pd = DD_Player(plrNum)->publicData();
     return pd.inGame && (pd.flags & DDPF_LOCAL);
 }
@@ -355,7 +355,7 @@ static void Net_DoUpdate()
 
     // Clients will periodically send their coordinates to the server so any prediction
     // errors can be fixed. Client movement is almost entirely local.
-    DENG2_ASSERT(::consolePlayer >= 0 && ::consolePlayer < DDMAXPLAYERS);
+    DE_ASSERT(::consolePlayer >= 0 && ::consolePlayer < DDMAXPLAYERS);
 
     ::coordTimer -= newTics;
     if(::isClient && ::coordTimer <= 0 && DD_Player(::consolePlayer)->publicData().mo)
@@ -492,7 +492,7 @@ void Net_StopGame()
     if(DD_Player(0)->publicData().mo)
     {
         /* $unifiedangles */
-        DENG2_ASSERT(::consolePlayer >= 0 && ::consolePlayer < DDMAXPLAYERS);
+        DE_ASSERT(::consolePlayer >= 0 && ::consolePlayer < DDMAXPLAYERS);
         DD_Player(0)->publicData().mo->angle = DD_Player(::consolePlayer)->publicData().mo->angle;
         DD_Player(0)->publicData().lookDir   = DD_Player(::consolePlayer)->publicData().lookDir;
     }
@@ -551,7 +551,7 @@ static dd_bool recordingDemo()
 
 void Net_DrawDemoOverlay()
 {
-    dint const x = DENG_GAMEVIEW_WIDTH - 10;
+    dint const x = DE_GAMEVIEW_WIDTH - 10;
     dint const y = 10;
 
     if(!recordingDemo() || !(SECONDS_TO_TICKS(::gameTime) & 8))
@@ -577,14 +577,14 @@ void Net_DrawDemoOverlay()
     }
     strcat(buf, "]");
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Go into screen projection mode.
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
     DGL_LoadIdentity();
-    DGL_Ortho(0, 0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, -1, 1);
+    DGL_Ortho(0, 0, DE_GAMEVIEW_WIDTH, DE_GAMEVIEW_HEIGHT, -1, 1);
 
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -611,7 +611,7 @@ void Net_Drawer()
     // Draw the light range debug display.
     Rend_DrawLightModMatrix();
 
-# ifdef DENG2_DEBUG
+# ifdef DE_DEBUG
     // Draw the input debug display.
     I_DebugDrawer();
 # endif
@@ -619,7 +619,7 @@ void Net_Drawer()
     // Draw the demo recording overlay.
     Net_DrawDemoOverlay();
 
-# if defined (DENG2_DEBUG) && defined (DENG_OPENGL)
+# if defined (DE_DEBUG) && defined (DE_OPENGL)
     Z_DebugDrawer();
 # endif
 #endif  // __CLIENT__
@@ -692,7 +692,7 @@ static dd_bool tokenize(char const *line, char *label, char *value, int valueSiz
     if(!colon || colon - src >= SVINFO_VALID_LABEL_LEN || valueSize <= 0)
         return false;
 
-    DENG2_ASSERT(label && value);
+    DE_ASSERT(label && value);
 
     // Copy the label.
     qstrncpy(label, src, de::min(int(colon - src + 1), valueSize));
@@ -707,7 +707,7 @@ static dd_bool tokenize(char const *line, char *label, char *value, int valueSiz
 
 void ServerInfo_FromRecord(serverinfo_t *info, de::Record const &rec)
 {
-    DENG2_ASSERT(info);
+    DE_ASSERT(info);
     de::zapPtr(info);
 
     info->port           = (dint)  rec["port"].value().asNumber();
@@ -747,7 +747,7 @@ dd_bool ServerInfo_FromString(serverinfo_t *info, char const *valuePair)
         return false;
     }
 
-    DENG2_ASSERT(info);
+    DE_ASSERT(info);
 
     if(!strcmp(label, "at"))
     {
@@ -859,7 +859,7 @@ void Net_WriteChatMessage(dint from, dint toMask, char const *message)
  */
 D_CMD(Chat)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     dint mode = !stricmp(argv[0], "chat") ||
                 !stricmp(argv[0], "say") ? 0 : !stricmp(argv[0], "chatNum") ||
@@ -953,7 +953,7 @@ D_CMD(Chat)
 #ifdef __SERVER__
 D_CMD(Kick)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     LOG_AS("kick (Cmd)")
 
@@ -990,7 +990,7 @@ D_CMD(Kick)
 #ifdef __CLIENT__
 D_CMD(SetName)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     Con_SetString("net-name", argv[1]);
 
@@ -1010,7 +1010,7 @@ D_CMD(SetName)
 
 D_CMD(SetTicks)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
 //  extern double lastSharpFrameTime;
 
@@ -1023,7 +1023,7 @@ D_CMD(SetTicks)
 // Create a new local player.
 D_CMD(MakeCamera)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     LOG_AS("makecam (Cmd)");
 
@@ -1063,7 +1063,7 @@ D_CMD(MakeCamera)
 
 D_CMD(SetConsole)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     dint cp = String(argv[1]).toInt();
     if(cp < 0 || cp >= DDMAXPLAYERS)
@@ -1097,7 +1097,7 @@ dint Net_StartConnection(char const *address, dint port)
  */
 D_CMD(Connect)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(argc < 2 || argc > 3)
     {
@@ -1136,7 +1136,7 @@ D_CMD(Connect)
  */
 D_CMD(Net)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     bool success = true;
 
@@ -1305,7 +1305,7 @@ void Net_Register()
 {
     C_VAR_BYTE      ("net-queue-show",          &::monitorMsgQueue, 0, 0, 1);
     C_VAR_BYTE      ("net-dev",                 &::netDev, 0, 0, 1);
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     C_VAR_FLOAT     ("net-dev-latency",         &::netSimulatedLatencySeconds, CVF_NO_MAX, 0, 0);
 #endif
     //C_VAR_BYTE      ("net-nosleep",             &::netDontSleep, 0, 0, 1);

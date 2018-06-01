@@ -31,7 +31,7 @@ using namespace de;
 
 //static AbstractSession::Profile currentProfile;
 
-DENG2_PIMPL_NOREF(AbstractSession)
+DE_PIMPL_NOREF(AbstractSession)
 {
     bool inProgress = false;  ///< @c true: session is in progress / internal.save exists.
     de::Uri mapUri;

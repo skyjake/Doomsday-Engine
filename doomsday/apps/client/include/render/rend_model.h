@@ -69,16 +69,16 @@ struct drawmodel2params_t
     render::StateAnimator const *animator;
 };
 
-DENG_EXTERN_C de::dbyte useModels;
-DENG_EXTERN_C de::dint modelLight;
-DENG_EXTERN_C de::dint frameInter;
-DENG_EXTERN_C de::dfloat modelAspectMod;
-DENG_EXTERN_C de::dint mirrorHudModels;
-//DENG_EXTERN_C de::dint modelShinyMultitex;
-DENG_EXTERN_C de::dfloat modelSpinSpeed;
-DENG_EXTERN_C de::dint maxModelDistance;
-DENG_EXTERN_C de::dfloat rendModelLOD;
-DENG_EXTERN_C de::dbyte precacheSkins;
+DE_EXTERN_C de::dbyte useModels;
+DE_EXTERN_C de::dint modelLight;
+DE_EXTERN_C de::dint frameInter;
+DE_EXTERN_C de::dfloat modelAspectMod;
+DE_EXTERN_C de::dint mirrorHudModels;
+//DE_EXTERN_C de::dint modelShinyMultitex;
+DE_EXTERN_C de::dfloat modelSpinSpeed;
+DE_EXTERN_C de::dint maxModelDistance;
+DE_EXTERN_C de::dfloat rendModelLOD;
+DE_EXTERN_C de::dbyte precacheSkins;
 
 /**
  * Registers the console commands and variables used by this module.

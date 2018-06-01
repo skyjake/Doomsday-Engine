@@ -87,8 +87,8 @@ static void draw(const Svg* svg)
 {
     dglprimtype_t nextPrimType, primType = DGL_LINE_STRIP;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     SvgLine const *lIt = svg->lines;
     for (uint i = 0; i < svg->lineCount; ++i, lIt++)
@@ -303,7 +303,7 @@ Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, uint lineCount)
         }
 
         // Link circularly?
-        DENG_ASSERT(prev);
+        DE_ASSERT(prev);
         prev->next = lineIsLoop? dlIt->head : NULL;
         dlIt->head->prev = lineIsLoop? prev : NULL;
 

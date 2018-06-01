@@ -19,8 +19,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_VERSION_H
-#define LIBDENG2_VERSION_H
+#ifndef LIBCORE_VERSION_H
+#define LIBCORE_VERSION_H
 
 #ifdef __cplusplus
 
@@ -36,12 +36,12 @@ namespace de {
  * numbers, while the label can be any text string.
  *
  * The build's version is specified using preprocessor defines
- * LIBDENG2_MAJOR_VERSION, LIBDENG2_MINOR_VERSION, LIBDENG2_PATCHLEVEL,
- * LIBDENG2_BUILD_TEXT, LIBDENG2_RELEASE_LABEL, and LIBDENG2_GIT_DESCRIPTION.
+ * LIBCORE_MAJOR_VERSION, LIBCORE_MINOR_VERSION, LIBCORE_PATCHLEVEL,
+ * LIBCORE_BUILD_TEXT, LIBCORE_RELEASE_LABEL, and LIBCORE_GIT_DESCRIPTION.
  *
  * @ingroup core
  */
-class DENG2_PUBLIC Version
+class DE_PUBLIC Version
 {
 public:
     int major;
@@ -135,4 +135,4 @@ public:
 
 #endif // __cplusplus
 
-#endif // LIBDENG2_VERSION_H
+#endif // LIBCORE_VERSION_H

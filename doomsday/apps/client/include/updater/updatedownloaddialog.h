@@ -19,8 +19,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UPDATEDOWNLOADDIALOG_H
-#define DENG_CLIENT_UPDATEDOWNLOADDIALOG_H
+#ifndef DE_CLIENT_UPDATEDOWNLOADDIALOG_H
+#define DE_CLIENT_UPDATEDOWNLOADDIALOG_H
 
 #include "ui/dialogs/downloaddialog.h"
 
@@ -65,7 +65,7 @@ public slots:
     void cancel() override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UPDATEDOWNLOADDIALOG_H
+#endif // DE_CLIENT_UPDATEDOWNLOADDIALOG_H

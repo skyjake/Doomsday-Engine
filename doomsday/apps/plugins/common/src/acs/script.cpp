@@ -42,7 +42,7 @@ Script::Args::Args(dbyte const *cArr, dint length)
 
 // ----------------------------------------------------------------------------
 
-DENG2_PIMPL_NOREF(Script)
+DE_PIMPL_NOREF(Script)
 {
     Module::EntryPoint const *entryPoint = nullptr;
     State state   = Inactive;
@@ -50,7 +50,7 @@ DENG2_PIMPL_NOREF(Script)
 
     void wait(State waitState, int value)
     {
-        DENG2_ASSERT((waitState == WaitingForSector)  ||
+        DE_ASSERT((waitState == WaitingForSector)  ||
                      (waitState == WaitingForPolyobj) ||
                      (waitState == WaitingForScript));
 
@@ -80,7 +80,7 @@ String Script::describe() const
     Module::EntryPoint const &ep = entryPoint();
     return "ACScript #" DE2_ESC(b) + String::number(ep.scriptNumber)
          + DE2_ESC(l) " Args: " DE2_ESC(.) DE2_ESC(i) + String::number(ep.scriptArgCount)
-         + DE2_ESC(l) " Open: " DE2_ESC(.) DE2_ESC(i) + DENG2_BOOL_YESNO(ep.startWhenMapBegins);
+         + DE2_ESC(l) " Open: " DE2_ESC(.) DE2_ESC(i) + DE_BOOL_YESNO(ep.startWhenMapBegins);
 }
 
 String Script::description() const
@@ -190,7 +190,7 @@ void Script::sectorFinished(int tag)
 
 Module::EntryPoint const &Script::entryPoint() const
 {
-    DENG2_ASSERT(d->entryPoint);
+    DE_ASSERT(d->entryPoint);
     return *d->entryPoint;
 }
 
@@ -201,14 +201,14 @@ void Script::setEntryPoint(Module::EntryPoint const &entryPoint)
 
 void Script::write(writer_s *writer) const
 {
-    DENG2_ASSERT(writer);
+    DE_ASSERT(writer);
     Writer_WriteInt16(writer, d->state);
     Writer_WriteInt16(writer, d->waitValue);
 }
 
 void Script::read(reader_s *reader)
 {
-    DENG2_ASSERT(reader);
+    DE_ASSERT(reader);
     d->state     = State( Reader_ReadInt16(reader) );
     d->waitValue = Reader_ReadInt16(reader);
 }

@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG2_FILESYS_NATIVELINK_H
-#define DENG2_FILESYS_NATIVELINK_H
+#ifndef DE_FILESYS_NATIVELINK_H
+#define DE_FILESYS_NATIVELINK_H
 
 #include "link.h"
 
@@ -27,7 +27,7 @@ namespace filesys {
 /**
  * Link to a native Doomsday remote repository (see RemoteFeedUser on server).
  */
-class DENG2_PUBLIC NativeLink : public Link
+class DE_PUBLIC NativeLink : public Link
 {
 public:
     static String const URL_SCHEME;
@@ -47,10 +47,10 @@ protected:
     void transmit(Query const &query) override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace filesys
 } // namespace de
 
-#endif // DENG2_FILESYS_NATIVELINK_H
+#endif // DE_FILESYS_NATIVELINK_H

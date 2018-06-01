@@ -26,7 +26,7 @@ namespace de {
 static int const SOURCE_SHIFT = 17;
 static int const NUMBER_MASK = 0x1ffff;
 
-DENG2_PIMPL_NOREF(SourceLineTable), public Lockable
+DE_PIMPL_NOREF(SourceLineTable), public Lockable
 {
     struct IdNode : public PathTree::Node
     {
@@ -50,7 +50,7 @@ SourceLineTable::LineId SourceLineTable::lineId(String const &path, duint lineNu
 {
     Path const source(path);
     
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     auto const *node = d->paths.tryFind(source, PathTree::MatchFull | PathTree::NoBranch);
     if (!node)
@@ -71,7 +71,7 @@ SourceLineTable::PathAndLine SourceLineTable::sourcePathAndLineNumber(LineId sou
 {
     duint const lineNumber = (NUMBER_MASK & sourceId);
 
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     auto found = d->lookup.constFind(sourceId >> SOURCE_SHIFT);
     if (found != d->lookup.constEnd())

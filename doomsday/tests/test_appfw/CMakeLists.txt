@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.1)
-project (DENG_TEST_APPFW)
+project (DE_TEST_APPFW)
 include (../TestConfig.cmake)
 
 find_package (Qt5 COMPONENTS Gui Widgets)

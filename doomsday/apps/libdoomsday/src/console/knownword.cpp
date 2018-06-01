@@ -64,7 +64,7 @@ static bool compareKnownWordByName(knownword_t const &a, knownword_t const &b)
     case WT_GAME:     textA = AutoStr_FromTextStd(reinterpret_cast<Game const *>(wA->data)->id().toUtf8().constData()); break;
 
     default:
-        DENG2_ASSERT_FAIL("compareKnownWordByName: Invalid type for word A");
+        DE_ASSERT_FAIL("compareKnownWordByName: Invalid type for word A");
         return false;
     }
 
@@ -76,7 +76,7 @@ static bool compareKnownWordByName(knownword_t const &a, knownword_t const &b)
     case WT_GAME:     textB = AutoStr_FromTextStd(reinterpret_cast<Game const *>(wB->data)->id().toUtf8().constData()); break;
 
     default:
-        DENG2_ASSERT_FAIL("compareKnownWordByName: Invalid type for word B");
+        DE_ASSERT_FAIL("compareKnownWordByName: Invalid type for word B");
         return false;
     }
 
@@ -98,7 +98,7 @@ static AutoStr *textForKnownWord(knownword_t const *word)
     case WT_GAME:     text = AutoStr_FromTextStd(reinterpret_cast<Game const *>(word->data)->id().toUtf8().constData()); break;
 
     default:
-        DENG2_ASSERT_FAIL("textForKnownWord: Invalid type for word");
+        DE_ASSERT_FAIL("textForKnownWord: Invalid type for word");
         text = AutoStr_FromTextStd("");
     }
 
@@ -108,7 +108,7 @@ static AutoStr *textForKnownWord(knownword_t const *word)
 #if 0
 static dd_bool removeFromKnownWords(knownwordtype_t type, void* data)
 {
-    DENG_ASSERT(VALID_KNOWNWORDTYPE(type) && data != 0);
+    DE_ASSERT(VALID_KNOWNWORDTYPE(type) && data != 0);
 
     for (int i = 0; i < knownWords.size(); ++i)
     {
@@ -207,7 +207,7 @@ int Con_IterateKnownWords(KnownWordMatchMode matchMode,
                           int (*callback)(knownword_t const* word, void* parameters),
                           void* parameters)
 {
-    DENG_ASSERT(callback);
+    DE_ASSERT(callback);
 
     knownwordtype_t matchType = (VALID_KNOWNWORDTYPE(type)? type : WT_ANY);
     size_t patternLength = (pattern? strlen(pattern) : 0);
@@ -250,7 +250,7 @@ int Con_IterateKnownWords(KnownWordMatchMode matchMode,
 
 static int countMatchedWordWorker(knownword_t const* /*word*/, void* parameters)
 {
-    DENG_ASSERT(parameters);
+    DE_ASSERT(parameters);
     uint* count = (uint*) parameters;
     ++(*count);
     return 0; // Continue iteration.
@@ -263,7 +263,7 @@ typedef struct {
 
 static int collectMatchedWordWorker(knownword_t const* word, void* parameters)
 {
-    DENG_ASSERT(word && parameters);
+    DE_ASSERT(word && parameters);
     collectmatchedwordworker_paramaters_t* p = (collectmatchedwordworker_paramaters_t*) parameters;
     p->matches[p->index++] = word;
     return 0; // Continue iteration.
@@ -341,7 +341,7 @@ static void printApropos(char const *matching)
 
 D_CMD(HelpApropos)
 {
-    DENG2_UNUSED2(argc, src);
+    DE_UNUSED(argc, src);
 
     printApropos(argv[1]);
     return true;

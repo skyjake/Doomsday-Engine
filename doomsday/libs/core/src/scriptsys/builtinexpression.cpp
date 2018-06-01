@@ -148,7 +148,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         else
         {
             Record::Subrecords subs = rec->dereference().subrecords();
-            DENG2_FOR_EACH(Record::Subrecords, i, subs)
+            DE_FOR_EACH(Record::Subrecords, i, subs)
             {
                 dict->add(new TextValue(i.key()), new RecordValue(i.value()));
             }
@@ -335,7 +335,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         return new TextValue(args.at(1).typeId());
 
     default:
-        DENG2_ASSERT(false);
+        DE_ASSERT(false);
     }
     return NULL;
 }

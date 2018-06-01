@@ -43,18 +43,18 @@ static TaskPool populateTasks;
 static bool     enableBackgroundPopulation = true;
 
 /// Forwards internal folder population notifications to the public audience.
-struct PopulationNotifier : DENG2_OBSERVES(TaskPool, Done)
+struct PopulationNotifier : DE_OBSERVES(TaskPool, Done)
 {
     PopulationNotifier() { populateTasks.audienceForDone() += this; }
     void taskPoolDone(TaskPool &) { notify(); }
-    void notify() { DENG2_FOR_AUDIENCE(FolderPopulation, i) i->folderPopulationFinished(); }
+    void notify() { DE_FOR_AUDIENCE(FolderPopulation, i) i->folderPopulationFinished(); }
 };
 
 static PopulationNotifier populationNotifier;
 
 } // namespace internal
 
-DENG2_PIMPL(Folder)
+DE_PIMPL(Folder)
 {
     /// A map of file names to file instances.
     Contents contents;
@@ -86,7 +86,7 @@ DENG2_PIMPL(Folder)
 
     QList<Folder *> subfolders() const
     {
-        DENG2_GUARD_FOR(self(), G);
+        DE_GUARD_FOR(self(), G);
         QList<Folder *> subs;
         for (Contents::const_iterator i = contents.begin(); i != contents.end(); ++i)
         {
@@ -116,9 +116,9 @@ Folder::Folder(String const &name) : File(name), d(new Impl(this))
 
 Folder::~Folder()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
-    DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
+    DE_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion().clear();
 
     deindex();
@@ -162,7 +162,7 @@ String Folder::describe() const
 
 String Folder::describeFeeds() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     String desc;
 
@@ -170,19 +170,19 @@ String Folder::describeFeeds() const
     {
         desc += String("contains %1 file%2 from %3")
                 .arg(d->contents.size())
-                .arg(DENG2_PLURAL_S(d->contents.size()))
+                .arg(DE_PLURAL_S(d->contents.size()))
                 .arg(d->feeds.front()->description());
     }
     else if (d->feeds.size() > 1)
     {
         desc += String("contains %1 file%2 from %3 feed%4")
                 .arg(d->contents.size())
-                .arg(DENG2_PLURAL_S(d->contents.size()))
+                .arg(DE_PLURAL_S(d->contents.size()))
                 .arg(d->feeds.size())
-                .arg(DENG2_PLURAL_S(d->feeds.size()));
+                .arg(DE_PLURAL_S(d->feeds.size()));
 
         int n = 0;
-        DENG2_FOR_EACH_CONST(Feeds, i, d->feeds)
+        DE_FOR_EACH_CONST(Feeds, i, d->feeds)
         {
             desc += String("; feed #%2 is %3")
                     .arg(n + 1)
@@ -196,7 +196,7 @@ String Folder::describeFeeds() const
 
 void Folder::clear()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     if (d->contents.empty()) return;
 
@@ -215,7 +215,7 @@ void Folder::populate(PopulationBehaviors behavior)
 
     LOG_AS("Folder");
     {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
 
         // Prune the existing files first.
         QMutableMapIterator<String, File *> iter(d->contents);
@@ -279,7 +279,7 @@ void Folder::populate(PopulationBehaviors behavior)
 
         // Insert and index all new files atomically.
         {
-            DENG2_GUARD(this);
+            DE_GUARD(this);
             for (File *i : newFiles)
             {
                 if (i)
@@ -334,13 +334,13 @@ void Folder::populate(PopulationBehaviors behavior)
 
 Folder::Contents Folder::contents() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     return d->contents;
 }
 
 LoopResult Folder::forContents(std::function<LoopResult (String, File &)> func) const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     for (Contents::const_iterator i = d->contents.constBegin(); i != d->contents.constEnd(); ++i)
     {
@@ -410,7 +410,7 @@ File &Folder::replaceFile(String const &newPath)
 
 void Folder::destroyFile(String const &removePath)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     String path = removePath.fileNamePath();
     if (!path.empty())
@@ -443,7 +443,7 @@ bool Folder::tryDestroyFile(String const &removePath)
 
 void Folder::destroyAllFiles()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     verifyWriteAccess();
 
@@ -476,13 +476,13 @@ bool Folder::has(String const &name) const
         return false;
     }
 
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     return (d->contents.find(name.lower()) != d->contents.end());
 }
 
 File &Folder::add(File *file)
 {
-    DENG2_ASSERT(file != 0);
+    DE_ASSERT(file != 0);
 
     if (has(file->name()))
     {
@@ -490,17 +490,17 @@ File &Folder::add(File *file)
         throw DuplicateNameError("Folder::add", "Folder cannot contain two files with the same name: '" +
             file->name() + "'");
     }
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     d->add(file);
     return *file;
 }
 
 File *Folder::remove(String name)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     String const key = name.toLower();
-    DENG2_ASSERT(d->contents.contains(key));
+    DE_ASSERT(d->contents.contains(key));
 
     File *removed = d->contents.take(key);
     removed->setParent(nullptr);
@@ -519,7 +519,7 @@ File *Folder::remove(File &file)
 
 filesys::Node const *Folder::tryGetChild(String const &name) const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     Contents::const_iterator found = d->contents.find(name.toLower());
     if (found != d->contents.end())
@@ -538,7 +538,7 @@ void Folder::waitForPopulation(WaitBehavior waitBehavior)
 {
     if (waitBehavior == OnlyInBackground && App::inMainThread())
     {
-        DENG2_ASSERT(!App::inMainThread());
+        DE_ASSERT(!App::inMainThread());
         throw Error("Folder::waitForPopulation", "Not allowed to block the main thread");
     }
     Time startedAt;
@@ -609,14 +609,14 @@ void Folder::attach(Feed *feed)
 {
     if (feed)
     {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         d->feeds.push_back(feed);
     }
 }
 
 Feed *Folder::detach(Feed &feed)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     d->feeds.removeOne(&feed);
     return &feed;
@@ -624,7 +624,7 @@ Feed *Folder::detach(Feed &feed)
 
 void Folder::setPrimaryFeed(Feed &feed)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     d->feeds.removeOne(&feed);
     d->feeds.push_front(&feed);
@@ -632,7 +632,7 @@ void Folder::setPrimaryFeed(Feed &feed)
 
 Feed *Folder::primaryFeed() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     if (d->feeds.isEmpty()) return nullptr;
     return d->feeds.front();
@@ -640,7 +640,7 @@ Feed *Folder::primaryFeed() const
 
 void Folder::clearFeeds()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     while (!d->feeds.empty())
     {
@@ -650,7 +650,7 @@ void Folder::clearFeeds()
 
 Folder::Feeds Folder::feeds() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     return d->feeds;
 }

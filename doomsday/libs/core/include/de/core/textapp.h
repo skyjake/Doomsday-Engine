@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_TEXTAPP_H
-#define LIBDENG2_TEXTAPP_H
+#ifndef LIBCORE_TEXTAPP_H
+#define LIBCORE_TEXTAPP_H
 
 #include <QCoreApplication>
 #include <de/App>
@@ -26,7 +26,7 @@
 /**
  * Macro for conveniently accessing the de::TextApp singleton instance.
  */
-#define DENG2_TEXT_APP   (static_cast<de::TextApp *>(qApp))
+#define DE_TEXT_APP   (static_cast<de::TextApp *>(qApp))
 
 namespace de {
 
@@ -38,7 +38,7 @@ namespace de {
  *
  * @ingroup core
  */
-class DENG2_PUBLIC TextApp : public QCoreApplication, public App
+class DE_PUBLIC TextApp : public QCoreApplication, public App
 {
     Q_OBJECT
 
@@ -59,9 +59,9 @@ protected:
     NativePath appDataPath() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_TEXTAPP_H
+#endif // LIBCORE_TEXTAPP_H

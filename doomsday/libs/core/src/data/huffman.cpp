@@ -254,7 +254,7 @@ struct Huffman
         HuffNode *min;
         int i, left, right, small;
 
-        DENG2_ASSERT(queue->count > 0);
+        DE_ASSERT(queue->count > 0);
 
         // This is what we'll return.
         min = queue->nodes[0];
@@ -311,7 +311,7 @@ struct Huffman
         }
 
         // Shouldn't run out of bits...
-        DENG2_ASSERT(length < 32);
+        DE_ASSERT(length < 32);
 
         // Descend into the left and right subtrees.
         if (node->left)
@@ -463,7 +463,7 @@ struct Huffman
             }
 
             // Did we arrive at a leaf?
-            DENG2_ASSERT(node);
+            DE_ASSERT(node);
             if (!node->left && !node->right)
             {
                 // This node represents a value.

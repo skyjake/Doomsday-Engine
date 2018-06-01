@@ -246,7 +246,7 @@ public:
     static bool recognize(File const &file);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

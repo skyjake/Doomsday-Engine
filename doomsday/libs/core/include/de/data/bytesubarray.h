@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_BYTESUBARRAY_H
-#define LIBDENG2_BYTESUBARRAY_H
+#ifndef LIBCORE_BYTESUBARRAY_H
+#define LIBCORE_BYTESUBARRAY_H
 
 #include "../IByteArray"
 
@@ -29,11 +29,11 @@ namespace de {
  *
  * @ingroup data
  */
-class DENG2_PUBLIC ByteSubArray : public IByteArray
+class DE_PUBLIC ByteSubArray : public IByteArray
 {
 public:
     /// set() is attempted on a nonmodifiable array. @ingroup errors
-    DENG2_ERROR(NonModifiableError);
+    DE_ERROR(NonModifiableError);
 
 public:
     /**
@@ -68,4 +68,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_BYTESUBARRAY_H */
+#endif /* LIBCORE_BYTESUBARRAY_H */

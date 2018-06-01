@@ -21,8 +21,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MOUSE_WIN32_H
-#define LIBDENG_MOUSE_WIN32_H
+#ifndef DE_MOUSE_WIN32_H
+#define DE_MOUSE_WIN32_H
 
 #include "ui/sys_input.h"
 
@@ -36,4 +36,4 @@ extern mouseinterface_t win32Mouse;
 } // extern "C"
 #endif
 
-#endif // LIBDENG_MOUSE_WIN32_H
+#endif // DE_MOUSE_WIN32_H

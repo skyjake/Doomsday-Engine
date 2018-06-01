@@ -39,7 +39,7 @@ public:
     void draw(de::Vec2i const &offset = de::Vec2i()) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif  // LIBHEXEN_UI_WORLDTIMEWIDGET_H

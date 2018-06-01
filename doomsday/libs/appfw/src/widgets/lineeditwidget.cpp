@@ -28,7 +28,7 @@
 #include <de/AnimationRule>
 #include <de/Drawable>
 
-#if defined (DENG_MOBILE)
+#if defined (DE_MOBILE)
 #  include <QGuiApplication>
 #  include <QInputMethod>
 #endif
@@ -41,7 +41,7 @@ static TimeSpan const HEIGHT_ANIM_SPAN = .5f;
 static duint const ID_BUF_TEXT   = 1;
 static duint const ID_BUF_CURSOR = 2;
 
-DENG_GUI_PIMPL(LineEditWidget)
+DE_GUI_PIMPL(LineEditWidget)
 {
     typedef GLBufferT<GuiVertex> VertexBuf;
 
@@ -384,7 +384,7 @@ void LineEditWidget::focusGained()
         d->hint->setOpacity(0);
     }
 
-#if defined (DENG_MOBILE)
+#if defined (DE_MOBILE)
     {
         auto &win = root().window();
         emit win.textEntryRequest();
@@ -398,7 +398,7 @@ void LineEditWidget::focusGained()
 
 void LineEditWidget::focusLost()
 {
-#if defined (DENG_MOBILE)
+#if defined (DE_MOBILE)
     {
         auto &win = root().window();
         disconnect(&win, &GLWindow::userEnteredText, this, &LineEditWidget::userEnteredText);
@@ -415,7 +415,7 @@ void LineEditWidget::focusLost()
     }
 }
 
-#if defined (DENG_MOBILE)
+#if defined (DE_MOBILE)
 void LineEditWidget::userEnteredText(QString text)
 {
     setText(text);

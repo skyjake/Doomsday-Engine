@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_DDSTRING_CPP_WRAPPER_HH
-#define LIBDENG_DDSTRING_CPP_WRAPPER_HH
+#ifndef LIBLEGACY_DDSTRING_CPP_WRAPPER_HH
+#define LIBLEGACY_DDSTRING_CPP_WRAPPER_HH
 
 #include "liblegacy.h"
 #include "str.h"
@@ -63,4 +63,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG_DDSTRING_CPP_WRAPPER_HH
+#endif // LIBLEGACY_DDSTRING_CPP_WRAPPER_HH

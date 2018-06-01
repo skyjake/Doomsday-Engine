@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_WHILESTATEMENT_H
-#define LIBDENG2_WHILESTATEMENT_H
+#ifndef LIBCORE_WHILESTATEMENT_H
+#define LIBCORE_WHILESTATEMENT_H
 
 #include "../Statement"
 #include "../Compound"
@@ -59,4 +59,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_WHILESTATEMENT_H */
+#endif /* LIBCORE_WHILESTATEMENT_H */

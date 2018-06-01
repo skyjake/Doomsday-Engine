@@ -29,7 +29,7 @@
 
 namespace de {
 
-DENG2_PIMPL(VRWindowTransform)
+DE_PIMPL(VRWindowTransform)
 {
     VRConfig &vrCfg;
 
@@ -45,7 +45,7 @@ DENG2_PIMPL(VRWindowTransform)
 
     Impl(Public *i)
         : Base(i)
-        , vrCfg(DENG2_BASE_GUI_APP->vr())
+        , vrCfg(DE_BASE_GUI_APP->vr())
     {}
 
     ~Impl()
@@ -72,7 +72,7 @@ DENG2_PIMPL(VRWindowTransform)
 
     float displayModeDependentUIScalingFactor() const
     {
-#if defined (DENG_MOBILE)
+#if defined (DE_MOBILE)
         return 1.0f;
 #else
         if (GuiWidget::pointsToPixels(1) == 1) return 1.0f; // Not enough pixels for good-quality scaling.
@@ -298,7 +298,7 @@ DENG2_PIMPL(VRWindowTransform)
             break;
 
         case VRConfig::RowInterleaved: {
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
             // Use absolute screen position of window to determine whether the
             // first scan line is odd or even.
             QPoint ulCorner(0, 0);

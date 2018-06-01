@@ -107,7 +107,7 @@ static FrameModelLOD *activeLod;
 
 static uint vertexBufferMax; ///< Maximum number of vertices we'll be required to render per submodel.
 static uint vertexBufferSize; ///< Current number of vertices supported by the render buffer.
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
 static bool announcedVertexBufferMaxBreach; ///< @c true if an attempt has been made to expand beyond our capability.
 #endif
 
@@ -141,7 +141,7 @@ void Rend_ModelInit()
     modelTexCoords   = 0;
 
     vertexBufferMax = vertexBufferSize = 0;
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
     announcedVertexBufferMaxBreach = false;
 #endif
 
@@ -158,7 +158,7 @@ void Rend_ModelShutdown()
     M_Free(modelTexCoords); modelTexCoords = 0;
 
     vertexBufferMax = vertexBufferSize = 0;
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
     announcedVertexBufferMaxBreach = false;
 #endif
 
@@ -167,7 +167,7 @@ void Rend_ModelShutdown()
 
 bool Rend_ModelExpandVertexBuffers(uint numVertices)
 {
-    DENG2_ASSERT(inited);
+    DE_ASSERT(inited);
 
     LOG_AS("Rend_ModelExpandVertexBuffers");
 
@@ -176,7 +176,7 @@ bool Rend_ModelExpandVertexBuffers(uint numVertices)
     // Sanity check a sane maximum...
     if (numVertices >= RENDER_MAX_MODEL_VERTS)
     {
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
         if (!announcedVertexBufferMaxBreach)
         {
             LOGDEV_GL_WARNING("Attempted to expand to %u vertices (max %u)")
@@ -216,8 +216,8 @@ static bool resizeVertexBuffer(uint numVertices)
 
 static void disableArrays(int vertices, int colors, int coords)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     if (vertices)
     {
@@ -237,21 +237,21 @@ static void disableArrays(int vertices, int colors, int coords)
         }
     }
 
-    DENG_ASSERT(!Sys_GLCheckError());
+    DE_ASSERT(!Sys_GLCheckError());
 }
 
 static inline void enableTexUnit(int id)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_Enable(DGL_TEXTURE0 + id);
 }
 
 static inline void disableTexUnit(int id)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_Disable(DGL_TEXTURE0 + id);
 
@@ -286,8 +286,8 @@ static void selectTexUnits(int count)
 static void configureArrays(void *vertices, void *colors, int numCoords = 0,
                             void **coords = 0)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     if (vertices)
     {
@@ -310,13 +310,13 @@ static void configureArrays(void *vertices, void *colors, int numCoords = 0,
         }
     }
 
-    DENG_ASSERT(!Sys_GLCheckError());
+    DE_ASSERT(!Sys_GLCheckError());
 }
 
 static void drawArrayElement(int index)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     for (int i = 0; i < MAX_TEX_UNITS; ++i)
     {
@@ -371,8 +371,8 @@ static void drawPrimitives(rendcmd_t mode,
                            Vec4ub *colorCoords,
                            Vec2f *texCoords = 0)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Disable all vertex arrays.
     disableArrays(true, true, DDMAXINT);
@@ -471,9 +471,9 @@ static void drawPrimitives(rendcmd_t mode,
 static void Mod_LerpVertices(float inter, int count, FrameModelFrame const &from,
     FrameModelFrame const &to, Vec3f *posOut, Vec3f *normOut)
 {
-    DENG2_ASSERT(&from.model == &to.model); // sanity check.
-    DENG2_ASSERT(!activeLod || &activeLod->model == &from.model); // sanity check.
-    DENG2_ASSERT(from.vertices.count() == to.vertices.count()); // sanity check.
+    DE_ASSERT(&from.model == &to.model); // sanity check.
+    DE_ASSERT(!activeLod || &activeLod->model == &from.model); // sanity check.
+    DE_ASSERT(from.vertices.count() == to.vertices.count()); // sanity check.
 
     FrameModelFrame::VertexBuf::const_iterator startIt = from.vertices.begin();
     FrameModelFrame::VertexBuf::const_iterator endIt   = to.vertices.begin();
@@ -504,7 +504,7 @@ static void Mod_LerpVertices(float inter, int count, FrameModelFrame const &from
 
 static void Mod_MirrorCoords(dint count, Vec3f *coords, dint axis)
 {
-    DENG2_ASSERT(coords);
+    DE_ASSERT(coords);
     for (; count-- > 0; coords++)
     {
         (*coords)[axis] = -(*coords)[axis];
@@ -592,7 +592,7 @@ static void Mod_VertexColors(Vec4ub *out, dint count, Vec3f const *normCoords,
  */
 static void Mod_FullBrightVertexColors(dint count, Vec4ub *colorCoords, dfloat alpha)
 {
-    DENG2_ASSERT(colorCoords);
+    DE_ASSERT(colorCoords);
     for (; count-- > 0; colorCoords++)
     {
         *colorCoords = Vec4ub(255, 255, 255, 255 * alpha);
@@ -604,7 +604,7 @@ static void Mod_FullBrightVertexColors(dint count, Vec4ub *colorCoords, dfloat a
  */
 static void Mod_FixedVertexColors(dint count, Vec4ub *colorCoords, Vec4ub const &color)
 {
-    DENG2_ASSERT(colorCoords);
+    DE_ASSERT(colorCoords);
     for (; count-- > 0; colorCoords++)
     {
         *colorCoords = color;
@@ -837,7 +837,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     // Determine the suitable LOD.
     if (mdl.lodCount() > 1 && rend_model_lod != 0)
     {
-        float lodFactor = rend_model_lod * DENG_GAMEVIEW_WIDTH / 640.0f / (Rend_FieldOfView() / 90.0f);
+        float lodFactor = rend_model_lod * DE_GAMEVIEW_WIDTH / 640.0f / (Rend_FieldOfView() / 90.0f);
         if (!de::fequal(lodFactor, 0))
         {
             lodFactor = 1 / lodFactor;
@@ -1101,9 +1101,9 @@ void Rend_DrawModel(vissprite_t const &spr)
 {
     drawmodelparams_t const &parm = *VS_MODEL(&spr);
 
-    DENG2_ASSERT(inited);
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT(inited);
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     if (!parm.mf) return;
 

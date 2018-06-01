@@ -26,7 +26,7 @@ using namespace de;
 
 static String const VAR_ID("__id__");
 
-DENG2_PIMPL_NOREF(MobjThinkerData)
+DE_PIMPL_NOREF(MobjThinkerData)
 {};
 
 MobjThinkerData::MobjThinkerData(de::Id const &id)

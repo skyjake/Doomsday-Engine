@@ -64,7 +64,7 @@ public:
     double ceilingHeight(const Vec3d &posMeters) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace gloom

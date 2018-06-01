@@ -387,7 +387,7 @@ void D_PreInit()
 
 void D_PostInit()
 {
-    CommandLine &cmdLine = DENG2_APP->commandLine();
+    CommandLine &cmdLine = DE_APP->commandLine();
 
     /// @todo Kludge: Border background is different in DOOM2.
     /// @todo Do this properly!

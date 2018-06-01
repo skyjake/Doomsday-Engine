@@ -1440,8 +1440,8 @@ int XL_ValidateLineRef(Line *line, int reftype, void * /*context*/, char const *
  */
 void XL_DoFunction(linetype_t *info, Line *line, int sideNum, mobj_t *actThing, int evType)
 {
-    DENG2_ASSERT(info && line);
-    DENG2_ASSERT(info->lineClass >= 0 && info->lineClass < NUMXGCLASSES);
+    DE_ASSERT(info && line);
+    DE_ASSERT(info->lineClass >= 0 && info->lineClass < NUMXGCLASSES);
     LOG_AS("XL_DoFunction");
 
     xgclass_t *xgClass = &xgClasses[info->lineClass];
@@ -1620,7 +1620,7 @@ int XL_DoPower(Line * /*line*/, dd_bool /*ceiling*/, void * /*context*/,
     void *context2, mobj_t *activator)
 {
     linetype_t *info = static_cast<linetype_t *>(context2);
-    DENG2_ASSERT(info);
+    DE_ASSERT(info);
     player_t *player = activator? activator->player : nullptr;
 
     // Only players have armor.
@@ -2318,7 +2318,7 @@ void XL_Message(mobj_t *act, char *msg, dd_bool global)
 void XL_ActivateLine(dd_bool activating, linetype_t *info, Line *line, int sidenum,
                      mobj_t *activator, int evtype)
 {
-    DENG2_ASSERT(line);
+    DE_ASSERT(line);
     LOG_AS("XL_ActivateLine");
 
     xline_t *xline = P_ToXLine(line);
@@ -2328,7 +2328,7 @@ void XL_ActivateLine(dd_bool activating, linetype_t *info, Line *line, int siden
            (activating? "Activating" : "Deactivating") << P_ToIndex(line)
            << sidenum << xline->special);
 
-    DENG2_ASSERT(xline->xg);
+    DE_ASSERT(xline->xg);
     xgline_t &xgline = *xline->xg;
     if(xgline.disabled)
     {
@@ -2867,7 +2867,7 @@ void XL_DoChain(Line *line, int chain, dd_bool activating, mobj_t *actThing)
  */
 void XL_Thinker(void *xlThinkerPtr)
 {
-    DENG2_ASSERT(xlThinkerPtr);
+    DE_ASSERT(xlThinkerPtr);
     LOG_AS("XL_Thinker");
 
     xlthinker_t *xl = static_cast<xlthinker_t *>(xlThinkerPtr);

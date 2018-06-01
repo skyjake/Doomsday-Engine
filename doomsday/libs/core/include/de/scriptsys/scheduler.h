@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_SCHEDULER_H
-#define LIBDENG2_SCHEDULER_H
+#ifndef LIBCORE_SCHEDULER_H
+#define LIBCORE_SCHEDULER_H
 
 #include "../Timeline"
 
@@ -26,7 +26,7 @@ namespace de {
 /**
  * Scheduler for scripts and timelines.
  */
-class DENG2_PUBLIC Scheduler
+class DE_PUBLIC Scheduler
 {
 public:
     Scheduler();
@@ -65,9 +65,9 @@ public:
     void advanceTime(TimeSpan const &elapsed);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_SCHEDULER_H
+#endif // LIBCORE_SCHEDULER_H

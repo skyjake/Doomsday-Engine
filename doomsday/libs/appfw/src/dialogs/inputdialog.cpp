@@ -20,7 +20,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(InputDialog)
+DE_PIMPL_NOREF(InputDialog)
 {
     LineEditWidget *editor;
 };

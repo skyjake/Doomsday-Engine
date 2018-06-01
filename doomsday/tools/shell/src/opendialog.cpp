@@ -37,7 +37,7 @@ using namespace de::shell;
 
 static int const MAX_HISTORY_SIZE = 10;
 
-DENG2_PIMPL(OpenDialog)
+DE_PIMPL(OpenDialog)
 {
     QComboBox *address;
     QLabel *localCount;

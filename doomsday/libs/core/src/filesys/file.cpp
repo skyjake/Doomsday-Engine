@@ -34,7 +34,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(File)
+DE_PIMPL_NOREF(File)
 {
     /// The source file (NULL for non-interpreted files).
     File *source;
@@ -54,10 +54,10 @@ DENG2_PIMPL_NOREF(File)
 
     Impl() : source(0), originFeed(0) {}
 
-    DENG2_PIMPL_AUDIENCE(Deletion)
+    DE_PIMPL_AUDIENCE(Deletion)
 };
 
-DENG2_AUDIENCE_METHOD(File, Deletion)
+DE_AUDIENCE_METHOD(File, Deletion)
 
 File::File(String const &fileName) : Node(fileName), d(new Impl)
 {
@@ -72,9 +72,9 @@ File::File(String const &fileName) : Node(fileName), d(new Impl)
 
 File::~File()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
-    DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
+    DE_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
 
     flush();
     if (d->source != this)
@@ -106,7 +106,7 @@ void File::clear()
 
 FileSystem &File::fileSystem()
 {
-    return DENG2_APP->fileSystem();
+    return DE_APP->fileSystem();
 }
 
 Folder *File::parent() const
@@ -116,7 +116,7 @@ Folder *File::parent() const
 
 String File::description(int verbosity) const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     // describe() gives the actual description of this file.
     String desc = describe();
@@ -166,7 +166,7 @@ String File::description(int verbosity) const
         }
     }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     // Describing the source file is usually redundant (or even misleading),
     // so only do that in debug builds so that developers can see that a
     // file interpretation is being applied.
@@ -187,21 +187,21 @@ String File::describe() const
 
 void File::setOriginFeed(Feed *feed)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     d->originFeed = feed;
 }
 
 Feed *File::originFeed() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     return d->originFeed;
 }
 
 void File::setSource(File *source)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     if (d->source != this)
     {
@@ -213,7 +213,7 @@ void File::setSource(File *source)
 
 File const *File::source() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     if (&target() != this)
     {
@@ -228,7 +228,7 @@ File const *File::source() const
 
 File *File::source()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     if (&target() != this)
     {
@@ -253,7 +253,7 @@ File const &File::target() const
 
 void File::setStatus(Status const &status)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     // The source file status is the official one.
     if (this != d->source)
@@ -268,7 +268,7 @@ void File::setStatus(Status const &status)
 
 File::Status const &File::status() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     if (this != d->source)
     {
@@ -279,7 +279,7 @@ File::Status const &File::status() const
 
 void File::setMode(Flags const &newMode)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     // Implicitly flush the file before switching away from write mode.
     if (d->mode.testFlag(Write) && !newMode.testFlag(Write))
@@ -314,7 +314,7 @@ Record const &File::objectNamespace() const
 
 File::Flags const &File::mode() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     if (this != d->source)
     {
@@ -341,7 +341,7 @@ File *File::reinterpret()
     if (original != this)
     {
         // Already interpreted. The current interpretation will be replaced.
-        DENG2_ASSERT(!original->parent());
+        DE_ASSERT(!original->parent());
         d->source = 0; // source is owned, so take it away
         deleteThis = true;
     }
@@ -359,7 +359,7 @@ File *File::reinterpret()
 
     if (deleteThis)
     {
-        DENG2_ASSERT(result != this);
+        DE_ASSERT(result != this);
         delete this;
     }
     if (folder)
@@ -388,19 +388,19 @@ NativePath File::correspondingNativePath() const
 
 IOStream &File::operator << (IByteArray const &bytes)
 {
-    DENG2_UNUSED(bytes);
+    DE_UNUSED(bytes);
     throw OutputError("File::operator <<", description() + " does not accept a byte stream");
 }
 
 IIStream &File::operator >> (IByteArray &bytes)
 {
-    DENG2_UNUSED(bytes);
+    DE_UNUSED(bytes);
     throw InputError("File::operator >>", description() + " does not produce a byte stream");
 }
 
 IIStream const &File::operator >> (IByteArray &bytes) const
 {
-    DENG2_UNUSED(bytes);
+    DE_UNUSED(bytes);
     throw InputError("File::operator >>", description() + " does not offer an immutable byte stream");
 }
 

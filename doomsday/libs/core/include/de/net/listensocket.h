@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_LISTENSOCKET_H
-#define LIBDENG2_LISTENSOCKET_H
+#ifndef LIBCORE_LISTENSOCKET_H
+#define LIBCORE_LISTENSOCKET_H
 
 #include "../libcore.h"
 
@@ -37,13 +37,13 @@ class Socket;
  *
  * @ingroup net
  */
-class DENG2_PUBLIC ListenSocket : public QObject
+class DE_PUBLIC ListenSocket : public QObject
 {
     Q_OBJECT
 
 public:
     /// Opening the socket failed. @ingroup errors
-    DENG2_ERROR(OpenError);
+    DE_ERROR(OpenError);
 
 public:
     /// Open a listen socket on the specified port.
@@ -67,9 +67,9 @@ protected slots:
     void acceptNewConnection();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_LISTENSOCKET_H
+#endif // LIBCORE_LISTENSOCKET_H

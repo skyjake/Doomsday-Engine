@@ -243,6 +243,6 @@ D_CMD( CCmdExitLevel );
 } // extern "C"
 #endif
 
-DENG_EXTERN_C dd_bool singledemo;
+DE_EXTERN_C dd_bool singledemo;
 
 #endif  // LIBCOMMON_GAME_H

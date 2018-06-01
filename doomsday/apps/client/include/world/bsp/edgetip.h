@@ -23,8 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_BSP_EDGETIP_H
-#define DENG_WORLD_BSP_EDGETIP_H
+#ifndef DE_WORLD_BSP_EDGETIP_H
+#define DE_WORLD_BSP_EDGETIP_H
 
 #include <list>
 #include "world/bsp/linesegment.h"
@@ -67,12 +67,12 @@ public:
     LineSegmentSide &side(Side sid) const {
         if(sid == Front)
         {
-            DENG2_ASSERT(_front != nullptr);
+            DE_ASSERT(_front != nullptr);
             return *_front;
         }
         else
         {
-            DENG2_ASSERT(_back != nullptr);
+            DE_ASSERT(_back != nullptr);
             return *_back;
         }
     }
@@ -219,4 +219,4 @@ private:
 }  // namespace bsp
 }  // namespace world
 
-#endif  // DENG_WORLD_BSP_EDGETIP_H
+#endif  // DE_WORLD_BSP_EDGETIP_H

@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_MATH_H
-#define LIBDENG2_MATH_H
+#ifndef LIBCORE_MATH_H
+#define LIBCORE_MATH_H
 
 #include "de/IByteArray"
 #include <cmath>
@@ -108,7 +108,7 @@ inline Type clamp(Type value, Type lowHighLimit) {
 /// Wrap value within range [low, high).
 template <typename Type>
 Type wrap(Type value, Type low, Type high) {
-    DENG2_ASSERT(high > low);
+    DE_ASSERT(high > low);
     Type const range = high - low;
     while (value < low) value += range;
     while (value >= high) value -= range;
@@ -255,8 +255,8 @@ DENG2_PUBLIC duint32 randui32();
 /**
  * Calculates the CRC32 checksum of the contents of byte array @a bytes.
  */
-DENG2_PUBLIC duint32 crc32(const IByteArray &bytes);
+DE_PUBLIC duint32 crc32(const IByteArray &bytes);
 
 } // namespace de
 
-#endif /* LIBDENG2_MATH_H */
+#endif /* LIBCORE_MATH_H */

@@ -50,7 +50,7 @@ public:  /// @todo make private:
 
 public:
     /// Required/referenced script is missing. @ingroup errors
-    DENG2_ERROR(MissingScriptError);
+    DE_ERROR(MissingScriptError);
 
 public:
     System();
@@ -138,7 +138,7 @@ public:
     static void consoleRegister();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 }  // namespace acs

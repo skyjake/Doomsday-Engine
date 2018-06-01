@@ -48,10 +48,10 @@ class LIBDOOMSDAY_PUBLIC Material : public MapElement
 {
 public:
     /// Notified when the material is about to be deleted.
-    DENG2_DEFINE_AUDIENCE2(Deletion,         void materialBeingDeleted(Material const &))
+    DE_DEFINE_AUDIENCE2(Deletion,         void materialBeingDeleted(Material const &))
 
     /// Notified whenever the logical dimensions change.
-    DENG2_DEFINE_AUDIENCE2(DimensionsChange, void materialDimensionsChanged(Material &))
+    DE_DEFINE_AUDIENCE2(DimensionsChange, void materialDimensionsChanged(Material &))
 
 public:
     /**
@@ -141,7 +141,7 @@ public:
 //- Layers ------------------------------------------------------------------------------
 
     /// The referenced layer does not exist. @ingroup errors
-    //DENG2_ERROR(MissingLayerError);
+    //DE_ERROR(MissingLayerError);
 
     /**
      * Base class for modelling a logical layer.
@@ -158,7 +158,7 @@ public:
     {
     public:
         /// The referenced stage does not exist. @ingroup errors
-        DENG2_ERROR(MissingStageError);
+        DE_ERROR(MissingStageError);
 
         /**
          * Base class for a logical layer animation stage.
@@ -172,7 +172,7 @@ public:
             Stage(Stage const &other) : tics(other.tics), variance(other.variance) {}
             virtual ~Stage() {}
 
-            DENG2_CAST_METHODS()
+            DE_CAST_METHODS()
 
             /**
              * Returns a human-friendly, textual description of the animation stage
@@ -184,7 +184,7 @@ public:
     public:
         virtual ~Layer();
 
-        DENG2_CAST_METHODS()
+        DE_CAST_METHODS()
 
         /**
          * Returns a human-friendly, textual name for the type of material layer.
@@ -244,7 +244,7 @@ public:
      * Lookup a Layer by it's unique @a index.
      */
     inline Layer &layer(int index) const {
-        DENG2_ASSERT(index >= 0 && index < layerCount());
+        DE_ASSERT(index >= 0 && index < layerCount());
         return *_layers[index];
     }
 
@@ -285,7 +285,7 @@ private:
     QVector<Layer *> _layers;
     Flags _flags = DefaultFlags;
 
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Material::Flags)

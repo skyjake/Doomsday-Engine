@@ -34,11 +34,11 @@ namespace de { namespace shell {
 static String const PATH_REMOTE_PACKS  = "/remote/packs";
 static String const PATH_REMOTE_SERVER = "/remote/server"; // local folder for RemoteFeed
 
-DENG2_PIMPL(PackageDownloader)
-, DENG2_OBSERVES(filesys::RemoteFeedRelay, Status)
-, DENG2_OBSERVES(Asset, StateChange)
-, DENG2_OBSERVES(RemoteFile, Download)
-, DENG2_OBSERVES(Deletable, Deletion)
+DE_PIMPL(PackageDownloader)
+, DE_OBSERVES(filesys::RemoteFeedRelay, Status)
+, DE_OBSERVES(Asset, StateChange)
+, DE_OBSERVES(RemoteFile, Download)
+, DE_OBSERVES(Deletable, Deletion)
 {
     String                           fileRepository;
     MountCallback                    afterConnected;
@@ -107,7 +107,7 @@ DENG2_PIMPL(PackageDownloader)
 
     void downloadProgress(IDownloadable &dl, dsize remainingBytes) override
     {
-        DENG2_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT_IN_MAIN_THREAD();
 
         auto found = downloadBytes.find(&dl);
         if (found == downloadBytes.end()) return;
@@ -129,7 +129,7 @@ DENG2_PIMPL(PackageDownloader)
                 totalRemaining += bytes.start;
             }
 
-            DENG2_FOR_PUBLIC_AUDIENCE2(Status, i)
+            DE_FOR_PUBLIC_AUDIENCE2(Status, i)
             {
                 i->downloadStatusUpdate(Rangei64(totalRemaining, totalBytes),
                                         Rangei(downloadBytes.size(), numDownloads));
@@ -139,7 +139,7 @@ DENG2_PIMPL(PackageDownloader)
 
     void objectWasDeleted(Deletable *del) override
     {
-        DENG2_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT_IN_MAIN_THREAD();
         downloadBytes.remove(static_cast<RemoteFile *>(del));
     }
 
@@ -151,7 +151,7 @@ DENG2_PIMPL(PackageDownloader)
                                        : "All downloads of remote files finished");
             Loop::mainCall([this] ()
             {
-                DENG2_ASSERT(downloadBytes.isEmpty());
+                DE_ASSERT(downloadBytes.isEmpty());
                 if (postDownloadCallback) postDownloadCallback();
             });
         }
@@ -160,7 +160,7 @@ DENG2_PIMPL(PackageDownloader)
     void finishDownloads()
     {
         // Final status update.
-        DENG2_FOR_PUBLIC_AUDIENCE2(Status, i)
+        DE_FOR_PUBLIC_AUDIENCE2(Status, i)
         {
             i->downloadStatusUpdate(Rangei64(0, totalBytes), Rangei(0, numDownloads));
         }
@@ -233,10 +233,10 @@ DENG2_PIMPL(PackageDownloader)
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(Status)
+    DE_PIMPL_AUDIENCE(Status)
 };
 
-DENG2_AUDIENCE_METHOD(PackageDownloader, Status)
+DE_AUDIENCE_METHOD(PackageDownloader, Status)
 
 PackageDownloader::PackageDownloader()
     : d(new Impl(this))
@@ -250,7 +250,7 @@ String PackageDownloader::fileRepository() const
 void PackageDownloader::cancel()
 {
     d->isCancelled = true;
-    DENG2_FOR_AUDIENCE2(Status, i)
+    DE_FOR_AUDIENCE2(Status, i)
     {
         i->downloadStatusUpdate(Rangei64(), Rangei());
     }

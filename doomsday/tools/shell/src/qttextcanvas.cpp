@@ -20,14 +20,14 @@
 #include <QPainter>
 #include <QImage>
 #include <QMap>
-#ifdef DENG2_QT_5_0_OR_NEWER
+#ifdef DE_QT_5_0_OR_NEWER
 #  include <QGuiApplication>
 #endif
 
 using namespace de;
 using namespace de::shell;
 
-DENG2_PIMPL_NOREF(QtTextCanvas)
+DE_PIMPL_NOREF(QtTextCanvas)
 {
     Size dims;
     QImage backBuffer;
@@ -45,7 +45,7 @@ DENG2_PIMPL_NOREF(QtTextCanvas)
 
     Impl() : blinkVisible(true)
     {
-#ifdef DENG2_QT_5_1_OR_NEWER
+#ifdef DE_QT_5_1_OR_NEWER
         dpiFactor = qApp->devicePixelRatio();
 #else
         dpiFactor = 1;

@@ -35,7 +35,7 @@ static char sri8(reader_s *r)
 {
     if(!r) return 0;
     int8_t val;
-    DENG2_ASSERT(reader);
+    DE_ASSERT(reader);
     *reader >> val;
     return char(val);
 }
@@ -44,7 +44,7 @@ static short sri16(reader_s *r)
 {
     if(!r) return 0;
     int16_t val;
-    DENG2_ASSERT(reader);
+    DE_ASSERT(reader);
     *reader >> val;
     return short(val);
 }
@@ -52,7 +52,7 @@ static short sri16(reader_s *r)
 static int sri32(reader_s *r)
 {
     if(!r) return 0;
-    DENG2_ASSERT(reader);
+    DE_ASSERT(reader);
     int32_t val;
     *reader >> val;
     return int(val);
@@ -61,8 +61,8 @@ static int sri32(reader_s *r)
 static float srf(reader_s *r)
 {
     if(!r) return 0;
-    DENG2_ASSERT(reader);
-    DENG2_ASSERT(sizeof(float) == 4);
+    DE_ASSERT(reader);
+    DE_ASSERT(sizeof(float) == 4);
     int32_t val;
     *reader >> val;
     float rerVal = 0;
@@ -73,7 +73,7 @@ static float srf(reader_s *r)
 static void srd(reader_s *r, char *data, int len)
 {
     if(!r) return;
-    DENG2_ASSERT(reader);
+    DE_ASSERT(reader);
     if(data)
     {
         de::ByteRefArray ref(data, len);
@@ -87,7 +87,7 @@ static void srd(reader_s *r, char *data, int len)
 
 reader_s *SV_NewReader()
 {
-    DENG2_ASSERT(reader != 0);
+    DE_ASSERT(reader != 0);
     return Reader_NewWithCallbacks(sri8, sri16, sri32, srf, srd);
 }
 
@@ -123,29 +123,29 @@ bool SV_OpenFileForWrite(de::IByteArray &block)
 static void swi8(writer_s *w, char val)
 {
     if(!w) return;
-    DENG2_ASSERT(writer);
+    DE_ASSERT(writer);
     *writer << val;
 }
 
 static void swi16(Writer1 *w, short val)
 {
     if(!w) return;
-    DENG2_ASSERT(writer);
+    DE_ASSERT(writer);
     *writer << val;
 }
 
 static void swi32(Writer1 *w, int val)
 {
     if(!w) return;
-    DENG2_ASSERT(writer);
+    DE_ASSERT(writer);
     *writer << val;
 }
 
 static void swf(Writer1 *w, float val)
 {
     if(!w) return;
-    DENG2_ASSERT(writer);
-    DENG2_ASSERT(sizeof(float) == 4);
+    DE_ASSERT(writer);
+    DE_ASSERT(sizeof(float) == 4);
 
     int32_t temp = 0;
     std::memcpy(&temp, &val, 4);
@@ -155,7 +155,7 @@ static void swf(Writer1 *w, float val)
 static void swd(Writer1 *w, char const *data, int len)
 {
     if(!w) return;
-    DENG2_ASSERT(writer);
+    DE_ASSERT(writer);
     if(data)
     {
         writer->writeBytes(de::ByteRefArray(data, len));

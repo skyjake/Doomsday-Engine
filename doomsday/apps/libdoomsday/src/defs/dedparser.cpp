@@ -33,7 +33,7 @@
  * 02110-1301 USA</small>
  */
 
-#define DENG_NO_API_MACROS_URI
+#define DE_NO_API_MACROS_URI
 
 #include "doomsday/defs/dedparser.h"
 #include "doomsday/doomsdayapp.h"
@@ -164,7 +164,7 @@ void DED_SetXGClassLinks(struct xgclass_s *links)
     xgClassLinks = links;
 }
 
-DENG2_PIMPL(DEDParser)
+DE_PIMPL(DEDParser)
 {
     ded_t *ded;
 
@@ -438,7 +438,7 @@ DENG2_PIMPL(DEDParser)
 
     int ReadString(char *dest, int maxLen)
     {
-        DENG_ASSERT(dest != 0);
+        DE_ASSERT(dest != 0);
         String buffer;
         if (!ReadString(buffer)) return false;
         qstrncpy(dest, buffer.toUtf8().constData(), maxLen);
@@ -604,7 +604,7 @@ DENG2_PIMPL(DEDParser)
 
     int ReadFlags(int *dest, char const *prefix)
     {
-        DENG2_ASSERT(dest);
+        DE_ASSERT(dest);
 
         // By default, no flags are set.
         *dest = 0;
@@ -963,7 +963,7 @@ DENG2_PIMPL(DEDParser)
                 {
                     ded->addFlag(id, value);
                     Record &flag = ded->flags.find(VAR_ID, id);
-                    DENG2_ASSERT(flag.geti("value") == value); // Sanity check.
+                    DE_ASSERT(flag.geti("value") == value); // Sanity check.
                     if (source->custom) flag.set("custom", true);
                 }
             }
@@ -1011,7 +1011,7 @@ DENG2_PIMPL(DEDParser)
                     retVal = false;
                     goto ded_end_read;
                 }
-                DENG2_ASSERT(epsd != 0);
+                DE_ASSERT(epsd != 0);
 
                 if (prevEpisodeDefIdx >= 0 && bCopyNext)
                 {
@@ -1044,7 +1044,7 @@ DENG2_PIMPL(DEDParser)
                         {
                             mainDef.addHub();
                         }
-                        DENG_ASSERT(hub < mainDef.hubCount());
+                        DE_ASSERT(hub < mainDef.hubCount());
                         hubRec = &mainDef.hub(hub);
                         if (source->custom) hubRec->set("custom", true);
 
@@ -1064,7 +1064,7 @@ DENG2_PIMPL(DEDParser)
                                     (*hubRec)["map"].array()
                                             .add(new RecordValue(map.take(), RecordValue::OwnsRecord));
                                 }
-                                DENG_ASSERT(map < int(hubRec->geta("map").size()));
+                                DE_ASSERT(map < int(hubRec->geta("map").size()));
                                 Record &mapRec = *hubRec->geta("map")[map].as<RecordValue>().record();
                                 if (source->custom) mapRec.set("custom", true);
 
@@ -1084,7 +1084,7 @@ DENG2_PIMPL(DEDParser)
                                         {
                                             mgNodeDef.addExit();
                                         }
-                                        DENG_ASSERT(exit < mgNodeDef.exitCount());
+                                        DE_ASSERT(exit < mgNodeDef.exitCount());
                                         Record &exitRec = mgNodeDef.exit(exit);
                                         if (source->custom) exitRec.set("custom", true);
 
@@ -1119,7 +1119,7 @@ DENG2_PIMPL(DEDParser)
                             (*epsd)["map"].array()
                                     .add(new RecordValue(map.take(), RecordValue::OwnsRecord));
                         }
-                        DENG_ASSERT(notHubMap < int(epsd->geta("map").size()));
+                        DE_ASSERT(notHubMap < int(epsd->geta("map").size()));
                         Record &mapRec = *epsd->geta("map")[notHubMap].as<RecordValue>().record();
                         if (source->custom) mapRec.set("custom", true);
 
@@ -1139,7 +1139,7 @@ DENG2_PIMPL(DEDParser)
                                 {
                                     mgNodeDef.addExit();
                                 }
-                                DENG_ASSERT(exit < mgNodeDef.exitCount());
+                                DE_ASSERT(exit < mgNodeDef.exitCount());
                                 Record &exitRec = mgNodeDef.exit(exit);
                                 if (source->custom) exitRec.set("custom", true);
 
@@ -1486,7 +1486,7 @@ DENG2_PIMPL(DEDParser)
                     retVal = false;
                     goto ded_end_read;
                 }
-                DENG2_ASSERT(mat);
+                DE_ASSERT(mat);
 
                 // Should we copy the previous definition?
                 if (prevMaterialDefIdx >= 0 && bCopyNext)
@@ -1696,7 +1696,7 @@ DENG2_PIMPL(DEDParser)
                         {
                             mainDef.addSub();
                         }
-                        DENG_ASSERT(sub < mainDef.subCount());
+                        DE_ASSERT(sub < mainDef.subCount());
 
                         Record &subDef = mainDef.sub(sub);
 
@@ -1816,7 +1816,7 @@ DENG2_PIMPL(DEDParser)
                     retVal = false;
                     goto ded_end_read;
                 }
-                DENG2_ASSERT(music != 0);
+                DE_ASSERT(music != 0);
 
                 if (prevMusicDefIdx >= 0 && bCopyNext)
                 {
@@ -1911,7 +1911,7 @@ DENG2_PIMPL(DEDParser)
                         {
                             mainDef.addModel();
                         }
-                        DENG_ASSERT(model < mainDef.modelCount());
+                        DE_ASSERT(model < mainDef.modelCount());
 
                         Record &mdlDef = mainDef.model(model);
                         if (source->custom) mdlDef.set("custom", true);
@@ -2039,7 +2039,7 @@ DENG2_PIMPL(DEDParser)
                     retVal = false;
                     goto ded_end_read;
                 }
-                DENG2_ASSERT(mi != 0);
+                DE_ASSERT(mi != 0);
 
                 if (prevMapInfoDefIdx >= 0 && bCopyNext)
                 {
@@ -2119,7 +2119,7 @@ DENG2_PIMPL(DEDParser)
                         {
                             skyDef.addModel();
                         }
-                        DENG_ASSERT(model < skyDef.modelCount());
+                        DE_ASSERT(model < skyDef.modelCount());
 
                         Record &mdlDef = skyDef.model(model);
                         if (source->custom) mdlDef.set("custom", true);

@@ -27,20 +27,20 @@ uniform vec4 uLightIntensities[4]; // colored
 uniform vec3 uLightDirs[4]; // model space
 uniform vec3 uEyePos; // model space
 
-#ifdef DENG_VERTEX_SHADER
+#ifdef DE_VERTEX_SHADER
 out vec3 vEyeDir; // from vertex, in model space
 #else
 in  vec3 vEyeDir;
 #endif
 
-#ifdef DENG_VERTEX_SHADER
+#ifdef DE_VERTEX_SHADER
 
 void calculateEyeDirection(vec4 vertex) 
 {
     vEyeDir = uEyePos - vertex.xyz/vertex.w;
 }
 
-#endif // DENG_VERTEX_SHADER
+#endif // DE_VERTEX_SHADER
 
 vec3 diffuseLightContrib(int index, vec3 msNormal) 
 {
@@ -60,7 +60,7 @@ vec3 diffuseLight(vec3 msNormal)
             diffuseLightContrib(3, msNormal));
 }
 
-#ifdef DENG_HAVE_UTEX
+#ifdef DE_HAVE_UTEX
 
 vec3 specularLightContrib(vec4 specGloss, int index, vec3 msNormal) 
 {
@@ -97,4 +97,4 @@ vec4 emittedLight(vec2 emissiveUV)
     return emission;
 }
 
-#endif // DENG_HAVE_UTEX
+#endif // DE_HAVE_UTEX

@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_LEX_H
-#define LIBDENG2_LEX_H
+#ifndef LIBCORE_LEX_H
+#define LIBCORE_LEX_H
 
 #include "../libcore.h"
 #include "../String"
@@ -35,11 +35,11 @@ class TokenBuffer;
  *
  * @ingroup script
  */
-class DENG2_PUBLIC Lex
+class DE_PUBLIC Lex
 {
 public:
     /// Attempt to read characters when there are none left. @ingroup errors
-    DENG2_ERROR(OutOfInputError);
+    DE_ERROR(OutOfInputError);
 
     enum ModeFlag {
         DoubleCharComment = 0x1, // Comment start char must be used twice to begin comment.
@@ -190,4 +190,4 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(Lex::ModeFlags)
 
 } // namespace de
 
-#endif /* LIBDENG2_LEX_H */
+#endif /* LIBCORE_LEX_H */

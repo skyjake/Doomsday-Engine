@@ -20,7 +20,7 @@
 #ifndef LIBGUI_PERSISTENTGLWINDOW_H
 #define LIBGUI_PERSISTENTGLWINDOW_H
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
 
 #include <de/Error>
 #include <de/GLWindow>
@@ -45,7 +45,7 @@ class LIBGUI_PUBLIC PersistentGLWindow : public GLWindow
 
 public:
     /// Provided window ID was not valid. @ingroup errors
-    DENG2_ERROR(InvalidIdError);
+    DE_ERROR(InvalidIdError);
 
     /// Absolute minimum width of a window (in fullscreen also).
     static int const MIN_WIDTH;
@@ -85,7 +85,7 @@ public:
      * changes are queued, the notification is made only after all the changes
      * have been applied.
      */
-    DENG2_DEFINE_AUDIENCE2(AttributeChange, void windowAttributesChanged(PersistentGLWindow &))
+    DE_DEFINE_AUDIENCE2(AttributeChange, void windowAttributesChanged(PersistentGLWindow &))
 
 public:
     /**
@@ -184,7 +184,7 @@ protected slots:
     String configName(String const &key) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

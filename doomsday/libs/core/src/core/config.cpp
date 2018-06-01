@@ -33,7 +33,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(Config)
+DE_PIMPL_NOREF(Config)
 {
     /// Configuration file name.
     Path configPath;

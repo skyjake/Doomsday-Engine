@@ -75,14 +75,14 @@ static inline void drawQuad(dgl_vertex_t *v, dgl_color_t *c, dgl_texcoord_t *tc)
 
 void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     TextureVariant *tex = nullptr;
     if(::renderTextures)
     {
         MaterialAnimator *matAnimator = parms.animator;
-        DENG2_ASSERT(matAnimator);
+        DE_ASSERT(matAnimator);
 
         // Ensure we have up to date info about the material.
         matAnimator->prepare();
@@ -242,7 +242,7 @@ static void applyUniformColor(dint count, dgl_color_t *colors, dfloat const *rgb
 static void Spr_VertexColors(dint count, dgl_color_t *out, dgl_vertex_t *normals,
     duint lightListIdx, dint maxLights, dfloat const *_ambient)
 {
-    DENG2_ASSERT(out && normals && _ambient);
+    DE_ASSERT(out && normals && _ambient);
 
     dbyte const opacity = 255 * _ambient[3];
     Vec3f const ambient(_ambient);
@@ -296,8 +296,8 @@ MaterialVariantSpec const &PSprite_MaterialSpec()
 
 void Rend_DrawPSprite(rendpspriteparams_t const &parms)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(::renderTextures == 1)
     {
@@ -395,8 +395,8 @@ void Rend_DrawSprite(vissprite_t const &spr)
 {
     drawspriteparams_t const &parm = *VS_SPRITE(&spr);
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     TextureVariant *tex = nullptr;
     Vec2f size;

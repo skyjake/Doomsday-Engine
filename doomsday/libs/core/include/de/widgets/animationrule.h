@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_ANIMATIONRULE_H
-#define LIBDENG2_ANIMATIONRULE_H
+#ifndef LIBCORE_ANIMATIONRULE_H
+#define LIBCORE_ANIMATIONRULE_H
 
 #include "rule.h"
 
@@ -33,7 +33,7 @@ namespace de {
  * Rule with an animated value. The value is animated over time using de::Animation.
  * @ingroup widgets
  */
-class DENG2_PUBLIC AnimationRule : public Rule, DENG2_OBSERVES(Clock, TimeChange)
+class DE_PUBLIC AnimationRule : public Rule, DE_OBSERVES(Clock, TimeChange)
 {
 public:
     explicit AnimationRule(float initialValue, Animation::Style style = Animation::EaseOut);
@@ -120,4 +120,4 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(AnimationRule::Behaviors)
 
 } // namespace de
 
-#endif // LIBDENG2_ANIMATIONRULE_H
+#endif // LIBCORE_ANIMATIONRULE_H

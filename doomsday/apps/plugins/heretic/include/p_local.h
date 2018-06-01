@@ -93,7 +93,7 @@
 #define USE_MACE_AMMO_1 1
 #define USE_MACE_AMMO_2 5
 
-DENG_EXTERN_C mobj_t *missileMobj;
+DE_EXTERN_C mobj_t *missileMobj;
 
 #ifdef __cplusplus
 extern "C" {

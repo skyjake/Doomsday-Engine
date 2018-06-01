@@ -32,21 +32,21 @@
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
-DENG_EXTERN_C patchid_t pInvItemBox;
-DENG_EXTERN_C patchid_t pInvSelectBox;
-DENG_EXTERN_C patchid_t pInvPageLeft[2];
-DENG_EXTERN_C patchid_t pInvPageRight[2];
+DE_EXTERN_C patchid_t pInvItemBox;
+DE_EXTERN_C patchid_t pInvSelectBox;
+DE_EXTERN_C patchid_t pInvPageLeft[2];
+DE_EXTERN_C patchid_t pInvPageRight[2];
 #endif
 
 #if __JDOOM__ || __JDOOM64__
 // Quit messages.
 #define NUM_QUITMESSAGES    22
-DENG_EXTERN_C char const *endmsg[NUM_QUITMESSAGES + 1];
+DE_EXTERN_C char const *endmsg[NUM_QUITMESSAGES + 1];
 #endif
 
-DENG_EXTERN_C dd_bool shiftdown;
-DENG_EXTERN_C char const shiftXForm[];
-DENG_EXTERN_C patchid_t borderPatches[8];
+DE_EXTERN_C dd_bool shiftdown;
+DE_EXTERN_C char const shiftXForm[];
+DE_EXTERN_C patchid_t borderPatches[8];
 
 // The fonts.
 typedef enum {
@@ -68,7 +68,7 @@ typedef enum {
     NUM_GAME_FONTS
 } gamefontid_t;
 
-DENG_EXTERN_C fontid_t fonts[NUM_GAME_FONTS];
+DE_EXTERN_C fontid_t fonts[NUM_GAME_FONTS];
 #define FID(idx) (fonts[idx])
 
 // Vector graphics.

@@ -42,7 +42,7 @@ void DeleteStatement::execute(Context &context) const
     Evaluator &eval = context.evaluator();
     ArrayValue &results = eval.evaluateTo<ArrayValue>(_targets);
 
-    DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, results.elements())
+    DE_FOR_EACH_CONST(ArrayValue::Elements, i, results.elements())
     {
         RefValue *ref = dynamic_cast<RefValue *>(*i);
         if (!ref)

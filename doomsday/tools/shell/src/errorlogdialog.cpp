@@ -7,7 +7,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(ErrorLogDialog)
+DE_PIMPL(ErrorLogDialog)
 {
     QLabel *msg;
     QTextEdit *text;

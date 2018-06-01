@@ -22,7 +22,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(PackageIconBank)
+DE_PIMPL_NOREF(PackageIconBank)
 {
     class PackageImageSource : public TextureBank::ImageSource
     {
@@ -32,7 +32,7 @@ DENG2_PIMPL_NOREF(PackageIconBank)
             : ImageSource(packagePath)
             , _displaySize(displaySize)
         {
-            DENG2_ASSERT(packagePath.lastSegment().toStringRef().endsWith(".pack"));
+            DE_ASSERT(packagePath.lastSegment().toStringRef().endsWith(".pack"));
         }
 
         Image load() const override

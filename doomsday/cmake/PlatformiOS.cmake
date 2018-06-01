@@ -1,16 +1,16 @@
 include (PlatformGenericUnix)
 
-set (DENG_PLATFORM_SUFFIX ios)
-#set (DENG_AMETHYST_PLATFORM IOS)
+set (DE_PLATFORM_SUFFIX ios)
+#set (DE_AMETHYST_PLATFORM IOS)
 
-set (DENG_STATIC_LINK YES)
+set (DE_STATIC_LINK YES)
 
 # Install the documentation in the app bundle.
-set (DENG_INSTALL_DOC_DIR "Doomsday.app/Contents/Resources/doc")
-#set (DENG_INSTALL_MAN_DIR ${DENG_INSTALL_DOC_DIR})
+set (DE_INSTALL_DOC_DIR "Doomsday.app/Contents/Resources/doc")
+#set (DE_INSTALL_MAN_DIR ${DE_INSTALL_DOC_DIR})
 
 # Code signing.
-#set (DENG_CODESIGN_APP_CERT "" CACHE STRING "ID of the certificate for signing applications.")
+#set (DE_CODESIGN_APP_CERT "" CACHE STRING "ID of the certificate for signing applications.")
 #find_program (CODESIGN_COMMAND codesign)
 #mark_as_advanced (CODESIGN_COMMAND)
 
@@ -20,12 +20,12 @@ set (DENG_INSTALL_DOC_DIR "Doomsday.app/Contents/Resources/doc")
 #    OUTPUT_STRIP_TRAILING_WHITESPACE
 #)
 
-# option (DENG_IOS_SIMULATOR "Target the iPhoneSimulator platform" ON)
+# option (DE_IOS_SIMULATOR "Target the iPhoneSimulator platform" ON)
 #
-# if (DENG_IOS_SIMULATOR)
-#     set (DENG_IOS_PLATFORM "iPhoneSimulator")
+# if (DE_IOS_SIMULATOR)
+#     set (DE_IOS_PLATFORM "iPhoneSimulator")
 # else ()
-#     set (DENG_IOS_PLATFORM "iPhoneOS")
+#     set (DE_IOS_PLATFORM "iPhoneOS")
 # endif ()
 #
 # execute_process (
@@ -34,10 +34,10 @@ set (DENG_INSTALL_DOC_DIR "Doomsday.app/Contents/Resources/doc")
 #     OUTPUT_STRIP_TRAILING_WHITESPACE
 # )
 
-#set (DENG_IOS_SDKVER "10.3")
-#set (DENG_IOS_DEVROOT "${XCODE_DEVROOT}/Platforms/${DENG_IOS_PLATFORM}.platform/Developer")
-#set (CMAKE_OSX_DEPLOYMENT_TARGET "${DENG_IOS_SDKVER}")
-#set (CMAKE_OSX_SYSROOT "${DENG_IOS_DEVROOT}/SDKs/${DENG_IOS_PLATFORM}${DENG_IOS_SDKVER}.sdk"
+#set (DE_IOS_SDKVER "10.3")
+#set (DE_IOS_DEVROOT "${XCODE_DEVROOT}/Platforms/${DE_IOS_PLATFORM}.platform/Developer")
+#set (CMAKE_OSX_DEPLOYMENT_TARGET "${DE_IOS_SDKVER}")
+#set (CMAKE_OSX_SYSROOT "${DE_IOS_DEVROOT}/SDKs/${DE_IOS_PLATFORM}${DE_IOS_SDKVER}.sdk"
 #    CACHE PATH "Sysroot path"
 #)
 if (IOS_PLATFORM STREQUAL SIMULATOR)
@@ -53,14 +53,14 @@ append_unique (CMAKE_C_FLAGS   "-Wno-shorten-64-to-32")
 append_unique (CMAKE_CXX_FLAGS "-Wno-shorten-64-to-32")
 
 add_definitions (
-    -DDENG_STATIC_LINK=1
-    -DDENG_APPLE=1
-    -DDENG_MOBILE=1
-    -DDENG_IOS=1
-    -DDENG_BASE_DIR="."
+    -DDE_STATIC_LINK=1
+    -DDE_APPLE=1
+    -DDE_MOBILE=1
+    -DDE_IOS=1
+    -DDE_BASE_DIR="."
 )
 
-set (DENG_FIXED_ASM_DEFAULT OFF)
+set (DE_FIXED_ASM_DEFAULT OFF)
 
 set (XCODE_ATTRIBUTE_USE_HEADERMAP NO)
 

@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_ASYNCTASK_H
-#define LIBDENG2_ASYNCTASK_H
+#ifndef LIBCORE_ASYNCTASK_H
+#define LIBCORE_ASYNCTASK_H
 
 #include "../App"
 #include "../Loop"
@@ -29,7 +29,7 @@
 
 namespace de {
 
-struct DENG2_PUBLIC AsyncTask : public QThread
+struct DE_PUBLIC AsyncTask : public QThread
 {
     virtual ~AsyncTask() {}
     virtual void abort() = 0;
@@ -121,7 +121,7 @@ public:
 template <typename Task, typename Completion>
 AsyncTask *async(Task task, Completion completion)
 {
-    DENG2_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_IN_MAIN_THREAD();
     auto *t = new internal::AsyncTaskThread<Task, Completion>(std::move(task), std::move(completion));
     t->start();
     // Note: The thread will delete itself when finished.
@@ -141,7 +141,7 @@ AsyncTask *async(Task const &task)
  * Utility for invalidating the completion callbacks of async tasks whose initiator
  * has gone out of scope.
  */
-class DENG2_PUBLIC AsyncScope
+class DE_PUBLIC AsyncScope
 {
 public:
     AsyncScope() = default;
@@ -157,4 +157,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_ASYNCTASK_H
+#endif // LIBCORE_ASYNCTASK_H

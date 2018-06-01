@@ -21,7 +21,7 @@
  * 02110-1301 USA</small>
  */
 
-#define DENG_NO_API_MACROS_MAP
+#define DE_NO_API_MACROS_MAP
 
 #include "de_base.h"
 #include "api_map.h"
@@ -132,7 +132,7 @@ static int dummyType(void const *dummy)
         return DMU_NONE;
     }
 
-    DENG2_ASSERT(dummies.contains(const_cast<MapElement *>(elem)));
+    DE_ASSERT(dummies.contains(const_cast<MapElement *>(elem)));
 
     return elem->type();
 }
@@ -187,7 +187,7 @@ void P_FreeDummy(void *dummy)
         App_FatalError("P_FreeDummy: Dummy is of unknown type.");
     }
 
-    DENG2_ASSERT(dummies.contains(elem));
+    DE_ASSERT(dummies.contains(elem));
 
     dummies.remove(elem);
     delete elem;
@@ -230,7 +230,7 @@ int P_ToIndex(void const *ptr)
 
     default:
         /// @todo Throw exception.
-        DENG2_ASSERT(false); // Unknown/non-indexable DMU type.
+        DE_ASSERT(false); // Unknown/non-indexable DMU type.
         return -1;
     }
 }
@@ -468,11 +468,11 @@ int P_Callbackp(int type, void *elPtr, int (*callback)(void *p, void *ctx), void
         {
             return callback(elem, context);
         }
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
         else
         {
             LOG_DEBUG("Type mismatch %s != %s\n") << DMU_Str(type) << DMU_Str(elem->type());
-            DENG2_ASSERT(false);
+            DE_ASSERT(false);
         }
 #endif
         break;
@@ -496,7 +496,7 @@ int P_Callbackp(int type, void *elPtr, int (*callback)(void *p, void *ctx), void
  */
 static void setProperty(MapElement *elem, DmuArgs &args)
 {
-    DENG_ASSERT(elem != 0);
+    DE_ASSERT(elem != 0);
 
     /**
      * @par Algorithm
@@ -602,7 +602,7 @@ static void setProperty(MapElement *elem, DmuArgs &args)
 
 static void getProperty(MapElement const *elem, DmuArgs &args)
 {
-    DENG_ASSERT(elem != 0);
+    DE_ASSERT(elem != 0);
 
     // Dereference where necessary. Note the order, these cascade.
     if(args.type == DMU_SECTOR)
@@ -1389,14 +1389,14 @@ void P_GetPtrpv(void *ptr, uint prop, void *params)
 }
 
 #undef P_MapExists
-DENG_EXTERN_C dd_bool P_MapExists(char const *uriCString)
+DE_EXTERN_C dd_bool P_MapExists(char const *uriCString)
 {
     if(!uriCString || !uriCString[0]) return false;
     return App_Resources().mapManifests().tryFindMapManifest(de::makeUri(uriCString)) != nullptr;
 }
 
 #undef P_MapIsCustom
-DENG_EXTERN_C dd_bool P_MapIsCustom(char const *uriCString)
+DE_EXTERN_C dd_bool P_MapIsCustom(char const *uriCString)
 {
     if(!uriCString || !uriCString[0]) return false;
     if(res::MapManifest const *mapDef = App_Resources().mapManifests().tryFindMapManifest(de::makeUri(uriCString)))
@@ -1407,7 +1407,7 @@ DENG_EXTERN_C dd_bool P_MapIsCustom(char const *uriCString)
 }
 
 #undef P_MapSourceFile
-DENG_EXTERN_C AutoStr *P_MapSourceFile(char const *uriCString)
+DE_EXTERN_C AutoStr *P_MapSourceFile(char const *uriCString)
 {
     if(!uriCString || !uriCString[0]) return nullptr;
     if(res::MapManifest const *mapDef = App_Resources().mapManifests().tryFindMapManifest(de::makeUri(uriCString)))
@@ -1418,7 +1418,7 @@ DENG_EXTERN_C AutoStr *P_MapSourceFile(char const *uriCString)
 }
 
 #undef P_MapChange
-DENG_EXTERN_C dd_bool P_MapChange(char const *uriCString)
+DE_EXTERN_C dd_bool P_MapChange(char const *uriCString)
 {
     if(!uriCString || !uriCString[0])
     {
@@ -1449,7 +1449,7 @@ DENG_EXTERN_C dd_bool P_MapChange(char const *uriCString)
 }
 
 #undef P_CountMapObjs
-DENG_EXTERN_C uint P_CountMapObjs(int entityId)
+DE_EXTERN_C uint P_CountMapObjs(int entityId)
 {
     if(!App_World().hasMap()) return 0;
     EntityDatabase &entities = App_World().map().entityDatabase();
@@ -1457,23 +1457,23 @@ DENG_EXTERN_C uint P_CountMapObjs(int entityId)
 }
 
 #undef Mobj_Link
-DENG_EXTERN_C void Mobj_Link(mobj_t *mobj, int flags)
+DE_EXTERN_C void Mobj_Link(mobj_t *mobj, int flags)
 {
     if(!mobj || !App_World().hasMap()) return; // Huh?
     App_World().map().link(*mobj, flags);
 }
 
 #undef Mobj_Unlink
-DENG_EXTERN_C void Mobj_Unlink(mobj_t *mobj)
+DE_EXTERN_C void Mobj_Unlink(mobj_t *mobj)
 {
     if(!mobj || !Mobj_IsLinked(*mobj)) return;
     Mobj_Map(*mobj).unlink(*mobj);
 }
 
 #undef Mobj_TouchedLinesIterator
-DENG_EXTERN_C int Mobj_TouchedLinesIterator(mobj_t *mob, int (*callback) (Line *, void *), void *context)
+DE_EXTERN_C int Mobj_TouchedLinesIterator(mobj_t *mob, int (*callback) (Line *, void *), void *context)
 {
-    DENG2_ASSERT(mob && callback);
+    DE_ASSERT(mob && callback);
     LoopResult result = Mobj_Map(*mob).forAllLinesTouchingMobj(*mob, [&callback, &context] (Line &line)
     {
         return LoopResult( callback(&line, context) );
@@ -1482,9 +1482,9 @@ DENG_EXTERN_C int Mobj_TouchedLinesIterator(mobj_t *mob, int (*callback) (Line *
 }
 
 #undef Mobj_TouchedSectorsIterator
-DENG_EXTERN_C int Mobj_TouchedSectorsIterator(mobj_t *mob, int (*callback) (Sector *, void *), void *context)
+DE_EXTERN_C int Mobj_TouchedSectorsIterator(mobj_t *mob, int (*callback) (Sector *, void *), void *context)
 {
-    DENG2_ASSERT(mob && callback);
+    DE_ASSERT(mob && callback);
     LoopResult result = Mobj_Map(*mob).forAllSectorsTouchingMobj(*mob, [&callback, &context] (Sector &sector)
     {
         return LoopResult( callback(&sector, context) );
@@ -1493,9 +1493,9 @@ DENG_EXTERN_C int Mobj_TouchedSectorsIterator(mobj_t *mob, int (*callback) (Sect
 }
 
 #undef Line_TouchingMobjsIterator
-DENG_EXTERN_C int Line_TouchingMobjsIterator(Line *line, int (*callback) (mobj_t *, void *), void *context)
+DE_EXTERN_C int Line_TouchingMobjsIterator(Line *line, int (*callback) (mobj_t *, void *), void *context)
 {
-    DENG2_ASSERT(line && callback);
+    DE_ASSERT(line && callback);
     LoopResult result = line->map().forAllMobjsTouchingLine(*line, [&callback, &context] (mobj_t &mob)
     {
         return LoopResult( callback(&mob, context) );
@@ -1504,9 +1504,9 @@ DENG_EXTERN_C int Line_TouchingMobjsIterator(Line *line, int (*callback) (mobj_t
 }
 
 #undef Sector_TouchingMobjsIterator
-DENG_EXTERN_C int Sector_TouchingMobjsIterator(Sector *sector, int (*callback) (mobj_t *, void *), void *context)
+DE_EXTERN_C int Sector_TouchingMobjsIterator(Sector *sector, int (*callback) (mobj_t *, void *), void *context)
 {
-    DENG2_ASSERT(sector && callback);
+    DE_ASSERT(sector && callback);
     LoopResult result = sector->map().forAllMobjsTouchingSector(*sector, [&callback, &context] (mobj_t &mob)
     {
         return LoopResult( callback(&mob, context) );
@@ -1515,17 +1515,17 @@ DENG_EXTERN_C int Sector_TouchingMobjsIterator(Sector *sector, int (*callback) (
 }
 
 #undef Sector_AtPoint_FixedPrecision
-DENG_EXTERN_C Sector *Sector_AtPoint_FixedPrecision(const_pvec2d_t point)
+DE_EXTERN_C Sector *Sector_AtPoint_FixedPrecision(const_pvec2d_t point)
 {
     if(!App_World().hasMap()) return 0;
     return App_World().map().bspLeafAt_FixedPrecision(point).sectorPtr();
 }
 
 #undef Mobj_BoxIterator
-DENG_EXTERN_C int Mobj_BoxIterator(AABoxd const *box,
+DE_EXTERN_C int Mobj_BoxIterator(AABoxd const *box,
     int (*callback) (mobj_t *, void *), void *context)
 {
-    DENG2_ASSERT(box && callback);
+    DE_ASSERT(box && callback);
 
     LoopResult result = LoopContinue;
     if(App_World().hasMap())
@@ -1548,10 +1548,10 @@ DENG_EXTERN_C int Mobj_BoxIterator(AABoxd const *box,
 }
 
 #undef Polyobj_BoxIterator
-DENG_EXTERN_C int Polyobj_BoxIterator(AABoxd const *box,
+DE_EXTERN_C int Polyobj_BoxIterator(AABoxd const *box,
     int (*callback) (struct polyobj_s *, void *), void *context)
 {
-    DENG2_ASSERT(box && callback);
+    DE_ASSERT(box && callback);
 
     LoopResult result = LoopContinue;
     if(App_World().hasMap())
@@ -1574,10 +1574,10 @@ DENG_EXTERN_C int Polyobj_BoxIterator(AABoxd const *box,
 }
 
 #undef Line_BoxIterator
-DENG_EXTERN_C int Line_BoxIterator(AABoxd const *box, int flags,
+DE_EXTERN_C int Line_BoxIterator(AABoxd const *box, int flags,
     int (*callback) (Line *, void *), void *context)
 {
-    DENG2_ASSERT(box && callback);
+    DE_ASSERT(box && callback);
     if(!App_World().hasMap()) return LoopContinue;
 
     return App_World().map().forAllLinesInBox(*box, flags, [&callback, &context] (Line &line)
@@ -1587,10 +1587,10 @@ DENG_EXTERN_C int Line_BoxIterator(AABoxd const *box, int flags,
 }
 
 #undef Subspace_BoxIterator
-DENG_EXTERN_C int Subspace_BoxIterator(AABoxd const *box,
+DE_EXTERN_C int Subspace_BoxIterator(AABoxd const *box,
     int (*callback) (struct convexsubspace_s *, void *), void *context)
 {
-    DENG2_ASSERT(box && callback);
+    DE_ASSERT(box && callback);
     if (!App_World().hasMap()) return LoopContinue;
 
     dint const localValidCount = validCount;
@@ -1617,7 +1617,7 @@ DENG_EXTERN_C int Subspace_BoxIterator(AABoxd const *box,
 }
 
 #undef P_PathTraverse2
-DENG_EXTERN_C int P_PathTraverse2(const_pvec2d_t from, const_pvec2d_t to,
+DE_EXTERN_C int P_PathTraverse2(const_pvec2d_t from, const_pvec2d_t to,
     int flags, traverser_t callback, void *context)
 {
     if(!App_World().hasMap()) return false;  // Continue iteration.
@@ -1627,7 +1627,7 @@ DENG_EXTERN_C int P_PathTraverse2(const_pvec2d_t from, const_pvec2d_t to,
 }
 
 #undef P_PathTraverse
-DENG_EXTERN_C int P_PathTraverse(const_pvec2d_t from, const_pvec2d_t to,
+DE_EXTERN_C int P_PathTraverse(const_pvec2d_t from, const_pvec2d_t to,
     traverser_t callback, void *context)
 {
     if(!App_World().hasMap()) return false;  // Continue iteration.
@@ -1637,7 +1637,7 @@ DENG_EXTERN_C int P_PathTraverse(const_pvec2d_t from, const_pvec2d_t to,
 }
 
 #undef P_CheckLineSight
-DENG_EXTERN_C dd_bool P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, coord_t bottomSlope,
+DE_EXTERN_C dd_bool P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, coord_t bottomSlope,
     coord_t topSlope, int flags)
 {
     if(!App_World().hasMap()) return false;  // Continue iteration.
@@ -1647,80 +1647,80 @@ DENG_EXTERN_C dd_bool P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, c
 }
 
 #undef Interceptor_Origin
-DENG_EXTERN_C coord_t const *Interceptor_Origin(Interceptor const *trace)
+DE_EXTERN_C coord_t const *Interceptor_Origin(Interceptor const *trace)
 {
     if(!trace) return 0;
     return trace->origin();
 }
 
 #undef Interceptor_Direction
-DENG_EXTERN_C coord_t const *(Interceptor_Direction)(Interceptor const *trace)
+DE_EXTERN_C coord_t const *(Interceptor_Direction)(Interceptor const *trace)
 {
     if(!trace) return 0;
     return trace->direction();
 }
 
 #undef Interceptor_Opening
-DENG_EXTERN_C LineOpening const *Interceptor_Opening(Interceptor const *trace)
+DE_EXTERN_C LineOpening const *Interceptor_Opening(Interceptor const *trace)
 {
     if(!trace) return 0;
     return &trace->opening();
 }
 
 #undef Interceptor_AdjustOpening
-DENG_EXTERN_C dd_bool Interceptor_AdjustOpening(Interceptor *trace, Line *line)
+DE_EXTERN_C dd_bool Interceptor_AdjustOpening(Interceptor *trace, Line *line)
 {
     if(!trace) return false;
     return trace->adjustOpening(line);
 }
 
 #undef Mobj_CreateXYZ
-DENG_EXTERN_C mobj_t *Mobj_CreateXYZ(thinkfunc_t function, coord_t x, coord_t y, coord_t z,
+DE_EXTERN_C mobj_t *Mobj_CreateXYZ(thinkfunc_t function, coord_t x, coord_t y, coord_t z,
     angle_t angle, coord_t radius, coord_t height, int ddflags)
 {
     return P_MobjCreate(function, Vec3d(x, y, z), angle, radius, height, ddflags);
 }
 
 // p_mobj.c
-DENG_EXTERN_C void Mobj_Destroy(mobj_t *mobj);
-DENG_EXTERN_C void Mobj_SetState(mobj_t *mobj, int statenum);
-DENG_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t *mobj);
-DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mobj, coord_t origin[3]);
-DENG_EXTERN_C Sector *Mobj_Sector(mobj_t const *mobj);
-DENG_EXTERN_C void Mobj_SpawnDamageParticleGen(mobj_t const *mobj, mobj_t const *inflictor, int amount);
+DE_EXTERN_C void Mobj_Destroy(mobj_t *mobj);
+DE_EXTERN_C void Mobj_SetState(mobj_t *mobj, int statenum);
+DE_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t *mobj);
+DE_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mobj, coord_t origin[3]);
+DE_EXTERN_C Sector *Mobj_Sector(mobj_t const *mobj);
+DE_EXTERN_C void Mobj_SpawnDamageParticleGen(mobj_t const *mobj, mobj_t const *inflictor, int amount);
 
 // p_think.c
-DENG_EXTERN_C struct mobj_s* Mobj_ById(int id);
+DE_EXTERN_C struct mobj_s* Mobj_ById(int id);
 
 #undef Polyobj_SetCallback
-DENG_EXTERN_C void Polyobj_SetCallback(void (*func) (struct mobj_s *, void *, void *))
+DE_EXTERN_C void Polyobj_SetCallback(void (*func) (struct mobj_s *, void *, void *))
 {
     Polyobj::setCollisionCallback(func);
 }
 
 #undef Polyobj_Unlink
-DENG_EXTERN_C void Polyobj_Unlink(Polyobj *po)
+DE_EXTERN_C void Polyobj_Unlink(Polyobj *po)
 {
     if(!po) return;
     po->unlink();
 }
 
 #undef Polyobj_Link
-DENG_EXTERN_C void Polyobj_Link(Polyobj *po)
+DE_EXTERN_C void Polyobj_Link(Polyobj *po)
 {
     if(!po) return;
     po->link();
 }
 
 #undef Polyobj_ById
-DENG_EXTERN_C Polyobj *Polyobj_ById(int index)
+DE_EXTERN_C Polyobj *Polyobj_ById(int index)
 {
     if(!App_World().hasMap()) return nullptr;
     return App_World().map().polyobjPtr(index);
 }
 
 #undef Polyobj_ByTag
-DENG_EXTERN_C Polyobj *Polyobj_ByTag(int tag)
+DE_EXTERN_C Polyobj *Polyobj_ByTag(int tag)
 {
     Polyobj *found = nullptr; // not found.
     if(App_World().hasMap())
@@ -1739,44 +1739,44 @@ DENG_EXTERN_C Polyobj *Polyobj_ByTag(int tag)
 }
 
 #undef Polyobj_Move
-DENG_EXTERN_C dd_bool Polyobj_Move(Polyobj *po, const_pvec3d_t xy)
+DE_EXTERN_C dd_bool Polyobj_Move(Polyobj *po, const_pvec3d_t xy)
 {
     if(!po) return false;
     return po->move(xy);
 }
 
 #undef Polyobj_MoveXY
-DENG_EXTERN_C dd_bool Polyobj_MoveXY(Polyobj *po, coord_t x, coord_t y)
+DE_EXTERN_C dd_bool Polyobj_MoveXY(Polyobj *po, coord_t x, coord_t y)
 {
     if(!po) return false;
     return po->move(x, y);
 }
 
 #undef Polyobj_Rotate
-DENG_EXTERN_C dd_bool Polyobj_Rotate(Polyobj *po, angle_t angle)
+DE_EXTERN_C dd_bool Polyobj_Rotate(Polyobj *po, angle_t angle)
 {
     if(!po) return false;
     return po->rotate(angle);
 }
 
 #undef Polyobj_FirstLine
-DENG_EXTERN_C Line *Polyobj_FirstLine(Polyobj *po)
+DE_EXTERN_C Line *Polyobj_FirstLine(Polyobj *po)
 {
     if(!po) return 0;
     return po->lines()[0];
 }
 
 #undef Line_PointDistance
-DENG_EXTERN_C coord_t Line_PointDistance(Line *line, coord_t const point[2], coord_t *offset)
+DE_EXTERN_C coord_t Line_PointDistance(Line *line, coord_t const point[2], coord_t *offset)
 {
-    DENG_ASSERT(line);
+    DE_ASSERT(line);
     return line->pointDistance(point, offset);
 }
 
 #undef Line_PointOnSide
-DENG_EXTERN_C coord_t Line_PointOnSide(Line const *line, coord_t const point[2])
+DE_EXTERN_C coord_t Line_PointOnSide(Line const *line, coord_t const point[2])
 {
-    DENG_ASSERT(line);
+    DE_ASSERT(line);
     if(!point)
     {
         LOG_AS("Line_PointOnSide");
@@ -1787,27 +1787,27 @@ DENG_EXTERN_C coord_t Line_PointOnSide(Line const *line, coord_t const point[2])
 }
 
 #undef Line_BoxOnSide
-DENG_EXTERN_C int Line_BoxOnSide(Line *line, AABoxd const *box)
+DE_EXTERN_C int Line_BoxOnSide(Line *line, AABoxd const *box)
 {
-    DENG_ASSERT(line && box);
+    DE_ASSERT(line && box);
     return line->boxOnSide(*box);
 }
 
 #undef Line_BoxOnSide_FixedPrecision
-DENG_EXTERN_C int Line_BoxOnSide_FixedPrecision(Line *line, AABoxd const *box)
+DE_EXTERN_C int Line_BoxOnSide_FixedPrecision(Line *line, AABoxd const *box)
 {
-    DENG_ASSERT(line && box);
+    DE_ASSERT(line && box);
     return line->boxOnSide_FixedPrecision(*box);
 }
 
 #undef Line_Opening
-DENG_EXTERN_C void Line_Opening(Line *line, LineOpening *opening)
+DE_EXTERN_C void Line_Opening(Line *line, LineOpening *opening)
 {
-    DENG2_ASSERT(line && opening);
+    DE_ASSERT(line && opening);
     *opening = LineOpening(*line);
 }
 
-DENG_DECLARE_API(Map) =
+DE_DECLARE_API(Map) =
 {
     { DE_API_MAP },
     P_MapExists,

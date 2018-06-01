@@ -21,7 +21,7 @@
 
 namespace res {
 
-DENG2_PIMPL(IdTech1FlatLib)
+DE_PIMPL(IdTech1FlatLib)
 {
     const LumpCatalog &catalog;
     QHash<String, LumpCatalog::LumpPos> flats;

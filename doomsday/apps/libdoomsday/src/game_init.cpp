@@ -42,7 +42,7 @@ using namespace de;
 
 static void updateProgress(int progress)
 {
-    DENG2_FOR_EACH_OBSERVER(Games::ProgressAudience, i,
+    DE_FOR_EACH_OBSERVER(Games::ProgressAudience, i,
                             DoomsdayApp::games().audienceForProgress())
     {
         i->gameWorkerProgress(progress);
@@ -92,7 +92,7 @@ namespace de {
 // Helper function for accessing files via the legacy FS1.
 static void forNativeDataFiles(DataBundle const &bundle, std::function<void (String const &)> func)
 {
-    DENG2_ASSERT(bundle.isLinkedAsPackage()); // couldn't be accessed otherwise
+    DE_ASSERT(bundle.isLinkedAsPackage()); // couldn't be accessed otherwise
 
     switch (bundle.format())
     {
@@ -213,7 +213,7 @@ bool File1::tryUnload(DataBundle const &bundle)
 
 static void loadResource(ResourceManifest &manifest)
 {
-    DENG2_ASSERT(manifest.resourceClass() == RC_PACKAGE);
+    DE_ASSERT(manifest.resourceClass() == RC_PACKAGE);
 
     de::Uri path(manifest.resolvedPath(false/*do not locate resource*/), RC_NULL);
     if (path.isEmpty()) return;
@@ -350,7 +350,7 @@ static dint findAllGameDataPaths(FS1::PathList &found)
     dint const numFoundSoFar = found.count();
     for (String const &ext : extensions)
     {
-        DENG2_ASSERT(!ext.isEmpty());
+        DE_ASSERT(!ext.isEmpty());
         String const searchPath = de::Uri(Path("$(App.DataPath)/$(GamePlugin.Name)/auto/*." + ext)).resolved();
         App_FileSystem().findAllPaths(searchPath, 0, found);
     }
@@ -368,7 +368,7 @@ static dint loadFilesFromDataGameAuto()
     findAllGameDataPaths(found);
 
     dint numLoaded = 0;
-    DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
+    DE_FOR_EACH_CONST(FS1::PathList, i, found)
     {
         // Ignore directories.
         if (i->attrib & A_SUBDIR) continue;
@@ -427,7 +427,7 @@ int loadAddonResourcesBusyWorker(void *context)
 
         FS1::PathList found;
         findAllGameDataPaths(found);
-        DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
+        DE_FOR_EACH_CONST(FS1::PathList, i, found)
         {
             // Ignore directories.
             if (i->attrib & A_SUBDIR) continue;

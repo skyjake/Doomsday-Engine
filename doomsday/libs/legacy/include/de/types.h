@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_BASIC_TYPES_H
-#define LIBDENG_BASIC_TYPES_H
+#ifndef DE_BASIC_TYPES_H
+#define DE_BASIC_TYPES_H
 
 // This header is ignored if read by Microsoft RC.
 #ifndef RC_INVOKED
@@ -184,4 +184,4 @@ typedef int32_t         int_from_pointer_t;
 
 #endif // RC_INVOKED
 
-#endif // LIBDENG_BASIC_TYPES_H
+#endif // DE_BASIC_TYPES_H

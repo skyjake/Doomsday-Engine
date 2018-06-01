@@ -50,8 +50,8 @@ static Value *Function_FS_RefreshPackageFolders(Context &, const Function::Argum
 void DoomsdayApp::initBindings(Binder &binder)
 {
     binder.init(ScriptSystem::get()["App"])
-            << DENG2_FUNC(App_Download, "download", "packageId");
+            << DE_FUNC(App_Download, "download", "packageId");
 
     binder.init(ScriptSystem::get()["FS"])
-            << DENG2_FUNC_NOARG(FS_RefreshPackageFolders, "refreshPackageFolders");
+            << DE_FUNC_NOARG(FS_RefreshPackageFolders, "refreshPackageFolders");
 }

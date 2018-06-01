@@ -49,7 +49,7 @@ using namespace internal;
 /**
  * Filter for determining which log entries will be put in the log buffer.
  */
-DENG2_PIMPL_NOREF(LogFilter)
+DE_PIMPL_NOREF(LogFilter)
 {
     /// Filtering information for a domain.
     struct Filter {
@@ -205,7 +205,7 @@ LogFilter::LogFilter() : d(new Impl)
 
 bool LogFilter::isLogEntryAllowed(duint32 metadata) const
 {
-    DENG2_ASSERT(metadata & LogEntry::DomainMask); // must have a domain
+    DE_ASSERT(metadata & LogEntry::DomainMask); // must have a domain
     return d->isLogEntryAllowed(metadata);
 }
 

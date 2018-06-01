@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_BANK_H
-#define LIBDENG2_BANK_H
+#ifndef LIBCORE_BANK_H
+#define LIBCORE_BANK_H
 
 #include <QObject>
 #include <set>
@@ -71,14 +71,14 @@ namespace de {
  *
  * @ingroup data
  */
-class DENG2_PUBLIC Bank
+class DE_PUBLIC Bank
 {
 public:
     /// Failed to load data from the source. @ingroup errors
-    DENG2_ERROR(LoadError);
+    DE_ERROR(LoadError);
 
     /// Attempted to add an item that already exists in the bank. @ingroup errors
-    DENG2_ERROR(AlreadyExistsError);
+    DE_ERROR(AlreadyExistsError);
 
     enum Flag
     {
@@ -159,7 +159,7 @@ public:
             return Time::invalidTime();
         }
 
-        DENG2_CAST_METHODS()
+        DE_CAST_METHODS()
     };
 
     /**
@@ -183,7 +183,7 @@ public:
         /// Called to notify the data that it is leaving the memory cache.
         virtual void aboutToUnload() {}
 
-        DENG2_CAST_METHODS()
+        DE_CAST_METHODS()
     };
 
     typedef std::set<String> Names; // alphabetical order
@@ -192,13 +192,13 @@ public:
      * Notified when a data item has been loaded to memory (cache level
      * InMemory). Notification are always called in the main thread.
      */
-    DENG2_DEFINE_AUDIENCE2(Load, void bankLoaded(DotPath const &path))
+    DE_DEFINE_AUDIENCE2(Load, void bankLoaded(DotPath const &path))
 
     /**
      * Notified when a data item's cache level changes (in addition to the Load
      * notification). Notification are always called in the main thread.
      */
-    DENG2_DEFINE_AUDIENCE2(CacheLevel, void bankCacheLevelChanged(DotPath const &path, CacheLevel level))
+    DE_DEFINE_AUDIENCE2(CacheLevel, void bankCacheLevelChanged(DotPath const &path, CacheLevel level))
 
 public:
     /**
@@ -400,11 +400,11 @@ protected:
     virtual IData *newData();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Bank::Flags)
 
 } // namespace de
 
-#endif // LIBDENG2_BANK_H
+#endif // LIBCORE_BANK_H

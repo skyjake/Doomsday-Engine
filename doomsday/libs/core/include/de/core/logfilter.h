@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_LOGFILTER_H
-#define LIBDENG2_LOGFILTER_H
+#ifndef LIBCORE_LOGFILTER_H
+#define LIBCORE_LOGFILTER_H
 
 #include "../Log"
 #include "../LogBuffer"
@@ -36,7 +36,7 @@ namespace de {
  *
  * @ingroup core
  */
-class DENG2_PUBLIC LogFilter : public LogBuffer::IFilter
+class DE_PUBLIC LogFilter : public LogBuffer::IFilter
 {
 public:
     LogFilter();
@@ -57,7 +57,7 @@ public:
     static String domainRecordName(LogEntry::Context domain);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 /**
@@ -66,11 +66,11 @@ private:
  *
  * @ingroup core
  */
-struct DENG2_PUBLIC SimpleLogFilter : public LogBuffer::IFilter
+struct DE_PUBLIC SimpleLogFilter : public LogBuffer::IFilter
 {
     bool isLogEntryAllowed(duint32 metadata) const
     {
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
         return (metadata & LogEntry::LevelMask) >= LogEntry::Verbose;
 #else
         return !(metadata & LogEntry::Dev) &&
@@ -81,4 +81,4 @@ struct DENG2_PUBLIC SimpleLogFilter : public LogBuffer::IFilter
 
 } // namespace de
 
-#endif // LIBDENG2_LOGFILTER_H
+#endif // LIBCORE_LOGFILTER_H

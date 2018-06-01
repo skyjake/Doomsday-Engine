@@ -22,10 +22,10 @@
 
 namespace de {
 
-DENG2_PIMPL(VariableToggleWidget),
-DENG2_OBSERVES(Variable,     Deletion),
-DENG2_OBSERVES(Variable,     Change  ),
-DENG2_OBSERVES(ToggleWidget, Toggle  )
+DE_PIMPL(VariableToggleWidget),
+DE_OBSERVES(Variable,     Deletion),
+DE_OBSERVES(Variable,     Change  ),
+DE_OBSERVES(ToggleWidget, Toggle  )
 {
     Variable *var;
     NumberValue activeValue;

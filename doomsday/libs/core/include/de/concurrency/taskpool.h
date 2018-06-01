@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_TASKPOOL_H
-#define LIBDENG2_TASKPOOL_H
+#ifndef LIBCORE_TASKPOOL_H
+#define LIBCORE_TASKPOOL_H
 
 #include "../Observers"
 #include <QObject>
@@ -43,7 +43,7 @@ class Task;
  *
  * A Task is considered done/finished when it has exited its Task::runTask() method.
  */
-class DENG2_PUBLIC TaskPool : public QObject
+class DE_PUBLIC TaskPool : public QObject
 {
     Q_OBJECT
 
@@ -63,7 +63,7 @@ public:
 
     typedef std::function<void ()> TaskFunction;
 
-    DENG2_DEFINE_AUDIENCE2(Done, void taskPoolDone(TaskPool &))
+    DE_DEFINE_AUDIENCE2(Done, void taskPoolDone(TaskPool &))
 
 public:
     TaskPool();
@@ -101,9 +101,9 @@ signals:
     void allTasksDone();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_TASKPOOL_H
+#endif // LIBCORE_TASKPOOL_H

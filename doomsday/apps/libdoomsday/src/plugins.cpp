@@ -36,8 +36,8 @@ struct ThreadState
     ThreadState() : currentPlugin(0) {}
 };
 
-#ifndef DENG2_QT_4_8_OR_NEWER // Qt 4.7 requires a pointer as the local data type
-# define DENG_LOCAL_DATA_POINTER
+#ifndef DE_QT_4_8_OR_NEWER // Qt 4.7 requires a pointer as the local data type
+# define DE_LOCAL_DATA_POINTER
 QThreadStorage<ThreadState *> pluginState; ///< Thread-local plugin state.
 void initLocalData() {
     if (!pluginState.hasLocalData()) pluginState.setLocalData(new ThreadState);
@@ -72,7 +72,7 @@ pluginid_t Plugins::Hook::pluginId() const
     return _pluginId;
 }
 
-DENG2_PIMPL_NOREF(Plugins)
+DE_PIMPL_NOREF(Plugins)
 {
     void *(*getGameAPI)(char const *) = nullptr;
     GameExports gameExports;
@@ -106,13 +106,13 @@ DENG2_PIMPL_NOREF(Plugins)
     {
         typedef void (*PluginInitializer)(void);
 
-#if !defined (DENG_STATIC_LINK)
+#if !defined (DE_STATIC_LINK)
         // We are only interested in native files.
         if (!is<NativeFile>(lib.source()))
             return 0;  // Continue iteration.
 #endif
 
-        DENG2_ASSERT(!lib.path().isEmpty());
+        DE_ASSERT(!lib.path().isEmpty());
         if (strcasestr("/bin/audio_", lib.path().toUtf8().constData()))
         {
             // Do not touch audio plugins at this point.
@@ -179,7 +179,7 @@ DENG2_PIMPL_NOREF(Plugins)
 
     bool unloadPlugin(PluginHandle *handle)
     {
-        DENG2_ASSERT(handle != nullptr);
+        DE_ASSERT(handle != nullptr);
         if (!*handle) return false;
 
         Library_Delete(*handle);
@@ -189,7 +189,7 @@ DENG2_PIMPL_NOREF(Plugins)
 
     void setActivePluginId(pluginid_t id)
     {
-#ifdef DENG_LOCAL_DATA_POINTER
+#ifdef DE_LOCAL_DATA_POINTER
         initLocalData();
         pluginState.localData()->currentPlugin = id;
 #else
@@ -199,7 +199,7 @@ DENG2_PIMPL_NOREF(Plugins)
 
     pluginid_t activePluginId() const
     {
-#ifdef DENG_LOCAL_DATA_POINTER
+#ifdef DE_LOCAL_DATA_POINTER
         initLocalData();
         return pluginState.localData()->currentPlugin;
 #else
@@ -207,19 +207,19 @@ DENG2_PIMPL_NOREF(Plugins)
 #endif
     }
 
-    DENG2_PIMPL_AUDIENCE(PublishAPI)
-    DENG2_PIMPL_AUDIENCE(Notification)
+    DE_PIMPL_AUDIENCE(PublishAPI)
+    DE_PIMPL_AUDIENCE(Notification)
 };
 
-DENG2_AUDIENCE_METHOD(Plugins, PublishAPI)
-DENG2_AUDIENCE_METHOD(Plugins, Notification)
+DE_AUDIENCE_METHOD(Plugins, PublishAPI)
+DE_AUDIENCE_METHOD(Plugins, Notification)
 
 Plugins::Plugins() : d(new Impl)
 {}
 
 void Plugins::publishAPIs(::Library *lib)
 {
-    DENG2_FOR_AUDIENCE2(PublishAPI, i)
+    DE_FOR_AUDIENCE2(PublishAPI, i)
     {
         i->publishAPIToPlugin(lib);
     }
@@ -227,7 +227,7 @@ void Plugins::publishAPIs(::Library *lib)
 
 void Plugins::notify(int notification, void *data)
 {
-    DENG2_FOR_AUDIENCE2(Notification, i)
+    DE_FOR_AUDIENCE2(Notification, i)
     {
         i->pluginSentNotification(notification, data);
     }
@@ -263,14 +263,14 @@ void Plugins::setActivePluginId(pluginid_t id)
 
 LibraryFile const &Plugins::fileForPlugin(pluginid_t id) const
 {
-    DENG2_ASSERT(id > 0 && id <= MAX_PLUGS);
+    DE_ASSERT(id > 0 && id <= MAX_PLUGS);
     return Library_File(d->hInstPlug[id - 1]);
 }
 
 void *Plugins::findEntryPoint(pluginid_t pluginId, char const *fn) const
 {
     int const plugIndex = pluginId - 1;
-    DENG2_ASSERT(plugIndex >= 0 && plugIndex < MAX_PLUGS);
+    DE_ASSERT(plugIndex >= 0 && plugIndex < MAX_PLUGS);
 
     void *addr = Library_Symbol(d->hInstPlug[plugIndex], fn);
     if (!addr)
@@ -297,7 +297,7 @@ bool Plugins::exchangeGameEntryPoints(pluginid_t pluginId)
 
         // Query all the known entrypoints.
         #define GET_FUNC_OPTIONAL(Name) { functionAssign(d->gameExports.Name, d->getGameAPI(#Name)); }
-        #define GET_FUNC(Name) { GET_FUNC_OPTIONAL(Name); DENG2_ASSERT(d->gameExports.Name); }
+        #define GET_FUNC(Name) { GET_FUNC_OPTIONAL(Name); DE_ASSERT(d->gameExports.Name); }
 
         GET_FUNC(PreInit);
         GET_FUNC(PostInit);
@@ -358,18 +358,18 @@ GameExports &Plugins::gameExports() const
 
 bool Plugins::hasHook(HookType type) const
 {
-    DENG2_ASSERT(type >= 0 && type < NUM_HOOK_TYPES);
+    DE_ASSERT(type >= 0 && type < NUM_HOOK_TYPES);
     return !d->hooks[type].isEmpty();
 }
 
 void Plugins::addHook(HookType type, hookfunc_t function)
 {
-    DENG2_ASSERT(type >= 0 && type < NUM_HOOK_TYPES);
+    DE_ASSERT(type >= 0 && type < NUM_HOOK_TYPES);
 
     // The current plugin must be set before calling this. The engine has the
     // responsibility to call setActivePluginId() whenever it passes control
     // to a plugin, and then set it back to zero after it gets control back.
-    DENG2_ASSERT(d->activePluginId() != 0);
+    DE_ASSERT(d->activePluginId() != 0);
 
     if (function)
     {
@@ -387,7 +387,7 @@ void Plugins::addHook(HookType type, hookfunc_t function)
 
 bool Plugins::removeHook(HookType type, hookfunc_t function)
 {
-    DENG2_ASSERT(type >= 0 && type < NUM_HOOK_TYPES);
+    DE_ASSERT(type >= 0 && type < NUM_HOOK_TYPES);
     if (function)
     {
         Hook temp;

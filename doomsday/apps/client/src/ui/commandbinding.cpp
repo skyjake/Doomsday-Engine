@@ -63,12 +63,12 @@ String CommandBinding::composeDescriptor()
     case E_ANGLE:       str += B_HatAngleToString(getf("pos")); break;
     case E_SYMBOLIC:    str += "-" + gets("symbolicName"); break;
 
-    default: DENG2_ASSERT_FAIL("CommandBinding::composeDescriptor: Unknown bind.type"); break;
+    default: DE_ASSERT_FAIL("CommandBinding::composeDescriptor: Unknown bind.type"); break;
     }
 
     // Append any state conditions.
     ArrayValue const &conds = def().geta("condition");
-    DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
+    DE_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
     {
         str += " + " + B_ConditionToString(*(*i)->as<RecordValue>().record());
     }
@@ -81,7 +81,7 @@ String CommandBinding::composeDescriptor()
  */
 static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const *command)
 {
-    DENG2_ASSERT(eventDesc);
+    DE_ASSERT(eventDesc);
     //InputSystem &isys = ClientApp::inputSystem();
 
     bind.resetToDefaults();
@@ -150,7 +150,7 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
             bind.def().set("pos", pos);
             break; }
 
-        default: DENG2_ASSERT_FAIL("InputSystem::configure: Invalid bind.type"); break;
+        default: DE_ASSERT_FAIL("InputSystem::configure: Invalid bind.type"); break;
         }
     }
     else if (!Str_CompareIgnoreCase(str, "joy") ||
@@ -198,7 +198,7 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
             bind.def().set("pos", pos);
             break; }
 
-        default: DENG2_ASSERT_FAIL("InputSystem::configure: Invalid bind.type") break;
+        default: DE_ASSERT_FAIL("InputSystem::configure: Invalid bind.type") break;
         }
     }
     else if (!Str_CompareIgnoreCase(str, "sym"))
@@ -229,7 +229,7 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
 
 void CommandBinding::configure(char const *eventDesc, char const *command, bool assignNewId)
 {
-    DENG2_ASSERT(eventDesc);
+    DE_ASSERT(eventDesc);
     LOG_AS("CommandBinding");
 
     // The first part specifies the event condition.
@@ -274,7 +274,7 @@ void CommandBinding::configure(char const *eventDesc, char const *command, bool 
  */
 static void substituteInCommand(String const &command, ddevent_t const &event, ddstring_t *out)
 {
-    DENG2_ASSERT(out);
+    DE_ASSERT(out);
     Block const str = command.toUtf8();
     for (char const *ptr = str.constData(); *ptr; ptr++)
     {
@@ -344,7 +344,7 @@ Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &co
         if (geti("controlId") != event.toggle.id)
             return nullptr;
 
-        DENG2_ASSERT(dev);
+        DE_ASSERT(dev);
         ButtonInputControl &button = dev->button(geti("controlId"));
 
         if (respectHigherContexts)
@@ -391,7 +391,7 @@ Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &co
         if (geti("controlId") != event.axis.id)
             return nullptr;
 
-        DENG2_ASSERT(dev);
+        DE_ASSERT(dev);
         if (dev->axis(geti("controlId")).bindContext() != &context)
             return nullptr; // Shadowed by a more important active class.
 
@@ -406,7 +406,7 @@ Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &co
         if (geti("controlId") != event.angle.id)
             return nullptr;
 
-        DENG2_ASSERT(dev);
+        DE_ASSERT(dev);
         if (dev->hat(geti("controlId")).bindContext() != &context)
             return nullptr; // Shadowed by a more important active class.
 
@@ -425,7 +425,7 @@ Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &co
 
     // Any conditions on the current state of the input devices?
     ArrayValue const &conds = def().geta("condition");
-    DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
+    DE_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
     {
         if (!B_CheckCondition(static_cast<Binding::CompiledConditionRecord *>
                               ((*i)->as<RecordValue>().record()), 0, &context))

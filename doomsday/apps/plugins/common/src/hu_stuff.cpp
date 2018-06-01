@@ -366,7 +366,7 @@ static void sortScoreInfo(scoreinfo_t* vec, size_t size)
 
 static int populateScoreInfo(scoreinfo_t* scoreBoard, int maxPlayers, int player)
 {
-    DENG_UNUSED(player);
+    DE_UNUSED(player);
 
 #if __JHEXEN__
     static const int plrColors[] = {
@@ -476,7 +476,7 @@ static int countTableColumns(const column_t* columns)
 static void applyTableLayout(column_t* columns, int numCols, float x, float width,
                              int cellPadding = 0)
 {
-    DENG_ASSERT(columns);
+    DE_ASSERT(columns);
     column_t* col;
 
     col = columns;
@@ -1344,7 +1344,7 @@ void Hu_FogEffectSetAlphaTarget(float alpha)
 dd_bool Hu_IsStatusBarVisible(int player)
 {
 #ifdef __JDOOM64__
-    DENG_UNUSED(player);
+    DE_UNUSED(player);
     return false;
 #else
     if(!ST_StatusBarIsActive(player)) return false;

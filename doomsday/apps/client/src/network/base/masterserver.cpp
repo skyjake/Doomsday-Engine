@@ -59,7 +59,7 @@ static QString masterUrl(char const *suffix = 0)
     return std::move(u);
 }
 
-DENG2_PIMPL_NOREF(MasterWorker)
+DE_PIMPL_NOREF(MasterWorker)
 {
     QNetworkAccessManager *network;
 
@@ -279,22 +279,22 @@ void N_MasterAnnounceServer(bool isOpen)
         info.setFlags(info.flags() & ~shell::ServerInfo::AllowJoin);
     }
 
-    DENG2_ASSERT(worker);
+    DE_ASSERT(worker);
     worker->newJob(MasterWorker::ANNOUNCE, info.asRecord());
 #else
-    DENG_UNUSED(isOpen);
+    DE_UNUSED(isOpen);
 #endif
 }
 
 void N_MasterRequestList(void)
 {
-    DENG2_ASSERT(worker);
+    DE_ASSERT(worker);
     worker->newJob(MasterWorker::REQUEST_SERVERS);
 }
 
 int N_MasterGet(int index, shell::ServerInfo *info)
 {
-    DENG2_ASSERT(worker);
+    DE_ASSERT(worker);
 
     if (!worker->isAllDone())
     {

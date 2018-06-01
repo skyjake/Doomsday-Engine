@@ -144,7 +144,7 @@ public:
     };
 
     /// Asked for a label that does not exist in the dialog. @ingroup errors
-    DENG2_ERROR(UndefinedLabel);
+    DE_ERROR(UndefinedLabel);
 
 public:
     DialogWidget(String const &name = String(), Flags const &flags = DefaultFlags);
@@ -270,7 +270,7 @@ protected:
     virtual void finish(int result);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef DialogWidget::ButtonItem DialogButtonItem;

@@ -22,7 +22,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(GridPopupWidget)
+DE_PIMPL_NOREF(GridPopupWidget)
 {
     DialogContentStylist stylist;
     GuiWidget *container;

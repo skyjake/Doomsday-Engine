@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_MATH_IHPLANE
-#define DENG_MATH_IHPLANE
+#ifndef DE_MATH_IHPLANE
+#define DE_MATH_IHPLANE
 
 #include <de/Error>
 #include <de/Partition>
@@ -34,7 +34,7 @@ class IHPlane
 {
 public:
     /// An invalid reference to an intercept was specified. @ingroup errors
-    DENG2_ERROR(UnknownInterceptError);
+    DE_ERROR(UnknownInterceptError);
 
     /**
      * Interface for an intercept in the implementing half-plane.
@@ -123,4 +123,4 @@ public:
 
 } // namespace de
 
-#endif // DENG_MATH_IHPLANE
+#endif // DE_MATH_IHPLANE

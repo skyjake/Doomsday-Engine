@@ -29,7 +29,7 @@ using namespace de::ui;
 static int const MAX_VISIBLE_PROFILE_NAME = 50;
 static int const MAX_PROFILE_NAME = 100;
 
-DENG_GUI_PIMPL(ProfilePickerWidget)
+DE_GUI_PIMPL(ProfilePickerWidget)
 {
     ConfigProfiles &settings;
     String description;

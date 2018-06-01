@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_ZEROED_H
-#define LIBDENG2_ZEROED_H
+#ifndef LIBCORE_ZEROED_H
+#define LIBCORE_ZEROED_H
 
 #include "../libcore.h"
 
@@ -64,4 +64,4 @@ typedef Zeroed<duint64> Uint64;
 
 } // namespace de
 
-#endif /* LIBDENG2_ZEROED_H */
+#endif /* LIBCORE_ZEROED_H */

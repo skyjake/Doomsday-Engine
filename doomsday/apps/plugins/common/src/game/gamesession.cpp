@@ -105,7 +105,7 @@ using namespace internal;
 static String const internalSavePath = "/home/cache/internal.save";
 static GameSession theSession;
 
-DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
+DE_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
 {
     String episodeId;
     GameRules rules;
@@ -174,7 +174,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
 
     void setEpisode(String const &newEpisodeId)
     {
-        DENG2_ASSERT(!self().hasBegun());
+        DE_ASSERT(!self().hasBegun());
 
         episodeId = newEpisodeId;
 
@@ -187,7 +187,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
      */
     GameStateMetadata metadata()
     {
-        DENG2_ASSERT(self().hasBegun());
+        DE_ASSERT(self().hasBegun());
 
         GameStateMetadata meta;
 
@@ -262,7 +262,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
      */
     GameStateFolder &updateGameStateFolder(String const &path, GameStateMetadata const &metadata)
     {
-        DENG2_ASSERT(self().hasBegun());
+        DE_ASSERT(self().hasBegun());
 
         LOG_AS("GameSession");
         LOG_RES_VERBOSE("Serializing to \"%s\"...") << path;
@@ -271,7 +271,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
         auto *saved = App::rootFolder().tryLocate<GameStateFolder>(path);
         if (saved)
         {
-            DENG2_ASSERT(saved->mode().testFlag(File::Write));
+            DE_ASSERT(saved->mode().testFlag(File::Write));
             saved->replaceFile("Info") << composeSaveInfo(metadata).toUtf8();
         }
         else
@@ -295,7 +295,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
 #endif
 
         Folder &mapsFolder = App::fileSystem().makeFolder(saved->path() / "maps");
-        DENG2_ASSERT(mapsFolder.mode().testFlag(File::Write));
+        DE_ASSERT(mapsFolder.mode().testFlag(File::Write));
 
         //MapStateWriter mapStateWriter;
         //self().setThinkerMapping(&mapStateWriter);
@@ -607,7 +607,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
 
     void setMap(de::Uri const &newMapUri)
     {
-        DENG2_ASSERT(self().hasBegun());
+        DE_ASSERT(self().hasBegun());
 
         self().setMapUri(newMapUri);
 
@@ -651,7 +651,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
      */
     void reloadMap(bool revisit = false)
     {
-        DENG2_ASSERT(self().hasBegun());
+        DE_ASSERT(self().hasBegun());
 
         Pause_End();
 
@@ -719,7 +719,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
 
     void backupPlayersInHub(playerbackup_t playerBackup[MAXPLAYERS])
     {
-        DENG2_ASSERT(playerBackup);
+        DE_ASSERT(playerBackup);
 
         for (dint i = 0; i < MAXPLAYERS; ++i)
         {
@@ -742,7 +742,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
      */
     void restorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS])
     {
-        DENG2_ASSERT(playerBackup);
+        DE_ASSERT(playerBackup);
 
         mobj_t *targetPlayerMobj = nullptr;
 
@@ -1204,8 +1204,8 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
         saved = &App::rootFolder().locate<GameStateFolder>(internalSavePath);
         auto &mapsFolder = saved->locate<Folder>("maps");
 
-        DENG2_ASSERT(saved->mode().testFlag(File::Write));
-        DENG2_ASSERT(mapsFolder.mode().testFlag(File::Write));
+        DE_ASSERT(saved->mode().testFlag(File::Write));
+        DE_ASSERT(mapsFolder.mode().testFlag(File::Write));
 
         // Are we entering a new hub?
 #if __JHEXEN__
@@ -1292,7 +1292,7 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
 
     if (saved)
     {
-        DENG2_ASSERT(saved->mode().testFlag(File::Write));
+        DE_ASSERT(saved->mode().testFlag(File::Write));
 
         GameStateMetadata metadata = d->metadata();
 
@@ -1308,7 +1308,7 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
 
         // Save the state of the current map.
         auto &mapsFolder = saved->locate<Folder>("maps");
-        DENG2_ASSERT(mapsFolder.mode().testFlag(File::Write));
+        DE_ASSERT(mapsFolder.mode().testFlag(File::Write));
 
         File &outFile = mapsFolder.replaceFile(mapUri().path() + "State");
         //MapStateWriter mapStateWriter;

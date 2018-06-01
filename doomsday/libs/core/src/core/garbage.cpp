@@ -40,7 +40,7 @@ struct Garbage : public Lockable
 
     bool contains(void const *ptr) const
     {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
 
         Allocs::const_iterator i = allocs.find(const_cast<void *>(ptr));
         return i != allocs.end();
@@ -48,11 +48,11 @@ struct Garbage : public Lockable
 
     void recycle(GarbageDestructor condition = nullptr)
     {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
 
         if (allocs.empty()) return;
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
         //qDebug() << "[Garbage] Recycling" << allocs.size() << "allocs/objects";
 #endif
 
@@ -61,7 +61,7 @@ struct Garbage : public Lockable
             Allocs::iterator next = i;
             ++next;
 
-            DENG2_ASSERT(i->second);
+            DE_ASSERT(i->second);
             if (!condition || i->second == condition)
             {
                 i->second(i->first);
@@ -98,7 +98,7 @@ struct Garbages : public std::map<QThread *, Garbage *>, public Lockable
 
     void clearAll()
     {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         for (iterator i = begin(); i != end(); ++i)
         {
             delete i->second;
@@ -108,7 +108,7 @@ struct Garbages : public std::map<QThread *, Garbage *>, public Lockable
 
     void recycleWithDestructor(GarbageDestructor func)
     {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         for (iterator i = begin(); i != end(); ++i)
         {
             i->second->recycle(func);
@@ -117,7 +117,7 @@ struct Garbages : public std::map<QThread *, Garbage *>, public Lockable
 
     void forgetAndLeak()
     {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         for (iterator i = begin(); i != end(); ++i)
         {
             i->second->forgetAndLeak();
@@ -136,7 +136,7 @@ static Garbages garbages;
 
 static Garbage *garbageForThread(QThread *thread)
 {
-    DENG2_GUARD(garbages);
+    DE_GUARD(garbages);
 
     Garbage *result;
     Garbages::iterator i = garbages.find(thread);
@@ -154,7 +154,7 @@ static Garbage *garbageForThread(QThread *thread)
 
 void Garbage_ClearForThread(void)
 {
-    DENG2_GUARD(garbages);
+    DE_GUARD(garbages);
 
     Garbages::iterator i = garbages.find(QThread::currentThread());
     if (i != garbages.end())
@@ -188,7 +188,7 @@ int Garbage_IsTrashed(void const *ptr)
 void Garbage_Untrash(void *ptr)
 {
     Garbage *g = garbageForThread(QThread::currentThread());
-    DENG2_ASSERT(g->contains(ptr));
+    DE_ASSERT(g->contains(ptr));
     g->allocs.erase(ptr);
 }
 

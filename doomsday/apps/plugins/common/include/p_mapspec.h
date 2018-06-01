@@ -27,7 +27,7 @@
 #include "p_iterlist.h"
 
 /// For crossed line specials.
-DENG_EXTERN_C iterlist_t *spechit;
+DE_EXTERN_C iterlist_t *spechit;
 
 #ifdef __cplusplus
 extern "C" {

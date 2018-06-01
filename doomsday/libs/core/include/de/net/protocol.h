@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
  
-#ifndef LIBDENG2_PROTOCOL_H
-#define LIBDENG2_PROTOCOL_H
+#ifndef LIBCORE_PROTOCOL_H
+#define LIBCORE_PROTOCOL_H
 
 #include "../libcore.h"
 #include <de/Reader>
@@ -49,17 +49,17 @@ class String;
  *
  * @ingroup protocol
  */
-class DENG2_PUBLIC Protocol
+class DE_PUBLIC Protocol
 {
 public:
     /// The response was not success. @ingroup errors
-    DENG2_ERROR(ResponseError);
+    DE_ERROR(ResponseError);
 
     /// The response to a command, query, or other message was FAILURE. @ingroup errors
-    DENG2_SUB_ERROR(ResponseError, FailureError);
+    DE_SUB_ERROR(ResponseError, FailureError);
 
     /// The response to a command, query, or other message was DENY. @ingroup errors
-    DENG2_SUB_ERROR(ResponseError, DenyError);
+    DE_SUB_ERROR(ResponseError, DenyError);
 
     /**
      * A constructor function examines a block of data and determines
@@ -138,4 +138,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_PROTOCOL_H */
+#endif /* LIBCORE_PROTOCOL_H */

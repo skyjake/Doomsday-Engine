@@ -22,7 +22,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(TextureBank::ImageSource)
+DE_PIMPL_NOREF(TextureBank::ImageSource)
 {
     DotPath sourcePath;
     int atlasId = 0;
@@ -49,7 +49,7 @@ int TextureBank::ImageSource::atlasId() const
     return d->atlasId;
 }
 
-DENG2_PIMPL(TextureBank)
+DE_PIMPL(TextureBank)
 {
     struct TextureData : public IData
     {

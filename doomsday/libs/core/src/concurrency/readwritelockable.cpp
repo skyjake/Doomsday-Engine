@@ -22,7 +22,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(ReadWriteLockable)
+DE_PIMPL_NOREF(ReadWriteLockable)
 {
     QReadWriteLock lock;
 

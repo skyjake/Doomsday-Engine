@@ -22,7 +22,7 @@ using namespace de;
 
 namespace gloom {
 
-DENG2_PIMPL_NOREF(Entity)
+DE_PIMPL_NOREF(Entity)
 {
     ID    id;
     Type  type{Tree1};

@@ -25,7 +25,7 @@
 #include "api_gl.h"
 #include "dd_share.h"
 
-DENG_API_TYPEDEF(Rend)
+DE_API_TYPEDEF(Rend)
 {
     de_api_t api;
 
@@ -149,9 +149,9 @@ DENG_API_TYPEDEF(Rend)
      */
     int (*ScreenShot)(const char* filename, int flags);
 }
-DENG_API_T(Rend);
+DE_API_T(Rend);
 
-#ifndef DENG_NO_API_MACROS_RENDER
+#ifndef DE_NO_API_MACROS_RENDER
 #define R_SetupFogDefaults          _api_Rend.SetupFogDefaults
 #define R_SetupFog                  _api_Rend.SetupFog
 #define Rend_CacheForMobjType       _api_Rend.CacheForMobjType
@@ -178,7 +178,7 @@ DENG_API_T(Rend);
 #endif
 
 #if defined __DOOMSDAY__ && defined __CLIENT__
-DENG_USING_API(Rend);
+DE_USING_API(Rend);
 #endif
 
 #endif // DOOMSDAY_API_RENDER_H

@@ -9,33 +9,33 @@ if (NOT CMAKE_CXX_COMPILER_ID)
     endif ()
 endif ()
 
-set (DENG_X11 ON)
-set (DENG_PLATFORM_SUFFIX x11)
-set (DENG_AMETHYST_PLATFORM UNIX)
+set (DE_X11 ON)
+set (DE_PLATFORM_SUFFIX x11)
+set (DE_AMETHYST_PLATFORM UNIX)
 
-set (DENG_BASE_DIR    "" CACHE STRING "Base directory path (defaults to {prefix}/${DENG_INSTALL_DATA_DIR})")
-set (DENG_LIBRARY_DIR "" CACHE STRING "Plugin directory path (defaults to {prefix}/${DENG_INSTALL_PLUGIN_DIR})")
+set (DE_BASE_DIR    "" CACHE STRING "Base directory path (defaults to {prefix}/${DE_INSTALL_DATA_DIR})")
+set (DE_LIBRARY_DIR "" CACHE STRING "Plugin directory path (defaults to {prefix}/${DE_INSTALL_PLUGIN_DIR})")
 
 add_definitions (
-    -DDENG_X11
+    -DDE_X11
     -D__USE_BSD
     -D_GNU_SOURCE=1
 )
-if (DENG_BASE_DIR)
-    add_definitions (-DDENG_BASE_DIR="${DENG_BASE_DIR}")
+if (DE_BASE_DIR)
+    add_definitions (-DDE_BASE_DIR="${DE_BASE_DIR}")
 else ()
-    add_definitions (-DDENG_BASE_DIR="${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_DATA_DIR}")
+    add_definitions (-DDE_BASE_DIR="${CMAKE_INSTALL_PREFIX}/${DE_INSTALL_DATA_DIR}")
 endif ()
-if (NOT DENG_LIBRARY_DIR STREQUAL "")
-    add_definitions (-DDENG_LIBRARY_DIR="${DENG_LIBRARY_DIR}")
+if (NOT DE_LIBRARY_DIR STREQUAL "")
+    add_definitions (-DDE_LIBRARY_DIR="${DE_LIBRARY_DIR}")
 else ()
-    add_definitions (-DDENG_LIBRARY_DIR="${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_PLUGIN_DIR}")
+    add_definitions (-DDE_LIBRARY_DIR="${CMAKE_INSTALL_PREFIX}/${DE_INSTALL_PLUGIN_DIR}")
 endif ()
 
-if (DENG_UPDATER_PLATFORM)
-    add_definitions (-DDENG_PLATFORM_ID="${DENG_UPDATER_PLATFORM}-${DENG_ARCH}")
+if (DE_UPDATER_PLATFORM)
+    add_definitions (-DDE_PLATFORM_ID="${DE_UPDATER_PLATFORM}-${DE_ARCH}")
 else ()
-    add_definitions (-DDENG_PLATFORM_ID="source")
+    add_definitions (-DDE_PLATFORM_ID="source")
 endif ()
 
 if (CMAKE_COMPILER_IS_GNUCXX)

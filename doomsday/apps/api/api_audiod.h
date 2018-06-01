@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_AUDIO_DRIVER_INTERFACE_H
-#define LIBDENG_AUDIO_DRIVER_INTERFACE_H
+#ifndef DE_AUDIO_DRIVER_INTERFACE_H
+#define DE_AUDIO_DRIVER_INTERFACE_H
 
 /**
  * @defgroup audio Audio
@@ -74,4 +74,4 @@ typedef struct audiointerface_base_s {
 
 ///@}
 
-#endif /* LIBDENG_AUDIO_DRIVER_INTERFACE_H */
+#endif /* DE_AUDIO_DRIVER_INTERFACE_H */

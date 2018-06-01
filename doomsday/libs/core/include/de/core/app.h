@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_APP_H
-#define LIBDENG2_APP_H
+#ifndef LIBCORE_APP_H
+#define LIBCORE_APP_H
 
 #include "../libcore.h"
 #include "de/Clock"
@@ -28,9 +28,13 @@
 /**
  * Macro for conveniently accessing the de::App singleton instance.
  */
-#define DENG2_APP   (&de::App::app())
+#define DE_APP   (&de::App::app())
 
-#define DENG2_ASSERT_IN_MAIN_THREAD()   DENG2_ASSERT(de::App::inMainThread())
+#if defined (DE_ASSERT_IN_MAIN_THREAD)
+#  undef DE_ASSERT_IN_MAIN_THREAD
+#endif
+
+#define DE_ASSERT_IN_MAIN_THREAD()   DE_ASSERT(de::App::inMainThread())
 
 namespace de {
 
@@ -63,7 +67,7 @@ namespace game { class Game; }
  *
  * @see GuiApp, TextApp
  */
-class DENG2_PUBLIC App : DENG2_OBSERVES(Clock, TimeChange)
+class DE_PUBLIC App : DE_OBSERVES(Clock, TimeChange)
 {
 public:
     enum SubsystemInitFlag {
@@ -75,15 +79,15 @@ public:
 
     /// Attempting to access persistent data when it has been disabled at init.
     /// @ingroup errors
-    DENG2_ERROR(PersistentDataNotAvailable);
+    DE_ERROR(PersistentDataNotAvailable);
 
     /// Asset with given identifier was not found. @ingroup errors
-    DENG2_ERROR(AssetNotFoundError);
+    DE_ERROR(AssetNotFoundError);
 
     /**
      * Notified when application startup has been fully completed.
      */
-    DENG2_DEFINE_AUDIENCE2(StartupComplete, void appStartupCompleted())
+    DE_DEFINE_AUDIENCE2(StartupComplete, void appStartupCompleted())
 
 public:
     /**
@@ -221,7 +225,7 @@ public:
      */
     NativePath nativeBasePath();
 
-#if !defined (DENG_STATIC_LINK)
+#if !defined (DE_STATIC_LINK)
     /**
      * Returns the native path of where to load binaries (plugins). This
      * is where "/bin" points to.
@@ -423,11 +427,11 @@ protected:
     virtual NativePath appDataPath() const = 0;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(App::SubsystemInitFlags)
 
 } // namespace de
 
-#endif // LIBDENG2_APP_H
+#endif // LIBCORE_APP_H

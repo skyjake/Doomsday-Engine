@@ -45,7 +45,7 @@ public:
     static void prepareAssets();
 
 //private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 void Face_Drawer    (guidata_face_t *face, Point2Raw const *offset);

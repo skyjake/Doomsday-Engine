@@ -34,8 +34,8 @@ namespace de {
 
 static TimeSpan const POPULATE_TIMEOUT = 15.0;
 
-DENG2_PIMPL(RemoteFeed)
-, DENG2_OBSERVES(filesys::RemoteFeedRelay, Status)
+DE_PIMPL(RemoteFeed)
+, DE_OBSERVES(filesys::RemoteFeedRelay, Status)
 {
     String repository;
     Path remotePath;

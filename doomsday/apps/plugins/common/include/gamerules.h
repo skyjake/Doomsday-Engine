@@ -88,7 +88,7 @@ public:
     void update();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #define gfw_Rule(name) (gfw_Session()->rules().values.name)

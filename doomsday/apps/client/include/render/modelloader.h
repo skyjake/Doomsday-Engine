@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_MODELLOADER_H
-#define DENG_CLIENT_MODELLOADER_H
+#ifndef DE_CLIENT_MODELLOADER_H
+#define DE_CLIENT_MODELLOADER_H
 
 #include <de/GLProgram>
 #include <de/ModelBank>
@@ -30,10 +30,10 @@ namespace render {
 class ModelLoader
 {
 public:
-    DENG2_DEFINE_AUDIENCE2(NewProgram, void newProgramCreated(de::GLProgram &))
+    DE_DEFINE_AUDIENCE2(NewProgram, void newProgramCreated(de::GLProgram &))
 
-    DENG2_ERROR(DefinitionError);
-    DENG2_ERROR(TextureMappingError);
+    DE_ERROR(DefinitionError);
+    DE_ERROR(TextureMappingError);
 
 public:
     ModelLoader();
@@ -74,9 +74,9 @@ public:
     static de::String const DEF_RENDER;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace render
 
-#endif // DENG_CLIENT_MODELLOADER_H
+#endif // DE_CLIENT_MODELLOADER_H

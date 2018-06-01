@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_IFSTATEMENT_H
-#define LIBDENG2_IFSTATEMENT_H
+#ifndef LIBCORE_IFSTATEMENT_H
+#define LIBCORE_IFSTATEMENT_H
 
 #include "../Statement"
 #include "../Compound"
@@ -83,4 +83,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_IFSTATEMENT_H */
+#endif /* LIBCORE_IFSTATEMENT_H */

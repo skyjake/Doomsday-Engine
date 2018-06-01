@@ -27,7 +27,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(ClientWindowSystem)
+DE_PIMPL(ClientWindowSystem)
 {
     ConfigProfiles settings;
 

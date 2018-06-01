@@ -22,8 +22,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_PROCESSCHECKDIALOG_H
-#define DENG_CLIENT_PROCESSCHECKDIALOG_H
+#ifndef DE_CLIENT_PROCESSCHECKDIALOG_H
+#define DE_CLIENT_PROCESSCHECKDIALOG_H
 
 #include <de/types.h>
 
@@ -45,4 +45,4 @@ dd_bool Updater_AskToStopProcess(char const *processName, char const *message);
 
 #endif // WIN32
 
-#endif // DENG_CLIENT_PROCESSCHECKDIALOG_H
+#endif // DE_CLIENT_PROCESSCHECKDIALOG_H

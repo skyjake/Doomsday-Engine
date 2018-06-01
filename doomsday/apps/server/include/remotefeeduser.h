@@ -35,7 +35,7 @@ public:
     de::Address address() const override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 

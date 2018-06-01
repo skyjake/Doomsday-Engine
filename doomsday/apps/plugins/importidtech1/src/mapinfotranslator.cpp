@@ -253,7 +253,7 @@ namespace internal {
     {
     public:
         /// Base class for all parse-related errors. @ingroup errors
-        DENG2_ERROR(ParseError);
+        DE_ERROR(ParseError);
 
         /// Mappings from symbolic song name to music id.
         typedef QMap<String, String> MusicMappings;
@@ -1191,7 +1191,7 @@ namespace internal {
 
 using namespace internal;
 
-DENG2_PIMPL_NOREF(MapInfoTranslator)
+DE_PIMPL_NOREF(MapInfoTranslator)
 {
     HexDefs defs;
     StringList translatedFiles;
@@ -1289,7 +1289,7 @@ DENG2_PIMPL_NOREF(MapInfoTranslator)
         // Warp numbers may be used as internal map references (doh!)
         translateWarpNumbers();
 
-/*#ifdef DENG_IMPORTIDTECH1_DEBUG
+/*#ifdef DE_IMPORTIDTECH1_DEBUG
         for(HexDefs::MapInfos::const_iterator i = defs.mapInfos.begin(); i != defs.mapInfos.end(); ++i)
         {
             MapInfo const &info = i->second;

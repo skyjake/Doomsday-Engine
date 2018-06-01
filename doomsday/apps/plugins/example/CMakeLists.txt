@@ -2,7 +2,7 @@
 # Copyright (c) 2015-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 cmake_minimum_required (VERSION 3.1)
-project (DENG_EXAMPLE)
+project (DE_EXAMPLE)
 include (../PluginConfig.cmake)
 
 include_directories (include)

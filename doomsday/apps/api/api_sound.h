@@ -26,7 +26,7 @@
 
 struct mobj_s;
 
-DENG_API_TYPEDEF(S)
+DE_API_TYPEDEF(S)
 {
     de_api_t api;
 
@@ -150,9 +150,9 @@ DENG_API_TYPEDEF(S)
      */
     void (*PauseMusic)(dd_bool doPause);
 }
-DENG_API_T(S);
+DE_API_T(S);
 
-#ifndef DENG_NO_API_MACROS_SOUND
+#ifndef DE_NO_API_MACROS_SOUND
 #define S_LocalSoundAtVolumeFrom    _api_S.LocalSoundAtVolumeFrom
 #define S_LocalSoundAtVolume        _api_S.LocalSoundAtVolume
 #define S_LocalSound                _api_S.LocalSound
@@ -171,7 +171,7 @@ DENG_API_T(S);
 #endif
 
 #ifdef __DOOMSDAY__
-DENG_USING_API(S);
+DE_USING_API(S);
 #endif
 
 #endif  // DOOMSDAY_API_SOUND_H

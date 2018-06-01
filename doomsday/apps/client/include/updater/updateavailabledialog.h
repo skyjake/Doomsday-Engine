@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_UPDATEAVAILABLEDIALOG_H
-#define DENG_CLIENT_UPDATEAVAILABLEDIALOG_H
+#ifndef DE_CLIENT_UPDATEAVAILABLEDIALOG_H
+#define DE_CLIENT_UPDATEAVAILABLEDIALOG_H
 
 #include <de/MessageDialog>
 #include <de/Version>
@@ -46,7 +46,7 @@ signals:
     void checkAgain();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // LIBDENG_UPDATEAVAILABLEDIALOG_H
+#endif // DE_UPDATEAVAILABLEDIALOG_H

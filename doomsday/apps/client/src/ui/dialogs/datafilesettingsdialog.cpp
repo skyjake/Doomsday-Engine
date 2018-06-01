@@ -27,7 +27,7 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(DataFileSettingsDialog)
+DE_PIMPL_NOREF(DataFileSettingsDialog)
 {
     Variable &pkgFolders  = Config::get("resource.packageFolder");
     Id searchGroup;

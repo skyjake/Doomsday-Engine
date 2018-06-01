@@ -66,8 +66,8 @@ struct WAVFormat : public IReadable
 } // namespace internal
 using namespace internal;
 
-DENG2_PIMPL(Waveform)
-, DENG2_OBSERVES(File, Deletion)
+DE_PIMPL(Waveform)
+, DE_OBSERVES(File, Deletion)
 {
     audio::Format format;
     Block sampleData;

@@ -20,7 +20,7 @@
 #ifndef CLIENT_MACX_CURSOR_H
 #define CLIENT_MACX_CURSOR_H
 
-#if !defined (DENG_IOS)
+#if !defined (DE_IOS)
 
 /**
  * Show or hide the mouse cursor.

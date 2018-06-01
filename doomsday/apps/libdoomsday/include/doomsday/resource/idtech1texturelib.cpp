@@ -62,7 +62,7 @@ struct PatchIndex {
 
 } // namespace wad
 
-DENG2_PIMPL(IdTech1TextureLib)
+DE_PIMPL(IdTech1TextureLib)
 {
     struct Patch {
         Vec2i                origin;
@@ -134,7 +134,7 @@ DENG2_PIMPL(IdTech1TextureLib)
                             /*fromLittleEndian(patch->stepdir),
                             ByteRefArray(palette.data() + COLORMAP_SIZE * fromLittleEndian(patch->colormap),
                                          COLORMAP_SIZE)*/);
-                        DENG2_ASSERT(tex.patches[p].patchLump.first);
+                        DE_ASSERT(tex.patches[p].patchLump.first);
                     }
                     textures.insert(textureName, tex);
                 }

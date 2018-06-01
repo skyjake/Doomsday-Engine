@@ -50,7 +50,7 @@ LIBGUI_VERTEX_FORMAT_SPEC(LightData, 11 * 4)
 static constexpr int MAX_OMNI_LIGHTS = 6;
 static constexpr int MAX_OMNI_SHADOWS = 6;
 
-DENG2_PIMPL(LightRender)
+DE_PIMPL(LightRender)
 {
     using VBuf   = GLBufferT<Vertex3>;
     using Lights = QHash<ID, std::shared_ptr<Light>>;
@@ -367,7 +367,7 @@ void LightRender::render()
     // Update shadow maps.
     foreach (auto *light, d->shadowCasters)
     {
-        DENG2_ASSERT(light->castShadows());
+        DE_ASSERT(light->castShadows());
         {
             Shadow *shadow = nullptr;
             if (light->type() == Light::Directional)

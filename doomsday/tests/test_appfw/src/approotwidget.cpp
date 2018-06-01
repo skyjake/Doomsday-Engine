@@ -22,7 +22,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(AppRootWidget)
+DE_PIMPL(AppRootWidget)
 {
     Impl(Public *i) : Base(i) {}
 };

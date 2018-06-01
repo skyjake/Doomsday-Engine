@@ -18,20 +18,20 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RENDER_R_MAIN_H
-#define DENG_RENDER_R_MAIN_H
+#ifndef DE_RENDER_R_MAIN_H
+#define DE_RENDER_R_MAIN_H
 
 #include "dd_types.h"
 
-DENG_EXTERN_C int      levelFullBright;
+DE_EXTERN_C int      levelFullBright;
 
-DENG_EXTERN_C float    pspOffset[2], pspLightLevelMultiplier;
-DENG_EXTERN_C int      psp3d;
-DENG_EXTERN_C float    weaponOffsetScale, weaponFOVShift;
-DENG_EXTERN_C int      weaponOffsetScaleY;
-DENG_EXTERN_C byte     weaponScaleMode; // cvar
+DE_EXTERN_C float    pspOffset[2], pspLightLevelMultiplier;
+DE_EXTERN_C int      psp3d;
+DE_EXTERN_C float    weaponOffsetScale, weaponFOVShift;
+DE_EXTERN_C int      weaponOffsetScaleY;
+DE_EXTERN_C byte     weaponScaleMode; // cvar
 
-DENG_EXTERN_C fixed_t  fineTangent[FINEANGLES / 2];
+DE_EXTERN_C fixed_t  fineTangent[FINEANGLES / 2];
 
 /**
  * Draws 2D HUD sprites. If they were already drawn 3D, this won't do anything.
@@ -43,4 +43,4 @@ void Rend_Draw2DPlayerSprites();
  */
 void Rend_Draw3DPlayerSprites();
 
-#endif // DENG_RENDER_R_MAIN_H
+#endif // DE_RENDER_R_MAIN_H

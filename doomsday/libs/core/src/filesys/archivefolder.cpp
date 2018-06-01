@@ -29,7 +29,7 @@ ArchiveFolder::ArchiveFolder(File &sourceArchiveFile, String const &name) : Fold
 
 ArchiveFolder::~ArchiveFolder()
 {
-    DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
+    DE_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion().clear();
     deindex();
 }
@@ -42,7 +42,7 @@ void ArchiveFolder::flush()
 
 String ArchiveFolder::describe() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     String desc = String("archive \"%1\"").arg(name());
 
@@ -57,7 +57,7 @@ String ArchiveFolder::describe() const
 
 Archive &ArchiveFolder::archive()
 {
-    DENG2_ASSERT(!feeds().empty());
+    DE_ASSERT(!feeds().empty());
     return primaryFeed()->as<ArchiveFeed>().archive();
 }
 

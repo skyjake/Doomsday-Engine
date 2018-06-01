@@ -26,9 +26,9 @@ using namespace de;
 
 namespace res {
 
-DENG2_PIMPL(TextureScheme)
-, DENG2_OBSERVES(TextureManifest, UniqueIdChange)
-, DENG2_OBSERVES(TextureManifest, Deletion)
+DE_PIMPL(TextureScheme)
+, DE_OBSERVES(TextureManifest, UniqueIdChange)
+, DE_OBSERVES(TextureManifest, Deletion)
 {
     /// Symbolic name of the scheme.
     String name;
@@ -52,7 +52,7 @@ DENG2_PIMPL(TextureScheme)
     ~Impl()
     {
         self().clear();
-        DENG_ASSERT(index.isEmpty());
+        DE_ASSERT(index.isEmpty());
     }
 
     bool inline uniqueIdInLutRange(int uniqueId) const
@@ -92,7 +92,7 @@ DENG2_PIMPL(TextureScheme)
         if (!uniqueIdLutDirty)
         {
             int uniqueId = manifest.uniqueId();
-            DENG_ASSERT(uniqueIdInLutRange(uniqueId));
+            DE_ASSERT(uniqueIdInLutRange(uniqueId));
             uniqueIdLut[uniqueId - uniqueIdBase] = 0;
         }
     }
@@ -101,7 +101,7 @@ DENG2_PIMPL(TextureScheme)
     void linkInUniqueIdLut(TextureManifest &manifest)
     {
         int uniqueId = manifest.uniqueId();
-        DENG_ASSERT(uniqueIdInLutRange(uniqueId));
+        DE_ASSERT(uniqueIdInLutRange(uniqueId));
         uniqueIdLut[uniqueId - uniqueIdBase] = &manifest;
     }
 
@@ -202,7 +202,7 @@ TextureManifest &TextureScheme::declare(Path const &path,
 
     int const sizeBefore = d->index.size();
     Manifest *newManifest = &d->index.insert(path);
-    DENG2_ASSERT(newManifest);
+    DE_ASSERT(newManifest);
 
     if (d->index.size() != sizeBefore)
     {
@@ -216,7 +216,7 @@ TextureManifest &TextureScheme::declare(Path const &path,
         newManifest->audienceForDeletion += d;
 
         // Notify interested parties that a new manifest was defined in the scheme.
-        DENG2_FOR_AUDIENCE(ManifestDefined, i) i->textureSchemeManifestDefined(*this, *newManifest);
+        DE_FOR_AUDIENCE(ManifestDefined, i) i->textureSchemeManifestDefined(*this, *newManifest);
     }
 
     /*

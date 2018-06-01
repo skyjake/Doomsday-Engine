@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_SOUND_ENVIRON
-#define DENG_SOUND_ENVIRON
+#ifndef DE_SOUND_ENVIRON
+#define DE_SOUND_ENVIRON
 
 #include <doomsday/uri.h>
 
@@ -62,4 +62,4 @@ AudioEnvironment const &S_AudioEnvironment(AudioEnvironmentId id);
  */
 AudioEnvironmentId S_AudioEnvironmentId(de::Uri const *uri);
 
-#endif // DENG_SOUND_ENVIRON
+#endif // DE_SOUND_ENVIRON

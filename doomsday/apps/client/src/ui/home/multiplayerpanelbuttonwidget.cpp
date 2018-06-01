@@ -42,8 +42,8 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
-, DENG2_OBSERVES(Games, Readiness)
+DE_GUI_PIMPL(MultiplayerPanelButtonWidget)
+, DE_OBSERVES(Games, Readiness)
 , public AsyncScope
 {
     shell::ServerInfo serverInfo;
@@ -99,7 +99,7 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
     void joinButtonPressed() const
     {
         self().root().setFocus(nullptr);
-        DENG2_FOR_PUBLIC_AUDIENCE2(AboutToJoin, i)
+        DE_FOR_PUBLIC_AUDIENCE2(AboutToJoin, i)
         {
             i->aboutToJoinMultiplayerGame(serverInfo);
         }
@@ -118,10 +118,10 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
         self().updateContent(serverInfo);
     }
 
-    DENG2_PIMPL_AUDIENCE(AboutToJoin)
+    DE_PIMPL_AUDIENCE(AboutToJoin)
 };
 
-DENG2_AUDIENCE_METHOD(MultiplayerPanelButtonWidget, AboutToJoin)
+DE_AUDIENCE_METHOD(MultiplayerPanelButtonWidget, AboutToJoin)
 
 MultiplayerPanelButtonWidget::MultiplayerPanelButtonWidget()
     : d(new Impl(this))
@@ -149,7 +149,7 @@ void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
     d->serverInfo = info;
     d->gameConfig = info.gameConfig();
 
-#define DIM_MDASH   _E(C) DENG2_CHAR_MDASH _E(.)
+#define DIM_MDASH   _E(C) DE_CHAR_MDASH _E(.)
 
     //label().setText(info.name);
     String meta;
@@ -158,7 +158,7 @@ void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
     {
         meta = String("%1 player%2 " DIM_MDASH " ")
                 .arg(playerCount)
-                .arg(DENG2_PLURAL_S(playerCount));
+                .arg(DE_PLURAL_S(playerCount));
     }
 
     meta += String("%1").arg(tr(d->hasConfig("coop")? "Co-op" :
@@ -206,7 +206,7 @@ void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
     if (localCount)
     {
         infoText += "\n" _E(D)_E(b) + String("%1 local package%2").arg(localCount)
-                .arg(DENG2_PLURAL_S(localCount));
+                .arg(DE_PLURAL_S(localCount));
     }
 
     d->info->setFont("small");

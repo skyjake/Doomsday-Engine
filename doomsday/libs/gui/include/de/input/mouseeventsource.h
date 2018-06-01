@@ -38,15 +38,15 @@ public:
         Trapped
     };
 
-    DENG2_DEFINE_AUDIENCE2(MouseStateChange, void mouseStateChanged(State))
-    DENG2_DEFINE_AUDIENCE2(MouseEvent,       void mouseEvent(MouseEvent const &))
+    DE_DEFINE_AUDIENCE2(MouseStateChange, void mouseStateChanged(State))
+    DE_DEFINE_AUDIENCE2(MouseEvent,       void mouseEvent(MouseEvent const &))
 
 public:
     MouseEventSource();
     virtual ~MouseEventSource() {}
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

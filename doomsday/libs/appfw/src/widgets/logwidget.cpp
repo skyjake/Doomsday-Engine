@@ -38,8 +38,8 @@ namespace de {
 
 using namespace ui;
 
-DENG_GUI_PIMPL(LogWidget),
-DENG2_OBSERVES(Atlas, OutOfSpace),
+DE_GUI_PIMPL(LogWidget),
+DE_OBSERVES(Atlas, OutOfSpace),
 public Font::RichFormat::IStyle
 {
     typedef GLBufferT<GuiVertex> VertexBuf;
@@ -191,14 +191,14 @@ public Font::RichFormat::IStyle
             }
             else if (yBottom > visiblePixels.end)
             {
-                DENG2_ASSERT(yTop >= visiblePixels.start);
+                DE_ASSERT(yTop >= visiblePixels.start);
 
                 // Partially inside.
                 range = Rangei(0, (visiblePixels.end - yTop) / lineSpacing);
             }
             else
             {
-                DENG2_ASSERT(yBottom <= visiblePixels.end);
+                DE_ASSERT(yBottom <= visiblePixels.end);
 
                 // Partially inside.
                 int count = (yBottom - visiblePixels.start) / lineSpacing;
@@ -214,7 +214,7 @@ public Font::RichFormat::IStyle
 
         void make(GuiVertexBuilder &verts, int y)
         {
-            DENG2_ASSERT(isReady());
+            DE_ASSERT(isReady());
             drawable.makeVertices(verts, Vec2i(0, y), AlignLeft);
         }
 
@@ -252,15 +252,15 @@ public Font::RichFormat::IStyle
 
         void clear()
         {
-            DENG2_GUARD(_wrappedEntries);
+            DE_GUARD(_wrappedEntries);
             qDeleteAll(_wrappedEntries);
             _wrappedEntries.clear();
         }
 
         void remove(int pos, int n = 1)
         {
-            DENG2_GUARD(this);
-            DENG2_ASSERT(pos + n <= _next);
+            DE_GUARD(this);
+            DE_ASSERT(pos + n <= _next);
             MemoryLogSink::remove(pos, n);
             _next -= n;
         }
@@ -278,7 +278,7 @@ public Font::RichFormat::IStyle
 
         CacheEntry *nextCachedEntry()
         {
-            DENG2_GUARD(_wrappedEntries);
+            DE_GUARD(_wrappedEntries);
             if (_wrappedEntries.isEmpty()) return 0;
             return _wrappedEntries.takeFirst();
         }
@@ -290,7 +290,7 @@ public Font::RichFormat::IStyle
         {
             if (!d->formatter) return; // Must have a formatter.
 
-            DENG2_GUARD(this);
+            DE_GUARD(this);
 
             while (_width > 0 && _next >= 0 && _next < entryCount())
             {
@@ -303,7 +303,7 @@ public Font::RichFormat::IStyle
                 // The cached entry will be passed to the widget when it's ready to
                 // receive new ones.
                 {
-                    DENG2_GUARD(_wrappedEntries);
+                    DE_GUARD(_wrappedEntries);
                     _wrappedEntries << cached;
                 }
 
@@ -382,7 +382,7 @@ public Font::RichFormat::IStyle
     ~Impl()
     {
         LogBuffer::get().removeSink(sink);
-        DENG2_ASSERT(cache.isEmpty());
+        DE_ASSERT(cache.isEmpty());
     }
 
     void clear()
@@ -605,7 +605,7 @@ public Font::RichFormat::IStyle
      */
     void prune()
     {
-        DENG2_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT_IN_MAIN_THREAD();
 
         // Remove oldest excess entries.
         int num = cache.size() - sink.maxEntries();

@@ -41,7 +41,7 @@ struct ListNode
 
     template <class ObjectType>
     ObjectType &objectAs() const {
-        DENG2_ASSERT(object);
+        DE_ASSERT(object);
         return *static_cast<ObjectType *>(object);
     }
 };
@@ -56,7 +56,7 @@ static ListNode head;
 static ListNode tail;
 static ListNode *mru;
 
-DENG2_PIMPL_NOREF(Interceptor)
+DE_PIMPL_NOREF(Interceptor)
 {
     traverser_t callback;
     void *context;
@@ -140,7 +140,7 @@ DENG2_PIMPL_NOREF(Interceptor)
      */
     void addIntercept(intercepttype_t type, dfloat distance, void *object)
     {
-        DENG2_ASSERT(object);
+        DE_ASSERT(object);
 
         // First reject vs our sentinels
         if(distance < head.distance) return;
@@ -348,7 +348,7 @@ LineOpening const &Interceptor::opening() const
 
 bool Interceptor::adjustOpening(Line const *line)
 {
-    DENG2_ASSERT(d->map != 0);
+    DE_ASSERT(d->map != 0);
     if(line)
     {
         if(d->map == &line->map())

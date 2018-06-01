@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENTWINDOWSYSTEM_H
-#define DENG_CLIENTWINDOWSYSTEM_H
+#ifndef DE_CLIENTWINDOWSYSTEM_H
+#define DE_CLIENTWINDOWSYSTEM_H
 
 #include <de/WindowSystem>
 #include <de/ui/Stylist>
@@ -60,7 +60,7 @@ protected:
     void rootUpdate();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENTWINDOWSYSTEM_H
+#endif // DE_CLIENTWINDOWSYSTEM_H

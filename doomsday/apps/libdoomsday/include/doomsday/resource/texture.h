@@ -41,8 +41,8 @@ class TextureManifest;
 class LIBDOOMSDAY_PUBLIC Texture
 {
 public:
-    DENG2_DEFINE_AUDIENCE(Deletion,         void textureBeingDeleted      (Texture const &))
-    DENG2_DEFINE_AUDIENCE(DimensionsChange, void textureDimensionsChanged (Texture const &))
+    DE_DEFINE_AUDIENCE(Deletion,         void textureBeingDeleted      (Texture const &))
+    DE_DEFINE_AUDIENCE(DimensionsChange, void textureDimensionsChanged (Texture const &))
 
     /**
      * Classification/processing flags.
@@ -240,7 +240,7 @@ public:
     static void consoleRegister();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Texture::Flags)

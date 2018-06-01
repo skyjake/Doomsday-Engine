@@ -110,21 +110,21 @@ void R_ResetFrameCount()
 }
 
 #undef R_SetViewOrigin
-DENG_EXTERN_C void R_SetViewOrigin(dint consoleNum, coord_t const origin[3])
+DE_EXTERN_C void R_SetViewOrigin(dint consoleNum, coord_t const origin[3])
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
     DD_Player(consoleNum)->viewport().latest.origin = Vec3d(origin);
 }
 
 #undef R_SetViewAngle
-DENG_EXTERN_C void R_SetViewAngle(dint consoleNum, angle_t angle)
+DE_EXTERN_C void R_SetViewAngle(dint consoleNum, angle_t angle)
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
     DD_Player(consoleNum)->viewport().latest.setAngle(angle);
 }
 
 #undef R_SetViewPitch
-DENG_EXTERN_C void R_SetViewPitch(dint consoleNum, dfloat pitch)
+DE_EXTERN_C void R_SetViewPitch(dint consoleNum, dfloat pitch)
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
     DD_Player(consoleNum)->viewport().latest.pitch = pitch;
@@ -137,7 +137,7 @@ void R_SetupDefaultViewWindow(dint consoleNum)
 
     vd->window =
         vd->windowOld =
-            vd->windowTarget = Rectanglei::fromSize(Vec2i(0, 0), Vec2ui(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT));
+            vd->windowTarget = Rectanglei::fromSize(Vec2i(0, 0), Vec2ui(DE_GAMEVIEW_WIDTH, DE_GAMEVIEW_HEIGHT));
     vd->windowInter = 1;
 }
 
@@ -164,7 +164,7 @@ void R_ViewWindowTicker(dint consoleNum, timespan_t ticLength)
 }
 
 #undef R_ViewWindowGeometry
-DENG_EXTERN_C dint R_ViewWindowGeometry(dint player, RectRaw *geometry)
+DE_EXTERN_C dint R_ViewWindowGeometry(dint player, RectRaw *geometry)
 {
     if(!geometry) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
@@ -178,7 +178,7 @@ DENG_EXTERN_C dint R_ViewWindowGeometry(dint player, RectRaw *geometry)
 }
 
 #undef R_ViewWindowOrigin
-DENG_EXTERN_C dint R_ViewWindowOrigin(dint player, Point2Raw *origin)
+DE_EXTERN_C dint R_ViewWindowOrigin(dint player, Point2Raw *origin)
 {
     if(!origin) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
@@ -190,7 +190,7 @@ DENG_EXTERN_C dint R_ViewWindowOrigin(dint player, Point2Raw *origin)
 }
 
 #undef R_ViewWindowSize
-DENG_EXTERN_C dint R_ViewWindowSize(dint player, Size2Raw *size)
+DE_EXTERN_C dint R_ViewWindowSize(dint player, Size2Raw *size)
 {
     if(!size) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
@@ -207,7 +207,7 @@ DENG_EXTERN_C dint R_ViewWindowSize(dint player, Size2Raw *size)
  * refresh only.
  */
 #undef R_SetViewWindowGeometry
-DENG_EXTERN_C void R_SetViewWindowGeometry(dint player, RectRaw const *geometry, dd_bool interpolate)
+DE_EXTERN_C void R_SetViewWindowGeometry(dint player, RectRaw const *geometry, dd_bool interpolate)
 {
     dint p = P_ConsoleToLocal(player);
     if(p < 0) return;
@@ -253,7 +253,7 @@ DENG_EXTERN_C void R_SetViewWindowGeometry(dint player, RectRaw const *geometry,
 }
 
 #undef R_ViewPortGeometry
-DENG_EXTERN_C dint R_ViewPortGeometry(dint player, RectRaw *geometry)
+DE_EXTERN_C dint R_ViewPortGeometry(dint player, RectRaw *geometry)
 {
     if(!geometry) return false;
 
@@ -269,7 +269,7 @@ DENG_EXTERN_C dint R_ViewPortGeometry(dint player, RectRaw *geometry)
 }
 
 #undef R_ViewPortOrigin
-DENG_EXTERN_C dint R_ViewPortOrigin(dint player, Point2Raw *origin)
+DE_EXTERN_C dint R_ViewPortOrigin(dint player, Point2Raw *origin)
 {
     if(!origin) return false;
 
@@ -283,7 +283,7 @@ DENG_EXTERN_C dint R_ViewPortOrigin(dint player, Point2Raw *origin)
 }
 
 #undef R_ViewPortSize
-DENG_EXTERN_C dint R_ViewPortSize(dint player, Size2Raw *size)
+DE_EXTERN_C dint R_ViewPortSize(dint player, Size2Raw *size)
 {
     if(!size) return false;
 
@@ -297,7 +297,7 @@ DENG_EXTERN_C dint R_ViewPortSize(dint player, Size2Raw *size)
 }
 
 #undef R_SetViewPortPlayer
-DENG_EXTERN_C void R_SetViewPortPlayer(dint consoleNum, dint viewPlayer)
+DE_EXTERN_C void R_SetViewPortPlayer(dint consoleNum, dint viewPlayer)
 {
     dint p = P_ConsoleToLocal(consoleNum);
     if(p != -1)
@@ -312,12 +312,12 @@ DENG_EXTERN_C void R_SetViewPortPlayer(dint consoleNum, dint viewPlayer)
  */
 void R_UpdateViewPortGeometry(viewport_t *port, dint col, dint row)
 {
-    DENG2_ASSERT(port);
+    DE_ASSERT(port);
 
-    Rectanglei newGeom = Rectanglei(Vec2i(DENG_GAMEVIEW_X + col * DENG_GAMEVIEW_WIDTH  / gridCols,
-                                             DENG_GAMEVIEW_Y + row * DENG_GAMEVIEW_HEIGHT / gridRows),
-                                    Vec2i(DENG_GAMEVIEW_X + (col+1) * DENG_GAMEVIEW_WIDTH  / gridCols,
-                                             DENG_GAMEVIEW_Y + (row+1) * DENG_GAMEVIEW_HEIGHT / gridRows));
+    Rectanglei newGeom = Rectanglei(Vec2i(DE_GAMEVIEW_X + col * DE_GAMEVIEW_WIDTH  / gridCols,
+                                             DE_GAMEVIEW_Y + row * DE_GAMEVIEW_HEIGHT / gridRows),
+                                    Vec2i(DE_GAMEVIEW_X + (col+1) * DE_GAMEVIEW_WIDTH  / gridCols,
+                                             DE_GAMEVIEW_Y + (row+1) * DE_GAMEVIEW_HEIGHT / gridRows));
     ddhook_viewport_reshape_t p;
 
     if(port->geometry == newGeom) return;
@@ -435,7 +435,7 @@ void R_CheckViewerLimits(viewer_t *src, viewer_t *dst)
  */
 viewer_t R_SharpViewer(ClientPlayer &player)
 {
-    DENG2_ASSERT(player.publicData().mo);
+    DE_ASSERT(player.publicData().mo);
 
     ddplayer_t const &ddpl = player.publicData();
 
@@ -517,7 +517,7 @@ void R_NewSharpWorld()
 
 void R_UpdateViewer(dint consoleNum)
 {
-    DENG2_ASSERT(consoleNum >= 0 && consoleNum < DDMAXPLAYERS);
+    DE_ASSERT(consoleNum >= 0 && consoleNum < DDMAXPLAYERS);
 
     dint const VIEWPOS_MAX_SMOOTHDISTANCE = 172;
 
@@ -695,15 +695,15 @@ void R_RenderPlayerViewBorder()
 
 void R_UseViewPort(viewport_t const *vp)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     if (!vp)
     {
         currentViewport = nullptr;
         /*ClientWindow::main().game().glApplyViewport(
-                Rectanglei::fromSize(Vec2i(DENG_GAMEVIEW_X, DENG_GAMEVIEW_Y),
-                                     Vec2ui(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT)));*/
+                Rectanglei::fromSize(Vec2i(DE_GAMEVIEW_X, DE_GAMEVIEW_Y),
+                                     Vec2ui(DE_GAMEVIEW_WIDTH, DE_GAMEVIEW_HEIGHT)));*/
     }
     else
     {
@@ -761,7 +761,7 @@ void R_RenderBlankView()
 
 static void setupPlayerSprites()
 {
-    DENG2_ASSERT(viewPlayer);
+    DE_ASSERT(viewPlayer);
 
     // There are no 3D psprites.
     ::psp3d = false;
@@ -905,10 +905,10 @@ enum ViewState { Default2D, PlayerView3D, PlayerSprite2D };
 
 static void changeViewState(ViewState viewState) //, viewport_t const *port, viewdata_t const *viewData)
 {
-    //DENG2_ASSERT(port && viewData);
+    //DE_ASSERT(port && viewData);
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch (viewState)
     {
@@ -1009,7 +1009,7 @@ static void changeViewState(ViewState viewState) //, viewport_t const *port, vie
 }
 
 #undef R_RenderPlayerView
-DENG_EXTERN_C void R_RenderPlayerView(dint num)
+DE_EXTERN_C void R_RenderPlayerView(dint num)
 {
     if (num < 0 || num >= DDMAXPLAYERS) return; // Huh?
     player_t *player = DD_Player(num);
@@ -1056,7 +1056,7 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     }
 
     // Go to wireframe mode?
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     if (renderWireframe)
     {
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -1079,7 +1079,7 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     changeViewState(PlayerSprite2D);
 
     // Don't render in wireframe mode with 2D psprites.
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     if (renderWireframe)
     {
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -1088,7 +1088,7 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
 
     Rend_Draw2DPlayerSprites();  // If the 2D versions are needed.
 
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     if (renderWireframe)
     {
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -1114,7 +1114,7 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
 
     DGL_Flush();
 
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     // Back from wireframe mode?
     if (renderWireframe)
     {
@@ -1155,7 +1155,7 @@ void R_RenderViewPort(int playerNum)
 
     viewport_t const *vp = &viewportOfLocalPlayer[localNum];
 
-    DENG2_ASSERT(vp->console == playerNum);
+    DE_ASSERT(vp->console == playerNum);
 
     dint const oldDisplay = displayPlayer;
     displayPlayer = vp->console;
@@ -1220,7 +1220,7 @@ void R_ClearViewData()
  * thank for this nonsense (Hexen's sector special 200)... -ds
  */
 #undef R_SkyParams
-DENG_EXTERN_C void R_SkyParams(dint layerIndex, dint param, void * /*data*/)
+DE_EXTERN_C void R_SkyParams(dint layerIndex, dint param, void * /*data*/)
 {
     LOG_AS("R_SkyParams");
     if (!ClientApp::world().hasMap())
@@ -1248,13 +1248,13 @@ DENG_EXTERN_C void R_SkyParams(dint layerIndex, dint param, void * /*data*/)
 
 bool R_ViewerSubspaceIsVisible(ConvexSubspace const &subspace)
 {
-    DENG2_ASSERT(subspace.indexInMap() != MapElement::NoIndex);
+    DE_ASSERT(subspace.indexInMap() != MapElement::NoIndex);
     return subspacesVisible.testBit(subspace.indexInMap());
 }
 
 void R_ViewerSubspaceMarkVisible(ConvexSubspace const &subspace, bool yes)
 {
-    DENG2_ASSERT(subspace.indexInMap() != MapElement::NoIndex);
+    DE_ASSERT(subspace.indexInMap() != MapElement::NoIndex);
     subspacesVisible.setBit(subspace.indexInMap(), yes);
 }
 
@@ -1299,8 +1299,8 @@ bool R_ViewerLumobjIsHidden(dint idx)
 static void markLumobjClipped(Lumobj const &lob, bool yes = true)
 {
     dint const index = lob.indexInMap();
-    DENG_ASSERT(index >= 0 && index < lob.map().lumobjCount());
-    DENG_ASSERT(index < frameLuminous.size());
+    DE_ASSERT(index >= 0 && index < lob.map().lumobjCount());
+    DE_ASSERT(index < frameLuminous.size());
     frameLuminous[index].isClipped = yes? 1 : 0;
 }
 
@@ -1460,7 +1460,7 @@ angle_t viewer_t::angle() const
 
 D_CMD(ViewGrid)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
     // Recalculate viewports.
     return R_SetViewGrid(String(argv[1]).toInt(), String(argv[2]).toInt());
 }

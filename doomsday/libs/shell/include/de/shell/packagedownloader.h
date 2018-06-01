@@ -77,11 +77,11 @@ public:
      * remaining to download. `bytes.size()` is the number of bytes downloaded so far.
      * `bytes.end` is the total number of bytes overall.
      */
-    DENG2_DEFINE_AUDIENCE2(Status,
+    DE_DEFINE_AUDIENCE2(Status,
                            void downloadStatusUpdate(Rangei64 const &bytes, Rangei const &files))
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 }} // namespace de::shell

@@ -27,13 +27,13 @@ using namespace de;
 
 static void ItemsWidget_Draw(guidata_items_t *items, Point2Raw const *offset)
 {
-    DENG2_ASSERT(items);
+    DE_ASSERT(items);
     items->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void ItemsWidget_UpdateGeometry(guidata_items_t *items)
 {
-    DENG2_ASSERT(items);
+    DE_ASSERT(items);
     items->updateGeometry();
 }
 
@@ -100,7 +100,7 @@ void guidata_items_t::draw(Vec2i const &offset) const
     DGL_PopMatrix();
 
 #else  // !__JHEXEN__
-    DENG2_UNUSED(offset);
+    DE_UNUSED(offset);
 #endif
 }
 

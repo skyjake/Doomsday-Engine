@@ -148,7 +148,7 @@ public:
              * @return @c NULL to use the default font.
              */
             virtual Font const *richStyleFont(Style fontStyle) const {
-                DENG2_UNUSED(fontStyle);
+                DE_UNUSED(fontStyle);
                 return NULL; // Use default.
             }
         };
@@ -262,7 +262,7 @@ public:
         };
 
     private:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
     typedef RichFormat::Ref RichFormatRef;
@@ -338,7 +338,7 @@ public:
     Rule const &lineSpacing() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

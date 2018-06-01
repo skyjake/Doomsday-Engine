@@ -35,7 +35,7 @@ using namespace de;
 
 namespace gloom {
 
-DENG2_PIMPL(MapRender)
+DE_PIMPL(MapRender)
 {
     MaterialLib       matLib;
     MapBuild::Buffers builtMap;
@@ -79,7 +79,7 @@ DENG2_PIMPL(MapRender)
 
         surfaces.clear();
 
-        DENG2_ASSERT(map);
+        DE_ASSERT(map);
 
         MapBuild builder{*map, matLib};
         builtMap = builder.build();

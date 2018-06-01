@@ -26,12 +26,12 @@
 
 namespace de {
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
 extern int GLDrawQueue_queuedElems;
 int GLDrawQueue_queuedElems = 0;
 #endif
 
-DENG2_PIMPL_NOREF(GLDrawQueue)
+DE_PIMPL_NOREF(GLDrawQueue)
 {
     GLProgram *       currentProgram = nullptr;
     GLBuffer const *  currentBuffer  = nullptr;
@@ -160,8 +160,8 @@ void GLDrawQueue::setBuffer(GLBuffer const &buffer)
 
 void GLDrawQueue::enqueueDraw(GLSubBuffer const &buffer)
 {
-    DENG2_ASSERT(&buffer.hostBuffer() == d->currentBuffer);
-    DENG2_ASSERT(d->currentProgram);
+    DE_ASSERT(&buffer.hostBuffer() == d->currentBuffer);
+    DE_ASSERT(d->currentProgram);
 
     if (buffer.size() == 0) return;
 
@@ -188,18 +188,18 @@ void GLDrawQueue::enqueueDraw(GLSubBuffer const &buffer)
         d->restoreBatchValues();
     }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     GLDrawQueue_queuedElems = d->indices.size();
 #endif
 }
 
 void GLDrawQueue::flush()
 {
-    DENG2_ASSERT(d->currentProgram);
+    DE_ASSERT(d->currentProgram);
 
     if (d->currentBuffer)
     {
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
         GLDrawQueue_queuedElems = 0;
 #endif
         GLState::current().apply();

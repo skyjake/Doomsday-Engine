@@ -127,7 +127,7 @@ static void readFile2(String const &path, bool sourceIsCustom = true)
 
 static void readPatchLumps(LumpIndex const &lumpIndex)
 {
-    bool const readAll = DENG2_APP->commandLine().check("-alldehs");
+    bool const readAll = DE_APP->commandLine().check("-alldehs");
     for (int i = lumpIndex.size() - 1; i >= 0; i--)
     {
         if (lumpIndex[i].name().fileNameExtension().toLower() == ".deh")
@@ -178,7 +178,7 @@ int DefsHook(int /*hook_type*/, int /*parm*/, void *data)
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
-DENG_ENTRYPOINT void DP_Initialize()
+DE_ENTRYPOINT void DP_Initialize()
 {
     Plug_AddHook(HOOK_DEFS, DefsHook);
 }
@@ -187,33 +187,33 @@ DENG_ENTRYPOINT void DP_Initialize()
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DENG_ENTRYPOINT char const *deng_LibraryType()
+DE_ENTRYPOINT char const *deng_LibraryType()
 {
     return "deng-plugin/generic";
 }
 
-#if defined (DENG_STATIC_LINK)
+#if defined (DE_STATIC_LINK)
 
-DENG_EXTERN_C void *staticlib_importdeh_symbol(char const *name)
+DE_EXTERN_C void *staticlib_importdeh_symbol(char const *name)
 {
-    DENG_SYMBOL_PTR(name, deng_LibraryType)
-    DENG_SYMBOL_PTR(name, DP_Initialize);
+    DE_SYMBOL_PTR(name, deng_LibraryType)
+    DE_SYMBOL_PTR(name, DP_Initialize);
     qWarning() << name << "not found in importdeh";
     return nullptr;
 }
 
 #else
 
-DENG_DECLARE_API(Base);
-DENG_DECLARE_API(Con);
-DENG_DECLARE_API(Def);
-DENG_DECLARE_API(F);
+DE_DECLARE_API(Base);
+DE_DECLARE_API(Con);
+DE_DECLARE_API(Def);
+DE_DECLARE_API(F);
 
-DENG_API_EXCHANGE(
-    DENG_GET_API(DE_API_BASE, Base);
-    DENG_GET_API(DE_API_CONSOLE, Con);
-    DENG_GET_API(DE_API_DEFINITIONS, Def);
-    DENG_GET_API(DE_API_FILE_SYSTEM, F);
+DE_API_EXCHANGE(
+    DE_GET_API(DE_API_BASE, Base);
+    DE_GET_API(DE_API_CONSOLE, Con);
+    DE_GET_API(DE_API_DEFINITIONS, Def);
+    DE_GET_API(DE_API_FILE_SYSTEM, F);
 )
 
 #endif

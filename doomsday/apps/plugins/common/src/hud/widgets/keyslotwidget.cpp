@@ -34,17 +34,17 @@ static patchid_t pKeySlots[NUM_KEY_TYPES];
 
 static void KeySlotWidget_UpdateGeometry(guidata_keyslot_t *kslt)
 {
-    DENG2_ASSERT(kslt);
+    DE_ASSERT(kslt);
     kslt->updateGeometry();
 }
 
 static void KeySlotWidget_Draw(guidata_keyslot_t *kslt, Point2Raw const *offset)
 {
-    DENG2_ASSERT(kslt);
+    DE_ASSERT(kslt);
     kslt->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
-DENG2_PIMPL_NOREF(guidata_keyslot_t)
+DE_PIMPL_NOREF(guidata_keyslot_t)
 {
     dint slotNum = 0;
     keytype_t keyTypeA = keytype_t(0);
@@ -201,7 +201,7 @@ void guidata_keyslot_t::prepareAssets()
     ::pKeySlots[/*KT_YELLOW*/ n++] = R_DeclarePatch("YKEYICON");
     ::pKeySlots[/*KT_GREEN*/  n++] = R_DeclarePatch("GKEYICON");
     ::pKeySlots[/*KT_BLUE*/   n++] = R_DeclarePatch("BKEYICON");
-    DENG2_ASSERT(n == NUM_KEY_TYPES);
+    DE_ASSERT(n == NUM_KEY_TYPES);
 #else
     for(dint i = 0; i < NUM_KEY_TYPES; ++i)
     {

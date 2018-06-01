@@ -31,8 +31,8 @@
 #include <doomsday.h>
 #include <de/libcore.h>
 
-DENG_EXTERN_C void DP_Initialize(void);
+DE_EXTERN_C void DP_Initialize(void);
 
-DENG_USING_API(Base);
+DE_USING_API(Base);
 
 #endif // IMPORTSAVE_H

@@ -24,7 +24,7 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(DownloadDialog)
+DE_GUI_PIMPL(DownloadDialog)
 {
     ProgressWidget *progress;
 

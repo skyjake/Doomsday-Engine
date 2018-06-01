@@ -48,7 +48,7 @@ public slots:
     void selectFolder();
     
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // FOLDERSELECTION_H

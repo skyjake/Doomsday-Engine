@@ -73,7 +73,7 @@ protected:
     void reset() override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif  // SERVERAPP_H

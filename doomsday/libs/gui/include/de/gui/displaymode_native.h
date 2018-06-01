@@ -23,8 +23,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_DISPLAYMODE_NATIVE_H
-#define LIBDENG_DISPLAYMODE_NATIVE_H
+#ifndef DE_DISPLAYMODE_NATIVE_H
+#define DE_DISPLAYMODE_NATIVE_H
 
 #include "displaymode.h"
 
@@ -56,4 +56,4 @@ void DisplayMode_Native_Raise(void* handle);
 } // extern "C"
 #endif
 
-#endif // LIBDENG_DISPLAYMODE_NATIVE_H
+#endif // DE_DISPLAYMODE_NATIVE_H

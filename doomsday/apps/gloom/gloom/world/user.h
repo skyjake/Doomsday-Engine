@@ -44,11 +44,11 @@ public:
     };
     Q_DECLARE_FLAGS(InputState, InputBit)
 
-    DENG2_DEFINE_AUDIENCE(Deletion,  void userBeingDeleted  (User &))
-    DENG2_DEFINE_AUDIENCE(Warp,      void userWarped        (User const &))
-    DENG2_DEFINE_AUDIENCE(PainLevel, void userPainLevel     (User const &, float pain))
-    DENG2_DEFINE_AUDIENCE(Move,      void userMoved         (User const &, de::Vec3f const &pos))
-    DENG2_DEFINE_AUDIENCE(Turn,      void userTurned        (User const &, float yaw))
+    DE_DEFINE_AUDIENCE(Deletion,  void userBeingDeleted  (User &))
+    DE_DEFINE_AUDIENCE(Warp,      void userWarped        (User const &))
+    DE_DEFINE_AUDIENCE(PainLevel, void userPainLevel     (User const &, float pain))
+    DE_DEFINE_AUDIENCE(Move,      void userMoved         (User const &, de::Vec3f const &pos))
+    DE_DEFINE_AUDIENCE(Turn,      void userTurned        (User const &, float yaw))
 
 public:
     User();
@@ -69,7 +69,7 @@ public:
     de::Sound &  fastWindSound();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(User::InputState)

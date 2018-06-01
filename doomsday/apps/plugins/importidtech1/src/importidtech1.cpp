@@ -56,7 +56,7 @@ static inline AutoStr *readFileIntoString(String const &path, bool *isCustom = 0
  */
 int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
 {
-    DENG2_ASSERT(context != 0);
+    DE_ASSERT(context != 0);
     Id1MapRecognizer const &recognizer = *reinterpret_cast<de::Id1MapRecognizer *>(context);
 
     if (recognizer.format() != Id1MapRecognizer::UnknownFormat &&
@@ -114,7 +114,7 @@ static void convertMapInfos(QList<QString> const &pathsInLoadOrder, String &xlat
 int ConvertMapInfoHook(int /*hookType*/, int /*parm*/, void *context)
 {
     LOG_AS("importidtech1");
-    DENG2_ASSERT(context);
+    DE_ASSERT(context);
     auto &parm = *static_cast<ddhook_mapinfo_convert_t *>(context);
     QStringList allPathsInLoadOrder = String(Str_Text(&parm.paths)).split(";");
     String xlat, xlatCustom;
@@ -128,7 +128,7 @@ int ConvertMapInfoHook(int /*hookType*/, int /*parm*/, void *context)
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
-DENG_ENTRYPOINT void DP_Initialize()
+DE_ENTRYPOINT void DP_Initialize()
 {
     Plug_AddHook(HOOK_MAP_CONVERT,     ConvertMapHook);
     Plug_AddHook(HOOK_MAPINFO_CONVERT, ConvertMapInfoHook);
@@ -138,37 +138,37 @@ DENG_ENTRYPOINT void DP_Initialize()
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DENG_ENTRYPOINT char const *deng_LibraryType()
+DE_ENTRYPOINT char const *deng_LibraryType()
 {
     return "deng-plugin/generic";
 }
 
-#if defined (DENG_STATIC_LINK)
+#if defined (DE_STATIC_LINK)
 
-DENG_EXTERN_C void *staticlib_importidtech1_symbol(char const *name)
+DE_EXTERN_C void *staticlib_importidtech1_symbol(char const *name)
 {
-    DENG_SYMBOL_PTR(name, deng_LibraryType)
-    DENG_SYMBOL_PTR(name, DP_Initialize);
+    DE_SYMBOL_PTR(name, deng_LibraryType)
+    DE_SYMBOL_PTR(name, DP_Initialize);
     qWarning() << name << "not found in importidtech1";
     return nullptr;
 }
 
 #else
 
-DENG_DECLARE_API(Base);
-DENG_DECLARE_API(F);
-DENG_DECLARE_API(Map);
-DENG_DECLARE_API(Material);
-DENG_DECLARE_API(MPE);
-DENG_DECLARE_API(Uri);
+DE_DECLARE_API(Base);
+DE_DECLARE_API(F);
+DE_DECLARE_API(Map);
+DE_DECLARE_API(Material);
+DE_DECLARE_API(MPE);
+DE_DECLARE_API(Uri);
 
-DENG_API_EXCHANGE(
-    DENG_GET_API(DE_API_BASE, Base);
-    DENG_GET_API(DE_API_FILE_SYSTEM, F);
-    DENG_GET_API(DE_API_MAP, Map);
-    DENG_GET_API(DE_API_MATERIALS, Material);
-    DENG_GET_API(DE_API_MAP_EDIT, MPE);
-    DENG_GET_API(DE_API_URI, Uri);
+DE_API_EXCHANGE(
+    DE_GET_API(DE_API_BASE, Base);
+    DE_GET_API(DE_API_FILE_SYSTEM, F);
+    DE_GET_API(DE_API_MAP, Map);
+    DE_GET_API(DE_API_MATERIALS, Material);
+    DE_GET_API(DE_API_MAP_EDIT, MPE);
+    DE_GET_API(DE_API_URI, Uri);
 )
 
 #endif

@@ -29,7 +29,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(Finale)
+DE_PIMPL(Finale)
 {
     bool active;
     int flags;  ///< @ref finaleFlags
@@ -46,7 +46,7 @@ DENG2_PIMPL(Finale)
 
     ~Impl()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->finaleBeingDeleted(self());
+        DE_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->finaleBeingDeleted(self());
     }
 
     void loadScript(String const &script)
@@ -67,10 +67,10 @@ DENG2_PIMPL(Finale)
         active = true;
     }
 
-    DENG2_PIMPL_AUDIENCE(Deletion)
+    DE_PIMPL_AUDIENCE(Deletion)
 };
 
-DENG2_AUDIENCE_METHOD(Finale, Deletion)
+DE_AUDIENCE_METHOD(Finale, Deletion)
 
 Finale::Finale(int flags, finaleid_t id, String const &script)
     : d(new Impl(this, flags, id))

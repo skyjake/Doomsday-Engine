@@ -30,7 +30,7 @@ using namespace de;
 
 typedef QMultiHash<GLuint, DrawList *> DrawListHash;
 
-DENG2_PIMPL(DrawLists)
+DE_PIMPL(DrawLists)
 {
     QScopedPointer<DrawList> skyMaskList;
     DrawListHash unlitHash;
@@ -59,7 +59,7 @@ DENG2_PIMPL(DrawLists)
 
         case SkyMaskGeom: break; // n/a?
         }
-        DENG2_ASSERT(false);
+        DE_ASSERT(false);
         return unlitHash;
     }
 };

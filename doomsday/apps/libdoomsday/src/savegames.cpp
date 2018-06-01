@@ -60,9 +60,9 @@ static Value *Function_GameStateFolder_ConvertAll(Context &, Function::ArgumentV
 
 // SaveGames ----------------------------------------------------------------------------
 
-DENG2_PIMPL(SaveGames)
-, DENG2_OBSERVES(Games, Addition)  // savegames folder setup
-, DENG2_OBSERVES(Loop,  Iteration) // post savegame conversion FS population
+DE_PIMPL(SaveGames)
+, DE_OBSERVES(Games, Addition)  // savegames folder setup
+, DE_OBSERVES(Loop,  Iteration) // post savegame conversion FS population
 {
     Binder binder;
     Record savedSessionModule; // GameStateFolder: manipulation, conversion, etc... (based on native class GameStateFolder)
@@ -72,8 +72,8 @@ DENG2_PIMPL(SaveGames)
     {
         // Setup the GameStateFolder module.
         binder.init(savedSessionModule)
-                << DENG2_FUNC(GameStateFolder_Convert,    "convert",    "gameId" << "savegamePath")
-                << DENG2_FUNC(GameStateFolder_ConvertAll, "convertAll", "gameId");
+                << DE_FUNC(GameStateFolder_Convert,    "convert",    "gameId" << "savegamePath")
+                << DE_FUNC(GameStateFolder_ConvertAll, "convertAll", "gameId");
         ScriptSystem::get().addNativeModule("SavedSession", savedSessionModule);
     }
 
@@ -209,7 +209,7 @@ void SaveGames::initialize()
 
 FileIndex const &SaveGames::saveIndex() const
 {
-    return FileSystem::get().indexFor(DENG2_TYPE_NAME(GameStateFolder));
+    return FileSystem::get().indexFor(DE_TYPE_NAME(GameStateFolder));
 }
 
 bool SaveGames::convertLegacySavegames(String const &gameId, String const &sourcePath)
@@ -267,7 +267,7 @@ SaveGames &SaveGames::get() // static
 
 D_CMD(InspectSavegame)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     String savePath = argv[1];
 

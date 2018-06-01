@@ -47,8 +47,8 @@ static float vrDominantEye;
 
 VRConfig &vrCfg()
 {
-    DENG2_ASSERT(DENG2_BASE_GUI_APP != 0);
-    return DENG2_BASE_GUI_APP->vr();
+    DE_ASSERT(DE_BASE_GUI_APP != 0);
+    return DE_BASE_GUI_APP->vr();
 }
 
 /*
@@ -130,13 +130,13 @@ static void vrNonRiftFovXChanged()
 
 D_CMD(LoadRiftParams)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
     return VR_LoadRiftParameters();
 }*/
 
 D_CMD(ResetRiftPose)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
     vrCfg().oculusRift().resetTracking();
     LOG_INPUT_MSG("Reset Oculus Rift position tracking");
     return true;

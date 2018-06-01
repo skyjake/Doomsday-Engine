@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_TASK_H
-#define LIBDENG2_TASK_H
+#ifndef LIBCORE_TASK_H
+#define LIBCORE_TASK_H
 
 #include <QRunnable>
 
@@ -32,7 +32,7 @@ namespace de {
  *
  * @ingroup concurrency
  */
-class DENG2_PUBLIC Task : public QRunnable
+class DE_PUBLIC Task : public QRunnable
 {
 public:
     Task();
@@ -53,4 +53,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_TASK_H
+#endif // LIBCORE_TASK_H

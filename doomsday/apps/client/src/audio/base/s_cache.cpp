@@ -64,7 +64,7 @@ static dint upsampleFactor(dint rate)
         factor = de::max(1, ::sfxRate / rate);
     }
 #else
-    DENG2_UNUSED(rate);
+    DE_UNUSED(rate);
 #endif
     return factor;
 }
@@ -87,7 +87,7 @@ static dshort inline U8_S16(duchar b)
 static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
     dint srcBytesPer, dint srcRate, dint srcNumSamples, duint srcSize)
 {
-    DENG2_ASSERT(src && dst);
+    DE_ASSERT(src && dst);
 
     // Let's first check for the easy cases.
     if (dstRate == srcRate)
@@ -250,8 +250,8 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
 void configureSample(sfxsample_t &smp, void const *data, duint size,
                      dint numSamples, dint bytesPer, dint rate)
 {
-    DENG2_UNUSED(data);
-    DENG2_UNUSED(size);
+    DE_UNUSED(data);
+    DE_UNUSED(size);
 
     zap(smp);
     smp.bytesPer   = bytesPer;
@@ -308,7 +308,7 @@ void SfxSampleCache::CacheItem::replaceSample(sfxsample_t &newSample)
 
 //---------------------------------------------------------------------------------------
 
-DENG2_PIMPL(SfxSampleCache)
+DE_PIMPL(SfxSampleCache)
 {
     /**
      * Cached samples are placed in a hash (key: sound id).
@@ -475,16 +475,16 @@ DENG2_PIMPL(SfxSampleCache)
      */
     void notifyRemove(CacheItem &item)
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(SampleRemove, i)
+        DE_FOR_PUBLIC_AUDIENCE2(SampleRemove, i)
         {
             i->sfxSampleCacheAboutToRemove(item.sample);
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(SampleRemove)
+    DE_PIMPL_AUDIENCE(SampleRemove)
 };
 
-DENG2_AUDIENCE_METHOD(SfxSampleCache, SampleRemove)
+DE_AUDIENCE_METHOD(SfxSampleCache, SampleRemove)
 
 SfxSampleCache::SfxSampleCache() : d(new Impl(this))
 {}

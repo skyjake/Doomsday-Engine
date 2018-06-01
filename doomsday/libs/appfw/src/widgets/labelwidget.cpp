@@ -30,7 +30,7 @@ namespace de {
 
 using namespace ui;
 
-DENG_GUI_PIMPL(LabelWidget),
+DE_GUI_PIMPL(LabelWidget),
 public Font::RichFormat::IStyle
 {
     AssetGroup assets;

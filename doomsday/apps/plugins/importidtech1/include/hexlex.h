@@ -36,7 +36,7 @@ class HexLex
 public:
     /// Base error for syntax errors at the level of lexical analysis (e.g.,
     /// a non-terminated string constant). @ingroup errors
-    DENG2_ERROR(SyntaxError);
+    DE_ERROR(SyntaxError);
 
 public:
     /**
@@ -101,7 +101,7 @@ public:
     de::Uri readUri(de::String const &defaultScheme = "");
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace idtech1

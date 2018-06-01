@@ -23,7 +23,7 @@
 using namespace de;
 using namespace de::shell;
 
-DENG2_PIMPL(StatusWidget)
+DE_PIMPL(StatusWidget)
 {
     Link *link;
     QTimer *updateTimer;

@@ -242,7 +242,7 @@ Page &Hu_MenuPage(String name)
 /// @return  @c true if the rotation of a cursor on this object should be animated.
 static bool Hu_MenuHasCursorRotation(Widget *wi)
 {
-    DENG2_ASSERT(wi != 0);
+    DE_ASSERT(wi != 0);
     return (!wi->isDisabled() && (is<InlineListWidget>(wi) || is<SliderWidget>(wi)));
 }
 
@@ -693,7 +693,7 @@ void Hu_MenuInitPlayerSetupPage()
     label.setFlags(Widget::LayoutOffset);
     label.setFixedY(5);
 #else
-    DENG2_UNUSED(label);
+    DE_UNUSED(label);
 #endif
 
     // Setup the player color selection list.
@@ -2825,7 +2825,7 @@ void Hu_MenuCommand(menucommand_e cmd)
 
 int Hu_MenuPrivilegedResponder(event_t *ev)
 {
-    DENG2_ASSERT(ev);
+    DE_ASSERT(ev);
     if(Hu_MenuIsActive())
     {
         if(Widget *focused = Hu_MenuPage().focusWidget())
@@ -2841,7 +2841,7 @@ int Hu_MenuPrivilegedResponder(event_t *ev)
 
 int Hu_MenuResponder(event_t *ev)
 {
-    DENG2_ASSERT(ev);
+    DE_ASSERT(ev);
     if(Hu_MenuIsActive())
     {
         if(Widget *focused = Hu_MenuPage().focusWidget())
@@ -2857,7 +2857,7 @@ int Hu_MenuResponder(event_t *ev)
 
 int Hu_MenuFallbackResponder(event_t *ev)
 {
-    DENG2_ASSERT(ev);
+    DE_ASSERT(ev);
     Page *page = Hu_MenuPagePtr();
 
     if(!Hu_MenuIsActive() || !page) return false;
@@ -3018,7 +3018,7 @@ void Hu_MenuDrawPlayerClassPage(Page const & /*page*/, Vec2i const &origin)
 void Hu_MenuDrawEpisodePage(Page const &page, Vec2i const &origin)
 {
 #if __JDOOM__
-    DENG2_UNUSED(page);
+    DE_UNUSED(page);
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
@@ -3255,7 +3255,7 @@ void Hu_MenuUpdateColorWidgetColor(Widget &wi, Widget::Action action)
     case CB: cboxMix.setBlue (value); break;
     case CA: cboxMix.setAlpha(value); break;
 
-    default: DENG2_ASSERT_FAIL("Hu_MenuUpdateColorWidgetColor: Invalid value for data2.");
+    default: DE_ASSERT_FAIL("Hu_MenuUpdateColorWidgetColor: Invalid value for data2.");
     }
 }
 
@@ -3613,7 +3613,7 @@ static void Hu_MenuInitNewGame(bool confirmed)
         return;
     }
 #else
-    DENG2_UNUSED(confirmed);
+    DE_UNUSED(confirmed);
 #endif
 
     Hu_MenuCommand(chooseCloseMethod());
@@ -3660,7 +3660,7 @@ void Hu_MenuSelectControlPanelLink(Widget &wi, Widget::Action action)
 
 D_CMD(MenuOpen)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(argc > 1)
     {
@@ -3694,7 +3694,7 @@ D_CMD(MenuOpen)
  */
 D_CMD(MenuCommand)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     if(menuActive)
     {

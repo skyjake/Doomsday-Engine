@@ -57,7 +57,7 @@ public:
     static de::String savePath();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // LIBDOOMSDAY_SAVEGAMES_H

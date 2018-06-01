@@ -71,7 +71,7 @@ struct CoreTextFontCache : public Lockable
 
     void clear()
     {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
 
         foreach (CTFontRef ref, fonts.values())
         {
@@ -87,7 +87,7 @@ struct CoreTextFontCache : public Lockable
         // lock while printing log output, a flush might occur, which might in turn
         // lead to text rendering and need for font information -- causing a hang.
         {
-            DENG2_GUARD(this);
+            DE_GUARD(this);
 
             Key const key(postScriptName, pointSize);
             if (fonts.contains(key))
@@ -113,17 +113,17 @@ struct CoreTextFontCache : public Lockable
 #if 0
     float fontSize(CTFontRef font) const
     {
-        DENG2_FOR_EACH_CONST(Fonts, i, fonts)
+        DE_FOR_EACH_CONST(Fonts, i, fonts)
         {
             if (i.value() == font) return i.key().size;
         }
-        DENG2_ASSERT_FAIL("Font not in cache");
+        DE_ASSERT_FAIL("Font not in cache");
         return 0;
     }
 
     int fontWeight(CTFontRef font) const
     {
-        DENG2_FOR_EACH_CONST(Fonts, i, fonts)
+        DE_FOR_EACH_CONST(Fonts, i, fonts)
         {
             if (i.value() == font)
             {
@@ -132,7 +132,7 @@ struct CoreTextFontCache : public Lockable
                 return 50;
             }
         }
-        DENG2_ASSERT_FAIL("Font not in cache");
+        DE_ASSERT_FAIL("Font not in cache");
         return 0;
     }
 #endif
@@ -140,7 +140,7 @@ struct CoreTextFontCache : public Lockable
 
 static CoreTextFontCache fontCache;
 
-DENG2_PIMPL(CoreTextNativeFont)
+DE_PIMPL(CoreTextNativeFont)
 {
     CTFontRef font;
     float ascent;
@@ -338,8 +338,8 @@ QImage CoreTextNativeFont::nativeFontRasterize(String const &text,
                                                Vec4ub const &background) const
 {
 #if 0
-    DENG2_ASSERT(fequal(fontCache.fontSize(d->font), size()));
-    DENG2_ASSERT(fontCache.fontWeight(d->font) == weight());
+    DE_ASSERT(fequal(fontCache.fontSize(d->font), size()));
+    DE_ASSERT(fontCache.fontWeight(d->font) == weight());
 #endif
 
     // Text color.

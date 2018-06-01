@@ -22,8 +22,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_NETWORK_MONITOR_H
-#define LIBDENG_NETWORK_MONITOR_H
+#ifndef DE_NETWORK_MONITOR_H
+#define DE_NETWORK_MONITOR_H
 
 #include "dd_share.h"
 
@@ -41,4 +41,4 @@ D_CMD(NetFreqs);
 
 #endif
 
-#endif // LIBDENG_NETWORK_MONITOR_H
+#endif // DE_NETWORK_MONITOR_H

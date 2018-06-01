@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_NETWORKINTERFACES_H
-#define LIBDENG2_NETWORKINTERFACES_H
+#ifndef LIBCORE_NETWORKINTERFACES_H
+#define LIBCORE_NETWORKINTERFACES_H
 
 #include "de/libcore.h"
 #include <QList>
@@ -48,10 +48,10 @@ public:
     QList<QHostAddress> allAddresses() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace internal
 } // namespace de
 
-#endif // LIBDENG2_NETWORKINTERFACES_H
+#endif // LIBCORE_NETWORKINTERFACES_H

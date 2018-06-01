@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_AABOX_H
-#define LIBDENG_AABOX_H
+#ifndef DE_AABOX_H
+#define DE_AABOX_H
 
 #include "types.h"
 
@@ -180,9 +180,9 @@ extern "C" {
  *          @c  0= line intersects bbox.
  *          @c >0= bbox wholly on the right side.
  */
-DENG_PUBLIC int M_BoxOnLineSide(const struct aaboxd_s* box, double const linePoint[2], double const lineDirection[2]);
+DE_PUBLIC int M_BoxOnLineSide(const struct aaboxd_s* box, double const linePoint[2], double const lineDirection[2]);
 
-DENG_PUBLIC int M_BoxOnLineSide_FixedPrecision(const fixed_t box[], const fixed_t linePoint[], const fixed_t lineDirection[]);
+DE_PUBLIC int M_BoxOnLineSide_FixedPrecision(const fixed_t box[], const fixed_t linePoint[], const fixed_t lineDirection[]);
 
 /**
  * Check the spatial relationship between the given box and a partitioning line.
@@ -201,11 +201,11 @@ DENG_PUBLIC int M_BoxOnLineSide_FixedPrecision(const fixed_t box[], const fixed_
  *          @c  0= line intersects bbox.
  *          @c >0= bbox wholly on the right side.
  */
-DENG_PUBLIC int M_BoxOnLineSide2(const struct aaboxd_s* box, double const linePoint[2],
+DE_PUBLIC int M_BoxOnLineSide2(const struct aaboxd_s* box, double const linePoint[2],
     double const lineDirection[2], double linePerp, double lineLength, double epsilon);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif // LIBDENG_AABOX_H
+#endif // DE_AABOX_H

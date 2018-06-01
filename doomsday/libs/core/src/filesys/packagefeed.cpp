@@ -26,7 +26,7 @@ namespace de {
 
 static String const VAR_LINK_PACKAGE_ID("link.package");
 
-DENG2_PIMPL(PackageFeed)
+DE_PIMPL(PackageFeed)
 {
     PackageLoader &loader;
     LinkMode linkMode;
@@ -69,7 +69,7 @@ DENG2_PIMPL(PackageFeed)
     PopulatedFiles populate(Folder const &folder)
     {
         PopulatedFiles populated;
-        DENG2_FOR_EACH_CONST(PackageLoader::LoadedPackages, i, loader.loadedPackages())
+        DE_FOR_EACH_CONST(PackageLoader::LoadedPackages, i, loader.loadedPackages())
         {
             Package *pkg = i.value();
             populated << linkToPackage(*pkg, i.key(), folder);

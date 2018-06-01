@@ -66,11 +66,11 @@ static String const VAR_U_VIEW_MATRIX       ("uViewMatrix");
 
 static Atlas::Size const MAX_ATLAS_SIZE (8192, 8192);
 
-DENG2_PIMPL(ModelLoader)
-, DENG2_OBSERVES(filesys::AssetObserver, Availability)
-, DENG2_OBSERVES(Bank, Load)
-, DENG2_OBSERVES(ModelDrawable, AboutToGLInit)
-, DENG2_OBSERVES(BusyRunner, DeferredGLTask)
+DE_PIMPL(ModelLoader)
+, DE_OBSERVES(filesys::AssetObserver, Availability)
+, DE_OBSERVES(Bank, Load)
+, DE_OBSERVES(ModelDrawable, AboutToGLInit)
+, DE_OBSERVES(BusyRunner, DeferredGLTask)
 , public MultiAtlas::IAtlasFactory
 {
     MultiAtlas atlasPool{*this};
@@ -97,18 +97,18 @@ DENG2_PIMPL(ModelLoader)
     {
         ~Programs()
         {
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
             for (auto i = constBegin(); i != constEnd(); ++i)
             {
                 qDebug() << i.key() << i.value();
-                DENG2_ASSERT(i.value());
+                DE_ASSERT(i.value());
                 qWarning() << "ModelRenderer: Program" << i.key()
                            << "still has" << i.value()->useCount << "users";
             }
 #endif
             // Everything should have been unloaded, because all models
             // have been destroyed at this point.
-            DENG2_ASSERT(empty());
+            DE_ASSERT(empty());
         }
     };
     Programs programs;
@@ -125,14 +125,14 @@ DENG2_PIMPL(ModelLoader)
         // request another one.
         loadProgram(SHADER_DEFAULT);
 
-#if defined (DENG_HAVE_BUSYRUNNER)
+#if defined (DE_HAVE_BUSYRUNNER)
         ClientApp::busyRunner().audienceForDeferredGLTask() += this;
 #endif
     }
 
     void deinit()
     {
-#if defined (DENG_HAVE_BUSYRUNNER)
+#if defined (DE_HAVE_BUSYRUNNER)
         ClientApp::busyRunner().audienceForDeferredGLTask() -= this;
 #endif
 
@@ -179,7 +179,7 @@ DENG2_PIMPL(ModelLoader)
             // Unload programs used by the various rendering passes.
             for (auto const &pass : model.passes)
             {
-                DENG2_ASSERT(pass.program);
+                DE_ASSERT(pass.program);
                 unloadProgram(*static_cast<Program *>(pass.program));
             }
 
@@ -193,12 +193,12 @@ DENG2_PIMPL(ModelLoader)
             }
             else
             {
-                DENG2_ASSERT(!model.program());
+                DE_ASSERT(!model.program());
             }
 
             bank.remove(identifier);
             {
-                DENG2_GUARD(pendingModels);
+                DE_GUARD(pendingModels);
                 pendingModels.value.remove(identifier);
             }
         }
@@ -212,7 +212,7 @@ DENG2_PIMPL(ModelLoader)
      */
     void initPendingModels(int maxCount)
     {
-        DENG2_GUARD(pendingModels);
+        DE_GUARD(pendingModels);
 
         while (!pendingModels.value.isEmpty() && maxCount > 0)
         {
@@ -237,7 +237,7 @@ DENG2_PIMPL(ModelLoader)
     {
         initPendingModels(1);
 
-        DENG2_GUARD(pendingModels);
+        DE_GUARD(pendingModels);
         return pendingModels.value.isEmpty()? BusyRunner::AllTasksCompleted
                                             : BusyRunner::TasksPending;
     }
@@ -267,7 +267,7 @@ DENG2_PIMPL(ModelLoader)
         // Bind the mandatory common state.
         ClientApp::shaders().build(*prog, name);
 
-        DENG2_FOR_PUBLIC_AUDIENCE2(NewProgram, i)
+        DE_FOR_PUBLIC_AUDIENCE2(NewProgram, i)
         {
             i->newProgramCreated(*prog);
         }
@@ -305,7 +305,7 @@ DENG2_PIMPL(ModelLoader)
             String name = program.shaderName;
             LOG_RES_VERBOSE("Model shader \"%s\" unloaded (no more users)") << name;
             delete &program;
-            DENG2_ASSERT(programs.contains(name));
+            DE_ASSERT(programs.contains(name));
             programs.remove(name);
         }
     }
@@ -314,7 +314,7 @@ DENG2_PIMPL(ModelLoader)
     {
         auto &model = static_cast<render::Model &>(drawable);
         {
-            DENG2_GUARD(pendingModels);
+            DE_GUARD(pendingModels);
             pendingModels.value.remove(model.identifier);
         }
         model.setAtlas(*model.textures);
@@ -501,7 +501,7 @@ DENG2_PIMPL(ModelLoader)
         if (asset.has(DEF_ANIMATION))
         {
             auto states = ScriptedInfo::subrecordsOfType(DEF_STATE, asset.subrecord(DEF_ANIMATION));
-            DENG2_FOR_EACH_CONST(Record::Subrecords, state, states)
+            DE_FOR_EACH_CONST(Record::Subrecords, state, states)
             {
                 // Sequences are added in source order.
                 auto const seqs = ScriptedInfo::subrecordsOfType(DEF_SEQUENCE, *state.value());
@@ -527,7 +527,7 @@ DENG2_PIMPL(ModelLoader)
 
             // Timelines.
             auto timelines = ScriptedInfo::subrecordsOfType(DEF_TIMELINE, asset.subrecord(DEF_ANIMATION));
-            DENG2_FOR_EACH_CONST(Record::Subrecords, timeline, timelines)
+            DE_FOR_EACH_CONST(Record::Subrecords, timeline, timelines)
             {
                 Timeline *scheduler = new Timeline;
                 scheduler->addFromInfo(*timeline.value());
@@ -624,7 +624,7 @@ DENG2_PIMPL(ModelLoader)
 
         // Initialize for rendering at a later time.
         {
-            DENG2_GUARD(pendingModels);
+            DE_GUARD(pendingModels);
             pendingModels.value.insert(path);
         }
     }
@@ -697,10 +697,10 @@ DENG2_PIMPL(ModelLoader)
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(NewProgram)
+    DE_PIMPL_AUDIENCE(NewProgram)
 };
 
-DENG2_AUDIENCE_METHOD(ModelLoader, NewProgram)
+DE_AUDIENCE_METHOD(ModelLoader, NewProgram)
 
 ModelLoader::ModelLoader()
     : d(new Impl(this))

@@ -30,7 +30,7 @@ using namespace de;
 
 static dfloat const AXIS_NORMALIZE = 1.f / float(IJOY_AXISMAX); // Normalize from SDL's range
 
-DENG2_PIMPL_NOREF(AxisInputControl)
+DE_PIMPL_NOREF(AxisInputControl)
 {
     Type type = Pointer;
     dint flags = 0;
@@ -62,7 +62,7 @@ DENG2_PIMPL_NOREF(AxisInputControl)
 #if 0
     static float filter(int grade, float *accumulation, float ticLength)
     {
-        DENG2_ASSERT(accumulation);
+        DE_ASSERT(accumulation);
         int dir     = de::sign(*accumulation);
         float avail = fabs(*accumulation);
         // Determine the target velocity.
@@ -110,32 +110,32 @@ AxisInputControl::~AxisInputControl()
 
 AxisInputControl::Type AxisInputControl::type() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     return d->type;
 }
 
 void AxisInputControl::setRawInput(bool yes)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     if (yes) d->flags |= IDA_RAW;
     else     d->flags &= ~IDA_RAW;
 }
 
 bool AxisInputControl::isActive() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     return (d->flags & IDA_DISABLED) == 0;
 }
 
 bool AxisInputControl::isInverted() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     return (d->flags & IDA_INVERT) != 0;
 }
 
 void AxisInputControl::update(timespan_t ticLength)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     Smoother_Advance(d->smoother, ticLength);
 
@@ -176,13 +176,13 @@ void AxisInputControl::update(timespan_t ticLength)
 
 ddouble AxisInputControl::position() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     return d->position;
 }
 
 void AxisInputControl::setPosition(ddouble newPosition)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     d->position = newPosition;
 }
 
@@ -198,7 +198,7 @@ ddouble AxisInputControl::markedPosition() const
 
 void AxisInputControl::applyRealPosition(dfloat pos)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     dfloat const oldRealPos  = d->realPosition;
     dfloat const transformed = translateRealPosition(pos);
@@ -227,7 +227,7 @@ void AxisInputControl::applyRealPosition(dfloat pos)
 
 dfloat AxisInputControl::translateRealPosition(dfloat realPos) const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     // An inactive axis is always zero.
     if (!isActive()) return 0;
@@ -261,49 +261,49 @@ dfloat AxisInputControl::translateRealPosition(dfloat realPos) const
 
 dfloat AxisInputControl::deadZone() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     return d->deadZone;
 }
 
 void AxisInputControl::setDeadZone(dfloat newDeadZone)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     d->deadZone = newDeadZone;
 }
 
 dfloat AxisInputControl::scale() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     return d->scale;
 }
 
 void AxisInputControl::setScale(dfloat newScale)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     d->scale = newScale;
 }
 
 dfloat AxisInputControl::offset() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     return d->offset;
 }
 
 void AxisInputControl::setOffset(dfloat newOffset)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     d->offset = newOffset;
 }
 
 duint AxisInputControl::time() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     return d->time;
 }
 
 String AxisInputControl::description() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     QStringList flags;
     if (!isActive()) flags << "disabled";
@@ -333,13 +333,13 @@ String AxisInputControl::description() const
 
 bool AxisInputControl::inDefaultState() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     return d->position == 0; // Centered?
 }
 
 void AxisInputControl::reset()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     if (d->type == Pointer)
     {
         // Clear the accumulation.
@@ -352,9 +352,9 @@ void AxisInputControl::reset()
 
 void AxisInputControl::consoleRegister()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
-    DENG2_ASSERT(hasDevice() && !name().isEmpty());
+    DE_ASSERT(hasDevice() && !name().isEmpty());
     String controlName = String("input-%1-%2").arg(device().name()).arg(name());
 
     Block scale = (controlName + "-factor").toUtf8();

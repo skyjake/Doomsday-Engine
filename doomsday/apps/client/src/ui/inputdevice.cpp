@@ -29,7 +29,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(InputDevice)
+DE_PIMPL(InputDevice)
 {
     bool active = false;  ///< Initially inactive.
     String title;         ///< Human-friendly title.
@@ -48,14 +48,14 @@ DENG2_PIMPL(InputDevice)
         qDeleteAll(axes);
     }
 
-    DENG2_PIMPL_AUDIENCE(ActiveChange)
+    DE_PIMPL_AUDIENCE(ActiveChange)
 };
 
-DENG2_AUDIENCE_METHOD(InputDevice, ActiveChange)
+DE_AUDIENCE_METHOD(InputDevice, ActiveChange)
 
 InputDevice::InputDevice(String const &name) : d(new Impl(this))
 {
-    DENG2_ASSERT(!name.isEmpty());
+    DE_ASSERT(!name.isEmpty());
     d->name = name;
 }
 
@@ -74,7 +74,7 @@ void InputDevice::activate(bool yes)
         d->active = yes;
 
         // Notify interested parties.
-        DENG2_FOR_AUDIENCE2(ActiveChange, i) i->inputDeviceActiveChanged(*this);
+        DE_FOR_AUDIENCE2(ActiveChange, i) i->inputDeviceActiveChanged(*this);
     }
 }
 
@@ -293,7 +293,7 @@ void InputDevice::consoleRegister()
 
 //---------------------------------------------------------------------------------------
 
-DENG2_PIMPL_NOREF(InputDevice::Control)
+DE_PIMPL_NOREF(InputDevice::Control)
 {
     String name;  ///< Symbolic
     InputDevice *device = nullptr;
@@ -312,19 +312,19 @@ InputDevice::Control::~Control()
 
 String InputDevice::Control::name() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     return d->name;
 }
 
 void InputDevice::Control::setName(String const &newName)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     d->name = newName;
 }
 
 String InputDevice::Control::fullName() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     String desc;
     if (hasDevice()) desc += device().name() + "-";
     desc += (d->name.isEmpty()? "<unnamed>" : d->name);
@@ -333,7 +333,7 @@ String InputDevice::Control::fullName() const
 
 InputDevice &InputDevice::Control::device() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     if (d->device) return *d->device;
     /// @throw MissingDeviceError  Missing InputDevice attribution.
     throw MissingDeviceError("InputDevice::Control::device", "No InputDevice is attributed");
@@ -341,43 +341,43 @@ InputDevice &InputDevice::Control::device() const
 
 bool InputDevice::Control::hasDevice() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     return d->device != nullptr;
 }
 
 void InputDevice::Control::setDevice(InputDevice *newDevice)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     d->device = newDevice;
 }
 
 BindContext *InputDevice::Control::bindContext() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     return d->bindContext;
 }
 
 void InputDevice::Control::setBindContext(BindContext *newContext)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     d->bindContext = newContext;
 }
 
 InputDevice::Control::BindContextAssociation InputDevice::Control::bindContextAssociation() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     return d->flags;
 }
 
 void InputDevice::Control::setBindContextAssociation(BindContextAssociation const &flagsToChange, FlagOp op)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     applyFlagOperation(d->flags, flagsToChange, op);
 }
 
 void InputDevice::Control::clearBindContextAssociation()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     d->prevBindContext = d->bindContext;
     d->bindContext     = nullptr;
     applyFlagOperation(d->flags, Triggered, UnsetFlags);
@@ -385,7 +385,7 @@ void InputDevice::Control::clearBindContextAssociation()
 
 void InputDevice::Control::expireBindContextAssociationIfChanged()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     
     // No change?
     if (d->bindContext == d->prevBindContext) return;

@@ -31,8 +31,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_FAKERADIO
-#define DENG_CLIENT_RENDER_FAKERADIO
+#ifndef DE_CLIENT_RENDER_FAKERADIO
+#define DE_CLIENT_RENDER_FAKERADIO
 
 #include "WallEdge"
 
@@ -61,8 +61,8 @@ struct edgespan_t
     de::dfloat shift;
 };
 
-DENG2_EXTERN_C de::dint rendFakeRadio;
-DENG2_EXTERN_C byte devFakeRadioUpdate;
+DE_EXTERN_C de::dint rendFakeRadio;
+DE_EXTERN_C byte devFakeRadioUpdate;
 
 /**
  * Render FakeRadio for the specified wall section. Generates and then draws all shadow geometry
@@ -88,4 +88,4 @@ void Rend_DrawFlatRadio(world::ConvexSubspace const &subspace);
  */
 void Rend_RadioRegister();
 
-#endif  // DENG_CLIENT_RENDER_FAKERADIO
+#endif  // DE_CLIENT_RENDER_FAKERADIO

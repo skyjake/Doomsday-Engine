@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_BYTEREFARRAY_H
-#define LIBDENG2_BYTEREFARRAY_H
+#ifndef LIBCORE_BYTEREFARRAY_H
+#define LIBCORE_BYTEREFARRAY_H
 
 #include "../IByteArray"
 
@@ -29,11 +29,11 @@ namespace de {
  * ByteRefArray are fixed size: one cannot write past the end of
  * the array. @ingroup data
  */
-class DENG2_PUBLIC ByteRefArray : public IByteArray
+class DE_PUBLIC ByteRefArray : public IByteArray
 {
 public:
     /// set() is attempted on a nonmodifiable array. @ingroup errors
-    DENG2_ERROR(NonModifiableError);
+    DE_ERROR(NonModifiableError);
 
 public:
     /**
@@ -108,4 +108,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG2_BYTEREFARRAY_H
+#endif // LIBCORE_BYTEREFARRAY_H

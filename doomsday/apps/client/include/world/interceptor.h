@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_WORLD_MAP_INTERCEPTOR_H
-#define DENG_WORLD_MAP_INTERCEPTOR_H
+#ifndef DE_WORLD_MAP_INTERCEPTOR_H
+#define DE_WORLD_MAP_INTERCEPTOR_H
 
 #include "world/map.h"
 #include "Line"
@@ -83,7 +83,7 @@ public:
     de::dint trace(world::Map const &map);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif  // DENG_WORLD_MAP_INTERCEPTOR_H
+#endif  // DE_WORLD_MAP_INTERCEPTOR_H

@@ -39,16 +39,16 @@ class HEdge : public MeshElement
 {
 public:
     /// Required vertex is missing. @ingroup errors
-    //DENG2_ERROR(MissingVertexError);
+    //DE_ERROR(MissingVertexError);
 
     /// Required twin half-edge is missing. @ingroup errors
-    DENG2_ERROR(MissingTwinError);
+    DE_ERROR(MissingTwinError);
 
     /// Required face is missing. @ingroup errors
-    //DENG2_ERROR(MissingFaceError);
+    //DE_ERROR(MissingFaceError);
 
     /// Required neighbor half-edge is missing. @ingroup errors
-    DENG2_ERROR(MissingNeighborError);
+    DE_ERROR(MissingNeighborError);
 
 public:
     HEdge(Mesh &mesh, Vertex &vertex);
@@ -111,7 +111,7 @@ public:
      * @see hasFace()
      */
     inline Face &face() const { 
-        DENG2_ASSERT(_face != nullptr);
+        DE_ASSERT(_face != nullptr);
         return *_face;
     }
 
@@ -198,7 +198,7 @@ public:
     world::Subsector *subsector() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 
     // Heavily used; visible for inline access:
     Vertex *_vertex; 

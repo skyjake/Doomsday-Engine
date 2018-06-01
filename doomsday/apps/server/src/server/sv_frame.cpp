@@ -55,7 +55,7 @@ void Sv_SendFrame(dint playerNumber);
 dint allowFrames;
 dint frameInterval = 1;  ///< Skip every second frame by default (17.5fps)
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
 static dint byteCounts[256];
 static dint totalFrameCount;
 #endif
@@ -148,7 +148,7 @@ void Sv_TransmitFrame()
  */
 void Sv_Shutdown()
 {
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     if (::totalFrameCount > 0)
     {
         // Byte probabilities.
@@ -234,8 +234,8 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
     }
     */
 
-    DENG2_ASSERT(!(df & MDFC_NULL));     // don't write NULL deltas
-    DENG2_ASSERT((df & 0xffff) != 0);    // don't write empty deltas
+    DE_ASSERT(!(df & MDFC_NULL));     // don't write NULL deltas
+    DE_ASSERT((df & 0xffff) != 0);    // don't write empty deltas
 
     // First the mobj ID number and flags.
     Writer_WriteUInt16(::msgWriter, delta->delta.id);
@@ -303,7 +303,7 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
 
     if (df & MDF_STATE)
     {
-        DENG2_ASSERT(d->state != 0);
+        DE_ASSERT(d->state != 0);
         Writer_WritePackedUInt16(::msgWriter, ::runtimeDefs.states.indexOf(d->state));
     }
 
@@ -646,7 +646,7 @@ void Sv_WriteSoundDelta(void const *deltaPtr)
  */
 void Sv_WriteDeltaHeader(byte type, delta_t const *delta)
 {
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     if (type >= NUM_DELTA_TYPES)
     {
         App_Error("Sv_WriteDeltaHeader: Invalid delta type %i.\n", type);
@@ -654,11 +654,11 @@ void Sv_WriteDeltaHeader(byte type, delta_t const *delta)
 #endif
 
     // Once sent, the deltas can be discarded and there is no need for resending.
-    DENG2_ASSERT(delta->state != DELTA_UNACKED);
+    DE_ASSERT(delta->state != DELTA_UNACKED);
 
     if (delta->state == DELTA_UNACKED)
     {
-        DENG2_ASSERT_FAIL("Unacked");
+        DE_ASSERT_FAIL("Unacked");
         // Flag this as Resent.
         type |= DT_RESENT;
     }
@@ -686,7 +686,7 @@ void Sv_WriteDeltaHeader(byte type, delta_t const *delta)
  */
 void Sv_WriteDelta(delta_t const *delta)
 {
-    DENG2_ASSERT(delta);
+    DE_ASSERT(delta);
 
 #ifdef _NETDEBUG
     // Extra length field in debug builds.
@@ -750,8 +750,8 @@ writeDeltaLength:
  */
 dsize Sv_GetMaxFrameSize(dint playerNumber)
 {
-    DENG2_UNUSED(playerNumber);
-    DENG2_ASSERT(playerNumber >= 0 && playerNumber < DDMAXPLAYERS);
+    DE_UNUSED(playerNumber);
+    DE_ASSERT(playerNumber >= 0 && playerNumber < DDMAXPLAYERS);
     dsize size = MINIMUM_FRAME_SIZE + FRAME_SIZE_FACTOR * 40 /* BWR_DEFAULT */;
 
     // What about the communications medium?
@@ -766,7 +766,7 @@ dsize Sv_GetMaxFrameSize(dint playerNumber)
  */
 byte Sv_GetNewResendID(pool_t *pool)
 {
-    DENG2_ASSERT(pool);
+    DE_ASSERT(pool);
 
     byte id = pool->resendDealer;
     // Advance to next ID, skipping zero.
@@ -796,7 +796,7 @@ void Sv_SendFrame(dint plrNum)
     Sv_RatePool(pool);
 
     // This will be a new set.
-    DENG2_ASSERT(pool);
+    DE_ASSERT(pool);
     pool->setDealer++;
 
     // Determine the maximum size of the frame packet.

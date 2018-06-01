@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
  
-#ifndef LIBDENG2_OPERATOR_H
-#define LIBDENG2_OPERATOR_H
+#ifndef LIBCORE_OPERATOR_H
+#define LIBCORE_OPERATOR_H
 
 namespace de {
 
@@ -74,4 +74,4 @@ bool isBinary(Operator op);
 
 } // namespace de
 
-#endif /* LIBDENG2_OPERATOR_H */
+#endif /* LIBCORE_OPERATOR_H */

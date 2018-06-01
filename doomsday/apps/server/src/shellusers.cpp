@@ -26,7 +26,7 @@ using namespace de;
 
 static int const PLAYER_INFO_INTERVAL = 2500; // ms
 
-DENG2_PIMPL_NOREF(ShellUsers)
+DE_PIMPL_NOREF(ShellUsers)
 {
     QTimer infoTimer;
 
@@ -52,7 +52,7 @@ ShellUsers::ShellUsers() : d(new Impl)
 
 void ShellUsers::add(User *user)
 {
-    DENG2_ASSERT(is<ShellUser>(user));
+    DE_ASSERT(is<ShellUser>(user));
     Users::add(user);
 
     LOG_NET_NOTE("New shell user from %s") << user->address();

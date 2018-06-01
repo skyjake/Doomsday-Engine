@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_FUNCTIONVALUE_H
-#define LIBDENG2_FUNCTIONVALUE_H
+#ifndef LIBCORE_FUNCTIONVALUE_H
+#define LIBCORE_FUNCTIONVALUE_H
 
 #include "../Value"
 #include "../Function"
@@ -58,4 +58,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_FUNCTIONVALUE_H */
+#endif /* LIBCORE_FUNCTIONVALUE_H */

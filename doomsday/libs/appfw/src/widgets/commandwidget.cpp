@@ -26,7 +26,7 @@
 
 namespace de {
 
-DENG_GUI_PIMPL(CommandWidget)
+DE_GUI_PIMPL(CommandWidget)
 {
     shell::EditorHistory history;
     DocumentPopupWidget *popup;       ///< Popup for autocompletions.

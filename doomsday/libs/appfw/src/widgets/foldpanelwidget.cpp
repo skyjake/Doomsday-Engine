@@ -27,7 +27,7 @@ using namespace ui;
 
 static TimeSpan const INDICATOR_ANIM_SPAN = 0.4;
 
-DENG2_PIMPL_NOREF(FoldPanelWidget)
+DE_PIMPL_NOREF(FoldPanelWidget)
 {
     /**
      * Indicator that shows whether a fold panel is open or closed.
@@ -133,7 +133,7 @@ ButtonWidget *FoldPanelWidget::makeTitle(String const &text)
 
 ButtonWidget &FoldPanelWidget::title()
 {
-    DENG2_ASSERT(d->title != nullptr);
+    DE_ASSERT(d->title != nullptr);
     return *d->title;
 }
 
@@ -222,7 +222,7 @@ void FoldPanelWidget::panelDismissed()
 
     content().notifySelfAndTree(&Widget::deinitialize);
 
-    DENG2_ASSERT(d->container == 0);
+    DE_ASSERT(d->container == 0);
     d->container = takeContent();
 }
 

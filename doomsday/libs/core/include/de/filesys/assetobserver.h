@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_FILESYS_ASSETOBSERVER_H
-#define LIBDENG2_FILESYS_ASSETOBSERVER_H
+#ifndef LIBCORE_FILESYS_ASSETOBSERVER_H
+#define LIBCORE_FILESYS_ASSETOBSERVER_H
 
 #include "de/FileIndex"
 
@@ -31,7 +31,7 @@ namespace filesys {
  *
  * @ingroup fs
  */
-class DENG2_PUBLIC AssetObserver
+class DE_PUBLIC AssetObserver
 {
 public:
     enum Event { Added, Removed };
@@ -46,13 +46,13 @@ public:
     AssetObserver(String const &regexPattern);
 
     /// Notified when an asset matching the provided regular expression is added or removed.
-    DENG2_DEFINE_AUDIENCE2(Availability, void assetAvailabilityChanged(String const &identifier, Event event))
+    DE_DEFINE_AUDIENCE2(Availability, void assetAvailabilityChanged(String const &identifier, Event event))
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace filesys
 } // namespace de
 
-#endif // LIBDENG2_FILESYS_ASSETOBSERVER_H
+#endif // LIBCORE_FILESYS_ASSETOBSERVER_H

@@ -1,15 +1,15 @@
 cmake_minimum_required (VERSION 3.1)
 project (GLOOM)
 
-# set (DENG_OPENGL_API 3.3)
+# set (DE_OPENGL_API 3.3)
 # set (CMAKE_AUTOMOC ON)
 # set (CMAKE_AUTORCC ON)
-# set (DENG_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/../..)
-# set (DENG_INSTALL_LIB_DIR lib)
+# set (DE_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/../..)
+# set (DE_INSTALL_LIB_DIR lib)
 # if (WIN32)
-#     set (DENG_INSTALL_DATA_DIR data)
+#     set (DE_INSTALL_DATA_DIR data)
 # else ()
-#     set (DENG_INSTALL_DATA_DIR share/doomsday)
+#     set (DE_INSTALL_DATA_DIR share/doomsday)
 # endif ()
 
 # Note: Additionally CMAKE_INSTALL_PREFIX must point to the SDK install dir.
@@ -107,8 +107,8 @@ set (SOURCES
     src/mainwindow.cpp
     src/mainwindow.h
     # Polygon clipper
-    #${DENG_EXTERNAL_SOURCE_DIR}/gpc/gpc.c
-    #${DENG_EXTERNAL_SOURCE_DIR}/gpc/gpc.h
+    #${DE_EXTERNAL_SOURCE_DIR}/gpc/gpc.c
+    #${DE_EXTERNAL_SOURCE_DIR}/gpc/gpc.h
 )
 
 # Deploy the FMOD library.
@@ -122,13 +122,13 @@ endif ()
 
 deng_add_application (gloom ${SOURCES} ${HEADERS})
 
-target_include_directories (gloom PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${DENG_EXTERNAL_SOURCE_DIR}/gpc)
+target_include_directories (gloom PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${DE_EXTERNAL_SOURCE_DIR}/gpc)
 target_link_libraries (gloom Deng::libappfw Deng::libdoomsday fmodex)
 
 if (APPLE)
     set_target_properties (gloom PROPERTIES
         OUTPUT_NAME gloom
-        MACOSX_BUNDLE_INFO_PLIST ${DENG_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in
+        MACOSX_BUNDLE_INFO_PLIST ${DE_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in
      )
     deng_install_bundle_deps (gloom
         Deng::libcore Deng::libgui Deng::libappfw Deng::libshell Deng::liblegacy Deng::libdoomsday

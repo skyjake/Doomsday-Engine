@@ -27,8 +27,8 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(HomeItemWidget)
-, DENG2_OBSERVES(MenuWidget, ItemTriggered)
+DE_GUI_PIMPL(HomeItemWidget)
+, DE_OBSERVES(MenuWidget, ItemTriggered)
 {
     // Event handler for mouse clicks on the item.
     struct ClickHandler : public GuiWidget::IEventHandler
@@ -304,7 +304,7 @@ AssetGroup &HomeItemWidget::assets()
 
 LabelWidget &HomeItemWidget::icon()
 {
-    DENG2_ASSERT(d->icon);
+    DE_ASSERT(d->icon);
     return *d->icon;
 }
 

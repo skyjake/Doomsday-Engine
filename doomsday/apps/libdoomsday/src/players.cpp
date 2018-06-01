@@ -21,7 +21,7 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(Players)
+DE_PIMPL_NOREF(Players)
 {
     Player *players[DDMAXPLAYERS];
 
@@ -45,14 +45,14 @@ Players::Players(Constructor playerConstructor) : d(new Impl)
     for (auto &plr : d->players)
     {
         plr = playerConstructor();
-        DENG2_ASSERT(is<Player>(plr));
+        DE_ASSERT(is<Player>(plr));
     }
 }
 
 Player &Players::at(int index) const
 {
-    DENG2_ASSERT(index >= 0);
-    DENG2_ASSERT(index < DDMAXPLAYERS);
+    DE_ASSERT(index >= 0);
+    DE_ASSERT(index < DDMAXPLAYERS);
     return *d->players[index];
 }
 

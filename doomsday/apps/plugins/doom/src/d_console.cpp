@@ -69,7 +69,7 @@ static void viewResizeAudioFeedback()
 
 D_CMD(ScreenShot)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
     G_SetGameAction(GA_SCREENSHOT);
     return true;
 }

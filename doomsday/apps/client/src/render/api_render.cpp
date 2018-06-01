@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_NO_API_MACROS_RENDER
+#define DE_NO_API_MACROS_RENDER
 
 #ifndef __CLIENT__
 #  error "api_render.cpp is for the client only"
@@ -48,10 +48,10 @@ using namespace de;
 
 // m_misc.c
 #undef M_ScreenShot
-DENG_EXTERN_C dint M_ScreenShot(char const *name, dint flags);
+DE_EXTERN_C dint M_ScreenShot(char const *name, dint flags);
 
 #undef Models_CacheForState
-DENG_EXTERN_C void Models_CacheForState(dint stateIndex)
+DE_EXTERN_C void Models_CacheForState(dint stateIndex)
 {
     if (FrameModelDef *modelDef = App_Resources().modelDefForState(stateIndex))
     {
@@ -61,10 +61,10 @@ DENG_EXTERN_C void Models_CacheForState(dint stateIndex)
 
 // r_draw.cpp
 #undef R_SetBorderGfx
-DENG_EXTERN_C void R_SetBorderGfx(struct uri_s const *const *paths);
+DE_EXTERN_C void R_SetBorderGfx(struct uri_s const *const *paths);
 
 #undef Rend_CacheForMobjType
-DENG_EXTERN_C void Rend_CacheForMobjType(dint num)
+DE_EXTERN_C void Rend_CacheForMobjType(dint num)
 {
     LOG_AS("Rend.CacheForMobjType");
 
@@ -107,22 +107,22 @@ DENG_EXTERN_C void Rend_CacheForMobjType(dint num)
 #undef R_SetViewPortPlayer
 
 // r_main.cpp
-DENG_EXTERN_C void R_RenderPlayerView(dint num);
-DENG_EXTERN_C void R_SetViewOrigin(dint consoleNum, coord_t const origin[3]);
-DENG_EXTERN_C void R_SetViewAngle(dint consoleNum, angle_t angle);
-DENG_EXTERN_C void R_SetViewPitch(dint consoleNum, dfloat pitch);
-DENG_EXTERN_C dint R_ViewWindowGeometry(dint consoleNum, RectRaw *geometry);
-DENG_EXTERN_C dint R_ViewWindowOrigin(dint consoleNum, Point2Raw *origin);
-DENG_EXTERN_C dint R_ViewWindowSize(dint consoleNum, Size2Raw *size);
-DENG_EXTERN_C void R_SetViewWindowGeometry(dint consoleNum, RectRaw const *geometry, dd_bool interpolate);
-DENG_EXTERN_C dint R_ViewPortGeometry(dint consoleNum, RectRaw *geometry);
-DENG_EXTERN_C dint R_ViewPortOrigin(dint consoleNum, Point2Raw *origin);
-DENG_EXTERN_C dint R_ViewPortSize(dint consoleNum, Size2Raw *size);
-DENG_EXTERN_C void R_SetViewPortPlayer(dint consoleNum, dint viewPlayer);
+DE_EXTERN_C void R_RenderPlayerView(dint num);
+DE_EXTERN_C void R_SetViewOrigin(dint consoleNum, coord_t const origin[3]);
+DE_EXTERN_C void R_SetViewAngle(dint consoleNum, angle_t angle);
+DE_EXTERN_C void R_SetViewPitch(dint consoleNum, dfloat pitch);
+DE_EXTERN_C dint R_ViewWindowGeometry(dint consoleNum, RectRaw *geometry);
+DE_EXTERN_C dint R_ViewWindowOrigin(dint consoleNum, Point2Raw *origin);
+DE_EXTERN_C dint R_ViewWindowSize(dint consoleNum, Size2Raw *size);
+DE_EXTERN_C void R_SetViewWindowGeometry(dint consoleNum, RectRaw const *geometry, dd_bool interpolate);
+DE_EXTERN_C dint R_ViewPortGeometry(dint consoleNum, RectRaw *geometry);
+DE_EXTERN_C dint R_ViewPortOrigin(dint consoleNum, Point2Raw *origin);
+DE_EXTERN_C dint R_ViewPortSize(dint consoleNum, Size2Raw *size);
+DE_EXTERN_C void R_SetViewPortPlayer(dint consoleNum, dint viewPlayer);
 
 // sky.cpp
 #undef R_SkyParams
-DENG_EXTERN_C void R_SkyParams(dint layer, dint param, void *data);
+DE_EXTERN_C void R_SkyParams(dint layer, dint param, void *data);
 
 static inline MaterialVariantSpec const &pspriteMaterialSpec_GetSpriteInfo()
 {
@@ -131,7 +131,7 @@ static inline MaterialVariantSpec const &pspriteMaterialSpec_GetSpriteInfo()
 }
 
 #undef R_GetSpriteInfo
-DENG_EXTERN_C dd_bool R_GetSpriteInfo(dint id, dint frame, spriteinfo_t *info)
+DE_EXTERN_C dd_bool R_GetSpriteInfo(dint id, dint frame, spriteinfo_t *info)
 {
     if (!info) return false;
 
@@ -183,14 +183,14 @@ DENG_EXTERN_C dd_bool R_GetSpriteInfo(dint id, dint frame, spriteinfo_t *info)
 #undef R_ChooseScaleMode
 
 // r_util.c
-DENG_EXTERN_C dd_bool R_ChooseAlignModeAndScaleFactor(dfloat *scale, dint width, dint height, dint availWidth, dint availHeight, scalemode_t scaleMode);
-DENG_EXTERN_C scalemode_t R_ChooseScaleMode2(dint width, dint height, dint availWidth, dint availHeight, scalemode_t overrideMode, dfloat stretchEpsilon);
-DENG_EXTERN_C scalemode_t R_ChooseScaleMode(dint width, dint height, dint availWidth, dint availHeight, scalemode_t overrideMode);
+DE_EXTERN_C dd_bool R_ChooseAlignModeAndScaleFactor(dfloat *scale, dint width, dint height, dint availWidth, dint availHeight, scalemode_t scaleMode);
+DE_EXTERN_C scalemode_t R_ChooseScaleMode2(dint width, dint height, dint availWidth, dint availHeight, scalemode_t overrideMode, dfloat stretchEpsilon);
+DE_EXTERN_C scalemode_t R_ChooseScaleMode(dint width, dint height, dint availWidth, dint availHeight, scalemode_t overrideMode);
 
 #undef R_SetupFog
-DENG_EXTERN_C void R_SetupFog(dfloat start, dfloat end, dfloat density, dfloat const *rgb)
+DE_EXTERN_C void R_SetupFog(dfloat start, dfloat end, dfloat density, dfloat const *rgb)
 {
-    DENG2_ASSERT(rgb);
+    DE_ASSERT(rgb);
     Con_Execute(CMDS_DDAY, "fog on", true, false);
     Con_Executef(CMDS_DDAY, true, "fog start %f", start);
     Con_Executef(CMDS_DDAY, true, "fog end %f", end);
@@ -200,13 +200,13 @@ DENG_EXTERN_C void R_SetupFog(dfloat start, dfloat end, dfloat density, dfloat c
 }
 
 #undef R_SetupFogDefaults
-DENG_EXTERN_C void R_SetupFogDefaults()
+DE_EXTERN_C void R_SetupFogDefaults()
 {
     // Go with the defaults.
     Con_Execute(CMDS_DDAY, "fog off", true, false);
 }
 
-DENG_DECLARE_API(Rend) =
+DE_DECLARE_API(Rend) =
 {
     { DE_API_RENDER },
     R_SetupFogDefaults,

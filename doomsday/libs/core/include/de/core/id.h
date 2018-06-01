@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_ID_H
-#define LIBDENG2_ID_H
+#ifndef LIBCORE_ID_H
+#define LIBCORE_ID_H
 
 #include "../libcore.h"
 #include "../ISerializable"
@@ -34,7 +34,7 @@ class String;
  * for the "no identifier" special case.
  * @ingroup core
  */
-class DENG2_PUBLIC Id : public ISerializable, public LogEntry::Arg::Base
+class DE_PUBLIC Id : public ISerializable, public LogEntry::Arg::Base
 {
 public:
     typedef duint32 Type;
@@ -102,14 +102,14 @@ private:
     Type _id;
 };
 
-DENG2_PUBLIC QTextStream &operator << (QTextStream &os, Id const &id);
+DE_PUBLIC QTextStream &operator << (QTextStream &os, Id const &id);
 
 inline uint qHash(Id const &id) { return id; }
 
 /**
  * Utility for declaring identifiers that are initially uninitialized.
  */
-class DENG2_PUBLIC NoneId : public Id
+class DE_PUBLIC NoneId : public Id
 {
 public:
     NoneId() : Id(None) {}
@@ -118,4 +118,4 @@ public:
 
 } // namespace de
 
-#endif // LIBDENG2_ID_H
+#endif // LIBCORE_ID_H

@@ -52,14 +52,14 @@ class ClientServerWorld : public World
 {
 public:
     /// No map is currently loaded. @ingroup errors
-    DENG2_ERROR(MapError);
+    DE_ERROR(MapError);
 
 #ifdef __CLIENT__
     /// Notified when a new frame begins.
-    DENG2_DEFINE_AUDIENCE2(FrameBegin, void worldSystemFrameBegins(bool resetNextViewer))
+    DE_DEFINE_AUDIENCE2(FrameBegin, void worldSystemFrameBegins(bool resetNextViewer))
 
     /// Notified when the "current" frame ends.
-    DENG2_DEFINE_AUDIENCE2(FrameEnd, void worldSystemFrameEnds())
+    DE_DEFINE_AUDIENCE2(FrameEnd, void worldSystemFrameEnds())
 #endif
 
 public:
@@ -166,10 +166,10 @@ public:
     static mobj_t &contextMobj(const de::Context &);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-DENG_EXTERN_C dd_bool ddMapSetup;
-DENG_EXTERN_C int validCount;
+DE_EXTERN_C dd_bool ddMapSetup;
+DE_EXTERN_C int validCount;
 
 #endif  // WORLDSYSTEM_H

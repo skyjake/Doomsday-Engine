@@ -40,7 +40,7 @@ DataFile::DataFile(Format format, File &sourceFile)
 
 DataFile::~DataFile()
 {
-    DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
+    DE_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion().clear();
     deindex();
 }

@@ -59,7 +59,7 @@ int main(int, char **)
         qDebug() << "Field 3:" << pack[3];
         qDebug() << "Field 10:" << pack[10];
 
-        DENG2_ASSERT(pack[10] == 149);
+        DE_ASSERT(pack[10] == 149);
 
         BitField pack2 = pack;
         qDebug() << "Copied:" << pack2.asText().toLatin1().constData();

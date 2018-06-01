@@ -52,10 +52,10 @@ class LIBGUI_PUBLIC GLProgram : public Asset
 {
 public:
     /// Failed to allocate a new GL program object. @ingroup errors
-    DENG2_ERROR(AllocError);
+    DE_ERROR(AllocError);
 
     /// Failed to link the program. @ingroup errors
-    DENG2_ERROR(LinkerError);
+    DE_ERROR(LinkerError);
 
 public:
     GLProgram();
@@ -132,7 +132,7 @@ public:
     bool validate() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

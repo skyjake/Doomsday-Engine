@@ -19,8 +19,8 @@
  */
 
 #ifdef __CLIENT__
-#ifndef DENG_CLIENT_WORLD_CONTACTSPREADER_H
-#define DENG_CLIENT_WORLD_CONTACTSPREADER_H
+#ifndef DE_CLIENT_WORLD_CONTACTSPREADER_H
+#define DE_CLIENT_WORLD_CONTACTSPREADER_H
 
 #include <de/aabox.h>
 #include <QBitArray>
@@ -35,5 +35,5 @@ void spreadContacts(Blockmap const &blockmap, AABoxd const &region, QBitArray *s
 
 }  // namespace world
 
-#endif  // DENG_CLIENT_WORLD_CONTACTSPREADER_H
+#endif  // DE_CLIENT_WORLD_CONTACTSPREADER_H
 #endif  // __CLIENT__

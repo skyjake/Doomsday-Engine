@@ -130,10 +130,10 @@ struct EditableElements
     }
 };
 
-DENG2_PIMPL(Map)
-, DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
+DE_PIMPL(Map)
+, DE_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 #ifdef __CLIENT__
-, DENG2_OBSERVES(ThinkerData, Deletion)
+, DE_OBSERVES(ThinkerData, Deletion)
 #endif
 {
     struct Bsp
@@ -386,7 +386,7 @@ DENG2_PIMPL(Map)
     void unclosedSectorFound(Sector &sector, Vec2d const &nearPoint)
     {
         // Notify interested parties that an unclosed sector was found.
-        DENG2_FOR_PUBLIC_AUDIENCE(UnclosedSectorFound, i) i->unclosedSectorFound(sector, nearPoint);
+        DE_FOR_PUBLIC_AUDIENCE(UnclosedSectorFound, i) i->unclosedSectorFound(sector, nearPoint);
     }
 
     /**
@@ -397,7 +397,7 @@ DENG2_PIMPL(Map)
      */
     void notifyOneWayWindowFound(Line &line, Sector &backFacingSector)
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(OneWayWindowFound, i) i->oneWayWindowFound(line, backFacingSector);
+        DE_FOR_PUBLIC_AUDIENCE(OneWayWindowFound, i) i->oneWayWindowFound(line, backFacingSector);
     }
 
     struct testForWindowEffectParams
@@ -569,8 +569,8 @@ DENG2_PIMPL(Map)
      */
     bool buildBspTree()
     {
-        DENG2_ASSERT(bsp.tree == nullptr);
-        DENG2_ASSERT(subspaces.isEmpty());
+        DE_ASSERT(bsp.tree == nullptr);
+        DE_ASSERT(subspaces.isEmpty());
 
         // It begins...
         Time begunAt;
@@ -604,7 +604,7 @@ DENG2_PIMPL(Map)
 
             // Build a new BSP tree.
             bsp.tree = partitioner.makeBspTree(linesToBuildFor, mesh);
-            DENG2_ASSERT(bsp.tree);
+            DE_ASSERT(bsp.tree);
 
             LOG_MAP_VERBOSE("BSP built: %s. With %d Segments and %d Vertexes.")
                     << bsp.tree->summary()
@@ -619,7 +619,7 @@ DENG2_PIMPL(Map)
                 vtx->setIndexInMap(i);
             }
 
-#ifdef DENG2_QT_4_7_OR_NEWER
+#ifdef DE_QT_4_7_OR_NEWER
             /// @todo Determine the actual number of subspaces needed.
             subspaces.reserve(bsp.tree->leafCount());
 #endif
@@ -649,7 +649,7 @@ DENG2_PIMPL(Map)
                                 subspace.setIndexInMap(subspaces.count());
                                 subspaces.append(&subspace);
 
-#ifdef DENG_DEBUG  // See if we received a partial geometry...
+#ifdef DE_DEBUG  // See if we received a partial geometry...
                                 dint discontinuities = 0;
                                 HEdge *hedge = subspace.poly().hedge();
                                 do
@@ -718,7 +718,7 @@ DENG2_PIMPL(Map)
      */
     void buildSubsectors(Sector &sector)
     {
-        DENG2_ASSERT(!sector.hasSubsectors());
+        DE_ASSERT(!sector.hasSubsectors());
 
         // Group the subspaces into sets which share at least one common edge. We'll do
         // this by starting with a set per subspace and then keep merging the sets until
@@ -795,7 +795,7 @@ DENG2_PIMPL(Map)
         for (Subspaces const &subspaceSet : subspaceSets)
         {
             Subsector *subsec = sector.addSubsector(subspaceSet);
-            DENG2_ASSERT(subsec != nullptr);
+            DE_ASSERT(subsec != nullptr);
             subsectorsById.insert(subsec->id(), subsec);
         }
     }
@@ -1352,7 +1352,7 @@ DENG2_PIMPL(Map)
 
     dint findDefForGenerator(Generator *gen)
     {
-        DENG2_ASSERT(gen);
+        DE_ASSERT(gen);
 
         auto &defs = *DED_Definitions();
 
@@ -1489,7 +1489,7 @@ DENG2_PIMPL(Map)
                         continue;
 
                     dint listIndex = pInfo->bspLeaf->sectorPtr()->indexInMap();
-                    DENG2_ASSERT((unsigned)listIndex < gens.listsSize);
+                    DE_ASSERT((unsigned)listIndex < gens.listsSize);
 
                     // Must check that it isn't already there...
                     bool found = false;
@@ -2010,7 +2010,7 @@ dint Map::clMobjIterator(dint (*callback)(mobj_t *, void *), void *context)
         next = i;
         next++;
 
-        DENG2_ASSERT(THINKER_DATA(i.value()->thinker, ClientMobjThinkerData).hasRemoteSync());
+        DE_ASSERT(THINKER_DATA(i.value()->thinker, ClientMobjThinkerData).hasRemoteSync());
 
         // Callback returns zero to continue.
         if (dint result = callback(i.value(), context))
@@ -2232,7 +2232,7 @@ LineSide *Map::sidePtr(dint index) const
 
 dint Map::toSideIndex(dint lineIndex, dint backSide) // static
 {
-    DENG_ASSERT(lineIndex >= 0);
+    DE_ASSERT(lineIndex >= 0);
     return lineIndex * 2 + (backSide? 1 : 0);
 }
 
@@ -2278,7 +2278,7 @@ void Map::initNodePiles()
     NP_Init(&d->lineNodes, lineCount() + 1000);
 
     // Allocate the rings.
-    DENG_ASSERT(d->lineLinks == nullptr);
+    DE_ASSERT(d->lineLinks == nullptr);
     d->lineLinks = (nodeindex_t *) Z_Malloc(sizeof(*d->lineLinks) * lineCount(), PU_MAPSTATIC, 0);
 
     for (dint i = 0; i < lineCount(); ++i)
@@ -2920,13 +2920,13 @@ dint Map::lumobjCount() const
 
 Lumobj &Map::addLumobj(Lumobj *lumobj)
 {
-    DENG2_ASSERT(lumobj != nullptr);
+    DE_ASSERT(lumobj != nullptr);
 
     d->lumobjs.append(lumobj);
 
     lumobj->setMap(this);
     lumobj->setIndexInMap(d->lumobjs.count() - 1);
-    DENG2_ASSERT(lumobj->bspLeafAtOrigin().hasSubspace());
+    DE_ASSERT(lumobj->bspLeafAtOrigin().hasSubspace());
     lumobj->bspLeafAtOrigin().subspace().link(*lumobj);
     R_AddContact(*lumobj);  // For spreading purposes.
 
@@ -3163,23 +3163,24 @@ void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMap
     {
         Info::BlockElement const &state = (*i)->as<Info::BlockElement>();
         Id::Type const privateId = state.name().toUInt32();
-        DENG2_ASSERT(privateId != 0);
+        DE_ASSERT(privateId != 0);
 
         if (thinker_t *th = thinkerMapping.thinkerForPrivateId(privateId))
         {
             if (ThinkerData *found = ThinkerData::find(privateId))
             {
-                DENG2_ASSERT(&found->thinker() == th);
+                DE_ASSERT(&found->thinker() == th);
 
                 // Restore the state according to the serialized info.
                 gx.MobjRestoreState(found->as<MobjThinkerData>().mobj(), state);
 
+            #if defined (DE_DEBUG)
                 // Verify that the state is now correct.
                 {
                     Info const currentDesc(gx.MobjStateAsInfo(found->as<MobjThinkerData>().mobj()));
                     Info::BlockElement const &currentState = currentDesc.root().contentsInOrder()
                             .first()->as<Info::BlockElement>();
-                    DENG2_ASSERT(currentState.name() == state.name());
+                    DE_ASSERT(currentState.name() == state.name());
                     foreach (String const &key, state.contents().keys())
                     {
                         if (state.keyValue(key).text != currentState.keyValue(key).text)
@@ -3194,6 +3195,7 @@ void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMap
                         }
                     }
                 }
+            #endif
             }
             else
             {
@@ -3278,7 +3280,7 @@ void Map::deserializeInternalState(Reader &from, IThinkerMapping const &thinkerM
                     else
                     {
                         LOG_MAP_WARNING("State for thinker %i is not deserializable "
-                                        DENG2_CHAR_MDASH " internal representation may have "
+                                        DE_CHAR_MDASH " internal representation may have "
                                         "changed, or save data is corrupt") << id;
                     }
                 }
@@ -3300,7 +3302,7 @@ void Map::deserializeInternalState(Reader &from, IThinkerMapping const &thinkerM
 
 void Map::worldSystemFrameBegins(bool resetNextViewer)
 {
-    DENG2_ASSERT(&App_World().map() == this); // Sanity check.
+    DE_ASSERT(&App_World().map() == this); // Sanity check.
 
     // Interpolate the map ready for drawing view(s) of it.
     d->lerpTrackedPlanes(resetNextViewer);
@@ -3368,7 +3370,7 @@ static dint expireClMobjsWorker(mobj_t *mob, void *context)
     if (mob->dPlayer) return 0;
 
     ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mob);
-    DENG2_ASSERT(info);
+    DE_ASSERT(info);
 
     if ((info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN | CLMF_NULLED)) || !mob->info)
     {
@@ -3443,7 +3445,7 @@ String Map::objectSummaryAsStyledText() const
 
 D_CMD(InspectMap)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     LOG_AS("inspectmap (Cmd)");
 
@@ -3709,7 +3711,7 @@ static void setVertexLineOwner(Vertex *vtx, Line *lineptr, LineOwner **storage)
         lineptr->_vo2 = newOwner;
 }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
 /**
  * Determines whether the specified vertex @a v has a correctly formed line owner ring.
  */
@@ -3781,7 +3783,7 @@ void buildVertexLineOwnerRings(QList<Vertex *> const &vertexs, QList<Line *> &ed
         // Set the angle of the last owner.
         last->_angle = last->angle() - firstAngle;
 
-/*#ifdef DENG2_DEBUG
+/*#ifdef DE_DEBUG
         LOG_MAP_VERBOSE("Vertex #%i: line owners #%i")
             << editmap.vertexes.indexOf(v) << v->lineOwnerCount();
 
@@ -3799,7 +3801,7 @@ void buildVertexLineOwnerRings(QList<Vertex *> const &vertexs, QList<Line *> &ed
 #endif*/
 
         // Sanity check.
-        DENG2_ASSERT(vertexHasValidLineOwnerRing(*v));
+        DE_ASSERT(vertexHasValidLineOwnerRing(*v));
     }
 }
 
@@ -3817,7 +3819,7 @@ struct VertexInfo
     /// @todo Math here is not correct (rounding directionality). -ds
     dint compareVertexOrigins(VertexInfo const &other) const
     {
-        DENG2_ASSERT(vertex && other.vertex);
+        DE_ASSERT(vertex && other.vertex);
 
         if (this == &other) return 0;
         if (vertex == other.vertex) return 0;
@@ -3965,24 +3967,24 @@ bool Map::endEditing()
     // Move the editable elements to the "static" element lists.
     //
     // Collate sectors:
-    DENG2_ASSERT(d->sectors.isEmpty());
-#ifdef DENG2_QT_4_7_OR_NEWER
+    DE_ASSERT(d->sectors.isEmpty());
+#ifdef DE_QT_4_7_OR_NEWER
     d->sectors.reserve(d->editable.sectors.count());
 #endif
     d->sectors.append(d->editable.sectors);
     d->editable.sectors.clear();
 
     // Collate lines:
-    DENG2_ASSERT(d->lines.isEmpty());
-#ifdef DENG2_QT_4_7_OR_NEWER
+    DE_ASSERT(d->lines.isEmpty());
+#ifdef DE_QT_4_7_OR_NEWER
     d->lines.reserve(d->editable.lines.count());
 #endif
     d->lines.append(d->editable.lines);
     d->editable.lines.clear();
 
     // Collate polyobjs:
-    DENG2_ASSERT(d->polyobjs.isEmpty());
-#ifdef DENG2_QT_4_7_OR_NEWER
+    DE_ASSERT(d->polyobjs.isEmpty());
+#ifdef DE_QT_4_7_OR_NEWER
     d->polyobjs.reserve(d->editable.polyobjs.count());
 #endif
     while (!d->editable.polyobjs.isEmpty())
@@ -4002,7 +4004,7 @@ bool Map::endEditing()
 #ifdef __CLIENT__
             seg->setLength(line->length());
 #else
-            DENG2_UNUSED(seg);
+            DE_UNUSED(seg);
 #endif
         }
 

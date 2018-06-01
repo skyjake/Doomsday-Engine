@@ -386,7 +386,7 @@ int PIT_ChangeMobjFlags(thinker_t *th, void *context)
         break;
 
     default:
-        DENG_ASSERT(false);
+        DE_ASSERT(false);
         break;
     }
 
@@ -404,7 +404,7 @@ int EV_FadeAway(Line *line, mobj_t *thing)
 {
     iterlist_t *list;
 
-    DENG_UNUSED(thing);
+    DE_UNUSED(thing);
 
     if(!line) return 0;
 

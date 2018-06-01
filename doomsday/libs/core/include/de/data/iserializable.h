@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
  
-#ifndef LIBDENG2_ISERIALIZABLE_H
-#define LIBDENG2_ISERIALIZABLE_H
+#ifndef LIBCORE_ISERIALIZABLE_H
+#define LIBCORE_ISERIALIZABLE_H
 
 #include "../libcore.h"
 #include "../IWritable"
@@ -38,11 +38,11 @@ class Reader;
  *
  * @ingroup data
  */
-class DENG2_PUBLIC ISerializable : public IWritable, public IReadable
+class DE_PUBLIC ISerializable : public IWritable, public IReadable
 {
 public:
     /// Deserialization of the provided data failed. @ingroup errors
-    DENG2_ERROR(DeserializationError);
+    DE_ERROR(DeserializationError);
 
 public:
     virtual ~ISerializable() {}
@@ -50,4 +50,4 @@ public:
 
 } // namespace de
 
-#endif // LIBDENG2_ISERIALIZABLE_H
+#endif // LIBCORE_ISERIALIZABLE_H

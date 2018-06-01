@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_PRINTSTATEMENT_H
-#define LIBDENG2_PRINTSTATEMENT_H
+#ifndef LIBCORE_PRINTSTATEMENT_H
+#define LIBCORE_PRINTSTATEMENT_H
 
 #include "../Statement"
 
@@ -56,4 +56,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_PRINTSTATEMENT_H */
+#endif /* LIBCORE_PRINTSTATEMENT_H */

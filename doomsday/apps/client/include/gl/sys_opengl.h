@@ -25,8 +25,8 @@
  * http://oss.sgi.com/projects/ogl-sample/
  */
 
-#ifndef LIBDENG_SYSTEM_OPENGL_H
-#define LIBDENG_SYSTEM_OPENGL_H
+#ifndef DE_SYSTEM_OPENGL_H
+#define DE_SYSTEM_OPENGL_H
 
 #ifdef __SERVER__
 #  define GL_CLAMP_TO_EDGE    0
@@ -161,4 +161,4 @@ de::String Sys_GLDescription();
 
 #endif
 
-#endif /* LIBDENG_SYSTEM_OPENGL_H */
+#endif /* DE_SYSTEM_OPENGL_H */

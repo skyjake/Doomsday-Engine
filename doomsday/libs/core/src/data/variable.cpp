@@ -33,7 +33,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(Variable)
+DE_PIMPL_NOREF(Variable)
 {
     String name;
 
@@ -57,14 +57,14 @@ DENG2_PIMPL_NOREF(Variable)
         delete value;
     }
 
-    DENG2_PIMPL_AUDIENCE(Deletion)
-    DENG2_PIMPL_AUDIENCE(Change)
-    DENG2_PIMPL_AUDIENCE(ChangeFrom)
+    DE_PIMPL_AUDIENCE(Deletion)
+    DE_PIMPL_AUDIENCE(Change)
+    DE_PIMPL_AUDIENCE(ChangeFrom)
 };
 
-DENG2_AUDIENCE_METHOD(Variable, Deletion)
-DENG2_AUDIENCE_METHOD(Variable, Change)
-DENG2_AUDIENCE_METHOD(Variable, ChangeFrom)
+DE_AUDIENCE_METHOD(Variable, Deletion)
+DE_AUDIENCE_METHOD(Variable, Change)
+DE_AUDIENCE_METHOD(Variable, ChangeFrom)
 
 Variable::Variable(String const &name, Value *initial, Flags const &m)
     : d(new Impl)
@@ -92,7 +92,7 @@ Variable::Variable(Variable const &other)
 
 Variable::~Variable()
 {
-    DENG2_FOR_AUDIENCE2(Deletion, i) i->variableBeingDeleted(*this);
+    DE_FOR_AUDIENCE2(Deletion, i) i->variableBeingDeleted(*this);
 }
 
 String const &Variable::name() const
@@ -114,7 +114,7 @@ Variable &Variable::operator = (String const &textValue)
 
 Variable &Variable::set(Value *v)
 {
-    DENG2_ASSERT(v != 0);
+    DE_ASSERT(v != 0);
 
     QScopedPointer<Value> val(v);
 
@@ -143,8 +143,8 @@ Variable &Variable::set(Value *v)
 
         if (notify)
         {
-            DENG2_FOR_AUDIENCE2(Change,     i) i->variableValueChanged(*this, *d->value);
-            DENG2_FOR_AUDIENCE2(ChangeFrom, i) i->variableValueChangedFrom(*this, *oldValue, *d->value);
+            DE_FOR_AUDIENCE2(Change,     i) i->variableValueChanged(*this, *d->value);
+            DE_FOR_AUDIENCE2(ChangeFrom, i) i->variableValueChangedFrom(*this, *oldValue, *d->value);
         }
     }
     return *this;
@@ -158,13 +158,13 @@ Variable &Variable::set(Value const &v)
 
 Value const &Variable::value() const
 {
-    DENG2_ASSERT(d->value != 0);
+    DE_ASSERT(d->value != 0);
     return *d->value;
 }
 
 Value &Variable::value()
 {
-    DENG2_ASSERT(d->value != 0);
+    DE_ASSERT(d->value != 0);
     return *d->value;
 }
 

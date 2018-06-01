@@ -58,9 +58,9 @@ String const Record::VAR_NATIVE_SELF = "__self__";
  */
 static std::atomic_uint recordIdCounter;
 
-DENG2_PIMPL(Record)
+DE_PIMPL(Record)
 , public Lockable
-, DENG2_OBSERVES(Variable, Deletion)
+, DE_OBSERVES(Variable, Deletion)
 {
     Record::Members members;
     duint32 uniqueId; ///< Identifier to track serialized references.
@@ -98,7 +98,7 @@ DENG2_PIMPL(Record)
         {
             Record::Members remaining; // Contains all members that are not removed.
 
-            DENG2_FOR_EACH(Members, i, members)
+            DE_FOR_EACH(Members, i, members)
             {
                 if (excluded(*i.value()))
                 {
@@ -106,7 +106,7 @@ DENG2_PIMPL(Record)
                     continue;
                 }
 
-                DENG2_FOR_PUBLIC_AUDIENCE2(Removal, o) o->recordMemberRemoved(self(), **i);
+                DE_FOR_PUBLIC_AUDIENCE2(Removal, o) o->recordMemberRemoved(self(), **i);
 
                 i.value()->audienceForDeletion() -= this;
                 delete i.value();
@@ -119,16 +119,16 @@ DENG2_PIMPL(Record)
     void copyMembersFrom(Record const &other, std::function<bool (Variable const &)> excluded)
     {
         auto const *other_d = other.d.getConst();
-        DENG2_GUARD(other_d);
+        DE_GUARD(other_d);
 
-        DENG2_FOR_EACH_CONST(Members, i, other_d->members)
+        DE_FOR_EACH_CONST(Members, i, other_d->members)
         {
             if (!excluded(*i.value()))
             {
                 bool alreadyExists;
                 Variable *var;
                 {
-                    DENG2_GUARD(this);
+                    DE_GUARD(this);
                     var = new Variable(*i.value());
                     var->audienceForDeletion() += this;
                     auto iter = members.find(i.key());
@@ -148,7 +148,7 @@ DENG2_PIMPL(Record)
                 if (!alreadyExists)
                 {
                     // Notify about newly added members.
-                    DENG2_FOR_PUBLIC_AUDIENCE2(Addition, i) i->recordMemberAdded(self(), *var);
+                    DE_FOR_PUBLIC_AUDIENCE2(Addition, i) i->recordMemberAdded(self(), *var);
                 }
 
                 /// @todo Should also notify if the value of an existing variable changes. -jk
@@ -159,7 +159,7 @@ DENG2_PIMPL(Record)
     void assignPreservingVariables(Record const &other, std::function<bool (Variable const &)> excluded)
     {
         auto const *other_d = other.d.getConst();
-        DENG2_GUARD(other_d);
+        DE_GUARD(other_d);
 
         // Add variables or update existing ones.
         for (auto i = other_d->members.begin(); i != other_d->members.end(); ++i)
@@ -170,7 +170,7 @@ DENG2_PIMPL(Record)
 
                 // Already have a variable with this name?
                 {
-                    DENG2_GUARD(this);
+                    DE_GUARD(this);
                     auto found = members.constFind(i.key());
                     if (found != members.constEnd())
                     {
@@ -202,7 +202,7 @@ DENG2_PIMPL(Record)
                 else
                 {
                     // Add a new one.
-                    DENG2_GUARD(this);
+                    DE_GUARD(this);
                     var = new Variable(*i.value());
                     var->audienceForDeletion() += this;
                     members[i.key()] = var;
@@ -211,7 +211,7 @@ DENG2_PIMPL(Record)
         }
 
         // Remove variables not present in the other.
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         QMutableHashIterator<String, Variable *> iter(members);
         while (iter.hasNext())
         {
@@ -243,13 +243,13 @@ DENG2_PIMPL(Record)
     LoopResult forSubrecords(std::function<LoopResult (String const &, Record &)> func) const
     {
         Members const unmodifiedMembers = members; // In case a callback removes members.
-        DENG2_FOR_EACH_CONST(Members, i, unmodifiedMembers)
+        DE_FOR_EACH_CONST(Members, i, unmodifiedMembers)
         {
             Variable const &member = *i.value();
             if (isSubrecord(member))
             {
                 Record *rec = member.value<RecordValue>().record();
-                DENG2_ASSERT(rec != 0); // subrecords are owned, so cannot have been deleted
+                DE_ASSERT(rec != 0); // subrecords are owned, so cannot have been deleted
 
                 if (auto result = func(i.key(), *rec))
                 {
@@ -262,7 +262,7 @@ DENG2_PIMPL(Record)
 
     Record::Subrecords listSubrecords(std::function<bool (Record const &)> filter) const
     {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
 
         Subrecords subs;
         forSubrecords([&subs, filter] (String const &name, Record &rec)
@@ -290,7 +290,7 @@ DENG2_PIMPL(Record)
             return self()[subName].value<RecordValue>().dereference().d->findMemberByPath(remaining);
         }
 
-        DENG2_GUARD(this);
+        DE_GUARD(this);
 
         Members::const_iterator found = members.constFind(name);
         if (found != members.constEnd())
@@ -311,7 +311,7 @@ DENG2_PIMPL(Record)
      */
     Record &parentRecordByPath(String const &pathOrName)
     {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
 
         int pos = pathOrName.indexOf('.');
         if (pos >= 0)
@@ -338,12 +338,12 @@ DENG2_PIMPL(Record)
     // Observes Variable deletion.
     void variableBeingDeleted(Variable &variable)
     {
-        DENG2_ASSERT(findMemberByPath(variable.name()));
+        DE_ASSERT(findMemberByPath(variable.name()));
 
         LOG_TRACE_DEBUGONLY("Variable %p deleted, removing from Record %p", &variable << thisPublic);
 
         // Remove from our index.
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         members.remove(variable.name());
     }
 
@@ -364,7 +364,7 @@ DENG2_PIMPL(Record)
      */
     void reconnectReferencesAfterDeserialization(RefMap const &refMap)
     {
-        DENG2_FOR_EACH(Members, i, members)
+        DE_FOR_EACH(Members, i, members)
         {
             RecordValue *value = dynamic_cast<RecordValue *>(&i.value()->value());
             if (!value || !value->record()) continue;
@@ -392,14 +392,14 @@ DENG2_PIMPL(Record)
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(Deletion)
-    DENG2_PIMPL_AUDIENCE(Addition)
-    DENG2_PIMPL_AUDIENCE(Removal)
+    DE_PIMPL_AUDIENCE(Deletion)
+    DE_PIMPL_AUDIENCE(Addition)
+    DE_PIMPL_AUDIENCE(Removal)
 };
 
-DENG2_AUDIENCE_METHOD(Record, Deletion)
-DENG2_AUDIENCE_METHOD(Record, Addition)
-DENG2_AUDIENCE_METHOD(Record, Removal)
+DE_AUDIENCE_METHOD(Record, Deletion)
+DE_AUDIENCE_METHOD(Record, Addition)
+DE_AUDIENCE_METHOD(Record, Removal)
 
 Record::Record() : RecordAccessor(this), d(new Impl(*this))
 {}
@@ -415,7 +415,7 @@ Record::Record(Record &&moved)
     : RecordAccessor(this)
     , d(std::move(moved.d))
 {
-    DENG2_ASSERT(moved.d.isNull());
+    DE_ASSERT(moved.d.isNull());
 
     d->thisPublic = this;
 }
@@ -426,7 +426,7 @@ Record::~Record()
     {
         // Notify before deleting members so that observers have full visibility
         // to the record prior to deletion.
-        DENG2_FOR_AUDIENCE2(Deletion, i) i->recordBeingDeleted(*this);
+        DE_FOR_AUDIENCE2(Deletion, i) i->recordBeingDeleted(*this);
 
         clear();
     }
@@ -445,7 +445,7 @@ Record::Flags Record::flags() const
 
 void Record::clear(Behavior behavior)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     d->clear(Impl::ExcludeByBehavior(behavior));
 }
@@ -476,7 +476,7 @@ Record &Record::assign(Record const &other, Behavior behavior)
 {
     if (this == &other) return *this;
 
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     clear(behavior);
     copyMembersFrom(other, behavior);
@@ -485,7 +485,7 @@ Record &Record::assign(Record const &other, Behavior behavior)
 
 Record &Record::assign(Record const &other, QRegExp const &excluded)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     d->clear(Impl::ExcludeByRegExp(excluded));
     d->copyMembersFrom(other, Impl::ExcludeByRegExp(excluded));
@@ -524,7 +524,7 @@ Variable &Record::add(Variable *variable)
     }
 
     {
-        DENG2_GUARD(d);
+        DE_GUARD(d);
         if (hasMember(variable->name()))
         {
             // Delete the previous variable with this name.
@@ -534,7 +534,7 @@ Variable &Record::add(Variable *variable)
         d->members[variable->name()] = var.release();
     }
 
-    DENG2_FOR_AUDIENCE2(Addition, i) i->recordMemberAdded(*this, *variable);
+    DE_FOR_AUDIENCE2(Addition, i) i->recordMemberAdded(*this, *variable);
 
     return *variable;
 }
@@ -542,12 +542,12 @@ Variable &Record::add(Variable *variable)
 Variable *Record::remove(Variable &variable)
 {
     {
-        DENG2_GUARD(d);
+        DE_GUARD(d);
         variable.audienceForDeletion() -= d;
         d->members.remove(variable.name());
     }
 
-    DENG2_FOR_AUDIENCE2(Removal, i) i->recordMemberRemoved(*this, variable);
+    DE_FOR_AUDIENCE2(Removal, i) i->recordMemberRemoved(*this, variable);
 
     return &variable;
 }
@@ -651,7 +651,7 @@ Record *Record::removeSubrecord(String const &name)
 
 Variable &Record::set(String const &name, bool value)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     if (hasMember(name))
     {
@@ -662,7 +662,7 @@ Variable &Record::set(String const &name, bool value)
 
 Variable &Record::set(String const &name, char const *value)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     if (hasMember(name))
     {
@@ -673,7 +673,7 @@ Variable &Record::set(String const &name, char const *value)
 
 Variable &Record::set(String const &name, Value::Text const &value)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     if (hasMember(name))
     {
@@ -689,7 +689,7 @@ Variable &Record::set(String const &name, Value::Number value)
 
 Variable &Record::set(const String &name, const NumberValue &value)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     if (hasMember(name))
     {
@@ -725,7 +725,7 @@ Variable &Record::set(String const &name, unsigned long value)
 
 Variable &Record::set(String const &name, Time const &value)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     if (hasMember(name))
     {
@@ -736,7 +736,7 @@ Variable &Record::set(String const &name, Time const &value)
 
 Variable &Record::set(String const &name, Block const &value)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     if (hasMember(name))
     {
@@ -763,7 +763,7 @@ Variable &Record::set(const String &name, const Record &value)
 
 Variable &Record::set(String const &name, ArrayValue *value)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     if (hasMember(name))
     {
@@ -796,7 +796,7 @@ Variable &Record::set(const String &name, const Value &value)
 
 Variable &Record::appendWord(String const &name, String const &word, String const &separator)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     String value = gets(name, "");
     if (!value.isEmpty()) value.append(separator);
@@ -806,7 +806,7 @@ Variable &Record::appendWord(String const &name, String const &word, String cons
 
 Variable &Record::appendUniqueWord(String const &name, String const &word, String const &separator)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     String const value = gets(name, "");
     if (!value.containsWord(word))
@@ -827,7 +827,7 @@ Variable &Record::appendMultipleUniqueWords(String const &name, String const &wo
 
 Variable &Record::appendToArray(String const &name, Value *value)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     if (!has(name))
     {
@@ -835,14 +835,14 @@ Variable &Record::appendToArray(String const &name, Value *value)
     }
 
     Variable &var = (*this)[name];
-    DENG2_ASSERT(is<ArrayValue>(var.value()));
+    DE_ASSERT(is<ArrayValue>(var.value()));
     var.value<ArrayValue>().add(value);
     return var;
 }
 
 Variable &Record::insertToSortedArray(String const &name, Value *value)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     if (!has(name))
     {
@@ -975,7 +975,7 @@ LoopResult Record::forSubrecords(std::function<LoopResult (String const &, Recor
 
 bool Record::anyMembersChanged() const
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     auto const *const_d = d.getConst();
     for (auto i = const_d->members.begin(); i != const_d->members.end(); ++i)
@@ -998,7 +998,7 @@ bool Record::anyMembersChanged() const
 
 void Record::markAllMembersUnchanged()
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     for (auto i = d->members.begin(); i != d->members.end(); ++i)
     {
@@ -1013,7 +1013,7 @@ void Record::markAllMembersUnchanged()
 
 String Record::asText(String const &prefix, List *lines) const
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     /*
     // If this is a module, don't print out the entire contents.
@@ -1094,7 +1094,7 @@ Function const &Record::function(String const &name) const
 
 void Record::addSuperRecord(Value *superValue)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     if (!has(VAR_SUPER))
     {
@@ -1110,10 +1110,10 @@ void Record::addSuperRecord(Record const &superRecord)
 
 void Record::operator >> (Writer &to) const
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     to << d->uniqueId << duint32(d->members.size());
-    DENG2_FOR_EACH_CONST(Members, i, d->members)
+    DE_FOR_EACH_CONST(Members, i, d->members)
     {
         to << *i.value();
     }
@@ -1138,7 +1138,7 @@ void Record::operator << (Reader &from)
         RecordValue *recVal = dynamic_cast<RecordValue *>(&var->value());
         if (recVal && recVal->usedToHaveOwnership())
         {
-            DENG2_ASSERT(recVal->record());
+            DE_ASSERT(recVal->record());
 
             // This record was a subrecord prior to serializing.
             // Let's remember the record for reconnecting other variables
@@ -1152,10 +1152,10 @@ void Record::operator << (Reader &from)
     // Find referenced records and relink them to their original targets.
     d->reconnectReferencesAfterDeserialization(refMap);
 
-#ifdef DENG2_DEBUG
-    DENG2_FOR_EACH(Members, i, d->members)
+#ifdef DE_DEBUG
+    DE_FOR_EACH(Members, i, d->members)
     {
-        DENG2_ASSERT(i.value()->audienceForDeletion().contains(d));
+        DE_ASSERT(i.value()->audienceForDeletion().contains(d));
     }
 #endif
 }

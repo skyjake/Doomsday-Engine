@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_NO_API_MACROS_RESOURCE
+#define DE_NO_API_MACROS_RESOURCE
 #include "de_base.h"
 #include "api_resource.h"
 #include "gl/gl_tex.h" // averagealpha_analysis_t, etc...
@@ -35,7 +35,7 @@
 using namespace de;
 
 #undef Textures_UniqueId2
-DENG_EXTERN_C int Textures_UniqueId2(uri_s const *_uri, dd_bool quiet)
+DE_EXTERN_C int Textures_UniqueId2(uri_s const *_uri, dd_bool quiet)
 {
     LOG_AS("Textures_UniqueId");
     if(!_uri) return -1;
@@ -57,19 +57,19 @@ DENG_EXTERN_C int Textures_UniqueId2(uri_s const *_uri, dd_bool quiet)
 }
 
 #undef Textures_UniqueId
-DENG_EXTERN_C int Textures_UniqueId(uri_s const *uri)
+DE_EXTERN_C int Textures_UniqueId(uri_s const *uri)
 {
     return Textures_UniqueId2(uri, false);
 }
 
 #undef R_CreateAnimGroup
-DENG_EXTERN_C int R_CreateAnimGroup(int flags)
+DE_EXTERN_C int R_CreateAnimGroup(int flags)
 {
     return res::AnimGroups::get().newAnimGroup(flags & ~AGF_PRECACHE).id();
 }
 
 #undef R_AddAnimGroupFrame
-DENG_EXTERN_C void R_AddAnimGroupFrame(int groupId, uri_s const *textureUri_, int tics, int randomTics)
+DE_EXTERN_C void R_AddAnimGroupFrame(int groupId, uri_s const *textureUri_, int tics, int randomTics)
 {
     LOG_AS("R_AddAnimGroupFrame");
 
@@ -96,10 +96,10 @@ DENG_EXTERN_C void R_AddAnimGroupFrame(int groupId, uri_s const *textureUri_, in
 }
 
 #undef R_CreateColorPalette
-DENG_EXTERN_C colorpaletteid_t R_CreateColorPalette(char const *colorFormatDescriptor,
+DE_EXTERN_C colorpaletteid_t R_CreateColorPalette(char const *colorFormatDescriptor,
     char const *nameCStr, uint8_t const *colorData, int colorCount)
 {
-    DENG2_ASSERT(nameCStr != 0 && colorFormatDescriptor != 0 && colorData != 0);
+    DE_ASSERT(nameCStr != 0 && colorFormatDescriptor != 0 && colorData != 0);
 
     LOG_AS("R_CreateColorPalette");
 
@@ -142,10 +142,10 @@ DENG_EXTERN_C colorpaletteid_t R_CreateColorPalette(char const *colorFormatDescr
 }
 
 #undef R_CreateColorPaletteTranslation
-DENG_EXTERN_C void R_CreateColorPaletteTranslation(colorpaletteid_t paletteId,
+DE_EXTERN_C void R_CreateColorPaletteTranslation(colorpaletteid_t paletteId,
     ddstring_s const *translationId, uint8_t const *mappings_)
 {
-    DENG2_ASSERT(mappings_ != 0);
+    DE_ASSERT(mappings_ != 0);
 
     LOG_AS("R_CreateColorPaletteTranslation");
 
@@ -159,7 +159,7 @@ DENG_EXTERN_C void R_CreateColorPaletteTranslation(colorpaletteid_t paletteId,
         for(int i = 0; i < colorCount; ++i)
         {
             int const palIdx = mappings_[i];
-            DENG2_ASSERT(palIdx >= 0 && palIdx < colorCount);
+            DE_ASSERT(palIdx >= 0 && palIdx < colorCount);
             mappings[i] = palIdx;
         }
 
@@ -181,7 +181,7 @@ DENG_EXTERN_C void R_CreateColorPaletteTranslation(colorpaletteid_t paletteId,
 }
 
 #undef R_GetColorPaletteNumForName
-DENG_EXTERN_C colorpaletteid_t R_GetColorPaletteNumForName(char const *name)
+DE_EXTERN_C colorpaletteid_t R_GetColorPaletteNumForName(char const *name)
 {
     LOG_AS("R_GetColorPaletteNumForName");
     try
@@ -197,7 +197,7 @@ DENG_EXTERN_C colorpaletteid_t R_GetColorPaletteNumForName(char const *name)
 }
 
 #undef R_GetColorPaletteNameForNum
-DENG_EXTERN_C char const *R_GetColorPaletteNameForNum(colorpaletteid_t id)
+DE_EXTERN_C char const *R_GetColorPaletteNameForNum(colorpaletteid_t id)
 {
     LOG_AS("R_GetColorPaletteNameForNum");
     try
@@ -214,7 +214,7 @@ DENG_EXTERN_C char const *R_GetColorPaletteNameForNum(colorpaletteid_t id)
 }
 
 #undef R_GetColorPaletteRGBubv
-DENG_EXTERN_C void R_GetColorPaletteRGBubv(colorpaletteid_t paletteId, int colorIdx, uint8_t rgb[3],
+DE_EXTERN_C void R_GetColorPaletteRGBubv(colorpaletteid_t paletteId, int colorIdx, uint8_t rgb[3],
     dd_bool applyTexGamma)
 {
     LOG_AS("R_GetColorPaletteRGBubv");
@@ -249,7 +249,7 @@ DENG_EXTERN_C void R_GetColorPaletteRGBubv(colorpaletteid_t paletteId, int color
 }
 
 #undef R_GetColorPaletteRGBf
-DENG_EXTERN_C void R_GetColorPaletteRGBf(colorpaletteid_t paletteId, int colorIdx, float rgb[3],
+DE_EXTERN_C void R_GetColorPaletteRGBf(colorpaletteid_t paletteId, int colorIdx, float rgb[3],
     dd_bool applyTexGamma)
 {
     LOG_AS("R_GetColorPaletteRGBf");
@@ -289,7 +289,7 @@ DENG_EXTERN_C void R_GetColorPaletteRGBf(colorpaletteid_t paletteId, int colorId
 }
 
 #undef R_ComposePatchPath
-DENG_EXTERN_C AutoStr *R_ComposePatchPath(patchid_t id)
+DE_EXTERN_C AutoStr *R_ComposePatchPath(patchid_t id)
 {
     LOG_AS("R_ComposePatchPath");
     try
@@ -306,7 +306,7 @@ DENG_EXTERN_C AutoStr *R_ComposePatchPath(patchid_t id)
 }
 
 #undef R_ComposePatchUri
-DENG_EXTERN_C uri_s *R_ComposePatchUri(patchid_t id)
+DE_EXTERN_C uri_s *R_ComposePatchUri(patchid_t id)
 {
     try
     {
@@ -322,15 +322,15 @@ DENG_EXTERN_C uri_s *R_ComposePatchUri(patchid_t id)
 }
 
 #undef R_DeclarePatch
-DENG_EXTERN_C patchid_t R_DeclarePatch(char const *encodedName)
+DE_EXTERN_C patchid_t R_DeclarePatch(char const *encodedName)
 {
     return res::Textures::get().declarePatch(encodedName);
 }
 
 #undef R_GetPatchInfo
-DENG_EXTERN_C dd_bool R_GetPatchInfo(patchid_t id, patchinfo_t *info)
+DE_EXTERN_C dd_bool R_GetPatchInfo(patchid_t id, patchinfo_t *info)
 {
-    DENG2_ASSERT(info);
+    DE_ASSERT(info);
     LOG_AS("R_GetPatchInfo");
 
     de::zapPtr(info);
@@ -378,7 +378,7 @@ DENG_EXTERN_C dd_bool R_GetPatchInfo(patchid_t id, patchinfo_t *info)
     return false;
 }
 
-DENG_DECLARE_API(R) =
+DE_DECLARE_API(R) =
 {
     { DE_API_RESOURCE },
     R_DeclarePatch,

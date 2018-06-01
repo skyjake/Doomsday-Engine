@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_PACKAGEFEED_H
-#define LIBDENG2_PACKAGEFEED_H
+#ifndef LIBCORE_PACKAGEFEED_H
+#define LIBCORE_PACKAGEFEED_H
 
 #include "../Feed"
 
@@ -31,7 +31,7 @@ class PackageLoader;
  *
  * @ingroup fs
  */
-class DENG2_PUBLIC PackageFeed : public Feed
+class DE_PUBLIC PackageFeed : public Feed
 {
 public:
     enum LinkMode { LinkIdentifier, LinkVersionedIdentifier };
@@ -50,9 +50,9 @@ public:
     bool prune(File &file) const override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_PACKAGEFEED_H
+#endif // LIBCORE_PACKAGEFEED_H

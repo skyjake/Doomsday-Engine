@@ -24,7 +24,7 @@
 
 namespace de {
 
-DENG2_PIMPL(Context)
+DE_PIMPL(Context)
 {
     /**
      * Information about the control flow is stored within a stack of
@@ -99,7 +99,7 @@ DENG2_PIMPL(Context)
         if (!names)
         {
             // Create a private empty namespace.
-            DENG2_ASSERT(type != GlobalNamespace);
+            DE_ASSERT(type != GlobalNamespace);
             names = new Record;
             ownsNamespace = true;
         }
@@ -112,7 +112,7 @@ DENG2_PIMPL(Context)
             delete names;
         }
         self().reset();
-        DENG2_ASSERT(controlFlow.empty());
+        DE_ASSERT(controlFlow.empty());
     }
 
     /// Returns the topmost control flow information.
@@ -125,7 +125,7 @@ DENG2_PIMPL(Context)
     /// iteration value is deleted, if it has been defined.
     void popFlow()
     {
-        DENG2_ASSERT(!controlFlow.empty());
+        DE_ASSERT(!controlFlow.empty());
         delete flow().iteration;
         controlFlow.pop_back();
     }
@@ -140,7 +140,7 @@ DENG2_PIMPL(Context)
         }
         else
         {
-            DENG2_ASSERT(statement == NULL);
+            DE_ASSERT(statement == NULL);
         }
     }
 };
@@ -277,13 +277,13 @@ Statement const *Context::current()
 
 Value *Context::iterationValue()
 {
-    DENG2_ASSERT(d->controlFlow.size());
+    DE_ASSERT(d->controlFlow.size());
     return d->controlFlow.back().iteration;
 }
 
 void Context::setIterationValue(Value *value)
 {
-    DENG2_ASSERT(d->controlFlow.size());
+    DE_ASSERT(d->controlFlow.size());
 
     Impl::ControlFlow &fl = d->flow();
     if (fl.iteration)
@@ -300,7 +300,7 @@ void Context::setNativeSelf(Value *scope)
 
 Value &Context::nativeSelf() const
 {
-    DENG2_ASSERT(!d->nativeSelf.isNull());
+    DE_ASSERT(!d->nativeSelf.isNull());
     if (d->nativeSelf.isNull())
     {
         throw UndefinedScopeError("Context::nativeSelf",

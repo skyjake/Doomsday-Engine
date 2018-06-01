@@ -247,7 +247,7 @@ dd_bool P_TeleportMove(mobj_t *mobj, coord_t x, coord_t y, dd_bool alwaysStomp)
 
 void P_Telefrag(mobj_t *thing)
 {
-    DENG2_ASSERT(thing != 0);
+    DE_ASSERT(thing != 0);
     P_TeleportMove(thing, thing->origin[VX], thing->origin[VY], false);
 }
 
@@ -339,7 +339,7 @@ static void checkForPushSpecial(Line *line, int side, mobj_t *mobj)
  */
 static int untouched(Line *line, mobj_t *mobj)
 {
-    DENG_ASSERT(line != 0 && mobj != 0);
+    DE_ASSERT(line != 0 && mobj != 0);
 
     coord_t const x      = mobj->origin[VX];
     coord_t const y      = mobj->origin[VY];
@@ -1629,7 +1629,7 @@ dd_bool P_TryMoveXYZ(mobj_t* thing, coord_t x, coord_t y, coord_t z)
 static mobj_t *spawnPuff(mobjtype_t type, const_pvec3d_t pos, bool noSpark = false)
 {
 #if __JHERETIC__ || __JHEXEN__
-    DENG_UNUSED(noSpark);
+    DE_UNUSED(noSpark);
 #endif
 
     angle_t const angle = P_Random() << 24;
@@ -1742,7 +1742,7 @@ static int PTR_ShootTraverse(Intercept const *icpt, void *context)
     {
         bool lineWasHit = false;
 #ifdef __JHEXEN__
-        DENG_UNUSED(lineWasHit);
+        DE_UNUSED(lineWasHit);
 #endif
 
         Line *line = icpt->line;
@@ -2390,7 +2390,7 @@ void P_RadiusAttack(mobj_t *bomb, mobj_t *source, int damage, int distance)
 
 static int PTR_UseTraverse(Intercept const *icpt, void *context)
 {
-    DENG_ASSERT(icpt->type == ICPT_LINE);
+    DE_ASSERT(icpt->type == ICPT_LINE);
 
     mobj_t *activator = static_cast<mobj_t *>(context);
 
@@ -2473,7 +2473,7 @@ void P_UseLines(player_t *player)
  */
 static void hitSlideLine(mobj_t *slideMo, Line *line, pvec2d_t move)
 {
-    DENG_ASSERT(slideMo != 0 && line != 0);
+    DE_ASSERT(slideMo != 0 && line != 0);
 
     slopetype_t slopeType = slopetype_t(P_GetIntp(line, DMU_SLOPETYPE));
     if(slopeType == ST_HORIZONTAL)
@@ -2513,7 +2513,7 @@ struct ptr_slidetraverse_params_t
 
 static int PTR_SlideTraverse(Intercept const *icpt, void *context)
 {
-    DENG_ASSERT(icpt->type == ICPT_LINE);
+    DE_ASSERT(icpt->type == ICPT_LINE);
 
     ptr_slidetraverse_params_t &parm = *static_cast<ptr_slidetraverse_params_t *>(context);
 
@@ -3142,7 +3142,7 @@ struct ptr_boucetraverse_params_t
 
 static int PTR_BounceTraverse(Intercept const *icpt, void *context)
 {
-    DENG_ASSERT(icpt->type == ICPT_LINE);
+    DE_ASSERT(icpt->type == ICPT_LINE);
 
     ptr_boucetraverse_params_t &parm = *static_cast<ptr_boucetraverse_params_t *>(context);
 
@@ -3251,7 +3251,7 @@ static int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
     {
     case ICPT_LINE: {
         xline_t *xline = P_ToXLine(icpt->line);
-        DENG2_ASSERT(xline);
+        DE_ASSERT(xline);
 
         if(xline->special != USE_PUZZLE_ITEM_SPECIAL)
         {
@@ -3295,7 +3295,7 @@ static int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
         return true; }
 
     case ICPT_MOBJ: {
-        DENG2_ASSERT(icpt->mobj);
+        DE_ASSERT(icpt->mobj);
         mobj_t &mob = *icpt->mobj;
 
         // Special id must match.
@@ -3326,14 +3326,14 @@ static int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
         // Stop searching.
         return true; }
 
-    default: DENG2_ASSERT_FAIL("Unknown intercept type");
+    default: DE_ASSERT_FAIL("Unknown intercept type");
         return false;
     }
 }
 
 dd_bool P_UsePuzzleItem(player_t *player, int itemType)
 {
-    DENG_ASSERT(player != 0);
+    DE_ASSERT(player != 0);
 
     mobj_t *mobj = player->plr->mo;
     if(!mobj) return false; // Huh?

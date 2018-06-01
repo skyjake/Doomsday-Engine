@@ -30,7 +30,7 @@
 /**
  * Macro for conveniently accessing the de::BaseGuiApp singleton instance.
  */
-#define DENG2_BASE_GUI_APP   (static_cast<de::BaseGuiApp *>(qApp))
+#define DE_BASE_GUI_APP   (static_cast<de::BaseGuiApp *>(qApp))
 
 namespace de {
 
@@ -87,7 +87,7 @@ public:
     static VRConfig &           vr();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

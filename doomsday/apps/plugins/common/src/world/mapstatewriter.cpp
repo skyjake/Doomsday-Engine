@@ -44,7 +44,7 @@ namespace internal
     }
 }
 
-DENG2_PIMPL(MapStateWriter)
+DE_PIMPL(MapStateWriter)
 {
     ThingArchive *thingArchive;
     world::MaterialArchive *materialArchive;
@@ -68,7 +68,7 @@ DENG2_PIMPL(MapStateWriter)
 #if __JHEXEN__
         Writer_WriteInt32(writer, segId);
 #else
-        DENG2_UNUSED(segId);
+        DE_UNUSED(segId);
 #endif
     }
 
@@ -154,7 +154,7 @@ DENG2_PIMPL(MapStateWriter)
         for (int i = 0; i < numpolyobjs; ++i)
         {
             Polyobj *po = Polyobj_ById(i);
-            DENG2_ASSERT(po != 0);
+            DE_ASSERT(po != 0);
             po->write(thisPublic);
         }
 
@@ -263,7 +263,7 @@ DENG2_PIMPL(MapStateWriter)
         }
 #endif
 #if __JDOOM__
-        DENG2_ASSERT(theBossBrain != 0);
+        DE_ASSERT(theBossBrain != 0);
         theBossBrain->write(thisPublic);
 #endif
     }
@@ -307,7 +307,7 @@ MapStateWriter::MapStateWriter() : d(new Impl(this))
 
 void MapStateWriter::write(Writer1 *writer, bool excludePlayers)
 {
-    DENG2_ASSERT(writer != 0);
+    DE_ASSERT(writer != 0);
     d->writer = writer;
 
     // Prepare and populate the material archive.
@@ -349,13 +349,13 @@ void MapStateWriter::write(Writer1 *writer, bool excludePlayers)
 
 ThingArchive::SerialId MapStateWriter::serialIdFor(mobj_t const *mobj)
 {
-    DENG2_ASSERT(d->thingArchive != 0);
+    DE_ASSERT(d->thingArchive != 0);
     return d->thingArchive->serialIdFor(mobj);
 }
 
 materialarchive_serialid_t MapStateWriter::serialIdFor(world::Material *material)
 {
-    DENG2_ASSERT(d->materialArchive != 0);
+    DE_ASSERT(d->materialArchive != 0);
     return d->materialArchive->findUniqueSerialId(material);
 }
 
@@ -366,6 +366,6 @@ materialarchive_serialid_t MapStateWriter::serialIdFor(material_s *material)
 
 Writer1 *MapStateWriter::writer()
 {
-    DENG2_ASSERT(d->writer != 0);
+    DE_ASSERT(d->writer != 0);
     return d->writer;
 }

@@ -27,7 +27,7 @@
 
 namespace de { namespace shell {
 
-DENG2_PIMPL(AbstractLink)
+DE_PIMPL(AbstractLink)
 {
     String   tryingToConnectToHost;
     Time     startedTryingAt;
@@ -117,7 +117,7 @@ void AbstractLink::disconnect()
 {
     if (d->status != Disconnected)
     {
-        DENG2_ASSERT(d->socket.get() != 0);
+        DE_ASSERT(d->socket.get() != 0);
 
         d->timeout = 0;
         d->socket->close(); // emits signal

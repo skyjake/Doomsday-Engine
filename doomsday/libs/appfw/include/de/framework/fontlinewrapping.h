@@ -144,7 +144,7 @@ public:
     Image rasterizedSegment(int line, int segment) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

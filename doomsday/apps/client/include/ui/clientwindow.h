@@ -32,10 +32,10 @@
 
 #undef main
 
-#define DENG_GAMEVIEW_X         ClientWindow::main().game().rule().left().valuei()
-#define DENG_GAMEVIEW_Y         ClientWindow::main().game().rule().top().valuei()
-#define DENG_GAMEVIEW_WIDTH     ClientWindow::main().game().rule().width().valuei()
-#define DENG_GAMEVIEW_HEIGHT    ClientWindow::main().game().rule().height().valuei()
+#define DE_GAMEVIEW_X         ClientWindow::main().game().rule().left().valuei()
+#define DE_GAMEVIEW_Y         ClientWindow::main().game().rule().top().valuei()
+#define DE_GAMEVIEW_WIDTH     ClientWindow::main().game().rule().width().valuei()
+#define DE_GAMEVIEW_HEIGHT    ClientWindow::main().game().rule().height().valuei()
 
 /**
  * A helpful macro that changes the origin of the window space coordinate system.
@@ -174,7 +174,7 @@ protected:
     void windowAboutToClose() override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // CANVASWINDOW_H

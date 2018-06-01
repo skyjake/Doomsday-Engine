@@ -70,9 +70,8 @@ static PackageLoadStatus isPackageLoaded;
 
 PackagesWidget::IPackageStatus::~IPackageStatus() {}
 
-DENG_GUI_PIMPL(PackagesWidget)
-//, DENG2_OBSERVES(res::Bundles, Identify)
-, DENG2_OBSERVES(FileSystem, Busy)
+DE_GUI_PIMPL(PackagesWidget)
+, DE_OBSERVES(FileSystem, Busy)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     /**
@@ -80,7 +79,7 @@ DENG_GUI_PIMPL(PackagesWidget)
      */
     struct PackageItem
         : public ui::Item
-        , DENG2_OBSERVES(File, Deletion) {
+        , DE_OBSERVES(File, Deletion) {
         SafePtr<const File> file;
         const Record *      info = nullptr;
         NativePath          nativePath;
@@ -135,9 +134,9 @@ DENG_GUI_PIMPL(PackagesWidget)
      */
     class PackageListItemWidget
         : public HomeItemWidget
-        , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation) // actions
-        , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)   // actions
-        , DENG2_OBSERVES(Bank, Load)                           // package icons
+        , DE_OBSERVES(ChildWidgetOrganizer, WidgetCreation) // actions
+        , DE_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)   // actions
+        , DE_OBSERVES(Bank, Load)                           // package icons
     {
     public:
         PackageListItemWidget(PackageItem const &item, PackagesWidget &owner)
@@ -419,7 +418,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         {
             if (_iconId) return;
 
-            DENG2_ASSERT_IN_MAIN_THREAD();
+            DE_ASSERT_IN_MAIN_THREAD();
 
             auto &bank = iconBank();
 
@@ -504,7 +503,7 @@ DENG_GUI_PIMPL(PackagesWidget)
     {
         defaultActionItems << new ui::VariantActionItem(
             tr("Load"), tr("Unload"), new CallbackAction([this]() {
-                DENG2_ASSERT(menu->interactedItem());
+            DE_ASSERT(menu->interactedItem());
 
                 String const packageId =
                     menu->interactedItem()->as<PackageItem>().data().toString();

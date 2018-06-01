@@ -23,13 +23,13 @@
 #include <QCoreApplication>
 #include <QDir>
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
 
 namespace de { namespace shell {
 
 static String const ERROR_LOG_NAME = "doomsday-errors.out";
 
-DENG2_PIMPL_NOREF(LocalServer)
+DE_PIMPL_NOREF(LocalServer)
 {
     Link *     link = nullptr;
     NativePath appPath; // where to find the server
@@ -79,7 +79,7 @@ void LocalServer::start(duint16 port,
     // Get rid of a previous error log in this location.
     QDir(d->userDir).remove(ERROR_LOG_NAME);
 
-    DENG2_ASSERT(d->link == 0);
+    DE_ASSERT(d->link == 0);
 
     CommandLine cmd;
     NativePath bin;

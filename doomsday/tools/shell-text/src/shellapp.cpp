@@ -37,7 +37,7 @@
 using namespace de;
 using namespace shell;
 
-DENG2_PIMPL(ShellApp)
+DE_PIMPL(ShellApp)
 {
     PersistentData persist;
     MenuWidget *menu;
@@ -297,7 +297,7 @@ void ShellApp::handleIncomingPackets()
 {
     forever
     {
-        DENG2_ASSERT(d->link != 0);
+        DE_ASSERT(d->link != 0);
 
         QScopedPointer<Packet> packet(d->link->nextPacket());
         if (packet.isNull()) break;

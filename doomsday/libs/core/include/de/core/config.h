@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_CONFIG_H
-#define LIBDENG2_CONFIG_H
+#ifndef LIBCORE_CONFIG_H
+#define LIBCORE_CONFIG_H
 
 #include "../Process"
 #include "../String"
@@ -49,7 +49,7 @@ class ArrayValue;
  *
  * @ingroup core
  */
-class DENG2_PUBLIC Config : public RecordAccessor, public IObject
+class DE_PUBLIC Config : public RecordAccessor, public IObject
 {
 public:
     enum ReadStatus { WasNotRead, SameVersion, DifferentVersion };
@@ -115,9 +115,9 @@ public:
     static bool exists();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif /* LIBDENG2_CONFIG_H */
+#endif /* LIBCORE_CONFIG_H */

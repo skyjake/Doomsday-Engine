@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_VISSPRITE_H
-#define DENG_CLIENT_RENDER_VISSPRITE_H
+#ifndef DE_CLIENT_RENDER_VISSPRITE_H
+#define DE_CLIENT_RENDER_VISSPRITE_H
 
 #include <de/Vector>
 #include <de/GLState>
@@ -203,9 +203,9 @@ struct vispsprite_t
     } data;
 };
 
-DENG_EXTERN_C vissprite_t visSprites[MAXVISSPRITES], *visSpriteP;
-DENG_EXTERN_C vissprite_t visSprSortedHead;
-DENG_EXTERN_C vispsprite_t visPSprites[DDMAXPSPRITES];
+DE_EXTERN_C vissprite_t visSprites[MAXVISSPRITES], *visSpriteP;
+DE_EXTERN_C vissprite_t visSprSortedHead;
+DE_EXTERN_C vispsprite_t visPSprites[DDMAXPSPRITES];
 
 /// To be called at the start of the current render frame to clear the vissprite list.
 void R_ClearVisSprites();
@@ -214,4 +214,4 @@ vissprite_t *R_NewVisSprite(visspritetype_t type);
 
 void R_SortVisSprites();
 
-#endif  // DENG_CLIENT_RENDER_VISSPRITE_H
+#endif  // DE_CLIENT_RENDER_VISSPRITE_H

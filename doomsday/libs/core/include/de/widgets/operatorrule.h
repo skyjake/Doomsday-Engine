@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_OPERATORRULE_H
-#define LIBDENG2_OPERATORRULE_H
+#ifndef LIBCORE_OPERATORRULE_H
+#define LIBCORE_OPERATORRULE_H
 
 #include "../Rule"
 #include "../ConstantRule"
@@ -30,7 +30,7 @@ namespace de {
  * or two other rules.
  * @ingroup widgets
  */
-class DENG2_PUBLIC OperatorRule : public Rule
+class DE_PUBLIC OperatorRule : public Rule
 {
 public:
     enum Operator {
@@ -198,4 +198,4 @@ inline void maxInto(RuleType const *&maximum, Rule const &value) {
 
 } // namespace de
 
-#endif // LIBDENG2_OPERATORRULE_H
+#endif // LIBCORE_OPERATORRULE_H

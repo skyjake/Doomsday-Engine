@@ -31,13 +31,13 @@ static bool drawFilter = false;
 static Vec4f filterColor;
 
 #undef GL_SetFilter
-DENG_EXTERN_C void GL_SetFilter(dd_bool enabled)
+DE_EXTERN_C void GL_SetFilter(dd_bool enabled)
 {
     drawFilter = CPP_BOOL(enabled);
 }
 
 #undef GL_SetFilterColor
-DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a)
+DE_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a)
 {
     Vec4f newColorClamped(de::clamp(0.f, r, 1.f),
                              de::clamp(0.f, g, 1.f),

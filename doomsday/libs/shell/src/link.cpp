@@ -26,7 +26,7 @@
 
 namespace de { namespace shell {
 
-DENG2_PIMPL(Link)
+DE_PIMPL(Link)
 {
     String   connectDomain;
     TimeSpan connectTimeout;

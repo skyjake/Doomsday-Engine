@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RENDER_WALLSPEC
-#define DENG_RENDER_WALLSPEC
+#ifndef DE_RENDER_WALLSPEC
+#define DE_RENDER_WALLSPEC
 
 #include <QFlags>
 
@@ -92,4 +92,4 @@ public:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(WallSpec::Flags)
 
-#endif // DENG_RENDER_WALLSPEC
+#endif // DE_RENDER_WALLSPEC

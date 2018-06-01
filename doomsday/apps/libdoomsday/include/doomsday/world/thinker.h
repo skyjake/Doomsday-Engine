@@ -127,7 +127,7 @@ public:
         virtual void think() = 0;
         virtual IData *duplicate() const = 0;
 
-        DENG2_CAST_METHODS()
+        DE_CAST_METHODS()
     };
 
     enum AllocMethod { AllocateStandard, AllocateMemoryZone };
@@ -225,7 +225,7 @@ public:
     static void zap(thinker_s &thinkerBase, de::dsize sizeInBytes);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 
 public:
     // Value accessors (POD thinker_s compatibility for old code; TODO: remove in the future):

@@ -31,17 +31,17 @@ using namespace de;
 
 static void ChatWidget_UpdateGeometry(ChatWidget *chat)
 {
-    DENG2_ASSERT(chat);
+    DE_ASSERT(chat);
     chat->updateGeometry();
 }
 
 static void ChatWidget_Draw(ChatWidget *chat, Point2Raw const *offset)
 {
-    DENG2_ASSERT(chat);
+    DE_ASSERT(chat);
     chat->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
-DENG2_PIMPL(ChatWidget)
+DE_PIMPL(ChatWidget)
 {
     bool active      = false;
     bool shiftDown   = false;

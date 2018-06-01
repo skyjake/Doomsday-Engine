@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_NETWORK_BUFFER_H
-#define LIBDENG_NETWORK_BUFFER_H
+#ifndef DE_NETWORK_BUFFER_H
+#define DE_NETWORK_BUFFER_H
 
 #include "dd_types.h"
 
@@ -138,4 +138,4 @@ void N_PostMessage(netmessage_t *msg);
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_NETWORK_BUFFER_H */
+#endif /* DE_NETWORK_BUFFER_H */

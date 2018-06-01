@@ -41,7 +41,7 @@ namespace de {
 
 TimeSpan const FLUSH_INTERVAL = .2; // seconds
 
-DENG2_PIMPL(LogBuffer)
+DE_PIMPL(LogBuffer)
 {
     typedef QList<LogEntry *> EntryList;
     typedef QSet<LogSink *> Sinks;
@@ -100,7 +100,7 @@ DENG2_PIMPL(LogBuffer)
 
     void enableAutoFlush(bool yes)
     {
-        DENG2_ASSERT(qApp);
+        DE_ASSERT(qApp);
         if (yes)
         {
             if (!autoFlushTimer->isActive())
@@ -130,10 +130,10 @@ DENG2_PIMPL(LogBuffer)
                 // Start an empty log file.
                 outputFile = &App::rootFolder().replaceFile(outputPath);
             }
-            DENG2_ASSERT(outputFile);
+            DE_ASSERT(outputFile);
 
             // Add a sink for the file.
-            DENG2_ASSERT(!fileLogSink);
+            DE_ASSERT(!fileLogSink);
             fileLogSink = new FileLogSink(*outputFile);
             sinks.insert(fileLogSink);
         }
@@ -161,7 +161,7 @@ LogBuffer::LogBuffer(duint maxEntryCount)
 
 LogBuffer::~LogBuffer()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     setOutputFile("");
     clear();
@@ -171,12 +171,12 @@ LogBuffer::~LogBuffer()
 
 void LogBuffer::clear()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     // Flush first, we don't want to miss any messages.
     flush();
 
-    DENG2_FOR_EACH(Impl::EntryList, i, d->entries)
+    DE_FOR_EACH(Impl::EntryList, i, d->entries)
     {
         delete *i;
     }
@@ -185,13 +185,13 @@ void LogBuffer::clear()
 
 dsize LogBuffer::size() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     return d->entries.size();
 }
 
 void LogBuffer::latestEntries(Entries &entries, int count) const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     entries.clear();
     for (int i = d->entries.size() - 1; i >= 0; --i)
     {
@@ -217,8 +217,8 @@ void LogBuffer::setEntryFilter(IFilter const *entryFilter)
 
 bool LogBuffer::isEnabled(duint32 entryMetadata) const
 {
-    DENG2_ASSERT(d->entryFilter != 0);
-    DENG2_ASSERT(entryMetadata & LogEntry::DomainMask); // must have a domain
+    DE_ASSERT(d->entryFilter != 0);
+    DE_ASSERT(entryMetadata & LogEntry::DomainMask); // must have a domain
     if (entryMetadata & LogEntry::Privileged)
     {
         return true; // always passes
@@ -233,7 +233,7 @@ void LogBuffer::setMaxEntryCount(duint maxEntryCount)
 
 void LogBuffer::add(LogEntry *entry)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     // We will not flush the new entry as it likely has not yet been given
     // all its arguments.
@@ -248,7 +248,7 @@ void LogBuffer::add(LogEntry *entry)
 
 void LogBuffer::enableStandardOutput(bool yes)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     d->useStandardOutput = yes;
 
@@ -271,7 +271,7 @@ void LogBuffer::setAutoFlushInterval(TimeSpan const &interval)
 
 void LogBuffer::setOutputFile(String const &path, OutputChangeBehavior behavior)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     if (behavior == FlushFirstToOldOutputs)
     {
@@ -290,14 +290,14 @@ String LogBuffer::outputFile() const
 
 void LogBuffer::addSink(LogSink &sink)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     d->sinks.insert(&sink);
 }
 
 void LogBuffer::removeSink(LogSink &sink)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     d->sinks.remove(&sink);
 }
@@ -306,13 +306,13 @@ void LogBuffer::flush()
 {
     if (!d->flushingEnabled) return;
 
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     if (!d->toBeFlushed.isEmpty())
     {
-        DENG2_FOR_EACH(Impl::EntryList, i, d->toBeFlushed)
+        DE_FOR_EACH(Impl::EntryList, i, d->toBeFlushed)
         {
-            DENG2_GUARD_FOR(**i, guardingCurrentLogEntry);
+            DE_GUARD_FOR(**i, guardingCurrentLogEntry);
             foreach (LogSink *sink, d->sinks)
             {
                 if (sink->willAccept(**i))
@@ -355,7 +355,7 @@ void LogBuffer::setAppBuffer(LogBuffer &appBuffer)
 
 LogBuffer &LogBuffer::get()
 {
-    DENG2_ASSERT(_appBuffer != 0);
+    DE_ASSERT(_appBuffer != 0);
     return *_appBuffer;
 }
 

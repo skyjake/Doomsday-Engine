@@ -1,7 +1,7 @@
 # Doomsday Engine -- libcore
 
 cmake_minimum_required (VERSION 3.1)
-project (DENG_LIBCORE)
+project (DE_LIBCORE)
 include (../../cmake/Config.cmake)
 
 # Dependencies.
@@ -10,26 +10,26 @@ find_package (Git QUIET)
 
 # Definitions.
 add_definitions (
-    -D__DENG2__=1
-    -DLIBDENG2_MAJOR_VERSION=${DENG_VERSION_MAJOR}
-    -DLIBDENG2_MINOR_VERSION=${DENG_VERSION_MINOR}
-    -DLIBDENG2_PATCHLEVEL=${DENG_VERSION_PATCH}
-    -DLIBDENG2_RELEASE_LABEL="${DENG_RELEASE_TYPE}"
-    -DLIBDENG2_VERSION="${DENG_VERSION}"
+    -D__LIBCORE__=1
+    -DLIBCORE_MAJOR_VERSION=${DE_VERSION_MAJOR}
+    -DLIBCORE_MINOR_VERSION=${DE_VERSION_MINOR}
+    -DLIBCORE_PATCHLEVEL=${DE_VERSION_PATCH}
+    -DLIBCORE_RELEASE_LABEL="${DE_RELEASE_TYPE}"
+    -DLIBCORE_VERSION="${DE_VERSION}"
 )
-if (DEFINED DENG_BUILD)
-    add_definitions (-DLIBDENG2_BUILD_TEXT="${DENG_BUILD}")
+if (DEFINED DE_BUILD)
+    add_definitions (-DLIBCORE_BUILD_TEXT="${DE_BUILD}")
 endif ()
 if (GIT_FOUND)
     execute_process (
         COMMAND ${GIT_EXECUTABLE} describe --tags --always --long
-        OUTPUT_VARIABLE DENG_GIT_DESCRIPTION
+        OUTPUT_VARIABLE DE_GIT_DESCRIPTION
         ERROR_QUIET
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
-    if (DENG_GIT_DESCRIPTION)
-        message (STATUS "Revision: ${DENG_GIT_DESCRIPTION}")
-        add_definitions (-DLIBDENG2_GIT_DESCRIPTION="${DENG_GIT_DESCRIPTION}")
+    if (DE_GIT_DESCRIPTION)
+        message (STATUS "Revision: ${DE_GIT_DESCRIPTION}")
+        add_definitions (-DLIBCORE_GIT_DESCRIPTION="${DE_GIT_DESCRIPTION}")
     endif ()
 endif ()
 
@@ -48,7 +48,7 @@ deng_merge_sources (widgets        src/widgets/*.cpp)
 
 if (WIN32)
     # Update the resource file.
-    set (DENG_LIBCORE_VERSION_WINDOWS ${DENG_VERSION_WINDOWS})
+    set (DE_LIBCORE_VERSION_WINDOWS ${DE_VERSION_WINDOWS})
     configure_file (res/win32/core.rc.in core.rc)
     list (APPEND SOURCES ${CMAKE_CURRENT_BINARY_DIR}/core.rc)
     include_directories (res/win32)

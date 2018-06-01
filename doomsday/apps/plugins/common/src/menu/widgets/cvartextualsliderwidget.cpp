@@ -29,7 +29,7 @@ using namespace de;
 namespace common {
 namespace menu {
 
-DENG2_PIMPL(CVarTextualSliderWidget)
+DE_PIMPL(CVarTextualSliderWidget)
 {
     //String templateString;
     String onethSuffix;

@@ -126,7 +126,7 @@ public:
     void pageActivated() override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef ListWidget::Item ListWidgetItem;

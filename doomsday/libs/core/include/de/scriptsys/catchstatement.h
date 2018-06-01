@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_CATCHSTATEMENT_H
-#define LIBDENG2_CATCHSTATEMENT_H
+#ifndef LIBCORE_CATCHSTATEMENT_H
+#define LIBCORE_CATCHSTATEMENT_H
 
 #include "../Statement"
 #include "../ArrayExpression"
@@ -87,4 +87,4 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(CatchStatement::Flags)
 
 } // namespace de
 
-#endif /* LIBDENG2_CATCHSTATEMENT_H */
+#endif /* LIBCORE_CATCHSTATEMENT_H */

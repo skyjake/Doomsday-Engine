@@ -75,13 +75,13 @@ protected:
 
 public:
     /// Notified whenever the "current" map changes.
-    DENG2_DEFINE_AUDIENCE2(MapChange, void worldMapChanged())
+    DE_DEFINE_AUDIENCE2(MapChange, void worldMapChanged())
 
 public:  /// @todo make private:
     void notifyMapChange();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif  // LIBDOOMSDAY_WORLD_H

@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_PROCESS_H
-#define LIBDENG2_PROCESS_H
+#ifndef LIBCORE_PROCESS_H
+#define LIBCORE_PROCESS_H
 
 #include "../Script"
 #include "../Time"
@@ -43,7 +43,7 @@ namespace internal {
  * used by Process:scriptCall() and is not intended to be used manually (hence
  * it is in the de::internal namespace).
  */
-struct DENG2_PUBLIC ScriptArgumentComposer
+struct DE_PUBLIC ScriptArgumentComposer
 {
     QStringList args;
     int counter = 0;
@@ -140,7 +140,7 @@ inline QString ScriptArgumentComposer::scriptArgumentAsText(IObject const &objec
     return scriptArgumentAsText(object.objectNamespace());
 }
 
-#define DENG2_SCRIPT_ARGUMENT_TYPE(ArgType, Method) \
+#define DE_SCRIPT_ARGUMENT_TYPE(ArgType, Method) \
     namespace de { namespace internal { template <> inline QString ScriptArgumentComposer::scriptArgumentAsText(ArgType const &arg) { Method } } }
 
 } // namespace internal
@@ -151,18 +151,18 @@ inline QString ScriptArgumentComposer::scriptArgumentAsText(IObject const &objec
  *
  * @ingroup script
  */
-class DENG2_PUBLIC Process
+class DE_PUBLIC Process
 {
 public:
     /// The process is running while an operation is attempted that requires the
     /// process to be stopped. @ingroup errors
-    DENG2_ERROR(NotStoppedError);
+    DE_ERROR(NotStoppedError);
 
     /// Suspending or resuming fails. @ingroup errors
-    DENG2_ERROR(SuspendError);
+    DE_ERROR(SuspendError);
 
     /// Execution is taking too long to complete. @ingroup errors
-    DENG2_ERROR(HangError);
+    DE_ERROR(HangError);
 
     /// A process is always in one of these states.
     enum State {
@@ -368,9 +368,9 @@ public:
     }
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif /* LIBDENG2_PROCESS_H */
+#endif /* LIBCORE_PROCESS_H */

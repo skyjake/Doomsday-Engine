@@ -89,12 +89,12 @@ public:
     }
 
     bool contains(ItemType const *data) const {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         return _items.contains(const_cast<ItemType *>(data));
     }
 
     virtual void clear() {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         _items.clear();
         _currentBytes = 0;
     }
@@ -116,7 +116,7 @@ private:
 
 } // namespace internal
 
-DENG2_PIMPL(Bank)
+DE_PIMPL(Bank)
 {
     /**
      * Data item. Has ownership of the in-memory cached data and the source
@@ -143,7 +143,7 @@ DENG2_PIMPL(Bank)
 
         void clearData()
         {
-            DENG2_GUARD(this);
+            DE_GUARD(this);
 
             if (data.get())
             {
@@ -156,8 +156,8 @@ DENG2_PIMPL(Bank)
 
         void setData(IData *newData)
         {
-            DENG2_GUARD(this);
-            DENG2_ASSERT(newData != 0);
+            DE_GUARD(this);
+            DE_ASSERT(newData != 0);
 
             data.reset(newData);
             accessedAt = Time::currentHighPerformanceTime();
@@ -167,7 +167,7 @@ DENG2_PIMPL(Bank)
         /// Load the item into memory from its current cache.
         void load()
         {
-            DENG2_ASSERT(cache != 0);
+            DE_ASSERT(cache != 0);
 
             switch (cache->format())
             {
@@ -187,7 +187,7 @@ DENG2_PIMPL(Bank)
 
         void loadFromSource()
         {
-            DENG2_ASSERT(source.get() != 0);
+            DE_ASSERT(source.get() != 0);
 
             Time startedAt;
 
@@ -213,7 +213,7 @@ DENG2_PIMPL(Bank)
 
         void loadFromSerialized()
         {
-            DENG2_ASSERT(serial);
+            DE_ASSERT(serial);
 
             try
             {
@@ -246,7 +246,7 @@ DENG2_PIMPL(Bank)
 
         void serialize(Path const &folderPath)
         {
-            DENG2_GUARD(this);
+            DE_GUARD(this);
 
             if (serial)
             {
@@ -254,7 +254,7 @@ DENG2_PIMPL(Bank)
                 return;
             }
 
-            DENG2_ASSERT(source.get() != 0);
+            DE_ASSERT(source.get() != 0);
 
             if (!data.get())
             {
@@ -262,7 +262,7 @@ DENG2_PIMPL(Bank)
                 loadFromSource();
             }
 
-            DENG2_ASSERT(data->asSerializable() != 0);
+            DE_ASSERT(data->asSerializable() != 0);
 
             try
             {
@@ -300,15 +300,15 @@ DENG2_PIMPL(Bank)
 
         void clearSerialized()
         {
-            DENG2_GUARD(this);
+            DE_GUARD(this);
 
             serial.reset();
         }
 
         void changeCache(Cache &toCache)
         {
-            DENG2_GUARD(this);
-            DENG2_ASSERT(cache != 0);
+            DE_GUARD(this);
+            DE_ASSERT(cache != 0);
 
             if (cache != &toCache)
             {
@@ -349,9 +349,9 @@ DENG2_PIMPL(Bank)
 
         void add(Data &item)
         {
-            DENG2_GUARD(this);
+            DE_GUARD(this);
 
-            DENG2_ASSERT(!_path.isEmpty());
+            DE_ASSERT(!_path.isEmpty());
             item.serialize(_path);
             addBytes(item.serial->size());
             DataCache::add(item);
@@ -359,7 +359,7 @@ DENG2_PIMPL(Bank)
 
         void remove(Data &item)
         {
-            DENG2_GUARD(this);
+            DE_GUARD(this);
 
             addBytes(-dint64(item.serial->size()));
             item.clearSerialized();
@@ -368,8 +368,8 @@ DENG2_PIMPL(Bank)
 
         void setLocation(String const &location)
         {
-            DENG2_ASSERT(!location.isEmpty());
-            DENG2_GUARD(this);
+            DE_ASSERT(!location.isEmpty());
+            DE_GUARD(this);
 
             // Serialized "hot" data is kept here.
             _path = location;
@@ -403,18 +403,18 @@ DENG2_PIMPL(Bank)
             // Acquire the object.
             item.load();
 
-            DENG2_GUARD(this);
+            DE_GUARD(this);
 
-            DENG2_ASSERT(item.data.get() != nullptr);
+            DE_ASSERT(item.data.get() != nullptr);
             addBytes(item.data->sizeInMemory());
             DataCache::add(item);
         }
 
         void remove(Data &item)
         {
-            DENG2_ASSERT(item.data.get() != nullptr);
+            DE_ASSERT(item.data.get() != nullptr);
 
-            DENG2_GUARD(this);
+            DE_GUARD(this);
 
             addBytes(-dint64(item.data->sizeInMemory()));
             item.clearData();
@@ -484,7 +484,7 @@ DENG2_PIMPL(Bank)
         {
             try
             {
-                DENG2_ASSERT(_bank.d->serialCache != 0);
+                DE_ASSERT(_bank.d->serialCache != 0);
 
                 LOG_XVERBOSE("Serializing \"%s\"", _path);
                 item().changeCache(*_bank.d->serialCache);
@@ -568,7 +568,7 @@ DENG2_PIMPL(Bank)
      */
     void clearHotStorage()
     {
-        DENG2_ASSERT(serialCache);
+        DE_ASSERT(serialCache);
 
         FS::waitForIdle();
         if (Folder *folder = serialCache->folder())
@@ -643,7 +643,7 @@ DENG2_PIMPL(Bank)
 
     void putInBestCache(Data &item)
     {
-        DENG2_ASSERT(item.cache == 0);
+        DE_ASSERT(item.cache == 0);
 
         // The source cache is always good.
         DataCache *best = &sourceCache;
@@ -711,16 +711,16 @@ DENG2_PIMPL(Bank)
         switch (nt.kind)
         {
         case Notification::Loaded:
-            DENG2_FOR_PUBLIC_AUDIENCE2(Load, i)
+            DE_FOR_PUBLIC_AUDIENCE2(Load, i)
             {
                 i->bankLoaded(nt.path);
             }
             break;
 
         case Notification::CacheChanged:
-            DENG2_FOR_PUBLIC_AUDIENCE2(CacheLevel, i)
+            DE_FOR_PUBLIC_AUDIENCE2(CacheLevel, i)
             {
-                DENG2_ASSERT(nt.cache != 0);
+                DE_ASSERT(nt.cache != 0);
 
                 i->bankCacheLevelChanged(nt.path,
                       nt.cache == &memoryCache?      InMemory :
@@ -731,12 +731,12 @@ DENG2_PIMPL(Bank)
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(Load)
-    DENG2_PIMPL_AUDIENCE(CacheLevel)
+    DE_PIMPL_AUDIENCE(Load)
+    DE_PIMPL_AUDIENCE(CacheLevel)
 };
 
-DENG2_AUDIENCE_METHOD(Bank, Load)
-DENG2_AUDIENCE_METHOD(Bank, CacheLevel)
+DE_AUDIENCE_METHOD(Bank, Load)
+DE_AUDIENCE_METHOD(Bank, CacheLevel)
 
 Bank::Bank(char const *nameForLog, Flags const &flags, String const &hotStorageLocation)
     : d(new Impl(this, nameForLog, flags))
@@ -833,7 +833,7 @@ void Bank::add(DotPath const &path, ISource *source)
 
     Impl::Data &item = d->items.insert(path);
 
-    DENG2_GUARD(item);
+    DE_GUARD(item);
 
     item.bank = this;
     item.source.reset(src.release());
@@ -889,7 +889,7 @@ void Bank::loadAll()
 {
     Names names;
     allItems(names);
-    DENG2_FOR_EACH(Names, i, names)
+    DE_FOR_EACH(Names, i, names)
     {
         load(*i, AfterQueued);
     }
@@ -901,7 +901,7 @@ Bank::IData &Bank::data(DotPath const &path) const
 
     // First check if the item is already in memory.
     Impl::Data &item = d->items.find(path, PathTree::MatchFull | PathTree::NoBranch);
-    DENG2_GUARD(item);
+    DE_GUARD(item);
 
     // Mark it used.
     item.accessedAt = Time::currentHighPerformanceTime();
@@ -967,7 +967,7 @@ void Bank::unloadAll(Importance importance, CacheLevel maxLevel)
 
     Names names;
     allItems(names);
-    DENG2_FOR_EACH(Names, i, names)
+    DE_FOR_EACH(Names, i, names)
     {
         unload(Path(*i, d->sepChar), maxLevel, importance);
     }

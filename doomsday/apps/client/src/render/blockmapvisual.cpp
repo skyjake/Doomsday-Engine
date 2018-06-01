@@ -67,7 +67,7 @@ static void drawLine(Line const &line)
 static void drawSubspace(ConvexSubspace const &subspace)
 {
     dfloat const scale = de::max(bmapDebugSize, 1.f);
-    dfloat const width = (DENG_GAMEVIEW_WIDTH / 16) / scale;
+    dfloat const width = (DE_GAMEVIEW_WIDTH / 16) / scale;
 
     Face const &poly = subspace.poly();
     HEdge *base = poly.hedge();
@@ -541,8 +541,8 @@ void Rend_BlockmapDebug()
         break;
     }
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     /*
      * Draw the blockmap.
@@ -550,12 +550,12 @@ void Rend_BlockmapDebug()
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
     DGL_LoadIdentity();
-    DGL_Ortho(0, 0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, -1, 1);
+    DGL_Ortho(0, 0, DE_GAMEVIEW_WIDTH, DE_GAMEVIEW_HEIGHT, -1, 1);
     // Orient on the center of the window.
-    DGL_Translatef((DENG_GAMEVIEW_WIDTH / 2), (DENG_GAMEVIEW_HEIGHT / 2), 0);
+    DGL_Translatef((DE_GAMEVIEW_WIDTH / 2), (DE_GAMEVIEW_HEIGHT / 2), 0);
 
     // Uniform scaling factor for this visual.
-    float scale = bmapDebugSize / de::max(DENG_GAMEVIEW_HEIGHT / 100, 1);
+    float scale = bmapDebugSize / de::max(DE_GAMEVIEW_HEIGHT / 100, 1);
     DGL_Scalef(scale, -scale, 1);
 
     // If possible we'll tailor what we draw relative to the viewPlayer.
@@ -577,7 +577,7 @@ void Rend_BlockmapDebug()
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
     DGL_LoadIdentity();
-    DGL_Ortho(0, 0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, -1, 1);
+    DGL_Ortho(0, 0, DE_GAMEVIEW_WIDTH, DE_GAMEVIEW_HEIGHT, -1, 1);
 
     if (followMobj)
     {
@@ -586,13 +586,13 @@ void Rend_BlockmapDebug()
         BlockmapCell cell = blockmap->toCell(followMobj->origin, &didClip);
         if (!didClip)
         {
-            drawCellInfoBox(Vec2d(DENG_GAMEVIEW_WIDTH / 2, 30), *blockmap,
+            drawCellInfoBox(Vec2d(DE_GAMEVIEW_WIDTH / 2, 30), *blockmap,
                             objectTypeName, cell);
         }
     }
 
     // About the Blockmap itself.
-    drawBlockmapInfo(Vec2d(DENG_GAMEVIEW_WIDTH - 10, DENG_GAMEVIEW_HEIGHT - 10),
+    drawBlockmapInfo(Vec2d(DE_GAMEVIEW_WIDTH - 10, DE_GAMEVIEW_HEIGHT - 10),
                      *blockmap);
 
     DGL_MatrixMode(DGL_PROJECTION);

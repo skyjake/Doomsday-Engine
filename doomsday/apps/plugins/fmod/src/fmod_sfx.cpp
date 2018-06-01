@@ -216,7 +216,7 @@ void DS_SFX_DestroyBuffer(sfxbuffer_t* buf)
     BufferInfo& info = bufferInfo(buf);
     if (info.sound)
     {
-        DENG2_GUARD(streams);
+        DE_GUARD(streams);
         info.sound->release();
         streams.value.erase(info.sound);
     }
@@ -244,15 +244,15 @@ static FMOD_RESULT F_CALLBACK pcmReadCallback(FMOD_SOUND* soundPtr, void* data, 
 
     sfxbuffer_t *buf = nullptr;
     {
-        DENG2_GUARD(streams);
+        DE_GUARD(streams);
         Streams::iterator found = streams.value.find(sound);
         if (found == streams.value.end())
         {
             return FMOD_ERR_NOTREADY;
         }
         buf = found->second;
-        DENG_ASSERT(buf != NULL);
-        DENG_ASSERT(buf->flags & SFXBF_STREAM);
+        DE_ASSERT(buf != NULL);
+        DE_ASSERT(buf->flags & SFXBF_STREAM);
     }
 
     // Call the stream callback.
@@ -299,7 +299,7 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     // If it has a sample, release it later.
     if (info.sound)
     {
-        DENG2_GUARD(streams);
+        DE_GUARD(streams);
         LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Load: Releasing buffer's old Sound %p", info.sound);
         info.sound->release();
         streams.value.erase(info.sound);
@@ -346,7 +346,7 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 
     if (streaming)
     {
-        DENG2_GUARD(streams);
+        DE_GUARD(streams);
         // Keep a record of the playing stream for the PCM read callback.
         streams.value[info.sound] = buf;
         LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Load: noting %p belongs to streaming buffer %p",
@@ -384,7 +384,7 @@ void DS_SFX_Reset(sfxbuffer_t* buf)
     BufferInfo& info = bufferInfo(buf);
     if (info.sound)
     {
-        DENG2_GUARD(streams);
+        DE_GUARD(streams);
         LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Reset: releasing Sound %p", info.sound);
         info.sound->release();
         streams.value.erase(info.sound);
@@ -446,7 +446,7 @@ void DS_SFX_Stop(sfxbuffer_t* buf)
 
     BufferInfo& info = bufferInfo(buf);
     {
-        DENG2_GUARD(streams);
+        DE_GUARD(streams);
         Streams::iterator found = streams.value.find(info.sound);
         if (found != streams.value.end() && info.channel)
         {

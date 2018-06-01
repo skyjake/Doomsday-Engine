@@ -28,11 +28,11 @@
 
 using namespace de;
 
-DENG2_PIMPL(MultiplayerServerMenuWidget)
-, DENG2_OBSERVES(DoomsdayApp, GameChange)
-, DENG2_OBSERVES(Games, Readiness)
-, DENG2_OBSERVES(ServerLink, DiscoveryUpdate)
-, DENG2_OBSERVES(MultiplayerPanelButtonWidget, AboutToJoin)
+DE_PIMPL(MultiplayerServerMenuWidget)
+, DE_OBSERVES(DoomsdayApp, GameChange)
+, DE_OBSERVES(Games, Readiness)
+, DE_OBSERVES(ServerLink, DiscoveryUpdate)
+, DE_OBSERVES(MultiplayerPanelButtonWidget, AboutToJoin)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     static ServerLink &link() { return ClientApp::serverLink(); }
@@ -218,7 +218,7 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
 
     void aboutToJoinMultiplayerGame(shell::ServerInfo const &sv) override
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(AboutToJoin, i) i->aboutToJoinMultiplayerGame(sv);
+        DE_FOR_PUBLIC_AUDIENCE2(AboutToJoin, i) i->aboutToJoinMultiplayerGame(sv);
     }
 
 //- ChildWidgetOrganizer::IWidgetFactory --------------------------------------
@@ -241,10 +241,10 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
         updateAvailability(widget);
     }
 
-    DENG2_PIMPL_AUDIENCE(AboutToJoin)
+    DE_PIMPL_AUDIENCE(AboutToJoin)
 };
 
-DENG2_AUDIENCE_METHOD(MultiplayerServerMenuWidget, AboutToJoin);
+DE_AUDIENCE_METHOD(MultiplayerServerMenuWidget, AboutToJoin);
 
 MultiplayerServerMenuWidget::MultiplayerServerMenuWidget(DiscoveryMode discovery,
                                                          String const &name)

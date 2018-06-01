@@ -23,7 +23,7 @@
 
 namespace de {
 
-DENG2_PIMPL(DirectoryListDialog)
+DE_PIMPL(DirectoryListDialog)
 {
     struct Group
     {
@@ -110,13 +110,13 @@ void DirectoryListDialog::prepare()
 
 void DirectoryListDialog::setValue(Id const &id, Value const &elements)
 {
-    DENG2_ASSERT(d->groups.contains(id));
+    DE_ASSERT(d->groups.contains(id));
     d->groups[id]->array.set(elements);
 }
 
 Value const &DirectoryListDialog::value(Id const &id) const
 {
-    DENG2_ASSERT(d->groups.contains(id));
+    DE_ASSERT(d->groups.contains(id));
     return d->groups[id]->array.value();
 }
 

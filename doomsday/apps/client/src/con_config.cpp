@@ -80,10 +80,10 @@ static void writeHeaderComment(de::Writer &out)
 static int writeVariableToFileWorker(knownword_t const *word, void *context)
 {
     de::Writer *out = reinterpret_cast<de::Writer *>(context);
-    DENG_ASSERT(out != 0);
+    DE_ASSERT(out != 0);
 
     cvar_t *var = (cvar_t *)word->data;
-    DENG2_ASSERT(var != 0);
+    DE_ASSERT(var != 0);
 
     // Don't archive this cvar?
     if (var->flags & CVF_NO_ARCHIVE)
@@ -140,10 +140,10 @@ static void writeVariablesToFile(de::Writer &out)
 static int writeAliasToFileWorker(knownword_t const *word, void *context)
 {
     de::Writer *out = reinterpret_cast<de::Writer *>(context);
-    DENG2_ASSERT(out != 0);
+    DE_ASSERT(out != 0);
 
     calias_t *cal = (calias_t *) word->data;
-    DENG2_ASSERT(cal != 0);
+    DE_ASSERT(cal != 0);
 
     out->writeText(String::format("alias \"%s\" \"%s\"\n",
                                   String(cal->name).escaped().toUtf8().constData(),
@@ -237,7 +237,7 @@ static bool writeBindingsState(Path const &filePath)
             {
                 ImpulseBinding bind(rec);
                 PlayerImpulse const *impulse = P_PlayerImpulsePtr(rec.compiled().impulseId);
-                DENG2_ASSERT(impulse);
+                DE_ASSERT(impulse);
 
                 out.writeText(String::format("bindcontrol local%i-%s \"%s\"\n",
                               bind.geti("localPlayer") + 1,
@@ -274,7 +274,7 @@ static bool writeState(Path const &filePath, Path const &bindingsFileName = "")
         writeBindingsState(bindingsFileName);
     }
 #else
-    DENG2_UNUSED(bindingsFileName);
+    DE_UNUSED(bindingsFileName);
 #endif
     return true;
 }
@@ -341,7 +341,7 @@ void Con_SaveDefaultsIfChanged()
 
 D_CMD(WriteConsole)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     Path filePath(argv[1]);
     LOG_SCR_MSG("Writing to \"%s\"...") << filePath;

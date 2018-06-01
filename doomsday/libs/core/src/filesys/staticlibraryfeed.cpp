@@ -35,7 +35,7 @@ String StaticLibraryFeed::description() const
 Feed::PopulatedFiles StaticLibraryFeed::populate(Folder const &folder)
 {
     PopulatedFiles files;
-#if defined (DENG_STATIC_LINK)
+#if defined (DE_STATIC_LINK)
     for (String name : Library::staticLibraries())
     {
         if (!folder.has(name))
@@ -44,7 +44,7 @@ Feed::PopulatedFiles StaticLibraryFeed::populate(Folder const &folder)
         }
     }
 #else
-    DENG2_UNUSED(folder);
+    DE_UNUSED(folder);
 #endif
     return files;
 }

@@ -27,12 +27,12 @@
 #  include <de/String>
 #endif
 
-#define DENG_MAX_ARGS            256
+#define DE_MAX_ARGS            256
 
 typedef struct {
     char cmdLine[2048];
     int argc;
-    char *argv[DENG_MAX_ARGS];
+    char *argv[DE_MAX_ARGS];
 } cmdargs_t;
 
 /**
@@ -74,7 +74,7 @@ typedef struct ccmd_s {
     int minArgs, maxArgs;
 
     /// List of argument types for this command.
-    cvartype_t args[DENG_MAX_ARGS];
+    cvartype_t args[DE_MAX_ARGS];
 } ccmd_t;
 
 /**
@@ -122,7 +122,7 @@ typedef struct ccmd_s {
 ///@}
 
 /// Helper macro for declaring console command functions. @ingroup console
-#define D_CMD(x)        DENG_EXTERN_C int CCmd##x(byte src, int argc, char** argv)
+#define D_CMD(x)        DE_EXTERN_C int CCmd##x(byte src, int argc, char** argv)
 
 /**
  * Helper macro for registering new console commands.

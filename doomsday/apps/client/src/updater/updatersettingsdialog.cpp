@@ -36,7 +36,7 @@ using namespace de;
 #if 0
 static QString defaultLocationName()
 {
-#ifdef DENG2_QT_5_0_OR_NEWER
+#ifdef DE_QT_5_0_OR_NEWER
     QString name = QStandardPaths::displayName(QStandardPaths::CacheLocation);
 #else
     QString name = QDesktopServices::displayName(QDesktopServices::CacheLocation);
@@ -49,8 +49,8 @@ static QString defaultLocationName()
 }
 #endif
 
-DENG2_PIMPL(UpdaterSettingsDialog),
-DENG2_OBSERVES(ToggleWidget, Toggle)
+DE_PIMPL(UpdaterSettingsDialog),
+DE_OBSERVES(ToggleWidget, Toggle)
 {
     ToggleWidget *autoCheck;
     ChoiceWidget *freqs;

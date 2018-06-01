@@ -21,8 +21,8 @@
  * Demos.
  */
 
-#ifndef LIBDENG_DEMO_H
-#define LIBDENG_DEMO_H
+#ifndef DE_DEMO_H
+#define DE_DEMO_H
 
 #ifdef __SERVER__
 #  error Demos are not available in a SERVER build
@@ -55,4 +55,4 @@ void            Demo_StopPlayback(void);
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_DEMO_H */
+#endif /* DE_DEMO_H */

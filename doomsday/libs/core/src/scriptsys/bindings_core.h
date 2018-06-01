@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_BINDINGS_CORE_H
-#define LIBDENG2_BINDINGS_CORE_H
+#ifndef LIBCORE_BINDINGS_CORE_H
+#define LIBCORE_BINDINGS_CORE_H
 
 #include "de/Binder"
 
@@ -27,5 +27,5 @@ void initCoreModule(Binder &binder, Record &coreModule);
 
 } // namespace de
 
-#endif // LIBDENG2_BINDINGS_CORE_H
+#endif // LIBCORE_BINDINGS_CORE_H
 

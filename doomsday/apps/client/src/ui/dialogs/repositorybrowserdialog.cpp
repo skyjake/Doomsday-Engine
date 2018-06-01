@@ -39,8 +39,8 @@ using namespace de;
 static String const VAR_RESOURCE_BROWSER_REPOSITORY("resource.browserRepository");
 static String const ALL_CATEGORIES(QObject::tr("All Categories"));
 
-DENG_GUI_PIMPL(RepositoryBrowserDialog)
-, DENG2_OBSERVES(filesys::RemoteFeedRelay, Status)
+DE_GUI_PIMPL(RepositoryBrowserDialog)
+, DE_OBSERVES(filesys::RemoteFeedRelay, Status)
 , public ChildWidgetOrganizer::IWidgetFactory
 , public AsyncScope
 {
@@ -280,7 +280,7 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
         populating.reset();
         if (connectedRepository)
         {
-            DENG2_GUARD(linkBusy);
+            DE_GUARD(linkBusy);
             mountPath.clear();
             connectedRepository.clear();
             RFRelay::get().removeRepository(connectedRepository);
@@ -290,7 +290,7 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
     filesys::Link &link()
     {
         auto *link = RFRelay::get().repository(connectedRepository);
-        DENG2_ASSERT(link);
+        DE_ASSERT(link);
         return *link;
     }
 
@@ -301,7 +301,7 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
 
         *populating += async([this] ()
         {
-            DENG2_GUARD(linkBusy);
+            DE_GUARD(linkBusy);
             // All packages from the remote repository are inserted to the data model.
             std::shared_ptr<ui::ListData> pkgs(new ui::ListData);
             link().forPackageIds([&pkgs] (String const &id)
@@ -319,7 +319,7 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
 
     void setData(std::shared_ptr<ui::ListData> newData)
     {
-        DENG2_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT_IN_MAIN_THREAD();
         //qDebug() << "got new data with" << newData->size() << "items";
 
         nameList->useDefaultItems();

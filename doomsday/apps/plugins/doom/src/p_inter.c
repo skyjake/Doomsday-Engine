@@ -53,8 +53,8 @@ static dd_bool giveOneAmmo(player_t *plr, ammotype_t ammoType, int numClips)
 {
     int numRounds = 0;
 
-    DENG_ASSERT(plr != 0);
-    DENG_ASSERT(((int)ammoType >= 0 && ammoType < NUM_AMMO_TYPES) || ammoType == AT_NOAMMO);
+    DE_ASSERT(plr != 0);
+    DE_ASSERT(((int)ammoType >= 0 && ammoType < NUM_AMMO_TYPES) || ammoType == AT_NOAMMO);
 
     // Giving the special 'unlimited ammo' type always succeeds.
     if(ammoType == AT_NOAMMO)
@@ -144,8 +144,8 @@ static dd_bool giveOneWeapon(player_t *plr, weapontype_t weaponType, dd_bool dro
     weaponinfo_t const *wpnInfo;
     ammotype_t i;
 
-    DENG_ASSERT(plr != 0);
-    DENG_ASSERT(weaponType >= WT_FIRST && weaponType < NUM_WEAPON_TYPES);
+    DE_ASSERT(plr != 0);
+    DE_ASSERT(weaponType >= WT_FIRST && weaponType < NUM_WEAPON_TYPES);
 
     wpnInfo = &weaponInfo[weaponType][plr->class_];
 
@@ -246,8 +246,8 @@ dd_bool P_GiveArmor(player_t* plr, int type, int points)
 
 static dd_bool giveOneKey(player_t *plr, keytype_t keyType)
 {
-    DENG_ASSERT(plr != 0);
-    DENG_ASSERT(keyType >= KT_FIRST && keyType < NUM_KEY_TYPES);
+    DE_ASSERT(plr != 0);
+    DE_ASSERT(keyType >= KT_FIRST && keyType < NUM_KEY_TYPES);
 
     // Already owned?
     if(plr->keys[keyType]) return false;
@@ -309,8 +309,8 @@ void P_GiveBackpack(player_t *plr)
 
 dd_bool P_GivePower(player_t *player, powertype_t powerType)
 {
-    DENG_ASSERT(player != 0);
-    DENG_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
+    DE_ASSERT(player != 0);
+    DE_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
 
     // Powers cannot be given to dead players.
     if(player->health <= 0) return false;
@@ -371,8 +371,8 @@ dd_bool P_GivePower(player_t *player, powertype_t powerType)
 
 dd_bool P_TakePower(player_t *player, powertype_t powerType)
 {
-    DENG_ASSERT(player != 0);
-    DENG_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
+    DE_ASSERT(player != 0);
+    DE_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
 
     if(!player->powers[powerType])
         return false; // Dont got it.
@@ -406,8 +406,8 @@ dd_bool P_TakePower(player_t *player, powertype_t powerType)
 
 dd_bool P_TogglePower(player_t *player, powertype_t powerType)
 {
-    DENG_ASSERT(player != 0);
-    DENG_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
+    DE_ASSERT(player != 0);
+    DE_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
 
     if(!player->powers[powerType])
     {
@@ -527,8 +527,8 @@ static dd_bool pickupWeapon(player_t *plr, weapontype_t weaponType,
 {
     dd_bool pickedWeapon;
 
-    DENG_ASSERT(plr != 0);
-    DENG_ASSERT(weaponType >= WT_FIRST && weaponType < NUM_WEAPON_TYPES);
+    DE_ASSERT(plr != 0);
+    DE_ASSERT(weaponType >= WT_FIRST && weaponType < NUM_WEAPON_TYPES);
 
     // Depending on the game rules the player should ignore the weapon.
     if(plr->weapons[weaponType].owned)

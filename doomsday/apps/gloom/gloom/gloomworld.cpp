@@ -72,8 +72,8 @@ enum {
     PerfTimerCount
 };
 
-DENG2_PIMPL(GloomWorld), public Asset
-, DENG2_OBSERVES(User, Warp)
+DE_PIMPL(GloomWorld), public Asset
+, DE_OBSERVES(User, Warp)
 {
     User *               localUser = nullptr;
     Context              renderContext;
@@ -140,7 +140,7 @@ DENG2_PIMPL(GloomWorld), public Asset
 
         qDebug() << "[GloomWorld] glInit";
 
-        DENG2_ASSERT(localUser);
+        DE_ASSERT(localUser);
 
         // Cube maps are used for 360-degree env maps, so prefer seamless edge filtering.
         LIBGUI_GL.glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -247,7 +247,7 @@ void GloomWorld::glInit()
 {
     if (d->glInit())
     {
-        DENG2_FOR_AUDIENCE(Ready, i)
+        DE_FOR_AUDIENCE(Ready, i)
         {
             i->worldReady(*this);
         }

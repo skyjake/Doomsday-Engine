@@ -201,7 +201,7 @@ static bool initMixerLine(mixerdata_t* mix, DWORD type)
 
     // This mixer line is now available.
     mix->available = true;
-    
+
     return true;
 }
 
@@ -427,13 +427,13 @@ void* DM_Music_SongBuffer(unsigned int length)
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DENG_EXTERN_C const char* deng_LibraryType(void)
+DE_EXTERN_C const char* deng_LibraryType(void)
 {
     return "deng-plugin/audio";
 }
 
-DENG_DECLARE_API(Con);
+DE_DECLARE_API(Con);
 
-DENG_API_EXCHANGE(
-    DENG_GET_API(DE_API_CONSOLE, Con);
+DE_API_EXCHANGE(
+    DE_GET_API(DE_API_CONSOLE, Con);
 )

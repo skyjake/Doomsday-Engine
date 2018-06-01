@@ -44,7 +44,7 @@ class LIBGUI_PUBLIC GLFramebuffer : public Asset
 public:
     /// Something is incorrect in the configuration of the contained
     /// framebuffer object. @ingroup errors
-    DENG2_ERROR(ConfigError);
+    DE_ERROR(ConfigError);
 
     enum Flag {
         Color0   = 0x001, ///< Target has a color attachment.
@@ -316,7 +316,7 @@ public:
     Rectangleui rectInUse() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(GLFramebuffer::Flags)

@@ -26,11 +26,11 @@
 /**
  * Macro for conveniently accessing the de::GuiApp singleton instance.
  */
-#define DENG2_GUI_APP   (static_cast<de::GuiApp *>(qApp))
+#define DE_GUI_APP   (static_cast<de::GuiApp *>(qApp))
 
-#define DENG2_ASSERT_IN_RENDER_THREAD()   DENG2_ASSERT(de::GuiApp::inRenderThread())
+#define DE_ASSERT_IN_RENDER_THREAD()   DE_ASSERT(de::GuiApp::inRenderThread())
 
-#if defined (DENG_MOBILE)
+#if defined (DE_MOBILE)
 #include <QGuiApplication>
 #  define LIBGUI_GUIAPP_BASECLASS  QGuiApplication
 #else
@@ -50,7 +50,7 @@ namespace de {
  */
 class LIBGUI_PUBLIC GuiApp : public LIBGUI_GUIAPP_BASECLASS
                            , public App
-                           , DENG2_OBSERVES(Loop, Iteration)
+                           , DE_OBSERVES(Loop, Iteration)
 {
     Q_OBJECT
 
@@ -97,7 +97,7 @@ signals:
     void displayModeChanged();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

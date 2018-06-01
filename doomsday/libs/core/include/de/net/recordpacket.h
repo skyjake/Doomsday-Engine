@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_RECORDPACKET_H
-#define LIBDENG2_RECORDPACKET_H
+#ifndef LIBCORE_RECORDPACKET_H
+#define LIBCORE_RECORDPACKET_H
 
 #include "../IdentifiedPacket"
 #include "../Record"
@@ -38,7 +38,7 @@ class Variable;
  *
  * @ingroup protocol
  */
-class DENG2_PUBLIC RecordPacket : public IdentifiedPacket
+class DE_PUBLIC RecordPacket : public IdentifiedPacket
 {
 public:
     RecordPacket(String const &name = String(), Id id = 0);
@@ -107,4 +107,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_RECORDPACKET_H */
+#endif /* LIBCORE_RECORDPACKET_H */

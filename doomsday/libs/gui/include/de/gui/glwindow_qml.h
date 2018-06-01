@@ -19,7 +19,7 @@
 #ifndef LIBGUI_GLWINDOW_IOS_H
 #define LIBGUI_GLWINDOW_IOS_H
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
 #  error "glwindow_qml.h is only for mobile platforms"
 #endif
 
@@ -50,20 +50,20 @@ public:
      * called immediately before drawing the contents of the WindowEventHandler for the
      * first time (during a paint event).
      */
-    DENG2_DEFINE_AUDIENCE2(Init, void windowInit(GLWindow &))
+    DE_DEFINE_AUDIENCE2(Init, void windowInit(GLWindow &))
 
     /**
      * Notified when a canvas's size has changed.
      */
-    DENG2_DEFINE_AUDIENCE2(Resize, void windowResized(GLWindow &))
+    DE_DEFINE_AUDIENCE2(Resize, void windowResized(GLWindow &))
 
     /**
      * Notified when the contents of the canvas have been swapped to the window front
      * buffer and are thus visible to the user.
      */
-    DENG2_DEFINE_AUDIENCE2(Swap, void windowSwapped(GLWindow &))
+    DE_DEFINE_AUDIENCE2(Swap, void windowSwapped(GLWindow &))
 
-    DENG2_CAST_METHODS()
+    DE_CAST_METHODS()
 
 public:
     GLWindow();
@@ -224,7 +224,7 @@ public slots:
     void frameWasSwapped();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 /**
@@ -259,7 +259,7 @@ private slots:
     void handleWindowChanged(QQuickWindow *win);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 /**

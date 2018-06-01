@@ -21,16 +21,16 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(Clock)
+DE_PIMPL_NOREF(Clock)
 {
     Time startedAt;
     Time time;
     std::atomic_uint tickCount { 0 };
 
-    DENG2_PIMPL_AUDIENCE(TimeChange)
+    DE_PIMPL_AUDIENCE(TimeChange)
 };
 
-DENG2_AUDIENCE_METHOD(Clock, TimeChange)
+DE_AUDIENCE_METHOD(Clock, TimeChange)
 
 Clock *Clock::_appClock = 0;
 
@@ -50,11 +50,11 @@ void Clock::setTime(Time const &currentTime)
     {
         d->tickCount++;
 
-        DENG2_FOR_EACH_OBSERVER(PriorityTimeChangeAudience, i, audienceForPriorityTimeChange)
+        DE_FOR_EACH_OBSERVER(PriorityTimeChangeAudience, i, audienceForPriorityTimeChange)
         {
             i->timeChanged(*this);
         }
-        DENG2_FOR_AUDIENCE2(TimeChange, i) i->timeChanged(*this);
+        DE_FOR_AUDIENCE2(TimeChange, i) i->timeChanged(*this);
     }
 }
 
@@ -85,7 +85,7 @@ void Clock::setAppClock(Clock *c)
 
 Clock &Clock::get()
 {
-    DENG2_ASSERT(_appClock != 0);
+    DE_ASSERT(_appClock != 0);
     return *_appClock;
 }
 

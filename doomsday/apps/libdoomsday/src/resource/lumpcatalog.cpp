@@ -29,7 +29,7 @@ using namespace de;
 
 namespace res {
 
-DENG2_PIMPL(LumpCatalog)
+DE_PIMPL(LumpCatalog)
 {
     StringList packageIds;
     QList<const DataBundle *> bundles; /// @todo Should observe for deletion. -jk
@@ -173,7 +173,7 @@ Block LumpCatalog::read(const LumpPos &lump) const
     Block data;
     if (lump.first)
     {
-        DENG2_ASSERT(lump.first->lumpDirectory());
+        DE_ASSERT(lump.first->lumpDirectory());
         auto const &entry = lump.first->lumpDirectory()->entry(lump.second);
         data.copyFrom(*lump.first, entry.offset, entry.size);
     }
@@ -184,7 +184,7 @@ String LumpCatalog::lumpName(const LumpPos &lump) const
 {
     if (lump.first)
     {
-        DENG2_ASSERT(lump.first->lumpDirectory());
+        DE_ASSERT(lump.first->lumpDirectory());
         return String::fromLatin1(lump.first->lumpDirectory()->entry(lump.second).name);
     }
     return {};

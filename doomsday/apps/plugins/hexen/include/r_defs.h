@@ -59,7 +59,7 @@ typedef struct xline_s {
     int             validCount;
 } xline_t;
 
-DENG_EXTERN_C xline_t* xlines;
-DENG_EXTERN_C xsector_t* xsectors;
+DE_EXTERN_C xline_t* xlines;
+DE_EXTERN_C xsector_t* xsectors;
 
 #endif

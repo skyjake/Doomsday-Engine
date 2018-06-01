@@ -131,13 +131,13 @@ private:
 
     void addElement(RingNode &node, void *elem)
     {
-        DENG2_ASSERT(node.elem == nullptr);
+        DE_ASSERT(node.elem == nullptr);
         node.elem = elem;
         elemCount++;
     }
 };
 
-DENG2_PIMPL(Blockmap)
+DE_PIMPL(Blockmap)
 {
     /**
      * Quadtree node.

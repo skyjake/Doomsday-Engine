@@ -46,20 +46,20 @@ Version::Version(int major, int minor, int patch, int buildNumber)
 Version Version::currentBuild()
 {
     Version v;
-    v.major = LIBDENG2_MAJOR_VERSION;
-    v.minor = LIBDENG2_MINOR_VERSION;
-    v.patch = LIBDENG2_PATCHLEVEL;
+    v.major = LIBCORE_MAJOR_VERSION;
+    v.minor = LIBCORE_MINOR_VERSION;
+    v.patch = LIBCORE_PATCHLEVEL;
 
-#ifdef LIBDENG2_BUILD_TEXT
-    v.build = String(LIBDENG2_BUILD_TEXT).toInt();
+#ifdef LIBCORE_BUILD_TEXT
+    v.build = String(LIBCORE_BUILD_TEXT).toInt();
 #else
-    v.build = Time().asBuildNumber(); // only used in development builds
+    v.build = Time().asBuildNumber();   // only used in development builds
 #endif
 
-    v.label = LIBDENG2_RELEASE_LABEL;
+    v.label = LIBCORE_RELEASE_LABEL;
 
-#ifdef LIBDENG2_GIT_DESCRIPTION
-    v.gitDescription = LIBDENG2_GIT_DESCRIPTION;
+#ifdef LIBCORE_GIT_DESCRIPTION
+    v.gitDescription = LIBCORE_GIT_DESCRIPTION;
 #endif
     return v;
 }
@@ -175,7 +175,7 @@ String Version::operatingSystem()
     return "windows";
 #elif defined (MACOSX)
     return "macx";
-#elif defined (DENG_IOS)
+#elif defined (DE_IOS)
     return "ios";
 #else
     return "unix";
@@ -184,7 +184,7 @@ String Version::operatingSystem()
 
 duint Version::cpuBits()
 {
-#ifdef DENG2_64BIT
+#ifdef DE_64BIT
     return 64;
 #else
     return 32;
@@ -193,7 +193,7 @@ duint Version::cpuBits()
 
 bool Version::isDebugBuild()
 {
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     return true;
 #else
     return false;

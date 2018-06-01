@@ -439,7 +439,7 @@ int floor_s::read(MapStateReader *msr)
 
         type                   = floortype_e(Reader_ReadByte(reader));
         sector                 = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
-        DENG_ASSERT(sector != 0);
+        DE_ASSERT(sector != 0);
         crush                  = dd_bool(Reader_ReadByte(reader));
         state                  = floorstate_e(Reader_ReadInt32(reader));
         newSpecial             = Reader_ReadInt32(reader);
@@ -479,7 +479,7 @@ int floor_s::read(MapStateReader *msr)
 #if __JHEXEN__
         // A 32bit pointer to sector, serialized.
         sector                 = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
-        DENG_ASSERT(sector != 0);
+        DE_ASSERT(sector != 0);
 
         type                   = floortype_e(Reader_ReadInt32(reader));
         crush                  = Reader_ReadInt32(reader);
@@ -489,7 +489,7 @@ int floor_s::read(MapStateReader *msr)
 
         // A 32bit pointer to sector, serialized.
         sector                 = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
-        DENG_ASSERT(sector != 0);
+        DE_ASSERT(sector != 0);
 #endif
         state                  = floorstate_e(Reader_ReadInt32(reader));
         newSpecial             = Reader_ReadInt32(reader);

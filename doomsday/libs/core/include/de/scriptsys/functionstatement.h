@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_FUNCTIONSTATEMENT_H
-#define LIBDENG2_FUNCTIONSTATEMENT_H
+#ifndef LIBCORE_FUNCTIONSTATEMENT_H
+#define LIBCORE_FUNCTIONSTATEMENT_H
 
 #include "de/Statement"
 #include "de/Function"
@@ -67,4 +67,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_FUNCTIONSTATEMENT_H */
+#endif /* LIBCORE_FUNCTIONSTATEMENT_H */

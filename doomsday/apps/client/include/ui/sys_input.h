@@ -23,8 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_SYSTEM_INPUT_H
-#define LIBDENG_SYSTEM_INPUT_H
+#ifndef DE_SYSTEM_INPUT_H
+#define DE_SYSTEM_INPUT_H
 
 #ifndef __CLIENT__
 #  error "Input requires __CLIENT__"

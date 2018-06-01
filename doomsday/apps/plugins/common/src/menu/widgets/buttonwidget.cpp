@@ -31,7 +31,7 @@ using namespace de;
 namespace common {
 namespace menu {
 
-DENG2_PIMPL_NOREF(ButtonWidget)
+DE_PIMPL_NOREF(ButtonWidget)
 {
     String    text;           ///< Label text.
     patchid_t patch     = -1; ///< Used when drawing this instead of text, if set.

@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_CLOCK_H
-#define LIBDENG2_CLOCK_H
+#ifndef LIBCORE_CLOCK_H
+#define LIBCORE_CLOCK_H
 
 #include "../Time"
 #include "../Observers"
@@ -29,20 +29,20 @@ namespace de {
  * Time source.
  * @ingroup core
  */
-class DENG2_PUBLIC Clock
+class DE_PUBLIC Clock
 {
 public:
     /**
      * Notified whenever the time of the clock changes. The audience members
      * will be notified in unspecified order.
      */
-    DENG2_DEFINE_AUDIENCE2(TimeChange, void timeChanged(Clock const &))
+    DE_DEFINE_AUDIENCE2(TimeChange, void timeChanged(Clock const &))
 
     /**
      * Notified whenever the time of the clock changes. The entire priority
      * audience is notified before the regular TimeChange audience.
      */
-    typedef Observers<DENG2_AUDIENCE_INTERFACE(TimeChange)> PriorityTimeChangeAudience;
+    typedef Observers<DE_AUDIENCE_INTERFACE(TimeChange)> PriorityTimeChangeAudience;
     PriorityTimeChangeAudience audienceForPriorityTimeChange;
 
 public:
@@ -79,11 +79,11 @@ public:
     static Time const &appTime();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 
     static Clock *_appClock;
 };
 
 } // namespace de
 
-#endif /* LIBDENG2_ICLOCK_H */
+#endif /* LIBCORE_ICLOCK_H */

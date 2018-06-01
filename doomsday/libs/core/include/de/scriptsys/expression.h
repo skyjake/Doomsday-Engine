@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_EXPRESSION_H
-#define LIBDENG2_EXPRESSION_H
+#ifndef LIBCORE_EXPRESSION_H
+#define LIBCORE_EXPRESSION_H
 
 #include "../ISerializable"
 
@@ -38,11 +38,11 @@ class Record;
  *
  * @ingroup script
  */
-class DENG2_PUBLIC Expression : public ISerializable
+class DE_PUBLIC Expression : public ISerializable
 {
 public:
     /// Deserialization of an expression failed. @ingroup errors
-    DENG2_ERROR(DeserializationError);
+    DE_ERROR(DeserializationError);
 
     // Flags for evaluating expressions.
     // Note: these are serialized as is, so don't change the existing values.
@@ -150,4 +150,4 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(Expression::Flags)
 
 } // namespace de
 
-#endif /* LIBDENG2_EXPRESSION_H */
+#endif /* LIBCORE_EXPRESSION_H */

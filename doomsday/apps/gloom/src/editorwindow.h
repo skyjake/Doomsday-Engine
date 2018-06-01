@@ -34,7 +34,7 @@ public:
     void closeEvent(QCloseEvent *event) override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // EDITORWINDOW_H

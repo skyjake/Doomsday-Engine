@@ -39,7 +39,7 @@ class LIBDOOMSDAY_PUBLIC Games
 {
 public:
     /// The requested game does not exist in the collection. @ingroup errors
-    DENG2_ERROR(NotFoundError);
+    DE_ERROR(NotFoundError);
 
     /// Used for returning the result of game searches. @see findAll()
     struct GameListItem
@@ -59,13 +59,13 @@ public:
     typedef QList<Game *> All;
 
     /// Notified when a new game is added.
-    DENG2_DEFINE_AUDIENCE2(Addition, void gameAdded(Game &game))
+    DE_DEFINE_AUDIENCE2(Addition, void gameAdded(Game &game))
 
     /// Notified after game resources have been located.
-    DENG2_DEFINE_AUDIENCE2(Readiness, void gameReadinessUpdated())
+    DE_DEFINE_AUDIENCE2(Readiness, void gameReadinessUpdated())
 
     /// Notified when a worker task is progressing.
-    DENG2_DEFINE_AUDIENCE2(Progress, void gameWorkerProgress(int progress))
+    DE_DEFINE_AUDIENCE2(Progress, void gameWorkerProgress(int progress))
 
     static Games &get();
 
@@ -156,7 +156,7 @@ public:
     static void consoleRegister();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // LIBDOOMSDAY_GAMES_H

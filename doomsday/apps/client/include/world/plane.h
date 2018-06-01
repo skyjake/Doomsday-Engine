@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_PLANE_H
-#define DENG_WORLD_PLANE_H
+#ifndef DE_WORLD_PLANE_H
+#define DE_WORLD_PLANE_H
 
 #include <de/Error>
 #include <de/Observers>
@@ -45,25 +45,25 @@ class ClPlaneMover;
  */
 class Plane : public world::MapElement
 {
-    DENG2_NO_COPY  (Plane)
-    DENG2_NO_ASSIGN(Plane)
+    DE_NO_COPY  (Plane)
+    DE_NO_ASSIGN(Plane)
 
 public:
 #ifdef __CLIENT__
     /// No generator is attached. @ingroup errors
-    DENG2_ERROR(MissingGeneratorError);
+    DE_ERROR(MissingGeneratorError);
 #endif
 
     /// Notified when the plane is about to be deleted.
-    DENG2_DEFINE_AUDIENCE2(Deletion, void planeBeingDeleted(Plane const &plane))
+    DE_DEFINE_AUDIENCE2(Deletion, void planeBeingDeleted(Plane const &plane))
 
     /// Notified whenever a @em sharp height change occurs.
-    DENG2_DEFINE_AUDIENCE2(HeightChange, void planeHeightChanged(Plane &plane))
+    DE_DEFINE_AUDIENCE2(HeightChange, void planeHeightChanged(Plane &plane))
 
 #ifdef __CLIENT__
 
     /// Notified whenever a @em smoothed height change occurs.
-    DENG2_DEFINE_AUDIENCE2(HeightSmoothedChange, void planeHeightSmoothedChanged(Plane &plane))
+    DE_DEFINE_AUDIENCE2(HeightSmoothedChange, void planeHeightSmoothedChanged(Plane &plane))
 
 #endif
 
@@ -252,7 +252,7 @@ protected:
     de::dint setProperty(world::DmuArgs const &args);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif  // DENG_WORLD_PLANE_H
+#endif  // DE_WORLD_PLANE_H

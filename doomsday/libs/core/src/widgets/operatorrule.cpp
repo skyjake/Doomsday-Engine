@@ -29,7 +29,7 @@ OperatorRule::OperatorRule(Operator op, Rule const &unary)
     , _rightOperand(nullptr)
     , _condition(nullptr)
 {
-    DENG2_ASSERT(_leftOperand != 0);
+    DE_ASSERT(_leftOperand != 0);
 
     dependsOn(_leftOperand);
 }
@@ -52,9 +52,9 @@ OperatorRule::OperatorRule(OperatorRule::Operator op, Rule const &left, Rule con
     , _rightOperand(&right)
     , _condition(&condition)
 {
-    DENG2_ASSERT(_leftOperand != _rightOperand);
-    DENG2_ASSERT(_condition != _leftOperand);
-    DENG2_ASSERT(_condition != _rightOperand);
+    DE_ASSERT(_leftOperand != _rightOperand);
+    DE_ASSERT(_condition != _leftOperand);
+    DE_ASSERT(_condition != _rightOperand);
 
     dependsOn(_leftOperand);
     dependsOn(_rightOperand);

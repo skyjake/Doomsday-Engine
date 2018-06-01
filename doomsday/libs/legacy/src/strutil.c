@@ -89,14 +89,14 @@ char* strlwr(char* string)
 
 char *M_SkipWhite(const char *str)
 {
-    while (*str && DENG_ISSPACE(*str))
+    while (*str && DE_ISSPACE(*str))
         str++;
     return (char *) str;
 }
 
 char *M_FindWhite(const char *str)
 {
-    while (*str && !DENG_ISSPACE(*str))
+    while (*str && !DE_ISSPACE(*str))
         str++;
     return (char *) str;
 }

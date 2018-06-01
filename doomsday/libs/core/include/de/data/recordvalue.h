@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_RECORDVALUE_H
-#define LIBDENG2_RECORDVALUE_H
+#ifndef LIBCORE_RECORDVALUE_H
+#define LIBCORE_RECORDVALUE_H
 
 #include "../Value"
 #include "../Record"
@@ -34,22 +34,22 @@ namespace de {
  *
  * @ingroup data
  */
-class DENG2_PUBLIC RecordValue
+class DE_PUBLIC RecordValue
         : public Value
         , public RecordAccessor
 {
 public:
     /// Attempt to access the record after it has been deleted. @ingroup errors
-    DENG2_ERROR(NullError);
+    DE_ERROR(NullError);
 
     /// An identifier that does not exist in the record was accessed. @ingroup errors
-    DENG2_ERROR(NotFoundError);
+    DE_ERROR(NotFoundError);
 
     /// The index used for accessing the record is of the wrong type. @ingroup errors
-    DENG2_ERROR(IllegalIndexError);
+    DE_ERROR(IllegalIndexError);
 
     /// The value does not own a record when expected to. @ingroup errors
-    DENG2_ERROR(OwnershipError);
+    DE_ERROR(OwnershipError);
 
     enum OwnershipFlag
     {
@@ -133,11 +133,11 @@ public:
     static RecordValue *takeRecord(Record &&record);
 
 public:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(RecordValue::OwnershipFlags)
 
 } // namespace de
 
-#endif /* LIBDENG2_RECORDVALUE_H */
+#endif /* LIBCORE_RECORDVALUE_H */

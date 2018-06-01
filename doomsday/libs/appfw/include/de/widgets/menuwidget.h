@@ -59,7 +59,7 @@ public:
      * Notified when an item in the menu is triggered. The corresponding UI item is
      * passed as argument.
      */
-    DENG2_DEFINE_AUDIENCE2(ItemTriggered, void menuItemTriggered(ui::Item const &))
+    DE_DEFINE_AUDIENCE2(ItemTriggered, void menuItemTriggered(ui::Item const &))
 
 public:
     MenuWidget(String const &name = String());
@@ -192,7 +192,7 @@ protected:
     void updateStyle() override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

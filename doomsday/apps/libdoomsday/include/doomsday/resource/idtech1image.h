@@ -79,7 +79,7 @@ public:
     void setOrigin(const Vec2i &origin);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace res

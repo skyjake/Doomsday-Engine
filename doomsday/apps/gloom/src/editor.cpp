@@ -70,7 +70,7 @@ enum Direction {
 Q_DECLARE_FLAGS(Directions, Direction)
 Q_DECLARE_OPERATORS_FOR_FLAGS(Directions)
 
-DENG2_PIMPL(Editor)
+DE_PIMPL(Editor)
 {
     enum UserAction {
         None,
@@ -1021,7 +1021,7 @@ DENG2_PIMPL(Editor)
         mapId.clear();
 
         QFile f(path);
-        DENG2_ASSERT(f.exists());
+        DE_ASSERT(f.exists());
         f.open(QFile::ReadOnly);
         map.deserialize(f.readAll());
         resetState();

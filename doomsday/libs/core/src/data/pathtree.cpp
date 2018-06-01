@@ -66,7 +66,7 @@ struct PathTree::Impl
         clearPathHash(hash.branches);
         size = 0;
 
-        DENG2_ASSERT(numNodesOwned == 0);
+        DE_ASSERT(numNodesOwned == 0);
     }
 
     PathTree::SegmentId internSegmentAndUpdateIdHashMap(String segment, Path::hash_type hashKey)
@@ -173,7 +173,7 @@ struct PathTree::Impl
                     hash.erase(i);
                     numNodesOwned--;
 
-                    DENG2_ASSERT(numNodesOwned >= 0);
+                    DE_ASSERT(numNodesOwned >= 0);
                 }
                 return node;
             }
@@ -212,13 +212,13 @@ struct PathTree::Impl
 
     void clearPathHash(PathTree::Nodes &ph)
     {
-        DENG2_FOR_EACH(PathTree::Nodes, i, ph)
+        DE_FOR_EACH(PathTree::Nodes, i, ph)
         {
             PathTree::Node *node = *i;
             delete node;
 
             numNodesOwned--;
-            DENG2_ASSERT(numNodesOwned >= 0);
+            DE_ASSERT(numNodesOwned >= 0);
         }
         ph.clear();
     }
@@ -231,17 +231,17 @@ PathTree::PathTree(Flags flags)
 
 PathTree::~PathTree()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     delete d;
 }
 
 PathTree::Node &PathTree::insert(Path const &path)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     PathTree::Node *node = d->buildNodesForPath(path);
-    DENG2_ASSERT(node != 0);
+    DE_ASSERT(node != 0);
 
     // There is now one more unique path in the tree.
     d->size++;
@@ -251,7 +251,7 @@ PathTree::Node &PathTree::insert(Path const &path)
 
 bool PathTree::remove(Path const &path, ComparisonFlags flags)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     PathTree::Node *node = d->find(path, flags | RelinquishMatching);
     if (node && node != &d->rootNode)
@@ -275,7 +275,7 @@ String const &PathTree::nodeTypeName(NodeType type)
 
 int PathTree::size() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     return d->size;
 }
@@ -287,21 +287,21 @@ bool PathTree::empty() const
 
 PathTree::Flags PathTree::flags() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     return d->flags;
 }
 
 void PathTree::clear()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     d->clear();
 }
 
 bool PathTree::has(Path const &path, ComparisonFlags flags) const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     flags &= ~RelinquishMatching; // never relinquish
     return d->find(path, flags) != 0;
@@ -309,7 +309,7 @@ bool PathTree::has(Path const &path, ComparisonFlags flags) const
 
 PathTree::Node const &PathTree::find(Path const &searchPath, ComparisonFlags flags) const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     Node const *found = d->find(searchPath, flags);
     if (!found)
@@ -322,7 +322,7 @@ PathTree::Node const &PathTree::find(Path const &searchPath, ComparisonFlags fla
 
 PathTree::Node const *PathTree::tryFind(Path const &path, ComparisonFlags flags) const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     return d->find(path, flags);
 }
 
@@ -334,20 +334,20 @@ PathTree::Node &PathTree::find(Path const &path, ComparisonFlags flags)
 
 PathTree::Node *PathTree::tryFind(Path const &path, ComparisonFlags flags)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     return d->find(path, flags);
 }
 
 String const &PathTree::segmentName(SegmentId segmentId) const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     return d->segments.stringRef(segmentId);
 }
 
 Path::hash_type PathTree::segmentHash(SegmentId segmentId) const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     return d->segments.userValue(segmentId);
 }
@@ -364,7 +364,7 @@ PathTree::Node *PathTree::newNode(NodeArgs const &args)
 
 PathTree::Nodes const &PathTree::nodes(NodeType type) const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     return (type == Leaf? d->hash.leaves : d->hash.branches);
 }
@@ -373,7 +373,7 @@ static void collectPathsInHash(PathTree::FoundPaths &found, PathTree::Nodes cons
 {
     if (ph.empty()) return;
 
-    DENG2_FOR_EACH_CONST(PathTree::Nodes, i, ph)
+    DE_FOR_EACH_CONST(PathTree::Nodes, i, ph)
     {
         PathTree::Node const &node = **i;
         found.push_back(node.path(separator));
@@ -382,7 +382,7 @@ static void collectPathsInHash(PathTree::FoundPaths &found, PathTree::Nodes cons
 
 int PathTree::findAllPaths(FoundPaths &found, ComparisonFlags flags, QChar separator) const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     int numFoundSoFar = found.count();
     if (!(flags & NoBranch))
@@ -434,7 +434,7 @@ static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
     else
     {
         // No known hash -- iterate all potential nodes.
-        DENG2_FOR_EACH_CONST(PathTree::Nodes, i, *nodes)
+        DE_FOR_EACH_CONST(PathTree::Nodes, i, *nodes)
         {
             if (!(flags.testFlag(PathTree::MatchParent) && parent != &(*i)->parent()))
             {
@@ -449,7 +449,7 @@ static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
 int PathTree::traverse(ComparisonFlags flags, PathTree::Node const *parent, Path::hash_type hashKey,
                        int (*callback) (PathTree::Node &, void *), void *parameters) const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
 
     int result = 0;
     if (callback)
@@ -463,7 +463,7 @@ int PathTree::traverse(ComparisonFlags flags, PathTree::Node const *parent, Path
     return result;
 }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
 void PathTree::debugPrint(QChar separator) const
 {
     LOGDEV_MSG("PathTree [%p]:") << de::dintptr(this);
@@ -472,7 +472,7 @@ void PathTree::debugPrint(QChar separator) const
     {
         qSort(found.begin(), found.end());
 
-        DENG2_FOR_EACH_CONST(FoundPaths, i, found)
+        DE_FOR_EACH_CONST(FoundPaths, i, found)
         {
             LOGDEV_MSG("  %s") << *i;
         }
@@ -485,7 +485,7 @@ static void printDistributionOverviewElement(int const *colWidths, char const *n
     size_t numEmpty, size_t maxHeight, size_t numCollisions, size_t maxCollisions,
     size_t sum, size_t total)
 {
-    DENG2_ASSERT(colWidths);
+    DE_ASSERT(colWidths);
 
     float coverage, collision, variance;
     if (0 != total)
@@ -525,7 +525,7 @@ static void printDistributionOverview(PathTree *pt,
 {
 #define NUMCOLS             10/*type+count+used:+empty+collideMax+collideCount+collidePercent+coverage+variance+maxheight*/
 
-    DENG2_ASSERT(pt);
+    DE_ASSERT(pt);
 
     size_t collisionsMax = 0, countSum = 0, countTotal = 0;
     for (int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
@@ -625,7 +625,7 @@ static void printDistributionHistogram(PathTree *pt, ushort size,
     int hashIndexDigits, col, colWidths[2+/*range+total*/PATHTREENODE_TYPE_COUNT];
     PathTreeNode *node;
     int j;
-    DENG2_ASSERT(pt);
+    DE_ASSERT(pt);
 
     total = 0;
     for (int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
@@ -782,7 +782,7 @@ void PathTree::debugPrintHashDistribution() const
            nodeCount[PATHTREENODE_TYPE_COUNT];
     size_t totalForRange;
     PathTreeNode *node;
-    DENG2_ASSERT(pt);
+    DE_ASSERT(pt);
 
     nodeCountTotal[PathTree::Node::Branch] = countNodesInPathHash(*hashAddressForNodeType(pt, PathTree::Node::Branch));
     nodeCountTotal[PT_LEAF]   = countNodesInPathHash(*hashAddressForNodeType(pt, PT_LEAF));

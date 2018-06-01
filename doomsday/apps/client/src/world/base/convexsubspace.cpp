@@ -50,7 +50,7 @@ ddouble triangleArea(Vec2d const &v1, Vec2d const &v2, Vec2d const &v3)
 
 namespace world {
 
-DENG2_PIMPL(ConvexSubspace)
+DE_PIMPL(ConvexSubspace)
 {
     Face *poly = nullptr;                  ///< Convex polygon geometry (not owned).
 
@@ -193,7 +193,7 @@ void ConvexSubspace::setBspLeaf(BspLeaf *newBspLeaf)
 
 Face &ConvexSubspace::poly() const
 {
-    DENG2_ASSERT(d->poly);
+    DE_ASSERT(d->poly);
     return *d->poly;
 }
 

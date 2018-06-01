@@ -31,7 +31,7 @@ using namespace de;
 
 namespace gloom {
 
-DENG2_PIMPL(GBuffer)
+DE_PIMPL(GBuffer)
 {
     GLTextureFramebuffer frame{GLTextureFramebuffer::Formats({Image::RGB_888,   // diffuse
                                                               Image::RGB_32f,   // normals (viewspace)

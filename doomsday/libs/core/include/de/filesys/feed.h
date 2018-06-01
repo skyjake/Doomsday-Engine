@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_FEED_H
-#define LIBDENG2_FEED_H
+#ifndef LIBCORE_FEED_H
+#define LIBCORE_FEED_H
 
 #include "../libcore.h"
 
@@ -48,15 +48,15 @@ class String;
  *
  * @ingroup fs
  */
-class DENG2_PUBLIC Feed
+class DE_PUBLIC Feed
 {
 public:
     /// Tried to create a new file that already exists in the native file
     /// system. @ingroup errors
-    DENG2_ERROR(AlreadyExistsError);
+    DE_ERROR(AlreadyExistsError);
 
     /// Failed to remove a file. @ingroup errors
-    DENG2_ERROR(RemoveError);
+    DE_ERROR(RemoveError);
 
     typedef QList<File *> PopulatedFiles;
 
@@ -125,9 +125,9 @@ public:
      */
     virtual Feed *newSubFeed(String const &name);
 
-    DENG2_CAST_METHODS()
+    DE_CAST_METHODS()
 };
 
 } // namespace de
 
-#endif /* LIBDENG2_FEED_H */
+#endif /* LIBCORE_FEED_H */

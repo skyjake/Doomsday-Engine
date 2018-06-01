@@ -41,7 +41,7 @@
 #  include <QTemporaryFile>
 #  include <QSaveFile>
 #  include <QProcess>
-#  ifndef DENG2_QT_5_0_OR_NEWER
+#  ifndef DE_QT_5_0_OR_NEWER
 #    include <QAbstractFileEngine>
 #  endif
 #endif

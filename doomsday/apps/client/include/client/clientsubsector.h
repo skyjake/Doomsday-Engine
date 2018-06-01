@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_CLIENTSUBSECTOR_H
-#define DENG_WORLD_CLIENTSUBSECTOR_H
+#ifndef DE_WORLD_CLIENTSUBSECTOR_H
+#define DE_WORLD_CLIENTSUBSECTOR_H
 
 #include <functional>
 #include <QBitArray>
@@ -292,9 +292,9 @@ public:
     void markVisPlanesDirty();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace world
 
-#endif // DENG_WORLD_CLIENTSUBSECTOR_H
+#endif // DE_WORLD_CLIENTSUBSECTOR_H

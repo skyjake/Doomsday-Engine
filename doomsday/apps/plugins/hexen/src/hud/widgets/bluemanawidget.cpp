@@ -53,7 +53,7 @@ void BlueManaWidget_Draw(guidata_bluemana_t *mana, Point2Raw const *offset)
 {
 #define TRACKING                ( 1 )
 
-    DENG2_ASSERT(mana);
+    DE_ASSERT(mana);
     dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
 
     if(mana->_value == 1994) return;
@@ -88,7 +88,7 @@ void SBarBlueManaWidget_Draw(guidata_bluemana_t *mana, Point2Raw const *offset)
 #define Y_OFFSET                ( 19 )
 #define TRACKING                (  0 )
 
-    DENG2_ASSERT(mana);
+    DE_ASSERT(mana);
     static Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
 
     dint const activeHud     = ST_ActiveHud(mana->player());
@@ -129,7 +129,7 @@ void BlueMana_UpdateGeometry(guidata_bluemana_t *mana)
 {
 #define TRACKING                ( 1 )
 
-    DENG2_ASSERT(mana);
+    DE_ASSERT(mana);
     Rect_SetWidthHeight(&mana->geometry(), 0, 0);
 
     if(mana->_value == 1994) return;
@@ -153,7 +153,7 @@ void SBarBlueManaWidget_UpdateGeometry(guidata_bluemana_t *mana)
 {
 #define TRACKING                ( 0 )
 
-    DENG2_ASSERT(mana);
+    DE_ASSERT(mana);
     Rect_SetWidthHeight(&mana->geometry(), 0, 0);
 
     if(mana->_value == 1994) return;

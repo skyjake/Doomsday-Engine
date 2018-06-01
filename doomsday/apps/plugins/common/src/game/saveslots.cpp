@@ -41,8 +41,8 @@ using namespace de;
 using namespace common;
 using namespace common::menu;
 
-DENG2_PIMPL_NOREF(SaveSlots::Slot)
-, DENG2_OBSERVES(GameStateFolder, MetadataChange)
+DE_PIMPL_NOREF(SaveSlots::Slot)
+, DE_OBSERVES(GameStateFolder, MetadataChange)
 {
     String id;
     bool userWritable;
@@ -116,8 +116,8 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
 
     void gameStateFolderMetadataChanged(GameStateFolder &changed)
     {
-        DENG2_ASSERT(&changed == session);
-        DENG2_UNUSED(changed);
+        DE_ASSERT(&changed == session);
+        DE_UNUSED(changed);
 
         updateStatus();
     }
@@ -194,7 +194,7 @@ void SaveSlots::Slot::setGameStateFolder(GameStateFolder *newSession)
     }
 
     // Should we announce this?
-#if !defined DENG_DEBUG // Always
+#if !defined DE_DEBUG // Always
     if (isUserWritable())
 #endif
     {
@@ -216,9 +216,9 @@ void SaveSlots::Slot::updateStatus()
     d->updateStatus();
 }
 
-DENG2_PIMPL(SaveSlots)
-, DENG2_OBSERVES(FileIndex, Addition)
-, DENG2_OBSERVES(FileIndex, Removal)
+DE_PIMPL(SaveSlots)
+, DE_OBSERVES(FileIndex, Addition)
+, DE_OBSERVES(FileIndex, Removal)
 {
     typedef std::map<String, Slot *> Slots;
     typedef std::pair<String, Slot *> SlotItem;
@@ -235,7 +235,7 @@ DENG2_PIMPL(SaveSlots)
 
     ~Impl()
     {
-        DENG2_FOR_EACH(Slots, i, sslots) { delete i->second; }
+        DE_FOR_EACH(Slots, i, sslots) { delete i->second; }
     }
 
     SaveSlot *slotById(String const &id)
@@ -258,7 +258,7 @@ DENG2_PIMPL(SaveSlots)
                 path += ".save";
             }
 
-            DENG2_FOR_EACH_CONST(Slots, i, sslots)
+            DE_FOR_EACH_CONST(Slots, i, sslots)
             {
                 if (!i->second->savePath().compareWithoutCase(path))
                 {
@@ -286,7 +286,7 @@ DENG2_PIMPL(SaveSlots)
 
     void fileRemoved(File const &saveFolder, FileIndex const &)
     {
-        DENG2_FOR_EACH_CONST(Slots, i, sslots)
+        DE_FOR_EACH_CONST(Slots, i, sslots)
         {
             SaveSlot *sslot = i->second;
             if (sslot->savePath() == saveFolder.path())
@@ -347,7 +347,7 @@ SaveSlots::Slot *SaveSlots::slotBySavedUserDescription(String const &description
 {
     if (!description.isEmpty())
     {
-        DENG2_FOR_EACH_CONST(Impl::Slots, i, d->sslots)
+        DE_FOR_EACH_CONST(Impl::Slots, i, d->sslots)
         {
             if (!gfw_Session()->savedUserDescription(i->second->saveName())
                                       .compareWithoutCase(description))
@@ -392,7 +392,7 @@ SaveSlots::Slot *SaveSlots::slotByUserInput(String const &str) const
 void SaveSlots::updateAll()
 {
     d->setAllIndexedSaves();
-    DENG2_FOR_EACH(Impl::Slots, i, d->sslots)
+    DE_FOR_EACH(Impl::Slots, i, d->sslots)
     {
         i->second->updateStatus();
     }

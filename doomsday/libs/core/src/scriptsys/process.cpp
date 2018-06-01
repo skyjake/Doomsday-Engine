@@ -30,7 +30,7 @@
 
 namespace de {
 
-DENG2_PIMPL(Process)
+DE_PIMPL(Process)
 {
     State state;
 
@@ -71,7 +71,7 @@ DENG2_PIMPL(Process)
 
     Context &context(duint downDepth = 0)
     {
-        DENG2_ASSERT(downDepth < depth());
+        DE_ASSERT(downDepth < depth());
         return **(stack.rbegin() + downDepth);
     }
 
@@ -205,14 +205,14 @@ void Process::stop()
 
     // Clear the context stack, apart from the bottommost context, which
     // represents the process itself.
-    DENG2_FOR_EACH_REVERSE(Impl::ContextStack, i, d->stack)
+    DE_FOR_EACH_REVERSE(Impl::ContextStack, i, d->stack)
     {
         if (*i != d->stack[0])
         {
             delete *i;
         }
     }
-    DENG2_ASSERT(!d->stack.empty());
+    DE_ASSERT(!d->stack.empty());
 
     // Erase all but the first context.
     d->stack.erase(d->stack.begin() + 1, d->stack.end());
@@ -311,7 +311,7 @@ Context *Process::popContext()
 
 void Process::finish(Value *returnValue)
 {
-    DENG2_ASSERT(depth() >= 1);
+    DE_ASSERT(depth() >= 1);
 
     // Move one level downwards in the context stack.
     if (depth() > 1)
@@ -326,12 +326,12 @@ void Process::finish(Value *returnValue)
         }
         else
         {
-            DENG2_ASSERT(returnValue == nullptr);
+            DE_ASSERT(returnValue == nullptr);
         }
     }
     else
     {
-        DENG2_ASSERT(d->stack.back()->type() == Context::BaseProcess);
+        DE_ASSERT(d->stack.back()->type() == Context::BaseProcess);
 
         if (returnValue) delete returnValue; // Possible return value ignored.
 
@@ -387,13 +387,13 @@ void Process::call(Function const &function, ArrayValue const &arguments, Value 
         for (; b != argValues.end() && a != function.arguments().end(); ++b, ++a)
         {
             // Records must only be passed as unowned references.
-            DENG2_ASSERT(!is<RecordValue>(*b) || !(*b)->as<RecordValue>().hasOwnership());
+            DE_ASSERT(!is<RecordValue>(*b) || !(*b)->as<RecordValue>().hasOwnership());
 
             context().names().add(new Variable(*a, (*b)->duplicate()));
         }
 
         // This should never be called if the process is suspended.
-        DENG2_ASSERT(d->state != Suspended);
+        DE_ASSERT(d->state != Suspended);
 
         if (d->state == Running)
         {
@@ -418,7 +418,7 @@ void Process::namespaces(Namespaces &spaces) const
 
     bool gotFunction = false;
 
-    DENG2_FOR_EACH_CONST_REVERSE(Impl::ContextStack, i, d->stack)
+    DE_FOR_EACH_CONST_REVERSE(Impl::ContextStack, i, d->stack)
     {
         Context &context = **i;
         if (context.type() == Context::FunctionCall)

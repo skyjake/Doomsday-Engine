@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_IOBJECT_H
-#define LIBDENG2_IOBJECT_H
+#ifndef LIBCORE_IOBJECT_H
+#define LIBCORE_IOBJECT_H
 
 #include "../Record"
 
@@ -36,7 +36,7 @@ class Variable;
  *
  * @ingroup script
  */
-class DENG2_PUBLIC IObject
+class DE_PUBLIC IObject
 {
 public:
     virtual ~IObject() {}
@@ -80,5 +80,5 @@ public:
 
 } // namespace de
 
-#endif // LIBDENG2_IOBJECT_H
+#endif // LIBCORE_IOBJECT_H
 

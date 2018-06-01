@@ -39,9 +39,9 @@ static int const MATCH_MAXIMUM_SCORE = 4; // in case 5 specified, allow 1 to not
 
 static String const VAR_REQUIRED_SCORE = "requiredScore";
 
-DENG2_PIMPL(Bundles)
-, DENG2_OBSERVES(FileIndex, Addition)
-, DENG2_OBSERVES(FileIndex, Removal)
+DE_PIMPL(Bundles)
+, DE_OBSERVES(FileIndex, Addition)
+, DE_OBSERVES(FileIndex, Removal)
 , public Lockable
 {
     String defPath;
@@ -56,17 +56,17 @@ DENG2_PIMPL(Bundles)
         , defPath(bundleDefPath)
     {
         // Observe new data files.
-        App::fileSystem().indexFor(DENG2_TYPE_NAME(DataFile))  .audienceForAddition() += this;
-        App::fileSystem().indexFor(DENG2_TYPE_NAME(DataFile))  .audienceForRemoval()  += this;
-        App::fileSystem().indexFor(DENG2_TYPE_NAME(DataFolder)).audienceForAddition() += this;
-        App::fileSystem().indexFor(DENG2_TYPE_NAME(DataFolder)).audienceForRemoval()  += this;
+        App::fileSystem().indexFor(DE_TYPE_NAME(DataFile))  .audienceForAddition() += this;
+        App::fileSystem().indexFor(DE_TYPE_NAME(DataFile))  .audienceForRemoval()  += this;
+        App::fileSystem().indexFor(DE_TYPE_NAME(DataFolder)).audienceForAddition() += this;
+        App::fileSystem().indexFor(DE_TYPE_NAME(DataFolder)).audienceForRemoval()  += this;
     }
 
     ~Impl()
     {
         // Ongoing identification tasks should first finish.
         {
-            DENG2_GUARD(this);
+            DE_GUARD(this);
             bundlesToIdentify.clear();
         }
         tasks.waitForDone();
@@ -74,9 +74,9 @@ DENG2_PIMPL(Bundles)
 
     void fileAdded(File const &dataFile, FileIndex const &)
     {
-        DENG2_ASSERT(is<DataBundle>(dataFile));
+        DE_ASSERT(is<DataBundle>(dataFile));
         {
-            DENG2_GUARD(this);
+            DE_GUARD(this);
             bundlesToIdentify.insert(maybeAs<DataBundle>(dataFile));
         }
         // Use a deferred call to avoid spamming.
@@ -88,15 +88,15 @@ DENG2_PIMPL(Bundles)
 
     void fileRemoved(File const &dataFile, FileIndex const &)
     {
-        DENG2_ASSERT(is<DataBundle>(dataFile));
+        DE_ASSERT(is<DataBundle>(dataFile));
 
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         bundlesToIdentify.remove(maybeAs<DataBundle>(dataFile));
     }
 
     DataBundle const *nextToIdentify()
     {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
         if (bundlesToIdentify.isEmpty())
         {
             return nullptr;
@@ -110,7 +110,7 @@ DENG2_PIMPL(Bundles)
     {
         Folder::waitForPopulation();
 
-        DENG2_ASSERT(App::rootFolder().has("/sys/bundles"));
+        DE_ASSERT(App::rootFolder().has("/sys/bundles"));
 
         bool wasIdentified = false;
         int  count         = 0;
@@ -186,10 +186,10 @@ DENG2_PIMPL(Bundles)
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(Identify)
+    DE_PIMPL_AUDIENCE(Identify)
 };
 
-DENG2_AUDIENCE_METHOD(Bundles, Identify)
+DE_AUDIENCE_METHOD(Bundles, Identify)
 
 Bundles::Bundles(const String &bundleDefPath)
     : d(new Impl(this, bundleDefPath))
@@ -215,7 +215,7 @@ void Bundles::identify()
         d->identifyAddedDataBundles();
         if (isEverythingIdentified())
         {
-            DENG2_FOR_AUDIENCE2(Identify, i)
+            DE_FOR_AUDIENCE2(Identify, i)
             {
                 i->dataBundlesIdentified();
             }
@@ -226,7 +226,7 @@ void Bundles::identify()
 
 bool Bundles::isEverythingIdentified() const
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
     return d->bundlesToIdentify.isEmpty();
 }
 

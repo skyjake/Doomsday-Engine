@@ -45,9 +45,9 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(GamePanelButtonWidget)
-, DENG2_OBSERVES(Profiles::AbstractProfile, Change)
-, DENG2_OBSERVES(res::Bundles, Identify)
+DE_GUI_PIMPL(GamePanelButtonWidget)
+, DE_OBSERVES(Profiles::AbstractProfile, Change)
+, DE_OBSERVES(res::Bundles, Identify)
 , DENG2_OBSERVES(Variable, Change)
 , DENG2_OBSERVES(ButtonWidget, StateChange)
 , public AsyncScope
@@ -239,7 +239,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 
     void deleteButtonPressed()
     {
-        DENG2_ASSERT(saves->selectedPos() != ui::Data::InvalidPos);
+        DE_ASSERT(saves->selectedPos() != ui::Data::InvalidPos);
 
         // Popup to make sure.
         PopupMenuWidget *pop = new PopupMenuWidget;
@@ -460,7 +460,7 @@ void GamePanelButtonWidget::saveSelected(de::ui::DataPos savePos)
     if (savePos != ui::Data::InvalidPos)
     {
         // Ensure that this game is selected.
-        DENG2_ASSERT(parentMenu() != nullptr);
+        DE_ASSERT(parentMenu() != nullptr);
         parentMenu()->setSelectedIndex(parentMenu()->findItem(*this));
 
         // Position the save deletion button.

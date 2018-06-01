@@ -23,8 +23,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_VECTOR_H
-#define LIBDENG2_VECTOR_H
+#ifndef LIBCORE_VECTOR_H
+#define LIBCORE_VECTOR_H
 
 #include "../math.h"
 #include "../Error"
@@ -139,7 +139,7 @@ public:
         return &x;
     }
     Type &operator [] (int index) {
-        DENG2_ASSERT(index >= 0 && index <= 1);
+        DE_ASSERT(index >= 0 && index <= 1);
         if (index >= 0 && index < 2)
         {
             return (&x)[index];
@@ -362,7 +362,7 @@ public:
         return ByteRefArray(&this->Vector2<Type>::x, size() * sizeof(Type));
     }
     Type &operator [] (int index) {
-        DENG2_ASSERT(index >= 0 && index <= 2);
+        DE_ASSERT(index >= 0 && index <= 2);
         if (index >= 0 && index < 3)
         {
             return (&(this->Vector2<Type>::x))[index];
@@ -599,7 +599,7 @@ public:
         return ByteRefArray(&this->Vector2<Type>::x, size() * sizeof(Type));
     }
     Type &operator [] (int index) {
-        DENG2_ASSERT(index >= 0 && index <= 3);
+        DE_ASSERT(index >= 0 && index <= 3);
         if (index >= 0 && index < 4)
         {
             return (&(this->Vector2<Type>::x))[index];
@@ -847,4 +847,4 @@ inline quint32 qHash(Vec2i const &vec) { return vec.x * vec.y + vec.x - vec.y; }
 
 } // namespace de
 
-#endif /* LIBDENG2_VECTOR_H */
+#endif /* LIBCORE_VECTOR_H */

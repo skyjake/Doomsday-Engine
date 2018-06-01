@@ -23,7 +23,7 @@ static gfw_game_id_t theCurrentGame = GFW_GAME_ID_COUNT;
 
 void gfw_SetCurrentGame(gfw_game_id_t game)
 {
-    DENG2_ASSERT(game != GFW_STRIFE);
+    DE_ASSERT(game != GFW_STRIFE);
     theCurrentGame = game;
 }
 

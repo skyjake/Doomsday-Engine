@@ -42,8 +42,8 @@ using namespace world;
 
 static Sector::SubsectorConstructor subsectorConstructor;
 
-DENG2_PIMPL(Sector)
-, DENG2_OBSERVES(Plane, HeightChange)
+DE_PIMPL(Sector)
+, DE_OBSERVES(Plane, HeightChange)
 {
     /**
      * POD: Metrics describing the geometry of the sector (the subsectors).
@@ -78,7 +78,7 @@ DENG2_PIMPL(Sector)
             if (!mob) return;
 
             // Ensure this isn't already included.
-            DENG2_ASSERT(!contains(mob));
+            DE_ASSERT(!contains(mob));
 
             // Prev pointers point to the pointer that points back to us.
             // (Which practically disallows traversing the list backwards.)
@@ -109,7 +109,7 @@ DENG2_PIMPL(Sector)
             mob->sPrev = nullptr;
 
             // Ensure this has been completely unlinked.
-            DENG2_ASSERT(!contains(mob));
+            DE_ASSERT(!contains(mob));
         }
     };
 
@@ -249,12 +249,12 @@ DENG2_PIMPL(Sector)
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(LightLevelChange)
-    DENG2_PIMPL_AUDIENCE(LightColorChange)
+    DE_PIMPL_AUDIENCE(LightLevelChange)
+    DE_PIMPL_AUDIENCE(LightColorChange)
 };
 
-DENG2_AUDIENCE_METHOD(Sector, LightLevelChange)
-DENG2_AUDIENCE_METHOD(Sector, LightColorChange)
+DE_AUDIENCE_METHOD(Sector, LightLevelChange)
+DE_AUDIENCE_METHOD(Sector, LightColorChange)
 
 Sector::Sector(dfloat lightLevel, Vec3f const &lightColor)
     : MapElement(DMU_SECTOR)
@@ -360,7 +360,7 @@ LoopResult Sector::forAllSubsectors(const std::function<LoopResult(Subsector &)>
 
 Subsector *Sector::addSubsector(QVector<ConvexSubspace *> const &subspaces)
 {
-    DENG2_ASSERT(subsectorConstructor);
+    DE_ASSERT(subsectorConstructor);
     /// @todo Add/move debug logic for ensuring the set is valid here. -ds
     std::unique_ptr<Subsector> subsec(subsectorConstructor(subspaces));
     d->subsectors << subsec.get();
@@ -481,7 +481,7 @@ void Sector::setLightLevel(dfloat newLightLevel)
     if (!de::fequal(d->lightLevel, newLightLevel))
     {
         d->lightLevel = newLightLevel;
-        DENG2_FOR_AUDIENCE2(LightLevelChange, i) i->sectorLightLevelChanged(*this);
+        DE_FOR_AUDIENCE2(LightLevelChange, i) i->sectorLightLevelChanged(*this);
     }
 }
 
@@ -496,7 +496,7 @@ void Sector::setLightColor(Vec3f const &newLightColor)
     if (d->lightColor != newColorClamped)
     {
         d->lightColor = newColorClamped;
-        DENG2_FOR_AUDIENCE2(LightColorChange, i) i->sectorLightColorChanged(*this);
+        DE_FOR_AUDIENCE2(LightColorChange, i) i->sectorLightColorChanged(*this);
     }
 }
 
@@ -611,7 +611,7 @@ dint Sector::setProperty(DmuArgs const &args)
 
 D_CMD(InspectSector)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     LOG_AS("inspectsector (Cmd)");
 

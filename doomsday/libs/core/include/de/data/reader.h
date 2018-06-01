@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_READER_HH
-#define LIBDENG2_READER_HH
+#ifndef LIBCORE_READER_HH
+#define LIBCORE_READER_HH
 
 #include "../libcore.h"
 #include "../IByteArray"
@@ -56,14 +56,14 @@ class IIStream;
  *
  * @ingroup data
  */
-class DENG2_PUBLIC Reader
+class DE_PUBLIC Reader
 {
 public:
     /// Seeking is not possible, e.g., when reading from a stream. @ingroup errors
-    DENG2_ERROR(SeekError);
+    DE_ERROR(SeekError);
 
     /// The serialization protocol version specified is unknown. @ingroup errors
-    DENG2_ERROR(VersionError);
+    DE_ERROR(VersionError);
 
 public:
     /**
@@ -335,9 +335,9 @@ public:
     }
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif /* LIBDENG2_READER_HH */
+#endif /* LIBCORE_READER_HH */

@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_GLTEXTUREUNIT_H
-#define DENG_CLIENT_GLTEXTUREUNIT_H
+#ifndef DE_CLIENT_GLTEXTUREUNIT_H
+#define DE_CLIENT_GLTEXTUREUNIT_H
 
 #include "ClientTexture"
 #include <de/GLTexture>
@@ -159,4 +159,4 @@ public:
 
 } // namespace de
 
-#endif // DENG_CLIENT_GLTEXTUREUNIT_H
+#endif // DE_CLIENT_GLTEXTUREUNIT_H

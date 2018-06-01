@@ -1,14 +1,14 @@
 include (PlatformGenericUnix)
 
-set (DENG_PLATFORM_SUFFIX macx)
-set (DENG_AMETHYST_PLATFORM MACOSX)
+set (DE_PLATFORM_SUFFIX macx)
+set (DE_AMETHYST_PLATFORM MACOSX)
 
 # Install the documentation in the app bundle.
-set (DENG_INSTALL_DOC_DIR "Doomsday.app/Contents/Resources/doc")
-set (DENG_INSTALL_MAN_DIR ${DENG_INSTALL_DOC_DIR})
+set (DE_INSTALL_DOC_DIR "Doomsday.app/Contents/Resources/doc")
+set (DE_INSTALL_MAN_DIR ${DE_INSTALL_DOC_DIR})
 
 # Code signing.
-set (DENG_CODESIGN_APP_CERT "" CACHE STRING "ID of the certificate for signing applications.")
+set (DE_CODESIGN_APP_CERT "" CACHE STRING "ID of the certificate for signing applications.")
 find_program (CODESIGN_COMMAND codesign)
 mark_as_advanced (CODESIGN_COMMAND)
 
@@ -20,20 +20,20 @@ execute_process (COMMAND sw_vers -productVersion
 
 add_definitions (
     -DMACOSX=1
-    -DDENG_APPLE=1
-    -DDENG_PLATFORM_ID="mac10_10-${DENG_ARCH}"
+    -DDE_APPLE=1
+    -DDE_PLATFORM_ID="mac10_10-${DE_ARCH}"
     # Fallback basedir for command line apps.
-    -DDENG_BASE_DIR="${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_DATA_DIR}"
+    -DDE_BASE_DIR="${CMAKE_INSTALL_PREFIX}/${DE_INSTALL_DATA_DIR}"
 )
 if (NOT MACOS_VERSION VERSION_LESS 10.7)
     add_definitions (-DMACOS_10_7=1)
 endif ()
 if (MACOS_VERSION VERSION_LESS 10.12)
     # QTKit has been deprecated; should use AVFoundation instead.
-    set (DENG_HAVE_QTKIT YES CACHE INTERNAL "")
+    set (DE_HAVE_QTKIT YES CACHE INTERNAL "")
     add_definitions (-DMACOS_HAVE_QTKIT=1)
 else ()
-    set (DENG_HAVE_QTKIT NO CACHE INTERNAL "")
+    set (DE_HAVE_QTKIT NO CACHE INTERNAL "")
 endif ()
 
 # Check compiler version.
@@ -48,7 +48,7 @@ if (${CLANG_VERSION_STRING} VERSION_EQUAL 7.0 OR
     append_unique (CMAKE_CXX_FLAGS "-Wno-inconsistent-missing-override") # too many warnings from Qt
 endif ()
 
-set (DENG_FIXED_ASM_DEFAULT OFF)
+set (DE_FIXED_ASM_DEFAULT OFF)
 
 macro (link_framework target linkType fw)
     find_library (${fw}_LIBRARY ${fw})

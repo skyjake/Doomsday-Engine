@@ -60,7 +60,7 @@ namespace internal
 
 using namespace internal;
 
-DENG2_PIMPL_NOREF(LumpIndex::Id1MapRecognizer)
+DE_PIMPL_NOREF(LumpIndex::Id1MapRecognizer)
 {
     lumpnum_t lastLump = -1;
     Lumps lumps;
@@ -150,7 +150,7 @@ LumpIndex::Id1MapRecognizer::Id1MapRecognizer(LumpIndex const &lumpIndex, lumpnu
 
         // Determine whether each data lump is of the expected size.
         duint numVertexes = 0, numThings = 0, numLines = 0, numSides = 0, numSectors = 0, numLights = 0;
-        DENG2_FOR_EACH_CONST(Lumps, i, d->lumps)
+        DE_FOR_EACH_CONST(Lumps, i, d->lumps)
         {
             DataType const dataType = i.key();
             File1 const &lump       = *i.value();
@@ -318,7 +318,7 @@ dsize LumpIndex::Id1MapRecognizer::elementSizeForDataType(Format mapFormat, Data
     }
 }
 
-DENG2_PIMPL(LumpIndex)
+DE_PIMPL(LumpIndex)
 {
     bool pathsAreUnique;
 
@@ -350,7 +350,7 @@ DENG2_PIMPL(LumpIndex)
         lumpsByPath.reset(new PathHash(numElements));
 
         // Clear the chains.
-        DENG2_FOR_EACH(PathHash, i, *lumpsByPath)
+        DE_FOR_EACH(PathHash, i, *lumpsByPath)
         {
             i->head = -1;
         }
@@ -378,7 +378,7 @@ DENG2_PIMPL(LumpIndex)
      */
     int flagContainedLumps(QBitArray &pruneFlags, File1 &file)
     {
-        DENG2_ASSERT(pruneFlags.size() == lumps.size());
+        DE_ASSERT(pruneFlags.size() == lumps.size());
 
         int const numRecords = lumps.size();
         int numFlagged = 0;
@@ -399,7 +399,7 @@ DENG2_PIMPL(LumpIndex)
      */
     int flagDuplicateLumps(QBitArray &pruneFlags)
     {
-        DENG2_ASSERT(pruneFlags.size() == lumps.size());
+        DE_ASSERT(pruneFlags.size() == lumps.size());
 
         // Any work to do?
         if (!pathsAreUnique) return 0;
@@ -440,7 +440,7 @@ DENG2_PIMPL(LumpIndex)
     /// @return Number of pruned lumps.
     int pruneFlaggedLumps(QBitArray flaggedLumps)
     {
-        DENG2_ASSERT(flaggedLumps.size() == lumps.size());
+        DE_ASSERT(flaggedLumps.size() == lumps.size());
 
         // Have we lumps to prune?
         int const numFlaggedForPrune = flaggedLumps.count(true);
@@ -596,7 +596,7 @@ bool LumpIndex::catalogues(File1 &file)
 {
     d->pruneDuplicatesIfNeeded();
 
-    DENG2_FOR_EACH(Lumps, i, d->lumps)
+    DE_FOR_EACH(Lumps, i, d->lumps)
     {
         File1 const &lump = **i;
         if (&lump.container() == &file)
@@ -623,7 +623,7 @@ int LumpIndex::findAll(Path const &path, FoundIndices &found) const
     d->buildLumpsByPathIfNeeded();
 
     // Perform the search.
-    DENG2_ASSERT(!d->lumpsByPath.isNull());
+    DE_ASSERT(!d->lumpsByPath.isNull());
     ushort hash = path.lastSegment().hash() % d->lumpsByPath->size();
     for (int idx = (*d->lumpsByPath)[hash].head; idx != -1;
         idx = (*d->lumpsByPath)[idx].nextInLoadOrder)
@@ -648,7 +648,7 @@ lumpnum_t LumpIndex::findLast(Path const &path) const
     d->buildLumpsByPathIfNeeded();
 
     // Perform the search.
-    DENG2_ASSERT(!d->lumpsByPath.isNull());
+    DE_ASSERT(!d->lumpsByPath.isNull());
     ushort hash = path.lastSegment().hash() % d->lumpsByPath->size();
     for (int idx = (*d->lumpsByPath)[hash].head; idx != -1;
         idx = (*d->lumpsByPath)[idx].nextInLoadOrder)
@@ -675,7 +675,7 @@ lumpnum_t LumpIndex::findFirst(Path const &path) const
     lumpnum_t earliest = -1; // Not found.
 
     // Perform the search.
-    DENG2_ASSERT(!d->lumpsByPath.isNull());
+    DE_ASSERT(!d->lumpsByPath.isNull());
     ushort hash = path.lastSegment().hash() % d->lumpsByPath->size();
     for (int idx = (*d->lumpsByPath)[hash].head; idx != -1;
         idx = (*d->lumpsByPath)[idx].nextInLoadOrder)

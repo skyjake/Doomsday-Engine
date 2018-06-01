@@ -61,9 +61,9 @@ namespace world {
 
 #define SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN (.05f)
 
-DENG_EXTERN_C de::Vec3d vOrigin; // Y/Z swizzled for drawing
-DENG_EXTERN_C float vang, vpitch, yfov;
-DENG_EXTERN_C float viewsidex, viewsidey;
+DE_EXTERN_C de::Vec3d vOrigin; // Y/Z swizzled for drawing
+DE_EXTERN_C float vang, vpitch, yfov;
+DE_EXTERN_C float viewsidex, viewsidey;
 
 struct FogParams
 {
@@ -75,73 +75,73 @@ struct FogParams
 
 extern FogParams fogParams;
 
-DENG_EXTERN_C byte smoothTexAnim, devMobjVLights;
+DE_EXTERN_C byte smoothTexAnim, devMobjVLights;
 
-DENG_EXTERN_C int renderTextures; /// @c 0= no textures, @c 1= normal mode, @c 2= lighting debug
-#if defined (DENG_OPENGL)
-DENG_EXTERN_C int renderWireframe;
+DE_EXTERN_C int renderTextures; /// @c 0= no textures, @c 1= normal mode, @c 2= lighting debug
+#if defined (DE_OPENGL)
+DE_EXTERN_C int renderWireframe;
 #endif
-//DENG_EXTERN_C int useMultiTexLights;
-//DENG_EXTERN_C int useMultiTexDetails;
+//DE_EXTERN_C int useMultiTexLights;
+//DE_EXTERN_C int useMultiTexDetails;
 
-DENG_EXTERN_C int dynlightBlend;
+DE_EXTERN_C int dynlightBlend;
 
-//DENG_EXTERN_C int torchAdditive;
-DENG_EXTERN_C de::Vec3f torchColor;
+//DE_EXTERN_C int torchAdditive;
+DE_EXTERN_C de::Vec3f torchColor;
 
-DENG_EXTERN_C int rAmbient;
-DENG_EXTERN_C float rendLightDistanceAttenuation;
-DENG_EXTERN_C int rendLightAttenuateFixedColormap;
-DENG_EXTERN_C float rendLightWallAngle;
-DENG_EXTERN_C byte rendLightWallAngleSmooth;
-DENG_EXTERN_C float rendSkyLight; // cvar
-DENG_EXTERN_C byte rendSkyLightAuto; // cvar
-DENG_EXTERN_C float lightModRange[255];
-DENG_EXTERN_C int extraLight;
-DENG_EXTERN_C float extraLightDelta;
+DE_EXTERN_C int rAmbient;
+DE_EXTERN_C float rendLightDistanceAttenuation;
+DE_EXTERN_C int rendLightAttenuateFixedColormap;
+DE_EXTERN_C float rendLightWallAngle;
+DE_EXTERN_C byte rendLightWallAngleSmooth;
+DE_EXTERN_C float rendSkyLight; // cvar
+DE_EXTERN_C byte rendSkyLightAuto; // cvar
+DE_EXTERN_C float lightModRange[255];
+DE_EXTERN_C int extraLight;
+DE_EXTERN_C float extraLightDelta;
 
-DENG_EXTERN_C int devRendSkyMode;
-DENG_EXTERN_C int gameDrawHUD;
+DE_EXTERN_C int devRendSkyMode;
+DE_EXTERN_C int gameDrawHUD;
 
-//DENG_EXTERN_C int useBias;
+//DE_EXTERN_C int useBias;
 
-DENG_EXTERN_C int useDynLights;
-DENG_EXTERN_C float dynlightFactor, dynlightFogBright;
-DENG_EXTERN_C int rendMaxLumobjs;
+DE_EXTERN_C int useDynLights;
+DE_EXTERN_C float dynlightFactor, dynlightFogBright;
+DE_EXTERN_C int rendMaxLumobjs;
 
-DENG_EXTERN_C int useGlowOnWalls;
-DENG_EXTERN_C float glowFactor, glowHeightFactor;
-DENG_EXTERN_C int glowHeightMax;
+DE_EXTERN_C int useGlowOnWalls;
+DE_EXTERN_C float glowFactor, glowHeightFactor;
+DE_EXTERN_C int glowHeightMax;
 
-DENG_EXTERN_C int useShadows;
-DENG_EXTERN_C float shadowFactor;
-DENG_EXTERN_C int shadowMaxRadius;
-DENG_EXTERN_C int shadowMaxDistance;
+DE_EXTERN_C int useShadows;
+DE_EXTERN_C float shadowFactor;
+DE_EXTERN_C int shadowMaxRadius;
+DE_EXTERN_C int shadowMaxDistance;
 
-DENG_EXTERN_C byte useLightDecorations;
+DE_EXTERN_C byte useLightDecorations;
 
-DENG_EXTERN_C int useShinySurfaces;
+DE_EXTERN_C int useShinySurfaces;
 
-DENG_EXTERN_C float detailFactor, detailScale;
+DE_EXTERN_C float detailFactor, detailScale;
 
-DENG_EXTERN_C int ratioLimit;
-DENG_EXTERN_C int mipmapping, filterUI, texQuality, filterSprites;
-DENG_EXTERN_C int texMagMode, texAniso;
-DENG_EXTERN_C int useSmartFilter;
-DENG_EXTERN_C int texMagMode;
-DENG_EXTERN_C int glmode[6];
-DENG_EXTERN_C dd_bool fillOutlines;
-//DENG_EXTERN_C dd_bool noHighResTex;
-//DENG_EXTERN_C dd_bool noHighResPatches;
-//DENG_EXTERN_C dd_bool highResWithPWAD;
-DENG_EXTERN_C byte loadExtAlways;
+DE_EXTERN_C int ratioLimit;
+DE_EXTERN_C int mipmapping, filterUI, texQuality, filterSprites;
+DE_EXTERN_C int texMagMode, texAniso;
+DE_EXTERN_C int useSmartFilter;
+DE_EXTERN_C int texMagMode;
+DE_EXTERN_C int glmode[6];
+DE_EXTERN_C dd_bool fillOutlines;
+//DE_EXTERN_C dd_bool noHighResTex;
+//DE_EXTERN_C dd_bool noHighResPatches;
+//DE_EXTERN_C dd_bool highResWithPWAD;
+DE_EXTERN_C byte loadExtAlways;
 
-DENG_EXTERN_C int devNoCulling;
-DENG_EXTERN_C byte devRendSkyAlways;
-DENG_EXTERN_C byte rendInfoLums;
-DENG_EXTERN_C byte devDrawLums;
+DE_EXTERN_C int devNoCulling;
+DE_EXTERN_C byte devRendSkyAlways;
+DE_EXTERN_C byte rendInfoLums;
+DE_EXTERN_C byte devDrawLums;
 
-DENG_EXTERN_C byte freezeRLs;
+DE_EXTERN_C byte freezeRLs;
 
 struct ResourceConfigVars
 {

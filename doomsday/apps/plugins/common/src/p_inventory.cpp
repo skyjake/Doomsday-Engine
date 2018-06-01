@@ -273,7 +273,7 @@ static int tryUseItem(playerinventory_t *inv, inventoryitemtype_t type, int pani
 
 def_invitem_t const *P_GetInvItemDef(inventoryitemtype_t type)
 {
-    DENG2_ASSERT(type >= IIT_FIRST && type < NUM_INVENTORYITEM_TYPES);
+    DE_ASSERT(type >= IIT_FIRST && type < NUM_INVENTORYITEM_TYPES);
     return itemDefForType(type);
 }
 
@@ -441,7 +441,7 @@ int P_InventoryGive(int player, inventoryitemtype_t type, int silent)
             ST_HUDUnHide(player, HUE_ON_PICKUP_INVITEM);
         }
 #else
-        DENG2_UNUSED(silent);
+        DE_UNUSED(silent);
 #endif
 
         return 1;

@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_COUNTED_H
-#define LIBDENG2_COUNTED_H
+#ifndef LIBCORE_COUNTED_H
+#define LIBCORE_COUNTED_H
 
 #include "../libcore.h"
 #include <atomic>
@@ -31,7 +31,7 @@ namespace de {
  *
  * @ingroup data
  */
-class DENG2_PUBLIC Counted
+class DE_PUBLIC Counted
 {
 public:
     /**
@@ -93,10 +93,10 @@ private:
     template <typename Type>
     friend Type *refless(Type *counted);
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
 public:
     static std::atomic_int totalCount; // Number of Counted objects in existence.
-# ifdef DENG_USE_COUNTED_TRACING
+# ifdef DE_USE_COUNTED_TRACING
     static void printAllocs();
 # endif
 #endif
@@ -262,4 +262,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_COUNTED_H */
+#endif /* LIBCORE_COUNTED_H */

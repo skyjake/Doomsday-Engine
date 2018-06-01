@@ -24,12 +24,12 @@ namespace de {
 
 using namespace ui;
 
-DENG_GUI_PIMPL(ChoiceWidget),
-DENG2_OBSERVES(Data, Addition),
-DENG2_OBSERVES(Data, Removal),
-DENG2_OBSERVES(Data, OrderChange),
-DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation),
-DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
+DE_GUI_PIMPL(ChoiceWidget),
+DE_OBSERVES(Data, Addition),
+DE_OBSERVES(Data, Removal),
+DE_OBSERVES(Data, OrderChange),
+DE_OBSERVES(ChildWidgetOrganizer, WidgetCreation),
+DE_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 {
     /**
      * Items in the choice's popup uses this as action to change the selected
@@ -259,7 +259,7 @@ Data::Pos ChoiceWidget::selected() const
 
 Item const &ChoiceWidget::selectedItem() const
 {
-    DENG2_ASSERT(d->isValidSelection());
+    DE_ASSERT(d->isValidSelection());
     return d->items().at(d->selected);
 }
 

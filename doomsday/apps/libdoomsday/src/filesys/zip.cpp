@@ -255,7 +255,7 @@ static bool applyGamePathMappings(String &path)
 
     // Key-named directories in the root might be mapped to another location.
     FS1::Schemes const &schemes = App_FileSystem().allSchemes();
-    DENG2_FOR_EACH_CONST(FS1::Schemes, i, schemes)
+    DE_FOR_EACH_CONST(FS1::Schemes, i, schemes)
     {
         if ((*i)->mapPath(path))
         {
@@ -316,7 +316,7 @@ Zip &Zip::LumpFile::zip() const
     return container().as<Zip>();
 }
 
-DENG2_PIMPL(Zip)
+DE_PIMPL(Zip)
 {
     LumpTree entries;                     ///< Directory structure and entry records for all lumps.
     QScopedPointer<LumpCache> dataCache;  ///< Data payload cache.
@@ -330,7 +330,7 @@ DENG2_PIMPL(Zip)
      */
     size_t bufferLump(LumpFile const &lump, uint8_t *buffer)
     {
-        DENG2_ASSERT(buffer);
+        DE_ASSERT(buffer);
         LOG_AS("Zip");
 
         FileInfo const &lumpInfo = lump.info();
@@ -690,7 +690,7 @@ uint8_t *Zip::compressAtLevel(uint8_t *in, size_t inSize, size_t *outSize, int l
     int result;
     int have;
 
-    DENG2_ASSERT(outSize);
+    DE_ASSERT(outSize);
     *outSize = 0;
 
     std::memset(&stream, 0, sizeof(stream));
@@ -743,8 +743,8 @@ uint8_t *Zip::compressAtLevel(uint8_t *in, size_t inSize, size_t *outSize, int l
         }
     } while (!stream.avail_out); // output chunk full, more data may follow
 
-    DENG2_ASSERT(result == Z_STREAM_END);
-    DENG2_ASSERT(stream.total_out == *outSize);
+    DE_ASSERT(result == Z_STREAM_END);
+    DE_ASSERT(stream.total_out == *outSize);
 
     deflateEnd(&stream);
     return output;
@@ -765,7 +765,7 @@ uint8_t *Zip::uncompress(uint8_t *in, size_t inSize, size_t *outSize)
     int result;
     int have;
 
-    DENG2_ASSERT(outSize);
+    DE_ASSERT(outSize);
     *outSize = 0;
 
     std::memset(&stream, 0, sizeof(stream));
@@ -808,7 +808,7 @@ uint8_t *Zip::uncompress(uint8_t *in, size_t inSize, size_t *outSize)
     } while (!stream.avail_out); // output chunk full, more data may follow
 
     // We should now be at the end.
-    DENG2_ASSERT(result == Z_STREAM_END);
+    DE_ASSERT(result == Z_STREAM_END);
 
     inflateEnd(&stream);
     return output;
@@ -857,7 +857,7 @@ Zip::LumpTree const &Zip::lumpTree() const
 
 Zip::LumpFile &Zip::Entry::file() const
 {
-    DENG2_ASSERT(!lumpFile.isNull());
+    DE_ASSERT(!lumpFile.isNull());
     return *lumpFile;
 }
 

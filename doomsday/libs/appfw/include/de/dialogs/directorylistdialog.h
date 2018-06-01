@@ -56,7 +56,7 @@ protected:
     void prepare() override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

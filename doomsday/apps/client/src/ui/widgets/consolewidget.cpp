@@ -43,7 +43,7 @@
 #include <de/ui/VariableToggleItem>
 #include <doomsday/doomsdayapp.h>
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
 #  include <QApplication>
 #  include <QCursor>
 #  include <QClipboard>
@@ -53,9 +53,9 @@ using namespace de;
 
 static TimeSpan const LOG_OPEN_CLOSE_SPAN = 0.2;
 
-DENG_GUI_PIMPL(ConsoleWidget)
-, DENG2_OBSERVES(Variable, Change)
-, DENG2_OBSERVES(DoomsdayApp, GameChange)
+DE_GUI_PIMPL(ConsoleWidget)
+, DE_OBSERVES(Variable, Change)
+, DE_OBSERVES(DoomsdayApp, GameChange)
 {
     GuiWidget *buttons = nullptr;
     PopupButtonWidget *button = nullptr;
@@ -160,7 +160,7 @@ DENG_GUI_PIMPL(ConsoleWidget)
             if (grabHover != RightEdge)
             {
                 grabHover = RightEdge;
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
                 self().root().window().setCursor(Qt::SizeHorCursor);
 #endif
             }
@@ -175,7 +175,7 @@ DENG_GUI_PIMPL(ConsoleWidget)
                 if (grabHover != TopEdge)
                 {
                     grabHover = TopEdge;
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
                     self().root().window().setCursor(Qt::SizeVerCursor);
 #endif
                 }
@@ -183,7 +183,7 @@ DENG_GUI_PIMPL(ConsoleWidget)
             else if (grabHover != NotGrabbed)
             {
                 grabHover = NotGrabbed;
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
                 self().root().window().setCursor(Qt::ArrowCursor);
 #endif
             }
@@ -645,7 +645,7 @@ void ConsoleWidget::commandWasEntered(String const &)
     }
 }
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
 void ConsoleWidget::copyLogPathToClipboard()
 {
     if (NativeFile *native = App::rootFolder().tryLocate<NativeFile>(LogBuffer::get().outputFile()))

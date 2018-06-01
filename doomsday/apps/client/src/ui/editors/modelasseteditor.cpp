@@ -53,9 +53,9 @@ struct PlayData
 };
 Q_DECLARE_METATYPE(PlayData)
 
-DENG_GUI_PIMPL(ModelAssetEditor)
-, DENG2_OBSERVES(PackageLoader, Activity)
-, DENG2_OBSERVES(PanelWidget, AboutToOpen)
+DE_GUI_PIMPL(ModelAssetEditor)
+, DE_OBSERVES(PackageLoader, Activity)
+, DE_OBSERVES(PanelWidget, AboutToOpen)
 , public VariableGroupEditor::IOwner
 {
     using Group = VariableGroupEditor;

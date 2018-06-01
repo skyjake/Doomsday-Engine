@@ -140,7 +140,7 @@ static float avertexnormals[NUMVERTEXNORMALS][3] = {
 /**
  * @todo reimplement file loading using de::Reader.
  */
-DENG2_PIMPL(FrameModel)
+DE_PIMPL(FrameModel)
 {
     Flags flags;
     Skins skins;

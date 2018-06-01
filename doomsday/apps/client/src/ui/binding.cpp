@@ -94,13 +94,13 @@ bool Binding::equalConditions(Binding const &other) const
     }
 
     ArrayValue const &conds = def().geta(VAR_CONDITION);
-    DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
+    DE_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
     {
         auto const &a = *static_cast<CompiledConditionRecord const *>((*i)->as<RecordValue>().record());
 
         bool found = false;
         ArrayValue const &conds2 = other.geta(VAR_CONDITION);
-        DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds2.elements())
+        DE_FOR_EACH_CONST(ArrayValue::Elements, i, conds2.elements())
         {
             auto const &b = *static_cast<CompiledConditionRecord const *>((*i)->as<RecordValue>().record());
             if (a.compiled() == b.compiled())

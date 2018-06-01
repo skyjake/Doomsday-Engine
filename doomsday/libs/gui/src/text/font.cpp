@@ -93,7 +93,7 @@ namespace internal
  */
 static QThreadStorage<QHash<Font *, internal::ThreadFonts>> fontsForThread;
 
-DENG2_PIMPL(Font)
+DE_PIMPL(Font)
 {
     QFont referenceFont;
     internal::ThreadFonts *threadFonts = nullptr;

@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_ARRAYVALUE_H
-#define LIBDENG2_ARRAYVALUE_H
+#ifndef LIBCORE_ARRAYVALUE_H
+#define LIBCORE_ARRAYVALUE_H
 
 #include "../Value"
 #include "../NumberValue"
@@ -34,14 +34,14 @@ namespace de {
  *
  * @ingroup data
  */
-class DENG2_PUBLIC ArrayValue : public Value
+class DE_PUBLIC ArrayValue : public Value
 {
 public:
     /// Attempt to index the array with indices that are not defined for the array. @ingroup errors
-    DENG2_ERROR(OutOfBoundsError);
+    DE_ERROR(OutOfBoundsError);
 
     /// The index used for accessing the array is of the wrong type. @ingroup errors
-    DENG2_ERROR(IllegalIndexError);
+    DE_ERROR(IllegalIndexError);
 
     /// Type for the elements. Public because const access to the elements is public.
     typedef QList<Value *> Elements;
@@ -225,4 +225,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG2_ARRAYVALUE_H */
+#endif /* LIBCORE_ARRAYVALUE_H */

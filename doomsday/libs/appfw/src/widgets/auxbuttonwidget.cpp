@@ -20,8 +20,8 @@
 
 namespace de {
 
-DENG_GUI_PIMPL(AuxButtonWidget)
-, DENG2_OBSERVES(ButtonWidget, StateChange)
+DE_GUI_PIMPL(AuxButtonWidget)
+, DE_OBSERVES(ButtonWidget, StateChange)
 {
     ButtonWidget *aux;
     bool inverted;

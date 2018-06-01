@@ -53,7 +53,7 @@
 using namespace de;
 using namespace world;
 
-DENG2_PIMPL_NOREF(Line::Side::Segment)
+DE_PIMPL_NOREF(Line::Side::Segment)
 {
     HEdge *hedge = nullptr;      ///< Half-edge attributed to the line segment (not owned).
 
@@ -83,7 +83,7 @@ Line::Side const &Line::Side::Segment::lineSide() const
 
 HEdge &Line::Side::Segment::hedge() const
 {
-    DENG2_ASSERT(d->hedge);
+    DE_ASSERT(d->hedge);
     return *d->hedge;
 }
 
@@ -121,7 +121,7 @@ void Line::Side::Segment::setFrontFacing(bool yes)
 
 #endif  // __CLIENT__
 
-DENG2_PIMPL(Line::Side)
+DE_PIMPL(Line::Side)
 {
     /**
      * Line side section of which there are three (middle, bottom and top).
@@ -211,7 +211,7 @@ DENG2_PIMPL(Line::Side)
         /// @throw Line::InvalidSectionIdError The given section identifier is not valid.
         throw Line::InvalidSectionIdError("Line::Side::section", "Invalid section id " + String::number(sectionId));*/
 
-        DENG2_ASSERT(sectionId >= Middle && sectionId <= Top);
+        DE_ASSERT(sectionId >= Middle && sectionId <= Top);
 
         return *sections->sections[sectionId];
     }
@@ -235,7 +235,7 @@ DENG2_PIMPL(Line::Side)
 #ifdef __CLIENT__
     void updateRadioCorner(shadowcorner_t &sc, dfloat openness, Plane *proximityPlane = nullptr, bool top = false)
     {
-        DENG2_ASSERT(self()._sector);
+        DE_ASSERT(self()._sector);
         sc.corner    = openness;
         sc.proximity = proximityPlane;
         if (sc.proximity)
@@ -326,7 +326,7 @@ String Line::Side::description() const
                        "%4")
                     .arg(Line::sideIdAsText(sideId()).upperFirstChar())
                     .arg(hasSector() ? String::number(sector().indexInMap()) : "None")
-                    .arg(DENG2_BOOL_YESNO(considerOneSided()))
+                    .arg(DE_BOOL_YESNO(considerOneSided()))
                     .arg(flagsString);
 
     forAllSurfaces([this, &text] (Surface &suf)
@@ -556,7 +556,7 @@ void Line::Side::updateSoundEmitterOrigin(dint sectionId)
     emitter.origin[0] = lineCenter.x;
     emitter.origin[1] = lineCenter.y;
 
-    DENG2_ASSERT(_sector);
+    DE_ASSERT(_sector);
     ddouble const ffloor = _sector->floor().height();
     ddouble const fceil  = _sector->ceiling().height();
 
@@ -928,7 +928,7 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
     {
         // Since we have the details of the backsector already, simply get the next
         // neighbor (it *is* the back neighbor).
-        DENG2_ASSERT(edge.line);
+        DE_ASSERT(edge.line);
         edge.line = R_FindLineNeighbor(*edge.line,
                                        *edge.line->vertexOwner(dint(edge.line->back().hasSector() && edge.line->back().sectorPtr() == edge.sector) ^ dint(right)),
                                        direction, edge.sector, &edge.diff);
@@ -1056,8 +1056,8 @@ String Line::Side::sectionIdAsText(dint sectionId) // static
     };
 }
 
-DENG2_PIMPL(Line)
-, DENG2_OBSERVES(Vertex, OriginChange)
+DE_PIMPL(Line)
+, DE_OBSERVES(Vertex, OriginChange)
 {
     dint flags;                 ///< Public DDLF_* flags.
     Side front;                 ///< Front side of the line.
@@ -1122,9 +1122,9 @@ DENG2_PIMPL(Line)
 
     void vertexOriginChanged(Vertex &vtx)
     {
-        DENG2_ASSERT(&vtx == from || &vtx == to); // Should only observe changes to "our" vertices.
-        DENG2_ASSERT(polyobj != nullptr);         // Should only observe changes to moveable (not editable) vertices.
-        DENG2_UNUSED(vtx);
+        DE_ASSERT(&vtx == from || &vtx == to); // Should only observe changes to "our" vertices.
+        DE_ASSERT(polyobj != nullptr);         // Should only observe changes to moveable (not editable) vertices.
+        DE_UNUSED(vtx);
 
         // Clear the now invalid geometry metrics (will update later).
         gdata.release();
@@ -1157,7 +1157,7 @@ void Line::setFlags(dint flagsToChange, FlagOp operation)
         d->flags = newFlags;
 
         // Notify interested parties of the change.
-        DENG2_FOR_AUDIENCE(FlagsChange, i) i->lineFlagsChanged(*this, oldFlags);
+        DE_FOR_AUDIENCE(FlagsChange, i) i->lineFlagsChanged(*this, oldFlags);
     }
 }
 
@@ -1242,13 +1242,13 @@ void Line::replaceVertex(dint to, Vertex &newVertex)
 
 Vertex &Line::vertex(dint to)
 {
-    DENG2_ASSERT((to ? d->to : d->from) != nullptr);
+    DE_ASSERT((to ? d->to : d->from) != nullptr);
     return (to ? *d->to : *d->from);
 }
 
 Vertex const &Line::vertex(dint to) const
 {
-    DENG2_ASSERT((to ? d->to : d->from) != nullptr);
+    DE_ASSERT((to ? d->to : d->from) != nullptr);
     return (to ? *d->to : *d->from);
 }
 
@@ -1429,7 +1429,7 @@ bool Line::isShadowCaster() const
 
 LineOwner *Line::vertexOwner(dint to) const
 {
-    DENG2_ASSERT((to ? _vo2 : _vo1) != nullptr);
+    DE_ASSERT((to ? _vo2 : _vo1) != nullptr);
     return (to ? _vo2 : _vo1);
 }
 
@@ -1515,7 +1515,7 @@ dint Line::setProperty(DmuArgs const &args)
 
 D_CMD(InspectLine)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     LOG_AS("inspectline (Cmd)");
 

@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_NATIVEFILE_H
-#define LIBDENG2_NATIVEFILE_H
+#ifndef LIBCORE_NATIVEFILE_H
+#define LIBCORE_NATIVEFILE_H
 
 #include "../libcore.h"
 #include "../ByteArrayFile"
@@ -34,7 +34,7 @@ namespace de {
  *
  * @ingroup fs
  */
-class DENG2_PUBLIC NativeFile : public ByteArrayFile
+class DE_PUBLIC NativeFile : public ByteArrayFile
 {
 public:
     /**
@@ -93,9 +93,9 @@ protected:
     void close();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif /* LIBDENG2_NATIVEFILE_H */
+#endif /* LIBCORE_NATIVEFILE_H */

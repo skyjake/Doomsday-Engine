@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_PACKAGELOADER_H
-#define LIBDENG2_PACKAGELOADER_H
+#ifndef LIBCORE_PACKAGELOADER_H
+#define LIBCORE_PACKAGELOADER_H
 
 #include "../String"
 #include "../Package"
@@ -42,33 +42,33 @@ namespace de {
  *
  * @ingroup fs
  */
-class DENG2_PUBLIC PackageLoader
+class DE_PUBLIC PackageLoader
 {
 public:
     /// Notified when any package is loaded or unloaded.
-    DENG2_DEFINE_AUDIENCE2(Activity, void setOfLoadedPackagesChanged())
+    DE_DEFINE_AUDIENCE2(Activity, void setOfLoadedPackagesChanged())
 
     /// Notified when a package is loaded.
-    DENG2_DEFINE_AUDIENCE2(Load, void packageLoaded(String const &packageId))
+    DE_DEFINE_AUDIENCE2(Load, void packageLoaded(String const &packageId))
 
     /// Notified when a package is unloaded.
-    DENG2_DEFINE_AUDIENCE2(Unload, void aboutToUnloadPackage(String const &packageId))
+    DE_DEFINE_AUDIENCE2(Unload, void aboutToUnloadPackage(String const &packageId))
 
     /// Requested package was not found. @ingroup errors
-    DENG2_ERROR(NotFoundError);
+    DE_ERROR(NotFoundError);
 
     /// Package is already loaded. @ingroup errors
-    DENG2_ERROR(AlreadyLoadedError);
+    DE_ERROR(AlreadyLoadedError);
 
     /// Errors during reactions to loading a package. @ingroup errors
-    DENG2_ERROR(PostLoadError);
+    DE_ERROR(PostLoadError);
 
     typedef QHash<String, Package *> LoadedPackages;
 
     /**
      * Utility for dealing with space-separated lists of identifiers.
      */
-    struct DENG2_PUBLIC IdentifierList
+    struct DE_PUBLIC IdentifierList
     {
         StringList ids;
 
@@ -183,9 +183,9 @@ public:
     StringList expandDependencies(StringList const &packageIdentifiers) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_PACKAGELOADER_H
+#endif // LIBCORE_PACKAGELOADER_H

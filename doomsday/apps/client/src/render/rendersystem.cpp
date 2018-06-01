@@ -50,9 +50,9 @@
 
 using namespace de;
 
-DENG2_PIMPL(RenderSystem)
-, DENG2_OBSERVES(PackageLoader, Load)
-, DENG2_OBSERVES(PackageLoader, Unload)
+DE_PIMPL(RenderSystem)
+, DE_OBSERVES(PackageLoader, Load)
+, DE_OBSERVES(PackageLoader, Unload)
 {
     Binder binder;
     Record renderModule;
@@ -120,7 +120,7 @@ DENG2_PIMPL(RenderSystem)
 
         ProjectionList &findOrCreateList(duint *listIdx, bool sortByLuma)
         {
-            DENG2_ASSERT(listIdx);
+            DE_ASSERT(listIdx);
 
             // Do we need to allocate a list?
             if(!(*listIdx))
@@ -192,7 +192,7 @@ DENG2_PIMPL(RenderSystem)
 
         VectorLightList &findOrCreateList(duint *listIdx)
         {
-            DENG2_ASSERT(listIdx);
+            DE_ASSERT(listIdx);
 
             // Do we need to allocate a list?
             if(!(*listIdx))
@@ -349,7 +349,7 @@ DENG2_PIMPL(RenderSystem)
     {
         FS::FoundFiles found;
         App::packageLoader().package(packageId).findPartialPath("shaders.dei", found);
-        DENG2_FOR_EACH(FS::FoundFiles, i, found)
+        DE_FOR_EACH(FS::FoundFiles, i, found)
         {
             // Load new shaders.
             loadShaders(**i);
@@ -373,7 +373,7 @@ DENG2_PIMPL(RenderSystem)
 //        // Load all the shader program definitions.
 //        FS::FoundFiles found;
 //        App::findInPackages("shaders.dei", found);
-//        DENG2_FOR_EACH(FS::FoundFiles, i, found)
+//        DE_FOR_EACH(FS::FoundFiles, i, found)
 //        {
 //            loadShaders(**i);
 //        }

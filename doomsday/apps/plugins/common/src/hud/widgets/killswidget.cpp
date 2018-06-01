@@ -27,13 +27,13 @@ using namespace de;
 
 static void KillsWidget_Draw(guidata_kills_t *kills, Point2Raw const *offset)
 {
-    DENG2_ASSERT(kills);
+    DE_ASSERT(kills);
     kills->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void KillsWidget_UpdateGeometry(guidata_kills_t *kills)
 {
-    DENG2_ASSERT(kills);
+    DE_ASSERT(kills);
     kills->updateGeometry();
 }
 
@@ -100,7 +100,7 @@ void guidata_kills_t::draw(Vec2i const &offset) const
     DGL_PopMatrix();
 
 #else  // !__JHEXEN__
-    DENG2_UNUSED(offset);
+    DE_UNUSED(offset);
 #endif
 }
 

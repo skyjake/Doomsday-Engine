@@ -26,7 +26,7 @@ using namespace de;
 
 namespace world {
 
-DENG2_PIMPL_NOREF(MapObject)
+DE_PIMPL_NOREF(MapObject)
 {
     Map *map = nullptr;
     dint indexInMap = NoIndex;

@@ -39,7 +39,7 @@ class LIBDOOMSDAY_PUBLIC ColorTableReader
 {
 public:
     /// Base class for color-format-related errors. @ingroup errors
-    DENG2_ERROR(FormatError);
+    DE_ERROR(FormatError);
 
 public:
     /**
@@ -66,10 +66,10 @@ class LIBDOOMSDAY_PUBLIC ColorPalette
 {
 public:
     /// An invalid translation id was specified. @ingroup errors
-    DENG2_ERROR(InvalidTranslationIdError);
+    DE_ERROR(InvalidTranslationIdError);
 
     /// Notified whenever the color table changes.
-    DENG2_DEFINE_AUDIENCE(ColorTableChange, void colorPaletteColorTableChanged(ColorPalette &colorPalette))
+    DE_DEFINE_AUDIENCE(ColorTableChange, void colorPaletteColorTableChanged(ColorPalette &colorPalette))
 
     /// Palette index translation mapping table.
     typedef QVector<int> Translation;
@@ -164,7 +164,7 @@ public:
     void newTranslation(de::String id, Translation const &mappings);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef ColorPalette::Translation ColorPaletteTranslation;

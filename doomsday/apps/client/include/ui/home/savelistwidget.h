@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_HOME_SAVELISTWIDGET_H
-#define DENG_CLIENT_UI_HOME_SAVELISTWIDGET_H
+#ifndef DE_CLIENT_UI_HOME_SAVELISTWIDGET_H
+#define DE_CLIENT_UI_HOME_SAVELISTWIDGET_H
 
 #include <de/MenuWidget>
 #include <de/ui/Data>
@@ -47,7 +47,7 @@ signals:
     void doubleClicked(de::ui::DataPos pos);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_HOME_SAVELISTWIDGET_H
+#endif // DE_CLIENT_UI_HOME_SAVELISTWIDGET_H

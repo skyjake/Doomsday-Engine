@@ -115,7 +115,7 @@ static void evaluateLighting(Vec3d const &origin, ConvexSubspace &subspaceAtOrig
 /// @todo use Mobj_OriginSmoothed
 static Vec3d mobjOriginSmoothed(mobj_t *mob)
 {
-    DENG2_ASSERT(mob);
+    DE_ASSERT(mob);
     coord_t origin[] = { mob->origin[0], mob->origin[1], mob->origin[2] };
 
     // The client may have a Smoother for this object.
@@ -458,7 +458,7 @@ void R_ProjectSprite(mobj_t &mob)
         }
         else
         {
-            DENG2_ASSERT(mf);
+            DE_ASSERT(mf);
             VisSprite_SetupModel(vis,
                                  VisEntityPose(vis->pose.origin,
                                                Vec3d(visOff.x, visOff.y, visOff.z - floorClip),
@@ -495,7 +495,7 @@ void R_ProjectSprite(mobj_t &mob)
             }
 
             auto const *pl = (pointlight_analysis_t const *) tex->base().analysisDataPointer(res::Texture::BrightPointAnalysis);
-            DENG2_ASSERT(pl);
+            DE_ASSERT(pl);
 
             Lumobj const &lob = subsec.sector().map().lumobj(mob.lumIdx);
             vissprite_t *vis  = R_NewVisSprite(VSPR_FLARE);

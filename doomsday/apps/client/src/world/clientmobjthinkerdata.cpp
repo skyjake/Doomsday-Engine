@@ -46,8 +46,8 @@ namespace internal
 
 using namespace ::internal;
 
-DENG2_PIMPL(ClientMobjThinkerData)
-, DENG2_OBSERVES(Asset, Deletion)
+DE_PIMPL(ClientMobjThinkerData)
+, DE_OBSERVES(Asset, Deletion)
 {
     enum SerialFlagUInt16
     {

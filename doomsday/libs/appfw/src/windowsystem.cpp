@@ -23,7 +23,7 @@
 
 namespace de {
 
-DENG2_PIMPL(WindowSystem)
+DE_PIMPL(WindowSystem)
 , DENG2_OBSERVES(GLWindow, PixelRatio)
 {
     typedef QMap<String, BaseWindow *> Windows;
@@ -100,7 +100,7 @@ bool WindowSystem::mainExists() // static
 
 BaseWindow &WindowSystem::main() // static
 {
-    DENG2_ASSERT(mainExists());
+    DE_ASSERT(mainExists());
     return **get().d->windows.find("main");
 }
 
@@ -195,7 +195,7 @@ void WindowSystem::setAppWindowSystem(WindowSystem &winSys)
 
 WindowSystem &WindowSystem::get() // static
 {
-    DENG2_ASSERT(theAppWindowSystem != 0);
+    DE_ASSERT(theAppWindowSystem != 0);
     return *theAppWindowSystem;
 }
 

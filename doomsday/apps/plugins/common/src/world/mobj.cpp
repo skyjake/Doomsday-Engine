@@ -133,7 +133,7 @@ dd_bool Mobj_IsVoodooDoll(mobj_t const *mo)
 
 void Mobj_XYMoveStopping(mobj_t *mo)
 {
-    DENG_ASSERT(mo != 0);
+    DE_ASSERT(mo != 0);
 
     player_t *player = mo->player;
 
@@ -272,7 +272,7 @@ dd_bool Mobj_IsPlayer(mobj_t const *mob)
 
 angle_t Mobj_AimAtPoint2(mobj_t *mob, coord_t const point[], dd_bool pointShadowed)
 {
-    DENG2_ASSERT(mob);
+    DE_ASSERT(mob);
     return P_AimAtPoint2(mob->origin, point, pointShadowed);
 }
 
@@ -283,7 +283,7 @@ angle_t Mobj_AimAtPoint(mobj_t *mob, coord_t const point[])
 
 angle_t Mobj_AimAtTarget(mobj_t *mob)
 {
-    DENG2_ASSERT(mob);
+    DE_ASSERT(mob);
     if(auto const *target = mob->target)
     {
         return Mobj_AimAtPoint2(mob, target->origin, target->flags & MF_SHADOW);
@@ -394,7 +394,7 @@ static bool shouldCallAction(mobj_t *mobj)
 
 static bool changeMobjState(mobj_t *mobj, statenum_t stateNum, bool doCallAction)
 {
-    DENG_ASSERT(mobj != 0);
+    DE_ASSERT(mobj != 0);
 
     // Skip zero-tic states -- call their action but then advance to the next.
     do
@@ -646,7 +646,7 @@ void mobj_s::write(MapStateWriter *msw) const
         break;
 
     default:
-        DENG_ASSERT(mo->tracer == NULL); /// @todo Tracer won't be saved correctly?
+        DE_ASSERT(mo->tracer == NULL); /// @todo Tracer won't be saved correctly?
         Writer_WriteInt32(writer, PTR2INT(mo->tracer));
         break;
     }
@@ -990,10 +990,10 @@ mobj_t *Mobj_ExplodeIfObstructed(mobj_t *mob)
 mobj_t *P_LaunchMissile(mobj_t *missile, angle_t angle, coord_t const targetPos[],
     coord_t const sourcePos[], coord_t extraMomZ)
 {
-    DENG2_ASSERT(targetPos);
+    DE_ASSERT(targetPos);
     if(missile)
     {
-        DENG2_ASSERT(missile->info);
+        DE_ASSERT(missile->info);
 
         // Play the launch sound.
         if(missile->info->seeSound)
@@ -1025,7 +1025,7 @@ mobj_t *P_LaunchMissile(mobj_t *missile, angle_t angle, coord_t const targetPos[
 mobj_t *Mobj_LaunchMissileAtAngle2(mobj_t *mob, mobj_t *missile, angle_t angle,
     coord_t const targetPos[], coord_t const sourcePos[], coord_t extraMomZ)
 {
-    DENG2_ASSERT(mob);
+    DE_ASSERT(mob);
 
     if(missile)
     {
@@ -1046,7 +1046,7 @@ mobj_t *Mobj_LaunchMissileAtAngle(mobj_t *mob, mobj_t *missile, angle_t angle,
 mobj_t *Mobj_LaunchMissile2(mobj_t *mob, mobj_t *missile, coord_t const targetPos[],
     coord_t const sourcePos[], coord_t extraMomZ)
 {
-    DENG2_ASSERT(mob);
+    DE_ASSERT(mob);
     return Mobj_LaunchMissileAtAngle2(mob, missile, missile? missile->angle : mob->angle,
                                       targetPos, sourcePos, extraMomZ);
 }
@@ -1059,7 +1059,7 @@ mobj_t *Mobj_LaunchMissile(mobj_t *mob, mobj_t *missile, coord_t const targetPos
 
 void Mobj_InflictDamage(mobj_t *mob, mobj_t const *inflictor, int damage)
 {
-    DENG_ASSERT(mob);
+    DE_ASSERT(mob);
 
     // Do the damage.
     mob->health -= damage;

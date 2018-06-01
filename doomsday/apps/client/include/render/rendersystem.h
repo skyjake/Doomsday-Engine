@@ -143,7 +143,7 @@ public:
     static void consoleRegister();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif  // CLIENT_RENDERSYSTEM_H

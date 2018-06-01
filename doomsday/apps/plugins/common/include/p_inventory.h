@@ -47,7 +47,7 @@ typedef struct {
     patchid_t patchId;
 } invitem_t;
 
-DENG_EXTERN_C int didUseItem;
+DE_EXTERN_C int didUseItem;
 
 #ifdef __cplusplus
 extern "C" {

@@ -20,8 +20,8 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(NativePointerValue)
-, DENG2_OBSERVES(Deletable, Deletion)
+DE_PIMPL_NOREF(NativePointerValue)
+, DE_OBSERVES(Deletable, Deletion)
 {
     Object *object = nullptr;
     Record const *memberScope = nullptr;
@@ -40,8 +40,8 @@ DENG2_PIMPL_NOREF(NativePointerValue)
 
     void objectWasDeleted(Deletable *obj)
     {
-        DENG2_UNUSED(obj);
-        DENG2_ASSERT(object == obj);
+        DE_UNUSED(obj);
+        DE_ASSERT(object == obj);
         object = nullptr;
     }
 };

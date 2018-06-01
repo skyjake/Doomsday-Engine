@@ -31,13 +31,13 @@ static patchid_t pDefenseIcon[FRAME_COUNT];
 
 static void DefenseWidget_Draw(guidata_defense_t *dfns, Point2Raw const *offset)
 {
-    DENG2_ASSERT(dfns);
+    DE_ASSERT(dfns);
     dfns->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
 static void DefenseWidget_UpdateGeometry(guidata_defense_t *dfns)
 {
-    DENG2_ASSERT(dfns);
+    DE_ASSERT(dfns);
     dfns->updateGeometry();
 }
 

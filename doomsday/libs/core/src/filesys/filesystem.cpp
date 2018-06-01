@@ -41,7 +41,7 @@ namespace de {
 
 static FileIndex const emptyIndex; // never contains any files
 
-DENG2_PIMPL_NOREF(FileSystem)
+DE_PIMPL_NOREF(FileSystem)
 {
     std::mutex              busyMutex;
     int                     busyLevel = 0;
@@ -75,14 +75,14 @@ DENG2_PIMPL_NOREF(FileSystem)
     {
         root.reset();
 
-        DENG2_GUARD(typeIndex);
+        DE_GUARD(typeIndex);
         qDeleteAll(typeIndex.value);
         typeIndex.value.clear();
     }
 
     FileIndex &getTypeIndex(String const &typeName)
     {
-        DENG2_GUARD(typeIndex);
+        DE_GUARD(typeIndex);
         FileIndex *&idx = typeIndex.value[typeName];
         if (!idx)
         {
@@ -145,7 +145,7 @@ Folder &FileSystem::makeFolder(String const &path, FolderCreationBehaviors behav
         // Inherit parent's feeds?
         if (behavior & (InheritPrimaryFeed | InheritAllFeeds))
         {
-            DENG2_GUARD(parentFolder);
+            DE_GUARD(parentFolder);
             foreach (Feed *parentFeed, parentFolder.feeds())
             {
                 Feed *feed = parentFeed->newSubFeed(subFolder->name());
@@ -191,7 +191,7 @@ Folder &FileSystem::makeFolderWithFeed(String const &path, Feed *feed,
 
 File *FileSystem::interpret(File *sourceData)
 {
-    DENG2_ASSERT(sourceData != nullptr);
+    DE_ASSERT(sourceData != nullptr);
 
     LOG_AS("FS::interpret");
     try
@@ -283,10 +283,10 @@ void FileSystem::index(File &file)
 {
     d->index.maybeAdd(file);
 
-    //qDebug() << "[FS] Indexing" << file.path() << DENG2_TYPE_NAME(file);
+    //qDebug() << "[FS] Indexing" << file.path() << DE_TYPE_NAME(file);
 
     // Also make an entry in the type index.
-    d->getTypeIndex(DENG2_TYPE_NAME(file)).maybeAdd(file);
+    d->getTypeIndex(DE_TYPE_NAME(file)).maybeAdd(file);
 
     // Also offer to custom indices.
     foreach (FileIndex *user, d->userIndices)
@@ -298,7 +298,7 @@ void FileSystem::index(File &file)
 void FileSystem::deindex(File &file)
 {
     d->index.remove(file);
-    d->getTypeIndex(DENG2_TYPE_NAME(file)).remove(file);
+    d->getTypeIndex(DE_TYPE_NAME(file)).remove(file);
 
     // Also remove from any custom indices.
     foreach (FileIndex *user, d->userIndices)
@@ -417,8 +417,8 @@ void FileSystem::printIndex()
     LOG_DEBUG("Main FS index has %i entries") << d->index.size();
     d->index.print();
 
-    DENG2_GUARD_FOR(d->typeIndex, G);
-    DENG2_FOR_EACH_CONST(Impl::TypeIndex, i, d->typeIndex.value)
+    DE_GUARD_FOR(d->typeIndex, G);
+    DE_FOR_EACH_CONST(Impl::TypeIndex, i, d->typeIndex.value)
     {
         LOG_DEBUG("Index for type '%s' has %i entries") << i.key() << i.value()->size();
 

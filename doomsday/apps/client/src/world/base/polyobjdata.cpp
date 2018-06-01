@@ -61,7 +61,7 @@ void PolyobjData::addMover(ClPolyMover &mover)
     if(_mover)
     {
         Thinker_Map(_mover->thinker()).thinkers().remove(_mover->thinker());
-        DENG2_ASSERT(!_mover);
+        DE_ASSERT(!_mover);
     }
 
     _mover = &mover;

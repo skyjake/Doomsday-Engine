@@ -44,7 +44,7 @@ public:
     Style();
     virtual ~Style();
 
-    DENG2_CAST_METHODS()
+    DE_CAST_METHODS()
 
     /**
      * Loads a style from a resource pack.
@@ -96,7 +96,7 @@ public:
     static void setAppStyle(Style &appStyle);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

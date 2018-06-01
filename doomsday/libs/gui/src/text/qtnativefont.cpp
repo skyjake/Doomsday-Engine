@@ -24,7 +24,7 @@
 
 namespace de
 {
-    DENG2_PIMPL_NOREF(QtNativeFont)
+    DE_PIMPL_NOREF(QtNativeFont)
     {
         QFont font;
         QScopedPointer<QFontMetrics> metrics;

@@ -46,8 +46,8 @@ static int const DEFAULT_SKILL = 3; // Normal skill level (1-5)
 
 static GameProfile nullGameProfile;
 
-DENG2_PIMPL(GameProfiles)
-, DENG2_OBSERVES(Games, Addition)
+DE_PIMPL(GameProfiles)
+, DE_OBSERVES(Games, Addition)
 {
     Impl(Public *i) : Base(i) {}
 
@@ -212,7 +212,7 @@ Profiles::AbstractProfile *GameProfiles::profileFromInfoBlock(Info::BlockElement
 
 //-------------------------------------------------------------------------------------------------
 
-DENG2_PIMPL_NOREF(GameProfiles::Profile)
+DE_PIMPL_NOREF(GameProfiles::Profile)
 {
     String     gameId;
     String     customDataFile;

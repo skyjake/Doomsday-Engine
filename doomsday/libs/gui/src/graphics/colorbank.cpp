@@ -22,7 +22,7 @@
 
 namespace de {
 
-DENG2_PIMPL(ColorBank)
+DE_PIMPL(ColorBank)
 {
     struct ColorSource : public ISource
     {

@@ -61,7 +61,7 @@ signals:
     void buildMapRequested();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // GLOOM_EDITOR_H

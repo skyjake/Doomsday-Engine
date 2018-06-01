@@ -25,7 +25,7 @@ namespace de {
 
 const DotPath RuleBank::UNIT("unit");
 
-DENG2_PIMPL_NOREF(RuleBank)
+DE_PIMPL_NOREF(RuleBank)
 {
     const Rule *dpiRule = nullptr;
 

@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_TIMELINE_H
-#define LIBDENG2_TIMELINE_H
+#ifndef LIBCORE_TIMELINE_H
+#define LIBCORE_TIMELINE_H
 
 #include "../libcore.h"
 #include "../Time"
@@ -37,7 +37,7 @@ class Record;
  *
  * @ingroup script
  */
-class DENG2_PUBLIC Timeline
+class DE_PUBLIC Timeline
 {
 public:
     Timeline();
@@ -70,7 +70,7 @@ public:
     /**
      * Clock for executing a timeline.
      */
-    class DENG2_PUBLIC Clock
+    class DE_PUBLIC Clock
     {
     public:
         Clock(Timeline const &timeline, Record *context = nullptr);
@@ -102,14 +102,14 @@ public:
         bool isFinished() const;
 
     private:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_TIMELINE_H
+#endif // LIBCORE_TIMELINE_H
 

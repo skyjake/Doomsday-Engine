@@ -22,7 +22,7 @@
 #include "../libappfw.h"
 #include <de/Vector>
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
 #  include <de/PersistentGLWindow>
 #  define LIBAPPFW_BASEWINDOW_SUPER de::PersistentGLWindow
 #else
@@ -88,7 +88,7 @@ public:
      */
     virtual void drawWindowContent() = 0;
 
-#if defined (DENG_MOBILE)
+#if defined (DE_MOBILE)
     String configName(String const &key) const;
 #endif
 
@@ -108,7 +108,7 @@ protected:
     virtual bool handleFallbackEvent(Event const &event) = 0;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

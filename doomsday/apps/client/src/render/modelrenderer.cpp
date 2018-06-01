@@ -43,8 +43,8 @@ static int constexpr MAX_LIGHTS = 4;
 
 float weaponFixedFOV = 95.f;
 
-DENG2_PIMPL(ModelRenderer)
-, DENG2_OBSERVES(render::ModelLoader, NewProgram)
+DE_PIMPL(ModelRenderer)
+, DE_OBSERVES(render::ModelLoader, NewProgram)
 {
     render::ModelLoader loader;
 
@@ -422,14 +422,14 @@ void ModelRenderer::initBindings(Binder &binder, Record &module) // static
     {
         Record &anim = module.addSubrecord("StateAnimator");
         binder.init(anim)
-                << DENG2_FUNC_NOARG(StateAnimator_Thing,            "thing")
-                << DENG2_FUNC_NOARG(StateAnimator_PlayingSequences, "playingSequences")
-                << DENG2_FUNC_DEFS (StateAnimator_StartSequence,    "startSequence",
+                << DE_FUNC_NOARG(StateAnimator_Thing,            "thing")
+                << DE_FUNC_NOARG(StateAnimator_PlayingSequences, "playingSequences")
+                << DE_FUNC_DEFS (StateAnimator_StartSequence,    "startSequence",
                                     "sequence" << "priority" << "looping" << "node",
                                     Function::Defaults({ std::make_pair("priority", new NumberValue(0)),
                                                          std::make_pair("looping",  new NumberValue(0)),
                                                          std::make_pair("node",     new TextValue) }))
-                << DENG2_FUNC      (StateAnimator_StartTimeline,    "startTimeline", "name")
-                << DENG2_FUNC      (StateAnimator_StopTimeline,     "stopTimeline", "name");
+                << DE_FUNC      (StateAnimator_StartTimeline,    "startTimeline", "name")
+                << DE_FUNC      (StateAnimator_StopTimeline,     "stopTimeline", "name");
     }
 }

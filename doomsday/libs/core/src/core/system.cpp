@@ -20,7 +20,7 @@
 
 namespace de {
 
-DENG2_PIMPL(System)
+DE_PIMPL(System)
 {
     Flags behavior;
 

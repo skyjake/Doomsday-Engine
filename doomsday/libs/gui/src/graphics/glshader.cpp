@@ -25,7 +25,7 @@
 
 namespace de {
 
-DENG2_PIMPL(GLShader)
+DE_PIMPL(GLShader)
 {
     GLuint name = 0;
     Type   type = Vertex;
@@ -116,7 +116,7 @@ Block GLShader::prefixToSource(Block const &source, Block const &prefix)
 
 void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
 {
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     static const Block DEFAULT_VERSION("#version 330 core\n");
     // With non-ES OpenGL, ignore the precision attributes.
     static const Block PREFIX("#ifndef GL_ES\n"
@@ -125,12 +125,12 @@ void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
                               "#  define highp\n"
                               "#endif\n");
 #else
-    int const glesVer = DENG_OPENGL_ES;
+    int const glesVer = DE_OPENGL_ES;
     static Block const DEFAULT_VERSION(glesVer == 30? "#version 300 es\n" : "#version 100\n");
     static Block const PREFIX("\n");
 #endif
 
-    DENG2_ASSERT(shaderType == Vertex || shaderType == Geometry || shaderType == Fragment);
+    DE_ASSERT(shaderType == Vertex || shaderType == Geometry || shaderType == Fragment);
 
     Block preamble;
     Block source = shaderSource;
@@ -152,44 +152,44 @@ void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
 //    Block predefs;
     if (shaderType == Vertex)
     {
-        preamble += "#define DENG_VERTEX_SHADER\n";
+        preamble += "#define DE_VERTEX_SHADER\n";
 
-#if defined (DENG_OPENGL) || (defined (DENG_OPENGL_ES) && DENG_OPENGL_ES == 30)
-        preamble += "#define DENG_VAR out\n"
-                    "#define DENG_ATTRIB in\n";
+#if defined (DE_OPENGL) || (defined (DE_OPENGL_ES) && DE_OPENGL_ES == 30)
+        preamble += "#define DE_VAR out\n"
+                    "#define DE_ATTRIB in\n";
 #else
-        preamble += "#define DENG_VAR varying\n"
-                    "#define DENG_ATTRIB attribute\n";
+        preamble += "#define DE_VAR varying\n"
+                    "#define DE_ATTRIB attribute\n";
 #endif
     }
     else if (shaderType == Geometry)
     {
-        predefs = QByteArray("#define DENG_GEOMETRY_SHADER\n");
+        predefs = QByteArray("#define DE_GEOMETRY_SHADER\n");
     }
     else
     {
-        preamble += "#define DENG_FRAGMENT_SHADER\n";
+        preamble += "#define DE_FRAGMENT_SHADER\n";
 
-#if defined (DENG_OPENGL_ES)
+#if defined (DE_OPENGL_ES)
         // Precision qualifiers required in fragment shaders.
         preamble += "precision highp float;\n"
                     "precision highp int;\n";
 #endif
 
-#if defined (DENG_OPENGL) || (defined (DENG_OPENGL_ES) && DENG_OPENGL_ES == 30)
-        preamble += "#define DENG_VAR in\n"
+#if defined (DE_OPENGL) || (defined (DE_OPENGL_ES) && DE_OPENGL_ES == 30)
+        preamble += "#define DE_VAR in\n"
                    "layout(location = 0) out vec4 out_FragColor;\n";
 #else
-        preamble += "#define DENG_VAR varying\n"
+        preamble += "#define DE_VAR varying\n"
                     "#define out_FragColor gl_FragColor\n";
 #endif
     }
-    preamble += String::format("#define DENG_MAX_BATCH_UNIFORMS %d\n", MAX_BATCH_UNIFORMS).toLatin1();
+    preamble += String::format("#define DE_MAX_BATCH_UNIFORMS %d\n", MAX_BATCH_UNIFORMS).toLatin1();
 
-#if defined (DENG_OPENGL) || (defined (DENG_OPENGL_ES) && DENG_OPENGL_ES == 30)
-    preamble += "#define DENG_LAYOUT_LOC(x) layout(location = x)\n";
+#if defined (DE_OPENGL) || (defined (DE_OPENGL_ES) && DE_OPENGL_ES == 30)
+    preamble += "#define DE_LAYOUT_LOC(x) layout(location = x)\n";
 #else
-    preamble += "#define DENG_LAYOUT_LOC(x)\n";
+    preamble += "#define DE_LAYOUT_LOC(x)\n";
 #endif
 
     preamble += "#line 1\n";
@@ -221,7 +221,7 @@ void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
         Block log{Block::Size(logSize)};
         LIBGUI_GL.glGetShaderInfoLog(d->name, logSize, &count, reinterpret_cast<GLchar *>(log.data()));
 
-#if defined (DENG2_DEBUG)
+#if defined (DE_DEBUG)
         {
             QTextStream ins(src);
             int lineNum = 1;
@@ -246,7 +246,7 @@ void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
 //{
 //    d->release();
 //    compile(d->type, d->compiledSource);
-//    DENG2_ASSERT(isReady());
+//    DE_ASSERT(isReady());
 //}
 
 } // namespace de

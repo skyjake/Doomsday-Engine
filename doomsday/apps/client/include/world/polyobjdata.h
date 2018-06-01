@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_WORLD_POLYOBJDATA_H
-#define DENG_WORLD_POLYOBJDATA_H
+#ifndef DE_WORLD_POLYOBJDATA_H
+#define DE_WORLD_POLYOBJDATA_H
 
 #include <QList>
 #include <QVector>
@@ -73,4 +73,4 @@ private:
 #endif
 };
 
-#endif  // DENG_WORLD_POLYOBJDATA_H
+#endif  // DE_WORLD_POLYOBJDATA_H

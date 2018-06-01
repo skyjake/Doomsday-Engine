@@ -25,10 +25,10 @@
 namespace de {
 namespace ui {
 
-DENG2_PIMPL(FilteredData)
-, DENG2_OBSERVES(Data, Addition)
-, DENG2_OBSERVES(Data, Removal)
-, DENG2_OBSERVES(Data, OrderChange)
+DE_PIMPL(FilteredData)
+, DE_OBSERVES(Data, Addition)
+, DE_OBSERVES(Data, Removal)
+, DE_OBSERVES(Data, OrderChange)
 {
     typedef QHash<Item const *, Pos> PosMapping;
 
@@ -56,7 +56,7 @@ DENG2_PIMPL(FilteredData)
             items << &item;
             reverseMapping.insert(&item, pos);
 
-            DENG2_FOR_PUBLIC_AUDIENCE2(Addition, i) i->dataItemAdded(pos, item);
+            DE_FOR_PUBLIC_AUDIENCE2(Addition, i) i->dataItemAdded(pos, item);
         }
     }
 
@@ -84,14 +84,14 @@ DENG2_PIMPL(FilteredData)
                 }
             }
 
-            DENG2_FOR_PUBLIC_AUDIENCE2(Removal, i) i->dataItemRemoved(oldPos, item);
+            DE_FOR_PUBLIC_AUDIENCE2(Removal, i) i->dataItemRemoved(oldPos, item);
         }
     }
 
     void dataItemOrderChanged()
     {
         remap();
-        DENG2_FOR_PUBLIC_AUDIENCE2(OrderChange, i) i->dataItemOrderChanged();
+        DE_FOR_PUBLIC_AUDIENCE2(OrderChange, i) i->dataItemOrderChanged();
     }
 
     void applyFilter(FilterFunc filterFunc)
@@ -167,14 +167,14 @@ void FilteredData::refilter()
     {
         if (!d->reverseMapping.contains(iter.key()))
         {
-            DENG2_FOR_AUDIENCE2(Removal, i) i->dataItemRemoved(iter.value(), *const_cast<Item *>(iter.key()));
+            DE_FOR_AUDIENCE2(Removal, i) i->dataItemRemoved(iter.value(), *const_cast<Item *>(iter.key()));
         }
     }
     for (auto iter = d->reverseMapping.constBegin(); iter != d->reverseMapping.constEnd(); ++iter)
     {
         if (!oldMapping.contains(iter.key()))
         {
-            DENG2_FOR_AUDIENCE2(Addition, i) i->dataItemAdded(iter.value(), *iter.key());
+            DE_FOR_AUDIENCE2(Addition, i) i->dataItemAdded(iter.value(), *iter.key());
         }
     }
 }
@@ -196,13 +196,13 @@ Item *FilteredData::take(Pos)
 
 Item &FilteredData::at(Pos pos)
 {
-    DENG2_ASSERT(pos < size());
+    DE_ASSERT(pos < size());
     return *const_cast<Item *>(d->items.at(pos));
 }
 
 Item const &FilteredData::at(Pos pos) const
 {
-    DENG2_ASSERT(pos < size());
+    DE_ASSERT(pos < size());
     return *d->items.at(pos);
 }
 
@@ -241,7 +241,7 @@ void FilteredData::sort(LessThanFunc lessThan)
     });
     d->updateReverseMapping();
 
-    DENG2_FOR_AUDIENCE2(OrderChange, i) i->dataItemOrderChanged();
+    DE_FOR_AUDIENCE2(OrderChange, i) i->dataItemOrderChanged();
 }
 
 void FilteredData::stableSort(LessThanFunc lessThan)
@@ -251,7 +251,7 @@ void FilteredData::stableSort(LessThanFunc lessThan)
     });
     d->updateReverseMapping();
 
-    DENG2_FOR_AUDIENCE2(OrderChange, i) i->dataItemOrderChanged();
+    DE_FOR_AUDIENCE2(OrderChange, i) i->dataItemOrderChanged();
 }
 
 dsize FilteredData::size() const

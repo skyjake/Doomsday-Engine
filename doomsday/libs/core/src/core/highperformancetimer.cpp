@@ -24,7 +24,7 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(HighPerformanceTimer)
+DE_PIMPL_NOREF(HighPerformanceTimer)
 {
     QDateTime origin;
     QElapsedTimer startedAt;

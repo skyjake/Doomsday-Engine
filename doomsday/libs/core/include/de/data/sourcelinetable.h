@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_SOURCELINETABLE_H
-#define LIBDENG2_SOURCELINETABLE_H
+#ifndef LIBCORE_SOURCELINETABLE_H
+#define LIBCORE_SOURCELINETABLE_H
 
 #include "../String"
 
@@ -59,10 +59,10 @@ public:
     PathAndLine sourcePathAndLineNumber(LineId sourceId) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_SOURCELINETABLE_H
+#endif // LIBCORE_SOURCELINETABLE_H
 

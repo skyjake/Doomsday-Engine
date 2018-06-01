@@ -21,8 +21,8 @@
  * Network Subsystem.
  */
 
-#ifndef LIBDENG_NETWORK_H
-#define LIBDENG_NETWORK_H
+#ifndef DE_NETWORK_H
+#define DE_NETWORK_H
 
 #include <stdio.h>
 #include "dd_share.h"
@@ -193,4 +193,4 @@ dd_bool Net_IsLocalPlayer(int pNum);
 
 de::String Net_UserAgent();
 
-#endif /* LIBDENG_NETWORK_H */
+#endif /* DE_NETWORK_H */

@@ -136,7 +136,7 @@ public:  // --------------------------------------------------------------------
      */
     de::dint checkRangeFromViewRelPoints(de::Vec2d const &from, de::Vec2d const &to);
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     /**
      * A debugging aid: checks if clipnode links are valid.
      */
@@ -144,7 +144,7 @@ public:  // --------------------------------------------------------------------
 #endif
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif  // CLIENT_RENDER_ANGLECLIPPER

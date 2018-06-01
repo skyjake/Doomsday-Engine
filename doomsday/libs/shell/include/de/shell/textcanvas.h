@@ -207,7 +207,7 @@ public:
     virtual void setCursorPosition(Coord const &pos);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(TextCanvas::Char::Attribs)

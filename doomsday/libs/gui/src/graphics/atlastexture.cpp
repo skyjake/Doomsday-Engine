@@ -58,7 +58,7 @@ void AtlasTexture::aboutToUse() const
 
 void AtlasTexture::commitFull(Image const &fullImage) const
 {
-    DENG2_ASSERT(fullImage.size() == totalSize());
+    DE_ASSERT(fullImage.size() == totalSize());
 
     // While the Atlas is const, the texture isn't...
     const_cast<AtlasTexture *>(this)->setImage(fullImage);

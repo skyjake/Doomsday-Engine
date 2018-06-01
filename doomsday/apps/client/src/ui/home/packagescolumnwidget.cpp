@@ -40,8 +40,8 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(PackagesColumnWidget)
-, DENG2_OBSERVES(DoomsdayApp, GameChange)
+DE_GUI_PIMPL(PackagesColumnWidget)
+, DE_OBSERVES(DoomsdayApp, GameChange)
 {
     PackagesWidget *packages;
     LabelWidget *countLabel;

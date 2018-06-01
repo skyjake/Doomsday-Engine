@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef DENG_CLIENT_VIDEOSETTINGSDIALOG_H
-#define DENG_CLIENT_VIDEOSETTINGSDIALOG_H
+#ifndef DE_CLIENT_VIDEOSETTINGSDIALOG_H
+#define DE_CLIENT_VIDEOSETTINGSDIALOG_H
 
 #include <de/DialogWidget>
 
@@ -33,7 +33,7 @@ public:
 
 protected slots:
     void resetToDefaults();
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
     void changeMode(uint selected);
     void changeColorDepth(uint selected);
     void changeRefreshRate(uint selected);
@@ -43,7 +43,7 @@ protected slots:
 #endif
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_VIDEOSETTINGSDIALOG_H
+#endif // DE_CLIENT_VIDEOSETTINGSDIALOG_H

@@ -41,7 +41,7 @@
 using namespace de;
 using namespace de::ui;
 
-DENG_GUI_PIMPL(RendererSettingsDialog)
+DE_GUI_PIMPL(RendererSettingsDialog)
 {
     ProfilePickerWidget *appear;
     CVarSliderWidget *fov;

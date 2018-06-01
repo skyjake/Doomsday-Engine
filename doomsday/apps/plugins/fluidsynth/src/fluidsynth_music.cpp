@@ -104,7 +104,7 @@ public:
     {
         Sys_Lock(_mutex);
 
-        DENG_ASSERT(_writePos < _end);
+        DE_ASSERT(_writePos < _end);
 
         // No need to split?
         const int remainder = _end - _writePos;
@@ -182,8 +182,8 @@ static float musicVolume = 1.0f;
  */
 static int synthWorkThread(void* parm)
 {
-    DENG_UNUSED(parm);
-    DENG_ASSERT(blockBuffer != 0);
+    DE_UNUSED(parm);
+    DE_ASSERT(blockBuffer != 0);
 
     byte samples[BLOCK_SIZE];
 
@@ -222,8 +222,8 @@ static int synthWorkThread(void* parm)
  */
 static int streamOutSamples(sfxbuffer_t* buf, void* data, unsigned int size)
 {
-    DENG_UNUSED(buf);
-    DENG_ASSERT(buf == sfxBuf);
+    DE_UNUSED(buf);
+    DE_ASSERT(buf == sfxBuf);
 
     if (blockBuffer->availableForReading() >= int(size))
     {
@@ -240,8 +240,8 @@ static int streamOutSamples(sfxbuffer_t* buf, void* data, unsigned int size)
 
 static void startWorker()
 {
-    DENG_ASSERT(DMFluid_Driver() == NULL);
-    DENG_ASSERT(worker == NULL);
+    DE_ASSERT(DMFluid_Driver() == NULL);
+    DE_ASSERT(worker == NULL);
 
     workerShouldStop = false;
     worker = Sys_StartThread(synthWorkThread, nullptr, nullptr);
@@ -254,8 +254,8 @@ static void startPlayer()
 {
     if (DMFluid_Driver()) return;
 
-    DENG_ASSERT(!worker);
-    DENG_ASSERT(sfxBuf == NULL);
+    DE_ASSERT(!worker);
+    DE_ASSERT(sfxBuf == NULL);
 
     // Create a sound buffer for playing the music.
     sfxBuf = DMFluid_Sfx()->Create(SFXBF_STREAM, 16, 44100);
@@ -283,7 +283,7 @@ static void startPlayer()
 
 static void stopWorker()
 {
-    DENG_ASSERT(DMFluid_Driver() == NULL);
+    DE_ASSERT(DMFluid_Driver() == NULL);
 
     if (worker)
     {
@@ -307,7 +307,7 @@ static void stopPlayer()
         stopWorker();
 
         // Destroy the sfx buffer.
-        DENG_ASSERT(sfxBuf != 0);
+        DE_ASSERT(sfxBuf != 0);
         DSFLUIDSYNTH_TRACE("stopPlayer: Destroying SFX buffer " << sfxBuf);
 
         DMFluid_Sfx()->Destroy(sfxBuf);
@@ -483,7 +483,7 @@ int DM_Music_PlayFile(const char *filename, int looped)
     // If we are playing something, make sure it's stopped.
     stopPlayer();
 
-    DENG_ASSERT(fsPlayer == NULL);
+    DE_ASSERT(fsPlayer == NULL);
 
     // Create a new player.
     fsPlayer = new_fluid_player(DMFluid_Synth());

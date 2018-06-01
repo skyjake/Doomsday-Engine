@@ -53,11 +53,11 @@ BEGIN
     "#endif\r\n"
     "\r\n"
     "VS_VERSION_INFO VERSIONINFO\r\n"
-    "FILEVERSION    LIBDENG2_VERSION_NUMBER\r\n"
-    "PRODUCTVERSION LIBDENG2_VERSION_NUMBER\r\n"
+    "FILEVERSION    LIBCORE_VERSION_NUMBER\r\n"
+    "PRODUCTVERSION LIBCORE_VERSION_NUMBER\r\n"
     "# if defined(_DEBUG)\r\n"
     "FILEFLAGSMASK  VS_FF_DEBUG | VS_FF_PRERELEASE\r\n"
-    "# elif defined(LIBDENG2_RELEASE_FULL)\r\n"
+    "# elif defined(LIBCORE_RELEASE_FULL)\r\n"
     "FILEFLAGSMASK  VS_FF_SPECIALBUILD\r\n"
     "# else\r\n"
     "FILEFLAGSMASK  0\r\n"
@@ -72,18 +72,18 @@ BEGIN
     "        BEGIN\r\n"
     "            VALUE ""CompanyName"",     ""\0""\r\n"
     "#if defined(UNICODE)\r\n"
-    "            VALUE ""FileDescription"", LIBDENG2_DESC_WSTR ""\0""\r\n"
+    "            VALUE ""FileDescription"", LIBCORE_DESC_WSTR ""\0""\r\n"
     "#else\r\n"
-    "            VALUE ""FileDescription"", LIBDENG2_DESC ""\0""\r\n"
+    "            VALUE ""FileDescription"", LIBCORE_DESC ""\0""\r\n"
     "#endif\r\n"
-    "            VALUE ""FileVersion"",     LIBDENG2_VERSION_TEXT ""\0""\r\n"
-    "            VALUE ""InternalName"",    LIBDENG2_NICENAME ""\0""\r\n"
-    "            VALUE ""LegalCopyright"",  ""Copyright (c) "" LIBDENG2_COPYRIGHT ""\0""\r\n"
-    "            VALUE ""OriginalFilename"", LIBDENG2_FILENAME ""\0""\r\n"
-    "            VALUE ""ProductName"",     LIBDENG2_NICENAME ""\0""\r\n"
-    "            VALUE ""ProductVersion"",  LIBDENG2_VERSION_TEXT ""\0""\r\n"
-    "#if !defined(_DEBUG) && !defined(LIBDENG2_RELEASE_FULL) && defined(LIBDENG2_RELEASE_NAME)\r\n"
-    "            VALUE ""SpecialBuild"",   LIBDENG2_RELEASE_NAME ""\0""\r\n"
+    "            VALUE ""FileVersion"",     LIBCORE_VERSION_TEXT ""\0""\r\n"
+    "            VALUE ""InternalName"",    LIBCORE_NICENAME ""\0""\r\n"
+    "            VALUE ""LegalCopyright"",  ""Copyright (c) "" LIBCORE_COPYRIGHT ""\0""\r\n"
+    "            VALUE ""OriginalFilename"", LIBCORE_FILENAME ""\0""\r\n"
+    "            VALUE ""ProductName"",     LIBCORE_NICENAME ""\0""\r\n"
+    "            VALUE ""ProductVersion"",  LIBCORE_VERSION_TEXT ""\0""\r\n"
+    "#if !defined(_DEBUG) && !defined(LIBCORE_RELEASE_FULL) && defined(LIBCORE_RELEASE_NAME)\r\n"
+    "            VALUE ""SpecialBuild"",   LIBCORE_RELEASE_NAME ""\0""\r\n"
     "#endif\r\n"
     "        END\r\n"
     "    END\r\n"
@@ -100,11 +100,11 @@ END
 
 #ifndef APSTUDIO_INVOKED
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION     ${DENG_LIBCORE_VERSION_WINDOWS}
-PRODUCTVERSION  ${DENG_LIBCORE_VERSION_WINDOWS}
+FILEVERSION     ${DE_LIBCORE_VERSION_WINDOWS}
+PRODUCTVERSION  ${DE_LIBCORE_VERSION_WINDOWS}
 # if defined(_DEBUG)
 FILEFLAGSMASK   VS_FF_DEBUG | VS_FF_PRERELEASE
-# elif !defined(LIBDENG2_RELEASE_FULL)
+# elif !defined(LIBCORE_RELEASE_FULL)
 FILEFLAGSMASK   VS_FF_SPECIALBUILD
 # else
 FILEFLAGSMASK   0
@@ -123,14 +123,14 @@ BEGIN
 #else
             VALUE "FileDescription", "Doomsday 2 Core Library" "\0"
 #endif
-            VALUE "FileVersion",    "${DENG_LIBCORE_VERSION}.${DENG_BUILD}" "\0"
+            VALUE "FileVersion",    "${DE_LIBCORE_VERSION}.${DE_BUILD}" "\0"
             VALUE "InternalName",   "libcore" "\0"
-            VALUE "LegalCopyright", "${DENG_TEAM_COPYRIGHT}" "\0"
+            VALUE "LegalCopyright", "${DE_TEAM_COPYRIGHT}" "\0"
             VALUE "OriginalFilename", "deng_core.dll" "\0"
             VALUE "ProductName",    "libcore" "\0"
-            VALUE "ProductVersion", "${DENG_LIBCORE_VERSION}.${DENG_BUILD}" "\0"
-#if !defined(_DEBUG) && !defined(LIBDENG2_RELEASE_FULL) && defined(LIBDENG2_RELEASE_NAME)
-            VALUE "SpecialBuild",   LIBDENG2_RELEASE_NAME "\0"
+            VALUE "ProductVersion", "${DE_LIBCORE_VERSION}.${DE_BUILD}" "\0"
+#if !defined(_DEBUG) && !defined(LIBCORE_RELEASE_FULL) && defined(LIBCORE_RELEASE_NAME)
+            VALUE "SpecialBuild",   LIBCORE_RELEASE_NAME "\0"
 #endif
         END
     END

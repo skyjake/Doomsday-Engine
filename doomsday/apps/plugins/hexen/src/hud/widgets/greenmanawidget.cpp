@@ -53,7 +53,7 @@ void GreenManaWidget_Draw(guidata_greenmana_t *mana, Point2Raw const *offset)
 {
 #define TRACKING                ( 1 )
 
-    DENG2_ASSERT(mana);
+    DE_ASSERT(mana);
     dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
 
     if(mana->_value == 1994) return;
@@ -89,7 +89,7 @@ void SBarGreenManaWidget_Draw(guidata_greenmana_t *mana, Point2Raw const *offset
 
     static Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
 
-    DENG2_ASSERT(mana);
+    DE_ASSERT(mana);
     dint const activeHud     = ST_ActiveHud(mana->player());
     dfloat const yOffset     = ST_HEIGHT * (1 - ST_StatusBarShown(mana->player()));
     dfloat const textOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
@@ -127,7 +127,7 @@ void GreenManaWidget_UpdateGeometry(guidata_greenmana_t *mana)
 {
 #define TRACKING                ( 1 )
 
-    DENG2_ASSERT(mana);
+    DE_ASSERT(mana);
     Rect_SetWidthHeight(&mana->geometry(), 0, 0);
 
     if(mana->_value == 1994) return;
@@ -149,7 +149,7 @@ void GreenManaWidget_UpdateGeometry(guidata_greenmana_t *mana)
 
 void SBarGreenManaWidget_UpdateGeometry(guidata_greenmana_t *mana)
 {
-    DENG2_ASSERT(mana);
+    DE_ASSERT(mana);
     Rect_SetWidthHeight(&mana->geometry(), 0, 0);
 
     if(mana->_value == 1994) return;

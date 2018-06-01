@@ -142,7 +142,7 @@ typedef struct classinfo_s{
     int         failUseSound; // Sound played when a use fails.
 } classinfo_t;
 
-DENG_EXTERN_C classinfo_t classInfo[NUM_PLAYER_CLASSES];
+DE_EXTERN_C classinfo_t classInfo[NUM_PLAYER_CLASSES];
 
 typedef enum {
     SM_NOTHINGS = -1,

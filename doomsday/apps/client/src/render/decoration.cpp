@@ -27,7 +27,7 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(Decoration)
+DE_PIMPL_NOREF(Decoration)
 {
     MaterialAnimator::Decoration const *source = nullptr;
     Surface *surface = nullptr;
@@ -52,7 +52,7 @@ String Decoration::description() const
                   .arg(source().decor().material().manifest().composeUri().asText())
                   .arg(String("[0x%1]").arg(de::dintptr(&surface()), 0, 16));
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     desc.prepend(String(_E(b) "Decoration " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
 #endif
     return desc;
@@ -60,7 +60,7 @@ String Decoration::description() const
 
 MaterialAnimator::Decoration const &Decoration::source() const
 {
-    DENG2_ASSERT(d->source);
+    DE_ASSERT(d->source);
     return *d->source;
 }
 

@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_ESCAPEPARSER_H
-#define LIBDENG2_ESCAPEPARSER_H
+#ifndef LIBCORE_ESCAPEPARSER_H
+#define LIBCORE_ESCAPEPARSER_H
 
 #include "../libcore.h"
 #include "../String"
@@ -28,9 +28,9 @@ namespace de {
 /**
  * Escape sequence parser for text strings. @ingroup data
  *
- * @see DENG2_ESC() macro
+ * @see DE_ESC() macro
  */
-class DENG2_PUBLIC EscapeParser
+class DE_PUBLIC EscapeParser
 {
 public:
     /**
@@ -38,7 +38,7 @@ public:
      *
      * @param range  Range in the original text.
      */
-    DENG2_DEFINE_AUDIENCE2(PlainText, void handlePlainText(Rangei const &range))
+    DE_DEFINE_AUDIENCE2(PlainText, void handlePlainText(Rangei const &range))
 
     /**
      * Called during parsing when an escape sequence has been parsed.
@@ -46,7 +46,7 @@ public:
      *
      * @param range  Range in the original text.
      */
-    DENG2_DEFINE_AUDIENCE2(EscapeSequence, void handleEscapeSequence(Rangei const &range))
+    DE_DEFINE_AUDIENCE2(EscapeSequence, void handleEscapeSequence(Rangei const &range))
 
 public:
     EscapeParser();
@@ -64,9 +64,9 @@ public:
     String plainText() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG2_ESCAPEPARSER_H
+#endif // LIBCORE_ESCAPEPARSER_H

@@ -124,8 +124,8 @@ void NetCl_UpdateGameState(reader_s *msg)
     {
         /// @todo Breaks session management logic; rules cannot change once the session has
         /// begun and setting the current map and/or entrance is illogical at this point.
-        DENG2_ASSERT(!Str_Compare(gsEpisodeId, gfw_Session()->episodeId().toLatin1().constData()));
-        DENG2_ASSERT(*reinterpret_cast<de::Uri *>(gsMapUri) == gfw_Session()->mapUri());
+        DE_ASSERT(!Str_Compare(gsEpisodeId, gfw_Session()->episodeId().toLatin1().constData()));
+        DE_ASSERT(*reinterpret_cast<de::Uri *>(gsMapUri) == gfw_Session()->mapUri());
 
         gfw_Session()->applyNewRules(gsRules);
     }
@@ -208,7 +208,7 @@ void NetCl_PlayerSpawnPosition(reader_s *msg)
             x, y, z, angle);
 
     mobj_t *mo = p->plr->mo;
-    DENG2_ASSERT(mo != 0);
+    DE_ASSERT(mo != 0);
 
     P_TryMoveXYZ(mo, x, y, z);
     mo->angle = angle;
@@ -801,7 +801,7 @@ void NetCl_SendPlayerInfo()
 void NetCl_SaveGame(reader_s *msg)
 {
 #if __JHEXEN__
-    DENG2_UNUSED(msg);
+    DE_UNUSED(msg);
 #endif
 
     if(Get(DD_PLAYBACK)) return;
@@ -817,7 +817,7 @@ void NetCl_SaveGame(reader_s *msg)
 void NetCl_LoadGame(reader_s *msg)
 {
 #if __JHEXEN__
-    DENG2_UNUSED(msg);
+    DE_UNUSED(msg);
 #endif
 
     if(!IS_CLIENT || Get(DD_PLAYBACK)) return;
@@ -999,6 +999,6 @@ void NetCl_UpdateTotalCounts(reader_s *msg)
     App_Log(DE2_DEV_NET_MSG, "NetCl_UpdateTotalCounts: kills=%i, items=%i, secrets=%i",
             totalKills, totalItems, totalSecret);
 #else
-    DENG2_UNUSED(msg);
+    DE_UNUSED(msg);
 #endif
 }

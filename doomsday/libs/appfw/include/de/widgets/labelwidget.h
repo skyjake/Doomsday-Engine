@@ -292,7 +292,7 @@ protected:
     virtual bool updateModelViewProjection(Mat4f &mvp);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de

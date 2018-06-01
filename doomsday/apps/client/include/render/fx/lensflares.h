@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_FX_LENSFLARES_H
-#define DENG_CLIENT_FX_LENSFLARES_H
+#ifndef DE_CLIENT_FX_LENSFLARES_H
+#define DE_CLIENT_FX_LENSFLARES_H
 
 #include "render/consoleeffect.h"
 #include "render/ilightsource.h"
@@ -44,9 +44,9 @@ public:
     static void consoleRegister();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace fx
 
-#endif // DENG_CLIENT_FX_LENSFLARES_H
+#endif // DE_CLIENT_FX_LENSFLARES_H

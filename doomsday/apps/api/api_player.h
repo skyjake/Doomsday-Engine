@@ -85,7 +85,7 @@ typedef impulsetype_t controltype_t;
 #define DDPF_UNDEFINED_WEAPON   0x4000 ///< Weapon of the player is undefined (not sent yet).
 ///@}
 
-DENG_API_TYPEDEF(Player)
+DE_API_TYPEDEF(Player)
 {
     de_api_t api;
 
@@ -159,9 +159,9 @@ DENG_API_TYPEDEF(Player)
      */
     void (*Impulse)(int playerNum, int impulseId);
 }
-DENG_API_T(Player);
+DE_API_T(Player);
 
-#ifndef DENG_NO_API_MACROS_PLAYER
+#ifndef DE_NO_API_MACROS_PLAYER
 #define Net_GetPlayerName           _api_Player.GetPlayerName
 #define Net_GetPlayerID             _api_Player.GetPlayerID
 #define Net_PlayerSmoother          _api_Player.GetSmoother
@@ -174,7 +174,7 @@ DENG_API_T(Player);
 #endif
 
 #ifdef __DOOMSDAY__
-DENG_USING_API(Player);
+DE_USING_API(Player);
 #endif
 
 #endif // DOOMSDAY_API_PLAYER_H

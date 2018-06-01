@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_ADDRESS_H
-#define LIBDENG2_ADDRESS_H
+#ifndef LIBCORE_ADDRESS_H
+#define LIBCORE_ADDRESS_H
 
 #include "../libcore.h"
 #include "../Log"
@@ -35,7 +35,7 @@ class String;
  *
  * @ingroup net
  */
-class DENG2_PUBLIC Address : public LogEntry::Arg::Base
+class DE_PUBLIC Address : public LogEntry::Arg::Base
 {
 public:
     Address();
@@ -109,11 +109,11 @@ public:
     LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::StringArgument; }
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-DENG2_PUBLIC QTextStream &operator << (QTextStream &os, Address const &address);
+DE_PUBLIC QTextStream &operator << (QTextStream &os, Address const &address);
 
 } // namespace de
 
-#endif // LIBDENG2_ADDRESS_H
+#endif // LIBCORE_ADDRESS_H

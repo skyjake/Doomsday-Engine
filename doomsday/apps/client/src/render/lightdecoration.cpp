@@ -46,7 +46,7 @@ LightDecoration::LightDecoration(MaterialAnimator::Decoration const &source, Vec
 String LightDecoration::description() const
 {
     String desc;
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     desc.prepend(String(_E(b) "LightDecoration " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
 #endif
     return Decoration::description() + "\n" + desc;

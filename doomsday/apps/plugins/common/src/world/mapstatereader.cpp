@@ -57,14 +57,14 @@ namespace internal
         return mapVersion >= 4? 1 : 0;
 #else
         return 0;
-        DENG2_UNUSED(mapVersion);
+        DE_UNUSED(mapVersion);
 #endif
     }
 }
 
 using namespace de;
 
-DENG2_PIMPL(MapStateReader)
+DE_PIMPL(MapStateReader)
 {
     reader_s *reader;
     int saveVersion;
@@ -118,7 +118,7 @@ DENG2_PIMPL(MapStateReader)
             throw ReadError("MapStateReader", "Corrupt save game, segment #" + String::number(segId) + " failed alignment check");
         }
 #else
-        DENG2_UNUSED(segId);
+        DE_UNUSED(segId);
 #endif
     }
 
@@ -340,13 +340,13 @@ DENG2_PIMPL(MapStateReader)
         beginSegment(ASEG_POLYOBJS);
 
         int const writtenPolyobjCount = Reader_ReadInt32(reader);
-        DENG2_ASSERT(writtenPolyobjCount == numpolyobjs);
+        DE_ASSERT(writtenPolyobjCount == numpolyobjs);
         for (int i = 0; i < writtenPolyobjCount; ++i)
         {
             /*Skip unused version byte*/ if (mapVersion >= 3) Reader_ReadByte(reader);
 
             Polyobj *po = Polyobj_ByTag(Reader_ReadInt32(reader));
-            DENG2_ASSERT(po != 0);
+            DE_ASSERT(po != 0);
             po->read(thisPublic);
         }
 
@@ -604,9 +604,9 @@ DENG2_PIMPL(MapStateReader)
                 break; // End of the list.
 
             ThinkerClassInfo *thInfo = SV_ThinkerInfoForClass(thinkerclass_t(tClass));
-            DENG2_ASSERT(thInfo != 0);
+            DE_ASSERT(thInfo != 0);
             // Not for us? (it shouldn't be here anyway!).
-            DENG2_ASSERT(!((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT));
+            DE_ASSERT(!((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT));
 
             // Mobjs use a special engine-side allocator.
             thinker_t *th = 0;
@@ -701,7 +701,7 @@ DENG2_PIMPL(MapStateReader)
         }
 #endif
 #if __JDOOM__
-        DENG2_ASSERT(theBossBrain != 0);
+        DE_ASSERT(theBossBrain != 0);
         theBossBrain->read(thisPublic);
 #endif
     }
@@ -718,11 +718,11 @@ DENG2_PIMPL(MapStateReader)
         for (int i = 0; i < numTargets; ++i)
         {
             xsector_t *xsec = P_ToXSector((Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader)));
-            DENG2_ASSERT(xsec != 0);
+            DE_ASSERT(xsec != 0);
 
             if (!xsec)
             {
-                DENG2_UNUSED(Reader_ReadInt16(reader));
+                DE_UNUSED(Reader_ReadInt16(reader));
                 continue;
             }
 
@@ -823,19 +823,19 @@ void MapStateReader::read(String const &mapUriStr)
 
 mobj_t *MapStateReader::mobj(ThingArchive::SerialId serialId, void *address) const
 {
-    DENG2_ASSERT(d->thingArchive != 0);
+    DE_ASSERT(d->thingArchive != 0);
     return d->thingArchive->mobj(serialId, address);
 }
 
 world_Material *MapStateReader::material(materialarchive_serialid_t serialId, int group) const
 {
-    DENG2_ASSERT(d->materialArchive != 0);
+    DE_ASSERT(d->materialArchive != 0);
     return reinterpret_cast<world_Material *>(d->materialArchive->find(serialId, group));
 }
 
 Side *MapStateReader::side(int sideIndex) const
 {
-    DENG2_ASSERT(d->sideArchive != 0);
+    DE_ASSERT(d->sideArchive != 0);
     return reinterpret_cast<Side *>(d->sideArchive->at(sideIndex));
 }
 
@@ -851,7 +851,7 @@ thinker_t *MapStateReader::thinkerForPrivateId(Id::Type id) const
 
 player_t *MapStateReader::player(int serialId) const
 {
-    DENG2_ASSERT(serialId > 0 && serialId <= MAXPLAYERS);
+    DE_ASSERT(serialId > 0 && serialId <= MAXPLAYERS);
     return players + saveToRealPlayerNum[serialId - 1];
 }
 
@@ -862,12 +862,12 @@ int MapStateReader::mapVersion()
 
 reader_s *MapStateReader::reader()
 {
-    DENG2_ASSERT(d->reader != 0);
+    DE_ASSERT(d->reader != 0);
     return d->reader;
 }
 
 void MapStateReader::addMobjToThingArchive(mobj_t *mobj, ThingArchive::SerialId serialId)
 {
-    DENG2_ASSERT(d->thingArchive != 0);
+    DE_ASSERT(d->thingArchive != 0);
     d->thingArchive->insert(mobj, serialId);
 }

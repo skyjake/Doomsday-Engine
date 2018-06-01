@@ -21,8 +21,8 @@
  * Unix Initialization.
  */
 
-#ifndef LIBDENG_UINIT_H
-#define LIBDENG_UINIT_H
+#ifndef DE_UINIT_H
+#define DE_UINIT_H
 
 #include "dd_pinit.h"
 
@@ -37,4 +37,4 @@ void DD_Shutdown(void);
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_UINIT_H */
+#endif /* DE_UINIT_H */

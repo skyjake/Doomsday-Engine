@@ -18,8 +18,8 @@
  */
 
 #ifdef __CLIENT__
-#ifndef DENG_CLIENT_WORLD_CONTACT_H
-#define DENG_CLIENT_WORLD_CONTACT_H
+#ifndef DE_CLIENT_WORLD_CONTACT_H
+#define DE_CLIENT_WORLD_CONTACT_H
 
 #include <functional>
 #include <de/aabox.h>
@@ -57,7 +57,7 @@ struct Contact
 
     template <class ObjectType>
     ObjectType &objectAs() const {
-        DENG2_ASSERT(_object);
+        DE_ASSERT(_object);
         return *static_cast<ObjectType *>(_object);
     }
 
@@ -157,5 +157,5 @@ de::LoopResult R_ForAllSubspaceLumContacts(ConvexSubspace &subspace, std::functi
 
 }  // namespace world
 
-#endif  // DENG_CLIENT_WORLD_CONTACT_H
+#endif  // DE_CLIENT_WORLD_CONTACT_H
 #endif  // __CLIENT__

@@ -505,7 +505,7 @@ void P_PlayerThinkHeadTurning(int pnum, timespan_t ticLength)
     pcontrolstate_t *state = &controlStates[pnum];
     float pos;
 
-    DENG_UNUSED(ticLength);
+    DE_UNUSED(ticLength);
 
     // Returned pos is in range -1...+1.
     P_GetControlState(pnum, CTL_HEAD_YAW, &pos, NULL);

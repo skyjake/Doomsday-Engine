@@ -24,7 +24,7 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(ClientRootWidget)
+DE_PIMPL_NOREF(ClientRootWidget)
 {
     PackageIconBank packageIconBank;
 };

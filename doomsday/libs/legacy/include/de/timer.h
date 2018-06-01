@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_SYSTEM_TIMER_H
-#define LIBDENG_SYSTEM_TIMER_H
+#ifndef DE_SYSTEM_TIMER_H
+#define DE_SYSTEM_TIMER_H
 
 #include "types.h"
 
@@ -44,47 +44,47 @@ void Timer_Shutdown(void);
  *
  * @return Game ticks.
  */
-DENG_PUBLIC int Timer_Ticks(void);
+DE_PUBLIC int Timer_Ticks(void);
 
 /**
  * Current time measured in game ticks.
  *
  * @return Floating-point game ticks.
  */
-DENG_PUBLIC double Timer_Ticksf(void);
+DE_PUBLIC double Timer_Ticksf(void);
 
 /**
  * Current time in seconds. Affected by the ticksPerSecond modifier.
  *
  * @return Seconds.
  */
-DENG_PUBLIC double Timer_Seconds(void);
+DE_PUBLIC double Timer_Seconds(void);
 
 /**
  * Elapsed time since initialization. Not affected by the ticksPerSecond modifier.
  *
  * @return Milliseconds.
  */
-DENG_PUBLIC uint Timer_RealMilliseconds(void);
+DE_PUBLIC uint Timer_RealMilliseconds(void);
 
 /**
  * Elapsed time since initialization. Not affected by the ticksPerSecond modifier.
  *
  * @return Seconds.
  */
-DENG_PUBLIC double Timer_RealSeconds(void);
+DE_PUBLIC double Timer_RealSeconds(void);
 
 /**
  * Set the number of game ticks per second.
  *
  * @param num  Number of ticks per second (default: 35).
  */
-DENG_PUBLIC void Timer_SetTicksPerSecond(float num);
+DE_PUBLIC void Timer_SetTicksPerSecond(float num);
 
 /**
  * Returns the current number of ticks per second (default: 35).
  */
-DENG_PUBLIC float Timer_TicksPerSecond(void);
+DE_PUBLIC float Timer_TicksPerSecond(void);
 
 /// @}
 
@@ -92,4 +92,4 @@ DENG_PUBLIC float Timer_TicksPerSecond(void);
 } // extern "C"
 #endif
 
-#endif // LIBDENG_SYSTEM_TIMER_H
+#endif // DE_SYSTEM_TIMER_H

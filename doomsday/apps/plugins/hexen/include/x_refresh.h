@@ -30,7 +30,7 @@
 
 #include "doomsday.h"
 
-DENG_EXTERN_C float quitDarkenOpacity;
+DE_EXTERN_C float quitDarkenOpacity;
 
 #ifdef __cplusplus
 extern "C" {

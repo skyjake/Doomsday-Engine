@@ -38,11 +38,11 @@
 
 using namespace de;
 
-DENG2_PIMPL(TestWindow),
-DENG2_OBSERVES(GLWindow, Init),
-DENG2_OBSERVES(GLWindow, Resize),
-DENG2_OBSERVES(Clock, TimeChange),
-DENG2_OBSERVES(Bank, Load)
+DE_PIMPL(TestWindow),
+DE_OBSERVES(GLWindow, Init),
+DE_OBSERVES(GLWindow, Resize),
+DE_OBSERVES(Clock, TimeChange),
+DE_OBSERVES(Bank, Load)
 {
     enum Mode
     {
@@ -300,7 +300,7 @@ DENG2_OBSERVES(Bank, Load)
         LOG_RES_NOTE("Bank item \"%s\" loaded") << path;
         if (path == "rtt.cube")
         {
-            DENG2_ASSERT_IN_MAIN_THREAD();
+            DE_ASSERT_IN_MAIN_THREAD();
 
             self().glActivate();
             testpic.setImage(imageBank.image(path));

@@ -52,7 +52,7 @@ public:
     de::String nthSuffix() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace menu

@@ -3,7 +3,7 @@ if (WIN32 AND NOT TARGET DirectX)
         PATHS ${DIRECTX_DIR}
         HINTS ENV DXSDK_DIR
         # TODO: look in the registry?
-        PATH_SUFFIXES Lib/${DENG_ARCH} ${DENG_ARCH}
+        PATH_SUFFIXES Lib/${DE_ARCH} ${DE_ARCH}
     )
     mark_as_advanced (DIRECTX_GUID_LIBRARY)
     if (NOT DIRECTX_GUID_LIBRARY)
