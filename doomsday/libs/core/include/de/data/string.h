@@ -20,12 +20,13 @@
 #ifndef LIBCORE_STRING_H
 #define LIBCORE_STRING_H
 
-#include <QString>
-#include <QList>
-
 #include "../libcore.h"
 #include "../Block"
 #include "../Range"
+#include "../List"
+#include "../RegExp"
+
+#include <c_plus/string.h>
 
 namespace de {
 
@@ -34,11 +35,11 @@ namespace de {
  * other convenience methods.
  *
  * The default codec when converting strings from C strings is UTF-8 (e.g.,
- * constructor that takes a <code>char const *</code> as the only argument).
+ * constructor that takes a <code>const char *</code> as the only argument).
  *
  * @ingroup types
  */
-class DE_PUBLIC String : public QString
+class DE_PUBLIC String
 {
 public:
     /// Error related to String operations (note: shadows de::Error). @ingroup errors
@@ -73,90 +74,132 @@ public:
         virtual ddouble asNumber() const = 0;
     };
 
-    typedef QList<IPatternArg const *> PatternArgs;
-
-    typedef dint size_type;
-
+    typedef List<const IPatternArg *> PatternArgs;
     enum CaseSensitivity { CaseInsensitive, CaseSensitive };
 
 public:
+    using size_type = dsize;
     static size_type const npos;
+    using Char2 = char[2];
 
 public:
     String();
-    String(String const &other);
+    String(const String &other);
     String(String &&moved);
-    String(QString const &text);
-    String(char const *nullTerminatedCStr);
-    String(wchar_t const *nullTerminatedWideStr);
-    String(char const *cStr, size_type length);
-    String(char const *cStr, dsize length);
-    String(QChar const *nullTerminatedStr);
-    String(QChar const *str, size_type length);
-    String(size_type length, QChar ch);
-    String(QString const &str, size_type index, size_type length);
-    String(const_iterator start, const_iterator end);
-    String(iterator start, iterator end);
+    String(const iString *other);
+    String(const std::string &text);
+    String(const char *nullTerminatedCStr);
+    String(const wchar_t *nullTerminatedWideStr);
+    String(const char *cStr, int length);
+    String(const char *cStr, dsize length);
+//    String(const QChar *nullTerminatedStr);
+//    String(const QChar *str, size_type length);
+    String(dsize length, char ch);
+    String(dsize length, Char ch);
+    String(const char *start, const char *end);
+    String(const std::string &str, dsize index, dsize length);
 
-    inline String &operator = (String const &other) {
-        QString::operator = (other);
+    template <typename Iterator>
+    String(Iterator start, Iterator end)
+    {
+        for (Iterator i = start; i != end; ++i)
+        {
+            push_back(*i);
+        }
+    }
+
+    ~String();
+
+    inline String &operator=(const String &other)
+    {
+        set_String(&_str, &other._str);
         return *this;
     }
 
-    inline String &operator = (String &&moved) {
-        QString::operator = (moved);
+    inline String &operator=(String &&moved)
+    {
+        deinit_String(&_str);
+        _str = moved._str;
+        zap(moved._str);
         return *this;
     }
 
     inline explicit operator bool() const { return size() > 0; }
 
-    /// Conversion to a character pointer.
-    operator QChar const *() const {
-        return data();
-    }
+    inline dsize size() const { return size_String(&_str); }
 
     /// Determines whether the string is empty.
-    bool empty() const { return size() == 0; }
+    inline bool empty() const { return size() == 0; }
+
+    inline bool isEmpty() const { return empty(); }
+
+    const char *c_str() const { return cstr_String(&_str); }
+
+    /// Conversion to a character pointer.
+    operator const char *() const { return c_str(); }
+
+    operator std::string() const { return toStdString(); }
+
+    std::string toStdString() const { return {constBegin_String(&_str), constEnd_String(&_str)}; }
+
+    std::wstring toWideString() const;
+
+    void clear();
 
     /// Returns the first character of the string.
-    QChar first() const;
+    Char first() const;
 
     /// Returns the last character of the string.
-    QChar last() const;
+    Char last() const;
 
-    bool beginsWith(QString const &s, CaseSensitivity cs = CaseSensitive) const {
-        return startsWith(s, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
+    bool beginsWith(const String &s, CaseSensitivity cs = CaseSensitive) const
+    {
+        return startsWithSc_String(&_str, s, cs == CaseSensitive? &iCaseSensitive : &iCaseInsensitive);
     }
-    bool beginsWith(QChar c, CaseSensitivity cs = CaseSensitive) const {
-        return startsWith(c, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
+    //    bool beginsWith(Qconst String &s, CaseSensitivity cs = CaseSensitive) const {
+    //        return startsWith(s, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
+    //    }
+    bool beginsWith(char ch, CaseSensitivity cs = CaseSensitive) const
+    {
+        return beginsWith(Char2{ch, 0}, cs);
     }
-    bool beginsWith(QLatin1String ls, CaseSensitivity cs = CaseSensitive) const {
-        return startsWith(ls, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
-    }
-    bool beginsWith(char const *ls, CaseSensitivity cs = CaseSensitive) const {
-        return beginsWith(QLatin1String(ls), cs);
-    }
-
-    bool endsWith(QString const &s, CaseSensitivity cs = CaseSensitive) const {
-        return QString::endsWith(s, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
-    }
-    bool endsWith(QChar c, CaseSensitivity cs = CaseSensitive) const {
-        return QString::endsWith(c, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
-    }
-    bool endsWith(QLatin1String ls, CaseSensitivity cs = CaseSensitive) const {
-        return QString::endsWith(ls, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
-    }
-    bool endsWith(char const *ls, CaseSensitivity cs = CaseSensitive) const {
-        return endsWith(QLatin1String(ls), cs);
+    //    bool beginsWith(QLatin1String ls, CaseSensitivity cs = CaseSensitive) const {
+    //        return startsWith(ls, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
+    //    }
+    bool beginsWith(const char *cstr, CaseSensitivity cs = CaseSensitive) const
+    {
+        return startsWithSc_String(&_str, cstr, cs == CaseSensitive? &iCaseSensitive : &iCaseInsensitive);
     }
 
-    String substr(int position, int n = -1) const {
-        return mid(position, n);
+//    bool endsWith(Qconst String &s, CaseSensitivity cs = CaseSensitive) const {
+//        return QString::endsWith(s, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
+//    }
+    bool endsWith(char ch, CaseSensitivity cs = CaseSensitive) const
+    {
+        return endsWith(Char2{ch, 0}, cs);
+        //        return QString::endsWith(c, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
+    }
+//    bool endsWith(QLatin1String ls, CaseSensitivity cs = CaseSensitive) const {
+//        return QString::endsWith(ls, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
+//    }
+    bool endsWith(const char *cstr, CaseSensitivity cs = CaseSensitive) const
+    {
+        return endsWithSc_String(
+            &_str, cstr, cs == CaseSensitive ? &iCaseSensitive : &iCaseInsensitive);
     }
 
-    String substr(Rangei const &range) const {
-        return mid(range.start, range.size());
-    }
+    inline String mid(int position, int n = -1) const { return substr(position, n); }
+    String        substr(size_type pos, size_type n = iInvalidPos) const;
+    String        substr(int position, int n = -1) const;
+    String        substr(const Rangei &range) const { return mid(range.start, range.size()); }
+
+    String        operator+(const char *) const;
+    inline String operator+(const String &other) const { return *this + (const char *) other; }
+
+    String &operator+=(char ch);
+    String &operator+=(Char ch);
+    String &operator+=(const char *);
+    String &operator+=(const String &);
 
     /**
      * Does a path concatenation on this string and the argument. Note that if
@@ -166,9 +209,9 @@ public:
      * @param path     Path to concatenate.
      * @param dirChar  Directory/folder separator character.
      */
-    String concatenatePath(String const &path, QChar dirChar = '/') const;
+    String concatenatePath(const String &path, Char dirChar = '/') const;
 
-    String concatenateRelativePath(String const &path, QChar dirChar = '/') const;
+    String concatenateRelativePath(const String &path, Char dirChar = '/') const;
 
     /**
      * Does a path concatenation on this string and the argument. Note that if
@@ -177,7 +220,7 @@ public:
      *
      * @param path  Path to concatenate.
      */
-    String operator / (String const &path) const;
+    String operator/(const String &path) const;
 
     /**
      * Applies pattern formatting using the string as a format string.
@@ -187,7 +230,7 @@ public:
      * @return String with placeholders replaced using the arguments.
      * @see patternFormat()
      */
-    String operator % (PatternArgs args) const;
+    String operator%(const PatternArgs &args) const;
 
     /**
      * Does a record member concatenation on a variable name. Record members
@@ -195,7 +238,7 @@ public:
      *
      * @param member  Identifier to append to this string.
      */
-    String concatenateMember(String const &member) const;
+    String concatenateMember(const String &member) const;
 
     /// Removes whitespace from the beginning and end of the string.
     /// @return Copy of the string without whitespace.
@@ -213,7 +256,7 @@ public:
     String normalizeWhitespace() const;
 
     /// Returns a copy of the string with matches removed.
-    String removed(QRegularExpression const &expr) const;
+    String removed(const RegExp &expr) const;
 
     /// Returns a lower-case version of the string.
     String lower() const;
@@ -225,7 +268,7 @@ public:
     String upperFirstChar() const;
 
     /// Extracts the base name from the string (includes extension).
-    String fileName(QChar dirChar = '/') const;
+    String fileName(Char dirChar = '/') const;
 
     /// Extracts the base name from the string (does not include extension).
     String fileNameWithoutExtension() const;
@@ -243,12 +286,29 @@ public:
     String fileNameExtension() const;
 
     /// Extracts the path of the string.
-    String fileNamePath(QChar dirChar = '/') const;
+    String fileNamePath(Char dirChar = '/') const;
 
     /// Extracts everything but the extension from string.
-    String fileNameAndPathWithoutExtension(QChar dirChar = '/') const;
+    String fileNameAndPathWithoutExtension(char dirChar = '/') const;
 
-    bool containsWord(String const &word) const;
+    int indexOf(char ch) const { size_t pos = indexOf_String(&_str, ch); return pos == iInvalidPos ? -1 : pos; }
+    int indexOf(Char ch) const { size_t pos = indexOf_String(&_str, ch); return pos == iInvalidPos ? -1 : pos; }
+    int indexOf(const char *cstr) const { size_t pos = indexOfCStr_String(&_str, cstr); return pos == iInvalidPos ? -1 : pos; }
+    int lastIndexOf(char ch) const { size_t pos = lastIndexOf_String(&_str, ch); return pos == iInvalidPos ? -1 : pos; }
+    int lastIndexOf(Char ch) const { size_t pos = lastIndexOf_String(&_str, ch); return pos == iInvalidPos ? -1 : pos; }
+    int lastIndexOf(const char *cstr) const { size_t pos = lastIndexOfCStr_String(&_str, cstr); return pos == iInvalidPos ? -1 : pos;}
+
+    bool containsWord(const String &word) const;
+
+    inline bool operator==(const char *cstr) const { return compare(cstr) == 0; }
+    inline bool operator!=(const char *cstr) const { return compare(cstr) != 0; }
+    inline bool operator< (const char *cstr) const { return compare(cstr) <  0; }
+    inline bool operator> (const char *cstr) const { return compare(cstr) >  0; }
+    inline bool operator<=(const char *cstr) const { return compare(cstr) <= 0; }
+    inline bool operator>=(const char *cstr) const { return compare(cstr) >= 0; }
+
+    inline int compare(const char *cstr) const { return cmp_String(&_str, cstr); }
+    inline int compare(const String &s) const { return cmpString_String(&_str, &s); }
 
     /**
      * Compare two strings (case sensitive).
@@ -256,7 +316,7 @@ public:
      * @return 0, if @a a and @a b are identical. Positive, if @a a > @a b.
      *         Negative, if @a a < @a b.
      */
-    dint compareWithCase(String const &str) const;
+    dint compareWithCase(const String &str) const;
 
     /**
      * Compare two strings (case insensitive).
@@ -264,7 +324,7 @@ public:
      * @return 0, if @a a and @a b are identical. Positive, if @a a > @a b.
      *         Negative, if @a a < @a b.
      */
-    dint compareWithoutCase(String const &str) const;
+    dint compareWithoutCase(const String &str) const;
 
     /**
      * Compare two strings (case insensitive), but only up to @a n characters.
@@ -273,7 +333,7 @@ public:
      * @return 0, if @a a and @a b are identical. Positive, if @a a > @a b.
      *         Negative, if @a a < @a b.
      */
-    dint compareWithoutCase(String const &str, int n) const;
+    dint compareWithoutCase(const String &str, int n) const;
 
     /**
      * Compares two strings to see how many characters they have in common
@@ -284,7 +344,7 @@ public:
      *
      * @return  Number of characters the two strings have in common from the left.
      */
-    int commonPrefixLength(String const &str, CaseSensitivity sensitivity = CaseSensitive) const;
+    int commonPrefixLength(const String &str, CaseSensitivity sensitivity = CaseSensitive) const;
 
     /**
      * Converts the string to UTF-8 and returns it as a byte block.
@@ -304,7 +364,7 @@ public:
         AllowOnlyWhitespace = 0x0,
         AllowSuffix = 0x1
     };
-    Q_DECLARE_FLAGS(IntConversionFlags, IntConversionFlag)
+//    Q_DECLARE_FLAGS(IntConversionFlags, IntConversionFlag)
 
     /**
      * Converts the string to an integer. The default behavior is identical to
@@ -326,7 +386,7 @@ public:
      * @return Integer parsed from the string (@c *ok set to true). @c 0 if
      * the conversion fails (@c *ok set to @c false).
      */
-    dint toInt(bool *ok = 0, int base = 10, IntConversionFlags flags = AllowOnlyWhitespace) const;
+    dint toInt(bool *ok = nullptr, int base = 10, duint flags = AllowOnlyWhitespace) const;
 
     /**
      * Converts the string to a 32-bit unsigned integer. The behavior is the same as
@@ -340,7 +400,7 @@ public:
      * @return 32-bit unsigned integer parsed from the string (@c *ok set to true).
      * @c 0 if the conversion fails (@c *ok set to @c false).
      */
-    duint32 toUInt32(bool *ok = 0, int base = 0) const;
+    duint32 toUInt32(bool *ok = nullptr, int base = 0) const;
 
     /**
      * Adds a prefix to each line in the text.
@@ -349,33 +409,74 @@ public:
      *
      * @return Prefixed text.
      */
-    String addLinePrefix(String const &prefix) const;
+    String addLinePrefix(const String &prefix) const;
 
     /**
      * Prefixes double quotes and backslashes with a backslash.
      */
     String escaped() const;
 
-    String truncateWithEllipsis(int maxLength) const;
+    String truncateWithEllipsis(dsize maxLength) const;
 
     Block toPercentEncoding() const;
+
+public:
+    // Iterators:
+
+    struct const_iterator
+    {
+        iStringConstIterator iter;
+
+        operator Char() const { return iter.value; }
+        Char operator*() const { return iter.value; }
+        void operator++() { next_StringConstIterator(&iter); }
+        void operator++(int) { next_StringConstIterator(&iter); }
+        bool operator==(const const_iterator &other) const {
+            return iter.str == other.str && iter.pos == other.pos;
+        }
+        bool operator!=(const const_iterator &other) const { return !(*this == other); }
+    };
+
+    struct const_reverse_iterator
+    {
+        iStringReverseConstIterator iter;
+
+        operator Char() const { return iter.value; }
+        Char operator*() const { return iter.value; }
+        void operator++() { next_StringReverseConstIterator(&iter); }
+        void operator++(int) { next_StringReverseConstIterator(&iter); }
+        bool operator==(const const_reverse_iterator &other) const {
+            return iter.str == other.str && iter.pos == other.pos;
+        }
+        bool operator!=(const const_reverse_iterator &other) const { return !(*this == other); }
+    };
+
+    const_iterator begin() const;
+    const_iterator cbegin() const { return begin(); }
+    const_reverse_iterator rbegin() const;
+    const_reverse_iterator crbegin() const { return rbegin(); }
+
+    const_iterator end() const;
+    const_iterator cend() const { return end(); }
+    const_reverse_iterator rend() const;
+    const_reverse_iterator crend() const { return rend(); }
 
 public:
     /**
      * Builds a String out of an array of bytes that contains a UTF-8 string.
      */
-    static String fromUtf8(IByteArray const &byteArray);
+    static String fromUtf8(const IByteArray &byteArray);
 
-    static String fromUtf8(QByteArray const &byteArray);
+//    static String fromUtf8(const QByteArray &byteArray);
 
-    static String fromUtf8(Block const &block);
+    static String fromUtf8(const Block &block);
 
-    static String fromUtf8(char const *nullTerminatedCStr);
+    static String fromUtf8(const char *nullTerminatedCStr);
 
     /**
      * Builds a String out of an array of bytes that contains a Latin1 string.
      */
-    static String fromLatin1(IByteArray const &byteArray);
+    static String fromLatin1(const IByteArray &byteArray);
 
     /**
      * Builds a String out of an array of bytes using the IBM PC character set
@@ -385,11 +486,11 @@ public:
      *
      * @return Converted string.
      */
-    static String fromCP437(IByteArray const &byteArray);
+    static String fromCP437(const IByteArray &byteArray);
 
-    static String fromPercentEncoding(Block const &percentEncoded);
+    static String fromPercentEncoding(const Block &percentEncoded);
 
-    static dint compareWithCase(QChar const *a, QChar const *b, dsize count);
+//    static dint compareWithCase(const QChar *a, const QChar *b, dsize count);
 
     /**
      * Checks if two strings are the same (case sensitive), up to @a count characters.
@@ -405,7 +506,7 @@ public:
      * @return @c true, if the strings are equal (excluding the part that is longer
      * than @a count).
      */
-    static bool equals(QChar const *a, QChar const *b, dsize count);
+//    static bool equals(const QChar *a, const QChar *b, dsize count);
 
     /**
      * Advances the iterator until a nonspace character is encountered.
@@ -413,20 +514,24 @@ public:
      * @param i  Iterator to advance.
      * @param end  End of the string. Will not advance past this.
      */
-    static void skipSpace(String::const_iterator &i, String::const_iterator const &end);
+    static void skipSpace(const_iterator &i, const const_iterator &end);
 
     /**
-     * Formats a string using standard printf() formatting. Uses UTF-8 encoding.
+     * Formats a string using standard printf() formatting.
      *
      * @param format  Format string.
      *
-     * @return Formatted output..
+     * @return Formatted output.
      */
-    static String format(String format, ...);
+    static String format(const char *format, ...);
 
     /**
      * Formats data according to formatting instructions. Outputs a
      * string containing the formatted data.
+     *
+     * Note that the behavior is different than the standard C printf() formatting.
+     * For example, "%b" will format the number argument as boolean "True" or "False".
+     * Use String::format() for normal printf() formatting.
      *
      * @param formatIter  Will be moved past the formatting instructions.
      *                    After the call, will remain past the end of
@@ -436,36 +541,47 @@ public:
      *
      * @return  Formatted argument as a string.
      */
-    static String patternFormat(String::const_iterator &formatIter,
-                                String::const_iterator const &formatEnd,
-                                IPatternArg const &arg);
+    static String patternFormat(const_iterator &formatIter,
+                                const const_iterator &formatEnd,
+                                const IPatternArg &arg);
 
-    static void advanceFormat(String::const_iterator &i,
-                              String::const_iterator const &end);
+    static void advanceFormat(const_iterator &i,
+                              const const_iterator &end);
 
-    static String join(QList<String> const &stringList, String const &sep = {});
+    static String join(const List<String> &stringList, const String &sep = {});
+
+private:
+    iString _str;
 };
+
+inline String operator+(Char ch, const String &s) {
+    return String(1, ch) + s;
+}
+
+inline String operator+(const char *cstr, const String &s) {
+    return String(cstr) + s;
+}
+
+using StringList = List<String>;
 
 /**
  * Support routine for determining the length of a null-terminated QChar*
  * string. Later versions have a QString constructor that needs no length
  * when constructing a string from QChar*.
  */
-size_t qchar_strlen(QChar const *str);
+//size_t qchar_strlen(const QChar *str);
 
-typedef QList<String> StringList;
+//inline StringList toStringList(const QStringList &qstr) {
+//    return compose<StringList>(qstr.begin(), qstr.end());
+//}
 
-inline StringList toStringList(const QStringList &qstr) {
-    return compose<StringList>(qstr.begin(), qstr.end());
+inline String operator / (const char *cstr, const String &str) {
+    return String(cstr) / str;
 }
 
-inline String operator / (char const *utf8CStr, String const &str) {
-    return String(utf8CStr) / str;
-}
-
-inline String operator / (QString const &qs, String const &str) {
-    return String(qs) / str;
-}
+//inline String operator / (Qconst String &qs, const String &str) {
+//    return String(qs) / str;
+//}
 
 } // namespace de
 

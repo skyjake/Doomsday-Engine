@@ -1,7 +1,6 @@
-/*
- * The Doomsday Engine Project -- libcore
+/** @file regexp.h  Perl-compatible regular expressions.
  *
- * Copyright © 2004-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -17,28 +16,35 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_LOGTEXTSTYLE_H
-#define LIBCORE_LOGTEXTSTYLE_H
+#ifndef LIBCORE_REGEXP_H
+#define LIBCORE_REGEXP_H
 
-#include "de/libcore.h"
-
-/**
- * @file logtextstyle.h
- * @internal Predefined text styles for log message text.
- */
+#include "../String"
+#include <c_plus/regexp.h>
 
 namespace de {
 
-extern const char *TEXT_STYLE_NORMAL;
-extern const char *TEXT_STYLE_MESSAGE;
-extern const char *TEXT_STYLE_MAJOR_MESSAGE;
-extern const char *TEXT_STYLE_MINOR_MESSAGE;
-extern const char *TEXT_STYLE_SECTION;
-extern const char *TEXT_STYLE_MINOR_SECTION;
-extern const char *TEXT_STYLE_MAJOR_SECTION;
-extern const char *TEXT_STYLE_LOG_TIME;
-extern const char *TEXT_MARK_INDENT;
+class RegExpMatch
+{
+public:
+    RegExpMatch();
+
+private:
+    iRegExpMatch _match;
+};
+
+/**
+ * Perl-compatible regular expression.
+ */
+class RegExp
+{
+public:
+    RegExp(const String &expression = {}, String::CaseSensitivity cs = String::CaseSensitive);
+
+private:
+    iRegExp *_d;
+};
 
 } // namespace de
 
-#endif // LIBCORE_LOGTEXTSTYLE_H
+#endif // LIBCORE_REGEXP_H

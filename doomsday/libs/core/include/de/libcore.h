@@ -86,45 +86,6 @@
 #  define DE_64BIT
 #endif
 
-#ifdef DE_USE_QT
-#  include <QtCore/qglobal.h>
-#  include <QScopedPointer>
-#  include <QDebug>
-#  include <QString>
-
-// Qt versioning helper. Qt 4.8 is the oldest we support.
-#  if (QT_VERSION < QT_VERSION_CHECK(4, 8, 0))
-#    error "Unsupported version of Qt"
-#  endif
-#  define DE_QT_4_6_OR_NEWER
-#  define DE_QT_4_7_OR_NEWER
-#  define DE_QT_4_8_OR_NEWER
-#  if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
-#    define DE_QT_5_0_OR_NEWER
-#  endif
-#  if (QT_VERSION >= QT_VERSION_CHECK(5, 1, 0))
-#    define DE_QT_5_1_OR_NEWER
-#  endif
-#  if (QT_VERSION >= QT_VERSION_CHECK(5, 2, 0))
-#    define DE_QT_5_2_OR_NEWER
-#  endif
-#  if (QT_VERSION >= QT_VERSION_CHECK(5, 3, 0))
-#    define DE_QT_5_3_OR_NEWER
-#  endif
-#  if (QT_VERSION >= QT_VERSION_CHECK(5, 4, 0))
-#    define DE_QT_5_4_OR_NEWER
-#  endif
-#  if (QT_VERSION >= QT_VERSION_CHECK(5, 5, 0))
-#    define DE_QT_5_5_OR_NEWER
-#  endif
-#  if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
-#    define DE_QT_5_6_OR_NEWER
-#  endif
-#  if (QT_VERSION >= QT_VERSION_CHECK(5, 7, 0))
-#    define DE_QT_5_7_OR_NEWER
-#  endif
-#endif
-
 #ifndef _MSC_VER
 #  include <stdint.h> // Not MSVC so use C99 standard header
 #endif
@@ -179,11 +140,7 @@
 #ifndef NDEBUG
 #  define DE_DEBUG
    DE_EXTERN_C DE_PUBLIC void LogBuffer_Flush(void);
-#  ifdef DE_USE_QT
-#    define DE_ASSERT(x) {if (!(x)) {LogBuffer_Flush(); Q_ASSERT(x);}}
-#  else
-#    define DE_ASSERT(x) {if (!(x)) {LogBuffer_Flush(); assert(x);}}
-#  endif
+#  define DE_ASSERT(x) {if (!(x)) {LogBuffer_Flush(); assert(x);}}
 #  define DE_DEBUG_ONLY(x) x
 #else
 #  define DE_NO_DEBUG
@@ -193,28 +150,27 @@
 
 #define DE_ASSERT_FAIL(msgCStr)  DE_ASSERT(msgCStr == nullptr)
 
-#ifdef DE_USE_QT
-#  ifdef UNIX
-#    include <execinfo.h>
+#ifdef UNIX
+#  include <execinfo.h>
 /**
  * @macro DE_PRINT_BACKTRACE
  * Debug utility for dumping the current backtrace using qDebug.
  */
-#    define DE_PRINT_BACKTRACE() { \
+#  define DE_PRINT_BACKTRACE() { \
         void *callstack[128]; \
         int i, frames = backtrace(callstack, 128); \
         char** strs = backtrace_symbols(callstack, frames); \
-        for (i = 0; i < frames; ++i) qDebug("%s", strs[i]); \
+        for (i = 0; i < frames; ++i) printf(stderr, "%s", strs[i]); \
         free(strs); }
-#    define DE_BACKTRACE(n, out) { \
+#  define DE_BACKTRACE(n, outStr) { \
         void *callstack[n]; \
         int i, frames = backtrace(callstack, n); \
         char** strs = backtrace_symbols(callstack, frames); \
         out = ""; \
-        for (i = 0; i < frames; ++i) { out.append(strs[i]); out.append('\n'); } \
+        for (i = 0; i < frames; ++i) { outStr.append(strs[i]); outStr.append('\n'); } \
         free(strs); }
 #  else
-#    define DENG2_PRINT_BACKTRACE() 
+#    define DE_PRINT_BACKTRACE() 
 #  endif
 #endif
 
@@ -374,6 +330,15 @@
 namespace de {
 
 /**
+ * Formats a string using the standard C printf() syntax.
+ *
+ * @param format  Format string.
+ *
+ * @return Formatted string.
+ */
+DE_PUBLIC std::string stringf(const char *format, ...);
+
+/**
  * @defgroup errors Exceptions
  *
  * These are exceptions thrown by libcore when a fatal error occurs.
@@ -385,13 +350,13 @@ namespace de {
 class DE_PUBLIC Error : public std::runtime_error
 {
 public:
-    Error(QString const &where, QString const &message);
+    Error(const std::string &where, const std::string &message);
 
-    QString name() const;
-    virtual QString asText() const;
+    std::string name() const;
+    virtual std::string asText() const;
 
 protected:
-    void setName(QString const &name);
+    void setName(const std::string &name);
 
 private:
     std::string _name;
@@ -406,9 +371,9 @@ private:
 #define DE_SUB_ERROR(Parent, Name) \
     class Name : public Parent { \
     public: \
-        Name(QString const &message) \
+        Name(const std::string &message) \
             : Parent("-", message) { Parent::setName(#Name); } \
-        Name(QString const &where, QString const &message) \
+        Name(const std::string &where, const std::string &message) \
             : Parent(where, message) { Parent::setName(#Name); } \
         virtual void raise() const { throw *this; } \
     } /**< @note One must put a semicolon after the macro invocation. */
@@ -470,14 +435,14 @@ template <typename X_, typename T_>
 inline X_ &expectedAs(T_ *ptr) {
     if (auto *t = maybeAs<X_>(ptr)) return *t;
     DE_ASSERT(false);
-    throw CastError(QString("Cannot cast %1 to %2").arg(DE_TYPE_NAME(T_)).arg(DE_TYPE_NAME(X_)));
+    throw CastError(stringf("Cannot cast %s to %s", DE_TYPE_NAME(T_), DE_TYPE_NAME(X_)));
 }
 
 template <typename X_, typename T_>
 inline X_ const &expectedAs(T_ const *ptr) {
     if (auto const *t = maybeAs<X_>(ptr)) return *t;
     DE_ASSERT(false);
-    throw CastError(QString("Cannot cast %1 to %2").arg(DE_TYPE_NAME(T_)).arg(DE_TYPE_NAME(X_)));
+    throw CastError(stringf("Cannot cast %s to %s", DE_TYPE_NAME(T_), DE_TYPE_NAME(X_)));
 }
 
 /**
@@ -785,25 +750,27 @@ enum ProtocolVersion {
 
 //@{
 /// @ingroup types
-typedef qint8   dchar;      ///< 8-bit signed integer.
-typedef quint8  dbyte;      ///< 8-bit unsigned integer.
-typedef quint8  duchar;     ///< 8-bit unsigned integer.
-typedef dchar   dint8;      ///< 8-bit signed integer.
-typedef dbyte   duint8;     ///< 8-bit unsigned integer.
-typedef qint16  dint16;     ///< 16-bit signed integer.
-typedef quint16 duint16;    ///< 16-bit unsigned integer.
-typedef dint16  dshort;     ///< 16-bit signed integer.
-typedef duint16 dushort;    ///< 16-bit unsigned integer.
-typedef qint32  dint32;     ///< 32-bit signed integer.
-typedef quint32 duint32;    ///< 32-bit unsigned integer.
-typedef dint32  dint;       ///< 32-bit signed integer.
-typedef duint32 duint;      ///< 32-bit unsigned integer.
-typedef qint64  dint64;     ///< 64-bit signed integer.
-typedef quint64 duint64;    ///< 64-bit unsigned integer.
-typedef float   dfloat;     ///< 32-bit floating point number.
-typedef double  ddouble;    ///< 64-bit floating point number.
-typedef size_t  dsize;      // Likely unsigned long.
-typedef long    dlong;
+typedef int8_t   dchar;      ///< 8-bit signed integer.
+typedef uint8_t  dbyte;      ///< 8-bit unsigned integer.
+typedef uint8_t  duchar;     ///< 8-bit unsigned integer.
+typedef dchar    dint8;      ///< 8-bit signed integer.
+typedef dbyte    duint8;     ///< 8-bit unsigned integer.
+typedef int16_t  dint16;     ///< 16-bit signed integer.
+typedef uint16_t duint16;    ///< 16-bit unsigned integer.
+typedef dint16   dshort;     ///< 16-bit signed integer.
+typedef duint16  dushort;    ///< 16-bit unsigned integer.
+typedef int32_t  dint32;     ///< 32-bit signed integer.
+typedef uint32_t duint32;    ///< 32-bit unsigned integer.
+typedef dint32   dint;       ///< 32-bit signed integer.
+typedef duint32  duint;      ///< 32-bit unsigned integer.
+typedef int64_t  dint64;     ///< 64-bit signed integer.
+typedef uint64_t duint64;    ///< 64-bit unsigned integer.
+typedef float    dfloat;     ///< 32-bit floating point number.
+typedef double   ddouble;    ///< 64-bit floating point number.
+typedef size_t   dsize;      // Likely unsigned long.
+typedef long     dlong;
+
+typedef wchar_t Char;
 
 // Pointer-integer conversion (used for legacy code).
 #ifdef DE_64BIT

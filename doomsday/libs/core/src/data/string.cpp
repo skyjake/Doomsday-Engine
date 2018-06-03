@@ -22,106 +22,179 @@
 #include "de/Block"
 #include "de/charsymbols.h"
 
-#include <QDir>
-#include <QTextStream>
-#include <QRegularExpression>
-#include <QUrl> // percent encoding
+#include <c_plus/path.h>
 #include <cstdio>
 #include <cstdarg>
+#include <cerrno>
 
 namespace de {
 
-String::size_type const String::npos = -1;
+const String::size_type String::npos = String::size_type(-1);
 
 String::String()
 {}
 
-String::String(String const &other) : QString(other)
-{}
+String::String(const String &other)
+{
+    initCopy_String(&_str, &other._str);
+}
 
-String::String(String &&moved) : QString(std::move(moved))
-{}
+String::String(String &&moved)
+{
+    _str = moved._str;
+    iZap(moved._str);
+}
 
-String::String(QString const &text) : QString(text)
-{}
+String::String(const iString *other)
+{
+    initCopy_String(&_str, other);
+}
 
-#ifdef DE_QT_4_7_OR_NEWER
-String::String(QChar const *nullTerminatedStr)
-    : QString(nullTerminatedStr)
-{}
-#else
-String::String(QChar const *nullTerminatedStr)
-    : QString(nullTerminatedStr, qchar_strlen(nullTerminatedStr))
-{}
-#endif
+String::String(const std::string &text)
+{
+    initCStrN_String(&_str, text.data(), text.size());
+}
 
-String::String(QChar const *str, size_type length) : QString(str, length)
-{}
+String::String(const char *nullTerminatedCStr)
+{
+    initCStr_String(&_str, nullTerminatedCStr);
+}
 
-String::String(char const *nullTerminatedCStr)
-    : QString(QString::fromUtf8(nullTerminatedCStr))
-{}
+String::String(const Char *nullTerminatedWideStr)
+{
+    initWide_String(&_str, nullTerminatedWideStr);
+}
 
-String::String(wchar_t const *nullTerminatedWideStr)
-    : QString(QString::fromWCharArray(nullTerminatedWideStr))
-{}
-
-String::String(char const *cStr, size_type length)
-    : QString(QString::fromUtf8(cStr, length))
-{}
+String::String(char const *cStr, int length)
+{
+    initCStrN_String(&_str, cStr, length);
+}
 
 String::String(char const *cStr, dsize length)
-    : QString(QString::fromUtf8(cStr, int(length)))
-{}
-
-String::String(size_type length, QChar ch) : QString(length, ch)
-{}
-
-String::String(QString const &str, size_type index, size_type length)
-    : QString(str.mid(index, length))
-{}
-
-String::String(const_iterator start, const_iterator end)
 {
-    for (const_iterator i = start; i < end; ++i)
+    initCStrN_String(&_str, cStr, length);
+}
+
+String::String(dsize length, char ch)
+{
+    init_Block(&_str.chars, length);
+    fill_Block(&_str.chars, ch);
+}
+
+String::String(const char *start, const char *end)
+{
+    initCStrN_String(&_str, start, end - start);
+}
+
+String::String(dsize length, iChar ch)
+{
+    init_String(&_str);
+
+    iMultibyteChar mb;
+    init_MultibyteChar(&mb, ch);
+    if (strlen(mb.bytes) == 1)
     {
-        append(*i);
+        resize_Block(&_str.chars, length);
+        fill_Block(&_str.chars, mb.bytes[0]);
+    }
+    else
+    {
+        while (length-- > 0)
+        {
+            appendCStr_String(&_str, mb.bytes);
+        }
     }
 }
 
-String::String(iterator start, iterator end)
+//String::String(Qconst String &str, size_type index, size_type length)
+//    : QString(str.mid(index, length))
+//{}
+
+String::~String()
 {
-    for (iterator i = start; i < end; ++i)
+    deinit_String(&_str);
+}
+
+std::wstring String::toWideString() const
+{
+    std::wstring ws;
+    for (auto i : *this)
     {
-        append(*i);
+        ws.push_back(i);
     }
+    return ws;
 }
 
-QChar String::first() const
+String String::substr(int position, int n) const
 {
-    if (empty()) return 0;
-    return at(0);
+    iString *sub = mid_String(&_str, position, n);
+    String s(sub);
+    delete_String(sub);
+    return s;
 }
 
-QChar String::last() const
+String String::operator+(const char *cStr) const
+    {
+    String cat(*this);
+    appendCStr_String(&cat._str, cStr);
+    return cat;
+    }
+
+String &String::operator+=(char ch)
 {
-    if (empty()) return 0;
-    return at(size() - 1);
+    appendData_Block(&_str.chars, &ch, 1);
+    return *this;
 }
 
-String String::operator / (String const &path) const
+String &String::operator+=(iChar ch)
+{
+    appendChar_String(&_str, ch);
+    return*this;
+}
+
+String &String::operator+=(const char *cStr)
+    {
+    appendCStr_String(&_str, cStr);
+    return *this;
+    }
+
+String &String::operator+=(const String &other)
+{
+    append_String(&_str, &other._str);
+    return *this;
+}
+
+String String::substr(String::size_type pos, String::size_type n) const
+{
+    iString *sub = mid_String(&_str, pos, n);
+    String s(sub);
+    delete_String(sub);
+    return s;
+}
+
+iChar String::first() const
+{
+    return empty() ? 0 : *begin();
+}
+
+iChar String::last() const
+{
+    return empty() ? 0 : *end();
+}
+
+String String::operator/(const String &path) const
 {
     return concatenatePath(path);
 }
 
-String String::operator % (PatternArgs args) const
+String String::operator%(const PatternArgs &args) const
 {
     String result;
-    QTextStream output(&result);
+//    QTextStream output(&result);
 
     PatternArgs::const_iterator arg = args.begin();
 
-    DE_FOR_EACH_CONST(String, i, *this)
+    for (auto i = begin(); i != end(); ++i)
     {
         if (*i == '%')
         {
@@ -130,7 +203,7 @@ String String::operator % (PatternArgs args) const
             if (*next == '%')
             {
                 // Escaped.
-                output << *next;
+                result += *next;
                 ++i;
                 continue;
             }
@@ -138,30 +211,30 @@ String String::operator % (PatternArgs args) const
             if (arg == args.end())
             {
                 // Out of args.
-                throw IllegalPatternError("String::operator %", "Ran out of arguments");
+                throw IllegalPatternError("String::operator%", "Ran out of arguments");
             }
 
-            output << patternFormat(i, end(), **arg);
+            result += patternFormat(i, end(), **arg);
             ++arg;
         }
         else
         {
-            output << *i;
+            result += *i;
         }
     }
 
     // Just append the rest of the arguments without special instructions.
     for (; arg != args.end(); ++arg)
     {
-        output << (*arg)->asText();
+        result += (*arg)->asText();
     }
 
     return result;
 }
 
-String String::concatenatePath(String const &other, QChar dirChar) const
+String String::concatenatePath(const String &other, iChar dirChar) const
 {
-    if ((dirChar == '/' || dirChar == '\\') && QDir::isAbsolutePath(other))
+    if ((dirChar == '/' || dirChar == '\\') && isAbsolute_Path(&other._str))
     {
         // The other path is absolute - use as is.
         return other;
@@ -169,14 +242,14 @@ String String::concatenatePath(String const &other, QChar dirChar) const
     return concatenateRelativePath(other, dirChar);
 }
 
-String String::concatenateRelativePath(const String &other, QChar dirChar) const
+String String::concatenateRelativePath(const String &other, iChar dirChar) const
 {
     if (other.isEmpty()) return *this;
 
     int const startPos = (other.first() == dirChar? 1 : 0);
 
     // Do a path combination. Check for a slash.
-    String result = *this;
+    String result(*this);
     if (!empty() && last() != dirChar)
     {
         result += dirChar;
@@ -185,7 +258,7 @@ String String::concatenateRelativePath(const String &other, QChar dirChar) const
     return result;
 }
 
-String String::concatenateMember(String const &member) const
+String String::concatenateMember(const String &member) const
 {
     if (member.isEmpty()) return *this;
     if (member.first() == '.')
@@ -197,195 +270,66 @@ String String::concatenateMember(String const &member) const
 
 String String::strip() const
 {
-    return trimmed();
+    String ts(*this);
+    trim_String(&ts._str);
+    return ts;
 }
 
 String String::leftStrip() const
 {
-    int endOfSpace = 0;
-    while (endOfSpace < size() && at(endOfSpace).isSpace())
-    {
-        ++endOfSpace;
+    String ts(*this);
+    trimStart_String(&ts._str);
+    return ts;
     }
-    return mid(endOfSpace);
-}
 
 String String::rightStrip() const
 {
-    int beginOfSpace = size() - 1;
-    while (beginOfSpace >= 0 && at(beginOfSpace).isSpace())
-    {
-        --beginOfSpace;
-    }
-    return left(beginOfSpace + 1);
+    String ts(*this);
+    trimEnd_String(&ts._str);
+    return ts;
 }
 
 String String::normalizeWhitespace() const
 {
-    static QRegularExpression const reg("\\s+");
+    static const RegExp reg("\\s+");
     String s = *this;
     s.replace(reg, " ");
     return s.strip();
 }
 
-String String::removed(const QRegularExpression &expr) const
+String String::removed(const RegExp &expr) const
 {
     String s = *this;
-    s.remove(expr);
+    s.replace(expr, "");
     return s;
 }
 
 String String::lower() const
 {
-    return toLower();
+    iString *low = toLower_String(&_str);
+    String str(low);
+    delete_String(low);
+    return str;
 }
 
 String String::upper() const
 {
-    return toUpper();
+    iString *upr = toUpper_String(&_str);
+    String str(upr);
+    delete_String(upr);
+    return str;
 }
 
 String String::upperFirstChar() const
 {
     if (isEmpty()) return "";
     if (size() == 1) return upper();
-    return at(0).toUpper() + substr(1);
+    return towupper(first()) + substr(1);
 }
 
-/*
-std::wstring String::stringToWide(String const &str)
+String String::fileName(Char dirChar) const
 {
-    duint inputSize = str.size();
-    dbyte const *input = reinterpret_cast<dbyte const *>(str.c_str());
-    dbyte const *inputEnd = input + inputSize;
-    std::vector<wchar_t> output;
-    duint c;
-    duint d;
-    duint trailing;
-
-    while (input < inputEnd)
-    {
-        d = *input++;
-
-        if (d < 0x80)
-        {
-            c = d;
-            trailing = 0;
-        }
-        else if (d < 0xc0)
-        {
-            throw ConversionError("String::stringToWide", "Trailing byte in leading position");
-        }
-        else if (d < 0xe0)
-        {
-            c = d & 0x1f;
-            trailing = 1;
-        }
-        else if (d < 0xf0)
-        {
-            c = d & 0x0f;
-            trailing = 2;
-        }
-        else if (d < 0xf8)
-        {
-            c = d & 0x07;
-            trailing = 3;
-        }
-        else
-        {
-            throw ConversionError("String::stringToWide", "Bad input");
-        }
-
-        for (; trailing; trailing--)
-        {
-            if ((input >= inputEnd) || (((d = *input++) & 0xc0) != 0x80))
-            {
-                throw ConversionError("String::stringToWide", "Bad input");
-            }
-            c <<= 6;
-            c |= d & 0x3f;
-        }
-
-        if (c < 0x10000)
-        {
-            output.push_back(wchar_t(c));
-        }
-        else if (c < 0x110000)
-        {
-            c -= 0x10000;
-            output.push_back(wchar_t(0xd800 | (c >> 10)));
-            output.push_back(0xdc00 | (c & 0x03ff));
-        }
-        else
-        {
-            throw ConversionError("String::stringToWide", "Bad input");
-        }
-    }
-
-    output.push_back(0);
-    return std::wstring(&output[0]);
-}
-
-String String::wideToString(std::wstring const &str)
-{
-    const wchar_t *input = &str[0];
-    const wchar_t *inputEnd = input + str.size();
-    String output;
-    duint c;
-    duint d;
-    dint bits;
-
-    while (input < inputEnd)
-    {
-        c = *input++;
-        if ((c & 0xfc00) == 0xd800)
-        {
-            if ((input < inputEnd) && (((d = *input++) & 0xfc00) == 0xdc00))
-            {
-                c &= 0x3ff;
-                c <<= 10;
-                c |= d & 0x3ff;
-                c += 0x10000;
-            }
-            else
-            {
-                throw ConversionError("String::wideToString", "Bad input");
-            }
-        }
-
-        if (c < 0x80)
-        {
-            output += dchar(c);
-            bits = -6;
-        }
-        else if (c < 0x800)
-        {
-            output += dchar((c >> 6) | 0xc0);
-            bits = 0;
-        }
-        else if (c < 0x10000)
-        {
-            output += dchar((c >> 12) | 0xe0);
-            bits = 6;
-        }
-        else
-        {
-            output += dchar((c >> 18) | 0xf0);
-            bits = 12;
-        }
-
-        for (; bits > 0; bits -= 6)
-        {
-            output += dchar((c >> bits) & 0x3f);
-        }
-    }
-    return output;
-}
-*/
-
-String String::fileName(QChar dirChar) const
-{
-    size_type pos = lastIndexOf(dirChar);
+    int pos = lastIndexOf(dirChar);
     if (pos >= 0)
     {
         return mid(pos + 1);
@@ -396,7 +340,7 @@ String String::fileName(QChar dirChar) const
 String String::fileNameWithoutExtension() const
 {
     String name = fileName();
-    size_type pos = name.lastIndexOf('.');
+    int pos = name.lastIndexOf('.');
     if (pos > 0)
     {
         return name.mid(0, pos);
@@ -406,8 +350,8 @@ String String::fileNameWithoutExtension() const
 
 String String::fileNameExtension() const
 {
-    size_type pos = lastIndexOf('.');
-    size_type slashPos = lastIndexOf('/');
+    int pos      = lastIndexOf('.');
+    int slashPos = lastIndexOf('/');
     if (pos > 0)
     {
         // If there is a directory included, make sure there it at least
@@ -422,7 +366,7 @@ String String::fileNameExtension() const
 
 String String::fileNamePath(QChar dirChar) const
 {
-    size_type pos = lastIndexOf(dirChar);
+    int pos = lastIndexOf(dirChar);
     if (pos >= 0)
     {
         return mid(0, pos);
@@ -435,34 +379,34 @@ String String::fileNameAndPathWithoutExtension(QChar dirChar) const
     return fileNamePath(dirChar) / fileNameWithoutExtension();
 }
 
-bool String::containsWord(String const &word) const
+bool String::containsWord(const String &word) const
 {
     if (word.isEmpty())
     {
         return false;
     }
-    return QRegularExpression(QString("\\b%1\\b").arg(word)).match(*this).hasMatch();
+    return RegExp(stringf("\\b%s\\b", word.c_str())).match(*this).hasMatch();
 }
 
-dint String::compareWithCase(String const &str) const
+dint String::compareWithCase(const String &other) const
 {
-    return compare(str, Qt::CaseSensitive);
+    return cmpSc_String(&_str, other, &iCaseSensitive);
 }
 
-dint String::compareWithoutCase(String const &str) const
+dint String::compareWithoutCase(const String &other) const
 {
-    return compare(str, Qt::CaseInsensitive);
+    return cmpSc_String(&_str, other, &iCaseInsensitive);
 }
 
-dint String::compareWithoutCase(String const &str, int n) const
+dint String::compareWithoutCase(const String &other, int n) const
 {
-    return leftRef(n).compare(str.leftRef(n), Qt::CaseInsensitive);
+    return cmpNSc_String(&_str, other, n, &iCaseInsensitive);
 }
 
-int String::commonPrefixLength(String const &str, CaseSensitivity sensitivity) const
+int String::commonPrefixLength(const String &str, CaseSensitivity sensitivity) const
 {
     int count = 0;
-    int len = qMin(str.size(), size());
+    size_t len = std::min(str.size(), size());
     for (int i = 0; i < len; ++i, ++count)
     {
         if (sensitivity == CaseSensitive)
@@ -477,43 +421,75 @@ int String::commonPrefixLength(String const &str, CaseSensitivity sensitivity) c
     return count;
 }
 
-dint String::compareWithCase(QChar const *a, QChar const *b, dsize count) // static
+String::const_iterator String::begin() const
 {
-    return QString(a).leftRef(count).compare(QString(b).leftRef(count), Qt::CaseSensitive);
+    const_iterator i;
+    init_StringConstIterator(&i.iter, &_str);
+    return i;
 }
 
-bool String::equals(QChar const *a, QChar const *b, dsize count) // static
+String::const_iterator String::end() const
 {
-    while (count--)
+    const_iterator i;
+    init_StringConstIterator(&i.iter, &_str);
+    i.iter.pos = i.iter.next = constEnd_String(&_str);
+    i.iter.remaining = 0;
+    return i;
+}
+
+String::const_reverse_iterator String::rbegin() const
     {
-        // Both strings the same length?
-        if (a->isNull() && b->isNull()) break;
-        // Mismatch?
-        if (*a != *b) return false;
-        // Advance.
-        a++;
-        b++;
+    const_reverse_iterator i;
+    init_StringReverseConstIterator(&i.iter, &_str);
+    return i;
     }
-    return true;
-}
 
-void String::skipSpace(String::const_iterator &i, String::const_iterator const &end)
+String::const_reverse_iterator String::rend() const
 {
-    while (i != end && (*i).isSpace()) ++i;
+    const_reverse_iterator i;
+    init_StringReverseConstIterator(&i.iter, &_str);
+    i.iter.pos = i.iter.next = constBegin_String(&_str);
+    i.iter.remaining = 0;
+    return i;
 }
 
-String String::format(String format, ...)
+//dint String::compareWithCase(QChar const *a, QChar const *b, dsize count) // static
+//{
+//    return QString(a).leftRef(count).compare(QString(b).leftRef(count), Qt::CaseSensitive);
+//}
+
+//bool String::equals(QChar const *a, QChar const *b, dsize count) // static
+//{
+//    while (count--)
+//    {
+//        // Both strings the same length?
+//        if (a->isNull() && b->isNull()) break;
+//        // Mismatch?
+//        if (*a != *b) return false;
+//        // Advance.
+//        a++;
+//        b++;
+//    }
+//    return true;
+//}
+
+void String::skipSpace(const_iterator &i, const const_iterator &end)
+{
+    while (i != end && iswspace(*i)) ++i;
+}
+
+String String::format(const char *format, ...)
 {
     va_list args;
     Block buffer;
-    int neededSize = 1024;
+    int neededSize = 512;
 
-    forever
+    for (;;)
     {
         buffer.resize(neededSize);
 
         va_start(args, format);
-        int count = vsnprintf((char *) buffer.data(), buffer.size(), format.toUtf8(), args);
+        int count = vsnprintf(reinterpret_cast<char *>(buffer.data()), buffer.size(), format, args);
         va_end(args);
 
         if (count >= 0 && count < neededSize)
@@ -534,45 +510,43 @@ String String::format(String format, ...)
     return fromUtf8(buffer);
 }
 
-// Seems like an ommission on the part of QChar...
-static inline bool isSign(QChar const &ch)
+static inline bool isSign(Char ch)
 {
     return ch == '-' || ch == '+';
 }
 
-dint String::toInt(bool *ok, int base, IntConversionFlags flags) const
+dint String::toInt(bool *ok, int base, duint flags) const
 {
-    String token = leftStrip();
-
-    if (flags & AllowSuffix)
+    char *endp;
+    auto value = std::strtol(*this, &endp, base);
+    if (ok) *ok = (errno != ERANGE);
+    if (!(flags & AllowSuffix) && !(*endp == 0 && isspace(*endp)))
     {
-        // Truncate at the first non-numeric, non-notation or sign character.
-        int endOfNumber = 0;
-        while (endOfNumber < token.size() &&
-              (token.at(endOfNumber).isDigit() || (endOfNumber == 0 && isSign(token.at(endOfNumber))) ||
-               ((base == 0 || base == 16) && endOfNumber <= 1 &&
-                (token.at(endOfNumber) == QChar('x') || token.at(endOfNumber) == QChar('X')))))
-        {
-            ++endOfNumber;
+        // Suffix not allowed; consider this a failure.
+        if (ok) *ok = false;
+        value = 0;
         }
-        token.truncate(endOfNumber);
-    }
-
-    return token.QString::toInt(ok, base);
+    return dint(value);
 }
 
 duint32 String::toUInt32(bool *ok, int base) const
 {
-    return QString::toUInt(ok, base);
+    char *endp;
+    const auto value = std::strtoul(*this, nullptr, base);
+    if (ok) *ok = (errno != ERANGE);
+    return duint32(value);
 }
 
-String String::addLinePrefix(String const &prefix) const
+String String::addLinePrefix(const String &prefix) const
 {
     String result;
-    for (auto const &str : QString::split(QChar('\n')))
+    iRangecc str{constBegin_String(&_str), constEnd_String(&_str)};
+    iRangecc range{};
+    while (nextSplit_Rangecc(&str, "\n", &range))
     {
-        if (!result.isEmpty()) result += "\n";
-        result += prefix + str;
+        if (!result.empty()) result += '\n';
+        result += prefix;
+        result += String(range.start, range.end);
     }
     return result;
 }
@@ -590,16 +564,16 @@ Block String::toPercentEncoding() const
     return QUrl::toPercentEncoding(*this);
 }
 
-String String::truncateWithEllipsis(int maxLength) const
+String String::truncateWithEllipsis(dsize maxLength) const
 {
     if (size() <= maxLength)
     {
         return *this;
     }
-    return left(maxLength/2 - 1) + "..." + right(maxLength/2 - 1);
+    return mid(0, maxLength/2 - 1) + "..." + right(maxLength/2 - 1);
 }
 
-void String::advanceFormat(String::const_iterator &i, String::const_iterator const &end)
+void String::advanceFormat(const_iterator &i, const const_iterator &end)
 {
     ++i;
     if (i == end)
@@ -609,33 +583,32 @@ void String::advanceFormat(String::const_iterator &i, String::const_iterator con
     }
 }
 
-String String::join(StringList const &stringList, String const &sep)
+String String::join(const StringList &stringList, const String &sep)
 {
     if (stringList.isEmpty()) return {};
 
-    String joined;
-    QTextStream os(&joined);
-    os << stringList.at(0);
+    String joined = stringList.at(0);
     for (int i = 1; i < stringList.size(); ++i)
     {
-        os << sep << stringList.at(i);
+        joined += sep;
+        joined += stringList.at(i);
     }
     return joined;
 }
 
-String String::patternFormat(String::const_iterator &formatIter,
-                             String::const_iterator const &formatEnd,
-                             IPatternArg const &arg)
+String String::patternFormat(const_iterator &      formatIter,
+                             const const_iterator &formatEnd,
+                             const IPatternArg &   arg)
 {
     advanceFormat(formatIter, formatEnd);
 
-    QString result;
-    QTextStream output(&result);
+    String result;
+    //QTextStream output(&result);
 
     // An argument comes here.
     bool rightAlign = true;
-    dint maxWidth = 0;
-    dint minWidth = 0;
+    dsize maxWidth = 0;
+    dsize minWidth = 0;
 
     DE_ASSERT(*formatIter != '%');
 
@@ -646,7 +619,7 @@ String String::patternFormat(String::const_iterator &formatIter,
         advanceFormat(formatIter, formatEnd);
     }
     String::const_iterator k = formatIter;
-    while ((*formatIter).isDigit())
+    while (iswdigit(*formatIter))
     {
         advanceFormat(formatIter, formatEnd);
     }
@@ -660,7 +633,7 @@ String String::patternFormat(String::const_iterator &formatIter,
         advanceFormat(formatIter, formatEnd);
         k = formatIter;
         // There's also a maxWidth.
-        while ((*formatIter).isDigit())
+        while (iswdigit(*formatIter))
         {
             advanceFormat(formatIter, formatEnd);
         }
@@ -668,42 +641,44 @@ String String::patternFormat(String::const_iterator &formatIter,
     }
 
     // Finally, the type formatting.
-    switch ((*formatIter).toLatin1())
+    switch (*formatIter)
     {
     case 's':
-        output << arg.asText();
+        result += arg.asText();
         break;
 
     case 'b':
-        output << (int(arg.asNumber())? "true" : "false");
+        result += (int(arg.asNumber())? "True" : "False");
         break;
 
     case 'c':
-        output << QChar(ushort(arg.asNumber()));
+        result += Char(arg.asNumber());
         break;
 
     case 'i':
     case 'd':
-        output << dint64(arg.asNumber());
+        result += format("%lli", dint64(arg.asNumber()));
         break;
 
     case 'u':
-        output << duint64(arg.asNumber());
+        result += format("%llu", duint64(arg.asNumber()));
         break;
 
     case 'X':
-        output << uppercasedigits;
+        result += format("%llX", dint64(arg.asNumber()));
+        break;
+
     case 'x':
-        output << "0x" << hex << dint64(arg.asNumber()) << dec << lowercasedigits;
+        result += format("%llx", dint64(arg.asNumber()));
         break;
 
     case 'p':
-        output << "0x" << hex << dintptr(arg.asNumber()) << dec;
+        result += format("%p", dintptr(arg.asNumber()));
         break;
 
     case 'f':
         // Max width is interpreted as the number of decimal places.
-        output << fixed << qSetRealNumberPrecision(maxWidth? maxWidth : 3) << arg.asNumber();
+        result += format(stringf("%%.%df", maxWidth? maxWidth : 3).c_str(), arg.asNumber());
         maxWidth = 0;
         break;
 
@@ -712,13 +687,11 @@ String String::patternFormat(String::const_iterator &formatIter,
             "Unknown format character '" + String(1, *formatIter) + "'");
     }
 
-    output.flush();
-
     // Align and fit.
     if (maxWidth && result.size() > maxWidth)
     {
         // Cut it.
-        result = result.mid(!rightAlign? 0 : result.size() - maxWidth, maxWidth);
+        result = result.substr(!rightAlign ? 0 : (result.size() - maxWidth), maxWidth);
     }
     if (result.size() < minWidth)
     {
@@ -738,64 +711,83 @@ String String::patternFormat(String::const_iterator &formatIter,
 
 Block String::toUtf8() const
 {
-    return QString::toUtf8();
+    return Block(&_str.chars);
 }
 
 Block String::toLatin1() const
 {
-    return QString::toLatin1();
+    // Non-8-bit characters are simply filtered out.
+    Block latin;
+    for (iChar ch : *this)
+{
+        if (ch < 256) latin.append(Block::Byte(ch));
+}
+    return latin;
 }
 
-String String::fromUtf8(IByteArray const &byteArray)
+String String::fromUtf8(const IByteArray &byteArray)
 {
-    Block const bytes(byteArray);
-    return QString::fromUtf8(reinterpret_cast<char const *>(bytes.data()), int(bytes.size()));
+    String s;
+    setBlock_String(&s._str, Block(byteArray));
+    return s;
 }
 
-String String::fromUtf8(QByteArray const &byteArray)
+String String::fromUtf8(const Block &block)
 {
-    return QString::fromUtf8(byteArray);
-}
-
-String String::fromUtf8(Block const &block)
-{
-    return QString::fromUtf8(block);
+    String s;
+    setBlock_String(&s._str, block);
+    return s;
 }
 
 String String::fromUtf8(char const *nullTerminatedCStr)
 {
-    return QString::fromUtf8(nullTerminatedCStr);
+    return String(nullTerminatedCStr);
 }
 
-String String::fromLatin1(IByteArray const &byteArray)
+String String::fromLatin1(const IByteArray &byteArray)
 {
-    return QString::fromLatin1(reinterpret_cast<char const *>(Block(byteArray).data()));
+    const Block bytes(byteArray);
+    return String(reinterpret_cast<const char *>(bytes.data()), bytes.size());
 }
 
-String String::fromCP437(IByteArray const &byteArray)
+String String::fromCP437(const IByteArray &byteArray)
 {
-    Block const chars(byteArray);
+    const Block chars(byteArray);
     String conv;
-    conv.reserve(byteArray.size());
     for (dbyte ch : chars)
     {
-        conv.append(codePage437ToUnicode(ch));
+        conv += Char(codePage437ToUnicode(ch));
     }
     return conv;
 }
 
-String String::fromPercentEncoding(Block const &percentEncoded) // static
+String String::fromPercentEncoding(const Block &percentEncoded) // static
 {
     return QUrl::fromPercentEncoding(percentEncoded);
 }
 
-size_t qchar_strlen(QChar const *str)
-{
-    if (!str) return 0;
+//size_t qchar_strlen(Char const *str)
+//{
+//    if (!str) return 0;
 
-    size_t len = 0;
-    while (str->unicode() != 0) { ++str; ++len; }
-    return len;
+//    size_t len = 0;
+//    while (str->unicode() != 0) { ++str; ++len; }
+//    return len;
+//}
+
+std::string stringf(const char *format, ...)
+{
+    // First determine the length of the result.
+    va_list args1, args2;
+    va_start(args1, format);
+    va_copy(args2, args1);
+    const int requiredLength = vsprintf(nullptr, format, args1);
+    va_end(args1);
+    // Format the output to a new string.
+    std::string str(requiredLength);
+    vsprintf(str.data(), format, args2);
+    va_end(args2);
+    return str;
 }
 
 } // namespace de

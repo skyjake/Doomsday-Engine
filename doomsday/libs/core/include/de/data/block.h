@@ -23,9 +23,10 @@
 #include "../IByteArray"
 #include "../IBlock"
 #include "../ISerializable"
+#include "../List"
 #include "../Writer"
 
-#include <QByteArray>
+#include <c_plus/block.h>
 #include <array>
 
 namespace de {
@@ -43,15 +44,17 @@ class IIStream;
  *
  * @ingroup data
  */
-class DE_PUBLIC Block : public QByteArray, public IByteArray, public IBlock,
-                           public ISerializable
+class DE_PUBLIC Block
+    : public IByteArray
+    , public IBlock
+    , public ISerializable
 {
 public:
     Block(Size initialSize = 0);
+    Block(const iBlock *);
     Block(IByteArray const &array);
     Block(Block const &other);
     Block(Block &&moved);
-    Block(QByteArray const &byteArray);
     Block(char const *nullTerminatedCStr);
     Block(void const *data, Size length);
 
@@ -83,16 +86,21 @@ public:
      */
     Block(IByteArray const &array, Offset at, Size count);
 
+    virtual ~Block();
+
     Byte *data();
     Byte const *dataConst() const;
+    inline Byte const *cdata() const { return dataConst(); }
+    inline Byte const *constData() const { return dataConst(); }
 
     Block &append(Byte b);
     Block &append(char const *str, int len);
 
-    inline explicit operator bool() const { return !isEmpty(); }
+                    operator const iBlock *() const { return &_block; }
+    inline explicit operator bool() const { return !isEmpty_Block(&_block); }
 
     Block &operator += (char const *nullTerminatedCStr);
-    Block &operator += (QByteArray const &bytes);
+//    Block &operator += (QByteArray const &bytes);
 
     /// Appends a block after this one.
     Block &operator += (Block const &other);
@@ -180,7 +188,10 @@ public:
     void operator << (Reader &from);
 
 public:
-    static Block join(QList<Block> const &blocks, Block const &sep = Block());
+    static Block join(List<Block> const &blocks, Block const &sep = Block());
+
+private:
+    iBlock _block;
 };
 
 template <typename... Args>

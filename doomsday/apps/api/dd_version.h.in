@@ -32,8 +32,7 @@ extern "C" {
 
 #define DOOMSDAY_NICENAME       "Doomsday Engine"
 #define DOOMSDAY_HOMEURL        "http://dengine.net"
-#define DOOMSDAY_MASTERURL      "http://dengine.net/master.php"
-#define DOOMSDAY_DOCSURL        "http://dengine.net/dew"
+#define DOOMSDAY_DOCSURL        "https://manual.dengine.net"
 
 /**
  * Version number rules: (major).(minor).(revision)-(release name)

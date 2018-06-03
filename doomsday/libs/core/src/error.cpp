@@ -20,10 +20,11 @@
 
 #include "de/error.h"
 #include "core/logtextstyle.h"
+#include "de/String"
 
 namespace de {
 
-Error::Error(QString const &where, QString const &message)
+Error::Error(const std::string &where, const std::string &message)
     : std::runtime_error(QString("%1(in " _E(m) "%2" _E(.) ")" _E(.) " %3")
                          .arg(TEXT_STYLE_SECTION)
                          .arg(where)
@@ -32,24 +33,23 @@ Error::Error(QString const &where, QString const &message)
     , _name("")
 {}
 
-QString Error::name() const
+std::string Error::name() const
 {
     if (!_name.size()) return "Error";
-    return QString::fromStdString(_name);
+    return _name;
 }
 
-QString Error::asText() const
+std::string Error::asText() const
 {
-    return QString("%1[%2]" _E(.) " %4")
-            .arg(TEXT_STYLE_SECTION)
-            .arg(name())
-            .arg(std::runtime_error::what());
+    return String::format("%s[%s] " _E(.) " %s", TEXT_STYLE_SECTION,
+            _name.c_str(),
+            std::runtime_error::what());
 }
 
-void Error::setName(QString const &name)
+void Error::setName(const std::string &name)
 {
     if (_name.size()) _name += "_";
-    _name += name.toStdString();
+    _name += name;
 }
 
 } // namespace de

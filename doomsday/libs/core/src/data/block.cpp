@@ -20,42 +20,47 @@
 #include "de/Block"
 #include "de/File"
 
-#include <QCryptographicHash>
 #include <cstring>
 
 namespace de {
 
 Block::Block(Size initialSize)
 {
-    resize(initialSize);
+    init_Block(&_block, initialSize);
+}
+
+Block::Block(const iBlock *other)
+{
+    initCopy_Block(&_block, other);
 }
 
 Block::Block(IByteArray const &other)
 {
+    init_Block(&_block, other.size());
     // Read the other's data directly into our data buffer.
-    resize(other.size());
-    other.get(0, (dbyte *) data(), other.size());
+    other.get(0, data(), other.size());
 }
 
 Block::Block(Block const &other)
-    : QByteArray(other), IByteArray(), IBlock()
-{}
+{
+    initCopy_Block(&_block, &other._block);
+}
 
 Block::Block(Block &&moved)
-    : QByteArray(moved)
-{}
-
-Block::Block(QByteArray const &byteArray)
-    : QByteArray(byteArray)
-{}
+{
+    _block = moved._block;
+    iZap(moved._block);
+}
 
 Block::Block(char const *nullTerminatedCStr)
-    : QByteArray(nullTerminatedCStr)
-{}
+{
+    initCStr_Block(&_block, nullTerminatedCStr);
+}
 
 Block::Block(void const *data, Size length)
-    : QByteArray(reinterpret_cast<char const *>(data), int(length)), IByteArray(), IBlock()
-{}
+{
+    initData_Block(&_block, data, length);
+}
 
 Block::Block(IIStream &stream)
 {
@@ -72,9 +77,14 @@ Block::Block(IByteArray const &other, Offset at, Size count) : IByteArray()
     copyFrom(other, at, count);
 }
 
+Block::~Block()
+{
+    deinit_Block(&_block);
+}
+
 Block::Size Block::size() const
 {
-    return QByteArray::size();
+    return size_Block(&_block);
 }
 
 void Block::get(Offset atPos, Byte *values, Size count) const
@@ -83,7 +93,7 @@ void Block::get(Offset atPos, Byte *values, Size count) const
     {
         /// @throw OffsetError The accessed region of the block was out of range.
         throw OffsetError("Block::get", "Out of range " +
-                          String("(%1[+%2] > %3)").arg(atPos).arg(count).arg(size()));
+                          String::format("(%zu[+%zu] > %zu)", atPos, count, size()));
     }
 
     std::memcpy(values, constData() + atPos, count);
@@ -108,7 +118,7 @@ void Block::copyFrom(IByteArray const &array, Offset at, Size count)
 
 void Block::resize(Size size)
 {
-    QByteArray::resize(size);
+    resize_Block(&_block, size);
 }
 
 IByteArray::Byte const *Block::dataConst() const

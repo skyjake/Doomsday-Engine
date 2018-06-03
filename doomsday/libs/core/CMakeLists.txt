@@ -5,6 +5,7 @@ project (DE_LIBCORE)
 include (../../cmake/Config.cmake)
 
 # Dependencies.
+find_package (CPlus)
 include (ZLIB)
 find_package (Git QUIET)
 
@@ -58,8 +59,9 @@ deng_add_package (net.dengine.stdlib)
 
 deng_add_library (libcore ${SOURCES} ${HEADERS})
 target_include_directories (libcore PRIVATE ${ZLIB_INCLUDE_DIR})
-deng_target_link_qt (libcore PUBLIC Core Network)
+#deng_target_link_qt (libcore PUBLIC Core Network)
 target_link_libraries (libcore PUBLIC ${ZLIB_LIBRARIES})
+target_link_libraries (libcore PRIVATE cplus)
 deng_deploy_library (libcore DengCore)
 
 deng_cotire (libcore src/precompiled.h)
