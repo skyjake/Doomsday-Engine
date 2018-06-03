@@ -141,7 +141,7 @@ public:
 
     void print() const;
 
-    QList<File *> files() const;
+    List<File *> files() const;
 
 protected:
     // C++ iterator (not thread-safe):

@@ -1,8 +1,6 @@
-/*
- * The Doomsday Engine Project -- libcore
+/** @file thread.h  Thread.
  *
- * @authors Copyright © 2004-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -18,23 +16,37 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Lockable"
-#include "de/error.h"
+#ifndef LIBCORE_THREAD_H
+#define LIBCORE_THREAD_H
+
+#include "../libcore.h"
+#include "../Time"
 
 namespace de {
 
-bool Lockable::lock() const noexcept
+/**
+ * Base class for running a thread.
+ */
+class DE_PUBLIC Thread
 {
-    try
-    {
-        _mutex.lock();
-        return true;
-    }
-    catch (...)
-    {
-        warning("[Lockable] (%p) Failed to lock mutex!", this);
-        return false;
-    }
-}
+public:
+    Thread();
+
+    virtual ~Thread();
+
+    virtual void run() = 0;
+
+    void start();
+    void join();
+    bool isRunning() const;
+    bool isFinished() const;
+
+    static void sleep(const TimeSpan &span);
+
+private:
+    DE_PRIVATE(d)
+};
 
 } // namespace de
+
+#endif // LIBCORE_THREAD_H

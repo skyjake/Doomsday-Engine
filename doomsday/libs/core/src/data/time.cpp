@@ -24,9 +24,9 @@
 #include "de/Reader"
 #include "de/HighPerformanceTimer"
 
-#include <QStringList>
-#include <QThread>
-#include <QDataStream>
+//#include <QStringList>
+//#include <QThread>
+//#include <QDataStream>
 
 namespace de {
 

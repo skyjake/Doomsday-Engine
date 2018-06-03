@@ -45,6 +45,11 @@ String::String(String &&moved)
     iZap(moved._str);
 }
 
+String::String(const Block &bytes)
+{
+    initCopy_Block(&_str.chars, bytes);
+}
+
 String::String(const iString *other)
 {
     initCopy_String(&_str, other);
@@ -123,6 +128,11 @@ std::wstring String::toWideString() const
         ws.push_back(i);
     }
     return ws;
+}
+
+bool String::contains(const char *cStr) const
+{
+    return indexOfCStr_String(&_str, cStr) != iInvalidPos;
 }
 
 String String::substr(int position, int n) const
@@ -482,7 +492,7 @@ String String::format(const char *format, ...)
 {
     va_list args;
     Block buffer;
-    int neededSize = 512;
+    int neededSize = 256;
 
     for (;;)
     {
@@ -495,7 +505,7 @@ String String::format(const char *format, ...)
         if (count >= 0 && count < neededSize)
         {
             buffer.resize(count);
-            return fromUtf8(buffer);
+            return {buffer};
         }
 
         if (count >= 0)
@@ -507,7 +517,7 @@ String String::format(const char *format, ...)
             neededSize *= 2; // Try bigger.
         }
     }
-    return fromUtf8(buffer);
+    return {buffer};
 }
 
 static inline bool isSign(Char ch)
@@ -754,7 +764,7 @@ String String::fromCP437(const IByteArray &byteArray)
 {
     const Block chars(byteArray);
     String conv;
-    for (dbyte ch : chars)
+    for (auto ch : chars)
     {
         conv += Char(codePage437ToUnicode(ch));
     }

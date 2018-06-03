@@ -1,3 +1,4 @@
+#if 0
 /** @file readwritelockable.h  Read-write lock.
  *
  * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -50,3 +51,4 @@ private:
 } // namespace de
 
 #endif // LIBCORE_READWRITELOCKABLE_H
+#endif

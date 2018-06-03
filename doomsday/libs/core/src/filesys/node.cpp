@@ -26,7 +26,7 @@ DE_PIMPL_NOREF(Node)
     String name;
     Node *parent;
 
-    Impl(String const &name_) : name(name_), parent(0) {}
+    Impl(String const &name_) : name(name_), parent(nullptr) {}
 };
 
 Node::Node(String const &name) : d(new Impl(name))
@@ -65,7 +65,7 @@ bool Node::hasAncestor(Node const &possibleAncestor) const
 }
 
 String Node::path() const
-{    
+{
     Node const *p = parent();
     if (!p)
     {
@@ -76,8 +76,8 @@ String Node::path() const
 
 Node const *Node::tryFollowPath(PathRef const &path) const
 {
-    static QString const DOT_SINGLE(".");
-    static QString const DOT_DOUBLE("..");
+    static const char *DOT_SINGLE = ".";
+    static const char *DOT_DOUBLE = "..";
 
     if (path.isEmpty())
     {

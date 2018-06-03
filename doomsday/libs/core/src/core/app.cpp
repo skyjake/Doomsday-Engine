@@ -52,9 +52,6 @@
 #include "de/Writer"
 #include "de/ZipArchive"
 
-#include <QDir>
-#include <QThread>
-
 #ifdef UNIX
 #  include <locale.h>
 #endif
@@ -955,8 +952,8 @@ Variable &App::config(String const &name)
 
 String App::apiUrl() // static
 {
-    String u = Config::get().gets(QStringLiteral("apiUrl"));
-    if (!u.startsWith("http")) u = "http://" + u;
+    String u = Config::get().gets("apiUrl");
+    if (!u.beginsWith("http")) u = "http://" + u;
     if (!u.endsWith("/")) u += "/";
     return u;
 }
@@ -964,6 +961,26 @@ String App::apiUrl() // static
 UnixInfo &App::unixInfo()
 {
     return *DE_APP->d->unixInfo;
+}
+
+void debug(const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    vfprintf(stdout, format, args);
+    fprintf(stdout, "\n");
+    va_end(args);
+}
+
+void warning(const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    fprintf(stderr, "\n");
+    va_end(args);
+
+    // TODO: On Windows, also print using the Win32 debug output functions.
 }
 
 } // namespace de

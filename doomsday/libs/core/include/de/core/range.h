@@ -19,12 +19,10 @@
 #ifndef LIBCORE_RANGE_H
 #define LIBCORE_RANGE_H
 
+#include "../List"
+#include "../String"
 #include "../libcore.h"
 #include "../math.h"
-
-#include <QString>
-#include <QList>
-#include <QStringList>
 
 namespace de {
 
@@ -110,11 +108,12 @@ struct Range
         end -= offset;
         return *this;
     }
-    QString asText() const {
-        return QString("[%1...%2)").arg(start).arg(end);
+    String asText() const {
+        return String::format(
+            "[%s...%s)", String::number(start).c_str(), String::number(end).c_str());
     }
 
-    typedef QList<Range<Type>> ContiguousRanges;
+    typedef List<Range<Type>> ContiguousRanges;
 
     /**
      * Finds a sequence of contiguous ranges in the input values. Only use with integer types.
@@ -124,7 +123,7 @@ struct Range
      * @return List of contiguous ranges. As usual, range starts are inclusive and range ends are
      * exclusive.
      */
-    static ContiguousRanges findContiguousRanges(QList<Type> const &values) {
+    static ContiguousRanges findContiguousRanges(const List<Type> &values) {
         ContiguousRanges cont;
         if (values.isEmpty()) return cont;
         cont.append(Range<Type>(values.first(), values.first() + 1));
@@ -139,27 +138,28 @@ struct Range
         }
         return cont;
     }
-    static QString contiguousRangesAsText(QList<Type> const &values,
-                                          QString const &separator = ", ") {
-        QStringList msg;
-        foreach (Range<Type> const &range, findContiguousRanges(values)) {
+    static String contiguousRangesAsText(const List<Type> &values, const String &separator = ", ")
+    {
+        StringList msg;
+        for (const auto &range : findContiguousRanges(values)) {
             if (range.size() == 1)
-                msg << QString::number(range.start);
+                msg << String::number(range.start);
             else
-                msg << QString("%1-%2").arg(range.start).arg(range.end - 1);
+                msg << String::number(range.start) + "-" + String::number(range.end - 1);
         }
         return msg.join(separator);
     }
 };
 
-typedef Range<duint16> Rangeui16;
-typedef Range<dint32>  Rangei;
-typedef Range<duint32> Rangeui;
-typedef Range<dint64>  Rangei64;
-typedef Range<duint64> Rangeui64;
-typedef Range<dsize>   Rangez;
-typedef Range<dfloat>  Rangef;
-typedef Range<ddouble> Ranged;
+typedef Range<duint16>      Rangeui16;
+typedef Range<dint32>       Rangei;
+typedef Range<duint32>      Rangeui;
+typedef Range<dint64>       Rangei64;
+typedef Range<duint64>      Rangeui64;
+typedef Range<dsize>        Rangez;
+typedef Range<dfloat>       Rangef;
+typedef Range<ddouble>      Ranged;
+typedef Range<const char *> Rangecc;
 
 } // namespace de
 

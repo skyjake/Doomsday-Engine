@@ -65,6 +65,12 @@ public:
     void     removeFirst() { Base::erase(Base::begin()); }
     void     removeLast()  { Base::erase(Base::begin() + size() - 1); }
     void     removeAt(int pos) { Base::erase(Base::begin() + pos); }
+
+    inline List &operator<<(const T &value)
+    {
+        push_back(value);
+        return *this;
+    }
 };
 
 } // namespace de

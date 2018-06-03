@@ -24,14 +24,14 @@
 
 namespace de {
 
-DE_PIMPL(FileIndex), public ReadWriteLockable
+DE_PIMPL(FileIndex), public Lockable
 {
     IPredicate const *predicate;
     Index index;
 
     Impl(Public *i)
         : Base(i)
-        , predicate(0)
+        , predicate(nullptr)
     {
         // File operations may occur in several threads.
         audienceForAddition.setAdditionAllowedDuringIteration(true);
@@ -53,14 +53,14 @@ DE_PIMPL(FileIndex), public ReadWriteLockable
 
     void add(File const &file)
     {
-        DE_GUARD_WRITE(this);
+        DE_GUARD(this);
 
         index.insert(std::pair<String, File *>(indexedName(file), const_cast<File *>(&file)));
     }
 
     void remove(File const &file)
     {
-        DE_GUARD_WRITE(this);
+        DE_GUARD(this);
 
         if (index.empty())
         {
@@ -92,7 +92,7 @@ DE_PIMPL(FileIndex), public ReadWriteLockable
             dir = "/" + dir;
         }
 
-        DE_GUARD_READ(this);
+        DE_GUARD(this);
 
         ConstIndexRange range = index.equal_range(baseName);
         for (Index::const_iterator i = range.first; i != range.second; ++i)
@@ -217,17 +217,17 @@ FileIndex::Index::const_iterator FileIndex::end() const
 
 void FileIndex::print() const
 {
-    DE_GUARD_READ(d);
+    DE_GUARD(d);
     for (auto i = begin(); i != end(); ++i)
     {
         LOG_TRACE("\"%s\": ", i->first << i->second->description());
     }
 }
 
-QList<File *> FileIndex::files() const
+List<File *> FileIndex::files() const
 {
-    DE_GUARD_READ(d);
-    QList<File *> list;
+    DE_GUARD(d);
+    List<File *> list;
     for (auto i = begin(); i != end(); ++i)
     {
         list.append(i->second);

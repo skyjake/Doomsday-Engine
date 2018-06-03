@@ -34,14 +34,14 @@ Block::Block(const iBlock *other)
     initCopy_Block(&_block, other);
 }
 
-Block::Block(IByteArray const &other)
+Block::Block(const IByteArray &other)
 {
     init_Block(&_block, other.size());
     // Read the other's data directly into our data buffer.
     other.get(0, data(), other.size());
 }
 
-Block::Block(Block const &other)
+Block::Block(const Block &other)
 {
     initCopy_Block(&_block, &other._block);
 }
@@ -52,12 +52,12 @@ Block::Block(Block &&moved)
     iZap(moved._block);
 }
 
-Block::Block(char const *nullTerminatedCStr)
+Block::Block(const char *nullTerminatedCStr)
 {
     initCStr_Block(&_block, nullTerminatedCStr);
 }
 
-Block::Block(void const *data, Size length)
+Block::Block(const void *data, Size length)
 {
     initData_Block(&_block, data, length);
 }
@@ -67,12 +67,12 @@ Block::Block(IIStream &stream)
     stream >> *this;
 }
 
-Block::Block(IIStream const &stream)
+Block::Block(const IIStream &stream)
 {
     stream >> *this;
 }
 
-Block::Block(IByteArray const &other, Offset at, Size count) : IByteArray()
+Block::Block(const IByteArray &other, Offset at, Size count) : IByteArray()
 {
     copyFrom(other, at, count);
 }
@@ -95,21 +95,20 @@ void Block::get(Offset atPos, Byte *values, Size count) const
         throw OffsetError("Block::get", "Out of range " +
                           String::format("(%zu[+%zu] > %zu)", atPos, count, size()));
     }
-
     std::memcpy(values, constData() + atPos, count);
 }
 
-void Block::set(Offset at, Byte const *values, Size count)
+void Block::set(Offset at, const Byte *values, Size count)
 {
     if (at > size())
     {
         /// @throw OffsetError The accessed region of the block was out of range.
         throw OffsetError("Block::set", "Out of range");
     }
-    replace(at, count, QByteArray(reinterpret_cast<char const *>(values), count));
+    setSubData_Block(&_block, at, values, count);
 }
 
-void Block::copyFrom(IByteArray const &array, Offset at, Size count)
+void Block::copyFrom(const IByteArray &array, Offset at, Size count)
 {
     // Read the other's data directly into our data buffer.
     resize(count);
@@ -121,46 +120,61 @@ void Block::resize(Size size)
     resize_Block(&_block, size);
 }
 
-IByteArray::Byte const *Block::dataConst() const
+const IByteArray::Byte *Block::cdata() const
 {
-    return reinterpret_cast<Byte const *>(QByteArray::constData());
+    return reinterpret_cast<const Byte *>(constData_Block(&_block));
 }
 
-Block &Block::append(IByteArray::Byte b)
+Block &Block::append(Byte b)
 {
-    QByteArray::append(char(b));
+    appendData_Block(&_block, &b, 1);
     return *this;
 }
 
-Block &Block::append(char const *str, int len)
+Block &Block::append(const char *str, int len)
 {
-    QByteArray::append(str, len);
+    appendData_Block(&_block, str, len);
     return *this;
 }
 
-Block &Block::operator += (char const *nullTerminatedCStr)
+Block &Block::prepend(const Block &other)
 {
-    QByteArray::append(nullTerminatedCStr);
+    iBlock *cat = concat_Block(other, &_block);
+    set_Block(&_block, cat);
+    delete_Block(cat);
     return *this;
 }
 
-Block &Block::operator += (QByteArray const &bytes)
+void Block::remove(size_t pos, size_t len)
 {
-    QByteArray::append(bytes);
+    remove_Block(&_block, pos, len);
+}
+
+Block &Block::operator += (const char *nullTerminatedCStr)
+{
+    appendCStr_Block(&_block, nullTerminatedCStr);
     return *this;
+}
+
+Block Block::mid(size_t pos, size_t len) const
+{
+    iBlock *m = mid_Block(&_block, pos, len);
+    Block i(m);
+    delete_Block(m);
+    return i;
 }
 
 Block::Byte *Block::data()
 {
-    return reinterpret_cast<Byte *>(QByteArray::data());
+    return reinterpret_cast<Byte *>(data_Block(&_block));
 }
 
-Block::Byte const *Block::data() const
+const Block::Byte *Block::data() const
 {
-    return reinterpret_cast<Byte const *>(QByteArray::data());
+    return reinterpret_cast<const Byte *>(constData_Block(&_block));
 }
 
-void Block::operator >> (Writer &to) const
+void Block::operator>>(Writer &to) const
 {
     // First write the length of the block.
     to << duint32(size());
@@ -168,7 +182,7 @@ void Block::operator >> (Writer &to) const
     to.writeBytes(size(), *this);
 }
 
-void Block::operator << (Reader &from)
+void Block::operator<<(Reader &from)
 {
     duint32 size = 0;
     from >> size;
@@ -177,13 +191,13 @@ void Block::operator << (Reader &from)
     from.readBytes(size, *this);
 }
 
-Block &Block::operator += (Block const &other)
+Block &Block::operator+=(const Block &other)
 {
-    QByteArray::append(other);
+    append_Block(&_block, other);
     return *this;
 }
 
-Block &Block::operator += (IByteArray const &byteArray)
+Block &Block::operator+=(const IByteArray &byteArray)
 {
     Offset pos = size();
     resize(size() + byteArray.size());
@@ -191,13 +205,13 @@ Block &Block::operator += (IByteArray const &byteArray)
     return *this;
 }
 
-Block &Block::operator = (Block const &other)
+Block &Block::operator=(const Block &other)
 {
-    *static_cast<QByteArray *>(this) = static_cast<QByteArray const &>(other);
+    set_Block(&_block, other);
     return *this;
 }
 
-Block &Block::operator = (IByteArray const &byteArray)
+Block &Block::operator=(const IByteArray &byteArray)
 {
     copyFrom(byteArray, 0, byteArray.size());
     return *this;
@@ -205,19 +219,25 @@ Block &Block::operator = (IByteArray const &byteArray)
 
 Block Block::compressed(int level) const
 {
-    return qCompress(*this, level);
+    iBlock *deflated = compressLevel_Block(&_block, level);
+    Block i(deflated);
+    delete_Block(deflated);
+    return i;
 }
 
 Block Block::decompressed() const
 {
-    return qUncompress(*this);
+    iBlock *inflated = decompress_Block(&_block);
+    Block i(inflated);
+    delete_Block(inflated);
+    return i;
 }
 
 Block Block::md5Hash() const
 {
-    QCryptographicHash hash(QCryptographicHash::Md5);
-    hash.addData(*this);
-    return hash.result();
+    Block hash(16);
+    md5_Block(&_block, hash.data());
+    return hash;
 }
 
 static char asciiHexNumber(char n)
@@ -228,13 +248,12 @@ static char asciiHexNumber(char n)
 
 String Block::asHexadecimalText() const
 {
-    int const count = QByteArray::size();
-    String hex(count * 2, QChar('0'));
-    for (int i = 0; i < count; i++)
+    String hex;
+    for (size_t i = 0; i < size(); i++)
     {
-        auto const ch = duint8(at(i));
-        hex[i*2]     = QChar(asciiHexNumber(ch >> 4));
-        hex[i*2 + 1] = QChar(asciiHexNumber(ch & 0xf));
+        auto const ch = at(i);
+        hex += asciiHexNumber(ch >> 4);
+        hex += asciiHexNumber(ch & 0xf);
     }
     return hex;
 }
@@ -248,8 +267,8 @@ Block Block::mapAsIndices(int                        valuesPerIndex,
 
     Block mapped(4 * size()); // output is always packed as uint32
 
-    const Byte *in  = dataConst();
-    const Byte *end = dataConst() + size();
+    const Byte *in  = cdata();
+    const Byte *end = cdata() + size();
     uint32_t *  out = reinterpret_cast<uint32_t *>(mapped.data());
 
     Byte entry[4]{defaultValues[0], defaultValues[1], defaultValues[2], defaultValues[3]};
@@ -273,7 +292,7 @@ Block Block::mapAsIndices(int               valuesPerIndex,
 
     Block mapped(4 * size()); // output is always packed as uint32
 
-    const Byte *begin = dataConst();
+    const Byte *begin = cdata();
     const Byte *in    = begin;
     const Byte *end   = begin + size();
     uint32_t *  out   = reinterpret_cast<uint32_t *>(mapped.data());
@@ -295,40 +314,7 @@ Block Block::mapAsIndices(int               valuesPerIndex,
     return mapped;
 }
 
-/*
-    Image Image::fromMaskedIndexedData(Size const &size, IByteArray const &imageAndMask,
-                                       IByteArray const &palette)
-    {
-        duint const layerSize = size.x * size.y;
-
-        QImage rgba(size.x, size.y, QImage::Format_ARGB32);
-
-        // Process the source data by row.
-        Block color(size.x);
-        Block alpha(size.x);
-
-        for (duint y = 0; y < size.y; ++y)
-        {
-            duint32 *dest = reinterpret_cast<duint32 *>(rgba.bits() + y * rgba.bytesPerLine());
-
-            imageAndMask.get(size.x * y,             color.data(), color.size());
-            imageAndMask.get(size.x * y + layerSize, alpha.data(), alpha.size());
-
-            auto const *srcColor = color.dataConst();
-            auto const *srcAlpha = alpha.dataConst();
-
-            for (duint x = 0; x < size.x; ++x)
-            {
-                duint8 paletteColor[3];
-                palette.get(*srcColor++ * 3, paletteColor, 3);
-                *dest++ = qRgba(paletteColor[0], paletteColor[1], paletteColor[2], *srcAlpha++);
-            }
-        }
-
-        return rgba;
-    }    */
-
-Block Block::join(QList<Block> const &blocks, Block const &sep) // static
+Block Block::join(const List<Block> &blocks, const Block &sep) // static
 {
     if (blocks.isEmpty()) return Block();
 
@@ -343,7 +329,7 @@ Block Block::join(QList<Block> const &blocks, Block const &sep) // static
 
 void Block::clear()
 {
-    QByteArray::clear();
+    clear_Block(&_block);
 }
 
 } // namespace de

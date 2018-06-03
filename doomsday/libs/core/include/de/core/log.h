@@ -20,13 +20,13 @@
 #ifndef LIBCORE_LOG_H
 #define LIBCORE_LOG_H
 
-#include "../Time"
-#include "../String"
-#include "../Lockable"
 #include "../Guard"
 #include "../ISerializable"
+#include "../List"
+#include "../Lockable"
+#include "../String"
+#include "../Time"
 
-#include <QList>
 #include <vector>
 #include <string>
 #include <cstdlib>
@@ -320,7 +320,7 @@ public:
         ContextMask = 0x0fff0000
     };
 
-    static String contextToText(duint32 context)
+    static String contextToText(Flags context)
     {
         String const suffix = (context & Dev? "Dev" : "");
         switch (context & DomainMask)
@@ -336,7 +336,7 @@ public:
         }
     }
 
-    static Context textToContext(String text)
+    static Context textToContext(const String &text)
     {
         duint32 val = 0;
         if (text.endsWith("Dev"))
@@ -416,7 +416,7 @@ public:
         }
     }
 
-    static Level textToLevel(String text)
+    static Level textToLevel(const String &text)
     {
         for (int i = XVerbose; i <= HighestLogLevel; ++i)
         {
@@ -484,10 +484,11 @@ public:
         void setValue(dint64 i);
         void setValue(ddouble d);
         void setValue(void const *p);
-        void setValue(char const *s);
-        void setValue(String const &s);
-        void setValue(Base const &arg);
-        void setValue(std::array<char, 4> const &typecode);
+        void setValue(const char *s);
+        void setValue(const std::string &s);
+        void setValue(const String &s);
+        void setValue(const Base &arg);
+        void setValue(const std::array<char, 4> &typecode);
 
         template <typename ValueType>
         Arg &set(ValueType const &s) { setValue(s); return *this; }
@@ -503,7 +504,7 @@ public:
             DE_ASSERT(_type == FloatingPointArgument);
             return _data.floatValue;
         }
-        inline QString stringValue() const {
+        inline String stringValue() const {
             DE_ASSERT(_type == StringArgument);
             return *_data.stringValue;
         }
@@ -528,7 +529,7 @@ public:
     private:
         Type _type;
         union Data {
-            dint64 intValue;
+            dint64  intValue;
             ddouble floatValue;
             String *stringValue;
         } _data;
@@ -565,9 +566,8 @@ public:
         /// Entry domain is not included in the output.
         OmitDomain = 0x80
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
-    typedef QList<Arg *> Args;
+    typedef List<Arg *> Args;
 
 public:
     /**
@@ -575,7 +575,11 @@ public:
      */
     LogEntry();
 
-    LogEntry(duint32 metadata, String const &section, int sectionDepth, String const &format, Args args);
+    LogEntry(duint32       metadata,
+             const String &section,
+             int           sectionDepth,
+             const String &format,
+             const Args &  args);
 
     /**
      * Copy constructor.
@@ -627,19 +631,15 @@ private:
     void advanceFormat(String::const_iterator &i) const;
 
 private:
-    Time _when;
+    Time    _when;
     duint32 _metadata;
-    String _section;
-    int _sectionDepth;
-    String _format;
-    Flags _defaultFlags;
-    bool _disabled;
-    Args _args;
+    String  _section;
+    int     _sectionDepth;
+    String  _format;
+    Flags   _defaultFlags;
+    bool    _disabled;
+    Args    _args;
 };
-
-QTextStream &operator << (QTextStream &stream, LogEntry::Arg const &arg);
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(LogEntry::Flags)
 
 /**
  * Provides means for adding log entries into the log entry buffer (LogBuffer).
@@ -786,9 +786,9 @@ public:
     ~LogEntryStager();
 
 private:
-    bool _disabled;
-    duint32 _metadata;
-    String _format;
+    bool           _disabled;
+    duint32        _metadata;
+    String         _format;
     LogEntry::Args _args;
 };
 

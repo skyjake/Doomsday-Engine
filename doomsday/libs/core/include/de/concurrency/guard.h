@@ -22,7 +22,7 @@
 
 #include "../libcore.h"
 #include "../Lockable"
-#include "../ReadWriteLockable"
+//#include "../ReadWriteLockable"
 
 namespace de {
 
@@ -36,6 +36,7 @@ namespace de {
     de::Guard _guarding_##varName(varName); \
     DE_UNUSED(_guarding_##varName);
 
+#if 0
 #define DE_GUARD_READ(varName) \
     de::Guard _guarding_##varName(varName, de::Guard::Reading); \
     DE_UNUSED(_guarding_##varName);
@@ -43,6 +44,7 @@ namespace de {
 #define DE_GUARD_WRITE(varName) \
     de::Guard _guarding_##varName(varName, de::Guard::Writing); \
     DE_UNUSED(_guarding_##varName);
+#endif
 
 /**
  * Locks the target @a targetName until the end of the current scope.
@@ -55,6 +57,7 @@ namespace de {
     de::Guard varName(targetName); \
     DE_UNUSED(varName);
 
+#if 0
 #define DE_GUARD_READ_FOR(targetName, varName) \
     de::Guard varName(targetName, de::Guard::Reading); \
     DE_UNUSED(varName);
@@ -62,9 +65,10 @@ namespace de {
 #define DE_GUARD_WRITE_FOR(targetName, varName) \
     de::Guard varName(targetName, de::Guard::Writing); \
     DE_UNUSED(varName);
+#endif
 
 class Lockable;
-class ReadWriteLockable;
+//class ReadWriteLockable;
 
 /**
  * Utility for locking a Lockable or ReadWriteLockable object for the lifetime
@@ -77,25 +81,32 @@ class ReadWriteLockable;
 class DE_PUBLIC Guard
 {
 public:
-    enum LockMode { Reading, Writing };
+//    enum LockMode { Reading, Writing };
 
 public:
     /**
      * The target object is locked.
      */
-    inline Guard(Lockable const &target) : _target(&target), _rwTarget(0) {
+    inline Guard(Lockable const &target)
+        : _target(&target)
+//        , _rwTarget(nullptr)
+    {
         _target->lock();
     }
 
     /**
      * The target object is locked.
      */
-    inline Guard(Lockable const *target) : _target(target), _rwTarget(0) {
-        DE_ASSERT(target != 0);
+    inline Guard(Lockable const *target)
+        : _target(target)
+//        , _rwTarget(nullptr)
+    {
+        DE_ASSERT(target != nullptr);
         _target->lock();
     }
 
-    inline Guard(ReadWriteLockable const &target, LockMode mode) : _target(0), _rwTarget(&target) {
+#if 0
+    inline Guard(ReadWriteLockable const &target, LockMode mode) : _target(nullptr), _rwTarget(&target) {
         if (mode == Reading) {
             _rwTarget->lockForRead();
         }
@@ -104,8 +115,8 @@ public:
         }
     }
 
-    inline Guard(ReadWriteLockable const *target, LockMode mode) : _target(0), _rwTarget(target) {
-        DE_ASSERT(_rwTarget != 0);
+    inline Guard(ReadWriteLockable const *target, LockMode mode) : _target(nullptr), _rwTarget(target) {
+        DE_ASSERT(_rwTarget != nullptr);
         if (mode == Reading) {
             _rwTarget->lockForRead();
         }
@@ -113,18 +124,19 @@ public:
             _rwTarget->lockForWrite();
         }
     }
+#endif
 
     /**
      * The target object is unlocked.
      */
     inline ~Guard() {
-        if (_target)   _target->unlock();
-        if (_rwTarget) _rwTarget->unlock();
+        if (_target) _target->unlock();
+//        if (_rwTarget) _rwTarget->unlock();
     }
 
 private:
     Lockable const *_target;
-    ReadWriteLockable const *_rwTarget;
+//    ReadWriteLockable const *_rwTarget;
 };
 
 } // namespace de

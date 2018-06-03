@@ -75,14 +75,14 @@ public:
         /**
          * Segments are implicitly converted to text strings.
          */
-        operator String () const;
+        operator String() const;
 
         /**
          * Converts the segment to a string.
          */
         String toString() const;
 
-        inline QStringRef const &toStringRef() const { return range; }
+        Rangecc toRange() const { return range; }
 
         /**
          * Determines the length of the segment in characters.
@@ -119,11 +119,12 @@ public:
             return !(*this == other);
         }
 
-        bool operator == (QString const &text) const {
-            return !range.compare(text, Qt::CaseInsensitive);
+        bool operator == (const char *text) const {
+            const iRangecc seg{range.start, range.end};
+            return cmpSc_Rangecc(&seg, text, &iCaseInsensitive) == 0;
         }
 
-        bool operator != (QString const &text) const {
+        bool operator != (const char *text) const {
             return !(*this == text);
         }
 
@@ -134,12 +135,11 @@ public:
         bool operator < (Segment const &other) const;
 
         enum Flag { GotHashKey = 0x1, WildCardChecked = 0x2, IncludesWildCard = 0x4 };
-        Q_DECLARE_FLAGS(Flags, Flag)
 
     private:
         mutable Flags flags;
         mutable hash_type hashKey;
-        QStringRef range;
+        Rangecc range;
 
         friend class Path;
     };
@@ -157,14 +157,14 @@ public:
      *              (implicit sharing): all white space is included in the path.
      * @param sep   Character used to separate path segments in @a path.
      */
-    Path(String const &path, QChar sep = '/');
+    Path(String const &path, Char sep = '/');
 
     /**
      * Construct a path from @a str with '/' as the segment separator.
      *
      * @param str  String.
      */
-    Path(QString const &str);
+    Path(String const &str);
 
     /**
      * Construct a path from a UTF-8 C-style string.
@@ -205,7 +205,7 @@ public:
      * operator for concatenating paths in a way that takes care of separators
      * and path relativity.
      */
-    Path operator + (QString const &str) const;
+    Path operator + (String const &str) const;
 
     /**
      * @copydoc operator+
@@ -263,7 +263,7 @@ public:
      *
      * @return Concatenated path.
      */
-    Path operator / (QString other) const;
+    Path operator / (const String &other) const;
 
     Path operator / (char const *otherNullTerminatedUtf8) const;
 
@@ -300,10 +300,10 @@ public:
     dsize size() const;
 
     /// Returns the first character of the path.
-    QChar first() const;
+    Char first() const;
 
     /// Returns the last character of the path.
-    QChar last() const;
+    Char last() const;
 
     /**
      * Clear the path.
@@ -325,7 +325,7 @@ public:
      * @param newPath  New path.
      * @param sep      Character used to separate path segments in @a path.
      */
-    Path &set(String const &newPath, QChar sep = '/');
+    Path &set(String const &newPath, Char sep = '/');
 
     /**
      * Returns a copy of the path where all segment separators have been
@@ -335,12 +335,12 @@ public:
      *
      * @return  Path with new separators.
      */
-    Path withSeparators(QChar sep = '/') const;
+    Path withSeparators(Char sep = '/') const;
 
     /**
      * Returns the character used as segment separator.
      */
-    QChar separator() const;
+    Char separator() const;
 
     /**
      * Adds a separator in the end of the path, if one is not there already.
@@ -463,8 +463,6 @@ private:
     DE_PRIVATE(d)
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(Path::Segment::Flags)
-
 /**
  * Utility class for specifying paths that use a dot (.) as the path separator.
  * @ingroup data
@@ -473,7 +471,7 @@ class DE_PUBLIC DotPath : public Path
 {
 public:
     DotPath(String const &path = "")        : Path(path, '.') {}
-    DotPath(QString const &str)             : Path(str, '.') {}
+//    DotPath(QString const &str)             : Path(str, '.') {}
     DotPath(char const *nullTerminatedCStr) : Path(nullTerminatedCStr, '.') {}
     DotPath(Path const &other)              : Path(other) {}
     DotPath(Path &&moved)                   : Path(moved) {}
@@ -486,9 +484,9 @@ public:
     DotPath &operator = (String const &str) {
         return *this = DotPath(str);
     }
-    DotPath &operator = (QString const &str) {
-        return *this = DotPath(str);
-    }
+//    DotPath &operator = (QString const &str) {
+//        return *this = DotPath(str);
+//    }
     DotPath &operator = (Path const &other) {
         Path::operator = (other);
         return *this;
@@ -524,46 +522,32 @@ class DE_PUBLIC PathRef
 public:
     PathRef(Path const &path)
         : _path(path)
-        , _range(0, path.segmentCount()) {}
+        , _range(0, path.segmentCount())
+    {}
     PathRef(Path const &path, Rangei const &segRange)
         : _path(path)
-        , _range(segRange) {}
+        , _range(segRange)
+    {}
 
     Path const &path() const { return _path; }
-    Rangei range() const { return _range; }
+    Rangei      range() const { return _range; }
 
-    bool isEmpty() const { return _range.isEmpty(); }
-    bool isAbsolute() const {
-        return !isEmpty() && !firstSegment().size();
-    }
-    Path::Segment const &segment(int index) const {
-        return _path.segment(_range.start + index);
-    }
-    int segmentCount() const { return _range.size(); }
-    inline Path::Segment const &firstSegment() const {
-        return segment(0);
-    }
-    inline Path::Segment const &lastSegment() const {
-        return segment(segmentCount() - 1);
-    }
-    PathRef subPath(Rangei const &sub) const {
-        return PathRef(_path, sub + _range.start);
-    }
-    Path toPath() const;
+    bool    isEmpty() const { return _range.isEmpty(); }
+    bool    isAbsolute() const { return !isEmpty() && !firstSegment().size(); }
+    PathRef subPath(Rangei const &sub) const { return PathRef(_path, sub + _range.start); }
+    Path    toPath() const;
+
+    const Path::Segment &segment(int index) const { return _path.segment(_range.start + index); }
+    int                  segmentCount() const { return _range.size(); }
+
+    inline const Path::Segment &firstSegment() const { return segment(0); }
+    inline const Path::Segment &lastSegment() const { return segment(segmentCount() - 1); }
 
 private:
     Path const &_path;
-    Rangei _range;
+    Rangei      _range;
 };
 
 } // namespace de
-
-/*namespace std {
-    // std::swap specialization for de::Path
-    template <>
-    inline void swap<de::Path>(de::Path &a, de::Path &b) {
-        a.swap(b);
-    }
-}*/
 
 #endif // LIBCORE_PATH_H

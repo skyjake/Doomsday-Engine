@@ -29,8 +29,6 @@
 #include "../Time"
 #include "../filesys/Node"
 
-#include <QFlags>
-
 namespace de {
 
 class FileSystem;
@@ -89,7 +87,6 @@ public:
         Truncate  = 0x2,
         DontPrune = 0x4, ///< File should never be pruned. Used for files we create ourselves.
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     /// Type of file.
     enum class Type
@@ -350,7 +347,7 @@ public:
      *
      * @return Text preformatted for fixed-width printing (padded with spaces).
      */
-    static String fileListAsText(QList<File const *> files);
+    static String fileListAsText(List<File const *> files);
 
 protected:
     /**
@@ -363,8 +360,6 @@ protected:
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(File::Flags)
 
 } // namespace de
 

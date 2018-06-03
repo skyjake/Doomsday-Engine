@@ -86,6 +86,7 @@ public:
     String();
     String(const String &other);
     String(String &&moved);
+    String(const Block &bytes);
     String(const iString *other);
     String(const std::string &text);
     String(const char *nullTerminatedCStr);
@@ -151,6 +152,8 @@ public:
 
     /// Returns the last character of the string.
     Char last() const;
+
+    bool contains(const char *cStr) const;
 
     bool beginsWith(const String &s, CaseSensitivity cs = CaseSensitive) const
     {
@@ -524,6 +527,17 @@ public:
      * @return Formatted output.
      */
     static String format(const char *format, ...);
+
+    static String number(dint8 value)       { return String::format("%d", value); }
+    static String number(dint16 value)      { return String::format("%d", value); }
+    static String number(dint32 value)      { return String::format("%d", value); }
+    static String number(dint64 value)      { return String::format("%lld", value); }
+    static String number(duint8 value)      { return String::format("%u", value); }
+    static String number(duint16 value)     { return String::format("%u", value); }
+    static String number(duint32 value)     { return String::format("%u", value); }
+    static String number(duint64 value)     { return String::format("%llu", value); }
+    static String number(dfloat value)      { return String::format("%f", value); }
+    static String number(ddouble int value) { return String::format("%f", value); }
 
     /**
      * Formats data according to formatting instructions. Outputs a

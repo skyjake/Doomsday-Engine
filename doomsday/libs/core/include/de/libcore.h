@@ -329,6 +329,9 @@
 #if defined(__cplusplus) && !defined(DE_C_API_ONLY)
 namespace de {
 
+DE_PUBLIC void debug(const char *, ...);
+DE_PUBLIC void warning(const char *, ...);
+
 /**
  * Formats a string using the standard C printf() syntax.
  *
@@ -770,7 +773,8 @@ typedef double   ddouble;    ///< 64-bit floating point number.
 typedef size_t   dsize;      // Likely unsigned long.
 typedef long     dlong;
 
-typedef wchar_t Char;
+typedef wchar_t  Char;
+typedef duint32  Flags;
 
 // Pointer-integer conversion (used for legacy code).
 #ifdef DE_64BIT

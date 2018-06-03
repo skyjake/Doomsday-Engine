@@ -27,30 +27,25 @@
 #include "de/FIFO"
 #include "../src/core/logtextstyle.h"
 
-#include <QMap>
-#include <QTextStream>
-#include <QThread>
-#include <QThreadStorage>
-#include <QStringList>
 #include <array>
 
 namespace de {
 
-char const *TEXT_STYLE_NORMAL        = DE_ESC("0"); // normal
-char const *TEXT_STYLE_MESSAGE       = DE_ESC("0"); // normal
-char const *TEXT_STYLE_MAJOR_MESSAGE = DE_ESC("1"); // major
-char const *TEXT_STYLE_MINOR_MESSAGE = DE_ESC("2"); // minor
-char const *TEXT_STYLE_SECTION       = DE_ESC("3"); // meta
-char const *TEXT_STYLE_MAJOR_SECTION = DE_ESC("4"); // major meta
-char const *TEXT_STYLE_MINOR_SECTION = DE_ESC("5"); // minor meta
-char const *TEXT_STYLE_LOG_TIME      = DE_ESC("6"); // aux meta
-char const *TEXT_MARK_INDENT         = DE_ESC(">");
+const char *TEXT_STYLE_NORMAL        = DE_ESC("0"); // normal
+const char *TEXT_STYLE_MESSAGE       = DE_ESC("0"); // normal
+const char *TEXT_STYLE_MAJOR_MESSAGE = DE_ESC("1"); // major
+const char *TEXT_STYLE_MINOR_MESSAGE = DE_ESC("2"); // minor
+const char *TEXT_STYLE_SECTION       = DE_ESC("3"); // meta
+const char *TEXT_STYLE_MAJOR_SECTION = DE_ESC("4"); // major meta
+const char *TEXT_STYLE_MINOR_SECTION = DE_ESC("5"); // minor meta
+const char *TEXT_STYLE_LOG_TIME      = DE_ESC("6"); // aux meta
+const char *TEXT_MARK_INDENT         = DE_ESC(">");
 
-char const *MAIN_SECTION = "";
+static const char *MAIN_SECTION = "";
 
 /// If the section is longer than this, it will be alone on one line while
 /// the rest of the entry continues after a break.
-static int const LINE_BREAKING_SECTION_LENGTH = 30;
+static const int LINE_BREAKING_SECTION_LENGTH = 30;
 
 namespace internal {
 
@@ -95,7 +90,7 @@ void LogEntry::Arg::clear()
     if (_type == StringArgument)
     {
         delete _data.stringValue;
-        _data.stringValue = 0;
+        _data.stringValue = nullptr;
         _type = IntegerArgument;
     }
 }
@@ -163,17 +158,24 @@ void LogEntry::Arg::setValue(char const *s)
     _data.stringValue = new String(s);
 }
 
-void LogEntry::Arg::setValue(String const &s)
+void LogEntry::Arg::setValue(const std::string &s)
+{
+    clear();
+    _type = StringArgument;
+    _data.stringValue = new String(s);
+}
+
+void LogEntry::Arg::setValue(const String &s)
 {
     clear();
     _type = StringArgument;
     // Ensure a deep copy of the string is taken.
-    _data.stringValue = new String(s.data(), s.size());
+    _data.stringValue = new String(s);
 }
 
-void LogEntry::Arg::setValue(std::array<char, 4> const &typecode)
+void LogEntry::Arg::setValue(const std::array<char, 4> &typecode)
 {
-    setValue(QString::fromLatin1(typecode.data(), 4));
+    setValue(String(typecode.data(), 4));
 }
 
 void LogEntry::Arg::setValue(LogEntry::Arg::Base const &arg)
@@ -299,7 +301,11 @@ void LogEntry::Arg::returnToPool(Arg *arg)
 LogEntry::LogEntry() : _metadata(0), _sectionDepth(0), _disabled(true)
 {}
 
-LogEntry::LogEntry(duint32 metadata, String const &section, int sectionDepth, String const &format, Args args)
+LogEntry::LogEntry(duint32       metadata,
+                   String const &section,
+                   int           sectionDepth,
+                   String const &format,
+                   const Args &  args)
     : _metadata(metadata)
     , _section(section)
     , _sectionDepth(sectionDepth)
@@ -324,7 +330,7 @@ LogEntry::LogEntry(LogEntry const &other, Flags extraFlags)
     , _defaultFlags(other._defaultFlags | extraFlags)
     , _disabled(other._disabled)
 {
-    DE_FOR_EACH_CONST(Args, i, other._args)
+    for (const auto &i : other._args)
     {
         Arg *a = Arg::newFromPool();
         *a = **i;

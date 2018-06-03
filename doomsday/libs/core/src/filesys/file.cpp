@@ -52,7 +52,7 @@ DE_PIMPL_NOREF(File)
     /// File information.
     Record info;
 
-    Impl() : source(0), originFeed(0) {}
+    Impl() : source(nullptr), originFeed(nullptr) {}
 
     DE_PIMPL_AUDIENCE(Deletion)
 };
@@ -144,7 +144,7 @@ String File::description(int verbosity) const
 
     if (verbosity > 1)
     {
-        if (!mode().testFlag(Write))
+        if (~mode() & Write)
         {
             desc = "read-only " + desc;
         }

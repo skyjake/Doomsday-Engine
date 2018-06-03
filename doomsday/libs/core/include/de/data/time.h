@@ -24,9 +24,6 @@
 #include "../math.h"
 #include "../ISerializable"
 
-#include <QDateTime>
-#include <QTextStream>
-
 namespace de {
 
 class Date;
@@ -62,49 +59,45 @@ public:
          *
          * @param seconds  Length of the time span.
          */
-        Span(ddouble seconds = 0) : _seconds(seconds) {}
+        Span(ddouble seconds = 0)
+            : _seconds(seconds)
+        {}
 
         /**
          * Conversion to the numeric type (floating-point seconds).
          */
         operator ddouble() const { return _seconds; }
 
-        inline bool operator < (ddouble const &d) const {
-            return _seconds < d;
-        }
+        inline bool operator<(ddouble d) const { return _seconds < d; }
 
-        inline bool operator > (ddouble const &d) const {
-            return _seconds > d;
-        }
+        inline bool operator>(ddouble d) const { return _seconds > d; }
 
-        inline bool operator == (ddouble const &d) const {
-            return fequal(_seconds, d);
-        }
+        inline bool operator==(ddouble d) const { return fequal(_seconds, d); }
 
-        inline Span operator + (ddouble const &d) const {
-            return _seconds + d;
-        }
+        inline Span operator+(ddouble d) const { return _seconds + d; }
 
-        inline Span &operator += (ddouble const &d) {
+        inline Span &operator+=(ddouble d)
+        {
             _seconds += d;
             return *this;
         }
 
-        inline Span operator - (ddouble const &d) const {
-            return _seconds - d;
-        }
+        inline Span operator-(ddouble d) const { return _seconds - d; }
 
-        inline Span &operator -= (ddouble const &d) {
+        inline Span &operator-=(ddouble d)
+        {
             _seconds -= d;
             return *this;
         }
 
-        inline Span &operator *= (ddouble const &d) {
+        inline Span &operator*=(ddouble d)
+        {
             _seconds *= d;
             return *this;
         }
 
-        inline Span &operator /= (ddouble const &d) {
+        inline Span &operator/=(ddouble d)
+        {
             _seconds /= d;
             return *this;
         }
@@ -124,9 +117,7 @@ public:
 
         ddouble asDays() const;
 
-        static Span fromMilliSeconds(duint64 milliseconds) {
-            return Span(milliseconds/1000.0);
-        }
+        static Span fromMilliSeconds(duint64 milliseconds) { return Span(milliseconds / 1000.0); }
 
         /**
          * Determines the amount of time passed since the beginning of the native
@@ -140,8 +131,8 @@ public:
         void sleep() const;
 
         // Implements ISerializable.
-        void operator >> (Writer &to) const;
-        void operator << (Reader &from);
+        void operator>>(Writer &to) const;
+        void operator<<(Reader &from);
 
     private:
         ddouble _seconds;
@@ -169,7 +160,7 @@ public:
 
     Time(Time &&moved);
 
-    Time(QDateTime const &t);
+//    Time(QDateTime const &t);
 
     /**
      * Construct a time relative to the shared high performance timer.
@@ -282,15 +273,15 @@ public:
      */
     static Time fromText(String const &text, Format format = ISOFormat);
 
-    /**
+    /*
      * Converts the time to a QDateTime.
      */
-    QDateTime &asDateTime();
+//    QDateTime &asDateTime();
 
-    /**
+    /*
      * Converts the time to a QDateTime.
      */
-    QDateTime const &asDateTime() const;
+//    QDateTime const &asDateTime() const;
 
     /**
      * Converts the time into a Date.
@@ -323,7 +314,7 @@ private:
     DE_PRIVATE(d)
 };
 
-DE_PUBLIC QTextStream &operator << (QTextStream &os, Time const &t);
+//DE_PUBLIC QTextStream &operator << (QTextStream &os, Time const &t);
 
 typedef Time::Span TimeSpan;
 

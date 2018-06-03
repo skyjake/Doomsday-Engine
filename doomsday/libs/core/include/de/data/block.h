@@ -52,11 +52,11 @@ class DE_PUBLIC Block
 public:
     Block(Size initialSize = 0);
     Block(const iBlock *);
-    Block(IByteArray const &array);
-    Block(Block const &other);
+    Block(const IByteArray &array);
+    Block(const Block &other);
     Block(Block &&moved);
-    Block(char const *nullTerminatedCStr);
-    Block(void const *data, Size length);
+    Block(const char *nullTerminatedCStr);
+    Block(const void *data, Size length);
 
     /**
      * Constructs a block by reading the contents of an input stream. The block
@@ -74,7 +74,7 @@ public:
      *
      * @param stream  Stream to read from.
      */
-    Block(IIStream const &stream);
+    Block(const IIStream &stream);
 
     /**
      * Construct a new block and copy its contents from the specified
@@ -84,34 +84,42 @@ public:
      * @param at     Offset within source data.
      * @param count  Number of bytes to copy. Also the size of the new block.
      */
-    Block(IByteArray const &array, Offset at, Size count);
+    Block(const IByteArray &array, Offset at, Size count);
 
     virtual ~Block();
 
     Byte *data();
-    Byte const *dataConst() const;
-    inline Byte const *cdata() const { return dataConst(); }
-    inline Byte const *constData() const { return dataConst(); }
+    const Byte *cdata() const;
+    inline const Byte *constData() const { return cdata(); }
 
     Block &append(Byte b);
-    Block &append(char const *str, int len);
+    Block &append(const char *str, int len);
+    Block &prepend(const Block &);
+    void   remove(size_t pos, size_t len = 1);
 
                     operator const iBlock *() const { return &_block; }
     inline explicit operator bool() const { return !isEmpty_Block(&_block); }
 
-    Block &operator += (char const *nullTerminatedCStr);
-//    Block &operator += (QByteArray const &bytes);
+    Block &operator += (const char *nullTerminatedCStr);
+//    Block &operator += (const QByteArray &bytes);
+
+    inline Byte &operator[](size_t pos) { return data()[pos]; }
+    inline Byte operator[](size_t pos) const { return at(pos); }
+
+    inline Byte at(size_t pos) const { return at_Block(&_block, pos); }
+
+    Block mid(size_t pos, size_t len = iInvalidSize) const;
 
     /// Appends a block after this one.
-    Block &operator += (Block const &other);
+    Block &operator += (const Block &other);
 
     /// Appends a byte array after this one.
-    Block &operator += (IByteArray const &byteArray);
+    Block &operator += (const IByteArray &byteArray);
 
     /// Copies the contents of another block.
-    Block &operator = (Block const &other);
+    Block &operator = (const Block &other);
 
-    Block &operator = (IByteArray const &byteArray);
+    Block &operator = (const IByteArray &byteArray);
 
     Block compressed(int level = -1) const;
     Block decompressed() const;
@@ -165,13 +173,13 @@ public:
     // Implements IByteArray.
     Size size() const;
     void get(Offset at, Byte *values, Size count) const;
-    void set(Offset at, Byte const *values, Size count);
+    void set(Offset at, const Byte *values, Size count);
 
     // Implements IBlock.
     void clear();
-    void copyFrom(IByteArray const &array, Offset at, Size count);
+    void copyFrom(const IByteArray &array, Offset at, Size count);
     void resize(Size size);
-    Byte const *data() const;
+    const Byte *data() const;
 
     // Implements ISerializable.
     /**
@@ -188,7 +196,23 @@ public:
     void operator << (Reader &from);
 
 public:
-    static Block join(List<Block> const &blocks, Block const &sep = Block());
+    // Iterators:
+
+    struct const_iterator
+    {
+        const Byte *ptr;
+
+        Byte operator*() const { return *ptr; }
+        bool operator==(const const_iterator &i) const { return ptr == i.ptr; }
+        bool operator!=(const const_iterator &i) const { return ptr != i.ptr; }
+        void operator++() { ptr++; }
+    };
+
+    const_iterator begin() const { return {data()}; }
+    const_iterator end() const   { return {data() + size()}; }
+
+public:
+    static Block join(const List<Block> &blocks, const Block &sep = Block());
 
 private:
     iBlock _block;

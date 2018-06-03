@@ -26,47 +26,46 @@
 #include "de/ByteRefArray"
 #include "de/data/byteorder.h"
 
-#include <QTextStream>
 #include <cstring>
 
 namespace de {
 
 DE_PIMPL_NOREF(Reader)
 {
-    ByteOrder const &convert;
+    const ByteOrder &convert;
     duint version;
 
     // Random access source:
-    IByteArray const *source;
+    const IByteArray *source;
     IByteArray::Offset offset;
     IByteArray::Offset markOffset;
 
     // Stream source:
     IIStream *stream;
-    IIStream const *constStream;
+    const IIStream *constStream;
     dsize numReceivedBytes;
     Block incoming;     ///< Buffer for bytes received so far from the stream.
     bool marking;       ///< @c true, if marking is occurring (mark() called).
     Block markedData;   ///< All read data since the mark was set.
 
-    Impl(ByteOrder const &order, IByteArray const *src, IByteArray::Offset off)
+    Impl(const ByteOrder &order, const IByteArray *src, IByteArray::Offset off)
         : convert(order), version(DE_PROTOCOL_LATEST),
           source(src), offset(off), markOffset(off),
-          stream(0), constStream(0), numReceivedBytes(0), marking(false)
+          stream(nullptr), constStream(nullptr), numReceivedBytes(0), marking(false)
     {}
 
-    Impl(ByteOrder const &order, IIStream *str)
+    Impl(const ByteOrder &order, IIStream *str)
         : convert(order), version(DE_PROTOCOL_LATEST),
-          source(0), offset(0), markOffset(0),
-          stream(str), constStream(0), numReceivedBytes(0), marking(false)
+          source(nullptr), offset(0), markOffset(0),
+          stream(str), constStream(nullptr), numReceivedBytes(0), marking(false)
     {
         upgradeToByteArray();
     }
 
-    Impl(ByteOrder const &order, IIStream const *str)
+    Impl(const ByteOrder &order, const IIStream *str)
         : convert(order), version(DE_PROTOCOL_LATEST),
-          source(0), offset(0), markOffset(0),
-          stream(0), constStream(str), numReceivedBytes(0), marking(false)
+          source(nullptr), offset(0), markOffset(0),
+          stream(nullptr), constStream(str), numReceivedBytes(0), marking(false)
     {
         upgradeToByteArray();
     }
@@ -79,17 +78,17 @@ DE_PIMPL_NOREF(Reader)
     {
         if (stream)
         {
-            if ((source = dynamic_cast<IByteArray const *>(stream)) != 0)
+            if ((source = dynamic_cast<const IByteArray *>(stream)) != nullptr)
             {
-                stream = 0;
+                stream = nullptr;
             }
         }
 
         if (constStream)
         {
-            if ((source = dynamic_cast<IByteArray const *>(constStream)) != 0)
+            if ((source = dynamic_cast<const IByteArray *>(constStream)) != nullptr)
             {
-                constStream = 0;
+                constStream = nullptr;
             }
         }
     }
@@ -141,15 +140,15 @@ DE_PIMPL_NOREF(Reader)
                 if (marking)
                 {
                     // We'll need this for rewinding a bit later.
-                    markedData += incoming.left(size);
+                    markedData += incoming.mid(0, size);
                 }
                 incoming.remove(0, size);
             }
             else
             {
                 throw IIStream::InputError("Reader::readBytes",
-                        QString("Attempted to read %1 bytes from stream while only %2 "
-                                "bytes are available").arg(size).arg(incoming.size()));
+                        stringf("Attempted to read %zu bytes from stream while only %zu "
+                                "bytes are available", size, incoming.size()));
             }
         }
     }
@@ -201,18 +200,18 @@ DE_PIMPL_NOREF(Reader)
     }
 };
 
-Reader::Reader(Reader const &other) : d(new Impl(*other.d))
+Reader::Reader(const Reader &other) : d(new Impl(*other.d))
 {}
 
-Reader::Reader(IByteArray const &source, ByteOrder const &byteOrder, IByteArray::Offset offset)
+Reader::Reader(const IByteArray &source, const ByteOrder &byteOrder, IByteArray::Offset offset)
     : d(new Impl(byteOrder, &source, offset))
 {}
 
-Reader::Reader(IIStream &stream, ByteOrder const &byteOrder)
+Reader::Reader(IIStream &stream, const ByteOrder &byteOrder)
     : d(new Impl(byteOrder, &stream))
 {}
 
-Reader::Reader(IIStream const &stream, ByteOrder const &byteOrder)
+Reader::Reader(const IIStream &stream, const ByteOrder &byteOrder)
     : d(new Impl(byteOrder, &stream))
 {}
 
@@ -227,7 +226,7 @@ Reader &Reader::withHeader()
     if (d->version > DE_PROTOCOL_LATEST)
     {
         throw VersionError("Reader::withHeader",
-                           QString("Version %1 is unknown").arg(d->version));
+                           stringf("Version %d is unknown", d->version));
     }
 
     return *this;
@@ -297,12 +296,18 @@ Reader &Reader::operator >> (duint64 &qword)
 
 Reader &Reader::operator >> (dfloat &value)
 {
-    return *this >> *reinterpret_cast<duint32 *>(&value);
+    duint32 tmp;
+    *this >> tmp;
+    memcpy(&value, &tmp, 4);
+    return *this;
 }
 
 Reader &Reader::operator >> (ddouble &value)
 {
-    return *this >> *reinterpret_cast<duint64 *>(&value);
+    duint64 tmp;
+    *this >> tmp;
+    memcpy(&value, &tmp, 8);
+    return *this;
 }
 
 Reader &Reader::operator >> (String &text)
@@ -310,13 +315,8 @@ Reader &Reader::operator >> (String &text)
     duint size = 0;
     *this >> size;
 
-    Block bytes;
-    for (duint i = 0; i < size; ++i)
-    {
-        IByteArray::Byte ch = 0;
-        *this >> ch;
-        bytes.append(ch);
-    }
+    Block bytes(size);
+    readBytesFixedSize(bytes);
     text = String::fromUtf8(bytes);
 
     return *this;
@@ -339,7 +339,7 @@ Reader &Reader::operator >> (IByteArray &byteArray)
      */
     Block data(size);
     d->readBytes(data.data(), size);
-    byteArray.set(0, data.dataConst(), size);
+    byteArray.set(0, data.cdata(), size);
     return *this;
 }
 
@@ -353,7 +353,7 @@ Reader &Reader::operator >> (FixedByteArray &fixedByteArray)
     dsize const size = fixedByteArray.size();
     Block data(size);
     d->readBytes(data.data(), size);
-    fixedByteArray.set(0, data.dataConst(), size);
+    fixedByteArray.set(0, data.cdata(), size);
     return *this;
 }
 
@@ -407,7 +407,7 @@ String Reader::readLine()
     return s;
 }
 
-IByteArray const *Reader::source() const
+const IByteArray *Reader::source() const
 {
     return d->source;
 }
@@ -457,7 +457,7 @@ void Reader::rewind()
     d->rewind();
 }
 
-ByteOrder const &Reader::byteOrder() const
+const ByteOrder &Reader::byteOrder() const
 {
     return d->convert;
 }
