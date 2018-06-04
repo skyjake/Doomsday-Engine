@@ -123,7 +123,8 @@ struct Range
      * @return List of contiguous ranges. As usual, range starts are inclusive and range ends are
      * exclusive.
      */
-    static ContiguousRanges findContiguousRanges(const List<Type> &values) {
+    static ContiguousRanges findContiguousRanges(const List<Type> &values)
+    {
         ContiguousRanges cont;
         if (values.isEmpty()) return cont;
         cont.append(Range<Type>(values.first(), values.first() + 1));
@@ -138,7 +139,7 @@ struct Range
         }
         return cont;
     }
-    static String contiguousRangesAsText(const List<Type> &values, const String &separator = ", ")
+    static String contiguousRangesAsText(const List<Type> &values, const char *separator = ", ")
     {
         StringList msg;
         for (const auto &range : findContiguousRanges(values)) {

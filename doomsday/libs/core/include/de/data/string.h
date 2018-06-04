@@ -528,16 +528,16 @@ public:
      */
     static String format(const char *format, ...);
 
-    static String number(dint8 value)       { return String::format("%d", value); }
-    static String number(dint16 value)      { return String::format("%d", value); }
-    static String number(dint32 value)      { return String::format("%d", value); }
-    static String number(dint64 value)      { return String::format("%lld", value); }
-    static String number(duint8 value)      { return String::format("%u", value); }
-    static String number(duint16 value)     { return String::format("%u", value); }
-    static String number(duint32 value)     { return String::format("%u", value); }
-    static String number(duint64 value)     { return String::format("%llu", value); }
-    static String number(dfloat value)      { return String::format("%f", value); }
-    static String number(ddouble int value) { return String::format("%f", value); }
+    static String number(dint8 value)   { return String::format("%d", value); }
+    static String number(dint16 value)  { return String::format("%d", value); }
+    static String number(dint32 value)  { return String::format("%d", value); }
+    static String number(dint64 value)  { return String::format("%lld", value); }
+    static String number(duint8 value)  { return String::format("%u", value); }
+    static String number(duint16 value) { return String::format("%u", value); }
+    static String number(duint32 value) { return String::format("%u", value); }
+    static String number(duint64 value) { return String::format("%llu", value); }
+    static String number(dfloat value)  { return String::format("%f", value); }
+    static String number(ddouble value) { return String::format("%f", value); }
 
     /**
      * Formats data according to formatting instructions. Outputs a
@@ -562,7 +562,7 @@ public:
     static void advanceFormat(const_iterator &i,
                               const const_iterator &end);
 
-    static String join(const List<String> &stringList, const String &sep = {});
+    static String join(const List<String> &stringList, const char *sep = "");
 
 private:
     iString _str;

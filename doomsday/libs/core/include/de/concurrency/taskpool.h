@@ -20,7 +20,6 @@
 #define LIBCORE_TASKPOOL_H
 
 #include "../Observers"
-#include <QObject>
 #include <functional>
 
 namespace de {
@@ -43,10 +42,8 @@ class Task;
  *
  * A Task is considered done/finished when it has exited its Task::runTask() method.
  */
-class DE_PUBLIC TaskPool : public QObject
+class DE_PUBLIC TaskPool
 {
-    Q_OBJECT
-
 public:
     enum Priority
     {
@@ -59,6 +56,7 @@ public:
     {
     public:
         virtual void taskFinishedRunning(Task &) = 0;
+        virtual ~IPool() {}
     };
 
     typedef std::function<void ()> TaskFunction;
@@ -96,9 +94,6 @@ public:
      * Determines if all started tasks have finished.
      */
     bool isDone() const;
-
-signals:
-    void allTasksDone();
 
 private:
     DE_PRIVATE(d)

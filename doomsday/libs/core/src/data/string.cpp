@@ -593,7 +593,7 @@ void String::advanceFormat(const_iterator &i, const const_iterator &end)
     }
 }
 
-String String::join(const StringList &stringList, const String &sep)
+String String::join(const StringList &stringList, const char *sep)
 {
     if (stringList.isEmpty()) return {};
 

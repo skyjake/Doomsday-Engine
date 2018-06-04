@@ -19,12 +19,17 @@
 #ifndef LIBCORE_TASK_H
 #define LIBCORE_TASK_H
 
-#include <QRunnable>
-
 #include "../libcore.h"
 #include "../TaskPool"
 
 namespace de {
+
+class DE_PUBLIC IRunnable
+{
+public:
+    virtual void run() = 0;
+    virtual ~IRunnable() {}
+};
 
 /**
  * Concurrent task that will be executed asynchronously by a TaskPool. Override
@@ -32,7 +37,7 @@ namespace de {
  *
  * @ingroup concurrency
  */
-class DE_PUBLIC Task : public QRunnable
+class DE_PUBLIC Task : public IRunnable
 {
 public:
     Task();
