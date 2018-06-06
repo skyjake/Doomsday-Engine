@@ -97,21 +97,16 @@ protected:
     Query *findQuery(QueryId id);
 
     void cancelAllQueries();
-
     void cleanupQueries();
 
     //void packagePathsReceived(QueryId id, PackagePaths const &remotePaths);
 
     void metadataReceived(QueryId id, DictionaryValue const &metadata);
-
     void chunkReceived(QueryId id, duint64 startOffset, Block const &chunk, duint64 fileSize);
 
     virtual void wasConnected();
-
     virtual void wasDisconnected();
-
-    virtual void handleError(QString errorMessage);
-
+    virtual void handleError(const String &errorMessage);
     virtual void transmit(Query const &query) = 0;
 
 private:

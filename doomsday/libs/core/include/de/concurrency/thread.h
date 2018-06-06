@@ -21,6 +21,9 @@
 
 #include "../libcore.h"
 #include "../Time"
+#include "../Observers"
+
+struct Impl_Thread;
 
 namespace de {
 
@@ -42,6 +45,9 @@ public:
     bool isFinished() const;
 
     static void sleep(const TimeSpan &span);
+
+public:
+    DE_DEFINE_AUDIENCE2(Finished, void threadFinished(Thread &))
 
 private:
     DE_PRIVATE(d)

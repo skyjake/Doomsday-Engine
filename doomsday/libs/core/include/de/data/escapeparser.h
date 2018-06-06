@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBCORE_ESCAPEPARSER_H
@@ -38,7 +38,7 @@ public:
      *
      * @param range  Range in the original text.
      */
-    DE_DEFINE_AUDIENCE2(PlainText, void handlePlainText(Rangei const &range))
+    DE_DEFINE_AUDIENCE2(PlainText, void handlePlainText(const String::ByteRange &range))
 
     /**
      * Called during parsing when an escape sequence has been parsed.
@@ -46,7 +46,7 @@ public:
      *
      * @param range  Range in the original text.
      */
-    DE_DEFINE_AUDIENCE2(EscapeSequence, void handleEscapeSequence(Rangei const &range))
+    DE_DEFINE_AUDIENCE2(EscapeSequence, void handleEscapeSequence(const String::ByteRange &range))
 
 public:
     EscapeParser();

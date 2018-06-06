@@ -19,7 +19,7 @@
  */
 
 #include "../src/core/callbacktimer.h"
-
+#if 0
 namespace de {
 namespace internal {
 
@@ -40,3 +40,4 @@ void CallbackTimer::callbackAndDeleteLater()
 
 } // namespace internal
 } // namespace de
+#endif

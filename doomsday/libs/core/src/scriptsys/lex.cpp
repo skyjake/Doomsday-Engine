@@ -21,13 +21,11 @@
 #include "de/TokenBuffer"
 
 #include <cctype>
+#include <cwctype>
 
 using namespace de;
 
-Lex::Lex(String const &input,
-         QChar lineCommentChar,
-         QChar multiCommentChar,
-         ModeFlags initialMode)
+Lex::Lex(String const &input, Char lineCommentChar, Char multiCommentChar, ModeFlags initialMode)
     : _input(&input)
     , _lineCommentChar(lineCommentChar)
     , _multiCommentChar(multiCommentChar)
@@ -41,28 +39,28 @@ String const &Lex::input() const
 
 bool Lex::atEnd() const
 {
-    return _state.pos >= duint(_input->size());
+    return _state.pos >= _input->size();
 }
 
-duint Lex::pos() const
+dsize Lex::pos() const
 {
     return _state.pos;
 }
 
 bool Lex::atCommentStart() const
 {
-    if (atEnd() || _mode.testFlag(RetainComments))
+    if (atEnd() || (_mode & RetainComments))
     {
         return false;
     }
 
-    QChar const c = _input->at(_state.pos);
+    Char const c = _input->at(_state.pos);
     if (c == _lineCommentChar)
     {
-        if (!_mode.testFlag(DoubleCharComment)) return true;
+        if (!(_mode & DoubleCharComment)) return true;
         if (int(_state.pos) >= _input->size() - 1) return false;
 
-        QChar const d = _input->at(_state.pos + 1);
+        Char const d = _input->at(_state.pos + 1);
         if (d == _lineCommentChar || d == _multiCommentChar)
         {
             return true;
@@ -71,16 +69,16 @@ bool Lex::atCommentStart() const
     return false;
 }
 
-QChar Lex::peekComment() const
+Char Lex::peekComment() const
 {
     DE_ASSERT(atCommentStart());
 
-    duint const inputSize = duint(_input->size());
+    dsize const inputSize = _input->size();
 
     // Skipping multiple lines?
-    if (_mode.testFlag(DoubleCharComment))
+    if (_mode & DoubleCharComment)
     {
-        QChar c = _input->at(_state.pos + 1);
+        Char c = _input->at(_state.pos + 1);
         if (c == _multiCommentChar)
         {
             duint p = _state.pos + 2;
@@ -103,7 +101,7 @@ QChar Lex::peekComment() const
     return (p < inputSize? '\n' : 0);
 }
 
-QChar Lex::peek() const
+Char Lex::peek() const
 {
     if (atEnd())
     {
@@ -139,7 +137,7 @@ QChar Lex::peek() const
     return _input->at(_state.pos);
 }
 
-QChar Lex::get()
+Char Lex::get()
 {
     if (atEnd())
     {
@@ -147,7 +145,7 @@ QChar Lex::get()
         throw OutOfInputError("Lex::get", "No more characters in input");
     }
 
-    QChar c = peek();
+    Char c = peek();
 
     // Keep track of the line numbers.
     for (duint p = _state.pos; p < _nextPos; ++p)
@@ -175,7 +173,7 @@ void Lex::skipWhite()
 
 void Lex::skipWhiteExceptNewline()
 {
-    QChar c = 0;
+    Char c = 0;
     while (isWhite(c = peek()) && c != '\n')
     {
         get();
@@ -194,7 +192,7 @@ bool Lex::onlyWhiteOnLine()
     {
         for (;;)
         {
-            QChar c = get();
+            Char c = get();
             if (c == '\n')
             {
                 _state = saved;
@@ -226,7 +224,7 @@ duint Lex::countLineStartSpace() const
     return count;
 }
 
-bool Lex::parseLiteralNumber(QChar c, TokenBuffer &output)
+bool Lex::parseLiteralNumber(Char c, TokenBuffer &output)
 {
     if ((c == '.' && isNumeric(peek())) ||
         (_mode.testFlag(NegativeNumbers) && c == '-' && isNumeric(peek())) ||
@@ -267,27 +265,27 @@ bool Lex::parseLiteralNumber(QChar c, TokenBuffer &output)
     return false;
 }
 
-bool Lex::isWhite(QChar c)
+bool Lex::isWhite(Char c)
 {
-    return c.isSpace();
+    return iswspace(c);
 }
 
-bool Lex::isAlpha(QChar c)
+bool Lex::isAlpha(Char c)
 {
-    return c.isLetter();
+    return iswalpha(c);
 }
 
-bool Lex::isNumeric(QChar c)
+bool Lex::isNumeric(Char c)
 {
-    return c.isDigit();
+    return iswdigit(c);
 }
 
-bool Lex::isHexNumeric(QChar c)
+bool Lex::isHexNumeric(Char c)
 {
     return isNumeric(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 }
 
-bool Lex::isAlphaNumeric(QChar c)
+bool Lex::isAlphaNumeric(Char c)
 {
-    return c.isLetterOrNumber() || c == '_' || c == '@';
+    return iswalnum(c) || c == '_' || c == '@';
 }

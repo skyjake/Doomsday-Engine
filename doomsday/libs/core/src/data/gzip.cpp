@@ -58,7 +58,7 @@ Block gDecompress(Block const &gzData)
             break;
 
         default:
-            qWarning("Error decompressing gzip data: result=%i (%s)", res, stream.msg);
+            warning("Error decompressing gzip data: result=%i (%s)", res, stream.msg);
             inflateEnd(&stream);
             return Block();
         }

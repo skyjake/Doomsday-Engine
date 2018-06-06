@@ -30,9 +30,6 @@
 #include "de/Reader"
 #include "de/math.h"
 
-#include <QThread>
-#include <QList>
-
 namespace de {
 
 namespace internal {

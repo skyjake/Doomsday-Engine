@@ -30,11 +30,11 @@ DE_PIMPL(NativeFile)
     NativePath nativePath;
 
     /// Input stream.
-    mutable QFile *in;
+    mutable std::ifstream *in;
 
     /// Output stream. Kept open until flush() is called.
     /// (Re)opened before changing the contents of the file.
-    QFile *out;
+    std::ofstream *out;
 
     /// Output file should be truncated before the next write.
     bool needTruncation;
@@ -52,16 +52,16 @@ DE_PIMPL(NativeFile)
         DE_ASSERT(!out);
     }
 
-    QFile &getInput()
+    std::ifstream &getInput()
     {
         if (!in)
         {
             // Reading is allowed always.
-            in = new QFile(nativePath);
-            if (!in->open(QFile::ReadOnly))
+            in = new std::ifstream(nativePath, std::ios::binary);
+            if (!*in)
             {
                 delete in;
-                in = 0;
+                in = nullptr;
                 /// @throw InputError  Opening the input stream failed.
                 throw InputError("NativeFile::openInput", "Failed to read " + nativePath);
             }
@@ -69,7 +69,7 @@ DE_PIMPL(NativeFile)
         return *in;
     }
 
-    QFile &getOutput()
+    std::ofstream &getOutput()
     {
         if (!out)
         {
@@ -91,7 +91,7 @@ DE_PIMPL(NativeFile)
                 delete out;
                 out = 0;
                 /// @throw OutputError  Opening the output stream failed.
-                throw OutputError("NativeFile::output", "Failed to write " + nativePath +
+                throw OutputError("NativeFile::output", String("Failed to write ") + nativePath +
                                   " (" + strerror(errno) + ")");
             }
             if (self().mode() & Truncate)

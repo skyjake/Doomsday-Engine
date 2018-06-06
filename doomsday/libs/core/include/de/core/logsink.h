@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBCORE_LOGSINK_H
@@ -21,7 +21,7 @@
 
 #include "../String"
 #include "../Log"
-#include <QList>
+#include "../List"
 
 namespace de {
 
@@ -37,8 +37,8 @@ public:
     enum Mode {
         Disabled,
         Enabled,
-        OnlyNormalEntries,  ///< Info or lower.
-        OnlyWarningEntries  ///< Warning or higher.
+        OnlyNormalEntries, ///< Info or lower.
+        OnlyWarningEntries ///< Warning or higher.
     };
 
 public:
@@ -50,12 +50,10 @@ public:
     class DE_PUBLIC IFormatter
     {
     public:
-        typedef QList<String> Lines;
+        typedef StringList Lines;
 
-    public:
+        virtual Lines logEntryToTextLines(const LogEntry &entry) = 0;
         virtual ~IFormatter() {}
-
-        virtual Lines logEntryToTextLines(LogEntry const &entry) = 0;
     };
 
 public:
@@ -74,7 +72,7 @@ public:
 
     Mode mode() const;
 
-    bool willAccept(LogEntry const &entry) const;
+    bool willAccept(const LogEntry &entry) const;
 
     IFormatter *formatter();
 

@@ -25,9 +25,9 @@
 #include "../String"
 #include "../Compound"
 #include "../Record"
-
-#include <QList>
-#include <QMap>
+#include "../List"
+#include "../Map"
+#include "../Set"
 
 namespace de {
 
@@ -62,9 +62,9 @@ public:
     /// An unknown native entry point was specified. @ingroup errors
     DE_ERROR(UnknownEntryPointError);
 
-    typedef QList<String> Arguments;
-    typedef QMap<String, Value *> Defaults;
-    typedef QList<Value const *> ArgumentValues;
+    typedef List<String> Arguments;
+    typedef Map<String, Value *> Defaults;
+    typedef List<const Value *> ArgumentValues;
 
 public:
     Function();
@@ -318,7 +318,7 @@ private:
     Record *_module;
     bool _isOwned;
     FunctionOwnership _funcOwned;
-    QSet<String> _boundEntryPoints;
+    Set<String> _boundEntryPoints;
     QSet<Variable *> _boundFunctions;
 };
 

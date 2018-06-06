@@ -23,8 +23,6 @@
 #include "../libcore.h"
 #include "../String"
 
-#include <QFlags>
-
 namespace de {
 
 class TokenBuffer;
@@ -47,7 +45,7 @@ public:
         NegativeNumbers   = 0x4, // If set, '-' preceding a number is included in the literal.
         DefaultMode       = 0
     };
-    Q_DECLARE_FLAGS(ModeFlags, ModeFlag)
+    using ModeFlags = Flags;
 
     /**
      * Utility for setting flags in a Lex instance. The flags specified
@@ -72,18 +70,18 @@ public:
     };
 
     // Constants.
-    static String const T_PARENTHESIS_OPEN;
-    static String const T_PARENTHESIS_CLOSE;
-    static String const T_BRACKET_OPEN;
-    static String const T_BRACKET_CLOSE;
-    static String const T_CURLY_OPEN;
-    static String const T_CURLY_CLOSE;
+//    static const char *T_PARENTHESIS_OPEN;
+//    static const char *T_PARENTHESIS_CLOSE;
+//    static const char *T_BRACKET_OPEN;
+//    static const char *T_BRACKET_CLOSE;
+//    static const char *T_CURLY_OPEN;
+//    static const char *T_CURLY_CLOSE;
 
 public:
     Lex(String const &input = "",
-        QChar lineCommentChar  = QChar('#'),
-        QChar multiCommentChar = QChar('\0'),
-        ModeFlags initialMode  = DefaultMode);
+        Char lineCommentChar  = Char('#'),
+        Char multiCommentChar = Char('\0'),
+        ModeFlags initialMode = DefaultMode);
 
     /// Returns the input string in its entirety.
     String const &input() const;
@@ -92,16 +90,16 @@ public:
     bool atEnd() const;
 
     /// Returns the current position of the analyzer.
-    duint pos() const;
+    dsize pos() const;
 
     /// Returns the next character, according to the position.
     /// Characters past the end of the input string are returned
     /// as zero.
-    QChar peek() const;
+    Char peek() const;
 
     /// Returns the next character and increments the position.
     /// Returns zero if the end of the input is reached.
-    QChar get();
+    Char get();
 
     /// Skips until a non-whitespace character is found.
     void skipWhite();
@@ -112,7 +110,7 @@ public:
     /// Skips until a new line begins.
     void skipToNextLine();
 
-    QChar peekComment() const;
+    Char peekComment() const;
 
     /// Returns the current line of the reading position. The character
     /// returned from get() will be on this line.
@@ -137,39 +135,39 @@ public:
     /// @param c Character that begins the number (from get()).
     /// @param output Token buffer.
     /// @return @c true, if a number token was parsed; otherwise @c false.
-    bool parseLiteralNumber(QChar c, TokenBuffer &output);
+    bool parseLiteralNumber(Char c, TokenBuffer &output);
 
 public:
     /// Determines whether a character is whitespace.
     /// @param c Character to check.
-    static bool isWhite(QChar c);
+    static bool isWhite(Char c);
 
     /// Determine whether a character is alphabetic.
     /// @param c Character to check.
-    static bool isAlpha(QChar c);
+    static bool isAlpha(Char c);
 
     /// Determine whether a character is numeric.
     /// @param c Character to check.
-    static bool isNumeric(QChar c);
+    static bool isNumeric(Char c);
 
     /// Determine whether a character is hexadecimal numeric.
     /// @param c Character to check.
-    static bool isHexNumeric(QChar c);
+    static bool isHexNumeric(Char c);
 
     /// Determine whether a character is alphanumeric.
     /// @param c Character to check.
-    static bool isAlphaNumeric(QChar c);
+    static bool isAlphaNumeric(Char c);
 
 private:
     /// Input text being analyzed.
     String const *_input;
 
-    mutable duint _nextPos;
+    mutable dsize _nextPos;
 
     struct State {
-        duint pos;          ///< Current reading position.
-        duint lineNumber;   ///< Keeps track of the line number on which the current position is.
-        duint lineStartPos; ///< Position which begins the current line.
+        dsize pos;          ///< Current reading position.
+        dsize lineNumber;   ///< Keeps track of the line number on which the current position is.
+        dsize lineStartPos; ///< Position which begins the current line.
 
         State() : pos(0), lineNumber(1), lineStartPos(0) {}
     };
@@ -177,16 +175,14 @@ private:
     State _state;
 
     /// Character that begins a line comment.
-    QChar _lineCommentChar;
+    Char _lineCommentChar;
 
     /// Character that begins a multiline comment, if it follows _lineCommentChar.
     /// In reversed order, the characters end a multiline comment.
-    QChar _multiCommentChar;
+    Char _multiCommentChar;
 
     ModeFlags _mode;
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Lex::ModeFlags)
 
 } // namespace de
 

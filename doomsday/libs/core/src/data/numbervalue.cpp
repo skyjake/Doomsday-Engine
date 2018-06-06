@@ -22,7 +22,7 @@
 #include "de/Reader"
 #include "de/math.h"
 
-#include <QTextStream>
+#include <sstream>
 
 namespace de {
 
@@ -71,34 +71,33 @@ Value::Number NumberValue::asNumber() const
 
 Value::Text NumberValue::asText() const
 {
-    Text result;
-    QTextStream s(&result);
-    if (_semantic.testFlag(Boolean) && (roundi(_value) == True || roundi(_value) == False))
+    std::ostringstream s;
+    if ((_semantic & Boolean) && (roundi(_value) == True || roundi(_value) == False))
     {
         s << (isTrue()? "True" : "False");
     }
-    else if (_semantic.testFlag(Hex))
+    else if (_semantic & Hex)
     {
-        s << "0x" << QString::number(duint32(_value), 16);
+        s << String::format("0x%x", duint32(_value));
     }
-    else if (_semantic.testFlag(Int))
+    else if (_semantic & Int)
     {
-        s << QString::number(roundi(_value));
+        s << String::asText(roundi(_value));
     }
-    else if (_semantic.testFlag(UInt))
+    else if (_semantic & UInt)
     {
-        s << QString::number(round<duint64>(_value));
+        s << String::asText(round<duint64>(_value));
     }
     else
     {
         s << _value;
     }
-    return result;
+    return s.str();
 }
 
 bool NumberValue::isTrue() const
 {
-    return roundi(_value) != 0;
+    return !fequal(_value, 0.0);
 }
 
 dint NumberValue::compare(Value const &value) const
@@ -184,10 +183,10 @@ static duint8 const SEMANTIC_UINT    = 0x08;
 
 void NumberValue::operator >> (Writer &to) const
 {
-    duint8 flags = (_semantic.testFlag(Boolean)? SEMANTIC_BOOLEAN : 0) |
-                   (_semantic.testFlag(Hex)?     SEMANTIC_HEX     : 0) |
-                   (_semantic.testFlag(Int)?     SEMANTIC_INT     : 0) |
-                   (_semantic.testFlag(UInt)?    SEMANTIC_UINT    : 0);
+    duint8 flags = (_semantic & Boolean? SEMANTIC_BOOLEAN : 0) |
+                   (_semantic & Hex?     SEMANTIC_HEX     : 0) |
+                   (_semantic & Int?     SEMANTIC_INT     : 0) |
+                   (_semantic & UInt?    SEMANTIC_UINT    : 0);
 
     to << SerialId(NUMBER) << flags << _value;
 }

@@ -21,10 +21,9 @@
 #define LIBCORE_ARRAYVALUE_H
 
 #include "../Value"
+#include "../List"
 #include "../NumberValue"
 #include "../Vector"
-
-#include <QList>
 
 namespace de {
 
@@ -44,7 +43,7 @@ public:
     DE_ERROR(IllegalIndexError);
 
     /// Type for the elements. Public because const access to the elements is public.
-    typedef QList<Value *> Elements;
+    typedef List<Value *> Elements;
 
 public:
     ArrayValue();

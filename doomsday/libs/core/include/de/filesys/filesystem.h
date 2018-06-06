@@ -26,7 +26,6 @@
 #include "../System"
 #include "IInterpreter"
 
-#include <QFlags>
 #include <functional>
 
 /**
@@ -180,7 +179,7 @@ public:
 
         InheritPrimaryFeedAndPopulate = InheritPrimaryFeed | PopulateNewFolder
     };
-    Q_DECLARE_FLAGS(FolderCreationBehaviors, FolderCreationBehavior)
+    using FolderCreationBehaviors = Flags;
 
     /**
      * Retrieves a folder in the file system. The folder gets created if it
@@ -377,7 +376,7 @@ public:
 
         DefaultCopyBehavior = ReinterpretDestination | PopulateDestination
     };
-    Q_DECLARE_FLAGS(CopyBehaviors, CopyBehavior)
+    using CopyBehaviors = Flags;
 
     /**
      * Makes a copy of a file by streaming the bytes of the source path to the
@@ -391,14 +390,11 @@ public:
                                 CopyBehaviors behavior = DefaultCopyBehavior);
 
     static String accessNativeLocation(NativePath const &nativePath,
-                                       File::Flags flags = File::ReadOnly);
+                                       Flags flags = File::ReadOnly);
 
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(FileSystem::FolderCreationBehaviors)
-Q_DECLARE_OPERATORS_FOR_FLAGS(FileSystem::CopyBehaviors)
 
 // Alias.
 typedef FileSystem FS;

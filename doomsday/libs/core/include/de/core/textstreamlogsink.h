@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBCORE_TEXTSTREAMLOGSINK_H
@@ -21,6 +21,8 @@
 
 #include "../LogSink"
 #include "../MonospaceLogSinkFormatter"
+
+#include <ostream>
 
 namespace de {
 
@@ -36,7 +38,7 @@ public:
      *
      * @param ts  Text stream. Ownership given to the sink.
      */
-    TextStreamLogSink(QTextStream *ts);
+    TextStreamLogSink(std::ostream &ts);
 
     ~TextStreamLogSink();
 
@@ -45,7 +47,7 @@ public:
     void flush();
 
 private:
-    QTextStream *_ts;
+    std::ostream &_ts;
     MonospaceLogSinkFormatter _format;
 };
 

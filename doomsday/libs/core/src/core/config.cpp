@@ -89,7 +89,7 @@ Config::ReadStatus Config::read()
 
     // Current version.
     Version verInfo = Version::currentBuild();
-    QScopedPointer<ArrayValue> version(new ArrayValue);
+    std::unique_ptr<ArrayValue> version(new ArrayValue);
     *version << NumberValue(verInfo.major)
              << NumberValue(verInfo.minor)
              << NumberValue(verInfo.patch)
@@ -218,7 +218,7 @@ Config &Config::get()
     return App::config();
 }
 
-Variable &Config::get(String const &name) // static
+Variable &Config::get(const CString &name) // static
 {
     return get()[name];
 }
@@ -233,32 +233,32 @@ Version Config::upgradedFromVersion() const
     return d->oldVersion;
 }
 
-Variable &Config::set(String const &name, bool value)
+Variable &Config::set(const CString &name, bool value)
 {
     return objectNamespace().set(name, value);
 }
 
-Variable &Config::set(String const &name, Value::Number const &value)
+Variable &Config::set(const CString &name, Value::Number const &value)
 {
     return objectNamespace().set(name, value);
 }
 
-Variable &Config::set(String const &name, dint value)
+Variable &Config::set(const CString &name, dint value)
 {
     return objectNamespace().set(name, value);
 }
 
-Variable &Config::set(String const &name, duint value)
+Variable &Config::set(const CString &name, duint value)
 {
     return objectNamespace().set(name, value);
 }
 
-Variable &Config::set(String const &name, ArrayValue *value)
+Variable &Config::set(const CString &name, ArrayValue *value)
 {
     return objectNamespace().set(name, value);
 }
 
-Variable &Config::set(String const &name, Value::Text const &value)
+Variable &Config::set(const CString &name, Value::Text const &value)
 {
     return objectNamespace().set(name, value);
 }

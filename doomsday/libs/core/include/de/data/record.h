@@ -20,17 +20,16 @@
 #ifndef LIBCORE_RECORD_H
 #define LIBCORE_RECORD_H
 
-#include "../ISerializable"
-#include "../String"
-#include "../Variable"
-#include "../Value"
 #include "../Audience"
+#include "../Hash"
+#include "../ISerializable"
+#include "../List"
 #include "../Log"
 #include "../RecordAccessor"
+#include "../CString"
+#include "../Value"
+#include "../Variable"
 
-#include <QHash>
-#include <QList>
-#include <QRegExp>
 #include <functional>
 
 namespace de {
@@ -80,10 +79,10 @@ public:
     static String const VAR_INIT;
     static String const VAR_NATIVE_SELF;
 
-    typedef QHash<String, Variable *> Members;  // unordered
-    typedef QHash<String, Record *> Subrecords; // unordered
+    typedef Hash<String, Variable *> Members;  // unordered
+    typedef Hash<String, Record *> Subrecords; // unordered
     typedef std::pair<String, String> KeyValue;
-    typedef QList<KeyValue> List;
+    typedef List<KeyValue> List;
 
     enum Behavior {
         AllMembers,
@@ -99,12 +98,9 @@ public:
 
         DefaultFlags = 0,
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     DE_DEFINE_AUDIENCE2(Addition, void recordMemberAdded(Record &record, Variable &member))
-
-    DE_DEFINE_AUDIENCE2(Removal, void recordMemberRemoved(Record &record, Variable &member))
-
+    DE_DEFINE_AUDIENCE2(Removal,  void recordMemberRemoved(Record &record, Variable &member))
     DE_DEFINE_AUDIENCE2(Deletion, void recordBeingDeleted(Record &record))
 
 public:
@@ -187,23 +183,23 @@ public:
      *
      * @return This record.
      */
-    Record &assign(Record const &other, QRegExp const &excluded);
+    Record &assign(const Record &other, const RegExp &excluded);
 
     /**
      * Determines if the record contains a variable or a subrecord named @a variableName.
      */
-    bool has(String const &name) const;
+    bool has(const CString &name) const;
 
     /**
      * Determines if the record contains a variable named @a variableName.
      */
-    bool hasMember(String const &variableName) const;
+    bool hasMember(const CString &variableName) const;
 
     /**
      * Determines if the record contains a subrecord named @a subrecordName.
      * Subrecords are owned by this record.
      */
-    bool hasSubrecord(String const &subrecordName) const;
+    bool hasSubrecord(const CString &subrecordName) const;
 
     /**
      * Determines if the record contains a variable @a recordName that
@@ -214,7 +210,7 @@ public:
      *
      * @return @c true if the variable points to a record.
      */
-    bool hasRecord(String const &recordName) const;
+    bool hasRecord(const CString &recordName) const;
 
     /**
      * Adds a new variable to the record.
@@ -242,9 +238,9 @@ public:
      *
      * @return  Caller gets ownership of the removed variable.
      */
-    Variable *remove(String const &variableName);
+    Variable *remove(const CString &variableName);
 
-    Variable *tryRemove(String const &variableName);
+    Variable *tryRemove(const CString &variableName);
 
     /**
      * Adds a new variable to the record with a NoneValue. If there is an existing
@@ -254,7 +250,7 @@ public:
      *
      * @return  The new variable.
      */
-    Variable &add(String const &variableName, Variable::Flags variableFlag = Variable::DefaultMode);
+    Variable &add(const CString &variableName, Variable::Flags variableFlag = Variable::DefaultMode);
 
     /**
      * Adds a number variable to the record. The variable is set up to only accept
@@ -265,7 +261,7 @@ public:
      *
      * @return  The number variable.
      */
-    Variable &addNumber(String const &variableName, Value::Number number);
+    Variable &addNumber(const CString &variableName, Value::Number number);
 
     /**
      * Adds a number variable to the record with a Boolean semantic hint. The variable is
@@ -277,7 +273,7 @@ public:
      *
      * @return  The number variable.
      */
-    Variable &addBoolean(String const &variableName, bool booleanValue);
+    Variable &addBoolean(const CString &variableName, bool booleanValue);
 
     /**
      * Adds a text variable to the record. The variable is set up to only accept
@@ -288,9 +284,9 @@ public:
      *
      * @return  The text variable.
      */
-    Variable &addText(String const &variableName, Value::Text const &text);
+    Variable &addText(const CString &variableName, Value::Text const &text);
 
-    Variable &addTime(String const &variableName, Time const &time);
+    Variable &addTime(const CString &variableName, Time const &time);
 
     /**
      * Adds an array variable to the record. The variable is set up to only accept
@@ -302,7 +298,7 @@ public:
      *
      * @return  The array variable.
      */
-    Variable &addArray(String const &variableName, ArrayValue *array = 0);
+    Variable &addArray(const CString &variableName, ArrayValue *array = 0);
 
     /**
      * Adds a dictionary variable to the record. The variable is set up to only accept
@@ -312,7 +308,7 @@ public:
      *
      * @return  The dictionary variable.
      */
-    Variable &addDictionary(String const &variableName);
+    Variable &addDictionary(const CString &variableName);
 
     /**
      * Adds a block variable to the record. The variable is set up to only accept
@@ -322,7 +318,7 @@ public:
      *
      * @return  The block variable.
      */
-    Variable &addBlock(String const &variableName);
+    Variable &addBlock(const CString &variableName);
 
     /**
      * Adds a function variable to the record. The variable is set up to only
@@ -335,7 +331,7 @@ public:
      *
      * @return The function variable.
      */
-    Variable &addFunction(String const &variableName, Function *func);
+    Variable &addFunction(const CString &variableName, Function *func);
 
     /**
      * Adds a new subrecord to the record. Adds a variable named @a name and gives
@@ -348,7 +344,7 @@ public:
      *
      * @return @a subrecord, for convenience.
      */
-    Record &add(String const &name, Record *subrecord);
+    Record &add(const CString &name, Record *subrecord);
 
     enum SubrecordAdditionBehavior { ReplaceExisting, KeepExisting };
 
@@ -366,7 +362,7 @@ public:
      *
      * @return  The new subrecord.
      */
-    Record &addSubrecord(String const &name, SubrecordAdditionBehavior behavior = ReplaceExisting);
+    Record &addSubrecord(const CString &name, SubrecordAdditionBehavior behavior = ReplaceExisting);
 
     /**
      * Removes a subrecord from the record.
@@ -375,7 +371,7 @@ public:
      *
      * @return  Caller gets ownership of the removed record.
      */
-    Record *removeSubrecord(String const &name);
+    Record *removeSubrecord(const CString &name);
 
     /**
      * Sets the value of a variable, creating the variable if needed.
@@ -385,40 +381,41 @@ public:
      *
      * @return Variable whose value was set.
      */
-    Variable &set(String const &name, bool value);
+    Variable &set(const CString &name, bool value);
 
     /// @copydoc set()
-    Variable &set(String const &name, char const *value);
+    Variable &set(const CString &name, char const *value);
 
     /// @copydoc set()
-    Variable &set(String const &name, Value::Text const &value);
+    Variable &set(const CString &name, Value::Text const &value);
+    Variable &set(const CString &name, Value::Number const &value);
 
     /// @copydoc set()
-    Variable &set(String const &name, Value::Number value);
+    Variable &set(const CString &name, Value::Number value);
 
     /// @copydoc set()
-    Variable &set(String const &name, const NumberValue &value);
+    Variable &set(const CString &name, const NumberValue &value);
+    
+    /// @copydoc set()
+    Variable &set(const CString &name, dint32 value);
 
     /// @copydoc set()
-    Variable &set(String const &name, dint32 value);
+    Variable &set(const CString &name, duint32 value);
 
     /// @copydoc set()
-    Variable &set(String const &name, duint32 value);
+    Variable &set(const CString &name, dint64 value);
 
     /// @copydoc set()
-    Variable &set(String const &name, dint64 value);
+    Variable &set(const CString &name, duint64 value);
 
     /// @copydoc set()
-    Variable &set(String const &name, duint64 value);
+    Variable &set(const CString &name, unsigned long value);
 
     /// @copydoc set()
-    Variable &set(String const &name, unsigned long value);
+    Variable &set(const CString &name, Time const &value);
 
     /// @copydoc set()
-    Variable &set(String const &name, Time const &value);
-
-    /// @copydoc set()
-    Variable &set(String const &name, Block const &value);
+    Variable &set(const CString &name, Block const &value);
 
     /// @copydoc set()
     Variable &set(const String &name, const Record &value);
@@ -429,9 +426,9 @@ public:
      * @param name   Name of the variable. May contain subrecords using the dot notation.
      * @param value  Array to use as the value of the variable. Ownership taken.
      */
-    Variable &set(String const &name, ArrayValue *value);
+    Variable &set(const CString &name, ArrayValue *value);
 
-    Variable &set(String const &name, Value *value);
+    Variable &set(const CString &name, Value *value);
 
     Variable &set(String const &name, const Value &value);
 
@@ -443,13 +440,13 @@ public:
      * @param separator  Separator to append before the word, if the variable is not
      *                   currently empty.
      */
-    Variable &appendWord(String const &name, String const &word, String const &separator = " ");
+    Variable &appendWord(const CString &name, String const &word, String const &separator = " ");
 
-    Variable &appendUniqueWord(String const &name, String const &word, String const &separator = " ");
+    Variable &appendUniqueWord(const CString &name, String const &word, String const &separator = " ");
 
-    Variable &appendMultipleUniqueWords(String const &name, String const &words, String const &separator = " ");
+    Variable &appendMultipleUniqueWords(const CString &name, String const &words, String const &separator = " ");
 
-    Variable &appendToArray(String const &name, Value *value);
+    Variable &appendToArray(const CString &name, Value *value);
 
     /**
      * Inserts a value to an array variable. The array is assumed to be sorted, and the
@@ -458,7 +455,7 @@ public:
      * @param name   Name of the variable.
      * @param value  Value to insert.
      */
-    Variable &insertToSortedArray(String const &name, Value *value);
+    Variable &insertToSortedArray(const CString &name, Value *value);
 
     /**
      * Looks up a variable in the record. Variables in subrecords can be accessed
@@ -468,7 +465,7 @@ public:
      *
      * @return  Variable.
      */
-    Variable &operator [] (String const &name);
+    Variable &operator[](const CString &name);
 
     /**
      * Looks up a variable in the record. Variables in subrecords can be accessed
@@ -478,17 +475,17 @@ public:
      *
      * @return  Variable (non-modifiable).
      */
-    Variable const &operator [] (String const &name) const;
+    const Variable &operator[](const CString &name) const;
 
-    Variable *tryFind(String const &name);
+    Variable *tryFind(const CString &name);
 
-    Variable const *tryFind(String const &name) const;
+    Variable const *tryFind(const CString &name) const;
 
-    inline Variable &member(String const &name) {
+    inline Variable &member(const CString &name) {
         return (*this)[name];
     }
 
-    inline Variable const &member(String const &name) const {
+    inline Variable const &member(const CString &name) const {
         return (*this)[name];
     }
 
@@ -499,7 +496,7 @@ public:
      *
      * @return  Subrecord.
      */
-    Record &subrecord(String const &name);
+    Record &subrecord(const CString &name);
 
     /**
      * Looks up a subrecord in the record.
@@ -508,7 +505,7 @@ public:
      *
      * @return  Subrecord (non-modifiable).
      */
-    Record const &subrecord(String const &name) const;
+    Record const &subrecord(const CString &name) const;
 
     dsize size() const;
 
@@ -573,7 +570,7 @@ public:
      * @return  Value cast to a specific value type.
      */
     template <typename ValueType>
-    ValueType const &value(String const &name) const {
+    ValueType const &value(const CString &name) const {
         return (*this)[name].value<ValueType>();
     }
 
@@ -587,7 +584,7 @@ public:
      *
      * @return  The function instance.
      */
-    Function const &function(String const &name) const;
+    Function const &function(const CString &name) const;
 
     /**
      * Adds a new record to be used as a superclass of this record.
@@ -621,7 +618,7 @@ public:
      *
      * @return Record containing the @a name.
      */
-    Record const &parentRecordForMember(String const &name) const;
+    Record const &parentRecordForMember(const CString &name) const;
 
     String asInfo() const;
 
@@ -656,10 +653,8 @@ private:
     DE_PRIVATE(d)
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(Record::Flags)
-
 /// Converts the record into a human-readable text representation.
-DE_PUBLIC QTextStream &operator << (QTextStream &os, Record const &record);
+DE_PUBLIC std::ostream &operator << (std::ostream &os, Record const &record);
 
 } // namespace de
 

@@ -23,7 +23,7 @@ namespace de {
 AsyncScope::~AsyncScope()
 {
     DE_GUARD(_tasks);
-    foreach (AsyncTask *task, _tasks.value)
+    for (AsyncTask *task : _tasks.value)
     {
         task->invalidate();
     }
@@ -55,7 +55,7 @@ bool AsyncScope::isAsyncFinished() const
 
 void AsyncScope::waitForFinished(TimeSpan timeout)
 {
-    forever
+    for (;;)
     {
         AsyncTask *task = nullptr;
         {

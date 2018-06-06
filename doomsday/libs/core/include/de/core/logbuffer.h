@@ -24,8 +24,6 @@
 #include "../File"
 #include "../Lockable"
 
-#include <QObject>
-
 namespace de {
 
 class LogEntry;
@@ -42,12 +40,10 @@ class LogSink;
  *
  * @ingroup core
  */
-class DE_PUBLIC LogBuffer : public QObject, public Lockable
+class DE_PUBLIC LogBuffer : public Lockable
 {
-    Q_OBJECT
-
 public:
-    typedef QList<LogEntry const *> Entries;
+    typedef List<const LogEntry *> Entries;
 
     /**
      * Interface for objects that filter log entries.
@@ -206,7 +202,6 @@ public:
 
     static LogBuffer &get();
 
-public slots:
     /**
      * Flushes all unflushed entries to the defined outputs.
      */

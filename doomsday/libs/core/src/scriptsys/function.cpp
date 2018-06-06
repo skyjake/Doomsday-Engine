@@ -27,12 +27,11 @@
 #include "de/Reader"
 #include "de/Log"
 
-#include <QTextStream>
-#include <QMap>
+#include <sstream>
 
 namespace de {
 
-typedef QMap<String, Function::NativeEntryPoint> RegisteredEntryPoints;
+typedef Map<String, Function::NativeEntryPoint> RegisteredEntryPoints;
 static RegisteredEntryPoints entryPoints;
 
 DE_PIMPL_NOREF(Function)
@@ -49,19 +48,18 @@ DE_PIMPL_NOREF(Function)
     /// Namespace where the function was created. This global namespace is
     /// used always when executing the function, regardless of where the
     /// function is called.
-    Record *globals;
+    Record *globals{nullptr};
 
     /// Name of the native function (empty, if this is not a native function).
     String nativeName;
 
     /// The native entry point.
-    Function::NativeEntryPoint nativeEntryPoint;
+    Function::NativeEntryPoint nativeEntryPoint{nullptr};
 
-    Impl() : globals(0), nativeEntryPoint(0)
-    {}
+    Impl() {}
 
     Impl(Function::Arguments const &args, Function::Defaults const &defaults)
-        : arguments(args), defaults(defaults), globals(0), nativeEntryPoint(0)
+        : arguments(args), defaults(defaults)
     {}
 };
 
@@ -90,7 +88,7 @@ Function::Function(String const &nativeName, Arguments const &args, Defaults con
 Function::~Function()
 {
     // Delete the default argument values.
-    DE_FOR_EACH(Defaults, i, d->defaults)
+    for (auto &i : d->defaults)
     {
         delete i.value();
     }
@@ -98,10 +96,9 @@ Function::~Function()
 
 String Function::asText() const
 {
-    String result;
-    QTextStream os(&result);
+    std::ostringstream os;
     os << "(Function " << this << " (";
-    DE_FOR_EACH_CONST(Arguments, i, d->arguments)
+    for (const auto &i : d->arguments)
     {
         if (i != d->arguments.begin())
         {
@@ -115,7 +112,7 @@ String Function::asText() const
         }
     }
     os << "))";
-    return result;
+    return os.str();
 }
 
 Compound &Function::compound()
@@ -213,8 +210,8 @@ void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values)
     {
         /// @throw WrongArgumentsError  Wrong number of argument specified.
         throw WrongArgumentsError("Function::mapArgumentValues",
-                                  "Expected " + QString::number(d->arguments.size()) +
-                                  " arguments, but got " + QString::number(values.size()) +
+                                  "Expected " + String::asText(d->arguments.size()) +
+                                  " arguments, but got " + String::asText(values.size()) +
                                   " arguments in function call");
     }
 }
@@ -222,7 +219,7 @@ void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values)
 void Function::setGlobals(Record *globals)
 {
     LOG_AS("Function::setGlobals");
-    DE_ASSERT(globals != 0);
+    DE_ASSERT(globals);
 
     if (!d->globals)
     {
@@ -278,9 +275,9 @@ void Function::operator >> (Writer &to) const
     to << duint16(d->defaults.size());
 
     // Default values.
-    DE_FOR_EACH_CONST(Defaults, i, d->defaults)
+    for (const auto &i : d->defaults)
     {
-        to << i.key() << *i.value();
+        to << ckey(i) << *cvalue(i);
     }
 
     // The statements of the function.

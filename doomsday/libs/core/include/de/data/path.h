@@ -27,6 +27,7 @@
 #include "../Log"
 #include "../ISerializable"
 #include "../String"
+#include "../Range"
 
 namespace de {
 
@@ -160,19 +161,12 @@ public:
     Path(String const &path, Char sep = '/');
 
     /**
-     * Construct a path from @a str with '/' as the segment separator.
-     *
-     * @param str  String.
-     */
-    Path(String const &str);
-
-    /**
      * Construct a path from a UTF-8 C-style string.
      *
      * @param nullTerminatedCStr  Path to be parsed. All white space is included in the path.
      * @param sep   Character used to separate path segments.
      */
-    Path(char const *nullTerminatedCStr, char sep);
+    Path(char const *nullTerminatedCStr, Char sep);
 
     /**
      * Construct a path from a UTF-8 C-style string that uses '/' separators.
@@ -242,7 +236,7 @@ public:
      * Returns @c true if this path is lexically less than @a other. The test
      * is case and separator insensitive.
      */
-    bool operator < (Path const &other) const;
+    bool operator<(Path const &other) const;
 
     /**
      * Concatenate paths together. This path's separator will be used for
@@ -252,7 +246,7 @@ public:
      *
      * @return Concatenated path.
      */
-    Path operator / (Path const &other) const;
+    Path operator/(Path const &other) const;
 
     /**
      * Concatenate paths together. This path's separator will be used for
@@ -263,16 +257,14 @@ public:
      *
      * @return Concatenated path.
      */
-    Path operator / (const String &other) const;
+    Path operator/(const String &other) const;
 
-    Path operator / (char const *otherNullTerminatedUtf8) const;
-
-    Path operator / (String const &other) const;
+    Path operator/(char const *otherNullTerminatedUtf8) const;
 
     /**
      * Convert this path to a text string.
      */
-    operator String() const {
+    inline operator String() const {
         return toString();
     }
 
@@ -281,10 +273,12 @@ public:
      */
     String toString() const;
 
+    const char *c_str() const;
+
     /**
      * Returns a reference to the path as a string.
      */
-    String const &toStringRef() const;
+    operator const char *() const;
 
     /**
      * Returns @c true if the path is empty; otherwise @c false.
@@ -445,7 +439,7 @@ public:
      *
      * @return String with all slashes replaced with @a replaceWith.
      */
-    static String normalizeString(String const &text, QChar replaceWith = '/');
+    static String normalizeString(String const &text, Char replaceWith = '/');
 
     /**
      * Makes a path where the given input text is first normalized so that
@@ -457,7 +451,7 @@ public:
      *
      * @return Path with @a replaceWith used in place of slashes.
      */
-    static Path normalize(String const &text, QChar replaceWith = '/');
+    static Path normalize(String const &text, Char replaceWith = '/');
 
 private:
     DE_PRIVATE(d)
@@ -470,12 +464,12 @@ private:
 class DE_PUBLIC DotPath : public Path
 {
 public:
-    DotPath(String const &path = "")        : Path(path, '.') {}
+    DotPath(String const &path = "")        : Path(path, L'.') {}
 //    DotPath(QString const &str)             : Path(str, '.') {}
-    DotPath(char const *nullTerminatedCStr) : Path(nullTerminatedCStr, '.') {}
+    DotPath(char const *nullTerminatedCStr) : Path(nullTerminatedCStr, L'.') {}
     DotPath(Path const &other)              : Path(other) {}
     DotPath(Path &&moved)                   : Path(moved) {}
-    DotPath(DotPath const &other)           : Path(other.toStringRef(), other.separator()) {}
+    DotPath(DotPath const &other)           : Path(other.toString(), other.separator()) {}
     DotPath(DotPath &&moved)                : Path(moved) {}
 
     DotPath &operator = (char const *nullTerminatedCStr) {

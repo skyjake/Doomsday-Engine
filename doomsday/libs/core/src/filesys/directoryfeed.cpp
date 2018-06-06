@@ -20,12 +20,12 @@
 #include "de/DirectoryFeed"
 #include "de/Folder"
 #include "de/NativeFile"
+#include "de/NativePath"
 #include "de/FS"
 #include "de/Date"
 #include "de/App"
 
-#include <QDir>
-#include <QFileInfo>
+#include <c_plus/fileinfo.h>
 
 namespace de {
 
@@ -78,8 +78,7 @@ Feed::PopulatedFiles DirectoryFeed::populate(Folder const &folder)
         NativePath::createPath(d->nativePath);
     }
 
-    QDir dir(d->nativePath);
-    if (!dir.isReadable())
+    if (!_nativePath.exists())
     {
         /// @throw NotFoundError The native directory was not accessible.
         throw NotFoundError("DirectoryFeed::populate", "Path '" + d->nativePath + "' inaccessible");

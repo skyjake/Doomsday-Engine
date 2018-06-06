@@ -336,7 +336,7 @@ public:
         }
     }
 
-    static Context textToContext(const String &text)
+    static Context textToContext(String text)
     {
         duint32 val = 0;
         if (text.endsWith("Dev"))
@@ -621,7 +621,7 @@ public:
      *
      * @return Composed textual representation of the entry.
      */
-    String asText(Flags const &flags = 0, int shortenSection = 0) const;
+    String asText(Flags const &flags = 0, String::BytePos shortenSection = String::BytePos(0)) const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

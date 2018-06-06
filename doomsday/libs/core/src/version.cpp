@@ -20,7 +20,7 @@
  */
 
 #include "de/Version"
-#include <QStringList>
+#include "de/List"
 
 #ifdef __GNUC__
 #  undef major
@@ -83,18 +83,18 @@ String Version::compactNumber() const
 {
     if (patch != 0)
     {
-        return String("%1.%2.%3").arg(major).arg(minor).arg(patch);
+        return String::format("%d.%d.%d", major, minor, patch);
     }
-    return String("%1.%2").arg(major).arg(minor);
+    return String::format("%d.%d", major, minor);
 }
 
 String Version::fullNumber() const
 {
     if (build != 0)
     {
-        return String("%1.%2.%3.%4").arg(major).arg(minor).arg(patch).arg(build);
+        return String::format("%d.%d.%d.%d", major, minor, patch, build);
     }
-    return String("%1.%2.%3").arg(major).arg(minor).arg(patch);
+    return String::format("%d.%d.%d", major, minor, patch);
 }
 
 String Version::asHumanReadableText() const
@@ -122,21 +122,23 @@ void Version::parseVersionString(String const &version)
     label.clear();
     gitDescription.clear();
 
-    int dashPos = version.indexOf('-');
+    if (version.isEmpty()) return;
 
-    QStringList parts = version.left(dashPos).split('.');
-    if (parts.size() >= 1) major = String(parts[0]).toInt();
-    if (parts.size() >= 2) minor = String(parts[1]).toInt(nullptr, 10, String::AllowSuffix);
-    if (parts.size() >= 3) patch = String(parts[2]).toInt(nullptr, 10, String::AllowSuffix);
-    if (parts.size() >= 4) build = String(parts[3]).toInt(nullptr, 10, String::AllowSuffix);
+    auto dashPos = version.indexOf('-');
 
-    if (dashPos >= 0 && dashPos < version.size() - 1)
+    StringList parts = version.left(dashPos).split('.');
+    if (parts.size() >= 1) major = parts[0].toInt();
+    if (parts.size() >= 2) minor = parts[1].toInt(nullptr, 10, String::AllowSuffix);
+    if (parts.size() >= 3) patch = parts[2].toInt(nullptr, 10, String::AllowSuffix);
+    if (parts.size() >= 4) build = parts[3].toInt(nullptr, 10, String::AllowSuffix);
+
+    if (dashPos >= 0 && dashPos < version.sizei() - 1)
     {
         label = version.substr(dashPos + 1);
     }
 }
 
-bool Version::operator < (Version const &other) const
+bool Version::operator<(Version const &other) const
 {
     if (major == other.major)
     {
@@ -153,10 +155,10 @@ bool Version::operator < (Version const &other) const
     return major < other.major;
 }
 
-bool Version::operator == (Version const &other) const
+bool Version::operator==(Version const &other) const
 {
-    return major == other.major && minor == other.minor &&
-           patch == other.patch && build == other.build;
+    return major == other.major && minor == other.minor && patch == other.patch &&
+           build == other.build;
 }
 
 bool Version::operator > (Version const &other) const
@@ -166,7 +168,7 @@ bool Version::operator > (Version const &other) const
 
 String Version::userAgent() const
 {
-    return String("Doomsday Engine %1 (%2)").arg(fullNumber()).arg(operatingSystem());
+    return String::format("Doomsday Engine %s (%s)", fullNumber().c_str(), operatingSystem().c_str());
 }
 
 String Version::operatingSystem()

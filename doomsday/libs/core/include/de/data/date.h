@@ -23,7 +23,7 @@
 #include "../Time"
 #include "../Log"
 
-#include <QTextStream>
+#include <sstream>
 
 namespace de {
 
@@ -42,13 +42,13 @@ public:
 
     Date(Time const &time);
 
-    int year() const { return asDateTime().date().year(); }
-    int month() const { return asDateTime().date().month(); }
-    int dayOfMonth() const { return asDateTime().date().day(); }
-    int hours() const { return asDateTime().time().hour(); }
-    int minutes() const { return asDateTime().time().minute(); }
-    int seconds() const { return asDateTime().time().second(); }
-    int daysTo(Date const &other) const { return int(asDateTime().date().daysTo(other.asDateTime().date())); }
+    int year() const;
+    int month() const;
+    int dayOfMonth() const;
+    int hours() const;
+    int minutes() const;
+    int seconds() const;
+    int daysTo(Date const &other) const;
 
     /**
      * Forms a textual representation of the date.
@@ -70,7 +70,7 @@ public:
     static Date fromText(String const &text);
 };
 
-DE_PUBLIC QTextStream &operator << (QTextStream &os, Date const &date);
+DE_PUBLIC std::ostream &operator << (std::ostream &os, Date const &date);
 
 }
 

@@ -21,65 +21,65 @@
 #include "de/String"
 #include "de/math.h"
 
-#include <QTextStream>
+#include <sstream>
 #include <cstring>
 
 using namespace de;
 
 // Default size of one allocation pool.
-static duint const POOL_SIZE = 1024;
+static const size_t POOL_SIZE = 1024;
 
-String const Token::PARENTHESIS_OPEN  = "(";
-String const Token::PARENTHESIS_CLOSE = ")";
-String const Token::BRACKET_OPEN      = "[";
-String const Token::BRACKET_CLOSE     = "]";
-String const Token::CURLY_OPEN        = "{";
-String const Token::CURLY_CLOSE       = "}";
-String const Token::COLON             = ":";
-String const Token::COMMA             = ",";
-String const Token::SEMICOLON         = ";";
+const char *Token::PARENTHESIS_OPEN  = "(";
+const char *Token::PARENTHESIS_CLOSE = ")";
+const char *Token::BRACKET_OPEN      = "[";
+const char *Token::BRACKET_CLOSE     = "]";
+const char *Token::CURLY_OPEN        = "{";
+const char *Token::CURLY_CLOSE       = "}";
+const char *Token::COLON             = ":";
+const char *Token::COMMA             = ",";
+const char *Token::SEMICOLON         = ";";
 
-bool Token::equals(QChar const *str) const
+bool Token::equals(const char *str) const
 {
-    dsize length = qchar_strlen(str);
-    if (length != dsize(size())) return false;
-    return String::equals(str, _begin, size());
+    return cmpSc_Rangecc(&_token, str, &iCaseSensitive) == 0;
 }
 
-bool Token::beginsWith(QChar const *str) const
+bool Token::beginsWith(const char *str) const
 {
-    dsize const length = qchar_strlen(str);
-    if (length > dsize(size()))
+    return startsWithSc_Rangecc(&_token, str, &iCaseSensitive) == 0;
+}
+
+void Token::appendChar(Char c)
+{
+    iMultibyteChar mb;
+    init_MultibyteChar(&mb, c);
+    for (const char *i = mb.bytes; *i; ++i)
     {
-        // We are shorter than the required beginning string.
-        return false;
+        *_end++ = *i;
     }
-    return String::equals(str, _begin, length);
 }
 
 String Token::asText() const
 {
-    return String(typeToText(_type)) + " '" + str() +
-           "' (on line " + QString::number(_line) + ")";
+    return String::format("%s '%s' (on line %u)", typeToText(_type), str().c_str(), _line);
 }
 
 String Token::str() const
 {
-    return String(_begin, _end - _begin);
+    return {_token.start, _token.end};
 }
 
 String Token::unescapeStringLiteral() const
 {
     DE_ASSERT(_type == LITERAL_STRING_APOSTROPHE ||
-                 _type == LITERAL_STRING_QUOTED ||
-                 _type == LITERAL_STRING_LONG);
+              _type == LITERAL_STRING_QUOTED ||
+              _type == LITERAL_STRING_LONG);
 
-    String result;
-    QTextStream os(&result);
+    String os;
     bool escaped = false;
 
-    QChar const *begin = _begin;
-    QChar const *end   = _end;
+    const char *begin = _begin;
+    const char *end   = _end;
 
     // A long string?
     if (_type == LITERAL_STRING_LONG)
@@ -95,11 +95,11 @@ String Token::unescapeStringLiteral() const
         --end;
     }
 
-    for (QChar const *ptr = begin; ptr != end; ++ptr)
+    for (const char *ptr = begin; ptr != end; ++ptr)
     {
         if (escaped)
         {
-            QChar c = '\\';
+            Char c = '\\';
             escaped = false;
             if (*ptr == '\\')
             {
@@ -143,18 +143,18 @@ String Token::unescapeStringLiteral() const
             }
             else if (*ptr == 'x' && (end - ptr > 2))
             {
-                QString num(const_cast<QChar const *>(ptr + 1), 2);
-                duint code = num.toInt(0, 16);
-                c = QChar(code);
+                String num(const_cast<const char *>(ptr + 1), 2);
+                c = Char(num.toInt(0, 16));
                 ptr += 2;
             }
             else
             {
                 // Unknown escape sequence?
-                os << '\\' << *ptr;
+                os += '\\';
+                os += *ptr;
                 continue;
             }
-            os << c;
+            os += c;
         }
         else
         {
@@ -163,12 +163,12 @@ String Token::unescapeStringLiteral() const
                 escaped = true;
                 continue;
             }
-            os << *ptr;
+            os += *ptr;
         }
     }
     DE_ASSERT(!escaped);
 
-    return result;
+    return os.str();
 }
 
 bool Token::isInteger() const
@@ -176,8 +176,7 @@ bool Token::isInteger() const
     if (_type != LITERAL_NUMBER) return false;
 
     String const string = str();
-    if (string.beginsWith(QStringLiteral("0x")) ||
-        string.beginsWith(QStringLiteral("0X")))
+    if (string.beginsWith("0x") || string.beginsWith("0X"))
     {
         return true;
     }
@@ -187,7 +186,7 @@ bool Token::isInteger() const
 bool Token::isFloat() const
 {
     if (_type != LITERAL_NUMBER) return false;
-    for (QChar c : *this)
+    for (Char c : *this)
     {
         if (c == '.') return true;
     }
@@ -196,10 +195,8 @@ bool Token::isFloat() const
 
 ddouble Token::toNumber() const
 {
-    String const string = str();
-
-    if (string.beginsWith(QStringLiteral("0x")) ||
-        string.beginsWith(QStringLiteral("0X")))
+    const String string = str();
+    if (string.beginsWith("0x") || string.beginsWith("0X"))
     {
         return ddouble(string.toLongLong(0, 16));
     }
@@ -241,7 +238,7 @@ void TokenBuffer::clear()
     _formPool = 0;
 }
 
-QChar *TokenBuffer::advanceToPoolWithSpace(duint minimum)
+const char *TokenBuffer::advanceToPoolWithSpace(duint minimum)
 {
     for (;; ++_formPool)
     {
@@ -281,29 +278,28 @@ void TokenBuffer::newToken(duint line)
     }
 
     // Determine which pool to use and the starting address.
-    QChar *begin = advanceToPoolWithSpace(0);
-
+    const char *begin = advanceToPoolWithSpace(0);
     _tokens.push_back(Token(begin, begin, line));
     _forming = &_tokens.back();
 }
 
-void TokenBuffer::appendChar(QChar c)
+void TokenBuffer::appendChar(Char c)
 {
     DE_ASSERT(_forming != 0);
 
-    // There is at least one character available in the pool.
+    // There is room for at least one character available in the pool.
     _forming->appendChar(c);
 
     // If we run out of space in the pool, we'll need to relocate the
     // token to a new pool. If the pool is new, or there are no tokens
     // in it yet, we can resize the pool in place.
     Pool &fp = _pools[_formPool];
-    if (_forming->end() - fp.chars.data() >= dint(fp.size))
+    if (_forming->end() - fp.chars.data() >= dint(fp.size) - iMultibyteCharMaxSize)
     {
         // The pool is full. Find a new pool and move the token.
-        String tok = _forming->str();
-        QChar *newBegin = advanceToPoolWithSpace(tok.size());
-        memmove(newBegin, tok.data(), tok.size() * sizeof(QChar));
+        const String tok = _forming->str();
+        const char *newBegin = advanceToPoolWithSpace(tok.size());
+        std::memmove(newBegin, tok.data(), tok.size());
         *_forming = Token(newBegin, newBegin + tok.size(), _forming->line());
     }
 }

@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/System"
@@ -38,7 +38,7 @@ void System::setBehavior(Flags const &behavior, FlagOp operation)
     applyFlagOperation(d->behavior, behavior, operation);
 }
 
-System::Flags System::behavior() const
+Flags System::behavior() const
 {
     return d->behavior;
 }

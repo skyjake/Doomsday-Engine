@@ -56,6 +56,8 @@
 #  include <locale.h>
 #endif
 
+#include <c_plus/thread.h>
+
 namespace de {
 
 static App *singletonApp;
@@ -94,7 +96,7 @@ static Value *Function_App_Locate(Context &, Function::ArgumentValues const &arg
 DE_PIMPL(App)
 , DE_OBSERVES(PackageLoader, Activity)
 {
-    QThread *mainThread = nullptr;
+    iThread *mainThread = nullptr;
 
     /// Name of the application (metadata for humans).
     String appName;
@@ -116,7 +118,7 @@ DE_PIMPL(App)
     Clock clock;
 
     /// Subsystems (not owned).
-    QList<System *> systems;
+    List<System *> systems;
 
     ScriptSystem scriptSys;
     Record appModule;
@@ -170,13 +172,13 @@ DE_PIMPL(App)
         packagesToLoadAtInit << "net.dengine.stdlib";
 
         singletonApp = a;
-        mainThread = QThread::currentThread();
+        mainThread = current_Thread();
 
         logBuffer.setEntryFilter(&logFilter);
 
         Clock::setAppClock(&clock);
         Animation::setClock(&clock);
-        qsrand(Time().asDateTime().toTime_t());
+        srand(Time().toTime_t());
 
         // Built-in systems.
         systems << &fs << &scriptSys;
@@ -332,7 +334,7 @@ DE_PIMPL(App)
             }
             catch (Error const &er)
             {
-                qWarning("%s", er.asText().toLatin1().constData());
+                warning("%s", er.asText().c_str());
             }
 
             level = LogEntry::Level(level
@@ -539,7 +541,7 @@ bool App::inMainThread()
         // No app even created yet, must be main thread.
         return true;
     }
-    return DE_APP->d->mainThread == QThread::currentThread();
+    return DE_APP->d->mainThread == current_Thread();
 }
 
 #if !defined (DE_STATIC_LINK)

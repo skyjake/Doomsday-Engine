@@ -24,8 +24,6 @@
 #include "../Record"
 #include "../File"
 
-#include <QMap>
-
 namespace de {
 
 /**

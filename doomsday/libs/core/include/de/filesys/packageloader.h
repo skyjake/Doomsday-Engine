@@ -23,8 +23,7 @@
 #include "../Package"
 #include "../ArchiveFolder"
 #include "../FileSystem"
-
-#include <QMap>
+#include "../Hash"
 
 namespace de {
 
@@ -63,7 +62,7 @@ public:
     /// Errors during reactions to loading a package. @ingroup errors
     DE_ERROR(PostLoadError);
 
-    typedef QHash<String, Package *> LoadedPackages;
+    typedef Hash<String, Package *> LoadedPackages;
 
     /**
      * Utility for dealing with space-separated lists of identifiers.
@@ -125,7 +124,7 @@ public:
      */
     LoadedPackages const &loadedPackages() const;
 
-    QList<Package *> loadedPackagesInOrder() const;
+    List<Package *> loadedPackagesInOrder() const;
 
     FileSystem::FoundFiles loadedPackagesAsFilesInPackageOrder() const;
 

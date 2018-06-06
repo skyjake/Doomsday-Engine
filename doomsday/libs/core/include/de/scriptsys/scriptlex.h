@@ -23,8 +23,6 @@
 #include "../Lex"
 #include "../TokenBuffer"
 
-#include <QFlags>
-
 namespace de {
 
 #ifdef WIN32
@@ -55,47 +53,47 @@ public:
     DE_SUB_ERROR(SyntaxError, MismatchedBracketError);
 
     // Keywords.
-    static String const AND;
-    static String const OR;
-    static String const NOT;
-    static String const ELSIF;
-    static String const ELSE;
-    static String const THROW;
-    static String const CATCH;
-    static String const IN;
-    static String const END;
-    static String const IF;
-    static String const WHILE;
-    static String const FOR;
-    static String const DEF;
-    static String const TRY;
-    static String const IMPORT;
-    static String const EXPORT;
-    static String const RECORD;
-    static String const SCOPE;
-    static String const DEL;
-    static String const PASS;
-    static String const CONTINUE;
-    static String const BREAK;
-    static String const RETURN;
-    static String const PRINT;
-    static String const CONST;
-    static String const T_TRUE;
-    static String const T_FALSE;
-    static String const NONE;
-    static String const PI;
+    static const char *AND;
+    static const char *OR;
+    static const char *NOT;
+    static const char *ELSIF;
+    static const char *ELSE;
+    static const char *THROW;
+    static const char *CATCH;
+    static const char *IN;
+    static const char *END;
+    static const char *IF;
+    static const char *WHILE;
+    static const char *FOR;
+    static const char *DEF;
+    static const char *TRY;
+    static const char *IMPORT;
+    static const char *EXPORT;
+    static const char *RECORD;
+    static const char *SCOPE;
+    static const char *DEL;
+    static const char *PASS;
+    static const char *CONTINUE;
+    static const char *BREAK;
+    static const char *RETURN;
+    static const char *PRINT;
+    static const char *CONST;
+    static const char *T_TRUE;
+    static const char *T_FALSE;
+    static const char *NONE;
+    static const char *PI;
 
     // Operators.
-    static String const ASSIGN;
-    static String const SCOPE_ASSIGN;
-    static String const WEAK_ASSIGN;
+    static const char *ASSIGN;
+    static const char *SCOPE_ASSIGN;
+    static const char *WEAK_ASSIGN;
 
     enum Behavior
     {
         DefaultBehavior = 0,
         StopAtMismatchedCloseBrace = 0x1 ///< Mismatched } is treated as end of input.
     };
-    Q_DECLARE_FLAGS(Behaviors, Behavior)
+    using Behaviors = Behavior;
 
 public:
     ScriptLex(String const &input = "");
@@ -120,24 +118,22 @@ public:
      *
      * @return Type of the parsed string.
      */
-    Token::Type parseString(QChar startChar, duint startIndentation, TokenBuffer &output);
+    Token::Type parseString(Char startChar, duint startIndentation, TokenBuffer &output);
 
 public:
     /// Determines whether a character is an operator character.
-    static bool isOperator(QChar c);
+    static bool isOperator(Char c);
 
     /// Determines whether a token is a Haw script keyword.
     static bool isKeyword(Token const &token);
 
     /// Returns a list of all the keywords.
-    static StringList keywords();
+//    static StringList keywords();
 
     /// Determines whether one character should join another to
     /// form a longer token.
-    static bool combinesWith(QChar a, QChar b);
+    static bool combinesWith(Char a, Char b);
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(ScriptLex::Behaviors)
 
 } // namespace de
 

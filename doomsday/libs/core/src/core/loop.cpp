@@ -22,20 +22,17 @@
 #include "de/Log"
 #include "de/math.h"
 
-#include <QCoreApplication>
-#include <QTimer>
-
 #include "../src/core/callbacktimer.h"
 
 namespace de {
 
-static Loop *loopSingleton = 0;
+static Loop *loopSingleton = nullptr;
 
 DE_PIMPL(Loop)
 {
     TimeSpan interval;
     bool running;
-    QTimer *timer;
+//    QTimer *timer;
     LoopCallback mainCall;
 
     Impl(Public *i) : Base(i), interval(0), running(false)
@@ -45,13 +42,13 @@ DE_PIMPL(Loop)
 
         audienceForIteration.setAdditionAllowedDuringIteration(true);
 
-        timer = new QTimer(thisPublic);
-        QObject::connect(timer, SIGNAL(timeout()), thisPublic, SLOT(nextLoopIteration()));
+//        timer = new QTimer(thisPublic);
+//        QObject::connect(timer, SIGNAL(timeout()), thisPublic, SLOT(nextLoopIteration()));
     }
 
     ~Impl()
     {
-        loopSingleton = 0;
+        loopSingleton = nullptr;
     }
 
     DE_PIMPL_AUDIENCE(Iteration)
@@ -62,6 +59,8 @@ DE_AUDIENCE_METHOD(Loop, Iteration)
 Loop::Loop() : d(new Impl(this))
 {}
 
+Loop::~Loop() {}
+
 void Loop::setRate(double freqHz)
 {
     if (fequal(freqHz, 0.0))
@@ -69,7 +68,7 @@ void Loop::setRate(double freqHz)
         freqHz = 1000.0;
     }
     d->interval = 1.0 / freqHz;
-    d->timer->setInterval(de::max(1, int(d->interval.asMilliSeconds())));
+//    d->timer->setInterval(de::max(1, int(d->interval.asMilliSeconds())));
 }
 
 double Loop::rate() const
@@ -80,30 +79,30 @@ double Loop::rate() const
 void Loop::start()
 {
     d->running = true;
-    d->timer->start();
+//    d->timer->start();
 }
 
 void Loop::stop()
 {
     d->running = false;
-    d->timer->stop();
+//    d->timer->stop();
 }
 
 void Loop::pause()
 {
-    d->timer->stop();
+//    d->timer->stop();
 }
 
 void Loop::resume()
 {
-    d->timer->start();
+//    d->timer->start();
 }
 
 void Loop::timer(TimeSpan const &delay, std::function<void ()> func)
 {
     // The timer will delete itself after it's triggered.
-    internal::CallbackTimer *timer = new internal::CallbackTimer(func, qApp);
-    timer->start(delay.asMilliSeconds());
+//    internal::CallbackTimer *timer = new internal::CallbackTimer(func, qApp);
+//    timer->start(delay.asMilliSeconds());
 }
 
 void Loop::mainCall(std::function<void ()> func) // static
@@ -120,7 +119,7 @@ void Loop::mainCall(std::function<void ()> func) // static
 
 Loop &Loop::get()
 {
-    DE_ASSERT(loopSingleton != 0);
+    DE_ASSERT(loopSingleton);
     return *loopSingleton;
 }
 
@@ -169,7 +168,7 @@ void LoopCallback::enqueue(Callback func)
 
 void LoopCallback::loopIteration()
 {
-    QList<Callback> funcs;
+    List<Callback> funcs;
 
     // Lock while modifying but not during the callbacks themselves.
     {
@@ -177,7 +176,7 @@ void LoopCallback::loopIteration()
         Loop::get().audienceForIteration() -= this;
 
         // Make a copy of the list if new callbacks get enqueued in the callback.
-        funcs = _funcs;
+        funcs = std::move(_funcs);
         _funcs.clear();
     }
 

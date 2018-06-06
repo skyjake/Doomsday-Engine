@@ -39,104 +39,104 @@ Record const *RecordAccessor::accessedRecordPtr() const
     return _rec;
 }
 
-bool RecordAccessor::has(String const &name) const
+bool RecordAccessor::has(const char *name) const
 {
     return accessedRecord().has(name);
 }
 
-Value const &RecordAccessor::get(String const &name) const
+Value const &RecordAccessor::get(const char *name) const
 {
     return accessedRecord()[name].value();
 }
 
-dint RecordAccessor::geti(String const &name) const
+dint RecordAccessor::geti(const char *name) const
 {
     return get(name).asInt();
 }
 
-dint RecordAccessor::geti(String const &name, dint defaultValue) const
+dint RecordAccessor::geti(const char *name, dint defaultValue) const
 {
     if (!accessedRecord().hasMember(name)) return defaultValue;
     return geti(name);
 }
 
-bool RecordAccessor::getb(String const &name) const
+bool RecordAccessor::getb(const char *name) const
 {
     return get(name).isTrue();
 }
 
-bool RecordAccessor::getb(String const &name, bool defaultValue) const
+bool RecordAccessor::getb(const char *name, bool defaultValue) const
 {
     if (!accessedRecord().hasMember(name)) return defaultValue;
     return getb(name);
 }
 
-duint RecordAccessor::getui(String const &name) const
+duint RecordAccessor::getui(const char *name) const
 {
     return duint(get(name).asNumber());
 }
 
-duint RecordAccessor::getui(String const &name, duint defaultValue) const
+duint RecordAccessor::getui(const char *name, duint defaultValue) const
 {
     if (!accessedRecord().hasMember(name)) return defaultValue;
     return getui(name);
 }
 
-dfloat RecordAccessor::getf(String const &name) const
+dfloat RecordAccessor::getf(const char *name) const
 {
     return dfloat(getd(name));
 }
 
-dfloat RecordAccessor::getf(String const &name, dfloat defaultValue) const
+dfloat RecordAccessor::getf(const char *name, dfloat defaultValue) const
 {
     if (!accessedRecord().hasMember(name)) return defaultValue;
     return getf(name);
 }
 
-ddouble RecordAccessor::getd(String const &name) const
+ddouble RecordAccessor::getd(const char *name) const
 {
     return get(name).asNumber();
 }
 
-ddouble RecordAccessor::getd(String const &name, ddouble defaultValue) const
+ddouble RecordAccessor::getd(const char *name, ddouble defaultValue) const
 {
     if (!accessedRecord().hasMember(name)) return defaultValue;
     return getd(name);
 }
 
-String RecordAccessor::gets(String const &name) const
+String RecordAccessor::gets(const char *name) const
 {
     return get(name).asText();
 }
 
-String RecordAccessor::gets(String const &name, String const &defaultValue) const
+String RecordAccessor::gets(const char *name, String const &defaultValue) const
 {
     if (!accessedRecord().hasMember(name)) return defaultValue;
     return gets(name);
 }
 
-ArrayValue const &RecordAccessor::geta(String const &name) const
+ArrayValue const &RecordAccessor::geta(const char *name) const
 {
     return getAs<ArrayValue>(name);
 }
 
-DictionaryValue const &RecordAccessor::getdt(String const &name) const
+DictionaryValue const &RecordAccessor::getdt(const char *name) const
 {
     return getAs<DictionaryValue>(name);
 }
 
-RecordValue const &RecordAccessor::getr(String const &name) const
+RecordValue const &RecordAccessor::getr(const char *name) const
 {
     return getAs<RecordValue>(name);
 }
 
-StringList RecordAccessor::getStringList(String const &name, StringList defaultValue) const
+StringList RecordAccessor::getStringList(const char *name, StringList defaultValue) const
 {
     if (!accessedRecord().has(name)) return defaultValue;
     return get(name).asStringList();
 }
 
-Record const &RecordAccessor::subrecord(String const &name) const
+Record const &RecordAccessor::subrecord(const char *name) const
 {
     return accessedRecord().subrecord(name);
 }

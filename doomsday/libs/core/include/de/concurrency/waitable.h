@@ -23,8 +23,6 @@
 #include "../libcore.h"
 #include "../Time"
 
-#include <QSemaphore>
-
 namespace de {
 
 /**
@@ -38,34 +36,29 @@ public:
     /// wait() failed due to timing out before the resource is secured. @ingroup errors
     DE_ERROR(TimeOutError);
 
-    /// wait() or waitTime() failed to secure the resource. @ingroup errors
-    DE_ERROR(WaitError);
-
 public:
-    Waitable(duint initialValue = 0);
-    virtual ~Waitable();
+    Waitable(dint initialValue = 0);
 
     /// Resets the semaphore to zero.
-    void reset();
+    //void reset();
 
     /// Wait until the resource becomes available. Waits indefinitely.
     void wait() const;
 
     /// Wait for the specified period of time to secure the
     /// resource.  If timeout occurs, an exception is thrown.
-    void wait(TimeSpan const &timeOut) const;
+    void wait(const TimeSpan &timeOut) const;
 
     /// Wait for the specified period of time to secure the
     /// resource.  If timeout occurs, returns @c false.
-    bool tryWait(TimeSpan const &timeOut) const;
+    bool tryWait(const TimeSpan &timeOut) const;
 
     /// Mark the resource as available by incrementing the
     /// semaphore value.
     void post() const;
 
 private:
-    /// Pointer to the internal semaphore data.
-    mutable QSemaphore _semaphore;
+    DE_PRIVATE(d)
 };
 
 }

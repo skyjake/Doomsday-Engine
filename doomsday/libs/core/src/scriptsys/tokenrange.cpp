@@ -46,9 +46,9 @@ duint TokenRange::tokenIndex(duint pos) const
     {
         /// @throw OutOfBoundsError  @a pos is out of range.
         throw OutOfBoundsError("TokenRange::tokenIndex",
-                               "Position " + QString::number(pos) + " is out of the range (" +
-                               QString::number(_start) + ", " + QString::number(_end) +
-                               "), length " + QString::number(size()));
+                               "Position " + QString::asText(pos) + " is out of the range (" +
+                               QString::asText(_start) + ", " + QString::asText(_end) +
+                               "), length " + QString::asText(size()));
     }
     return _start + pos;
 }
@@ -59,8 +59,8 @@ duint TokenRange::tokenPos(duint index) const
     {
         /// @throw OutOfBoundsError  @a index is out of range.
         throw OutOfBoundsError("TokenRange::tokenPos",
-                               "Index " + QString::number(index) + " is out of the range (" +
-                               QString::number(_start) + ", " + QString::number(_end) + ")");
+                               "Index " + QString::asText(index) + " is out of the range (" +
+                               QString::asText(_start) + ", " + QString::asText(_end) + ")");
     }
     return index - _start;
 }
@@ -71,8 +71,8 @@ Token const &TokenRange::token(duint pos) const
     {
         /// @throw OutOfBoundsError  @a pos is out of range.
         throw OutOfBoundsError("TokenRange::token",
-                               "Position " + QString::number(pos) + " is out of the range (" +
-                               QString::number(_start) + ", " + QString::number(_end) + ")");
+                               "Position " + QString::asText(pos) + " is out of the range (" +
+                               QString::asText(_start) + ", " + QString::asText(_end) + ")");
     }
     return _tokens->at(tokenIndex(pos));
 }
@@ -117,8 +117,8 @@ TokenRange TokenRange::endingTo(duint pos) const
     {
         /// @throw OutOfBoundsError  @a pos is out of range.
         throw OutOfBoundsError("TokenRange::endingTo",
-                               "Position " + QString::number(pos) + " is not within the range (" +
-                               QString::number(_start) + ", " + QString::number(_end) + ")");
+                               "Position " + QString::asText(pos) + " is not within the range (" +
+                               QString::asText(_start) + ", " + QString::asText(_end) + ")");
     }
     return TokenRange(*_tokens, _start, tokenIndex(pos));
 }

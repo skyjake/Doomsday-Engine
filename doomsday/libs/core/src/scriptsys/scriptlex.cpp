@@ -23,39 +23,38 @@
 
 using namespace de;
 
-String const ScriptLex::AND("and");
-String const ScriptLex::OR("or");
-String const ScriptLex::NOT("not");
-String const ScriptLex::IF("if");
-String const ScriptLex::ELSIF("elsif");
-String const ScriptLex::ELSE("else");
-String const ScriptLex::END("end");
-String const ScriptLex::THROW("throw");
-String const ScriptLex::CATCH("catch");
-String const ScriptLex::IN("in");
-String const ScriptLex::WHILE("while");
-String const ScriptLex::FOR("for");
-String const ScriptLex::DEF("def");
-String const ScriptLex::TRY("try");
-String const ScriptLex::IMPORT("import");
-String const ScriptLex::EXPORT("export");
-String const ScriptLex::RECORD("record");
-String const ScriptLex::SCOPE("->");
-String const ScriptLex::DEL("del");
-String const ScriptLex::PASS("pass");
-String const ScriptLex::CONTINUE("continue");
-String const ScriptLex::BREAK("break");
-String const ScriptLex::RETURN("return");
-String const ScriptLex::CONST("const");
-String const ScriptLex::PRINT("print");
-String const ScriptLex::T_TRUE("True");
-String const ScriptLex::T_FALSE("False");
-String const ScriptLex::NONE("None");
-String const ScriptLex::PI("Pi");
-
-String const ScriptLex::ASSIGN("=");
-String const ScriptLex::SCOPE_ASSIGN(":=");
-String const ScriptLex::WEAK_ASSIGN("?=");
+const char *ScriptLex::AND("and");
+const char *ScriptLex::OR("or");
+const char *ScriptLex::NOT("not");
+const char *ScriptLex::IF("if");
+const char *ScriptLex::ELSIF("elsif");
+const char *ScriptLex::ELSE("else");
+const char *ScriptLex::END("end");
+const char *ScriptLex::THROW("throw");
+const char *ScriptLex::CATCH("catch");
+const char *ScriptLex::IN("in");
+const char *ScriptLex::WHILE("while");
+const char *ScriptLex::FOR("for");
+const char *ScriptLex::DEF("def");
+const char *ScriptLex::TRY("try");
+const char *ScriptLex::IMPORT("import");
+const char *ScriptLex::EXPORT("export");
+const char *ScriptLex::RECORD("record");
+const char *ScriptLex::SCOPE("->");
+const char *ScriptLex::DEL("del");
+const char *ScriptLex::PASS("pass");
+const char *ScriptLex::CONTINUE("continue");
+const char *ScriptLex::BREAK("break");
+const char *ScriptLex::RETURN("return");
+const char *ScriptLex::CONST("const");
+const char *ScriptLex::PRINT("print");
+const char *ScriptLex::T_TRUE("True");
+const char *ScriptLex::T_FALSE("False");
+const char *ScriptLex::NONE("None");
+const char *ScriptLex::PI("Pi");
+const char *ScriptLex::ASSIGN("=");
+const char *ScriptLex::SCOPE_ASSIGN(":=");
+const char *ScriptLex::WEAK_ASSIGN("?=");
 
 ScriptLex::ScriptLex(String const &input) : Lex(input)
 {}
@@ -90,7 +89,7 @@ duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
         // Tokens are primarily separated by whitespace.
         skipWhiteExceptNewline();
 
-        if (behavior.testFlag(StopAtMismatchedCloseBrace) &&
+        if ((behavior & StopAtMismatchedCloseBrace) &&
             !bracketLevel[BRACKET_CURLY] &&
             peek() == '}')
         {
@@ -101,7 +100,7 @@ duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
         if (peek().isNull()) break;
 
         // This will be the first character of the token.
-        QChar c = get();
+        Char c = get();
 
         if (c == '\n' || c == ';')
         {
@@ -201,9 +200,9 @@ duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
                 {
                     // Very unusual!
                     throw MismatchedBracketError("ScriptLex::getStatement",
-                                                 "Mismatched bracket '" + QString(c) +
+                                                 "Mismatched bracket '" + String(1, c) +
                                                  "' on line " +
-                                                 QString::number(lineNumber()));
+                                                 String::asText(lineNumber()));
                 }
             }
 
@@ -225,9 +224,10 @@ duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
         {
             if (bracketLevel[i] > 0)
             {
-                throw MismatchedBracketError("ScriptLex::getStatement", "Unclosed bracket '" +
-                    String(i == BRACKET_PARENTHESIS? ")" :
-                           i == BRACKET_SQUARE? "]" : "}") + "'");
+                throw MismatchedBracketError(
+                    "ScriptLex::getStatement",
+                    stringf("Unclosed bracket '%s'",
+                            i == BRACKET_PARENTHESIS ? ")" : i == BRACKET_SQUARE ? "]" : "}"));
             }
         }
     }
@@ -236,7 +236,7 @@ duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
 }
 
 Token::Type
-ScriptLex::parseString(QChar startChar, duint startIndentation, TokenBuffer &output)
+ScriptLex::parseString(Char startChar, duint startIndentation, TokenBuffer &output)
 {
     Token::Type type =
         ( startChar == '\''? Token::LITERAL_STRING_APOSTROPHE :
@@ -247,13 +247,13 @@ ScriptLex::parseString(QChar startChar, duint startIndentation, TokenBuffer &out
     ModeSpan readingMode(*this, RetainComments);
 
     // The token already contains the startChar.
-    QChar c = get();
+    Char c = get();
 
     if (c == '\n')
     {
         // This can't be good.
         throw UnterminatedStringError("ScriptLex::parseString",
-                                      "String on line " + QString::number(charLineNumber) +
+                                      "String on line " + String::asText(charLineNumber) +
                                       " is not terminated");
     }
 
@@ -292,7 +292,7 @@ ScriptLex::parseString(QChar startChar, duint startIndentation, TokenBuffer &out
             {
                 throw UnterminatedStringError("ScriptLex::parseString",
                                               "String on line " +
-                                              QString::number(charLineNumber) +
+                                              String::asText(charLineNumber) +
                                               " is not terminated");
             }
             // Skip whitespace according to the indentation.
@@ -328,7 +328,7 @@ ScriptLex::parseString(QChar startChar, duint startIndentation, TokenBuffer &out
     return (longString? Token::LITERAL_STRING_LONG : type);
 }
 
-bool ScriptLex::isOperator(QChar c)
+bool ScriptLex::isOperator(Char c)
 {
     return (c == '=' || c == ',' || c == '.'
          || c == '-' || c == '+' || c == '/' || c == '*' || c == '%'
@@ -337,7 +337,7 @@ bool ScriptLex::isOperator(QChar c)
          || c == ':' || c == '<' || c == '>' || c == '?');
 }
 
-bool ScriptLex::combinesWith(QChar a, QChar b)
+bool ScriptLex::combinesWith(Char a, Char b)
 {
     if (b == '=')
     {
@@ -352,7 +352,7 @@ bool ScriptLex::combinesWith(QChar a, QChar b)
     return false;
 }
 
-static QSet<QString> const keywordStr
+static Set<const char *> const keywordStr
 {
     ScriptLex::AND,
     ScriptLex::BREAK,
@@ -388,23 +388,15 @@ static QSet<QString> const keywordStr
 bool ScriptLex::isKeyword(Token const &token)
 {
     return keywordStr.contains(token.str());
-
-/*    for (int i = 0; keywordStr[i]; ++i)
-    {
-        if (token.equals(keywordStr[i]))
-        {
-            return true;
-        }
-    }
-    return false;*/
 }
 
-StringList ScriptLex::keywords()
+/*StringList ScriptLex::keywords()
 {
     StringList list;
-    foreach (QString const &kw, keywordStr)
+    for (const char *kw : keywordStr)
     {
         list << kw;
     }
     return list;
 }
+*/

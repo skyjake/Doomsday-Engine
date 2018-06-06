@@ -23,8 +23,6 @@
 #include "../Feed"
 #include "../NativePath"
 
-#include <QFlags>
-
 namespace de {
 
 /**
@@ -60,7 +58,6 @@ public:
 
         DefaultFlags = PopulateNativeSubfolders
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
 public:
     /**
@@ -136,8 +133,6 @@ protected:
 private:
     DENG2_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(DirectoryFeed::Flags)
 
 } // namespace de
 

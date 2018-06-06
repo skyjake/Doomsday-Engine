@@ -30,13 +30,11 @@
 #include "de/Parser"
 #include "de/TextValue"
 #include "de/Version"
-
-#include <QMap>
-#include <QRegularExpression>
+#include "de/RegExp"
 
 namespace de {
 
-static String const VAR_PACKAGE_VERSION("package.version");
+static const char *VAR_PACKAGE_VERSION("package.version");
 
 DE_PIMPL(PackageLoader)
 , DENG2_OBSERVES(File, Deletion) // loaded package source file is deleted?
@@ -50,7 +48,7 @@ DE_PIMPL(PackageLoader)
     ~Impl()
     {
         // We own all loaded packages.
-        qDeleteAll(loaded.values());
+        deleteAll(loaded);
     }
 
     /**

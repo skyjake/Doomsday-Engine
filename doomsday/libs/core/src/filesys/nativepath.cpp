@@ -21,8 +21,9 @@
 
 #include "de/NativePath"
 #include "de/App"
-#include <QDir>
-#include <QFile>
+
+#include <c_plus/fileinfo.h>
+#include <c_plus/path.h>
 
 /**
  * @def NATIVE_BASE_SYMBOLIC
@@ -43,10 +44,10 @@
 
 #ifdef WIN32
 #  define NATIVE_HOME_SYMBOLIC  "%HOMEPATH%"
-#  define DIR_SEPARATOR         QChar('\\')
+#  define DIR_SEPARATOR         Char('\\')
 #else
 #  define NATIVE_HOME_SYMBOLIC  "~"
-#  define DIR_SEPARATOR         QChar('/')
+#  define DIR_SEPARATOR         Char('/')
 #  ifdef UNIX
 #    include <sys/types.h>
 #    include <pwd.h>
@@ -55,7 +56,7 @@
 
 namespace de {
 
-static QString toNative(String const &s)
+static String toNative(String const &s)
 {
     // This will resolve parent references (".."), multiple separators
     // (hello//world), and self-references (".").
@@ -119,7 +120,7 @@ NativePath &NativePath::operator = (char const *nullTerminatedCStr)
 NativePath NativePath::concatenatePath(NativePath const &nativePath) const
 {
     if (nativePath.isAbsolute()) return nativePath;
-    return toString().concatenatePath(nativePath, QChar(DIR_SEPARATOR));
+    return toString().concatenatePath(nativePath, Char(DIR_SEPARATOR));
 }
 
 NativePath NativePath::concatenatePath(String const &nativePath) const
@@ -248,7 +249,7 @@ String NativePath::pretty() const
     return result;
 }
 
-String NativePath::withSeparators(QChar sep) const
+String NativePath::withSeparators(Char sep) const
 {
     return Path::withSeparators(sep);
 }
@@ -256,7 +257,7 @@ String NativePath::withSeparators(QChar sep) const
 bool NativePath::exists() const
 {
     if (isEmpty()) return false;
-    return QFile::exists(toString());
+    return fileExistsCStr_FileInfo(c_str());
 }
 
 bool NativePath::isReadable() const
@@ -270,14 +271,16 @@ NativePath NativePath::workPath()
 {
     if (currentNativeWorkPath.isEmpty())
     {
-        currentNativeWorkPath = QDir::currentPath();
+        iString *cwd = cwd_Path();
+        currentNativeWorkPath = String(cwd);
+        delete_String(cwd);
     }
     return currentNativeWorkPath;
 }
 
-bool NativePath::setWorkPath(NativePath const &cwd)
+bool NativePath::setWorkPath(const NativePath &cwd)
 {
-    if (QDir::setCurrent(cwd))
+    if (setCwd_Path(cwd.toString()))
     {
         currentNativeWorkPath = cwd;
         return true;
@@ -285,9 +288,17 @@ bool NativePath::setWorkPath(NativePath const &cwd)
     return false;
 }
 
+NativePath NativePath::homePath()
+{
+#if defined (UNIX)
+    return getenv("HOME");
+#else
+#endif
+}
+
 bool NativePath::exists(NativePath const &nativePath)
 {
-    return QDir::current().exists(nativePath);
+    return fileExistsCStr_FileInfo(nativePath);
 }
 
 void NativePath::createPath(NativePath const &nativePath)
@@ -323,7 +334,7 @@ bool NativePath::destroyPath(const NativePath &nativePath)
     return true;
 }
 
-QChar NativePath::separator()
+Char NativePath::separator()
 {
     return DIR_SEPARATOR;
 }

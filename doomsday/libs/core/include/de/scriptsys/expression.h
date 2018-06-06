@@ -14,15 +14,13 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBCORE_EXPRESSION_H
 #define LIBCORE_EXPRESSION_H
 
 #include "../ISerializable"
-
-#include <QFlags>
 
 namespace de {
 
@@ -86,11 +84,10 @@ public:
         /// If missing, create a new subrecord. Otherwise, reuse the existing record.
         NewSubrecordIfNotInScope = 0x800
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
 public:
     Expression();
-    
+
     virtual ~Expression();
 
     virtual void push(Evaluator &evaluator, Value *scope = 0) const;
@@ -145,8 +142,6 @@ protected:
 private:
     Flags _flags;
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Expression::Flags)
 
 } // namespace de
 

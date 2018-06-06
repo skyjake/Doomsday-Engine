@@ -139,7 +139,7 @@ String Address::asText() const
         d->textRepr = (isLocal()? String("localhost") : d->host->toString());
         if (d->port)
         {
-            d->textRepr += ":" + QString::number(d->port);
+            d->textRepr += Stringf(":%u", d->port);
         }
     }
     return d->textRepr;

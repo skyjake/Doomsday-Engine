@@ -22,13 +22,15 @@
 
 #include "../libcore.h"
 #include "../Block"
-#include "../Range"
 #include "../List"
-#include "../RegExp"
 
 #include <c_plus/string.h>
+#include <ostream>
 
 namespace de {
+
+template <typename T> struct Range;
+class RegExp;
 
 /**
  * The String class extends the QString class with Block conversion and
@@ -78,23 +80,74 @@ public:
     enum CaseSensitivity { CaseInsensitive, CaseSensitive };
 
 public:
-    using size_type = dsize;
+    using SingleChar = char[2];
+    using size_type  = dsize;
+
     static size_type const npos;
-    using Char2 = char[2];
+
+    struct BytePos {
+        dsize index;
+
+        explicit BytePos(dsize i = npos)
+            : index(i)
+        {}
+        explicit operator bool() const { return index != npos; }
+        bool     operator==(dsize i) const { return index == i; }
+        bool     operator!=(dsize i) const { return index != i; }
+        bool     operator<(dsize i) const { return index < i; }
+        bool     operator<(BytePos p) const { return index < p.index; }
+        bool     operator>(dsize i) const { return index > i; }
+        bool     operator>(BytePos p) const { return index > p.index; }
+        bool     operator<=(dsize i) const { return index <= i; }
+        bool     operator>=(dsize i) const { return index >= i; }
+        bool     operator>=(BytePos p) const { return index >= p.index; }
+        BytePos  operator-(int sub) const { return BytePos{index - sub}; }
+        BytePos  operator+(int sub) const { return BytePos{index + sub}; }
+        BytePos  operator++(int) { BytePos p = *this; index++; return p; }
+        BytePos &operator++() { index++; return *this; }
+        BytePos  operator--(int) { BytePos p = *this; index--; return p; }
+        BytePos &operator--() { index--; return *this; }
+        BytePos  operator-(BytePos p) const { return BytePos(index - p.index); }
+    };
+    using ByteRange = Range<BytePos>;
+
+    struct CharPos {
+        dsize index;
+
+        explicit CharPos(dsize i = npos)
+            : index(i)
+        {}
+        explicit operator bool() const { return index != npos; }
+        bool     operator==(dsize i) const { return index == i; }
+        bool     operator!=(dsize i) const { return index != i; }
+        bool     operator<(dsize i) const { return index < i; }
+        bool     operator<(CharPos i) const { return index < i.index; }
+        bool     operator>(dsize i) const { return index > i; }
+        bool     operator>(CharPos i) const { return index > i.index; }
+        bool     operator<=(dsize i) const { return index <= i; }
+        bool     operator>=(dsize i) const { return index >= i; }
+        CharPos  operator-(int sub) const { return CharPos{index - sub}; }
+        CharPos  operator+(int sub) const { return CharPos{index + sub}; }
+        CharPos  operator++(int) { CharPos p = *this; index++; return p; }
+        CharPos &operator++() { index++; return *this; }
+        CharPos  operator--(int) { CharPos p = *this; index--; return p; }
+        CharPos &operator--() { index--; return *this; }
+        CharPos  operator-(CharPos p) const { return CharPos(index - p.index); }
+    };
+    using CharRange = Range<CharPos>;
 
 public:
     String();
     String(const String &other);
     String(String &&moved);
     String(const Block &bytes);
+    String(const iBlock *bytes);
     String(const iString *other);
     String(const std::string &text);
     String(const char *nullTerminatedCStr);
     String(const wchar_t *nullTerminatedWideStr);
     String(const char *cStr, int length);
     String(const char *cStr, dsize length);
-//    String(const QChar *nullTerminatedStr);
-//    String(const QChar *str, size_type length);
     String(dsize length, char ch);
     String(dsize length, Char ch);
     String(const char *start, const char *end);
@@ -125,24 +178,28 @@ public:
         return *this;
     }
 
-    inline explicit operator bool() const { return size() > 0; }
+    inline BytePos size() const { return BytePos{size_String(&_str)}; }
+    inline dint    sizei() const { return dint(size_String(&_str)); }
+    inline dsize   sizeu() const { return size().index; }
 
-    inline dsize size() const { return size_String(&_str); }
+    void resize(size_t newSize);
 
     /// Determines whether the string is empty.
-    inline bool empty() const { return size() == 0; }
-
+    inline bool empty() const { return sizeu() == 0; }
     inline bool isEmpty() const { return empty(); }
+    inline explicit operator bool() const { return !empty(); }
 
-    const char *c_str() const { return cstr_String(&_str); }
+    inline const char *c_str() const { return cstr_String(&_str); }
+    inline const char *data() const { return c_str(); }
 
-    /// Conversion to a character pointer.
-    operator const char *() const { return c_str(); }
+    inline operator const char *() const { return c_str(); }
+    inline operator const iString *() const { return &_str; }
+    inline operator std::string() const { return toStdString(); }
 
-    operator std::string() const { return toStdString(); }
-
-    std::string toStdString() const { return {constBegin_String(&_str), constEnd_String(&_str)}; }
-
+    inline std::string toStdString() const
+    {
+        return {constBegin_String(&_str), constEnd_String(&_str)};
+    }
     std::wstring toWideString() const;
 
     void clear();
@@ -159,42 +216,41 @@ public:
     {
         return startsWithSc_String(&_str, s, cs == CaseSensitive? &iCaseSensitive : &iCaseInsensitive);
     }
-    //    bool beginsWith(Qconst String &s, CaseSensitivity cs = CaseSensitive) const {
-    //        return startsWith(s, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
-    //    }
     bool beginsWith(char ch, CaseSensitivity cs = CaseSensitive) const
     {
-        return beginsWith(Char2{ch, 0}, cs);
+        return beginsWith(SingleChar{ch, 0}, cs);
     }
-    //    bool beginsWith(QLatin1String ls, CaseSensitivity cs = CaseSensitive) const {
-    //        return startsWith(ls, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
-    //    }
     bool beginsWith(const char *cstr, CaseSensitivity cs = CaseSensitive) const
     {
         return startsWithSc_String(&_str, cstr, cs == CaseSensitive? &iCaseSensitive : &iCaseInsensitive);
     }
-
-//    bool endsWith(Qconst String &s, CaseSensitivity cs = CaseSensitive) const {
-//        return QString::endsWith(s, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
-//    }
     bool endsWith(char ch, CaseSensitivity cs = CaseSensitive) const
     {
-        return endsWith(Char2{ch, 0}, cs);
-        //        return QString::endsWith(c, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
+        return endsWith(SingleChar{ch, 0}, cs);
     }
-//    bool endsWith(QLatin1String ls, CaseSensitivity cs = CaseSensitive) const {
-//        return QString::endsWith(ls, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
-//    }
     bool endsWith(const char *cstr, CaseSensitivity cs = CaseSensitive) const
     {
         return endsWithSc_String(
             &_str, cstr, cs == CaseSensitive ? &iCaseSensitive : &iCaseInsensitive);
     }
 
-    inline String mid(int position, int n = -1) const { return substr(position, n); }
-    String        substr(size_type pos, size_type n = iInvalidPos) const;
-    String        substr(int position, int n = -1) const;
-    String        substr(const Rangei &range) const { return mid(range.start, range.size()); }
+    inline char operator[](BytePos pos) const { return c_str()[pos.index]; }
+    char at(BytePos pos) const { DE_ASSERT(pos < sizeu()); return c_str()[pos.index]; }
+
+    inline String mid(CharPos pos, dsize charCount = npos) const { return substr(pos, charCount); }
+    String        substr(CharPos pos, dsize charCount = npos) const;
+    String        substr(const Range<CharPos> &charRange) const;
+    String        substr(BytePos pos, dsize charCount = npos) const;
+    String        substr(const Range<BytePos> &byteRange) const;
+    String        left(BytePos count) const { return substr(BytePos{0}, count.index); }
+    String        left(CharPos count) const { return substr(CharPos{0}, count.index); }
+    String        right(BytePos count) const { return substr(size() - count); }
+    String        right(CharPos count) const { return substr(count); }
+    String        remove(BytePos count) const { return substr(count); }
+    String        remove(CharPos count) const { return substr(count); }
+    void          remove(BytePos start, dsize count);
+    List<String>  split(const char *separator) const;
+    List<String>  split(Char ch) const;
 
     String        operator+(const char *) const;
     inline String operator+(const String &other) const { return *this + (const char *) other; }
@@ -203,6 +259,14 @@ public:
     String &operator+=(Char ch);
     String &operator+=(const char *);
     String &operator+=(const String &);
+
+    String &append(char ch) { return *this += ch; }
+    String &append(Char ch) { return *this += ch; }
+    String &append(const char *s) { return *this += s; }
+    String &append(const String &s) { return *this += s; }
+
+    void insert(BytePos pos, const char *cStr);
+    void insert(BytePos pos, const String &str);
 
     /**
      * Does a path concatenation on this string and the argument. Note that if
@@ -294,12 +358,12 @@ public:
     /// Extracts everything but the extension from string.
     String fileNameAndPathWithoutExtension(char dirChar = '/') const;
 
-    int indexOf(char ch) const { size_t pos = indexOf_String(&_str, ch); return pos == iInvalidPos ? -1 : pos; }
-    int indexOf(Char ch) const { size_t pos = indexOf_String(&_str, ch); return pos == iInvalidPos ? -1 : pos; }
-    int indexOf(const char *cstr) const { size_t pos = indexOfCStr_String(&_str, cstr); return pos == iInvalidPos ? -1 : pos; }
-    int lastIndexOf(char ch) const { size_t pos = lastIndexOf_String(&_str, ch); return pos == iInvalidPos ? -1 : pos; }
-    int lastIndexOf(Char ch) const { size_t pos = lastIndexOf_String(&_str, ch); return pos == iInvalidPos ? -1 : pos; }
-    int lastIndexOf(const char *cstr) const { size_t pos = lastIndexOfCStr_String(&_str, cstr); return pos == iInvalidPos ? -1 : pos;}
+    BytePos indexOf(char ch) const { return BytePos{indexOf_String(&_str, ch)}; }
+    BytePos indexOf(Char ch) const { return BytePos{indexOf_String(&_str, ch)}; }
+    BytePos indexOf(const char *cstr) const { return BytePos{indexOfCStr_String(&_str, cstr)}; }
+    BytePos lastIndexOf(char ch) const { return BytePos{lastIndexOf_String(&_str, ch)}; }
+    BytePos lastIndexOf(Char ch) const { return BytePos{lastIndexOf_String(&_str, ch)}; }
+    BytePos lastIndexOf(const char *cstr) const { return BytePos{lastIndexOfCStr_String(&_str, cstr)}; }
 
     bool containsWord(const String &word) const;
 
@@ -311,7 +375,7 @@ public:
     inline bool operator>=(const char *cstr) const { return compare(cstr) >= 0; }
 
     inline int compare(const char *cstr) const { return cmp_String(&_str, cstr); }
-    inline int compare(const String &s) const { return cmpString_String(&_str, &s); }
+    inline int compare(const String &s) const { return cmpString_String(&_str, &s._str); }
 
     /**
      * Compare two strings (case sensitive).
@@ -363,11 +427,7 @@ public:
      * Flags for controlling how string-to-integer conversion works.
      * See de::String::toInt().
      */
-    enum IntConversionFlag {
-        AllowOnlyWhitespace = 0x0,
-        AllowSuffix = 0x1
-    };
-//    Q_DECLARE_FLAGS(IntConversionFlags, IntConversionFlag)
+    enum IntConversionFlag { AllowOnlyWhitespace = 0x0, AllowSuffix = 0x1 };
 
     /**
      * Converts the string to an integer. The default behavior is identical to
@@ -430,12 +490,13 @@ public:
     {
         iStringConstIterator iter;
 
+        operator const char *() { return iter.pos; }
         operator Char() const { return iter.value; }
         Char operator*() const { return iter.value; }
         void operator++() { next_StringConstIterator(&iter); }
         void operator++(int) { next_StringConstIterator(&iter); }
         bool operator==(const const_iterator &other) const {
-            return iter.str == other.str && iter.pos == other.pos;
+            return iter.str == other.iter.str && iter.pos == other.iter.pos;
         }
         bool operator!=(const const_iterator &other) const { return !(*this == other); }
     };
@@ -444,12 +505,13 @@ public:
     {
         iStringReverseConstIterator iter;
 
+        operator const char *() { return iter.pos; }
         operator Char() const { return iter.value; }
         Char operator*() const { return iter.value; }
         void operator++() { next_StringReverseConstIterator(&iter); }
         void operator++(int) { next_StringReverseConstIterator(&iter); }
         bool operator==(const const_reverse_iterator &other) const {
-            return iter.str == other.str && iter.pos == other.pos;
+            return iter.str == other.iter.str && iter.pos == other.iter.pos;
         }
         bool operator!=(const const_reverse_iterator &other) const { return !(*this == other); }
     };
@@ -528,16 +590,24 @@ public:
      */
     static String format(const char *format, ...);
 
-    static String number(dint8 value)   { return String::format("%d", value); }
-    static String number(dint16 value)  { return String::format("%d", value); }
-    static String number(dint32 value)  { return String::format("%d", value); }
-    static String number(dint64 value)  { return String::format("%lld", value); }
-    static String number(duint8 value)  { return String::format("%u", value); }
-    static String number(duint16 value) { return String::format("%u", value); }
-    static String number(duint32 value) { return String::format("%u", value); }
-    static String number(duint64 value) { return String::format("%llu", value); }
-    static String number(dfloat value)  { return String::format("%f", value); }
-    static String number(ddouble value) { return String::format("%f", value); }
+    static String asText(dint8 value)   { return String::format("%d", value); }
+    static String asText(dint16 value)  { return String::format("%d", value); }
+    static String asText(dint32 value)  { return String::format("%d", value); }
+    static String asText(dint64 value)  { return String::format("%lld", value); }
+    static String asText(duint8 value)  { return String::format("%u", value); }
+    static String asText(duint16 value) { return String::format("%u", value); }
+    static String asText(duint32 value) { return String::format("%u", value); }
+    static String asText(duint64 value) { return String::format("%llu", value); }
+    static String asText(dfloat value)  { return String::format("%f", value); }
+    static String asText(ddouble value) { return String::format("%f", value); }
+    static String asText(char value)    { return String::format("%c", value); }
+    static String asText(Char value)
+    {
+        iMultibyteChar mb;
+        init_MultibyteChar(&mb, value);
+        return asText(mb.bytes);
+    }
+    static String asText(const char *value) { return String::format("%s", value); }
 
     /**
      * Formats data according to formatting instructions. Outputs a
@@ -572,8 +642,12 @@ inline String operator+(Char ch, const String &s) {
     return String(1, ch) + s;
 }
 
-inline String operator+(const char *cstr, const String &s) {
-    return String(cstr) + s;
+inline String operator+(const char *cStr, const String &s) {
+    return String(cStr) + s;
+}
+
+inline const char *operator+(const char *cStr, const String::BytePos &offset) {
+    return cStr + offset.index;
 }
 
 using StringList = List<String>;
@@ -589,14 +663,48 @@ using StringList = List<String>;
 //    return compose<StringList>(qstr.begin(), qstr.end());
 //}
 
-inline String operator / (const char *cstr, const String &str) {
-    return String(cstr) / str;
+inline String operator/(const char *cStr, const String &str) {
+    return String(cStr) / str;
 }
 
-//inline String operator / (Qconst String &qs, const String &str) {
-//    return String(qs) / str;
-//}
+std::ostream &operator<<(std::ostream &os, const String &str) {
+    os.write(str, str.sizei());
+    return os;
+}
+
+struct DE_PUBLIC mb_iterator
+{
+    const char *i;
+    const char *start;
+    mbstate_t mb{};
+    int curCharLen = 0;
+
+    mb_iterator(const char *p) : i{p}, start{i} {}
+    mb_iterator(const String &str) : i{str.c_str()}, start{i} {}
+
+    operator const char *() const { return i; }
+    Char operator*() const;
+    mb_iterator &operator++();
+    mb_iterator operator++(int);
+    mb_iterator operator+(int byteOffset) const { return i + byteOffset; }
+    bool operator==(const mb_iterator &other) const { return i == other.i; }
+    bool operator!=(const mb_iterator &other) const { return !(*this == other); }
+
+    String::BytePos pos() const { return String::BytePos(i - start); }
+
+    Char decode();
+};
 
 } // namespace de
+
+namespace std
+{
+    template<>
+    struct hash<de::String> {
+        std::size_t operator()(const de::String &key) const {
+            return hash<std::string>()(key.toStdString());
+        }
+    };
+}
 
 #endif // LIBCORE_STRING_H

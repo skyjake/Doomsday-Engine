@@ -22,8 +22,6 @@
 
 #include "../Value"
 
-#include <QFlags>
-
 #ifdef False
 #  undef False
 #endif
@@ -60,7 +58,7 @@ public:
         UInt    = 0x8,
         Generic = 0 ///< Generic number.
     };
-    Q_DECLARE_FLAGS(SemanticHints, SemanticHint)
+    using SemanticHints = Flags;
 
 public:
     explicit NumberValue(Number initialValue = 0, SemanticHints semantic = Generic);
@@ -80,18 +78,18 @@ public:
     template <typename Type>
     Type as() const { return Type(_value); }
 
-    Text typeId() const;
+    Text   typeId() const;
     Value *duplicate() const;
     Number asNumber() const;
-    Text asText() const;
-    bool isTrue() const;
-    dint compare(Value const &value) const;
-    void negate();
-    void sum(Value const &value);
-    void subtract(Value const &value);
-    void divide(Value const &divisor);
-    void multiply(Value const &value);
-    void modulo(Value const &divisor);
+    Text   asText() const;
+    bool   isTrue() const;
+    dint   compare(Value const &value) const;
+    void   negate();
+    void   sum(Value const &value);
+    void   subtract(Value const &value);
+    void   divide(Value const &divisor);
+    void   multiply(Value const &value);
+    void   modulo(Value const &divisor);
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;
@@ -101,8 +99,6 @@ private:
     Number _value;
     SemanticHints _semantic;
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(NumberValue::SemanticHints)
 
 } // namespace de
 

@@ -23,9 +23,9 @@
 #include "de/Log"
 #include "de/App"
 
-#include <QFile>
-#include <QDir>
-#include <QDebug>
+//#include <QFile>
+//#include <QDir>
+//#include <QDebug>
 
 #include <fstream>
 #include <sstream>
@@ -34,20 +34,21 @@
 
 namespace de {
 
-static char *duplicateStringAsUtf8(QString const &s)
+static char *duplicateStringAsUtf8(String const &s)
 {
-    QByteArray utf = s.toUtf8();
-    char *copy = (char *) malloc(utf.size() + 1);
-    memcpy(copy, utf.constData(), utf.size());
-    copy[utf.size()] = 0;
-    return copy;
+//    QByteArray utf = s.toUtf8();
+//    char *copy = (char *) malloc(utf.size() + 1);
+//    memcpy(copy, utf.constData(), utf.size());
+//    copy[utf.size()] = 0;
+//    return copy;
+    return strdup(s);
 }
 
 DE_PIMPL(CommandLine)
 {
-    QDir initialDir;
+    NativePath initialDir;
 
-    typedef QList<QString> Arguments;
+    typedef StringList Arguments;
     Arguments arguments;
 
     typedef std::vector<char *> ArgumentPointers; // UTF-8 representation
@@ -59,7 +60,7 @@ DE_PIMPL(CommandLine)
 
     Impl(Public &i) : Base(i)
     {
-        initialDir = QDir::current();
+        initialDir = NativePath::workPath();
     }
 
     ~Impl()
@@ -75,7 +76,7 @@ DE_PIMPL(CommandLine)
         pointers.push_back(0);
     }
 
-    void appendArg(QString const &arg)
+    void appendArg(const String &arg)
     {
         arguments.append(arg);
 
@@ -92,9 +93,9 @@ DE_PIMPL(CommandLine)
         DE_ASSERT(pointers.back() == 0);
     }
 
-    void insert(duint pos, String const &arg)
+    void insert(int pos, String const &arg)
     {
-        if (pos > (duint) arguments.size())
+        if (pos > arguments.size())
         {
             /// @throw OutOfRangeError @a pos is out of range.
             throw OutOfRangeError("CommandLine::insert", "Index out of range");
@@ -125,14 +126,15 @@ DE_PIMPL(CommandLine)
 CommandLine::CommandLine() : d(new Impl(*this))
 {}
 
-CommandLine::CommandLine(QStringList args) : d(new Impl(*this))
+CommandLine::CommandLine(const StringList &args) : d(new Impl(*this))
 {
     for (int i = 0; i < args.size(); ++i)
     {
-        if (args.at(i)[0] == '@')
+        mb_iterator arg = args.at(i);
+        if (*arg == '@')
         {
             // This is a response file or something else that requires parsing.
-            parseResponseFile(args.at(i).mid(1));
+            parseResponseFile(String(++arg));
         }
         else
         {
@@ -141,7 +143,7 @@ CommandLine::CommandLine(QStringList args) : d(new Impl(*this))
     }
 }
 
-CommandLine::CommandLine(CommandLine const &other) : d(new Impl(*this))
+CommandLine::CommandLine(const CommandLine &other) : d(new Impl(*this))
 {
     DE_FOR_EACH_CONST(Impl::Arguments, i, other.d->arguments)
     {
@@ -151,7 +153,7 @@ CommandLine::CommandLine(CommandLine const &other) : d(new Impl(*this))
 
 NativePath CommandLine::startupPath()
 {
-    return d->initialDir.path();
+    return d->initialDir;
 }
 
 dint CommandLine::count() const
@@ -276,7 +278,7 @@ bool CommandLine::isOption(duint pos) const
 
 bool CommandLine::isOption(String const &arg)
 {
-    return !(arg.empty() || arg[0] != '-');
+    return !(arg.empty() || arg.first() != '-');
 }
 
 String CommandLine::at(duint pos) const
@@ -303,7 +305,7 @@ void CommandLine::makeAbsolutePath(duint pos)
     if (!isOption(pos) && !arg.startsWith("}"))
     {
         bool converted = false;
-        QDir dir(NativePath(arg).expand()); // note: strips trailing slash
+        NativePath dir = NativePath(arg).expand(); // note: strips trailing slash
 
         if (!QDir::isAbsolutePath(arg))
         {
@@ -334,14 +336,13 @@ void CommandLine::makeAbsolutePath(duint pos)
 
 void CommandLine::parseResponseFile(NativePath const &nativePath)
 {
-    QFile response(nativePath.expand());
-    if (response.open(QFile::ReadOnly | QFile::Text))
+    if (std::ifstream response{nativePath.expand()})
     {
-        parse(QString::fromUtf8(response.readAll().constData()));
+        parse(String::fromUtf8(readAll(response)));
     }
     else
     {
-        qWarning() << "Failed to open response file:" << nativePath;
+        warning("Failed to open response file: %s", nativePath.c_str());
     }
 }
 
@@ -457,7 +458,7 @@ bool CommandLine::matches(String const &full, String const &fullOrAlias) const
     }
     return false;
 }
-    
+
 #if defined (DE_HAVE_QPROCESS)
 
 bool CommandLine::execute() const
@@ -514,7 +515,7 @@ QProcess *CommandLine::executeProcess() const
     LOG_DEBUG("Started process %i \"%s\"") << proc->pid() << at(0);
     return proc;
 }
-    
+
 #endif // DE_HAVE_QPROCESS
 
 CommandLine &CommandLine::get()

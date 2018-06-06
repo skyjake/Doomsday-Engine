@@ -75,7 +75,6 @@ public:
         DisablePlugins        = 0x1,
         DisablePersistentData = 0x2
     };
-    Q_DECLARE_FLAGS(SubsystemInitFlags, SubsystemInitFlag)
 
     /// Attempting to access persistent data when it has been disabled at init.
     /// @ingroup errors
@@ -99,7 +98,7 @@ public:
      * @param appFilePath  Path of the application binary.
      * @param args         Arguments.
      */
-    App(NativePath const &appFilePath, QStringList args);
+    App(const NativePath &appFilePath, const StringList &args);
 
     virtual ~App();
 
@@ -169,7 +168,7 @@ public:
      *
      * @param flags  How to/which subsystems to initialize.
      */
-    virtual void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems);
+    virtual void initSubsystems(Flags subsystemInitflags = DefaultSubsystems);
 
     /**
      * Adds a system to the application. The order of systems is preserved; the
@@ -429,8 +428,6 @@ protected:
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(App::SubsystemInitFlags)
 
 } // namespace de
 

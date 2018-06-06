@@ -189,7 +189,7 @@ Block const &Archive::entryBlock(Path const &path) const
     else
     {
         /// @throw NotFoundError Entry with @a path was not found.
-        throw NotFoundError("Archive::entryBlock", String("'%1' not found").arg(path));
+        throw NotFoundError("Archive::entryBlock", stringf("'%s' not found", path.c_str()));
     }
 }
 
@@ -233,7 +233,7 @@ void Archive::uncacheBlock(Path const &path) const
     else
     {
         /// @throw NotFoundError Entry with @a path was not found.
-        throw NotFoundError("Archive::uncacheBlock", String("'%1' not found").arg(path));
+        throw NotFoundError("Archive::uncacheBlock", stringf("'%s' not found", path.c_str()));
     }
 }
 
@@ -243,7 +243,7 @@ void Archive::add(Path const &path, IByteArray const &data)
     {
         /// @throws InvalidPathError  Provided path was not a valid path.
         throw InvalidPathError("Archive::add",
-                               QString("'%1' is an invalid path for an entry").arg(path));
+                               stringf("'%s' is an invalid path for an entry", path.c_str()));
     }
 
     // Get rid of the earlier entry with this path.

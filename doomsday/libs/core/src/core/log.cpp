@@ -232,11 +232,11 @@ String LogEntry::Arg::asText() const
     }
     else if (_type == IntegerArgument)
     {
-        return String::number(_data.intValue);
+        return String::asText(_data.intValue);
     }
     else if (_type == FloatingPointArgument)
     {
-        return String::number(_data.floatValue);
+        return String::asText(_data.floatValue);
     }
     throw TypeError("Log::Arg::asText", "Number argument cannot be used a string");
 }
@@ -333,7 +333,7 @@ LogEntry::LogEntry(LogEntry const &other, Flags extraFlags)
     for (const auto &i : other._args)
     {
         Arg *a = Arg::newFromPool();
-        *a = **i;
+        *a = *i;
         _args.append(a);
     }
 }
@@ -349,20 +349,19 @@ LogEntry::~LogEntry()
     }
 }
 
-LogEntry::Flags LogEntry::flags() const
+Flags LogEntry::flags() const
 {
     return _defaultFlags;
 }
 
-String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
+String LogEntry::asText(Flags const &formattingFlags, String::BytePos shortenSection) const
 {
     DE_GUARD(this);
 
     /// @todo This functionality belongs in an entry formatter class.
 
     Flags flags = formattingFlags;
-    QString result;
-    QTextStream output(&result);
+    std::ostringstream output;
 
     if (_defaultFlags & Simple)
     {
@@ -370,31 +369,31 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
     }
 
     // In simple mode, skip the metadata.
-    if (!flags.testFlag(Simple))
+    if (!(flags & Simple))
     {
         // Begin with the timestamp.
-        if (flags.testFlag(Styled)) output << TEXT_STYLE_LOG_TIME;
+        if (flags & Styled) output << TEXT_STYLE_LOG_TIME;
 
         output << _when.asText(Date::SecondsSinceStart) << " ";
 
-        if (!flags.testFlag(OmitDomain))
+        if (!(flags & OmitDomain))
         {
-            QChar dc = (_metadata & Resource? 'R' :
-                        _metadata & Map?      'M' :
-                        _metadata & Script?   'S' :
-                        _metadata & GL?       'G' :
-                        _metadata & Audio?    'A' :
-                        _metadata & Input?    'I' :
-                        _metadata & Network?  'N' : ' ');
+            Char dc = (_metadata & Resource? 'R' :
+                       _metadata & Map?      'M' :
+                       _metadata & Script?   'S' :
+                       _metadata & GL?       'G' :
+                       _metadata & Audio?    'A' :
+                       _metadata & Input?    'I' :
+                       _metadata & Network?  'N' : ' ');
             if (_metadata & Dev)
             {
                 if (dc != ' ')
-                    dc = dc.toLower();
+                    dc = towlower(dc);
                 else
                     dc = '-'; // Generic developer message
             }
 
-            if (!flags.testFlag(Styled))
+            if (!(flags & Styled))
             {
                 output << dc;
             }
@@ -404,11 +403,11 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
             }
         }
 
-        if (!flags.testFlag(OmitLevel))
+        if (!(flags & OmitLevel))
         {
-            if (!flags.testFlag(Styled))
+            if (!(flags & Styled))
             {
-                char const *levelNames[] = {
+                const char *levelNames[] = {
                     "", // not used
                     "(vv)",
                     "(v)",
@@ -418,8 +417,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
                     "(ERR)",
                     "(!!!)"
                 };
-                output << qSetPadChar(' ') << qSetFieldWidth(5)
-                       << levelNames[level()] << qSetFieldWidth(0) << " ";
+                output << stringf("%5s ", levelNames[level()]);
             }
             else
             {
@@ -443,9 +441,9 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
     }
 
     // Section name.
-    if (!flags.testFlag(OmitSection) && !_section.empty())
+    if (!(flags & OmitSection) && !_section.empty())
     {
-        if (flags.testFlag(Styled))
+        if (flags & Styled)
         {
             output << TEXT_MARK_INDENT
                    << (level() >= LogEntry::Warning? TEXT_STYLE_MAJOR_SECTION :
@@ -454,8 +452,8 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
         }
 
         // Process the section: shortening and possible abbreviation.
-        QString sect;
-        if (flags.testFlag(AbbreviateSection))
+        String sect;
+        if (flags & AbbreviateSection)
         {
             /*
              * We'll split the section into parts, and then abbreviate some of
@@ -463,7 +461,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
              * @a shortenSection controls how much of the section can be
              * abbreviated (num of chars from beginning).
              */
-            QStringList parts = _section.split(" > ");
+            StringList parts = _section.split(" > ");
             int len = 0;
             while (!parts.isEmpty())
             {
@@ -473,9 +471,9 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
                     sect += " > ";
                 }
 
-                if (len + parts.first().size() >= shortenSection) break;
+                if (parts.first().size() + len >= shortenSection) break;
 
-                len += parts.first().size();
+                len += parts.first().sizei();
                 if (sect.isEmpty())
                 {
                     // Never abbreviate the first part.
@@ -488,22 +486,22 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
                 parts.removeFirst();
             }
             // Append the remainer as-is.
-            sect += _section.mid(len);
+            sect += _section.substr(String::BytePos(len));
         }
         else
         {
-            if (shortenSection < _section.size())
+            if (shortenSection < _section.sizei())
             {
                 sect = _section.right(_section.size() - shortenSection);
             }
         }
 
-        if (flags.testFlag(SectionSameAsBefore))
+        if (flags & SectionSameAsBefore)
         {
-            int visibleSectLen = (!sect.isEmpty() && shortenSection? sect.size() : 0);
-            int fillLen = de::max(shortenSection, _section.size()) - visibleSectLen;
+            int visibleSectLen = (!sect.isEmpty() && shortenSection? sect.sizei() : 0);
+            size_t fillLen = de::max(shortenSection.index, _section.sizeu()) - visibleSectLen;
             if (fillLen > LINE_BREAKING_SECTION_LENGTH) fillLen = 2;
-            output << String(fillLen, QChar(' '));
+            output << String(fillLen, Char(' '));
             if (visibleSectLen)
             {
                 output << "[" << sect << "] ";
@@ -521,7 +519,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
         }
     }
 
-    if (flags.testFlag(Styled))
+    if (flags & Styled)
     {
         output << TEXT_MARK_INDENT
                << (level() >= LogEntry::Warning? TEXT_STYLE_MAJOR_MESSAGE :
@@ -541,7 +539,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
         output << _format % patArgs;
     }
 
-    return result;
+    return output.str();
 }
 
 void LogEntry::operator >> (Writer &to) const
@@ -558,7 +556,7 @@ void LogEntry::operator >> (Writer &to) const
 
 void LogEntry::operator << (Reader &from)
 {
-    foreach (Arg *a, _args) delete a;
+    for (Arg *a : _args) delete a;
     _args.clear();
 
     from >> _when
@@ -582,7 +580,7 @@ void LogEntry::operator << (Reader &from)
         .readObjects<Arg>(_args);
 }
 
-QTextStream &operator << (QTextStream &stream, LogEntry::Arg const &arg)
+std::ostream &operator << (std::ostream &stream, LogEntry::Arg const &arg)
 {
     switch (arg.type())
     {
@@ -613,7 +611,7 @@ Log::Section::~Section()
 
 DE_PIMPL_NOREF(Log)
 {
-    typedef QVector<char const *> SectionStack;
+    typedef std::vector<const char *> SectionStack;
     SectionStack sectionStack;
     LogEntry *throwawayEntry;
     duint32 currentEntryMedata; ///< Applies to the current entry being staged in the thread.
@@ -708,7 +706,7 @@ LogEntry &Log::enter(duint32 metadata, String const &format, LogEntry::Args argu
     String context;
     String latest;
     int depth = 0;
-    foreach (char const *i, d->sectionStack)
+    for (char const *i : d->sectionStack)
     {
         if (i == latest)
         {

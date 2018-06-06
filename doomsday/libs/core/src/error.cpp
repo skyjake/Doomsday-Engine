@@ -25,11 +25,10 @@
 namespace de {
 
 Error::Error(const std::string &where, const std::string &message)
-    : std::runtime_error(QString("%1(in " _E(m) "%2" _E(.) ")" _E(.) " %3")
-                         .arg(TEXT_STYLE_SECTION)
-                         .arg(where)
-                         .arg(message)
-                         .toStdString())
+    : std::runtime_error(stringf("%s(in " _E(m) "%s" _E(.) ")" _E(.) " %s",
+                         TEXT_STYLE_SECTION,
+                         where.c_str(),
+                         message.c_str()))
     , _name("")
 {}
 
@@ -41,9 +40,8 @@ std::string Error::name() const
 
 std::string Error::asText() const
 {
-    return String::format("%s[%s] " _E(.) " %s", TEXT_STYLE_SECTION,
-            _name.c_str(),
-            std::runtime_error::what());
+    return stringf(
+        "%s[%s] " _E(.) " %s", TEXT_STYLE_SECTION, _name.c_str(), std::runtime_error::what());
 }
 
 void Error::setName(const std::string &name)

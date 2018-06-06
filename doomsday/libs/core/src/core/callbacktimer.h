@@ -21,7 +21,7 @@
 #ifndef LIBCORE_CALLBACKTIMER_H
 #define LIBCORE_CALLBACKTIMER_H
 
-#include <QTimer>
+#if 0
 #include <functional>
 
 namespace de {
@@ -32,8 +32,6 @@ namespace internal {
  */
 class CallbackTimer : public QTimer
 {
-    Q_OBJECT
-
 public:
     explicit CallbackTimer(std::function<void ()> func, QObject *parent = 0);
 
@@ -46,5 +44,6 @@ private:
 
 } // namespace internal
 } // namespace de
+#endif
 
 #endif // LIBCORE_CALLBACKTIMER_H

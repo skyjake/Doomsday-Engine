@@ -24,7 +24,7 @@
 #include "../ByteArrayFile"
 #include "../NativePath"
 
-#include <QFile>
+#include <fstream>
 
 namespace de {
 
@@ -84,10 +84,10 @@ public:
 
 protected:
     /// Returns the input stream.
-    QFile &input() const;
+    std::ifstream &input() const;
 
     /// Returns the output stream.
-    QFile &output();
+    std::ofstream &output();
 
     /// Close any open streams.
     void close();

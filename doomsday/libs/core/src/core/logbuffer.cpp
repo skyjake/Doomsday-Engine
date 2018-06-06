@@ -29,13 +29,7 @@
 #include "de/TextStreamLogSink"
 #include "de/Writer"
 
-#include <stdio.h>
-#include <QTextStream>
-#include <QCoreApplication>
-#include <QList>
-#include <QSet>
-#include <QTimer>
-#include <QDebug>
+#include <iostream>
 
 namespace de {
 
@@ -43,8 +37,8 @@ TimeSpan const FLUSH_INTERVAL = .2; // seconds
 
 DE_PIMPL(LogBuffer)
 {
-    typedef QList<LogEntry *> EntryList;
-    typedef QSet<LogSink *> Sinks;
+    typedef List<LogEntry *> EntryList;
+    typedef Set<LogSink *> Sinks;
 
     SimpleLogFilter defaultFilter;
     IFilter const *entryFilter;
@@ -53,13 +47,13 @@ DE_PIMPL(LogBuffer)
     bool flushingEnabled;
     String outputPath;
     FileLogSink *fileLogSink;
-#ifndef WIN32
+//#ifndef WIN32
     TextStreamLogSink outSink;
     TextStreamLogSink errSink;
-#else
-    DebugLogSink outSink;
-    DebugLogSink errSink;
-#endif
+//#else
+//    DebugLogSink outSink;
+//    DebugLogSink errSink;
+//#endif
     EntryList entries;
     EntryList toBeFlushed;
     Time lastFlushedAt;
@@ -73,14 +67,14 @@ DE_PIMPL(LogBuffer)
         , useStandardOutput(true)
         , flushingEnabled(true)
         , fileLogSink(0)
-#ifndef WIN32
-        , outSink(new QTextStream(stdout))
-        , errSink(new QTextStream(stderr))
-#else
+//#ifndef WIN32
+        , outSink(std::cout)
+        , errSink(std::cerr)
+//#else
           // Windows GUI apps don't have stdout/stderr.
-        , outSink(QtDebugMsg)
-        , errSink(QtWarningMsg)
-#endif
+//        , outSink(QtDebugMsg)
+//        , errSink(QtWarningMsg)
+//#endif
         , lastFlushedAt(Time::invalidTime())
         , autoFlushTimer(0)
     {
@@ -100,7 +94,7 @@ DE_PIMPL(LogBuffer)
 
     void enableAutoFlush(bool yes)
     {
-        DE_ASSERT(qApp);
+        DE_ASSERT(App::appExists());
         if (yes)
         {
             if (!autoFlushTimer->isActive())
@@ -313,7 +307,7 @@ void LogBuffer::flush()
         DE_FOR_EACH(Impl::EntryList, i, d->toBeFlushed)
         {
             DE_GUARD_FOR(**i, guardingCurrentLogEntry);
-            foreach (LogSink *sink, d->sinks)
+            for (LogSink *sink : d->sinks)
             {
                 if (sink->willAccept(**i))
                 {
@@ -334,7 +328,7 @@ void LogBuffer::flush()
         d->toBeFlushed.clear();
 
         // Make sure everything really gets written now.
-        foreach (LogSink *sink, d->sinks) sink->flush();
+        for (LogSink *sink : d->sinks) sink->flush();
     }
 
     d->lastFlushedAt = Time();

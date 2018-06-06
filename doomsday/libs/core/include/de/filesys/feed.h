@@ -58,7 +58,7 @@ public:
     /// Failed to remove a file. @ingroup errors
     DE_ERROR(RemoveError);
 
-    typedef QList<File *> PopulatedFiles;
+    typedef List<File *> PopulatedFiles;
 
 public:
     Feed();

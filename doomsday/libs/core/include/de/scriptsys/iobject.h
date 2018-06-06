@@ -59,7 +59,7 @@ public:
      *
      * @return  Variable.
      */
-    inline Variable &operator [] (String const &name) {
+    inline Variable &operator [] (const CString &name) {
         return objectNamespace()[name];
     }
 
@@ -73,7 +73,7 @@ public:
      *
      * @return  Variable.
      */
-    inline Variable const &operator [] (String const &name) const {
+    inline Variable const &operator [] (const CString name) const {
         return objectNamespace()[name];
     }
 };

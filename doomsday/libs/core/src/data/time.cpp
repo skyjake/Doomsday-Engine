@@ -634,10 +634,9 @@ void Time::updateCurrentHighPerformanceTime() // static
     currentHighPerfDelta = highPerfTimer().elapsed();
 }
 
-QTextStream &operator << (QTextStream &os, Time const &t)
+std::ostream &operator << (std::ostream &os, Time const &t)
 {
-    os << t.asText();
-    return os;
+    return os << t.asText();
 }
 
 } // namespace de

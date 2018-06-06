@@ -99,7 +99,7 @@ DE_PIMPL_NOREF(Path)
     String path;
 
     /// The character in Impl::path that acts as the segment separator.
-    QChar separator;
+    Char separator;
 
     /**
      * Total number of segments in the path. If 0, it means that the path
@@ -128,7 +128,7 @@ DE_PIMPL_NOREF(Path)
      * List of the extra segments that don't fit in segments, in reverse
      * order.
      */
-    QList<Path::Segment> extraSegments;
+    List<Path::Segment> extraSegments;
 
     Impl() : separator('/'), segmentCount(0)
     {}
@@ -250,10 +250,6 @@ Path::Path(String const &path, QChar sep)
     : d(new Impl(path, sep))
 {}
 
-Path::Path(QString const &str)
-    : d(new Impl(str, '/'))
-{}
-
 Path::Path(char const *nullTerminatedCStr, char sep)
     : d(new Impl(QString::fromUtf8(nullTerminatedCStr), sep))
 {}
@@ -270,29 +266,29 @@ Path::Path(Path &&moved)
     : d(std::move(moved.d))
 {}
 
-Path &Path::operator = (char const *pathUtf8)
+Path &Path::operator=(char const *pathUtf8)
 {
     return *this = Path(pathUtf8);
 }
 
-Path &Path::operator = (Path const &other)
+Path &Path::operator=(Path const &other)
 {
     d.reset(new Impl(other.d->path, other.d->separator));
     return *this;
 }
 
-Path &Path::operator = (Path &&moved)
+Path &Path::operator=(Path &&moved)
 {
     d = std::move(moved.d);
     return *this;
 }
 
-Path Path::operator + (QString const &str) const
+Path Path::operator+(String const &str) const
 {
     return Path(d->path + str, d->separator);
 }
 
-Path Path::operator + (char const *nullTerminatedCStr) const
+Path Path::operator+(char const *nullTerminatedCStr) const
 {
     return Path(d->path + QString(nullTerminatedCStr), d->separator);
 }
@@ -401,7 +397,7 @@ bool Path::operator < (Path const &other) const
     }
 }
 
-Path Path::operator / (Path const &other) const
+Path Path::operator/(Path const &other) const
 {
     // Unify the separators.
     String otherPath = other.d->path;
@@ -413,17 +409,17 @@ Path Path::operator / (Path const &other) const
     return Path(d->path.concatenatePath(otherPath, d->separator), d->separator);
 }
 
-Path Path::operator / (QString other) const
+Path Path::operator/(const String &other) const
 {
     return *this / Path(other);
 }
 
-Path Path::operator / (char const *otherNullTerminatedUtf8) const
+Path Path::operator/(char const *otherNullTerminatedUtf8) const
 {
     return *this / Path(otherNullTerminatedUtf8, '/');
 }
 
-Path Path::operator / (String const &other) const
+Path Path::operator/(String const &other) const
 {
     return *this / Path(other);
 }
@@ -433,7 +429,12 @@ String Path::toString() const
     return d->path;
 }
 
-String const &Path::toStringRef() const
+const char *Path::c_str() const
+{
+    return d->path.c_str();
+}
+
+Path::operator const char *() const
 {
     return d->path;
 }

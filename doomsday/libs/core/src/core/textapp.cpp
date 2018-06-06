@@ -20,7 +20,6 @@
 #include <de/Log>
 #include <de/math.h>
 #include <de/NativePath>
-#include <QDir>
 
 namespace de {
 
@@ -46,9 +45,9 @@ DE_PIMPL(TextApp)
     }
 };
 
-TextApp::TextApp(int &argc, char **argv)
-    : QCoreApplication(argc, argv)
-    , App(applicationFilePath(), arguments())
+TextApp::TextApp(const StringList &args)
+     //QCoreApplication(argc, argv)
+    : App(applicationFilePath(), args)
     , d(new Impl(this))
 {}
 
@@ -64,6 +63,7 @@ void TextApp::setMetadata(String const &orgName, String const &orgDomain,
     setApplicationVersion(appVersion);
 }
 
+/*
 bool TextApp::notify(QObject *receiver, QEvent *event)
 {
     try
@@ -80,6 +80,7 @@ bool TextApp::notify(QObject *receiver, QEvent *event)
     }
     return false;
 }
+*/
 
 int TextApp::execLoop()
 {
@@ -105,7 +106,7 @@ Loop &TextApp::loop()
 
 NativePath TextApp::appDataPath() const
 {
-    return NativePath(QDir::homePath()) / unixHomeFolderName();
+    return NativePath::homePath() / unixHomeFolderName();
 }
 
 } // namespace de

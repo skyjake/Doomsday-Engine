@@ -20,18 +20,31 @@
 #include "de/Waitable"
 #include "de/Time"
 
-using namespace de;
+#include <mutex>
+#include <condition_variable>
 
-Waitable::Waitable(duint initialValue) : _semaphore(initialValue)
-{}
+namespace de {
 
-Waitable::~Waitable()
-{}
+DE_PIMPL_NOREF(Waitable)
+{
+    std::condition_variable cv;
+    std::mutex mutex;
+    int counter = 0;
+};
 
+Waitable::Waitable(dint initialValue)
+    : d(new Impl)
+{
+    d->counter = initialValue;
+}
+
+/*
 void Waitable::reset()
 {
-    _semaphore.tryAcquire(_semaphore.available());
+    std::lock_guard<std::mutex> grd(d->mutex);
+    d->counter = 0;
 }
+*/
 
 void Waitable::wait() const
 {
@@ -43,28 +56,50 @@ void Waitable::wait(TimeSpan const &timeOut) const
     if (!tryWait(timeOut))
     {
         /// @throw WaitError Failed to secure the resource due to an error.
-        throw WaitError("Waitable::wait", "Timed out");
+        throw TimeOutError("Waitable::wait", "Timed out");
     }
 }
 
-bool Waitable::tryWait(TimeSpan const &timeOut) const
+bool Waitable::tryWait(const TimeSpan &timeOut) const
 {
-    if (timeOut <= 0.0)
+    std::unique_lock<std::mutex> mtx(d->mutex);
+    mtx.lock();
+    for (;;)
     {
-        _semaphore.acquire();
-    }
-    else
-    {
-        // Wait until the resource becomes available.
-        if (!_semaphore.tryAcquire(1, int(timeOut.asMilliSeconds())))
+        if (d->counter == 0)
         {
-            return false;
+            if (timeOut > 0.0)
+            {
+                if (d->cv.wait_for(mtx, std::chrono::microseconds(timeOut)) ==
+                    std::cv_status::timeout)
+                {
+                    mtx.unlock();
+                    return false;
+                }
+            }
+            else
+            {
+                d->cv.wait(mtx);
+            }
+        }
+        else
+        {
+            DE_ASSERT(d->counter > 0);
+            d->counter--;
+            break;
         }
     }
+    mtx.unlock();
     return true;
 }
 
 void Waitable::post() const
 {
-    _semaphore.release();
+    std::lock_guard<std::mutex> grd(d->mutex);
+    DE_ASSERT(d->counter >= 0);
+    d->counter++;
+    d->cv.notify_one();
 }
+
+} // namespace de
+

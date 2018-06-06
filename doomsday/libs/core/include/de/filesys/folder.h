@@ -22,9 +22,8 @@
 
 #include "../libcore.h"
 #include "../File"
-
-#include <map>
-#include <list>
+#include "../List"
+#include "../Map"
 
 namespace de {
 
@@ -67,8 +66,8 @@ public:
     /// Creating a new file was unsuccessful. @ingroup errors
     DE_ERROR(NewFileError);
 
-    typedef QList<Feed *> Feeds;
-    typedef QMap<String, File *> Contents;
+    typedef List<Feed *> Feeds;
+    typedef Map<String, File *> Contents;
 
     enum PopulationBehavior {
         PopulateFullTree       = 0x1,   ///< The full tree is populated.
@@ -78,7 +77,7 @@ public:
 
         PopulateCalledRecursively = 0x1000, // internal use
     };
-    Q_DECLARE_FLAGS(PopulationBehaviors, PopulationBehavior)
+    using PopulationBehaviors = Flags;
 
     /// Behavior for creating new files.
     enum FileCreationBehavior {
@@ -125,7 +124,7 @@ public:
 
     LoopResult forContents(std::function<LoopResult (String name, File &file)> func) const;
 
-    QList<Folder *> subfolders() const;
+    List<Folder *> subfolders() const;
 
     /**
      * Empties the contents of the folder: all contained file instances are
@@ -299,9 +298,8 @@ public:
         /// @throw NotFoundError  Found file could not be cast to the
         /// requested type.
         throw NotFoundError("Folder::locate",
-                            QString("%1 has incompatible type; wanted %2")
-                                .arg(found->description())
-                                .arg(DE_TYPE_NAME(Type)));
+                            found->description() + " has incompatible type; wanted " +
+                                DE_TYPE_NAME(Type));
     }
 
     /**
@@ -389,8 +387,6 @@ public:
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Folder::PopulationBehaviors)
 
 DE_DECLARE_AUDIENCE(FolderPopulation, void folderPopulationFinished())
 DE_EXTERN_AUDIENCE(FolderPopulation)

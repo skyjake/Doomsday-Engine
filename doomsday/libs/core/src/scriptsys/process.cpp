@@ -35,7 +35,7 @@ DE_PIMPL(Process)
     State state;
 
     // The execution environment.
-    typedef std::vector<Context *> ContextStack;
+    typedef List<Context *> ContextStack;
     ContextStack stack;
 
     /// This is the current working folder of the process. Relative paths

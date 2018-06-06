@@ -24,6 +24,8 @@
 #include "../math.h"
 #include "../ISerializable"
 
+#include <chrono>
+
 namespace de {
 
 class Date;
@@ -102,6 +104,11 @@ public:
             return *this;
         }
 
+        inline operator std::chrono::microseconds() const
+        {
+            return std::chrono::microseconds{int64_t(_seconds * 1e6)};
+        }
+
         duint64 asMicroSeconds() const;
 
         /**
@@ -160,7 +167,7 @@ public:
 
     Time(Time &&moved);
 
-//    Time(QDateTime const &t);
+    Time(const std::chrono::system_clock::time_point &tp);
 
     /**
      * Construct a time relative to the shared high performance timer.

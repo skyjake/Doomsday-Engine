@@ -51,7 +51,7 @@ ListenSocket::ListenSocket(duint16 port) : d(new Impl)
     if (!d->socket->listen(QHostAddress::Any, d->port))
     {
         /// @throw OpenError Opening the socket failed.
-        throw OpenError("ListenSocket", "Port " + QString::number(d->port) + ": " +
+        throw OpenError("ListenSocket", "Port " + QString::asText(d->port) + ": " +
                         d->socket->errorString());
     }
 

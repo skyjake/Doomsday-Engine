@@ -19,7 +19,6 @@
 #ifndef LIBCORE_BANK_H
 #define LIBCORE_BANK_H
 
-#include <QObject>
 #include <set>
 #include <functional>
 
@@ -108,7 +107,6 @@ public:
 
         DefaultFlags = SingleThread | DisableHotStorage
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     enum CacheLevel
     {
@@ -224,7 +222,7 @@ public:
      *
      * @param sep  Path separator character. The default is a period '.'.
      */
-    void setSeparator(QChar sep);
+    void setSeparator(Char sep);
 
     /**
      * Sets the folder where the hot storage (serialized data) is kept. A
@@ -402,8 +400,6 @@ protected:
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Bank::Flags)
 
 } // namespace de
 

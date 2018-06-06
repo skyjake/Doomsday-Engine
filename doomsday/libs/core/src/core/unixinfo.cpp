@@ -16,13 +16,12 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/UnixInfo"
 #include "de/Info"
 #include "de/App"
-#include <QDir>
 
 namespace de {
 namespace internal {
@@ -36,14 +35,14 @@ public:
     Infos(String fileName) : etcInfo(0), userInfo(0)
     {
         String fn = String("/etc") / App::app().unixEtcFolderName() / fileName;
-        if (QFile::exists(fn))
+        if (NativePath::exists(fn))
         {
             etcInfo = new Info;
             etcInfo->parseNativeFile(fn);
         }
 
-        fn = String(QDir::homePath()) / App::app().unixHomeFolderName() / fileName;
-        if (QFile::exists(fn))
+        fn = NativePath::homePath() / App::app().unixHomeFolderName() / fileName;
+        if (NativePath::exists(fn))
         {
             userInfo = new Info;
             userInfo->parseNativeFile(fn);

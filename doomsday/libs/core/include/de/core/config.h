@@ -78,19 +78,19 @@ public:
      *
      * @return Variable whose value was set.
      */
-    Variable &set(String const &name, bool value);
+    Variable &set(const CString &name, bool value);
 
     /// @copydoc set()
-    Variable &set(String const &name, Value::Text const &value);
+    Variable &set(const CString &name, Value::Text const &value);
 
     /// @copydoc set()
-    Variable &set(String const &name, Value::Number const &value);
+    Variable &set(const CString &name, Value::Number const &value);
 
     /// @copydoc set()
-    Variable &set(String const &name, dint value);
+    Variable &set(const CString &name, dint value);
 
     /// @copydoc set()
-    Variable &set(String const &name, duint value);
+    Variable &set(const CString &name, duint value);
 
     /**
      * Sets the value of a variable, creating the variable if it doesn't exist.
@@ -98,7 +98,7 @@ public:
      * @param name   Name of the variable. May contain subrecords using the dot notation.
      * @param value  Array to use as the value of the variable. Ownership taken.
      */
-    Variable &set(String const &name, ArrayValue *value);
+    Variable &set(const CString &name, ArrayValue *value);
 
     /**
      * Returns the old version, when a new installed version has been detected.
@@ -111,7 +111,7 @@ public:
     Record const &objectNamespace() const;
 
     static Config &get();
-    static Variable &get(String const &name);
+    static Variable &get(const CString &name);
     static bool exists();
 
 private:

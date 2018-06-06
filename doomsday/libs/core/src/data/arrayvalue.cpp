@@ -27,7 +27,6 @@
 #include "de/Writer"
 
 #include <algorithm>
-#include <QTextStream>
 
 namespace de {
 
@@ -70,9 +69,7 @@ Value *ArrayValue::duplicate() const
 
 Value::Text ArrayValue::asText() const
 {
-    Text result;
-    QTextStream s(&result);
-    s << "[";
+    Text s = "[";
 
     bool isFirst = true;
     bool hadNewline = false;
@@ -82,19 +79,20 @@ Value::Text ArrayValue::asText() const
         i != _elements.end(); ++i)
     {
         String content = (*i)->asText();
-        bool multiline = content.contains('\n');
+        bool multiline = content.contains("\n");
         if (!isFirst)
         {
-            if (hadNewline || multiline) s << "\n";
-            s << ",";
+            if (hadNewline || multiline) s += "\n";
+            s += ",";
         }
         hadNewline = multiline;
-        s << " " << content.replace("\n", "\n  ");
+        s += " ";
+        s += content.replace("\n", "\n  ");
         isFirst = false;
     }
 
-    s << " ]";
-    return result;
+    s += " ]";
+    return s;
 }
 
 dsize ArrayValue::size() const
@@ -422,16 +420,10 @@ String ArrayValue::asInfo() const
     for (Value const *value : elements())
     {
         String text = value->asText();
-        text.replace("\"", "''");
+        text.replace("\"", "''"); // Double quote in Info syntax.
         values << String("\"%1\"").arg(text);
     }
-    QString out;
-    QTextStream os(&out);
-    os.setCodec("UTF-8");
-    os << "<"
-       << String::join(values, ", ")
-       << ">";
-    return out;
+    return String("<") + String::join(values, ", ") + ">";
 }
 
 Value::Text ArrayValue::typeId() const

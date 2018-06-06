@@ -102,9 +102,9 @@ private:
     Type _id;
 };
 
-DE_PUBLIC QTextStream &operator << (QTextStream &os, Id const &id);
+//DE_PUBLIC QTextStream &operator << (QTextStream &os, Id const &id);
 
-inline uint qHash(Id const &id) { return id; }
+//inline uint qHash(Id const &id) { return id; }
 
 /**
  * Utility for declaring identifiers that are initially uninitialized.

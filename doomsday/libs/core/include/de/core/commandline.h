@@ -24,12 +24,10 @@
 #include <vector>
 #include <map>
 
-#include <QStringList>
-
-#if !defined (DE_MOBILE)
-#  include <QProcess>
-#  define DE_HAVE_QPROCESS
-#endif
+//#if !defined (DE_MOBILE)
+//#  include <QProcess>
+//#  define DE_HAVE_QPROCESS
+//#endif
 
 #include "../libcore.h"
 #include "../String"
@@ -72,9 +70,9 @@ public:
      *
      * @param args  Arguments to use.
      */
-    CommandLine(QStringList args);
+    CommandLine(const StringList &args);
 
-    CommandLine(CommandLine const &other);
+    CommandLine(const CommandLine &other);
 
     /**
      * Returns the native path where the command line was started in.

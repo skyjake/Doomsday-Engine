@@ -13,33 +13,31 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/TextStreamLogSink"
 
 namespace de {
 
-TextStreamLogSink::TextStreamLogSink(QTextStream *ts)
+TextStreamLogSink::TextStreamLogSink(std::ostream &ts)
     : LogSink(_format), _ts(ts)
 {
-    _ts->setCodec("UTF-8");
+    //_ts->setCodec("UTF-8");
 }
 
 TextStreamLogSink::~TextStreamLogSink()
-{
-    delete _ts;
-}
+{}
 
 LogSink &TextStreamLogSink::operator << (String const &plainText)
 {
-    *_ts << plainText + "\n";
+    _ts << plainText << "\n";
     return *this;
 }
 
 void TextStreamLogSink::flush()
 {
-    _ts->flush();
+    _ts.flush();
 }
 
 } // namespace de

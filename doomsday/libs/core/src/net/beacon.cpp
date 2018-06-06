@@ -86,7 +86,7 @@ void Beacon::start(duint16 serviceListenPort)
     }
 
     /// @throws PortError Could not open the UDP port.
-    throw PortError("Beacon::start", "Could not bind to UDP port " + String::number(d->port));
+    throw PortError("Beacon::start", "Could not bind to UDP port " + String::asText(d->port));
 }
 
 void Beacon::setMessage(IByteArray const &advertisedMessage)
@@ -128,7 +128,7 @@ void Beacon::discover(TimeSpan const &timeOut, TimeSpan const &interval)
         if (!--tries)
         {
             /// @throws PortError Could not open the UDP port.
-            throw PortError("Beacon::start", "Could not bind to UDP port " + String::number(d->port));
+            throw PortError("Beacon::start", "Could not bind to UDP port " + String::asText(d->port));
         }
     }
 

@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/EscapeParser"
@@ -40,11 +40,11 @@ void EscapeParser::parse(String const &textWithEscapes)
     d->original = textWithEscapes;
     d->plain.clear();
 
-    Rangei range;
+    String::ByteRange range;
 
-    forever
+    for (;;)
     {
-        range.end = d->original.indexOf(QChar('\x1b'), range.start);
+        range.end = d->original.indexOf('\x1b', range.start);
         if (range.end >= 0)
         {
             // Empty ranges are ignored.

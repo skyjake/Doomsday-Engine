@@ -13,9 +13,10 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
+#if 0
 #include "de/DebugLogSink"
 
 namespace de {
@@ -40,3 +41,4 @@ void DebugLogSink::flush()
 {}
 
 } // namespace de
+#endif

@@ -23,8 +23,7 @@
 #include "../libcore.h"
 #include "../Log"
 
-#include <QHostAddress>
-#include <QTextStream>
+#include <sstream>
 
 namespace de {
 
@@ -47,7 +46,7 @@ public:
      *                 Domain names are not allowed.
      * @param port     Port number.
      */
-    Address(QHostAddress const &address, duint16 port = 0);
+//    Address(QHostAddress const &address, duint16 port = 0);
 
     Address(char const *address, duint16 port = 0);
 
@@ -71,9 +70,9 @@ public:
     /**
      * Returns the host IP address.
      */
-    QHostAddress const &host() const;
+//    QHostAddress const &host() const;
 
-    void setHost(QHostAddress const &host);
+//    void setHost(QHostAddress const &host);
 
     /**
      * Determines if the address is on the local host.
@@ -103,7 +102,7 @@ public:
     /**
      * Determines whether a host address refers to the local host.
      */
-    static bool isHostLocal(QHostAddress const &host);
+    static bool isHostLocal(const Address &host);
 
     // Implements LogEntry::Arg::Base.
     LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::StringArgument; }
@@ -112,7 +111,7 @@ private:
     DE_PRIVATE(d)
 };
 
-DE_PUBLIC QTextStream &operator << (QTextStream &os, Address const &address);
+DE_PUBLIC std::ostream &operator << (std::ostream &os, Address const &address);
 
 } // namespace de
 

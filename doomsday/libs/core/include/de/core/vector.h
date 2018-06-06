@@ -35,7 +35,7 @@
 #include "../String"
 #include "../NumberValue"
 
-#include <QTextStream>
+#include <sstream>
 #include <cmath>
 
 #ifdef WIN32
@@ -144,7 +144,7 @@ public:
         {
             return (&x)[index];
         }
-        throw Error("Vector2::operator []", QString("Illegal index %1").arg(index));
+        throw Error("Vector2::operator []", "Illegal index " + String::asText(index));
     }
     Type const &operator [] (int index) const {
         return const_cast<Vector2<Type> &>(*this)[index];
@@ -241,10 +241,9 @@ public:
         return Vector2();
     }
     String asText() const {
-        String str;
-        QTextStream s(&str);
+        std::ostringstream s;
         s << *this;
-        return str;
+        return s.str();
     }
     Vector2 abs() const {
         return Vector2(de::abs(x), de::abs(y));
@@ -314,7 +313,7 @@ inline void operator >> (Reader const &from, Vector2<Type> &vec2) {
 }
 
 template <typename Type>
-inline QTextStream &operator << (QTextStream &os, Vector2<Type> const &vec2) {
+inline std::ostream &operator << (std::ostream &os, const Vector2<Type> &vec2) {
     os << "(" << vec2.x << ", " << vec2.y << ")";
     return os;
 }
@@ -367,7 +366,7 @@ public:
         {
             return (&(this->Vector2<Type>::x))[index];
         }
-        throw Error("Vector3::operator []", QString("Illegal index %1").arg(index));
+        throw Error("Vector3::operator []", "Illegal index " + String::asText(index));
     }
     Type const &operator [] (int index) const {
         return const_cast<Vector3<Type> &>(*this)[index];
@@ -462,10 +461,9 @@ public:
         return Vector3();
     }
     String asText() const {
-        String str;
-        QTextStream os(&str);
+        std::ostringstream os;
         os << *this;
-        return str;
+        return os.str();
     }
     Vector3 abs() const {
         return Vector3(de::abs(Vector2<Type>::x), de::abs(Vector2<Type>::y), de::abs(z));
@@ -543,7 +541,7 @@ inline void operator >> (Reader const &from, Vector3<Type> &vec3) {
 }
 
 template <typename Type>
-QTextStream &operator << (QTextStream &os, Vector3<Type> const &vec3)
+std::ostream &operator << (std::ostream &os, Vector3<Type> const &vec3)
 {
     os << "(" << vec3.x << ", " << vec3.y << ", " << vec3.z << ")";
     return os;
@@ -604,7 +602,7 @@ public:
         {
             return (&(this->Vector2<Type>::x))[index];
         }
-        throw Error("Vector4::operator []", QString("Illegal index %1").arg(index));
+        throw Error("Vector4::operator []", "Illegal index " + String::asText(index));
     }
     Type const &operator [] (int index) const {
         return const_cast<Vector4<Type> &>(*this)[index];
@@ -686,10 +684,9 @@ public:
         return *this == other || *this < other;
     }
     String asText() const {
-        String str;
-        QTextStream os(&str);
+        std::ostringstream os;
         os << *this;
-        return str;
+        return os.str();
     }
     Vector4 abs() const {
         return Vector4(de::abs(Vector3<Type>::x), de::abs(Vector3<Type>::y), de::abs(Vector3<Type>::z), de::abs(w));
@@ -818,7 +815,7 @@ inline void operator >> (Reader const &from, Vector4<Type> &vec4) {
 }
 
 template <typename Type>
-QTextStream &operator << (QTextStream &os, Vector4<Type> const &vec4)
+std::ostream &operator << (std::ostream &os, Vector4<Type> const &vec4)
 {
     os << "(" << vec4.x << ", " << vec4.y << ", " << vec4.z << ", " << vec4.w << ")";
     return os;
@@ -843,7 +840,7 @@ typedef Vector4<ddouble> Vec4d;  ///< 4-component vector of high-precision float
 ///@}
 
 // Qt hash functions:
-inline quint32 qHash(Vec2i const &vec) { return vec.x * vec.y + vec.x - vec.y; }
+//inline quint32 qHash(Vec2i const &vec) { return vec.x * vec.y + vec.x - vec.y; }
 
 } // namespace de
 

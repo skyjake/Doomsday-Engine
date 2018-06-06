@@ -41,9 +41,19 @@ DE_PIMPL(Thread)
     static iThreadResult runFunc(iThread *thd)
     {
         Thread::Impl *d = static_cast<Thread::Impl *>(userData_Thread(thd));
-        d->self().run();
+        auto &self = d->self();
+        self.run();
+        DE_FOR_EACH_OBSERVER(FinishedAudience, i, self.audienceForFinished())
+        {
+            i->threadFinished(self);
+        }
+        return 0;
     }
+
+    DE_PIMPL_AUDIENCE(Finished)
 };
+
+DE_AUDIENCE_METHOD(Thread, Finished)
 
 Thread::Thread()
     : d(new Impl(this))

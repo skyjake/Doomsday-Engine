@@ -25,8 +25,6 @@
 #include "../Audience"
 #include "../Deletable"
 
-#include <QFlags>
-
 namespace de {
 
 class Value;
@@ -105,7 +103,6 @@ public:
             AllowRef | AllowTime
     };
     //@}
-    Q_DECLARE_FLAGS(Flags, Flag)
 
 public:
     /**
@@ -116,7 +113,7 @@ public:
      *      a NoneValue will be created for the variable.
      * @param varMode  Mode flags.
      */
-    Variable(String const &name = String(), Value *initial = nullptr,
+    Variable(const CString &name = {}, Value *initial = nullptr,
              Flags const &varMode = DefaultMode);
 
     /**
@@ -183,7 +180,7 @@ public:
         if (!v) {
             /// @throw TypeError Casting to Type failed.
             throw TypeError("Variable::value",
-                            QString("Illegal type conversion to ") + typeid(Type).name());
+                            String("Illegal type conversion to ") + typeid(Type).name());
         }
         return *v;
     }
@@ -197,7 +194,7 @@ public:
         if (!v) {
             /// @throw TypeError Casting to Type failed.
             throw TypeError("Variable::value",
-                            QString("Illegal type conversion to ") + typeid(Type).name());
+                            String("Illegal type conversion to ") + typeid(Type).name());
         }
         return *v;
     }
@@ -224,7 +221,6 @@ public:
 
     // Automatic conversion to native primitive types.
     operator String () const;
-    operator QString () const;
     operator ddouble () const;
 
     /**
@@ -306,8 +302,6 @@ public:
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Variable::Flags)
 
 } // namespace de
 

@@ -45,7 +45,7 @@ namespace internal {
  */
 struct DE_PUBLIC ScriptArgumentComposer
 {
-    QStringList args;
+    StringList args;
     int counter = 0;
     Record &ns;
 
@@ -56,25 +56,25 @@ struct DE_PUBLIC ScriptArgumentComposer
         // Delete the argument variables that were created.
         for (int i = 0; i < counter; ++i)
         {
-            delete ns.remove(QStringLiteral("__arg%1__").arg(i));
+            delete ns.remove(stringf("__arg%i__", i));
         }
     }
 
     Variable &addArgument()
     {
-        return ns.add(QStringLiteral("__arg%1__").arg(counter++));
+        return ns.add(stringf("__arg%i__", counter++));
     }
 
     template <typename Type>
-    QString scriptArgumentAsText(Type const &arg)
+    String scriptArgumentAsText(Type const &arg)
     {
-        return QString("%1").arg(arg); // basic types
+        return String::asText(arg); // basic types
     }
 
-    inline void convertScriptArguments(QStringList &) {}
+    inline void convertScriptArguments(StringList &) {}
 
     template <typename FirstArg, typename... Args>
-    void convertScriptArguments(QStringList &list, FirstArg const &firstArg, Args... args)
+    void convertScriptArguments(StringList &list, FirstArg const &firstArg, Args... args)
     {
         list << scriptArgumentAsText(firstArg);
         convertScriptArguments(list, args...);
@@ -82,38 +82,32 @@ struct DE_PUBLIC ScriptArgumentComposer
 };
 
 template <>
-inline QString ScriptArgumentComposer::scriptArgumentAsText(QString const &arg)
+inline String ScriptArgumentComposer::scriptArgumentAsText(const String &arg)
 {
-    if (arg.startsWith("$")) // Verbatim?
+    if (arg.beginsWith("$")) // Verbatim?
     {
-        return arg.mid(1);
+        return arg.substr(String::BytePos(1));
     }
-    QString quoted(arg);
+    String quoted(arg);
     quoted.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
-    return QString("\"%1\"").arg(quoted);
+    return String::format("\"%s\"", quoted.c_str());
 }
 
 template <>
-inline QString ScriptArgumentComposer::scriptArgumentAsText(String const &arg)
-{
-    return scriptArgumentAsText(QString(arg));
-}
-
-template <>
-inline QString ScriptArgumentComposer::scriptArgumentAsText(std::nullptr_t const &)
+inline String ScriptArgumentComposer::scriptArgumentAsText(std::nullptr_t const &)
 {
     return ScriptLex::NONE;
 }
 
 template <>
-inline QString ScriptArgumentComposer::scriptArgumentAsText(char const * const &utf8)
+inline String ScriptArgumentComposer::scriptArgumentAsText(char const * const &utf8)
 {
     if (!utf8) return ScriptLex::NONE;
-    return scriptArgumentAsText(QString::fromUtf8(utf8));
+    return scriptArgumentAsText(String::fromUtf8(utf8));
 }
 
 template <>
-inline QString ScriptArgumentComposer::scriptArgumentAsText(Record const &record)
+inline String ScriptArgumentComposer::scriptArgumentAsText(Record const &record)
 {
     Variable &arg = addArgument();
     arg.set(new RecordValue(record));
@@ -121,27 +115,27 @@ inline QString ScriptArgumentComposer::scriptArgumentAsText(Record const &record
 }
 
 template <>
-inline QString ScriptArgumentComposer::scriptArgumentAsText(Record const * const &record)
+inline String ScriptArgumentComposer::scriptArgumentAsText(Record const * const &record)
 {
     if (!record) return ScriptLex::NONE;
     return scriptArgumentAsText(*record);
 }
 
 template <>
-inline QString ScriptArgumentComposer::scriptArgumentAsText(IObject const * const &object)
+inline String ScriptArgumentComposer::scriptArgumentAsText(IObject const * const &object)
 {
     if (!object) return ScriptLex::NONE;
     return scriptArgumentAsText(object->objectNamespace());
 }
 
 template <>
-inline QString ScriptArgumentComposer::scriptArgumentAsText(IObject const &object)
+inline String ScriptArgumentComposer::scriptArgumentAsText(IObject const &object)
 {
     return scriptArgumentAsText(object.objectNamespace());
 }
 
 #define DE_SCRIPT_ARGUMENT_TYPE(ArgType, Method) \
-    namespace de { namespace internal { template <> inline QString ScriptArgumentComposer::scriptArgumentAsText(ArgType const &arg) { Method } } }
+    namespace de { namespace internal { template <> inline String ScriptArgumentComposer::scriptArgumentAsText(ArgType const &arg) { Method } } }
 
 } // namespace internal
 
@@ -352,7 +346,7 @@ public:
     {
         internal::ScriptArgumentComposer composer(globals);
         composer.convertScriptArguments(composer.args, args...);
-        Script script(QString("%1(%2)").arg(function).arg(composer.args.join(',')));
+        Script script(String("%1(%2)").arg(function).arg(String::join(composer.args, ",")));
         Process proc(&globals);
         proc.run(script);
         proc.execute();

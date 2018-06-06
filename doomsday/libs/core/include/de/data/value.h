@@ -25,8 +25,6 @@
 #include "../ISerializable"
 #include "../String"
 
-#include <QVariant>
-
 namespace de {
 
 class Process;
@@ -124,8 +122,10 @@ public:
     ValueType &as() {
         ValueType *t = dynamic_cast<ValueType *>(this);
         if (!t) {
-            throw ConversionError("Value::as<>", QString("Illegal type conversion from ") +
-                                  typeid(*this).name() + " to " + typeid(ValueType).name());
+            throw ConversionError("Value::as<>",
+                                  stringf("Illegal type conversion from %s to %s",
+                                          typeid(*this).name(),
+                                          typeid(ValueType).name()));
         }
         return *t;
     }
@@ -134,8 +134,10 @@ public:
     ValueType const &as() const {
         ValueType const *t = dynamic_cast<ValueType const *>(this);
         if (!t) {
-            throw ConversionError("Value::as<>", QString("Illegal const type conversion from ") +
-                                  typeid(*this).name() + " to " + typeid(ValueType).name());
+            throw ConversionError("Value::as<>",
+                                  stringf("Illegal const type conversion from %s to %s",
+                                          typeid(*this).name(),
+                                          typeid(ValueType).name()));
         }
         return *t;
     }
@@ -300,7 +302,7 @@ public:
      *                   variable in the called function's local namespace.
      *                   Ownership taken.
      */
-    virtual void call(Process &process, Value const &arguments, Value *self = 0) const;
+    virtual void call(Process &process, Value const &arguments, Value *self = nullptr) const;
 
 public:
     /**
@@ -315,7 +317,7 @@ public:
      * @param variant  Data for the value.
      * @return Value. Caller gets ownership.
      */
-    static Value *constructFrom(QVariant const &variant);
+//    static Value *constructFrom(QVariant const &variant);
 
 protected:
     typedef dbyte SerialId;

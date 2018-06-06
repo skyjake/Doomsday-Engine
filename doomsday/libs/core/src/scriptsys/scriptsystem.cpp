@@ -35,8 +35,6 @@
 #include "../src/scriptsys/bindings_core.h"
 #include "../src/scriptsys/bindings_math.h"
 
-#include <QMap>
-
 namespace de {
 
 static ScriptSystem *_scriptSystem = 0;
@@ -48,17 +46,17 @@ DE_PIMPL(ScriptSystem)
 
     /// Built-in special modules. These are constructed by native code and thus not
     /// parsed from any script.
-    typedef QHash<String, Record *> NativeModules;
+    typedef Hash<String, Record *> NativeModules;
     LockableT<NativeModules> nativeModules; // not owned
     Record coreModule;    ///< Script: built-in script classes and functions.
     Record mathModule;    ///< Math: math related functions.
     Record versionModule; ///< Version: information about the platform and build
 
     /// Resident modules.
-    typedef QHash<String, Module *> Modules; // owned
+    typedef Hash<String, Module *> Modules; // owned
     Modules modules;
 
-    QList<Path> additionalImportPaths;
+    List<Path> additionalImportPaths;
 
     Impl(Public *i) : Base(*i)
     {

@@ -19,26 +19,45 @@
 #include "de/TaskPool"
 #include "de/Task"
 #include "de/Guard"
+#include "de/Set"
 
-#include <QThreadPool>
-#include <QSet>
 #include <de/Lockable>
 #include <de/Loop>
 #include <de/Waitable>
 
-namespace de {
+#include <c_plus/threadpool.h>
 
-namespace internal
+namespace de {
+namespace internal {
+
+static void deleteThreadPool();
+
+static iThreadPool *globalThreadPool()
 {
-    class CallbackTask : public Task
+    static iThreadPool *pool = nullptr;
+    if (!pool)
     {
-    public:
-        CallbackTask(TaskPool::TaskFunction func) : _func(func) {}
-        void runTask() override { _func(); }
-    private:
-        TaskPool::TaskFunction _func;
-    };
+        pool = new_ThreadPool();
+        atexit(deleteThreadPool);
+    }
+    return pool;
 }
+
+static void deleteThreadPool()
+{
+    iRelease(globalThreadPool());
+}
+
+class CallbackTask : public Task
+{
+public:
+    CallbackTask(TaskPool::TaskFunction func) : _func(func) {}
+    void runTask() override { _func(); }
+private:
+    TaskPool::TaskFunction _func;
+};
+
+} // namespace internal
 
 DE_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
 {
@@ -46,7 +65,7 @@ DE_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
     bool deleteWhenDone = false;
 
     /// Set of running tasks.
-    QSet<Task *> tasks;
+    Set<Task *> tasks;
 
     Impl(Public *i) : Base(i)
     {
@@ -117,7 +136,7 @@ DE_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
             {
                 try
                 {
-                    emit self().allTasksDone();
+//                    emit self().allTasksDone();
                     DE_FOR_AUDIENCE(Done, i) i->taskPoolDone(self());
                 }
                 catch (Error const &er)
@@ -149,10 +168,23 @@ TaskPool::~TaskPool()
     }
 }
 
+static iThreadResult runTask(iThread *thd)
+{
+    Task *task = static_cast<Task *>(userData_Thread(thd));
+    task->run();
+    iRelease(thd);
+    return 0;
+}
+
 void TaskPool::start(Task *task, Priority priority)
 {
     d->add(task);
-    QThreadPool::globalInstance()->start(task, int(priority));
+
+    iThread *thd = new_Thread(runTask);
+    setUserData_Thread(thd, task);
+    run_ThreadPool(internal::globalThreadPool(), thd);
+
+    DE_UNUSED(priority);
 }
 
 void TaskPool::start(TaskFunction taskFunction, Priority priority)

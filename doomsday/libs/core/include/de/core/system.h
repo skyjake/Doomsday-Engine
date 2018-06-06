@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBCORE_SYSTEM_H
@@ -21,7 +21,6 @@
 
 #include "../Clock"
 #include "../Event"
-#include <QFlags>
 
 namespace de {
 
@@ -45,7 +44,6 @@ public:
 
         DefaultBehavior = ObservesTime
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
 public:
     System(Flags const &behavior = DefaultBehavior);
@@ -71,8 +69,6 @@ public:
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(System::Flags)
 
 } // namespace de
 

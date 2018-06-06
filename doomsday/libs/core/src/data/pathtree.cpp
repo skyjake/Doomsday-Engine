@@ -258,7 +258,7 @@ bool PathTree::remove(Path const &path, ComparisonFlags flags)
     {
         // One less unique path in the tree.
         d->size--;
-        delete node;        
+        delete node;
         return true;
     }
     return false;
@@ -369,7 +369,7 @@ PathTree::Nodes const &PathTree::nodes(NodeType type) const
     return (type == Leaf? d->hash.leaves : d->hash.branches);
 }
 
-static void collectPathsInHash(PathTree::FoundPaths &found, PathTree::Nodes const &ph, QChar separator)
+static void collectPathsInHash(PathTree::FoundPaths &found, PathTree::Nodes const &ph, Char separator)
 {
     if (ph.empty()) return;
 
@@ -380,7 +380,7 @@ static void collectPathsInHash(PathTree::FoundPaths &found, PathTree::Nodes cons
     }
 }
 
-int PathTree::findAllPaths(FoundPaths &found, ComparisonFlags flags, QChar separator) const
+int PathTree::findAllPaths(FoundPaths &found, ComparisonFlags flags, Char separator) const
 {
     DE_GUARD(this);
 
@@ -464,7 +464,7 @@ int PathTree::traverse(ComparisonFlags flags, PathTree::Node const *parent, Path
 }
 
 #ifdef DE_DEBUG
-void PathTree::debugPrint(QChar separator) const
+void PathTree::debugPrint(Char separator) const
 {
     LOGDEV_MSG("PathTree [%p]:") << de::dintptr(this);
     FoundPaths found;

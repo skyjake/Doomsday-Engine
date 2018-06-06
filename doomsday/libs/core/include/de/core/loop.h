@@ -19,10 +19,9 @@
 #ifndef LIBCORE_LOOP_H
 #define LIBCORE_LOOP_H
 
-#include <QObject>
-#include <QList>
-#include <de/Observers>
-#include <de/Time>
+#include "../Observers"
+#include "../Time"
+#include "../List"
 
 #include <functional>
 
@@ -34,10 +33,8 @@ namespace de {
  *
  * @ingroup core
  */
-class DE_PUBLIC Loop : public QObject
+class DE_PUBLIC Loop
 {
-    Q_OBJECT
-
 public:
     /**
      * Audience to be notified each time the loop iterates.
@@ -50,6 +47,8 @@ public:
      * possible).
      */
     Loop();
+
+    virtual ~Loop();
 
     /**
      * Sets the frequency for loop iteration (e.g., 35 Hz for a dedicated
@@ -92,7 +91,6 @@ public:
 
     static Loop &get();
 
-public slots:
     virtual void nextLoopIteration();
 
 private:
@@ -108,7 +106,7 @@ public:
     typedef std::function<void ()> Callback;
 
     LoopCallback();
-    ~LoopCallback();
+    ~LoopCallback() override;
 
     bool isEmpty() const;
     inline operator bool() const { return !isEmpty(); }
@@ -117,7 +115,7 @@ public:
     void loopIteration() override;
 
 private:
-    QList<Callback> _funcs;
+    List<Callback> _funcs;
 };
 
 } // namespace de

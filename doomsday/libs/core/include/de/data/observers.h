@@ -25,8 +25,6 @@
 #include "../Guard"
 #include "../PointerSet"
 
-#include <QSet>
-
 /**
  * Macro that forms the name of an observer interface.
  */
@@ -273,10 +271,10 @@ public:
         const_iterator const &get() const {
             return _current;
         }
-        Type *operator -> () const {
+        Type *operator->() const {
             return *get();
         }
-        Loop &operator ++ () {
+        Loop &operator++() {
             next();
             return *this;
         }

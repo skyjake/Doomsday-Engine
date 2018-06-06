@@ -45,7 +45,7 @@ String Date::asText() const
     return result;
 }
 
-QTextStream &operator << (QTextStream &os, Date const &d)
+std::ostream &operator << (std::ostream &os, Date const &d)
 {
     os << d.asDateTime().toString("yyyy-MM-dd");
     return os;

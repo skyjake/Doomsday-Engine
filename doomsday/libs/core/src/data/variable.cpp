@@ -43,7 +43,7 @@ DE_PIMPL_NOREF(Variable)
     /// Mode flags.
     Flags flags;
 
-    Impl() : value(0) {}
+    Impl() : value(nullptr) {}
 
     Impl(Impl const &other)
         : de::IPrivate()
@@ -66,7 +66,7 @@ DE_AUDIENCE_METHOD(Variable, Deletion)
 DE_AUDIENCE_METHOD(Variable, Change)
 DE_AUDIENCE_METHOD(Variable, ChangeFrom)
 
-Variable::Variable(String const &name, Value *initial, Flags const &m)
+Variable::Variable(const CString &name, Value *initial, Flags const &m)
     : d(new Impl)
 {
     d->name = name;
@@ -114,16 +114,16 @@ Variable &Variable::operator = (String const &textValue)
 
 Variable &Variable::set(Value *v)
 {
-    DE_ASSERT(v != 0);
+    DE_ASSERT(v);
 
-    QScopedPointer<Value> val(v);
+    std::unique_ptr<Value> val(v);
 
     // If the value would change, must check if this is allowed.
     verifyWritable(*v);
     verifyValid(*v);
 
-    QScopedPointer<Value> oldValue(d->value); // old value deleted afterwards
-    d->value = val.take();
+    std::unique_ptr<Value> oldValue(d->value); // old value deleted afterwards
+    d->value = val.release();
     d->flags |= ValueHasChanged;
 
     // We'll only determine if actual change occurred if someone is interested.
@@ -133,7 +133,7 @@ Variable &Variable::set(Value *v)
         try
         {
             // Did it actually change? Let's compare...
-            notify = oldValue.isNull() || oldValue->compare(*v);
+            notify = !oldValue || oldValue->compare(*v);
         }
         catch (Error const &)
         {
@@ -158,13 +158,13 @@ Variable &Variable::set(Value const &v)
 
 Value const &Variable::value() const
 {
-    DE_ASSERT(d->value != 0);
+    DE_ASSERT(d->value);
     return *d->value;
 }
 
 Value &Variable::value()
 {
-    DE_ASSERT(d->value != 0);
+    DE_ASSERT(d->value);
     return *d->value;
 }
 
@@ -213,17 +213,12 @@ Variable::operator String () const
     return value().asText();
 }
 
-Variable::operator QString () const
-{
-    return value().asText();
-}
-
 Variable::operator ddouble () const
 {
     return value().asNumber();
 }
 
-Variable::Flags Variable::flags() const
+Flags Variable::flags() const
 {
     return d->flags;
 }
@@ -286,7 +281,7 @@ void Variable::verifyWritable(Value const &attemptedNewValue)
 
 void Variable::verifyName(String const &s)
 {
-    if (s.indexOf('.') != String::npos)
+    if (s.indexOf('.') >= 0)
     {
         /// @throw NameError The name cannot contain periods '.'.
         throw NameError("Variable::verifyName", "Name contains '.': " + s);
@@ -295,7 +290,7 @@ void Variable::verifyName(String const &s)
 
 void Variable::operator >> (Writer &to) const
 {
-    if (!d->flags.testFlag(NoSerialize))
+    if (!(d->flags & NoSerialize))
     {
         to << d->name << duint32(d->flags) << *d->value;
     }

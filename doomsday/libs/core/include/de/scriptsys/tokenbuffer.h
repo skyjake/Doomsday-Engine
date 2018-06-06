@@ -21,6 +21,7 @@
 #define LIBCORE_TOKENBUFFER_H
 
 #include "../libcore.h"
+#include "../Range"
 
 #include <vector>
 
@@ -49,19 +50,19 @@ public:
     };
 
     // Token constants.
-    static String const PARENTHESIS_OPEN;
-    static String const PARENTHESIS_CLOSE;
-    static String const BRACKET_OPEN;
-    static String const BRACKET_CLOSE;
-    static String const CURLY_OPEN;
-    static String const CURLY_CLOSE;
-    static String const COLON;
-    static String const COMMA;
-    static String const SEMICOLON;
+    static const char *PARENTHESIS_OPEN;
+    static const char *PARENTHESIS_CLOSE;
+    static const char *BRACKET_OPEN;
+    static const char *BRACKET_CLOSE;
+    static const char *CURLY_OPEN;
+    static const char *CURLY_CLOSE;
+    static const char *COLON;
+    static const char *COMMA;
+    static const char *SEMICOLON;
 
 public:
-    Token(QChar *begin = 0, QChar *end = 0, duint line = 0)
-        : _type(UNKNOWN), _begin(begin), _end(end), _line(line) {}
+    Token(const char *begin = 0, const char *end = 0, duint line = 0)
+        : _type(UNKNOWN), _token{begin, end}, _line(line) {}
 
     void setType(Type type) { _type = type; }
 
@@ -69,45 +70,43 @@ public:
 
     /// Returns the address of the beginning of the token.
     /// @return Pointer to the first character of the token.
-    QChar const *begin() const { return _begin; }
+    const char *begin() const { return _token.start; }
 
     /// Returns the address of the end of the token.
     /// @return Pointer to the character just after the last
     /// character of the token.
-    QChar const *end() const { return _end; }
+    const char *end() const { return _token.end; }
 
     /// Returns the address of the beginning of the token.
     /// @return Pointer to the first character of the token.
-    QChar *begin() { return _begin; }
+//    const char *begin() { return _begin; }
 
     /// Returns the address of the end of the token.
     /// @return Pointer to the character just after the last
     /// character of the token. This is where a new character is
     /// appended when the token is being compiled.
-    QChar *end() { return _end; }
+//    const char *end() { return _end; }
 
     /// Determines the length of the token.
-    /// @return Length of the token as number of characters.
-    int size() const {
-        if (!_begin || !_end) return 0;
-        return int(_end - _begin);
+    /// @return Length of the token as number of bytes.
+    size_t size() const {
+        if (!_token.start || !_token.end) return 0;
+        return size_Range(&_token);
     }
 
     bool isEmpty() const {
         return !size();
     }
 
-    void appendChar(QChar c) {
-        *_end++ = c;
-    }
+    void appendChar(Char c);
 
     /// Determines whether the token equals @c str. Case sensitive.
     /// @return @c true if an exact match, otherwise @c false.
-    bool equals(QChar const *str) const;
+    bool equals(const char *str) const;
 
     /// Determines whether the token begins with @c str. Case
     /// sensitive. @return @c true if an exact match, otherwise @c false.
-    bool beginsWith(QChar const *str) const;
+    bool beginsWith(const char *str) const;
 
     /// Determines the line on which the token begins in the source.
     duint line() const { return _line; }
@@ -130,10 +129,10 @@ public:
     /// Converts the token into a double-precision floating point number.
     ddouble toNumber() const;
 
-    de::dint64 toInteger() const;
-    de::ddouble toDouble() const;
+    dint64 toInteger() const;
+    ddouble toDouble() const;
 
-    static char const *typeToText(Type type) {
+    static const char *typeToText(Type type) {
         switch (type) {
         case UNKNOWN:
             return "UNKNOWN";
@@ -158,10 +157,9 @@ public:
     }
 
 private:
-    Type _type;     ///< Type of the token.
-    QChar *_begin;  ///< Points to the first character.
-    QChar *_end;    ///< Points to the last character + 1.
-    duint _line;    ///< On which line the token begins.
+    Type     _type; ///< Type of the token.
+    iRangecc _token;
+    duint    _line; ///< On which line the token begins.
 };
 
 /**
@@ -193,7 +191,7 @@ public:
 
     /// Appends a character to the Token being formed.
     /// @param c Character to append.
-    void appendChar(QChar c);
+    void appendChar(Char c);
 
     /// Sets the type of the token being formed.
     void setType(Token::Type type);
@@ -219,14 +217,14 @@ private:
      * memory.
      */
     struct Pool {
-        QString chars;
-        duint size;
-        duint rover;
+        String chars;
+        dsize size;
+        dsize rover;
 
         Pool() : size(0), rover(0) {}
     };
 
-    QChar *advanceToPoolWithSpace(duint minimum);
+    const char *advanceToPoolWithSpace(duint minimum);
 
     typedef std::vector<Pool> Pools;
     Pools _pools;

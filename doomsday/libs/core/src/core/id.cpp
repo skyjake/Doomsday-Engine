@@ -23,6 +23,8 @@
 #include "de/Reader"
 
 #include <atomic>
+#include <cstdlib>
+#include <ostream>
 
 namespace de {
 
@@ -41,7 +43,7 @@ Id::Id(String const &text) : _id(None)
 {
     if (text.beginsWith("{") && text.endsWith("}"))
     {
-        _id = text.substr(1, text.size() - 2).toUInt(nullptr, 16);
+        _id = std::strtoul(text.substr(String::BytePos{1}, text.sizeu() - 2), nullptr, 16);
     }
 }
 
@@ -60,7 +62,7 @@ Id::operator Value::Number () const
 
 String Id::asText() const
 {
-    return QString("{%1}").arg(_id, 8, 16, QChar('0'));
+    return String::format("{%08x}", _id);
 }
 
 ddouble Id::asDouble() const
@@ -73,9 +75,9 @@ dint64 Id::asInt64() const
     return _id;
 }
 
-QTextStream &operator << (QTextStream &os, Id const &id)
+std::ostream &operator << (std::ostream &os, Id const &id)
 {
-    os << id.asText();
+    os << id.asText().c_str();
     return os;
 }
 

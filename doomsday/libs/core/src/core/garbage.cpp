@@ -17,13 +17,14 @@
  */
 
 #include "de/Garbage"
-#include "de/Lockable"
 #include "de/Guard"
+#include "de/Lockable"
 #include "de/Log"
+#include "de/Thread"
 
-#include <QThread>
 #include <map>
 #include <set>
+#include <c_plus/thread.h>
 
 namespace de {
 namespace internal {
@@ -86,7 +87,7 @@ struct Garbage : public Lockable
     }
 };
 
-struct Garbages : public std::map<QThread *, Garbage *>, public Lockable
+struct Garbages : public std::map<iThread *, Garbage *>, public Lockable
 {
     /**
      * Recycles all collected garbage and deletes the collectors.
@@ -134,7 +135,7 @@ using namespace de::internal;
 
 static Garbages garbages;
 
-static Garbage *garbageForThread(QThread *thread)
+static Garbage *garbageForThread(iThread *thread)
 {
     DE_GUARD(garbages);
 
@@ -156,7 +157,7 @@ void Garbage_ClearForThread(void)
 {
     DE_GUARD(garbages);
 
-    Garbages::iterator i = garbages.find(QThread::currentThread());
+    Garbages::iterator i = garbages.find(current_Thread());
     if (i != garbages.end())
     {
         Garbage *g = i->second;
@@ -174,27 +175,27 @@ void Garbage_TrashInstance(void *ptr, GarbageDestructor destructor)
 {
     if (ptr)
     {
-        Garbage *g = garbageForThread(QThread::currentThread());
+        Garbage *g = garbageForThread(current_Thread());
         g->allocs[ptr] = destructor;
     }
 }
 
 int Garbage_IsTrashed(void const *ptr)
 {
-    Garbage *g = garbageForThread(QThread::currentThread());
+    Garbage *g = garbageForThread(current_Thread());
     return g->contains(ptr);
 }
 
 void Garbage_Untrash(void *ptr)
 {
-    Garbage *g = garbageForThread(QThread::currentThread());
+    Garbage *g = garbageForThread(current_Thread());
     DE_ASSERT(g->contains(ptr));
     g->allocs.erase(ptr);
 }
 
 void Garbage_RemoveIfTrashed(void *ptr)
 {
-    Garbage *g = garbageForThread(QThread::currentThread());
+    Garbage *g = garbageForThread(current_Thread());
     Garbage::Allocs::iterator found = g->allocs.find(ptr);
     if (found != g->allocs.end())
     {
@@ -204,7 +205,7 @@ void Garbage_RemoveIfTrashed(void *ptr)
 
 void Garbage_Recycle(void)
 {
-    Garbage *g = garbageForThread(QThread::currentThread());
+    Garbage *g = garbageForThread(current_Thread());
     g->recycle();
 }
 

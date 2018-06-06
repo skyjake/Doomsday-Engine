@@ -24,8 +24,7 @@
 #include "../FileIndex"
 #include "../Version"
 #include "../IObject"
-
-#include <QSet>
+#include "../Set"
 
 namespace de {
 
@@ -59,7 +58,7 @@ public:
     /// Package is missing some required metadata. @ingroup errors
     DE_SUB_ERROR(ValidationError, IncompleteMetadataError);
 
-    typedef QSet<String> Assets;
+    typedef Set<String> Assets;
 
     /**
      * Utility for accessing asset metadata. @ingroup fs
@@ -186,11 +185,11 @@ public:
 
     static Record const &metadata(File const &packageFile);
 
-    static QStringList tags(File const &packageFile);
+    static StringList tags(File const &packageFile);
 
     static bool matchTags(File const &packageFile, String const &tagRegExp);
 
-    static QStringList tags(String const& tagsString);
+    static StringList tags(String const& tagsString);
 
     static StringList requires(File const &packageFile);
 
@@ -242,13 +241,13 @@ public:
      */
     static Time containerOfFileModifiedAt(File const &file);
 
-    static String const VAR_PACKAGE;
-    static String const VAR_PACKAGE_ID;
-    static String const VAR_PACKAGE_ALIAS;
-    static String const VAR_PACKAGE_TITLE;
-    static String const VAR_ID;
-    static String const VAR_TITLE;
-    static String const VAR_VERSION;
+    static const String VAR_PACKAGE;
+    static const String VAR_PACKAGE_ID;
+    static const String VAR_PACKAGE_ALIAS;
+    static const String VAR_PACKAGE_TITLE;
+    static const String VAR_ID;
+    static const String VAR_TITLE;
+    static const String VAR_VERSION;
 
 private:
     DE_PRIVATE(d)

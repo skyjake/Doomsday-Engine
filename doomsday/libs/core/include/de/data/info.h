@@ -24,9 +24,8 @@
 #include "../Record"
 #include "../SourceLineTable"
 #include "../String"
-
-#include <QStringList>
-#include <QHash>
+#include "../List"
+#include "../Hash"
 
 namespace de {
 
@@ -70,17 +69,16 @@ public:
                 StringLiteral = 0x2,    ///< Quoted string literal (otherwise a plain token).
                 DefaultFlags = 0
             };
-            Q_DECLARE_FLAGS(Flags, Flag)
 
             String text;
             Flags flags;
 
-            Value(String const &txt = "", Flags const &f = DefaultFlags)
+            Value(String const &txt = "", Flags f = DefaultFlags)
                 : text(txt), flags(f) {}
 
             operator String const & () const { return text; }
         };
-        typedef QList<Value> ValueList;
+        typedef de::List<Value> ValueList;
 
         /**
          * @param type  Type of the element.
@@ -126,10 +124,9 @@ public:
             Attribute = 0x1,
             DefaultFlags = 0
         };
-        Q_DECLARE_FLAGS(Flags, Flag)
 
     public:
-        KeyElement(String const &name, Value const &value, Flags const &f = DefaultFlags)
+        KeyElement(String const &name, Value const &value, Flags f = DefaultFlags)
             : Element(Key, name), _value(value), _flags(f) {}
 
         void setValue(Value const &v) { _value = v; }
@@ -168,8 +165,8 @@ public:
     public:
         DE_ERROR(ValuesError);
 
-        typedef QHash<String, Element *> Contents;
-        typedef QList<Element *> ContentsInOrder;
+        typedef Hash<String, Element *> Contents;
+        typedef de::List<Element *> ContentsInOrder;
 
     public:
         BlockElement(String const &bType, String const &name, Info &document)
@@ -200,9 +197,9 @@ public:
 
         int size() const { return _contents.size(); }
 
-        bool contains(String const &name) const { return _contents.contains(name.toLower()); }
+        bool contains(String const &name) const { return _contents.contains(name.lower()); }
 
-        void setBlockType(String const &bType) { _blockType = bType.toLower(); }
+        void setBlockType(String const &bType) { _blockType = bType.lower(); }
 
         void clear();
 
@@ -326,9 +323,9 @@ public:
      *
      * @param blocksToParseAsScript  List of block types.
      */
-    void setScriptBlocks(QStringList blocksToParseAsScript);
+    void setScriptBlocks(const StringList &blocksToParseAsScript);
 
-    void setAllowDuplicateBlocksOfType(QStringList duplicatesAllowed);
+    void setAllowDuplicateBlocksOfType(const StringList &duplicatesAllowed);
 
     /**
      * Sets the block type used for single-token blocks. By default, this is not set,
@@ -414,9 +411,6 @@ public:
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Info::Element::Value::Flags)
-Q_DECLARE_OPERATORS_FOR_FLAGS(Info::KeyElement::Flags)
 
 } // namespace de
 

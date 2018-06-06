@@ -45,7 +45,7 @@ struct DE_PUBLIC RepositoryPath
     {}
 };
 
-typedef QHash<String, RepositoryPath> PackagePaths;
+typedef Hash<String, RepositoryPath> PackagePaths;
 
 typedef std::function<void (DictionaryValue const &)> FileMetadata;
 typedef std::function<void (duint64 startOffset, Block const &, duint64 remainingBytes)> FileContents;

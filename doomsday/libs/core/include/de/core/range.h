@@ -42,7 +42,7 @@ struct Range
     static Range fromSize(Type const &a, Type const &size) { return Range(a, a + size); }
     inline bool isEmpty() const { return end == start; }
     explicit inline operator bool() const { return !isEmpty(); }
-    inline Type size() const { return end - start; }
+    inline decltype(end - start) size() const { return end - start; }
     inline bool contains(Type const &i) const { return i >= start && i < end; }
     inline Type clamp(Type const &i) const {
         if (i < start) return start;
@@ -109,8 +109,7 @@ struct Range
         return *this;
     }
     String asText() const {
-        return String::format(
-            "[%s...%s)", String::number(start).c_str(), String::number(end).c_str());
+        return String("[") + String::asText(start) + "..." + String::asText(end) + ")";
     }
 
     typedef List<Range<Type>> ContiguousRanges;
@@ -144,11 +143,11 @@ struct Range
         StringList msg;
         for (const auto &range : findContiguousRanges(values)) {
             if (range.size() == 1)
-                msg << String::number(range.start);
+                msg << String::asText(range.start);
             else
-                msg << String::number(range.start) + "-" + String::number(range.end - 1);
+                msg << String::asText(range.start) + "-" + String::asText(range.end - 1);
         }
-        return msg.join(separator);
+        return String::join(msg, separator);
     }
 };
 

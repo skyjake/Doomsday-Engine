@@ -18,18 +18,20 @@
  */
 
 #include "de/c_wrapper.h"
-#include "de/Error"
-#include "de/App"
-#include "de/CommandLine"
-#include "de/Loop"
+
 #include "de/Address"
-#include "de/ByteRefArray"
+#include "de/App"
 #include "de/Block"
-#include "de/LogBuffer"
 #include "de/ByteOrder"
+#include "de/ByteRefArray"
+#include "de/CommandLine"
+#include "de/Error"
 #include "de/Info"
+#include "de/LogBuffer"
+#include "de/Loop"
+#include "de/String"
 #include "de/UnixInfo"
-#include <QFile>
+
 #include <cstring>
 #include <stdarg.h>
 
@@ -104,7 +106,7 @@ void App_FatalError(char const *msgFormat, ...)
 
     va_list args;
     va_start(args, msgFormat);
-    qvsnprintf(buffer, sizeof(buffer) - 1, msgFormat, args);
+    std::vsnprintf(buffer, sizeof(buffer) - 1, msgFormat, args);
     va_end(args);
 
     DE_APP->handleUncaughtException(buffer);
@@ -221,7 +223,7 @@ de_Info *Info_NewFromString(char const *utf8text)
 {
     try
     {
-        return reinterpret_cast<de_Info *>(new de::Info(QString::fromUtf8(utf8text)));
+        return reinterpret_cast<de_Info *>(new de::Info(de::String::fromUtf8(utf8text)));
     }
     catch (de::Error const &er)
     {
@@ -234,9 +236,9 @@ de_Info *Info_NewFromFile(char const *nativePath)
 {
     try
     {
-        QScopedPointer<de::Info> info(new de::Info);
+        std::unique_ptr<de::Info> info(new de::Info);
         info->parseNativeFile(nativePath);
-        return reinterpret_cast<de_Info *>(info.take());
+        return reinterpret_cast<de_Info *>(info.release());
     }
     catch (de::Error const &er)
     {
@@ -261,16 +263,16 @@ int Info_FindValue(de_Info *info, char const *path, char *buffer, size_t bufSize
     DE_SELF(Info, info);
     de::Info::Element const *element = self->findByPath(path);
     if (!element || !element->isKey()) return false;
-    QString value = static_cast<de::Info::KeyElement const *>(element)->value();
+    de::String value = static_cast<de::Info::KeyElement const *>(element)->value();
     if (buffer)
     {
-        qstrncpy(buffer, value.toUtf8().constData(), uint(bufSize));
+        strncpy(buffer, value, uint(bufSize));
         return true;
     }
     else
     {
         // Just return the size of the value.
-        return value.size();
+        return value.sizei();
     }
 }
 
@@ -279,20 +281,20 @@ char *UnixInfo_GetConfigValue(char const *configFile, char const *key)
     de::UnixInfo &info = de::App::unixInfo();
 
     // "paths" is the only config file currently being used.
-    if (!qstrcmp(configFile, "paths"))
+    if (!strcmp(configFile, "paths"))
     {
         de::NativePath foundValue;
         if (info.path(key, foundValue))
         {
-            return qstrdup(foundValue.toString().toUtf8().constData());
+            return strdup(foundValue);
         }
     }
-    else if (!qstrcmp(configFile, "defaults"))
+    else if (!strcmp(configFile, "defaults"))
     {
         de::String foundValue;
         if (info.defaults(key, foundValue))
         {
-            return qstrdup(foundValue.toUtf8().constData());
+            return strdup(foundValue);
         }
     }
     return nullptr;

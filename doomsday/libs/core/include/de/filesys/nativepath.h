@@ -62,7 +62,6 @@ public:
      */
     NativePath(String const &str);
 
-    NativePath(QString const &qstr);
     NativePath(char const *nullTerminatedCStr);
     NativePath(char const *cStr, dsize length);
 
@@ -74,7 +73,6 @@ public:
      */
     NativePath &operator = (String const &str);
 
-    NativePath &operator = (QString const &str);
     NativePath &operator = (NativePath &&moved);
     NativePath &operator = (NativePath const &other);
     NativePath &operator = (char const *nullTerminatedCStr);
@@ -100,7 +98,6 @@ public:
      */
     NativePath operator / (String const &str) const;
 
-    NativePath operator / (QString const &str) const;
     NativePath operator / (char const *nullTerminatedCStr) const;
 
     /// Extracts the path of the string, using native directory separators.
@@ -151,7 +148,7 @@ public:
      *
      * @return Path with separators replaced.
      */
-    String withSeparators(QChar sep) const;
+    String withSeparators(Char sep) const;
 
     bool exists() const;
 
@@ -174,6 +171,8 @@ public:
      */
     static bool setWorkPath(NativePath const &cwd);
 
+    static NativePath homePath();
+
     /**
      * Determines whether a native path exists.
      *
@@ -195,7 +194,7 @@ public:
     /**
      * Returns the native path separator character.
      */
-    static QChar separator();
+    static Char separator();
 };
 
 } // namespace de

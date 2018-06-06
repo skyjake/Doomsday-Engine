@@ -27,7 +27,7 @@
 #include "../String"
 #include "../ByteRefArray"
 
-#include <QTextStream>
+#include <sstream>
 
 namespace de {
 
@@ -148,13 +148,12 @@ public:
         return m;
     }
     String asText() const {
-        String str;
-        QTextStream s(&str);
+        std::ostringstream s;
         s << "Matrix3:\n"
           << "  " << row(0) << "\n"
           << "  " << row(1) << "\n"
           << "  " << row(2) << "\n";
-        return str;
+        return s.str();
     }
 
 public:
@@ -191,7 +190,7 @@ inline void operator >> (Reader const &from, Matrix3<Type> &mat3) {
 }
 
 template <typename Type>
-inline QTextStream &operator << (QTextStream &os, Matrix3<Type> const &mat3) {
+inline std::ostream &operator << (std::ostream &os, Matrix3<Type> const &mat3) {
     os << mat3.asText();
     return os;
 }
@@ -320,14 +319,13 @@ public:
     }
 
     String asText() const {
-        String str;
-        QTextStream s(&str);
+        std::ostringstream s;
         s << "Matrix4:\n"
           << "  " << row(0) << "\n"
           << "  " << row(1) << "\n"
           << "  " << row(2) << "\n"
           << "  " << row(3) << "\n";
-        return str;
+        return s.str();
     }
 
 public:
@@ -490,7 +488,7 @@ inline void operator >> (Reader const &from, Matrix4<Type> &mat4) {
 }
 
 template <typename Type>
-inline QTextStream &operator << (QTextStream &os, Matrix4<Type> const &mat4) {
+inline std::ostream &operator << (std::ostream &os, Matrix4<Type> const &mat4) {
     os << mat4.asText();
     return os;
 }

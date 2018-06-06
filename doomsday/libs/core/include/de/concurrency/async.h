@@ -22,14 +22,14 @@
 #include "../App"
 #include "../Loop"
 #include "../String"
+#include "../Thread"
 
-#include <QThread>
 #include <atomic>
 #include <utility>
 
 namespace de {
 
-struct DE_PUBLIC AsyncTask : public QThread
+struct DE_PUBLIC AsyncTask : public Thread
 {
     virtual ~AsyncTask() {}
     virtual void abort() = 0;
@@ -152,7 +152,7 @@ public:
     void waitForFinished(TimeSpan timeout = 0.0);
 
 private:
-    LockableT<QSet<AsyncTask *>> _tasks;
+    LockableT<Set<AsyncTask *>> _tasks;
 };
 
 } // namespace de

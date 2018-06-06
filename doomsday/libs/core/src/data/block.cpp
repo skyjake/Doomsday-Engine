@@ -327,6 +327,18 @@ Block Block::join(const List<Block> &blocks, const Block &sep) // static
     return joined;
 }
 
+Block Block::readAll(std::istream &is)
+{
+    Block data;
+    char buf[16384];
+    while (!is.eof())
+    {
+        is.read(buf, sizeof(buf));
+        appendData_Block(&data._block, buf, is.gcount());
+    }
+    return data;
+}
+
 void Block::clear()
 {
     clear_Block(&_block);

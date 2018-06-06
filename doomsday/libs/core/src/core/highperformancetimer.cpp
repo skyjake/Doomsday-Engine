@@ -17,27 +17,34 @@
  */
 
 #include "de/HighPerformanceTimer"
+#include "de/Guard"
+#include "de/Lockable"
+#include "de/ElapsedTimer"
 
-#include <de/Guard>
-#include <de/Lockable>
-#include <QElapsedTimer>
+#include <chrono>
 
 namespace de {
 
+namespace chr = std::chrono;
+
 DE_PIMPL_NOREF(HighPerformanceTimer)
 {
-    QDateTime origin;
-    QElapsedTimer startedAt;
+    chr::system_clock::time_point origin = chr::system_clock::now();
+    ElapsedTimer timer;
+
+//    QDateTime origin;
+//    QElapsedTimer startedAt;
 
     Impl()
     {
-        origin = QDateTime::currentDateTime();
-        startedAt.start();
+        timer.start();
+//        origin = QDateTime::currentDateTime();
+//        startedAt.start();
     }
 
     duint64 milliSeconds()
     {
-        return duint64(startedAt.elapsed());
+        return duint64(timer.elapsedSeconds() * 1000L);
     }
 };
 

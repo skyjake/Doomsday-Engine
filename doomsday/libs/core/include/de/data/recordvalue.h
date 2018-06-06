@@ -24,8 +24,6 @@
 #include "../Record"
 #include "../IObject"
 
-#include <QFlags>
-
 namespace de {
 
 /**
@@ -58,7 +56,7 @@ public:
 
         RecordNotOwned = 0
     };
-    Q_DECLARE_FLAGS(OwnershipFlags, OwnershipFlag)
+    using OwnershipFlags = Flags;
 
 public:
     /**
@@ -135,8 +133,6 @@ public:
 public:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(RecordValue::OwnershipFlags)
 
 } // namespace de
 

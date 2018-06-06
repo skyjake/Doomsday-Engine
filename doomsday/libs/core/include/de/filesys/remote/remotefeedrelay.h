@@ -26,9 +26,6 @@
 #include "../Query"
 #include "../Link"
 
-#include <QHash>
-#include <QNetworkAccessManager>
-
 namespace de {
 namespace filesys {
 
@@ -85,7 +82,7 @@ public:
                                             String filePath,
                                             FileContents contentsReceived);
 
-    QNetworkAccessManager &network();
+//    QNetworkAccessManager &network();
 
 private:
     DE_PRIVATE(d)

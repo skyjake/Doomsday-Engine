@@ -317,7 +317,7 @@ static void pathConstructor(internal::PathConstructorArgs &args, PathTree::Node 
  *
  * Perhaps a fixed size MRU cache? -ds
  */
-Path PathTree::Node::path(QChar sep) const
+Path PathTree::Node::path(Char sep) const
 {
     internal::PathConstructorArgs args(sep);
 #ifdef DE_STACK_MONITOR

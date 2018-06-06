@@ -28,6 +28,7 @@
 
 #include <c_plus/block.h>
 #include <array>
+#include <istream>
 
 namespace de {
 
@@ -213,14 +214,16 @@ public:
 
 public:
     static Block join(const List<Block> &blocks, const Block &sep = Block());
+    static Block readAll(std::istream &is);
 
 private:
     iBlock _block;
 };
 
 template <typename... Args>
-Block md5Hash(Args... args) {
-    Block data;
+Block md5Hash(Args... args)
+{
+    Block  data;
     Writer writer(data);
     writer.writeMultiple(args...);
     return data.md5Hash();

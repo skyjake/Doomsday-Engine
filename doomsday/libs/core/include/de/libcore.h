@@ -390,6 +390,15 @@ private:
 /// Thrown from the expectedAs() method if a cast cannot be made as expected.
 DE_ERROR(CastError);
 
+template <typename Iterator>
+const typename Iterator::key_type &ckey(const Iterator &i) {
+    return i->first;
+}
+template <typename Iterator>
+const typename Iterator::value_type cvalue(const Iterator &i) {
+    return i->second;
+}
+
 /*
  * Convenience wrappers for dynamic_cast.
  */
@@ -586,6 +595,13 @@ inline void zapPtr(Type *t) {
     std::memset(t, 0, sizeof(Type));
 }
 
+template <typename Container>
+inline void deleteAll(Container &c) {
+    for (auto *i : c) {
+        delete i;
+    }
+}
+
 template <typename ContainerType>
 inline ContainerType mapInPlace(ContainerType &c,
                                 std::function<typename ContainerType::value_type (
@@ -771,6 +787,7 @@ typedef uint64_t duint64;    ///< 64-bit unsigned integer.
 typedef float    dfloat;     ///< 32-bit floating point number.
 typedef double   ddouble;    ///< 64-bit floating point number.
 typedef size_t   dsize;      // Likely unsigned long.
+typedef ssize_t  dsigsize;
 typedef long     dlong;
 
 typedef wchar_t  Char;

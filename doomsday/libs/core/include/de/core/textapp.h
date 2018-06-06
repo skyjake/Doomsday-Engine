@@ -13,20 +13,19 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBCORE_TEXTAPP_H
 #define LIBCORE_TEXTAPP_H
 
-#include <QCoreApplication>
 #include <de/App>
 #include <de/Loop>
 
 /**
  * Macro for conveniently accessing the de::TextApp singleton instance.
  */
-#define DE_TEXT_APP   (static_cast<de::TextApp *>(qApp))
+#define DE_TEXT_APP   (static_cast<de::TextApp *>(&de::App::app()))
 
 namespace de {
 
@@ -38,17 +37,15 @@ namespace de {
  *
  * @ingroup core
  */
-class DE_PUBLIC TextApp : public QCoreApplication, public App
+class DE_PUBLIC TextApp : public App
 {
-    Q_OBJECT
-
 public:
-    TextApp(int &argc, char **argv);
+    TextApp(const StringList &args);
 
     void setMetadata(String const &orgName, String const &orgDomain,
                      String const &appName, String const &appVersion);
 
-    bool notify(QObject *receiver, QEvent *event);
+//    bool notify(QObject *receiver, QEvent *event);
 
     int execLoop();
     void stopLoop(int code);

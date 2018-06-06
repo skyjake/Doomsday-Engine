@@ -265,7 +265,7 @@ DE_PIMPL(Record)
         DE_GUARD(this);
 
         Subrecords subs;
-        forSubrecords([&subs, filter] (String const &name, Record &rec)
+        forSubrecords([&subs, filter] (const CString &, Record &rec)
         {
             // Must pass the filter.
             if (filter(rec))
@@ -277,14 +277,14 @@ DE_PIMPL(Record)
         return subs;
     }
 
-    Variable const *findMemberByPath(String const &name) const
+    Variable const *findMemberByPath(const CString &name) const
     {
         // Path notation allows looking into subrecords.
         int pos = name.indexOf('.');
         if (pos >= 0)
         {
-            String subName = name.substr(0, pos);
-            String remaining = name.substr(pos + 1);
+            CString subName = name.substr(0, pos);
+            CString remaining = name.substr(pos + 1);
             // If it is a subrecord we can descend into it.
             if (!self().hasRecord(subName)) return 0;
             return self()[subName].value<RecordValue>().dereference().d->findMemberByPath(remaining);
@@ -309,15 +309,15 @@ DE_PIMPL(Record)
      *
      * @return  Parent record for the variable.
      */
-    Record &parentRecordByPath(String const &pathOrName)
+    Record &parentRecordByPath(const CString &pathOrName)
     {
         DE_GUARD(this);
 
         int pos = pathOrName.indexOf('.');
         if (pos >= 0)
         {
-            String subName = pathOrName.substr(0, pos);
-            String remaining = pathOrName.substr(pos + 1);
+            CString subName = pathOrName.substr(0, pos);
+            CString remaining = pathOrName.substr(pos + 1);
             Record *rec = 0;
 
             if (!self().hasSubrecord(subName))
@@ -347,7 +347,7 @@ DE_PIMPL(Record)
         members.remove(variable.name());
     }
 
-    static String memberNameFromPath(String const &path)
+    static String memberNameFromPath(const CString &path)
     {
         return path.fileName('.');
     }
@@ -492,23 +492,23 @@ Record &Record::assign(Record const &other, QRegExp const &excluded)
     return *this;
 }
 
-bool Record::has(String const &name) const
+bool Record::has(const CString &name) const
 {
     return hasMember(name);
 }
 
-bool Record::hasMember(String const &variableName) const
+bool Record::hasMember(const CString &variableName) const
 {
     return d->findMemberByPath(variableName) != 0;
 }
 
-bool Record::hasSubrecord(String const &subrecordName) const
+bool Record::hasSubrecord(const CString &subrecordName) const
 {
     Variable const *found = d->findMemberByPath(subrecordName);
     return found? d->isSubrecord(*found) : false;
 }
 
-bool Record::hasRecord(String const &recordName) const
+bool Record::hasRecord(const CString &recordName) const
 {
     Variable const *found = d->findMemberByPath(recordName);
     return found? d->isRecord(*found) : false;
@@ -552,12 +552,12 @@ Variable *Record::remove(Variable &variable)
     return &variable;
 }
 
-Variable *Record::remove(String const &variableName)
+Variable *Record::remove(const char *variableName)
 {
     return remove((*this)[variableName]);
 }
 
-Variable *Record::tryRemove(String const &variableName)
+Variable *Record::tryRemove(const CString &variableName)
 {
     if (has(variableName))
     {
@@ -566,45 +566,45 @@ Variable *Record::tryRemove(String const &variableName)
     return nullptr;
 }
 
-Variable &Record::add(String const &name, Variable::Flags variableFlags)
+Variable &Record::add(const CString &name, Variable::Flags variableFlags)
 {
     return d->parentRecordByPath(name)
             .add(new Variable(Impl::memberNameFromPath(name), nullptr, variableFlags));
 }
 
-Variable &Record::addNumber(String const &name, Value::Number number)
+Variable &Record::addNumber(const CString &name, Value::Number number)
 {
     return add(name, Variable::AllowNumber).set(NumberValue(number));
 }
 
-Variable &Record::addBoolean(String const &name, bool booleanValue)
+Variable &Record::addBoolean(const CString &, bool booleanValue)
 {
     return add(name, Variable::AllowNumber).set(NumberValue(booleanValue, NumberValue::Boolean));
 }
 
-Variable &Record::addText(String const &name, Value::Text const &text)
+Variable &Record::addText(const CString &, Value::Text const &text)
 {
     return add(name, Variable::AllowText).set(TextValue(text));
 }
 
-Variable &Record::addTime(String const &name, Time const &time)
+Variable &Record::addTime(const CString &, Time const &time)
 {
     return add(name, Variable::AllowTime).set(TimeValue(time));
 }
 
-Variable &Record::addArray(String const &name, ArrayValue *array)
+Variable &Record::addArray(const CString &, ArrayValue *array)
 {
     // Automatically create an empty array if one is not provided.
     if (!array) array = new ArrayValue;
     return add(name, Variable::AllowArray).set(array);
 }
 
-Variable &Record::addDictionary(String const &name)
+Variable &Record::addDictionary(const CString &)
 {
     return add(name, Variable::AllowDictionary).set(new DictionaryValue);
 }
 
-Variable &Record::addBlock(String const &name)
+Variable &Record::addBlock(const CString &)
 {
     return add(name, Variable::AllowBlock).set(new BlockValue);
 }
@@ -614,14 +614,14 @@ Variable &Record::addFunction(const String &name, Function *func)
     return add(name, Variable::AllowFunction).set(new FunctionValue(func));
 }
 
-Record &Record::add(String const &name, Record *subrecord)
+Record &Record::add(const CString &, Record *subrecord)
 {
     std::unique_ptr<Record> sub(subrecord);
     add(name).set(RecordValue::takeRecord(sub.release()));
     return *subrecord;
 }
 
-Record &Record::addSubrecord(String const &name, SubrecordAdditionBehavior behavior)
+Record &Record::addSubrecord(const CString &, SubrecordAdditionBehavior behavior)
 {
     if (behavior == KeepExisting)
     {
@@ -637,7 +637,7 @@ Record &Record::addSubrecord(String const &name, SubrecordAdditionBehavior behav
     return add(name, new Record);
 }
 
-Record *Record::removeSubrecord(String const &name)
+Record *Record::removeSubrecord(const CString &)
 {
     Members::const_iterator found = d->members.find(name);
     if (found != d->members.end() && d->isSubrecord(*found.value()))
@@ -649,7 +649,7 @@ Record *Record::removeSubrecord(String const &name)
     throw NotFoundError("Record::remove", "Subrecord '" + name + "' not found");
 }
 
-Variable &Record::set(String const &name, bool value)
+Variable &Record::set(const CString &, bool value)
 {
     DE_GUARD(d);
 
@@ -660,7 +660,7 @@ Variable &Record::set(String const &name, bool value)
     return addBoolean(name, value);
 }
 
-Variable &Record::set(String const &name, char const *value)
+Variable &Record::set(const CString &, char const *value)
 {
     DE_GUARD(d);
 
@@ -671,7 +671,7 @@ Variable &Record::set(String const &name, char const *value)
     return addText(name, value);
 }
 
-Variable &Record::set(String const &name, Value::Text const &value)
+Variable &Record::set(const CString &, Value::Text const &value)
 {
     DE_GUARD(d);
 
@@ -682,7 +682,7 @@ Variable &Record::set(String const &name, Value::Text const &value)
     return addText(name, value);
 }
 
-Variable &Record::set(String const &name, Value::Number value)
+Variable &Record::set(const CString &name, Value::Number value)
 {
     return set(name, NumberValue(value));
 }
@@ -698,32 +698,32 @@ Variable &Record::set(const String &name, const NumberValue &value)
     return add(name, Variable::AllowNumber).set(value);
 }
 
-Variable &Record::set(String const &name, dint32 value)
+Variable &Record::set(const CString &, dint32 value)
 {
     return set(name, NumberValue(value));
 }
 
-Variable &Record::set(String const &name, duint32 value)
+Variable &Record::set(const CString &, duint32 value)
 {
     return set(name, NumberValue(value));
 }
 
-Variable &Record::set(String const &name, dint64 value)
+Variable &Record::set(const CString &, dint64 value)
 {
   return set(name, NumberValue(value));
 }
 
-Variable &Record::set(String const &name, duint64 value)
+Variable &Record::set(const CString &, duint64 value)
 {
     return set(name, NumberValue(value));
 }
 
-Variable &Record::set(String const &name, unsigned long value)
+Variable &Record::set(const CString &, unsigned long value)
 {
     return set(name, NumberValue(value));
 }
 
-Variable &Record::set(String const &name, Time const &value)
+Variable &Record::set(const CString &, Time const &value)
 {
     DE_GUARD(d);
 
@@ -734,7 +734,7 @@ Variable &Record::set(String const &name, Time const &value)
     return addTime(name, value);
 }
 
-Variable &Record::set(String const &name, Block const &value)
+Variable &Record::set(const CString &, Block const &value)
 {
     DE_GUARD(d);
 
@@ -747,7 +747,7 @@ Variable &Record::set(String const &name, Block const &value)
     return var;
 }
 
-Variable &Record::set(const String &name, const Record &value)
+Variable &Record::set(const CString &name, const Record &value)
 {
     DENG2_GUARD(d);
 
@@ -761,7 +761,7 @@ Variable &Record::set(const String &name, const Record &value)
     return var;
 }
 
-Variable &Record::set(String const &name, ArrayValue *value)
+Variable &Record::set(const CString &name, ArrayValue *value)
 {
     DE_GUARD(d);
 
@@ -772,7 +772,7 @@ Variable &Record::set(String const &name, ArrayValue *value)
     return addArray(name, value);
 }
 
-Variable &Record::set(const String &name, Value *value)
+Variable &Record::set(const CString &name, Value *value)
 {
     DENG2_GUARD(d);
 
@@ -783,7 +783,7 @@ Variable &Record::set(const String &name, Value *value)
     return add(name).set(value);
 }
 
-Variable &Record::set(const String &name, const Value &value)
+Variable &Record::set(const CString &name, const Value &value)
 {
     DENG2_GUARD(d);
 
@@ -804,7 +804,7 @@ Variable &Record::appendWord(String const &name, String const &word, String cons
     return (*this)[name];
 }
 
-Variable &Record::appendUniqueWord(String const &name, String const &word, String const &separator)
+Variable &Record::appendUniqueWord(const CString &, const CString &word, const CString &separator)
 {
     DE_GUARD(d);
 
@@ -816,7 +816,7 @@ Variable &Record::appendUniqueWord(String const &name, String const &word, Strin
     return (*this)[name];
 }
 
-Variable &Record::appendMultipleUniqueWords(String const &name, String const &words, String const &separator)
+Variable &Record::appendMultipleUniqueWords(const CString &, const CString &words, const CString &separator)
 {
     foreach (String word, words.split(separator, QString::SkipEmptyParts))
     {
@@ -825,7 +825,7 @@ Variable &Record::appendMultipleUniqueWords(String const &name, String const &wo
     return (*this)[name];
 }
 
-Variable &Record::appendToArray(String const &name, Value *value)
+Variable &Record::appendToArray(const CString &, Value *value)
 {
     DE_GUARD(d);
 
@@ -840,7 +840,7 @@ Variable &Record::appendToArray(String const &name, Value *value)
     return var;
 }
 
-Variable &Record::insertToSortedArray(String const &name, Value *value)
+Variable &Record::insertToSortedArray(const CString &, Value *value)
 {
     DE_GUARD(d);
 
@@ -865,12 +865,12 @@ Variable &Record::insertToSortedArray(String const &name, Value *value)
     return var;
 }
 
-Variable &Record::operator [] (String const &name)
+Variable &Record::operator [] (const CString &name)
 {
     return const_cast<Variable &>((*const_cast<Record const *>(this))[name]);
 }
 
-Variable const &Record::operator [] (String const &name) const
+Variable const &Record::operator [] (const CString &name) const
 {
     // Path notation allows looking into subrecords.
     Variable const *found = d->findMemberByPath(name);
@@ -881,22 +881,22 @@ Variable const &Record::operator [] (String const &name) const
     throw NotFoundError("Record::operator []", "Variable '" + name + "' not found");
 }
 
-Variable *Record::tryFind(String const &name)
+Variable *Record::tryFind(const CString &name)
 {
     return const_cast<Variable *>(d->findMemberByPath(name));
 }
 
-Variable const *Record::tryFind(String const &name) const
+Variable const *Record::tryFind(const CString &name) const
 {
     return d->findMemberByPath(name);
 }
 
-Record &Record::subrecord(String const &name)
+Record &Record::subrecord(const CString &)
 {
     return const_cast<Record &>((const_cast<Record const *>(this))->subrecord(name));
 }
 
-Record const &Record::subrecord(String const &name) const
+Record const &Record::subrecord(const CString &) const
 {
     // Path notation allows looking into subrecords.
     int pos = name.indexOf('.');
@@ -923,7 +923,7 @@ Record::Members const &Record::members() const
     return d->members;
 }
 
-LoopResult Record::forMembers(std::function<LoopResult (String const &, Variable &)> func)
+LoopResult Record::forMembers(std::function<LoopResult (const String &, Variable &)> func)
 {
     for (Members::iterator i = d->members.begin(); i != d->members.end(); ++i)
     {
@@ -935,7 +935,7 @@ LoopResult Record::forMembers(std::function<LoopResult (String const &, Variable
     return LoopContinue;
 }
 
-LoopResult Record::forMembers(std::function<LoopResult (String const &, Variable const &)> func) const
+LoopResult Record::forMembers(std::function<LoopResult (const String &, Variable const &)> func) const
 {
     for (Members::const_iterator i = d->members.constBegin(); i != d->members.constEnd(); ++i)
     {
@@ -967,7 +967,7 @@ LoopResult Record::forSubrecords(std::function<LoopResult (String const &, Recor
 
 LoopResult Record::forSubrecords(std::function<LoopResult (String const &, Record const &)> func) const
 {
-    return d->forSubrecords([func] (String const &name, Record &rec)
+    return d->forSubrecords([func] (const CString &, Record &rec)
     {
         return func(name, rec);
     });
@@ -1046,8 +1046,7 @@ String Record::asText(String const &prefix, List *lines) const
     }
 
     // Top level of the recursion.
-    QString result;
-    QTextStream os(&result);
+    std::ostringstream os;
     List allLines;
     Vec2ui maxLength;
 
@@ -1055,7 +1054,7 @@ String Record::asText(String const &prefix, List *lines) const
     asText(prefix, &allLines);
 
     // Sort and find maximum length.
-    qSort(allLines);
+    std::sort(allLines.begin(), allLines.end());
     for (List::iterator i = allLines.begin(); i != allLines.end(); ++i)
     {
         maxLength = maxLength.max(Vec2ui(i->first.size(), i->second.size()));
@@ -1087,7 +1086,7 @@ String Record::asText(String const &prefix, List *lines) const
     return result;
 }
 
-Function const &Record::function(String const &name) const
+Function const &Record::function(const CString &) const
 {
     return (*this)[name].value<FunctionValue>().function();
 }
@@ -1132,7 +1131,7 @@ void Record::operator << (Reader &from)
 
     while (count-- > 0)
     {
-        QScopedPointer<Variable> var(new Variable());
+        std::unique_ptr<Variable> var(new Variable());
         from >> *var;
 
         RecordValue *recVal = dynamic_cast<RecordValue *>(&var->value());
@@ -1146,7 +1145,7 @@ void Record::operator << (Reader &from)
             refMap.insert(recVal->record()->d->oldUniqueId, recVal->record());
         }
 
-        add(var.take());
+        add(var.release());
     }
 
     // Find referenced records and relink them to their original targets.
@@ -1166,7 +1165,7 @@ Record &Record::operator << (NativeFunctionSpec const &spec)
     return *this;
 }
 
-Record const &Record::parentRecordForMember(String const &name) const
+Record const &Record::parentRecordForMember(const CString &) const
 {
     String const lastOmitted = name.fileNamePath('.');
     if (lastOmitted.isEmpty()) return *this;
@@ -1214,7 +1213,7 @@ String Record::asInfo() const
     return out;
 }
 
-QTextStream &operator << (QTextStream &os, Record const &record)
+std::ostream &operator << (std::ostream &os, Record const &record)
 {
     return os << record.asText();
 }

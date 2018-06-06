@@ -26,6 +26,7 @@
 #include <cstdio>
 #include <cstdarg>
 #include <cerrno>
+#include <cwchar>
 
 namespace de {
 
@@ -46,6 +47,11 @@ String::String(String &&moved)
 }
 
 String::String(const Block &bytes)
+{
+    initCopy_Block(&_str.chars, bytes);
+}
+
+String::String(const iBlock *bytes)
 {
     initCopy_Block(&_str.chars, bytes);
 }
@@ -111,13 +117,14 @@ String::String(dsize length, iChar ch)
     }
 }
 
-//String::String(Qconst String &str, size_type index, size_type length)
-//    : QString(str.mid(index, length))
-//{}
-
 String::~String()
 {
     deinit_String(&_str);
+}
+
+void String::resize(size_t newSize)
+{
+    resize_Block(&_str.chars);
 }
 
 std::wstring String::toWideString() const
@@ -135,12 +142,66 @@ bool String::contains(const char *cStr) const
     return indexOfCStr_String(&_str, cStr) != iInvalidPos;
 }
 
-String String::substr(int position, int n) const
+String String::substr(CharPos pos, dsize count) const
 {
-    iString *sub = mid_String(&_str, position, n);
+    iString *sub = mid_String(&_str, pos.index, count);
     String s(sub);
     delete_String(sub);
     return s;
+}
+
+String String::substr(BytePos pos, dsize count) const
+{
+    iBlock *sub = mid_Block(&_str.chars, pos.index, count);
+    String s(sub);
+    delete_Block(sub);
+    return s;
+}
+
+String String::substr(const Range<CharPos> &range) const
+{
+    return substr(range.start, range.size());
+}
+
+String String::substr(const Range<BytePos> &range) const
+{
+    return substr(range.start, range.size());
+}
+
+void String::remove(BytePos start, dsize count)
+{
+    remove_Block(&_str.chars, start.index, count);
+}
+
+String String::right(CharPos count) const
+{
+    if (count == 0) return {};
+    // Characters may have varying size, so we need to iterate them separately.
+    const_reverse_iterator i = rbegin();
+    while(--count.index > 0 && i != rend())
+    {
+        i++;
+    }
+    return String(i);
+}
+
+List<String> String::split(const char *separator) const
+{
+    List<String> parts;
+    iRangecc seg{};
+    iRangecc str{constBegin_String(&_str), constEnd_String(&_str)};
+    while (nextSplit_Rangecc(&str, separator, &seg))
+    {
+        parts << String(seg.start, seg.end);
+    }
+    return parts;
+}
+
+List<String> String::split(Char ch) const
+{
+    iMultibyteChar mb;
+    init_MultibyteChar(&mb, ch);
+    return split(mb.bytes);
 }
 
 String String::operator+(const char *cStr) const
@@ -174,12 +235,14 @@ String &String::operator+=(const String &other)
     return *this;
 }
 
-String String::substr(String::size_type pos, String::size_type n) const
+void String::insert(BytePos pos, const char *cStr)
 {
-    iString *sub = mid_String(&_str, pos, n);
-    String s(sub);
-    delete_String(sub);
-    return s;
+    insertData_Block(&_str.chars, pos, str, cStr ? strlen(cStr) : 0);
+}
+
+void String::insert(BytePos pos, const String &str)
+{
+    insertData_Block(&_str.chars, pos, str, str.size());
 }
 
 iChar String::first() const
@@ -774,6 +837,35 @@ String String::fromCP437(const IByteArray &byteArray)
 String String::fromPercentEncoding(const Block &percentEncoded) // static
 {
     return QUrl::fromPercentEncoding(percentEncoded);
+}
+
+Char String::operator*() const
+{
+    return decode(nullptr);
+}
+
+Char String::decode()
+{
+    Char ch;
+    const char *end = i;
+    for (int j = 0; *end && j < MB_CUR_MAX; ++j, ++end) {}
+    curCharLen = mbrtowc(&ch, i, end - i, end);
+    return ch;
+}
+
+mb_iterator &String::operator++()
+{
+    if (!curCharLen) decode();
+    i += de::max(curCharLen, 1);
+    curCharLen = 0;
+    return *this;
+}
+
+mb_iterator String::operator++(int)
+{
+    mb_iterator i = *this;
+    ++(*this);
+    return i;
 }
 
 //size_t qchar_strlen(Char const *str)

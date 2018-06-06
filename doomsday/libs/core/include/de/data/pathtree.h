@@ -25,8 +25,7 @@
 #include <de/String>
 #include <de/Path>
 
-#include <QList>
-#include <QMultiHash>
+#include <unordered_map>
 
 namespace de {
 
@@ -68,7 +67,7 @@ class DE_PUBLIC PathTree : public Lockable
 public:
     class Node; // forward declaration
 
-    typedef QMultiHash<Path::hash_type, Node *> Nodes;
+    typedef std::unordered_multimap<Path::hash_type, Node *> Nodes;
     typedef StringList FoundPaths;
 
     /**
@@ -87,7 +86,6 @@ public:
     {
         MultiLeaf = 0x1     ///< There can be more than one leaf with a given name.
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     /**
      * Flags used to alter the behavior of path comparisons.
@@ -103,7 +101,7 @@ public:
         RelinquishMatching = 0x10 /**< Matching node's ownership is relinquished; the node is
                                        removed from the tree. */
     };
-    Q_DECLARE_FLAGS(ComparisonFlags, ComparisonFlag)
+    using ComparisonFlags = Flags;
 
     /// Identifier associated with each unique path segment.
     typedef duint32 SegmentId;
@@ -126,7 +124,7 @@ public:
     static Path::hash_type const no_hash;
 
 #ifdef DE_DEBUG
-    void debugPrint(QChar separator = '/') const;
+    void debugPrint(Char separator = L'/') const;
     void debugPrintHashDistribution() const;
 #endif
 
@@ -233,7 +231,7 @@ public:
          *
          * @return The composed path.
          */
-        Path path(QChar sep = '/') const;
+        Path path(Char sep = '/') const;
 
         DE_CAST_METHODS()
 
@@ -348,7 +346,7 @@ public:
      *
      * @return Number of paths found.
      */
-    int findAllPaths(FoundPaths &found, ComparisonFlags flags = 0, QChar sep = '/') const;
+    int findAllPaths(FoundPaths &found, ComparisonFlags flags = 0, Char sep = L'/') const;
 
     /**
      * Traverse the node hierarchy making a callback for visited node. Traversal
@@ -424,9 +422,6 @@ private:
     Impl *d;
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(PathTree::Flags)
-Q_DECLARE_OPERATORS_FOR_FLAGS(PathTree::ComparisonFlags)
-
 /**
  * Decode and then lexicographically compare the two manifest paths,
  * returning @c true if @a is less than @a b.
@@ -434,9 +429,9 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(PathTree::ComparisonFlags)
 template <typename PathTreeNodeType>
 inline bool comparePathTreeNodePathsAscending(PathTreeNodeType const *a, PathTreeNodeType const *b)
 {
-    String pathA(QString(QByteArray::fromPercentEncoding(a->path().toUtf8())));
-    String pathB(QString(QByteArray::fromPercentEncoding(b->path().toUtf8())));
-    return pathA.compareWithoutCase(pathB) < 0;
+//    String pathA(QString(QByteArray::fromPercentEncoding(a->path().toUtf8())));
+//    String pathB(QString(QByteArray::fromPercentEncoding(b->path().toUtf8())));
+    return a->path().compareWithoutCase(b->path()) < 0;
 }
 
 /**
@@ -484,12 +479,12 @@ public:
 
     Path::hash_type key() const {
         DE_ASSERT(_current != _nodes.end());
-        return _current.key();
+        return _current->first;
     }
 
     typename TreeType::Node &value() const {
         DE_ASSERT(_current != _nodes.end());
-        return *static_cast<typename TreeType::Node *>(_current.value());
+        return *static_cast<typename TreeType::Node *>(_current->second);
     }
 
 private:
@@ -505,8 +500,8 @@ class PathTreeT : public PathTree
 {
 public:
     typedef Type Node; // shadow PathTree::Node
-    typedef QMultiHash<Path::hash_type, Type *> Nodes;
-    typedef QList<Type *> FoundNodes;
+    typedef std::unordered_multimap<Path::hash_type, Type *> Nodes;
+    typedef List<Type *> FoundNodes;
 
 public:
     explicit PathTreeT(Flags flags = 0) : PathTree(flags) {}
