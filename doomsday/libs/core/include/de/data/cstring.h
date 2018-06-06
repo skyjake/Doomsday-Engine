@@ -36,6 +36,7 @@ public:
     CString(const char *cStr) : _range{cStr, nullptr} {} // lazy init
     CString(const char *start, const char *end) : _range{start, end} {}
     CString(const std::string &str) : _range{str.data(), str.data() + str.size()} {}
+    CString(const String &str) : _range{str.data(), str.data() + str.size()} {}
     CString(const iRangecc &cc) : _range{cc.start, cc.end} {}
 
     inline void updateEnd() const
@@ -56,6 +57,8 @@ public:
     dsize indexOf(char ch, size_t from = 0) const;
     dsize indexOf(const char *cStr, size_t from = 0) const;
     CString substr(size_t start, size_t count = npos) const;
+    const char *begin() const { return _range.start; }
+    const char *end() const { updateEnd(); return _range.end; }
 
     static size_t npos;
 

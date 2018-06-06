@@ -32,6 +32,8 @@
 #include <cctype>
 #include <string.h>
 
+#include <c_plus/fileinfo.h>
+
 namespace de {
 
 static char *duplicateStringAsUtf8(String const &s)
@@ -300,28 +302,29 @@ void CommandLine::makeAbsolutePath(duint pos)
         throw OutOfRangeError("CommandLine::makeAbsolutePath", "Index out of range");
     }
 
-    QString arg = d->arguments[pos];
+    String arg = d->arguments[pos];
 
-    if (!isOption(pos) && !arg.startsWith("}"))
+    if (!isOption(pos) && !arg.beginsWith("}"))
     {
         bool converted = false;
         NativePath dir = NativePath(arg).expand(); // note: strips trailing slash
 
-        if (!QDir::isAbsolutePath(arg))
+        if (!dir.isAbsolute())
         {
-            dir.setPath(d->initialDir.filePath(dir.path()));
+            dir = d->initialDir / dir;
             converted = true;
         }
 
         // Update the argument string.
-        d->arguments[pos] = NativePath(dir.path());
+        d->arguments[pos] = dir;
 
-        QFileInfo info(dir.path());
-        if (info.isDir())
+        iFileInfo *info = newCStr_FileInfo(dir);
+        if (isDirectory_FileInfo(info))
         {
             // Append a slash so FS1 will treat it as a directory.
             d->arguments[pos] += '/';
         }
+        iRelease(info);
 
         // Replace the pointer string.
         free(d->pointers[pos]);
@@ -338,7 +341,7 @@ void CommandLine::parseResponseFile(NativePath const &nativePath)
 {
     if (std::ifstream response{nativePath.expand()})
     {
-        parse(String::fromUtf8(readAll(response)));
+        parse(String::fromUtf8(Block::readAll(response)));
     }
     else
     {
@@ -371,7 +374,7 @@ void CommandLine::parse(String const &cmdLine)
 
         String word;
 
-        while (i != cmdLine.end() && (quote || !(*i).isSpace()))
+        while (i != cmdLine.end() && (quote || !iswspace(*i)))
         {
             bool copyChar = true;
             if (!quote)
@@ -388,10 +391,11 @@ void CommandLine::parse(String const &cmdLine)
                 // We're inside quotes.
                 if (*i == '\"') // Quote ends.
                 {
-                    if (i + 1 != cmdLine.end() && *(i + 1) == '\"') // Doubles?
+                    auto j = i; j++;
+                    if (j != cmdLine.end() && *j == '\"') // Doubles?
                     {
                         // Normal processing, but output only one quote.
-                        i++;
+                        i = j;
                     }
                     else
                     {
@@ -403,7 +407,7 @@ void CommandLine::parse(String const &cmdLine)
 
             if (copyChar)
             {
-                word.push_back(*i);
+                word += *i;
             }
 
             i++;

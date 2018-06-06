@@ -45,8 +45,7 @@ class File;
 class DE_PUBLIC InfoBank : public Bank, public IObject
 {
 public:
-    InfoBank(char const *nameForLog           = "InfoBank",
-             Bank::Flags const &flags         = Bank::DefaultFlags,
+    InfoBank(char const *nameForLog = "InfoBank", Flags const &flags = Bank::DefaultFlags,
              String const &hotStorageLocation = "/home/cache");
 
     /**

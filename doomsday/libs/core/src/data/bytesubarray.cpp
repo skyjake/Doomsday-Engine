@@ -51,7 +51,7 @@ void ByteSubArray::set(Offset at, Byte const *values, Size count)
         throw NonModifiableError("ByteSubArray::set", "Array is non-modifiable.");
     }
     _mainArray->set(_at + at, values, count);
-    _size = qMax(_size, at + count);
+    _size = std::max(_size, at + count);
 }
 
 } // namespace de

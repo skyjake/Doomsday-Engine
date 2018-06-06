@@ -38,7 +38,7 @@ struct Range
     Type start;
     Type end;
 
-    Range(Type const &a = 0, Type const &b = 0) : start(a), end(b) {}
+    Range(Type const &a = Type(0), Type const &b = Type(0)) : start(a), end(b) {}
     static Range fromSize(Type const &a, Type const &size) { return Range(a, a + size); }
     inline bool isEmpty() const { return end == start; }
     explicit inline operator bool() const { return !isEmpty(); }

@@ -24,7 +24,7 @@
 #include "de/Writer"
 #include "de/Reader"
 
-#include <QTextStream>
+#include <sstream>
 
 namespace de {
 
@@ -104,8 +104,7 @@ const Value *DictionaryValue::find(const Value &key) const
 
 ArrayValue *DictionaryValue::contentsAsArray(ContentSelection selection) const
 {
-    QScopedPointer<ArrayValue> array(new ArrayValue);
-
+    std::unique_ptr<ArrayValue> array(new ArrayValue);
     DE_FOR_EACH_CONST(Elements, i, elements())
     {
         if (selection == Keys)
@@ -117,7 +116,18 @@ ArrayValue *DictionaryValue::contentsAsArray(ContentSelection selection) const
             array->add(i->second->duplicateAsReference());
         }
     }
-    return array.take();
+    return array.release();
+}
+
+Record DictionaryValue::toRecord() const
+{
+    Record rec;
+    for (auto i = _elements.begin(); i != _elements.end(); ++i)
+    {
+        Variable &var = rec.add(i->first.value->asText());
+        var.set(i->second->duplicateAsReference());
+    }
+    return rec;
 }
 
 Value::Text DictionaryValue::typeId() const
@@ -132,19 +142,18 @@ Value *DictionaryValue::duplicate() const
 
 Value::Text DictionaryValue::asText() const
 {
-    Text result;
-    QTextStream s(&result);
+    std::ostringstream s;
     s << "{";
 
     bool isFirst = true;
     bool hadNewline = false;
 
     // Compose a textual representation of the array elements.
-    for (Elements::const_iterator i = _elements.begin(); i != _elements.end(); ++i)
+    for (auto i = _elements.begin(); i != _elements.end(); ++i)
     {
-        String const label = i->first.value->asText() + ": ";
+        const String label = i->first.value->asText() + ": ";
         String content = i->second->asText();
-        bool const multiline = content.contains('\n');
+        bool const multiline = content.contains("\n");
         if (!isFirst)
         {
             if (hadNewline || multiline) s << "\n";
@@ -156,7 +165,7 @@ Value::Text DictionaryValue::asText() const
     }
 
     s << " }";
-    return result;
+    return s.str();
 }
 
 Record *DictionaryValue::memberScope() const
@@ -175,7 +184,7 @@ Value const &DictionaryValue::element(Value const &index) const
     if (i == _elements.end())
     {
         throw KeyError("DictionaryValue::element",
-            "Key '" + index.asText() + "' does not exist in the dictionary");
+                       "Key '" + index.asText() + "' does not exist in the dictionary");
     }
     return *i->second;
 }
@@ -248,8 +257,8 @@ dint DictionaryValue::compare(Value const &value) const
             return 1;
         }
         // If all the keys and values compare equal, these are equal.
-        Elements::const_iterator mine = _elements.begin();
-        Elements::const_iterator theirs = other->_elements.begin();
+        auto mine = _elements.begin();
+        auto theirs = other->_elements.begin();
         for (; mine != _elements.end() && theirs != other->_elements.end(); ++mine, ++theirs)
         {
             dint result = mine->first.value->compare(*theirs->first.value);
@@ -272,8 +281,7 @@ void DictionaryValue::sum(Value const &value)
         throw ArithmeticError("DictionaryValue::sum", "Values cannot be summed");
     }
 
-    for (Elements::const_iterator i = other->_elements.begin();
-        i != other->_elements.end(); ++i)
+    for (auto i = other->_elements.begin(); i != other->_elements.end(); ++i)
     {
         add(i->first.value->duplicate(), i->second->duplicate());
     }
@@ -296,7 +304,7 @@ void DictionaryValue::operator >> (Writer &to) const
 
     if (!_elements.empty())
     {
-        for (Elements::const_iterator i = _elements.begin(); i != _elements.end(); ++i)
+        for (auto i = _elements.begin(); i != _elements.end(); ++i)
         {
             to << *i->first.value << *i->second;
         }
@@ -318,9 +326,9 @@ void DictionaryValue::operator << (Reader &from)
     clear();
     while (count--)
     {
-        QScopedPointer<Value> key(Value::constructFrom(from));
-        QScopedPointer<Value> value(Value::constructFrom(from));
-        add(key.take(), value.take());
+        std::unique_ptr<Value> key(Value::constructFrom(from));
+        std::unique_ptr<Value> value(Value::constructFrom(from));
+        add(key.release(), value.release());
     }
 }
 

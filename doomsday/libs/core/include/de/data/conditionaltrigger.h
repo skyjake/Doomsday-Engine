@@ -24,7 +24,7 @@
 namespace de {
 
 /**
- * Conditional trigger that calls a method
+ * Conditional trigger that calls a method.
  */
 class DE_PUBLIC ConditionalTrigger
 {
@@ -42,9 +42,9 @@ public:
      *
      * @param variable  Variable for configuring the conditional trigger.
      */
-    void setCondition(Variable const &variable);
+    void setCondition(const Variable &variable);
 
-    Variable const &condition() const;
+    const Variable &condition() const;
 
     /**
      * Checks if a trigger will cause activation, and if so, call the appropriate
@@ -53,13 +53,13 @@ public:
      * @param trigger  Trigger to check.
      * @return @c true if the trigger was activated, otherwise @c false.
      */
-    bool tryTrigger(String const &trigger);
+    bool tryTrigger(const String &trigger);
 
     /**
      * Called when the trigger is activated.
      * @param trigger  Trigger that caused activation.
      */
-    virtual void handleTriggered(String const &trigger) = 0;
+    virtual void handleTriggered(const String &trigger) = 0;
 
 private:
     DE_PRIVATE(d)

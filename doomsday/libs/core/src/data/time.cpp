@@ -24,10 +24,6 @@
 #include "de/Reader"
 #include "de/HighPerformanceTimer"
 
-//#include <QStringList>
-//#include <QThread>
-//#include <QDataStream>
-
 namespace de {
 
 static String const ISO_FORMAT = "yyyy-MM-dd hh:mm:ss.zzz";
@@ -39,24 +35,6 @@ static HighPerformanceTimer &highPerfTimer()
 }
 
 static TimeSpan currentHighPerfDelta;
-
-namespace internal {
-
-class SleeperThread : public QThread
-{
-public:
-    void run() {}
-    static void msleep(unsigned long milliseconds)
-    {
-        QThread::msleep(milliseconds);
-    }
-    static void usleep(unsigned long microseconds)
-    {
-        QThread::usleep(microseconds);
-    }
-};
-
-} // namespace internal
 
 duint64 Time::Span::asMicroSeconds() const
 {
@@ -90,14 +68,7 @@ Time::Span Time::Span::sinceStartOfProcess()
 
 void TimeSpan::sleep() const
 {
-    if (_seconds < 60)
-    {
-        internal::SleeperThread::usleep(static_cast<unsigned long>(_seconds * 1e6));
-    }
-    else
-    {
-        internal::SleeperThread::msleep(static_cast<unsigned long>(_seconds * 1e3));
-    }
+    Thread::sleep(_seconds);
 }
 
 void TimeSpan::operator >> (Writer &to) const
@@ -113,56 +84,50 @@ void TimeSpan::operator << (Reader &from)
 DE_PIMPL_NOREF(Time)
 {
     enum Flag {
-        DateTime        = 0x1,
+        SysTime         = 0x1,
         HighPerformance = 0x2
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
-    Flags flags;
-    QDateTime dateTime;
-    Span highPerfElapsed;
+    Flags     flags;
+    TimePoint sysTime;
+    Span      highPerfElapsed;
 
     Impl()
-        : flags(DateTime | HighPerformance)
-        , dateTime(QDateTime::currentDateTime())
+        : flags(SysTime | HighPerformance)
+        , dateTime(std::chrono::system_clock::now())
         , highPerfElapsed(highPerfTimer().elapsed())
     {}
 
-    Impl(QDateTime const &dt) : flags(DateTime), dateTime(dt) {}
+    Impl(const TimePoint &tp) : flags(SysTime), sysTime(tp) {}
 
     Impl(Span const &span) : flags(HighPerformance), highPerfElapsed(span) {}
 
     Impl(Impl const &other)
         : de::IPrivate()
         , flags(other.flags)
-        , dateTime(other.dateTime)
+        , sysTime(other.sysTime)
         , highPerfElapsed(other.highPerfElapsed)
     {}
 
-    bool hasDateTime() const
-    {
-        return flags.testFlag(DateTime);
-    }
-
     bool isValid() const
     {
-        if (flags.testFlag(DateTime))
+        if (flags & SysTime)
         {
-            return dateTime.isValid();
+            return sysTime != TimePoint::zero();
         }
-        return flags.testFlag(HighPerformance);
+        return (flags & HighPerformance) != 0;
     }
 
     bool isLessThan(Impl const &other) const
     {
-        if (flags.testFlag(HighPerformance) && other.flags.testFlag(HighPerformance))
+        if ((flags & HighPerformance) && (other.flags & HighPerformance))
         {
             return highPerfElapsed < other.highPerfElapsed;
         }
-        if (flags.testFlag(DateTime) && other.flags.testFlag(DateTime))
+        if ((flags & SysTime) && (other.flags & SysTime))
         {
             // Full date and time comparison.
-            return dateTime < other.dateTime;
+            return sysTime < other.sysTime;
         }
         /**
          * @todo Implement needed conversion to compare DateTime with high
@@ -174,36 +139,39 @@ DE_PIMPL_NOREF(Time)
 
     bool isEqualTo(Impl const &other) const
     {
-        if (flags.testFlag(HighPerformance) && other.flags.testFlag(HighPerformance))
+        if ((flags & HighPerformance) && (other.flags & HighPerformance))
         {
             return highPerfElapsed == other.highPerfElapsed;
         }
-        if (flags.testFlag(DateTime) && other.flags.testFlag(DateTime))
+        if ((flags & SysTime) && (other.flags & SysTime))
         {
-            return dateTime == other.dateTime;
+            return sysTime == other.sysTime;
         }
-        if (flags.testFlag(DateTime))
+        if (flags & SysTime)
         {
             // This is DateTime but other is high-perf.
-            return fequal(highPerfTimer().startedAt().asDateTime().msecsTo(dateTime)/1000.0,
-                          other.highPerfElapsed);
+            DE_ASSERT(false);
+//            return fequal(highPerfTimer().startedAt().asDateTime().msecsTo(dateTime)/1000.0,
+//                          other.highPerfElapsed);
         }
-        if (flags.testFlag(HighPerformance))
+        if (flags & HighPerformance)
         {
             // This is high-perf and the other is DateTime.
-            return fequal(highPerfElapsed,
-                          highPerfTimer().startedAt().asDateTime().msecsTo(other.dateTime)/1000.0);
+            DE_ASSERT(false);
+
+//            return fequal(highPerfElapsed,
+//                          highPerfTimer().startedAt().asDateTime().msecsTo(other.dateTime)/1000.0);
         }
         return false;
     }
 
     void add(Span const &delta)
     {
-        if (flags.testFlag(DateTime))
+        if (flags & SysTime)
         {
-            dateTime = dateTime.addMSecs(delta.asMilliSeconds());
+            sysTime += std::chrono::milliseconds(delta.asMilliSeconds()); //= sysTime.addMSecs(delta.asMilliSeconds());
         }
-        if (flags.testFlag(HighPerformance))
+        if (flags & HighPerformance)
         {
             highPerfElapsed += delta;
         }
@@ -211,13 +179,15 @@ DE_PIMPL_NOREF(Time)
 
     Span delta(Impl const &earlier) const
     {
-        if (flags.testFlag(HighPerformance) && earlier.flags.testFlag(HighPerformance))
+        if ((flags & HighPerformance) && (earlier.flags & HighPerformance))
         {
             return highPerfElapsed - earlier.highPerfElapsed;
         }
-        if (flags.testFlag(DateTime) && earlier.flags.testFlag(DateTime))
+        if ((flags & DateTime) && (earlier.flags & DateTime))
         {
-            return earlier.dateTime.msecsTo(dateTime) / 1000.0;
+            //return earlier.dateTime.msecsTo(dateTime) / 1000.0;
+            using namespace std::chrono;
+            return duration_cast<milliseconds>(sysTime - earlier.sysTime).count() / 1.0e3;
         }
         /**
          * @todo Implement needed conversion to compare DateTime with high
@@ -227,10 +197,10 @@ DE_PIMPL_NOREF(Time)
         return 0;
     }
 
-    void setDateTimeFromHighPerf()
+    void setSysTimeFromHighPerf()
     {
-        dateTime = (highPerfTimer().startedAt() + highPerfElapsed).asDateTime();
-        flags |= DateTime;
+        sysTime = (highPerfTimer().startedAt() + highPerfElapsed).d->sysTime;
+        flags |= SysTime;
     }
 };
 
@@ -243,7 +213,7 @@ Time::Time(Time const &other) : d(new Impl(*other.d))
 Time::Time(Time &&moved) : d(std::move(moved.d))
 {}
 
-Time::Time(QDateTime const &t) : d(new Impl(t))
+Time::Time(const TimePoint &tp) : d(new Impl(tp))
 {}
 
 Time::Time(TimeSpan const &highPerformanceDelta)
@@ -252,7 +222,7 @@ Time::Time(TimeSpan const &highPerformanceDelta)
 
 Time Time::invalidTime()
 {
-    return Time(QDateTime());
+    return Time(TimePoint());
 }
 
 Time &Time::operator = (Time const &other)
@@ -265,6 +235,34 @@ Time &Time::operator = (Time &&moved)
 {
     d = std::move(moved.d);
     return *this;
+}
+
+time_t Time::toTime_t() const
+{
+    if (d->flags & Impl::SysTime)
+    {
+        return std::chrono::system_clock::to_time_t(d->sysTime);
+    }
+    if (d->flags & Impl::HighPerformance)
+    {
+        return std::chrono::system_clock::to_time_t
+                ((highPerfTimer().startedAt() + d->highPerfElapsed()).d->sysTime);
+    }
+    return 0;
+}
+
+Time::TimePoint Time::toTimePoint() const
+{
+    if (d->flags & Impl::SysTime)
+    {
+        return d->sysTime;
+    }
+    if (d->flags & Impl::HighPerformance)
+    {
+        const Time tm = highPerfTimer().startedAt() + d->highPerfElapsed;
+        return tm.d->sysTime;
+    }
+    return {};
 }
 
 bool Time::isValid() const
@@ -511,13 +509,13 @@ Time Time::fromText(String const &text, Time::Format format)
     return Time::invalidTime();
 }
 
-QDateTime &de::Time::asDateTime()
+/*QDateTime &Time::asDateTime()
 {
     DE_ASSERT(d->hasDateTime());
     return d->dateTime;
 }
 
-QDateTime const &de::Time::asDateTime() const
+QDateTime const &Time::asDateTime() const
 {
     if (!d->hasDateTime() && d->flags.testFlag(Impl::HighPerformance))
     {
@@ -525,7 +523,7 @@ QDateTime const &de::Time::asDateTime() const
         d->flags |= Impl::DateTime;
     }
     return d->dateTime;
-}
+}*/
 
 Date Time::asDate() const
 {
@@ -586,7 +584,6 @@ void Time::operator << (Reader &from)
         if (flags & HAS_HIGH_PERF)
         {
             d->flags |= Impl::HighPerformance;
-
             from >> d->highPerfElapsed;
         }
 

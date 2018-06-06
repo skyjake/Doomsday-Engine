@@ -27,6 +27,7 @@
 namespace de {
 
 class ArrayValue;
+class Record;
 
 /**
  * Subclass of Value that contains an array of values, indexed by any value.
@@ -99,6 +100,8 @@ public:
      * @return Caller gets ownership.
      */
     ArrayValue *contentsAsArray(ContentSelection selection) const;
+
+    Record toRecord() const;
 
     inline const Value &operator[](const Value &index) const { return element(index); }
     inline Value &      operator[](const Value &index) { return element(index); }

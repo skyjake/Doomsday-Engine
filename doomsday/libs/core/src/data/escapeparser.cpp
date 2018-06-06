@@ -68,7 +68,7 @@ void EscapeParser::parse(String const &textWithEscapes)
             case '[':
             case '{': {
                 // Find the matching end.
-                int end = d->original.indexOf(ch == '('? ')' : ch == '['? ']' : '}', range.end + 1);
+                auto end = d->original.indexOf(ch == '('? ')' : ch == '['? ']' : '}', range.end + 1);
                 if (end < 0) end = d->original.size() - 1;
                 escLen = end - range.end + 1;
                 break; }
@@ -83,7 +83,7 @@ void EscapeParser::parse(String const &textWithEscapes)
 
             DE_FOR_AUDIENCE2(EscapeSequence, i)
             {
-                i->handleEscapeSequence(Rangei(range.end + 1, range.end + escLen));
+                i->handleEscapeSequence({range.end + 1, range.end + escLen});
             }
 
             // Advance the scanner.
@@ -92,7 +92,7 @@ void EscapeParser::parse(String const &textWithEscapes)
         else
         {
             // Final plain text range.
-            range.end = d->original.size();
+            range.end = d->original.sizeb();
             if (range.size() > 0)
             {
                 DE_FOR_AUDIENCE2(PlainText, i)

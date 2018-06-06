@@ -23,13 +23,13 @@ namespace de {
 
 dsize CString::npos = dsize(-1);
 
-dsize CString::indexOf(char ch, size_t from = 0) const
+dsize CString::indexOf(char ch, size_t from) const
 {
     const char str[2] = { ch, 0 };
     return indexOf(str, from);
 }
 
-dsize CString::indexOf(const char *cStr, size_t from = 0) const
+dsize CString::indexOf(const char *cStr, size_t from) const
 {
     if (from >= _range.size()) return npos;
     const char *pos = strnstr(_range.start + from, cStr, _range.size() - from);

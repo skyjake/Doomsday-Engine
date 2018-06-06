@@ -157,6 +157,8 @@ public:
         UnixLsStyleDateTime,
     };
 
+    using TimePoint = std::chrono::system_clock::time_point;
+
 public:
     /**
      * Constructor initializes the time to the current time.
@@ -167,7 +169,7 @@ public:
 
     Time(Time &&moved);
 
-    Time(const std::chrono::system_clock::time_point &tp);
+    Time(const TimePoint &tp);
 
     /**
      * Construct a time relative to the shared high performance timer.
@@ -183,6 +185,8 @@ public:
     Time &operator = (Time &&moved);
 
     bool isValid() const;
+    time_t toTime_t() const;
+    TimePoint toTimePoint() const;
 
     bool operator < (Time const &t) const;
 

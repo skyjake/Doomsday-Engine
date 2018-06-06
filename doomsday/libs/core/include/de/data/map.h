@@ -38,6 +38,10 @@ public:
     using const_iterator         = typename Base::const_iterator;
     using reverse_iterator       = typename Base::reverse_iterator;
     using const_reverse_iterator = typename Base::const_reverse_iterator;
+
+    void insert(const Key &key, const Value &value) { Base::operator[](key) = value; }
+    bool contains(const Key &key) const { return Base::find(key) != Base::end(); }
+    const_iterator constFind(const Key &key) const { return Base::find(key); }
 };
 
 } // namespace de

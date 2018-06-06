@@ -23,6 +23,7 @@
 #include "../Loop"
 #include "../String"
 #include "../Thread"
+#include "../Garbage"
 
 #include <atomic>
 #include <utility>
@@ -62,7 +63,7 @@ class AsyncTaskThread : public AsyncTask
         Loop::mainCall([this] ()
         {
             if (valid) completion(result);
-            deleteLater();
+            de::trash(this);
         });
     }
 
@@ -141,7 +142,7 @@ AsyncTask *async(Task const &task)
  * Utility for invalidating the completion callbacks of async tasks whose initiator
  * has gone out of scope.
  */
-class DE_PUBLIC AsyncScope
+class DE_PUBLIC AsyncScope : DE_OBSERVES(Thread, Finished)
 {
 public:
     AsyncScope() = default;
@@ -150,6 +151,7 @@ public:
     AsyncScope &operator += (AsyncTask *task);
     bool isAsyncFinished() const;
     void waitForFinished(TimeSpan timeout = 0.0);
+    void threadFinished(Thread &) override;
 
 private:
     LockableT<Set<AsyncTask *>> _tasks;

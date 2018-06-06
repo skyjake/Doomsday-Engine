@@ -35,12 +35,17 @@ class Set : public std::unordered_set<Value>
 public:
     Set() {}
 
+    using Base::begin;
+    using Base::end;
+
     // Qt style methods:
 
     int      size() const { return int(Base::size()); }
     bool     isEmpty() const { return Base::empty(); }
     void     clear() { Base::clear(); }
     void     remove(const Value &value) { Base::erase(value); }
+    bool     contains(const Value &value) const { return Base::find(value) != end(); }
+    Set &    operator<<(const Value &value) { Base::insert(value); return *this; }
 };
 
 } // namespace de

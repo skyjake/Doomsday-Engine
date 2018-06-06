@@ -360,7 +360,7 @@ DE_PIMPL_NOREF(Socket)
      */
     void deserializeMessages()
     {
-        forever
+        for (;;)
         {
             if (receptionState == ReceivingHeader)
             {

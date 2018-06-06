@@ -13,12 +13,12 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/BitField"
 
-#include <QTextStream>
+#include <sstream>
 
 namespace de {
 
@@ -238,16 +238,13 @@ duint BitField::asUInt(Id id) const
 
 String BitField::asText() const
 {
-    QString str;
-    QTextStream os(&str);
+    std::ostringstream os;
     os << "BitField (" << d->elements->bitCount() << " bits, " << d->elements->size() << " elements):";
-    os.setIntegerBase(2);
     for (int i = int(d->packed.size()) - 1; i >= 0; --i)
     {
-        os << " " << qSetPadChar('0') << qSetFieldWidth(8) << dbyte(d->packed[i])
-           << qSetFieldWidth(0);
+        os << stringf(" %02x", d->packed[i]);
     }
-    return str;
+    return os.str();
 }
 
 } // namespace de

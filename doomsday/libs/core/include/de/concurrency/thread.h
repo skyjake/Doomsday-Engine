@@ -22,6 +22,7 @@
 #include "../libcore.h"
 #include "../Time"
 #include "../Observers"
+#include "../Waitable"
 
 struct Impl_Thread;
 
@@ -30,19 +31,19 @@ namespace de {
 /**
  * Base class for running a thread.
  */
-class DE_PUBLIC Thread
+class DE_PUBLIC Thread : public Waitable
 {
 public:
     Thread();
 
     virtual ~Thread();
 
-    virtual void run() = 0;
-
     void start();
     void join();
     bool isRunning() const;
     bool isFinished() const;
+
+    virtual void run() = 0;
 
     static void sleep(const TimeSpan &span);
 

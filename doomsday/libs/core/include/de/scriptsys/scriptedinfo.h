@@ -22,8 +22,7 @@
 #include "../Info"
 #include "../File"
 #include "../IObject"
-
-#include <QSet>
+#include "../Set"
 
 namespace de {
 
@@ -124,7 +123,7 @@ namespace de {
 class DE_PUBLIC ScriptedInfo : public IObject
 {
 public:
-    typedef QSet<String> Paths;
+    typedef Set<String> Paths;
 
     DE_DEFINE_AUDIENCE2(NamedBlock, void parsedNamedBlock(String const &name, Record &block))
 
@@ -238,16 +237,16 @@ public:
     static SourceLineTable::PathAndLine sourcePathAndLine(RecordAccessor const &record);
 
 public:
-    static String const SCRIPT;
-    static String const BLOCK_GROUP;
+    static const char *SCRIPT;
+    static const char *BLOCK_GROUP;
 
     /// Name of a special variable where the source location of a record is stored.
-    static String const VAR_SOURCE;
+    static const char *VAR_SOURCE;
 
     /// Name of a special variable where the block type is stored.
-    static String const VAR_BLOCK_TYPE;
+    static const char *VAR_BLOCK_TYPE;
 
-    static String const VAR_INHERITED_SOURCES;
+    static const char *VAR_INHERITED_SOURCES;
 
 private:
     DE_PRIVATE(d)

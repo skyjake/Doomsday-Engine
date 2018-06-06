@@ -29,7 +29,7 @@ AsyncScope::~AsyncScope()
     }
 }
 
-AsyncScope &AsyncScope::operator += (AsyncTask *task)
+AsyncScope &AsyncScope::operator+=(AsyncTask *task)
 {
     if (task)
     {
@@ -37,12 +37,7 @@ AsyncScope &AsyncScope::operator += (AsyncTask *task)
             DE_GUARD(_tasks);
             _tasks.value.insert(task);
         }
-
-        QObject::connect(task, &QObject::destroyed, [this] (QObject *obj)
-        {
-            DE_GUARD(_tasks);
-            _tasks.value.remove(static_cast<AsyncTask *>(obj));
-        });
+        task->audienceForFinished() += this;
     }
     return *this;
 }
@@ -64,12 +59,19 @@ void AsyncScope::waitForFinished(TimeSpan timeout)
             {
                 auto i = _tasks.value.begin();
                 task = *i;
+                task->audienceForFinished() -= this;
                 _tasks.value.erase(i);
             }
         }
         if (!task) break;
-        task->wait(timeout.asMilliSeconds());
+        task->wait(timeout);
     }
+}
+
+void AsyncScope::threadFinished(Thread &thd)
+{
+    DE_GUARD(_tasks);
+    _tasks.value.remove(static_cast<AsyncTask *>(&thd));
 }
 
 } // namespace de

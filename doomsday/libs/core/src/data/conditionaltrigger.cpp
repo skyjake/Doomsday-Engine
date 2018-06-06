@@ -17,9 +17,8 @@
  */
 
 #include "de/ConditionalTrigger"
+#include "de/Set"
 #include "de/Value"
-
-#include <QSet>
 
 namespace de {
 
@@ -27,13 +26,13 @@ DE_PIMPL(ConditionalTrigger)
 , DE_OBSERVES(Variable, Change)
 {
     SafePtr<Variable const> condition;
-    QSet<QString> activeTriggers;
+    Set<String> activeTriggers;
     bool anyTrigger = false;
 
     Impl(Public *i) : Base(i)
     {}
 
-    void variableValueChanged(Variable &, Value const &) override
+    void variableValueChanged(Variable &, const Value &) override
     {
         update();
     }
@@ -46,9 +45,9 @@ DE_PIMPL(ConditionalTrigger)
         if (!condition) return;
 
         // The condition can be a text string or an array of text strings.
-        StringList const trigs = condition->value().asStringList();
+        const StringList trigs = condition->value().asStringList();
 
-        for (String const &trig : trigs)
+        for (const String &trig : trigs)
         {
             if (trig == "*")
             {
@@ -60,7 +59,7 @@ DE_PIMPL(ConditionalTrigger)
         }
     }
 
-    bool check(String const &trigger)
+    bool check(const String &trigger)
     {
         if (anyTrigger) return true;
         return activeTriggers.contains(trigger);
@@ -79,7 +78,7 @@ bool ConditionalTrigger::isValid() const
     return d->condition;
 }
 
-void ConditionalTrigger::setCondition(Variable const &variable)
+void ConditionalTrigger::setCondition(const Variable &variable)
 {
     if (d->condition)
     {
@@ -90,12 +89,12 @@ void ConditionalTrigger::setCondition(Variable const &variable)
     d->update();
 }
 
-Variable const &ConditionalTrigger::condition() const
+const Variable &ConditionalTrigger::condition() const
 {
     return *d->condition;
 }
 
-bool ConditionalTrigger::tryTrigger(String const &trigger)
+bool ConditionalTrigger::tryTrigger(const String &trigger)
 {
     if (d->check(trigger))
     {

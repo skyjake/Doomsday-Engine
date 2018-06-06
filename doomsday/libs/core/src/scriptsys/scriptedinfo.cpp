@@ -31,25 +31,25 @@
 
 namespace de {
 
-String const ScriptedInfo::SCRIPT         = "script";
-String const ScriptedInfo::BLOCK_GROUP    = "group";
-String const ScriptedInfo::VAR_SOURCE     = "__source__";
-String const ScriptedInfo::VAR_BLOCK_TYPE = "__type__";
-String const ScriptedInfo::VAR_INHERITED_SOURCES = "__inheritedSources__"; // array
+const char *ScriptedInfo::SCRIPT         = "script";
+const char *ScriptedInfo::BLOCK_GROUP    = "group";
+const char *ScriptedInfo::VAR_SOURCE     = "__source__";
+const char *ScriptedInfo::VAR_BLOCK_TYPE = "__type__";
+const char *ScriptedInfo::VAR_INHERITED_SOURCES = "__inheritedSources__"; // array
 
-static String const BLOCK_NAMESPACE = "namespace";
-static String const BLOCK_SCRIPT    = ScriptedInfo::SCRIPT;
-static String const KEY_SCRIPT      = ScriptedInfo::SCRIPT;
-static String const KEY_INHERITS    = "inherits";
-static String const KEY_CONDITION   = "condition";
-static String const VAR_SCRIPT      = "__script%1__";
+static const char *BLOCK_NAMESPACE = "namespace";
+static const char *BLOCK_SCRIPT    = ScriptedInfo::SCRIPT;
+static const char *KEY_SCRIPT      = ScriptedInfo::SCRIPT;
+static const char *KEY_INHERITS    = "inherits";
+static const char *KEY_CONDITION   = "condition";
+static const char *VAR_SCRIPT      = "__script%1__";
 
 DE_PIMPL(ScriptedInfo)
 {
     typedef Info::Element::Value InfoValue;
 
     Info info;                     ///< Original full parsed contents.
-    QScopedPointer<Script> script; ///< Current script being executed.
+    std::unique_ptr<Script> script; ///< Current script being executed.
     Process process;               ///< Execution context.
     String currentNamespace;
 
@@ -245,7 +245,7 @@ DE_PIMPL(ScriptedInfo)
     static String chooseScriptName(Record const &where)
     {
         int counter = 0;
-        forever
+        for (;;)
         {
             String name = VAR_SCRIPT.arg(counter, 2 /*width*/, 10 /*base*/, QLatin1Char('0'));
             if (!where.has(name)) return name;
@@ -260,7 +260,7 @@ DE_PIMPL(ScriptedInfo)
         if (Info::Element *condition = block.find(KEY_CONDITION))
         {
             // Any block will be ignored if its condition is false.
-            QScopedPointer<Value> result(evaluate(condition->values().first(), 0));
+            std::unique_ptr<Value> result(evaluate(condition->values().first(), 0));
             if (result.isNull() || result->isFalse())
             {
                 return;
@@ -488,7 +488,7 @@ DE_PIMPL(ScriptedInfo)
 
     void processKey(Info::KeyElement const &key)
     {
-        QScopedPointer<Value> v(makeValue(key.value(), key.parent()));
+        std::unique_ptr<Value> v(makeValue(key.value(), key.parent()));
         process.globals().add(variableName(key)) = v.take();
     }
 

@@ -79,14 +79,14 @@ static Value *Function_App_Locate(Context &, Function::ArgumentValues const &arg
     }
 
     // Remote packages.
-    auto found = App::remoteFeedRelay().locatePackages(StringList({ packageId }));
+    auto found = App::remoteFeedRelay().locatePackages({packageId});
     for (auto i = found.begin(); i != found.end(); ++i)
     {
-        result->add(new TextValue(i.key()), RecordValue::takeRecord(
+        result->add(new TextValue(i->first), RecordValue::takeRecord(
                         Record::withMembers(
-                            "repository", i->link->address(),
-                            "localPath",  i->localPath,
-                            "remotePath", i->remotePath
+                            "repository", i->second.link->address(),
+                            "localPath",  i->second.localPath,
+                            "remotePath", i->second.remotePath
                         )));
     }
 
@@ -148,7 +148,7 @@ DE_PIMPL(App)
     /// Optional sink for warnings and errors (set with "-errors").
     std::unique_ptr<FileLogSink> errorSink;
 
-    Impl(Public *a, QStringList args)
+    Impl(Public *a, const StringList &args)
         : Base(a)
         , appName("Doomsday Engine")
         , cmdLine(args)
@@ -167,7 +167,7 @@ DE_PIMPL(App)
         #endif
 
         // Override the system number formatting.
-        QLocale::setDefault(QLocale("en_US.UTF-8"));
+        //QLocale::setDefault(QLocale("en_US.UTF-8"));
 
         packagesToLoadAtInit << "net.dengine.stdlib";
 
@@ -406,7 +406,7 @@ DE_PIMPL(App)
 
 DE_AUDIENCE_METHOD(App, StartupComplete)
 
-App::App(NativePath const &appFilePath, QStringList args)
+App::App(NativePath const &appFilePath, const StringList &args)
     : d(new Impl(this, args))
 {
     d->unixInfo.reset(new UnixInfo);
@@ -488,9 +488,9 @@ String App::unixHomeFolderName() const
 
 String App::unixEtcFolderName() const
 {
-    if (d->unixHomeFolder.startsWith("."))
+    if (d->unixHomeFolder.beginsWith("."))
     {
-        return d->unixHomeFolder.mid(1);
+        return d->unixHomeFolder.substr(String::BytePos(1));
     }
     return d->unixHomeFolder;
 }
@@ -507,12 +507,12 @@ void App::handleUncaughtException(String message)
     EscapeParser esc;
     esc.parse(message);
 
-    if (d->terminateFunc) d->terminateFunc(esc.plainText().toUtf8());
+    if (d->terminateFunc) d->terminateFunc(esc.plainText());
 }
 
 bool App::processEvent(Event const &ev)
 {
-    foreach (System *sys, d->systems)
+    for (System *sys : d->systems)
     {
         if (sys->behavior() & System::ReceivesInputEvents)
         {
@@ -525,7 +525,7 @@ bool App::processEvent(Event const &ev)
 
 void App::timeChanged(Clock const &clock)
 {
-    foreach (System *sys, d->systems)
+    for (System *sys : d->systems)
     {
         if (sys->behavior() & System::ObservesTime)
         {
@@ -601,12 +601,12 @@ NativePath App::nativeHomePath()
 
     #if defined (DE_IOS)
     {
-        nativeHome = QDir::homePath();
+        nativeHome = NativePath::homePath();
         nativeHome = nativeHome / "Documents/runtime";
     }
     #elif defined (MACOSX)
     {
-        nativeHome = QDir::homePath();
+        nativeHome = NativePath::homePath();
         nativeHome = nativeHome / "Library/Application Support" / d->appName / "runtime";
     }
     #elif defined (WIN32)
@@ -616,7 +616,7 @@ NativePath App::nativeHomePath()
     }
     #else // UNIX
     {
-        nativeHome = QDir::homePath();
+        nativeHome = NativePath::homePath();
         nativeHome = nativeHome / d->unixHomeFolder / "runtime";
     }
     #endif
@@ -714,23 +714,23 @@ NativePath App::nativeBasePath()
 
 void App::initSubsystems(SubsystemInitFlags flags)
 {
-    bool allowPlugins = !flags.testFlag(DisablePlugins);
+    bool allowPlugins = !(flags & DisablePlugins);
 
     d->initFileSystem(allowPlugins);
 
     // Load the init packages.
-    foreach (String pkg, d->packagesToLoadAtInit)
+    for (const String &pkg : d->packagesToLoadAtInit)
     {
         d->packageLoader.load(pkg);
     }
 
-    if (!flags.testFlag(DisablePersistentData))
+    if (!(flags & DisablePersistentData))
     {
         // Recreate the persistent state data package, if necessary.
         if (!homeFolder().has("persist.pack") || commandLine().has("-reset"))
         {
             ZipArchive arch;
-            arch.add("Info", String(QString("# Package for %1's persistent state.\n").arg(d->appName)).toUtf8());
+            arch.add("Info", String::format("# Package for %s's persistent state.\n", d->appName.c_str()));
             File &persistPack = homeFolder().replaceFile("persist.pack");
             Writer(persistPack) << arch;
             persistPack.reinterpret()->as<ArchiveFolder>().populate();
@@ -895,17 +895,17 @@ PackageLoader &App::packageLoader()
     return DE_APP->d->packageLoader;
 }
 
-int App::findInPackages(String const &partialPath, FS::FoundFiles &files)
+int App::findInPackages(const CString &partialPath, FS::FoundFiles &files)
 {
     return App::fileSystem().nameIndex().findPartialPathInPackageOrder(partialPath, files);
 }
 
-bool App::assetExists(String const &identifier)
+bool App::assetExists(const CString &identifier)
 {
     return DE_APP->d->findAsset(identifier) != 0;
 }
 
-Package::Asset App::asset(String const &identifier)
+Package::Asset App::asset(const CString &identifier)
 {
     Record const *info = DE_APP->d->findAsset(identifier);
     if (!info)
@@ -947,7 +947,7 @@ Config &App::config()
     return *DE_APP->d->config;
 }
 
-Variable &App::config(String const &name)
+Variable &App::config(const CString &name)
 {
     return config()[name];
 }

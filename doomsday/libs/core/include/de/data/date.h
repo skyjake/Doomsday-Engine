@@ -32,7 +32,7 @@ namespace de {
  *
  * @ingroup types
  */
-class DE_PUBLIC Date : public Time, public LogEntry::Arg::Base
+class DE_PUBLIC Date : public LogEntry::Arg::Base
 {
 public:
     /**
@@ -40,7 +40,7 @@ public:
      */
     Date();
 
-    Date(Time const &time);
+    Date(const Time &time);
 
     int year() const;
     int month() const;
@@ -48,12 +48,12 @@ public:
     int hours() const;
     int minutes() const;
     int seconds() const;
-    int daysTo(Date const &other) const;
+    int daysTo(const Date &other) const;
 
     /**
      * Forms a textual representation of the date.
      */
-    String asText() const;
+    String format(const char *format = "%F") const;
 
     /**
      * Converts the date back to a Time.
@@ -67,11 +67,14 @@ public:
         return LogEntry::Arg::StringArgument;
     }
 
-    static Date fromText(String const &text);
+    static Date fromText(const String &text);
+
+private:
+    DE_PRIVATE(d)
 };
 
 DE_PUBLIC std::ostream &operator << (std::ostream &os, Date const &date);
 
-}
+} // namespace de
 
 #endif /* LIBCORE_DATE_H */

@@ -75,6 +75,7 @@ public:
         DisablePlugins        = 0x1,
         DisablePersistentData = 0x2
     };
+    using SubsystemInitFlags = Flags;
 
     /// Attempting to access persistent data when it has been disabled at init.
     /// @ingroup errors
@@ -168,7 +169,7 @@ public:
      *
      * @param flags  How to/which subsystems to initialize.
      */
-    virtual void initSubsystems(Flags subsystemInitflags = DefaultSubsystems);
+    virtual void initSubsystems(SubsystemInitFlags subsystemInitflags = DefaultSubsystems);
 
     /**
      * Adds a system to the application. The order of systems is preserved; the
@@ -315,7 +316,7 @@ public:
      *
      * @return Number of files found.
      */
-    static int findInPackages(String const &partialPath, FileIndex::FoundFiles &files);
+    static int findInPackages(const CString &partialPath, FileIndex::FoundFiles &files);
 
     /**
      * Checks if an asset exists.
@@ -324,7 +325,7 @@ public:
      *
      * @return @c true, if assetInfo() can be called.
      */
-    static bool assetExists(String const &identifier);
+    static bool assetExists(const CString &identifier);
 
     /**
      * Retrieves the namespace of an asset.
@@ -333,7 +334,7 @@ public:
      *
      * @return Asset namespace accessor.
      */
-    static Package::Asset asset(String const &identifier);
+    static Package::Asset asset(const CString &identifier);
 
     /**
      * Returns the application's script system.
@@ -354,7 +355,7 @@ public:
      *
      * @return Variable.
      */
-    static Variable &config(String const &name);
+    static Variable &config(const CString &name);
 
     /**
      * Returns the web API URL. Always includes the protocol and ends with a slash.

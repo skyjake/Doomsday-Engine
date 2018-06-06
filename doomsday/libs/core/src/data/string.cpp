@@ -245,6 +245,22 @@ void String::insert(BytePos pos, const String &str)
     insertData_Block(&_str.chars, pos, str, str.size());
 }
 
+String &String::replace(const CString &before, const CString &after)
+{
+    const iRangecc newTerm{after.begin(), after.end()};
+    iRangecc remaining(*this);
+    String result;
+    while (dsize found = CString(remaining).indexOf(oldTerm.c_str()), found != npos)
+    {
+        const iRangecc prefix{remaining.start, remaining.start + found};
+        appendRange_String(&result._str, &prefix);
+        appendRange_String(&result._str, &newTerm);
+        remaining.start += found + before.size();
+    }
+    appendRange_String(&result._str, &remaining);
+    return *this = result;
+}
+
 iChar String::first() const
 {
     return empty() ? 0 : *begin();
@@ -604,10 +620,16 @@ dint String::toInt(bool *ok, int base, duint flags) const
 
 duint32 String::toUInt32(bool *ok, int base) const
 {
-    char *endp;
     const auto value = std::strtoul(*this, nullptr, base);
     if (ok) *ok = (errno != ERANGE);
     return duint32(value);
+}
+
+long String::toLong(bool *ok, int base) const
+{
+    long value = strtol(*this, nullptr, base);
+    if (ok) *ok = (errno != ERANGE);
+    return value;
 }
 
 String String::addLinePrefix(const String &prefix) const
@@ -628,13 +650,39 @@ String String::escaped() const
 {
     String esc = *this;
     esc.replace("\\", "\\\\")
-       .replace("\"", "\\\"");
+       .replace("\"", "\\\"")
+       .replace("\b", "\\b")
+       .replace("\f", "\\f")
+       .replace("\n", "\\n")
+       .replace("\r", "\\r")
+       .replace("\t", "\\t");
     return esc;
 }
 
 Block String::toPercentEncoding() const
 {
     return QUrl::toPercentEncoding(*this);
+}
+
+void String::get(Offset at, Byte *values, Size count) const
+{
+    if (at + count > size())
+    {
+        /// @throw OffsetError The accessed region of the block was out of range.
+        throw OffsetError("String::get", "Out of range " +
+                          String::format("(%zu[+%zu] > %zu)", at, count, size()));
+    }
+    std::memcpy(values, constData_String(&_str) + at, count);
+}
+
+void String::set(Offset at, const Byte *values, Size count)
+{
+    if (at > size())
+    {
+        /// @throw OffsetError The accessed region of the block was out of range.
+        throw OffsetError("String::set", "Out of range");
+    }
+    setSubData_Block(&_str.chars, at, values, count);
 }
 
 String String::truncateWithEllipsis(dsize maxLength) const

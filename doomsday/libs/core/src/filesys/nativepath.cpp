@@ -155,7 +155,7 @@ NativePath NativePath::fileNamePath() const
 
 bool NativePath::isAbsolute() const
 {
-    return QDir::isAbsolutePath(expand());
+    return isAbsolute_Path(expand().toString());
 }
 
 bool NativePath::isDirectory() const
@@ -177,25 +177,24 @@ NativePath NativePath::expand(bool *didExpand) const
         if (didExpand) *didExpand = true;
 
         String const path = toString();
-        int firstSlash = path.indexOf('/');
+        auto firstSlash = path.indexOf('/');
         if (firstSlash > 1)
         {
             // Parse the user's home directory (from passwd).
-            QByteArray userName = path.mid(1, firstSlash - 1).toLatin1();
+            String userName = path.mid(1, firstSlash - 1);
             struct passwd *pw = getpwnam(userName);
             if (!pw)
             {
                 /// @throws UnknownUserError  User is not known.
                 throw UnknownUserError("NativePath::expand",
-                                       String("Unknown user '%1'").arg(QLatin1String(userName)));
+                                       String("Unknown user '%s'", userName.c_str())));
             }
-
             return NativePath(pw->pw_dir) / path.mid(firstSlash + 1);
         }
         else
         {
             // Replace with the HOME path.
-            return NativePath(QDir::homePath()) / path.mid(2);
+            return NativePath::homePath() / path.mid(2);
         }
     }
 #endif

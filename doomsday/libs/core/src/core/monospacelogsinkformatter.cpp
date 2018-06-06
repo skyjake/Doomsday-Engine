@@ -18,9 +18,9 @@
 
 #include "de/MonospaceLogSinkFormatter"
 #include "de/EscapeParser"
-#include <de/math.h>
-
-#include <de/Vector>
+#include "de/CString"
+#include "de/math.h"
+#include "de/Vector"
 
 namespace de {
 
@@ -261,7 +261,7 @@ StringList MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
         else if (section.beginsWith(_sectionOfPreviousLine))
         {
             // Previous section is partially the same, omit the common beginning.
-            cutSection = _sectionOfPreviousLine.size();
+            cutSection = String::BytePos(_sectionOfPreviousLine.size());
             entryFlags |= LogEntry::SectionSameAsBefore;
         }
         else
@@ -295,7 +295,7 @@ StringList MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
     {
         // Find the length of the current line.
         auto next = message.indexOf('\n', pos);
-        duint lineLen = (next == String::npos? message.size() - pos : next - pos);
+        duint lineLen = !next ? (message.sizeb() - pos) : (next - pos);
         duint const maxLen = (pos > 0? _maxLength - wrapIndent.index : _maxLength);
         if (lineLen > maxLen)
         {
@@ -352,12 +352,12 @@ StringList MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
             for (; w < lineText.size(); ++w)
             {
                 // Indent to colons automatically (but not too deeply).
-                if (w < lineText.size() - 1 && lineText[w + 1].isSpace())
+                if (w < lineText.sizeb() - 1 && lineText[w + 1].isSpace())
                 {
                     if (firstBracket == -1 && lineText[w] == ']') firstBracket = w;
                 }
 
-                if (firstNonSpace == String::npos && !lineText[w].isSpace())
+                if (!firstNonSpace && !lineText[w].isSpace())
                     firstNonSpace = w;
             }
 

@@ -19,18 +19,15 @@
  */
 
 #include "de/data/json.h"
-#include <QVarLengthArray>
+#include <de/ArrayValue>
 #include <de/Block>
+#include <de/DictionaryValue>
 #include <de/Error>
 #include <de/Log>
-#include <de/Record>
 #include <de/NoneValue>
 #include <de/NumberValue>
 #include <de/RecordValue>
-#include <de/DictionaryValue>
-#include <de/ArrayValue>
-#include <QTextStream>
-#include <QDebug>
+#include <de/TextValue>
 
 namespace de {
 
@@ -41,65 +38,85 @@ namespace internal {
  */
 class JSONParser
 {
-    QString const &source;
-    int pos;
+    const String &source;
+    String::const_iterator pos;
+    String::const_iterator _previous;
 
 public:
-    JSONParser(QString const &s) : source(s), pos(0)
+    JSONParser(const String &s) : source(s), pos(s.begin())
     {
         skipWhite();
     }
 
     void advance()
     {
-        pos++;
+        _previous = pos++;
         skipWhite();
     }
 
     void skipWhite()
     {
-        while (!atEnd() && source[pos].isSpace()) pos++;
+        while (!atEnd() && iswspace(*pos)) _previous = pos++;
     }
 
     bool atEnd() const
     {
-        return pos >= source.size();
+        return pos >= source.end();
     }
 
-    QChar peek() const
+    Char peek() const
     {
         if (atEnd()) return 0;
-        return source[pos];
+        return *pos;
     }
 
-    QChar next()
+    Char next()
     {
         if (atEnd()) return 0;
-        QChar c = source[pos];
+        Char c = *pos;
         advance();
         return c;
     }
 
-    QChar nextNoSkip()
+    Char nextNoSkip()
     {
         if (atEnd()) return 0;
-        return source[pos++];
+        return *(_previous = pos++);
     }
 
-    DE_NORETURN void error(QString const &message)
+    DE_NORETURN void error(const String &message)
     {
-        throw de::Error("JSONParser", de::String("Error at position %1 (%2^%3): %4")
-                        .arg(pos).arg(source.mid(pos - 4, 4)).arg(source.mid(pos, 4)).arg(message));
+        String::BytePos offset = pos.bytePos();
+        throw Error("JSONParser",
+                    stringf("Error at position %u (%s^%s): %s",
+                            offset,
+                            source.substr(offset - 4, 4).c_str(),
+                            source.substr(offset, 4).c_str(),
+                            message.c_str()));
     }
 
-    QVariant parse()
+    Value *parse()
     {
         LOG_AS("JSONParser");
-        if (atEnd()) return QVariant();
-        QChar c = peek();
+        if (atEnd())
+        {
+            return nullptr;
+        }
+        Char c = peek();
         if (c == '{')
         {
-            return parseObject();
+            const TextValue objKey{"__obj__"};
+            std::unique_ptr<DictionaryValue> dict(parseObject());
+            if (dict->contains(objKey))
+            {
+                const auto &objClass = dict->element(objKey);
+                if (objClass.asText() == "Record")
+                {
+                    // Convert to a record.
+                    return RecordValue::takeRecord(dict->toRecord());
+                }
+            }
+            return dict.release();
         }
         else if (c == '[')
         {
@@ -109,7 +126,7 @@ public:
         {
             return parseString();
         }
-        else if (c == '-' || c.isDigit())
+        else if (c == '-' || iswdigit(c))
         {
             return parseNumber();
         }
@@ -119,24 +136,23 @@ public:
         }
     }
 
-    QVariant parseObject()
+    DictionaryValue *parseObject()
     {
-        QVariantMap result;
-        QChar c = next();
+        std::unique_ptr<DictionaryValue> result(new DictionaryValue);
+        Char c = next();
         DE_ASSERT(c == '{');
-        forever
+        for (;;)
         {
             if (peek() == '}')
             {
                 // Totally empty.
                 break;
             }
-            QString name = parseString().toString();
+            std::unique_ptr<TextValue> name(parseString());
             c = next();
             if (c != ':') error("object keys and values must be separated by a colon");
-            QVariant value = parse();
             // Add to the result.
-            result.insert(name, value);
+            result->add(name.release(), parse());
             // Move forward.
             skipWhite();
             c = next();
@@ -147,27 +163,27 @@ public:
             }
             else if (c != ',')
             {
-                LOG_DEBUG(de::String("got %1 instead of ,").arg(c));
+                LOG_DEBUG(String::format("got '%lc' instead of ','", c));
                 error("key/value pairs must be separated by comma");
             }
         }
-        return result;
+        return result.release();
     }
 
-    QVariant parseArray()
+    ArrayValue *parseArray()
     {
-        QVariantList result;
-        QChar c = next();
+        std::unique_ptr<ArrayValue> result(new ArrayValue);
+        Char c = next();
         DE_ASSERT(c == '[');
         if (peek() == ']')
         {
             // Empty list.
             next();
-            return result;
+            return result.release();
         }
-        forever
+        for (;;)
         {
-            result << parse();
+            *result << parse();
             c = next();
             if (c == ']')
             {
@@ -180,15 +196,15 @@ public:
                 error("array items must be separated by comma");
             }
         }
-        return result;
+        return result.release();
     }
 
-    QVariant parseString()
+    TextValue *parseString()
     {
-        QVarLengthArray<QChar, 1024> result;
-        QChar c = next();
+        String result;
+        Char c = next();
         DE_ASSERT(c == '\"');
-        forever
+        for (;;)
         {
             c = nextNoSkip();
             if (c == '\\')
@@ -209,9 +225,9 @@ public:
                     result.append('\t');
                 else if (c == 'u')
                 {
-                    QString code = source.mid(pos, 4);
+                    const String code = source.substr(pos.bytePos(), 4);
                     pos += 4;
-                    result.append(QChar(ushort(code.toLong(0, 16))));
+                    result.append(Char(code.toUInt32(nullptr, 16)));
                 }
                 else error("unknown escape sequence in string");
             }
@@ -226,19 +242,19 @@ public:
             }
         }
         skipWhite();
-        return QString(result.constData(), result.size());
+        return new TextValue(result);
     }
 
-    QVariant parseNumber()
+    NumberValue *parseNumber()
     {
-        QVarLengthArray<QChar> str;
-        QChar c = next();
+        String str;
+        Char c = next();
         if (c == '-')
         {
             str.append(c);
             c = nextNoSkip();
         }
-        for (; c.isDigit(); c = nextNoSkip())
+        for (; iswdigit(c); c = nextNoSkip())
         {
             str.append(c);
         }
@@ -248,7 +264,7 @@ public:
             str.append(c);
             hasDecimal = true;
             c = nextNoSkip();
-            for (; c.isDigit(); c = nextNoSkip())
+            for (; iswdigit(c); c = nextNoSkip())
             {
                 str.append(c);
             }
@@ -263,66 +279,66 @@ public:
                 str.append(c);
                 c = nextNoSkip();
             }
-            for (; c.isDigit(); c = nextNoSkip())
+            for (; iswdigit(c); c = nextNoSkip())
             {
                 str.append(c);
             }
         }
         // Rewind one char (the loop was broken when a non-digit was read).
-        pos--;
+        pos = _previous;
         skipWhite();
-        double value = QString(str.constData(), str.size()).toDouble();
+        double value = strtod(str, nullptr);
         if (hasDecimal)
         {
-            return QVariant(value);
+            return new NumberValue(value);
         }
         else
         {
-            return QVariant(int(value));
+            return new NumberValue(int(value));
         }
     }
 
-    QVariant parseKeyword()
+    Value *parseKeyword()
     {
-        if (source.mid(pos, 4) == "true")
+        if (iCmpStrN(pos, "true", 4) == 0)
         {
             pos += 4;
             skipWhite();
-            return QVariant(true);
+            return new NumberValue(true);
         }
-        else if (source.mid(pos, 5) == "false")
+        else if (iCmpStrN(pos, "false", 5) == 0)
         {
             pos += 5;
             skipWhite();
-            return QVariant(false);
+            return new NumberValue(false);
         }
-        else if (source.mid(pos, 4) == "null")
+        else if (iCmpStrN(pos, "null", 4) == 0)
         {
             pos += 4;
             skipWhite();
-            return QVariant();
+            return new NoneValue;
         }
         else
         {
             error("unknown keyword");
         }
-        return QVariant();
+        return new NoneValue;
     }
 };
 
 //---------------------------------------------------------------------------------------
 
-static Block recordToJSON(Record const &rec);
-static Block valueToJSON(Value const &value);
+static String recordToJSON(Record const &rec);
+static String valueToJSON(Value const &value);
 
-static Block valueToJSONWithTabNewlines(Value const &value)
+static String valueToJSONWithTabNewlines(Value const &value)
 {
-    Block json = valueToJSON(value);
-    json.replace('\n', "\n\t");
+    String json = valueToJSON(value);
+    json.replace("\n", "\n\t");
     return json;
 }
 
-static Block valueToJSON(Value const &value)
+static String valueToJSON(Value const &value)
 {
     if (is<NoneValue>(value))
     {
@@ -334,7 +350,7 @@ static Block valueToJSON(Value const &value)
     }
     if (auto const *dict = maybeAs<DictionaryValue>(value))
     {
-        Block out = "{";
+        String out = "{";
         auto const &elems = dict->elements();
         for (auto i = elems.begin(); i != elems.end(); ++i)
         {
@@ -349,7 +365,7 @@ static Block valueToJSON(Value const &value)
     }
     if (auto const *array = maybeAs<ArrayValue>(value))
     {
-        Block out = "[";
+        String out = "[";
         auto const &elems = array->elements();
         for (auto i = elems.begin(); i != elems.end(); ++i)
         {
@@ -363,31 +379,23 @@ static Block valueToJSON(Value const &value)
     }
     if (auto const *num = maybeAs<NumberValue>(value))
     {
-        if (num->semanticHints().testFlag(NumberValue::Boolean))
+        if (num->semanticHints() & NumberValue::Boolean)
         {
             return num->isTrue()? "true" : "false";
         }
-        return num->asText().toUtf8();
+        return num->asText();
     }
 
     // Text string.
-    String text = value.asText();
-    text.replace("\\", "\\\\")
-        .replace("\"", "\\\"")
-        .replace("\b", "\\b")
-        .replace("\f", "\\f")
-        .replace("\n", "\\n")
-        .replace("\r", "\\r")
-        .replace("\t", "\\t");
-    return "\"" + text.toUtf8() + "\"";
+    return "\"" + value.asText().escaped() + "\"";
 }
 
-static Block recordToJSON(Record const &rec)
+static String recordToJSON(Record const &rec)
 {
-    Block out = "{\n\t\"__obj__\": \"Record\"";
+    String out = "{\n\t\"__obj__\": \"Record\"";
     rec.forMembers([&out] (String const &name, Variable const &var)
     {
-        out += ",\n\t\"" + name.toUtf8() + "\": " + valueToJSONWithTabNewlines(var.value());
+        out += ",\n\t\"" + name + "\": " + valueToJSONWithTabNewlines(var.value());
         return LoopContinue;
     });
     return out + "\n}";
@@ -395,20 +403,28 @@ static Block recordToJSON(Record const &rec)
 
 } // internal
 
-QVariant parseJSON(String const &jsonText)
+Record parseJSON(const String &jsonText)
 {
     try
     {
-        return internal::JSONParser(jsonText).parse();
+        std::unique_ptr<Value> parsed(internal::JSONParser(jsonText).parse());
+        if (is<DictionaryValue>(parsed.get()))
+        {
+            return parsed->as<DictionaryValue>().toRecord();
+        }
+        if (is<RecordValue>(parsed.get()))
+        {
+            return parsed->as<RecordValue>().dereference();
+        }
     }
-    catch (de::Error const &er)
+    catch (Error const &er)
     {
-        LOG_WARNING(er.asText());
-        return QVariant(); // invalid
+        LOG_WARNING(er.asText().c_str());
     }
+    return {}; // invalid
 }
 
-Block composeJSON(Record const &rec)
+String composeJSON(Record const &rec)
 {
     return internal::recordToJSON(rec) + "\n";
 }

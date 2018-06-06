@@ -38,7 +38,7 @@ public:
     List(List &&moved) : Base(moved) {}
     List(const std::initializer_list<T> &init) {
         for (const auto &i : init) {
-            push_back(i);
+            Base::push_back(i);
         }
     }
 
@@ -47,6 +47,8 @@ public:
     using reverse_iterator       = typename Base::reverse_iterator;
     using const_reverse_iterator = typename Base::const_reverse_iterator;
 
+    using Base::begin;
+    using Base::end;
     void pop_front() { removeFirst(); } // slow...
 
     // Qt style methods:
@@ -57,17 +59,19 @@ public:
     void     append(const T &s) { Base::push_back(s); }
     void     prepend(const T &s) { Base::push_front(s); }
     void     insert(int pos, const T &value) { Base::insert(Base::begin() + pos, value); }
+    void     insert(const const_iterator &i, const T &value) { Base::insert(i, value); }
     const T &operator[](int pos) const { return Base::at(pos); }
     T &      operator[](int pos) { return Base::operator[](pos); }
     const T &at(int pos) const { return Base::at(pos); }
     const T &first() const { return Base::front(); }
     const T &last() const { return Base::back(); }
-    T        takeFirst() { T v = first(); Base::pop_front(); return std::move(v); }
+    T        takeFirst() { T v = first(); pop_front(); return std::move(v); }
     T        takeLast()  { T v = last();  Base::pop_back();  return std::move(v); }
     T        takeAt(int pos) { T v = std::move(at(pos)); Base::erase(Base::begin() + pos); return std::move(v); }
     void     removeFirst() { Base::erase(Base::begin()); }
     void     removeLast()  { Base::erase(Base::begin() + size() - 1); }
     void     removeAt(int pos) { Base::erase(Base::begin() + pos); }
+    void     removeAll(const T &v) { Base::erase(std::remove(begin(), end(), v), end()); }
     List &   operator=(const List &other) { Base::operator=(other); return *this; }
     List &   operator=(List &&other) { Base::operator=(other); return *this; }
 

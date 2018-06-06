@@ -31,6 +31,7 @@ namespace de {
 
 template <typename T> struct Range;
 class RegExp;
+class CString;
 
 /**
  * The String class extends the QString class with Block conversion and
@@ -41,7 +42,7 @@ class RegExp;
  *
  * @ingroup types
  */
-class DE_PUBLIC String
+class DE_PUBLIC String : public IByteArray
 {
 public:
     /// Error related to String operations (note: shadows de::Error). @ingroup errors
@@ -178,9 +179,9 @@ public:
         return *this;
     }
 
-    inline BytePos size() const { return BytePos{size_String(&_str)}; }
+    inline BytePos sizeb() const { return BytePos{size_String(&_str)}; }
     inline dint    sizei() const { return dint(size_String(&_str)); }
-    inline dsize   sizeu() const { return size().index; }
+    inline dsize   sizeu() const { return size_String(&_str); }
 
     void resize(size_t newSize);
 
@@ -191,6 +192,7 @@ public:
 
     inline const char *c_str() const { return cstr_String(&_str); }
     inline const char *data() const { return c_str(); }
+    inline operator iRangecc() const { return iRangecc{data(), data() + size()}; }
 
     inline operator const char *() const { return c_str(); }
     inline operator const iString *() const { return &_str; }
@@ -244,7 +246,7 @@ public:
     String        substr(const Range<BytePos> &byteRange) const;
     String        left(BytePos count) const { return substr(BytePos{0}, count.index); }
     String        left(CharPos count) const { return substr(CharPos{0}, count.index); }
-    String        right(BytePos count) const { return substr(size() - count); }
+    String        right(BytePos count) const { return substr(sizeb() - count); }
     String        right(CharPos count) const { return substr(count); }
     String        remove(BytePos count) const { return substr(count); }
     String        remove(CharPos count) const { return substr(count); }
@@ -267,6 +269,7 @@ public:
 
     void insert(BytePos pos, const char *cStr);
     void insert(BytePos pos, const String &str);
+    String &replace(const CString &before, const CString &after);
 
     /**
      * Does a path concatenation on this string and the argument. Note that if
@@ -465,6 +468,8 @@ public:
      */
     duint32 toUInt32(bool *ok = nullptr, int base = 0) const;
 
+    long toLong(bool *ok = nullptr, int base = 0) const;
+
     /**
      * Adds a prefix to each line in the text.
      *
@@ -483,6 +488,11 @@ public:
 
     Block toPercentEncoding() const;
 
+    // Implements IByteArray.
+    Size size() const { return size_String(&_str); }
+    void get(Offset at, Byte *values, Size count) const;
+    void set(Offset at, const Byte *values, Size count);
+
 public:
     // Iterators:
 
@@ -490,15 +500,30 @@ public:
     {
         iStringConstIterator iter;
 
-        operator const char *() { return iter.pos; }
-        operator Char() const { return iter.value; }
-        Char operator*() const { return iter.value; }
-        void operator++() { next_StringConstIterator(&iter); }
-        void operator++(int) { next_StringConstIterator(&iter); }
+                        operator const char *() { return iter.pos; }
+                        operator Char() const { return iter.value; }
+        Char            operator*() const { return iter.value; }
+        const_iterator &operator++()
+        {
+            next_StringConstIterator(&iter);
+            return *this;
+        }
+        const_iterator operator++(int)
+        {
+            const_iterator prior = *this;
+            next_StringConstIterator(&iter);
+            return prior;
+        }
+        const_iterator &operator+=(int count)
+        {
+            while (count-- > 0) next_StringConstIterator(&iter);
+            return *this;
+        }
         bool operator==(const const_iterator &other) const {
             return iter.str == other.iter.str && iter.pos == other.iter.pos;
         }
         bool operator!=(const const_iterator &other) const { return !(*this == other); }
+        BytePos bytePos() const { return BytePos(iter.pos - cstr_String(iter.str)); }
     };
 
     struct const_reverse_iterator
@@ -598,6 +623,7 @@ public:
     static String asText(duint16 value) { return String::format("%u", value); }
     static String asText(duint32 value) { return String::format("%u", value); }
     static String asText(duint64 value) { return String::format("%llu", value); }
+    static String asText(dsize value)   { return String::format("%zu", value); }
     static String asText(dfloat value)  { return String::format("%f", value); }
     static String asText(ddouble value) { return String::format("%f", value); }
     static String asText(char value)    { return String::format("%c", value); }

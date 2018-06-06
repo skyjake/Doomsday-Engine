@@ -346,7 +346,7 @@ public:
     {
         internal::ScriptArgumentComposer composer(globals);
         composer.convertScriptArguments(composer.args, args...);
-        Script script(String("%1(%2)").arg(function).arg(String::join(composer.args, ",")));
+        Script script(function + "(" + String::join(composer.args, ",") + ")");
         Process proc(&globals);
         proc.run(script);
         proc.execute();

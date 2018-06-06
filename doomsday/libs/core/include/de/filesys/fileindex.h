@@ -93,7 +93,7 @@ public:
 
     enum Behavior { FindInEntireIndex, FindOnlyInLoadedPackages };
 
-    void findPartialPath(String const &path, FoundFiles &found,
+    void findPartialPath(const CString &path, FoundFiles &found,
                          Behavior behavior = FindInEntireIndex) const;
 
     /**
@@ -106,7 +106,7 @@ public:
      * @param behavior    Search behavior.
      */
     void findPartialPath(Folder const &rootFolder,
-                         String const &path,
+                         const CString &path,
                          FoundFiles &found,
                          Behavior behavior = FindInEntireIndex) const;
 
@@ -117,8 +117,8 @@ public:
      * @param path       Partial path to find.
      * @param found      All matching files.
      */
-    void findPartialPath(String const &packageId,
-                         String const &path,
+    void findPartialPath(const CString &packageId,
+                         const CString &path,
                          FoundFiles &found) const;
 
     /**
@@ -136,7 +136,7 @@ public:
      *
      * @return  Number of files found.
      */
-    int findPartialPathInPackageOrder(String const &path, FoundFiles &found,
+    int findPartialPathInPackageOrder(const CString &path, FoundFiles &found,
                                       Behavior behavior = FindOnlyInLoadedPackages) const;
 
     void print() const;

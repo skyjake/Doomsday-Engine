@@ -22,7 +22,6 @@
 #ifndef LIBCORE_JSON_H
 #define LIBCORE_JSON_H
 
-#include <QVariant>
 #include <de/String>
 
 namespace de {
@@ -31,13 +30,13 @@ class Block;
 class Record;
 
 /**
- * Parses text as JSON and returns the data structured in a QVariant.
+ * Parses text as JSON and returns the data structured in a Block.
  *
  * @param jsonText  Text to parse.
  *
  * @return Parsed data, or an invalid variant if an error occurred.
  */
-DE_PUBLIC QVariant parseJSON(String const &jsonText);
+DE_PUBLIC Record parseJSON(String const &jsonText);
 
 /**
  * Composes a JSON representation of a Record.
@@ -46,7 +45,7 @@ DE_PUBLIC QVariant parseJSON(String const &jsonText);
  *
  * @return JSON in UTF-8 encoding.
  */
-DE_PUBLIC Block composeJSON(Record const &rec);
+DE_PUBLIC String composeJSON(Record const &rec);
 
 } // namespace de
 

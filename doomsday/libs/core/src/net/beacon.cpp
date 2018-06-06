@@ -118,7 +118,7 @@ void Beacon::discover(TimeSpan const &timeOut, TimeSpan const &interval)
 
     // Choose a semi-random port for listening to replies from servers' beacons.
     int tries = 10;
-    forever
+    for (;;)
     {
         if (d->socket->bind(d->port + Rangeui16(1, 0x4000).random(), QUdpSocket::DontShareAddress))
         {

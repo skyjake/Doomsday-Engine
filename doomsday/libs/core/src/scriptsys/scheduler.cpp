@@ -17,8 +17,7 @@
  */
 
 #include "de/Scheduler"
-
-#include <QHash>
+#include "de/Hash"
 
 namespace de {
 
@@ -36,7 +35,7 @@ DE_PIMPL_NOREF(Scheduler)
         }
     };
 
-    QHash<String, RunningTimeline *> running;
+    Hash<String, RunningTimeline *> running;
     duint64 counter = 0;
 
     ~Impl()
@@ -46,16 +45,16 @@ DE_PIMPL_NOREF(Scheduler)
 
     void clear()
     {
-        qDeleteAll(running);
+        deleteAll(running);
         running.clear();
     }
 
-    String internalName(String const &publicName)
+    String internalName(const String &publicName)
     {
         if (publicName.isEmpty())
         {
             // Choose a name automatically.
-            return QString("__TL%1__").arg(counter++, 0, 16);
+            return String::format("__TL%x__", counter++);
         }
         return publicName;
     }

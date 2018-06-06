@@ -25,6 +25,7 @@ namespace de {
 DE_PIMPL(Thread)
 {
     iThread *thread;
+    std::condition_variable cv;
 
     Impl(Public *i) : Base(i)
     {
@@ -43,6 +44,7 @@ DE_PIMPL(Thread)
         Thread::Impl *d = static_cast<Thread::Impl *>(userData_Thread(thd));
         auto &self = d->self();
         self.run();
+        self.post();
         DE_FOR_EACH_OBSERVER(FinishedAudience, i, self.audienceForFinished())
         {
             i->threadFinished(self);

@@ -21,9 +21,8 @@
 
 #include <de/Block>
 #include <de/Error>
+#include <de/Set>
 #include <de/String>
-
-#include <QSet>
 
 namespace de {
 
@@ -52,7 +51,7 @@ public:
         Id id;          ///< User-provided identifier for the element.
         int numBits;    ///< 32 bits at most.
     };
-    typedef QSet<Id> Ids;
+    typedef Set<Id> Ids;
 
     /**
      * Metadata about the elements of a bit field.
@@ -76,7 +75,7 @@ public:
 
         void add(Spec const *elements, dsize count);
 
-        void add(QList<Spec> const &elements);
+        void add(const List<Spec> &elements);
 
         void clear();
 

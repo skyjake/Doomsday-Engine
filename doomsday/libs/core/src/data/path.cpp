@@ -213,7 +213,7 @@ DE_PIMPL_NOREF(Path)
 
         // Scan the path for segments, in reverse order.
         QChar const *from;
-        forever
+        for (;;)
         {
             if (segEnd < segBegin) break; // E.g., path is "/"
 

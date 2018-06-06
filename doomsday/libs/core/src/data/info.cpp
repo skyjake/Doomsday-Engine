@@ -27,16 +27,16 @@
 #include "de/SourceLineTable"
 #include <de/TextValue>
 
-#include <QFile>
+#include <fstream>
 
 namespace de {
 
-static QString const WHITESPACE = " \t\r\n";
-static QString const WHITESPACE_OR_COMMENT = " \t\r\n#";
-static QString const TOKEN_BREAKING_CHARS = "#:=$(){}<>,;\"" + WHITESPACE;
-static QString const INCLUDE_TOKEN = "@include";
-static QString const SCRIPT_TOKEN = "script";
-static String const GROUP_TOKEN = "group";
+static const char *WHITESPACE            = " \t\r\n";
+static const char *WHITESPACE_OR_COMMENT = " \t\r\n#";
+static const char *TOKEN_BREAKING_CHARS  = "#:=$(){}<>,;\" \t\r\n";
+static const char *INCLUDE_TOKEN         = "@include";
+static const char *SCRIPT_TOKEN          = "script";
+static const char *GROUP_TOKEN           = "group";
 
 static SourceLineTable sourceLineTable;
 
@@ -56,16 +56,16 @@ DE_PIMPL(Info)
         }
     };
 
-    QStringList scriptBlockTypes;
-    QStringList allowDuplicateBlocksOfType;
+    Set<String> scriptBlockTypes;
+    StringList allowDuplicateBlocksOfType;
     String implicitBlockType = GROUP_TOKEN;
 
     String sourcePath; ///< May be unknown (empty).
     String content;
     int currentLine = 0;
-    int cursor = 0; ///< Index of the next character from the source.
-    QChar currentChar;
-    int tokenStartOffset = 0;
+    String::const_iterator cursor; ///< Index of the next character from the source.
+    Char currentChar;
+    String::const_iterator tokenStartOffset;
     String currentToken;
     BlockElement rootBlock;
     DefaultIncludeFinder defaultFinder;
@@ -94,14 +94,14 @@ DE_PIMPL(Info)
         currentLine = 1;
 
         currentChar = '\0';
-        cursor = 0;
+        cursor = content.begin();
 
         // When nextToken() is called and the current token is empty,
         // it is deduced that the source file has ended. We must
         // therefore set a dummy token that will be discarded
         // immediately.
         currentToken = " ";
-        tokenStartOffset = 0;
+        tokenStartOffset = cursor;
 
         if (source.isEmpty())
         {
@@ -114,7 +114,7 @@ DE_PIMPL(Info)
             nextChar();
             nextToken();
         }
-        catch(EndOfFile const &)
+        catch (EndOfFile const &)
         {
             currentToken.clear();
         }
@@ -123,7 +123,7 @@ DE_PIMPL(Info)
     /**
      * Returns the next character from the source file.
      */
-    QChar peekChar()
+    Char peekChar()
     {
         return currentChar;
     }
@@ -133,17 +133,16 @@ DE_PIMPL(Info)
      */
     void nextChar()
     {
-        if (cursor >= content.size())
+        if (cursor != content.end())
         {
             // No more characters to read.
-            throw EndOfFile(QString("EOF on line %1").arg(currentLine));
+            throw EndOfFile(stringf("EOF on line %i", currentLine));
         }
         if (currentChar == '\n')
         {
             currentLine++;
         }
-        currentChar = content[cursor];
-        cursor++;
+        currentChar = *cursor++;
     }
 
     /**
@@ -193,7 +192,7 @@ DE_PIMPL(Info)
         // Already drawn a blank?
         if (currentToken.isEmpty())
         {
-            throw EndOfFile(QStringLiteral("out of tokens"));
+            throw EndOfFile("out of tokens");
         }
 
         currentToken = "";
@@ -201,7 +200,7 @@ DE_PIMPL(Info)
         try
         {
             // Skip over any whitespace.
-            while (WHITESPACE_OR_COMMENT.contains(peekChar()))
+            while (strchr(WHITESPACE_OR_COMMENT, peekChar()))
             {
                 // Comments are considered whitespace.
                 if (peekChar() == '#') readLine();
@@ -216,10 +215,10 @@ DE_PIMPL(Info)
             nextChar();
 
             // Token breakers are tokens all by themselves.
-            if (TOKEN_BREAKING_CHARS.contains(currentToken[0]))
+            if (strchr(TOKEN_BREAKING_CHARS, currentToken.first()))
                 return currentToken;
 
-            while (!TOKEN_BREAKING_CHARS.contains(peekChar()))
+            while (!strchr(TOKEN_BREAKING_CHARS, peekChar()))
             {
                 currentToken += peekChar();
                 nextChar();
@@ -297,9 +296,11 @@ DE_PIMPL(Info)
     {
         if (peekToken() != "\"")
         {
-            throw SyntaxError("Info::parseString",
-                              QString("Expected string to begin with '\"', but '%1' found instead (on line %2).")
-                              .arg(peekToken()).arg(currentLine));
+            throw SyntaxError(
+                "Info::parseString",
+                stringf("Expected string to begin with '\"', but '%s' found instead (on line %i).",
+                        peekToken().c_str(),
+                        currentLine));
         }
 
         // The collected characters.
@@ -379,7 +380,7 @@ DE_PIMPL(Info)
 
     InfoValue parseScript(int requiredStatementCount = 0)
     {
-        int startPos = cursor - 1;
+        const auto startPos = cursor.bytePos() - 1;
         String remainder = content.substr(startPos);
         ScriptLex lex(remainder);
 
@@ -394,11 +395,11 @@ DE_PIMPL(Info)
         }
 
         // Continue parsing normally from here.
-        int endPos = startPos + int(lex.pos());
-        do { nextChar(); } while (cursor < endPos); // fast-forward
+        auto endPos = startPos + lex.pos();
+        do { nextChar(); } while (cursor.bytePos() < endPos); // fast-forward
 
         // Update the current token.
-        currentToken = QString(peekChar());
+        currentToken = String(1, peekChar());
         nextChar();
 
         if (currentToken != ")" && currentToken != "}")
@@ -411,7 +412,7 @@ DE_PIMPL(Info)
         //qDebug() << "now at" << content.substr(endPos - 15, endPos) << "^" << content.substr(endPos);
 
         // Whitespace is removed from beginning and end.
-        return InfoValue(content.substr(startPos, int(lex.pos()) - 1).trimmed(), InfoValue::Script);
+        return InfoValue(content.substr(startPos, int(lex.pos()) - 1).strip(), InfoValue::Script);
     }
 
     /**
@@ -433,16 +434,16 @@ DE_PIMPL(Info)
         // the key element.
         if (peekToken() == ":")
         {
-            value.text = readToEOL().trimmed();
+            value.text = readToEOL().strip();
             nextToken();
         }
         else if (peekToken() == "=")
         {
-            if (value.flags.testFlag(InfoValue::Script))
+            if (value.flags & InfoValue::Script)
             {
                 // Parse one script statement.
                 value = parseScript(1);
-                value.text = value.text.trimmed();
+                value.text = value.text.strip();
             }
             else
             {
@@ -458,8 +459,8 @@ DE_PIMPL(Info)
         else
         {
             throw SyntaxError("Info::parseKeyElement",
-                              QString("Expected either '=' or ':', but '%1' found instead (on line %2).")
-                              .arg(peekToken()).arg(currentLine));
+                              stringf("Expected either '=' or ':', but '%s' found instead (on line %i).",
+                              peekToken().c_str(), currentLine));
         }
         return new KeyElement(name, value);
     }
@@ -472,11 +473,11 @@ DE_PIMPL(Info)
         if (peekToken() != "<")
         {
             throw SyntaxError("Info::parseListElement",
-                              QString("List must begin with a '<', but '%1' found instead (on line %2).")
-                              .arg(peekToken()).arg(currentLine));
+                              stringf("List must begin with a '<', but '%s' found instead (on line %i).",
+                              peekToken().c_str(), currentLine));
         }
 
-        QScopedPointer<ListElement> element(new ListElement(name));
+        std::unique_ptr<ListElement> element(new ListElement(name));
 
         /// List syntax:
         /// list ::= list-identifier '<' [value {',' value}] '>'
@@ -488,10 +489,10 @@ DE_PIMPL(Info)
         if (peekToken() == ">")
         {
             nextToken();
-            return element.take();
+            return element.release();
         }
 
-        forever
+        for (;;)
         {
             element->add(parseValue());
 
@@ -506,11 +507,13 @@ DE_PIMPL(Info)
             if (separator != ",")
             {
                 throw SyntaxError("Info::parseListElement",
-                                  QString("List values must be separated with a comma, but '%1' found instead (on line %2).")
-                                  .arg(separator).arg(currentLine));
+                                  stringf("List values must be separated with a comma, but '%s' "
+                                          "found instead (on line %i).",
+                                          separator.c_str(),
+                                          currentLine));
             }
         }
-        return element.take();
+        return element.release();
     }
 
     /**
@@ -633,16 +636,16 @@ DE_PIMPL(Info)
         catch (Error const &er)
         {
             throw IIncludeFinder::NotFoundError("Info::includeFrom",
-                    QString("Cannot include '%1': %2")
-                    .arg(includeName)
-                    .arg(er.asText()));
+                    stringf("Cannot include '%s': %s",
+                    includeName.c_str(),
+                    er.asText().c_str()));
         }
     }
 
     void parse(String const &source)
     {
         init(source);
-        forever
+        for (;;)
         {
             Element *e = parseElement();
             if (!e) break;
@@ -651,7 +654,7 @@ DE_PIMPL(Info)
             // instead. Inclusions are only possible at the root level.
             if (e->isList() && e->name() == INCLUDE_TOKEN)
             {
-                foreach (Element::Value const &val, e->as<ListElement>().values())
+                for (Element::Value const &val : e->as<ListElement>().values())
                 {
                     includeFrom(val);
                 }
@@ -751,15 +754,15 @@ void Info::BlockElement::add(Info::Element *elem)
     _contentsInOrder.append(elem); // owned
     if (!elem->name().isEmpty())
     {
-        _contents.insert(elem->name().toLower(), elem); // not owned (name may be empty)
+        _contents.insert(elem->name().lower(), elem); // not owned (name may be empty)
     }
 }
 
 Info::Element *Info::BlockElement::find(String const &name) const
 {
-    Contents::const_iterator found = _contents.find(name.toLower());
+    Contents::const_iterator found = _contents.find(name.lower());
     if (found == _contents.end()) return 0;
-    return found.value();
+    return found->second;
 }
 
 Info::Element::Value Info::BlockElement::keyValue(String const &name,
@@ -774,17 +777,16 @@ Info::Element *Info::BlockElement::findByPath(String const &path) const
 {
     String name;
     String remainder;
-    int pos = path.indexOf(':');
-    if (pos >= 0)
+    if (auto pos = path.indexOf(':'))
     {
-        name = path.left(pos);
-        remainder = path.mid(pos + 1);
+        name      = path.left(pos);
+        remainder = path.substr(pos + 1);
     }
     else
     {
         name = path;
     }
-    name = name.trimmed();
+    name = name.strip();
 
     // Does this element exist?
     Element *e = find(name);
@@ -800,7 +802,7 @@ Info::Element *Info::BlockElement::findByPath(String const &path) const
 
 void Info::BlockElement::moveContents(BlockElement &destination)
 {
-    foreach (Element *e, _contentsInOrder)
+    for (Element *e : _contentsInOrder)
     {
         destination.add(e);
     }
@@ -844,24 +846,24 @@ Info::Info() : d(new Impl(this))
 
 Info::Info(String const &source) : d(nullptr)
 {
-    QScopedPointer<Impl> inst(new Impl(this)); // parsing may throw exception
+    std::unique_ptr<Impl> inst(new Impl(this)); // parsing may throw exception
     inst->parse(source);
-    d.reset(inst.take());
+    d.reset(inst.release());
 }
 
 Info::Info(File const &file) : d(nullptr)
 {
-    QScopedPointer<Impl> inst(new Impl(this)); // parsing may throw exception
+    std::unique_ptr<Impl> inst(new Impl(this)); // parsing may throw exception
     inst->parse(file);
-    d.reset(inst.take());
+    d.reset(inst.release());
 }
 
 Info::Info(String const &source, IIncludeFinder const &finder) : d(nullptr)
 {
-    QScopedPointer<Impl> inst(new Impl(this)); // parsing may throw exception
+    std::unique_ptr<Impl> inst(new Impl(this)); // parsing may throw exception
     inst->finder = &finder;
     inst->parse(source);
-    d.reset(inst.take());
+    d.reset(inst.release());
 }
 
 void Info::setFinder(IIncludeFinder const &finder)
@@ -874,12 +876,15 @@ void Info::useDefaultFinder()
     d->finder = &d->defaultFinder;
 }
 
-void Info::setScriptBlocks(QStringList blocksToParseAsScript)
+void Info::setScriptBlocks(const StringList &blocksToParseAsScript)
 {
-    d->scriptBlockTypes = blocksToParseAsScript;
+    for (const auto &s : blocksToParseAsScript)
+    {
+        d->scriptBlockTypes << s;
+    }
 }
 
-void Info::setAllowDuplicateBlocksOfType(QStringList duplicatesAllowed)
+void Info::setAllowDuplicateBlocksOfType(const StringList &duplicatesAllowed)
 {
     d->allowDuplicateBlocksOfType = duplicatesAllowed;
 }
@@ -901,10 +906,9 @@ void Info::parse(File const &file)
 
 void Info::parseNativeFile(NativePath const &nativePath)
 {
-    QFile file(nativePath);
-    if (file.open(QFile::ReadOnly | QFile::Text))
+    if (std::ifstream file{nativePath})
     {
-        parse(file.readAll().constData());
+        parse(Block::readAll(file));
     }
 }
 

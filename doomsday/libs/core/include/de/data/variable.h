@@ -24,6 +24,7 @@
 #include "../String"
 #include "../Audience"
 #include "../Deletable"
+#include "../CString"
 
 namespace de {
 

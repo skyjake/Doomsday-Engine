@@ -342,7 +342,7 @@ public:
         if (text.endsWith("Dev"))
         {
             val |= Dev;
-            text = text.remove(text.size() - 3);
+            text = text.remove(text.sizeb() - 3);
         }
         for (int i = FirstDomainBit; i <= LastDomainBit; ++i)
         {

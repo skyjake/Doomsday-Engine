@@ -21,6 +21,7 @@
 
 #include "../libcore.h"
 #include "../TaskPool"
+#include "../Deletable"
 
 namespace de {
 
@@ -37,7 +38,7 @@ public:
  *
  * @ingroup concurrency
  */
-class DE_PUBLIC Task : public IRunnable
+class DE_PUBLIC Task : public IRunnable, public Deletable
 {
 public:
     Task();

@@ -29,17 +29,12 @@ namespace chr = std::chrono;
 
 DE_PIMPL_NOREF(HighPerformanceTimer)
 {
-    chr::system_clock::time_point origin = chr::system_clock::now();
+    Time::TimePoint origin = chr::system_clock::now();
     ElapsedTimer timer;
-
-//    QDateTime origin;
-//    QElapsedTimer startedAt;
 
     Impl()
     {
         timer.start();
-//        origin = QDateTime::currentDateTime();
-//        startedAt.start();
     }
 
     duint64 milliSeconds()

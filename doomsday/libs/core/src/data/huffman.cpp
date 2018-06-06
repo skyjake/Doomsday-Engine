@@ -335,7 +335,7 @@ struct Huffman
         while (neededSize > buffer->size)
         {
             if (!buffer->size)
-                buffer->size = qMax(dsize(1024), neededSize);
+                buffer->size = std::max(dsize(1024), neededSize);
             else
                 buffer->size *= 2;
         }

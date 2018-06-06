@@ -17,9 +17,8 @@
  */
 
 #include "de/BitField"
-
-#include <QMap>
-#include <QList>
+#include "de/Map"
+#include "de/List"
 
 namespace de {
 
@@ -30,7 +29,7 @@ DE_PIMPL(BitField::Elements)
         int numBits;
         int firstBit;
     };
-    typedef QMap<Id, Element> Elements; // needs to be ordered
+    typedef Map<Id, Element> Elements; // needs to be ordered
 
     Elements elements;
     dsize totalBits;
@@ -40,7 +39,7 @@ DE_PIMPL(BitField::Elements)
      * the packed data. Indexed using the packed data byte index; size ==
      * packed size.
      */
-    QList<Ids> lookup;
+    List<Ids> lookup;
 
     Impl(Public *i)
         : Base(i)
@@ -57,7 +56,7 @@ DE_PIMPL(BitField::Elements)
     Element const &element(Id id) const
     {
         DE_ASSERT(elements.contains(id));
-        return elements.constFind(id).value();
+        return elements.constFind(id)->second;
     }
 };
 
@@ -111,9 +110,9 @@ void BitField::Elements::add(Spec const *elements, dsize count)
     }
 }
 
-void BitField::Elements::add(QList<Spec> const &elements)
+void BitField::Elements::add(const List<Spec> &elements)
 {
-    foreach (Spec spec, elements)
+    for (const Spec &spec : elements)
     {
         add(spec.id, spec.numBits);
     }
@@ -151,9 +150,9 @@ int BitField::Elements::bitCount() const
 BitField::Ids BitField::Elements::ids() const
 {
     Ids ids;
-    foreach (Id id, d->elements.keys())
+    for (auto i = d->elements.cbegin(); i != d->elements.cend(); ++i)
     {
-        ids.insert(id);
+        ids.insert(i->first);
     }
     return ids;
 }

@@ -19,35 +19,91 @@
 
 #include "de/Date"
 
+#include <chrono>
+#include <ctime>
+#include <c_plus/time.h>
+
 namespace de {
 
-Date::Date()
+using namespace std::chrono;
+
+DE_PIMPL_NOREF(Date)
+{
+    Time time;
+    iDate date;
+
+    Impl() { zap(date); }
+
+    Impl(const Time &time)
+        : time(time)
+    {
+        initSinceEpoch_Date(&date, time.toTime_t());
+    }
+};
+
+Date::Date() : d(new Impl)
 {}
 
-Date::Date(Time const &time) : Time(time)
+Date::Date(const Time &time) : d(new Impl(time))
 {}
+
+int Date::year() const
+{
+    return d->date.year;
+}
+
+int Date::month() const
+{
+    return d->date.month;
+}
+
+int Date::dayOfMonth() const
+{
+    return d->date.day;
+}
+
+int Date::hours() const
+{
+    return d->date.hour;
+}
+
+int Date::minutes() const
+{
+    return d->date.minute;
+}
+
+int Date::seconds() const
+{
+    return d->date.second;
+}
+
+int Date::daysTo(const Date &other) const
+{
+    return duration_cast<std::chrono::minutes>(other.d->time.toTimePoint() - d->time.toTimePoint())
+        .count() / (60 * 24);
+}
 
 Time Date::asTime() const
 {
-    return *this;
+    return d->time;
 }
 
 Date Date::fromText(String const &text)
 {
-    return Time::fromText(text, HumanDate);
+    return Time::fromText(text, Time::HumanDate);
 }
 
-String Date::asText() const
+String Date::format(const char *format) const
 {
-    String result;
-    QTextStream os(&result);
-    os << *this;
-    return result;
+    const time_t tm = d->time.toTime_t();
+    char buf[256];
+    strftime(buf, sizeof(buf) - 1, format, localtime(&tm));
+    return buf;
 }
 
-std::ostream &operator << (std::ostream &os, Date const &d)
+std::ostream &operator << (std::ostream &os, const Date &d)
 {
-    os << d.asDateTime().toString("yyyy-MM-dd");
+    os << d.asText().c_str();
     return os;
 }
 

@@ -57,7 +57,7 @@ public:
         return "";
     }
 
-    typedef QSet<ItemType *> Items;
+    typedef Set<ItemType *> Items;
 
 public:
     Cache(Format format)
@@ -190,15 +190,15 @@ DE_PIMPL(Bank)
 
             // Ask the concrete bank implementation to load the data for
             // us. This may take an unspecified amount of time.
-            QScopedPointer<IData> loaded(bank->loadFromSource(*source));
+            std::unique_ptr<IData> loaded(bank->loadFromSource(*source));
 
             LOG_XVERBOSE("Loaded \"%s\" from source in %.2f seconds",
                          path(bank->d->sepChar) << startedAt.since());
 
-            if (loaded.data())
+            if (loaded)
             {
                 // Put the loaded data into the memory cache.
-                setData(loaded.take());
+                setData(loaded.release());
             }
         }
 
@@ -534,7 +534,7 @@ DE_PIMPL(Bank)
     typedef FIFO<Notification> NotifyQueue;
 
     char const *nameForLog;
-    QChar sepChar { '.' }; ///< Default separator in identifier paths.
+    Char sepChar { '.' }; ///< Default separator in identifier paths.
     Flags flags;
     SourceCache sourceCache;
     ObjectCache memoryCache;
@@ -549,7 +549,7 @@ DE_PIMPL(Bank)
         , nameForLog(name)
         , flags(flg)
     {
-        if (!flags.testFlag(DisableHotStorage))
+        if (~flags & DisableHotStorage)
         {
             serialCache.reset(new SerializedCache);
         }
@@ -579,7 +579,7 @@ DE_PIMPL(Bank)
         jobs.waitForDone();
 
         // Should we delete the actual files where the data has been kept?
-        if (serialCache && flags.testFlag(ClearHotStorageWhenBankDestroyed))
+        if (serialCache && (flags & ClearHotStorageWhenBankDestroyed))
         {
             clearHotStorage();
         }
@@ -589,7 +589,7 @@ DE_PIMPL(Bank)
 
     inline bool isThreaded() const
     {
-        return flags.testFlag(BackgroundThread);
+        return (flags & BackgroundThread) != 0;
     }
 
     void beginJob(Job *job, Importance importance)
@@ -597,7 +597,7 @@ DE_PIMPL(Bank)
         if (!isThreaded() || importance == ImmediatelyInCurrentThread)
         {
             // Execute the job immediately.
-            QScopedPointer<Job> j(job);
+            std::unique_ptr<Job> j(job);
             j->runTask();
             performNotifications();
         }
@@ -623,7 +623,7 @@ DE_PIMPL(Bank)
 
     void setSerialLocation(String const &location)
     {
-        if (location.isEmpty() || flags.testFlag(DisableHotStorage))
+        if (location.isEmpty() || (flags & DisableHotStorage))
         {
             destroySerialCache();
         }
@@ -694,10 +694,10 @@ DE_PIMPL(Bank)
 
     void performNotifications()
     {
-        forever
+        for (;;)
         {
-            QScopedPointer<Notification> notif (notifications.take());
-            if (!notif.data()) break;
+            std::unique_ptr<Notification> notif(notifications.take());
+            if (!notif.get()) break;
 
             performNotification(*notif);
         }
@@ -751,12 +751,12 @@ char const *Bank::nameForLog() const
     return d->nameForLog;
 }
 
-Bank::Flags Bank::flags() const
+Flags Bank::flags() const
 {
     return d->flags;
 }
 
-void Bank::setSeparator(QChar sep)
+void Bank::setSeparator(Char sep)
 {
     d->sepChar = sep;
 }
@@ -824,8 +824,8 @@ void Bank::add(DotPath const &path, ISource *source)
     // Paths are unique.
     if (d->items.has(path, PathTree::MatchFull | PathTree::NoBranch))
     {
-        throw AlreadyExistsError(QLatin1String(d->nameForLog) + "::add",
-                                 "Item '" + path.toString() + "' already exists");
+        throw AlreadyExistsError(stringf("%s::add", d->nameForLog),
+                                 "Item '" + path + "' already exists");
     }
 
     Impl::Data &item = d->items.insert(path);
@@ -866,7 +866,7 @@ void Bank::iterate(const std::function<void (DotPath const &)> &func) const
 {
     PathTree::FoundPaths paths;
     d->items.findAllPaths(paths, PathTree::NoBranch, d->sepChar);
-    foreach (String const &path, paths)
+    for (const String &path : paths)
     {
         func(path);
     }
@@ -910,7 +910,7 @@ Bank::IData &Bank::data(DotPath const &path) const
     }
 
     // We'll have to request and wait.
-    item.reset();
+    //item.reset();
     item.unlock();
 
     LOG_XVERBOSE("Loading \"%s\"...", path);
@@ -924,7 +924,7 @@ Bank::IData &Bank::data(DotPath const &path) const
     item.lock();
     if (!item.data.get())
     {
-        throw LoadError(QLatin1String(d->nameForLog) + "::data", "Failed to load \"" + path + "\"");
+        throw LoadError(stringf("%s::data", d->nameForLog), "Failed to load \"" + path + "\"");
     }
 
     if (waitTime > 0.0)

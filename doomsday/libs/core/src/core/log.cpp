@@ -374,7 +374,7 @@ String LogEntry::asText(Flags const &formattingFlags, String::BytePos shortenSec
         // Begin with the timestamp.
         if (flags & Styled) output << TEXT_STYLE_LOG_TIME;
 
-        output << _when.asText(Date::SecondsSinceStart) << " ";
+        output << _when.asText(Time::SecondsSinceStart) << " ";
 
         if (!(flags & OmitDomain))
         {
@@ -471,7 +471,7 @@ String LogEntry::asText(Flags const &formattingFlags, String::BytePos shortenSec
                     sect += " > ";
                 }
 
-                if (parts.first().size() + len >= shortenSection) break;
+                if (parts.first().sizeb() + len >= shortenSection) break;
 
                 len += parts.first().sizei();
                 if (sect.isEmpty())
@@ -492,7 +492,7 @@ String LogEntry::asText(Flags const &formattingFlags, String::BytePos shortenSec
         {
             if (shortenSection < _section.sizei())
             {
-                sect = _section.right(_section.size() - shortenSection);
+                sect = _section.right(_section.sizeb() - shortenSection);
             }
         }
 

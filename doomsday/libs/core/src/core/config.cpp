@@ -169,7 +169,7 @@ Config::ReadStatus Config::read()
     }
 
     // The version of libcore is automatically included in the namespace.
-    d->config.globals().add(new Variable("__version__", version.take(),
+    d->config.globals().add(new Variable("__version__", version.release(),
                                          Variable::AllowArray | Variable::ReadOnly));
 
     if (shouldRunScript)
