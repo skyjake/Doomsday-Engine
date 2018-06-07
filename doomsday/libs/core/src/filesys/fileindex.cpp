@@ -161,7 +161,7 @@ static bool fileNotInAnyLoadedPackage(File *file)
     return !App::packageLoader().isLoaded(identifier);
 }
 
-void FileIndex::findPartialPath(const CString &path, FoundFiles &found, Behavior behavior) const
+void FileIndex::findPartialPath(const String &path, FoundFiles &found, Behavior behavior) const
 {
     d->findPartialPath(path, found);
 
@@ -171,7 +171,7 @@ void FileIndex::findPartialPath(const CString &path, FoundFiles &found, Behavior
     }
 }
 
-void FileIndex::findPartialPath(Folder const &rootFolder, const CString &path,
+void FileIndex::findPartialPath(Folder const &rootFolder, const String &path,
                                 FoundFiles &found, Behavior behavior) const
 {
     findPartialPath(path, found, behavior);
@@ -182,7 +182,7 @@ void FileIndex::findPartialPath(Folder const &rootFolder, const CString &path,
     });
 }
 
-void FileIndex::findPartialPath(const CString &packageId, const CString &path,
+void FileIndex::findPartialPath(const String &packageId, const String &path,
                                 FoundFiles &found) const
 {
     // We can only look in Folder-like packages.
@@ -198,7 +198,7 @@ void FileIndex::findPartialPath(const CString &packageId, const CString &path,
     }
 }
 
-int FileIndex::findPartialPathInPackageOrder(const CString &path, FoundFiles &found, Behavior behavior) const
+int FileIndex::findPartialPathInPackageOrder(const String &path, FoundFiles &found, Behavior behavior) const
 {
     findPartialPath(path, found, behavior);
     App::packageLoader().sortInPackageOrder(found);

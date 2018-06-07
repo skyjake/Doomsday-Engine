@@ -209,7 +209,7 @@ void *Library::address(String const &name, SymbolLookupMode lookup)
         return 0;
     }
 
-    d->symbols[name] = ptr;
+    d->symbols.insert(name, ptr);
     return ptr;
 }
 

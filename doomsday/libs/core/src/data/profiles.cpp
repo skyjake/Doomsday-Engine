@@ -24,15 +24,15 @@
 
 namespace de {
 
-static String nameToKey(String const &name)
+static String nameToKey(const String &name)
 {
-    return name.toLower();
+    return name.lower();
 }
 
 DE_PIMPL(Profiles)
 , DE_OBSERVES(Deletable, Deletion)
 {
-    typedef QMap<String, AbstractProfile *> Profiles;
+    typedef Map<String, AbstractProfile *> Profiles;
     Profiles profiles;
     String persistentName;
 
@@ -82,7 +82,7 @@ DE_PIMPL(Profiles)
     void objectWasDeleted(Deletable *obj)
     {
         // At this point the AbstractProfile itself is already deleted.
-        QMutableMapIterator<String, AbstractProfile *> iter(profiles);
+        MutableMapIterator<String, AbstractProfile *> iter(profiles);
         while (iter.hasNext())
         {
             iter.next();
@@ -96,12 +96,12 @@ DE_PIMPL(Profiles)
 
     void clear()
     {
-        for (auto *prof : profiles)
+        for (auto &prof : profiles)
         {
-            prof->audienceForDeletion -= this;
-            prof->setOwner(nullptr);
+            prof.second->audienceForDeletion -= this;
+            prof.second->setOwner(nullptr);
+            delete prof.second;
         }
-        qDeleteAll(profiles.values());
         profiles.clear();
     }
 
@@ -112,7 +112,7 @@ DE_PIMPL(Profiles)
     String fileName() const
     {
         if (persistentName.isEmpty()) return "";
-        return String("/home/configs/%1.dei").arg(persistentName);
+        return String::format("/home/configs/%s.dei", persistentName.c_str());
     }
 
     void loadProfilesFromInfo(File const &file, bool markReadOnly)
@@ -127,7 +127,7 @@ DE_PIMPL(Profiles)
             de::Info info;
             info.parse(String::fromUtf8(raw));
 
-            foreach (de::Info::Element const *elem, info.root().contentsInOrder())
+            for (const auto *elem : info.root().contentsInOrder())
             {
                 if (!elem->isBlock()) continue;
 
@@ -171,7 +171,7 @@ Profiles::~Profiles()
 StringList Profiles::profiles() const
 {
     StringList names;
-    for (auto const *p : d->profiles.values()) names << p->name();
+    for (auto &p : d->profiles) names << p.second->name();
     return names;
 }
 
@@ -182,10 +182,10 @@ int Profiles::count() const
 
 Profiles::AbstractProfile *Profiles::tryFind(String const &name) const
 {
-    auto found = d->profiles.constFind(nameToKey(name));
-    if (found != d->profiles.constEnd())
+    auto found = d->profiles.find(nameToKey(name));
+    if (found != d->profiles.end())
     {
-        return found.value();
+        return found->second;
     }
     return nullptr;
 }
@@ -216,9 +216,9 @@ bool Profiles::isPersistent() const
 
 LoopResult Profiles::forAll(std::function<LoopResult (AbstractProfile &)> func) const
 {
-    foreach (AbstractProfile *prof, d->profiles.values())
+    for (const auto &prof : d->profiles)
     {
-        if (auto result = func(*prof))
+        if (auto result = func(*prof.second))
         {
             return result;
         }
@@ -264,8 +264,9 @@ void Profiles::serialize() const
 
     // Write /home/configs/(persistentName).dei with all non-readonly profiles.
     int count = 0;
-    for (auto *prof : d->profiles)
+    for (auto &iter : d->profiles)
     {
+        const auto *prof = iter.second;
         if (prof->isReadOnly()) continue;
 
         os << "\nprofile {\n"
@@ -280,7 +281,7 @@ void Profiles::serialize() const
 
     // Create the pack and update the file system.
     File &outFile = App::rootFolder().replaceFile(d->fileName());
-    outFile << Block(os.str(), os.str().size());
+    outFile << Block(os.str());
     outFile.flush(); // we're done
 
     LOG_VERBOSE("Wrote \"%s\" with %i profile%s")

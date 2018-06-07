@@ -205,6 +205,19 @@
     reinterpret_cast<const void *>(offsetof(type, member))
 
 /**
+ * Returns a String literal that uses statically allocated memory
+ * for the string.
+ */
+#define DE_STR(cStringLiteral) \
+    ([]() -> de::String { \
+        const size_t len = std::strlen(cStringLiteral); /* likely compile time */ \
+        static iBlockData blockData = { \
+           2, const_cast<char *>(cStringLiteral), len, len + 1}; \
+        static iBlock block = { &blockData }; \
+        return de::String(&block); \
+    }())
+
+/**
  * Macro for defining an opaque type in the C wrapper API.
  */
 #define DE_OPAQUE(Name) \

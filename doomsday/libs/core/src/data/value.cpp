@@ -101,10 +101,9 @@ dsize Value::size() const
 Value const &Value::element(Value const &/*index*/) const
 {
     /// @throw IllegalError Value cannot be indexed.
-    throw IllegalError("Value::element",
-                       String("Value cannot be indexed (%1 \"%2\")")
-                       .arg(typeid(*this).name())
-                       .arg(asText()));
+    throw IllegalError(
+        "Value::element",
+        stringf("Value cannot be indexed (%s \"%s\")", typeid(*this).name(), asText().c_str()));
 }
 
 Value &Value::element(Value const &/*index*/)
@@ -265,7 +264,8 @@ Value *Value::constructFrom(Reader &reader)
     return result.release();
 }
 
-Value *Value::constructFrom(QVariant const &variant)
+/*
+Value *Value::constructFrom(Value const &value)
 {
     switch (variant.type())
     {
@@ -320,6 +320,7 @@ Value *Value::constructFrom(QVariant const &variant)
 
     return new TextValue(variant.toString());
 }
+*/
 
 Value const &Value::element(dint index) const
 {

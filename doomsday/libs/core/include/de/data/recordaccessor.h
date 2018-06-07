@@ -51,29 +51,29 @@ public:
     Record const &accessedRecord() const;
     Record const *accessedRecordPtr() const;
 
-    bool has(const char *name) const;
-    Value const &get(const char *name) const;
-    dint geti(const char *name) const;
-    dint geti(const char *name, dint defaultValue) const;
-    bool getb(const char *name) const;
-    bool getb(const char *name, bool defaultValue) const;
-    duint getui(const char *name) const;
-    duint getui(const char *name, duint defaultValue) const;
-    dfloat getf(const char *name) const;
-    dfloat getf(const char *name, dfloat defaultValue) const;
-    ddouble getd(const char *name) const;
-    ddouble getd(const char *name, ddouble defaultValue) const;
-    String gets(const char *name) const;
-    String gets(const char *name, String const &defaultValue) const;
-    ArrayValue const &geta(const char *name) const;
-    DictionaryValue const &getdt(const char *name) const;
-    RecordValue const &getr(const char *name) const;
-    StringList getStringList(const char *name, StringList defaultValue = StringList()) const;
+    bool has(const String &name) const;
+    Value const &get(const String &name) const;
+    dint geti(const String &name) const;
+    dint geti(const String &name, dint defaultValue) const;
+    bool getb(const String &name) const;
+    bool getb(const String &name, bool defaultValue) const;
+    duint getui(const String &name) const;
+    duint getui(const String &name, duint defaultValue) const;
+    dfloat getf(const String &name) const;
+    dfloat getf(const String &name, dfloat defaultValue) const;
+    ddouble getd(const String &name) const;
+    ddouble getd(const String &name, ddouble defaultValue) const;
+    String gets(const String &name) const;
+    String gets(const String &name, const char *defaultValue) const;
+    ArrayValue const &geta(const String &name) const;
+    DictionaryValue const &getdt(const String &name) const;
+    RecordValue const &getr(const String &name) const;
+    StringList getStringList(const String &name, StringList defaultValue = StringList()) const;
 
-    Record const &subrecord(const char *name) const;
+    Record const &subrecord(const String &name) const;
 
     template <typename ValueType>
-    ValueType const &getAs(const char *name) const {
+    ValueType const &getAs(const String &name) const {
         ValueType const *v = maybeAs<ValueType>(get(name));
         if (!v) {
             throw ValueTypeError("RecordAccessor::getAs", String("Cannot cast to expected type (") +

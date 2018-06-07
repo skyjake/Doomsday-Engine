@@ -206,6 +206,7 @@ public:
         return {constBegin_String(&_str), constEnd_String(&_str)};
     }
     std::wstring toWideString() const;
+    CString toCString() const;
 
     void clear();
 
@@ -216,6 +217,7 @@ public:
     Char last() const;
 
     bool contains(const char *cStr) const;
+    int count(char ch) const;
 
     bool beginsWith(const String &s, CaseSensitivity cs = CaseSensitive) const
     {
@@ -272,8 +274,11 @@ public:
     String &append(const char *s) { return *this += s; }
     String &append(const String &s) { return *this += s; }
 
+    inline void push_back(Char ch) { append(ch); }
+
     void insert(BytePos pos, const char *cStr);
     void insert(BytePos pos, const String &str);
+    String &replace(Char before, Char after);
     String &replace(const CString &before, const CString &after);
 
     /**
@@ -296,6 +301,8 @@ public:
      * @param path  Path to concatenate.
      */
     String operator/(const String &path) const;
+
+    String operator/(const CString &path) const;
 
     /**
      * Applies pattern formatting using the string as a format string.

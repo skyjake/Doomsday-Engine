@@ -109,7 +109,7 @@ public:
      *
      * @return  Unique Id associated with the internal copy of @a str.
      */
-    Id intern(String str);
+    Id intern(const String &str);
 
     /**
      * Interns string @a str. If this string is not already in the pool, a new
@@ -121,7 +121,7 @@ public:
      *
      * @return The interned copy of the string owned by the pool.
      */
-    String internAndRetrieve(String str);
+    String internAndRetrieve(const String &str);
 
     /**
      * Sets the user-specified custom value associated with the string @a id.
@@ -169,7 +169,7 @@ public:
      *
      * @return  Id of the matching string; else @c 0.
      */
-    Id isInterned(String str) const;
+    Id isInterned(const String &str) const;
 
     /**
      * Retrieve an immutable copy of the interned string associated with the
@@ -200,7 +200,7 @@ public:
      *
      * @return  @c true iff a string was removed.
      */
-    bool remove(String str);
+    bool remove(const String &str);
 
     /**
      * Removes a string from the pool.

@@ -143,8 +143,8 @@ Path::hash_type PathTree::Node::hash() const
 }
 
 /// @todo This logic should be encapsulated in de::Path or de::Path::Segment.
-static int matchName(QChar const *string,  dsize stringSize,
-                     QChar const *pattern, dsize patternSize)
+static int matchName(char const *string,  dsize stringSize,
+                     char const *pattern, dsize patternSize)
 {
     QChar const *in    = string;
     QChar const *inEnd = string + stringSize;

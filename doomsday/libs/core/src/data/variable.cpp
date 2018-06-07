@@ -66,7 +66,7 @@ DE_AUDIENCE_METHOD(Variable, Deletion)
 DE_AUDIENCE_METHOD(Variable, Change)
 DE_AUDIENCE_METHOD(Variable, ChangeFrom)
 
-Variable::Variable(const CString &name, Value *initial, Flags const &m)
+Variable::Variable(const String &name, Value *initial, Flags const &m)
     : d(new Impl)
 {
     d->name = name;

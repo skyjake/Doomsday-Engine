@@ -322,7 +322,7 @@ public:
      *
      * @return Number of files found.
      */
-    static int findInPackages(const CString &partialPath, FileIndex::FoundFiles &files);
+    static int findInPackages(const String &partialPath, FileIndex::FoundFiles &files);
 
     /**
      * Checks if an asset exists.
@@ -331,7 +331,7 @@ public:
      *
      * @return @c true, if assetInfo() can be called.
      */
-    static bool assetExists(const CString &identifier);
+    static bool assetExists(const String &identifier);
 
     /**
      * Retrieves the namespace of an asset.
@@ -340,7 +340,7 @@ public:
      *
      * @return Asset namespace accessor.
      */
-    static Package::Asset asset(const CString &identifier);
+    static Package::Asset asset(const String &identifier);
 
     /**
      * Returns the application's script system.
@@ -361,7 +361,7 @@ public:
      *
      * @return Variable.
      */
-    static Variable &config(const CString &name);
+    static Variable &config(const String &name);
 
     /**
      * Returns the web API URL. Always includes the protocol and ends with a slash.

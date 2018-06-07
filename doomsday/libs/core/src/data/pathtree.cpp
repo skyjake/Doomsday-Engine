@@ -67,7 +67,7 @@ struct PathTree::Impl
         DE_ASSERT(numNodesOwned == 0);
     }
 
-    PathTree::SegmentId internSegmentAndUpdateIdHashMap(String segment, Path::hash_type hashKey)
+    PathTree::SegmentId internSegmentAndUpdateIdHashMap(const String &segment, Path::hash_type hashKey)
     {
         PathTree::SegmentId internId = segments.intern(segment);
         segments.setUserValue(internId, hashKey);
@@ -90,7 +90,7 @@ struct PathTree::Impl
             // The name is known. Perhaps we have.
             Path::hash_type hashKey = segments.userValue(segmentId);
             for (PathTree::Nodes::const_iterator i = hash.find(hashKey);
-                i != hash.end() && i.key() == hashKey; ++i)
+                 i != hash.end() && i.key() == hashKey; ++i)
             {
                 PathTree::Node *node = *i;
                 if (parent    != &node->parent()) continue;

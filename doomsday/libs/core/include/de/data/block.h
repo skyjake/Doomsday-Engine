@@ -57,6 +57,7 @@ public:
     Block(const Block &other);
     Block(Block &&moved);
     Block(const char *nullTerminatedCStr);
+    Block(const std::string &str);
     Block(const void *data, Size length);
 
     /**

@@ -53,15 +53,15 @@ public:
         : _str(), _id(0), _userValue(0), _userPointer(0)
     {}
 
-    CaselessString(QString text)
+    CaselessString(const String &text)
         : _str(text), _id(0), _userValue(0), _userPointer(0)
     {}
 
     CaselessString(CaselessString const &other)
-        : ISerializable(), _str(other._str), _id(other._id), _userValue(other._userValue), _userPointer(0)
+        : _str(other._str), _id(other._id), _userValue(other._userValue), _userPointer(0)
     {}
 
-    void setText(String &text)
+    void setText(const String &text)
     {
         _str = text;
     }
@@ -72,10 +72,10 @@ public:
         return _str;
     }
     bool operator < (CaselessString const &other) const {
-        return _str.compare(other, Qt::CaseInsensitive) < 0;
+        return _str.compare(other, String::CaseInsensitive) < 0;
     }
     bool operator == (CaselessString const &other) const {
-        return !_str.compare(other, Qt::CaseInsensitive);
+        return _str.compare(other, String::CaseInsensitive) == 0;
     }
     InternalId id() const {
         return _id;
@@ -174,7 +174,7 @@ DE_PIMPL_NOREF(StringPool), public Lockable
     void clear()
     {
         DE_GUARD(this);
-        
+
         for (dsize i = 0; i < idMap.size(); ++i)
         {
             if (!idMap[i]) continue; // Unused slot.
@@ -194,13 +194,13 @@ DE_PIMPL_NOREF(StringPool), public Lockable
         DE_ASSERT(count == idMap.size() - available.size());
     }
 
-    Interns::iterator findIntern(String text)
+    Interns::iterator findIntern(const String &text)
     {
         CaselessString const key(text);
         return interns.find(CaselessStringRef(&key)); // O(log n)
     }
 
-    Interns::const_iterator findIntern(String text) const
+    Interns::const_iterator findIntern(const String &text) const
     {
         CaselessString const key(text);
         return interns.find(CaselessStringRef(&key)); // O(log n)
@@ -213,7 +213,7 @@ DE_PIMPL_NOREF(StringPool), public Lockable
      * @param text  Text string to add to the interned strings. A copy is
      *              made of this.
      */
-    InternalId copyAndAssignUniqueId(String const &text)
+    InternalId copyAndAssignUniqueId(const String &text)
     {
         CaselessString *str = new CaselessString(text);
 
@@ -299,7 +299,7 @@ void StringPool::clear()
 bool StringPool::empty() const
 {
     DE_GUARD(d);
-    
+
     d->assertCount();
     return !d->count;
 }
@@ -312,10 +312,10 @@ dsize StringPool::size() const
     return d->count;
 }
 
-StringPool::Id StringPool::intern(String str)
+StringPool::Id StringPool::intern(const String &str)
 {
     DE_GUARD(d);
-    
+
     Interns::iterator found = d->findIntern(str); // O(log n)
     if (found != d->interns.end())
     {
@@ -325,10 +325,10 @@ StringPool::Id StringPool::intern(String str)
     return EXPORT_ID(d->copyAndAssignUniqueId(str)); // O(log n)
 }
 
-String StringPool::internAndRetrieve(String str)
+String StringPool::internAndRetrieve(const String &str)
 {
     DE_GUARD(d);
-    
+
     InternalId id = IMPORT_ID(intern(str));
     return *d->idMap[id];
 }
@@ -405,7 +405,7 @@ StringPool::Id StringPool::isInterned(String str) const
 String StringPool::string(Id id) const
 {
     DE_GUARD(d);
-    
+
     /// @throws InvalidIdError Provided identifier is not in use.
     return stringRef(id);
 }
@@ -427,7 +427,7 @@ String const &StringPool::stringRef(StringPool::Id id) const
     return *d->idMap[internalId];
 }
 
-bool StringPool::remove(String str)
+bool StringPool::remove(const String &str)
 {
     DE_GUARD(d);
 
@@ -472,7 +472,7 @@ LoopResult StringPool::forAll(std::function<LoopResult (Id)> func) const
 }
 
 // Implements ISerializable.
-void StringPool::operator >> (Writer &to) const
+void StringPool::operator>>(Writer &to) const
 {
     DE_GUARD(d);
 
@@ -487,7 +487,7 @@ void StringPool::operator >> (Writer &to) const
     }
 }
 
-void StringPool::operator << (Reader &from)
+void StringPool::operator<<(Reader &from)
 {
     DE_GUARD(d);
 

@@ -35,10 +35,55 @@ class Hash : public std::unordered_map<Key, Value>
 public:
     Hash();
 
-    void insert(const Key &key, const Value &value) { Base::operator[](key) = value; }
-    bool contains(const Key &key) const { return Base::find(key) != Base::end(); }
+    void         insert(const Key &key, const Value &value) { Base::operator[](key) = value; }
+    void         remove(const Key &key) { Base::erase(key); }
+    bool         contains(const Key &key) const { return Base::find(key) != Base::end(); }
+    Value &      operator[](const Key &key) { return Base::operator[](key); }
+    const Value &operator[](const Key &key) const { return Base::find(key)->second; }
 };
 
+template <typename Key, typename Value>
+class MutableHashIterator
+{
+    using Container = Hash<Key, Value>;
+    using Iterator = typename Container::iterator;
+
+    Container _hash;
+    Iterator _cur;
+    Iterator _next;
+
+public:
+    MutableHashIterator(Container &c) : _hash(c)
+    {
+        _next = c.begin();
+    }
+
+    bool hasNext() const
+    {
+        return _next != _hash.end();
+    }
+
+    Iterator &next()
+    {
+        _cur = _next++;
+        return _cur;
+    }
+
+    const typename Container::key_type &key() const
+    {
+        return _cur->first;
+    }
+
+    const typename Container::value_type::second_type &value() const
+    {
+        return _cur->second;
+    }
+
+    void remove()
+    {
+        _hash.erase(_cur);
+    }
+};
 } // namespace de
 
 #endif // LIBCORE_HASH_H

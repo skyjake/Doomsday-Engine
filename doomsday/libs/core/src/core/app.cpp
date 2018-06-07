@@ -399,7 +399,7 @@ DE_PIMPL(App)
         fs.root().locate<Folder>("/packs").populate();
     }
 
-    Record const *findAsset(const CString &identifier) const
+    Record const *findAsset(const String &identifier) const
     {
         // Access the package that has this asset via a link.
         Folder const *pkg = fs.root().tryLocate<Folder>(String("/packs/asset.") + identifier + "/.");
@@ -919,17 +919,17 @@ PackageLoader &App::packageLoader()
     return DE_APP->d->packageLoader;
 }
 
-int App::findInPackages(const CString &partialPath, FS::FoundFiles &files)
+int App::findInPackages(const String &partialPath, FS::FoundFiles &files)
 {
     return App::fileSystem().nameIndex().findPartialPathInPackageOrder(partialPath, files);
 }
 
-bool App::assetExists(const CString &identifier)
+bool App::assetExists(const String &identifier)
 {
     return DE_APP->d->findAsset(identifier) != 0;
 }
 
-Package::Asset App::asset(const CString &identifier)
+Package::Asset App::asset(const String &identifier)
 {
     Record const *info = DE_APP->d->findAsset(identifier);
     if (!info)
@@ -971,7 +971,7 @@ Config &App::config()
     return *DE_APP->d->config;
 }
 
-Variable &App::config(const CString &name)
+Variable &App::config(const String &name)
 {
     return config()[name];
 }

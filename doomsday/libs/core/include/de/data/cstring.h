@@ -56,6 +56,8 @@ public:
         updateEnd();
         return _range.size();
     }
+    bool isEmpty() const { return size() == 0; }
+    bool empty() const { return size() == 0; }
     bool contains(char ch) const;
     dsize indexOf(char ch, size_t from = 0) const;
     dsize indexOf(const char *cStr, size_t from = 0) const;

@@ -31,7 +31,7 @@
 
 namespace de {
 
-static const char *WHITESPACE            = " \t\r\n";
+//static const char *WHITESPACE            = " \t\r\n";
 static const char *WHITESPACE_OR_COMMENT = " \t\r\n#";
 static const char *TOKEN_BREAKING_CHARS  = "#:=$(){}<>,;\" \t\r\n";
 static const char *INCLUDE_TOKEN         = "@include";

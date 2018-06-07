@@ -40,8 +40,57 @@ public:
     using const_reverse_iterator = typename Base::const_reverse_iterator;
 
     void insert(const Key &key, const Value &value) { Base::operator[](key) = value; }
+    void remove(const Key &key) { Base::erase(key); }
     bool contains(const Key &key) const { return Base::find(key) != Base::end(); }
     const_iterator constFind(const Key &key) const { return Base::find(key); }
+
+    void deleteAll()
+    {
+        for (auto i : *this) { delete i->second; }
+    }
+};
+
+template <typename Key, typename Value>
+class MutableMapIterator
+{
+    using Container = Map<Key, Value>;
+    using Iterator = typename Container::iterator;
+
+    Container _map;
+    Iterator _cur;
+    Iterator _next;
+
+public:
+    MutableMapIterator(Container &c) : _map(c)
+    {
+        _next = c.begin();
+    }
+
+    bool hasNext() const
+    {
+        return _next != _map.end();
+    }
+
+    Iterator &next()
+    {
+        _cur = _next++;
+        return _cur;
+    }
+
+    const typename Container::key_type &key() const
+    {
+        return _cur->first;
+    }
+
+    const typename Container::value_type::second_type &value() const
+    {
+        return _cur->second;
+    }
+
+    void remove()
+    {
+        _map.erase(_cur);
+    }
 };
 
 } // namespace de

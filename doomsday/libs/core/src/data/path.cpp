@@ -29,8 +29,6 @@ namespace de {
 /// Size of the fixed-size portion of the segment buffer.
 static int const SEGMENT_BUFFER_SIZE = 8;
 
-static String emptyPath;
-
 //---------------------------------------------------------------------------------------
 
 Path::hash_type const Path::hash_range = 0xffffffff;
@@ -92,10 +90,13 @@ dsize Path::Segment::size() const
 
 DE_PIMPL_NOREF(Path)
 {
+    static String emptyPath;
+
     String path;
 
-    /// The character in Impl::path that acts as the segment separator.
-    Char separator;
+    /// The character(s) in Impl::path that act(s) as the segment separator.
+    /// This is assumed to be a single multibyte character.
+    String separator;
 
     /**
      * Total number of segments in the path. If 0, it means that the path
@@ -126,10 +127,21 @@ DE_PIMPL_NOREF(Path)
      */
     List<Path::Segment> extraSegments;
 
-    Impl() : separator('/'), segmentCount(0)
+    Impl()
+        : separator("/")
+        , segmentCount(0)
     {}
 
-    Impl(String const &p, Char sep) : path(p), separator(sep), segmentCount(0)
+    Impl(const String &p, const String &sep)
+        : path(p)
+        , separator(sep)
+        , segmentCount(0)
+    {}
+
+    Impl(const String &p, Char sep)
+        : path(p)
+        , separator(1, sep)
+        , segmentCount(0)
     {}
 
     ~Impl()
@@ -155,7 +167,7 @@ DE_PIMPL_NOREF(Path)
      *
      * @return  New segment.
      */
-    Path::Segment *allocSegment(QStringRef const &range)
+    Path::Segment *allocSegment(const String &range)
     {
         Path::Segment *segment;
         if (segmentCount < SEGMENT_BUFFER_SIZE)
@@ -246,12 +258,12 @@ Path::Path(String const &path, Char sep)
     : d(new Impl(path, sep))
 {}
 
-Path::Path(char const *nullTerminatedCStr, char sep)
-    : d(new Impl(QString::fromUtf8(nullTerminatedCStr), sep))
+Path::Path(char const *nullTerminatedCStr, Char sep)
+    : d(new Impl(nullTerminatedCStr, sep))
 {}
 
 Path::Path(char const *nullTerminatedCStr)
-    : d(new Impl(QString::fromUtf8(nullTerminatedCStr), '/'))
+    : d(new Impl(nullTerminatedCStr, '/'))
 {}
 
 Path::Path(Path const &other)
@@ -281,12 +293,12 @@ Path &Path::operator=(Path &&moved)
 
 Path Path::operator+(String const &str) const
 {
-    return Path(d->path + str, d->separator);
+    return Path(d->path + str, d->separator.first());
 }
 
 Path Path::operator+(char const *nullTerminatedCStr) const
 {
-    return Path(d->path + QString(nullTerminatedCStr), d->separator);
+    return Path(d->path + nullTerminatedCStr, d->separator.first());
 }
 
 int Path::segmentCount() const
@@ -307,7 +319,8 @@ Path::Segment const &Path::reverseSegment(int reverseIndex) const
     if (reverseIndex < 0 || reverseIndex >= d->segmentCount)
     {
         /// @throw OutOfBoundsError  Attempt to reference a nonexistent segment.
-        throw OutOfBoundsError("Path::reverseSegment", String("Reverse index %1 is out of bounds").arg(reverseIndex));
+        throw OutOfBoundsError("Path::reverseSegment",
+                               stringf("Reverse index %i is out of bounds", reverseIndex));
     }
 
     // Is this in the static buffer?
@@ -324,9 +337,9 @@ Path Path::subPath(Rangei const &range) const
 {
     if (range.isEmpty())
     {
-        return Path("", d->separator);
+        return Path("", d->separator.first());
     }
-    Path sub(segment(range.start), d->separator);
+    Path sub(String(segment(range.start)), d->separator.first());
     for (int i = range.start + 1; i < range.end; ++i)
     {
         sub = sub / segment(i);
@@ -393,16 +406,17 @@ bool Path::operator < (Path const &other) const
     }
 }
 
-Path Path::operator/(Path const &other) const
+Path Path::operator/(const Path &other) const
 {
     // Unify the separators.
     String otherPath = other.d->path;
-    if (other.separator() != d->separator)
+    if (other.d->separator != d->separator)
     {
         otherPath.replace(other.d->separator, d->separator);
     }
 
-    return Path(d->path.concatenatePath(otherPath, d->separator), d->separator);
+    const Char sep = d->separator.first();
+    return Path(d->path.concatenatePath(otherPath, sep), sep);
 }
 
 Path Path::operator/(const String &other) const
@@ -410,14 +424,9 @@ Path Path::operator/(const String &other) const
     return *this / Path(other);
 }
 
-Path Path::operator/(char const *otherNullTerminatedUtf8) const
+Path Path::operator/(const char *otherNullTerminatedUtf8) const
 {
     return *this / Path(otherNullTerminatedUtf8, '/');
-}
-
-Path Path::operator/(String const &other) const
-{
-    return *this / Path(other);
 }
 
 String Path::toString() const
@@ -447,7 +456,7 @@ bool Path::isAbsolute() const
 
 int Path::length() const
 {
-    return d->path.length();
+    return d->path.size();
 }
 
 dsize Path::size() const
@@ -481,30 +490,31 @@ Path &Path::operator = (String const &newPath)
 Path &Path::set(String const &newPath, Char sep)
 {
     d->path = newPath; // implicitly shared
-    d->separator = sep;
+    d->separator = String(1, sep);
     d->clearSegments();
     return *this;
 }
 
 Path Path::withSeparators(Char sep) const
 {
-    if (sep == d->separator) return *this;
+    const Char curSep = d->separator.first();
+    if (sep == curSep) return *this;
 
     String modPath = d->path;
-    modPath.replace(d->separator, sep);
+    modPath.replace(d->separator, String(1, sep));
     return Path(modPath, sep);
 }
 
 Char Path::separator() const
 {
-    return d->separator;
+    return d->separator.first();
 }
 
 void Path::addTerminatingSeparator()
 {
     if (!isEmpty())
     {
-        if (last() != d->separator)
+        if (last() != d->separator.first())
         {
             d->path.append(d->separator);
             d->clearSegments();
@@ -514,8 +524,8 @@ void Path::addTerminatingSeparator()
 
 String Path::fileName() const
 {
-    if (last() == d->separator) return "";
-    return lastSegment();
+    if (last() == d->separator.first()) return "";
+    return lastSegment().toRange();
 }
 
 Block Path::toUtf8() const
@@ -525,7 +535,7 @@ Block Path::toUtf8() const
 
 void Path::operator >> (Writer &to) const
 {
-    to << d->path.toUtf8() << d->separator.unicode();
+    to << d->path << duint16(d->separator.first());
 }
 
 void Path::operator << (Reader &from)
@@ -533,9 +543,9 @@ void Path::operator << (Reader &from)
     clear();
 
     Block b;
-    ushort sep;
+    duint16 sep;
     from >> b >> sep;
-    set(String::fromUtf8(b), sep);
+    set(String::fromUtf8(b), Char(sep));
 }
 
 String Path::normalizeString(String const &text, Char replaceWith)
@@ -561,7 +571,7 @@ Path PathRef::toPath() const
 {
     if (!segmentCount()) return Path(); // Empty.
 
-    String composed = segment(0);
+    String composed = segment(0).toRange();
     for (int i = 1; i < segmentCount(); ++i)
     {
         composed += path().separator();
@@ -572,6 +582,7 @@ Path PathRef::toPath() const
 
 } // namespace de
 
+#if 0
 #ifdef _DEBUG
 #include <QDebug>
 
@@ -720,3 +731,4 @@ static int Path_UnitTest()
 static int testResult = Path_UnitTest();
 
 #endif // _DEBUG
+#endif

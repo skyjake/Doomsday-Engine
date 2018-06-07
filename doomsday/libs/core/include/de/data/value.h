@@ -312,7 +312,7 @@ public:
      */
     static Value *constructFrom(Reader &reader);
 
-    /**
+    /*
      * Construct a value by converting from a QVariant.
      * @param variant  Data for the value.
      * @return Value. Caller gets ownership.

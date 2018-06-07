@@ -182,7 +182,7 @@ Record const &RecordValue::dereference() const
 
 Value::Text RecordValue::typeId() const
 {
-    return QStringLiteral("Record");
+    static String id("Record"); return id;
 }
 
 Value *RecordValue::duplicate() const
@@ -282,7 +282,7 @@ void RecordValue::call(Process &process, Value const &arguments, Value *) const
 
     // Calling a record causes it to be treated as a class and a new record is
     // initialized as a member of the class.
-    QScopedPointer<RecordValue> instance(new RecordValue(new Record, RecordValue::OwnsRecord));
+    std::unique_ptr<RecordValue> instance(RecordValue::takeRecord(new Record));
 
     instance->record()->addSuperRecord(*d->record);
 
@@ -296,7 +296,7 @@ void RecordValue::call(Process &process, Value const &arguments, Value *) const
         delete process.context().evaluator().popResult();
     }
 
-    process.context().evaluator().pushResult(instance.take());
+    process.context().evaluator().pushResult(instance.release());
 }
 
 // Flags for serialization:

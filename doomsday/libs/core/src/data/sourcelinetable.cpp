@@ -65,7 +65,7 @@ SourceLineTable::LineId SourceLineTable::lineId(String const &path, duint lineNu
 String SourceLineTable::sourceLocation(LineId sourceId) const
 {
     auto const location = sourcePathAndLineNumber(sourceId);
-    return QString("%1:%2").arg(location.first).arg(location.second);
+    return String::format("%s:%u", location.first.c_str(), location.second);
 }
 
 SourceLineTable::PathAndLine SourceLineTable::sourcePathAndLineNumber(LineId sourceId) const
@@ -74,10 +74,10 @@ SourceLineTable::PathAndLine SourceLineTable::sourcePathAndLineNumber(LineId sou
 
     DE_GUARD(d);
 
-    auto found = d->lookup.constFind(sourceId >> SOURCE_SHIFT);
-    if (found != d->lookup.constEnd())
+    auto found = d->lookup.find(sourceId >> SOURCE_SHIFT);
+    if (found != d->lookup.end())
     {
-        return PathAndLine(found.value()->path().toStringRef(), lineNumber);
+        return PathAndLine(found->second->path(), lineNumber);
     }
     return PathAndLine("", lineNumber);
 }

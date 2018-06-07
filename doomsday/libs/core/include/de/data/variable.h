@@ -114,7 +114,7 @@ public:
      *      a NoneValue will be created for the variable.
      * @param varMode  Mode flags.
      */
-    Variable(const CString &name = {}, Value *initial = nullptr,
+    Variable(const String &name = {}, Value *initial = nullptr,
              Flags const &varMode = DefaultMode);
 
     /**

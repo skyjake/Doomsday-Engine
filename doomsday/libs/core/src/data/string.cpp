@@ -159,9 +159,24 @@ std::wstring String::toWideString() const
     return ws;
 }
 
+CString String::toCString() const
+{
+    return {begin(), end()};
+}
+
 bool String::contains(const char *cStr) const
 {
     return indexOfCStr_String(&_str, cStr) != iInvalidPos;
+}
+
+int String::count(char ch) const
+{
+    int num = 0;
+    for (const char *i = constBegin_String(&_str), *end = constEnd_String(&_str); i != end; ++i)
+    {
+        if (*i == ch) ++num;
+    }
+    return num;
 }
 
 String String::substr(CharPos pos, dsize count) const
@@ -268,6 +283,14 @@ void String::insert(BytePos pos, const String &str)
     insertData_Block(&_str.chars, pos.index, str.data(), str.size());
 }
 
+String &String::replace(Char before, Char after)
+{
+    iMultibyteChar mb1, mb2;
+    init_MultibyteChar(&mb1, before);
+    init_MultibyteChar(&mb2, after);
+    return replace(mb1.bytes, mb2.bytes);
+}
+
 String &String::replace(const CString &before, const CString &after)
 {
     const String oldTerm{before};
@@ -299,6 +322,11 @@ iChar String::last() const
 String String::operator/(const String &path) const
 {
     return concatenatePath(path);
+}
+
+String String::operator/(const CString &path) const
+{
+    return concatenatePath(String(path));
 }
 
 String String::operator%(const PatternArgs &args) const
@@ -438,7 +466,7 @@ String String::upperFirstChar() const
 {
     if (isEmpty()) return "";
     const_iterator i = begin();
-    String capitalized(1, towupper(*i++));
+    String capitalized(1, Char(towupper(*i++)));
     appendCStr_String(&capitalized._str, i);
     return capitalized;
 }

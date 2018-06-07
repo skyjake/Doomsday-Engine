@@ -57,6 +57,11 @@ Block::Block(const char *nullTerminatedCStr)
     initCStr_Block(&_block, nullTerminatedCStr);
 }
 
+Block::Block(const std::string &str)
+{
+    initData_Block(&_block, str.data(), str.size());
+}
+
 Block::Block(const void *data, Size length)
 {
     initData_Block(&_block, data, length);
