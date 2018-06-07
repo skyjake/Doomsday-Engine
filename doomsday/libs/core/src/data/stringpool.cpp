@@ -72,10 +72,10 @@ public:
         return _str;
     }
     bool operator < (CaselessString const &other) const {
-        return _str.compare(other, String::CaseInsensitive) < 0;
+        return _str.compareWithoutCase(other) < 0;
     }
     bool operator == (CaselessString const &other) const {
-        return _str.compare(other, String::CaseInsensitive) == 0;
+        return _str.compareWithoutCase(other) == 0;
     }
     InternalId id() const {
         return _id;
@@ -531,8 +531,7 @@ void StringPool::print() const
     duint count = 0;
     forAll([this, &count] (Id id)
     {
-        QByteArray strUtf8 = string(id).toUtf8();
-        fprintf(stderr, "%*u %5u %s\n", padding, count++, id, strUtf8.constData());
+        fprintf(stderr, "%*u %5u %s\n", padding, count++, id, string(id).c_str());
         return LoopContinue;
     });
     fprintf(stderr, "  There is %u %s in the pool.\n", duint( size() ),

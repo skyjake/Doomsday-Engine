@@ -45,6 +45,7 @@ public:
     int year() const;
     int month() const;
     int dayOfMonth() const;
+    int dayOfYear() const;
     int hours() const;
     int minutes() const;
     int seconds() const;

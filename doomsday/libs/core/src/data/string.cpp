@@ -294,18 +294,35 @@ String &String::replace(Char before, Char after)
 String &String::replace(const CString &before, const CString &after)
 {
     const String oldTerm{before};
-    const iRangecc newTerm{after.begin(), after.end()};
+    const iRangecc newTerm = after;
     iRangecc remaining(*this);
     String result;
     dsize found;
     while ((found = CString(remaining).indexOf(oldTerm)) != npos)
     {
         const iRangecc prefix{remaining.start, remaining.start + found};
-        appendRange_String(&result._str, &prefix);
-        appendRange_String(&result._str, &newTerm);
+        appendRange_String(result, &prefix);
+        appendRange_String(result, &newTerm);
         remaining.start += found + before.size();
     }
-    appendRange_String(&result._str, &remaining);
+    appendRange_String(result, &remaining);
+    return *this = result;
+}
+
+String &String::replace(const RegExp &before, const CString &after)
+{
+    const iRangecc newTerm = after;
+    iRangecc remaining(*this);
+    String result;
+    RegExpMatch found;
+    while (before.match(*this, found))
+    {
+        const iRangecc prefix{remaining.start, found.begin()};
+        appendRange_String(result, &prefix);
+        appendRange_String(result, &newTerm);
+        remaining.start = found.end();
+    }
+    appendRange_String(result, &remaining);
     return *this = result;
 }
 
@@ -526,7 +543,7 @@ bool String::containsWord(const String &word) const
     {
         return false;
     }
-    return RegExp(stringf("\\b%s\\b", word.c_str())).match(*this).hasMatch();
+    return RegExp(stringf("\\b%s\\b", word.c_str())).hasMatch(*this);
 }
 
 dint String::compareWithCase(const String &other) const

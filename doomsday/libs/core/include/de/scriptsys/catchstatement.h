@@ -24,8 +24,6 @@
 #include "../ArrayExpression"
 #include "../Compound"
 
-#include <QFlags>
-
 namespace de {
 
 /**
@@ -41,7 +39,6 @@ public:
         /// The final catch compound in a sequence of catch compounds.
         FinalCompound = 0x1
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     /// Flags.
     Flags flags;
@@ -82,8 +79,6 @@ private:
     ArrayExpression *_args;
     Compound _compound;
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(CatchStatement::Flags)
 
 } // namespace de
 

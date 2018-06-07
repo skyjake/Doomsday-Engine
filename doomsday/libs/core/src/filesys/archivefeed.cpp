@@ -357,7 +357,7 @@ void ArchiveFeed::uncacheAllEntries(StringList folderTypes) // static
 
     for (String const &folderType : folderTypes)
     {
-        foreach (File *file, FileSystem::get().indexFor(folderType).files())
+        for (File *file : FS::get().indexFor(folderType).files())
         {
             if (auto *feed = file->as<Folder>().primaryFeedMaybeAs<ArchiveFeed>())
             {

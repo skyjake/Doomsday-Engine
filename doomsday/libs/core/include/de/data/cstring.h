@@ -51,6 +51,11 @@ public:
         updateEnd();
         return _range;
     }
+    operator iRangecc() const
+    {
+        updateEnd();
+        return iRangecc{begin(), end()};
+    }
     dsize size() const
     {
         updateEnd();

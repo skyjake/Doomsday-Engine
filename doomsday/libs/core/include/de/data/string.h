@@ -199,6 +199,7 @@ public:
 
     inline operator const char *() const { return c_str(); }
     inline operator const iString *() const { return &_str; }
+    inline operator iString *() { return &_str; }
     inline operator std::string() const { return toStdString(); }
 
     inline std::string toStdString() const
@@ -280,6 +281,7 @@ public:
     void insert(BytePos pos, const String &str);
     String &replace(Char before, Char after);
     String &replace(const CString &before, const CString &after);
+    String &replace(const RegExp &before, const CString &after);
 
     /**
      * Does a path concatenation on this string and the argument. Note that if
@@ -391,7 +393,10 @@ public:
     inline bool operator>=(const char *cstr) const { return compare(cstr) >= 0; }
 
     inline int compare(const char *cstr) const { return cmp_String(&_str, cstr); }
-    inline int compare(const String &s) const { return cmpString_String(&_str, &s._str); }
+    inline int compare(const String &s, CaseSensitivity cs = CaseSensitive) const {
+        return cmpStringSc_String(
+            &_str, &s._str, cs == CaseSensitive ? &iCaseSensitive : &iCaseInsensitive);
+    }
 
     /**
      * Compare two strings (case sensitive).
@@ -690,8 +695,8 @@ inline String operator+(Char ch, const String &s) {
     return String(1, ch) + s;
 }
 
-inline String operator+(const char *cStr, const String &s) {
-    return String(cStr) + s;
+inline String operator+(const char *left, const String &right) {
+    return String(left) + right;
 }
 
 inline const char *operator+(const char *cStr, const String::BytePos &offset) {

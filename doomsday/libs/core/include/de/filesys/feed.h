@@ -21,8 +21,7 @@
 #define LIBCORE_FEED_H
 
 #include "../libcore.h"
-
-#include <list>
+#include "../List"
 
 namespace de {
 

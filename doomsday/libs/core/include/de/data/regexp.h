@@ -24,22 +24,32 @@
 
 namespace de {
 
-class RegExpMatch
+class DE_PUBLIC RegExpMatch
 {
 public:
+    iRegExpMatch match;
+
     RegExpMatch();
 
-private:
-    iRegExpMatch _match;
+    const char *begin() const;
+    const char *end() const;
+
+    void   clear();
+    String captured(int index = 0) const;
 };
 
 /**
  * Perl-compatible regular expression.
  */
-class RegExp
+class DE_PUBLIC RegExp
 {
 public:
     RegExp(const String &expression = {}, String::CaseSensitivity cs = String::CaseSensitive);
+    ~RegExp();
+
+    bool match(const String &subject, RegExpMatch &match) const;
+    bool hasMatch(const String &subject) const;
+    bool exactMatch(const String &subject) const;
 
 private:
     iRegExp *_d;

@@ -21,31 +21,32 @@
 #include "de/FileSystem"
 #include "de/LinkFile"
 #include "de/Loop"
-#include <regex>
+#include "de/RegExp"
 
 namespace de {
 namespace filesys {
         
-static const std::string PREFIX = "asset";
+static const char *PREFIX_DOT = "asset.";
+static const char *PREFIX_SLASH_DOT = "asset\\.";
 
 DE_PIMPL(AssetObserver)
 , DE_OBSERVES(FileIndex, Addition)
 , DE_OBSERVES(FileIndex, Removal)
 {
-    const std::regex pattern;
+    RegExp pattern;
 
     static FileIndex const &linkIndex() {
-        return App::fileSystem().indexFor(DE_TYPE_NAME(LinkFile));
+        return FS::get().indexFor(DE_TYPE_NAME(LinkFile));
     }
 
     static String assetIdentifier(File const &link) {
-        DE_ASSERT(link.name().beginsWith(String::fromStdString(PREFIX + ".")));
-        return link.name().mid(6);
+        DE_ASSERT(link.name().beginsWith(PREFIX_DOT));
+        return link.name().substr(String::BytePos(6));
     }
 
     Impl(Public *i, String const &regex)
         : Base(i)
-        , pattern(PREFIX + "\\." + regex.toStdString(), std::regex::icase)
+        , pattern(PREFIX_SLASH_DOT + regex, String::CaseInsensitive)
     {
         // We will observe available model assets.
         linkIndex().audienceForAddition() += this;

@@ -53,7 +53,7 @@ Value *TextValue::duplicate() const
 
 Value::Number TextValue::asNumber() const
 {
-    return _value.toDouble();
+    return std::strtod(_value, nullptr);
 }
 
 Value::Text TextValue::asText() const
@@ -77,7 +77,7 @@ bool TextValue::contains(Value const &value) const
     // type conversions.
     if (is<TextValue>(value))
     {
-        return _value.indexOf(value.asText(), Qt::CaseSensitive) >= 0;
+        return _value.indexOf(value.as<TextValue>()._value) >= 0;
     }
     return Value::contains(value);
 }
@@ -85,10 +85,9 @@ bool TextValue::contains(Value const &value) const
 bool TextValue::isTrue() const
 {
     // If there is at least one nonwhite character, this is considered a truth.
-    for (Text::const_iterator i = _value.begin(); i != _value.end(); ++i)
+    for (auto ch : _value)
     {
-        if (!(*i).isSpace())
-            return true;
+        if (!iswspace(ch)) return true;
     }
     return false;
 }
@@ -130,15 +129,14 @@ void TextValue::multiply(Value const &value)
     }
     else
     {
-        QString str;
-        QTextStream os(&str);
+        String str;
         while (factor-- > 1)
         {
-            os << _value;
+            str += _value;
         }
         // The remainder.
         dint remain = dint(std::floor((factor + 1) * _value.size() + .5));
-        os << _value.substr(0, remain);
+        str += _value.left(String::CharPos(remain));
         _value = str;
     }
 }
@@ -177,31 +175,27 @@ void TextValue::modulo(Value const &value)
 
 String TextValue::substitutePlaceholders(String const &pattern, const std::list<Value const *> &args)
 {
-    QString result;
-    QTextStream out(&result);
-    list<Value const *>::const_iterator arg = args.begin();
+    String result;
+    auto arg = args.begin();
 
-    for (String::const_iterator i = pattern.begin(); i != pattern.end(); ++i)
+    for (auto i = pattern.begin(); i != pattern.end(); ++i)
     {
-        QChar ch = *i;
-
+        Char ch = *i;
         if (ch == '%')
         {
             if (arg == args.end())
             {
                 throw IllegalPatternError("TextValue::replacePlaceholders",
-                    "Too few substitution values");
+                                          "Too few substitution values");
             }
-
-            out << String::patternFormat(i, pattern.end(), **arg);
+            result += String::patternFormat(i, pattern.end(), **arg);
             ++arg;
         }
         else
         {
-            out << ch;
+            result += ch;
         }
     }
-
     return result;
 }
 

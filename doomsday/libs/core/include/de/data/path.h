@@ -84,6 +84,7 @@ public:
 //        String toString() const;
 
         Rangecc toRange() const { return range; }
+        String toString() const { return String(range); }
 
         /**
          * Determines the length of the segment in characters.

@@ -44,12 +44,14 @@ String ArchiveFolder::describe() const
 {
     DE_GUARD(this);
 
-    String desc = String("archive \"%1\"").arg(name());
+    String desc = String::format("archive \"%s\"", name().c_str());
 
     String const feedDesc = describeFeeds();
     if (!feedDesc.isEmpty())
     {
-        desc += String(" (%1)").arg(feedDesc);
+        desc += " (";
+        desc += feedDesc;
+        desc += ")";
     }
 
     return desc;

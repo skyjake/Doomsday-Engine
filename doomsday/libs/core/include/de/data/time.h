@@ -25,6 +25,7 @@
 #include "../ISerializable"
 
 #include <chrono>
+#include <c_plus/time.h>
 
 namespace de {
 
@@ -169,7 +170,11 @@ public:
 
     Time(Time &&moved);
 
+    Time(int year, int month, int day, int hour, int minute, int second);
+
     Time(const TimePoint &tp);
+
+    Time(iTime time);
 
     /**
      * Construct a time relative to the shared high performance timer.
@@ -273,6 +278,8 @@ public:
      * 2012-12-02 13:08:21.851).
      */
     String asText(Format format = ISOFormat) const;
+
+    String asText(const char *format) const;
 
     /**
      * Parses a text string into a Time.

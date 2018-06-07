@@ -26,9 +26,11 @@
 #include "de/Thread"
 #include "de/Writer"
 
+#include <ctime>
+
 namespace de {
 
-static String const ISO_FORMAT = "yyyy-MM-dd hh:mm:ss.zzz";
+//static const char *ISO_FORMAT = "yyyy-MM-dd hh:mm:ss.zzz";
 
 static HighPerformanceTimer &highPerfTimer()
 {
@@ -96,7 +98,7 @@ DE_PIMPL_NOREF(Time)
 
     Impl()
         : flags(SysTime | HighPerformance)
-        , dateTime(std::chrono::system_clock::now())
+        , sysTime(std::chrono::system_clock::now())
         , highPerfElapsed(highPerfTimer().elapsed())
     {}
 
@@ -115,7 +117,7 @@ DE_PIMPL_NOREF(Time)
     {
         if (flags & SysTime)
         {
-            return sysTime != TimePoint::zero();
+            return sysTime != TimePoint();
         }
         return (flags & HighPerformance) != 0;
     }
@@ -185,7 +187,7 @@ DE_PIMPL_NOREF(Time)
         {
             return highPerfElapsed - earlier.highPerfElapsed;
         }
-        if ((flags & DateTime) && (earlier.flags & DateTime))
+        if ((flags & SysTime) && (earlier.flags & SysTime))
         {
             //return earlier.dateTime.msecsTo(dateTime) / 1000.0;
             using namespace std::chrono;
@@ -215,8 +217,32 @@ Time::Time(Time const &other) : d(new Impl(*other.d))
 Time::Time(Time &&moved) : d(std::move(moved.d))
 {}
 
+Time::Time(int year, int month, int day, int hour, int minute, int second)
+    : d(new Impl)
+{
+    using namespace std;
+
+    tm t{};
+    t.tm_year  = year - 1900;
+    t.tm_mon   = month - 1;
+    t.tm_mday  = day;
+    t.tm_hour  = hour;
+    t.tm_min   = minute;
+    t.tm_sec   = second;
+    d->sysTime = chrono::system_clock::from_time_t(mktime(&t));
+    d->flags |= Impl::SysTime;
+}
+
 Time::Time(const TimePoint &tp) : d(new Impl(tp))
 {}
+
+Time::Time(iTime time) : d(new Impl)
+{
+    using namespace std::chrono;
+    d->flags |= Impl::SysTime;
+    d->sysTime = system_clock::from_time_t(time.ts.tv_sec) +
+                 duration_cast<system_clock::duration>(nanoseconds(time.ts.tv_nsec));
+}
 
 Time::Time(TimeSpan const &highPerformanceDelta)
     : ISerializable(), d(new Impl(highPerformanceDelta))
@@ -248,7 +274,7 @@ time_t Time::toTime_t() const
     if (d->flags & Impl::HighPerformance)
     {
         return std::chrono::system_clock::to_time_t
-                ((highPerfTimer().startedAt() + d->highPerfElapsed()).d->sysTime);
+                ((highPerfTimer().startedAt() + d->highPerfElapsed).d->sysTime);
     }
     return 0;
 }
@@ -302,9 +328,10 @@ TimeSpan Time::operator - (Time const &earlierTime) const
 
 dint Time::asBuildNumber() const
 {
-    if (d->hasDateTime())
+    if (d->flags & Impl::SysTime)
     {
-        return (d->dateTime.date().year() - 2011)*365 + d->dateTime.date().dayOfYear();
+        const Date date{*this};
+        return (date.year() - 2011) * 365 + date.dayOfYear();
     }
     return 0;
 }
@@ -315,15 +342,17 @@ String Time::asText(Format format) const
     {
         return "(undefined time)";
     }
-    if (d->hasDateTime())
+    if (d->flags & Impl::SysTime)
     {
         if (format == ISOFormat)
         {
-            return d->dateTime.toString(ISO_FORMAT);
+            const auto dur = d->sysTime.time_since_epoch();
+            auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+            return asText("%F %M") + stringf("%03i", ms % 1000).c_str();
         }
         else if (format == ISODateOnly)
         {
-            return d->dateTime.toString("yyyy-MM-dd");
+            return d->dateTime.toString("%F");
         }
         else if (format == FriendlyFormat)
         {
@@ -383,6 +412,14 @@ String Time::asText(Format format) const
     return "";
 }
 
+String Time::asText(const char *format) const
+{
+    const time_t time = toTime_t();
+    char buf[256];
+    strftime(buf, sizeof(buf) - 1, format, std::localtime(&time));
+    return buf;
+}
+
 static int parseMonth(String const &shortName)
 {
     static char const *months[] = {
@@ -402,12 +439,8 @@ static int parseMonth(String const &shortName)
 
 Time Time::fromText(String const &text, Time::Format format)
 {
-    DE_ASSERT(format == ISOFormat ||
-                 format == ISODateOnly ||
-                 format == FriendlyFormat ||
-                 format == CompilerDateTime ||
-                 format == HumanDate ||
-                 format == UnixLsStyleDateTime);
+    DE_ASSERT(format == ISOFormat || format == ISODateOnly || format == FriendlyFormat ||
+              format == CompilerDateTime || format == HumanDate || format == UnixLsStyleDateTime);
 
     if (format == ISOFormat)
     {

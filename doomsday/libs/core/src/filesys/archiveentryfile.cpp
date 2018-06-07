@@ -80,7 +80,7 @@ String ArchiveEntryFile::describe() const
 {
     DE_GUARD(this);
 
-    return String("archive entry \"%1\"").arg(d->entryPath);
+    return String("archive entry \"%s\"", d->entryPath.c_str());
 }
 
 void ArchiveEntryFile::clear()

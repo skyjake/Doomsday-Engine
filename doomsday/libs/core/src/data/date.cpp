@@ -62,6 +62,11 @@ int Date::dayOfMonth() const
     return d->date.day;
 }
 
+int Date::dayOfYear() const
+{
+    return d->date.dayOfYear;
+}
+
 int Date::hours() const
 {
     return d->date.hour;

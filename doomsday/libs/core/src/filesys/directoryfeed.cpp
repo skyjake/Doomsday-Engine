@@ -25,6 +25,8 @@
 #include "de/Date"
 #include "de/App"
 
+#include <fstream>
+#include <c_plus/object.h>
 #include <c_plus/fileinfo.h>
 
 namespace de {
@@ -281,26 +283,25 @@ void DirectoryFeed::changeWorkingDir(NativePath const &nativePath)
 
 File::Status DirectoryFeed::fileStatus(NativePath const &nativePath)
 {
-    QFileInfo info(nativePath);
-    if (!info.exists())
+    cplus::Ref<iFileInfo> info(new_FileInfo(nativePath.toString()));
+    if (!exists_FileInfo(info))
     {
         /// @throw StatusError Determining the file status was not possible.
-        throw StatusError("DirectoryFeed::fileStatus", nativePath + " inaccessible");
+        throw StatusError("DirectoryFeed::fileStatus", nativePath.toString() + " inaccessible");
     }
 
     // Get file status information.
-    File::Status st { info.isDir()? File::Type::Folder : File::Type::File,
-                      dsize(info.size()),
-                      info.lastModified() };
+    File::Status st { isDirectory_FileInfo(info)? File::Type::Folder : File::Type::File,
+                      dsize(size_FileInfo(info)),
+                      Time(lastModified_FileInfo(info)) };
 
     // Check for overridden status.
     String const overrideName = nativePath + fileStatusSuffix;
-    if (QFileInfo().exists(overrideName))
+    if (fileExistsCStr_FileInfo(overrideName))
     {
-        QFile f(overrideName);
-        if (f.open(QFile::ReadOnly))
+        if (std::ifstream f{overrideName.c_str()})
         {
-            st.modifiedAt = Time::fromText(String::fromUtf8(f.readAll()), Time::ISOFormat);
+            st.modifiedAt = Time::fromText(Block::readAll(f), Time::ISOFormat);
         }
     }
     return st;
@@ -308,16 +309,16 @@ File::Status DirectoryFeed::fileStatus(NativePath const &nativePath)
 
 void DirectoryFeed::setFileModifiedTime(NativePath const &nativePath, Time const &modifiedAt)
 {
-    String const overrideName = nativePath + fileStatusSuffix;
+    const String overrideName = nativePath + fileStatusSuffix;
     if (!modifiedAt.isValid())
     {
-        QFile::remove(overrideName);
+        remove(overrideName);
         return;
     }
-    QFile f(overrideName);
-    if (f.open(QFile::WriteOnly | QFile::Truncate))
+    if (std::ofstream f{overrideName.c_str(), std::ios::trunc})
     {
-        f.write(modifiedAt.asText(Time::ISOFormat).toUtf8());
+        const String mod = modifiedAt.asText(Time::ISOFormat);
+        f.write(mod, mod.size());
     }
 }
 
@@ -348,8 +349,8 @@ File &DirectoryFeed::manuallyPopulateSingleFile(NativePath const &nativePath,
         int const last = nativePath.segmentCount() - 1;
         Rangei packRange(last, last);
         while (packRange.start > 0 &&
-               nativePath.segment(packRange.start - 1).toStringRef()
-               .endsWith(".pack", Qt::CaseInsensitive))
+               nativePath.segment(packRange.start - 1).toString()
+               .endsWith(".pack", String::CaseInsensitive))
         {
             packRange.start--;
         }

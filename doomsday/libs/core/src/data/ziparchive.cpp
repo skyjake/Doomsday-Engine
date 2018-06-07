@@ -267,7 +267,7 @@ DE_PIMPL(ZipArchive)
 {
     Block directoryCacheId;
     CentralEnd zipSummary;
-    QVector<std::pair<Block, CentralFileHeader>> centralHeaders;
+    List<std::pair<Block, CentralFileHeader>> centralHeaders;
 
     Impl(Public *i) : Base(i) {}
 
@@ -332,7 +332,7 @@ DE_PIMPL(ZipArchive)
             {
                 /// @throw FormatError  Invalid signature in a central directory entry.
                 throw FormatError("ZipArchive::readCentralDirectory",
-                                  QString("Corrupt central directory (at file %1)").arg(index));
+                                  stringf("Corrupt central directory (at file %u)", index));
             }
 
             Block latin1Name;
@@ -375,10 +375,9 @@ DE_PIMPL(ZipArchive)
                 // Unpack the last modified time from the ZIP entry header.
                 DOSDate lastModDate(header.lastModDate);
                 DOSTime lastModTime(header.lastModTime);
-                entry->modifiedAt = QDateTime(QDate(lastModDate.year + 1980, lastModDate.month, lastModDate.dayOfMonth),
-                                              QTime(lastModTime.hours, lastModTime.minutes, lastModTime.seconds),
-                                              Qt::UTC); // buildpackage.py sets UTC for .packs
-
+                entry->modifiedAt = Time(lastModDate.year + 1980, lastModDate.month, lastModDate.dayOfMonth,
+                                         lastModTime.hours, lastModTime.minutes, lastModTime.seconds);
+                                             
                 if (readingFromOriginal)
                 {
                     LocalFileHeader localHeader;
