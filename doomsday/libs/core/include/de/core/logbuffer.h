@@ -146,12 +146,12 @@ public:
      */
     void enableFlushing(bool yes = true);
 
-    /**
+    /*
      * Sets the interval for autoflushing. Also automatically enables flushing.
      *
      * @param interval  Interval for autoflushing.
      */
-    void setAutoFlushInterval(TimeSpan const &interval);
+//    void setAutoFlushInterval(TimeSpan const &interval);
 
     enum OutputChangeBehavior {
         FlushFirstToOldOutputs,

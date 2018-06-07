@@ -23,8 +23,6 @@
 #include "de/PathTree"
 #include "de/Guard"
 
-#include <QDebug>
-
 namespace de {
 
 Path::hash_type const PathTree::no_hash = Path::hash_range;

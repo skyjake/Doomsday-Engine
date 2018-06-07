@@ -621,7 +621,7 @@ public:
      *
      * @return Composed textual representation of the entry.
      */
-    String asText(Flags const &flags = 0, String::BytePos shortenSection = String::BytePos(0)) const;
+    String asText(Flags const &flags = 0, dsize shortenSection = 0) const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;
@@ -752,11 +752,11 @@ public:
      */
     static Log &threadLog();
 
-    /**
+    /*
      * Deletes the current thread's log. Threads should call this before
      * they quit.
      */
-    static void disposeThreadLog();
+//    static void disposeThreadLog();
 
 private:
     DE_PRIVATE(d)

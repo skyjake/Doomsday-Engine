@@ -28,6 +28,7 @@
 #include "../src/core/logtextstyle.h"
 
 #include <array>
+#include <c_plus/stdthreads.h>
 
 namespace de {
 
@@ -354,7 +355,7 @@ Flags LogEntry::flags() const
     return _defaultFlags;
 }
 
-String LogEntry::asText(Flags const &formattingFlags, String::BytePos shortenSection) const
+String LogEntry::asText(Flags const &formattingFlags, dsize shortenSection) const
 {
     DE_GUARD(this);
 
@@ -490,7 +491,7 @@ String LogEntry::asText(Flags const &formattingFlags, String::BytePos shortenSec
         }
         else
         {
-            if (shortenSection < _section.sizei())
+            if (shortenSection < _section.sizeu())
             {
                 sect = _section.right(_section.sizeb() - shortenSection);
             }
@@ -499,7 +500,7 @@ String LogEntry::asText(Flags const &formattingFlags, String::BytePos shortenSec
         if (flags & SectionSameAsBefore)
         {
             int visibleSectLen = (!sect.isEmpty() && shortenSection? sect.sizei() : 0);
-            size_t fillLen = de::max(shortenSection.index, _section.sizeu()) - visibleSectLen;
+            size_t fillLen = de::max(shortenSection, _section.sizeu()) - visibleSectLen;
             if (fillLen > LINE_BREAKING_SECTION_LENGTH) fillLen = 2;
             output << String(fillLen, Char(' '));
             if (visibleSectLen)
@@ -740,14 +741,41 @@ LogEntry &Log::enter(duint32 metadata, String const &format, LogEntry::Args argu
     return *logsPtr;
 }*/
 
-static QThreadStorage<Log> theLogs;
+//static QThreadStorage<Log> theLogs;
+static tss_t threadLogKey;
+
+static void deleteLog(void *log)
+{
+    if (log) delete static_cast<Log *>(log);
+}
+
+static void destroyThreadLog()
+{
+    if (threadLogKey)
+    {
+        deleteLog(tss_get(threadLogKey));
+        tss_set(threadLogKey, nullptr);
+    }
+}
 
 Log &Log::threadLog()
 {
+    if (!threadLogKey)
+    {
+        tss_create(&threadLogKey, deleteLog);
+        atexit(destroyThreadLog); // at end of thread
+    }
+    Log *log = static_cast<Log *>(tss_get(threadLogKey));
+    if (!log)
+    {
+        tss_set(threadLogKey, log = new Log);
+    }
+    return *log;
+
     // Each thread has its own log.
     //QThread *thread = QThread::currentThread();
 
-    return theLogs.localData();
+    //return theLogs.localData();
 
     /*if (!theLogs.hasLocalData())
     {
@@ -769,6 +797,7 @@ Log &Log::threadLog()
     }*/
 }
 
+#if 0
 void Log::disposeThreadLog()
 {
     /*internal::Logs &logs = theLogs();
@@ -782,6 +811,7 @@ void Log::disposeThreadLog()
         logs.erase(found);
     }*/
 }
+#endif
 
 LogEntryStager::LogEntryStager(duint32 metadata, String const &format)
     : _metadata(metadata)

@@ -42,9 +42,9 @@ class DE_PUBLIC TextApp : public App
 public:
     TextApp(const StringList &args);
 
-    void setMetadata(String const &orgName, String const &orgDomain,
+/*    void setMetadata(String const &orgName, String const &orgDomain,
                      String const &appName, String const &appVersion);
-
+*/
 //    bool notify(QObject *receiver, QEvent *event);
 
     int execLoop();

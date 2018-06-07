@@ -408,6 +408,7 @@ Record parseJSON(const String &jsonText)
     try
     {
         std::unique_ptr<Value> parsed(internal::JSONParser(jsonText).parse());
+        // The returned object needs to be a record.
         if (is<DictionaryValue>(parsed.get()))
         {
             return parsed->as<DictionaryValue>().toRecord();

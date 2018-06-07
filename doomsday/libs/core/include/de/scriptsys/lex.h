@@ -90,7 +90,7 @@ public:
     bool atEnd() const;
 
     /// Returns the current position of the analyzer.
-    dsize pos() const;
+    String::const_iterator pos() const;
 
     /// Returns the next character, according to the position.
     /// Characters past the end of the input string are returned
@@ -162,14 +162,12 @@ private:
     /// Input text being analyzed.
     String const *_input;
 
-    mutable dsize _nextPos;
+    mutable String::const_iterator _nextPos;
 
     struct State {
-        dsize pos;          ///< Current reading position.
-        dsize lineNumber;   ///< Keeps track of the line number on which the current position is.
-        dsize lineStartPos; ///< Position which begins the current line.
-
-        State() : pos(0), lineNumber(1), lineStartPos(0) {}
+        String::const_iterator pos; ///< Current reading position.
+        dsize lineNumber = 1; ///< Keeps track of the line number on which the current position is.
+        String::const_iterator lineStartPos; ///< Position which begins the current line.
     };
 
     State _state;

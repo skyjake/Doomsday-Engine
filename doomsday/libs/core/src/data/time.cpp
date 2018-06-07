@@ -18,11 +18,13 @@
  */
 
 #include "de/Time"
+
 #include "de/Date"
-#include "de/String"
-#include "de/Writer"
-#include "de/Reader"
 #include "de/HighPerformanceTimer"
+#include "de/Reader"
+#include "de/String"
+#include "de/Thread"
+#include "de/Writer"
 
 namespace de {
 

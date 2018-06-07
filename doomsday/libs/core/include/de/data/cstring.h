@@ -37,6 +37,7 @@ public:
     CString(const char *start, const char *end) : _range{start, end} {}
     CString(const std::string &str) : _range{str.data(), str.data() + str.size()} {}
     CString(const String &str) : _range{str.data(), str.data() + str.size()} {}
+    CString(const Rangecc &cc) : _range{cc} {}
     CString(const iRangecc &cc) : _range{cc.start, cc.end} {}
 
     inline void updateEnd() const
@@ -44,6 +45,7 @@ public:
         if (!_range.end) _range.end = _range.start + strlen(_range.start);
     }
     operator String() const { return {_range.start, _range.end}; }
+    String toString() const { return String(_range.start, _range.end); }
     operator Rangecc() const
     {
         updateEnd();
@@ -54,17 +56,24 @@ public:
         updateEnd();
         return _range.size();
     }
+    bool contains(char ch) const;
     dsize indexOf(char ch, size_t from = 0) const;
     dsize indexOf(const char *cStr, size_t from = 0) const;
     CString substr(size_t start, size_t count = npos) const;
     const char *begin() const { return _range.start; }
     const char *end() const { updateEnd(); return _range.end; }
+    int compare(const CString &other, const iStringComparison *sc = &iCaseSensitive) const;
+    int compare(const char *cStr, const iStringComparison *sc = &iCaseSensitive) const;
 
     static size_t npos;
 
 private:
     mutable Rangecc _range;
 };
+
+String operator+(const char *cStr, const CString &str) {
+    return String(cStr) + str;
+}
 
 } // namespace de
 

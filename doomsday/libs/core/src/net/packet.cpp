@@ -24,8 +24,6 @@
 #include "de/String"
 #include "de/Writer"
 
-#include <QByteArray>
-
 namespace de {
 
 Packet::Type Packet::typeFromString(char const *fourcc)

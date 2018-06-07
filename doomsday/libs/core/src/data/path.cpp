@@ -21,10 +21,8 @@
 #include "de/Reader"
 #include "de/Writer"
 
-#include <QList>
 #include <de/math.h>
 #include <de/ByteRefArray>
-#include <cstring> // memset
 
 namespace de {
 
@@ -42,9 +40,7 @@ Path::hash_type Path::Segment::hash() const
     // Is it time to compute the hash?
     if (!(flags & GotHashKey))
     {
-        String const lower = range.toString().toLower();
-        hashKey = de::crc32(ByteRefArray(lower.constData(), lower.size() * sizeof(QChar)))
-                % hash_range;
+        hashKey = de::crc32(range.toString().lower()) % hash_range;
         flags |= GotHashKey;
     }
     return hashKey;
@@ -56,20 +52,20 @@ bool Path::Segment::hasWildCard() const
     {
         return flags.testFlag(IncludesWildCard);
     }
-    bool isWild = toStringRef().contains(QChar('*'));
+    bool isWild = range.contains('*');
     applyFlagOperation(flags, IncludesWildCard, isWild? SetFlags : UnsetFlags);
     flags |= WildCardChecked;
     return isWild;
 }
 
-bool Path::Segment::operator == (Path::Segment const &other) const
+bool Path::Segment::operator==(Path::Segment const &other) const
 {
-    return !range.compare(other.range, Qt::CaseInsensitive);
+    return !range.compare(other.range, &iCaseInsensitive);
 }
 
 bool Path::Segment::operator < (Path::Segment const &other) const
 {
-    return range.compare(other.range, Qt::CaseInsensitive) < 0;
+    return range.compare(other.range, &iCaseInsensitive) < 0;
 }
 
 int Path::Segment::length() const
@@ -82,15 +78,15 @@ dsize Path::Segment::size() const
     return range.size();
 }
 
-Path::Segment::operator String () const
-{
-    return toString();
-}
+//Path::Segment::operator String() const
+//{
+//    return range;
+//}
 
-String Path::Segment::toString() const
-{
-    return range.string()->mid(range.position(), range.size());
-}
+//String Path::Segment::toString() const
+//{
+//    return range.string()->mid(range.position(), range.size());
+//}
 
 //---------------------------------------------------------------------------------------
 
@@ -133,7 +129,7 @@ DE_PIMPL_NOREF(Path)
     Impl() : separator('/'), segmentCount(0)
     {}
 
-    Impl(String const &p, QChar sep) : path(p), separator(sep), segmentCount(0)
+    Impl(String const &p, Char sep) : path(p), separator(sep), segmentCount(0)
     {}
 
     ~Impl()
@@ -203,8 +199,8 @@ DE_PIMPL_NOREF(Path)
             return;
         }
 
-        QChar const *segBegin = path.constData();
-        QChar const *segEnd   = path.constData() + path.length() - 1;
+        Char const *segBegin = path.constData();
+        Char const *segEnd   = path.constData() + path.length() - 1;
 
         // Skip over any trailing delimiters.
         for (int i = path.length();
@@ -212,7 +208,7 @@ DE_PIMPL_NOREF(Path)
             --segEnd) {}
 
         // Scan the path for segments, in reverse order.
-        QChar const *from;
+        Char const *from;
         for (;;)
         {
             if (segEnd < segBegin) break; // E.g., path is "/"
@@ -246,7 +242,7 @@ DE_PIMPL_NOREF(Path)
 Path::Path() : d(new Impl)
 {}
 
-Path::Path(String const &path, QChar sep)
+Path::Path(String const &path, Char sep)
     : d(new Impl(path, sep))
 {}
 
@@ -459,12 +455,12 @@ dsize Path::size() const
     return length();
 }
 
-QChar Path::first() const
+Char Path::first() const
 {
     return d->path.first();
 }
 
-QChar Path::last() const
+Char Path::last() const
 {
     return d->path.last();
 }
@@ -482,7 +478,7 @@ Path &Path::operator = (String const &newPath)
     return *this;
 }
 
-Path &Path::set(String const &newPath, QChar sep)
+Path &Path::set(String const &newPath, Char sep)
 {
     d->path = newPath; // implicitly shared
     d->separator = sep;
@@ -490,7 +486,7 @@ Path &Path::set(String const &newPath, QChar sep)
     return *this;
 }
 
-Path Path::withSeparators(QChar sep) const
+Path Path::withSeparators(Char sep) const
 {
     if (sep == d->separator) return *this;
 
@@ -499,7 +495,7 @@ Path Path::withSeparators(QChar sep) const
     return Path(modPath, sep);
 }
 
-QChar Path::separator() const
+Char Path::separator() const
 {
     return d->separator;
 }
@@ -542,7 +538,7 @@ void Path::operator << (Reader &from)
     set(String::fromUtf8(b), sep);
 }
 
-String Path::normalizeString(String const &text, QChar replaceWith)
+String Path::normalizeString(String const &text, Char replaceWith)
 {
     String result = text;
     if (replaceWith != '/')
@@ -556,7 +552,7 @@ String Path::normalizeString(String const &text, QChar replaceWith)
     return result;
 }
 
-Path Path::normalize(String const &text, QChar replaceWith)
+Path Path::normalize(String const &text, Char replaceWith)
 {
     return Path(normalizeString(text, replaceWith), replaceWith);
 }

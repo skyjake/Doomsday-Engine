@@ -75,7 +75,7 @@ Value *NativePointerValue::duplicate() const
 
 Value::Text NativePointerValue::asText() const
 {
-    return QString("(native object 0x%1)").arg(dintptr(d->object), 0, 16);
+    return String::format("(native object %p)", d->object);
 }
 
 bool NativePointerValue::isTrue() const

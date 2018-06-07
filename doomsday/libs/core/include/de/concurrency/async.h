@@ -86,7 +86,8 @@ public:
 
     void abort() override
     {
-        terminate();
+//        terminate();
+        warning("AsyncTaskThread requested to terminate (ignoring)");
         notifyCompletion();
     }
 };

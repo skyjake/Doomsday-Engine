@@ -17,6 +17,7 @@
  */
 
 #include "de/EscapeParser"
+#include "de/CString"
 
 namespace de {
 
@@ -40,66 +41,73 @@ void EscapeParser::parse(String const &textWithEscapes)
     d->original = textWithEscapes;
     d->plain.clear();
 
-    String::ByteRange range;
+    //String::ByteRange range;
+    String::const_iterator pos = d->original.begin();
+    String::const_iterator end = pos;
+
+    const char escape = '\x1b';
 
     for (;;)
     {
-        range.end = d->original.indexOf('\x1b', range.start);
-        if (range.end >= 0)
+        while (*end != escape && end != d->original.end())
         {
-            // Empty ranges are ignored.
-            if (range.size() > 0)
-            {
-                DE_FOR_AUDIENCE2(PlainText, i)
-                {
-                    i->handlePlainText(range);
-                }
+            ++end;
+        }
 
-                // Update the plain text.
-                d->plain += d->original.substr(range);
+        if (*end == escape)
+        {
+            const CString plain{pos, end};
+            if (plain.size() > 0)
+            {
+                DE_FOR_AUDIENCE2(PlainText, i) { i->handlePlainText(plain); }
+                d->plain += plain;
             }
 
             // Check the escape sequences.
-            int escLen = 2;
-            char ch = d->original[range.end + 1].toLatin1();
+            //int escLen = 2;
+            auto escStart = ++end;
+            Char ch = *end++;
             switch (ch)
             {
             case '(':
             case '[':
             case '{': {
                 // Find the matching end.
-                auto end = d->original.indexOf(ch == '('? ')' : ch == '['? ']' : '}', range.end + 1);
-                if (end < 0) end = d->original.size() - 1;
-                escLen = end - range.end + 1;
+                //auto end = d->original.indexOf(ch == '('? ')' : ch == '['? ']' : '}', range.end + 1);
+                const char closing = (ch == '('? ')' : ch == '['? ']' : '}');
+                while (*end != closing && end != d->original.end())
+                {
+                    end++;
+                }
+                //if (end < 0) end = d->original.size() - 1;
+//                escLen = escEnd - end;
                 break; }
 
             case 'T':
-                escLen = 3;
+                end += 2;//escLen = 3;
                 break;
 
             default:
+                end++;
                 break;
             }
 
             DE_FOR_AUDIENCE2(EscapeSequence, i)
             {
-                i->handleEscapeSequence({range.end + 1, range.end + escLen});
+                i->handleEscapeSequence({escStart, end});
             }
 
             // Advance the scanner.
-            range.start = range.end + escLen;
+            pos = end;
         }
         else
         {
             // Final plain text range.
-            range.end = d->original.sizeb();
-            if (range.size() > 0)
+            const CString plain{pos, d->original.end()};
+            if (plain.size() > 0)
             {
-                DE_FOR_AUDIENCE2(PlainText, i)
-                {
-                    i->handlePlainText(range);
-                }
-                d->plain += d->original.substr(range);
+                DE_FOR_AUDIENCE2(PlainText, i) { i->handlePlainText(plain); }
+                d->plain += plain;
             }
             break;
         }

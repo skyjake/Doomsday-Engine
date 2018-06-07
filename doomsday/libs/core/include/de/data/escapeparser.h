@@ -38,7 +38,7 @@ public:
      *
      * @param range  Range in the original text.
      */
-    DE_DEFINE_AUDIENCE2(PlainText, void handlePlainText(const String::ByteRange &range))
+    DE_DEFINE_AUDIENCE2(PlainText, void handlePlainText(const CString &))
 
     /**
      * Called during parsing when an escape sequence has been parsed.
@@ -46,12 +46,12 @@ public:
      *
      * @param range  Range in the original text.
      */
-    DE_DEFINE_AUDIENCE2(EscapeSequence, void handleEscapeSequence(const String::ByteRange &range))
+    DE_DEFINE_AUDIENCE2(EscapeSequence, void handleEscapeSequence(const CString &))
 
 public:
     EscapeParser();
 
-    void parse(String const &textWithEscapes);
+    void parse(const String &textWithEscapes);
 
     /**
      * Returns the original string that was parsed.

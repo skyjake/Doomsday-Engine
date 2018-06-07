@@ -20,9 +20,6 @@
 #include "de/Task"
 #include "de/TaskPool"
 
-#include <QNetworkInterface>
-#include <QTimer>
-
 namespace de {
 namespace internal {
 
@@ -36,11 +33,11 @@ DE_PIMPL(NetworkInterfaces), public Lockable
 
         void runTask() override
         {
-            QList<QHostAddress> ipv6;
-            foreach (QHostAddress addr, QNetworkInterface::allAddresses())
-            {
-                ipv6 << QHostAddress(addr.toIPv6Address());
-            }
+            List<Address> ipv6;
+//            foreach (QHostAddress addr, QNetworkInterface::allAddresses())
+//            {
+//                ipv6 << QHostAddress(addr.toIPv6Address());
+//            }
 
             // Submit the updated information.
             {
@@ -53,7 +50,7 @@ DE_PIMPL(NetworkInterfaces), public Lockable
         }
     };
 
-    QList<QHostAddress> addresses; // lock before access
+    List<Address> addresses; // lock before access
     TaskPool tasks;
     QTimer updateTimer;
     bool gotAddresses = false;
@@ -75,7 +72,7 @@ NetworkInterfaces::NetworkInterfaces()
     : d(new Impl(this))
 {}
 
-QList<QHostAddress> NetworkInterfaces::allAddresses() const
+List<Address> NetworkInterfaces::allAddresses() const
 {
     if (!d->gotAddresses)
     {

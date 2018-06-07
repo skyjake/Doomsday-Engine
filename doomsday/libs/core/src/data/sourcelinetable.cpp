@@ -18,6 +18,7 @@
 
 #include "de/SourceLineTable"
 #include "de/PathTree"
+#include "de/Hash"
 
 #include <atomic>
 
@@ -38,7 +39,7 @@ DE_PIMPL_NOREF(SourceLineTable), public Lockable
     };
 
     PathTreeT<IdNode> paths;
-    QHash<duint, IdNode const *> lookup; // reverse lookup
+    Hash<duint, IdNode const *> lookup; // reverse lookup
 };
 
 std::atomic_uint SourceLineTable::Impl::IdNode::counter;
@@ -49,7 +50,7 @@ SourceLineTable::SourceLineTable() : d(new Impl)
 SourceLineTable::LineId SourceLineTable::lineId(String const &path, duint lineNumber)
 {
     Path const source(path);
-    
+
     DE_GUARD(d);
 
     auto const *node = d->paths.tryFind(source, PathTree::MatchFull | PathTree::NoBranch);

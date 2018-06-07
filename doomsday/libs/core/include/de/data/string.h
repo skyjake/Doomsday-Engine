@@ -145,6 +145,7 @@ public:
     String(const iBlock *bytes);
     String(const iString *other);
     String(const std::string &text);
+    String(const std::wstring &text);
     String(const char *nullTerminatedCStr);
     String(const wchar_t *nullTerminatedWideStr);
     String(const char *cStr, int length);
@@ -152,6 +153,8 @@ public:
     String(dsize length, char ch);
     String(dsize length, Char ch);
     String(const char *start, const char *end);
+    String(const Range<const char *> &range);
+    String(const CString &cstr);
     String(const std::string &str, dsize index, dsize length);
 
     template <typename Iterator>
@@ -255,11 +258,13 @@ public:
     List<String>  split(Char ch) const;
 
     String        operator+(const char *) const;
+    String        operator+(const CString &) const;
     inline String operator+(const String &other) const { return *this + (const char *) other; }
 
     String &operator+=(char ch);
     String &operator+=(Char ch);
     String &operator+=(const char *);
+    String &operator+=(const CString &);
     String &operator+=(const String &);
 
     String &append(char ch) { return *this += ch; }
@@ -359,11 +364,12 @@ public:
     String fileNamePath(Char dirChar = '/') const;
 
     /// Extracts everything but the extension from string.
-    String fileNameAndPathWithoutExtension(char dirChar = '/') const;
+    String fileNameAndPathWithoutExtension(Char dirChar = '/') const;
 
     BytePos indexOf(char ch) const { return BytePos{indexOf_String(&_str, ch)}; }
     BytePos indexOf(Char ch) const { return BytePos{indexOf_String(&_str, ch)}; }
     BytePos indexOf(const char *cstr) const { return BytePos{indexOfCStr_String(&_str, cstr)}; }
+    BytePos indexOf(const char *cstr, BytePos from) const { return BytePos{indexOfCStrFrom_String(&_str, cstr, from.index)}; }
     BytePos lastIndexOf(char ch) const { return BytePos{lastIndexOf_String(&_str, ch)}; }
     BytePos lastIndexOf(Char ch) const { return BytePos{lastIndexOf_String(&_str, ch)}; }
     BytePos lastIndexOf(const char *cstr) const { return BytePos{lastIndexOfCStr_String(&_str, cstr)}; }
@@ -514,10 +520,19 @@ public:
             next_StringConstIterator(&iter);
             return prior;
         }
+        const_iterator operator+(int count)
+        {
+            const_iterator i = *this;
+            while (count-- > 0) i++;
+            return i;
+        }
         const_iterator &operator+=(int count)
         {
             while (count-- > 0) next_StringConstIterator(&iter);
             return *this;
+        }
+        bool operator<(const const_iterator &other) const {
+            return iter.pos < other.iter.pos;
         }
         bool operator==(const const_iterator &other) const {
             return iter.str == other.iter.str && iter.pos == other.iter.pos;
@@ -702,8 +717,8 @@ struct DE_PUBLIC mb_iterator
 {
     const char *i;
     const char *start;
-    mbstate_t mb{};
-    int curCharLen = 0;
+    mutable mbstate_t mb{};
+    mutable int curCharLen = 0;
 
     mb_iterator(const char *p) : i{p}, start{i} {}
     mb_iterator(const String &str) : i{str.c_str()}, start{i} {}
@@ -715,10 +730,11 @@ struct DE_PUBLIC mb_iterator
     mb_iterator operator+(int byteOffset) const { return i + byteOffset; }
     bool operator==(const mb_iterator &other) const { return i == other.i; }
     bool operator!=(const mb_iterator &other) const { return !(*this == other); }
+    bool operator!=(const char *ptr) const { return i != ptr; }
 
     String::BytePos pos() const { return String::BytePos(i - start); }
 
-    Char decode();
+    Char decode() const;
 };
 
 } // namespace de

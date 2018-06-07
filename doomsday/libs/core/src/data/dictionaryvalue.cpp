@@ -125,7 +125,7 @@ Record DictionaryValue::toRecord() const
     for (auto i = _elements.begin(); i != _elements.end(); ++i)
     {
         Variable &var = rec.add(i->first.value->asText());
-        var.set(i->second->duplicateAsReference());
+        var.set(i->second->duplicate());
     }
     return rec;
 }

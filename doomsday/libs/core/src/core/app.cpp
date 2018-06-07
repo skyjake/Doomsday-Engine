@@ -62,6 +62,13 @@ namespace de {
 
 static App *singletonApp;
 
+const char *App::ORG_NAME    = "org.name";
+const char *App::ORG_DOMAIN  = "org.domain";
+const char *App::APP_NAME    = "name";
+const char *App::APP_VERSION = "version";
+const char *App::CONFIG_PATH = "config";
+const char *App::UNIX_HOME   = "unixHome";
+
 static Value *Function_App_Locate(Context &, Function::ArgumentValues const &args)
 {
     std::unique_ptr<DictionaryValue> result(new DictionaryValue);
@@ -98,8 +105,8 @@ DE_PIMPL(App)
 {
     iThread *mainThread = nullptr;
 
-    /// Name of the application (metadata for humans).
-    String appName;
+    /// Metadata about the application.
+    Record metadata;
 
     CommandLine cmdLine;
 
@@ -108,7 +115,7 @@ DE_PIMPL(App)
 
     /// Path of the application executable.
     NativePath appPath;
-    String unixHomeFolder;
+//    String unixHomeFolder;
 
     NativePath cachedBasePath;
     NativePath cachedPluginBinaryPath;
@@ -137,7 +144,7 @@ DE_PIMPL(App)
     filesys::RemoteFeedRelay remoteFeedRelay;
 
     /// The configuration.
-    Path configPath;
+//    Path configPath;
     Config *config;
 
     StringList packagesToLoadAtInit;
@@ -150,14 +157,20 @@ DE_PIMPL(App)
 
     Impl(Public *a, const StringList &args)
         : Base(a)
-        , appName("Doomsday Engine")
+        //, appName("Doomsday Engine")
         , cmdLine(args)
-        , unixHomeFolder(".doomsday")
+//        , unixHomeFolder()
         , persistentData(0)
-        , configPath("/packs/net.dengine.stdlib/modules/Config.ds")
+//        , configPath("/packs/net.dengine.stdlib/modules/Config.ds")
         , config(0)
         , terminateFunc(0)
     {
+        appPath = cmdLine.startupPath() / cmdLine.at(0);
+
+        metadata.set(APP_NAME,    "Doomsday Engine");
+        metadata.set(CONFIG_PATH, "/packs/net.dengine.stdlib/modules/Config.ds");
+        metadata.set(UNIX_HOME,   ".doomsday");
+
         #ifdef UNIX
         {
             // We wish to use U.S. English formatting for time and numbers (in libc).
@@ -386,14 +399,14 @@ DE_PIMPL(App)
         fs.root().locate<Folder>("/packs").populate();
     }
 
-    Record const *findAsset(String const &identifier) const
+    Record const *findAsset(const CString &identifier) const
     {
         // Access the package that has this asset via a link.
-        Folder const *pkg = fs.root().tryLocate<Folder>("/packs/asset." + identifier + "/.");
+        Folder const *pkg = fs.root().tryLocate<Folder>(String("/packs/asset.") + identifier + "/.");
         if (!pkg) return 0;
 
         // Find the record that has this asset's metadata.
-        String const ns = "package." + identifier;
+        const String ns = "package." + identifier;
         if (pkg->objectNamespace().has(ns))
         {
             return &(*pkg)[ns].valueAsRecord();
@@ -406,7 +419,7 @@ DE_PIMPL(App)
 
 DE_AUDIENCE_METHOD(App, StartupComplete)
 
-App::App(NativePath const &appFilePath, const StringList &args)
+App::App(const StringList &args)
     : d(new Impl(this, args))
 {
     d->unixInfo.reset(new UnixInfo);
@@ -432,7 +445,7 @@ App::App(NativePath const &appFilePath, const StringList &args)
     // the options from the command line.
     d->setLogLevelAccordingToOptions();
 
-    d->appPath = appFilePath;
+    //d->appPath = appFilePath;
 
     LOG_NOTE("Application path: ") << d->appPath;
     LOG_NOTE("Version: ") << Version::currentBuild().asHumanReadableText();
@@ -452,10 +465,18 @@ App::App(NativePath const &appFilePath, const StringList &args)
 App::~App()
 {
     LOG_AS("~App");
-
     d.reset();
-
     singletonApp = 0;
+}
+
+Record &App::metadata()
+{
+    return d->metadata;
+}
+
+const Record &App::metadata() const
+{
+    return d->metadata;
 }
 
 void App::addInitPackage(String const &identifier)
@@ -463,19 +484,21 @@ void App::addInitPackage(String const &identifier)
     d->packagesToLoadAtInit << identifier;
 }
 
-void App::setConfigScript(Path const &path)
+/*void App::setConfigScript(Path const &path)
 {
     d->configPath = path;
-}
+}*/
 
+/*
 void App::setName(String const &appName)
 {
     d->appName = appName;
 }
+*/
 
 void App::setUnixHomeFolderName(String const &name)
 {
-    d->unixHomeFolder = name;
+    d->metadata.set(UNIX_HOME, name);
 
     // Reload Unix config files.
     d->unixInfo.reset(new UnixInfo);
@@ -483,16 +506,17 @@ void App::setUnixHomeFolderName(String const &name)
 
 String App::unixHomeFolderName() const
 {
-    return d->unixHomeFolder;
+    return d->metadata.gets(UNIX_HOME);
 }
 
 String App::unixEtcFolderName() const
 {
-    if (d->unixHomeFolder.beginsWith("."))
+    String unixHome = d->metadata.gets(UNIX_HOME);
+    if (unixHome.beginsWith("."))
     {
-        return d->unixHomeFolder.substr(String::BytePos(1));
+        return unixHome.substr(String::BytePos(1));
     }
-    return d->unixHomeFolder;
+    return unixHome;
 }
 
 void App::setTerminateFunc(void (*func)(char const *))
@@ -607,7 +631,7 @@ NativePath App::nativeHomePath()
     #elif defined (MACOSX)
     {
         nativeHome = NativePath::homePath();
-        nativeHome = nativeHome / "Library/Application Support" / d->appName / "runtime";
+        nativeHome = nativeHome / "Library/Application Support" / d->metadata.gets(APP_NAME) / "runtime";
     }
     #elif defined (WIN32)
     {
@@ -730,7 +754,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
         if (!homeFolder().has("persist.pack") || commandLine().has("-reset"))
         {
             ZipArchive arch;
-            arch.add("Info", String::format("# Package for %s's persistent state.\n", d->appName.c_str()));
+            arch.add("Info", String::format("# Package for %s's persistent state.\n", d->metadata.gets(APP_NAME).c_str()));
             File &persistPack = homeFolder().replaceFile("persist.pack");
             Writer(persistPack) << arch;
             persistPack.reinterpret()->as<ArchiveFolder>().populate();
@@ -741,7 +765,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     }
 
     // The configuration.
-    d->config = new Config(d->configPath);
+    d->config = new Config(d->metadata.gets(CONFIG_PATH));
     d->scriptSys.addNativeModule("Config", d->config->objectNamespace());
 
     // Whenever the version changes, reset the cached metadata so any updates will be applied.

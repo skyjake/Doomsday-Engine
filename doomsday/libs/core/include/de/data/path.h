@@ -26,7 +26,7 @@
 #include "../Error"
 #include "../Log"
 #include "../ISerializable"
-#include "../String"
+#include "../CString"
 #include "../Range"
 
 namespace de {
@@ -76,12 +76,12 @@ public:
         /**
          * Segments are implicitly converted to text strings.
          */
-        operator String() const;
+        operator CString() const;
 
         /**
          * Converts the segment to a string.
          */
-        String toString() const;
+//        String toString() const;
 
         Rangecc toRange() const { return range; }
 
@@ -114,33 +114,29 @@ public:
          *
          * @return @c true, iff the segments are equal.
          */
-        bool operator == (Segment const &other) const;
+        bool operator==(Segment const &other) const;
 
-        bool operator != (Segment const &other) const {
-            return !(*this == other);
+        bool operator!=(Segment const &other) const { return !(*this == other); }
+
+        bool operator==(const char *text) const
+        {
+            return range.compare(text, &iCaseInsensitive) == 0;
         }
 
-        bool operator == (const char *text) const {
-            const iRangecc seg{range.start, range.end};
-            return cmpSc_Rangecc(&seg, text, &iCaseInsensitive) == 0;
-        }
-
-        bool operator != (const char *text) const {
-            return !(*this == text);
-        }
+        bool operator!=(const char *text) const { return !(*this == text); }
 
         /**
          * Returns @c true if this segment is lexically less than @a other.
          * The test is case and separator insensitive.
          */
-        bool operator < (Segment const &other) const;
+        bool operator<(Segment const &other) const;
 
         enum Flag { GotHashKey = 0x1, WildCardChecked = 0x2, IncludesWildCard = 0x4 };
 
     private:
         mutable Flags flags;
         mutable hash_type hashKey;
-        Rangecc range;
+        CString range;
 
         friend class Path;
     };

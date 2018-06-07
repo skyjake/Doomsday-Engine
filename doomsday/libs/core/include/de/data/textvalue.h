@@ -27,6 +27,8 @@
 
 namespace de {
 
+class CString;
+
 /**
  * The TextValue class is a subclass of Value that holds a text string.
  *
@@ -43,6 +45,8 @@ public:
 
     /// Converts the TextValue to plain text.
     operator String const &() const;
+
+    operator CString() const;
 
     Text typeId() const;
     Value *duplicate() const;

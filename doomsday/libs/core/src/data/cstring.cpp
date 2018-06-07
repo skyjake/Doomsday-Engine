@@ -23,6 +23,16 @@ namespace de {
 
 dsize CString::npos = dsize(-1);
 
+bool CString::contains(char ch) const
+{
+    updateEnd();
+    for (const char *i = _range.start; i != _range.end; ++i)
+    {
+        if (*i == ch) return true;
+    }
+    return false;
+}
+
 dsize CString::indexOf(char ch, size_t from) const
 {
     const char str[2] = { ch, 0 };
@@ -31,7 +41,7 @@ dsize CString::indexOf(char ch, size_t from) const
 
 dsize CString::indexOf(const char *cStr, size_t from) const
 {
-    if (from >= _range.size()) return npos;
+    if (from >= size_t(_range.size())) return npos;
     const char *pos = strnstr(_range.start + from, cStr, _range.size() - from);
     return pos ? (pos - _range.start) : npos;
 }
@@ -41,6 +51,18 @@ CString CString::substr(size_t start, size_t count) const
     if (start > size()) return CString();
     if (start + count > size()) count = size() - start;
     return {_range.start + start, _range.start + start + count};
+}
+
+int CString::compare(const CString &other, const iStringComparison *sc) const
+{
+    const iRangecc range{begin(), end()};
+    return cmpCStrNSc_Rangecc(&range, other.begin(), other.size(), sc);
+}
+
+int CString::compare(const char *cStr, const iStringComparison *sc) const
+{
+    const iRangecc range{begin(), end()};
+    return cmpCStrSc_Rangecc(&range, cStr, sc);
 }
 
 } // namespace de

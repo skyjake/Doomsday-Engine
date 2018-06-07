@@ -65,6 +65,8 @@ public:
     const T &at(int pos) const { return Base::at(pos); }
     const T &first() const { return Base::front(); }
     const T &last() const { return Base::back(); }
+    T &      first() { return Base::front(); }
+    T &      last() { return Base::back(); }
     T        takeFirst() { T v = first(); pop_front(); return std::move(v); }
     T        takeLast()  { T v = last();  Base::pop_back();  return std::move(v); }
     T        takeAt(int pos) { T v = std::move(at(pos)); Base::erase(Base::begin() + pos); return std::move(v); }

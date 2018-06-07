@@ -560,9 +560,9 @@ DE_PIMPL(Info)
                 nextToken();
                 if (peekToken() == "(" || peekToken() == "{")
                 {
-                    throw SyntaxError("Info::parseBlockElement",
-                                      QString("Attribute on line %1 is missing a value")
-                                      .arg(currentLine));
+                    throw SyntaxError(
+                        "Info::parseBlockElement",
+                        stringf("Attribute on line %i is missing a value", currentLine));
                 }
                 InfoValue value = parseValue();
 
@@ -590,9 +590,13 @@ DE_PIMPL(Info)
                     Element *element = parseElement();
                     if (!element)
                     {
-                        throw SyntaxError("Info::parseBlockElement",
-                                          QString("Block element (on line %1) was never closed, end of file encountered before '%2' was found (on line %3).")
-                                          .arg(startLine).arg(endToken).arg(currentLine));
+                        throw SyntaxError(
+                            "Info::parseBlockElement",
+                            stringf("Block element (on line %i) was never closed, end of file "
+                                    "encountered before '%s' was found (on line %i).",
+                                    startLine,
+                                    endToken.c_str(),
+                                    currentLine));
                     }
                     block->add(element);
                 }
@@ -606,8 +610,9 @@ DE_PIMPL(Info)
         catch (EndOfFile const &)
         {
             throw SyntaxError("Info::parseBlockElement",
-                              QString("End of file encountered unexpectedly while parsing a block element (block started on line %1).")
-                              .arg(startLine));
+                              stringf("End of file encountered unexpectedly while parsing a block "
+                                      "element (block started on line %i).",
+                                      startLine));
         }
 
         return block.release();
@@ -624,7 +629,8 @@ DE_PIMPL(Info)
 
             Info included;
             included.setImplicitBlockType(implicitBlockType);
-            included.setScriptBlocks(scriptBlockTypes);
+            included.setScriptBlocks(compose<StringList>(scriptBlockTypes.begin(),
+                                                         scriptBlockTypes.end()));
             included.setAllowDuplicateBlocksOfType(allowDuplicateBlocksOfType);
             included.setFinder(*finder); // use ours
             included.setSourcePath(includePath);
@@ -959,7 +965,7 @@ String Info::quoteString(String const &text)
 {
     String quoted = text;
     quoted.replace("\"", "''");
-    return String("\"%1\"").arg(quoted);
+    return "\"" + quoted + "\"";
 }
 
 String Info::sourceLocation(duint32 lineId) // static

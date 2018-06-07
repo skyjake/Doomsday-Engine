@@ -35,6 +35,7 @@ class Hash : public std::unordered_map<Key, Value>
 public:
     Hash();
 
+    void insert(const Key &key, const Value &value) { Base::operator[](key) = value; }
     bool contains(const Key &key) const { return Base::find(key) != Base::end(); }
 };
 

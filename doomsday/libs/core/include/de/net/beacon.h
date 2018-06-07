@@ -13,13 +13,12 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBCORE_BEACON_H
 #define LIBCORE_BEACON_H
 
-#include <QObject>
 #include "../Error"
 #include "../Block"
 #include "../Address"
@@ -30,10 +29,8 @@ namespace de {
  * UDP-based peer discovery mechanism.
  * @ingroup net
  */
-class DE_PUBLIC Beacon : public QObject
+class DE_PUBLIC Beacon
 {
-    Q_OBJECT
-
 public:
     /// The UDP port was unavailable. @ingroup errors
     DE_ERROR(PortError);
@@ -77,7 +74,7 @@ public:
      */
     void discover(TimeSpan const &timeOut, TimeSpan const &interval = TimeSpan(1.0));
 
-    QList<Address> foundHosts() const;
+    List<Address> foundHosts() const;
     Block messageFromHost(Address const &host) const;
 
 protected slots:

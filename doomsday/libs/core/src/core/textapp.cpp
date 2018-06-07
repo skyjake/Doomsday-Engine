@@ -47,21 +47,19 @@ DE_PIMPL(TextApp)
 
 TextApp::TextApp(const StringList &args)
      //QCoreApplication(argc, argv)
-    : App(applicationFilePath(), args)
+    : App(args)
     , d(new Impl(this))
 {}
 
-void TextApp::setMetadata(String const &orgName, String const &orgDomain,
+/*void TextApp::setMetadata(String const &orgName, String const &orgDomain,
                           String const &appName, String const &appVersion)
 {
-    setName(appName);
-
-    // Qt metadata.
+    // Application metadata.
     setOrganizationName  (orgName);
     setOrganizationDomain(orgDomain);
     setApplicationName   (appName);
     setApplicationVersion(appVersion);
-}
+}*/
 
 /*
 bool TextApp::notify(QObject *receiver, QEvent *event)
@@ -87,7 +85,7 @@ int TextApp::execLoop()
     LOGDEV_NOTE("Starting TextApp event loop...");
 
     d->loop.start();
-    int code = QCoreApplication::exec();
+    int code = 0; //QCoreApplication::exec();
 
     LOGDEV_NOTE("TextApp event loop exited with code %i") << code;
     return code;
@@ -96,7 +94,7 @@ int TextApp::execLoop()
 void TextApp::stopLoop(int code)
 {
     d->loop.stop();
-    return QCoreApplication::exit(code);
+//    return QCoreApplication::exit(code);
 }
 
 Loop &TextApp::loop()

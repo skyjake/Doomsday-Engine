@@ -18,7 +18,7 @@
  */
 
 #include "de/Reader"
-#include "de/String"
+#include "de/CString"
 #include "de/Block"
 #include "de/ISerializable"
 #include "de/IIStream"

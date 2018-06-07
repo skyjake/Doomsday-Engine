@@ -128,11 +128,15 @@ BitField::Spec BitField::Elements::at(int index) const
     DE_ASSERT(index >= 0);
     DE_ASSERT(index < size());
 
-    Impl::Element elem = d->elements.values()[index];
-    Spec spec;
-    spec.id = d->elements.keys()[index];
-    spec.numBits = elem.numBits;
-    return spec;
+    auto elem = d->elements.cbegin();
+    for (int i = 0; elem != d->elements.cend(); ++i, ++elem)
+    {
+        if (i == index)
+        {
+            return Spec{elem->first, elem->second.numBits};
+        }
+    }
+    return {};
 }
 
 void BitField::Elements::elementLayout(Id const &id, int &firstBit, int &numBits) const

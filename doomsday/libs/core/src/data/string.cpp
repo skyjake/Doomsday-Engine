@@ -20,6 +20,7 @@
 #include "de/App"
 #include "de/String"
 #include "de/Block"
+#include "de/RegExp"
 #include "de/charsymbols.h"
 
 #include <c_plus/path.h>
@@ -66,6 +67,17 @@ String::String(const std::string &text)
     initCStrN_String(&_str, text.data(), text.size());
 }
 
+String::String(const std::wstring &text)
+{
+    init_String(&_str);
+    for (auto ch : text)
+    {
+        iMultibyteChar mb;
+        init_MultibyteChar(&mb, ch);
+        appendCStr_String(&_str, mb.bytes);
+    }
+}
+
 String::String(const char *nullTerminatedCStr)
 {
     initCStr_String(&_str, nullTerminatedCStr);
@@ -97,6 +109,16 @@ String::String(const char *start, const char *end)
     initCStrN_String(&_str, start, end - start);
 }
 
+String::String(const Range<const char *> &range)
+{
+    initCStrN_String(&_str, range.start, range.end - range.start);
+}
+
+String::String(const CString &cstr)
+{
+    initCStrN_String(&_str, cstr.begin(), cstr.size());
+}
+
 String::String(dsize length, iChar ch)
 {
     init_String(&_str);
@@ -124,15 +146,15 @@ String::~String()
 
 void String::resize(size_t newSize)
 {
-    resize_Block(&_str.chars);
+    resize_Block(&_str.chars, newSize);
 }
 
 std::wstring String::toWideString() const
 {
     std::wstring ws;
-    for (auto i : *this)
+    for (auto c : *this)
     {
-        ws.push_back(i);
+        ws.push_back(c);
     }
     return ws;
 }
@@ -160,29 +182,17 @@ String String::substr(BytePos pos, dsize count) const
 
 String String::substr(const Range<CharPos> &range) const
 {
-    return substr(range.start, range.size());
+    return substr(range.start, range.size().index);
 }
 
 String String::substr(const Range<BytePos> &range) const
 {
-    return substr(range.start, range.size());
+    return substr(range.start, range.size().index);
 }
 
 void String::remove(BytePos start, dsize count)
 {
     remove_Block(&_str.chars, start.index, count);
-}
-
-String String::right(CharPos count) const
-{
-    if (count == 0) return {};
-    // Characters may have varying size, so we need to iterate them separately.
-    const_reverse_iterator i = rbegin();
-    while(--count.index > 0 && i != rend())
-    {
-        i++;
-    }
-    return String(i);
 }
 
 List<String> String::split(const char *separator) const
@@ -202,6 +212,13 @@ List<String> String::split(Char ch) const
     iMultibyteChar mb;
     init_MultibyteChar(&mb, ch);
     return split(mb.bytes);
+}
+
+String String::operator+(const CString &cStr) const
+{
+    String cat = *this;
+    appendCStrN_String(&cat._str, cStr.begin(), cStr.size());
+    return cat;
 }
 
 String String::operator+(const char *cStr) const
@@ -229,6 +246,12 @@ String &String::operator+=(const char *cStr)
     return *this;
     }
 
+String &String::operator+=(const CString &s)
+{
+    appendCStrN_String(&_str, s.begin(), s.size());
+    return *this;
+}
+
 String &String::operator+=(const String &other)
 {
     append_String(&_str, &other._str);
@@ -237,20 +260,22 @@ String &String::operator+=(const String &other)
 
 void String::insert(BytePos pos, const char *cStr)
 {
-    insertData_Block(&_str.chars, pos, str, cStr ? strlen(cStr) : 0);
+    insertData_Block(&_str.chars, pos.index, cStr, cStr ? strlen(cStr) : 0);
 }
 
 void String::insert(BytePos pos, const String &str)
 {
-    insertData_Block(&_str.chars, pos, str, str.size());
+    insertData_Block(&_str.chars, pos.index, str.data(), str.size());
 }
 
 String &String::replace(const CString &before, const CString &after)
 {
+    const String oldTerm{before};
     const iRangecc newTerm{after.begin(), after.end()};
     iRangecc remaining(*this);
     String result;
-    while (dsize found = CString(remaining).indexOf(oldTerm.c_str()), found != npos)
+    dsize found;
+    while ((found = CString(remaining).indexOf(oldTerm)) != npos)
     {
         const iRangecc prefix{remaining.start, remaining.start + found};
         appendRange_String(&result._str, &prefix);
@@ -331,11 +356,11 @@ String String::concatenatePath(const String &other, iChar dirChar) const
     return concatenateRelativePath(other, dirChar);
 }
 
-String String::concatenateRelativePath(const String &other, iChar dirChar) const
+String String::concatenateRelativePath(const String &other, Char dirChar) const
 {
     if (other.isEmpty()) return *this;
 
-    int const startPos = (other.first() == dirChar? 1 : 0);
+    const auto startPos = CharPos(other.first() == dirChar? 1 : 0);
 
     // Do a path combination. Check for a slash.
     String result(*this);
@@ -412,16 +437,17 @@ String String::upper() const
 String String::upperFirstChar() const
 {
     if (isEmpty()) return "";
-    if (size() == 1) return upper();
-    return towupper(first()) + substr(1);
+    const_iterator i = begin();
+    String capitalized(1, towupper(*i++));
+    appendCStr_String(&capitalized._str, i);
+    return capitalized;
 }
 
 String String::fileName(Char dirChar) const
 {
-    int pos = lastIndexOf(dirChar);
-    if (pos >= 0)
+    if (auto pos = lastIndexOf(dirChar))
     {
-        return mid(pos + 1);
+        return substr(pos + 1);
     }
     return *this;
 }
@@ -429,41 +455,39 @@ String String::fileName(Char dirChar) const
 String String::fileNameWithoutExtension() const
 {
     String name = fileName();
-    int pos = name.lastIndexOf('.');
-    if (pos > 0)
+    if (auto pos = name.lastIndexOf('.'))
     {
-        return name.mid(0, pos);
+        return name.left(pos);
     }
     return name;
 }
 
 String String::fileNameExtension() const
 {
-    int pos      = lastIndexOf('.');
-    int slashPos = lastIndexOf('/');
+    auto pos      = lastIndexOf('.');
+    auto slashPos = lastIndexOf('/');
     if (pos > 0)
     {
         // If there is a directory included, make sure there it at least
         // one character's worth of file name before the period.
-        if (slashPos < 0 || pos > slashPos + 1)
+        if (!slashPos || pos > slashPos + 1)
         {
-            return mid(pos);
+            return substr(pos);
         }
     }
     return "";
 }
 
-String String::fileNamePath(QChar dirChar) const
+String String::fileNamePath(Char dirChar) const
 {
-    int pos = lastIndexOf(dirChar);
-    if (pos >= 0)
+    if (auto pos = lastIndexOf(dirChar))
     {
-        return mid(0, pos);
+        return left(pos);
     }
     return "";
 }
 
-String String::fileNameAndPathWithoutExtension(QChar dirChar) const
+String String::fileNameAndPathWithoutExtension(Char dirChar) const
 {
     return fileNamePath(dirChar) / fileNameWithoutExtension();
 }
@@ -495,16 +519,16 @@ dint String::compareWithoutCase(const String &other, int n) const
 int String::commonPrefixLength(const String &str, CaseSensitivity sensitivity) const
 {
     int count = 0;
-    size_t len = std::min(str.size(), size());
-    for (int i = 0; i < len; ++i, ++count)
+    for (const_iterator a = begin(), b = str.begin(), aEnd = end(), bEnd = str.end();
+         a != aEnd && b != bEnd; ++a, ++b, ++count)
     {
         if (sensitivity == CaseSensitive)
         {
-            if (at(i) != str.at(i)) break;
+            if (*a != *b) break;
         }
         else
         {
-            if (at(i).toLower() != str.at(i).toLower()) break;
+            if (towlower(*a) != towlower(*b)) break;
         }
     }
     return count;
@@ -672,7 +696,7 @@ void String::get(Offset at, Byte *values, Size count) const
         throw OffsetError("String::get", "Out of range " +
                           String::format("(%zu[+%zu] > %zu)", at, count, size()));
     }
-    std::memcpy(values, constData_String(&_str) + at, count);
+    std::memcpy(values, constBegin_String(&_str) + at, count);
 }
 
 void String::set(Offset at, const Byte *values, Size count)
@@ -691,7 +715,7 @@ String String::truncateWithEllipsis(dsize maxLength) const
     {
         return *this;
     }
-    return mid(0, maxLength/2 - 1) + "..." + right(maxLength/2 - 1);
+    return left(CharPos(maxLength/2 - 1)) + "..." + right(CharPos(maxLength/2 - 1));
 }
 
 void String::advanceFormat(const_iterator &i, const const_iterator &end)
@@ -812,7 +836,7 @@ String String::patternFormat(const_iterator &      formatIter,
     if (maxWidth && result.size() > maxWidth)
     {
         // Cut it.
-        result = result.substr(!rightAlign ? 0 : (result.size() - maxWidth), maxWidth);
+        result = result.substr(BytePos(!rightAlign ? 0 : (result.size() - maxWidth)), maxWidth);
     }
     if (result.size() < minWidth)
     {
@@ -887,21 +911,21 @@ String String::fromPercentEncoding(const Block &percentEncoded) // static
     return QUrl::fromPercentEncoding(percentEncoded);
 }
 
-Char String::operator*() const
+Char mb_iterator::operator*() const
 {
-    return decode(nullptr);
+    return decode();
 }
 
-Char String::decode()
+Char mb_iterator::decode() const
 {
     Char ch;
     const char *end = i;
     for (int j = 0; *end && j < MB_CUR_MAX; ++j, ++end) {}
-    curCharLen = mbrtowc(&ch, i, end - i, end);
+    curCharLen = std::mbrtowc(&ch, i, end - i, &mb);
     return ch;
 }
 
-mb_iterator &String::operator++()
+mb_iterator &mb_iterator::operator++()
 {
     if (!curCharLen) decode();
     i += de::max(curCharLen, 1);
@@ -909,7 +933,7 @@ mb_iterator &String::operator++()
     return *this;
 }
 
-mb_iterator String::operator++(int)
+mb_iterator mb_iterator::operator++(int)
 {
     mb_iterator i = *this;
     ++(*this);
@@ -934,8 +958,8 @@ std::string stringf(const char *format, ...)
     const int requiredLength = vsprintf(nullptr, format, args1);
     va_end(args1);
     // Format the output to a new string.
-    std::string str(requiredLength);
-    vsprintf(str.data(), format, args2);
+    std::string str(requiredLength, '\0');
+    vsprintf(&str[0], format, args2);
     va_end(args2);
     return str;
 }

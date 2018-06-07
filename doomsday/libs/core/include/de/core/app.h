@@ -89,6 +89,13 @@ public:
      */
     DE_DEFINE_AUDIENCE2(StartupComplete, void appStartupCompleted())
 
+    static const char *ORG_NAME; ///< Name of the author/organization.
+    static const char *ORG_DOMAIN; ///< Network domain of the author/organization.
+    static const char *APP_NAME; ///< Name of the application, as presented to humans.
+    static const char *APP_VERSION; ///< Version of the application.
+    static const char *CONFIG_PATH;
+    static const char *UNIX_HOME;
+
 public:
     /**
      * Construct an App instance. The application will not be fully usable
@@ -99,20 +106,19 @@ public:
      * @param appFilePath  Path of the application binary.
      * @param args         Arguments.
      */
-    App(const NativePath &appFilePath, const StringList &args);
+    App(const StringList &args);
 
     virtual ~App();
 
     /**
-     * Defines metadata about the application.
-     *
-     * @param appName     Name of the application, as presented to humans.
-     * @param appVersion  Version of the application.
-     * @param orgName     Name of the author/organization.
-     * @param orgDomain   Network domain of the author/organization.
+     * Metadata about the application (META_* as keys).
      */
-    virtual void setMetadata(String const &orgName, String const &orgDomain,
-                             String const &appName, String const &appVersion) = 0;
+    Record &metadata();
+
+    /**
+     * Returns the application metadata.
+     */
+    const Record &metadata() const;
 
     /**
      * Add a new package to be loaded at initialization time. Call this before
@@ -132,7 +138,7 @@ public:
      * @param path  Location of the @em Config.ds script file. The default path of the
      *              script is "/modules/Config.ds".
      */
-    void setConfigScript(Path const &path);
+//    void setConfigScript(Path const &path);
 
     /**
      * Sets the name of the application. Derived classes should call this from their
@@ -140,7 +146,7 @@ public:
      *
      * @param appName  Application name. Defaults to "Doomsday Engine".
      */
-    void setName(String const &appName);
+//    void setName(String const &appName);
 
     /**
      * Sets the Unix-style home folder name. For instance, ".doomsday" could be used.

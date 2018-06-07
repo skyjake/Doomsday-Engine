@@ -197,7 +197,8 @@
  * Forms an escape sequence string literal. Escape sequences begin
  * with an ASCII Escape character.
  */
-#define DE_ESC(StringLiteral) "\x1b" StringLiteral
+#define DE_ESC(StringLiteral)       "\x1b" StringLiteral
+#define DE_ESCL(WideStringLiteral)  L"\x1b" WideStringLiteral
 #define _E(Code) DE_ESC(#Code)
 
 #define DENG2_OFFSET_PTR(type, member) \
@@ -792,7 +793,25 @@ typedef ssize_t  dsigsize;
 typedef long     dlong;
 
 typedef wchar_t  Char;
-typedef duint32  Flags;
+
+class Flags
+{
+public:
+    inline Flags(uint32_t flags = 0) : _flg(flags) {}
+    inline Flags(const Flags &other) : _flg(other._flg) {}
+
+    inline operator uint32_t() const { return _flg; }
+
+    inline bool testFlag(uint32_t f) const { return (_flg & f) == f; }
+
+    inline uint32_t &operator=(uint32_t flags) { return _flg = flags; }
+    inline uint32_t &operator|=(uint32_t flags) { return _flg |= flags; }
+    inline uint32_t &operator&=(uint32_t flags) { return _flg &= flags; }
+    inline uint32_t &operator^=(uint32_t flags) { return _flg ^= flags; }
+
+private:
+    uint32_t _flg;
+};
 
 // Pointer-integer conversion (used for legacy code).
 #ifdef DE_64BIT

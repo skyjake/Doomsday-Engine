@@ -20,10 +20,10 @@
 #include "de/Reader"
 #include "de/Writer"
 #include "de/LogBuffer"
-#include <QUdpSocket>
-#include <QHostInfo>
-#include <QTimer>
-#include <QMap>
+//#include <QUdpSocket>
+//#include <QHostInfo>
+//#include <QTimer>
+//#include <QMap>
 
 namespace de {
 
@@ -35,7 +35,7 @@ static duint16 const MAX_LISTEN_RANGE = 16;
 
 // 1.0: Initial version.
 // 1.1: Advertised message is compressed with zlib (deflate).
-static char const *discoveryMessage = "Doomsday Beacon 1.1";
+static const char *discoveryMessage = "Doomsday Beacon 1.1";
 
 DE_PIMPL_NOREF(Beacon)
 {
@@ -45,7 +45,7 @@ DE_PIMPL_NOREF(Beacon)
     Block message;
     QTimer *timer;
     Time discoveryEndsAt;
-    QMap<Address, Block> found;
+    Map<Address, Block> found;
 
     Impl() : socket(0), timer(0)
     {}

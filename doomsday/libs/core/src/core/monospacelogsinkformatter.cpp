@@ -49,10 +49,9 @@ struct TabFiller
         if (!current.isEmpty()) lines << current;
     }
 
-    void handlePlainText(const String::ByteRange &range)
+    void handlePlainText(const CString &range)
     {
-        const String origText = esc.originalText();
-        for (mb_iterator i = origText.c_str() + range.start; i < origText.c_str() + range.end; ++i)
+        for (mb_iterator i = range.begin(); i != range.end(); ++i)
         {
             const Char ch = *i;
             if (ch == '\n')
@@ -67,9 +66,9 @@ struct TabFiller
         }
     }
 
-    void handleEscapeSequence(const String::ByteRange &range)
+    void handleEscapeSequence(const CString &range)
     {
-        mb_iterator it = esc.originalText() + range.start;
+        mb_iterator it = range.begin();
         switch (*it)
         {
         case L'\t':
@@ -234,12 +233,12 @@ MonospaceLogSinkFormatter::MonospaceLogSinkFormatter()
 
 StringList MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
 {
+    using namespace std;
+
+    const String &section = entry.section();
+
     StringList resultLines;
-
-    String const &section = entry.section();
-
-    String::BytePos cutSection{0};
-
+    dsize cutSection = 0;
 #ifndef DE_DEBUG
     // In a release build we can dispense with the metadata.
     Flags entryFlags = LogEntry::Simple;
@@ -261,24 +260,25 @@ StringList MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
         else if (section.beginsWith(_sectionOfPreviousLine))
         {
             // Previous section is partially the same, omit the common beginning.
-            cutSection = String::BytePos(_sectionOfPreviousLine.size());
+            cutSection = _sectionOfPreviousLine.size();
             entryFlags |= LogEntry::SectionSameAsBefore;
         }
         else
         {
-            int prefix = section.commonPrefixLength(_sectionOfPreviousLine);
+            dsize prefix = section.commonPrefixLength(_sectionOfPreviousLine);
             if (prefix > 5)
             {
                 // Some commonality with previous section, we can abbreviate
                 // those parts of the section.
                 entryFlags |= LogEntry::AbbreviateSection;
-                cutSection.index = prefix;
+                cutSection = prefix;
             }
         }
     }
 
     // Fill tabs with space.
-    String message = TabFiller(entry.asText(entryFlags, cutSection)).filled(_minimumIndent);
+    wstring message =
+        TabFiller(entry.asText(entryFlags, cutSection)).filled(_minimumIndent).toWideString();
 
     // Remember for the next line.
     _sectionOfPreviousLine      = section;
@@ -286,17 +286,17 @@ StringList MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
 
     // The wrap indentation will be determined dynamically based on the content
     // of the line.
-    String::BytePos wrapIndent;
-    String::BytePos nextWrapIndent;
+    dsize wrapIndent = wstring::npos;
+    dsize nextWrapIndent = wstring::npos;
 
     // Print line by line.
-    String::BytePos pos{0};
-    while (pos)
+    dsize pos = 0;
+    while (pos != wstring::npos)
     {
         // Find the length of the current line.
-        auto next = message.indexOf('\n', pos);
-        duint lineLen = !next ? (message.sizeb() - pos) : (next - pos);
-        duint const maxLen = (pos > 0? _maxLength - wrapIndent.index : _maxLength);
+        dsize next = message.find(L'\n', pos);
+        dsize lineLen = (next == wstring::npos ? (message.size() - pos) : (next - pos));
+        dsize const maxLen = (pos > 0? _maxLength - wrapIndent : _maxLength);
         if (lineLen > maxLen)
         {
             // Wrap overly long lines.
@@ -304,7 +304,7 @@ StringList MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
             lineLen = maxLen;
 
             // Maybe there's whitespace we can wrap at.
-            String::BytePos checkPos = pos + maxLen;
+            dsize checkPos = pos + maxLen;
             while (checkPos > pos)
             {
                 /// @todo remove isPunct() and just check for the breaking chars
@@ -324,7 +324,7 @@ StringList MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
 
                     // Break here.
                     next = checkPos;
-                    lineLen = (checkPos - pos).index;
+                    lineLen = checkPos - pos;
                     break;
                 }
                 checkPos--;
@@ -332,46 +332,50 @@ StringList MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
         }
 
         // Crop this line's text out of the entire message.
-        String lineText = message.substr(pos, lineLen);
+        wstring lineText = message.substr(pos, lineLen);
 
         //qDebug() << "[formatting]" << wrapIndent << lineText;
 
         // For lines other than the first one, print an indentation.
         if (pos > 0)
         {
-            lineText = String(wrapIndent.index, ' ') + lineText;
+            lineText = wstring(wrapIndent, L' ') + lineText;
         }
 
         // The wrap indent for this paragraph depends on the first line's content.
-        bool const lineStartsWithSpace = lineText.isEmpty() || iswspace(lineText.first());
-        String::BytePos firstNonSpace;
-        if (nextWrapIndent < 0 && !lineStartsWithSpace)
+        const bool lineStartsWithSpace = lineText.empty() || iswspace(lineText.front());
+        dsize firstNonSpace = wstring::npos;
+        if (nextWrapIndent == wstring::npos && !lineStartsWithSpace)
         {
-            auto w = String::BytePos(_minimumIndent);
-            String::BytePos firstBracket;
+            dsize w = _minimumIndent;
+            dsize firstBracket = wstring::npos;
             for (; w < lineText.size(); ++w)
             {
                 // Indent to colons automatically (but not too deeply).
-                if (w < lineText.sizeb() - 1 && lineText[w + 1].isSpace())
+                if (w < lineText.size() - 1 && iswspace(lineText[w + 1]))
                 {
-                    if (firstBracket == -1 && lineText[w] == ']') firstBracket = w;
+                    if (firstBracket == wstring::npos && lineText[w] == ']')
+                    {
+                        firstBracket = w;
+                    }
                 }
-
-                if (!firstNonSpace && !lineText[w].isSpace())
+                if (firstNonSpace == wstring::npos && !iswspace(lineText[w]))
+                {
                     firstNonSpace = w;
+                }
             }
 
-            if (firstBracket > 0)
+            if (firstBracket != wstring::npos && firstBracket > 0)
             {
                 nextWrapIndent = firstBracket + 2;
             }
-            else if (firstNonSpace > 0)
+            else if (firstNonSpace != wstring::npos && firstNonSpace > 0)
             {
                 nextWrapIndent = firstNonSpace;
             }
             else
             {
-                nextWrapIndent = String::BytePos(_minimumIndent);
+                nextWrapIndent = _minimumIndent;
             }
 
             //qDebug() << "min" << _minimumIndent << "nsp" << firstNonSpace
@@ -380,14 +384,14 @@ StringList MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
         //if (firstNonSpace < 0) firstNonSpace = _minimumIndent;
 
         // Check for formatting symbols.
-        lineText.replace(DE_ESC("R"), String(maxLen - _minimumIndent, '-'));
-
-        resultLines.append(lineText);
+        String finalLine{lineText};
+        finalLine.replace(DE_ESC("R"), String(maxLen - _minimumIndent, '-'));
+        resultLines << finalLine;
 
         // Advance to the next line.
         wrapIndent = nextWrapIndent;
         pos = next;
-        if (pos && message[pos].isSpace())
+        if (pos && iswspace(message[pos]))
         {
             // At a forced newline, reset the wrap indentation.
             if (message[pos] == '\n')

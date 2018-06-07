@@ -20,12 +20,11 @@
 #include "de/TextValue"
 #include "de/NumberValue"
 #include "de/ArrayValue"
-#include "de/String"
+#include "de/CString"
 #include "de/Writer"
 #include "de/Reader"
 #include "de/ScriptSystem"
 
-#include <QTextStream>
 #include <list>
 #include <cmath>
 
@@ -36,6 +35,11 @@ using std::list;
 TextValue::TextValue(String const &initialValue)
     : _value(initialValue)
 {}
+
+TextValue::operator CString() const
+{
+    return _value;
+}
 
 TextValue::operator String const &() const
 {

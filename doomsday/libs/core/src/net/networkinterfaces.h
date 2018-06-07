@@ -20,8 +20,7 @@
 #define LIBCORE_NETWORKINTERFACES_H
 
 #include "de/libcore.h"
-#include <QList>
-#include <QHostAddress>
+#include "de/List"
 
 namespace de {
 namespace internal {
@@ -45,7 +44,7 @@ public:
      *
      * @return Network interface addresses, in IPv6 format.
      */
-    QList<QHostAddress> allAddresses() const;
+    List<Address> allAddresses() const;
 
 private:
     DE_PRIVATE(d)

@@ -80,9 +80,7 @@ DE_PIMPL(InfoBank)
 
 const String InfoBank::Impl::VAR_NOT_IN_BANK{"__notInBank__"};
 
-InfoBank::InfoBank(char const *       nameForLog,
-                   Bank::Flags const &flags,
-                   String const &     hotStorageLocation)
+InfoBank::InfoBank(char const *nameForLog, Flags const &flags, String const &hotStorageLocation)
     : Bank(nameForLog, flags, hotStorageLocation)
     , d(new Impl(this))
 {}
@@ -137,7 +135,7 @@ Record const &InfoBank::objectNamespace() const
 
 void InfoBank::addFromInfoBlocks(String const &blockType)
 {
-    foreach (String id, d->info.allBlocksOfType(blockType))
+    for (const String &id : d->info.allBlocksOfType(blockType))
     {
         Record &rec = d->names[id];
         if (!rec.has(Impl::VAR_NOT_IN_BANK))
@@ -154,7 +152,7 @@ void InfoBank::removeAllWithRootPath(String const &rootPath)
 {
     LOG_AS(nameForLog());
     d->removeFromGroup(d->names, [&rootPath] (String const &, Record const &rec) {
-        return ScriptedInfo::sourceLocation(rec).startsWith(rootPath);
+        return ScriptedInfo::sourceLocation(rec).beginsWith(rootPath);
     });
 }
 
