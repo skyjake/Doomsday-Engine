@@ -94,7 +94,7 @@ DE_PIMPL(FileIndex), public Lockable
 
         DE_GUARD(this);
 
-        ConstIndexRange range = index.equal_range(baseName);
+        auto range = index.equal_range(baseName);
         for (Index::const_iterator i = range.first; i != range.second; ++i)
         {
             File *file = i->second;

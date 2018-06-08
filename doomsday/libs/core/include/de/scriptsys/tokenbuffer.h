@@ -90,8 +90,8 @@ public:
     /// Determines the length of the token.
     /// @return Length of the token as number of bytes.
     size_t size() const {
-        if (!_token.start || !_token.end) return 0;
-        return size_Range(&_token);
+        if (!_token) return 0;
+        return _token.size();
     }
 
     bool isEmpty() const {
@@ -157,9 +157,9 @@ public:
     }
 
 private:
-    Type     _type; ///< Type of the token.
-    iRangecc _token;
-    duint    _line; ///< On which line the token begins.
+    Type    _type; ///< Type of the token.
+    Rangecc _token;
+    duint   _line; ///< On which line the token begins.
 };
 
 /**

@@ -202,6 +202,14 @@ String String::substr(const Range<BytePos> &range) const
     return substr(range.start, range.size().index);
 }
 
+String String::right(CharPos count) const
+{
+    if (count.index == 0) return {};
+    auto i = rbegin();
+    for (auto end = rend(); --count.index > 0 && i != end; ++i) {}
+    return String(static_cast<const char *>(i), data() + size());
+}
+
 void String::remove(BytePos start, dsize count)
 {
     remove_Block(&_str.chars, start.index, count);
@@ -224,6 +232,11 @@ List<String> String::split(Char ch) const
     iMultibyteChar mb;
     init_MultibyteChar(&mb, ch);
     return split(mb.bytes);
+}
+
+String String::operator+(const std::string &s) const
+{
+    return *this + CString(s);
 }
 
 String String::operator+(const CString &cStr) const
@@ -541,6 +554,12 @@ bool String::containsWord(const String &word) const
     return RegExp(stringf("\\b%s\\b", word.c_str())).hasMatch(*this);
 }
 
+int String::compare(const CString &str, Sensitivity cs) const
+{
+    const iRangecc s = *this;
+    return cmpCStrNSc_Rangecc(&s, str.begin(), str.size(), cs);
+}
+
 dint String::compareWithCase(const String &other) const
 {
     return cmpSc_String(&_str, other, &iCaseSensitive);
@@ -556,7 +575,7 @@ dint String::compareWithoutCase(const String &other, int n) const
     return cmpNSc_String(&_str, other, n, &iCaseInsensitive);
 }
 
-int String::commonPrefixLength(const String &str, CaseSensitivity sensitivity) const
+int String::commonPrefixLength(const String &str, Sensitivity sensitivity) const
 {
     int count = 0;
     for (const_iterator a = begin(), b = str.begin(), aEnd = end(), bEnd = str.end();

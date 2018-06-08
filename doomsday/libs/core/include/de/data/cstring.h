@@ -44,7 +44,8 @@ public:
     {
         if (!_range.end) _range.end = _range.start + strlen(_range.start);
     }
-    //inline operator String() const { return {_range.start, _range.end}; }
+
+    inline explicit operator bool() const { return _range.start != nullptr; }
     inline String toString() const { return String(_range.start, _range.end); }
     inline operator Rangecc() const
     {
@@ -89,6 +90,12 @@ String operator+(const char *cStr, const CString &str) {
 
 String operator+(const CString &str, const char *cStr) {
     return String(str) + cStr;
+}
+
+String operator+(const CString &str, Char ch) {
+    String s(str);
+    s += ch;
+    return s;
 }
 
 String operator/(const CString &str, const char *cStr) {

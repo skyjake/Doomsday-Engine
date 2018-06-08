@@ -19,18 +19,19 @@
 
 #include "de/Address"
 #include "de/String"
+#include "de/RegExp"
+#include "de/CString"
 #include "../src/net/networkinterfaces.h"
 
-#include <QHostInfo>
-#include <QRegularExpression>
+#include <c_plus/address.h>
 
 namespace de {
 
 DE_PIMPL_NOREF(Address)
 {
-    std::shared_ptr<QHostAddress> host;
-    duint16                       port = 0;
-    String                        textRepr;
+    cplus::Ref<iAddress> addr;
+    duint16 port = 0;
+    String  textRepr;
 
     enum Special { Undefined, LocalHost, RemoteHost };
     Special special = Undefined;
@@ -48,27 +49,34 @@ Address::Address() : d(new Impl)
 Address::Address(char const *address, duint16 port) : d(new Impl)
 {
     d->port = port;
-
-    if (QLatin1String(address) == "localhost") // special case
+    if (CString(address) == "localhost") // special case
     {
-        d->host.reset(new QHostAddress(QHostAddress::LocalHostIPv6));
+        d->addr.reset(newLocalhost_Address(6));
         d->special = Impl::LocalHost;
     }
     else
     {
-        d->host.reset(new QHostAddress(QHostAddress(address).toIPv6Address()));
+        d->addr.reset(new_Address());
+        lookupHostCStr_Address(d->addr, address, 0);
     }
 }
 
-Address::Address(QHostAddress const &host, duint16 port) : d(new Impl)
+//Address::Address(QHostAddress const &host, duint16 port) : d(new Impl)
+//{
+//    d->host = QHostAddress(host.toIPv6Address());
+//    d->port = port;
+//}
+
+Address::Address(Address const &other) : LogEntry::Arg::Base(), d(new Impl)
 {
-    d->host.reset(new QHostAddress(host.toIPv6Address()));
-    d->port = port;
+    d->addr.reset(copy_Address(other.d->addr));
+    d->port = other.d->port;
 }
 
 Address::Address(Address const &other)
-    : d(new Impl(*other.d))
-{}
+{
+    d->addr.reset(copy_Address(other.d->addr));
+}
 
 Address &Address::operator=(Address const &other)
 {
@@ -86,25 +94,17 @@ bool Address::operator<(Address const &other) const
 
 bool Address::operator==(Address const &other) const
 {
-//    if (d->port != other.d->port) return false;
-//    return (isLocal() && other.isLocal()) || (d->host == other.d->host);
     return asText() == other.asText();
+}
+
+String Address::hostName() const
+{
+    return String(hostName_Address(d->addr));
 }
 
 bool Address::isNull() const
 {
-    return d->host->isNull();
-}
-
-QHostAddress const &Address::host() const
-{
-    return *d->host;
-}
-
-void Address::setHost(QHostAddress const &host)
-{
-    d->clearCached();
-    d->host.reset(new QHostAddress(host.toIPv6Address()));
+    return !d->addr;
 }
 
 bool Address::isLocal() const
@@ -129,14 +129,14 @@ void Address::setPort(duint16 p)
 
 bool Address::matches(Address const &other, duint32 mask)
 {
-    return (d->host->toIPv4Address() & mask) == (other.d->host->toIPv4Address() & mask);
+//    return (d->host.toIPv4Address() & mask) == (other.d->host.toIPv4Address() & mask);
 }
 
 String Address::asText() const
 {
     if (!d->textRepr)
     {
-        d->textRepr = (isLocal()? String("localhost") : d->host->toString());
+        d->textRepr = (isLocal()? String("localhost") : String::take(toString_Address(d->addr)));
         if (d->port)
         {
             d->textRepr += Stringf(":%u", d->port);
@@ -162,11 +162,11 @@ Address Address::parse(String const &addressWithOptionalPort, duint16 defaultPor
         str = str.left(pos);
     }*/
     // Let's see if there is a port number included.
-    static QRegularExpression const ipPortRegex
+    static const RegExp ipPortRegex
             ("^(localhost|::1|(::ffff:)?[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+|[:A-Fa-f0-9]+[A-Fa-f0-9]):([0-9]+)$");
     //qDebug() << "matching:" << addressWithOptionalPort;
-    auto match = ipPortRegex.match(addressWithOptionalPort);
-    if (match.hasMatch())
+    RegExpMatch match;
+    if (ipPortRegex.match(addressWithOptionalPort, match))
     {
         //qDebug() << match;
         str  = match.captured(1);
@@ -176,24 +176,23 @@ Address Address::parse(String const &addressWithOptionalPort, duint16 defaultPor
     {
         //qDebug() << "no match!";
     }
-    return Address(str.toLatin1(), port);
+    return Address(str, port);
 }
 
-QTextStream &operator<<(QTextStream &os, Address const &address)
+std::ostream &operator<<(std::ostream &os, Address const &address)
 {
-    os << address.asText();
+    os << address.asText().c_str();
     return os;
 }
 
-bool Address::isHostLocal(QHostAddress const &host) // static
+bool Address::isHostLocal(const Address &host) // static
 {
-    if (host.isLoopback()) return true;
+//    if (host.isLoopback()) return true;
 
-    QHostAddress const hostv6(host.toIPv6Address());
-    foreach (QHostAddress addr, internal::NetworkInterfaces::get().allAddresses())
+//    QHostAddress const hostv6(host.toIPv6Address());
+    for (const Address &addr : internal::NetworkInterfaces::get().allAddresses())
     {
-        if (addr == hostv6)
-            return true;
+        if (addr == host) return true;
     }
     return false;
 }

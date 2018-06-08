@@ -263,9 +263,9 @@ public:
     /**
      * Convert this path to a text string.
      */
-    inline operator String() const {
-        return toString();
-    }
+    inline CString toCString() const { return {c_str(), c_str() + size()}; }
+
+    inline operator String() const { return toString(); }
 
     /**
      * Convert this path to a text string.
@@ -291,6 +291,8 @@ public:
 
     /// Returns the length of the path.
     dsize size() const;
+
+    String::BytePos sizeb() const;
 
     /// Returns the first character of the path.
     Char first() const;

@@ -457,7 +457,7 @@ Time Time::fromText(String const &text, Time::Format format)
     else if (format == CompilerDateTime)
     {
         // Parse the text manually as it is locale-independent.
-        QStringList const parts = text.split(" ", QString::SkipEmptyParts);
+        const StringList parts = de::filter(text.split(" "), [](const String &s){ return !s.empty(); });
         if (parts.size() >= 4)
         {
             int day = parts[1].toInt();

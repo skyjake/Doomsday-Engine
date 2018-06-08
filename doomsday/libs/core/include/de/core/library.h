@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBCORE_LIBRARY_H
@@ -45,7 +45,6 @@ typedef void *(*StaticSymbolFunc)(char const *name);
 namespace de {
 
 class Audio;
-class Map;
 class Object;
 class User;
 class WorldSystem;
@@ -116,10 +115,10 @@ public:
      */
     typedef WorldSystem *(*deng_NewWorld)(void);
 
-    /**
+    /*
      * Constructs a new game map.
      */
-    typedef Map *(*deng_NewMap)();
+//    typedef Map *(*deng_NewMap)();
 
     /**
      * Constructs a new object.
@@ -135,7 +134,7 @@ public:
     typedef char const *(*deng_GetString)(dint id);
     typedef void *(*deng_GetAddress)(dint id);
     typedef void (*deng_Ticker)(ddouble tickLength);
-    
+
 #if defined (DE_STATIC_LINK)
     static void importStaticLibrary(char const *name, StaticSymbolFunc symbolFunc);
     static StringList staticLibraries();

@@ -49,17 +49,17 @@ DE_PIMPL_NOREF(FileSystem)
 
     Record fsModule;
 
-    QList<filesys::IInterpreter const *> interpreters;
-
+    List<filesys::IInterpreter const *> interpreters;
+    
     /// The main index to all files in the file system.
     FileIndex index;
 
     /// Index of file types. Each entry in the index is another index of names
     /// to file instances.
-    typedef QHash<String, FileIndex *> TypeIndex; // owned
+    typedef Hash<String, FileIndex *> TypeIndex; // owned
     LockableT<TypeIndex> typeIndex;
 
-    QSet<FileIndex *> userIndices; // not owned
+    Set<FileIndex *> userIndices; // not owned
 
     /// The root folder of the entire file system.
     std::unique_ptr<Folder> root;
@@ -76,7 +76,7 @@ DE_PIMPL_NOREF(FileSystem)
         root.reset();
 
         DE_GUARD(typeIndex);
-        qDeleteAll(typeIndex.value);
+        typeIndex.value.deleteAll();
         typeIndex.value.clear();
     }
 
@@ -146,7 +146,7 @@ Folder &FileSystem::makeFolder(String const &path, FolderCreationBehaviors behav
         if (behavior & (InheritPrimaryFeed | InheritAllFeeds))
         {
             DE_GUARD(parentFolder);
-            foreach (Feed *parentFeed, parentFolder.feeds())
+            for (Feed *parentFeed : parentFolder.feeds())
             {
                 Feed *feed = parentFeed->newSubFeed(subFolder->name());
                 if (!feed) continue; // Check next one instead.
@@ -267,7 +267,7 @@ int FileSystem::findAllOfTypes(StringList typeIdentifiers, String const &path, F
     LOG_AS("FS::findAllOfTypes");
 
     found.clear();
-    foreach (String const &id, typeIdentifiers)
+    for (String const &id : typeIdentifiers)
     {
         indexFor(id).findPartialPath(path, found);
     }
@@ -289,7 +289,7 @@ void FileSystem::index(File &file)
     d->getTypeIndex(DE_TYPE_NAME(file)).maybeAdd(file);
 
     // Also offer to custom indices.
-    foreach (FileIndex *user, d->userIndices)
+    for (FileIndex *user : d->userIndices)
     {
         user->maybeAdd(file);
     }
@@ -301,7 +301,7 @@ void FileSystem::deindex(File &file)
     d->getTypeIndex(DE_TYPE_NAME(file)).remove(file);
 
     // Also remove from any custom indices.
-    foreach (FileIndex *user, d->userIndices)
+    for (FileIndex *user : d->userIndices)
     {
         user->remove(file);
     }
@@ -418,16 +418,16 @@ void FileSystem::printIndex()
     d->index.print();
 
     DE_GUARD_FOR(d->typeIndex, G);
-    DE_FOR_EACH_CONST(Impl::TypeIndex, i, d->typeIndex.value)
+    for (auto &i : d->typeIndex.value)
     {
-        LOG_DEBUG("Index for type '%s' has %i entries") << i.key() << i.value()->size();
+        LOG_DEBUG("Index for type '%s' has %i entries") << i.first << i.second->size();
 
-        LOG_AS_STRING(i.key());
-        i.value()->print();
+        LOG_AS_STRING(i.first);
+        i.second->print();
     }
 }
 
-String FileSystem::accessNativeLocation(NativePath const &nativePath, File::Flags flags) // static
+String FileSystem::accessNativeLocation(NativePath const &nativePath, Flags flags) // static
 {
     static const String SYS_NATIVE = "/sys/native";
     static const String VAR_MAPPING = "accessNames";
@@ -465,7 +465,7 @@ String FileSystem::accessNativeLocation(NativePath const &nativePath, File::Flag
     /*    String const path = folders / nativePath.fileNamePath().fileName();
     if (!fs.root().has(path))
     {
-        DirectoryFeed::Flags feedFlags = DirectoryFeed::OnlyThisFolder;
+        Flags feedFlags = DirectoryFeed::OnlyThisFolder;
         if (flags.testFlag(File::Write)) feedFlags |= DirectoryFeed::AllowWrite;
         fs.makeFolderWithFeed(path,
                               new DirectoryFeed(nativePath.fileNamePath(), feedFlags),

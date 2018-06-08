@@ -51,7 +51,7 @@
  */
 #define LOG_AS_STRING(str) \
     de::Block __logSectionUtf8 { de::String(str).toUtf8() }; \
-    LOG_AS(__logSectionUtf8.constData());
+    LOG_AS(reinterpret_cast<const char *>(__logSectionUtf8.constData()));
 
 /*
  * Macros that make a new log entry with a particular set of audience/level bits:
@@ -662,14 +662,14 @@ public:
          *
          * @param name  Name of the log section.
          */
-        Section(char const *name);
+        Section(const char *name);
         ~Section();
 
         Log &log() const { return _log; }
 
     private:
         Log &_log;
-        char const *_name;
+        const char *_name;
     };
 
 public:

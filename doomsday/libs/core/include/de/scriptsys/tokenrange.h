@@ -86,7 +86,7 @@ public:
     Token const &lastToken() const;
 
     /// Determines whether the range begins with a specific token.
-    bool beginsWith(QChar const *token) const;
+    bool beginsWith(const CString &token) const;
 
     /**
      * Composes a subrange that starts from a specific position.
@@ -121,7 +121,7 @@ public:
      *
      * @return @c true, if token was found, otherwise @c false.
      */
-    bool has(QChar const *token) const {
+    bool has(Char const *token) const {
         return find(token) >= 0;
     }
 
@@ -133,7 +133,7 @@ public:
      *
      * @return @c true, if token was found, otherwise @c false.
      */
-    bool hasBracketless(QChar const *token) const {
+    bool hasBracketless(Char const *token) const {
         return findIndexSkippingBrackets(token, _start) >= 0;
     }
 
@@ -145,9 +145,9 @@ public:
      *
      * @return Position of the token, or -1 if not found.
      */
-    dint find(QChar const *token, dint startPos = 0) const;
+    dint find(Char const *token, dint startPos = 0) const;
 
-    dint findBracketless(QChar const *token, dint startPos = 0) const;
+    dint findBracketless(Char const *token, dint startPos = 0) const;
 
     /**
      * Finds the index of a specific token within the range. When
@@ -158,7 +158,7 @@ public:
      *
      * @return Index of the token, or -1 if not found.
      */
-    dint findIndexSkippingBrackets(QChar const *token, dint startIndex) const;
+    dint findIndexSkippingBrackets(Char const *token, dint startIndex) const;
 
     /**
      * Finds the next token subrange which is delimited with @c
@@ -172,7 +172,7 @@ public:
      * @return  @c true, if the next delimited subrange found successfully.
      *          Otherwise @c false.
      */
-    bool getNextDelimited(QChar const *delimiter, TokenRange &subrange) const;
+    bool getNextDelimited(Char const *delimiter, TokenRange &subrange) const;
 
     /**
      * Locates the matching closing bracket. If the matching bracket
@@ -204,7 +204,7 @@ public:
 
 public:
     static void bracketTokens(Token const &openingToken,
-        QChar const * &opening, QChar const * &closing);
+        Char const * &opening, Char const * &closing);
 
 private:
     TokenBuffer const *_tokens;

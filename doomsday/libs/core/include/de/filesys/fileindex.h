@@ -41,7 +41,6 @@ class DE_PUBLIC FileIndex
 public:
     typedef std::multimap<String, File *> Index;
     typedef std::pair<Index::iterator, Index::iterator> IndexRange;
-    typedef std::pair<Index::const_iterator, Index::const_iterator> ConstIndexRange;
     typedef std::list<File *> FoundFiles;
 
     class DE_PUBLIC IPredicate

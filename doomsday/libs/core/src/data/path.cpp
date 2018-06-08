@@ -23,11 +23,12 @@
 
 #include <de/math.h>
 #include <de/ByteRefArray>
+#include <array>
 
 namespace de {
 
 /// Size of the fixed-size portion of the segment buffer.
-static int const SEGMENT_BUFFER_SIZE = 8;
+//static int const SEGMENT_BUFFER_SIZE = 8;
 
 //---------------------------------------------------------------------------------------
 
@@ -38,7 +39,7 @@ Path::hash_type Path::Segment::hash() const
     // Is it time to compute the hash?
     if (!(flags & GotHashKey))
     {
-        hashKey = de::crc32(range.toString().lower()) % hash_range;
+        hashKey = de::crc32(range.lower()) % hash_range;
         flags |= GotHashKey;
     }
     return hashKey;
@@ -56,12 +57,12 @@ bool Path::Segment::hasWildCard() const
     return isWild;
 }
 
-bool Path::Segment::operator==(Path::Segment const &other) const
+bool Path::Segment::operator==(Segment const &other) const
 {
     return !range.compare(other.range, CaseInsensitive);
 }
 
-bool Path::Segment::operator < (Path::Segment const &other) const
+bool Path::Segment::operator < (Segment const &other) const
 {
     return range.compare(other.range, CaseInsensitive) < 0;
 }
@@ -76,40 +77,29 @@ dsize Path::Segment::size() const
     return range.size();
 }
 
-//Path::Segment::operator String() const
-//{
-//    return range;
-//}
-
-//String Path::Segment::toString() const
-//{
-//    return range.string()->mid(range.position(), range.size());
-//}
-
 //---------------------------------------------------------------------------------------
 
 DE_PIMPL_NOREF(Path)
 {
-    static String emptyPath;
+    static const String emptyPath;
 
     String path;
 
-    /// The character(s) in Impl::path that act(s) as the segment separator.
-    /// This is assumed to be a single multibyte character.
-    String separator;
+    /// The character in Impl::path that act(s) as the segment separator.
+    Char separator;
 
     /**
      * Total number of segments in the path. If 0, it means that the path
      * isn't parsed into segments yet -- all paths have at least one segment
      * (an empty one if nothing else).
      */
-    int segmentCount;
+    dsize segmentCount;
 
     /**
      * Fixed-size array for the segments of the path.
      *
      * The segments array is composed of two parts: the first
-     * SEGMENT_BUFFER_SIZE elements are placed into a fixed-size array which is
+     * eight elements are placed into a fixed-size array which is
      * allocated along with the Instance, and additional segments are allocated
      * dynamically and linked in the extraSegments list.
      *
@@ -119,28 +109,22 @@ DE_PIMPL_NOREF(Path)
      *
      * @note Contents of the array are not initialized to zero.
      */
-    Path::Segment segments[SEGMENT_BUFFER_SIZE];
+    std::array<Segment, 8> segments;
 
     /**
      * List of the extra segments that don't fit in segments, in reverse
      * order.
      */
-    List<Path::Segment> extraSegments;
+    List<Segment> extraSegments;
 
     Impl()
-        : separator("/")
-        , segmentCount(0)
-    {}
-
-    Impl(const String &p, const String &sep)
-        : path(p)
-        , separator(sep)
+        : separator('/')
         , segmentCount(0)
     {}
 
     Impl(const String &p, Char sep)
         : path(p)
-        , separator(1, sep)
+        , separator(sep)
         , segmentCount(0)
     {}
 
@@ -150,9 +134,7 @@ DE_PIMPL_NOREF(Path)
     }
 
     /**
-     * Clear the segment array.
-     *
-     * @post The map will need to be rebuilt with parse().
+     * Clear the segment array. The map will need to be rebuilt with parse().
      */
     void clearSegments()
     {
@@ -167,26 +149,21 @@ DE_PIMPL_NOREF(Path)
      *
      * @return  New segment.
      */
-    Path::Segment *allocSegment(const String &range)
+    Segment *allocSegment(const CString &range)
     {
-        Path::Segment *segment;
-        if (segmentCount < SEGMENT_BUFFER_SIZE)
+        Segment *segment;
+        if (segmentCount < segments.size())
         {
-            segment = segments + segmentCount;
+            segment = &segments[segmentCount];
         }
         else
         {
-            // Allocate an "extra" node.
-            extraSegments.append(Path::Segment());
+            extraSegments << Segment();
             segment = &extraSegments.last();
         }
-
         zapPtr(segment);
         segment->range = range;
-
-        // There is now one more segment in the map.
         segmentCount++;
-
         return segment;
     }
 
@@ -205,46 +182,49 @@ DE_PIMPL_NOREF(Path)
         if (path.isEmpty())
         {
             // There always has to be at least one segment.
-            allocSegment(&emptyPath);
+            allocSegment(emptyPath);
 
             DE_ASSERT(segmentCount > 0);
             return;
         }
 
-        Char const *segBegin = path.constData();
-        Char const *segEnd   = path.constData() + path.length() - 1;
+        const char *                   segBegin = path.c_str();
+        String::const_reverse_iterator segEnd   = path.rbegin();
+
+        const Char SEP = separator;
 
         // Skip over any trailing delimiters.
-        for (int i = path.length();
-            segEnd->unicode() && *segEnd == separator && i-- > 0;
-            --segEnd) {}
+        /*for (int i = path.length(); segEnd->unicode() && *segEnd == separator && i-- > 0; --segEnd)
+        {}*/
+        while (segEnd != segBegin && *segEnd == SEP) segEnd++;
 
         // Scan the path for segments, in reverse order.
-        Char const *from;
-        for (;;)
+        //char const *from;
+        while (segEnd != segBegin)
         {
-            if (segEnd < segBegin) break; // E.g., path is "/"
+            //if (segEnd < segBegin) break; // E.g., path is "/"
 
             // Find the start of the next segment.
-            for (from = segEnd; from > segBegin && !(*from == separator); from--)
-            {}
+            /*for (from = segEnd; from > segBegin && !(*from == separator); from--)
+            {}*/
+            const char *lastSep = segEnd++;
+            for (; segEnd != segBegin && *segEnd != SEP; segEnd++) {}
 
-            int startIndex = (*from == separator? from + 1 : from) - path.constData();
-            int length = (segEnd - path.constData()) - startIndex + 1;
-            allocSegment(QStringRef(&path, startIndex, length));
+            const char *startPtr = static_cast<const char *>(segEnd) + (*segEnd == SEP? 1 : 0); // - path.constData();
+            allocSegment(CString(startPtr, lastSep));
 
             // Are there no more parent directories?
-            if (from == segBegin) break;
+            //if (segEnd == segBegin) break;
 
             // So far so good. Move one directory level upwards.
             // The next name ends here.
-            segEnd = from - 1;
+            //segEnd++;
         }
 
         // Unix style zero-length root name?
-        if (*segBegin == separator)
+        if (*segBegin == SEP)
         {
-            allocSegment(&emptyPath);
+            allocSegment(emptyPath);
         }
 
         DE_ASSERT(segmentCount > 0);
@@ -293,12 +273,12 @@ Path &Path::operator=(Path &&moved)
 
 Path Path::operator+(String const &str) const
 {
-    return Path(d->path + str, d->separator.first());
+    return Path(d->path + str, d->separator);
 }
 
 Path Path::operator+(char const *nullTerminatedCStr) const
 {
-    return Path(d->path + nullTerminatedCStr, d->separator.first());
+    return Path(d->path + nullTerminatedCStr, d->separator);
 }
 
 int Path::segmentCount() const
@@ -316,7 +296,7 @@ Path::Segment const &Path::reverseSegment(int reverseIndex) const
 {
     d->parse();
 
-    if (reverseIndex < 0 || reverseIndex >= d->segmentCount)
+    if (reverseIndex < 0 || reverseIndex >= int(d->segmentCount))
     {
         /// @throw OutOfBoundsError  Attempt to reference a nonexistent segment.
         throw OutOfBoundsError("Path::reverseSegment",
@@ -324,22 +304,22 @@ Path::Segment const &Path::reverseSegment(int reverseIndex) const
     }
 
     // Is this in the static buffer?
-    if (reverseIndex < SEGMENT_BUFFER_SIZE)
+    if (reverseIndex < int(d->segments.size()))
     {
         return d->segments[reverseIndex];
     }
 
     // No - an extra segment.
-    return d->extraSegments[reverseIndex - SEGMENT_BUFFER_SIZE];
+    return d->extraSegments[reverseIndex - d->segments.size()];
 }
 
 Path Path::subPath(Rangei const &range) const
 {
     if (range.isEmpty())
     {
-        return Path("", d->separator.first());
+        return Path("", d->separator);
     }
-    Path sub(String(segment(range.start)), d->separator.first());
+    Path sub(String(segment(range.start)), d->separator);
     for (int i = range.start + 1; i < range.end; ++i)
     {
         sub = sub / segment(i);
@@ -364,7 +344,7 @@ bool Path::operator == (Path const &other) const
     if (segmentCount() != other.segmentCount()) return false;
 
     // If the hashes are different, the segments can't be the same.
-    for (int i = 0; i < d->segmentCount; ++i)
+    for (dsize i = 0; i < d->segmentCount; ++i)
     {
         if (segment(i).hash() != other.segment(i).hash())
             return false;
@@ -380,7 +360,7 @@ bool Path::operator == (Path const &other) const
     else
     {
         // Do a string-based test for each segment separately.
-        for (int i = 0; i < d->segmentCount; ++i)
+        for (dsize i = 0; i < d->segmentCount; ++i)
         {
             if (segment(i) != other.segment(i)) return false;
         }
@@ -398,7 +378,7 @@ bool Path::operator < (Path const &other) const
     else
     {
         // Do a string-based test for each segment separately.
-        for (int i = 0; i < d->segmentCount; ++i)
+        for (dsize i = 0; i < d->segmentCount; ++i)
         {
             if (!(segment(i) < other.segment(i))) return false;
         }
@@ -415,8 +395,7 @@ Path Path::operator/(const Path &other) const
         otherPath.replace(other.d->separator, d->separator);
     }
 
-    const Char sep = d->separator.first();
-    return Path(d->path.concatenatePath(otherPath, sep), sep);
+    return Path(d->path.concatenatePath(otherPath, d->separator), d->separator);
 }
 
 Path Path::operator/(const String &other) const
@@ -469,6 +448,11 @@ dsize Path::size() const
     return length();
 }
 
+String::BytePos Path::sizeb() const
+{
+    return d->path.sizeb();
+}
+
 Char Path::first() const
 {
     return d->path.first();
@@ -495,31 +479,31 @@ Path &Path::operator = (String const &newPath)
 Path &Path::set(String const &newPath, Char sep)
 {
     d->path = newPath; // implicitly shared
-    d->separator = String(1, sep);
+    d->separator = sep;
     d->clearSegments();
     return *this;
 }
 
 Path Path::withSeparators(Char sep) const
 {
-    const Char curSep = d->separator.first();
+    const Char curSep = d->separator;
     if (sep == curSep) return *this;
 
     String modPath = d->path;
-    modPath.replace(d->separator, String(1, sep));
+    modPath.replace(d->separator, sep);
     return Path(modPath, sep);
 }
 
 Char Path::separator() const
 {
-    return d->separator.first();
+    return d->separator;
 }
 
 void Path::addTerminatingSeparator()
 {
     if (!isEmpty())
     {
-        if (last() != d->separator.first())
+        if (last() != d->separator)
         {
             d->path.append(d->separator);
             d->clearSegments();
@@ -529,7 +513,7 @@ void Path::addTerminatingSeparator()
 
 String Path::fileName() const
 {
-    if (last() == d->separator.first()) return "";
+    if (last() == d->separator) return "";
     return lastSegment().toRange();
 }
 
@@ -540,7 +524,7 @@ Block Path::toUtf8() const
 
 void Path::operator >> (Writer &to) const
 {
-    to << d->path << duint16(d->separator.first());
+    to << d->path << duint16(d->separator);
 }
 
 void Path::operator << (Reader &from)

@@ -264,7 +264,7 @@ public:
     String        left(BytePos count) const { return substr(BytePos{0}, count.index); }
     String        left(CharPos count) const { return substr(CharPos{0}, count.index); }
     String        right(BytePos count) const { return substr(sizeb() - count); }
-    String        right(CharPos count) const { return substr(count); }
+    String        right(CharPos count) const;
     String        remove(BytePos count) const { return substr(count); }
     String        remove(CharPos count) const { return substr(count); }
     void          remove(BytePos start, dsize count);
@@ -273,6 +273,7 @@ public:
 
     String        operator+(const char *) const;
     String        operator+(const CString &) const;
+    String        operator+(const std::string &s) const;
     inline String operator+(const String &other) const { return *this + (const char *) other; }
 
     String &operator+=(char ch);
@@ -404,9 +405,9 @@ public:
     inline bool operator>=(const char *cstr) const { return compare(cstr) >= 0; }
 
     inline int compare(const char *cstr) const { return cmp_String(&_str, cstr); }
-    inline int compare(const String &s, CaseSensitivity cs = CaseSensitive) const {
-        return cmpStringSc_String(
-            &_str, &s._str, cs == CaseSensitive ? &iCaseSensitive : &iCaseInsensitive);
+    int        compare(const CString &str, Sensitivity cs = CaseSensitive) const;
+    inline int compare(const String &s, Sensitivity cs = CaseSensitive) const {
+        return cmpStringSc_String(&_str, &s._str, cs);
     }
 
     /**
@@ -443,7 +444,7 @@ public:
      *
      * @return  Number of characters the two strings have in common from the left.
      */
-    int commonPrefixLength(const String &str, CaseSensitivity sensitivity = CaseSensitive) const;
+    int commonPrefixLength(const String &str, Sensitivity sensitivity = CaseSensitive) const;
 
     /**
      * Converts the string to UTF-8 and returns it as a byte block.
@@ -529,9 +530,10 @@ public:
     {
         iStringConstIterator iter;
 
-                        operator const char *() { return iter.pos; }
-                        operator Char() const { return iter.value; }
-        Char            operator*() const { return iter.value; }
+        operator const char *() { return iter.pos; }
+        operator Char() const { return iter.value; }
+
+        Char operator*() const { return iter.value; }
         const_iterator &operator++()
         {
             next_StringConstIterator(&iter);
@@ -570,13 +572,25 @@ public:
 
         operator const char *() { return iter.pos; }
         operator Char() const { return iter.value; }
+
         Char operator*() const { return iter.value; }
-        void operator++() { next_StringReverseConstIterator(&iter); }
-        void operator++(int) { next_StringReverseConstIterator(&iter); }
-        bool operator==(const const_reverse_iterator &other) const {
+        const_reverse_iterator &operator++()
+        {
+            next_StringReverseConstIterator(&iter);
+            return *this;
+        }
+        const_reverse_iterator operator++(int)
+        {
+            const_reverse_iterator prior = *this;
+            next_StringReverseConstIterator(&iter);
+            return prior;
+        }
+        bool operator==(const const_reverse_iterator &other) const
+        {
             return iter.str == other.iter.str && iter.pos == other.iter.pos;
         }
         bool operator!=(const const_reverse_iterator &other) const { return !(*this == other); }
+        BytePos bytePos() const { return BytePos(iter.pos - cstr_String(iter.str)); }
     };
 
     const_iterator begin() const;
@@ -745,6 +759,7 @@ struct DE_PUBLIC mb_iterator
     mutable mbstate_t mb{};
     mutable int curCharLen = 0;
 
+    mb_iterator() : i{nullptr}, start{nullptr} {}
     mb_iterator(const char *p) : i{p}, start{i} {}
     mb_iterator(const String &str) : i{str.c_str()}, start{i} {}
 
@@ -753,9 +768,11 @@ struct DE_PUBLIC mb_iterator
     mb_iterator &operator++();
     mb_iterator operator++(int);
     mb_iterator operator+(int byteOffset) const { return i + byteOffset; }
+    bool operator==(const char *ptr) const { return i == ptr; }
     bool operator==(const mb_iterator &other) const { return i == other.i; }
     bool operator!=(const mb_iterator &other) const { return !(*this == other); }
     bool operator!=(const char *ptr) const { return i != ptr; }
+    explicit operator bool() const { return i != nullptr; }
 
     String::BytePos pos() const { return String::BytePos(i - start); }
 

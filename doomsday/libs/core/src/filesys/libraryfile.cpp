@@ -23,8 +23,6 @@
 #include "de/NativePath"
 #include "de/LogBuffer"
 
-#include <QLibrary>
-
 using namespace de;
 
 DE_PIMPL_NOREF(LibraryFile)
@@ -59,7 +57,7 @@ LibraryFile::~LibraryFile()
 
 String LibraryFile::describe() const
 {
-    String desc = "shared library";
+    String desc = DE_STR("shared library");
     if (loaded()) desc += " [" + library().type() + "]";
     return desc;
 }
@@ -89,8 +87,9 @@ Library &LibraryFile::library()
         {
             /// @throw UnsupportedSourceError Currently shared libraries are only loaded directly
             /// from native files. Other kinds of files would require a temporary native file.
-            throw UnsupportedSourceError("LibraryFile::library", source()->description() +
-                ": can only load from NativeFile");
+            throw UnsupportedSourceError("LibraryFile::library",
+                                         source()->description() +
+                                             ": can only load from NativeFile");
         }
         d->library = new Library(native->nativePath());
     }

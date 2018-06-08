@@ -28,22 +28,22 @@ DE_PIMPL_NOREF(PathTree::Node)
     PathTree &tree;
 
     /// Parent node in the user's hierarchy.
-    PathTree::Node *parent;
+    Node *parent;
 
     /// @c NULL for leaves, index of children for branches.
-    PathTree::Node::Children *children;
+    Node::Children *children;
 
     /// Unique identifier for the path fragment this node represents,
     /// in the owning PathTree.
-    PathTree::SegmentId segmentId;
+    SegmentId segmentId;
 
     String const *segmentText = nullptr; // owned by the PathTree
 
-    Impl(PathTree &_tree, bool isLeaf, PathTree::SegmentId _segmentId,
-             PathTree::Node *_parent)
+    Impl(PathTree &_tree, bool isLeaf, SegmentId _segmentId,
+             Node *_parent)
         : tree(_tree), parent(_parent), children(0), segmentId(_segmentId)
     {
-        if (!isLeaf) children = new PathTree::Node::Children;
+        if (!isLeaf) children = new Node::Children;
     }
 
     ~Impl()
@@ -57,9 +57,9 @@ DE_PIMPL_NOREF(PathTree::Node)
     }
 };
 
-PathTree::Node::Node(PathTree::NodeArgs const &args) : d(nullptr)
+PathTree::Node::Node(NodeArgs const &args) : d(nullptr)
 {
-    d.reset(new Impl(args.tree, args.type == PathTree::Leaf, args.segmentId, args.parent));
+    d.reset(new Impl(args.tree, args.type == Leaf, args.segmentId, args.parent));
 
     // Let the parent know of the new child node.
     if (d->parent) d->parent->addChild(*this);
@@ -89,16 +89,16 @@ const PathTree::Node::Children &PathTree::Node::children() const
     return *d->children;
 }
 
-PathTree::Nodes const &PathTree::Node::childNodes(PathTree::NodeType type) const
+PathTree::Nodes const &PathTree::Node::childNodes(NodeType type) const
 {
     DE_ASSERT(d->children != 0);
-    return (type == PathTree::Leaf? d->children->leaves : d->children->branches);
+    return (type == Leaf? d->children->leaves : d->children->branches);
 }
 
-PathTree::Nodes &PathTree::Node::childNodes(PathTree::NodeType type)
+PathTree::Nodes &PathTree::Node::childNodes(NodeType type)
 {
     DE_ASSERT(d->children != 0);
-    return (type == PathTree::Leaf? d->children->leaves : d->children->branches);
+    return (type == Leaf? d->children->leaves : d->children->branches);
 }
 
 bool PathTree::Node::isAtRootLevel() const
@@ -111,18 +111,27 @@ PathTree::SegmentId PathTree::Node::segmentId() const
     return d->segmentId;
 }
 
-void PathTree::Node::addChild(PathTree::Node &node)
+void PathTree::Node::addChild(Node &node)
 {
     DE_ASSERT(d->children != 0);
 
-    childNodes(node.type()).insert(node.hash(), &node);
+    childNodes(node.type()).insert(std::make_pair(node.hash(), &node));
 }
 
-void PathTree::Node::removeChild(PathTree::Node &node)
+void PathTree::Node::removeChild(Node &node)
 {
     DE_ASSERT(d->children != 0);
 
-    childNodes(node.type()).remove(node.hash(), &node);
+    auto &hash = childNodes(node.type());
+    auto found = hash.equal_range(node.hash());
+    for (auto i = found.first; i != found.second; ++i)
+    {
+        if (i->second == &node)
+        {
+            hash.erase(i);
+            break;
+        }
+    }
 }
 
 String const &PathTree::Node::name() const
@@ -143,30 +152,34 @@ Path::hash_type PathTree::Node::hash() const
 }
 
 /// @todo This logic should be encapsulated in de::Path or de::Path::Segment.
-static int matchName(char const *string,  dsize stringSize,
-                     char const *pattern, dsize patternSize)
+static int matchName(const CString &string, const CString &pattern)
 {
-    QChar const *in    = string;
-    QChar const *inEnd = string + stringSize;
-    QChar const *pat   = pattern;
+    mb_iterator in     = string.begin();
+    const char *inEnd  = string.end();
+    mb_iterator pat    = pattern.begin();
+    mb_iterator asterisk;
 
     while (in < inEnd)
     {
-        if (*pat == QChar('*'))
+        if (*pat == '*')
         {
+            asterisk = pat;
             pat++;
             continue;
         }
 
-        if (/**st != QChar('?') && */ pat->toLower() != in->toLower())
+        if (towlower(*pat) != towlower(*in))
         {
             // A mismatch. Hmm. Go back to a previous '*'.
-            while (pat >= pattern && *pat != QChar('*')) { --pat; }
-
-            // No match?
-            if (pat < pattern) return false;
+            //while (pat >= pattern && *pat != QChar('*')) { --pat; }
+            if (!asterisk) return false;
 
             // The asterisk lets us continue.
+            pat = asterisk;
+
+            // No match?
+            //if (pat < pattern) return false;
+
         }
 
         // This character of the pattern is OK.
@@ -175,26 +188,26 @@ static int matchName(char const *string,  dsize stringSize,
     }
 
     // Skip remaining asterisks.
-    while (*pat == QChar('*')) { pat  ++; }
+    while (*pat == '*') { pat++; }
 
     // Match is good if the end of the pattern was reached.
-    return pat == (pattern + patternSize);
+    return pat == pattern.end();
 }
 
-int PathTree::Node::comparePath(de::Path const &searchPattern, ComparisonFlags flags) const
+int PathTree::Node::comparePath(Path const &searchPattern, ComparisonFlags flags) const
 {
-    if (((flags & PathTree::NoLeaf)   && isLeaf()) ||
-        ((flags & PathTree::NoBranch) && isBranch()))
+    if (((flags & NoLeaf)   && isLeaf()) ||
+        ((flags & NoBranch) && isBranch()))
     {
         return 1;
     }
 
-    de::Path::Segment const *snode = &searchPattern.lastSegment();
+    Path::Segment const *snode = &searchPattern.lastSegment();
 
     // In reverse order, compare each path node in the search term.
     int pathNodeCount = searchPattern.segmentCount();
 
-    PathTree::Node const *node = this;
+    const auto *node = this;
     for (int i = 0; i < pathNodeCount; ++i)
     {
         if (!snode->hasWildCard())
@@ -204,7 +217,7 @@ int PathTree::Node::comparePath(de::Path const &searchPattern, ComparisonFlags f
             {
                 return 1;
             }
-            if (node->name().compare(snode->toStringRef(), Qt::CaseInsensitive))
+            if (node->name().compare(*snode, CaseInsensitive))
             {
                 return 1;
             }
@@ -213,8 +226,7 @@ int PathTree::Node::comparePath(de::Path const &searchPattern, ComparisonFlags f
         {
             // Compare the names using wildcard pattern matching.
             // Note: This has relatively slow performance.
-            if (!matchName(node->name().constData(), node->name().size(),
-                           snode->toStringRef().constData(), snode->toStringRef().size()))
+            if (!matchName(node->name(), *snode))
             {
                 return 1;
             }
@@ -248,11 +260,11 @@ static size_t maxStackDepth;
 namespace internal {
     struct PathConstructorArgs
     {
-        int length;
-        QChar separator;
+        dsize length;
+        Char separator;
         String composedPath;
 
-        PathConstructorArgs(QChar sep = '/') : length(0), separator(sep)
+        PathConstructorArgs(Char sep = '/') : length(0), separator(sep)
         {}
     };
 }
@@ -270,11 +282,11 @@ static void pathConstructor(internal::PathConstructorArgs &args, PathTree::Node 
     maxStackDepth = MAX_OF(maxStackDepth, stackStart - (void *)&fragment);
 #endif
 
-    args.length += segment.length();
+    args.length += segment.size();
 
     if (!trav.isAtRootLevel())
     {
-        if (!args.separator.isNull())
+        if (args.separator)
         {
             // There also needs to be a separator (a single character).
             args.length += 1;
@@ -284,14 +296,16 @@ static void pathConstructor(internal::PathConstructorArgs &args, PathTree::Node 
         pathConstructor(args, trav.parent());
 
         // Append the separator.
-        if (!args.separator.isNull())
+        if (args.separator)
+        {
             args.composedPath.append(args.separator);
+        }
     }
     // We've arrived at the deepest level. The full length is now known.
     // Ensure there's enough memory for the string.
     else if (args.composedPath)
     {
-        args.composedPath.reserve(args.length);
+        //args.composedPath.reserve(args.length);
     }
 
     // Assemble the path by appending the segment.
@@ -325,7 +339,7 @@ Path PathTree::Node::path(Char sep) const
 #endif
 
     // Include a terminating path separator for branches.
-    if (!sep.isNull() && isBranch())
+    if (sep && isBranch())
     {
         args.length++; // A single character.
     }
@@ -334,12 +348,12 @@ Path PathTree::Node::path(Char sep) const
     pathConstructor(args, *this);
 
     // Add a closing separator for branches.
-    if (!sep.isNull() && isBranch())
+    if (sep && isBranch())
     {
         args.composedPath += sep;
     }
 
-    DE_ASSERT(args.composedPath.length() == (int)args.length);
+    DE_ASSERT(args.composedPath.size() == args.length);
 
 #ifdef DE_STACK_MONITOR
     LOG_AS("pathConstructor");
@@ -350,9 +364,9 @@ Path PathTree::Node::path(Char sep) const
 }
 
 UserDataNode::UserDataNode(PathTree::NodeArgs const &args, void *userPointer, int userValue)
-    : PathTree::Node(args),
-      _pointer(userPointer),
-      _value(userValue)
+    : Node(args)
+    , _pointer(userPointer)
+    , _value(userValue)
 {}
 
 void *UserDataNode::userPointer() const

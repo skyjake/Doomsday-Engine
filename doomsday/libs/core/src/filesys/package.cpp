@@ -17,18 +17,18 @@
  */
 
 #include "de/Package"
+
 #include "de/App"
 #include "de/DotPath"
 #include "de/LogBuffer"
 #include "de/PackageLoader"
 #include "de/Process"
+#include "de/RegExp"
 #include "de/Script"
 #include "de/ScriptSystem"
 #include "de/ScriptedInfo"
 #include "de/TextValue"
 #include "de/TimeValue"
-
-#include <QRegularExpression>
 
 namespace de {
 
@@ -212,7 +212,7 @@ void Package::findPartialPath(String const &path, FileIndex::FoundFiles &found) 
 void Package::didLoad()
 {
     // The package's own import paths come into effect when loaded.
-    foreach (String imp, d->importPaths())
+    for (const String &imp : d->importPaths())
     {
         App::scriptSystem().addModuleImportPath(imp);
     }
@@ -224,7 +224,7 @@ void Package::aboutToUnload()
 {
     executeFunction("onUnload");
 
-    foreach (String imp, d->importPaths())
+    for (const String &imp : d->importPaths())
     {
         App::scriptSystem().removeModuleImportPath(imp);
     }
@@ -319,8 +319,8 @@ void Package::validateMetadata(Record const &packageInfo)
     if (ident.segmentCount() <= 1)
     {
         throw ValidationError("Package::validateMetadata",
-                              QString("Identifier of package \"%1\" must specify a domain")
-                              .arg(packageInfo.gets("path")));
+                              stringf("Identifier of package \"%s\" must specify a domain",
+                                      packageInfo.gets("path").c_str()));
     }
 
     String const &topLevelDomain = ident.segment(0).toString();
@@ -329,31 +329,33 @@ void Package::validateMetadata(Record const &packageInfo)
     {
         // Functional top-level domains cannot be used as package identifiers (only aliases).
         throw ValidationError("Package::validateMetadata",
-                              QString("Package \"%1\" has an invalid domain: functional top-level "
-                                      "domains can only be used as aliases")
-                              .arg(packageInfo.gets("path")));
+                              stringf("Package \"%s\" has an invalid domain: functional top-level "
+                                      "domains can only be used as aliases",
+                                      packageInfo.gets("path").c_str()));
     }
 
-    static String const required[] = { "title", "version", "license", VAR_TAGS };
+    static const String required[] = { "title", "version", "license", VAR_TAGS };
     for (auto const &req : required)
     {
         if (!packageInfo.has(req))
         {
-            throw IncompleteMetadataError("Package::validateMetadata",
-                                          QString("Package \"%1\" does not have '%2' in its metadata")
-                                          .arg(packageInfo.gets("path"))
-                                          .arg(req));
+            throw IncompleteMetadataError(
+                "Package::validateMetadata",
+                stringf("Package \"%s\" does not have '%s' in its metadata",
+                        packageInfo.gets("path").c_str(),
+                        req.c_str()));
         }
     }
 
-    static QRegularExpression const regexReservedTags("\\b(loaded)\\b");
-    auto match = regexReservedTags.match(packageInfo.gets(VAR_TAGS));
-    if (match.hasMatch())
+    static RegExp const regexReservedTags("\\b(loaded)\\b");
+    RegExpMatch match;
+    if (regexReservedTags.match(packageInfo.gets(VAR_TAGS), match))
     {
-        throw ValidationError("Package::validateMetadata",
-                              QString("Package \"%1\" has a tag that is reserved for internal use (%2)")
-                              .arg(packageInfo.gets("path"))
-                              .arg(match.captured(1)));
+        throw ValidationError(
+            "Package::validateMetadata",
+            stringf("Package \"%s\" has a tag that is reserved for internal use (%s)",
+                    packageInfo.gets("path").c_str(),
+                    match.captured(1).c_str()));
     }
 }
 
@@ -375,19 +377,19 @@ Record const &Package::metadata(File const &packageFile)
     return packageFile.objectNamespace().subrecord(VAR_PACKAGE);
 }
 
-QStringList Package::tags(File const &packageFile)
+StringList Package::tags(File const &packageFile)
 {
     return tags(packageFile.objectNamespace().gets(PACKAGE_TAGS));
 }
 
 bool Package::matchTags(File const &packageFile, String const &tagRegExp)
 {
-    return QRegExp(tagRegExp).indexIn(packageFile.objectNamespace().gets(PACKAGE_TAGS, "")) >= 0;
+    return RegExp(tagRegExp).hasMatch(packageFile.objectNamespace().gets(PACKAGE_TAGS, ""));
 }
 
-QStringList Package::tags(String const &tagsString)
+StringList Package::tags(String const &tagsString)
 {
-    return tagsString.split(' ', QString::SkipEmptyParts);
+    return filter(tagsString.split(" "), [](const String &s){ return !s.empty(); });
 }
 
 StringList Package::requires(File const &packageFile)
@@ -417,7 +419,7 @@ bool Package::hasOptionalContent(File const &packageFile)
 
 static String stripAfterFirstUnderscore(String str)
 {
-    int pos = str.indexOf('_');
+    auto pos = str.indexOf('_');
     if (pos > 0) return str.left(pos);
     return str;
 }
@@ -430,11 +432,10 @@ static String extractIdentifier(String str)
 std::pair<String, Version> Package::split(String const &identifier_version)
 {
     std::pair<String, Version> idVer;
-
-    if (identifier_version.contains(QChar('_')))
+    if (identifier_version.contains("_"))
     {
         idVer.first  = stripAfterFirstUnderscore(identifier_version);
-        idVer.second = Version(identifier_version.substr(idVer.first.size() + 1));
+        idVer.second = Version(identifier_version.substr(idVer.first.sizeb() + 1));
     }
     else
     {
@@ -446,10 +447,11 @@ std::pair<String, Version> Package::split(String const &identifier_version)
 String Package::splitToHumanReadable(String const &identifier_version)
 {
     auto const id_ver = split(identifier_version);
-    return QObject::tr("%1 " _E(C) "(%2)" _E(.))
-            .arg(id_ver.first)
-            .arg(id_ver.second.isValid()? QObject::tr("version %1").arg(id_ver.second.fullNumber())
-                                        : QObject::tr("any version"));
+    return String::format("%s " _E(C) "(%s)" _E(.),
+                          id_ver.first.c_str(),
+                          id_ver.second.isValid()
+                              ? stringf("version %s", id_ver.second.fullNumber().c_str()).c_str()
+                              : "any version");
 }
 
 bool Package::equals(String const &id1, String const &id2)

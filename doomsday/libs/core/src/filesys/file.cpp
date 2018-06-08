@@ -408,35 +408,35 @@ static bool sortByNameAsc(File const *a, File const *b)
     return a->name().compareWithoutCase(b->name()) < 0;
 }
 
-String File::fileListAsText(QList<File const *> files)
+String File::fileListAsText(List<File const *> files)
 {
-    qSort(files.begin(), files.end(), sortByNameAsc);
+    std::sort(files.begin(), files.end(), sortByNameAsc);
 
     String txt;
-    foreach (File const *f, files)
+    for (File const *f : files)
     {
         // One line per file.
         if (!txt.isEmpty()) txt += "\n";
 
         // Folder / Access flags / source flag / has origin feed.
-        String flags = QString("%1%2%3%4%5")
-                .arg(is<Folder>(f)?                'd' : '-')
-                .arg(f->mode().testFlag(Write)?    'w' : 'r')
-                .arg(f->mode().testFlag(Truncate)? 't' : '-')
-                .arg(f->source() != f?             'i' : '-')
-                .arg(f->originFeed()?              'f' : '-');
+        String flags = String::format("%c%c%c%c%c",
+                                      is<Folder>(f)?                'd' : '-',
+                                      f->mode().testFlag(Write)?    'w' : 'r',
+                                      f->mode().testFlag(Truncate)? 't' : '-',
+                                      f->source() != f?             'i' : '-',
+                                      f->originFeed()?              'f' : '-');
 
-        txt += flags + QString("%1 %2 %3")
-                .arg(f->size(), 9)
-                .arg(f->status().modifiedAt.asText(), 23)
-                .arg(f->name());
+        txt += flags + String::format("%9zu %23s %s",
+                                      f->size(),
+                                      f->status().modifiedAt.asText().c_str(),
+                                      f->name().c_str());
 
         // Link target.
         if (LinkFile const *link = maybeAs<LinkFile>(f))
         {
             if (!link->isBroken())
             {
-                txt += QString(" -> %1").arg(link->target().path());
+                txt += String::format(" -> %s", link->target().path().c_str());
             }
             else
             {

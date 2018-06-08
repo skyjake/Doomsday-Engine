@@ -34,8 +34,8 @@ DE_PIMPL(Link), public AsyncScope
     State state = Initializing;
     String address;
     QueryId nextQueryId = 1;
-    QList<Query> deferredQueries;
-    QHash<QueryId, Query> pendingQueries;
+    List<Query> deferredQueries;
+    Hash<QueryId, Query> pendingQueries;
 
     Impl(Public *i) : Base(i)
     {}
@@ -60,7 +60,7 @@ DE_PIMPL(Link), public AsyncScope
     /// Remove all invalid/cancelled queries.
     void cleanup()
     {
-        QMutableHashIterator<QueryId, Query> iter(pendingQueries);
+        MutableHashIterator<QueryId, Query> iter(pendingQueries);
         while (iter.hasNext())
         {
             iter.next();
@@ -96,7 +96,7 @@ DE_PIMPL(Link), public AsyncScope
 
     void sendDeferredQueries()
     {
-        foreach (Query const &query, deferredQueries)
+        for (Query const &query : deferredQueries)
         {
             if (query.isValid())
             {
@@ -110,8 +110,7 @@ DE_PIMPL(Link), public AsyncScope
     void notifyStatus(RemoteFeedRelay::Status status)
     {
         using Relay = RemoteFeedRelay;
-        DE_FOR_EACH_OBSERVER(Relay::StatusAudience, i,
-                                Relay::get().audienceForStatus())
+        DE_FOR_EACH_OBSERVER(Relay::StatusAudience, i, Relay::get().audienceForStatus())
         {
             i->remoteRepositoryStatusChanged(address, status);
         }
@@ -188,7 +187,7 @@ void Link::wasDisconnected()
     }
 }
 
-void Link::handleError(QString errorMessage)
+void Link::handleError(const String &errorMessage)
 {
     LOG_NET_ERROR("Error accessing remote file repository \"%s\": %s " DE_CHAR_MDASH
                   " files from repository may not be available")
@@ -216,7 +215,7 @@ Query *Link::findQuery(QueryId id)
     auto found = d->pendingQueries.find(id);
     if (found != d->pendingQueries.end())
     {
-        return &found.value();
+        return &found->second;
     }
     return nullptr;
 }

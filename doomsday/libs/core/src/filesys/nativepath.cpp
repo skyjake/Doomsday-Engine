@@ -44,10 +44,10 @@
 
 #ifdef WIN32
 #  define NATIVE_HOME_SYMBOLIC  "%HOMEPATH%"
-#  define DIR_SEPARATOR         Char('\\')
+#  define DIR_SEPARATOR         '\\'
 #else
 #  define NATIVE_HOME_SYMBOLIC  "~"
-#  define DIR_SEPARATOR         Char('/')
+#  define DIR_SEPARATOR         '/'
 #  ifdef UNIX
 #    include <sys/types.h>
 #    include <pwd.h>
@@ -60,7 +60,9 @@ static String toNative(String const &s)
 {
     // This will resolve parent references (".."), multiple separators
     // (hello//world), and self-references (".").
-    return Path::normalizeString(String::take(clean_Path(s)), DIR_SEPARATOR);
+    String cleaned(s);
+    clean_Path(cleaned);
+    return Path::normalizeString(cleaned, DIR_SEPARATOR);
 }
 
 NativePath::NativePath() : Path()
@@ -197,35 +199,35 @@ String NativePath::pretty() const
     String result = *this;
 
     // Replace relative directives like '}' (used in FS1 only) with a full symbol.
-    if (result.length() > 1 && (result.first() == '}' || result.first() == '>'))
+    if (result.size() > 1 && (result.first() == '}' || result.first() == '>'))
     {
-        return String(NATIVE_BASE_SYMBOLIC) + DIR_SEPARATOR + result.mid(1);
+        return CString(NATIVE_BASE_SYMBOLIC) + DIR_SEPARATOR + result.substr(String::BytePos(1));
     }
 
     // If within one of the known native directories, cut out the known path,
     // replacing it with a symbolic. This retains the absolute nature of the path
     // while omitting potentially redundant/verbose information.
-    if (QDir::isAbsolutePath(result))
+    if (isAbsolute_Path(result))
     {
         NativePath basePath = App::app().nativeBasePath();
-        if (result.beginsWith(basePath))
+        if (result.beginsWith(basePath.toString()))
         {
-            result = NATIVE_BASE_SYMBOLIC + result.mid(basePath.length());
+            result = NATIVE_BASE_SYMBOLIC + result.substr(basePath.sizeb());
         }
         else
         {
 #ifdef MACOSX
             NativePath contentsPath = App::app().nativeAppContentsPath();
-            if (result.beginsWith(contentsPath))
+            if (result.beginsWith(contentsPath.toString()))
             {
-                return "(app)" + result.mid(contentsPath.length());
+                return "(app)" + result.substr(contentsPath.sizeb());
             }
 #endif
 #ifndef WIN32 // Windows users are not familiar with a symbolic home path.
-            NativePath homePath = QDir::homePath(); // actual native home dir, not FS2 "/home"
-            if (result.beginsWith(homePath))
+            NativePath homePath = NativePath::homePath(); // actual native home dir, not FS2 "/home"
+            if (result.beginsWith(homePath.toString()))
             {
-                result = NATIVE_HOME_SYMBOLIC + result.mid(homePath.length());
+                result = NATIVE_HOME_SYMBOLIC + result.substr(homePath.sizeb());
             }
 #endif
         }
@@ -247,7 +249,8 @@ bool NativePath::exists() const
 
 bool NativePath::isReadable() const
 {
-    return QFileInfo(toString()).isReadable();
+    return exists();
+    //return QFileInfo(toString()).isReadable();
 }
 
 static NativePath currentNativeWorkPath;
@@ -292,7 +295,7 @@ void NativePath::createPath(NativePath const &nativePath)
         parentPath.create();
     }
 
-    QDir::current().mkdir(nativePath);
+    mkdir_Path(nativePath.toString());
 
     if (!nativePath.exists())
     {

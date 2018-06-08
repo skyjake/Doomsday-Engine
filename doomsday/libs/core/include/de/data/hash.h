@@ -40,6 +40,11 @@ public:
     bool         contains(const Key &key) const { return Base::find(key) != Base::end(); }
     Value &      operator[](const Key &key) { return Base::operator[](key); }
     const Value &operator[](const Key &key) const { return Base::find(key)->second; }
+
+    void deleteAll()
+    {
+        for (auto &i : *this) { delete i.second; }
+    }
 };
 
 template <typename Key, typename Value>

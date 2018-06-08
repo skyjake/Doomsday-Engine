@@ -33,7 +33,7 @@
 
 namespace de {
 
-String const NameExpression::LOCAL_SCOPE = "-";
+const char *NameExpression::LOCAL_SCOPE = "-";
 
 DE_PIMPL_NOREF(NameExpression)
 {

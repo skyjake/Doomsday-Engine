@@ -22,6 +22,7 @@
 #include "../../AsyncCallback"
 #include "../../DictionaryValue"
 #include "../../IdentifiedPacket"
+#include "../../Hash"
 
 namespace de {
 namespace filesys {

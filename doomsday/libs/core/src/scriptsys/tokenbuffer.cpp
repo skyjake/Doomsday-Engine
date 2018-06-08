@@ -41,7 +41,7 @@ const char *Token::SEMICOLON         = ";";
 
 bool Token::equals(const char *str) const
 {
-    return cmpSc_Rangecc(&_token, str, &iCaseSensitive) == 0;
+    return cmpCStrSc_Rangecc(&_token, str, &iCaseSensitive) == 0;
 }
 
 bool Token::beginsWith(const char *str) const

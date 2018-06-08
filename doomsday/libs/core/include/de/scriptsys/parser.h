@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBCORE_PARSER_H
@@ -27,8 +27,6 @@
 #include "../ScriptLex"
 #include "../Operator"
 #include "../Expression"
-
-#include <QFlags>
 
 namespace de {
 
@@ -75,7 +73,7 @@ public:
         StayAtClosingStatement = 0x2,
         IgnoreExtraBeforeColon = 0x4
     };
-    Q_DECLARE_FLAGS(CompoundFlags, CompoundFlag)
+    using CompoundFlags = Flags;
 
 public:
     Parser();
@@ -115,30 +113,27 @@ public:
     ExpressionStatement *parseExpressionStatement();
 
     /// Parse a range of tokens as a comma-separated argument list:
-    ArrayExpression *parseList(TokenRange const &range,
-                               QChar const *separator = Token::COMMA,
-                               Expression::Flags const &flags = Expression::ByValue);
+    ArrayExpression *parseList(TokenRange const &range, char const *separator = Token::COMMA,
+                               Flags const &flags = Expression::ByValue);
 
     /// Parse a range of tokens as an operator-based expression.
-    Expression *parseExpression(TokenRange const &range,
-        Expression::Flags const &flags = Expression::ByValue);
+    Expression *parseExpression(TokenRange const &range, Flags const &flags = Expression::ByValue);
 
     ArrayExpression *parseArrayExpression(TokenRange const &range);
 
     DictionaryExpression *parseDictionaryExpression(TokenRange const &range);
 
-    Expression *parseCallExpression(TokenRange const &nameRange,
-        TokenRange const &argumentRange);
+    Expression *parseCallExpression(TokenRange const &nameRange, TokenRange const &argumentRange);
 
-    OperatorExpression *parseOperatorExpression(Operator op,
-        TokenRange const &leftSide, TokenRange const &rightSide,
-        Expression::Flags const &rightFlags = Expression::ByValue);
+    OperatorExpression *parseOperatorExpression(Operator op, TokenRange const &leftSide,
+                                                TokenRange const &rightSide,
+                                                Flags const &     rightFlags = Expression::ByValue);
 
     Expression *parseTokenExpression(TokenRange const &range,
-        Expression::Flags const &flags = Expression::ByValue);
+                                     Flags const &     flags = Expression::ByValue);
 
-    Operator findLowestOperator(TokenRange const &range,
-        TokenRange &leftSide, TokenRange &rightSide);
+    Operator findLowestOperator(TokenRange const &range, TokenRange &leftSide,
+                                TokenRange &rightSide);
 
 protected:
     /// Gets the set of tokens for the next statement.
@@ -154,8 +149,6 @@ private:
     // set of tokens.
     TokenRange _statementRange;
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(de::Parser::CompoundFlags)
 
 } // namespace de
 

@@ -41,8 +41,8 @@ DE_PIMPL(NativeFile)
 
     Impl(Public *i)
         : Base(i)
-        , in(0)
-        , out(0)
+        , in(nullptr)
+        , out(nullptr)
         , needTruncation(false)
     {}
 
@@ -71,28 +71,29 @@ DE_PIMPL(NativeFile)
 
     std::ofstream &getOutput()
     {
+        using namespace std;
         if (!out)
         {
             // Are we allowed to output?
             self().verifyWriteAccess();
 
-            QFile::OpenMode fileMode = QFile::ReadWrite;
+            ios::openmode fileMode = ios::binary | ios::out;
             if (self().mode() & Truncate)
             {
                 if (needTruncation)
                 {
-                    fileMode |= QFile::Truncate;
+                    fileMode |= ios::trunc;
                     needTruncation = false;
                 }
             }
-            out = new QFile(nativePath);
-            if (!out->open(fileMode))
+            out = new std::ofstream{nativePath, fileMode};
+            if (!*out)
             {
                 delete out;
-                out = 0;
+                out = nullptr;
                 /// @throw OutputError  Opening the output stream failed.
-                throw OutputError("NativeFile::output", String("Failed to write ") + nativePath +
-                                  " (" + strerror(errno) + ")");
+                throw OutputError("NativeFile::output",
+                                  "Failed to write " + nativePath + " (" + strerror(errno) + ")");
             }
             if (self().mode() & Truncate)
             {
@@ -144,8 +145,7 @@ NativeFile::~NativeFile()
 String NativeFile::describe() const
 {
     DE_GUARD(this);
-
-    return String("\"%1\"").arg(d->nativePath.pretty());
+    return String::format("\"%s\"", d->nativePath.pretty().c_str());
 }
 
 Block NativeFile::metaId() const
@@ -213,37 +213,36 @@ void NativeFile::get(Offset at, Byte *values, Size count) const
         /// @throw IByteArray::OffsetError  The region specified for reading extends
         /// beyond the bounds of the file.
         throw OffsetError("NativeFile::get", description() + ": cannot read past end of file " +
-                          String("(%1[+%2] > %3)").arg(at).arg(count).arg(size()));
+                          String::format("(%zu[+%zu] > %zu)", at, count, size()));
     }
-    QFile &in = input();
-    if (in.pos() != qint64(at)) in.seek(qint64(at));
+    auto &in = input();
+    if (in.tellg() != std::ifstream::pos_type(at)) in.seekg(at);
     in.read(reinterpret_cast<char *>(values), count);
 
-    // Close the native input file after reaching the end of the file.
-    if (in.atEnd())
+    // Close the native input file after the full contents have been read.
+    if (at + count == size())
     {
         d->closeInput();
     }
 }
 
-void NativeFile::set(Offset at, Byte const *values, Size count)
+void NativeFile::set(Offset at, const Byte *values, Size count)
 {
     DE_GUARD(this);
 
-    QFile &out = output();
+    auto &out = output();
     if (at > size())
     {
         /// @throw IByteArray::OffsetError  @a at specified a position beyond the
         /// end of the file.
-        throw OffsetError("NativeFile::set", "Cannot write past end of file");
+        throw OffsetError("NativeFile::set", description() + ": cannot write past end of file");
     }
-    out.seek(at);
-    out.write(reinterpret_cast<char const *>(values), count);
-    if (out.error() != QFile::NoError)
+    out.seekp(at);
+    out.write(reinterpret_cast<const char *>(values), count);
+    if (out.bad())
     {
         /// @throw OutputError  Failure to write to the native file.
-        throw OutputError("NativeFile::set", "Error writing to file:" +
-                          out.errorString());
+        throw OutputError("NativeFile::set", description() + ": error writing to file");
     }
     // Update status.
     Status st = status();
@@ -276,14 +275,14 @@ void NativeFile::setMode(Flags const &newMode)
     }
 }
 
-QFile &NativeFile::input() const
+std::ifstream &NativeFile::input() const
 {
     DE_GUARD(this);
 
     return d->getInput();
 }
 
-QFile &NativeFile::output()
+std::ofstream &NativeFile::output()
 {
     DE_GUARD(this);
 

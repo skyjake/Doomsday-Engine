@@ -48,11 +48,16 @@ public:
      */
 //    Address(QHostAddress const &address, duint16 port = 0);
 
-    Address(char const *address, duint16 port = 0);
+    Address(char const *hostNameOrAddress, duint16 port = 0);
 
     Address(Address const &other);
 
     Address &operator=(Address const &other);
+
+    /**
+     * Returns the host name that was passed to lookup.
+     */
+    String hostName() const;
 
     bool operator<(Address const &other) const;
 

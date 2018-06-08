@@ -35,7 +35,7 @@ struct PathTree::Impl
     StringPool segments;
 
     /// Flags that determine the properties of the path tree (see PathTree::Flag).
-    PathTree::Flags flags;
+    Flags flags;
 
     /// Total number of unique paths in the directory.
     int size;
@@ -43,14 +43,14 @@ struct PathTree::Impl
     int numNodesOwned;
 
     /// Node that represents the one root branch of all nodes.
-    PathTree::Node rootNode;
+    Node rootNode;
 
     /// Path node hashes (leaves and branches).
-    PathTree::NodeHash hash;
+    NodeHash hash;
 
     Impl(PathTree &d, int _flags)
         : self(d), flags(_flags), size(0), numNodesOwned(0),
-          rootNode(PathTree::NodeArgs(d, PathTree::Branch, 0))
+          rootNode(NodeArgs(d, Branch, 0))
     {}
 
     ~Impl()
@@ -67,9 +67,9 @@ struct PathTree::Impl
         DE_ASSERT(numNodesOwned == 0);
     }
 
-    PathTree::SegmentId internSegmentAndUpdateIdHashMap(const String &segment, Path::hash_type hashKey)
+    SegmentId internSegmentAndUpdateIdHashMap(const String &segment, Path::hash_type hashKey)
     {
-        PathTree::SegmentId internId = segments.intern(segment);
+        SegmentId internId = segments.intern(segment);
         segments.setUserValue(internId, hashKey);
         return internId;
     }
@@ -78,26 +78,30 @@ struct PathTree::Impl
      * @return Tree node that matches the name and type and which has the
      * specified parent node.
      */
-    PathTree::Node *nodeForSegment(Path::Segment const &segment, PathTree::NodeType nodeType,
-                                   PathTree::Node *parent)
+    Node *nodeForSegment(Path::Segment const &segment, NodeType nodeType, Node *parent)
     {
-        PathTree::Nodes const &hash = self.nodes(nodeType);
+        const auto &hash = self.nodes(nodeType);
+
+        const String segmentStr = segment.toString();
 
         // Have we already encountered this?
-        PathTree::SegmentId segmentId = segments.isInterned(segment);
+        SegmentId segmentId = segments.isInterned(segmentStr);
         if (segmentId)
         {
             // The name is known. Perhaps we have.
             Path::hash_type hashKey = segments.userValue(segmentId);
-            for (PathTree::Nodes::const_iterator i = hash.find(hashKey);
-                 i != hash.end() && i.key() == hashKey; ++i)
+            const auto found = hash.equal_range(hashKey);
+            for (auto i = found.first; i != found.second; ++i)
             {
-                PathTree::Node *node = *i;
-                if (parent    != &node->parent()) continue;
-                if (segmentId != node->segmentId()) continue;
-
-                if (nodeType == PathTree::Branch || !(flags & PathTree::MultiLeaf))
+                Node *node = i->second;
+                if (parent != &node->parent() || segmentId != node->segmentId())
+                {
+                    continue;
+                }
+                if (nodeType == Branch || !(flags & MultiLeaf))
+                {
                     return node;
+                }
             }
         }
 
@@ -110,17 +114,17 @@ struct PathTree::Impl
         if (!segmentId)
         {
             hashKey   = segment.hash();
-            segmentId = internSegmentAndUpdateIdHashMap(segment, hashKey);
+            segmentId = internSegmentAndUpdateIdHashMap(segmentStr, hashKey);
         }
         else
         {
             hashKey = self.segmentHash(segmentId);
         }
 
-        PathTree::Node *node = self.newNode(PathTree::NodeArgs(self, nodeType, segmentId, parent));
+        Node *node = self.newNode(NodeArgs(self, nodeType, segmentId, parent));
 
         // Insert the new node into the hash.
-        const_cast<Nodes &>(hash).insert(hashKey, node);
+        const_cast<Nodes &>(hash).insert(std::make_pair(hashKey, node));
 
         numNodesOwned++;
 
@@ -132,16 +136,16 @@ struct PathTree::Impl
      *
      * @return  The node that identifies the given path.
      */
-    PathTree::Node *buildNodesForPath(Path const &path)
+    Node *buildNodesForPath(Path const &path)
     {
-        bool const hasLeaf = !path.toStringRef().endsWith(DE_STR("/"));
+        const bool hasLeaf = !path.toCString().endsWith("/");
 
-        PathTree::Node *node = 0, *parent = &rootNode;
+        Node *node = 0, *parent = &rootNode;
         for (int i = 0; i < path.segmentCount() - (hasLeaf? 1 : 0); ++i)
         {
             Path::Segment const &pn = path.segment(i);
             //qDebug() << "Add branch: " << pn.toString();
-            node = nodeForSegment(pn, PathTree::Branch, parent);
+            node = nodeForSegment(pn, Branch, parent);
             parent = node;
         }
 
@@ -149,19 +153,19 @@ struct PathTree::Impl
         {
             Path::Segment const &pn = path.lastSegment();
             //qDebug() << "Add leaf: " << pn.toString();
-            node = nodeForSegment(pn, PathTree::Leaf, parent);
+            node = nodeForSegment(pn, Leaf, parent);
         }
         return node;
     }
 
-    PathTree::Node *findInHash(PathTree::Nodes &hash, Path::hash_type hashKey,
+    Node *findInHash(Nodes &hash, Path::hash_type hashKey,
                                Path const &searchPath,
-                               PathTree::ComparisonFlags compFlags)
+                               ComparisonFlags compFlags)
     {
-        for (Nodes::iterator i = hash.find(hashKey);
-            i != hash.end() && i.key() == hashKey; ++i)
+        auto found = hash.equal_range(hashKey);
+        for (auto i = found.first; i != found.second; ++i)
         {
-            PathTree::Node *node = *i;
+            Node *node = i->second;
             if (!node->comparePath(searchPath, compFlags))
             {
                 // This is the leaf node we're looking for.
@@ -179,14 +183,14 @@ struct PathTree::Impl
         return 0;
     }
 
-    PathTree::Node *find(Path const &searchPath, PathTree::ComparisonFlags compFlags)
+    Node *find(Path const &searchPath, ComparisonFlags compFlags)
     {
         if (searchPath.isEmpty() && !compFlags.testFlag(NoBranch))
         {
             return &rootNode;
         }
 
-        PathTree::Node *found = 0;
+        Node *found = 0;
         if (size)
         {
             Path::hash_type hashKey = searchPath.lastSegment().hash();
@@ -208,11 +212,11 @@ struct PathTree::Impl
         return 0;
     }
 
-    void clearPathHash(PathTree::Nodes &ph)
+    void clearPathHash(Nodes &ph)
     {
-        DE_FOR_EACH(PathTree::Nodes, i, ph)
+        for (auto &i : ph)
         {
-            PathTree::Node *node = *i;
+            Node *node = i.second;
             delete node;
 
             numNodesOwned--;
@@ -238,7 +242,7 @@ PathTree::Node &PathTree::insert(Path const &path)
 {
     DE_GUARD(this);
 
-    PathTree::Node *node = d->buildNodesForPath(path);
+    Node *node = d->buildNodesForPath(path);
     DE_ASSERT(node != 0);
 
     // There is now one more unique path in the tree.
@@ -251,7 +255,7 @@ bool PathTree::remove(Path const &path, ComparisonFlags flags)
 {
     DE_GUARD(this);
 
-    PathTree::Node *node = d->find(path, flags | RelinquishMatching);
+    Node *node = d->find(path, flags | RelinquishMatching);
     if (node && node != &d->rootNode)
     {
         // One less unique path in the tree.
@@ -283,7 +287,7 @@ bool PathTree::empty() const
     return size() == 0;
 }
 
-PathTree::Flags PathTree::flags() const
+Flags PathTree::flags() const
 {
     DE_GUARD(this);
 
@@ -371,9 +375,9 @@ static void collectPathsInHash(PathTree::FoundPaths &found, PathTree::Nodes cons
 {
     if (ph.empty()) return;
 
-    DE_FOR_EACH_CONST(PathTree::Nodes, i, ph)
+    for (auto &i : ph)
     {
-        PathTree::Node const &node = **i;
+        const auto &node = *i.second;
         found.push_back(node.path(separator));
     }
 }
@@ -382,7 +386,7 @@ int PathTree::findAllPaths(FoundPaths &found, ComparisonFlags flags, Char separa
 {
     DE_GUARD(this);
 
-    int numFoundSoFar = found.count();
+    int numFoundSoFar = found.size();
     if (!(flags & NoBranch))
     {
         collectPathsInHash(found, d->hash.branches, separator);
@@ -391,7 +395,7 @@ int PathTree::findAllPaths(FoundPaths &found, ComparisonFlags flags, Char separa
     {
         collectPathsInHash(found, d->hash.leaves, separator);
     }
-    return found.count() - numFoundSoFar;
+    return found.size() - numFoundSoFar;
 }
 
 static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
@@ -401,30 +405,20 @@ static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
 {
     int result = 0;
 
-    if (hashKey != PathTree::no_hash && hashKey >= Path::hash_range)
-    {
-        throw Error("PathTree::iteratePathsInHash", String("Invalid hash %1, valid range is [0..%2).").arg(hashKey).arg(Path::hash_range-1));
-    }
-
-    PathTree::Nodes const *nodes = &pathTree.nodes(type);
-
-    // If the parent is known, we can narrow our search to all the parent's
-    // children.
-    if (flags.testFlag(PathTree::MatchParent) && parent)
-    {
-        nodes = &parent->childNodes(type);
-    }
+    // If the parent is known, we can narrow our search to all the parent's children.
+    const auto &nodes = (flags.testFlag(PathTree::MatchParent) && parent ? parent->childNodes(type)
+                                                                         : pathTree.nodes(type));
 
     // Are we iterating nodes with a known hash?
     if (hashKey != PathTree::no_hash)
     {
         // Yes.
-        PathTree::Nodes::const_iterator i = nodes->constFind(hashKey);
-        for (; i != nodes->end() && i.key() == hashKey; ++i)
+        auto found = nodes.equal_range(hashKey);
+        for (auto i = found.first; i != found.second; ++i)
         {
-            if (!(flags.testFlag(PathTree::MatchParent) && parent != &(*i)->parent()))
+            if (!(flags.testFlag(PathTree::MatchParent) && parent != &i->second->parent()))
             {
-                result = callback(**i, parameters);
+                result = callback(*i->second, parameters);
                 if (result) break;
             }
         }
@@ -432,11 +426,11 @@ static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
     else
     {
         // No known hash -- iterate all potential nodes.
-        DE_FOR_EACH_CONST(PathTree::Nodes, i, *nodes)
+        for (auto &i : nodes)
         {
-            if (!(flags.testFlag(PathTree::MatchParent) && parent != &(*i)->parent()))
+            if (!(flags.testFlag(PathTree::MatchParent) && parent != &i.second->parent()))
             {
-                result = callback(**i, parameters);
+                result = callback(*i.second, parameters);
                 if (result) break;
             }
         }
@@ -444,8 +438,8 @@ static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
     return result;
 }
 
-int PathTree::traverse(ComparisonFlags flags, PathTree::Node const *parent, Path::hash_type hashKey,
-                       int (*callback) (PathTree::Node &, void *), void *parameters) const
+int PathTree::traverse(ComparisonFlags flags, Node const *parent, Path::hash_type hashKey,
+                       int (*callback) (Node &, void *), void *parameters) const
 {
     DE_GUARD(this);
 
@@ -468,14 +462,13 @@ void PathTree::debugPrint(Char separator) const
     FoundPaths found;
     if (findAllPaths(found, 0, separator))
     {
-        qSort(found.begin(), found.end());
-
-        DE_FOR_EACH_CONST(FoundPaths, i, found)
+        std::sort(found.begin(), found.end());
+        for (auto &i : found)
         {
-            LOGDEV_MSG("  %s") << *i;
+            LOGDEV_MSG("  %s") << i;
         }
     }
-    LOGDEV_MSG("  %i unique %s in the tree.") << found.count() << (found.count() == 1? "path" : "paths");
+    LOGDEV_MSG("  %i unique path%s in the tree.") << found.size() << DE_PLURAL_S(found.size());
 }
 
 #if 0
@@ -542,7 +535,7 @@ static void printDistributionOverview(PathTree *pt,
     *col = 0;
     for (int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
     {
-        PathTree::NodeType type = PathTree::NodeType(i);
+        NodeType type = NodeType(i);
         if (Str_Length(PathTreeNode::typeName(type)) > *col)
             *col = Str_Length(PathTreeNode::typeName(type));
     }
@@ -595,7 +588,7 @@ static void printDistributionOverview(PathTree *pt,
     {
         for (int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
         {
-            PathTree::NodeType type = PathTree::NodeType(i);
+            NodeType type = NodeType(i);
             printDistributionOverviewElement(colWidths, Str_Text(PathTreeNode::typeName(type)),
                 nodeBucketEmpty[i], (i == PT_LEAF? nodeBucketHeight : 0),
                 nodeBucketCollisions[i], nodeBucketCollisionsMax[i],
@@ -782,7 +775,7 @@ void PathTree::debugPrintHashDistribution() const
     PathTreeNode *node;
     DE_ASSERT(pt);
 
-    nodeCountTotal[PathTree::Node::Branch] = countNodesInPathHash(*hashAddressForNodeType(pt, PathTree::Node::Branch));
+    nodeCountTotal[Node::Branch] = countNodesInPathHash(*hashAddressForNodeType(pt, Node::Branch));
     nodeCountTotal[PT_LEAF]   = countNodesInPathHash(*hashAddressForNodeType(pt, PT_LEAF));
 
     memset(nodeCountSum, 0, sizeof(nodeCountSum));
@@ -793,11 +786,11 @@ void PathTree::debugPrintHashDistribution() const
     for (Path::hash_type i = 0; i < Path::hash_range; ++i)
     {
         pathtree_pathhash_t **phAdr;
-        phAdr = hashAddressForNodeType(pt, PathTree::Node::Branch);
-        nodeCount[PathTree::Node::Branch] = 0;
+        phAdr = hashAddressForNodeType(pt, Node::Branch);
+        nodeCount[Node::Branch] = 0;
         if (*phAdr)
         for (node = (**phAdr)[i].head; node; node = node->next)
-            ++nodeCount[PathTree::Node::Branch];
+            ++nodeCount[Node::Branch];
 
         phAdr = hashAddressForNodeType(pt, PT_LEAF);
         nodeCount[PT_LEAF] = 0;
@@ -821,9 +814,9 @@ void PathTree::debugPrintHashDistribution() const
                 nodeBucketHeight = chainHeight;
         }
 
-        totalForRange = nodeCount[PathTree::Node::Branch] + nodeCount[PT_LEAF];
+        totalForRange = nodeCount[Node::Branch] + nodeCount[PT_LEAF];
 
-        nodeCountSum[PT_BRANCH] += nodeCount[PathTree::Node::Branch];
+        nodeCountSum[PT_BRANCH] += nodeCount[Node::Branch];
         nodeCountSum[PT_LEAF]   += nodeCount[PT_LEAF];
 
         for (int j = 0; j < PATHTREENODE_TYPE_COUNT; ++j)

@@ -69,10 +69,10 @@ DE_PIMPL(PackageFeed)
     PopulatedFiles populate(Folder const &folder)
     {
         PopulatedFiles populated;
-        DE_FOR_EACH_CONST(PackageLoader::LoadedPackages, i, loader.loadedPackages())
+        for (auto &i : loader.loadedPackages())
         {
-            Package *pkg = i.value();
-            populated << linkToPackage(*pkg, i.key(), folder);
+            Package *pkg = i.second;
+            populated << linkToPackage(*pkg, i.first, folder);
 
             // Also link it under its possible alias identifier (for variants).
             if (pkg->objectNamespace().has(Package::VAR_PACKAGE_ALIAS))
@@ -82,9 +82,9 @@ DE_PIMPL(PackageFeed)
             }
 
             // Link each contained asset, too.
-            foreach (String ident, pkg->assets())
+            for (const String &ident : pkg->assets())
             {
-                populated << linkToPackage(*pkg, "asset." + ident, folder);
+                populated << linkToPackage(*pkg, DE_STR("asset.") + ident, folder);
             }
         }
         return populated;

@@ -41,7 +41,7 @@ void Protocol::define(Constructor constructor)
 
 Packet *Protocol::interpret(Block const &block) const
 {
-    foreach (Constructor constructor, _constructors)
+    for (Constructor constructor : _constructors)
     {
         if (Packet *p = constructor(block))
         {

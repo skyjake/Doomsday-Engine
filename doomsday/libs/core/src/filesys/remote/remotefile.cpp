@@ -54,7 +54,7 @@ DE_PIMPL(RemoteFile)
     String cachePath() const
     {
         String const hex = remoteMetaId.asHexadecimalText();
-        String path = CACHE_PATH / hex.right(1);
+        String path = CACHE_PATH / hex.right(String::CharPos(1));
         String original = self().objectNamespace().gets("package.path", remotePath);
         return path / hex + "_" + original.fileName();
     }
@@ -126,7 +126,7 @@ RemoteFile::RemoteFile(String const &name, String const &remotePath, Block const
     d->remotePath        = remotePath;
     d->remoteMetaId      = remoteMetaId;
 
-    qDebug() << "RemoteFile remotePath:" << remotePath;
+    debug("RemoteFile remotePath: %s", remotePath.c_str());
 
     setState(NotReady);
 }
@@ -239,19 +239,19 @@ String RemoteFile::describe() const
 {
     if (isReady())
     {
-        return String("\"%1\"").arg(name());
+        return String::format("\"%s\"", name().c_str());
     }
     String targetDesc;
     if (!isBroken())
     {
         targetDesc = " cached in " + target().description();
     }
-    return String("remote file \"%1\" (%2)")
-            .arg(name())
-            .arg(  state() == NotReady   ? "not ready"
-                 : state() == Recovering ? "downloading"
-                                         : "ready")
-            + targetDesc;
+    return String::format("remote file \"%s\" (%s)%s",
+                          name().c_str(),
+                          state() == NotReady   ? "not ready"
+                        : state() == Recovering ? "downloading"
+                                                : "ready",
+                          targetDesc.c_str());
 }
 
 Block RemoteFile::metaId() const

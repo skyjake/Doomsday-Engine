@@ -60,21 +60,21 @@ DE_PIMPL(PackageLoader)
     {
         #if 0
         {
-            qDebug() << "tryFindLoaded:" << Package::identifierForFile(file) << file.description();
+            std::cerr << "tryFindLoaded:" << Package::identifierForFile(file) << file.description();
             for (auto i = loaded.begin(); i != loaded.end(); ++i)
             {
-                qDebug() << "  currently loaded:" << i.key() << "file:" << i.value()->file().path() << "source:" << i.value()->sourceFile().path();
+                std::cerr << "  currently loaded:" << i.key() << "file:" << i.value()->file().path() << "source:" << i.value()->sourceFile().path();
             }
         }
         #endif
 
-        LoadedPackages::const_iterator found = loaded.constFind(Package::identifierForFile(file));
-        if (found != loaded.constEnd())
+        auto found = loaded.find(Package::identifierForFile(file));
+        if (found != loaded.end())
         {
-            auto const &pkg = *found.value();
+            auto const &pkg = *found->second;
             if (&pkg.file() == &file || &pkg.sourceFile() == &file)
             {
-                return found.value();
+                return found->second;
             }
         }
         return nullptr;
@@ -95,8 +95,8 @@ DE_PIMPL(PackageLoader)
         // The version may be provided optionally, to set the preferred version.
         auto idVer = Package::split(packageIdVer);
 
-        String const packageId = idVer.first;
-        QStringList const components = packageId.split('.');
+        const String     packageId  = idVer.first;
+        const StringList components = packageId.split('.');
 
         String id;
 
@@ -194,7 +194,7 @@ DE_PIMPL(PackageLoader)
         }
 
         // If the identifier includes a version, only accept that specific version.
-        bool const mustMatchExactVersion = (packageId.contains('_'));
+        const bool mustMatchExactVersion = (packageId.contains("_"));
 
         if (mustMatchExactVersion)
         {
@@ -261,7 +261,7 @@ DE_PIMPL(PackageLoader)
         LoadedPackages::iterator found = loaded.find(identifier);
         if (found == loaded.end()) return false;
 
-        Package *pkg = found.value();
+        Package *pkg = found->second;
         pkg->aboutToUnload();
         if (pkg->sourceFileExists())
         {
@@ -282,7 +282,7 @@ DE_PIMPL(PackageLoader)
 
     void listPackagesInIndex(FileIndex const &index, StringList &list)
     {
-        foreach (File *indexedFile, index.files())
+        for (File *indexedFile : index.files())
         {
             if (shouldIgnoreFile(*indexedFile)) continue;
 
@@ -410,10 +410,11 @@ DE_PIMPL(PackageLoader)
         });
     }
 
-    QList<Package *> loadedInOrder() const
+    List<Package *> loadedInOrder() const
     {
-        QList<Package *> pkgs = loaded.values();
-        qSort(pkgs.begin(), pkgs.end(), [] (Package const *a, Package const *b) {
+        List<Package *> pkgs;
+        for (auto &i : loaded) pkgs << i.second;
+        std::sort(pkgs.begin(), pkgs.end(), [] (Package const *a, Package const *b) {
             return a->order() < b->order();
         });
         return pkgs;
