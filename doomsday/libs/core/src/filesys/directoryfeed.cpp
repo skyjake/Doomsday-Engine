@@ -85,32 +85,38 @@ Feed::PopulatedFiles DirectoryFeed::populate(Folder const &folder)
         /// @throw NotFoundError The native directory was not accessible.
         throw NotFoundError("DirectoryFeed::populate", "Path '" + d->nativePath + "' inaccessible");
     }
-    QStringList nameFilters;
-    if (d->namePattern)
-    {
-        nameFilters << d->namePattern;
-    }
-    else
-    {
-        nameFilters << "*";
-    }
-    QDir::Filters dirFlags = QDir::Files | QDir::NoDotAndDotDot;
-    if (d->mode.testFlag(PopulateNativeSubfolders))
-    {
-        dirFlags |= QDir::Dirs;
-    }
+//    QStringList nameFilters;
+//    nameFilters << "*";
+//    QDir::Filters dirFlags = QDir::Files | QDir::NoDotAndDotDot;
+//    if (_mode.testFlag(PopulateNativeSubfolders))
+//    {
+//        dirFlags |= QDir::Dirs;
+//    }
+
     PopulatedFiles populated;
-    foreach (QFileInfo entry, dir.entryInfoList(nameFilters, dirFlags))
+
+    cplus::Ref<iDirFileInfo> dirInfo(new_DirFileInfo(_nativePath.toString()));
+    iForEach(DirFileInfo, i, dirInfo)
     {
-        if (entry.isDir())
+        const String path = path_FileInfo(i.value);
+        const CString name = path.fileName();
+
+        // Filter out some files.
+        if (!_mode.testFlag(PopulateNativeSubfolders) && isDirectory_FileInfo(i.value))
+    {
+            continue;
+    }
+        if (name == ".." || name.first() == '.') continue;
+
+        if (isDirectory_FileInfo(i.value))
         {
-            populateSubFolder(folder, entry.fileName());
+            populateSubFolder(folder, name);
         }
         else
         {
-            if (!entry.fileName().endsWith(fileStatusSuffix)) // ignore meta files
+            if (!name.endsWith(fileStatusSuffix)) // ignore meta files
             {
-                populateFile(folder, entry.fileName(), populated);
+                populateFile(folder, name, populated);
             }
         }
     }
@@ -350,7 +356,7 @@ File &DirectoryFeed::manuallyPopulateSingleFile(NativePath const &nativePath,
         Rangei packRange(last, last);
         while (packRange.start > 0 &&
                nativePath.segment(packRange.start - 1).toString()
-               .endsWith(".pack", String::CaseInsensitive))
+               .endsWith(".pack", CaseInsensitive))
         {
             packRange.start--;
         }

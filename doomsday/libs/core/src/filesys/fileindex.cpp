@@ -98,7 +98,7 @@ DE_PIMPL(FileIndex), public Lockable
         for (Index::const_iterator i = range.first; i != range.second; ++i)
         {
             File *file = i->second;
-            if (file->path().fileNamePath().endsWith(dir, String::CaseInsensitive))
+            if (file->path().fileNamePath().endsWith(dir, CaseInsensitive))
             {
                 found.push_back(file);
             }
@@ -151,7 +151,7 @@ void FileIndex::remove(File const &file)
 
 int FileIndex::size() const
 {
-    DE_GUARD_READ(d);
+    DE_GUARD(d);
     return int(d->index.size());
 }
 

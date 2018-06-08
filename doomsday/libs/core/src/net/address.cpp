@@ -150,7 +150,7 @@ Address Address::parse(String const &addressWithOptionalPort, duint16 defaultPor
     duint16 port = defaultPort;
     String str = addressWithOptionalPort;
     /*int portPosMin = 1;
-    if (str.beginsWith(QStringLiteral("::ffff:")))
+    if (str.beginsWith(DE_STR("::ffff:")))
     {
         // IPv4 address.
         portPosMin = 8;

@@ -33,6 +33,19 @@ template <typename T> struct Range;
 class RegExp;
 class CString;
 
+enum CaseSensitivity { CaseInsensitive, CaseSensitive };
+
+struct DE_PUBLIC Sensitivity
+{
+    CaseSensitivity cs;
+
+    inline Sensitivity(CaseSensitivity cs = CaseSensitive) : cs(cs) {}
+    inline operator CaseSensitivity() const { return cs; }
+    inline operator const iStringComparison *() const {
+        return cs == CaseSensitive ? &iCaseSensitive : &iCaseInsensitive;
+    }
+};
+
 /**
  * The String class extends the QString class with Block conversion and
  * other convenience methods.
@@ -78,7 +91,6 @@ public:
     };
 
     typedef List<const IPatternArg *> PatternArgs;
-    enum CaseSensitivity { CaseInsensitive, CaseSensitive };
 
 public:
     using SingleChar = char[2];
@@ -220,26 +232,25 @@ public:
     bool contains(const char *cStr) const;
     int count(char ch) const;
 
-    bool beginsWith(const String &s, CaseSensitivity cs = CaseSensitive) const
+    bool beginsWith(const String &s, Sensitivity cs = CaseSensitive) const
     {
-        return startsWithSc_String(&_str, s, cs == CaseSensitive? &iCaseSensitive : &iCaseInsensitive);
+        return startsWithSc_String(&_str, s, cs);
     }
-    bool beginsWith(char ch, CaseSensitivity cs = CaseSensitive) const
+    bool beginsWith(char ch, Sensitivity cs = CaseSensitive) const
     {
         return beginsWith(SingleChar{ch, 0}, cs);
     }
-    bool beginsWith(const char *cstr, CaseSensitivity cs = CaseSensitive) const
+    bool beginsWith(const char *cstr, Sensitivity cs = CaseSensitive) const
     {
-        return startsWithSc_String(&_str, cstr, cs == CaseSensitive? &iCaseSensitive : &iCaseInsensitive);
+        return startsWithSc_String(&_str, cstr, cs);
     }
-    bool endsWith(char ch, CaseSensitivity cs = CaseSensitive) const
+    bool endsWith(char ch, Sensitivity cs = CaseSensitive) const
     {
         return endsWith(SingleChar{ch, 0}, cs);
     }
-    bool endsWith(const char *cstr, CaseSensitivity cs = CaseSensitive) const
+    bool endsWith(const char *cstr, Sensitivity cs = CaseSensitive) const
     {
-        return endsWithSc_String(
-            &_str, cstr, cs == CaseSensitive ? &iCaseSensitive : &iCaseInsensitive);
+        return endsWithSc_String(&_str, cstr, cs);
     }
 
     inline char operator[](BytePos pos) const { return c_str()[pos.index]; }
@@ -352,10 +363,10 @@ public:
     String upperFirstChar() const;
 
     /// Extracts the base name from the string (includes extension).
-    String fileName(Char dirChar = '/') const;
+    CString fileName(Char dirChar = '/') const;
 
     /// Extracts the base name from the string (does not include extension).
-    String fileNameWithoutExtension() const;
+    CString fileNameWithoutExtension() const;
 
     /**
      * Extracts the file name extension from a path. A valid extension
@@ -367,10 +378,10 @@ public:
      * @return The extension, including the period in the beginning.
      * An empty string is returned if the string contains no period.
      */
-    String fileNameExtension() const;
+    CString fileNameExtension() const;
 
     /// Extracts the path of the string.
-    String fileNamePath(Char dirChar = '/') const;
+    CString fileNamePath(Char dirChar = '/') const;
 
     /// Extracts everything but the extension from string.
     String fileNameAndPathWithoutExtension(Char dirChar = '/') const;
@@ -579,6 +590,8 @@ public:
     const_reverse_iterator crend() const { return rend(); }
 
 public:
+    static String take(iString *str);
+
     /**
      * Builds a String out of an array of bytes that contains a UTF-8 string.
      */

@@ -67,7 +67,7 @@ File::File(String const &fileName) : Node(fileName), d(new Impl)
     d->info.add(Record::VAR_NATIVE_SELF).set(new NativePointerValue(this)).setReadOnly();
 
     // Core.File provides the member functions for files.
-    d->info.addSuperRecord(ScriptSystem::builtInClass(QStringLiteral("File")));
+    d->info.addSuperRecord(ScriptSystem::builtInClass(DE_STR("File")));
 }
 
 File::~File()
@@ -312,10 +312,9 @@ Record const &File::objectNamespace() const
     return d->info;
 }
 
-File::Flags const &File::mode() const
+Flags File::mode() const
 {
     DE_GUARD(this);
-
     if (this != d->source)
     {
         return d->source->mode();

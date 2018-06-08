@@ -317,7 +317,7 @@ File const &ScriptSystem::findModuleSource(String const &name, String const &loc
 
 Record &ScriptSystem::builtInClass(String const &name)
 {
-    return builtInClass(QStringLiteral("Core"), name);
+    return builtInClass(DE_STR("Core"), name);
 }
 
 Record &ScriptSystem::builtInClass(String const &nativeModuleName, String const &className)

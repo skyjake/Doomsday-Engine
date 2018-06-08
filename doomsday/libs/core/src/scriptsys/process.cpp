@@ -378,7 +378,7 @@ void Process::call(Function const &function, ArrayValue const &arguments, Value 
         // If the scope is defined, create the "self" variable for it.
         if (self)
         {
-            context().names().add(new Variable(QStringLiteral("self"), self /*taken*/));
+            context().names().add(new Variable(DE_STR("self"), self /*taken*/));
         }
 
         // Create local variables for the arguments in the new context.

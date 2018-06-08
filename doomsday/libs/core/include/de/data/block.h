@@ -94,12 +94,15 @@ public:
     const Byte *cdata() const;
     inline const Byte *constData() const { return cdata(); }
 
+    bool empty() const { return size() == 0; }
+    bool isEmpty() const { return size() == 0; }
+
     Block &append(Byte b);
     Block &append(const char *str, int len);
     Block &prepend(const Block &);
     void   remove(size_t pos, size_t len = 1);
 
-                    operator const iBlock *() const { return &_block; }
+    operator const iBlock *() const { return &_block; }
     inline explicit operator bool() const { return !isEmpty_Block(&_block); }
 
     Block &operator += (const char *nullTerminatedCStr);
@@ -112,16 +115,18 @@ public:
 
     Block mid(size_t pos, size_t len = iInvalidSize) const;
 
+    Block operator+(const Block &other) const;
+
     /// Appends a block after this one.
-    Block &operator += (const Block &other);
+    Block &operator+=(const Block &other);
 
     /// Appends a byte array after this one.
-    Block &operator += (const IByteArray &byteArray);
+    Block &operator+=(const IByteArray &byteArray);
 
     /// Copies the contents of another block.
-    Block &operator = (const Block &other);
+    Block &operator=(const Block &other);
 
-    Block &operator = (const IByteArray &byteArray);
+    Block &operator=(const IByteArray &byteArray);
 
     Block compressed(int level = -1) const;
     Block decompressed() const;
@@ -193,9 +198,9 @@ public:
      *
      * @return  Reference to the Writer.
      */
-    void operator >> (Writer &to) const;
+    void operator>>(Writer &to) const;
 
-    void operator << (Reader &from);
+    void operator<<(Reader &from);
 
 public:
     // Iterators:

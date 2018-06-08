@@ -44,16 +44,13 @@ void RegExpMatch::clear()
 
 String RegExpMatch::captured(int index) const
 {
-    iString *cap = captured_RegExpMatch(&match, index);
-    String str(cap);
-    delete_String(cap);
-    return str;
+    return String::take(captured_RegExpMatch(&match, index));
 }
 
-RegExp::RegExp(const String &expression, String::CaseSensitivity cs)
+RegExp::RegExp(const String &expression, Sensitivity cs)
 {
-    _d = new_RegExp(expression, cs == String::CaseSensitive? caseSensitive_RegExpOption
-                                                           : caseInsensitive_RegExpOption);
+    _d = new_RegExp(expression, cs == CaseSensitive? caseSensitive_RegExpOption
+                                                   : caseInsensitive_RegExpOption);
 }
 
 RegExp::~RegExp()

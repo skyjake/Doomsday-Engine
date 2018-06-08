@@ -33,6 +33,12 @@ bool CString::contains(char ch) const
     return false;
 }
 
+bool CString::endsWith(const CString &suffix, Sensitivity cs) const
+{
+    if (suffix.size() > size()) return false;
+    return CString(end() - suffix.size(), end()).compare(suffix, cs) == 0;
+}
+
 dsize CString::indexOf(char ch, size_t from) const
 {
     const char str[2] = { ch, 0 };
@@ -53,16 +59,36 @@ CString CString::substr(size_t start, size_t count) const
     return {_range.start + start, _range.start + start + count};
 }
 
-int CString::compare(const CString &other, const iStringComparison *sc) const
+int CString::compare(const CString &other, Sensitivity cs) const
 {
     const iRangecc range{begin(), end()};
-    return cmpCStrNSc_Rangecc(&range, other.begin(), other.size(), sc);
+    return cmpCStrNSc_Rangecc(&range, other.begin(), other.size(), cs);
 }
 
-int CString::compare(const char *cStr, const iStringComparison *sc) const
+int CString::compare(const char *cStr, Sensitivity cs) const
 {
     const iRangecc range{begin(), end()};
-    return cmpCStrSc_Rangecc(&range, cStr, sc);
+    return cmpCStrSc_Rangecc(&range, cStr, cs);
+}
+
+String CString::lower() const
+{
+    String low;
+    for (mb_iterator i = begin(), j = end(); i != j; ++i)
+    {
+        low += Char(towlower(*i));
+    }
+    return low;
+}
+
+String CString::upper() const
+{
+    String up;
+    for (mb_iterator i = begin(), j = end(); i != j; ++i)
+    {
+        up += Char(towupper(*i));
+    }
+    return up;
 }
 
 } // namespace de

@@ -169,6 +169,13 @@ Block Block::mid(size_t pos, size_t len) const
     return i;
 }
 
+Block Block::operator+(const Block &other) const
+{
+    Block cat(*this);
+    cat += other;
+    return cat;
+}
+
 Block::Byte *Block::data()
 {
     return reinterpret_cast<Byte *>(data_Block(&_block));

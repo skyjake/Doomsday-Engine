@@ -456,7 +456,7 @@ App::App(const StringList &args)
         // line argument. The working directory needs to be changed.
         if (d->cmdLine.count() >= 2 && d->cmdLine.at(1).beginsWith("-psn"))
         {
-            DirectoryFeed::changeWorkingDir(d->cmdLine.at(0).fileNamePath() + "/..");
+            DirectoryFeed::changeWorkingDir(d->cmdLine.at(0).fileNamePath() / "..");
         }
     }
     #endif

@@ -96,7 +96,7 @@ Node const *Node::tryFollowPath(PathRef const &path) const
             // Special case: not a child, but a reference to this node.
             return this;
         }
-        return tryGetChild(component);
+        return tryGetChild(String(component));
     }
 
     PathRef const remainder = path.subPath(Rangei(1, path.segmentCount()));
@@ -117,7 +117,7 @@ Node const *Node::tryFollowPath(PathRef const &path) const
     }
 
     // Continue recursively to the next component.
-    if (Node const *child = tryGetChild(component))
+    if (Node const *child = tryGetChild(String(component)))
     {
         return child->tryFollowPath(remainder);
     }

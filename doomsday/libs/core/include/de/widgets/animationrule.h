@@ -25,8 +25,6 @@
 #include "../Animation"
 #include "../Time"
 
-#include <QFlags>
-
 namespace de {
 
 /**
@@ -67,7 +65,7 @@ public:
         RestartWhenTargetChanges = 0x2,
         DontAnimateFromZero      = 0x4,
     };
-    Q_DECLARE_FLAGS(Behaviors, Behavior)
+    using Behaviors = Flags;
 
     /**
      * Sets the behavior for updating the animation target. The default is Singleshot,
@@ -115,8 +113,6 @@ private:
     Rule const *_targetRule;
     Behaviors _behavior;
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(AnimationRule::Behaviors)
 
 } // namespace de
 

@@ -295,8 +295,8 @@ Value *Value::constructFrom(Value const &value)
     if (variant.canConvert<QVariantMap>())
     {
         auto const map = variant.toMap();
-        if (map.contains(QStringLiteral("__obj__")) &&
-            map[QStringLiteral("__obj__")] == QStringLiteral("Record"))
+        if (map.contains(DE_STR("__obj__")) &&
+            map[DE_STR("__obj__")] == DE_STR("Record"))
         {
             std::unique_ptr<Record> rec(new Record);
             foreach (QString key, map.keys())

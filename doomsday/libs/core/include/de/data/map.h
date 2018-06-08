@@ -44,6 +44,15 @@ public:
     bool contains(const Key &key) const { return Base::find(key) != Base::end(); }
     const_iterator constFind(const Key &key) const { return Base::find(key); }
 
+    inline Value take(const Key &key)
+    {
+        DE_ASSERT(contains(key));
+        auto  found = Base::find(key);
+        Value v     = found->second;
+        Base::erase(found);
+        return v;
+    }
+
     void deleteAll()
     {
         for (auto i : *this) { delete i->second; }

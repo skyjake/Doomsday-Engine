@@ -58,12 +58,12 @@ bool Path::Segment::hasWildCard() const
 
 bool Path::Segment::operator==(Path::Segment const &other) const
 {
-    return !range.compare(other.range, &iCaseInsensitive);
+    return !range.compare(other.range, CaseInsensitive);
 }
 
 bool Path::Segment::operator < (Path::Segment const &other) const
 {
-    return range.compare(other.range, &iCaseInsensitive) < 0;
+    return range.compare(other.range, CaseInsensitive) < 0;
 }
 
 int Path::Segment::length() const
@@ -422,6 +422,11 @@ Path Path::operator/(const Path &other) const
 Path Path::operator/(const String &other) const
 {
     return *this / Path(other);
+}
+
+Path Path::operator/(const CString &other) const
+{
+    return *this / String(other);
 }
 
 Path Path::operator/(const char *otherNullTerminatedUtf8) const

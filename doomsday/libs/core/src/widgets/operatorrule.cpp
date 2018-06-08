@@ -143,7 +143,7 @@ void OperatorRule::update()
     case Select:
         v = (_condition->value() < 0? leftValue : rightValue);
         break;
-            
+
     default:
         v = leftValue;
         break;
@@ -171,12 +171,15 @@ String OperatorRule::description() const
     String desc = "{";
     if (_leftOperand)
     {
-        desc += " " + _leftOperand->description();
+        desc += " ";
+        desc += _leftOperand->description();
     }
-    desc += String(" %1").arg(texts[_operator]);
+    desc += " ";
+    desc += texts[_operator];
     if (_rightOperand)
     {
-        desc += " " + _rightOperand->description();
+        desc += " ";
+        desc += _rightOperand->description();
     }
     return desc + " }";
 }

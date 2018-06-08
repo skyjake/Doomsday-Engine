@@ -134,7 +134,7 @@ struct PathTree::Impl
      */
     PathTree::Node *buildNodesForPath(Path const &path)
     {
-        bool const hasLeaf = !path.toStringRef().endsWith(QStringLiteral("/"));
+        bool const hasLeaf = !path.toStringRef().endsWith(DE_STR("/"));
 
         PathTree::Node *node = 0, *parent = &rootNode;
         for (int i = 0; i < path.segmentCount() - (hasLeaf? 1 : 0); ++i)

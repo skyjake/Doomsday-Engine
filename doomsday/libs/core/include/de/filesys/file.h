@@ -280,7 +280,7 @@ public:
     /**
      * Returns the mode of the file.
      */
-    Flags const &mode() const;
+    Flags mode() const;
 
     /**
      * Changes the mode of the file. For example, using

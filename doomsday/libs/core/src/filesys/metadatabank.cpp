@@ -54,7 +54,7 @@ DE_PIMPL(MetadataBank), public Lockable
     {
         DE_ASSERT(!id.isEmpty());
         String const hex = id.asHexadecimalText();
-        return String("%1.%2.%3").arg(category).arg(hex.last()).arg(hex);
+        return String::format("%s.%lc.%s", category.c_str(), hex.last(), hex.c_str());
     }
 };
 

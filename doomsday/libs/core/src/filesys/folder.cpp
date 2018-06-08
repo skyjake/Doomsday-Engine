@@ -66,7 +66,7 @@ DE_PIMPL(Folder)
 
     void add(File *file)
     {
-        contents.insert(file->name().toLower(), file);
+        contents.insert(file->name().lower(), file);
         file->setParent(thisPublic);
     }
 
@@ -84,13 +84,13 @@ DE_PIMPL(Folder)
         }
     }
 
-    QList<Folder *> subfolders() const
+    List<Folder *> subfolders() const
     {
         DE_GUARD_FOR(self(), G);
-        QList<Folder *> subs;
+        List<Folder *> subs;
         for (Contents::const_iterator i = contents.begin(); i != contents.end(); ++i)
         {
-            if (Folder *folder = maybeAs<Folder>(i.value()))
+            if (Folder *folder = maybeAs<Folder>(i->second))
             {
                 subs << folder;
             }
@@ -100,7 +100,7 @@ DE_PIMPL(Folder)
 
     static void destroyRecursive(Folder &folder)
     {
-        foreach (Folder *sub, folder.subfolders())
+        for (Folder *sub : folder.subfolders())
         {
             destroyRecursive(*sub);
         }
@@ -111,7 +111,7 @@ DE_PIMPL(Folder)
 Folder::Folder(String const &name) : File(name), d(new Impl(this))
 {
     setStatus(Type::Folder);
-    objectNamespace().addSuperRecord(ScriptSystem::builtInClass(QStringLiteral("Folder")));
+    objectNamespace().addSuperRecord(ScriptSystem::builtInClass(DE_STR("Folder")));
 }
 
 Folder::~Folder()
@@ -138,7 +138,7 @@ String Folder::describe() const
     // As a special case, plain native directories should be described as such.
     if (auto const *direcFeed = primaryFeedMaybeAs<DirectoryFeed>())
     {
-        return String("directory \"%1\"").arg(direcFeed->nativePath().pretty());
+        return String::format("directory \"%s\"", direcFeed->nativePath().pretty().c_str());
     }
 
     String desc;
@@ -148,13 +148,13 @@ String Folder::describe() const
     }
     else
     {
-        desc = String("folder \"%1\"").arg(name());
+        desc = String::format("folder \"%s\"", name().c_str());
     }
 
-    String const feedDesc = describeFeeds();
+    const String feedDesc = describeFeeds();
     if (!feedDesc.isEmpty())
     {
-        desc += String(" (%1)").arg(feedDesc);
+        desc += String::format(" (%s)", feedDesc.c_str());
     }
 
     return desc;
@@ -168,25 +168,23 @@ String Folder::describeFeeds() const
 
     if (d->feeds.size() == 1)
     {
-        desc += String("contains %1 file%2 from %3")
-                .arg(d->contents.size())
-                .arg(DE_PLURAL_S(d->contents.size()))
-                .arg(d->feeds.front()->description());
+        desc += String::format("contains %zu file%s from %s",
+                               d->contents.size(),
+                               DE_PLURAL_S(d->contents.size()),
+                               d->feeds.front()->description().c_str());
     }
     else if (d->feeds.size() > 1)
     {
-        desc += String("contains %1 file%2 from %3 feed%4")
-                .arg(d->contents.size())
-                .arg(DE_PLURAL_S(d->contents.size()))
-                .arg(d->feeds.size())
-                .arg(DE_PLURAL_S(d->feeds.size()));
+        desc += String::format("contains %zu file%s from %zu feed%s",
+                               d->contents.size(),
+                               DE_PLURAL_S(d->contents.size()),
+                               d->feeds.size(),
+                               DE_PLURAL_S(d->feeds.size()));
 
         int n = 0;
-        DE_FOR_EACH_CONST(Feeds, i, d->feeds)
+        for (auto *i : d->feeds)
         {
-            desc += String("; feed #%2 is %3")
-                    .arg(n + 1)
-                    .arg((*i)->description());
+            desc += String::format("; feed #%i is %s", n + 1, i->description().c_str());
             ++n;
         }
     }
@@ -203,8 +201,8 @@ void Folder::clear()
     // Destroy all the file objects.
     for (Contents::iterator i = d->contents.begin(); i != d->contents.end(); ++i)
     {
-        i.value()->setParent(0);
-        delete i.value();
+        i->second->setParent(0);
+        delete i->second;
     }
     d->contents.clear();
 }
@@ -218,7 +216,7 @@ void Folder::populate(PopulationBehaviors behavior)
         DE_GUARD(this);
 
         // Prune the existing files first.
-        QMutableMapIterator<String, File *> iter(d->contents);
+        MutableMapIterator<String, File *> iter(d->contents);
         while (iter.hasNext())
         {
             iter.next();
@@ -285,7 +283,7 @@ void Folder::populate(PopulationBehaviors behavior)
                 if (i)
                 {
                     std::unique_ptr<File> file(i);
-                    if (!d->contents.contains(i->name().toLower()))
+                    if (!d->contents.contains(i->name().lower()))
                     {
                         d->add(file.release());
                         fileSystem().index(*i);
@@ -342,9 +340,9 @@ LoopResult Folder::forContents(std::function<LoopResult (String, File &)> func) 
 {
     DE_GUARD(this);
 
-    for (Contents::const_iterator i = d->contents.constBegin(); i != d->contents.constEnd(); ++i)
+    for (Contents::const_iterator i = d->contents.begin(); i != d->contents.end(); ++i)
     {
-        if (auto result = func(i.key(), *i.value()))
+        if (auto result = func(i->first, *i->second))
         {
             return result;
         }
@@ -352,7 +350,7 @@ LoopResult Folder::forContents(std::function<LoopResult (String, File &)> func) 
     return LoopContinue;
 }
 
-QList<Folder *> Folder::subfolders() const
+List<Folder *> Folder::subfolders() const
 {
     return d->subfolders();
 }
@@ -447,10 +445,10 @@ void Folder::destroyAllFiles()
 
     verifyWriteAccess();
 
-    foreach (File *file, d->contents)
+    for (auto &i : d->contents)
     {
-        file->setParent(nullptr);
-        d->destroy(file->name(), file);
+        i.second->setParent(nullptr);
+        d->destroy(i.second->name(), i.second);
     }
     d->contents.clear();
 }
@@ -495,11 +493,11 @@ File &Folder::add(File *file)
     return *file;
 }
 
-File *Folder::remove(String name)
+File *Folder::remove(const String &name)
 {
     DE_GUARD(this);
 
-    String const key = name.toLower();
+    String const key = name.lower();
     DE_ASSERT(d->contents.contains(key));
 
     File *removed = d->contents.take(key);
@@ -521,10 +519,10 @@ filesys::Node const *Folder::tryGetChild(String const &name) const
 {
     DE_GUARD(this);
 
-    Contents::const_iterator found = d->contents.find(name.toLower());
+    auto found = d->contents.find(name.lower());
     if (found != d->contents.end())
     {
-        return found.value();
+        return found->second;
     }
     return nullptr;
 }
@@ -657,7 +655,7 @@ Folder::Feeds Folder::feeds() const
 
 String Folder::contentsAsText() const
 {
-    QList<File const *> files;
+    List<File const *> files;
     forContents([&files] (String, File &f)
     {
         files << &f;

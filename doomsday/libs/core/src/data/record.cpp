@@ -349,7 +349,7 @@ DE_PIMPL(Record)
 
     static String memberNameFromPath(const String &path)
     {
-        return String(path).fileName('.'); /// @todo Should not copying `path`.
+        return String(path.fileName('.'));
     }
 
     /**

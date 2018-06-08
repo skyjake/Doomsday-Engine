@@ -152,7 +152,7 @@ Block NativeFile::metaId() const
 {
     // Special exception: application's persistent data store will be rewritten on every
     // run so there's no point in caching it.
-    if (name() == QStringLiteral("persist.pack"))
+    if (name() == DE_STR("persist.pack"))
     {
         return Block();
     }

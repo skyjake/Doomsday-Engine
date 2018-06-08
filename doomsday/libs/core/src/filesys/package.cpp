@@ -179,7 +179,7 @@ Version Package::version() const
 
 Package::Assets Package::assets() const
 {
-    return ScriptedInfo::allBlocksOfType(QStringLiteral("asset"), d->packageInfo());
+    return ScriptedInfo::allBlocksOfType(DE_STR("asset"), d->packageInfo());
 }
 
 bool Package::executeFunction(String const &name)
@@ -239,10 +239,10 @@ void Package::parseMetadata(File &packageFile) // static
 
     if (Folder *folder = maybeAs<Folder>(packageFile))
     {
-        File *initializerScript = folder->tryLocateFile(QStringLiteral("__init__.ds"));
-        if (!initializerScript) initializerScript = folder->tryLocateFile(QStringLiteral("__init__.de")); // old extension
-        File *metadataInfo      = folder->tryLocateFile(QStringLiteral("Info.dei"));
-        if (!metadataInfo) metadataInfo = folder->tryLocateFile(QStringLiteral("Info")); // alternate name
+        File *initializerScript = folder->tryLocateFile(DE_STR("__init__.ds"));
+        if (!initializerScript) initializerScript = folder->tryLocateFile(DE_STR("__init__.de")); // old extension
+        File *metadataInfo      = folder->tryLocateFile(DE_STR("Info.dei"));
+        if (!metadataInfo) metadataInfo = folder->tryLocateFile(DE_STR("Info")); // alternate name
         Time parsedAt           = Time::invalidTime();
         bool needParse          = true;
 
@@ -324,8 +324,8 @@ void Package::validateMetadata(Record const &packageInfo)
     }
 
     String const &topLevelDomain = ident.segment(0).toString();
-    if (topLevelDomain == QStringLiteral("feature") ||
-        topLevelDomain == QStringLiteral("asset"))
+    if (topLevelDomain == DE_STR("feature") ||
+        topLevelDomain == DE_STR("asset"))
     {
         // Functional top-level domains cannot be used as package identifiers (only aliases).
         throw ValidationError("Package::validateMetadata",

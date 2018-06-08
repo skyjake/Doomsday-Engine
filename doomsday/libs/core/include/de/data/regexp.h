@@ -44,7 +44,7 @@ public:
 class DE_PUBLIC RegExp
 {
 public:
-    RegExp(const String &expression = {}, String::CaseSensitivity cs = String::CaseSensitive);
+    RegExp(const String &expression = {}, Sensitivity cs = CaseSensitive);
     ~RegExp();
 
     bool match(const String &subject, RegExpMatch &match) const;

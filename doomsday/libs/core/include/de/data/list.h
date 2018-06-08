@@ -49,16 +49,19 @@ public:
 
     using Base::begin;
     using Base::end;
+    using Base::push_back;
     void pop_front() { removeFirst(); } // slow...
+    void push_front(const T &v) { prepend(v); } // slow...
 
     // Qt style methods:
 
     int      size() const { return int(Base::size()); }
     void     clear() { Base::clear(); }
     bool     isEmpty() const { return Base::size() == 0; }
-    void     append(const T &s) { Base::push_back(s); }
-    void     prepend(const T &s) { Base::push_front(s); }
-    void     insert(int pos, const T &value) { Base::insert(Base::begin() + pos, value); }
+    void     append(const T &v) { push_back(v); }
+    void     append(const List &list) { for (const T &v : list) push_back(v); }
+    void     prepend(const T &v) { Base::insert(begin(), v); }
+    void     insert(int pos, const T &value) { Base::insert(begin() + pos, value); }
     void     insert(const const_iterator &i, const T &value) { Base::insert(i, value); }
     const T &operator[](int pos) const { return Base::at(pos); }
     T &      operator[](int pos) { return Base::operator[](pos); }
@@ -74,6 +77,11 @@ public:
     void     removeLast()  { Base::erase(Base::begin() + size() - 1); }
     void     removeAt(int pos) { Base::erase(Base::begin() + pos); }
     void     removeAll(const T &v) { Base::erase(std::remove(begin(), end(), v), end()); }
+    void     removeOne(const T &v)
+    {
+        auto found = std::find(begin(), end(), v);
+        if (found != end()) Base::erase(found);
+    }
     List &   operator=(const List &other) { Base::operator=(other); return *this; }
     List &   operator=(List &&other) { Base::operator=(other); return *this; }
 

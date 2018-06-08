@@ -121,7 +121,7 @@ RemoteFile::RemoteFile(String const &name, String const &remotePath, Block const
     : LinkFile(name)
     , d(new Impl(this))
 {
-    objectNamespace().addSuperRecord(ScriptSystem::builtInClass(QStringLiteral("RemoteFile")));
+    objectNamespace().addSuperRecord(ScriptSystem::builtInClass(DE_STR("RemoteFile")));
     d->repositoryAddress = repositoryAddress;
     d->remotePath        = remotePath;
     d->remoteMetaId      = remoteMetaId;

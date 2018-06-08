@@ -233,7 +233,7 @@ public:
      * @return  The removed file object. Ownership of the object is given to
      * the caller.
      */
-    File *remove(String name);
+    File *remove(const String &name);
 
     File *remove(char const *nameUtf8);
 

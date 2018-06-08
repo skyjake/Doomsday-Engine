@@ -46,7 +46,7 @@ DE_PIMPL(AssetObserver)
 
     Impl(Public *i, String const &regex)
         : Base(i)
-        , pattern(PREFIX_SLASH_DOT + regex, String::CaseInsensitive)
+        , pattern(PREFIX_SLASH_DOT + regex, CaseInsensitive)
     {
         // We will observe available model assets.
         linkIndex().audienceForAddition() += this;

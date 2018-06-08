@@ -389,7 +389,7 @@ void *StringPool::userPointer(Id id) const
     return d->idMap[internalId]->userPointer(); // O(1)
 }
 
-StringPool::Id StringPool::isInterned(String str) const
+StringPool::Id StringPool::isInterned(const String &str) const
 {
     DE_GUARD(d);
 

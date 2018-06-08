@@ -121,7 +121,7 @@ public:
 
         bool operator==(const char *text) const
         {
-            return range.compare(text, &iCaseInsensitive) == 0;
+            return range.compare(text, CaseInsensitive) == 0;
         }
 
         bool operator!=(const char *text) const { return !(*this == text); }
@@ -255,6 +255,8 @@ public:
      * @return Concatenated path.
      */
     Path operator/(const String &other) const;
+
+    Path operator/(const CString &other) const;
 
     Path operator/(char const *otherNullTerminatedUtf8) const;
 

@@ -295,7 +295,7 @@ DE_PIMPL(PackageLoader)
                     String path = indexedFile->path();
 
                     // The special persistent data package should be ignored.
-                    if (path == QStringLiteral("/home/persist.pack")) continue;
+                    if (path == DE_STR("/home/persist.pack")) continue;
 
                     // Check the metadata.
                     checkPackage(*indexedFile);

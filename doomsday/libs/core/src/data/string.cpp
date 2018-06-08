@@ -181,10 +181,7 @@ int String::count(char ch) const
 
 String String::substr(CharPos pos, dsize count) const
 {
-    iString *sub = mid_String(&_str, pos.index, count);
-    String s(sub);
-    delete_String(sub);
-    return s;
+    return String::take(mid_String(&_str, pos.index, count));
 }
 
 String String::substr(BytePos pos, dsize count) const
@@ -465,18 +462,12 @@ String String::removed(const RegExp &expr) const
 
 String String::lower() const
 {
-    iString *low = toLower_String(&_str);
-    String str(low);
-    delete_String(low);
-    return str;
+    return String::take(lower_String(&_str));
 }
 
 String String::upper() const
 {
-    iString *upr = toUpper_String(&_str);
-    String str(upr);
-    delete_String(upr);
-    return str;
+    return String::take(upper_String(&_str));
 }
 
 String String::upperFirstChar() const
@@ -488,26 +479,29 @@ String String::upperFirstChar() const
     return capitalized;
 }
 
-String String::fileName(Char dirChar) const
+CString String::fileName(Char dirChar) const
 {
-    if (auto pos = lastIndexOf(dirChar))
+    if (auto bytePos = lastIndexOf(dirChar))
     {
-        return substr(pos + 1);
+        return {data() + bytePos.index + 1, data() + size()};
     }
     return *this;
 }
 
-String String::fileNameWithoutExtension() const
+CString String::fileNameWithoutExtension() const
 {
-    String name = fileName();
-    if (auto pos = name.lastIndexOf('.'))
+    const CString name = fileName();
+    if (auto dotPos = lastIndexOf('.'))
     {
-        return name.left(pos);
+        if (dotPos.index > dsize(name.begin() - data()))
+        {
+            return {name.begin(), data() + dotPos.index};
+        }
     }
     return name;
 }
 
-String String::fileNameExtension() const
+CString String::fileNameExtension() const
 {
     auto pos      = lastIndexOf('.');
     auto slashPos = lastIndexOf('/');
@@ -517,24 +511,25 @@ String String::fileNameExtension() const
         // one character's worth of file name before the period.
         if (!slashPos || pos > slashPos + 1)
         {
-            return substr(pos);
+            return {data() + pos.index, data() + size()};
         }
     }
     return "";
 }
 
-String String::fileNamePath(Char dirChar) const
+CString String::fileNamePath(Char dirChar) const
 {
     if (auto pos = lastIndexOf(dirChar))
     {
-        return left(pos);
+        //return left(pos);
+        return {data(), data() + pos.index};
     }
     return "";
 }
 
 String String::fileNameAndPathWithoutExtension(Char dirChar) const
 {
-    return fileNamePath(dirChar) / fileNameWithoutExtension();
+    return String(fileNamePath(dirChar)) / fileNameWithoutExtension();
 }
 
 bool String::containsWord(const String &word) const
@@ -611,6 +606,13 @@ String::const_reverse_iterator String::rend() const
     return i;
 }
 
+String String::take(iString *str) // static
+{
+    String s(str);
+    delete_String(str);
+    return s;
+}
+
 //dint String::compareWithCase(QChar const *a, QChar const *b, dsize count) // static
 //{
 //    return QString(a).leftRef(count).compare(QString(b).leftRef(count), Qt::CaseSensitive);
@@ -668,10 +670,10 @@ String String::format(const char *format, ...)
     return {buffer};
 }
 
-static inline bool isSign(Char ch)
-{
-    return ch == '-' || ch == '+';
-}
+//static inline bool isSign(Char ch)
+//{
+//    return ch == '-' || ch == '+';
+//}
 
 dint String::toInt(bool *ok, int base, duint flags) const
 {
@@ -726,11 +728,6 @@ String String::escaped() const
        .replace("\r", "\\r")
        .replace("\t", "\\t");
     return esc;
-}
-
-Block String::toPercentEncoding() const
-{
-    return QUrl::toPercentEncoding(*this);
 }
 
 void String::get(Offset at, Byte *values, Size count) const
@@ -951,9 +948,17 @@ String String::fromCP437(const IByteArray &byteArray)
     return conv;
 }
 
+Block String::toPercentEncoding() const
+{
+    iString *enc = urlEncode_String(*this);
+    Block b(&enc->chars);
+    delete_String(enc);
+    return b;
+}
+
 String String::fromPercentEncoding(const Block &percentEncoded) // static
 {
-    return QUrl::fromPercentEncoding(percentEncoded);
+    return String::take(urlDecode_String(String(percentEncoded)));
 }
 
 Char mb_iterator::operator*() const

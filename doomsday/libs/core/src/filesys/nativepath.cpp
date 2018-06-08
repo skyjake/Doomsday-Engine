@@ -60,7 +60,7 @@ static String toNative(String const &s)
 {
     // This will resolve parent references (".."), multiple separators
     // (hello//world), and self-references (".").
-    return Path::normalizeString(QDir::cleanPath(s), DIR_SEPARATOR);
+    return Path::normalizeString(String::take(clean_Path(s)), DIR_SEPARATOR);
 }
 
 NativePath::NativePath() : Path()
@@ -77,9 +77,6 @@ NativePath::NativePath(NativePath &&moved)
 NativePath::NativePath(String const &str) : Path(toNative(str), DIR_SEPARATOR)
 {}
 
-NativePath::NativePath(QString const &qstr) : Path(toNative(qstr), DIR_SEPARATOR)
-{}
-
 NativePath::NativePath(char const *nullTerminatedCStr)
     : Path(toNative(nullTerminatedCStr), DIR_SEPARATOR)
 {}
@@ -88,31 +85,25 @@ NativePath::NativePath(char const *cStr, dsize length)
     : Path(toNative(String(cStr, length)), DIR_SEPARATOR)
 {}
 
-NativePath &NativePath::operator = (String const &str)
+NativePath &NativePath::operator=(String const &str)
 {
     set(toNative(str), DIR_SEPARATOR);
     return *this;
 }
 
-NativePath &NativePath::operator = (QString const &str)
-{
-    set(toNative(str), DIR_SEPARATOR);
-    return *this;
-}
-
-NativePath &NativePath::operator = (NativePath &&moved)
+NativePath &NativePath::operator=(NativePath &&moved)
 {
     Path::operator = (moved);
     return *this;
 }
 
-NativePath &NativePath::operator = (NativePath const &other)
+NativePath &NativePath::operator=(NativePath const &other)
 {
     Path::operator = (other);
     return *this;
 }
 
-NativePath &NativePath::operator = (char const *nullTerminatedCStr)
+NativePath &NativePath::operator=(char const *nullTerminatedCStr)
 {
     return (*this) = String(nullTerminatedCStr);
 }
@@ -128,29 +119,24 @@ NativePath NativePath::concatenatePath(String const &nativePath) const
     return concatenatePath(NativePath(nativePath));
 }
 
-NativePath NativePath::operator / (NativePath const &nativePath) const
+NativePath NativePath::operator/(NativePath const &nativePath) const
 {
     return concatenatePath(nativePath);
 }
 
-NativePath NativePath::operator / (String const &str) const
+NativePath NativePath::operator/(String const &str) const
 {
     return *this / NativePath(str);
 }
 
-NativePath NativePath::operator / (QString const &str) const
-{
-    return *this / NativePath(str);
-}
-
-NativePath NativePath::operator / (char const *nullTerminatedCStr) const
+NativePath NativePath::operator/(char const *nullTerminatedCStr) const
 {
     return *this / NativePath(nullTerminatedCStr);
 }
 
 NativePath NativePath::fileNamePath() const
 {
-    return String(*this).fileNamePath(DIR_SEPARATOR);
+    return NativePath(toString().fileNamePath(DIR_SEPARATOR));
 }
 
 bool NativePath::isAbsolute() const
@@ -160,8 +146,8 @@ bool NativePath::isAbsolute() const
 
 bool NativePath::isDirectory() const
 {
-    QFileInfo info(*this);
-    return info.exists() && info.isDir();
+    cplus::Ref<iFileInfo> i(new_FileInfo(toString()));
+    return exists_FileInfo(i) && isDirectory_FileInfo(i);
 }
 
 NativePath NativePath::expand(bool *didExpand) const
@@ -169,7 +155,7 @@ NativePath NativePath::expand(bool *didExpand) const
     if (first() == '>' || first() == '}')
     {
         if (didExpand) *didExpand = true;
-        return App::app().nativeBasePath() / toString().mid(1);
+        return App::app().nativeBasePath() / toString().substr(String::BytePos(1));
     }
 #ifdef UNIX
     else if (first() == '~')
@@ -181,20 +167,20 @@ NativePath NativePath::expand(bool *didExpand) const
         if (firstSlash > 1)
         {
             // Parse the user's home directory (from passwd).
-            String userName = path.mid(1, firstSlash - 1);
+            String userName = path.substr(String::BytePos(1), (firstSlash - 1).index);
             struct passwd *pw = getpwnam(userName);
             if (!pw)
             {
                 /// @throws UnknownUserError  User is not known.
                 throw UnknownUserError("NativePath::expand",
-                                       String("Unknown user '%s'", userName.c_str())));
+                                       stringf("Unknown user '%s'", userName.c_str()));
             }
-            return NativePath(pw->pw_dir) / path.mid(firstSlash + 1);
+            return NativePath(pw->pw_dir) / path.substr(firstSlash + 1);
         }
         else
         {
             // Replace with the HOME path.
-            return NativePath::homePath() / path.mid(2);
+            return NativePath::homePath() / path.substr(String::BytePos(2));
         }
     }
 #endif
@@ -270,9 +256,7 @@ NativePath NativePath::workPath()
 {
     if (currentNativeWorkPath.isEmpty())
     {
-        iString *cwd = cwd_Path();
-        currentNativeWorkPath = String(cwd);
-        delete_String(cwd);
+        currentNativeWorkPath = String::take(cwd_Path());
     }
     return currentNativeWorkPath;
 }

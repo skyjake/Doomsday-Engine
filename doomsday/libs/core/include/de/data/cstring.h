@@ -44,33 +44,38 @@ public:
     {
         if (!_range.end) _range.end = _range.start + strlen(_range.start);
     }
-    operator String() const { return {_range.start, _range.end}; }
-    String toString() const { return String(_range.start, _range.end); }
-    operator Rangecc() const
+    //inline operator String() const { return {_range.start, _range.end}; }
+    inline String toString() const { return String(_range.start, _range.end); }
+    inline operator Rangecc() const
     {
         updateEnd();
         return _range;
     }
-    operator iRangecc() const
+    inline operator iRangecc() const
     {
         updateEnd();
         return iRangecc{begin(), end()};
     }
-    dsize size() const
+    inline dsize size() const
     {
         updateEnd();
         return _range.size();
     }
-    bool isEmpty() const { return size() == 0; }
-    bool empty() const { return size() == 0; }
+    inline bool isEmpty() const { return size() == 0; }
+    inline bool empty() const { return size() == 0; }
     bool contains(char ch) const;
+    bool endsWith(const CString &suffix, Sensitivity cs = CaseSensitive) const;
     dsize indexOf(char ch, size_t from = 0) const;
     dsize indexOf(const char *cStr, size_t from = 0) const;
     CString substr(size_t start, size_t count = npos) const;
-    const char *begin() const { return _range.start; }
-    const char *end() const { updateEnd(); return _range.end; }
-    int compare(const CString &other, const iStringComparison *sc = &iCaseSensitive) const;
-    int compare(const char *cStr, const iStringComparison *sc = &iCaseSensitive) const;
+    inline const char *begin() const { return _range.start; }
+    inline const char *end() const { updateEnd(); return _range.end; }
+    int compare(const CString &other, Sensitivity cs = CaseSensitive) const;
+    int compare(const char *cStr, Sensitivity cs = CaseSensitive) const;
+    inline bool operator==(const char *cStr) const { return compare(cStr) == 0; }
+    Char first() const { return *mb_iterator(begin()); }
+    String lower() const;
+    String upper() const;
 
     static size_t npos;
 
@@ -80,6 +85,14 @@ private:
 
 String operator+(const char *cStr, const CString &str) {
     return String(cStr) + str;
+}
+
+String operator+(const CString &str, const char *cStr) {
+    return String(str) + cStr;
+}
+
+String operator/(const CString &str, const char *cStr) {
+    return String(str).concatenatePath(cStr);
 }
 
 } // namespace de
