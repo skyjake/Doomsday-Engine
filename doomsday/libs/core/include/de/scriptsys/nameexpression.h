@@ -23,8 +23,6 @@
 #include "../Expression"
 #include "../String"
 
-#include <QFlags>
-
 namespace de {
 
 /**

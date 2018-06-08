@@ -24,11 +24,9 @@
 #include "../IByteArray"
 #include "../Address"
 #include "../Transmitter"
+#include "../Observers"
 
-#include <QTcpSocket>
-#include <QHostInfo>
-#include <QList>
-#include <QFlags>
+#include <c_plus/socket.h>
 
 /// Largest message sendable using the protocol.
 #define DE_SOCKET_MAX_PAYLOAD_SIZE (1 << 22) // 4 MB
@@ -48,10 +46,8 @@ class Message;
  *
  * @ingroup net
  */
-class DE_PUBLIC Socket : public QObject, public Transmitter
+class DE_PUBLIC Socket : public Transmitter
 {
-    Q_OBJECT
-
 public:
     /// Creating the TCP/IP connection failed. @ingroup errors
     DE_ERROR(ConnectionError);
@@ -73,7 +69,7 @@ public:
         Huffman = 0x1,
         Channel1 = 0x2
     };
-    Q_DECLARE_FLAGS(HeaderFlags, HeaderFlag)
+    using HeaderFlags = Flags;
 
 public:
     Socket();
@@ -87,7 +83,7 @@ public:
      * @param address  Address to connect to.
      * @param timeOut  Maximum time to wait for connection.
      */
-    Socket(Address const &address, TimeSpan const &timeOut);
+    Socket(Address const &address, TimeSpan timeOut);
 
     virtual ~Socket();
 
@@ -219,33 +215,31 @@ public:
     void setQuiet(bool noLogOutput);
 
     // Statistics:
-    static void resetCounters();
+    static void    resetCounters();
     static duint64 sentUncompressedBytes();
     static duint64 sentBytes();
-    static double outputBytesPerSecond();
+    static double  outputBytesPerSecond();
 
-signals:
-    void addressResolved();
-    void connected();
-    void messagesReady();
-    void disconnected();
-    void error(QString errorMessage);
-    void allSent();
+    DE_DEFINE_AUDIENCE2(Resolved, void addressResolved(Socket &))
+    DE_DEFINE_AUDIENCE2(Connect,  void socketConnected(Socket &, bool isConnected))
+    DE_DEFINE_AUDIENCE2(Ready,    void messagesReady(Socket &))
+    DE_DEFINE_AUDIENCE2(Error,    void error(Socket &, const String &errorMessage))
+    DE_DEFINE_AUDIENCE2(AllSent,  void allSent(Socket &))
 
-public slots:
-    void socketDisconnected();
-    void socketError(QAbstractSocket::SocketError socketError);
-    void readIncomingBytes();
-    void reconnect();
+//public slots:
+//    void socketDisconnected();
+//    void socketError(QAbstractSocket::SocketError socketError);
+//    void readIncomingBytes();
+//    void reconnect();
 
-private slots:
-    void hostResolved(QHostInfo const &);
-    void bytesWereWritten(qint64 bytes);
-    void socketDestroyed();
+//private slots:
+//    void hostResolved(QHostInfo const &);
+//    void bytesWereWritten(qint64 bytes);
+//    void socketDestroyed();
 
 protected:
     /// Create a Socket object for a previously opened socket.
-    Socket(QTcpSocket *existingSocket);
+    Socket(iSocket *existingSocket);
 
     void initialize();
 
@@ -268,8 +262,6 @@ private:
      */
     friend class ListenSocket;
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Socket::HeaderFlags)
 
 } // namespace de
 

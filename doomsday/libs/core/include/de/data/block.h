@@ -114,6 +114,7 @@ public:
     inline Byte at(size_t pos) const { return at_Block(&_block, pos); }
 
     Block mid(size_t pos, size_t len = iInvalidSize) const;
+    Block left(size_t len) const;
 
     Block operator+(const Block &other) const;
 

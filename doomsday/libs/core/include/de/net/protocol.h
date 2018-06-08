@@ -21,6 +21,7 @@
 #define LIBCORE_PROTOCOL_H
 
 #include "../libcore.h"
+#include "../List"
 #include <de/Reader>
 
 /**

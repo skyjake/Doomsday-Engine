@@ -121,8 +121,7 @@ String RemoteFeed::repository() const
 
 String RemoteFeed::description() const
 {
-    return String("remote repository \"%1\"")
-            .arg(d->repository / d->remotePath);
+    return "remote repository \"" + d->repository / d->remotePath + "\"";
 }
 
 Feed::PopulatedFiles RemoteFeed::populate(Folder const &folder)

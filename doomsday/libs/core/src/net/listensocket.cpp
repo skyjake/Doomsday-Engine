@@ -20,65 +20,79 @@
 #include "de/ListenSocket"
 #include "de/Address"
 #include "de/Socket"
+#include "de/Lockable"
 
-#include <QCoreApplication>
-#include <QTcpServer>
-#include <QThread>
+#include <c_plus/service.h>
 
 namespace de {
 
-DE_PIMPL_NOREF(ListenSocket)
+DE_PIMPL(ListenSocket)
 {
-    QTcpServer *socket;
-    duint16 port;
+    cplus::Ref<iService> service;
+    duint16 port{0};
+    LockableT<List<iSocket *>> incoming; ///< Incoming connections.
 
-    /// Incoming connections.
-    QList<QTcpSocket *> incoming;
+    Impl(Public *i) : Base(i) {}
 
-    Impl() : socket(0), port(0) {}
-    ~Impl() {
-        delete socket;
+    ~Impl()
+    {
+        if (service) close_Service(service);
+    }
+
+    static void acceptNewConnection(iAny *, iService *sv, iSocket *sock)
+    {
+        Impl *d = static_cast<Impl *>(userData_Object(sv));
+        {
+            DE_GUARD_FOR(d->incoming, _);
+            d->incoming.value << sock;
+        }
+        DE_FOR_EACH_OBSERVER(IncomingAudience, i, d->self().audienceForIncoming())
+        {
+            i->incomingConnection(d->self());
+        }
     }
 };
 
-ListenSocket::ListenSocket(duint16 port) : d(new Impl)
+ListenSocket::ListenSocket(duint16 port) : d(new Impl(this))
 {
     LOG_AS("ListenSocket");
 
-    d->socket = new QTcpServer(this);
+    d->service.reset(new_Service(port));
     d->port = port;
+    setUserData_Object(d->service, d);
 
-    if (!d->socket->listen(QHostAddress::Any, d->port))
+    if (!open_Service(d->service))
     {
         /// @throw OpenError Opening the socket failed.
-        throw OpenError("ListenSocket", "Port " + QString::asText(d->port) + ": " +
-                        d->socket->errorString());
+        throw OpenError("ListenSocket", "Port " + String::asText(d->port) + ": " +
+                        strerror(errno));
     }
 
-    connect(d->socket, SIGNAL(newConnection()), this, SLOT(acceptNewConnection()));
+    iConnect(Service, d->service, incomingAccepted, d->service, Impl::acceptNewConnection);
 }
 
-void ListenSocket::acceptNewConnection()
-{
-    LOG_AS("ListenSocket::acceptNewConnection");
+//void ListenSocket::acceptNewConnection()
+//{
+//    LOG_AS("ListenSocket::acceptNewConnection");
 
-    d->incoming << d->socket->nextPendingConnection();
+//    d->incoming << d->socket->nextPendingConnection();
 
-    emit incomingConnection();
-}
+//    emit incomingConnection();
+//}
 
 Socket *ListenSocket::accept()
 {
-    if (d->incoming.empty())
+    iSocket *s;
     {
-        return 0;
+        DE_GUARD_FOR(d->incoming, _);
+        if (d->incoming.value.empty())
+        {
+            return nullptr;
+        }
+        s = d->incoming.value.takeFirst();
     }
-
-    QTcpSocket *s = d->incoming.takeFirst();
-    LOG_NET_NOTE("Accepted new connection from %s") << Address(s->peerAddress()).asText();
-
-    // We can use this constructor because we are Socket's friend.
-    return new Socket(s);
+    LOG_NET_NOTE("Accepted new connection from %s") << String::take(toString_Address(address_Socket(s)));
+    return new Socket(s); // taken
 }
 
 duint16 ListenSocket::port() const

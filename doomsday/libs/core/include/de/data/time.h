@@ -147,12 +147,12 @@ public:
     };
 
     enum Format {
-        ISOFormat,
+        ISOFormat, // yyyy-MM-dd hh:mm:ss.zzz
         BuildNumberAndTime,
         SecondsSinceStart,
         BuildNumberAndSecondsSinceStart,
         FriendlyFormat,
-        ISODateOnly,
+        ISODateOnly, // yyyy-MM-dd
         CompilerDateTime, // Oct  7 2013 03:18:36 (__DATE__ __TIME__)
         HumanDate, ///< human-entered date (only with Time::fromText)
         UnixLsStyleDateTime,
@@ -167,14 +167,12 @@ public:
     Time();
 
     Time(Time const &other);
-
     Time(Time &&moved);
 
-    Time(int year, int month, int day, int hour, int minute, int second);
-
     Time(const TimePoint &tp);
-
     Time(iTime time);
+
+    Time(int year, int month, int day, int hour, int minute, int second);
 
     /**
      * Construct a time relative to the shared high performance timer.
@@ -186,24 +184,24 @@ public:
     static Time invalidTime();
 
     Time &operator = (Time const &other);
-
     Time &operator = (Time &&moved);
 
-    bool isValid() const;
-    time_t toTime_t() const;
+    bool      isValid() const;
+    time_t    toTime_t() const;
     TimePoint toTimePoint() const;
+    uint64_t  millisecondsSinceEpoch() const;
 
-    bool operator < (Time const &t) const;
+    bool operator<(Time const &t) const;
 
-    inline bool operator > (Time const &t) const { return t < *this; }
+    inline bool operator>(Time const &t) const { return t < *this; }
 
-    inline bool operator <= (Time const &t) const { return !(*this > t); }
+    inline bool operator<=(Time const &t) const { return !(*this > t); }
 
-    inline bool operator >= (Time const &t) const { return !(*this < t); }
+    inline bool operator>=(Time const &t) const { return !(*this < t); }
 
-    bool operator == (Time const &t) const;
+    bool operator==(Time const &t) const;
 
-    inline bool operator != (Time const &t) const { return !(*this == t); }
+    inline bool operator!=(Time const &t) const { return !(*this == t); }
 
     /**
      * Add a time span to the point of time.
@@ -212,7 +210,7 @@ public:
      *
      * @return  Modified time.
      */
-    Time operator + (Span const &span) const;
+    Time operator+(Span const &span) const;
 
     /**
      * Subtract a time span from the point of time.
@@ -221,7 +219,7 @@ public:
      *
      * @return  Modified time.
      */
-    inline Time operator - (Span const &span) const { return *this + (-span); }
+    inline Time operator-(Span const &span) const { return *this + (-span); }
 
     /**
      * Modify point of time.
@@ -230,7 +228,7 @@ public:
      *
      * @return  Reference to this Time.
      */
-    Time &operator += (Span const &span);
+    Time &operator+=(Span const &span);
 
     /**
      * Modify point of time.
@@ -239,14 +237,14 @@ public:
      *
      * @return  Reference to this Time.
      */
-    inline Time &operator -= (Span const &span) { return *this += -span; }
+    inline Time &operator-=(Span const &span) { return *this += -span; }
 
     /**
      * Difference between two times.
      *
      * @param earlierTime  Time at some point before this time.
      */
-    Span operator - (Time const &earlierTime) const;
+    Span operator-(Time const &earlierTime) const;
 
     /**
      * Difference between this time and the current point of time.
@@ -314,8 +312,8 @@ public:
     Span highPerformanceTime() const;
 
     // Implements ISerializable.
-    void operator >> (Writer &to) const;
-    void operator << (Reader &from);
+    void operator>>(Writer &to) const;
+    void operator<<(Reader &from);
 
 public:
     /**

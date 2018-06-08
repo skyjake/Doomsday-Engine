@@ -61,6 +61,13 @@ Address::Address(char const *address, duint16 port) : d(new Impl)
     }
 }
 
+Address Address::take(iAddress *addr)
+{
+    Address a;
+    a.d->addr.reset(addr);
+    return a;
+}
+
 //Address::Address(QHostAddress const &host, duint16 port) : d(new Impl)
 //{
 //    d->host = QHostAddress(host.toIPv6Address());

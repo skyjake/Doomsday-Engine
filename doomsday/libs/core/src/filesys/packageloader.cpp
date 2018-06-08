@@ -48,7 +48,7 @@ DE_PIMPL(PackageLoader)
     ~Impl()
     {
         // We own all loaded packages.
-        deleteAll(loaded);
+        loaded.deleteAll();
     }
 
     /**
@@ -597,26 +597,26 @@ void PackageLoader::sortInPackageOrder(FS::FoundFiles &filesToSort) const
     typedef std::pair<File *, int> FileAndOrder;
 
     // Find the packages for files.
-    QList<FileAndOrder> all;
-    DE_FOR_EACH_CONST(FS::FoundFiles, i, filesToSort)
+    List<FileAndOrder> all;
+    for (auto *i : filesToSort)
     {
         Package const *pkg = 0;
-        String identifier = Package::identifierForContainerOfFile(**i);
+        String identifier = Package::identifierForContainerOfFile(*i);
         if (isLoaded(identifier))
         {
             pkg = &package(identifier);
         }
-        all << FileAndOrder(*i, pkg? pkg->order() : -1);
+        all << FileAndOrder(i, pkg? pkg->order() : -1);
     }
 
     // Sort by package order.
-    std::sort(all.begin(), all.end(), [] (FileAndOrder const &a, FileAndOrder const &b) {
+    std::sort(all.begin(), all.end(), [] (const FileAndOrder &a, const FileAndOrder &b) {
         return a.second < b.second;
     });
 
     // Put the results back in the given array.
     filesToSort.clear();
-    foreach (FileAndOrder const &f, all)
+    for (const FileAndOrder &f : all)
     {
         filesToSort.push_back(f.first);
     }

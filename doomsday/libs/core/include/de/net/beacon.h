@@ -22,6 +22,7 @@
 #include "../Error"
 #include "../Block"
 #include "../Address"
+#include "../Observers"
 
 namespace de {
 
@@ -34,6 +35,9 @@ class DE_PUBLIC Beacon
 public:
     /// The UDP port was unavailable. @ingroup errors
     DE_ERROR(PortError);
+
+    DE_DEFINE_AUDIENCE2(Discovery, void beaconFoundHost(const Address &host, const Block &message))
+    DE_DEFINE_AUDIENCE2(Finished,  void beaconFinished())
 
 public:
     Beacon(duint16 port);
@@ -72,19 +76,15 @@ public:
      *                  is zero or negative, discovery will not end.
      * @param interval  Interval between query broadcasts.
      */
-    void discover(TimeSpan const &timeOut, TimeSpan const &interval = TimeSpan(1.0));
+    void discover(TimeSpan timeOut, TimeSpan interval = 1.0);
 
     List<Address> foundHosts() const;
     Block messageFromHost(Address const &host) const;
 
-protected slots:
-    void readIncoming();
-    void readDiscoveryReply();
-    void continueDiscovery();
-
-signals:
-    void found(de::Address host, de::Block message);
-    void finished();
+//protected slots:
+//    void readIncoming();
+//    void readDiscoveryReply();
+//    void continueDiscovery();
 
 private:
     DE_PRIVATE(d)

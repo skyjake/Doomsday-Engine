@@ -73,7 +73,7 @@
 #include "de/Reader"
 #include "de/data/huffman.h"
 
-#include <QThread>
+//#include <QThread>
 
 namespace de {
 
@@ -214,7 +214,7 @@ DE_PIMPL_NOREF(Socket)
     QTcpSocket *socket = nullptr;
 
     /// Buffer for incoming received messages.
-    QList<Message *> receivedMessages;
+    List<Message *> receivedMessages;
 
     /// Number of bytes waiting to be written to the socket.
     dint64 bytesToBeWritten = 0;
@@ -224,8 +224,7 @@ DE_PIMPL_NOREF(Socket)
 
     ~Impl()
     {
-        // Delete received messages left in the buffer.
-        foreach (Message *msg, receivedMessages) delete msg;
+        deleteAll(receivedMessages);
     }
 
     void serializeMessage(MessageHeader &header, Block &payload)
@@ -289,7 +288,7 @@ DE_PIMPL_NOREF(Socket)
                      Block const &payload)
     {
         DE_ASSERT(socket != nullptr);
-        DE_ASSERT(QThread::currentThread() == socket->thread());
+//        DE_ASSERT(QThread::currentThread() == socket->thread());
 
         // Write the message header.
         Block dest;
@@ -436,7 +435,7 @@ Socket::Socket() : d(new Impl)
     QObject::connect(d->socket, SIGNAL(connected()), this, SIGNAL(connected()));
 }
 
-Socket::Socket(Address const &address, TimeSpan const &timeOut) : d(new Impl) // blocking
+Socket::Socket(Address const &address, TimeSpan timeOut) : d(new Impl) // blocking
 {
     LOG_AS("Socket");
 

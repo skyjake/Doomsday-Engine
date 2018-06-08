@@ -14,18 +14,13 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBCORE_LISTENSOCKET_H
 #define LIBCORE_LISTENSOCKET_H
 
-#include "../libcore.h"
-
-#include <QObject>
-#include <QList>
-#include <QThread>
-#include <QDebug>
+#include "../Observers"
 
 namespace de {
 
@@ -37,13 +32,17 @@ class Socket;
  *
  * @ingroup net
  */
-class DE_PUBLIC ListenSocket : public QObject
+class DE_PUBLIC ListenSocket
 {
-    Q_OBJECT
-
 public:
     /// Opening the socket failed. @ingroup errors
     DE_ERROR(OpenError);
+
+    /**
+     * Notifies when a new incoming connection is available.
+     * Call accept() to get the Socket object.
+     */
+    DE_DEFINE_AUDIENCE2(Incoming, void incomingConnection(ListenSocket &))
 
 public:
     /// Open a listen socket on the specified port.
@@ -55,16 +54,6 @@ public:
     /// Returns an incoming connection. Caller takes ownership of
     /// the returned object.
     Socket *accept();
-
-signals:
-    /**
-     * Notifies when a new incoming connection is available.
-     * Call accept() to get the Socket object.
-     */
-    void incomingConnection();
-
-protected slots:
-    void acceptNewConnection();
 
 private:
     DE_PRIVATE(d)

@@ -42,13 +42,16 @@ public:
 
     Date(const Time &time);
 
+    static Date fromJulianDayNumber(int jdn);
+
     int year() const;
     int month() const;
     int dayOfMonth() const;
     int dayOfYear() const;
+    int julianDayNumber() const;
     int hours() const;
     int minutes() const;
-    int seconds() const;
+    ddouble seconds() const;
     int daysTo(const Date &other) const;
 
     /**
@@ -67,6 +70,8 @@ public:
     LogEntry::Arg::Type logEntryArgType() const {
         return LogEntry::Arg::StringArgument;
     }
+
+    static Date currentDate();
 
     static Date fromText(const String &text);
 

@@ -34,23 +34,23 @@
 #include <vector>
 
 // Qt:
-#include <QtCore/qglobal.h>
-#include <QCoreApplication>
-#include <QDataStream>
-#include <QDebug>
-#include <QFlags>
-#include <QList>
-#include <QMap>
-#include <QMutex>
-#include <QScopedPointer>
-#include <QSet>
-#include <QString>
-#include <QStringList>
-#include <QTextStream>
-#include <QThread>
-#include <QTime>
-#include <QTimer>
-#include <QVarLengthArray>
-#include <QVector>
+//#include <QtCore/qglobal.h>
+//#include <QCoreApplication>
+//#include <QDataStream>
+//#include <QDebug>
+//#include <QFlags>
+//#include <QList>
+//#include <QMap>
+//#include <QMutex>
+//#include <QScopedPointer>
+//#include <QSet>
+//#include <QString>
+//#include <QStringList>
+//#include <QTextStream>
+//#include <QThread>
+//#include <QTime>
+//#include <QTimer>
+//#include <QVarLengthArray>
+//#include <QVector>
 
 #endif

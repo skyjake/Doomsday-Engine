@@ -24,6 +24,7 @@
 #include "../Log"
 
 #include <sstream>
+#include <c_plus/address.h>
 
 namespace de {
 
@@ -49,6 +50,8 @@ public:
 //    Address(QHostAddress const &address, duint16 port = 0);
 
     Address(char const *hostNameOrAddress, duint16 port = 0);
+
+    static Address take(iAddress *);
 
     Address(Address const &other);
 

@@ -25,16 +25,16 @@
 #include "de/RemoteFeedRelay"
 #include "de/TextValue"
 
-#include <QNetworkRequest>
-#include <QNetworkReply>
-#include <QNetworkDiskCache>
+//#include <QNetworkRequest>
+//#include <QNetworkReply>
+//#include <QNetworkDiskCache>
 
 namespace de {
 namespace filesys {
 
 DE_PIMPL(WebHostedLink), public Lockable
 {
-    QSet<QNetworkReply *> pendingRequests;
+    Set<QNetworkReply *> pendingRequests;
     std::shared_ptr<FileTree> fileTree;
 
     Impl(Public *i) : Base(i)
@@ -69,9 +69,9 @@ DE_PIMPL(WebHostedLink), public Lockable
                 auto addMeta = [this]
                         (DictionaryValue &list, PathTree::Nodes const &nodes)
                 {
-                    for (auto i = nodes.begin(); i != nodes.end(); ++i)
+                    for (auto &i = nodes.begin(); i != nodes.end(); ++i)
                     {
-                        auto const &entry = i.value()->as<FileEntry>();
+                        auto const &entry = i.second->as<FileEntry>();
                         list.add(new TextValue(entry.name()),
                                   RecordValue::takeRecord(
                                       Record::withMembers(

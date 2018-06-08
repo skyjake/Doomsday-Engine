@@ -30,15 +30,13 @@ namespace filesys {
 class DE_PUBLIC NativeLink : public Link
 {
 public:
-    static String const URL_SCHEME;
+    static const char *URL_SCHEME;
 
     static Link *construct(String const &address);
 
-    void setLocalRoot(String const &rootPath) override;
-
+    void         setLocalRoot(String const &rootPath) override;
     PackagePaths locatePackages(StringList const &packageIds) const override;
-
-    LoopResult forPackageIds(std::function<LoopResult (String const &packageId)> func) const override;
+    LoopResult   forPackageIds(std::function<LoopResult(String const &pkgId)> func) const override;
 
 protected:
     NativeLink(String const &address);

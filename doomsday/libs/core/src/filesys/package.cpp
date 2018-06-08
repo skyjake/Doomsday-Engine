@@ -485,12 +485,12 @@ String Package::versionedIdentifierForFile(File const &file)
     auto const id_ver = split(file.name().fileNameWithoutExtension());
     if (id_ver.second.isValid())
     {
-        return String("%1_%2").arg(id).arg(id_ver.second.fullNumber());
+        return String::format("%s_%s", id.c_str(), id_ver.second.fullNumber().c_str());
     }
     // The version may be specified in metadata.
     if (auto const *pkgVer = file.objectNamespace().tryFind(PACKAGE_VERSION))
     {
-        return String("%1_%2").arg(id).arg(Version(pkgVer->value().asText()).fullNumber());
+        return String::format("%s_%s", id.c_str(), Version(pkgVer->value().asText()).fullNumber().c_str());
     }
     return id;
 }

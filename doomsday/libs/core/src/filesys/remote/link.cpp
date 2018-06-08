@@ -53,7 +53,7 @@ DE_PIMPL(Link), public AsyncScope
         }
         for (auto i = pendingQueries.begin(); i != pendingQueries.end(); ++i)
         {
-            i.value().cancel();
+            i->second.cancel();
         }
     }
 

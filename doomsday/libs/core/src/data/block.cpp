@@ -169,6 +169,13 @@ Block Block::mid(size_t pos, size_t len) const
     return i;
 }
 
+Block Block::left(size_t len) const
+{
+    Block trunc(*this);
+    truncate_Block(&trunc._block, len);
+    return trunc;
+}
+
 Block Block::operator+(const Block &other) const
 {
     Block cat(*this);

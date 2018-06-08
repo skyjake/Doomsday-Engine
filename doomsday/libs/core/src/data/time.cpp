@@ -206,6 +206,46 @@ DE_PIMPL_NOREF(Time)
         sysTime = (highPerfTimer().startedAt() + highPerfElapsed).d->sysTime;
         flags |= SysTime;
     }
+
+    TimePoint systemTime() const
+    {
+        if (flags & Impl::SysTime)
+        {
+            return sysTime;
+        }
+        if (flags & Impl::HighPerformance)
+        {
+            return (highPerfTimer().startedAt() + highPerfElapsed).d->sysTime;
+        }
+        return {};
+    }
+
+    static Time getQDateTime(const Block &data)
+    {
+        uint32_t julianDay;
+        uint32_t msecs;
+        uint32_t utfOffset;
+
+        // This matches Qt's QDataStream format.
+        Reader r(data);
+        r >> julianDay >> msecs >> utfOffset;
+
+        return Date::fromJulianDayNumber(julianDay).asTime()
+                + double(msecs) / 1.0e3;
+    }
+
+    static Block putQDateTime(const Time &time)
+    {
+        Date date(time);
+        uint32_t julianDay = date.julianDayNumber();
+        uint32_t msecs = (date.seconds() + date.minutes() * 60 + date.hours() * 3600) * 1000;
+        uint32_t utfOffset = 0;
+
+        Block bytes;
+        Writer w(bytes);
+        w << julianDay << msecs << utfOffset;
+        return bytes;
+    }
 };
 
 Time::Time() : d(new Impl)
@@ -267,30 +307,18 @@ Time &Time::operator = (Time &&moved)
 
 time_t Time::toTime_t() const
 {
-    if (d->flags & Impl::SysTime)
-    {
-        return std::chrono::system_clock::to_time_t(d->sysTime);
-    }
-    if (d->flags & Impl::HighPerformance)
-    {
-        return std::chrono::system_clock::to_time_t
-                ((highPerfTimer().startedAt() + d->highPerfElapsed).d->sysTime);
-    }
-    return 0;
+    return std::chrono::system_clock::to_time_t(d->systemTime());
+}
+
+uint64_t Time::millisecondsSinceEpoch() const
+{
+    const auto dur = d->systemTime().time_since_epoch();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
 }
 
 Time::TimePoint Time::toTimePoint() const
 {
-    if (d->flags & Impl::SysTime)
-    {
-        return d->sysTime;
-    }
-    if (d->flags & Impl::HighPerformance)
-    {
-        const Time tm = highPerfTimer().startedAt() + d->highPerfElapsed;
-        return tm.d->sysTime;
-    }
-    return {};
+    return d->systemTime();
 }
 
 bool Time::isValid() const
@@ -346,16 +374,18 @@ String Time::asText(Format format) const
     {
         if (format == ISOFormat)
         {
-            const auto dur = d->sysTime.time_since_epoch();
-            auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
-            return asText("%F %M") + stringf("%03i", ms % 1000).c_str();
+            auto ms = millisecondsSinceEpoch();
+            return asText("%F %M") + stringf(".%03u", ms % 1000).c_str();
         }
         else if (format == ISODateOnly)
         {
-            return d->dateTime.toString("%F");
+            return asText("%F");
         }
         else if (format == FriendlyFormat)
         {
+            // Wed May 20 03:40:13 1998
+            // return asText("%a %b %d %H:%M:%S %Y");
+
             // Is it today?
             if (d->dateTime.date() == QDateTime::currentDateTime().date())
             {
@@ -378,38 +408,35 @@ String Time::asText(Format format) const
             {
                 elapsed = d->highPerfElapsed;
             }
-            else if (d->flags.testFlag(Impl::DateTime))
+            else if (d->flags.testFlag(Impl::SysTime))
             {
-                elapsed = highPerfTimer().startedAt().deltaTo(Time(d->dateTime));
+                elapsed = highPerfTimer().startedAt().deltaTo(Time(d->sysTime));
             }
             int hours = int(elapsed.asHours());
-            TimeSpan sec = elapsed - hours * 3600.0;
-            QString prefix;
+            ddouble sec = elapsed - hours * 3600.0;
+            String prefix;
             if (format == BuildNumberAndSecondsSinceStart)
             {
-                prefix = QString("#%1 ").arg(asBuildNumber(), -4);
+                prefix = String::format("#%-4d ", asBuildNumber());
             }
             if (hours > 0)
             {
-                return QString("%1%2h%3")
-                        .arg(prefix)
-                        .arg(hours)
-                        .arg(sec, 7, 'f', 3, '0');
+                return String::format("%s%ih%7.3f", prefix.c_str(), hours, sec);
             }
-            return QString("%1%2")
-                    .arg(prefix)
-                    .arg(sec, 7, 'f', 3, '0');
+            return String::format("%s%7.3f", prefix.c_str(), sec);
         }
         else
         {
-            return QString("#%1 ").arg(asBuildNumber(), -4) + d->dateTime.toString("hh:mm:ss.zzz");
+            auto ms = millisecondsSinceEpoch();
+            return String::format("#%-4d ", asBuildNumber()) + asText("%H:%M:%S") +
+                   stringf(".%03i", ms % 1000).c_str();
         }
     }
     if (d->flags.testFlag(Impl::HighPerformance))
     {
-        return QString("+%1 sec").arg(d->highPerfElapsed, 0, 'f', 3);
+        return String::format("+%.3f sec", ddouble(d->highPerfElapsed));
     }
-    return "";
+    return {};
 }
 
 String Time::asText(const char *format) const
@@ -420,7 +447,7 @@ String Time::asText(const char *format) const
     return buf;
 }
 
-static int parseMonth(String const &shortName)
+static int parseMonth(const String &shortName)
 {
     static char const *months[] = {
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -437,35 +464,39 @@ static int parseMonth(String const &shortName)
     return 0;
 }
 
-Time Time::fromText(String const &text, Time::Format format)
+Time Time::fromText(const String &text, Time::Format format)
 {
-    DE_ASSERT(format == ISOFormat || format == ISODateOnly || format == FriendlyFormat ||
-              format == CompilerDateTime || format == HumanDate || format == UnixLsStyleDateTime);
+    DE_ASSERT(format == ISOFormat ||
+              format == ISODateOnly ||
+              format == CompilerDateTime ||
+              format == HumanDate ||
+              format == UnixLsStyleDateTime);
 
     if (format == ISOFormat)
     {
-        return Time(QDateTime::fromString(text, ISO_FORMAT));
+        int year = 0, month = 0, mday = 0, hour = 0, minute = 0;
+        double seconds = 0;
+        std::sscanf(text, "%4d-%d-%d %d:%d:%lf", &year, &month, &mday, &hour, &minute, &seconds);
+        return Time(year, month, mday, hour, minute, 0) + seconds;
     }
     else if (format == ISODateOnly)
+        int year = 0, month = 0, mday = 0;
     {
-        return Time(QDateTime::fromString(text, "yyyy-MM-dd"));
-    }
-    else if (format == FriendlyFormat)
-    {
-        return Time(QDateTime::fromString(text, Qt::TextDate));
+        std::sscanf(text, "%4d-%d-%d", &year, &month, &mday);
+        return Time(year, month, mday, 0, 0, 0);
     }
     else if (format == CompilerDateTime)
     {
         // Parse the text manually as it is locale-independent.
-        const StringList parts = de::filter(text.split(" "), [](const String &s){ return !s.empty(); });
+        const StringList parts = filter(text.split(" "), [](const String &s){ return !s.empty(); });
         if (parts.size() >= 4)
         {
             int day = parts[1].toInt();
             int year = parts[2].toInt();
             int month = parseMonth(parts[0]);
-            QDate date(year, month, day);
-            QTime time = QTime::fromString(parts[3], "HH:mm:ss");
-            return Time(QDateTime(date, time));
+            int hour = 0, minute = 0, seconds = 0;
+            std::sscanf(parts[3], "%d:%d:%d", &hour, &minute, &seconds);
+            return Time(year, month, day, hour, minute, seconds);
         }
     }
     else if (format == UnixLsStyleDateTime)
@@ -474,33 +505,32 @@ Time Time::fromText(String const &text, Time::Format format)
         // Jun 2 2016
         // Jun 2 06:30
 
-        QStringList const parts = text.split(" ", QString::SkipEmptyParts);
+        const StringList parts = filter(text.split(" "), [](const String &s){ return !s.empty(); });
         if (parts.size() >= 3)
         {
-            int month = parseMonth(parts[0]);
-            int day = parts[1].toInt();
-            int hour = 0;
+            int month  = parseMonth(parts[0]);
+            int day    = parts[1].toInt();
+            int hour   = 0;
             int minute = 0;
             int year;
-            if (parts[2].contains(QChar(':')))
+            if (parts[2].contains(":"))
             {
-                year = QDate::currentDate().year();
-                hour = parts[2].left(2).toInt();
-                minute = parts[2].right(2).toInt();
-                return Time(QDateTime(QDate(year, month, day),
-                                      QTime(hour, minute, 0)));
+                year   = Date::currentDate().year();
+                hour   = parts[2].left(String::BytePos(2)).toInt();
+                minute = parts[2].right(String::BytePos(2)).toInt();
+                return Time(year, month, day, hour, minute, 0);
             }
             else
             {
                 year = parts[2].toInt();
-                return Time(QDateTime(QDate(year, month, day), QTime(0, 0, 0)));
+                return Time(year, month, day, 0, 0, 0);
             }
         }
     }
     else if (format == HumanDate)
     {
         // Note: Check use of indices below.
-        static QStringList const formats({
+        static const char *formats[] = {
             "M/d/yy",
             "MM/dd/yy",
             "d.M.yy",
@@ -515,8 +545,8 @@ Time Time::fromText(String const &text, Time::Format format)
             // Unix "ls" style:
             "MMM d yyyy",
             "MMM d hh:mm",
-        });
-        String const normText = text.normalizeWhitespace();
+        };
+        const String normText = text.normalizeWhitespace();
         for (int i = 0; i < formats.size(); ++i)
         {
             String const fmt = formats.at(i);
@@ -562,7 +592,6 @@ QDateTime const &Time::asDateTime() const
 
 Date Time::asDate() const
 {
-    DE_ASSERT(d->hasDateTime());
     return Date(*this);
 }
 
@@ -570,19 +599,16 @@ Date Time::asDate() const
 static duint8 const HAS_DATETIME  = 0x01;
 static duint8 const HAS_HIGH_PERF = 0x02;
 
-void Time::operator >> (Writer &to) const
+void Time::operator>>(Writer &to) const
 {
-    duint8 flags = (d->flags & Impl::DateTime?        HAS_DATETIME  : 0) |
+    duint8 flags = (d->flags & Impl::SysTime?         HAS_DATETIME  : 0) |
                    (d->flags & Impl::HighPerformance? HAS_HIGH_PERF : 0);
     to << flags;
 
-    if (d->flags.testFlag(Impl::DateTime))
+    if (d->flags.testFlag(Impl::SysTime))
     {
-        Block bytes;
-        QDataStream s(&bytes, QIODevice::WriteOnly);
-        s.setVersion(QDataStream::Qt_4_8);
-        s << d->dateTime;
-        to << bytes;
+        // Using Qt's format for backwards compatibility (and it's pretty compact).
+        to << Impl::putQDateTime(*this);
     }
 
     if (d->flags.testFlag(Impl::HighPerformance))
@@ -591,7 +617,7 @@ void Time::operator >> (Writer &to) const
     }
 }
 
-void Time::operator << (Reader &from)
+void Time::operator<<(Reader &from)
 {
     if (from.version() >= DE_PROTOCOL_1_11_0_Time_high_performance)
     {
@@ -607,13 +633,11 @@ void Time::operator << (Reader &from)
 
         if (flags & HAS_DATETIME)
         {
-            d->flags |= Impl::DateTime;
+            d->flags |= Impl::SysTime;
 
             Block bytes;
             from >> bytes;
-            QDataStream s(bytes);
-            s.setVersion(QDataStream::Qt_4_8);
-            s >> d->dateTime;
+            d->sysTime = Impl::getQDateTime(bytes).d->sysTime;
         }
 
         if (flags & HAS_HIGH_PERF)
@@ -626,7 +650,7 @@ void Time::operator << (Reader &from)
         {
             // If both are present, the high-performance time should be synced
             // with current high-perf timer.
-            if (d->dateTime < highPerfTimer().startedAt().asDateTime())
+            if (d->sysTime < highPerfTimer().startedAt().toTimePoint())
             {
                 // Current high-performance timer was started after this time;
                 // we can't represent the time as high performance delta.
@@ -634,7 +658,9 @@ void Time::operator << (Reader &from)
             }
             else
             {
-                d->highPerfElapsed = highPerfTimer().startedAt().deltaTo(d->dateTime);
+                const auto dur = d->sysTime - highPerfTimer().startedAt().toTimePoint();
+                d->highPerfElapsed = std::chrono::duration_cast
+                        <std::chrono::milliseconds>(dur).count() / 1.0e3;
             }
         }
     }
@@ -643,10 +669,8 @@ void Time::operator << (Reader &from)
         // This serialization only has a QDateTime.
         Block bytes;
         from >> bytes;
-        QDataStream s(bytes);
-        s.setVersion(QDataStream::Qt_4_8);
-        s >> d->dateTime;
-        d->flags = Impl::DateTime;
+        d->sysTime = Impl::getQDateTime(bytes).d->sysTime;
+        d->flags = Impl::SysTime;
     }
 }
 

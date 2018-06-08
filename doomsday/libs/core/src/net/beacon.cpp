@@ -20,6 +20,7 @@
 #include "de/Reader"
 #include "de/Writer"
 #include "de/LogBuffer"
+#include "de/Map"
 //#include <QUdpSocket>
 //#include <QHostInfo>
 //#include <QTimer>
@@ -107,7 +108,7 @@ void Beacon::stop()
     d->socket = 0;
 }
 
-void Beacon::discover(TimeSpan const &timeOut, TimeSpan const &interval)
+void Beacon::discover(TimeSpan timeOut, TimeSpan interval)
 {
     if (d->timer) return; // Already discovering.
 
@@ -150,7 +151,7 @@ void Beacon::discover(TimeSpan const &timeOut, TimeSpan const &interval)
     continueDiscovery();
 }
 
-QList<Address> Beacon::foundHosts() const
+List<Address> Beacon::foundHosts() const
 {
     return d->found.keys();
 }
@@ -170,7 +171,7 @@ void Beacon::readIncoming()
     while (d->socket->hasPendingDatagrams())
     {
         QHostAddress from;
-        quint16 port = 0;
+        duint16 port = 0;
         Block block(d->socket->pendingDatagramSize());
         d->socket->readDatagram(reinterpret_cast<char *>(block.data()),
                                 block.size(), &from, &port);

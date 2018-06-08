@@ -21,6 +21,7 @@
 
 #include "de/libcore.h"
 #include "de/List"
+#include "de/Address"
 
 namespace de {
 namespace internal {

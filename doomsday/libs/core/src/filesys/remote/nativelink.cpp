@@ -29,9 +29,9 @@
 namespace de {
 namespace filesys {
 
-String const NativeLink::URL_SCHEME("doomsday:");
+const char *NativeLink::URL_SCHEME = "doomsday:";
 
-static String const PATH_SERVER_REPOSITORY_ROOT("/sys/server/public"); // serverside folder
+static const char *PATH_SERVER_REPOSITORY_ROOT = "/sys/server/public"; // serverside folder
 
 DE_PIMPL(NativeLink)
 {
@@ -83,7 +83,7 @@ NativeLink::NativeLink(String const &address)
     : Link(address)
     , d(new Impl(this))
 {
-    DE_ASSERT(address.startsWith(URL_SCHEME));
+    DE_ASSERT(address.beginsWith(URL_SCHEME));
 
     QObject::connect(&d->socket, &Socket::connected,     [this] () { wasConnected(); });
     QObject::connect(&d->socket, &Socket::disconnected,  [this] () { wasDisconnected(); });
@@ -91,12 +91,12 @@ NativeLink::NativeLink(String const &address)
 
     QObject::connect(&d->socket, &Socket::messagesReady, [this] () { d->receiveMessages(); });
 
-    d->socket.open(address.mid(URL_SCHEME.size()));
+    d->socket.open(address.substr(String::BytePos(strlen(URL_SCHEME))));
 }
 
 Link *NativeLink::construct(String const &address)
 {
-    if (address.startsWith(URL_SCHEME))
+    if (address.beginsWith(URL_SCHEME))
     {
         return new NativeLink(address);
     }
@@ -112,13 +112,13 @@ void NativeLink::setLocalRoot(String const &rootPath)
     root.populate(Folder::PopulateAsyncFullTree);
 }
 
-PackagePaths NativeLink::locatePackages(StringList const &packageIds) const
+PackagePaths NativeLink::locatePackages(const StringList &packageIds) const
 {
     PackagePaths remotePaths;
-    foreach (String pkg, packageIds)
+    for (const String &pkg : packageIds)
     {
         // Available packages have been populated as remote files.
-        if (File *rem = FS::tryLocate<File>("/remote/server"/pkg))
+        if (File *rem = FS::tryLocate<File>(DE_STR("/remote/server") / pkg))
         {
             // Remote path not needed because local folders are fully populated with
             // remote files.
@@ -130,7 +130,7 @@ PackagePaths NativeLink::locatePackages(StringList const &packageIds) const
 
 LoopResult filesys::NativeLink::forPackageIds(std::function<LoopResult (String const &)> func) const
 {
-    return FS::locate<Folder>("/remote/server").forContents([&func] (String name, File &) -> LoopResult
+    return FS::locate<Folder>(DE_STR("/remote/server")).forContents([&func] (String name, File &) -> LoopResult
     {
         if (auto result = func(name))
         {

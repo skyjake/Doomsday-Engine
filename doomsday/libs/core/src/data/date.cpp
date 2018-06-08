@@ -38,6 +38,7 @@ DE_PIMPL_NOREF(Date)
         : time(time)
     {
         initSinceEpoch_Date(&date, time.toTime_t());
+        date.nsecs = (time.millisecondsSinceEpoch() % 1000) * 1000000L;
     }
 };
 
@@ -46,6 +47,34 @@ Date::Date() : d(new Impl)
 
 Date::Date(const Time &time) : d(new Impl(time))
 {}
+
+Date Date::fromJulianDayNumber(int julianDay) // static
+{
+    // https://en.wikipedia.org/wiki/Julian_day#Converting_Gregorian_calendar_date_to_Julian_Day_Number
+
+    const int y = 4716;
+    const int j = 1401;
+    const int m = 2;
+    const int n = 12;
+    const int r = 4;
+    const int p = 1461;
+    const int v = 3;
+    const int u = 5;
+    const int s = 153;
+    const int w = 2;
+    const int B = 274277;
+    const int C = -38;
+
+    int f = julianDay + j + (((4 * julianDay + B) / 146097) * 3) / 4 + C;
+    int e = r * f + v;
+    int g = mod(e, p) / r;
+    int h = u * g + w;
+    int D = mod(h, s) / u + 1;
+    int M = mod(h / s + m, n) + 1;
+    int Y = (e / p) - y + (n + m - M) / n;
+
+    return Time(Y, M, D, 0, 0, 0);
+}
 
 int Date::year() const
 {
@@ -67,6 +96,20 @@ int Date::dayOfYear() const
     return d->date.dayOfYear;
 }
 
+int Date::julianDayNumber() const
+{
+    // For reference, see
+    // https://en.wikipedia.org/wiki/Julian_day#Converting_Gregorian_calendar_date_to_Julian_Day_Number
+
+    const int Y = year();
+    const int M = month();
+    const int D = dayOfMonth();
+
+    return (1461 * (Y + 4800 + (M - 14)/12))/4 +
+            (367 * (M - 2 - 12 * ((M - 14)/12)))/12 -
+            (3 * ((Y + 4900 + (M - 14)/12)/100))/4 + D - 32075;
+}
+
 int Date::hours() const
 {
     return d->date.hour;
@@ -77,9 +120,9 @@ int Date::minutes() const
     return d->date.minute;
 }
 
-int Date::seconds() const
+ddouble Date::seconds() const
 {
-    return d->date.second;
+    return d->date.second + double(d->date.nsecs) / 1.0e9;
 }
 
 int Date::daysTo(const Date &other) const
@@ -91,6 +134,11 @@ int Date::daysTo(const Date &other) const
 Time Date::asTime() const
 {
     return d->time;
+}
+
+Date Date::currentDate()
+{
+    return Time().asDate();
 }
 
 Date Date::fromText(String const &text)

@@ -19,6 +19,7 @@
 #include "../src/net/networkinterfaces.h"
 #include "de/Task"
 #include "de/TaskPool"
+#include "de/Address"
 
 namespace de {
 namespace internal {
@@ -29,8 +30,9 @@ DE_PIMPL(NetworkInterfaces), public Lockable
     {
         NetworkInterfaces::Impl *d;
 
-        AddressQueryTask(NetworkInterfaces::Impl *d) : d(d) {}
-
+        AddressQueryTask(NetworkInterfaces::Impl *d)
+            : d(d)
+        {}
         void runTask() override
         {
             List<Address> ipv6;
@@ -52,18 +54,18 @@ DE_PIMPL(NetworkInterfaces), public Lockable
 
     List<Address> addresses; // lock before access
     TaskPool tasks;
-    QTimer updateTimer;
+//    QTimer updateTimer;
     bool gotAddresses = false;
 
     Impl(Public *i) : Base(i)
     {
-        updateTimer.setInterval(1000 * 60 * 1);
-        updateTimer.setSingleShot(false);
-        QObject::connect(&updateTimer, &QTimer::timeout, [this] ()
-        {
-            tasks.start(new AddressQueryTask(this));
-        });
-        updateTimer.start();
+//        updateTimer.setInterval(1000 * 60 * 1);
+//        updateTimer.setSingleShot(false);
+//        QObject::connect(&updateTimer, &QTimer::timeout, [this] ()
+//        {
+//            tasks.start(new AddressQueryTask(this));
+//        });
+//        updateTimer.start();
         tasks.start(new AddressQueryTask(this));
     }
 };

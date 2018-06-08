@@ -82,8 +82,8 @@ endif ()
 # Qt Configuration -----------------------------------------------------------
 
 set (CMAKE_INCLUDE_CURRENT_DIR ON)
-set (CMAKE_AUTOMOC ON)
-set (CMAKE_AUTORCC ON)
+set (CMAKE_AUTOMOC OFF)
+set (CMAKE_AUTORCC OFF)
 set_property (GLOBAL PROPERTY AUTOGEN_TARGETS_FOLDER Generated)
 
 find_package (Qt)
