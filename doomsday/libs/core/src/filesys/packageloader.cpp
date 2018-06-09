@@ -508,7 +508,7 @@ void PackageLoader::unloadAll()
 
     while (!d->loaded.isEmpty())
     {
-        unload(d->loaded.begin().key());
+        unload(d->loaded.begin()->first);
     }
 }
 
@@ -522,13 +522,13 @@ bool PackageLoader::isLoaded(String const &packageId) const
 {
     // Split ID, check version too if specified.
     auto const id_ver = Package::split(packageId);
-    auto found = d->loaded.constFind(id_ver.first);
-    if (found == d->loaded.constEnd())
+    auto found = d->loaded.find(id_ver.first);
+    if (found == d->loaded.end())
     {
         return false;
     }
     return (!id_ver.second.isValid() /* no valid version provided in argumnet */ ||
-            id_ver.second == found.value()->version());
+            id_ver.second == found->second->version());
 }
 
 bool PackageLoader::isLoaded(File const &file) const
@@ -546,16 +546,16 @@ PackageLoader::LoadedPackages const &PackageLoader::loadedPackages() const
     return d->loaded;
 }
 
-QList<Package *> PackageLoader::loadedPackagesInOrder() const
+List<Package *> PackageLoader::loadedPackagesInOrder() const
 {
     return d->loadedInOrder();
 }
 
 FS::FoundFiles PackageLoader::loadedPackagesAsFilesInPackageOrder() const
 {
-    QList<Package *> pkgs = d->loadedInOrder();
+    List<Package *> pkgs = d->loadedInOrder();
     FS::FoundFiles sorted;
-    for (auto p : pkgs)
+    for (auto &p : pkgs)
     {
         sorted.push_back(const_cast<File *>(&p->sourceFile()));
     }
@@ -564,7 +564,7 @@ FS::FoundFiles PackageLoader::loadedPackagesAsFilesInPackageOrder() const
 
 StringList PackageLoader::loadedPackageIdsInOrder(IdentifierType idType) const
 {
-    QList<Package *> pkgs = d->loadedInOrder();
+    List<Package *> pkgs = d->loadedInOrder();
     StringList ids;
     for (auto p : pkgs)
     {
@@ -572,7 +572,7 @@ StringList PackageLoader::loadedPackageIdsInOrder(IdentifierType idType) const
         Version const pkgVersion(meta.gets("version"));
         if (idType == Versioned && pkgVersion.isValid()) // nonzero
         {
-            ids << String("%1_%2").arg(meta.gets("ID")).arg(pkgVersion.fullNumber());
+            ids << String::format("%s_%s", meta.gets("ID").c_str(), pkgVersion.fullNumber().c_str());
         }
         else
         {
@@ -646,9 +646,9 @@ StringList PackageLoader::loadedFromCommandLine() const
 StringList PackageLoader::findAllPackages() const
 {
     StringList all;
-    for (QString typeName : QStringList({ DE_TYPE_NAME(Folder),
+    for (const char *typeName : {DE_TYPE_NAME(Folder),
                                           DE_TYPE_NAME(ArchiveFolder),
-                                          DE_TYPE_NAME(LinkFile) }))
+                                 DE_TYPE_NAME(LinkFile)})
     {
         d->listPackagesInIndex(App::fileSystem().indexFor(typeName), all);
     }
@@ -681,12 +681,15 @@ PackageLoader &PackageLoader::get()
     return App::packageLoader();
 }
 
-PackageLoader::IdentifierList::IdentifierList(String const &spaceSeparatedIds)
+PackageLoader::IdentifierList::IdentifierList(const String &spaceSeparatedIds)
 {
-    static const QRegularExpression anySpace("\\s");
-    for (auto const &qs : spaceSeparatedIds.split(anySpace, String::SkipEmptyParts))
+    static RegExp anySpace("\\s");
+    for (const String &qs : spaceSeparatedIds.split(anySpace))
     {
-        ids.append(qs);
+        if (qs)
+        {
+            ids << qs;
+        }
     }
 }
 

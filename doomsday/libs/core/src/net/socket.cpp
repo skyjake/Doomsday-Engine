@@ -482,8 +482,8 @@ void Socket::open(String const &domainNameWithOptionalPort,
     duint16 port = defaultPort;
     if (str.contains(':'))
     {
-        int pos = str.lastIndexOf(':');
-        port = duint16(str.mid(pos + 1).toInt());
+        auto pos = str.lastIndexOf(':');
+        port = duint16(str.substr(pos + 1).toInt());
         if (!port) port = defaultPort;
         str = str.left(pos);
     }

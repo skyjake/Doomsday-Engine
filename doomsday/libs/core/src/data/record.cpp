@@ -746,9 +746,8 @@ Variable &Record::set(const String &name, Block const &value)
     var.value<BlockValue>().block() = value;
     return var;
 }
-Variable &Record::set(const String &name, ArrayValue *value)
 
-Variable &Record::set(const CString &name, const Record &value)
+Variable &Record::set(const String &name, const Record &value)
 {
     DENG2_GUARD(d);
 
@@ -762,7 +761,7 @@ Variable &Record::set(const CString &name, const Record &value)
     return var;
 }
 
-Variable &Record::set(const CString &name, ArrayValue *value)
+Variable &Record::set(const String &name, ArrayValue *value)
 {
     DE_GUARD(d);
 
@@ -821,7 +820,7 @@ Variable &Record::appendMultipleUniqueWords(const String &name, const String &wo
 {
     for (const String &word : words.split(separator))
 {
-        if (!word.empty())
+        if (word)
     {
         appendUniqueWord(name, word, separator);
     }

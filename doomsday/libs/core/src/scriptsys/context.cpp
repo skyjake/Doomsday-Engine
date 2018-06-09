@@ -84,7 +84,7 @@ DE_PIMPL(Context)
     /// The local namespace of this context.
     Record *names;
 
-    QScopedPointer<Value> nativeSelf;
+    std::unique_ptr<Value> nativeSelf;
 
     Variable throwaway;
 

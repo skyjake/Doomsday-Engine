@@ -164,6 +164,15 @@ CString String::toCString() const
     return {begin(), end()};
 }
 
+bool String::contains(char c) const
+{
+    for (const char *i = constBegin_String(&_str), *end = constEnd_String(&_str); i != end; ++i)
+    {
+        if (*i == c) return true;
+    }
+    return false;
+}
+
 bool String::contains(const char *cStr) const
 {
     return indexOfCStr_String(&_str, cStr) != iInvalidPos;
@@ -232,6 +241,20 @@ List<String> String::split(Char ch) const
     iMultibyteChar mb;
     init_MultibyteChar(&mb, ch);
     return split(mb.bytes);
+}
+
+List<String> String::split(const RegExp &regExp) const
+{
+    List<String> parts;
+    const char *pos = constBegin_String(&_str);
+    for (RegExpMatch m; regExp.match(*this, m); pos = m.end())
+    {
+        // The part before the matched separator.
+        parts << String(pos, m.begin());
+    }
+    // The final part.
+    parts << String(pos, constEnd_String(&_str));
+    return parts;
 }
 
 String String::operator+(const std::string &s) const

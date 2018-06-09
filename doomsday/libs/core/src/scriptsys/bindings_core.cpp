@@ -155,9 +155,9 @@ static Value *Function_File_Locate(Context &ctx, Function::ArgumentValues const 
 
 static Value *Function_File_Read(Context &ctx, Function::ArgumentValues const &)
 {
-    QScopedPointer<BlockValue> data(new BlockValue);
+    std::unique_ptr<BlockValue> data(new BlockValue);
     constFileInstance(ctx) >> *data;
-    return data.take();
+    return data.release();
 }
 
 static Value *Function_File_ReadUtf8(Context &ctx, Function::ArgumentValues const &)

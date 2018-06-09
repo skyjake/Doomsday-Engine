@@ -30,13 +30,12 @@
 #include "de/Version"
 #include "de/charsymbols.h"
 
-#include <QNetworkAccessManager>
-#include <QNetworkDiskCache>
-#include <QNetworkReply>
-#include <QRegularExpression>
-#include <QStandardPaths>
-
-#include <QFile>
+//#include <QNetworkAccessManager>
+//#include <QNetworkDiskCache>
+//#include <QNetworkReply>
+//#include <QRegularExpression>
+//#include <QStandardPaths>
+//#include <QFile>
 
 namespace de {
 namespace filesys {
@@ -44,8 +43,8 @@ namespace filesys {
 DE_PIMPL(RemoteFeedRelay)
 {
     std::unique_ptr<QNetworkAccessManager> network;
-    QList<Link::Constructor> linkConstructors;
-    QHash<String, filesys::Link *> repositories; // owned
+    List<Link::Constructor> linkConstructors;
+    Hash<String, filesys::Link *> repositories; // owned
 
     Impl(Public *i) : Base(i)
     {
@@ -60,7 +59,7 @@ DE_PIMPL(RemoteFeedRelay)
 
     ~Impl()
     {
-        qDeleteAll(repositories.values());
+        repositories.deleteAll();
     }
 
     DE_PIMPL_AUDIENCE(Status)
@@ -109,10 +108,10 @@ void RemoteFeedRelay::removeRepository(String const &address)
 
 Link *RemoteFeedRelay::repository(String const &address) const
 {
-    auto found = d->repositories.constFind(address);
-    if (found != d->repositories.constEnd())
+    auto found = d->repositories.find(address);
+    if (found != d->repositories.end())
     {
-        return found.value();
+        return found->second;
     }
     return nullptr;
 }
@@ -120,9 +119,9 @@ Link *RemoteFeedRelay::repository(String const &address) const
 StringList RemoteFeedRelay::repositories() const
 {
     StringList repos;
-    foreach (String a, d->repositories.keys())
+    for (const auto &a : d->repositories)
     {
-        repos << a;
+        repos << a->first;
     }
     return repos;
 }
@@ -139,16 +138,17 @@ bool RemoteFeedRelay::isConnected(String const &address) const
 PackagePaths RemoteFeedRelay::locatePackages(StringList const &packageIds) const
 {
     PackagePaths located;
-    foreach (auto *repo, d->repositories)
+    for (auto &r : d->repositories)
     {
+        auto *repo = r.second;
         if (repo->state() == Link::Ready)
         {
             auto const paths = repo->locatePackages(packageIds);
             for (auto i = paths.begin(); i != paths.end(); ++i)
             {
-                if (!located.contains(i.key()))
+                if (!located.contains(i->first))
                 {
-                    located.insert(i.key(), i.value());
+                    located.insert(i->first, i->second);
                 }
             }
         }

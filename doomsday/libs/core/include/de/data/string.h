@@ -229,6 +229,7 @@ public:
     /// Returns the last character of the string.
     Char last() const;
 
+    bool contains(char c) const;
     bool contains(const char *cStr) const;
     int count(char ch) const;
 
@@ -270,6 +271,8 @@ public:
     void          remove(BytePos start, dsize count);
     List<String>  split(const char *separator) const;
     List<String>  split(Char ch) const;
+    List<String>  split(const String &separator) const { return split(separator.c_str()); }
+    List<String>  split(const RegExp &regExp) const;
 
     String        operator+(const char *) const;
     String        operator+(const CString &) const;

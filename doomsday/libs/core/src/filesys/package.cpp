@@ -389,7 +389,7 @@ bool Package::matchTags(File const &packageFile, String const &tagRegExp)
 
 StringList Package::tags(String const &tagsString)
 {
-    return filter(tagsString.split(" "), [](const String &s){ return !s.empty(); });
+    return filter(tagsString.split(" "), [](const String &s) { return bool(s); });
 }
 
 StringList Package::requires(File const &packageFile)
