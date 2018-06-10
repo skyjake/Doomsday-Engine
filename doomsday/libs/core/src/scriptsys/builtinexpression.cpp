@@ -369,39 +369,43 @@ void BuiltInExpression::operator << (Reader &from)
     _arg = Expression::constructFrom(from);
 }
 
-static const Hash<String, BuiltInExpression::Type> types {
-    { "File",        BuiltInExpression::AS_FILE },
-    { "Number",      BuiltInExpression::AS_NUMBER },
-    { "Record",      BuiltInExpression::AS_RECORD },
-    { "Text",        BuiltInExpression::AS_TEXT },
-    { "Time",        BuiltInExpression::AS_TIME },
-    { "deserialize", BuiltInExpression::DESERIALIZE },
-    { "dictkeys",    BuiltInExpression::DICTIONARY_KEYS },
-    { "dictvalues",  BuiltInExpression::DICTIONARY_VALUES },
-    { "dir",         BuiltInExpression::DIR },
-    { "eval",        BuiltInExpression::EVALUATE },
-    { "floor",       BuiltInExpression::FLOOR },
-    { "globals",     BuiltInExpression::GLOBAL_NAMESPACE },
-    { "len",         BuiltInExpression::LENGTH },
-    { "locals",      BuiltInExpression::LOCAL_NAMESPACE },
-    { "members",     BuiltInExpression::RECORD_MEMBERS },
-    { "serialize",   BuiltInExpression::SERIALIZE },
-    { "subrecords",  BuiltInExpression::RECORD_SUBRECORDS },
-    { "timedelta",   BuiltInExpression::TIME_DELTA },
-    { "typeof",      BuiltInExpression::TYPE_OF },
-};
+const Hash<String, BuiltInExpression::Type> &builtinTypes()
+{
+    static const Hash<String, BuiltInExpression::Type> types {
+        { "File",        BuiltInExpression::AS_FILE },
+        { "Number",      BuiltInExpression::AS_NUMBER },
+        { "Record",      BuiltInExpression::AS_RECORD },
+        { "Text",        BuiltInExpression::AS_TEXT },
+        { "Time",        BuiltInExpression::AS_TIME },
+        { "deserialize", BuiltInExpression::DESERIALIZE },
+        { "dictkeys",    BuiltInExpression::DICTIONARY_KEYS },
+        { "dictvalues",  BuiltInExpression::DICTIONARY_VALUES },
+        { "dir",         BuiltInExpression::DIR },
+        { "eval",        BuiltInExpression::EVALUATE },
+        { "floor",       BuiltInExpression::FLOOR },
+        { "globals",     BuiltInExpression::GLOBAL_NAMESPACE },
+        { "len",         BuiltInExpression::LENGTH },
+        { "locals",      BuiltInExpression::LOCAL_NAMESPACE },
+        { "members",     BuiltInExpression::RECORD_MEMBERS },
+        { "serialize",   BuiltInExpression::SERIALIZE },
+        { "subrecords",  BuiltInExpression::RECORD_SUBRECORDS },
+        { "timedelta",   BuiltInExpression::TIME_DELTA },
+        { "typeof",      BuiltInExpression::TYPE_OF },
+    };
+    return types;
+}
 
 BuiltInExpression::Type BuiltInExpression::findType(const String &identifier)
 {
-    auto found = types.find(identifier);
-    if (found != types.end()) return found->second;
+    auto found = builtinTypes().find(identifier);
+    if (found != builtinTypes().end()) return found->second;
     return NONE;
 }
 
 StringList BuiltInExpression::identifiers()
 {
     StringList names;
-    for (const auto &t : types)
+    for (const auto &t : builtinTypes())
     {
         names << t.first;
     }

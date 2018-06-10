@@ -330,7 +330,7 @@ dsize TokenBuffer::size() const
     return _tokens.size();
 }
 
-Token const &TokenBuffer::at(duint i) const
+Token const &TokenBuffer::at(dsize i) const
 {
     if (i >= _tokens.size())
     {

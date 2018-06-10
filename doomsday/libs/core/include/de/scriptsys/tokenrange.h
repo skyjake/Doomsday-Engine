@@ -54,17 +54,13 @@ public:
     TokenRange(TokenBuffer const &tokens);
 
     /// Constructor that uses a specific set of tokens.
-    TokenRange(TokenBuffer const &tokens, duint startIndex, duint endIndex);
+    TokenRange(TokenBuffer const &tokens, dsize startIndex, dsize endIndex);
 
-    TokenBuffer const &buffer() const {
-        return *_tokens;
-    }
+    TokenBuffer const &buffer() const { return *_tokens; }
 
     /// Determines the length of the range.
     /// @return Number of tokens in the range.
-    duint size() const {
-        return _end - _start;
-    }
+    dsize size() const { return _end - _start; }
 
     bool isEmpty() const { return !size(); }
 
@@ -73,20 +69,20 @@ public:
     bool undefined() const;
 
     /// Converts a position within the range to an index in the buffer.
-    duint tokenIndex(duint pos) const;
+    dsize tokenIndex(dsize pos) const;
 
-    duint tokenPos(duint index) const;
+    dsize tokenPos(dsize index) const;
 
     /// Returns a specific token from the token buffer.
     /// @param pos Position of the token within the range.
-    Token const &token(duint pos) const;
+    Token const &token(dsize pos) const;
 
     Token const &firstToken() const;
 
     Token const &lastToken() const;
 
     /// Determines whether the range begins with a specific token.
-    bool beginsWith(const CString &token) const;
+    bool beginsWith(const char *token) const;
 
     /**
      * Composes a subrange that starts from a specific position.
@@ -96,7 +92,7 @@ public:
      * @return Subrange that starts from position @a pos and continues until
      *         the end of the range.
      */
-    TokenRange startingFrom(duint pos) const;
+    TokenRange startingFrom(dsize pos) const;
 
     /**
      * Composes a subrange that ends at a specific position.
@@ -106,13 +102,11 @@ public:
      * @return  Subrange that starts from the beginning of this range
      *          and ends to @a pos.
      */
-    TokenRange endingTo(duint pos) const;
+    TokenRange endingTo(dsize pos) const;
 
-    TokenRange between(duint startPos, duint endPos) const;
+    TokenRange between(dsize startPos, dsize endPos) const;
 
-    TokenRange shrink(duint count) const {
-        return between(count, size() - count);
-    }
+    TokenRange shrink(dsize count) const { return between(count, size() - count); }
 
     /**
      * Determines if the range contains a specific token.
@@ -121,9 +115,7 @@ public:
      *
      * @return @c true, if token was found, otherwise @c false.
      */
-    bool has(Char const *token) const {
-        return find(token) >= 0;
-    }
+    bool has(const char *token) const { return find(token) >= 0; }
 
     /**
      * Determines if the range contains a specific token, but only if
@@ -133,7 +125,8 @@ public:
      *
      * @return @c true, if token was found, otherwise @c false.
      */
-    bool hasBracketless(Char const *token) const {
+    bool hasBracketless(const char *token) const
+    {
         return findIndexSkippingBrackets(token, _start) >= 0;
     }
 
@@ -145,9 +138,9 @@ public:
      *
      * @return Position of the token, or -1 if not found.
      */
-    dint find(Char const *token, dint startPos = 0) const;
+    dint find(const char *token, dsize startPos = 0) const;
 
-    dint findBracketless(Char const *token, dint startPos = 0) const;
+    dint findBracketless(const char *token, dsize startPos = 0) const;
 
     /**
      * Finds the index of a specific token within the range. When
@@ -158,7 +151,7 @@ public:
      *
      * @return Index of the token, or -1 if not found.
      */
-    dint findIndexSkippingBrackets(Char const *token, dint startIndex) const;
+    dint findIndexSkippingBrackets(const char *token, dsize startIndex) const;
 
     /**
      * Finds the next token subrange which is delimited with @c
@@ -172,7 +165,7 @@ public:
      * @return  @c true, if the next delimited subrange found successfully.
      *          Otherwise @c false.
      */
-    bool getNextDelimited(Char const *delimiter, TokenRange &subrange) const;
+    bool getNextDelimited(const char *delimiter, TokenRange &subrange) const;
 
     /**
      * Locates the matching closing bracket. If the matching bracket
@@ -182,7 +175,7 @@ public:
      *
      * @return Position of the closing bracket.
      */
-    duint closingBracket(duint openBracketPos) const;
+    dsize closingBracket(dsize openBracketPos) const;
 
     /**
      * Locates the matching opening bracket. If the matching bracket
@@ -192,7 +185,7 @@ public:
      *
      * @return Position of the opening bracket.
      */
-    duint openingBracket(duint closeBracketPos) const;
+    dsize openingBracket(dsize closeBracketPos) const;
 
     /**
      * Composes a string representation of the token range. Intended
@@ -203,19 +196,20 @@ public:
     String asText() const;
 
 public:
-    static void bracketTokens(Token const &openingToken,
-        Char const * &opening, Char const * &closing);
+    static void bracketTokens(const Token &openingToken,
+                              const char *&opening,
+                              const char *&closing);
 
 private:
-    TokenBuffer const *_tokens;
+    const TokenBuffer *_tokens;
 
     /// Index of the start of the range. This is the first token in
     /// the range.
-    duint _start;
+    dsize _start;
 
     /// Index of the end of the range, plus one. This is the token
     /// just after the last token of the range.
-    duint _end;
+    dsize _end;
 };
 
 } // namespace de

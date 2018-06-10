@@ -23,8 +23,6 @@
 #include "de/Context"
 #include "de/Process"
 
-#include <QList>
-
 namespace de {
 
 DE_PIMPL(Evaluator)
@@ -34,10 +32,11 @@ DE_PIMPL(Evaluator)
 
     struct ScopedExpression {
         Expression const *expression;
-        Value *scope; // owned
+        Value *           scope; // owned
 
-        ScopedExpression(Expression const *e = 0, Value *s = 0)
-            : expression(e), scope(s)
+        ScopedExpression(Expression const *e = nullptr, Value *s = nullptr)
+            : expression(e)
+            , scope(s)
         {}
         Record *names() const
         {
@@ -49,11 +48,11 @@ DE_PIMPL(Evaluator)
         Value *result;
         Value *scope; // owned
 
-        ScopedResult(Value *v, Value *s = 0) : result(v), scope(s) {}
+        ScopedResult(Value *v, Value *s = nullptr) : result(v), scope(s) {}
     };
 
-    typedef QList<ScopedExpression> Expressions;
-    typedef QList<ScopedResult> Results;
+    typedef List<ScopedExpression> Expressions;
+    typedef List<ScopedResult> Results;
 
     /// The expression that is currently being evaluated.
     Expression const *current;
@@ -70,8 +69,8 @@ DE_PIMPL(Evaluator)
     Impl(Public *i, Context &owner)
         : Base(i)
         , context(owner)
-        , current(0)
-        , names(0)
+        , current(nullptr)
+        , names(nullptr)
     {}
 
     ~Impl()
@@ -85,13 +84,13 @@ DE_PIMPL(Evaluator)
     {
         if (names)
         {
-            names = 0;
+            names = nullptr;
         }
     }
 
     void clearResults()
     {
-        foreach (ScopedResult const &i, results)
+        for (const ScopedResult &i : results)
         {
             delete i.result;
             delete i.scope;
@@ -110,7 +109,7 @@ DE_PIMPL(Evaluator)
         }
     }
 
-    void pushResult(Value *value, Value *scope = 0 /*take*/)
+    void pushResult(Value *value, Value *scope = nullptr /*taken*/)
     {
         // NULLs are not pushed onto the results expressions as they indicate that
         // no result was given.
@@ -230,7 +229,7 @@ Record *Evaluator::localNamespace() const
     Namespaces spaces;
     namespaces(spaces);
     DE_ASSERT(!spaces.empty());
-    DE_ASSERT(spaces.front() != 0);
+    DE_ASSERT(spaces.front() != nullptr);
     return spaces.front();
 }
 

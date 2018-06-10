@@ -35,11 +35,11 @@ namespace de {
 /// Used for popping a result and checking if it's True.
 static OperatorExpression isResultTrue(RESULT_TRUE, nullptr);
 
-OperatorExpression::OperatorExpression() : _op(NONE), _leftOperand(0), _rightOperand(0)
+OperatorExpression::OperatorExpression() : _op(NONE), _leftOperand(nullptr), _rightOperand(nullptr)
 {}
 
 OperatorExpression::OperatorExpression(Operator op, Expression *operand)
-    : _op(op), _leftOperand(0), _rightOperand(operand)
+    : _op(op), _leftOperand(nullptr), _rightOperand(operand)
 {
     if (!isUnary(op))
     {
@@ -104,7 +104,7 @@ Value *OperatorExpression::newBooleanValue(bool isTrue)
 
 void OperatorExpression::verifyAssignable(Value *value)
 {
-    DE_ASSERT(value != 0);
+    DE_ASSERT(value != nullptr);
     if (!dynamic_cast<RefValue *>(value))
     {
         throw NotAssignableError("OperatorExpression::verifyAssignable",
@@ -122,7 +122,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
     Value *leftValue = (_leftOperand? evaluator.popResult(&leftScopePtr) : nullptr);
     Value *result = (leftValue? leftValue : rightValue);
 
-    QScopedPointer<Value> leftScope(leftScopePtr); // will be deleted if not needed
+    std::unique_ptr<Value> leftScope(leftScopePtr); // will be deleted if not needed
 
     DE_ASSERT(_op == MEMBER || _op == AND || _op == OR ||
                  (!isUnary(_op) && leftValue && rightValue) ||
@@ -257,9 +257,9 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
             break;
 
         case CALL:
-            leftValue->call(evaluator.process(), *rightValue, leftScope.take());
+            leftValue->call(evaluator.process(), *rightValue, leftScope.release());
             // Result comes from whatever is being called.
-            result = 0;
+            result = nullptr;
             break;
 
         case INDEX:
@@ -290,7 +290,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
 
         case MEMBER:
         {
-            Record *scope = (leftValue? leftValue->memberScope() : 0);
+            Record *scope = (leftValue? leftValue->memberScope() : nullptr);
             if (!scope)
             {
                 throw ScopeError("OperatorExpression::evaluate",
@@ -304,7 +304,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
 
             // Cleanup.
             //delete leftValue;
-            DE_ASSERT(rightValue == NULL);
+            DE_ASSERT(rightValue == nullptr);
 
             // The MEMBER operator does not evaluate to any result.
             // Whatever is on the right side will be the result.
@@ -371,8 +371,8 @@ void OperatorExpression::operator << (Reader &from)
 
     delete _leftOperand;
     delete _rightOperand;
-    _leftOperand = 0;
-    _rightOperand = 0;
+    _leftOperand = nullptr;
+    _rightOperand = nullptr;
 
     _rightOperand = Expression::constructFrom(from);
     if (header & HAS_LEFT_OPERAND)
@@ -389,7 +389,7 @@ namespace internal {
         }
         Value *take() {
             Value *v = value;
-            value = 0;
+            value = nullptr;
             return v;
         }
         virtual void append(Value const &src, dint index) = 0;
@@ -406,7 +406,7 @@ namespace internal {
         TextSliceTarget() : SliceTarget(new TextValue) {}
         TextValue &text() { return *static_cast<TextValue *>(value); }
         void append(Value const &src, dint index) {
-            text().sum(TextValue(String(1, src.asText().at(index))));
+            text().sum(TextValue(src.asText().mid(String::CharPos(index), 1))); ///@todo Performance??
         }
     };
 }
@@ -420,7 +420,7 @@ Value *OperatorExpression::performSlice(Value &leftValue, Value &rightValue) con
     DE_ASSERT(rightValue.size() >= 2);
 
     ArrayValue const *args = dynamic_cast<ArrayValue *>(&rightValue);
-    DE_ASSERT(args != NULL); // Parser makes sure.
+    DE_ASSERT(args != nullptr); // Parser makes sure.
 
     // The resulting slice of leftValue's elements.
     std::unique_ptr<SliceTarget> slice;
@@ -445,7 +445,7 @@ Value *OperatorExpression::performSlice(Value &leftValue, Value &rightValue) con
         }
     }
 
-    dint leftSize = leftValue.size();
+    dint leftSize = dint(leftValue.size());
     dint begin = 0;
     dint end = leftSize;
     bool unspecifiedStart = false;

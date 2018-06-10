@@ -29,7 +29,6 @@
 #include "../Observers"
 #include "../String"
 
-#include <QList>
 #include <functional>
 
 namespace de {
@@ -38,7 +37,7 @@ class AssetGroup;
 class Widget;
 class RootWidget;
 
-typedef QList<Widget *> WidgetList;
+typedef List<Widget *> WidgetList;
 
 /**
  * Base class for widgets.
@@ -85,7 +84,7 @@ public:
 
         DefaultBehavior = 0
     };
-    Q_DECLARE_FLAGS(Behaviors, Behavior)
+    using Behaviors = Flags;
 
     enum WalkDirection { Forward, Backward };
 
@@ -165,14 +164,14 @@ public:
      * @param behavior   Flags to modify.
      * @param operation  Operation to perform on the flags.
      */
-    void setBehavior(Behaviors behavior, FlagOpArg operation = SetFlags);
+    void setBehavior(const Behaviors& behavior, FlagOpArg operation = SetFlags);
 
     /**
      * Clears one or more behavior flags.
      *
      * @param behavior   Flags to unset.
      */
-    void unsetBehavior(Behaviors behavior);
+    void unsetBehavior(const Behaviors& behavior);
 
     Behaviors behavior() const;
 
@@ -204,7 +203,7 @@ public:
      *                 that the widget is not destroyed while the
      *                 routing is in effect.
      */
-    void setEventRouting(QList<int> const &types, Widget *routeTo);
+    void setEventRouting(const List<int> &types, Widget *routeTo);
 
     void clearEventRouting();
 
@@ -273,7 +272,7 @@ public:
      * LoopAbort. Otherwise returns nullptr to indicate that all the available widgets
      * were handled.
      */
-    Widget *walkInOrder(WalkDirection dir, std::function<LoopResult (Widget &)> callback);
+    Widget *walkInOrder(WalkDirection dir, const std::function<LoopResult (Widget &)>& callback);
 
     /**
      * Calls the given callback on each child of this widget. The full subtree of each
@@ -287,7 +286,7 @@ public:
      * LoopAbort. Otherwise returns nullptr to indicate that all the available children
      * were handled.
      */
-    Widget *walkChildren(WalkDirection dir, std::function<LoopResult (Widget &)> callback);
+    Widget *walkChildren(WalkDirection dir, const std::function<LoopResult (Widget &)>& callback);
 
     /**
      * Removes the widget from its parent, if it has a parent.
@@ -311,9 +310,13 @@ public:
         void (Widget::*postNotifyFunc)();
         Widget *until;
 
-        NotifyArgs(void (Widget::*notify)()) : notifyFunc(notify),
-            conditionFunc(0), preNotifyFunc(0), postNotifyFunc(0),
-            until(0) {}
+        NotifyArgs(void (Widget::*notify)())
+            : notifyFunc(notify)
+            , conditionFunc(nullptr)
+            , preNotifyFunc(nullptr)
+            , postNotifyFunc(nullptr)
+            , until(nullptr)
+        {}
     };
 
     NotifyArgs notifyArgsForDraw() const;
@@ -350,8 +353,6 @@ public:
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Widget::Behaviors)
 
 /**
  * Auto-nulled pointer to a Widget. Does not own the target widget.

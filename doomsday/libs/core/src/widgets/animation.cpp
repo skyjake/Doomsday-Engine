@@ -31,7 +31,7 @@ namespace internal {
 
 static inline float easeOut(TimeSpan t)
 {
-    return t * (2 - t);
+    return float(t * (2 - t));
 }
 
 static inline float easeOutSofter(TimeSpan t)
@@ -64,8 +64,7 @@ enum AnimationFlag
     Paused = 0x1,
     Finished = 0x2,
 };
-Q_DECLARE_FLAGS(AnimationFlags, AnimationFlag)
-Q_DECLARE_OPERATORS_FOR_FLAGS(AnimationFlags)
+using AnimationFlags = Flags;
 
 /// Thread-safe current time for animations.
 struct AnimationTime : DE_OBSERVES(Clock, TimeChange) {
@@ -80,7 +79,7 @@ static AnimationTime theTime;
 using namespace internal;
 
 /// Global animation time source.
-Clock const *Animation::_clock = 0;
+Clock const *Animation::_clock = nullptr;
 
 DE_PIMPL_NOREF(Animation)
 {
@@ -218,7 +217,7 @@ void Animation::setStyle(Style style, float bounce)
 {
     d->style = style;
     d->spring = bounce;
-    if (!d->spring)
+    if (fequal(d->spring, 0))
     {
         d->spring = DEFAULT_SPRING;
     }
@@ -345,12 +344,13 @@ void Animation::finish()
 
 String Animation::asText() const
 {
-    return String("Animation(%1 -> %2, ETA:%3 s; curr: %4)").arg(d->value).arg(d->target).arg(remainingTime()).arg(value());
+    return String::format(
+        "Animation(%f -> %f, ETA:%lf s)", d->value, d->target, ddouble(remainingTime()));
 }
 
 Clock const &Animation::clock()
 {
-    DE_ASSERT(_clock != 0);
+    DE_ASSERT(_clock != nullptr);
     if (!_clock)
     {
         throw ClockMissingError("Animation::clock", "Animation has no clock");

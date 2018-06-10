@@ -29,8 +29,8 @@ namespace de {
 
 DE_PIMPL_NOREF(ScopeStatement)
 {
-    QScopedPointer<Expression> identifier;
-    QScopedPointer<Expression> superRecords;
+    std::unique_ptr<Expression> identifier;
+    std::unique_ptr<Expression> superRecords;
     Compound compound;
 };
 
@@ -54,11 +54,11 @@ void ScopeStatement::execute(Context &context) const
     Evaluator &eval = context.evaluator();
 
     // Get the identified class record.
-    Record &classRecord = eval.evaluateTo<RecordValue>(d->identifier.data()).dereference();
+    Record &classRecord = eval.evaluateTo<RecordValue>(d->identifier.get()).dereference();
 
     // Possible super records.
-    eval.evaluate(d->superRecords.data());
-    QScopedPointer<ArrayValue> newSupers(eval.popResultAs<ArrayValue>());
+    eval.evaluate(d->superRecords.release());
+    std::unique_ptr<ArrayValue> newSupers(eval.popResultAs<ArrayValue>());
     while (newSupers->size() > 0)
     {
         classRecord.addSuperRecord(newSupers->popFirst());

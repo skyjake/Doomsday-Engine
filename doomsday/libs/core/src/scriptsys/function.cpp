@@ -32,7 +32,12 @@
 namespace de {
 
 typedef Map<String, Function::NativeEntryPoint> RegisteredEntryPoints;
-static RegisteredEntryPoints entryPoints;
+
+static RegisteredEntryPoints &entryPoints()
+{
+    static RegisteredEntryPoints eps;
+    return eps;
+}
 
 DE_PIMPL_NOREF(Function)
 {
@@ -90,7 +95,7 @@ Function::~Function()
     // Delete the default argument values.
     for (auto &i : d->defaults)
     {
-        delete i.value();
+        delete i.second;
     }
 }
 
@@ -100,15 +105,15 @@ String Function::asText() const
     os << "(Function " << this << " (";
     for (const auto &i : d->arguments)
     {
-        if (i != d->arguments.begin())
+        if (&i != &d->arguments.front())
         {
             os << ", ";
         }
-        os << *i;
-        Defaults::const_iterator def = d->defaults.find(*i);
+        os << i;
+        auto def = d->defaults.find(i);
         if (def != d->defaults.end())
         {
-            os << "=" << def.value()->asText();
+            os << "=" << def->second->asText();
         }
     }
     os << "))";
@@ -152,7 +157,7 @@ void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values)
     DictionaryValue const *labeledArgs = dynamic_cast<DictionaryValue const *>(
         args.elements().front());
 
-    DE_ASSERT(labeledArgs != NULL);
+    DE_ASSERT(labeledArgs != nullptr);
 
     // First use all the unlabeled arguments.
     Arguments::const_iterator k = d->arguments.begin();
@@ -190,10 +195,10 @@ void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values)
             else
             {
                 // Check the defaults.
-                Defaults::const_iterator k = d->defaults.find(*i);
+                auto k = d->defaults.find(*i);
                 if (k != d->defaults.end())
                 {
-                    values.append(k.value());
+                    values.append(k->second);
                 }
                 else
                 {
@@ -242,7 +247,7 @@ Record *Function::globals() const
 
 bool Function::isNative() const
 {
-    return d->nativeEntryPoint != NULL;
+    return d->nativeEntryPoint != nullptr;
 }
 
 Value *Function::callNative(Context &context, ArgumentValues const &args) const
@@ -277,7 +282,7 @@ void Function::operator >> (Writer &to) const
     // Default values.
     for (const auto &i : d->defaults)
     {
-        to << ckey(i) << *cvalue(i);
+        to << i.first << *i.second;
     }
 
     // The statements of the function.
@@ -328,28 +333,29 @@ void Function::recordBeingDeleted(Record &DE_DEBUG_ONLY(record))
     // The namespace of the record is being deleted.
     DE_ASSERT(d->globals == &record);
 
-    d->globals = 0;
+    d->globals = nullptr;
 }
 
 void Function::registerNativeEntryPoint(String const &name, Function::NativeEntryPoint entryPoint)
 {
-    entryPoints.insert(name, entryPoint);
+    entryPoints().insert(name, entryPoint);
 }
 
 void Function::unregisterNativeEntryPoint(String const &name)
 {
-    entryPoints.remove(name);
+    entryPoints().remove(name);
 }
 
 Function::NativeEntryPoint Function::nativeEntryPoint(String const &name)
 {
-    RegisteredEntryPoints::const_iterator found = entryPoints.constFind(name);
-    if (found == entryPoints.constEnd())
+    auto found = entryPoints().find(name);
+    if (found == entryPoints().end())
     {
-        throw UnknownEntryPointError("Function::nativeEntryPoint",
-                                     QString("Native entry point '%1' is not available").arg(name));
+        throw UnknownEntryPointError(
+            "Function::nativeEntryPoint",
+            stringf("Native entry point '%s' is not available", name.c_str()));
     }
-    return found.value();
+    return found->second;
 }
 
 //----------------------------------------------------------------------------
@@ -398,10 +404,10 @@ void Binder::deinit()
     if (_isOwned)
     {
         delete _module;
-        _module = 0;
+        _module = nullptr;
         _isOwned = false;
     }
-    foreach (String const &name, _boundEntryPoints)
+    for (const String &name : _boundEntryPoints)
     {
         Function::unregisterNativeEntryPoint(name);
     }
@@ -410,7 +416,7 @@ void Binder::deinit()
 
 Record &Binder::module() const
 {
-    DE_ASSERT(_module != 0);
+    DE_ASSERT(_module);
     return *_module;
 }
 

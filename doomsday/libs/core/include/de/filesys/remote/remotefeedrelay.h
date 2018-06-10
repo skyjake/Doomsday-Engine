@@ -52,7 +52,7 @@ public:
      *
      * @param linkConstructor  Constructor method.
      */
-    void defineLink(Link::Constructor linkConstructor);
+    void defineLink(const Link::Constructor &linkConstructor);
 
     void addRepository(String const &address, String const &localRootPath);
 

@@ -23,7 +23,6 @@
 #include "../Vector"
 #include "../Range"
 #include "math.h"
-#include <QRect>
 
 #ifdef WIN32
 #  undef min
@@ -58,9 +57,9 @@ public:
     static RectangleType fromSize(Corner const &tl, Size const &size) {
         return RectangleType(tl.x, tl.y, size.x, size.y);
     }
-    static RectangleType fromQRect(QRect const &qr) {
-        return RectangleType(qr.left(), qr.top(), qr.width(), qr.height());
-    }
+//    static RectangleType fromQRect(QRect const &qr) {
+//        return RectangleType(qr.left(), qr.top(), qr.width(), qr.height());
+//    }
 
     // Automatic conversion to a Rectanglef.
     operator Rectangle<Vec2f, Vec2f> () const {

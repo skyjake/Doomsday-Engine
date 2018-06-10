@@ -153,7 +153,9 @@ void Beacon::discover(TimeSpan timeOut, TimeSpan interval)
 
 List<Address> Beacon::foundHosts() const
 {
-    return d->found.keys();
+    return map<List<Address>>(d->found, [](const std::pair<Address, Block> &v){
+        return v.first;
+    });
 }
 
 Block Beacon::messageFromHost(Address const &host) const
@@ -162,6 +164,7 @@ Block Beacon::messageFromHost(Address const &host) const
     return d->found[host];
 }
 
+#if 0
 void Beacon::readIncoming()
 {
     LOG_AS("Beacon");
@@ -255,5 +258,6 @@ void Beacon::continueDiscovery()
                                  d->port + range);
     }
 }
+#endif
 
 } // namespace de

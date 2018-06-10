@@ -14,20 +14,18 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/TokenRange"
 #include "de/TokenBuffer"
 
-#include <QTextStream>
-
-using namespace de;
+namespace de {
 
 /// This position is used for marking an undefined position in the range.
-duint const UNDEFINED_POS = 0xffffffff;
+static duint const UNDEFINED_POS = 0xffffffff;
 
-TokenRange::TokenRange() : _tokens(0), _start(0), _end(0)
+TokenRange::TokenRange() : _tokens(nullptr), _start(0), _end(0)
 {}
 
 TokenRange::TokenRange(TokenBuffer const &tokens) : _tokens(&tokens), _start(0)
@@ -35,44 +33,44 @@ TokenRange::TokenRange(TokenBuffer const &tokens) : _tokens(&tokens), _start(0)
     _end = _tokens->size();
 }
 
-TokenRange::TokenRange(TokenBuffer const &tokens, duint start, duint end)
+TokenRange::TokenRange(TokenBuffer const &tokens, dsize start, dsize end)
     : _tokens(&tokens), _start(start), _end(end)
-{    
+{
 }
 
-duint TokenRange::tokenIndex(duint pos) const
+dsize TokenRange::tokenIndex(dsize pos) const
 {
     if (pos >= size())
     {
         /// @throw OutOfBoundsError  @a pos is out of range.
         throw OutOfBoundsError("TokenRange::tokenIndex",
-                               "Position " + QString::asText(pos) + " is out of the range (" +
-                               QString::asText(_start) + ", " + QString::asText(_end) +
-                               "), length " + QString::asText(size()));
+                               stringf("Position %zu is out of the range %zu...%zu (length %zu)",
+                                       pos,
+                                       _start,
+                                       _end,
+                                       size()));
     }
     return _start + pos;
 }
 
-duint TokenRange::tokenPos(duint index) const
+dsize TokenRange::tokenPos(dsize index) const
 {
     if (index < _start)
     {
         /// @throw OutOfBoundsError  @a index is out of range.
-        throw OutOfBoundsError("TokenRange::tokenPos",
-                               "Index " + QString::asText(index) + " is out of the range (" +
-                               QString::asText(_start) + ", " + QString::asText(_end) + ")");
+        throw OutOfBoundsError(
+            "TokenRange::tokenPos",
+            stringf("Index %zu is out of the range %zu...%zu", index, _start, _end));
     }
     return index - _start;
 }
 
-Token const &TokenRange::token(duint pos) const
+Token const &TokenRange::token(dsize pos) const
 {
     if (pos >= size())
     {
         /// @throw OutOfBoundsError  @a pos is out of range.
-        throw OutOfBoundsError("TokenRange::token",
-                               "Position " + QString::asText(pos) + " is out of the range (" +
-                               QString::asText(_start) + ", " + QString::asText(_end) + ")");
+        throw OutOfBoundsError("TokenRange::token", stringf("Position %zu is out of bounds", pos));
     }
     return _tokens->at(tokenIndex(pos));
 }
@@ -97,33 +95,33 @@ Token const &TokenRange::lastToken() const
     return token(size() - 1);
 }
 
-bool TokenRange::beginsWith(QChar const *str) const
+bool TokenRange::beginsWith(const char *str) const
 {
     if (size())
     {
-        return token(0).equals(str);
+        return token(0).cStr() == str;
     }
     return false;
 }
 
-TokenRange TokenRange::startingFrom(duint pos) const
+TokenRange TokenRange::startingFrom(dsize pos) const
 {
     return TokenRange(*_tokens, tokenIndex(pos), _end);
 }
 
-TokenRange TokenRange::endingTo(duint pos) const
+TokenRange TokenRange::endingTo(dsize pos) const
 {
     if (pos > size())
     {
         /// @throw OutOfBoundsError  @a pos is out of range.
-        throw OutOfBoundsError("TokenRange::endingTo",
-                               "Position " + QString::asText(pos) + " is not within the range (" +
-                               QString::asText(_start) + ", " + QString::asText(_end) + ")");
+        throw OutOfBoundsError(
+            "TokenRange::endingTo",
+            stringf("Position %zu is not within the range (%zu, %zu)", pos, _start, _end));
     }
     return TokenRange(*_tokens, _start, tokenIndex(pos));
 }
 
-TokenRange TokenRange::between(duint startPos, duint endPos) const
+TokenRange TokenRange::between(dsize startPos, dsize endPos) const
 {
     if (endPos > size())
     {
@@ -132,49 +130,49 @@ TokenRange TokenRange::between(duint startPos, duint endPos) const
     return TokenRange(*_tokens, tokenIndex(startPos), tokenIndex(endPos));
 }
 
-dint TokenRange::find(QChar const *token, dint startPos) const
+dint TokenRange::find(const char *token, dsize startPos) const
 {
-    duint len = size();
-    DE_ASSERT(startPos >= 0 && startPos <= dint(len));
+    const dsize len = size();
+    DE_ASSERT(startPos <= len);
 
-    for (dint i = startPos; i < dint(len); ++i)
+    for (dsize i = startPos; i < len; ++i)
     {
         if (_tokens->at(_start + i).equals(token))
-            return i;
+            return dint(i);
     }
     return -1;
 }
 
-dint TokenRange::findBracketless(QChar const *token, dint startPos) const
+dint TokenRange::findBracketless(const char *token, dsize startPos) const
 {
     dint index = findIndexSkippingBrackets(token, tokenIndex(startPos));
     if (index >= 0)
     {
-        return tokenPos(index);
+        return dint(tokenPos(index));
     }
     return -1;
 }
 
-dint TokenRange::findIndexSkippingBrackets(QChar const *token, dint startIndex) const
+dint TokenRange::findIndexSkippingBrackets(const char *token, dsize startIndex) const
 {
-    DE_ASSERT(startIndex >= dint(_start) && startIndex <= dint(_end));
-    
-    for (duint i = startIndex; i < _end; ++i)
+    DE_ASSERT(startIndex >= _start && startIndex <= _end);
+
+    for (dsize i = startIndex; i < _end; ++i)
     {
         Token const &t = _tokens->at(i);
         if (t.equals(Token::PARENTHESIS_OPEN) || t.equals(Token::BRACKET_OPEN) ||
-           t.equals(Token::CURLY_OPEN))
+            t.equals(Token::CURLY_OPEN))
         {
             i = tokenIndex(closingBracket(tokenPos(i)));
             continue;
         }
         if (t.equals(token))
-            return i;
+            return dint(i);
     }
     return -1;
 }
 
-bool TokenRange::getNextDelimited(QChar const *delimiter, TokenRange &subrange) const
+bool TokenRange::getNextDelimited(const char *delimiter, TokenRange &subrange) const
 {
     if (subrange.undefined())
     {
@@ -186,13 +184,13 @@ bool TokenRange::getNextDelimited(QChar const *delimiter, TokenRange &subrange) 
         // Start past the previous delimiter.
         subrange._start = subrange._end + 1;
     }
-    
+
     if (subrange._start > _end)
     {
         // No more tokens available.
         return false;
     }
-    
+
     dint index = findIndexSkippingBrackets(delimiter, subrange._start);
     if (index < 0)
     {
@@ -207,12 +205,12 @@ bool TokenRange::getNextDelimited(QChar const *delimiter, TokenRange &subrange) 
     return true;
 }
 
-void TokenRange::bracketTokens(Token const &openingToken, QChar const * &opening,
-                               QChar const * &closing)
+void TokenRange::bracketTokens(Token const &openingToken, const char * &opening,
+                               const char * &closing)
 {
-    opening = NULL;
-    closing = NULL;
-    
+    opening = nullptr;
+    closing = nullptr;
+
     if (openingToken.equals(Token::PARENTHESIS_OPEN))
     {
         opening = Token::PARENTHESIS_OPEN;
@@ -230,15 +228,15 @@ void TokenRange::bracketTokens(Token const &openingToken, QChar const * &opening
     }
 }
 
-duint TokenRange::closingBracket(duint openBracketPos) const
+dsize TokenRange::closingBracket(dsize openBracketPos) const
 {
-    QChar const *openingToken;
-    QChar const *closingToken;
-    
+    const char *openingToken;
+    const char *closingToken;
+
     bracketTokens(token(openBracketPos), openingToken, closingToken);
-    
+
     int level = 1;
-    for (dint i = tokenIndex(openBracketPos + 1); i < dint(_end); ++i)
+    for (dsize i = tokenIndex(openBracketPos + 1); i < _end; ++i)
     {
         Token const &token = _tokens->at(i);
         if (token.equals(closingToken))
@@ -256,16 +254,17 @@ duint TokenRange::closingBracket(duint openBracketPos) const
     }
     /// @throw MismatchedBracketError  Cannot find a closing bracket.
     throw MismatchedBracketError("TokenRange::closingBracket",
-        "Could not find closing bracket for '" + String(openingToken) +
-        "' within '" + asText() + "'");
+                                 stringf("Could not find closing bracket for '%s' within '%s'",
+                                         openingToken,
+                                         asText().c_str()));
 }
 
-duint TokenRange::openingBracket(duint closeBracketPos) const
+dsize TokenRange::openingBracket(dsize closeBracketPos) const
 {
-    QChar const *openingToken;
-    QChar const *closingToken;
-    
-    for (dint start = tokenIndex(closeBracketPos - 1); start >= 0; --start)
+    const char *openingToken;
+    const char *closingToken;
+
+    for (dsize start = tokenIndex(closeBracketPos - 1); start < _end; --start)
     {
         bracketTokens(_tokens->at(start), openingToken, closingToken);
         if (!closingToken || !token(closeBracketPos).equals(closingToken))
@@ -281,22 +280,21 @@ duint TokenRange::openingBracket(duint closeBracketPos) const
     }
     /// @throw MismatchedBracketError  Cannot find an opening bracket.
     throw MismatchedBracketError("TokenRange::openingBracket",
-        "Could not find opening bracket for '" + token(closeBracketPos).str() +
-        "' within '" + asText() + "'");
+                                 "Could not find opening bracket for '" +
+                                     token(closeBracketPos).str() + "' within '" + asText() + "'");
 }
 
 String TokenRange::asText() const
 {
     String result;
-    QTextStream os(&result);
-    for (duint i = _start; i < _end; ++i)
+    for (dsize i = _start; i < _end; ++i)
     {
-        if (i > _start) 
+        if (i > _start)
         {
-            os << " ";
+            result += " ";
         }
-        os << _tokens->at(i).str();
-    }    
+        result += _tokens->at(i).str();
+    }
     return result;
 }
 
@@ -307,5 +305,7 @@ TokenRange TokenRange::undefinedRange() const
 
 bool TokenRange::undefined() const
 {
-    return (_start == UNDEFINED_POS && _end == UNDEFINED_POS);    
+    return (_start == UNDEFINED_POS && _end == UNDEFINED_POS);
 }
+
+} // namespace de

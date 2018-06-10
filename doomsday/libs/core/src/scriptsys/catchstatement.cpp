@@ -59,10 +59,10 @@ bool CatchStatement::matches(Error const &err) const
     }
 
     NameExpression const *name = dynamic_cast<NameExpression const *>(&_args->at(0));
-    DE_ASSERT(name != NULL);
+    DE_ASSERT(name != nullptr);
 
     return (name->identifier() == "Error" ||   // Generic catch-all.
-            name->identifier() == err.name() || // Exact match.
+            name->identifier().c_str() == err.name() || // Exact match.
             String(err.name()).endsWith("_" + name->identifier())); // Sub-error match.
 }
 

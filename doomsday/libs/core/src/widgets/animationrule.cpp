@@ -19,21 +19,20 @@
 
 #include "de/AnimationRule"
 #include "de/Clock"
-#include <QDebug>
 
 namespace de {
 
 AnimationRule::AnimationRule(float initialValue, Animation::Style style)
     : Rule(initialValue)
     , _animation(initialValue, style)
-    , _targetRule(0)
+    , _targetRule(nullptr)
     , _behavior(Singleshot)
 {}
 
 AnimationRule::AnimationRule(Rule const &target, TimeSpan transition, Animation::Style style)
     : Rule(target.value())
     , _animation(target.value(), style)
-    , _targetRule(0)
+    , _targetRule(nullptr)
     , _behavior(RestartWhenTargetChanges | DontAnimateFromZero)
 {
     set(target, transition);

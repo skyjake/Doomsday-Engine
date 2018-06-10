@@ -59,6 +59,13 @@ public:
     void     clear() { Base::clear(); }
     bool     isEmpty() const { return Base::size() == 0; }
     inline explicit operator bool() const { return !isEmpty(); }
+    int indexOf(const T &v) const
+    {
+        auto found = std::find(begin(), end(), v);
+        if (found == end()) return -1;
+        return found - begin();
+    }
+    bool     contains(const T &v) const { return indexOf(v) != -1; }
     void     append(const T &v) { push_back(v); }
     void     append(const List &list) { for (const T &v : list) push_back(v); }
     void     prepend(const T &v) { Base::insert(begin(), v); }

@@ -47,8 +47,8 @@ void DictionaryExpression::clear()
 
 void DictionaryExpression::add(Expression *key, Expression *value)
 {
-    DE_ASSERT(key != NULL);
-    DE_ASSERT(value != NULL);
+    DE_ASSERT(key != nullptr);
+    DE_ASSERT(value != nullptr);
     _arguments.push_back(ExpressionPair(key, value));
 }
 
@@ -123,8 +123,8 @@ void DictionaryExpression::operator << (Reader &from)
     clear();
     while (count--)
     {
-        QScopedPointer<Expression> key(Expression::constructFrom(from));
-        QScopedPointer<Expression> value(Expression::constructFrom(from));
-        _arguments.push_back(ExpressionPair(key.take(), value.take()));
+        std::unique_ptr<Expression> key(Expression::constructFrom(from));
+        std::unique_ptr<Expression> value(Expression::constructFrom(from));
+        _arguments.push_back(ExpressionPair(key.release(), value.release()));
     }
 }

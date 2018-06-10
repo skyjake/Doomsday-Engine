@@ -25,8 +25,6 @@
 #include "de/Reader"
 #include "de/Log"
 
-#include <QTextStream>
-
 using namespace de;
 
 PrintStatement::PrintStatement(ArrayExpression *arguments) : _arg(arguments)
@@ -47,20 +45,19 @@ void PrintStatement::execute(Context &context) const
     ArrayValue &value = context.evaluator().evaluateTo<ArrayValue>(_arg);
 
     String msg;
-    QTextStream os(&msg);
     bool isFirst = true;
 
-    DE_FOR_EACH_CONST(ArrayValue::Elements, i, value.elements())
+    for (const auto &i : value.elements())
     {
        if (!isFirst)
        {
-           os << " ";
+           msg += " ";
        }
        else
        {
            isFirst = false;
        }
-       os << (*i)->asText();
+       msg += i->asText();
     }
 
     LOG_SCR_MSG(_E(m)) << msg;

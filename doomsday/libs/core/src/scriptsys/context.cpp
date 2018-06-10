@@ -43,10 +43,10 @@ DE_PIMPL(Context)
          *                 @c NULL if breaking is not allowed.
          */
         ControlFlow(Statement const *current,
-                    Statement const *f = 0,
-                    Statement const *c = 0,
-                    Statement const *b = 0)
-            : flow(f), jumpContinue(c), jumpBreak(b), iteration(0), _current(current) {}
+                    Statement const *f = nullptr,
+                    Statement const *c = nullptr,
+                    Statement const *b = nullptr)
+            : flow(f), jumpContinue(c), jumpBreak(b), iteration(nullptr), _current(current) {}
 
         /// Returns the currently executed statement.
         Statement const *current() const { return _current; }
@@ -140,7 +140,7 @@ DE_PIMPL(Context)
         }
         else
         {
-            DE_ASSERT(statement == NULL);
+            DE_ASSERT(statement == nullptr);
         }
     }
 };
@@ -198,7 +198,7 @@ void Context::reset()
 
 bool Context::execute()
 {
-    if (current() != NULL)
+    if (current())
     {
         current()->execute(*this);
         return true;
@@ -208,7 +208,7 @@ bool Context::execute()
 
 void Context::proceed()
 {
-    Statement const *st = NULL;
+    Statement const *st = nullptr;
     if (current())
     {
         st = current()->next();
@@ -224,7 +224,7 @@ void Context::proceed()
 
 void Context::jumpContinue()
 {
-    Statement const *st = NULL;
+    Statement const *st = nullptr;
     while (!st && d->controlFlow.size())
     {
         st = d->controlFlow.back().jumpContinue;
@@ -244,7 +244,7 @@ void Context::jumpBreak(duint count)
         throw JumpError("Context::jumpBreak", "Invalid number of nested breaks");
     }
 
-    Statement const *st = NULL;
+    Statement const *st = nullptr;
     while ((!st || count > 0) && d->controlFlow.size())
     {
         st = d->controlFlow.back().jumpBreak;
@@ -272,7 +272,7 @@ Statement const *Context::current()
     {
         return d->flow().current();
     }
-    return NULL;
+    return nullptr;
 }
 
 Value *Context::iterationValue()
@@ -300,8 +300,8 @@ void Context::setNativeSelf(Value *scope)
 
 Value &Context::nativeSelf() const
 {
-    DE_ASSERT(!d->nativeSelf.isNull());
-    if (d->nativeSelf.isNull())
+    DE_ASSERT(d->nativeSelf);
+    if (!d->nativeSelf)
     {
         throw UndefinedScopeError("Context::nativeSelf",
                                   "Context is not executing in scope of any instance");

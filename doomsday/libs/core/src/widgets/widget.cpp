@@ -21,8 +21,8 @@
 #include "de/RootWidget"
 #include "de/Asset"
 #include "de/LogBuffer"
-#include <QList>
-#include <QMap>
+#include "de/List"
+#include "de/Map"
 
 namespace de {
 
@@ -37,11 +37,11 @@ DE_PIMPL(Widget)
     String focusNext;
     String focusPrev;
 
-    typedef QMap<int, Widget *> Routing;
+    typedef Map<int, Widget *> Routing;
     Routing routing;
 
-    typedef QList<Widget *> Children;
-    typedef QMap<String, Widget *> NamedChildren;
+    typedef WidgetList Children;
+    typedef Map<String, Widget *> NamedChildren;
     Children children;
     NamedChildren index;
 
@@ -57,7 +57,7 @@ DE_PIMPL(Widget)
     {
         while (!children.isEmpty())
         {
-            children.first()->d->parent = 0;
+            children.first()->d->parent = nullptr;
             Widget *w = children.takeFirst();
             //qDebug() << "deleting" << w << w->name();
             delete w;
@@ -88,8 +88,8 @@ DE_PIMPL(Widget)
 
     void add(Widget *child, AddBehavior behavior, Widget const *ref = nullptr)
     {
-        DE_ASSERT(child != 0);
-        DE_ASSERT(child->d->parent == 0);
+        DE_ASSERT(child != nullptr);
+        DE_ASSERT(child->d->parent == nullptr);
 
 #ifdef _DEBUG
         // Can't have double ownership.
@@ -122,9 +122,11 @@ DE_PIMPL(Widget)
             children.push_front(child);
             break;
 
-        case InsertBefore:
-            children.insert(children.indexOf(const_cast<Widget *>(ref)), child);
-            break;
+        case InsertBefore: {
+            auto ip = std::find(children.begin(), children.end(), ref);
+            children.insert(ip, child);
+//            children.insert(children.indexOf(const_cast<Widget *>(ref)), child);
+            break; }
         }
 
         // Update index.
@@ -140,13 +142,13 @@ DE_PIMPL(Widget)
         }
         DE_FOR_EACH_OBSERVER(i, child->audienceForParentChange())
         {
-            i->widgetParentChanged(*child, 0, thisPublic);
+            i->widgetParentChanged(*child, nullptr, thisPublic);
         }
     }
 
     Widget *walkChildren(Widget *beginFrom,
                          WalkDirection dir,
-                         std::function<LoopResult (Widget &)> func,
+                         const std::function<LoopResult (Widget &)>& func,
                          int verticalDir = 0)
     {
         bool first = true;
@@ -232,7 +234,7 @@ Widget::~Widget()
 {
     if (hasRoot() && root().focus() == this)
     {
-        root().setFocus(0);
+        root().setFocus(nullptr);
     }
 
     audienceForParentChange().clear();
@@ -290,7 +292,7 @@ DotPath Widget::path() const
         }
         else
         {
-            result = QString("0x%1").arg(dintptr(w), 0, 16) + result;
+            result = String::format("0x%x", w) + result;
         }
         w = w->parent();
     }
@@ -333,7 +335,7 @@ bool Widget::canBeFocused() const
 
 bool Widget::hasFamilyBehavior(Behavior const &flags) const
 {
-    for (Widget const *w = this; w != 0; w = w->d->parent)
+    for (Widget const *w = this; w; w = w->d->parent)
     {
         if (w->d->behavior.testFlag(flags)) return true;
     }
@@ -345,12 +347,12 @@ void Widget::show(bool doShow)
     setBehavior(Hidden, !doShow);
 }
 
-void Widget::setBehavior(Behaviors behavior, FlagOpArg operation)
+void Widget::setBehavior(const Behaviors& behavior, FlagOpArg operation)
 {
     applyFlagOperation(d->behavior, behavior, operation);
 }
 
-void Widget::unsetBehavior(Behaviors behavior)
+void Widget::unsetBehavior(const Behaviors& behavior)
 {
     applyFlagOperation(d->behavior, behavior, UnsetFlags);
 }
@@ -380,9 +382,9 @@ String Widget::focusPrev() const
     return d->focusPrev;
 }
 
-void Widget::setEventRouting(QList<int> const &types, Widget *routeTo)
+void Widget::setEventRouting(const List<int> &types, Widget *routeTo)
 {
-    foreach (int type, types)
+    for (int type : types)
     {
         if (routeTo)
         {
@@ -441,7 +443,7 @@ Widget *Widget::remove(Widget &child)
     DE_ASSERT(child.d->parent == this);
     DE_ASSERT(d->children.contains(&child));
 
-    child.d->parent = 0;
+    child.d->parent = nullptr;
     d->children.removeOne(&child);
 
     DE_ASSERT(!d->children.contains(&child));
@@ -458,7 +460,7 @@ Widget *Widget::remove(Widget &child)
     }
     DE_FOR_EACH_OBSERVER(i, child.audienceForParentChange())
     {
-        i->widgetParentChanged(child, this, 0);
+        i->widgetParentChanged(child, this, nullptr);
     }
 
     return &child;
@@ -478,19 +480,19 @@ Widget *Widget::find(String const &name)
     if (d->name == name) return this;
 
     Impl::NamedChildren::const_iterator found = d->index.constFind(name);
-    if (found != d->index.constEnd())
+    if (found != d->index.end())
     {
-        return found.value();
+        return found->second;
     }
 
     // Descend recursively to child widgets.
-    DE_FOR_EACH_CONST(Impl::Children, i, d->children)
+    for (const auto &i : d->children)
     {
-        Widget *w = (*i)->find(name);
+        Widget *w = i->find(name);
         if (w) return w;
     }
 
-    return 0;
+    return nullptr;
 }
 
 bool Widget::isInTree(Widget const &child) const
@@ -577,7 +579,7 @@ bool Widget::isLastChild() const
     return this == parent()->d->children.last();
 }
 
-Widget *Widget::walkInOrder(WalkDirection dir, std::function<LoopResult (Widget &)> callback)
+Widget *Widget::walkInOrder(WalkDirection dir, const std::function<LoopResult (Widget &)>& callback)
 {
     if (!d->parent)
     {
@@ -596,7 +598,7 @@ Widget *Widget::walkInOrder(WalkDirection dir, std::function<LoopResult (Widget 
     return d->parent->d->walkChildren(this, dir, callback); // allows ascending
 }
 
-Widget *Widget::walkChildren(WalkDirection dir, std::function<LoopResult (Widget &)> callback)
+Widget *Widget::walkChildren(WalkDirection dir, const std::function<LoopResult (Widget &)>& callback)
 {
     if (d->children.isEmpty()) return nullptr;
     return d->walkChildren(dir == Forward? d->children.first() : d->children.last(),
@@ -605,7 +607,7 @@ Widget *Widget::walkChildren(WalkDirection dir, std::function<LoopResult (Widget
 
 String Widget::uniqueName(String const &name) const
 {
-    return String("#%1.%2").arg(id().asInt64()).arg(name);
+    return String::format("%s.%s", id().asText().c_str(), name.c_str());
 }
 
 Widget::NotifyArgs Widget::notifyArgsForDraw() const

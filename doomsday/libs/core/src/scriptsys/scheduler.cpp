@@ -45,7 +45,7 @@ DE_PIMPL_NOREF(Scheduler)
 
     void clear()
     {
-        deleteAll(running);
+        running.deleteAll();
         running.clear();
     }
 
@@ -78,10 +78,10 @@ DE_PIMPL_NOREF(Scheduler)
 
     void advanceTime(TimeSpan const &elapsed)
     {
-        QMutableHashIterator<String, RunningTimeline *> iter(running);
+        MutableHashIterator<String, RunningTimeline *> iter(running);
         while (iter.hasNext())
         {
-            RunningTimeline *rt = iter.next().value();
+            RunningTimeline *rt = iter.next()->second;
             rt->clock->advanceTime(elapsed);
             if (rt->clock->isFinished())
             {

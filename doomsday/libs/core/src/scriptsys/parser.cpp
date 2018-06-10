@@ -163,7 +163,7 @@ void Parser::parseStatement(Compound &compound)
     {
         // Break may have an expression argument that tells us how many
         // nested compounds to break out of.
-        Expression *breakCount = 0;
+        Expression *breakCount = nullptr;
         if (_statementRange.size() > 1)
         {
             breakCount = parseExpression(_statementRange.startingFrom(1));
@@ -172,7 +172,7 @@ void Parser::parseStatement(Compound &compound)
     }
     else if (firstToken.equals(ScriptLex::RETURN) || firstToken.equals(ScriptLex::THROW))
     {
-        Expression *argValue = 0;
+        Expression *argValue = nullptr;
         if (_statementRange.size() > 1)
         {
             argValue = parseExpression(_statementRange.startingFrom(1));
@@ -234,7 +234,7 @@ IfStatement *Parser::parseIfStatement()
     {
         if (_statementRange.size() != 1 || !_statementRange.firstToken().equals(ScriptLex::END))
         {
-            throw UnexpectedTokenError("Parser::parseIfStatement", "Expected '" + ScriptLex::END +
+            throw UnexpectedTokenError("Parser::parseIfStatement", String("Expected '") + ScriptLex::END +
                                        "', but got " + _statementRange.firstToken().asText());
         }
         nextStatement();
@@ -288,7 +288,7 @@ ExpressionStatement *Parser::parseImportStatement()
             "Expected identifier to follow " + _statementRange.firstToken().asText());
     }
     dint startAt = 1;
-    Expression::Flags flags =
+    Flags flags =
             Expression::Import     |
             //Expression::NotInScope |
             Expression::LocalOnly;
@@ -330,19 +330,20 @@ Statement *Parser::parseDeclarationStatement()
     dint pos = _statementRange.find(Token::PARENTHESIS_OPEN);
     if (pos >= 0)
     {
-        QScopedPointer<Expression> name(parseExpression(_statementRange.between(1, pos),
-                                                        Expression::NewSubrecordIfNotInScope));
-        QScopedPointer<ScopeStatement> names(new ScopeStatement(name.take(),
-                parseList(_statementRange.between(pos + 1, _statementRange.closingBracket(pos)))));
+        std::unique_ptr<Expression> name(
+            parseExpression(_statementRange.between(1, pos), Expression::NewSubrecordIfNotInScope));
+        std::unique_ptr<ScopeStatement> names(new ScopeStatement(
+            name.release(),
+            parseList(_statementRange.between(pos + 1, _statementRange.closingBracket(pos)))));
 
         parseConditionalCompound(names->compound(),
                                  IgnoreExtraBeforeColon | StayAtClosingStatement);
-        return names.take();
+        return names.release();
     }
     else
     {
         // Regular record declaration.
-        Expression::Flags flags = Expression::LocalOnly | Expression::NewSubrecord;
+        Flags flags = Expression::LocalOnly | Expression::NewSubrecord;
         return new ExpressionStatement(parseList(_statementRange.startingFrom(1), Token::COMMA, flags));
     }
 }
@@ -480,7 +481,7 @@ void Parser::parseTryCatchSequence(Compound &compound)
 
 PrintStatement *Parser::parsePrintStatement()
 {
-    ArrayExpression *args = 0;
+    ArrayExpression *args = nullptr;
     if (_statementRange.size() == 1) // Just the keyword.
     {
         args = new ArrayExpression();
@@ -495,7 +496,7 @@ PrintStatement *Parser::parsePrintStatement()
 
 AssignStatement *Parser::parseAssignStatement()
 {
-    Expression::Flags flags = Expression::NewVariable | Expression::ByReference | Expression::LocalOnly;
+    Flags flags = Expression::NewVariable | Expression::ByReference | Expression::LocalOnly;
 
     /// "export" will export the newly assigned variable.
     if (_statementRange.firstToken().equals(ScriptLex::EXPORT))
@@ -526,13 +527,13 @@ AssignStatement *Parser::parseAssignStatement()
 
     // Has indices been specified?
     AssignStatement::Indices indices;
-    dint nameEndPos = pos;
-    dint bracketPos = pos - 1;
+    dsize nameEndPos = pos;
+    dsize bracketPos = pos - 1;
     try
     {
         while (_statementRange.token(bracketPos).equals(Token::BRACKET_CLOSE))
         {
-            dint startPos = _statementRange.openingBracket(bracketPos);
+            auto startPos = _statementRange.openingBracket(bracketPos);
             nameEndPos = startPos;
             Expression *indexExpr = parseExpression(
                 _statementRange.between(startPos + 1, bracketPos));
@@ -546,13 +547,13 @@ AssignStatement *Parser::parseAssignStatement()
                 "Weak assignment cannot be used with indices");
         }
 
-        QScopedPointer<Expression> lValue(parseExpression(_statementRange.endingTo(nameEndPos), flags));
-        QScopedPointer<Expression> rValue(parseExpression(_statementRange.startingFrom(pos + 1)));
+        std::unique_ptr<Expression> lValue(parseExpression(_statementRange.endingTo(nameEndPos), flags));
+        std::unique_ptr<Expression> rValue(parseExpression(_statementRange.startingFrom(pos + 1)));
 
-        AssignStatement *st = new AssignStatement(lValue.data(), indices, rValue.data());
+        AssignStatement *st = new AssignStatement(lValue.get(), indices, rValue.get());
 
-        lValue.take();
-        rValue.take();
+        lValue.release();
+        rValue.release();
 
         return st;
     }
@@ -582,7 +583,7 @@ Expression *Parser::parseConditionalCompound(Compound &compound, CompoundFlags c
     // See if there is a colon on this line.
     dint colon = range.findBracketless(Token::COLON);
 
-    QScopedPointer<Expression> condition;
+    std::unique_ptr<Expression> condition;
     if (flags.testFlag(HasCondition))
     {
         LOG_AS("parseConditionalCompound");
@@ -624,13 +625,13 @@ Expression *Parser::parseConditionalCompound(Compound &compound, CompoundFlags c
             nextStatement();
         }
     }
-    return condition.take();
+    return condition.release();
 }
 
-ArrayExpression *Parser::parseList(TokenRange const &range, QChar const *separator,
-                                   Expression::Flags const &flags)
+ArrayExpression *Parser::parseList(TokenRange const &range, const char *separator,
+                                   Flags const &flags)
 {
-    QScopedPointer<ArrayExpression> exp(new ArrayExpression);
+    std::unique_ptr<ArrayExpression> exp(new ArrayExpression);
     if (range.size() > 0)
     {
         // The arguments are comma-separated.
@@ -640,10 +641,10 @@ ArrayExpression *Parser::parseList(TokenRange const &range, QChar const *separat
             exp->add(parseExpression(delim, flags));
         }
     }
-    return exp.take();
+    return exp.release();
 }
 
-Expression *Parser::parseExpression(TokenRange const &fullRange, Expression::Flags const &flags)
+Expression *Parser::parseExpression(TokenRange const &fullRange, Flags const &flags)
 {
     TokenRange range = fullRange;
 
@@ -746,9 +747,9 @@ DictionaryExpression *Parser::parseDictionaryExpression(TokenRange const &range)
                     delim.firstToken().asText());
             }
 
-            QScopedPointer<Expression> key(parseExpression(delim.endingTo(colonPos)));
+            std::unique_ptr<Expression> key(parseExpression(delim.endingTo(colonPos)));
             Expression *value = parseExpression(delim.startingFrom(colonPos + 1));
-            exp->add(key.take(), value);
+            exp->add(key.release(), value);
         }
     }
     return exp.release();
@@ -770,7 +771,7 @@ Expression *Parser::parseCallExpression(TokenRange const &nameRange, TokenRange 
     // Parse the arguments, with possible labels included.
     // The named arguments are evaluated by a dictionary which is always
     // included as the first expression in the array.
-    QScopedPointer<ArrayExpression> args(new ArrayExpression);
+    std::unique_ptr<ArrayExpression> args(new ArrayExpression);
     DictionaryExpression *namedArgs = new DictionaryExpression;
     args->add(namedArgs);
 
@@ -809,32 +810,32 @@ Expression *Parser::parseCallExpression(TokenRange const &nameRange, TokenRange 
         BuiltInExpression::Type builtIn = BuiltInExpression::findType(nameRange.firstToken().str());
         if (builtIn != BuiltInExpression::NONE)
         {
-            return new BuiltInExpression(builtIn, args.take());
+            return new BuiltInExpression(builtIn, args.release());
         }
     }
-    QScopedPointer<Expression> identifier(parseExpression(nameRange, Expression::ByReference));
-    return new OperatorExpression(CALL, identifier.take(), args.take());
+    std::unique_ptr<Expression> identifier(parseExpression(nameRange, Expression::ByReference));
+    return new OperatorExpression(CALL, identifier.release(), args.release());
 }
 
 OperatorExpression *Parser::parseOperatorExpression(Operator op, TokenRange const &leftSide,
-    TokenRange const &rightSide, Expression::Flags const &rightFlags)
+    TokenRange const &rightSide, Flags const &rightFlags)
 {
     //std::cerr << "left: " << leftSide.asText() << ", right: " << rightSide.asText() << "\n";
 
     if (leftSide.isEmpty())
     {
         // Must be unary.
-        QScopedPointer<Expression> operand(parseExpression(rightSide));
-        OperatorExpression *x = new OperatorExpression(op, operand.data());
-        operand.take();
+        std::unique_ptr<Expression> operand(parseExpression(rightSide));
+        OperatorExpression *x = new OperatorExpression(op, operand.release());
+        operand.release();
         return x;
     }
     else
     {
-        Expression::Flags leftOpFlags = (leftOperandByReference(op)?
-                                             Expression::ByReference : Expression::ByValue);
+        Flags leftOpFlags =
+            (leftOperandByReference(op) ? Expression::ByReference : Expression::ByValue);
 
-        Expression::Flags rightOpFlags = rightFlags;
+        Flags rightOpFlags = rightFlags;
         if (op == MEMBER)
         {
             // Don't create new variables for the left side of the member. The only place
@@ -847,18 +848,18 @@ OperatorExpression *Parser::parseOperatorExpression(Operator op, TokenRange cons
         }
 
         // Binary operation.
-        QScopedPointer<Expression> leftOperand(parseExpression(leftSide, leftOpFlags));
-        QScopedPointer<Expression> rightOperand(op == SLICE? parseList(rightSide, Token::COLON) :
+        std::unique_ptr<Expression> leftOperand(parseExpression(leftSide, leftOpFlags));
+        std::unique_ptr<Expression> rightOperand(op == SLICE? parseList(rightSide, Token::COLON) :
             parseExpression(rightSide, rightOpFlags));
-        OperatorExpression *x = new OperatorExpression(op, leftOperand.data(), rightOperand.data());
+        OperatorExpression *x = new OperatorExpression(op, leftOperand.get(), rightOperand.get());
         x->setFlags(rightFlags); // original flags
-        rightOperand.take();
-        leftOperand.take();
+        rightOperand.release();
+        leftOperand.release();
         return x;
     }
 }
 
-Expression *Parser::parseTokenExpression(TokenRange const &range, Expression::Flags const &flags)
+Expression *Parser::parseTokenExpression(TokenRange const &range, Flags const &flags)
 {
     if (!range.size())
     {
@@ -956,7 +957,7 @@ Operator Parser::findLowestOperator(TokenRange const &range, TokenRange &leftSid
     Operator lowestOp = NONE;
     int lowestRank = MAX_RANK;
 
-    for (duint i = 0, continueFrom = 0; i < range.size(); i = continueFrom)
+    for (dsize i = 0, continueFrom = 0; i < range.size(); i = continueFrom)
     {
         continueFrom = i + 1;
 
@@ -1043,7 +1044,7 @@ Operator Parser::findLowestOperator(TokenRange const &range, TokenRange &leftSid
                 { "/",      DIVIDE,             10,         LEFT_TO_RIGHT },
                 { "%",      MODULO,             10,         LEFT_TO_RIGHT },
                 { ".",      DOT,                RANK_DOT,   LEFT_TO_RIGHT },
-                { 0,        NONE,               MAX_RANK,   LEFT_TO_RIGHT }
+                { nullptr,  NONE,               MAX_RANK,   LEFT_TO_RIGHT },
             };
 
             // Operator precedence:

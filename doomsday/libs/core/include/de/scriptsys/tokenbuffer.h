@@ -22,6 +22,7 @@
 
 #include "../libcore.h"
 #include "../Range"
+#include "../CString"
 
 #include <vector>
 
@@ -119,6 +120,8 @@ public:
     /// This includes nothing extra but the text of the token.
     String str() const;
 
+    CString cStr() const { return CString(begin(), end()); }
+
     /// Unescapes a string literal into a String. The quotes/apostrophes in the
     /// beginning and end are also removed.
     String unescapeStringLiteral() const;
@@ -205,7 +208,7 @@ public:
     bool empty() const { return !size(); }
 
     /// Returns a specific token in the buffer.
-    Token const &at(duint i) const;
+    Token const &at(dsize i) const;
 
     Token const &latest() const;
 

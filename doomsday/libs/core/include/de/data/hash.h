@@ -37,10 +37,11 @@ public:
 
     Hash(const std::initializer_list<typename Base::value_type> &init)
     {
-        for (const auto &v : init) insert(v);
+        for (const auto &v : init) Base::insert(v);
     }
 
     using Base::empty;
+    using Base::find;
 
     bool isEmpty() const { return empty(); }
 
@@ -49,6 +50,14 @@ public:
     bool         contains(const Key &key) const { return Base::find(key) != Base::end(); }
     Value &      operator[](const Key &key) { return Base::operator[](key); }
     const Value &operator[](const Key &key) const { return Base::find(key)->second; }
+
+    Value take(const Key &key)
+    {
+        auto  found = find(key);
+        Value v     = std::move(found->second);
+        Base::erase(found);
+        return v;
+    }
 
     void deleteAll()
     {

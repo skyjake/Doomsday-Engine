@@ -86,7 +86,7 @@ Expression *Expression::constructFrom(Reader &reader)
     return result.release();
 }
 
-Expression::Flags const &Expression::flags () const
+Flags const &Expression::flags() const
 {
     return _flags;
 }

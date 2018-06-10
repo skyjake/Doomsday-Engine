@@ -34,7 +34,7 @@ namespace filesys {
 
 DE_PIMPL(WebHostedLink), public Lockable
 {
-    Set<QNetworkReply *> pendingRequests;
+//    Set<QNetworkReply *> pendingRequests;
     std::shared_ptr<FileTree> fileTree;
 
     Impl(Public *i) : Base(i)
@@ -51,6 +51,7 @@ DE_PIMPL(WebHostedLink), public Lockable
 
     void handleFileListQueryAsync(Query query)
     {
+#if 0
         QueryId const id = query.id;
         String const queryPath = query.path;
         self().scope() += async([this, queryPath] () -> std::shared_ptr<DictionaryValue>
@@ -69,7 +70,7 @@ DE_PIMPL(WebHostedLink), public Lockable
                 auto addMeta = [this]
                         (DictionaryValue &list, const PathTree::Nodes &nodes)
                 {
-                    for (auto &i = nodes.begin(); i != nodes.end(); ++i)
+                    for (const auto &i : nodes)
                     {
                         auto const &entry = i.second->as<FileEntry>();
                         list.add(new TextValue(entry.name()),
@@ -118,6 +119,7 @@ DE_PIMPL(WebHostedLink), public Lockable
 
             /// @todo Abort query with error.
         }
+#endif
     }
 };
 
@@ -125,6 +127,7 @@ WebHostedLink::WebHostedLink(String const &address, String const &indexPath)
     : Link(address)
     , d(new Impl(this))
 {
+#if 0
     // Fetch the repository index.
     {
         QNetworkRequest req(QUrl(address / indexPath));
@@ -145,6 +148,7 @@ WebHostedLink::WebHostedLink(String const &address, String const &indexPath)
             }
         });
     }
+#endif
 }
 
 void WebHostedLink::setFileTree(FileTree *tree)
@@ -189,7 +193,7 @@ void WebHostedLink::transmit(Query const &query)
     }
 
     DE_ASSERT(query.fileContents);
-
+#if 0
     String url = address();
     QNetworkRequest req(url.concatenateRelativePath(query.path));
     qDebug() << req.url().toString();
@@ -208,6 +212,7 @@ void WebHostedLink::transmit(Query const &query)
         d->pendingRequests.remove(reply);
         reply->deleteLater();
     });
+#endif
 }
 
 Block WebHostedLink::FileEntry::metaId(Link const &link) const

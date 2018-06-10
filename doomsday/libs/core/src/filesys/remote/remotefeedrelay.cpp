@@ -42,19 +42,19 @@ namespace filesys {
 
 DE_PIMPL(RemoteFeedRelay)
 {
-    std::unique_ptr<QNetworkAccessManager> network;
+//    std::unique_ptr<QNetworkAccessManager> network;
     List<Link::Constructor> linkConstructors;
     Hash<String, filesys::Link *> repositories; // owned
 
     Impl(Public *i) : Base(i)
     {
-        network.reset(new QNetworkAccessManager);
+//        network.reset(new QNetworkAccessManager);
 
-        auto *cache = new QNetworkDiskCache;
-        String const dir = NativePath(QStandardPaths::writableLocation(QStandardPaths::CacheLocation))
-                / "RemoteFiles";
-        cache->setCacheDirectory(dir);
-        network->setCache(cache);
+//        auto *cache = new QNetworkDiskCache;
+//        String const dir = NativePath(QStandardPaths::writableLocation(QStandardPaths::CacheLocation))
+//                / "RemoteFiles";
+//        cache->setCacheDirectory(dir);
+//        network->setCache(cache);
     }
 
     ~Impl()
@@ -79,7 +79,7 @@ RemoteFeedRelay::RemoteFeedRelay()
     defineLink(NativeLink::construct);
 }
 
-void RemoteFeedRelay::defineLink(filesys::Link::Constructor linkConstructor)
+void RemoteFeedRelay::defineLink(const Link::Constructor &linkConstructor)
 {
     d->linkConstructors.push_front(linkConstructor);
 }
@@ -87,7 +87,7 @@ void RemoteFeedRelay::defineLink(filesys::Link::Constructor linkConstructor)
 void RemoteFeedRelay::addRepository(String const &address,
                                     String const &localRootPath)
 {
-    for (auto constructor : d->linkConstructors)
+    for (const auto &constructor : d->linkConstructors)
     {
         if (auto *link = constructor(address))
         {
@@ -121,7 +121,7 @@ StringList RemoteFeedRelay::repositories() const
     StringList repos;
     for (const auto &a : d->repositories)
     {
-        repos << a->first;
+        repos << a.first;
     }
     return repos;
 }
@@ -194,10 +194,10 @@ RemoteFeedRelay::fetchFileContents(String const &repository, String filePath, Fi
     return request;
 }
 
-QNetworkAccessManager &RemoteFeedRelay::network()
-{
-    return *d->network;
-}
+////QNetworkAccessManager &RemoteFeedRelay::network()
+////{
+////    return *d->network;
+//}
 
 } // namespace filesys
 } // namespace de
