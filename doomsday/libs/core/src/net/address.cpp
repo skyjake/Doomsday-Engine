@@ -29,7 +29,7 @@ namespace de {
 
 DE_PIMPL_NOREF(Address)
 {
-    cplus::Ref<iAddress> addr;
+    cplus::ref<iAddress> addr;
     duint16 port = 0;
     String  textRepr;
 
@@ -61,6 +61,11 @@ Address::Address(char const *address, duint16 port) : d(new Impl)
     }
 }
 
+Address::Address(const iAddress *address) : d(new Impl)
+{
+    d->addr.reset(address);
+}
+
 Address Address::take(iAddress *addr)
 {
     Address a;
@@ -80,6 +85,11 @@ Address::Address(Address const &other) : LogEntry::Arg::Base(), d(new Impl)
     d->port = other.d->port;
 }
 
+Address::operator const iAddress *() const
+{
+    return d->addr;
+}
+
 Address::Address(Address const &other)
 {
     d->addr.reset(copy_Address(other.d->addr));
@@ -87,7 +97,7 @@ Address::Address(Address const &other)
 
 Address &Address::operator=(Address const &other)
 {
-    d->host     = other.d->host;
+    d->addr.reset(copy_Address(other.d->addr));
     d->port     = other.d->port;
     d->textRepr = other.d->textRepr;
     d->special  = other.d->special;
@@ -134,10 +144,10 @@ void Address::setPort(duint16 p)
     d->port = p;
 }
 
-bool Address::matches(Address const &other, duint32 mask)
-{
+//bool Address::matches(Address const &other, duint32 mask)
+//{
 //    return (d->host.toIPv4Address() & mask) == (other.d->host.toIPv4Address() & mask);
-}
+//}
 
 String Address::asText() const
 {

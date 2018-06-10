@@ -20,6 +20,7 @@
 #include "de/ScriptLex"
 #include "de/TokenBuffer"
 #include "de/Vector"
+#include "de/Set"
 
 using namespace de;
 
@@ -97,7 +98,7 @@ duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
             break;
         }
 
-        if (peek().isNull()) break;
+        if (!peek()) break;
 
         // This will be the first character of the token.
         Char c = get();
@@ -352,41 +353,13 @@ bool ScriptLex::combinesWith(Char a, Char b)
     return false;
 }
 
-static Set<const char *> const keywordStr
-{
-    ScriptLex::AND,
-    ScriptLex::BREAK,
-    ScriptLex::CATCH,
-    ScriptLex::CONST,
-    ScriptLex::CONTINUE,
-    ScriptLex::DEF,
-    ScriptLex::DEL,
-    ScriptLex::ELSE,
-    ScriptLex::ELSIF,
-    ScriptLex::END,
-    ScriptLex::FOR,
-    ScriptLex::IF,
-    ScriptLex::IMPORT,
-    ScriptLex::EXPORT,
-    ScriptLex::IN,
-    ScriptLex::NOT,
-    ScriptLex::OR,
-    ScriptLex::PASS,
-    ScriptLex::PRINT,
-    ScriptLex::RECORD,
-    ScriptLex::RETURN,
-    ScriptLex::SCOPE,
-    ScriptLex::THROW,
-    ScriptLex::TRY,
-    ScriptLex::WHILE,
-    ScriptLex::NONE,
-    ScriptLex::T_FALSE,
-    ScriptLex::T_TRUE,
-    ScriptLex::PI,
-};
-
 bool ScriptLex::isKeyword(Token const &token)
 {
+    static const Set<const char *> keywordStr{
+        AND,    BREAK, CATCH,  CONST,  CONTINUE, DEF,  DEL,     ELSE,   ELSIF, END,
+        FOR,    IF,    IMPORT, EXPORT, IN,       NOT,  OR,      PASS,   PRINT, RECORD,
+        RETURN, SCOPE, THROW,  TRY,    WHILE,    NONE, T_FALSE, T_TRUE, PI,
+    };
     return keywordStr.contains(token.str());
 }
 

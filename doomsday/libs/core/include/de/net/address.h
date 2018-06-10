@@ -43,17 +43,16 @@ public:
     /**
      * Constructs an Address.
      *
-     * @param address  IP address. E.g., "localhost" or "127.0.0.1".
-     *                 Domain names are not allowed.
-     * @param port     Port number.
+     * @param hostNameOrAddress  IP address. E.g., "localhost" or "127.0.0.1".
+     *                           Domain names are allowed.
+     * @param port  Port number.
      */
-//    Address(QHostAddress const &address, duint16 port = 0);
-
     Address(char const *hostNameOrAddress, duint16 port = 0);
 
-    static Address take(iAddress *);
+    Address(const iAddress *);
+    Address(const Address &other);
 
-    Address(Address const &other);
+    operator const iAddress *() const;
 
     Address &operator=(Address const &other);
 
@@ -76,13 +75,6 @@ public:
     bool isNull() const;
 
     /**
-     * Returns the host IP address.
-     */
-//    QHostAddress const &host() const;
-
-//    void setHost(QHostAddress const &host);
-
-    /**
      * Determines if the address is on the local host.
      */
     bool isLocal() const;
@@ -98,12 +90,18 @@ public:
      * @param mask   Net mask. Use to check if subnets match. The default
      *               checks if two IP addresses match.
      */
-    bool matches(Address const &other, duint32 mask = 0xffffffff);
+//    bool matches(Address const &other, duint32 mask = 0xffffffff);
 
     /**
      * Converts the address to text.
      */
     String asText() const;
+
+    // Implements LogEntry::Arg::Base.
+    LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::StringArgument; }
+
+public:
+    static Address take(iAddress *);
 
     static Address parse(String const &addressWithOptionalPort, duint16 defaultPort = 0);
 
@@ -111,9 +109,6 @@ public:
      * Determines whether a host address refers to the local host.
      */
     static bool isHostLocal(const Address &host);
-
-    // Implements LogEntry::Arg::Base.
-    LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::StringArgument; }
 
 private:
     DE_PRIVATE(d)

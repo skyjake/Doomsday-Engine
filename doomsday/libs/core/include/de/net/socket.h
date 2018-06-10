@@ -83,7 +83,7 @@ public:
      * @param address  Address to connect to.
      * @param timeOut  Maximum time to wait for connection.
      */
-    Socket(Address const &address, TimeSpan timeOut);
+    Socket(Address const &address, const TimeSpan &timeOut);
 
     virtual ~Socket();
 
@@ -153,7 +153,7 @@ public:
      *
      * @return  Reference to this socket.
      */
-    Socket &operator << (IByteArray const &data);
+    Socket &operator<<(IByteArray const &data);
 
     /**
      * Returns the next received message. If nothing has been received,

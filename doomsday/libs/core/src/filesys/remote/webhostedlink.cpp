@@ -61,13 +61,13 @@ DE_PIMPL(WebHostedLink), public Lockable
             {
                 std::shared_ptr<DictionaryValue> list(new DictionaryValue);
 
-                static String const VAR_TYPE       ("type");
-                static String const VAR_MODIFIED_AT("modifiedAt");
-                static String const VAR_SIZE       ("size");
-                static String const VAR_META_ID    ("metaId");
+                static const String VAR_TYPE       ("type");
+                static const String VAR_MODIFIED_AT("modifiedAt");
+                static const String VAR_SIZE       ("size");
+                static const String VAR_META_ID    ("metaId");
 
                 auto addMeta = [this]
-                        (DictionaryValue &list, PathTree::Nodes const &nodes)
+                        (DictionaryValue &list, const PathTree::Nodes &nodes)
                 {
                     for (auto &i = nodes.begin(); i != nodes.end(); ++i)
                     {
@@ -75,10 +75,10 @@ DE_PIMPL(WebHostedLink), public Lockable
                         list.add(new TextValue(entry.name()),
                                   RecordValue::takeRecord(
                                       Record::withMembers(
-                                          VAR_TYPE, entry.isLeaf()? 0 : 1,
-                                          VAR_SIZE, entry.size,
+                                          VAR_TYPE,        entry.isLeaf()? 0 : 1,
+                                          VAR_SIZE,        entry.size,
                                           VAR_MODIFIED_AT, entry.modTime,
-                                          VAR_META_ID, metaIdForFileEntry(entry)
+                                          VAR_META_ID,     metaIdForFileEntry(entry)
                                       )));
                     }
                 };
@@ -167,7 +167,7 @@ WebHostedLink::FileEntry const *WebHostedLink::findFile(Path const &path) const
 filesys::PackagePaths WebHostedLink::locatePackages(StringList const &packageIds) const
 {
     PackagePaths remotePaths;
-    foreach (String packageId, packageIds)
+    for (const String &packageId : packageIds)
     {
         if (String remotePath = findPackagePath(packageId))
         {

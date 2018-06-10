@@ -110,7 +110,7 @@ DE_PIMPL(Link), public AsyncScope
     void notifyStatus(RemoteFeedRelay::Status status)
     {
         using Relay = RemoteFeedRelay;
-        DE_FOR_EACH_OBSERVER(Relay::StatusAudience, i, Relay::get().audienceForStatus())
+        DE_FOR_EACH_OBSERVER(i, Relay::get().audienceForStatus())
         {
             i->remoteRepositoryStatusChanged(address, status);
         }

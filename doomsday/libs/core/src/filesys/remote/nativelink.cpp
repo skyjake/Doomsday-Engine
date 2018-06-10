@@ -34,11 +34,41 @@ const char *NativeLink::URL_SCHEME = "doomsday:";
 static const char *PATH_SERVER_REPOSITORY_ROOT = "/sys/server/public"; // serverside folder
 
 DE_PIMPL(NativeLink)
+, DE_OBSERVES(Socket, StateChange)
+, DE_OBSERVES(Socket, Message)
+, DE_OBSERVES(Socket, Error)
 {
     RemoteFeedProtocol protocol;
-    Socket socket;
+    Socket             socket;
 
     Impl(Public *i) : Base(i) {}
+
+    void socketStateChanged(Socket &, Socket::SocketState state) override
+    {
+        switch (state)
+        {
+        case Socket::Connected:
+            self().wasConnected();
+            break;
+
+        case Socket::Disconnected:
+            self().wasDisconnected();
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    void error(Socket &, const String &errorMessage) override
+    {
+        self().handleError(errorMessage);
+    }
+
+    void messagesIncoming(Socket &) override
+    {
+        Loop::mainCall([this]() { receiveMessages(); });
+    }
 
     void receiveMessages()
     {
@@ -56,12 +86,12 @@ DE_PIMPL(NativeLink)
                 switch (protocol.recognize(*packet))
                 {
                 case RemoteFeedProtocol::Metadata: {
-                    auto const &md = packet->as<RemoteFeedMetadataPacket>();
+                    const auto &md = packet->as<RemoteFeedMetadataPacket>();
                     self().metadataReceived(md.id(), md.metadata());
                     break; }
 
                 case RemoteFeedProtocol::FileContents: {
-                    auto const &fc = packet->as<RemoteFeedFileContentsPacket>();
+                    const auto &fc = packet->as<RemoteFeedFileContentsPacket>();
                     self().chunkReceived(fc.id(), fc.startOffset(), fc.data(), fc.fileSize());
                     break; }
 
@@ -83,14 +113,11 @@ NativeLink::NativeLink(String const &address)
     : Link(address)
     , d(new Impl(this))
 {
+    d->socket.audienceForStateChange() += d;
+    d->socket.audienceForError() += d;
+    d->socket.audienceForMessage() += d;
+
     DE_ASSERT(address.beginsWith(URL_SCHEME));
-
-    QObject::connect(&d->socket, &Socket::connected,     [this] () { wasConnected(); });
-    QObject::connect(&d->socket, &Socket::disconnected,  [this] () { wasDisconnected(); });
-    QObject::connect(&d->socket, &Socket::error,         [this] (QString msg) { handleError(msg); });
-
-    QObject::connect(&d->socket, &Socket::messagesReady, [this] () { d->receiveMessages(); });
-
     d->socket.open(address.substr(String::BytePos(strlen(URL_SCHEME))));
 }
 

@@ -322,8 +322,6 @@ private:
     DE_PRIVATE(d)
 };
 
-//DE_PUBLIC QTextStream &operator << (QTextStream &os, Time const &t);
-
 typedef Time::Span TimeSpan;
 
 } // namespace de

@@ -147,11 +147,11 @@ class DE_PUBLIC AsyncScope : DE_OBSERVES(Thread, Finished)
 {
 public:
     AsyncScope() = default;
-    ~AsyncScope();
+    ~AsyncScope() override;
 
     AsyncScope &operator += (AsyncTask *task);
     bool isAsyncFinished() const;
-    void waitForFinished(TimeSpan timeout = 0.0);
+    void waitForFinished(const TimeSpan &timeout = 0.0);
     void threadFinished(Thread &) override;
 
 private:

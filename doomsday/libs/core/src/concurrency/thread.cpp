@@ -45,7 +45,7 @@ DE_PIMPL(Thread)
         auto &self = d->self();
         self.run();
         self.post();
-        DE_FOR_EACH_OBSERVER(FinishedAudience, i, self.audienceForFinished())
+        DE_FOR_EACH_OBSERVER(i, self.audienceForFinished())
         {
             i->threadFinished(self);
         }

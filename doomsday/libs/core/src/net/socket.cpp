@@ -73,7 +73,7 @@
 #include "de/Reader"
 #include "de/data/huffman.h"
 
-//#include <QThread>
+#include <c_plus/object.h>
 
 namespace de {
 
@@ -114,15 +114,15 @@ namespace internal {
  */
 struct MessageHeader : public ISerializable
 {
-    int size;
-    bool isHuffmanCoded;
-    bool isDeflated;
+    dsize size;
+    bool  isHuffmanCoded;
+    bool  isDeflated;
     duint channel; /// @todo include in the written header
 
     MessageHeader() : size(0), isHuffmanCoded(false), isDeflated(false), channel(0)
     {}
 
-    void operator >> (Writer &writer) const
+    void operator>>(Writer &writer) const
     {
         if (size <= MAX_SIZE_SMALL && !isDeflated)
         {
@@ -144,14 +144,14 @@ struct MessageHeader : public ISerializable
         else
         {
             // Not supported.
-            DE_ASSERT(false);
+            DE_ASSERT_FAIL("[MessageHeader::operator>>] Message is too long");
         }
     }
 
     /**
     * Throws an exception if the header is malformed/incomplete.
     */
-    void operator << (Reader &reader)
+    void operator<<(Reader &reader)
     {
         // Start reading the header.
         dbyte b;
@@ -197,27 +197,28 @@ using namespace internal;
 
 DE_PIMPL_NOREF(Socket)
 {
-    Address peer;
-    bool quiet = false;
-    bool retainOrder = true;
+    Waitable connecting;
+    Address  peer;
+    bool     quiet       = false;
+    bool     retainOrder = true;
 
     enum ReceptionState { ReceivingHeader, ReceivingPayload };
     ReceptionState receptionState = ReceivingHeader;
-    Block receivedBytes;
-    MessageHeader incomingHeader;
+    Block          receivedBytes;
+    MessageHeader  incomingHeader;
 
     /// Number of the active channel.
     /// @todo Channel is not used at the moment.
     duint activeChannel = 0;
 
     /// Pointer to the internal socket data.
-    QTcpSocket *socket = nullptr;
+    cplus::ref<iSocket> socket;
 
     /// Buffer for incoming received messages.
     List<Message *> receivedMessages;
 
     /// Number of bytes waiting to be written to the socket.
-    dint64 bytesToBeWritten = 0;
+    //    dint64 bytesToBeWritten = 0;
 
     /// Number of bytes written to the socket so far.
     dint64 totalBytesWritten = 0;
@@ -263,7 +264,7 @@ DE_PIMPL_NOREF(Socket)
             if (deflated.size() > MAX_SIZE_LARGE)
             {
                 throw ProtocolError("Socket::send",
-                                    QString("Compressed payload is too large (%1 bytes)").arg(deflated.size()));
+                                    stringf("Compressed payload is too large (%zu bytes)", deflated.size()));
             }
 
             // Choose the smallest compression.
@@ -287,20 +288,19 @@ DE_PIMPL_NOREF(Socket)
     void sendMessage(MessageHeader const &header,
                      Block const &payload)
     {
-        DE_ASSERT(socket != nullptr);
-//        DE_ASSERT(QThread::currentThread() == socket->thread());
+        DE_ASSERT(socket);
 
         // Write the message header.
         Block dest;
         Writer(dest) << header;
-        socket->write(dest);
+        write_Socket(socket, dest);
 
         // Update totals (for statistics).
-        dsize const total = dest.size() + payload.size();
-        bytesToBeWritten  += total;
+        const dsize total = dest.size() + payload.size();
+//        bytesToBeWritten  += total;
         totalBytesWritten += total;
 
-        socket->write(payload);
+        write_Socket(socket, payload);
 
         // Update total counters, too.
         {
@@ -377,7 +377,7 @@ DE_PIMPL_NOREF(Socket)
                     // Remove the read bytes from the buffer.
                     receivedBytes.remove(0, reader.offset());
                 }
-                catch (de::Error const &)
+                catch (const Error &)
                 {
                     // It seems we don't have a full header yet.
                     return;
@@ -386,7 +386,7 @@ DE_PIMPL_NOREF(Socket)
 
             if (receptionState == ReceivingPayload)
             {
-                if (int(receivedBytes.size()) >= incomingHeader.size)
+                if (receivedBytes.size() >= incomingHeader.size)
                 {
                     // Extract the payload from the incoming buffer.
                     Block payload = receivedBytes.left(incomingHeader.size);
@@ -398,20 +398,22 @@ DE_PIMPL_NOREF(Socket)
                         payload = codec::huffmanDecode(payload);
                         if (!payload.size())
                         {
-                            throw ProtocolError("Socket::Impl::deserializeMessages", "Huffman decoding failed");
+                            throw ProtocolError("Socket::Impl::deserializeMessages",
+                                                "Huffman decoding failed");
                         }
                     }
                     else if (incomingHeader.isDeflated)
                     {
-                        payload = qUncompress(payload);
+                        payload = payload.decompressed(); //qUncompress(payload);
                         if (!payload.size())
                         {
-                            throw ProtocolError("Socket::Impl::deserializeMessages", "Deflate failed");
+                            throw ProtocolError("Socket::Impl::deserializeMessages",
+                                                "Deflate failed");
                         }
                     }
 
-                    receivedMessages << new Message(Address(socket->peerAddress(), socket->peerPort()),
-                                                    incomingHeader.channel, payload);
+                    receivedMessages << new Message(
+                        Address(address_Socket(socket)), incomingHeader.channel, payload);
 
                     // We can proceed to the next message.
                     receptionState = ReceivingHeader;
@@ -425,126 +427,244 @@ DE_PIMPL_NOREF(Socket)
             }
         }
     }
+
+    static void handleAddressLookedUp(iAny *, const iAddress *addr)
+    {
+        Socket &self = *static_cast<Socket *>(userData_Object(addr));
+        try
+        {
+            DE_FOR_EACH_OBSERVER(i, self.audienceForStateChange())
+            {
+                i->socketStateChanged(self, AddressResolved);
+            }
+            // Proceed with opening the connection.
+            self.open(Address(addr));
+        }
+        catch (const Error &er)
+        {
+            DE_FOR_EACH_OBSERVER(i, self.audienceForError())
+            {
+                i->error(self, "Failed to look up address: " + er.asText());
+            }
+        }
+    }
+
+    static void handleError(iAny *, iSocket *sock, int error, const char *msg)
+    {
+        Socket &self = *static_cast<Socket *>(userData_Object(sock));
+        if (!self.d->quiet)
+        {
+            LOG_NET_WARNING("%s") << msg;
+        }
+        DE_FOR_EACH_OBSERVER(i, self.audienceForError())
+        {
+            i->error(self, String::format("Socket error %i: %s", error, msg));
+        }
+    }
+
+    static void handleConnected(iAny *, iSocket *sock)
+    {
+        Socket &self = *static_cast<Socket *>(userData_Object(sock));
+        self.d->connecting.post();
+        DE_FOR_EACH_OBSERVER(i, self.audienceForStateChange())
+        {
+            i->socketStateChanged(self, Connected);
+        }
+    }
+
+    static void handleDisconnected(iAny *, iSocket *sock)
+    {
+        Socket &self = *static_cast<Socket *>(userData_Object(sock));
+        DE_FOR_EACH_OBSERVER(i, self.audienceForStateChange())
+        {
+            i->socketStateChanged(self, Disconnected);
+        }
+    }
+
+    static void handleReadyRead(iAny *, iSocket *sock)
+    {
+        Socket &self = *static_cast<Socket *>(userData_Object(sock));
+        Impl *d = self.d;
+
+        d->receivedBytes += Block::take(readAll_Socket(sock));
+
+//        auto available = d->socket->bytesAvailable();
+//        if (available > 0)
+//        {
+//            d->receivedBytes += d->socket->read(d->socket->bytesAvailable());
+//        }
+
+        d->deserializeMessages();
+
+        // Notification about available messages.
+        if (d->receivedMessages)
+        {
+            //emit messagesReady();
+            DE_FOR_EACH_OBSERVER(i, self.audienceForMessage())
+            {
+                i->messagesIncoming(self);
+            }
+        }
+    }
+
+    static void handleWriteFinished(iAny *, iSocket *sock)
+    {
+        Socket &self = *static_cast<Socket *>(userData_Object(sock));
+        DE_FOR_EACH_OBSERVER(i, self.audienceForAllSent())
+        {
+            i->allSent(self);
+        }
+    }
 };
 
 Socket::Socket() : d(new Impl)
 {
-    d->socket = new QTcpSocket;
-    initialize();
-
-    QObject::connect(d->socket, SIGNAL(connected()), this, SIGNAL(connected()));
+//    initialize();
+//    /QObject::connect(d->socket, SIGNAL(connected()), this, SIGNAL(connected()));
 }
 
-Socket::Socket(Address const &address, TimeSpan timeOut) : d(new Impl) // blocking
+Socket::Socket(Address const &address, const TimeSpan &timeOut) : d(new Impl)
 {
     LOG_AS("Socket");
-
-    d->socket = new QTcpSocket;
-    initialize();
-
-    // Now that the signals have been set...
-    d->socket->connectToHost(address.host(), address.port());
-    if (!d->socket->waitForConnected(int(timeOut.asMilliSeconds())))
+    try
     {
-        QString msg = d->socket->errorString();
-        delete d->socket;
+        open(address);
+        // This semaphore is made available when the connection is open.
+        if (!d->connecting.tryWait(timeOut))
+        {
+            /// @throw ConnectionError  Connection timed out.
+            throw ConnectionError("Socket", "Timeout trying to connect to " + address.asText());
+        }
+    }
+    catch (...)
+    {
         d.reset();
-
-        // Timed out!
-        /// @throw ConnectionError Connection did not open in time.
-        throw ConnectionError("Socket", "Opening the connection to " + address.asText() + " failed: " + msg);
+        throw;
     }
 
-    LOG_NET_NOTE("Connection opened to %s") << address.asText();
+    //LOG_NET_NOTE("Connection opened to %s") << address.asText();
 
-    d->peer = address;
+//    d->peer = address;
 
-    DE_ASSERT(d->socket->isOpen() && d->socket->isWritable() &&
-                 d->socket->state() == QAbstractSocket::ConnectedState);
+//    DE_ASSERT(d->socket->isOpen() && d->socket->isWritable() &&
+//                 d->socket->state() == QAbstractSocket::ConnectedState);
 }
 
 void Socket::open(Address const &address) // non-blocking
 {
     DE_ASSERT(d->socket);
-    DE_ASSERT(d->socket->state() == QAbstractSocket::UnconnectedState);
+//    DE_ASSERT(d->socket->state() == QAbstractSocket::UnconnectedState);
 
     LOG_AS("Socket");
     if (!d->quiet) LOG_NET_MSG("Opening connection to %s") << address.asText();
 
-    d->socket->connectToHost(address.host(), address.port());
     d->peer = address;
+    d->socket.reset(newAddress_Socket(address));
+    initialize();
+
+    // Now that the signals have been set...
+//    d->socket->connectToHost(address.host(), address.port());
+    //if (!d->socket->waitForConnected(int(timeOut.asMilliSeconds())))
+    if (!open_Socket(d->socket))
+    {
+        /// @throw ConnectionError  Error when setting up the socket.
+        throw ConnectionError("Socket", "Failed to open connection to " + address.asText());
+    }
+
+    //d->socket->connectToHost(address.host(), address.port());
+//    d->peer = address;
+//    d->socket.reset(newAddress_Socket(address));
+//    initialize();
+//    open_Socket(d->socket);
 }
 
-void Socket::open(String const &domainNameWithOptionalPort,
-                  duint16 defaultPort) // non-blocking
+void Socket::open(const String &domainNameWithOptionalPort,
+                  duint16       defaultPort) // non-blocking
 {
-    String str = domainNameWithOptionalPort;
+    String  host = domainNameWithOptionalPort;
     duint16 port = defaultPort;
-    if (str.contains(':'))
+
+    if (host.contains(':'))
     {
-        auto pos = str.lastIndexOf(':');
-        port = duint16(str.substr(pos + 1).toInt());
+        auto pos = host.lastIndexOf(':');
+        port = duint16(host.substr(pos + 1).toInt());
         if (!port) port = defaultPort;
-        str = str.left(pos);
+        host.truncate(pos);
     }
-    if (str == "localhost")
-    {
-        open(Address(str.toLatin1(), port));
-        return;
-    }
+//    if (host == "localhost")
+//    {
+//        //open(Address(str.toLatin1(), port));
+//        return;
+//    }
 
-    QHostAddress host(str);
-    if (!host.isNull())
-    {
-        // Looks like a regular IP address.
-        open(Address(str.toLatin1(), port));
-        return;
-    }
+//    QHostAddress host(str);
+//    if (!host.isNull())
+//    {
+//        // Looks like a regular IP address.
+//        open(Address(str.toLatin1(), port));
+//        return;
+//    }
 
-    d->peer.setPort(port);
+//    d->peer.setPort(port);
+
+    iAddress *addr = new_Address();
+    setUserData_Object(addr, this);
+    iConnect(Address, addr, lookupFinished, addr, Impl::handleAddressLookedUp);
+    lookupHostCStr_Address(addr, host, port);
+    d->peer = Address::take(addr);
+
+
 
     // Looks like we will need to look this up.
-    QHostInfo::lookupHost(str, this, SLOT(hostResolved(QHostInfo)));
+//    QHostInfo::lookupHost(str, this, SLOT(hostResolved(QHostInfo)));
 }
 
-void Socket::reconnect()
-{
-    DE_ASSERT(!isOpen());
+//void Socket::reconnect()
+//{
+//    DE_ASSERT(!isOpen());
 
-    open(d->peer);
-}
+//    open(d->peer);
+//}
 
-Socket::Socket(QTcpSocket *existingSocket) : d(new Impl)
+Socket::Socket(iSocket *existingSocket) : d(new Impl)
 {
-    d->socket = existingSocket;
+    d->socket.reset(existingSocket);
     initialize();
 
     // Maybe we missed an earlier signal, since we are only now getting ownership.
-    readIncomingBytes();
+    Impl::handleReadyRead(nullptr, d->socket);
 }
 
 Socket::~Socket()
 {
     close();
-    delete d->socket;
+//    delete d->socket;
 }
 
-void Socket::socketDestroyed()
-{
-    // The socket is gone...
-    d->socket = 0;
-}
+//void Socket::socketDestroyed()
+//{
+//    // The socket is gone...
+//    d->socket.reset();
+//}
 
 void Socket::initialize()
 {
     // Options.
-    d->socket->setSocketOption(QTcpSocket::LowDelayOption, 1); // prefer short buffering
+    //d->socket->setSocketOption(QTcpSocket::LowDelayOption, 1); // prefer short buffering
 
-    QObject::connect(d->socket, SIGNAL(bytesWritten(qint64)), this, SLOT(bytesWereWritten(qint64)));
-    QObject::connect(d->socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
-    QObject::connect(d->socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketError(QAbstractSocket::SocketError)), Qt::DirectConnection);
-    QObject::connect(d->socket, SIGNAL(readyRead()), this, SLOT(readIncomingBytes()));
-    QObject::connect(d->socket, SIGNAL(destroyed()), this, SLOT(socketDestroyed()));
+    setUserData_Object(d->socket, this);
+
+    iConnect(Socket, d->socket, writeFinished, d->socket, Impl::handleWriteFinished);
+    iConnect(Socket, d->socket, error,         d->socket, Impl::handleError);
+    iConnect(Socket, d->socket, connected,     d->socket, Impl::handleConnected);
+    iConnect(Socket, d->socket, disconnected,  d->socket, Impl::handleDisconnected);
+    iConnect(Socket, d->socket, readyRead,     d->socket, Impl::handleReadyRead);
+
+//    QObject::connect(d->socket, SIGNAL(bytesWritten(qint64)), this, SLOT(bytesWereWritten(qint64)));
+//    QObject::connect(d->socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
+//    QObject::connect(d->socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketError(QAbstractSocket::SocketError)), Qt::DirectConnection);
+//    QObject::connect(d->socket, SIGNAL(readyRead()), this, SLOT(readIncomingBytes()));
+//    QObject::connect(d->socket, SIGNAL(destroyed()), this, SLOT(socketDestroyed()));
 
     /*QObject::connect(d->socket, &QAbstractSocket::stateChanged, [] (QAbstractSocket::SocketState state)
     {
@@ -556,23 +676,24 @@ void Socket::close()
 {
     if (!d->socket) return;
 
-    if (d->socket->state() == QAbstractSocket::ConnectedState)
-    {
+//    if (status_Socket(d->socket) == connected_SocketStatus) //d->socket->state() == QAbstractSocket::ConnectedState)
+//    {
         // All pending data will be written to the socket before closing.
-        d->socket->disconnectFromHost();
-    }
-    else
-    {
-        d->socket->abort();
-    }
+//        d->socket->disconnectFromHost();
+    close_Socket(d->socket);
+//    }
+//    else
+//    {
+//        d->socket->abort();
+//    }
 
-    if (d->socket->state() != QAbstractSocket::UnconnectedState)
-    {
-        // Make sure the socket is disconnected before the return.
-        d->socket->waitForDisconnected();
-    }
+//    if (d->socket->state() != QAbstractSocket::UnconnectedState)
+//    {
+//        // Make sure the socket is disconnected before the return.
+//        d->socket->waitForDisconnected();
+//    }
 
-    d->socket->close();
+//    d->socket->close();
 }
 
 void Socket::setQuiet(bool noLogOutput)
@@ -625,7 +746,7 @@ void Socket::send(IByteArray const &packet)
     send(packet, d->activeChannel);
 }
 
-Socket &Socket::operator << (IByteArray const &packet)
+Socket &Socket::operator<<(IByteArray const &packet)
 {
     send(packet, d->activeChannel);
     return *this;
@@ -640,30 +761,12 @@ void Socket::send(IByteArray const &packet, duint /*channel*/)
     }
 
     // Sockets must be used only in their own thread.
-    DE_ASSERT(thread() == QThread::currentThread());
+//    DE_ASSERT(thread() == QThread::currentThread());
 
     d->serializeAndSendMessage(packet);
 }
 
-void Socket::readIncomingBytes()
-{
-    if (!d->socket) return;
-
-    auto available = d->socket->bytesAvailable();
-    if (available > 0)
-    {
-        d->receivedBytes += d->socket->read(d->socket->bytesAvailable());
-    }
-
-    d->deserializeMessages();
-
-    // Notification about available messages.
-    if (!d->receivedMessages.isEmpty())
-    {
-        emit messagesReady();
-    }
-}
-
+/*
 void Socket::hostResolved(QHostInfo const &info)
 {
     if (info.error() != QHostInfo::NoError || info.addresses().isEmpty())
@@ -679,6 +782,7 @@ void Socket::hostResolved(QHostInfo const &info)
         emit addressResolved();
     }
 }
+*/
 
 Message *Socket::receive()
 {
@@ -703,22 +807,24 @@ void Socket::flush()
     if (!d->socket) return;
 
     // Wait until data has been written.
-    d->socket->flush();
-    d->socket->waitForBytesWritten();
+    flush_Socket(d->socket);
+//    d->socket->flush();
+//    d->socket->waitForBytesWritten();
 }
 
 Address Socket::peerAddress() const
 {
-    if (isOpen() && d->socket->state() == QTcpSocket::ConnectedState)
+    if (isOpen() && status_Socket(d->socket) == connected_SocketStatus) // d->socket->state() == QTcpSocket::ConnectedState)
     {
-        return Address(d->socket->peerAddress(), d->socket->peerPort());
+        return Address(address_Socket(d->socket)); //d->socket->peerAddress(), d->socket->peerPort());
     }
     return d->peer;
 }
 
 bool Socket::isOpen() const
 {
-    return d->socket && d->socket->state() != QTcpSocket::UnconnectedState;
+    const auto st = status_Socket(d->socket);
+    return d->socket && (st == connecting_SocketStatus || st == connected_SocketStatus); //d->socket->state() != QTcpSocket::UnconnectedState;
 }
 
 bool Socket::isLocal() const
@@ -726,22 +832,22 @@ bool Socket::isLocal() const
     return peerAddress().isLocal();
 }
 
-void Socket::socketDisconnected()
-{
-    emit disconnected();
-}
+//void Socket::socketDisconnected()
+//{
+//    emit disconnected();
+//}
 
-void Socket::socketError(QAbstractSocket::SocketError socketError)
-{
-    if (socketError != QAbstractSocket::SocketTimeoutError)
-    {
-        LOG_AS("Socket");
-        if (!d->quiet) LOG_NET_WARNING(d->socket->errorString());
+//void Socket::socketError(QAbstractSocket::SocketError socketError)
+//{
+//    if (socketError != QAbstractSocket::SocketTimeoutError)
+//    {
+//        LOG_AS("Socket");
+//        if (!d->quiet) LOG_NET_WARNING(d->socket->errorString());
 
-        emit error(d->socket->errorString());
-        emit disconnected();
-    }
-}
+//        emit error(d->socket->errorString());
+//        emit disconnected();
+//    }
+//}
 
 bool Socket::hasIncoming() const
 {
@@ -750,18 +856,18 @@ bool Socket::hasIncoming() const
 
 dsize Socket::bytesBuffered() const
 {
-    return dsize(d->bytesToBeWritten);
+    return bytesToSend_Socket(d->socket);
 }
 
-void Socket::bytesWereWritten(qint64 bytes)
-{
-    d->bytesToBeWritten -= bytes;
-    DE_ASSERT(d->bytesToBeWritten >= 0);
+//void Socket::bytesWereWritten(qint64 bytes)
+//{
+//    d->bytesToBeWritten -= bytes;
+//    DE_ASSERT(d->bytesToBeWritten >= 0);
 
-    if (d->bytesToBeWritten == 0)
-    {
-        emit allSent();
-    }
-}
+//    if (d->bytesToBeWritten == 0)
+//    {
+//        emit allSent();
+//    }
+//}
 
 } // namespace de

@@ -35,8 +35,15 @@ class Set : public std::unordered_set<Value>
 public:
     Set() {}
 
+    template <typename T>
+    Set(const std::initializer_list<T> &init)
+    {
+        for (const auto &i : init) insert(i);
+    }
+
     using Base::begin;
     using Base::end;
+    using Base::insert;
 
     // Qt style methods:
 

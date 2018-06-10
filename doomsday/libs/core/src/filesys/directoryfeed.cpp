@@ -95,7 +95,7 @@ Feed::PopulatedFiles DirectoryFeed::populate(Folder const &folder)
 
     PopulatedFiles populated;
 
-    cplus::Ref<iDirFileInfo> dirInfo(new_DirFileInfo(_nativePath.toString()));
+    cplus::ref<iDirFileInfo> dirInfo(new_DirFileInfo(_nativePath.toString()));
     iForEach(DirFileInfo, i, dirInfo)
     {
         const String path = path_FileInfo(i.value);
@@ -289,7 +289,7 @@ void DirectoryFeed::changeWorkingDir(NativePath const &nativePath)
 
 File::Status DirectoryFeed::fileStatus(NativePath const &nativePath)
 {
-    cplus::Ref<iFileInfo> info(new_FileInfo(nativePath.toString()));
+    cplus::ref<iFileInfo> info(new_FileInfo(nativePath.toString()));
     if (!exists_FileInfo(info))
     {
         /// @throw StatusError Determining the file status was not possible.

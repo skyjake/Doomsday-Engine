@@ -224,7 +224,7 @@ private:
         Pool() : size(0), rover(0) {}
     };
 
-    const char *advanceToPoolWithSpace(duint minimum);
+    const char *advanceToPoolWithSpace(dsize minimum);
 
     typedef std::vector<Pool> Pools;
     Pools _pools;

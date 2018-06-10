@@ -63,13 +63,14 @@ public:
     };
 
 public:
-    BuiltInExpression();
+    BuiltInExpression() : _type(NONE), _arg(nullptr)
+    {}
 
     BuiltInExpression(Type type, Expression *argument);
 
     ~BuiltInExpression();
 
-    void push(Evaluator &evaluator, Value *scope = 0) const;
+    void push(Evaluator &evaluator, Value *scope = nullptr) const;
 
     Value *evaluate(Evaluator &evaluator) const;
 

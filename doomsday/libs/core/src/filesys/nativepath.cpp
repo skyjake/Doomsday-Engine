@@ -148,7 +148,7 @@ bool NativePath::isAbsolute() const
 
 bool NativePath::isDirectory() const
 {
-    cplus::Ref<iFileInfo> i(new_FileInfo(toString()));
+    cplus::ref<iFileInfo> i(new_FileInfo(toString()));
     return exists_FileInfo(i) && isDirectory_FileInfo(i);
 }
 

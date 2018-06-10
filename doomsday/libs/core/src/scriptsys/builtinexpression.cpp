@@ -35,10 +35,7 @@
 #include "de/Writer"
 #include "de/math.h"
 
-using namespace de;
-
-BuiltInExpression::BuiltInExpression() : _type(NONE), _arg(0)
-{}
+namespace de {
 
 BuiltInExpression::BuiltInExpression(Type type, Expression *argument)
     : _type(type), _arg(argument)
@@ -110,14 +107,16 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
             ns = &args.at(1).as<RecordValue>().dereference();
         }
 
-        ArrayValue *keys = new ArrayValue;
-        auto names = ns->members().keys();
-        qSort(names);
-        for (auto const &name : names)
+        // Compose an alphabetically sorted list of the members.
+        std::unique_ptr<ArrayValue> keys(new ArrayValue);
+        StringList names = map<StringList>(
+            ns->members(), [](const std::pair<String, Variable *> &v) { return v.first; });
+        names.sort();
+        for (const auto &name : names)
         {
             *keys << new TextValue(name);
         }
-        return keys;
+        return keys.release();
     }
 
     case RECORD_MEMBERS:
@@ -142,15 +141,15 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
             for (Record::Members::const_iterator i = rec->dereference().members().begin();
                 i != rec->dereference().members().end(); ++i)
             {
-                dict->add(new TextValue(i.key()), new RefValue(i.value()));
+                dict->add(new TextValue(i->first), new RefValue(i->second));
             }
         }
         else
         {
             Record::Subrecords subs = rec->dereference().subrecords();
-            DE_FOR_EACH(Record::Subrecords, i, subs)
+            for (const auto &i : subs)
             {
-                dict->add(new TextValue(i.key()), new RecordValue(i.value()));
+                dict->add(new TextValue(i.first), new RecordValue(i.second));
             }
         }
         return dict;
@@ -335,9 +334,9 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         return new TextValue(args.at(1).typeId());
 
     default:
-        DE_ASSERT(false);
+        DE_ASSERT_FAIL("BuiltInExpression: invalid type");
     }
-    return NULL;
+    return nullptr;
 }
 
 void BuiltInExpression::operator >> (Writer &to) const
@@ -366,11 +365,11 @@ void BuiltInExpression::operator << (Reader &from)
     from >> t;
     _type = Type(t);
     delete _arg;
-    _arg = 0;
+    _arg = nullptr;
     _arg = Expression::constructFrom(from);
 }
 
-static QHash<String, BuiltInExpression::Type> const types {
+static const Hash<String, BuiltInExpression::Type> types {
     { "File",        BuiltInExpression::AS_FILE },
     { "Number",      BuiltInExpression::AS_NUMBER },
     { "Record",      BuiltInExpression::AS_RECORD },
@@ -392,19 +391,21 @@ static QHash<String, BuiltInExpression::Type> const types {
     { "typeof",      BuiltInExpression::TYPE_OF },
 };
 
-BuiltInExpression::Type BuiltInExpression::findType(String const &identifier)
+BuiltInExpression::Type BuiltInExpression::findType(const String &identifier)
 {
     auto found = types.find(identifier);
-    if (found != types.end()) return found.value();
+    if (found != types.end()) return found->second;
     return NONE;
 }
 
 StringList BuiltInExpression::identifiers()
 {
     StringList names;
-    foreach (auto const &t, types.keys())
+    for (const auto &t : types)
     {
-        names << t;
+        names << t.first;
     }
     return names;
 }
+
+} // namespace de

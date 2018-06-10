@@ -138,7 +138,7 @@ DE_PIMPL(Widget)
         {
             i->widgetChildAdded(*child);
         }
-        DE_FOR_EACH_OBSERVER(ParentChangeAudience, i, child->audienceForParentChange())
+        DE_FOR_EACH_OBSERVER(i, child->audienceForParentChange())
         {
             i->widgetParentChanged(*child, 0, thisPublic);
         }
@@ -456,7 +456,7 @@ Widget *Widget::remove(Widget &child)
     {
         i->widgetChildRemoved(child);
     }
-    DE_FOR_EACH_OBSERVER(ParentChangeAudience, i, child.audienceForParentChange())
+    DE_FOR_EACH_OBSERVER(i, child.audienceForParentChange())
     {
         i->widgetParentChanged(child, this, 0);
     }

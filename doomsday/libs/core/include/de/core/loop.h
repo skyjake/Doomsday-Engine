@@ -79,7 +79,7 @@ public:
      * Calls a function in the main thread. If the current thread is the main thread,
      * the function is called immediately. Otherwise a loop callback is enqueued.
      */
-    static void mainCall(std::function<void ()> func);
+    static void mainCall(const std::function<void ()> &func);
 
     /**
      * Registers a new single-shot timer that will do a callback.
@@ -87,7 +87,7 @@ public:
      * @param delay  Time to wait before calling.
      * @param func   Callback to call.
      */
-    static void timer(TimeSpan const &delay, std::function<void ()> func);
+    static void timer(TimeSpan const &delay, const std::function<void ()> &func);
 
     static Loop &get();
 

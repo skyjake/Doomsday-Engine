@@ -196,9 +196,9 @@ static Value *Function_Folder_List(Context &ctx, Function::ArgumentValues const 
 {
     Folder const &folder = constFileInstance(ctx).as<Folder>();
     std::unique_ptr<ArrayValue> array(new ArrayValue);
-    foreach (String name, folder.contents().keys())
+    for (const auto &i : folder.contents())
     {
-        *array << new TextValue(name);
+        *array << new TextValue(i.first);
     }
     return array.release();
 }
@@ -260,10 +260,10 @@ static Value *Function_Animation_SetValue(Context &ctx, Function::ArgumentValues
 
 static Value *Function_Animation_SetValueFrom(Context &ctx, Function::ArgumentValues const &args)
 {
-    animationInstance(ctx).setValueFrom(args.at(0)->asNumber(),    // fromValue
-                                        args.at(1)->asNumber(),    // toValue
-                                        args.at(2)->asNumber(),    // span
-                                        args.at(3)->asNumber());   // delay
+    animationInstance(ctx).setValueFrom(float(args.at(0)->asNumber()), // fromValue
+                                        float(args.at(1)->asNumber()), // toValue
+                                        args.at(2)->asNumber(),        // span
+                                        args.at(3)->asNumber());       // delay
     return nullptr;
 }
 

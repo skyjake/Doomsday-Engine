@@ -269,6 +269,7 @@ public:
     String        remove(BytePos count) const { return substr(count); }
     String        remove(CharPos count) const { return substr(count); }
     void          remove(BytePos start, dsize count);
+    void          truncate(BytePos pos);
     List<String>  split(const char *separator) const;
     List<String>  split(Char ch) const;
     List<String>  split(const String &separator) const { return split(separator.c_str()); }
@@ -501,7 +502,9 @@ public:
      */
     duint32 toUInt32(bool *ok = nullptr, int base = 0) const;
 
-    long toLong(bool *ok = nullptr, int base = 0) const;
+    long    toLong(bool *ok = nullptr, int base = 0) const;
+    dfloat  toFloat() const;
+    ddouble toDouble() const;
 
     /**
      * Adds a prefix to each line in the text.
@@ -548,7 +551,7 @@ public:
             next_StringConstIterator(&iter);
             return prior;
         }
-        const_iterator operator+(int count)
+        const_iterator operator+(int count) const
         {
             const_iterator i = *this;
             while (count-- > 0) i++;
@@ -770,7 +773,8 @@ struct DE_PUBLIC mb_iterator
     Char operator*() const;
     mb_iterator &operator++();
     mb_iterator operator++(int);
-    mb_iterator operator+(int byteOffset) const { return i + byteOffset; }
+    mb_iterator operator+(int offset) const;
+    mb_iterator &operator+=(int offset);
     bool operator==(const char *ptr) const { return i == ptr; }
     bool operator==(const mb_iterator &other) const { return i == other.i; }
     bool operator!=(const mb_iterator &other) const { return !(*this == other); }

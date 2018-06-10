@@ -210,6 +210,13 @@ void Block::operator<<(Reader &from)
     from.readBytes(size, *this);
 }
 
+Block Block::take(iBlock *b)
+{
+    Block block(b);
+    delete_Block(b);
+    return b;
+}
+
 Block &Block::operator+=(const Block &other)
 {
     append_Block(&_block, other);

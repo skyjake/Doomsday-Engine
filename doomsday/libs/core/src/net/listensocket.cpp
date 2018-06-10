@@ -28,7 +28,7 @@ namespace de {
 
 DE_PIMPL(ListenSocket)
 {
-    cplus::Ref<iService> service;
+    cplus::ref<iService> service;
     duint16 port{0};
     LockableT<List<iSocket *>> incoming; ///< Incoming connections.
 
@@ -46,7 +46,7 @@ DE_PIMPL(ListenSocket)
             DE_GUARD_FOR(d->incoming, _);
             d->incoming.value << sock;
         }
-        DE_FOR_EACH_OBSERVER(IncomingAudience, i, d->self().audienceForIncoming())
+        DE_FOR_EACH_OBSERVER(i, d->self().audienceForIncoming())
         {
             i->incomingConnection(d->self());
         }

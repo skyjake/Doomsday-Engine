@@ -224,6 +224,11 @@ void String::remove(BytePos start, dsize count)
     remove_Block(&_str.chars, start.index, count);
 }
 
+void String::truncate(String::BytePos pos)
+{
+    truncate_Block(&_str.chars, pos.index);
+}
+
 List<String> String::split(const char *separator) const
 {
     List<String> parts;
@@ -740,9 +745,19 @@ duint32 String::toUInt32(bool *ok, int base) const
 
 long String::toLong(bool *ok, int base) const
 {
-    long value = strtol(*this, nullptr, base);
+    long value = std::strtol(*this, nullptr, base);
     if (ok) *ok = (errno != ERANGE);
     return value;
+}
+
+dfloat String::toFloat() const
+{
+    return std::strtof(*this, nullptr);
+}
+
+ddouble String::toDouble() const
+{
+    return std::strtod(*this, nullptr);
 }
 
 String String::addLinePrefix(const String &prefix) const
@@ -1030,6 +1045,18 @@ mb_iterator mb_iterator::operator++(int)
     mb_iterator i = *this;
     ++(*this);
     return i;
+}
+
+mb_iterator mb_iterator::operator+(int offset) const
+{
+    mb_iterator i = *this;
+    return i += offset;
+}
+
+mb_iterator &mb_iterator::operator+=(int offset)
+{
+    while (offset-- > 0) ++(*this);
+    return *this;
 }
 
 //size_t qchar_strlen(Char const *str)

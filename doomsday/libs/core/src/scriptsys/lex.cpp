@@ -60,7 +60,7 @@ bool Lex::atCommentStart() const
         if (!(_mode & DoubleCharComment)) return true;
         if (_state.pos.bytePos() >= _input->sizeb() - 1) return false;
 
-        Char const d = *(_state.pos + 1);
+        const Char d = *(_state.pos + 1);
         if (d == _lineCommentChar || d == _multiCommentChar)
         {
             return true;
@@ -207,7 +207,7 @@ duint Lex::countLineStartSpace() const
 bool Lex::parseLiteralNumber(Char c, TokenBuffer &output)
 {
     if ((c == '.' && isNumeric(peek())) ||
-        (_mode & NegativeNumbers) && c == '-' && isNumeric(peek())) ||
+        (_mode.testFlag(NegativeNumbers) && c == '-' && isNumeric(peek())) ||
         isNumeric(c))
     {
         if (c == '-')

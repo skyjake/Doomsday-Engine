@@ -58,6 +58,7 @@ public:
     int      size() const { return int(Base::size()); }
     void     clear() { Base::clear(); }
     bool     isEmpty() const { return Base::size() == 0; }
+    inline explicit operator bool() const { return !isEmpty(); }
     void     append(const T &v) { push_back(v); }
     void     append(const List &list) { for (const T &v : list) push_back(v); }
     void     prepend(const T &v) { Base::insert(begin(), v); }
@@ -90,6 +91,8 @@ public:
         Base::push_back(value);
         return *this;
     }
+
+    void sort() { std::sort(begin(), end()); }
 };
 
 } // namespace de

@@ -33,7 +33,12 @@ class Hash : public std::unordered_map<Key, Value>
     using Base = std::unordered_map<Key, Value>;
 
 public:
-    Hash();
+    Hash() {}
+
+    Hash(const std::initializer_list<typename Base::value_type> &init)
+    {
+        for (const auto &v : init) insert(v);
+    }
 
     using Base::empty;
 

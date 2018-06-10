@@ -115,7 +115,8 @@
  * @param Var      Variable used in the loop.
  * @param Name     Name of the observer set.
  */
-#define DE_FOR_EACH_OBSERVER(SetName, Var, Name) for (SetName::Loop Var(Name); !Var.done(); ++Var)
+#define DE_FOR_EACH_OBSERVER(Var, Name) for (std::remove_reference<decltype(Name)>::type::Loop Var(Name); !Var.done(); ++Var)
+
 
 /**
  * Macro for looping through the audience members.
@@ -124,10 +125,10 @@
  * @param Var   Variable used in the loop.
  */
 #define DE_FOR_AUDIENCE(Name, Var) \
-    DE_FOR_EACH_OBSERVER(Name##Audience, Var, audienceFor##Name)
+    DE_FOR_EACH_OBSERVER(Var, audienceFor##Name)
 
 #define DE_FOR_AUDIENCE2(Name, Var) \
-    DE_FOR_EACH_OBSERVER(Name##Audience, Var, audienceFor##Name())
+    DE_FOR_EACH_OBSERVER(Var, audienceFor##Name())
 
 /**
  * Macro for looping through the public audience members from inside a private
@@ -137,10 +138,10 @@
  * @param Var   Variable used in the loop.
  */
 #define DE_FOR_PUBLIC_AUDIENCE(Name, Var) \
-    DE_FOR_EACH_OBSERVER(Name##Audience, Var, self().audienceFor##Name)
+    DE_FOR_EACH_OBSERVER(Var, self().audienceFor##Name)
 
 #define DE_FOR_PUBLIC_AUDIENCE2(Name, Var) \
-    DE_FOR_EACH_OBSERVER(Name##Audience, Var, self().audienceFor##Name())
+    DE_FOR_EACH_OBSERVER(Var, self().audienceFor##Name())
 
 namespace de {
 
@@ -235,12 +236,16 @@ public:
      * notifying observers, because it is safe against the observer removing
      * itself from the observer set, or the set itself being destroyed.
      */
-    class Loop : public PointerSet::IIterationObserver {
+    class Loop : public PointerSet::IIterationObserver
+    {
     public:
-        Loop(Observers const &observers) : _audience(&observers)
-                                         , _prevObserver(nullptr) {
+        Loop(Observers const &observers)
+            : _audience(&observers)
+            , _prevObserver(nullptr)
+        {
             DE_GUARD(_audience);
-            if (members().flags() & PointerSet::AllowInsertionDuringIteration) {
+            if (members().flags() & PointerSet::AllowInsertionDuringIteration)
+            {
                 _prevObserver = members().iterationObserver();
                 members().setIterationObserver(this);
             }
@@ -248,54 +253,56 @@ public:
             _next = members().begin();
             next();
         }
-        virtual ~Loop() {
+        virtual ~Loop()
+        {
             DE_GUARD(_audience);
             members().setBeingIterated(false);
-            if (members().flags() & PointerSet::AllowInsertionDuringIteration) {
+            if (members().flags() & PointerSet::AllowInsertionDuringIteration)
+            {
                 members().setIterationObserver(_prevObserver);
             }
         }
-        bool done() const {
-            return _current >= members().end();
-        }
-        void next() {
+        bool done() const { return _current >= members().end(); }
+        void next()
+        {
             _current = _next;
-            if (_current < members().begin()) {
+            if (_current < members().begin())
+            {
                 _current = members().begin();
                 if (_next < _current) _next = _current;
             }
-            if (_next < members().end()) {
+            if (_next < members().end())
+            {
                 ++_next;
             }
         }
-        const_iterator const &get() const {
-            return _current;
-        }
-        Type *operator->() const {
-            return *get();
-        }
-        Loop &operator++() {
+        const_iterator const &get() const { return _current; }
+        Type *operator->() const { return *get(); }
+        Loop &operator++()
+        {
             next();
             return *this;
         }
         void pointerSetIteratorsWereInvalidated(PointerSet::Pointer const *oldBase,
-                                                PointerSet::Pointer const *newBase) override {
-            if (_prevObserver) {
+                                                PointerSet::Pointer const *newBase) override
+        {
+            if (_prevObserver)
+            {
                 _prevObserver->pointerSetIteratorsWereInvalidated(oldBase, newBase);
             }
             _current = reinterpret_cast<const_iterator>(newBase) +
                        (_current - reinterpret_cast<const_iterator>(oldBase));
-            _next    = reinterpret_cast<const_iterator>(newBase) +
-                       (_next    - reinterpret_cast<const_iterator>(oldBase));
+            _next = reinterpret_cast<const_iterator>(newBase) +
+                    (_next - reinterpret_cast<const_iterator>(oldBase));
         }
+
     private:
-        inline Members const &members() const {
-            return _audience->_members;
-        }
-        Observers const *_audience;
+        inline Members const &members() const { return _audience->_members; }
+
+        Observers const *               _audience;
         PointerSet::IIterationObserver *_prevObserver;
-        const_iterator _current;
-        const_iterator _next;
+        const_iterator                  _current;
+        const_iterator                  _next;
     };
 
     friend class Loop;
@@ -303,27 +310,29 @@ public:
 public:
     Observers() {}
 
-    Observers(Observers<Type> const &other) {
-        *this = other;
-    }
+    Observers(Observers<Type> const &other) { *this = other; }
 
-    virtual ~Observers() {
+    virtual ~Observers()
+    {
         _disassociateAllMembers();
         DE_GUARD(this);
     }
 
-    void clear() {
+    void clear()
+    {
         DE_GUARD(this);
         _disassociateAllMembers();
         _members.clear();
     }
 
-    Observers<Type> &operator = (Observers<Type> const &other) {
+    Observers<Type> &operator=(Observers<Type> const &other)
+    {
         if (this == &other) return *this;
         DE_GUARD(other);
         DE_GUARD(this);
         _members = other._members;
-        for (Type *observer : _members) {
+        for (Type *observer : _members)
+        {
             observer->addMemberOf(*this);
         }
         return *this;
@@ -331,71 +340,82 @@ public:
 
     /// Add an observer into the set. The set does not receive
     /// ownership of the observer instance.
-    void add(Type *observer) {
+    void add(Type *observer)
+    {
         _add(observer);
         observer->addMemberOf(*this);
     }
 
-    Observers<Type> &operator += (Type *observer) {
+    Observers<Type> &operator+=(Type *observer)
+    {
         add(observer);
         return *this;
     }
 
-    Observers<Type> &operator += (Type &observer) {
+    Observers<Type> &operator+=(Type &observer)
+    {
         add(&observer);
         return *this;
     }
 
-    Observers<Type> const &operator += (Type const *observer) const {
+    Observers<Type> const &operator+=(Type const *observer) const
+    {
         const_cast<Observers<Type> *>(this)->add(const_cast<Type *>(observer));
         return *this;
     }
 
-    Observers<Type> const &operator += (Type const &observer) const {
+    Observers<Type> const &operator+=(Type const &observer) const
+    {
         const_cast<Observers<Type> *>(this)->add(const_cast<Type *>(&observer));
         return *this;
     }
 
-    void remove(Type *observer) {
+    void remove(Type *observer)
+    {
         _remove(observer);
         observer->removeMemberOf(*this);
     }
 
-    Observers<Type> &operator -= (Type *observer) {
+    Observers<Type> &operator-=(Type *observer)
+    {
         remove(observer);
         return *this;
     }
 
-    Observers<Type> &operator -= (Type &observer) {
+    Observers<Type> &operator-=(Type &observer)
+    {
         remove(&observer);
         return *this;
     }
 
-    Observers<Type> const &operator -= (Type *observer) const {
+    Observers<Type> const &operator-=(Type *observer) const
+    {
         const_cast<Observers<Type> *>(this)->remove(observer);
         return *this;
     }
 
-    Observers<Type> const &operator -= (Type &observer) const {
+    Observers<Type> const &operator-=(Type &observer) const
+    {
         const_cast<Observers<Type> *>(this)->remove(&observer);
         return *this;
     }
 
-    size_type size() const {
+    size_type size() const
+    {
         DE_GUARD(this);
         return _members.size();
     }
 
-    inline bool isEmpty() const {
-        return size() == 0;
-    }
+    inline bool isEmpty() const { return size() == 0; }
 
-    bool contains(Type const *observer) const {
+    bool contains(Type const *observer) const
+    {
         DE_GUARD(this);
         return _members.contains(const_cast<Type *>(observer));
     }
 
-    bool contains(Type const &observer) const {
+    bool contains(Type const &observer) const
+    {
         DE_GUARD(this);
         return _members.contains(const_cast<Type *>(&observer));
     }
@@ -407,7 +427,8 @@ public:
      *
      * @param yes  @c true to allow additions, @c false to deny.
      */
-    void setAdditionAllowedDuringIteration(bool yes) {
+    void setAdditionAllowedDuringIteration(bool yes)
+    {
         DE_GUARD(this);
         _members.setFlags(Members::AllowInsertionDuringIteration, yes);
     }
@@ -417,19 +438,23 @@ public:
     void removeMember(ObserverBase *member) { _remove(static_cast<Type *>(member)); }
 
 private:
-    void _disassociateAllMembers() {
-        for (Type *observer : _members) {
+    void _disassociateAllMembers()
+    {
+        for (Type *observer : _members)
+        {
             observer->removeMemberOf(*this);
         }
     }
 
-    void _add(Type *observer) {
+    void _add(Type *observer)
+    {
         DE_GUARD(this);
         DE_ASSERT(observer != 0);
         _members.insert(observer);
     }
 
-    void _remove(Type *observer) {
+    void _remove(Type *observer)
+    {
         DE_GUARD(this);
         _members.remove(observer);
     }

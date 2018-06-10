@@ -94,8 +94,8 @@ public:
     const Byte *cdata() const;
     inline const Byte *constData() const { return cdata(); }
 
-    bool empty() const { return size() == 0; }
-    bool isEmpty() const { return size() == 0; }
+    inline bool empty() const { return size() == 0; }
+    inline bool isEmpty() const { return size() == 0; }
 
     Block &append(Byte b);
     Block &append(const char *str, int len);
@@ -129,9 +129,9 @@ public:
 
     Block &operator=(const IByteArray &byteArray);
 
-    Block compressed(int level = -1) const;
-    Block decompressed() const;
-    Block md5Hash() const;
+    Block  compressed(int level = -1) const;
+    Block  decompressed() const;
+    Block  md5Hash() const;
     String asHexadecimalText() const;
 
     /**
@@ -220,6 +220,7 @@ public:
     const_iterator end() const   { return {data() + size()}; }
 
 public:
+    static Block take(iBlock *b);
     static Block join(const List<Block> &blocks, const Block &sep = Block());
     static Block readAll(std::istream &is);
 

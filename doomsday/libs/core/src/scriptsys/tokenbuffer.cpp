@@ -41,22 +41,26 @@ const char *Token::SEMICOLON         = ";";
 
 bool Token::equals(const char *str) const
 {
-    return cmpCStrSc_Rangecc(&_token, str, &iCaseSensitive) == 0;
+    const iRangecc r{_token.start, _token.end};
+    return cmpCStrSc_Rangecc(&r, str, &iCaseSensitive) == 0;
 }
 
 bool Token::beginsWith(const char *str) const
 {
-    return startsWithSc_Rangecc(&_token, str, &iCaseSensitive) == 0;
+    const iRangecc r{_token.start, _token.end};
+    return startsWithSc_Rangecc(&r, str, &iCaseSensitive) == 0;
 }
 
 void Token::appendChar(Char c)
 {
     iMultibyteChar mb;
     init_MultibyteChar(&mb, c);
+    char *end = const_cast<char *>(_token.end);
     for (const char *i = mb.bytes; *i; ++i)
     {
-        *_end++ = *i;
+        *end++ = *i;
     }
+    _token.end = end;
 }
 
 String Token::asText() const
@@ -78,8 +82,8 @@ String Token::unescapeStringLiteral() const
     String os;
     bool escaped = false;
 
-    const char *begin = _begin;
-    const char *end   = _end;
+    const char *begin = _token.start;
+    const char *end   = _token.end;
 
     // A long string?
     if (_type == LITERAL_STRING_LONG)
@@ -95,7 +99,7 @@ String Token::unescapeStringLiteral() const
         --end;
     }
 
-    for (const char *ptr = begin; ptr != end; ++ptr)
+    for (mb_iterator ptr = begin; ptr != end; ++ptr)
     {
         if (escaped)
         {
@@ -143,8 +147,8 @@ String Token::unescapeStringLiteral() const
             }
             else if (*ptr == 'x' && (end - ptr > 2))
             {
-                String num(const_cast<const char *>(ptr + 1), 2);
-                c = Char(num.toInt(0, 16));
+                const String num(ptr + 1, ptr + 3);
+                c = Char(strtoul(num, nullptr, 16));
                 ptr += 2;
             }
             else
@@ -168,7 +172,7 @@ String Token::unescapeStringLiteral() const
     }
     DE_ASSERT(!escaped);
 
-    return os.str();
+    return os;
 }
 
 bool Token::isInteger() const
@@ -195,20 +199,20 @@ bool Token::isFloat() const
 
 ddouble Token::toNumber() const
 {
-    const String string = str();
-    if (string.beginsWith("0x") || string.beginsWith("0X"))
+    const String s = str();
+    if (s.beginsWith("0x") || s.beginsWith("0X"))
     {
-        return ddouble(string.toLongLong(0, 16));
+        return ddouble(strtoull(s, nullptr, 16));
     }
     else
     {
-        return string.toDouble();
+        return s.toDouble();
     }
 }
 
 dint64 Token::toInteger() const
 {
-    return str().toLongLong(nullptr, 0);
+    return strtoll(str(), nullptr, 0);
 }
 
 ddouble Token::toDouble() const
@@ -218,7 +222,7 @@ ddouble Token::toDouble() const
 
 //---------------------------------------------------------------------------------------
 
-TokenBuffer::TokenBuffer() : _forming(0), _formPool(0)
+TokenBuffer::TokenBuffer() : _forming(nullptr), _formPool(0)
 {}
 
 TokenBuffer::~TokenBuffer()
@@ -238,7 +242,7 @@ void TokenBuffer::clear()
     _formPool = 0;
 }
 
-const char *TokenBuffer::advanceToPoolWithSpace(duint minimum)
+const char *TokenBuffer::advanceToPoolWithSpace(dsize minimum)
 {
     for (;; ++_formPool)
     {
@@ -261,7 +265,7 @@ const char *TokenBuffer::advanceToPoolWithSpace(duint minimum)
         // Can we resize this pool?
         if (!fp.rover)
         {
-            fp.size = max(POOL_SIZE + minimum, 2 * minimum);
+            fp.size = std::max(POOL_SIZE + minimum, 2 * minimum);
             fp.chars.resize(fp.size);
             return fp.chars.data();
         }
@@ -285,7 +289,7 @@ void TokenBuffer::newToken(duint line)
 
 void TokenBuffer::appendChar(Char c)
 {
-    DE_ASSERT(_forming != 0);
+    DE_ASSERT(_forming);
 
     // There is room for at least one character available in the pool.
     _forming->appendChar(c);
@@ -299,14 +303,14 @@ void TokenBuffer::appendChar(Char c)
         // The pool is full. Find a new pool and move the token.
         const String tok = _forming->str();
         const char *newBegin = advanceToPoolWithSpace(tok.size());
-        std::memmove(newBegin, tok.data(), tok.size());
+        std::memmove(const_cast<char *>(newBegin), tok.data(), tok.size());
         *_forming = Token(newBegin, newBegin + tok.size(), _forming->line());
     }
 }
 
 void TokenBuffer::setType(Token::Type type)
 {
-    DE_ASSERT(_forming != 0);
+    DE_ASSERT(_forming);
     _forming->setType(type);
 }
 
@@ -317,7 +321,7 @@ void TokenBuffer::endToken()
         // Update the pool.
         _pools[_formPool].rover += _forming->size();
 
-        _forming = 0;
+        _forming = nullptr;
     }
 }
 
