@@ -220,11 +220,12 @@ public:
     static duint64 sentBytes();
     static double  outputBytesPerSecond();
 
-    DE_DEFINE_AUDIENCE2(Resolved, void addressResolved(Socket &))
-    DE_DEFINE_AUDIENCE2(Connect,  void socketConnected(Socket &, bool isConnected))
-    DE_DEFINE_AUDIENCE2(Ready,    void messagesReady(Socket &))
-    DE_DEFINE_AUDIENCE2(Error,    void error(Socket &, const String &errorMessage))
-    DE_DEFINE_AUDIENCE2(AllSent,  void allSent(Socket &))
+    enum SocketState { AddressResolved, Disconnected, Connected };
+
+    DE_DEFINE_AUDIENCE2(StateChange, void socketStateChanged(Socket &, SocketState state))
+    DE_DEFINE_AUDIENCE2(Message,     void messagesIncoming(Socket &))
+    DE_DEFINE_AUDIENCE2(AllSent,     void allSent(Socket &))
+    DE_DEFINE_AUDIENCE2(Error,       void error(Socket &, const String &errorMessage))
 
 //public slots:
 //    void socketDisconnected();

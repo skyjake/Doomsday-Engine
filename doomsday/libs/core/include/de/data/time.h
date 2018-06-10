@@ -280,26 +280,6 @@ public:
     String asText(const char *format) const;
 
     /**
-     * Parses a text string into a Time.
-     *
-     * @param text    Text that contains a date and/or time.
-     * @param format  Format of the text string.
-     *
-     * @return Time that corresponds @a text.
-     */
-    static Time fromText(String const &text, Format format = ISOFormat);
-
-    /*
-     * Converts the time to a QDateTime.
-     */
-//    QDateTime &asDateTime();
-
-    /*
-     * Converts the time to a QDateTime.
-     */
-//    QDateTime const &asDateTime() const;
-
-    /**
      * Converts the time into a Date.
      */
     Date asDate() const;
@@ -325,6 +305,18 @@ public:
     static Time currentHighPerformanceTime();
 
     static void updateCurrentHighPerformanceTime();
+
+    /**
+     * Parses a text string into a Time.
+     *
+     * @param text    Text that contains a date and/or time.
+     * @param format  Format of the text string.
+     *
+     * @return Time that corresponds @a text.
+     */
+    static Time fromText(String const &text, Format format = ISOFormat);
+
+    static Time parse(const String &text, const char *format);
 
 private:
     DE_PRIVATE(d)

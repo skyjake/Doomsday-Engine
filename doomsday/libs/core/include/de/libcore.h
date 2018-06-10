@@ -812,6 +812,7 @@ class Flags
 public:
     inline Flags(uint32_t flags = 0) : _flg(flags) {}
     inline Flags(const Flags &other) : _flg(other._flg) {}
+    inline Flags &operator=(const Flags &other) { _flg = other._flg; return *this; }
 
     inline operator uint32_t() const { return _flg; }
 

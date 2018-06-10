@@ -22,15 +22,14 @@
 #include "de/Date"
 #include "de/HighPerformanceTimer"
 #include "de/Reader"
-#include "de/String"
+#include "de/CString"
 #include "de/Thread"
 #include "de/Writer"
 
 #include <ctime>
+#include <sstream>
 
 namespace de {
-
-//static const char *ISO_FORMAT = "yyyy-MM-dd hh:mm:ss.zzz";
 
 static HighPerformanceTimer &highPerfTimer()
 {
@@ -102,16 +101,25 @@ DE_PIMPL_NOREF(Time)
         , highPerfElapsed(highPerfTimer().elapsed())
     {}
 
-    Impl(const TimePoint &tp) : flags(SysTime), sysTime(tp) {}
+    Impl(const TimePoint &tp) : flags(tp != TimePoint() ? SysTime : 0), sysTime(tp) {}
 
-    Impl(Span const &span) : flags(HighPerformance), highPerfElapsed(span) {}
+    Impl(int) {} // invalid time
 
-    Impl(Impl const &other)
-        : de::IPrivate()
-        , flags(other.flags)
+    Impl(const Span &span) : flags(HighPerformance), highPerfElapsed(span) {}
+
+    Impl(const Impl &other)
+        : flags(other.flags)
         , sysTime(other.sysTime)
         , highPerfElapsed(other.highPerfElapsed)
     {}
+
+    Impl &operator=(const Impl &other)
+    {
+        flags = other.flags;
+        sysTime = other.sysTime;
+        highPerfElapsed = other.highPerfElapsed;
+        return *this;
+    }
 
     bool isValid() const
     {
@@ -137,7 +145,8 @@ DE_PIMPL_NOREF(Time)
          * @todo Implement needed conversion to compare DateTime with high
          * performance delta time.
          */
-        DE_ASSERT(false);
+        DE_ASSERT_FAIL("Time: Implement needed conversion to compare DateTime with high "
+                       "performance delta time");
         return false;
     }
 
@@ -154,14 +163,14 @@ DE_PIMPL_NOREF(Time)
         if (flags & SysTime)
         {
             // This is DateTime but other is high-perf.
-            DE_ASSERT(false);
+            DE_ASSERT_FAIL("[Time::isEqualTo] This is SysTime but other is high-perf");
 //            return fequal(highPerfTimer().startedAt().asDateTime().msecsTo(dateTime)/1000.0,
 //                          other.highPerfElapsed);
         }
         if (flags & HighPerformance)
         {
             // This is high-perf and the other is DateTime.
-            DE_ASSERT(false);
+            DE_ASSERT_FAIL("[Time::isEqualTo] This is high-perf and the other is SysTime");
 
 //            return fequal(highPerfElapsed,
 //                          highPerfTimer().startedAt().asDateTime().msecsTo(other.dateTime)/1000.0);
@@ -197,7 +206,7 @@ DE_PIMPL_NOREF(Time)
          * @todo Implement needed conversion to compare DateTime with high
          * performance delta time.
          */
-        DE_ASSERT(false);
+        DE_ASSERT(0);
         return 0;
     }
 
@@ -238,7 +247,7 @@ DE_PIMPL_NOREF(Time)
     {
         Date date(time);
         uint32_t julianDay = date.julianDayNumber();
-        uint32_t msecs = (date.seconds() + date.minutes() * 60 + date.hours() * 3600) * 1000;
+        uint32_t msecs = uint32_t((date.seconds() + date.minutes() * 60 + date.hours() * 3600) * 1000);
         uint32_t utfOffset = 0;
 
         Block bytes;
@@ -285,12 +294,12 @@ Time::Time(iTime time) : d(new Impl)
 }
 
 Time::Time(TimeSpan const &highPerformanceDelta)
-    : ISerializable(), d(new Impl(highPerformanceDelta))
+    : d(new Impl(highPerformanceDelta))
 {}
 
 Time Time::invalidTime()
 {
-    return Time(TimePoint());
+    return Time(0);
 }
 
 Time &Time::operator = (Time const &other)
@@ -464,6 +473,100 @@ static int parseMonth(const String &shortName)
     return 0;
 }
 
+Time Time::parse(const String &text, const char *format) // static
+{
+    const Date currentDate = Date::currentDate();
+
+    int year = 0, month = 0, day = 0, hour = 0, minute = 0;
+
+    const CString fmt{format};
+    const char *pos = fmt.begin();
+    const char *end = fmt.end();
+    std::istringstream is(text.strip());
+    while (pos != end)
+    {
+        if (!iCmpStrN(pos, "yyyy", 4))
+        {
+            pos += 4;
+            is >> year;
+        }
+        else if (!iCmpStrN(pos, "yy", 2))
+        {
+            pos += 2;
+            is >> year;
+            year += (year >= 70 ? 1900 : 2000);
+        }
+        else if (!iCmpStrN(pos, "MMM", 3))
+        {
+            char name[4]{};
+            pos += 3;
+            is >> name[0] >> name[1] >> name[2];
+            if (is.fail()) return Time::invalidTime();
+            month = parseMonth(name);
+            if (!month) return Time::invalidTime();
+        }
+        else if (!iCmpStrN(pos, "MM", 2))
+        {
+            pos += 2;
+            is >> month;
+        }
+        else if (!iCmpStrN(pos, "M", 1))
+        {
+            pos += 1;
+            is >> month;
+        }
+        else if (!iCmpStrN(pos, "dd", 2))
+        {
+            pos += 2;
+            is >> day;
+        }
+        else if (!iCmpStrN(pos, "d", 1))
+        {
+            pos += 1;
+            is >> day;
+        }
+        else if (!iCmpStrN(pos, "hh", 2))
+        {
+            pos += 2;
+            is >> hour;
+        }
+        else if (!iCmpStrN(pos, "hh", 2))
+        {
+            pos += 2;
+            is >> hour;
+        }
+        else if (!iCmpStrN(pos, "mm", 2))
+        {
+            pos += 2;
+            is >> hour;
+        }
+        else
+        {
+            // Any character.
+            char ch = 0;
+            is >> ch;
+            if (*pos != ch) return Time::invalidTime();
+        }
+        if (is.fail()) return Time::invalidTime();
+    }
+
+    // Assume missing date values.
+    if (year == 0)
+    {
+        year = currentDate.year();
+    }
+    if (month == 0)
+    {
+        month = 1;
+    }
+    if (day == 0)
+    {
+        day = 1;
+    }
+
+    return Time(year, month, day, hour, minute, 0);
+}
+
 Time Time::fromText(const String &text, Time::Format format)
 {
     DE_ASSERT(format == ISOFormat ||
@@ -529,66 +632,33 @@ Time Time::fromText(const String &text, Time::Format format)
     }
     else if (format == HumanDate)
     {
-        // Note: Check use of indices below.
-        static const char *formats[] = {
-            "M/d/yy",
-            "MM/dd/yy",
-            "d.M.yy",
-            "dd.MM.yy",
-
-            "MM/dd/yyyy",
-            "d.M.yyyy",
-            "dd.MM.yyyy",
-            "MM.dd.yyyy", // as a fallback...
-            "yyyy-MM-dd",
-
-            // Unix "ls" style:
-            "MMM d yyyy",
-            "MMM d hh:mm",
-        };
         const String normText = text.normalizeWhitespace();
-        for (int i = 0; i < formats.size(); ++i)
+        for (const char *fmt : {
+                 "M/d/yy",
+                 "MM/dd/yy",
+                 "d.M.yy",
+                 "dd.MM.yy",
+
+                 "MM/dd/yyyy",
+                 "d.M.yyyy",
+                 "dd.MM.yyyy",
+                 "MM.dd.yyyy", // as a fallback...
+                 "yyyy-MM-dd",
+
+                 // Unix "ls" style:
+                 "MMM d hh:mm",
+                 "MMM d yyyy",
+             })
         {
-            String const fmt = formats.at(i);
-            bool const isShortYear = i < 4;
-            QDateTime dt = QDateTime::fromString(normText, fmt);
-            if (dt.isValid())
+            const Time parsed = parse(normText, fmt);
+            if (parsed.isValid())
             {
-                if (i == 10) // No year specified.
-                {
-                    dt.setDate(QDate(QDate::currentDate().year(),
-                                     dt.date().month(),
-                                     dt.date().day()));
-                }
-                else if (isShortYear && dt.date().year() < 1980)
-                {
-                    dt.setDate(QDate(dt.date().year() + 100,
-                                     dt.date().month(),
-                                     dt.date().day())); // Y2K?
-                }
-                return Time(dt);
+                return parsed;
             }
         }
-        return Time(QDateTime::fromString(normText, Qt::TextDate));
     }
     return Time::invalidTime();
 }
-
-/*QDateTime &Time::asDateTime()
-{
-    DE_ASSERT(d->hasDateTime());
-    return d->dateTime;
-}
-
-QDateTime const &Time::asDateTime() const
-{
-    if (!d->hasDateTime() && d->flags.testFlag(Impl::HighPerformance))
-    {
-        d->dateTime = (highPerfTimer().startedAt() + d->highPerfElapsed).asDateTime();
-        d->flags |= Impl::DateTime;
-    }
-    return d->dateTime;
-}*/
 
 Date Time::asDate() const
 {
