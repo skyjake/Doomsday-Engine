@@ -165,22 +165,11 @@ String Address::asText() const
 Address Address::parse(String const &addressWithOptionalPort, duint16 defaultPort) // static
 {
     duint16 port = defaultPort;
-    String str = addressWithOptionalPort;
-    /*int portPosMin = 1;
-    if (str.beginsWith(DE_STR("::ffff:")))
-    {
-        // IPv4 address.
-        portPosMin = 8;
-    }
-    int pos = str.lastIndexOf(':');
-    if (pos >= portPosMin)
-    {
-        port = duint16(str.mid(pos + 1).toInt());
-        str = str.left(pos);
-    }*/
-    // Let's see if there is a port number included.
+    String  str  = addressWithOptionalPort;
+
+    // Let's see if there is a port number included (address is inside brackets).
     static const RegExp ipPortRegex
-            ("^(localhost|::1|(::ffff:)?[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+|[:A-Fa-f0-9]+[A-Fa-f0-9]):([0-9]+)$");
+            ("^\\[(localhost|::1|(::ffff:)?[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+|[:A-Fa-f0-9]+[A-Fa-f0-9])\\]:([0-9]+)$");
     //qDebug() << "matching:" << addressWithOptionalPort;
     RegExpMatch match;
     if (ipPortRegex.match(addressWithOptionalPort, match))
