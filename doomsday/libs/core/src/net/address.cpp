@@ -73,15 +73,9 @@ Address Address::take(iAddress *addr)
     return a;
 }
 
-//Address::Address(QHostAddress const &host, duint16 port) : d(new Impl)
-//{
-//    d->host = QHostAddress(host.toIPv6Address());
-//    d->port = port;
-//}
-
-Address::Address(const Address &other) : LogEntry::Arg::Base(), d(new Impl)
+Address::Address(const Address &other) : d(new Impl)
 {
-    d->addr.reset(copy_Address(other.d->addr));
+    d->addr.reset(other.d->addr);
     d->port = other.d->port;
 }
 
@@ -92,7 +86,7 @@ Address::operator const iAddress *() const
 
 Address::Address(Address const &other)
 {
-    d->addr.reset(copy_Address(other.d->addr));
+    d->addr.reset(other.d->addr);
 }
 
 Address &Address::operator=(Address const &other)
