@@ -164,6 +164,11 @@ CString String::toCString() const
     return {begin(), end()};
 }
 
+void String::clear()
+{
+    clear_String(&_str);
+}
+
 bool String::contains(char c) const
 {
     for (const char *i = constBegin_String(&_str), *end = constEnd_String(&_str); i != end; ++i)

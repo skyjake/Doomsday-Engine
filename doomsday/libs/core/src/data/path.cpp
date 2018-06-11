@@ -231,6 +231,8 @@ DE_PIMPL_NOREF(Path)
     }
 };
 
+const String Path::Impl::emptyPath;
+
 Path::Path() : d(new Impl)
 {}
 

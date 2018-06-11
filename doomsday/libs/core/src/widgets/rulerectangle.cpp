@@ -61,7 +61,7 @@ DE_PIMPL(RuleRectangle)
             outputRules[i] = new IndirectRule;
         }
 
-        debugName = QString("0x%1").arg(dintptr(thisPublic), 0, 16);
+        debugName = String::format("0x%x", thisPublic);
     }
 
     ~Impl()
@@ -423,7 +423,7 @@ bool RuleRectangle::isFullyDefined() const
 
 String RuleRectangle::description() const
 {
-    String desc = QString("RuleRectangle '%1'").arg(d->debugName);
+    String desc = String::format("RuleRectangle '%s'", d->debugName.c_str());
 
     for (int i = 0; i < int(Rule::MAX_SEMANTICS); ++i)
     {

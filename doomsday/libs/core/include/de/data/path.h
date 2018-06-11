@@ -76,15 +76,15 @@ public:
         /**
          * Segments are implicitly converted to text strings.
          */
-        operator CString() const;
+        inline operator CString() const { return range; }
 
         /**
          * Converts the segment to a string.
          */
 //        String toString() const;
 
-        Rangecc toRange() const { return range; }
-        String toString() const { return String(range); }
+        inline Rangecc toRange() const { return range; }
+        inline String toString() const { return String(range); }
 
         /**
          * Determines the length of the segment in characters.

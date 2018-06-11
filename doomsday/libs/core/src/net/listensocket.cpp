@@ -51,7 +51,11 @@ DE_PIMPL(ListenSocket)
             i->incomingConnection(d->self());
         }
     }
+
+    DE_PIMPL_AUDIENCE(Incoming)
 };
+
+DE_AUDIENCE_METHOD(ListenSocket, Incoming)
 
 ListenSocket::ListenSocket(duint16 port) : d(new Impl(this))
 {

@@ -79,7 +79,7 @@ Address Address::take(iAddress *addr)
 //    d->port = port;
 //}
 
-Address::Address(Address const &other) : LogEntry::Arg::Base(), d(new Impl)
+Address::Address(const Address &other) : LogEntry::Arg::Base(), d(new Impl)
 {
     d->addr.reset(copy_Address(other.d->addr));
     d->port = other.d->port;

@@ -42,12 +42,13 @@ DE_PIMPL_NOREF(Beacon)
 {
     duint16 port;
     duint16 servicePort;
-    QUdpSocket *socket;
+//    QUdpSocket *socket;
     Block message;
-    QTimer *timer;
+//    QTimer *timer;
     Time discoveryEndsAt;
     Map<Address, Block> found;
 
+#if 0
     Impl() : socket(0), timer(0)
     {}
 
@@ -56,6 +57,7 @@ DE_PIMPL_NOREF(Beacon)
         delete socket;
         delete timer;
     }
+#endif
 };
 
 Beacon::Beacon(duint16 port) : d(new Impl)
@@ -70,6 +72,7 @@ duint16 Beacon::port() const
 
 void Beacon::start(duint16 serviceListenPort)
 {
+#if 0
     DE_ASSERT(!d->socket);
 
     d->servicePort = serviceListenPort;
@@ -88,6 +91,7 @@ void Beacon::start(duint16 serviceListenPort)
 
     /// @throws PortError Could not open the UDP port.
     throw PortError("Beacon::start", "Could not bind to UDP port " + String::asText(d->port));
+#endif
 }
 
 void Beacon::setMessage(IByteArray const &advertisedMessage)
@@ -104,12 +108,15 @@ void Beacon::setMessage(IByteArray const &advertisedMessage)
 
 void Beacon::stop()
 {
+#if 0
     delete d->socket;
     d->socket = 0;
+#endif
 }
 
 void Beacon::discover(TimeSpan timeOut, TimeSpan interval)
 {
+#if 0
     if (d->timer) return; // Already discovering.
 
     DE_ASSERT(!d->socket);
@@ -149,6 +156,7 @@ void Beacon::discover(TimeSpan timeOut, TimeSpan interval)
     d->timer->start(interval.asMilliSeconds());
 
     continueDiscovery();
+#endif
 }
 
 List<Address> Beacon::foundHosts() const

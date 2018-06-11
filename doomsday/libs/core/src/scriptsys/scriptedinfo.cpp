@@ -42,7 +42,7 @@ static const char *BLOCK_SCRIPT    = ScriptedInfo::SCRIPT;
 static const char *KEY_SCRIPT      = ScriptedInfo::SCRIPT;
 static const char *KEY_INHERITS    = "inherits";
 static const char *KEY_CONDITION   = "condition";
-static const char *VAR_SCRIPT      = "__script%1__";
+static const char *VAR_SCRIPT      = "__script%02d__";
 
 DE_PIMPL(ScriptedInfo)
 {
@@ -58,11 +58,10 @@ DE_PIMPL(ScriptedInfo)
         , process(globalNamespace)
     {
         // No limitation on duplicates for the special block types.
-        info.setAllowDuplicateBlocksOfType(
-                    QStringList() << BLOCK_GROUP << BLOCK_NAMESPACE);
+        info.setAllowDuplicateBlocksOfType({BLOCK_GROUP, BLOCK_NAMESPACE});
 
         // Blocks whose contents are parsed as scripts.
-        info.setScriptBlocks(QStringList() << BLOCK_SCRIPT);
+        info.setScriptBlocks({BLOCK_SCRIPT});
 
         // Single-token blocks are implicitly treated as "group" blocks.
         info.setImplicitBlockType(BLOCK_GROUP);
@@ -152,7 +151,7 @@ DE_PIMPL(ScriptedInfo)
             if (!ns.has(targetName))
             {
                 // Assume it's an identifier rather than a regular variable.
-                targetName = checkNamespaceForVariable(target.text.toLower());
+                targetName = checkNamespaceForVariable(target.text.lower());
             }
             if (!ns.has(targetName))
             {
@@ -247,7 +246,7 @@ DE_PIMPL(ScriptedInfo)
         int counter = 0;
         for (;;)
         {
-            String name = VAR_SCRIPT.arg(counter, 2 /*width*/, 10 /*base*/, QLatin1Char('0'));
+            String name = String::format(VAR_SCRIPT, counter);
             if (!where.has(name)) return name;
             counter++;
         }
@@ -260,8 +259,8 @@ DE_PIMPL(ScriptedInfo)
         if (Info::Element *condition = block.find(KEY_CONDITION))
         {
             // Any block will be ignored if its condition is false.
-            std::unique_ptr<Value> result(evaluate(condition->values().first(), 0));
-            if (result.isNull() || result->isFalse())
+            std::unique_ptr<Value> result(evaluate(condition->values().first(), nullptr));
+            if (!result || result->isFalse())
             {
                 return;
             }
@@ -357,8 +356,9 @@ DE_PIMPL(ScriptedInfo)
                     // These are not processed as regular subelements because the
                     // path of the script record is not directly determined by the parent
                     // blocks (see above; chooseScriptName()).
-                    for (auto const *elem : block.contents().values())
+                    for (const auto &i : block.contents())
                     {
+                        auto *elem = i.second;
                         if (elem->isKey())
                         {
                             auto const &key = elem->as<Info::KeyElement>();
@@ -375,7 +375,7 @@ DE_PIMPL(ScriptedInfo)
             // script block).
             if (!isScriptBlock)
             {
-                foreach (Info::Element const *sub, block.contentsInOrder())
+                for (const auto *sub : block.contentsInOrder())
                 {
                     // Handle special elements.
                     if (sub->name() == KEY_CONDITION || sub->name() == KEY_INHERITS)
@@ -403,7 +403,7 @@ DE_PIMPL(ScriptedInfo)
     String variableName(Info::Element const &element)
     {
         String varName = element.name();
-        for (Info::BlockElement *b = element.parent(); b != 0; b = b->parent())
+        for (Info::BlockElement *b = element.parent(); b != nullptr; b = b->parent())
         {
             if (b->blockType() == BLOCK_NAMESPACE) continue;
 
@@ -489,20 +489,20 @@ DE_PIMPL(ScriptedInfo)
     void processKey(Info::KeyElement const &key)
     {
         std::unique_ptr<Value> v(makeValue(key.value(), key.parent()));
-        process.globals().add(variableName(key)) = v.take();
+        process.globals().add(variableName(key)) = v.release();
     }
 
     void processList(Info::ListElement const &list)
     {
         ArrayValue* av = new ArrayValue;
-        foreach (InfoValue const &v, list.values())
+        for (const InfoValue &v : list.values())
         {
             *av << makeValue(v, list.parent());
         }
         process.globals().addArray(variableName(list), av);
     }
 
-    static void findBlocks(String const &blockType, Paths &paths, Record const &rec, String prefix = "")
+    static void findBlocks(String const &blockType, Paths &paths, Record const &rec, const String& prefix = {})
     {
         if (rec.hasMember(VAR_BLOCK_TYPE) &&
            !rec[VAR_BLOCK_TYPE].value().asText().compareWithoutCase(blockType))
@@ -510,11 +510,9 @@ DE_PIMPL(ScriptedInfo)
             // Block type matches.
             paths.insert(prefix);
         }
-
-        Record::Subrecords const subs = rec.subrecords();
-        DE_FOR_EACH_CONST(Record::Subrecords, i, subs)
+        for (const auto &i : rec.subrecords())
         {
-            findBlocks(blockType, paths, *i.value(), prefix.concatenateMember(i.key()));
+            findBlocks(blockType, paths, *i.second, prefix.concatenateMember(i.first));
         }
     }
 
@@ -548,7 +546,7 @@ void ScriptedInfo::parse(File const &file)
 
 Value *ScriptedInfo::evaluate(String const &source)
 {
-    return d->evaluate(source, 0);
+    return d->evaluate(source, nullptr);
 }
 
 Record &ScriptedInfo::objectNamespace()
@@ -581,7 +579,7 @@ String ScriptedInfo::absolutePathInContext(Record const &context, String const &
             {
                 // Look in reverse so the latest inherited locations are checked first.
                 auto const &elems = context.geta(VAR_INHERITED_SOURCES);
-                for (int i = elems.size() - 1; i >= 0; --i)
+                for (long i = elems.size() - 1; i >= 0; --i)
                 {
                     String inheritedPath = elems.at(i).asText().fileNamePath() / relativePath;
                     if (App::rootFolder().has(inheritedPath))
@@ -626,7 +624,7 @@ bool ScriptedInfo::isTrue(RecordAccessor const &rec, String const &name, bool de
 
 String ScriptedInfo::blockType(Record const &block)
 {
-    return block.gets(VAR_BLOCK_TYPE, BLOCK_GROUP).toLower();
+    return block.gets(VAR_BLOCK_TYPE, BLOCK_GROUP).lower();
 }
 
 bool ScriptedInfo::isFalse(RecordAccessor const &rec, String const &name, bool defaultValue)
@@ -675,7 +673,8 @@ Record::Subrecords ScriptedInfo::subrecordsOfType(String const &blockType, Recor
 
 StringList ScriptedInfo::sortRecordsBySource(Record::Subrecords const &subrecs)
 {
-    StringList keys = subrecs.keys();
+    StringList keys =
+        map<StringList>(subrecs, [](const std::pair<String, Record *> &v) { return v.first; });
 
     std::sort(keys.begin(), keys.end(), [&subrecs] (String const &a, String const &b) -> bool
     {

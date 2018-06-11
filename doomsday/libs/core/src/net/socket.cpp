@@ -515,7 +515,17 @@ DE_PIMPL_NOREF(Socket)
             i->allSent(self);
         }
     }
+
+    DE_PIMPL_AUDIENCE(StateChange)
+    DE_PIMPL_AUDIENCE(Message)
+    DE_PIMPL_AUDIENCE(AllSent)
+    DE_PIMPL_AUDIENCE(Error)
 };
+
+DE_AUDIENCE_METHOD(Socket, StateChange)
+DE_AUDIENCE_METHOD(Socket, Message)
+DE_AUDIENCE_METHOD(Socket, AllSent)
+DE_AUDIENCE_METHOD(Socket, Error)
 
 Socket::Socket() : d(new Impl)
 {

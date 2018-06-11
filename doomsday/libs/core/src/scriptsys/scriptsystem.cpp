@@ -37,7 +37,7 @@
 
 namespace de {
 
-static ScriptSystem *_scriptSystem = 0;
+static ScriptSystem *_scriptSystem = nullptr;
 
 DE_PIMPL(ScriptSystem)
 , DE_OBSERVES(Record, Deletion)
@@ -89,7 +89,7 @@ DE_PIMPL(ScriptSystem)
 
     ~Impl()
     {
-        qDeleteAll(modules);
+        modules.deleteAll();
     }
 
     static Value *Function_ImportPath(Context &, Function::ArgumentValues const &)
@@ -137,7 +137,7 @@ DE_PIMPL(ScriptSystem)
     void recordBeingDeleted(Record &record)
     {
         DE_GUARD(nativeModules);
-        QMutableHashIterator<String, Record *> iter(nativeModules);
+        MutableHashIterator<String, Record *> iter(nativeModules);
         while (iter.hasNext())
         {
             iter.next();
@@ -169,7 +169,7 @@ DE_PIMPL(ScriptSystem)
         {
             importPaths << (*i)->asText();
         }
-        foreach (Path const &path, additionalImportPaths)
+        for (const Path &path : additionalImportPaths)
         {
             importPaths << path;
         }
@@ -183,7 +183,7 @@ ScriptSystem::ScriptSystem() : d(new Impl(this))
 
 ScriptSystem::~ScriptSystem()
 {
-    _scriptSystem = 0;
+    _scriptSystem = nullptr;
 }
 
 void ScriptSystem::addModuleImportPath(Path const &path)
@@ -209,9 +209,9 @@ void ScriptSystem::removeNativeModule(String const &name)
 Record &ScriptSystem::nativeModule(String const &name)
 {
     DE_GUARD_FOR(d->nativeModules, G);
-    Impl::NativeModules::const_iterator foundNative = d->nativeModules.value.constFind(name);
-    DE_ASSERT(foundNative != d->nativeModules.value.constEnd());
-    return *foundNative.value();
+    auto foundNative = d->nativeModules.value.find(name);
+    DE_ASSERT(foundNative != d->nativeModules.value.end());
+    return *foundNative->second;
 }
 
 Record &ScriptSystem::operator[](const String &name)
@@ -241,15 +241,8 @@ bool ScriptSystem::nativeModuleExists(const String &name) const
 StringList ScriptSystem::nativeModules() const
 {
     DE_GUARD_FOR(d->nativeModules, G);
-    return d->nativeModules.value.keys();
-}
-
-namespace internal {
-    static bool sortFilesByModifiedAt(File *a, File *b) {
-        DE_ASSERT(a != b);
-        return de::cmp(a->status().modifiedAt, b->status().modifiedAt) < 0;
+    return map<StringList>(d->nativeModules.value, [](const std::pair<String, Record *> &v) { return v.first; });
     }
-}
 
 File const *ScriptSystem::tryFindModuleSource(String const &name, String const &localPath)
 {
@@ -258,11 +251,11 @@ File const *ScriptSystem::tryFindModuleSource(String const &name, String const &
     d->listImportPaths(importPaths);
 
     // Search all import locations.
-    foreach (String dir, importPaths)
+    for (const String &dir : importPaths)
     {
         String p;
         FS::FoundFiles matching;
-        File *found = 0;
+        File *found = nullptr;
         if (dir.empty())
         {
             if (!localPath.empty())
@@ -282,7 +275,10 @@ File const *ScriptSystem::tryFindModuleSource(String const &name, String const &
             {
                 continue;
             }
-            matching.sort(internal::sortFilesByModifiedAt);
+            matching.sort([](File *a, File *b) {
+                DE_ASSERT(a != b);
+                return de::cmp(a->status().modifiedAt, b->status().modifiedAt) < 0;
+            });
             found = matching.back();
             LOG_SCR_VERBOSE("Chose ") << found->path() << " out of " << dint(matching.size())
                                       << " candidates (latest modified)";
@@ -301,7 +297,7 @@ File const *ScriptSystem::tryFindModuleSource(String const &name, String const &
         }
     }
 
-    return 0;
+    return nullptr;
 }
 
 File const &ScriptSystem::findModuleSource(String const &name, String const &localPath)
@@ -339,18 +335,18 @@ Record &ScriptSystem::importModule(String const &name, String const &importedFro
     // There are some special native modules.
     {
         DE_GUARD_FOR(d->nativeModules, G);
-        Impl::NativeModules::const_iterator foundNative = d->nativeModules.value.constFind(name);
-        if (foundNative != d->nativeModules.value.constEnd())
+        auto foundNative = d->nativeModules.value.find(name);
+        if (foundNative != d->nativeModules.value.end())
         {
-            return *foundNative.value();
+            return *foundNative->second;
         }
     }
 
     // Maybe we already have this module?
-    Impl::Modules::iterator found = d->modules.find(name);
+    auto found = d->modules.find(name);
     if (found != d->modules.end())
     {
-        return found.value()->names();
+        return found->second->names();
     }
 
     // Get it from a file, then.
