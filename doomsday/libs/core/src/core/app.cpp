@@ -160,10 +160,10 @@ DE_PIMPL(App)
         //, appName("Doomsday Engine")
         , cmdLine(args)
 //        , unixHomeFolder()
-        , persistentData(0)
+        , persistentData(nullptr)
 //        , configPath("/packs/net.dengine.stdlib/modules/Config.ds")
-        , config(0)
-        , terminateFunc(0)
+        , config(nullptr)
+        , terminateFunc(nullptr)
     {
         appPath = cmdLine.startupPath() / cmdLine.at(0);
 

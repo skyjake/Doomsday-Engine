@@ -28,11 +28,11 @@ namespace internal {
 
 class Infos
 {
-    Info *etcInfo;
-    Info *userInfo;
+    Info *etcInfo  = nullptr;
+    Info *userInfo = nullptr;
 
 public:
-    Infos(String fileName) : etcInfo(0), userInfo(0)
+    Infos(const String& fileName)
     {
         String fn = String("/etc") / App::app().unixEtcFolderName() / fileName;
         if (NativePath::exists(fn))

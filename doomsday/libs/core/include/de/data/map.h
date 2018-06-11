@@ -72,17 +72,18 @@ class MutableMapIterator
 public:
     MutableMapIterator(Container &c) : _map(c)
     {
-        _next = c.begin();
+        if (!_map.empty()) _next = c.begin();
     }
 
     bool hasNext() const
     {
-        return _next != _map.end();
+        return !_map.empty() && _next != _map.end();
     }
 
     Iterator &next()
     {
-        _cur = _next++;
+        _cur = _next;
+        if (hasNext()) ++_next;
         return _cur;
     }
 

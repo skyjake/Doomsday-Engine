@@ -85,21 +85,21 @@ private:
     mutable Rangecc _range;
 };
 
-String operator+(const char *cStr, const CString &str) {
+inline String operator+(const char *cStr, const CString &str) {
     return String(cStr) + str;
 }
 
-String operator+(const CString &str, const char *cStr) {
+inline String operator+(const CString &str, const char *cStr) {
     return String(str) + cStr;
 }
 
-String operator+(const CString &str, Char ch) {
+inline String operator+(const CString &str, Char ch) {
     String s(str);
     s += ch;
     return s;
 }
 
-String operator/(const CString &str, const char *cStr) {
+inline String operator/(const CString &str, const char *cStr) {
     return String(str).concatenatePath(cStr);
 }
 

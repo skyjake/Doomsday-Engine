@@ -640,7 +640,7 @@ DE_PIMPL(Bank)
 
     void putInBestCache(Data &item)
     {
-        DE_ASSERT(item.cache == 0);
+        DE_ASSERT(item.cache == nullptr);
 
         // The source cache is always good.
         DataCache *best = &sourceCache;

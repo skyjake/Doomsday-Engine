@@ -472,7 +472,7 @@ public:
 
     public:
         Arg();
-        ~Arg();
+        virtual ~Arg();
 
         void clear();
 

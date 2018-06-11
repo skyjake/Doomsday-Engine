@@ -2,9 +2,9 @@
 # Copyright (c) 2015-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 cmake_minimum_required (VERSION 3.0)
-include (${CMAKE_CURRENT_LIST_DIR}/../cmake/Config.cmake)
+include (${CMAKE_CURRENT_LIST_DIR}/../cmake/Macros.cmake)
 
-find_package (DengCore)
+find_package (DengCore REQUIRED)
 
 macro (deng_test target)
     sublist (_src 1 -1 ${ARGV})

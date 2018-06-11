@@ -105,12 +105,8 @@ public:
     operator const iBlock *() const { return &_block; }
     inline explicit operator bool() const { return !isEmpty_Block(&_block); }
 
-    Block &operator += (const char *nullTerminatedCStr);
-//    Block &operator += (const QByteArray &bytes);
-
     inline Byte &operator[](size_t pos) { return data()[pos]; }
     inline Byte operator[](size_t pos) const { return at(pos); }
-
     inline Byte at(size_t pos) const { return at_Block(&_block, pos); }
 
     Block mid(size_t pos, size_t len = iInvalidSize) const;
@@ -118,15 +114,11 @@ public:
 
     Block operator+(const Block &other) const;
 
-    /// Appends a block after this one.
+    Block &operator+=(const char *nullTerminatedCStr);
     Block &operator+=(const Block &other);
-
-    /// Appends a byte array after this one.
     Block &operator+=(const IByteArray &byteArray);
 
-    /// Copies the contents of another block.
     Block &operator=(const Block &other);
-
     Block &operator=(const IByteArray &byteArray);
 
     Block  compressed(int level = -1) const;

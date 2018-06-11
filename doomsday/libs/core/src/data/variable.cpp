@@ -281,7 +281,7 @@ void Variable::verifyWritable(Value const &attemptedNewValue)
 
 void Variable::verifyName(String const &s)
 {
-    if (s.indexOf('.') >= 0)
+    if (s.indexOf('.'))
     {
         /// @throw NameError The name cannot contain periods '.'.
         throw NameError("Variable::verifyName", "Name contains '.': " + s);

@@ -21,11 +21,20 @@
 #include "de/TaskPool"
 #include "de/Address"
 
+#include <c_plus/object.h>
+#include <c_plus/objectlist.h>
+
 namespace de {
 namespace internal {
 
-DE_PIMPL(NetworkInterfaces), public Lockable
+static const ddouble UPDATE_THRESHOLD = 60.0;
+
+DE_PIMPL_NOREF(NetworkInterfaces), public Lockable
 {
+    Time          lastUpdatedAt;
+    List<Address> interfaces;
+
+#if 0
     struct AddressQueryTask : public Task
     {
         NetworkInterfaces::Impl *d;
@@ -68,22 +77,35 @@ DE_PIMPL(NetworkInterfaces), public Lockable
 //        updateTimer.start();
         tasks.start(new AddressQueryTask(this));
     }
+#endif
+
+    void update()
+    {
+        interfaces.clear();
+        cplus::ref<iObjectList> infs(networkInterfaces_Address());
+        iConstForEach(ObjectList, i, infs)
+        {
+            interfaces << Address(reinterpret_cast<const iAddress *>(i.object));
+        }
+        lastUpdatedAt = Time();
+    }
 };
 
 NetworkInterfaces::NetworkInterfaces()
-    : d(new Impl(this))
-{}
+    : d(new Impl)
+{
+    DE_GUARD(d);
+    d->update();
+}
 
 List<Address> NetworkInterfaces::allAddresses() const
 {
-    if (!d->gotAddresses)
-    {
-        // Too early...
-        d->tasks.waitForDone();
-    }
-
     DE_GUARD(d);
-    return d->addresses;
+    if (d->lastUpdatedAt.since() > UPDATE_THRESHOLD)
+    {
+        d->update();
+    }
+    return d->interfaces;
 }
 
 NetworkInterfaces &NetworkInterfaces::get() // static

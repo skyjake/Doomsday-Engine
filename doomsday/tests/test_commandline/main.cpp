@@ -21,7 +21,7 @@
 #include <de/Log>
 #include <de/TextApp>
 
-#include <QDebug>
+#include <iostream>
 
 using namespace de;
 
@@ -29,7 +29,7 @@ int main(int argc, char **argv)
 {
     try
     {
-        TextApp app(argc, argv);
+        TextApp app(makeList(argc, argv));
         app.initSubsystems(App::DisablePlugins);
 
         CommandLine cmd;
@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 #endif
 
         String output;
-        if (cmd.executeAndWait(&output))
+        if (false)//cmd.executeAndWait(&output))
         {
             LOG_MSG("Output from %s:\n") << cmd.at(0) << output;
         }
@@ -50,9 +50,8 @@ int main(int argc, char **argv)
     }
     catch (Error const &err)
     {
-        qWarning() << err.asText();
+        std::cerr << err.asText();
     }
-
-    qDebug() << "Exiting main()...";
+    std::cout << "Exiting main()...";
     return 0;
 }

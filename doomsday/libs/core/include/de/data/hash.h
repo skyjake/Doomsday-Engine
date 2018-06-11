@@ -78,12 +78,12 @@ class MutableHashIterator
 public:
     MutableHashIterator(Container &c) : _hash(c)
     {
-        _next = c.begin();
+        if (!_hash.empty()) _next = c.begin();
     }
 
     bool hasNext() const
     {
-        return _next != _hash.end();
+        return !_hash.empty() && _next != _hash.end();
     }
 
     Iterator &next()

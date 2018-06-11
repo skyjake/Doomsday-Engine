@@ -85,14 +85,14 @@ DE_PIMPL(CommandLine)
         if (pointers.empty())
         {
             pointers.push_back(duplicateStringAsUtf8(arg));
-            pointers.push_back(0); // Keep null-terminated.
+            pointers.push_back(nullptr); // Keep null-terminated.
         }
         else
         {
             // Insert before the NULL.
             pointers.insert(pointers.end() - 1, duplicateStringAsUtf8(arg));
         }
-        DE_ASSERT(pointers.back() == 0);
+        DE_ASSERT(pointers.back() == nullptr);
     }
 
     void insert(int pos, String const &arg)

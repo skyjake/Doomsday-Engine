@@ -48,29 +48,23 @@ Address::Address() : d(new Impl)
 
 Address::Address(char const *address, duint16 port) : d(new Impl)
 {
+    d->addr.reset(new_Address());
     d->port = port;
-    if (CString(address) == "localhost") // special case
-    {
-        d->addr.reset(newLocalhost_Address(6));
-        d->special = Impl::LocalHost;
-    }
-    else
-    {
-        d->addr.reset(new_Address());
-        lookupHostCStr_Address(d->addr, address, 0);
-    }
+    lookupHostCStr_Address(d->addr, address, port);
 }
 
 Address::Address(const iAddress *address) : d(new Impl)
 {
     d->addr.reset(address);
+    d->port = port_Address(address);
 }
 
 Address Address::take(iAddress *addr)
 {
-    Address a;
-    a.d->addr.reset(addr);
-    return a;
+    Address taker;
+    taker.d->addr.reset(addr);
+    taker.d->port = port_Address(addr);
+    return taker;
 }
 
 Address::Address(const Address &other) : d(new Impl)
@@ -105,6 +99,7 @@ bool Address::operator<(Address const &other) const
 
 bool Address::operator==(Address const &other) const
 {
+    if (d->port != other.d->port) return false;
     return asText() == other.asText();
 }
 
@@ -132,11 +127,11 @@ duint16 Address::port() const
     return d->port;
 }
 
-void Address::setPort(duint16 p)
-{
+//void Address::setPort(duint16 p)
+//{
     d->clearCached();
-    d->port = p;
-}
+//    d->port = p;
+//}
 
 //bool Address::matches(Address const &other, duint32 mask)
 //{
@@ -187,9 +182,6 @@ std::ostream &operator<<(std::ostream &os, Address const &address)
 
 bool Address::isHostLocal(const Address &host) // static
 {
-//    if (host.isLoopback()) return true;
-
-//    QHostAddress const hostv6(host.toIPv6Address());
     for (const Address &addr : internal::NetworkInterfaces::get().allAddresses())
     {
         if (addr == host) return true;

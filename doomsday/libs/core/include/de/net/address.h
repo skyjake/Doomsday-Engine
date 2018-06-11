@@ -81,7 +81,7 @@ public:
 
     duint16 port() const;
 
-    void setPort(duint16 p);
+//    void setPort(duint16 p);
 
     /**
      * Checks if two IP address match. Port numbers are ignored.

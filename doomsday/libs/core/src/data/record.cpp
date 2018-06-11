@@ -289,7 +289,7 @@ DE_PIMPL(Record)
             String subName   = name.left(pos);
             String remaining = name.substr(pos + 1);
             // If it is a subrecord we can descend into it.
-            if (!self().hasRecord(subName)) return 0;
+            if (!self().hasRecord(subName)) return nullptr;
             return self()[subName].value<RecordValue>().dereference().d->findMemberByPath(remaining);
         }
 
@@ -299,7 +299,7 @@ DE_PIMPL(Record)
         {
             return found->second;
         }
-        return 0;
+        return nullptr;
     }
 
     /**
@@ -316,9 +316,9 @@ DE_PIMPL(Record)
 
         if (auto pos = pathOrName.indexOf('.'))
         {
-            String subName = pathOrName.left(pos);
-            String remaining = pathOrName.substr(pos + 1);
-            Record *rec = 0;
+            String  subName   = pathOrName.left(pos);
+            String  remaining = pathOrName.substr(pos + 1);
+            Record *rec       = nullptr;
 
             if (!self().hasSubrecord(subName))
             {

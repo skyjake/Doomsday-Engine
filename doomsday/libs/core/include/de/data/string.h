@@ -724,36 +724,40 @@ private:
     iString _str;
 };
 
-inline String operator+(Char ch, const String &s) {
+using StringList = List<String>;
+
+inline StringList makeList(int count, const char * const *strings)
+{
+    StringList list;
+    for (int i = 0; i < count; ++i)
+    {
+        list << String(strings[i]);
+    }
+    return list;
+}
+
+inline String operator+(Char ch, const String &s)
+{
     return String(1, ch) + s;
 }
 
-inline String operator+(const char *left, const String &right) {
+inline String operator+(const char *left, const String &right)
+{
     return String(left) + right;
 }
 
-inline const char *operator+(const char *cStr, const String::BytePos &offset) {
+inline const char *operator+(const char *cStr, const String::BytePos &offset)
+{
     return cStr + offset.index;
 }
 
-using StringList = List<String>;
-
-/**
- * Support routine for determining the length of a null-terminated QChar*
- * string. Later versions have a QString constructor that needs no length
- * when constructing a string from QChar*.
- */
-//size_t qchar_strlen(const QChar *str);
-
-//inline StringList toStringList(const QStringList &qstr) {
-//    return compose<StringList>(qstr.begin(), qstr.end());
-//}
-
-inline String operator/(const char *cStr, const String &str) {
+inline String operator/(const char *cStr, const String &str)
+{
     return String(cStr) / str;
 }
 
-std::ostream &operator<<(std::ostream &os, const String &str) {
+inline std::ostream &operator<<(std::ostream &os, const String &str)
+{
     os.write(str, str.sizei());
     return os;
 }

@@ -34,7 +34,9 @@ namespace de {
 const String::size_type String::npos = String::size_type(-1);
 
 String::String()
-{}
+{
+    init_String(&_str);
+}
 
 String::String(const String &other)
 {
@@ -141,7 +143,11 @@ String::String(dsize length, iChar ch)
 
 String::~String()
 {
-    deinit_String(&_str);
+    // The string may have been deinitialized already by a move.
+    if (_str.chars.i)
+    {
+        deinit_String(&_str);
+    }
 }
 
 void String::resize(size_t newSize)
@@ -348,6 +354,11 @@ String &String::replace(const CString &before, const CString &after)
         appendRange_String(result, &newTerm);
         remaining.start += found + before.size();
     }
+    if (size_Range(&remaining) == size())
+    {
+        // No changes were applied.
+        return *this;
+    }
     appendRange_String(result, &remaining);
     return *this = result;
 }
@@ -376,7 +387,7 @@ iChar String::first() const
 
 iChar String::last() const
 {
-    return empty() ? 0 : *end();
+    return empty() ? 0 : *rbegin();
 }
 
 String String::operator/(const String &path) const
@@ -694,32 +705,30 @@ String String::format(const char *format, ...)
 {
     va_list args;
     Block buffer;
-    int neededSize = 256;
 
     for (;;)
     {
-        buffer.resize(neededSize);
-
         va_start(args, format);
-        int count = vsnprintf(reinterpret_cast<char *>(buffer.data()), buffer.size(), format, args);
+        int count =
+            vsnprintf(buffer.size() == 0 ? nullptr : reinterpret_cast<char *>(buffer.data()),
+                      buffer.size(),
+                      format,
+                      args);
         va_end(args);
 
-        if (count >= 0 && count < neededSize)
+        if (count < 0)
+        {
+            warning("[String::format] Error: %s", errno, strerror(errno));
+            return buffer;
+        }
+        if (dsize(count) < buffer.size())
         {
             buffer.resize(count);
-            return {buffer};
+            break;
         }
-
-        if (count >= 0)
-        {
-            neededSize = count + 1;
-        }
-        else
-        {
-            neededSize *= 2; // Try bigger.
-        }
+        buffer.resize(count + 1);
     }
-    return {buffer};
+    return buffer;
 }
 
 //static inline bool isSign(Char ch)
@@ -1079,11 +1088,11 @@ std::string stringf(const char *format, ...)
     va_list args1, args2;
     va_start(args1, format);
     va_copy(args2, args1);
-    const int requiredLength = vsprintf(nullptr, format, args1);
+    const int requiredLength = vsnprintf(nullptr, 0, format, args1);
     va_end(args1);
     // Format the output to a new string.
-    std::string str(requiredLength, '\0');
-    vsprintf(&str[0], format, args2);
+    std::string str(requiredLength + 1, '\0');
+    vsnprintf(&str[0], str.size(), format, args2);
     va_end(args2);
     return str;
 }

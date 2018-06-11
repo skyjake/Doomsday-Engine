@@ -253,22 +253,22 @@ bool NativePath::isReadable() const
     //return QFileInfo(toString()).isReadable();
 }
 
-static NativePath currentNativeWorkPath;
+static std::unique_ptr<NativePath> currentNativeWorkPath;
 
 NativePath NativePath::workPath()
 {
-    if (currentNativeWorkPath.isEmpty())
+    if (!currentNativeWorkPath)
     {
-        currentNativeWorkPath = String::take(cwd_Path());
+        currentNativeWorkPath.reset(new NativePath(String::take(cwd_Path())));
     }
-    return currentNativeWorkPath;
+    return *currentNativeWorkPath;
 }
 
 bool NativePath::setWorkPath(const NativePath &cwd)
 {
     if (setCwd_Path(cwd.toString()))
     {
-        currentNativeWorkPath = cwd;
+        currentNativeWorkPath.reset(new NativePath(cwd));
         return true;
     }
     return false;
