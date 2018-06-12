@@ -63,7 +63,6 @@ void Waitable::wait(TimeSpan const &timeOut) const
 bool Waitable::tryWait(const TimeSpan &timeOut) const
 {
     std::unique_lock<std::mutex> mtx(d->mutex);
-    mtx.lock();
     for (;;)
     {
         if (d->counter == 0)
@@ -73,7 +72,6 @@ bool Waitable::tryWait(const TimeSpan &timeOut) const
                 if (d->cv.wait_for(mtx, std::chrono::microseconds(timeOut)) ==
                     std::cv_status::timeout)
                 {
-                    mtx.unlock();
                     return false;
                 }
             }
@@ -89,7 +87,6 @@ bool Waitable::tryWait(const TimeSpan &timeOut) const
             break;
         }
     }
-    mtx.unlock();
     return true;
 }
 

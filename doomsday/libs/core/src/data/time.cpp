@@ -267,7 +267,7 @@ Time::Time(Time &&moved) : d(std::move(moved.d))
 {}
 
 Time::Time(int year, int month, int day, int hour, int minute, int second)
-    : d(new Impl)
+    : d(new Impl(0 /* init as invalid */))
 {
     using namespace std;
 
@@ -299,7 +299,7 @@ Time::Time(TimeSpan const &highPerformanceDelta)
 
 Time Time::invalidTime()
 {
-    return Time(0);
+    return Time(TimePoint());
 }
 
 Time &Time::operator = (Time const &other)

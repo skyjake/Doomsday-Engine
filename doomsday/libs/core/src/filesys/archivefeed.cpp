@@ -57,8 +57,8 @@ DE_PIMPL(ArchiveFeed)
     Impl(Public *feed, File &f)
         : Base(feed)
         , file(&f)
-        , arch(0)
-        , parentFeed(0)
+        , arch(nullptr)
+        , parentFeed(nullptr)
         , allowWrite(f.mode().testFlag(File::Write)) // write access depends on file
     {
         // If the file happens to be a byte array file, we can use it
