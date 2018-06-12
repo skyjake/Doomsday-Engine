@@ -92,6 +92,17 @@ public:
 
     typedef List<const IPatternArg *> PatternArgs;
 
+    /**
+     * Comparator for case-insensitive container keys.
+     */
+    struct DE_PUBLIC InsensitiveLessThan
+    {
+        inline bool operator()(const String &a, const String &b) const
+        {
+            return a.compareWithoutCase(b) < 0;
+        }
+    };
+
 public:
     using SingleChar = char[2];
     using size_type  = dsize;
