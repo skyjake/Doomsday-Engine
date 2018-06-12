@@ -245,6 +245,7 @@ public:
     {
         return startsWithSc_String(&_str, cstr, cs);
     }
+    bool beginsWith(Char ch, Sensitivity cs = CaseSensitive) const;
     bool endsWith(char ch, Sensitivity cs = CaseSensitive) const
     {
         return endsWith(SingleChar{ch, 0}, cs);
@@ -274,6 +275,8 @@ public:
     List<String>  split(Char ch) const;
     List<String>  split(const String &separator) const { return split(separator.c_str()); }
     List<String>  split(const RegExp &regExp) const;
+    List<CString> splitRef(const char *separator) const;
+    List<CString> splitRef(Char ch) const;
 
     String        operator+(const char *) const;
     String        operator+(const CString &) const;

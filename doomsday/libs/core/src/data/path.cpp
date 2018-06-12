@@ -168,7 +168,7 @@ DE_PIMPL_NOREF(Path)
     }
 
     /**
-     * Build the segment array by parsing the path. when the path is modified,
+     * Build the segment array by splitting the path. When the path is modified,
      * the existing map is invalidated and needs to be remapped.
      */
     void parse()
@@ -188,6 +188,19 @@ DE_PIMPL_NOREF(Path)
             return;
         }
 
+        const auto parts = path.splitRef(separator);
+        for (auto p = parts.rbegin(); p != parts.rend(); ++p)
+        {
+            allocSegment(*p);
+        }
+
+        // We expect an empty segment in the beginning for absolute paths.
+        if (path.beginsWith(separator))
+        {
+            allocSegment(emptyPath);
+        }
+
+#if 0
         const char *                   segBegin = path.c_str();
         String::const_reverse_iterator segEnd   = path.rbegin();
 
@@ -226,6 +239,7 @@ DE_PIMPL_NOREF(Path)
         {
             allocSegment(emptyPath);
         }
+#endif
 
         DE_ASSERT(segmentCount > 0);
     }

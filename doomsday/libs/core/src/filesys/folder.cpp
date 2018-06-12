@@ -40,7 +40,7 @@ FolderPopulationAudience audienceForFolderPopulation; // public
 namespace internal {
 
 static TaskPool populateTasks;
-static bool     enableBackgroundPopulation = true;
+static bool     enableBackgroundPopulation = false; //true;
 
 /// Forwards internal folder population notifications to the public audience.
 struct PopulationNotifier : DE_OBSERVES(TaskPool, Done)
@@ -480,7 +480,8 @@ bool Folder::has(String const &name) const
 
 File &Folder::add(File *file)
 {
-    DE_ASSERT(file != 0);
+    DE_ASSERT(file != nullptr);
+    DE_ASSERT(!file->name().contains('/'));
 
     if (has(file->name()))
     {

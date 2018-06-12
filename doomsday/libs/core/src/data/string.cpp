@@ -199,6 +199,13 @@ int String::count(char ch) const
     return num;
 }
 
+bool String::beginsWith(Char ch, Sensitivity cs) const
+{
+    iMultibyteChar mb;
+    init_MultibyteChar(&mb, ch);
+    return beginsWith(mb.bytes, cs);
+}
+
 String String::substr(CharPos pos, dsize count) const
 {
     return String::take(mid_String(&_str, pos.index, count));
@@ -250,6 +257,25 @@ List<String> String::split(const char *separator) const
         parts << String(seg.start, seg.end);
     }
     return parts;
+}
+
+List<CString> String::splitRef(const char *separator) const
+{
+    List<CString> parts;
+    iRangecc seg{};
+    iRangecc str{constBegin_String(&_str), constEnd_String(&_str)};
+    while (nextSplit_Rangecc(&str, separator, &seg))
+    {
+        parts << CString(seg.start, seg.end);
+    }
+    return parts;
+}
+
+List<CString> String::splitRef(Char ch) const
+{
+    iMultibyteChar mb;
+    init_MultibyteChar(&mb, ch);
+    return splitRef(mb.bytes);
 }
 
 List<String> String::split(Char ch) const
