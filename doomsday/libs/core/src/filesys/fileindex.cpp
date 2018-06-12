@@ -40,10 +40,10 @@ DE_PIMPL(FileIndex), public Lockable
 
     static String indexedName(File const &file)
     {
-        String name = file.name().lower();
+        String name = file.name();
 
         // Ignore the package version in the indexed names.
-        if (name.endsWith(".pack"))
+        if (name.endsWith(".pack", CaseInsensitive))
         {
             name = Package::split(name.fileNameWithoutExtension()).first + ".pack";
         }
@@ -83,8 +83,8 @@ DE_PIMPL(FileIndex), public Lockable
 
     void findPartialPath(const String &path, FoundFiles &found) const
     {
-        String baseName = path.fileName().lower();
-        String dir      = path.fileNamePath().lower();
+        String baseName = path.fileName();
+        String dir      = path.fileNamePath();
 
         if (!dir.empty() && !dir.beginsWith("/"))
         {

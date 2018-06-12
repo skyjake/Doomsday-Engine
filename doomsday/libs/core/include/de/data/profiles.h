@@ -142,7 +142,7 @@ public:
      */
     StringList profiles() const;
 
-    LoopResult forAll(std::function<LoopResult (AbstractProfile &)> func) const;
+    LoopResult forAll(const std::function<LoopResult (AbstractProfile &)>& func) const;
 
     /**
      * Returns the total number of profiles.

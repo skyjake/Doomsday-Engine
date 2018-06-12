@@ -39,7 +39,7 @@ class Package;
 class DE_PUBLIC FileIndex
 {
 public:
-    typedef std::multimap<String, File *> Index;
+    typedef std::multimap<String, File *, String::InsensitiveLessThan> Index;
     typedef std::pair<Index::iterator, Index::iterator> IndexRange;
     typedef std::list<File *> FoundFiles;
 

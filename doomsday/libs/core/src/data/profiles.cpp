@@ -24,15 +24,10 @@
 
 namespace de {
 
-static String nameToKey(const String &name)
-{
-    return name.lower();
-}
-
 DE_PIMPL(Profiles)
 , DE_OBSERVES(Deletable, Deletion)
 {
-    typedef Map<String, AbstractProfile *> Profiles;
+    typedef Map<String, AbstractProfile *, String::InsensitiveLessThan> Profiles;
     Profiles profiles;
     String persistentName;
 
@@ -46,8 +41,8 @@ DE_PIMPL(Profiles)
 
     void add(AbstractProfile *profile)
     {
-        String const key = nameToKey(profile->name());
-        if (profiles.contains(nameToKey(key)))
+        String const key = profile->name();
+        if (profiles.contains(key))
         {
             delete profiles[key];
         }
@@ -65,7 +60,7 @@ DE_PIMPL(Profiles)
     {
         profile.audienceForDeletion -= this;
         profile.setOwner(nullptr);
-        profiles.remove(nameToKey(profile.name()));
+        profiles.remove(profile.name());
 
         DE_FOR_PUBLIC_AUDIENCE2(Removal, i)
         {
@@ -75,20 +70,18 @@ DE_PIMPL(Profiles)
 
     void changeLookupKey(AbstractProfile const &profile, String const &newName)
     {
-        profiles.remove(nameToKey(profile.name()));
-        profiles.insert(nameToKey(newName), const_cast<AbstractProfile *>(&profile));
+        profiles.remove(profile.name());
+        profiles.insert(newName, const_cast<AbstractProfile *>(&profile));
     }
 
     void objectWasDeleted(Deletable *obj)
     {
         // At this point the AbstractProfile itself is already deleted.
-        MutableMapIterator<String, AbstractProfile *> iter(profiles);
-        while (iter.hasNext())
+        for (auto i = profiles.begin(); i != profiles.end(); ++i)
         {
-            iter.next();
-            if (iter.value() == obj)
+            if (i->second == obj)
             {
-                iter.remove();
+                profiles.erase(i);
                 break;
             }
         }
@@ -182,7 +175,7 @@ int Profiles::count() const
 
 Profiles::AbstractProfile *Profiles::tryFind(String const &name) const
 {
-    auto found = d->profiles.find(nameToKey(name));
+    auto found = d->profiles.find(name);
     if (found != d->profiles.end())
     {
         return found->second;
@@ -214,7 +207,7 @@ bool Profiles::isPersistent() const
     return !d->persistentName.isEmpty();
 }
 
-LoopResult Profiles::forAll(std::function<LoopResult (AbstractProfile &)> func) const
+LoopResult Profiles::forAll(const std::function<LoopResult (AbstractProfile &)>& func) const
 {
     for (const auto &prof : d->profiles)
     {
@@ -271,9 +264,9 @@ void Profiles::serialize() const
 
         os << "\nprofile {\n"
               "    name: " << prof->name().c_str() << "\n";
-        for (auto line : prof->toInfoSource().split('\n'))
+        for (const auto &line : prof->toInfoSource().splitRef('\n'))
         {
-            os << "    " << line.c_str() << "\n";
+            os << "    " << line.toStdString() << "\n";
         }
         os << "}\n";
         ++count;

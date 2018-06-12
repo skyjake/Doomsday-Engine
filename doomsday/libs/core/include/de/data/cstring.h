@@ -78,6 +78,7 @@ public:
     Char first() const { return *mb_iterator(begin()); }
     String lower() const;
     String upper() const;
+    std::string toStdString() const { return {begin(), end()}; }
 
     static size_t npos;
 
