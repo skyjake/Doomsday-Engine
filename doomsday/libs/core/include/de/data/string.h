@@ -199,7 +199,10 @@ public:
 
     inline String &operator=(String &&moved)
     {
-        deinit_String(&_str);
+        if (_str.chars.i)
+        {
+            deinit_String(&_str);
+        }
         _str = moved._str;
         zap(moved._str);
         return *this;
@@ -550,7 +553,7 @@ public:
     {
         iStringConstIterator iter;
 
-        operator const char *() { return iter.pos; }
+        operator const char *() const { return iter.pos; }
         operator Char() const { return iter.value; }
 
         Char operator*() const { return iter.value; }
@@ -578,6 +581,9 @@ public:
         }
         bool operator<(const const_iterator &other) const {
             return iter.pos < other.iter.pos;
+        }
+        bool operator>=(const const_iterator &other) const {
+            return iter.pos >= other.iter.pos;
         }
         bool operator==(const const_iterator &other) const {
             return iter.str == other.iter.str && iter.pos == other.iter.pos;

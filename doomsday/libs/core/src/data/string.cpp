@@ -1117,8 +1117,8 @@ std::string stringf(const char *format, ...)
     const int requiredLength = vsnprintf(nullptr, 0, format, args1);
     va_end(args1);
     // Format the output to a new string.
-    std::string str(requiredLength + 1, '\0');
-    vsnprintf(&str[0], str.size(), format, args2);
+    std::string str(requiredLength, '\0');
+    vsnprintf(&str[0], str.size() + 1, format, args2);
     va_end(args2);
     return str;
 }

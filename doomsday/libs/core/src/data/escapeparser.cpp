@@ -41,15 +41,15 @@ void EscapeParser::parse(String const &textWithEscapes)
     d->original = textWithEscapes;
     d->plain.clear();
 
-    //String::ByteRange range;
-    String::const_iterator pos = d->original.begin();
-    String::const_iterator end = pos;
+    const String::const_iterator origEnd = d->original.end();
+    String::const_iterator       pos     = d->original.begin();
+    String::const_iterator       end     = pos;
 
     const char escape = '\x1b';
 
     for (;;)
     {
-        while (*end != escape && end != d->original.end())
+        while (*end != escape && end != origEnd)
         {
             ++end;
         }
@@ -103,7 +103,7 @@ void EscapeParser::parse(String const &textWithEscapes)
         else
         {
             // Final plain text range.
-            const CString plain{pos, d->original.end()};
+            const CString plain{pos, origEnd};
             if (plain.size() > 0)
             {
                 DE_FOR_AUDIENCE2(PlainText, i) { i->handlePlainText(plain); }

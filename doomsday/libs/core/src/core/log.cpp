@@ -379,7 +379,7 @@ String LogEntry::asText(Flags const &formattingFlags, dsize shortenSection) cons
 
         if (!(flags & OmitDomain))
         {
-            Char dc = (_metadata & Resource? 'R' :
+            char dc = (_metadata & Resource? 'R' :
                        _metadata & Map?      'M' :
                        _metadata & Script?   'S' :
                        _metadata & GL?       'G' :
@@ -389,7 +389,7 @@ String LogEntry::asText(Flags const &formattingFlags, dsize shortenSection) cons
             if (_metadata & Dev)
             {
                 if (dc != ' ')
-                    dc = towlower(dc);
+                    dc = tolower(dc);
                 else
                     dc = '-'; // Generic developer message
             }

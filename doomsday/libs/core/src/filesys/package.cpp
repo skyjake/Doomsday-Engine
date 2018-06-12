@@ -339,6 +339,8 @@ void Package::validateMetadata(Record const &packageInfo)
     {
         if (!packageInfo.has(req))
         {
+            debug("metadata:\n%s\n", packageInfo.asText().c_str());
+
             throw IncompleteMetadataError(
                 "Package::validateMetadata",
                 stringf("Package \"%s\" does not have '%s' in its metadata",

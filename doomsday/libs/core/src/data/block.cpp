@@ -69,16 +69,19 @@ Block::Block(const void *data, Size length)
 
 Block::Block(IIStream &stream)
 {
+    init_Block(&_block, 0);
     stream >> *this;
 }
 
 Block::Block(const IIStream &stream)
 {
+    init_Block(&_block, 0);
     stream >> *this;
 }
 
 Block::Block(const IByteArray &other, Offset at, Size count) : IByteArray()
 {
+    init_Block(&_block, 0);
     copyFrom(other, at, count);
 }
 

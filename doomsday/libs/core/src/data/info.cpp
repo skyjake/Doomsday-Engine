@@ -103,11 +103,11 @@ DE_PIMPL(Info)
         currentToken = " ";
         tokenStartOffset = cursor;
 
-        if (source.isEmpty())
-        {
-            content.clear();
-            currentLine = 0;
-        }
+//        if (source.isEmpty())
+//        {
+//            content.clear();
+//            currentLine = 0;
+//        }
 
         try
         {
@@ -133,7 +133,7 @@ DE_PIMPL(Info)
      */
     void nextChar()
     {
-        if (cursor != content.end())
+        if (cursor == content.end())
         {
             // No more characters to read.
             throw EndOfFile(stringf("EOF on line %i", currentLine));

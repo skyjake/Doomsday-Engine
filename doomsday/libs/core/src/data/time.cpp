@@ -233,11 +233,11 @@ DE_PIMPL_NOREF(Time)
     {
         uint32_t julianDay;
         uint32_t msecs;
-        uint32_t utfOffset;
+        uint8_t timezone;
 
         // This matches Qt's QDataStream format.
         Reader r(data);
-        r >> julianDay >> msecs >> utfOffset;
+        r >> julianDay >> msecs >> timezone;
 
         return Date::fromJulianDayNumber(julianDay).asTime()
                 + double(msecs) / 1.0e3;
@@ -248,11 +248,11 @@ DE_PIMPL_NOREF(Time)
         Date date(time);
         uint32_t julianDay = date.julianDayNumber();
         uint32_t msecs = uint32_t((date.seconds() + date.minutes() * 60 + date.hours() * 3600) * 1000);
-        uint32_t utfOffset = 0;
+        uint8_t timezone = 0;
 
         Block bytes;
         Writer w(bytes);
-        w << julianDay << msecs << utfOffset;
+        w << julianDay << msecs << timezone;
         return bytes;
     }
 };
@@ -384,7 +384,7 @@ String Time::asText(Format format) const
         if (format == ISOFormat)
         {
             auto ms = millisecondsSinceEpoch();
-            return asText("%F %M") + stringf(".%03u", ms % 1000).c_str();
+            return asText("%F %T") + stringf(".%03u", ms % 1000).c_str();
         }
         else if (format == ISODateOnly)
         {
