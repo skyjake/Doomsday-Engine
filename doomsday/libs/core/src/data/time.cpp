@@ -285,7 +285,7 @@ Time::Time(int year, int month, int day, int hour, int minute, int second)
 Time::Time(const TimePoint &tp) : d(new Impl(tp))
 {}
 
-Time::Time(iTime time) : d(new Impl)
+Time::Time(const iTime &time) : d(new Impl(0 /* init as invalid */))
 {
     using namespace std::chrono;
     d->flags |= Impl::SysTime;

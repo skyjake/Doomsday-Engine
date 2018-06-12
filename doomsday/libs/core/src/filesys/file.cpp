@@ -81,7 +81,7 @@ File::~File()
     {
         // If we own a source, get rid of it.
         delete d->source;
-        d->source = 0;
+        d->source = nullptr;
     }
     if (Folder *parentFolder = parent())
     {

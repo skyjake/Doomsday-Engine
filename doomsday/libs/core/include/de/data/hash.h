@@ -27,10 +27,13 @@ namespace de {
  * Efficient key-value container with unordered keys (based on std::unordered_map).
  * @ingroup data
  */
-template <typename Key, typename Value>
-class Hash : public std::unordered_map<Key, Value>
+template <typename Key,
+          typename Value,
+          typename HashFn = std::hash<Key>,
+          typename KeyEqual = std::equal_to<Key>>
+class Hash : public std::unordered_map<Key, Value, HashFn, KeyEqual>
 {
-    using Base = std::unordered_map<Key, Value>;
+    using Base = std::unordered_map<Key, Value, HashFn, KeyEqual>;
 
 public:
     Hash() {}
@@ -65,30 +68,33 @@ public:
     }
 };
 
-template <typename Key, typename Value>
+template <typename Key,
+          typename Value,
+          typename HashFn = std::hash<Key>,
+          typename KeyEqual = std::equal_to<Key>>
 class MutableHashIterator
 {
-    using Container = Hash<Key, Value>;
+    using Container = Hash<Key, Value, HashFn, KeyEqual>;
     using Iterator = typename Container::iterator;
 
     Container _hash;
+    Iterator _iter;
     Iterator _cur;
-    Iterator _next;
 
 public:
     MutableHashIterator(Container &c) : _hash(c)
     {
-        if (!_hash.empty()) _next = c.begin();
+        _iter = _hash.begin();
     }
 
     bool hasNext() const
     {
-        return !_hash.empty() && _next != _hash.end();
+        return _iter != _hash.end();
     }
 
     Iterator &next()
     {
-        _cur = _next++;
+        _cur = _iter++;
         return _cur;
     }
 
@@ -104,7 +110,7 @@ public:
 
     void remove()
     {
-        _hash.erase(_cur);
+        _iter = _hash.erase(_cur);
     }
 };
 } // namespace de

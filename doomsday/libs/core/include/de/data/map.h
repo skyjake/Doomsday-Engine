@@ -26,10 +26,10 @@ namespace de {
 /**
  * Key-value container with ordered keys (based on std::map).
  */
-template <typename Key, typename Value>
-class Map : public std::map<Key, Value>
+template <typename Key, typename Value, typename Compare = std::less<Key>>
+class Map : public std::map<Key, Value, Compare>
 {
-    using Base = std::map<Key, Value>;
+    using Base = std::map<Key, Value, Compare>;
 
 public:
     Map() {}
@@ -59,31 +59,30 @@ public:
     }
 };
 
-template <typename Key, typename Value>
+template <typename Key, typename Value, typename Compare = std::less<Key>>
 class MutableMapIterator
 {
-    using Container = Map<Key, Value>;
+    using Container = Map<Key, Value, Compare>;
     using Iterator = typename Container::iterator;
 
     Container _map;
+    Iterator _iter;
     Iterator _cur;
-    Iterator _next;
 
 public:
     MutableMapIterator(Container &c) : _map(c)
     {
-        if (!_map.empty()) _next = c.begin();
+        _iter = _map.begin();
     }
 
     bool hasNext() const
     {
-        return !_map.empty() && _next != _map.end();
+        return _iter != _map.end();
     }
 
     Iterator &next()
     {
-        _cur = _next;
-        if (hasNext()) ++_next;
+        _cur = _iter++;
         return _cur;
     }
 
@@ -99,7 +98,7 @@ public:
 
     void remove()
     {
-        _map.erase(_cur);
+        _iter = _map.erase(_cur);
     }
 };
 

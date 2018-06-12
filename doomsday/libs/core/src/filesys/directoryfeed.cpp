@@ -106,7 +106,6 @@ Feed::PopulatedFiles DirectoryFeed::populate(Folder const &folder)
     {
             continue;
     }
-        if (name == ".." || name.first() == '.') continue;
 
         if (isDirectory_FileInfo(i.value))
         {

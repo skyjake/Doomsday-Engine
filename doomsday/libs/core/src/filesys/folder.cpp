@@ -66,7 +66,7 @@ DE_PIMPL(Folder)
 
     void add(File *file)
     {
-        contents.insert(file->name().lower(), file);
+        contents.insert(file->name(), file);
         file->setParent(thisPublic);
     }
 
@@ -216,22 +216,21 @@ void Folder::populate(PopulationBehaviors behavior)
         DE_GUARD(this);
 
         // Prune the existing files first.
-        MutableMapIterator<String, File *> iter(d->contents);
-        while (iter.hasNext())
+        for (auto iter = d->contents.begin(); iter != d->contents.end(); )
         {
-            iter.next();
-
             // By default we will NOT prune if there are no feeds attached to the folder.
             // In this case the files were probably created manually, so we shouldn't
             // touch them.
             bool mustPrune = false;
 
-            File *file = iter.value();
+            File *file = iter->second;
             if (file->mode() & DontPrune)
             {
                 // Skip this one, it should be kept as-is until manually deleted.
+                ++iter;
                 continue;
             }
+
             Feed *originFeed = file->originFeed();
 
             // If the file has a designated feed, ask it about pruning.
@@ -245,11 +244,11 @@ void Folder::populate(PopulationBehaviors behavior)
                 // There is no designated feed, ask all feeds of this folder.
                 // If even one of the feeds thinks that the file is out of date,
                 // it will be pruned.
-                for (Feeds::iterator f = d->feeds.begin(); f != d->feeds.end(); ++f)
+                for (auto *f : d->feeds)
                 {
-                    if ((*f)->prune(*file))
+                    if (f->prune(*file))
                     {
-                        LOG_RES_XVERBOSE("Pruning %s due to non-origin feed %s", file->path() << (*f)->description());
+                        LOG_RES_XVERBOSE("Pruning %s due to non-origin feed %s", file->path() << f->description());
                         mustPrune = true;
                         break;
                     }
@@ -260,8 +259,12 @@ void Folder::populate(PopulationBehaviors behavior)
             {
                 // It needs to go.
                 file->setParent(nullptr);
-                iter.remove();
+                iter = d->contents.erase(iter);
                 delete file;
+            }
+            else
+            {
+                ++iter;
             }
         }
     }
@@ -283,7 +286,7 @@ void Folder::populate(PopulationBehaviors behavior)
                 if (i)
                 {
                     std::unique_ptr<File> file(i);
-                    if (!d->contents.contains(i->name().lower()))
+                    if (!d->contents.contains(i->name()))
                     {
                         d->add(file.release());
                         fileSystem().index(*i);
@@ -475,7 +478,7 @@ bool Folder::has(String const &name) const
     }
 
     DE_GUARD(this);
-    return (d->contents.find(name.lower()) != d->contents.end());
+    return (d->contents.find(name) != d->contents.end());
 }
 
 File &Folder::add(File *file)
@@ -498,10 +501,8 @@ File *Folder::remove(const String &name)
 {
     DE_GUARD(this);
 
-    String const key = name.lower();
-    DE_ASSERT(d->contents.contains(key));
-
-    File *removed = d->contents.take(key);
+    DE_ASSERT(d->contents.contains(name));
+    File *removed = d->contents.take(name);
     removed->setParent(nullptr);
     return removed;
 }
@@ -520,7 +521,7 @@ filesys::Node const *Folder::tryGetChild(String const &name) const
 {
     DE_GUARD(this);
 
-    auto found = d->contents.find(name.lower());
+    auto found = d->contents.find(name);
     if (found != d->contents.end())
     {
         return found->second;

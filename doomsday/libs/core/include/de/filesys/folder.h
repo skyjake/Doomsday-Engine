@@ -67,7 +67,7 @@ public:
     DE_ERROR(NewFileError);
 
     typedef List<Feed *> Feeds;
-    typedef Map<String, File *> Contents;
+    typedef Map<String, File *, String::InsensitiveLessThan> Contents;
 
     enum PopulationBehavior {
         PopulateFullTree       = 0x1,   ///< The full tree is populated.

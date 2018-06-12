@@ -170,7 +170,7 @@ public:
     Time(Time &&moved);
 
     Time(const TimePoint &tp);
-    Time(iTime time);
+    Time(const iTime &time);
 
     Time(int year, int month, int day, int hour, int minute, int second);
 
