@@ -95,7 +95,7 @@ DE_PIMPL(CommandLine)
         DE_ASSERT(pointers.back() == nullptr);
     }
 
-    void insert(int pos, String const &arg)
+    void insert(dsize pos, String const &arg)
     {
         if (pos > arguments.size())
         {
@@ -106,12 +106,12 @@ DE_PIMPL(CommandLine)
         arguments.insert(pos, arg);
 
         pointers.insert(pointers.begin() + pos, duplicateStringAsUtf8(arg));
-        DE_ASSERT(pointers.back() == 0);
+        DE_ASSERT(pointers.back() == nullptr);
     }
 
-    void remove(duint pos)
+    void remove(dsize pos)
     {
-        if (pos >= (duint) arguments.size())
+        if (pos >= arguments.size())
         {
             /// @throw OutOfRangeError @a pos is out of range.
             throw OutOfRangeError("CommandLine::remove", "Index out of range");
@@ -130,7 +130,7 @@ CommandLine::CommandLine() : d(new Impl(*this))
 
 CommandLine::CommandLine(const StringList &args) : d(new Impl(*this))
 {
-    for (int i = 0; i < args.size(); ++i)
+    for (dsize i = 0; i < args.size(); ++i)
     {
         mb_iterator arg = args.at(i);
         if (*arg == '@')
@@ -147,9 +147,9 @@ CommandLine::CommandLine(const StringList &args) : d(new Impl(*this))
 
 CommandLine::CommandLine(const CommandLine &other) : d(new Impl(*this))
 {
-    DE_FOR_EACH_CONST(Impl::Arguments, i, other.d->arguments)
+    for (const auto &i : other.d->arguments)
     {
-        d->appendArg(*i);
+        d->appendArg(i);
     }
 }
 
@@ -158,9 +158,14 @@ NativePath CommandLine::startupPath()
     return d->initialDir;
 }
 
-dint CommandLine::count() const
+dsize CommandLine::count() const
 {
     return d->arguments.size();
+}
+
+dint CommandLine::sizei() const
+{
+    return dint(count());
 }
 
 void CommandLine::clear()
@@ -173,12 +178,12 @@ void CommandLine::append(String const &arg)
     d->appendArg(arg);
 }
 
-void CommandLine::insert(duint pos, String const &arg)
+void CommandLine::insert(dsize pos, String const &arg)
 {
     d->insert(pos, arg);
 }
 
-void CommandLine::remove(duint pos)
+void CommandLine::remove(dsize pos)
 {
     d->remove(pos);
 }
@@ -214,7 +219,7 @@ CommandLine::ArgWithParams CommandLine::check(String const &arg, dint numParams)
 }
 
 int CommandLine::forAllParameters(String const &arg,
-                                  std::function<void (duint, String const &)> paramHandler) const
+                                  std::function<void (dsize, String const &)> paramHandler) const
 {
     int total = 0;
     bool inside = false;
@@ -267,9 +272,9 @@ dint CommandLine::has(String const &arg) const
     return howMany;
 }
 
-bool CommandLine::isOption(duint pos) const
+bool CommandLine::isOption(dsize pos) const
 {
-    if (pos >= (duint) d->arguments.size())
+    if (pos >= d->arguments.size())
     {
         /// @throw OutOfRangeError @a pos is out of range.
         throw OutOfRangeError("CommandLine::isOption", "Index out of range");
@@ -283,20 +288,20 @@ bool CommandLine::isOption(String const &arg)
     return !(arg.empty() || arg.first() != '-');
 }
 
-String CommandLine::at(duint pos) const
+String CommandLine::at(dsize pos) const
 {
     return d->arguments.at(pos);
 }
 
 char const *const *CommandLine::argv() const
 {
-    DE_ASSERT(*d->pointers.rbegin() == 0); // the list itself must be null-terminated
+    DE_ASSERT(*d->pointers.rbegin() == nullptr); // the list itself must be null-terminated
     return &d->pointers[0];
 }
 
-void CommandLine::makeAbsolutePath(duint pos)
+void CommandLine::makeAbsolutePath(dsize pos)
 {
-    if (pos >= (duint) d->arguments.size())
+    if (pos >= d->arguments.size())
     {
         /// @throw OutOfRangeError @a pos is out of range.
         throw OutOfRangeError("CommandLine::makeAbsolutePath", "Index out of range");

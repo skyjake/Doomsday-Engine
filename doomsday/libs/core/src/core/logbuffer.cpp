@@ -66,7 +66,7 @@ DE_PIMPL(LogBuffer)
         , maxEntryCount(maxEntryCount)
         , useStandardOutput(true)
         , flushingEnabled(true)
-        , fileLogSink(0)
+        , fileLogSink(nullptr)
 //#ifndef WIN32
         , outSink(std::cout)
         , errSink(std::cerr)
@@ -162,7 +162,7 @@ LogBuffer::~LogBuffer()
     setOutputFile("");
     clear();
 
-    if (_appBuffer == this) _appBuffer = 0;
+    if (_appBuffer == this) _appBuffer = nullptr;
 }
 
 void LogBuffer::clear()
@@ -189,10 +189,10 @@ void LogBuffer::latestEntries(Entries &entries, int count) const
 {
     DE_GUARD(this);
     entries.clear();
-    for (int i = d->entries.size() - 1; i >= 0; --i)
+    for (int i = d->entries.sizei() - 1; i >= 0; --i)
     {
         entries.append(d->entries[i]);
-        if (count && entries.size() >= count)
+        if (count && entries.sizei() >= count)
         {
             return;
         }
@@ -213,7 +213,7 @@ void LogBuffer::setEntryFilter(IFilter const *entryFilter)
 
 bool LogBuffer::isEnabled(duint32 entryMetadata) const
 {
-    DE_ASSERT(d->entryFilter != 0);
+    DE_ASSERT(d->entryFilter != nullptr);
     DE_ASSERT(entryMetadata & LogEntry::DomainMask); // must have a domain
     if (entryMetadata & LogEntry::Privileged)
     {
@@ -338,7 +338,7 @@ void LogBuffer::flush()
 //    d->lastFlushedAt = Time();
 
     // Too many entries? Now they can be destroyed since we have flushed everything.
-    while (d->entries.size() > d->maxEntryCount)
+    while (d->entries.sizei() > d->maxEntryCount)
     {
         LogEntry *old = d->entries.front();
         d->entries.pop_front();
@@ -353,13 +353,13 @@ void LogBuffer::setAppBuffer(LogBuffer &appBuffer)
 
 LogBuffer &LogBuffer::get()
 {
-    DE_ASSERT(_appBuffer != 0);
+    DE_ASSERT(_appBuffer != nullptr);
     return *_appBuffer;
 }
 
 bool LogBuffer::appBufferExists()
 {
-    return _appBuffer != 0;
+    return _appBuffer != nullptr;
 }
 
 } // namespace de

@@ -50,12 +50,13 @@ public:
     using Base::begin;
     using Base::end;
     using Base::push_back;
+    using Base::size;
     void pop_front() { removeFirst(); } // slow...
     void push_front(const T &v) { prepend(v); } // slow...
 
     // Qt style methods:
 
-    int      size() const { return int(Base::size()); }
+    int      sizei() const { return int(Base::size()); }
     void     clear() { Base::clear(); }
     bool     isEmpty() const { return Base::size() == 0; }
     inline explicit operator bool() const { return !isEmpty(); }
@@ -69,21 +70,25 @@ public:
     void     append(const T &v) { push_back(v); }
     void     append(const List &list) { for (const T &v : list) push_back(v); }
     void     prepend(const T &v) { Base::insert(begin(), v); }
-    void     insert(int pos, const T &value) { Base::insert(begin() + pos, value); }
+//    void     insert(int pos, const T &value) { Base::insert(begin() + pos, value); }
+    void     insert(size_t pos, const T &value) { Base::insert(begin() + pos, value); }
     void     insert(const const_iterator &i, const T &value) { Base::insert(i, value); }
-    const T &operator[](int pos) const { return Base::at(pos); }
-    T &      operator[](int pos) { return Base::operator[](pos); }
-    const T &at(int pos) const { return Base::at(pos); }
+//    const T &operator[](int pos) const    { return Base::at(pos); }
+    const T &operator[](size_t pos) const { return Base::at(pos); }
+//    T &      operator[](int pos)    { return Base::operator[](pos); }
+    T &      operator[](size_t pos) { return Base::operator[](pos); }
+//    const T &at(int pos) const { return Base::at(pos); }
+    const T &at(size_t pos) const { return Base::at(pos); }
     const T &first() const { return Base::front(); }
     const T &last() const { return Base::back(); }
     T &      first() { return Base::front(); }
     T &      last() { return Base::back(); }
     T        takeFirst() { T v = first(); pop_front(); return std::move(v); }
     T        takeLast()  { T v = last();  Base::pop_back();  return std::move(v); }
-    T        takeAt(int pos) { T v = std::move(at(pos)); Base::erase(Base::begin() + pos); return std::move(v); }
+    T        takeAt(size_t pos) { T v = std::move(at(pos)); Base::erase(Base::begin() + pos); return std::move(v); }
     void     removeFirst() { Base::erase(Base::begin()); }
     void     removeLast()  { Base::erase(Base::begin() + size() - 1); }
-    void     removeAt(int pos) { Base::erase(Base::begin() + pos); }
+    void     removeAt(size_t pos) { Base::erase(Base::begin() + pos); }
     void     removeAll(const T &v) { Base::erase(std::remove(begin(), end(), v), end()); }
     void     removeOne(const T &v)
     {

@@ -872,7 +872,7 @@ String String::join(const StringList &stringList, const char *sep)
     if (stringList.isEmpty()) return {};
 
     String joined = stringList.at(0);
-    for (int i = 1; i < stringList.size(); ++i)
+    for (dsize i = 1; i < stringList.size(); ++i)
     {
         joined += sep;
         joined += stringList.at(i);

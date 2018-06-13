@@ -73,14 +73,14 @@ int MemoryLogSink::entryCount() const
 {
     DE_GUARD(this);
 
-    return _entries.size();
+    return _entries.sizei();
 }
 
 LogEntry const &MemoryLogSink::entry(int index) const
 {
     DE_GUARD(this);
     DE_ASSERT(index >= 0);
-    DE_ASSERT(index < _entries.size());
+    DE_ASSERT(index < _entries.sizei());
 
     return *_entries.at(index);
 }

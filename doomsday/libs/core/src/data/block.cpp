@@ -348,7 +348,7 @@ Block Block::join(const List<Block> &blocks, const Block &sep) // static
     if (blocks.isEmpty()) return Block();
 
     Block joined = blocks.at(0);
-    for (int i = 1; i < blocks.size(); ++i)
+    for (int i = 1; i < blocks.sizei(); ++i)
     {
         joined += sep;
         joined += blocks.at(i);

@@ -89,7 +89,7 @@ BitField::Elements &BitField::Elements::add(Id id, dsize numBits)
     // Update the lookup table.
     int pos = elem.firstBit / 8;
     int endPos = (elem.firstBit + (numBits - 1)) / 8;
-    while (d->lookup.size() <= endPos)
+    while (d->lookup.sizei() <= endPos)
     {
         d->lookup.append(Ids());
     }

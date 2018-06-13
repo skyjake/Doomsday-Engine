@@ -172,7 +172,7 @@ DE_PIMPL(Widget)
 
             // When we run out of siblings, try to ascend to parent and continue from
             // there without handling the parent again.
-            if (pos < 0 || pos >= children.size())
+            if (pos < 0 || pos >= children.sizei())
             {
                 if (verticalDir > 0)
                 {
@@ -531,7 +531,7 @@ void Widget::moveChildBefore(Widget *child, Widget const &otherChild)
     int to = -1;
 
     // Note: O(n)
-    for (int i = 0; i < d->children.size() && (from < 0 || to < 0); ++i)
+    for (int i = 0; i < d->children.sizei() && (from < 0 || to < 0); ++i)
     {
         if (d->children.at(i) == child)
         {
@@ -624,7 +624,7 @@ Widget::NotifyArgs::Result Widget::notifyTree(NotifyArgs const &args)
     NotifyArgs::Result result = NotifyArgs::Continue;
     bool preNotified = false;
 
-    for (int idx = 0; idx < d->children.size(); ++idx)
+    for (int idx = 0; idx < d->children.sizei(); ++idx)
     {
         Widget *i = d->children.at(idx);
 
@@ -855,7 +855,7 @@ const Record &Widget::objectNamespace() const
 
 void Widget::setFocusCycle(WidgetList const &order)
 {
-    for (int i = 0; i < order.size(); ++i)
+    for (dsize i = 0; i < order.size(); ++i)
     {
         Widget *a = order[i];
         Widget *b = order[(i + 1) % order.size()];

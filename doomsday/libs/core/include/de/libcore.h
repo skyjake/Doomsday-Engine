@@ -229,7 +229,7 @@
  * Asserts that the object really exists (not null).
  */
 #define DE_SELF(Type, Var) \
-    DE_ASSERT(Var != 0); \
+    DE_ASSERT(Var != nullptr); \
     de::Type *self = reinterpret_cast<de::Type *>(Var);
 
 /**

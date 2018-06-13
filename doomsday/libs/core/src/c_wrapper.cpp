@@ -122,13 +122,13 @@ void CommandLine_Alias(char const *longname, char const *shortname)
 
 int CommandLine_Count(void)
 {
-    return DE_COMMANDLINE().count();
+    return DE_COMMANDLINE().sizei();
 }
 
 char const *CommandLine_At(int i)
 {
     DE_ASSERT(i >= 0);
-    DE_ASSERT(i < DE_COMMANDLINE().count());
+    DE_ASSERT(i < DE_COMMANDLINE().sizei());
     return *(DE_COMMANDLINE().argv() + i);
 }
 
@@ -145,7 +145,7 @@ char const *CommandLine_Next(void)
     if (!argLastMatch || argLastMatch >= CommandLine_Count() - 1)
     {
         // No more arguments following the last match.
-        return 0;
+        return nullptr;
     }
     return CommandLine_At(++argLastMatch);
 }
@@ -155,7 +155,7 @@ char const *CommandLine_NextAsPath(void)
     if (!argLastMatch || argLastMatch >= CommandLine_Count() - 1)
     {
         // No more arguments following the last match.
-        return 0;
+        return nullptr;
     }
     DE_COMMANDLINE().makeAbsolutePath(argLastMatch + 1);
     return CommandLine_Next();
@@ -228,7 +228,7 @@ de_Info *Info_NewFromString(char const *utf8text)
     catch (de::Error const &er)
     {
         LOG_WARNING(er.asText());
-        return 0;
+        return nullptr;
     }
 }
 
@@ -243,7 +243,7 @@ de_Info *Info_NewFromFile(char const *nativePath)
     catch (de::Error const &er)
     {
         LOG_WARNING(er.asText());
-        return 0;
+        return nullptr;
     }
 }
 

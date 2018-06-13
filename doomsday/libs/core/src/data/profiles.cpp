@@ -264,7 +264,7 @@ void Profiles::serialize() const
 
         os << "\nprofile {\n"
               "    name: " << prof->name().c_str() << "\n";
-        for (const auto &line : prof->toInfoSource().splitRef('\n'))
+        for (const auto &line : prof->toInfoSource().split('\n'))
         {
             os << "    " << line.toStdString() << "\n";
         }

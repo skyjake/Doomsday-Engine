@@ -129,7 +129,7 @@ struct TabFiller
             int tabWidth = 0;
 
             // Find the widest position for this tab stop by checking all lines.
-            for (int idx = 0; idx < fills.size(); ++idx)
+            for (int idx = 0; idx < fills.sizei(); ++idx)
             {
                 String const &ln = fills.at(idx);
                 int w = (idx > 0? minIndent : 0);
@@ -162,7 +162,7 @@ struct TabFiller
 replaceTabs:
             // Fill up (replace) the tabs with spaces according to the widest found
             // position.
-            for (int idx = 0; idx < fills.size(); ++idx)
+            for (int idx = 0; idx < fills.sizei(); ++idx)
             {
                 String &ln = fills[idx];
                 int w = (idx > 0? minIndent : 0);
@@ -339,7 +339,9 @@ StringList MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
         // For lines other than the first one, print an indentation.
         if (pos > 0)
         {
-            lineText = wstring(wrapIndent, L' ') + lineText;
+            wstring indented(wrapIndent, L' ');
+            indented += lineText;
+            lineText = indented;
         }
 
         // The wrap indent for this paragraph depends on the first line's content.

@@ -84,7 +84,11 @@ public:
      * Returns the number of arguments. This includes the program name, which
      * is the first argument in the list.
      */
-    dint count() const;
+    dsize count() const;
+
+    inline dsize size() const { return count(); }
+
+    dint sizei() const;
 
     void clear();
 
@@ -106,14 +110,14 @@ public:
      * @param pos  Index at which the new argument will be at.
      * @param arg  Argument to insert.
      */
-    void insert(duint pos, String const &arg);
+    void insert(dsize pos, String const &arg);
 
     /**
      * Removes an argument by index.
      *
      * @param pos  Index of argument to remove.
      */
-    void remove(duint pos);
+    void remove(dsize pos);
 
     /**
      * Checks whether @a arg is in the arguments. Since the first argument is
@@ -140,7 +144,7 @@ public:
      * @return Number of parameters handled.
      */
     int forAllParameters(String const &arg,
-                         std::function<void (duint, String const &)> paramHandler) const;
+                         std::function<void (dsize, String const &)> paramHandler) const;
 
     /**
      * Gets the parameter for an argument.
@@ -166,14 +170,14 @@ public:
     /**
      * Determines whether an argument is an option, i.e., it begins with a hyphen.
      */
-    bool isOption(duint pos) const;
+    bool isOption(dsize pos) const;
 
     /**
      * Determines whether an argument is an option, i.e., it begins with a hyphen.
      */
     static bool isOption(String const &arg);
 
-    String at(duint pos) const;
+    String at(dsize pos) const;
 
     /**
      * Returns a list of pointers to the arguments. The list contains
@@ -188,7 +192,7 @@ public:
      *
      * @param pos  Argument index.
      */
-    void makeAbsolutePath(duint pos);
+    void makeAbsolutePath(dsize pos);
 
     /**
      * Reads a native file and parses its contents using parse().
