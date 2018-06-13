@@ -308,27 +308,26 @@ void LogBuffer::flush()
 
     if (!d->toBeFlushed.isEmpty())
     {
-        DE_FOR_EACH(Impl::EntryList, i, d->toBeFlushed)
+        for (const auto *entry : d->toBeFlushed)
         {
-            DE_GUARD_FOR(**i, guardingCurrentLogEntry);
+            DE_GUARD_FOR(*entry, guardingCurrentLogEntry);
             for (LogSink *sink : d->sinks)
             {
-                if (sink->willAccept(**i))
+                if (sink->willAccept(*entry))
                 {
                     try
                     {
-                        *sink << **i;
+                        *sink << *entry;
                     }
                     catch (Error const &error)
                     {
                         *sink << String("Exception during log flush:\n") +
                                         error.what() + "\n(the entry format is: '" +
-                                        (*i)->format() + "')";
+                                        entry->format() + "')";
                     }
                 }
             }
         }
-
         d->toBeFlushed.clear();
 
         // Make sure everything really gets written now.

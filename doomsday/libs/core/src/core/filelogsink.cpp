@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/FileLogSink"
@@ -23,18 +23,26 @@ namespace de {
 
 FileLogSink::FileLogSink(File &outputFile)
     : LogSink(_format)
-    , _file(outputFile)
+    , _file(&outputFile)
 {}
 
-LogSink &FileLogSink::operator << (String const &plainText)
+LogSink &FileLogSink::operator<<(const String &plainText)
 {
-    _file << Block((plainText + "\n").toUtf8());
+    static const Block endl("\n");
+    if (_file)
+    {
+        *_file << plainText;
+        *_file << endl;
+    }
     return *this;
 }
 
 void FileLogSink::flush()
 {
-    _file.flush();
+    if (_file)
+    {
+        _file->flush();
+    }
 }
 
 } // namespace de

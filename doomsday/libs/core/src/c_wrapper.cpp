@@ -281,7 +281,7 @@ char *UnixInfo_GetConfigValue(char const *configFile, char const *key)
     de::UnixInfo &info = de::App::unixInfo();
 
     // "paths" is the only config file currently being used.
-    if (!strcmp(configFile, "paths"))
+    if (!iCmpStr(configFile, "paths"))
     {
         de::NativePath foundValue;
         if (info.path(key, foundValue))
@@ -289,7 +289,7 @@ char *UnixInfo_GetConfigValue(char const *configFile, char const *key)
             return strdup(foundValue);
         }
     }
-    else if (!strcmp(configFile, "defaults"))
+    else if (!iCmpStr(configFile, "defaults"))
     {
         de::String foundValue;
         if (info.defaults(key, foundValue))

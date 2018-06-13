@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 #endif
 
         String output;
-        if (false)//cmd.executeAndWait(&output))
+        if (cmd.executeAndWait(&output))
         {
             LOG_MSG("Output from %s:\n") << cmd.at(0) << output;
         }

@@ -23,11 +23,7 @@
 #include <string>
 #include <vector>
 #include <map>
-
-//#if !defined (DE_MOBILE)
-//#  include <QProcess>
-//#  define DE_HAVE_QPROCESS
-//#endif
+#include <c_plus/process.h>
 
 #include "../libcore.h"
 #include "../String"
@@ -144,7 +140,7 @@ public:
      * @return Number of parameters handled.
      */
     int forAllParameters(String const &arg,
-                         std::function<void (dsize, String const &)> paramHandler) const;
+                         const std::function<void (dsize, String const &)>& paramHandler) const;
 
     /**
      * Gets the parameter for an argument.
@@ -230,8 +226,6 @@ public:
      */
     bool matches(String const &full, String const &fullOrAlias) const;
 
-#if defined (DE_HAVE_QPROCESS)
-
     /**
      * Spawns a new process using the command line. The first argument
      * specifies the file name of the executable. Returns immediately
@@ -249,11 +243,9 @@ public:
      *
      * @return @c true if successful, otherwise @c false.
      */
-    bool executeAndWait(String *output = 0) const;
+    bool executeAndWait(String *output = nullptr) const;
 
-    QProcess *executeProcess() const;
-
-#endif
+    iProcess *executeProcess() const;
 
     static CommandLine &get();
 

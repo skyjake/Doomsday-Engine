@@ -33,16 +33,13 @@
 #include <string.h>
 
 #include <c_plus/fileinfo.h>
+#include <c_plus/stringlist.h>
+#include <c_plus/process.h>
 
 namespace de {
 
 static char *duplicateStringAsUtf8(String const &s)
 {
-//    QByteArray utf = s.toUtf8();
-//    char *copy = (char *) malloc(utf.size() + 1);
-//    memcpy(copy, utf.constData(), utf.size());
-//    copy[utf.size()] = 0;
-//    return copy;
     return strdup(s);
 }
 
@@ -75,7 +72,7 @@ DE_PIMPL(CommandLine)
         arguments.clear();
         DE_FOR_EACH(ArgumentPointers, i, pointers) free(*i);
         pointers.clear();
-        pointers.push_back(0);
+        pointers.push_back(nullptr);
     }
 
     void appendArg(const String &arg)
@@ -121,7 +118,29 @@ DE_PIMPL(CommandLine)
 
         free(pointers[pos]);
         pointers.erase(pointers.begin() + pos);
-        DE_ASSERT(pointers.back() == 0);
+        DE_ASSERT(pointers.back() == nullptr);
+    }
+
+    iProcess *execute() const
+    {
+        if (self().count() < 1) return nullptr;
+
+        iProcess *proc = new_Process();
+        setWorkingDirectory_Process(proc, initialDir.toString());
+
+        cplus::ref<iStringList> args{new_StringList()};
+        for (dsize i = 0; i < self().count(); ++i)
+        {
+            pushBack_StringList(args, self().at(i));
+        }
+        setArguments_Process(proc, args);
+
+        if (!start_Process(proc))
+        {
+            iRelease(proc);
+            return nullptr;
+        }
+        return proc;
     }
 };
 
@@ -219,7 +238,7 @@ CommandLine::ArgWithParams CommandLine::check(String const &arg, dint numParams)
 }
 
 int CommandLine::forAllParameters(String const &arg,
-                                  std::function<void (dsize, String const &)> paramHandler) const
+                                  const std::function<void (dsize, String const &)>& paramHandler) const
 {
     int total = 0;
     bool inside = false;
@@ -468,64 +487,45 @@ bool CommandLine::matches(String const &full, String const &fullOrAlias) const
     return false;
 }
 
-#if defined (DE_HAVE_QPROCESS)
-
 bool CommandLine::execute() const
 {
     LOG_AS("CommandLine");
 
-    if (count() < 1) return false;
-
-    QStringList args;
-    for (int i = 1; i < count(); ++i) args << at(i);
-
-    qint64 pid = 0;
-    if (!QProcess::startDetached(at(0), args, d->initialDir.path(), &pid))
+    cplus::ref<iProcess> proc{d->execute()};
+    if (!proc)
     {
         LOG_ERROR("Failed to start \"%s\"") << at(0);
         return false;
     }
-
-    LOG_DEBUG("Started detached process %i \"%s\"") << pid << at(0);
+    LOG_DEBUG("Started detached process %i \"%s\"") << pid_Process(proc) << at(0);
     return true;
 }
 
 bool CommandLine::executeAndWait(String *output) const
 {
-    std::unique_ptr<QProcess> proc(executeProcess());
+    cplus::ref<iProcess> proc{d->execute()};
     if (!proc)
     {
         return false;
     }
-    bool result = proc->waitForFinished();
+    waitForFinished_Process(proc);
     if (output)
     {
-        *output = String::fromUtf8(proc->readAll());
+        *output = String::take(readOutput_Process(proc));
     }
-    return result;
+    return true;
 }
 
-QProcess *CommandLine::executeProcess() const
+iProcess *CommandLine::executeProcess() const
 {
     LOG_AS("CommandLine");
-
-    if (count() < 1) return nullptr;
-
-    QStringList args;
-    for (int i = 1; i < count(); ++i) args << at(i);
-
-    auto *proc = new QProcess;
-    proc->start(at(0), args);
-    if (!proc->waitForStarted())
+    iProcess *proc = d->execute();
+    if (proc)
     {
-        delete proc;
-        return nullptr;
+        LOG_DEBUG("Started process %i \"%s\"") << pid_Process(proc) << at(0);
     }
-    LOG_DEBUG("Started process %i \"%s\"") << proc->pid() << at(0);
     return proc;
 }
-
-#endif // DE_HAVE_QPROCESS
 
 CommandLine &CommandLine::get()
 {
@@ -542,7 +542,7 @@ CommandLine::ArgWithParams::operator dint () const
 
 dint CommandLine::ArgWithParams::size() const
 {
-    return params.size();
+    return params.sizei();
 }
 
 } // namespace de

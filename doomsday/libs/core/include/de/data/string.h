@@ -787,7 +787,7 @@ struct DE_PUBLIC mb_iterator
     const char *i;
     const char *start;
     mutable mbstate_t mb{};
-    mutable int curCharLen = 0;
+    mutable dsize curCharLen = 0;
 
     mb_iterator() : i{nullptr}, start{nullptr} {}
     mb_iterator(const char *p) : i{p}, start{i} {}

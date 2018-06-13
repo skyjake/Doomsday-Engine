@@ -746,8 +746,11 @@ void ZipArchive::operator >> (Writer &to) const
 
 static bool recognizeZipExtension(String const &ext)
 {
-    return (ext == ".pack" || ext == ".demo" || ext == ".save" || ext == ".addon" ||
-            /*ext == ".box"  ||*/ ext == ".pk3"  || ext == ".zip");
+    for (const char *e : {".pack", ".demo", ".save", ".addon", ".pk3", ".zip"})
+    {
+        if (!iCmpStrCase(ext, e)) return true;
+    }
+    return false;
 }
 
 bool ZipArchive::recognize(File const &file)
@@ -755,14 +758,14 @@ bool ZipArchive::recognize(File const &file)
     if (file.status().type() == File::Type::File)
     {
         // For now, just check the name.
-        return recognizeZipExtension(file.extension().lower());
+        return recognizeZipExtension(file.extension());
     }
     return false;
 }
 
 bool ZipArchive::recognize(NativePath const &path)
 {
-    return recognizeZipExtension(path.toString().fileNameExtension().lower());
+    return recognizeZipExtension(path.toString().fileNameExtension());
 }
 
 void ZipArchive::ZipEntry::update()

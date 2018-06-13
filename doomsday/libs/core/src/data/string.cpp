@@ -702,26 +702,6 @@ String String::take(iString *str) // static
     return s;
 }
 
-//dint String::compareWithCase(QChar const *a, QChar const *b, dsize count) // static
-//{
-//    return QString(a).leftRef(count).compare(QString(b).leftRef(count), Qt::CaseSensitive);
-//}
-
-//bool String::equals(QChar const *a, QChar const *b, dsize count) // static
-//{
-//    while (count--)
-//    {
-//        // Both strings the same length?
-//        if (a->isNull() && b->isNull()) break;
-//        // Mismatch?
-//        if (*a != *b) return false;
-//        // Advance.
-//        a++;
-//        b++;
-//    }
-//    return true;
-//}
-
 void String::skipSpace(const_iterator &i, const const_iterator &end)
 {
     while (i != end && iswspace(*i)) ++i;
@@ -756,11 +736,6 @@ String String::format(const char *format, ...)
     }
     return buffer;
 }
-
-//static inline bool isSign(Char ch)
-//{
-//    return ch == '-' || ch == '+';
-//}
 
 dint String::toInt(bool *ok, int base, duint flags) const
 {
@@ -887,10 +862,9 @@ String String::patternFormat(const_iterator &      formatIter,
     advanceFormat(formatIter, formatEnd);
 
     String result;
-    //QTextStream output(&result);
 
     // An argument comes here.
-    bool rightAlign = true;
+    bool  rightAlign = true;
     dsize maxWidth = 0;
     dsize minWidth = 0;
 
@@ -1075,7 +1049,7 @@ Char mb_iterator::decode() const
 mb_iterator &mb_iterator::operator++()
 {
     if (!curCharLen) decode();
-    i += de::max(curCharLen, 1);
+    i += de::max(curCharLen, dsize(1));
     curCharLen = 0;
     return *this;
 }
@@ -1098,15 +1072,6 @@ mb_iterator &mb_iterator::operator+=(int offset)
     while (offset-- > 0) ++(*this);
     return *this;
 }
-
-//size_t qchar_strlen(Char const *str)
-//{
-//    if (!str) return 0;
-
-//    size_t len = 0;
-//    while (str->unicode() != 0) { ++str; ++len; }
-//    return len;
-//}
 
 std::string stringf(const char *format, ...)
 {

@@ -67,7 +67,7 @@ LogSink::IFormatter *LogSink::formatter()
     return _formatter;
 }
 
-LogSink &LogSink::operator << (LogEntry const &entry)
+LogSink &LogSink::operator<<(const LogEntry &entry)
 {
     DE_ASSERT(formatter());
     for (const String &line : formatter()->logEntryToTextLines(entry))
