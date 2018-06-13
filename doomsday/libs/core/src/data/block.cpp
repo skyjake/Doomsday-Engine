@@ -158,7 +158,13 @@ void Block::remove(size_t pos, size_t len)
     remove_Block(&_block, pos, len);
 }
 
-Block &Block::operator += (const char *nullTerminatedCStr)
+Block::Byte &Block::operator[](size_t pos)
+{
+    if (pos >= size()) resize(pos + 1);
+    return data()[pos];
+}
+
+Block &Block::operator+=(const char *nullTerminatedCStr)
 {
     appendCStr_Block(&_block, nullTerminatedCStr);
     return *this;
@@ -177,6 +183,11 @@ Block Block::left(size_t len) const
     Block trunc(*this);
     truncate_Block(&trunc._block, len);
     return trunc;
+}
+
+bool Block::operator==(const Block &other) const
+{
+    return size() == other.size() && cmp_Block(*this, other) == 0;
 }
 
 Block Block::operator+(const Block &other) const

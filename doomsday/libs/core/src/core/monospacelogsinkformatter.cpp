@@ -331,18 +331,18 @@ StringList MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
             }
         }
 
-        // Crop this line's text out of the entire message.
-        wstring lineText = message.substr(pos, lineLen);
+        wstring lineText;
 
         //qDebug() << "[formatting]" << wrapIndent << lineText;
 
         // For lines other than the first one, print an indentation.
-        if (pos > 0)
+        if (pos > 0 && wrapIndent != String::npos)
         {
-            wstring indented(wrapIndent, L' ');
-            indented += lineText;
-            lineText = indented;
+            lineText += wstring(wrapIndent, L' ');
         }
+
+        // Crop this line's text out of the entire message.
+        lineText += message.substr(pos, lineLen);
 
         // The wrap indent for this paragraph depends on the first line's content.
         const bool lineStartsWithSpace = lineText.empty() || iswspace(lineText.front());

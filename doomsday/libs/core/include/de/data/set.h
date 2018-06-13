@@ -20,6 +20,7 @@
 #define LIBCORE_SET_H
 
 #include <unordered_set>
+#include <ostream>
 
 namespace de {
 
@@ -54,6 +55,18 @@ public:
     bool     contains(const Value &value) const { return Base::find(value) != end(); }
     Set &    operator<<(const Value &value) { Base::insert(value); return *this; }
 };
+
+template <typename T>
+inline std::ostream &operator<<(std::ostream &os, const Set<T> &set)
+{
+    os << "Set{";
+    for (const auto &v : set)
+    {
+        os << " " << v;
+    }
+    os << " }";
+    return os;
+}
 
 } // namespace de
 

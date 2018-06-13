@@ -105,12 +105,15 @@ public:
     operator const iBlock *() const { return &_block; }
     inline explicit operator bool() const { return !isEmpty_Block(&_block); }
 
-    inline Byte &operator[](size_t pos) { return data()[pos]; }
+    Byte &operator[](size_t pos);
     inline Byte operator[](size_t pos) const { return at(pos); }
     inline Byte at(size_t pos) const { return at_Block(&_block, pos); }
 
     Block mid(size_t pos, size_t len = iInvalidSize) const;
     Block left(size_t len) const;
+
+    bool operator==(const Block &other) const;
+    inline bool operator!=(const Block &other) const { return !(*this == other); }
 
     Block operator+(const Block &other) const;
 
