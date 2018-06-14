@@ -217,7 +217,7 @@ public:
      *
      * @param func  Callback to make for each string.
      */
-    LoopResult forAll(std::function<LoopResult (Id)> func) const;
+    LoopResult forAll(const std::function<LoopResult (Id)>& func) const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

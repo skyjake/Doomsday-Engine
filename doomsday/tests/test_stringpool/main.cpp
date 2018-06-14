@@ -24,7 +24,7 @@
 #include <de/StringPool>
 #include <de/Reader>
 #include <de/Writer>
-#include <QDebug>
+#include <iostream>
 
 using namespace de;
 
@@ -89,7 +89,7 @@ int main(int, char **)
         // Serialize.
         Block b;
         Writer(b) << p;
-        qDebug() << "Serialized stringpool to" << b.size() << "bytes.";
+        std::cout << "Serialized StringPool to " << b.size() << " bytes." << std::endl;
 
         // Deserialize.
         StringPool p2;
@@ -106,9 +106,9 @@ int main(int, char **)
     }
     catch (Error const &err)
     {
-        qWarning() << err.asText() << "\n";
+        warning("%s", err.asText().c_str());
     }
 
-    qDebug() << "Exiting main()...\n";
+    std::cout << "Exiting main()...\n";
     return 0;
 }

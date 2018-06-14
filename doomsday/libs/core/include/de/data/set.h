@@ -35,6 +35,7 @@ class Set : public std::unordered_set<Value>
 
 public:
     Set() {}
+    Set(Set &&moved) : Base(moved) {}
 
     template <typename T>
     Set(const std::initializer_list<T> &init)
@@ -54,6 +55,7 @@ public:
     void     remove(const Value &value) { Base::erase(value); }
     bool     contains(const Value &value) const { return Base::find(value) != end(); }
     Set &    operator<<(const Value &value) { Base::insert(value); return *this; }
+    Set &    operator=(Set &&moved) { Base::operator=(moved); return *this; }
 };
 
 template <typename T>
