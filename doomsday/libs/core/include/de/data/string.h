@@ -181,8 +181,9 @@ public:
     String(const std::string &str, dsize index, dsize length);
 
     template <typename Iterator>
-    String(Iterator start, Iterator end)
+    inline String(Iterator start, Iterator end)
     {
+        init_String(&_str);
         for (Iterator i = start; i != end; ++i)
         {
             push_back(*i);

@@ -141,13 +141,7 @@ DE_PIMPL_NOREF(Time)
             // Full date and time comparison.
             return sysTime < other.sysTime;
         }
-        /**
-         * @todo Implement needed conversion to compare DateTime with high
-         * performance delta time.
-         */
-        DE_ASSERT_FAIL("Time: Implement needed conversion to compare DateTime with high "
-                       "performance delta time");
-        return false;
+        return systemTime() < other.systemTime();
     }
 
     bool isEqualTo(Impl const &other) const
@@ -160,29 +154,14 @@ DE_PIMPL_NOREF(Time)
         {
             return sysTime == other.sysTime;
         }
-        if (flags & SysTime)
-        {
-            // This is DateTime but other is high-perf.
-            DE_ASSERT_FAIL("[Time::isEqualTo] This is SysTime but other is high-perf");
-//            return fequal(highPerfTimer().startedAt().asDateTime().msecsTo(dateTime)/1000.0,
-//                          other.highPerfElapsed);
-        }
-        if (flags & HighPerformance)
-        {
-            // This is high-perf and the other is DateTime.
-            DE_ASSERT_FAIL("[Time::isEqualTo] This is high-perf and the other is SysTime");
-
-//            return fequal(highPerfElapsed,
-//                          highPerfTimer().startedAt().asDateTime().msecsTo(other.dateTime)/1000.0);
-        }
-        return false;
+        return systemTime() == other.systemTime();
     }
 
     void add(Span const &delta)
     {
         if (flags & SysTime)
         {
-            sysTime += std::chrono::milliseconds(delta.asMilliSeconds()); //= sysTime.addMSecs(delta.asMilliSeconds());
+            sysTime += std::chrono::milliseconds(delta.asMilliSeconds());
         }
         if (flags & HighPerformance)
         {
@@ -196,18 +175,12 @@ DE_PIMPL_NOREF(Time)
         {
             return highPerfElapsed - earlier.highPerfElapsed;
         }
-        if ((flags & SysTime) && (earlier.flags & SysTime))
+        else //if ((flags & SysTime) && (earlier.flags & SysTime))
         {
             //return earlier.dateTime.msecsTo(dateTime) / 1000.0;
             using namespace std::chrono;
-            return duration_cast<milliseconds>(sysTime - earlier.sysTime).count() / 1.0e3;
+            return duration_cast<milliseconds>(systemTime() - earlier.systemTime()).count() / 1.0e3;
         }
-        /**
-         * @todo Implement needed conversion to compare DateTime with high
-         * performance delta time.
-         */
-        DE_ASSERT(0);
-        return 0;
     }
 
     void setSysTimeFromHighPerf()
@@ -229,30 +202,34 @@ DE_PIMPL_NOREF(Time)
         return {};
     }
 
-    static Time getQDateTime(const Block &data)
+    struct QDateTimeFormat
     {
         uint32_t julianDay;
         uint32_t msecs;
         uint8_t timezone;
+    };
 
+    static Time getQDateTime(const Block &data)
+    {
         // This matches Qt's QDataStream format.
+        QDateTimeFormat fmt;
         Reader r(data);
-        r >> julianDay >> msecs >> timezone;
+        r >> fmt.julianDay >> fmt.msecs >> fmt.timezone;
 
-        return Date::fromJulianDayNumber(julianDay).asTime()
-                + double(msecs) / 1.0e3;
+        return Date::fromJulianDayNumber(fmt.julianDay).asTime() + double(fmt.msecs) / 1.0e3;
     }
 
     static Block putQDateTime(const Time &time)
     {
         Date date(time);
-        uint32_t julianDay = date.julianDayNumber();
-        uint32_t msecs = uint32_t((date.seconds() + date.minutes() * 60 + date.hours() * 3600) * 1000);
-        uint8_t timezone = 0;
+        QDateTimeFormat fmt;
+        fmt.julianDay = date.julianDayNumber();
+        fmt.msecs = uint32_t((date.seconds() + date.minutes() * 60 + date.hours() * 3600) * 1000);
+        fmt.timezone = 0;
 
         Block bytes;
         Writer w(bytes);
-        w << julianDay << msecs << timezone;
+        w << fmt.julianDay << fmt.msecs << fmt.timezone;
         return bytes;
     }
 };
