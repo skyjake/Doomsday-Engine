@@ -22,12 +22,13 @@
 #include <de/Writer>
 #include <de/Reader>
 #include <de/Block>
-#include <QDebug>
+#include <iostream>
 
 using namespace de;
 
 int main(int, char **)
 {
+    using namespace std;
     try
     {
         Vec2f a(1, 2.5);
@@ -40,55 +41,55 @@ int main(int, char **)
         // Note: Using QDebug because no de::App (and therefore no log message
         // buffer) is available.
 
-        qDebug() << "Sizeof Vec2f:" << sizeof(a);
-        qDebug() << "Sizeof Vec2f.x:" << sizeof(a.x);
-        qDebug() << "Sizeof Vec3f:" << sizeof(b);
+        cout << "Sizeof Vec2f: " << sizeof(a) << endl;
+        cout << "Sizeof Vec2f.x: " << sizeof(a.x) << endl;
+        cout << "Sizeof Vec3f: " << sizeof(b) << endl;
 
-        qDebug() << "Sizeof Mat3f:" << sizeof(ma);
-        qDebug() << "Sizeof Mat4f:" << sizeof(mb);
-        qDebug() << "Sizeof Mat4d:" << sizeof(mc);
+        cout << "Sizeof Mat3f: " << sizeof(ma) << endl;
+        cout << "Sizeof Mat4f: " << sizeof(mb) << endl;
+        cout << "Sizeof Mat4d: " << sizeof(mc) << endl;
 
-        qDebug() << "Direct access to members:";
-        qDebug() << a.x << a.y << a[0] << a[1];
-        qDebug() << b.x << b.y << b.z << b[0] << b[1] << b[2];
+        cout << "Direct access to members:" << endl;
+        cout << stringf("%f %f %f %f", a.x, a.y, a[0], a[1]) << endl;
+        cout << stringf("%f %f %f %f %f %f", b.x, b.y, b.z, b[0], b[1], b[2]) << endl;
 
-        qDebug() << "First operand defines type of result:";
+        cout << "First operand defines type of result:" << endl;
 
-        qDebug() << "Vec2f + Vec3f:" << (a + b).asText();
-        qDebug() << "Vec3f + Vec2f:" << (b + a).asText();
+        cout << "Vec2f + Vec3f: " << (a + b).asText() << endl;
+        cout << "Vec3f + Vec2f: " << (b + a).asText() << endl;
 
         Vec2i c(6, 5);
 
         // This would downgrade the latter to int; won't do it.
-        //qDebug() << "Vec2i + Vec2f (converted to int!): " << (c + a).asText();
+        //cout << "Vec2i + Vec2f (converted to int!): " << (c + a).asText();
 
-        qDebug() << "Vec2i:" << c.asText();
-        qDebug() << "Vec2f + Vec2i:" << (a + c).asText();
+        cout << "Vec2i: " << c.asText() << endl;
+        cout << "Vec2f + Vec2i: " << (a + c).asText() << endl;
 
         a += b;
         b += a;
-        qDebug() << "After sum:" ;
-        qDebug() << "a:" << a.asText() << "b:" << b.asText();
+        cout << "After sum:" << endl;
+        cout << "a: " << a.asText() << " b: " << b.asText() << endl;
 
-        qDebug() << "a > b: " << (a > b);
-        qDebug() << "b > a: " << (b > a);
+        cout << "a > b: " << (a > b) << endl;
+        cout << "b > a: " << (b > a) << endl;
 
         Vec2f s(1, 1);
         Vec3f t(2, 2, 2);
-        qDebug() << "s: " << s.asText() << " t:" << t.asText();
-        qDebug() << "s > t: " << (s > t);
-        qDebug() << "t > s: " << (t > s);
-        qDebug() << "s < t: " << (s < t);
-        qDebug() << "t < s: " << (t < s);
+        cout << "s: " << s.asText() << " t: " << t.asText() << endl;
+        cout << "s > t: " << (s > t) << endl;
+        cout << "t > s: " << (t > s) << endl;
+        cout << "s < t: " << (s < t) << endl;
+        cout << "t < s: " << (t < s) << endl;
         t.z = -100;
-        qDebug() << "t is now: " << t.asText();
-        qDebug() << "s > t: " << (s > t);
-        qDebug() << "t > s: " << (t > s);
-        qDebug() << "s < t: " << (s < t) << " <- first operand causes conversion to Vector2";
-        qDebug() << "t < s: " << (t < s);
+        cout << "t is now: " << t.asText() << endl;
+        cout << "s > t: " << (s > t) << endl;
+        cout << "t > s: " << (t > s) << endl;
+        cout << "s < t: " << (s < t) << " <- first operand causes conversion to Vector2" << endl;
+        cout << "t < s: " << (t < s) << endl;
 
         Vec2d u(3.1415926535, 3.33333333333333333333333);
-        qDebug() << "u:" << u.asText();
+        cout << "u: " << u.asText() << endl;
         Block block, block2;
         //Writer writer(block); writer << u;
         Writer(block) << u;
@@ -102,54 +103,54 @@ int main(int, char **)
         Vec2d y;
         Reader reader(block2);
         reader >> y;
-        qDebug() << "w:" << w.asText();
-        qDebug() << "y:" << w.asText();
+        cout << "w: " << w.asText() << endl;
+        cout << "y: " << w.asText() << endl;
 
-        qDebug() << "Matrix operations:";
+        cout << "Matrix operations:" << endl;
 
-        qDebug() << "Identity" << ma.asText();
-        qDebug() << "Identity" << mc.asText();
+        cout << "Identity " << ma.asText() << endl;
+        cout << "Identity " << mc.asText() << endl;
 
-        qDebug() << "Rotation 45 degrees" << Mat4f::rotate(45).asText();
-        qDebug() << "Rotation 90 degrees" << Mat4f::rotate(90).asText();
-        qDebug() << "Rotation 45 degrees, X axis"
-                 << Mat4f::rotate(45, Vec3f(1, 0, 0)).asText();
+        cout << "Rotation 45 degrees " << Mat4f::rotate(45).asText() << endl;
+        cout << "Rotation 90 degrees " << Mat4f::rotate(90).asText() << endl;
+        cout << "Rotation 45 degrees, X axis "
+                 << Mat4f::rotate(45, Vec3f(1, 0, 0)).asText() << endl;
 
-        qDebug() << "Translation"
-                 << Mat4f::translate(Vec3f(1, 2, 3)).asText();
+        cout << "Translation "
+                 << Mat4f::translate(Vec3f(1, 2, 3)).asText() << endl;
 
-        qDebug() << "Scale"
-                 << Mat4f::scale(Vec3f(1, 2, 3)).asText();
+        cout << "Scale "
+                 << Mat4f::scale(Vec3f(1, 2, 3)).asText() << endl;
 
         t = Vec3f(1, 2, 3);
         Mat4f scaleTrans = Mat4f::scaleThenTranslate(Vec3f(10, 10, 10), Vec3f(-5, -5, -5));
-        qDebug() << "Scale and translate with"
-                 << scaleTrans.asText() << "result:" << (scaleTrans * t).asText();
+        cout << "Scale and translate with "
+                 << scaleTrans.asText() << "result: " << (scaleTrans * t).asText() << endl;
 
-        qDebug() << "Seperate matrices (translate * scale):"
-                 << (Mat4f::translate(Vec3f(-5, -5, -5)) * Mat4f::scale(10) * t).asText();
+        cout << "Seperate matrices (translate * scale): "
+                 << (Mat4f::translate(Vec3f(-5, -5, -5)) * Mat4f::scale(10) * t).asText() << endl;
 
-        qDebug() << "Seperate matrices (scale * translate):"
-                 << (Mat4f::scale(10) * Mat4f::translate(Vec3f(-5, -5, -5)) * t).asText();
+        cout << "Seperate matrices (scale * translate): "
+                 << (Mat4f::scale(10) * Mat4f::translate(Vec3f(-5, -5, -5)) * t).asText() << endl;
 
-        qDebug() << "Inverse" << scaleTrans.inverse().asText();
+        cout << "Inverse " << scaleTrans.inverse().asText() << endl;
 
         t = scaleTrans * t;
-        qDebug() << "Result" << (scaleTrans.inverse() * t).asText();
+        cout << "Result " << (scaleTrans.inverse() * t).asText() << endl;
 
-        qDebug() << "X axis rotated to Z" <<
-                    (Mat4d::rotate(90, Vec3d(0, -1, 0)) * Vec3d(1, 0, 0)).asText();
+        cout << "X axis rotated to Z " <<
+                    (Mat4d::rotate(90, Vec3d(0, -1, 0)) * Vec3d(1, 0, 0)).asText() << endl;
 
-        qDebug() << "Look at (10,10,10) from (1,1,1)"
-                 << Mat4f::lookAt(Vec3f(10, 10, 10), Vec3f(1, 1, 1), Vec3f(0, 0, 1)).asText();
+        cout << "Look at (10,10,10) from (1,1,1) "
+                 << Mat4f::lookAt(Vec3f(10, 10, 10), Vec3f(1, 1, 1), Vec3f(0, 0, 1)).asText() << endl;
 
-        qDebug() << "Cross product" << Vec3f(1, 0, 0).cross(Vec3f(0, 1, 0)).asText();
+        cout << "Cross product " << Vec3f(1, 0, 0).cross(Vec3f(0, 1, 0)).asText() << endl;
     }
     catch (Error const &err)
     {
-        qWarning() << err.asText() << "\n";
+        warning("%s", err.asText().c_str());
     }
 
-    qDebug() << "Exiting main()...\n";
+    cout << "Exiting main()...\n";
     return 0;
 }
