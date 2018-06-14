@@ -21,19 +21,20 @@
  */
 
 #include <de/PointerSet>
-#include <QDebug>
+#include <iostream>
 
 using namespace de;
+using namespace std;
 
 void printSet(PointerSet const &pset)
 {
-    qDebug() << "[ Size:" << pset.size() << "/" << pset.allocatedSize() << "range:"
-             << pset.usedRange().asText() << "flags:" << QString::number(pset.flags(), 16);
+    cout << "[ Size: " << pset.size() << " / " << pset.allocatedSize() << " range: "
+             << pset.usedRange().asText() << " flags: " << stringf("%x", pset.flags()) << endl;
     for (auto const p : pset)
     {
-        qDebug() << "   " << QString("%1").arg(reinterpret_cast<dintptr>(p), 16, 16, QChar('0')).toLatin1().constData();
+        cout << "   " << stringf("%p", p) << endl;
     }
-    qDebug() << "]";
+    cout << "]" << endl;
 }
 
 int main(int, char **)
@@ -50,31 +51,31 @@ int main(int, char **)
 //        PointerSet::Pointer h = reinterpret_cast<PointerSet::Pointer>(0x8000);
 
         PointerSet pset;
-        qDebug() << "Empty PointerSet:";
+        cout << "Empty PointerSet: " << endl;
         printSet(pset);
 
         pset.insert(a);
-        qDebug() << "Added one pointer:";
+        cout << "Added one pointer: " << endl;
         printSet(pset);
 
         pset.insert(a);
-        qDebug() << "'a' is there?" << pset.contains(a);
-        qDebug() << "'b' should not be there?" << pset.contains(b);
+        cout << "'a' is there? " << pset.contains(a) << endl;
+        cout << "'b' should not be there? " << pset.contains(b) << endl;
 
-        qDebug() << "Trying to remove a non-existing pointer.";
+        cout << "Trying to remove a non-existing pointer." << endl;
         pset.remove(b);
         printSet(pset);
 
         pset.remove(a);
-        qDebug() << "Removed the pointer:";
+        cout << "Removed the pointer:" << endl;
         printSet(pset);
-        
-        qDebug() << "Adding again:";
+
+        cout << "Adding again:" << endl;
         pset.insert(b);
         pset.insert(c);
         printSet(pset);
 
-        qDebug() << "Adding everything:";
+        cout << "Adding everything:" << endl;
         pset.insert(d);
         pset.insert(a);
         pset.insert(c);
@@ -82,16 +83,16 @@ int main(int, char **)
         pset.insert(e);
         printSet(pset);
 
-        qDebug() << "Removing the ends:";
+        cout << "Removing the ends:" << endl;
         pset.remove(a);
         pset.remove(e);
         printSet(pset);
 
-        qDebug() << "Removing the middle:";
+        cout << "Removing the middle:" << endl;
         pset.remove(c);
         printSet(pset);
 
-        qDebug() << "Adding everything again:";
+        cout << "Adding everything again:" << endl;
         pset.insert(e);
         pset.insert(d);
         pset.insert(c);
@@ -99,7 +100,7 @@ int main(int, char **)
         pset.insert(a);
         printSet(pset);
 
-        qDebug() << "Removing everything:";
+        cout << "Removing everything:" << endl;
         pset.remove(d);
         pset.remove(a);
         pset.remove(c);
@@ -107,15 +108,15 @@ int main(int, char **)
         pset.remove(e);
         printSet(pset);
 
-        qDebug() << "Adding one:";
+        cout << "Adding one:" << endl;
         pset.insert(e);
         printSet(pset);
 
-        qDebug() << "Adding another:";
+        cout << "Adding another:" << endl;
         pset.insert(a);
         printSet(pset);
 
-        qDebug() << "Removing during iteration:";
+        cout << "Removing during iteration:" << endl;
         pset.insert(e);
         pset.insert(d);
         pset.insert(c);
@@ -127,17 +128,17 @@ int main(int, char **)
         {
             if (i == c)
             {
-                qDebug() << "Removing 'c'...";
+                cout << "Removing 'c'..." << endl;
                 pset.remove(i);
             }
             if (i == a)
             {
-                qDebug() << "Removing 'a'...";
+                cout << "Removing 'a'..." << endl;
                 pset.remove(i);
             }
             if (i == e)
             {
-                qDebug() << "Removing 'e'...";
+                cout << "Removing 'e'..." << endl;
                 pset.remove(i);
             }
             pset.remove(d);
@@ -145,15 +146,15 @@ int main(int, char **)
         pset.setBeingIterated(false);
         printSet(pset);
 
-        qDebug() << "Assignment:";
+        cout << "Assignment:" << endl;
         pset = PointerSet();
         printSet(pset);
     }
     catch (Error const &err)
     {
-        qWarning() << err.asText() << "\n";
+        warning("%s", err.asText().c_str());
     }
 
-    qDebug() << "Exiting main()...\n";
+    cout << "Exiting main()...\n";
     return 0;
 }

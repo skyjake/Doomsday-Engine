@@ -21,16 +21,14 @@
 #include <de/Log>
 #include <de/LogFilter>
 
-#include <QDebug>
-
 using namespace de;
 
 int main(int argc, char **argv)
 {
     try
     {
-        TextApp app(argc, argv);
-        app.initSubsystems(App::DisablePlugins);
+        TextApp app(makeList(argc, argv));
+        app.initSubsystems(App::DisablePlugins | App::DisablePersistentData);
 
         for (int j = 0; j < 2; ++j)
         {
@@ -62,9 +60,9 @@ int main(int argc, char **argv)
     }
     catch (Error const &err)
     {
-        qWarning() << err.asText();
+        warning(err.asText().c_str());
     }
 
-    qDebug() << "Exiting main()...";
+    debug("Exiting main()...");
     return 0;
 }
