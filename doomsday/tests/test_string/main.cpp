@@ -19,7 +19,6 @@
 
 #include <de/TextApp>
 #include <de/math.h>
-#include <QDebug>
 
 using namespace de;
 
@@ -27,7 +26,7 @@ int main(int argc, char **argv)
 {
     try
     {
-        TextApp app(argc, argv);
+        TextApp app(makeList(argc, argv));
         app.initSubsystems(App::DisablePlugins);
 
         LOG_MSG("Escaped %%: arg %i") << 1;
@@ -59,9 +58,9 @@ int main(int argc, char **argv)
     }
     catch (Error const &err)
     {
-        qWarning() << err.asText() << "\n";
+        warning("%s", err.asText().c_str());
     }
 
-    qDebug() << "Exiting main()...\n";
-    return 0;        
+    debug("Exiting main()...");
+    return 0;
 }

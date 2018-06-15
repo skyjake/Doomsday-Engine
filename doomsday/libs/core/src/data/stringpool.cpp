@@ -240,6 +240,7 @@ DE_PIMPL_NOREF(StringPool), public Lockable
         auto *intern = new Intern(text.lower(), nextId());
         interns.insert(intern); // O(log n)
         idMap[intern->id] = intern;
+        assertCount();
         return intern->id;
     }
 
@@ -267,7 +268,6 @@ DE_PIMPL_NOREF(StringPool), public Lockable
 
         // We have one more string in the pool.
         count++;
-        assertCount();
 
         return idx;
     }
@@ -447,7 +447,7 @@ bool StringPool::remove(const String &str)
     Interns::iterator found = d->findIntern(str); // O(log n)
     if (found != d->interns.end())
     {
-        d->releaseAndDestroy((*found)->id(), &found); // O(1) (amortized)
+        d->releaseAndDestroy((*found)->id, &found); // O(1) (amortized)
         return true;
     }
     return false;

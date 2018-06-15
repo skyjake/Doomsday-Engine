@@ -93,12 +93,11 @@ DE_PIMPL(Record)
         }
     };
 
-    void clear(std::function<bool (Variable const &)> excluded)
+    void clear(const std::function<bool (Variable const &)>& excluded)
     {
         if (!members.empty())
         {
             Record::Members remaining; // Contains all members that are not removed.
-
             for (auto &i : members)
             {
                 if (excluded(*i.second))
@@ -106,18 +105,18 @@ DE_PIMPL(Record)
                     remaining.insert(i.first, i.second);
                     continue;
                 }
-
-                DE_FOR_PUBLIC_AUDIENCE2(Removal, o) o->recordMemberRemoved(self(), *i.second);
-
+                DE_FOR_PUBLIC_AUDIENCE2(Removal, o)
+                {
+                    o->recordMemberRemoved(self(), *i.second);
+                }
                 i.second->audienceForDeletion() -= this;
                 delete i.second;
             }
-
-            members = remaining;
+            members = std::move(remaining);
         }
     }
 
-    void copyMembersFrom(Record const &other, std::function<bool (Variable const &)> excluded)
+    void copyMembersFrom(Record const &other, const std::function<bool (Variable const &)>& excluded)
     {
         auto const *other_d = other.d.getConst();
         DE_GUARD(other_d);

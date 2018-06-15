@@ -37,6 +37,7 @@ class Hash : public std::unordered_map<Key, Value, HashFn, KeyEqual>
 
 public:
     Hash() {}
+    Hash(const Hash &copied) : Base(copied) {}
     Hash(Hash &&moved) : Base(moved) {}
 
     Hash(const std::initializer_list<typename Base::value_type> &init)
@@ -54,6 +55,7 @@ public:
     bool         contains(const Key &key) const { return Base::find(key) != Base::end(); }
     Value &      operator[](const Key &key) { return Base::operator[](key); }
     const Value &operator[](const Key &key) const { return Base::find(key)->second; }
+    Hash &       operator=(const Hash &&copied) { Base::operator=(copied); return *this; }
     Hash &       operator=(Hash &&moved) { Base::operator=(moved); return *this; }
 
     Value take(const Key &key)

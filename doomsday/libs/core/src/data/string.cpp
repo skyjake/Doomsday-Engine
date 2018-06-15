@@ -742,7 +742,7 @@ dint String::toInt(bool *ok, int base, duint flags) const
     char *endp;
     auto value = std::strtol(*this, &endp, base);
     if (ok) *ok = (errno != ERANGE);
-    if (!(flags & AllowSuffix) && !(*endp == 0 && isspace(*endp)))
+    if (!(flags & AllowSuffix) && !(*endp == 0 || isspace(*endp)))
     {
         // Suffix not allowed; consider this a failure.
         if (ok) *ok = false;
@@ -946,22 +946,29 @@ String String::patternFormat(const_iterator &      formatIter,
     }
 
     // Align and fit.
-    if (maxWidth && result.size() > maxWidth)
+    if (maxWidth || minWidth)
     {
-        // Cut it.
-        result = result.substr(BytePos(!rightAlign ? 0 : (result.size() - maxWidth)), maxWidth);
-    }
-    if (result.size() < minWidth)
-    {
-        // Pad it.
-        String padding = String(minWidth - result.size(), ' ');
-        if (rightAlign)
+        // Must determine actual character count.
+        CharPos len = result.sizec();
+
+        if (maxWidth && len.index > maxWidth)
         {
-            result = padding + result;
+            result = result.left(CharPos(maxWidth));
+            len.index = maxWidth;
         }
-        else
+
+        if (minWidth && len.index < minWidth)
         {
-            result += padding;
+            // Pad it.
+            String padding = String(minWidth - len.index, ' ');
+            if (rightAlign)
+            {
+                result = padding + result;
+            }
+            else
+            {
+                result += padding;
+            }
         }
     }
     return result;

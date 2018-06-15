@@ -210,6 +210,7 @@ public:
     }
 
     inline BytePos sizeb() const { return BytePos{size_String(&_str)}; }
+    inline CharPos sizec() const { return CharPos(length_String(&_str)); }
     inline dint    sizei() const { return dint(size_String(&_str)); }
     inline dsize   sizeu() const { return size_String(&_str); }
 
@@ -296,7 +297,7 @@ public:
     String        operator+(const char *) const;
     String        operator+(const CString &) const;
     String        operator+(const std::string &s) const;
-    inline String operator+(const String &other) const { return *this + (const char *) other; }
+    inline String operator+(const String &other) const { return *this + static_cast<const char *>(other); }
 
     String &operator+=(char ch);
     String &operator+=(Char ch);
