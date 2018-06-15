@@ -30,7 +30,9 @@ Lex::Lex(String const &input, Char lineCommentChar, Char multiCommentChar, ModeF
     , _lineCommentChar(lineCommentChar)
     , _multiCommentChar(multiCommentChar)
     , _mode(initialMode)
-{}
+{
+    _state.pos = _state.lineStartPos = _input->begin();
+}
 
 String const &Lex::input() const
 {

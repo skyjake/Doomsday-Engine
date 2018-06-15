@@ -4,4 +4,5 @@ include (../TestConfig.cmake)
 
 deng_test (test_info main.cpp)
 
-install (FILES test_info.dei DESTINATION ${DE_INSTALL_DATA_DIR})
+install (FILES test_info.dei DESTINATION share/doomsday)
+

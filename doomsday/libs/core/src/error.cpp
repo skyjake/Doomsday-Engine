@@ -41,7 +41,7 @@ std::string Error::name() const
 std::string Error::asText() const
 {
     return stringf(
-        "%s[%s] " _E(.) " %s", TEXT_STYLE_SECTION, _name.c_str(), std::runtime_error::what());
+        "%s[%s]" _E(.) " %s", TEXT_STYLE_SECTION, _name.c_str(), std::runtime_error::what());
 }
 
 void Error::setName(const std::string &name)

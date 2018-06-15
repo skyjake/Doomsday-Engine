@@ -26,17 +26,14 @@
 #include <de/Variable>
 #include <de/data/json.h>
 
-#include <QDebug>
-#include <QTextStream>
-
 using namespace de;
 
 int main(int argc, char **argv)
 {
     try
     {
-        TextApp app(argc, argv);
-        app.initSubsystems(App::DisablePlugins);
+        TextApp app(makeList(argc, argv));
+        app.initSubsystems(App::DisablePlugins | App::DisablePersistentData);
 
         Record rec;
 
@@ -48,7 +45,7 @@ int main(int argc, char **argv)
         rec.add(new Variable("size", new NumberValue(1024)));
         LOG_MSG("With two variables:\n") << rec;
 
-        LOG_MSG("Record as JSON:\n") << composeJSON(rec).constData();
+        LOG_MSG("Record as JSON:\n") << composeJSON(rec);
 
         Record rec2;
         Block b;
@@ -56,10 +53,10 @@ int main(int argc, char **argv)
         LOG_MSG("Serialized record to ") << b.size() << " bytes.";
 
         String str;
-        QTextStream os(&str);
         for (duint i = 0; i < b.size(); ++i)
         {
-            os << dint(b.data()[i]) << " ";
+            str += String::asText(int(b[i]));
+            str += " ";
         }
         LOG_MSG(str);
 
@@ -76,13 +73,13 @@ int main(int argc, char **argv)
         DE_ASSERT(copied.hasSubrecord("subrecord"));
         LOG_MSG("Copied:\n") << copied;
 
-        LOG_MSG("...and as JSON:\n") << composeJSON(copied).constData();
+        LOG_MSG("...and as JSON:\n") << composeJSON(copied);
     }
     catch (Error const &err)
     {
-        qWarning() << err.asText();
+        warning("%s", err.asText().c_str());
     }
 
-    qDebug() << "Exiting main()...";
+    debug("Exiting main()...");
     return 0;
 }

@@ -906,8 +906,8 @@ Expression *Parser::parseTokenExpression(TokenRange const &range, Flags const &f
             return new NameExpression(range.token(0).str(), flags);
         }
         else if (range.size() == 3 &&
-                range.token(1).equals(ScriptLex::SCOPE) &&
-                range.token(2).type() == Token::IDENTIFIER)
+                 range.token(1).equals(ScriptLex::SCOPE) &&
+                 range.token(2).type() == Token::IDENTIFIER)
         {
             // Scoped name. This is intended for allowing access to shadowed
             // identifiers from super records.

@@ -88,7 +88,7 @@ void EscapeParser::parse(String const &textWithEscapes)
                 break;
 
             default:
-                end++;
+//                end++;
                 break;
             }
 

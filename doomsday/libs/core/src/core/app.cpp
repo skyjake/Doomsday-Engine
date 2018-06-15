@@ -191,7 +191,7 @@ DE_PIMPL(App)
 
         Clock::setAppClock(&clock);
         Animation::setClock(&clock);
-        srand(Time().toTime_t());
+        srand(unsigned(Time().toTime_t()));
 
         // Built-in systems.
         systems << &fs << &scriptSys;
@@ -229,7 +229,7 @@ DE_PIMPL(App)
             delete config;
         }
 
-        Clock::setAppClock(0);
+        Clock::setAppClock(nullptr);
         logBuffer.setOutputFile("");
     }
 
@@ -403,7 +403,7 @@ DE_PIMPL(App)
     {
         // Access the package that has this asset via a link.
         Folder const *pkg = fs.root().tryLocate<Folder>(String("/packs/asset.") + identifier + "/.");
-        if (!pkg) return 0;
+        if (!pkg) return nullptr;
 
         // Find the record that has this asset's metadata.
         const String ns = "package." + identifier;
@@ -466,7 +466,7 @@ App::~App()
 {
     LOG_AS("~App");
     d.reset();
-    singletonApp = 0;
+    singletonApp = nullptr;
 }
 
 Record &App::metadata()

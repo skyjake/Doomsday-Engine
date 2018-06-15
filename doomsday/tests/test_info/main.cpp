@@ -20,8 +20,8 @@
 #include <de/TextApp>
 #include <de/LogBuffer>
 #include <de/ScriptedInfo>
+#include <de/EscapeParser>
 #include <de/FS>
-#include <QDebug>
 
 using namespace de;
 
@@ -29,17 +29,19 @@ int main(int argc, char **argv)
 {
     try
     {
-        TextApp app(argc, argv);
-        app.initSubsystems(App::DisablePlugins);
+        TextApp app(makeList(argc, argv));
+        app.initSubsystems(App::DisablePlugins | App::DisablePersistentData);
 
         ScriptedInfo dei;
         dei.parse(app.fileSystem().find("test_info.dei"));
     }
     catch (Error const &err)
     {
-        qWarning() << err.asText();
+        EscapeParser esc;
+        esc.parse(err.asText());
+        warning("%s", esc.plainText().c_str());
     }
 
-    qDebug("Exiting main()...");
-    return 0;        
+    debug("Exiting main()...");
+    return 0;
 }

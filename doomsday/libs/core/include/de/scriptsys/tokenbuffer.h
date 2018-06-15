@@ -62,7 +62,7 @@ public:
     static const char *SEMICOLON;
 
 public:
-    Token(const char *begin = 0, const char *end = 0, duint line = 0)
+    Token(const char *begin = nullptr, const char *end = nullptr, duint line = 0)
         : _type(UNKNOWN), _token{begin, end}, _line(line) {}
 
     void setType(Type type) { _type = type; }

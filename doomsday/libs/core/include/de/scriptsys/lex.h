@@ -166,10 +166,9 @@ private:
 
     struct State {
         String::const_iterator pos; ///< Current reading position.
-        dsize lineNumber = 1; ///< Keeps track of the line number on which the current position is.
         String::const_iterator lineStartPos; ///< Position which begins the current line.
+        dsize lineNumber = 1; ///< Keeps track of the line number on which the current position is.
     };
-
     State _state;
 
     /// Character that begins a line comment.
