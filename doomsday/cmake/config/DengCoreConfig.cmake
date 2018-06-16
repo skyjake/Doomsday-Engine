@@ -1,4 +1,4 @@
-# find_package (Qt5 COMPONENTS Core Network REQUIRED)
+find_package (CPlus REQUIRED)
 
 # Deng::libcore may exist in the current build, in which case using 
 # a previously installed version is inappropriate.

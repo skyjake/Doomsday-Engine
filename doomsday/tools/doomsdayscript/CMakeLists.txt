@@ -5,7 +5,6 @@ project (DE_DSCRIPT)
 include (../../cmake/Macros.cmake)
 
 # Dependencies.
-find_package (CPlus)
 find_package (DengCore)
 
 add_executable (doomsdayscript main.cpp)
