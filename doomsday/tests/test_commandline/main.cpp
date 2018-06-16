@@ -50,8 +50,8 @@ int main(int argc, char **argv)
     }
     catch (Error const &err)
     {
-        std::cerr << err.asText();
+        err.warnPlainText();
     }
-    std::cout << "Exiting main()...";
+    debug("Exiting main()...");
     return 0;
 }

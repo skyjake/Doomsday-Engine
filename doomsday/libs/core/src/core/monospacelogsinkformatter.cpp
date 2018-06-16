@@ -277,8 +277,7 @@ StringList MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
     }
 
     // Fill tabs with space.
-    wstring message =
-        TabFiller(entry.asText(entryFlags, cutSection)).filled(_minimumIndent).toWideString();
+    String message = TabFiller(entry.asText(entryFlags, cutSection)).filled(_minimumIndent);
 
     // Remember for the next line.
     _sectionOfPreviousLine      = section;
@@ -286,10 +285,42 @@ StringList MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
 
     // The wrap indentation will be determined dynamically based on the content
     // of the line.
-    dsize wrapIndent = wstring::npos;
+    dsize wrapIndent     = wstring::npos;
     dsize nextWrapIndent = wstring::npos;
 
+    const String minIndentStr{dsize(_minimumIndent), ' '};
+
+    using IndentedLine = std::pair<CString, dsize>;
+
     // Print line by line.
+    List<IndentedLine> messageLines;
+    for (const auto &hardLine : message.splitRef('\n'))
+    {
+        messageLines << IndentedLine{hardLine, 0};
+    }
+
+    /// @todo Ensure lines don't exceed the configured maximum length.
+    /// Split messageLines; insert new entries with extra indent where needed.
+    /// (Carry over indentation from previous log entry?)
+
+    for (const auto &messageLine : messageLines)
+    {
+        String ln;
+        if (resultLines)
+        {
+            // Lines other than the first one always get the minimum indentation.
+            ln += minIndentStr;
+        }
+        if (messageLine.second > 0)
+        {
+            // Additional indentation.
+            ln += String(messageLine.second, ' ');
+        }
+        ln += messageLine.first;
+        resultLines << ln;
+    }
+
+#if 0
     dsize pos = 0;
     while (pos != wstring::npos)
     {
@@ -404,6 +435,7 @@ StringList MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
             pos++; // Skip whitespace.
         }
     }
+#endif
 
     return resultLines;
 }

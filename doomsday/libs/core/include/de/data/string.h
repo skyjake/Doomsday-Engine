@@ -32,6 +32,7 @@ namespace de {
 template <typename T> struct Range;
 class RegExp;
 class CString;
+class Path;
 
 enum CaseSensitivity { CaseInsensitive, CaseSensitive };
 
@@ -340,6 +341,10 @@ public:
     String operator/(const String &path) const;
 
     String operator/(const CString &path) const;
+
+    String operator/(const char *path) const;
+
+    String operator/(const Path &path) const;
 
     /**
      * Applies pattern formatting using the string as a format string.

@@ -37,9 +37,7 @@ int main(int argc, char **argv)
     }
     catch (Error const &err)
     {
-        EscapeParser esc;
-        esc.parse(err.asText());
-        warning("%s", esc.plainText().c_str());
+        err.warnPlainText();
     }
 
     debug("Exiting main()...");

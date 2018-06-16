@@ -67,9 +67,8 @@ public:
     Time asTime() const;
 
     // Implements LogEntry::Arg::Base.
-    LogEntry::Arg::Type logEntryArgType() const {
-        return LogEntry::Arg::StringArgument;
-    }
+    LogEntry::Arg::Type logEntryArgType() const override { return LogEntry::Arg::StringArgument; }
+    String asText() const override { return format(); }
 
     static Date currentDate();
 

@@ -106,9 +106,9 @@ int main(int, char **)
     }
     catch (Error const &err)
     {
-        warning("%s", err.asText().c_str());
+        err.warnPlainText();
     }
 
-    std::cout << "Exiting main()...\n";
+    debug("Exiting main()...");
     return 0;
 }

@@ -487,6 +487,7 @@ public:
         void setValue(const char *s);
         void setValue(const std::string &s);
         void setValue(const String &s);
+        void setValue(const Time &t);
         void setValue(const Base &arg);
         void setValue(const std::array<char, 4> &typecode);
 

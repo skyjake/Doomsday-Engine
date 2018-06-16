@@ -58,7 +58,7 @@ int main(int argc, char **argv)
     }
     catch (Error const &err)
     {
-        warning("%s", err.asText().c_str());
+        err.warnPlainText();
     }
 
     debug("Exiting main()...");

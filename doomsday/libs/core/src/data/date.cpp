@@ -154,7 +154,7 @@ String Date::format(const char *format) const
     return buf;
 }
 
-std::ostream &operator << (std::ostream &os, const Date &d)
+std::ostream &operator<<(std::ostream &os, const Date &d)
 {
     os << d.asText().c_str();
     return os;

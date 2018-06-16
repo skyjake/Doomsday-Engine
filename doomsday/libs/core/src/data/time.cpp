@@ -259,6 +259,14 @@ Time::Time(int year, int month, int day, int hour, int minute, int second)
     d->flags |= Impl::SysTime;
 }
 
+Time Time::fromHighPerformanceDelta(const Span &highPerformanceDelta)
+{
+    Time t = invalidTime();
+    t.d->flags |= Impl::HighPerformance;
+    t.d->highPerfElapsed = highPerformanceDelta;
+    return t;
+}
+
 Time::Time(const TimePoint &tp) : d(new Impl(tp))
 {}
 
@@ -269,10 +277,6 @@ Time::Time(const iTime &time) : d(new Impl(0 /* init as invalid */))
     d->sysTime = system_clock::from_time_t(time.ts.tv_sec) +
                  duration_cast<system_clock::duration>(nanoseconds(time.ts.tv_nsec));
 }
-
-Time::Time(TimeSpan const &highPerformanceDelta)
-    : d(new Impl(highPerformanceDelta))
-{}
 
 Time Time::invalidTime()
 {
@@ -729,7 +733,7 @@ TimeSpan Time::highPerformanceTime() const
 
 Time Time::currentHighPerformanceTime() // static
 {
-    return currentHighPerfDelta;
+    return fromHighPerformanceDelta(currentHighPerfDelta);
 }
 
 void Time::updateCurrentHighPerformanceTime() // static
@@ -737,7 +741,7 @@ void Time::updateCurrentHighPerformanceTime() // static
     currentHighPerfDelta = highPerfTimer().elapsed();
 }
 
-std::ostream &operator << (std::ostream &os, Time const &t)
+std::ostream &operator<<(std::ostream &os, Time const &t)
 {
     return os << t.asText();
 }

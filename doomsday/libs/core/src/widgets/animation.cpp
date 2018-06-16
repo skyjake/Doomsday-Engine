@@ -400,7 +400,7 @@ void Animation::setClock(Clock const *clock)
    
 TimeSpan Animation::currentTime() // static
 {
-    DE_ASSERT(_clock != 0);
+    DE_ASSERT(_clock != nullptr);
     if (!_clock)
     {
         throw ClockMissingError("Animation::clock", "Animation has no clock");

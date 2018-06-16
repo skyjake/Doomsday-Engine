@@ -23,7 +23,8 @@ namespace de {
 TextStreamLogSink::TextStreamLogSink(std::ostream &ts)
     : LogSink(_format), _ts(ts)
 {
-    //_ts->setCodec("UTF-8");
+    // Keep lines unwrapped.
+    _format.setMaxLength(10000);
 }
 
 TextStreamLogSink::~TextStreamLogSink()

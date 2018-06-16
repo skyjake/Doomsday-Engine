@@ -179,7 +179,7 @@ public:
      *
      * @param highPerformanceDelta Elapsed time since the high performance timer was started.
      */
-    Time(Span const &highPerformanceDelta);
+    static Time fromHighPerformanceDelta(const Span &highPerformanceDelta);
 
     static Time invalidTime();
 

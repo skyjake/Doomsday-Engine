@@ -170,8 +170,14 @@ void LogEntry::Arg::setValue(const String &s)
 {
     clear();
     _type = StringArgument;
-    // Ensure a deep copy of the string is taken.
-    _data.stringValue = new String(s);
+    _data.stringValue = new String(s); // make a copy
+}
+
+void LogEntry::Arg::setValue(const Time &t)
+{
+    clear();
+    _type = StringArgument;
+    _data.stringValue = new String(t.asText());
 }
 
 void LogEntry::Arg::setValue(const std::array<char, 4> &typecode)

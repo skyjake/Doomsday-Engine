@@ -21,6 +21,7 @@
 #include "de/String"
 #include "de/Block"
 #include "de/RegExp"
+#include "de/Path"
 #include "de/charsymbols.h"
 
 #include <c_plus/path.h>
@@ -424,6 +425,16 @@ String String::operator/(const String &path) const
 String String::operator/(const CString &path) const
 {
     return concatenatePath(String(path));
+}
+
+String String::operator/(const char *path) const
+{
+    return concatenatePath(String(path));
+}
+
+String String::operator/(const Path &path) const
+{
+    return concatenatePath(path.toString());
 }
 
 String String::operator%(const PatternArgs &args) const

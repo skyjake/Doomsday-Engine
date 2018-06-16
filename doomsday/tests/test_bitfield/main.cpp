@@ -85,9 +85,9 @@ int main(int, char **)
     }
     catch (Error const &err)
     {
-        warning("%s", err.asText().c_str());
+        err.warnPlainText();
     }
 
-    cout << "Exiting main()..." << endl;
+    debug("Exiting main()...");
     return 0;
 }

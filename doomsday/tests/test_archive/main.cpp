@@ -26,15 +26,13 @@
 #include <de/Writer>
 #include <de/FS>
 
-#include <QDebug>
-
 using namespace de;
 
 int main(int argc, char **argv)
 {
     try
     {
-        TextApp app(argc, argv);
+        TextApp app(makeList(argc, argv));
         app.initSubsystems(App::DisablePlugins);
 
         Block b;
@@ -86,7 +84,7 @@ int main(int argc, char **argv)
         LOGDEV_MSG ("Developer description: %s") << zip2.description();
 
         // Manual reinterpretation can be requested.
-        DE_ASSERT(zip2.parent() != 0);
+        DE_ASSERT(zip2.parent() != nullptr);
         Folder &updated = zip2.reinterpret()->as<Folder>();
         DE_ASSERT(!zip2.parent()); // became a source
 
@@ -138,9 +136,9 @@ int main(int argc, char **argv)
     }
     catch (Error const &err)
     {
-        qWarning() << err.asText();
+        err.warnPlainText();
     }
 
-    qDebug() << "Exiting main()...";
+    debug("Exiting main()...");
     return 0;
 }
