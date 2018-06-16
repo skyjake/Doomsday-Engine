@@ -2,9 +2,10 @@
 
 cmake_minimum_required (VERSION 3.1)
 project (DE_DSCRIPT)
-include (../../cmake/Config.cmake)
+include (../../cmake/Macros.cmake)
 
 # Dependencies.
+find_package (CPlus)
 find_package (DengCore)
 
 add_executable (doomsdayscript main.cpp)

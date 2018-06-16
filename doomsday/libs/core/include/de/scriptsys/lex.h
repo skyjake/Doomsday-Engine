@@ -56,32 +56,25 @@ public:
     class ModeSpan
     {
     public:
-        ModeSpan(Lex &lex, ModeFlags const &m) : _lex(lex), _originalMode(lex._mode) {
+        ModeSpan(Lex &lex, ModeFlags const &m)
+            : _lex(lex)
+            , _originalMode(lex._mode)
+        {
             applyFlagOperation(_lex._mode, m, true);
         }
 
-        ~ModeSpan() {
-            _lex._mode = _originalMode;
-        }
+        ~ModeSpan() { _lex._mode = _originalMode; }
 
     private:
-        Lex &_lex;
+        Lex &     _lex;
         ModeFlags _originalMode;
     };
 
-    // Constants.
-//    static const char *T_PARENTHESIS_OPEN;
-//    static const char *T_PARENTHESIS_CLOSE;
-//    static const char *T_BRACKET_OPEN;
-//    static const char *T_BRACKET_CLOSE;
-//    static const char *T_CURLY_OPEN;
-//    static const char *T_CURLY_CLOSE;
-
 public:
-    Lex(String const &input = "",
-        Char lineCommentChar  = Char('#'),
-        Char multiCommentChar = Char('\0'),
-        ModeFlags initialMode = DefaultMode);
+    Lex(String const &input            = "",
+        Char          lineCommentChar  = Char('#'),
+        Char          multiCommentChar = Char('\0'),
+        ModeFlags     initialMode      = DefaultMode);
 
     /// Returns the input string in its entirety.
     String const &input() const;
@@ -114,9 +107,7 @@ public:
 
     /// Returns the current line of the reading position. The character
     /// returned from get() will be on this line.
-    duint lineNumber() const {
-        return _state.lineNumber;
-    }
+    dsize lineNumber() const { return _state.lineNumber; }
 
     /// Determines whether there is only whitespace (or nothing)
     /// remaining on the current line.
@@ -128,13 +119,17 @@ public:
     /// the current line.
     duint countLineStartSpace() const;
 
-    /// Attempts to parse the current reading position as a C-style number
-    /// literal (integer, float, or hexadecimal). It is assumed that a new
-    /// token has been started in the @a output buffer, and @a c has already
-    /// been added as the token's first character.
-    /// @param c Character that begins the number (from get()).
-    /// @param output Token buffer.
-    /// @return @c true, if a number token was parsed; otherwise @c false.
+    /**
+     * Attempts to parse the current reading position as a C-style number
+     * literal (integer, float, or hexadecimal). It is assumed that a new
+     * token has been started in the @a output buffer, and @a c has already
+     * been added as the token's first character.
+     *
+     * @param c         Character that begins the number (from get()).
+     * @param output    Token buffer.
+     *
+     * @return @c true, if a number token was parsed; otherwise @c false.
+     */
     bool parseLiteralNumber(Char c, TokenBuffer &output);
 
 public:
@@ -160,16 +155,16 @@ public:
 
 private:
     /// Input text being analyzed.
-    String const *_input;
-
-    mutable String::const_iterator _nextPos;
+    const String *_input;
 
     struct State {
-        String::const_iterator pos; ///< Current reading position.
+        String::const_iterator pos;          ///< Current reading position.
         String::const_iterator lineStartPos; ///< Position which begins the current line.
         dsize lineNumber = 1; ///< Keeps track of the line number on which the current position is.
     };
     State _state;
+
+    mutable String::const_iterator _nextPos;
 
     /// Character that begins a line comment.
     Char _lineCommentChar;

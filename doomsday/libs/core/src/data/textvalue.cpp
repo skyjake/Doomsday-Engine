@@ -34,7 +34,13 @@ using std::list;
 
 TextValue::TextValue(String const &initialValue)
     : _value(initialValue)
+    , _iteration(nullptr)
 {}
+
+TextValue::~TextValue()
+{
+    delete _iteration;
+}
 
 TextValue::operator CString() const
 {
@@ -80,6 +86,26 @@ bool TextValue::contains(Value const &value) const
         return _value.indexOf(value.as<TextValue>()._value) >= 0;
     }
     return Value::contains(value);
+}
+
+Value *TextValue::duplicateElement(const Value &charPos) const
+{
+    return new TextValue(_value.substr(String::CharPos(charPos.asInt()), 1));
+}
+
+Value *TextValue::next()
+{
+    if (_iteration && *_iteration == _value.end())
+    {
+        delete _iteration;
+        _iteration = nullptr;
+        return nullptr; // The end.
+    }
+    if (!_iteration)
+    {
+        _iteration = new String::const_iterator(_value.begin());
+    }
+    return new TextValue(String(1, *(*_iteration)++));
 }
 
 bool TextValue::isTrue() const

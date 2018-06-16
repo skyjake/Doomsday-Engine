@@ -75,8 +75,7 @@ Value::Text ArrayValue::asText() const
     bool hadNewline = false;
 
     // Compose a textual representation of the array elements.
-    for (Elements::const_iterator i = _elements.begin();
-        i != _elements.end(); ++i)
+    for (Elements::const_iterator i = _elements.begin(); i != _elements.end(); ++i)
     {
         String content = (*i)->asText();
         bool multiline = content.contains("\n");

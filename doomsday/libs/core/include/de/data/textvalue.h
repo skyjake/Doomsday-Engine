@@ -43,6 +43,8 @@ public:
 public:
     TextValue(String const &initialValue = "");
 
+    ~TextValue();
+
     /// Converts the TextValue to plain text.
     operator String const &() const;
 
@@ -55,6 +57,8 @@ public:
     Record *memberScope() const;
     dsize size() const;
     bool contains(Value const &value) const;
+    Value *duplicateElement(const Value &charPos) const;
+    Value *next();
     bool isTrue() const;
     dint compare(Value const &value) const;
     void sum(Value const &value);
@@ -74,6 +78,7 @@ protected:
 
 private:
     Text _value;
+    String::const_iterator *_iteration;
 };
 
 } // namespace de

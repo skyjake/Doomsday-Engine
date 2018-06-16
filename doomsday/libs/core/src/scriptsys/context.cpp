@@ -46,7 +46,7 @@ DE_PIMPL(Context)
                     Statement const *f = nullptr,
                     Statement const *c = nullptr,
                     Statement const *b = nullptr)
-            : flow(f), jumpContinue(c), jumpBreak(b), iteration(nullptr), _current(current) {}
+            : flow(f), jumpContinue(c), jumpBreak(b), _current(current) {}
 
         /// Returns the currently executed statement.
         Statement const *current() const { return _current; }
@@ -59,7 +59,7 @@ DE_PIMPL(Context)
         Statement const *flow;
         Statement const *jumpContinue;
         Statement const *jumpBreak;
-        Value *iteration; // owned
+        std::unique_ptr<Value> iteration;
 
     private:
         Statement const *_current;
@@ -126,7 +126,6 @@ DE_PIMPL(Context)
     void popFlow()
     {
         DE_ASSERT(!controlFlow.empty());
-        delete flow().iteration;
         controlFlow.pop_back();
     }
 
@@ -278,19 +277,13 @@ Statement const *Context::current()
 Value *Context::iterationValue()
 {
     DE_ASSERT(d->controlFlow.size());
-    return d->controlFlow.back().iteration;
+    return d->controlFlow.back().iteration.get();
 }
 
 void Context::setIterationValue(Value *value)
 {
     DE_ASSERT(d->controlFlow.size());
-
-    Impl::ControlFlow &fl = d->flow();
-    if (fl.iteration)
-    {
-        delete fl.iteration;
-    }
-    fl.iteration = value;
+    d->flow().iteration.reset(value);
 }
 
 void Context::setNativeSelf(Value *scope)

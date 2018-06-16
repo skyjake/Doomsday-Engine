@@ -26,7 +26,6 @@
 #include <de/Process>
 #include <de/Script>
 #include <de/TextApp>
-#include <QDebug>
 
 using namespace de;
 
@@ -35,9 +34,12 @@ int main(int argc, char **argv)
     if (argc < 2) return -1;
     try
     {
-        TextApp app(argc, argv);
-        app.setApplicationName("Doomsday Script");
-        app.setConfigScript("");
+        TextApp app(makeList(argc, argv));
+        {
+            Record &amd = app.metadata();
+            amd.set(App::APP_NAME, "Doomsday Script");
+            amd.set(App::CONFIG_PATH, "");
+        }
         LogBuffer::get().enableStandardOutput();
         app.initSubsystems(App::DisablePlugins | App::DisablePersistentData);
 
@@ -56,13 +58,13 @@ int main(int argc, char **argv)
         LOG_MSG("------------------------------------------------------------------------------");
         LOG_MSG("Final result value is: ") << proc.context().evaluator().result().asText();
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         EscapeParser esc;
         esc.parse(er.asText());
-        qWarning() << esc.plainText();
+        warning("%s", esc.plainText().c_str());
     }
 
-    qDebug("Exiting main()...");
+    debug("Exiting main()...");
     return 0;
 }
