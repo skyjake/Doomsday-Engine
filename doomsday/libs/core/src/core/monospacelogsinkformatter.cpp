@@ -393,7 +393,7 @@ StringList MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
         // Advance to the next line.
         wrapIndent = nextWrapIndent;
         pos = next;
-        if (pos && iswspace(message[pos]))
+        if (pos != String::npos && pos > 0 && iswspace(message[pos]))
         {
             // At a forced newline, reset the wrap indentation.
             if (message[pos] == '\n')

@@ -1061,16 +1061,41 @@ String Record::asText(String const &prefix, List *lines) const
     }
 
     std::ostringstream os;
-    os << std::left << std::setfill(' ');
+    //os << std::left << std::setfill(' ');
+
+    const String indent = "\n" + String(maxLength.x, ' ');
 
     // Print aligned.
-    for (List::iterator i = allLines.begin(); i != allLines.end(); ++i)
+    bool first = true;
+    for (auto i = allLines.begin(); i != allLines.end(); ++i)
     {
-        int extra = 0;
-        if (i != allLines.begin()) os << "\n";
-        os << std::setw(maxLength.x) << i->first;
+        if (first)
+        {
+            first = false;
+        }
+        else
+        {
+            os << "\n";
+        }
+
+        // The key.
+        os << i->first;
+        if (i->first.size() < maxLength.x)
+        {
+            os << String(maxLength.x - i->first.size(), ' ');
+        }
+
         // Print the value line by line.
-        String::BytePos pos{0};
+        for (const CString &valueLine : i->second.splitRef('\n'))
+        {
+            if (valueLine.begin() > i->second.data())
+            {
+                os << indent;
+            }
+            os << valueLine;
+        }
+
+        /*String::BytePos pos{0};
         while (pos)
         {
             auto next = i->second.indexOf("\n", pos);
@@ -1081,7 +1106,8 @@ String Record::asText(String const &prefix, List *lines) const
             os << i->second.substr(pos, (next ? (next - pos + 1) : next).index);
             pos = next;
             if (pos) pos++;
-        }
+        }*/
+
     }
 
     return os.str();

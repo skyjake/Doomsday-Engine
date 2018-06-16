@@ -355,12 +355,12 @@ bool ScriptLex::combinesWith(Char a, Char b)
 
 bool ScriptLex::isKeyword(Token const &token)
 {
-    static const Set<const char *> keywordStr{
+    static const Set<CString> keywordStr{
         AND,    BREAK, CATCH,  CONST,  CONTINUE, DEF,  DEL,     ELSE,   ELSIF, END,
         FOR,    IF,    IMPORT, EXPORT, IN,       NOT,  OR,      PASS,   PRINT, RECORD,
         RETURN, SCOPE, THROW,  TRY,    WHILE,    NONE, T_FALSE, T_TRUE, PI,
     };
-    return keywordStr.contains(token.str());
+    return keywordStr.contains(token.cStr());
 }
 
 /*StringList ScriptLex::keywords()

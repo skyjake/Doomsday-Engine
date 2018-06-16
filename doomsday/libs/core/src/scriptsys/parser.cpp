@@ -665,7 +665,7 @@ Expression *Parser::parseExpression(TokenRange const &fullRange, Flags const &fl
 
     // Do we have a record declaration in the expression?
     if (range.firstToken().type() == Token::KEYWORD &&
-       range.firstToken().equals(ScriptLex::RECORD))
+        range.firstToken().equals(ScriptLex::RECORD))
     {
         LOGDEV_SCR_XVERBOSE_DEBUGONLY("declaration expression: RECORD %s", range.startingFrom(1).asText());
 

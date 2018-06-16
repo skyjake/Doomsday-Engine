@@ -57,7 +57,7 @@ void ScopeStatement::execute(Context &context) const
     Record &classRecord = eval.evaluateTo<RecordValue>(d->identifier.get()).dereference();
 
     // Possible super records.
-    eval.evaluate(d->superRecords.release());
+    eval.evaluate(d->superRecords.get());
     std::unique_ptr<ArrayValue> newSupers(eval.popResultAs<ArrayValue>());
     while (newSupers->size() > 0)
     {
