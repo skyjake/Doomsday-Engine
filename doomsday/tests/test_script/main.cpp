@@ -22,18 +22,24 @@
 #include <de/Script>
 #include <de/FS>
 #include <de/Process>
-#include <QDebug>
+#include <de/EscapeParser>
+
+#include <iostream>
 
 using namespace de;
 
 int main(int argc, char **argv)
 {
+    using namespace std;
     try
     {
-        TextApp app(argc, argv);
+        TextApp app(makeList(argc, argv));
         app.initSubsystems(App::DisablePlugins);
+        cout << FS::locate<const Folder>("/data").correspondingNativePath().toString() << endl;
 
+#if 1
         Script testScript(app.fileSystem().find("kitchen_sink.ds"));
+#endif
 #if 0
         Script testScript("def returnValue(a): return a\n"
                           "returnValue(True) and returnValue(True)\n");
@@ -50,11 +56,11 @@ int main(int argc, char **argv)
         LOG_MSG("------------------------------------------------------------------------------");
         LOG_MSG("Final result value is: ") << proc.context().evaluator().result().asText();
     }
-    catch (Error const &err)
+    catch (const Error &err)
     {
-        qWarning() << err.asText();
+        err.warnPlainText();
     }
 
-    qDebug("Exiting main()...");
+    debug("Exiting main()...");
     return 0;
 }

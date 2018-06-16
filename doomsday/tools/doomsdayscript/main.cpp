@@ -60,9 +60,7 @@ int main(int argc, char **argv)
     }
     catch (const Error &er)
     {
-        EscapeParser esc;
-        esc.parse(er.asText());
-        warning("%s", esc.plainText().c_str());
+        er.warnPlainText();
     }
 
     debug("Exiting main()...");

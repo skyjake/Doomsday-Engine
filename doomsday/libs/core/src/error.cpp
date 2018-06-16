@@ -20,6 +20,7 @@
 
 #include "de/error.h"
 #include "core/logtextstyle.h"
+#include "de/EscapeParser"
 #include "de/String"
 
 namespace de {
@@ -41,7 +42,14 @@ std::string Error::name() const
 std::string Error::asText() const
 {
     return stringf(
-        "%s[%s]" _E(.) " %s", TEXT_STYLE_SECTION, _name.c_str(), std::runtime_error::what());
+                "%s[%s]" _E(.) " %s", TEXT_STYLE_SECTION, _name.c_str(), std::runtime_error::what());
+}
+
+void Error::warnPlainText() const
+{
+    EscapeParser esc;
+    esc.parse(asText());
+    warning("%s", esc.plainText().c_str());
 }
 
 void Error::setName(const std::string &name)

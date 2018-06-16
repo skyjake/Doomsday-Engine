@@ -22,6 +22,7 @@
 #include "../Range"
 #include "../String"
 #include <c_plus/string.h>
+#include <string>
 
 namespace de {
 
@@ -86,24 +87,44 @@ private:
     mutable Rangecc _range;
 };
 
-inline String operator+(const char *cStr, const CString &str) {
+inline String operator+(const char *cStr, const CString &str)
+{
     return String(cStr) + str;
 }
 
-inline String operator+(const CString &str, const char *cStr) {
+inline String operator+(const CString &str, const char *cStr)
+{
     return String(str) + cStr;
 }
 
-inline String operator+(const CString &str, Char ch) {
+inline String operator+(const CString &str, Char ch)
+{
     String s(str);
     s += ch;
     return s;
 }
 
-inline String operator/(const CString &str, const char *cStr) {
+inline String operator/(const CString &str, const char *cStr)
+{
     return String(str).concatenatePath(cStr);
 }
 
+inline std::ostream &operator<<(std::ostream &os, const CString &str)
+{
+    os.write(str.begin(), str.size());
+    return os;
+}
+
 } // namespace de
+
+namespace std
+{
+    template<>
+    struct hash<de::CString> {
+        std::size_t operator()(const de::CString &key) const {
+            return hash<std::string>()(key.toStdString());
+        }
+    };
+}
 
 #endif // LIBCORE_CSTRING_H

@@ -848,7 +848,8 @@ void App::initSubsystems(SubsystemInitFlags flags)
 #endif
     }
 
-    LOG_VERBOSE("Subsystems initialized");
+    LOG_VERBOSE("%s %s subsystems initialized")
+        << metadata().gets(APP_NAME) << Version::currentBuild().asHumanReadableText();
 }
 
 void App::addSystem(System &system)

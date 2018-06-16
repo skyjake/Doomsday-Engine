@@ -372,6 +372,12 @@ public:
     std::string name() const;
     virtual std::string asText() const;
 
+    /**
+     * Prints the error as plain text using de::warning. EscapeParser is used
+     * to remove any escape sequences.
+     */
+    void warnPlainText() const;
+
 protected:
     void setName(const std::string &name);
 
