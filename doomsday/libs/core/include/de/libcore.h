@@ -189,6 +189,14 @@
      (void)(_5), (void)(_6), (void)(_7), (void)(_8), (void)(_9))
 #define DE_UNUSED(...) DE_UNUSED_MANY(__VA_ARGS__, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
+// Macro trick for determining number of arguments (up to 8).
+#define DE_NUM_ARG_RSEQ_N()     8, 7, 6, 5, 4, 3, 2, 1, 0
+#define DE_NUM_ARG(...)         DE_NUM_ARG_(__VA_ARGS__, DE_NUM_ARG_RSEQ_N())
+#define DE_NUM_ARG_(...)        DE_NUM_ARG_N(__VA_ARGS__)
+#define DE_NUM_ARG_N(_1, _2, _3, _4, _5, _6, _7, _8, N, ...) N
+
+#define DE_CONCAT(x, y)         x##y
+
 #define DE_PLURAL_S(Count) ((Count) != 1? "s" : "")
 
 #define DE_BOOL_YESNO(Yes) ((Yes)? "yes" : "no")
