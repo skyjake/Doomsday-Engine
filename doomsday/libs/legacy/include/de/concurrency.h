@@ -2,7 +2,7 @@
  * @file concurrency.h
  * Concurrency: threads, mutexes, semaphores.
  *
- * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
@@ -45,31 +45,30 @@ typedef enum systhreadexitstatus_e {
 typedef std::function<int (void *)> systhreadfunc_t;
 
 #ifdef __DE__ // libdeng internal
-#include <QThread>
+#include <de/Thread>
 /**
  * Thread that runs a user-specified callback function. Exceptions from the callback
  * function are caught.
  */
-class CallbackThread : public QThread
+class CallbackThread
+    : public de::Thread
+    , DE_OBSERVES(de::Thread, Finished)
 {
-    Q_OBJECT
-
 public:
     CallbackThread(systhreadfunc_t func, void *parm = 0);
     ~CallbackThread();
 
-    void run();
-    int exitValue() const;
+    void                  run() override;
+    int                   exitValue() const;
     systhreadexitstatus_t exitStatus() const;
-    void setTerminationFunc(void (*func)(systhreadexitstatus_t));
+    void                  setTerminationFunc(void (*func)(systhreadexitstatus_t));
 
-protected slots:
-    void deleteNow();
+    void threadFinished(Thread &) override;
 
 private:
-    systhreadfunc_t _callback;
-    void *_parm;
-    int _returnValue;
+    systhreadfunc_t       _callback;
+    void *                _parm;
+    int                   _returnValue;
     systhreadexitstatus_t _exitStatus;
     void (*_terminationFunc)(systhreadexitstatus_t);
 };
@@ -87,8 +86,9 @@ private:
  *                         of the thread as a parameter.
  * @return Thread handle.
  */
-DE_PUBLIC thread_t Sys_StartThread(systhreadfunc_t startpos, void *parm,
-                                     void (*terminationFunc)(systhreadexitstatus_t));
+DE_PUBLIC thread_t Sys_StartThread(systhreadfunc_t startpos,
+                                   void *          parm,
+                                   void (*terminationFunc)(systhreadexitstatus_t));
 
 extern "C" {
 #endif // __cplusplus
@@ -104,8 +104,9 @@ extern "C" {
  *                         of the thread as a parameter.
  * @return Thread handle.
  */
-DE_PUBLIC thread_t Sys_StartThread(int (*startpos)(void *), void *parm,
-                                     void (*terminationFunc)(systhreadexitstatus_t));
+DE_PUBLIC thread_t Sys_StartThread(int (*startpos)(void *),
+                                   void *parm,
+                                   void (*terminationFunc)(systhreadexitstatus_t));
 
 DE_PUBLIC void Thread_Sleep(int milliseconds);
 

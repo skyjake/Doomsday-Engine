@@ -52,10 +52,6 @@
 #  endif
 #endif
 
-#ifdef DE_USE_QT
-#  include <QtCore/qglobal.h>
-#endif
-
 #include <assert.h>
 #include <stddef.h>
 

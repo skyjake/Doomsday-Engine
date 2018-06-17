@@ -25,7 +25,7 @@
 #include "liblegacy.h"
 #include "str.h"
 
-#include <QString>
+#include <de/String>
 
 namespace de {
 
@@ -34,21 +34,21 @@ namespace de {
  */
 class Str {
 public:
-    Str(char const *text = 0) {
+    Str(const char *text = 0) {
         Str_InitStd(&str);
         if (text) {
             Str_Set(&str, text);
         }
     }
-    Str(QString const &text) {
+    Str(const String &text) {
         Str_InitStd(&str);
-        Str_Set(&str, text.toUtf8());
+        Str_Set(&str, text);
     }
     ~Str() {
         // This should never be called directly.
         Str_Free(&str);
     }
-    operator char const *(void) const {
+    operator const char *(void) const {
         return str.str;
     }
     operator ddstring_t *(void) {

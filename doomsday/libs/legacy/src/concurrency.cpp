@@ -2,7 +2,7 @@
  * @file concurrency.cpp
  * Concurrency: threads, mutexes, semaphores.
  *
- * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
@@ -22,9 +22,6 @@
  */
 
 #include "de/concurrency.h"
-#include <QMutex>
-#include <QCoreApplication>
-#include <QDebug>
 #include <de/App>
 #include <de/Time>
 #include <de/Log>
@@ -32,9 +29,11 @@
 #include <assert.h>
 
 CallbackThread::CallbackThread(systhreadfunc_t func, void *param)
-    : _callback(func), _parm(param), _returnValue(0),
-      _exitStatus(DE_THREAD_STOPPED_NORMALLY),
-      _terminationFunc(0)
+    : _callback(std::move(func))
+    , _parm(param)
+    , _returnValue(0)
+    , _exitStatus(DE_THREAD_STOPPED_NORMALLY)
+    , _terminationFunc(nullptr)
 {
     //qDebug() << "CallbackThread:" << this << "created.";
 
@@ -42,16 +41,16 @@ CallbackThread::CallbackThread(systhreadfunc_t func, void *param)
     setTerminationEnabled(true);
 
     // Cleanup at app exit time for threads whose exit value hasn't been checked.
-    connect(qApp, SIGNAL(destroyed()), this, SLOT(deleteNow()));
+    audienceForFinished() += this;
 }
 
 CallbackThread::~CallbackThread()
 {
     if (isRunning())
     {
-        //qDebug() << "CallbackThread:" << this << "forcibly stopping, deleting.";
+        de::debug("CallbackThread %p being forcibly stopped before deletion", this);
         terminate();
-        wait(1000);
+//        wait(1000);
     }
     else
     {
@@ -59,9 +58,10 @@ CallbackThread::~CallbackThread()
     }
 }
 
-void CallbackThread::deleteNow()
+//void CallbackThread::deleteNow()
+void CallbackThread::threadFinished(Thread &)
 {
-    delete this;
+    de::trash(this); //delete this;
 }
 
 void CallbackThread::run()
@@ -76,10 +76,10 @@ void CallbackThread::run()
         }
         _exitStatus = DE_THREAD_STOPPED_NORMALLY;
     }
-    catch (std::exception const &error)
+    catch (const std::exception &error)
     {
         LOG_AS("CallbackThread");
-        LOG_ERROR(QString("Uncaught exception: ") + error.what());
+        LOG_ERROR("Uncaught exception: ") << error.what();
         _returnValue = -1;
         _exitStatus = DE_THREAD_STOPPED_WITH_EXCEPTION;
     }
@@ -92,7 +92,7 @@ void CallbackThread::run()
     Garbage_ClearForThread();
 
     // No more log output from this thread.
-    de::Log::disposeThreadLog();
+    //de::Log::disposeThreadLog();
 }
 
 int CallbackThread::exitValue() const
@@ -128,7 +128,7 @@ void Thread_Sleep(int milliseconds)
 
 thread_t Sys_StartThread(systhreadfunc_t startpos, void *parm, void (*terminationFunc)(systhreadexitstatus_t))
 {
-    CallbackThread *t = new CallbackThread(startpos, parm);
+    CallbackThread *t = new CallbackThread(std::move(startpos), parm);
     t->setTerminationFunc(terminationFunc);
     t->start();
     return t;
@@ -141,12 +141,12 @@ thread_t Sys_StartThread(int (*startpos)(void *), void *parm, void (*termination
 
 void Thread_KillAbnormally(thread_t handle)
 {
-    QThread *t = reinterpret_cast<QThread *>(handle);
+    de::Thread *t = reinterpret_cast<de::Thread *>(handle);
     if (!handle)
     {
-        t = QThread::currentThread();
+        t = de::Thread::currentThread();
     }
-    assert(t);
+    DE_ASSERT(t);
     t->terminate();
 }
 
@@ -168,7 +168,7 @@ int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t *exitSt
     }
 
     CallbackThread *t = reinterpret_cast<CallbackThread *>(handle);
-    assert(static_cast<QThread *>(t) != QThread::currentThread());
+    DE_ASSERT(static_cast<de::Thread *>(t) != de::Thread::currentThread());
     t->wait(timeoutMs);
     if (!t->isFinished())
     {
@@ -179,40 +179,41 @@ int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t *exitSt
     {
         if (exitStatus) *exitStatus = t->exitStatus();
     }
-    t->deleteLater(); // get rid of it
+    //t->deleteLater(); // get rid of it
+    de::trash(t);
     return t->exitValue();
 }
 
 uint32_t Sys_ThreadId(thread_t handle)
 {
-    QThread *t = reinterpret_cast<QThread *>(handle);
-    if (!t) t = QThread::currentThread();
+    auto *t = reinterpret_cast<de::Thread *>(handle);
+    if (!t) t = de::Thread::currentThread();
     return uint32_t(PTR2INT(t));
 }
 
 uint32_t Sys_CurrentThreadId(void)
 {
-    return Sys_ThreadId(NULL /*this thread*/);
+    return Sys_ThreadId(nullptr /*this thread*/);
 }
 
 /// @todo remove the name parameter
 mutex_t Sys_CreateMutex(const char *)
 {
-    return new QMutex(QMutex::Recursive);
+    return new std::recursive_mutex;
 }
 
 void Sys_DestroyMutex(mutex_t handle)
 {
     if (handle)
     {
-        delete reinterpret_cast<QMutex *>(handle);
+        delete reinterpret_cast<std::recursive_mutex *>(handle);
     }
 }
 
 void Sys_Lock(mutex_t handle)
 {
-    QMutex *m = reinterpret_cast<QMutex *>(handle);
-    assert(m != 0);
+    auto *m = reinterpret_cast<std::recursive_mutex *>(handle);
+    DE_ASSERT(m != nullptr);
     if (m)
     {
         m->lock();
@@ -221,8 +222,8 @@ void Sys_Lock(mutex_t handle)
 
 void Sys_Unlock(mutex_t handle)
 {
-    QMutex *m = reinterpret_cast<QMutex *>(handle);
-    assert(m != 0);
+    auto *m = reinterpret_cast<std::recursive_mutex *>(handle);
+    DE_ASSERT(m != nullptr);
     if (m)
     {
         m->unlock();
