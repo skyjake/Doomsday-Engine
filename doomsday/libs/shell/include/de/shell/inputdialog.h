@@ -19,27 +19,27 @@
 #ifndef LIBSHELL_INPUTDIALOG_H
 #define LIBSHELL_INPUTDIALOG_H
 
-#include "DialogWidget"
+#include "DialogTextWidget"
 
 namespace de { namespace shell {
 
-class LabelWidget;
-class LineEditWidget;
-class MenuWidget;
+class LabelTextWidget;
+class LineEditTextWidget;
+class MenuTextWidget;
 
 /**
  * Dialog for querying text from the user.
  *
  * @ingroup textUi
  */
-class InputDialog : public de::shell::DialogWidget
+class InputDialogTextWidget : public DialogTextWidget
 {
 public:
-    InputDialog(de::String const &name = de::String());
+    InputDialogTextWidget(const String &name = {});
 
-    LabelWidget &   label();
-    LineEditWidget &lineEdit();
-    MenuWidget &    menu();
+    LabelTextWidget &   label();
+    LineEditTextWidget &lineEdit();
+    MenuTextWidget &    menu();
 
     /**
      * Sets the width of the dialog. The default width is 50.
@@ -61,7 +61,7 @@ public:
      * Returns the text that the user entered in the dialog. If the dialog
      * was rejected, the returned string is empy.
      */
-    de::String text() const;
+    String text() const;
 
     /**
      * Returns the result from the DialogWidget.

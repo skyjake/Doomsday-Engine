@@ -43,7 +43,7 @@ public:
      * @param serverInfo      Server information.
      * @param afterConnected  Callback to call when the repository is connected and ready for use.
      */
-    void mountServerRepository(ServerInfo const &serverInfo, MountCallback afterConnected);
+    void mountServerRepository(ServerInfo const &serverInfo, const MountCallback& afterConnected);
 
     void unmountServerRepository();
 
@@ -54,7 +54,7 @@ public:
      * @param packageIds  Packages to download from the remote repository.
      * @param callback    Called when the downloads are finished or cancelled.
      */
-    void download(StringList packageIds, std::function<void()> callback);
+    void download(const StringList& packageIds, const std::function<void()>& callback);
 
     de::String fileRepository() const;
 
@@ -78,7 +78,7 @@ public:
      * `bytes.end` is the total number of bytes overall.
      */
     DE_DEFINE_AUDIENCE2(Status,
-                           void downloadStatusUpdate(Rangei64 const &bytes, Rangei const &files))
+                        void downloadStatusUpdate(Rangei64 const &bytes, Rangei const &files))
 
 private:
     DE_PRIVATE(d)

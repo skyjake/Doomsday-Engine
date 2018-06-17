@@ -21,6 +21,7 @@
 
 #include "libshell.h"
 #include "ITextEditor"
+#include "KeyEvent"
 #include <de/libcore.h>
 #include <de/String>
 #include <de/Vector>
@@ -71,10 +72,10 @@ public:
 
     Vec2i lineCursorPos() const { return linePos(cursor()); }
 
-    bool        isSuggestingCompletion() const;
-    Rangei      completionRange() const;
-    QStringList suggestedCompletions() const;
-    void        acceptCompletion();
+    bool       isSuggestingCompletion() const;
+    Rangei     completionRange() const;
+    StringList suggestedCompletions() const;
+    void       acceptCompletion();
 
     /**
      * Defines the terms and rules for auto-completion.
@@ -97,9 +98,9 @@ public:
     EchoMode echoMode() const;
 
     enum KeyModifier { Unmodified = 0, Shift = 0x1, Control = 0x2, Alt = 0x4, Meta = 0x8 };
-    Q_DECLARE_FLAGS(KeyModifiers, KeyModifier)
+    using KeyModifiers = Flags;
 
-    virtual bool handleControlKey(int qtKey, KeyModifiers const &mods = Unmodified);
+    virtual bool handleControlKey(Key key, KeyModifiers const &mods = Unmodified);
 
     /**
      * Inserts a fragment of text at the cursor position. The cursor moves
@@ -130,8 +131,6 @@ protected:
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(AbstractLineEditor::KeyModifiers)
 
 }} // namespace de::shell
 

@@ -66,10 +66,10 @@ String Lexicon::additionalWordChars() const
     return d->extraChars;
 }
 
-bool Lexicon::isWordChar(QChar ch) const
+bool Lexicon::isWordChar(Char ch) const
 {
     // Default word characters.
-    if (ch.isLetterOrNumber()) return true;
+    if (iswalnum(ch)) return true;
     return d->extraChars.contains(ch);
 }
 

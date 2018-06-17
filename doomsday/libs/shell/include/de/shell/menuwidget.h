@@ -37,10 +37,8 @@ namespace de { namespace shell {
  *
  * @ingroup textUi
  */
-class LIBSHELL_PUBLIC MenuWidget : public TextWidget
+class LIBSHELL_PUBLIC MenuTextWidget : public TextWidget
 {
-    Q_OBJECT
-
 public:
     enum Preset {
         Popup,     ///< Menu initially hidden, will popup on demand.
@@ -49,8 +47,10 @@ public:
 
     enum BorderStyle { NoBorder, LineBorder };
 
+    DE_DEFINE_AUDIENCE2(Close, void menuClosed())
+
 public:
-    MenuWidget(Preset preset, String const &name = String());
+    MenuTextWidget(Preset preset, String const &name = {});
 
     int itemCount() const;
 
@@ -99,13 +99,13 @@ public:
      */
     void setClosable(bool canBeClosed);
 
-    void setSelectionAttribs(TextCanvas::Char::Attribs const &attribs);
+    void setSelectionAttribs(TextCanvas::AttribChar::Attribs const &attribs);
 
-    void setBackgroundAttribs(TextCanvas::Char::Attribs const &attribs);
+    void setBackgroundAttribs(TextCanvas::AttribChar::Attribs const &attribs);
 
     void setBorder(BorderStyle style);
 
-    void setBorderAttribs(TextCanvas::Char::Attribs const &attribs);
+    void setBorderAttribs(TextCanvas::AttribChar::Attribs const &attribs);
 
     Vec2i cursorPosition() const;
 
@@ -113,12 +113,8 @@ public:
     void draw();
     bool handleEvent(Event const &);
 
-public slots:
     void open();
     void close();
-
-signals:
-    void closed();
 
 private:
     DE_PRIVATE(d)

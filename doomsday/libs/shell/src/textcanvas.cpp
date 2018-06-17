@@ -17,21 +17,19 @@
  */
 
 #include "de/shell/TextCanvas"
-#include <QList>
-#include <QDebug>
 
 namespace de { namespace shell {
 
 DE_PIMPL_NOREF(TextCanvas)
 {
-    Size          size;
-    QList<Char *> lines;
+    Size               size;
+    List<AttribChar *> lines;
 
     struct RichFormat {
-        Char::Attribs attrib;
-        Rangei        range;
+        AttribChar::Attribs attrib;
+        Rangei              range;
     };
-    QList<RichFormat> richFormats;
+    List<RichFormat> richFormats;
 
     Impl(Size const &initialSize) : size(initialSize)
     {
@@ -44,7 +42,7 @@ DE_PIMPL_NOREF(TextCanvas)
 
     ~Impl()
     {
-        for (int i = 0; i < lines.size(); ++i)
+        for (duint i = 0; i < lines.size(); ++i)
         {
             delete [] lines[i];
         }
@@ -55,9 +53,9 @@ DE_PIMPL_NOREF(TextCanvas)
         return lines.size();
     }
 
-    Char *makeLine()
+    AttribChar *makeLine()
     {
-        return new Char[size.x];
+        return new AttribChar[size.x];
     }
 
     void resize(Size const &newSize)
@@ -74,14 +72,14 @@ DE_PIMPL_NOREF(TextCanvas)
             lines.append(makeLine());
         }
 
-        Q_ASSERT(lineCount() == newSize.y);
+        DE_ASSERT(lineCount() == newSize.y);
         size.y = newSize.y;
 
         // Make sure all lines are the correct width.
-        for (int row = 0; row < lines.size(); ++row)
+        for (duint row = 0; row < lines.size(); ++row)
         {
-            Char *newLine = new Char[newSize.x];
-            memcpy(newLine, lines[row], sizeof(Char) * de::min(size.x, newSize.x));
+            AttribChar *newLine = new AttribChar[newSize.x];
+            std::memcpy(newLine, lines[row], sizeof(AttribChar) * de::min(size.x, newSize.x));
             delete [] lines[row];
             lines[row] = newLine;
         }
@@ -91,24 +89,20 @@ DE_PIMPL_NOREF(TextCanvas)
 
     void markAllAsDirty(bool markDirty)
     {
-        for (int row = 0; row < lines.size(); ++row)
+        for (duint row = 0; row < lines.size(); ++row)
         {
-            Char *line = lines[row];
+            auto *line = lines[row];
             for (duint col = 0; col < size.x; ++col)
             {
-                Char &c = line[col];
-                if (markDirty)
-                    c.attribs |= Char::Dirty;
-                else
-                    c.attribs &= ~Char::Dirty;
+                applyFlagOperation(line[col].attribs, AttribChar::Dirty, markDirty);
             }
         }
     }
 
-    Char::Attribs richAttribsForTextIndex(int pos, int offset = 0) const
+    AttribChar::Attribs richAttribsForTextIndex(int pos, int offset = 0) const
     {
-        Char::Attribs attr;
-        foreach (RichFormat const &rf, richFormats)
+        AttribChar::Attribs attr;
+        for (const RichFormat &rf : richFormats)
         {
             if (rf.range.contains(offset + pos))
             {
@@ -152,15 +146,15 @@ void TextCanvas::resize(Size const &newSize)
     d->resize(newSize);
 }
 
-TextCanvas::Char &TextCanvas::at(Coord const &pos)
+TextCanvas::AttribChar &TextCanvas::at(Coord const &pos)
 {
-    Q_ASSERT(isValid(pos));
+    DE_ASSERT(isValid(pos));
     return d->lines[pos.y][pos.x];
 }
 
-TextCanvas::Char const &TextCanvas::at(Coord const &pos) const
+TextCanvas::AttribChar const &TextCanvas::at(Coord const &pos) const
 {
-    Q_ASSERT(isValid(pos));
+    DE_ASSERT(isValid(pos));
     return d->lines[pos.y][pos.x];
 }
 
@@ -174,12 +168,12 @@ void TextCanvas::markDirty()
     d->markAllAsDirty(true);
 }
 
-void TextCanvas::clear(Char const &ch)
+void TextCanvas::clear(AttribChar const &ch)
 {
     fill(Rectanglei(0, 0, d->size.x, d->size.y), ch);
 }
 
-void TextCanvas::fill(Rectanglei const &rect, Char const &ch)
+void TextCanvas::fill(Rectanglei const &rect, AttribChar const &ch)
 {
     for (int y = rect.top(); y < rect.bottom(); ++y)
     {
@@ -191,7 +185,7 @@ void TextCanvas::fill(Rectanglei const &rect, Char const &ch)
     }
 }
 
-void TextCanvas::put(Vec2i const &pos, Char const &ch)
+void TextCanvas::put(Vec2i const &pos, AttribChar const &ch)
 {
     if (isValid(pos))
     {
@@ -204,7 +198,7 @@ void TextCanvas::clearRichFormat()
     d->richFormats.clear();
 }
 
-void TextCanvas::setRichFormatRange(Char::Attribs const &attribs, Rangei const &range)
+void TextCanvas::setRichFormatRange(AttribChar::Attribs const &attribs, Rangei const &range)
 {
     Impl::RichFormat rf;
     rf.attrib = attribs;
@@ -212,22 +206,26 @@ void TextCanvas::setRichFormatRange(Char::Attribs const &attribs, Rangei const &
     d->richFormats.append(rf);
 }
 
-void TextCanvas::drawText(Vec2i const &pos, String const &text,
-                          Char::Attribs const &attribs, int richOffset)
+void TextCanvas::drawText(Vec2i const &              pos,
+                          String const &             text,
+                          AttribChar::Attribs const &attribs,
+                          int                        richOffset)
 {
     Vec2i p = pos;
-    for (int i = 0; i < text.size(); ++i)
+    duint i = 0;
+    //for (duint i = 0; i < text.size(); ++i)
+    for (String::const_iterator iter = text.begin(), end = text.end(); iter != end; ++iter, ++i)
     {
         if (isValid(p))
         {
-            at(p) = Char(text[i], attribs | d->richAttribsForTextIndex(i, richOffset));
+            at(p) = AttribChar(*iter, attribs | d->richAttribsForTextIndex(i, richOffset));
         }
         p.x++;
     }
 }
 
 void TextCanvas::drawWrappedText(Vec2i const &pos, String const &text,
-                                 ILineWrapping const &wraps, Char::Attribs const &attribs,
+                                 ILineWrapping const &wraps, AttribChar::Attribs const &attribs,
                                  Alignment lineAlignment)
 {
     int const width = wraps.width();
@@ -239,21 +237,21 @@ void TextCanvas::drawWrappedText(Vec2i const &pos, String const &text,
         int x = 0;
         if (lineAlignment.testFlag(AlignRight))
         {
-            x = width - part.size();
+            x = width - part.sizei();
         }
         else if (!lineAlignment.testFlag(AlignLeft))
         {
-            x = width/2 - part.size()/2;
+            x = width/2 - part.sizei()/2;
         }
-        drawText(pos + Vec2i(x, y), part, attribs, span.range.start);
+        drawText(pos + Vec2i(x, y), part, attribs, span.range.start.index);
     }
 }
 
-void TextCanvas::drawLineRect(Rectanglei const &rect, Char::Attribs const &attribs)
+void TextCanvas::drawLineRect(Rectanglei const &rect, AttribChar::Attribs const &attribs)
 {
-    Char const corner('+', attribs);
-    Char const hEdge ('-', attribs);
-    Char const vEdge ('|', attribs);
+    AttribChar const corner('+', attribs);
+    AttribChar const hEdge ('-', attribs);
+    AttribChar const vEdge ('|', attribs);
 
     // Horizontal edges.
     for (duint x = 1; x < rect.width() - 1; ++x)

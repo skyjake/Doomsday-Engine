@@ -26,7 +26,6 @@
 #include <de/Transmitter>
 #include <de/shell/AbstractLink>
 #include <de/shell/Protocol>
-#include <QObject>
 
 namespace de { namespace shell {
 
@@ -37,8 +36,6 @@ namespace de { namespace shell {
  */
 class LIBSHELL_PUBLIC Link : public AbstractLink
 {
-    Q_OBJECT
-
 public:
     DE_ERROR(ConnectError);
 

@@ -20,6 +20,7 @@
 #define LIBSHELL_EDITORHISTORY_H
 
 #include "ITextEditor"
+#include "KeyEvent"
 
 namespace de { namespace shell {
 
@@ -32,7 +33,7 @@ namespace de { namespace shell {
 class LIBSHELL_PUBLIC EditorHistory
 {
 public:
-    EditorHistory(ITextEditor *editor = 0);
+    EditorHistory(ITextEditor *editor = nullptr);
 
     void         setEditor(ITextEditor &editor);
     ITextEditor &editor();
@@ -59,11 +60,11 @@ public:
     /**
      * Handles a key. History control keys include navigation in the history.
      *
-     * @param qtKey  Qt key code.
+     * @param key  Key code.
      *
      * @return @c true, if key was handled.
      */
-    bool handleControlKey(int qtKey);
+    bool handleControlKey(Key key);
 
     /**
      * Returns the history contents.
@@ -72,7 +73,7 @@ public:
      */
     StringList fullHistory(int maxCount = 0) const;
 
-    void setFullHistory(StringList history);
+    void setFullHistory(const StringList& history);
 
 private:
     DE_PRIVATE(d)

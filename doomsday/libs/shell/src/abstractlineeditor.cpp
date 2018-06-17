@@ -20,10 +20,6 @@
 #include "de/shell/Lexicon"
 #include <de/ConstantRule>
 
-#include <QList>
-#include <QStringList>
-#include <QScopedPointer>
-
 namespace de { namespace shell {
 
 DE_PIMPL(AbstractLineEditor)
@@ -34,7 +30,7 @@ DE_PIMPL(AbstractLineEditor)
     Lexicon  lexicon;
     EchoMode echoMode;
 
-    QScopedPointer<ILineWrapping> wraps;
+    std::unique_ptr<ILineWrapping> wraps;
 
     struct Completion {
         int pos;
@@ -48,18 +44,18 @@ DE_PIMPL(AbstractLineEditor)
             return Rangei(pos, pos + size);
         }
     };
-    Completion  completion;
-    QStringList suggestions;
-    bool        suggesting;
-    bool        completionNotified;
+    Completion completion;
+    StringList suggestions;
+    bool       suggesting;
+    bool       completionNotified;
 
     Impl(Public *i, ILineWrapping *lineWraps)
-        : Base(i),
-          cursor(0),
-          echoMode(NormalEchoMode),
-          wraps(lineWraps),
-          suggesting(false),
-          completionNotified(false)
+        : Base(i)
+        , cursor(0)
+        , echoMode(NormalEchoMode)
+        , wraps(lineWraps)
+        , suggesting(false)
+        , completionNotified(false)
     {
         // Initialize line wrapping.
         completion.reset();
@@ -118,7 +114,7 @@ DE_PIMPL(AbstractLineEditor)
                 // Stop here. Mark is on this line.
                 break;
             }
-            pos.x -= span.range.end - span.range.start + 1;
+            pos.x -= (span.range.end - span.range.start + 1).index;
         }
         return pos;
     }
@@ -306,13 +302,13 @@ DE_PIMPL(AbstractLineEditor)
         return wordBehindPos(cursor);
     }
 
-    QStringList completionsForBase(String base, String &commonPrefix) const
+    StringList completionsForBase(String base, String &commonPrefix) const
     {
         String::CaseSensitivity const sensitivity =
                 lexicon.isCaseSensitive()? String::CaseSensitive : String::CaseInsensitive;
 
         bool first = true;
-        QStringList sugs;
+        StringList sugs;
 
         foreach (String term, lexicon.terms())
         {
@@ -523,9 +519,9 @@ Rangei AbstractLineEditor::completionRange() const
     return d->completion.range();
 }
 
-QStringList AbstractLineEditor::suggestedCompletions() const
+StringList AbstractLineEditor::suggestedCompletions() const
 {
-    if (!isSuggestingCompletion()) return QStringList();
+    if (!isSuggestingCompletion()) return StringList();
 
     return d->suggestions;
 }
@@ -555,7 +551,7 @@ AbstractLineEditor::EchoMode AbstractLineEditor::echoMode() const
     return d->echoMode;
 }
 
-bool AbstractLineEditor::handleControlKey(int qtKey, KeyModifiers const &mods)
+bool AbstractLineEditor::handleControlKey(Key key, KeyModifiers const &mods)
 {
 #ifdef MACOSX
 #  define WORD_JUMP_MODIFIER    Alt
@@ -563,9 +559,9 @@ bool AbstractLineEditor::handleControlKey(int qtKey, KeyModifiers const &mods)
 #  define WORD_JUMP_MODIFIER    Control
 #endif
 
-    switch (qtKey)
+    switch (key)
     {
-    case Qt::Key_Backspace:
+    case Key::Backspace:
         if (mods.testFlag(WORD_JUMP_MODIFIER))
         {
             d->doWordBackspace();
@@ -576,11 +572,11 @@ bool AbstractLineEditor::handleControlKey(int qtKey, KeyModifiers const &mods)
         }
         return true;
 
-    case Qt::Key_Delete:
+    case Key::Delete:
         d->doDelete();
         return true;
 
-    case Qt::Key_Left:
+    case Key::Left:
 #ifdef MACOSX
         if (mods.testFlag(Control))
         {
@@ -598,7 +594,7 @@ bool AbstractLineEditor::handleControlKey(int qtKey, KeyModifiers const &mods)
         }
         return true;
 
-    case Qt::Key_Right:
+    case Key::Right:
 #ifdef MACOSX
         if (mods.testFlag(Control))
         {
@@ -616,42 +612,42 @@ bool AbstractLineEditor::handleControlKey(int qtKey, KeyModifiers const &mods)
         }
         return true;
 
-    case Qt::Key_Home:
+    case Key::Home:
         d->doHome();
         return true;
 
-    case Qt::Key_End:
+    case Key::End:
         d->doEnd();
         return true;
 
-    case Qt::Key_Tab:
-    case Qt::Key_Backtab:
-        if (d->doCompletion(qtKey == Qt::Key_Tab))
+    case Key::Tab:
+    case Key::Backtab:
+        if (d->doCompletion(key == Key::Tab))
         {
             return true;
         }
         break;
 
-    case Qt::Key_K:
-        if (mods.testFlag(Control))
-        {
-            d->killEndOfLine();
-            return true;
-        }
-        break;
+    case Key::Kill:
+//        if (mods.testFlag(Control))
+//        {
+        d->killEndOfLine();
+        return true;
+//        }
+//        break;
 
-    case Qt::Key_Up:
+    case Key::Up:
         // First try moving within the current command.
         if (!d->moveCursorByLine(-1)) return false; // not eaten
         return true;
 
-    case Qt::Key_Down:
+    case Key::Down:
         // First try moving within the current command.
         if (!d->moveCursorByLine(+1)) return false; // not eaten
         return true;
 
-    case Qt::Key_Enter:
-    case Qt::Key_Return:
+    case Key::Enter:
+//    case Key::Return:
         d->acceptCompletion();
         return true;
 

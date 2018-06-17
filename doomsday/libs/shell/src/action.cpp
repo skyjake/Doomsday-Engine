@@ -20,34 +20,19 @@
 
 namespace de { namespace shell {
 
-Action::Action(String const &label) : _event(KeyEvent("")), _label(label), _target(0), _slot(0)
+Action::Action(String const &label) : _event(KeyEvent("")), _label(label)
 {}
 
-Action::Action(String const &label, QObject *target, char const *slot)
-    : _event(KeyEvent("")), _label(label), _target(target), _slot(slot)
+Action::Action(String const &label, const Func &func)
+    : _event(KeyEvent("")), _label(label)
 {
-    if (target && slot)
-    {
-        connect(this, SIGNAL(triggered()), target, slot);
-    }
+    audienceForTriggered() += func;
 }
 
-Action::Action(String const &label, KeyEvent const &event, QObject *target, char const *slot)
-    : _event(event), _label(label), _target(target), _slot(slot)
+Action::Action(String const &label, KeyEvent const &event, const Func &func)
+    : _event(event), _label(label)
 {
-    if (target && slot)
-    {
-        connect(this, SIGNAL(triggered()), target, slot);
-    }
-}
-
-Action::Action(KeyEvent const &event, QObject *target, char const *slot)
-    : _event(event), _target(target), _slot(slot)
-{
-    if (target && slot)
-    {
-        connect(this, SIGNAL(triggered()), target, slot);
-    }
+    audienceForTriggered() += func;
 }
 
 Action::~Action()
@@ -71,12 +56,6 @@ bool Action::tryTrigger(KeyEvent const &ev)
         return true;
     }
     return false;
-}
-
-void Action::trigger()
-{
-    de::Action::trigger();
-    emit triggered();
 }
 
 }} // namespace de::shell

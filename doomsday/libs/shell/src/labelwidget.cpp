@@ -1,3 +1,7 @@
+#include <utility>
+
+#include <utility>
+
 /** @file libshell/src/labelwidget.cpp  Widget for showing a label.
  *
  * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -16,22 +20,22 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/LabelWidget"
+#include "de/shell/LabelTextWidget"
 #include "de/shell/TextRootWidget"
 #include "de/shell/MonospaceLineWrapping"
 #include <de/ConstantRule>
 
 namespace de { namespace shell {
 
-DE_PIMPL_NOREF(LabelWidget)
+DE_PIMPL_NOREF(LabelTextWidget)
 {
-    TextCanvas::Char          background;
-    String                    label;
-    MonospaceLineWrapping     wraps;
-    TextCanvas::Char::Attribs attribs;
-    Alignment                 align;
-    bool                      vertExpand;
-    ConstantRule *            height;
+    TextCanvas::AttribChar          background;
+    String                          label;
+    MonospaceLineWrapping           wraps;
+    TextCanvas::AttribChar::Attribs attribs;
+    Alignment                       align;
+    bool                            vertExpand;
+    ConstantRule *                  height;
 
     Impl() : align(0), vertExpand(false)
     {
@@ -50,47 +54,47 @@ DE_PIMPL_NOREF(LabelWidget)
     }
 };
 
-LabelWidget::LabelWidget(String const &name)
+LabelTextWidget::LabelTextWidget(String const &name)
     : TextWidget(name), d(new Impl)
 {}
 
-void LabelWidget::setBackground(TextCanvas::Char const &background)
+void LabelTextWidget::setBackground(TextCanvas::AttribChar const &background)
 {
     d->background = background;
 }
 
-void LabelWidget::setLabel(String const &text, TextCanvas::Char::Attribs attribs)
+void LabelTextWidget::setLabel(String const &text, TextCanvas::AttribChar::Attribs attribs)
 {
     d->label   = text;
-    d->attribs = attribs;
+    d->attribs = std::move(attribs);
     d->wraps.clear(); // updated later
     redraw();
 }
 
-void LabelWidget::setAttribs(TextCanvas::Char::Attribs const &attribs)
+void LabelTextWidget::setAttribs(TextCanvas::AttribChar::Attribs const &attribs)
 {
     d->attribs = attribs;
     redraw();
 }
 
-void LabelWidget::setBackgroundAttribs(TextCanvas::Char::Attribs const &attribs)
+void LabelTextWidget::setBackgroundAttribs(TextCanvas::AttribChar::Attribs const &attribs)
 {
     d->background.attribs = attribs;
     redraw();
 }
 
-TextCanvas::Char::Attribs LabelWidget::attribs() const
+TextCanvas::AttribChar::Attribs LabelTextWidget::attribs() const
 {
     return d->attribs;
 }
 
-void LabelWidget::setAlignment(Alignment align)
+void LabelTextWidget::setAlignment(Alignment align)
 {
-    d->align = align;
+    d->align = std::move(align);
     redraw();
 }
 
-void LabelWidget::setExpandsToFitLines(bool expand)
+void LabelTextWidget::setExpandsToFitLines(bool expand)
 {
     d->vertExpand = expand;
     if (expand)
@@ -100,12 +104,12 @@ void LabelWidget::setExpandsToFitLines(bool expand)
     redraw();
 }
 
-String LabelWidget::label() const
+String LabelTextWidget::label() const
 {
     return d->label;
 }
 
-void LabelWidget::update()
+void LabelTextWidget::update()
 {
     if (d->wraps.isEmpty())
     {
@@ -113,7 +117,7 @@ void LabelWidget::update()
     }
 }
 
-void LabelWidget::draw()
+void LabelTextWidget::draw()
 {
     Rectanglei pos = rule().recti();
     TextCanvas buf(pos.size());

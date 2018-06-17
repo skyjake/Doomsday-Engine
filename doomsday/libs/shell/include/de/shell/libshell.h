@@ -58,7 +58,7 @@ static duint16 const DEFAULT_PORT = 13209;
 
 inline Address checkPort(Address const &address)
 {
-    if (address.port() == 0) return Address(address.host(), DEFAULT_PORT);
+    if (address.port() == 0) return Address(address.hostName(), DEFAULT_PORT);
     return address;
 }
 
@@ -67,11 +67,13 @@ inline Address checkPort(Address const &address)
  */
 struct LIBSHELL_PUBLIC WrappedLine
 {
-    Rangei range;
+    String::ByteRange range;
     bool isFinal;
 
-    WrappedLine(Rangei const &range_, bool final = false)
-        : range(range_), isFinal(final) {}
+    WrappedLine(const String::ByteRange &range_, bool final = false)
+        : range(range_)
+        , isFinal(final)
+    {}
 };
 
 class LIBSHELL_PUBLIC ILineWrapping
@@ -81,7 +83,7 @@ public:
 
     virtual bool isEmpty() const = 0;
     virtual void clear() = 0;
-    virtual void wrapTextToWidth(String const &text, int maxWidth) = 0;
+    virtual void wrapTextToWidth(String const &text, String::CharPos maxWidth) = 0;
     virtual WrappedLine line(int index) const = 0;
 
     /// Determines the visible maximum width of the wrapped content.
@@ -91,7 +93,7 @@ public:
     virtual int height() const = 0;
 
     /// Returns the advance width of the range.
-    virtual int rangeWidth(Rangei const &range) const = 0;
+    virtual int rangeWidth(const String::ByteRange &range) const = 0;
 
     /**
      * Calculates which index in the provided content range occupies a
@@ -100,7 +102,7 @@ public:
      * @param range  Range within the content.
      * @param width  Advance width to check.
      */
-    virtual int indexAtWidth(Rangei const &range, int width) const = 0;
+    virtual int indexAtWidth(const String::ByteRange &range, int width) const = 0;
 };
 
 } // namespace shell

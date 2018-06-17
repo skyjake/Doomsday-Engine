@@ -33,7 +33,6 @@ class LIBSHELL_PUBLIC ServerInfo
 {
 public:
     enum Flag { AllowJoin = 0x1, DefaultFlags = AllowJoin };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     ServerInfo();
     ServerInfo(ServerInfo const &other);
@@ -89,8 +88,6 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(ServerInfo::Flags)
 
 }} // namespace de::shell
 

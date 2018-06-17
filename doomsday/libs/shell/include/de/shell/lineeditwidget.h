@@ -33,11 +33,12 @@ namespace de { namespace shell {
  *
  * @ingroup textUi
  */
-class LIBSHELL_PUBLIC LineEditWidget
+class LIBSHELL_PUBLIC LineEditTextWidget
     : public TextWidget
     , public AbstractLineEditor
 {
-    Q_OBJECT
+public:
+    DE_DEFINE_AUDIENCE2(Enter, void enterPressed(String text))
 
 public:
     /**
@@ -45,7 +46,7 @@ public:
      *
      * @param name  Widget name.
      */
-    LineEditWidget(String const &name = String());
+    LineEditTextWidget(String const &name = String());
 
     /**
      * Enables or disables the signal emitted when the edit widget receives an
@@ -57,16 +58,13 @@ public:
 
     Vec2i cursorPosition() const;
 
-    bool handleControlKey(int qtKey, KeyModifiers const &mods = Unmodified);
+    bool handleControlKey(Key key, KeyModifiers const &mods = Unmodified);
 
     // Events.
     void viewResized();
     void update();
     void draw();
     bool handleEvent(Event const &event);
-
-signals:
-    void enterPressed(de::String text);
 
 protected:
     virtual int  maximumWidth() const;

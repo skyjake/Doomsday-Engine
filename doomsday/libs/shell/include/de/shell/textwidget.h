@@ -22,8 +22,6 @@
 #include "libshell.h"
 #include <de/Widget>
 #include <de/RuleRectangle>
-#include <QObject>
-#include <QFlags>
 #include "TextCanvas"
 
 namespace de { namespace shell {
@@ -46,11 +44,8 @@ class Action;
  * @ingroup textUi
  */
 class LIBSHELL_PUBLIC TextWidget
-    : public QObject
-    , public Widget
+    : public Widget
 {
-    Q_OBJECT
-
 public:
     TextWidget(String const &name = String());
 

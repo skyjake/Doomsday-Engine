@@ -16,44 +16,48 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/CommandLineWidget"
+#include "de/shell/CommandLineTextWidget"
 #include "de/shell/TextRootWidget"
 #include "de/shell/KeyEvent"
 #include "de/shell/EditorHistory"
 
 #include <de/String>
-#include <QStringList>
 
 namespace de { namespace shell {
 
-DE_PIMPL(CommandLineWidget)
+DE_PIMPL(CommandLineTextWidget)
 {
     EditorHistory history;
 
     Impl(Public *i) : Base(i), history(i) {}
+
+    DE_PIMPL_AUDIENCE(Command)
 };
 
-CommandLineWidget::CommandLineWidget(String const &name)
-    : LineEditWidget(name), d(new Impl(this))
+DE_AUDIENCE_METHOD(CommandLineTextWidget, Command)
+
+CommandLineTextWidget::CommandLineTextWidget(String const &name)
+    : LineEditTextWidget(name)
+    , d(new Impl(this))
 {
     setPrompt("> ");
 }
 
-bool CommandLineWidget::handleEvent(Event const &event)
+bool CommandLineTextWidget::handleEvent(Event const &event)
 {
     // There are only key press events.
     DE_ASSERT(event.type() == Event::KeyPress);
     KeyEvent const &ev = event.as<KeyEvent>();
 
     // Override the editor's normal Enter handling.
-    if (ev.key() == Qt::Key_Enter)
+    if (ev.key() == '\n')
     {
         String const entered = d->history.enter();
-        emit commandEntered(entered);
+        DE_FOR_AUDIENCE2(Command, i) i->commandEntered(entered);
         return true;
     }
 
-    if (LineEditWidget::handleEvent(event))
+    if (LineEditTextWidget::handleEvent(event))
     {
         return true;
     }
@@ -62,12 +66,12 @@ bool CommandLineWidget::handleEvent(Event const &event)
     return d->history.handleControlKey(ev.key());
 }
 
-void CommandLineWidget::autoCompletionBegan(String const &wordBase)
+void CommandLineTextWidget::autoCompletionBegan(String const &wordBase)
 {
-    LineEditWidget::autoCompletionBegan(wordBase);
+    LineEditTextWidget::autoCompletionBegan(wordBase);
 
     LOG_MSG("Completions for '%s':") << wordBase;
-    LOG_MSG("  %s") << suggestedCompletions().join(", ");
+    LOG_MSG("  %s") << String::join(suggestedCompletions(), ", ");
 }
 
 }} // namespace de::shell

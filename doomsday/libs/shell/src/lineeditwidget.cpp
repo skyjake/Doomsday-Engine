@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/LineEditWidget"
+#include "de/shell/LineEditTextWidget"
 #include "de/shell/TextRootWidget"
 #include "de/shell/KeyEvent"
 #include "de/shell/Lexicon"
@@ -25,11 +25,10 @@
 #include <de/RuleRectangle>
 #include <de/String>
 #include <de/Log>
-#include <QSet>
 
 namespace de { namespace shell {
 
-DE_PIMPL(LineEditWidget)
+DE_PIMPL(LineEditTextWidget)
 {
     bool signalOnEnter;
     ConstantRule *height; ///< As rows.
@@ -48,10 +47,10 @@ DE_PIMPL(LineEditWidget)
     }
 };
 
-LineEditWidget::LineEditWidget(de::String const &name)
-    : TextWidget(name),
-      AbstractLineEditor(new MonospaceLineWrapping),
-      d(new Impl(*this))
+LineEditTextWidget::LineEditTextWidget(de::String const &name)
+    : TextWidget(name)
+    , AbstractLineEditor(new MonospaceLineWrapping)
+    , d(new Impl(*this))
 {
     setBehavior(HandleEventsOnlyWhenFocused);
 
@@ -59,39 +58,39 @@ LineEditWidget::LineEditWidget(de::String const &name)
     rule().setInput(Rule::Height, *d->height);
 }
 
-Vec2i LineEditWidget::cursorPosition() const
+Vec2i LineEditTextWidget::cursorPosition() const
 {
     de::Rectanglei pos = rule().recti();
     return pos.topLeft + Vec2i(prompt().size(), 0) + lineCursorPos();
 }
 
-void LineEditWidget::viewResized()
+void LineEditTextWidget::viewResized()
 {
     updateLineWraps(RewrapNow);
 }
 
-void LineEditWidget::update()
+void LineEditTextWidget::update()
 {
     updateLineWraps(WrapUnlessWrappedAlready);
 }
 
-void LineEditWidget::draw()
+void LineEditTextWidget::draw()
 {
-    Rectanglei pos = rule().recti();
+    using AChar = TextCanvas::AttribChar;
 
     // Temporary buffer for drawing.
+    Rectanglei pos = rule().recti();
     TextCanvas buf(pos.size());
 
-    TextCanvas::Char::Attribs attr =
-            (hasFocus()? TextCanvas::Char::Reverse : TextCanvas::Char::DefaultAttributes);
-    buf.clear(TextCanvas::Char(' ', attr));
+    AChar::Attribs attr = (hasFocus() ? AChar::Reverse : AChar::DefaultAttributes);
+    buf.clear(AChar(' ', attr));
 
-    buf.drawText(Vec2i(0, 0), prompt(), attr | TextCanvas::Char::Bold);
+    buf.drawText(Vec2i(0, 0), prompt(), attr | AChar::Bold);
 
     // Underline the suggestion for completion.
     if (isSuggestingCompletion())
     {
-        buf.setRichFormatRange(TextCanvas::Char::Underline, completionRange());
+        buf.setRichFormatRange(AChar::Underline, completionRange());
     }
 
     // Echo mode determines what we actually draw.
@@ -105,10 +104,11 @@ void LineEditWidget::draw()
     targetCanvas().draw(buf, pos.topLeft);
 }
 
-bool LineEditWidget::handleEvent(Event const &event)
+bool LineEditTextWidget::handleEvent(Event const &event)
 {
-    // There are only key press events.
     DE_ASSERT(event.type() == Event::KeyPress);
+
+    // There are only key press events.
     KeyEvent const &ev = event.as<KeyEvent>();
 
     bool eaten = true;
@@ -129,15 +129,15 @@ bool LineEditWidget::handleEvent(Event const &event)
     return TextWidget::handleEvent(event);
 }
 
-bool LineEditWidget::handleControlKey(int qtKey, KeyModifiers const &mods)
+bool LineEditTextWidget::handleControlKey(Key key, const KeyModifiers &mods)
 {
-    if (AbstractLineEditor::handleControlKey(qtKey, mods))
+    if (AbstractLineEditor::handleControlKey(key, mods))
     {
-        if (qtKey == Qt::Key_Enter)
+        if (key == Key::Enter)
         {
             if (d->signalOnEnter)
             {
-                emit enterPressed(text());
+                DE_FOR_AUDIENCE2(Enter, i) i->enterPressed(text());
             }
             else
             {
@@ -150,22 +150,22 @@ bool LineEditWidget::handleControlKey(int qtKey, KeyModifiers const &mods)
     return false;
 }
 
-void LineEditWidget::setSignalOnEnter(int enterSignal)
+void LineEditTextWidget::setSignalOnEnter(int enterSignal)
 {
     d->signalOnEnter = enterSignal;
 }
 
-int LineEditWidget::maximumWidth() const
+int LineEditTextWidget::maximumWidth() const
 {
     return int(rule().recti().width()) - int(prompt().size()) - 1;
 }
 
-void LineEditWidget::numberOfLinesChanged(int lineCount)
+void LineEditTextWidget::numberOfLinesChanged(int lineCount)
 {
     d->height->set(lineCount);
 }
 
-void LineEditWidget::contentChanged()
+void LineEditTextWidget::contentChanged()
 {
     if (hasRoot())
     {
@@ -174,7 +174,7 @@ void LineEditWidget::contentChanged()
     redraw();
 }
 
-void LineEditWidget::cursorMoved()
+void LineEditTextWidget::cursorMoved()
 {
     redraw();
 }

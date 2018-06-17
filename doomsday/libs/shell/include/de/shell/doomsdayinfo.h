@@ -22,7 +22,6 @@
 #include "libshell.h"
 #include <de/String>
 #include <de/NativePath>
-#include <QList>
 
 namespace de { namespace shell {
 
@@ -55,14 +54,17 @@ public:
             {}
         };
 
-        OptionType   type;
-        String       title;
-        String       command; // e.g., "setmap %1"
-        Value        defaultValue;
-        QList<Value> allowedValues;
+        OptionType  type;
+        String      title;
+        String      command; // e.g., "setmap %1"
+        Value       defaultValue;
+        List<Value> allowedValues;
 
-        GameOption(OptionType type, String title, String command, Value defaultValue = Value(),
-                   QList<Value> allowedValues = QList<Value>());
+        GameOption(OptionType         type,
+                   String             title,
+                   String             command,
+                   Value              defaultValue  = Value(),
+                   const List<Value> &allowedValues = List<Value>());
     };
 
     /**
@@ -70,11 +72,11 @@ public:
      * human-presentable titles plus game mode identifiers (for the @c -game
      * option).
      */
-    static QList<Game> allGames();
+    static List<Game> allGames();
 
     static String titleForGame(String const &gameId);
 
-    static QList<GameOption> gameOptions(String const &gameId);
+    static List<GameOption> gameOptions(String const &gameId);
 
     static NativePath defaultServerRuntimeFolder();
 };

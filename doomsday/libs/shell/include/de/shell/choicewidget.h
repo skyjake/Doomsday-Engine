@@ -19,8 +19,8 @@
 #ifndef LIBSHELL_CHOICEWIDGET_H
 #define LIBSHELL_CHOICEWIDGET_H
 
-#include "LabelWidget"
-#include <QList>
+#include "LabelTextWidget"
+#include <de/List>
 
 namespace de { namespace shell {
 
@@ -29,27 +29,21 @@ namespace de { namespace shell {
  *
  * @ingroup textUi
  */
-class LIBSHELL_PUBLIC ChoiceWidget : public LabelWidget
+class LIBSHELL_PUBLIC ChoiceTextWidget : public LabelTextWidget
 {
-    Q_OBJECT
+public:
+    typedef StringList Items;
 
 public:
-    typedef QList<String> Items;
-
-public:
-    ChoiceWidget(String const &name = String());
+    ChoiceTextWidget(String const &name = String());
 
     void setItems(Items const &items);
-
     void setPrompt(String const &prompt);
-
-    Items items() const;
-
     void select(int pos);
 
-    int selection() const;
-
-    QList<int> selections() const;
+    Items     items() const;
+    int       selection() const;
+    List<int> selections() const;
 
     /**
      * Determines if the selection menu is currently visible.
@@ -64,7 +58,6 @@ public:
     void draw();
     bool handleEvent(Event const &event);
 
-protected slots:
     void updateSelectionFromMenu();
     void menuClosed();
 

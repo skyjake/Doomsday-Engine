@@ -40,15 +40,15 @@ DE_PIMPL(PackageDownloader)
 , DE_OBSERVES(RemoteFile, Download)
 , DE_OBSERVES(Deletable, Deletion)
 {
-    String                           fileRepository;
-    MountCallback                    afterConnected;
-    bool                             isCancelled  = false;
-    dint64                           totalBytes   = 0;
-    int                              numDownloads = 0;
-    AssetGroup                       downloads;
-    QHash<IDownloadable *, Rangei64> downloadBytes;
-    std::function<void()>            postDownloadCallback;
-    LoopCallback                     deferred;
+    String                          fileRepository;
+    MountCallback                   afterConnected;
+    bool                            isCancelled  = false;
+    dint64                          totalBytes   = 0;
+    int                             numDownloads = 0;
+    AssetGroup                      downloads;
+    Hash<IDownloadable *, Rangei64> downloadBytes;
+    std::function<void()>           postDownloadCallback;
+    LoopCallback                    deferred;
 
     Impl(Public *i) : Base(i) {}
 
@@ -112,7 +112,7 @@ DE_PIMPL(PackageDownloader)
         auto found = downloadBytes.find(&dl);
         if (found == downloadBytes.end()) return;
 
-        found.value().start = dint64(remainingBytes);
+        found->second.start = dint64(remainingBytes);
 
         if (remainingBytes == 0)
         {
@@ -124,9 +124,9 @@ DE_PIMPL(PackageDownloader)
         // Update total for the UI popup.
         {
             dint64 totalRemaining = 0;
-            foreach (auto bytes, downloadBytes)
+            for (const auto &bytes : downloadBytes)
             {
-                totalRemaining += bytes.start;
+                totalRemaining += bytes.second.start;
             }
 
             DE_FOR_PUBLIC_AUDIENCE2(Status, i)
@@ -173,7 +173,7 @@ DE_PIMPL(PackageDownloader)
     {
         for (auto i = downloadBytes.begin(); i != downloadBytes.end(); ++i)
         {
-            auto *dl = i.key();
+            auto *dl = i->first;
 
             // Ongoing (partial) downloads will be cancelled.
             dl->cancelDownload();
@@ -202,8 +202,8 @@ DE_PIMPL(PackageDownloader)
         Folder &remotePacks = FS::get().makeFolder(PATH_REMOTE_PACKS);
         for (auto i = pkgPaths.begin(); i != pkgPaths.end(); ++i)
         {
-            LOG_RES_VERBOSE("Registering remote package \"%s\"") << i.key();
-            if (auto *file = FS::tryLocate<File>(i.value().localPath))
+            LOG_RES_VERBOSE("Registering remote package \"%s\"") << i->first;
+            if (auto *file = FS::tryLocate<File>(i->second.localPath))
             {
                 LOGDEV_RES_VERBOSE("Cached metadata:\n") << file->objectNamespace().asText();
 
@@ -214,7 +214,7 @@ DE_PIMPL(PackageDownloader)
                 remotePacks.add(pack);
                 FS::get().index(*pack);
 
-                LOG_RES_VERBOSE("\"%s\" linked as ") << i.key() << pack->path();
+                LOG_RES_VERBOSE("\"%s\" linked as ") << i->first << pack->path();
             }
         }
     }
@@ -268,7 +268,7 @@ bool PackageDownloader::isActive() const
 }
 
 void PackageDownloader::mountServerRepository(shell::ServerInfo const &info,
-                                              MountCallback afterConnected)
+                                              const MountCallback& afterConnected)
 {
     // The remote repository feature was added in 2.1. Trying to send a RemoteFeed
     // request to an older server would just result in us getting immediately
@@ -306,17 +306,17 @@ void PackageDownloader::unmountServerRepository()
     }
 }
 
-void PackageDownloader::download(StringList packageIds, std::function<void ()> callback)
+void PackageDownloader::download(const StringList& packageIds, const std::function<void ()>& callback)
 {
     d->downloads.clear();
 
     auto const pkgPaths = filesys::RemoteFeedRelay::get().locatePackages(packageIds);
 
     // The set of found packages may not contain all the requested packages.
-    StringList const foundIds = pkgPaths.keys();
+//    StringList const foundIds = pkgPaths.keys();
     for (auto found = pkgPaths.begin(); found != pkgPaths.end(); ++found)
     {
-        if (File *file = found.value().link->populateRemotePath(found.key(), found.value()))
+        if (File *file = found->second.link->populateRemotePath(found->first, found->second))
         {
             d->downloadFile(*file);
         }

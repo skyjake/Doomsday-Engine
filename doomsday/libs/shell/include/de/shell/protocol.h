@@ -24,7 +24,7 @@
 #include <de/Protocol>
 #include <de/RecordPacket>
 #include <de/Vector>
-#include <QList>
+#include <de/Map>
 
 namespace de { namespace shell {
 
@@ -46,7 +46,7 @@ public:
 class LIBSHELL_PUBLIC LogEntryPacket : public Packet
 {
 public:
-    typedef QList<LogEntry *> Entries;
+    typedef List<LogEntry *> Entries;
 
 public:
     LogEntryPacket();
@@ -86,9 +86,9 @@ class LIBSHELL_PUBLIC PlayerInfoPacket : public Packet
 {
 public:
     struct Player {
-        int       number;
+        int    number;
         Vec2i  position;
-        String    name;
+        String name;
         Vec3ub color;
 
         Player(int num = 0, Vec2i const &pos = Vec2i(), String const &plrName = "",
@@ -100,18 +100,16 @@ public:
         {}
     };
 
-    typedef QMap<int, Player> Players;
+    typedef Map<int, Player> Players;
 
 public:
     PlayerInfoPacket();
 
     void add(Player const &player);
 
-    int count() const;
-
-    Player const &player(int number) const;
-
-    Players players() const;
+    dsize         count() const;
+    const Player &player(int number) const;
+    Players       players() const;
 
     // Implements ISerializable.
     void operator>>(Writer &to) const;

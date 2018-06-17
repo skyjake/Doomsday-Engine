@@ -22,9 +22,7 @@
 namespace de { namespace shell {
 
 MonospaceLineWrapping::MonospaceLineWrapping()
-{
-    //_lines.append(WrappedLine(Range(), true));
-}
+{}
 
 bool MonospaceLineWrapping::isEmpty() const
 {
@@ -36,52 +34,57 @@ void MonospaceLineWrapping::clear()
     _lines.clear();
 }
 
-void MonospaceLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
+void MonospaceLineWrapping::wrapTextToWidth(String const &text, String::CharPos maxWidth)
 {
-    QChar const newline('\n');
-
     clear();
-
     if (maxWidth < 1) return; // No room to wrap.
 
-    int const lineWidth = maxWidth;
-    int begin = 0;
-    forever
+    const Char            newline   = '\n';
+    const String::CharPos lineWidth = maxWidth;
+
+    dsize curLineWidth = 0;
+    mb_iterator begin = text.data();
+    const mb_iterator textEnd = text.data() + text.size();
+    for (;;)
     {
         // Newlines always cause a wrap.
-        int end = begin;
-        while (end < begin + lineWidth &&
-              end < text.size() && text.at(end) != newline) ++end;
+        mb_iterator end = begin;
+        while (curLineWidth < lineWidth.index && end != textEnd && *end != newline)
+        {
+            ++end;
+            ++curLineWidth;
+        }
 
-        if (end == text.size())
+        if (end == textEnd)
         {
             // Time to stop.
-            _lines.append(WrappedLine(Rangei(begin, text.size())));
+            _lines << WrappedLine(String::ByteRange(begin.pos(), text.sizeb()));
             break;
         }
 
         // Find a good break point.
-        while (!text.at(end).isSpace())
+        const mb_iterator lineEnding = end;
+        while (!iswspace(*end))
         {
             --end;
             if (end == begin)
             {
                 // Ran out of non-space chars, force a break.
-                end = begin + lineWidth;
+                end = lineEnding;
                 break;
             }
         }
 
-        if (text.at(end) == newline)
+        if (*end == newline)
         {
             // The newline will be omitted from the wrapped lines.
-            _lines.append(WrappedLine(Rangei(begin, end)));
+            _lines << WrappedLine(String::ByteRange(begin.pos(), end.pos()));
             begin = end + 1;
         }
         else
         {
-            if (text.at(end).isSpace()) ++end;
-            _lines.append(WrappedLine(Rangei(begin, end)));
+            if (iswspace(*end)) ++end;
+            _lines << WrappedLine(String::ByteRange(begin.pos(), end.pos()));
             begin = end;
         }
     }
@@ -92,18 +95,18 @@ void MonospaceLineWrapping::wrapTextToWidth(String const &text, int maxWidth)
 
 int MonospaceLineWrapping::width() const
 {
-    int w = 0;
-    for (int i = 0; i < _lines.size(); ++i)
+    dsize w = 0;
+    for (duint i = 0; i < _lines.size(); ++i)
     {
         WrappedLine const &span = _lines[i];
-        w = de::max(w, span.range.size());
+        w = de::max(w, span.range.size().index);
     }
-    return w;
+    return int(w);
 }
 
 int MonospaceLineWrapping::height() const
 {
-    return _lines.size();
+    return int(_lines.size());
 }
 
 int MonospaceLineWrapping::rangeWidth(Rangei const &range) const

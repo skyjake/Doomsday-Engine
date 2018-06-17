@@ -20,8 +20,8 @@
 #define LIBSHELL_LEXICON_H
 
 #include "libshell.h"
-#include <QSet>
 #include <de/String>
+#include <de/Set>
 
 namespace de { namespace shell {
 
@@ -34,7 +34,7 @@ namespace de { namespace shell {
 class LIBSHELL_PUBLIC Lexicon
 {
 public:
-    typedef QSet<String> Terms;
+    typedef Set<String> Terms;
 
 public:
     Lexicon();
@@ -45,7 +45,7 @@ public:
 
     String additionalWordChars() const;
 
-    bool isWordChar(QChar ch) const;
+    bool isWordChar(Char ch) const;
 
     bool isCaseSensitive() const;
 

@@ -19,7 +19,7 @@
 #ifndef LIBSHELL_COMMANDLINEWIDGET_H
 #define LIBSHELL_COMMANDLINEWIDGET_H
 
-#include "LineEditWidget"
+#include "LineEditTextWidget"
 
 namespace de { namespace shell {
 
@@ -28,16 +28,14 @@ namespace de { namespace shell {
  *
  * @ingroup textUi
  */
-class LIBSHELL_PUBLIC CommandLineWidget : public LineEditWidget
+class LIBSHELL_PUBLIC CommandLineTextWidget : public LineEditTextWidget
 {
-    Q_OBJECT
+public:
+    DE_DEFINE_AUDIENCE2(Command, void commandEntered(de::String command))
 
 public:
-    CommandLineWidget(String const &name = String());
+    CommandLineTextWidget(String const &name = String());
     bool handleEvent(Event const &event);
-
-signals:
-    void commandEntered(de::String command);
 
 protected:
     void autoCompletionBegan(String const &wordBase);

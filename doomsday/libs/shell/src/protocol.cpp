@@ -22,8 +22,6 @@
 #include <de/TextValue>
 #include <de/Reader>
 #include <de/Writer>
-#include <QCryptographicHash>
-#include <QList>
 
 namespace de { namespace shell {
 
@@ -57,7 +55,7 @@ LogEntryPacket::~LogEntryPacket()
 
 void LogEntryPacket::clear()
 {
-    foreach (LogEntry *e, _entries) delete e;
+    for (LogEntry *e : _entries) delete e;
     _entries.clear();
 }
 
@@ -80,7 +78,7 @@ void LogEntryPacket::execute() const
 {
     // Copies of all entries in the packet are added to the LogBuffer.
     LogBuffer &buf = LogBuffer::get();
-    foreach (LogEntry *e, _entries)
+    for (LogEntry *e : _entries)
     {
         buf.add(new LogEntry(*e, LogEntry::Remote));
     }
@@ -88,7 +86,7 @@ void LogEntryPacket::execute() const
 
 void LogEntryPacket::operator >> (Writer &to) const
 {
-    Packet::operator >> (to);
+    Packet::operator>>(to);
     to.writeObjects(_entries);
 }
 
@@ -96,7 +94,7 @@ void LogEntryPacket::operator << (Reader &from)
 {
     _entries.clear();
 
-    Packet::operator << (from);
+    Packet::operator<<(from);
     from.readObjects<LogEntry>(_entries);
 }
 
@@ -123,7 +121,7 @@ void PlayerInfoPacket::add(Player const &player)
     d->players.insert(player.number, player);
 }
 
-int PlayerInfoPacket::count() const
+dsize PlayerInfoPacket::count() const
 {
     return d->players.size();
 }
@@ -139,22 +137,23 @@ PlayerInfoPacket::Players PlayerInfoPacket::players() const
     return d->players;
 }
 
-void PlayerInfoPacket::operator >> (Writer &to) const
+void PlayerInfoPacket::operator>>(Writer &to) const
 {
-    Packet::operator >> (to);
+    Packet::operator>>(to);
 
     to << duint32(d->players.size());
-    foreach (Player const &p, d->players)
+    for (const auto &i : d->players)
     {
+        const Player &p = i.second;
         to << dbyte(p.number) << p.position << p.name << p.color;
     }
 }
 
-void PlayerInfoPacket::operator << (Reader &from)
+void PlayerInfoPacket::operator<<(Reader &from)
 {
     d->players.clear();
 
-    Packet::operator << (from);
+    Packet::operator<<(from);
 
     duint32 count;
     from >> count;
@@ -177,7 +176,7 @@ static Packet::Type const MAP_OUTLINE_PACKET_TYPE = Packet::typeFromString("MpOL
 
 DE_PIMPL_NOREF(MapOutlinePacket)
 {
-    QList<Line> lines;
+    List<Line> lines;
 };
 
 MapOutlinePacket::MapOutlinePacket()
@@ -200,21 +199,21 @@ void MapOutlinePacket::addLine(Vec2i const &vertex1, Vec2i const &vertex2, LineT
 
 int MapOutlinePacket::lineCount() const
 {
-    return d->lines.size();
+    return d->lines.sizei();
 }
 
 MapOutlinePacket::Line const &MapOutlinePacket::line(int index) const
 {
-    DE_ASSERT(index >= 0 && index < d->lines.size());
+    DE_ASSERT(index >= 0 && index < d->lines.sizei());
     return d->lines[index];
 }
 
 void MapOutlinePacket::operator >> (Writer &to) const
 {
-    Packet::operator >> (to);
+    Packet::operator>>(to);
 
     to << duint32(d->lines.size());
-    foreach (Line const &ln, d->lines)
+    for (const Line &ln : d->lines)
     {
         to << ln.start << ln.end << dbyte(ln.type);
     }
@@ -224,7 +223,7 @@ void MapOutlinePacket::operator << (Reader &from)
 {
     clear();
 
-    Packet::operator << (from);
+    Packet::operator<<(from);
 
     duint32 count;
     from >> count;
@@ -301,8 +300,8 @@ Block Protocol::passwordResponse(String const &plainPassword)
 {
     Block response;
     response += "Shell";
-    response += QCryptographicHash::hash(plainPassword.toUtf8(),
-                                         QCryptographicHash::Sha1);
+    response += Block(plainPassword).md5Hash(); // MD5 isn't actually secure
+    /// @todo Calculate SHA-256 digest instead.
     return response;
 }
 
@@ -316,7 +315,7 @@ RecordPacket *Protocol::newCommand(String const &command)
 static RecordPacket const &asRecordPacket(Packet const &packet, Protocol::PacketType type)
 {
     RecordPacket const *rec = dynamic_cast<RecordPacket const *>(&packet);
-    DE_ASSERT(rec != 0);
+    DE_ASSERT(rec != nullptr);
     DE_ASSERT(Protocol::recognize(&packet) == type);
     DE_UNUSED(type);
     return *rec;
@@ -333,7 +332,7 @@ RecordPacket *Protocol::newConsoleLexicon(Lexicon const &lexicon)
     RecordPacket *lex = new RecordPacket(PT_LEXICON);
     lex->record().addText("extraChars", lexicon.additionalWordChars());
     ArrayValue &arr = lex->record().addArray("terms").array();
-    foreach (String const &term, lexicon.terms())
+    for (const String &term : lexicon.terms())
     {
         arr << TextValue(term);
     }

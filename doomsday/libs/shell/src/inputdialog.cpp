@@ -16,36 +16,31 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/InputDialog"
-#include "de/shell/LabelWidget"
-#include "de/shell/LineEditWidget"
-#include "de/shell/MenuWidget"
+#include "de/shell/InputDialogTextWidget"
+#include "de/shell/LabelTextWidget"
+#include "de/shell/LineEditTextWidget"
+#include "de/shell/MenuTextWidget"
 #include "de/shell/TextRootWidget"
 
 namespace de { namespace shell {
 
-DE_PIMPL_NOREF(InputDialog)
+DE_PIMPL_NOREF(InputDialogTextWidget)
 {
-    LabelWidget *   label;
-    LineEditWidget *edit;
-    MenuWidget *    menu;
-    String          userText;
-    int             result;
-
-    Impl() : label(0), edit(0), menu(0), result(0)
-    {}
-
-    ~Impl()
-    {}
+    LabelTextWidget *   label = nullptr;
+    LineEditTextWidget *edit  = nullptr;
+    MenuTextWidget *    menu  = nullptr;
+    String              userText;
+    int                 result = 0;
 };
 
-InputDialog::InputDialog(String const &name)
-    : DialogWidget(name), d(new Impl)
+InputDialogTextWidget::InputDialogTextWidget(String const &name)
+    : DialogTextWidget(name)
+    , d(new Impl)
 {
     RuleRectangle &rect = rule();
 
     // Label.
-    d->label = new LabelWidget;
+    d->label = new LabelTextWidget;
     d->label->setExpandsToFitLines(true); // determines height independently
 
     d->label->rule()
@@ -54,7 +49,7 @@ InputDialog::InputDialog(String const &name)
             .setInput(Rule::Left,  rect.left());
 
     // Address editor.
-    d->edit = new LineEditWidget;
+    d->edit = new LineEditTextWidget;
     d->edit->setName(d->edit->uniqueName("edit"));
 
     d->edit->rule()
@@ -63,14 +58,14 @@ InputDialog::InputDialog(String const &name)
             .setInput(Rule::Top,   d->label->rule().bottom() + 1);
 
     // Menu for actions.
-    d->menu = new MenuWidget(MenuWidget::AlwaysOpen);
+    d->menu = new MenuTextWidget(MenuTextWidget::AlwaysOpen);
     d->menu->setName(d->menu->uniqueName("menu"));
-    d->menu->setBorder(MenuWidget::NoBorder);
-    d->menu->setBackgroundAttribs(TextCanvas::Char::DefaultAttributes);
-    d->menu->setSelectionAttribs(TextCanvas::Char::Reverse);
-    d->menu->appendItem(new Action(tr("OK"), this, SLOT(accept())));
-    d->menu->appendItem(new Action(tr("Cancel"), KeyEvent(Qt::Key_C, KeyEvent::Control),
-                                   this, SLOT(reject())), "Ctrl-C");
+    d->menu->setBorder(MenuTextWidget::NoBorder);
+    d->menu->setBackgroundAttribs(TextCanvas::AttribChar::DefaultAttributes);
+    d->menu->setSelectionAttribs(TextCanvas::AttribChar::Reverse);
+    d->menu->appendItem(new Action("OK", [this]() { accept(); }));
+    d->menu->appendItem(
+        new Action("Cancel", KeyEvent("c", KeyEvent::Control), [this]() { reject(); }), "Ctrl-C");
 
     d->menu->rule()
             .setInput(Rule::Width,  rect.width())
@@ -91,56 +86,56 @@ InputDialog::InputDialog(String const &name)
                   d->label->rule().height() + 2);
 }
 
-LabelWidget &InputDialog::label()
+LabelTextWidget &InputDialogTextWidget::label()
 {
     return *d->label;
 }
 
-LineEditWidget &InputDialog::lineEdit()
+LineEditTextWidget &InputDialogTextWidget::lineEdit()
 {
     return *d->edit;
 }
 
-MenuWidget &InputDialog::menu()
+MenuTextWidget &InputDialogTextWidget::menu()
 {
     return *d->menu;
 }
 
-void InputDialog::setWidth(int width)
+void InputDialogTextWidget::setWidth(int width)
 {
     rule().setInput(Rule::Width, Const(width));
 }
 
-void InputDialog::setDescription(String const &desc)
+void InputDialogTextWidget::setDescription(String const &desc)
 {
     d->label->setLabel(desc);
 }
 
-void InputDialog::setPrompt(String const &prompt)
+void InputDialogTextWidget::setPrompt(String const &prompt)
 {
     d->edit->setPrompt(prompt);
 }
 
-void InputDialog::setText(String const &text)
+void InputDialogTextWidget::setText(String const &text)
 {
     d->edit->setText(text);
 }
 
-void InputDialog::setAcceptLabel(String const &label)
+void InputDialogTextWidget::setAcceptLabel(String const &label)
 {
     d->menu->itemAction(0).setLabel(label);
     redraw();
 }
 
-void InputDialog::setRejectLabel(String const &label)
+void InputDialogTextWidget::setRejectLabel(String const &label)
 {
     d->menu->itemAction(1).setLabel(label);
     redraw();
 }
 
-void InputDialog::prepare()
+void InputDialogTextWidget::prepare()
 {
-    DialogWidget::prepare();
+    DialogTextWidget::prepare();
 
     d->userText.clear();
     d->result = 0;
@@ -148,21 +143,21 @@ void InputDialog::prepare()
     root().setFocus(d->edit);
 }
 
-void InputDialog::finish(int result)
+void InputDialogTextWidget::finish(int result)
 {
     d->result = result;
     d->userText.clear();
     if (result) d->userText = d->edit->text();
 
-    DialogWidget::finish(result);
+    DialogTextWidget::finish(result);
 }
 
-String InputDialog::text() const
+String InputDialogTextWidget::text() const
 {
     return d->userText;
 }
 
-int InputDialog::result() const
+int InputDialogTextWidget::result() const
 {
     return d->result;
 }

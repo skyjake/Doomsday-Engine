@@ -16,39 +16,44 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/DialogWidget"
+#include "de/shell/DialogTextWidget"
 #include "de/shell/TextRootWidget"
 #include "de/shell/KeyEvent"
-#include <QEventLoop>
 
 namespace de { namespace shell {
 
-DE_PIMPL_NOREF(DialogWidget)
+DE_PIMPL_NOREF(DialogTextWidget)
 {
-    QEventLoop subloop;
+//    QEventLoop subloop;
+
+    DE_PIMPL_AUDIENCE(Accept)
+    DE_PIMPL_AUDIENCE(Reject)
 };
 
-DialogWidget::DialogWidget(String const &name)
+DE_AUDIENCE_METHOD(DialogTextWidget, Accept)
+DE_AUDIENCE_METHOD(DialogTextWidget, Reject)
+
+DialogTextWidget::DialogTextWidget(String const &name)
     : TextWidget(name), d(new Impl)
 {
     // Dialogs are hidden until executed.
     hide();
 }
 
-void DialogWidget::prepare()
+void DialogTextWidget::prepare()
 {
     show();
     root().setFocus(this);
     redraw();
 }
 
-void DialogWidget::finish(int /*result*/)
+void DialogTextWidget::finish(int /*result*/)
 {
     hide();
     root().setFocus(0);
 }
 
-int DialogWidget::exec(TextRootWidget &root)
+int DialogTextWidget::exec(TextRootWidget &root)
 {
     // The widget is added to the root temporarily (as top child).
     DE_ASSERT(!hasRoot());
@@ -60,7 +65,8 @@ int DialogWidget::exec(TextRootWidget &root)
 
     prepare();
 
-    int result = d->subloop.exec();
+    int result = 0; //d->subloop.exec();
+    /// @todo Run an event loop here.
 
     finish(result);
 
@@ -70,21 +76,21 @@ int DialogWidget::exec(TextRootWidget &root)
     return result;
 }
 
-void DialogWidget::draw()
+void DialogTextWidget::draw()
 {
     Rectanglei pos = rule().recti().adjusted(Vec2i(-2, -1), Vec2i(2, 1));
 
     // Draw a background frame.
-    targetCanvas().fill(pos, TextCanvas::Char());
+    targetCanvas().fill(pos, TextCanvas::AttribChar());
     targetCanvas().drawLineRect(pos);
 }
 
-bool DialogWidget::handleEvent(Event const &event)
+bool DialogTextWidget::handleEvent(Event const &event)
 {
     if (event.type() == Event::KeyPress)
     {
         KeyEvent const &ev = event.as<KeyEvent>();
-        if (ev.key() == Qt::Key_Escape)
+        if (ev.key() == Key::Escape)
         {
             reject();
             return true;
@@ -95,21 +101,27 @@ bool DialogWidget::handleEvent(Event const &event)
     return true;
 }
 
-void DialogWidget::accept(int result)
+void DialogTextWidget::accept(int result)
 {
-    if (d->subloop.isRunning())
+//    if (d->subloop.isRunning())
     {
-        d->subloop.exit(result);
-        emit accepted(result);
+//        d->subloop.exit(result);
+        DE_FOR_AUDIENCE2(Accept, i)
+        {
+            i->accepted(result);
+        }
     }
 }
 
-void DialogWidget::reject(int result)
+void DialogTextWidget::reject(int result)
 {
-    if (d->subloop.isRunning())
+//    if (d->subloop.isRunning())
     {
-        d->subloop.exit(result);
-        emit rejected(result);
+//        d->subloop.exit(result);
+        DE_FOR_AUDIENCE2(Reject, i)
+        {
+            i->rejected(result);
+        }
     }
 }
 

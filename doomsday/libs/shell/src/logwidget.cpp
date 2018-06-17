@@ -16,13 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/LogWidget"
+#include "de/shell/LogTextWidget"
 #include "de/shell/KeyEvent"
 #include "de/shell/TextRootWidget"
 #include <de/MonospaceLogSinkFormatter>
 #include <de/MemoryLogSink>
 #include <de/LogBuffer>
-#include <QList>
 
 namespace de { namespace shell {
 
@@ -33,7 +32,7 @@ namespace de { namespace shell {
 class Sink : public MemoryLogSink
 {
 public:
-    Sink(LogWidget &widget) : MemoryLogSink(), _widget(widget) {}
+    Sink(LogTextWidget &widget) : MemoryLogSink(), _widget(widget) {}
 
     void addedNewEntry(LogEntry &)
     {
@@ -41,28 +40,28 @@ public:
     }
 
 private:
-    LogWidget &_widget;
+    LogTextWidget &_widget;
 };
 
-DE_PIMPL(LogWidget)
+DE_PIMPL(LogTextWidget)
 {
     Sink sink;
     MonospaceLogSinkFormatter formatter;
     unsigned int cacheWidth;
-    QList<TextCanvas *> cache; ///< Indices match entry indices in sink.
+    List<TextCanvas *> cache; ///< Indices match entry indices in sink.
     int maxEntries;
     int visibleOffset;
     bool showScrollIndicator;
     int lastMaxScroll;
 
-    Impl(Public *inst)
-        : Base(inst),
-          sink(*inst),
-          cacheWidth(0),
-          maxEntries(1000),
-          visibleOffset(0),
-          showScrollIndicator(true),
-          lastMaxScroll(0)
+    Impl(Public * inst)
+        : Base(inst)
+        , sink(*inst)
+        , cacheWidth(0)
+        , maxEntries(1000)
+        , visibleOffset(0)
+        , showScrollIndicator(true)
+        , lastMaxScroll(0)
     {}
 
     ~Impl()
@@ -78,7 +77,7 @@ DE_PIMPL(LogWidget)
 
     void clearCache()
     {
-        qDeleteAll(cache);
+        deleteAll(cache);
         cache.clear();
     }
 
@@ -122,52 +121,59 @@ DE_PIMPL(LogWidget)
         if (visibleOffset != off)
         {
             visibleOffset = off;
-            emit self().scrollPositionChanged(off);
+            DE_FOR_PUBLIC_AUDIENCE2(Scroll, i)
+            {
+                i->scrollPositionChanged(off);
+            }
         }
     }
+
+    DE_PIMPL_AUDIENCES(Scroll, Maximum)
 };
 
-LogWidget::LogWidget(String const &name) : TextWidget(name), d(new Impl(this))
+DE_AUDIENCE_METHODS(LogTextWidget, Scroll, Maximum)
+
+LogTextWidget::LogTextWidget(String const &name) : TextWidget(name), d(new Impl(this))
 {}
 
-LogSink &LogWidget::logSink()
+LogSink &LogTextWidget::logSink()
 {
     return d->sink;
 }
 
-void LogWidget::clear()
+void LogTextWidget::clear()
 {
     d->clear();
     redraw();
 }
 
-void LogWidget::setScrollIndicatorVisible(bool visible)
+void LogTextWidget::setScrollIndicatorVisible(bool visible)
 {
     d->showScrollIndicator = visible;
 }
 
-int LogWidget::scrollPosition() const
+int LogTextWidget::scrollPosition() const
 {
     return d->visibleOffset;
 }
 
-int LogWidget::scrollPageSize() const
+int LogTextWidget::scrollPageSize() const
 {
     return de::max(1, rule().height().valuei() - 1);
 }
 
-int LogWidget::maximumScroll() const
+int LogTextWidget::maximumScroll() const
 {
     return d->lastMaxScroll;
 }
 
-void LogWidget::scroll(int to)
+void LogTextWidget::scroll(int to)
 {
     d->visibleOffset = de::max(0, to);
     redraw();
 }
 
-void LogWidget::draw()
+void LogTextWidget::draw()
 {
     Rectanglei pos = rule().recti();
     TextCanvas buf(pos.size());
@@ -186,9 +192,9 @@ void LogWidget::draw()
 
     // Cache entries we don't yet have. We'll do this in normal order so that
     // the formatter gets them chronologically.
-    while (d->cache.size() < d->sink.entryCount())
+    while (d->cache.sizei() < d->sink.entryCount())
     {
-        int idx = d->cache.size();
+        int idx = d->cache.sizei();
 
         // No cached entry for this, generate one.
         LogEntry const &entry = d->sink.entry(idx);
@@ -198,11 +204,11 @@ void LogWidget::draw()
         TextCanvas *buf = new TextCanvas(Vec2ui(pos.width(), lines.size()));
         d->cache.append(buf);
 
-        TextCanvas::Char::Attribs attribs = (entry.flags() & LogEntry::Remote?
-                TextCanvas::Char::DefaultAttributes : TextCanvas::Char::Bold);
+        TextCanvas::AttribChar::Attribs attribs = (entry.flags() & LogEntry::Remote?
+                TextCanvas::AttribChar::DefaultAttributes : TextCanvas::AttribChar::Bold);
 
         // Draw the text.
-        for (int i = 0; i < lines.size(); ++i)
+        for (int i = 0; i < lines.sizei(); ++i)
         {
             buf->drawText(Vec2i(0, i), lines[i], attribs);
         }
@@ -210,11 +216,11 @@ void LogWidget::draw()
         // Adjust visible offset.
         if (d->visibleOffset > 0)
         {
-            d->setVisibleOffset(d->visibleOffset + lines.size());
+            d->setVisibleOffset(d->visibleOffset + lines.sizei());
         }
     }
 
-    DE_ASSERT(d->cache.size() == d->sink.entryCount());
+    DE_ASSERT(d->cache.sizei() == d->sink.entryCount());
 
     d->clampVisibleOffset(buf.height());
 
@@ -242,7 +248,7 @@ void LogWidget::draw()
         for (int i = 0; i < indHeight; ++i)
         {
             buf.put(Vec2i(buf.width() - 1, i + avail - indPos * avail),
-                    TextCanvas::Char(':', TextCanvas::Char::Reverse));
+                    TextCanvas::AttribChar(':', TextCanvas::AttribChar::Reverse));
         }
     }
 
@@ -255,11 +261,14 @@ void LogWidget::draw()
     if (d->lastMaxScroll != maxScroll)
     {
         d->lastMaxScroll = maxScroll;
-        emit scrollMaxChanged(maxScroll);
+        DE_FOR_AUDIENCE2(Maximum, i)
+        {
+            i->scrollMaxChanged(maxScroll);
+        }
     }
 }
 
-bool LogWidget::handleEvent(Event const &event)
+bool LogTextWidget::handleEvent(Event const &event)
 {
     if (event.type() != Event::KeyPress) return false;
 
@@ -269,12 +278,12 @@ bool LogWidget::handleEvent(Event const &event)
 
     switch (ev.key())
     {
-    case Qt::Key_PageUp:
+    case Key::PageUp:
         d->setVisibleOffset(d->visibleOffset + pageSize);
         redraw();
         return true;
 
-    case Qt::Key_PageDown:
+    case Key::PageDown:
         d->setVisibleOffset(de::max(0, d->visibleOffset - pageSize));
         redraw();
         return true;
@@ -286,7 +295,7 @@ bool LogWidget::handleEvent(Event const &event)
     return TextWidget::handleEvent(event);
 }
 
-void LogWidget::scrollToBottom()
+void LogTextWidget::scrollToBottom()
 {
     d->setVisibleOffset(0);
     redraw();

@@ -23,11 +23,11 @@
 #include <de/Packet>
 #include <de/Socket>
 #include <de/Time>
-#include <QTimer>
 
 namespace de { namespace shell {
 
 DE_PIMPL(AbstractLink)
+, DE_OBSERVES(Socket, StateChange)
 {
     String   tryingToConnectToHost;
     Time     startedTryingAt;
@@ -43,15 +43,81 @@ DE_PIMPL(AbstractLink)
           status(Disconnected),
           connectedAt(Time::invalidTime()) {}
 
-    ~Impl()
+    void socketStateChanged(Socket &, Socket::SocketState state) override
     {
-        // Disconnection is implied since the link is being destroyed.
-        if (socket.get())
+        switch (state)
         {
-            QObject::disconnect(socket.get(), SIGNAL(disconnected()), thisPublic, SLOT(socketDisconnected()));
+        case Socket::AddressResolved:
+            DE_FOR_PUBLIC_AUDIENCE2(AddressResolved, i)
+            {
+                i->addressResolved();
+            }
+            break;
+
+        case Socket::Connected:
+            socketConnected();
+            break;
+
+        case Socket::Disconnected:
+            socketDisconnected();
+            break;
         }
     }
+
+    void socketConnected()
+    {
+        LOG_AS("AbstractLink");
+        LOG_NET_VERBOSE("Successfully connected to server %s") << socket->peerAddress();
+
+        self().initiateCommunications();
+
+        status = Connected;
+        connectedAt = Time();
+        peerAddress = socket->peerAddress();
+
+        DE_FOR_PUBLIC_AUDIENCE2(Connected, i) i->connected();
+    }
+
+    void socketDisconnected()
+    {
+        LOG_AS("AbstractLink");
+
+        if (status == Connecting)
+        {
+            if (startedTryingAt.since() < timeout)
+            {
+                // Let's try again a bit later.
+//                Timer::singleShot(500, d->socket.get(), SLOT(reconnect()));
+                /// @todo Implement reconnect attempt.
+                return;
+            }
+            socket->setQuiet(false);
+        }
+        else
+        {
+            if (!peerAddress.isNull())
+            {
+                LOG_NET_NOTE("Disconnected from %s") << peerAddress;
+            }
+            else
+            {
+                LOG_NET_NOTE("Disconnected");
+            }
+        }
+
+        status = Disconnected;
+
+        DE_FOR_PUBLIC_AUDIENCE2(Disconnected, i) i->disconnected();
+
+        // Slots have now had an opportunity to observe the total
+        // duration of the connection that has just ended.
+        connectedAt = Time::invalidTime();
+    }
+
+    DE_PIMPL_AUDIENCES(Connected, Disconnected, PacketsReady, AddressResolved)
 };
+
+DE_AUDIENCE_METHODS(AbstractLink, Connected, Disconnected, PacketsReady, AddressResolved)
 
 AbstractLink::AbstractLink() : d(new Impl(this))
 {}
@@ -62,10 +128,15 @@ void AbstractLink::connectDomain(String const &domain, TimeSpan const &timeout)
 
     d->socket.reset(new Socket);
 
-    connect(d->socket.get(), SIGNAL(addressResolved()), this, SIGNAL(addressResolved()));
-    connect(d->socket.get(), SIGNAL(connected()), this, SLOT(socketConnected()));
-    connect(d->socket.get(), SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
-    connect(d->socket.get(), SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
+//    connect(d->socket.get(), SIGNAL(addressResolved()), this, SIGNAL(addressResolved()));
+//    connect(d->socket.get(), SIGNAL(connected()), this, SLOT(socketConnected()));
+//    connect(d->socket.get(), SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
+//    connect(d->socket.get(), SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
+
+    d->socket->audienceForStateChange() += d;
+    d->socket->audienceForMessage() += [this]() {
+        DE_FOR_AUDIENCE2(PacketsReady, i) i->packetsReady();
+    };
 
     // Fallback to default port.
     d->tryingToConnectToHost = domain;
@@ -84,13 +155,16 @@ void AbstractLink::connectHost(Address const &address)
     d->peerAddress = address;
     d->socket.reset(new Socket);
 
-    connect(d->socket.get(), SIGNAL(connected()), this, SLOT(socketConnected()));
-    connect(d->socket.get(), SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
-    connect(d->socket.get(), SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
+    d->socket->audienceForStateChange() += d;
+    d->socket->audienceForMessage() += [this]() {
+        DE_FOR_AUDIENCE2(PacketsReady, i) i->packetsReady();
+    };
 
     // Fallback to default port.
-    if (!d->peerAddress.port()) d->peerAddress.setPort(DEFAULT_PORT);
-
+    if (!d->peerAddress.port())
+    {
+        d->peerAddress = Address(d->peerAddress.hostName(), DEFAULT_PORT);
+    }
     d->socket->open(d->peerAddress);
 
     d->status = Connecting;
@@ -106,8 +180,10 @@ void AbstractLink::takeOver(Socket *openSocket)
     d->socket.reset(openSocket);
 
     // Note: socketConnected() not used because the socket is already open.
-    connect(d->socket.get(), SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
-    connect(d->socket.get(), SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
+    d->socket->audienceForStateChange() += d;
+    d->socket->audienceForMessage() += [this]() {
+        DE_FOR_AUDIENCE2(PacketsReady, i) i->packetsReady();
+    };
 
     d->status = Connected;
     d->connectedAt = Time();
@@ -117,17 +193,18 @@ void AbstractLink::disconnect()
 {
     if (d->status != Disconnected)
     {
-        DE_ASSERT(d->socket.get() != 0);
+        DE_ASSERT(d->socket.get() != nullptr);
 
         d->timeout = 0;
         d->socket->close(); // emits signal
 
         d->status = Disconnected;
 
-        QObject::disconnect(d->socket.get(), SIGNAL(addressResolved()), this, SIGNAL(addressResolved()));
-        QObject::disconnect(d->socket.get(), SIGNAL(connected()), this, SLOT(socketConnected()));
-        QObject::disconnect(d->socket.get(), SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
-        QObject::disconnect(d->socket.get(), SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
+        d->socket->audienceForStateChange() -= d;
+//        QObject::disconnect(d->socket.get(), SIGNAL(addressResolved()), this, SIGNAL(addressResolved()));
+//        QObject::disconnect(d->socket.get(), SIGNAL(connected()), this, SLOT(socketConnected()));
+//        QObject::disconnect(d->socket.get(), SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
+//        QObject::disconnect(d->socket.get(), SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
     }
 }
 
@@ -150,8 +227,10 @@ Time AbstractLink::connectedAt() const
 
 Packet *AbstractLink::nextPacket()
 {
-    if (!d->socket->hasIncoming()) return 0;
-
+    if (!d->socket->hasIncoming())
+    {
+        return nullptr;
+    }
     std::unique_ptr<Message> data(d->socket->receive());
     Packet *packet = interpret(*data.get());
     if (packet) packet->setFrom(data->address());
@@ -161,55 +240,6 @@ Packet *AbstractLink::nextPacket()
 void AbstractLink::send(IByteArray const &data)
 {
     d->socket->send(data);
-}
-
-void AbstractLink::socketConnected()
-{
-    LOG_AS("AbstractLink");
-    LOG_NET_VERBOSE("Successfully connected to server %s") << d->socket->peerAddress();
-
-    initiateCommunications();
-
-    d->status = Connected;
-    d->connectedAt = Time();
-    d->peerAddress = d->socket->peerAddress();
-
-    emit connected();
-}
-
-void AbstractLink::socketDisconnected()
-{
-    LOG_AS("AbstractLink");
-
-    if (d->status == Connecting)
-    {
-        if (d->startedTryingAt.since() < d->timeout)
-        {
-            // Let's try again a bit later.
-            QTimer::singleShot(500, d->socket.get(), SLOT(reconnect()));
-            return;
-        }
-        d->socket->setQuiet(false);
-    }
-    else
-    {
-        if (!d->peerAddress.isNull())
-        {
-            LOG_NET_NOTE("Disconnected from %s") << d->peerAddress;
-        }
-        else
-        {
-            LOG_NET_NOTE("Disconnected");
-        }
-    }
-
-    d->status = Disconnected;
-
-    emit disconnected();
-
-    // Slots have now had an opportunity to observe the total
-    // duration of the connection that has just ended.
-    d->connectedAt = Time::invalidTime();
 }
 
 }} // namespace de::shell

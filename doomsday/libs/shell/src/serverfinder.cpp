@@ -21,18 +21,18 @@
 #include <de/Beacon>
 #include <de/CommandLine>
 #include <de/LogBuffer>
+#include <de/Loop>
+#include <de/Map>
 #include <de/NumberValue>
 #include <de/Reader>
 #include <de/TextValue>
-
-#include <QMap>
-#include <QTimer>
 
 namespace de { namespace shell {
 
 static TimeSpan MSG_EXPIRATION_SECS = 4;
 
-DE_PIMPL_NOREF(ServerFinder)
+DE_PIMPL(ServerFinder)
+, DE_OBSERVES(Beacon, Discovery)
 {
     Beacon beacon;
     struct Found
@@ -42,35 +42,98 @@ DE_PIMPL_NOREF(ServerFinder)
 
         Found() : at(Time()) {}
     };
-    QMap<Address, Found> servers;
+    Map<Address, Found> servers;
 
-    Impl() : beacon(DEFAULT_PORT) {}
+    Impl(Public * i)
+        : Base(i)
+        , beacon(DEFAULT_PORT)
+    {}
+
+    void beaconFoundHost(const Address &host, const Block &block) override
+    {
+        // Normalize the local host address.
+        //if (host.isLocal()) host.setHost(QHostAddress::LocalHost);
+
+        try
+        {
+            LOG_TRACE("Received a server message from %s with %i bytes",
+                      host << block.size());
+
+            shell::ServerInfo receivedInfo;
+            Reader(block).withHeader() >> receivedInfo;
+            receivedInfo.setAddress(host);
+
+            Address const from = receivedInfo.address(); // port validated
+
+            // Replace or insert the information for this host.
+            Impl::Found found;
+            if (servers.contains(from))
+            {
+                servers[from].message = receivedInfo;
+                servers[from].at = Time();
+            }
+            else
+            {
+                found.message = receivedInfo;
+                servers.insert(from, found);
+            }
+
+            //qDebug() << "Server found:\n" << receivedInfo.asText().toLatin1().constData();
+
+            DE_FOR_PUBLIC_AUDIENCE2(Update, i)
+            {
+                i->foundServersUpdated();
+            }
+        }
+        catch (Error const &)
+        {
+            // Remove the message that failed to deserialize.
+            if (servers.contains(host))
+            {
+                servers.remove(host);
+            }
+        }
+    }
 
     bool removeExpired()
     {
         bool changed = false;
-
-        QMutableMapIterator<Address, Found> iter(servers);
-        while (iter.hasNext())
+        for (auto iter = servers.begin(); iter != servers.end(); )
         {
-            Found &found = iter.next().value();
+            Found &found = iter->second;
             if (found.at.since() > MSG_EXPIRATION_SECS)
             {
-                iter.remove();
+                iter = servers.erase(iter);
                 changed = true;
             }
+            else
+            {
+                ++iter;
+            }
         }
-
         return changed;
     }
+
+    void expire()
+    {
+        if (removeExpired())
+        {
+            DE_FOR_PUBLIC_AUDIENCE2(Update, i) { i->foundServersUpdated(); }
+        }
+        Loop::get().timer(1.0, [this]() { expire(); });
+    }
+
+    DE_PIMPL_AUDIENCE(Update)
 };
 
-ServerFinder::ServerFinder() : d(new Impl)
+DE_AUDIENCE_METHOD(ServerFinder, Update)
+
+ServerFinder::ServerFinder() : d(new Impl(this))
 {
     try
     {
-        connect(&d->beacon, SIGNAL(found(de::Address, de::Block)), this, SLOT(found(de::Address, de::Block)));
-        QTimer::singleShot(1000, this, SLOT(expire()));
+        d->beacon.audienceForDiscovery() += d;
+        Loop::get().timer(1.0, [this]() { d->expire(); });
 
         if (!App::appExists() || !App::commandLine().has("-nodiscovery"))
         {
@@ -93,9 +156,10 @@ void ServerFinder::clear()
     d->servers.clear();
 }
 
-QList<Address> ServerFinder::foundServers() const
+List<Address> ServerFinder::foundServers() const
 {
-    return d->servers.keys();
+    return map<List<Address>>(d->servers,
+                              [](const decltype(d->servers)::value_type &v) { return v.first; });
 }
 
 String ServerFinder::name(Address const &server) const
@@ -123,60 +187,6 @@ ServerInfo ServerFinder::messageFromServer(Address const &address) const
                             "No message from server " + addr.asText());
     }
     return d->servers[addr].message;
-}
-
-void ServerFinder::found(Address host, Block block)
-{
-    // Normalize the local host address.
-    if (host.isLocal()) host.setHost(QHostAddress::LocalHost);
-
-    try
-    {
-        LOG_TRACE("Received a server message from %s with %i bytes",
-                  host << block.size());
-
-        Record info;
-        Reader(block).withHeader() >> info;
-
-        ServerInfo receivedInfo(info);
-        receivedInfo.setAddress(host);
-
-        Address const from = receivedInfo.address(); // port validated
-
-        // Replace or insert the information for this host.
-        Impl::Found found;
-        if (d->servers.contains(from))
-        {
-            d->servers[from].message = receivedInfo;
-            d->servers[from].at = Time();
-        }
-        else
-        {
-            found.message = receivedInfo;
-            d->servers.insert(from, found);
-        }
-
-        //qDebug() << "Server found:\n" << receivedInfo.asText().toLatin1().constData();
-
-        emit updated();
-    }
-    catch (Error const &)
-    {
-        // Remove the message that failed to deserialize.
-        if (d->servers.contains(host))
-        {
-            d->servers.remove(host);
-        }
-    }
-}
-
-void ServerFinder::expire()
-{
-    if (d->removeExpired())
-    {
-        emit updated();
-    }
-    QTimer::singleShot(1000, this, SLOT(expire()));
 }
 
 }} // namespace de::shell

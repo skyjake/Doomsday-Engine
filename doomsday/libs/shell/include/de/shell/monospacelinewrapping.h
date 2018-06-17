@@ -20,7 +20,6 @@
 #define LIBSHELL_MONOSPACELINEWRAPPING_H
 
 #include "libshell.h"
-#include <QList>
 
 namespace de { namespace shell {
 
@@ -48,16 +47,16 @@ public:
      * @return List of positions in @a text where to break the lines. Total number
      * of word-wrapped lines is equal to the size of the returned list.
      */
-    void wrapTextToWidth(String const &text, int maxWidth);
+    void wrapTextToWidth(String const &text, String::CharPos maxWidth);
 
     WrappedLine line(int index) const { return _lines[index]; }
     int         width() const;
     int         height() const;
-    int         rangeWidth(Rangei const &range) const;
-    int         indexAtWidth(Rangei const &range, int width) const;
+    int         rangeWidth(const String::ByteRange &range) const;
+    int         indexAtWidth(const String::ByteRange &range, int width) const;
 
 private:
-    QList<WrappedLine> _lines;
+    List<WrappedLine> _lines;
 };
 
 }} // namespace de::shell

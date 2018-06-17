@@ -19,7 +19,6 @@
 #include "de/shell/TextWidget"
 #include "de/shell/TextRootWidget"
 #include "de/shell/Action"
-#include <QList>
 
 namespace de { namespace shell {
 
@@ -27,20 +26,20 @@ DE_PIMPL_NOREF(TextWidget)
 {
     TextCanvas *    canvas;
     RuleRectangle * rule;
-    QList<Action *> actions;
+    List<Action *>  actions;
 
-    Impl() : canvas(0), rule(new RuleRectangle)
+    Impl() : canvas(nullptr), rule(new RuleRectangle)
     {}
 
     ~Impl()
     {
         delete rule;
-        foreach (Action *act, actions) releaseRef(act);
+        for (Action *act : actions) releaseRef(act);
     }
 
     void removeAction(Action &action)
     {
-        for (int i = actions.size() - 1; i >= 0; --i)
+        for (int i = actions.sizei() - 1; i >= 0; --i)
         {
             if (actions.at(i) == &action)
             {
@@ -80,7 +79,7 @@ TextWidget::TextWidget(String const &name) : Widget(name), d(new Impl)
 TextRootWidget &TextWidget::root() const
 {
     TextRootWidget *r = dynamic_cast<TextRootWidget *>(&Widget::root());
-    DE_ASSERT(r != 0);
+    DE_ASSERT(r != nullptr);
     return *r;
 }
 
@@ -120,13 +119,13 @@ void TextWidget::drawAndShow()
 
 RuleRectangle &TextWidget::rule()
 {
-    DE_ASSERT(d->rule != 0);
+    DE_ASSERT(d->rule != nullptr);
     return *d->rule;
 }
 
 RuleRectangle const &TextWidget::rule() const
 {
-    DE_ASSERT(d->rule != 0);
+    DE_ASSERT(d->rule != nullptr);
     return *d->rule;
 }
 
@@ -153,20 +152,20 @@ bool TextWidget::handleEvent(Event const &event)
     {
         KeyEvent const &keyEvent = event.as<KeyEvent>();
 
-        foreach (Action *act, d->actions)
+        for (Action *act : d->actions)
         {
             // Event will be used by actions.
             if (act->tryTrigger(keyEvent)) return true;
         }
 
         // Focus navigation.
-        if ((keyEvent.key() == Qt::Key_Tab || keyEvent.key() == Qt::Key_Down) &&
+        if ((keyEvent.key() == Key::Tab || keyEvent.key() == Key::Down) &&
                 hasFocus() && !focusNext().isEmpty())
         {
             if (d->navigateFocus(root(), focusNext()))
                 return true;
         }
-        if ((keyEvent.key() == Qt::Key_Backtab || keyEvent.key() == Qt::Key_Up) &&
+        if ((keyEvent.key() == Key::Backtab || keyEvent.key() == Key::Up) &&
                 hasFocus() && !focusPrev().isEmpty())
         {
             if (d->navigateFocus(root(), focusPrev()))

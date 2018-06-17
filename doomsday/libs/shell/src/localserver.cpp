@@ -20,14 +20,14 @@
 #include "de/shell/Link"
 #include "de/shell/DoomsdayInfo"
 #include <de/CommandLine>
-#include <QCoreApplication>
-#include <QDir>
+#include <de/NativePath>
+#include <de/App>
 
 #if !defined (DE_MOBILE)
 
 namespace de { namespace shell {
 
-static String const ERROR_LOG_NAME = "doomsday-errors.out";
+static const char *ERROR_LOG_NAME = "doomsday-errors.out";
 
 DE_PIMPL_NOREF(LocalServer)
 {
@@ -36,15 +36,8 @@ DE_PIMPL_NOREF(LocalServer)
     duint16    port = 0;
     String     name;
     NativePath userDir;
-    QProcess * proc = nullptr; // not deleted until stopped
 
-    ~Impl()
-    {
-        if (proc && proc->state() == QProcess::NotRunning)
-        {
-            delete proc;
-        }
-    }
+    cplus::ref<iProcess> proc;
 };
 
 LocalServer::LocalServer() : d(new Impl)
@@ -63,11 +56,10 @@ void LocalServer::setApplicationPath(NativePath const &path)
 
 void LocalServer::start(duint16 port,
                         String const &gameMode,
-                        QStringList additionalOptions,
-                        NativePath const &runtimePath)
+                        const StringList &additionalOptions,
+                        const NativePath &runtimePath)
 {
-    d->port = port;
-
+    d->port    = port;
     d->userDir = runtimePath;
 
     if (d->userDir.isEmpty())
@@ -77,9 +69,9 @@ void LocalServer::start(duint16 port,
     }
 
     // Get rid of a previous error log in this location.
-    QDir(d->userDir).remove(ERROR_LOG_NAME);
+    NativePath::deleteNativeFile(d->userDir / ERROR_LOG_NAME);
 
-    DE_ASSERT(d->link == 0);
+    DE_ASSERT(d->link == nullptr);
 
     CommandLine cmd;
     NativePath bin;
@@ -96,13 +88,13 @@ void LocalServer::start(duint16 port,
     }
     if (!bin.exists())
     {
-        bin = NativePath(qApp->applicationDirPath()) / "../MacOS/doomsday-server";
+        bin = App::executableDir() / "../MacOS/doomsday-server";
     }
     if (!bin.exists())
     {
         // Yet another possibility: Doomsday Shell.app -> Doomsday.app
         // App folder randomization means this is only useful in developer builds, though.
-        bin = NativePath(qApp->applicationDirPath()) /
+        bin = App::executableDir() /
                 "../../../Doomsday.app/Contents/MacOS/doomsday-server";
     }
     if (!bin.exists())
@@ -118,7 +110,7 @@ void LocalServer::start(duint16 port,
     }
     if (!bin.exists())
     {
-        bin = NativePath(qApp->applicationDirPath()) / "doomsday-server.exe";
+        bin = App::executableDir() / "doomsday-server.exe";
     }
     cmd.append(bin);
     cmd.append("-basedir");
@@ -131,7 +123,7 @@ void LocalServer::start(duint16 port,
     }
     if (!bin.exists())
     {
-        bin = NativePath(qApp->applicationDirPath()) / "doomsday-server";
+        bin = App::executableDir() / "doomsday-server";
     }
     if (!bin.exists()) bin = "doomsday-server"; // Perhaps it's on the path?
     cmd.append(bin);
@@ -144,7 +136,7 @@ void LocalServer::start(duint16 port,
     cmd.append("-game");
     cmd.append(gameMode);
     cmd.append("-cmd");
-    cmd.append("net-ip-port " + String::number(port));
+    cmd.append(String::format("net-ip-port %d", port));
 
     if (!d->name.isEmpty())
     {
@@ -152,12 +144,12 @@ void LocalServer::start(duint16 port,
         cmd.append("server-name \"" + d->name + "\"");
     }
 
-    foreach (String opt, additionalOptions) cmd.append(opt);
+    for (const String &opt : additionalOptions) cmd.append(opt);
 
     LOG_NET_NOTE("Starting local server on port %i using game mode '%s'")
             << port << gameMode;
 
-    d->proc = cmd.executeProcess();
+    d->proc.reset(cmd.executeProcess());
 }
 
 void LocalServer::stop()
@@ -165,7 +157,7 @@ void LocalServer::stop()
     if (isRunning())
     {
         LOG_NET_NOTE("Stopping local server on port %i") << d->port;
-        d->proc->kill();
+        kill_Process(d->proc);
     }
 }
 
@@ -177,13 +169,13 @@ duint16 LocalServer::port() const
 bool LocalServer::isRunning() const
 {
     if (!d->proc) return false;
-    return (d->proc->state() != QProcess::NotRunning);
+    return isRunning_Process(d->proc) == iTrue;
 }
 
 Link *LocalServer::openLink()
 {
     if (!isRunning()) return nullptr;
-    return new Link(String("localhost:%1").arg(d->port), 30);
+    return new Link(String::format("localhost:%d", d->port), 30);
 }
 
 NativePath LocalServer::errorLogPath() const

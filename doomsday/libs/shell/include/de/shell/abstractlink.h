@@ -24,7 +24,6 @@
 #include <de/Socket>
 #include <de/Time>
 #include <de/Transmitter>
-#include <QObject>
 
 namespace de { namespace shell {
 
@@ -36,11 +35,8 @@ namespace de { namespace shell {
  * @ingroup shell
  */
 class LIBSHELL_PUBLIC AbstractLink
-    : public QObject
-    , public Transmitter
+    : public Transmitter
 {
-    Q_OBJECT
-
 public:
     enum Status { Disconnected, Connecting, Connected };
 
@@ -110,15 +106,10 @@ protected:
      */
     virtual void initiateCommunications() = 0;
 
-protected slots:
-    void socketConnected();
-    void socketDisconnected();
-
-signals:
-    void addressResolved();
-    void connected();
-    void disconnected();
-    void packetsReady();
+    DE_DEFINE_AUDIENCE2(AddressResolved, void addressResolved())
+    DE_DEFINE_AUDIENCE2(Connected, void connected())
+    DE_DEFINE_AUDIENCE2(Disconnected, void disconnected())
+    DE_DEFINE_AUDIENCE2(PacketsReady, void packetsReady())
 
 private:
     DE_PRIVATE(d)

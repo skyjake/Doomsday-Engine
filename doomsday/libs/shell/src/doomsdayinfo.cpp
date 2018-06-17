@@ -1,3 +1,5 @@
+#include <utility>
+
 /** @file doomsdayinfo.cpp  Information about Doomsday Engine and its plugins.
  *
  * @todo This information should not be hardcoded. Instead, it should be read
@@ -23,7 +25,7 @@
  */
 
 #include "de/shell/DoomsdayInfo"
-#include <QDir>
+#include <de/NativePath>
 
 namespace de { namespace shell {
 
@@ -55,9 +57,9 @@ const gameTable[] =
     { nullptr, nullptr }
 };
 
-QList<DoomsdayInfo::Game> DoomsdayInfo::allGames()
+List<DoomsdayInfo::Game> DoomsdayInfo::allGames()
 {
-    QList<Game> games;
+    List<Game> games;
     for (int i = 0; gameTable[i].name; ++i)
     {
         Game game;
@@ -78,22 +80,22 @@ String DoomsdayInfo::titleForGame(String const &mode)
     return mode;
 }
 
-QList<DoomsdayInfo::GameOption> DoomsdayInfo::gameOptions(String const &gameId)
+List<DoomsdayInfo::GameOption> DoomsdayInfo::gameOptions(String const &gameId)
 {
     using GOValue = GameOption::Value;
 
-    QList<GameOption> opts;
+    List<GameOption> opts;
 
     // Common options.
     opts << GameOption(Choice, "Game type", "server-game-deathmatch %1",
                        GOValue(),
-                       QList<GOValue>({ GOValue("0", "Co-op", "coop"),
+                       List<GOValue>({ GOValue("0", "Co-op", "coop"),
                                         GOValue("1", "Deathmatch", "dm"),
                                         GOValue("2", "Deathmatch II", "dm2") }));
 
     opts << GameOption(Choice, "Skill level", "server-game-skill %1",
                        GOValue(),
-                       QList<GOValue>({ GOValue("0", "Novice", "skill1"),
+                       List<GOValue>({ GOValue("0", "Novice", "skill1"),
                                         GOValue("1", "Easy", "skill2"),
                                         GOValue("2", "Normal", "skill3"),
                                         GOValue("3", "Hard", "skill4"),
@@ -101,35 +103,35 @@ QList<DoomsdayInfo::GameOption> DoomsdayInfo::gameOptions(String const &gameId)
 
     opts << GameOption(Toggle, "Players can jump", "server-game-jump %1",
                        GOValue(),
-                       QList<GOValue>({ GOValue("0"),
+                       List<GOValue>({ GOValue("0"),
                                         GOValue("1", "", "jump") }));
 
     opts << GameOption(Toggle, "Monsters disabled", "server-game-nomonsters %1",
                        GOValue(),
-                       QList<GOValue>({ GOValue("0"),
+                       List<GOValue>({ GOValue("0"),
                                         GOValue("1", "", "nomonst") }));
 
-    if (!gameId.startsWith("hexen"))
+    if (!gameId.beginsWith("hexen"))
     {
         opts << GameOption(Toggle, "Respawn monsters", "server-game-respawn %1",
                            GOValue(),
-                           QList<GOValue>({ GOValue("0"),
+                           List<GOValue>({ GOValue("0"),
                                             GOValue("1", "", "respawn") }));
     }
 
-    if (gameId.startsWith("doom1"))
+    if (gameId.beginsWith("doom1"))
     {
         opts << GameOption(Text, "Map", "setmap %1", GOValue("E1M1", "", "mapId"));
     }
-    else if (gameId.startsWith("doom2"))
+    else if (gameId.beginsWith("doom2"))
     {
         opts << GameOption(Text, "Map", "setmap %1", GOValue("MAP01", "", "mapId"));
     }
-    else if (gameId.startsWith("heretic"))
+    else if (gameId.beginsWith("heretic"))
     {
         opts << GameOption(Text, "Map", "setmap %1", GOValue("E1M1", "", "mapId"));
     }
-    else if (gameId.startsWith("hexen"))
+    else if (gameId.beginsWith("hexen"))
     {
         opts << GameOption(Text, "Map", "setmap %1", GOValue("MAP01", "", "mapId"));
     }
@@ -140,21 +142,23 @@ QList<DoomsdayInfo::GameOption> DoomsdayInfo::gameOptions(String const &gameId)
 NativePath DoomsdayInfo::defaultServerRuntimeFolder()
 {
 #ifdef MACOSX
-    return QDir::home().filePath("Library/Application Support/Doomsday Engine/server-runtime");
+    return NativePath::homePath()/"Library/Application Support/Doomsday Engine/server-runtime";
 #elif WIN32
-    return QDir::home().filePath("AppData/Local/Deng Team/Doomsday Engine/server-runtime");
+    return NativePath::homePath()/"AppData/Local/Deng Team/Doomsday Engine/server-runtime";
 #else
-    return NativePath(QDir::home().filePath(".doomsday")) / "server-runtime";
+    return NativePath::homePath()/".doomsday/server-runtime";
 #endif
 }
 
-DoomsdayInfo::GameOption::GameOption(OptionType type, String title,
-                                     String command, Value defaultValue,
-                                     QList<Value> allowedValues)
+DoomsdayInfo::GameOption::GameOption(OptionType         type,
+                                     String             title,
+                                     String             command,
+                                     Value              defaultValue,
+                                     const List<Value> &allowedValues)
     : type(type)
-    , title(title)
-    , command(command)
-    , defaultValue(defaultValue)
+    , title(std::move(title))
+    , command(std::move(command))
+    , defaultValue(std::move(defaultValue))
     , allowedValues(allowedValues)
 {}
 

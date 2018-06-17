@@ -21,7 +21,6 @@
 
 #include "libshell.h"
 #include "ServerInfo"
-#include <QObject>
 #include <de/Error>
 #include <de/Address>
 
@@ -30,10 +29,8 @@ namespace de { namespace shell {
 /**
  * Looks up servers via beacon. @ingroup shell
  */
-class LIBSHELL_PUBLIC ServerFinder : public QObject
+class LIBSHELL_PUBLIC ServerFinder
 {
-    Q_OBJECT
-
 public:
     /// Specified server was not found. @ingroup errors
     DE_ERROR(NotFoundError);
@@ -47,7 +44,7 @@ public:
      */
     void clear();
 
-    QList<Address> foundServers() const;
+    List<Address> foundServers() const;
 
     String name(Address const &server) const;
     int    playerCount(Address const &server) const;
@@ -62,12 +59,11 @@ public:
      */
     ServerInfo messageFromServer(Address const &address) const;
 
-protected slots:
-    void found(de::Address address, de::Block info);
-    void expire();
+//protected slots:
+//    void found(de::Address address, de::Block info);
+//    void expire();
 
-signals:
-    void updated();
+    DE_DEFINE_AUDIENCE2(Update, void foundServersUpdated())
 
 private:
     DE_PRIVATE(d)

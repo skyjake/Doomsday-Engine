@@ -21,10 +21,9 @@
 
 #if !defined(DE_MOBILE)
 
-#    include "Link"
-#    include <de/Error>
-#    include <de/NativePath>
-#    include <QStringList>
+#include "Link"
+#include <de/Error>
+#include <de/NativePath>
 
 namespace de { namespace shell {
 
@@ -52,7 +51,7 @@ public:
     void setApplicationPath(NativePath const &path);
 
     void start(duint16 port, String const &gameMode,
-               QStringList additionalOptions = QStringList(),
+               const StringList &additionalOptions = {},
                NativePath const &runtimePath = "");
 
     void stop();

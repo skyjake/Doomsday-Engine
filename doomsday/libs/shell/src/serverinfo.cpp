@@ -25,22 +25,22 @@
 namespace de { namespace shell {
 
 static String const VAR_SERVER_ID               ("sid");
-static String const VAR_VERSION                 ("ver");
-static String const VAR_COMPATIBILITY_VERSION   ("cver");
-static String const VAR_HOST                    ("host");
-static String const VAR_DOMAIN                  ("dom");
-static String const VAR_PORT                    ("port");
-static String const VAR_NAME                    ("name");
-static String const VAR_DESCRIPTION             ("desc");
-static String const VAR_PLUGIN                  ("plugin");
-static String const VAR_PACKAGES                ("pkgs");
-static String const VAR_GAME_ID                 ("game");
-static String const VAR_GAME_CONFIG             ("cfg");
-static String const VAR_MAP                     ("map");
-static String const VAR_PLAYERS                 ("plrs");
-static String const VAR_PLAYER_COUNT            ("pnum");
-static String const VAR_MAX_PLAYERS             ("pmax");
-static String const VAR_FLAGS                   ("flags");
+static const String VAR_VERSION                 ("ver");
+static const String VAR_COMPATIBILITY_VERSION   ("cver");
+static const String VAR_HOST                    ("host");
+static const String VAR_DOMAIN                  ("dom");
+static const String VAR_PORT                    ("port");
+static const String VAR_NAME                    ("name");
+static const String VAR_DESCRIPTION             ("desc");
+static const String VAR_PLUGIN                  ("plugin");
+static const String VAR_PACKAGES                ("pkgs");
+static const String VAR_GAME_ID                 ("game");
+static const String VAR_GAME_CONFIG             ("cfg");
+static const String VAR_MAP                     ("map");
+static const String VAR_PLAYERS                 ("plrs");
+static const String VAR_PLAYER_COUNT            ("pnum");
+static const String VAR_MAX_PLAYERS             ("pmax");
+static const String VAR_FLAGS                   ("flags");
 
 DENG2_PIMPL(ServerInfo)
 {
@@ -291,7 +291,7 @@ ServerInfo &ServerInfo::setMaxPlayers(int count)
     return *this;
 }
 
-ServerInfo::Flags ServerInfo::flags() const
+Flags ServerInfo::flags() const
 {
     return Flags(d->info->geti(VAR_FLAGS, DefaultFlags));
 }
@@ -300,29 +300,24 @@ String ServerInfo::asStyledText() const
 {
 #define TABBED(A, B) _E(Ta)_E(l) "  " A _E(.) " " _E(\t) B "\n"
 
-    auto const playerNames = players();
+    const auto & playerNames = players();
+    const String nameStr     = String::join(playerNames, " ");
 
-    return String(_E(b) "%1" _E(.) "\n%2\n" _E(T`)
-                  TABBED("Address:", "%6")
-                  TABBED("Joinable:", "%5")
-                  TABBED("Players:", "%3 / %4%11")
-                  TABBED("Game:", "%7\n%8\n%10 %9")
-                  TABBED("Packages:", "%12")
-                  /*TABBED("Ping:", "%8 ms (approx)")*/)
-            .arg(name())
-            .arg(description())
-            .arg(playerNames.size())
-            .arg(maxPlayers())
-            .arg(flags().testFlag(AllowJoin)? "Yes" : "No") // 5
-            .arg(address().asText())
-            //.arg(sv->ping)
-            .arg(pluginDescription())
-            .arg(gameId())
-            .arg(gameConfig())
-            .arg(map()) // 10
-            .arg(!playerNames.isEmpty()? String(_E(2) " (%1)" _E(.)).arg(String::join(playerNames, " ")) : "")
-            .arg(String::join(packages(), " "));
-
+    return String::format(_E(b) "%s" _E(.) "\n%s\n" _E(T`) TABBED("Address:", "%s")
+                          TABBED("Joinable:", "%s") TABBED("Players:", "%d / %d%s")
+                          TABBED("Game:", "%s\n%s\n%s %s") TABBED("Packages:", "%s"),
+                          name().c_str(),
+                          description().c_str(),
+                          address().asText().c_str(),
+                          flags().testFlag(AllowJoin) ? "Yes" : "No",
+                          playerNames.size(),
+                          maxPlayers(),
+                          !nameStr ? String(_E(2) " (%s)" _E(.), nameStr.c_str()).c_str() : "",
+                          gameId().c_str(),
+                          pluginDescription().c_str(),
+                          gameConfig().c_str(),
+                          map().c_str(),
+                          String::join(packages(), " ").c_str());
 #undef TABBED
 }
 

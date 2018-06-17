@@ -16,24 +16,25 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/MenuWidget"
+#include "de/shell/MenuTextWidget"
 #include "de/shell/TextRootWidget"
 #include <de/ConstantRule>
-#include <QList>
 
 namespace de { namespace shell {
 
-DE_PIMPL(MenuWidget)
+using AChar = TextCanvas::AttribChar;
+
+DE_PIMPL(MenuTextWidget)
 {
-    ConstantRule *            width;
-    ConstantRule *            height;
-    TextCanvas::Char::Attribs borderAttr;
-    TextCanvas::Char::Attribs backgroundAttr;
-    TextCanvas::Char::Attribs selectionAttr;
-    BorderStyle               borderStyle;
-    Vec2i                  cursorPos; ///< Visual position.
-    bool                      closable;
-    bool                      cycleCursor;
+    ConstantRule * width;
+    ConstantRule * height;
+    AChar::Attribs borderAttr;
+    AChar::Attribs backgroundAttr;
+    AChar::Attribs selectionAttr;
+    BorderStyle    borderStyle;
+    Vec2i          cursorPos; ///< Visual position.
+    bool           closable;
+    bool           cycleCursor;
 
     struct Item
     {
@@ -41,7 +42,7 @@ DE_PIMPL(MenuWidget)
         String shortcutLabel;
         bool separatorAfter;
 
-        Item() : action(0), separatorAfter(false) {}
+        Item() : action(nullptr), separatorAfter(false) {}
 
         Item(Item const &other)
             : action(holdRef(other.action))
@@ -60,13 +61,13 @@ DE_PIMPL(MenuWidget)
         }
     };
 
-    QList<Item> items;
+    List<Item> items;
     int cursor;
 
     Impl(Public &i)
         : Base(i),
-          borderAttr(TextCanvas::Char::Reverse),
-          backgroundAttr(TextCanvas::Char::Reverse),
+          borderAttr(AChar::Reverse),
+          backgroundAttr(AChar::Reverse),
           borderStyle(LineBorder),
           closable(true),
           cycleCursor(true),
@@ -85,7 +86,7 @@ DE_PIMPL(MenuWidget)
 
     void clear()
     {
-        foreach (Item i, items)
+        for (const Item &i : items)
         {
             self().removeAction(*i.action);
         }
@@ -97,12 +98,12 @@ DE_PIMPL(MenuWidget)
     {
         int cols = 0;
         int lines = (borderStyle == NoBorder? 0 : 2);
-        foreach (Item const &item, items)
+        for (const Item &item : items)
         {
             lines++;
             if (item.separatorAfter) lines++;
 
-            int w = item.action->label().size();
+            int w = item.action->label().sizei();
             if (!item.shortcutLabel.isEmpty())
             {
                 w += 1 + item.shortcutLabel.size();
@@ -121,7 +122,7 @@ DE_PIMPL(MenuWidget)
     }
 };
 
-MenuWidget::MenuWidget(Preset preset, String const &name)
+MenuTextWidget::MenuTextWidget(Preset preset, String const &name)
     : TextWidget(name), d(new Impl(*this))
 {
     switch (preset)
@@ -142,12 +143,12 @@ MenuWidget::MenuWidget(Preset preset, String const &name)
     rule().setSize(*d->width, *d->height);
 }
 
-int MenuWidget::itemCount() const
+int MenuTextWidget::itemCount() const
 {
-    return d->items.size();
+    return d->items.sizei();
 }
 
-void MenuWidget::appendItem(RefArg<Action> action, String const &shortcutLabel)
+void MenuTextWidget::appendItem(RefArg<Action> action, String const &shortcutLabel)
 {
     Impl::Item item;
     item.action = action.holdRef();
@@ -159,7 +160,7 @@ void MenuWidget::appendItem(RefArg<Action> action, String const &shortcutLabel)
     addAction(action);
 }
 
-void MenuWidget::appendSeparator()
+void MenuTextWidget::appendSeparator()
 {
     if (d->items.isEmpty()) return;
 
@@ -168,7 +169,7 @@ void MenuWidget::appendSeparator()
     redraw();
 }
 
-void MenuWidget::insertItem(int pos, RefArg<Action> action, String const &shortcutLabel)
+void MenuTextWidget::insertItem(int pos, RefArg<Action> action, String const &shortcutLabel)
 {
     Impl::Item item;
     item.action = action.holdRef();
@@ -180,35 +181,35 @@ void MenuWidget::insertItem(int pos, RefArg<Action> action, String const &shortc
     addAction(action);
 }
 
-void MenuWidget::insertSeparator(int pos)
+void MenuTextWidget::insertSeparator(int pos)
 {
-    if (pos < 0 || pos >= d->items.size()) return;
+    if (pos < 0 || pos >= d->items.sizei()) return;
 
     d->items[pos].separatorAfter = true;
     d->updateSize();
     redraw();
 }
 
-void MenuWidget::clear()
+void MenuTextWidget::clear()
 {
     d->clear();
     redraw();
 }
 
-void MenuWidget::removeItem(int pos)
+void MenuTextWidget::removeItem(int pos)
 {
     d->removeItem(pos);
     redraw();
 }
 
-Action &MenuWidget::itemAction(int pos) const
+Action &MenuTextWidget::itemAction(int pos) const
 {
     return *d->items[pos].action;
 }
 
-int MenuWidget::findLabel(String const &label) const
+int MenuTextWidget::findLabel(String const &label) const
 {
-    for (int i = 0; i < d->items.size(); ++i)
+    for (int i = 0; i < d->items.sizei(); ++i)
     {
         if (!d->items[i].action->label().compareWithoutCase(label))
             return i;
@@ -216,18 +217,18 @@ int MenuWidget::findLabel(String const &label) const
     return -1;
 }
 
-bool MenuWidget::hasLabel(String const &label) const
+bool MenuTextWidget::hasLabel(String const &label) const
 {
     return findLabel(label) >= 0;
 }
 
-void MenuWidget::setCursor(int pos)
+void MenuTextWidget::setCursor(int pos)
 {
     d->cursor = de::min(pos, itemCount() - 1);
     redraw();
 }
 
-void MenuWidget::setCursorByLabel(String const &label)
+void MenuTextWidget::setCursorByLabel(String const &label)
 {
     int idx = findLabel(label);
     if (idx >= 0)
@@ -241,46 +242,46 @@ void MenuWidget::setCursorByLabel(String const &label)
     }
 }
 
-int MenuWidget::cursor() const
+int MenuTextWidget::cursor() const
 {
     return d->cursor;
 }
 
-void MenuWidget::setClosable(bool canBeClosed)
+void MenuTextWidget::setClosable(bool canBeClosed)
 {
     d->closable = canBeClosed;
 }
 
-void MenuWidget::setSelectionAttribs(TextCanvas::Char::Attribs const &attribs)
+void MenuTextWidget::setSelectionAttribs(AChar::Attribs const &attribs)
 {
     d->selectionAttr = attribs;
     redraw();
 }
 
-void MenuWidget::setBackgroundAttribs(TextCanvas::Char::Attribs const &attribs)
+void MenuTextWidget::setBackgroundAttribs(AChar::Attribs const &attribs)
 {
     d->backgroundAttr = attribs;
     redraw();
 }
 
-void MenuWidget::setBorder(MenuWidget::BorderStyle style)
+void MenuTextWidget::setBorder(MenuTextWidget::BorderStyle style)
 {
     d->borderStyle = style;
     redraw();
 }
 
-void MenuWidget::setBorderAttribs(TextCanvas::Char::Attribs const &attribs)
+void MenuTextWidget::setBorderAttribs(AChar::Attribs const &attribs)
 {
     d->borderAttr = attribs;
     redraw();
 }
 
-Vec2i MenuWidget::cursorPosition() const
+Vec2i MenuTextWidget::cursorPosition() const
 {
     return d->cursorPos;
 }
 
-void MenuWidget::open()
+void MenuTextWidget::open()
 {
     DE_ASSERT(hasRoot());
 
@@ -289,52 +290,52 @@ void MenuWidget::open()
     redraw();
 }
 
-void MenuWidget::close()
+void MenuTextWidget::close()
 {
     if (d->closable)
     {
         DE_ASSERT(hasRoot());
 
-        root().setFocus(0);
-        emit closed();
+        root().setFocus(nullptr);
+        DE_FOR_AUDIENCE2(Close, i) i->menuClosed();
         hide();
         redraw();
     }
 }
 
-void MenuWidget::draw()
+void MenuTextWidget::draw()
 {
     Rectanglei pos = rule().recti();
     TextCanvas buf(pos.size());
-    buf.clear(TextCanvas::Char(' ', d->backgroundAttr));
+    buf.clear(AChar(' ', d->backgroundAttr));
 
     int const border = (d->borderStyle == NoBorder? 0 : 1);
     int y = border;
-    for (int i = 0; i < d->items.size(); ++i)
+    for (int i = 0; i < d->items.sizei(); ++i)
     {
         Impl::Item const &item = d->items[i];
 
         // Determine style.
-        TextCanvas::Char::Attribs itemAttr = (d->cursor == i && hasFocus()?
-                                              d->selectionAttr : d->backgroundAttr);
+        AChar::Attribs itemAttr =
+            (d->cursor == i && hasFocus() ? d->selectionAttr : d->backgroundAttr);
 
         // Cursor.
         if (d->cursor == i)
         {
             buf.fill(Rectanglei(Vec2i(border, y), Vec2i(pos.width() - border, y + 1)),
-                     TextCanvas::Char(' ', itemAttr));
+                     AChar(' ', itemAttr));
 
             d->cursorPos = Vec2i(border + 1, y);
-            buf.put(d->cursorPos, TextCanvas::Char('*', itemAttr));
+            buf.put(d->cursorPos, AChar('*', itemAttr));
             d->cursorPos += pos.topLeft;
         }
 
         buf.drawText(Vec2i(border + 3, y), item.action->label(),
-                     itemAttr | (d->cursor == i? TextCanvas::Char::Bold : TextCanvas::Char::DefaultAttributes));
+                     itemAttr | (d->cursor == i? AChar::Bold : AChar::DefaultAttributes));
 
         if (item.shortcutLabel)
         {
-            buf.drawText(Vec2i(buf.width() - 1 - border - item.shortcutLabel.size(), y),
+            buf.drawText(Vec2i(buf.width() - 1 - border - item.shortcutLabel.sizei(), y),
                          item.shortcutLabel, itemAttr);
         }
 
@@ -344,7 +345,7 @@ void MenuWidget::draw()
         if (item.separatorAfter)
         {
             buf.fill(Rectanglei(Vec2i(border, y), Vec2i(pos.width() - border, y + 1)),
-                     TextCanvas::Char('-', d->borderAttr));
+                     AChar('-', d->borderAttr));
             y++;
         }
     }
@@ -358,11 +359,12 @@ void MenuWidget::draw()
     targetCanvas().draw(buf, pos.topLeft);
 }
 
-bool MenuWidget::handleEvent(Event const &event)
+bool MenuTextWidget::handleEvent(Event const &event)
 {
-    if (!itemCount()) return false;
-
-    if (event.type() != Event::KeyPress) return false;
+    if (!itemCount() || event.type() != Event::KeyPress)
+    {
+        return false;
+    }
 
     KeyEvent const &ev = event.as<KeyEvent>();
 
@@ -371,7 +373,7 @@ bool MenuWidget::handleEvent(Event const &event)
     {
         switch (ev.key())
         {
-        case Qt::Key_Up:
+        case Key::Up:
             if (d->cursor == 0)
             {
                 if (!d->cycleCursor) break;
@@ -384,7 +386,7 @@ bool MenuWidget::handleEvent(Event const &event)
             redraw();
             return true;
 
-        case Qt::Key_Down:
+        case Key::Down:
             if (d->cursor == itemCount() - 1)
             {
                 if (!d->cycleCursor) break;
@@ -397,19 +399,19 @@ bool MenuWidget::handleEvent(Event const &event)
             redraw();
             return true;
 
-        case Qt::Key_Home:
-        case Qt::Key_PageUp:
+        case Key::Home:
+        case Key::PageUp:
             d->cursor = 0;
             redraw();
             return true;
 
-        case Qt::Key_End:
-        case Qt::Key_PageDown:
+        case Key::End:
+        case Key::PageDown:
             d->cursor = itemCount() - 1;
             redraw();
             return true;
 
-        case Qt::Key_Enter:
+        case Key::Enter:
             itemAction(d->cursor).trigger();
             close();
             return true;
@@ -445,10 +447,10 @@ bool MenuWidget::handleEvent(Event const &event)
     else
     {
         // Look for an item that begins with the letter.
-        for (int i = 0; i < d->items.size(); ++i)
+        for (int i = 0; i < d->items.sizei(); ++i)
         {
             int idx = (d->cursor + i + 1) % d->items.size();
-            if (d->items[idx].action->label().startsWith(ev.text(), Qt::CaseInsensitive))
+            if (d->items[idx].action->label().beginsWith(ev.text(), CaseInsensitive))
             {
                 setCursor(idx);
                 return true;

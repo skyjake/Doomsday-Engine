@@ -29,17 +29,17 @@ namespace de { namespace shell {
  *
  * @ingroup textUi
  */
-class LIBSHELL_PUBLIC LabelWidget : public TextWidget
+class LIBSHELL_PUBLIC LabelTextWidget : public TextWidget
 {
 public:
-    LabelWidget(String const &name = String());
+    LabelTextWidget(String const &name = String());
 
     /**
      * Sets the background for the label.
      *
      * @param background  Character to fill the area of the widget with.
      */
-    void setBackground(TextCanvas::Char const &background);
+    void setBackground(const TextCanvas::AttribChar &background);
 
     /**
      * Allows or disallows the label to expand vertically to fit provided label.
@@ -56,14 +56,15 @@ public:
      * @param text     Text to show.
      * @param attribs  Attributes for the text.
      */
-    void setLabel(String const &            text,
-                  TextCanvas::Char::Attribs attribs = TextCanvas::Char::DefaultAttributes);
+    void setLabel(
+        String const &                  text,
+        TextCanvas::AttribChar::Attribs attribs = TextCanvas::AttribChar::DefaultAttributes);
 
-    void setAttribs(TextCanvas::Char::Attribs const &attribs);
+    void setAttribs(TextCanvas::AttribChar::Attribs const &attribs);
 
-    void setBackgroundAttribs(TextCanvas::Char::Attribs const &attribs);
+    void setBackgroundAttribs(TextCanvas::AttribChar::Attribs const &attribs);
 
-    TextCanvas::Char::Attribs attribs() const;
+    TextCanvas::AttribChar::Attribs attribs() const;
 
     /**
      * Sets the alignment of the label inside the widget's rectangle. The default

@@ -32,23 +32,23 @@ DE_PIMPL(EditorHistory)
     {
         String text;
         String original; ///< For undoing editing in history.
-        int    cursor;   ///< Index in range [0...text.size()]
+        dsize  cursor;   ///< Index in range [0...text.size()]
 
         Command() : cursor(0) {}
     };
 
     // Command history.
-    QList<Command> history;
+    List<Command> history;
     int historyPos;
 
-    Impl(Public *i) : Base(i), editor(0), historyPos(0)
+    Impl(Public *i) : Base(i), editor(nullptr), historyPos(0)
     {
         history.append(Command());
     }
 
     ~Impl() {}
 
-    void restore(StringList contents)
+    void restore(const StringList& contents)
     {
         history.clear();
         if (contents.isEmpty())
@@ -57,31 +57,31 @@ DE_PIMPL(EditorHistory)
             historyPos = 0;
             return;
         }
-        foreach (String line, contents)
+        for (const String &line : contents)
         {
             Command cmd;
             cmd.text = cmd.original = line;
             cmd.cursor = cmd.text.size();
             history.append(cmd);
         }
-        historyPos = history.size() - 1;
+        historyPos = history.sizei() - 1;
     }
 
     Command &command()
     {
-        DE_ASSERT(historyPos >= 0 && historyPos < history.size());
+        DE_ASSERT(historyPos >= 0 && historyPos < history.sizei());
         return history[historyPos];
     }
 
     Command const &command() const
     {
-        DE_ASSERT(historyPos >= 0 && historyPos < history.size());
+        DE_ASSERT(historyPos >= 0 && historyPos < history.sizei());
         return history[historyPos];
     }
 
     void updateCommandFromEditor()
     {
-        DE_ASSERT(editor != 0);
+        DE_ASSERT(editor != nullptr);
 
         command().text = editor->text();
         command().cursor = editor->cursor();
@@ -98,7 +98,7 @@ DE_PIMPL(EditorHistory)
     bool navigateHistory(int offset)
     {
         if ((offset < 0 && historyPos >= -offset) ||
-           (offset > 0 && historyPos < history.size() - offset))
+            (offset > 0 && historyPos < history.sizei() - offset))
         {
             // Save the current state.
             updateCommandFromEditor();
@@ -114,7 +114,7 @@ DE_PIMPL(EditorHistory)
 
     void restoreTextsToOriginal()
     {
-        for (int i = 0; i < history.size(); ++i)
+        for (dsize i = 0; i < history.size(); ++i)
         {
             Command &cmd = history[i];
             cmd.text = cmd.original;
@@ -135,19 +135,19 @@ void EditorHistory::setEditor(ITextEditor &editor)
 
 ITextEditor &EditorHistory::editor()
 {
-    DE_ASSERT(d->editor != 0);
+    DE_ASSERT(d->editor != nullptr);
     return *d->editor;
 }
 
 bool EditorHistory::isAtLatest() const
 {
-    return d->historyPos == d->history.size() - 1;
+    return d->historyPos == d->history.sizei() - 1;
 }
 
 void EditorHistory::goToLatest()
 {
     d->updateCommandFromEditor();
-    d->historyPos = d->history.size() - 1;
+    d->historyPos = d->history.sizei() - 1;
     d->updateEditor();
 }
 
@@ -159,7 +159,7 @@ String EditorHistory::enter()
     if (!entered.isEmpty())
     {
         // Update the history.
-        if (d->historyPos < d->history.size() - 1)
+        if (d->historyPos < d->history.sizei() - 1)
         {
             if (d->history.last().text.isEmpty())
             {
@@ -174,22 +174,22 @@ String EditorHistory::enter()
     }
 
     // Move on.
-    d->historyPos = d->history.size() - 1;
+    d->historyPos = d->history.sizei() - 1;
     d->updateEditor();
     d->restoreTextsToOriginal();
 
     return entered;
 }
 
-bool EditorHistory::handleControlKey(int qtKey)
+bool EditorHistory::handleControlKey(Key key)
 {
-    switch (qtKey)
+    switch (key)
     {
-    case Qt::Key_Up:
+    case Key::Up:
         d->navigateHistory(-1);
         return true;
 
-    case Qt::Key_Down:
+    case Key::Down:
         d->navigateHistory(+1);
         return true;
 
@@ -202,10 +202,10 @@ bool EditorHistory::handleControlKey(int qtKey)
 StringList EditorHistory::fullHistory(int maxCount) const
 {
     StringList lines;
-    foreach (auto const &cmd, d->history)
+    for (const auto &cmd : d->history)
     {
         lines << cmd.original;
-        if (maxCount > 0 && lines.count() == maxCount)
+        if (maxCount > 0 && lines.sizei() == maxCount)
         {
             break;
         }
@@ -213,7 +213,7 @@ StringList EditorHistory::fullHistory(int maxCount) const
     return lines;
 }
 
-void EditorHistory::setFullHistory(StringList history)
+void EditorHistory::setFullHistory(const StringList& history)
 {
     d->restore(history);
 }

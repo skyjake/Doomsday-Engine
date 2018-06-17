@@ -28,12 +28,14 @@ namespace de { namespace shell {
  *
  * @ingroup textUi
  */
-class LIBSHELL_PUBLIC DialogWidget : public TextWidget
+class LIBSHELL_PUBLIC DialogTextWidget : public TextWidget
 {
-    Q_OBJECT
+public:
+    DE_DEFINE_AUDIENCE2(Accept, void accepted(int result))
+    DE_DEFINE_AUDIENCE2(Reject, void rejected(int result))
 
 public:
-    DialogWidget(String const &name = String());
+    DialogTextWidget(String const &name = String());
 
     /**
      * Shows the dialog and gives it focus. Execution is blocked until the
@@ -50,7 +52,6 @@ public:
     void draw();
     bool handleEvent(Event const &event);
 
-public slots:
     void accept(int result = 1);
     void reject(int result = 0);
 
@@ -69,10 +70,6 @@ protected:
      * @param result  Result code.
      */
     virtual void finish(int result);
-
-signals:
-    void accepted(int result);
-    void rejected(int result);
 
 private:
     DE_PRIVATE(d)

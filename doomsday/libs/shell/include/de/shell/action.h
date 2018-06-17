@@ -21,7 +21,6 @@
 
 #include "KeyEvent"
 #include <de/Action>
-#include <QObject>
 
 namespace de { namespace shell {
 
@@ -30,20 +29,21 @@ namespace de { namespace shell {
  *
  * @ingroup textUi
  */
-class Action
-    : public QObject
-    , public de::Action
+class Action : public de::Action
 {
-    Q_OBJECT
+public:
+    using Func = std::function<void()>;
 
 public:
-    Action(String const &label);
+    Action(const String &label);
 
-    Action(String const &label, QObject *target, char const *slot = 0);
+    Action(const String &label, const Func &func);
 
-    Action(String const &label, KeyEvent const &event, QObject *target = 0, char const *slot = 0);
+//    Action(String const &label, QObject *target, char const *slot = 0);
 
-    Action(KeyEvent const &event, QObject *target = 0, char const *slot = 0);
+    Action(const String &label, const KeyEvent &event, const Func &func = {});
+
+//    Action(KeyEvent const &event, QObject *target = 0, char const *slot = 0);
 
     void setLabel(String const &label);
 
@@ -58,19 +58,12 @@ public:
      */
     bool tryTrigger(KeyEvent const &ev);
 
-    void trigger();
-
-signals:
-    void triggered();
-
 protected:
     ~Action();
 
 private:
-    KeyEvent    _event;
-    String      _label;
-    QObject *   _target;
-    char const *_slot;
+    KeyEvent _event;
+    String   _label;
 };
 
 }} // namespace de::shell

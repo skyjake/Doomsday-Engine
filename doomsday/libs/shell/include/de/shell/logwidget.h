@@ -29,12 +29,10 @@ namespace de { namespace shell {
  *
  * @ingroup textUi
  */
-class LIBSHELL_PUBLIC LogWidget : public TextWidget
+class LIBSHELL_PUBLIC LogTextWidget : public TextWidget
 {
-    Q_OBJECT
-
 public:
-    LogWidget(String const &name = String());
+    LogTextWidget(String const &name = {});
 
     /**
      * Returns the log sink that can be connected to a log buffer for receiving
@@ -76,15 +74,13 @@ public:
     void draw();
     bool handleEvent(Event const &event);
 
-public slots:
     /**
      * Moves the scroll offset of the widget to the bottom of the history.
      */
     void scrollToBottom();
 
-signals:
-    void scrollPositionChanged(int pos);
-    void scrollMaxChanged(int maximum);
+    DE_DEFINE_AUDIENCE2(Scroll, void scrollPositionChanged(int pos))
+    DE_DEFINE_AUDIENCE2(Maximum, void scrollMaxChanged(int maximum))
 
 private:
     DE_PRIVATE(d)

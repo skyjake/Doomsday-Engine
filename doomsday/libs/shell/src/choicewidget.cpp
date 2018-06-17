@@ -16,18 +16,21 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/ChoiceWidget"
-#include "de/shell/MenuWidget"
-#include <de/shell/TextRootWidget>
+#include "de/shell/ChoiceTextWidget"
+#include "de/shell/MenuTextWidget"
+#include "de/shell/TextRootWidget"
 
 namespace de { namespace shell {
 
-DE_PIMPL(ChoiceWidget)
+using AChar = TextCanvas::AttribChar;
+
+DE_PIMPL(ChoiceTextWidget)
+, DE_OBSERVES(MenuTextWidget, Close)
 {
-    Items       items;
-    int         selection;
-    MenuWidget *menu;
-    String      prompt;
+    Items           items;
+    int             selection;
+    MenuTextWidget *menu;
+    String          prompt;
 
     Impl(Public &i) : Base(i), selection(0)
     {}
@@ -35,9 +38,9 @@ DE_PIMPL(ChoiceWidget)
     void updateMenu()
     {
         menu->clear();
-        foreach (String item, items)
+        for (const String &item : items)
         {
-            menu->appendItem(new Action(item, thisPublic, SLOT(updateSelectionFromMenu())));
+            menu->appendItem(new Action(item, [this]() { self().updateSelectionFromMenu(); }));
         }
         menu->setCursor(selection);
     }
@@ -46,15 +49,24 @@ DE_PIMPL(ChoiceWidget)
     {
         self().setLabel(prompt + items[selection], self().attribs());
     }
+
+    void menuClosed() override
+    {
+        self().root().setFocus(thisPublic);
+        self().root().remove(*menu);
+        self().redraw();
+        self().add(menu);
+    }
 };
 
-ChoiceWidget::ChoiceWidget(String const &name)
-    : LabelWidget(name), d(new Impl(*this))
+ChoiceTextWidget::ChoiceTextWidget(String const &name)
+    : LabelTextWidget(name)
+    , d(new Impl(*this))
 {
     setBehavior(HandleEventsOnlyWhenFocused);
     setAlignment(AlignLeft);
 
-    d->menu = new MenuWidget(MenuWidget::Popup);
+    d->menu = new MenuTextWidget(MenuTextWidget::Popup);
     add(d->menu);
 
     d->menu->rule()
@@ -62,86 +74,85 @@ ChoiceWidget::ChoiceWidget(String const &name)
             .setInput(Rule::AnchorY, rule().top())
             .setAnchorPoint(Vec2f(0, .5f));
 
-    connect(d->menu, SIGNAL(closed()), this, SLOT(menuClosed()));
+    d->menu->audienceForClose() += d;
 }
 
-void ChoiceWidget::setItems(ChoiceWidget::Items const &items)
+void ChoiceTextWidget::setItems(ChoiceTextWidget::Items const &items)
 {
     d->items = items;
     d->updateMenu();
     d->updateLabel();
 }
 
-void ChoiceWidget::setPrompt(String const &prompt)
+void ChoiceTextWidget::setPrompt(String const &prompt)
 {
     d->prompt = prompt;
     d->updateLabel();
     redraw();
 }
 
-ChoiceWidget::Items ChoiceWidget::items() const
+ChoiceTextWidget::Items ChoiceTextWidget::items() const
 {
     return d->items;
 }
 
-void ChoiceWidget::select(int pos)
+void ChoiceTextWidget::select(int pos)
 {
     d->selection = pos;
     d->menu->setCursor(pos);
     d->updateLabel();
 }
 
-int ChoiceWidget::selection() const
+int ChoiceTextWidget::selection() const
 {
     return d->selection;
 }
 
-QList<int> ChoiceWidget::selections() const
+List<int> ChoiceTextWidget::selections() const
 {
-    QList<int> sels;
+    List<int> sels;
     sels.append(d->selection);
     return sels;
 }
 
-bool ChoiceWidget::isOpen() const
+bool ChoiceTextWidget::isOpen() const
 {
     return !d->menu->isHidden();
 }
 
-Vec2i ChoiceWidget::cursorPosition() const
+Vec2i ChoiceTextWidget::cursorPosition() const
 {
     Rectanglei rect = rule().recti();
-    return Vec2i(rect.left() + d->prompt.size(), rect.top());
+    return Vec2i(rect.left() + d->prompt.sizei(), rect.top());
 }
 
-void ChoiceWidget::focusLost()
+void ChoiceTextWidget::focusLost()
 {
-    setAttribs(TextCanvas::Char::DefaultAttributes);
-    setBackgroundAttribs(TextCanvas::Char::DefaultAttributes);
+    setAttribs(AChar::DefaultAttributes);
+    setBackgroundAttribs(AChar::DefaultAttributes);
 }
 
-void ChoiceWidget::focusGained()
+void ChoiceTextWidget::focusGained()
 {
-    setAttribs(TextCanvas::Char::Reverse);
-    setBackgroundAttribs(TextCanvas::Char::Reverse);
+    setAttribs(AChar::Reverse);
+    setBackgroundAttribs(AChar::Reverse);
 }
 
-void ChoiceWidget::draw()
+void ChoiceTextWidget::draw()
 {
-    LabelWidget::draw();
+    LabelTextWidget::draw();
 
     Rectanglei rect = rule().recti();
-    targetCanvas().drawText(rect.topLeft, d->prompt, attribs() | TextCanvas::Char::Bold);
-    targetCanvas().put(Vec2i(rect.right() - 1, rect.top()),
-                       TextCanvas::Char('>', attribs()));
+    targetCanvas().drawText(rect.topLeft, d->prompt, attribs() | AChar::Bold);
+    targetCanvas().put(Vec2i(rect.right() - 1, rect.top()), AChar('>', attribs()));
 }
 
-bool ChoiceWidget::handleEvent(Event const &ev)
+bool ChoiceTextWidget::handleEvent(Event const &ev)
 {
     if (ev.type() == Event::KeyPress)
     {
         KeyEvent const &event = ev.as<KeyEvent>();
-        if (!event.text().isEmpty() || event.key() == Qt::Key_Enter)
+        if (!event.text().isEmpty() || event.key() == Key::Enter)
         {
             DE_ASSERT(!isOpen());
 
@@ -153,9 +164,9 @@ bool ChoiceWidget::handleEvent(Event const &ev)
             {
                 // Preselect the first item that begins with the given letter.
                 int curs = d->selection;
-                for (int i = 0; i < d->items.size(); ++i)
+                for (int i = 0; i < d->items.sizei(); ++i)
                 {
-                    if (d->items[i].startsWith(event.text(), Qt::CaseInsensitive))
+                    if (d->items[i].beginsWith(event.text(), CaseInsensitive))
                     {
                         curs = i;
                         break;
@@ -170,23 +181,14 @@ bool ChoiceWidget::handleEvent(Event const &ev)
         }
     }
 
-    return LabelWidget::handleEvent(ev);
+    return LabelTextWidget::handleEvent(ev);
 }
 
-void ChoiceWidget::updateSelectionFromMenu()
+void ChoiceTextWidget::updateSelectionFromMenu()
 {
     DE_ASSERT(isOpen());
     d->selection = d->menu->cursor();
     d->updateLabel();
-}
-
-void ChoiceWidget::menuClosed()
-{
-    root().setFocus(this);
-    root().remove(*d->menu);
-    redraw();
-
-    add(d->menu);
 }
 
 }} // namespace de::shell

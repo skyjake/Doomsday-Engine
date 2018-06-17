@@ -1,3 +1,5 @@
+#include <utility>
+
 /** @file shell/keyevent.h Key event.
  *
  * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -22,9 +24,28 @@
 #include "libshell.h"
 #include <de/Event>
 #include <de/String>
-#include <QFlags>
 
 namespace de { namespace shell {
+
+enum class Key {
+    None,
+    Escape,
+    Up,
+    Down,
+    Left,
+    Right,
+    Home,
+    End,
+    PageUp,
+    PageDown,
+    Insert,
+    Delete,
+    Enter,
+    Backspace,
+    Kill,
+    Tab,
+    Backtab,
+};
 
 /**
  * Key press event generated when the user presses a key on the keyboard.
@@ -35,22 +56,23 @@ class LIBSHELL_PUBLIC KeyEvent : public Event
 {
 public:
     enum Modifier { None = 0x0, Control = 0x1 };
-    Q_DECLARE_FLAGS(Modifiers, Modifier)
+    using Modifiers = Flags;
 
 public:
-    KeyEvent(String const &keyText)
+    KeyEvent(String const &keyText, Modifiers mods = None)
         : Event(KeyPress)
         , _text(keyText)
-        , _code(0)
+        , _code(Key::None)
+        , _modifiers(std::move(mods))
     {}
-    KeyEvent(int keyCode, Modifiers mods = None)
+    KeyEvent(Key keyCode, Modifiers mods = None)
         : Event(KeyPress)
         , _code(keyCode)
-        , _modifiers(mods)
+        , _modifiers(std::move(mods))
     {}
 
     String    text() const { return _text; }
-    int       key() const { return _code; }
+    Key       key() const { return _code; }
     Modifiers modifiers() const { return _modifiers; }
 
     bool operator==(KeyEvent const &other) const
@@ -60,11 +82,9 @@ public:
 
 private:
     String    _text;      ///< Text to be inserted by the event.
-    int       _code;      ///< Qt key code.
+    Key       _code;      ///< Key code.
     Modifiers _modifiers; ///< Modifiers in effect.
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(KeyEvent::Modifiers)
 
 }} // namespace de::shell
 
