@@ -27,6 +27,20 @@ int main(int argc, char **argv)
     try
     {
         TextApp app(makeList(argc, argv));
+
+        // Iterators.
+        {
+            const String str = u8"H★llo Wörld";
+            for (auto i = str.begin(); i != str.end(); ++i)
+            {
+                debug("Char %u: %x %lc", i.pos().index, unsigned(*i), *i);
+            }
+            for (auto i = str.rbegin(); i != str.rend(); ++i)
+            {
+                debug("Char %u: %x %lc", i.pos().index, unsigned(*i), *i);
+            }
+        }
+
         app.initSubsystems(App::DisablePlugins);
 
         LOG_MSG("Escaped %%: arg %i") << 1;

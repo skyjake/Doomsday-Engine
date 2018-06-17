@@ -97,7 +97,7 @@ int main(int, char **)
         //p2.print();
         DE_ASSERT(p2.size() == 2);
         DE_ASSERT(!p2.string(2).compare("abc"));
-        DE_ASSERT(!p2.string(3).compare("FOUR"));
+        DE_ASSERT(!p2.string(3).compare("four"));
         s = String("hello again");
         DE_ASSERT(p2.intern(s) == 1);
 
