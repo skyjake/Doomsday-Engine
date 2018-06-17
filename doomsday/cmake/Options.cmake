@@ -15,6 +15,7 @@ option (DE_ENABLE_TURBO    "Enable/disable Turbo mode (source merging)" ${DE_ENA
 option (DE_ENABLE_GUI      "Enable/disable the client and all GUI related functionality" ON)
 option (DE_ENABLE_SERVER   "Enable/disable the server executable" ON)
 option (DE_ENABLE_SDK      "Enable/disable installation of the Doomsday 2 SDK" ON)
+option (DE_ENABLE_TESTS    "Enable/disable tests" OFF)
 option (DE_ENABLE_TOOLS    "Compile the Doomsday tools" ON)
 option (DE_ENABLE_DEPLOYQT "Enable/disable the *deployqt tool" ON)
 

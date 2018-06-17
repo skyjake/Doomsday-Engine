@@ -4,11 +4,6 @@
 cmake_minimum_required (VERSION 3.0)
 include (${CMAKE_CURRENT_LIST_DIR}/../cmake/Macros.cmake)
 
-find_package (DengCore REQUIRED)
-find_package (CPlus REQUIRED)
-
-set (DE_INSTALL_DATA_DIR share/doomsday)
-
 macro (deng_test target)
     sublist (_src 1 -1 ${ARGV})
     add_executable (${target} ${_src})

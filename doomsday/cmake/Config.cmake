@@ -74,10 +74,10 @@ set (CMAKE_INSTALL_DEFAULT_COMPONENT_NAME "client")
 
 # Prefix path is used for finding CMake config packages.
 if (NOT DE_SDK_DIR STREQUAL "")
-    set (CMAKE_PREFIX_PATH "${DE_SDK_DIR}/${DE_INSTALL_LIB_DIR}")
-else ()
-    set (CMAKE_PREFIX_PATH "${DE_CMAKE_DIR}/config")
+    list (APPEND CMAKE_PREFIX_PATH "${DE_SDK_DIR}/${DE_INSTALL_LIB_DIR}")
 endif ()
+
+find_package (CPlus REQUIRED)
 
 # Qt Configuration -----------------------------------------------------------
 

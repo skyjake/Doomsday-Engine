@@ -59,8 +59,17 @@ deng_add_package (net.dengine.stdlib)
 
 deng_add_library (libcore ${SOURCES} ${HEADERS})
 target_include_directories (libcore PRIVATE ${ZLIB_INCLUDE_DIR})
-#deng_target_link_qt (libcore PUBLIC Core Network)
 target_link_libraries (libcore PUBLIC ${ZLIB_LIBRARIES} CPlus::cplus)
 deng_deploy_library (libcore DengCore)
 
 deng_cotire (libcore src/precompiled.h)
+
+if (DE_ENABLE_TESTS)
+    set (coreTests
+        test_archive test_bitfield test_commandline test_info test_log
+        test_pointerset test_record test_script test_string test_stringpool test_vectors
+    )
+    foreach (test ${coreTests})
+        add_subdirectory (../../tests/${test} ${CMAKE_CURRENT_BINARY_DIR}/${test})
+    endforeach (test)
+endif ()

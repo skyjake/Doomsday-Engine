@@ -463,9 +463,13 @@ macro (deng_deploy_library target name)
             LIBRARY DESTINATION ${DE_INSTALL_LIB_DIR} COMPONENT libs
             ARCHIVE DESTINATION lib COMPONENT sdk
         )
-        install (EXPORT ${name} DESTINATION ${DE_INSTALL_CMAKE_DIR}/${name} NAMESPACE Deng:: COMPONENT sdk)
-        install (FILES ${DE_CMAKE_DIR}/config/${name}Config.cmake
-            DESTINATION ${DE_INSTALL_CMAKE_DIR}/${name} COMPONENT sdk)
+        install (EXPORT ${name} DESTINATION ${DE_INSTALL_CMAKE_DIR}/${name}
+            FILE ${name}-config.cmake
+            NAMESPACE Deng::
+            COMPONENT sdk
+        )
+#        install (FILES ${DE_CMAKE_DIR}/config/${name}Config.cmake
+#            DESTINATION ${DE_INSTALL_CMAKE_DIR}/${name} COMPONENT sdk)
         if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/include/de)
             install (DIRECTORY include/de DESTINATION include COMPONENT sdk)
         endif ()

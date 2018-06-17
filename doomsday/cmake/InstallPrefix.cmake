@@ -7,14 +7,14 @@ endif ()
 
 set (_oldPrefix ${CMAKE_INSTALL_PREFIX})
 
-# Install destination. PREFIX can be used to set the location manually.
+# Install destination. DE_PREFIX can be used to set the location manually.
 # By default we'll use products/ as the prefix.
-if (DEFINED DE_PREFIX OR NOT DEFINED DENG_PREFIX_SET)
+if (DEFINED DE_PREFIX OR NOT DEFINED DE_PREFIX_SET)
     if (DEFINED DE_PREFIX)
         get_filename_component (DE_PREFIX "${DE_PREFIX}" ABSOLUTE)
         set (CMAKE_INSTALL_PREFIX "${DE_PREFIX}" CACHE STRING "Install prefix" FORCE)
     else ()
-        #message ("The default install prefix can be overridden with PREFIX.")
+        #message ("The default install prefix can be overridden with DE_PREFIX.")
         get_filename_component (installPrefix "${DE_DISTRIB_DIR}" REALPATH)
         set (CMAKE_INSTALL_PREFIX "${installPrefix}" CACHE STRING "Install prefix" FORCE)
     endif ()
@@ -24,3 +24,6 @@ if (DEFINED DE_PREFIX OR NOT DEFINED DENG_PREFIX_SET)
     set (DE_PREFIX_SET YES CACHE STRING "Install prefix applied from the DE_PREFIX variable")
     mark_as_advanced (DE_PREFIX_SET)
 endif ()
+
+# Some CMake targets may be exported to the install directory.
+list (APPEND CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX})
