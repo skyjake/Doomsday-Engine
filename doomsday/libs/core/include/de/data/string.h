@@ -32,6 +32,7 @@ namespace de {
 template <typename T> struct Range;
 class RegExp;
 class CString;
+class String;
 class Path;
 
 enum CaseSensitivity { CaseInsensitive, CaseSensitive };
@@ -45,6 +46,68 @@ struct DE_PUBLIC Sensitivity
     inline operator const iStringComparison *() const {
         return cs == CaseSensitive ? &iCaseSensitive : &iCaseInsensitive;
     }
+};
+
+struct DE_PUBLIC BytePos
+{
+    dsize index;
+
+    static constexpr dsize npos = dsize(-1);
+
+    explicit BytePos(dsize i = npos)
+        : index(i)
+    {}
+    explicit operator bool() const { return index != npos; }
+    bool     operator==(dsize i) const { return index == i; }
+    bool     operator!=(dsize i) const { return index != i; }
+    bool     operator<(dsize i) const { return index < i; }
+    bool     operator<(BytePos p) const { return index < p.index; }
+    bool     operator>(dsize i) const { return index > i; }
+    bool     operator>(BytePos p) const { return index > p.index; }
+    bool     operator<=(dsize i) const { return index <= i; }
+    bool     operator>=(dsize i) const { return index >= i; }
+    bool     operator>=(BytePos p) const { return index >= p.index; }
+    BytePos  operator-(int sub) const { return BytePos{index - sub}; }
+    BytePos  operator+(int sub) const { return BytePos{index + sub}; }
+    BytePos  operator+(const BytePos &p) const { return BytePos{index + p.index}; }
+    BytePos  operator++(int) { BytePos p = *this; index++; return p; }
+    BytePos &operator++() { index++; return *this; }
+    BytePos  operator--(int) { BytePos p = *this; index--; return p; }
+    BytePos &operator--() { index--; return *this; }
+    BytePos  operator-(BytePos p) const { return BytePos(index - p.index); }
+};
+
+struct DE_PUBLIC mb_iterator
+{
+    const char *i;
+    const char *start;
+    mutable mbstate_t mb{};
+    mutable dsize curCharLen = 0;
+
+    mb_iterator() : i{nullptr}, start{nullptr} {}
+    mb_iterator(const char *p) : i{p}, start{p} {}
+    mb_iterator(const char *p, const char *start) : i{p}, start{start} {}
+    mb_iterator(const String &str);
+
+    operator const char *() const { return i; }
+    Char operator*() const;
+    mb_iterator &operator++();
+    mb_iterator operator++(int);
+    mb_iterator &operator--();
+    mb_iterator operator--(int);
+    mb_iterator operator+(int offset) const;
+    mb_iterator &operator+=(int offset);
+    mb_iterator operator-(int offset) const;
+    mb_iterator &operator-=(int offset);
+    bool operator==(const char *ptr) const { return i == ptr; }
+    bool operator!=(const char *ptr) const { return i != ptr; }
+    bool operator==(const mb_iterator &other) const { return i == other.i; }
+    bool operator!=(const mb_iterator &other) const { return !(*this == other); }
+    explicit operator bool() const { return i != nullptr; }
+
+    BytePos pos() const { return BytePos(i - start); }
+
+    Char decode() const;
 };
 
 /**
@@ -110,30 +173,7 @@ public:
 
     static size_type const npos;
 
-    struct BytePos {
-        dsize index;
-
-        explicit BytePos(dsize i = npos)
-            : index(i)
-        {}
-        explicit operator bool() const { return index != npos; }
-        bool     operator==(dsize i) const { return index == i; }
-        bool     operator!=(dsize i) const { return index != i; }
-        bool     operator<(dsize i) const { return index < i; }
-        bool     operator<(BytePos p) const { return index < p.index; }
-        bool     operator>(dsize i) const { return index > i; }
-        bool     operator>(BytePos p) const { return index > p.index; }
-        bool     operator<=(dsize i) const { return index <= i; }
-        bool     operator>=(dsize i) const { return index >= i; }
-        bool     operator>=(BytePos p) const { return index >= p.index; }
-        BytePos  operator-(int sub) const { return BytePos{index - sub}; }
-        BytePos  operator+(int sub) const { return BytePos{index + sub}; }
-        BytePos  operator++(int) { BytePos p = *this; index++; return p; }
-        BytePos &operator++() { index++; return *this; }
-        BytePos  operator--(int) { BytePos p = *this; index--; return p; }
-        BytePos &operator--() { index--; return *this; }
-        BytePos  operator-(BytePos p) const { return BytePos(index - p.index); }
-    };
+    using BytePos = de::BytePos;
     using ByteRange = Range<BytePos>;
 
     struct CharPos {
@@ -247,6 +287,7 @@ public:
     Char last() const;
 
     bool contains(char c) const;
+    bool contains(Char c) const;
     bool contains(const char *cStr) const;
     int count(char ch) const;
 
@@ -556,6 +597,7 @@ public:
 public:
     // Iterators:
 
+#if 0
     struct const_iterator
     {
         iStringConstIterator iter;
@@ -625,6 +667,69 @@ public:
         bool operator!=(const const_reverse_iterator &other) const { return !(*this == other); }
         BytePos bytePos() const { return BytePos(iter.pos - cstr_String(iter.str)); }
     };
+#endif
+
+    using const_iterator = mb_iterator;
+
+    struct DE_PUBLIC const_reverse_iterator
+    {
+        mb_iterator iter;
+
+        const_reverse_iterator(const mb_iterator &mbi) : iter(mbi) {}
+        const_reverse_iterator(const Range<const char *> &range);
+        const_reverse_iterator(const CString &cstr);
+        const_reverse_iterator(const String &str);
+
+        operator const char *() const { return iter; }
+
+        Char operator *() const { return *iter; }
+
+        inline const_reverse_iterator &operator++()
+        {
+            --iter;
+            return *this;
+        }
+        inline const_reverse_iterator &operator--()
+        {
+            ++iter;
+            return *this;
+        }
+        inline const_reverse_iterator operator++(int)
+        {
+            const_reverse_iterator i = *this;
+            --iter;
+            return i;
+        }
+        inline const_reverse_iterator operator--(int)
+        {
+            const_reverse_iterator i = *this;
+            ++iter;
+            return i;
+        }
+        inline const_reverse_iterator &operator+=(int off)
+        {
+            if (off > 0)
+            {
+                while (off-- > 0) ++*this;
+            }
+            else
+            {
+                while (off++ < 0) --*this;
+            }
+            return *this;
+        }
+        inline const_reverse_iterator &operator-=(int off)
+        {
+            (*this) += -off;
+            return *this;
+        }
+        inline bool operator==(const char *ptr) const { return iter == ptr; }
+        inline bool operator!=(const char *ptr) const { return iter != ptr; }
+        inline bool operator==(const mb_iterator &other) const { return iter == other; }
+        inline bool operator!=(const mb_iterator &other) const { return !(*this == other); }
+
+        BytePos pos() const { return iter.pos(); }
+    };
 
     const_iterator begin() const;
     const_iterator cbegin() const { return begin(); }
@@ -643,8 +748,6 @@ public:
      * Builds a String out of an array of bytes that contains a UTF-8 string.
      */
     static String fromUtf8(const IByteArray &byteArray);
-
-//    static String fromUtf8(const QByteArray &byteArray);
 
     static String fromUtf8(const Block &block);
 
@@ -763,6 +866,16 @@ inline StringList makeList(int count, const char * const *strings)
     return list;
 }
 
+inline bool operator>=(int a, const String::BytePos &b)
+{
+    return a >= int(b.index);
+}
+
+inline bool operator<=(int a, const String::BytePos &b)
+{
+    return a <= int(b.index);
+}
+
 inline String operator+(Char ch, const String &s)
 {
     return String(1, ch) + s;
@@ -788,34 +901,6 @@ inline std::ostream &operator<<(std::ostream &os, const String &str)
     os.write(str, str.sizei());
     return os;
 }
-
-struct DE_PUBLIC mb_iterator
-{
-    const char *i;
-    const char *start;
-    mutable mbstate_t mb{};
-    mutable dsize curCharLen = 0;
-
-    mb_iterator() : i{nullptr}, start{nullptr} {}
-    mb_iterator(const char *p) : i{p}, start{i} {}
-    mb_iterator(const String &str) : i{str.c_str()}, start{i} {}
-
-    operator const char *() const { return i; }
-    Char operator*() const;
-    mb_iterator &operator++();
-    mb_iterator operator++(int);
-    mb_iterator operator+(int offset) const;
-    mb_iterator &operator+=(int offset);
-    bool operator==(const char *ptr) const { return i == ptr; }
-    bool operator==(const mb_iterator &other) const { return i == other.i; }
-    bool operator!=(const mb_iterator &other) const { return !(*this == other); }
-    bool operator!=(const char *ptr) const { return i != ptr; }
-    explicit operator bool() const { return i != nullptr; }
-
-    String::BytePos pos() const { return String::BytePos(i - start); }
-
-    Char decode() const;
-};
 
 } // namespace de
 

@@ -185,6 +185,13 @@ bool String::contains(char c) const
     return false;
 }
 
+bool String::contains(Char c) const
+{
+    iMultibyteChar mb;
+    init_MultibyteChar(&mb, c);
+    return contains(mb.bytes);
+}
+
 bool String::contains(const char *cStr) const
 {
     return indexOfCStr_String(&_str, cStr) != iInvalidPos;
@@ -615,7 +622,6 @@ CString String::fileNamePath(Char dirChar) const
 {
     if (auto pos = lastIndexOf(dirChar))
     {
-        //return left(pos);
         return {data(), data() + pos.index};
     }
     return "";
@@ -676,34 +682,26 @@ int String::commonPrefixLength(const String &str, Sensitivity sensitivity) const
 
 String::const_iterator String::begin() const
 {
-    const_iterator i;
-    init_StringConstIterator(&i.iter, &_str);
-    return i;
+    return const_iterator(*this);
 }
 
 String::const_iterator String::end() const
 {
-    const_iterator i;
-    init_StringConstIterator(&i.iter, &_str);
-    i.iter.pos = i.iter.next = constEnd_String(&_str);
-    i.iter.remaining = 0;
-    return i;
+    return {data() + size(), data()};
 }
 
 String::const_reverse_iterator String::rbegin() const
     {
-    const_reverse_iterator i;
-    init_StringReverseConstIterator(&i.iter, &_str);
-    return i;
+    return {*this};
     }
 
 String::const_reverse_iterator String::rend() const
 {
-    const_reverse_iterator i;
-    init_StringReverseConstIterator(&i.iter, &_str);
-    i.iter.pos = i.iter.next = constBegin_String(&_str);
-    i.iter.remaining = 0;
-    return i;
+    return mb_iterator(data() - 1);
+//    init_StringReverseConstIterator(&i.iter, &_str);
+//    i.iter.pos = i.iter.next = constBegin_String(&_str);
+//    i.iter.remaining = 0;
+//    return i;
 }
 
 String String::take(iString *str) // static
@@ -1050,6 +1048,32 @@ String String::fromPercentEncoding(const Block &percentEncoded) // static
     return String::take(urlDecode_String(String(percentEncoded)));
 }
 
+//------------------------------------------------------------------------------------------------
+
+String::const_reverse_iterator::const_reverse_iterator(const Range<const char *> &range)
+    : iter(range.end, range.start)
+{
+    --iter;
+
+}
+String::const_reverse_iterator::const_reverse_iterator(const CString &cstr)
+    : iter(cstr.end(), cstr.begin())
+{
+    --iter;
+}
+
+String::const_reverse_iterator::const_reverse_iterator(const String &str)
+    : iter(str.data() + str.size(), str.data())
+{
+    --iter;
+}
+
+//------------------------------------------------------------------------------------------------
+
+mb_iterator::mb_iterator(const String &str)
+    : i(str.data()), start(str.data())
+{}
+
 Char mb_iterator::operator*() const
 {
     return decode();
@@ -1079,6 +1103,34 @@ mb_iterator mb_iterator::operator++(int)
     return i;
 }
 
+mb_iterator &mb_iterator::operator--()
+{
+    if (i <= start)
+    {
+        // Cannot access memory beyond the start pointer.
+        --i;
+        return *this;
+    }
+    for (int j = 1; j < MB_CUR_MAX; ++j)
+    {
+        mb_iterator prec = i - j;
+        if (prec.decode() != 0 && prec.curCharLen == dsize(j))
+        {
+            prec.start = start;
+            *this = prec;
+            break;
+        }
+    }
+    return *this;
+}
+
+mb_iterator mb_iterator::operator--(int)
+{
+    mb_iterator i = *this;
+    --(*this);
+    return i;
+}
+
 mb_iterator mb_iterator::operator+(int offset) const
 {
     mb_iterator i = *this;
@@ -1087,9 +1139,29 @@ mb_iterator mb_iterator::operator+(int offset) const
 
 mb_iterator &mb_iterator::operator+=(int offset)
 {
+    if (offset < 0)
+    {
+        while (offset++ < 0) --(*this);
+    }
+    else
+    {
     while (offset-- > 0) ++(*this);
+    }
     return *this;
+
 }
+mb_iterator mb_iterator::operator-(int offset) const
+{
+    mb_iterator i = *this;
+    return i -= offset;
+}
+
+mb_iterator &mb_iterator::operator-=(int offset)
+{
+    return (*this) += -offset;
+}
+
+//------------------------------------------------------------------------------------------------
 
 std::string stringf(const char *format, ...)
 {

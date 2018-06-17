@@ -27,13 +27,14 @@
 #include "de/LogSink"
 #include "de/SimpleLogFilter"
 #include "de/TextStreamLogSink"
+#include "de/Timer"
 #include "de/Writer"
 
 #include <iostream>
 
 namespace de {
 
-//TimeSpan const FLUSH_INTERVAL = .2; // seconds
+TimeSpan const FLUSH_INTERVAL = .2; // seconds
 
 DE_PIMPL(LogBuffer)
 {
@@ -56,8 +57,8 @@ DE_PIMPL(LogBuffer)
 //#endif
     EntryList entries;
     EntryList toBeFlushed;
-//    Time lastFlushedAt;
-//    QTimer *autoFlushTimer;
+    Time lastFlushedAt;
+    Timer autoFlushTimer;
     Sinks sinks;
 
     Impl(Public *i, duint maxEntryCount)
@@ -75,7 +76,7 @@ DE_PIMPL(LogBuffer)
 //        , outSink(QtDebugMsg)
 //        , errSink(QtWarningMsg)
 //#endif
-//        , lastFlushedAt(Time::invalidTime())
+        , lastFlushedAt(Time::invalidTime())
 //        , autoFlushTimer(0)
     {
         // Standard output enabled by default.
@@ -88,28 +89,26 @@ DE_PIMPL(LogBuffer)
 
     ~Impl()
     {
-//        if (autoFlushTimer) autoFlushTimer->stop();
+        autoFlushTimer.stop();
         delete fileLogSink;
     }
 
-    /*
     void enableAutoFlush(bool yes)
     {
         DE_ASSERT(App::appExists());
         if (yes)
         {
-            if (!autoFlushTimer->isActive())
+            if (!autoFlushTimer.isActive())
             {
                 // Every now and then the buffer will be flushed.
-                autoFlushTimer->start(int(FLUSH_INTERVAL.asMilliSeconds()));
+                autoFlushTimer.start(FLUSH_INTERVAL);
             }
         }
         else
         {
-            autoFlushTimer->stop();
+            autoFlushTimer.stop();
         }
     }
-    */
 
     void createFileLogSink(bool truncate)
     {
@@ -151,8 +150,7 @@ LogBuffer *LogBuffer::_appBuffer = nullptr;
 LogBuffer::LogBuffer(duint maxEntryCount)
     : d(new Impl(this, maxEntryCount))
 {
-//    d->autoFlushTimer = new QTimer(this);
-//    connect(d->autoFlushTimer, SIGNAL(timeout()), this, SLOT(flush()));
+    d->autoFlushTimer.audienceForTrigger() += [this]() { flush(); };
 }
 
 LogBuffer::~LogBuffer()
@@ -231,12 +229,12 @@ void LogBuffer::add(LogEntry *entry)
 {
     DE_GUARD(this);
 
-/*    // We will not flush the new entry as it likely has not yet been given
+    // We will not flush the new entry as it likely has not yet been given
     // all its arguments.
     if (d->lastFlushedAt.isValid() && d->lastFlushedAt.since() > FLUSH_INTERVAL)
     {
         flush();
-    }*/
+    }
 
     d->entries.push_back(entry);
     d->toBeFlushed.push_back(entry);
@@ -255,17 +253,14 @@ void LogBuffer::enableStandardOutput(bool yes)
 void LogBuffer::enableFlushing(bool yes)
 {
     d->flushingEnabled = yes;
-//    d->enableAutoFlush(true);
+    d->enableAutoFlush(true);
 }
 
-/*
-void LogBuffer::setAutoFlushInterval(TimeSpan const &interval)
+void LogBuffer::setAutoFlushInterval(const TimeSpan &interval)
 {
     enableFlushing();
-
-    d->autoFlushTimer->setInterval(interval.asMilliSeconds());
+    d->autoFlushTimer.setInterval(interval);
 }
-*/
 
 void LogBuffer::setOutputFile(String const &path, OutputChangeBehavior behavior)
 {
@@ -334,7 +329,7 @@ void LogBuffer::flush()
         for (LogSink *sink : d->sinks) sink->flush();
     }
 
-//    d->lastFlushedAt = Time();
+    d->lastFlushedAt = Time();
 
     // Too many entries? Now they can be destroyed since we have flushed everything.
     while (d->entries.sizei() > d->maxEntryCount)

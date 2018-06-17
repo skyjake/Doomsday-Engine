@@ -1,6 +1,6 @@
-/** @file libcore/src/precompiled.h  Precompiled headers for libcore.
+/** @file timer.h  Simple timer.
  *
- * @authors Copyright (c) 2014-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -16,21 +16,41 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifdef __cplusplus
+#ifndef LIBCORE_TIMER_H
+#define LIBCORE_TIMER_H
 
-// C++ standard library:
-#include <algorithm>
-#include <cmath>
-#include <cassert>
-#include <cstdlib>
-#include <cstring>
-#include <list>
-#include <map>
-#include <memory>
-#include <set>
-#include <sstream>
-#include <string>
-#include <typeinfo>
-#include <vector>
+#include "../Time"
+#include "../Observers"
 
-#endif
+namespace de {
+
+/**
+ * Simple timer.
+ */
+class DE_PUBLIC Timer
+{
+public:
+    Timer();
+
+    void setInterval(const TimeSpan &interval);
+    void setSingleShot(bool singleshot);
+    void start();
+    void stop();
+
+    inline void start(const TimeSpan &interval)
+    {
+        setInterval(interval);
+        start();
+    }
+
+    bool isActive() const;
+
+    DE_DEFINE_AUDIENCE2(Trigger, void triggered(Timer &))
+
+private:
+    DE_PRIVATE(d)
+};
+
+} // namespace de
+
+#endif // LIBCORE_TIMER_H

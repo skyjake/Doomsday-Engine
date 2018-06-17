@@ -40,9 +40,9 @@ class DE_PUBLIC Event
 public:
     /// Event type codes.
     enum {
-        KeyPress      = 1,
-        KeyRelease    = 2,
-        KeyRepeat     = 3,
+        KeyPress   = 1,
+        KeyRelease = 2,
+        KeyRepeat  = 3,
 
         MouseButton   = 4,
         MouseMotion   = 5,

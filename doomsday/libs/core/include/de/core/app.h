@@ -214,7 +214,12 @@ public:
     /**
      * Returns the absolute native path of the application executable.
      */
-    static NativePath executablePath();
+    static NativePath executableFile();
+
+    /**
+     * Returns the absolute native path of the directory where the application executable is located.
+     */
+    static NativePath executableDir();
 
 #ifdef MACOSX
     /**

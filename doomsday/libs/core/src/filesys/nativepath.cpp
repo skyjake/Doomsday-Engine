@@ -287,7 +287,7 @@ bool NativePath::exists(NativePath const &nativePath)
     return fileExistsCStr_FileInfo(nativePath);
 }
 
-void NativePath::createPath(NativePath const &nativePath)
+void NativePath::createPath(NativePath const &nativePath) // static
 {
     NativePath parentPath = nativePath.fileNamePath();
     if (!parentPath.isEmpty() && !exists(parentPath))
@@ -300,11 +300,11 @@ void NativePath::createPath(NativePath const &nativePath)
     if (!nativePath.exists())
     {
         /// @throw CreateDirError Failed to create directory @a nativePath.
-        throw CreateDirError("NativePath::createPath", "Could not create: " + nativePath);
+        throw CreateDirError("NativePath::createDirectory", "Could not create: " + nativePath);
     }
 }
 
-bool NativePath::destroyPath(const NativePath &nativePath)
+bool NativePath::destroyPath(const NativePath &nativePath) // static
 {
     if (!nativePath.isEmpty())
     {
@@ -314,8 +314,8 @@ bool NativePath::destroyPath(const NativePath &nativePath)
         }
         else
         {
-            return QDir::current().remove(nativePath);
-        }
+            return remove(nativePath.c_str()) == 0;
+
     }
     return true;
 }

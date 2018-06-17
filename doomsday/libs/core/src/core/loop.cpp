@@ -98,12 +98,12 @@ void Loop::resume()
 //    d->timer->start();
 }
 
-void Loop::timer(TimeSpan const &delay, const std::function<void ()> &func)
+void Loop::timer(const TimeSpan &delay, const std::function<void ()> &func)
 {
     // The timer will delete itself after it's triggered.
 //    internal::CallbackTimer *timer = new internal::CallbackTimer(func, qApp);
 //    timer->start(delay.asMilliSeconds());
-    DE_ASSERT_FAIL("Loop::timer not implemented");
+    DE_ASSERT_FAIL("FIXME: Loop::timer not implemented");
 }
 
 void Loop::mainCall(const std::function<void ()> &func) // static

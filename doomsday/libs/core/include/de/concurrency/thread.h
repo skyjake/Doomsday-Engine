@@ -24,8 +24,6 @@
 #include "../Observers"
 #include "../Waitable"
 
-struct Impl_Thread;
-
 namespace de {
 
 /**
@@ -38,14 +36,18 @@ public:
 
     virtual ~Thread();
 
+    void setTerminationEnabled(bool enable);
+
     void start();
     void join();
+    void terminate();
     bool isRunning() const;
     bool isFinished() const;
 
     virtual void run() = 0;
 
     static void sleep(const TimeSpan &span);
+    static Thread *currentThread();
 
 public:
     DE_DEFINE_AUDIENCE2(Finished, void threadFinished(Thread &))

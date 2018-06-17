@@ -380,7 +380,7 @@ DE_PIMPL(Info)
 
     InfoValue parseScript(int requiredStatementCount = 0)
     {
-        const auto startPos = cursor.bytePos() - 1;
+        const auto startPos = cursor.pos() - 1;
         String remainder = content.substr(startPos);
         ScriptLex lex(remainder);
 
@@ -395,8 +395,8 @@ DE_PIMPL(Info)
         }
 
         // Continue parsing normally from here.
-        auto endPos = startPos + lex.pos();
-        do { nextChar(); } while (cursor.bytePos() < endPos); // fast-forward
+        auto endPos = startPos + lex.pos().pos();
+        do { nextChar(); } while (cursor.pos() < endPos); // fast-forward
 
         // Update the current token.
         currentToken = String(1, peekChar());
@@ -412,7 +412,8 @@ DE_PIMPL(Info)
         //qDebug() << "now at" << content.substr(endPos - 15, endPos) << "^" << content.substr(endPos);
 
         // Whitespace is removed from beginning and end.
-        return InfoValue(content.substr(startPos, int(lex.pos()) - 1).strip(), InfoValue::Script);
+        return InfoValue(content.substr(startPos, int(lex.pos().pos().index) - 1).strip(),
+                         InfoValue::Script);
     }
 
     /**

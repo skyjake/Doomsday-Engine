@@ -21,6 +21,7 @@
 #include "de/Writer"
 #include "de/LogBuffer"
 #include "de/Map"
+#include "de/Timer"
 //#include <QUdpSocket>
 //#include <QHostInfo>
 //#include <QTimer>
@@ -38,15 +39,17 @@ static duint16 const MAX_LISTEN_RANGE = 16;
 // 1.1: Advertised message is compressed with zlib (deflate).
 static const char *discoveryMessage = "Doomsday Beacon 1.1";
 
-DE_PIMPL_NOREF(Beacon)
+DE_PIMPL(Beacon)
 {
     duint16 port;
     duint16 servicePort;
 //    QUdpSocket *socket;
     Block message;
-//    QTimer *timer;
+    std::unique_ptr<Timer> timer;
     Time discoveryEndsAt;
     Map<Address, Block> found;
+
+    Impl(Public *i) : Base(i) {}
 
 #if 0
     Impl() : socket(0), timer(0)
@@ -58,9 +61,112 @@ DE_PIMPL_NOREF(Beacon)
         delete timer;
     }
 #endif
+
+    void continueDiscovery()
+    {
+        DE_ASSERT(timer);
+#if 0
+        DE_ASSERT(socket);
+
+        // Time to stop discovering?
+        if (d->discoveryEndsAt.isValid() && Time() > d->discoveryEndsAt)
+        {
+            d->timer->stop();
+
+            emit finished();
+
+            d->socket->deleteLater();
+            d->socket = 0;
+
+            d->timer->deleteLater();
+            d->timer = 0;
+            return;
+        }
+
+        Block block(discoveryMessage);
+
+        LOG_NET_XVERBOSE("Broadcasting %i bytes", block.size());
+
+        // Send a new broadcast to the whole listening range of the beacons.
+        for (duint16 range = 0; range < MAX_LISTEN_RANGE; ++range)
+        {
+            d->socket->writeDatagram(block,
+                                     QHostAddress::Broadcast,
+                                     d->port + range);
+        }
+#endif
+    }
+
+#if 0
+void Beacon::readIncoming()
+{
+    LOG_AS("Beacon");
+
+    if (!d->socket) return;
+
+    while (d->socket->hasPendingDatagrams())
+    {
+        QHostAddress from;
+        duint16 port = 0;
+        Block block(d->socket->pendingDatagramSize());
+        d->socket->readDatagram(reinterpret_cast<char *>(block.data()),
+                                block.size(), &from, &port);
+
+        LOG_NET_XVERBOSE("Received %i bytes from %s port %i", block.size() << from.toString() << port);
+
+        if (block == discoveryMessage)
+        {
+            // Send a reply.
+            d->socket->writeDatagram(d->message, from, port);
+        }
+    }
+}
+
+void Beacon::readDiscoveryReply()
+{
+    LOG_AS("Beacon");
+
+    if (!d->socket) return;
+
+    while (d->socket->hasPendingDatagrams())
+    {
+        QHostAddress from;
+        quint16 port = 0;
+        Block block(d->socket->pendingDatagramSize());
+        d->socket->readDatagram(reinterpret_cast<char *>(block.data()),
+                                block.size(), &from, &port);
+
+        if (block == discoveryMessage)
+            continue;
+
+        try
+        {
+            // Remove the service listening port from the beginning.
+            duint16 listenPort = 0;
+            Reader(block) >> listenPort;
+            block.remove(0, 2);
+            block = block.decompressed();
+
+            Address const host(from, listenPort);
+            d->found.insert(host, block);
+
+            emit found(host, block);
+        }
+        catch (Error const &)
+        {
+            // Bogus reply message, ignore.
+        }
+    }
+}
+
+#endif
+
+    DE_PIMPL_AUDIENCES(Discovery, Finished)
 };
 
-Beacon::Beacon(duint16 port) : d(new Impl)
+DE_AUDIENCE_METHODS(Beacon, Discovery, Finished)
+
+Beacon::Beacon(duint16 port) : d(new Impl(this))
 {
     d->port = port;
 }
@@ -151,11 +257,11 @@ void Beacon::discover(TimeSpan timeOut, TimeSpan interval)
     {
         d->discoveryEndsAt = Time::invalidTime();
     }
-    d->timer = new QTimer;
-    connect(d->timer, SIGNAL(timeout()), this, SLOT(continueDiscovery()));
-    d->timer->start(interval.asMilliSeconds());
+    d->timer.reset(new Timer);
+    d->timer->audienceForTrigger() += [this](){ d->continueDiscovery(); };
+    d->timer->start(interval);
 
-    continueDiscovery();
+    d->continueDiscovery();
 #endif
 }
 
@@ -171,101 +277,5 @@ Block Beacon::messageFromHost(Address const &host) const
     if (!d->found.contains(host)) return Block();
     return d->found[host];
 }
-
-#if 0
-void Beacon::readIncoming()
-{
-    LOG_AS("Beacon");
-
-    if (!d->socket) return;
-
-    while (d->socket->hasPendingDatagrams())
-    {
-        QHostAddress from;
-        duint16 port = 0;
-        Block block(d->socket->pendingDatagramSize());
-        d->socket->readDatagram(reinterpret_cast<char *>(block.data()),
-                                block.size(), &from, &port);
-
-        LOG_NET_XVERBOSE("Received %i bytes from %s port %i", block.size() << from.toString() << port);
-
-        if (block == discoveryMessage)
-        {
-            // Send a reply.
-            d->socket->writeDatagram(d->message, from, port);
-        }
-    }
-}
-
-void Beacon::readDiscoveryReply()
-{
-    LOG_AS("Beacon");
-
-    if (!d->socket) return;
-
-    while (d->socket->hasPendingDatagrams())
-    {
-        QHostAddress from;
-        quint16 port = 0;
-        Block block(d->socket->pendingDatagramSize());
-        d->socket->readDatagram(reinterpret_cast<char *>(block.data()),
-                                block.size(), &from, &port);
-
-        if (block == discoveryMessage)
-            continue;
-
-        try
-        {
-            // Remove the service listening port from the beginning.
-            duint16 listenPort = 0;
-            Reader(block) >> listenPort;
-            block.remove(0, 2);
-            block = block.decompressed();
-
-            Address const host(from, listenPort);
-            d->found.insert(host, block);
-
-            emit found(host, block);
-        }
-        catch (Error const &)
-        {
-            // Bogus reply message, ignore.
-        }
-    }
-}
-
-void Beacon::continueDiscovery()
-{
-    DE_ASSERT(d->socket);
-    DE_ASSERT(d->timer);
-
-    // Time to stop discovering?
-    if (d->discoveryEndsAt.isValid() && Time() > d->discoveryEndsAt)
-    {
-        d->timer->stop();
-
-        emit finished();
-
-        d->socket->deleteLater();
-        d->socket = 0;
-
-        d->timer->deleteLater();
-        d->timer = 0;
-        return;
-    }
-
-    Block block(discoveryMessage);
-
-    LOG_NET_XVERBOSE("Broadcasting %i bytes", block.size());
-
-    // Send a new broadcast to the whole listening range of the beacons.
-    for (duint16 range = 0; range < MAX_LISTEN_RANGE; ++range)
-    {
-        d->socket->writeDatagram(block,
-                                 QHostAddress::Broadcast,
-                                 d->port + range);
-    }
-}
-#endif
 
 } // namespace de

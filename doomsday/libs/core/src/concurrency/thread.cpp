@@ -17,10 +17,18 @@
  */
 
 #include "de/Thread"
+#include "de/Hash"
 
 #include <c_plus/thread.h>
 
 namespace de {
+
+using KnownThreads = LockableT<Hash<iThread *, Thread *>>;
+KnownThreads &knownThreads()
+{
+    static KnownThreads kt;
+    return kt;
+}
 
 DE_PIMPL(Thread)
 {
@@ -31,10 +39,20 @@ DE_PIMPL(Thread)
     {
         thread = new_Thread(runFunc);
         setUserData_Thread(thread, this);
+        {
+            auto &kt = knownThreads();
+            DE_GUARD(kt);
+            kt.value.insert(thread, thisPublic);
+        }
     }
 
     ~Impl()
     {
+        {
+            auto &kt = knownThreads();
+            DE_GUARD(kt);
+            kt.value.remove(thread);
+        }
         iRelease(thread);
         thread = nullptr;
     }
@@ -64,6 +82,11 @@ Thread::Thread()
 Thread::~Thread()
 {}
 
+void Thread::setTerminationEnabled(bool enable)
+{
+    setTerminationEnabled_Thread(d->thread, enable);
+}
+
 void Thread::start()
 {
     start_Thread(d->thread);
@@ -72,6 +95,12 @@ void Thread::start()
 void Thread::join()
 {
     join_Thread(d->thread);
+}
+
+void Thread::terminate()
+{
+    // Only possible if termination has been enabled before the thread was started.
+    terminate_Thread(d->thread);
 }
 
 bool Thread::isRunning() const
@@ -87,6 +116,15 @@ bool Thread::isFinished() const
 void Thread::sleep(const TimeSpan &span) // static
 {
     sleep_Thread(span);
+}
+
+Thread *Thread::currentThread() // static
+{
+    auto &kt = knownThreads();
+    DE_GUARD(kt);
+    auto found = kt.value.find(current_Thread());
+    if (found != kt.value.end()) return found->second;
+    return nullptr;
 }
 
 } // namespace de

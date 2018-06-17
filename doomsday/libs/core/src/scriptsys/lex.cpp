@@ -41,7 +41,7 @@ String const &Lex::input() const
 
 bool Lex::atEnd() const
 {
-    return _state.pos.bytePos() >= _input->sizeb();
+    return _state.pos.pos() >= _input->sizeb();
 }
 
 String::const_iterator Lex::pos() const
@@ -60,7 +60,7 @@ bool Lex::atCommentStart() const
     if (c == _lineCommentChar)
     {
         if (!(_mode & DoubleCharComment)) return true;
-        if (_state.pos.bytePos() >= _input->sizeb() - 1) return false;
+        if (_state.pos.pos() >= _input->sizeb() - 1) return false;
 
         const Char d = *(_state.pos + 1);
         if (d == _lineCommentChar || d == _multiCommentChar)
@@ -84,7 +84,7 @@ Char Lex::peekComment() const
         if (c == _multiCommentChar)
         {
             auto p = _state.pos + 2;
-            while (p.bytePos() < inputSize - 1 &&
+            while (p.pos() < inputSize - 1 &&
                    !(*p       == _multiCommentChar &&
                      *(p + 1) == _lineCommentChar))
             {
@@ -92,15 +92,15 @@ Char Lex::peekComment() const
             }
             p += 2; // skip the ending
             _nextPos = p + 1;
-            return (p.bytePos() < inputSize? *p : 0);
+            return (p.pos() < inputSize? *p : 0);
         }
     }
 
     // Skip over the line.
     auto p = _state.pos;
-    while (p.bytePos() < inputSize && *++p != '\n') {}
+    while (p.pos() < inputSize && *++p != '\n') {}
     _nextPos = p + 1;
-    return (p.bytePos() < inputSize? '\n' : 0);
+    return (p.pos() < inputSize? '\n' : 0);
 }
 
 Char Lex::peek() const
@@ -199,7 +199,7 @@ duint Lex::countLineStartSpace() const
 {
     auto pos = _state.lineStartPos;
     duint count = 0;
-    while (pos.bytePos() < _input->sizeb() && isWhite(*pos++))
+    while (pos.pos() < _input->sizeb() && isWhite(*pos++))
     {
         count++;
     }

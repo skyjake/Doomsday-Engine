@@ -81,11 +81,6 @@ public:
     List<Address> foundHosts() const;
     Block messageFromHost(Address const &host) const;
 
-//protected slots:
-//    void readIncoming();
-//    void readDiscoveryReply();
-//    void continueDiscovery();
-
 private:
     DE_PRIVATE(d)
 };

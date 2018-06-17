@@ -86,7 +86,7 @@ public:
 
     DE_NORETURN void error(const String &message)
     {
-        String::BytePos offset = pos.bytePos();
+        String::BytePos offset = pos.pos();
         throw Error("JSONParser",
                     stringf("Error at position %u (%s^%s): %s",
                             offset,
@@ -225,7 +225,7 @@ public:
                     result.append('\t');
                 else if (c == 'u')
                 {
-                    const String code = source.substr(pos.bytePos(), 4);
+                    const String code = source.substr(pos.pos(), 4);
                     pos += 4;
                     result.append(Char(code.toUInt32(nullptr, 16)));
                 }

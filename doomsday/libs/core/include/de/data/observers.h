@@ -98,6 +98,35 @@
     DE_DECLARE_AUDIENCE(Name, Method) \
     DE_AUDIENCE_METHOD_INLINE(Name)
 
+// Variadic conveniences:
+
+#define DE_PIMPL_AUDIENCES_1(x, ...) DE_PIMPL_AUDIENCE(x)
+#define DE_PIMPL_AUDIENCES_2(x, ...) DE_PIMPL_AUDIENCE(x) DE_PIMPL_AUDIENCES_1(__VA_ARGS__)
+#define DE_PIMPL_AUDIENCES_3(x, ...) DE_PIMPL_AUDIENCE(x) DE_PIMPL_AUDIENCES_2(__VA_ARGS__)
+#define DE_PIMPL_AUDIENCES_4(x, ...) DE_PIMPL_AUDIENCE(x) DE_PIMPL_AUDIENCES_3(__VA_ARGS__)
+#define DE_PIMPL_AUDIENCES_5(x, ...) DE_PIMPL_AUDIENCE(x) DE_PIMPL_AUDIENCES_4(__VA_ARGS__)
+#define DE_PIMPL_AUDIENCES_6(x, ...) DE_PIMPL_AUDIENCE(x) DE_PIMPL_AUDIENCES_5(__VA_ARGS__)
+#define DE_PIMPL_AUDIENCES_7(x, ...) DE_PIMPL_AUDIENCE(x) DE_PIMPL_AUDIENCES_6(__VA_ARGS__)
+#define DE_PIMPL_AUDIENCES_8(x, ...) DE_PIMPL_AUDIENCE(x) DE_PIMPL_AUDIENCES_7(__VA_ARGS__)
+
+#define DE_PIMPL_AUDIENCES_(N, ...) DE_CONCAT(DE_PIMPL_AUDIENCES_, N)(__VA_ARGS__)
+
+#define DE_PIMPL_AUDIENCES(...) \
+    DE_PIMPL_AUDIENCES_(DE_NUM_ARG(__VA_ARGS__), __VA_ARGS__)
+
+#define DE_AUDIENCE_METHODS_1(ClassName, x, ...) DE_AUDIENCE_METHOD(ClassName, x)
+#define DE_AUDIENCE_METHODS_2(ClassName, x, ...) DE_AUDIENCE_METHOD(ClassName, x) DE_AUDIENCE_METHODS_1(ClassName, __VA_ARGS__)
+#define DE_AUDIENCE_METHODS_3(ClassName, x, ...) DE_AUDIENCE_METHOD(ClassName, x) DE_AUDIENCE_METHODS_2(ClassName, __VA_ARGS__)
+#define DE_AUDIENCE_METHODS_4(ClassName, x, ...) DE_AUDIENCE_METHOD(ClassName, x) DE_AUDIENCE_METHODS_3(ClassName, __VA_ARGS__)
+#define DE_AUDIENCE_METHODS_5(ClassName, x, ...) DE_AUDIENCE_METHOD(ClassName, x) DE_AUDIENCE_METHODS_4(ClassName, __VA_ARGS__)
+#define DE_AUDIENCE_METHODS_6(ClassName, x, ...) DE_AUDIENCE_METHOD(ClassName, x) DE_AUDIENCE_METHODS_5(ClassName, __VA_ARGS__)
+#define DE_AUDIENCE_METHODS_7(ClassName, x, ...) DE_AUDIENCE_METHOD(ClassName, x) DE_AUDIENCE_METHODS_6(ClassName, __VA_ARGS__)
+#define DE_AUDIENCE_METHODS_8(ClassName, x, ...) DE_AUDIENCE_METHOD(ClassName, x) DE_AUDIENCE_METHODS_7(ClassName, __VA_ARGS__)
+
+#define DE_AUDIENCE_METHODS_(N, ClassName, ...) DE_CONCAT(DE_AUDIENCE_METHODS_, N)(ClassName, __VA_ARGS__)
+#define DE_AUDIENCE_METHODS(ClassName, ...) \
+    DE_AUDIENCE_METHODS_(DE_NUM_ARG(__VA_ARGS__), ClassName, __VA_ARGS__)
+
 /**
  * Macro that can be used in class declarations to specify which audiences the class
  * can belong to.
@@ -115,8 +144,9 @@
  * @param Var      Variable used in the loop.
  * @param Name     Name of the observer set.
  */
-#define DE_FOR_EACH_OBSERVER(Var, Name) for (std::remove_reference<decltype(Name)>::type::Loop Var(Name); !Var.done(); ++Var)
-
+#define DE_FOR_EACH_OBSERVER(Var, Name) \
+    Name.call(); \
+    for (std::remove_reference<decltype(Name)>::type::Loop Var(Name); !Var.done(); ++Var)
 
 /**
  * Macro for looping through the audience members.
@@ -400,6 +430,25 @@ public:
         return *this;
     }
 
+    Observers<Type> &operator+=(const std::function<void()> &callback)
+    {
+        DE_GUARD(this);
+        _callbacks << callback;
+        return *this;
+    }
+
+    void call() const
+    {
+        lock();
+        const auto cbs = _callbacks;
+        unlock();
+
+        for (const auto &cb : cbs)
+        {
+            cb();
+        }
+    }
+
     size_type size() const
     {
         DE_GUARD(this);
@@ -460,6 +509,7 @@ private:
     }
 
     Members _members;
+    List<std::function<void()>> _callbacks;
 };
 
 } // namespace de

@@ -31,7 +31,7 @@
 
 namespace de {
 
-static String const fileStatusSuffix = ".doomsday_file_status";
+static const char *fileStatusSuffix = ".doomsday_file_status";
 
 DENG2_PIMPL_NOREF(DirectoryFeed)
 {
@@ -43,6 +43,7 @@ DENG2_PIMPL_NOREF(DirectoryFeed)
 DirectoryFeed::DirectoryFeed(NativePath const &nativePath, Flags const &mode)
     : d(new Impl)
 {
+    DE_ASSERT(!nativePath.toString().isEmpty());
     d->nativePath = nativePath;
     d->mode = mode;
 }
@@ -70,6 +71,8 @@ const NativePath &DirectoryFeed::nativePath() const
 
 Feed::PopulatedFiles DirectoryFeed::populate(Folder const &folder)
 {
+    DE_ASSERT(!_nativePath.toString().isEmpty());
+
     if (d->mode & AllowWrite)
     {
         // Automatically enable modifying the Folder.
@@ -85,13 +88,6 @@ Feed::PopulatedFiles DirectoryFeed::populate(Folder const &folder)
         /// @throw NotFoundError The native directory was not accessible.
         throw NotFoundError("DirectoryFeed::populate", "Path '" + d->nativePath + "' inaccessible");
     }
-//    QStringList nameFilters;
-//    nameFilters << "*";
-//    QDir::Filters dirFlags = QDir::Files | QDir::NoDotAndDotDot;
-//    if (_mode.testFlag(PopulateNativeSubfolders))
-//    {
-//        dirFlags |= QDir::Dirs;
-//    }
 
     PopulatedFiles populated;
 

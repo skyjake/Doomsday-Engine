@@ -422,6 +422,8 @@ DE_AUDIENCE_METHOD(App, StartupComplete)
 App::App(const StringList &args)
     : d(new Impl(this, args))
 {
+    init_CPlus();
+
     d->unixInfo.reset(new UnixInfo);
 
     // Global time source for animations.
@@ -873,7 +875,7 @@ void App::notifyStartupComplete()
 
 bool App::appExists()
 {
-    return singletonApp != 0;
+    return singletonApp != nullptr;
 }
 
 App &App::app()
@@ -892,9 +894,14 @@ CommandLine &App::commandLine()
     return DE_APP->d->cmdLine;
 }
 
-NativePath App::executablePath()
+NativePath App::executableFile()
 {
     return DE_APP->d->appPath;
+}
+
+NativePath de::App::executableDir()
+{
+    return DE_APP->d->appPath.fileNamePath();
 }
 
 #ifdef MACOSX
