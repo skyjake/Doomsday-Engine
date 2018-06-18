@@ -37,6 +37,7 @@ void MonospaceLineWrapping::clear()
 void MonospaceLineWrapping::wrapTextToWidth(String const &text, String::CharPos maxWidth)
 {
     clear();
+
     if (maxWidth < 1) return; // No room to wrap.
 
     const Char            newline   = '\n';
@@ -58,7 +59,7 @@ void MonospaceLineWrapping::wrapTextToWidth(String const &text, String::CharPos 
         if (end == textEnd)
         {
             // Time to stop.
-            _lines << WrappedLine(String::ByteRange(begin.pos(), text.sizeb()));
+            _lines << WrappedLine({begin.pos(), text.sizeb()});
             break;
         }
 
@@ -78,13 +79,13 @@ void MonospaceLineWrapping::wrapTextToWidth(String const &text, String::CharPos 
         if (*end == newline)
         {
             // The newline will be omitted from the wrapped lines.
-            _lines << WrappedLine(String::ByteRange(begin.pos(), end.pos()));
+            _lines << WrappedLine({begin.pos(), end.pos()});
             begin = end + 1;
         }
         else
         {
             if (iswspace(*end)) ++end;
-            _lines << WrappedLine(String::ByteRange(begin.pos(), end.pos()));
+            _lines << WrappedLine({begin.pos(), end.pos()});
             begin = end;
         }
     }
