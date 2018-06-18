@@ -58,17 +58,26 @@ struct DE_PUBLIC BytePos
         : index(i)
     {}
     explicit operator bool() const { return index != npos; }
-    bool     operator==(dsize i) const { return index == i; }
-    bool     operator!=(dsize i) const { return index != i; }
-    bool     operator<(dsize i) const { return index < i; }
-    bool     operator<(BytePos p) const { return index < p.index; }
-    bool     operator>(dsize i) const { return index > i; }
-    bool     operator>(BytePos p) const { return index > p.index; }
-    bool     operator<=(dsize i) const { return index <= i; }
-    bool     operator>=(dsize i) const { return index >= i; }
+
+    bool     operator==(dsize i) const   { return index == i; }
+    bool     operator!=(dsize i) const   { return index != i; }
+    bool     operator<(dsize i) const    { return index < i; }
+    bool     operator>(dsize i) const    { return index > i; }
+    bool     operator<=(dsize i) const   { return index <= i; }
+    bool     operator>=(dsize i) const   { return index >= i; }
+
+    bool     operator==(BytePos p) const { return index == p.index; }
+    bool     operator!=(BytePos p) const { return index != p.index; }
+    bool     operator<(BytePos p) const  { return index < p.index; }
+    bool     operator>(BytePos p) const  { return index > p.index; }
     bool     operator>=(BytePos p) const { return index >= p.index; }
-    BytePos  operator-(int sub) const { return BytePos{index - sub}; }
-    BytePos  operator+(int sub) const { return BytePos{index + sub}; }
+    bool     operator<=(BytePos p) const { return index <= p.index; }
+
+    BytePos  operator-(long sub) const { return BytePos{index - sub}; }
+    BytePos  operator+(long sub) const { return BytePos{index + sub}; }
+    BytePos  &operator+=(long sub) { index += sub; return *this; }
+    BytePos  &operator-=(long sub) { index -= sub; return *this; }
+
     BytePos  operator+(const BytePos &p) const { return BytePos{index + p.index}; }
     BytePos  operator++(int) { BytePos p = *this; index++; return p; }
     BytePos &operator++() { index++; return *this; }
@@ -328,6 +337,7 @@ public:
     String        remove(BytePos count) const { return substr(count); }
     String        remove(CharPos count) const { return substr(count); }
     void          remove(BytePos start, dsize count);
+    inline void   remove(BytePos start, BytePos count) { remove(start, count.index); }
     void          truncate(BytePos pos);
     List<String>  split(const char *separator) const;
     List<String>  split(Char ch) const;
@@ -352,6 +362,9 @@ public:
     String &append(const char *s) { return *this += s; }
     String &append(const String &s) { return *this += s; }
 
+    String &prepend(Char ch);
+
+    inline void push_front(Char ch) { prepend(ch); }
     inline void push_back(Char ch) { append(ch); }
 
     void insert(BytePos pos, const char *cStr);
@@ -513,7 +526,7 @@ public:
      *
      * @return  Number of characters the two strings have in common from the left.
      */
-    int commonPrefixLength(const String &str, Sensitivity sensitivity = CaseSensitive) const;
+    CharPos commonPrefixLength(const String &str, Sensitivity sensitivity = CaseSensitive) const;
 
     /**
      * Converts the string to UTF-8 and returns it as a byte block.

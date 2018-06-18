@@ -356,6 +356,12 @@ String &String::operator+=(const String &other)
     return *this;
 }
 
+String &String::prepend(Char ch)
+{
+    prependChar_String(&_str, ch);
+    return *this;
+}
+
 void String::insert(BytePos pos, const char *cStr)
 {
     insertData_Block(&_str.chars, pos.index, cStr, cStr ? strlen(cStr) : 0);
@@ -662,9 +668,9 @@ dint String::compareWithoutCase(const String &other, int n) const
     return cmpNSc_String(&_str, other, n, &iCaseInsensitive);
 }
 
-int String::commonPrefixLength(const String &str, Sensitivity sensitivity) const
+String::CharPos String::commonPrefixLength(const String &str, Sensitivity sensitivity) const
 {
-    int count = 0;
+    CharPos count{0};
     for (const_iterator a = begin(), b = str.begin(), aEnd = end(), bEnd = str.end();
          a != aEnd && b != bEnd; ++a, ++b, ++count)
     {

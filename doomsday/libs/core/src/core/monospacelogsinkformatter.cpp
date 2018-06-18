@@ -265,13 +265,13 @@ StringList MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
         }
         else
         {
-            dsize prefix = section.commonPrefixLength(_sectionOfPreviousLine);
+            String::CharPos prefix = section.commonPrefixLength(_sectionOfPreviousLine);
             if (prefix > 5)
             {
                 // Some commonality with previous section, we can abbreviate
                 // those parts of the section.
                 entryFlags |= LogEntry::AbbreviateSection;
-                cutSection = prefix;
+                cutSection = prefix.index; // NOTE: assumes sections are single-byte chars
             }
         }
     }
