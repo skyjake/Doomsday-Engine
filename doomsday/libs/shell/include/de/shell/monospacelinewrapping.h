@@ -52,8 +52,8 @@ public:
     WrappedLine line(int index) const { return _lines[index]; }
     int         width() const;
     int         height() const;
-    int         rangeWidth(const String::ByteRange &range) const;
-    int         indexAtWidth(const String::ByteRange &range, int width) const;
+    BytePos     rangeWidth(const String::ByteRange &range) const;
+    BytePos     indexAtWidth(const String::ByteRange &range, BytePos width) const;
 
 private:
     List<WrappedLine> _lines;

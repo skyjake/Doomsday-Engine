@@ -26,23 +26,24 @@ DE_PIMPL(AbstractLineEditor)
 {
     String   prompt;
     String   text;
-    int      cursor; ///< Index in range [0...text.size()]
+    BytePos  cursor; ///< Index in range [0...text.size()]
     Lexicon  lexicon;
     EchoMode echoMode;
 
     std::unique_ptr<ILineWrapping> wraps;
 
     struct Completion {
-        int pos;
-        int size;
+        BytePos pos;
+        dsize size;
         int ordinal; ///< Ordinal within list of possible completions.
 
-        void reset() {
-            pos = size = ordinal = 0;
+        void reset()
+        {
+            pos     = BytePos(0);
+            size    = 0;
+            ordinal = 0;
         }
-        Rangei range() const {
-            return Rangei(pos, pos + size);
-        }
+        String::ByteRange range() const { return {pos, pos + size}; }
     };
     Completion completion;
     StringList suggestions;
@@ -85,7 +86,7 @@ DE_PIMPL(AbstractLineEditor)
      */
     void updateWraps()
     {
-        wraps->wrapTextToWidth(text, de::max(1, self().maximumWidth()));
+        wraps->wrapTextToWidth(text, String::CharPos(max(1, self().maximumWidth())));
 
         if (wraps->height() > 0)
         {
@@ -97,17 +98,17 @@ DE_PIMPL(AbstractLineEditor)
         }
     }
 
-    de::Vec2i lineCursorPos() const
+    LineBytePos lineCursorPos() const
     {
         return linePos(cursor);
     }
 
-    de::Vec2i linePos(int mark) const
+    LineBytePos linePos(BytePos mark) const
     {
-        de::Vec2i pos(mark);
-        for (pos.y = 0; pos.y < wraps->height(); ++pos.y)
+        LineBytePos pos{mark, 0};
+        for (pos.line = 0; pos.line < wraps->height(); ++pos.line)
         {
-            WrappedLine span = lineSpan(pos.y);
+            WrappedLine span = lineSpan(pos.line);
             if (!span.isFinal) span.range.end--;
             if (mark >= span.range.start && mark <= span.range.end)
             {
@@ -131,15 +132,16 @@ DE_PIMPL(AbstractLineEditor)
 
         DE_ASSERT(lineOff == 1 || lineOff == -1);
 
-        Vec2i const linePos = lineCursorPos();
-        int const destWidth = wraps->rangeWidth(Rangei(lineSpan(linePos.y).range.start, cursor));
+        const LineBytePos linePos = lineCursorPos();
+        const BytePos     destWidth =
+            wraps->rangeWidth(String::ByteRange(lineSpan(linePos.line).range.start, cursor));
 
         // Check for no room.
-        if (!linePos.y && lineOff < 0) return false;
-        if (linePos.y == wraps->height() - 1 && lineOff > 0) return false;
+        if (!linePos.line && lineOff < 0) return false;
+        if (linePos.line == wraps->height() - 1 && lineOff > 0) return false;
 
         // Move cursor onto the adjacent line.
-        WrappedLine span = lineSpan(linePos.y + lineOff);
+        WrappedLine span = lineSpan(linePos.line + lineOff);
         cursor = wraps->indexAtWidth(span.range, destWidth);
         if (!span.isFinal) span.range.end--;
         if (cursor > span.range.end) cursor = span.range.end;
@@ -174,7 +176,7 @@ DE_PIMPL(AbstractLineEditor)
 
         if (!text.isEmpty() && cursor > 0)
         {
-            int to = wordJumpLeft(cursor);
+            auto to = wordJumpLeft(cursor);
             text.remove(to, cursor - to);
             cursor = to;
             rewrapNow();
@@ -183,7 +185,7 @@ DE_PIMPL(AbstractLineEditor)
 
     void doDelete()
     {
-        if (text.size() > cursor)
+        if (text.sizeb() > cursor)
         {
             text.remove(cursor, 1);
             rewrapNow();
@@ -216,20 +218,23 @@ DE_PIMPL(AbstractLineEditor)
         return false;
     }
 
-    int wordJumpLeft(int pos) const
+    BytePos wordJumpLeft(BytePos pos) const
     {
-        pos = de::min(pos, text.size() - 1);
+        //pos = de::min(pos, text.sizeb() - 1);
+
+        mb_iterator iter{text.data() + de::min(pos, text.sizeb() - 1), text.data()};
 
         // First jump over any non-word chars.
-        while (pos > 0 && !text[pos].isLetterOrNumber()) pos--;
+        //while (pos > 0 && !text[pos].isLetterOrNumber()) pos--;
+        while (iter.pos() > 0 && !iswalnum(*iter)) { --iter; }
 
         // At least move one character.
-        if (pos > 0) pos--;
+        if (iter.pos() > 0) --pos;
 
         // We're inside a word, jump to its beginning.
-        while (pos > 0 && text[pos - 1].isLetterOrNumber()) pos--;
+        while (iter.pos() > 0 && iswalnum(*(iter - 1))) { --iter; }
 
-        return pos;
+        return iter.pos();
     }
 
     void doWordLeft()
@@ -241,21 +246,24 @@ DE_PIMPL(AbstractLineEditor)
 
     void doWordRight()
     {
-        int const last = text.size() - 1;
-
         acceptCompletion();
 
+        const auto last = text.end();
+        mb_iterator iter{text.data() + cursor};
+
         // If inside a word, jump to its end.
-        while (cursor <= last && text[de::min(last, cursor)].isLetterOrNumber())
+        while (iter != last && iswalnum(*iter))
         {
-            cursor++;
+            iter++;
         }
 
         // Jump over any non-word chars.
-        while (cursor <= last && !text[de::min(last, cursor)].isLetterOrNumber())
+        while (iter != last && !iswalnum(*iter))
         {
-            cursor++;
+            iter++;
         }
+
+        cursor = iter.pos();
 
         self().cursorMoved();
     }
@@ -264,7 +272,7 @@ DE_PIMPL(AbstractLineEditor)
     {
         acceptCompletion();
 
-        cursor = lineSpan(lineCursorPos().y).range.start;
+        cursor = lineSpan(lineCursorPos().line).range.start;
         self().cursorMoved();
     }
 
@@ -272,14 +280,14 @@ DE_PIMPL(AbstractLineEditor)
     {
         acceptCompletion();
 
-        WrappedLine const span = lineSpan(lineCursorPos().y);
+        WrappedLine const span = lineSpan(lineCursorPos().line);
         cursor = span.range.end - (span.isFinal? 0 : 1);
         self().cursorMoved();
     }
 
     void killEndOfLine()
     {
-        text.remove(cursor, lineSpan(lineCursorPos().y).range.end - cursor);
+        text.remove(cursor, lineSpan(lineCursorPos().line).range.end - cursor);
         rewrapNow();
     }
 
@@ -289,11 +297,16 @@ DE_PIMPL(AbstractLineEditor)
         //return completion.size > 0;
     }
 
-    String wordBehindPos(int pos) const
+    String wordBehindPos(BytePos pos) const
     {
         String word;
-        int i = pos - 1;
-        while (i >= 0 && lexicon.isWordChar(text[i])) word.prepend(text[i--]);
+        /// @todo Could alternatively find a range and do a single insertion...
+        mb_iterator iter{text.data() + pos, text.data()};
+        --iter;
+        while (iter.pos() >= 0 && lexicon.isWordChar(*iter))
+        {
+            word.prepend(*iter--);
+        }
         return word;
     }
 
@@ -302,15 +315,15 @@ DE_PIMPL(AbstractLineEditor)
         return wordBehindPos(cursor);
     }
 
-    StringList completionsForBase(String base, String &commonPrefix) const
+    StringList completionsForBase(const String& base, String &commonPrefix) const
     {
-        String::CaseSensitivity const sensitivity =
-                lexicon.isCaseSensitive()? String::CaseSensitive : String::CaseInsensitive;
+        const CaseSensitivity sensitivity =
+                lexicon.isCaseSensitive()? CaseSensitive : CaseInsensitive;
 
         bool first = true;
         StringList sugs;
 
-        foreach (String term, lexicon.terms())
+        for (const String &term : lexicon.terms())
         {
             if (term.beginsWith(base, sensitivity) && term.size() > base.size())
             {
@@ -324,12 +337,12 @@ DE_PIMPL(AbstractLineEditor)
                 }
                 else if (!commonPrefix.isEmpty())
                 {
-                    int len = commonPrefix.commonPrefixLength(term, sensitivity);
+                    auto len = commonPrefix.commonPrefixLength(term, sensitivity);
                     commonPrefix = commonPrefix.left(len);
                 }
             }
         }
-        qSort(sugs);
+        sugs.sort();
         return sugs;
     }
 
@@ -338,7 +351,7 @@ DE_PIMPL(AbstractLineEditor)
         if (!suggestingCompletion())
         {
             completionNotified = false;
-            String const base = wordBehindCursor();
+            const String base = wordBehindCursor();
             if (!base.isEmpty())
             {
                 // Find all the possible completions and apply the first one.
@@ -348,7 +361,7 @@ DE_PIMPL(AbstractLineEditor)
                 {
                     // Insert the common prefix.
                     completion.ordinal = -1;
-                    commonPrefix.remove(0, base.size());
+                    commonPrefix.remove(base.sizeb());
                     completion.pos = cursor;
                     completion.size = commonPrefix.size();
                     text.insert(cursor, commonPrefix);
@@ -393,9 +406,9 @@ DE_PIMPL(AbstractLineEditor)
             {
                 // This occurs after a common prefix is inserted rather than
                 // a full suggestion.
-                completion.ordinal = (forwardCycle? 0 : suggestions.size() - 1);
+                completion.ordinal = (forwardCycle? 0 : suggestions.sizei() - 1);
 
-                if (base + text.mid(completion.pos, completion.size) == suggestions[completion.ordinal])
+                if (base + text.substr(completion.pos, completion.size) == suggestions[completion.ordinal])
                 {
                     // We already had this one, skip it.
                     cycleCompletion(forwardCycle);
@@ -407,11 +420,11 @@ DE_PIMPL(AbstractLineEditor)
             }
 
             String comp = suggestions[completion.ordinal];
-            comp.remove(0, base.size());
+            comp.remove(/*BytePos(0), */base.sizeb());
 
             text.remove(completion.pos, completion.size);
             text.insert(completion.pos, comp);
-            completion.size = comp.size();
+            completion.size = comp.sizei();
             cursor = completion.pos + completion.size;
             rewrapNow();
 
@@ -423,7 +436,7 @@ DE_PIMPL(AbstractLineEditor)
     void cycleCompletion(bool forwardCycle)
     {
         completion.ordinal = de::wrap(completion.ordinal + (forwardCycle? 1 : -1),
-                                      0, suggestions.size());
+                                      0, suggestions.sizei());
     }
 
     void resetCompletion()
@@ -447,7 +460,7 @@ DE_PIMPL(AbstractLineEditor)
     {
         if (!suggestingCompletion()) return false;
 
-        int oldCursor = cursor;
+        auto oldCursor = cursor;
 
         text.remove(completion.pos, completion.size);
         cursor = completion.pos;
@@ -483,7 +496,7 @@ void AbstractLineEditor::setText(String const &contents)
 {
     d->completion.reset();
     d->text = contents;
-    d->cursor = contents.size();
+    d->cursor = contents.sizeb();
     d->rewrapLater();
 }
 
@@ -492,19 +505,19 @@ String AbstractLineEditor::text() const
     return d->text;
 }
 
-void AbstractLineEditor::setCursor(int index)
+void AbstractLineEditor::setCursor(BytePos index)
 {
     d->completion.reset();
     d->cursor = index;
     cursorMoved();
 }
 
-int AbstractLineEditor::cursor() const
+BytePos AbstractLineEditor::cursor() const
 {
     return d->cursor;
 }
 
-Vec2i AbstractLineEditor::linePos(int index) const
+AbstractLineEditor::LineBytePos AbstractLineEditor::linePos(BytePos index) const
 {
     return d->linePos(index);
 }
@@ -514,7 +527,7 @@ bool AbstractLineEditor::isSuggestingCompletion() const
     return d->suggestingCompletion();
 }
 
-Rangei AbstractLineEditor::completionRange() const
+String::ByteRange AbstractLineEditor::completionRange() const
 {
     return d->completion.range();
 }

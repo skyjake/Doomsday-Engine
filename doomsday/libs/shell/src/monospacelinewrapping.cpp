@@ -109,12 +109,12 @@ int MonospaceLineWrapping::height() const
     return int(_lines.size());
 }
 
-int MonospaceLineWrapping::rangeWidth(Rangei const &range) const
+BytePos MonospaceLineWrapping::rangeWidth(const String::ByteRange &range) const
 {
     return range.size();
 }
 
-int MonospaceLineWrapping::indexAtWidth(Rangei const &range, int width) const
+BytePos MonospaceLineWrapping::indexAtWidth(const String::ByteRange &range, BytePos width) const
 {
     if (width <= range.size())
     {

@@ -158,7 +158,7 @@ public:
     void drawText(Coord const &              pos,
                   String const &             text,
                   AttribChar::Attribs const &attribs    = AttribChar::DefaultAttributes,
-                  int                        richOffset = 0);
+                  BytePos                    richOffset = BytePos(0));
 
     /**
      * Draws line wrapped text. Use de::shell::wordWrapText() to determine
@@ -170,15 +170,15 @@ public:
      * @param attribs        Character attributes.
      * @param lineAlignment  Alignment for lines.
      */
-    void drawWrappedText(Coord const &              pos,
-                         String const &             text,
-                         ILineWrapping const &      wraps,
-                         AttribChar::Attribs const &attribs       = AttribChar::DefaultAttributes,
-                         Alignment                  lineAlignment = AlignLeft);
+    void drawWrappedText(const Coord &              pos,
+                         const String &             text,
+                         const ILineWrapping &      wraps,
+                         const AttribChar::Attribs &attribs       = AttribChar::DefaultAttributes,
+                         const Alignment &          lineAlignment = AlignLeft);
 
     void clearRichFormat();
 
-    void setRichFormatRange(AttribChar::Attribs const &attribs, Rangei const &range);
+    void setRichFormatRange(AttribChar::Attribs const &attribs, const String::ByteRange &range);
 
     void drawLineRect(Rectanglei const &         rect,
                       AttribChar::Attribs const &attribs = AttribChar::DefaultAttributes);

@@ -120,7 +120,11 @@ DE_PIMPL(MenuTextWidget)
         items.removeAt(pos);
         updateSize();
     }
+
+    DE_PIMPL_AUDIENCE(Close)
 };
+
+DE_AUDIENCE_METHOD(MenuTextWidget, Close)
 
 MenuTextWidget::MenuTextWidget(Preset preset, String const &name)
     : TextWidget(name), d(new Impl(*this))

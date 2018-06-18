@@ -50,7 +50,7 @@ bool CommandLineTextWidget::handleEvent(Event const &event)
     KeyEvent const &ev = event.as<KeyEvent>();
 
     // Override the editor's normal Enter handling.
-    if (ev.key() == '\n')
+    if (ev.key() == Key::Enter)
     {
         String const entered = d->history.enter();
         DE_FOR_AUDIENCE2(Command, i) i->commandEntered(entered);

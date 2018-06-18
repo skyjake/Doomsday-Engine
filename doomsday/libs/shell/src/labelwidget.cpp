@@ -49,7 +49,7 @@ DE_PIMPL_NOREF(LabelTextWidget)
 
     void updateWraps(int width)
     {
-        wraps.wrapTextToWidth(label, width);
+        wraps.wrapTextToWidth(label, String::CharPos(width));
         if (vertExpand) height->set(wraps.height());
     }
 };

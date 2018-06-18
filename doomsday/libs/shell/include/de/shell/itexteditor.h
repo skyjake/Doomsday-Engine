@@ -34,10 +34,10 @@ public:
     virtual ~ITextEditor() {}
 
     virtual void setText(String const &text) = 0;
-    virtual void setCursor(int pos)          = 0;
+    virtual void setCursor(BytePos bytePos)  = 0;
 
-    virtual String text() const   = 0;
-    virtual int    cursor() const = 0;
+    virtual String  text() const   = 0;
+    virtual BytePos cursor() const = 0;
 };
 
 }} // namespace de::shell

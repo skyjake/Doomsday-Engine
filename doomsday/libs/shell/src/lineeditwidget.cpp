@@ -45,7 +45,11 @@ DE_PIMPL(LineEditTextWidget)
     {
         releaseRef(height);
     }
+
+    DE_PIMPL_AUDIENCE(Enter)
 };
+
+DE_AUDIENCE_METHOD(LineEditTextWidget, Enter)
 
 LineEditTextWidget::LineEditTextWidget(de::String const &name)
     : TextWidget(name)
@@ -61,6 +65,7 @@ LineEditTextWidget::LineEditTextWidget(de::String const &name)
 Vec2i LineEditTextWidget::cursorPosition() const
 {
     de::Rectanglei pos = rule().recti();
+    /// @todo Must calculate CharPos on the line.
     return pos.topLeft + Vec2i(prompt().size(), 0) + lineCursorPos();
 }
 

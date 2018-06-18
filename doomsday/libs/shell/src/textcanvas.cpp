@@ -27,7 +27,7 @@ DE_PIMPL_NOREF(TextCanvas)
 
     struct RichFormat {
         AttribChar::Attribs attrib;
-        Rangei              range;
+        String::ByteRange   range;
     };
     List<RichFormat> richFormats;
 
@@ -99,12 +99,12 @@ DE_PIMPL_NOREF(TextCanvas)
         }
     }
 
-    AttribChar::Attribs richAttribsForTextIndex(int pos, int offset = 0) const
+    AttribChar::Attribs richAttribsForTextIndex(BytePos pos, BytePos offset = BytePos(0)) const
     {
         AttribChar::Attribs attr;
         for (const RichFormat &rf : richFormats)
         {
-            if (rf.range.contains(offset + pos))
+            if (rf.range.contains(pos + offset))
             {
                 attr |= rf.attrib;
             }
@@ -198,7 +198,7 @@ void TextCanvas::clearRichFormat()
     d->richFormats.clear();
 }
 
-void TextCanvas::setRichFormatRange(AttribChar::Attribs const &attribs, Rangei const &range)
+void TextCanvas::setRichFormatRange(AttribChar::Attribs const &attribs, const String::ByteRange &range)
 {
     Impl::RichFormat rf;
     rf.attrib = attribs;
@@ -209,24 +209,26 @@ void TextCanvas::setRichFormatRange(AttribChar::Attribs const &attribs, Rangei c
 void TextCanvas::drawText(Vec2i const &              pos,
                           String const &             text,
                           AttribChar::Attribs const &attribs,
-                          int                        richOffset)
+                          BytePos                    richOffset)
 {
     Vec2i p = pos;
-    duint i = 0;
+//    duint i = 0;
     //for (duint i = 0; i < text.size(); ++i)
-    for (String::const_iterator iter = text.begin(), end = text.end(); iter != end; ++iter, ++i)
+    for (String::const_iterator i = text.begin(), end = text.end(); i != end; ++i/*, ++i*/)
     {
         if (isValid(p))
         {
-            at(p) = AttribChar(*iter, attribs | d->richAttribsForTextIndex(i, richOffset));
+            at(p) = AttribChar(*i, attribs | d->richAttribsForTextIndex(i.pos(), richOffset));
         }
         p.x++;
     }
 }
 
-void TextCanvas::drawWrappedText(Vec2i const &pos, String const &text,
-                                 ILineWrapping const &wraps, AttribChar::Attribs const &attribs,
-                                 Alignment lineAlignment)
+void TextCanvas::drawWrappedText(const Vec2i &              pos,
+                                 const String &             text,
+                                 const ILineWrapping &      wraps,
+                                 const AttribChar::Attribs &attribs,
+                                 const Alignment &          lineAlignment)
 {
     int const width = wraps.width();
 
@@ -243,7 +245,7 @@ void TextCanvas::drawWrappedText(Vec2i const &pos, String const &text,
         {
             x = width/2 - part.sizei()/2;
         }
-        drawText(pos + Vec2i(x, y), part, attribs, span.range.start.index);
+        drawText(pos + Vec2i(x, y), part, attribs, span.range.start);
     }
 }
 

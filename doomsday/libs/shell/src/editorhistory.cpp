@@ -30,9 +30,9 @@ DE_PIMPL(EditorHistory)
      */
     struct Command
     {
-        String text;
-        String original; ///< For undoing editing in history.
-        dsize  cursor;   ///< Index in range [0...text.size()]
+        String  text;
+        String  original; ///< For undoing editing in history.
+        BytePos cursor;   ///< Index in range [0...text.size()]
 
         Command() : cursor(0) {}
     };
@@ -61,7 +61,7 @@ DE_PIMPL(EditorHistory)
         {
             Command cmd;
             cmd.text = cmd.original = line;
-            cmd.cursor = cmd.text.size();
+            cmd.cursor = cmd.text.sizeb();
             history.append(cmd);
         }
         historyPos = history.sizei() - 1;
@@ -118,7 +118,7 @@ DE_PIMPL(EditorHistory)
         {
             Command &cmd = history[i];
             cmd.text = cmd.original;
-            cmd.cursor = de::min(cmd.cursor, cmd.text.size());
+            cmd.cursor = de::min(cmd.cursor, cmd.text.sizeb());
         }
     }
 };

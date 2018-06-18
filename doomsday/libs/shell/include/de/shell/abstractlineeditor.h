@@ -45,6 +45,9 @@ class Lexicon;
 class LIBSHELL_PUBLIC AbstractLineEditor : public ITextEditor
 {
 public:
+    struct LineBytePos { BytePos x; int line; };
+
+public:
     AbstractLineEditor(ILineWrapping *lineWraps);
 
     ILineWrapping const &lineWraps() const;
@@ -60,22 +63,22 @@ public:
     void   setText(String const &lineText);
     String text() const;
 
-    void setCursor(int index);
-    int  cursor() const;
+    void    setCursor(BytePos index);
+    BytePos cursor() const;
 
     /**
      * Determines the position of a specific character on the wrapped lines.
      * The Y component is the wrapped line index and the X component is the
      * character index on that line.
      */
-    Vec2i linePos(int index) const;
+    LineBytePos linePos(BytePos index) const;
 
-    Vec2i lineCursorPos() const { return linePos(cursor()); }
+    LineBytePos lineCursorPos() const { return linePos(cursor()); }
 
-    bool       isSuggestingCompletion() const;
-    Rangei     completionRange() const;
-    StringList suggestedCompletions() const;
-    void       acceptCompletion();
+    bool              isSuggestingCompletion() const;
+    String::ByteRange completionRange() const;
+    StringList        suggestedCompletions() const;
+    void              acceptCompletion();
 
     /**
      * Defines the terms and rules for auto-completion.

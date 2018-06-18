@@ -93,7 +93,7 @@ public:
     virtual int height() const = 0;
 
     /// Returns the advance width of the range.
-    virtual int rangeWidth(const String::ByteRange &range) const = 0;
+    virtual BytePos rangeWidth(const String::ByteRange &range) const = 0;
 
     /**
      * Calculates which index in the provided content range occupies a
@@ -102,7 +102,7 @@ public:
      * @param range  Range within the content.
      * @param width  Advance width to check.
      */
-    virtual int indexAtWidth(const String::ByteRange &range, int width) const = 0;
+    virtual BytePos indexAtWidth(const String::ByteRange &range, BytePos width) const = 0;
 };
 
 } // namespace shell
