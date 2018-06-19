@@ -230,11 +230,11 @@ void TextCanvas::drawWrappedText(const Vec2i &              pos,
                                  const AttribChar::Attribs &attribs,
                                  const Alignment &          lineAlignment)
 {
-    int const width = wraps.width();
+    const int width = wraps.width().index;
 
     for (int y = 0; y < wraps.height(); ++y)
     {
-        WrappedLine const &span = wraps.line(y);
+        const WrappedLine span = wraps.line(y);
         String part = text.substr(span.range);
         int x = 0;
         if (lineAlignment.testFlag(AlignRight))

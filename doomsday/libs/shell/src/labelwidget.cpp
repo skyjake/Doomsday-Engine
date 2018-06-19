@@ -125,7 +125,7 @@ void LabelTextWidget::draw()
 
     // Use the wrapped lines to determine width and height.
     DE_ASSERT(!d->wraps.isEmpty());
-    Vec2i labelSize(d->wraps.width(), d->wraps.height());
+    Vec2i labelSize(d->wraps.width().index, d->wraps.height());
 
     // Determine position of the label based on alignment.
     Vec2i labelPos;

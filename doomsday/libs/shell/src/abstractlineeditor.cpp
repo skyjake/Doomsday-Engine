@@ -62,6 +62,8 @@ DE_PIMPL(AbstractLineEditor)
         completion.reset();
     }
 
+    mb_iterator iterator(BytePos pos) const { return {text.data() + pos, text.data()}; }
+
     WrappedLine lineSpan(int line) const
     {
         DE_ASSERT(line < wraps->height());
@@ -109,13 +111,18 @@ DE_PIMPL(AbstractLineEditor)
         for (pos.line = 0; pos.line < wraps->height(); ++pos.line)
         {
             WrappedLine span = lineSpan(pos.line);
-            if (!span.isFinal) span.range.end--;
+            if (!span.isFinal)
+            {
+                span.range.end = (iterator(span.range.end) - 1).pos();
+            }
             if (mark >= span.range.start && mark <= span.range.end)
             {
                 // Stop here. Mark is on this line.
                 break;
             }
-            pos.x -= (span.range.end - span.range.start + 1).index;
+            pos.x -= span.range.size().index;
+            pos.x = (iterator(pos.x) - 1).pos();
+            //pos.x -= (span.range.end - span.range.start + 1).index;
         }
         return pos;
     }
@@ -133,8 +140,7 @@ DE_PIMPL(AbstractLineEditor)
         DE_ASSERT(lineOff == 1 || lineOff == -1);
 
         const LineBytePos linePos = lineCursorPos();
-        const BytePos     destWidth =
-            wraps->rangeWidth(String::ByteRange(lineSpan(linePos.line).range.start, cursor));
+        const auto destWidth      = wraps->rangeWidth({lineSpan(linePos.line).range.start, cursor});
 
         // Check for no room.
         if (!linePos.line && lineOff < 0) return false;
@@ -143,7 +149,11 @@ DE_PIMPL(AbstractLineEditor)
         // Move cursor onto the adjacent line.
         WrappedLine span = lineSpan(linePos.line + lineOff);
         cursor = wraps->indexAtWidth(span.range, destWidth);
-        if (!span.isFinal) span.range.end--;
+        if (!span.isFinal)
+        {
+            // Step back by one character.
+            span.range.end = (iterator(span.range.end) - 1).pos();
+        }
         if (cursor > span.range.end) cursor = span.range.end;
 
         self().cursorMoved();
@@ -163,9 +173,10 @@ DE_PIMPL(AbstractLineEditor)
         if (rejectCompletion())
             return;
 
-        if (!text.isEmpty() && cursor > 0)
+        if (text && cursor > 0)
         {
-            text.remove(--cursor, 1);
+            cursor = (iterator(cursor) - 1).pos();
+            text.remove(cursor, 1);
             rewrapNow();
         }
     }
@@ -174,7 +185,7 @@ DE_PIMPL(AbstractLineEditor)
     {
         rejectCompletion();
 
-        if (!text.isEmpty() && cursor > 0)
+        if (text && cursor > 0)
         {
             auto to = wordJumpLeft(cursor);
             text.remove(to, cursor - to);
@@ -198,7 +209,7 @@ DE_PIMPL(AbstractLineEditor)
 
         if (cursor > 0)
         {
-            --cursor;
+            cursor = (iterator(cursor) - 1).pos();
             self().cursorMoved();
             return true;
         }
@@ -211,7 +222,7 @@ DE_PIMPL(AbstractLineEditor)
 
         if (cursor < text.size())
         {
-            ++cursor;
+            cursor = (iterator(cursor) + 1).pos();
             self().cursorMoved();
             return true;
         }
@@ -220,9 +231,7 @@ DE_PIMPL(AbstractLineEditor)
 
     BytePos wordJumpLeft(BytePos pos) const
     {
-        //pos = de::min(pos, text.sizeb() - 1);
-
-        mb_iterator iter{text.data() + de::min(pos, text.sizeb() - 1), text.data()};
+        auto iter = iterator(de::min(pos, text.sizeb() - 1));
 
         // First jump over any non-word chars.
         //while (pos > 0 && !text[pos].isLetterOrNumber()) pos--;
@@ -249,7 +258,7 @@ DE_PIMPL(AbstractLineEditor)
         acceptCompletion();
 
         const auto last = text.end();
-        mb_iterator iter{text.data() + cursor};
+        mb_iterator iter = iterator(cursor);
 
         // If inside a word, jump to its end.
         while (iter != last && iswalnum(*iter))
@@ -281,7 +290,11 @@ DE_PIMPL(AbstractLineEditor)
         acceptCompletion();
 
         WrappedLine const span = lineSpan(lineCursorPos().line);
-        cursor = span.range.end - (span.isFinal? 0 : 1);
+        cursor = span.range.end; // - (span.isFinal? 0 : 1);
+        if (!span.isFinal)
+        {
+            cursor = (iterator(cursor) - 1).pos();
+        }
         self().cursorMoved();
     }
 
@@ -294,14 +307,13 @@ DE_PIMPL(AbstractLineEditor)
     bool suggestingCompletion() const
     {
         return suggesting;
-        //return completion.size > 0;
     }
 
     String wordBehindPos(BytePos pos) const
     {
         String word;
         /// @todo Could alternatively find a range and do a single insertion...
-        mb_iterator iter{text.data() + pos, text.data()};
+        mb_iterator iter = iterator(pos);
         --iter;
         while (iter.pos() >= 0 && lexicon.isWordChar(*iter))
         {
@@ -372,14 +384,9 @@ DE_PIMPL(AbstractLineEditor)
                 }
                 if (!suggestions.isEmpty())
                 {
-                    completion.ordinal = -1; //(forwardCycle? 0 : suggestions.size() - 1);
-                    /*String comp = suggestions[completion.ordinal];
-                    comp.remove(0, base.size());*/
+                    completion.ordinal = -1;
                     completion.pos = cursor;
-                    completion.size = 0; //comp.size();
-                    //text.insert(cursor, comp);
-                    //cursor += completion.size;
-                    //rewrapNow();
+                    completion.size = 0;
                     suggesting = true;
                     // Notify immediately.
                     self().autoCompletionBegan(base);

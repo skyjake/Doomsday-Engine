@@ -68,10 +68,12 @@ inline Address checkPort(Address const &address)
 struct LIBSHELL_PUBLIC WrappedLine
 {
     String::ByteRange range;
-    bool isFinal;
+    String::CharPos   width;
+    bool              isFinal;
 
-    WrappedLine(const String::ByteRange &range_, bool final = false)
-        : range(range_)
+    WrappedLine(const String::ByteRange &range, const String::CharPos &width, bool final = false)
+        : range(range)
+        , width(width)
         , isFinal(final)
     {}
 };
@@ -81,19 +83,19 @@ class LIBSHELL_PUBLIC ILineWrapping
 public:
     virtual ~ILineWrapping() {}
 
-    virtual bool isEmpty() const = 0;
-    virtual void clear() = 0;
-    virtual void wrapTextToWidth(String const &text, String::CharPos maxWidth) = 0;
-    virtual WrappedLine line(int index) const = 0;
+    virtual bool        isEmpty() const                                               = 0;
+    virtual void        clear()                                                       = 0;
+    virtual void        wrapTextToWidth(String const &text, String::CharPos maxWidth) = 0;
+    virtual WrappedLine line(int index) const                                         = 0;
 
     /// Determines the visible maximum width of the wrapped content.
-    virtual int width() const = 0;
+    virtual String::CharPos width() const = 0;
 
     /// Determines the number of lines in the wrapped content.
     virtual int height() const = 0;
 
     /// Returns the advance width of the range.
-    virtual BytePos rangeWidth(const String::ByteRange &range) const = 0;
+    virtual String::CharPos rangeWidth(const String::ByteRange &range) const = 0;
 
     /**
      * Calculates which index in the provided content range occupies a
@@ -102,7 +104,7 @@ public:
      * @param range  Range within the content.
      * @param width  Advance width to check.
      */
-    virtual BytePos indexAtWidth(const String::ByteRange &range, BytePos width) const = 0;
+    virtual BytePos indexAtWidth(const String::ByteRange &range, String::CharPos width) const = 0;
 };
 
 } // namespace shell

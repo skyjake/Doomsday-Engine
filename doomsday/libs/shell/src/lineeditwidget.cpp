@@ -65,8 +65,12 @@ LineEditTextWidget::LineEditTextWidget(de::String const &name)
 Vec2i LineEditTextWidget::cursorPosition() const
 {
     de::Rectanglei pos = rule().recti();
-    /// @todo Must calculate CharPos on the line.
-    return pos.topLeft + Vec2i(prompt().size(), 0) + lineCursorPos();
+    // Calculate CharPos on the cursor's line.
+    const auto      linePos     = lineCursorPos();
+    const auto      curLineSpan = lineWraps().line(linePos.line);
+    String::CharPos x           = lineWraps().rangeWidth({curLineSpan.range.start, linePos.x});
+    int             y           = linePos.line;
+    return pos.topLeft + Vec2i(prompt().sizei(), 0) + Vec2i(x.index, y);
 }
 
 void LineEditTextWidget::viewResized()
@@ -104,7 +108,7 @@ void LineEditTextWidget::draw()
     {
         txt = String(txt.size(), '*');
     }
-    buf.drawWrappedText(Vec2i(prompt().size(), 0), txt, lineWraps(), attr);
+    buf.drawWrappedText(Vec2i(prompt().sizei(), 0), txt, lineWraps(), attr);
 
     targetCanvas().draw(buf, pos.topLeft);
 }

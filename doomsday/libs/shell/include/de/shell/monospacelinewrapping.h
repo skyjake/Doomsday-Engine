@@ -49,13 +49,14 @@ public:
      */
     void wrapTextToWidth(String const &text, String::CharPos maxWidth);
 
-    WrappedLine line(int index) const { return _lines[index]; }
-    int         width() const;
-    int         height() const;
-    BytePos     rangeWidth(const String::ByteRange &range) const;
-    BytePos     indexAtWidth(const String::ByteRange &range, BytePos width) const;
+    WrappedLine     line(int index) const { return _lines[index]; }
+    String::CharPos width() const;
+    int             height() const;
+    String::CharPos rangeWidth(const String::ByteRange &range) const;
+    BytePos         indexAtWidth(const String::ByteRange &range, String::CharPos width) const;
 
 private:
+    String            _text;
     List<WrappedLine> _lines;
 };
 
