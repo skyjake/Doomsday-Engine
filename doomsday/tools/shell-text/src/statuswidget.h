@@ -24,8 +24,6 @@
 
 class StatusWidget : public de::shell::TextWidget
 {
-    Q_OBJECT
-
 public:
     StatusWidget(de::String const &name = de::String());
 
@@ -39,11 +37,6 @@ public:
     void setGameState(de::String const &mode, de::String const &rules, de::String const &mapId);
 
     void draw();
-
-public slots:
-    void refresh();
-    void linkConnected();
-    void linkDisconnected();
 
 private:
     DE_PRIVATE(d)

@@ -24,8 +24,6 @@
 
 class ShellApp : public CursesApp
 {
-    Q_OBJECT
-
 public:
     ShellApp(int &argc, char **argv);
 
@@ -33,7 +31,6 @@ public:
 
     void openConnection(de::String const &address);
 
-public slots:
     void showAbout();
     void askToOpenConnection();
     void askToStartLocalServer();

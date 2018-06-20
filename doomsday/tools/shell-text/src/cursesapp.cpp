@@ -16,16 +16,17 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <QTimer>
-#include <QProcess>
-#include <QTextStream>
-#include <QDebug>
+//#include <QProcess>
+//#include <QTextStream>
+//#include <QDebug>
 #include "cursesapp.h"
 #include "cursestextcanvas.h"
 #include <curses.h>
 #include <stdio.h>
+#include <sstream>
 #include <signal.h>
 #include <de/Clock>
+#include <de/Timer>
 #include <de/Error>
 #include <de/Animation>
 #include <de/Rule>
@@ -42,15 +43,15 @@ static void windowResized(int)
     ungetch(KEY_RESIZE);
 }
 
-static QByteArray runSystemCommand(char const *cmd)
+static de::String runSystemCommand(char const *cmd)
 {
-    QByteArray result;
+    de::String result;
     FILE *p = popen(cmd, "r");
-    forever
+    for (;;)
     {
         int c = fgetc(p);
         if (c == EOF) break;
-        result.append(c);
+        result.append(char(c));
     }
     pclose(p);
     return result;
@@ -67,8 +68,8 @@ static QByteArray runSystemCommand(char const *cmd)
 static de::Vec2ui actualTerminalSize(de::Vec2ui const &oldSize)
 {
     de::Vec2ui size = oldSize;
-    QByteArray result = runSystemCommand("stty size");
-    QTextStream is(result);
+    const auto result = runSystemCommand("stty size");
+    std::istringstream is(result.toStdString());
     is >> size.y >> size.x;
     return size;
 }
@@ -81,11 +82,11 @@ DE_PIMPL(CursesApp)
     // Curses state:
     WINDOW *rootWin;
     de::Vec2ui rootSize;
-    int unicodeContinuation;
+    int unicodeContinuation = 0;
 
-    TextRootWidget *rootWidget;
+    TextRootWidget *rootWidget = nullptr;
 
-    Impl(Public &i) : Base(i), unicodeContinuation(0), rootWidget(0)
+    Impl(Public &i) : Base(i)
     {
         logBuffer.enableStandardOutput(false);
         logBuffer.setAutoFlushInterval(0.1);
@@ -107,8 +108,8 @@ DE_PIMPL(CursesApp)
 
         shutdownCurses();
 
-        de::Clock::setAppClock(0);
-        de::Animation::setClock(0);
+        de::Clock::setAppClock(nullptr);
+        de::Animation::setClock(nullptr);
     }
 
     void initCurses()
@@ -116,8 +117,8 @@ DE_PIMPL(CursesApp)
         // Initialize curses.
         if (!(rootWin = initscr()))
         {
-            qFatal("Failed initializing curses.");
-            return;
+            de::warning("Failed initializing curses!");
+            exit(-1);
         }
         initCursesState();
 
@@ -147,7 +148,7 @@ DE_PIMPL(CursesApp)
     void shutdownCurses()
     {
         delwin(rootWin);
-        rootWin = 0;
+        rootWin = nullptr;
 
         endwin();
         refresh();
@@ -195,7 +196,7 @@ DE_PIMPL(CursesApp)
             }
             else if ((key & KEY_CODE_YES) || key < 0x20 || key == 0x7f)
             {
-                int code = 0;
+                Key code = Key::None;
                 KeyEvent::Modifiers mods;
 
                 // Control keys.
@@ -203,150 +204,150 @@ DE_PIMPL(CursesApp)
                 {
                 case KEY_ENTER:
                 case 0xd: // Enter
-                    code = Qt::Key_Enter;
+                    code = Key::Enter;
                     break;
 
                 case 0x7f: // Delete
-                    code = Qt::Key_Backspace;
+                    code = Key::Backspace;
                     break;
 
                 case 0x3: // Ctrl-C
-                    code = Qt::Key_C;
-                    mods = KeyEvent::Control;
+                    code = Key::Break; //Qt::Key_C;
+                    //mods = KeyEvent::Control;
                     break;
 
                 case KEY_DC:
                 case 0x4: // Ctrl-D
-                    code = Qt::Key_Delete;
+                    code = Key::Delete;
                     break;
 
                 case KEY_BACKSPACE:
-                    code = Qt::Key_Backspace;
+                    code = Key::Backspace; //Qt::Key_Backspace;
                     break;
 
                 case 0x9:
-                    code = Qt::Key_Tab;
+                    code = Key::Tab; //Qt::Key_Tab;
                     break;
 
                 case KEY_BTAB: // back-tab
-                    code = Qt::Key_Backtab;
+                    code = Key::Backtab;
                     break;
 
                 case KEY_LEFT:
-                    code = Qt::Key_Left;
+                    code = Key::Left;
                     break;
 
                 case KEY_RIGHT:
-                    code = Qt::Key_Right;
+                    code = Key::Right;
                     break;
 
                 case KEY_UP:
-                    code = Qt::Key_Up;
+                    code = Key::Up;
                     break;
 
                 case KEY_DOWN:
-                    code = Qt::Key_Down;
+                    code = Key::Down;
                     break;
 
                 case KEY_HOME:
                 case 0x1: // Ctrl-A
-                    code = Qt::Key_Home;
+                    code = Key::Home;
                     break;
 
                 case KEY_END:
                 case 0x5: // Ctrl-E
-                    code = Qt::Key_End;
+                    code = Key::End;
                     break;
 
                 case KEY_NPAGE:
                 case 0x16: // Ctrl-V
-                    code = Qt::Key_PageDown;
+                    code = Key::PageDown;
                     break;
 
                 case KEY_PPAGE:
                 case 0x19: // Ctrl-Y
-                    code = Qt::Key_PageUp;
+                    code = Key::PageUp;
                     break;
 
                 case 0xb:
-                    code = Qt::Key_K;
-                    mods = KeyEvent::Control;
+                    code = Key::Kill;
+                    //mods = KeyEvent::Control;
                     break;
 
                 case KEY_F(1):
-                    code = Qt::Key_F1;
+                    code = Key::F1;
                     break;
 
                 case KEY_F(2):
-                    code = Qt::Key_F2;
+                    code = Key::F2;
                     break;
 
                 case KEY_F(3):
-                    code = Qt::Key_F3;
+                    code = Key::F3;
                     break;
 
                 case KEY_F(4):
-                    code = Qt::Key_F4;
+                    code = Key::F4;
                     break;
 
                 case KEY_F(5):
-                    code = Qt::Key_F5;
+                    code = Key::F5;
                     break;
 
                 case KEY_F(6):
-                    code = Qt::Key_F6;
+                    code = Key::F6;
                     break;
 
                 case KEY_F(7):
-                    code = Qt::Key_F7;
+                    code = Key::F7;
                     break;
 
                 case KEY_F(8):
-                    code = Qt::Key_F8;
+                    code = Key::F8;
                     break;
 
                 case KEY_F(9):
-                    code = Qt::Key_F9;
+                    code = Key::F9;
                     break;
 
                 case KEY_F(10):
-                    code = Qt::Key_F10;
+                    code = Key::F10;
                     break;
 
                 case KEY_F(11):
-                    code = Qt::Key_F11;
+                    code = Key::F11;
                     break;
 
                 case KEY_F(12):
-                    code = Qt::Key_F12;
+                    code = Key::F12;
                     break;
 
                 case 0x18:
-                    code = Qt::Key_X;
-                    mods = KeyEvent::Control;
+                    code = Key::Cancel; //Qt::Key_X;
+                    //mods = KeyEvent::Control;
                     break;
 
                 case 0x1a:
-                    code = Qt::Key_Z;
-                    mods = KeyEvent::Control;
+                    code = Key::Substitute; //Qt::Key_Z;
+                    //mods = KeyEvent::Control;
                     break;
 
                 case 0x1b:
-                    code = Qt::Key_Escape;
+                    code = Key::Escape;
                     break;
 
                 default:
 #ifdef _DEBUG
                     if (key & KEY_CODE_YES)
-                        qDebug() << "CURSES" << QString("0%1").arg(key, 0, 8).toLatin1().constData();
+                        de::debug("CURSES 0x%x", key);
                     else
                         // This key code is ignored.
-                        qDebug() << QString("%1").arg(key, 0, 16);
+                        de::debug("0x%x", key);
 #endif
                     break;
                 }
 
-                if (code)
+                if (code != Key::None)
                 {
                     rootWidget->processEvent(KeyEvent(code, mods));
                 }

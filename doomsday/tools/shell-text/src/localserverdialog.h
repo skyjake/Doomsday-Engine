@@ -20,9 +20,9 @@
 #define LOCALSERVERDIALOG_H
 
 #include <de/libcore.h>
-#include <de/shell/InputDialog>
+#include <de/shell/InputDialogTedget>
 
-class LocalServerDialog : public de::shell::InputDialog
+class LocalServerDialog : public de::shell::InputDialogTedget
 {
 public:
     LocalServerDialog();

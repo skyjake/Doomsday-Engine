@@ -19,21 +19,17 @@
 #ifndef CURSESAPP_H
 #define CURSESAPP_H
 
-#include <QCoreApplication>
 #include <de/shell/TextRootWidget>
 
 class CursesApp : public QCoreApplication
 {
-    Q_OBJECT
-
 public:
     CursesApp(int &argc, char **argv);
 
-    bool notify(QObject *receiver, QEvent *event);
+//    bool notify(QObject *receiver, QEvent *event);
 
     de::shell::TextRootWidget &rootWidget();
 
-protected slots:
     void refresh();
 
 private:

@@ -18,11 +18,11 @@
 
 #include "openconnectiondialog.h"
 #include "persistentdata.h"
-#include <de/shell/LineEditWidget>
+#include <de/shell/LineEditTedget>
 
 using namespace de;
 
-OpenConnectionDialog::OpenConnectionDialog(String const &name) : shell::InputDialog(name)
+OpenConnectionDialog::OpenConnectionDialog(String const &name) : shell::InputDialogTedget(name)
 {
     setDescription(tr("Enter the address of the server you want to connect to. "
                       "The address can be a domain name or an IP address. "

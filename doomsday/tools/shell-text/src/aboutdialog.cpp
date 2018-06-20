@@ -17,19 +17,19 @@
  */
 
 #include "aboutdialog.h"
-#include <de/shell/LabelWidget>
+#include <de/shell/LabelTedget>
 
 using namespace de;
 using namespace de::shell;
 
 AboutDialog::AboutDialog()
 {
-    LabelWidget *label = new LabelWidget;
-    label->setLabel(tr("Doomsday Shell %1\nCopyright (c) %2\n\n"
+    LabelTedget *label = new LabelTedget;
+    label->setLabel(String::format("Doomsday Shell %s\nCopyright (c) %s\n\n"
                        "The Shell is a utility for controlling and monitoring "
-                       "Doomsday servers using a text-based (curses) user interface.")
-                    .arg(SHELL_VERSION)
-                    .arg("2013-2018 Deng Team"));
+                                   "Doomsday servers using a text-based (curses) user interface.",
+                                   SHELL_VERSION,
+                                   "2013-2018 Deng Team"));
 
     label->setExpandsToFitLines(true);
     label->rule()
@@ -48,6 +48,5 @@ bool AboutDialog::handleEvent(Event const &event)
         accept();
         return true;
     }
-
-    return DialogWidget::handleEvent(event);
+    return DialogTedget::handleEvent(event);
 }

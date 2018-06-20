@@ -19,10 +19,10 @@
 #include "localserverdialog.h"
 #include "persistentdata.h"
 #include <de/shell/TextRootWidget>
-#include <de/shell/LabelWidget>
-#include <de/shell/MenuWidget>
-#include <de/shell/ChoiceWidget>
-#include <de/shell/LineEditWidget>
+#include <de/shell/LabelTedget>
+#include <de/shell/MenuTedget>
+#include <de/shell/ChoiceTedget>
+#include <de/shell/LineEditTedget>
 #include <de/shell/DoomsdayInfo>
 
 using namespace de;
@@ -30,26 +30,26 @@ using namespace de::shell;
 
 DE_PIMPL_NOREF(LocalServerDialog)
 {
-    ChoiceWidget *choice;
-    LineEditWidget *port;
+    ChoiceTedget *choice;
+    LineEditTedget *port;
 };
 
 LocalServerDialog::LocalServerDialog() : d(new Impl)
 {
-    add(d->choice = new ChoiceWidget  ("gameMode"));
-    add(d->port   = new LineEditWidget("serverPort"));
+    add(d->choice = new ChoiceTedget  ("gameMode"));
+    add(d->port   = new LineEditTedget("serverPort"));
 
     // Define the contents for the choice list.
-    ChoiceWidget::Items modes;
-    foreach (DoomsdayInfo::Game const &game, DoomsdayInfo::allGames())
+    ChoiceTedget::Items modes;
+    for (const DoomsdayInfo::Game &game : DoomsdayInfo::allGames())
     {
         modes << game.title;
     }
     d->choice->setItems(modes);
-    d->choice->setPrompt(tr("Game mode: "));
-    d->choice->setBackground(TextCanvas::Char(' ', TextCanvas::Char::Reverse));
+    d->choice->setPrompt("Game mode: ");
+    d->choice->setBackground(TextCanvas::AttribChar(' ', TextCanvas::AttribChar::Reverse));
 
-    setFocusCycle(WidgetList() << d->choice << d->port << &lineEdit() << &menu());
+    setFocusCycle({d->choice, d->port, &lineEdit(), &menu()});
 
     d->choice->rule()
             .setInput(Rule::Height, Const(1))
@@ -57,7 +57,7 @@ LocalServerDialog::LocalServerDialog() : d(new Impl)
             .setInput(Rule::Left,   rule().left())
             .setInput(Rule::Top,    label().rule().bottom() + 1);
 
-    d->port->setPrompt(tr("TCP port: "));
+    d->port->setPrompt("TCP port: ");
 
     d->port->rule()
             .setInput(Rule::Width,  Const(16))
@@ -74,21 +74,21 @@ LocalServerDialog::LocalServerDialog() : d(new Impl)
                     lineEdit().rule().height() +
                     menu().rule()    .height() + 3);
 
-    setDescription(tr("Specify the settings for starting a new local server."));
+    setDescription("Specify the settings for starting a new local server.");
 
-    setPrompt(tr("Options: "));
+    setPrompt("Options: ");
 
-    setAcceptLabel(tr("Start local server"));
+    setAcceptLabel("Start local server");
 
     // Values.
     d->choice->select (PersistentData::geti("LocalServer/gameMode"));
-    d->port->setText  (PersistentData::get ("LocalServer/port", QString::number(DEFAULT_PORT)));
+    d->port->setText  (PersistentData::get ("LocalServer/port", String::asText(DEFAULT_PORT)));
     lineEdit().setText(PersistentData::get ("LocalServer/options"));
 }
 
 duint16 LocalServerDialog::port() const
 {
-    return d->port->text().toInt();
+    return duint16(d->port->text().toInt());
 }
 
 String LocalServerDialog::gameMode() const
@@ -98,14 +98,14 @@ String LocalServerDialog::gameMode() const
 
 void LocalServerDialog::prepare()
 {
-    InputDialog::prepare();
+    InputDialogTedget::prepare();
 
     root().setFocus(d->choice);
 }
 
 void LocalServerDialog::finish(int result)
 {
-    InputDialog::finish(result);
+    InputDialogTedget::finish(result);
 
     if (result)
     {

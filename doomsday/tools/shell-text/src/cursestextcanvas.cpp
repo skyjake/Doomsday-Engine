@@ -18,11 +18,13 @@
 
 #include "cursestextcanvas.h"
 
+using namespace de;
+
 DE_PIMPL_NOREF(CursesTextCanvas)
 {
     WINDOW *window;
-    Coord origin;
-    de::Vec2i cursorPos;
+    Coord   origin;
+    Vec2i   cursorPos;
 
     Impl(WINDOW *window, Coord const &originInWindow)
         : window(window), origin(originInWindow)
@@ -33,7 +35,7 @@ CursesTextCanvas::CursesTextCanvas(Size const &size, WINDOW *window, Coord const
     : TextCanvas(size), d(new Impl(window, originInWindow))
 {}
 
-void CursesTextCanvas::setCursorPosition(const de::Vec2i &pos)
+void CursesTextCanvas::setCursorPosition(const Vec2i &pos)
 {
     d->cursorPos = pos;
 }
@@ -43,14 +45,14 @@ void CursesTextCanvas::show()
     Size const dims = size();
 
     // All dirty characters are drawn.
-    for (de::duint row = 0; row < dims.y; ++row)
+    for (duint row = 0; row < dims.y; ++row)
     {
         bool needMove = true;
 
-        for (de::duint col = 0; col < dims.x; ++col)
+        for (duint col = 0; col < dims.x; ++col)
         {
-            Coord const pos(col, row);
-            Char const &ch = at(pos);
+            const Coord pos(col, row);
+            const AttribChar &ch = at(pos);
 
             if (!ch.isDirty())
             {
@@ -67,13 +69,13 @@ void CursesTextCanvas::show()
 
             // Set attributes.
             wattrset(d->window,
-                     (ch.attribs.testFlag(Char::Bold)?      A_BOLD : 0) |
-                     (ch.attribs.testFlag(Char::Reverse)?   A_REVERSE : 0) |
-                     (ch.attribs.testFlag(Char::Underline)? A_UNDERLINE : 0) |
-                     (ch.attribs.testFlag(Char::Blink)?     A_BLINK : 0));
+                     (ch.attribs.testFlag(AttribChar::Bold)?      A_BOLD : 0) |
+                     (ch.attribs.testFlag(AttribChar::Reverse)?   A_REVERSE : 0) |
+                     (ch.attribs.testFlag(AttribChar::Underline)? A_UNDERLINE : 0) |
+                     (ch.attribs.testFlag(AttribChar::Blink)?     A_BLINK : 0));
 
             /// @todo What about Unicode output? (libncursesw?)
-            waddch(d->window, ch.ch.toLatin1()); // cursor advanced
+            waddch(d->window, ch.ch); // cursor advanced
         }
     }
 

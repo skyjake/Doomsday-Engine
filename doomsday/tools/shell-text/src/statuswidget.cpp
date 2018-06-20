@@ -17,7 +17,7 @@
  */
 
 #include "statuswidget.h"
-#include <QTimer>
+#include <de/Timer>
 #include <de/shell/TextRootWidget>
 
 using namespace de;
@@ -25,22 +25,39 @@ using namespace de::shell;
 
 DE_PIMPL(StatusWidget)
 {
-    Link *link;
-    QTimer *updateTimer;
+    Link * link;
+    Timer  updateTimer;
     String gameMode;
     String rules;
     String mapId;
 
-    Impl(Public &i) : Base(i), link(0)
+    Impl(Public &i) : Base(i), link(nullptr)
     {
-        updateTimer = new QTimer(thisPublic);
+        //updateTimer = new QTimer(thisPublic);
+    }
+
+    void refresh()
+    {
+        self().redraw();
+    }
+
+    void linkConnected()
+    {
+        updateTimer.start(1000);
+        self().redraw();
+    }
+
+    void linkDisconnected()
+    {
+        updateTimer.stop();
+        self().redraw();
     }
 };
 
 StatusWidget::StatusWidget(String const &name)
     : TextWidget(name), d(new Impl(*this))
 {
-    connect(d->updateTimer, SIGNAL(timeout()), this, SLOT(refresh()));
+    d->updateTimer.audienceForTrigger() += [this]() { d->refresh(); };
 }
 
 void StatusWidget::setShellLink(Link *link)
@@ -50,9 +67,9 @@ void StatusWidget::setShellLink(Link *link)
     if (link)
     {
         // Observe changes in link status.
-        connect(link, SIGNAL(addressResolved()), this, SLOT(refresh()));
-        connect(link, SIGNAL(connected()), this, SLOT(linkConnected()));
-        connect(link, SIGNAL(disconnected()), this, SLOT(linkDisconnected()));
+        link->audienceForAddressResolved() += [this]() { d->refresh(); };
+        link->audienceForConnected()       += [this]() { d->linkConnected(); };
+        link->audienceForDisconnected()    += [this]() { d->linkDisconnected(); };
     }
 
     root().requestDraw();
@@ -74,21 +91,21 @@ void StatusWidget::draw()
 
     if (!d->link || d->link->status() == Link::Disconnected)
     {
-        String msg = tr("Not connected to a server");
-        buf.drawText(Vec2i(buf.size().x/2 - msg.size()/2), msg /*, TextCanvas::Char::Bold*/);
+        String msg = "Not connected to a server";
+        buf.drawText(Vec2i(buf.size().x/2 - msg.lengthi()/2), msg /*, TextCanvas::Char::Bold*/);
     }
     else if (d->link->status() == Link::Connecting)
     {
         String msg;
         if (!d->link->address().isNull())
         {
-            msg = tr("Connecting to ") + d->link->address().asText();
+            msg = "Connecting to " + d->link->address().asText();
         }
         else
         {
-            msg = tr("Looking up host...");
+            msg = "Looking up host...";
         }
-        buf.drawText(Vec2i(buf.size().x/2 - msg.size()/2), msg);
+        buf.drawText(Vec2i(buf.size().x/2 - msg.lengthi()/2), msg);
     }
     else if (d->link->status() == Link::Connected)
     {
@@ -98,13 +115,13 @@ void StatusWidget::draw()
         buf.drawText(Vec2i(1, 0), msg);
 
         TimeSpan elapsed = d->link->connectedAt().since();
-        String time = String("| %1:%2:%3")
-                .arg(int(elapsed.asHours()))
-                .arg(int(elapsed.asMinutes()) % 60, 2, 10, QLatin1Char('0'))
-                .arg(int(elapsed) % 60, 2, 10, QLatin1Char('0'));
+        String time = String::format("| %d:%02d:%02d",
+                int(elapsed.asHours()),
+                int(elapsed.asMinutes()) % 60,
+                int(elapsed) % 60);
         String host = "| " + d->link->address().asText();
 
-        int x = buf.size().x - time.size() - 1;
+        int x = buf.size().x - time.lengthi() - 1;
         buf.drawText(x, time);
 
         x -= host.size() + 1;
@@ -114,20 +131,4 @@ void StatusWidget::draw()
     targetCanvas().draw(buf, pos.topLeft);
 }
 
-void StatusWidget::refresh()
-{
-    redraw();
-}
-
-void StatusWidget::linkConnected()
-{
-    d->updateTimer->start(1000);
-    redraw();
-}
-
-void StatusWidget::linkDisconnected()
-{
-    d->updateTimer->stop();
-    redraw();
-}
 

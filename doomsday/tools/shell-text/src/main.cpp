@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 {
     int result;
     {
-        ShellApp a(argc, argv);
+        ShellApp a(de::makeList(argc, argv));
         result = a.exec();
     }
 #ifdef DE_DEBUG

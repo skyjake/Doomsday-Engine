@@ -22,33 +22,33 @@
 #include "localserverdialog.h"
 #include "aboutdialog.h"
 #include "persistentdata.h"
-#include <de/shell/LabelWidget>
-#include <de/shell/MenuWidget>
-#include <de/shell/CommandLineWidget>
-#include <de/shell/LogWidget>
+
+#include <de/shell/LabelTextWidget>
+#include <de/shell/MenuTextWidget>
+#include <de/shell/CommandLineTextWidget>
+#include <de/shell/LogTextWidget>
 #include <de/shell/Action>
 #include <de/shell/Link>
 #include <de/shell/LocalServer>
 #include <de/shell/ServerFinder>
+
 #include <de/LogBuffer>
-#include <QStringList>
-#include <QTimer>
 
 using namespace de;
 using namespace shell;
 
 DE_PIMPL(ShellApp)
 {
-    PersistentData persist;
-    MenuWidget *menu;
-    LogWidget *log;
-    CommandLineWidget *cli;
-    LabelWidget *menuLabel;
-    StatusWidget *status;
-    Link *link;
-    ServerFinder finder;
+    PersistentData         persist;
+    MenuTextWidget *       menu;
+    LogTextWidget *        log;
+    CommandLineTextWidget *cli;
+    LabelTextWidget *      menuLabel;
+    StatusWidget *         status;
+    Link *                 link = nullptr;
+    ServerFinder           finder;
 
-    Impl(Public &i) : Base(i), link(0)
+    Impl(Public &i) : Base(i)
     {
         RootWidget &root = self().rootWidget();
 
@@ -61,10 +61,10 @@ DE_PIMPL(ShellApp)
                 .setInput(Rule::Left,   root.viewLeft());
 
         // Menu button at the left edge.
-        menuLabel = new LabelWidget;
+        menuLabel = new LabelTextWidget;
         menuLabel->setAlignment(AlignTop);
-        menuLabel->setLabel(tr(" F9:Menu "));
-        menuLabel->setAttribs(TextCanvas::Char::Bold);
+        menuLabel->setLabel(" F9:Menu ");
+        menuLabel->setAttribs(TextCanvas::AttribChar::Bold);
         menuLabel->rule()
                 .setInput(Rule::Left,   root.viewLeft())
                 .setInput(Rule::Width,  Const(menuLabel->label().size()))
@@ -76,7 +76,7 @@ DE_PIMPL(ShellApp)
         menuLabel->addAction(new shell::Action(KeyEvent(Qt::Key_X, KeyEvent::Control), thisPublic, SLOT(quit())));
 
         // Expanding command line widget.
-        cli = new CommandLineWidget;
+        cli = new CommandLineTextWidget;
         cli->rule()
                 .setInput(Rule::Left,   menuLabel->rule().right())
                 .setInput(Rule::Right,  root.viewRight())
@@ -85,7 +85,7 @@ DE_PIMPL(ShellApp)
         menuLabel->rule().setInput(Rule::Top, cli->rule().top());
 
         // Log history covers the rest of the view.
-        log = new LogWidget;
+        log = new LogTextWidget;
         log->rule()
                 .setInput(Rule::Left,   root.viewLeft())
                 .setInput(Rule::Width,  root.viewWidth())
@@ -95,7 +95,7 @@ DE_PIMPL(ShellApp)
         log->addAction(new shell::Action(KeyEvent(Qt::Key_F5), log, SLOT(scrollToBottom())));
 
         // Main menu.
-        menu = new MenuWidget(MenuWidget::Popup);
+        menu = new MenuTextWidget(MenuTextWidget::Popup);
         menu->appendItem(new shell::Action(tr("Connect to..."),
                                     thisPublic, SLOT(askToOpenConnection())));
         menu->appendItem(new shell::Action(tr("Disconnect"), thisPublic, SLOT(closeConnection())));
