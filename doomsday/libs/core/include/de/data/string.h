@@ -1,7 +1,6 @@
-/*
- * The Doomsday Engine Project -- libcore
+/** @file string.h  Multibyte string.
  *
- * Copyright © 2004-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2004-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -29,7 +28,7 @@
 
 namespace de {
 
-template <typename T> struct Range;
+template <typename> struct Range;
 class RegExp;
 class CString;
 class String;
@@ -120,11 +119,9 @@ struct DE_PUBLIC mb_iterator
 };
 
 /**
- * The String class extends the QString class with Block conversion and
- * other convenience methods.
+ * Multibyte string.
  *
- * The default codec when converting strings from C strings is UTF-8 (e.g.,
- * constructor that takes a <code>const char *</code> as the only argument).
+ * Supports byte access via IByteArray. The default character encoding is UTF-8.
  *
  * @ingroup types
  */
@@ -185,6 +182,9 @@ public:
     using BytePos = de::BytePos;
     using ByteRange = Range<BytePos>;
 
+    /**
+     * Character index. A single character may be composed of multiple bytes.
+     */
     struct CharPos {
         dsize index;
 
@@ -260,9 +260,13 @@ public:
     }
 
     inline BytePos sizeb() const { return BytePos{size_String(&_str)}; }
-    inline CharPos sizec() const { return CharPos(length_String(&_str)); }
     inline dint    sizei() const { return dint(size_String(&_str)); }
     inline dsize   sizeu() const { return size_String(&_str); }
+    inline CharPos sizec() const { return CharPos(length()); }
+
+    /// Calculates the length of the string in characters.
+    inline dsize length() const { return length_String(&_str); }
+    inline dint lengthi() const { return dint(length_String(&_str)); }
 
     void resize(size_t newSize);
 
@@ -608,82 +612,8 @@ public:
     void set(Offset at, const Byte *values, Size count);
 
 public:
-    // Iterators:
-
-#if 0
-    struct const_iterator
-    {
-        iStringConstIterator iter;
-
-        operator const char *() const { return iter.pos; }
-        operator Char() const { return iter.value; }
-
-        Char operator*() const { return iter.value; }
-        const_iterator &operator++()
-        {
-            next_StringConstIterator(&iter);
-            return *this;
-        }
-        const_iterator operator++(int)
-        {
-            const_iterator prior = *this;
-            next_StringConstIterator(&iter);
-            return prior;
-        }
-        const_iterator operator+(int count) const
-        {
-            const_iterator i = *this;
-            while (count-- > 0) i++;
-            return i;
-        }
-        const_iterator &operator+=(int count)
-        {
-            while (count-- > 0) next_StringConstIterator(&iter);
-            return *this;
-        }
-        bool operator<(const const_iterator &other) const {
-            return iter.pos < other.iter.pos;
-        }
-        bool operator>=(const const_iterator &other) const {
-            return iter.pos >= other.iter.pos;
-        }
-        bool operator==(const const_iterator &other) const {
-            return iter.str == other.iter.str && iter.pos == other.iter.pos;
-        }
-        bool operator!=(const const_iterator &other) const { return !(*this == other); }
-        BytePos bytePos() const { return BytePos(iter.pos - cstr_String(iter.str)); }
-    };
-
-    struct const_reverse_iterator
-    {
-        iStringReverseConstIterator iter;
-
-        operator const char *() { return iter.pos; }
-        operator Char() const { return iter.value; }
-
-        Char operator*() const { return iter.value; }
-        const_reverse_iterator &operator++()
-        {
-            next_StringReverseConstIterator(&iter);
-            return *this;
-        }
-        const_reverse_iterator operator++(int)
-        {
-            const_reverse_iterator prior = *this;
-            next_StringReverseConstIterator(&iter);
-            return prior;
-        }
-        bool operator==(const const_reverse_iterator &other) const
-        {
-            return iter.str == other.iter.str && iter.pos == other.iter.pos;
-        }
-        bool operator!=(const const_reverse_iterator &other) const { return !(*this == other); }
-        BytePos bytePos() const { return BytePos(iter.pos - cstr_String(iter.str)); }
-    };
-#endif
-
+    // Iterators.
     using const_iterator = mb_iterator;
-
     struct DE_PUBLIC const_reverse_iterator
     {
         mb_iterator iter;
@@ -782,8 +712,6 @@ public:
     static String fromCP437(const IByteArray &byteArray);
 
     static String fromPercentEncoding(const Block &percentEncoded);
-
-//    static dint compareWithCase(const QChar *a, const QChar *b, dsize count);
 
     /**
      * Checks if two strings are the same (case sensitive), up to @a count characters.
