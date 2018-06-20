@@ -127,12 +127,6 @@ void AbstractLink::connectDomain(String const &domain, TimeSpan const &timeout)
     disconnect();
 
     d->socket.reset(new Socket);
-
-//    connect(d->socket.get(), SIGNAL(addressResolved()), this, SIGNAL(addressResolved()));
-//    connect(d->socket.get(), SIGNAL(connected()), this, SLOT(socketConnected()));
-//    connect(d->socket.get(), SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
-//    connect(d->socket.get(), SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
-
     d->socket->audienceForStateChange() += d;
     d->socket->audienceForMessage() += [this]() {
         DE_FOR_AUDIENCE2(PacketsReady, i) i->packetsReady();

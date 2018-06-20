@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/MenuTextWidget"
+#include "de/shell/MenuTedget"
 #include "de/shell/TextRootWidget"
 #include <de/ConstantRule>
 
@@ -24,7 +24,7 @@ namespace de { namespace shell {
 
 using AChar = TextCanvas::AttribChar;
 
-DE_PIMPL(MenuTextWidget)
+DE_PIMPL(MenuTedget)
 {
     ConstantRule * width;
     ConstantRule * height;
@@ -124,10 +124,10 @@ DE_PIMPL(MenuTextWidget)
     DE_PIMPL_AUDIENCE(Close)
 };
 
-DE_AUDIENCE_METHOD(MenuTextWidget, Close)
+DE_AUDIENCE_METHOD(MenuTedget, Close)
 
-MenuTextWidget::MenuTextWidget(Preset preset, String const &name)
-    : TextWidget(name), d(new Impl(*this))
+MenuTedget::MenuTedget(Preset preset, String const &name)
+    : Tedget(name), d(new Impl(*this))
 {
     switch (preset)
     {
@@ -147,12 +147,12 @@ MenuTextWidget::MenuTextWidget(Preset preset, String const &name)
     rule().setSize(*d->width, *d->height);
 }
 
-int MenuTextWidget::itemCount() const
+int MenuTedget::itemCount() const
 {
     return d->items.sizei();
 }
 
-void MenuTextWidget::appendItem(RefArg<Action> action, String const &shortcutLabel)
+void MenuTedget::appendItem(RefArg<Action> action, String const &shortcutLabel)
 {
     Impl::Item item;
     item.action = action.holdRef();
@@ -164,7 +164,7 @@ void MenuTextWidget::appendItem(RefArg<Action> action, String const &shortcutLab
     addAction(action);
 }
 
-void MenuTextWidget::appendSeparator()
+void MenuTedget::appendSeparator()
 {
     if (d->items.isEmpty()) return;
 
@@ -173,7 +173,7 @@ void MenuTextWidget::appendSeparator()
     redraw();
 }
 
-void MenuTextWidget::insertItem(int pos, RefArg<Action> action, String const &shortcutLabel)
+void MenuTedget::insertItem(int pos, RefArg<Action> action, String const &shortcutLabel)
 {
     Impl::Item item;
     item.action = action.holdRef();
@@ -185,7 +185,7 @@ void MenuTextWidget::insertItem(int pos, RefArg<Action> action, String const &sh
     addAction(action);
 }
 
-void MenuTextWidget::insertSeparator(int pos)
+void MenuTedget::insertSeparator(int pos)
 {
     if (pos < 0 || pos >= d->items.sizei()) return;
 
@@ -194,24 +194,24 @@ void MenuTextWidget::insertSeparator(int pos)
     redraw();
 }
 
-void MenuTextWidget::clear()
+void MenuTedget::clear()
 {
     d->clear();
     redraw();
 }
 
-void MenuTextWidget::removeItem(int pos)
+void MenuTedget::removeItem(int pos)
 {
     d->removeItem(pos);
     redraw();
 }
 
-Action &MenuTextWidget::itemAction(int pos) const
+Action &MenuTedget::itemAction(int pos) const
 {
     return *d->items[pos].action;
 }
 
-int MenuTextWidget::findLabel(String const &label) const
+int MenuTedget::findLabel(String const &label) const
 {
     for (int i = 0; i < d->items.sizei(); ++i)
     {
@@ -221,18 +221,18 @@ int MenuTextWidget::findLabel(String const &label) const
     return -1;
 }
 
-bool MenuTextWidget::hasLabel(String const &label) const
+bool MenuTedget::hasLabel(String const &label) const
 {
     return findLabel(label) >= 0;
 }
 
-void MenuTextWidget::setCursor(int pos)
+void MenuTedget::setCursor(int pos)
 {
     d->cursor = de::min(pos, itemCount() - 1);
     redraw();
 }
 
-void MenuTextWidget::setCursorByLabel(String const &label)
+void MenuTedget::setCursorByLabel(String const &label)
 {
     int idx = findLabel(label);
     if (idx >= 0)
@@ -246,46 +246,46 @@ void MenuTextWidget::setCursorByLabel(String const &label)
     }
 }
 
-int MenuTextWidget::cursor() const
+int MenuTedget::cursor() const
 {
     return d->cursor;
 }
 
-void MenuTextWidget::setClosable(bool canBeClosed)
+void MenuTedget::setClosable(bool canBeClosed)
 {
     d->closable = canBeClosed;
 }
 
-void MenuTextWidget::setSelectionAttribs(AChar::Attribs const &attribs)
+void MenuTedget::setSelectionAttribs(AChar::Attribs const &attribs)
 {
     d->selectionAttr = attribs;
     redraw();
 }
 
-void MenuTextWidget::setBackgroundAttribs(AChar::Attribs const &attribs)
+void MenuTedget::setBackgroundAttribs(AChar::Attribs const &attribs)
 {
     d->backgroundAttr = attribs;
     redraw();
 }
 
-void MenuTextWidget::setBorder(MenuTextWidget::BorderStyle style)
+void MenuTedget::setBorder(MenuTedget::BorderStyle style)
 {
     d->borderStyle = style;
     redraw();
 }
 
-void MenuTextWidget::setBorderAttribs(AChar::Attribs const &attribs)
+void MenuTedget::setBorderAttribs(AChar::Attribs const &attribs)
 {
     d->borderAttr = attribs;
     redraw();
 }
 
-Vec2i MenuTextWidget::cursorPosition() const
+Vec2i MenuTedget::cursorPosition() const
 {
     return d->cursorPos;
 }
 
-void MenuTextWidget::open()
+void MenuTedget::open()
 {
     DE_ASSERT(hasRoot());
 
@@ -294,7 +294,7 @@ void MenuTextWidget::open()
     redraw();
 }
 
-void MenuTextWidget::close()
+void MenuTedget::close()
 {
     if (d->closable)
     {
@@ -307,7 +307,7 @@ void MenuTextWidget::close()
     }
 }
 
-void MenuTextWidget::draw()
+void MenuTedget::draw()
 {
     Rectanglei pos = rule().recti();
     TextCanvas buf(pos.size());
@@ -363,7 +363,7 @@ void MenuTextWidget::draw()
     targetCanvas().draw(buf, pos.topLeft);
 }
 
-bool MenuTextWidget::handleEvent(Event const &event)
+bool MenuTedget::handleEvent(Event const &event)
 {
     if (!itemCount() || event.type() != Event::KeyPress)
     {
@@ -433,7 +433,7 @@ bool MenuTextWidget::handleEvent(Event const &event)
     }
 
     // Check registered actions (shortcuts), focus navigation.
-    if (TextWidget::handleEvent(event))
+    if (Tedget::handleEvent(event))
     {
         close();
         return true;

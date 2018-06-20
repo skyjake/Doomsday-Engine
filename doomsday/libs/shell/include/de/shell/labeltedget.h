@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_LABELWIDGET_H
-#define LIBSHELL_LABELWIDGET_H
+#ifndef LIBSHELL_LABELTEDGET_H
+#define LIBSHELL_LABELTEDGET_H
 
-#include "TextWidget"
+#include "Tedget"
 #include "TextCanvas"
 
 namespace de { namespace shell {
@@ -29,10 +29,10 @@ namespace de { namespace shell {
  *
  * @ingroup textUi
  */
-class LIBSHELL_PUBLIC LabelTextWidget : public TextWidget
+class LIBSHELL_PUBLIC LabelTedget : public Tedget
 {
 public:
-    LabelTextWidget(String const &name = String());
+    LabelTedget(String const &name = String());
 
     /**
      * Sets the background for the label.
@@ -88,4 +88,4 @@ private:
 
 }} // namespace de::shell
 
-#endif // LIBSHELL_LABELWIDGET_H
+#endif // LIBSHELL_LABELTEDGET_H

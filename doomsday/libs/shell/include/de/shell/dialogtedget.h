@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_DIALOGWIDGET_H
-#define LIBSHELL_DIALOGWIDGET_H
+#ifndef LIBSHELL_DIALOGTEDGET_H
+#define LIBSHELL_DIALOGTEDGET_H
 
-#include "TextWidget"
+#include "Tedget"
 
 namespace de { namespace shell {
 
@@ -28,14 +28,14 @@ namespace de { namespace shell {
  *
  * @ingroup textUi
  */
-class LIBSHELL_PUBLIC DialogTextWidget : public TextWidget
+class LIBSHELL_PUBLIC DialogTedget : public Tedget
 {
 public:
     DE_DEFINE_AUDIENCE2(Accept, void accepted(int result))
     DE_DEFINE_AUDIENCE2(Reject, void rejected(int result))
 
 public:
-    DialogTextWidget(String const &name = String());
+    DialogTedget(String const &name = String());
 
     /**
      * Shows the dialog and gives it focus. Execution is blocked until the
@@ -77,4 +77,4 @@ private:
 
 }} // namespace de::shell
 
-#endif // LIBSHELL_DIALOGWIDGET_H
+#endif // LIBSHELL_DIALOGTEDGET_H

@@ -40,6 +40,11 @@ class LIBSHELL_PUBLIC AbstractLink
 public:
     enum Status { Disconnected, Connecting, Connected };
 
+    DE_DEFINE_AUDIENCE2(AddressResolved, void addressResolved())
+    DE_DEFINE_AUDIENCE2(Connected,       void connected())
+    DE_DEFINE_AUDIENCE2(Disconnected,    void disconnected())
+    DE_DEFINE_AUDIENCE2(PacketsReady,    void packetsReady())
+
 public:
     AbstractLink();
 
@@ -105,11 +110,6 @@ protected:
      * Called immediately after a connection has been formed.
      */
     virtual void initiateCommunications() = 0;
-
-    DE_DEFINE_AUDIENCE2(AddressResolved, void addressResolved())
-    DE_DEFINE_AUDIENCE2(Connected, void connected())
-    DE_DEFINE_AUDIENCE2(Disconnected, void disconnected())
-    DE_DEFINE_AUDIENCE2(PacketsReady, void packetsReady())
 
 private:
     DE_PRIVATE(d)

@@ -16,30 +16,30 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_INPUTDIALOG_H
-#define LIBSHELL_INPUTDIALOG_H
+#ifndef LIBSHELL_INPUTDIALOGTEDGET_H
+#define LIBSHELL_INPUTDIALOGTEDGET_H
 
-#include "DialogTextWidget"
+#include "DialogTedget"
 
 namespace de { namespace shell {
 
-class LabelTextWidget;
-class LineEditTextWidget;
-class MenuTextWidget;
+class LabelTedget;
+class LineEditTedget;
+class MenuTedget;
 
 /**
  * Dialog for querying text from the user.
  *
  * @ingroup textUi
  */
-class InputDialogTextWidget : public DialogTextWidget
+class InputDialogTedget : public DialogTedget
 {
 public:
-    InputDialogTextWidget(const String &name = {});
+    InputDialogTedget(const String &name = {});
 
-    LabelTextWidget &   label();
-    LineEditTextWidget &lineEdit();
-    MenuTextWidget &    menu();
+    LabelTedget &   label();
+    LineEditTedget &lineEdit();
+    MenuTedget &    menu();
 
     /**
      * Sets the width of the dialog. The default width is 50.
@@ -74,4 +74,4 @@ private:
 
 }} // namespace de::shell
 
-#endif // LIBSHELL_INPUTDIALOG_H
+#endif // LIBSHELL_INPUTDIALOGTEDGET_H

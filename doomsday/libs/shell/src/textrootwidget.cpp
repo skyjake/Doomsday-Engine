@@ -17,7 +17,7 @@
  */
 
 #include "de/shell/TextRootWidget"
-#include "de/shell/TextWidget"
+#include "de/shell/Tedget"
 
 namespace de { namespace shell {
 
@@ -45,9 +45,9 @@ void TextRootWidget::setViewSize(Size const &viewSize)
     RootWidget::setViewSize(vs);
 }
 
-TextWidget *TextRootWidget::focus() const
+Tedget *TextRootWidget::focus() const
 {
-    return static_cast<TextWidget *>(RootWidget::focus());
+    return static_cast<Tedget *>(RootWidget::focus());
 }
 
 void TextRootWidget::requestDraw()

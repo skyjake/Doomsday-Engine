@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_TEXTWIDGET_H
-#define LIBSHELL_TEXTWIDGET_H
+#ifndef LIBSHELL_TEDGET_H
+#define LIBSHELL_TEDGET_H
 
 #include "libshell.h"
 #include <de/Widget>
@@ -30,24 +30,21 @@ class TextRootWidget;
 class Action;
 
 /**
- * Generic widget with a text-based visual.
+ * Generic text-based widget.
  *
- * TextWidget is the base class for all widgets in libshell, because they are
+ * Tedget is the base class for all text-based widgets in libshell, because they are
  * intended to be device-independent and compatible with all character-based
  * UIs, regardless of whether the underlying device is text-only or graphical.
  *
  * It is assumed that the root widget under which text widgets are used is
  * derived from TextRootWidget.
  *
- * QObject is a base class for the signals and slots capabilities.
- *
  * @ingroup textUi
  */
-class LIBSHELL_PUBLIC TextWidget
-    : public Widget
+class LIBSHELL_PUBLIC Tedget : public Widget
 {
 public:
-    TextWidget(String const &name = String());
+    Tedget(String const &name = String());
 
     TextRootWidget &root() const;
 
@@ -126,4 +123,4 @@ private:
 
 }} // namespace de::shell
 
-#endif // LIBSHELL_TEXTWIDGET_H
+#endif // LIBSHELL_TEDGET_H

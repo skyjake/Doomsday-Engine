@@ -16,31 +16,31 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/InputDialogTextWidget"
-#include "de/shell/LabelTextWidget"
-#include "de/shell/LineEditTextWidget"
-#include "de/shell/MenuTextWidget"
+#include "de/shell/InputDialogTedget"
+#include "de/shell/LabelTedget"
+#include "de/shell/LineEditTedget"
+#include "de/shell/MenuTedget"
 #include "de/shell/TextRootWidget"
 
 namespace de { namespace shell {
 
-DE_PIMPL_NOREF(InputDialogTextWidget)
+DE_PIMPL_NOREF(InputDialogTedget)
 {
-    LabelTextWidget *   label = nullptr;
-    LineEditTextWidget *edit  = nullptr;
-    MenuTextWidget *    menu  = nullptr;
+    LabelTedget *   label = nullptr;
+    LineEditTedget *edit  = nullptr;
+    MenuTedget *    menu  = nullptr;
     String              userText;
     int                 result = 0;
 };
 
-InputDialogTextWidget::InputDialogTextWidget(String const &name)
-    : DialogTextWidget(name)
+InputDialogTedget::InputDialogTedget(String const &name)
+    : DialogTedget(name)
     , d(new Impl)
 {
     RuleRectangle &rect = rule();
 
     // Label.
-    d->label = new LabelTextWidget;
+    d->label = new LabelTedget;
     d->label->setExpandsToFitLines(true); // determines height independently
 
     d->label->rule()
@@ -49,7 +49,7 @@ InputDialogTextWidget::InputDialogTextWidget(String const &name)
             .setInput(Rule::Left,  rect.left());
 
     // Address editor.
-    d->edit = new LineEditTextWidget;
+    d->edit = new LineEditTedget;
     d->edit->setName(d->edit->uniqueName("edit"));
 
     d->edit->rule()
@@ -58,9 +58,9 @@ InputDialogTextWidget::InputDialogTextWidget(String const &name)
             .setInput(Rule::Top,   d->label->rule().bottom() + 1);
 
     // Menu for actions.
-    d->menu = new MenuTextWidget(MenuTextWidget::AlwaysOpen);
+    d->menu = new MenuTedget(MenuTedget::AlwaysOpen);
     d->menu->setName(d->menu->uniqueName("menu"));
-    d->menu->setBorder(MenuTextWidget::NoBorder);
+    d->menu->setBorder(MenuTedget::NoBorder);
     d->menu->setBackgroundAttribs(TextCanvas::AttribChar::DefaultAttributes);
     d->menu->setSelectionAttribs(TextCanvas::AttribChar::Reverse);
     d->menu->appendItem(new Action("OK", [this]() { accept(); }));
@@ -86,56 +86,56 @@ InputDialogTextWidget::InputDialogTextWidget(String const &name)
                   d->label->rule().height() + 2);
 }
 
-LabelTextWidget &InputDialogTextWidget::label()
+LabelTedget &InputDialogTedget::label()
 {
     return *d->label;
 }
 
-LineEditTextWidget &InputDialogTextWidget::lineEdit()
+LineEditTedget &InputDialogTedget::lineEdit()
 {
     return *d->edit;
 }
 
-MenuTextWidget &InputDialogTextWidget::menu()
+MenuTedget &InputDialogTedget::menu()
 {
     return *d->menu;
 }
 
-void InputDialogTextWidget::setWidth(int width)
+void InputDialogTedget::setWidth(int width)
 {
     rule().setInput(Rule::Width, Const(width));
 }
 
-void InputDialogTextWidget::setDescription(String const &desc)
+void InputDialogTedget::setDescription(String const &desc)
 {
     d->label->setLabel(desc);
 }
 
-void InputDialogTextWidget::setPrompt(String const &prompt)
+void InputDialogTedget::setPrompt(String const &prompt)
 {
     d->edit->setPrompt(prompt);
 }
 
-void InputDialogTextWidget::setText(String const &text)
+void InputDialogTedget::setText(String const &text)
 {
     d->edit->setText(text);
 }
 
-void InputDialogTextWidget::setAcceptLabel(String const &label)
+void InputDialogTedget::setAcceptLabel(String const &label)
 {
     d->menu->itemAction(0).setLabel(label);
     redraw();
 }
 
-void InputDialogTextWidget::setRejectLabel(String const &label)
+void InputDialogTedget::setRejectLabel(String const &label)
 {
     d->menu->itemAction(1).setLabel(label);
     redraw();
 }
 
-void InputDialogTextWidget::prepare()
+void InputDialogTedget::prepare()
 {
-    DialogTextWidget::prepare();
+    DialogTedget::prepare();
 
     d->userText.clear();
     d->result = 0;
@@ -143,21 +143,21 @@ void InputDialogTextWidget::prepare()
     root().setFocus(d->edit);
 }
 
-void InputDialogTextWidget::finish(int result)
+void InputDialogTedget::finish(int result)
 {
     d->result = result;
     d->userText.clear();
     if (result) d->userText = d->edit->text();
 
-    DialogTextWidget::finish(result);
+    DialogTedget::finish(result);
 }
 
-String InputDialogTextWidget::text() const
+String InputDialogTedget::text() const
 {
     return d->userText;
 }
 
-int InputDialogTextWidget::result() const
+int InputDialogTedget::result() const
 {
     return d->result;
 }

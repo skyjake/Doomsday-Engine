@@ -16,13 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/TextWidget"
+#include "de/shell/Tedget"
 #include "de/shell/TextRootWidget"
 #include "de/shell/Action"
 
 namespace de { namespace shell {
 
-DE_PIMPL_NOREF(TextWidget)
+DE_PIMPL_NOREF(Tedget)
 {
     TextCanvas *    canvas;
     RuleRectangle * rule;
@@ -71,24 +71,24 @@ DE_PIMPL_NOREF(TextWidget)
     }
 };
 
-TextWidget::TextWidget(String const &name) : Widget(name), d(new Impl)
+Tedget::Tedget(String const &name) : Widget(name), d(new Impl)
 {
     setBehavior(Focusable, SetFlags);
 }
 
-TextRootWidget &TextWidget::root() const
+TextRootWidget &Tedget::root() const
 {
     TextRootWidget *r = dynamic_cast<TextRootWidget *>(&Widget::root());
     DE_ASSERT(r != nullptr);
     return *r;
 }
 
-void TextWidget::setTargetCanvas(TextCanvas *canvas)
+void Tedget::setTargetCanvas(TextCanvas *canvas)
 {
     d->canvas = canvas;
 }
 
-TextCanvas &TextWidget::targetCanvas() const
+TextCanvas &Tedget::targetCanvas() const
 {
     if (!d->canvas)
     {
@@ -98,12 +98,12 @@ TextCanvas &TextWidget::targetCanvas() const
     return *d->canvas;
 }
 
-void TextWidget::redraw()
+void Tedget::redraw()
 {
     if (hasRoot() && !isHidden()) root().requestDraw();
 }
 
-void TextWidget::drawAndShow()
+void Tedget::drawAndShow()
 {
     if (!isHidden())
     {
@@ -117,34 +117,34 @@ void TextWidget::drawAndShow()
     }
 }
 
-RuleRectangle &TextWidget::rule()
+RuleRectangle &Tedget::rule()
 {
     DE_ASSERT(d->rule != nullptr);
     return *d->rule;
 }
 
-RuleRectangle const &TextWidget::rule() const
+RuleRectangle const &Tedget::rule() const
 {
     DE_ASSERT(d->rule != nullptr);
     return *d->rule;
 }
 
-Vec2i TextWidget::cursorPosition() const
+Vec2i Tedget::cursorPosition() const
 {
     return Vec2i(rule().left().valuei(), rule().top().valuei());
 }
 
-void TextWidget::addAction(RefArg<Action> action)
+void Tedget::addAction(RefArg<Action> action)
 {
     d->actions.append(action.holdRef());
 }
 
-void TextWidget::removeAction(Action &action)
+void Tedget::removeAction(Action &action)
 {
     d->removeAction(action);
 }
 
-bool TextWidget::handleEvent(Event const &event)
+bool Tedget::handleEvent(Event const &event)
 {
     // We only support KeyEvents.
     if (event.type() == Event::KeyPress)

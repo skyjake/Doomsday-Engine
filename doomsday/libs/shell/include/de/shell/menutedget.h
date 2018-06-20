@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_MENUWIDGET_H
-#define LIBSHELL_MENUWIDGET_H
+#ifndef LIBSHELL_MENUTEDGET_H
+#define LIBSHELL_MENUTEDGET_H
 
-#include "TextWidget"
+#include "Tedget"
 #include "Action"
 #include "TextCanvas"
 
@@ -37,7 +37,7 @@ namespace de { namespace shell {
  *
  * @ingroup textUi
  */
-class LIBSHELL_PUBLIC MenuTextWidget : public TextWidget
+class LIBSHELL_PUBLIC MenuTedget : public Tedget
 {
 public:
     enum Preset {
@@ -50,7 +50,7 @@ public:
     DE_DEFINE_AUDIENCE2(Close, void menuClosed())
 
 public:
-    MenuTextWidget(Preset preset, String const &name = {});
+    MenuTedget(Preset preset, String const &name = {});
 
     int itemCount() const;
 
@@ -122,4 +122,4 @@ private:
 
 }} // namespace de::shell
 
-#endif // LIBSHELL_MENUWIDGET_H
+#endif // LIBSHELL_MENUTEDGET_H

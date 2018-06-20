@@ -1,4 +1,4 @@
-/** @file shell/logwidget.h  Widget for output message log.
+/** @file shell/logwidget.h  Text widget for log message output.
  *
  * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,23 +16,23 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LOGWIDGET_H
-#define LOGWIDGET_H
+#ifndef LIBSHELL_LOGTEDGET_H
+#define LIBSHELL_LOGTEDGET_H
 
-#include <de/shell/TextWidget>
+#include <de/shell/Tedget>
 #include <de/LogSink>
 
 namespace de { namespace shell {
 
 /**
- * Text-based log widget.
+ * Text-based log output widget.
  *
  * @ingroup textUi
  */
-class LIBSHELL_PUBLIC LogTextWidget : public TextWidget
+class LIBSHELL_PUBLIC LogTedget : public Tedget
 {
 public:
-    LogTextWidget(String const &name = {});
+    LogTedget(String const &name = {});
 
     /**
      * Returns the log sink that can be connected to a log buffer for receiving
@@ -88,4 +88,4 @@ private:
 
 }} // namespace de::shell
 
-#endif // LOGWIDGET_H
+#endif // LIBSHELL_LOGTEDGET_H

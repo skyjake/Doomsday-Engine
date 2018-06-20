@@ -16,13 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/DialogTextWidget"
+#include "de/shell/DialogTedget"
 #include "de/shell/TextRootWidget"
 #include "de/shell/KeyEvent"
 
 namespace de { namespace shell {
 
-DE_PIMPL_NOREF(DialogTextWidget)
+DE_PIMPL_NOREF(DialogTedget)
 {
 //    QEventLoop subloop;
 
@@ -30,30 +30,30 @@ DE_PIMPL_NOREF(DialogTextWidget)
     DE_PIMPL_AUDIENCE(Reject)
 };
 
-DE_AUDIENCE_METHOD(DialogTextWidget, Accept)
-DE_AUDIENCE_METHOD(DialogTextWidget, Reject)
+DE_AUDIENCE_METHOD(DialogTedget, Accept)
+DE_AUDIENCE_METHOD(DialogTedget, Reject)
 
-DialogTextWidget::DialogTextWidget(String const &name)
-    : TextWidget(name), d(new Impl)
+DialogTedget::DialogTedget(String const &name)
+    : Tedget(name), d(new Impl)
 {
     // Dialogs are hidden until executed.
     hide();
 }
 
-void DialogTextWidget::prepare()
+void DialogTedget::prepare()
 {
     show();
     root().setFocus(this);
     redraw();
 }
 
-void DialogTextWidget::finish(int /*result*/)
+void DialogTedget::finish(int /*result*/)
 {
     hide();
     root().setFocus(0);
 }
 
-int DialogTextWidget::exec(TextRootWidget &root)
+int DialogTedget::exec(TextRootWidget &root)
 {
     // The widget is added to the root temporarily (as top child).
     DE_ASSERT(!hasRoot());
@@ -76,7 +76,7 @@ int DialogTextWidget::exec(TextRootWidget &root)
     return result;
 }
 
-void DialogTextWidget::draw()
+void DialogTedget::draw()
 {
     Rectanglei pos = rule().recti().adjusted(Vec2i(-2, -1), Vec2i(2, 1));
 
@@ -85,7 +85,7 @@ void DialogTextWidget::draw()
     targetCanvas().drawLineRect(pos);
 }
 
-bool DialogTextWidget::handleEvent(Event const &event)
+bool DialogTedget::handleEvent(Event const &event)
 {
     if (event.type() == Event::KeyPress)
     {
@@ -101,7 +101,7 @@ bool DialogTextWidget::handleEvent(Event const &event)
     return true;
 }
 
-void DialogTextWidget::accept(int result)
+void DialogTedget::accept(int result)
 {
 //    if (d->subloop.isRunning())
     {
@@ -113,7 +113,7 @@ void DialogTextWidget::accept(int result)
     }
 }
 
-void DialogTextWidget::reject(int result)
+void DialogTedget::reject(int result)
 {
 //    if (d->subloop.isRunning())
     {

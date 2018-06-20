@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/LineEditTextWidget"
+#include "de/shell/LineEditTedget"
 #include "de/shell/TextRootWidget"
 #include "de/shell/KeyEvent"
 #include "de/shell/Lexicon"
@@ -28,7 +28,7 @@
 
 namespace de { namespace shell {
 
-DE_PIMPL(LineEditTextWidget)
+DE_PIMPL(LineEditTedget)
 {
     bool signalOnEnter;
     ConstantRule *height; ///< As rows.
@@ -49,10 +49,10 @@ DE_PIMPL(LineEditTextWidget)
     DE_PIMPL_AUDIENCE(Enter)
 };
 
-DE_AUDIENCE_METHOD(LineEditTextWidget, Enter)
+DE_AUDIENCE_METHOD(LineEditTedget, Enter)
 
-LineEditTextWidget::LineEditTextWidget(de::String const &name)
-    : TextWidget(name)
+LineEditTedget::LineEditTedget(de::String const &name)
+    : Tedget(name)
     , AbstractLineEditor(new MonospaceLineWrapping)
     , d(new Impl(*this))
 {
@@ -62,7 +62,7 @@ LineEditTextWidget::LineEditTextWidget(de::String const &name)
     rule().setInput(Rule::Height, *d->height);
 }
 
-Vec2i LineEditTextWidget::cursorPosition() const
+Vec2i LineEditTedget::cursorPosition() const
 {
     de::Rectanglei pos = rule().recti();
     // Calculate CharPos on the cursor's line.
@@ -73,17 +73,17 @@ Vec2i LineEditTextWidget::cursorPosition() const
     return pos.topLeft + Vec2i(prompt().sizei(), 0) + Vec2i(x.index, y);
 }
 
-void LineEditTextWidget::viewResized()
+void LineEditTedget::viewResized()
 {
     updateLineWraps(RewrapNow);
 }
 
-void LineEditTextWidget::update()
+void LineEditTedget::update()
 {
     updateLineWraps(WrapUnlessWrappedAlready);
 }
 
-void LineEditTextWidget::draw()
+void LineEditTedget::draw()
 {
     using AChar = TextCanvas::AttribChar;
 
@@ -113,7 +113,7 @@ void LineEditTextWidget::draw()
     targetCanvas().draw(buf, pos.topLeft);
 }
 
-bool LineEditTextWidget::handleEvent(Event const &event)
+bool LineEditTedget::handleEvent(Event const &event)
 {
     DE_ASSERT(event.type() == Event::KeyPress);
 
@@ -135,10 +135,10 @@ bool LineEditTextWidget::handleEvent(Event const &event)
 
     if (eaten) return true;
 
-    return TextWidget::handleEvent(event);
+    return Tedget::handleEvent(event);
 }
 
-bool LineEditTextWidget::handleControlKey(Key key, const KeyModifiers &mods)
+bool LineEditTedget::handleControlKey(Key key, const KeyModifiers &mods)
 {
     if (AbstractLineEditor::handleControlKey(key, mods))
     {
@@ -159,22 +159,22 @@ bool LineEditTextWidget::handleControlKey(Key key, const KeyModifiers &mods)
     return false;
 }
 
-void LineEditTextWidget::setSignalOnEnter(int enterSignal)
+void LineEditTedget::setSignalOnEnter(int enterSignal)
 {
     d->signalOnEnter = enterSignal;
 }
 
-int LineEditTextWidget::maximumWidth() const
+int LineEditTedget::maximumWidth() const
 {
     return int(rule().recti().width()) - int(prompt().size()) - 1;
 }
 
-void LineEditTextWidget::numberOfLinesChanged(int lineCount)
+void LineEditTedget::numberOfLinesChanged(int lineCount)
 {
     d->height->set(lineCount);
 }
 
-void LineEditTextWidget::contentChanged()
+void LineEditTedget::contentChanged()
 {
     if (hasRoot())
     {
@@ -183,7 +183,7 @@ void LineEditTextWidget::contentChanged()
     redraw();
 }
 
-void LineEditTextWidget::cursorMoved()
+void LineEditTedget::cursorMoved()
 {
     redraw();
 }

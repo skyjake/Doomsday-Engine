@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_LINEEDITWIDGET_H
-#define LIBSHELL_LINEEDITWIDGET_H
+#ifndef LIBSHELL_LINEEDITTEDGET_H
+#define LIBSHELL_LINEEDITTEDGET_H
 
 #include "libshell.h"
-#include "TextWidget"
+#include "Tedget"
 #include "AbstractLineEditor"
 
 namespace de { namespace shell {
@@ -33,8 +33,8 @@ namespace de { namespace shell {
  *
  * @ingroup textUi
  */
-class LIBSHELL_PUBLIC LineEditTextWidget
-    : public TextWidget
+class LIBSHELL_PUBLIC LineEditTedget
+    : public Tedget
     , public AbstractLineEditor
 {
 public:
@@ -46,7 +46,7 @@ public:
      *
      * @param name  Widget name.
      */
-    LineEditTextWidget(String const &name = String());
+    LineEditTedget(String const &name = String());
 
     /**
      * Enables or disables the signal emitted when the edit widget receives an
@@ -78,4 +78,4 @@ private:
 
 }} // namespace de::shell
 
-#endif // LIBSHELL_LINEEDITWIDGET_H
+#endif // LIBSHELL_LINEEDITTEDGET_H

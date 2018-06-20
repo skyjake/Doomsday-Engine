@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_CHOICEWIDGET_H
-#define LIBSHELL_CHOICEWIDGET_H
+#ifndef LIBSHELL_CHOICETEDGET_H
+#define LIBSHELL_CHOICETEDGET_H
 
-#include "LabelTextWidget"
+#include "LabelTedget"
 #include <de/List>
 
 namespace de { namespace shell {
@@ -29,13 +29,13 @@ namespace de { namespace shell {
  *
  * @ingroup textUi
  */
-class LIBSHELL_PUBLIC ChoiceTextWidget : public LabelTextWidget
+class LIBSHELL_PUBLIC ChoiceTedget : public LabelTedget
 {
 public:
     typedef StringList Items;
 
 public:
-    ChoiceTextWidget(String const &name = String());
+    ChoiceTedget(String const &name = String());
 
     void setItems(Items const &items);
     void setPrompt(String const &prompt);
@@ -67,4 +67,4 @@ private:
 
 }} // namespace de::shell
 
-#endif // LIBSHELL_CHOICEWIDGET_H
+#endif // LIBSHELL_CHOICETEDGET_H
