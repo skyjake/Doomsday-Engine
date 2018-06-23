@@ -29,10 +29,7 @@ namespace sc = std::chrono;
 namespace de {
 namespace internal {
 
-using Clock = sc::system_clock;
-using TimePoint = Clock::time_point;
-
-static atomic_int timerCount; // Number of timers in existence.
+using TimePoint = sc::system_clock::time_point;
 
 /// Thread that posts timer events when it is time to trigger scheduled timers.
 struct TimerScheduler : public Thread, public Lockable
@@ -61,8 +58,9 @@ struct TimerScheduler : public Thread, public Lockable
                 DE_GUARD(this);
                 while (!pending.empty())
                 {
-                    const auto now = Clock::now();
+                    const auto now    = sc::system_clock::now();
                     const auto nextAt = pending.top().nextAt;
+
                     TimeSpan until = sc::duration_cast<sc::milliseconds>(nextAt - now).count() / 1.0e3;
                     if (until <= 0.0)
                     {
@@ -74,12 +72,13 @@ struct TimerScheduler : public Thread, public Lockable
                         // timer scheduling thread won't be blocked by slow trigger handlers.
                         if (auto *loop = EventLoop::get())
                         {
+                            Timer *timer = pt.timer;
                             loop->postEvent(
-                                new CoreEvent(Event::Timer, [pt]() { pt.timer->trigger(); }));
+                                new CoreEvent(Event::Timer, [timer]() { timer->trigger(); }));
                         }
                         else
                         {
-                            warning("[TimerScheduler] Pending timer %p trying to trigger with no "
+                            warning("[TimerScheduler] Pending timer %p triggered with no "
                                     "event loop running (event not posted)",
                                     pt.timer);
                         }
@@ -110,9 +109,10 @@ struct TimerScheduler : public Thread, public Lockable
     void addPending(Timer &timer)
     {
         const TimeSpan repeatDuration = timer.interval();
-        pending.push(Pending{Clock::now() + sc::microseconds(dint64(repeatDuration * 1.0e6)),
-                             &timer,
-                             timer.isSingleShot() ? TimeSpan() : repeatDuration});
+        pending.push(
+            Pending{sc::system_clock::now() + sc::microseconds(dint64(repeatDuration * 1.0e6)),
+                    &timer,
+                    timer.isSingleShot() ? TimeSpan() : repeatDuration});
         waiter.post();
     }
 
@@ -141,7 +141,8 @@ struct TimerScheduler : public Thread, public Lockable
     }
 };
 
-static LockableT<TimerScheduler *> scheduler{nullptr};
+static LockableT<TimerScheduler *> scheduler;
+static atomic_int timerCount; // Number of timers in existence.
 
 } // namespace internal
 
@@ -159,9 +160,8 @@ DE_PIMPL_NOREF(Timer)
         DE_GUARD(scheduler);
         if (--timerCount == 0)
         {
-            auto *t = scheduler.value;
-            t->stop();
-            delete t;
+            scheduler.value->stop();
+            delete scheduler.value;
             scheduler.value = nullptr;
         }
     }
@@ -210,7 +210,6 @@ void Timer::start()
     if (!d->isActive)
     {
         d->isActive = true;
-        DE_GUARD(scheduler);
         scheduler.value->addPending(*this);
     }
 }
@@ -231,9 +230,7 @@ void Timer::stop()
 
     if (d->isActive)
     {
-        DE_GUARD(scheduler);
         scheduler.value->removePending(*this);
-
         d->isActive = false;
     }
 }
