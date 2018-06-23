@@ -40,6 +40,10 @@ int main(int argc, char **argv)
         quittingTime.audienceForTrigger() += [&](){ app.stopLoop(0); };
         quittingTime.start();
 
+        Timer test;
+        test.audienceForTrigger() += [](){ debug("Testing!"); };
+        test.start(1);
+
         app.execLoop();
     }
     catch (Error const &err)
