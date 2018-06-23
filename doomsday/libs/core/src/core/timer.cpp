@@ -72,10 +72,8 @@ struct TimerScheduler : public Thread, public Lockable
 
                         // We'll have the event loop notify the timer's audience. This way the
                         // timer scheduling thread won't be blocked by slow trigger handlers.
-
                         if (auto *loop = EventLoop::get())
                         {
-                            debug("Timer trigger %p", pt.timer);
                             loop->postEvent(
                                 new CoreEvent(Event::Timer, [pt]() { pt.timer->trigger(); }));
                         }

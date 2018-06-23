@@ -37,14 +37,15 @@ int main(int argc, char **argv)
         debug("Timer %p created", &quittingTime);
         quittingTime.setInterval(3);
         quittingTime.setSingleShot(true);
-        quittingTime.audienceForTrigger() += [&](){ app.stopLoop(0); };
+        quittingTime.audienceForTrigger() += [&](){ app.stopLoop(12345); };
         quittingTime.start();
 
         Timer test;
         test.audienceForTrigger() += [](){ debug("Testing!"); };
         test.start(1);
 
-        app.execLoop();
+        int code = app.execLoop();
+        debug("Event loop returned %i", code);
     }
     catch (Error const &err)
     {
