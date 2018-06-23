@@ -71,9 +71,9 @@ public:
      *                        This includes @a startDelay.
      * @param startDelay      Number of seconds to wait before starting the transition.
      */
-    void setValue(float toValue, TimeSpan transitionSpan = 0, TimeSpan startDelay = 0);
+    void setValue(float toValue, TimeSpan transitionSpan = 0.0, TimeSpan startDelay = 0.0);
 
-    void setValue(int toValue, TimeSpan transitionSpan = 0, TimeSpan startDelay = 0);
+    void setValue(int toValue, TimeSpan transitionSpan = 0.0, TimeSpan startDelay = 0.0);
 
     /**
      * Starts a new transition.
@@ -84,7 +84,10 @@ public:
      *                        This includes @a startDelay.
      * @param startDelay      Number of seconds to wait before starting the transition.
      */
-    void setValueFrom(float fromValue, float toValue, TimeSpan transitionSpan = 0, TimeSpan startDelay = 0);
+    void setValueFrom(float    fromValue,
+                      float    toValue,
+                      TimeSpan transitionSpan = 0.0,
+                      TimeSpan startDelay     = 0.0);
 
     /**
      * Current value.
@@ -178,7 +181,7 @@ public:
 
     static TimeSpan currentTime();
 
-    static Animation range(Style style, float from, float to, TimeSpan span, TimeSpan delay = 0);
+    static Animation range(Style style, float from, float to, TimeSpan span, TimeSpan delay = 0.0);
 
 private:
     DE_PRIVATE(d)

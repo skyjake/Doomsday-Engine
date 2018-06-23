@@ -178,7 +178,7 @@ void ShellApp::openConnection(String const &address)
     LOG_NET_NOTE("Opening connection to %s") << address;
 
     // Keep trying to connect to 30 seconds.
-    d->link = new Link(address, 30);
+    d->link = new Link(address, 30.0);
     d->status->setShellLink(d->link);
 
     d->link->audienceForPacketsReady() += [this]() { handleIncomingPackets(); };

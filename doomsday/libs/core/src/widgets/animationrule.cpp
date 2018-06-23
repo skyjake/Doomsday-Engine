@@ -131,7 +131,7 @@ void AnimationRule::update()
                 TimeSpan span = _animation.transitionTime();
                 if (_behavior.testFlag(DontAnimateFromZero) && fequal(_animation.target(), 0))
                 {
-                    span = 0;
+                    span = 0.0;
                 }
                 _animation.setValue(_targetRule->value(), span);
                 _animation.clock().audienceForPriorityTimeChange += this;

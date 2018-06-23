@@ -86,7 +86,7 @@ struct Counters
     Time periodStartedAt;
 };
 static LockableT<Counters> counters;
-static TimeSpan const sendPeriodDuration = 5;
+static TimeSpan const sendPeriodDuration = 5.0;
 
 /// Maximum number of channels.
 static duint const MAX_CHANNELS = 2;

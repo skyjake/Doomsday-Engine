@@ -62,9 +62,11 @@ public:
          *
          * @param seconds  Length of the time span.
          */
-        Span(ddouble seconds = 0)
+        Span(ddouble seconds = 0.0)
             : _seconds(seconds)
         {}
+
+        Span(int) = delete; // ambiguous
 
         /**
          * Conversion to the numeric type (floating-point seconds).

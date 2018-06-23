@@ -25,16 +25,13 @@ using namespace de::shell;
 
 DE_PIMPL(StatusWidget)
 {
-    Link * link;
+    Link * link{nullptr};
     Timer  updateTimer;
     String gameMode;
     String rules;
     String mapId;
 
-    Impl(Public &i) : Base(i), link(nullptr)
-    {
-        //updateTimer = new QTimer(thisPublic);
-    }
+    Impl(Public * i) : Base(i) {}
 
     void refresh()
     {
@@ -43,7 +40,7 @@ DE_PIMPL(StatusWidget)
 
     void linkConnected()
     {
-        updateTimer.start(1000);
+        updateTimer.start(1.0);
         self().redraw();
     }
 
@@ -55,7 +52,7 @@ DE_PIMPL(StatusWidget)
 };
 
 StatusWidget::StatusWidget(String const &name)
-    : Widget(name), d(new Impl(*this))
+    : Widget(name), d(new Impl(this))
 {
     d->updateTimer.audienceForTrigger() += [this]() { d->refresh(); };
 }
@@ -78,8 +75,8 @@ void StatusWidget::setShellLink(Link *link)
 void StatusWidget::setGameState(String const &mode, String const &rules, String const &mapId)
 {
     d->gameMode = mode;
-    d->rules = rules;
-    d->mapId = mapId;
+    d->rules    = rules;
+    d->mapId    = mapId;
 
     redraw();
 }

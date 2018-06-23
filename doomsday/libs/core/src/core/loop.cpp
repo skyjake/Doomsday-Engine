@@ -31,12 +31,12 @@ static Loop *loopSingleton = nullptr;
 
 DE_PIMPL(Loop)
 {
-    TimeSpan interval;
-    bool running;
-    Timer timer;
+    TimeSpan     interval;
+    bool         running;
+    Timer        timer;
     LoopCallback mainCall;
 
-    Impl(Public *i) : Base(i), interval(0), running(false)
+    Impl(Public *i) : Base(i), running(false)
     {
         DE_ASSERT(!loopSingleton);
         loopSingleton = i;

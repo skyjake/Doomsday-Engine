@@ -47,9 +47,9 @@ public:
      */
     explicit AnimationRule(Rule const &target, TimeSpan transition, Animation::Style style = Animation::EaseOut);
 
-    void set(float target, TimeSpan transition = 0, TimeSpan delay = 0);
+    void set(float target, TimeSpan transition = 0.0, TimeSpan delay = 0.0);
 
-    void set(Rule const &target, TimeSpan transition = 0, TimeSpan delay = 0);
+    void set(Rule const &target, TimeSpan transition = 0.0, TimeSpan delay = 0.0);
 
     /**
      * Sets the animation style of the rule.

@@ -163,7 +163,7 @@ void AbstractLink::connectHost(Address const &address)
 
     d->status = Connecting;
     d->startedTryingAt = Time();
-    d->timeout = 0;
+    d->timeout = 0.0;
 }
 
 void AbstractLink::takeOver(Socket *openSocket)
@@ -189,7 +189,7 @@ void AbstractLink::disconnect()
     {
         DE_ASSERT(d->socket.get() != nullptr);
 
-        d->timeout = 0;
+        d->timeout = 0.0;
         d->socket->close(); // emits signal
 
         d->status = Disconnected;

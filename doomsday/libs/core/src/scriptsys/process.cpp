@@ -147,7 +147,7 @@ DE_PIMPL(Process)
 };
 
 /// If execution continues for longer than this, a HangError is thrown.
-static TimeSpan const MAX_EXECUTION_TIME = 10;
+static TimeSpan const MAX_EXECUTION_TIME = 10.0;
 
 Process::Process(Record *externalGlobalNamespace) : d(new Impl(this))
 {

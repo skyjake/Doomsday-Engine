@@ -165,9 +165,9 @@ DE_PIMPL(ScriptSystem)
 
         // Compile a list of all possible import locations.
         importPaths.clear();
-        DE_FOR_EACH_CONST(ArrayValue::Elements, i, importPath->elements())
+        for (const auto *i : importPath->elements())
         {
-            importPaths << (*i)->asText();
+            importPaths << i->asText();
         }
         for (const Path &path : additionalImportPaths)
         {

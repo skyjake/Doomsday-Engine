@@ -175,7 +175,7 @@ bool LocalServer::isRunning() const
 Link *LocalServer::openLink()
 {
     if (!isRunning()) return nullptr;
-    return new Link(String::format("localhost:%d", d->port), 30);
+    return new Link(String::format("localhost:%d", d->port), 30.0);
 }
 
 NativePath LocalServer::errorLogPath() const

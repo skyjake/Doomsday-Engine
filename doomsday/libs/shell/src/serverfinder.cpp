@@ -29,7 +29,7 @@
 
 namespace de { namespace shell {
 
-static TimeSpan MSG_EXPIRATION_SECS = 4;
+static TimeSpan MSG_EXPIRATION_SECS = 4.0;
 
 DE_PIMPL(ServerFinder)
 , DE_OBSERVES(Beacon, Discovery)
@@ -137,7 +137,7 @@ ServerFinder::ServerFinder() : d(new Impl(this))
 
         if (!App::appExists() || !App::commandLine().has("-nodiscovery"))
         {
-            d->beacon.discover(0 /* no timeout */, 2);
+            d->beacon.discover(0.0 /* no timeout */, 2.0);
         }
     }
     catch (Beacon::PortError const &er)

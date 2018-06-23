@@ -96,7 +96,6 @@ DE_PIMPL_NOREF(Animation)
     Impl(float val, Style s)
         : value(val)
         , target(val)
-        , startDelay(0)
         , setTime   (theTime.now)
         , targetTime(theTime.now)
         , style(s)
@@ -113,8 +112,8 @@ DE_PIMPL_NOREF(Animation)
         TimeSpan span = targetTime - setTime;
 
         float s2 = 0;
-        TimeSpan peak = 0;
-        TimeSpan peak2 = 0;
+        TimeSpan peak;
+        TimeSpan peak2;
 
         // Spring values.
         if (style == Bounce || style == FixedBounce)
@@ -302,7 +301,7 @@ TimeSpan Animation::remainingTime() const
     TimeSpan const now = d->currentTime();
     if (now >= d->targetTime)
     {
-        return 0;
+        return 0.0;
     }
     return d->targetTime - now;
 }
