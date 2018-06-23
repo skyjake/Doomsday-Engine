@@ -486,18 +486,6 @@ void App::addInitPackage(String const &identifier)
     d->packagesToLoadAtInit << identifier;
 }
 
-/*void App::setConfigScript(Path const &path)
-{
-    d->configPath = path;
-}*/
-
-/*
-void App::setName(String const &appName)
-{
-    d->appName = appName;
-}
-*/
-
 void App::setUnixHomeFolderName(String const &name)
 {
     d->metadata.set(UNIX_HOME, name);
@@ -526,7 +514,7 @@ void App::setTerminateFunc(void (*func)(char const *))
     d->terminateFunc = func;
 }
 
-void App::handleUncaughtException(String message)
+void App::handleUncaughtException(const String& message)
 {
     LOG_CRITICAL(message);
 
@@ -672,7 +660,7 @@ Archive &App::mutablePersistentData()
 
 bool App::hasPersistentData()
 {
-    return DE_APP->d->persistentData != 0;
+    return DE_APP->d->persistentData != nullptr;
 }
 
 ArchiveFolder &App::persistPackFolder()

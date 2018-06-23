@@ -19,10 +19,11 @@
 #include "de/EventLoop"
 
 #include "de/CoreEvent"
+#include "de/Garbage"
+#include "de/Log"
 #include "de/NumberValue"
 #include "de/ThreadLocal"
 #include "de/WaitableFIFO"
-#include "de/Garbage"
 
 namespace de {
 namespace internal {
@@ -49,11 +50,12 @@ EventLoop::EventLoop() : d(new Impl)
 EventLoop::~EventLoop()
 {}
 
-int EventLoop::exec()
+int EventLoop::exec(const std::function<void ()> &postExec)
 {
     try
     {
         internal::StackPusher sp(this);
+        postExec();
         for (;;)
         {
             // Wait until an event is posted.
@@ -77,6 +79,7 @@ int EventLoop::exec()
     {
         warning("[EventLoop] Event loop terminating due to an uncaught exception");
         er.warnPlainText();
+        LOG_WARNING("Event loop stopped: %s") << er.asText();
         return 0;
     }
 }

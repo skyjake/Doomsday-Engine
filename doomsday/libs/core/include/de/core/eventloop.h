@@ -54,7 +54,7 @@ public:
 
     virtual ~EventLoop();
 
-    int exec();
+    int exec(const std::function<void ()> &postExec = {});
 
     void quit(int exitCode);
 

@@ -42,13 +42,14 @@ class DE_PUBLIC TextApp : public App
 public:
     TextApp(const StringList &args);
 
-/*    void setMetadata(String const &orgName, String const &orgDomain,
-                     String const &appName, String const &appVersion);
-*/
-//    bool notify(QObject *receiver, QEvent *event);
+    /**
+     * Start the application event loop.
+     *
+     * @param postExec  Function to call immediately after starting the event loop.
+     */
+    int exec(const std::function<void()> &postExec = {});
 
-    int  execLoop();
-    void stopLoop(int code);
+    void quit(int code);
 
     Loop &loop();
 

@@ -86,10 +86,12 @@ struct TimerScheduler : public Thread, public Lockable
                         // Schedule the next trigger.
                         if (pt.repeatDuration > 0.0)
                         {
-                            pending.push(
-                                Pending{pt.nextAt + sc::microseconds(dint64(pt.repeatDuration * 1.0e6)),
-                                        pt.timer,
-                                        pt.repeatDuration});
+                            TimePoint nextAt = pt.nextAt + sc::microseconds(dint64(pt.repeatDuration * 1.0e6));
+#if defined (DE_DEBUG)
+                            // Debugger may halt the process, don't bother spamming with timer events.
+                            nextAt = de::max(nextAt, sc::system_clock::now());
+#endif
+                            pending.push(Pending{nextAt, pt.timer, pt.repeatDuration});
                         }
                     }
                     else

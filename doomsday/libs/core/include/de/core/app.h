@@ -380,20 +380,6 @@ public:
     static UnixInfo &unixInfo();
 
     /**
-     * Starts the application's main loop.
-     *
-     * @return Return code after the loop exits.
-     */
-    virtual int execLoop() = 0;
-
-    /**
-     * Stops the application's main loop.
-     *
-     * @param code  Return code from the loop.
-     */
-    virtual void stopLoop(int code) = 0;
-
-    /**
      * Requests engine shutdown by calling the specified termination callback
      * (see setTerminateFunc()). Called when an exception is caught at the
      * de::App level, at which point there is no way to gracefully handle it
@@ -405,7 +391,7 @@ public:
      *
      * @param message  Error message to be shown to the user.
      */
-    void handleUncaughtException(String message);
+    void handleUncaughtException(const String& message);
 
     /**
      * Events received from the operating system should be passed here; the

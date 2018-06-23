@@ -74,7 +74,9 @@ DE_PIMPL_NOREF(Config)
     }
 };
 
-Config::Config(Path const &path) : RecordAccessor(0), d(new Impl(path))
+Config::Config(Path const &path)
+    : RecordAccessor(nullptr)
+    , d(new Impl(path))
 {
     setAccessedRecord(objectNamespace());
 }
