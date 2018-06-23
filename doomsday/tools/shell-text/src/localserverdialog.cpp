@@ -17,12 +17,11 @@
  */
 
 #include "localserverdialog.h"
-#include "persistentdata.h"
 #include <de/shell/TextRootWidget>
-#include <de/shell/LabelTedget>
-#include <de/shell/MenuTedget>
-#include <de/shell/ChoiceTedget>
-#include <de/shell/LineEditTedget>
+#include <de/shell/LabelWidget>
+#include <de/shell/MenuWidget>
+#include <de/shell/ChoiceWidget>
+#include <de/shell/LineEditWidget>
 #include <de/shell/DoomsdayInfo>
 #include <de/Config>
 
@@ -31,17 +30,17 @@ using namespace de::shell;
 
 DE_PIMPL_NOREF(LocalServerDialog)
 {
-    ChoiceTedget *choice;
-    LineEditTedget *port;
+    ChoiceWidget *  choice;
+    LineEditWidget *port;
 };
 
 LocalServerDialog::LocalServerDialog() : d(new Impl)
 {
-    add(d->choice = new ChoiceTedget  ("gameMode"));
-    add(d->port   = new LineEditTedget("serverPort"));
+    add(d->choice = new ChoiceWidget  ("gameMode"));
+    add(d->port   = new LineEditWidget("serverPort"));
 
     // Define the contents for the choice list.
-    ChoiceTedget::Items modes;
+    ChoiceWidget::Items modes;
     for (const DoomsdayInfo::Game &game : DoomsdayInfo::allGames())
     {
         modes << game.title;
@@ -100,14 +99,14 @@ String LocalServerDialog::gameMode() const
 
 void LocalServerDialog::prepare()
 {
-    InputDialogTedget::prepare();
+    InputDialogWidget::prepare();
 
     root().setFocus(d->choice);
 }
 
 void LocalServerDialog::finish(int result)
 {
-    InputDialogTedget::finish(result);
+    InputDialogWidget::finish(result);
 
     if (result)
     {

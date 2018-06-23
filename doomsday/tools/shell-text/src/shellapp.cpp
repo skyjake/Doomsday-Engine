@@ -22,10 +22,10 @@
 #include "localserverdialog.h"
 #include "aboutdialog.h"
 
-#include <de/shell/LabelTedget>
-#include <de/shell/MenuTedget>
-#include <de/shell/CommandLineTedget>
-#include <de/shell/LogTedget>
+#include <de/shell/LabelWidget>
+#include <de/shell/MenuWidget>
+#include <de/shell/CommandLineWidget>
+#include <de/shell/LogWidget>
 #include <de/shell/Action>
 #include <de/shell/Link>
 #include <de/shell/LocalServer>
@@ -41,12 +41,12 @@ using namespace de;
 using namespace shell;
 
 DE_PIMPL(ShellApp)
-, DE_OBSERVES(CommandLineTedget, Command)
+, DE_OBSERVES(CommandLineWidget, Command)
 {
-    MenuTedget *       menu;
-    LogTedget *        log;
-    CommandLineTedget *cli;
-    LabelTedget *      menuLabel;
+    MenuWidget *       menu;
+    LogWidget *        log;
+    CommandLineWidget *cli;
+    LabelWidget *      menuLabel;
     StatusWidget *     status;
     Link *             link = nullptr;
     ServerFinder       finder;
@@ -64,7 +64,7 @@ DE_PIMPL(ShellApp)
                 .setInput(Rule::Left,   root.viewLeft());
 
         // Menu button at the left edge.
-        menuLabel = new LabelTedget;
+        menuLabel = new LabelWidget;
         menuLabel->setAlignment(AlignTop);
         menuLabel->setLabel(" F9:Menu ");
         menuLabel->setAttribs(TextCanvas::AttribChar::Bold);
@@ -81,7 +81,7 @@ DE_PIMPL(ShellApp)
         menuLabel->addAction(new shell::Action(KeyEvent(Key::Cancel), [this](){ self().quit(); }));
 
         // Expanding command line widget.
-        cli = new CommandLineTedget;
+        cli = new CommandLineWidget;
         cli->rule()
                 .setInput(Rule::Left,   menuLabel->rule().right())
                 .setInput(Rule::Right,  root.viewRight())
@@ -90,7 +90,7 @@ DE_PIMPL(ShellApp)
         menuLabel->rule().setInput(Rule::Top, cli->rule().top());
 
         // Log history covers the rest of the view.
-        log = new LogTedget;
+        log = new LogWidget;
         log->rule()
                 .setInput(Rule::Left,   root.viewLeft())
                 .setInput(Rule::Width,  root.viewWidth())
@@ -100,7 +100,7 @@ DE_PIMPL(ShellApp)
         log->addAction(new shell::Action(KeyEvent(Key::F5), [this]() { log->scrollToBottom(); }));
 
         // Main menu.
-        menu = new MenuTedget(MenuTedget::Popup);
+        menu = new MenuWidget(MenuWidget::Popup);
         menu->appendItem(new shell::Action("Connect to...",
                                     [this]() { self().askToOpenConnection(); }));
         menu->appendItem(new shell::Action("Disconnect", [this](){ self().closeConnection(); }));
@@ -209,10 +209,10 @@ void ShellApp::closeConnection()
 
 void ShellApp::askForPassword()
 {
-    InputDialogTedget dlg;
+    InputDialogWidget dlg;
     dlg.setDescription("The server requires a password.");
     dlg.setPrompt("Password: ");
-    dlg.lineEdit().setEchoMode(LineEditTedget::PasswordEchoMode);
+    dlg.lineEdit().setEchoMode(LineEditWidget::PasswordEchoMode);
     dlg.lineEdit().setSignalOnEnter(false);
 
     if (dlg.exec(rootWidget()))

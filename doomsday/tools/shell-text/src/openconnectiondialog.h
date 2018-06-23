@@ -19,12 +19,12 @@
 #ifndef OPENCONNECTIONDIALOG_H
 #define OPENCONNECTIONDIALOG_H
 
-#include <de/shell/InputDialogTedget>
+#include <de/shell/InputDialogWidget>
 
 /**
  * Dialog for specifying address for opening a connection.
  */
-class OpenConnectionDialog : public de::shell::InputDialogTedget
+class OpenConnectionDialog : public de::shell::InputDialogWidget
 {
 public:
     OpenConnectionDialog(de::String const &name = de::String());
@@ -33,7 +33,7 @@ public:
      * Returns the address that the user entered in the dialog. If the dialog
      * was rejected, the returned string is empy.
      */
-    de::String address();
+    de::String address() const;
 
 protected:
     void finish(int result);

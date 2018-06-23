@@ -26,7 +26,7 @@
 #include <de/Vector>
 #include <de/LogBuffer>
 #include <de/shell/TextRootWidget>
-#include <de/shell/Tedget>
+#include <de/shell/Widget>
 #include <de/shell/KeyEvent>
 #include <curses.h>
 #include <stdio.h>
@@ -333,7 +333,7 @@ DE_PIMPL(CursesApp)
                     break;
 
                 default:
-#ifdef _DEBUG
+#if defined (DE_DEBUG)
                     if (key & KEY_CODE_YES)
                         debug("CURSES 0x%x", key);
                     else

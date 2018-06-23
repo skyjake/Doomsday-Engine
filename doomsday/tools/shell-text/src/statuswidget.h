@@ -19,10 +19,10 @@
 #ifndef STATUSWIDGET_H
 #define STATUSWIDGET_H
 
-#include <de/shell/Tedget>
+#include <de/shell/Widget>
 #include <de/shell/Link>
 
-class StatusWidget : public de::shell::Tedget
+class StatusWidget : public de::shell::Widget
 {
 public:
     StatusWidget(de::String const &name = de::String());

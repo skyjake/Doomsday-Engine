@@ -17,13 +17,12 @@
  */
 
 #include "openconnectiondialog.h"
-#include "persistentdata.h"
-#include <de/shell/LineEditTedget>
+#include <de/shell/LineEditWidget>
 #include <de/Config>
 
 using namespace de;
 
-OpenConnectionDialog::OpenConnectionDialog(String const &name) : shell::InputDialogTedget(name)
+OpenConnectionDialog::OpenConnectionDialog(String const &name) : shell::InputDialogWidget(name)
 {
     setDescription("Enter the address of the server you want to connect to. "
                    "The address can be a domain name or an IP address. "
@@ -37,14 +36,14 @@ OpenConnectionDialog::OpenConnectionDialog(String const &name) : shell::InputDia
     setAcceptLabel("Connect to server");
 }
 
-String OpenConnectionDialog::address()
+String OpenConnectionDialog::address() const
 {
     return text();
 }
 
 void OpenConnectionDialog::finish(int result)
 {
-    InputDialogTedget::finish(result);
+    InputDialogWidget::finish(result);
 
     if (result)
     {

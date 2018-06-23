@@ -19,12 +19,12 @@
 #ifndef ABOUTDIALOG_H
 #define ABOUTDIALOG_H
 
-#include <de/shell/DialogTedget>
+#include <de/shell/DialogWidget>
 
 /**
  * Dialog for information about the program.
  */
-class AboutDialog : public de::shell::DialogTedget
+class AboutDialog : public de::shell::DialogWidget
 {
 public:
     AboutDialog();
