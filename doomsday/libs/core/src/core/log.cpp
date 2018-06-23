@@ -747,7 +747,6 @@ LogEntry &Log::enter(duint32 metadata, String const &format, LogEntry::Args argu
     return *logsPtr;
 }*/
 
-//static QThreadStorage<Log> theLogs;
 static tss_t threadLogKey;
 
 static void deleteLog(void *log)
@@ -777,30 +776,6 @@ Log &Log::threadLog()
         tss_set(threadLogKey, log = new Log);
     }
     return *log;
-
-    // Each thread has its own log.
-    //QThread *thread = QThread::currentThread();
-
-    //return theLogs.localData();
-
-    /*if (!theLogs.hasLocalData())
-    {
-        theLogs.setLocalData(<#de::Log t#>)
-    internal::Logs &logs = theLogs();
-    DE_GUARD(logs);
-
-    auto found = logs.constFind(thread);
-    if (found == logs.constEnd())
-    {
-        // Create a new log.
-        Log *theLog = new Log;
-        logs.insert(thread, theLog);
-        return *theLog;
-    }
-    else
-    {
-        return *found.value();
-    }*/
 }
 
 #if 0

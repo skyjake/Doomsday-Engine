@@ -47,7 +47,7 @@ public:
 */
 //    bool notify(QObject *receiver, QEvent *event);
 
-    int execLoop();
+    int  execLoop();
     void stopLoop(int code);
 
     Loop &loop();

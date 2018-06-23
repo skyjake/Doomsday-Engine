@@ -28,7 +28,7 @@
 namespace de {
 
 /**
- * Continually iterating loop, running as part of the Qt event loop.
+ * Continually iterating loop, running as part of the application event loop.
  * Each frame/update originates from here.
  *
  * @ingroup core
@@ -111,7 +111,7 @@ public:
     bool isEmpty() const;
     inline operator bool() const { return !isEmpty(); }
 
-    void enqueue(Callback func);
+    void enqueue(const Callback& func);
     void loopIteration() override;
 
 private:

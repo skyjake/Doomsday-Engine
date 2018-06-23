@@ -1,4 +1,4 @@
-/** @file timer.h  Simple timer.
+/** @file threadlocal.h
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,46 +16,52 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_TIMER_H
-#define LIBCORE_TIMER_H
+#ifndef LIBCORE_THREADLOCAL_H
+#define LIBCORE_THREADLOCAL_H
 
-#include "../Time"
-#include "../Observers"
+#include <c_plus/stdthreads.h>
+#include "../libcore.h"
 
 namespace de {
 
 /**
- * Simple timer.
+ * Thread-local object.
+ *
+ * An object of type T gets created for each thread on which ThreadLocal::get() is called.
+ * A thread-local object is deleted when the thread exits.
  */
-class DE_PUBLIC Timer
+template <typename T>
+class ThreadLocal
 {
 public:
-    Timer();
-    virtual ~Timer();
-
-    void setInterval(const TimeSpan &interval);
-    void setSingleShot(bool singleshot);
-    void start();
-    void stop();
-
-    inline void start(const TimeSpan &interval)
+    ThreadLocal()
     {
-        setInterval(interval);
-        start();
+        zap(_tsKey);
     }
 
-    bool isActive() const;
-    bool isSingleShot() const;
-    TimeSpan interval() const;
+    T &get()
+    {
+        if (!_tsKey)
+        {
+            tss_create(&_tsKey, deleter);
+        }
+        T *obj = static_cast<T *>(tss_get(_tsKey));
+        if (!obj)
+        {
+            tss_set(_tsKey, obj = new T);
+        }
+        return *obj;
+    }
 
-    void trigger();
-
-    DE_DEFINE_AUDIENCE2(Trigger, void triggered(Timer &))
+    static void deleter(void *obj)
+    {
+        if (obj) delete static_cast<T *>(obj);
+    }
 
 private:
-    DE_PRIVATE(d)
+    tss_t _tsKey;
 };
 
 } // namespace de
 
-#endif // LIBCORE_TIMER_H
+#endif // LIBCORE_THREADLOCAL_H

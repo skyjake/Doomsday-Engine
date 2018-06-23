@@ -40,14 +40,18 @@ class DE_PUBLIC Event
 public:
     /// Event type codes.
     enum {
-        KeyPress   = 1,
-        KeyRelease = 2,
-        KeyRepeat  = 3,
+        Quit     = 1,
+        Callback = 2,
+        Timer    = 3,
 
-        MouseButton   = 4,
-        MouseMotion   = 5,
-        MousePosition = 6,
-        MouseWheel    = 7
+        KeyPress   = 100,
+        KeyRelease = 111,
+        KeyRepeat  = 112,
+
+        MouseButton   = 120,
+        MouseMotion   = 121,
+        MousePosition = 122,
+        MouseWheel    = 123,
     };
 
 public:
@@ -62,8 +66,11 @@ public:
 
     bool isKey() const { return _type == KeyPress || _type == KeyRepeat || _type == KeyRelease; }
     bool isKeyDown() const { return _type == KeyPress || _type == KeyRepeat; }
-    bool isMouse() const { return _type == MouseButton || _type == MouseMotion ||
-                _type == MousePosition || _type == MouseWheel; }
+    bool isMouse() const
+    {
+        return _type == MouseButton || _type == MouseMotion || _type == MousePosition ||
+               _type == MouseWheel;
+    }
 
     DE_CAST_METHODS()
 

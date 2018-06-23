@@ -19,25 +19,20 @@
  */
 
 #include "../src/core/callbacktimer.h"
-#if 0
+#include "de/Garbage"
+
 namespace de {
 namespace internal {
 
-CallbackTimer::CallbackTimer(std::function<void ()> func, QObject *parent)
-    : QTimer(parent), _func(func)
+CallbackTimer::CallbackTimer(const std::function<void ()> &func)
+    : _func(func)
 {
     setSingleShot(true);
-    connect(this, SIGNAL(timeout()), this, SLOT(callbackAndDeleteLater()));
-}
-
-void CallbackTimer::callbackAndDeleteLater()
-{
-    if (_func) _func();
-
-    // The timer will be gone.
-    this->deleteLater();
+    audienceForTrigger() += [this](){
+        if (_func) _func();
+        trash(this);
+    };
 }
 
 } // namespace internal
 } // namespace de
-#endif

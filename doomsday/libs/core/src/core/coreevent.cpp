@@ -1,8 +1,6 @@
-/**
- * @file callbacktimer.h
- * Internal helper class for making callbacks.
+/** @file coreevent.cpp  Internal libcore events.
  *
- * @authors Copyright © 2012-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -18,27 +16,38 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_CALLBACKTIMER_H
-#define LIBCORE_CALLBACKTIMER_H
-
-#include "de/Timer"
+#include "de/CoreEvent"
+#include "de/NoneValue"
 
 namespace de {
-namespace internal {
 
-/**
- * Helper for making timed callbacks to C code.
- */
-class CallbackTimer : public Timer
+CoreEvent::CoreEvent(int type)
+    : Event(type)
+{}
+
+CoreEvent::CoreEvent(int type, const Value &value)
+    : Event(type)
+    , _value(value.duplicate())
+{}
+
+CoreEvent::CoreEvent(int type, const std::function<void()> &callback)
+    : Event(type)
+    , _callback(callback)
+{}
+
+const Value &CoreEvent::value() const
 {
-public:
-    explicit CallbackTimer(const std::function<void ()> &func);
+    if (!_value)
+    {
+        static NoneValue null;
+        return null;
+    }
+    return *_value;
+}
 
-private:
-    std::function<void ()> _func;
-};
+const std::function<void()> &CoreEvent::callback() const
+{
+    return _callback;
+}
 
-} // namespace internal
 } // namespace de
-
-#endif // LIBCORE_CALLBACKTIMER_H

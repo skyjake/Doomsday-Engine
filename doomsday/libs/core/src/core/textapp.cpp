@@ -17,15 +17,17 @@
  */
 
 #include "de/TextApp"
-#include <de/Log>
-#include <de/math.h>
-#include <de/NativePath>
+#include "de/EventLoop"
+#include "de/Log"
+#include "de/NativePath"
+#include "de/math.h"
 
 namespace de {
 
 DE_PIMPL(TextApp)
 , DE_OBSERVES(Loop, Iteration)
 {
+    EventLoop eventLoop;
     Loop loop;
 
     Impl(Public *i) : Base(i)
@@ -46,7 +48,6 @@ DE_PIMPL(TextApp)
 };
 
 TextApp::TextApp(const StringList &args)
-     //QCoreApplication(argc, argv)
     : App(args)
     , d(new Impl(this))
 {}
@@ -85,7 +86,7 @@ int TextApp::execLoop()
     LOGDEV_NOTE("Starting TextApp event loop...");
 
     d->loop.start();
-    int code = 0; //QCoreApplication::exec();
+    int code = d->eventLoop.exec();
 
     LOGDEV_NOTE("TextApp event loop exited with code %i") << code;
     return code;
@@ -94,7 +95,7 @@ int TextApp::execLoop()
 void TextApp::stopLoop(int code)
 {
     d->loop.stop();
-//    return QCoreApplication::exit(code);
+    d->eventLoop.quit(code);
 }
 
 Loop &TextApp::loop()

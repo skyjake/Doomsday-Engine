@@ -19,6 +19,7 @@
 #include "de/Loop"
 #include "de/App"
 #include "de/Time"
+#include "de/Timer"
 #include "de/Log"
 #include "de/math.h"
 
@@ -32,7 +33,7 @@ DE_PIMPL(Loop)
 {
     TimeSpan interval;
     bool running;
-//    QTimer *timer;
+    Timer timer;
     LoopCallback mainCall;
 
     Impl(Public *i) : Base(i), interval(0), running(false)
@@ -42,8 +43,7 @@ DE_PIMPL(Loop)
 
         audienceForIteration.setAdditionAllowedDuringIteration(true);
 
-//        timer = new QTimer(thisPublic);
-//        QObject::connect(timer, SIGNAL(timeout()), thisPublic, SLOT(nextLoopIteration()));
+        timer.audienceForTrigger() += [this]() { self().nextLoopIteration(); };
     }
 
     ~Impl()
@@ -68,7 +68,7 @@ void Loop::setRate(double freqHz)
         freqHz = 1000.0;
     }
     d->interval = 1.0 / freqHz;
-//    d->timer->setInterval(de::max(1, int(d->interval.asMilliSeconds())));
+    d->timer.setInterval(de::max(TimeSpan(0.001), d->interval));
 }
 
 double Loop::rate() const
@@ -79,31 +79,30 @@ double Loop::rate() const
 void Loop::start()
 {
     d->running = true;
-//    d->timer->start();
+    d->timer.start();
 }
 
 void Loop::stop()
 {
     d->running = false;
-//    d->timer->stop();
+    d->timer.stop();
 }
 
 void Loop::pause()
 {
-//    d->timer->stop();
+    d->timer.stop();
 }
 
 void Loop::resume()
 {
-//    d->timer->start();
+    d->timer.start();
 }
 
 void Loop::timer(const TimeSpan &delay, const std::function<void ()> &func)
 {
     // The timer will delete itself after it's triggered.
-//    internal::CallbackTimer *timer = new internal::CallbackTimer(func, qApp);
-//    timer->start(delay.asMilliSeconds());
-    DE_ASSERT_FAIL("FIXME: Loop::timer not implemented");
+    internal::CallbackTimer *timer = new internal::CallbackTimer(func);
+    timer->start(delay);
 }
 
 void Loop::mainCall(const std::function<void ()> &func) // static
@@ -158,7 +157,7 @@ bool LoopCallback::isEmpty() const
     return _funcs.isEmpty();
 }
 
-void LoopCallback::enqueue(Callback func)
+void LoopCallback::enqueue(const Callback& func)
 {
     DE_GUARD(this);
 
