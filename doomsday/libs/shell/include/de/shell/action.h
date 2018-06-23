@@ -43,7 +43,7 @@ public:
 
     Action(const String &label, const KeyEvent &event, const Func &func = {});
 
-//    Action(KeyEvent const &event, QObject *target = 0, char const *slot = 0);
+    Action(KeyEvent const &event, const Func &func);
 
     void setLabel(String const &label);
 

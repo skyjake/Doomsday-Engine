@@ -35,6 +35,12 @@ Action::Action(String const &label, KeyEvent const &event, const Func &func)
     audienceForTriggered() += func;
 }
 
+Action::Action(const KeyEvent &event, const Action::Func &func)
+    : _event(event)
+{
+    audienceForTriggered() += func;
+}
+
 Action::~Action()
 {}
 
