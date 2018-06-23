@@ -58,7 +58,7 @@ DE_PIMPL(LogBuffer)
     EntryList entries;
     EntryList toBeFlushed;
     Time lastFlushedAt;
-    Timer autoFlushTimer;
+    std::unique_ptr<Timer> autoFlushTimer;
     Sinks sinks;
 
     Impl(Public *i, duint maxEntryCount)
@@ -77,7 +77,6 @@ DE_PIMPL(LogBuffer)
 //        , errSink(QtWarningMsg)
 //#endif
         , lastFlushedAt(Time::invalidTime())
-//        , autoFlushTimer(0)
     {
         // Standard output enabled by default.
         outSink.setMode(LogSink::OnlyNormalEntries);
@@ -89,7 +88,7 @@ DE_PIMPL(LogBuffer)
 
     ~Impl()
     {
-        autoFlushTimer.stop();
+        if (autoFlushTimer) autoFlushTimer->stop();
         delete fileLogSink;
     }
 
@@ -98,15 +97,20 @@ DE_PIMPL(LogBuffer)
         DE_ASSERT(App::appExists());
         if (yes)
         {
-            if (!autoFlushTimer.isActive())
+            if (!autoFlushTimer)
+            {
+                autoFlushTimer.reset(new Timer);
+                autoFlushTimer->audienceForTrigger() += [this]() { self().flush(); };
+            }
+            if (!autoFlushTimer->isActive())
             {
                 // Every now and then the buffer will be flushed.
-                autoFlushTimer.start(FLUSH_INTERVAL);
+                autoFlushTimer->start(FLUSH_INTERVAL);
             }
         }
         else
         {
-            autoFlushTimer.stop();
+            autoFlushTimer->stop();
         }
     }
 
@@ -149,9 +153,7 @@ LogBuffer *LogBuffer::_appBuffer = nullptr;
 
 LogBuffer::LogBuffer(duint maxEntryCount)
     : d(new Impl(this, maxEntryCount))
-{
-    d->autoFlushTimer.audienceForTrigger() += [this]() { flush(); };
-}
+{}
 
 LogBuffer::~LogBuffer()
 {
@@ -259,7 +261,8 @@ void LogBuffer::enableFlushing(bool yes)
 void LogBuffer::setAutoFlushInterval(const TimeSpan &interval)
 {
     enableFlushing();
-    d->autoFlushTimer.setInterval(interval);
+    DE_ASSERT(d->autoFlushTimer);
+    d->autoFlushTimer->setInterval(interval);
 }
 
 void LogBuffer::setOutputFile(String const &path, OutputChangeBehavior behavior)
