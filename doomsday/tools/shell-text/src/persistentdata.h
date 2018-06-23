@@ -1,3 +1,4 @@
+#if 0
 /** @file persistentdata.h  Data that persists even after restarting the app.
  *
  * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -40,3 +41,4 @@ public:
 };
 
 #endif // PERSISTENTDATA_H
+#endif

@@ -21,32 +21,35 @@
 #include "openconnectiondialog.h"
 #include "localserverdialog.h"
 #include "aboutdialog.h"
-#include "persistentdata.h"
 
-#include <de/shell/LabelTextWidget>
-#include <de/shell/MenuTextWidget>
-#include <de/shell/CommandLineTextWidget>
-#include <de/shell/LogTextWidget>
+#include <de/shell/LabelTedget>
+#include <de/shell/MenuTedget>
+#include <de/shell/CommandLineTedget>
+#include <de/shell/LogTedget>
 #include <de/shell/Action>
 #include <de/shell/Link>
 #include <de/shell/LocalServer>
 #include <de/shell/ServerFinder>
 
+#include <de/CommandLine>
+#include <de/Config>
+#include <de/Garbage>
+#include <de/RegExp>
 #include <de/LogBuffer>
 
 using namespace de;
 using namespace shell;
 
 DE_PIMPL(ShellApp)
+, DE_OBSERVES(CommandLineTedget, Command)
 {
-    PersistentData         persist;
-    MenuTextWidget *       menu;
-    LogTextWidget *        log;
-    CommandLineTextWidget *cli;
-    LabelTextWidget *      menuLabel;
-    StatusWidget *         status;
-    Link *                 link = nullptr;
-    ServerFinder           finder;
+    MenuTedget *       menu;
+    LogTedget *        log;
+    CommandLineTedget *cli;
+    LabelTedget *      menuLabel;
+    StatusWidget *     status;
+    Link *             link = nullptr;
+    ServerFinder       finder;
 
     Impl(Public &i) : Base(i)
     {
@@ -61,22 +64,24 @@ DE_PIMPL(ShellApp)
                 .setInput(Rule::Left,   root.viewLeft());
 
         // Menu button at the left edge.
-        menuLabel = new LabelTextWidget;
+        menuLabel = new LabelTedget;
         menuLabel->setAlignment(AlignTop);
         menuLabel->setLabel(" F9:Menu ");
         menuLabel->setAttribs(TextCanvas::AttribChar::Bold);
         menuLabel->rule()
                 .setInput(Rule::Left,   root.viewLeft())
-                .setInput(Rule::Width,  Const(menuLabel->label().size()))
+                .setInput(Rule::Width,  Constu(menuLabel->label().length()))
                 .setInput(Rule::Bottom, status->rule().top());
 
-        menuLabel->addAction(new shell::Action(KeyEvent(Qt::Key_F9), thisPublic, SLOT(openMenu())));
-        menuLabel->addAction(new shell::Action(KeyEvent(Qt::Key_Z, KeyEvent::Control), thisPublic, SLOT(openMenu())));
-        menuLabel->addAction(new shell::Action(KeyEvent(Qt::Key_C, KeyEvent::Control), thisPublic, SLOT(openMenu())));
-        menuLabel->addAction(new shell::Action(KeyEvent(Qt::Key_X, KeyEvent::Control), thisPublic, SLOT(quit())));
+        auto openMenu = [this](){ self().openMenu(); };
+
+        menuLabel->addAction(new shell::Action(KeyEvent(Key::F9),         openMenu));
+        menuLabel->addAction(new shell::Action(KeyEvent(Key::Substitute), openMenu));
+        menuLabel->addAction(new shell::Action(KeyEvent(Key::Break),      openMenu));
+        menuLabel->addAction(new shell::Action(KeyEvent(Key::Cancel), [this](){ self().quit(); }));
 
         // Expanding command line widget.
-        cli = new CommandLineTextWidget;
+        cli = new CommandLineTedget;
         cli->rule()
                 .setInput(Rule::Left,   menuLabel->rule().right())
                 .setInput(Rule::Right,  root.viewRight())
@@ -85,26 +90,26 @@ DE_PIMPL(ShellApp)
         menuLabel->rule().setInput(Rule::Top, cli->rule().top());
 
         // Log history covers the rest of the view.
-        log = new LogTextWidget;
+        log = new LogTedget;
         log->rule()
                 .setInput(Rule::Left,   root.viewLeft())
                 .setInput(Rule::Width,  root.viewWidth())
                 .setInput(Rule::Top,    root.viewTop())
                 .setInput(Rule::Bottom, cli->rule().top());
 
-        log->addAction(new shell::Action(KeyEvent(Qt::Key_F5), log, SLOT(scrollToBottom())));
+        log->addAction(new shell::Action(KeyEvent(Key::F5), [this]() { log->scrollToBottom(); }));
 
         // Main menu.
-        menu = new MenuTextWidget(MenuTextWidget::Popup);
-        menu->appendItem(new shell::Action(tr("Connect to..."),
-                                    thisPublic, SLOT(askToOpenConnection())));
-        menu->appendItem(new shell::Action(tr("Disconnect"), thisPublic, SLOT(closeConnection())));
+        menu = new MenuTedget(MenuTedget::Popup);
+        menu->appendItem(new shell::Action("Connect to...",
+                                    [this]() { self().askToOpenConnection(); }));
+        menu->appendItem(new shell::Action("Disconnect", [this](){ self().closeConnection(); }));
         menu->appendSeparator();
-        menu->appendItem(new shell::Action(tr("Start local server"), thisPublic, SLOT(askToStartLocalServer())));
+        menu->appendItem(new shell::Action("Start local server", [this](){ self().askToStartLocalServer(); }));
         menu->appendSeparator();
-        menu->appendItem(new shell::Action(tr("Scroll to bottom"), log, SLOT(scrollToBottom())), "F5");
-        menu->appendItem(new shell::Action(tr("About"), thisPublic, SLOT(showAbout())));
-        menu->appendItem(new shell::Action(tr("Quit Shell"), thisPublic, SLOT(quit())), "Ctrl-X");
+        menu->appendItem(new shell::Action("Scroll to bottom", [this](){ log->scrollToBottom(); }), "F5");
+        menu->appendItem(new shell::Action("About", [this]() { self().showAbout(); }));
+        menu->appendItem(new shell::Action("Quit Shell", [this]() { self().quit(); }), "Ctrl-X");
         menu->rule()
                 .setInput(Rule::Bottom, menuLabel->rule().top())
                 .setInput(Rule::Left,   menuLabel->rule().left());
@@ -119,25 +124,30 @@ DE_PIMPL(ShellApp)
         root.setFocus(cli);
 
         // Signals.
-        QObject::connect(cli, SIGNAL(commandEntered(de::String)), thisPublic, SLOT(sendCommandToServer(de::String)));
-        QObject::connect(menu, SIGNAL(closed()), thisPublic, SLOT(menuClosed()));
-        QObject::connect(&finder, SIGNAL(updated()), thisPublic, SLOT(updateMenuWithFoundServers()));
+        cli->audienceForCommand()  +=  this;
+        menu->audienceForClose()   += [this](){ self().menuClosed(); };
+        finder.audienceForUpdate() += [this](){ self().updateMenuWithFoundServers(); };
     }
 
-    ~Impl()
+    ~Impl() override
     {
         delete link;
+    }
+
+    void commandEntered(const String &command) override
+    {
+        self().sendCommandToServer(command);
     }
 };
 
 ShellApp::ShellApp(int &argc, char **argv)
     : CursesApp(argc, argv), d(new Impl(*this))
 {
-    // Metadata.
-    setOrganizationDomain ("dengine.net");
-    setOrganizationName   ("Deng Team");
-    setApplicationName    ("doomsday-shell-text");
-    setApplicationVersion (SHELL_VERSION);
+    auto &amd = metadata();
+    amd.set(ORG_DOMAIN, "dengine.net");
+    amd.set(ORG_NAME,   "Deng Team");
+    amd.set(APP_NAME,   "doomsday-shell-text");
+    amd.set(APP_VERSION, SHELL_VERSION);
 
     // Configure the log buffer.
     LogBuffer &buf = LogBuffer::get();
@@ -145,11 +155,11 @@ ShellApp::ShellApp(int &argc, char **argv)
     buf.enableFlushing();
     buf.addSink(d->log->logSink());
 
-    QStringList args = arguments();
-    if (args.size() > 1)
+    auto &cmdLine = commandLine();
+    if (cmdLine.size() > 1)
     {
         // Open a connection.
-        openConnection(args[1]);
+        openConnection(cmdLine.at(1));
     }
 }
 
@@ -171,8 +181,8 @@ void ShellApp::openConnection(String const &address)
     d->link = new Link(address, 30);
     d->status->setShellLink(d->link);
 
-    connect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
-    connect(d->link, SIGNAL(disconnected()), this, SLOT(disconnected()));
+    d->link->audienceForPacketsReady() += [this]() { handleIncomingPackets(); };
+    d->link->audienceForDisconnected() += [this]() { disconnected(); };
 
     d->link->connectLink();
 }
@@ -189,20 +199,20 @@ void ShellApp::closeConnection()
         LOG_NET_NOTE("Closing existing connection to %s") << d->link->address();
 
         // Get rid of the old connection.
-        disconnect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
-        disconnect(d->link, SIGNAL(disconnected()), this, SLOT(disconnected()));
+//        disconnect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
+//        disconnect(d->link, SIGNAL(disconnected()), this, SLOT(disconnected()));
         delete d->link;
-        d->link = 0;
-        d->status->setShellLink(0);
+        d->link = nullptr;
+        d->status->setShellLink(nullptr);
     }
 }
 
 void ShellApp::askForPassword()
 {
-    InputDialog dlg;
-    dlg.setDescription(tr("The server requires a password."));
+    InputDialogTedget dlg;
+    dlg.setDescription("The server requires a password.");
     dlg.setPrompt("Password: ");
-    dlg.lineEdit().setEchoMode(LineEditWidget::PasswordEchoMode);
+    dlg.lineEdit().setEchoMode(LineEditTedget::PasswordEchoMode);
     dlg.lineEdit().setSignalOnEnter(false);
 
     if (dlg.exec(rootWidget()))
@@ -211,7 +221,7 @@ void ShellApp::askForPassword()
     }
     else
     {
-        QTimer::singleShot(1, this, SLOT(closeConnection()));
+        Loop::get().timer(0.01, [this](){ closeConnection(); });
     }
 
     rootWidget().setFocus(d->cli);
@@ -234,12 +244,12 @@ void ShellApp::askToStartLocalServer()
     LocalServerDialog dlg;
     if (dlg.exec(rootWidget()))
     {
-        QStringList opts = dlg.text().split(' ', QString::SkipEmptyParts);
+        StringList opts = dlg.text().split(RegExp("\\s+"));
 
         LocalServer sv;
         sv.start(dlg.port(), dlg.gameMode(), opts);
 
-        openConnection("localhost:" + String::number(dlg.port()));
+        openConnection("localhost:" + String::asText(dlg.port()));
     }
 }
 
@@ -250,8 +260,8 @@ void ShellApp::updateMenuWithFoundServers()
     // Remove old servers.
     for (int i = 2; i < d->menu->itemCount() - 3; ++i)
     {
-        if (d->menu->itemAction(i).label()[0].isDigit() ||
-           d->menu->itemAction(i).label().startsWith("localhost"))
+        if (iswdigit(d->menu->itemAction(i).label().first()) ||
+            d->menu->itemAction(i).label().beginsWith("localhost"))
         {
             d->menu->removeItem(i);
             --i;
@@ -259,14 +269,14 @@ void ShellApp::updateMenuWithFoundServers()
     }
 
     int pos = 2;
-    foreach (Address const &sv, d->finder.foundServers())
+    for (const Address &sv : d->finder.foundServers())
     {
-        String label = sv.asText() + String(" (%1; %2/%3)")
-                .arg(d->finder.name(sv).left(20))
-                .arg(d->finder.playerCount(sv))
-                .arg(d->finder.maxPlayers(sv));
+        String label = sv.asText() + String::format(" (%s; %d/%d)",
+                d->finder.name(sv).left(String::CharPos(20)).c_str(),
+                d->finder.playerCount(sv),
+                d->finder.maxPlayers(sv));
 
-        d->menu->insertItem(pos++, new shell::Action(label, this, SLOT(connectToFoundServer())));
+        d->menu->insertItem(pos++, new shell::Action(label, [this]() { connectToFoundServer(); }));
     }
 
     // Update cursor position after changing menu items.
@@ -282,31 +292,31 @@ void ShellApp::connectToFoundServer()
     openConnection(label.left(label.indexOf('(') - 1));
 }
 
-void ShellApp::sendCommandToServer(String command)
+void ShellApp::sendCommandToServer(const String& command)
 {
     if (d->link)
     {
         LOG_NOTE(">") << command;
 
-        QScopedPointer<Packet> packet(d->link->protocol().newCommand(command));
+        std::unique_ptr<Packet> packet(d->link->protocol().newCommand(command));
         *d->link << *packet;
     }
 }
 
 void ShellApp::handleIncomingPackets()
 {
-    forever
+    for (;;)
     {
-        DE_ASSERT(d->link != 0);
+        DE_ASSERT(d->link != nullptr);
 
-        QScopedPointer<Packet> packet(d->link->nextPacket());
-        if (packet.isNull()) break;
+        std::unique_ptr<Packet> packet(d->link->nextPacket());
+        if (!packet) break;
 
         packet->execute();
 
         // Process packet contents.
         shell::Protocol &protocol = d->link->protocol();
-        switch (protocol.recognize(packet.data()))
+        switch (protocol.recognize(packet.get()))
         {
         case shell::Protocol::PasswordChallenge:
             askForPassword();
@@ -318,7 +328,7 @@ void ShellApp::handleIncomingPackets()
             break;
 
         case shell::Protocol::GameState: {
-            Record &rec = static_cast<RecordPacket *>(packet.data())->record();
+            Record &rec = static_cast<RecordPacket *>(packet.get())->record();
             d->status->setGameState(
                     rec["mode"].value().asText(),
                     rec["rules"].value().asText(),
@@ -338,20 +348,20 @@ void ShellApp::disconnected()
     if (!d->link) return;
 
     // The link was disconnected.
-    disconnect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
-    d->link->deleteLater();
-    d->link = 0;
-    d->status->setShellLink(0);
+    d->link->audienceForPacketsReady().clear();
+    trash(d->link);
+    d->link = nullptr;
+    d->status->setShellLink(nullptr);
 }
 
 void ShellApp::openMenu()
 {
-    d->menuLabel->setAttribs(TextCanvas::Char::Reverse);
+    d->menuLabel->setAttribs(TextCanvas::AttribChar::Reverse);
     d->menu->open();
 }
 
 void ShellApp::menuClosed()
 {
-    d->menuLabel->setAttribs(TextCanvas::Char::Bold);
+    d->menuLabel->setAttribs(TextCanvas::AttribChar::Bold);
     rootWidget().setFocus(d->cli);
 }

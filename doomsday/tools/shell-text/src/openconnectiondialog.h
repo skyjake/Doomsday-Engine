@@ -19,12 +19,12 @@
 #ifndef OPENCONNECTIONDIALOG_H
 #define OPENCONNECTIONDIALOG_H
 
-#include <de/shell/InputDialogTextWidget>
+#include <de/shell/InputDialogTedget>
 
 /**
  * Dialog for specifying address for opening a connection.
  */
-class OpenConnectionDialog : public de::shell::InputDialogTextWidget
+class OpenConnectionDialog : public de::shell::InputDialogTedget
 {
 public:
     OpenConnectionDialog(de::String const &name = de::String());

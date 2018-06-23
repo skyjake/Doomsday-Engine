@@ -19,21 +19,22 @@
 #include "openconnectiondialog.h"
 #include "persistentdata.h"
 #include <de/shell/LineEditTedget>
+#include <de/Config>
 
 using namespace de;
 
 OpenConnectionDialog::OpenConnectionDialog(String const &name) : shell::InputDialogTedget(name)
 {
-    setDescription(tr("Enter the address of the server you want to connect to. "
-                      "The address can be a domain name or an IP address. "
-                      "Optionally, you may include a TCP port number, for example "
-                      "\"10.0.1.1:13209\"."));
+    setDescription("Enter the address of the server you want to connect to. "
+                   "The address can be a domain name or an IP address. "
+                   "Optionally, you may include a TCP port number, for example "
+                   "\"10.0.1.1:13209\".");
 
-    setPrompt(tr("Address: "));
+    setPrompt("Address: ");
     lineEdit().setSignalOnEnter(false); // let menu handle it
-    lineEdit().setText(PersistentData::get("OpenConnection/address"));
+    lineEdit().setText(Config::get().gets("OpenConnection.address", ""));
 
-    setAcceptLabel(tr("Connect to server"));
+    setAcceptLabel("Connect to server");
 }
 
 String OpenConnectionDialog::address()
@@ -43,10 +44,10 @@ String OpenConnectionDialog::address()
 
 void OpenConnectionDialog::finish(int result)
 {
-    InputDialog::finish(result);
+    InputDialogTedget::finish(result);
 
     if (result)
     {
-        PersistentData::set("OpenConnection/address", text());
+        Config::get().set("OpenConnection.address", text());
     }
 }

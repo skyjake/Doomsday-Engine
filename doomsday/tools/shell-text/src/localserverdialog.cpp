@@ -24,6 +24,7 @@
 #include <de/shell/ChoiceTedget>
 #include <de/shell/LineEditTedget>
 #include <de/shell/DoomsdayInfo>
+#include <de/Config>
 
 using namespace de;
 using namespace de::shell;
@@ -81,9 +82,10 @@ LocalServerDialog::LocalServerDialog() : d(new Impl)
     setAcceptLabel("Start local server");
 
     // Values.
-    d->choice->select (PersistentData::geti("LocalServer/gameMode"));
-    d->port->setText  (PersistentData::get ("LocalServer/port", String::asText(DEFAULT_PORT)));
-    lineEdit().setText(PersistentData::get ("LocalServer/options"));
+    auto &cfg = Config::get();
+    d->choice->select (cfg.geti("LocalServer.gameMode", 0));
+    d->port->setText  (cfg.gets("LocalServer.port",     String::asText(DEFAULT_PORT)));
+    lineEdit().setText(cfg.gets("LocalServer.options",  ""));
 }
 
 duint16 LocalServerDialog::port() const
@@ -109,8 +111,9 @@ void LocalServerDialog::finish(int result)
 
     if (result)
     {
-        PersistentData::set("LocalServer/gameMode", d->choice->selection());
-        PersistentData::set("LocalServer/port",     d->port->text());
-        PersistentData::set("LocalServer/options",  lineEdit().text());
+        auto &cfg = Config::get();
+        cfg.set("LocalServer.gameMode", d->choice->selection());
+        cfg.set("LocalServer.port",     d->port->text());
+        cfg.set("LocalServer.options",  lineEdit().text());
     }
 }

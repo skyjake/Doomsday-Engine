@@ -55,7 +55,7 @@ DE_PIMPL(StatusWidget)
 };
 
 StatusWidget::StatusWidget(String const &name)
-    : TextWidget(name), d(new Impl(*this))
+    : Tedget(name), d(new Impl(*this))
 {
     d->updateTimer.audienceForTrigger() += [this]() { d->refresh(); };
 }

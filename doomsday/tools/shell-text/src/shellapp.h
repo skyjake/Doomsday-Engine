@@ -38,7 +38,7 @@ public:
     void connectToFoundServer();
     void closeConnection();
     void askForPassword();
-    void sendCommandToServer(de::String command);
+    void sendCommandToServer(const de::String& command);
     void handleIncomingPackets();
     void disconnected();
     void openMenu();

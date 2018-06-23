@@ -24,7 +24,8 @@ int main(int argc, char *argv[])
 {
     int result;
     {
-        ShellApp a(de::makeList(argc, argv));
+        ShellApp a(argc, argv);
+        a.initSubsystems(ShellApp::DisablePlugins);
         result = a.exec();
     }
 #ifdef DE_DEBUG

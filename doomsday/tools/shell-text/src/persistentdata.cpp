@@ -1,3 +1,4 @@
+#if 0
 /** @file persistentdata.cpp  Data that persists even after restarting the app.
  *
  * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -17,7 +18,6 @@
  */
 
 #include "persistentdata.h"
-#include <QSettings>
 
 using namespace de;
 
@@ -50,3 +50,4 @@ int PersistentData::geti(String const &name, int defaultValue)
     QSettings st;
     return st.value(name, defaultValue).toInt();
 }
+#endif

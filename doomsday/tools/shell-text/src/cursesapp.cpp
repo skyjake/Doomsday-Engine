@@ -16,15 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-//#include <QProcess>
-//#include <QTextStream>
-//#include <QDebug>
 #include "cursesapp.h"
 #include "cursestextcanvas.h"
-#include <curses.h>
-#include <stdio.h>
-#include <sstream>
-#include <signal.h>
 #include <de/Clock>
 #include <de/Timer>
 #include <de/Error>
@@ -33,19 +26,24 @@
 #include <de/Vector>
 #include <de/LogBuffer>
 #include <de/shell/TextRootWidget>
-#include <de/shell/TextWidget>
+#include <de/shell/Tedget>
 #include <de/shell/KeyEvent>
+#include <curses.h>
+#include <stdio.h>
+#include <sstream>
+#include <signal.h>
 
-using namespace de::shell;
+using namespace de;
+using namespace shell;
 
 static void windowResized(int)
 {
     ungetch(KEY_RESIZE);
 }
 
-static de::String runSystemCommand(char const *cmd)
+static String runSystemCommand(char const *cmd)
 {
-    de::String result;
+    String result;
     FILE *p = popen(cmd, "r");
     for (;;)
     {
@@ -65,9 +63,9 @@ static de::String runSystemCommand(char const *cmd)
  *
  * @return Terminal columns and rows.
  */
-static de::Vec2ui actualTerminalSize(de::Vec2ui const &oldSize)
+static Vec2ui actualTerminalSize(Vec2ui const &oldSize)
 {
-    de::Vec2ui size = oldSize;
+    Vec2ui size = oldSize;
     const auto result = runSystemCommand("stty size");
     std::istringstream is(result.toStdString());
     is >> size.y >> size.x;
@@ -76,13 +74,13 @@ static de::Vec2ui actualTerminalSize(de::Vec2ui const &oldSize)
 
 DE_PIMPL(CursesApp)
 {
-    de::LogBuffer logBuffer;
-    de::Clock clock;
+    LogBuffer logBuffer;
+    Clock     clock;
 
     // Curses state:
     WINDOW *rootWin;
-    de::Vec2ui rootSize;
-    int unicodeContinuation = 0;
+    Vec2ui  rootSize;
+    int     unicodeContinuation = 0;
 
     TextRootWidget *rootWidget = nullptr;
 
@@ -91,9 +89,9 @@ DE_PIMPL(CursesApp)
         logBuffer.enableStandardOutput(false);
         logBuffer.setAutoFlushInterval(0.1);
 
-        de::LogBuffer::setAppBuffer(logBuffer);
-        de::Animation::setClock(&clock);
-        de::Clock::setAppClock(&clock);
+        LogBuffer::setAppBuffer(logBuffer);
+        Animation::setClock(&clock);
+        Clock::setAppClock(&clock);
 
         initCurses();
 
@@ -108,8 +106,8 @@ DE_PIMPL(CursesApp)
 
         shutdownCurses();
 
-        de::Clock::setAppClock(nullptr);
-        de::Animation::setClock(nullptr);
+        Clock::setAppClock(nullptr);
+        Animation::setClock(nullptr);
     }
 
     void initCurses()
@@ -117,15 +115,13 @@ DE_PIMPL(CursesApp)
         // Initialize curses.
         if (!(rootWin = initscr()))
         {
-            de::warning("Failed initializing curses!");
+            warning("Failed initializing curses!");
             exit(-1);
         }
         initCursesState();
 
         // Listen for window resizing.
         signal(SIGWINCH, windowResized);
-
-        requestRefresh();
     }
 
     void initCursesState()
@@ -156,13 +152,13 @@ DE_PIMPL(CursesApp)
 
     void requestRefresh()
     {
-        QTimer::singleShot(1000 / 30, thisPublic, SLOT(refresh()));
+        Loop::get().timer(1.0 / 30.0, [this]() { refresh(); });
     }
 
     void handleResize()
     {
         // Terminal has been resized.
-        de::Vec2ui size = actualTerminalSize(rootSize);
+        Vec2ui size = actualTerminalSize(rootSize);
 
         // Curses needs to resize its buffers.
         werase(rootWin);
@@ -184,7 +180,7 @@ DE_PIMPL(CursesApp)
         requestRefresh();
 
         // Update time.
-        clock.setTime(de::Time());
+        clock.setTime(Time());
 
         // Poll for input.
         int key;
@@ -339,10 +335,10 @@ DE_PIMPL(CursesApp)
                 default:
 #ifdef _DEBUG
                     if (key & KEY_CODE_YES)
-                        de::debug("CURSES 0x%x", key);
+                        debug("CURSES 0x%x", key);
                     else
                         // This key code is ignored.
-                        de::debug("0x%x", key);
+                        debug("0x%x", key);
 #endif
                     break;
                 }
@@ -355,12 +351,12 @@ DE_PIMPL(CursesApp)
             else
             {
                 // Convert the key code(s) into a string.
-                de::String keyStr;
+                String keyStr;
 
                 if (unicodeContinuation)
                 {
                     char utf8[3] = { char(unicodeContinuation), char(key), 0 };
-                    keyStr = de::String(utf8);
+                    keyStr = String(utf8);
                     //qDebug() << QString("%1 %2, %3").arg(unicodeCont, 0, 16).arg(key, 0, 16)
                     //            .arg(keyStr[0].unicode(), 0, 16);
                     unicodeContinuation = 0;
@@ -374,7 +370,7 @@ DE_PIMPL(CursesApp)
                     }
                     else
                     {
-                        keyStr.append(QChar(key));
+                        keyStr.append(Char(key));
                     }
                 }
 
@@ -385,14 +381,14 @@ DE_PIMPL(CursesApp)
         rootWidget->update();
 
         // Automatically redraw the UI if the values of layout rules have changed.
-        if (de::Rule::invalidRulesExist() || rootWidget->drawWasRequested())
+        if (Rule::invalidRulesExist() || rootWidget->drawWasRequested())
         {
             rootWidget->draw();
         }
 
         if (rootWidget->focus())
         {
-            de::Vec2i p = rootWidget->focus()->cursorPosition();
+            Vec2i p = rootWidget->focus()->cursorPosition();
             wmove(rootWin, p.y, p.x);
             wrefresh(rootWin);
         }
@@ -400,28 +396,42 @@ DE_PIMPL(CursesApp)
 };
 
 CursesApp::CursesApp(int &argc, char **argv)
-    : QCoreApplication(argc, argv), d(new Impl(*this))
+    : TextApp(makeList(argc, argv))
+    , d(new Impl(*this))
 {}
 
-bool CursesApp::notify(QObject *receiver, QEvent *event)
-{
-    try
-    {
-        return QCoreApplication::notify(receiver, event);
-    }
-    catch (de::Error const &er)
-    {
-        qDebug() << "Caught exception:" << er.asText().toLatin1().constData();
-    }
-    return false;
-}
+//bool CursesApp::notify(QObject *receiver, QEvent *event)
+//{
+//    try
+//    {
+//        return QCoreApplication::notify(receiver, event);
+//    }
+//    catch (Error const &er)
+//    {
+//        qDebug() << "Caught exception:" << er.asText().toLatin1().constData();
+//    }
+//    return false;
+//}
 
 TextRootWidget &CursesApp::rootWidget()
 {
     return *d->rootWidget;
 }
 
+int CursesApp::exec()
+{
+    return TextApp::exec([this]() {
+        // Begin by requesting the first UI refresh.
+        d->requestRefresh();
+    });
+}
+
 void CursesApp::refresh()
 {
     d->refresh();
+}
+
+void CursesApp::quit()
+{
+    TextApp::quit(0);
 }
