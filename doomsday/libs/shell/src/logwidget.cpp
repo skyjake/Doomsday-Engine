@@ -204,8 +204,9 @@ void LogWidget::draw()
         TextCanvas *buf = new TextCanvas(Vec2ui(pos.width(), lines.size()));
         d->cache.append(buf);
 
-        TextCanvas::AttribChar::Attribs attribs = (entry.flags() & LogEntry::Remote?
-                TextCanvas::AttribChar::DefaultAttributes : TextCanvas::AttribChar::Bold);
+        TextCanvas::AttribChar::Attribs attribs =
+            (entry.flags() & LogEntry::Remote ? TextCanvas::AttribChar::DefaultAttributes
+                                              : TextCanvas::AttribChar::Bold);
 
         // Draw the text.
         for (int i = 0; i < lines.sizei(); ++i)

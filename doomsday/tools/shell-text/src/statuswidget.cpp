@@ -33,21 +33,18 @@ DE_PIMPL(StatusWidget)
 
     Impl(Public * i) : Base(i) {}
 
-    void refresh()
-    {
-        self().redraw();
-    }
+    void refresh() { self().redraw(); }
 
     void linkConnected()
     {
         updateTimer.start(1.0);
-        self().redraw();
+        refresh();
     }
 
     void linkDisconnected()
     {
         updateTimer.stop();
-        self().redraw();
+        refresh();
     }
 };
 

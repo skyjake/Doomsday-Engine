@@ -29,7 +29,7 @@ public:
 
     de::shell::TextRootWidget &rootWidget();
 
-    int exec();
+    int  exec();
     void refresh();
     void quit();
 
