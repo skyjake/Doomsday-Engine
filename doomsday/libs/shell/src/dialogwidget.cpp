@@ -16,57 +16,55 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/DialogTedget"
+#include "de/shell/DialogWidget"
 #include "de/shell/TextRootWidget"
 #include "de/shell/KeyEvent"
 
+#include <de/EventLoop>
+
 namespace de { namespace shell {
 
-DE_PIMPL_NOREF(DialogTedget)
+DE_PIMPL_NOREF(DialogWidget)
 {
-//    QEventLoop subloop;
+    EventLoop subloop;
 
-    DE_PIMPL_AUDIENCE(Accept)
-    DE_PIMPL_AUDIENCE(Reject)
+    DE_PIMPL_AUDIENCES(Accept, Reject)
 };
+DE_AUDIENCE_METHODS(DialogWidget, Accept, Reject)
 
-DE_AUDIENCE_METHOD(DialogTedget, Accept)
-DE_AUDIENCE_METHOD(DialogTedget, Reject)
-
-DialogTedget::DialogTedget(String const &name)
-    : Tedget(name), d(new Impl)
+DialogWidget::DialogWidget(String const &name)
+    : Widget(name), d(new Impl)
 {
     // Dialogs are hidden until executed.
     hide();
 }
 
-void DialogTedget::prepare()
+void DialogWidget::prepare()
 {
     show();
     root().setFocus(this);
     redraw();
 }
 
-void DialogTedget::finish(int /*result*/)
+void DialogWidget::finish(int /*result*/)
 {
     hide();
-    root().setFocus(0);
+    root().setFocus(nullptr);
 }
 
-int DialogTedget::exec(TextRootWidget &root)
+int DialogWidget::exec(TextRootWidget &root)
 {
     // The widget is added to the root temporarily (as top child).
     DE_ASSERT(!hasRoot());
     root.add(this);
 
     // Center the dialog.
-    rule().setInput(Rule::Left,  (root.viewWidth()  - rule().width())  / 2)
-          .setInput(Rule::Top,   (root.viewHeight() - rule().height()) / 2);
+    rule().setInput(Rule::Left, (root.viewWidth()  - rule().width())  / 2)
+          .setInput(Rule::Top,  (root.viewHeight() - rule().height()) / 2);
 
     prepare();
 
-    int result = 0; //d->subloop.exec();
-    /// @todo Run an event loop here.
+    int result = d->subloop.exec();
 
     finish(result);
 
@@ -76,7 +74,7 @@ int DialogTedget::exec(TextRootWidget &root)
     return result;
 }
 
-void DialogTedget::draw()
+void DialogWidget::draw()
 {
     Rectanglei pos = rule().recti().adjusted(Vec2i(-2, -1), Vec2i(2, 1));
 
@@ -85,7 +83,7 @@ void DialogTedget::draw()
     targetCanvas().drawLineRect(pos);
 }
 
-bool DialogTedget::handleEvent(Event const &event)
+bool DialogWidget::handleEvent(Event const &event)
 {
     if (event.type() == Event::KeyPress)
     {
@@ -96,32 +94,25 @@ bool DialogTedget::handleEvent(Event const &event)
             return true;
         }
     }
-
     // All events not handled by children are eaten by the dialog.
     return true;
 }
 
-void DialogTedget::accept(int result)
+void DialogWidget::accept(int result)
 {
-//    if (d->subloop.isRunning())
+    if (d->subloop.isRunning())
     {
-//        d->subloop.exit(result);
-        DE_FOR_AUDIENCE2(Accept, i)
-        {
-            i->accepted(result);
-        }
+        d->subloop.quit(result);
+        DE_FOR_AUDIENCE2(Accept, i) { i->accepted(result); }
     }
 }
 
-void DialogTedget::reject(int result)
+void DialogWidget::reject(int result)
 {
-//    if (d->subloop.isRunning())
+    if (d->subloop.isRunning())
     {
-//        d->subloop.exit(result);
-        DE_FOR_AUDIENCE2(Reject, i)
-        {
-            i->rejected(result);
-        }
+        d->subloop.quit(result);
+        DE_FOR_AUDIENCE2(Reject, i) { i->rejected(result); }
     }
 }
 

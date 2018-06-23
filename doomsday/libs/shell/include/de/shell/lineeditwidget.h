@@ -20,7 +20,7 @@
 #define LIBSHELL_LINEEDITTEDGET_H
 
 #include "libshell.h"
-#include "Tedget"
+#include "Widget"
 #include "AbstractLineEditor"
 
 namespace de { namespace shell {
@@ -33,8 +33,8 @@ namespace de { namespace shell {
  *
  * @ingroup textUi
  */
-class LIBSHELL_PUBLIC LineEditTedget
-    : public Tedget
+class LIBSHELL_PUBLIC LineEditWidget
+    : public Widget
     , public AbstractLineEditor
 {
 public:
@@ -46,7 +46,7 @@ public:
      *
      * @param name  Widget name.
      */
-    LineEditTedget(String const &name = String());
+    LineEditWidget(String const &name = String());
 
     /**
      * Enables or disables the signal emitted when the edit widget receives an

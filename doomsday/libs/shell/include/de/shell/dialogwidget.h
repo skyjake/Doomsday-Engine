@@ -19,7 +19,7 @@
 #ifndef LIBSHELL_DIALOGTEDGET_H
 #define LIBSHELL_DIALOGTEDGET_H
 
-#include "Tedget"
+#include "Widget"
 
 namespace de { namespace shell {
 
@@ -28,14 +28,14 @@ namespace de { namespace shell {
  *
  * @ingroup textUi
  */
-class LIBSHELL_PUBLIC DialogTedget : public Tedget
+class LIBSHELL_PUBLIC DialogWidget : public Widget
 {
 public:
     DE_DEFINE_AUDIENCE2(Accept, void accepted(int result))
     DE_DEFINE_AUDIENCE2(Reject, void rejected(int result))
 
 public:
-    DialogTedget(String const &name = String());
+    DialogWidget(String const &name = String());
 
     /**
      * Shows the dialog and gives it focus. Execution is blocked until the

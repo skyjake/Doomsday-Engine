@@ -19,7 +19,7 @@
 #ifndef LIBSHELL_LOGTEDGET_H
 #define LIBSHELL_LOGTEDGET_H
 
-#include <de/shell/Tedget>
+#include <de/shell/Widget>
 #include <de/LogSink>
 
 namespace de { namespace shell {
@@ -29,10 +29,10 @@ namespace de { namespace shell {
  *
  * @ingroup textUi
  */
-class LIBSHELL_PUBLIC LogTedget : public Tedget
+class LIBSHELL_PUBLIC LogWidget : public Widget
 {
 public:
-    LogTedget(String const &name = {});
+    LogWidget(String const &name = {});
 
     /**
      * Returns the log sink that can be connected to a log buffer for receiving

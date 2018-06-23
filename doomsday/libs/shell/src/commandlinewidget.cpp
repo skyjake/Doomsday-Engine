@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/CommandLineTedget"
+#include "de/shell/CommandLineWidget"
 #include "de/shell/TextRootWidget"
 #include "de/shell/KeyEvent"
 #include "de/shell/EditorHistory"
@@ -25,7 +25,7 @@
 
 namespace de { namespace shell {
 
-DE_PIMPL(CommandLineTedget)
+DE_PIMPL(CommandLineWidget)
 {
     EditorHistory history;
 
@@ -34,16 +34,16 @@ DE_PIMPL(CommandLineTedget)
     DE_PIMPL_AUDIENCE(Command)
 };
 
-DE_AUDIENCE_METHOD(CommandLineTedget, Command)
+DE_AUDIENCE_METHOD(CommandLineWidget, Command)
 
-CommandLineTedget::CommandLineTedget(String const &name)
-    : LineEditTedget(name)
+CommandLineWidget::CommandLineWidget(String const &name)
+    : LineEditWidget(name)
     , d(new Impl(this))
 {
     setPrompt("> ");
 }
 
-bool CommandLineTedget::handleEvent(Event const &event)
+bool CommandLineWidget::handleEvent(Event const &event)
 {
     // There are only key press events.
     DE_ASSERT(event.type() == Event::KeyPress);
@@ -57,7 +57,7 @@ bool CommandLineTedget::handleEvent(Event const &event)
         return true;
     }
 
-    if (LineEditTedget::handleEvent(event))
+    if (LineEditWidget::handleEvent(event))
     {
         return true;
     }
@@ -66,9 +66,9 @@ bool CommandLineTedget::handleEvent(Event const &event)
     return d->history.handleControlKey(ev.key());
 }
 
-void CommandLineTedget::autoCompletionBegan(String const &wordBase)
+void CommandLineWidget::autoCompletionBegan(String const &wordBase)
 {
-    LineEditTedget::autoCompletionBegan(wordBase);
+    LineEditWidget::autoCompletionBegan(wordBase);
 
     LOG_MSG("Completions for '%s':") << wordBase;
     LOG_MSG("  %s") << String::join(suggestedCompletions(), ", ");

@@ -19,7 +19,7 @@
 #ifndef LIBSHELL_MENUTEDGET_H
 #define LIBSHELL_MENUTEDGET_H
 
-#include "Tedget"
+#include "Widget"
 #include "Action"
 #include "TextCanvas"
 
@@ -37,7 +37,7 @@ namespace de { namespace shell {
  *
  * @ingroup textUi
  */
-class LIBSHELL_PUBLIC MenuTedget : public Tedget
+class LIBSHELL_PUBLIC MenuWidget : public Widget
 {
 public:
     enum Preset {
@@ -50,7 +50,7 @@ public:
     DE_DEFINE_AUDIENCE2(Close, void menuClosed())
 
 public:
-    MenuTedget(Preset preset, String const &name = {});
+    MenuWidget(Preset preset, String const &name = {});
 
     int itemCount() const;
 

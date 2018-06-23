@@ -19,27 +19,27 @@
 #ifndef LIBSHELL_INPUTDIALOGTEDGET_H
 #define LIBSHELL_INPUTDIALOGTEDGET_H
 
-#include "DialogTedget"
+#include "DialogWidget"
 
 namespace de { namespace shell {
 
-class LabelTedget;
-class LineEditTedget;
-class MenuTedget;
+class LabelWidget;
+class LineEditWidget;
+class MenuWidget;
 
 /**
  * Dialog for querying text from the user.
  *
  * @ingroup textUi
  */
-class InputDialogTedget : public DialogTedget
+class InputDialogWidget : public DialogWidget
 {
 public:
-    InputDialogTedget(const String &name = {});
+    InputDialogWidget(const String &name = {});
 
-    LabelTedget &   label();
-    LineEditTedget &lineEdit();
-    MenuTedget &    menu();
+    LabelWidget &   label();
+    LineEditWidget &lineEdit();
+    MenuWidget &    menu();
 
     /**
      * Sets the width of the dialog. The default width is 50.

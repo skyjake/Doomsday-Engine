@@ -25,7 +25,7 @@
 
 namespace de { namespace shell {
 
-class Tedget;
+class Widget;
 
 /**
  * Root widget for device-independent, text-based UIs.
@@ -61,7 +61,7 @@ public:
      */
     void setViewSize(Size const &viewSize);
 
-    Tedget *focus() const;
+    shell::Widget *focus() const;
 
     void draw();
 

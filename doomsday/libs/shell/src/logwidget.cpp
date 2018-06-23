@@ -1,4 +1,4 @@
-/** @file libshell/src/logtedget.cpp  Text widget for log message output.
+/** @file libshell/src/logwidget.cpp  Text widget for log message output.
  *
  * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/LogTedget"
+#include "de/shell/LogWidget"
 #include "de/shell/KeyEvent"
 #include "de/shell/TextRootWidget"
 #include <de/MonospaceLogSinkFormatter>
@@ -32,7 +32,7 @@ namespace de { namespace shell {
 class Sink : public MemoryLogSink
 {
 public:
-    Sink(LogTedget &widget) : MemoryLogSink(), _widget(widget) {}
+    Sink(LogWidget &widget) : MemoryLogSink(), _widget(widget) {}
 
     void addedNewEntry(LogEntry &)
     {
@@ -40,10 +40,10 @@ public:
     }
 
 private:
-    LogTedget &_widget;
+    LogWidget &_widget;
 };
 
-DE_PIMPL(LogTedget)
+DE_PIMPL(LogWidget)
 {
     Sink sink;
     MonospaceLogSinkFormatter formatter;
@@ -131,49 +131,49 @@ DE_PIMPL(LogTedget)
     DE_PIMPL_AUDIENCES(Scroll, Maximum)
 };
 
-DE_AUDIENCE_METHODS(LogTedget, Scroll, Maximum)
+DE_AUDIENCE_METHODS(LogWidget, Scroll, Maximum)
 
-LogTedget::LogTedget(String const &name) : Tedget(name), d(new Impl(this))
+LogWidget::LogWidget(String const &name) : Widget(name), d(new Impl(this))
 {}
 
-LogSink &LogTedget::logSink()
+LogSink &LogWidget::logSink()
 {
     return d->sink;
 }
 
-void LogTedget::clear()
+void LogWidget::clear()
 {
     d->clear();
     redraw();
 }
 
-void LogTedget::setScrollIndicatorVisible(bool visible)
+void LogWidget::setScrollIndicatorVisible(bool visible)
 {
     d->showScrollIndicator = visible;
 }
 
-int LogTedget::scrollPosition() const
+int LogWidget::scrollPosition() const
 {
     return d->visibleOffset;
 }
 
-int LogTedget::scrollPageSize() const
+int LogWidget::scrollPageSize() const
 {
     return de::max(1, rule().height().valuei() - 1);
 }
 
-int LogTedget::maximumScroll() const
+int LogWidget::maximumScroll() const
 {
     return d->lastMaxScroll;
 }
 
-void LogTedget::scroll(int to)
+void LogWidget::scroll(int to)
 {
     d->visibleOffset = de::max(0, to);
     redraw();
 }
 
-void LogTedget::draw()
+void LogWidget::draw()
 {
     Rectanglei pos = rule().recti();
     TextCanvas buf(pos.size());
@@ -268,7 +268,7 @@ void LogTedget::draw()
     }
 }
 
-bool LogTedget::handleEvent(Event const &event)
+bool LogWidget::handleEvent(Event const &event)
 {
     if (event.type() != Event::KeyPress) return false;
 
@@ -292,10 +292,10 @@ bool LogTedget::handleEvent(Event const &event)
         break;
     }
 
-    return Tedget::handleEvent(event);
+    return Widget::handleEvent(event);
 }
 
-void LogTedget::scrollToBottom()
+void LogWidget::scrollToBottom()
 {
     d->setVisibleOffset(0);
     redraw();

@@ -19,7 +19,7 @@
 #ifndef LIBSHELL_LABELTEDGET_H
 #define LIBSHELL_LABELTEDGET_H
 
-#include "Tedget"
+#include "Widget"
 #include "TextCanvas"
 
 namespace de { namespace shell {
@@ -29,10 +29,10 @@ namespace de { namespace shell {
  *
  * @ingroup textUi
  */
-class LIBSHELL_PUBLIC LabelTedget : public Tedget
+class LIBSHELL_PUBLIC LabelWidget : public Widget
 {
 public:
-    LabelTedget(String const &name = String());
+    LabelWidget(String const &name = String());
 
     /**
      * Sets the background for the label.

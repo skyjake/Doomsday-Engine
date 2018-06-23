@@ -20,14 +20,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/LabelTedget"
+#include "de/shell/LabelWidget"
 #include "de/shell/TextRootWidget"
 #include "de/shell/MonospaceLineWrapping"
 #include <de/ConstantRule>
 
 namespace de { namespace shell {
 
-DE_PIMPL_NOREF(LabelTedget)
+DE_PIMPL_NOREF(LabelWidget)
 {
     TextCanvas::AttribChar          background;
     String                          label;
@@ -54,16 +54,16 @@ DE_PIMPL_NOREF(LabelTedget)
     }
 };
 
-LabelTedget::LabelTedget(String const &name)
-    : Tedget(name), d(new Impl)
+LabelWidget::LabelWidget(String const &name)
+    : Widget(name), d(new Impl)
 {}
 
-void LabelTedget::setBackground(TextCanvas::AttribChar const &background)
+void LabelWidget::setBackground(TextCanvas::AttribChar const &background)
 {
     d->background = background;
 }
 
-void LabelTedget::setLabel(String const &text, TextCanvas::AttribChar::Attribs attribs)
+void LabelWidget::setLabel(String const &text, TextCanvas::AttribChar::Attribs attribs)
 {
     d->label   = text;
     d->attribs = std::move(attribs);
@@ -71,30 +71,30 @@ void LabelTedget::setLabel(String const &text, TextCanvas::AttribChar::Attribs a
     redraw();
 }
 
-void LabelTedget::setAttribs(TextCanvas::AttribChar::Attribs const &attribs)
+void LabelWidget::setAttribs(TextCanvas::AttribChar::Attribs const &attribs)
 {
     d->attribs = attribs;
     redraw();
 }
 
-void LabelTedget::setBackgroundAttribs(TextCanvas::AttribChar::Attribs const &attribs)
+void LabelWidget::setBackgroundAttribs(TextCanvas::AttribChar::Attribs const &attribs)
 {
     d->background.attribs = attribs;
     redraw();
 }
 
-TextCanvas::AttribChar::Attribs LabelTedget::attribs() const
+TextCanvas::AttribChar::Attribs LabelWidget::attribs() const
 {
     return d->attribs;
 }
 
-void LabelTedget::setAlignment(Alignment align)
+void LabelWidget::setAlignment(Alignment align)
 {
     d->align = std::move(align);
     redraw();
 }
 
-void LabelTedget::setExpandsToFitLines(bool expand)
+void LabelWidget::setExpandsToFitLines(bool expand)
 {
     d->vertExpand = expand;
     if (expand)
@@ -104,12 +104,12 @@ void LabelTedget::setExpandsToFitLines(bool expand)
     redraw();
 }
 
-String LabelTedget::label() const
+String LabelWidget::label() const
 {
     return d->label;
 }
 
-void LabelTedget::update()
+void LabelWidget::update()
 {
     if (d->wraps.isEmpty())
     {
@@ -117,7 +117,7 @@ void LabelTedget::update()
     }
 }
 
-void LabelTedget::draw()
+void LabelWidget::draw()
 {
     Rectanglei pos = rule().recti();
     TextCanvas buf(pos.size());

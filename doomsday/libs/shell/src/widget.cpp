@@ -16,13 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/Tedget"
+#include "de/shell/Widget"
 #include "de/shell/TextRootWidget"
 #include "de/shell/Action"
 
 namespace de { namespace shell {
 
-DE_PIMPL_NOREF(Tedget)
+DE_PIMPL_NOREF(Widget)
 {
     TextCanvas *    canvas;
     RuleRectangle * rule;
@@ -60,8 +60,7 @@ DE_PIMPL_NOREF(Tedget)
      */
     bool navigateFocus(TextRootWidget &root, String const &name)
     {
-        Widget *w = root.find(name);
-        if (w)
+        if (auto *w = root.find(name))
         {
             root.setFocus(w);
             root.requestDraw();
@@ -71,24 +70,26 @@ DE_PIMPL_NOREF(Tedget)
     }
 };
 
-Tedget::Tedget(String const &name) : Widget(name), d(new Impl)
+Widget::Widget(String const &name)
+    : de::Widget(name)
+    , d(new Impl)
 {
     setBehavior(Focusable, SetFlags);
 }
 
-TextRootWidget &Tedget::root() const
+TextRootWidget &Widget::root() const
 {
-    TextRootWidget *r = dynamic_cast<TextRootWidget *>(&Widget::root());
+    TextRootWidget *r = dynamic_cast<TextRootWidget *>(&de::Widget::root());
     DE_ASSERT(r != nullptr);
     return *r;
 }
 
-void Tedget::setTargetCanvas(TextCanvas *canvas)
+void Widget::setTargetCanvas(TextCanvas *canvas)
 {
     d->canvas = canvas;
 }
 
-TextCanvas &Tedget::targetCanvas() const
+TextCanvas &Widget::targetCanvas() const
 {
     if (!d->canvas)
     {
@@ -98,12 +99,12 @@ TextCanvas &Tedget::targetCanvas() const
     return *d->canvas;
 }
 
-void Tedget::redraw()
+void Widget::redraw()
 {
     if (hasRoot() && !isHidden()) root().requestDraw();
 }
 
-void Tedget::drawAndShow()
+void Widget::drawAndShow()
 {
     if (!isHidden())
     {
@@ -117,34 +118,34 @@ void Tedget::drawAndShow()
     }
 }
 
-RuleRectangle &Tedget::rule()
+RuleRectangle &Widget::rule()
 {
     DE_ASSERT(d->rule != nullptr);
     return *d->rule;
 }
 
-RuleRectangle const &Tedget::rule() const
+RuleRectangle const &Widget::rule() const
 {
     DE_ASSERT(d->rule != nullptr);
     return *d->rule;
 }
 
-Vec2i Tedget::cursorPosition() const
+Vec2i Widget::cursorPosition() const
 {
     return Vec2i(rule().left().valuei(), rule().top().valuei());
 }
 
-void Tedget::addAction(RefArg<Action> action)
+void Widget::addAction(RefArg<Action> action)
 {
     d->actions.append(action.holdRef());
 }
 
-void Tedget::removeAction(Action &action)
+void Widget::removeAction(Action &action)
 {
     d->removeAction(action);
 }
 
-bool Tedget::handleEvent(Event const &event)
+bool Widget::handleEvent(Event const &event)
 {
     // We only support KeyEvents.
     if (event.type() == Event::KeyPress)
@@ -172,7 +173,7 @@ bool Tedget::handleEvent(Event const &event)
         }
     }
 
-    return Widget::handleEvent(event);
+    return de::Widget::handleEvent(event);
 }
 
 }} // namespace de::shell

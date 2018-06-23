@@ -16,20 +16,20 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/ChoiceTedget"
-#include "de/shell/MenuTedget"
+#include "de/shell/ChoiceWidget"
+#include "de/shell/MenuWidget"
 #include "de/shell/TextRootWidget"
 
 namespace de { namespace shell {
 
 using AChar = TextCanvas::AttribChar;
 
-DE_PIMPL(ChoiceTedget)
-, DE_OBSERVES(MenuTedget, Close)
+DE_PIMPL(ChoiceWidget)
+, DE_OBSERVES(MenuWidget, Close)
 {
     Items           items;
     int             selection;
-    MenuTedget *menu;
+    MenuWidget *menu;
     String          prompt;
 
     Impl(Public &i) : Base(i), selection(0)
@@ -59,14 +59,14 @@ DE_PIMPL(ChoiceTedget)
     }
 };
 
-ChoiceTedget::ChoiceTedget(String const &name)
-    : LabelTedget(name)
+ChoiceWidget::ChoiceWidget(String const &name)
+    : LabelWidget(name)
     , d(new Impl(*this))
 {
     setBehavior(HandleEventsOnlyWhenFocused);
     setAlignment(AlignLeft);
 
-    d->menu = new MenuTedget(MenuTedget::Popup);
+    d->menu = new MenuWidget(MenuWidget::Popup);
     add(d->menu);
 
     d->menu->rule()
@@ -77,77 +77,77 @@ ChoiceTedget::ChoiceTedget(String const &name)
     d->menu->audienceForClose() += d;
 }
 
-void ChoiceTedget::setItems(ChoiceTedget::Items const &items)
+void ChoiceWidget::setItems(ChoiceWidget::Items const &items)
 {
     d->items = items;
     d->updateMenu();
     d->updateLabel();
 }
 
-void ChoiceTedget::setPrompt(String const &prompt)
+void ChoiceWidget::setPrompt(String const &prompt)
 {
     d->prompt = prompt;
     d->updateLabel();
     redraw();
 }
 
-ChoiceTedget::Items ChoiceTedget::items() const
+ChoiceWidget::Items ChoiceWidget::items() const
 {
     return d->items;
 }
 
-void ChoiceTedget::select(int pos)
+void ChoiceWidget::select(int pos)
 {
     d->selection = pos;
     d->menu->setCursor(pos);
     d->updateLabel();
 }
 
-int ChoiceTedget::selection() const
+int ChoiceWidget::selection() const
 {
     return d->selection;
 }
 
-List<int> ChoiceTedget::selections() const
+List<int> ChoiceWidget::selections() const
 {
     List<int> sels;
     sels.append(d->selection);
     return sels;
 }
 
-bool ChoiceTedget::isOpen() const
+bool ChoiceWidget::isOpen() const
 {
     return !d->menu->isHidden();
 }
 
-Vec2i ChoiceTedget::cursorPosition() const
+Vec2i ChoiceWidget::cursorPosition() const
 {
     Rectanglei rect = rule().recti();
     return Vec2i(rect.left() + d->prompt.sizei(), rect.top());
 }
 
-void ChoiceTedget::focusLost()
+void ChoiceWidget::focusLost()
 {
     setAttribs(AChar::DefaultAttributes);
     setBackgroundAttribs(AChar::DefaultAttributes);
 }
 
-void ChoiceTedget::focusGained()
+void ChoiceWidget::focusGained()
 {
     setAttribs(AChar::Reverse);
     setBackgroundAttribs(AChar::Reverse);
 }
 
-void ChoiceTedget::draw()
+void ChoiceWidget::draw()
 {
-    LabelTedget::draw();
+    LabelWidget::draw();
 
     Rectanglei rect = rule().recti();
     targetCanvas().drawText(rect.topLeft, d->prompt, attribs() | AChar::Bold);
     targetCanvas().put(Vec2i(rect.right() - 1, rect.top()), AChar('>', attribs()));
 }
 
-bool ChoiceTedget::handleEvent(Event const &ev)
+bool ChoiceWidget::handleEvent(Event const &ev)
 {
     if (ev.type() == Event::KeyPress)
     {
@@ -181,10 +181,10 @@ bool ChoiceTedget::handleEvent(Event const &ev)
         }
     }
 
-    return LabelTedget::handleEvent(ev);
+    return LabelWidget::handleEvent(ev);
 }
 
-void ChoiceTedget::updateSelectionFromMenu()
+void ChoiceWidget::updateSelectionFromMenu()
 {
     DE_ASSERT(isOpen());
     d->selection = d->menu->cursor();

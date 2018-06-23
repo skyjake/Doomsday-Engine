@@ -1,4 +1,4 @@
-/** @file shell/choicewidget.h  Widget for selecting an item from multiple choices.
+/** @file commandlinewidget.h  Widget for command line input.
  *
  * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,50 +16,29 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_CHOICETEDGET_H
-#define LIBSHELL_CHOICETEDGET_H
+#ifndef LIBSHELL_COMMANDLINEWIDGET_H
+#define LIBSHELL_COMMANDLINEWIDGET_H
 
-#include "LabelTedget"
-#include <de/List>
+#include "LineEditWidget"
 
 namespace de { namespace shell {
 
 /**
- * Widget for selecting an item from multiple choices.
+ * Text editor with a history.
  *
  * @ingroup textUi
  */
-class LIBSHELL_PUBLIC ChoiceTedget : public LabelTedget
+class LIBSHELL_PUBLIC CommandLineWidget : public LineEditWidget
 {
 public:
-    typedef StringList Items;
+    DE_DEFINE_AUDIENCE2(Command, void commandEntered(const de::String &command))
 
 public:
-    ChoiceTedget(String const &name = String());
-
-    void setItems(Items const &items);
-    void setPrompt(String const &prompt);
-    void select(int pos);
-
-    Items     items() const;
-    int       selection() const;
-    List<int> selections() const;
-
-    /**
-     * Determines if the selection menu is currently visible.
-     */
-    bool isOpen() const;
-
-    Vec2i cursorPosition() const;
-
-    // Events.
-    void focusLost();
-    void focusGained();
-    void draw();
+    CommandLineWidget(String const &name = String());
     bool handleEvent(Event const &event);
 
-    void updateSelectionFromMenu();
-    void menuClosed();
+protected:
+    void autoCompletionBegan(String const &wordBase);
 
 private:
     DE_PRIVATE(d)
@@ -67,4 +46,4 @@ private:
 
 }} // namespace de::shell
 
-#endif // LIBSHELL_CHOICETEDGET_H
+#endif // LIBSHELL_COMMANDLINEWIDGET_H
