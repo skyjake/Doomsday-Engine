@@ -59,6 +59,12 @@ public:
     void quit(int exitCode);
 
     /**
+     * Determines if this the currently running event loop. Note that if an event loop is
+     * started inside another event loop, only the latest one is considered running.
+     */
+    bool isRunning() const;
+
+    /**
      * Posts a new event into the event loop.
      *
      * @param event  Event to post. Ownership taken by EventLoop. The event will be deleted

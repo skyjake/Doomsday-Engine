@@ -18,6 +18,7 @@
 
 #include "de/Thread"
 #include "de/Hash"
+#include "de/Garbage"
 
 #include <c_plus/thread.h>
 
@@ -67,6 +68,7 @@ DE_PIMPL(Thread)
         {
             i->threadFinished(self);
         }
+        Garbage_ClearForThread();
         return 0;
     }
 

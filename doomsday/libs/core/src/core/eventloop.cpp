@@ -55,7 +55,7 @@ int EventLoop::exec(const std::function<void ()> &postExec)
     try
     {
         internal::StackPusher sp(this);
-        postExec();
+        if (postExec) postExec();
         for (;;)
         {
             // Wait until an event is posted.
@@ -87,6 +87,13 @@ int EventLoop::exec(const std::function<void ()> &postExec)
 void EventLoop::quit(int exitCode)
 {
     postEvent(new CoreEvent(Event::Quit, NumberValue(exitCode)));
+}
+
+bool EventLoop::isRunning() const
+{
+    using namespace internal;
+    DE_GUARD(loopStack);
+    return loopStack.value.back() == this;
 }
 
 void EventLoop::postEvent(Event *event)

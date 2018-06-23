@@ -19,6 +19,7 @@
 #include "de/TextApp"
 #include "de/EventLoop"
 #include "de/Log"
+#include "de/Garbage"
 #include "de/NativePath"
 #include "de/math.h"
 
@@ -36,6 +37,11 @@ DE_PIMPL(TextApp)
 
         // In text-based apps, we can limit the loop frequency.
         loop.setRate(35);
+    }
+
+    ~Impl()
+    {
+        Garbage_Recycle();
     }
 
     void loopIteration() override
