@@ -235,4 +235,14 @@ Block md5Hash(Args... args)
 
 } // namespace de
 
+namespace std
+{
+    template<>
+    struct hash<de::Block> {
+        std::size_t operator()(const de::Block &key) const {
+            return hash<std::string>()({key.data(), key.data() + key.size()});
+        }
+    };
+}
+
 #endif // LIBCORE_BLOCK_H
