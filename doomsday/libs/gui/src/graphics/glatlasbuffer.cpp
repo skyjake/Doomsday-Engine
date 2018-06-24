@@ -19,39 +19,40 @@
 #include "de/GLAtlasBuffer"
 #include "de/GLSubBuffer"
 
-#include <QList>
+#include <de/List>
 
 namespace de {
 
-static dsize const MIN_RANGE_SIZE = 16;
+static const dsize MIN_RANGE_SIZE = 16;
 
 DE_PIMPL_NOREF(GLAtlasBuffer)
 {
     struct HostBuffer
     {
         GLBuffer buffer;
-        QList<Rangeui16> availableRanges;
+        List<Rangeui16> availableRanges;
 
         void addAvailable(Rangeui16 const &range)
         {
-            DE_ASSERT(range.size() >= MIN_RANGE_SIZE);
+            DE_ASSERT(dsize(range.size()) >= MIN_RANGE_SIZE);
             availableRanges.append(range);
-            qSort(availableRanges.begin(), availableRanges.end(),
-                  [] (Rangeui16 const &a, Rangeui16 const &b) { return a.size() < b.size(); });
+            std::sort(availableRanges.begin(),
+                      availableRanges.end(),
+                      [](Rangeui16 const &a, Rangeui16 const &b) { return a.size() < b.size(); });
         }
 
         Rangeui16 findBestAvailable(dsize forSize)
         {
             for (auto i = availableRanges.begin(); i != availableRanges.end(); ++i)
             {
-                if (i->size() >= forSize)
+                if (i->size() >= int(forSize))
                 {
                     Rangeui16 chosen = *i;
                     availableRanges.erase(i);
                     if (chosen.size() - forSize >= MIN_RANGE_SIZE)
                     {
                         // Split the extra part into a new available range.
-                        addAvailable(Rangeui16(chosen.start + forSize, chosen.end));
+                        addAvailable(Rangeui16(duint16(chosen.start + forSize), chosen.end));
                     }
                     return chosen;
                 }
@@ -59,7 +60,7 @@ DE_PIMPL_NOREF(GLAtlasBuffer)
             return Rangeui16();
         }
     };
-    QList<HostBuffer *> hostBuffers;
+    List<HostBuffer *> hostBuffers;
     gl::Usage usage = gl::Static;
     dsize elementSize = 0;
     duint16 maxElementCount = 0;
@@ -95,7 +96,7 @@ DE_PIMPL_NOREF(GLAtlasBuffer)
 
     void deinit()
     {
-        qDeleteAll(hostBuffers);
+        deleteAll(hostBuffers);
         hostBuffers.clear();
     }
 
@@ -123,7 +124,7 @@ DE_PIMPL_NOREF(GLAtlasBuffer)
     void releaseSubBuffer(GLSubBuffer &)
     {
         /// @todo Implement if needed.
-        DE_ASSERT(false);
+        DE_ASSERT_FAIL("GLAtlasBuffer::releaseSubBuffer not implemented");
     }
 };
 

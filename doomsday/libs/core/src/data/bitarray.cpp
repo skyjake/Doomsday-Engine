@@ -1,6 +1,6 @@
-/** @file mouseeventsource.h  Object that produces mouse events.
+/** @file bitarray.cpp
  *
- * @authors Copyright (c) 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -16,35 +16,46 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_MOUSEEVENTSOURCE_H
-#define LIBGUI_MOUSEEVENTSOURCE_H
-
-#include "../gui/libgui.h"
-#include "mouseevent.h"
-#include <de/Vector>
-#include <de/Observers>
+#include "de/BitArray"
 
 namespace de {
 
-/**
- * Object that produces mouse events. @ingroup gui
- */
-class LIBGUI_PUBLIC MouseEventSource
+BitArray::BitArray()
+{}
+
+bool BitArray::isEmpty() const
 {
-public:
-    enum State { Untrapped, Trapped };
+    return _bits.empty();
+}
 
-    DE_DEFINE_AUDIENCE2(MouseStateChange, void mouseStateChanged(State))
-    DE_DEFINE_AUDIENCE2(MouseEvent,       void mouseEvent(MouseEvent const &))
+bool BitArray::testBit(dsize pos) const
+{
+    DE_ASSERT(pos < _bits.size());
+    return _bits.at(pos) != 0;
+}
 
-public:
-    MouseEventSource();
-    virtual ~MouseEventSource() {}
+dsize BitArray::size() const
+{
+    return _bits.size();
+}
 
-private:
-    DE_PRIVATE(d)
-};
+void BitArray::resize(dsize count)
+{
+    return _bits.resize(count);
+}
+
+void BitArray::fill(bool bit)
+{
+    for (auto &b : _bits)
+    {
+        b = bit ? 1 : 0;
+    }
+}
+
+BitArray &BitArray::operator=(const BitArray &other)
+{
+    _bits = other._bits;
+    return *this;
+}
 
 } // namespace de
-
-#endif // LIBGUI_MOUSEEVENTSOURCE_H

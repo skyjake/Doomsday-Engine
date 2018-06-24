@@ -20,6 +20,7 @@
 #define LIBGUI_GLPIXELFORMAT_H
 
 #include "../gui/libgui.h"
+#include "opengl.h"
 
 namespace de {
 
@@ -29,13 +30,15 @@ namespace de {
  * @ingroup gl
  */
 struct LIBGUI_PUBLIC GLPixelFormat {
-    duint internalFormat;
-    duint format;
-    duint type;
-    duint rowStartAlignment; // 1, 2, 4, 8
+    GLenum internalFormat;
+    GLenum format;
+    GLenum type;
+    GLint rowStartAlignment; // 1, 2, 4, 8
 
-    GLPixelFormat(duint glInternalFormat, duint glFormat, duint glDataType = 0,
-                  duint glRowStartAlignment = 0)
+    GLPixelFormat(GLenum glInternalFormat,
+                  GLenum glFormat,
+                  GLenum glDataType,
+                  GLint glRowStartAlignment = 0)
         : internalFormat(glInternalFormat)
         , format(glFormat)
         , type(glDataType)

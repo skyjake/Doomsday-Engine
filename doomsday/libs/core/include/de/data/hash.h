@@ -45,7 +45,13 @@ public:
         for (const auto &v : init) Base::insert(v);
     }
 
+
+    using iterator               = typename Base::iterator;
+    using const_iterator         = typename Base::const_iterator;
+
+    using Base::begin;
     using Base::empty;
+    using Base::end;
     using Base::find;
 
     bool isEmpty() const { return empty(); }

@@ -115,13 +115,13 @@ static BitField::Spec const propSpecs[MAX_PROPERTIES] = {
 static BitField::Elements const glStateProperties(propSpecs, MAX_PROPERTIES);
 
 /// The GL state stack.
-struct GLStateStack : public QList<GLState *> {
+struct GLStateStack : public List<GLState *> {
     GLStateStack()
     {
         // Initialize with a default state.
         append(new GLState);
     }
-    ~GLStateStack() { qDeleteAll(*this); }
+    ~GLStateStack() { deleteAll(*this); }
 };
 static GLStateStack stack;
 
@@ -146,9 +146,9 @@ class CurrentTarget : DE_OBSERVES(Asset, Deletion)
 
 public:
     CurrentTarget()
-        : _target(0)
+        : _target(nullptr)
     {}
-    ~CurrentTarget() { set(0); }
+    ~CurrentTarget() { set(nullptr); }
     void set(GLFramebuffer *trg)
     {
         if (_target)
@@ -257,47 +257,46 @@ DE_PIMPL(GLState)
 
     void glApply(internal::Property prop)
     {
-        auto &GL = LIBGUI_GL;
         switch (prop)
         {
         case internal::CullFace:
             switch (self().cull())
             {
             case gl::None:
-                GL.glDisable(GL_CULL_FACE);
+                glDisable(GL_CULL_FACE);
                 break;
             case gl::Front:
             case gl::Back:
             case gl::FrontAndBack:
-                GL.glEnable(GL_CULL_FACE);
-                GL.glCullFace(glFace(self().cull()));
+                glEnable(GL_CULL_FACE);
+                glCullFace(glFace(self().cull()));
                 break;
             }
             break;
 
         case internal::DepthTest:
             if (self().depthTest())
-                GL.glEnable(GL_DEPTH_TEST);
+                glEnable(GL_DEPTH_TEST);
             else
-                GL.glDisable(GL_DEPTH_TEST);
+                glDisable(GL_DEPTH_TEST);
             break;
 
         case internal::DepthFunc:
-            GL.glDepthFunc(internal::glComp(self().depthFunc()));
+            glDepthFunc(internal::glComp(self().depthFunc()));
             break;
 
         case internal::DepthWrite:
             if (self().depthWrite())
-                GL.glDepthMask(GL_TRUE);
+                glDepthMask(GL_TRUE);
             else
-                GL.glDepthMask(GL_FALSE);
+                glDepthMask(GL_FALSE);
             break;
 
         case internal::AlphaTest:
             /*if (self().alphaTest())
-                LIBGUI_GL.glEnable(GL_ALPHA_TEST);
+                glEnable(GL_ALPHA_TEST);
             else
-                LIBGUI_GL.glDisable(GL_ALPHA_TEST);*/
+                glDisable(GL_ALPHA_TEST);*/
 
             // TODO: use a shared GLUniform available to all shaders that need it
 
@@ -305,7 +304,7 @@ DE_PIMPL(GLState)
             break;
 
         case internal::AlphaLimit:
-            //LIBGUI_GL.glAlphaFunc(GL_GREATER, self().alphaLimit());
+            //glAlphaFunc(GL_GREATER, self().alphaLimit());
 
             // TODO: use a shared GLUniform available to all shaders that need it
 
@@ -313,14 +312,14 @@ DE_PIMPL(GLState)
 
         case internal::Blend:
             if (self().blend())
-                GL.glEnable(GL_BLEND);
+                glEnable(GL_BLEND);
             else
-                GL.glDisable(GL_BLEND);
+                glDisable(GL_BLEND);
             break;
 
         case internal::BlendFuncSrc:
         case internal::BlendFuncDest:
-            GL.glBlendFuncSeparate(
+            glBlendFuncSeparate(
                 glBFunc(self().srcBlendFunc()), glBFunc(self().destBlendFunc()), GL_ONE, GL_ONE);
             break;
 
@@ -328,13 +327,13 @@ DE_PIMPL(GLState)
             switch (self().blendOp())
             {
             case gl::Add:
-                GL.glBlendEquation(GL_FUNC_ADD);
+                glBlendEquation(GL_FUNC_ADD);
                 break;
             case gl::Subtract:
-                GL.glBlendEquation(GL_FUNC_SUBTRACT);
+                glBlendEquation(GL_FUNC_SUBTRACT);
                 break;
             case gl::ReverseSubtract:
-                GL.glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
+                glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
                 break;
             }
             break;
@@ -342,7 +341,7 @@ DE_PIMPL(GLState)
         case internal::ColorMask:
         {
             gl::ColorMask const mask = self().colorMask();
-            GL.glColorMask((mask & gl::WriteRed) != 0,
+            glColorMask((mask & gl::WriteRed) != 0,
                                   (mask & gl::WriteGreen) != 0,
                            (mask & gl::WriteBlue) != 0,
                                   (mask & gl::WriteAlpha) != 0);
@@ -351,16 +350,16 @@ DE_PIMPL(GLState)
 
         case internal::StencilTest:
             if (self().stencilTest())
-                GL.glEnable(GL_STENCIL_TEST);
+                glEnable(GL_STENCIL_TEST);
             else
-                GL.glDisable(GL_STENCIL_TEST);
+                glDisable(GL_STENCIL_TEST);
             break;
 
         case internal::StencilFrontMask:
         case internal::StencilBackMask:
         {
             const gl::Face face = (prop == internal::StencilFrontMask? gl::Front : gl::Back);
-            GL.glStencilMaskSeparate(glFace(face), self().stencilMask(face));
+            glStencilMaskSeparate(glFace(face), self().stencilMask(face));
             break;
         }
 
@@ -369,7 +368,7 @@ DE_PIMPL(GLState)
         {
             const gl::Face face = (prop == internal::StencilFrontFunc? gl::Front : gl::Back);
             const auto stf = self().stencilFunc(face);
-            GL.glStencilFuncSeparate(glFace(face), internal::glComp(stf.func), stf.ref, stf.mask);
+            glStencilFuncSeparate(glFace(face), internal::glComp(stf.func), stf.ref, stf.mask);
             break;
         }
 
@@ -378,7 +377,7 @@ DE_PIMPL(GLState)
         {
             const gl::Face face = (prop == internal::StencilFrontOp? gl::Front : gl::Back);
             const auto sop = self().stencilOp(face);
-            GL.glStencilOpSeparate(glFace(face),
+            glStencilOpSeparate(glFace(face),
                                    glStencilOp(sop.stencilFail),
                                    glStencilOp(sop.depthFail),
                                    glStencilOp(sop.depthPass));
@@ -393,7 +392,7 @@ DE_PIMPL(GLState)
         {
             if (self().scissor() || self().target().hasActiveRect())
             {
-                GL.glEnable(GL_SCISSOR_TEST);
+                glEnable(GL_SCISSOR_TEST);
 
                 Rectangleui origScr;
                 if (self().scissor())
@@ -406,12 +405,12 @@ DE_PIMPL(GLState)
                 }
 
                 Rectangleui const scr = self().target().scaleToActiveRect(origScr);
-                GL.glScissor(scr.left(), self().target().size().y - scr.bottom(),
+                glScissor(scr.left(), self().target().size().y - scr.bottom(),
                                     scr.width(), scr.height());
             }
             else
             {
-                GL.glDisable(GL_SCISSOR_TEST);
+                glDisable(GL_SCISSOR_TEST);
             }
             break;
         }
@@ -422,7 +421,7 @@ DE_PIMPL(GLState)
         case internal::ViewportHeight:
         {
             Rectangleui const vp = self().target().scaleToActiveRect(self().viewport());
-            GL.glViewport(vp.left(), self().target().size().y - vp.bottom(),
+            glViewport(vp.left(), self().target().size().y - vp.bottom(),
                                  vp.width(), vp.height());
             break;
         }
@@ -891,7 +890,7 @@ void GLState::apply() const
         d->removeRedundancies(changed);
 
         // Apply the changed properties.
-        foreach (BitField::Id id, changed)
+        for (BitField::Id id : changed)
         {
             d->glApply(internal::Property(id));
         }
@@ -907,22 +906,22 @@ void GLState::apply() const
         switch (elem.id)
         {
         case internal::Blend:
-            LIBGUI_GL.glGetIntegerv(GL_BLEND, &val);
+            glGetIntegerv(GL_BLEND, &val);
             DE_ASSERT(!val == !d->props.asBool(elem.id));
             break;
 
         case internal::BlendFuncSrc:
-            LIBGUI_GL.glGetIntegerv(GL_BLEND_SRC_RGB, &val);
+            glGetIntegerv(GL_BLEND_SRC_RGB, &val);
             DE_ASSERT(d->fromGlBFunc(val) == d->props.asUInt(elem.id));
             break;
 
         case internal::BlendFuncDest:
-            LIBGUI_GL.glGetIntegerv(GL_BLEND_DST_RGB, &val);
+            glGetIntegerv(GL_BLEND_DST_RGB, &val);
             DE_ASSERT(d->fromGlBFunc(val) == d->props.asUInt(elem.id));
             break;
 
         case internal::BlendOp:
-            LIBGUI_GL.glGetIntegerv(GL_BLEND_EQUATION_RGB, &val);
+            glGetIntegerv(GL_BLEND_EQUATION_RGB, &val);
             val = (val == GL_FUNC_ADD? gl::Add :
                    val == GL_FUNC_SUBTRACT? gl::Subtract :
                    val == GL_FUNC_REVERSE_SUBTRACT? gl::ReverseSubtract : 0);
@@ -936,7 +935,7 @@ void GLState::apply() const
 void GLState::considerNativeStateUndefined()
 {
     internal::currentProps.clear();
-    internal::currentTarget = 0;
+    internal::currentTarget = nullptr;
 }
 
 GLFramebuffer *GLState::currentTarget()

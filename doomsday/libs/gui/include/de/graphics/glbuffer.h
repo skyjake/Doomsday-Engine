@@ -19,9 +19,8 @@
 #ifndef LIBGUI_GLBUFFER_H
 #define LIBGUI_GLBUFFER_H
 
-#include <QVector>
-
 #include <de/libcore.h>
+#include <de/List>
 #include <de/Vector>
 #include <de/Asset>
 #include <utility>
@@ -330,11 +329,11 @@ class LIBGUI_PUBLIC GLBuffer : public Asset
 {
 public:
     typedef duint16 Index;
-    typedef QVector<Index> Indices;
+    typedef List<Index> Indices;
 
     struct LIBGUI_PUBLIC DrawRanges {
-        QVector<GLint>   first;
-        QVector<GLsizei> count;
+        List<GLint>   first;
+        List<GLsizei> count;
 
         inline void clear() {
             first.clear();
@@ -351,7 +350,7 @@ public:
             count << GLsizei(range.size());
         }
 
-        inline int size() const {
+        inline dsize size() const {
             DE_ASSERT(first.size() == count.size());
             return first.size();
         }
@@ -431,7 +430,7 @@ class GLBufferT : public GLBuffer
 {
 public:
     typedef VertexType Type;
-    typedef QVector<VertexType> Vertices;
+    typedef List<VertexType> Vertices;
     typedef typename VertexBuilder<VertexType>::Vertices Builder;
 
 public:
@@ -444,7 +443,7 @@ public:
     }
 
     void setVertices(Vertices const &vertices, gl::Usage usage) {
-        GLBuffer::setVertices(vertices.size(), vertices.constData(), sizeof(VertexType) * vertices.size(), usage);
+        GLBuffer::setVertices(vertices.size(), vertices.data(), sizeof(VertexType) * vertices.size(), usage);
     }
 
     void setVertices(gl::Primitive primitive, VertexType const *vertices, dsize count, gl::Usage usage) {
@@ -452,7 +451,7 @@ public:
     }
 
     void setVertices(gl::Primitive primitive, Vertices const &vertices, gl::Usage usage) {
-        GLBuffer::setVertices(primitive, vertices.size(), vertices.constData(), sizeof(VertexType) * vertices.size(), usage);
+        GLBuffer::setVertices(primitive, vertices.size(), vertices.data(), sizeof(VertexType) * vertices.size(), usage);
     }
 };
 

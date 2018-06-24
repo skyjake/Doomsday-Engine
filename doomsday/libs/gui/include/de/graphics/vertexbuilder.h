@@ -19,7 +19,7 @@
 #ifndef LIBGUI_VERTEXBUILDER_H
 #define LIBGUI_VERTEXBUILDER_H
 
-#include <QVector>
+#include <de/List>
 #include <de/Vector>
 #include <de/Matrix>
 #include <de/Rectangle>
@@ -34,10 +34,10 @@ namespace de {
 template <typename VertexType>
 struct VertexBuilder
 {
-    struct Vertices : public QVector<VertexType> {
-        using Base = QVector<VertexType>;
+    struct Vertices : public List<VertexType> {
+        using Base = List<VertexType>;
         Vertices() {
-            Base::reserve(64);
+            //Base::reserve(64);
         }
         explicit operator bool() const {
             return !Base::isEmpty();
@@ -76,7 +76,7 @@ struct VertexBuilder
             return *this += quad;
         }
         Vertices &makeQuad(Rectanglef const &rect, Vec4f const &color, Rectanglef const &uv,
-                           Mat4f const *matrix = 0) {
+                           Mat4f const *matrix = nullptr) {
             Vertices quad;
             VertexType v;
             v.rgba = color;
@@ -162,7 +162,7 @@ struct VertexBuilder
             VertexType v;
             v.rgba = color;
             for (int i = 0; i <= divisions; ++i) {
-                float const ang = 2 * PI * (i == divisions? 0 : i) / divisions;
+                float const ang = 2.f * PIf * (i == divisions? 0 : i) / divisions;
                 Vec2f r(cos(ang), sin(ang));
                 // Outer.
                 v.pos = center + r * outerRadius;

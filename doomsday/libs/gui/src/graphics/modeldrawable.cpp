@@ -31,6 +31,7 @@
 #include <de/Matrix>
 #include <de/NativePath>
 #include <de/TextureBank>
+#include <de/Hash>
 
 #include <assimp/IOStream.hpp>
 #include <assimp/IOSystem.hpp>
@@ -175,8 +176,8 @@ struct DefaultImageLoader : public ModelDrawable::IImageLoader
         if (img.depth() == 24)
         {
             // Model texture atlases need to have an alpha channel.
-            DE_ASSERT(img.canConvertToQImage());
-            return Image(img.toQImage().convertToFormat(QImage::Format_ARGB32));
+            //DE_ASSERT(img.canConvertToQImage());
+            return img.convertToFormat(Image::RGBA_8888);
         }
         return img;
     }
@@ -251,7 +252,7 @@ static String const DUMMY_BONE_NAME{"__deng_dummy-bone__"};
 DE_PIMPL(ModelDrawable)
 {
     typedef GLBufferT<ModelVertex> VBuf;
-    typedef QHash<String, int> AnimLookup;
+    typedef Hash<String, int> AnimLookup;
 
     static TextureMap textureMapType(aiTextureType type)
     {
@@ -310,12 +311,12 @@ DE_PIMPL(ModelDrawable)
     Vec3f maxPoint;
     Mat4f globalInverse;
 
-    QVector<VertexBone>           vertexBones; // indexed by vertex
-    QHash<String, duint16>        boneNameToIndex;
-    QHash<String, aiNode const *> nodeNameToPtr;
-    QVector<BoneData>             bones; // indexed by bone index
-    AnimLookup                    animNameToIndex;
-    QVector<Rangeui>              meshIndexRanges;
+    List<VertexBone>             vertexBones; // indexed by vertex
+    Hash<String, duint16>        boneNameToIndex;
+    Hash<String, aiNode const *> nodeNameToPtr;
+    List<BoneData>               bones; // indexed by bone index
+    AnimLookup                   animNameToIndex;
+    List<Rangez>                 meshIndexRanges;
 
     /**
      * Management of texture maps.
@@ -331,12 +332,12 @@ DE_PIMPL(ModelDrawable)
             struct MeshTextures
             {
                 Id::Type texIds[MAX_TEXTURES];
-                QHash<TextureMap, String> customPaths;
+                Hash<TextureMap, String> customPaths;
 
                 MeshTextures() { zap(texIds); }
             };
 
-            QVector<MeshTextures> meshTextures; // indexed by mesh index
+            List<MeshTextures> meshTextures; // indexed by mesh index
             std::unique_ptr<VBuf> buffer;
         };
 
@@ -362,9 +363,9 @@ DE_PIMPL(ModelDrawable)
         TextureMap textureOrder[MAX_TEXTURES];  ///< Order of textures for vertex buffer texcoords.
         IImageLoader *imageLoader{&defaultImageLoader};
 
-        TextureBank       textureBank;
-        QList<Material *> materials; // owned
-        bool              needMakeBuffer{false};
+        TextureBank      textureBank;
+        List<Material *> materials; // owned
+        bool             needMakeBuffer{false};
 
         String         sourcePath; ///< Location of the model file (imported with Assimp).
         aiScene const *scene{nullptr};
@@ -381,7 +382,7 @@ DE_PIMPL(ModelDrawable)
 
         ~GLData()
         {
-            qDeleteAll(materials);
+            deleteAll(materials);
         }
 
         void initMaterials()
@@ -392,11 +393,11 @@ DE_PIMPL(ModelDrawable)
 
         void deinitMaterials()
         {
-            qDeleteAll(materials);
+            deleteAll(materials);
             materials.clear();
         }
 
-        duint addMaterial()
+        dsize addMaterial()
         {
             DE_ASSERT(scene != nullptr);
 
@@ -412,7 +413,7 @@ DE_PIMPL(ModelDrawable)
             return materials.size() - 1;
         }
 
-        void glInit(String modelSourcePath)
+        void glInit(const String &modelSourcePath)
         {
             sourcePath = modelSourcePath;
 
@@ -509,7 +510,7 @@ DE_PIMPL(ModelDrawable)
          */
         void loadTextureImage(MeshId const &mesh, aiTextureType type)
         {
-            DE_ASSERT(imageLoader != 0);
+            DE_ASSERT(imageLoader != nullptr);
 
             aiMesh     const &sceneMesh     = *scene->mMeshes[mesh.index];
             aiMaterial const &sceneMaterial = *scene->mMaterials[sceneMesh.mMaterialIndex];
@@ -666,7 +667,7 @@ DE_PIMPL(ModelDrawable)
             String const baseName = file.name().fileNameWithoutExtension() + "_";
             file.parent()->forContents([&anims, &baseName] (String fileName, File &)
             {
-                if (fileName.startsWith(baseName) &&
+                if (fileName.beginsWith(baseName) &&
                     fileName.fileNameExtension() == ".md5anim")
                 {
                     if (!anims.isEmpty()) anims += ";";
@@ -684,17 +685,19 @@ DE_PIMPL(ModelDrawable)
         importerIoSystem->referencePath = sourcePath.fileNamePath();
 
         // Read the model file and apply suitable postprocessing to clean up the data.
-        if (!importer.ReadFile(sourcePath.toUtf8(),
-                              aiProcess_CalcTangentSpace |
-                              aiProcess_GenSmoothNormals |
-                              aiProcess_JoinIdenticalVertices |
-                              aiProcess_Triangulate |
-                              aiProcess_GenUVCoords |
-                              aiProcess_FlipUVs |
-                              aiProcess_SortByPType))
+        if (!importer.ReadFile(sourcePath.c_str(),
+                               aiProcess_CalcTangentSpace |
+                               aiProcess_GenSmoothNormals |
+                               aiProcess_JoinIdenticalVertices |
+                               aiProcess_Triangulate |
+                               aiProcess_GenUVCoords |
+                               aiProcess_FlipUVs |
+                               aiProcess_SortByPType))
         {
-            throw LoadError("ModelDrawable::import", String("Failed to load model from %1: %2")
-                            .arg(file.description()).arg(importer.GetErrorString()));
+            throw LoadError("ModelDrawable::import",
+                            stringf("Failed to load model from %s: %s",
+                                    file.description().c_str(),
+                                    importer.GetErrorString()));
         }
 
         scene = glData.scene = importer.GetScene();
@@ -754,7 +757,7 @@ DE_PIMPL(ModelDrawable)
     {
         String const name = node.mName.C_Str();
 #ifdef DE_DEBUG
-        qDebug() << "Node:" << name;
+        debug("Node: %s", name.c_str());
 #endif
         if (!name.isEmpty())
         {
@@ -846,7 +849,7 @@ DE_PIMPL(ModelDrawable)
 
     int boneCount() const
     {
-        return bones.size();
+        return bones.sizei();
     }
 
     int addBone(String const &name)
@@ -1045,7 +1048,7 @@ DE_PIMPL(ModelDrawable)
                 verts << v;
             }
 
-            duint firstFace = indx.size();
+            dsize firstFace = indx.size();
 
             // Get face indices.
             for (duint i = 0; i < mesh.mNumFaces; ++i)
@@ -1057,7 +1060,7 @@ DE_PIMPL(ModelDrawable)
                      << VBuf::Index(face.mIndices[2] + base);
             }
 
-            meshIndexRanges[m] = Rangeui::fromSize(firstFace, mesh.mNumFaces * 3);
+            meshIndexRanges[m] = Rangez::fromSize(firstFace, mesh.mNumFaces * 3);
 
             base += mesh.mNumVertices;
         }
@@ -1072,10 +1075,10 @@ DE_PIMPL(ModelDrawable)
 
     struct AccumData
     {
-        Animator const &animator;
-        ddouble time = 0.0;
-        aiAnimation const *anim = nullptr;
-        QVector<Mat4f> finalTransforms;
+        const Animator &   animator;
+        ddouble            time = 0.0;
+        const aiAnimation *anim = nullptr;
+        List<Mat4f>        finalTransforms;
 
         AccumData(Animator const &animator, int boneCount)
             : animator(animator)
@@ -1303,10 +1306,10 @@ DE_PIMPL(ModelDrawable)
         }
     }
 
-    void initRanges(GLBuffer::DrawRanges &ranges, QBitArray const &meshes)
+    void initRanges(GLBuffer::DrawRanges &ranges, BitArray const &meshes)
     {
-        Rangeui current;
-        for (int i = 0; i < meshIndexRanges.size(); ++i)
+        Rangez current;
+        for (int i = 0; i < meshIndexRanges.sizei(); ++i)
         {
             if (!meshes.at(i)) continue;
             auto const &mesh = meshIndexRanges.at(i);
@@ -1342,7 +1345,7 @@ DE_PIMPL(ModelDrawable)
         try
         {
             GLBuffer::DrawRanges ranges;
-            for (int i = 0; i < passes->size(); ++i)
+            for (dsize i = 0; i < passes->size(); ++i)
             {
                 Pass const &pass = passes->at(i);
 
@@ -1358,8 +1361,9 @@ DE_PIMPL(ModelDrawable)
                 if (!drawProgram)
                 {
                     throw ProgramError("ModelDrawable::draw",
-                                       QString("Rendering pass %1 (\"%2\") has no shader program")
-                                        .arg(i).arg(pass.name));
+                                       stringf("Rendering pass %d (\"%s\") has no shader program",
+                                               i,
+                                               pass.name.c_str()));
                 }
 
                 if (appearance && appearance->passCallback)
@@ -1462,7 +1466,7 @@ String ModelDrawable::textureMapToText(TextureMap map) // static
         if (mapping.map == map)
             return mapping.text;
     }
-    return QStringLiteral("unknown");
+    return DE_STR("unknown");
 }
 
 ModelDrawable::ModelDrawable() : d(new Impl(this))
@@ -1498,10 +1502,10 @@ void ModelDrawable::clear()
 
 int ModelDrawable::animationIdForName(String const &name) const
 {
-    Impl::AnimLookup::const_iterator found = d->animNameToIndex.constFind(name);
-    if (found != d->animNameToIndex.constEnd())
+    auto found = d->animNameToIndex.find(name);
+    if (found != d->animNameToIndex.end())
     {
-        return found.value();
+        return found->second;
     }
     return -1;
 }
@@ -1515,7 +1519,7 @@ String ModelDrawable::animationName(int id) const
     String const name = d->scene->mAnimations[id]->mName.C_Str();
     if (name.isEmpty())
     {
-        return QString("@%1").arg(id);
+        return String::format("@%d", id);
     }
     return name;
 }
@@ -1554,7 +1558,7 @@ String ModelDrawable::meshName(int id) const
     String const name = d->scene->mMeshes[id]->mName.C_Str();
     if (name.isEmpty())
     {
-        return QString("@%1").arg(id);
+        return String::format("@%d", id);
     }
     return name;
 }
@@ -1613,7 +1617,7 @@ void ModelDrawable::resetMaterials()
     d->glData.initMaterials();
 }
 
-void ModelDrawable::setTextureMapping(Mapping mapsToUse)
+void ModelDrawable::setTextureMapping(const Mapping &mapsToUse)
 {
     d->glData.setTextureMapping(mapsToUse);
 }
@@ -1688,10 +1692,10 @@ void ModelDrawable::drawInstanced(GLBuffer const &instanceAttribs,
 #if defined (DE_DEBUG)
     else
     {
-        qDebug() << "[ModelDrawable] drawInstanced isReady:"
-                 << isReady()
-                 << "program:" << d->program
-                 << "atlas:" << d->glData.textureBank.atlas();
+        debug("[ModelDrawable] drawInstanced isReady: %s program: %p atlas: %p",
+              DE_BOOL_YESNO(isReady()),
+              d->program,
+              d->glData.textureBank.atlas());
     }
 #endif
 }
@@ -1718,10 +1722,10 @@ Vec3f ModelDrawable::midPoint() const
 
 int ModelDrawable::Passes::findName(String const &name) const
 {
-    for (int i = 0; i < size(); ++i)
+    for (dsize i = 0; i < size(); ++i)
     {
         if (at(i).name == name) // case sensitive
-            return i;
+            return int(i);
     }
     return -1;
 }
@@ -1737,10 +1741,10 @@ DE_PIMPL_NOREF(ModelDrawable::Animator)
 {
     Constructor constructor;
     ModelDrawable const *model = nullptr;
-    QList<OngoingSequence *> anims;
+    List<OngoingSequence *> anims;
     Flags flags = DefaultFlags;
 
-    Impl(Constructor ctr, ModelDrawable const *mdl = 0)
+    Impl(const Constructor &ctr, ModelDrawable const *mdl = nullptr)
         : constructor(ctr)
     {
         setModel(mdl);
@@ -1749,7 +1753,7 @@ DE_PIMPL_NOREF(ModelDrawable::Animator)
     ~Impl()
     {
         setModel(nullptr);
-        qDeleteAll(anims);
+        deleteAll(anims);
     }
 
     void setModel(ModelDrawable const *mdl)
@@ -1787,21 +1791,23 @@ DE_PIMPL_NOREF(ModelDrawable::Animator)
 
     void stopByNode(String const &node)
     {
-        QMutableListIterator<OngoingSequence *> iter(anims);
-        while (iter.hasNext())
+        for (auto i = anims.begin(); i != anims.end(); )
         {
-            iter.next();
-            if (iter.value()->node == node)
+            if ((*i)->node == node)
             {
-                delete iter.value();
-                iter.remove();
+                delete *i;
+                i = anims.erase(i);
+            }
+            else
+            {
+                ++i;
             }
         }
     }
 
     OngoingSequence const *findAny(String const &rootNode) const
     {
-        foreach (OngoingSequence const *anim, anims)
+        for (OngoingSequence const *anim : anims)
         {
             if (anim->node == rootNode)
                 return anim;
@@ -1811,7 +1817,7 @@ DE_PIMPL_NOREF(ModelDrawable::Animator)
 
     OngoingSequence const *find(int animId, String const &rootNode) const
     {
-        foreach (OngoingSequence const *anim, anims)
+        for (OngoingSequence const *anim : anims)
         {
             if (anim->animId == animId && anim->node == rootNode)
                 return anim;
@@ -1826,11 +1832,11 @@ DE_PIMPL_NOREF(ModelDrawable::Animator)
 };
 
 ModelDrawable::Animator::Animator(Constructor constructor)
-    : d(new Impl(constructor))
+    : d(new Impl(std::move(constructor)))
 {}
 
 ModelDrawable::Animator::Animator(ModelDrawable const &model, Constructor constructor)
-    : d(new Impl(constructor, &model))
+    : d(new Impl(std::move(constructor), &model))
 {}
 
 void ModelDrawable::Animator::setModel(ModelDrawable const &model)
@@ -1843,20 +1849,20 @@ void ModelDrawable::Animator::setFlags(Flags const &flags, FlagOp op)
     applyFlagOperation(d->flags, flags, op);
 }
 
-ModelDrawable::Animator::Flags ModelDrawable::Animator::flags() const
+Flags ModelDrawable::Animator::flags() const
 {
     return d->flags;
 }
 
 ModelDrawable const &ModelDrawable::Animator::model() const
 {
-    DE_ASSERT(d->model != 0);
+    DE_ASSERT(d->model != nullptr);
     return *d->model;
 }
 
 int ModelDrawable::Animator::count() const
 {
-    return d->anims.size();
+    return d->anims.sizei();
 }
 
 ModelDrawable::Animator::OngoingSequence const &
@@ -1907,16 +1913,16 @@ ModelDrawable::Animator::start(int animId, String const &rootNode)
     if (animId < 0 || animId >= int(scene.mNumAnimations))
     {
         throw InvalidError("ModelDrawable::Animator::start",
-                           QString("Invalid animation ID %1").arg(animId));
+                           stringf("Invalid animation ID %d", animId));
     }
 
     auto const &animData = *scene.mAnimations[animId];
 
     OngoingSequence *anim = d->constructor();
-    anim->animId = animId;
-    anim->node   = rootNode;
-    anim->time   = 0.0;
-    anim->duration = ticksToSeconds(animData.mDuration, animData);
+    anim->animId          = animId;
+    anim->node            = rootNode;
+    anim->time            = 0.0;
+    anim->duration        = ticksToSeconds(animData.mDuration, animData);
     anim->initialize();
     return d->add(anim);
 }
@@ -1928,7 +1934,7 @@ void ModelDrawable::Animator::stop(int index)
 
 void ModelDrawable::Animator::clear()
 {
-    qDeleteAll(d->anims);
+    deleteAll(d->anims);
     d->anims.clear();
 }
 
@@ -1998,7 +2004,7 @@ ModelDrawable::Animator::OngoingSequence::make() // static
 
 } // namespace de
 
-uint qHash(de::ModelDrawable::Pass const &pass)
-{
-    return qHash(pass.name);
-}
+//uint qHash(de::ModelDrawable::Pass const &pass)
+//{
+//    return qHash(pass.name);
+//}

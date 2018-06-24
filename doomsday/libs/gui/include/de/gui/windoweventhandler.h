@@ -26,11 +26,6 @@
 #include "../KeyEventSource"
 #include "../MouseEventSource"
 
-#include <QFocusEvent>
-#include <QKeyEvent>
-#include <QMouseEvent>
-#include <QWheelEvent>
-
 namespace de {
 
 class GLWindow;
@@ -44,10 +39,8 @@ class GLWindow;
  *
  * @ingroup gui
  */
-class LIBGUI_PUBLIC WindowEventHandler : public QObject, public KeyEventSource, public MouseEventSource
+class LIBGUI_PUBLIC WindowEventHandler : public KeyEventSource, public MouseEventSource
 {
-    Q_OBJECT
-
 public:
     /**
      * Notified when the canvas gains or loses input focus.
@@ -72,16 +65,16 @@ public:
      */
     bool isMouseTrapped() const;
 
-    // Native events.
-    void focusInEvent(QFocusEvent *ev);
-    void focusOutEvent(QFocusEvent *ev);
-    void keyPressEvent(QKeyEvent *ev);
-    void keyReleaseEvent(QKeyEvent *ev);
-    void mousePressEvent(QMouseEvent *ev);
-    void mouseReleaseEvent(QMouseEvent *ev);
-    void mouseDoubleClickEvent(QMouseEvent *ev);
-    void mouseMoveEvent(QMouseEvent *ev);
-    void wheelEvent(QWheelEvent *ev);
+//    // Native events.
+//    void focusInEvent(QFocusEvent *ev);
+//    void focusOutEvent(QFocusEvent *ev);
+//    void keyPressEvent(QKeyEvent *ev);
+//    void keyReleaseEvent(QKeyEvent *ev);
+//    void mousePressEvent(QMouseEvent *ev);
+//    void mouseReleaseEvent(QMouseEvent *ev);
+//    void mouseDoubleClickEvent(QMouseEvent *ev);
+//    void mouseMoveEvent(QMouseEvent *ev);
+//    void wheelEvent(QWheelEvent *ev);
 
 private:
     DE_PRIVATE(d)

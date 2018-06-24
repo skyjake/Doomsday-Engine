@@ -18,36 +18,40 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifdef WIN32
-#  define WIN32_LEAN_AND_MEAN
-#  include <windows.h>
-#endif
+//#ifdef WIN32
+//#  define WIN32_LEAN_AND_MEAN
+//#  include <windows.h>
+//#endif
 
 #include "de/KeyEvent"
-#include <QKeyEvent>
 #include <de/Log>
 
-#if defined (DE_X11)
-#  include <QX11Info>
-#  include <X11/keysym.h>
-#  include <X11/Xlib.h>
-#  include "../src/input/imKStoUCS_x11.c"
-#  define XFREE_KEYMAPPING
-static int x11ScancodeToDDKey(int scancode);
-#  ifdef KeyPress
-#    undef KeyPress
-#  endif
-#  ifdef KeyRelease
-#    undef KeyRelease
-#  endif
-#  ifdef Always
-#    undef Always
-#  endif
-#  ifdef None
-#    undef None
-#  endif
-#endif
+#include <SDL2/SDL_keycode.h>
 
+namespace de {
+
+//#if defined (DE_X11)
+//#  include <QX11Info>
+//#  include <X11/keysym.h>
+//#  include <X11/Xlib.h>
+//#  include "../src/input/imKStoUCS_x11.c"
+//#  define XFREE_KEYMAPPING
+//static int x11ScancodeToDDKey(int scancode);
+//#  ifdef KeyPress
+//#    undef KeyPress
+//#  endif
+//#  ifdef KeyRelease
+//#    undef KeyRelease
+//#  endif
+//#  ifdef Always
+//#    undef Always
+//#  endif
+//#  ifdef None
+//#    undef None
+//#  endif
+//#endif
+
+#if 0
 #if defined (WIN32)
 static int win32Keymap[256];
 
@@ -186,80 +190,106 @@ static void checkWin32Keymap()
     keymap[0x5A] = 'z';
 }
 #endif // WIN32
+#endif // 0
 
-int de::KeyEvent::ddKeyFromQt(int qtKey, int nativeVirtualKey, int nativeScanCode)
+int KeyEvent::ddKeyFromSDL(int sdlKey, int scancode)
 {
-#ifdef MACOSX
-    switch (qtKey)
+//#ifdef MACOSX
+//    switch (qtKey)
+//    {
+//    case Qt::Key_Meta:          return DDKEY_RCTRL;
+//    case Qt::Key_Control:       return 0; // Don't map the Command key.
+//    case Qt::Key_F14:           return DDKEY_PAUSE; // No pause key on the Mac.
+//    case Qt::Key_F15:           return DDKEY_PRINT;
+
+//    default:
+//        break;
+//    }
+//#endif
+
+//#ifdef XFREE_KEYMAPPING
+//    // We'll check before the generic Qt keys to detect the numpad.
+//    int mapped = x11ScancodeToDDKey(nativeScanCode);
+//    if (mapped) return mapped;
+//#else
+//    DE_UNUSED(nativeScanCode);
+//#endif
+
+    if (sdlKey >= ' ' && sdlKey <= '~')
     {
-    case Qt::Key_Meta:          return DDKEY_RCTRL;
-    case Qt::Key_Control:       return 0; // Don't map the Command key.
-    case Qt::Key_F14:           return DDKEY_PAUSE; // No pause key on the Mac.
-    case Qt::Key_F15:           return DDKEY_PRINT;
-
-    default:
-        break;
+        // Basic ASCII.
+        return sdlKey;
     }
-#endif
-
-#ifdef XFREE_KEYMAPPING
-    // We'll check before the generic Qt keys to detect the numpad.
-    int mapped = x11ScancodeToDDKey(nativeScanCode);
-    if (mapped) return mapped;
-#else
-    DE_UNUSED(nativeScanCode);
-#endif
 
     // Non-character-inserting keys.
-    switch (qtKey)
+    switch (sdlKey)
     {
-    case Qt::Key_Escape:        return DDKEY_ESCAPE;
-    case Qt::Key_Tab:           return DDKEY_TAB;
-    case Qt::Key_Backtab:       return DDKEY_TAB; // Shift detected separately
-    case Qt::Key_Backspace:     return DDKEY_BACKSPACE;
-    case Qt::Key_Space:         return ' ';
-    case Qt::Key_Pause:         return DDKEY_PAUSE;
-    case Qt::Key_Up:            return DDKEY_UPARROW;
-    case Qt::Key_Down:          return DDKEY_DOWNARROW;
-    case Qt::Key_Left:          return DDKEY_LEFTARROW;
-    case Qt::Key_Right:         return DDKEY_RIGHTARROW;
-    case Qt::Key_Control:       return DDKEY_RCTRL;
-    case Qt::Key_Shift:         return DDKEY_RSHIFT;
-    case Qt::Key_Alt:           return DDKEY_RALT;
-    case Qt::Key_AltGr:         return DDKEY_LALT;
-    case Qt::Key_Menu:          return DDKEY_WINMENU;
-    case Qt::Key_Return:        return DDKEY_RETURN;
-    case Qt::Key_F1:            return DDKEY_F1;
-    case Qt::Key_F2:            return DDKEY_F2;
-    case Qt::Key_F3:            return DDKEY_F3;
-    case Qt::Key_F4:            return DDKEY_F4;
-    case Qt::Key_F5:            return DDKEY_F5;
-    case Qt::Key_F6:            return DDKEY_F6;
-    case Qt::Key_F7:            return DDKEY_F7;
-    case Qt::Key_F8:            return DDKEY_F8;
-    case Qt::Key_F9:            return DDKEY_F9;
-    case Qt::Key_F10:           return DDKEY_F10;
-    case Qt::Key_F11:           return DDKEY_F11;
-    case Qt::Key_F12:           return DDKEY_F12;
-    case Qt::Key_NumLock:       return DDKEY_NUMLOCK;
-    case Qt::Key_ScrollLock:    return DDKEY_SCROLL;
-    case Qt::Key_Enter:         return DDKEY_ENTER;
-    case Qt::Key_Insert:        return DDKEY_INS;
-    case Qt::Key_Delete:        return DDKEY_DEL;
-    case Qt::Key_Home:          return DDKEY_HOME;
-    case Qt::Key_End:           return DDKEY_END;
-    case Qt::Key_PageUp:        return DDKEY_PGUP;
-    case Qt::Key_PageDown:      return DDKEY_PGDN;
-    case Qt::Key_SysReq:        return DDKEY_PRINT;
-    case Qt::Key_Print:         return DDKEY_PRINT;
-    case Qt::Key_CapsLock:      return DDKEY_CAPSLOCK;
-#ifdef WIN32
-    case Qt::Key_Meta:          return 0; // Ignore Windows key.
-#endif
+    case SDLK_ESCAPE:        return DDKEY_ESCAPE;
+    case SDLK_TAB:           return DDKEY_TAB;
+    case SDLK_BACKSPACE:     return DDKEY_BACKSPACE;
+    case SDLK_PAUSE:         return DDKEY_PAUSE;
+    case SDLK_UP:            return DDKEY_UPARROW;
+    case SDLK_DOWN:          return DDKEY_DOWNARROW;
+    case SDLK_LEFT:          return DDKEY_LEFTARROW;
+    case SDLK_RIGHT:         return DDKEY_RIGHTARROW;
+    case SDLK_RCTRL:         return DDKEY_RCTRL;
+    case SDLK_LCTRL:         return DDKEY_LCTRL;
+    case SDLK_RSHIFT:        return DDKEY_RSHIFT;
+    case SDLK_LSHIFT:        return DDKEY_LSHIFT;
+    case SDLK_RALT:          return DDKEY_RALT;
+    case SDLK_LALT:          return DDKEY_LALT;
+    case SDLK_APPLICATION:   return DDKEY_WINMENU;
+    case SDLK_RETURN:        return DDKEY_RETURN;
+    case SDLK_F1:            return DDKEY_F1;
+    case SDLK_F2:            return DDKEY_F2;
+    case SDLK_F3:            return DDKEY_F3;
+    case SDLK_F4:            return DDKEY_F4;
+    case SDLK_F5:            return DDKEY_F5;
+    case SDLK_F6:            return DDKEY_F6;
+    case SDLK_F7:            return DDKEY_F7;
+    case SDLK_F8:            return DDKEY_F8;
+    case SDLK_F9:            return DDKEY_F9;
+    case SDLK_F10:           return DDKEY_F10;
+    case SDLK_F11:           return DDKEY_F11;
+    case SDLK_F12:           return DDKEY_F12;
+    case SDLK_F14:           return DDKEY_PAUSE;
+    case SDLK_F15:           return DDKEY_PRINT;
+    case SDLK_NUMLOCKCLEAR:  return DDKEY_NUMLOCK;
+    case SDLK_SCROLLLOCK:    return DDKEY_SCROLL;
+    case SDLK_KP_ENTER:      return DDKEY_ENTER;
+    case SDLK_INSERT:        return DDKEY_INS;
+    case SDLK_DELETE:        return DDKEY_DEL;
+    case SDLK_HOME:          return DDKEY_HOME;
+    case SDLK_END:           return DDKEY_END;
+    case SDLK_PAGEUP:        return DDKEY_PGUP;
+    case SDLK_PAGEDOWN:      return DDKEY_PGDN;
+    case SDLK_SYSREQ:        return DDKEY_PRINT;
+    case SDLK_PRINTSCREEN:   return DDKEY_PRINT;
+    case SDLK_CAPSLOCK:      return DDKEY_CAPSLOCK;
+    case SDLK_KP_0:          return DDKEY_NUMPAD0;
+    case SDLK_KP_1:          return DDKEY_NUMPAD1;
+    case SDLK_KP_2:          return DDKEY_NUMPAD2;
+    case SDLK_KP_3:          return DDKEY_NUMPAD3;
+    case SDLK_KP_4:          return DDKEY_NUMPAD4;
+    case SDLK_KP_5:          return DDKEY_NUMPAD5;
+    case SDLK_KP_6:          return DDKEY_NUMPAD6;
+    case SDLK_KP_7:          return DDKEY_NUMPAD7;
+    case SDLK_KP_8:          return DDKEY_NUMPAD8;
+    case SDLK_KP_9:          return DDKEY_NUMPAD9;
+    case SDLK_KP_PLUS:       return DDKEY_ADD;
+    case SDLK_KP_MINUS:      return DDKEY_SUBTRACT;
+    case SDLK_KP_MULTIPLY:   return DDKEY_MULTIPLY;
+    case SDLK_KP_DIVIDE:     return DDKEY_DIVIDE;
+    case SDLK_KP_PERIOD:     return DDKEY_DECIMAL;
+
+//#ifdef WIN32
+//    case Qt::Key_Meta:          return 0; // Ignore Windows key.
+//#endif
     default:
         break;
     }
 
+#if 0
     /// We'll have to use the native virtual keys to make a distinction, e.g.,
     /// between the number row and the keypad. These are the real physical keys
     /// -- the insertion text is provided outside this mapping.
@@ -346,11 +376,10 @@ int de::KeyEvent::ddKeyFromQt(int qtKey, int nativeVirtualKey, int nativeScanCod
         break;
     }
 #endif
-
+#endif
     // Not supported!
-    LOGDEV_INPUT_WARNING("Ignored unknown key: Qt key %i (%x), virtualKey %i, scancode %i")
-            << qtKey << qtKey << nativeVirtualKey << nativeScanCode;
-
+    LOGDEV_INPUT_WARNING("Ignored unknown key: SDL key %i (%x), scancode %i (%x)")
+        << sdlKey << sdlKey << scancode << scancode;
     return 0;
 }
 
@@ -420,22 +449,25 @@ static int x11ScancodeToDDKey(int scancode)
 }
 #endif
 
-namespace de {
-
 KeyEvent::KeyEvent()
-    : Event(KeyPress), _qtKey(0), _ddKey(0), _nativeCode(0)
+    : Event(KeyPress)
+    , _ddKey(0)
+    , _sdlKey(0)
+    , _scancode(0)
 {}
 
-KeyEvent::KeyEvent(State keyState, int qtKeyCode, int ddKeyCode, int nativeKeyCode, String const &keyText,
-                   Modifiers const &modifiers)
-    : Event(keyState == Pressed? KeyPress :
-            keyState == Repeat?  KeyRepeat :
-                                 KeyRelease),
-      _qtKey(qtKeyCode),
-      _mods(modifiers),
-      _ddKey(ddKeyCode),
-      _nativeCode(nativeKeyCode),
-      _text(keyText)
+KeyEvent::KeyEvent(State            keyState,
+                   int              ddKey,
+                   int              sdlKey,
+                   int              scancode,
+                   const String &   keyText,
+                   const Modifiers &modifiers)
+    : Event(keyState == Pressed ? KeyPress : keyState == Repeat ? KeyRepeat : KeyRelease)
+    , _ddKey(ddKey)
+    , _sdlKey(sdlKey)
+    , _scancode(scancode)
+    , _text(keyText)
+    , _mods(modifiers)
 {}
 
 KeyEvent::State KeyEvent::state() const
@@ -450,8 +482,31 @@ KeyEvent::State KeyEvent::state() const
 
 bool KeyEvent::isModifier() const
 {
-    return _qtKey == Qt::Key_Shift || _qtKey == Qt::Key_Control ||
-            _qtKey == Qt::Key_Alt   || _qtKey == Qt::Key_Meta;
+    switch (_sdlKey)
+    {
+        case SDLK_RSHIFT:
+        case SDLK_RALT:
+        case SDLK_RCTRL:
+        case SDLK_RGUI:
+        case SDLK_LSHIFT:
+        case SDLK_LALT:
+        case SDLK_LCTRL:
+        case SDLK_LGUI:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+KeyEvent::Modifiers KeyEvent::modifiersFromSDL(int mods) // static
+{
+    Modifiers m;
+    if (mods & KMOD_SHIFT) m |= Shift;
+    if (mods & KMOD_ALT)   m |= Alt;
+    if (mods & KMOD_CTRL)  m |= Control;
+    if (mods & KMOD_GUI)   m |= Meta;
+    return m;
 }
 
 } // namespace de

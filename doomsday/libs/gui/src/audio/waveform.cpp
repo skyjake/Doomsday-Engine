@@ -70,17 +70,17 @@ DE_PIMPL(Waveform)
 , DE_OBSERVES(File, Deletion)
 {
     audio::Format format;
-    Block sampleData;
-    File const *source;
-    duint channelCount;
-    duint bitsPerSample;
-    dsize sampleCount;
-    duint sampleRate;
+    Block         sampleData;
+    const File *  source;
+    duint         channelCount;
+    duint         bitsPerSample;
+    dsize         sampleCount;
+    duint         sampleRate;
 
     Impl(Public *i)
         : Base(i)
         , format(audio::PCMLittleEndian)
-        , source(0)
+        , source(nullptr)
         , channelCount (0)
         , bitsPerSample(0)
         , sampleCount  (0)
@@ -89,7 +89,7 @@ DE_PIMPL(Waveform)
 
     ~Impl()
     {
-        setSource(0);
+        setSource(nullptr);
     }
 
     void setSource(File const *src)
@@ -101,7 +101,7 @@ DE_PIMPL(Waveform)
 
     void clear()
     {
-        setSource(0);
+        setSource(nullptr);
         format = audio::PCMLittleEndian;
         sampleData.clear();
         channelCount  = 0;
@@ -193,7 +193,7 @@ DE_PIMPL(Waveform)
         {
             // Could read file contents to memory if the waveform data
             // is still needed?
-            source = 0;
+            source = nullptr;
         }
     }
 };
@@ -249,7 +249,7 @@ duint Waveform::sampleRate() const
 
 TimeSpan Waveform::duration() const
 {
-    return d->sampleRate * d->sampleCount;
+    return ddouble(d->sampleRate) * d->sampleCount;
 }
 
 } // namespace de

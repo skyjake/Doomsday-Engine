@@ -32,7 +32,7 @@
 
 #include "de/RowAtlasAllocator"
 
-#include <QList>
+#include <de/List>
 #include <set>
 
 namespace de {
@@ -222,7 +222,7 @@ DE_PIMPL(RowAtlasAllocator)
 
         Row *top; ///< Always at least one row exists.
         std::set<Slot *, Slot::SortByWidth> vacant; // not owned
-        QHash<Id, Slot *> slotsById; // not owned
+        Hash<Id, Slot *> slotsById; // not owned
 
         dsize usedArea = 0; ///< Total allocated pixels.
         Impl *d;
@@ -459,12 +459,12 @@ DE_PIMPL(RowAtlasAllocator)
     bool optimize()
     {
         // Set up a LUT based on descending allocation width.
-        QList<ContentSize> descending;
-        DE_FOR_EACH(Allocations, i, allocs)
+        List<ContentSize> descending;
+        for (const auto &i : allocs)
         {
-            descending.append(ContentSize(i.key(), i.value().size()));
+            descending.emplace_back(i.first, i.second.size());
         }
-        qSort(descending);
+        descending.sort();
 
         Allocations optimal;
         std::unique_ptr<Rows> revised(new Rows(this));
@@ -537,9 +537,9 @@ int RowAtlasAllocator::count() const
 Atlas::Ids RowAtlasAllocator::ids() const
 {
     Atlas::Ids ids;
-    foreach (Id const &id, d->allocs.keys())
+    for (const auto &i : d->allocs)
     {
-        ids.insert(id);
+        ids.insert(i.first);
     }
     return ids;
 }

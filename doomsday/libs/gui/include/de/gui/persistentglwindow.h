@@ -41,8 +41,6 @@ namespace de {
  */
 class LIBGUI_PUBLIC PersistentGLWindow : public GLWindow
 {
-    Q_OBJECT
-
 public:
     /// Provided window ID was not valid. @ingroup errors
     DE_ERROR(InvalidIdError);
@@ -165,10 +163,10 @@ public:
     static PersistentGLWindow &main();
 
     // Events.
-    void moveEvent(QMoveEvent *) override;
-    void resizeEvent(QResizeEvent *) override;
+//    void moveEvent(QMoveEvent *) override;
+//    void resizeEvent(QResizeEvent *) override;
 
-protected slots:
+protected:
     void performQueuedTasks();
     void windowVisibilityChanged();
 

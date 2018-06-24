@@ -24,8 +24,8 @@ static float const NORMAL_Z = .2f;
 
 DE_PIMPL_NOREF(HeightMap)
 {
-    QImage heightImage;
-    QImage normalImage;
+    Image heightImage;
+    Image normalImage;
     Vec2f  mapSize;
     float  heightRange = 1.f;
 
@@ -67,7 +67,7 @@ void HeightMap::setMapSize(Vec2f const &worldSize, float heightRange)
 
 void HeightMap::loadGrayscale(Image const &heightImage)
 {
-    d->heightImage = heightImage.toQImage();
+    d->heightImage = heightImage;
 }
 
 Image HeightMap::toImage() const
@@ -77,9 +77,9 @@ Image HeightMap::toImage() const
 
 Image HeightMap::makeNormalMap() const
 {
-    QImage const &heightMap = d->heightImage;
+    Image const &heightMap = d->heightImage;
 
-    QImage img(heightMap.size(), QImage::Format_ARGB32);
+    Image img(heightMap.size(), Image::RGBA_8888);
 
     int const w = heightMap.width();
     int const h = heightMap.height();
@@ -104,7 +104,7 @@ Image HeightMap::makeNormalMap() const
 
 float HeightMap::heightAtPosition(Vec2f const &worldPos) const
 {
-    QImage const &img = d->heightImage;
+    Image const &img = d->heightImage;
 
     Vec2f coord = d->pixelCoordf(worldPos);
     Vec2i pixelCoord = coord.toVec2i();

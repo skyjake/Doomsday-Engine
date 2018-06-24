@@ -3,6 +3,7 @@
 cmake_minimum_required (VERSION 3.1)
 project (DE_LIBGUI)
 
+include (${CMAKE_CURRENT_LIST_DIR}/../../cmake/Directories.cmake)
 option (DE_ASSIMP_EMBEDDED "Use the Assimp from 'external/assimp' instead of system libraries" YES)
 
 set (CMAKE_INSTALL_DEFAULT_COMPONENT_NAME)
@@ -61,10 +62,10 @@ endif ()
 include (../../cmake/Config.cmake)
 
 # libgui uses Qt 5.4 OpenGL APIs.
-qmake_query (QT_VERSION "QT_VERSION")
-if (QT_VERSION VERSION_LESS 5.4)
-    message (FATAL_ERROR "libgui requires Qt 5.4 or newer! You can disable all GUI features with DE_ENABLE_GUI=OFF.")
-endif ()
+#qmake_query (QT_VERSION "QT_VERSION")
+#if (QT_VERSION VERSION_LESS 5.4)
+#    message (FATAL_ERROR "libgui requires Qt 5.4 or newer! You can disable all GUI features with DE_ENABLE_GUI=OFF.")
+#endif ()
 
 if (APPLE)
     # Don't change display modes on macOS/iOS. We'll instead resize the
@@ -79,13 +80,15 @@ option (DE_ENABLE_DISPLAYMODE "Enable/disable changing the display mode"
 
 # OpenGL API selection.
 set (DE_OPENGL_API "3.3" CACHE STRING "OpenGL API selection (3.3, GLES3, GLES2)")
-
 if (IOS)
     set (DE_OPENGL_API "GLES3" CACHE STRING "OpenGL API selection" FORCE)
 endif ()
 
 # Dependencies.
 find_package (DengCore)
+find_package (SDL2)
+find_package (Stb)
+find_package (glbinding REQUIRED)
 find_package (Assimp REQUIRED)
 if (DE_X11)
     find_package (X11 REQUIRED)
@@ -132,10 +135,10 @@ list_remove_matches (SOURCES ".*_qml.*")
 deng_add_library (libgui ${SOURCES} ${HEADERS})
 
 target_link_libraries (libgui
-    PUBLIC Deng::libcore
-    PRIVATE libassimp
+    PUBLIC  Deng::libcore glbinding::glbinding
+    PRIVATE SDL2 SDL2_ttf stb libassimp
 )
-deng_target_link_qt (libgui PUBLIC Gui OpenGLExtensions Widgets)
+#deng_target_link_qt (libgui PUBLIC Gui OpenGLExtensions Widgets)
 
 if (UNIX AND NOT APPLE)
     # The assimp target may be linked to some system libraries that

@@ -32,7 +32,7 @@ namespace de {
 class LIBGUI_PUBLIC AtlasTexture : public Atlas, public GLTexture
 {
 public:
-    AtlasTexture(Atlas::Flags const &flags = DefaultFlags,
+    AtlasTexture(Flags const &flags = DefaultFlags,
                  Atlas::Size const &totalSize = Atlas::Size());
 
     /**
@@ -43,10 +43,10 @@ public:
      *
      * @return AtlasTexture instance.
      */
-    static AtlasTexture *newWithRowAllocator(Atlas::Flags const &flags = DefaultFlags,
+    static AtlasTexture *newWithRowAllocator(Flags const &flags = DefaultFlags,
                                              Atlas::Size const &totalSize = Atlas::Size());
 
-    static AtlasTexture *newWithKdTreeAllocator(Atlas::Flags const &flags = DefaultFlags,
+    static AtlasTexture *newWithKdTreeAllocator(Flags const &flags = DefaultFlags,
                                                 Atlas::Size const &totalSize = Atlas::Size());
 
     void clear();

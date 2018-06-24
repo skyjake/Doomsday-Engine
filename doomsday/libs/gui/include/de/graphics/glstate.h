@@ -43,8 +43,7 @@ namespace gl /// OpenGL constants, flags, and other definitions.
         WriteAlpha = 0x8,
         WriteAll   = WriteRed | WriteGreen | WriteBlue | WriteAlpha
     };
-    Q_DECLARE_FLAGS(ColorMask, ColorMaskFlag)
-    Q_DECLARE_OPERATORS_FOR_FLAGS(ColorMask)
+    using ColorMask = Flags;
 
     enum Face {
         None,

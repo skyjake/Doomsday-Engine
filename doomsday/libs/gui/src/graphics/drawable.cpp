@@ -17,26 +17,25 @@
  */
 
 #include "de/Drawable"
-
-#include <QMap>
+#include <de/Map>
 
 namespace de {
 
 DE_PIMPL(Drawable)
 {
-    typedef QMap<Id, std::shared_ptr<GLBuffer>> Buffers;
-    typedef QMap<Id, GLProgram *> Programs;
-    typedef QMap<Id, GLState *>   States;
-    typedef QMap<String, Id>      Names;
+    typedef Map<Id, std::shared_ptr<GLBuffer>> Buffers;
+    typedef Map<Id, GLProgram *> Programs;
+    typedef Map<Id, GLState *>   States;
+    typedef Map<String, Id>      Names;
 
     struct BufferConfig {
         GLProgram const *program;
         GLState const *state;
 
-        BufferConfig(GLProgram const *p = 0, GLState const *s = 0)
+        BufferConfig(GLProgram const *p = nullptr, GLState const *s = nullptr)
             : program(p), state(s) {}
     };
-    typedef QMap<Id, BufferConfig> BufferConfigs;
+    typedef Map<Id, BufferConfig> BufferConfigs;
 
     Buffers       buffers;
     Programs      programs;
@@ -420,7 +419,7 @@ void Drawable::setProgram(Name const &bufferName, Name const &programName)
 
 void Drawable::setProgram(GLProgram &program)
 {
-    foreach (Id id, allBuffers())
+    for (const auto &id : allBuffers())
     {
         setProgram(id, program);
     }
@@ -458,7 +457,7 @@ void Drawable::setState(Name const &bufferName, Name const &stateName)
 
 void Drawable::setState(GLState &state)
 {
-    foreach (Id id, allBuffers())
+    for (const Id &id : allBuffers())
     {
         setState(id, state);
     }
@@ -481,7 +480,7 @@ void Drawable::unsetState(Name const &bufferName)
 
 void Drawable::unsetState()
 {
-    foreach (Id id, allBuffers())
+    for (const Id &id : allBuffers())
     {
         unsetState(id);
     }
@@ -492,15 +491,15 @@ void Drawable::draw() const
     // Ignore the draw request until everything is ready.
     if (!isReady()) return;
 
-    GLProgram const *currentProgram = 0;
-    GLState   const *currentState   = 0;
+    GLProgram const *currentProgram = nullptr;
+    GLState   const *currentState   = nullptr;
 
     // Make sure the GL state on the top of the stack is in effect.
     GLState::current().apply();
 
-    DE_FOR_EACH_CONST(Impl::Buffers, i, d->buffers)
+    for (const auto &i : d->buffers)
     {
-        Id const id = i.key();
+        const Id id = i.first;
 
         // Switch the program if necessary.
         GLProgram const &bufProg = programForBuffer(id);
@@ -519,10 +518,10 @@ void Drawable::draw() const
             currentState = bufState;
             currentState->apply();
         }
-        else if (!bufState && currentState != 0)
+        else if (!bufState && currentState != nullptr)
         {
             // Use the current state from the stack.
-            currentState = 0;
+            currentState = nullptr;
             GLState::current().apply();
         }
 

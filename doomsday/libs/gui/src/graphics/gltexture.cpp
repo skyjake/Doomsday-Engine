@@ -31,11 +31,9 @@ enum TextureFlag {
     MipmapAvailable = 0x2,
     ParamsChanged   = 0x4
 };
-Q_DECLARE_FLAGS(TextureFlags, TextureFlag)
+using TextureFlags = Flags;
 
 } // namespace internal
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(internal::TextureFlags)
 
 using namespace internal;
 using namespace gl;
@@ -69,7 +67,7 @@ DE_PIMPL(GLTexture)
     {
         if (!name)
         {
-            LIBGUI_GL.glGenTextures(1, &name);
+            glGenTextures(1, &name);
         }
     }
 
@@ -77,7 +75,7 @@ DE_PIMPL(GLTexture)
     {
         if (name)
         {
-            LIBGUI_GL.glDeleteTextures(1, &name);
+            glDeleteTextures(1, &name);
             name = 0;
         }
     }
@@ -154,12 +152,12 @@ DE_PIMPL(GLTexture)
 
     void glBind() const
     {
-        LIBGUI_GL.glBindTexture(texTarget, name); LIBGUI_ASSERT_GL_OK();
+        glBindTexture(texTarget, name); LIBGUI_ASSERT_GL_OK();
     }
 
     void glUnbind() const
     {
-        LIBGUI_GL.glBindTexture(texTarget, 0);
+        glBindTexture(texTarget, 0);
     }
 
     /**
@@ -168,20 +166,18 @@ DE_PIMPL(GLTexture)
      */
     void glUpdateParamsOfBoundTexture()
     {
-        auto &GL = LIBGUI_GL;
-
-        GL.glTexParameteri (texTarget, GL_TEXTURE_WRAP_S,       glWrap(wrap.x));
-        GL.glTexParameteri (texTarget, GL_TEXTURE_WRAP_T,       glWrap(wrap.y));
-        GL.glTexParameteri (texTarget, GL_TEXTURE_MAG_FILTER,   magFilter == Nearest? GL_NEAREST : GL_LINEAR);
-        GL.glTexParameteri (texTarget, GL_TEXTURE_MIN_FILTER,   glMinFilter(minFilter, mipFilter));
-        GL.glTexParameterf (texTarget, GL_TEXTURE_MAX_LEVEL,    maxLevel);
-        GL.glTexParameterfv(texTarget, GL_TEXTURE_BORDER_COLOR, &borderColor[0]);
-        GL.glTexParameteri (texTarget, GL_TEXTURE_COMPARE_MODE, glCompareMode(compareMode));
-        GL.glTexParameteri (texTarget, GL_TEXTURE_COMPARE_FUNC, internal::glComp(compareFunc));
+        glTexParameteri (texTarget, GL_TEXTURE_WRAP_S,       glWrap(wrap.x));
+        glTexParameteri (texTarget, GL_TEXTURE_WRAP_T,       glWrap(wrap.y));
+        glTexParameteri (texTarget, GL_TEXTURE_MAG_FILTER,   magFilter == Nearest? GL_NEAREST : GL_LINEAR);
+        glTexParameteri (texTarget, GL_TEXTURE_MIN_FILTER,   glMinFilter(minFilter, mipFilter));
+        glTexParameterf (texTarget, GL_TEXTURE_MAX_LEVEL,    maxLevel);
+        glTexParameterfv(texTarget, GL_TEXTURE_BORDER_COLOR, &borderColor[0]);
+        glTexParameteri (texTarget, GL_TEXTURE_COMPARE_MODE, glCompareMode(compareMode));
+        glTexParameteri (texTarget, GL_TEXTURE_COMPARE_FUNC, internal::glComp(compareFunc));
 
         if (GLInfo::extensions().EXT_texture_filter_anisotropic)
         {
-            GL.glTexParameterf(texTarget, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
+            glTexParameterf(texTarget, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
         }
 
         LIBGUI_ASSERT_GL_OK();
@@ -196,32 +192,32 @@ DE_PIMPL(GLTexture)
                 << level << internalFormat << size.x << size.y << 0
                 << glFormat.format << glFormat.type << data;*/
 
-        if (data) LIBGUI_GL.glPixelStorei(GL_UNPACK_ALIGNMENT, GLint(glFormat.rowStartAlignment));
-        LIBGUI_GL.glTexImage2D(isCube() ? glFace(face) : texTarget,
-                               level,
-                               glFormat.internalFormat,
-                               size.x,
-                               size.y,
-                               0,
-                               glFormat.format,
-                               glFormat.type,
-                               data);
+        if (data) glPixelStorei(GL_UNPACK_ALIGNMENT, GLint(glFormat.rowStartAlignment));
+        glTexImage2D(isCube() ? glFace(face) : texTarget,
+                     level,
+                     glFormat.internalFormat,
+                     size.x,
+                     size.y,
+                     0,
+                     glFormat.format,
+                     glFormat.type,
+                     data);
         LIBGUI_ASSERT_GL_OK();
     }
 
     void glSubImage(int level, Vec2i const &pos, Size const &size,
                     GLPixelFormat const &glFormat, void const *data, CubeFace face = PositiveX)
     {
-        if (data) LIBGUI_GL.glPixelStorei(GL_UNPACK_ALIGNMENT, GLint(glFormat.rowStartAlignment));
-        LIBGUI_GL.glTexSubImage2D(isCube() ? glFace(face) : texTarget,
-                                  level,
-                                  pos.x,
-                                  pos.y,
-                                  size.x,
-                                  size.y,
-                                  glFormat.format,
-                                  glFormat.type,
-                                  data);
+        if (data) glPixelStorei(GL_UNPACK_ALIGNMENT, GLint(glFormat.rowStartAlignment));
+        glTexSubImage2D(isCube() ? glFace(face) : texTarget,
+                        level,
+                        pos.x,
+                        pos.y,
+                        size.x,
+                        size.y,
+                        glFormat.format,
+                        glFormat.type,
+                        data);
         LIBGUI_ASSERT_GL_OK();
     }
 
@@ -230,18 +226,23 @@ DE_PIMPL(GLTexture)
     {
         auto const &glFormat = image.glFormat();
 
-        LIBGUI_GL.glPixelStorei(GL_UNPACK_ALIGNMENT,  GLint(glFormat.rowStartAlignment));
-        LIBGUI_GL.glPixelStorei(GL_UNPACK_ROW_LENGTH, GLint(image.width()));
+        glPixelStorei(GL_UNPACK_ALIGNMENT,  GLint(glFormat.rowStartAlignment));
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, GLint(image.width()));
 
         int const bytesPerPixel = image.depth() / 8;
 
-        LIBGUI_GL.glTexSubImage2D(isCube()? glFace(face) : texTarget,
-                                  level, rect.left(), rect.top(), rect.width(), rect.height(),
-                                  glFormat.format, glFormat.type,
-                                  static_cast<dbyte const *>(image.bits()) +
-                                  bytesPerPixel * rect.left() + image.stride() * rect.top());
+        glTexSubImage2D(isCube() ? glFace(face) : texTarget,
+                        level,
+                        rect.left(),
+                        rect.top(),
+                        rect.width(),
+                        rect.height(),
+                        glFormat.format,
+                        glFormat.type,
+                        static_cast<const dbyte *>(image.bits()) + bytesPerPixel * rect.left() +
+                            image.stride() * rect.top());
 
-        LIBGUI_GL.glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
         LIBGUI_ASSERT_GL_OK();
     }
@@ -375,7 +376,7 @@ void GLTexture::setUndefinedImage(GLTexture::Size const &size, Image::Format for
 
     d->alloc();
     d->glBind();
-    d->glImage(level, size, Image::glFormat(format), NULL);
+    d->glImage(level, size, Image::glFormat(format), nullptr);
     d->glUnbind();
 
     setState(Ready);
@@ -390,7 +391,7 @@ void GLTexture::setUndefinedImage(CubeFace face, GLTexture::Size const &size,
 
     d->alloc();
     d->glBind();
-    d->glImage(level, size, Image::glFormat(format), NULL, face);
+    d->glImage(level, size, Image::glFormat(format), nullptr, face);
     d->glUnbind();
 
     setState(Ready);
@@ -404,7 +405,7 @@ void GLTexture::setUndefinedContent(Size const &size, GLPixelFormat const &glFor
 
     d->alloc();
     d->glBind();
-    d->glImage(level, size, glFormat, NULL);
+    d->glImage(level, size, glFormat, nullptr);
     d->glUnbind();
 
     setState(Ready);
@@ -418,7 +419,7 @@ void GLTexture::setUndefinedContent(CubeFace face, Size const &size, GLPixelForm
 
     d->alloc();
     d->glBind();
-    d->glImage(level, size, glFormat, NULL, face);
+    d->glImage(level, size, glFormat, nullptr, face);
     d->glUnbind();
 
     setState(Ready);
@@ -534,7 +535,7 @@ void GLTexture::generateMipmap()
     if (d->name)
     {
         d->glBind();
-        LIBGUI_GL.glGenerateMipmap(d->texTarget); LIBGUI_ASSERT_GL_OK();
+        glGenerateMipmap(d->texTarget); LIBGUI_ASSERT_GL_OK();
         d->glUnbind();
 
         d->flags |= MipmapAvailable;
@@ -565,7 +566,7 @@ GLuint GLTexture::glName() const
 
 void GLTexture::glBindToUnit(int unit) const
 {
-    LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + unit);
+    glActiveTexture(GL_TEXTURE0 + unit);
 
     aboutToUse();
 
@@ -595,7 +596,7 @@ Image::Format GLTexture::imageFormat() const
 GLTexture::Size GLTexture::maximumSize()
 {
     int v = 0;
-    LIBGUI_GL.glGetIntegerv(GL_MAX_TEXTURE_SIZE, &v); LIBGUI_ASSERT_GL_OK();
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &v); LIBGUI_ASSERT_GL_OK();
     return Size(v, v);
 }
 

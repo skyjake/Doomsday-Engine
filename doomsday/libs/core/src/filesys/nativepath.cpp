@@ -278,7 +278,8 @@ NativePath NativePath::homePath()
 {
 #if defined (UNIX)
     return getenv("HOME");
-#else
+#elif defined (WIN32)
+    return getenv("HOMEPATH");
 #endif
 }
 

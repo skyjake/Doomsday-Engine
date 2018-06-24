@@ -19,14 +19,13 @@
 #ifndef LIBGUI_ATLAS_H
 #define LIBGUI_ATLAS_H
 
-#include <QFlags>
-#include <QSet>
-#include <QMap>
-#include <de/Id>
-#include <de/Rectangle>
-#include <de/Observers>
-#include <de/Lockable>
 #include <de/Deletable>
+#include <de/Hash>
+#include <de/Id>
+#include <de/Lockable>
+#include <de/Observers>
+#include <de/Rectangle>
+#include <de/Set>
 
 #include "../Image"
 
@@ -103,9 +102,8 @@ public:
 
         DefaultFlags = 0
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
-    typedef QSet<Id> Ids;
+    typedef Set<Id> Ids;
 
     /**
      * Interface for allocator logic. Each Atlas requires one IAllocator object to
@@ -114,7 +112,7 @@ public:
     class LIBGUI_PUBLIC IAllocator
     {
     public:
-        typedef QHash<Id, Rectanglei> Allocations;
+        typedef Hash<Id, Rectanglei> Allocations;
 
     public:
         virtual ~IAllocator() {}
@@ -309,8 +307,6 @@ protected:
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Atlas::Flags)
 
 } // namespace de
 

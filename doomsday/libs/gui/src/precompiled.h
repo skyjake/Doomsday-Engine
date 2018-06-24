@@ -40,6 +40,7 @@
 #include <typeinfo>
 #include <vector>
 
+/*
 // Qt:
 #include <QtCore/qglobal.h>
 #include <QApplication>
@@ -67,5 +68,6 @@
 #include <QTimer>
 #include <QVarLengthArray>
 #include <QVector>
+*/
 
 #endif

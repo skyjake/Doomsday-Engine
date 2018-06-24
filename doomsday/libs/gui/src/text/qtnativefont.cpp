@@ -1,3 +1,4 @@
+#if 0
 /** @file qtnativefont.cpp  Qt-based native font.
  *
  * @authors Copyright (c) 2014-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -144,3 +145,4 @@ QImage QtNativeFont::nativeFontRasterize(String const &text,
 }
 
 } // namespace de
+#endif

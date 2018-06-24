@@ -31,8 +31,6 @@
 #  error "glwindow.h is for desktop platforms (use glwindow_qml.h instead)"
 #endif
 
-#include <QOpenGLWindow>
-
 #ifdef WIN32
 #  undef min
 #  undef max
@@ -47,10 +45,8 @@ class GLTimer;
  *
  * @see WindowEventHandler
  */
-class LIBGUI_PUBLIC GLWindow : public QOpenGLWindow, public Asset
+class LIBGUI_PUBLIC GLWindow : public Asset
 {
-    Q_OBJECT
-
 public:
     typedef Vec2ui Size;
 
@@ -92,6 +88,9 @@ public:
     float frameRate() const;
     uint frameCount() const;
 
+    int x() const;
+    int y() const;
+
     /**
      * Determines the current top left corner (origin) of the window.
      */
@@ -132,11 +131,7 @@ public:
      */
     bool ownsEventHandler(WindowEventHandler *handler) const;
 
-    enum GrabMode
-    {
-        GrabNormal,
-        GrabHalfSized
-    };
+    enum GrabMode { GrabNormal, GrabHalfSized };
 
     /**
      * Grabs the contents of the window and saves it into a native image file.
@@ -157,7 +152,7 @@ public:
      *
      * @return  Framebuffer contents (no alpha channel).
      */
-    QImage grabImage(QSize const &outputSize = QSize()) const;
+    Image grabImage(Size const &outputSize = Size()) const;
 
     /**
      * Grabs a portion of the contents of the window framebuffer.
@@ -168,7 +163,7 @@ public:
      *
      * @return  Framebuffer contents (no alpha channel).
      */
-    QImage grabImage(QRect const &area, QSize const &outputSize = QSize()) const;
+    Image grabImage(Rectanglei const &area, Size const &outputSize = Size()) const;
 
     /**
      * Activates the window's GL context so that OpenGL API calls can be made.
@@ -198,26 +193,25 @@ public:
     static void setMain(GLWindow *window);
 
 protected:
-    void initializeGL() override;
-    void paintGL() override;
+    virtual void initializeGL();
+    virtual void paintGL();
     virtual void windowAboutToClose();
 
     // Native events.
-    void resizeEvent            (QResizeEvent *ev) override;
-    void focusInEvent           (QFocusEvent  *ev) override;
-    void focusOutEvent          (QFocusEvent  *ev) override;
-    void keyPressEvent          (QKeyEvent    *ev) override;
-    void keyReleaseEvent        (QKeyEvent    *ev) override;
-    void mousePressEvent        (QMouseEvent  *ev) override;
-    void mouseReleaseEvent      (QMouseEvent  *ev) override;
-    void mouseDoubleClickEvent  (QMouseEvent  *ev) override;
-    void mouseMoveEvent         (QMouseEvent  *ev) override;
-    void wheelEvent             (QWheelEvent  *ev) override;
+//    void resizeEvent            (QResizeEvent *ev) override;
+//    void focusInEvent           (QFocusEvent  *ev) override;
+//    void focusOutEvent          (QFocusEvent  *ev) override;
+//    void keyPressEvent          (QKeyEvent    *ev) override;
+//    void keyReleaseEvent        (QKeyEvent    *ev) override;
+//    void mousePressEvent        (QMouseEvent  *ev) override;
+//    void mouseReleaseEvent      (QMouseEvent  *ev) override;
+//    void mouseDoubleClickEvent  (QMouseEvent  *ev) override;
+//    void mouseMoveEvent         (QMouseEvent  *ev) override;
+//    void wheelEvent             (QWheelEvent  *ev) override;
 
-    bool event(QEvent *) override;
+//    bool event(QEvent *) override;
 
-protected slots:
-    void frameWasSwapped();
+    DE_DEFINE_AUDIENCE2(FrameSwapped, void frameWasSwapped())
 
 private:
     DE_PRIVATE(d)

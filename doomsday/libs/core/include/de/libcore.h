@@ -821,20 +821,20 @@ typedef long     dlong;
 
 typedef wchar_t  Char;
 
-class Flags
+class DE_PUBLIC Flags
 {
 public:
     inline Flags(uint32_t flags = 0) : _flg(flags) {}
-    inline Flags(const Flags &other) : _flg(other._flg) {}
-    inline Flags(Flags &&moved) : _flg(moved._flg) {}
-    inline Flags &operator=(const Flags &other) { _flg = other._flg; return *this; }
-    inline Flags &operator=(Flags &&moved) { _flg = moved._flg; return *this; }
+    inline Flags(const Flags &other) = default;
+    inline Flags(Flags &&moved)      = default;
 
     inline operator uint32_t() const { return _flg; }
 
     inline bool testFlag(uint32_t f) const { return (_flg & f) == f; }
 
-    inline uint32_t &operator=(uint32_t flags) { return _flg = flags; }
+    inline Flags &operator=(uint32_t flags) { _flg = flags; return *this; }
+    Flags &operator=(const Flags &) = default;
+    Flags &operator=(Flags &&) = default;
     inline uint32_t &operator|=(uint32_t flags) { return _flg |= flags; }
     inline uint32_t &operator&=(uint32_t flags) { return _flg &= flags; }
     inline uint32_t &operator^=(uint32_t flags) { return _flg ^= flags; }

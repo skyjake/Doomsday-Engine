@@ -61,10 +61,11 @@ public:
 public:
     Asset(State initialState = NotReady);
     Asset(Asset const &other);
+
     virtual ~Asset();
 
-    void setState(State s);
-    void setState(bool assetReady);
+    void  setState(State s);
+    void  setState(bool assetReady);
     State state() const;
 
     /**
@@ -90,9 +91,10 @@ private:
  *
  * @todo Any better name for this class?
  */
-class DE_PUBLIC AssetGroup : public Asset,
-                                DE_OBSERVES(Asset, Deletion),
-                                DE_OBSERVES(Asset, StateChange)
+class DE_PUBLIC AssetGroup
+    : public Asset
+    , DE_OBSERVES(Asset, Deletion)
+    , DE_OBSERVES(Asset, StateChange)
 {
     DE_NO_COPY  (AssetGroup)
     DE_NO_ASSIGN(AssetGroup)
@@ -107,15 +109,18 @@ public:
 
 public:
     AssetGroup();
+
     virtual ~AssetGroup();
 
-    dint size() const;
-
-    inline bool isEmpty() const { return !size(); }
+    inline bool    isEmpty() const { return !size(); }
+    dint           size() const;
+    bool           has(Asset const &dep) const;
+    const Members &all() const;
 
     void clear();
-
     void insert(Asset const &dep, Policy policy = Required);
+    void remove(Asset const &asset);
+    void setPolicy(Asset const &asset, Policy policy);
 
     AssetGroup &operator += (Asset const &dep) {
         insert(dep, Required);
@@ -126,14 +131,6 @@ public:
         remove(dep);
         return *this;
     }
-
-    bool has(Asset const &dep) const;
-
-    void setPolicy(Asset const &asset, Policy policy);
-
-    void remove(Asset const &asset);
-
-    Members const &all() const;
 
     // Observes contained Assets.
     void assetBeingDeleted(Asset &);

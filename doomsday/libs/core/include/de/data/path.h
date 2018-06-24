@@ -408,23 +408,17 @@ public:
      * @return First (i.e., left-most) segment in the path. If the path is
      * empty, the returned segment is an empty, zero-length segment.
      */
-    inline Segment const &firstSegment() const {
-        return segment(0);
-    }
+    inline Segment const &firstSegment() const { return segment(0); }
 
     /**
      * @return  Last (i.e., right-most) segment in the path. If the path is empty,
      * the returned segment is an empty, zero-length segment.
      */
-    inline Segment const &lastSegment() const {
-        return segment(segmentCount() - 1);
-    }
+    inline Segment const &lastSegment() const { return segment(segmentCount() - 1); }
 
     // Implements LogEntry::Arg::Base.
     LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::StringArgument; }
-    String asText() const {
-        return toString();
-    }
+    String              asText()          const { return toString(); }
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

@@ -85,7 +85,7 @@ public:
      *
      * @return Reference to this program.
      */
-    GLProgram &build(QVector<GLShader const *> const &shaders);
+    GLProgram &build(const List<const GLShader *> &shaders);
 
     GLProgram &build(IByteArray const &vertexShaderSource,
                      IByteArray const &fragmentShaderSource);

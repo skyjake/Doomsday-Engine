@@ -75,7 +75,7 @@ public:
      *
      * @return The resulting combination.
      */
-    static Block prefixToSource(Block const &source, Block const &prefix);
+    static String prefixToSource(const String &source, const String &prefix);
 
     static int constexpr MAX_BATCH_UNIFORMS = 64;
 

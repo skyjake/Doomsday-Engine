@@ -34,10 +34,14 @@ class List : public std::vector<T>
 
 public:
     List() {}
+    List(size_t count, const T &initValue = T()) : Base(count, initValue) {}
     List(const List &other) : Base(other) {}
     List(List &&moved) : Base(moved) {}
-    List(const std::initializer_list<T> &init) {
-        for (const auto &i : init) {
+
+    List(const std::initializer_list<T> &init)
+    {
+        for (const auto &i : init)
+        {
             Base::push_back(i);
         }
     }

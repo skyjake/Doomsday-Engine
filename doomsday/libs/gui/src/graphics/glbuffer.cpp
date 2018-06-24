@@ -127,7 +127,7 @@ static duint drawCounter = 0;
 
 DE_PIMPL(GLBuffer)
 {
-    GLuint           bufferType      = GL_ARRAY_BUFFER;
+    GLenum           bufferType      = GL_ARRAY_BUFFER;
     GLuint           vao             = 0;
     GLProgram const *vaoBoundProgram = nullptr;
     GLuint           name            = 0;
@@ -156,7 +156,7 @@ DE_PIMPL(GLBuffer)
 #if defined (DE_HAVE_VAOS)
         if (!vao)
         {
-            LIBGUI_GL.glGenVertexArrays(1, &vao);
+            glGenVertexArrays(1, &vao);
         }
 #endif
     }
@@ -166,7 +166,7 @@ DE_PIMPL(GLBuffer)
 #if defined (DE_HAVE_VAOS)
         if (vao)
         {
-            LIBGUI_GL.glDeleteVertexArrays(1, &vao);
+            glDeleteVertexArrays(1, &vao);
             vao = 0;
             vaoBoundProgram = nullptr;
         }
@@ -177,7 +177,7 @@ DE_PIMPL(GLBuffer)
     {
         if (!name)
         {
-            LIBGUI_GL.glGenBuffers(1, &name);
+            glGenBuffers(1, &name);
         }
     }
 
@@ -186,7 +186,7 @@ DE_PIMPL(GLBuffer)
         if (bufferType != GL_ARRAY_BUFFER) return;
         if (!idxName)
         {
-            LIBGUI_GL.glGenBuffers(1, &idxName);
+            glGenBuffers(1, &idxName);
         }
     }
 
@@ -194,7 +194,7 @@ DE_PIMPL(GLBuffer)
     {
         if (name)
         {
-            LIBGUI_GL.glDeleteBuffers(1, &name);
+            glDeleteBuffers(1, &name);
             name = 0;
             count = 0;
             vaoBoundProgram = nullptr;
@@ -205,7 +205,7 @@ DE_PIMPL(GLBuffer)
     {
         if (idxName)
         {
-            LIBGUI_GL.glDeleteBuffers(1, &idxName);
+            glDeleteBuffers(1, &idxName);
             idxName = 0;
             idxCount = 0;
         }
@@ -225,7 +225,7 @@ DE_PIMPL(GLBuffer)
         case StreamRead:  return GL_STREAM_READ;
         case StreamCopy:  return GL_STREAM_COPY;
         }
-        DE_ASSERT(false);
+        DE_ASSERT_FAIL("Invalid glUsage");
         return GL_STATIC_DRAW;
     }
 
@@ -241,7 +241,7 @@ DE_PIMPL(GLBuffer)
         case TriangleFan:   return GL_TRIANGLE_FAN;
         case Triangles:     return GL_TRIANGLES;
         }
-        DE_ASSERT(false);
+        DE_ASSERT_FAIL("Invalid glPrimitive");
         return GL_TRIANGLES;
     }
 
@@ -249,12 +249,10 @@ DE_PIMPL(GLBuffer)
     {
         DE_ASSERT(!part || spec.type == GL_FLOAT);
 
-        auto &GL = LIBGUI_GL;
-
-        GL.glEnableVertexAttribArray(index + part);
+        glEnableVertexAttribArray(index + part);
         LIBGUI_ASSERT_GL_OK();
 
-        GL.glVertexAttribPointer(
+        glVertexAttribPointer(
             index + part,
                                         min(4, spec.size),
                                         spec.type,
@@ -264,7 +262,7 @@ DE_PIMPL(GLBuffer)
         LIBGUI_ASSERT_GL_OK();
 
 #if defined (DE_HAVE_INSTANCES)
-        GL.glVertexAttribDivisor(index + part, divisor);
+        glVertexAttribDivisor(index + part, divisor);
         LIBGUI_ASSERT_GL_OK();
 #else
         DE_UNUSED(divisor);
@@ -273,18 +271,16 @@ DE_PIMPL(GLBuffer)
 
     void enableArrays(bool enable, int divisor = 0, GLuint vaoName = 0)
     {
-        auto &GL = LIBGUI_GL;
-
         if (!enable)
         {
 #if defined (DE_HAVE_VAOS)
-            GL.glBindVertexArray(0);
+            glBindVertexArray(0);
 #endif
             return;
         }
 
         DE_ASSERT(GLProgram::programInUse());
-        DE_ASSERT(specs.first != 0); // must have a spec
+        DE_ASSERT(specs.first != nullptr); // must have a spec
 #if defined (DE_HAVE_VAOS)
         DE_ASSERT(vaoName || vao);
 #else
@@ -292,9 +288,9 @@ DE_PIMPL(GLBuffer)
 #endif
 
 #if defined (DE_HAVE_VAOS)
-        GL.glBindVertexArray(vaoName? vaoName : vao);
+        glBindVertexArray(vaoName? vaoName : vao);
 #endif
-        GL.glBindBuffer(GL_ARRAY_BUFFER, name);
+        glBindBuffer(GL_ARRAY_BUFFER, name);
 
         // Arrays are updated for a particular program.
         vaoBoundProgram = GLProgram::programInUse();
@@ -317,7 +313,7 @@ DE_PIMPL(GLBuffer)
                     }
                     else
                     {
-                        GL.glDisableVertexAttribArray(index + part);
+                        glDisableVertexAttribArray(index + part);
                         LIBGUI_ASSERT_GL_OK();
                     }
                 }
@@ -330,13 +326,13 @@ DE_PIMPL(GLBuffer)
                 }
                 else
                 {
-                    GL.glDisableVertexAttribArray(index);
+                    glDisableVertexAttribArray(index);
                     LIBGUI_ASSERT_GL_OK();
                 }
             }
         }
 
-        GL.glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
     void bindArray(bool doBind)
@@ -353,12 +349,12 @@ DE_PIMPL(GLBuffer)
             else
             {
                 // Just bind it, the setup is already good.
-                LIBGUI_GL.glBindVertexArray(vao);
+                glBindVertexArray(vao);
             }
         }
         else
         {
-            LIBGUI_GL.glBindVertexArray(0);
+            glBindVertexArray(0);
         }
 #else
         enableArrays(doBind);
@@ -397,10 +393,9 @@ void GLBuffer::setVertices(Primitive primitive, dsize count, void const *data, d
 
         if (dataSize && count)
         {
-            auto &GL = LIBGUI_GL;
-            GL.glBindBuffer(d->bufferType, d->name);
-            GL.glBufferData(d->bufferType, dataSize, data, Impl::glUsage(usage));
-            GL.glBindBuffer(d->bufferType, 0);
+            glBindBuffer(d->bufferType, d->name);
+            glBufferData(d->bufferType, dataSize, data, Impl::glUsage(usage));
+            glBindBuffer(d->bufferType, 0);
         }
 
         setState(Ready);
@@ -424,11 +419,12 @@ void GLBuffer::setIndices(Primitive primitive, dsize count, Index const *indices
         d->allocArray();
         d->allocIndices();
 
-        auto &GL = LIBGUI_GL;
-        GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
-        GL.glBufferData(GL_ELEMENT_ARRAY_BUFFER, GLsizeiptr(count * sizeof(Index)),
-                        indices, Impl::glUsage(usage));
-        GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                     GLsizeiptr(count * sizeof(Index)),
+                     indices,
+                     Impl::glUsage(usage));
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
     else
     {
@@ -438,7 +434,7 @@ void GLBuffer::setIndices(Primitive primitive, dsize count, Index const *indices
 
 void GLBuffer::setIndices(Primitive primitive, Indices const &indices, Usage usage)
 {
-    setIndices(primitive, indices.size(), indices.constData(), usage);
+    setIndices(primitive, indices.size(), indices.data(), usage);
 }
 
 void GLBuffer::setData(void const *data, dsize dataSize, gl::Usage usage)
@@ -447,10 +443,9 @@ void GLBuffer::setData(void const *data, dsize dataSize, gl::Usage usage)
     {
         d->alloc();
 
-        auto &GL = LIBGUI_GL;
-        GL.glBindBuffer(d->bufferType, d->name);
-        GL.glBufferData(d->bufferType, GLsizeiptr(dataSize), data, Impl::glUsage(usage));
-        GL.glBindBuffer(d->bufferType, 0);
+        glBindBuffer(d->bufferType, d->name);
+        glBufferData(d->bufferType, GLsizeiptr(dataSize), data, Impl::glUsage(usage));
+        glBindBuffer(d->bufferType, 0);
     }
     else
     {
@@ -464,10 +459,9 @@ void GLBuffer::setData(dsize startOffset, void const *data, dsize dataSize)
 
     if (data && dataSize)
     {
-        auto &GL = LIBGUI_GL;
-        GL.glBindBuffer   (d->bufferType, d->name);
-        GL.glBufferSubData(d->bufferType, GLintptr(startOffset), GLsizeiptr(dataSize), data);
-        GL.glBindBuffer   (d->bufferType, 0);
+        glBindBuffer   (d->bufferType, d->name);
+        glBufferSubData(d->bufferType, GLintptr(startOffset), GLsizeiptr(dataSize), data);
+        glBindBuffer   (d->bufferType, 0);
     }
 }
 
@@ -479,9 +473,9 @@ void GLBuffer::setUninitializedData(dsize dataSize, gl::Usage usage)
     d->allocArray();
     d->alloc();
 
-    LIBGUI_GL.glBindBuffer(d->bufferType, d->name);
-    LIBGUI_GL.glBufferData(d->bufferType, GLsizeiptr(dataSize), nullptr, Impl::glUsage(usage));
-    LIBGUI_GL.glBindBuffer(d->bufferType, 0);
+    glBindBuffer(d->bufferType, d->name);
+    glBufferData(d->bufferType, GLsizeiptr(dataSize), nullptr, Impl::glUsage(usage));
+    glBindBuffer(d->bufferType, 0);
 
     setState(Ready);
 }
@@ -495,8 +489,6 @@ void GLBuffer::draw(DrawRanges const *ranges) const
     // Mark the current target changed.
     GLState::current().target().markAsChanged();
 
-    auto &GL = LIBGUI_GL;
-
     d->bindArray(true);
 
 #if defined (DE_DEBUG)
@@ -504,20 +496,20 @@ void GLBuffer::draw(DrawRanges const *ranges) const
     {
         const GLuint progName = GLProgram::programInUse()->glName();
         GLint isValid;
-        LIBGUI_GL.glValidateProgram(progName);
-        LIBGUI_GL.glGetProgramiv(progName, GL_VALIDATE_STATUS, &isValid);
+        glValidateProgram(progName);
+        glGetProgramiv(progName, GL_VALIDATE_STATUS, &isValid);
         if (!isValid)
         {
-            qDebug() << "[GLProgram] Program" << progName << "status invalid";
+            debug("[GLProgram] Program %u status invalid", progName);
 
             dint32 logSize;
             dint32 count;
-            GL.glGetProgramiv(progName, GL_INFO_LOG_LENGTH, &logSize);
+            glGetProgramiv(progName, GL_INFO_LOG_LENGTH, &logSize);
 
             Block log(logSize);
-            GL.glGetProgramInfoLog(progName, logSize, &count, reinterpret_cast<GLchar *>(log.data()));
+            glGetProgramInfoLog(progName, logSize, &count, reinterpret_cast<GLchar *>(log.data()));
 
-            qDebug() << "Program info log:" << log.constData();
+            debug("Program info log: %s", log.data());
         }
     }
 #endif
@@ -526,11 +518,11 @@ void GLBuffer::draw(DrawRanges const *ranges) const
 
     if (d->idxName)
     {
-        GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
-        DENG2_ASSERT(GLProgram::programInUse()->validate());
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
+        DE_ASSERT(GLProgram::programInUse()->validate());
         if (drawRanges.size() == 1)
         {
-            GL.glDrawElements(d->prim,
+            glDrawElements(d->prim,
                               drawRanges.count[0],
                               GL_UNSIGNED_SHORT,
                               reinterpret_cast<const void *>(dintptr(drawRanges.first[0] * 2)));
@@ -539,37 +531,37 @@ void GLBuffer::draw(DrawRanges const *ranges) const
         else
         {
             const void **indices = new const void *[drawRanges.size()];
-            for (int i = 0; i < drawRanges.size(); ++i)
+            for (duint i = 0; i < drawRanges.size(); ++i)
             {
                 indices[i] = reinterpret_cast<const void *>(dintptr(drawRanges.first[i] * 2));
             }
 
-            GL.glMultiDrawElements(d->prim,
+            glMultiDrawElements(d->prim,
                                    drawRanges.count.data(),
                                    GL_UNSIGNED_SHORT,
                                    indices,
-                                   drawRanges.size());
+                                GLsizei(drawRanges.size()));
             LIBGUI_ASSERT_GL_OK();
 
             delete [] indices;
         }
 
-        GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
     else
     {
         DENG2_ASSERT(GLProgram::programInUse()->validate());
         if (drawRanges.size() == 1)
         {
-            GL.glDrawArrays(d->prim, drawRanges.first[0], drawRanges.count[0]);
+            glDrawArrays(d->prim, drawRanges.first[0], drawRanges.count[0]);
             LIBGUI_ASSERT_GL_OK();
         }
         else
         {
-            GL.glMultiDrawArrays(d->prim,
+            glMultiDrawArrays(d->prim,
                                  drawRanges.first.data(),
                                  drawRanges.count.data(),
-                                 drawRanges.size());
+                              GLsizei(drawRanges.size()));
             LIBGUI_ASSERT_GL_OK();
         }
     }
@@ -589,18 +581,16 @@ void GLBuffer::drawWithIndices(GLBuffer const &indexBuffer) const
     // Mark the current target changed.
     GLState::current().target().markAsChanged();
 
-    auto &GL = LIBGUI_GL;
-
     d->bindArray(true);
 
     DENG2_ASSERT(GLProgram::programInUse()->validate());
 
-    GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.d->idxName);
-    GL.glDrawElements(indexBuffer.d->prim,
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.d->idxName);
+    glDrawElements(indexBuffer.d->prim,
                       GLsizei(indexBuffer.d->idxCount),
                       GL_UNSIGNED_SHORT, nullptr);
     LIBGUI_ASSERT_GL_OK();
-    GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     ++drawCounter;
 
@@ -613,11 +603,9 @@ void GLBuffer::drawWithIndices(gl::Primitive primitive, Index const *indices, ds
 
     GLState::current().target().markAsChanged();
 
-    auto &GL = LIBGUI_GL;
-
     d->bindArray(true);
     DENG2_ASSERT(GLProgram::programInUse()->validate());
-    GL.glDrawElements(Impl::glPrimitive(primitive), GLsizei(count), GL_UNSIGNED_SHORT, indices);
+    glDrawElements(Impl::glPrimitive(primitive), GLsizei(count), GL_UNSIGNED_SHORT, indices);
     LIBGUI_ASSERT_GL_OK();
     ++drawCounter;
 
@@ -631,9 +619,10 @@ void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint 
     if (!isReady() || !instanceAttribs.isReady() || !GLProgram::programInUse())
     {
 #if defined (DE_DEBUG)
-        qDebug() << "[GLBuffer] isReady:" << isReady()
-                 << "instAttr isReady:" << instanceAttribs.isReady()
-                 << "progInUse:" << GLProgram::programInUse();
+        debug("[GLBuffer] isReady: %s, instAttr isReady: %s, progInUse: %s",
+              DE_BOOL_YESNO(isReady()),
+              DE_BOOL_YESNO(instanceAttribs.isReady()),
+              DE_BOOL_YESNO(GLProgram::programInUse()));
 #endif
         return;
     }
@@ -642,8 +631,6 @@ void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint 
 
     // Mark the current target changed.
     GLState::current().target().markAsChanged();
-
-    auto &GL = LIBGUI_GL;
 
     d->enableArrays(true);
 
@@ -658,16 +645,17 @@ void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint 
     {
         if (count < 0) count = d->idxCount;
         if (first + count > d->idxCount) count = d->idxCount - first;
-
+        
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
         DE_ASSERT(count >= 0);
-
-        GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
-        DENG2_ASSERT(GLProgram::programInUse()->validate());
-        GL.glDrawElementsInstanced(d->prim, count, GL_UNSIGNED_SHORT,
+        DE_ASSERT(GLProgram::programInUse()->validate());
+        glDrawElementsInstanced(d->prim,
+                                count,
+                                GL_UNSIGNED_SHORT,
                                    reinterpret_cast<void const *>(dintptr(first * 2)),
                                    GLsizei(instanceAttribs.count()));
         LIBGUI_ASSERT_GL_OK();
-        GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
     else
     {
@@ -677,8 +665,7 @@ void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint 
         DE_ASSERT(count >= 0);
         DENG2_ASSERT(GLProgram::programInUse()->validate());
 
-        GL.glDrawArraysInstanced(d->prim, first, count,
-                                 GLsizei(instanceAttribs.count()));
+        glDrawArraysInstanced(d->prim, first, count, GLsizei(instanceAttribs.count()));
         LIBGUI_ASSERT_GL_OK();
     }
 

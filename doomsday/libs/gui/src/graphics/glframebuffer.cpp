@@ -33,8 +33,8 @@ namespace de {
 static Vec2ui const nullSize;
 static GLuint defaultFramebuffer = 0;
 
-DE_PIMPL(GLFramebuffer),
-DE_OBSERVES(Asset, Deletion)
+DE_PIMPL(GLFramebuffer)
+, DE_OBSERVES(Asset, Deletion)
 {
     enum AttachmentId {
         ColorBuffer0,
@@ -73,7 +73,7 @@ DE_OBSERVES(Asset, Deletion)
             return DepthStencilBuffer;
 
         default:
-            DE_ASSERT(false);
+            DE_ASSERT_FAIL("Invalid GLFramebuffer attachment");
             break;
         }
         return ColorBuffer0; // should not be reached

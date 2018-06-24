@@ -21,8 +21,7 @@
 #include <de/App>
 #include <de/Folder>
 #include <de/LogBuffer>
-
-#include <QHash>
+#include <de/Hash>
 
 namespace de {
 
@@ -35,14 +34,14 @@ static String const COLOR_MULTIPLY      ("Color.multiply:");
 DE_PIMPL(ImageFile)
 {
     BuiltInFilter filter = NoFilter;
-    QHash<BuiltInFilter, ImageFile *> filtered; // owned
+    Hash<BuiltInFilter, ImageFile *> filtered; // owned
     String filterParameter;
 
     Impl(Public *i) : Base(i) {}
 
     ~Impl()
     {
-        qDeleteAll(filtered);
+        deleteAll(filtered);
     }
 
     ImageFile *makeOrGetFiltered(BuiltInFilter filter)
@@ -119,8 +118,8 @@ ImageFile::~ImageFile()
 
 String ImageFile::describe() const
 {
-    String desc = String("image \"%1\"").arg(d->filter == NoFilter?
-                                             name() : d->filterSource().name());
+    String desc = String::format(
+        "image \"%1\"", d->filter == NoFilter ? name().c_str() : d->filterSource().name().c_str());
     switch (d->filter)
     {
     case HeightMapToNormals:
@@ -170,9 +169,9 @@ Image ImageFile::image() const
             if (img.size() != factorImg.size())
             {
                 throw FilterError("ImageFile::image",
-                                  String("Cannot multiply %1 and %2 due to different sizes")
-                                  .arg(d->filterSource().path())
-                                  .arg(refPath / d->filterParameter));
+                                  stringf("Cannot multiply %s and %s due to different sizes",
+                                          d->filterSource().path().c_str(),
+                                          (refPath / d->filterParameter).c_str()));
             }
 
             img = img.multiplied(factorImg);
@@ -187,9 +186,12 @@ Image ImageFile::image() const
             // Parse the parameters.
             const auto components = d->filterParameter.split(',');
             duint8 colorValues[4] {0, 0, 0, 255};
-            for (int i = 0; i < 4; ++i)
+            for (dsize i = 0; i < 4; ++i)
             {
-                if (i < components.size()) colorValues[i] = duint8(components[i].toUInt());
+                if (i < components.size())
+            {
+                    colorValues[i] = duint8(components[i].toUInt32());
+                }
             }
 
             const Image::Color paramColor{
@@ -230,29 +232,29 @@ filesys::Node const *ImageFile::tryGetChild(String const &name) const
     {
         return d->makeOrGetFiltered(HeightMapToNormals);
     }
-    else if (name.beginsWith(MULTIPLY, String::CaseInsensitive))
+    else if (name.beginsWith(MULTIPLY, CaseInsensitive))
     {
         /// @bug Different filter parameters should be saved as unique ImageFiles,
         /// or otherwise the latest accessed parameter is in effect for all multiplied
         /// instances. -jk
         ImageFile *filtered = d->makeOrGetFiltered(Multiply);
-        filtered->d->filterParameter = name.substr(MULTIPLY.size());
+        filtered->d->filterParameter = name.substr(MULTIPLY.sizeb());
         return filtered;
     }
     else if (!name.compareWithoutCase(COLOR_DESATURATE))
     {
         return d->makeOrGetFiltered(ColorDesaturate);
     }
-    else if (name.beginsWith(COLOR_SOLID, String::CaseInsensitive))
+    else if (name.beginsWith(COLOR_SOLID, CaseInsensitive))
     {
         ImageFile *filtered = d->makeOrGetFiltered(ColorSolid);
-        filtered->d->filterParameter = name.substr(COLOR_SOLID.size());
+        filtered->d->filterParameter = name.substr(COLOR_SOLID.sizeb());
         return filtered;
     }
-    else if (name.beginsWith(COLOR_MULTIPLY, String::CaseInsensitive))
+    else if (name.beginsWith(COLOR_MULTIPLY, CaseInsensitive))
     {
         ImageFile *filtered = d->makeOrGetFiltered(ColorMultiply);
-        filtered->d->filterParameter = name.substr(COLOR_MULTIPLY.size());
+        filtered->d->filterParameter = name.substr(COLOR_MULTIPLY.sizeb());
         return filtered;
     }
     else if (d->filter == Multiply)

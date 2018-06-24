@@ -47,9 +47,9 @@ DE_PIMPL(GLUniform)
     duint16 usedElemCount;
     duint16 elemCount;
 
-    Impl(Public *i, QLatin1String const &n, Type t, duint elems)
+    Impl(Public *i, const char *n, Type t, duint elems)
         : Base(i)
-        , name(n.latin1())
+        , name(n)
         , type(t)
         , usedElemCount(duint16(elems))
         , elemCount(duint16(elems))
@@ -221,20 +221,18 @@ DE_PIMPL(GLUniform)
             if (value.tex == &asset)
             {
                 // No more texture to refer to.
-                value.tex = 0;
+                value.tex = nullptr;
             }
         }
     }
 
-    DE_PIMPL_AUDIENCE(Deletion)
-    DE_PIMPL_AUDIENCE(ValueChange)
+    DE_PIMPL_AUDIENCES(Deletion, ValueChange)
 };
 
-DE_AUDIENCE_METHOD(GLUniform, Deletion)
-DE_AUDIENCE_METHOD(GLUniform, ValueChange)
+DE_AUDIENCE_METHODS(GLUniform, Deletion, ValueChange)
 
 GLUniform::GLUniform(char const *nameInShader, Type uniformType, duint elements)
-    : d(new Impl(this, QLatin1String(nameInShader), uniformType, elements))
+    : d(new Impl(this, nameInShader, uniformType, elements))
 {}
 
 void GLUniform::setName(char const *nameInShader)
@@ -263,8 +261,8 @@ void GLUniform::bindSamplerTexture(dint unit) const
     if (d->type == SamplerBuffer)
     {
         // Buffer textures are not represented by GLTexture.
-        LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + unit);
-        LIBGUI_GL.glBindTexture(GL_TEXTURE_BUFFER, d->value.uint32);
+        glActiveTexture(GL_TEXTURE0 + unit);
+        glBindTexture(GL_TEXTURE_BUFFER, d->value.uint32);
     }
     else
     {
@@ -607,7 +605,7 @@ void GLUniform::applyInProgram(GLProgram &program) const
 {
     LIBGUI_ASSERT_GL_OK();
 
-    int loc = program.glUniformLocation(d->name.constData());
+    int loc = program.glUniformLocation(d->name.c_str());
     if (loc < 0)
     {
         // Uniform not in the program.
@@ -620,27 +618,27 @@ void GLUniform::applyInProgram(GLProgram &program) const
     switch (d->type)
     {
     case Int:
-        LIBGUI_GL.glUniform1i(loc, d->value.int32);
+        glUniform1i(loc, d->value.int32);
         break;
 
     case IntArray:
-        LIBGUI_GL.glUniform1iv(loc, d->usedElemCount, d->value.ints);
+        glUniform1iv(loc, d->usedElemCount, d->value.ints);
         break;
 
     case UInt:
-        LIBGUI_GL.glUniform1ui(loc, d->value.uint32);
+        glUniform1ui(loc, d->value.uint32);
         break;
 
     case Float:
-        LIBGUI_GL.glUniform1f(loc, d->value.float32);
+        glUniform1f(loc, d->value.float32);
         break;
 
     case FloatArray:
-        LIBGUI_GL.glUniform1fv(loc, d->usedElemCount, d->value.floats);
+        glUniform1fv(loc, d->usedElemCount, d->value.floats);
         break;
 
     case Vec2:
-        LIBGUI_GL.glUniform2f(loc, d->value.vector->x, d->value.vector->y);
+        glUniform2f(loc, d->value.vector->x, d->value.vector->y);
         break;
 
     case Vec2Array:
@@ -648,25 +646,25 @@ void GLUniform::applyInProgram(GLProgram &program) const
         break;
 
     case Vec3:
-        LIBGUI_GL.glUniform3f(loc, d->value.vector->x, d->value.vector->y, d->value.vector->z);
+        glUniform3f(loc, d->value.vector->x, d->value.vector->y, d->value.vector->z);
         break;
 
     case Vec3Array:
-        LIBGUI_GL.glUniform3fv(loc, d->usedElemCount, &d->value.vec3array->x); // sequentially laid out
+        glUniform3fv(loc, d->usedElemCount, &d->value.vec3array->x); // sequentially laid out
         break;
 
     case Vec4:
     case Vec4Array:
-        LIBGUI_GL.glUniform4fv(loc, d->usedElemCount, &d->value.vector->x); // sequentially laid out
+        glUniform4fv(loc, d->usedElemCount, &d->value.vector->x); // sequentially laid out
         break;
 
     case Mat3:
-        LIBGUI_GL.glUniformMatrix3fv(loc, 1, GL_FALSE, d->value.mat3->values());
+        glUniformMatrix3fv(loc, 1, GL_FALSE, d->value.mat3->values());
         break;
 
     case Mat4:
     case Mat4Array:
-        LIBGUI_GL.glUniformMatrix4fv(loc, d->usedElemCount, GL_FALSE, d->value.mat4->values()); // sequentially laid out
+        glUniformMatrix4fv(loc, d->usedElemCount, GL_FALSE, d->value.mat4->values()); // sequentially laid out
         break;
 
     case Sampler2D:
@@ -677,10 +675,10 @@ void GLUniform::applyInProgram(GLProgram &program) const
 
 #if defined (DE_DEBUG)
     {
-        GLenum err = LIBGUI_GL.glGetError();
+        GLenum err = glGetError();
         if (err != GL_NO_ERROR)
         {
-            qDebug() << "[GLUniform] Failure with uniform:" << d->name << "loc:" << loc;
+            debug("[GLUniform] Failure with uniform: %s loc: %i", d->name.c_str(), loc);
         }
     }
 #endif

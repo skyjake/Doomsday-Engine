@@ -28,13 +28,17 @@
 #include <de/Writer>
 #include <de/Zeroed>
 
-#include <QDataStream>
-#include <QPainter>
-#include <QColor>
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
+
+#include <stb/stb_image.h>
+#include <stb/stb_image_write.h>
+#include <stb/stb_image_resize.h>
 
 namespace de {
 
-#define IMAGE_ASSERT_EDITABLE(d) DE_ASSERT(d->format == UseQImageFormat)
+#define IMAGE_ASSERT_EDITABLE(d) DE_ASSERT(d->format == RGBA_8888)
 
 namespace internal {
 
@@ -548,62 +552,67 @@ bool Image::isGLCompatible() const
     return d->format >= Luminance_8 && d->format <= RGBA_32ui;
 }
 
-bool Image::canConvertToQImage() const
+Image Image::convertToFormat(Format format) const
 {
-    switch (d->format)
-    {
-    case RGB_444:
-    case RGB_555:
-    case RGB_565:
-    case RGB_888:
-    case RGBA_8888:
-    case RGBx_8888:
-    case UseQImageFormat:
-        return true;
-
-    default:
-        return false;
-    }
+    DE_ASSERT_FAIL("Image::convertToFormat not implemented");
 }
 
-QImage Image::toQImage() const
-{
-    if (d->format == UseQImageFormat)
-    {
-        return d->image;
-    }
+//bool Image::canConvertToQImage() const
+//{
+//    switch (d->format)
+//    {
+//    case RGB_444:
+//    case RGB_555:
+//    case RGB_565:
+//    case RGB_888:
+//    case RGBA_8888:
+//    case RGBx_8888:
+//    case UseQImageFormat:
+//        return true;
 
-    // There may be some conversions we can do.
-    QImage::Format form = QImage::Format_Invalid;
-    switch (d->format)
-    {
-    case RGB_444:
-        form = QImage::Format_RGB444;
-        break;
-    case RGB_555:
-        form = QImage::Format_RGB555;
-        break;
-    case RGB_565:
-        form = QImage::Format_RGB16;
-        break;
-    case RGB_888:
-        form = QImage::Format_RGB888;
-        break;
-    case RGBA_8888:
-        form = QImage::Format_ARGB32;
-        break;
-    case RGBx_8888:
-        form = QImage::Format_RGB32;
-        break;
-    default:
-        // Cannot be done.
-        return QImage();
-    }
+//    default:
+//        return false;
+//    }
+//}
 
-    QImage img(QSize(d->size.x, d->size.y), form);
-    std::memcpy(const_cast<uchar *>(img.constBits()), bits(), byteCount());
-    return img;
-}
+//QImage Image::toQImage() const
+//{
+//    if (d->format == UseQImageFormat)
+//    {
+//        return d->image;
+//    }
+
+//    // There may be some conversions we can do.
+//    QImage::Format form = QImage::Format_Invalid;
+//    switch (d->format)
+//    {
+//    case RGB_444:
+//        form = QImage::Format_RGB444;
+//        break;
+//    case RGB_555:
+//        form = QImage::Format_RGB555;
+//        break;
+//    case RGB_565:
+//        form = QImage::Format_RGB16;
+//        break;
+//    case RGB_888:
+//        form = QImage::Format_RGB888;
+//        break;
+//    case RGBA_8888:
+//        form = QImage::Format_ARGB32;
+//        break;
+//    case RGBx_8888:
+//        form = QImage::Format_RGB32;
+//        break;
+//    default:
+//        // Cannot be done.
+//        return QImage();
+//    }
+
+//    QImage img(QSize(d->size.x, d->size.y), form);
+//    std::memcpy(const_cast<uchar *>(img.constBits()), bits(), byteCount());
+//    return img;
+//}
 
 GLPixelFormat Image::glFormat() const
 {

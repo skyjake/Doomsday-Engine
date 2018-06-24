@@ -19,10 +19,9 @@
 #ifndef LIBGUI_DRAWABLE_H
 #define LIBGUI_DRAWABLE_H
 
-#include <QSet>
-
 #include <de/libcore.h>
 #include <de/Asset>
+#include <de/Set>
 #include <de/String>
 
 #include "../GLBuffer"
@@ -86,7 +85,7 @@ public:
     /// also identified using textual names.
     typedef String Name;
 
-    typedef QList<Id> Ids;
+    typedef List<Id> Ids;
 
 public:
     Drawable();

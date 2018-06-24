@@ -19,7 +19,7 @@
 
 #include "de/KdTreeAtlasAllocator"
 #include <de/BinaryTree>
-#include <QList>
+#include <de/List>
 
 namespace de {
 
@@ -53,7 +53,7 @@ DE_PIMPL(KdTreeAtlasAllocator)
             Node *subTree;
 
             // Try to insert into the right subtree.
-            if ((subTree = treeInsert(parent->rightPtr(), allocSize)) != 0)
+            if ((subTree = treeInsert(parent->rightPtr(), allocSize)) != nullptr)
                 return subTree;
 
             // Try to insert into the left subtree.
@@ -68,11 +68,11 @@ DE_PIMPL(KdTreeAtlasAllocator)
 
         // Is this leaf already in use?
         if (!pnode.alloc.isNone())
-            return 0;
+            return nullptr;
 
         // Is this leaf big enough to hold the texture?
         if (pnode.area.width() < allocSize.x || pnode.area.height() < allocSize.y)
-            return 0; // No, too small.
+            return nullptr; // No, too small.
 
         // Is this leaf the exact size required?
         if (pnode.area.size() == allocSize)
@@ -184,12 +184,12 @@ DE_PIMPL(KdTreeAtlasAllocator)
     bool optimize()
     {
         // Set up a LUT based on descending allocation width.
-        QList<ContentSize> descending;
+        List<ContentSize> descending;
         DE_FOR_EACH(Allocations, i, allocs)
         {
-            descending.append(ContentSize(i.key(), i.value().size()));
+            descending.emplace_back(i->first, i->second.size());
         }
-        qSort(descending);
+        descending.sort();
 
         Allocations optimal;
         Node optimalRoot;
@@ -199,17 +199,17 @@ DE_PIMPL(KdTreeAtlasAllocator)
          * Attempt to optimize space usage by placing the largest allocations
          * first.
          */
-        foreach (ContentSize const &iter, descending)
+        for (const auto &i : descending)
         {
             Rectanglei newRect;
-            if (allocate(optimalRoot, allocs[iter.id].size(), newRect, iter.id).isNone())
+            if (allocate(optimalRoot, allocs[i.id].size(), newRect, i.id).isNone())
             {
                 // Could not find a place for this any more.
                 return false;
             }
 
             // This'll do.
-            optimal.insert(iter.id, newRect);
+            optimal.insert(i.id, newRect);
         }
 
         // Use the new layout.
@@ -268,9 +268,9 @@ int KdTreeAtlasAllocator::count() const
 Atlas::Ids KdTreeAtlasAllocator::ids() const
 {
     Atlas::Ids ids;
-    foreach (Id const &id, d->allocs.keys())
+    for (const auto &i : d->allocs)
     {
-        ids.insert(id);
+        ids.insert(i.first);
     }
     return ids;
 }

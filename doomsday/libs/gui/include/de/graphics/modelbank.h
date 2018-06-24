@@ -52,7 +52,7 @@ public:
     typedef std::pair<ModelDrawable *, IUserData *> ModelWithData;
 
 public:
-    ModelBank(Constructor modelConstructor = nullptr);
+    ModelBank(const Constructor& modelConstructor = {});
 
     void add(DotPath const &id, String const &sourcePath);
 

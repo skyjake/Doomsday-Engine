@@ -1,4 +1,4 @@
-/** @file opengl.h  Headers for OpenGL 2.1.
+/** @file opengl.h  Headers for OpenGL.
  *
  * @ingroup gl
  *
@@ -18,23 +18,24 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_SYSTEM_OPENGL_H
-#define LIBGUI_SYSTEM_OPENGL_H
+#ifndef LIBGUI_GRAPHICS_OPENGL_H
+#define LIBGUI_GRAPHICS_OPENGL_H
 
-#ifdef glDeleteTextures
-#  error "glDeleteTextures defined as a macro! (would be undefined by Qt)"
-#endif
+#include <SDL2/SDL_video.h>
 
 /*
  * OpenGL API selection
  */
 #if (DE_OPENGL == 330)
-#  include <QOpenGLFunctions_3_3_Core>
-#  include <QOpenGLExtensions>
-#  define QOpenGLFunctions_Doomsday QOpenGLFunctions_3_3_Core
-#  ifndef GL_VERSION_3_3
-#    error "OpenGL 3.3 (or newer) headers not found"
-#  endif
+#  include <glbinding/gl33core/gl.h>
+#  include <glbinding/gl33ext/enum.h>
+using namespace gl33core;
+//#  include <QOpenGLFunctions_3_3_Core>
+//#  include <QOpenGLExtensions>
+//#  define QOpenGLFunctions_Doomsday QOpenGLFunctions_3_3_Core
+//#  ifndef GL_VERSION_3_3
+//#    error "OpenGL 3.3 (or newer) headers not found"
+//#  endif
 #  define DE_HAVE_TIMER_QUERY
 
 #elif (DE_OPENGL_ES == 30)
@@ -59,4 +60,4 @@
 #  define DE_HAVE_BLIT_FRAMEBUFFER
 #endif
 
-#endif // LIBGUI_SYSTEM_OPENGL_H
+#endif // LIBGUI_GRAPHICS_OPENGL_H

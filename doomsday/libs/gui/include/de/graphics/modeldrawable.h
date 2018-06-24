@@ -19,17 +19,15 @@
 #ifndef LIBGUI_MODELDRAWABLE_H
 #define LIBGUI_MODELDRAWABLE_H
 
+#include <de/Animation>
 #include <de/Asset>
+#include <de/AtlasTexture>
+#include <de/BitArray>
 #include <de/Deletable>
 #include <de/File>
 #include <de/GLProgram>
 #include <de/GLState>
-#include <de/AtlasTexture>
 #include <de/Vector>
-#include <de/Animation>
-
-#include <QBitArray>
-#include <QVariant>
 
 #include <functional>
 
@@ -102,7 +100,7 @@ public:
     };
 
     static TextureMap textToTextureMap(String const &text);
-    static String textureMapToText(TextureMap map);
+    static String     textureMapToText(TextureMap map);
 
     /**
      * Animation state for a model. There can be any number of ongoing animations,
@@ -125,7 +123,6 @@ public:
                 ClampToDuration = 0x1,
                 Defaults = 0
             };
-            Q_DECLARE_FLAGS(Flags, Flag)
 
         public:
             int animId;         ///< Which animation to use in a ModelDrawable.
@@ -151,8 +148,8 @@ public:
             bool atEnd() const;
 
             // ISerializable.
-            void operator >> (Writer &to) const override;
-            void operator << (Reader &from) override;
+            void operator>>(Writer &to) const override;
+            void operator<<(Reader &from) override;
 
             /**
              * Constructs an OngoingSequence instance. This is used by default if no other
@@ -178,7 +175,6 @@ public:
 
             DefaultFlags = 0
         };
-        Q_DECLARE_FLAGS(Flags, Flag)
 
     public:
         Animator(Constructor sequenceConstructor = OngoingSequence::make);
@@ -269,8 +265,8 @@ public:
         virtual Vec4f extraRotationForNode(String const &nodeName) const;
 
         // ISerializable.
-        void operator >> (Writer &to) const override;
-        void operator << (Reader &from) override;
+        void operator>>(Writer &to) const override;
+        void operator<<(Reader &from) override;
 
     private:
         DE_PRIVATE(d)
@@ -308,20 +304,21 @@ public:
      */
     struct LIBGUI_PUBLIC Pass
     {
-        String name;
-        QBitArray meshes; ///< One bit per model mesh.
-        GLProgram *program = nullptr; ///< Shading program.
-        gl::BlendFunc blendFunc { gl::SrcAlpha, gl::OneMinusSrcAlpha };
-        gl::BlendOp blendOp = gl::Add;
-        bool depthWrite = true;
-        gl::Comparison depthFunc = gl::Less;
+        String         name;
+        BitArray       meshes;            ///< One bit per model mesh.
+        GLProgram *    program = nullptr; ///< Shading program.
+        gl::BlendFunc  blendFunc{gl::SrcAlpha, gl::OneMinusSrcAlpha};
+        gl::BlendOp    blendOp    = gl::Add;
+        bool           depthWrite = true;
+        gl::Comparison depthFunc  = gl::Less;
 
-        bool operator == (Pass const &other) const {
+        bool operator==(Pass const &other) const
+        {
             return name == other.name; // Passes are uniquely identified by names.
         }
     };
 
-    struct LIBGUI_PUBLIC Passes : public QList<Pass>
+    struct LIBGUI_PUBLIC Passes : public List<Pass>
     {
         /**
          * Finds the pass with a given name. Performance is O(n) (i.e., suitable
@@ -346,7 +343,6 @@ public:
     struct LIBGUI_PUBLIC Appearance
     {
         enum Flag { DefaultFlags = 0 };
-        Q_DECLARE_FLAGS(Flags, Flag)
 
         Flags flags = DefaultFlags;
 
@@ -365,14 +361,14 @@ public:
          * of the model. It only determines which vertex buffer is selected
          * for drawing the pass.
          */
-        QList<duint> passMaterial;
+        List<duint> passMaterial;
 
         /**
          * Sets a mask that specifies which rendering passes are enabled. Each
          * bit in the array corresponds to an element in @a drawPasses. An
          * empty mask (size zero) means that all passes are enabled.
          */
-        QBitArray passMask = QBitArray();
+        BitArray passMask;
 
         ProgramBindingFunc programCallback = ProgramBindingFunc();
         RenderingPassFunc passCallback = RenderingPassFunc();
@@ -390,7 +386,7 @@ public:
             : index(index), material(material) {}
     };
 
-    typedef QList<TextureMap> Mapping;
+    typedef List<TextureMap> Mapping;
 
     // Audiences:
     DE_DEFINE_AUDIENCE2(AboutToGLInit, void modelAboutToGLInit(ModelDrawable &))
@@ -501,7 +497,7 @@ public:
      *                   as the first texture bounds (@c aBounds in the shader), index
      *                   one will become the second texture bounds (@c aBounds2), etc.
      */
-    void setTextureMapping(Mapping mapsToUse);
+    void setTextureMapping(const Mapping& mapsToUse);
 
     static Mapping diffuseNormalsSpecularEmission();
 
@@ -596,12 +592,8 @@ private:
     DE_PRIVATE(d)
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(ModelDrawable::Animator::Flags)
-Q_DECLARE_OPERATORS_FOR_FLAGS(ModelDrawable::Animator::OngoingSequence::Flags)
-Q_DECLARE_OPERATORS_FOR_FLAGS(ModelDrawable::Appearance::Flags)
-
 } // namespace de
 
-LIBGUI_PUBLIC uint qHash(de::ModelDrawable::Pass const &pass);
+//LIBGUI_PUBLIC uint qHash(de::ModelDrawable::Pass const &pass);
 
 #endif // LIBGUI_MODELDRAWABLE_H

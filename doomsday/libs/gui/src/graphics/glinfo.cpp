@@ -27,14 +27,17 @@
 #include <de/math.h>
 #include <de/c_wrapper.h>
 
-#ifdef DE_DEBUG
-#  define DE_ENABLE_OPENGL_DEBUG_LOGGER
-#  include <QOpenGLDebugLogger>
-#endif
+#include <glbinding/gl33ext/enum.h>
+#include <glbinding/Binding.h>
 
-#if defined (MACOSX)
-#  include <OpenGL/OpenGL.h>
-#endif
+//#ifdef DE_DEBUG
+//#  define DE_ENABLE_OPENGL_DEBUG_LOGGER
+//#  include <QOpenGLDebugLogger>
+//#endif
+
+//#if defined (MACOSX)
+//#  include <OpenGL/OpenGL.h>
+//#endif
 
 #if defined (DE_X11)
 #  include <QX11Info>
@@ -49,7 +52,7 @@ namespace de {
 
 static GLInfo info;
 
-DE_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
+DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
 {
     bool inited = false;
     Extensions ext;
@@ -60,9 +63,9 @@ DE_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
     //std::unique_ptr<QOpenGLExtension_EXT_framebuffer_blit>        EXT_framebuffer_blit;
     //std::unique_ptr<QOpenGLExtension_EXT_framebuffer_multisample> EXT_framebuffer_multisample;
     //std::unique_ptr<QOpenGLExtension_EXT_framebuffer_object>      EXT_framebuffer_object;
-#if defined (DE_OPENGL)
-    std::unique_ptr<QOpenGLExtension_NV_framebuffer_multisample_coverage> NV_framebuffer_multisample_coverage;
-#endif
+//#if defined (DE_OPENGL)
+//    std::unique_ptr<QOpenGLExtension_NV_framebuffer_multisample_coverage> NV_framebuffer_multisample_coverage;
+//#endif
 
 #ifdef WIN32
     BOOL (APIENTRY *wglSwapIntervalEXT)(int interval) = nullptr;
@@ -90,23 +93,25 @@ DE_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
      */
     bool checkExtensionString(char const *name, char const *extensions)
     {
-        GLubyte const *start;
-        GLubyte const *c, *terminator;
+        const char *start;
+        const char *c, *terminator;
 
         // Extension names should not have spaces.
-        c = (GLubyte const *) strchr(name, ' ');
+        c = strchr(name, ' ');
         if (c || *name == '\0')
+        {
             return false;
-
+        }
         if (!extensions)
+        {
             return false;
-
+        }
         // It takes a bit of care to be fool-proof about parsing the
         // OpenGL extensions string. Don't be fooled by sub-strings, etc.
-        start = (GLubyte const *) extensions;
+        start = extensions;
         for (;;)
         {
-            c = (GLubyte const *) strstr((char const *) start, name);
+            c = strstr(start, name);
             if (!c)
                 break;
 
@@ -120,14 +125,14 @@ DE_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
             }
             start = terminator;
         }
-
         return false;
     }
 
     bool doQuery(char const *ext)
     {
         DE_ASSERT(ext);
-        DE_ASSERT(QOpenGLContext::currentContext() != nullptr);
+        //DE_ASSERT(QOpenGLContext::currentContext() != nullptr);
+        LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
 
 #if 0
 #ifdef WIN32
@@ -148,7 +153,8 @@ DE_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
 //        return checkExtensionString(ext, glGetString(GL_EXTENSIONS));
 //#endif
 
-        return QOpenGLContext::currentContext()->hasExtension(ext);
+        //return QOpenGLContext::currentContext()->hasExtension(ext);
+        return SDL_GL_ExtensionSupported(ext);
     }
 
     bool query(char const *ext)
@@ -191,9 +197,14 @@ DE_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
         }
         #else
         {
-            if (!initializeOpenGLFunctions())
+            try
             {
-                throw InitError("GLInfo::init", "Failed to initialize OpenGL");
+                glbinding::Binding::initialize(false);
+            }
+            catch (const std::exception &x)
+            {
+                throw InitError("GLInfo::init",
+                                "Failed to initialize OpenGL: " + std::string(x.what()));
             }
         }
         #endif
@@ -201,26 +212,10 @@ DE_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
         inited = true;
 
         // Extensions.
-        //ext.ARB_draw_instanced             = query("GL_ARB_draw_instanced");
-        //ext.ARB_instanced_arrays           = query("GL_ARB_instanced_arrays");
-        //ext.ARB_texture_env_combine        = query("GL_ARB_texture_env_combine") || query("GL_EXT_texture_env_combine");
-        //ext.ARB_texture_non_power_of_two   = query("GL_ARB_texture_non_power_of_two");
-
-        //ext.EXT_blend_subtract             = query("GL_EXT_blend_subtract");
-        //ext.EXT_framebuffer_blit           = query("GL_EXT_framebuffer_blit");
-        //ext.EXT_framebuffer_multisample    = query("GL_EXT_framebuffer_multisample");
-        //ext.EXT_framebuffer_object         = query("GL_EXT_framebuffer_object");
-        //ext.EXT_packed_depth_stencil       = query("GL_EXT_packed_depth_stencil");
         ext.EXT_texture_compression_s3tc   = query("GL_EXT_texture_compression_s3tc");
         ext.EXT_texture_filter_anisotropic = query("GL_EXT_texture_filter_anisotropic");
-        //ext.EXT_timer_query                = query("GL_EXT_timer_query");
-
-        //ext.ATI_texture_env_combine3       = query("GL_ATI_texture_env_combine3");
         ext.NV_framebuffer_multisample_coverage
                                            = query("GL_NV_framebuffer_multisample_coverage");
-        //ext.NV_texture_env_combine4        = query("GL_NV_texture_env_combine4");
-        //ext.SGIS_generate_mipmap           = query("GL_SGIS_generate_mipmap");
-
         ext.KHR_debug                      = query("GL_KHR_debug");
 
         #ifdef WIN32
@@ -374,15 +369,15 @@ DE_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
             EXT_framebuffer_object->initializeOpenGLFunctions();
         }*/
 
-        #if defined (DE_OPENGL)
-        {
-            if (ext.NV_framebuffer_multisample_coverage)
-            {
-                NV_framebuffer_multisample_coverage.reset(new QOpenGLExtension_NV_framebuffer_multisample_coverage);
-                NV_framebuffer_multisample_coverage->initializeOpenGLFunctions();
-            }
-        }
-        #endif
+//        #if defined (DE_OPENGL)
+//        {
+//            if (ext.NV_framebuffer_multisample_coverage)
+//            {
+//                NV_framebuffer_multisample_coverage.reset(new QOpenGLExtension_NV_framebuffer_multisample_coverage);
+//                NV_framebuffer_multisample_coverage->initializeOpenGLFunctions();
+//            }
+//        }
+//        #endif
 
         // Limits.
         glGetIntegerv(GL_MAX_TEXTURE_SIZE,              reinterpret_cast<GLint *>(&lim.maxTexSize));
@@ -398,7 +393,7 @@ DE_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
 
         if (ext.EXT_texture_filter_anisotropic)
         {
-            glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, (GLint *) &lim.maxTexFilterAniso);
+            glGetIntegerv(gl33ext::GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &lim.maxTexFilterAniso);
         }
 
         // Set a custom maximum size?
@@ -407,9 +402,11 @@ DE_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
             lim.maxTexSize = min(ceilPow2(String(CommandLine_Next()).toInt()),
                                  lim.maxTexSize);
 
-            LOG_GL_NOTE("Using requested maximum texture size of %i x %i") << lim.maxTexSize << lim.maxTexSize;
+            LOG_GL_NOTE("Using requested maximum texture size of %i x %i")
+                << lim.maxTexSize << lim.maxTexSize;
         }
 
+#if 0
         // Check default OpenGL format attributes.
         QOpenGLContext const *ctx = QOpenGLContext::currentContext();
         QSurfaceFormat form = ctx->format();
@@ -424,6 +421,7 @@ DE_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
         LOGDEV_GL_MSG(" - swap behavior: %i") << form.swapBehavior();
 
         LIBGUI_ASSERT_GL_OK();
+#endif
     }
 };
 
@@ -450,12 +448,12 @@ void GLInfo::glDeinit()
     info.d.reset();
 }
 
-QOpenGLFunctions_Doomsday &GLInfo::api() // static
-{
-    DE_ASSERT(QOpenGLContext::currentContext() != nullptr);
-    DE_ASSERT(info.d->inited);
-    return *info.d;
-}
+//QOpenGLFunctions_Doomsday &GLInfo::api() // static
+//{
+//    DE_ASSERT(QOpenGLContext::currentContext() != nullptr);
+//    DE_ASSERT(info.d->inited);
+//    return *info.d;
+//}
 
 /*
 QOpenGLExtension_ARB_draw_instanced *GLInfo::ARB_draw_instanced()
@@ -489,18 +487,19 @@ QOpenGLExtension_EXT_framebuffer_object *GLInfo::EXT_framebuffer_object()
 }
 */
 
-#if defined (DE_OPENGL)
-QOpenGLExtension_NV_framebuffer_multisample_coverage *GLInfo::NV_framebuffer_multisample_coverage()
-{
-    DE_ASSERT(info.d->inited);
-    return info.d->NV_framebuffer_multisample_coverage.get();
-}
-#endif
+//#if defined (DE_OPENGL)
+//QOpenGLExtension_NV_framebuffer_multisample_coverage *GLInfo::NV_framebuffer_multisample_coverage()
+//{
+//    DE_ASSERT(info.d->inited);
+//    return info.d->NV_framebuffer_multisample_coverage.get();
+//}
+//#endif
 
 void GLInfo::setSwapInterval(int interval)
 {
     DE_ASSERT(info.d->inited);
-
+    SDL_GL_SetSwapInterval(interval);
+#if 0
     #if defined (WIN32)
     {
         if (extensions().Windows_EXT_swap_control)
@@ -536,6 +535,7 @@ void GLInfo::setSwapInterval(int interval)
         }
     }
     #endif
+#endif
 }
 
 #if 0
@@ -544,8 +544,8 @@ void GLInfo::setLineWidth(float lineWidth)
     #if defined (DE_OPENGL)
     {
         LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
-        DE_ASSERT(info.d->inited);
-        info.d->glLineWidth(info.d->lim.smoothLineWidth.clamp(lineWidth));
+//        DE_ASSERT(info.d->inited);
+        glLineWidth(info.d->lim.smoothLineWidth.clamp(lineWidth));
         LIBGUI_ASSERT_GL_OK();
     }
     #else
@@ -575,15 +575,15 @@ bool GLInfo::isFramebufferMultisamplingSupported()
 
 void GLInfo::checkError(char const *file, int line)
 {
-    GLuint error = GL_NO_ERROR;
+    GLenum error = GL_NO_ERROR;
     do
     {
-        error = LIBGUI_GL.glGetError();
+        error = glGetError();
         if (error != GL_NO_ERROR)
         {
             LogBuffer_Flush();
-            qWarning("%s:%i: OpenGL error: 0x%x (%s)", file, line, error,
-                     LIBGUI_GL_ERROR_STR(error));
+            warning(
+                "%s:%i: OpenGL error: 0x%x (%s)", file, line, error, LIBGUI_GL_ERROR_STR(error));
             DE_ASSERT_FAIL("OpenGL operation failed");
         }
     }

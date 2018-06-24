@@ -47,13 +47,13 @@ DE_PIMPL(ModelBank)
         }
     };
 
-    Impl(Public *i, Constructor c)
+    Impl(Public *i, const Constructor& c)
         : Base(i)
         , modelConstructor(c? c : [] () { return new ModelDrawable; })
     {}
 };
 
-ModelBank::ModelBank(Constructor modelConstructor)
+ModelBank::ModelBank(const Constructor& modelConstructor)
     : Bank("ModelBank", BackgroundThread)
     , d(new Impl(this, modelConstructor))
 {}

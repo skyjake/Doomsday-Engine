@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/MouseEvent"
@@ -21,20 +21,18 @@
 namespace de {
 
 MouseEvent::MouseEvent()
-    : Event(MouseButton),
-      _wheelMotion(FineAngle),
-      _button(Unknown),
-      _state(Released)
+    : Event(MouseButton)
+    , _wheelMotion(FineAngle)
+    , _button(Unknown)
+    , _state(Released)
 {}
 
 MouseEvent::MouseEvent(MotionType motion, Vec2i const &pos)
-    : Event(motion == Absolute? MousePosition :
-            motion == Relative? MouseMotion :
-                                MouseWheel),
-      _pos(pos),
-      _wheelMotion(FineAngle),
-      _button(Unknown),
-      _state(Released)
+    : Event(motion == Absolute ? MousePosition : motion == Relative ? MouseMotion : MouseWheel)
+    , _pos(pos)
+    , _wheelMotion(FineAngle)
+    , _button(Unknown)
+    , _state(Released)
 {
     if (motion == Wheel)
     {
@@ -44,19 +42,19 @@ MouseEvent::MouseEvent(MotionType motion, Vec2i const &pos)
 }
 
 MouseEvent::MouseEvent(WheelMotion wheelMotion, Vec2i const &wheel, Vec2i const &pos)
-    : Event(MouseWheel),
-      _pos(pos),
-      _wheelMotion(wheelMotion),
-      _wheel(wheel),
-      _button(Unknown),
-      _state(Released)
+    : Event(MouseWheel)
+    , _pos(pos)
+    , _wheelMotion(wheelMotion)
+    , _wheel(wheel)
+    , _button(Unknown)
+    , _state(Released)
 {}
 
 MouseEvent::MouseEvent(Button button, ButtonState state, Vec2i const &pos)
-    : Event(MouseButton),
-      _pos(pos),
-      _button(button),
-      _state(state)
+    : Event(MouseButton)
+    , _pos(pos)
+    , _button(button)
+    , _state(state)
 {}
 
 MouseEvent::MotionType MouseEvent::motion() const

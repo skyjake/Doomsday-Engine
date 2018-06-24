@@ -1,6 +1,6 @@
-/** @file mouseeventsource.h  Object that produces mouse events.
+/** @file bitarray.h  Array of bits.
  *
- * @authors Copyright (c) 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -16,35 +16,37 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_MOUSEEVENTSOURCE_H
-#define LIBGUI_MOUSEEVENTSOURCE_H
+#ifndef LIBCORE_BITARRAY_H
+#define LIBCORE_BITARRAY_H
 
-#include "../gui/libgui.h"
-#include "mouseevent.h"
-#include <de/Vector>
-#include <de/Observers>
+#include "../libcore.h"
+#include <vector>
 
 namespace de {
 
 /**
- * Object that produces mouse events. @ingroup gui
+ * Array of bits.
+ * @ingroup data
  */
-class LIBGUI_PUBLIC MouseEventSource
+class DE_PUBLIC BitArray
 {
 public:
-    enum State { Untrapped, Trapped };
+    BitArray();
 
-    DE_DEFINE_AUDIENCE2(MouseStateChange, void mouseStateChanged(State))
-    DE_DEFINE_AUDIENCE2(MouseEvent,       void mouseEvent(MouseEvent const &))
+    bool        isEmpty() const;
+    bool        testBit(dsize pos) const;
+    inline bool at(dsize pos) const { return testBit(pos); }
+    dsize       size() const;
 
-public:
-    MouseEventSource();
-    virtual ~MouseEventSource() {}
+    void resize(dsize count);
+    void fill(bool bit);
+
+    BitArray &operator=(const BitArray &);
 
 private:
-    DE_PRIVATE(d)
+    std::vector<char> _bits;
 };
 
 } // namespace de
 
-#endif // LIBGUI_MOUSEEVENTSOURCE_H
+#endif // LIBCORE_BITARRAY_H

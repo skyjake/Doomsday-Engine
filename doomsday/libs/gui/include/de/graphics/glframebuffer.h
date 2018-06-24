@@ -19,14 +19,11 @@
 #ifndef LIBGUI_GLFRAMEBUFFER_H
 #define LIBGUI_GLFRAMEBUFFER_H
 
-#include <QImage>
-
 #include <de/libcore.h>
 #include <de/Asset>
 #include <de/Error>
 #include <de/Vector>
 #include <de/Rectangle>
-#include <QFlags>
 
 #include "../gui/libgui.h"
 #include "opengl.h"
@@ -69,7 +66,6 @@ public:
         NoAttachments = 0,
         DefaultFlags  = ColorDepth,
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     typedef Vec2ui Size;
 
@@ -167,9 +163,9 @@ public:
      * @param missingRenderBuffers  Create renderbuffers for attachments where
      *                              texture has not been specified.
      */
-    void configure(QList<GLTexture *> colorTextures,
-                   GLTexture *        depthStencilTex,
-                   Flags              missingRenderBuffers = ColorDepthStencil);
+    void configure(List<GLTexture *> colorTextures,
+                   GLTexture *       depthStencilTex,
+                   Flags             missingRenderBuffers = ColorDepthStencil);
 
     /**
      * Changes the configuration of the render target. Any previously allocated
@@ -206,7 +202,7 @@ public:
     /**
      * Copies the contents of the render target's color attachment to an image.
      */
-    QImage toImage() const;
+    Image toImage() const;
 
     /**
      * Sets the color for clearing the target (see clear()).
@@ -318,8 +314,6 @@ public:
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(GLFramebuffer::Flags)
 
 } // namespace de
 

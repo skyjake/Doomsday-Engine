@@ -20,11 +20,6 @@
 
 #include <de/LogBuffer>
 
-#include <QSet>
-#include <QRect>
-#include <QImage>
-#include <QPainter>
-
 namespace de {
 
 DE_PIMPL(Atlas)
@@ -34,12 +29,12 @@ DE_PIMPL(Atlas)
     int margin;
     int border;
     std::unique_ptr<IAllocator> allocator;
-    QHash<Id::Type, Image *> deferred; ///< Only used with DeferredAllocations.
+    Hash<Id::Type, Image *> deferred; ///< Only used with DeferredAllocations.
     Image backing;
     bool needCommit;
     bool needFullCommit;
     bool mayDefrag;
-    QList<Rectanglei> changedAreas;
+    List<Rectanglei> changedAreas;
     Time fullReportedAt;
 
     // Minimum backing size is 1x1 pixels.
@@ -55,7 +50,7 @@ DE_PIMPL(Atlas)
     {
         if (hasBacking())
         {
-            backing = QImage(QSize(totalSize.x, totalSize.y), QImage::Format_ARGB32);
+            backing = Image(Image::Size(totalSize.x, totalSize.y), Image::RGBA_8888);
         }
     }
 
@@ -128,7 +123,7 @@ DE_PIMPL(Atlas)
         duint totalPx = totalSize.x * totalSize.y;
         duint usedPx = 0;
 
-        foreach (Rectanglei const &alloc, allocator->allocs().values())
+        for (const Rectanglei &alloc : allocator->allocs().values())
         {
             usedPx += alloc.width() * alloc.height();
         }
@@ -255,15 +250,15 @@ DE_PIMPL(Atlas)
             return;
         }
 
-        Image defragged(QImage(QSize(backing.size().x, backing.size().y), backing.qtFormat()));
+        Image defragged(backing.size(), backing.format());
         defragged.fill(Image::Color(0, 0, 0, 0));
 
         // Copy all the images to their optimal places.
         IAllocator::Allocations optimal = allocator->allocs();
-        DE_FOR_EACH(IAllocator::Allocations, i, optimal)
+        for (const auto &i : optimal) //IAllocator::Allocations, i, optimal)
         {
-            defragged.draw(backing.subImage(oldLayout[i.key()]),
-                           i.value().topLeft);
+            defragged.draw(backing.subImage(oldLayout[i.first]),
+                           i.second.topLeft);
         }
 
         // Defragmentation complete, use the revised backing store.
@@ -300,7 +295,7 @@ Atlas::Atlas(Flags const &flags, Size const &totalSize)
     : d(new Impl(this, flags, totalSize))
 {}
 
-Atlas::Flags Atlas::flags() const
+Flags Atlas::flags() const
 {
     return d->flags;
 }
@@ -543,12 +538,12 @@ void Atlas::commit() const
 
 void Atlas::cancelDeferred()
 {
-    for (auto i = d->deferred.constBegin(); i != d->deferred.constEnd(); ++i)
+    for (auto i = d->deferred.begin(); i != d->deferred.end(); ++i)
     {
-        delete i.value(); // we own a copy of the Image
+        delete i->second; // we own a copy of the Image
         if (d->allocator)
         {
-            release(i.key());
+            release(i->first);
         }
     }
     d->deferred.clear();

@@ -32,15 +32,9 @@ namespace de {
 class LIBGUI_PUBLIC MouseEvent : public Event
 {
 public:
-    enum MotionType
-    {
-        Absolute = 0,
-        Relative = 1,
-        Wheel    = 2
-    };
+    enum MotionType { Absolute = 0, Relative = 1, Wheel = 2 };
 
-    enum Button
-    {
+    enum Button {
         Unknown  = -1,
         Left     = 0,
         Middle   = 1,
@@ -49,18 +43,13 @@ public:
         XButton2 = 4
     };
 
-    enum ButtonState
-    {
-        Released,       ///< Released button.
-        Pressed,        ///< Pressed button.
+    enum ButtonState {
+        Released, ///< Released button.
+        Pressed,  ///< Pressed button.
         DoubleClick
     };
 
-    enum WheelMotion
-    {
-        FineAngle,
-        Step
-    };
+    enum WheelMotion { FineAngle, Step };
 
 public:
     MouseEvent();
@@ -68,20 +57,20 @@ public:
     MouseEvent(WheelMotion wheelMotion, Vec2i const &wheel, Vec2i const &pos);
     MouseEvent(Button button, ButtonState state, Vec2i const &pos);
 
-    MotionType motion() const;
+    MotionType   motion() const;
     Vec2i const &pos() const { return _pos; }
-    WheelMotion wheelMotion() const { return _wheelMotion; }
+    WheelMotion  wheelMotion() const { return _wheelMotion; }
     Vec2i const &wheel() const { return _wheel; }
-    Button button() const { return _button; }
-    ButtonState state() const { return _state; }
+    Button       button() const { return _button; }
+    ButtonState  state() const { return _state; }
 
     void setPos(Vec2i const &p) { _pos = p; }
 
 private:
-    Vec2i _pos;
+    Vec2i       _pos;
     WheelMotion _wheelMotion;
-    Vec2i _wheel;
-    Button _button;
+    Vec2i       _wheel;
+    Button      _button;
     ButtonState _state;
 };
 

@@ -38,9 +38,9 @@
 
 namespace de {
 
-static bool inited = false;
+static bool                 inited = false;
 static DisplayColorTransfer originalColorTransfer;
-static de::Binder binder;
+static de::Binder           binder;
 
 static float differenceToOriginalHz(float hz);
 
@@ -75,7 +75,7 @@ struct Mode : public DisplayMode
     bool operator == (const Mode& other) const
     {
         return width == other.width && height == other.height &&
-               depth == other.depth && refreshRate == other.refreshRate;
+               depth == other.depth && fequal(refreshRate, other.refreshRate);
     }
 
     bool operator != (const Mode& other) const
@@ -92,7 +92,8 @@ struct Mode : public DisplayMode
                 if (depth == b.depth)
                 {
                     // The refresh rate that more closely matches the original is preferable.
-                    return differenceToOriginalHz(refreshRate) < differenceToOriginalHz(b.refreshRate);
+                    return differenceToOriginalHz(refreshRate) <
+                           differenceToOriginalHz(b.refreshRate);
                 }
                 return depth < b.depth;
             }
@@ -120,15 +121,15 @@ struct Mode : public DisplayMode
         }
 
         // Multiply until we arrive at a close enough integer ratio.
-        for (int mul = 2; mul < qMin(width, height); ++mul)
+        for (int mul = 2; mul < de::min(width, height); ++mul)
         {
             float rx = fx*mul;
             float ry = fy*mul;
-            if (qAbs(rx - qRound(rx)) < .01f && qAbs(ry - qRound(ry)) < .01f)
+            if (std::abs(rx - de::roundi(rx)) < .01f && std::abs(ry - de::roundi(ry)) < .01f)
             {
                 // This seems good.
-                ratioX = qRound(rx);
-                ratioY = qRound(ry);
+                ratioX = de::roundi(rx);
+                ratioY = de::roundi(ry);
                 break;
             }
         }
@@ -152,15 +153,15 @@ struct Mode : public DisplayMode
 
 using namespace internal;
 
-typedef std::set<Mode> Modes; // note: no duplicates
+typedef Set<Mode> Modes; // note: no duplicates
 
 static Modes modes;
-static Mode originalMode;
-static bool captured;
+static Mode  originalMode;
+static bool  captured;
 
 static float differenceToOriginalHz(float hz)
 {
-    return qAbs(hz - originalMode.refreshRate);
+    return std::abs(hz - originalMode.refreshRate);
 }
 
 static de::Value *Function_DisplayMode_OriginalMode(de::Context &, de::Function::ArgumentValues const &)

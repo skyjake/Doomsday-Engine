@@ -21,13 +21,14 @@
 #include "de/GLWindow"
 #include "de/GuiApp"
 #include "de/GLTimer"
+#include "de/ElapsedTimer"
 
-#include <QElapsedTimer>
-#include <QImage>
-#include <QOpenGLTimerQuery>
+//#include <QElapsedTimer>
+//#include <QImage>
+//#include <QOpenGLTimerQuery>
 #include <QScreen>
-#include <QSurfaceFormat>
-#include <QTimer>
+//#include <QSurfaceFormat>
+//#include <QTimer>
 
 #include <de/GLBuffer>
 #include <de/GLState>
@@ -42,6 +43,8 @@ static GLWindow *mainWindow = nullptr;
 
 DE_PIMPL(GLWindow)
 {
+    SDL_Window *        window = nullptr;
+
     LoopCallback        mainCall;
     GLFramebuffer       backing;                 // Represents QOpenGLWindow's framebuffer.
     WindowEventHandler *handler       = nullptr; ///< Event handler.
@@ -567,22 +570,6 @@ void GLWindow::windowAboutToClose()
 {}
 
 void GLWindow::resizeEvent(QResizeEvent *ev)
-{
-    d->pendingSize = Size(ev->size().width(), ev->size().height()) * qApp->devicePixelRatio();
-
-    // Only react if this is actually a resize.
-    if (d->currentSize != d->pendingSize)
-    {
-        d->currentSize = d->pendingSize;
-
-        if (d->readyNotified)
-        {
-            makeCurrent();
-        }
-
-        DE_FOR_AUDIENCE2(Resize, i) i->windowResized(*this);
-
-        if (d->readyNotified)
 {
     d->submitResize(Size(ev->size().width(), ev->size().height()) * devicePixelRatio());
 }

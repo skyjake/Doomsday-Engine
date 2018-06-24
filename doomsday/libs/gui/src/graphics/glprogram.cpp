@@ -26,15 +26,10 @@
 #include <de/Block>
 #include <de/Log>
 
-#include <QList>
-#include <QSet>
-#include <QHash>
-#include <QStack>
-
 namespace de {
 
 /// The currently used GLProgram.
-static GLProgram const *currentProgram = 0;
+static GLProgram const *currentProgram = nullptr;
 
 using namespace internal;
 
@@ -42,13 +37,13 @@ DE_PIMPL(GLProgram)
 , DE_OBSERVES(GLUniform, ValueChange)
 , DE_OBSERVES(GLUniform, Deletion)
 {
-    typedef QSet<GLUniform const *>  Uniforms;
-    typedef QList<GLUniform const *> UniformList;
-    typedef QSet<GLShader const *>   Shaders;
+    typedef Set <const GLUniform *> Uniforms;
+    typedef List<const GLUniform *> UniformList;
+    typedef Set <const GLShader *>  Shaders;
 
     /// For each uniform name, there is a stack of bindings. The top binding
     /// in each stack is the active one at any given time.
-    QHash<Block, QStack<GLUniform const *>> stacks;
+    Hash<Block, List<const GLUniform *>> stacks;
 
     Uniforms    allBound;
     Uniforms    active; ///< Currently active bindings.
@@ -79,7 +74,7 @@ DE_PIMPL(GLProgram)
     {
         if (!name)
         {
-            name = LIBGUI_GL.glCreateProgram();
+            name = glCreateProgram();
             if (!name)
             {
                 throw AllocError("GLProgram::alloc", "Failed to create program");
@@ -93,7 +88,7 @@ DE_PIMPL(GLProgram)
         detachAllShaders();
         if (name)
         {
-            LIBGUI_GL.glDeleteProgram(name);
+            glDeleteProgram(name);
             name = 0;
         }
     }
@@ -108,7 +103,7 @@ DE_PIMPL(GLProgram)
     {
         DE_ASSERT(shader->isReady());
         alloc();
-        LIBGUI_GL.glAttachShader(name, shader->glName());
+        glAttachShader(name, shader->glName());
         LIBGUI_ASSERT_GL_OK();
         shaders.insert(holdRef(shader));
     }
@@ -117,7 +112,7 @@ DE_PIMPL(GLProgram)
     {
         if (shader->isReady())
         {
-            LIBGUI_GL.glDetachShader(name, shader->glName());
+            glDetachShader(name, shader->glName());
         }
         shaders.remove(shader);
         shader->release();
@@ -167,7 +162,7 @@ DE_PIMPL(GLProgram)
         for (uint i = 0; i < AttribSpec::MaxSemantics; ++i)
         {
             char const *var = AttribSpec::semanticVariableName(AttribSpec::Semantic(i));
-            attribLocation[i] = GL.glGetAttribLocation(name, var);
+            attribLocation[i] = glGetAttribLocation(name, var);
         }
     }
 
@@ -175,10 +170,10 @@ DE_PIMPL(GLProgram)
     {
         dint32 logSize;
         dint32 count;
-        LIBGUI_GL.glGetProgramiv(name, GL_INFO_LOG_LENGTH, &logSize);
+        glGetProgramiv(name, GL_INFO_LOG_LENGTH, &logSize);
 
         Block log{Block::Size(logSize)};
-        LIBGUI_GL.glGetProgramInfoLog(name, logSize, &count, reinterpret_cast<GLchar *>(log.data()));
+        glGetProgramInfoLog(name, logSize, &count, reinterpret_cast<GLchar *>(log.data()));
         return log;
     }
 
@@ -186,11 +181,11 @@ DE_PIMPL(GLProgram)
     {
         DE_ASSERT(name != 0);
 
-        GL.glLinkProgram(name);
+        glLinkProgram(name);
 
         // Was linking successful?
         GLint ok;
-        GL.glGetProgramiv(name, GL_LINK_STATUS, &ok);
+        glGetProgramiv(name, GL_LINK_STATUS, &ok);
         if (!ok)
         {
             throw LinkerError("GLProgram::link", "Linking failed:\n" + getInfoLog());
@@ -199,7 +194,7 @@ DE_PIMPL(GLProgram)
 
     void markAllBoundUniformsChanged()
     {
-        foreach (GLUniform const *u, active)
+        for (GLUniform const *u : active)
         {
             changed.insert(u);
         }
@@ -211,7 +206,7 @@ DE_PIMPL(GLProgram)
         if (changed.isEmpty()) return;
 
         // Apply the uniform values in this program.
-        foreach (GLUniform const *u, changed)
+        for (GLUniform const *u : changed)
         {
             DE_ASSERT(active.contains(changed));
             if (!u->isSampler())
@@ -222,14 +217,13 @@ DE_PIMPL(GLProgram)
 
         if (samplersChanged)
         {
-            auto &GL = LIBGUI_GL;
             // Update the sampler uniforms with the assigned texture image unit values.
             for (int unit = 0; unit < samplers.size(); ++unit)
             {
                 int loc = self().glUniformLocation(samplers[unit]->name());
                 if (loc >= 0)
                 {
-                    GL.glUniform1i(loc, unit);
+                    glUniform1i(loc, unit);
 //                    qDebug("P%i Sampler %s loc:%i unit:%i",
 //                           name,
 //                           samplers[unit]->name().constData(),
@@ -247,7 +241,7 @@ DE_PIMPL(GLProgram)
     void bindSamplers()
     {
         // Bind textures to the assigned texture image units.
-        for (int unit = samplers.size() - 1; unit >= 0; --unit)
+        for (int unit = samplers.sizei() - 1; unit >= 0; --unit)
         {
             samplers[unit]->bindSamplerTexture(unit);
         }
@@ -257,15 +251,15 @@ DE_PIMPL(GLProgram)
     {
         if (name)
         {
-            LIBGUI_GL.glDeleteProgram(name);
+            glDeleteProgram(name);
             name = 0;
         }
 
         alloc();
 
-        foreach (GLShader const *shader, shaders)
+        for (GLShader const *shader : shaders)
         {
-            LIBGUI_GL.glAttachShader(name, shader->glName());
+            glAttachShader(name, shader->glName());
             LIBGUI_ASSERT_GL_OK();
         }
 
@@ -371,10 +365,10 @@ GLProgram &GLProgram::build(GLShader const *vertexShader, GLShader const *fragme
     return build({vertexShader, fragmentShader});
 }
 
-GLProgram &GLProgram::build(QVector<GLShader const *> const &shaders)
+GLProgram &GLProgram::build(const List<const GLShader *> &shaders)
 {
     d->releaseButRetainBindings();
-    for (GLShader const *shd : shaders)
+    for (const GLShader *shd : shaders)
     {
         DE_ASSERT(shd != nullptr);
         DE_ASSERT(shd->isReady());
@@ -415,7 +409,7 @@ GLProgram &GLProgram::bind(GLUniform const &uniform)
     {
         // If the program is already linked, we can check which uniforms it
         // actually has.
-        if (!isReady() || glHasUniform(uniform.name()))
+        if (!isReady() || glHasUniform(uniform.name().c_str()))
         {
             d->addBinding(&uniform);
         }
@@ -446,13 +440,13 @@ void GLProgram::beginUse() const
         const_cast<GLProgram *>(this)->rebuild();
     }
 
-    DE_ASSERT(LIBGUI_GL.glIsProgram(d->name));
+    DE_ASSERT(glIsProgram(d->name));
 
     d->inUse = true;
     currentProgram = this;
 
     // The program is now ready for use.
-    LIBGUI_GL.glUseProgram(d->name);
+    glUseProgram(d->name);
 
     LIBGUI_ASSERT_GL_OK();
 
@@ -469,7 +463,7 @@ void GLProgram::endUse() const
 
     d->inUse = false;
     currentProgram = 0;
-    LIBGUI_GL.glUseProgram(0);
+    glUseProgram(0);
 }
 
 GLProgram const *GLProgram::programInUse() // static
@@ -484,7 +478,7 @@ GLuint GLProgram::glName() const
 
 int GLProgram::glUniformLocation(char const *uniformName) const
 {
-    return LIBGUI_GL.glGetUniformLocation(d->name, uniformName);
+    return glGetUniformLocation(d->name, uniformName);
 }
 
 bool GLProgram::glHasUniform(char const *uniformName) const

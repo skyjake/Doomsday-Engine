@@ -31,13 +31,13 @@ class GLWindow;
 class GuiLoop : public Loop
 {
 public:
+    static GuiLoop &get();
+
+public:
     GuiLoop();
 
     void setWindow(GLWindow *window);
 
-    static GuiLoop &get();
-
-protected slots:
     void nextLoopIteration() override;
 
 private:

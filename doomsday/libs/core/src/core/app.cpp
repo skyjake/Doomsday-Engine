@@ -930,8 +930,7 @@ Package::Asset App::asset(const String &identifier)
     Record const *info = DE_APP->d->findAsset(identifier);
     if (!info)
     {
-        throw AssetNotFoundError("App::asset", "Asset \"" + identifier +
-                                 "\" does not exist");
+        throw AssetNotFoundError("App::asset", "Asset \"" + identifier + "\" does not exist");
     }
     return *info;
 }
@@ -963,7 +962,7 @@ filesys::RemoteFeedRelay &App::remoteFeedRelay()
 
 Config &App::config()
 {
-    DE_ASSERT(DE_APP->d->config != 0);
+    DE_ASSERT(DE_APP->d->config != nullptr);
     return *DE_APP->d->config;
 }
 

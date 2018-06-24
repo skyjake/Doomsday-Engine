@@ -20,7 +20,7 @@
 #define LIBGUI_IMAGE_H
 
 #include <utility>
-#include <QImage>
+//#include <QImage>
 #include <de/Vector>
 #include <de/Rectangle>
 #include <de/ByteRefArray>
@@ -34,12 +34,7 @@ namespace de {
 class File;
 
 /**
- * Thin wrapper over QImage allowing use of some custom/raw image formats.
- *
- * Some image formats do not allow drawing. As a rule, all QImage-based formats
- * support drawing (via QPainter).
- *
- * @todo Merge image_t and the related Image_* routines into here.
+ * Reading, writing, and modifying pixel-based images.
  *
  * @ingroup gl
  */
@@ -52,7 +47,7 @@ public:
      */
     enum Format {
         Unknown           = -1,
-        UseQImageFormat   = 0, ///< May not be GL friendly.
+//        UseQImageFormat   = 0, ///< May not be GL friendly.
 
         Luminance_8       = 1,
         LuminanceAlpha_88 = 2,
@@ -91,7 +86,7 @@ public:
 public:
     Image();
     Image(Image const &other);
-    Image(QImage const &image);
+//    Image(QImage const &image);
 
     /**
      * Constructs an image with uninitialized contents.
@@ -113,12 +108,12 @@ public:
     Image(Size const &size, Format format, ByteRefArray const &refPixels);
 
     Image &operator = (Image const &other);
-    Image &operator = (QImage const &other);
+//    Image &operator = (QImage const &other);
 
     inline explicit operator bool() const { return !isNull(); }
 
     Format format() const;
-    QImage::Format qtFormat() const;
+//    QImage::Format qtFormat() const;
 
     Size size() const;
     Rectanglei rect() const;
@@ -156,7 +151,9 @@ public:
      */
     bool isGLCompatible() const;
 
-    bool canConvertToQImage() const;
+//    bool canConvertToQImage() const;
+
+    Image convertToFormat(Format format) const;
 
     /**
      * Converts the image to a QImage. Only allowed if canConvertToQImage()
@@ -164,7 +161,7 @@ public:
      *
      * @return QImage instance.
      */
-    QImage toQImage() const;
+//    QImage toQImage() const;
 
     GLPixelFormat glFormat() const;
 
@@ -180,11 +177,11 @@ public:
 
     // Drawing/editing methods.
     Image subImage(Rectanglei const &subArea) const;
-    void resize(Size const &size);
-    void fill(Color const &color);
-    void fill(Rectanglei const &rect, Color const &color);
-    void draw(Image const &image, Vec2i const &topLeft);
-    void drawPartial(Image const &image, Rectanglei const &part, Vec2i const &topLeft);
+    void  resize(Size const &size);
+    void  fill(Color const &color);
+    void  fill(Rectanglei const &rect, Color const &color);
+    void  draw(Image const &image, Vec2i const &topLeft);
+    void  drawPartial(Image const &image, Rectanglei const &part, Vec2i const &topLeft);
     Image multiplied(Image const &factorImage) const;
     Image multiplied(Color const &color) const;
     Image colorized(Color const &color) const;
@@ -198,7 +195,7 @@ public:
 
 public:
     static GLPixelFormat glFormat(Format imageFormat);
-    static GLPixelFormat glFormat(QImage::Format qtImageFormat);
+//    static GLPixelFormat glFormat(QImage::Format qtImageFormat);
 
     static Image solidColor(Color const &color, Size const &size);
 

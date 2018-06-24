@@ -19,18 +19,19 @@
 #include "de/MultiAtlas"
 #include <de/Deletable>
 
-#include <QHash>
-#include <QSet>
+#include <de/Hash>
+#include <de/List>
+#include <de/Set>
 
 namespace de {
 
-typedef QHash<Id::Type, Image *> PendingImages;
+typedef Hash<Id::Type, Image *> PendingImages;
 
 DE_PIMPL(MultiAtlas)
 , public Deletable
 {
     IAtlasFactory &factory;
-    QList<Atlas *> atlases;
+    List<Atlas *> atlases;
 
     Impl(Public *i, IAtlasFactory &factory)
         : Base(i)
@@ -47,14 +48,14 @@ DE_PIMPL(MultiAtlas)
 
     void release()
     {
-        qDeleteAll(atlases);
+        deleteAll(atlases);
         atlases.clear();
     }
 
     Atlas *getEmptyAtlas()
     {
         // Reuse an empty atlas.
-        foreach (Atlas *atlas, atlases)
+        for (Atlas *atlas : atlases)
         {
             if (atlas->isEmpty()) return atlas;
         }
@@ -71,7 +72,7 @@ DE_PIMPL(MultiAtlas)
 
         for (auto i = pending.begin(); i != pending.end(); ++i)
         {
-            if (!atlas.alloc(*i.value(), i.key()))
+            if (!atlas.alloc(*i->second, i->first))
             {
                 // Cannot fit on this atlas!
                 atlas.cancelDeferred();
@@ -94,7 +95,7 @@ DE_PIMPL(MultiAtlas)
     Atlas &allocatePending(PendingImages const &pending)
     {
         // Let's see if the images fit on one of our existing atlases.
-        foreach (Atlas *atlas, atlases)
+        for (Atlas *atlas : atlases)
         {
             if (tryAllocatePending(*atlas, pending))
             {
@@ -134,7 +135,7 @@ DE_PIMPL_NOREF(MultiAtlas::AllocGroup)
     MultiAtlas *owner;
     PendingImages pending; // owned
     Atlas *atlas = nullptr; ///< Committed atlas.
-    QSet<Id::Type> allocated; // committed to the atlas
+    Set<Id::Type> allocated; // committed to the atlas
 
     Impl(AllocGroup *i, MultiAtlas &owner)
         : self(i)
@@ -173,7 +174,7 @@ DE_PIMPL_NOREF(MultiAtlas::AllocGroup)
 
     void cancelPending()
     {
-        qDeleteAll(pending.values());
+        pending.deleteAll();
         pending.clear();
     }
 
@@ -217,11 +218,11 @@ Id MultiAtlas::AllocGroup::alloc(Image const &image, Id const &knownId)
 
 void MultiAtlas::AllocGroup::release(Id const &id)
 {
-    auto foundPending = d->pending.constFind(id);
-    if (foundPending != d->pending.constEnd())
+    auto foundPending = d->pending.find(id);
+    if (foundPending != d->pending.end())
     {
-        delete foundPending.value();
-        d->pending.remove(id);
+        delete foundPending->second;
+        d->pending.erase(foundPending);
         return;
     }
 
@@ -252,8 +253,8 @@ void MultiAtlas::AllocGroup::commit() const
     }
     for (auto i = d->pending.begin(); i != d->pending.end(); ++i)
     {
-        d->allocated.insert(i.key());
-        delete i.value(); // free the Image
+        d->allocated.insert(i->first);
+        delete i->second; // free the Image
     }
     d->pending.clear();
 

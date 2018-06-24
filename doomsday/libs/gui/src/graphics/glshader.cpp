@@ -43,7 +43,7 @@ DE_PIMPL(GLShader)
     {
         if (!name)
         {
-            name = LIBGUI_GL.glCreateShader(type == Vertex   ? GL_VERTEX_SHADER
+            name = glCreateShader(type == Vertex   ? GL_VERTEX_SHADER
                                           : type == Geometry ? GL_GEOMETRY_SHADER
                                                              : GL_FRAGMENT_SHADER);
             LIBGUI_ASSERT_GL_OK();
@@ -58,7 +58,7 @@ DE_PIMPL(GLShader)
     {
         if (name)
         {
-            LIBGUI_GL.glDeleteShader(name);
+            glDeleteShader(name);
             name = 0;
         }
         self().setState(Asset::NotReady);
@@ -97,14 +97,13 @@ void GLShader::clear()
     d->release();
 }
 
-Block GLShader::prefixToSource(Block const &source, Block const &prefix)
+String GLShader::prefixToSource(const String &source, const String &prefix)
 {
-    Block src = source;
-    int versionPos = src.indexOf("#version ");
-    if (versionPos >= 0)
+    String src = source;
+    if (auto versionPos = src.indexOf("#version "))
     {
         // Append prefix after version.
-        int pos = src.indexOf('\n', versionPos);
+        auto pos = src.indexOf("\n", versionPos);
         src.insert(pos + 1, prefix);
     }
     else
@@ -117,13 +116,13 @@ Block GLShader::prefixToSource(Block const &source, Block const &prefix)
 void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
 {
 #if defined (DE_OPENGL)
-    static const Block DEFAULT_VERSION("#version 330 core\n");
+    static const String DEFAULT_VERSION("#version 330 core\n");
     // With non-ES OpenGL, ignore the precision attributes.
-    static const Block PREFIX("#ifndef GL_ES\n"
-                              "#  define lowp\n"
-                              "#  define mediump\n"
-                              "#  define highp\n"
-                              "#endif\n");
+    static const String PREFIX("#ifndef GL_ES\n"
+                               "#  define lowp\n"
+                               "#  define mediump\n"
+                               "#  define highp\n"
+                               "#endif\n");
 #else
     int const glesVer = DE_OPENGL_ES;
     static Block const DEFAULT_VERSION(glesVer == 30? "#version 300 es\n" : "#version 100\n");
@@ -132,8 +131,8 @@ void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
 
     DE_ASSERT(shaderType == Vertex || shaderType == Geometry || shaderType == Fragment);
 
-    Block preamble;
-    Block source = shaderSource;
+    String preamble;
+    String source = shaderSource;
 
     if (!source.contains("#version"))
     {
@@ -149,7 +148,6 @@ void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
     d->alloc();
 
     // Additional predefined symbols for the shader.
-//    Block predefs;
     if (shaderType == Vertex)
     {
         preamble += "#define DE_VERTEX_SHADER\n";
@@ -164,7 +162,7 @@ void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
     }
     else if (shaderType == Geometry)
     {
-        predefs = QByteArray("#define DE_GEOMETRY_SHADER\n");
+        predefs = "#define DE_GEOMETRY_SHADER\n";
     }
     else
     {
@@ -184,7 +182,7 @@ void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
                     "#define out_FragColor gl_FragColor\n";
 #endif
     }
-    preamble += String::format("#define DE_MAX_BATCH_UNIFORMS %d\n", MAX_BATCH_UNIFORMS).toLatin1();
+    preamble += Stringf("#define DE_MAX_BATCH_UNIFORMS %d\n", MAX_BATCH_UNIFORMS);
 
 #if defined (DE_OPENGL) || (defined (DE_OPENGL_ES) && DE_OPENGL_ES == 30)
     preamble += "#define DE_LAYOUT_LOC(x) layout(location = x)\n";
@@ -194,40 +192,29 @@ void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
 
     preamble += "#line 1\n";
 
-    // Prepare the shader source. This would be the time to substitute any
-    // remaining symbols in the shader source.
-    //Block src = prefixToSource(source, PREFIX + predefs);
-
-    // If version has not been specified, use the default one.
-//    if (!src.contains("#version"))
-//    {
-//        src = DEFAULT_VERSION + src;
-//    }
-
     const char *srcPtr[] = {preamble.constData(), source.constData()};
-    LIBGUI_GL.glShaderSource(d->name, 2, srcPtr, 0);
-    LIBGUI_GL.glCompileShader(d->name);
+    glShaderSource(d->name, 2, srcPtr, 0);
+    glCompileShader(d->name);
     LIBGUI_ASSERT_GL_OK();
 
     // Check the compilation status.
     GLint status;
-    LIBGUI_GL.glGetShaderiv(d->name, GL_COMPILE_STATUS, &status);
+    glGetShaderiv(d->name, GL_COMPILE_STATUS, &status);
     if (!status)
     {
         dint32 logSize = 0;
         dint32 count = 0;
-        LIBGUI_GL.glGetShaderiv(d->name, GL_INFO_LOG_LENGTH, &logSize);
+        glGetShaderiv(d->name, GL_INFO_LOG_LENGTH, &logSize);
 
-        Block log{Block::Size(logSize)};
-        LIBGUI_GL.glGetShaderInfoLog(d->name, logSize, &count, reinterpret_cast<GLchar *>(log.data()));
+        Block log(logSize);
+        glGetShaderInfoLog(d->name, logSize, &count, reinterpret_cast<GLchar *>(log.data()));
 
 #if defined (DE_DEBUG)
         {
-            QTextStream ins(src);
             int lineNum = 1;
-            while (!ins.atEnd())
+            for (const auto &line : src.splitRef("\n"))
             {
-                qDebug("%4i: %s", lineNum++, ins.readLine().toLatin1().constData());
+                debug("%4i: %s", lineNum++, line.toStdString().c_str());
             }
         }
 #endif

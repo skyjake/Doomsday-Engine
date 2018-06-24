@@ -22,22 +22,25 @@
 #include <de/FileSystem>
 #include <de/Log>
 #include <de/NativePath>
+#include <de/Thread>
+#include <de/EventLoop>
 
-#include <QSurfaceFormat>
-#include <QThread>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_video.h>
 
-#ifdef DE_QT_5_0_OR_NEWER
-#  include <QStandardPaths>
-#else
-#  include <QDesktopServices>
-#endif
+//#ifdef DE_QT_5_0_OR_NEWER
+//#  include <QStandardPaths>
+//#else
+//#  include <QDesktopServices>
+//#endif
 
 namespace de {
 
 DE_PIMPL(GuiApp)
 {
-    GuiLoop loop;
-    QThread *renderThread;
+    EventLoop eventLoop;
+    GuiLoop   loop;
+    Thread *  renderThread;
 
     Impl(Public *i) : Base(i)
     {
@@ -45,35 +48,46 @@ DE_PIMPL(GuiApp)
         loop.audienceForIteration() += self();
 
         // The default render thread is the main thread.
-        renderThread = QThread::currentThread();
+        renderThread = Thread::currentThread();
     }
+
+    DE_PIMPL_AUDIENCE(DisplayModeChange)
 };
+DE_AUDIENCE_METHOD(GuiApp, DisplayModeChange)
 
-void GuiApp::setDefaultOpenGLFormat() // static
-{
-    QSurfaceFormat fmt;
-#if defined (DE_OPENGL_ES)
-    fmt.setRenderableType(QSurfaceFormat::OpenGLES);
-    fmt.setVersion(DE_OPENGL_ES / 10, DE_OPENGL_ES % 10);
-#else
-    fmt.setRenderableType(QSurfaceFormat::OpenGL);
-    fmt.setProfile(QSurfaceFormat::CoreProfile);
-    fmt.setVersion(3, 3);
-#endif
-    fmt.setDepthBufferSize(24);
-    fmt.setStencilBufferSize(8);
-    fmt.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
-#if defined (DE_DEBUG)
-    fmt.setOption(QSurfaceFormat::DebugContext, true);
-#endif
-    QSurfaceFormat::setDefaultFormat(fmt);
-}
+//void GuiApp::setDefaultOpenGLFormat() // static
+//{
+//    QSurfaceFormat fmt;
+//#if defined (DE_OPENGL_ES)
+//    fmt.setRenderableType(QSurfaceFormat::OpenGLES);
+//    fmt.setVersion(DE_OPENGL_ES / 10, DE_OPENGL_ES % 10);
+//#else
+//    fmt.setRenderableType(QSurfaceFormat::OpenGL);
+//    fmt.setProfile(QSurfaceFormat::CoreProfile);
+//    fmt.setVersion(3, 3);
+//#endif
+//    fmt.setDepthBufferSize(24);
+//    fmt.setStencilBufferSize(8);
+//    fmt.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
+//#if defined (DE_DEBUG)
+//    fmt.setOption(QSurfaceFormat::DebugContext, true);
+//#endif
+//    QSurfaceFormat::setDefaultFormat(fmt);
+//}
 
-GuiApp::GuiApp(int &argc, char **argv)
-    : LIBGUI_GUIAPP_BASECLASS(argc, argv)
-    , App(applicationFilePath(), arguments())
+GuiApp::GuiApp(const StringList &args)
+    : //LIBGUI_GUIAPP_BASECLASS(argc, argv)
+      App(args)
     , d(new Impl(this))
 {
+    if (!SDL_InitSubSystem(SDL_INIT_EVENTS |
+                           SDL_INIT_VIDEO |
+                           SDL_INIT_JOYSTICK |
+                           SDL_INIT_GAMECONTROLLER))
+    {
+        throw Error("GuiApp::GuiApp", "Failed to initialize SDL");
+    }
+
     static ImageFile::Interpreter intrpImageFile;
     fileSystem().addInterpreter(intrpImageFile);
 
@@ -84,43 +98,43 @@ GuiApp::GuiApp(int &argc, char **argv)
 void GuiApp::setMetadata(String const &orgName, String const &orgDomain,
                          String const &appName, String const &appVersion)
 {
-    setName(appName);
+    Record &amd = metadata();
 
-    // Qt metadata.
-    setOrganizationName  (orgName);
-    setOrganizationDomain(orgDomain);
-    setApplicationName   (appName);
-    setApplicationVersion(appVersion);
+    amd.set(APP_NAME,    appName);
+    amd.set(APP_VERSION, appVersion);
+    amd.set(ORG_NAME,    orgName);
+    amd.set(ORG_DOMAIN,  orgDomain);
 }
 
-bool GuiApp::notify(QObject *receiver, QEvent *event)
-{
-    try
-    {
-        return LIBGUI_GUIAPP_BASECLASS::notify(receiver, event);
-    }
-    catch (std::exception const &error)
-    {
-        handleUncaughtException(error.what());
-    }
-    catch (...)
-    {
-        handleUncaughtException("de::GuiApp caught exception of unknown type.");
-    }
-    return false;
-}
+//bool GuiApp::notify(QObject *receiver, QEvent *event)
+//{
+//    try
+//    {
+//        return LIBGUI_GUIAPP_BASECLASS::notify(receiver, event);
+//    }
+//    catch (std::exception const &error)
+//    {
+//        handleUncaughtException(error.what());
+//    }
+//    catch (...)
+//    {
+//        handleUncaughtException("de::GuiApp caught exception of unknown type.");
+//    }
+//    return false;
+//}
 
-void GuiApp::notifyDisplayModeChanged()
-{
-    emit displayModeChanged();
-}
+//void GuiApp::notifyDisplayModeChanged()
+//{
+//    emit displayModeChanged();
+//}
 
 int GuiApp::execLoop()
 {
     LOGDEV_NOTE("Starting GuiApp event loop...");
 
-    d->loop.start();
-    int code = LIBGUI_GUIAPP_BASECLASS::exec();
+    int code = d->eventLoop.exec([this](){
+        d->loop.start();
+    });
 
     LOGDEV_NOTE("GuiApp event loop exited with code %i") << code;
     return code;
@@ -131,7 +145,7 @@ void GuiApp::stopLoop(int code)
     LOGDEV_MSG("Stopping GuiApp event loop");
 
     d->loop.stop();
-    return LIBGUI_GUIAPP_BASECLASS::exit(code);
+    d->eventLoop.quit(code);
 }
 
 GuiLoop &GuiApp::loop()
@@ -145,10 +159,10 @@ bool GuiApp::inRenderThread()
     {
         return false;
     }
-    return DE_GUI_APP->d->renderThread == QThread::currentThread();
+    return DE_GUI_APP->d->renderThread == Thread::currentThread();
 }
 
-void GuiApp::setRenderThread(QThread *thread)
+void GuiApp::setRenderThread(Thread *thread)
 {
     DE_GUI_APP->d->renderThread = thread;
 }
@@ -163,10 +177,13 @@ void GuiApp::loopIteration()
 
 NativePath GuiApp::appDataPath() const
 {
-#ifdef DE_QT_5_0_OR_NEWER
-    return QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+    const auto &amd = metadata();
+#if defined (WIN32)
+    return NativePath::homePath() / "AppData/Local" / amd.gets(ORG_NAME) / amd.gets(APP_NAME);
+#elif defined (MACOSX)
+    return NativePath::homePath() / "Library/Application Support" / amd.gets(APP_NAME);
 #else
-    return QDesktopServices::storageLocation(QDesktopServices::DataLocation);
+    return NativePath::homePath() / amd.gets(UNIX_HOME);
 #endif
 }
 

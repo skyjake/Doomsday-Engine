@@ -20,7 +20,7 @@
 #include "de/graphics/opengl.h"
 #include "de/GLInfo"
 
-#include <QHash>
+#include <de/Hash>
 
 namespace de {
 
@@ -57,17 +57,16 @@ DE_PIMPL_NOREF(GLTimer)
             return true;
         }
     };
-    QHash<Id::Type, Query> queries;
+    Hash<Id::Type, Query> queries;
     Id measuring{Id::None};
 
     ~Impl()
     {
-        auto &GL = LIBGUI_GL;
         for (auto i = queries.begin(), end = queries.end(); i != end; ++i)
         {
-            for (auto &ms : i.value().measurements)
+            for (auto &ms : i->second.measurements)
             {
-                GL.glDeleteQueries(1, &ms.id);
+                glDeleteQueries(1, &ms.id);
             }
         }
     }
@@ -82,16 +81,15 @@ void GLTimer::beginTimer(const Id &id)
     DE_ASSERT(!d->measuring);
     if (d->measuring) return;
 
-    auto &GL = LIBGUI_GL;
     auto &query = d->queries[id];
     if (query.pushFront())
     {
         auto &ms = query.front();
         if (!ms.id)
         {
-            GL.glGenQueries(1, &ms.id);
+            glGenQueries(1, &ms.id);
         }
-        GL.glBeginQuery(GL_TIME_ELAPSED, ms.id);
+        glBeginQuery(GL_TIME_ELAPSED, ms.id);
         d->measuring = id;
     }
     LIBGUI_ASSERT_GL_OK();
@@ -101,13 +99,12 @@ void GLTimer::endTimer(const Id &id)
 {
     if (d->measuring != id) return;
 
-    auto found = d->queries.constFind(id);
-    if (found != d->queries.constEnd())
+    auto found = d->queries.find(id);
+    if (found != d->queries.end())
     {
-        auto &query = found.value();
-        if (!query.isEmpty())
+        if (!found->second.isEmpty())
         {
-            LIBGUI_GL.glEndQuery(GL_TIME_ELAPSED);
+            glEndQuery(GL_TIME_ELAPSED);
             d->measuring = Id::None;
         }
     }
@@ -116,11 +113,10 @@ void GLTimer::endTimer(const Id &id)
 
 TimeSpan GLTimer::elapsedTime(const Id &id) const
 {
-    auto &GL = LIBGUI_GL;
     auto found = d->queries.find(id);
     if (found != d->queries.end())
     {
-        auto &query = found.value();
+        auto &query = found->second;
         if (query.isEmpty()) return 0.0;
 
         const auto &ms = query.back();
@@ -131,13 +127,13 @@ TimeSpan GLTimer::elapsedTime(const Id &id) const
         }
 
         GLint isAvailable;
-        GL.glGetQueryObjectiv(ms.id, GL_QUERY_RESULT_AVAILABLE, &isAvailable);
+        glGetQueryObjectiv(ms.id, GL_QUERY_RESULT_AVAILABLE, &isAvailable);
         LIBGUI_ASSERT_GL_OK();
 
         if (isAvailable)
         {
             GLuint64 nanosecs = 0;
-            GL.glGetQueryObjectui64v(ms.id, GL_QUERY_RESULT, &nanosecs);
+            glGetQueryObjectui64v(ms.id, GL_QUERY_RESULT, &nanosecs);
             LIBGUI_ASSERT_GL_OK();
             query.popBack();
             return double(nanosecs) / 1.0e9;

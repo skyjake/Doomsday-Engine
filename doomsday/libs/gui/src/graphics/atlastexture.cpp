@@ -22,21 +22,21 @@
 
 namespace de {
 
-AtlasTexture::AtlasTexture(Atlas::Flags const &flags, Atlas::Size const &totalSize)
+AtlasTexture::AtlasTexture(Flags const &flags, Atlas::Size const &totalSize)
     : Atlas(flags, totalSize)
 {
     // Atlas textures are updated automatically when needed.
     setState(Ready);
 }
 
-AtlasTexture *AtlasTexture::newWithRowAllocator(Atlas::Flags const &flags, Atlas::Size const &totalSize)
+AtlasTexture *AtlasTexture::newWithRowAllocator(Flags const &flags, Atlas::Size const &totalSize)
 {
     AtlasTexture *atlas = new AtlasTexture(flags, totalSize);
     atlas->setAllocator(new RowAtlasAllocator);
     return atlas;
 }
 
-AtlasTexture *AtlasTexture::newWithKdTreeAllocator(Atlas::Flags const &flags, Atlas::Size const &totalSize)
+AtlasTexture *AtlasTexture::newWithKdTreeAllocator(Flags const &flags, Atlas::Size const &totalSize)
 {
     AtlasTexture *atlas = new AtlasTexture(flags, totalSize);
     atlas->setAllocator(new KdTreeAtlasAllocator);

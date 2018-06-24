@@ -23,20 +23,17 @@
 #include <de/Log>
 #include <de/Loop>
 
-#include <QTime>
-#include <QDebug>
-
 namespace de {
 
 DE_PIMPL(WindowEventHandler)
 {
     GLWindow *window;
     bool      mouseGrabbed = false;
-    QPoint    prevMousePos;
-    QTime     prevWheelAt;
-    QPoint    wheelAngleAccum;
+    Vec2i     prevMousePos;
+    Time      prevWheelAt;
+    Vec2i     wheelAngleAccum;
     int       wheelDir[2];
-#if defined(WIN32)
+#if defined (WIN32)
     bool      altIsDown = false;
 #endif
 

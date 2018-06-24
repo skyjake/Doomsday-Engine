@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/ColorBank"
@@ -35,7 +35,7 @@ DE_PIMPL(ColorBank)
         Vec4d load() const
         {
             Record const &def = bank[id];
-            ArrayValue const *colorDef = 0;
+            ArrayValue const *colorDef = nullptr;
             if (def.has("rgb"))
             {
                 colorDef = &def.geta("rgb");

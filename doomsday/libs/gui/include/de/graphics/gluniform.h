@@ -26,8 +26,6 @@
 
 #include "../gui/libgui.h"
 
-#include <QLatin1String>
-
 namespace de {
 
 class GLProgram;
@@ -100,17 +98,17 @@ public:
     bool isSampler() const;
     void bindSamplerTexture(dint unit) const;
 
-    GLUniform &operator = (dint value);
-    GLUniform &operator = (duint value);
-    GLUniform &operator = (dfloat value);
-    GLUniform &operator = (ddouble value);
-    GLUniform &operator = (Vec2f const &vec);
-    GLUniform &operator = (Vec3f const &vec);
-    GLUniform &operator = (Vec4f const &vec);
-    GLUniform &operator = (Mat3f const &vec);
-    GLUniform &operator = (Mat4f const &mat);
-    GLUniform &operator = (GLTexture const &texture);
-    GLUniform &operator = (GLTexture const *texture);
+    GLUniform &operator=(dint value);
+    GLUniform &operator=(duint value);
+    GLUniform &operator=(dfloat value);
+    GLUniform &operator=(ddouble value);
+    GLUniform &operator=(Vec2f const &vec);
+    GLUniform &operator=(Vec3f const &vec);
+    GLUniform &operator=(Vec4f const &vec);
+    GLUniform &operator=(Mat3f const &vec);
+    GLUniform &operator=(Mat4f const &mat);
+    GLUniform &operator=(GLTexture const &texture);
+    GLUniform &operator=(GLTexture const *texture);
 
     GLUniform &set(duint elementIndex, dfloat value);
     GLUniform &set(duint elementIndex, dint value);

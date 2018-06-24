@@ -32,12 +32,12 @@ DE_PIMPL_NOREF(PackageIconBank)
             : ImageSource(packagePath)
             , _displaySize(displaySize)
         {
-            DE_ASSERT(packagePath.lastSegment().toStringRef().endsWith(".pack"));
+            DE_ASSERT(CString(packagePath.lastSegment()).endsWith(".pack"));
         }
 
         Image load() const override
         {
-            const String iconPath = sourcePath() / QStringLiteral("icon");
+            const String iconPath = sourcePath() / DE_STR("icon");
 
             Image img;
             if (ImageFile const *file = FS::tryLocate<ImageFile const>(iconPath + ".jpg"))

@@ -173,7 +173,7 @@ public:
 
         /// Returns an ISerializable pointer to the object. Required
         /// for putting the data in hot storage.
-        virtual ISerializable *asSerializable() { return 0; }
+        virtual ISerializable *asSerializable() { return nullptr; }
 
         /// Returns the size of the data that it occupies in memory.
         virtual duint sizeInMemory() const { return 0; }

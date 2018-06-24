@@ -48,7 +48,7 @@ void GLSubBuffer::clear()
 
 void GLSubBuffer::setVertices(dsize count, void const *data)
 {
-    DE_ASSERT(count <= d->hostRange.size());
+    DE_ASSERT(count <= dsize(d->hostRange.size()));
 
     dsize const elementSize = d->format.first->stride;
     d->host->setData(elementSize * d->hostRange.start, data,

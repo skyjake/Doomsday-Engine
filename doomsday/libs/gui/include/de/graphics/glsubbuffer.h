@@ -59,8 +59,8 @@ public:
     Rangeui16 const &hostRange() const;
 
     template <typename VertexType>
-    void setVertices(QVector<VertexType> const &vertices) {
-        setVertices(sizeof(VertexType), vertices.size(), vertices.constData());
+    void setVertices(const List<VertexType> &vertices) {
+        setVertices(sizeof(VertexType), vertices.size(), vertices.data());
     }
 
     void setFormat(internal::AttribSpecs const &format);
