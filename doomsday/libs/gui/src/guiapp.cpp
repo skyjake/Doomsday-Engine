@@ -19,6 +19,8 @@
 #include "de/GuiApp"
 #include "de/graphics/opengl.h"
 #include "de/ImageFile"
+#include "de/GLWindow"
+
 #include <de/FileSystem>
 #include <de/Log>
 #include <de/NativePath>
@@ -27,6 +29,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_video.h>
+#include <SDL2/SDL_events.h>
 
 //#ifdef DE_QT_5_0_OR_NEWER
 //#  include <QStandardPaths>
@@ -49,6 +52,33 @@ DE_PIMPL(GuiApp)
 
         // The default render thread is the main thread.
         renderThread = Thread::currentThread();
+    }
+
+    /**
+     * Get events from SDL and route them to the appropriate place for handling.
+     */
+    void postEvents()
+    {
+        GLWindow *window = GLWindow::mainExists() ? &GLWindow::main() : nullptr;
+
+        SDL_Event event;
+        while (SDL_PollEvent(&event))
+        {
+            switch (event.type)
+            {
+            case SDL_QUIT:
+                eventLoop.quit(0);
+                break;
+
+            case SDL_WINDOWEVENT:
+            case SDL_MOUSEMOTION:
+            case SDL_MOUSEBUTTONDOWN:
+            case SDL_MOUSEBUTTONUP:
+            case SDL_MOUSEWHEEL:
+                if (window) window->handleSDLEvent(&event);
+                break;
+            }
+        }
     }
 
     DE_PIMPL_AUDIENCE(DisplayModeChange)
@@ -169,6 +199,8 @@ void GuiApp::setRenderThread(Thread *thread)
 
 void GuiApp::loopIteration()
 {
+    d->postEvents();
+
     // Update the clock time. de::App listens to this clock and will inform
     // subsystems in the order they've been added.
     Time::updateCurrentHighPerformanceTime();

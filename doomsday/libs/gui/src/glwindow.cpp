@@ -37,13 +37,16 @@
 #include <de/Log>
 #include <de/c_wrapper.h>
 
+#include <SDL2/SDL_events.h>
+
 namespace de {
 
 static GLWindow *mainWindow = nullptr;
 
 DE_PIMPL(GLWindow)
 {
-    SDL_Window *        window = nullptr;
+    SDL_Window *   window   = nullptr;
+    SDL_GLContext glContext = nullptr;
 
     LoopCallback        mainCall;
     GLFramebuffer       backing;                 // Represents QOpenGLWindow's framebuffer.
@@ -56,22 +59,39 @@ DE_PIMPL(GLWindow)
     uint  frameCount = 0;
     float fps        = 0;
 
-//#if defined(DE_HAVE_TIMER_QUERY)
-//    bool               timerQueryPending = false;
-//    QOpenGLTimerQuery *timerQuery        = nullptr;
-//    QElapsedTimer      gpuTimeRecordingStartedAt;
-//    QVector<TimeSpan>  recordedGpuTimes;
-//#endif
     std::unique_ptr<GLTimer> timer;
     Id totalFrameTimeQueryId;
 
-    Impl(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i)
+    {
+        SDL_GL_SetAttribute(SDL_GL_RED_SIZE,     8);
+        SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,   8);
+        SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,    8);
+        SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,   16);
+        SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+
+        window = SDL_CreateWindow("GLWindow",
+                                  SDL_WINDOWPOS_UNDEFINED,
+                                  SDL_WINDOWPOS_UNDEFINED,
+                                  640,
+                                  400,
+                                  SDL_WINDOW_OPENGL |
+                                  SDL_WINDOW_RESIZABLE |
+                                  SDL_WINDOW_ALLOW_HIGHDPI);
+        glContext = SDL_GL_CreateContext(window);
+    }
 
     ~Impl()
     {
         self().makeCurrent();
+        {
+            // Perform cleanup of GL objects.
         glDeinit();
+        }
         self().doneCurrent();
+
+        SDL_GL_DeleteContext(glContext);
+        SDL_DestroyWindow(window);
 
         if (thisPublic == mainWindow)
         {
@@ -113,8 +133,9 @@ DE_PIMPL(GLWindow)
 
         self().makeCurrent();
 
-        DE_ASSERT(QOpenGLContext::currentContext() != nullptr);
+        DE_ASSERT(SDL_GL_GetCurrentContext() != nullptr);
 
+#if 0
         // Print some information.
         QSurfaceFormat const fmt = self().format();
 
@@ -128,6 +149,7 @@ DE_PIMPL(GLWindow)
 #else
         LOG_GL_NOTE("OpenGL ES %i.%i supported")
                 << fmt.majorVersion() << fmt.minorVersion();
+#endif
 #endif
 
         // Everybody can perform GL init now.
@@ -202,6 +224,11 @@ DE_PIMPL(GLWindow)
         }
     }
 
+    Flags winFlags() const
+    {
+        return SDL_GetWindowFlags(window);
+    }
+
     void submitResize(const Size &pixelSize)
     {
         //qDebug() << "resize event:" << pixelSize.asText();
@@ -217,8 +244,8 @@ DE_PIMPL(GLWindow)
                 self().makeCurrent();
             }
 
-            DENG2_FOR_PUBLIC_AUDIENCE2(Resize, i) i->windowResized(self());
-
+            DE_FOR_PUBLIC_AUDIENCE2(Resize, i) i->windowResized(self());
+            
             if (readyNotified)
             {
                 self().doneCurrent();
@@ -226,23 +253,17 @@ DE_PIMPL(GLWindow)
         }
     }
 
-    DE_PIMPL_AUDIENCE(Init)
-    DE_PIMPL_AUDIENCE(Resize)
-    DENG2_PIMPL_AUDIENCE(PixelRatio)
-    DE_PIMPL_AUDIENCE(Swap)
+    DE_PIMPL_AUDIENCES(Init, Resize, PixelRatio, Swap)
 };
 
-DE_AUDIENCE_METHOD(GLWindow, Init)
-DE_AUDIENCE_METHOD(GLWindow, Resize)
-DENG2_AUDIENCE_METHOD(GLWindow, PixelRatio)
-DE_AUDIENCE_METHOD(GLWindow, Swap)
+DE_AUDIENCE_METHODS(GLWindow, Init, Resize, PixelRatio, Swap)
 
 GLWindow::GLWindow()
     : d(new Impl(this))
 {
-#if defined (MACOSX)
-    setFlags(flags() | Qt::WindowFullscreenButtonHint);
-#endif
+//#if defined (MACOSX)
+//    setFlags(flags() | Qt::WindowFullscreenButtonHint);
+//#endif
 
 #if defined (DE_MOBILE)
     setFocusPolicy(Qt::StrongFocus);
@@ -269,6 +290,21 @@ GLWindow::GLWindow()
     });
 }
 
+void GLWindow::makeCurrent()
+{
+    SDL_GL_MakeCurrent(d->window, d->glContext);
+}
+
+void GLWindow::doneCurrent()
+{
+    SDL_GL_MakeCurrent(d->window, nullptr);
+}
+
+void GLWindow::setMinimumSize(const Size &minSize)
+{
+    SDL_SetWindowMinimumSize(d->window, minSize.x, minSize.y);
+}
+
 #if defined (DE_MOBILE)
 void GLWindow::setTitle(QString const &title)
 {
@@ -286,7 +322,7 @@ bool GLWindow::isMaximized() const
 #if defined (DE_MOBILE)
     return false;
 #else
-    return visibility() == QWindow::Maximized;
+    return d->winFlags().testFlag(SDL_WINDOW_MAXIMIZED);
 #endif
 }
 
@@ -295,8 +331,13 @@ bool GLWindow::isMinimized() const
 #if defined (DE_MOBILE)
     return false;
 #else
-    return visibility() == QWindow::Minimized;
+    return d->winFlags().testFlag(SDL_WINDOW_MINIMIZED);
 #endif
+}
+
+bool GLWindow::isVisible() const
+{
+    return d->winFlags().testFlag(SDL_WINDOW_SHOWN);
 }
 
 bool GLWindow::isFullScreen() const
@@ -304,7 +345,7 @@ bool GLWindow::isFullScreen() const
 #if defined (DE_MOBILE)
     return true;
 #else
-    return visibility() == QWindow::FullScreen;
+    return (d->winFlags() & (SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP)) != 0;
 #endif
 }
 
@@ -313,7 +354,7 @@ bool GLWindow::isHidden() const
 #if defined (DE_MOBILE)
     return false;
 #else
-    return visibility() == QWindow::Hidden;
+    return d->winFlags().testFlag(SDL_WINDOW_HIDDEN);
 #endif
 }
 
@@ -339,8 +380,9 @@ uint GLWindow::frameCount() const
 
 GLWindow::Size GLWindow::pointSize() const
 {
-    return Size(duint(de::max(0, QOpenGLWindow::width())),
-                duint(de::max(0, QOpenGLWindow::height())));
+    int w, h;
+    SDL_GetWindowSize(d->window, &w, &h);
+    return Size(w, h);
 }
 
 GLWindow::Size GLWindow::pixelSize() const
@@ -385,6 +427,7 @@ bool GLWindow::ownsEventHandler(WindowEventHandler *handler) const
     return d->handler == handler;
 }
 
+#if 0
 void GLWindow::focusInEvent(QFocusEvent *ev)
 {
     d->handler->focusInEvent(ev);
@@ -447,28 +490,29 @@ bool GLWindow::event(QEvent *ev)
     }
     return QOpenGLWindow::event(ev);
 }
+#endif
 
 bool GLWindow::grabToFile(NativePath const &path) const
 {
-    return grabImage().save(path.toString());
+    return grabImage().save(path);
 }
 
-QImage GLWindow::grabImage(QSize const &outputSize) const
+Image GLWindow::grabImage(Size const &outputSize) const
 {
     return grabImage(QRect(QPoint(0, 0), QSize(pixelWidth(), pixelHeight())), outputSize);
 }
 
-QImage GLWindow::grabImage(QRect const &area, QSize const &outputSize) const
+Image GLWindow::grabImage(Rectanglei const &area, Size const &outputSize) const
 {
     // We will be grabbing the visible, latest complete frame.
-    //LIBGUI_GL.glReadBuffer(GL_FRONT);
+    //glReadBuffer(GL_FRONT);
     QImage grabbed = const_cast<GLWindow *>(this)->grabFramebuffer(); // no alpha
     if (area.size() != grabbed.size())
     {
         // Just take a portion of the full image.
         grabbed = grabbed.copy(area);
     }
-    //LIBGUI_GL.glReadBuffer(GL_BACK);
+    //glReadBuffer(GL_BACK);
     if (outputSize.isValid())
     {
         grabbed = grabbed.scaled(outputSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
@@ -491,6 +535,29 @@ void *GLWindow::nativeHandle() const
     return reinterpret_cast<void *>(winId());
 }
 
+void GLWindow::handleSDLEvent(const void *ptr)
+{
+    DE_ASSERT(ptr);
+    const SDL_Event *event = reinterpret_cast<const SDL_Event *>(ptr);
+    switch (event->type)
+    {
+    case SDL_WINDOWEVENT:
+    {
+        switch (event->window.event)
+        {
+        case SDL_WINDOWEVENT_RESIZED:
+
+            break;
+
+        default: break;
+        }
+    }
+    break;
+
+    default: break;
+    }
+}
+
 void GLWindow::initializeGL()
 {
     LOG_AS("GLWindow");
@@ -501,7 +568,7 @@ void GLWindow::initializeGL()
 
 void GLWindow::paintGL()
 {
-    GLFramebuffer::setDefaultFramebuffer(defaultFramebufferObject());
+    GLFramebuffer::setDefaultFramebuffer(0); //defaultFramebufferObject());
 
     // Do not proceed with painting until after the application has completed
     // GL initialization. This is done via timer callback because we don't
@@ -514,11 +581,12 @@ void GLWindow::paintGL()
             d->readyPending = true;
             d->mainCall.enqueue([this]() { d->notifyReady(); });
         }
-        LIBGUI_GL.glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT);
         return;
     }
 
-    DE_ASSERT(QOpenGLContext::currentContext() != nullptr);
+    //DE_ASSERT(QOpenGLContext::currentContext() != nullptr);
+    LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
 
     //qDebug() << "Frame time:" << d->timer->elapsedTime(d->totalFrameTimeQueryId);
 

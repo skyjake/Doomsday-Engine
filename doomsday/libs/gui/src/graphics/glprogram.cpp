@@ -120,7 +120,7 @@ DE_PIMPL(GLProgram)
 
     void detachAllShaders()
     {
-        foreach (GLShader const *shader, shaders)
+        for (GLShader const *shader : shaders)
         {
             detach(shader);
         }
@@ -155,8 +155,6 @@ DE_PIMPL(GLProgram)
         {
             link();
         }
-
-        auto &GL = LIBGUI_GL;
 
         // Look up where the attributes ended up being linked.
         for (uint i = 0; i < AttribSpec::MaxSemantics; ++i)
@@ -208,7 +206,7 @@ DE_PIMPL(GLProgram)
         // Apply the uniform values in this program.
         for (GLUniform const *u : changed)
         {
-            DE_ASSERT(active.contains(changed));
+            DE_ASSERT(active.contains(u));
             if (!u->isSampler())
             {
                 u->applyInProgram(self());
@@ -462,7 +460,7 @@ void GLProgram::endUse() const
     DE_ASSERT(d->inUse);
 
     d->inUse = false;
-    currentProgram = 0;
+    currentProgram = nullptr;
     glUseProgram(0);
 }
 

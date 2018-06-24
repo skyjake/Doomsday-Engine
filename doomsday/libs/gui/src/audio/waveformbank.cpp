@@ -39,9 +39,9 @@ DE_PIMPL_NOREF(WaveformBank)
 
         Waveform *load() const
         {
-            QScopedPointer<Waveform> wf(new Waveform);
+            std::unique_ptr<Waveform> wf(new Waveform);
             wf->load(App::rootFolder().locate<File const>(filePath));
-            return wf.take();
+            return wf.release();
         }
     };
 

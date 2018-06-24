@@ -34,22 +34,22 @@
 #include <de/LogBuffer>
 #include <de/NumberValue>
 
-#include <QDesktopWidget>
-#include <QResizeEvent>
-#include <QScreen>
-#include <QTimer>
-#include <QVector>
-#include <QList>
+//#include <QDesktopWidget>
+//#include <QResizeEvent>
+//#include <QScreen>
+//#include <QTimer>
+//#include <QVector>
+//#include <QList>
 
 namespace de {
 
-static String const MAIN_WINDOW_ID = "main";
+static const char *MAIN_WINDOW_ID            = "main";
+static const int   BREAK_CENTERING_THRESHOLD = 5;
 
-int const PersistentGLWindow::MIN_WIDTH  = 320;
-int const PersistentGLWindow::MIN_HEIGHT = 240;
+const int PersistentGLWindow::MIN_WIDTH  = 320;
+const int PersistentGLWindow::MIN_HEIGHT = 240;
 
-static int const BREAK_CENTERING_THRESHOLD = 5;
-static QRect desktopRect()
+static Rectanglei desktopRect()
 {
     //return QApplication::desktop()->screenGeometry();
 
@@ -57,28 +57,30 @@ static QRect desktopRect()
 #if defined (DE_QT_5_6_OR_NEWER)
     return QGuiApplication::primaryScreen()->geometry();
 #else
-    return QGuiApplication::screens().at(0)->geometry();
+    //return QGuiApplication::screens().at(0)->geometry();
+    SDL_Rect vid;
+    SDL_GetDisplayBounds(0, &vid);
+    return Rectanglei(vid.x, vid.y, vid.w, vid.h);
 #endif
 }
 
-static QRect centeredQRect(Vec2ui const &size)
+static Rectanglei centeredQRect(Vec2ui const &size)
 {
-    Vec2ui const screenSize(desktopRect().size().width(),
-                               desktopRect().size().height());
+    Vec2ui const screenSize(desktopRect().size().width(), desktopRect().size().height());
     Vec2ui const clamped = size.min(screenSize);
 
     LOGDEV_GL_XVERBOSE("centeredGeometry: Current desktop rect %i x %i",
                        screenSize.x << screenSize.y);
 
-    return QRect(desktopRect().topLeft() +
-                 QPoint((screenSize.x - clamped.x) / 2,
+    return Rectanglei(desktopRect().topLeft() +
+                 Vec2i((screenSize.x - clamped.x) / 2,
                         (screenSize.y - clamped.y) / 2),
-                 QSize(clamped.x, clamped.y));
+                 Vec2i(clamped.x, clamped.y));
 }
 
 static Rectanglei centeredRect(Vec2ui const &size)
 {
-    QRect rect = centeredQRect(size);
+    auto rect = centeredQRect(size);
     return Rectanglei(rect.left(), rect.top(), rect.width(), rect.height());
 }
 
@@ -125,7 +127,7 @@ DE_PIMPL(PersistentGLWindow)
                     fullSize       == other.fullSize &&
                     colorDepthBits == other.colorDepthBits &&
                     flags          == other.flags &&
-                    refreshRate    == other.refreshRate);
+                    fequal(refreshRate, other.refreshRate));
         }
 
         bool operator != (State const &other) const
@@ -183,9 +185,9 @@ DE_PIMPL(PersistentGLWindow)
             }
         }
 
-        QString configName(String const &key) const
+        String configName(String const &key) const
         {
-            return QString("window.%1.%2").arg(winId).arg(key);
+            return String::format("window.%s.%s", winId.c_str(), key.c_str());
         }
 
         void saveToConfig()
@@ -223,16 +225,16 @@ DE_PIMPL(PersistentGLWindow)
             ArrayValue const &rect = config.geta(configName("rect"));
             if (rect.size() >= 4)
             {
-                windowRect = Rectanglei(rect.at(0).asNumber(),
-                                        rect.at(1).asNumber(),
-                                        rect.at(2).asNumber(),
-                                        rect.at(3).asNumber());
+                windowRect = Rectanglei(rect.at(0).asInt(),
+                                        rect.at(1).asInt(),
+                                        rect.at(2).asInt(),
+                                        rect.at(3).asInt());
             }
 
             ArrayValue const &fs = config.geta(configName("fullSize"));
             if (fs.size() >= 2)
             {
-                fullSize = Size(fs.at(0).asNumber(), fs.at(1).asNumber());
+                fullSize = Size(fs.at(0).asInt(), fs.at(1).asInt());
             }
 
             colorDepthBits    = config.geti(configName("colorDepth"));
@@ -316,7 +318,7 @@ DE_PIMPL(PersistentGLWindow)
                     break;
 
                 case PersistentGLWindow::RefreshRate:
-                    refreshRate = float(de::max(0, attribs[i])) / 1000.f;                    
+                    refreshRate = float(de::max(0, attribs[i])) / 1000.f;
                     break;
 
                 case PersistentGLWindow::FullSceneAntialias:
@@ -329,7 +331,7 @@ DE_PIMPL(PersistentGLWindow)
 
                 default:
                     // Unknown attribute.
-                    DE_ASSERT(false);
+                    DE_ASSERT_FAIL("PersistentGLWindow: unknown attribute");
                 }
             }
         }
@@ -343,7 +345,7 @@ DE_PIMPL(PersistentGLWindow)
             CommandLine const &cmdLine = App::commandLine();
 
             // We will compose a set of attributes based on the options.
-            QVector<int> attribs;
+            List<int> attribs;
 
             if (cmdLine.has("-nofullscreen") || cmdLine.has("-window"))
             {
@@ -452,7 +454,7 @@ DE_PIMPL(PersistentGLWindow)
 
             attribs << PersistentGLWindow::End;
 
-            applyAttributes(attribs.constData());
+            applyAttributes(attribs.data());
         }
     };
 
@@ -485,7 +487,7 @@ DE_PIMPL(PersistentGLWindow)
     State savedState; // used by saveState(), restoreState()
     bool neverShown;
 
-    typedef QList<Task> Tasks;
+    typedef List<Task> Tasks;
     Tasks queue;
 
     Impl(Public *i, String const &windowId)
@@ -502,7 +504,7 @@ DE_PIMPL(PersistentGLWindow)
             setMain(thisPublic);
         }
 
-        self().setMinimumSize(QSize(MIN_WIDTH, MIN_HEIGHT));
+        self().setMinimumSize(Size(MIN_WIDTH, MIN_HEIGHT));
     }
 
     ~Impl()
@@ -574,7 +576,7 @@ DE_PIMPL(PersistentGLWindow)
 
         // Update the cached state from the authoritative source:
         // the widget itself.
-        state = widgetState();  
+        state = widgetState();
 
         // The new modified state.
         State mod = state;

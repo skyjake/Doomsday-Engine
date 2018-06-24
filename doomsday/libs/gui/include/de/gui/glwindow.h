@@ -79,10 +79,15 @@ public:
 public:
     GLWindow();
 
+    void setMinimumSize(const Size &minSize);
+    void makeCurrent();
+    void doneCurrent();
+
     bool isGLReady() const;
     bool isFullScreen() const;
     bool isMaximized() const;
     bool isMinimized() const;
+    bool isVisible() const;
     bool isHidden() const;
 
     float frameRate() const;
@@ -185,6 +190,8 @@ public:
     void *nativeHandle() const;
 
     virtual void draw() = 0;
+
+    void handleSDLEvent(const void *);
 
 public:
     static bool mainExists();

@@ -19,8 +19,6 @@
 #ifndef LIBGUI_IMAGE_H
 #define LIBGUI_IMAGE_H
 
-#include <utility>
-//#include <QImage>
 #include <de/Vector>
 #include <de/Rectangle>
 #include <de/ByteRefArray>
@@ -29,9 +27,12 @@
 #include "../gui/libgui.h"
 #include "../GLPixelFormat"
 
+#include <utility>
+
 namespace de {
 
 class File;
+class NativePath;
 
 /**
  * Reading, writing, and modifying pixel-based images.
@@ -188,6 +189,8 @@ public:
     Image invertedColor() const;
     Image mixed(Image const &low, Image const &high) const;
     Image withAlpha(Image const &grayscale) const;
+
+    void save(const NativePath &path) const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

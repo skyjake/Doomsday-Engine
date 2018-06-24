@@ -812,7 +812,39 @@ Image Image::withAlpha(Image const &grayscale) const
     return img;
 }
 
-void Image::operator >> (Writer &to) const
+void Image::save(const NativePath &path) const
+{
+    DE_ASSERT(d->format == RGBA_8888 || d->format == RGB_888 ||
+              d->format == Luminance_8 || d->format == LuminanceAlpha_88);
+
+    const String ext = path.toString().fileNameExtension();
+    const int comp = d->format == RGBA_8888 ? 4
+                   : d->format == RGB_888 ? 3
+                   : d->format == LuminanceAlpha_88 ? 2 : 1;
+
+    if (!ext.compareWithoutCase(".png"))
+    {
+        stbi_write_png(path.c_str(), width(), height(), comp, bits(), stride());
+    }
+    else if (!ext.compareWithoutCase(".jpg"))
+    {
+        stbi_write_jpg(path.c_str(), width(), height(), comp, bits(), 85);
+    }
+    else if (!ext.compareWithoutCase(".tga"))
+    {
+        stbi_write_tga(path.c_str(), width(), height(), comp, bits());
+    }
+    else if (!ext.compareWithoutCase(".bmp"))
+    {
+        stbi_write_bmp(path.c_str(), width(), height(), comp, bits());
+    }
+    else
+    {
+        throw Error("Image::save", "Image format " + ext + " not supported for writing");
+    }
+}
+
+void Image::operator>>(Writer &to) const
 {
     to << duint8(d->format);
 
@@ -830,7 +862,7 @@ void Image::operator >> (Writer &to) const
     }
 }
 
-void Image::operator << (Reader &from)
+void Image::operator<<(Reader &from)
 {
     d->pixels.clear();
     d->refPixels = ByteRefArray();
@@ -950,6 +982,7 @@ GLPixelFormat Image::glFormat(Format imageFormat) // static
     }
 }
 
+#if 0
 GLPixelFormat Image::glFormat(QImage::Format format)
 {
     switch (format)
@@ -989,6 +1022,7 @@ GLPixelFormat Image::glFormat(QImage::Format format)
     }
     return GLPixelFormat(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, 4);
 }
+#endif
 
 Image Image::solidColor(Color const &color, Size const &size)
 {
@@ -1047,10 +1081,12 @@ Image Image::fromMaskedIndexedData(Size const &size, IByteArray const &imageAndM
 
 bool Image::recognize(File const &file)
 {
-    String const ext = file.extension().toLower();
-    return (ext == ".tga"  || ext == ".pcx" || ext == ".png"  || ext == ".jpg" ||
-            ext == ".jpeg" || ext == ".gif" || ext == ".tiff" || ext == ".ico" ||
-            ext == ".bmp");
+    const String ext = file.extension();
+    for (const char *e : {".tga", ".pcx", ".png", ".jpg", ".jpeg", ".bmp"})
+    {
+        if (!ext.compareWithoutCase(e)) return true;
+    }
+    return false;
 }
 
 } // namespace de

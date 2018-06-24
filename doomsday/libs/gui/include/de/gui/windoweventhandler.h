@@ -66,6 +66,7 @@ public:
     bool isMouseTrapped() const;
 
 //    // Native events.
+
 //    void focusInEvent(QFocusEvent *ev);
 //    void focusOutEvent(QFocusEvent *ev);
 //    void keyPressEvent(QKeyEvent *ev);

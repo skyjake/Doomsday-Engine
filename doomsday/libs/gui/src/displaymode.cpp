@@ -153,7 +153,7 @@ struct Mode : public DisplayMode
 
 using namespace internal;
 
-typedef Set<Mode> Modes; // note: no duplicates
+typedef std::set<Mode> Modes; // note: no duplicates
 
 static Modes modes;
 static Mode  originalMode;
@@ -213,7 +213,7 @@ int DisplayMode_Init(void)
     originalMode.debugPrint();
 
     LOG_GL_VERBOSE("All available modes:");
-    for (Modes::iterator i = modes.begin(); i != modes.end(); ++i)
+    for (auto i = modes.begin(); i != modes.end(); ++i)
     {
         i->debugPrint();
     }

@@ -79,6 +79,7 @@ DE_PIMPL(WindowEventHandler)
         }
     }
 
+#if 0
     static int nativeCode(QKeyEvent const *ev)
     {
 #if defined(UNIX) && !defined(MACOSX)
@@ -87,6 +88,7 @@ DE_PIMPL(WindowEventHandler)
         return ev->nativeVirtualKey();
 #endif
     }
+#endif
 
     void handleKeyEvent(QKeyEvent *ev)
     {
