@@ -19,7 +19,7 @@
 #ifndef LIBCORE_REGEXP_H
 #define LIBCORE_REGEXP_H
 
-#include "../String"
+#include "../CString"
 #include <c_plus/regexp.h>
 
 namespace de {
@@ -34,8 +34,9 @@ public:
     const char *begin() const;
     const char *end() const;
 
-    void   clear();
-    String captured(int index = 0) const;
+    void    clear();
+    String  captured(int index = 0) const;
+    CString capturedCStr(int index = 0) const;
 };
 
 /**

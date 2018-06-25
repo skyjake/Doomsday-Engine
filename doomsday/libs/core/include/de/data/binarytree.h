@@ -132,7 +132,7 @@ public:
             return *_parent;
         }
         /// @throw MissingParentError Attempted with no parent linked.
-        throw MissingParentError("BinaryTree::parent", QString("No parent is linked"));
+        throw MissingParentError("BinaryTree::parent", "No parent is linked");
     }
 
     /**
@@ -255,8 +255,8 @@ public:
             return **adr;
         }
         /// @throw MissingChildError Attempted with no child linked.
-        throw MissingChildError("BinaryTree::child", QString("No %1 child is linked")
-                                                        .arg(which? "Left" : "Right"));
+        throw MissingChildError("BinaryTree::child",
+                                stringf("No %s child is linked", which ? "Left" : "Right"));
     }
 
     /**
@@ -331,7 +331,7 @@ public:
      * Retrieve the height of this tree.
      * @return  Tree height.
      */
-    size_t height() const
+    dsize height() const
     {
         if (!isLeaf())
         {
@@ -409,7 +409,7 @@ public:
      * @return  @c 0= iff all callbacks complete wholly else the return value of the
      * callback last made.
      */
-    int traversePreOrder(int (*callback) (BinaryTree &, void *), void *parameters = 0)
+    int traversePreOrder(int (*callback) (BinaryTree &, void *), void *parameters = nullptr)
     {
         if (!callback) return false; // Continue iteration.
 
@@ -444,7 +444,7 @@ public:
      * @return  @c 0= iff all callbacks complete wholly else the return value of the
      * callback last made.
      */
-    int traverseInOrder(int (*callback) (BinaryTree &, void *), void *parameters = 0)
+    int traverseInOrder(int (*callback) (BinaryTree &, void *), void *parameters = nullptr)
     {
         if (!callback) return false; // Continue iteration.
 
@@ -479,7 +479,7 @@ public:
      * @return  @c 0= iff all callbacks complete wholly else the return value of the
      * callback last made.
      */
-    int traversePostOrder(int (*callback) (BinaryTree &, void *), void *parameters = 0)
+    int traversePostOrder(int (*callback) (BinaryTree &, void *), void *parameters = nullptr)
     {
         if (!callback) return false; // Continue iteration.
 
@@ -504,14 +504,12 @@ public:
      */
     String summary() const
     {
-        String text = String("%1 nodes, %2 leafs")
-                        .arg(nodeCount())
-                        .arg(leafCount());
+        String text = String::format("%i nodes, %i leafs", nodeCount(), leafCount());
         if (!isLeaf())
         {
-            text += String(" (balance is %1:%2)")
-                        .arg(hasRight()? right().height() : 0)
-                        .arg(hasLeft() ? left ().height() : 0);
+            text += stringf(" (balance is %zu:%zu)",
+                            hasRight() ? right().height() : 0,
+                            hasLeft() ? left().height() : 0);
         }
         return text;
     }

@@ -102,9 +102,7 @@ private:
     Type _id;
 };
 
-//DE_PUBLIC QTextStream &operator << (QTextStream &os, Id const &id);
-
-//inline uint qHash(Id const &id) { return id; }
+DE_PUBLIC std::ostream &operator<<(std::ostream &os, Id const &id);
 
 /**
  * Utility for declaring identifiers that are initially uninitialized.
@@ -117,5 +115,15 @@ public:
 };
 
 } // namespace de
+
+namespace std
+{
+    template<>
+    struct hash<de::Id> {
+        std::size_t operator()(const de::Id &key) const {
+            return hash<uint32_t>()(key.asUInt32());
+        }
+    };
+}
 
 #endif // LIBCORE_ID_H

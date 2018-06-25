@@ -47,6 +47,13 @@ String RegExpMatch::captured(int index) const
     return String::take(captured_RegExpMatch(&match, index));
 }
 
+CString RegExpMatch::capturedCStr(int index) const
+{
+    iRangecc range;
+    capturedRange_RegExpMatch(&match, index, &range);
+    return range;
+}
+
 RegExp::RegExp(const String &expression, Sensitivity cs)
 {
     _d = new_RegExp(expression, cs == CaseSensitive? caseSensitive_RegExpOption

@@ -351,8 +351,8 @@
 #if defined(__cplusplus) && !defined(DE_C_API_ONLY)
 namespace de {
 
-DE_PUBLIC void debug(const char *, ...);
-DE_PUBLIC void warning(const char *, ...);
+DE_PUBLIC void debug    (const char *, ...);
+DE_PUBLIC void warning  (const char *, ...);
 
 /**
  * Formats a string using the standard C printf() syntax.
