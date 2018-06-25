@@ -36,13 +36,12 @@ namespace de { typedef QtNativeFont PlatformFont; }
 #endif
 
 namespace de {
+namespace internal {
 
-namespace internal
-{
     struct FontParams
     {
-        String family;
-        float size;
+    String           family;
+    float            size;
         NativeFont::Spec spec;
 
         FontParams() {}
@@ -58,24 +57,28 @@ namespace internal
 
         bool operator==(FontParams const &other) const
         {
-            return fequal(size, other.size)
-                && spec == other.spec
-                && family == other.family;
+        return fequal(size, other.size) && spec == other.spec && family == other.family;
         }
     };
 
-    static uint qHash(FontParams const &params)
-    {
-        return ::qHash(params.family)
-             ^ ::qHash(int(100 * params.size))
-             ^ ::qHash(params.spec.weight)
-             ^ ::qHash(int(params.spec.style))
-             ^ uint(params.spec.transform);
-    }
-}
+}} // namespace de::internal
 
-namespace internal
-{
+namespace std {
+template<>
+struct hash<de::internal::FontParams> {
+    std::size_t operator()(const de::internal::FontParams &fp) const {
+        return hash<de::String>()(fp.family)
+             ^ hash<int>()(int(100 * fp.size))
+             ^ hash<int>()(fp.spec.weight)
+             ^ hash<int>()(int(fp.spec.style))
+             ^ hash<int>()(fp.spec.transform);
+    }
+};
+} // namespace std
+
+namespace de {
+namespace internal {
+
     struct ThreadFonts
     {
         PlatformFont font;
@@ -85,7 +88,8 @@ namespace internal
             fontMods.deleteAll();
         }
     };
-}
+
+} // namespace internal
 
 /**
  * Each thread uses its own independent set of native font instances. This allows
@@ -197,22 +201,28 @@ DE_PIMPL(Font)
         lineSpacingRule->set(plat.font.lineSpacing());
     }
 
+    static PlatformFont makePlatformFont(const internal::FontParams &params)
+    {
+        PlatformFont pf;
+        pf.setFamily(params.family);
+        pf.setSize(params.size);
+        pf.setStyle(params.spec.style);
+        pf.setWeight(params.spec.weight);
+        pf.setTransform(params.spec.transform);
+        return pf;
+    }
+
     PlatformFont &getFontMod(internal::FontParams const &params)
     {
         auto &plat = getThreadFonts();
 
-        auto found = plat.fontMods.constFind(params);
-        if (found != plat.fontMods.constEnd())
+        auto found = plat.fontMods.find(params);
+        if (found != plat.fontMods.end())
         {
-            return *found.value();
+            return *found->second;
         }
 
-        auto *mod = new PlatformFont;
-        mod->setFamily(params.family);
-        mod->setSize(params.size);
-        mod->setStyle(params.spec.style);
-        mod->setWeight(params.spec.weight);
-        mod->setTransform(params.spec.transform);
+        PlatformFont *mod = new PlatformFont(makePlatformFont(params));
         plat.fontMods.insert(params, mod);
         return *mod;
     }
@@ -378,8 +388,7 @@ Image Font::rasterize(String const &       textLine,
     Image::Color fg = foreground;
     Image::Color bg = background;
 
-    Image img(Size(bounds.width(),
-                     de::max(duint(plat.font.height()), bounds.height())),
+    Image img(Image::Size(bounds.width(), de::max(duint(plat.font.height()), bounds.height())),
                Image::RGBA_8888);
     img.fill(bgColor);
 
@@ -434,10 +443,10 @@ Image Font::rasterize(String const &       textLine,
         }
 #endif
 
-        QImage fragment = font->rasterize(part, fg, bg);
+        Image fragment = font->rasterize(part, fg, bg);
         Rectanglei const bounds = font->measure(part);
 
-        painter.drawImage(QPoint(advance + bounds.left(), d->ascent + bounds.top()), fragment);
+        img.draw(fragment, Vec2i(advance + bounds.left(), d->ascent + bounds.top()));
         advance += font->width(part);
     }
     return img;

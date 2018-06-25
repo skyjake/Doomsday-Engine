@@ -58,8 +58,8 @@ DE_PIMPL(Drawable)
 
     void clear()
     {
-        qDeleteAll(programs.values());
-        qDeleteAll(states.values());
+        programs.deleteAll();
+        states.deleteAll();
 
         defaultProgram.clear();
 
@@ -76,24 +76,24 @@ DE_PIMPL(Drawable)
     Id nextBufferId() const
     {
         Id next = 1;
-        // Keys of a QMap are sorted in ascending order.
-        if (!buffers.isEmpty()) next = buffers.keys().back() + 1;
+        // Keys of a Map are sorted in ascending order.
+        if (!buffers.empty()) next = buffers.rbegin()->first + 1;
         return next;
     }
 
     Id nextProgramId() const
     {
         Id next = 1;
-        // Keys of a QMap are sorted in ascending order.
-        if (!programs.isEmpty()) next = programs.keys().back() + 1;
+        // Keys of a Map are sorted in ascending order.
+        if (!programs.empty()) next = programs.rbegin()->first + 1;
         return next;
     }
 
     Id nextStateId() const
     {
         Id next = 1;
-        // Keys of a QMap are sorted in ascending order.
-        if (!states.isEmpty()) next = states.keys().back() + 1;
+        // Keys of a Map are sorted in ascending order.
+        if (!states.empty()) next = states.rbegin()->first + 1;
         return next;
     }
 
@@ -101,9 +101,9 @@ DE_PIMPL(Drawable)
     {
         DE_FOR_EACH(BufferConfigs, i, configs)
         {
-            if (i.value().program == src)
+            if (i->second.program == src)
             {
-                i.value().program = dest;
+                i->second.program = dest;
             }
         }
     }
@@ -112,22 +112,24 @@ DE_PIMPL(Drawable)
     {
         DE_FOR_EACH(BufferConfigs, i, configs)
         {
-            if (i.value().state == src)
+            if (i->second.state == src)
             {
-                i.value().state = dest;
+                i->second.state = dest;
             }
         }
     }
 
     void removeName(Names &names, Id id)
     {
-        QMutableMapIterator<String, Id> iter(names);
-        while (iter.hasNext())
+        for (auto i = names.begin(); i != names.end(); )
         {
-            iter.next();
-            if (iter.value() == id)
+            if (i->second == id)
             {
-                iter.remove();
+                i = names.erase(i);
+            }
+            else
+            {
+                ++i;
             }
         }
     }
@@ -143,14 +145,14 @@ void Drawable::clear()
 
 Drawable::Ids Drawable::allBuffers() const
 {
-    return d->buffers.keys();
+    return map<Ids>(d->buffers, [](const Impl::Buffers::value_type &v) { return v.first; });
 }
 
 Drawable::Ids Drawable::allPrograms() const
 {
     Ids ids;
     ids << 0 // default program is always there
-        << d->programs.keys();
+        << map<Ids>(d->programs, [](const Impl::Programs::value_type &v) { return v.first; }); //d->programs.keys();
     return ids;
 }
 
