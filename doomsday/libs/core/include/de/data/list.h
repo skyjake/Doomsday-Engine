@@ -107,6 +107,11 @@ public:
         Base::push_back(value);
         return *this;
     }
+    inline List &operator<<(const List &other)
+    {
+        for (const T &v : other) *this << v;
+        return *this;
+    }
 
     void sort() { std::sort(begin(), end()); }
 };
