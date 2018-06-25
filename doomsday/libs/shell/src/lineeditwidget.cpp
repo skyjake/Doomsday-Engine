@@ -66,11 +66,11 @@ Vec2i LineEditWidget::cursorPosition() const
 {
     de::Rectanglei pos = rule().recti();
     // Calculate CharPos on the cursor's line.
-    const auto      linePos     = lineCursorPos();
-    const auto      curLineSpan = lineWraps().line(linePos.line);
-    String::CharPos x           = lineWraps().rangeWidth({curLineSpan.range.start, linePos.x});
-    int             y           = linePos.line;
-    return pos.topLeft + Vec2i(prompt().sizei(), 0) + Vec2i(x.index, y);
+    const auto linePos     = lineCursorPos();
+    const auto curLineSpan = lineWraps().line(linePos.line);
+    WrapWidth  x           = lineWraps().rangeWidth(curLineSpan.range.left(linePos.x));
+    int        y           = linePos.line;
+    return pos.topLeft + Vec2i(prompt().sizei(), 0) + Vec2i(x, y);
 }
 
 void LineEditWidget::viewResized()

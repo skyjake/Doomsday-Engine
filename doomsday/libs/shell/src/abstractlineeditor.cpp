@@ -88,7 +88,7 @@ DE_PIMPL(AbstractLineEditor)
      */
     void updateWraps()
     {
-        wraps->wrapTextToWidth(text, String::CharPos(max(1, self().maximumWidth())));
+        wraps->wrapTextToWidth(text, max(1, self().maximumWidth()));
 
         if (wraps->height() > 0)
         {
@@ -113,18 +113,22 @@ DE_PIMPL(AbstractLineEditor)
             WrappedLine span = lineSpan(pos.line);
             if (!span.isFinal)
             {
-                span.range.end = (iterator(span.range.end) - 1).pos();
+                span.range.setEnd(span.range.end() - 1);
             }
-            if (mark >= span.range.start && mark <= span.range.end)
+            if (mark >= span.range.begin().pos(text) && mark <= span.range.end().pos(text))
             {
                 // Stop here. Mark is on this line.
                 break;
             }
-            pos.x -= span.range.size().index;
-            pos.x = (iterator(pos.x) - 1).pos();
-            //pos.x -= (span.range.end - span.range.start + 1).index;
+            pos.x -= span.range.size();
+            pos.x = (iterator(pos.x) - 1).pos(text);
         }
         return pos;
+    }
+
+    const char *cursorPtr() const
+    {
+        return text.data() + cursor;
     }
 
     /**
@@ -140,7 +144,7 @@ DE_PIMPL(AbstractLineEditor)
         DE_ASSERT(lineOff == 1 || lineOff == -1);
 
         const LineBytePos linePos = lineCursorPos();
-        const auto destWidth      = wraps->rangeWidth({lineSpan(linePos.line).range.start, cursor});
+        const auto destWidth = wraps->rangeWidth({lineSpan(linePos.line).range.begin(), cursorPtr()});
 
         // Check for no room.
         if (!linePos.line && lineOff < 0) return false;
@@ -152,9 +156,12 @@ DE_PIMPL(AbstractLineEditor)
         if (!span.isFinal)
         {
             // Step back by one character.
-            span.range.end = (iterator(span.range.end) - 1).pos();
+            span.range.setEnd(span.range.end() - 1);
         }
-        if (cursor > span.range.end) cursor = span.range.end;
+        if (cursorPtr() > span.range.end())
+        {
+            cursor = span.range.end().pos(text);
+        }
 
         self().cursorMoved();
         return true;
@@ -281,7 +288,7 @@ DE_PIMPL(AbstractLineEditor)
     {
         acceptCompletion();
 
-        cursor = lineSpan(lineCursorPos().line).range.start;
+        cursor = lineSpan(lineCursorPos().line).range.begin().pos(text);
         self().cursorMoved();
     }
 
@@ -290,17 +297,19 @@ DE_PIMPL(AbstractLineEditor)
         acceptCompletion();
 
         WrappedLine const span = lineSpan(lineCursorPos().line);
-        cursor = span.range.end; // - (span.isFinal? 0 : 1);
+        mb_iterator p = span.range.end();
         if (!span.isFinal)
         {
-            cursor = (iterator(cursor) - 1).pos();
+            --p;
         }
+        cursor = p.pos(text);
         self().cursorMoved();
     }
 
     void killEndOfLine()
     {
-        text.remove(cursor, lineSpan(lineCursorPos().line).range.end - cursor);
+        text.remove(cursor,
+                    CString(cursorPtr(), lineSpan(lineCursorPos().line).range.end()).size());
         rewrapNow();
     }
 

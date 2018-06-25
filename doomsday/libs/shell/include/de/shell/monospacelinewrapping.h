@@ -34,9 +34,8 @@ class LIBSHELL_PUBLIC MonospaceLineWrapping : public ILineWrapping
 public:
     MonospaceLineWrapping();
 
-    bool isEmpty() const;
-
-    void clear();
+    bool isEmpty() const override;
+    void clear() override;
 
     /**
      * Determines word wrapping for a line of text given a maximum line width.
@@ -47,13 +46,13 @@ public:
      * @return List of positions in @a text where to break the lines. Total number
      * of word-wrapped lines is equal to the size of the returned list.
      */
-    void wrapTextToWidth(String const &text, String::CharPos maxWidth);
+    void wrapTextToWidth(String const &text, WrapWidth maxWidth) override;
 
-    WrappedLine     line(int index) const { return _lines[index]; }
-    String::CharPos width() const;
-    int             height() const;
-    String::CharPos rangeWidth(const String::ByteRange &range) const;
-    BytePos         indexAtWidth(const String::ByteRange &range, String::CharPos width) const;
+    WrappedLine line(int index) const override { return _lines[index]; }
+    WrapWidth   width() const override;
+    int         height() const override;
+    WrapWidth   rangeWidth(const CString &range) const override;
+    BytePos     indexAtWidth(const CString &range, WrapWidth width) const override;
 
 private:
     String            _text;

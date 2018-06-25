@@ -230,22 +230,22 @@ void TextCanvas::drawWrappedText(const Vec2i &              pos,
                                  const AttribChar::Attribs &attribs,
                                  const Alignment &          lineAlignment)
 {
-    const int width = wraps.width().index;
+    const int width = wraps.width();
 
     for (int y = 0; y < wraps.height(); ++y)
     {
         const WrappedLine span = wraps.line(y);
-        String part = text.substr(span.range);
+        const auto part = span.range;
         int x = 0;
         if (lineAlignment.testFlag(AlignRight))
         {
-            x = width - part.sizei();
+            x = width - span.width; //part.sizei();
         }
         else if (!lineAlignment.testFlag(AlignLeft))
         {
-            x = width/2 - part.sizei()/2;
+            x = width/2 - span.width/2;
         }
-        drawText(pos + Vec2i(x, y), part, attribs, span.range.start);
+        drawText(pos + Vec2i(x, y), part, attribs, span.range.begin().pos(text));
     }
 }
 

@@ -21,7 +21,7 @@
 
 #include <de/Address>
 #include <de/Range>
-#include <de/String>
+#include <de/CString>
 
 /** @defgroup shell Shell Access */
 
@@ -62,16 +62,18 @@ inline Address checkPort(Address const &address)
     return address;
 }
 
+using WrapWidth = duint;
+
 /**
  * Line of word-wrapped text.
  */
 struct LIBSHELL_PUBLIC WrappedLine
 {
-    String::ByteRange range;
-    String::CharPos   width;
-    bool              isFinal;
+    CString   range;
+    WrapWidth width;
+    bool      isFinal;
 
-    WrappedLine(const String::ByteRange &range, const String::CharPos &width, bool final = false)
+    WrappedLine(const CString &range, WrapWidth width, bool final = false)
         : range(range)
         , width(width)
         , isFinal(final)
@@ -83,28 +85,30 @@ class LIBSHELL_PUBLIC ILineWrapping
 public:
     virtual ~ILineWrapping() {}
 
-    virtual bool        isEmpty() const                                               = 0;
-    virtual void        clear()                                                       = 0;
-    virtual void        wrapTextToWidth(String const &text, String::CharPos maxWidth) = 0;
-    virtual WrappedLine line(int index) const                                         = 0;
+    virtual bool        isEmpty() const                                         = 0;
+    virtual void        clear()                                                 = 0;
+    virtual void        wrapTextToWidth(String const &text, WrapWidth maxWidth) = 0;
+    virtual WrappedLine line(int index) const                                   = 0;
 
     /// Determines the visible maximum width of the wrapped content.
-    virtual String::CharPos width() const = 0;
+    virtual WrapWidth width() const = 0;
 
     /// Determines the number of lines in the wrapped content.
     virtual int height() const = 0;
 
     /// Returns the advance width of the range.
-    virtual String::CharPos rangeWidth(const String::ByteRange &range) const = 0;
+    virtual WrapWidth rangeWidth(const CString &range) const = 0;
 
     /**
-     * Calculates which index in the provided content range occupies a
-     * character at a given width.
+     * Calculates which index in the text content occupies a character at a given width.
      *
      * @param range  Range within the content.
      * @param width  Advance width to check.
+     *
+     * @return Index from the beginning of the content (note: @em NOT the beginning
+     * of @a range).
      */
-    virtual BytePos indexAtWidth(const String::ByteRange &range, String::CharPos width) const = 0;
+    virtual BytePos indexAtWidth(const CString &range, WrapWidth width) const = 0;
 };
 
 } // namespace shell
