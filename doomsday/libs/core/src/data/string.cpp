@@ -1077,7 +1077,8 @@ String::const_reverse_iterator::const_reverse_iterator(const String &str)
 //------------------------------------------------------------------------------------------------
 
 mb_iterator::mb_iterator(const String &str)
-    : i(str.data()), start(str.data())
+    : i(str.data())
+    , start(str.data())
 {}
 
 Char mb_iterator::operator*() const
@@ -1165,6 +1166,11 @@ mb_iterator mb_iterator::operator-(int offset) const
 mb_iterator &mb_iterator::operator-=(int offset)
 {
     return (*this) += -offset;
+}
+
+BytePos mb_iterator::pos(const String &reference) const
+{
+    return BytePos(i - reference.c_str());
 }
 
 //------------------------------------------------------------------------------------------------

@@ -23,6 +23,13 @@ namespace de {
 
 dsize CString::npos = dsize(-1);
 
+dsize CString::length() const
+{
+    dsize len = 0;
+    for (auto i = begin(), j = end(); i != j; ++i, ++len) {}
+    return len;
+}
+
 bool CString::contains(char ch) const
 {
     updateEnd();
@@ -36,7 +43,7 @@ bool CString::contains(char ch) const
 bool CString::endsWith(const CString &suffix, Sensitivity cs) const
 {
     if (suffix.size() > size()) return false;
-    return CString(end() - suffix.size(), end()).compare(suffix, cs) == 0;
+    return CString(_range.end - suffix.size(), end()).compare(suffix, cs) == 0;
 }
 
 dsize CString::indexOf(char ch, size_t from) const

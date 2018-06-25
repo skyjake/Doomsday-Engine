@@ -114,6 +114,8 @@ struct DE_PUBLIC mb_iterator
     explicit operator bool() const { return i != nullptr; }
 
     BytePos pos() const { return BytePos(i - start); }
+    BytePos pos(const char *reference) const { return BytePos(i - reference); }
+    BytePos pos(const String &reference) const;
 
     Char decode() const;
 };

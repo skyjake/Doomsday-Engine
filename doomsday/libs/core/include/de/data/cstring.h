@@ -35,7 +35,7 @@ class DE_PUBLIC CString
 public:
     CString() : _range{nullptr, nullptr} {}
     CString(const char *cStr) : _range{cStr, nullptr} {} // lazy init
-    CString(const char *start, const char *end) : _range{start, end} {}
+    CString(const char *start, const char *end) : _range{start, end} { DE_ASSERT(end >= start); }
     CString(const std::string &str) : _range{str.data(), str.data() + str.size()} {}
     CString(const String &str) : _range{str.data(), str.data() + str.size()} {}
     CString(const Rangecc &cc) : _range{cc} {}
@@ -65,21 +65,25 @@ public:
     }
     inline bool isEmpty() const { return size() == 0; }
     inline bool empty() const { return size() == 0; }
+    inline void setEnd(const char *p) { _range.end = p; }
+    const char *ptr(BytePos pos = BytePos(0)) const { return _range.start + pos; }
+    dsize length() const;
     bool contains(char ch) const;
     bool endsWith(const CString &suffix, Sensitivity cs = CaseSensitive) const;
     dsize indexOf(char ch, size_t from = 0) const;
     dsize indexOf(const char *cStr, size_t from = 0) const;
     CString substr(size_t start, size_t count = npos) const;
-    inline const char *begin() const { return _range.start; }
-    inline const char *end() const { updateEnd(); return _range.end; }
+    CString left(BytePos pos) const { return {_range.start, _range.start + pos}; }
+    inline mb_iterator begin() const { return _range.start; }
+    inline mb_iterator end() const { updateEnd(); return {_range.end, _range.start}; }
     int compare(const CString &other, Sensitivity cs = CaseSensitive) const;
     int compare(const char *cStr, Sensitivity cs = CaseSensitive) const;
     inline bool operator==(const char *cStr) const { return compare(cStr) == 0; }
     inline bool operator==(const CString &other) const { return compare(other) == 0; }
-    Char first() const { return *mb_iterator(begin()); }
+    Char first() const { return *begin(); }
     String lower() const;
     String upper() const;
-    std::string toStdString() const { return {begin(), end()}; }
+    std::string toStdString() const { updateEnd(); return {_range.start, _range.end}; }
 
     static size_t npos;
 
