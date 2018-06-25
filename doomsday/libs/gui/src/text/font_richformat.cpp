@@ -76,7 +76,7 @@ DE_PIMPL_NOREF(Font::RichFormat)
 
     void handlePlainText(const CString &range)
     {
-        Rangei plainRange(plainPos, plainPos + range.size());
+        Rangei plainRange(plainPos, plainPos + int(range.size()));
         plainPos += range.size();
 
         // Append a formatted range using the stack's current format.
@@ -91,19 +91,21 @@ DE_PIMPL_NOREF(Font::RichFormat)
         // Save the previous format on the stack.
         stack << Impl::Format(stack.last());
 
-        String const code = esc.originalText().substr(range);
+        //String const code = range.toString();esc.originalText().substr(range);
+        mb_iterator iter = range.begin();
 
         // Check the escape sequence.
-        char ch = code[0].toLatin1();
+        Char ch = *iter++; //code[0].toLatin1();
 
         switch (ch)
         {
         case '(':
             // Sequence of tab stops effective in the entire content.
             tabs.clear();
-            for (int i = 1; i < code.size() - 1; ++i)
+            //for (int i = 1; i < code.size() - 1; ++i)
+            for (auto end = range.end() - 1; iter != end; ++iter)
             {
-                tabs << (code[i].toLatin1() - 'a' + 1);
+                tabs << (*iter - 'a' + 1);
             }
             break;
 
@@ -134,7 +136,7 @@ DE_PIMPL_NOREF(Font::RichFormat)
             break;
 
         case 'T':
-            stack.last().tabStop = de::max(-1, code[1].toLatin1() - 'a');
+            stack.last().tabStop = de::max(-1, *iter - 'a');
             // Note: _E(T`): tabStop -1, i.e., switch to untabbed
             break;
 
@@ -245,7 +247,7 @@ Font::RichFormat::IStyle const &Font::RichFormat::style() const
 Font::RichFormat Font::RichFormat::fromPlainText(String const &plainText)
 {
     Impl::FormatRange all;
-    all.range = Rangei(0, plainText.size());
+    all.range = Rangei(0, plainText.sizei());
     RichFormat form;
     form.d->ranges << all;
     return form;
@@ -303,7 +305,7 @@ int Font::RichFormat::tabStopXWidth(int stop) const
     int x = 0;
     for (int i = 0; i <= stop; ++i)
     {
-        if (i >= d->tabs.size())
+        if (i >= d->tabs.sizei())
             x += d->tabs.last();
         else
             x += d->tabs[i];
@@ -322,7 +324,8 @@ Font::RichFormat::Ref::Ref(Ref const &ref, Rangei const &subSpan)
 }
 
 Font::RichFormat::Ref::Ref(RichFormat const &richFormat)
-    : _ref(richFormat), _indices(0, richFormat.d->ranges.size())
+    : _ref(richFormat)
+    , _indices(0, richFormat.d->ranges.sizei())
 {
     if (!richFormat.d->ranges.isEmpty())
     {
@@ -381,7 +384,7 @@ void Font::RichFormat::Ref::updateIndices()
     Impl::Ranges const &ranges = format().d->ranges;
 
     int i = 0;
-    for (; i < ranges.size(); ++i)
+    for (; i < ranges.sizei(); ++i)
     {
         Rangei const &r = ranges.at(i).range;
         if (r.end > _span.start)
@@ -391,7 +394,7 @@ void Font::RichFormat::Ref::updateIndices()
             break;
         }
     }
-    for (++i; i < ranges.size(); ++i, ++_indices.end)
+    for (++i; i < ranges.sizei(); ++i, ++_indices.end)
     {
         // Empty ranges are accepted at the end of the span.
         Rangei const &r = ranges.at(i).range;
@@ -429,9 +432,10 @@ bool Font::RichFormat::Iterator::isDefault() const
             colorIndex() == OriginalColor);
 }
 
-Rangei Font::RichFormat::Iterator::range() const
+String::ByteRange Font::RichFormat::Iterator::range() const
 {
-    return format.range(index);
+    const auto r = format.range(index);
+    return {BytePos(r.start), BytePos(r.end)};
 }
 
 #define REF_RANGE_AT(Idx) format.format().d->ranges.at(format.rangeIndices().start + Idx)

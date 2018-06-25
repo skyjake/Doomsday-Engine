@@ -336,7 +336,6 @@ DE_PIMPL(Image)
 {
     Format       format;
     Size         size;
-//    Image        image;
     Block        pixels;
     ByteRefArray refPixels;
     float pointRatio = 1.f;
@@ -665,8 +664,14 @@ Image Image::subImage(Rectanglei const &subArea) const
 {
     IMAGE_ASSERT_EDITABLE(d);
 
-    return Image(d->image.copy(subArea.topLeft.x, subArea.topLeft.y,
-                               subArea.width(), subArea.height()));
+    Image sub(subArea.size(), d->format);
+
+    DE_ASSERT_FAIL("Image::subImage is not implemented");
+
+//    return Image(d->image.copy(subArea.topLeft.x, subArea.topLeft.y,
+//                               subArea.width(), subArea.height()));
+
+    return sub;
 }
 
 void Image::resize(Size const &size)
@@ -771,7 +776,7 @@ Image Image::colorized(Color const &color) const
 
     for (duint y = 0; y < height(); ++y)
     {
-        duint32 *ptr = reinterpret_cast<duint32 *>(copy.bits() + y * copy.bytesPerLine());
+        duint32 *ptr = reinterpret_cast<duint32 *>(copy.bits() + y * copy.stride());
         for (duint x = 0; x < width(); ++x)
         {
             duint16 b =  *ptr & 0xff;
@@ -779,11 +784,11 @@ Image Image::colorized(Color const &color) const
             duint16 r = (*ptr & 0xff0000) >> 16;
             duint16 a = (*ptr & 0xff000000) >> 24;
 
-            QColor rgba(r, g, b, a);
-            QColor colorized;
+            Color rgba(r, g, b, a);
+            Color colorized;
             colorized.setHsv(targetHue, rgba.saturation(), rgba.value(), color.w * a >> 8);
 
-            *ptr++ = colorized.rgba();
+            *ptr++ = packColor(colorized);
         }
     }
     return copy;
@@ -811,18 +816,19 @@ Image Image::mixed(Image const &low, Image const &high) const
         duint32 *ptr = reinterpret_cast<duint32 *>(mix.bits() + y * mix.stride());
         for (duint x = 0; x < width(); ++x)
         {
+            /// @todo Is this really meant to be BGRA?
             duint mb =  *ptr & 0xff;
             duint mg = (*ptr & 0xff00) >> 8;
             duint mr = (*ptr & 0xff0000) >> 16;
             duint ma = (*ptr & 0xff000000) >> 24;
 
-            const QRgb lowColor  = lowImg .pixel(x, y);
-            const QRgb highColor = highImg.pixel(x, y);
+            const auto lowColor  = lowImg .pixel(x, y);
+            const auto highColor = highImg.pixel(x, y);
 
-            int red   = (qRed(highColor)   * mr + qRed(lowColor)   * (255 - mr)) / 255;
-            int green = (qGreen(highColor) * mg + qGreen(lowColor) * (255 - mg)) / 255;
-            int blue  = (qBlue(highColor)  * mb + qBlue(lowColor)  * (255 - mb)) / 255;
-            int alpha = (qAlpha(highColor) * ma + qAlpha(lowColor) * (255 - ma)) / 255;
+            int red   = (highColor.x * mr + lowColor.x * (255 - mr)) / 255;
+            int green = (highColor.y * mg + lowColor.y * (255 - mg)) / 255;
+            int blue  = (highColor.z * mb + lowColor.z * (255 - mb)) / 255;
+            int alpha = (highColor.w * ma + lowColor.w * (255 - ma)) / 255;
 
             *ptr = blue | (green << 8) | (red << 16) | (alpha << 24);
 
@@ -835,7 +841,7 @@ Image Image::mixed(Image const &low, Image const &high) const
 Image Image::withAlpha(Image const &grayscale) const
 {
     DE_ASSERT(size() == grayscale.size());
-    const Image &alpha = grayscale;//.toQImage();
+    const Image &alpha = grayscale;
     Image img = convertToFormat(RGBA_8888);
     for (duint y = 0; y < height(); ++y)
     {
@@ -843,7 +849,7 @@ Image Image::withAlpha(Image const &grayscale) const
         for (duint x = 0; x < width(); ++x)
         {
             *ptr &= 0x00ffffff;
-            *ptr++ |= qRed(alpha.pixel(x, y)) << 24;
+            *ptr++ |= alpha.pixel(x, y).x << 24;
         }
     }
     return img;
@@ -897,15 +903,15 @@ void Image::operator>>(Writer &to) const
 {
     to << duint8(d->format);
 
-    if (d->format == UseQImageFormat)
-    {
-        Block block;
-        QDataStream os(&block, QIODevice::WriteOnly);
-        os.setVersion(QDataStream::Qt_4_8);
-        os << d->image;
-        to << block;
-    }
-    else
+//    if (d->format == UseQImageFormat)
+//    {
+//        Block block;
+//        QDataStream os(&block, QIODevice::WriteOnly);
+//        os.setVersion(QDataStream::Qt_4_8);
+//        os << d->image;
+//        to << block;
+//    }
+//    else
     {
         to << d->size << ByteRefArray(bits(), byteCount());
     }
@@ -918,18 +924,18 @@ void Image::operator<<(Reader &from)
 
     from.readAs<duint8>(d->format);
 
-    if (d->format == UseQImageFormat)
-    {
-        Block block;
-        from >> block;
-        QDataStream is(block);
-        is.setVersion(QDataStream::Qt_4_8);
-        is >> d->image;
+//    if (d->format == UseQImageFormat)
+//    {
+//        Block block;
+//        from >> block;
+//        QDataStream is(block);
+//        is.setVersion(QDataStream::Qt_4_8);
+//        is >> d->image;
 
-        d->size.x = d->image.width();
-        d->size.y = d->image.height();
-    }
-    else
+//        d->size.x = d->image.width();
+//        d->size.y = d->image.height();
+//    }
+//    else
     {
         from >> d->size >> d->pixels;
     }
@@ -1075,8 +1081,8 @@ GLPixelFormat Image::glFormat(QImage::Format format)
 
 Image Image::solidColor(Color const &color, Size const &size)
 {
-    QImage img(QSize(size.x, size.y), QImage::Format_ARGB32);
-    img.fill(QColor(color.x, color.y, color.z, color.w).rgba());
+    Image img(size, Image::RGBA_8888);
+    img.fill(color);
     return img;
 }
 
@@ -1093,23 +1099,37 @@ Image Image::fromData(Block const &data, String const &formatHint)
         return tga::load(data);
     }
 
-    // Qt does not support PCX images (too old school?).
     if (pcx::recognize(data))
     {
         return pcx::load(data);
     }
 
-    /// @todo Could check when alpha channel isn't needed and return an RGB888
-    /// image instead. -jk
-    return QImage::fromData(data).convertToFormat(QImage::Format_ARGB32);
+    // STB provides readers for various formats.
+    {
+        int w, h, num;
+        auto *pixels = stbi_load_from_memory(data.data(), int(data.size()),
+                                             &w, &h, &num, 0);
+        if (pixels)
+        {
+            Image img;
+            img.d->size   = Size(w, h);
+            img.d->format = (num == 4 ? RGBA_8888 :
+                             num == 3 ? RGB_888 :
+                             num == 2 ? LuminanceAlpha_88 : Luminance_8);
+            img.d->pixels = Block(pixels, num * w * h); // makes an extra copy...
+            stbi_image_free(pixels);
+        }
+    }
+
+    return {};
 }
 
 Image Image::fromRgbaData(const Size &size, const IByteArray &rgba)
 {
-    QImage img(size.x, size.y, QImage::Format_ARGB32);
+    Image img(size, Image::RGBA_8888);
     for (duint y = 0; y < size.y; ++y)
     {
-        rgba.get(size.x * y * 4, img.scanLine(y), size.x * 4);
+        rgba.get(size.x * y * 4, img.row(y), size.x * 4);
     }
     return img;
 }

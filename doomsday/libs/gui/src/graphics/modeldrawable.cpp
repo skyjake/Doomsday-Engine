@@ -332,7 +332,7 @@ DE_PIMPL(ModelDrawable)
             struct MeshTextures
             {
                 Id::Type texIds[MAX_TEXTURES];
-                Hash<TextureMap, String> customPaths;
+                Hash<int /*TextureMap*/, String> customPaths;
 
                 MeshTextures() { zap(texIds); }
             };
@@ -602,11 +602,11 @@ DE_PIMPL(ModelDrawable)
             needMakeBuffer = true;
         }
 
-        void setTextureMapping(Mapping mapsToUse)
+        void setTextureMapping(const Mapping &mapsToUse)
         {
             for (int i = 0; i < MAX_TEXTURES; ++i)
             {
-                textureOrder[i] = (i < mapsToUse.size()? mapsToUse.at(i) : Unknown);
+                textureOrder[i] = (i < mapsToUse.sizei()? mapsToUse.at(i) : Unknown);
 
                 // Height is an alias for normals.
                 if (textureOrder[i] == Height) textureOrder[i] = Normals;
@@ -671,7 +671,7 @@ DE_PIMPL(ModelDrawable)
                     fileName.fileNameExtension() == ".md5anim")
                 {
                     if (!anims.isEmpty()) anims += ";";
-                    anims += fileName.substr(baseName.size()).fileNameWithoutExtension();
+                    anims += fileName.substr(baseName.sizeb()).fileNameWithoutExtension();
                 }
                 return LoopContinue;
             });

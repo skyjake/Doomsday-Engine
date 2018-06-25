@@ -55,7 +55,7 @@ public:
 
     void deleteAll()
     {
-        for (auto i : *this) { delete i->second; }
+        for (const auto &i : *this) { delete i.second; }
     }
 };
 

@@ -152,13 +152,13 @@ Drawable::Ids Drawable::allPrograms() const
 {
     Ids ids;
     ids << 0 // default program is always there
-        << map<Ids>(d->programs, [](const Impl::Programs::value_type &v) { return v.first; }); //d->programs.keys();
+        << map<Ids>(d->programs, [](const Impl::Programs::value_type &v) { return v.first; });
     return ids;
 }
 
 Drawable::Ids Drawable::allStates() const
 {
-    return d->states.keys();
+    return map<Ids>(d->states, [](const Impl::States::value_type &v) { return v.first; });
 }
 
 bool Drawable::hasBuffer(Id id) const
@@ -205,7 +205,7 @@ Drawable::Id Drawable::programId(Name const &programName) const
 GLProgram const &Drawable::programForBuffer(Id bufferId) const
 {
     DE_ASSERT(d->configs.contains(bufferId));
-    DE_ASSERT(d->configs[bufferId].program != 0);
+    DE_ASSERT(d->configs[bufferId].program != nullptr);
     return *d->configs[bufferId].program;
 }
 
@@ -246,7 +246,7 @@ void Drawable::addBuffer(Id id, GLBuffer *buffer)
     addBuffer(id, std::shared_ptr<GLBuffer>(buffer));
 }
 
-void Drawable::addBuffer(Id id, std::shared_ptr<GLBuffer> buffer)
+void Drawable::addBuffer(Id id, const std::shared_ptr<GLBuffer>& buffer)
 {
     removeBuffer(id);
 
@@ -268,7 +268,7 @@ Drawable::Id Drawable::addBuffer(GLBuffer *buffer)
     return addBuffer(std::shared_ptr<GLBuffer>(buffer));
 }
 
-Drawable::Id Drawable::addBuffer(std::shared_ptr<GLBuffer> buffer)
+Drawable::Id Drawable::addBuffer(const std::shared_ptr<GLBuffer>& buffer)
 {
     Id const id = d->nextBufferId();
     addBuffer(id, buffer);
@@ -368,7 +368,7 @@ void Drawable::removeState(Id id)
     if (d->programs.contains(id))
     {
         GLState *st = d->states[id];
-        d->replaceState(st, 0);
+        d->replaceState(st, nullptr);
         delete d->states.take(id);
     }
 }

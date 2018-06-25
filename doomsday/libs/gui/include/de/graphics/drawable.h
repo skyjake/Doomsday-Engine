@@ -165,7 +165,7 @@ public:
      * @param id      Identifier of the buffer.
      * @param buffer  GL buffer.
      */
-    void addBuffer(Id id, std::shared_ptr<GLBuffer> buffer);
+    void addBuffer(Id id, const std::shared_ptr<GLBuffer>& buffer);
 
     Id addBuffer(Name const &bufferName, GLBuffer *buffer);
 
@@ -180,7 +180,7 @@ public:
      */
     Id addBuffer(GLBuffer *buffer);
 
-    Id addBuffer(std::shared_ptr<GLBuffer> buffer);
+    Id addBuffer(const std::shared_ptr<GLBuffer>& buffer);
 
     /**
      * Adds a new buffer, reserving an unused identifier for it. The chosen

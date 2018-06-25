@@ -84,7 +84,7 @@ public:
     typedef Vec2ui Size;
     typedef Vec4ub Color;
 
-    static inline uint32_t packColor(Color color)
+    static inline duint32 packColor(Color color)
     {
         return color.x | (color.y << 8) | (color.z << 16) | (color.w << 24);
     }

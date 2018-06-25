@@ -241,16 +241,17 @@ DE_PIMPL(GLState)
     {
         switch (e)
         {
-        case GL_ZERO: return gl::Zero;
-        case GL_ONE: return gl::One;
-        case GL_SRC_COLOR: return gl::SrcColor;
+        case GL_ZERO:                return gl::Zero;
+        case GL_ONE:                 return gl::One;
+        case GL_SRC_COLOR:           return gl::SrcColor;
         case GL_ONE_MINUS_SRC_COLOR: return gl::OneMinusSrcColor;
-        case GL_SRC_ALPHA: return gl::SrcAlpha;
+        case GL_SRC_ALPHA:           return gl::SrcAlpha;
         case GL_ONE_MINUS_SRC_ALPHA: return gl::OneMinusSrcAlpha;
-        case GL_DST_COLOR: return gl::DestColor;
+        case GL_DST_COLOR:           return gl::DestColor;
         case GL_ONE_MINUS_DST_COLOR: return gl::OneMinusDestColor;
-        case GL_DST_ALPHA: return gl::DestAlpha;
+        case GL_DST_ALPHA:           return gl::DestAlpha;
         case GL_ONE_MINUS_DST_ALPHA: return gl::OneMinusDestAlpha;
+        default: break;
         }
         return gl::Zero;
     }

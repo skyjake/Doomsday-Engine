@@ -250,16 +250,16 @@ public:
             /// Determines if all the style parameters are the same as the default ones.
             bool isDefault() const;
 
-            Rangei        range() const;
-            float         sizeFactor() const;
-            Weight        weight() const;
-            Style         style() const;
-            int           colorIndex() const;
-            IStyle::Color color() const;
-            bool          markIndent() const;
-            bool          resetIndent() const;
-            int           tabStop() const;
-            bool          isTabless() const; ///< Tabstop < 0.
+            String::ByteRange range() const;
+            float             sizeFactor() const;
+            Weight            weight() const;
+            Style             style() const;
+            int               colorIndex() const;
+            IStyle::Color     color() const;
+            bool              markIndent() const;
+            bool              resetIndent() const;
+            int               tabStop() const;
+            bool              isTabless() const; ///< Tabstop < 0.
         };
 
     private:
