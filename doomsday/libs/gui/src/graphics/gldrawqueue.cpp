@@ -28,7 +28,7 @@ namespace de {
 
 #ifdef DE_DEBUG
 extern int GLDrawQueue_queuedElems;
-int GLDrawQueue_queuedElems = 0;
+int        GLDrawQueue_queuedElems = 0;
 #endif
 
 DE_PIMPL_NOREF(GLDrawQueue)
@@ -36,7 +36,7 @@ DE_PIMPL_NOREF(GLDrawQueue)
     GLProgram *       currentProgram = nullptr;
     GLBuffer const *  currentBuffer  = nullptr;
     GLBuffer::Indices indices;
-    QList<GLBuffer *> indexBuffers;
+    List<GLBuffer *>  indexBuffers;
     int               indexBufferPos = 0;
 
     dsize batchIndex = 0;
@@ -54,12 +54,12 @@ DE_PIMPL_NOREF(GLDrawQueue)
 
     ~Impl()
     {
-        qDeleteAll(indexBuffers);
+        deleteAll(indexBuffers);
     }
 
     GLBuffer &nextIndexBuffer()
     {
-        if (indexBufferPos == indexBuffers.size())
+        if (indexBufferPos == indexBuffers.sizei())
         {
             // Allocate a new one.
             indexBuffers << new GLBuffer;
@@ -113,8 +113,8 @@ void GLDrawQueue::setProgram(GLProgram &program,
 
     if (batchUniformName)
     {
-        d->uBatchColors.reset(new GLUniform(batchUniformName, batchUniformType,
-                                            GLShader::MAX_BATCH_UNIFORMS));
+        d->uBatchColors.reset(
+            new GLUniform(batchUniformName, batchUniformType, GLShader::MAX_BATCH_UNIFORMS));
         program << *d->uBatchColors;
 
         // Other batch variables.
@@ -189,7 +189,7 @@ void GLDrawQueue::enqueueDraw(GLSubBuffer const &buffer)
     }
 
 #ifdef DE_DEBUG
-    GLDrawQueue_queuedElems = d->indices.size();
+    GLDrawQueue_queuedElems = d->indices.sizei();
 #endif
 }
 

@@ -470,7 +470,7 @@ void Drawable::setState(Name const &stateName)
 
 void Drawable::unsetState(Id bufferId)
 {
-    d->configs[bufferId].state = 0;
+    d->configs[bufferId].state = nullptr;
 }
 
 void Drawable::unsetState(Name const &bufferName)
@@ -526,7 +526,7 @@ void Drawable::draw() const
         }
 
         // Ready to draw.
-        i.value()->draw();
+        i.second->draw();
     }
 
     // Cleanup.

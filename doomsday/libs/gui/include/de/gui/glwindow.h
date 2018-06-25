@@ -74,14 +74,28 @@ public:
      */
     DE_DEFINE_AUDIENCE2(Swap, void windowSwapped(GLWindow &))
 
+    DE_DEFINE_AUDIENCE2(Move,       void windowMoved(GLWindow &, Vec2i))
+    DE_DEFINE_AUDIENCE2(Visibility, void windowVisibilityChanged(GLWindow &))
+
     DE_CAST_METHODS()
 
 public:
     GLWindow();
 
-    void setMinimumSize(const Size &minSize);
+    void        setMinimumSize(const Size &minSize);
+    void        setGeometry(const Rectanglei &rect);
+    inline void setGeometry(dint x, dint y, duint width, duint height)
+    {
+        setGeometry(Rectanglei{x, y, width, height});
+    }
+
     void makeCurrent();
     void doneCurrent();
+    void update();
+    void showNormal();
+    void showMaximized();
+    void showFullScreen();
+    void hide();
 
     bool isGLReady() const;
     bool isFullScreen() const;
@@ -104,6 +118,8 @@ public:
     Size pointSize() const;
     Size pixelSize() const;
     double pixelRatio() const;
+
+    inline Rectanglei geometry() const { return {x(), y(), pointSize().x, pointSize().y }; }
 
     int pointWidth() const;
     int pointHeight() const;
@@ -144,10 +160,8 @@ public:
      * @param path  Name of the file to save. May include a file extension
      *              that indicates which format to use (e.g, "screenshot.jpg").
      *              If omitted, defaults to PNG.
-     *
-     * @return @c true if successful, otherwise @c false.
      */
-    bool grabToFile(NativePath const &path) const;
+    void grabToFile(NativePath const &path) const;
 
     /**
      * Grabs the contents of the window framebuffer.
@@ -184,10 +198,10 @@ public:
      */
     void glDone();
 
-    /**
+    /*
      * Returns a handle to the native window instance. (Platform-specific.)
      */
-    void *nativeHandle() const;
+//    void *nativeHandle() const;
 
     virtual void draw() = 0;
 

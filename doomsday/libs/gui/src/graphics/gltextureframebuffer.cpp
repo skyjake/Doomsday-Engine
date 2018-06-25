@@ -35,12 +35,12 @@ DE_PIMPL(GLTextureFramebuffer)
         Image::Format format;
         std::shared_ptr<GLTexture> texture;
     };
-    Size          size;
-    int           _samples{0}; ///< don't touch directly (0 == default)
-    QList<ColorAttachment> color;
-    GLTexture     depthStencil;
-    GLFramebuffer resolvedFbo;
-    Asset         texFboState;
+    Size                  size;
+    int                   _samples{0}; ///< don't touch directly (0 == default)
+    List<ColorAttachment> color;
+    GLTexture             depthStencil;
+    GLFramebuffer         resolvedFbo;
+    Asset                 texFboState;
 
     Impl(Public *i)
         : Base(i)
@@ -70,9 +70,9 @@ DE_PIMPL(GLTextureFramebuffer)
         reconfigure();
     }
 
-    QList<GLTexture *> colorAttachments()
+    List<GLTexture *> colorAttachments()
     {
-        QList<GLTexture *> attachments;
+        List<GLTexture *> attachments;
         for (const auto &cb : color)
         {
             attachments << cb.texture.get();

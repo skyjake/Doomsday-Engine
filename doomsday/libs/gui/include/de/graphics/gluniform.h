@@ -81,9 +81,9 @@ public:
     DE_DEFINE_AUDIENCE2(Deletion, void uniformDeleted(GLUniform &))
 
 public:
-    GLUniform(char const *nameInShader, Type uniformType, duint elements = 1);
+    GLUniform(const Block &nameInShader, Type uniformType, duint elements = 1);
 
-    void setName(char const *nameInShader);
+    void setName(const Block &nameInShader);
 
     /**
      * Returns the name of the uniform as it appears in shaders.

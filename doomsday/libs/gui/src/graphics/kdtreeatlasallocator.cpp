@@ -214,7 +214,7 @@ DE_PIMPL(KdTreeAtlasAllocator)
 
         // Use the new layout.
         root = optimalRoot;
-        allocs = optimal;
+        allocs = std::move(optimal);
         return true;
     }
 };

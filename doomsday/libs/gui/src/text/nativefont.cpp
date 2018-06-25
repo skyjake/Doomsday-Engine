@@ -17,10 +17,12 @@
  */
 
 #include "de/NativeFont"
+#include <de/Map>
+#include <de/Hash>
 
 namespace de {
 
-typedef QMap<String, NativeFont::StyleMapping> Families;
+typedef Hash<String, NativeFont::StyleMapping> Families;
 static Families families;
 
 static int const MAX_CACHE_STRING_LENGTH = 200;
@@ -28,12 +30,13 @@ static int const MAX_CACHE_STRINGS = 500;
 
 DE_PIMPL(NativeFont)
 {
-    String family;
-    dfloat size;
-    Style style;
-    int weight;
+    String    family;
+    dfloat    size;
+    Style     style;
+    int       weight;
     Transform transform;
-    QHash<QString, Rectanglei> measureCache;
+
+    Hash<String, Rectanglei> measureCache;
 
     Impl(Public *i)
         : Base(i)
@@ -148,9 +151,10 @@ String NativeFont::nativeFontName() const
     {
         StyleMapping const &map = families[d->family];
         Spec const spec(d->style, d->weight);
-        if (map.contains(spec))
+        auto found = map.find(spec);
+        if (found != map.end())
         {
-            return map[spec];
+            return found->second;
         }
     }
     return d->family;
@@ -186,10 +190,10 @@ Rectanglei NativeFont::measure(String const &text) const
 
     if (text.size() < MAX_CACHE_STRING_LENGTH)
     {
-        auto foundInCache = d->measureCache.constFind(text);
-        if (foundInCache != d->measureCache.constEnd())
+        auto foundInCache = d->measureCache.find(text);
+        if (foundInCache != d->measureCache.end())
         {
-            return foundInCache.value();
+            return foundInCache->second;
         }
     }
 
@@ -212,9 +216,9 @@ int NativeFont::width(String const &text) const
     return nativeFontWidth(text);
 }
 
-QImage NativeFont::rasterize(String const &text,
-                             Vec4ub const &foreground,
-                             Vec4ub const &background) const
+Image NativeFont::rasterize(String const &      text,
+                            Image::Color const &foreground,
+                            Image::Color const &background) const
 {
     d->prepare();
     return nativeFontRasterize(text, foreground, background);

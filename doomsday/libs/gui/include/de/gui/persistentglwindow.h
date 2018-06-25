@@ -167,9 +167,6 @@ public:
 //    void resizeEvent(QResizeEvent *) override;
 
 protected:
-    void performQueuedTasks();
-    void windowVisibilityChanged();
-
     /**
      * Forms the name of a Config variable for this window. Subclasses are
      * allowed to use this to store their own properties in the persistent

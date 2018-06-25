@@ -24,9 +24,9 @@
 #include <de/String>
 #include <de/Asset>
 #include <de/Rectangle>
+#include <de/Map>
 
-#include <QImage>
-#include <QMap>
+#include "../Image"
 
 namespace de {
 
@@ -58,8 +58,8 @@ public:
 
     struct Spec
     {
-        Style style;
-        dint weight;
+        Style     style;
+        dint      weight;
         Transform transform;
 
         Spec(Style s = Regular, dint w = Normal, Transform xform = NoTransform)
@@ -78,7 +78,7 @@ public:
         }
     };
 
-    typedef QMap<Spec, String> StyleMapping; ///< Spec => native font name
+    typedef Map<Spec, String> StyleMapping; ///< Spec => native font name
 
     /**
      * Defines a mapping from font family name plus style/weight to an actual platform
@@ -135,9 +135,9 @@ public:
      *
      * @return Image of the text, with the same dimensions as returned by measure().
      */
-    QImage rasterize(String const &text,
-                     Vec4ub const &foreground,
-                     Vec4ub const &background) const;
+    Image rasterize(String const &      text,
+                    Image::Color const &foreground,
+                    Image::Color const &background) const;
 
 protected:
     NativeFont &operator = (NativeFont const &other);
@@ -147,16 +147,16 @@ protected:
      */
     virtual void commit() const = 0;
 
-    virtual int nativeFontAscent() const = 0;
-    virtual int nativeFontDescent() const = 0;
-    virtual int nativeFontHeight() const = 0;
+    virtual int nativeFontAscent() const      = 0;
+    virtual int nativeFontDescent() const     = 0;
+    virtual int nativeFontHeight() const      = 0;
     virtual int nativeFontLineSpacing() const = 0;
 
-    virtual int nativeFontWidth(String const &text) const = 0;
-    virtual Rectanglei nativeFontMeasure(String const &text) const = 0;
-    virtual QImage nativeFontRasterize(String const &text,
-                                       Vec4ub const &foreground,
-                                       Vec4ub const &background) const = 0;
+    virtual int        nativeFontWidth(String const &text) const                 = 0;
+    virtual Rectanglei nativeFontMeasure(String const &text) const               = 0;
+    virtual Image      nativeFontRasterize(String const &      text,
+                                           Image::Color const &foreground,
+                                           Image::Color const &background) const = 0;
 
 private:
     DE_PRIVATE(d)

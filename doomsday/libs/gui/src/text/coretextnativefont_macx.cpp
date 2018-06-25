@@ -18,10 +18,11 @@
 
 #include "../src/text/coretextnativefont_macx.h"
 #include <de/Log>
+#include <de/Thread>
+#include <de/Map>
 
-#include <QFont>
-#include <QColor>
-#include <QThread>
+//#include <QFont>
+//#include <QColor>
 #include <CoreGraphics/CoreGraphics.h>
 #include <CoreText/CoreText.h>
 #include <atomic>
@@ -34,8 +35,13 @@ struct CoreTextFontCache : public Lockable
         String name;
         dfloat size;
 
-        Key(String const &n = "", dfloat s = 12.f) : name(n), size(s) {}
-        bool operator < (Key const &other) const {
+        Key(String const &n = "", dfloat s = 12.f)
+            : name(n)
+            , size(s)
+        {}
+
+        bool operator<(Key const &other) const
+        {
             if (name == other.name) {
                 return size < other.size && !fequal(size, other.size);
             }
@@ -43,12 +49,12 @@ struct CoreTextFontCache : public Lockable
         }
     };
 
-    typedef QMap<Key, CTFontRef> Fonts;
+    typedef Map<Key, CTFontRef> Fonts;
     Fonts fonts;
 
     CGColorSpaceRef _colorspace; ///< Shared by all fonts.
 
-    CoreTextFontCache() : _colorspace(0)
+    CoreTextFontCache() : _colorspace(nullptr)
     {}
 
     ~CoreTextFontCache()
@@ -73,9 +79,9 @@ struct CoreTextFontCache : public Lockable
     {
         DE_GUARD(this);
 
-        foreach (CTFontRef ref, fonts.values())
+        for (const auto &ref : fonts)
         {
-            CFRelease(ref);
+            CFRelease(ref.second);
         }
     }
 
@@ -172,7 +178,7 @@ DE_PIMPL(CoreTextNativeFont)
 
     Impl(Public *i)
         : Base(i)
-        , font(0)
+        , font(nullptr)
         , ascent(0)
         , descent(0)
         , height(0)
@@ -198,10 +204,10 @@ DE_PIMPL(CoreTextNativeFont)
         switch (self().transform())
         {
         case Uppercase:
-            return str.toUpper();
+            return str.upper();
 
         case Lowercase:
-            return str.toLower();
+            return str.lower();
 
         default:
             break;
@@ -211,7 +217,7 @@ DE_PIMPL(CoreTextNativeFont)
 
     void release()
     {
-        font = 0;
+        font = nullptr;
         cache.release();
     }
 
@@ -229,7 +235,7 @@ DE_PIMPL(CoreTextNativeFont)
         lineSpacing = height + CTFontGetLeading(font);
     }
 
-    CachedLine &makeLine(String const &text, CGColorRef color = 0)
+    CachedLine &makeLine(String const &text, CGColorRef color = nullptr)
     {
         if (cache.lineText == text)
         {
@@ -244,8 +250,8 @@ DE_PIMPL(CoreTextNativeFont)
         CFDictionaryRef attribs = CFDictionaryCreate(nil, keys, values,
                                                      color? 2 : 1, nil, nil);
 
-        CFStringRef textStr = CFStringCreateWithCharacters(nil, (UniChar *) text.data(), text.size());
-        CFAttributedStringRef as = CFAttributedStringCreate(0, textStr, attribs);
+        CFStringRef textStr = CFStringCreateWithCString(nil, text.c_str(), kCFStringEncodingUTF8);
+        CFAttributedStringRef as = CFAttributedStringCreate(nullptr, textStr, attribs);
         cache.line = CTLineCreateWithAttributedString(as);
 
         CFRelease(attribs);
@@ -263,26 +269,27 @@ CoreTextNativeFont::CoreTextNativeFont(String const &family)
     : NativeFont(family), d(new Impl(this))
 {}
 
-CoreTextNativeFont::CoreTextNativeFont(QFont const &font)
-    : NativeFont(font.family()), d(new Impl(this))
-{
-    setSize     (font.pointSizeF());
-    setWeight   (font.weight());
-    setStyle    (font.italic()? Italic : Regular);
-    setTransform(font.capitalization() == QFont::AllUppercase? Uppercase :
-                 font.capitalization() == QFont::AllLowercase? Lowercase : NoTransform);
-}
+//CoreTextNativeFont::CoreTextNativeFont(QFont const &font)
+//    : NativeFont(font.family()), d(new Impl(this))
+//{
+//    setSize     (font.pointSizeF());
+//    setWeight   (font.weight());
+//    setStyle    (font.italic()? Italic : Regular);
+//    setTransform(font.capitalization() == QFont::AllUppercase? Uppercase :
+//                 font.capitalization() == QFont::AllLowercase? Lowercase : NoTransform);
+//}
 
 CoreTextNativeFont::CoreTextNativeFont(CoreTextNativeFont const &other)
-    : NativeFont(other), d(new Impl(this, *other.d))
+    : NativeFont(other)
+    , d(new Impl(this, *other.d))
 {
     // If the other is ready, this will be too.
     setState(other.state());
 }
 
-CoreTextNativeFont &CoreTextNativeFont::operator = (CoreTextNativeFont const &other)
+CoreTextNativeFont &CoreTextNativeFont::operator=(CoreTextNativeFont const &other)
 {
-    NativeFont::operator = (other);
+    NativeFont::operator=(other);
     d.reset(new Impl(this, *other.d));
     // If the other is ready, this will be too.
     setState(other.state());
@@ -333,9 +340,9 @@ int CoreTextNativeFont::nativeFontWidth(String const &text) const
     return roundi(CTLineGetTypographicBounds(cachedLine.line, NULL, NULL, NULL));
 }
 
-QImage CoreTextNativeFont::nativeFontRasterize(String const &text,
-                                               Vec4ub const &foreground,
-                                               Vec4ub const &background) const
+Image CoreTextNativeFont::nativeFontRasterize(const String &text,
+                                              const Image::Color &foreground,
+                                              const Image::Color &background) const
 {
 #if 0
     DE_ASSERT(fequal(fontCache.fontSize(d->font), size()));
@@ -353,8 +360,8 @@ QImage CoreTextNativeFont::nativeFontRasterize(String const &text,
 
     // Set up the bitmap for drawing into.
     Rectanglei const bounds = measure(d->cache.lineText);
-    QImage backbuffer(QSize(bounds.width(), bounds.height()), QImage::Format_ARGB32);
-    backbuffer.fill(QColor(background.x, background.y, background.z, background.w).rgba());
+    Image backbuffer(bounds.size(), Image::RGBA_8888);
+    backbuffer.fill(background);
 
     CGContextRef gc = CGBitmapContextCreate(backbuffer.bits(),
                                             backbuffer.width(),

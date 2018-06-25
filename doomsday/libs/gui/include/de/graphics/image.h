@@ -84,6 +84,18 @@ public:
     typedef Vec2ui Size;
     typedef Vec4ub Color;
 
+    static inline uint32_t packColor(Color color)
+    {
+        return color.x | (color.y << 8) | (color.z << 16) | (color.w << 24);
+    }
+    static inline Color unpackColor(uint32_t packed)
+    {
+        return Color( packed & 0xff,
+                     (packed >> 8) & 0xff,
+                     (packed >> 16) & 0xff,
+                     (packed >> 24) & 0xff);
+    }
+
 public:
     Image();
     Image(Image const &other);
@@ -127,6 +139,8 @@ public:
      */
     int depth() const;
 
+    inline int bytesPerPixel() const { return depth() / 8; }
+
     /**
      * Number of bytes between rows in the pixel data.
      */
@@ -135,11 +149,13 @@ public:
     /**
      * Total number of bytes in the pixel data.
      */
-    int byteCount() const;
+    dsize byteCount() const;
 
-    void const *bits() const;
+    const dbyte *bits() const;
+    dbyte *      bits();
 
-    void *bits();
+    const dbyte *row(duint y) const;
+    dbyte *      row(duint y);
 
     /**
      * Determines if the image has a zero size (no pixels).
@@ -173,22 +189,32 @@ public:
      * @return Points per image pixel.
      */
     float pointRatio() const;
-
     void setPointRatio(float pointsPerPixel);
 
+    inline Color pixel(duint x, duint y) const { return pixel(Vec2ui(x, y)); }
+    Color pixel(Vec2ui pos) const;
+    
     // Drawing/editing methods.
     Image subImage(Rectanglei const &subArea) const;
     void  resize(Size const &size);
     void  fill(Color const &color);
     void  fill(Rectanglei const &rect, Color const &color);
+    inline void  setPixel(duint x, duint y, Color color) { setPixel(Vec2ui(x, y), color); }
+    void  setPixel(Vec2ui pos, Color color);
     void  draw(Image const &image, Vec2i const &topLeft);
+    inline void draw(int x, int y, const Image &image) { draw(image, Vec2i(x, y)); }
     void  drawPartial(Image const &image, Rectanglei const &part, Vec2i const &topLeft);
+    inline void draw(int x, int y, const Image &image, int subX, int subY, int subW, int subH) {
+        drawPartial(image, Rectanglei(subX, subY, subW, subH), Vec2i(x, y));
+    }
     Image multiplied(Image const &factorImage) const;
     Image multiplied(Color const &color) const;
     Image colorized(Color const &color) const;
     Image invertedColor() const;
     Image mixed(Image const &low, Image const &high) const;
     Image withAlpha(Image const &grayscale) const;
+    Image rgbSwapped() const;
+    Image mirrored(bool horizontally, bool vertically) const;
 
     void save(const NativePath &path) const;
 

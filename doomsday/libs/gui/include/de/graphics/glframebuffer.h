@@ -163,9 +163,9 @@ public:
      * @param missingRenderBuffers  Create renderbuffers for attachments where
      *                              texture has not been specified.
      */
-    void configure(List<GLTexture *> colorTextures,
-                   GLTexture *       depthStencilTex,
-                   Flags             missingRenderBuffers = ColorDepthStencil);
+    void configure(const List<GLTexture *> &colorTextures,
+                   GLTexture *              depthStencilTex,
+                   Flags                    missingRenderBuffers = ColorDepthStencil);
 
     /**
      * Changes the configuration of the render target. Any previously allocated

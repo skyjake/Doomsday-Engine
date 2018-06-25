@@ -23,6 +23,8 @@
 #include <de/Log>
 #include <de/Loop>
 
+#include <SDL2/SDL_events.h>
+
 namespace de {
 
 DE_PIMPL(WindowEventHandler)
@@ -90,11 +92,11 @@ DE_PIMPL(WindowEventHandler)
     }
 #endif
 
-    void handleKeyEvent(QKeyEvent *ev)
+    void handleKeyEvent(const SDL_KeyboardEvent &ev)
     {
         //LOG_AS("Canvas");
 
-        ev->accept();
+//        ev->accept();
         //if (ev->isAutoRepeat()) return; // Ignore repeats, we do our own.
 
         /*
@@ -104,7 +106,7 @@ DE_PIMPL(WindowEventHandler)
                  << "scancode:" << ev->nativeScanCode();
         */
 
-#ifdef WIN32
+#if 0
         // We must track the state of the alt key ourselves as the OS grabs the up event...
         if (ev->key() == Qt::Key_Alt)
         {
@@ -128,7 +130,9 @@ DE_PIMPL(WindowEventHandler)
 
         DE_FOR_PUBLIC_AUDIENCE2(KeyEvent, i)
         {
-            i->keyEvent(KeyEvent(ev->isAutoRepeat()?             KeyEvent::Repeat :
+            i->keyEvent(KeyEvent());
+
+/*            i->keyEvent(KeyEvent(ev->isAutoRepeat()?             KeyEvent::Repeat :
                                  ev->type() == QEvent::KeyPress? KeyEvent::Pressed :
                                                                  KeyEvent::Released,
                                  ev->key(),
@@ -139,14 +143,19 @@ DE_PIMPL(WindowEventHandler)
                                  (ev->modifiers().testFlag(Qt::ControlModifier)? KeyEvent::Control : KeyEvent::NoModifiers) |
                                  (ev->modifiers().testFlag(Qt::AltModifier)?     KeyEvent::Alt     : KeyEvent::NoModifiers) |
                                  (ev->modifiers().testFlag(Qt::MetaModifier)?    KeyEvent::Meta    : KeyEvent::NoModifiers)));
+   */
         }
     }
 
+#if 0
     template <typename QtEventType>
     Vec2i translatePosition(QtEventType const *ev) const
     {
-        return Vec2i(ev->pos().x(), ev->pos().y()) * window->devicePixelRatio();
+        double devicePixelRatio = 1.0;
+        /// @todo Find out the actual pixel ratio.
+        return Vec2i(ev->pos().x(), ev->pos().y()) * devicePixelRatio;
     }
+#endif
 
     DE_PIMPL_AUDIENCE(FocusChange)
 };
@@ -154,8 +163,7 @@ DE_PIMPL(WindowEventHandler)
 DE_AUDIENCE_METHOD(WindowEventHandler, FocusChange)
 
 WindowEventHandler::WindowEventHandler(GLWindow *window)
-    : QObject(window)
-    , d(new Impl(this, window))
+    : d(new Impl(this, window))
 {
     //setMouseTracking(true);
     //setFocusPolicy(Qt::StrongFocus);
@@ -178,6 +186,19 @@ bool WindowEventHandler::isMouseTrapped() const
     return d->mouseGrabbed;
 }
 
+void WindowEventHandler::handleSDLEvent(const void *ptr)
+{
+    const SDL_Event *event = reinterpret_cast<const SDL_Event *>(ptr);
+    switch (event->type)
+    {
+    case SDL_KEYDOWN:
+    case SDL_KEYUP:
+        d->handleKeyEvent(event->key);
+        break;
+    }
+}
+
+#if 0
 void WindowEventHandler::focusInEvent(QFocusEvent*)
 {
     LOG_AS("Canvas");
@@ -314,5 +335,6 @@ void WindowEventHandler::wheelEvent(QWheelEvent *ev)
 
     d->prevWheelAt.start();
 }
+#endif
 
 } // namespace de

@@ -45,11 +45,11 @@ DE_PIMPL_NOREF(HeightMap)
         int x2 = min(pos.x + 1, w - 1);
         int y2 = min(pos.y + 1, h - 1);
 
-        float base  = qRed(heightImage.pixel(pos.x, pos.y)) / 255.f;
-        float left  = qRed(heightImage.pixel(x0,    pos.y)) / 255.f;
-        float right = qRed(heightImage.pixel(x2,    pos.y)) / 255.f;
-        float up    = qRed(heightImage.pixel(pos.x, y0))    / 255.f;
-        float down  = qRed(heightImage.pixel(pos.x, y2))    / 255.f;
+        float base  = heightImage.pixel(pos.x, pos.y).x / 255.f;
+        float left  = heightImage.pixel(x0,    pos.y).x / 255.f;
+        float right = heightImage.pixel(x2,    pos.y).x / 255.f;
+        float up    = heightImage.pixel(pos.x, y0).x    / 255.f;
+        float down  = heightImage.pixel(pos.x, y2).x    / 255.f;
 
         return (Vec3f(base - right, base - down, NORMAL_Z) +
                 Vec3f(left - base,  up - base,   NORMAL_Z)).normalize();
@@ -90,10 +90,12 @@ Image HeightMap::makeNormalMap() const
         {
             Vec3f norm = d->normalAtCoord(Vec2i(x, y)) * 0.5f + Vec3f(.5f, .5f, .5f);
 
-            img.setPixel(x, y, qRgba(int(clamp(0.f, norm.x * 256.f, 255.f)),
-                                     int(clamp(0.f, norm.y * 256.f, 255.f)),
-                                     int(clamp(0.f, norm.z * 256.f, 255.f)),
-                                     max(1, qRed(heightMap.pixel(x, y)))));
+            img.setPixel(x,
+                         y,
+                         Image::Color(dbyte(clamp(0.f, norm.x * 256.f, 255.f)),
+                                      dbyte(clamp(0.f, norm.y * 256.f, 255.f)),
+                                      dbyte(clamp(0.f, norm.z * 256.f, 255.f)),
+                                      max<dbyte>(1, heightMap.pixel(x, y).x)));
         }
     }
 
@@ -109,13 +111,18 @@ float HeightMap::heightAtPosition(Vec2f const &worldPos) const
     Vec2f coord = d->pixelCoordf(worldPos);
     Vec2i pixelCoord = coord.toVec2i();
 
-    if (pixelCoord.x < 0 || pixelCoord.y < 0 ||
-       pixelCoord.x >= img.width() - 1 || pixelCoord.y >= img.height() - 1) return 0;
+    if (pixelCoord.x < 0 ||
+        pixelCoord.y < 0 ||
+        pixelCoord.x >= int(img.width()) - 1 ||
+        pixelCoord.y >= int(img.height()) - 1)
+    {
+        return 0;
+    }
 
-    float A = qRed(img.pixel(pixelCoord.x,     pixelCoord.y))     / 255.f - 0.5f;
-    float B = qRed(img.pixel(pixelCoord.x + 1, pixelCoord.y))     / 255.f - 0.5f;
-    float C = qRed(img.pixel(pixelCoord.x + 1, pixelCoord.y + 1)) / 255.f - 0.5f;
-    float D = qRed(img.pixel(pixelCoord.x,     pixelCoord.y + 1)) / 255.f - 0.5f;
+    float A = img.pixel(pixelCoord.x,     pixelCoord.y).x     / 255.f - 0.5f;
+    float B = img.pixel(pixelCoord.x + 1, pixelCoord.y).x     / 255.f - 0.5f;
+    float C = img.pixel(pixelCoord.x + 1, pixelCoord.y + 1).x / 255.f - 0.5f;
+    float D = img.pixel(pixelCoord.x,     pixelCoord.y + 1).x / 255.f - 0.5f;
 
     // Bilinear interpolation.
     Vec2f i(fract(coord.x), fract(coord.y));

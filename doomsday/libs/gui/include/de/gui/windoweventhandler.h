@@ -66,6 +66,7 @@ public:
     bool isMouseTrapped() const;
 
 //    // Native events.
+    void handleSDLEvent(const void *);
 
 //    void focusInEvent(QFocusEvent *ev);
 //    void focusOutEvent(QFocusEvent *ev);

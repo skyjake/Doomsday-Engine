@@ -19,24 +19,25 @@
 #include "de/Font"
 
 #include <de/EscapeParser>
+#include <de/CString>
 
 namespace de {
 
-DE_PIMPL_NOREF(Font::RichFormat),
-DE_OBSERVES(EscapeParser, PlainText),
-DE_OBSERVES(EscapeParser, EscapeSequence)
+DE_PIMPL_NOREF(Font::RichFormat)
+, DE_OBSERVES(EscapeParser, PlainText)
+, DE_OBSERVES(EscapeParser, EscapeSequence)
 {
     IStyle const *style;
 
     struct Format
     {
-        float sizeFactor;
+        float  sizeFactor;
         Weight weight;
-        Style style;
-        int colorIndex;
-        bool markIndent;
-        bool resetIndent;
-        int tabStop;
+        Style  style;
+        int    colorIndex;
+        bool   markIndent;
+        bool   resetIndent;
+        int    tabStop;
 
         Format() : sizeFactor(1.f), weight(OriginalWeight),
             style(OriginalStyle), colorIndex(-1), markIndent(false), resetIndent(false),
@@ -52,7 +53,7 @@ DE_OBSERVES(EscapeParser, EscapeSequence)
             : range(r), format(frm) {}
     };
 
-    typedef QList<FormatRange> Ranges;
+    typedef List<FormatRange> Ranges;
     Ranges ranges;
 
     /// Tab stops are only applicable on the first line of a set of wrapped
@@ -60,23 +61,20 @@ DE_OBSERVES(EscapeParser, EscapeSequence)
     TabStops tabs;
 
     EscapeParser esc;
-    QList<Format> stack;
+    List<Format> stack;
     int plainPos;
 
-    Impl() : style(0) {}
+    Impl() : style(nullptr) {}
 
     Impl(IStyle const &style) : style(&style) {}
 
     Impl(Impl const &other)
-        : de::IPrivate()
-        , de::EscapeParser::IPlainTextObserver()
-        , de::EscapeParser::IEscapeSequenceObserver()
-        , style(other.style)
+        : style(other.style)
         , ranges(other.ranges)
         , tabs(other.tabs)
     {}
 
-    void handlePlainText(Rangei const &range)
+    void handlePlainText(const CString &range)
     {
         Rangei plainRange(plainPos, plainPos + range.size());
         plainPos += range.size();
@@ -88,7 +86,7 @@ DE_OBSERVES(EscapeParser, EscapeSequence)
         stack.last().markIndent = stack.last().resetIndent = false;
     }
 
-    void handleEscapeSequence(Rangei const &range)
+    void handleEscapeSequence(const CString &range)
     {
         // Save the previous format on the stack.
         stack << Impl::Format(stack.last());
@@ -121,14 +119,14 @@ DE_OBSERVES(EscapeParser, EscapeSequence)
 
         case '>':
             stack.last().markIndent = true;
-            handlePlainText(Rangei(0, 0));
+            handlePlainText(CString());
             break;
 
         case '<':
             stack.last().resetIndent = true;
 
             // Insert an empty range for reseting the indent.
-            handlePlainText(Rangei(0, 0));
+            handlePlainText(CString());
             break;
 
         case '\t':
@@ -236,7 +234,7 @@ void Font::RichFormat::setStyle(IStyle const &style)
 
 bool Font::RichFormat::hasStyle() const
 {
-    return d->style != 0;
+    return d->style != nullptr;
 }
 
 Font::RichFormat::IStyle const &Font::RichFormat::style() const

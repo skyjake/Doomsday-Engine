@@ -1,3 +1,7 @@
+#include <utility>
+
+#include <utility>
+
 /** @file persistentcanvaswindow.cpp  Canvas window with persistent state.
  * @ingroup gui
  *
@@ -64,24 +68,17 @@ static Rectanglei desktopRect()
 #endif
 }
 
-static Rectanglei centeredQRect(Vec2ui const &size)
+static Rectanglei centeredRect(Vec2ui const &size)
 {
-    Vec2ui const screenSize(desktopRect().size().width(), desktopRect().size().height());
+    Vec2ui const screenSize(desktopRect().size().x, desktopRect().size().y);
     Vec2ui const clamped = size.min(screenSize);
 
     LOGDEV_GL_XVERBOSE("centeredGeometry: Current desktop rect %i x %i",
                        screenSize.x << screenSize.y);
 
-    return Rectanglei(desktopRect().topLeft() +
-                 Vec2i((screenSize.x - clamped.x) / 2,
-                        (screenSize.y - clamped.y) / 2),
-                 Vec2i(clamped.x, clamped.y));
-}
-
-static Rectanglei centeredRect(Vec2ui const &size)
-{
-    auto rect = centeredQRect(size);
-    return Rectanglei(rect.left(), rect.top(), rect.width(), rect.height());
+    return Rectanglei::fromSize(desktopRect().topLeft + Vec2i((screenSize.x - clamped.x) / 2,
+                                                              (screenSize.y - clamped.y) / 2),
+                                clamped);
 }
 
 static void notifyAboutModeChange()
@@ -470,14 +467,19 @@ DE_PIMPL(PersistentGLWindow)
             MacRaiseOverShield
         };
 
-        Type type;
+        Type       type;
         Rectanglei rect;
-        TimeSpan delay; ///< How long to wait before doing this.
+        TimeSpan   delay; ///< How long to wait before doing this.
 
-        Task(Type t, TimeSpan defer = 0)
-            : type(t), delay(defer) {}
-        Task(Rectanglei const &r, TimeSpan defer = 0)
-            : type(SetGeometry), rect(r), delay(defer) {}
+        Task(Type t, TimeSpan defer = 0.0)
+            : type(t)
+            , delay(std::move(defer))
+        {}
+        Task(Rectanglei const &r, TimeSpan defer = 0.0)
+            : type(SetGeometry)
+            , rect(r)
+            , delay(std::move(defer))
+        {}
     };
 
     String id;
@@ -613,7 +615,7 @@ DE_PIMPL(PersistentGLWindow)
 
         // If the display mode needs to change, we will have to defer the rest
         // of the state changes so that everything catches up after the change.
-        TimeSpan defer = 0;
+        TimeSpan defer = 0.0;
         DisplayMode const *newMode = newState.displayMode();
         bool modeChanged = false;
 
@@ -682,7 +684,7 @@ DE_PIMPL(PersistentGLWindow)
                 }
             }
 
-            defer = 0;
+            defer = 0.0;
         }
 
         if (modeChanged)
@@ -707,7 +709,7 @@ DE_PIMPL(PersistentGLWindow)
         if (self().isVisible())
         {
             // Carry out queued operations after dropping back to the event loop.
-            QTimer::singleShot(10, thisPublic, SLOT(performQueuedTasks()));
+            Loop::get().timer(0.010, [this]() { performQueuedTasks(); });
         }
         else
         {
@@ -723,8 +725,8 @@ DE_PIMPL(PersistentGLWindow)
             Task &next = queue[0];
             if (next.delay > 0.0)
             {
-                QTimer::singleShot(next.delay.asMilliSeconds(), thisPublic, SLOT(performQueuedTasks()));
-                next.delay = 0;
+                Loop::get().timer(next.delay, [this](){ performQueuedTasks(); });
+                next.delay = 0.0;
                 break;
             }
             else
@@ -765,11 +767,11 @@ DE_PIMPL(PersistentGLWindow)
                     break;
 
                 case Task::MacRaiseOverShield:
-#ifdef MACOSX
-                    // Pull the window again over the shield after the mode change.
-                    LOGDEV_GL_VERBOSE("Raising window over shield");
-                    DisplayMode_Native_Raise(self().nativeHandle());
-#endif
+//#ifdef MACOSX
+//                    // Pull the window again over the shield after the mode change.
+//                    LOGDEV_GL_VERBOSE("Raising window over shield");
+//                    DisplayMode_Native_Raise(self().nativeHandle());
+//#endif
                     break;
 
                 case Task::TrapMouse:
@@ -808,6 +810,24 @@ DE_PIMPL(PersistentGLWindow)
         return st;
     }
 
+    void performQueuedTasks()
+    {
+        checkQueue();
+    }
+
+    void windowVisibilityChanged()
+    {
+        if (queue.isEmpty())
+        {
+            state = widgetState();
+        }
+
+        DE_FOR_PUBLIC_AUDIENCE2(AttributeChange, i)
+        {
+            i->windowAttributesChanged(self());
+        }
+    }
+
     DE_PIMPL_AUDIENCE(AttributeChange)
 };
 
@@ -818,12 +838,35 @@ PersistentGLWindow::PersistentGLWindow(String const &id)
 {
     try
     {
-        connect(this, SIGNAL(visibilityChanged(QWindow::Visibility)), this, SLOT(windowVisibilityChanged()));
+        audienceForVisibility() += [this]() { d->windowVisibilityChanged(); };
+        audienceForMove() += [this]()
+        {
+            if (isCentered() && !isMaximized() && !isFullScreen())
+            {
+                int len = int((geometry().topLeft - centeredRect(pointSize()).topLeft).length());
+
+                if (len > BREAK_CENTERING_THRESHOLD)
+                {
+                    d->state.setFlag(Impl::State::Centered, false);
+
+                    // Notify.
+                    DE_FOR_AUDIENCE2(AttributeChange, i)
+                    {
+                        i->windowAttributesChanged(*this);
+                    }
+                }
+                else
+                {
+                    // Recenter.
+                    setGeometry(centeredRect(pointSize()));
+                }
+            }
+        };
         restoreFromConfig();
     }
     catch (Error const &er)
     {
-        LOG_WARNING("Failed to restore window state:\n%s") << er.asText();
+        LOG_WARNING("Failed to restore window state: %s") << er.asText();
     }
 }
 
@@ -840,7 +883,7 @@ void PersistentGLWindow::saveToConfig()
     }
     catch (Error const &er)
     {
-        LOG_WARNING("Failed to save window state:\n%s") << er.asText();
+        LOG_WARNING("Failed to save window state: %s") << er.asText();
     }
 }
 
@@ -876,9 +919,7 @@ Rectanglei PersistentGLWindow::windowRect() const
         // the State.
         return d->state.windowRect;
     }
-
-    QRect geom = geometry();
-    return Rectanglei(geom.left(), geom.top(), geom.width(), geom.height());
+    return geometry();
 }
 
 GLWindow::Size PersistentGLWindow::fullscreenSize() const
@@ -948,24 +989,6 @@ bool PersistentGLWindow::changeAttributes(int const *attribs)
     return false;
 }
 
-void PersistentGLWindow::performQueuedTasks()
-{
-    d->checkQueue();
-}
-
-void PersistentGLWindow::windowVisibilityChanged()
-{
-    if (d->queue.isEmpty())
-    {
-        d->state = d->widgetState();
-    }
-
-    DE_FOR_AUDIENCE2(AttributeChange, i)
-    {
-        i->windowAttributesChanged(*this);
-    }
-}
-
 String PersistentGLWindow::configName(String const &key) const
 {
     return d->state.configName(key);
@@ -977,35 +1000,12 @@ PersistentGLWindow &PersistentGLWindow::main()
     if (!mainExists())
     {
         throw InvalidIdError("PersistentGLWindow::main",
-                             "No window found with id \"" + MAIN_WINDOW_ID + "\"");
+                             stringf("No window found with id \"%s\"", MAIN_WINDOW_ID));
     }
     return static_cast<PersistentGLWindow &>(GLWindow::main());
 }
 
-void PersistentGLWindow::moveEvent(QMoveEvent *)
-{
-    if (isCentered() && !isMaximized() && !isFullScreen())
-    {
-        int len = (geometry().topLeft() - centeredQRect(pointSize()).topLeft()).manhattanLength();
-
-        if (len > BREAK_CENTERING_THRESHOLD)
-        {
-            d->state.setFlag(Impl::State::Centered, false);
-
-            // Notify.
-            DE_FOR_AUDIENCE2(AttributeChange, i)
-            {
-                i->windowAttributesChanged(*this);
-            }
-        }
-        else
-        {
-            // Recenter.
-            setGeometry(centeredQRect(pointSize()));
-        }
-    }
-}
-
+#if 0
 void PersistentGLWindow::resizeEvent(QResizeEvent *ev)
 {
     GLWindow::resizeEvent(ev);
@@ -1020,6 +1020,7 @@ void PersistentGLWindow::resizeEvent(QResizeEvent *ev)
         d->state.windowRect.setSize(Vec2i(ev->size().width(), ev->size().height()));
     }*/
 }
+#endif
 
 } // namespace de
 

@@ -19,11 +19,13 @@
 #include "de/Font"
 
 #include <de/ConstantRule>
-#include <QFontMetrics>
-#include <QFontDatabase>
-#include <QImage>
-#include <QPainter>
-#include <QThreadStorage>
+//#include <QFontMetrics>
+//#include <QFontDatabase>
+//#include <QImage>
+//#include <QPainter>
+//#include <QThreadStorage>
+#include <de/Hash>
+#include <de/ThreadLocal>
 
 #if (defined(MACOSX) && defined(MACOS_10_7)) || defined (DENG_IOS)
 #  include "../src/text/coretextnativefont_macx.h"
@@ -77,10 +79,10 @@ namespace internal
     struct ThreadFonts
     {
         PlatformFont font;
-        QHash<internal::FontParams, PlatformFont *> fontMods;
+        Hash<internal::FontParams, PlatformFont *> fontMods;
 
         ~ThreadFonts() {
-            qDeleteAll(fontMods);
+            fontMods.deleteAll();
         }
     };
 }
@@ -91,11 +93,12 @@ namespace internal
  * instances without any synchronization. Also note that these background threads are
  * pooled, so there is only a fixed total number of threads accessing these objects.
  */
-static QThreadStorage<QHash<Font *, internal::ThreadFonts>> fontsForThread;
+static ThreadLocal<Hash<Font *, internal::ThreadFonts>> fontsForThread;
 
 DE_PIMPL(Font)
 {
-    QFont referenceFont;
+//    QFont referenceFont;
+    internal::FontParams fontParams;
     internal::ThreadFonts *threadFonts = nullptr;
 
     ConstantRule *heightRule;
@@ -109,6 +112,15 @@ DE_PIMPL(Font)
         createRules();
     }
 
+    Impl(Public * i, const internal::FontParams &fp)
+        : Base(i)
+        , fontParams(fp)
+    {
+        createRules();
+        updateMetrics();
+    }
+
+#if 0
     Impl(Public *i, QFont const &qfont) : Base(i), referenceFont(qfont)
     {
 #if 0
@@ -123,10 +135,11 @@ DE_PIMPL(Font)
         createRules();
         updateMetrics();
     }
+#endif
 
     ~Impl()
     {
-        fontsForThread.localData().remove(thisPublic); // FIXME: not removed by all threads...
+        fontsForThread.get().remove(thisPublic); // FIXME: not removed by all threads...
 
         releaseRef(heightRule);
         releaseRef(ascentRule);
@@ -147,7 +160,7 @@ DE_PIMPL(Font)
      */
     internal::ThreadFonts &getThreadFonts()
     {
-        auto &hash = fontsForThread.localData();
+        auto &hash = fontsForThread.get();
         auto found = hash.find(thisPublic);
         if (found != hash.end())
         {
@@ -157,7 +170,7 @@ DE_PIMPL(Font)
                 return tf;
             }
             // Size has changed, re-initialize the font.
-            qDeleteAll(tf.fontMods);
+            deleteAll(tf.fontMods);
             tf.fontMods.clear();
         }
         hash[thisPublic].font = PlatformFont(referenceFont);
@@ -271,11 +284,11 @@ DE_PIMPL(Font)
 Font::Font() : d(new Impl(this))
 {}
 
-Font::Font(Font const &other) : d(new Impl(this, other.d->referenceFont))
+Font::Font(Font const &other) : d(new Impl(this, other.d->fontParams))
 {}
 
-Font::Font(QFont const &font) : d(new Impl(this, font))
-{}
+//Font::Font(QFont const &font) : d(new Impl(this, font))
+//{}
 
 void Font::initialize(const QFont &font)
 {
@@ -333,21 +346,21 @@ int Font::advanceWidth(String const &textLine, RichFormatRef const &format) cons
     return advance;
 }
 
-QImage Font::rasterize(String const &textLine,
-                       Vec4ub const &foreground,
-                       Vec4ub const &background) const
+Image Font::rasterize(String const &      textLine,
+                      Image::Color const &foreground,
+                      Image::Color const &background) const
 {
     return rasterize(textLine, RichFormat::fromPlainText(textLine), foreground, background);
 }
 
-QImage Font::rasterize(String const &textLine,
+Image Font::rasterize(String const &       textLine,
                        RichFormatRef const &format,
-                       Vec4ub const &foreground,
-                       Vec4ub const &background) const
+                      Image::Color const & foreground,
+                      Image::Color const & background) const
 {
     if (textLine.isEmpty())
     {
-        return QImage();
+        return {};
     }
 
     auto const &plat = d->getThreadFonts();
@@ -360,18 +373,18 @@ QImage Font::rasterize(String const &textLine,
                             plat.font.height());
 #endif
 
-    QColor bgColor(background.x, background.y, background.z, background.w);
+    Image::Color bgColor(background.x, background.y, background.z, background.w);
 
-    Vec4ub fg = foreground;
-    Vec4ub bg = background;
+    Image::Color fg = foreground;
+    Image::Color bg = background;
 
-    QImage img(QSize(bounds.width(),
+    Image img(Size(bounds.width(),
                      de::max(duint(plat.font.height()), bounds.height())),
-               QImage::Format_ARGB32);
-    img.fill(bgColor.rgba());
+               Image::RGBA_8888);
+    img.fill(bgColor);
 
-    QPainter painter(&img);
-    painter.setCompositionMode(QPainter::CompositionMode_Source);
+    //QPainter painter(&img);
+    //painter.setCompositionMode(QPainter::CompositionMode_Source);
 
     // Composite the final image by drawing each rich range first into a separate
     // bitmap and then drawing those into the final image.

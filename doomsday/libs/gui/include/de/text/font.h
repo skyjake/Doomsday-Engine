@@ -27,11 +27,12 @@
 #include <de/Range>
 #include <de/EscapeParser>
 
-#include <QFont>
-#include <QImage>
-#include <QList>
+//#include <QFont>
+//#include <QImage>
+//#include <QList>
 
 #include "../gui/libgui.h"
+#include "../Image"
 
 namespace de {
 
@@ -43,7 +44,7 @@ class NativeFont;
 class LIBGUI_PUBLIC Font
 {
 public:
-    typedef QVector<int> TabStops;
+    typedef List<int> TabStops;
 
     /**
      * Rich formatting instructions for a string of plain text.
@@ -69,7 +70,7 @@ public:
      *
      * The indentation mark ">" determines the width at which the following
      * lines are left-indented. It does not affect the line the mark itself is
-     * on. Newlines (\n) do not reset the indentation. If multiple marks are
+     * on. Newlines (\\n) do not reset the indentation. If multiple marks are
      * used in the same text content, each mark is applied cumulatively on the
      * previous indentation. Also note that placing an indentation mark at the
      * beginning of a line or immediately after a new line does nothing (a
@@ -149,7 +150,7 @@ public:
              */
             virtual Font const *richStyleFont(Style fontStyle) const {
                 DE_UNUSED(fontStyle);
-                return NULL; // Use default.
+                return nullptr; // Use default.
             }
         };
 
@@ -242,23 +243,23 @@ public:
         public:
             Iterator(Ref const &ref);
 
-            int size() const;
+            int  size() const;
             bool hasNext() const;
             void next();
 
             /// Determines if all the style parameters are the same as the default ones.
             bool isDefault() const;
 
-            Rangei range() const;
-            float sizeFactor() const;
-            Weight weight() const;
-            Style style() const;
-            int colorIndex() const;
+            Rangei        range() const;
+            float         sizeFactor() const;
+            Weight        weight() const;
+            Style         style() const;
+            int           colorIndex() const;
             IStyle::Color color() const;
-            bool markIndent() const;
-            bool resetIndent() const;
-            int tabStop() const;
-            bool isTabless() const; ///< Tabstop < 0.
+            bool          markIndent() const;
+            bool          resetIndent() const;
+            int           tabStop() const;
+            bool          isTabless() const; ///< Tabstop < 0.
         };
 
     private:
@@ -272,7 +273,7 @@ public:
 
     Font(Font const &other);
     //Font(NativeFont const &font);
-    Font(QFont const &font);
+//    Font(QFont const &font);
 
     //QFont toQFont() const;
 
@@ -323,19 +324,19 @@ public:
      *
      * @return Image containing the rasterized text.
      */
-    QImage rasterize(String const &textLine,
-                     Vec4ub const &foreground = Vec4ub(255, 255, 255, 255),
-                     Vec4ub const &background = Vec4ub(255, 255, 255, 0)) const;
+    Image rasterize(String const &textLine,
+                    Vec4ub const &foreground = Image::Color(255, 255, 255, 255),
+                    Vec4ub const &background = Image::Color(255, 255, 255, 0)) const;
 
-    QImage rasterize(String const &textLine,
-                     RichFormatRef const &format,
-                     Vec4ub const &foreground = Vec4ub(255, 255, 255, 255),
-                     Vec4ub const &background = Vec4ub(255, 255, 255, 0)) const;
+    Image rasterize(String const &       textLine,
+                    RichFormatRef const &format,
+                    Vec4ub const &       foreground = Image::Color(255, 255, 255, 255),
+                    Vec4ub const &       background = Image::Color(255, 255, 255, 0)) const;
 
-    Rule const &height() const;
-    Rule const &ascent() const;
-    Rule const &descent() const;
-    Rule const &lineSpacing() const;
+    const Rule &height() const;
+    const Rule &ascent() const;
+    const Rule &descent() const;
+    const Rule &lineSpacing() const;
 
 private:
     DE_PRIVATE(d)

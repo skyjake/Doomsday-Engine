@@ -216,9 +216,9 @@ DE_PIMPL(GLProgram)
         if (samplersChanged)
         {
             // Update the sampler uniforms with the assigned texture image unit values.
-            for (int unit = 0; unit < samplers.size(); ++unit)
+            for (duint unit = 0; unit < samplers.size(); ++unit)
             {
-                int loc = self().glUniformLocation(samplers[unit]->name());
+                int loc = self().glUniformLocation(samplers[unit]->name().c_str());
                 if (loc >= 0)
                 {
                     glUniform1i(loc, unit);
@@ -292,10 +292,10 @@ DE_PIMPL(GLProgram)
         if (!stack.isEmpty())
         {
             // The old binding is no longer active.
-            active.remove(stack.top());
-            changed.remove(stack.top());
+            active.remove(stack.back());
+            changed.remove(stack.back());
         }
-        stack.push(uniform);
+        stack.push_back(uniform);
 
         active.insert(uniform);
         changed.insert(uniform);
@@ -317,24 +317,23 @@ DE_PIMPL(GLProgram)
         changed.remove(uniform);
 
         auto &stack = stacks[uniform->name()];
-        if (stack.top() == uniform)
+        if (stack.back() == uniform)
         {
-            stack.pop();
+            stack.back();
             if (!stack.isEmpty())
             {
                 // The new topmost binding becomes active.
-                active.insert(stack.top());
-                changed.insert(stack.top());
+                active.insert(stack.back());
+                changed.insert(stack.back());
             }
         }
         else
         {
             // It might be deeper in the stack.
-            //stack.removeAll(uniform); // added in Qt 5.4
             int found = stack.indexOf(uniform);
             if (found >= 0)
             {
-                stack.remove(found);
+                stack.removeAt(found);
             }
         }
         if (stack.isEmpty())

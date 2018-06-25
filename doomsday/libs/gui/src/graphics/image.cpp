@@ -110,7 +110,7 @@ static bool recognize(Block const &data)
  *
  * @return QImage using the RGB888 (24-bit) format.
  */
-static QImage load(Block const &data)
+static Image load(const Block &data)
 {
     Header header;
     Reader reader(data);
@@ -118,12 +118,12 @@ static QImage load(Block const &data)
 
     Image::Size const size(header.xMax + 1, header.yMax + 1);
 
-    QImage image(size.x, size.y, QImage::Format_RGB888);
+    Image image(size, Image::RGB_888);
     DE_ASSERT(image.depth() == 24);
 
     dbyte const *palette = data.data() + data.size() - 768;
     dbyte const *pos = data.data() + HEADER_SIZE;
-    dbyte *dst = image.bits();
+    dbyte *dst = reinterpret_cast<dbyte *>(image.bits());
 
     for (duint y = 0; y < size.y; ++y, dst += size.x * 3)
     {
@@ -162,7 +162,6 @@ struct Header : public IReadable
         InterleaveTwoWay  = 0x2,
         InterleaveFourWay = 0x4
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     enum ColorMapType
     {
@@ -232,8 +231,6 @@ struct Header : public IReadable
     }
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(Header::Flags)
-
 static bool recognize(Block const &data)
 {
     try
@@ -250,16 +247,16 @@ static bool recognize(Block const &data)
     }
 }
 
-static QImage load(Block const &data)
+static Image load(const Block &data)
 {
     Header header;
     Reader input(data);
     input >> header;
 
     int const pixelSize = header.depth / 8;
-    QImage img(QSize(header.size.x, header.size.y),
-               pixelSize == 4? QImage::Format_ARGB32 : QImage::Format_RGB888);
-    dbyte *base = img.bits();
+    Image img(Image::Size(header.size.x, header.size.y),
+               pixelSize == 4? Image::RGBA_8888 : Image::RGB_888);
+    dbyte *base = reinterpret_cast<dbyte *>(img.bits());
 
     bool const isUpperOrigin = header.flags.testFlag(Header::ScreenOriginUpper);
 
@@ -269,13 +266,13 @@ static QImage load(Block const &data)
         for (int y = 0; y < header.size.y; y++)
         {
             int inY = (isUpperOrigin? y : (header.size.y - y - 1));
-            ByteRefArray line(base + (inY * img.bytesPerLine()), header.size.x * pixelSize);
+            ByteRefArray line(base + (inY * img.stride()), header.size.x * pixelSize);
             input.readBytesFixedSize(line);
         }
     }
     else if (header.imageType == Header::RleRGB)
     {
-        img.fill(0);
+        img.fill(Image::Color());
 
         // RLE packets may cross over to the next line.
         int x = 0;
@@ -339,16 +336,15 @@ DE_PIMPL(Image)
 {
     Format       format;
     Size         size;
-    QImage       image;
+//    Image        image;
     Block        pixels;
     ByteRefArray refPixels;
     float pointRatio = 1.f;
 
-    Impl(Public *i, QImage const &img = QImage())
-        : Base(i), format(UseQImageFormat), image(img)
-    {
-        size = Size(img.width(), img.height());
-    }
+    Impl(Public *i)
+        : Base(i)
+        , format(Unknown)
+    {}
 
     Impl(Public *i, Impl const &other)
         : Base(i)
@@ -361,17 +357,25 @@ DE_PIMPL(Image)
     {}
 
     Impl(Public *i, Size const &imgSize, Format imgFormat)
-        : Base(i), format(imgFormat), size(imgSize)
+        : Base(i)
+        , format(imgFormat)
+        , size(imgSize)
     {
         pixels.resize(i->stride() * imgSize.y);
     }
 
     Impl(Public *i, Size const &imgSize, Format imgFormat, IByteArray const &imgPixels)
-        : Base(i), format(imgFormat), size(imgSize), pixels(imgPixels)
+        : Base(i)
+        , format(imgFormat)
+        , size(imgSize)
+        , pixels(imgPixels)
     {}
 
     Impl(Public *i, Size const &imgSize, Format imgFormat, ByteRefArray const &imgRefPixels)
-        : Base(i), format(imgFormat), size(imgSize), refPixels(imgRefPixels)
+        : Base(i)
+        , format(imgFormat)
+        , size(imgSize)
+        , refPixels(imgRefPixels)
     {}
 };
 
@@ -380,9 +384,6 @@ Image::Image() : d(new Impl(this))
 
 Image::Image(Image const &other)
     : d(new Impl(this, *other.d))
-{}
-
-Image::Image(QImage const &image) : d(new Impl(this, image))
 {}
 
 Image::Image(Size const &size, Format format)
@@ -403,25 +404,25 @@ Image &Image::operator=(Image const &other)
     return *this;
 }
 
-Image &Image::operator = (QImage const &other)
-{
-    d.reset(new Impl(this, other));
-    return *this;
-}
+//Image &Image::operator = (QImage const &other)
+//{
+//    d.reset(new Impl(this, other));
+//    return *this;
+//}
 
 Image::Format Image::format() const
 {
     return d->format;
 }
 
-QImage::Format Image::qtFormat() const
-{
-    if (d->format == UseQImageFormat)
-    {
-        return d->image.format();
-    }
-    return QImage::Format_Invalid;
-}
+//QImage::Format Image::qtFormat() const
+//{
+//    if (d->format == UseQImageFormat)
+//    {
+//        return d->image.format();
+//    }
+//    return QImage::Format_Invalid;
+//}
 
 Image::Size Image::size() const
 {
@@ -437,7 +438,7 @@ int Image::depth() const
 {
     switch (d->format)
     {
-    case UseQImageFormat: return d->image.depth();
+//    case UseQImageFormat: return d->image.depth();
 
     case Luminance_8:
     case Alpha_8: return 8;
@@ -479,50 +480,64 @@ int Image::depth() const
 
 int Image::stride() const
 {
-    if (d->format == UseQImageFormat)
-    {
-        return d->image.bytesPerLine();
+//    if (d->format == UseQImageFormat)
+//    {
+//        return d->image.bytesPerLine();
+//    }
+    return bytesPerPixel() * d->size.x;
     }
     return depth() / 8 * d->size.x;
 }
 
-int Image::byteCount() const
+dsize Image::byteCount() const
 {
-    if (d->format == UseQImageFormat)
-    {
-        return d->image.byteCount();
-    }
+//    if (d->format == UseQImageFormat)
+//    {
+//        return d->image.byteCount();
+//    }
     if (!d->pixels.isEmpty())
     {
         return d->pixels.size();
     }
-    return depth() / 8 * d->size.x * d->size.y;
+    return bytesPerPixel() * d->size.x * d->size.y;
 }
 
-void const *Image::bits() const
+const dbyte *Image::bits() const
 {
-    if (d->format == UseQImageFormat)
-    {
-        return d->image.constBits();
-    }
+//    if (d->format == UseQImageFormat)
+//    {
+//        return d->image.constBits();
+//    }
     if (!d->pixels.isEmpty())
     {
         return d->pixels.constData();
     }
-    return d->refPixels.readBase();
+    return reinterpret_cast<const dbyte *>(d->refPixels.readBase());
 }
 
-void *Image::bits()
+dbyte *Image::bits()
 {
-    if (d->format == UseQImageFormat)
-    {
-        return d->image.bits();
-    }
+//    if (d->format == UseQImageFormat)
+//    {
+//        return d->image.bits();
+//    }
     if (!d->pixels.isEmpty())
     {
         return d->pixels.data();
     }
-    return d->refPixels.base();
+    return reinterpret_cast<dbyte *>(d->refPixels.base());
+    }
+
+const dbyte *Image::row(duint y) const
+    {
+    DE_ASSERT(y < height());
+    return bits() + stride() * y;
+    }
+
+dbyte *Image::row(duint y)
+{
+    DE_ASSERT(y < height());
+    return bits() + stride() * y;
 }
 
 bool Image::isNull() const
@@ -532,28 +547,33 @@ bool Image::isNull() const
 
 bool Image::isGLCompatible() const
 {
-    if (d->format == UseQImageFormat)
-    {
-        // Some QImage formats are GL compatible.
-        switch (qtFormat())
-        {
-        case QImage::Format_ARGB32: // 8888
-        case QImage::Format_RGB32:  // 8888
-        case QImage::Format_RGB888: // 888
-        case QImage::Format_RGB16:  // 565
-        case QImage::Format_RGB555: // 555
-        case QImage::Format_RGB444: // 444
-            return true;
+//    if (d->format == UseQImageFormat)
+//    {
+//        // Some QImage formats are GL compatible.
+//        switch (qtFormat())
+//        {
+//        case QImage::Format_ARGB32: // 8888
+//        case QImage::Format_RGB32:  // 8888
+//        case QImage::Format_RGB888: // 888
+//        case QImage::Format_RGB16:  // 565
+//        case QImage::Format_RGB555: // 555
+//        case QImage::Format_RGB444: // 444
+//            return true;
 
-        default:
-            return false;
-        }
-    }
+//        default:
+//            return false;
+//        }
+//    }
     return d->format >= Luminance_8 && d->format <= RGBA_32ui;
 }
 
 Image Image::convertToFormat(Format format) const
 {
+    if (d->format == format)
+{
+        // No conversion necessary.
+        return *this;
+    }
     DE_ASSERT_FAIL("Image::convertToFormat not implemented");
 }
 
@@ -616,16 +636,24 @@ Image Image::convertToFormat(Format format) const
 
 GLPixelFormat Image::glFormat() const
 {
-    if (d->format == UseQImageFormat)
-    {
-        return glFormat(d->image.format());
-    }
+//    if (d->format == UseQImageFormat)
+//    {
+//        return glFormat(d->image.format());
+//    }
     return glFormat(d->format);
 }
 
-float Image::pointRatio() const
+Image::Color Image::pixel(Vec2ui pos) const
 {
-    return d->pointRatio;
+    const dbyte *ptr = &row(pos.y)[pos.x * bytesPerPixel()];
+    switch (d->format)
+    {
+    case RGBA_8888: return Color(ptr[0], ptr[1], ptr[2], ptr[3]);
+    case RGB_888:   return Color(ptr[0], ptr[1], ptr[2]);
+
+    default: DE_ASSERT_FAIL("Image::pixel does not support this format"); break;
+    }
+    return {};
 }
 
 void Image::setPointRatio(float pointsPerPixel)
@@ -644,7 +672,7 @@ Image Image::subImage(Rectanglei const &subArea) const
 void Image::resize(Size const &size)
 {
     IMAGE_ASSERT_EDITABLE(d);
-    DE_ASSERT(d->image.format() != QImage::Format_Invalid);
+//    DE_ASSERT(d->image.format() != QImage::Format_Invalid);
 
     QImage resized(QSize(size.x, size.y), d->image.format());
     resized.fill(0);
@@ -670,6 +698,14 @@ void Image::fill(Rectanglei const &rect, Color const &color)
     painter.setCompositionMode(QPainter::CompositionMode_Source);
     painter.fillRect(QRect(rect.topLeft.x, rect.topLeft.y, rect.width(), rect.height()),
                      QColor(color.x, color.y, color.z, color.w));
+}
+
+void Image::setPixel(Vec2ui pos, Color color)
+{
+    IMAGE_ASSERT_EDITABLE(d);
+
+    uint32_t packed = packColor(color);
+    std::memcpy(&row(pos.y)[bytesPerPixel() * pos.x], &packed, 4);
 }
 
 void Image::draw(Image const &image, Vec2i const &topLeft)
@@ -705,11 +741,11 @@ Image Image::multiplied(Color const &color) const
 {
     if (color == Color(255, 255, 255, 255)) return *this; // No change.
 
-    QImage copy = toQImage().convertToFormat(QImage::Format_ARGB32);
+    Image copy = convertToFormat(RGBA_8888);
 
     for (duint y = 0; y < height(); ++y)
     {
-        duint32 *ptr = reinterpret_cast<duint32 *>(copy.bits() + y * copy.bytesPerLine());
+        duint32 *ptr = reinterpret_cast<duint32 *>(copy.bits() + y * copy.stride());
         for (duint x = 0; x < width(); ++x)
         {
             duint16 b =  *ptr & 0xff;
@@ -717,10 +753,10 @@ Image Image::multiplied(Color const &color) const
             duint16 r = (*ptr & 0xff0000) >> 16;
             duint16 a = (*ptr & 0xff000000) >> 24;
 
-            *ptr++ = qRgba((color.x + 1) * r >> 8,
+            *ptr++ = packColor(Color((color.x + 1) * r >> 8,
                            (color.y + 1) * g >> 8,
                            (color.z + 1) * b >> 8,
-                           (color.w + 1) * a >> 8);
+                                     (color.w + 1) * a >> 8));
         }
     }
     return copy;
@@ -728,9 +764,9 @@ Image Image::multiplied(Color const &color) const
 
 Image Image::colorized(Color const &color) const
 {
-    QImage copy = toQImage().convertToFormat(QImage::Format_ARGB32);
+    Image copy = convertToFormat(RGBA_8888);
 
-    QColor targetColor(color.x, color.y, color.z, 255);
+    Color targetColor(color.x, color.y, color.z, 255);
     int targetHue = targetColor.hue();
 
     for (duint y = 0; y < height(); ++y)
@@ -755,8 +791,9 @@ Image Image::colorized(Color const &color) const
 
 Image Image::invertedColor() const
 {
-    QImage img = toQImage().convertToFormat(QImage::Format_ARGB32);
-    img.invertPixels();
+    Image img = convertToFormat(RGBA_8888);
+    //img.invertPixels();
+    DE_ASSERT_FAIL("Image::invertedColor not implemented");
     return img;
 }
 
@@ -765,13 +802,13 @@ Image Image::mixed(Image const &low, Image const &high) const
     DE_ASSERT(size() == low.size());
     DE_ASSERT(size() == high.size());
 
-    const QImage lowImg  = low.toQImage();
-    const QImage highImg = high.toQImage();
+    const Image &lowImg  = low;
+    const Image &highImg = high;
 
-    QImage mix = toQImage().convertToFormat(QImage::Format_ARGB32);
+    Image mix = convertToFormat(RGBA_8888);
     for (duint y = 0; y < height(); ++y)
     {
-        duint32 *ptr = reinterpret_cast<duint32 *>(mix.bits() + y * mix.bytesPerLine());
+        duint32 *ptr = reinterpret_cast<duint32 *>(mix.bits() + y * mix.stride());
         for (duint x = 0; x < width(); ++x)
         {
             duint mb =  *ptr & 0xff;
@@ -798,11 +835,11 @@ Image Image::mixed(Image const &low, Image const &high) const
 Image Image::withAlpha(Image const &grayscale) const
 {
     DE_ASSERT(size() == grayscale.size());
-    const QImage alpha = grayscale.toQImage();
-    QImage img = toQImage().convertToFormat(QImage::Format_ARGB32);
+    const Image &alpha = grayscale;//.toQImage();
+    Image img = convertToFormat(RGBA_8888);
     for (duint y = 0; y < height(); ++y)
     {
-        duint32 *ptr = reinterpret_cast<duint32 *>(img.bits() + y * img.bytesPerLine());
+        duint32 *ptr = reinterpret_cast<duint32 *>(img.bits() + y * img.stride());
         for (duint x = 0; x < width(); ++x)
         {
             *ptr &= 0x00ffffff;
@@ -810,6 +847,18 @@ Image Image::withAlpha(Image const &grayscale) const
         }
     }
     return img;
+}
+
+Image Image::rgbSwapped() const
+{
+    DE_ASSERT_FAIL("Image::rgbSwapped is not implemented");
+    return {};
+}
+
+Image Image::mirrored(bool horizontally, bool vertically) const
+{
+    DE_ASSERT_FAIL("Image::mirrored is not implemented");
+    return {};
 }
 
 void Image::save(const NativePath &path) const

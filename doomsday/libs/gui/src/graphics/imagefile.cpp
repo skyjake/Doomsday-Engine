@@ -25,32 +25,32 @@
 
 namespace de {
 
-static String const MULTIPLY            ("Multiply:");
-static String const HEIGHTMAP_TO_NORMALS("HeightMap.toNormals");
-static String const COLOR_DESATURATE    ("Color.desaturate");
-static String const COLOR_SOLID         ("Color.solid:");
-static String const COLOR_MULTIPLY      ("Color.multiply:");
+static const String MULTIPLY            ("Multiply:");
+static const String HEIGHTMAP_TO_NORMALS("HeightMap.toNormals");
+static const String COLOR_DESATURATE    ("Color.desaturate");
+static const String COLOR_SOLID         ("Color.solid:");
+static const String COLOR_MULTIPLY      ("Color.multiply:");
 
 DE_PIMPL(ImageFile)
 {
-    BuiltInFilter filter = NoFilter;
-    Hash<BuiltInFilter, ImageFile *> filtered; // owned
-    String filterParameter;
+    BuiltInFilter            filter = NoFilter;
+    Hash<duint, ImageFile *> filtered; // owned
+    String                   filterParameter;
 
     Impl(Public *i) : Base(i) {}
 
     ~Impl()
     {
-        deleteAll(filtered);
+        filtered.deleteAll();
     }
 
     ImageFile *makeOrGetFiltered(BuiltInFilter filter)
     {
         // Already got it?
-        auto found = filtered.constFind(filter);
-        if (found != filtered.constEnd())
+        auto found = filtered.find(filter);
+        if (found != filtered.end())
         {
-            return found.value();
+            return found->second;
         }
         if (filter != NoFilter) //filter == HeightMapToNormals || filter == Multiply)
         {

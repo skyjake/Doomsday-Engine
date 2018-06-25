@@ -13,13 +13,14 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBGUI_CORETEXTNATIVEFONT_H
 #define LIBGUI_CORETEXTNATIVEFONT_H
 
 #include "de/NativeFont"
+#include "de/Image"
 
 namespace de {
 
@@ -31,9 +32,8 @@ class CoreTextNativeFont : public NativeFont
 public:
     CoreTextNativeFont(String const &family = "");
     CoreTextNativeFont(CoreTextNativeFont const &other);
-    CoreTextNativeFont(QFont const &font);
 
-    CoreTextNativeFont &operator = (CoreTextNativeFont const &other);
+    CoreTextNativeFont &operator=(CoreTextNativeFont const &other);
 
 protected:
     void commit() const;
@@ -44,10 +44,10 @@ protected:
     int nativeFontLineSpacing() const;
 
     Rectanglei nativeFontMeasure(String const &text) const;
-    int nativeFontWidth(String const &text) const;
-    QImage nativeFontRasterize(String const &text,
-                               Vec4ub const &foreground,
-                               Vec4ub const &background) const;
+    int        nativeFontWidth(String const &text) const;
+    Image      nativeFontRasterize(const String &      text,
+                                   const Image::Color &foreground,
+                                   const Image::Color &background) const;
 
 private:
     DE_PRIVATE(d)

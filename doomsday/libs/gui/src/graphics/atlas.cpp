@@ -123,9 +123,9 @@ DE_PIMPL(Atlas)
         duint totalPx = totalSize.x * totalSize.y;
         duint usedPx = 0;
 
-        for (const Rectanglei &alloc : allocator->allocs().values())
+        for (const auto &alloc : allocator->allocs())
         {
-            usedPx += alloc.width() * alloc.height();
+            usedPx += alloc.second.width() * alloc.second.height();
         }
         return float(usedPx) / float(totalPx);
     }
@@ -179,32 +179,33 @@ DE_PIMPL(Atlas)
             if (border > 0)
             {
                 // Expand with borders (repeat edges).
-                QImage const srcImg = image.toQImage();
-                int const sw = srcImg.width();
-                int const sh = srcImg.height();
+                const Image &srcImg = image;
+                const int    sw     = srcImg.width();
+                const int    sh     = srcImg.height();
 
-                QImage bordered(QSize(rect.width(), rect.height()), srcImg.format());
-                int const w = bordered.width();
-                int const h = bordered.height();
+                Image bordered(rect.size(), srcImg.format());
+                const int w = bordered.width();
+                const int h = bordered.height();
 
-                QPainter painter(&bordered);
-                painter.setCompositionMode(QPainter::CompositionMode_Source);
-                painter.fillRect(bordered.rect(), QColor(0, 0, 0, 0));
+                //QPainter painter(&bordered);
+                //painter.setCompositionMode(QPainter::CompositionMode_Source);
+                //painter.fillRect(bordered.rect(), QColor(0, 0, 0, 0));
+                bordered.fill(Image::Color(0, 0, 0, 0));
 
                 /// @todo This really only works for a border of 1 pixels. Should
                 /// repeat the same outmost edge pixels for every border. -jk
 
-                painter.drawImage(border, border, srcImg);
-                painter.drawImage(border, 0,     srcImg, 0, 0, sw, 1); // top
-                painter.drawImage(border, h - 1, srcImg, 0, sh - 1, sw, 1); // bottom
-                painter.drawImage(0, border,     srcImg, 0, 0, 1, sh); // left
-                painter.drawImage(w - 1, border, srcImg, sw - 1, 0, 1, sh); // right
+                bordered.draw(border, border, srcImg);
+                bordered.draw(border, 0,     srcImg, 0, 0, sw, 1); // top
+                bordered.draw(border, h - 1, srcImg, 0, sh - 1, sw, 1); // bottom
+                bordered.draw(0, border,     srcImg, 0, 0, 1, sh); // left
+                bordered.draw(w - 1, border, srcImg, sw - 1, 0, 1, sh); // right
 
                 // Corners.
-                painter.drawImage(0, 0,         srcImg, 0, 0, 1, 1);
-                painter.drawImage(w - 1, 0,     srcImg, sw - 1, 0, 1, 1);
-                painter.drawImage(0, h - 1,     srcImg, 0, sh - 1, 1, 1);
-                painter.drawImage(w - 1, h - 1, srcImg, sw - 1, sh - 1, 1, 1);
+                bordered.draw(0, 0,         srcImg, 0, 0, 1, 1);
+                bordered.draw(w - 1, 0,     srcImg, sw - 1, 0, 1, 1);
+                bordered.draw(0, h - 1,     srcImg, 0, sh - 1, 1, 1);
+                bordered.draw(w - 1, h - 1, srcImg, sw - 1, sh - 1, 1, 1);
 
                 self().commit(bordered, rect.topLeft);
             }
@@ -222,15 +223,15 @@ DE_PIMPL(Atlas)
             try
             {
                 Rectanglei rect;
-                allocator->rect(i.key(), rect);
-                submitImage(*i.value(), rect);
+                allocator->rect(i->first, rect);
+                submitImage(*i->second, rect);
             }
             catch (Error const &er)
             {
                 LOG_GL_ERROR("Allocation %s could not be submitted: %s")
-                        << i.key() << er.asText();
+                        << i->first << er.asText();
             }
-            delete i.value(); // we own the Image
+            delete i->second; // we own the Image
         }
         deferred.clear();
     }

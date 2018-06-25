@@ -30,8 +30,8 @@
 
 namespace de {
 
-static Vec2ui const nullSize;
-static GLuint defaultFramebuffer = 0;
+static const Vec2ui nullSize;
+static GLuint       defaultFramebuffer = 0;
 
 DE_PIMPL(GLFramebuffer)
 , DE_OBSERVES(Asset, Deletion)
@@ -220,8 +220,8 @@ DE_PIMPL(GLFramebuffer)
     {
         if (isDefault() || fbo) return;
 
-        LIBGUI_GL.glGenFramebuffers(1, &fbo);
-        LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        glGenFramebuffers(1, &fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
         LIBGUI_ASSERT_GL_OK();
         LOG_GL_XVERBOSE("Creating FBO %i", fbo);
@@ -235,11 +235,11 @@ DE_PIMPL(GLFramebuffer)
         DE_ASSERT(tex.isReady());
         if (tex.isCubeMap())
         {
-            LIBGUI_GL.glFramebufferTexture(GL_FRAMEBUFFER, attachment, tex.glName(), level);
+            glFramebufferTexture(GL_FRAMEBUFFER, attachment, tex.glName(), level);
         }
         else
         {
-            LIBGUI_GL.glFramebufferTexture2D(
+            glFramebufferTexture2D(
                 GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, tex.glName(), level);
         }
         LIBGUI_ASSERT_GL_OK();
@@ -251,8 +251,8 @@ DE_PIMPL(GLFramebuffer)
     {
         DE_ASSERT(size != Vec2ui(0, 0));
 
-        LIBGUI_GL.glGenRenderbuffers(1, &renderBufs[id]);
-        LIBGUI_GL.glBindRenderbuffer(GL_RENDERBUFFER, renderBufs[id]);
+        glGenRenderbuffers(1, &renderBufs[id]);
+        glBindRenderbuffer(GL_RENDERBUFFER, renderBufs[id]);
         LIBGUI_ASSERT_GL_OK();
 
 #if !defined(DE_OPENGL_ES)
@@ -264,7 +264,7 @@ DE_PIMPL(GLFramebuffer)
                         << fbo << size.x << size.y << sampleCount
                         << attachmentToId(attachment);
 
-                GLInfo::NV_framebuffer_multisample_coverage()->glRenderbufferStorageMultisampleCoverageNV(
+                glRenderbufferStorageMultisampleCoverageNV(
                         GL_RENDERBUFFER, 8, sampleCount, type, size.x, size.y);
                 LIBGUI_ASSERT_GL_OK();
             }
@@ -275,7 +275,7 @@ DE_PIMPL(GLFramebuffer)
                         << attachmentToId(attachment);
 
                 //DE_ASSERT(GLInfo::extensions().EXT_framebuffer_multisample);
-                LIBGUI_GL.glRenderbufferStorageMultisample(
+                glRenderbufferStorageMultisample(
                         GL_RENDERBUFFER, sampleCount, type, size.x, size.y);
                 LIBGUI_ASSERT_GL_OK();
             }
@@ -283,11 +283,11 @@ DE_PIMPL(GLFramebuffer)
         else
 #endif
         {
-            LIBGUI_GL.glRenderbufferStorage(GL_RENDERBUFFER, type, size.x, size.y);
+            glRenderbufferStorage(GL_RENDERBUFFER, type, size.x, size.y);
             LIBGUI_ASSERT_GL_OK();
         }
 
-        LIBGUI_GL.glFramebufferRenderbuffer(
+        glFramebufferRenderbuffer(
                     GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, renderBufs[id]);
         LIBGUI_ASSERT_GL_OK();
     }
@@ -300,9 +300,9 @@ DE_PIMPL(GLFramebuffer)
         {
             // The texture's attachment point must be unambiguously defined.
             DE_ASSERT(textureAttachment == Color0  ||
-                         textureAttachment == Depth   ||
-                         textureAttachment == Stencil ||
-                         textureAttachment == DepthStencil);
+                      textureAttachment == Depth   ||
+                      textureAttachment == Stencil ||
+                      textureAttachment == DepthStencil);
 
             attachTexture(*texture,
                           textureAttachment == Color0?  GL_COLOR_ATTACHMENT0  :
@@ -333,7 +333,7 @@ DE_PIMPL(GLFramebuffer)
 
         allocDepthStencilRenderBuffers();
 
-        LIBGUI_GL.glBindRenderbuffer(GL_RENDERBUFFER, 0);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
     }
 
     void allocDepthStencilRenderBuffers()
@@ -365,7 +365,7 @@ DE_PIMPL(GLFramebuffer)
 
     void deallocRenderBuffers()
     {
-        LIBGUI_GL.glDeleteRenderbuffers(MAX_ATTACHMENTS, renderBufs);
+        glDeleteRenderbuffers(MAX_ATTACHMENTS, renderBufs);
         zap(renderBufs);
         zap(bufTextures);
     }
@@ -376,7 +376,7 @@ DE_PIMPL(GLFramebuffer)
         if (fbo)
         {
             deallocRenderBuffers();
-            LIBGUI_GL.glDeleteFramebuffers(1, &fbo);
+            glDeleteFramebuffers(1, &fbo);
             fbo = 0;
         }
         zap(bufTextures);
@@ -397,7 +397,7 @@ DE_PIMPL(GLFramebuffer)
     {
         if (renderBufs[id])
         {
-            LIBGUI_GL.glDeleteRenderbuffers(1, &renderBufs[id]);
+            glDeleteRenderbuffers(1, &renderBufs[id]);
             renderBufs[id] = 0;
         }
     }
@@ -415,7 +415,7 @@ DE_PIMPL(GLFramebuffer)
         DE_ASSERT(self().isReady()); // must already be inited
         DE_ASSERT(bufTextures[attachmentToId(attachment)] != 0); // must have an attachment already
 
-        LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
         attachTexture(newTexture, attachment);
 
         validate();
@@ -426,7 +426,7 @@ DE_PIMPL(GLFramebuffer)
         DE_ASSERT(self().isReady()); // must already be inited
         if (attachment == DepthStencil) // this supported only
         {
-            LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+            glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
             allocDepthStencilRenderBuffers();
 
@@ -442,8 +442,8 @@ DE_PIMPL(GLFramebuffer)
 
         renderBufs[id] = renderBufId;
 
-        LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-        LIBGUI_GL.glFramebufferRenderbuffer(
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        glFramebufferRenderbuffer(
                     GL_FRAMEBUFFER, flagsToGLAttachment(attachment),
                     GL_RENDERBUFFER, renderBufs[id]);
 
@@ -456,32 +456,29 @@ DE_PIMPL(GLFramebuffer)
     void glBind() const
     {
         DE_ASSERT(fbo);
-        auto &GL = LIBGUI_GL;
 
-        GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo); LIBGUI_ASSERT_GL_OK();
-//        GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo); LIBGUI_ASSERT_GL_OK();
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo); LIBGUI_ASSERT_GL_OK();
+//        glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo); LIBGUI_ASSERT_GL_OK();
 
         int const count = colorAttachmentCount();
 
         static const GLenum drawBufs[4] = {
             GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3
         };
-        GL.glDrawBuffers(count, drawBufs); LIBGUI_ASSERT_GL_OK();
-//        GL.glReadBuffer(count > 0? GL_COLOR_ATTACHMENT0 : GL_NONE); LIBGUI_ASSERT_GL_OK();
+        glDrawBuffers(count, drawBufs); LIBGUI_ASSERT_GL_OK();
+//        glReadBuffer(count > 0? GL_COLOR_ATTACHMENT0 : GL_NONE); LIBGUI_ASSERT_GL_OK();
     }
 
     void glRelease() const
     {
         LIBGUI_ASSERT_GL_OK();
 
-        auto &GL = LIBGUI_GL;
-
-        GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defaultFramebuffer); // both read and write FBOs
-//        GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, defaultFramebuffer); // both read and write FBOs
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defaultFramebuffer); // both read and write FBOs
+//        glBindFramebuffer(GL_READ_FRAMEBUFFER, defaultFramebuffer); // both read and write FBOs
         LIBGUI_ASSERT_GL_OK();
 
-        GL.glDrawBuffer(GL_BACK);   LIBGUI_ASSERT_GL_OK();
-//        GL.glReadBuffer(GL_BACK);   LIBGUI_ASSERT_GL_OK();
+        glDrawBuffer(GL_BACK);   LIBGUI_ASSERT_GL_OK();
+//        glReadBuffer(GL_BACK);   LIBGUI_ASSERT_GL_OK();
     }
 
     void validate()
@@ -494,20 +491,20 @@ DE_PIMPL(GLFramebuffer)
 
         DE_ASSERT(fbo != 0);
 
-        //LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        //glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
         glBind();
 
-        GLenum status = LIBGUI_GL.glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if (status != GL_FRAMEBUFFER_COMPLETE)
         {
             deallocAndReset();
 
             throw ConfigError("GLFramebuffer::validate",
-                status == GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT? "Incomplete attachments" :
-                status == GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS? "Mismatch with dimensions" :
-                status == GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT? "No images attached" :
-                                                                        QString("Unsupported (0x%1)").arg(status, 0, 16));
+                status == GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT ? "Incomplete attachments" :
+                status == GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS ? "Mismatch with dimensions" :
+                status == GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT ? "No images attached" :
+                    stringf("Unsupported (0x%x)", status).c_str());
         }
         self().setState(Ready);
 
@@ -555,7 +552,7 @@ GLFramebuffer::GLFramebuffer(Vec2ui const &size, Flags flags)
     d->alloc();
 }
 
-GLFramebuffer::Flags GLFramebuffer::flags() const
+Flags GLFramebuffer::flags() const
 {
     return d->flags;
 }
@@ -598,12 +595,12 @@ void GLFramebuffer::configure(GLTexture *colorTex,
                               GLTexture *depthStencilTex,
                               Flags      missingRenderBuffers)
 {
-    configure(QList<GLTexture *>({colorTex}), depthStencilTex, missingRenderBuffers);
+    configure(List<GLTexture *>({colorTex}), depthStencilTex, missingRenderBuffers);
 }
 
-void GLFramebuffer::configure(QList<GLTexture *> colorTextures,
-                              GLTexture *        depthStencilTex,
-                              Flags              missingRenderBuffers)
+void GLFramebuffer::configure(const List<GLTexture *> &colorTextures,
+                              GLTexture *              depthStencilTex,
+                              Flags                    missingRenderBuffers)
 {
     LOG_AS("GLFramebuffer");
 
@@ -612,7 +609,7 @@ void GLFramebuffer::configure(QList<GLTexture *> colorTextures,
     d->deallocAndReset();
 
     // Set new configuration.
-    for (int i = 0; i < colorTextures.size(); ++i)
+    for (int i = 0; i < colorTextures.sizei(); ++i)
     {
         d->flags |= Flag(Color0 << i);
         d->size = colorTextures[i]->size();
@@ -626,7 +623,7 @@ void GLFramebuffer::configure(QList<GLTexture *> colorTextures,
     d->allocFBO();
 
     // The color attachment.
-    for (int i = 0; i < colorTextures.size(); ++i)
+    for (int i = 0; i < colorTextures.sizei(); ++i)
     {
         auto *colorTex = colorTextures[i];
         DE_ASSERT(colorTex->isReady());
@@ -698,7 +695,7 @@ void GLFramebuffer::glBind() const
 
 //    GLuint const fbo = (d->fbo? d->fbo : defaultFramebuffer);
 
-//    LIBGUI_GL.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+//    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 //    LIBGUI_ASSERT_GL_OK();
 
 //    if (d->fbo)
@@ -710,7 +707,7 @@ void GLFramebuffer::glBind() const
 //    }
 //    else
 //    {
-//        LIBGUI_GL.glDrawBuffer(GL_BACK);
+//        glDrawBuffer(GL_BACK);
 //    }
 }
 
@@ -719,7 +716,7 @@ void GLFramebuffer::glRelease() const
     d->glRelease();
 }
 
-QImage GLFramebuffer::toImage() const
+Image GLFramebuffer::toImage() const
 {
     if (!d->fbo)
     {
@@ -727,19 +724,18 @@ QImage GLFramebuffer::toImage() const
     }
     else if (d->flags & Color0)
     {
-        auto &GL = LIBGUI_GL;
         // Read the contents of the color attachment.
         Size imgSize = size();
-        QImage img(QSize(imgSize.x, imgSize.y), QImage::Format_ARGB32);
-        GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, d->fbo);
-        GL.glPixelStorei(GL_PACK_ALIGNMENT, 4);
-        GL.glReadPixels(0, 0, imgSize.x, imgSize.y, GL_BGRA, GL_UNSIGNED_BYTE, img.bits());
-        GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+        Image img(imgSize, Image::RGBA_8888);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, d->fbo);
+        glPixelStorei(GL_PACK_ALIGNMENT, 4);
+        glReadPixels(0, 0, imgSize.x, imgSize.y, GL_BGRA, GL_UNSIGNED_BYTE, img.bits());
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
         // Restore the stack's target.
 //        GLState::current().target().glBind();
         return img.mirrored(false, true);
     }
-    return QImage();
+    return Image();
 }
 
 void GLFramebuffer::setClearColor(Vec4f const &color)
@@ -753,16 +749,14 @@ void GLFramebuffer::clear(Flags attachments)
 
     markAsChanged();
 
-    auto &GL = LIBGUI_GL;
-
     // The entire framebuffer is being cleared.
     GLint oldViewport[4], scissorEnabled = 0;
     if (attachments & FullClear)
     {
-        GL.glGetIntegerv(GL_SCISSOR_TEST, &scissorEnabled);
-        GL.glGetIntegerv(GL_VIEWPORT, oldViewport);
-        GL.glViewport(0, 0, d->size.x, d->size.y);
-        GL.glDisable(GL_SCISSOR_TEST);
+        glGetIntegerv(GL_SCISSOR_TEST, &scissorEnabled);
+        glGetIntegerv(GL_VIEWPORT, oldViewport);
+        glViewport(0, 0, d->size.x, d->size.y);
+        glDisable(GL_SCISSOR_TEST);
     }
     else
     {
@@ -771,19 +765,20 @@ void GLFramebuffer::clear(Flags attachments)
 
     glBind();
 
+    glClearColor(d->clearColor.x, d->clearColor.y, d->clearColor.z, d->clearColor.w);
+
     // Only clear what we have.
     Flags which = attachments & d->flags;
-
-    GL.glClearColor(d->clearColor.x, d->clearColor.y, d->clearColor.z, d->clearColor.w);
-    GL.glClear((which & (Color0 | Color1 | Color2 | Color3)?  GL_COLOR_BUFFER_BIT : 0) |
-                      (which & Depth?   GL_DEPTH_BUFFER_BIT   : 0) |
-                      (which & Stencil? GL_STENCIL_BUFFER_BIT : 0));
+    glClear((which & (Color0 | Color1 | Color2 | Color3) ?
+                               ClearBufferMask::GL_COLOR_BUFFER_BIT : ClearBufferMask::GL_NONE_BIT) |
+            (which & Depth ?   ClearBufferMask::GL_DEPTH_BUFFER_BIT : ClearBufferMask::GL_NONE_BIT) |
+            (which & Stencil ? ClearBufferMask::GL_STENCIL_BUFFER_BIT : ClearBufferMask::GL_NONE_BIT));
 
     // Restore previous state.
     if (attachments & FullClear)
     {
-        GL.glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
-        if (scissorEnabled) GL.glEnable(GL_SCISSOR_TEST);
+        glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
+        if (scissorEnabled) glEnable(GL_SCISSOR_TEST);
     }
     else
     {
@@ -838,48 +833,52 @@ void GLFramebuffer::releaseAttachment(Flags attachment)
 void GLFramebuffer::blit(GLFramebuffer &dest, Flags attachments, gl::Filter filtering) const
 {
     LIBGUI_ASSERT_GL_OK();
-    auto &GL = LIBGUI_GL;
 
     // We will modify GL state directly, so let's save the current state.
 //    GLint oldDrawFbo;
 //    GLint oldReadFbo;
 //    GLint oldReadBuffer;
-//    GL.glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &oldDrawFbo);
-//    GL.glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &oldReadFbo);
-//    GL.glGetIntegerv(GL_READ_BUFFER, &oldReadBuffer);
+//    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &oldDrawFbo);
+//    glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &oldReadFbo);
+//    glGetIntegerv(GL_READ_BUFFER, &oldReadBuffer);
 
     GLFramebuffer *oldTarget = GLState::currentTarget();
 
-    //GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dest.glName());
+    //glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dest.glName());
     dest.glBind();
     LIBGUI_ASSERT_GL_OK();
 
 #if defined (DE_HAVE_BLIT_FRAMEBUFFER)
 
-    GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, glName());
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, glName());
     LIBGUI_ASSERT_GL_OK();
 
     if (attachments & ColorAny)
     {
-        GL.glReadBuffer(attachments & Color0? GL_COLOR_ATTACHMENT0
-                      : attachments & Color1? GL_COLOR_ATTACHMENT1
-                      : attachments & Color2? GL_COLOR_ATTACHMENT2
-                      : attachments & Color3? GL_COLOR_ATTACHMENT3
-                      : GL_COLOR_ATTACHMENT0);
+        glReadBuffer(attachments & Color0? GL_COLOR_ATTACHMENT0
+                   : attachments & Color1? GL_COLOR_ATTACHMENT1
+                   : attachments & Color2? GL_COLOR_ATTACHMENT2
+                   : attachments & Color3? GL_COLOR_ATTACHMENT3
+                   : GL_COLOR_ATTACHMENT0);
     }
 
     Flags common = d->flags & dest.flags() & attachments;
 
-    GL.glBlitFramebuffer(
-                0, 0, size().x, size().y,
-                0, 0, dest.size().x, dest.size().y,
-                (common & ColorAny? GL_COLOR_BUFFER_BIT   : 0) |
-                (common & Depth?    GL_DEPTH_BUFFER_BIT   : 0) |
-                (common & Stencil?  GL_STENCIL_BUFFER_BIT : 0),
-                filtering == gl::Nearest? GL_NEAREST : GL_LINEAR);
+    glBlitFramebuffer(0,
+                      0,
+                      size().x,
+                      size().y,
+                      0,
+                      0,
+                      dest.size().x,
+                      dest.size().y,
+                      (common & ColorAny ? ClearBufferMask::GL_COLOR_BUFFER_BIT   : ClearBufferMask::GL_NONE_BIT) |
+                      (common & Depth ?    ClearBufferMask::GL_DEPTH_BUFFER_BIT   : ClearBufferMask::GL_NONE_BIT) |
+                      (common & Stencil ?  ClearBufferMask::GL_STENCIL_BUFFER_BIT : ClearBufferMask::GL_NONE_BIT),
+                      filtering == gl::Nearest ? GL_NEAREST : GL_LINEAR);
     LIBGUI_ASSERT_GL_OK();
 
-    GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
     //GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, 0);
     //LIBGUI_ASSERT_GL_OK();
@@ -901,18 +900,16 @@ void GLFramebuffer::blit(gl::Filter filtering) const
 {
     LIBGUI_ASSERT_GL_OK();
 
-    auto &GL = LIBGUI_GL;
-
     //qDebug() << "Blitting from" << glName() << "to" << defaultFramebuffer << size().asText();
 
     GLFramebuffer *oldTarget = GLState::currentTarget();
 
 #if defined (DE_HAVE_BLIT_FRAMEBUFFER)
 
-    GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, glName());
-    GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defaultFramebuffer);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, glName());
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defaultFramebuffer);
 
-    GL.glBlitFramebuffer(
+    glBlitFramebuffer(
                 0, 0, size().x, size().y,
                 0, 0, size().x, size().y,
                 GL_COLOR_BUFFER_BIT,
@@ -920,7 +917,7 @@ void GLFramebuffer::blit(gl::Filter filtering) const
 
     LIBGUI_ASSERT_GL_OK();
 
-    GL.glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
 #else
 

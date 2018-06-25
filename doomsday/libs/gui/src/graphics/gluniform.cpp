@@ -30,7 +30,7 @@ DE_PIMPL(GLUniform)
 , DE_OBSERVES(Asset, Deletion)
 {
     Block name;
-    Type type;
+    Type  type;
     union Value{
         dint    int32;
         duint   uint32;
@@ -47,7 +47,7 @@ DE_PIMPL(GLUniform)
     duint16 usedElemCount;
     duint16 elemCount;
 
-    Impl(Public *i, const char *n, Type t, duint elems)
+    Impl(Public *i, const Block &n, Type t, duint elems)
         : Base(i)
         , name(n)
         , type(t)
@@ -231,13 +231,13 @@ DE_PIMPL(GLUniform)
 
 DE_AUDIENCE_METHODS(GLUniform, Deletion, ValueChange)
 
-GLUniform::GLUniform(char const *nameInShader, Type uniformType, duint elements)
+GLUniform::GLUniform(const Block &nameInShader, Type uniformType, duint elements)
     : d(new Impl(this, nameInShader, uniformType, elements))
 {}
 
-void GLUniform::setName(char const *nameInShader)
+void GLUniform::setName(const Block &nameInShader)
 {
-    d->name = Block(nameInShader);
+    d->name = nameInShader;
     d->name.append('\0');
 }
 

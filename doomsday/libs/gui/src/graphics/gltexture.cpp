@@ -177,7 +177,7 @@ DE_PIMPL(GLTexture)
 
         if (GLInfo::extensions().EXT_texture_filter_anisotropic)
         {
-            glTexParameterf(texTarget, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
+            glTexParameterf(texTarget, gl33ext::GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
         }
 
         LIBGUI_ASSERT_GL_OK();

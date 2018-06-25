@@ -25,36 +25,29 @@
 #include <de/ByteArrayFile>
 #include <de/DictionaryValue>
 #include <de/FS>
+#include <de/Map>
+#include <de/RegExp>
 #include <de/ScriptedInfo>
 #include <de/math.h>
 
-#include <QRegularExpression>
-#include <QMap>
-
 namespace de {
-
-//static int countLines(String const &text)
-//{
-//    return text.count(QChar('\n'));
-//}
 
 static String processIncludes(String source, String const &sourceFolderPath)
 {
-    QRegularExpression const re("#include\\s+['\"]([^\"']+)['\"]");
-    forever
-    {
-        auto found = re.match(source);
-        if (!found.hasMatch()) break; // No more includes.
+    static const RegExp includeRegex("#include\\s+['\"]([^\"']+)['\"]");
 
-        String incFilePath = sourceFolderPath / found.captured(1);
+    RegExpMatch found;
+    while (includeRegex.match(source, found))
+    {
+        const auto capStr = found.capturedCStr(1);
+
+        String incFilePath = sourceFolderPath / capStr;
         String incSource   = String::fromUtf8(FS::locate<File const>(incFilePath));
         incSource          = processIncludes(incSource, incFilePath.fileNamePath());
 
-        Rangei const capRange(found.capturedStart(), found.capturedEnd());
-        String const prefix = source.substr(0, capRange.start);
-        source = prefix //+ String::format("#line %i\n", countLines(prefix))
+        source = CString{source.begin(), capStr.begin()}
                + incSource
-               + source.substr(capRange.end);
+               + CString{capStr.end(), source.end()};
     }
     return source;
 }
@@ -68,7 +61,7 @@ DE_PIMPL(GLShaderBank)
         {
             enum Type { None, FilePath, ShaderSourceText };
 
-            Type type;
+            Type   type;
             String source;
 
             ShaderSource(String const &str = "", Type t = None)
@@ -98,9 +91,8 @@ DE_PIMPL(GLShaderBank)
                 if (type == None) return;
                 convertToSourceText();
                 Block combo = GLShader::prefixToSource(
-                    source.toLatin1(),
-                    Block(String("#define %1 %2\n").arg(macroName).arg(content).toLatin1()));
-                source = String::fromLatin1(combo);
+                    source, Stringf("#define %s %s\n", macroName.c_str(), content.c_str()));
+                source = combo;
             }
 
             void insertIncludes(GLShaderBank const &bank, Record const &def)
@@ -112,8 +104,8 @@ DE_PIMPL(GLShaderBank)
         };
 
         GLShaderBank &bank;
-        String id;
-        ShaderSource sources[3]; // GLShader::Type as index
+        String        id;
+        ShaderSource  sources[3]; // GLShader::Type as index
 
         Source(GLShaderBank &      b,
                String const &      id,
@@ -161,7 +153,7 @@ DE_PIMPL(GLShaderBank)
     struct Data : public IData
     {
         GLShader *shaders[3]; // GLShader::Type as index
-        QSet<GLUniform *> defaultUniforms;
+        Set<GLUniform *> defaultUniforms;
 
         Data(GLShader *v, GLShader *g, GLShader *f)
             : shaders{holdRef(v), g? holdRef(g) : nullptr, holdRef(f)}
@@ -169,12 +161,12 @@ DE_PIMPL(GLShaderBank)
 
         ~Data()
         {
-            qDeleteAll(defaultUniforms);
+            deleteAll(defaultUniforms);
             for (auto &shd : shaders) releaseRef(shd);
         }
     };
 
-    typedef QMap<String, GLShader *> Shaders; // path -> shader
+    typedef Map<String, GLShader *> Shaders; // path -> shader
     Shaders shaders;
     std::unique_ptr<DictionaryValue> preDefines;
 
@@ -189,9 +181,9 @@ DE_PIMPL(GLShaderBank)
     void clearShaders()
     {
         // Release all of our references to the shaders.
-        foreach (GLShader *shader, shaders)
+        for (const auto &i : shaders)
         {
-            shader->release();
+            i.second->release();
         }
         shaders.clear();
     }
@@ -262,7 +254,7 @@ GLProgram &GLShaderBank::build(GLProgram &program, DotPath const &path) const
 {
     Impl::Data &i = data(path).as<Impl::Data>();
 
-    QVector<GLShader const *> shaders;
+    List<GLShader const *> shaders;
     for (auto *s : i.shaders)
     {
         if (s) shaders << s;
@@ -271,7 +263,7 @@ GLProgram &GLShaderBank::build(GLProgram &program, DotPath const &path) const
 
     // Bind the default uniforms. These will be used if no overriding
     // uniforms are bound.
-    foreach (GLUniform *uniform, i.defaultUniforms)
+    for (GLUniform *uniform : i.defaultUniforms)
     {
         program << *uniform;
     }
@@ -325,7 +317,7 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
     {
         // Including in reverse to retain order -- each one is prepended.
             auto const &incs = def[includeTokens[i]].value<ArrayValue>().elements();
-            for (int j = incs.size() - 1; j >= 0; --j)
+            for (int j = incs.sizei() - 1; j >= 0; --j)
         {
                 sources[i].insertFromFile(absolutePathInContext(def, incs.at(j)->asText()));
         }
@@ -361,27 +353,29 @@ Bank::IData *GLShaderBank::loadFromSource(ISource &source)
         src.load(GLShader::Vertex), src.load(GLShader::Geometry), src.load(GLShader::Fragment)));
 
     // Create default uniforms.
-    Record const &def = info()[src.id];
-    auto const vars = ScriptedInfo::subrecordsOfType(QStringLiteral("variable"), def);
+    const Record &def  = info()[src.id];
+    const auto    vars = ScriptedInfo::subrecordsOfType(DE_STR("variable"), def);
+
     for (auto i = vars.begin(); i != vars.end(); ++i)
     {
         std::unique_ptr<GLUniform> uniform;
-        Block const uName = i.key().toLatin1();
+        const String &uName = i->first;
 
-        if (!i.value()->has(QStringLiteral("value"))) continue;
+        if (!i->second->has(DE_STR("value"))) continue;
 
         // Initialize the appropriate type of value animation and uniform,
         // depending on the "value" key in the definition.
-        Value const &valueDef = i.value()->get(QStringLiteral("value"));
-        if (auto const *array = maybeAs<ArrayValue>(valueDef))
+        const Value &valueDef = i->second->get(DE_STR("value"));
+        if (const auto *array = maybeAs<ArrayValue>(valueDef))
         {
             switch (array->size())
             {
             default:
-                throw DefinitionError("GLShaderBank::loadFromSource",
-                                      QString("%1: Invalid initial value size (%2) for shader variable")
-                                      .arg(ScriptedInfo::sourceLocation(*i.value()))
-                                      .arg(array->size()));
+                throw DefinitionError(
+                    "GLShaderBank::loadFromSource",
+                    stringf("%s: Invalid initial value size (%zu) for shader variable",
+                            ScriptedInfo::sourceLocation(*i->second).c_str(),
+                            array->size()));
 
             case 1:
                 uniform.reset(new GLUniform(uName, GLUniform::Float));

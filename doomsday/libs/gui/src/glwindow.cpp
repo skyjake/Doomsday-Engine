@@ -229,22 +229,27 @@ DE_PIMPL(GLWindow)
         return SDL_GetWindowFlags(window);
     }
 
-    void submitResize(const Size &pixelSize)
+    void resizeEvent(const SDL_WindowEvent &ev)
     {
-        //qDebug() << "resize event:" << pixelSize.asText();
-        //qDebug() << "pixel ratio:" << pixelRatio;
+        const int w = ev.data1;
+        const int h = ev.data2;
+
+        /// @todo This is likely points, not pixels.
+        debug("[GLWindow] SDL window resize event to %dx%d", w, h);
+
+        auto pendingSize = Size(w, h); // * qApp->devicePixelRatio();
 
         // Only react if this is actually a resize.
-        if (currentSize != pixelSize)
+        if (currentSize != pendingSize)
         {
-            currentSize = pixelSize;
+            currentSize = pendingSize;
 
             if (readyNotified)
             {
                 self().makeCurrent();
             }
 
-            DE_FOR_PUBLIC_AUDIENCE2(Resize, i) i->windowResized(self());
+            DE_FOR_PUBLIC_AUDIENCE2(Resize, i) { i->windowResized(self()); }
             
             if (readyNotified)
             {
@@ -253,10 +258,18 @@ DE_PIMPL(GLWindow)
         }
     }
 
-    DE_PIMPL_AUDIENCES(Init, Resize, PixelRatio, Swap)
+    void frameWasSwapped()
+    {
+        self().makeCurrent();
+        DE_FOR_PUBLIC_AUDIENCE2(Swap, i) i->windowSwapped(self());
+        updateFrameRateStatistics();
+        self().doneCurrent();
+    }
+
+    DE_PIMPL_AUDIENCES(Init, Resize, PixelRatio, Swap, Move, Visibility)
 };
 
-DE_AUDIENCE_METHODS(GLWindow, Init, Resize, PixelRatio, Swap)
+DE_AUDIENCE_METHODS(GLWindow, Init, Resize, PixelRatio, Swap, Move, Visibility)
 
 GLWindow::GLWindow()
     : d(new Impl(this))
@@ -269,9 +282,8 @@ GLWindow::GLWindow()
     setFocusPolicy(Qt::StrongFocus);
 #endif
 
-    connect(this, SIGNAL(frameSwapped()), this, SLOT(frameWasSwapped()));
+//    connect(this, SIGNAL(frameSwapped()), this, SLOT(frameWasSwapped()));
 
-    // Create the drawing canvas for this window.
     d->handler = new WindowEventHandler(this);
 
     d->pixelRatio = devicePixelRatio();
@@ -290,6 +302,11 @@ GLWindow::GLWindow()
     });
 }
 
+void GLWindow::setMinimumSize(const Size &minSize)
+{
+    SDL_SetWindowMinimumSize(d->window, minSize.x, minSize.y);
+}
+
 void GLWindow::makeCurrent()
 {
     SDL_GL_MakeCurrent(d->window, d->glContext);
@@ -300,9 +317,21 @@ void GLWindow::doneCurrent()
     SDL_GL_MakeCurrent(d->window, nullptr);
 }
 
-void GLWindow::setMinimumSize(const Size &minSize)
+void GLWindow::update()
 {
-    SDL_SetWindowMinimumSize(d->window, minSize.x, minSize.y);
+    /// @todo Schedule a redraw event.
+
+}
+
+void GLWindow::hide()
+{
+    SDL_HideWindow(d->window);
+}
+
+void GLWindow::setGeometry(const Rectanglei &rect)
+{
+    SDL_SetWindowPosition(d->window, rect.left(),  rect.top());
+    SDL_SetWindowSize    (d->window, rect.width(), rect.height());
 }
 
 #if defined (DE_MOBILE)
@@ -492,21 +521,24 @@ bool GLWindow::event(QEvent *ev)
 }
 #endif
 
-bool GLWindow::grabToFile(NativePath const &path) const
+void GLWindow::grabToFile(NativePath const &path) const
 {
-    return grabImage().save(path);
+    grabImage().save(path);
 }
 
 Image GLWindow::grabImage(Size const &outputSize) const
 {
-    return grabImage(QRect(QPoint(0, 0), QSize(pixelWidth(), pixelHeight())), outputSize);
+    return grabImage(Rectanglei::fromSize(pixelSize()), outputSize);
 }
 
 Image GLWindow::grabImage(Rectanglei const &area, Size const &outputSize) const
 {
+    Image grabbed;
+    DE_ASSERT_FAIL("[GLWindow] grabImage not implemented");
+#if 0
     // We will be grabbing the visible, latest complete frame.
     //glReadBuffer(GL_FRONT);
-    QImage grabbed = const_cast<GLWindow *>(this)->grabFramebuffer(); // no alpha
+    Image grabbed = const_cast<GLWindow *>(this)->grabFramebuffer(); // no alpha
     if (area.size() != grabbed.size())
     {
         // Just take a portion of the full image.
@@ -517,6 +549,7 @@ Image GLWindow::grabImage(Rectanglei const &area, Size const &outputSize) const
     {
         grabbed = grabbed.scaled(outputSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     }
+#endif
     return grabbed;
 }
 
@@ -530,28 +563,44 @@ void GLWindow::glDone()
     doneCurrent();
 }
 
-void *GLWindow::nativeHandle() const
-{
-    return reinterpret_cast<void *>(winId());
-}
-
 void GLWindow::handleSDLEvent(const void *ptr)
 {
     DE_ASSERT(ptr);
     const SDL_Event *event = reinterpret_cast<const SDL_Event *>(ptr);
     switch (event->type)
     {
+    case SDL_KEYDOWN:
+    case SDL_KEYUP:
+        d->handler->handleSDLEvent(ptr);
+        break;
+
     case SDL_WINDOWEVENT:
-    {
         switch (event->window.event)
         {
-        case SDL_WINDOWEVENT_RESIZED:
+        case SDL_WINDOWEVENT_EXPOSED: break;
 
+        case SDL_WINDOWEVENT_MOVED:
+            DE_FOR_AUDIENCE2(Move, i)
+            {
+                i->windowMoved(*this, Vec2i(event->window.data1, event->window.data2));
+            }
             break;
+
+        case SDL_WINDOWEVENT_RESIZED: d->resizeEvent(event->window); break;
+
+        case SDL_WINDOWEVENT_CLOSE: break;
+
+        case SDL_WINDOWEVENT_FOCUS_GAINED:
+        case SDL_WINDOWEVENT_FOCUS_LOST: break;
+
+        case SDL_WINDOWEVENT_MAXIMIZED:
+        case SDL_WINDOWEVENT_MINIMIZED:
+        case SDL_WINDOWEVENT_RESTORED:
+        case SDL_WINDOWEVENT_SHOWN:
+        case SDL_WINDOWEVENT_HIDDEN: break;
 
         default: break;
         }
-    }
     break;
 
     default: break;
@@ -636,19 +685,6 @@ void GLWindow::paintGL()
 
 void GLWindow::windowAboutToClose()
 {}
-
-void GLWindow::resizeEvent(QResizeEvent *ev)
-{
-    d->submitResize(Size(ev->size().width(), ev->size().height()) * devicePixelRatio());
-}
-
-void GLWindow::frameWasSwapped()
-{
-    makeCurrent();
-    DE_FOR_AUDIENCE2(Swap, i) i->windowSwapped(*this);
-    d->updateFrameRateStatistics();
-    doneCurrent();
-}
 
 bool GLWindow::mainExists() // static
 {

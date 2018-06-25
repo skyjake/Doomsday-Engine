@@ -479,7 +479,7 @@ DE_PIMPL(RowAtlasAllocator)
             optimal[ct.id] = optRect;
         }
 
-        allocs = optimal;
+        allocs = std::move(optimal);
         rows.reset(revised.release());
         return true;
     }

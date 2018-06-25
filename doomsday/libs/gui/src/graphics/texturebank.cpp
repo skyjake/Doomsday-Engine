@@ -18,7 +18,7 @@
 
 #include "de/TextureBank"
 
-#include <QHash>
+#include <de/Hash>
 
 namespace de {
 
@@ -95,8 +95,8 @@ DE_PIMPL(TextureBank)
         }
     };
 
-    QHash<int, IAtlas *> atlases;
-    QHash<Id::Type, std::pair<AtlasId, String>> pathForAtlasId; // reverse lookup
+    Hash<int, IAtlas *>                  atlases;
+    Hash<Id, std::pair<AtlasId, String>> pathForAtlasId; // reverse lookup
 
     Impl(Public *i) : Base(i) {}
 
@@ -123,8 +123,8 @@ void TextureBank::setAtlas(AtlasId atlasId, IAtlas *atlas)
 
 IAtlas *TextureBank::atlas(AtlasId atlasId)
 {
-    auto found = d->atlases.constFind(atlasId);
-    return found != d->atlases.constEnd()? found.value() : nullptr;
+    auto found = d->atlases.find(atlasId);
+    return found != d->atlases.end()? found->second : nullptr;
 }
 
 TextureBank::Allocation TextureBank::texture(DotPath const &id)
@@ -135,12 +135,12 @@ TextureBank::Allocation TextureBank::texture(DotPath const &id)
 
 Path TextureBank::sourcePathForAtlasId(Id const &id) const
 {
-    auto found = d->pathForAtlasId.constFind(id);
-    if (found != d->pathForAtlasId.constEnd())
+    auto found = d->pathForAtlasId.find(id);
+    if (found != d->pathForAtlasId.end())
     {
-        return found.value().second;
+        return found->second.second;
     }
-    return "";
+    return {};
 }
 
 Bank::IData *TextureBank::loadFromSource(ISource &source)
@@ -149,7 +149,7 @@ Bank::IData *TextureBank::loadFromSource(ISource &source)
     auto *data = new Impl::TextureData(src.atlasId(), src.load(), d);
     if (auto const &texId = data->id())
     {
-        d->pathForAtlasId.insert(texId, std::make_pair(src.atlasId(), src.sourcePath()));
+        d->pathForAtlasId.insert(texId, std::make_pair(src.atlasId(), src.sourcePath().toString()));
     }
     return data;
 }
