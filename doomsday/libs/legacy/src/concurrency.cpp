@@ -169,7 +169,7 @@ int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t *exitSt
 
     CallbackThread *t = reinterpret_cast<CallbackThread *>(handle);
     DE_ASSERT(static_cast<de::Thread *>(t) != de::Thread::currentThread());
-    t->wait(timeoutMs);
+    t->wait(de::TimeSpan::fromMilliSeconds(timeoutMs));
     if (!t->isFinished())
     {
         LOG_WARNING("Thread did not stop in time, forcibly killing it.");
