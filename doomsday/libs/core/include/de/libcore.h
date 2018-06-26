@@ -110,15 +110,22 @@
 #if defined(_WIN32) && defined(_MSC_VER)
 #  ifdef __LIBCORE__
 // This is defined when compiling the library.
-#    define DE_PUBLIC __declspec(dllexport)
+#    define DE_PUBLIC   __declspec(dllexport)
 #  else
-#    define DE_PUBLIC __declspec(dllimport)
+#    define DE_PUBLIC   __declspec(dllimport)
 #  endif
-#  define DE_NORETURN __declspec(noreturn)
+#  define DE_NORETURN   __declspec(noreturn)
+#elif defined (MACOSX)
+//#  ifdef __LIBCORE__
+#    define DE_PUBLIC   __attribute__((visibility("default")))
+//#  else
+//#    define DE_PUBLIC
+//#  endif
+#  define DE_NORETURN   __attribute__((__noreturn__))
 #else
 // No need to use any special declarators.
 #  define DE_PUBLIC
-#  define DE_NORETURN __attribute__((__noreturn__))
+#  define DE_NORETURN   __attribute__((__noreturn__))
 #endif
 
 #if defined (DE_IOS)

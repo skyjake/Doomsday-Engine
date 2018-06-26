@@ -48,6 +48,8 @@ if (CLANG_VERSION_STRING VERSION_EQUAL 7.0 OR
     append_unique (CMAKE_CXX_FLAGS "-Wno-inconsistent-missing-override") # too many warnings from Qt
 endif ()
 
+append_unique (CMAKE_CXX_FLAGS "-fvisibility=hidden")
+
 set (DE_FIXED_ASM_DEFAULT OFF)
 
 macro (link_framework target linkType fw)
