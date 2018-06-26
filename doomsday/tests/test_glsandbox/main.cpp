@@ -17,22 +17,19 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "testwindow.h"
+
 #include <de/GuiApp>
 #include <de/LogBuffer>
-#include <QTimer>
-#include <QDebug>
-
-#include "testwindow.h"
+#include <SDL2/SDL_main.h>
 
 using namespace de;
 
-int main(int argc, char **argv)
+DE_EXTERN_C int main(int argc, char **argv)
 {
     try
     {
-        GuiApp::setDefaultOpenGLFormat();
-
-        GuiApp app(argc, argv);
+        GuiApp app(makeList(argc, argv));
         app.addInitPackage("net.dengine.test.glsandbox");
         app.initSubsystems(App::DisablePlugins);
 
@@ -43,9 +40,8 @@ int main(int argc, char **argv)
     }
     catch (Error const &err)
     {
-        qWarning() << err.asText();
+        err.warnPlainText();
     }
-
-    qDebug("Exiting main()...");
+    debug("Exiting main()...");
     return 0;
 }

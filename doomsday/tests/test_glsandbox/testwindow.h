@@ -24,15 +24,12 @@
 
 class TestWindow : public de::GLWindow
 {
-    Q_OBJECT
-
 public:
     TestWindow();
 
     void draw() override;
-    void keyPressEvent(QKeyEvent *ev) override;
+//    void keyPressEvent(QKeyEvent *ev) override;
 
-public slots:
     void testRenderToTexture();
     void testDynamicAtlas();
     void testModel();

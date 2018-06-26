@@ -19,10 +19,6 @@
 
 #include "testwindow.h"
 
-#include <QMessageBox>
-#include <QPainter>
-#include <QToolBar>
-
 #include <de/AtlasTexture>
 #include <de/Drawable>
 #include <de/FileSystem>
@@ -36,40 +32,41 @@
 #include <de/ImageBank>
 #include <de/ModelDrawable>
 
+#include <SDL2/SDL_messagebox.h>
+
 using namespace de;
 
-DE_PIMPL(TestWindow),
-DE_OBSERVES(GLWindow, Init),
-DE_OBSERVES(GLWindow, Resize),
-DE_OBSERVES(Clock, TimeChange),
-DE_OBSERVES(Bank, Load)
-{
-    enum Mode
-    {
-        TestRenderToTexture,
-        TestDynamicAtlas,
-        TestModel
-    };
+namespace dgl = de::gl;
 
-    Mode mode;
+DE_PIMPL(TestWindow)
+, DE_OBSERVES(GLWindow, Init)
+, DE_OBSERVES(GLWindow, Resize)
+, DE_OBSERVES(Clock, TimeChange)
+, DE_OBSERVES(Bank, Load)
+{
+    enum Mode { TestRenderToTexture, TestDynamicAtlas, TestModel };
+
+    Mode      mode;
     ImageBank imageBank;
-    Drawable ob;
-    Drawable atlasOb;
-    Mat4f modelMatrix;
-    Mat4f projMatrix;
+    Drawable  ob;
+    Drawable  atlasOb;
+    Mat4f     modelMatrix;
+    Mat4f     projMatrix;
     GLUniform uMvpMatrix;
     GLUniform uColor;
     GLUniform uTime;
     GLUniform uTex;
     GLTexture frameTex;
     GLTexture testpic;
+
     ModelDrawable model;
     ModelDrawable::Animator modelAnim;
-    QScopedPointer<AtlasTexture> modelAtlas;
+    std::unique_ptr<AtlasTexture> modelAtlas;
     GLUniform uModelTex;
     GLProgram modelProgram;
-    QScopedPointer<AtlasTexture> atlas;
-    QScopedPointer<GLFramebuffer> frameTarget;
+
+    std::unique_ptr<AtlasTexture> atlas;
+    std::unique_ptr<GLFramebuffer> frameTarget;
     Time startedAt;
     Time lastAtlasAdditionAt;
     bool eraseAtlas;
@@ -77,19 +74,17 @@ DE_OBSERVES(Bank, Load)
     typedef GLBufferT<Vertex3TexRgba> VertexBuf;
     typedef GLBufferT<Vertex2Tex> Vertex2Buf;
 
-    Impl(Public *i)
-        : Base(i),
-          mode      (TestRenderToTexture),
-          //imageBank (0),
-          uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
-          uColor    ("uColor",     GLUniform::Vec4),
-          uTime     ("uTime",      GLUniform::Float),
-          uTex      ("uTex",       GLUniform::Sampler2D),
-          modelAnim (model),
-          uModelTex ("uTex",       GLUniform::Sampler2D),
-          atlas     (AtlasTexture::newWithRowAllocator(Atlas::AllowDefragment |
-                                                          Atlas::BackingStore |
-                                                          Atlas::WrapBordersInBackingStore))
+    Impl(Public * i)
+        : Base(i)
+        , mode(TestRenderToTexture)
+        , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
+        , uColor("uColor", GLUniform::Vec4)
+        , uTime("uTime", GLUniform::Float)
+        , uTex("uTex", GLUniform::Sampler2D)
+        , modelAnim(model)
+        , uModelTex("uTex", GLUniform::Sampler2D)
+        , atlas(AtlasTexture::newWithRowAllocator(Atlas::AllowDefragment | Atlas::BackingStore |
+                                                  Atlas::WrapBordersInBackingStore))
     {
         // Use this as the main window.
         setMain(i);
@@ -101,7 +96,7 @@ DE_OBSERVES(Bank, Load)
         uColor = Vec4f(.5f, .75f, .5f, 1);
         atlas->setTotalSize(Vec2ui(256, 256));
         atlas->setBorderSize(2);
-        atlas->setMagFilter(gl::Nearest);
+        atlas->setMagFilter(dgl::Nearest);
 
         imageBank.add("rtt.cube", "/packs/net.dengine.test.glsandbox/testpic.png");
         //imageBank.loadAll();
@@ -129,9 +124,11 @@ DE_OBSERVES(Bank, Load)
         }
         catch (Error const &er)
         {
-            qWarning() << er.asText();
+            er.warnPlainText();
 
-            QMessageBox::critical(nullptr, "GL Init Error", er.asText());
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "GL Init Error",
+                                     er.asText().c_str(), nullptr);
+//            QMessageBox::critical(nullptr, "GL Init Error", er.asText());
             exit(1);
         }
     }
@@ -141,8 +138,8 @@ DE_OBSERVES(Bank, Load)
         // Set up the default state.
         GLState &st = GLState::current();
         st.setBlend(true);
-        st.setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
-        //st.setCull(gl::Back);
+        st.setBlendFunc(dgl::SrcAlpha, dgl::OneMinusSrcAlpha);
+        //st.setCull(dgl::Back);
         st.setDepthTest(true);
 
         // Textures.
@@ -150,8 +147,8 @@ DE_OBSERVES(Bank, Load)
         imageBank.load("rtt.cube");
         //testpic.setImage(imageBank.image("rtt/cube"));
         //testpic.setImage(QImage(":/images/testpic.png"));
-        testpic.setWrapT(gl::RepeatMirrored);
-        testpic.setMinFilter(gl::Linear, gl::MipLinear);
+        testpic.setWrapT(dgl::RepeatMirrored);
+        testpic.setMinFilter(dgl::Linear, dgl::MipLinear);
         uTex = testpic;
 
         // Prepare the custom target.
@@ -173,7 +170,7 @@ DE_OBSERVES(Bank, Load)
             { Vec3f(-1,  1,  1), Vec2f(1, 0), Vec4f(0, 0, 1, 1) }
         };
 
-        buf->setVertices(verts, 8, gl::Static);
+        buf->setVertices(verts, 8, dgl::Static);
 
         GLBuffer::Indices idx;
         idx << 0 << 4 << 3 << 7 << 2 << 6 << 1 << 5 << 0 << 4
@@ -181,7 +178,7 @@ DE_OBSERVES(Bank, Load)
             << 0 << 3 << 1 << 2
             << 2 << 7
             << 7 << 4 << 6 << 5;
-        buf->setIndices(gl::TriangleStrip, idx, gl::Static);
+        buf->setIndices(dgl::TriangleStrip, idx, dgl::Static);
 
         ob.program().build(
                     ByteRefArray::fromCStr(
@@ -228,7 +225,7 @@ DE_OBSERVES(Bank, Load)
             { Vec2f(100, 100), Vec2f(1, 1) },
             { Vec2f(0,   100), Vec2f(0, 1) }
         };
-        buf2->setVertices(gl::TriangleFan, verts2, 4, gl::Static);
+        buf2->setVertices(dgl::TriangleFan, verts2, 4, dgl::Static);
         atlasOb.addBuffer(buf2);
 
         atlasOb.program().build(
@@ -490,12 +487,12 @@ DE_OBSERVES(Bank, Load)
         }
 
 #if 1
-        if ((qrand() % 10) <= 5 && !atlas->isEmpty())
+        if ((rand() % 10) <= 5 && !atlas->isEmpty())
         {
             // Randomly remove one of the allocations.
-            QList<Id> ids;
-            foreach (Id const &id, atlas->allImages()) ids << id;
-            Id chosen = ids[qrand() % ids.size()];
+            List<Id> ids;
+            for (const Id &id : atlas->allImages()) ids << id;
+            Id chosen = ids[rand() % ids.size()];
             atlas->release(chosen);
 
             LOG_DEBUG("Removed ") << chosen;
@@ -503,12 +500,10 @@ DE_OBSERVES(Bank, Load)
 #endif
 
         // Generate a random image.
-        QSize imgSize(10 + qrand() % 40, 10 + 10 * (qrand() % 2));
-        QImage img(imgSize, QImage::Format_ARGB32);
-        QPainter painter(&img);
-        painter.fillRect(img.rect(), QColor(qrand() % 256, qrand() % 256, qrand() % 256));
-        painter.setPen(Qt::white);
-        painter.drawRect(img.rect().adjusted(0, 0, -1, -1));
+        Image::Size imgSize(10 + rand() % 40, 10 + 10 * (rand() % 2));
+        Image img(imgSize, Image::RGBA_8888);
+        img.fill(Image::makeColor(rand() % 256, rand() % 256, rand() % 256));
+        img.drawRect(img.rect() /*.adjusted(0, 0, -1, -1)*/, Image::Color(255, 255, 255, 255));
 
         Id id = atlas->alloc(img);
         LOG_DEBUG("Allocated ") << id;
@@ -524,22 +519,20 @@ DE_OBSERVES(Bank, Load)
 
 TestWindow::TestWindow() : d(new Impl(this))
 {
-    qsrand(Time().asDateTime().toTime_t());
-
     setTitle("libgui GL Sandbox");
-    setMinimumSize(QSize(640, 480));
+    setMinimumSize(Size(640, 480));
 
-    QToolBar *tools = new QToolBar(tr("Tests"));
-    tools->addAction("RTT", this, SLOT(testRenderToTexture()));
-    tools->addAction("Atlas", this, SLOT(testDynamicAtlas()));
-    tools->addAction("Model", this, SLOT(testModel()));
-    tools->addSeparator();
-    tools->addAction("MD2", this, SLOT(loadMD2Model()));
-    tools->addAction("MD5", this, SLOT(loadMD5Model()));
+//    QToolBar *tools = new QToolBar(tr("Tests"));
+//    tools->addAction("RTT", this, SLOT(testRenderToTexture()));
+//    tools->addAction("Atlas", this, SLOT(testDynamicAtlas()));
+//    tools->addAction("Model", this, SLOT(testModel()));
+//    tools->addSeparator();
+//    tools->addAction("MD2", this, SLOT(loadMD2Model()));
+//    tools->addAction("MD5", this, SLOT(loadMD5Model()));
 
-    tools->show();
+//    tools->show();
 
-    tools->setGeometry(25, 75, tools->width(), tools->height());
+//    tools->setGeometry(25, 75, tools->width(), tools->height());
 }
 
 void TestWindow::draw()
@@ -549,6 +542,7 @@ void TestWindow::draw()
     LIBGUI_ASSERT_GL_OK();
 }
 
+/*
 void TestWindow::keyPressEvent(QKeyEvent *ev)
 {
     if (ev->modifiers() & Qt::ControlModifier)
@@ -582,6 +576,7 @@ void TestWindow::keyPressEvent(QKeyEvent *ev)
 
     GLWindow::keyPressEvent(ev);
 }
+*/
 
 void TestWindow::testRenderToTexture()
 {
