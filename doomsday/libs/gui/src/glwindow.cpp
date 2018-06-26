@@ -22,6 +22,8 @@
 #include "de/GuiApp"
 #include "de/GLTimer"
 #include "de/ElapsedTimer"
+#include "de/EventLoop"
+#include "de/CoreEvent"
 
 //#include <QElapsedTimer>
 //#include <QImage>
@@ -51,24 +53,30 @@ DE_PIMPL(GLWindow)
     LoopCallback        mainCall;
     GLFramebuffer       backing;                 // Represents QOpenGLWindow's framebuffer.
     WindowEventHandler *handler       = nullptr; ///< Event handler.
+    bool                initialized   = false;
     bool                readyPending  = false;
     bool                readyNotified = false;
+    bool                paintPending  = false;
     Size                currentSize;
     double              pixelRatio = 0.0;
 
-    uint  frameCount = 0;
-    float fps        = 0;
+    uint  frameCount   = 0;
+    float fps          = 0;
 
     std::unique_ptr<GLTimer> timer;
     Id totalFrameTimeQueryId;
 
     Impl(Public *i) : Base(i)
     {
-        SDL_GL_SetAttribute(SDL_GL_RED_SIZE,     8);
-        SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,   8);
-        SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,    8);
-        SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,   16);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+        SDL_GL_SetAttribute(SDL_GL_RED_SIZE,     5);
+        SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,   6);
+        SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,    5);
+        SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,   16);
 
         window = SDL_CreateWindow("GLWindow",
                                   SDL_WINDOWPOS_UNDEFINED,
@@ -152,8 +160,11 @@ DE_PIMPL(GLWindow)
 #endif
 #endif
 
+        LIBGUI_ASSERT_GL_OK();
+
         // Everybody can perform GL init now.
         DE_FOR_PUBLIC_AUDIENCE2(Init, i) i->windowInit(self());
+        DE_FOR_PUBLIC_AUDIENCE2(Resize, i) i->windowResized(self());
 
         readyNotified = true;
 
@@ -241,7 +252,7 @@ DE_PIMPL(GLWindow)
         SDL_GL_GetDrawableSize(window, &pw, &ph);
         debug("[GLWindow] Drawable size is %dx%d pixels", pw, ph);
 
-        pendingSize = Size(pw, ph);
+        auto pendingSize = Size(pw, ph); // * qApp->devicePixelRatio();
 
         // Only react if this is actually a resize.
         if (currentSize != pendingSize)
@@ -324,12 +335,6 @@ void GLWindow::makeCurrent()
 void GLWindow::doneCurrent()
 {
     SDL_GL_MakeCurrent(d->window, nullptr);
-}
-
-void GLWindow::update()
-{
-    /// @todo Schedule a redraw event.
-
 }
 
 void GLWindow::show()
@@ -616,7 +621,13 @@ void GLWindow::handleSDLEvent(const void *ptr)
     case SDL_WINDOWEVENT:
         switch (event->window.event)
         {
-        case SDL_WINDOWEVENT_EXPOSED: break;
+        case SDL_WINDOWEVENT_EXPOSED:
+            if (!d->initialized)
+        {
+                initializeGL();
+                paintGL();
+            }
+            break;
 
         case SDL_WINDOWEVENT_MOVED:
             DE_FOR_AUDIENCE2(Move, i)
@@ -646,16 +657,40 @@ void GLWindow::handleSDLEvent(const void *ptr)
     }
 }
 
+void GLWindow::update()
+{
+    if (!d->paintPending)
+    {
+        d->paintPending = true;
+        EventLoop::get()->postEvent(new CoreEvent(Event::Callback, [this]() {
+            makeCurrent();
+            paintGL();
+            doneCurrent();
+        }));
+    }
+}
+
 void GLWindow::initializeGL()
+{
+    if (!d->initialized)
 {
     LOG_AS("GLWindow");
     LOGDEV_GL_NOTE("Initializing OpenGL window");
 
+        d->initialized = true;
     d->glInit();
+
+        int w, h;
+        SDL_GL_GetDrawableSize(d->window, &w, &h);
+        debug("initializeGL: %i x %i", w, h);
+
+        d->currentSize = Size(w, h);
+    }
 }
 
 void GLWindow::paintGL()
 {
+    d->paintPending = false;
     GLFramebuffer::setDefaultFramebuffer(0); //defaultFramebufferObject());
 
     // Do not proceed with painting until after the application has completed
@@ -670,6 +705,7 @@ void GLWindow::paintGL()
             d->mainCall.enqueue([this]() { d->notifyReady(); });
         }
         glClear(GL_COLOR_BUFFER_BIT);
+        SDL_GL_SwapWindow(d->window);
         return;
     }
 
@@ -720,6 +756,8 @@ void GLWindow::paintGL()
 //        d->timerQueryPending = true;
 //    }
 //#endif
+
+    SDL_GL_SwapWindow(d->window);
 }
 
 void GLWindow::windowAboutToClose()

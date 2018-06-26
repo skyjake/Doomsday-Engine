@@ -1207,6 +1207,7 @@ Image Image::fromData(Block const &data, String const &formatHint)
                              num == 2 ? LuminanceAlpha_88 : Luminance_8);
             img.d->pixels = Block(pixels, num * w * h); // makes an extra copy...
             stbi_image_free(pixels);
+            return img;
         }
     }
 
