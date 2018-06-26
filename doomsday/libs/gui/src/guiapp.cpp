@@ -54,6 +54,11 @@ DE_PIMPL(GuiApp)
         renderThread = Thread::currentThread();
     }
 
+    ~Impl()
+    {
+        SDL_Quit();
+    }
+
     /**
      * Get events from SDL and route them to the appropriate place for handling.
      */
@@ -110,12 +115,10 @@ GuiApp::GuiApp(const StringList &args)
       App(args)
     , d(new Impl(this))
 {
-    if (!SDL_InitSubSystem(SDL_INIT_EVENTS |
-                           SDL_INIT_VIDEO |
-                           SDL_INIT_JOYSTICK |
-                           SDL_INIT_GAMECONTROLLER))
+    if (SDL_InitSubSystem(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK |
+                          SDL_INIT_GAMECONTROLLER) != 0)
     {
-        throw Error("GuiApp::GuiApp", "Failed to initialize SDL");
+        throw Error("GuiApp::GuiApp", stringf("Failed to initialize SDL: %s", SDL_GetError()));
     }
 
     static ImageFile::Interpreter intrpImageFile;

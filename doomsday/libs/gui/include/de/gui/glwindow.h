@@ -82,6 +82,7 @@ public:
 public:
     GLWindow();
 
+    void        setTitle(const String &title);
     void        setMinimumSize(const Size &minSize);
     void        setGeometry(const Rectanglei &rect);
     inline void setGeometry(dint x, dint y, duint width, duint height)
@@ -92,6 +93,7 @@ public:
     void makeCurrent();
     void doneCurrent();
     void update();
+    void show();
     void showNormal();
     void showMaximized();
     void showFullScreen();

@@ -44,7 +44,7 @@
 #  endif
 #else
 // No need to use any special declarators.
-#  define LIBGUI_PUBLIC
+#  define LIBGUI_PUBLIC DE_PUBLIC
 #endif
 
 #if defined(WIN32) || defined(MACOSX)

@@ -355,9 +355,7 @@ DE_PIMPL(Image)
         : Base(i)
         , format(imgFormat)
         , size(imgSize)
-    {
-        pixels.resize(i->stride() * imgSize.y);
-    }
+    {}
 
     Impl(Public *i, Size const &imgSize, Format imgFormat, IByteArray const &imgPixels)
         : Base(i)
@@ -388,7 +386,9 @@ Image::Image(Image const &other)
 
 Image::Image(Size const &size, Format format)
     : d(new Impl(this, size, format))
-{}
+{
+    d->pixels.resize(stride() * size.y);
+}
 
 Image::Image(Size const &size, Format format, IByteArray const &pixels)
     : d(new Impl(this, size, format, pixels))
@@ -398,7 +398,7 @@ Image::Image(Size const &size, Format format, ByteRefArray const &refPixels)
     : d(new Impl(this, size, format, refPixels))
 {}
 
-Image &Image::operator=(Image const &other)
+Image &Image::operator=(const Image &other)
 {
     d.reset(new Impl(this, *other.d));
     return *this;
@@ -710,7 +710,7 @@ void Image::resize(Size const &size)
     *this = resized;
 }
 
-void Image::fill(Color const &color)
+void Image::fill(Color color)
 {
     IMAGE_ASSERT_EDITABLE(d);
 
@@ -724,7 +724,7 @@ void Image::fill(Color const &color)
     }
 }
 
-void Image::fill(Rectanglei const &rect, Color const &color)
+void Image::fill(Rectanglei const &rect, Color color)
 {
     IMAGE_ASSERT_EDITABLE(d);
 
@@ -748,6 +748,34 @@ void Image::setPixel(Vec2ui pos, Color color)
 
     uint32_t packed = packColor(color);
     std::memcpy(&row(pos.y)[bytesPerPixel() * pos.x], &packed, 4);
+}
+
+void Image::drawRect(const Rectanglei &rect, Color color)
+{
+    IMAGE_ASSERT_EDITABLE(d);
+
+    if (rect.isNull()) return;
+
+    const duint32 packed = packColor(color);
+
+    duint32 *top    = row32(rect.top())        + rect.left();
+    duint32 *bottom = row32(rect.bottom() - 1) + rect.left();
+    for (duint x = 0; x < rect.width(); ++x)
+    {
+        *top++    = packed;
+        *bottom++ = packed;
+    }
+
+    const int stride32 = stride() / 4;
+
+    duint32 *left  = row32(rect.top() + 1) + rect.left();
+    duint32 *right = row32(rect.top() + 1) + (rect.right() - 1);
+    for (duint y = 0; y < rect.height() - 2; ++y)
+    {
+        *left = *right = packed;
+        left  += stride32;
+        right += stride32;
+    }
 }
 
 void Image::draw(Image const &image, Vec2i const &topLeft)
@@ -804,7 +832,7 @@ Image Image::multiplied(const Image &factorImage) const
     return multiplied;
 }
 
-Image Image::multiplied(Color const &color) const
+Image Image::multiplied(Color color) const
 {
     if (color == Color(255, 255, 255, 255)) return *this; // No change.
 
@@ -825,7 +853,7 @@ Image Image::multiplied(Color const &color) const
     return copy;
 }
 
-Image Image::colorized(Color const &color) const
+Image Image::colorized(Color color) const
 {
     const float targetHue = hsv(color).x;
 
@@ -929,7 +957,7 @@ Image Image::flipped() const
     return flip;
 }
 
-Image Image::solidColor(Color const &color, Size const &size)
+Image Image::solidColor(Color color, Size const &size)
 {
     Image img(size, Image::RGBA_8888);
     img.fill(color);

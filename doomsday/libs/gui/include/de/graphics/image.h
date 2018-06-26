@@ -85,7 +85,7 @@ public:
     typedef Vec4ub Color;
     typedef Vector4<duint16> Color16;
 
-    static inline Color makeColor(int r, int g, int b, int a)
+    static inline Color makeColor(int r, int g, int b, int a = 255)
     {
         return Color(duint8(clamp(0, r, 255)),
                      duint8(clamp(0, g, 255)),
@@ -222,21 +222,24 @@ public:
     Color pixel(Vec2ui pos) const;
     
     // Drawing/editing methods.
-    Image subImage(Rectanglei const &subArea) const;
-    void  resize(Size const &size);
-    void  fill(Color const &color);
-    void  fill(Rectanglei const &rect, Color const &color);
-    inline void  setPixel(duint x, duint y, Color color) { setPixel(Vec2ui(x, y), color); }
-    void  setPixel(Vec2ui pos, Color color);
-    void  draw(Image const &image, Vec2i const &topLeft);
+    Image       subImage(Rectanglei const &subArea) const;
+    void        resize(Size const &size);
+    void        fill(Color color);
+    void        fill(Rectanglei const &rect, Color color);
+    inline void setPixel(duint x, duint y, Color color) { setPixel(Vec2ui(x, y), color); }
+    void        setPixel(Vec2ui pos, Color color);
+    void        drawRect(const Rectanglei &rect, Color color);
+    void        draw(Image const &image, Vec2i const &topLeft);
     inline void draw(int x, int y, const Image &image) { draw(image, Vec2i(x, y)); }
-    void  drawPartial(Image const &image, Rectanglei const &part, Vec2i const &topLeft);
-    inline void draw(int x, int y, const Image &image, int subX, int subY, int subW, int subH) {
+    void        drawPartial(Image const &image, Rectanglei const &part, Vec2i const &topLeft);
+    inline void draw(int x, int y, const Image &image, int subX, int subY, int subW, int subH)
+    {
         drawPartial(image, Rectanglei(subX, subY, subW, subH), Vec2i(x, y));
     }
+
     Image multiplied(Image const &factorImage) const;
-    Image multiplied(Color const &color) const;
-    Image colorized(Color const &color) const;
+    Image multiplied(Color color) const;
+    Image colorized(Color color) const;
     Image invertedColor() const;
     Image mixed(Image const &low, Image const &high) const;
     Image withAlpha(Image const &grayscale) const;
@@ -253,7 +256,7 @@ public:
     static GLPixelFormat glFormat(Format imageFormat);
 //    static GLPixelFormat glFormat(QImage::Format qtImageFormat);
 
-    static Image solidColor(Color const &color, Size const &size);
+    static Image solidColor(Color color, Size const &size);
 
     /**
      * Loads an image from a block of data. The format of the image is autodetected.

@@ -306,6 +306,11 @@ GLWindow::GLWindow()
     });
 }
 
+void GLWindow::setTitle(const String &title)
+{
+    SDL_SetWindowTitle(d->window, title);
+}
+
 void GLWindow::setMinimumSize(const Size &minSize)
 {
     SDL_SetWindowMinimumSize(d->window, minSize.x, minSize.y);
@@ -327,9 +332,15 @@ void GLWindow::update()
 
 }
 
+void GLWindow::show()
+{
+    SDL_ShowWindow(d->window);
+}
+
 void GLWindow::showNormal()
 {
     SDL_ShowWindow(d->window);
+    SDL_RestoreWindow(d->window);
 }
 
 void GLWindow::showMaximized()
