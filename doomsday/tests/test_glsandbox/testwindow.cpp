@@ -42,6 +42,7 @@ namespace dgl = de::gl;
 DE_PIMPL(TestWindow)
 , DE_OBSERVES(GLWindow, Init)
 , DE_OBSERVES(GLWindow, Resize)
+, DE_OBSERVES(KeyEventSource, KeyEvent)
 , DE_OBSERVES(Clock, TimeChange)
 , DE_OBSERVES(Bank, Load)
 {
@@ -92,6 +93,7 @@ DE_PIMPL(TestWindow)
 
         self().audienceForInit() += this;
         self().audienceForResize() += this;
+        self().eventHandler().audienceForKeyEvent() += this;
         Clock::get().audienceForTimeChange() += this;
 
         uColor = Vec4f(.5f, .75f, .5f, 1);
@@ -519,6 +521,29 @@ DE_PIMPL(TestWindow)
 
             // Erase the entire atlas.
             eraseAtlas = true;
+        }
+    }
+
+    void keyEvent(KeyEvent const &event)
+    {
+        debug("sdlkey %x (%s) [%s]",
+              event.sdlKey(),
+              event.state() == KeyEvent::Pressed
+                  ? "down"
+                  : event.state() == KeyEvent::Released ? "up" : "repeat",
+              event.text().c_str());
+
+        if (event.state() == KeyEvent::Pressed)
+        {
+            switch (event.ddKey())
+            {
+            case '1': self().testRenderToTexture(); break;
+            case '2': self().testDynamicAtlas(); break;
+            case '3': self().testModel(); break;
+            case '4': self().loadMD2Model(); break;
+            case '5': self().loadMD5Model(); break;
+            default: break;
+            }
         }
     }
 };

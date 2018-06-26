@@ -29,15 +29,16 @@ namespace de {
 
 DE_PIMPL(WindowEventHandler)
 {
-    GLWindow *window;
-    bool      mouseGrabbed = false;
-    Vec2i     prevMousePos;
-    Time      prevWheelAt;
-    Vec2i     wheelAngleAccum;
-    int       wheelDir[2];
-#if defined (WIN32)
-    bool      altIsDown = false;
-#endif
+    GLWindow *   window;
+    bool         mouseGrabbed = false;
+    KeyboardMode keyboardMode = TextInput;
+    Vec2i        prevMousePos;
+    Time         prevWheelAt;
+    Vec2i        wheelAngleAccum;
+    int          wheelDir[2];
+    //#if defined (WIN32)
+    //    bool      altIsDown = false;
+    //#endif
 
     Impl(Public *i, GLWindow *parentWindow)
         : Base(i)
@@ -92,47 +93,34 @@ DE_PIMPL(WindowEventHandler)
     }
 #endif
 
+    void handleTextInput(const SDL_TextInputEvent &ev)
+    {
+        KeyEvent keyEvent(KeyEvent::Pressed, 0, 0, 0, ev.text);
+        DE_FOR_PUBLIC_AUDIENCE2(KeyEvent, i)
+        {
+            i->keyEvent(keyEvent);
+        }
+    }
+
     void handleKeyEvent(const SDL_KeyboardEvent &ev)
     {
-        //LOG_AS("Canvas");
+        debug("text input active: %i", SDL_IsTextInputActive());
 
-//        ev->accept();
-        //if (ev->isAutoRepeat()) return; // Ignore repeats, we do our own.
-
-        /*
-        qDebug() << "Canvas: key press" << ev->key() << QString("0x%1").arg(ev->key(), 0, 16)
-                 << "text:" << ev->text()
-                 << "native:" << ev->nativeVirtualKey()
-                 << "scancode:" << ev->nativeScanCode();
-        */
-
-#if 0
-        // We must track the state of the alt key ourselves as the OS grabs the up event...
-        if (ev->key() == Qt::Key_Alt)
-        {
-            if (ev->type() == QEvent::KeyPress)
-            {
-                if (altIsDown) return; // Ignore repeat down events(!)?
-                altIsDown = true;
-            }
-            else if (ev->type() == QEvent::KeyRelease)
-            {
-                if (!altIsDown)
-                {
-                    LOG_DEBUG("Ignoring repeat alt up.");
-                    return; // Ignore repeat up events.
-                }
-                altIsDown = false;
-                //LOG_DEBUG("Alt is up.");
-            }
-        }
-#endif
+        const int ddKey = KeyEvent::ddKeyFromSDL(ev.keysym.sym, ev.keysym.scancode);
+        KeyEvent keyEvent(ev.state == SDL_PRESSED
+                              ? (ev.repeat ? KeyEvent::Repeat : KeyEvent::Pressed)
+                              : KeyEvent::Released,
+                          ddKey,
+                          ev.keysym.sym,
+                          ev.keysym.scancode,
+                          String(),
+                          KeyEvent::modifiersFromSDL(ev.keysym.mod));
 
         DE_FOR_PUBLIC_AUDIENCE2(KeyEvent, i)
         {
-            i->keyEvent(KeyEvent());
+            i->keyEvent(keyEvent);
 
-/*            i->keyEvent(KeyEvent(ev->isAutoRepeat()?             KeyEvent::Repeat :
+            /*            i->keyEvent(KeyEvent(ev->isAutoRepeat()?             KeyEvent::Repeat :
                                  ev->type() == QEvent::KeyPress? KeyEvent::Pressed :
                                                                  KeyEvent::Released,
                                  ev->key(),
@@ -181,6 +169,29 @@ void WindowEventHandler::trapMouse(bool trap)
     }
 }
 
+void WindowEventHandler::setKeyboardMode(KeyboardMode kbMode)
+{
+    if (d->keyboardMode != kbMode)
+    {
+        d->keyboardMode = kbMode;
+        if (kbMode == TextInput)
+        {
+            LOG_INPUT_MSG("Begin text input mode");
+            SDL_StartTextInput();
+        }
+        else
+        {
+            LOG_INPUT_MSG("End text input mode");
+            SDL_StopTextInput();
+        }
+    }
+}
+
+WindowEventHandler::KeyboardMode WindowEventHandler::keyboardMode() const
+{
+    return d->keyboardMode;
+}
+
 bool WindowEventHandler::isMouseTrapped() const
 {
     return d->mouseGrabbed;
@@ -194,6 +205,10 @@ void WindowEventHandler::handleSDLEvent(const void *ptr)
     case SDL_KEYDOWN:
     case SDL_KEYUP:
         d->handleKeyEvent(event->key);
+        break;
+
+    case SDL_TEXTINPUT:
+        d->handleTextInput(event->text);
         break;
     }
 }

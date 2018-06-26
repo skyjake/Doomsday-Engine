@@ -300,7 +300,8 @@ GLWindow::GLWindow()
 //    connect(this, SIGNAL(frameSwapped()), this, SLOT(frameWasSwapped()));
 
     d->handler = new WindowEventHandler(this);
-
+    d->handler->setKeyboardMode(WindowEventHandler::RawKeys);
+    
     d->pixelRatio = devicePixelRatio();
 
     connect(this, &QWindow::screenChanged, [this](QScreen *scr) {
@@ -615,6 +616,11 @@ void GLWindow::handleSDLEvent(const void *ptr)
     {
     case SDL_KEYDOWN:
     case SDL_KEYUP:
+    case SDL_TEXTINPUT:
+    case SDL_MOUSEMOTION:
+    case SDL_MOUSEBUTTONDOWN:
+    case SDL_MOUSEBUTTONUP:
+    case SDL_MOUSEWHEEL:
         d->handler->handleSDLEvent(ptr);
         break;
 

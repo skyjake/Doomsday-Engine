@@ -64,7 +64,7 @@ DE_PIMPL(GuiApp)
         SDL_DisplayMode mode;
         if (SDL_GetCurrentDisplayMode(0, &mode) == 0)
         {
-            LOG_GL_MSG("Current display mode refresh rate %d Hz") << mode.refresh_rate;
+            LOG_GL_MSG("Current display mode refresh rate: %d Hz") << mode.refresh_rate;
             self().loop().setRate(mode.refresh_rate ? mode.refresh_rate : 60.0);
         }
     }
@@ -90,6 +90,9 @@ DE_PIMPL(GuiApp)
             case SDL_MOUSEBUTTONDOWN:
             case SDL_MOUSEBUTTONUP:
             case SDL_MOUSEWHEEL:
+            case SDL_KEYDOWN:
+            case SDL_KEYUP:
+            case SDL_TEXTINPUT:
                 if (window) window->handleSDLEvent(&event);
                 break;
             }

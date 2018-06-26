@@ -47,6 +47,8 @@ public:
      */
     DE_DEFINE_AUDIENCE2(FocusChange, void windowFocusChanged(GLWindow &, bool hasFocus))
 
+    enum KeyboardMode { RawKeys, TextInput };
+
 public:
     explicit WindowEventHandler(GLWindow *parent);
 
@@ -60,23 +62,16 @@ public:
      */
     void trapMouse(bool trap = true);
 
+    void setKeyboardMode(KeyboardMode kbMode);
+
+    KeyboardMode keyboardMode() const;
+
     /**
      * Determines if the mouse is presently trapped by the canvas.
      */
     bool isMouseTrapped() const;
 
-//    // Native events.
     void handleSDLEvent(const void *);
-
-//    void focusInEvent(QFocusEvent *ev);
-//    void focusOutEvent(QFocusEvent *ev);
-//    void keyPressEvent(QKeyEvent *ev);
-//    void keyReleaseEvent(QKeyEvent *ev);
-//    void mousePressEvent(QMouseEvent *ev);
-//    void mouseReleaseEvent(QMouseEvent *ev);
-//    void mouseDoubleClickEvent(QMouseEvent *ev);
-//    void mouseMoveEvent(QMouseEvent *ev);
-//    void wheelEvent(QWheelEvent *ev);
 
 private:
     DE_PRIVATE(d)
