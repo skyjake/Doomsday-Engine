@@ -21,6 +21,7 @@
 
 #include <de/AtlasTexture>
 #include <de/Drawable>
+#include <de/EscapeParser>
 #include <de/FileSystem>
 #include <de/GLBuffer>
 #include <de/GLInfo>
@@ -122,13 +123,15 @@ DE_PIMPL(TestWindow)
             LOG_DEBUG("GLInit");
             glInit();
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             er.warnPlainText();
 
-            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "GL Init Error",
-                                     er.asText().c_str(), nullptr);
-//            QMessageBox::critical(nullptr, "GL Init Error", er.asText());
+            EscapeParser esc;
+            esc.parse(er.asText());
+            SDL_ShowSimpleMessageBox(
+                SDL_MESSAGEBOX_ERROR, "GL Init Error", esc.plainText().c_str(), nullptr);
+
             exit(1);
         }
     }
