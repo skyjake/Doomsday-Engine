@@ -50,8 +50,7 @@ class Thread;
  *
  * @ingroup gui
  */
-class LIBGUI_PUBLIC GuiApp : //public LIBGUI_GUIAPP_BASECLASS
-                             public App
+class LIBGUI_PUBLIC GuiApp : public App
                            , DE_OBSERVES(Loop, Iteration)
 {
 public:
@@ -90,10 +89,10 @@ public:
     DE_DEFINE_AUDIENCE2(DisplayModeChange, void displayModeChanged())
 
 protected:
-    NativePath appDataPath() const;
+    NativePath appDataPath() const override;
 
     // Observes Loop iteration.
-    void loopIteration();
+    void loopIteration() override;
 
 private:
     DE_PRIVATE(d)

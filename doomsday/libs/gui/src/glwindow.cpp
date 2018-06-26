@@ -275,10 +275,10 @@ DE_PIMPL(GLWindow)
 
     void frameWasSwapped()
     {
-        self().makeCurrent();
+//        self().makeCurrent();
         DE_FOR_PUBLIC_AUDIENCE2(Swap, i) i->windowSwapped(self());
         updateFrameRateStatistics();
-        self().doneCurrent();
+//        self().doneCurrent();
     }
 
     DE_PIMPL_AUDIENCES(Init, Resize, PixelRatio, Swap, Move, Visibility)
@@ -758,6 +758,7 @@ void GLWindow::paintGL()
 //#endif
 
     SDL_GL_SwapWindow(d->window);
+    d->frameWasSwapped();
 }
 
 void GLWindow::windowAboutToClose()

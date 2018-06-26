@@ -59,6 +59,16 @@ DE_PIMPL(GuiApp)
         SDL_Quit();
     }
 
+    void matchLoopRateToDisplayMode()
+    {
+        SDL_DisplayMode mode;
+        if (SDL_GetCurrentDisplayMode(0, &mode) == 0)
+        {
+            LOG_GL_MSG("Current display mode refresh rate %d Hz") << mode.refresh_rate;
+            self().loop().setRate(mode.refresh_rate ? mode.refresh_rate : 60.0);
+        }
+    }
+
     /**
      * Get events from SDL and route them to the appropriate place for handling.
      */
@@ -120,6 +130,11 @@ GuiApp::GuiApp(const StringList &args)
     {
         throw Error("GuiApp::GuiApp", stringf("Failed to initialize SDL: %s", SDL_GetError()));
     }
+    if (SDL_GetNumVideoDisplays() == 0)
+    {
+        throw Error("GuiApp::GuiApp", "No video displays available");
+    }
+    d->matchLoopRateToDisplayMode();
 
     static ImageFile::Interpreter intrpImageFile;
     fileSystem().addInterpreter(intrpImageFile);
