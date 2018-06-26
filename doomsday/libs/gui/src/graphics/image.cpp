@@ -587,12 +587,27 @@ bool Image::isGLCompatible() const
     return d->format >= Luminance_8 && d->format <= RGBA_32ui;
 }
 
-Image Image::convertToFormat(Format format) const
+Image Image::convertToFormat(Format toFormat) const
 {
-    if (d->format == format)
+    if (d->format == toFormat)
 {
         // No conversion necessary.
         return *this;
+    }
+    if (d->format == RGB_888 && toFormat == RGBA_8888)
+    {
+        const int inStep = bytesPerPixel();
+        Image conv(size(), toFormat);
+        for (duint y = 0; y < height(); ++y)
+        {
+            const duint8 *in = row(y);
+            for (duint32 *out = conv.row32(y), *outEnd = conv.rowEnd32(y);
+                 out != outEnd; ++out, in += inStep)
+            {
+                *out = packColor(Color(in[0], in[1], in[2], 255));
+            }
+        }
+        return conv;
     }
     DE_ASSERT_FAIL("Image::convertToFormat not implemented");
 }
