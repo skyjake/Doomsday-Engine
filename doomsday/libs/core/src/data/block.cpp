@@ -36,9 +36,12 @@ Block::Block(const iBlock *other)
 
 Block::Block(const IByteArray &other)
 {
-    init_Block(&_block, other.size());
+    const dsize num = other.size();
+    init_Block(&_block, num);
     // Read the other's data directly into our data buffer.
-    other.get(0, data(), other.size());
+    other.get(0, data(), num);
+    // Ensure it's null-terminated.
+    data()[num] = 0;
 }
 
 Block::Block(const Block &other)
