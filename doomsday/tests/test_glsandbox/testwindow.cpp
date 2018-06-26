@@ -114,6 +114,9 @@ DE_PIMPL(TestWindow)
     {
         self().glActivate();
         model.glDeinit();
+        ob.clear();
+        atlasOb.clear();
+        modelProgram.clear();
     }
 
     void windowInit(GLWindow &)
