@@ -114,7 +114,6 @@ public:
     Size fullscreenSize() const;
 
     inline int fullscreenWidth() const { return fullscreenSize().x; }
-
     inline int fullscreenHeight() const { return fullscreenSize().y; }
 
     int colorDepthBits() const;

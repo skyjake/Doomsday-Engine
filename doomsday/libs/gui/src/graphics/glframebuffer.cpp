@@ -729,11 +729,11 @@ Image GLFramebuffer::toImage() const
         Image img(imgSize, Image::RGBA_8888);
         glBindFramebuffer(GL_READ_FRAMEBUFFER, d->fbo);
         glPixelStorei(GL_PACK_ALIGNMENT, 4);
-        glReadPixels(0, 0, imgSize.x, imgSize.y, GL_BGRA, GL_UNSIGNED_BYTE, img.bits());
+        glReadPixels(0, 0, imgSize.x, imgSize.y, GL_RGBA, GL_UNSIGNED_BYTE, img.bits());
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
         // Restore the stack's target.
 //        GLState::current().target().glBind();
-        return img.mirrored(false, true);
+        return img.flipped();
     }
     return Image();
 }

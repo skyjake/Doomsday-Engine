@@ -26,7 +26,7 @@ typedef Hash<String, NativeFont::StyleMapping> Families;
 static Families families;
 
 static int const MAX_CACHE_STRING_LENGTH = 200;
-static int const MAX_CACHE_STRINGS = 500;
+static int const MAX_CACHE_STRINGS       = 500;
 
 DE_PIMPL(NativeFont)
 {
@@ -147,10 +147,11 @@ NativeFont::Transform NativeFont::transform() const
 String NativeFont::nativeFontName() const
 {
     // Check the defined mappings.
-    if (families.contains(d->family))
+    auto found = families.find(d->family);
+    if (found != families.end())
     {
-        StyleMapping const &map = families[d->family];
-        Spec const spec(d->style, d->weight);
+        const StyleMapping &map = found->second;
+        const Spec spec(d->style, d->weight);
         auto found = map.find(spec);
         if (found != map.end())
         {

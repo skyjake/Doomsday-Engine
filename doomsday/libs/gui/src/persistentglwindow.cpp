@@ -1,7 +1,3 @@
-#include <utility>
-
-#include <utility>
-
 /** @file persistentcanvaswindow.cpp  Canvas window with persistent state.
  * @ingroup gui
  *

@@ -107,13 +107,13 @@ public:
     float frameRate() const;
     uint frameCount() const;
 
-    int x() const;
-    int y() const;
+    inline int x() const { return pos().x; }
+    inline int y() const { return pos().y; }
 
     /**
      * Determines the current top left corner (origin) of the window.
      */
-    inline Vec2i pos() const { return Vec2i(x(), y()); }
+    Vec2i pos() const;
 
     Size pointSize() const;
     Size pixelSize() const;

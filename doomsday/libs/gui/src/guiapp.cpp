@@ -136,6 +136,14 @@ void GuiApp::setMetadata(String const &orgName, String const &orgDomain,
     amd.set(ORG_DOMAIN,  orgDomain);
 }
 
+void GuiApp::notifyDisplayModeChanged()
+{
+    DE_FOR_AUDIENCE2(DisplayModeChange, i)
+    {
+        i->displayModeChanged();
+    }
+}
+
 //bool GuiApp::notify(QObject *receiver, QEvent *event)
 //{
 //    try

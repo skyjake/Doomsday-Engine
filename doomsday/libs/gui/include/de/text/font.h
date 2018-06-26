@@ -27,17 +27,26 @@
 #include <de/Range>
 #include <de/EscapeParser>
 
-//#include <QFont>
-//#include <QImage>
-//#include <QList>
-
 #include "../gui/libgui.h"
 #include "../Image"
+#include "../NativeFont"
 
 namespace de {
 
-class NativeFont;
+struct FontParams
+{
+    String           family;
+    float            size; // points
+    NativeFont::Spec spec;
 
+    FontParams();
+    FontParams(const NativeFont &font);
+
+    bool operator==(FontParams const &other) const
+    {
+        return fequal(size, other.size) && spec == other.spec && family == other.family;
+    }
+};
 /**
  * Font with metrics. @ingroup gui
  */
@@ -271,11 +280,8 @@ public:
 public:
     Font();
 
-    Font(Font const &other);
-    //Font(NativeFont const &font);
-//    Font(QFont const &font);
-
-    //QFont toQFont() const;
+    Font(const Font &other);
+    Font(const FontParams &params);
 
     void initialize(const QFont &font);
 

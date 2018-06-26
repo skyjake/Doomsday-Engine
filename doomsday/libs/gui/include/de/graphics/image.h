@@ -83,18 +83,40 @@ public:
 
     typedef Vec2ui Size;
     typedef Vec4ub Color;
+    typedef Vector4<duint16> Color16;
 
+    static inline Color makeColor(int r, int g, int b, int a)
+    {
+        return Color(duint8(clamp(0, r, 255)),
+                     duint8(clamp(0, g, 255)),
+                     duint8(clamp(0, b, 255)),
+                     duint8(clamp(0, a, 255)));
+    }
     static inline duint32 packColor(Color color)
     {
         return color.x | (color.y << 8) | (color.z << 16) | (color.w << 24);
     }
+    static inline duint32 packColor(Color16 color)
+    {
+        return (color.x & 0xff) | ((color.y & 0xff) << 8) | ((color.z & 0xff) << 16) |
+               ((color.w & 0xff) << 24);
+    }
     static inline Color unpackColor(uint32_t packed)
     {
-        return Color( packed & 0xff,
-                     (packed >> 8) & 0xff,
+        return Color( packed        & 0xff,
+                     (packed >> 8)  & 0xff,
                      (packed >> 16) & 0xff,
                      (packed >> 24) & 0xff);
     }
+    static inline Color16 unpackColor16(uint32_t packed)
+    {
+        return Color16( packed        & 0xff,
+                       (packed >> 8)  & 0xff,
+                       (packed >> 16) & 0xff,
+                       (packed >> 24) & 0xff);
+    }
+    static Vec4f hsv(Color color);          // normalized HSV
+    static Color fromHsv(const Vec4f &hsv); // normalized HSV
 
 public:
     Image();
@@ -156,6 +178,11 @@ public:
 
     const dbyte *row(duint y) const;
     dbyte *      row(duint y);
+    dbyte *      rowEnd(duint y);
+
+    const duint32 *row32(duint y) const;
+    duint32 *      row32(duint y);
+    duint32 *      rowEnd32(duint y);
 
     /**
      * Determines if the image has a zero size (no pixels).
@@ -214,7 +241,7 @@ public:
     Image mixed(Image const &low, Image const &high) const;
     Image withAlpha(Image const &grayscale) const;
     Image rgbSwapped() const;
-    Image mirrored(bool horizontally, bool vertically) const;
+    Image flipped() const;
 
     void save(const NativePath &path) const;
 

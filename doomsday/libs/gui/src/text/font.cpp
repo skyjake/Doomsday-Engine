@@ -19,11 +19,6 @@
 #include "de/Font"
 
 #include <de/ConstantRule>
-//#include <QFontMetrics>
-//#include <QFontDatabase>
-//#include <QImage>
-//#include <QPainter>
-//#include <QThreadStorage>
 #include <de/Hash>
 #include <de/ThreadLocal>
 
@@ -35,38 +30,10 @@ namespace de { typedef CoreTextNativeFont PlatformFont; }
 namespace de { typedef QtNativeFont PlatformFont; }
 #endif
 
-namespace de {
-namespace internal {
-
-    struct FontParams
-    {
-    String           family;
-    float            size;
-        NativeFont::Spec spec;
-
-        FontParams() {}
-
-        FontParams(PlatformFont const &font)
-        {
-            family         = font.family();
-            size           = font.size();
-            spec.weight    = font.weight();
-            spec.style     = font.style();
-            spec.transform = font.transform();
-        }
-
-        bool operator==(FontParams const &other) const
-        {
-        return fequal(size, other.size) && spec == other.spec && family == other.family;
-        }
-    };
-
-}} // namespace de::internal
-
 namespace std {
 template<>
-struct hash<de::internal::FontParams> {
-    std::size_t operator()(const de::internal::FontParams &fp) const {
+struct hash<de::FontParams> {
+    std::size_t operator()(const de::FontParams &fp) const {
         return hash<de::String>()(fp.family)
              ^ hash<int>()(int(100 * fp.size))
              ^ hash<int>()(fp.spec.weight)
@@ -82,11 +49,9 @@ namespace internal {
     struct ThreadFonts
     {
         PlatformFont font;
-        Hash<internal::FontParams, PlatformFont *> fontMods;
+    Hash<FontParams, PlatformFont *> fontMods;
 
-        ~ThreadFonts() {
-            fontMods.deleteAll();
-        }
+    ~ThreadFonts() { fontMods.deleteAll(); }
     };
 
 } // namespace internal
@@ -101,8 +66,7 @@ static ThreadLocal<Hash<Font *, internal::ThreadFonts>> fontsForThread;
 
 DE_PIMPL(Font)
 {
-//    QFont referenceFont;
-    internal::FontParams fontParams;
+    FontParams fontParams;
     internal::ThreadFonts *threadFonts = nullptr;
 
     ConstantRule *heightRule;
@@ -116,7 +80,7 @@ DE_PIMPL(Font)
         createRules();
     }
 
-    Impl(Public * i, const internal::FontParams &fp)
+    Impl(Public * i, const FontParams &fp)
         : Base(i)
         , fontParams(fp)
     {
@@ -201,7 +165,7 @@ DE_PIMPL(Font)
         lineSpacingRule->set(plat.font.lineSpacing());
     }
 
-    static PlatformFont makePlatformFont(const internal::FontParams &params)
+    static PlatformFont makePlatformFont(const FontParams &params)
     {
         PlatformFont pf;
         pf.setFamily(params.family);
@@ -212,7 +176,7 @@ DE_PIMPL(Font)
         return pf;
     }
 
-    PlatformFont &getFontMod(internal::FontParams const &params)
+    PlatformFont &getFontMod(FontParams const &params)
     {
         auto &plat = getThreadFonts();
 
@@ -241,7 +205,7 @@ DE_PIMPL(Font)
 
         if (!rich.isDefault())
         {
-            internal::FontParams modParams(plat.font);
+            FontParams modParams(plat.font);
 
             // Size change.
             if (!fequal(rich.sizeFactor(), 1.f))
@@ -270,7 +234,7 @@ DE_PIMPL(Font)
                 {
                     if (Font const *altFont = rich.format.format().style().richStyleFont(rich.style()))
                     {
-                        modParams = internal::FontParams(altFont->d->getThreadFonts().font);
+                        modParams = FontParams(altFont->d->getThreadFonts().font);
                     }
                 }
                 break;
@@ -291,14 +255,17 @@ DE_PIMPL(Font)
     }
 };
 
-Font::Font() : d(new Impl(this))
+Font::Font()
+    : d(new Impl(this))
 {}
 
-Font::Font(Font const &other) : d(new Impl(this, other.d->fontParams))
+Font::Font(Font const &other)
+    : d(new Impl(this, other.d->fontParams))
 {}
+Font::Font(const FontParams &params)
 
-//Font::Font(QFont const &font) : d(new Impl(this, font))
-//{}
+    : d(new Impl(this, params))
+{}
 
 void Font::initialize(const QFont &font)
 {
@@ -470,6 +437,20 @@ Rule const &Font::descent() const
 Rule const &Font::lineSpacing() const
 {
     return *d->lineSpacingRule;
+}
+
+//------------------------------------------------------------------------------------------------
+
+FontParams::FontParams()
+{}
+
+FontParams::FontParams(const NativeFont &font)
+{
+    family         = font.family();
+    size           = font.size();
+    spec.weight    = font.weight();
+    spec.style     = font.style();
+    spec.transform = font.transform();
 }
 
 } // namespace de

@@ -237,7 +237,11 @@ DE_PIMPL(GLWindow)
         /// @todo This is likely points, not pixels.
         debug("[GLWindow] SDL window resize event to %dx%d", w, h);
 
-        auto pendingSize = Size(w, h); // * qApp->devicePixelRatio();
+        int pw, ph;
+        SDL_GL_GetDrawableSize(window, &pw, &ph);
+        debug("[GLWindow] Drawable size is %dx%d pixels", pw, ph);
+
+        pendingSize = Size(pw, ph);
 
         // Only react if this is actually a resize.
         if (currentSize != pendingSize)
@@ -323,6 +327,23 @@ void GLWindow::update()
 
 }
 
+void GLWindow::showNormal()
+{
+    SDL_ShowWindow(d->window);
+}
+
+void GLWindow::showMaximized()
+{
+    SDL_ShowWindow(d->window);
+    SDL_MaximizeWindow(d->window);
+}
+
+void GLWindow::showFullScreen()
+{
+    SDL_ShowWindow(d->window);
+    SDL_SetWindowFullscreen(d->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+}
+
 void GLWindow::hide()
 {
     SDL_HideWindow(d->window);
@@ -405,6 +426,13 @@ float GLWindow::frameRate() const
 uint GLWindow::frameCount() const
 {
     return d->frameCount;
+}
+
+Vec2i GLWindow::pos() const
+{
+    Vec2i p;
+    SDL_GetWindowPosition(d->window, &p.x, &p.y);
+    return p;
 }
 
 GLWindow::Size GLWindow::pointSize() const

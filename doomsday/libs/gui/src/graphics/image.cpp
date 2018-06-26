@@ -28,10 +28,6 @@
 #include <de/Writer>
 #include <de/Zeroed>
 
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#define STB_IMAGE_RESIZE_IMPLEMENTATION
-
 #include <stb/stb_image.h>
 #include <stb/stb_image_write.h>
 #include <stb/stb_image_resize.h>
@@ -376,6 +372,11 @@ DE_PIMPL(Image)
         , size(imgSize)
         , refPixels(imgRefPixels)
     {}
+
+    Rectanglei rect() const
+    {
+        return Rectanglei::fromSize(size);
+    }
 };
 
 Image::Image() : d(new Impl(this))
@@ -539,6 +540,26 @@ dbyte *Image::row(duint y)
     return bits() + stride() * y;
 }
 
+dbyte *Image::rowEnd(duint y)
+{
+    return row(y) + width() * bytesPerPixel();
+}
+
+const duint32 *Image::row32(duint y) const
+{
+    return reinterpret_cast<const duint32 *>(row(y));
+}
+
+duint32 *Image::row32(duint y)
+{
+    return reinterpret_cast<duint32 *>(row(y));
+}
+
+duint32 *Image::rowEnd32(duint y)
+{
+    return reinterpret_cast<duint32 *>(row(y) + width() * bytesPerPixel());
+}
+
 bool Image::isNull() const
 {
     return size() == Size(0, 0);
@@ -662,15 +683,12 @@ void Image::setPointRatio(float pointsPerPixel)
 
 Image Image::subImage(Rectanglei const &subArea) const
 {
-    IMAGE_ASSERT_EDITABLE(d);
-
-    Image sub(subArea.size(), d->format);
-
-    DE_ASSERT_FAIL("Image::subImage is not implemented");
-
-//    return Image(d->image.copy(subArea.topLeft.x, subArea.topLeft.y,
-//                               subArea.width(), subArea.height()));
-
+    const auto bounds = d->rect() & subArea;
+    Image sub(bounds.size(), d->format);
+    for (duint y = 0; y < bounds.height(); ++y)
+    {
+        memcpy(sub.row(y), row(bounds.top() + y), bounds.width() * bytesPerPixel());
+    }
     return sub;
 }
 
@@ -679,30 +697,49 @@ void Image::resize(Size const &size)
     IMAGE_ASSERT_EDITABLE(d);
 //    DE_ASSERT(d->image.format() != QImage::Format_Invalid);
 
-    QImage resized(QSize(size.x, size.y), d->image.format());
-    resized.fill(0);
-
-    QPainter painter(&resized);
-    painter.drawImage(QRect(QPoint(0, 0), resized.size()), d->image);
-    d->image = resized;
-    d->size = size;
+    Image resized{size, d->format};
+    stbir_resize_uint8(bits(),
+                       width(),
+                       height(),
+                       stride(),
+                       resized.bits(),
+                       size.x,
+                       size.y,
+                       resized.stride(),
+                       bytesPerPixel());
+    *this = resized;
 }
 
 void Image::fill(Color const &color)
 {
     IMAGE_ASSERT_EDITABLE(d);
 
-    d->image.fill(QColor(color.x, color.y, color.z, color.w).rgba());
+    const duint32 colorBits = packColor(color);
+    for (duint y = 0; y < height(); ++y)
+    {
+        for (duint32 *i = row32(y), *end = rowEnd32(y); i != end; ++i)
+        {
+            *i = colorBits;
+        }
+    }
 }
 
 void Image::fill(Rectanglei const &rect, Color const &color)
 {
     IMAGE_ASSERT_EDITABLE(d);
 
-    QPainter painter(&d->image);
-    painter.setCompositionMode(QPainter::CompositionMode_Source);
-    painter.fillRect(QRect(rect.topLeft.x, rect.topLeft.y, rect.width(), rect.height()),
-                     QColor(color.x, color.y, color.z, color.w));
+    const Rectanglei bounds = d->rect() & rect;
+    const duint32 colorBits = packColor(color);
+
+    for (int y = bounds.top(); y < bounds.bottom(); ++y)
+    {
+        auto *rowStart = row32(y) + bounds.left();
+        auto *end = rowStart + bounds.width();
+        for (duint32 *i = rowStart; i != end; ++i)
+        {
+            *i = colorBits;
+        }
+    }
 }
 
 void Image::setPixel(Vec2ui pos, Color color)
@@ -715,30 +752,55 @@ void Image::setPixel(Vec2ui pos, Color color)
 
 void Image::draw(Image const &image, Vec2i const &topLeft)
 {
-    IMAGE_ASSERT_EDITABLE(d);
-    IMAGE_ASSERT_EDITABLE(image.d);
-
-    QPainter painter(&d->image);
-    painter.drawImage(QPoint(topLeft.x, topLeft.y), image.d->image);
+    drawPartial(image, image.d->rect(), topLeft);
 }
 
 void Image::drawPartial(Image const &image, Rectanglei const &part, Vec2i const &topLeft)
 {
+    DE_ASSERT(d->format == image.d->format); // conversion not supported
     IMAGE_ASSERT_EDITABLE(d);
     IMAGE_ASSERT_EDITABLE(image.d);
 
-    QPainter painter(&d->image);
-    painter.drawImage(QPoint(topLeft.x, topLeft.y),
-                      image.d->image,
-                      QRect(part.left(), part.top(), part.width(), part.height()));
+    const auto srcPart  = image.d->rect() & part;
+    const auto bounds   = Rectanglei(topLeft, topLeft + srcPart.size().toVec2i());
+    const auto destRect = d->rect() & bounds;
+    const auto srcRect  = bounds.moved(-topLeft + srcPart.topLeft);
+
+    if (srcRect.isNull()) return;
+
+    DE_ASSERT(srcRect.size() == destRect.size());
+
+    for (int dy = destRect.top(), sy = srcRect.top(); sy < srcRect.bottom(); ++dy, ++sy)
+    {
+        memcpy(row32(dy) + destRect.left(),
+               image.row32(sy) + srcRect.left(),
+               srcRect.width() * bytesPerPixel());
+    }
 }
 
-Image Image::multiplied(Image const &factorImage) const
+Image Image::multiplied(const Image &factorImage) const
 {
-    QImage multiplied = toQImage();
-    QPainter painter(&multiplied);
-    painter.setCompositionMode(QPainter::CompositionMode_Multiply);
-    painter.drawImage(0, 0, factorImage.toQImage());
+    IMAGE_ASSERT_EDITABLE(factorImage.d);
+
+    const auto bounds = d->rect() & factorImage.d->rect();
+
+    Image multiplied = convertToFormat(RGBA_8888);
+    for (duint y = 0; y < bounds.height(); ++y)
+    {
+        const duint32 *src1 = row32(y);
+        const duint32 *end  = src1 + bounds.width();
+        const duint32 *src2 = factorImage.row32(y);
+
+        for (duint32 *dest = multiplied.row32(y); src1 != end; ++src1, ++src2, ++dest)
+{
+            const Color16 col1 = unpackColor16(*src1);
+            const Color16 col2 = unpackColor16(*src2);
+            *dest = packColor(Color16((col2.x + 1) * col1.x >> 8,
+                                      (col2.y + 1) * col1.y >> 8,
+                                      (col2.z + 1) * col1.z >> 8,
+                                      (col2.w + 1) * col1.w >> 8));
+        }
+    }
     return multiplied;
 }
 
@@ -753,15 +815,11 @@ Image Image::multiplied(Color const &color) const
         duint32 *ptr = reinterpret_cast<duint32 *>(copy.bits() + y * copy.stride());
         for (duint x = 0; x < width(); ++x)
         {
-            duint16 b =  *ptr & 0xff;
-            duint16 g = (*ptr & 0xff00) >> 8;
-            duint16 r = (*ptr & 0xff0000) >> 16;
-            duint16 a = (*ptr & 0xff000000) >> 24;
-
-            *ptr++ = packColor(Color((color.x + 1) * r >> 8,
-                           (color.y + 1) * g >> 8,
-                           (color.z + 1) * b >> 8,
-                                     (color.w + 1) * a >> 8));
+            const Color16 pix = unpackColor16(*ptr);
+            *ptr++ = packColor(Color16((color.x + 1) * pix.x >> 8,
+                                       (color.y + 1) * pix.y >> 8,
+                                       (color.z + 1) * pix.z >> 8,
+                                       (color.w + 1) * pix.w >> 8));
         }
     }
     return copy;
@@ -769,26 +827,19 @@ Image Image::multiplied(Color const &color) const
 
 Image Image::colorized(Color const &color) const
 {
+    const float targetHue = hsv(color).x;
+
     Image copy = convertToFormat(RGBA_8888);
-
-    Color targetColor(color.x, color.y, color.z, 255);
-    int targetHue = targetColor.hue();
-
     for (duint y = 0; y < height(); ++y)
     {
-        duint32 *ptr = reinterpret_cast<duint32 *>(copy.bits() + y * copy.stride());
-        for (duint x = 0; x < width(); ++x)
+        for (duint32 *ptr = copy.row32(y), *end = ptr + width(); ptr != end; ++ptr)
         {
-            duint16 b =  *ptr & 0xff;
-            duint16 g = (*ptr & 0xff00) >> 8;
-            duint16 r = (*ptr & 0xff0000) >> 16;
-            duint16 a = (*ptr & 0xff000000) >> 24;
+            Vec4f pixelHsv = hsv(unpackColor(*ptr));
 
-            Color rgba(r, g, b, a);
-            Color colorized;
-            colorized.setHsv(targetHue, rgba.saturation(), rgba.value(), color.w * a >> 8);
+            pixelHsv.x = targetHue;
+            pixelHsv.w = (color.w / 255.f) * pixelHsv.w;
 
-            *ptr++ = packColor(colorized);
+            *ptr = packColor(fromHsv(pixelHsv));
         }
     }
     return copy;
@@ -797,8 +848,14 @@ Image Image::colorized(Color const &color) const
 Image Image::invertedColor() const
 {
     Image img = convertToFormat(RGBA_8888);
-    //img.invertPixels();
-    DE_ASSERT_FAIL("Image::invertedColor not implemented");
+    for (duint y = 0; y < height(); ++y)
+    {
+        for (duint32 *ptr = img.row32(y), *end = ptr + width(); ptr != end; ++ptr)
+        {
+            const auto color = unpackColor(*ptr);
+            *ptr = packColor(Color(255 - color.x, 255 - color.y, 255 - color.z, color.w));
+        }
+    }
     return img;
 }
 
@@ -813,14 +870,15 @@ Image Image::mixed(Image const &low, Image const &high) const
     Image mix = convertToFormat(RGBA_8888);
     for (duint y = 0; y < height(); ++y)
     {
-        duint32 *ptr = reinterpret_cast<duint32 *>(mix.bits() + y * mix.stride());
+        duint32 *ptr = mix.row32(y);
         for (duint x = 0; x < width(); ++x)
         {
-            /// @todo Is this really meant to be BGRA?
-            duint mb =  *ptr & 0xff;
-            duint mg = (*ptr & 0xff00) >> 8;
-            duint mr = (*ptr & 0xff0000) >> 16;
-            duint ma = (*ptr & 0xff000000) >> 24;
+            const auto pix = unpackColor(*ptr);
+
+            const duint mr = pix.x;
+            const duint mg = pix.y;
+            const duint mb = pix.z;
+            const duint ma = pix.w;
 
             const auto lowColor  = lowImg .pixel(x, y);
             const auto highColor = highImg.pixel(x, y);
@@ -830,7 +888,7 @@ Image Image::mixed(Image const &low, Image const &high) const
             int blue  = (highColor.z * mb + lowColor.z * (255 - mb)) / 255;
             int alpha = (highColor.w * ma + lowColor.w * (255 - ma)) / 255;
 
-            *ptr = blue | (green << 8) | (red << 16) | (alpha << 24);
+            *ptr = packColor(makeColor(red, green, blue, alpha));
 
             ptr++;
         }
@@ -845,7 +903,7 @@ Image Image::withAlpha(Image const &grayscale) const
     Image img = convertToFormat(RGBA_8888);
     for (duint y = 0; y < height(); ++y)
     {
-        duint32 *ptr = reinterpret_cast<duint32 *>(img.bits() + y * img.stride());
+        duint32 *ptr = img.row32(y);
         for (duint x = 0; x < width(); ++x)
         {
             *ptr &= 0x00ffffff;
@@ -861,10 +919,21 @@ Image Image::rgbSwapped() const
     return {};
 }
 
-Image Image::mirrored(bool horizontally, bool vertically) const
+Image Image::flipped() const
 {
-    DE_ASSERT_FAIL("Image::mirrored is not implemented");
-    return {};
+    Image flip(d->size, d->format);
+    for (duint y = 0; y < height(); ++y)
+    {
+        memcpy(flip.row(y), row(height() - 1 - y), stride());
+    }
+    return flip;
+}
+
+Image Image::solidColor(Color const &color, Size const &size)
+{
+    Image img(size, Image::RGBA_8888);
+    img.fill(color);
+    return img;
 }
 
 void Image::save(const NativePath &path) const
@@ -1079,13 +1148,6 @@ GLPixelFormat Image::glFormat(QImage::Format format)
 }
 #endif
 
-Image Image::solidColor(Color const &color, Size const &size)
-{
-    Image img(size, Image::RGBA_8888);
-    img.fill(color);
-    return img;
-}
-
 Image Image::fromData(IByteArray const &data, String const &formatHint)
 {
     return fromData(Block(data), formatHint);
@@ -1106,9 +1168,8 @@ Image Image::fromData(Block const &data, String const &formatHint)
 
     // STB provides readers for various formats.
     {
-        int w, h, num;
-        auto *pixels = stbi_load_from_memory(data.data(), int(data.size()),
-                                             &w, &h, &num, 0);
+        int   w, h, num;
+        auto *pixels = stbi_load_from_memory(data.data(), int(data.size()), &w, &h, &num, 0);
         if (pixels)
         {
             Image img;
@@ -1156,6 +1217,112 @@ bool Image::recognize(File const &file)
         if (!ext.compareWithoutCase(e)) return true;
     }
     return false;
+}
+
+//------------------------------------------------------------------------------------------------
+
+Vec4f Image::hsv(Color color)
+{
+    const Vec4f rgb = color.toVec4f() / 255.f; // normalize
+
+    Vec4f result(0, 0, 0, rgb.w); // alpha is unmodified
+
+    float rgbMin = min(min(rgb.x, rgb.y), rgb.z);
+    float rgbMax = max(max(rgb.x, rgb.y), rgb.z);
+    float delta  = rgbMax - rgbMin;
+
+    result.z = rgbMax;
+
+    if (delta < 0.00001f)
+    {
+        result.x = 0;
+        result.y = 0;
+        return result;
+    }
+
+    if (rgbMax > 0.0f)
+    {
+        result.y = delta / rgbMax;
+    }
+    else
+    {
+        result.x = 0;
+        result.y = 0;
+        return result;
+    }
+
+    if (rgb.x >= rgbMax)
+    {
+        result.x = (rgb.y - rgb.z) / delta;
+    }
+    else
+    {
+        if (rgb.y >= rgbMax)
+        {
+            result.x = 2.0f + (rgb.z - rgb.x) / delta;
+        }
+        else
+        {
+            result.x = 4.0f + (rgb.x - rgb.y) / delta;
+        }
+    }
+
+    result.x *= 60.0f;
+    if (result.x < 0.0)
+    {
+        result.x += 360.0f;
+    }
+
+    return result;
+}
+
+Image::Color Image::fromHsv(const Vec4f &hsv)
+{
+    Vec4f rgb;
+
+    if (hsv.y <= 0.0f)
+    {
+        rgb = Vec4f(hsv.z, hsv.z, hsv.z, hsv.w);
+    }
+    else
+    {
+        float hh = hsv.x;
+        if (hh >= 360.0f) hh = 0.0;
+        hh /= 60.0;
+
+        const float ff = fract(hh);
+        const float p = hsv.z * (1.0f -  hsv.y);
+        const float q = hsv.z * (1.0f - (hsv.y *         ff));
+        const float t = hsv.z * (1.0f - (hsv.y * (1.0f - ff)));
+
+        const int i = int(hh);
+        if (i == 0)
+        {
+            rgb = Vec4f(hsv.z, t, p, hsv.w);
+        }
+        else if (i == 1)
+        {
+            rgb = Vec4f(q, hsv.z, p, hsv.w);
+        }
+        else if (i == 2)
+        {
+            rgb = Vec4f(p, hsv.z, t, hsv.w);
+        }
+        else if (i == 3)
+        {
+            rgb = Vec4f(p, q, hsv.z, hsv.w);
+        }
+        else if (i == 4)
+        {
+            rgb = Vec4f(t, p, hsv.z, hsv.w);
+        }
+        else
+        {
+            rgb = Vec4f(hsv.z, p, q, hsv.w);
+        }
+    }
+
+    return (rgb.min(Vec4f(1, 1, 1, 1)).max(Vec4f()) * 255.f + Vec4f(.5f, .5f, .5f, .5f)).toVec4ub();
 }
 
 } // namespace de

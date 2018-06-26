@@ -44,7 +44,6 @@ class LIBGUI_PUBLIC NativeFont : public Asset
 {
 public:
     enum Style { Regular, Italic };
-
     enum Weight
     {
         UltraLight = 0,
@@ -53,7 +52,6 @@ public:
         Bold       = 75,
         Black      = 100
     };
-
     enum Transform { NoTransform, Uppercase, Lowercase };
 
     struct Spec
@@ -68,7 +66,7 @@ public:
         bool operator == (Spec const &other) const {
             return style == other.style && weight == other.weight && transform == other.transform;
         }
-        bool operator < (Spec const &other) const { // QMap key order
+        bool operator < (Spec const &other) const { // Map key order
             if (weight < other.weight) return true;
             if (weight > other.weight) return false;
             if (style == other.style) {
@@ -99,10 +97,10 @@ public:
     void setWeight(dint weight);
     void setTransform(Transform transform);
 
-    String family() const;
-    dfloat size() const;
-    Style style() const;
-    dint weight() const;
+    String    family() const;
+    dfloat    size() const;
+    Style     style() const;
+    dint      weight() const;
     Transform transform() const;
 
     /**

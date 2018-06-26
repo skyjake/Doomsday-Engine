@@ -21,8 +21,6 @@
 #include <de/Thread>
 #include <de/Map>
 
-//#include <QFont>
-//#include <QColor>
 #include <CoreGraphics/CoreGraphics.h>
 #include <CoreText/CoreText.h>
 #include <atomic>
@@ -103,8 +101,7 @@ struct CoreTextFontCache : public Lockable
             }
 
             // Get a reference to the font.
-            CFStringRef name = CFStringCreateWithCharacters(nil, (UniChar *) postScriptName.data(),
-                                                            postScriptName.size());
+            CFStringRef name = CFStringCreateWithCString(nil, postScriptName.c_str(), kCFStringEncodingUTF8);
             font = CTFontCreateWithName(name, pointSize, nil);
             CFRelease(name);
 

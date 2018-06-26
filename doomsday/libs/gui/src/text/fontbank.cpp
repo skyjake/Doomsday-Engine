@@ -45,34 +45,37 @@ DE_PIMPL(FontBank)
         {
             const Record &def = bank[id];
 
-            font.setFamily(def["family"]);
+            // Font family.
+            FontParams font;
+            font.family = def["family"];
 
             // Size.
             String size = def["size"];
             if (size.endsWith("px"))
             {
-                font.setPixelSize(size.toInt(0, 10, String::AllowSuffix) * bank.d->fontSizeFactor);
+                DE_ASSERT_FAIL("Convert font size from pixels to points");
+                //font.setPixelSize(size.toInt(0, 10, String::AllowSuffix) * bank.d->fontSizeFactor);
             }
             else
             {
-                font.setPointSize(size.toInt(0, 10, String::AllowSuffix) * bank.d->fontSizeFactor);
+                font.size = size.toInt(nullptr, 10, String::AllowSuffix) * bank.d->fontSizeFactor;
             }
 
             // Weight.
             String const weight = def["weight"];
-            font.setWeight(weight == "light"? QFont::Light :
-                           weight == "bold"?  QFont::Bold :
-                                              QFont::Normal);
+            font.spec.weight = (weight == "light"? NativeFont::Light :
+                                weight == "bold"?  NativeFont::Bold :
+                                                   NativeFont::Normal);
 
             // Style.
             String const style = def["style"];
-            font.setStyle(style == "italic"? QFont::StyleItalic : QFont::StyleNormal);
+            font.spec.style = (style == "italic"? NativeFont::Italic : NativeFont::Regular);
 
             // Transformation function.
             String const caps = def.gets("transform", "normal");
-            font.setCapitalization(caps == "uppercase"? QFont::AllUppercase :
-                                   caps == "lowercase"? QFont::AllLowercase :
-                                                        QFont::MixedCase);
+            font.spec.transform = (caps == "uppercase"? NativeFont::Uppercase :
+                                   caps == "lowercase"? NativeFont::Lowercase :
+                                                        NativeFont::NoTransform);
         }
 
         Font *load() const
