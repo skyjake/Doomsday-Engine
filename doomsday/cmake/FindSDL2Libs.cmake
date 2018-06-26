@@ -1,5 +1,11 @@
 find_package (PkgConfig QUIET)
 
+#find_package (SDL2 REQUIRED)
+#message (STATUS "SDL2 config: ${SDL2_LIBRARIES}")
+#add_library (SDL2 INTERFACE)
+#target_include_directories (SDL2 INTERFACE ${SDL2_INCLUDE_DIRS})
+#target_link_libraries      (SDL2 INTERFACE ${SDL2_LIBRARIES})
+
 if (PKG_CONFIG_FOUND AND NOT IOS)
     add_pkgconfig_interface_library (SDL2 OPTIONAL sdl2)
     add_pkgconfig_interface_library (SDL2_ttf OPTIONAL SDL2_ttf)

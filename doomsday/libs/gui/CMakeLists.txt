@@ -86,7 +86,7 @@ endif ()
 
 # Dependencies.
 find_package (DengCore)
-find_package (SDL2)
+find_package (SDL2Libs)
 find_package (Stb)
 find_package (glbinding REQUIRED)
 find_package (Assimp REQUIRED)
@@ -188,3 +188,12 @@ if (TARGET assimp)
 endif ()
 
 deng_cotire (libgui src/precompiled.h)
+
+if (DE_ENABLE_TESTS)
+    set (guiTests
+        test_glsandbox
+    )
+    foreach (test ${guiTests})
+        add_subdirectory (../../tests/${test} ${CMAKE_CURRENT_BINARY_DIR}/${test})
+    endforeach (test)
+endif ()
