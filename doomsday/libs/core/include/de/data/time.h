@@ -107,11 +107,6 @@ public:
             return *this;
         }
 
-        inline operator std::chrono::microseconds() const
-        {
-            return std::chrono::microseconds{int64_t(_seconds * 1e6)};
-        }
-
         duint64 asMicroSeconds() const;
 
         /**

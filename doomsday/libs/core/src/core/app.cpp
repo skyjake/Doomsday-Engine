@@ -991,6 +991,7 @@ void debug(const char *format, ...)
     vfprintf(stdout, format, args);
     fprintf(stdout, "\n");
     va_end(args);
+    fflush(stdout);
 }
 
 void warning(const char *format, ...)
@@ -1000,6 +1001,7 @@ void warning(const char *format, ...)
     vfprintf(stderr, format, args);
     fprintf(stderr, "\n");
     va_end(args);
+    fflush(stderr);
 
     // TODO: On Windows, also print using the Win32 debug output functions.
 }

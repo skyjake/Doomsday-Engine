@@ -179,11 +179,11 @@ public:
 
     Path(Path &&moved);
 
-    Path &operator = (Path const &other);
+    Path &operator=(Path const &other);
 
-    Path &operator = (Path &&moved);
+    Path &operator=(Path &&moved);
 
-    Path &operator = (char const *pathUtf8);
+    Path &operator=(char const *pathUtf8);
 
     /**
      * Append a string.
@@ -196,12 +196,12 @@ public:
      * operator for concatenating paths in a way that takes care of separators
      * and path relativity.
      */
-    Path operator + (String const &str) const;
+    Path operator+(String const &str) const;
 
     /**
      * @copydoc operator+
      */
-    Path operator + (char const *str) const;
+    Path operator+(char const *str) const;
 
     /**
      * Determines if this path is equal to @a other. The test is case
@@ -215,7 +215,7 @@ public:
      *
      * @return @c true, iff the paths are equal.
      */
-    bool operator == (Path const &other) const;
+    bool operator==(Path const &other) const;
 
     /**
      * Determines if this path is not equal to @a other. The test is case
@@ -225,9 +225,7 @@ public:
      *
      * @return @c true, iff the paths are not equal.
      */
-    bool operator != (Path const &other) const {
-        return !(*this == other);
-    }
+    bool operator!=(Path const &other) const { return !(*this == other); }
 
     /**
      * Returns @c true if this path is lexically less than @a other. The test
@@ -493,13 +491,10 @@ public:
         return *this;
     }
 
-    bool operator == (DotPath const &other) const {
-        return Path::operator == (other);
-    }
+    bool operator==(DotPath const &other) const { return Path::operator==(other); }
+    bool operator!=(DotPath const &other) const { return Path::operator!=(other); }
 
-    bool operator != (DotPath const &other) const {
-        return Path::operator != (other);
-    }
+    bool operator==(const char *cstr) const { return toString() == cstr; }
 };
 
 /**

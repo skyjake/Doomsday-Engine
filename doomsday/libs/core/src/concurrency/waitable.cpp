@@ -69,7 +69,7 @@ bool Waitable::tryWait(const TimeSpan &timeOut) const
         {
             if (timeOut > 0.0)
             {
-                if (d->cv.wait_for(mtx, std::chrono::microseconds(timeOut)) ==
+                if (d->cv.wait_for(mtx, std::chrono::microseconds(timeOut.asMicroSeconds())) ==
                     std::cv_status::timeout)
                 {
                     return false;
