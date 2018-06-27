@@ -234,7 +234,7 @@ Font const *Style::richStyleFont(Font::RichFormat::Style fontStyle) const
     switch (fontStyle)
     {
     case Font::RichFormat::Monospace:
-        return &fonts().font(QStringLiteral("monospace"));
+        return &fonts().font(DE_STR("monospace"));
 
     default:
         return nullptr;
@@ -265,7 +265,7 @@ static Style *theAppStyle = nullptr;
 
 Style &Style::get()
 {
-    DE_ASSERT(theAppStyle != 0);
+    DE_ASSERT(theAppStyle != nullptr);
     return *theAppStyle;
 }
 

@@ -32,40 +32,49 @@ using namespace ui;
 /**
  * Popup for editing the value of a slider.
  */
-class ValuePopup : public PopupWidget
+class ValuePopup : public PopupWidget //, DE_OBSERVES(LineEditWidget, Enter)
 {
 public:
     ValuePopup(SliderWidget &slider)
     {
         setContent(_edit = new LineEditWidget);
-        //_edit->setEmptyContentHint(tr("Enter value"));
         _edit->setSignalOnEnter(true);
-        connect(_edit, SIGNAL(enterPressed(QString)), &slider, SLOT(setValueFromText(QString)));
-        connect(_edit, SIGNAL(enterPressed(QString)), this, SLOT(close()));
+        //_edit->audienceForEnter() += this;
+        _edit->audienceForEnter() += [this, &slider]() {
+            slider.setValueFromText(_edit->text());
+            close();
+        };
         _edit->rule().setInput(Rule::Width, slider.rule("slider.editor"));
 
-        _edit->setText(QString::number(slider.value() * slider.displayFactor(), 'f',
+        _edit->setText(String::asText(float(slider.value() * slider.displayFactor()),
                                        slider.precision()));
     }
+
+//    void enterPressed(const String &text) override
+//    {
+//        _slider.setValueFromText(text);
+//        close();
+//    }
 
     LineEditWidget &editor() const
     {
         return *_edit;
     }
 
-    void preparePanelForOpening()
+    void preparePanelForOpening() override
     {
         PopupWidget::preparePanelForOpening();
         root().setFocus(_edit);
     }
 
-    void panelClosing()
+    void panelClosing() override
     {
         PopupWidget::panelClosing();
-        root().setFocus(0);
+        root().setFocus(nullptr);
     }
 
 private:
+//    SliderWidget &_slider;
     LineEditWidget *_edit;
 };
 
@@ -354,7 +363,7 @@ DE_GUI_PIMPL(SliderWidget)
         }
         else
         {
-            labels[Value].setText(QString::number(value * displayFactor, 'f', precision));
+            labels[Value].setText(String::asText(float(value * displayFactor), precision));
         }
     }
 
@@ -380,14 +389,14 @@ DE_GUI_PIMPL(SliderWidget)
 
             emit self().valueChanged(v);
 
-            DENG2_FOR_PUBLIC_AUDIENCE2(Change, i) i->sliderValueChanged(self());
+            DE_FOR_PUBLIC_AUDIENCE2(Value, i) { i->sliderValueChanged(self(), v); }
         }
     }
 
     void updateRangeLabels()
     {
-        labels[Start].setText(minLabel.isEmpty()? QString::number(range.start * displayFactor, 'f', precision) : minLabel);
-        labels[End]  .setText(maxLabel.isEmpty()? QString::number(range.end   * displayFactor, 'f', precision) : maxLabel);
+        labels[Start].setText(minLabel.isEmpty()? String::asText(float(range.start * displayFactor), precision) : minLabel);
+        labels[End]  .setText(maxLabel.isEmpty()? String::asText(float(range.end   * displayFactor), precision) : maxLabel);
     }
 
     void startGrab(MouseEvent const &ev)
@@ -410,7 +419,10 @@ DE_GUI_PIMPL(SliderWidget)
         ddouble unitsPerPixel = range.size() / (area.width() - endLabelSize);
         setValue(grabValue + (ev.pos().x - grabFrom.x) * unitsPerPixel);
 
-        emit self().valueChangedByUser(value);
+        DE_FOR_PUBLIC_AUDIENCE2(UserValue, i)
+        {
+            i->sliderValueChangedByUser(self(), value);
+        }
     }
 
     /// Amount to step when clicking a label.
@@ -443,12 +455,12 @@ DE_GUI_PIMPL(SliderWidget)
                 if (ev.pos().x < rect.left() + endLabelSize)
                 {
                     setValue(value - clickStep());
-                    emit self().valueChangedByUser(value);
+                    DE_FOR_PUBLIC_AUDIENCE2(UserValue, i) i->sliderValueChangedByUser(self(), value);
                 }
                 else if (ev.pos().x > rect.right() - endLabelSize)
                 {
                     setValue(value + clickStep());
-                    emit self().valueChangedByUser(value);
+                    DE_FOR_PUBLIC_AUDIENCE2(UserValue, i) i->sliderValueChangedByUser(self(), value);
                 }
             }
         }
@@ -635,10 +647,13 @@ bool SliderWidget::handleEvent(Event const &event)
     return GuiWidget::handleEvent(event);
 }
 
-void SliderWidget::setValueFromText(QString text)
+void SliderWidget::setValueFromText(const String &text)
 {
     setValue(text.toDouble() / d->displayFactor);
-    emit valueChangedByUser(d->value);
+    DE_FOR_AUDIENCE2(UserValue, i)
+    {
+        i->sliderValueChangedByUser(*this, d->value);
+    }
 }
 
 void SliderWidget::glInit()

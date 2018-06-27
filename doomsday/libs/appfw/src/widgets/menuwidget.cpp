@@ -81,7 +81,7 @@ DE_PIMPL(MenuWidget)
 
         void trigger()
         {
-            DE_ASSERT(bool(_widget));
+            DE_ASSERT(_widget);
             DE_ASSERT(d->self().hasRoot());
 
             if (_widget->isOpeningOrClosing()) return;
@@ -151,7 +151,7 @@ DE_PIMPL(MenuWidget)
             , _item(parentItem)
         {}
 
-        void trigger()
+        void trigger() override
         {
             if (isTriggered()) return; // Already open, cannot retrigger.
 
@@ -163,10 +163,11 @@ DE_PIMPL(MenuWidget)
             {
                 _widget->audienceForClose() += this;
             }
+
             SubAction::trigger();
         }
 
-        void panelClosed(PanelWidget &)
+        void panelBeingClosed(PanelWidget &) override
         {
             if (auto *selfPopup = maybeAs<PopupMenuWidget>(d->self().parentGuiWidget()))
             {
@@ -353,7 +354,7 @@ DE_PIMPL(MenuWidget)
                 return new ToggleWidget;
             }
         }
-        return 0;
+        return nullptr;
     }
 
     void updateItemWidget(GuiWidget &widget, Item const &item)
@@ -424,10 +425,13 @@ DE_PIMPL(MenuWidget)
         w->audienceForClose()    += this;
         w->audienceForDeletion() += this;
 
-        emit self().subWidgetOpened(w);
+        DE_FOR_PUBLIC_AUDIENCE2(SubWidgetOpened, i)
+        {
+            i->subWidgetOpened(self(), w);
+        }
 
         // Automatically close other subwidgets when one is opened.
-        foreach (auto *panel, openSubs)
+        for (auto *panel : openSubs)
         {
             if (panel != w) panel->close();
         }
@@ -445,7 +449,7 @@ DE_PIMPL(MenuWidget)
     int countVisible() const
     {
         int num = 0;
-        foreach (GuiWidget *i, self().childWidgets())
+        for (GuiWidget *i : self().childWidgets())
         {
             if (isVisibleItem(i)) ++num;
         }
@@ -462,7 +466,7 @@ DE_PIMPL(MenuWidget)
                               self().contentRule().top() + organizer.virtualStrut());
         }
 
-        foreach (GuiWidget *child, self().childWidgets())
+        for (GuiWidget *child : self().childWidgets())
         {
             if (isVisibleItem(child))
             {
@@ -609,10 +613,9 @@ Rule const &MenuWidget::contentHeight() const
 
 void MenuWidget::offerFocus()
 {
-    foreach (GuiWidget *widget, childWidgets())
+    for (GuiWidget *widget : childWidgets())
     {
-        if (!widget->behavior().testFlag(Hidden) &&
-            widget->behavior().testFlag(Focusable))
+        if (!widget->behavior().testFlag(Hidden) && widget->behavior().testFlag(Focusable))
         {
             root().setFocus(widget);
             return;
@@ -718,7 +721,7 @@ bool MenuWidget::handleEvent(Event const &event)
 
 void MenuWidget::dismissPopups()
 {
-    foreach (PanelWidget *pop, d->openSubs)
+    for (PanelWidget *pop : d->openSubs)
     {
         pop->close();
     }

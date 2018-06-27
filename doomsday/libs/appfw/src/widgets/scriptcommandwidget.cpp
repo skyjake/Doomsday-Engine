@@ -20,7 +20,6 @@
 #include "de/PopupWidget"
 
 #include <de/charsymbols.h>
-//#include <de/game/Game>
 #include <de/shell/Lexicon>
 #include <de/App>
 #include <de/Script>
@@ -52,7 +51,7 @@ DE_PIMPL(ScriptCommandWidget)
     void importNativeModules()
     {
         // Automatically import all native modules into the interactive process.
-        foreach (String const &name, App::scriptSystem().nativeModules())
+        for (String const &name : App::scriptSystem().nativeModules())
         {
             process.globals().add(new Variable(name,
                     new RecordValue(App::scriptSystem().nativeModule(name))));
@@ -69,17 +68,17 @@ DE_PIMPL(ScriptCommandWidget)
         /// @todo Should be determined dynamically based on the scope at the cursor position.
         DE_FOR_EACH_CONST(Record::Members, i, process.globals().members())
         {
-            lexi.addTerm(i.key());
+            lexi.addTerm(i->first);
         }
 
         // Add all built-in Doomsday Script functions.
-        foreach (String name, BuiltInExpression::identifiers())
+        for (const String &name : BuiltInExpression::identifiers())
         {
             lexi.addTerm(name);
         }
 
         // Add all Doomsday Script keywords.
-        foreach (String keyword, ScriptLex::keywords())
+        for (const String &keyword : ScriptLex::keywords())
         {
             lexi.addTerm(keyword);
         }
@@ -167,15 +166,15 @@ void ScriptCommandWidget::executeCommand(String const &text)
     {}
 }
 
-void ScriptCommandWidget::autoCompletionBegan(String const &prefix)
+void ScriptCommandWidget::autoCompletionBegan(const String &prefix)
 {
     // Prepare a list of annotated completions to show in the popup.
-    QStringList const compls = suggestedCompletions();
-    if (compls.size() > 1)
+    const auto compls = suggestedCompletions();
+    if (compls)
     {
-        showAutocompletionPopup(tr("Completions for %1:\n")
-                                .arg(_E(b) + prefix + _E(.)) +
-                                _E(m) + compls.join("\n"));
+        showAutocompletionPopup(
+            String::format("Completions for %s:\n",
+                           (_E(b) + prefix + _E(.)_E(m) + String::join(compls, "\n")).c_str()));
     }
 }
 

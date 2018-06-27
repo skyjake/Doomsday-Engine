@@ -1,3 +1,9 @@
+#include <utility>
+
+#include <utility>
+
+#include <utility>
+
 /** @file scrollareawidget.cpp  Scrollable area.
  *
  * @todo The scroll indicator is currently only implemented for the vertical
@@ -122,7 +128,7 @@ DE_GUI_PIMPL(ScrollAreaWidget), public Lockable
         }
         else
         {
-            scrollOpacity.setValueFrom(.8f, .333f, 5, 2);
+            scrollOpacity.setValueFrom(.8f, .333f, 5.0, 2.0);
         }
     }
 
@@ -382,7 +388,7 @@ Vec2i ScrollAreaWidget::maximumScroll() const
     return Vec2i(maximumScrollX().valuei(), maximumScrollY().valuei());
 }
 
-void ScrollAreaWidget::scroll(Vec2i const &to, TimeSpan span)
+void ScrollAreaWidget::scroll(Vec2i const &to, const TimeSpan& span)
 {
     scrollX(to.x, span);
     scrollY(to.y, span);
@@ -390,18 +396,18 @@ void ScrollAreaWidget::scroll(Vec2i const &to, TimeSpan span)
 
 void ScrollAreaWidget::scrollX(int to, TimeSpan span)
 {
-    d->x->set(de::clamp(0, to, maximumScrollX().valuei()), span);
+    d->x->set(de::clamp(0, to, maximumScrollX().valuei()), std::move(span));
 }
 
 void ScrollAreaWidget::scrollY(int to, TimeSpan span)
 {
-    d->y->set(de::clamp(0, to, maximumScrollY().valuei()), span);
+    d->y->set(de::clamp(0, to, maximumScrollY().valuei()), std::move(span));
     d->restartScrollOpacityFade();
 }
 
 void ScrollAreaWidget::scrollY(Rule const &to, TimeSpan span)
 {
-    d->y->set(OperatorRule::clamped(to, Const(0), maximumScrollY()), span);
+    d->y->set(OperatorRule::clamped(to, Const(0), maximumScrollY()), std::move(span));
     d->restartScrollOpacityFade();
 }
 
@@ -412,7 +418,7 @@ bool ScrollAreaWidget::isScrollable() const
 
 bool ScrollAreaWidget::isAtBottom() const
 {
-    return d->origin == Bottom && d->y->animation().target() == 0;
+    return d->origin == Bottom && fequal(d->y->animation().target(), 0);
 }
 
 void ScrollAreaWidget::enableScrolling(bool enabled)
@@ -564,7 +570,7 @@ bool ScrollAreaWidget::handleEvent(Event const &event)
     return GuiWidget::handleEvent(event);
 }
 
-void ScrollAreaWidget::scrollToTop(TimeSpan span)
+void ScrollAreaWidget::scrollToTop(const TimeSpan& span)
 {
     if (d->origin == Top)
     {
@@ -576,7 +582,7 @@ void ScrollAreaWidget::scrollToTop(TimeSpan span)
     }
 }
 
-void ScrollAreaWidget::scrollToBottom(TimeSpan span)
+void ScrollAreaWidget::scrollToBottom(const TimeSpan& span)
 {
     if (d->origin == Top)
     {

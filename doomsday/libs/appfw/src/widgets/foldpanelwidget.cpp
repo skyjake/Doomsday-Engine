@@ -19,13 +19,12 @@
 #include "de/FoldPanelWidget"
 #include "de/ProceduralImage"
 #include "de/DialogContentStylist"
-#include "de/SignalAction"
 
 namespace de {
 
 using namespace ui;
 
-static TimeSpan const INDICATOR_ANIM_SPAN = 0.4;
+static const ddouble INDICATOR_ANIM_SPAN = 0.4;
 
 DE_PIMPL_NOREF(FoldPanelWidget)
 {
@@ -122,7 +121,7 @@ ButtonWidget *FoldPanelWidget::makeTitle(String const &text)
     d->title->setAlignment(ui::AlignLeft);
     d->title->setTextLineAlignment(ui::AlignLeft);
     d->title->set(Background()); // no frame or background
-    d->title->setAction(new SignalAction(this, SLOT(toggleFold())));
+    d->title->setActionFn([this](){ toggleFold(); });
     d->title->setOpacity(.8f);
 
     // Fold indicator.
@@ -190,7 +189,7 @@ void FoldPanelWidget::toggleFold()
     }
     else
     {
-        close(0);
+        close(0.0);
     }
 }
 
@@ -222,7 +221,7 @@ void FoldPanelWidget::panelDismissed()
 
     content().notifySelfAndTree(&Widget::deinitialize);
 
-    DE_ASSERT(d->container == 0);
+    DE_ASSERT(d->container == nullptr);
     d->container = takeContent();
 }
 

@@ -37,6 +37,8 @@ class LIBAPPFW_PUBLIC WindowTransform
 public:
     WindowTransform(BaseWindow &window);
 
+    virtual ~WindowTransform();
+
     BaseWindow &window() const;
 
     /**

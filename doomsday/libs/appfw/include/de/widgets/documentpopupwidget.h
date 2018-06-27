@@ -32,11 +32,9 @@ namespace de {
  */
 class LIBAPPFW_PUBLIC DocumentPopupWidget : public PopupWidget
 {
-    Q_OBJECT
-
 public:
-    DocumentPopupWidget(String const &name = String());
-    DocumentPopupWidget(ButtonWidget *actionButton, String const &name = String());
+    DocumentPopupWidget(String const &name = {});
+    DocumentPopupWidget(ButtonWidget *actionButton, String const &name = {});
 
     void setPreferredHeight(Rule const &preferredHeight);
     void setPreferredHeight(Rule const &preferredHeight, Rule const &maxHeight);

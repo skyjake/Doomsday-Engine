@@ -276,6 +276,7 @@ DE_PIMPL(VRWindowTransform)
             break;
 
         case VRConfig::QuadBuffered:
+#if 0
             if (self().window().format().stereo())
             {
                 /// @todo Fix me!
@@ -291,6 +292,7 @@ DE_PIMPL(VRWindowTransform)
                 //canvas().framebuffer().swapBuffers(canvas(), gl::SwapStereoRightBuffer);
             }
             else
+#endif
             {
                 // Normal non-stereoscopic frame.
                 drawContent();
@@ -301,9 +303,9 @@ DE_PIMPL(VRWindowTransform)
 #if !defined (DE_MOBILE)
             // Use absolute screen position of window to determine whether the
             // first scan line is odd or even.
-            QPoint ulCorner(0, 0);
+            Vec2i ulCorner(0, 0);
             ulCorner = self().window().mapToGlobal(ulCorner); // widget to screen coordinates
-            bool const rowParityIsEven = ((int(ulCorner.y()) % 2) == 0);
+            bool const rowParityIsEven = ((ulCorner.y % 2) == 0);
 
             rowInterNeedRelease = false;
 

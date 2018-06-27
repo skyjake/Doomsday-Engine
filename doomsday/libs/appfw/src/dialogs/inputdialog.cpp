@@ -31,7 +31,7 @@ InputDialog::InputDialog(String const &name)
     // Create the editor.
     area().add(d->editor = new LineEditWidget);
     d->editor->setSignalOnEnter(true);
-    connect(d->editor, SIGNAL(enterPressed(QString)), this, SLOT(accept()));
+    d->editor->audienceForEnter() += [this](){ accept(); };
 
     buttons() << new DialogButtonItem(Default | Accept)
               << new DialogButtonItem(Reject);
@@ -58,7 +58,7 @@ void InputDialog::preparePanelForOpening()
 void InputDialog::panelClosing()
 {
     MessageDialog::panelClosing();
-    root().setFocus(0);
+    root().setFocus(nullptr);
 }
 
 } // namespace de

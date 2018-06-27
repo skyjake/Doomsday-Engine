@@ -119,7 +119,7 @@ DE_PIMPL(GuiWidget)
          * first before beginning destruction.
          */
 #ifdef DE_DEBUG
-        if (flags & Inited) qDebug() << "GuiWidget" << thisPublic << self().name() << "is still inited!";
+        if (flags & Inited) debug("GuiWidget %p \"%s\" has not been deinited!", thisPublic, self().name().c_str());
         DE_ASSERT(!(flags & Inited));
 #endif
     }
@@ -302,7 +302,7 @@ DE_PIMPL(GuiWidget)
             background.type == Background::SharedBlurWithBorderGlow)
         {
             // Use another widget's blur.
-            DE_ASSERT(background.blur != 0);
+            DE_ASSERT(background.blur != nullptr);
             if (background.blur)
             {
                 self().root().painter().flush();
@@ -479,13 +479,13 @@ DE_PIMPL(GuiWidget)
                                                      selfRect.midRight() );
         Vec2f const delta     = otherMiddle - middle;
         Vec2f const dirVector = directionVector(dir);
-        auto dotProd = delta.normalize().dot(dirVector);
+        float dotProd = float(delta.normalize().dot(dirVector));
         if (dotProd <= 0)
         {
             // On the wrong side.
             return -1;
         }
-        float distance = delta.length();
+        float distance = float(delta.length());
         if (axisOverlap)
         {
             dotProd = 1.0;
@@ -506,7 +506,7 @@ DE_PIMPL(GuiWidget)
         }
 
         // Prefer widgets that are nearby, particularly in the specified direction.
-        return distance * (.5f + acos(dotProd)) * favorability;
+        return distance * (.5f + acosf(dotProd)) * favorability;
     }
 
     GuiWidget *findAdjacentWidgetToFocus(ui::Direction dir) const
@@ -602,7 +602,7 @@ GuiWidget::Children GuiWidget::childWidgets() const
 {
     Children children;
     children.reserve(childCount());
-    foreach (Widget *c, Widget::children())
+    for (Widget *c : Widget::children())
     {
         DE_ASSERT(is<GuiWidget>(c));
         children.append(static_cast<GuiWidget *>(c));
@@ -788,7 +788,7 @@ GuiWidget::Background const &GuiWidget::background() const
 
 void GuiWidget::setOpacity(float opacity, TimeSpan span, TimeSpan startDelay)
 {
-    d->opacity.setValue(opacity, span, startDelay);
+    d->opacity.setValue(opacity, std::move(span), std::move(startDelay));
 }
 
 Animation GuiWidget::opacity() const
@@ -843,7 +843,7 @@ void GuiWidget::saveState()
 {
     d->saveState();
 
-    foreach (GuiWidget *child, childWidgets())
+    for (GuiWidget *child : childWidgets())
     {
         child->saveState();
     }
@@ -853,7 +853,7 @@ void GuiWidget::restoreState()
 {
     d->restoreState();
 
-    foreach (GuiWidget *child, childWidgets())
+    for (GuiWidget *child : childWidgets())
     {
         child->restoreState();
     }
@@ -969,7 +969,7 @@ void GuiWidget::draw()
 
 bool GuiWidget::handleEvent(Event const &event)
 {
-    foreach (IEventHandler *handler, d->eventHandlers)
+    for (IEventHandler *handler : d->eventHandlers)
     {
         if (handler->handleEvent(*this, event))
         {
@@ -1059,7 +1059,7 @@ bool GuiWidget::hitTest(Event const &event) const
 GuiWidget const *GuiWidget::treeHitTest(Vec2i const &pos) const
 {
     Children const childs = childWidgets();
-    for (int i = childs.size() - 1; i >= 0; --i)
+    for (int i = childs.sizei() - 1; i >= 0; --i)
     {
         // Check children first.
         if (GuiWidget const *hit = childs.at(i)->treeHitTest(pos))
@@ -1071,7 +1071,7 @@ GuiWidget const *GuiWidget::treeHitTest(Vec2i const &pos) const
     {
         return this;
     }
-    return 0;
+    return nullptr;
 }
 
 RuleRectangle &GuiWidget::hitRule()
@@ -1152,7 +1152,7 @@ void GuiWidget::drawBlurredRect(Rectanglei const &rect, Vec4f const &color, floa
                              rect.height() / float(viewSize.y));
     blur->uMvpMatrix = root().projMatrix2D() *
                        Mat4f::scaleThenTranslate(rect.size(), rect.topLeft);
-    blur->drawable.setProgram(QStringLiteral("vert"));
+    blur->drawable.setProgram(DE_STR("vert"));
 
     blur->drawable.draw();
 }
@@ -1322,7 +1322,7 @@ void GuiWidget::postDrawChildren()
     }
 }
 
-void GuiWidget::collectNotReadyAssets(AssetGroup &collected, CollectMode collectMode)
+void GuiWidget::collectUnreadyAssets(AssetGroup &collected, CollectMode collectMode)
 {
 #if defined (DENG2_DEBUG)
     if (!rule().isFullyDefined())

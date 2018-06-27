@@ -22,6 +22,7 @@
 #include "../GuiWidget"
 #include "../ui/ImageItem"
 #include "../ui/Data"
+#include <de/NoneValue>
 
 namespace de {
 
@@ -36,13 +37,13 @@ namespace de {
  */
 class LIBAPPFW_PUBLIC TabWidget : public GuiWidget
 {
-    Q_OBJECT
-
 public:
+    DE_DEFINE_AUDIENCE2(Tab, void currentTabChanged(TabWidget &))
+
     class TabItem : public ui::ImageItem
     {
     public:
-        TabItem(String const &label, QVariant const &userData = QVariant())
+        TabItem(String const &label, const Value &userData = NoneValue())
             : ImageItem(ShownAsButton, label)
         {
             setData(userData);
@@ -89,9 +90,6 @@ public:
     // Events.
     void update() override;
     bool handleEvent(de::Event const &ev) override;
-
-signals:
-    void currentTabChanged();
 
 private:
     DE_PRIVATE(d)

@@ -274,7 +274,7 @@ public:
     void contentLayout(ContentLayout &layout);
 
 public:
-    static LabelWidget *newWithText(const String &text, GuiWidget *parent = nullptr);
+    static LabelWidget *newWithText(const String &label, GuiWidget *parent = nullptr);
     static LabelWidget *appendSeparatorWithText(const String &text, GuiWidget *parent = nullptr,
                                                 GridLayout *appendToGrid = nullptr);
 

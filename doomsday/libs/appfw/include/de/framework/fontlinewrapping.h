@@ -48,6 +48,8 @@ class LIBAPPFW_PUBLIC FontLineWrapping : public Lockable, public shell::ILineWra
 public:
     FontLineWrapping();
 
+    using WrapWidth = shell::WrapWidth;
+
     void        setFont(Font const &font);
     const Font &font() const;
     bool        hasFont() const;
@@ -63,8 +65,8 @@ public:
      */
     void reset();
 
-    void wrapTextToWidth(String const &text, shell::WrapWidth maxWidth) override;
-    void wrapTextToWidth(String const &text, Font::RichFormat const &format, shell::WrapWidth maxWidth);
+    void wrapTextToWidth(String const &text, WrapWidth maxWidth) override;
+    void wrapTextToWidth(String const &text, Font::RichFormat const &format, WrapWidth maxWidth);
 
     void rasterizeLines(Rangei const &lineRange);
     void clearRasterizedLines() const;
@@ -79,10 +81,10 @@ public:
     bool               isEmpty() const override;
     String const &     text() const;
     shell::WrappedLine line(int index) const override;
-    shell::WrapWidth   width() const override;
+    WrapWidth          width() const override;
     int                height() const override;
-    shell::WrapWidth   rangeWidth(const CString &range) const override;
-    BytePos            indexAtWidth(const CString &range, shell::WrapWidth width) const override;
+    WrapWidth          rangeWidth(const CString &range) const override;
+    BytePos            indexAtWidth(const CString &range, WrapWidth width) const override;
 
     /**
      * Calculates the total height of the wrapped lined in pixels. If there are
@@ -105,16 +107,19 @@ public:
      *
      * @return XY coordinates of the character.
      */
-    Vec2i charTopLeftInPixels(int line, int charIndex);
+    Vec2i charTopLeftInPixels(int line, BytePos charIndex);
 
     struct LineInfo
     {
         struct Segment {
-            Rangei range;
-            int tabStop;
-            int width;
+            CString   range;
+            int       tabStop;
+            WrapWidth width;
 
-            Segment(Rangei const &r = Rangei(), int tab = 0) : range(r), tabStop(tab), width(0)
+            Segment(const CString &r = CString(), int tab = 0)
+                : range(r)
+                , tabStop(tab)
+                , width(0)
             {}
         };
         typedef List<Segment> Segments;

@@ -35,13 +35,18 @@ class LIBAPPFW_PUBLIC ImageItem : public Item
 {
 public:
     ImageItem(Semantics semantics, String const &label = "")
-        : Item(semantics, label) {}
+        : Item(semantics, label)
+    {}
 
     ImageItem(Semantics semantics, Image const &image, String const &label = "")
-        : Item(semantics, label), _image(image) {}
+        : Item(semantics, label)
+        , _image(image)
+    {}
 
     ImageItem(Semantics semantics, DotPath const &styleImageId, String const &label = "")
-        : Item(semantics, label), _styleId(styleImageId) {}
+        : Item(semantics, label)
+        , _styleId(styleImageId)
+    {}
 
     Image const &image() const;
     DotPath const &styleImageId() const;

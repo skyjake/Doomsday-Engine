@@ -94,13 +94,13 @@ public Font::RichFormat::IStyle
         , imageScale  (1)
         , imageColor  (1, 1, 1, 1)
         , textGLColor (1, 1, 1, 1)
-        , maxTextWidth(0)
+        , maxTextWidth(nullptr)
         , appearSize  (new AnimationRule(0))
         , appearType  (AppearInstantly)
         , appearSpan  (0.0)
         , gapId       ("label.gap")
         , shaderId    ("generic.textured.color_ucolor")
-        , richStyle   (0)
+        , richStyle   (nullptr)
     {
         width     = new ConstantRule(0);
         height    = new ConstantRule(0);
@@ -570,7 +570,7 @@ public Font::RichFormat::IStyle
             if (horizPolicy == Expand) return appearSize;
             break;
         }
-        return 0;
+        return nullptr;
     }
 
     Rule const *heightRule() const
@@ -586,7 +586,7 @@ public Font::RichFormat::IStyle
             if (vertPolicy == Expand) return appearSize;
             break;
         }
-        return 0;
+        return nullptr;
     }
 };
 

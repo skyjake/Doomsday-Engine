@@ -30,7 +30,8 @@ namespace de {
  */
 class LIBAPPFW_PUBLIC DirectoryListDialog : public MessageDialog
 {
-    Q_OBJECT
+public:
+    DE_DEFINE_AUDIENCE2(Change, void directoryListChanged())
 
 public:
     DirectoryListDialog(String const &name = String());
@@ -48,9 +49,6 @@ public:
      * Array of text strings, or a single TextValue.
      */
     Value const &value(Id const &group) const;
-
-signals:
-    void arrayChanged();
 
 protected:
     void prepare() override;

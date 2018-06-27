@@ -19,7 +19,6 @@
 #ifndef LIBAPPFW_GLTEXTCOMPOSER_H
 #define LIBAPPFW_GLTEXTCOMPOSER_H
 
-#include <QVector>
 #include <de/Font>
 #include <de/Atlas>
 #include <de/GLBuffer>

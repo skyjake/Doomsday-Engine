@@ -21,7 +21,7 @@
 #include "de/ui/Item"
 
 #include <de/App>
-#include <QMap>
+#include <de/Map>
 
 namespace de {
 
@@ -33,9 +33,7 @@ namespace internal
         AlwaysPrepend   = 0x2,
         DefaultBehavior = 0,
     };
-
-    Q_DECLARE_FLAGS(AddBehaviors, AddBehavior)
-    Q_DECLARE_OPERATORS_FOR_FLAGS(AddBehaviors)
+    using AddBehaviors = Flags;
 }
 
 using namespace internal;
@@ -55,8 +53,8 @@ DE_PIMPL(ChildWidgetOrganizer)
     GuiWidget *container;
     IWidgetFactory *factory;
 
-    typedef QMap<ui::Item const *, GuiWidget *> Mapping;
-    typedef QMutableMapIterator<ui::Item const *, GuiWidget *> MutableMappingIterator;
+    typedef Map<ui::Item const *, GuiWidget *> Mapping;
+    //typedef QMutableMapIterator<ui::Item const *, GuiWidget *> MutableMappingIterator;
     Mapping mapping; ///< Maps items to corresponding widgets.
 
     bool virtualEnabled = false;
@@ -72,7 +70,7 @@ DE_PIMPL(ChildWidgetOrganizer)
     float correctionPerUnit = 0;
 
     bool recyclingEnabled = false;
-    QList<GuiWidget *> recycledWidgets; // Not GL-deinitialized to facilitate fast reuse.
+    List<GuiWidget *> recycledWidgets; // Not GL-deinitialized to facilitate fast reuse.
 
     Impl(Public *i, GuiWidget *c)
         : Base(i)
@@ -82,7 +80,7 @@ DE_PIMPL(ChildWidgetOrganizer)
 
     ~Impl()
     {
-        foreach (GuiWidget *recycled, recycledWidgets)
+        for (GuiWidget *recycled : recycledWidgets)
         {
             GuiWidget::destroy(recycled);
         }
@@ -103,7 +101,7 @@ DE_PIMPL(ChildWidgetOrganizer)
             dataItems->audienceForOrderChange() -= this;
 
             clearWidgets();
-            dataItems = 0;
+            dataItems = nullptr;
         }
 
         dataItems = ctx;
@@ -120,7 +118,7 @@ DE_PIMPL(ChildWidgetOrganizer)
 
     PvsRange itemRange() const
     {
-        PvsRange range(0, dataItems->size());
+        PvsRange range(0, int(dataItems->size()));
         if (virtualEnabled) range = range.intersection(virtualPvs);
         return range;
     }
@@ -128,9 +126,9 @@ DE_PIMPL(ChildWidgetOrganizer)
     GuiWidget *addItemWidget(ui::Data::Pos pos, AddBehaviors behavior = DefaultBehavior)
     {
         DE_ASSERT_IN_MAIN_THREAD(); // widgets should only be manipulated in UI thread
-        DE_ASSERT(factory != 0);
+        DE_ASSERT(factory != nullptr);
 
-        if (!itemRange().contains(pos))
+        if (!itemRange().contains(int(pos)))
         {
             // Outside the current potentially visible range.
             return nullptr;
@@ -193,7 +191,7 @@ DE_PIMPL(ChildWidgetOrganizer)
         auto found = mapping.find(item);
         if (found != mapping.end())
         {
-            GuiWidget *w = found.value();
+            GuiWidget *w = found->second;
             mapping.erase(found);
             deleteWidget(w);
             item->audienceForChange() -= this;
@@ -206,10 +204,10 @@ DE_PIMPL(ChildWidgetOrganizer)
         // until the next widget is found.
         while (++afterPos < dataItems->size())
         {
-            auto found = mapping.constFind(&dataItems->at(afterPos));
-            if (found != mapping.constEnd())
+            auto found = mapping.find(&dataItems->at(afterPos));
+            if (found != mapping.end())
             {
-                return found.value();
+                return found->second;
             }
         }
         return nullptr;
@@ -217,8 +215,8 @@ DE_PIMPL(ChildWidgetOrganizer)
 
     void makeWidgets()
     {
-        DE_ASSERT(dataItems != 0);
-        DE_ASSERT(container != 0);
+        DE_ASSERT(dataItems != nullptr);
+        DE_ASSERT(container != nullptr);
 
         for (ui::Data::Pos i = 0; i < dataItems->size(); ++i)
         {
@@ -246,21 +244,19 @@ DE_PIMPL(ChildWidgetOrganizer)
     {
         DE_FOR_EACH_CONST(Mapping, i, mapping)
         {
-            i.key()->audienceForChange() -= this;
-            deleteWidget(i.value());
+            i->first->audienceForChange() -= this;
+            deleteWidget(i->second);
         }
         mapping.clear();
     }
 
     void widgetBeingDeleted(Widget &widget)
     {
-        MutableMappingIterator iter(mapping);
-        while (iter.hasNext())
+        for (auto i = mapping.begin(); i != mapping.end(); ++i)
         {
-            iter.next();
-            if (iter.value() == &widget)
+            if (i->second == &widget)
             {
-                iter.remove();
+                mapping.erase(i);
                 break;
             }
         }
@@ -290,14 +286,14 @@ DE_PIMPL(ChildWidgetOrganizer)
         Mapping::iterator found = mapping.find(&item);
         if (found != mapping.end())
         {
-            found.key()->audienceForChange() -= this;
-            deleteWidget(found.value());
+            found->first->audienceForChange() -= this;
+            deleteWidget(found->second);
             mapping.erase(found);
         }
 
         if (virtualEnabled)
         {
-            if (virtualPvs.contains(pos))
+            if (virtualPvs.contains(int(pos)))
             {
                 clearWidgets();
                 virtualPvs = PvsRange();
@@ -312,7 +308,7 @@ DE_PIMPL(ChildWidgetOrganizer)
         // Remove all widgets and put them back in the correct order.
         DE_FOR_EACH_CONST(Mapping, i, mapping)
         {
-            container->remove(*i.value());
+            container->remove(*i->second);
         }
         for (ui::Data::Pos i = 0; i < dataItems->size(); ++i)
         {
@@ -343,33 +339,33 @@ DE_PIMPL(ChildWidgetOrganizer)
 
     GuiWidget *find(ui::Item const &item) const
     {
-        Mapping::const_iterator found = mapping.constFind(&item);
-        if (found == mapping.constEnd()) return 0;
-        return found.value();
+        Mapping::const_iterator found = mapping.find(&item);
+        if (found == mapping.end()) return nullptr;
+        return found->second;
     }
 
     GuiWidget *findByLabel(String const &label) const
     {
         DE_FOR_EACH_CONST(Mapping, i, mapping)
         {
-            if (i.key()->label() == label)
+            if (i->first->label() == label)
             {
-                return i.value();
+                return i->second;
             }
         }
-        return 0;
+        return nullptr;
     }
 
     ui::Item const *findByWidget(GuiWidget const &widget) const
     {
         DE_FOR_EACH_CONST(Mapping, i, mapping)
         {
-            if (i.value() == &widget)
+            if (i->second == &widget)
             {
-                return i.key();
+                return i->first;
             }
         }
-        return 0;
+        return nullptr;
     }
 
 //- Child Widget Virtualization ---------------------------------------------------------
@@ -394,7 +390,8 @@ DE_PIMPL(ChildWidgetOrganizer)
 
     float virtualItemHeight(GuiWidget const *widget) const
     {
-        if (float hgt = widget->rule().height().value())
+        float hgt = widget->rule().height().value();
+        if (hgt > 0)
         {
             return hgt;
         }
@@ -549,12 +546,12 @@ void ChildWidgetOrganizer::setContext(ui::Data const &context)
 
 void ChildWidgetOrganizer::unsetContext()
 {
-    d->set(0);
+    d->set(nullptr);
 }
 
 ui::Data const &ChildWidgetOrganizer::context() const
 {
-    DE_ASSERT(d->dataItems != 0);
+    DE_ASSERT(d->dataItems != nullptr);
     return *d->dataItems;
 }
 

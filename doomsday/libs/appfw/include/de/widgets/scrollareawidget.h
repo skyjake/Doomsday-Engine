@@ -108,7 +108,7 @@ public:
      * @param to    Scroll position.
      * @param span  Animation time span.
      */
-    void scroll(Vec2i const &to, TimeSpan span = 0.0);
+    void scroll(Vec2i const &to, const TimeSpan& span = 0.0);
 
     void scrollX(int to, TimeSpan span = 0.0);
     void scrollY(int to, TimeSpan span = 0.0);
@@ -151,12 +151,12 @@ public:
     void drawContent() override;
     bool handleEvent(Event const &event) override;
 
-    void scrollToTop(TimeSpan span = 0.3);
+    void scrollToTop(const TimeSpan& span = 0.3);
 
     /**
      * Moves the scroll offset of the widget to the bottom of the content.
      */
-    void scrollToBottom(TimeSpan span = 0.3);
+    void scrollToBottom(const TimeSpan& span = 0.3);
 
     void scrollToLeft(TimeSpan span = 0.3);
     void scrollToRight(TimeSpan span = 0.3);

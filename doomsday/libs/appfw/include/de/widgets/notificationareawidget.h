@@ -45,10 +45,8 @@ namespace de {
  */
 class LIBAPPFW_PUBLIC NotificationAreaWidget : public GuiWidget
 {
-    Q_OBJECT
-
 public:
-    NotificationAreaWidget(String const &name = String());
+    NotificationAreaWidget(String const &name = {});
 
     /**
      * Places the notification widget in the top right corner of @a area.
@@ -84,7 +82,6 @@ public:
 
     bool isChildShown(GuiWidget &notif) const;
 
-public slots:
     void dismiss();
 
 private:

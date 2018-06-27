@@ -20,7 +20,6 @@
 #include "de/ToggleWidget"
 #include "de/ChoiceWidget"
 #include "de/GuiRootWidget"
-#include "de/SignalAction"
 #include "de/DialogContentStylist"
 #include "de/ui/FilteredData"
 
@@ -329,11 +328,11 @@ DE_GUI_PIMPL(DialogWidget)
             {
                 if (i->role() & (Accept | Yes))
                 {
-                    but.setAction(new SignalAction(thisPublic, SLOT(accept())));
+                    but.setActionFn([this]() { self().accept(); });
                 }
                 else if (i->role() & (Reject | No))
                 {
-                    but.setAction(new SignalAction(thisPublic, SLOT(reject())));
+                    but.setActionFn([this](){ self().reject(); });
                 }
             }
         }
@@ -353,19 +352,19 @@ DE_GUI_PIMPL(DialogWidget)
             {
                 if (i->role().testFlag(Accept))
                 {
-                    but.setText(tr("OK"));
+                    but.setText("OK");
                 }
                 else if (i->role().testFlag(Reject))
                 {
-                    but.setText(tr("Cancel"));
+                    but.setText("Cancel");
                 }
                 else if (i->role().testFlag(Yes))
                 {
-                    but.setText(tr("Yes"));
+                    but.setText("Yes");
                 }
                 else if (i->role().testFlag(No))
                 {
-                    but.setText(tr("No"));
+                    but.setText("No");
                 }
             }
 
@@ -399,7 +398,7 @@ DE_GUI_PIMPL(DialogWidget)
                 return act;
             }
         }
-        return 0;
+        return nullptr;
     }
 
     ButtonWidget *findDefaultButton() const
@@ -480,7 +479,7 @@ DialogWidget::Modality DialogWidget::modality() const
 
 LabelWidget &DialogWidget::heading()
 {
-    DE_ASSERT(d->heading != 0);
+    DE_ASSERT(d->heading != nullptr);
     return *d->heading;
 }
 
@@ -565,10 +564,10 @@ PopupButtonWidget *DialogWidget::popupButtonWidget(int roleId) const
     return nullptr;
 }
 
-QList<ButtonWidget *> DialogWidget::buttonWidgets() const
+List<ButtonWidget *> DialogWidget::buttonWidgets() const
 {
-    QList<ButtonWidget *> buttons;
-    foreach (GuiWidget *w, d->buttons->childWidgets())
+    List<ButtonWidget *> buttons;
+    for (GuiWidget *w : d->buttons->childWidgets())
     {
         if (auto *but = maybeAs<ButtonWidget>(w))
         {
@@ -721,12 +720,12 @@ void DialogWidget::accept(int result)
     if (d->subloop.isRunning())
     {
         DE_ASSERT(d->modality == Modal);
-        d->subloop.exit(result);
-        emit accepted(result);
+        d->subloop.quit(result);
+        DE_FOR_AUDIENCE2(Accept, i) { i->dialogAccepted(*this, result); }
     }
     else
     {
-        emit accepted(result);
+        DE_FOR_AUDIENCE2(Accept, i) { i->dialogAccepted(*this, result); }
         finish(result);
     }
 }
@@ -736,12 +735,12 @@ void DialogWidget::reject(int result)
     if (d->subloop.isRunning())
     {
         DE_ASSERT(d->modality == Modal);
-        d->subloop.exit(result);
-        emit rejected(result);
+        d->subloop.quit(result);
+        DE_FOR_AUDIENCE2(Reject, i) { i->dialogRejected(*this, result); }
     }
     else
     {
-        emit rejected(result);
+        DE_FOR_AUDIENCE2(Reject, i) { i->dialogRejected(*this, result); }
         finish(result);
     }
 }
@@ -792,7 +791,7 @@ void DialogWidget::finish(int result)
 }
 
 DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, String const &label)
-    : ui::ActionItem(itemSemantics(flags), label, 0)
+    : ui::ActionItem(itemSemantics(flags), label, nullptr)
     , _role(flags)
 {}
 
@@ -801,17 +800,24 @@ DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, Image const &image)
     , _role(flags)
 {}
 
-DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, String const &label, RefArg<de::Action> action)
+DialogWidget::ButtonItem::ButtonItem(RoleFlags                 flags,
+                                     String const &            label,
+                                     const RefArg<de::Action> &action)
     : ui::ActionItem(itemSemantics(flags), label, action)
     , _role(flags)
 {}
 
-DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, Image const &image, RefArg<de::Action> action)
+DialogWidget::ButtonItem::ButtonItem(RoleFlags                 flags,
+                                     Image const &             image,
+                                     const RefArg<de::Action> &action)
     : ui::ActionItem(itemSemantics(flags), image, "", action)
     , _role(flags)
 {}
 
-DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, Image const &image, String const &label, RefArg<de::Action> action)
+DialogWidget::ButtonItem::ButtonItem(RoleFlags                 flags,
+                                     Image const &             image,
+                                     String const &            label,
+                                     const RefArg<de::Action> &action)
     : ui::ActionItem(itemSemantics(flags), image, label, action)
     , _role(flags)
 {}

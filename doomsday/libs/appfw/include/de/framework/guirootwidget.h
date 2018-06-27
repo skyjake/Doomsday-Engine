@@ -43,7 +43,7 @@ class Painter;
 class LIBAPPFW_PUBLIC GuiRootWidget : public RootWidget
 {
 public:
-    GuiRootWidget(GLWindow *window = 0);
+    GuiRootWidget(GLWindow *window = nullptr);
 
     /**
      * Sets the window in which the root widget resides.
@@ -83,7 +83,7 @@ public:
      * Returns the default projection for 2D graphics.
      */
     Mat4f projMatrix2D() const;
-    
+
     AnimationVector2 &rootOffset();
 
     void routeMouse(Widget *routeTo);

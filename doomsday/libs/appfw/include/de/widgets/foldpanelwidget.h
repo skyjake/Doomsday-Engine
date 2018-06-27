@@ -43,10 +43,8 @@ namespace de {
  */
 class LIBAPPFW_PUBLIC FoldPanelWidget : public PanelWidget
 {
-    Q_OBJECT
-
 public:
-    FoldPanelWidget(String const &name = String());
+    FoldPanelWidget(String const &name = {});
 
     /**
      * Creates a title button widget for toggling the fold open and closed.
@@ -63,13 +61,12 @@ public:
     void setContent(GuiWidget *content);
 
     GuiWidget &content() const;
+    
+    void toggleFold();
 
 public:
     static FoldPanelWidget *makeOptionsGroup(const String &name, const String &heading,
                                              GuiWidget *parent);
-
-public slots:
-    void toggleFold();
 
 protected:
     void preparePanelForOpening();

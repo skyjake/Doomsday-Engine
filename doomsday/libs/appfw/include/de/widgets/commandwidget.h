@@ -34,10 +34,13 @@ class PopupWidget;
  */
 class LIBAPPFW_PUBLIC CommandWidget : public LineEditWidget, public IPersistent
 {
-    Q_OBJECT
+public:
+    DE_DEFINE_AUDIENCE2(GotFocus,  void gotFocus(CommandWidget &))
+    DE_DEFINE_AUDIENCE2(LostFocus, void lostFocus(CommandWidget &))
+    DE_DEFINE_AUDIENCE2(Command,   void commandEntered(const String &command))
 
 public:
-    CommandWidget(String const &name = String());
+    CommandWidget(String const &name = {});
 
     PopupWidget &autocompletionPopup();
 
@@ -47,13 +50,12 @@ public:
     bool handleEvent(Event const &event) override;
     void update() override;
 
-    bool handleControlKey(int qtKey, KeyModifiers const &mods) override;
+    bool handleControlKey(shell::Key key, KeyModifiers const &mods) override;
 
     // IPersistent.
     void operator >> (PersistentState &toState) const override;
     void operator << (PersistentState const &fromState) override;
 
-public slots:
     /**
      * Moves the current contents of the command line to the history. The
      * command line contents are then cleared.
@@ -83,11 +85,6 @@ protected:
     void showAutocompletionPopup(String const &completionsText);
 
     void autoCompletionEnded(bool accepted) override;
-
-signals:
-    void gotFocus();
-    void lostFocus();
-    void commandEntered(de::String const &command);
 
 private:
     DE_PRIVATE(d)

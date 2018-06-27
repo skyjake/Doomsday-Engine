@@ -32,17 +32,11 @@ namespace de {
  */
 class LIBAPPFW_PUBLIC VariableSliderWidget : public SliderWidget
 {
-    Q_OBJECT
-
 public:
     /// Thrown when the variable is gone and someone tries to access it. @ingroup errors
     DE_ERROR(VariableMissingError);
 
-    enum ValueType
-    {
-        Number,
-        Animation
-    };
+    enum ValueType { Number, Animation };
 
 public:
     VariableSliderWidget(Variable &variable, Ranged const &range, ddouble step = 0,
@@ -54,10 +48,9 @@ public:
 
     Variable &variable() const;
 
-public slots:
     void updateFromVariable();
 
-protected slots:
+protected:
     void setVariableFromWidget();
 
 private:

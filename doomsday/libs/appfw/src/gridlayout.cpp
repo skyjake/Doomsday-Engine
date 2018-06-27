@@ -54,13 +54,14 @@ DE_PIMPL(GridLayout)
         ui::Alignment cellAlign;///< Cell alignment affecting the entire column/row.
 
         Metric()
-            : fixedLength(0),
-              current(0),
-              final(new IndirectRule),
-              accumulatedLengths(0),
-              minEdge(0),
-              maxEdge(0),
-              cellAlign(ui::AlignLeft) {}
+            : fixedLength(nullptr)
+            , current(nullptr)
+            , final(new IndirectRule)
+            , accumulatedLengths(nullptr)
+            , minEdge(nullptr)
+            , maxEdge(nullptr)
+            , cellAlign(ui::AlignLeft)
+        {}
 
         ~Metric()
         {

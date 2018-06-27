@@ -39,8 +39,7 @@ DE_PIMPL(VariableSliderWidget)
     void init()
     {
         self().updateFromVariable();
-        QObject::connect(thisPublic, SIGNAL(valueChangedByUser(double)),
-                         thisPublic, SLOT(setVariableFromWidget()));
+        self().audienceForUserValue() += [this](){ setVariableFromWidget(); };
     }
 
     void updateFromVariable()
@@ -84,7 +83,7 @@ DE_PIMPL(VariableSliderWidget)
 
     void variableBeingDeleted(Variable &)
     {
-        var = 0;
+        var = nullptr;
         self().disable();
     }
 };

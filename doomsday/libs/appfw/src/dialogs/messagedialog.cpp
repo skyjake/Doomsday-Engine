@@ -73,7 +73,7 @@ DE_GUI_PIMPL(MessageDialog)
         layout.setOverrideWidth(*layoutWidth);
 
         // Put all the widgets into the layout.
-        foreach (GuiWidget *w, area.childWidgets())
+        for (GuiWidget *w : area.childWidgets())
         {
             // Individual children can be hidden to exclude them from the layout.
             if (behavior == IncludeHidden || !w->behavior().testFlag(Widget::Hidden))

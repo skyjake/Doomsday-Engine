@@ -457,8 +457,8 @@ public:
      */
     PopupWidget *findParentPopup() const;
 
-    void collectNotReadyAssets(AssetGroup &collected,
-                               CollectMode = CollectMode::OnlyVisible) override;
+    void collectUnreadyAssets(AssetGroup &collected,
+                              CollectMode = CollectMode::OnlyVisible) override;
 
     /**
      * Blocks until all assets in the widget tree are Ready.

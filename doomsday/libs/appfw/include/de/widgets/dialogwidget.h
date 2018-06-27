@@ -125,12 +125,12 @@ public:
          * @param label   Label for the button. If empty, the default label will be used.
          * @param action  Action for the button.
          */
-        ButtonItem(RoleFlags flags, String const &label, RefArg<de::Action> action);
+        ButtonItem(RoleFlags flags, String const &label, const RefArg<de::Action>& action);
 
-        ButtonItem(RoleFlags flags, Image const &image, RefArg<de::Action> action);
+        ButtonItem(RoleFlags flags, Image const &image, const RefArg<de::Action>& action);
 
         ButtonItem(RoleFlags flags, Image const &image, String const &label,
-                   RefArg<de::Action> action = RefArg<de::Action>());
+                   const RefArg<de::Action>& action = RefArg<de::Action>());
 
         RoleFlags role() const { return _role; }
 

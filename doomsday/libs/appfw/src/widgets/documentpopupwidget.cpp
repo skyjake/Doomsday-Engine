@@ -24,7 +24,7 @@ namespace de {
 DE_PIMPL_NOREF(DocumentPopupWidget)
 {
     DocumentWidget *doc;
-    ButtonWidget *button = nullptr;
+    ButtonWidget *  button = nullptr;
 };
 
 DocumentPopupWidget::DocumentPopupWidget(String const &name)

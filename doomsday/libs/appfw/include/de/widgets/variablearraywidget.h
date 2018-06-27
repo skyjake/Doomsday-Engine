@@ -36,11 +36,11 @@ class ButtonWidget;
  */
 class LIBAPPFW_PUBLIC VariableArrayWidget : public GuiWidget
 {
-    Q_OBJECT
-
 public:
     /// Thrown when the variable is gone and someone tries to access it. @ingroup errors
     DE_ERROR(VariableMissingError);
+
+    DE_DEFINE_AUDIENCE2(Change, void variableArrayChanged(VariableArrayWidget &))
 
 public:
     VariableArrayWidget(Variable &variable, String const &name = String());
@@ -65,17 +65,13 @@ public:
     // Events.
     bool handleEvent(Event const &event) override;
 
-signals:
-    void arrayChanged();
-
 protected:
     virtual String labelForElement(Value const &value) const;
     virtual void   elementCreated(LabelWidget &, const ui::Item &);
 
-public slots:
     void updateFromVariable();
 
-protected slots:
+protected:
     void setVariableFromWidget();
 
 private:

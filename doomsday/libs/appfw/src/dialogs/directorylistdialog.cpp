@@ -19,8 +19,6 @@
 #include "de/DirectoryListDialog"
 #include "de/DirectoryArrayWidget"
 
-#include <de/CallbackAction>
-
 namespace de {
 
 DE_PIMPL(DirectoryListDialog)
@@ -32,14 +30,14 @@ DE_PIMPL(DirectoryListDialog)
         Variable array;
         DirectoryArrayWidget *list;
     };
-    QHash<Id::Type, Group *> groups;
+    Hash<Id::Type, Group *> groups;
 
     Impl(Public *i) : Base(i)
     {}
 
     ~Impl()
     {
-        qDeleteAll(groups);
+        groups.deleteAll();
     }
 
     Id addGroup(String const &title, String const &description)
@@ -75,8 +73,9 @@ DE_PIMPL(DirectoryListDialog)
         group->list->addButton().hide();
         self().area().add(group->list);
 
-        QObject::connect(group->list, SIGNAL(arrayChanged()),
-                         thisPublic, SIGNAL(arrayChanged()));
+        group->list->audienceForChange() += [this](){
+            DE_FOR_PUBLIC_AUDIENCE2(Change, i) { i->directoryListChanged(); }
+        };
 
         groups.insert(groupId, group.release());
         return groupId;

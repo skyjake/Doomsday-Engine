@@ -24,8 +24,8 @@
 #include <de/Matrix>
 #include <de/AnimationRule>
 
-#include <QMap>
-#include <QTimer>
+#include <de/Map>
+#include <de/Timer>
 
 namespace de {
 
@@ -34,16 +34,16 @@ DE_GUI_PIMPL(NotificationAreaWidget)
 {
     static TimeSpan const ANIM_SPAN;
     AnimationRule *shift;
-    QMap<GuiWidget *, RelayWidget *> shown;
+    Map<GuiWidget *, RelayWidget *> shown;
 
-    QTimer dismissTimer;
-    QList<GuiWidget *> pendingDismiss;
+    Timer dismissTimer;
+    List<GuiWidget *> pendingDismiss;
 
     Impl(Public *i) : Base(i)
     {
         dismissTimer.setSingleShot(true);
-        dismissTimer.setInterval(ANIM_SPAN.asMilliSeconds());
-        QObject::connect(&dismissTimer, SIGNAL(timeout()), thisPublic, SLOT(dismiss()));
+        dismissTimer.setInterval(ANIM_SPAN);
+        dismissTimer.audienceForTrigger() += [this](){ self().dismiss(); };
 
         shift = new AnimationRule(0);
     }
@@ -51,9 +51,9 @@ DE_GUI_PIMPL(NotificationAreaWidget)
     ~Impl()
     {
 #ifdef DE_DEBUG
-        foreach (GuiWidget *w, shown.keys())
+        for (auto &w : shown)
         {
-            DE_ASSERT(w->audienceForDeletion().contains(this));
+            DE_ASSERT(w.first->audienceForDeletion().contains(this));
         }
 #endif
         releaseRef(shift);
@@ -67,7 +67,7 @@ DE_GUI_PIMPL(NotificationAreaWidget)
         SequentialLayout layout(self().rule().right(), self().rule().top(), ui::Left);
 
         bool first = true;
-        foreach (GuiWidget *child, self().childWidgets())
+        for (GuiWidget *child : self().childWidgets())
         {
             GuiWidget *w = child->as<RelayWidget>().target();
             DE_ASSERT(w != nullptr);
@@ -132,7 +132,7 @@ DE_GUI_PIMPL(NotificationAreaWidget)
         dismissTimer.stop();
 
         // The pending children were already asked to be dismissed.
-        foreach (GuiWidget *w, pendingDismiss)
+        for (GuiWidget *w : pendingDismiss)
         {
             dismissChild(*w);
         }

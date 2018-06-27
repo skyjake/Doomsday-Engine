@@ -23,7 +23,7 @@ namespace de {
 DE_PIMPL(Untrapper)
 {
     GLWindow &window;
-    bool wasTrapped;
+    bool      wasTrapped;
 
     Impl(Public *i, GLWindow &w) : Base(i), window(w)
     {

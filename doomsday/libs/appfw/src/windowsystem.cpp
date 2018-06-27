@@ -19,17 +19,17 @@
 #include "de/WindowSystem"
 #include <de/Style>
 #include <de/BaseGuiApp> // for updating pixel ratio
-#include <QMap>
+#include <de/Map>
 
 namespace de {
 
 DE_PIMPL(WindowSystem)
 , DENG2_OBSERVES(GLWindow, PixelRatio)
 {
-    typedef QMap<String, BaseWindow *> Windows;
+    typedef Map<String, BaseWindow *> Windows;
     Windows windows;
 
-    QScopedPointer<Style> style;
+    std::unique_ptr<Style> style;
 
     // Mouse motion.
     bool mouseMoved;
@@ -101,24 +101,24 @@ bool WindowSystem::mainExists() // static
 BaseWindow &WindowSystem::main() // static
 {
     DE_ASSERT(mainExists());
-    return **get().d->windows.find("main");
+    return *get().d->windows.find("main")->second;
 }
 
 BaseWindow *WindowSystem::find(String const &id) const
 {
-    Impl::Windows::const_iterator found = d->windows.constFind(id);
-    if (found != d->windows.constEnd())
+    Impl::Windows::const_iterator found = d->windows.find(id);
+    if (found != d->windows.end())
     {
-        return found.value();
+        return found->second;
     }
-    return 0;
+    return nullptr;
 }
 
-LoopResult WindowSystem::forAll(std::function<LoopResult (BaseWindow *)> func)
+LoopResult WindowSystem::forAll(const std::function<LoopResult (BaseWindow *)>& func)
 {
-    for (BaseWindow *win : d->windows)
+    for (auto &win : d->windows)
     {
-        if (auto result = func(win))
+        if (auto result = func(win.second))
         {
             return result;
         }
@@ -130,7 +130,7 @@ void WindowSystem::closeAll()
 {
     closingAllWindows();
 
-    qDeleteAll(d->windows.values());
+    d->windows.deleteAll();
     d->windows.clear();
 }
 
@@ -186,7 +186,7 @@ void WindowSystem::timeChanged(Clock const &/*clock*/)
 void WindowSystem::closingAllWindows()
 {}
 
-static WindowSystem *theAppWindowSystem = 0;
+static WindowSystem *theAppWindowSystem = nullptr;
 
 void WindowSystem::setAppWindowSystem(WindowSystem &winSys)
 {
@@ -195,7 +195,7 @@ void WindowSystem::setAppWindowSystem(WindowSystem &winSys)
 
 WindowSystem &WindowSystem::get() // static
 {
-    DE_ASSERT(theAppWindowSystem != 0);
+    DE_ASSERT(theAppWindowSystem != nullptr);
     return *theAppWindowSystem;
 }
 

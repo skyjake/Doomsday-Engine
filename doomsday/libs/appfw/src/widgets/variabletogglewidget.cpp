@@ -73,7 +73,7 @@ DE_OBSERVES(ToggleWidget, Toggle  )
 
     void variableBeingDeleted(Variable &)
     {
-        var = 0;
+        var = nullptr;
         self().disable();
     }
 };

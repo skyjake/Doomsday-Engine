@@ -32,9 +32,12 @@ WindowTransform::WindowTransform(BaseWindow &window)
     d->win = &window;
 }
 
+WindowTransform::~WindowTransform()
+{}
+
 BaseWindow &WindowTransform::window() const
 {
-    DE_ASSERT(d->win != 0);
+    DE_ASSERT(d->win != nullptr);
     return *d->win;
 }
 

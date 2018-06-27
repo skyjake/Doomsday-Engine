@@ -18,18 +18,17 @@
 
 #include "de/ChoiceWidget"
 #include "de/PopupMenuWidget"
-#include "de/SignalAction"
 
 namespace de {
 
 using namespace ui;
 
-DE_GUI_PIMPL(ChoiceWidget),
-DE_OBSERVES(Data, Addition),
-DE_OBSERVES(Data, Removal),
-DE_OBSERVES(Data, OrderChange),
-DE_OBSERVES(ChildWidgetOrganizer, WidgetCreation),
-DE_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
+DE_GUI_PIMPL(ChoiceWidget)
+, DE_OBSERVES(Data, Addition)
+, DE_OBSERVES(Data, Removal)
+, DE_OBSERVES(Data, OrderChange)
+, DE_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
+, DE_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 {
     /**
      * Items in the choice's popup uses this as action to change the selected
@@ -51,7 +50,10 @@ DE_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
             wd->updateItemHighlight();
             wd->choices->dismiss();
 
-            emit wd->self().selectionChangedByUser(wd->selected);
+            DE_FOR_EACH_OBSERVER(i, wd->self().audienceForUserSelection())
+            {
+                i->selectionChangedByUser(wd->self(), wd->selected);
+            }
         }
     };
 
@@ -78,14 +80,14 @@ DE_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 
         self().setPopup(*choices, ui::Right);
 
-        QObject::connect(choices, &PanelWidget::opened, [this] ()
+        choices->audienceForOpen() += [this]()
         {
             // Focus the selected item when the popup menu is opened.
             if (auto *w = choices->menu().itemWidget<GuiWidget>(selected))
             {
                 root().setFocus(w);
             }
-        });
+        };
 
         updateButtonWithSelection();
         updateStyle();
@@ -224,7 +226,10 @@ DE_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
             self().setImage(Image());
         }
 
-        emit self().selectionChanged(selected);
+        DE_FOR_PUBLIC_AUDIENCE2(Selection, i)
+        {
+            i->selectionChanged(self(), selected);
+        }
     }
 };
 

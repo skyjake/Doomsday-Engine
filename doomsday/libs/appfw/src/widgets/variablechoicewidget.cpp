@@ -45,15 +45,15 @@ DE_OBSERVES(Variable, Change  )
     {
         if (!var || self().items().isEmpty()) return;
 
-        if (variableType == Text)
-        {
-            self().setSelected(self().items().findData(var->value().asText()));
+        //if (variableType == Text)
+        //{
+            self().setSelected(self().items().findData(var->value()));
+//        }
+//        else
+//        {
+//            self().setSelected(self().items().findData(var->value()));
+//        }
         }
-        else
-        {
-            self().setSelected(self().items().findData(var->value().asNumber()));
-        }
-    }
 
     void setVariableFromWidget()
     {
@@ -62,11 +62,11 @@ DE_OBSERVES(Variable, Change  )
         var->audienceForChange() -= this;
         if (variableType == Text)
         {
-            var->set(TextValue(self().selectedItem().data().toString()));
+            var->set(TextValue(self().selectedItem().data().asText()));
         }
         else
         {
-            var->set(NumberValue(self().selectedItem().data().toDouble()));
+            var->set(NumberValue(self().selectedItem().data().asNumber()));
         }
         var->audienceForChange() += this;
     }
@@ -78,7 +78,7 @@ DE_OBSERVES(Variable, Change  )
 
     void variableBeingDeleted(Variable &)
     {
-        var = 0;
+        var = nullptr;
         self().disable();
     }
 };
@@ -88,8 +88,7 @@ VariableChoiceWidget::VariableChoiceWidget(Variable &variable, VariableType vari
     : ChoiceWidget(name)
     , d(new Impl(this, variable, variableType))
 {
-    connect(this, SIGNAL(selectionChangedByUser(uint)),
-            this, SLOT(setVariableFromWidget()));
+    audienceForUserSelection() += [this](){ setVariableFromWidget(); };
 }
 
 Variable &VariableChoiceWidget::variable() const

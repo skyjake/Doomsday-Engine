@@ -1,3 +1,7 @@
+#include <utility>
+
+#include <utility>
+
 /** @file popupbuttonwidget.cpp
  *
  * @authors Copyright (c) 2015-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -93,14 +97,14 @@ void PopupButtonWidget::setPopup(PopupWidget &popup, ui::Direction openingDirect
 
 void PopupButtonWidget::setOpener(Opener opener)
 {
-    d->opener = opener;
+    d->opener = std::move(opener);
 }
 
 void PopupButtonWidget::setPopup(Constructor makePopup, ui::Direction openingDirection)
 {
     d->pop.reset();
     d->direction = openingDirection;
-    d->constructor = makePopup;
+    d->constructor = std::move(makePopup);
 }
 
 void PopupButtonWidget::setOpeningDirection(ui::Direction direction)

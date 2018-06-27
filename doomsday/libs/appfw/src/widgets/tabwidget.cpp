@@ -22,8 +22,6 @@
 
 #include <de/AnimationRule>
 
-Q_DECLARE_METATYPE(de::ui::Item const *)
-
 namespace de {
 
 DE_GUI_PIMPL(TabWidget)
@@ -33,13 +31,13 @@ DE_GUI_PIMPL(TabWidget)
 , DE_OBSERVES(ui::Data,             OrderChange)
 , DE_OBSERVES(ButtonWidget,         Press)
 {
-    ui::Data::Pos current = 0;
-    MenuWidget *buttons = nullptr;
-    bool needUpdate = false;
-    bool invertedStyle = false;
-    LabelWidget *selected = nullptr;
-    AnimationRule *selLeft = nullptr;
-    AnimationRule *selWidth = nullptr;
+    ui::Data::Pos  current       = 0;
+    MenuWidget *   buttons       = nullptr;
+    bool           needUpdate    = false;
+    bool           invertedStyle = false;
+    LabelWidget *  selected      = nullptr;
+    AnimationRule *selLeft       = nullptr;
+    AnimationRule *selWidth      = nullptr;
 
     Impl(Public *i) : Base(i)
     {
@@ -108,7 +106,10 @@ DE_GUI_PIMPL(TabWidget)
         {
             current = pos;
             updateSelected();
-            emit self().currentTabChanged();
+            DE_FOR_PUBLIC_AUDIENCE2(Tab, i)
+            {
+                i->currentTabChanged(self());
+            }
         }
     }
 
@@ -144,7 +145,7 @@ DE_GUI_PIMPL(TabWidget)
                     selected->rule()
                         .setInput(Rule::Width,  *selWidth)
                         .setInput(Rule::Left,   *selLeft);
-                    span = 0;
+                    span = 0.0;
                 }
                 // Animate to new position.
                 selLeft ->set(w.rule().left(),  span);
@@ -159,7 +160,7 @@ DE_GUI_PIMPL(TabWidget)
 
     bool handleShortcutKey(KeyEvent const &key)
     {
-        foreach (auto *w, buttons->childWidgets())
+        for (auto *w : buttons->childWidgets())
         {
             if (ButtonWidget *but = maybeAs<ButtonWidget>(w))
             {
@@ -171,7 +172,11 @@ DE_GUI_PIMPL(TabWidget)
         }
         return false;
     }
+
+    DE_PIMPL_AUDIENCE(Tab)
 };
+
+DE_AUDIENCE_METHOD(TabWidget, Tab)
 
 TabWidget::TabWidget(String const &name)
     : GuiWidget(name), d(new Impl(this))

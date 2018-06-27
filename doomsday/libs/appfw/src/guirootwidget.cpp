@@ -28,10 +28,8 @@
 #include <de/GLState>
 #include <de/GLUniform>
 #include <de/GLWindow>
+#include <de/Image>
 #include <de/TextureBank>
-
-#include <QImage>
-#include <QPainter>
 
 namespace de {
 
@@ -64,50 +62,58 @@ DE_PIMPL(GuiRootWidget)
     };
     struct ThinCornersImage : public TextureBank::ImageSource {
         Image load() const {
-            QImage img(QSize(DPI_SCALED_INT(15), DPI_SCALED_INT(15)), QImage::Format_ARGB32);
-            img.fill(QColor(255, 255, 255, 0).rgba());
-            QPainter painter(&img);
-            painter.setRenderHint(QPainter::Antialiasing, true);
-            painter.setBrush(Qt::NoBrush);
-            painter.setPen(QPen(Qt::white, DPI_SCALED(1)));
-            painter.drawEllipse(DPI_SCALED(QPointF(8, 8)), DPI_SCALED(6), DPI_SCALED(6));
-            return img;
+//            QImage img(QSize(DPI_SCALED_INT(15), DPI_SCALED_INT(15)), QImage::Format_ARGB32);
+//            img.fill(QColor(255, 255, 255, 0).rgba());
+//            QPainter painter(&img);
+//            painter.setRenderHint(QPainter::Antialiasing, true);
+//            painter.setBrush(Qt::NoBrush);
+//            painter.setPen(QPen(Qt::white, DPI_SCALED(1)));
+//            painter.drawEllipse(DPI_SCALED(QPointF(8, 8)), DPI_SCALED(6), DPI_SCALED(6));
+//            return img;
+            DE_ASSERT_FAIL("Need to load style image")
+            return {};
         }
     };
     struct BoldCornersImage : public TextureBank::ImageSource {
         Image load() const {
-            QImage img(QSize(DPI_SCALED_INT(12), DPI_SCALED_INT(12)), QImage::Format_ARGB32);
-            img.fill(QColor(255, 255, 255, 0).rgba());
-            QPainter painter(&img);
-            painter.setRenderHint(QPainter::Antialiasing, true);
-            painter.setPen(QPen(Qt::white, DPI_SCALED(2)));
-            painter.setBrush(Qt::NoBrush);
-            painter.drawEllipse(DPI_SCALED(QPointF(6, 6)), DPI_SCALED(4), DPI_SCALED(4));
-            return img;
+//            QImage img(QSize(DPI_SCALED_INT(12), DPI_SCALED_INT(12)), QImage::Format_ARGB32);
+//            img.fill(QColor(255, 255, 255, 0).rgba());
+//            QPainter painter(&img);
+//            painter.setRenderHint(QPainter::Antialiasing, true);
+//            painter.setPen(QPen(Qt::white, DPI_SCALED(2)));
+//            painter.setBrush(Qt::NoBrush);
+//            painter.drawEllipse(DPI_SCALED(QPointF(6, 6)), DPI_SCALED(4), DPI_SCALED(4));
+//            return img;
+            DE_ASSERT_FAIL("Need to load style image")
+            return {};
         }
     };
     struct SolidRoundedImage : public TextureBank::ImageSource {
         Image load() const {
-            QImage img(QSize(DPI_SCALED_INT(12), DPI_SCALED_INT(12)), QImage::Format_ARGB32);
-            img.fill(QColor(255, 255, 255, 0).rgba());
-            QPainter painter(&img);
-            painter.setRenderHint(QPainter::Antialiasing, true);
-            painter.setPen(Qt::NoPen);
-            painter.setBrush(Qt::white);
-            painter.drawEllipse(DPI_SCALED(QPointF(6, 6)), DPI_SCALED(6), DPI_SCALED(6));
-            return img;
+//            QImage img(QSize(DPI_SCALED_INT(12), DPI_SCALED_INT(12)), QImage::Format_ARGB32);
+//            img.fill(QColor(255, 255, 255, 0).rgba());
+//            QPainter painter(&img);
+//            painter.setRenderHint(QPainter::Antialiasing, true);
+//            painter.setPen(Qt::NoPen);
+//            painter.setBrush(Qt::white);
+//            painter.drawEllipse(DPI_SCALED(QPointF(6, 6)), DPI_SCALED(6), DPI_SCALED(6));
+//            return img;
+            DE_ASSERT_FAIL("Need to load style image")
+            return {};
         }
     };
     struct TinyDotImage : public TextureBank::ImageSource {
         Image load() const {
-            QImage img(QSize(DPI_SCALED_INT(5), DPI_SCALED_INT(5)), QImage::Format_ARGB32);
-            img.fill(QColor(255, 255, 255, 0).rgba());
-            QPainter painter(&img);
-            painter.setRenderHint(QPainter::Antialiasing, true);
-            painter.setPen(Qt::NoPen);
-            painter.setBrush(Qt::white);
-            painter.drawEllipse(DPI_SCALED(QPointF(2.5, 2.5)), DPI_SCALED(2), DPI_SCALED(2));
-            return img;
+//            QImage img(QSize(DPI_SCALED_INT(5), DPI_SCALED_INT(5)), QImage::Format_ARGB32);
+//            img.fill(QColor(255, 255, 255, 0).rgba());
+//            QPainter painter(&img);
+//            painter.setRenderHint(QPainter::Antialiasing, true);
+//            painter.setPen(Qt::NoPen);
+//            painter.setBrush(Qt::white);
+//            painter.drawEllipse(DPI_SCALED(QPointF(2.5, 2.5)), DPI_SCALED(2), DPI_SCALED(2));
+//            return img;
+            DE_ASSERT_FAIL("Need to load style image")
+            return {};
         }
     };
     struct StyleImage : public TextureBank::ImageSource {
@@ -118,19 +124,18 @@ DE_PIMPL(GuiRootWidget)
     };
 
     GLWindow *window;
-    QScopedPointer<AtlasTexture> atlas; ///< Shared atlas for most UI graphics/text.
+    std::unique_ptr<AtlasTexture> atlas; ///< Shared atlas for most UI graphics/text.
     GLUniform uTexAtlas;
     TextureBank texBank; ///< Bank for the atlas contents.
     Painter painter;
     AnimationVector2 rootOffset;
     FocusWidget *focusIndicator;
     bool noFramesDrawnYet;
-    QList<SafeWidgetPtr<Widget> *> focusStack;
+    List<SafeWidgetPtr<Widget> *> focusStack;
 
     Impl(Public *i, GLWindow *win)
         : Base(i)
         , window(win)
-        , atlas(0)
         , uTexAtlas("uTex", GLUniform::Sampler2D)
         , noFramesDrawnYet(true)
     {
@@ -146,7 +151,7 @@ DE_PIMPL(GuiRootWidget)
     {
         if (window) window->glActivate();
 
-        qDeleteAll(focusStack);
+        deleteAll(focusStack);
 
         GuiWidget::recycleTrashedWidgets();
 
@@ -163,14 +168,14 @@ DE_PIMPL(GuiRootWidget)
 
     void initAtlas()
     {
-        if (atlas.isNull() || atlas->totalSize() == Atlas::Size())
+        if (!atlas || atlas->totalSize() == Atlas::Size())
         {
             window->glActivate();
             atlas.reset(AtlasTexture::newWithKdTreeAllocator(
                             Atlas::BackingStore | Atlas::AllowDefragment,
                             GLTexture::maximumSize().min(GLTexture::Size(4096, 4096))));
             uTexAtlas = *atlas;
-            texBank.setAtlas(atlas.data());
+            texBank.setAtlas(atlas.get());
 
             // Load a set of general purpose textures (derived classes may extend this).
             self().loadCommonTextures();
@@ -190,7 +195,7 @@ DE_PIMPL(GuiRootWidget)
         Style const &st = Style::get();
         ImageBank::Names imageNames;
         st.images().allItems(imageNames);
-        foreach (String const &name, imageNames)
+        for (String const &name : imageNames)
         {
             texBank.add("Style." + name, new StyleImage(name));
         }
@@ -235,7 +240,7 @@ void GuiRootWidget::setWindow(GLWindow *window)
 
 GLWindow &GuiRootWidget::window()
 {
-    DE_ASSERT(d->window != 0);
+    DE_ASSERT(d->window != nullptr);
     return *d->window;
 }
 
@@ -292,7 +297,7 @@ Id GuiRootWidget::boldRoundCorners() const
 Id GuiRootWidget::borderGlow() const
 {
     d->initAtlas();
-    return d->texBank.texture(QStringLiteral("Style.window.borderglow"));
+    return d->texBank.texture(DE_STR("Style.window.borderglow"));
 }
 
 Id GuiRootWidget::tinyDot() const
@@ -304,7 +309,7 @@ Id GuiRootWidget::tinyDot() const
 Id GuiRootWidget::styleTexture(DotPath const &styleImagePath) const
 {
     d->initAtlas();
-    return d->texBank.texture(QStringLiteral("Style.") + styleImagePath);
+    return d->texBank.texture(DE_STR("Style.") + styleImagePath.toString());
 }
 
 GLShaderBank &GuiRootWidget::shaders()
@@ -331,9 +336,8 @@ AnimationVector2 &GuiRootWidget::rootOffset()
 
 void GuiRootWidget::routeMouse(Widget *routeTo)
 {
-    setEventRouting(QList<int>({ Event::MouseButton,   Event::MouseMotion,
-                                 Event::MousePosition, Event::MouseWheel }),
-                    routeTo);
+    setEventRouting(
+        {Event::MouseButton, Event::MouseMotion, Event::MousePosition, Event::MouseWheel}, routeTo);
 }
 
 void GuiRootWidget::dispatchLatestMousePosition()
@@ -366,7 +370,7 @@ void GuiRootWidget::loadCommonTextures()
 GuiWidget const *GuiRootWidget::globalHitTest(Vec2i const &pos) const
 {
     Widget::Children const childs = children();
-    for (int i = childs.size() - 1; i >= 0; --i)
+    for (int i = childs.sizei() - 1; i >= 0; --i)
     {
         if (auto const *w = maybeAs<GuiWidget>(childs.at(i)))
         {
@@ -376,7 +380,7 @@ GuiWidget const *GuiRootWidget::globalHitTest(Vec2i const &pos) const
             }
         }
     }
-    return 0;
+    return nullptr;
 }
 
 GuiWidget const *GuiRootWidget::guiFind(String const &name) const
@@ -417,7 +421,7 @@ void GuiRootWidget::popFocus()
 
 void GuiRootWidget::clearFocusStack()
 {
-    qDeleteAll(d->focusStack);
+    deleteAll(d->focusStack);
     d->focusStack.clear();
 }
 

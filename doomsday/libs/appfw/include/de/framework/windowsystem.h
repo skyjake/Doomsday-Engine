@@ -84,7 +84,7 @@ public:
      *
      * @see hasMain()
      */
-    inline static BaseWindow *mainPtr() { return mainExists()? &main() : 0; }
+    inline static BaseWindow *mainPtr() { return mainExists()? &main() : nullptr; }
 
     /**
      * Find a window.
@@ -95,7 +95,7 @@ public:
      */
     BaseWindow *find(String const &id) const;
 
-    LoopResult forAll(std::function<LoopResult (BaseWindow *)> func);
+    LoopResult forAll(const std::function<LoopResult (BaseWindow *)>& func);
 
     /**
      * Closes all windows, including the main window.

@@ -37,9 +37,10 @@ namespace de {
  */
 class LIBAPPFW_PUBLIC ChoiceWidget : public PopupButtonWidget
 {
-    Q_OBJECT
-
 public:
+    DE_DEFINE_AUDIENCE2(Selection,     void selectionChanged(ChoiceWidget &, ui::DataPos pos))
+    DE_DEFINE_AUDIENCE2(UserSelection, void selectionChangedByUser(ChoiceWidget &, ui::DataPos pos))
+
     /**
      * The items of the widget are expected to be instanced of
      * ChoiceWidget::Item or derived from it (or at least ui::ActionItem).
@@ -50,7 +51,7 @@ public:
         Item(String const &label, Image const &image = Image())
             : ui::ActionItem(image, label) {}
 
-        Item(String const &label, QVariant const &userData, Image const &image = Image())
+        Item(String const &label, const Value &userData, Image const &image = Image())
             : ui::ActionItem(image, label)
         {
             setData(userData);
@@ -92,12 +93,7 @@ public:
      */
     Rule const &maximumWidth() const;
 
-public slots:
     void openPopup();
-
-signals:
-    void selectionChanged(uint pos);
-    void selectionChangedByUser(uint pos);
 
 private:
     DE_PRIVATE(d)

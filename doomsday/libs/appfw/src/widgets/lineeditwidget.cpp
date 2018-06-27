@@ -69,10 +69,10 @@ DE_GUI_PIMPL(LineEditWidget)
     Impl(Public *i)
         : Base(i)
         , wraps(static_cast<FontLineWrapping &>(i->lineWraps()))
-        , hint(0)
+        , hint(nullptr)
         , signalOnEnter(false)
         , firstUpdateAfterCreation(true)
-        , font(0)
+        , font(nullptr)
         , hovering(0, Animation::Linear)
         , uMvpMatrix  ("uMvpMatrix", GLUniform::Mat4)
         , uColor      ("uColor",     GLUniform::Vec4)
@@ -231,7 +231,10 @@ DE_GUI_PIMPL(LineEditWidget)
         composer.setText(self().text());
         if (notify)
         {
-            emit self().editorContentChanged();
+            DE_FOR_PUBLIC_AUDIENCE2(ContentChange, i)
+            {
+                i->editorContentChanged(self());
+            }
         }
     }
 
@@ -295,8 +298,8 @@ void LineEditWidget::setSignalOnEnter(bool enterSignal)
 
 Rectanglei LineEditWidget::cursorRect() const
 {
-    Vec2i const cursorPos = lineCursorPos();
-    Vec2i const cp = d->wraps.charTopLeftInPixels(cursorPos.y, cursorPos.x) +
+    const auto cursorPos = lineCursorPos();
+    Vec2i const cp = d->wraps.charTopLeftInPixels(cursorPos.line, cursorPos.x) +
             contentRect().topLeft;
 
     return Rectanglei(cp + pointsToPixels(Vec2i(-1, 0)),
@@ -343,9 +346,9 @@ void LineEditWidget::glMakeGeometry(GuiVertexBuilder &verts)
     // Underline the possible suggested completion.
     if (isSuggestingCompletion())
     {
-        Rangei const   comp     = completionRange();
-        Vec2i const startPos = linePos(comp.start);
-        Vec2i const endPos   = linePos(comp.end);
+        Rangei const comp     = completionRange();
+        Vec2i const  startPos = linePos(comp.start);
+        Vec2i const  endPos   = linePos(comp.end);
 
         Vec2i const offset = contentRect.topLeft + Vec2i(0, d->font->ascent().valuei() + pointsToPixels(2));
 
@@ -411,7 +414,7 @@ void LineEditWidget::focusLost()
 
     if (d->hint && d->showingHint())
     {
-        d->hint->setOpacity(1, 1, 0.5);
+        d->hint->setOpacity(1, 1.0, 0.5);
     }
 }
 
@@ -495,9 +498,9 @@ bool LineEditWidget::handleEvent(Event const &event)
         }
     }
 
-    if (is<KeyEvent>(event) && event.as<KeyEvent>().qtKey() == Qt::Key_Enter)
+    if (is<KeyEvent>(event) && event.as<KeyEvent>().ddKey() == DDKEY_ENTER)
     {
-        qDebug() << "LineEditWidget: Enter key" << event.type() << hasFocus();
+        debug("LineEditWidget: Enter key %i %s", event.type(), DE_BOOL_YESNO(hasFocus()));
     }
 
     // Only handle keys when focused.
@@ -525,20 +528,24 @@ bool LineEditWidget::handleEvent(Event const &event)
             return false;
         }*/
 
-        if (d->signalOnEnter && (key.qtKey() == Qt::Key_Enter || key.qtKey() == Qt::Key_Return))
+        if (d->signalOnEnter && (key.ddKey() == DDKEY_ENTER || key.ddKey() == DDKEY_RETURN))
         {
-            emit enterPressed(text());
+            DE_FOR_AUDIENCE2(Enter, i)
+            {
+                i->enterPressed(text());
+            }
             return true;
         }
 
         // Control character.
-        if (handleControlKey(key.qtKey(), modifiersFromKeyEvent(key.modifiers())))
+        /// @todo Convert key+mods to shell::Key.
+        if (handleControlKey(key.ddKey(), modifiersFromKeyEvent(key.modifiers())))
         {
             return true;
         }
 
         // Insert text?
-        if (!key.text().isEmpty() && key.text()[0].isPrint())
+        if (!key.text().isEmpty()) // && iswprint(key.text().first()))
         {
             // Insert some text into the editor.
             insert(key.text());

@@ -32,8 +32,6 @@ namespace de {
  */
 class LIBAPPFW_PUBLIC VariableChoiceWidget : public ChoiceWidget
 {
-    Q_OBJECT
-
 public:
     /// Thrown when the variable is gone and someone tries to access it. @ingroup errors
     DE_ERROR(VariableMissingError);
@@ -42,14 +40,13 @@ public:
 
 public:
     VariableChoiceWidget(Variable &variable, VariableType variableType,
-                         String const &name = String());
+                         String const &name = {});
 
     Variable &variable() const;
 
-public slots:
     void updateFromVariable();
 
-protected slots:
+protected:
     void setVariableFromWidget();
 
 private:

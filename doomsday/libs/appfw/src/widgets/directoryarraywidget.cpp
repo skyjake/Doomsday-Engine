@@ -29,7 +29,7 @@
 
 namespace de {
 
-static String const CFG_LAST_FOLDER("resource.latestDirectory");
+static const char *CFG_LAST_FOLDER("resource.latestDirectory");
 
 DE_PIMPL_NOREF(DirectoryArrayWidget)
 {};

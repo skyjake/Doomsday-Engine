@@ -35,22 +35,16 @@ public:
     FadeToBlackWidget();
 
     void initFadeFromBlack(TimeSpan const &span);
-
     void initFadeToBlack(TimeSpan const &span);
 
     void start(TimeSpan const &delay = 0.0);
-
     void pause();
-
     void resume();
-
     void cancel();
+    void disposeIfDone();
 
     bool isStarted() const;
-
     bool isDone() const;
-
-    void disposeIfDone();
 
 private:
     DE_PRIVATE(d)

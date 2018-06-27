@@ -19,7 +19,6 @@
 #ifndef LIBAPPFW_LOGWIDGET_H
 #define LIBAPPFW_LOGWIDGET_H
 
-#include <QObject>
 #include <de/LogSink>
 #include <de/Animation>
 
@@ -37,10 +36,11 @@ namespace de {
  */
 class LIBAPPFW_PUBLIC LogWidget : public ScrollAreaWidget
 {
-    Q_OBJECT
+public:
+    DE_DEFINE_AUDIENCE2(ContentHeight, void contentHeightIncreased(LogWidget &, int delta))
 
 public:
-    LogWidget(String const &name = String());
+    LogWidget(String const &name = {});
 
     /**
      * Sets the formatter that will be used for formatting log entries for the widget.
@@ -75,11 +75,6 @@ public:
     void update();
     void drawContent();
     bool handleEvent(Event const &event);
-
-signals:
-    //void scrollPositionChanged(int pos);
-    //void scrollMaxChanged(int maximum);
-    void contentHeightIncreased(int delta);
 
 protected:
     void glInit();

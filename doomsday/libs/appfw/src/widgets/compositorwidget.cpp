@@ -27,7 +27,7 @@ DE_GUI_PIMPL(CompositorWidget)
     Drawable drawable;
     struct Buffer {
         GLTexture texture;
-        QScopedPointer<GLFramebuffer> offscreen;
+        std::unique_ptr<GLFramebuffer> offscreen;
 
         void clear() {
             texture.clear();
@@ -35,7 +35,7 @@ DE_GUI_PIMPL(CompositorWidget)
         }
     };
     int nextBufIndex;
-    QList<Buffer *> buffers; ///< Stack of buffers to allow nested compositing.
+    List<Buffer *> buffers; ///< Stack of buffers to allow nested compositing.
     GLUniform uMvpMatrix;
     GLUniform uTex;
 
@@ -55,7 +55,7 @@ DE_GUI_PIMPL(CompositorWidget)
      */
     Buffer *beginBufferUse()
     {
-        if (nextBufIndex <= buffers.size())
+        if (nextBufIndex <= buffers.sizei())
         {
             buffers.append(new Buffer);
         }
@@ -97,7 +97,7 @@ DE_GUI_PIMPL(CompositorWidget)
 
     void glDeinit()
     {
-        qDeleteAll(buffers);
+        deleteAll(buffers);
         buffers.clear();
         drawable.clear();
     }
@@ -144,7 +144,7 @@ void CompositorWidget::preDrawChildren()
         //qDebug() << "entering compositor" << d->nextBufIndex;
 
         Impl::Buffer *buf = d->beginBufferUse();
-        DE_ASSERT(!buf->offscreen.isNull());
+        DE_ASSERT(buf->offscreen);
 
         GLState::push()
                 .setTarget(*buf->offscreen)

@@ -41,12 +41,16 @@ DE_GUI_PIMPL(CommandWidget)
 
         // Height for the content: depends on the document height (plus margins), but at
         // most 400; never extend outside the view, though.
-        popup->setPreferredHeight(rule("editor.completion.height"),
+        popup->setPreferredHeight(rule(DE_STR("editor.completion.height")),
                                   self().rule().top() - rule("gap"));
 
         self().add(popup);
     }
+
+    DE_PIMPL_AUDIENCES(GotFocus, LostFocus, Command)
 };
+
+DE_AUDIENCE_METHODS(CommandWidget, GotFocus, LostFocus, Command)
 
 CommandWidget::CommandWidget(String const &name)
     : LineEditWidget(name), d(new Impl(this))
@@ -60,7 +64,7 @@ PopupWidget &CommandWidget::autocompletionPopup()
 void CommandWidget::focusGained()
 {
     LineEditWidget::focusGained();
-    emit gotFocus();
+    DE_FOR_AUDIENCE2(GotFocus, i) { i->gotFocus(*this); }
 }
 
 void CommandWidget::focusLost()
@@ -70,7 +74,7 @@ void CommandWidget::focusLost()
     // Get rid of the autocompletion popup.
     closeAutocompletionPopup();
 
-    emit lostFocus();
+    DE_FOR_AUDIENCE2(LostFocus, i) { i->lostFocus(*this); }
 }
 
 bool CommandWidget::handleEvent(Event const &event)
@@ -83,7 +87,7 @@ bool CommandWidget::handleEvent(Event const &event)
 
         if (d->allowReshow &&
             isSuggestingCompletion() &&
-            key.qtKey() == Qt::Key_Tab && !d->popup->isOpen() &&
+            key.ddKey() == DDKEY_TAB && !d->popup->isOpen() &&
             suggestedCompletions().size() > 1)
         {
             // The completion popup has been manually dismissed, but the editor is
@@ -94,7 +98,7 @@ bool CommandWidget::handleEvent(Event const &event)
         }
 
         // Override the handling of the Enter key.
-        if (key.qtKey() == Qt::Key_Return || key.qtKey() == Qt::Key_Enter)
+        if (key.ddKey() == DDKEY_RETURN || key.ddKey() == DDKEY_ENTER)
         {
             if (isAcceptedAsCommand(text()))
             {
@@ -103,7 +107,7 @@ bool CommandWidget::handleEvent(Event const &event)
 
                 String const entered = d->history.enter();
                 executeCommand(entered);
-                emit commandEntered(entered);
+                DE_FOR_AUDIENCE2(Command, i) { i->commandEntered(entered); }
             }
             return true;
         }
@@ -133,27 +137,27 @@ void CommandWidget::update()
     setAttribute(FocusCyclingDisabled, !text().isEmpty());
 }
 
-bool CommandWidget::handleControlKey(int qtKey, KeyModifiers const &mods)
+bool CommandWidget::handleControlKey(shell::Key key, KeyModifiers const &mods)
 {
-    if (LineEditWidget::handleControlKey(qtKey, mods))
+    if (LineEditWidget::handleControlKey(key, mods))
     {
         return true;
     }
-    if (d->history.handleControlKey(qtKey))
+    if (d->history.handleControlKey(key))
     {
         return true;
     }
     return false;
 }
 
-void CommandWidget::operator >> (PersistentState &toState) const
+void CommandWidget::operator>>(PersistentState &toState) const
 {
     int const MAX_PERSISTENT_HISTORY = 200;
     toState.objectNamespace().set(name().concatenateMember("history"),
                                   new ArrayValue(d->history.fullHistory(MAX_PERSISTENT_HISTORY)));
 }
 
-void CommandWidget::operator << (PersistentState const &fromState)
+void CommandWidget::operator<<(PersistentState const &fromState)
 {
     d->history.setFullHistory(fromState.objectNamespace()
                               .getStringList(name().concatenateMember("history")));
@@ -178,7 +182,7 @@ void CommandWidget::closeAutocompletionPopup()
 void CommandWidget::showAutocompletionPopup(String const &completionsText)
 {
     d->popup->document().setText(completionsText);
-    d->popup->document().scrollToTop(0);
+    d->popup->document().scrollToTop(0.0);
 
     d->popup->setAnchorX(cursorRect().middle().x);
     d->popup->setAnchorY(rule().top());

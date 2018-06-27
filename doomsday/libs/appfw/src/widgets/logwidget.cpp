@@ -30,17 +30,15 @@
 #include <de/Task>
 #include <de/TaskPool>
 #include <de/App>
-
-#include <QImage>
-#include <QPainter>
+#include <de/Image>
 
 namespace de {
 
 using namespace ui;
 
-DE_GUI_PIMPL(LogWidget),
-DE_OBSERVES(Atlas, OutOfSpace),
-public Font::RichFormat::IStyle
+DE_GUI_PIMPL(LogWidget)
+, DE_OBSERVES(Atlas, OutOfSpace)
+, public Font::RichFormat::IStyle
 {
     typedef GLBufferT<GuiVertex> VertexBuf;
 
@@ -253,7 +251,7 @@ public Font::RichFormat::IStyle
         void clear()
         {
             DE_GUARD(_wrappedEntries);
-            qDeleteAll(_wrappedEntries);
+            deleteAll(_wrappedEntries);
             _wrappedEntries.clear();
         }
 
@@ -317,13 +315,13 @@ public Font::RichFormat::IStyle
         int _next;
         int _width;
 
-        struct WrappedEntries : public QList<CacheEntry *>, public Lockable {};
+        struct WrappedEntries : public List<CacheEntry *>, public Lockable {};
         WrappedEntries _wrappedEntries; ///< New entries possibly created in background threads.
     };
 
     WrappingMemoryLogSink sink;
 
-    QList<CacheEntry *> cache; ///< Cached entries in use when drawing.
+    List<CacheEntry *> cache; ///< Cached entries in use when drawing.
     int cacheWidth;
 
     // State.
@@ -363,10 +361,10 @@ public Font::RichFormat::IStyle
         , sink(this)
         , cacheWidth(0)
         , visibleRange(Rangei(-1, -1))
-        , formatter(0)
-        , font(0)
-        , buf(0)
-        , entryAtlas(0)
+        , formatter(nullptr)
+        , font(nullptr)
+        , buf(nullptr)
+        , entryAtlas(nullptr)
         , entryAtlasLayoutChanged(false)
         , entryAtlasFull(false)
         , uMvpMatrix  ("uMvpMatrix", GLUniform::Mat4)
@@ -394,7 +392,7 @@ public Font::RichFormat::IStyle
 
     void clearCache()
     {
-        qDeleteAll(cache); // Ongoing text wrapping cancelled automatically.
+        deleteAll(cache); // Ongoing text wrapping cancelled automatically.
         cache.clear();
     }
 
@@ -553,7 +551,7 @@ public Font::RichFormat::IStyle
 
         // Resize entries starting from the first visible entry, continue down to the
         // most recent entry.
-        for (int idx = startFrom; idx < cache.size(); ++idx)
+        for (int idx = startFrom; idx < cache.sizei(); ++idx)
         {
             cache[idx]->rewrap(contentWidth());
         }
@@ -580,7 +578,7 @@ public Font::RichFormat::IStyle
 
         // Excess entries after the visible range.
         excess = visibleRange.end + len;
-        for (int i = excess; i < cache.size(); ++i)
+        for (int i = excess; i < cache.sizei(); ++i)
         {
             cache[i]->releaseFromAtlas();
         }
@@ -591,7 +589,7 @@ public Font::RichFormat::IStyle
      */
     void releaseAllNonVisibleEntries()
     {
-        for (int i = 0; i < cache.size(); ++i)
+        for (int i = 0; i < cache.sizei(); ++i)
         {
             if (!visibleRange.contains(i))
             {
@@ -608,7 +606,7 @@ public Font::RichFormat::IStyle
         DE_ASSERT_IN_MAIN_THREAD();
 
         // Remove oldest excess entries.
-        int num = cache.size() - sink.maxEntries();
+        int num = cache.sizei() - sink.maxEntries();
         if (num > 0)
         {
             // There is one sink entry and one cached entry for each log entry.
@@ -680,7 +678,7 @@ public Font::RichFormat::IStyle
             entryAtlasLayoutChanged = false;
 
             // Find the visible range and update all visible entries.
-            for (int idx = cache.size() - 1; yBottom >= -contentOffsetForDrawing && idx >= 0; --idx)
+            for (int idx = cache.sizei() - 1; yBottom >= -contentOffsetForDrawing && idx >= 0; --idx)
             {
                 CacheEntry *entry = cache[idx];
 
@@ -743,7 +741,10 @@ nextAttempt:
             modifyContentHeight(heightDelta);
             if (needHeightNotify && heightDelta > 0)
             {
-                emit self().contentHeightIncreased(heightDelta);
+                DE_FOR_PUBLIC_AUDIENCE2(ContentHeight, i)
+                {
+                    i->contentHeightIncreased(self(), heightDelta);
+                }
             }
         }
 
@@ -795,7 +796,11 @@ nextAttempt:
             GLState::pop();
         }
     }
+
+    DE_PIMPL_AUDIENCE(ContentHeight)
 };
+
+DE_AUDIENCE_METHODS(LogWidget, ContentHeight)
 
 LogWidget::LogWidget(String const &name)
     : ScrollAreaWidget(name), d(new Impl(this))

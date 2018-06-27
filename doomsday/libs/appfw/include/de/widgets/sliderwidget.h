@@ -34,13 +34,12 @@ namespace de {
  */
 class LIBAPPFW_PUBLIC SliderWidget : public GuiWidget
 {
-    Q_OBJECT
+public:
+    DE_DEFINE_AUDIENCE2(Value,     void sliderValueChanged(SliderWidget &, double value))
+    DE_DEFINE_AUDIENCE2(UserValue, void sliderValueChangedByUser(SliderWidget &, double value))
 
 public:
-    DENG2_DEFINE_AUDIENCE2(Change, void sliderValueChanged(SliderWidget &))
-
-public:
-    SliderWidget(String const &name = String());
+    SliderWidget(String const &name = {});
 
     void setRange(Rangei const &intRange, int step = 1);
     void setRange(Rangef const &floatRange, float step = 0);
@@ -70,13 +69,8 @@ public:
     void update();
     void drawContent();
     bool handleEvent(Event const &event);
+    void setValueFromText(const String &text);
 
-public slots:
-    void setValueFromText(QString text);
-
-signals:
-    void valueChanged(double value);
-    void valueChangedByUser(double value);
 
 protected:
     void glInit();

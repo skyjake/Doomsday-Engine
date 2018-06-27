@@ -193,7 +193,7 @@ DE_GUI_PIMPL(PopupMenuWidget)
             {
                 widget.margins().set("");
                 widget.setFont("separator.empty");
-                widget.as<LabelWidget>().setOverlayImage(0);
+                widget.as<LabelWidget>().setOverlayImage(nullptr);
             }
             else
             {
@@ -227,7 +227,7 @@ DE_GUI_PIMPL(PopupMenuWidget)
         GridLayout const &layout = self().menu().layout();
         AutoRef<Rule const> halfUnit = self().rule("halfunit");
 
-        foreach (GuiWidget *widget, self().menu().childWidgets())
+        for (GuiWidget *widget : self().menu().childWidgets())
         {
             if (self().menu().isWidgetPartOfMenu(*widget))
             {
@@ -249,7 +249,7 @@ DE_GUI_PIMPL(PopupMenuWidget)
 
     bool hasButtonsWithImages() const
     {
-        foreach (GuiWidget *child, self().menu().childWidgets())
+        for (GuiWidget *child : self().menu().childWidgets())
         {
             if (ButtonWidget *button = maybeAs<ButtonWidget>(child))
             {
@@ -273,7 +273,7 @@ DE_GUI_PIMPL(PopupMenuWidget)
         auto const &padding = rule("popup.menu.paddedmargin");
         auto const &none    = rule("popup.menu.margin");
 
-        foreach (GuiWidget *widget, self().menu().childWidgets())
+        for (GuiWidget *widget : self().menu().childWidgets())
         {
             // Pad annotations with the full amount.
             if (LabelWidget *label = maybeAs<LabelWidget>(widget))
@@ -332,7 +332,7 @@ DE_GUI_PIMPL(PopupMenuWidget)
         // Position item highlight.
         if (&button == hover && state == ButtonWidget::Up)
         {
-            hover = 0;
+            hover = nullptr;
             self().requestGeometry();
             return;
         }
@@ -506,7 +506,7 @@ void PopupMenuWidget::panelClosing()
     if (d->hover)
     {
         auto &btn = *const_cast<ButtonWidget *>(d->hover);
-        d->hover = 0;
+        d->hover = nullptr;
         btn.setState(ButtonWidget::Up);
         //d->setButtonColors(btn);
         d->updateImageColor(btn);

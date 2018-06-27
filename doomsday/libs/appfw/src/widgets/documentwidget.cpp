@@ -127,7 +127,7 @@ public Font::RichFormat::IStyle
     {
         if (fontStyle == Font::RichFormat::Monospace)
         {
-            return &style().fonts().font(QStringLiteral("document.monospace"));
+            return &style().fonts().font(DE_STR("document.monospace"));
         }
         return style().richStyleFont(fontStyle);
     }

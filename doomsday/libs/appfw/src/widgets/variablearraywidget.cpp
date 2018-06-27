@@ -133,14 +133,14 @@ DE_GUI_PIMPL(VariableArrayWidget)
         }
         else if (menu->items().size() == 1)
         {
-            var->set(new TextValue(menu->items().at(0).data().toString()));
+            var->set(new TextValue(menu->items().at(0).data().asText()));
         }
         else
         {
             auto *array = new ArrayValue;
             for (ui::DataPos i = 0; i < menu->items().size(); ++i)
             {
-                array->add(new TextValue(menu->items().at(i).data().toString()));
+                array->add(new TextValue(menu->items().at(i).data().asText()));
             }
             var->set(array);
         }
@@ -255,7 +255,7 @@ ButtonWidget *VariableArrayWidget::detachAddButton(Rule const &contentWidth)
 ui::Item *VariableArrayWidget::makeItem(Value const &value)
 {
     auto *item = new ui::Item(ui::Item::ShownAsLabel, labelForElement(value));
-    item->setData(value.asText());
+    item->setData(value);
     return item;
 }
 
@@ -283,7 +283,10 @@ void VariableArrayWidget::updateFromVariable()
 void VariableArrayWidget::setVariableFromWidget()
 {
     d->setVariableFromWidget();
-    emit arrayChanged();
+    DE_FOR_AUDIENCE2(Change, i)
+    {
+        i->variableArrayChanged(*this);
+    }
 }
 
 } // namespace de

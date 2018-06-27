@@ -40,8 +40,8 @@ DE_PIMPL(SequentialLayout)
           initialY(holdRef(y)),
           posX(holdRef(x)),
           posY(holdRef(y)),
-          fixedWidth(0),
-          fixedHeight(0),
+          fixedWidth(nullptr),
+          fixedHeight(nullptr),
           totalWidth(new ConstantRule(0)),
           totalHeight(new ConstantRule(0))
     {}
@@ -217,7 +217,7 @@ void SequentialLayout::setOverrideHeight(Rule const &height)
 
 SequentialLayout &SequentialLayout::append(GuiWidget &widget, AppendMode mode)
 {
-    d->append(&widget, 0, mode);
+    d->append(&widget, nullptr, mode);
     return *this;
 }
 
@@ -229,7 +229,7 @@ SequentialLayout &SequentialLayout::append(GuiWidget &widget, Rule const &spaceB
 
 SequentialLayout &SequentialLayout::append(Rule const &emptySpace)
 {
-    d->append(0, &emptySpace, IgnoreMinorAxis);
+    d->append(nullptr, &emptySpace, IgnoreMinorAxis);
     return *this;
 }
 
@@ -240,7 +240,7 @@ GuiWidgetList SequentialLayout::widgets() const
 
 int SequentialLayout::size() const
 {
-    return d->widgets.size();
+    return d->widgets.sizei();
 }
 
 bool SequentialLayout::isEmpty() const

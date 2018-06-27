@@ -22,7 +22,7 @@ namespace de {
 
 DE_PIMPL_NOREF(FadeToBlackWidget)
 {
-    TimeSpan span = 1;
+    TimeSpan span = 1.0;
     bool started = false;
 };
 

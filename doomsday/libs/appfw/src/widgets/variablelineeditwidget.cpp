@@ -40,7 +40,7 @@ DE_OBSERVES(Variable, Change  )
     {
         if (!var) return;
 
-        self().setText(var->value<TextValue>());
+        self().setText(var->value().asText());
     }
 
     void setVariableFromWidget()
@@ -59,7 +59,7 @@ DE_OBSERVES(Variable, Change  )
 
     void variableBeingDeleted(Variable &)
     {
-        var = 0;
+        var = nullptr;
         self().disable();
     }
 };
@@ -67,8 +67,7 @@ DE_OBSERVES(Variable, Change  )
 VariableLineEditWidget::VariableLineEditWidget(Variable &variable, String const &name)
     : LineEditWidget(name), d(new Impl(this, variable))
 {
-    connect(this, SIGNAL(editorContentChanged()),
-            this, SLOT(setVariableFromWidget()));
+    audienceForContentChange() += [this](){ setVariableFromWidget(); };
 }
 
 Variable &VariableLineEditWidget::variable() const
