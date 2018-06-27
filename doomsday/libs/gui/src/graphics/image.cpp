@@ -384,6 +384,10 @@ Image::Image(Image const &other)
     : d(new Impl(this, *other.d))
 {}
 
+Image::Image(Image &&moved)
+    : d(std::move(moved.d))
+{}
+
 Image::Image(Size const &size, Format format)
     : d(new Impl(this, size, format))
 {
@@ -401,6 +405,12 @@ Image::Image(Size const &size, Format format, ByteRefArray const &refPixels)
 Image &Image::operator=(const Image &other)
 {
     d.reset(new Impl(this, *other.d));
+    return *this;
+}
+
+Image &Image::operator=(Image &&moved)
+{
+    std::swap(d, moved.d);
     return *this;
 }
 

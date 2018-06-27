@@ -489,6 +489,11 @@ int GLWindow::pixelHeight() const
     return pixelSize().y;
 }
 
+Vec2i GLWindow::mapToGlobal(const Vec2i &coordInsideWindow) const
+{
+    return pos() + coordInsideWindow;
+}
+
 WindowEventHandler &GLWindow::eventHandler() const
 {
     DE_ASSERT(d->handler != nullptr);

@@ -120,8 +120,8 @@ public:
 
 public:
     Image();
-    Image(Image const &other);
-//    Image(QImage const &image);
+    Image(const Image &);
+    Image(Image &&);
 
     /**
      * Constructs an image with uninitialized contents.
@@ -142,13 +142,12 @@ public:
 
     Image(Size const &size, Format format, ByteRefArray const &refPixels);
 
-    Image &operator = (Image const &other);
-//    Image &operator = (QImage const &other);
+    Image &operator=(const Image &);
+    Image &operator=(Image &&);
 
     inline explicit operator bool() const { return !isNull(); }
 
     Format format() const;
-//    QImage::Format qtFormat() const;
 
     Size size() const;
     Rectanglei rect() const;

@@ -123,6 +123,8 @@ public:
 
     inline Rectanglei geometry() const { return {x(), y(), pointSize().x, pointSize().y }; }
 
+    Vec2i mapToGlobal(const Vec2i &coordInsideWindow) const;
+
     int pointWidth() const;
     int pointHeight() const;
     int pixelWidth() const;
