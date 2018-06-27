@@ -752,6 +752,11 @@ String String::format(const char *format, ...)
     return buffer;
 }
 
+String String::asText(dfloat value, int precision)
+{
+    return String::format(stringf("%%.%if", precision).c_str(), value);
+}
+
 dint String::toInt(bool *ok, int base, duint flags) const
 {
     char *endp;

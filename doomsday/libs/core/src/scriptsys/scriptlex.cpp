@@ -353,23 +353,18 @@ bool ScriptLex::combinesWith(Char a, Char b)
     return false;
 }
 
-bool ScriptLex::isKeyword(Token const &token)
+const Set<CString> ScriptLex::KEYWORDS = {
+    AND,    BREAK, CATCH,  CONST,  CONTINUE, DEF,  DEL,     ELSE,   ELSIF, END,
+    FOR,    IF,    IMPORT, EXPORT, IN,       NOT,  OR,      PASS,   PRINT, RECORD,
+    RETURN, SCOPE, THROW,  TRY,    WHILE,    NONE, T_FALSE, T_TRUE, PI,
+};
+
+bool ScriptLex::isKeyword(Token const &token) // static
 {
-    static const Set<CString> keywordStr{
-        AND,    BREAK, CATCH,  CONST,  CONTINUE, DEF,  DEL,     ELSE,   ELSIF, END,
-        FOR,    IF,    IMPORT, EXPORT, IN,       NOT,  OR,      PASS,   PRINT, RECORD,
-        RETURN, SCOPE, THROW,  TRY,    WHILE,    NONE, T_FALSE, T_TRUE, PI,
-    };
-    return keywordStr.contains(token.cStr());
+    return KEYWORDS.contains(token.cStr());
 }
 
-/*StringList ScriptLex::keywords()
+StringList ScriptLex::keywords() // static
 {
-    StringList list;
-    for (const char *kw : keywordStr)
-    {
-        list << kw;
-    }
-    return list;
+    return compose<StringList>(KEYWORDS.begin(), KEYWORDS.end());
 }
-*/

@@ -72,7 +72,6 @@
 #endif
 
 #if defined(__cplusplus) && !defined(DE_C_API_ONLY)
-#  define DE_USE_QT
 #  include <cstddef> // size_t
 #  include <cstring> // memset
 #  include <functional>

@@ -22,6 +22,7 @@
 
 #include "../Lex"
 #include "../TokenBuffer"
+#include "../Set"
 
 namespace de {
 
@@ -128,11 +129,14 @@ public:
     static bool isKeyword(Token const &token);
 
     /// Returns a list of all the keywords.
-//    static StringList keywords();
+    static StringList keywords();
 
     /// Determines whether one character should join another to
     /// form a longer token.
     static bool combinesWith(Char a, Char b);
+
+private:
+    static const Set<CString> KEYWORDS;
 };
 
 } // namespace de

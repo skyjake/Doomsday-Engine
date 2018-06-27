@@ -335,6 +335,7 @@ public:
     String        substr(CharPos pos, dsize charCount = npos) const;
     String        substr(const Range<CharPos> &charRange) const;
     String        substr(BytePos pos, dsize charCount = npos) const;
+    inline String substr(BytePos pos, BytePos charCount) const { return substr(pos, charCount.index); }
     String        substr(const Range<BytePos> &byteRange) const;
     String        left(BytePos count) const { return substr(BytePos{0}, count.index); }
     String        left(CharPos count) const { return substr(CharPos{0}, count.index); }
@@ -758,6 +759,7 @@ public:
     static String asText(duint64 value) { return String::format("%llu", value); }
     static String asText(dsize value)   { return String::format("%zu", value); }
     static String asText(dfloat value)  { return String::format("%f", value); }
+    static String asText(dfloat value, int precision);
     static String asText(ddouble value) { return String::format("%f", value); }
     static String asText(char value)    { return String::format("%c", value); }
     static String asText(Char value)
