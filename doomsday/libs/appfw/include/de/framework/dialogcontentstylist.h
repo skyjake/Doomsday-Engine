@@ -34,8 +34,8 @@ class DialogWidget;
  * @ingroup appfw
  */
 class LIBAPPFW_PUBLIC DialogContentStylist
-        : public ui::Stylist,
-          DE_OBSERVES(Widget, ChildAddition)
+    : public ui::Stylist
+    , DE_OBSERVES(Widget, ChildAddition)
 {
 public:
     DialogContentStylist();

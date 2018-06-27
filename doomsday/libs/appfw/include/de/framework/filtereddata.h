@@ -73,19 +73,17 @@ public:
     void refilter();
 
     Data &insert(Pos pos, Item *item) override;
-    void remove(Pos pos) override;
-    Item *take(Pos pos) override;
-    Item &at(Pos pos) override;
+    void        remove(Pos pos) override;
+    Item *      take(Pos pos) override;
+    Item &      at(Pos pos) override;
     Item const &at(Pos pos) const override;
-    Pos find(Item const &item) const override;
-    Pos findLabel(String const &label) const override;
-    Pos findData(QVariant const &data) const override;
-    void sort(SortMethod method = Ascending) override {
-        Data::sort(method);
-    }
-    void sort(LessThanFunc lessThan) override;
-    void stableSort(LessThanFunc lessThan) override;
-    dsize size() const override;
+    Pos         find(Item const &item) const override;
+    Pos         findLabel(String const &label) const override;
+    Pos         findData(const Value &data) const override;
+    void        sort(SortMethod method = Ascending) override { Data::sort(method); }
+    void        sort(LessThanFunc lessThan) override;
+    void        stableSort(LessThanFunc lessThan) override;
+    dsize       size() const override;
 
 private:
     DE_PRIVATE(d)

@@ -35,7 +35,9 @@ namespace de {
  */
 class LIBAPPFW_PUBLIC LineEditWidget : public GuiWidget, public shell::AbstractLineEditor
 {
-    Q_OBJECT
+public:
+    DE_DEFINE_AUDIENCE2(Enter,         void enterPressed(const String &text))
+    DE_DEFINE_AUDIENCE2(ContentChange, void editorContentChanged(LineEditWidget &))
 
 public:
     LineEditWidget(String const &name = String());
@@ -83,10 +85,6 @@ protected slots:
     void userEnteredText(QString);
     void userFinishedTextEntry();
 #endif
-    
-signals:
-    void enterPressed(QString text);
-    void editorContentChanged();
 
 protected:
     void glInit() override;

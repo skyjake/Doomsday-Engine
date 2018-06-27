@@ -18,26 +18,26 @@
 
 #include "de/FocusWidget"
 
-#include <QTimer>
+#include <de/Timer>
 
 namespace de {
 
-static TimeSpan FLASH_SPAN = .5;
+static constexpr ddouble FLASH_SPAN = .5;
 
 DE_PIMPL(FocusWidget)
 {
-    QTimer flashing;
-    SafeWidgetPtr<GuiWidget const> reference;
-    Animation color { 0.f, Animation::Linear };
+    SafeWidgetPtr<const GuiWidget> reference;
+    Animation color{0.f, Animation::Linear};
     Vec4f flashColors[2];
     float fadeOpacity = 0.f;
+    Timer flashing;
 
     Impl(Public *i) : Base(i)
     {
         flashColors[0] = Style::get().colors().colorf("focus.flash.off");
         flashColors[1] = Style::get().colors().colorf("focus.flash.on");
 
-        flashing.setInterval(FLASH_SPAN.asMilliSeconds());
+        flashing.setInterval(FLASH_SPAN);
         flashing.setSingleShot(false);
     }
 
@@ -66,7 +66,7 @@ FocusWidget::FocusWidget(String const &name)
     , d(new Impl(this))
 {
     hide();
-    connect(&d->flashing, SIGNAL(timeout()), this, SLOT(updateFlash()));
+    d->flashing.audienceForTrigger() += [this]() { updateFlash(); };
 }
 
 void FocusWidget::startFlashing(GuiWidget const *reference)

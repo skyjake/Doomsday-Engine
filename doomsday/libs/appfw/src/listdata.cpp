@@ -17,8 +17,6 @@
  */
 
 #include "de/ui/ListData"
-
-#include <QtAlgorithms>
 #include <algorithm>
 
 namespace de {
@@ -28,7 +26,7 @@ using namespace ui;
 ListData::~ListData()
 {
     // Delete all items.
-    qDeleteAll(_items);
+    deleteAll(_items);
 }
 
 dsize ListData::size() const
@@ -66,11 +64,11 @@ Data::Pos ListData::findLabel(String const &label) const
     return InvalidPos;
 }
 
-Data::Pos ListData::findData(QVariant const &data) const
+Data::Pos ListData::findData(const Value &data) const
 {
     for (Pos i = 0; i < size(); ++i)
     {
-        if (at(i).data() == data) return i;
+        if (at(i).data().compare(data) == 0) return i;
     }
     return InvalidPos;
 }
@@ -88,13 +86,7 @@ Data &ListData::insert(Pos pos, Item *item)
 {
     _items.insert(pos, item);
     item->setDataContext(*this);
-
-    // Notify.
-    DE_FOR_AUDIENCE2(Addition, i)
-    {
-        i->dataItemAdded(pos, *item);
-    }
-
+    DE_FOR_AUDIENCE2(Addition, i) { i->dataItemAdded(pos, *item); }
     return *this;
 }
 
@@ -106,33 +98,24 @@ void ListData::remove(Pos pos)
 Item *ListData::take(Data::Pos pos)
 {
     DE_ASSERT(pos < size());
-
     Item *taken = _items.takeAt(pos);
-
-    // Notify.
-    DE_FOR_AUDIENCE2(Removal, i)
-    {
-        i->dataItemRemoved(pos, *taken);
-    }
-
+    DE_FOR_AUDIENCE2(Removal, i) { i->dataItemRemoved(pos, *taken); }
     return taken;
 }
 
 void ListData::sort(LessThanFunc lessThan)
 {
-    qSort(_items.begin(), _items.end(), [&lessThan] (Item const *a, Item const *b) {
+    std::sort(_items.begin(), _items.end(), [&lessThan] (Item const *a, Item const *b) {
         return lessThan(*a, *b);
     });
-
     DE_FOR_AUDIENCE2(OrderChange, i) i->dataItemOrderChanged();
 }
 
 void ListData::stableSort(LessThanFunc lessThan)
 {
-    qStableSort(_items.begin(), _items.end(), [&lessThan] (Item const *a, Item const *b) {
+    std::stable_sort(_items.begin(), _items.end(), [&lessThan] (Item const *a, Item const *b) {
         return lessThan(*a, *b);
     });
-
     DE_FOR_AUDIENCE2(OrderChange, i) i->dataItemOrderChanged();
 }
 

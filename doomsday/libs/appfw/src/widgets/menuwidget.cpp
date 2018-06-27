@@ -75,7 +75,7 @@ DE_PIMPL(MenuWidget)
         GuiWidget &parent() const
         {
             auto *p = d->organizer.itemWidget(_parentItem);
-            DE_ASSERT(p != 0);
+            DE_ASSERT(p != nullptr);
             return *p;
         }
 
@@ -143,7 +143,7 @@ DE_PIMPL(MenuWidget)
     /**
      * Action owned by the button that represents a SubwidgetItem.
      */
-    class SubwidgetAction : public SubAction
+    class SubwidgetAction : public SubAction, DE_OBSERVES(PanelWidget, Close)
     {
     public:
         SubwidgetAction(MenuWidget::Impl *inst, ui::SubwidgetItem const &parentItem)
@@ -161,13 +161,17 @@ DE_PIMPL(MenuWidget)
 
             if (_item.semantics().testFlag(Item::ClosesParentPopup))
             {
-                // PopupMenuWidget has a MenuWidget as content.
-                if (auto *selfPopup = maybeAs<PopupMenuWidget>(d->self().parentGuiWidget()))
-                {
-                    QObject::connect(_widget.get(), SIGNAL(closed()), selfPopup, SLOT(close()));
-                }
+                _widget->audienceForClose() += this;
             }
             SubAction::trigger();
+        }
+
+        void panelClosed(PanelWidget &)
+        {
+            if (auto *selfPopup = maybeAs<PopupMenuWidget>(d->self().parentGuiWidget()))
+            {
+                selfPopup->close();
+            }
         }
 
     private:
@@ -181,7 +185,7 @@ DE_PIMPL(MenuWidget)
     ListData defaultItems;
     Data const *items = nullptr;
     ChildWidgetOrganizer organizer;
-    QSet<PanelWidget *> openSubs;
+    Set<PanelWidget *> openSubs;
     IndirectRule *outContentHeight;
 
     SizePolicy colPolicy = Fixed;

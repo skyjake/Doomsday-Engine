@@ -25,31 +25,31 @@
 
 namespace de {
 
-static TimeSpan const SWITCH_ANIM_SPAN = 0.3;
+static constexpr ddouble SWITCH_ANIM_SPAN = 0.3;
 
-DE_PIMPL(ToggleWidget),
-DE_OBSERVES(ButtonWidget, Press)
+DE_PIMPL(ToggleWidget)
+, DE_OBSERVES(ButtonWidget, Press)
 {
     /// Draws the animated I/O toggle indicator.
     class ToggleProceduralImage : public ProceduralImage
     {
     public:
         ToggleProceduralImage(GuiWidget &owner)
-            : _owner(owner),
-              _pos(0, Animation::EaseBoth),
-              _animating(false)
+            : _owner(owner)
+            , _pos(0, Animation::EaseBoth)
+            , _animating(false)
         {
             const Image &img = style().images().image("toggle.onoff");
             setPointSize(img.size() * img.pointRatio());
             updateStyle();
         }
 
-        Style const &style() const { return _owner.style(); }
-        Atlas &atlas() const { return _owner.root().atlas(); }
+        const Style &style() const { return _owner.style(); }
+        Atlas &      atlas() const { return _owner.root().atlas(); }
 
         void setState(ToggleState st, bool animate)
         {
-            _pos.setValue(st == Active? 1 : 0, animate? SWITCH_ANIM_SPAN : TimeSpan());
+            _pos.setValue(st == Active ? 1 : 0, animate ? SWITCH_ANIM_SPAN : 0.0);
             _animating = true;
         }
 
@@ -129,13 +129,16 @@ DE_OBSERVES(ButtonWidget, Press)
         // Toggle the state.
         self().setActive(self().isInactive());
 
-        emit self().stateChangedByUser(self().toggleState());
+        DE_FOR_PUBLIC_AUDIENCE2(UserToggle, i)
+        {
+            i->toggleStateChangedByUser(self().toggleState());
+        }
     }
 
-    DE_PIMPL_AUDIENCE(Toggle)
+    DE_PIMPL_AUDIENCES(Toggle, UserToggle)
 };
 
-DE_AUDIENCE_METHOD(ToggleWidget, Toggle)
+DE_AUDIENCE_METHODS(ToggleWidget, Toggle, UserToggle)
 
 ToggleWidget::ToggleWidget(Flags const &flags, String const &name)
     : ButtonWidget(name)
@@ -154,12 +157,10 @@ void ToggleWidget::setToggleState(ToggleState state, bool notify)
         {
             d->procImage->setState(state, hasBeenUpdated());
         }
-
         if (notify)
         {
-            DE_FOR_AUDIENCE2(Toggle, i) i->toggleStateChanged(*this);
+            DE_FOR_AUDIENCE2(Toggle, i) { i->toggleStateChanged(*this); }
         }
-        emit stateChanged(state);
     }
 }
 

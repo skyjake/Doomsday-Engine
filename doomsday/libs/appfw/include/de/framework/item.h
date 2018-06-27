@@ -22,8 +22,7 @@
 #include "../libappfw.h"
 #include <de/Observers>
 #include <de/String>
-
-#include <QVariant>
+#include <de/Value>
 
 namespace de {
 namespace ui {
@@ -63,7 +62,7 @@ public:
 
         DefaultSemantics      = ShownAsLabel
     };
-    Q_DECLARE_FLAGS(Semantics, SemanticFlag)
+    using Semantics = Flags;
 
     DE_DEFINE_AUDIENCE2(Change, void itemChanged(Item const &item))
 
@@ -99,9 +98,9 @@ public:
      *
      * @param d  Variant data to be associated with the item.
      */
-    void setData(QVariant const &d);
+    void setData(const Value &d);
 
-    QVariant const &data() const;
+    const Value &data() const;
 
     DE_CAST_METHODS()
 
@@ -113,8 +112,6 @@ public:
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Item::Semantics)
 
 } // namespace ui
 } // namespace de

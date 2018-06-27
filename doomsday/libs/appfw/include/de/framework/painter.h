@@ -24,6 +24,7 @@
 #include <de/GLSubBuffer>
 #include <de/GLDrawQueue>
 #include <de/VertexBuilder>
+#include <de/List>
 
 namespace de {
 
@@ -48,7 +49,7 @@ public:
     Painter();
 
     /**
-     * Initializes the Painter for drawing. This must be called on every frame, before 
+     * Initializes the Painter for drawing. This must be called on every frame, before
      * drawing anything.
      */
     void init();
@@ -77,7 +78,7 @@ public:
      * @param vertices  Vertices to draw. Batch indices in the array are updated by
      *                  the draw queue.
      */
-    void drawTriangleStrip(QVector<GuiVertex> &vertices);
+    void drawTriangleStrip(List<GuiVertex> &vertices);
 
     void flush();
 

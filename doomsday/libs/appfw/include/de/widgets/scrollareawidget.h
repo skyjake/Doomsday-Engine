@@ -43,8 +43,6 @@ namespace de {
  */
 class LIBAPPFW_PUBLIC ScrollAreaWidget : public GuiWidget
 {
-    Q_OBJECT
-
 public:
     enum Origin {
         Top,        ///< Scroll position 0 is at the top.
@@ -110,11 +108,11 @@ public:
      * @param to    Scroll position.
      * @param span  Animation time span.
      */
-    void scroll(Vec2i const &to, TimeSpan span = 0);
+    void scroll(Vec2i const &to, TimeSpan span = 0.0);
 
-    void scrollX(int to, TimeSpan span = 0);
-    void scrollY(int to, TimeSpan span = 0);
-    void scrollY(Rule const &to, TimeSpan span = 0);
+    void scrollX(int to, TimeSpan span = 0.0);
+    void scrollY(int to, TimeSpan span = 0.0);
+    void scrollY(Rule const &to, TimeSpan span = 0.0);
 
     bool isScrollable() const;
 
@@ -153,7 +151,6 @@ public:
     void drawContent() override;
     bool handleEvent(Event const &event) override;
 
-public slots:
     void scrollToTop(TimeSpan span = 0.3);
 
     /**

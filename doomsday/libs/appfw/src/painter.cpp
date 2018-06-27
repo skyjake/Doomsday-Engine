@@ -116,11 +116,11 @@ void Painter::setNormalizedScissor(Rectanglef const &normScissorRect)
 
     Rectangleui const vp = GLState::current().viewport();
 
-    Rectangleui scis = Rectangleui(Vec2ui(d->normScissorRect.left()   * vp.width(),
-                                             d->normScissorRect.top()    * vp.height()),
+    Rectangleui scis = Rectangleui(Vec2ui(d->normScissorRect.left() * vp.width(),
+                                          d->normScissorRect.top()  * vp.height()),
                                    Vec2ui(std::ceil(d->normScissorRect.right()  * vp.width()),
-                                             std::ceil(d->normScissorRect.bottom() * vp.height())))
-            .moved(vp.topLeft);
+                                          std::ceil(d->normScissorRect.bottom() * vp.height())))
+                           .moved(vp.topLeft);
 
     scis = GLState::current().target().scaleToActiveRect(scis);
 
@@ -143,7 +143,7 @@ void Painter::setSaturation(float saturation)
     d->queue.setBatchSaturation(saturation);
 }
 
-void Painter::drawTriangleStrip(QVector<GuiVertex> &vertices)
+void Painter::drawTriangleStrip(List<GuiVertex> &vertices)
 {
     DE_ASSERT(d->isReady());
     std::unique_ptr<GLSubBuffer> sub(d->vertexBuf.alloc(dsize(vertices.size())));

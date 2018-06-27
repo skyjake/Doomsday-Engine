@@ -1,3 +1,5 @@
+#include <utility>
+
 /** @file callbackaction.cpp  Action with a std::function callback.
  *
  * @authors Copyright (c) 2016-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -21,7 +23,7 @@
 namespace de {
 
 CallbackAction::CallbackAction(Callback callback)
-    : _func(callback)
+    : _func(std::move(callback))
 {}
 
 void CallbackAction::trigger()

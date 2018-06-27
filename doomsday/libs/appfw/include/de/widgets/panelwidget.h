@@ -39,15 +39,17 @@ namespace de {
  */
 class LIBAPPFW_PUBLIC PanelWidget : public GuiWidget
 {
-    Q_OBJECT
-
 public:
     DE_DEFINE_AUDIENCE2(AboutToOpen, void panelAboutToOpen(PanelWidget &))
+
+    DE_DEFINE_AUDIENCE2(Open, void panelOpened(PanelWidget &))
 
     /**
      * Audience to be notified when the panel is closing.
      */
     DE_DEFINE_AUDIENCE2(Close, void panelBeingClosed(PanelWidget &))
+
+    DE_DEFINE_AUDIENCE2(Dismiss, void panelDismissed(PanelWidget &))
 
     enum AnimationStyle { Bouncy, EasedOut, Smooth };
 
@@ -112,7 +114,6 @@ public:
     void update() override;
     bool handleEvent(Event const &event) override;
 
-public slots:
     /**
      * Opens the panel, positioning it appropriately so that is anchored to the
      * position specified with setAnchor().
@@ -132,16 +133,11 @@ public slots:
      */
     void dismiss();
 
-signals:
-    void opened();
-    void closed();
-    void dismissed();
-
 protected:
-    void glInit();
-    void glDeinit();
-    void drawContent();
-    void glMakeGeometry(GuiVertexBuilder &verts);
+    void glInit() override;
+    void glDeinit() override;
+    void drawContent() override;
+    void glMakeGeometry(GuiVertexBuilder &verts) override;
 
     virtual void preparePanelForOpening();
     virtual void panelClosing();

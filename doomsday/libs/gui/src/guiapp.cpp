@@ -31,12 +31,6 @@
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL_events.h>
 
-//#ifdef DE_QT_5_0_OR_NEWER
-//#  include <QStandardPaths>
-//#else
-//#  include <QDesktopServices>
-//#endif
-
 namespace de {
 
 DE_PIMPL(GuiApp)
@@ -61,6 +55,9 @@ DE_PIMPL(GuiApp)
 
     void matchLoopRateToDisplayMode()
     {
+        float dpi[2];
+        SDL_GetDisplayDPI(0, nullptr, dpi, dpi + 1);
+
         SDL_DisplayMode mode;
         if (SDL_GetCurrentDisplayMode(0, &mode) == 0)
         {
@@ -124,8 +121,7 @@ DE_AUDIENCE_METHOD(GuiApp, DisplayModeChange)
 //}
 
 GuiApp::GuiApp(const StringList &args)
-    : //LIBGUI_GUIAPP_BASECLASS(argc, argv)
-      App(args)
+    : App(args)
     , d(new Impl(this))
 {
     if (SDL_InitSubSystem(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK |
@@ -138,6 +134,11 @@ GuiApp::GuiApp(const StringList &args)
         throw Error("GuiApp::GuiApp", "No video displays available");
     }
     d->matchLoopRateToDisplayMode();
+
+    // Check display pixel ratio.
+    {
+
+    }
 
     static ImageFile::Interpreter intrpImageFile;
     fileSystem().addInterpreter(intrpImageFile);

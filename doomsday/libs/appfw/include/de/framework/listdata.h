@@ -22,7 +22,7 @@
 #include "../ui/Data"
 #include "../ui/Item"
 
-#include <QList>
+#include <de/List>
 
 namespace de {
 namespace ui {
@@ -36,27 +36,25 @@ class LIBAPPFW_PUBLIC ListData : public Data
 {
 public:
     ListData() {}
-    ~ListData();
+    ~ListData() override;
 
-    dsize size() const;
-    Item &at(Pos pos);
-    Item const &at(Pos pos) const;
-    Pos find(Item const &item) const;
-    Pos findLabel(String const &label) const;
-    Pos findData(QVariant const &data) const;
+    dsize       size() const override;
+    Item &      at(Pos pos) override;
+    Item const &at(Pos pos) const override;
+    Pos         find(Item const &item) const override;
+    Pos         findLabel(String const &label) const override;
+    Pos         findData(const Value &data) const override;
 
-    Data &clear();
-    Data &insert(Pos pos, Item *item);
-    void remove(Pos pos);
-    Item *take(Pos pos);
-    void sort(SortMethod method = Ascending) override {
-        Data::sort(method);
-    }
-    void sort(LessThanFunc lessThan);
-    void stableSort(LessThanFunc lessThan);
+    Data &clear() override;
+    Data &insert(Pos pos, Item *item) override;
+    void  remove(Pos pos) override;
+    Item *take(Pos pos) override;
+    void  sort(SortMethod method = Ascending) override { Data::sort(method); }
+    void  sort(LessThanFunc lessThan) override;
+    void  stableSort(LessThanFunc lessThan) override;
 
 private:
-    typedef QList<Item *> Items;
+    typedef List<Item *> Items;
     Items _items;
 };
 

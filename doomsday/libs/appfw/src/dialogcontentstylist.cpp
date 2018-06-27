@@ -28,7 +28,7 @@ namespace de {
 
 DE_PIMPL_NOREF(DialogContentStylist)
 {
-    QList<GuiWidget *> containers;
+    List<GuiWidget *> containers;
     bool useInfoStyle;
     bool adjustMargins;
 
@@ -58,7 +58,7 @@ DialogContentStylist::~DialogContentStylist()
 
 void DialogContentStylist::clear()
 {
-    foreach (GuiWidget *w, d->containers)
+    for (GuiWidget *w : d->containers)
     {
         w->audienceForChildAddition() -= this;
     }

@@ -22,7 +22,6 @@
 #define LIBAPPFW_UI_DEFS_H
 
 #include "../libappfw.h"
-#include <QFlags>
 #include <de/Vector>
 
 namespace de {
@@ -31,14 +30,7 @@ namespace ui {
 /**
  * Basic directions.
  */
-enum Direction
-{
-    Left,
-    Up,
-    Right,
-    Down,
-    NoDirection
-};
+enum Direction { Left, Up, Right, Down, NoDirection };
 
 inline Direction opposite(Direction dir) {
     switch (dir) {
@@ -69,24 +61,19 @@ inline Vec2f directionVector(Direction dir) {
 /**
  * Flags for specifying alignment.
  */
-enum AlignmentFlag
-{
+enum AlignmentFlag {
     AlignTop         = 0x1,
     AlignBottom      = 0x2,
     AlignLeft        = 0x4,
     AlignRight       = 0x8,
-
     AlignTopLeft     = AlignTop | AlignLeft,
     AlignTopRight    = AlignTop | AlignRight,
     AlignBottomLeft  = AlignBottom | AlignLeft,
     AlignBottomRight = AlignBottom | AlignRight,
-
     AlignCenter      = 0,
-
     DefaultAlignment = AlignCenter
 };
-Q_DECLARE_FLAGS(Alignment, AlignmentFlag)
-Q_DECLARE_OPERATORS_FOR_FLAGS(Alignment)
+using Alignment = Flags;
 
 template <typename SizeType, typename RectType>
 typename RectType::Corner applyAlignment(Alignment align, SizeType const &size, RectType const &bounds)
@@ -123,25 +110,21 @@ void applyAlignment(Alignment align, RectType &alignedRect, BoundsRectType const
 /**
  * Flags for specifying content fitting/scaling.
  */
-enum ContentFitFlag
-{
+enum ContentFitFlag {
     OriginalSize        = 0,
     FitToWidth          = 0x1,
     FitToHeight         = 0x2,
     OriginalAspectRatio = 0x4,
     CoverArea           = 0x8, ///< Entire available area should be covered, even if
                                ///< one dimension doesn't fit.
-
     FitToSize = FitToWidth | FitToHeight
 };
-Q_DECLARE_FLAGS(ContentFit, ContentFitFlag)
-Q_DECLARE_OPERATORS_FOR_FLAGS(ContentFit)
+using ContentFit = Flags;
 
 /**
  * Policy for controlling size.
  */
-enum SizePolicy
-{
+enum SizePolicy {
     Fixed,  ///< Size is fixed, content positioned inside.
     Filled, ///< Size is fixed, content expands to fill entire area.
     Expand  ///< Size depends on content, expands/contracts to fit.

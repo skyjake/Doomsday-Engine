@@ -17,22 +17,24 @@
  */
 
 #include "de/ui/Item"
+#include <de/NoneValue>
 
 namespace de {
 namespace ui {
 
 DE_PIMPL_NOREF(Item)
 {
-    Data *context;
-    Semantics semantics;
-    String label;
-    QVariant data;
+    Data *                 context;
+    Semantics              semantics;
+    String                 label;
+    std::unique_ptr<Value> data;
 
-    Impl(Semantics sem, String const &text = "", QVariant var = QVariant())
-        : context(0)
+    Impl(Semantics sem, String const &text = "", Value *var = nullptr)
+        : context(nullptr)
         , semantics(sem)
         , label(text)
-        , data(var) {}
+        , data(var)
+    {}
 
     DE_PIMPL_AUDIENCE(Change)
 };
@@ -78,7 +80,7 @@ void Item::setDataContext(Data &context)
 
 bool Item::hasDataContext() const
 {
-    return d->context != 0;
+    return d->context != nullptr;
 }
 
 Data &Item::dataContext() const
@@ -92,14 +94,19 @@ String Item::sortKey() const
     return d->label;
 }
 
-void Item::setData(QVariant const &v)
+void Item::setData(const Value &v)
 {
-    d->data = v;
+    d->data.reset(v.duplicate());
 }
 
-QVariant const &Item::data() const
+const Value &Item::data() const
 {
-    return d->data;
+    if (!d->data)
+    {
+        static NoneValue null;
+        return null;
+    }
+    return *d->data;
 }
 
 void Item::notifyChange() const

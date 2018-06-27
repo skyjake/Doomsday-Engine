@@ -52,14 +52,19 @@ namespace de {
  */
 class LIBAPPFW_PUBLIC MenuWidget : public ScrollAreaWidget, public IAssetGroup
 {
-    Q_OBJECT
-
 public:
     /**
      * Notified when an item in the menu is triggered. The corresponding UI item is
      * passed as argument.
      */
     DE_DEFINE_AUDIENCE2(ItemTriggered, void menuItemTriggered(ui::Item const &))
+
+    /**
+     * Called when a submenu/widget is opened by one of the items.
+     *
+     * @param panel  Panel that was opened.
+     */
+    DE_DEFINE_AUDIENCE2(SubWidgetOpened, void subWidgetOpened(MenuWidget &, PanelWidget *subwidget))
 
 public:
     MenuWidget(String const &name = String());
@@ -177,16 +182,7 @@ public:
     void update() override;
     bool handleEvent(Event const &event) override;
 
-public slots:
     void dismissPopups();
-
-signals:
-    /**
-     * Called when a submenu/widget is opened by one of the items.
-     *
-     * @param panel  Panel that was opened.
-     */
-    void subWidgetOpened(de::PanelWidget *panel);
 
 protected:
     void updateStyle() override;

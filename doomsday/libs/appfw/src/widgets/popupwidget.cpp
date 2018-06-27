@@ -27,23 +27,23 @@
 #include <de/AnimationRule>
 #include <de/Garbage>
 #include <de/math.h>
-#include <QTimer>
 
 namespace de {
 
 DE_GUI_PIMPL(PopupWidget)
 {
-    ColorTheme colorTheme = Normal;
-    bool flexibleDir = true;
-    bool deleteAfterDismiss = false;
-    bool clickToClose = true;
-    bool outsideClickOngoing = false;
-    DotPath outlineColorId;
-    ColorBank::Colorf outlineColor;
+    ColorTheme colorTheme          = Normal;
+    bool       flexibleDir         = true;
+    bool       deleteAfterDismiss  = false;
+    bool       clickToClose        = true;
+    bool       outsideClickOngoing = false;
+
+    DotPath               outlineColorId;
+    ColorBank::Colorf     outlineColor;
     SafeWidgetPtr<Widget> realParent;
-    RuleRectangle anchor;
-    Rule const *marker;
-    ButtonWidget *close = nullptr;
+    RuleRectangle         anchor;
+    Rule const *          marker;
+    ButtonWidget *        close = nullptr;
 
     Impl(Public *i) : Base(i)
     {

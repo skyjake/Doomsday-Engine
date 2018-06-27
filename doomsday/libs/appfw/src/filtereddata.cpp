@@ -1,3 +1,5 @@
+#include <utility>
+
 /** @file filtereddata.cpp  Data model that filters another model.
  *
  * @authors Copyright (c) 2016-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -19,8 +21,8 @@
 #include "de/ui/FilteredData"
 #include "de/ui/Item"
 
-#include <QHash>
-#include <QList>
+#include <de/Hash>
+#include <de/List>
 
 namespace de {
 namespace ui {
@@ -30,10 +32,10 @@ DE_PIMPL(FilteredData)
 , DE_OBSERVES(Data, Removal)
 , DE_OBSERVES(Data, OrderChange)
 {
-    typedef QHash<Item const *, Pos> PosMapping;
+    typedef Hash<const Item *, Pos> PosMapping;
 
     Data const &source;
-    QList<Item const *> items; ///< Maps filtered items to source items.
+    List<Item const *> items; ///< Maps filtered items to source items.
     PosMapping reverseMapping;
     FilterFunc isItemAccepted;
 
@@ -65,7 +67,7 @@ DE_PIMPL(FilteredData)
         auto mapped = reverseMapping.find(&item);
         if (mapped != reverseMapping.end())
         {
-            Pos oldPos = mapped.value();
+            Pos oldPos = mapped->second;
             items.removeAt(oldPos);
             reverseMapping.erase(mapped);
 
@@ -74,12 +76,11 @@ DE_PIMPL(FilteredData)
             if (oldPos != Pos(items.size()))
             {
                 // Update reverse mapping to account for the removed item.
-                QMutableHashIterator<Item const *, Pos> iter(reverseMapping);
-                while (iter.hasNext())
+                for (auto iter = reverseMapping.begin(); iter != reverseMapping.end(); ++iter)
                 {
-                    if (iter.next().value() > oldPos)
+                    if (iter->second > oldPos)
                     {
-                        iter.setValue(iter.value() - 1);
+                        --iter->second; /// @todo Does this actually decrement the stored value?
                     }
                 }
             }
@@ -94,7 +95,7 @@ DE_PIMPL(FilteredData)
         DE_FOR_PUBLIC_AUDIENCE2(OrderChange, i) i->dataItemOrderChanged();
     }
 
-    void applyFilter(FilterFunc filterFunc)
+    void applyFilter(const FilterFunc& filterFunc)
     {
         items.clear();
         reverseMapping.clear();
@@ -152,7 +153,7 @@ Data &FilteredData::clear()
 
 void FilteredData::setFilter(std::function<bool (Item const &item)> isItemAccepted)
 {
-    d->isItemAccepted = isItemAccepted;
+    d->isItemAccepted = std::move(isItemAccepted);
     refilter();
 }
 
@@ -163,18 +164,24 @@ void FilteredData::refilter()
     d->applyFilter(d->isItemAccepted);
 
     // Notify about items that were removed and added in the filtering.
-    for (auto iter = oldMapping.constBegin(); iter != oldMapping.constEnd(); ++iter)
+    for (auto iter = oldMapping.begin(); iter != oldMapping.end(); ++iter)
     {
-        if (!d->reverseMapping.contains(iter.key()))
+        if (!d->reverseMapping.contains(iter->first))
         {
-            DE_FOR_AUDIENCE2(Removal, i) i->dataItemRemoved(iter.value(), *const_cast<Item *>(iter.key()));
+            DE_FOR_AUDIENCE2(Removal, i)
+            {
+                i->dataItemRemoved(iter->second, *const_cast<Item *>(iter->first));
+            }
         }
     }
-    for (auto iter = d->reverseMapping.constBegin(); iter != d->reverseMapping.constEnd(); ++iter)
+    for (auto iter = d->reverseMapping.begin(); iter != d->reverseMapping.end(); ++iter)
     {
-        if (!oldMapping.contains(iter.key()))
+        if (!oldMapping.contains(iter->first))
         {
-            DE_FOR_AUDIENCE2(Addition, i) i->dataItemAdded(iter.value(), *iter.key());
+            DE_FOR_AUDIENCE2(Addition, i)
+            {
+                i->dataItemAdded(iter->second, *iter->first);
+            }
         }
     }
 }
@@ -208,10 +215,10 @@ Item const &FilteredData::at(Pos pos) const
 
 Data::Pos FilteredData::find(Item const &item) const
 {
-    auto found = d->reverseMapping.constFind(&item);
-    if (found != d->reverseMapping.constEnd())
+    auto found = d->reverseMapping.find(&item);
+    if (found != d->reverseMapping.end())
     {
-        return found.value();
+        return found->second;
     }
     return InvalidPos;
 }
@@ -225,32 +232,30 @@ Data::Pos FilteredData::findLabel(String const &label) const
     return InvalidPos;
 }
 
-Data::Pos FilteredData::findData(QVariant const &data) const
+Data::Pos FilteredData::findData(const Value &data) const
 {
     for (Pos i = 0; i < Pos(d->items.size()); ++i)
     {
-        if (d->items.at(i)->data() == data) return i;
+        if (d->items.at(i)->data().compare(data) == 0) return i;
     }
     return InvalidPos;
 }
 
 void FilteredData::sort(LessThanFunc lessThan)
 {
-    qSort(d->items.begin(), d->items.end(), [&lessThan] (Item const *a, Item const *b) {
+    std::sort(d->items.begin(), d->items.end(), [&lessThan] (Item const *a, Item const *b) {
         return lessThan(*a, *b);
     });
     d->updateReverseMapping();
-
     DE_FOR_AUDIENCE2(OrderChange, i) i->dataItemOrderChanged();
 }
 
 void FilteredData::stableSort(LessThanFunc lessThan)
 {
-    qStableSort(d->items.begin(), d->items.end(), [&lessThan] (Item const *a, Item const *b) {
+    std::stable_sort(d->items.begin(), d->items.end(), [&lessThan] (Item const *a, Item const *b) {
         return lessThan(*a, *b);
     });
     d->updateReverseMapping();
-
     DE_FOR_AUDIENCE2(OrderChange, i) i->dataItemOrderChanged();
 }
 

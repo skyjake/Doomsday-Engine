@@ -113,7 +113,7 @@ public:
      *
      * @return The items' position, or Data::InvalidPos if not found.
      */
-    virtual Pos findData(QVariant const &data) const = 0;
+    virtual Pos findData(const Value &data) const = 0;
 
     enum SortMethod { Ascending, Descending };
 
@@ -130,9 +130,9 @@ public:
      */
     virtual dsize size() const = 0;
 
-    LoopResult forAll(std::function<LoopResult (Item &)> func);
+    LoopResult forAll(const std::function<LoopResult (Item &)>& func);
 
-    LoopResult forAll(std::function<LoopResult (Item const &)> func) const;
+    LoopResult forAll(const std::function<LoopResult (Item const &)> &func) const;
 
 private:
     DE_PRIVATE(d)

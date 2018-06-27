@@ -29,7 +29,7 @@
 #include <de/NativeFont>
 #include <de/BaseWindow>
 #include <de/ScriptSystem>
-#include <QFontDatabase>
+#include <de/Font>
 
 #ifdef WIN32
 #  define CONST const
@@ -42,17 +42,18 @@ static Value *Function_App_LoadFont(Context &, Function::ArgumentValues const &a
 {
     try
     {
-        // Try to load the specific font.
-        Block data(App::rootFolder().locate<File const>(args.at(0)->asText()));
-        int id;
-        id = QFontDatabase::addApplicationFontFromData(data);
-        if (id < 0)
+        // Try to load the specified font file.
+        const String fileName = args.at(0)->asText();
+        const Block fontData(App::rootFolder().locate<const File>(fileName));
+//        int id;
+//        id = QFontDatabase::addApplicationFontFromData(data);
+        if (Font::load(fontData))
         {
-            LOG_RES_WARNING("Failed to load font:");
+            LOG_RES_VERBOSE("Loaded font: %s") << fileName;
         }
         else
         {
-            LOG_RES_VERBOSE("Loaded font: %s") << args.at(0)->asText();
+            LOG_RES_WARNING("Failed to load font: %s") << fileName;
             //qDebug() << args.at(0)->asText();
             //qDebug() << "Families:" << QFontDatabase::applicationFontFamilies(id);
         }
@@ -61,7 +62,7 @@ static Value *Function_App_LoadFont(Context &, Function::ArgumentValues const &a
     {
         LOG_RES_WARNING("Failed to load font:\n") << er.asText();
     }
-    return 0;
+    return nullptr;
 }
 
 static Value *Function_App_AddFontMapping(Context &, Function::ArgumentValues const &args)
@@ -73,7 +74,6 @@ static Value *Function_App_AddFontMapping(Context &, Function::ArgumentValues co
     // weight: 0-99 (25=light, 50=normal, 75=bold)
 
     NativeFont::StyleMapping mapping;
-
     DictionaryValue const &dict = args.at(1)->as<DictionaryValue>();
     DE_FOR_EACH_CONST(DictionaryValue::Elements, i, dict.elements())
     {
@@ -86,17 +86,15 @@ static Value *Function_App_AddFontMapping(Context &, Function::ArgumentValues co
         spec.weight = roundi(key.at(1).asNumber());
         mapping.insert(spec, i->second->asText());
     }
-
     NativeFont::defineMapping(args.at(0)->asText(), mapping);
-
-    return 0;
+    return nullptr;
 }
 
 DE_PIMPL(BaseGuiApp)
 , DENG2_OBSERVES(Variable, Change)
 {
     Binder binder;
-    QScopedPointer<PersistentState> uiState;
+    std::unique_ptr<PersistentState> uiState;
     GLShaderBank shaders;
     WaveformBank waveforms;
     VRConfig vr;
@@ -132,12 +130,12 @@ DE_PIMPL(BaseGuiApp)
     }
 };
 
-BaseGuiApp::BaseGuiApp(int &argc, char **argv)
-    : GuiApp(argc, argv), d(new Impl(this))
+BaseGuiApp::BaseGuiApp(const StringList &args)
+    : GuiApp(args), d(new Impl(this))
 {
     d->binder.init(scriptSystem()["App"])
             << DE_FUNC (App_AddFontMapping, "addFontMapping", "family" << "mappings")
-            << DE_FUNC (App_LoadFont,       "loadFont", "fileName");
+            << DE_FUNC (App_LoadFont,       "loadFont",       "fileName");
 }
 
 void BaseGuiApp::glDeinit()
@@ -242,6 +240,5 @@ void BaseGuiApp::endNativeUIMode()
 #   endif
 #endif
 }
-    
 
 } // namespace de

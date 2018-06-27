@@ -30,7 +30,7 @@
 /**
  * Macro for conveniently accessing the de::BaseGuiApp singleton instance.
  */
-#define DE_BASE_GUI_APP   (static_cast<de::BaseGuiApp *>(qApp))
+#define DE_BASE_GUI_APP   (static_cast<de::BaseGuiApp *>(DE_APP))
 
 namespace de {
 
@@ -46,7 +46,7 @@ class VRConfig;
 class LIBAPPFW_PUBLIC BaseGuiApp : public GuiApp
 {
 public:
-    BaseGuiApp(int &argc, char **argv);
+    BaseGuiApp(const StringList &args);
 
     virtual void glDeinit();
 

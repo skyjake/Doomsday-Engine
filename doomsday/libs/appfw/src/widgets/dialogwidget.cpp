@@ -27,11 +27,11 @@
 #include <de/KeyEvent>
 #include <de/MouseEvent>
 #include <de/Untrapper>
-#include <QEventLoop>
+#include <de/EventLoop>
 
 namespace de {
 
-static TimeSpan const FLASH_ANIM_SPAN = 0.75;
+static const ddouble FLASH_ANIM_SPAN = 0.75;
 
 /**
  * Compares dialog button items to determine the order in which they
@@ -93,13 +93,13 @@ DE_GUI_PIMPL(DialogWidget)
     ui::ListData buttonItems;
     ui::FilteredData mainButtonItems  { buttonItems };
     ui::FilteredData extraButtonItems { buttonItems };
-    QEventLoop subloop;
+    EventLoop subloop;
     de::Action *acceptAction;
     Animation glow;
     bool needButtonUpdate;
     float normalGlow;
     bool animatingGlow;
-    QScopedPointer<Untrapper> untrapper;
+    std::unique_ptr<Untrapper> untrapper;
     DialogContentStylist stylist;
     IndirectRule *minWidth;
     Rule const *maxContentHeight = nullptr;
@@ -108,8 +108,8 @@ DE_GUI_PIMPL(DialogWidget)
         : Base(i)
         , modality(Modal)
         , flags(dialogFlags)
-        , heading(0)
-        , acceptAction(0)
+        , heading(nullptr)
+        , acceptAction(nullptr)
         , needButtonUpdate(false)
         , animatingGlow(false)
     {
@@ -458,7 +458,11 @@ DE_GUI_PIMPL(DialogWidget)
         }
         self().set(bg);
     }
+
+    DE_PIMPL_AUDIENCES(Accept, Reject)
 };
+
+DE_AUDIENCE_METHODS(DialogWidget, Accept, Reject)
 
 DialogWidget::DialogWidget(String const &name, Flags const &flags)
     : PopupWidget(name), d(new Impl(this, flags))

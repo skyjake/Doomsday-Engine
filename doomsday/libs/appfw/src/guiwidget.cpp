@@ -32,26 +32,22 @@
 #include <de/FocusWidget>
 #include <de/PopupWidget>
 
-#include <QList>
-
 namespace de {
 
 DE_PIMPL(GuiWidget)
 , DE_OBSERVES(Widget, ChildAddition)
 , DE_OBSERVES(ui::Margins, Change)
 , DENG2_OBSERVES(Style, Change)
-#ifdef DE_DEBUG
+#if defined (DE_DEBUG)
 , DE_OBSERVES(Widget, ParentChange)
 #endif
 {
-    enum
-    {
-        Inited       = 0x1,
-        NeedGeometry = 0x2,
-        StyleChanged = 0x4,
-        FirstUpdateAfterCreation
-                     = 0x8,
-        DefaultFlags = NeedGeometry | FirstUpdateAfterCreation,
+    enum {
+        Inited                   = 0x1,
+        NeedGeometry             = 0x2,
+        StyleChanged             = 0x4,
+        FirstUpdateAfterCreation = 0x8,
+        DefaultFlags             = NeedGeometry | FirstUpdateAfterCreation,
     };
 
     RuleRectangle rule;     ///< Visual rule, used when drawing.
@@ -65,7 +61,7 @@ DE_PIMPL(GuiWidget)
     Animation opacityWhenDisabled;
     Rectanglef oldClip; // when drawing children
     float saturation = 1.f;
-    QList<IEventHandler *> eventHandlers;
+    List<IEventHandler *> eventHandlers;
 
     // Style.
     DotPath fontId;
@@ -76,7 +72,7 @@ DE_PIMPL(GuiWidget)
     {
         Time updatedAt;
         Vec2ui size;
-        QScopedPointer<GLTextureFramebuffer> fb[2];
+        std::unique_ptr<GLTextureFramebuffer> fb[2];
         Drawable drawable;
         GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
         GLUniform uColor     { "uColor",     GLUniform::Vec4 };
@@ -109,7 +105,7 @@ DE_PIMPL(GuiWidget)
 
     ~Impl() override
     {
-        qDeleteAll(eventHandlers);
+        deleteAll(eventHandlers);
 
         // The base class will delete all children, but we need to deinitialize
         // them first.
@@ -133,8 +129,8 @@ DE_PIMPL(GuiWidget)
         flags |= StyleChanged;
     }
 
-#ifdef DE_DEBUG
-    void widgetParentChanged(Widget &, Widget *, Widget *) override
+#if defined (DE_DEBUG)
+    void widgetParentChanged(Widget &, Widget *, Widget *)
     {
         rule.setDebugName(self().path());
     }
@@ -238,6 +234,15 @@ DE_PIMPL(GuiWidget)
         blur->drawable.clear();
 
         blur.reset();
+    }
+
+    void reinitBlur()
+    {
+        if (blur)
+        {
+            deinitBlur();
+            initBlur();
+        }
     }
 
     void updateBlurredBackground()

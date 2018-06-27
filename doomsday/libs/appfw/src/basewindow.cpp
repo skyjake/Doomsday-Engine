@@ -25,8 +25,6 @@
 #include <de/GLBuffer>
 #include <de/GLState>
 
-#include <QVector>
-
 namespace de {
 
 DE_PIMPL(BaseWindow)
@@ -111,7 +109,7 @@ void BaseWindow::useDefaultTransform()
 
 WindowTransform &BaseWindow::transform()
 {
-    DE_ASSERT(d->xf != 0);
+    DE_ASSERT(d->xf != nullptr);
     return *d->xf;
 }
 

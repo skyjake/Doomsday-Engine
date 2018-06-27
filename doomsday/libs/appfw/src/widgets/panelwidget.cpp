@@ -1,3 +1,5 @@
+#include <utility>
+
 /** @file panelwidget.cpp
  *
  * @authors Copyright (c) 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -24,9 +26,8 @@
 #include <de/Garbage>
 #include <de/LogBuffer>
 #include <de/MouseEvent>
+#include <de/Timer>
 #include <de/math.h>
-
-#include <QTimer>
 
 namespace de {
 
@@ -38,17 +39,18 @@ DE_GUI_PIMPL(PanelWidget)
 , DE_OBSERVES(Asset, StateChange)
 {
     bool waitForContentReady = true;
-    bool eatMouseEvents = true;
-    bool opened = false;
-    ui::Direction dir = ui::Down;
-    ui::SizePolicy secondaryPolicy = ui::Expand;
-    GuiWidget *content = nullptr;
+    bool eatMouseEvents      = true;
+    bool opened              = false;
+
+    ui::Direction  dir                 = ui::Down;
+    ui::SizePolicy secondaryPolicy     = ui::Expand;
+    GuiWidget *    content             = nullptr;
     AnimationRule *openingRule;
     AnimationStyle openingStyle = EasedOut;
-    QTimer dismissTimer;
+    Timer dismissTimer;
+
     std::unique_ptr<AssetGroup> pendingShow;
 
-    // GL objects.
     GuiVertexBuilder verts;
 
     Impl(Public *i) : Base(i)
@@ -57,7 +59,7 @@ DE_GUI_PIMPL(PanelWidget)
         openingRule->setBehavior(AnimationRule::RestartWhenTargetChanges);
 
         dismissTimer.setSingleShot(true);
-        QObject::connect(&dismissTimer, SIGNAL(timeout()), thisPublic, SLOT(dismiss()));
+        dismissTimer.audienceForTrigger() += [this](){ self().dismiss(); };
     }
 
     ~Impl()
@@ -109,7 +111,7 @@ DE_GUI_PIMPL(PanelWidget)
         }
     }
 
-    void startOpeningAnimation(TimeSpan span)
+    void startOpeningAnimation(const TimeSpan& span)
     {
         if (isVerticalAnimation())
         {
@@ -128,7 +130,7 @@ DE_GUI_PIMPL(PanelWidget)
         }
     }
 
-    void close(TimeSpan delay)
+    void close(const TimeSpan& delay)
     {
         if (!opened) return;
 
@@ -156,10 +158,8 @@ DE_GUI_PIMPL(PanelWidget)
             i->panelBeingClosed(self());
         }
 
-        emit self().closed();
-
         dismissTimer.start();
-        dismissTimer.setInterval(TimeSpan(CLOSING_ANIM_SPAN + delay).asMilliSeconds());
+        dismissTimer.setInterval(CLOSING_ANIM_SPAN + delay);
     }
 
     void waitForAssetsInContent()
@@ -205,12 +205,10 @@ DE_GUI_PIMPL(PanelWidget)
         }
     }
 
-    DE_PIMPL_AUDIENCE(AboutToOpen)
-    DE_PIMPL_AUDIENCE(Close)
+    DE_PIMPL_AUDIENCES(AboutToOpen, Open, Close, Dismiss)
 };
 
-DE_AUDIENCE_METHOD(PanelWidget, AboutToOpen)
-DE_AUDIENCE_METHOD(PanelWidget, Close)
+DE_AUDIENCE_METHODS(PanelWidget, AboutToOpen, Open, Close, Dismiss)
 
 PanelWidget::PanelWidget(String const &name) : GuiWidget(name), d(new Impl(this))
 {
@@ -253,16 +251,16 @@ void PanelWidget::setContent(GuiWidget *content)
 
 GuiWidget &PanelWidget::content() const
 {
-    DE_ASSERT(d->content != 0);
+    DE_ASSERT(d->content != nullptr);
     return *d->content;
 }
 
 GuiWidget *PanelWidget::takeContent()
 {
     GuiWidget *w = d->content;
-    if (!w) return 0;
+    if (!w) { return nullptr; }
 
-    d->content = 0;
+    d->content = nullptr;
 
     w->rule().clearInput(Rule::Left);
     w->rule().clearInput(Rule::Top);
@@ -304,7 +302,7 @@ bool PanelWidget::isOpeningOrClosing() const
 
 void PanelWidget::close(TimeSpan delayBeforeClosing)
 {
-    d->close(delayBeforeClosing);
+    d->close(std::move(delayBeforeClosing));
 }
 
 void PanelWidget::viewResized()
@@ -337,10 +335,7 @@ void PanelWidget::open()
 {
     if (d->opened) return;
 
-    DE_FOR_AUDIENCE2(AboutToOpen, i)
-    {
-        i->panelAboutToOpen(*this);
-    }
+    DE_FOR_AUDIENCE2(AboutToOpen, i) { i->panelAboutToOpen(*this); }
 
     d->dismissTimer.stop();
 
@@ -355,7 +350,7 @@ void PanelWidget::open()
 
     d->opened = true;
 
-    emit opened();
+    DE_FOR_AUDIENCE2(Open, i) { i->panelOpened(*this); }
 
     // The animation might have to be paused until all assets are prepared.
     d->waitForAssetsInContent();
@@ -390,7 +385,7 @@ void PanelWidget::dismiss()
 
     panelDismissed();
 
-    emit dismissed();
+    DE_FOR_AUDIENCE2(Dismiss, i) { i->panelDismissed(*this); }
 }
 
 void PanelWidget::drawContent()

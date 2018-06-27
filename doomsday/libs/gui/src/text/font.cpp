@@ -439,6 +439,11 @@ Rule const &Font::lineSpacing() const
     return *d->lineSpacingRule;
 }
 
+bool Font::load(const Block &data) // static
+{
+    DE_ASSERT_FAIL("Font::load not implemented");
+}
+
 //------------------------------------------------------------------------------------------------
 
 FontParams::FontParams()

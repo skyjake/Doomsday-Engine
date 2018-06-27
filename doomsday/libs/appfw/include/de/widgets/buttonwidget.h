@@ -34,14 +34,9 @@ namespace de {
  */
 class LIBAPPFW_PUBLIC ButtonWidget : public LabelWidget
 {
-    Q_OBJECT
-
 public:
-    enum State {
-        Up,
-        Hover,
-        Down
-    };
+    enum State { Up, Hover, Down };
+    enum HoverColorMode { ReplaceColor, ModulateColor };
 
     /**
      * Notified when the state of the button changes.
@@ -64,16 +59,11 @@ public:
 public:
     ButtonWidget(String const &name = String());
 
-    enum HoverColorMode {
-        ReplaceColor,
-        ModulateColor
-    };
-
     void useInfoStyle(bool yes = true);
     void useNormalStyle() { useInfoStyle(false); }
     bool isUsingInfoStyle() const;
 
-    void setColorTheme(ColorTheme theme);
+    void       setColorTheme(ColorTheme theme);
     ColorTheme colorTheme() const;
 
     void setTextColor(DotPath const &colorId) override;
@@ -123,14 +113,10 @@ public:
     void update() override;
     bool handleEvent(Event const &event) override;
 
-public slots:
     /**
      * Triggers the action of the button.
      */
     void trigger();
-
-signals:
-    void pressed();
 
 protected:
     bool updateModelViewProjection(Mat4f &mvp) override;

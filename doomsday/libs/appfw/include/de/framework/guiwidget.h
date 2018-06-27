@@ -24,7 +24,6 @@
 #include <de/MouseEvent>
 #include <de/GLBuffer>
 #include <de/Painter>
-#include <QObject>
 
 #include "../Style"
 #include "../ui/defs.h"
@@ -85,10 +84,8 @@ class PopupWidget;
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC GuiWidget : public QObject, public Widget
+class LIBAPPFW_PUBLIC GuiWidget : public Widget
 {
-    Q_OBJECT
-
 public:
     /**
      * Properties of the widget's background's apperance.
@@ -100,41 +97,40 @@ public:
      */
     struct Background {
         enum Type {
-            None,               ///< No background, no solid fill.
-            GradientFrame,      ///< Bold round corners, square background.
+            None,                         ///< No background, no solid fill.
+            GradientFrame,                ///< Bold round corners, square background.
             GradientFrameWithRoundedFill, ///< Bold round corners with solid rounded background.
             GradientFrameWithThinBorder,  ///< Bold round corners, black thin secondary border.
-            BorderGlow,         ///< Border glow with specified color/thickness.
-            Blurred,            ///< Blurs whatever is showing behind the widget.
+            BorderGlow,                   ///< Border glow with specified color/thickness.
+            Blurred,                      ///< Blurs whatever is showing behind the widget.
             BlurredWithBorderGlow,
             BlurredWithSolidFill,
-            SharedBlur,         ///< Use the blur background from a BlurWidget.
+            SharedBlur,                   ///< Use the blur background from a BlurWidget.
             SharedBlurWithBorderGlow,
             Rounded
         };
-        Vec4f solidFill;     ///< Always applied if opacity > 0.
-        Type type;
-        Vec4f color;         ///< Secondary color.
-        float thickness;        ///< Frame border thickenss.
-        GuiWidget *blur;
+        Vec4f      solidFill; ///< Always applied if opacity > 0.
+        Type       type;
+        Vec4f      color;     ///< Secondary color.
+        float      thickness; ///< Frame border thickenss.
+        GuiWidget *blur = nullptr;
 
         Background()
-            : type(None), thickness(0), blur(0) {}
+            : type(None), thickness(0) {}
 
         Background(GuiWidget &blurred, Vec4f const &blurColor)
             : solidFill(blurColor), type(SharedBlur), thickness(0), blur(&blurred) {}
 
         Background(Vec4f const &solid, Type t = None)
-            : solidFill(solid), type(t), thickness(0), blur(0) {}
+            : solidFill(solid), type(t), thickness(0) {}
 
         Background(Type t, Vec4f const &borderColor, float borderThickness = 0)
-            : type(t), color(borderColor), thickness(borderThickness), blur(0) {}
+            : type(t), color(borderColor), thickness(borderThickness) {}
 
         Background(Vec4f const &solid, Type t,
                    Vec4f const &borderColor,
                    float borderThickness = 0)
-            : solidFill(solid), type(t), color(borderColor), thickness(borderThickness),
-              blur(0) {}
+            : solidFill(solid), type(t), color(borderColor), thickness(borderThickness) {}
 
         inline Background withSolidFill(Vec4f const &newSolidFill) const {
             Background bg = *this;
@@ -151,7 +147,7 @@ public:
 
     typedef Vertex2TexRgba DefaultVertex;
     typedef GLBufferT<DefaultVertex> DefaultVertexBuf;
-    typedef QList<GuiWidget *> Children;
+    typedef List<GuiWidget *> Children;
 
     /**
      * Handles events.
@@ -236,7 +232,7 @@ public:
         /// Default set of attributes.
         DefaultAttributes = RetainStatePersistently | AnimateOpacityWhenEnabledOrDisabled
     };
-    Q_DECLARE_FLAGS(Attributes, Attribute)
+    using Attributes = Flags;
 
     enum ColorTheme { Normal, Inverted };
 
@@ -331,7 +327,7 @@ public:
      * @param span        Animation transition span.
      * @param startDelay  Starting delay.
      */
-    void setOpacity(float opacity, TimeSpan span = 0, TimeSpan startDelay = 0);
+    void setOpacity(float opacity, TimeSpan span = 0.0, TimeSpan startDelay = 0.0);
 
     /**
      * Determines the widget's opacity animation.
@@ -593,8 +589,6 @@ protected:
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(GuiWidget::Attributes)
 
 template <typename WidgetType>
 struct GuiWidgetDeleter {

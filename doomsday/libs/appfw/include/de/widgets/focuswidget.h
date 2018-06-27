@@ -31,8 +31,6 @@ namespace de {
  */
 class LIBAPPFW_PUBLIC FocusWidget : public LabelWidget
 {
-    Q_OBJECT
-
 public:
     FocusWidget(de::String const &name = "focus");
 
@@ -50,7 +48,7 @@ public:
     // Events.
     void update() override;
 
-protected slots:
+protected:
     void updateFlash();
 
 private:

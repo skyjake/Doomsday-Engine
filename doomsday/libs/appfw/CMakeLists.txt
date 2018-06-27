@@ -8,10 +8,13 @@ include (../../cmake/Config.cmake)
 find_package (DengCore)
 find_package (DengGui)
 find_package (DengShell)
+find_package (glbinding REQUIRED)
+find_package (SDL2Libs)
 find_package (OculusVR QUIET)
 
 # Definitions.
 add_definitions (-D__LIBAPPFW__=1)
+add_definitions (-DDE_OPENGL=330) # TODO: common include w/libgui?
 
 # Source and header files.
 file (GLOB_RECURSE HEADERS include/de/*)
@@ -26,8 +29,8 @@ deng_add_library (libappfw ${SOURCES} ${HEADERS})
 
 target_link_libraries (libappfw
     PUBLIC Deng::libcore Deng::libgui Deng::libshell
+    PRIVATE SDL2
 )
-deng_target_link_qt (libappfw PUBLIC Widgets OpenGL)
 if (TARGET LibOVR)
     target_link_libraries (libappfw PRIVATE LibOVR)
 endif ()

@@ -48,14 +48,14 @@ class LIBAPPFW_PUBLIC FontLineWrapping : public Lockable, public shell::ILineWra
 public:
     FontLineWrapping();
 
-    void setFont(Font const &font);
-    Font const &font() const;
-    bool hasFont() const;
+    void        setFont(Font const &font);
+    const Font &font() const;
+    bool        hasFont() const;
 
     /**
      * Clears the wrapping completely. The text is also cleared.
      */
-    void clear();
+    void clear() override;
 
     /**
      * Resets the existing wrapping (isEmpty() will return @c true) but does not
@@ -63,8 +63,8 @@ public:
      */
     void reset();
 
-    void wrapTextToWidth(String const &text, int maxWidth);
-    void wrapTextToWidth(String const &text, Font::RichFormat const &format, int maxWidth);
+    void wrapTextToWidth(String const &text, shell::WrapWidth maxWidth) override;
+    void wrapTextToWidth(String const &text, Font::RichFormat const &format, shell::WrapWidth maxWidth);
 
     void rasterizeLines(Rangei const &lineRange);
     void clearRasterizedLines() const;
@@ -76,13 +76,13 @@ public:
      */
     void cancel();
 
-    bool isEmpty() const;
-    String const &text() const;
-    shell::WrappedLine line(int index) const;
-    int width() const;
-    int height() const;
-    int rangeWidth(Rangei const &range) const;
-    int indexAtWidth(Rangei const &range, int width) const;
+    bool               isEmpty() const override;
+    String const &     text() const;
+    shell::WrappedLine line(int index) const override;
+    shell::WrapWidth   width() const override;
+    int                height() const override;
+    shell::WrapWidth   rangeWidth(const CString &range) const override;
+    BytePos            indexAtWidth(const CString &range, shell::WrapWidth width) const override;
 
     /**
      * Calculates the total height of the wrapped lined in pixels. If there are
@@ -117,7 +117,7 @@ public:
             Segment(Rangei const &r = Rangei(), int tab = 0) : range(r), tabStop(tab), width(0)
             {}
         };
-        typedef QVector<Segment> Segments;
+        typedef List<Segment> Segments;
         Segments segs;
 
         int indent;         ///< Left indentation to apply to the entire line.

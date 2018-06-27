@@ -20,7 +20,7 @@
 #include "de/ui/Item"
 #include "de/LabelWidget"
 
-#include <QtAlgorithms>
+#include <algorithm>
 
 namespace de {
 namespace ui {
@@ -29,14 +29,10 @@ dsize const Data::InvalidPos = dsize(-1);
 
 DE_PIMPL_NOREF(Data)
 {
-    DE_PIMPL_AUDIENCE(Addition)
-    DE_PIMPL_AUDIENCE(Removal)
-    DE_PIMPL_AUDIENCE(OrderChange)
+    DE_PIMPL_AUDIENCES(Addition, Removal, OrderChange)
 };
 
-DE_AUDIENCE_METHOD(Data, Addition)
-DE_AUDIENCE_METHOD(Data, Removal)
-DE_AUDIENCE_METHOD(Data, OrderChange)
+DE_AUDIENCE_METHODS(Data, Addition, Removal, OrderChange)
 
 Data::Data() : d(new Impl)
 {}
@@ -59,22 +55,20 @@ void Data::sort(SortMethod method)
     }
 }
 
-LoopResult Data::forAll(std::function<LoopResult (Item &)> func)
+LoopResult Data::forAll(const std::function<LoopResult (Item &)>& func)
 {
     for (DataPos pos = 0; pos < size(); ++pos)
     {
-        if (auto result = func(at(pos)))
-            return result;
+        if (auto result = func(at(pos))) return result;
     }
     return LoopContinue;
 }
 
-LoopResult Data::forAll(std::function<LoopResult (Item const &)> func) const
+LoopResult Data::forAll(const std::function<LoopResult (Item const &)> &func) const
 {
     for (DataPos pos = 0; pos < size(); ++pos)
     {
-        if (auto result = func(at(pos)))
-            return result;
+        if (auto result = func(at(pos))) return result;
     }
     return LoopContinue;
 }

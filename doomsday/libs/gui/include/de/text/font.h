@@ -344,6 +344,16 @@ public:
     const Rule &descent() const;
     const Rule &lineSpacing() const;
 
+public:
+    /**
+     * Loads a Truetype font.
+     *
+     * @param data  Font data.
+     *
+     * @return @c true, if successful.
+     */
+    static bool load(const Block &data);
+
 private:
     DE_PRIVATE(d)
 };

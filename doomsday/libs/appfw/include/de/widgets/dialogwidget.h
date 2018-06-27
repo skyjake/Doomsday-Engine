@@ -66,23 +66,17 @@ class DialogContentStylist;
  */
 class LIBAPPFW_PUBLIC DialogWidget : public PopupWidget
 {
-    Q_OBJECT
-
 public:
     /**
      * Modality of the dialog. By default, dialogs are modal, meaning that
      * while they are open, no events can get past the dialog.
      */
-    enum Modality {
-        Modal,
-        NonModal
-    };
+    enum Modality { Modal, NonModal };
 
     enum Flag {
         DefaultFlags = 0,
         WithHeading  = 0x1      ///< Dialog has a heading above the content area.
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     enum RoleFlag {
         None    = 0,
@@ -102,7 +96,10 @@ public:
         Id3     = 0x030000,
         Id4     = 0x040000
     };
-    Q_DECLARE_FLAGS(RoleFlags, RoleFlag)
+    using RoleFlags = Flags;
+
+    DE_DEFINE_AUDIENCE2(Accept, void dialogAccepted(DialogWidget &, int result))
+    DE_DEFINE_AUDIENCE2(Reject, void dialogRejected(DialogWidget &, int result))
 
     /**
      * All buttons in a dialog must be ButtonItem instances or instances of
@@ -147,7 +144,7 @@ public:
     DE_ERROR(UndefinedLabel);
 
 public:
-    DialogWidget(String const &name = String(), Flags const &flags = DefaultFlags);
+    DialogWidget(String const &name = {}, Flags const &flags = DefaultFlags);
 
     Modality modality() const;
 
@@ -202,7 +199,7 @@ public:
     ButtonWidget *buttonWidget(int roleId) const;
     PopupButtonWidget *popupButtonWidget(int roleId) const;
 
-    QList<ButtonWidget *> buttonWidgets() const;
+    List<ButtonWidget *> buttonWidgets() const;
 
     /**
      * Sets the action that will be triggered if the dialog is accepted. The action
@@ -243,13 +240,8 @@ public:
     void update() override;
     bool handleEvent(Event const &event) override;
 
-public slots:
     void accept(int result = 1);
     void reject(int result = 0);
-
-signals:
-    void accepted(int result);
-    void rejected(int result);
 
 protected:
     void preparePanelForOpening() override;
@@ -274,9 +266,6 @@ private:
 };
 
 typedef DialogWidget::ButtonItem DialogButtonItem;
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(DialogWidget::Flags)
-Q_DECLARE_OPERATORS_FOR_FLAGS(DialogWidget::RoleFlags)
 
 } // namespace de
 

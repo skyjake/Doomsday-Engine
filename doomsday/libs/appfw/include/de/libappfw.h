@@ -19,6 +19,8 @@
 #ifndef LIBAPPFW_MAIN_H
 #define LIBAPPFW_MAIN_H
 
+#include <de/libcore.h>
+
 /** @namespace de::ui User interface. */
 
 /** @defgroup appfw Application Framework
@@ -53,8 +55,7 @@
 #    define LIBAPPFW_PUBLIC __declspec(dllimport)
 #  endif
 #else
-// No need to use any special declarators.
-#  define LIBAPPFW_PUBLIC
+#  define LIBAPPFW_PUBLIC   DE_PUBLIC
 #endif
 
 #endif // LIBAPPFW_MAIN_H

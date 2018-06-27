@@ -19,13 +19,13 @@
 #include "de/GridLayout"
 #include "de/SequentialLayout"
 
-#include <QMap>
+#include <de/Map>
 
 namespace de {
 
 DE_PIMPL(GridLayout)
 {
-    typedef QMap<Vec2i, ui::Alignment> CellAlignments;
+    typedef Map<Vec2i, ui::Alignment> CellAlignments;
 
     GuiWidgetList widgets;
     Mode mode;
@@ -38,8 +38,8 @@ DE_PIMPL(GridLayout)
     Vec2i cell;
     Rule const *fixedCellWidth;
     Rule const *fixedCellHeight;
-    QMap<int, Rule const *> fixedColWidths;
-    QMap<GuiWidget const *, int> widgetMultiCellCount; ///< Only multicell widgets.
+    Map<int, Rule const *> fixedColWidths;
+    Map<GuiWidget const *, int> widgetMultiCellCount; ///< Only multicell widgets.
     CellAlignments cellAlignment;
     Rule const *colPad;
     Rule const *rowPad;
@@ -72,7 +72,7 @@ DE_PIMPL(GridLayout)
             releaseRef(maxEdge);
         }
     };
-    typedef QList<Metric *> Metrics;
+    typedef List<Metric *> Metrics;
     Metrics cols;
     Metrics rows;
 
@@ -119,10 +119,9 @@ DE_PIMPL(GridLayout)
         releaseRef(totalHeight);
         releaseRef(publicWidth);
         releaseRef(publicHeight);
-
-        foreach (Rule const *rule, fixedColWidths.values())
+        for (auto &rule : fixedColWidths)
         {
-            releaseRef(rule);
+            releaseRef(rule.second);
         }
         fixedColWidths.clear();
 
@@ -137,7 +136,7 @@ DE_PIMPL(GridLayout)
         changeRef(baseY, *initialY);
 
         delete current;
-        current = 0;
+        current = nullptr;
 
         publicWidth ->unsetSource();
         publicHeight->unsetSource();
@@ -150,8 +149,8 @@ DE_PIMPL(GridLayout)
 
     void clearMetrics()
     {
-        qDeleteAll(cols); cols.clear();
-        qDeleteAll(rows); rows.clear();
+        deleteAll(cols); cols.clear();
+        deleteAll(rows); rows.clear();
 
         cellAlignment.clear();
     }
@@ -193,7 +192,7 @@ DE_PIMPL(GridLayout)
     void addMetric(Metrics &list)
     {
         Metric *m = new Metric;
-        int pos = list.size();
+        int pos = list.sizei();
 
         // Check if there is a fixed width defined for this column.
         if (&list == &cols && fixedColWidths.contains(pos))
@@ -202,7 +201,7 @@ DE_PIMPL(GridLayout)
             m->fixedLength = holdRef(*fixedColWidths[pos]);
         }
 
-        for (int i = 0; i < list.size(); ++i)
+        for (int i = 0; i < list.sizei(); ++i)
         {
             sumInto(m->accumulatedLengths, list[i]->fixedLength? *list[i]->fixedLength :
                                                                  *list[i]->final);
@@ -213,12 +212,12 @@ DE_PIMPL(GridLayout)
     void updateMaximum(Metrics &list, int index, Rule const &rule)
     {
         if (index < 0) index = 0;
-        if (index >= list.size())
+        if (index >= list.sizei())
         {
             // The list may expand.
             addMetric(list);
         }
-        DE_ASSERT(index < list.size());
+        DE_ASSERT(index < list.sizei());
 
         DE_ASSERT(list[index] != nullptr);
         if (!list[index]) return;
@@ -255,7 +254,7 @@ DE_PIMPL(GridLayout)
 
     Rule const &columnRightX(int col)
     {
-        if (col < cols.size() - 1)
+        if (col < cols.sizei() - 1)
         {
             return columnLeftX(col + 1);
         }
@@ -287,7 +286,7 @@ DE_PIMPL(GridLayout)
         CellAlignments::const_iterator found = cellAlignment.find(pos);
         if (found != cellAlignment.end())
         {
-            return found.value();
+            return found->second;
         }
         return cols.at(pos.x)->cellAlign;
     }
@@ -316,7 +315,7 @@ DE_PIMPL(GridLayout)
      */
     void end(int cellSpan)
     {
-        DE_ASSERT(current != 0);
+        DE_ASSERT(current != nullptr);
 
         // Advance to next cell.
         if (mode == ColumnFirst)
@@ -331,7 +330,7 @@ DE_PIMPL(GridLayout)
                 if (rowPad) sumInto(baseY, *rowPad * cellSpan);
 
                 // This one is finished.
-                delete current; current = 0;
+                delete current; current = nullptr;
             }
         }
         else
@@ -346,7 +345,7 @@ DE_PIMPL(GridLayout)
                 if (colPad) sumInto(baseX, *colPad * cellSpan);
 
                 // This one is finished.
-                delete current; current = 0;
+                delete current; current = nullptr;
             }
         }
     }
@@ -613,7 +612,7 @@ GuiWidgetList GridLayout::widgets() const
 
 int GridLayout::size() const
 {
-    return d->widgets.size();
+    return d->widgets.sizei();
 }
 
 bool GridLayout::isEmpty() const
@@ -634,7 +633,7 @@ Vec2i GridLayout::gridSize() const
 Vec2i GridLayout::widgetPos(GuiWidget &widget) const
 {
     Vec2i pos;
-    foreach (Widget *w, d->widgets)
+    for (Widget *w : d->widgets)
     {
         if (w == &widget) return pos;
 
@@ -663,7 +662,7 @@ Vec2i GridLayout::widgetPos(GuiWidget &widget) const
 GuiWidget *GridLayout::at(Vec2i const &cell) const
 {
     Vec2i pos;
-    foreach (GuiWidget *w, d->widgets)
+    for (GuiWidget *w : d->widgets)
     {
         if (pos == cell)
         {
@@ -690,15 +689,15 @@ GuiWidget *GridLayout::at(Vec2i const &cell) const
             break;
         }
     }
-    return 0;
+    return nullptr;
 }
 
 int GridLayout::widgetCellSpan(GuiWidget const &widget) const
 {
-    auto found = d->widgetMultiCellCount.constFind(&widget);
-    if (found != d->widgetMultiCellCount.constEnd())
+    auto found = d->widgetMultiCellCount.find(&widget);
+    if (found != d->widgetMultiCellCount.end())
     {
-        return found.value();
+        return found->second;
     }
     return 1;
 }
@@ -717,37 +716,37 @@ Rule const &GridLayout::height() const
 
 Rule const &GridLayout::columnLeft(int col) const
 {
-    DE_ASSERT(col >= 0 && col < d->cols.size());
+    DE_ASSERT(col >= 0 && col < d->cols.sizei());
     return d->columnLeftX(col);
 }
 
 Rule const &GridLayout::columnRight(int col) const
 {
-    DE_ASSERT(col >= 0 && col < d->cols.size());
+    DE_ASSERT(col >= 0 && col < d->cols.sizei());
     return d->columnRightX(col);
 }
 
 Rule const &GridLayout::columnWidth(int col) const
 {
-    DE_ASSERT(col >= 0 && col < d->cols.size());
+    DE_ASSERT(col >= 0 && col < d->cols.sizei());
     return *d->cols.at(col)->final;
 }
 
 Rule const &GridLayout::rowHeight(int row) const
 {
-    DE_ASSERT(row >= 0 && row < d->rows.size());
+    DE_ASSERT(row >= 0 && row < d->rows.sizei());
     return *d->rows.at(row)->final;
 }
 
 Rule const &GridLayout::overrideWidth() const
 {
-    DE_ASSERT(d->fixedCellWidth != 0);
+    DE_ASSERT(d->fixedCellWidth != nullptr);
     return *d->fixedCellWidth;
 }
 
 Rule const &GridLayout::overrideHeight() const
 {
-    DE_ASSERT(d->fixedCellHeight != 0);
+    DE_ASSERT(d->fixedCellHeight != nullptr);
     return *d->fixedCellHeight;
 }
 

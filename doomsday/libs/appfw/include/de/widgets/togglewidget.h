@@ -31,24 +31,20 @@ namespace de {
  */
 class LIBAPPFW_PUBLIC ToggleWidget : public ButtonWidget
 {
-    Q_OBJECT
-
 public:
     enum Flag {
         DefaultFlags     = 0,
         WithoutIndicator = 0x1,
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
-    enum ToggleState {
-        Active,
-        Inactive
-    };
+    enum ToggleState { Active, Inactive };
 
     /**
      * Audience to be notified whenever the toggle is toggled.
      */
     DE_DEFINE_AUDIENCE2(Toggle, void toggleStateChanged(ToggleWidget &toggle))
+
+    DE_DEFINE_AUDIENCE2(UserToggle, void toggleStateChangedByUser(ToggleState active))
 
 public:
     ToggleWidget(Flags const &flags = DefaultFlags, String const &name = String());
@@ -71,15 +67,9 @@ public:
      */
     void finishAnimation();
 
-signals:
-    void stateChanged(ToggleWidget::ToggleState active);
-    void stateChangedByUser(ToggleWidget::ToggleState active);
-
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(ToggleWidget::Flags)
 
 } // namespace de
 

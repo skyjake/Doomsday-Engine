@@ -1,3 +1,5 @@
+#include <utility>
+
 /** @file buttonwidget.cpp  Clickable button widget.
  *
  * @authors Copyright (c) 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -26,23 +28,23 @@
 
 namespace de {
 
-DE_GUI_PIMPL(ButtonWidget),
-DE_OBSERVES(Action, Triggered)
+DE_GUI_PIMPL(ButtonWidget)
+, DE_OBSERVES(Action, Triggered)
 {
-    State state                   { Up };
-    DotPath bgColorId             { "background" };
-    DotPath borderColorId         { "text" };
-    HoverColorMode hoverColorMode { ReplaceColor };
-    ColorTheme colorTheme         { Normal };
-    Background::Type bgType       { Background::GradientFrame };
-    Action *action                { nullptr };
-    Animation scale               { 1.f };
-    Animation frameOpacity        { .08f, Animation::Linear };
-    bool animating                { false };
-    DotPath hoverTextColor;
-    DotPath originalTextColor;
-    Vec4f originalTextModColor;
-    String shortcut;
+    State            state{Up};
+    DotPath          bgColorId{"background"};
+    DotPath          borderColorId{"text"};
+    HoverColorMode   hoverColorMode{ReplaceColor};
+    ColorTheme       colorTheme{Normal};
+    Background::Type bgType{Background::GradientFrame};
+    Action *         action{nullptr};
+    Animation        scale{1.f};
+    Animation        frameOpacity{.08f, Animation::Linear};
+    bool             animating{false};
+    DotPath          hoverTextColor;
+    DotPath          originalTextColor;
+    Vec4f            originalTextModColor;
+    String           shortcut;
 
     Impl(Public *i) : Base(i)
     {
@@ -283,7 +285,7 @@ void ButtonWidget::setAction(RefArg<Action> action)
 
 void ButtonWidget::setActionFn(std::function<void ()> callback)
 {
-    setAction(new CallbackAction(callback));
+    setAction(new CallbackAction(std::move(callback)));
 }
 
 Action const *ButtonWidget::action() const
@@ -302,7 +304,6 @@ void ButtonWidget::trigger()
     AutoRef<Action> held = holdRef(d->action);
 
     // Notify.
-    emit pressed();
     DE_FOR_AUDIENCE2(Press, i) i->buttonPressed(*this);
 
     if (held)
@@ -337,8 +338,8 @@ bool ButtonWidget::handleShortcut(KeyEvent const &keyEvent)
     {
         return false;
     }
-    if ((!d->shortcut.isEmpty() && d->shortcut.startsWith(keyEvent.text(), Qt::CaseInsensitive)) ||
-        text().startsWith(keyEvent.text(), Qt::CaseInsensitive))
+    if ((!d->shortcut.isEmpty() && d->shortcut.beginsWith(keyEvent.text(), CaseInsensitive)) ||
+        text().beginsWith(keyEvent.text(), CaseInsensitive))
     {
         trigger();
         return true;

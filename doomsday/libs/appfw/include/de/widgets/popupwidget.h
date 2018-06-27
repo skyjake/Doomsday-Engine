@@ -36,10 +36,8 @@ namespace de {
  */
 class LIBAPPFW_PUBLIC PopupWidget : public PanelWidget
 {
-    Q_OBJECT
-
 public:
-    PopupWidget(String const &name = String());
+    PopupWidget(String const &name = {});
 
     /**
      * Determines how deeply nested this popup is within parent popups.

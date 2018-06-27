@@ -34,13 +34,6 @@
 #include <de/LogBuffer>
 #include <de/NumberValue>
 
-//#include <QDesktopWidget>
-//#include <QResizeEvent>
-//#include <QScreen>
-//#include <QTimer>
-//#include <QVector>
-//#include <QList>
-
 namespace de {
 
 static const char *MAIN_WINDOW_ID            = "main";
