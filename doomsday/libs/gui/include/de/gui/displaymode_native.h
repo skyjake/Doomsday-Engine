@@ -48,10 +48,6 @@ void DisplayMode_Native_GetColorTransfer(DisplayColorTransfer *colors);
 
 void DisplayMode_Native_SetColorTransfer(DisplayColorTransfer const *colors);
 
-#ifdef MACOSX
-void DisplayMode_Native_Raise(void* handle);
-#endif
-
 #ifdef __cplusplus
 } // extern "C"
 #endif
