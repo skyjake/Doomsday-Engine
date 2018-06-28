@@ -87,13 +87,13 @@ bool TextApp::notify(QObject *receiver, QEvent *event)
 }
 */
 
-int TextApp::exec(const std::function<void()> &postExec)
+int TextApp::exec(const std::function<void()> &startup)
 {
     LOGDEV_NOTE("Starting TextApp event loop...");
 
-    int code = d->eventLoop.exec([this, postExec]() {
+    int code = d->eventLoop.exec([this, startup]() {
         d->loop.start();
-        postExec();
+        startup();
     });
 
     LOGDEV_NOTE("TextApp event loop exited with code %i") << code;

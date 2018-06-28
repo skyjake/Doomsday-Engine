@@ -45,9 +45,9 @@ public:
     /**
      * Start the application event loop.
      *
-     * @param postExec  Function to call immediately after starting the event loop.
+     * @param startup  Function to call immediately after starting the event loop.
      */
-    int exec(const std::function<void()> &postExec = {});
+    int exec(const std::function<void()> &startup = {});
 
     void quit(int code);
 
