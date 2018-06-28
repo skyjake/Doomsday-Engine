@@ -39,8 +39,8 @@
 namespace de {
 
 static bool                 inited = false;
+static Binder *             binder = nullptr;
 static DisplayColorTransfer originalColorTransfer;
-static de::Binder           binder;
 
 static float differenceToOriginalHz(float hz);
 
@@ -188,6 +188,13 @@ static de::Value *Function_DisplayMode_OriginalMode(de::Context &, de::Function:
 
 using namespace de;
 
+#if defined (DE_DEBUG)
+static void assertDisplayModeHasBeenDeinitialized()
+{
+    DE_ASSERT(!inited);
+}
+#endif
+
 int DisplayMode_Init(void)
 {
     if (inited) return true;
@@ -219,9 +226,16 @@ int DisplayMode_Init(void)
     }
 
     // Script bindings.
-    binder.initNew() << DE_FUNC_NOARG(DisplayMode_OriginalMode, "originalMode");
-    de::App::scriptSystem().addNativeModule("DisplayMode", binder.module());
-    binder.module().addNumber("PIXEL_RATIO", 1.0);
+    {
+        binder = new Binder;
+        binder->initNew() << DE_FUNC_NOARG(DisplayMode_OriginalMode, "originalMode");
+        de::App::scriptSystem().addNativeModule("DisplayMode", binder->module());
+        binder->module().addNumber("PIXEL_RATIO", 1.0);
+    }
+
+#if defined (DE_DEBUG)
+    atexit(assertDisplayModeHasBeenDeinitialized);
+#endif
 
     inited = true;
     return true;
@@ -231,7 +245,8 @@ void DisplayMode_Shutdown(void)
 {
     if (!inited) return;
 
-    binder.deinit();
+    delete binder;
+    binder = nullptr;
 
     LOG_GL_NOTE("Restoring original display mode due to shutdown");
 

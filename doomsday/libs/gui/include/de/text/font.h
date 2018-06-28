@@ -219,10 +219,8 @@ public:
          * provided styled text (using escape sequences).
          *
          * @param styledText  Text with style markup.
-         *
-         * @return Corresponding plain text for use with the methods of Font.
          */
-        String initFromStyledText(const String &styledText);
+        void initFromStyledText(const String &styledText);
 
         /**
          * Clips this RichFormat so that it covers only the specified range.

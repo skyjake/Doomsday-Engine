@@ -138,7 +138,10 @@ target_link_libraries (libgui
     PUBLIC  Deng::libcore glbinding::glbinding
     PRIVATE SDL2 SDL2_ttf stb libassimp
 )
-#deng_target_link_qt (libgui PUBLIC Gui OpenGLExtensions Widgets)
+if (WIN32)
+    # Direct2D is used for DPI information.
+    target_link_libraries (libgui PRIVATE d2d1.lib)
+endif ()
 
 if (UNIX AND NOT APPLE)
     # The assimp target may be linked to some system libraries that

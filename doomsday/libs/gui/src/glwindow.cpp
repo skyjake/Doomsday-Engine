@@ -25,13 +25,6 @@
 #include "de/EventLoop"
 #include "de/CoreEvent"
 
-//#include <QElapsedTimer>
-//#include <QImage>
-//#include <QOpenGLTimerQuery>
-#include <QScreen>
-//#include <QSurfaceFormat>
-//#include <QTimer>
-
 #include <de/GLBuffer>
 #include <de/GLState>
 #include <de/GLFramebuffer>
@@ -51,7 +44,7 @@ DE_PIMPL(GLWindow)
     SDL_GLContext glContext = nullptr;
 
     LoopCallback        mainCall;
-    GLFramebuffer       backing;                 // Represents QOpenGLWindow's framebuffer.
+    GLFramebuffer       backing;
     WindowEventHandler *handler       = nullptr; ///< Event handler.
     bool                initialized   = false;
     bool                readyPending  = false;
@@ -71,12 +64,11 @@ DE_PIMPL(GLWindow)
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-        SDL_GL_SetAttribute(SDL_GL_RED_SIZE,     5);
-        SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,   6);
-        SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,    5);
-        SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,   16);
+        SDL_GL_SetAttribute(SDL_GL_RED_SIZE,   5);
+        SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 6);
+        SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,  5);
+        SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
 
         window = SDL_CreateWindow("GLWindow",
                                   SDL_WINDOWPOS_UNDEFINED,
@@ -120,15 +112,6 @@ DE_PIMPL(GLWindow)
         self().setState(NotReady);
         readyNotified = false;
         readyPending = false;
-//#if defined (DE_HAVE_TIMER_QUERY)
-//        if (timerQuery)
-//        {
-//            if (timerQueryPending) timerQuery->waitForResult();
-//            delete timerQuery;
-//            timerQuery = nullptr;
-//            timerQueryPending = false;
-//        }
-//#endif
         timer.reset();
         GLInfo::glDeinit();
     }
@@ -163,7 +146,7 @@ DE_PIMPL(GLWindow)
         LIBGUI_ASSERT_GL_OK();
 
         // Everybody can perform GL init now.
-        DE_FOR_PUBLIC_AUDIENCE2(Init, i) i->windowInit(self());
+        DE_FOR_PUBLIC_AUDIENCE2(Init, i)   i->windowInit(self());
         DE_FOR_PUBLIC_AUDIENCE2(Resize, i) i->windowResized(self());
 
         readyNotified = true;
@@ -173,48 +156,6 @@ DE_PIMPL(GLWindow)
         // Now we can paint.
         mainCall.enqueue([this] () { self().update(); });
     }
-
-#if 0
-#if defined (DE_HAVE_TIMER_QUERY)
-    bool timerQueryReady() const
-    {
-        //if (!GLInfo::extensions().EXT_timer_query) return false;
-        return timerQuery && !timerQueryPending;
-    }
-
-    void checkTimerQueryResult()
-    {
-        // Measure how long it takes to render a frame on average.
-        if (//GLInfo::extensions().EXT_timer_query &&
-            timerQueryPending &&
-            timerQuery->isResultAvailable())
-        {
-            timerQueryPending = false;
-            recordedGpuTimes.append(double(timerQuery->waitForResult()) / 1.0e9);
-
-            if (!gpuTimeRecordingStartedAt.isValid())
-            {
-                gpuTimeRecordingStartedAt.start();
-            }
-
-            // There are minor time variations rendering the same frame, so average over
-            // a second to find out a reasonable value.
-            if (gpuTimeRecordingStartedAt.elapsed() > 1000)
-            {
-                TimeSpan average = 0;
-                for (auto dt : recordedGpuTimes) average += dt;
-                average = average / recordedGpuTimes.size();
-                recordedGpuTimes.clear();
-
-                //qDebug() << "[OpenGL average frame timed]" << average.asMicroSeconds() << "µs";
-                //qDebug() << "[OpenGL draw count]" << GLBuffer::drawCount();
-
-                gpuTimeRecordingStartedAt.restart();
-            }
-        }
-    }
-#endif
-#endif // 0
 
     void updateFrameRateStatistics()
     {
@@ -252,7 +193,7 @@ DE_PIMPL(GLWindow)
         SDL_GL_GetDrawableSize(window, &pw, &ph);
         debug("[GLWindow] Drawable size is %dx%d pixels", pw, ph);
 
-        auto pendingSize = Size(pw, ph); // * qApp->devicePixelRatio();
+        Size pendingSize = Size(pw, ph);
 
         // Only react if this is actually a resize.
         if (currentSize != pendingSize)
@@ -263,9 +204,10 @@ DE_PIMPL(GLWindow)
             {
                 self().makeCurrent();
             }
-
-            DE_FOR_PUBLIC_AUDIENCE2(Resize, i) { i->windowResized(self()); }
-            
+            DE_FOR_PUBLIC_AUDIENCE2(Resize, i)
+            {
+                i->windowResized(self());
+            }
             if (readyNotified)
             {
                 self().doneCurrent();
@@ -275,10 +217,9 @@ DE_PIMPL(GLWindow)
 
     void frameWasSwapped()
     {
-//        self().makeCurrent();
+        LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
         DE_FOR_PUBLIC_AUDIENCE2(Swap, i) i->windowSwapped(self());
         updateFrameRateStatistics();
-//        self().doneCurrent();
     }
 
     DE_PIMPL_AUDIENCES(Init, Resize, PixelRatio, Swap, Move, Visibility)
@@ -364,6 +305,11 @@ void GLWindow::showFullScreen()
 void GLWindow::hide()
 {
     SDL_HideWindow(d->window);
+}
+
+void GLWindow::raise()
+{
+    SDL_RaiseWindow(d->window);
 }
 
 void GLWindow::setGeometry(const Rectanglei &rect)
@@ -702,7 +648,7 @@ void GLWindow::initializeGL()
 void GLWindow::paintGL()
 {
     d->paintPending = false;
-    GLFramebuffer::setDefaultFramebuffer(0); //defaultFramebufferObject());
+    GLFramebuffer::setDefaultFramebuffer(0);
 
     // Do not proceed with painting until after the application has completed
     // GL initialization. This is done via timer callback because we don't
@@ -720,32 +666,7 @@ void GLWindow::paintGL()
         return;
     }
 
-    //DE_ASSERT(QOpenGLContext::currentContext() != nullptr);
     LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
-
-    //qDebug() << "Frame time:" << d->timer->elapsedTime(d->totalFrameTimeQueryId);
-
-//#if defined (DE_HAVE_TIMER_QUERY)
-//    {
-//        d->checkTimerQueryResult();
-
-//        if (!d->timerQuery)
-//        {
-//            d->timerQuery = new QOpenGLTimerQuery();
-//            if (!d->timerQuery->create())
-//            {
-//                LOG_GL_ERROR("Failed to create timer query object");
-//            }
-//        }
-
-//        if (d->timerQueryReady())
-//        {
-//            d->timerQuery->begin();
-//        }
-//    }
-//#endif
-
-    //d->timer->beginTimer(d->totalFrameTimeQueryId);
 
     GLBuffer::resetDrawCount();
 
@@ -757,16 +678,6 @@ void GLWindow::paintGL()
     draw();
 
     LIBGUI_ASSERT_GL_OK();
-
-    //d->timer->endTimer(d->totalFrameTimeQueryId);
-
-//#if defined (DE_HAVE_TIMER_QUERY)
-//    if (d->timerQueryReady())
-//    {
-//        d->timerQuery->end();
-//        d->timerQueryPending = true;
-//    }
-//#endif
 
     SDL_GL_SwapWindow(d->window);
     d->frameWasSwapped();

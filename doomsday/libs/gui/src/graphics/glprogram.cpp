@@ -120,11 +120,10 @@ DE_PIMPL(GLProgram)
 
     void detachAllShaders()
     {
-        for (GLShader const *shader : shaders)
+        while (!shaders.empty())
         {
-            detach(shader);
+            detach(*shaders.begin()); // gets removed from `shaders`
         }
-        shaders.clear();
     }
 
     void unbindAll()

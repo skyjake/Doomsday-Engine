@@ -54,14 +54,19 @@ class LIBGUI_PUBLIC GuiApp : public App
                            , DE_OBSERVES(Loop, Iteration)
 {
 public:
-//    static void setDefaultOpenGLFormat(); // call before constructing GuiApp
-
     GuiApp(const StringList &args);
 
-    void setMetadata(String const &orgName, String const &orgDomain,
-                     String const &appName, String const &appVersion);
+    void initSubsystems(SubsystemInitFlags subsystemInitFlags = DefaultSubsystems) override;
 
-//    bool notify(QObject *receiver, QEvent *event);
+    /**
+     * Determines the pixel ratio of the (HiDPI) display.
+     */
+    double dpiFactor() const;
+
+    void setMetadata(const String &orgName,
+                     const String &orgDomain,
+                     const String &appName,
+                     const String &appVersion);
 
     /**
      * Emits the displayModeChanged() signal.
@@ -72,8 +77,8 @@ public:
      */
     void notifyDisplayModeChanged();
 
-    int  execLoop();
-    void stopLoop(int code);
+    int  exec(const std::function<void ()> &startup = {});
+    void quit(int code = 0);
 
     GuiLoop &loop();
 

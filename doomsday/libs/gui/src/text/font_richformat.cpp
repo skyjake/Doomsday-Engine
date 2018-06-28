@@ -83,9 +83,6 @@ DE_PIMPL_NOREF(Font::RichFormat)
 
     void handlePlainText(const CString &range)
     {
-//        Rangei plainRange(plainPos, plainPos + int(range.size()));
-//        plainPos += range.size();
-
         // Append a formatted range using the stack's current format.
         ranges.emplace_back(range, stack.last());
 
@@ -96,7 +93,7 @@ DE_PIMPL_NOREF(Font::RichFormat)
     void handleEscapeSequence(const CString &range)
     {
         // Save the previous format on the stack.
-        stack << Impl::Format(stack.last());
+        stack.emplace_back(stack.last());
 
         mb_iterator iter = range.begin();
 
@@ -231,8 +228,7 @@ void Font::RichFormat::clear()
     d->ranges.clear();
     d->tabs.clear();
     d->stack.clear();
-    d->stack << Impl::Format();
-//    d->plainPos = 0;
+    d->stack.emplace_back();
 }
 
 void Font::RichFormat::setStyle(IStyle const &style)
@@ -259,7 +255,7 @@ Font::RichFormat Font::RichFormat::fromPlainText(String const &plainText)
     return form;
 }
 
-String Font::RichFormat::initFromStyledText(String const &styledText)
+void Font::RichFormat::initFromStyledText(String const &styledText)
 {
     clear();
 
@@ -288,7 +284,7 @@ String Font::RichFormat::initFromStyledText(String const &styledText)
     }
 #endif
 
-    return d->esc.plainText();
+//    return d->esc.plainText();
 }
 
 Font::RichFormatRef Font::RichFormat::subRange(const CString &range) const

@@ -21,11 +21,14 @@
 #include "de/ImageFile"
 #include "de/GLWindow"
 
+#include <de/CommandLine>
+#include <de/Config>
+#include <de/EventLoop>
 #include <de/FileSystem>
 #include <de/Log>
 #include <de/NativePath>
+#include <de/ScriptSystem>
 #include <de/Thread>
-#include <de/EventLoop>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_video.h>
@@ -38,6 +41,7 @@ DE_PIMPL(GuiApp)
     EventLoop eventLoop;
     GuiLoop   loop;
     Thread *  renderThread;
+    double    dpiFactor = 1.0;
 
     Impl(Public *i) : Base(i)
     {
@@ -53,11 +57,41 @@ DE_PIMPL(GuiApp)
         SDL_Quit();
     }
 
+    void determineDevicePixelRatio()
+    {
+#if defined (WIN32)
+        // Use the Direct2D API to find out the desktop DPI factor.
+        ID2D1Factory *d2dFactory = nullptr;
+        HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &d2dFactory);
+        if (SUCCEEDED(hr))
+        {
+            FLOAT dpiX = 96;
+            FLOAT dpiY = 96;
+            d2dFactory->GetDesktopDpi(&dpiX, &dpiY);
+            dpiFactor = dpiX / 96.0;
+            d2dFactory->Release();
+            d2dFactory = nullptr;
+        }
+#else
+        // Use a hidden SDL window to determine pixel ratio.
+        SDL_Window *temp =
+            SDL_CreateWindow("",
+                             SDL_WINDOWPOS_UNDEFINED,
+                             SDL_WINDOWPOS_UNDEFINED,
+                             100,
+                             100,
+                             SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
+        int points, pixels;
+        SDL_GetWindowSize(temp, &points, nullptr);
+        SDL_GL_GetDrawableSize(temp, &pixels, nullptr);
+        SDL_DestroyWindow(temp);
+
+        dpiFactor = double(pixels) / double(points);
+#endif
+    }
+
     void matchLoopRateToDisplayMode()
     {
-        float dpi[2];
-        SDL_GetDisplayDPI(0, nullptr, dpi, dpi + 1);
-
         SDL_DisplayMode mode;
         if (SDL_GetCurrentDisplayMode(0, &mode) == 0)
         {
@@ -133,18 +167,36 @@ GuiApp::GuiApp(const StringList &args)
     {
         throw Error("GuiApp::GuiApp", "No video displays available");
     }
+
     d->matchLoopRateToDisplayMode();
-
-    // Check display pixel ratio.
-    {
-
-    }
+    d->determineDevicePixelRatio();
 
     static ImageFile::Interpreter intrpImageFile;
     fileSystem().addInterpreter(intrpImageFile);
 
     // Core packages for GUI functionality.
     addInitPackage("net.dengine.stdlib.gui");
+}
+
+void GuiApp::initSubsystems(SubsystemInitFlags subsystemInitFlags)
+{
+    App::initSubsystems(subsystemInitFlags);
+
+    // The "-dpi" option overrides the detected DPI factor.
+    if (auto dpi = commandLine().check("-dpi", 1))
+    {
+        d->dpiFactor = dpi.params.at(0).toDouble();
+    }
+
+    // Apply the overall UI scale factor.
+    d->dpiFactor *= config().getf("ui.scaleFactor", 1.f);
+
+    scriptSystem().nativeModule("DisplayMode").set("DPI_FACTOR", d->dpiFactor);
+}
+
+double GuiApp::dpiFactor() const
+{
+    return d->dpiFactor;
 }
 
 void GuiApp::setMetadata(String const &orgName, String const &orgDomain,
@@ -188,19 +240,20 @@ void GuiApp::notifyDisplayModeChanged()
 //    emit displayModeChanged();
 //}
 
-int GuiApp::execLoop()
+int GuiApp::exec(const std::function<void ()> &startup)
 {
     LOGDEV_NOTE("Starting GuiApp event loop...");
 
-    int code = d->eventLoop.exec([this](){
+    int code = d->eventLoop.exec([this, startup](){
         d->loop.start();
+        if (startup) startup();
     });
 
     LOGDEV_NOTE("GuiApp event loop exited with code %i") << code;
     return code;
 }
 
-void GuiApp::stopLoop(int code)
+void GuiApp::quit(int code)
 {
     LOGDEV_MSG("Stopping GuiApp event loop");
 

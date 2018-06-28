@@ -98,6 +98,7 @@ public:
     void showMaximized();
     void showFullScreen();
     void hide();
+    void raise();
 
     bool isGLReady() const;
     bool isFullScreen() const;
