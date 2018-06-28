@@ -19,7 +19,6 @@
 #include "testapp.h"
 #include "appwindowsystem.h"
 
-#include <de/DisplayMode>
 #include <de/FileSystem>
 #include <de/ScriptSystem>
 
@@ -36,8 +35,6 @@ DE_PIMPL(TestApp)
     {
         // Windows will be closed; OpenGL context will be gone.
         self().glDeinit();
-
-        DisplayMode_Shutdown();
     }
 
     void loadAllShaders()
@@ -63,7 +60,6 @@ TestApp::TestApp(const StringList &args)
 
 void TestApp::initialize()
 {
-    DisplayMode_Init();
     addInitPackage("net.dengine.test.appfw");
     initSubsystems(App::DisablePlugins);
 

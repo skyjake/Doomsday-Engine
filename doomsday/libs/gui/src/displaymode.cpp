@@ -197,6 +197,7 @@ static void assertDisplayModeHasBeenDeinitialized()
 
 int DisplayMode_Init(void)
 {
+    DE_ASSERT(!inited); // don't redo it
     if (inited) return true;
 
     captured = false;

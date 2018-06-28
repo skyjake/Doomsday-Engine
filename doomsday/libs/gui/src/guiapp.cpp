@@ -23,6 +23,7 @@
 
 #include <de/CommandLine>
 #include <de/Config>
+#include <de/DisplayMode>
 #include <de/EventLoop>
 #include <de/FileSystem>
 #include <de/Log>
@@ -54,6 +55,7 @@ DE_PIMPL(GuiApp)
 
     ~Impl()
     {
+        DisplayMode_Shutdown();
         SDL_Quit();
     }
 
@@ -191,6 +193,7 @@ void GuiApp::initSubsystems(SubsystemInitFlags subsystemInitFlags)
     // Apply the overall UI scale factor.
     d->dpiFactor *= config().getf("ui.scaleFactor", 1.f);
 
+    DisplayMode_Init();
     scriptSystem().nativeModule("DisplayMode").set("DPI_FACTOR", d->dpiFactor);
 }
 
