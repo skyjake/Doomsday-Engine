@@ -27,7 +27,7 @@ using namespace de;
 
 DE_PIMPL(TestApp)
 {
-    QScopedPointer<AppWindowSystem> winSys;
+    std::unique_ptr<AppWindowSystem> winSys;
     ImageBank images;
 
     Impl(Public *i) : Base(i) {}
@@ -36,6 +36,8 @@ DE_PIMPL(TestApp)
     {
         // Windows will be closed; OpenGL context will be gone.
         self().glDeinit();
+
+        DisplayMode_Shutdown();
     }
 
     void loadAllShaders()
@@ -51,8 +53,9 @@ DE_PIMPL(TestApp)
     }
 };
 
-TestApp::TestApp(int &argc, char **argv)
-    : BaseGuiApp(argc, argv), d(new Impl(this))
+TestApp::TestApp(const StringList &args)
+    : BaseGuiApp(args)
+    , d(new Impl(this))
 {
     setMetadata("Deng Team", "dengine.net", "Application Framework Test", "1.0");
     setUnixHomeFolderName(".test_appfw");
@@ -74,7 +77,7 @@ void TestApp::initialize()
     d->images.addFromInfo(rootFolder().locate<File>("/packs/net.dengine.test.appfw/images.dei"));
 
     // Create the window.
-    MainWindow *win = d->winSys->newWindow<MainWindow>("main");
+    auto *win = d->winSys->newWindow<MainWindow>("main");
 
     scriptSystem().importModule("bootstrap");
 

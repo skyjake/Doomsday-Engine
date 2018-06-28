@@ -30,14 +30,14 @@
 class TestApp : public de::BaseGuiApp
 {
 public:
-    TestApp(int &argc, char **argv);
+    TestApp(const de::StringList &args);
 
     void initialize();
 
-    static TestApp &app();
+    static TestApp &        app();
     static AppWindowSystem &windowSystem();
-    static MainWindow &main();
-    static de::ImageBank &images();
+    static MainWindow &     main();
+    static de::ImageBank &  images();
 
 private:
     DE_PRIVATE(d)

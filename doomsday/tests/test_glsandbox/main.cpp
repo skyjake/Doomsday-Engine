@@ -36,7 +36,7 @@ DE_EXTERN_C int main(int argc, char **argv)
         TestWindow win;
         win.show();
 
-        return app.execLoop();
+        return app.exec();
     }
     catch (Error const &err)
     {

@@ -55,9 +55,9 @@ DE_PIMPL(MainWindow)
         , root(i)
         , needRootSizeUpdate(false)
         , contentXf(*i)
-        , compositor(0)
-        , test(0)
-        , cursor(0)
+        , compositor(nullptr)
+        , test(nullptr)
+        , cursor(nullptr)
         , cursorX(new ConstantRule(0))
         , cursorY(new ConstantRule(0))
     {
@@ -74,7 +74,7 @@ DE_PIMPL(MainWindow)
 
     void setupUI()
     {
-        Style const &style = Style::get();
+        const auto &style = Style::get();
 
         shortcuts = new GlobalShortcuts;
         root.add(shortcuts);
@@ -136,8 +136,6 @@ DE_PIMPL(MainWindow)
         contentXf.glInit();
 
         self().raise();
-        self().requestActivate();
-        //self.canvas().setFocus();
     }
 
     void updateMouseCursor()

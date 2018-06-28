@@ -19,26 +19,25 @@
 #include "testapp.h"
 #include "mainwindow.h"
 #include <de/EscapeParser>
-#include <QMessageBox>
-#include <QDebug>
+#include <SDL2/SDL_messagebox.h>
 
 using namespace de;
 
 int main(int argc, char **argv)
 {
-    TestApp::setDefaultOpenGLFormat();
-    TestApp app(argc, argv);
+    TestApp app(makeList(argc, argv));
     try
     {
         app.initialize();
-        return app.execLoop();
+        return app.exec();
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         EscapeParser esc;
         esc.parse(er.asText());
-        qWarning() << "App init failed:\n" << esc.plainText();
-        QMessageBox::critical(0, "test_appfw", "App init failed:\n" + esc.plainText());
+        warning("App init failed: %s", esc.plainText().c_str());
+        SDL_ShowSimpleMessageBox(
+            SDL_MESSAGEBOX_ERROR, "test_appfw", "App init failed:\n" + esc.plainText(), nullptr);
         return -1;
     }
 

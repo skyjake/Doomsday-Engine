@@ -25,8 +25,6 @@
 
 class MainWindow : public de::BaseWindow
 {
-    Q_OBJECT
-
 public:
     MainWindow(de::String const &id = "main");
 

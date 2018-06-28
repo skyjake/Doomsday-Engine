@@ -30,7 +30,7 @@ class MainWindow;
 class AppRootWidget : public de::GuiRootWidget
 {
 public:
-    AppRootWidget(de::GLWindow *window = 0);
+    AppRootWidget(de::GLWindow *window = nullptr);
 
     MainWindow &window();
 
