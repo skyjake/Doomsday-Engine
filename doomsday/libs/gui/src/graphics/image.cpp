@@ -817,7 +817,7 @@ void Image::drawPartial(Image const &image, Rectanglei const &part, Vec2i const 
     const auto srcPart  = image.d->rect() & part;
     const auto bounds   = Rectanglei(topLeft, topLeft + srcPart.size().toVec2i());
     const auto destRect = d->rect() & bounds;
-    const auto srcRect  = bounds.moved(-topLeft + srcPart.topLeft);
+    const auto srcRect  = destRect.moved(-topLeft);
 
     if (srcRect.isNull()) return;
 
