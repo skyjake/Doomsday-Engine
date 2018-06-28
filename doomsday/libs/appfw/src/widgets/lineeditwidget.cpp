@@ -242,7 +242,11 @@ DE_GUI_PIMPL(LineEditWidget)
     {
         self().requestGeometry();
     }
+
+    DE_PIMPL_AUDIENCES(Enter, ContentChange)
 };
+
+DE_AUDIENCE_METHODS(LineEditWidget, Enter, ContentChange)
 
 LineEditWidget::LineEditWidget(String const &name)
     : GuiWidget(name),
@@ -346,18 +350,19 @@ void LineEditWidget::glMakeGeometry(GuiVertexBuilder &verts)
     // Underline the possible suggested completion.
     if (isSuggestingCompletion())
     {
-        Rangei const comp     = completionRange();
-        Vec2i const  startPos = linePos(comp.start);
-        Vec2i const  endPos   = linePos(comp.end);
+        const auto comp     = completionRange();
+        const auto startPos = linePos(comp.start);
+        const auto endPos   = linePos(comp.end);
 
-        Vec2i const offset = contentRect.topLeft + Vec2i(0, d->font->ascent().valuei() + pointsToPixels(2));
+        Vec2i const offset =
+            contentRect.topLeft + Vec2i(0, d->font->ascent().valuei() + pointsToPixels(2));
 
         // It may span multiple lines.
-        for (int i = startPos.y; i <= endPos.y; ++i)
+        for (auto i = startPos.line; i <= endPos.line; ++i)
         {
-            Rangei const span = d->wraps.line(i).range;
-            Vec2i start = d->wraps.charTopLeftInPixels(i, i == startPos.y? startPos.x : span.start) + offset;
-            Vec2i end   = d->wraps.charTopLeftInPixels(i, i == endPos.y?   endPos.x   : span.end)   + offset;
+            const auto &span = d->wraps.line(i).range;
+            Vec2i start = d->wraps.charTopLeftInPixels(i, i == startPos.line? startPos.x : BytePos(0)) + offset;
+            Vec2i end   = d->wraps.charTopLeftInPixels(i, i == endPos.line?   endPos.x   : BytePos(span.size())) + offset;
 
             verts.makeQuad(Rectanglef(start, end + pointsToPixels(Vec2i(0, 1))),
                            Vec4f(1, 1, 1, 1), solidWhiteUv.middle());
@@ -538,8 +543,7 @@ bool LineEditWidget::handleEvent(Event const &event)
         }
 
         // Control character.
-        /// @todo Convert key+mods to shell::Key.
-        if (handleControlKey(key.ddKey(), modifiersFromKeyEvent(key.modifiers())))
+        if (handleControlKey(shellKey(key), modifiersFromKeyEvent(key.modifiers())))
         {
             return true;
         }
@@ -554,6 +558,62 @@ bool LineEditWidget::handleEvent(Event const &event)
     }
 
     return GuiWidget::handleEvent(event);
+}
+
+shell::Key LineEditWidget::shellKey(const KeyEvent &keyEvent) // static
+{
+    using shell::Key;
+
+    if (keyEvent.modifiers() == KeyEvent::Control)
+    {
+        switch (keyEvent.ddKey())
+        {
+        case 'c': return Key::Break;
+        case 'a': return Key::Home;
+        case 'e': return Key::End;
+        case 'k': return Key::Kill;
+        case 'x': return Key::Cancel;
+        case 'z': return Key::Substitute;
+        }
+    }
+    else if (keyEvent.modifiers() == KeyEvent::Shift)
+    {
+        switch (keyEvent.ddKey())
+        {
+        case DDKEY_TAB: return Key::Backtab;
+        }
+    }
+    switch (keyEvent.ddKey())
+    {
+    case DDKEY_ESCAPE: return Key::Escape;
+    case DDKEY_UPARROW: return Key::Up;
+    case DDKEY_DOWNARROW: return Key::Down;
+    case DDKEY_LEFTARROW: return Key::Left;
+    case DDKEY_RIGHTARROW: return Key::Right;
+    case DDKEY_HOME: return Key::Home;
+    case DDKEY_END: return Key::End;
+    case DDKEY_PGUP: return Key::PageUp;
+    case DDKEY_PGDN: return Key::PageDown;
+    case DDKEY_INS: return Key::Insert;
+    case DDKEY_DEL: return Key::Delete;
+    case DDKEY_ENTER: return Key::Enter;
+    case DDKEY_BACKSPACE: return Key::Backspace;
+    case DDKEY_TAB: return Key::Tab;
+    case DDKEY_F1: return Key::F1;
+    case DDKEY_F2: return Key::F2;
+    case DDKEY_F3: return Key::F3;
+    case DDKEY_F4: return Key::F4;
+    case DDKEY_F5: return Key::F5;
+    case DDKEY_F6: return Key::F6;
+    case DDKEY_F7: return Key::F7;
+    case DDKEY_F8: return Key::F8;
+    case DDKEY_F9: return Key::F9;
+    case DDKEY_F10: return Key::F10;
+    case DDKEY_F11: return Key::F11;
+    case DDKEY_F12: return Key::F12;
+
+    default: return Key::None;
+    }
 }
 
 shell::AbstractLineEditor::KeyModifiers LineEditWidget::modifiersFromKeyEvent(KeyEvent::Modifiers const &keyMods)

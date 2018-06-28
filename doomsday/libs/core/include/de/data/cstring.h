@@ -65,8 +65,10 @@ public:
     }
     inline bool isEmpty() const { return size() == 0; }
     inline bool empty() const { return size() == 0; }
+    inline void setStart(const char *p) { _range.start = p; }
     inline void setEnd(const char *p) { _range.end = p; }
     const char *ptr(BytePos pos = BytePos(0)) const { return _range.start + pos; }
+    const char *endPtr() const { return ptr(BytePos(size())); }
     dsize length() const;
     bool contains(char ch) const;
     bool endsWith(const CString &suffix, Sensitivity cs = CaseSensitive) const;

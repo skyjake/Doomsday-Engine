@@ -69,7 +69,7 @@ DE_PIMPL(OculusRift)
     float aspect = 1.f;
 
     BaseWindow *window = nullptr;
-    QRect oldGeometry;
+    Rectanglei oldGeometry;
 
     bool inited = false;
     bool frameOngoing = false;

@@ -262,8 +262,8 @@ Font::Font()
 Font::Font(Font const &other)
     : d(new Impl(this, other.d->fontParams))
 {}
-Font::Font(const FontParams &params)
 
+Font::Font(const FontParams &params)
     : d(new Impl(this, params))
 {}
 
@@ -275,10 +275,10 @@ void Font::initialize(const QFont &font)
 
 Rectanglei Font::measure(String const &textLine) const
 {
-    return measure(textLine, RichFormat::fromPlainText(textLine));
+    return measure(RichFormat::fromPlainText(textLine));
 }
 
-Rectanglei Font::measure(String const &textLine, RichFormatRef const &format) const
+Rectanglei Font::measure(RichFormatRef const &format) const
 {
     Rectanglei bounds;
     int advance = 0;
@@ -291,7 +291,7 @@ Rectanglei Font::measure(String const &textLine, RichFormatRef const &format) co
 
         PlatformFont const &altFont = d->alteredFont(iter);
 
-        String const part = textLine.substr(iter.range());
+        const String part = iter.range();
         Rectanglei rect = altFont.measure(part);
 
         // Combine to the total bounds.
@@ -306,10 +306,10 @@ Rectanglei Font::measure(String const &textLine, RichFormatRef const &format) co
 
 int Font::advanceWidth(String const &textLine) const
 {
-    return advanceWidth(textLine, RichFormat::fromPlainText(textLine));
+    return advanceWidth(RichFormat::fromPlainText(textLine));
 }
 
-int Font::advanceWidth(String const &textLine, RichFormatRef const &format) const
+int Font::advanceWidth(RichFormatRef const &format) const
 {
     int advance = 0;
     RichFormat::Iterator iter(format);
@@ -318,7 +318,7 @@ int Font::advanceWidth(String const &textLine, RichFormatRef const &format) cons
         iter.next();
         if (iter.range().isEmpty()) continue;
 
-        advance += d->alteredFont(iter).width(textLine.substr(iter.range()));
+        advance += d->alteredFont(iter).width(iter.range());
     }
     return advance;
 }
@@ -327,23 +327,18 @@ Image Font::rasterize(String const &      textLine,
                       Image::Color const &foreground,
                       Image::Color const &background) const
 {
-    return rasterize(textLine, RichFormat::fromPlainText(textLine), foreground, background);
+    if (textLine.isEmpty()) return {};
+    return rasterize(RichFormat::fromPlainText(textLine), foreground, background);
 }
 
-Image Font::rasterize(String const &       textLine,
-                       RichFormatRef const &format,
+Image Font::rasterize(RichFormatRef const &format,
                       Image::Color const & foreground,
                       Image::Color const & background) const
 {
-    if (textLine.isEmpty())
-    {
-        return {};
-    }
-
     auto const &plat = d->getThreadFonts();
 
 #ifdef LIBGUI_ACCURATE_TEXT_BOUNDS
-    Rectanglei const bounds = measure(textLine, format);
+    Rectanglei const bounds = measure(format);
 #else
     Rectanglei const bounds(0, 0,
                             advanceWidth(textLine, format),
@@ -359,9 +354,6 @@ Image Font::rasterize(String const &       textLine,
                Image::RGBA_8888);
     img.fill(bgColor);
 
-    //QPainter painter(&img);
-    //painter.setCompositionMode(QPainter::CompositionMode_Source);
-
     // Composite the final image by drawing each rich range first into a separate
     // bitmap and then drawing those into the final image.
     int advance = 0;
@@ -371,7 +363,7 @@ Image Font::rasterize(String const &       textLine,
         iter.next();
         if (iter.range().isEmpty()) continue;
 
-        PlatformFont const *font = &plat.font;
+        const auto *font = &plat.font;
 
         if (iter.isDefault())
         {
@@ -394,7 +386,7 @@ Image Font::rasterize(String const &       textLine,
             }
         }
 
-        String const part = textLine.substr(iter.range());
+        const String part = iter.range();
 
 #ifdef WIN32
         // Kludge: No light-weight fonts available, so reduce opacity to give the

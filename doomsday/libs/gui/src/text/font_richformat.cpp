@@ -27,33 +27,31 @@ DE_PIMPL_NOREF(Font::RichFormat)
 , DE_OBSERVES(EscapeParser, PlainText)
 , DE_OBSERVES(EscapeParser, EscapeSequence)
 {
-    IStyle const *style;
-
     struct Format
     {
-        float  sizeFactor;
-        Weight weight;
-        Style  style;
-        int    colorIndex;
-        bool   markIndent;
-        bool   resetIndent;
-        int    tabStop;
+        float  sizeFactor  = 1.f;
+        Weight weight      = OriginalWeight;
+        Style  style       = OriginalStyle;
+        int    colorIndex  = -1;
+        bool   markIndent  = false;
+        bool   resetIndent = false;
+        int    tabStop     = -1; // untabbed
 
-        Format() : sizeFactor(1.f), weight(OriginalWeight),
-            style(OriginalStyle), colorIndex(-1), markIndent(false), resetIndent(false),
-            tabStop(-1 /* untabbed */) {}
+        Format() {}
     };
-
     struct FormatRange
     {
-        Rangei range;
-        Format format;
+        CString range;
+        Format  format;
 
-        FormatRange(Rangei const &r = Rangei(), Format const &frm = Format())
-            : range(r), format(frm) {}
+        FormatRange(const CString &r = CString(), const Format &frm = Format())
+            : range(r)
+            , format(frm)
+        {}
     };
-
     typedef List<FormatRange> Ranges;
+
+    const IStyle *style;
     Ranges ranges;
 
     /// Tab stops are only applicable on the first line of a set of wrapped
@@ -62,7 +60,7 @@ DE_PIMPL_NOREF(Font::RichFormat)
 
     EscapeParser esc;
     List<Format> stack;
-    int plainPos;
+//    int plainPos;
 
     Impl() : style(nullptr) {}
 
@@ -74,13 +72,22 @@ DE_PIMPL_NOREF(Font::RichFormat)
         , tabs(other.tabs)
     {}
 
+    CString fullRange() const
+    {
+        if (ranges)
+        {
+            return CString(ranges.front().range.begin(), ranges.back().range.end());
+        }
+        return {};
+    }
+
     void handlePlainText(const CString &range)
     {
-        Rangei plainRange(plainPos, plainPos + int(range.size()));
-        plainPos += range.size();
+//        Rangei plainRange(plainPos, plainPos + int(range.size()));
+//        plainPos += range.size();
 
         // Append a formatted range using the stack's current format.
-        ranges << Impl::FormatRange(plainRange, stack.last());
+        ranges.emplace_back(range, stack.last());
 
         // Properties that span a single range only.
         stack.last().markIndent = stack.last().resetIndent = false;
@@ -91,11 +98,10 @@ DE_PIMPL_NOREF(Font::RichFormat)
         // Save the previous format on the stack.
         stack << Impl::Format(stack.last());
 
-        //String const code = range.toString();esc.originalText().substr(range);
         mb_iterator iter = range.begin();
 
         // Check the escape sequence.
-        Char ch = *iter++; //code[0].toLatin1();
+        Char ch = *iter++;
 
         switch (ch)
         {
@@ -214,7 +220,7 @@ Font::RichFormat::RichFormat(IStyle const &style) : d(new RichFormat::Impl(style
 Font::RichFormat::RichFormat(RichFormat const &other) : d(new RichFormat::Impl(*other.d))
 {}
 
-Font::RichFormat &Font::RichFormat::operator = (RichFormat const &other)
+Font::RichFormat &Font::RichFormat::operator=(RichFormat const &other)
 {
     d.reset(new RichFormat::Impl(*other.d));
     return *this;
@@ -226,7 +232,7 @@ void Font::RichFormat::clear()
     d->tabs.clear();
     d->stack.clear();
     d->stack << Impl::Format();
-    d->plainPos = 0;
+//    d->plainPos = 0;
 }
 
 void Font::RichFormat::setStyle(IStyle const &style)
@@ -247,7 +253,7 @@ Font::RichFormat::IStyle const &Font::RichFormat::style() const
 Font::RichFormat Font::RichFormat::fromPlainText(String const &plainText)
 {
     Impl::FormatRange all;
-    all.range = Rangei(0, plainText.sizei());
+    all.range = plainText; //Rangei(0, plainText.sizei());
     RichFormat form;
     form.d->ranges << all;
     return form;
@@ -258,8 +264,7 @@ String Font::RichFormat::initFromStyledText(String const &styledText)
     clear();
 
     d->esc.audienceForEscapeSequence() += d;
-    d->esc.audienceForPlainText() += d;
-
+    d->esc.audienceForPlainText()      += d;
     d->esc.parse(styledText);
 
 #if 0
@@ -286,7 +291,7 @@ String Font::RichFormat::initFromStyledText(String const &styledText)
     return d->esc.plainText();
 }
 
-Font::RichFormatRef Font::RichFormat::subRange(Rangei const &range) const
+Font::RichFormatRef Font::RichFormat::subRange(const CString &range) const
 {
     return RichFormatRef(*this, range);
 }
@@ -313,33 +318,31 @@ int Font::RichFormat::tabStopXWidth(int stop) const
     return x;
 }
 
-Font::RichFormat::Ref::Ref(Ref const &ref)
+//------------------------------------------------------------------------------------------------
+
+Font::RichFormat::Ref::Ref(const Ref &ref)
     : _ref(ref.format()), _span(ref._span), _indices(ref._indices)
 {}
 
-Font::RichFormat::Ref::Ref(Ref const &ref, Rangei const &subSpan)
-    : _ref(ref.format()), _span(subSpan + ref._span.start)
+Font::RichFormat::Ref::Ref(const Ref &ref, const CString &subSpan)
+    : _ref(ref.format()), _span(subSpan)
 {
     updateIndices();
 }
 
-Font::RichFormat::Ref::Ref(RichFormat const &richFormat)
+Font::RichFormat::Ref::Ref(const RichFormat &richFormat)
     : _ref(richFormat)
+    , _span(richFormat.d->fullRange())
     , _indices(0, richFormat.d->ranges.sizei())
-{
-    if (!richFormat.d->ranges.isEmpty())
-    {
-        _span = Rangei(0, richFormat.d->ranges.last().range.end);
-    }
-}
+{}
 
-Font::RichFormat::Ref::Ref(RichFormat const &richFormat, Rangei const &subSpan)
+Font::RichFormat::Ref::Ref(RichFormat const &richFormat, const CString &subSpan)
     : _ref(richFormat), _span(subSpan)
 {
     updateIndices();
 }
 
-Font::RichFormat const &Font::RichFormat::Ref::format() const
+const Font::RichFormat &Font::RichFormat::Ref::format() const
 {
     return _ref;
 }
@@ -349,45 +352,43 @@ int Font::RichFormat::Ref::rangeCount() const
     return _indices.size();
 }
 
-Rangei Font::RichFormat::Ref::range(int index) const
+CString Font::RichFormat::Ref::range(int index) const
 {
-    Rangei r = _ref.d->ranges.at(_indices.start + index).range;
+    CString r = _ref.d->ranges.at(_indices.start + index).range;
 
     if (index == 0)
     {
         // Clip the beginning.
-        r.start = de::max(r.start, _span.start);
+        r.setStart(de::max(r.ptr(), _span.ptr()));
     }
     if (index == rangeCount() - 1)
     {
         // Clip the end in the last range.
-        r.end = de::min(r.end, _span.end);
+        r.setEnd(de::min(r.endPtr(), _span.endPtr()));
     }
 
-    DE_ASSERT(r.start >= _span.start);
-    DE_ASSERT(r.end <= _span.end);
-    DE_ASSERT(r.start <= r.end);
+    DE_ASSERT(r.ptr() >= _span.ptr());
+    DE_ASSERT(r.endPtr() <= _span.endPtr());
+    DE_ASSERT(r.ptr() <= r.endPtr());
 
-    // Make sure it's relative to the start of the subspan.
-    return r - _span.start;
+    return r; //r - _span.start;
 }
 
-Font::RichFormat::Ref Font::RichFormat::Ref::subRef(Rangei const &subSpan) const
+Font::RichFormat::Ref Font::RichFormat::Ref::subRef(const CString &subSpan) const
 {
     return Ref(*this, subSpan);
 }
 
 void Font::RichFormat::Ref::updateIndices()
 {
-    _indices = Rangei(0, 0);
-
-    Impl::Ranges const &ranges = format().d->ranges;
+    const auto &ranges = format().d->ranges;
+    _indices           = Rangei(0, 0);
 
     int i = 0;
     for (; i < ranges.sizei(); ++i)
     {
-        Rangei const &r = ranges.at(i).range;
-        if (r.end > _span.start)
+        const CString &r = ranges.at(i).range;
+        if (r.endPtr() > _span.ptr())
         {
             _indices.start = i;
             _indices.end = i + 1;
@@ -397,10 +398,9 @@ void Font::RichFormat::Ref::updateIndices()
     for (++i; i < ranges.sizei(); ++i, ++_indices.end)
     {
         // Empty ranges are accepted at the end of the span.
-        Rangei const &r = ranges.at(i).range;
-        if (( r.isEmpty() && r.start >  _span.end) ||
-           (!r.isEmpty() && r.start >= _span.end))
-            break;
+        const CString &r = ranges.at(i).range;
+        if (( r.isEmpty() && r.ptr() >  _span.endPtr()) ||
+            (!r.isEmpty() && r.ptr() >= _span.endPtr())) break;
     }
 
     DE_ASSERT(_indices.start <= _indices.end);
@@ -432,10 +432,9 @@ bool Font::RichFormat::Iterator::isDefault() const
             colorIndex() == OriginalColor);
 }
 
-String::ByteRange Font::RichFormat::Iterator::range() const
+CString Font::RichFormat::Iterator::range() const
 {
-    const auto r = format.range(index);
-    return {BytePos(r.start), BytePos(r.end)};
+    return format.range(index);
 }
 
 #define REF_RANGE_AT(Idx) format.format().d->ranges.at(format.rangeIndices().start + Idx)
@@ -467,7 +466,7 @@ Font::RichFormat::IStyle::Color Font::RichFormat::Iterator::color() const
         return format.format().d->style->richStyleColor(colorIndex());
     }
     // Fall back to white.
-    return Vec4ub(255, 255, 255, 255);
+    return IStyle::Color(255, 255, 255, 255);
 }
 
 bool Font::RichFormat::Iterator::markIndent() const

@@ -571,7 +571,7 @@ DE_GUI_PIMPL(LogWidget)
 
         // Excess entries before the visible range.
         int excess = visibleRange.start - len;
-        for (int i = 0; i <= excess && i < cache.size(); ++i)
+        for (int i = 0; i <= excess && i < cache.sizei(); ++i)
         {
             cache[i]->releaseFromAtlas();
         }

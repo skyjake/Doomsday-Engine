@@ -22,7 +22,7 @@
 #include <de/libcore.h>
 #include <de/Rule>
 #include <de/Rectangle>
-#include <de/String>
+#include <de/CString>
 #include <de/Vector>
 #include <de/Range>
 #include <de/EscapeParser>
@@ -170,24 +170,24 @@ public:
         {
         public:
             Ref(Ref const &ref);
-            Ref(Ref const &ref, Rangei const &subSpan);
+            Ref(Ref const &ref, const CString &subSpan);
             Ref(RichFormat const &richFormat);
-            Ref(RichFormat const &richFormat, Rangei const &subSpan);
+            Ref(RichFormat const &richFormat, const CString &subSpan);
 
-            Ref subRef(Rangei const &subSpan) const;
+            Ref subRef(const CString &subSpan) const;
 
             /// Returns the original referred RichFormat instance.
-            RichFormat const &format() const;
+            const RichFormat &format() const;
 
             int rangeCount() const;
-            Rangei range(int index) const;
+            CString range(int index) const;
             Rangei rangeIndices() const { return _indices; }
 
         private:
             void updateIndices();
 
             RichFormat const &_ref;
-            Rangei _span;
+            CString _span;
             Rangei _indices; ///< Applicable indices in the referred format's ranges list.
         };
 
@@ -196,7 +196,7 @@ public:
         RichFormat(IStyle const &style);
         RichFormat(RichFormat const &other);
 
-        RichFormat &operator = (RichFormat const &other);
+        RichFormat &operator=(RichFormat const &other);
 
         void clear();
 
@@ -212,7 +212,7 @@ public:
          * @return RichFormat instance with a single range that uses the
          * default formatting.
          */
-        static RichFormat fromPlainText(String const &plainText);
+        static RichFormat fromPlainText(const String &plainText);
 
         /**
          * Initializes this RichFormat instance with the styles found in the
@@ -222,7 +222,7 @@ public:
          *
          * @return Corresponding plain text for use with the methods of Font.
          */
-        String initFromStyledText(String const &styledText);
+        String initFromStyledText(const String &styledText);
 
         /**
          * Clips this RichFormat so that it covers only the specified range.
@@ -232,7 +232,7 @@ public:
          *
          * @return RichFormat with only those ranges covering @a range.
          */
-        Ref subRange(Rangei const &range) const;
+        Ref subRange(const CString &range) const;
 
         TabStops const &tabStops() const;
 
@@ -250,7 +250,7 @@ public:
             int index;
 
         public:
-            Iterator(Ref const &ref);
+            Iterator(const Ref &ref);
 
             int  size() const;
             bool hasNext() const;
@@ -259,16 +259,16 @@ public:
             /// Determines if all the style parameters are the same as the default ones.
             bool isDefault() const;
 
-            String::ByteRange range() const;
-            float             sizeFactor() const;
-            Weight            weight() const;
-            Style             style() const;
-            int               colorIndex() const;
-            IStyle::Color     color() const;
-            bool              markIndent() const;
-            bool              resetIndent() const;
-            int               tabStop() const;
-            bool              isTabless() const; ///< Tabstop < 0.
+            CString       range() const;
+            float         sizeFactor() const;
+            Weight        weight() const;
+            Style         style() const;
+            int           colorIndex() const;
+            IStyle::Color color() const;
+            bool          markIndent() const;
+            bool          resetIndent() const;
+            int           tabStop() const;
+            bool          isTabless() const; ///< Tabstop < 0.
         };
 
     private:
@@ -301,12 +301,11 @@ public:
      * area is covered by the glyphs. (0,0) is at the baseline, left edge of
      * the line. The rectangle may extend into negative coordinates.
      *
-     * @param textLine     Text to measure.
-     * @param format       Rich formatting for @a textLine.
+     * @param format  Rich-formatted text.
      *
      * @return Rectangle covered by the text.
      */
-    Rectanglei measure(String const &textLine, RichFormatRef const &format) const;
+    Rectanglei measure(RichFormatRef const &format) const;
 
     /**
      * Returns the advance width of a line of text. This may not be the same as
@@ -319,7 +318,7 @@ public:
      */
     int advanceWidth(String const &textLine) const;
 
-    int advanceWidth(String const &textLine, RichFormatRef const &format) const;
+    int advanceWidth(RichFormatRef const &format) const;
 
     /**
      * Rasterizes a line of text onto a 32-bit RGBA image.
@@ -334,8 +333,7 @@ public:
                     Vec4ub const &foreground = Image::Color(255, 255, 255, 255),
                     Vec4ub const &background = Image::Color(255, 255, 255, 0)) const;
 
-    Image rasterize(String const &       textLine,
-                    RichFormatRef const &format,
+    Image rasterize(RichFormatRef const &format,
                     Vec4ub const &       foreground = Image::Color(255, 255, 255, 255),
                     Vec4ub const &       background = Image::Color(255, 255, 255, 0)) const;
 

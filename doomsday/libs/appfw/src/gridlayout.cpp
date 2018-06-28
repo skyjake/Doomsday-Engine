@@ -534,7 +534,7 @@ void GridLayout::setModeAndGridSize(GridLayout::Mode mode, int numCols, int numR
 
 void GridLayout::setColumnAlignment(int column, ui::Alignment cellAlign)
 {
-    DE_ASSERT(column >= 0 && column < d->cols.size());
+    DE_ASSERT(column >= 0 && column < d->cols.sizei());
     d->cols[column]->cellAlign = cellAlign;
 }
 

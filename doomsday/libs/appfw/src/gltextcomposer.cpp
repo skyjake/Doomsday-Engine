@@ -22,25 +22,26 @@ namespace de {
 
 using namespace ui;
 
-static const Rangei MAX_VISIBLE_RANGE(0, 0x7fffffff);
-
 DE_PIMPL(GLTextComposer)
 {
-    Font const *font = nullptr;
-    Atlas *atlas = nullptr;
-    String text;
+    static const Rangei MAX_VISIBLE_RANGE;
+
+    const Font *            font  = nullptr;
+    Atlas *                 atlas = nullptr;
+    String                  text;
     FontLineWrapping const *wraps = nullptr;
-    Font::RichFormat format;
-    bool needRedo = false; ///< Release completely and allocate.
-    Rangei visibleLineRange { MAX_VISIBLE_RANGE }; ///< Only these lines will be updated/drawn.
+    Font::RichFormat        format;
+    bool                    needRedo          = false; ///< Release completely and allocate.
+    int                     maxGeneratedWidth = 0;
+    Rangei visibleLineRange{MAX_VISIBLE_RANGE}; ///< Only these lines will be updated/drawn.
     bool visibleLineRangeChanged = false;
     int maxGeneratedWidth = 0;
 
     struct Line {
         struct Segment {
             Id id;
-            CString range;
-//            String text;
+//            CString range;
+            String text;
             int x;
             int width;
             bool compressed;
@@ -122,13 +123,13 @@ DE_PIMPL(GLTextComposer)
         }
         for (int i = 0; i < info.segs.sizei(); ++i)
         {
-            if (info.segs[i].range != lines[lineIndex].segs[i].range)
+            if (lines[lineIndex].segs[i].text != info.segs[i].range)
             {
                 // Range has changed.
                 //qDebug() << "line" << lineIndex << "seg" << i << "range change";
                 return false;
             }
-            if (segmentText(i, info) != lines[lineIndex].segs[i].text)
+            if (lines[lineIndex].segs[i].text != segmentText(i, info))
             {
                 // Text has changed.
                 //qDebug() << "line" << lineIndex << "seg" << i << "text change";
@@ -184,9 +185,9 @@ DE_PIMPL(GLTextComposer)
             for (int k = 0; k < info.segs.sizei(); ++k)
             {
                 Line::Segment seg;
-                seg.range = info.segs[k].range;
+                seg.text = info.segs[k].range;
 //                seg.text = segmentText(k, info);
-                if (isLineVisible(i) && seg.range.size() > 0)
+                if (isLineVisible(i) && seg.text)
                 {
                     // The color is white unless a style is defined.
                     Vec4ub fgColor(255, 255, 255, 255);
@@ -350,13 +351,15 @@ DE_PIMPL(GLTextComposer)
     }
 };
 
+const Rangei GLTextComposer::Impl::MAX_VISIBLE_RANGE{0, 0x7fffffff};
+
 GLTextComposer::GLTextComposer() : d(new Impl(this))
 {}
 
 void GLTextComposer::release()
 {
     d->releaseLines();
-    setRange(MAX_VISIBLE_RANGE);
+    setRange(Impl::MAX_VISIBLE_RANGE);
     setState(false);
 }
 
@@ -452,18 +455,18 @@ void GLTextComposer::forceUpdate()
 }
 
 void GLTextComposer::makeVertices(GuiVertexBuilder &triStrip,
-                                  Vec2i const &topLeft,
-                                  Alignment const &lineAlign,
-                                  Vec4f const &color)
+                                  Vec2i const &     topLeft,
+                                  Alignment const & lineAlign,
+                                  Vec4f const &     color)
 {
     makeVertices(triStrip, Rectanglei(topLeft, topLeft), AlignTopLeft, lineAlign, color);
 }
 
 void GLTextComposer::makeVertices(GuiVertexBuilder &triStrip,
                                   Rectanglei const &rect,
-                                  Alignment const &alignInRect,
-                                  Alignment const &lineAlign,
-                                  Vec4f const &color)
+                                  Alignment const & alignInRect,
+                                  Alignment const & lineAlign,
+                                  Vec4f const &     color)
 {
     if (!isReady()) return;
 

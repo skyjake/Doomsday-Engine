@@ -647,6 +647,11 @@ bool String::containsWord(const String &word) const
     return RegExp(stringf("\\b%s\\b", word.c_str())).hasMatch(*this);
 }
 
+bool String::operator==(const CString &cstr) const
+{
+    return CString(*this) == cstr;
+}
+
 int String::compare(const CString &str, Sensitivity cs) const
 {
     const iRangecc s = *this;

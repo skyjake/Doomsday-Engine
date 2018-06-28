@@ -493,6 +493,12 @@ public:
     inline bool operator<=(const char *cstr) const { return compare(cstr) <= 0; }
     inline bool operator>=(const char *cstr) const { return compare(cstr) >= 0; }
 
+    bool        operator==(const CString &cstr) const;
+    inline bool operator!=(const CString &cstr) const { return !(*this == cstr); }
+
+    inline bool operator==(const String &str) const { return compare(str) == 0; }
+    inline bool operator!=(const String &str) const { return !(*this == str); }
+
     inline int compare(const char *cstr) const { return cmp_String(&_str, cstr); }
     int        compare(const CString &str, Sensitivity cs = CaseSensitive) const;
     inline int compare(const String &s, Sensitivity cs = CaseSensitive) const {

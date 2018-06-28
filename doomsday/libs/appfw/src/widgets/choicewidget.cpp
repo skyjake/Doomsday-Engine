@@ -231,7 +231,11 @@ DE_GUI_PIMPL(ChoiceWidget)
             i->selectionChanged(self(), selected);
         }
     }
+
+    DE_PIMPL_AUDIENCES(Selection, UserSelection)
 };
+
+DE_AUDIENCE_METHODS(ChoiceWidget, Selection, UserSelection)
 
 ChoiceWidget::ChoiceWidget(String const &name)
     : PopupButtonWidget(name), d(new Impl(this))

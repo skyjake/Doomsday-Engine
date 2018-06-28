@@ -80,7 +80,11 @@ DE_PIMPL(DirectoryListDialog)
         groups.insert(groupId, group.release());
         return groupId;
     }
+
+    DE_PIMPL_AUDIENCE(Change)
 };
+
+DE_AUDIENCE_METHOD(DirectoryListDialog, Change)
 
 DirectoryListDialog::DirectoryListDialog(String const &name)
     : MessageDialog(name)

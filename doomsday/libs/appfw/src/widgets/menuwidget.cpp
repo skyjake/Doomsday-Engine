@@ -496,10 +496,10 @@ DE_PIMPL(MenuWidget)
         }
     }
 
-    DE_PIMPL_AUDIENCE(ItemTriggered)
+    DE_PIMPL_AUDIENCES(ItemTriggered, SubWidgetOpened)
 };
 
-DE_AUDIENCE_METHOD(MenuWidget, ItemTriggered)
+DE_AUDIENCE_METHODS(MenuWidget, ItemTriggered, SubWidgetOpened)
 
 MenuWidget::MenuWidget(String const &name)
     : ScrollAreaWidget(name), d(new Impl(this))

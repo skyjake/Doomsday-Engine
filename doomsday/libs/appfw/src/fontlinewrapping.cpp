@@ -96,16 +96,11 @@ DE_PIMPL_NOREF(FontLineWrapping)
         rasterized.clear();
     }
 
-//    String rangeText(Rangei const &range) const
-//    {
-//        return text.substr(range.start, range.size());
-//    }
-
     int rangeVisibleWidth(const CString &range) const
     {
         if (font)
         {
-            return font->measure(range, format.subRange(range)).width();
+            return font->measure(format.subRange(range)).width();
         }
         return 0;
     }
@@ -115,7 +110,7 @@ DE_PIMPL_NOREF(FontLineWrapping)
         checkCancel();
         if (font)
         {
-            return font->advanceWidth(range, format.subRange(range));
+            return font->advanceWidth(format.subRange(range));
         }
         return 0;
     }
@@ -131,9 +126,9 @@ DE_PIMPL_NOREF(FontLineWrapping)
             if (iter.markIndent())
             {
                 prevIndents.append(indent);
-                indent = origIndent + rangeAdvanceWidth(Rangei(0, iter.range().start) + range.start);
+                indent = origIndent + rangeAdvanceWidth({range.ptr(), iter.range().ptr()});
+                    //Rangei(0, iter.range().start) + range.start);
             }
-
             if (iter.resetIndent())
             {
                 if (!prevIndents.isEmpty())
@@ -171,7 +166,7 @@ DE_PIMPL_NOREF(FontLineWrapping)
         Line *line = new Line(WrappedLine(range, width), indent);
 
         // Determine segments in the line.
-        mb_iterator pos = range.begin();
+        const char *pos = range.begin();
 
         Font::RichFormatRef rich = format.subRange(range);
         Font::RichFormat::Iterator iter(rich);
@@ -180,22 +175,20 @@ DE_PIMPL_NOREF(FontLineWrapping)
         while (iter.hasNext())
         {
             iter.next();
-
             if (iter.tabStop() != tabStop)
             {
-                int const start = range.start + iter.range().start;
+                const char *start = iter.range().begin();
                 if (start > pos)
                 {
-                    line->info.segs << LineInfo::Segment(Rangei(pos, start), tabStop);
+                    line->info.segs << LineInfo::Segment({pos, start}, tabStop);
                     pos = start;
                 }
-
                 tabStop = iter.tabStop();
             }
         }
 
         // The final segment.
-        line->info.segs << LineInfo::Segment(Rangei(pos, range.end), tabStop);
+        line->info.segs << LineInfo::Segment({pos, range.end()}, tabStop);
 
         // Determine segment widths.
         if (line->info.segs.size() == 1)
@@ -506,7 +499,7 @@ DE_PIMPL_NOREF(FontLineWrapping)
 
     Image rasterizeSegment(LineInfo::Segment const &segment)
     {
-        return font->rasterize(segment.range, format.subRange(segment.range));
+        return font->rasterize(format.subRange(segment.range));
     }
 };
 

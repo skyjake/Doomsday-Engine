@@ -466,10 +466,10 @@ DE_GUI_PIMPL(SliderWidget)
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(Change)
+    DE_PIMPL_AUDIENCES(Value, UserValue)
 };
 
-DENG2_AUDIENCE_METHOD(SliderWidget, Change)
+DE_AUDIENCE_METHODS(SliderWidget, Value, UserValue)
 
 SliderWidget::SliderWidget(String const &name)
     : GuiWidget(name), d(new Impl(this))

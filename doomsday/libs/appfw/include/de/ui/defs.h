@@ -24,8 +24,7 @@
 #include "../libappfw.h"
 #include <de/Vector>
 
-namespace de {
-namespace ui {
+namespace de { namespace ui {
 
 /**
  * Basic directions.
@@ -130,7 +129,6 @@ enum SizePolicy {
     Expand  ///< Size depends on content, expands/contracts to fit.
 };
 
-} // namespace ui
-} // namespace de
+}} // namespace de::ui
 
 #endif // LIBAPPFW_UI_DEFS_H

@@ -157,7 +157,11 @@ DE_GUI_PIMPL(VariableArrayWidget)
         var = nullptr;
         self().disable();
     }
+
+    DE_PIMPL_AUDIENCE(Change)
 };
+
+DE_AUDIENCE_METHOD(VariableArrayWidget, Change)
 
 VariableArrayWidget::VariableArrayWidget(Variable &variable, String const &name)
     : GuiWidget(name)

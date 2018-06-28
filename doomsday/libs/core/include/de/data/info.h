@@ -195,7 +195,7 @@ public:
                               "Block elements do not contain text values (only other elements)");
         }
 
-        int size() const { return _contents.size(); }
+        dsize size() const { return _contents.size(); }
 
         bool contains(String const &name) const { return _contents.contains(name.lower()); }
 

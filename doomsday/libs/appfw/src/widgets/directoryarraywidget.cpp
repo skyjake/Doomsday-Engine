@@ -25,7 +25,6 @@
 #include <de/NativePath>
 #include <de/TextValue>
 #include <de/ToggleWidget>
-#include <QFileDialog>
 
 namespace de {
 
@@ -38,12 +37,15 @@ DirectoryArrayWidget::DirectoryArrayWidget(Variable &variable, String const &nam
     : VariableArrayWidget(variable, name)
     , d(new Impl)
 {
-    addButton().setText(tr("Add Folder..."));
+    addButton().setText("Add Folder...");
     addButton().setActionFn([this] ()
     {
         // Use a native dialog to select the IWAD folder.
         DE_BASE_GUI_APP->beginNativeUIMode();
 
+        DE_ASSERT_FAIL("Need a file picker");
+
+#if 0
         QFileDialog dlg(nullptr, tr("Select Folder"),
                         Config::get().gets(CFG_LAST_FOLDER, "."), "");
         dlg.setFileMode(QFileDialog::Directory);
@@ -57,6 +59,7 @@ DirectoryArrayWidget::DirectoryArrayWidget(Variable &variable, String const &nam
             elementsMenu().items() << makeItem(TextValue(dir));
             setVariableFromWidget();
         }
+#endif
 
         DE_BASE_GUI_APP->endNativeUIMode();
     });

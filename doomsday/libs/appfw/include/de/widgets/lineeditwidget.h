@@ -78,6 +78,8 @@ public:
     bool handleEvent(Event const &event) override;
 
 public:
+    static shell::Key shellKey(const KeyEvent &keyEvent);
+
     static KeyModifiers modifiersFromKeyEvent(KeyEvent::Modifiers const &keyMods);
 
 #if defined (DE_MOBILE)
