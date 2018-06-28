@@ -31,11 +31,6 @@
 #include <de/ScriptSystem>
 #include <de/Font>
 
-#ifdef WIN32
-#  define CONST const
-#  include <d2d1.h>
-#endif
-
 namespace de {
 
 static Value *Function_App_LoadFont(Context &, Function::ArgumentValues const &args)
@@ -101,24 +96,6 @@ DE_PIMPL(BaseGuiApp)
     float windowPixelRatio = 1.0f; ///< Without user's Config.ui.scaleConfig
     ConstantRule *pixelRatio = new ConstantRule;
 
-    Impl(Public *i) : Base(i)
-    {
-#if defined(WIN32)
-        // Use the Direct2D API to find out the desktop pixel ratio.
-        ID2D1Factory *d2dFactory = nullptr;
-        HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &d2dFactory);
-        if (SUCCEEDED(hr))
-        {
-            FLOAT dpiX = 96;
-            FLOAT dpiY = 96;
-            d2dFactory->GetDesktopDpi(&dpiX, &dpiY);
-            windowPixelRatio = dpiX / 96.0;
-            d2dFactory->Release();
-            d2dFactory = nullptr;
-        }
-#endif
-    }
-
     ~Impl() override
     {
         releaseRef(pixelRatio);
@@ -150,9 +127,8 @@ void BaseGuiApp::initSubsystems(SubsystemInitFlags flags)
 {
     GuiApp::initSubsystems(flags);
 
-#if !defined(WIN32)
-    d->windowPixelRatio = float(devicePixelRatio());
-#endif
+    // FIXME: (rebasing) This was probably moved elsewhere?
+
     // The "-dpi" option overrides the detected pixel ratio.
     if (auto dpi = commandLine().check("-dpi", 1))
     {

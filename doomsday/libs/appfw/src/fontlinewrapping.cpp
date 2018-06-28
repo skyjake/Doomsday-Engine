@@ -565,6 +565,21 @@ void FontLineWrapping::wrapTextToWidth(const String &text, const Font::RichForma
     d->text     = text;
     d->format   = format;
 
+#if defined (DE_DEBUG)
+    {
+        // Ensure the format refers to the correct string.
+        Font::RichFormat::Iterator iter(format);
+        while (iter.hasNext())
+        {
+            iter.next();
+            DE_ASSERT(iter.range().ptr() >= text.data());
+            DE_ASSERT(iter.range().ptr() < text.data() + text.size());
+            DE_ASSERT(iter.range().endPtr() >= text.data());
+            DE_ASSERT(iter.range().endPtr() <= text.data() + text.size());
+        }
+    }
+#endif
+
     // When tabs are used, we must first determine the maximum width of each tab stop.
     if (d->containsTabs(text))
     {

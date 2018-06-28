@@ -62,7 +62,7 @@ DE_PIMPL(GuiRootWidget)
     };
     struct ThinCornersImage : public TextureBank::ImageSource {
         Image load() const {
-//            QImage img(QSize(DPI_SCALED_INT(15), DPI_SCALED_INT(15)), QImage::Format_ARGB32);
+            Image img(Image::Size(DPI_SCALED_INT(15), DPI_SCALED_INT(15)), Image::RGBA_8888);
 //            img.fill(QColor(255, 255, 255, 0).rgba());
 //            QPainter painter(&img);
 //            painter.setRenderHint(QPainter::Antialiasing, true);
@@ -70,13 +70,13 @@ DE_PIMPL(GuiRootWidget)
 //            painter.setPen(QPen(Qt::white, DPI_SCALED(1)));
 //            painter.drawEllipse(DPI_SCALED(QPointF(8, 8)), DPI_SCALED(6), DPI_SCALED(6));
 //            return img;
-            DE_ASSERT_FAIL("Need to load style image")
-            return {};
+//            DE_ASSERT_FAIL("Need to load style image")
+            return img;
         }
     };
     struct BoldCornersImage : public TextureBank::ImageSource {
         Image load() const {
-//            QImage img(QSize(DPI_SCALED_INT(12), DPI_SCALED_INT(12)), QImage::Format_ARGB32);
+            Image img(Image::Size(DPI_SCALED_INT(12), DPI_SCALED_INT(12)), Image::RGBA_8888);
 //            img.fill(QColor(255, 255, 255, 0).rgba());
 //            QPainter painter(&img);
 //            painter.setRenderHint(QPainter::Antialiasing, true);
@@ -84,13 +84,13 @@ DE_PIMPL(GuiRootWidget)
 //            painter.setBrush(Qt::NoBrush);
 //            painter.drawEllipse(DPI_SCALED(QPointF(6, 6)), DPI_SCALED(4), DPI_SCALED(4));
 //            return img;
-            DE_ASSERT_FAIL("Need to load style image")
-            return {};
+//            DE_ASSERT_FAIL("Need to load style image")
+            return img;
         }
     };
     struct SolidRoundedImage : public TextureBank::ImageSource {
         Image load() const {
-//            QImage img(QSize(DPI_SCALED_INT(12), DPI_SCALED_INT(12)), QImage::Format_ARGB32);
+            Image img(Image::Size(DPI_SCALED_INT(12), DPI_SCALED_INT(12)), Image::RGBA_8888);
 //            img.fill(QColor(255, 255, 255, 0).rgba());
 //            QPainter painter(&img);
 //            painter.setRenderHint(QPainter::Antialiasing, true);
@@ -98,13 +98,13 @@ DE_PIMPL(GuiRootWidget)
 //            painter.setBrush(Qt::white);
 //            painter.drawEllipse(DPI_SCALED(QPointF(6, 6)), DPI_SCALED(6), DPI_SCALED(6));
 //            return img;
-            DE_ASSERT_FAIL("Need to load style image")
-            return {};
+//            DE_ASSERT_FAIL("Need to load style image")
+            return img;
         }
     };
     struct TinyDotImage : public TextureBank::ImageSource {
         Image load() const {
-//            QImage img(QSize(DPI_SCALED_INT(5), DPI_SCALED_INT(5)), QImage::Format_ARGB32);
+            Image img(Image::Size(DPI_SCALED_INT(5), DPI_SCALED_INT(5)), Image::RGBA_8888);
 //            img.fill(QColor(255, 255, 255, 0).rgba());
 //            QPainter painter(&img);
 //            painter.setRenderHint(QPainter::Antialiasing, true);
@@ -112,8 +112,8 @@ DE_PIMPL(GuiRootWidget)
 //            painter.setBrush(Qt::white);
 //            painter.drawEllipse(DPI_SCALED(QPointF(2.5, 2.5)), DPI_SCALED(2), DPI_SCALED(2));
 //            return img;
-            DE_ASSERT_FAIL("Need to load style image")
-            return {};
+//            DE_ASSERT_FAIL("Need to load style image")
+            return img;
         }
     };
     struct StyleImage : public TextureBank::ImageSource {

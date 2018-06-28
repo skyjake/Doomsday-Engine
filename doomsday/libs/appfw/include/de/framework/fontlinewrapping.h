@@ -65,8 +65,8 @@ public:
      */
     void reset();
 
-    void wrapTextToWidth(String const &text, WrapWidth maxWidth) override;
-    void wrapTextToWidth(String const &text, Font::RichFormat const &format, WrapWidth maxWidth);
+    void wrapTextToWidth(const String &text, WrapWidth maxWidth) override;
+    void wrapTextToWidth(const String &text, const Font::RichFormat &format, WrapWidth maxWidth);
 
     void rasterizeLines(Rangei const &lineRange);
     void clearRasterizedLines() const;

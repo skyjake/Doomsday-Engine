@@ -48,7 +48,7 @@ public:
 
     void setText(String const &text);
     void setStyledText(String const &styledText);
-    void setText(String const &text, Font::RichFormat const &format);
+    void setText(/*String const &text, */Font::RichFormat const &format);
 
     /**
      * Sets the range of visible lines.

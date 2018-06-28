@@ -28,7 +28,7 @@ DE_PIMPL(GLTextComposer)
 
     const Font *            font  = nullptr;
     Atlas *                 atlas = nullptr;
-    String                  text;
+//    String                  text;
     FontLineWrapping const *wraps = nullptr;
     Font::RichFormat        format;
     bool                    needRedo          = false; ///< Release completely and allocate.
@@ -385,20 +385,20 @@ void GLTextComposer::setWrapping(FontLineWrapping const &wrappedLines)
 
 void GLTextComposer::setText(String const &text)
 {
-    setText(text, Font::RichFormat::fromPlainText(text));
+    setText(Font::RichFormat::fromPlainText(text));
 }
 
 void GLTextComposer::setStyledText(String const &styledText)
 {
     d->format.clear();
-    d->text = d->format.initFromStyledText(styledText);
+    d->format.initFromStyledText(styledText);
     d->needRedo = true;
     setState(false);
 }
 
-void GLTextComposer::setText(String const &text, Font::RichFormat const &format)
+void GLTextComposer::setText(/*String const &text, */Font::RichFormat const &format)
 {
-    d->text = text;
+//    d->text = text;
     d->format = format;
     d->needRedo = true;
     setState(false);

@@ -34,11 +34,16 @@ target_link_libraries (libappfw
 if (TARGET LibOVR)
     target_link_libraries (libappfw PRIVATE LibOVR)
 endif ()
-if (WIN32)
-    # Direct2D is used for DPI information.
-    target_link_libraries (libappfw PRIVATE d2d1.lib)
-endif ()
 
 deng_deploy_library (libappfw DengAppfw)
 
 deng_cotire (libappfw src/precompiled.h)
+
+if (DE_ENABLE_TESTS)
+    set (appfwTests
+        test_appfw
+    )
+    foreach (test ${appfwTests})
+        add_subdirectory (../../tests/${test} ${CMAKE_CURRENT_BINARY_DIR}/${test})
+    endforeach (test)
+endif ()

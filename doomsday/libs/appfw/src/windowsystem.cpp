@@ -95,13 +95,13 @@ void WindowSystem::addWindow(String const &id, BaseWindow *window)
 
 bool WindowSystem::mainExists() // static
 {
-    return get().d->windows.contains("main");
+    return get().d->windows.contains(DE_STR("main"));
 }
 
 BaseWindow &WindowSystem::main() // static
 {
     DE_ASSERT(mainExists());
-    return *get().d->windows.find("main")->second;
+    return *get().d->windows.find(DE_STR("main"))->second;
 }
 
 BaseWindow *WindowSystem::find(String const &id) const
